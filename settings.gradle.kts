@@ -11,4 +11,3 @@ plugins {
 }
 
 rootProject.name = "open-vadl"
-include("app")
