@@ -22,7 +22,7 @@ dependencies {
     compileOnly("com.google.errorprone:error_prone_annotations:$errorProneVersion")
 
     testImplementation(platform("org.junit:junit-bom:5.9.1"))
-    testImplementation(libs.junit)
+    testImplementation("org.junit.jupiter:junit-jupiter")
 }
 
 
