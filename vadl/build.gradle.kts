@@ -6,7 +6,7 @@ plugins {
     id("net.ltgt.errorprone") version "3.1.0"
 }
 
-group = "ord.vadl"
+group = "vadl"
 version = "1.0-SNAPSHOT"
 
 val errorProneVersion = "2.26.1"
@@ -40,7 +40,7 @@ tasks.withType<JavaCompile> {
     if (!name.lowercase().contains("test")) {
         options.errorprone {
             check("NullAway", CheckSeverity.ERROR)
-            option("NullAway:AnnotatedPackages", "at.ac.tuwien.complang.vadl")
+            option("NullAway:AnnotatedPackages", "vadl")
             disable("EqualsGetClass")
         }
     }
@@ -57,3 +57,4 @@ java {
         languageVersion.set(JavaLanguageVersion.of(17))
     }
 }
+

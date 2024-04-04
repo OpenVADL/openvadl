@@ -1,8 +1,8 @@
 .gradle
 build/
 !gradle/wrapper/gradle-wrapper.jar
-!src/main/**/build/
-!src/test/**/build/
+!vadl/src/main/**/build/
+!vadl/src/test/**/build/
 
 ### IntelliJ IDEA ###
 .idea/modules.xml
@@ -15,8 +15,8 @@ build/
 *.iml
 *.ipr
 out/
-!src/main/**/out/
-!src/test/**/out/
+!vadl/src/main/**/out/
+!vadl/src/test/**/out/
 
 ### Eclipse ###
 .apt_generated
@@ -27,8 +27,8 @@ out/
 .springBeans
 .sts4-cache
 bin/
-!src/main/**/bin/
-!src/test/**/bin/
+!vadl/src/main/**/bin/
+!vadl/src/test/**/bin/
 
 ### NetBeans ###
 /nbproject/private/
