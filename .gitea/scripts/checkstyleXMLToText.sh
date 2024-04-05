@@ -10,6 +10,8 @@ fi
 
 # Path to Checkstyle XML result
 INPUT_PATH="$1"
+BASENAME=$(basename "$INPUT_PATH")
+
 
 # Check if the path exists
 if [ ! -f "$INPUT_PATH" ]; then
@@ -17,8 +19,13 @@ if [ ! -f "$INPUT_PATH" ]; then
     exit 1
 fi
 
-echo "Checkstyle Report:"
+echo "<details>"
+echo "<summary>❌ Checkstyle Report of $BASENAME </summary>"
+echo "
+\`\`\`"
 xmlstarlet sel -T -t \
     -m "//file" -v "concat('File: ', @name)" -n \
     -m ".//error" -v "concat('    Line ',@line, ':	',@severity, ': ',  @message)" -n \
     -b -n "$INPUT_PATH"
+echo "\`\`\`"
+echo "</details>"
