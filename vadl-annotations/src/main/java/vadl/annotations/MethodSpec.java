@@ -28,6 +28,10 @@ public class MethodSpec {
     this.typeString = typeString;
   }
 
+  /**
+   * Constructor that takes an additional check lambda.
+   * This lambda specifies additional method requirements.
+   */
   public MethodSpec(String methodName, String typeString, Function<Element, Boolean> furtherCheck) {
     this.methodName = methodName;
     this.typeString = typeString;
@@ -52,10 +56,10 @@ public class MethodSpec {
    * @return {@code true} if the element matches this {@code MethodSpec}, {@code false} otherwise.
    */
   public boolean check(Element element) {
-    return element.getKind().equals(ElementKind.METHOD) &&
-        element.getSimpleName().toString().equals(methodName) &&
-        element.asType().toString().equals(typeString) &&
-        (furtherCheck == null || furtherCheck.apply(element));
+    return element.getKind().equals(ElementKind.METHOD)
+        && element.getSimpleName().toString().equals(methodName)
+        && element.asType().toString().equals(typeString)
+        && (furtherCheck == null || furtherCheck.apply(element));
   }
 
 }

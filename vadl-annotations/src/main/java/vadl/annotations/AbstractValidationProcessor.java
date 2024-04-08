@@ -14,18 +14,19 @@ import javax.tools.Diagnostic;
 
 /**
  * A {@link AbstractProcessor} for validating annotations related to the VADL project.
- * It checks if classes annotated with specific annotations conform to required method specifications.
+ * It checks if classes annotated with specific annotations conform to required
+ * method specifications.
  *
  * <p>This processor is designed to run with source versions up to {@code 21}.
- * It uses predefined {@link AnnotationChecker}s to validate that annotated classes have the correct methods
- * defined as per the specifications of each annotation.</p>
+ * It uses predefined {@link AnnotationChecker}s to validate that annotated classes
+ * have the correct methods defined as per the specifications of each annotation.</p>
  */
 public abstract class AbstractValidationProcessor extends AbstractProcessor {
 
   /**
    * Returns the {@link AnnotationChecker}s that should be applied by the processor.
    */
-  abstract public List<AnnotationChecker> checkers();
+  public abstract List<AnnotationChecker> checkers();
 
   /**
    * Processes a set of annotation types on elements in the round environment.

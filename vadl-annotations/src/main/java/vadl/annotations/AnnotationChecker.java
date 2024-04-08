@@ -31,7 +31,7 @@ public class AnnotationChecker {
    * Checks if the given annotation instance can be checked by this checker.
    *
    * @param annotation The annotation instance to check.
-   * @return {@code true} if this checker is applicable to the given annotation, {@code false} otherwise.
+   * @return {@code true} if this checker is applicable to the given annotation.
    */
   public boolean canCheck(Annotation annotation) {
     return this.annoClass.isInstance(annotation);
@@ -71,7 +71,6 @@ public class AnnotationChecker {
       MethodSpec methodSpec, List<M> methods) {
     return methods.stream().anyMatch(methodSpec::check);
   }
-
 
 
 }
