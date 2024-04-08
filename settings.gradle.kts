@@ -13,3 +13,4 @@ plugins {
 rootProject.name = "open-vadl"
 
 include("vadl")
+include("vadl-annotations")

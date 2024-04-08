@@ -25,6 +25,9 @@ dependencies {
     errorprone("com.google.errorprone:error_prone_core:$errorProneVersion")
     compileOnly("com.google.errorprone:error_prone_annotations:$errorProneVersion")
 
+    annotationProcessor(project(":vadl-annotations"))
+    implementation(project(":vadl-annotations"))
+
     testImplementation(platform("org.junit:junit-bom:5.9.1"))
     testImplementation("org.junit.jupiter:junit-jupiter")
 }
