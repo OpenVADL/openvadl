@@ -23,9 +23,21 @@ def validate_commit_message(message):
   return True
 
 
+# remove all lines starting with a #
+def remove_comments(commit_message):
+  lines = commit_message.split('\n')
+  non_comment_lines = [line for line in lines if
+                       not line.strip().startswith('#')]
+  return '\n'.join(non_comment_lines)
+
+
 def main(commit_msg_file):
   with open(commit_msg_file, 'r') as file:
     commit_message = file.read().strip()
+
+  # remove all comment lines
+  commit_message = remove_comments(commit_message)
+
   if not validate_commit_message(commit_message):
     print("Commit message does not follow the required format: \n[scope:] <description>\n\n[optional body]\n----")
     print("Ensure the description starts with a capital letter, is in imperative mood, and does not end with a period.")
