@@ -1,4 +1,4 @@
-package vadl.annotations.viam;
+package vadl.javaannotations.viam;
 
 import java.lang.annotation.ElementType;
 import java.lang.annotation.Retention;

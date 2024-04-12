@@ -1,7 +1,6 @@
 import net.ltgt.gradle.errorprone.CheckSeverity
 import net.ltgt.gradle.errorprone.errorprone
 import javax.xml.parsers.DocumentBuilderFactory
-import kotlin.io.path.Path
 
 plugins {
     id("java")
@@ -25,8 +24,8 @@ dependencies {
     errorprone("com.google.errorprone:error_prone_core:$errorProneVersion")
     compileOnly("com.google.errorprone:error_prone_annotations:$errorProneVersion")
 
-    annotationProcessor(project(":vadl-annotations"))
-    implementation(project(":vadl-annotations"))
+    annotationProcessor(project(":java-annotations"))
+    implementation(project(":java-annotations"))
 
     testImplementation(platform("org.junit:junit-bom:5.9.1"))
     testImplementation("org.junit.jupiter:junit-jupiter")

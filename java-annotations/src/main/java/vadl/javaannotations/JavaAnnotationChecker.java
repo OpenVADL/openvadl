@@ -1,4 +1,4 @@
-package vadl.annotations;
+package vadl.javaannotations;
 
 import java.lang.annotation.Annotation;
 import java.util.Arrays;
@@ -8,15 +8,15 @@ import javax.lang.model.element.ElementKind;
 
 /**
  * Provides functionality to check if a given class element meets specific method specifications
- * for an annotation. This class checks the presence and signatures of methods required by
+ * for an java annotation. This class checks the presence and signatures of methods required by
  * an annotation on a class element, throwing exceptions if the expectations are not met.
  */
-public class AnnotationChecker {
+public class JavaAnnotationChecker {
 
   private final Class<?> annoClass;
   private final List<MethodSpec> methodSpecs;
 
-  public <T extends Annotation> AnnotationChecker(Class<T> annoClass, MethodSpec... methods) {
+  public <T extends Annotation> JavaAnnotationChecker(Class<T> annoClass, MethodSpec... methods) {
     this.annoClass = annoClass;
     this.methodSpecs = Arrays.stream(methods).toList();
   }

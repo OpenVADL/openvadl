@@ -1,37 +1,36 @@
-package vadl.annotations.viam;
+package vadl.javaannotations.viam;
 
 import java.util.List;
-import vadl.annotations.AbstractValidationProcessor;
-import vadl.annotations.AnnotationChecker;
-import vadl.annotations.MethodSpec;
+import vadl.javaannotations.AbstractValidationProcessor;
+import vadl.javaannotations.JavaAnnotationChecker;
+import vadl.javaannotations.MethodSpec;
 
 /**
- * An {@link AbstractValidationProcessor} that classes using the annotations
+ * An {@link AbstractValidationProcessor} that classes using the java annotations
  * {@link Input}, {@link Successor} and {@link DataValue}.
  */
 public class ViamValidationProcessor extends AbstractValidationProcessor {
 
   private static final String NODE_CLASS = "vadl.viam.graph.Node";
   private static final String INPUT_APPLIER_CLASS = NODE_CLASS + ".InputApplier";
-  private static final List<AnnotationChecker> checkers = List.of(
+  private static final List<JavaAnnotationChecker> checkers = List.of(
       new InputChecker(),
       new SuccessorChecker(),
       new DataChecker()
   );
 
   @Override
-  public List<AnnotationChecker> checkers() {
+  public List<JavaAnnotationChecker> checkers() {
     return checkers;
   }
 
 
-
   /**
-   * A specialized {@link AnnotationChecker} that checks for specific method requirements
+   * A specialized {@link JavaAnnotationChecker} that checks for specific method requirements
    * on classes annotated with {@link Input}. It ensures that annotated classes contain
    * specific methods related to input collection and application on an abstract node.
    */
-  private static class InputChecker extends AnnotationChecker {
+  private static class InputChecker extends JavaAnnotationChecker {
     InputChecker() {
       super(
           Input.class,
@@ -48,11 +47,11 @@ public class ViamValidationProcessor extends AbstractValidationProcessor {
   }
 
   /**
-   * A specialized {@link AnnotationChecker} that checks for specific method requirements
+   * A specialized {@link JavaAnnotationChecker} that checks for specific method requirements
    * on classes annotated with {@link Successor}. It ensures that annotated classes contain
    * specific methods related to successor collection on an abstract node.
    */
-  private static class SuccessorChecker extends AnnotationChecker {
+  private static class SuccessorChecker extends JavaAnnotationChecker {
     SuccessorChecker() {
       super(
           Successor.class,
@@ -65,11 +64,11 @@ public class ViamValidationProcessor extends AbstractValidationProcessor {
   }
 
   /**
-   * A specialized {@link AnnotationChecker} that checks for specific method requirements
+   * A specialized {@link JavaAnnotationChecker} that checks for specific method requirements
    * on classes annotated with {@link DataValue}. It ensures that annotated classes contain
    * specific methods related to data collection on an abstract node.
    */
-  private static class DataChecker extends AnnotationChecker {
+  private static class DataChecker extends JavaAnnotationChecker {
     DataChecker() {
       super(
           DataValue.class,
