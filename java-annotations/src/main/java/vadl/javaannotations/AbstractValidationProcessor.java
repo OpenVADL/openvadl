@@ -1,4 +1,4 @@
-package vadl.annotations;
+package vadl.javaannotations;
 
 
 import java.util.List;
@@ -13,24 +13,24 @@ import javax.tools.Diagnostic;
 
 
 /**
- * A {@link AbstractProcessor} for validating annotations related to the VADL project.
+ * A {@link AbstractProcessor} for validating java annotations related to the VADL project.
  * It checks if classes annotated with specific annotations conform to required
  * method specifications.
  *
  * <p>This processor is designed to run with source versions up to {@code 21}.
- * It uses predefined {@link AnnotationChecker}s to validate that annotated classes
+ * It uses predefined {@link JavaAnnotationChecker}s to validate that annotated classes
  * have the correct methods defined as per the specifications of each annotation.</p>
  */
 public abstract class AbstractValidationProcessor extends AbstractProcessor {
 
   /**
-   * Returns the {@link AnnotationChecker}s that should be applied by the processor.
+   * Returns the {@link JavaAnnotationChecker}s that should be applied by the processor.
    */
-  public abstract List<AnnotationChecker> checkers();
+  public abstract List<JavaAnnotationChecker> checkers();
 
   /**
    * Processes a set of annotation types on elements in the round environment.
-   * It iterates over each {@link AnnotationChecker} and collects classes annotated with
+   * It iterates over each {@link JavaAnnotationChecker} and collects classes annotated with
    * the corresponding annotation. Then, it validates these classes against the specifications
    * defined in the {@code AnnotationChecker}.
    */
@@ -38,7 +38,7 @@ public abstract class AbstractValidationProcessor extends AbstractProcessor {
   public boolean process(Set<? extends TypeElement> annotations, RoundEnvironment roundEnv) {
 
     // go through all annotation checkers
-    for (AnnotationChecker checker : checkers()) {
+    for (JavaAnnotationChecker checker : checkers()) {
       var fields = roundEnv.getElementsAnnotatedWith(checker.getAnnoClass());
       var classToFieldsMap = fields.stream()
           .collect(Collectors.groupingBy(

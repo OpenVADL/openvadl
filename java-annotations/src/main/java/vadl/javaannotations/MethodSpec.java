@@ -1,4 +1,4 @@
-package vadl.annotations;
+package vadl.javaannotations;
 
 import java.util.function.Function;
 import javax.lang.model.element.Element;
