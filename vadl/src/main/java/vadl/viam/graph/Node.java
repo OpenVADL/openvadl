@@ -171,9 +171,68 @@ public abstract class Node {
 
   /// GRAPH VERIFICATION METHODS
 
+  /**
+   * Verifies the consistency of this node to all its
+   * inputs, successors, usages and predecessor.
+   */
   public final void verify() {
     ensure(isActive(), "node is not active");
     ensure(graph != null, "graph of node is null");
+
+    verifyAllEdges();
+  }
+
+  private void verifyAllEdges() {
+    inputs().forEach(this::verifyInput);
+    usages().forEach(this::verifyUsage);
+    successors().forEach(this::verifySuccessor);
+    verifyPredecessor();
+  }
+
+  private void verifySuccessor(Node successor) {
+    ensure(successor != null,
+        "successor is null, but currently no optional successors are supported!");
+    ensure(successor.isActive(), "successor isn't active %s", successor);
+    ensure(successor.graph() == graph, "successor is not in same graph %s", successor);
+
+    // check if input has this node registered as input
+    ensure(successor.predecessor != null, "successor's predecessor is null %s", successor);
+    ensure(successor.predecessor == this, "this node is not this %s", successor);
+  }
+
+  private void verifyPredecessor() {
+    var pred = predecessor;
+    if (pred == null) {
+      return;
+    }
+
+    ensure(pred.isActive(), "predecessor isn't active %s", pred);
+    ensure(pred.graph() == graph, "predecessor is not in same graph %s", pred);
+
+    // check if input has this node registered as input
+    ensure(pred.successorList().contains(this),
+        "Predecessor's successors do not contain this node %s", pred);
+  }
+
+  private void verifyInput(Node input) {
+    ensure(input != null, "input is null, but currently no optional inputs are supported!");
+    ensure(input.isActive(), "input isn't active %s", input);
+    ensure(input.graph() == graph, "input is not in same graph %s", input);
+
+    // check if input has this node registered as input
+    ensure(input.usages.contains(this), "tshis node is not a usage of input %s", input);
+  }
+
+  private void verifyUsage(Node usage) {
+    ensure(usage != null, "usage is null");
+    ensure(usage.isActive(), "usage is not active %s", usage);
+    ensure(usage.graph() == graph, "usage is in other graph %s", usage);
+
+    var usageContainsThis = usage
+        .inputList()
+        .contains(this);
+
+    ensure(usageContainsThis, "usage does not contain this node as input %s", usage);
   }
 
   /// RUNTIME CHECK HELPERS
