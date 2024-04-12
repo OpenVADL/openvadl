@@ -1,3 +1,5 @@
+package vadl;
+
 import vadl.ast.VadlParser;
 import vadl.error.ErrorPrinter;
 import vadl.error.VadlException;

@@ -34,12 +34,14 @@ tasks.test {
 }
 
 tasks.withType<Checkstyle> {
-    exclude("build/**")
+    exclude("build")
 }
 
 tasks.withType<JavaCompile> {
     sourceCompatibility = "17"
     targetCompatibility = "17"
+
+    dependsOn("generateCocoParser")
 
     // options.compilerArgs.plusAssign("--enable-preview")
 
