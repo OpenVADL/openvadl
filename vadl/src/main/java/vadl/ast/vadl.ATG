@@ -1,0 +1,54 @@
+$package=vadl.ast
+import vadl.ast.Ast;
+import vadl.ast.Expr;
+import vadl.ast.Stmt;
+
+
+// Flo was here twich
+COMPILER vadl
+    Ast ast = new Ast();
+
+    Location locationFromToken(Token token) {
+        return new Location("unknown.vadl", token.line,  token.line, token.col, token.col + token.val.length());
+    }
+
+
+CHARACTERS
+    digit = '0' .. '9'.
+
+TOKENS
+    number = digit {digit}.
+
+PRODUCTIONS
+    vadl =
+    {
+        statement<out Stmt stmt>             (. ast.statements.add(stmt); .)
+    }.
+
+    statement<out Stmt stmt>
+    = expression<out Expr expr> '\n'         (. stmt = new ExpressionStmt(expr); .)
+    .
+
+    expression<out Expr expr>
+    = term<out Expr expr1>                   (. expr = expr1; .)
+        {
+            '+' term<out Expr expr2>         (. expr = new BinaryExpr(expr, BinaryExpr.Operation.ADD, expr2); .)
+        |   '-' term<out Expr expr2>         (. expr = new BinaryExpr(expr, BinaryExpr.Operation.SUBTRACT, expr2); .)
+        }
+    .
+
+    term<out Expr expr>
+    = factor<out Expr expr1>                 (. expr = expr1; .)
+        {
+            '*' factor<out Expr expr2>       (. expr = new BinaryExpr(expr, BinaryExpr.Operation.MULTIPLY, expr2); .)
+        |   '/' factor<out Expr expr2>       (. expr = new BinaryExpr(expr, BinaryExpr.Operation.DIVIDE, expr2); .)
+        }
+    .
+
+    factor<out Expr expr>                   (. expr = null; .) // FIXME: This is quite ugly, is it really needed?
+    = number                                (. expr = new IntegerLiteral(Integer.parseInt(t.val), locationFromToken(t)); .)
+    | '(' expression<out Expr expr1> ')'    (. expr = expr1; .) // FIXME: We need a group expression for pretty printing.
+    .
+
+
+END vadl.
