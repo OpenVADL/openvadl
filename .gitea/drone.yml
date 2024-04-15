@@ -38,5 +38,7 @@ steps:
       status: [ failure ]
 
 triggers:
+  events:
+    - pull_request
   ref:
     - refs/heads/**
