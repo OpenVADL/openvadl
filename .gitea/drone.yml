@@ -6,37 +6,37 @@ type: docker
 name: checkstyle
 
 steps:
-- name: set gitea token
-  image: c2.complang.tuwien.ac.at:5000/vadl-ci:f7222374638bccc355ba51bfcc2b17e9561204a4
-  environment:
-    ACCESS_TOKEN:
-      from_secret: ACCESS_TOKEN
-  commands:
-  - git config --add --global url."https://$(ACCESS_TOKEN)@ea.complang.tuwien.ac.at/".insteadOf "git@ea.complang.tuwien.ac.at:"
-  - git log -n 1 --oneline
+  - name: set gitea token
+    image: c2.complang.tuwien.ac.at:5000/vadl-ci:f7222374638bccc355ba51bfcc2b17e9561204a4
+    environment:
+      ACCESS_TOKEN:
+        from_secret: ACCESS_TOKEN
+    commands:
+      - git config --add --global url."https://$(ACCESS_TOKEN)@ea.complang.tuwien.ac.at/".insteadOf "git@ea.complang.tuwien.ac.at:"
+      - git log -n 1 --oneline
 
-- name: build and checkstyle
-  image: c2.complang.tuwien.ac.at:5000/vadl-ci:f7222374638bccc355ba51bfcc2b17e9561204a4
-  commands:
-  - ./gradlew checkstyleAll
+  - name: build and checkstyle
+    image: c2.complang.tuwien.ac.at:5000/vadl-ci:f7222374638bccc355ba51bfcc2b17e9561204a4
+    commands:
+      - ./gradlew checkstyleAll
 
-- name: bundle failure report
-  image: c2.complang.tuwien.ac.at:5000/vadl-ci:f7222374638bccc355ba51bfcc2b17e9561204a4
-  commands:
-  - ./gradlew generateBundledCheckstyleReports
-  when:
-    status: [ failure ]
+  - name: bundle failure report
+    image: c2.complang.tuwien.ac.at:5000/vadl-ci:f7222374638bccc355ba51bfcc2b17e9561204a4
+    commands:
+      - ./gradlew generateBundledCheckstyleReports
+    when:
+      status: [ failure ]
 
-- name: comment checkstyle report
-  image: tsakidev/giteacomment:latest
-  settings:
-    gitea_token:
-      from_secret: ACCESS_TOKEN
-    gitea_base_url: https://ea.complang.tuwien.ac.at
-    comment_from_file: vadl/build/reports/checkstyle/report.md
-  when:
-    status: [ failure ]
+  - name: comment checkstyle report
+    image: jozott/drone-gitea-message:latest
+    settings:
+      api_key:
+        from_secret: ACCESS_TOKEN
+      base_url: https://ea.complang.tuwien.ac.at
+      file: vadl/build/reports/checkstyle/report.md
+    when:
+      status: [ failure ]
 
 triggers:
   ref:
-  - refs/heads/**
+    - refs/heads/**
