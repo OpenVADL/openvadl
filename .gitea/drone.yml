@@ -28,12 +28,13 @@ steps:
       status: [ failure ]
 
   - name: comment checkstyle report
-    image: jozott/drone-gitea-message:latest
+    image: jozott/drone-gitea-message:v0.2.0
     settings:
       api_key:
         from_secret: ACCESS_TOKEN
       base_url: https://ea.complang.tuwien.ac.at
-      file: vadl/build/reports/checkstyle/report.md
+      message_file: vadl/build/reports/checkstyle/report.md
+      delete_identifier: checkstyle-report-delete-id
     when:
       status: [ failure ]
 
