@@ -73,7 +73,7 @@ public abstract class Node {
    *
    * <p><b>IMPORTANT</b>:
    * <li>This must be overridden by every node that has inputs
-   * (annotated with {@link vadl.annotations.viam.Input}).</li>
+   * (annotated with {@link vadl.javaannotations.viam.Input}).</li>
    * <li>The subclass must call {@code super.collectInputs(collection)} before
    * adding its own inputs!</li>
    * <li>Optional successors must only be added if they are non-null</li>
@@ -102,7 +102,7 @@ public abstract class Node {
    *
    * <p><b>IMPORTANT</b>:
    * <li>This must be overridden by every node that has successors
-   * (annotated with {@link vadl.annotations.viam.Successor})</li>
+   * (annotated with {@link vadl.javaannotations.viam.Successor})</li>
    * <li>The subclass must call {@code super.collectSuccessors(collection)} before
    * adding its own successors!</li>
    * <li>Optional successors must only be added if they are non-null</li>
@@ -124,7 +124,7 @@ public abstract class Node {
    *
    * <p><b>IMPORTANT</b>:
    * <li>This must be overridden by every node that has data
-   * (annotated with {@link vadl.annotations.viam.DataValue})</li>
+   * (annotated with {@link vadl.javaannotations.viam.DataValue})</li>
    * <li>The subclass must call {@code super.collectData(collection)} before
    * adding its own data!</li>
    * <li>Optional successors must be added even if they might be null!</li>
@@ -142,14 +142,14 @@ public abstract class Node {
 
   /**
    * Returns a stream of all {@link Node}s that have this node as
-   * {@link vadl.annotations.viam.Input}.
+   * {@link vadl.javaannotations.viam.Input}.
    */
   public final Stream<Node> usages() {
     return usages.stream();
   }
 
   /**
-   * Returns the {@link Node} that has this node as {@link vadl.annotations.viam.Successor}.
+   * Returns the {@link Node} that has this node as {@link vadl.javaannotations.viam.Successor}.
    */
   public final @Nullable Node predecessor() {
     return predecessor;
