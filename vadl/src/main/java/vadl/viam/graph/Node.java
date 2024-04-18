@@ -169,6 +169,33 @@ public abstract class Node {
   }
 
 
+  /**
+   * Applies visitor output on all inputs.
+   *
+   * <p><b>IMPORTANT</b>:
+   * <li>This must be overridden by every node that has inputs
+   * (annotated with {@link vadl.javaannotations.viam.Input}).</li>
+   * <li>The subclass must call {@code super.applyOnInputs(visitor)} before
+   * adding its own inputs!</li>
+   *
+   * @param visitor that produces new value for input.
+   */
+  public void applyOnInputs(GraphVisitor.Applier<Node> visitor) {
+    // default none, must be overridden by subtypes
+  }
+
+  /**
+   * For each input of the node it calls {@code visitor.visit(node, input)}.
+   *
+   * @param visitor the visitor that gets visited
+   */
+  public void visitInputs(GraphVisitor visitor) {
+    applyOnInputs((from, to) -> {
+      visitor.visit(from, to);
+      return to;
+    });
+  }
+
   /// GRAPH VERIFICATION METHODS
 
   /**

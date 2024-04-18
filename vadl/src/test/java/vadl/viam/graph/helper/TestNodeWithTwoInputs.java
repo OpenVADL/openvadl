@@ -2,6 +2,7 @@ package vadl.viam.graph.helper;
 
 import java.util.List;
 import vadl.javaannotations.viam.Input;
+import vadl.viam.graph.GraphVisitor;
 import vadl.viam.graph.Node;
 
 public class TestNodeWithTwoInputs extends Node {
@@ -21,4 +22,10 @@ public class TestNodeWithTwoInputs extends Node {
     collection.add(input2);
   }
 
+  @Override
+  public void applyOnInputs(GraphVisitor.Applier<Node> visitor) {
+    super.applyOnInputs(visitor);
+    input1 = visitor.apply(this, input1);
+    input2 = visitor.apply(this, input2);
+  }
 }
