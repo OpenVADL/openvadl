@@ -35,6 +35,9 @@ public class IfNode extends ControlSplitNode {
   @Successor
   Node falseBranch;
 
+  /**
+   * The constructor to instantiate a IfNode.
+   */
   public IfNode(ExpressionNode condition, Node trueBranch, Node falseBranch) {
     this.condition = condition;
     this.trueBranch = trueBranch;

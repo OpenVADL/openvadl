@@ -20,7 +20,7 @@ public class TestNodes {
    * The TestNode class is an abstract class that represents a node in a test graph structure.
    * It extends the Node class.
    */
-  public static abstract class TestNode extends Node {
+  public abstract static class TestNode extends Node {
   }
 
   /**
