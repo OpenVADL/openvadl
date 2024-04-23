@@ -189,7 +189,7 @@ public abstract class Node {
    * If the new input node differs from the old one, this method will automatically handle
    * the usage transfer.
    */
-  public void applyOnInputs(GraphVisitor.Applier<Node> visitor) {
+  public final void applyOnInputs(GraphVisitor.Applier<Node> visitor) {
     applyOnInputsUnsafe((s, input) -> {
       var newInput = visitor.applyNullable(s, input);
       if (newInput != null) {
@@ -208,7 +208,7 @@ public abstract class Node {
    *
    * @param visitor the visitor that gets visited
    */
-  public void visitInputs(GraphVisitor visitor) {
+  public final void visitInputs(GraphVisitor visitor) {
     applyOnInputsUnsafe((from, to) -> {
       visitor.visit(from, to);
       return to;
