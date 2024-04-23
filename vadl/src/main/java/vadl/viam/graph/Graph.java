@@ -54,30 +54,21 @@ public class Graph {
    * @return the node added to the graph
    */
   public <T extends Node> T add(T node) {
-    assert !(node instanceof UniqueNode) :
-        "add() only allowed for non-unique nodes. Use unique() instead.";
-    return addInternal(node);
-  }
-
-  public <T extends Node & UniqueNode> T unique(T node) {
-    return uniqueInternal(node);
-  }
-
-  public <T extends Node> T addOrUnique(T node) {
     if (node instanceof UniqueNode) {
-      return uniqueInternal(node);
+      return addUniqueInternal(node);
+    } else {
+      return addSimpleInternal(node);
     }
-    return addInternal(node);
   }
 
-  public <T extends Node> T addOrUniqueWithInputs(T node) {
-    node.applyOnInputs((n, target) -> {
+  public <T extends Node> T addWithInputs(T node) {
+    node.applyOnInputsUnsafe((n, target) -> {
       if (target == null || target.isActive()) {
         return target;
       }
 
       target.ensure(!target.isDeleted(), "cannot add deleted input node");
-      var newT = addOrUniqueWithInputs(target);
+      var newT = addWithInputs(target);
       if (newT != target) {
         // TODO: Check if we can use visit inputs for this lambda
         // as we are calling replaceInput on the node anyway
@@ -85,7 +76,7 @@ public class Graph {
       }
       return newT;
     });
-    return addOrUnique(node);
+    return add(node);
   }
 
   /**
@@ -173,7 +164,7 @@ public class Graph {
   }
 
   // helper method to add node to graph
-  private <T extends Node> T addInternal(T node) {
+  private <T extends Node> T addSimpleInternal(T node) {
     // ensure that all input dependencies are already added
     // to the graph
     ensureInputsAdded(node);
@@ -182,12 +173,12 @@ public class Graph {
     return node;
   }
 
-  private <T extends Node> T uniqueInternal(T node) {
+  private <T extends Node> T addUniqueInternal(T node) {
     var result = findDuplicate(node);
     if (result != null) {
       return result;
     }
-    return addInternal(node);
+    return addSimpleInternal(node);
   }
 
   /**

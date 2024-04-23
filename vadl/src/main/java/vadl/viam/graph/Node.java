@@ -168,6 +168,9 @@ public abstract class Node {
 
   /**
    * Applies visitor output on all inputs.
+   * This is unsafe, as it may lead to an inconsistent graph, if the usages are not
+   * updated accordingly. Use {@link Node#applyOnInputs(GraphVisitor.Applier)} to
+   * let this be handled automatically.
    *
    * <p><b>IMPORTANT</b>:
    * <li>This must be overridden by every node that has inputs
@@ -177,8 +180,27 @@ public abstract class Node {
    *
    * @param visitor that produces new value for input.
    */
-  public void applyOnInputs(GraphVisitor.Applier<Node> visitor) {
+  protected void applyOnInputsUnsafe(GraphVisitor.Applier<Node> visitor) {
     // default none, must be overridden by subtypes
+  }
+
+  /**
+   * Applies the visitor's output on each input of this node.
+   * If the new input node differs from the old one, this method will automatically handle
+   * the usage transfer.
+   */
+  public void applyOnInputs(GraphVisitor.Applier<Node> visitor) {
+    applyOnInputsUnsafe((s, input) -> {
+      var newInput = visitor.applyNullable(s, input);
+      if (newInput != null) {
+        transferUsageOfThis(input, newInput);
+      } else {
+        if (input != null) {
+          input.removeUsage(this);
+        }
+      }
+      return newInput;
+    });
   }
 
   /**
@@ -187,7 +209,7 @@ public abstract class Node {
    * @param visitor the visitor that gets visited
    */
   public void visitInputs(GraphVisitor visitor) {
-    applyOnInputs((from, to) -> {
+    applyOnInputsUnsafe((from, to) -> {
       visitor.visit(from, to);
       return to;
     });
@@ -229,7 +251,7 @@ public abstract class Node {
    */
   public void replaceInput(Node oldInput, Node newInput) {
     AtomicBoolean replaced = new AtomicBoolean(false);
-    applyOnInputs((self, input) -> {
+    applyOnInputsUnsafe((self, input) -> {
       if (input == oldInput) {
         replaced.set(true);
         return newInput;
@@ -269,14 +291,16 @@ public abstract class Node {
    * @param from node that gets {@code this} removed
    * @param to   node that gets {@code this} added
    */
-  public final void transferUsageOfThis(Node from, Node to) {
+  public final void transferUsageOfThis(@Nullable Node from, Node to) {
     ensure(isActive(), "node must be active on usage transfer");
-    ensure(to != null && (this.id.isInit() || to.isActiveIn(graph)),
+    ensure(this.id.isInit() || to.isActiveIn(graph),
         "cannot transfer usage to inactive node %s", to);
     if (from == to) {
       return;
     }
-    from.removeUsage(this);
+    if (from != null) {
+      from.removeUsage(this);
+    }
     to.addUsage(this);
   }
 
@@ -311,12 +335,11 @@ public abstract class Node {
   public String nodeName() {
     // uses the class name and removes the "Node" suffix if existing
     var className = this.getClass().getSimpleName();
-    int i = className.lastIndexOf("Node");
-    if (i > 0) {
-      return className.substring(0, i);
-    } else {
-      return className;
+    var postfix = "Node";
+    if (className.endsWith(postfix)) {
+      return className.substring(0, className.length() - postfix.length());
     }
+    return className;
   }
 
   @Override
@@ -369,7 +392,7 @@ public abstract class Node {
   private void verifySuccessor(Node successor) {
     ensure(successor != null,
         "successor is null, but currently no optional successors are supported!");
-    ensure(successor.isActive(), "successor isn't active %s", successor);
+    ensure(successor.isActive(), "successor is not active %s", successor);
     ensure(successor.graph() == graph, "successor is not in same graph %s", successor);
 
     // check if input has this node registered as input
@@ -383,7 +406,7 @@ public abstract class Node {
       return;
     }
 
-    ensure(pred.isActive(), "predecessor isn't active %s", pred);
+    ensure(pred.isActive(), "predecessor is not active %s", pred);
     ensure(pred.graph() == graph, "predecessor is not in same graph %s", pred);
 
     // check if input has this node registered as input
@@ -393,11 +416,11 @@ public abstract class Node {
 
   private void verifyInput(Node input) {
     ensure(input != null, "input is null, but currently no optional inputs are supported!");
-    ensure(input.isActive(), "input isn't active %s", input);
+    ensure(input.isActive(), "input is not active %s", input);
     ensure(input.graph() == graph, "input is not in same graph %s", input);
 
     // check if input has this node registered as input
-    ensure(input.usages.contains(this), "tshis node is not a usage of input %s", input);
+    ensure(input.usages.contains(this), "this node is not a user of input %s", input);
   }
 
   private void verifyUsage(Node usage) {
@@ -409,7 +432,7 @@ public abstract class Node {
         .inputList()
         .contains(this);
 
-    ensure(usageContainsThis, "usage does not contain this node as input %s", usage);
+    ensure(usageContainsThis, "user does not contain this node as input %s", usage);
   }
 
   /// RUNTIME CHECK HELPERS
@@ -477,6 +500,15 @@ public abstract class Node {
       DELETED
     }
 
+
+    @Override
+    public String toString() {
+      return switch (state) {
+        case INIT -> "i";
+        case ACTIVE -> "" + numericId;
+        case DELETED -> "d(%s)".formatted(numericId);
+      };
+    }
   }
 
 }
