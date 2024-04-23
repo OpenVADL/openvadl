@@ -62,16 +62,16 @@ public class DotGraphVisualizer implements GraphVisualizer<String, Graph> {
 
   private String nodeStyle(Node node) {
     return "";
-//    if (node instanceof ControlNode) {
-//      return "shape=box";
-//    } else {
-//      if (node instanceof ExpressionNode) {
-//        if (node.isLeaf()) {
-//          return "style=filled fontcolor=\"#2f9e44\" color=\"#2f9e44\" fillcolor=\"#b2f2bb\"";
-//        } else {
-//          return "style=filled fontcolor=\"#1971c2\" color=\"#1971c2\" fillcolor=\"#a5d8ff\"";
-//        }
-//      }
+    //    if (node instanceof ControlNode) {
+    //      return "shape=box";
+    //    } else {
+    //      if (node instanceof ExpressionNode) {
+    //        if (node.isLeaf()) {
+    //          return "style=filled fontcolor=\"#2f9e44\" color=\"#2f9e44\" fillcolor=\"#b2f2bb\"";
+    //        } else {
+    //          return "style=filled fontcolor=\"#1971c2\" color=\"#1971c2\" fillcolor=\"#a5d8ff\"";
+    //        }
+    //      }
   }
 
 }

@@ -243,8 +243,10 @@ public abstract class Node {
   }
 
   /**
-   * Replaces the old input with the new input in the graph by modifying the input edges of the nodes.
-   * If the replacement is successful, the usage of the old input is transferred to the new input.
+   * Replaces the old input with the new input in the graph by modifying the
+   * input edges of the nodes.
+   * If the replacement is successful, the usage of the old input is
+   * transferred to the new input.
    *
    * @param oldInput the node to be replaced
    * @param newInput the node to replace the old input with
@@ -312,15 +314,15 @@ public abstract class Node {
    */
   protected boolean equalInputs(Node o) {
     var thisIter = inputs().iterator();
-    var oIter = o.inputs().iterator();
-    while (thisIter.hasNext() && oIter.hasNext()) {
+    var otherIter = o.inputs().iterator();
+    while (thisIter.hasNext() && otherIter.hasNext()) {
       var thisInput = thisIter.next();
-      var oInput = oIter.next();
-      if (!thisInput.equals(oInput)) {
+      var otherInput = otherIter.next();
+      if (!thisInput.equals(otherInput)) {
         return false;
       }
     }
-    return !thisIter.hasNext() && !oIter.hasNext();
+    return !thisIter.hasNext() && !otherIter.hasNext();
   }
 
   protected boolean equalData(Node o) {
@@ -345,9 +347,9 @@ public abstract class Node {
   @Override
   public String toString() {
     var dataList = dataList();
-    var data = !dataList.isEmpty() ?
-        "<%s>".formatted(
-            dataList.stream().map(Object::toString).collect(Collectors.joining(", "))) :
+    var data = !dataList.isEmpty()
+        ? "<%s>".formatted(
+        dataList.stream().map(Object::toString).collect(Collectors.joining(", "))) :
         "";
     return "(%s) %s%s".formatted(id, nodeName(), data);
   }

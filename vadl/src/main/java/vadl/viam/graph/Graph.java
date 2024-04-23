@@ -33,7 +33,7 @@ public class Graph {
    *
    * @return iterable over all nodes of graph.
    */
-  final public Stream<Node> getNodes() {
+  public final Stream<Node> getNodes() {
     return nodes.stream().filter(Objects::nonNull);
   }
 
@@ -43,15 +43,35 @@ public class Graph {
    * @param clazz of node type
    * @return iterable of all nodes of type clazz
    */
-  final public <T extends Node> Stream<T> getNodes(Class<T> clazz) {
+  public final <T extends Node> Stream<T> getNodes(Class<T> clazz) {
     return getNodes().filter(clazz::isInstance).map(clazz::cast);
   }
 
   /**
    * Adds the node to the graph (without its inputs).
+   * If the node is a unique node, it will check for duplication int the graph.
+   *
+   * <p>Always use the return value for further usage of the node.
+   * The following shows a <b>valid</b> usage:
+   * <pre>
+   * {@code
+   * var node = new Node(...);
+   * node = graph.add(node);
+   * doSomethingWith(node);
+   * }
+   * </pre>
+   * The following shows a <b>wrong</b> usage:
+   * <pre>
+   * {@code
+   * var node = new Node(...);
+   * graph.add(node);
+   * doSomethingWith(node);
+   * }
+   * </pre>
+   * </p>
    *
    * @param node to be added
-   * @return the node added to the graph
+   * @return the node added to the graph or its duplicate
    */
   public <T extends Node> T add(T node) {
     if (node instanceof UniqueNode) {
@@ -61,6 +81,33 @@ public class Graph {
     }
   }
 
+  /**
+   * Adds the given node with all its inputs to the graph.
+   * If this or any input is a unique node, it will be only
+   * added if there is no duplicate.
+   *
+   * <p>Always use the return value for further usage of the node.
+   * The following shows <b>valid</b> usage:
+   * <pre>
+   * {@code
+   * var node = new Node(...);
+   * node = graph.add(node);
+   * doSomethingWith(node);
+   * }
+   * </pre>
+   * The following shows <b>wrong</b> usage:
+   * <pre>
+   * {@code
+   * var node = new Node(...);
+   * graph.add(node);
+   * doSomethingWith(node);
+   * }
+   * </pre>
+   * </p>
+   *
+   * @param node to be added
+   * @return the node added to the graph or its duplicate
+   */
   public <T extends Node> T addWithInputs(T node) {
     node.applyOnInputsUnsafe((n, target) -> {
       if (target == null || target.isActive()) {
@@ -91,7 +138,6 @@ public class Graph {
     // TODO: We should differ between leafs and none-leafs, and also maintain a leafs cache
     node.ensure(node instanceof UniqueNode, "Only UniqueNodes might be used to find duplicates");
 
-    var nodeUnique = (UniqueNode) node;
     var inputs = node.inputList();
 
     // if it is leaf
