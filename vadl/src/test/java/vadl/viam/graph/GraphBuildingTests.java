@@ -20,6 +20,14 @@ import vadl.viam.graph.helper.TestNodes.WithTwoInputs;
 import vadl.viam.graph.helper.TestNodes.WithTwoInputsUnique;
 
 
+/**
+ * The GraphBuildingTests class is a test class that contains several test
+ * methods for validating the functionality of the Graph class.
+ * It performs tests related to adding nodes to the graph and checking node duplication.
+ *
+ * @see Graph
+ * @see Node
+ */
 public class GraphBuildingTests {
 
   TestGraph testGraph;

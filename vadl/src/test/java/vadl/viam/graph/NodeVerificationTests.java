@@ -12,6 +12,12 @@ import vadl.viam.graph.helper.TestNodes.Plain;
 import vadl.viam.graph.helper.TestNodes.WithInput;
 import vadl.viam.graph.helper.TestNodes.WithSuccessor;
 
+/**
+ * The NodeVerificationTests class is a test class that verifies the behavior of the Node class.
+ * It contains test methods for different scenarios.
+ *
+ * @see Node
+ */
 public class NodeVerificationTests {
 
 

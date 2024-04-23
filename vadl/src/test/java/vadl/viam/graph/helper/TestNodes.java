@@ -8,18 +8,44 @@ import vadl.viam.graph.GraphVisitor;
 import vadl.viam.graph.Node;
 import vadl.viam.graph.UniqueNode;
 
+/**
+ * TestNodes is a class that contains several nested classes
+ * representing different types of test nodes.
+ * These nodes are used for testing purposes in a graph structure.
+ */
 public class TestNodes {
 
+
+  /**
+   * The TestNode class is an abstract class that represents a node in a test graph structure.
+   * It extends the Node class.
+   */
   public static abstract class TestNode extends Node {
   }
 
+  /**
+   * The Plain class represents a plain test node in a graph structure.
+   * It extends the TestNode class.
+   */
   public static class Plain extends TestNode {
 
   }
 
+  /**
+   * The PlainUnique class represents a node in a test graph structure
+   * that is marked as unique.
+   * It extends the TestNode class and implements the UniqueNode interface.
+   *
+   * @see UniqueNode
+   */
   public static class PlainUnique extends TestNode implements UniqueNode {
   }
 
+  /**
+   * The WithInput class is a subclass of TestNode that represents a node with an input field.
+   * It extends the TestNode class and adds an input field marked with the @Input annotation.
+   * When creating an instance of WithInput, a Node input object must be provided.
+   */
   public static class WithInput extends TestNode {
 
     public @Input Node input;
@@ -41,6 +67,13 @@ public class TestNodes {
     }
   }
 
+  /**
+   * This class represents a subclass of TestNode that represents a node with an input field.
+   * It extends the TestNode class and adds an input field marked with the @Input annotation.
+   *
+   * @see WithInput
+   * @see UniqueNode
+   */
   public static class WithInputUnique extends WithInput implements UniqueNode {
 
     public WithInputUnique(Node input) {
@@ -48,6 +81,10 @@ public class TestNodes {
     }
   }
 
+  /**
+   * The WithSuccessor class represents a test node that has a successor node.
+   * It extends the TestNode class.
+   */
   public static class WithSuccessor extends TestNode {
 
     public @Successor Node successor;
@@ -63,6 +100,11 @@ public class TestNodes {
     }
   }
 
+  /**
+   * The WithSuccessorUnique class represents a test node that has a successor node
+   * and is marked as unique in the graph.
+   * It extends the WithSuccessor class and implements the UniqueNode interface.
+   */
   public static class WithSuccessorUnique extends WithSuccessor implements UniqueNode {
 
     public WithSuccessorUnique(Node successor) {
@@ -70,6 +112,10 @@ public class TestNodes {
     }
   }
 
+  /**
+   * The WithTwoInputs class is a subclass of TestNode that represents a node with two input nodes.
+   * It stores references to the input nodes and provides methods to interact with them.
+   */
   public static class WithTwoInputs extends TestNode {
 
     public @Input Node input1;
@@ -95,6 +141,11 @@ public class TestNodes {
     }
   }
 
+  /**
+   * The WithTwoInputsUnique class is a subclass of WithTwoInputs that represents a
+   * unique node with two input nodes.
+   * It implements the UniqueNode interface, which marks the node as unique in the graph.
+   */
   public static class WithTwoInputsUnique extends WithTwoInputs implements UniqueNode {
 
     public WithTwoInputsUnique(Node input1, Node input2) {
@@ -102,6 +153,10 @@ public class TestNodes {
     }
   }
 
+  /**
+   * The WithData class represents a node in a test graph structure that contains a data value.
+   * It extends the TestNode class.
+   */
   public static class WithData extends TestNode {
     public @DataValue int val;
 
@@ -116,6 +171,11 @@ public class TestNodes {
     }
   }
 
+  /**
+   * The WithDataUnique class represents a node in a test graph
+   * structure that contains a data value.
+   * It extends the WithData class and implements the UniqueNode interface.
+   */
   public static class WithDataUnique extends WithData implements UniqueNode {
     public WithDataUnique(int val) {
       super(val);

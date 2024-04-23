@@ -4,6 +4,10 @@ import org.junit.jupiter.api.Test;
 import vadl.viam.graph.helper.TestNodes;
 import vadl.viam.graph.visualize.DotGraphVisualizer;
 
+/**
+ * The VisualizationTest class is a JUnit test class that demonstrates the usage of the Graph class
+ * and the DotGraphVisualizer class to visualize a graph.
+ */
 public class VisualizationTest {
 
   @Test
