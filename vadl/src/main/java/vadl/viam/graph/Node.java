@@ -4,6 +4,8 @@ import com.google.errorprone.annotations.FormatMethod;
 import com.google.errorprone.annotations.FormatString;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.stream.Collectors;
 import java.util.stream.Stream;
 import javax.annotation.Nullable;
 
@@ -16,7 +18,7 @@ import javax.annotation.Nullable;
  */
 public abstract class Node {
 
-  private Id id;
+  public final Id id;
   private @Nullable Graph graph;
 
 
@@ -28,7 +30,7 @@ public abstract class Node {
    * no usages and no predecessor.
    */
   public Node() {
-    this.id = Id.init();
+    this.id = new Id();
     this.usages = new ArrayList<>();
     this.predecessor = null;
   }
@@ -41,7 +43,7 @@ public abstract class Node {
     return this.id.isActive();
   }
 
-  public boolean isActiveIn(Graph graph) {
+  public boolean isActiveIn(@Nullable Graph graph) {
     return this.isActive() && graph == this.graph;
   }
 
@@ -163,11 +165,6 @@ public abstract class Node {
     return usages.size();
   }
 
-  protected final void addUsage(Node usage) {
-    ensure(usage.isActive(), "usage must be active: %s", usage);
-    usages.add(usage);
-  }
-
 
   /**
    * Applies visitor output on all inputs.
@@ -194,6 +191,159 @@ public abstract class Node {
       visitor.visit(from, to);
       return to;
     });
+  }
+
+  /**
+   * Initializes the node for the given graph.
+   * This is typically called by the graph itself.
+   */
+  protected void initialize(Graph graph) {
+    graph.include(this);
+    this.graph = graph;
+    inputs().forEach(e -> e.addUsage(this));
+    successors().forEach(e -> e.setPredecessor(this));
+  }
+
+  /**
+   * Deletes this node in a safe way, such that all inputs and
+   * successors remain consistent after deletion is done.
+   *
+   * @throws ViamGraphError if some other node still uses this as input or
+   *                        successor
+   */
+  public void safeDelete() {
+    ensureDeleteIsPossible();
+    clearInputsUsageOfThis();
+    clearSuccessorsUsageOfThis();
+    if (graph != null) {
+      graph.remove(this);
+    }
+  }
+
+  /**
+   * Replaces the old input with the new input in the graph by modifying the input edges of the nodes.
+   * If the replacement is successful, the usage of the old input is transferred to the new input.
+   *
+   * @param oldInput the node to be replaced
+   * @param newInput the node to replace the old input with
+   */
+  public void replaceInput(Node oldInput, Node newInput) {
+    AtomicBoolean replaced = new AtomicBoolean(false);
+    applyOnInputs((self, input) -> {
+      if (input == oldInput) {
+        replaced.set(true);
+        return newInput;
+      } else {
+        return input;
+      }
+    });
+
+    if (replaced.get()) {
+      if (isUninitialized()) {
+        // if this node is not yet initialized, we will add it as usage
+        // to the new node. This is done as asoon as this node gets added to the graph
+        oldInput.removeUsage(this);
+      } else {
+        transferUsageOfThis(oldInput, newInput);
+      }
+    }
+  }
+
+  protected void addUsage(Node usage) {
+    ensure(usage.isActiveIn(graph), "usage must be active: %s", usage);
+    usages.add(usage);
+  }
+
+  protected final void removeUsage(Node usage) {
+    usages.remove(usage);
+  }
+
+  protected final void setPredecessor(@Nullable Node predecessor) {
+    this.predecessor = predecessor;
+  }
+
+  /**
+   * Removes this as usage from the {@code from} node and adds this
+   * as usage to the {@code to} node.
+   *
+   * @param from node that gets {@code this} removed
+   * @param to   node that gets {@code this} added
+   */
+  public final void transferUsageOfThis(Node from, Node to) {
+    ensure(isActive(), "node must be active on usage transfer");
+    ensure(to != null && (this.id.isInit() || to.isActiveIn(graph)),
+        "cannot transfer usage to inactive node %s", to);
+    if (from == to) {
+      return;
+    }
+    from.removeUsage(this);
+    to.addUsage(this);
+  }
+
+  /**
+   * This checks if the inputs are equal to the other
+   * node `o`.
+   *
+   * @return true if all inputs are equal, false otherwise.
+   */
+  protected boolean equalInputs(Node o) {
+    var thisIter = inputs().iterator();
+    var oIter = o.inputs().iterator();
+    while (thisIter.hasNext() && oIter.hasNext()) {
+      var thisInput = thisIter.next();
+      var oInput = oIter.next();
+      if (!thisInput.equals(oInput)) {
+        return false;
+      }
+    }
+    return !thisIter.hasNext() && !oIter.hasNext();
+  }
+
+  protected boolean equalData(Node o) {
+    return dataList().equals(o.dataList());
+  }
+
+  /**
+   * Returns the name of the type of node.
+   *
+   * @return name of node
+   */
+  public String nodeName() {
+    // uses the class name and removes the "Node" suffix if existing
+    var className = this.getClass().getSimpleName();
+    int i = className.lastIndexOf("Node");
+    if (i > 0) {
+      return className.substring(0, i);
+    } else {
+      return className;
+    }
+  }
+
+  @Override
+  public String toString() {
+    var dataList = dataList();
+    var data = !dataList.isEmpty() ?
+        "<%s>".formatted(
+            dataList.stream().map(Object::toString).collect(Collectors.joining(", "))) :
+        "";
+    return "(%s) %s%s".formatted(id, nodeName(), data);
+  }
+
+
+  /**
+   * Removes {@code this} from the usages of all of its inputs.
+   */
+  private void clearInputsUsageOfThis() {
+    ensure(isActive(), "node must be active on input clear");
+    inputs().forEach(e -> e.removeUsage(this));
+  }
+
+  /**
+   * Removes {@code this} as predecessor from all successor nodes.
+   */
+  private void clearSuccessorsUsageOfThis() {
+    ensure(isActive(), "node must be active on successor clear");
+    successors().forEach(e -> e.setPredecessor(null));
   }
 
   /// GRAPH VERIFICATION METHODS
@@ -275,66 +425,56 @@ public abstract class Node {
     }
   }
 
-  /**
-   * The node's id class. It can be {@link Init}, {@link Active} or {@link Deleted}.
-   */
-  public abstract static sealed class Id permits Id.Init, Id.Active, Id.Deleted {
+  protected final void ensureDeleteIsPossible() {
+    ensure(isActive(), "cannot delete: node is not active");
+    ensure(this.usages.isEmpty(), "cannot delete: user of this node exist");
+    ensure(predecessor == null, "cannot delete: predecessor exist");
+  }
 
-    public static Init init() {
-      return Init.id;
+  /**
+   * The node's id class. It can be in Init, Active and Deleted state.
+   */
+  public class Id {
+    private IdState state;
+    private int numericId;
+
+    private Id() {
+      state = IdState.INIT;
+      numericId = -1;
     }
 
     boolean isInit() {
-      return this instanceof Init;
+      return state == IdState.INIT;
     }
 
     boolean isActive() {
-      return this instanceof Active;
+      return state == IdState.ACTIVE;
     }
 
     boolean isDeleted() {
-      return this instanceof Deleted;
+      return state == IdState.DELETED;
     }
 
-
-    /**
-     * The initial id of a node.
-     * To get an instance of this, use {@code Init.id}.
-     */
-    public static final class Init extends Id {
-
-      public static Init id = new Init();
-
-      private Init() {
-      }
+    protected void turnActive(int numericId) {
+      ensure(state == IdState.INIT, "cannot turn active from %s state", state);
+      this.state = IdState.ACTIVE;
+      this.numericId = numericId;
     }
 
-    /**
-     * The id of an active node.
-     * The concrete id is given by the id field.
-     */
-    public static final class Active extends Id {
-      public final int id;
-
-      Active(int id) {
-        this.id = id;
-      }
+    protected void turnDeleted() {
+      ensure(state == IdState.ACTIVE, "cannot turn deleted from %s state", state);
+      this.state = IdState.DELETED;
     }
 
-    /**
-     * The id of a deleted node.
-     * The {@code originalId} specifies the previously used
-     * original id.
-     *
-     * <p>Note that the originalId might be outdated due to
-     * a re-layout of the graph during runtime.
-     */
-    public static final class Deleted extends Id {
-      public final int originalId;
+    protected int numericId() {
+      ensure(state != IdState.INIT, "id in Init state has no numeric id");
+      return numericId;
+    }
 
-      Deleted(int originalId) {
-        this.originalId = originalId;
-      }
+    private enum IdState {
+      INIT,
+      ACTIVE,
+      DELETED
     }
 
   }
