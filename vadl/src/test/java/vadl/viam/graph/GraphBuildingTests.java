@@ -1,11 +1,13 @@
 package vadl.viam.graph;
 
 import static org.hamcrest.MatcherAssert.assertThat;
+import static org.hamcrest.Matchers.containsString;
 import static org.hamcrest.Matchers.equalTo;
 import static org.hamcrest.Matchers.everyItem;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 import static vadl.viam.graph.GraphMatchers.activeIn;
 
 import org.junit.jupiter.api.BeforeEach;
@@ -59,7 +61,7 @@ public class GraphBuildingTests {
     var d1 = new WithDataUnique(1);
     var d2 = new WithDataUnique(2);
     d1 = testGraph.add(d1);
-    d1 = testGraph.add(d1);
+    d2 = testGraph.add(d2);
     var n1 = new WithTwoInputsUnique(d1, d2);
     n1 = testGraph.add(n1);
 
@@ -68,11 +70,11 @@ public class GraphBuildingTests {
         new WithDataUnique(1),
         new WithDataUnique(2)
     );
-    var n2return = testGraph.add(n2);
+    var n2return = testGraph.addWithInputs(n2);
 
 
     assertNotEquals(n2, n2return);
-    assertEquals(n1, n2);
+    assertEquals(n1, n2return);
     assertEquals(n1.inputs().toList(), n2.inputs().toList());
   }
 
@@ -81,7 +83,7 @@ public class GraphBuildingTests {
     var d1 = new WithDataUnique(1);
     var d2 = new WithDataUnique(2);
     d1 = testGraph.add(d1);
-    d1 = testGraph.add(d1);
+    d2 = testGraph.add(d2);
     var n1 = new WithTwoInputsUnique(d1, d2);
     n1 = testGraph.add(n1);
 
@@ -90,12 +92,25 @@ public class GraphBuildingTests {
         new WithDataUnique(1),
         new WithDataUnique(2)
     );
-    var n2return = testGraph.add(n2);
+    var n2return = testGraph.addWithInputs(n2);
 
 
     assertEquals(n2, n2return);
     assertEquals(n1.inputs().toList(), n2.inputs().toList());
   }
 
+  @Test
+  void add_twoTimes_Failure() {
+    var n = testGraph.add(new Plain());
+    var exc = assertThrows(ViamGraphError.class, () -> testGraph.add(n));
+    assertThat(exc.getMessage(), containsString("node is not uninitialized"));
+  }
+
+  @Test
+  void add_twoTimesUnique_Failure() {
+    var n = testGraph.add(new PlainUnique());
+    var exc = assertThrows(ViamGraphError.class, () -> testGraph.add(n));
+    assertThat(exc.getMessage(), containsString("node is not uninitialized"));
+  }
 
 }

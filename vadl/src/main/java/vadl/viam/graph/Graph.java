@@ -211,6 +211,7 @@ public class Graph {
 
   // helper method to add node to graph
   private <T extends Node> T addSimpleInternal(T node) {
+    node.ensure(node.isUninitialized(), "node is not uninitialized");
     // ensure that all input dependencies are already added
     // to the graph
     ensureInputsAdded(node);
@@ -220,6 +221,7 @@ public class Graph {
   }
 
   private <T extends Node> T addUniqueInternal(T node) {
+    node.ensure(node.isUninitialized(), "node is not uninitialized");
     var result = findDuplicate(node);
     if (result != null) {
       return result;

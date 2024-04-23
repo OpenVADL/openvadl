@@ -17,7 +17,7 @@ public class TestNodes {
 
   }
 
-  public static class PlainUnique extends TestNode {
+  public static class PlainUnique extends TestNode implements UniqueNode {
   }
 
   public static class WithInput extends TestNode {
