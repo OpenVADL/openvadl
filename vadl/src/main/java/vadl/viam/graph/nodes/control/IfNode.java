@@ -35,6 +35,11 @@ public class IfNode extends ControlSplitNode {
   @Successor
   Node falseBranch;
 
+  public IfNode(ExpressionNode condition, Node trueBranch, Node falseBranch) {
+    this.condition = condition;
+    this.trueBranch = trueBranch;
+    this.falseBranch = falseBranch;
+  }
 
   @Override
   protected void collectInputs(List<Node> collection) {
