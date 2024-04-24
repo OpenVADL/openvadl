@@ -21,7 +21,7 @@ steps:
       - ./gradlew checkstyleAll
 
   - name: comment checkstyle report
-    image: jozott/drone-gitea-message:v0.2.1
+    image: c2.complang.tuwien.ac.at:5000/drone-gitea-message:1411b3d7e54329473da2717d2ef09a06f13b3bc4
     settings:
       api_key:
         from_secret: ACCESS_TOKEN
