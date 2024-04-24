@@ -89,7 +89,13 @@ val generateCheckstyleReport = tasks.register("generateCheckstyleReport") {
     doLast {
 
         val projectCheckstylePairs = mutableListOf<Pair<Project, Checkstyle>>()
+        var failures = mutableListOf<String>()
         subprojects.forEach { subproject ->
+            subproject.tasks.withType<JavaCompile> {
+                state.failure?.localizedMessage?.let {
+                    failures.add(it)
+                }
+            }
             subproject.tasks.withType<Checkstyle>().forEach { task ->
                 projectCheckstylePairs.add(Pair(subproject, task))
             }
@@ -103,8 +109,21 @@ val generateCheckstyleReport = tasks.register("generateCheckstyleReport") {
             projectReportDir.mkdirs()
         }
 
+        if (failures.isNotEmpty()) {
+            val errorBlocks = failures.map { f ->
+                """
+                ```
+                $f
+                ```
+                """.trimIndent()
+            }.joinToString("\n")
+            bundledReportFile.writeText("### ❌ No Checkstyle Report\n$errorBlocks")
+            return@doLast
+        }
+
         logger.info("Generating Checkstyle markdown reports...")
         FileWriter(bundledReportFile).use { writer ->
+            writer.append("### Checkstyle Report\n")
             // same location as
             projectCheckstylePairs.forEach { (project, task) ->
                 val checkName = "${project.name} (${task.name.removePrefix("checkstyle")})"
