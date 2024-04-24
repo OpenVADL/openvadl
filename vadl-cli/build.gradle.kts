@@ -2,7 +2,7 @@ plugins {
     id("java")
 }
 
-group = "vadl.cli"
+group = "vadl"
 version = "unspecified"
 
 repositories {

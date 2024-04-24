@@ -5,11 +5,11 @@ import javax.xml.parsers.DocumentBuilderFactory
 
 buildscript {
     repositories {
-        mavenCentral()  // or google() if it's there
+        mavenCentral()
         gradlePluginPortal()
     }
     dependencies {
-        classpath("net.ltgt.gradle:gradle-errorprone-plugin:2.0.1")  // Check for the latest version
+        classpath("net.ltgt.gradle:gradle-errorprone-plugin:2.0.1")
     }
 }
 

@@ -2,7 +2,7 @@ plugins {
     id("java")
 }
 
-group = "vadl.javaanotations"
+group = "vadl"
 version = "1.0-SNAPSHOT"
 
 repositories {
