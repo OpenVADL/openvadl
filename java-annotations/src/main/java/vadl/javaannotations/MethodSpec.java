@@ -1,6 +1,7 @@
 package vadl.javaannotations;
 
 import java.util.function.Function;
+import javax.annotation.Nullable;
 import javax.lang.model.element.Element;
 import javax.lang.model.element.ElementKind;
 
@@ -16,11 +17,13 @@ public class MethodSpec {
   /**
    * An optional hint message providing additional information about the method.
    */
+  @Nullable
   String hint;
 
   /**
    * An optional {@link Function} for further validation of the method beyond its name and type.
    */
+  @Nullable
   Function<Element, Boolean> furtherCheck;
 
   public MethodSpec(String methodName, String typeString) {
