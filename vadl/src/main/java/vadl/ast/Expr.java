@@ -1,5 +1,7 @@
 package vadl.ast;
 
+import java.util.Objects;
+
 /**
  * The Expression node of the AST.
  */
@@ -29,6 +31,24 @@ class IntegerLiteral extends Expr {
   @Override
   void prettyPrint(int indent, StringBuilder builder) {
     builder.append(number);
+  }
+
+  @Override
+  public boolean equals(Object o) {
+    if (this == o) {
+      return true;
+    }
+    if (o == null || getClass() != o.getClass()) {
+      return false;
+    }
+
+    IntegerLiteral that = (IntegerLiteral) o;
+    return number == that.number;
+  }
+
+  @Override
+  public int hashCode() {
+    return Long.hashCode(number);
   }
 }
 
@@ -70,9 +90,12 @@ class BinaryExpr extends Expr {
 
   @Override
   void prettyPrint(int indent, StringBuilder builder) {
+    // FIXME: Remove the parenthesis in the future and determine if they are needed
+    builder.append("(");
     left.prettyPrint(indent, builder);
     builder.append(" %s ".formatted(operationAsString(operation)));
     right.prettyPrint(indent, builder);
+    builder.append(")");
   }
 
   enum Operation {
@@ -80,6 +103,28 @@ class BinaryExpr extends Expr {
     SUBTRACT,
     MULTIPLY,
     DIVIDE,
+  }
+
+  @Override
+  public boolean equals(Object o) {
+    if (this == o) {
+      return true;
+    }
+    if (o == null || getClass() != o.getClass()) {
+      return false;
+    }
+
+    BinaryExpr that = (BinaryExpr) o;
+    return Objects.equals(left, that.left) && operation == that.operation &&
+        Objects.equals(right, that.right);
+  }
+
+  @Override
+  public int hashCode() {
+    int result = Objects.hashCode(left);
+    result = 31 * result + Objects.hashCode(operation);
+    result = 31 * result + Objects.hashCode(right);
+    return result;
   }
 }
 

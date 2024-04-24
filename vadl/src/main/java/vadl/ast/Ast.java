@@ -2,12 +2,13 @@ package vadl.ast;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
 
 /** The abstract syntax tree for the vadl language.
  *
  */
 public class Ast {
-  List<Stmt> statements = new ArrayList<>();
+  List<Definition> definitions = new ArrayList<>();
 
   /** Dump the AST into a tree like representation for debugging.
    *
@@ -15,8 +16,7 @@ public class Ast {
    */
   public String dump() {
     StringBuilder builder = new StringBuilder();
-    builder.append("=== AST DUMP ===\n");
-    for (var stmt : statements) {
+    for (var stmt : definitions) {
       stmt.dump(0, builder);
     }
     return builder.toString();
@@ -32,11 +32,28 @@ public class Ast {
    */
   public String prettyPrint() {
     StringBuilder builder = new StringBuilder();
-    builder.append("=== AST PRETTY PRINT ===\n");
-    for (var stmt : statements) {
+    for (var stmt : definitions) {
       stmt.prettyPrint(0, builder);
     }
     return builder.toString();
+  }
+
+  @Override
+  public boolean equals(Object o) {
+    if (this == o) {
+      return true;
+    }
+    if (o == null || getClass() != o.getClass()) {
+      return false;
+    }
+
+    Ast ast = (Ast) o;
+    return Objects.equals(definitions, ast.definitions);
+  }
+
+  @Override
+  public int hashCode() {
+    return Objects.hashCode(definitions);
   }
 }
 
@@ -54,4 +71,48 @@ abstract class Node {
   abstract void dump(int indent, StringBuilder builder);
 
   abstract void prettyPrint(int indent, StringBuilder builder);
+}
+
+class Identifier extends Node {
+  String name;
+  Location loc;
+
+  public Identifier(String name, Location location) {
+    this.loc = location;
+    this.name = name;
+  }
+
+  @Override
+  void dump(int indent, StringBuilder builder) {
+    builder.append(indentString(indent));
+    builder.append("Identifier \"%s\"\n".formatted(name));
+  }
+
+  @Override
+  Location location() {
+    return loc;
+  }
+
+  @Override
+  void prettyPrint(int indent, StringBuilder builder) {
+    builder.append(name);
+  }
+
+  @Override
+  public boolean equals(Object o) {
+    if (this == o) {
+      return true;
+    }
+    if (o == null || getClass() != o.getClass()) {
+      return false;
+    }
+
+    Identifier that = (Identifier) o;
+    return name.equals(that.name);
+  }
+
+  @Override
+  public int hashCode() {
+    return name.hashCode();
+  }
 }

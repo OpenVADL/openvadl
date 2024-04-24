@@ -1,4 +1,6 @@
 $package=vadl.ast
+import java.util.ArrayList;
+
 import vadl.ast.Ast;
 import vadl.ast.Expr;
 import vadl.ast.Stmt;
@@ -13,22 +15,51 @@ COMPILER vadl
     }
 
 
+
 CHARACTERS
     digit = '0' .. '9'.
+    letter = 'a' .. 'z' + 'A' .. 'Z'.
 
 TOKENS
     number = digit {digit}.
+    identifierToken = letter {letter | digit}.
+
+COMMENTS FROM "//" TO '\n'
+COMMENTS FROM "/*" TO "*/" NESTED
+
+IGNORE '\t' + '\r' + '\n'
+
 
 PRODUCTIONS
     vadl =
     {
-        statement<out Stmt stmt>             (. ast.statements.add(stmt); .)
+        definition<out Definition definition>   (. ast.definitions.add(definition); .)
     }.
 
-    statement<out Stmt stmt>
-    = expression<out Expr expr> '\n'         (. stmt = new ExpressionStmt(expr); .)
+    // -- DEFINITIONS --------------------------------------------------------------------------------------------------
+    definition<out Definition definition>
+    = instructionsetDefinition<out InstructionSetDefinition isaDef>   (. definition = isaDef; .)
     .
 
+    instructionsetDefinition<out InstructionSetDefinition isaDef> (. var statements = new ArrayList<Stmt>(); .)
+    = "instruction" (. var startLocation = locationFromToken(t);.)
+       "set" "architecture" identifier<out Identifier identifier>
+       "=" "{"
+      {
+        // FIXME: In the future this will be wrong as not all statements should be accepted here.
+        statement<out Stmt stmt>    (. statements.add(stmt); .)
+      }
+      "}"   (. isaDef = new InstructionSetDefinition(identifier, statements, new Location(startLocation, locationFromToken(t))); .)
+      .
+
+
+    // -- STATEMENTS ---------------------------------------------------------------------------------------------------
+    statement<out Stmt stmt>
+    = "constant" (. var startLocation = locationFromToken(t); .)
+        identifier<out Identifier id> '=' expression<out Expr expr>       (. stmt = new ConstantDefinitionStmt(id, expr, new Location(startLocation, locationFromToken(t))); .)
+    .
+
+    // -- EXPRESSIONS ---------------------------------------------------------------------------------------------------
     expression<out Expr expr>
     = term<out Expr expr1>                   (. expr = expr1; .)
         {
@@ -45,10 +76,12 @@ PRODUCTIONS
         }
     .
 
-    factor<out Expr expr>                   (. expr = null; .) // FIXME: This is quite ugly, is it really needed?
+    factor<out Expr expr>                   (. expr = null; .)
     = number                                (. expr = new IntegerLiteral(Integer.parseInt(t.val), locationFromToken(t)); .)
-    | '(' expression<out Expr expr1> ')'    (. expr = expr1; .) // FIXME: We need a group expression for pretty printing.
+    | '(' expression<out Expr expr1> ')'    (. expr = expr1; .)
     .
 
+    identifier<out Identifier identifier> = identifierToken (. identifier = new Identifier(t.val, locationFromToken(t)); .)
+    .
 
 END vadl.
