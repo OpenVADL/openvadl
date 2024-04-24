@@ -21,12 +21,12 @@ steps:
       - ./gradlew checkstyleAll
 
   - name: comment checkstyle report
-    image: jozott/drone-gitea-message:v0.2.0
+    image: jozott/drone-gitea-message:v0.2.1
     settings:
       api_key:
         from_secret: ACCESS_TOKEN
       base_url: https://ea.complang.tuwien.ac.at
-      message_file: vadl/build/reports/checkstyle/report.md
+      message_file: build/reports/checkstyle/report.md
       delete_identifier: checkstyle-report-delete-id
     when:
       status: [ failure ]
