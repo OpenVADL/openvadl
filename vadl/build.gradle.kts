@@ -33,6 +33,7 @@ dependencies {
 
 checkstyle {
     toolVersion = checkstyleVersion
+    configFile = project.projectDir.resolve("../config/checkstyle/checkstyle.xml")
 }
 
 tasks.test {
@@ -46,7 +47,7 @@ tasks.withType<JavaCompile> {
 
 //    options.compilerArgs.plusAssign("--enable-preview")
 
-    if (!name.lowercase().contains("test")) {
+    if (!name.toLowerCase().contains("test")) {
         options.errorprone {
             check("NullAway", CheckSeverity.ERROR)
             option("NullAway:AnnotatedPackages", "vadl")
@@ -59,12 +60,6 @@ tasks.withType<JavaCompile> {
 tasks {
     compileTestJava {
         options.errorprone.isEnabled.set(false)
-    }
-}
-
-java {
-    toolchain {
-        languageVersion.set(JavaLanguageVersion.of(17))
     }
 }
 
