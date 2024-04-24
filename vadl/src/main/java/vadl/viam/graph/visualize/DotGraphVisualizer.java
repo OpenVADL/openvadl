@@ -12,6 +12,7 @@ public class DotGraphVisualizer implements GraphVisualizer<String, Graph> {
 
   private @Nullable Graph graph;
 
+  @Override
   public DotGraphVisualizer load(Graph graph) {
     this.graph = graph;
     return this;

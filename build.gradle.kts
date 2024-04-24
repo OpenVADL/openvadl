@@ -43,6 +43,7 @@ subprojects {
         add("compileOnly", "com.google.code.findbugs:jsr305:3.0.2")
         add("errorprone", "com.google.errorprone:error_prone_core:$errorProneVersion")
         add("compileOnly", "com.google.errorprone:error_prone_annotations:$errorProneVersion")
+        add("compileOnly", "org.jetbrains:annotations:24.0.1")
     }
 
 
