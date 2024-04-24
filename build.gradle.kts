@@ -181,7 +181,7 @@ fun genCheckstyleMdReport(checkName: String, xmlReport: SingleFileReport): Strin
 
     // save markdown report
     val mdFile = File(reportFile.parent, reportFile.nameWithoutExtension + ".md")
-    val finalString = mdReport.toString();
+    val finalString = mdReport.toString()
     mdFile.writeText(finalString)
     return finalString
 }

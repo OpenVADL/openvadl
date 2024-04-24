@@ -35,7 +35,8 @@ public class MethodSpec {
    * Constructor that takes an additional check lambda.
    * This lambda specifies additional method requirements.
    */
-  public MethodSpec(String methodName, String typeString, Function<Element, Boolean> furtherCheck) {
+  public MethodSpec(String methodName, String typeString,
+                    @Nullable Function<Element, Boolean> furtherCheck) {
     this.methodName = methodName;
     this.typeString = typeString;
     this.furtherCheck = furtherCheck;
