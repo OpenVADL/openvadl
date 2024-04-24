@@ -119,6 +119,7 @@ val generateCheckstyleReport = tasks.register("generateCheckstyleReport") {
         val failures = mutableListOf<String>()
         subprojects.forEach { subproject ->
             subproject.tasks.withType<JavaCompile> {
+                @Suppress("SAFE_CALL_WILL_CHANGE_NULLABILITY", "UNNECESSARY_SAFE_CALL")
                 state.failure?.localizedMessage?.let {
                     failures.add(it)
                 }
