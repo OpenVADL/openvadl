@@ -2,7 +2,7 @@ plugins {
     id("java")
 }
 
-group = "vadl.javaanotations"
+group = "vadl"
 version = "1.0-SNAPSHOT"
 
 repositories {
@@ -12,12 +12,8 @@ repositories {
 dependencies {
 }
 
-java {
-    toolchain {
-        languageVersion.set(JavaLanguageVersion.of(17))
-    }
+tasks.withType<JavaCompile> {
+    sourceCompatibility = "17"
+    targetCompatibility = "17"
 }
 
-tasks.test {
-    useJUnitPlatform()
-}
