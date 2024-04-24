@@ -20,13 +20,6 @@ steps:
     commands:
       - ./gradlew checkstyleAll
 
-  - name: bundle failure report
-    image: c2.complang.tuwien.ac.at:5000/vadl-ci:f7222374638bccc355ba51bfcc2b17e9561204a4
-    commands:
-      - ./gradlew generateBundledCheckstyleReports
-    when:
-      status: [ failure ]
-
   - name: comment checkstyle report
     image: jozott/drone-gitea-message:v0.2.0
     settings:
