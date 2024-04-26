@@ -47,7 +47,7 @@ public class DotGraphVisualizer implements GraphVisualizer<String, Graph> {
       node.successors().forEach(successor -> {
 
         dotBuilder.append("     ")
-            .append(node)
+            .append(node.id)
             .append(" -> ")
             .append(successor.id())
             .append("[color=red];\n");

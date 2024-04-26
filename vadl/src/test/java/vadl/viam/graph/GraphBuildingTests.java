@@ -140,7 +140,7 @@ public class GraphBuildingTests {
         )
     );
     var end = testGraph.addWithInputs(new EndNode(sideEffects));
-    var start = testGraph.add(new StartNode(end));
+    testGraph.add(new StartNode(end));
 
     assertEquals(testGraph.getNodes().count(), 5);
   }
