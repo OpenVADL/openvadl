@@ -4,6 +4,7 @@ import java.util.List;
 import vadl.javaannotations.viam.Input;
 import vadl.viam.graph.GraphVisitor;
 import vadl.viam.graph.Node;
+import vadl.viam.graph.nodes.DependencyNode;
 
 /**
  * Represents a write operation to some location that produces a side
@@ -12,12 +13,12 @@ import vadl.viam.graph.Node;
 public abstract class WriteNode extends SideEffectNode {
 
   @Input
-  protected ExpressionNode location;
+  protected DependencyNode location;
 
   @Input
   protected ExpressionNode value;
 
-  public WriteNode(ExpressionNode location, ExpressionNode value) {
+  public WriteNode(DependencyNode location, ExpressionNode value) {
     this.location = location;
     this.value = value;
   }
