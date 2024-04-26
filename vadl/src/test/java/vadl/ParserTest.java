@@ -22,6 +22,13 @@ public class ParserTest {
   }
 
   @Test
+  void commonConstantDefinition() {
+    var prog = "constant a = 13";
+    var ast = Assertions.assertDoesNotThrow(() -> VadlParser.parse(prog), "Cannot parse input");
+    verifyPrettifiedAst(ast);
+  }
+
+  @Test
   void emptyIsa() {
     var prog = """
         instruction set architecture imaginaryIsa = {

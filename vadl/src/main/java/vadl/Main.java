@@ -16,7 +16,7 @@ public class Main {
    */
   public static void main(String[] args) {
     var program = """
-        
+        constant a = 13
         """;
 
     try {
@@ -25,11 +25,6 @@ public class Main {
       System.out.println(ast.dump());
       System.out.println("== AST PRETTY PRINT ==");
       System.out.println(ast.prettyPrint());
-
-      var p2 = ast.prettyPrint();
-      System.out.printf("'%s'\n", p2);
-      var a2 = VadlParser.parse(p2);
-      System.out.println(a2.equals(ast));
     } catch (VadlException e) {
       var printer = new ErrorPrinter();
       printer.print(e.errors);

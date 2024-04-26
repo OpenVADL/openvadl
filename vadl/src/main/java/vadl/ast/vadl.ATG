@@ -1,5 +1,6 @@
 $package=vadl.ast
 import java.util.ArrayList;
+import java.util.List;
 
 import vadl.ast.Ast;
 import vadl.ast.Expr;
@@ -9,6 +10,7 @@ import vadl.ast.Stmt;
 // Flo was here twich
 COMPILER vadl
     Ast ast = new Ast();
+    SymbolTable symbolTable = new SymbolTable();
 
     Location locationFromToken(Token token) {
         return new Location("unknown.vadl", token.line,  token.line, token.col, token.col + token.val.length());
@@ -37,8 +39,16 @@ PRODUCTIONS
     }.
 
     // -- DEFINITIONS --------------------------------------------------------------------------------------------------
-    definition<out Definition definition>
-    = instructionsetDefinition<out InstructionSetDefinition isaDef>   (. definition = isaDef; .)
+    definition<out Definition definition>                               (. definition = null; .)
+    = instructionsetDefinition<out InstructionSetDefinition isaDef>     (. definition = isaDef; .)
+    | commonDefinition<out CommonDefinition commonDef>                  (. definition = commonDef; .)
+    .
+
+    commonDefinition<out CommonDefinition common>
+    = statement<out Stmt stmt>      (. var statements = new ArrayList<Stmt>(List.of(stmt)); .)
+      {
+        statement<out Stmt stmt2>     (. statements.add(stmt2); .)
+      } (. common = new CommonDefinition(statements); .)
     .
 
     instructionsetDefinition<out InstructionSetDefinition isaDef> (. var statements = new ArrayList<Stmt>(); .)
@@ -56,7 +66,8 @@ PRODUCTIONS
     // -- STATEMENTS ---------------------------------------------------------------------------------------------------
     statement<out Stmt stmt>
     = "constant" (. var startLocation = locationFromToken(t); .)
-        identifier<out Identifier id> '=' expression<out Expr expr>       (. stmt = new ConstantDefinitionStmt(id, expr, new Location(startLocation, locationFromToken(t))); .)
+        identifier<out Identifier id>       (. symbolTable.addDefinition(id); .)
+        '=' expression<out Expr expr>       (. stmt = new ConstantDefinitionStmt(id, expr, new Location(startLocation, locationFromToken(t))); .)
     .
 
     // -- EXPRESSIONS ---------------------------------------------------------------------------------------------------
