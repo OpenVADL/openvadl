@@ -10,8 +10,11 @@ import vadl.javaannotations.viam.DataValue;
 public class ConstantNode extends ExpressionNode {
 
   @DataValue
-  int constant; // TODO: Replace this by appropriate type
+  public final int constant; // TODO: Replace this by appropriate type
 
+  public ConstantNode(int constant1) {
+    this.constant = constant1;
+  }
 
   @Override
   protected void collectData(List<Object> collection) {
