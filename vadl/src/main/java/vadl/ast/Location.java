@@ -48,4 +48,9 @@ public class Location {
       this.endColumn = a.endColumn;
     }
   }
+
+  @Override
+  public String toString() {
+    return "%s:%d:%d".formatted(file, startLine, startColumn);
+  }
 }

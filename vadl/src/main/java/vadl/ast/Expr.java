@@ -52,6 +52,48 @@ class IntegerLiteral extends Expr {
   }
 }
 
+class Variable extends Expr {
+  Identifier identifier;
+
+  public Variable(Identifier identifier) {
+    this.identifier = identifier;
+  }
+
+  @Override
+  Location location() {
+    return identifier.location();
+  }
+
+  @Override
+  void dump(int indent, StringBuilder builder) {
+    builder.append(indentString(indent));
+    builder.append("Variable \"%s\"\n".formatted(identifier.name));
+  }
+
+  @Override
+  void prettyPrint(int indent, StringBuilder builder) {
+    identifier.prettyPrint(indent, builder);
+  }
+
+  @Override
+  public boolean equals(Object o) {
+    if (this == o) {
+      return true;
+    }
+    if (o == null || getClass() != o.getClass()) {
+      return false;
+    }
+
+    Variable that = (Variable) o;
+    return identifier.equals(that.identifier);
+  }
+
+  @Override
+  public int hashCode() {
+    return Objects.hash(identifier);
+  }
+}
+
 /**
  * Any kind of binary expression (often written with the infix notation in vadl).
  */

@@ -56,10 +56,12 @@ public class SymbolTable {
   public void verifyAllUsages() {
     for (var unresovled : unresolvedUsages) {
       if (!definitions.containsKey(unresovled.name)) {
+        // FIXME: We could do some fancy stuff here searching the symbol table for similarly named
+        // variables and suggesting them.
         errors.add(new VadlError(
             "Cannot find variable '%s'".formatted(unresovled.name),
             unresovled.location(),
-            null,
+            "No variable with such a name exists.",
             null
         ));
       }

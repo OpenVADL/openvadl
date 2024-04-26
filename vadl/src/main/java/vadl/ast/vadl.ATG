@@ -7,7 +7,6 @@ import vadl.ast.Expr;
 import vadl.ast.Stmt;
 
 
-// Flo was here twich
 COMPILER vadl
     Ast ast = new Ast();
     SymbolTable symbolTable = new SymbolTable();
@@ -72,23 +71,28 @@ PRODUCTIONS
 
     // -- EXPRESSIONS ---------------------------------------------------------------------------------------------------
     expression<out Expr expr>
-    = term<out Expr expr1>                   (. expr = expr1; .)
-        {
-            '+' term<out Expr expr2>         (. expr = new BinaryExpr(expr, BinaryExpr.Operation.ADD, expr2); .)
-        |   '-' term<out Expr expr2>         (. expr = new BinaryExpr(expr, BinaryExpr.Operation.SUBTRACT, expr2); .)
-        }
+    = term<out Expr expr1>  (. expr = expr1; .)
     .
 
     term<out Expr expr>
-    = factor<out Expr expr1>                 (. expr = expr1; .)
+    = factor<out Expr expr1>                   (. expr = expr1; .)
         {
-            '*' factor<out Expr expr2>       (. expr = new BinaryExpr(expr, BinaryExpr.Operation.MULTIPLY, expr2); .)
-        |   '/' factor<out Expr expr2>       (. expr = new BinaryExpr(expr, BinaryExpr.Operation.DIVIDE, expr2); .)
+            '+' factor<out Expr expr2>         (. expr = new BinaryExpr(expr, BinaryExpr.Operation.ADD, expr2); .)
+        |   '-' factor<out Expr expr2>         (. expr = new BinaryExpr(expr, BinaryExpr.Operation.SUBTRACT, expr2); .)
         }
     .
 
-    factor<out Expr expr>                   (. expr = null; .)
+    factor<out Expr expr>
+    = primary<out Expr expr1>                 (. expr = expr1; .)
+        {
+            '*' primary<out Expr expr2>       (. expr = new BinaryExpr(expr, BinaryExpr.Operation.MULTIPLY, expr2); .)
+        |   '/' primary<out Expr expr2>       (. expr = new BinaryExpr(expr, BinaryExpr.Operation.DIVIDE, expr2); .)
+        }
+    .
+
+    primary<out Expr expr>                  (. expr = null; .)
     = number                                (. expr = new IntegerLiteral(Integer.parseInt(t.val), locationFromToken(t)); .)
+    | identifier<out Identifier id>         (. expr = new Variable(id); symbolTable.addUsage(id); .)
     | '(' expression<out Expr expr1> ')'    (. expr = expr1; .)
     .
 

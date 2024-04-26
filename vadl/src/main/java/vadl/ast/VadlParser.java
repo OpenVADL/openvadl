@@ -3,7 +3,9 @@ package vadl.ast;
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.PrintStream;
+import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.List;
 import vadl.error.VadlError;
 import vadl.error.VadlException;
 
@@ -31,20 +33,28 @@ public class VadlParser {
     parser.errors.errMsgFormat = "{0};{1};{2}"; // FIXME: there could be problems with the delimiter
 
     parser.Parse();
-    //var ast = parser.vadl();
+
+    List<VadlError> errors = new ArrayList<>();
     if (parser.errors.count > 0) {
       var lines = outStream.toString().split(System.lineSeparator());
-      var errors = Arrays.stream(lines).map(line -> {
+      for(var line : lines) {
         var fields = line.split(";");
         var lineNum = Integer.parseInt(fields[0]);
         var colNum = Integer.parseInt(fields[0]);
-        return new VadlError(
+        errors.add( new VadlError(
             fields[2],
-            new Location("unknown.vadl", lineNum, lineNum, colNum, colNum), null, null);
-      }).toList();
-      //System.out.println("Had " + parser.errors.count + " errors.");
-      //System.out.println(outStream.toString());
-      //throw new ParserException();
+            new Location("unknown.vadl", lineNum, lineNum, colNum, colNum), null, null)
+        );
+      };
+    }
+
+    try {
+      parser.symbolTable.verifyAllUsages();
+    } catch (VadlException e) {
+      errors.addAll(e.errors);
+    }
+
+    if (!errors.isEmpty()) {
       throw new VadlException(errors);
     }
 

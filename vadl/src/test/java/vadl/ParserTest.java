@@ -5,6 +5,10 @@ import org.junit.jupiter.api.Test;
 import vadl.ast.Ast;
 import vadl.ast.VadlParser;
 
+/**
+ * A class to test the parser. Since the parser does  also name resolution and macro expansion this
+ * class only focuses on correct parsing and the two other tasks are tested in different classes.
+ */
 public class ParserTest {
 
   void verifyPrettifiedAst(Ast ast) {
