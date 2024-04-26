@@ -18,6 +18,12 @@ import vadl.viam.graph.helper.TestNodes.PlainUnique;
 import vadl.viam.graph.helper.TestNodes.WithDataUnique;
 import vadl.viam.graph.helper.TestNodes.WithTwoInputs;
 import vadl.viam.graph.helper.TestNodes.WithTwoInputsUnique;
+import vadl.viam.graph.nodes.control.EndNode;
+import vadl.viam.graph.nodes.control.StartNode;
+import vadl.viam.graph.nodes.dependency.ConstantNode;
+import vadl.viam.graph.nodes.dependency.InstrParamNode;
+import vadl.viam.graph.nodes.dependency.SideEffectNode;
+import vadl.viam.graph.nodes.dependency.WriteRegNode;
 
 
 /**
@@ -120,5 +126,24 @@ public class GraphBuildingTests {
     var exc = assertThrows(ViamGraphError.class, () -> testGraph.add(n));
     assertThat(exc.getMessage(), containsString("node is not uninitialized"));
   }
+
+  @Test
+  void add_withNodeListInput_Failure() {
+    var sideEffects = new NodeList<SideEffectNode>(
+        new WriteRegNode(
+            new InstrParamNode("testReg"),
+            new ConstantNode(2)
+        ),
+        new WriteRegNode(
+            new InstrParamNode("testReg"),
+            new ConstantNode(2)
+        )
+    );
+    var end = testGraph.addWithInputs(new EndNode(sideEffects));
+    var start = testGraph.add(new StartNode(end));
+
+    assertEquals(testGraph.getNodes().count(), 5);
+  }
+
 
 }

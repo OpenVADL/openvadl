@@ -34,8 +34,8 @@ public abstract class WriteNode extends SideEffectNode {
 
   @Override
   public void applyOnInputsUnsafe(GraphVisitor.Applier<Node> visitor) {
-    super.applyOnInputs(visitor);
-    location = visitor.apply(this, location, ExpressionNode.class);
+    super.applyOnInputsUnsafe(visitor);
+    location = visitor.apply(this, location, DependencyNode.class);
     value = visitor.apply(this, value, ExpressionNode.class);
   }
 }

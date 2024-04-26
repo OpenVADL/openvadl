@@ -27,7 +27,7 @@ public abstract class ReadNode extends ExpressionNode {
 
   @Override
   public void applyOnInputsUnsafe(GraphVisitor.Applier<Node> visitor) {
-    super.applyOnInputs(visitor);
+    super.applyOnInputsUnsafe(visitor);
     location = visitor.apply(this, location, ExpressionNode.class);
   }
 }
