@@ -3,44 +3,32 @@ package vadl.javaannotations.viam;
 import com.google.auto.service.AutoService;
 import com.google.errorprone.BugPattern;
 import com.google.errorprone.bugpatterns.BugChecker;
-import com.google.errorprone.util.ASTHelpers;
 import com.sun.source.tree.VariableTree;
-import java.util.ArrayList;
 import java.util.List;
 import vadl.javaannotations.AbstractAnnotationChecker;
 
 @AutoService(BugChecker.class)
 @BugPattern(
-    summary = "Do implement the collectData method on Node",
+    name = "CollectData",
+    summary = "Classes with @DataValue annotated fields must override the collectCollect method",
     severity = BugPattern.SeverityLevel.ERROR
 )
-public class CollectDataChecker extends AbstractAnnotationChecker {
+public class CollectDataChecker extends AbstractAnnotationChecker implements DefaultCollectMixin {
 
-  private static String GRAPH_PKG = "vadl.viam.";
-  private static String NODELIST = GRAPH_PKG + "NodeList";
+  private static final String PARAM_TYPE = "java.util.List<java.lang.Object>";
 
   public CollectDataChecker() {
     super(
         DataValue.class,
         "collectData",
         "void",
-        List.of("java.util.List<java.lang.Object>")
+        List.of(PARAM_TYPE)
     );
   }
 
   @Override
   protected List<String> expectedMethodStatements(List<String> paramNames,
                                                   List<VariableTree> fields) {
-    var stmts = new ArrayList<String>();
-
-    stmts.add("super.%s(%s);".formatted(methodName, paramNames.get(0)));
-    for (var field : fields) {
-      var type = ASTHelpers.getType(field);
-
-      assert type != null;
-      var addName = type.toString().startsWith(NODELIST) ? "addAll" : "add";
-      stmts.add("%s.%s(%s);".formatted(paramNames.get(0), addName, field.getName()));
-    }
-    return stmts;
+    return defaultCollectStatements(methodName, paramNames, fields);
   }
 }
