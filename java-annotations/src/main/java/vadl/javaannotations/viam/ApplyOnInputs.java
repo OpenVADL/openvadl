@@ -11,20 +11,24 @@ import vadl.javaannotations.AbstractAnnotationChecker;
 
 @AutoService(BugChecker.class)
 @BugPattern(
-    summary = "Do implement the collectData method on Node",
+    summary = "Classes with @Input annotated fields must override collectInputs method",
     severity = BugPattern.SeverityLevel.ERROR
 )
-public class CollectDataChecker extends AbstractAnnotationChecker {
+public class ApplyOnInputs extends AbstractAnnotationChecker {
 
   private static String GRAPH_PKG = "vadl.viam.";
   private static String NODELIST = GRAPH_PKG + "NodeList";
+  private static String NODE = GRAPH_PKG + "Node";
+  private static String GRAPH_APPLIER = GRAPH_PKG + "GraphVisitor.Applier";
 
-  public CollectDataChecker() {
+  private static String PARAM_TYPE = GRAPH_APPLIER + "<" + NODE + ">";
+
+  public ApplyOnInputs() {
     super(
-        DataValue.class,
-        "collectData",
+        Input.class,
+        "applyOnInputsUnsafe",
         "void",
-        List.of("java.util.List<java.lang.Object>")
+        List.of(PARAM_TYPE)
     );
   }
 
@@ -35,11 +39,18 @@ public class CollectDataChecker extends AbstractAnnotationChecker {
 
     stmts.add("super.%s(%s);".formatted(methodName, paramNames.get(0)));
     for (var field : fields) {
-      var type = ASTHelpers.getType(field);
+      var fieldType = ASTHelpers.getType(field);
+      var fieldName = field.getName();
 
-      assert type != null;
-      var addName = type.toString().startsWith(NODELIST) ? "addAll" : "add";
-      stmts.add("%s.%s(%s);".formatted(paramNames.get(0), addName, field.getName()));
+      assert fieldType != null;
+      var typeOverload = "";
+      if (!fieldType.toString().equals(NODE)) {
+        typeOverload = ", " + fieldType + ".class";
+      }
+
+      stmts.add("%s = %s.apply(this, %s%s);".formatted(
+          fieldName, paramNames.get(0),
+          fieldName, typeOverload));
     }
     return stmts;
   }

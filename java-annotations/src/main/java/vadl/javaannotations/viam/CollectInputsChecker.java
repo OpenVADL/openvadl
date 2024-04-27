@@ -11,20 +11,23 @@ import vadl.javaannotations.AbstractAnnotationChecker;
 
 @AutoService(BugChecker.class)
 @BugPattern(
-    summary = "Do implement the collectData method on Node",
+    summary = "Classes with @Input annotated fields must override collectInputs method",
     severity = BugPattern.SeverityLevel.ERROR
 )
-public class CollectDataChecker extends AbstractAnnotationChecker {
+public class CollectInputsChecker extends AbstractAnnotationChecker {
 
   private static String GRAPH_PKG = "vadl.viam.";
   private static String NODELIST = GRAPH_PKG + "NodeList";
+  private static String NODE = GRAPH_PKG + "Node";
 
-  public CollectDataChecker() {
+  private static String PARAM_TYPE = NODELIST + "<" + NODE + ">";
+
+  public CollectInputsChecker() {
     super(
-        DataValue.class,
-        "collectData",
+        Input.class,
+        "collectInputs",
         "void",
-        List.of("java.util.List<java.lang.Object>")
+        List.of(PARAM_TYPE)
     );
   }
 

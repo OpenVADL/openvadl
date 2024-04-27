@@ -12,7 +12,6 @@ import com.sun.source.tree.Tree;
 import com.sun.source.tree.VariableTree;
 import java.util.ArrayList;
 import java.util.List;
-import vadl.javaannotations.viam.DataValue;
 
 
 @SuppressWarnings("TreeToString")
@@ -40,7 +39,7 @@ public abstract class AbstractAnnotationChecker extends BugChecker implements
     var annotatedFields = classTree.getMembers().stream()
         .filter(VariableTree.class::isInstance)
         .map(VariableTree.class::cast)
-        .filter(t -> hasAnnotation(DataValue.class.getCanonicalName()).matches(t, state))
+        .filter(t -> hasAnnotation(annotation.getCanonicalName()).matches(t, state))
         .toList();
 
     if (annotatedFields.isEmpty()) {
