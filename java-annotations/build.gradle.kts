@@ -10,6 +10,9 @@ repositories {
 }
 
 dependencies {
+    errorprone("com.google.auto.service:auto-service-annotations:1.1.1")
+    annotationProcessor("com.google.auto.service:auto-service:1.1.1")
+    compileOnly("com.google.errorprone:error_prone_check_api:2.26.1")
 }
 
 tasks.withType<JavaCompile> {
