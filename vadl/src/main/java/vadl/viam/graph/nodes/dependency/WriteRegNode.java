@@ -1,7 +1,5 @@
 package vadl.viam.graph.nodes.dependency;
 
-import vadl.viam.graph.nodes.DependencyNode;
-
 /**
  * Represents a write to register.
  *
@@ -13,7 +11,7 @@ import vadl.viam.graph.nodes.DependencyNode;
  * </p>
  */
 public class WriteRegNode extends WriteNode {
-  public WriteRegNode(DependencyNode location, ExpressionNode value) {
+  public WriteRegNode(ExpressionNode location, ExpressionNode value) {
     super(location, value);
   }
 }

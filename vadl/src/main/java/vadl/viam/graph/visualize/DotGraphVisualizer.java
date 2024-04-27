@@ -8,6 +8,7 @@ import vadl.viam.graph.Node;
 /**
  * Visualizes a given Graph using the Dot graph language.
  */
+// TODO: Refactor this class
 public class DotGraphVisualizer implements GraphVisualizer<String, Graph> {
 
   private @Nullable Graph graph;
