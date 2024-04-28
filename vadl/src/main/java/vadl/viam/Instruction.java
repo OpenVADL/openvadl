@@ -2,6 +2,9 @@ package vadl.viam;
 
 import vadl.viam.graph.Graph;
 
+/**
+ * The VADL ISA Instruction definition.
+ */
 public class Instruction {
 
   private Format format;

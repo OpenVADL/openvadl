@@ -7,10 +7,10 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import vadl.viam.graph.helper.TestGraph;
-import vadl.viam.graph.helper.TestNodes.Plain;
-import vadl.viam.graph.helper.TestNodes.WithInput;
-import vadl.viam.graph.helper.TestNodes.WithSuccessor;
+import vadl.viam.helper.TestGraph;
+import vadl.viam.helper.TestNodes.Plain;
+import vadl.viam.helper.TestNodes.WithInput;
+import vadl.viam.helper.TestNodes.WithSuccessor;
 
 /**
  * The NodeVerificationTests class is a test class that verifies the behavior of the Node class.

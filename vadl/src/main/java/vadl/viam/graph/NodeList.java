@@ -9,7 +9,7 @@ import org.jetbrains.annotations.NotNull;
  * A list of nodes in the VIAM graph.
  */
 public class NodeList<T extends Node> extends ArrayList<T> {
-  
+
   public NodeList() {
   }
 
