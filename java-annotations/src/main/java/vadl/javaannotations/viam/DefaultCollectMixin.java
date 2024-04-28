@@ -5,6 +5,11 @@ import com.sun.source.tree.VariableTree;
 import java.util.ArrayList;
 import java.util.List;
 
+/**
+ * The DefaultCollectMixin interface provides a default implementation of the
+ * expectedMethodStatements method for collecting checkers based on the given
+ * method name, parameter names, and field declarations.
+ */
 interface DefaultCollectMixin {
   default List<String> defaultCollectStatements(String methodName, List<String> paramNames,
                                                 List<VariableTree> fields) {

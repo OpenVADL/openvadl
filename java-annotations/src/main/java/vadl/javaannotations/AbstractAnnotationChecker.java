@@ -14,6 +14,14 @@ import java.util.ArrayList;
 import java.util.List;
 
 
+/**
+ * This abstract class represents a bug checker that checks for specific annotations and their
+ * corresponding method overrides in a class. It extends the BugChecker class and implements the
+ * BugChecker.ClassTreeMatcher interface.
+ *
+ * <p>Concrete implementations are e.g. {@link vadl.javaannotations.viam.CollectInputsChecker},
+ * {@link vadl.javaannotations.viam.ApplyOnInputsChecker}...</p>
+ */
 @SuppressWarnings("TreeToString")
 public abstract class AbstractAnnotationChecker extends BugChecker implements
     BugChecker.ClassTreeMatcher {
@@ -23,6 +31,14 @@ public abstract class AbstractAnnotationChecker extends BugChecker implements
   protected final List<String> parameterTypes;
   protected final Class<?> annotation;
 
+  /**
+   * Constructor of the bug checker.
+   *
+   * @param annotation     to search for
+   * @param methodName     that must be overridden
+   * @param returnType     of the overridden method
+   * @param parameterTypes parameter types of the overridden method
+   */
   public AbstractAnnotationChecker(Class<?> annotation, String methodName, String returnType,
                                    List<String> parameterTypes) {
     this.methodName = methodName;
@@ -71,7 +87,8 @@ public abstract class AbstractAnnotationChecker extends BugChecker implements
     if (expectedStatements.size() != actualStatements.size()) {
       return buildDescription(method)
           .setMessage(
-              "Invalid number of statements. Expected %s statements.\n\nUse this implementation:\n%s\n"
+              ("Invalid number of statements. Expected %s statements."
+                  + "\n\nUse this implementation:\n%s\n")
                   .formatted(
                       expectedStatements.size(),
                       demoImplementation(paramNames, annotatedFields)

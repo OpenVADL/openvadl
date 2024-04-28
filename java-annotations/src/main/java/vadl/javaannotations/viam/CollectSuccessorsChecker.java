@@ -7,6 +7,11 @@ import com.sun.source.tree.VariableTree;
 import java.util.List;
 import vadl.javaannotations.AbstractAnnotationChecker;
 
+/**
+ * The CollectSuccessorsChecker class is a bug checker that checks for classes with @Successor
+ * annotated fields that must override the collectSuccessors method.
+ * It will fail if the method implementation is not as expected.
+ */
 @AutoService(BugChecker.class)
 @BugPattern(
     name = "CollectSuccessors",
@@ -17,8 +22,11 @@ import vadl.javaannotations.AbstractAnnotationChecker;
 public class CollectSuccessorsChecker extends AbstractAnnotationChecker
     implements DefaultCollectMixin {
 
-  private final static String PARAM_TYPE = "java.util.List<" + CheckerUtils.NODE + ">";
+  private static final String PARAM_TYPE = "java.util.List<" + CheckerUtils.NODE + ">";
 
+  /**
+   * Constructs the bug checker.
+   */
   public CollectSuccessorsChecker() {
     super(
         Successor.class,

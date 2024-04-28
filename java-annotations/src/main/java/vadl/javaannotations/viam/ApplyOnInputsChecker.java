@@ -9,12 +9,18 @@ import java.util.ArrayList;
 import java.util.List;
 import vadl.javaannotations.AbstractAnnotationChecker;
 
+/**
+ * The ApplyOnInputsChecker class is a bug checker that checks for classes with fields
+ * annotated with @Input and ensures that they override the applyOnInputsUnsafe method.
+ * It will fail if its implementation is not as expected.
+ */
 @AutoService(BugChecker.class)
 @BugPattern(
     name = "ApplyOnInputs",
     summary = "Classes with @Input annotated fields must override applyOnInputsUnsafe method",
     severity = BugPattern.SeverityLevel.ERROR
 )
+@SuppressWarnings("BugPatternNaming")
 public class ApplyOnInputsChecker extends AbstractAnnotationChecker {
 
   private static String GRAPH_PKG = "vadl.viam.graph.";
@@ -24,6 +30,11 @@ public class ApplyOnInputsChecker extends AbstractAnnotationChecker {
 
   private static String PARAM_TYPE = GRAPH_APPLIER + "<" + NODE + ">";
 
+  /**
+   * The ApplyOnInputsChecker class is a bug checker that checks for classes with fields
+   * annotated with @Input and ensures that they override the applyOnInputsUnsafe method.
+   * It will fail if its implementation is not as expected.
+   */
   public ApplyOnInputsChecker() {
     super(
         Input.class,
@@ -33,6 +44,14 @@ public class ApplyOnInputsChecker extends AbstractAnnotationChecker {
     );
   }
 
+  /**
+   * This method generates a list of expected method statements based on the given parameters
+   * and fields.
+   *
+   * @param paramNames The names of the parameters for the method.
+   * @param fields     The list of VariableTree objects representing the fields used in the method.
+   * @return A List of String objects representing the expected method statements.
+   */
   @Override
   protected List<String> expectedMethodStatements(List<String> paramNames,
                                                   List<VariableTree> fields) {
@@ -67,7 +86,8 @@ public class ApplyOnInputsChecker extends AbstractAnnotationChecker {
       if (fieldType.toString().startsWith(NODELIST)) {
         // if the field is a nodelist, we implement it as stream
         stmt =
-            "%s = %s.stream().map((e) -> %s.apply(this, e%s)).collect(Collectors.toCollection(NodeList::new));"
+            ("%s = %s.stream().map((e) -> %s.apply(this, e%s))"
+                + ".collect(Collectors.toCollection(NodeList::new));")
                 .formatted(fieldName, fieldName, paramNames.get(0), typeOverload);
       } else {
         // otherwise we use the default apply method
