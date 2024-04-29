@@ -25,7 +25,11 @@ subprojects {
     plugins.apply("net.ltgt.errorprone")
     plugins.apply("checkstyle")
 
-    val errorProneVersion = "2.26.1"
+    val errorProneVersion by extra("2.26.1")
+
+    extra {
+        errorProneVersion
+    }
 
     checkstyle {
         toolVersion = "10.15.0"
