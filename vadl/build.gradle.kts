@@ -28,6 +28,13 @@ tasks.withType<JavaCompile> {
     dependsOn("generateCocoParser")
 }
 
+tasks.withType<Checkstyle> {
+    doFirst {
+        exclude("**/Scanner.java")
+        exclude("**/Parser.java")
+    }
+}
+
 tasks.test {
     useJUnitPlatform()
     jvmArgs("--enable-preview")

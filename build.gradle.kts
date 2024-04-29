@@ -32,7 +32,8 @@ subprojects {
 
     checkstyle {
         toolVersion = "10.15.0"
-        configFile = project.projectDir.resolve("../config/checkstyle/checkstyle.xml")
+        // configFile = project.projectDir.resolve("../config/checkstyle/checkstyle.xml")
+        configDirectory.set(project.projectDir.resolve("../config/checkstyle/"))
         sourceSets = listOf()
         maxWarnings = 0
     }
