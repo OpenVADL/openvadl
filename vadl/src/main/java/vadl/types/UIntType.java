@@ -14,9 +14,4 @@ public class UIntType extends Type {
   public String name() {
     return "UInt<%s>".formatted(bitWidth);
   }
-
-  @Override
-  public Type concreteType() {
-    return this;
-  }
 }

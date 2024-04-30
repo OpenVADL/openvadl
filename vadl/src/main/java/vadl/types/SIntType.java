@@ -14,9 +14,4 @@ public class SIntType extends Type {
   public String name() {
     return "SInt<%s>".formatted(bitWidth);
   }
-
-  @Override
-  public Type concreteType() {
-    return this;
-  }
 }

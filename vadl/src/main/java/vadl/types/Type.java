@@ -12,11 +12,4 @@ public abstract class Type {
    * @return the name of the type
    */
   public abstract String name();
-
-  /**
-   * Since the typesystem allows aliases it is sometimes handy to get the acutall underlying type.
-   *
-   * @return the type, disregarding all aliases.
-   */
-  public abstract Type concreteType();
 }

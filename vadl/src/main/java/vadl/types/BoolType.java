@@ -8,9 +8,4 @@ public class BoolType extends Type {
   public String name() {
     return "Bool";
   }
-
-  @Override
-  public Type concreteType() {
-    return this;
-  }
 }
