@@ -16,6 +16,8 @@ public record SourceLocation(
     SourcePosition end
 ) {
 
+  public static final URI INVALID_MEMORY = URI.create("memory://unknown");
+
   public SourceLocation(URI uri, SourcePosition begin) {
     this(uri, begin, begin);
   }
@@ -26,6 +28,14 @@ public record SourceLocation(
 
   public SourceLocation(URI uri, int line) {
     this(uri, line, line);
+  }
+
+  public SourceLocation() {
+    this(INVALID_MEMORY, 0);
+  }
+
+  public boolean isValid() {
+    return !this.uri.equals(INVALID_MEMORY);
   }
 
   public String toConciseString() {
@@ -39,6 +49,10 @@ public record SourceLocation(
   }
 
   public @Nullable String toSourceString() {
+    if (!this.isValid()) {
+      return "Invalid source location: " + this;
+    }
+
     try (Stream<String> lines = Files.lines(Paths.get(uri))) {
       if (begin.line <= 0) {
         return null;

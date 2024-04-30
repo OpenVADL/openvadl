@@ -8,6 +8,7 @@ import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 import javax.annotation.Nullable;
+import vadl.utils.SourceLocation;
 
 /**
  * The base node class of the VIAM {@link Graph}.
@@ -25,6 +26,8 @@ public abstract class Node {
   private ArrayList<Node> usages;
   private @Nullable Node predecessor;
 
+  private SourceLocation sourceLocation;
+
   /**
    * Construction a new node with the initial id,
    * no usages and no predecessor.
@@ -33,6 +36,7 @@ public abstract class Node {
     this.id = new Id();
     this.usages = new ArrayList<>();
     this.predecessor = null;
+    this.sourceLocation = new SourceLocation();
   }
 
   public Id id() {
@@ -55,6 +59,13 @@ public abstract class Node {
     return this.id.isInit();
   }
 
+  public SourceLocation sourceLocation() {
+    return sourceLocation;
+  }
+
+  public void setSourceLocation(SourceLocation sourceLocation) {
+    this.sourceLocation = sourceLocation;
+  }
 
   /**
    * A stream of all inputs of this node.
