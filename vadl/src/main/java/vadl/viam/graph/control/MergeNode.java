@@ -20,6 +20,10 @@ public class MergeNode extends AbstractBeginNode {
     this.branchEnds = branchEnds;
   }
 
+  public MergeNode(NodeList<EndNode> branchEnds) {
+    this.branchEnds = branchEnds;
+  }
+
   @Override
   protected void collectInputs(List<Node> collection) {
     super.collectInputs(collection);

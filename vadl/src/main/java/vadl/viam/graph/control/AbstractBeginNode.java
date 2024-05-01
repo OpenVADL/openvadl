@@ -7,7 +7,11 @@ import vadl.viam.graph.Node;
  * This may be a subflow or the most outer control flow.
  */
 public class AbstractBeginNode extends DirectionalNode {
+
   public AbstractBeginNode(Node next) {
     setNext(next);
+  }
+
+  public AbstractBeginNode() {
   }
 }

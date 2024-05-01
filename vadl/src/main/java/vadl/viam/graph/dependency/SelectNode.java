@@ -6,8 +6,8 @@ import vadl.viam.graph.GraphVisitor;
 import vadl.viam.graph.Node;
 
 /**
- * The SelectNode class represents a node in a graph that applies a condition to select
- * between two cases. It extends the ExpressionNode class.
+ * Represents the If-Expression in a VADL specification.
+ * All its cases produce a value and are side effect free.
  */
 public class SelectNode extends ExpressionNode {
 
