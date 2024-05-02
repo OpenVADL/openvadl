@@ -9,6 +9,7 @@ import java.util.stream.Collectors;
 import java.util.stream.Stream;
 import javax.annotation.Nullable;
 import vadl.utils.SourceLocation;
+import vadl.viam.graph.dependency.DependencyNode;
 
 /**
  * The base node class of the VIAM {@link Graph}.
@@ -65,6 +66,20 @@ public abstract class Node {
 
   public void setSourceLocation(SourceLocation sourceLocation) {
     this.sourceLocation = sourceLocation;
+  }
+
+  /**
+   * Checks if the node is a leaf node, such that it a {@link DependencyNode} and
+   * has no further inputs.
+   *
+   * @return true if the node is a leaf node, false otherwise
+   */
+  public final boolean isLeaf() {
+    if (!(this instanceof DependencyNode)) {
+      return false;
+    }
+
+    return inputList().isEmpty();
   }
 
   /**
