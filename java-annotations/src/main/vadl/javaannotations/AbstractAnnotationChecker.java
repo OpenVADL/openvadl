@@ -1,10 +1,9 @@
 package vadl.javaannotations;
 
-import static com.google.errorprone.matchers.Matchers.hasAnnotation;
-
 import com.google.errorprone.VisitorState;
 import com.google.errorprone.bugpatterns.BugChecker;
 import com.google.errorprone.matchers.Description;
+import com.google.errorprone.matchers.Matchers;
 import com.google.errorprone.util.ASTHelpers;
 import com.sun.source.tree.ClassTree;
 import com.sun.source.tree.MethodTree;
@@ -55,7 +54,7 @@ public abstract class AbstractAnnotationChecker extends BugChecker implements
     var annotatedFields = classTree.getMembers().stream()
         .filter(VariableTree.class::isInstance)
         .map(VariableTree.class::cast)
-        .filter(t -> hasAnnotation(annotation.getCanonicalName()).matches(t, state))
+        .filter(t -> Matchers.hasAnnotation(annotation.getCanonicalName()).matches(t, state))
         .toList();
 
     if (annotatedFields.isEmpty()) {
