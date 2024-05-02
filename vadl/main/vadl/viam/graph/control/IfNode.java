@@ -45,6 +45,11 @@ public class IfNode extends ControlSplitNode {
   }
 
   @Override
+  public String toString() {
+    return "%s(t: %s, f: %s)".formatted(super.toString(), trueBranch.id, falseBranch.id);
+  }
+
+  @Override
   protected void collectInputs(List<Node> collection) {
     super.collectInputs(collection);
     collection.add(condition);
