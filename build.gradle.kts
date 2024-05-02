@@ -49,14 +49,14 @@ subprojects {
     sourceSets {
         main {
             java {
-                srcDir("src/main")
-                exclude("src/main/resources/**")
+                srcDir("main")
+                exclude("main/resources/**")
             }
         }
         test {
             java {
-                srcDir("src/test")
-                exclude("src/test/resources/**")
+                srcDir("test")
+                exclude("test/resources/**")
             }
         }
     }
