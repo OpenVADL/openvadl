@@ -2,6 +2,7 @@ package vadl.viam.graph.dependency;
 
 import java.util.List;
 import vadl.javaannotations.viam.DataValue;
+import vadl.types.DummyType;
 
 public class InstrParamNode extends ParamNode {
 
@@ -9,6 +10,7 @@ public class InstrParamNode extends ParamNode {
   String reg; // TODO: refactor to real datastructure
 
   public InstrParamNode(String reg) {
+    super(DummyType.INSTANCE);
     this.reg = reg;
   }
 

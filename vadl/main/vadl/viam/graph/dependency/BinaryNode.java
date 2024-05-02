@@ -2,6 +2,7 @@ package vadl.viam.graph.dependency;
 
 import java.util.List;
 import vadl.javaannotations.viam.Input;
+import vadl.types.Type;
 import vadl.viam.graph.GraphVisitor;
 import vadl.viam.graph.Node;
 
@@ -12,7 +13,8 @@ public abstract class BinaryNode extends ExpressionNode {
   @Input
   protected ExpressionNode y;
 
-  public BinaryNode(ExpressionNode x, ExpressionNode y) {
+  public BinaryNode(ExpressionNode x, ExpressionNode y, Type type) {
+    super(type);
     this.x = x;
     this.y = y;
   }

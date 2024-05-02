@@ -2,6 +2,7 @@ package vadl.viam.graph.dependency;
 
 import java.util.List;
 import vadl.javaannotations.viam.DataValue;
+import vadl.types.DummyType;
 
 /**
  * The ReadRegNode class is a subclass of ReadNode that represents
@@ -13,7 +14,7 @@ public class ReadRegNode extends ReadNode {
   protected String register; // TODO: Replace by proper datastructure
 
   public ReadRegNode(String register, ExpressionNode location) {
-    super(location);
+    super(location, DummyType.INSTANCE);
     this.register = register;
   }
 

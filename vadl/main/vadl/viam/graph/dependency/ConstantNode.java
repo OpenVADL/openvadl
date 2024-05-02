@@ -2,6 +2,7 @@ package vadl.viam.graph.dependency;
 
 import java.util.List;
 import vadl.javaannotations.viam.DataValue;
+import vadl.types.DummyType;
 
 /**
  * The constant node represents a compile time constant value in the
@@ -13,6 +14,7 @@ public class ConstantNode extends ExpressionNode {
   public final int constant; // TODO: Replace this by appropriate type
 
   public ConstantNode(int constant1) {
+    super(DummyType.INSTANCE);
     this.constant = constant1;
   }
 

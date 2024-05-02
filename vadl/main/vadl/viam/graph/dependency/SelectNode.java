@@ -2,6 +2,7 @@ package vadl.viam.graph.dependency;
 
 import java.util.List;
 import vadl.javaannotations.viam.Input;
+import vadl.types.BoolType;
 import vadl.viam.graph.GraphVisitor;
 import vadl.viam.graph.Node;
 
@@ -23,6 +24,9 @@ public class SelectNode extends ExpressionNode {
    * Constructor to instantiate a select node.
    */
   public SelectNode(ExpressionNode condition, ExpressionNode trueCase, ExpressionNode falseCase) {
+    super(trueCase.type());
+    ensure(trueCase.type().equals(falseCase.type()), "True and false case must have the same type");
+    ensure(condition.type() instanceof BoolType, "Condition must have type Bool");
     this.condition = condition;
     this.trueCase = trueCase;
     this.falseCase = falseCase;

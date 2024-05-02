@@ -20,6 +20,7 @@ public class LetNode extends ExpressionNode {
   protected ExpressionNode expression;
 
   public LetNode(Identifier identifier, ExpressionNode expression) {
+    super(expression.type());
     this.identifier = identifier;
     this.expression = expression;
   }
