@@ -52,11 +52,18 @@ subprojects {
                 srcDir("main")
                 exclude("main/resources/**")
             }
+            resources {
+                srcDir("main/resources")
+            }
         }
+
         test {
             java {
                 srcDir("test")
                 exclude("test/resources/**")
+            }
+            resources {
+                srcDir("test/resources")
             }
         }
     }
@@ -108,7 +115,7 @@ val generateCheckstyleReport = tasks.register("generateCheckstyleReport") {
     doLast {
 
         val projectCheckstylePairs = mutableListOf<Pair<Project, Checkstyle>>()
-        var failures = mutableListOf<String>()
+        val failures = mutableListOf<String>()
         subprojects.forEach { subproject ->
             subproject.tasks.withType<JavaCompile> {
                 state.failure?.localizedMessage?.let {
@@ -129,13 +136,13 @@ val generateCheckstyleReport = tasks.register("generateCheckstyleReport") {
         }
 
         if (failures.isNotEmpty()) {
-            val errorBlocks = failures.map { f ->
+            val errorBlocks = failures.joinToString("\n") { f ->
                 """
                 ```
                 $f
                 ```
                 """.trimIndent()
-            }.joinToString("\n")
+            }
             bundledReportFile.writeText("### ❌ No Checkstyle Report\n$errorBlocks")
             return@doLast
         }
