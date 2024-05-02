@@ -4,6 +4,8 @@ import java.util.Objects;
 import javax.annotation.Nullable;
 import vadl.viam.graph.Graph;
 import vadl.viam.graph.Node;
+import vadl.viam.graph.control.ControlNode;
+import vadl.viam.graph.dependency.ExpressionNode;
 
 /**
  * Visualizes a given Graph using the Dot graph language.
@@ -34,7 +36,7 @@ public class DotGraphVisualizer implements GraphVisualizer<String, Graph> {
       dotBuilder
           .append("     ")
           .append(node.id())
-          .append(" [label=\"%s\" %s]".formatted(node, nodeStyle(node)))
+          .append(" [label=\"%s\" %s]".formatted(label(node), nodeStyle(node)))
           .append(";\n");
 
       node.inputs().forEach((input) -> {
@@ -62,18 +64,30 @@ public class DotGraphVisualizer implements GraphVisualizer<String, Graph> {
 
   }
 
+  private String label(Node node) {
+    var label = new StringBuilder();
+    label.append(node.toString());
+    if (node instanceof ExpressionNode) {
+      label.append(" -> ");
+      label.append(((ExpressionNode) node).type().name());
+    }
+    return label.toString();
+  }
+
   private String nodeStyle(Node node) {
+    if (node instanceof ControlNode) {
+      return "shape=box";
+    }
+
+    if (node instanceof ExpressionNode) {
+      if (node.isLeaf()) {
+        return "style=filled fontcolor=\"#2f9e44\" color=\"#2f9e44\" fillcolor=\"#b2f2bb\"";
+      } else {
+        return "style=filled fontcolor=\"#1971c2\" color=\"#1971c2\" fillcolor=\"#a5d8ff\"";
+      }
+    }
+
     return "";
-    //    if (node instanceof ControlNode) {
-    //      return "shape=box";
-    //    } else {
-    //      if (node instanceof ExpressionNode) {
-    //        if (node.isLeaf()) {
-    //          return "style=filled fontcolor=\"#2f9e44\" color=\"#2f9e44\" fillcolor=\"#b2f2bb\"";
-    //        } else {
-    //          return "style=filled fontcolor=\"#1971c2\" color=\"#1971c2\" fillcolor=\"#a5d8ff\"";
-    //        }
-    //      }
   }
 
 }
