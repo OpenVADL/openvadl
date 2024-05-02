@@ -1,9 +1,7 @@
-package vadl;
+package vadl.ast;
 
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
-import vadl.ast.Ast;
-import vadl.ast.VadlParser;
 
 /**
  * A class to test the parser. Since the parser does  also name resolution and macro expansion this

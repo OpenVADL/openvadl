@@ -45,6 +45,22 @@ subprojects {
         add("compileOnly", "com.google.errorprone:error_prone_annotations:$errorProneVersion")
     }
 
+
+    sourceSets {
+        main {
+            java {
+                srcDir("main")
+                exclude("main/resources/**")
+            }
+        }
+        test {
+            java {
+                srcDir("test")
+                exclude("test/resources/**")
+            }
+        }
+    }
+
     tasks.withType<JavaCompile> {
         sourceCompatibility = "17"
         targetCompatibility = "17"

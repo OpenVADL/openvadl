@@ -1,9 +1,8 @@
-package vadl;
+package vadl.ast;
 
 
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
-import vadl.ast.VadlParser;
 import vadl.error.VadlException;
 
 /**
