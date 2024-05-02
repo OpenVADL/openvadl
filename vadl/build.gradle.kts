@@ -30,8 +30,11 @@ tasks.withType<JavaCompile> {
 
 tasks.withType<Checkstyle> {
     doFirst {
-        exclude("**/Scanner.java")
-        exclude("**/Parser.java")
+        exclude { f ->
+            // NOTE: we cannot exclude all tests here but we could disable the checkstyleTest target.
+            val absolute = f.file.absolutePath
+            absolute.contains("build/generated/")
+        }
     }
 }
 

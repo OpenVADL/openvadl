@@ -15,7 +15,8 @@ class CommonDefinition extends Definition {
 
   @Override
   Location location() {
-    return new Location(statements.get(0).location(), statements.get(statements.size() - 1).location());
+    return new Location(statements.get(0).location(),
+        statements.get(statements.size() - 1).location());
   }
 
   @Override
@@ -44,7 +45,7 @@ class CommonDefinition extends Definition {
       return false;
     }
 
-   CommonDefinition that = (CommonDefinition) o;
+    CommonDefinition that = (CommonDefinition) o;
     return Objects.equals(statements, that.statements);
   }
 
@@ -100,8 +101,8 @@ class InstructionSetDefinition extends Definition {
     }
 
     InstructionSetDefinition that = (InstructionSetDefinition) o;
-    return Objects.equals(identifier, that.identifier) &&
-        Objects.equals(statements, that.statements);
+    return Objects.equals(identifier, that.identifier)
+        && Objects.equals(statements, that.statements);
   }
 
   @Override

@@ -7,6 +7,7 @@ import java.util.Map;
 import vadl.error.VadlError;
 import vadl.error.VadlException;
 
+
 /**
  * A symbol table to hold variable definition and usages and verify the later.
  */
@@ -16,17 +17,18 @@ public class SymbolTable {
   private List<VadlError> errors = new ArrayList<>();
 
   /**
-   * Adds a new symbol definition;
+   * Adds a new symbol definition.
    *
    * @param identifier of the symbol being defined.
    */
   public void addDefinition(Identifier identifier) {
-    if (definitions.containsKey(identifier.name))  {
+    if (definitions.containsKey(identifier.name)) {
       errors.add(new VadlError(
           "Redefinition of variable '%s' is not allowed".formatted(identifier.name),
           identifier.location(),
-          "Variables cannot be redefined or reassigned and a variable with the same name was " +
-          "already defined in %s".formatted(definitions.get(identifier.name).location().toString()),
+          "Variables cannot be redefined or reassigned and a variable with the same name was "
+              + "already defined in %s".formatted(
+              definitions.get(identifier.name).location().toString()),
           null
       ));
       return;
@@ -43,7 +45,9 @@ public class SymbolTable {
    * @param identifier of the symbol beeing used.
    */
   public void addUsage(Identifier identifier) {
-    if (definitions.containsKey(identifier.name)) return;
+    if (definitions.containsKey(identifier.name)) {
+      return;
+    }
 
     unresolvedUsages.add(identifier);
   }

@@ -49,8 +49,8 @@ class ConstantDefinitionStmt extends Stmt {
     }
 
     ConstantDefinitionStmt that = (ConstantDefinitionStmt) o;
-    return Objects.equals(identifier, that.identifier) &&
-        Objects.equals(value, that.value);
+    return Objects.equals(identifier, that.identifier)
+        && Objects.equals(value, that.value);
   }
 
   @Override

@@ -157,8 +157,8 @@ class BinaryExpr extends Expr {
     }
 
     BinaryExpr that = (BinaryExpr) o;
-    return Objects.equals(left, that.left) && operation == that.operation &&
-        Objects.equals(right, that.right);
+    return Objects.equals(left, that.left) && operation == that.operation
+        && Objects.equals(right, that.right);
   }
 
   @Override

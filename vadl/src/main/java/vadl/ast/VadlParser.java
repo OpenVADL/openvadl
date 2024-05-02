@@ -3,8 +3,8 @@ package vadl.ast;
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.PrintStream;
+import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
 import vadl.error.VadlError;
 import vadl.error.VadlException;
@@ -22,7 +22,7 @@ public class VadlParser {
    * @throws VadlException if there are any parsing errors.
    */
   public static Ast parse(String program) {
-    var scanner = new Scanner(new ByteArrayInputStream(program.getBytes()));
+    var scanner = new Scanner(new ByteArrayInputStream(program.getBytes(StandardCharsets.UTF_8)));
     var parser = new vadl.ast.Parser(scanner);
 
     // Setting up the Error printing so we can parse it again.
@@ -36,16 +36,17 @@ public class VadlParser {
 
     List<VadlError> errors = new ArrayList<>();
     if (parser.errors.count > 0) {
-      var lines = outStream.toString().split(System.lineSeparator());
-      for(var line : lines) {
-        var fields = line.split(";");
+      var lines = outStream.toString(StandardCharsets.UTF_8).split(System.lineSeparator(), -1);
+      for (var line : lines) {
+        var fields = line.split(";", -1);
         var lineNum = Integer.parseInt(fields[0]);
         var colNum = Integer.parseInt(fields[0]);
-        errors.add( new VadlError(
+        errors.add(new VadlError(
             fields[2],
             new Location("unknown.vadl", lineNum, lineNum, colNum, colNum), null, null)
         );
-      };
+      }
+      ;
     }
 
     try {
