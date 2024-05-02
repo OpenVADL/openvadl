@@ -24,8 +24,8 @@ public class UIntType extends Type {
       return false;
     }
 
-    UIntType uIntType = (UIntType) o;
-    return bitWidth == uIntType.bitWidth;
+    UIntType type = (UIntType) o;
+    return bitWidth == type.bitWidth;
   }
 
   @Override

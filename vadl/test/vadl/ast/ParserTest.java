@@ -77,4 +77,19 @@ public class ParserTest {
     var ast = Assertions.assertDoesNotThrow(() -> VadlParser.parse(prog), "Cannot parse input");
     verifyPrettifiedAst(ast);
   }
+
+  @Test
+  void contantsWithAdvancedTypeAnnotation() {
+    // FIXME: we will need to adapt this test once we check if certain types exist
+    var prog = """
+        constant size = 64
+                
+        constant a: customBoolean = 1
+        constant b: Bits<size> = 1
+        constant c: SInt<1+2> = 1
+        """;
+
+    var ast = Assertions.assertDoesNotThrow(() -> VadlParser.parse(prog), "Cannot parse input");
+    verifyPrettifiedAst(ast);
+  }
 }

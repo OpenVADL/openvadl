@@ -2,7 +2,6 @@ package vadl.ast;
 
 import java.util.Objects;
 import javax.annotation.Nullable;
-import vadl.types.Type;
 
 /**
  * The Statement nodes inside the AST.
@@ -14,12 +13,12 @@ class ConstantDefinitionStmt extends Stmt {
   final Identifier identifier;
 
   @Nullable
-  final Type typeAnnotation;
+  final TypeLiteral typeAnnotation;
 
   final Expr value;
   final Location loc;
 
-  ConstantDefinitionStmt(Identifier identifier, @Nullable Type typeAnnotation, Expr value,
+  ConstantDefinitionStmt(Identifier identifier, @Nullable TypeLiteral typeAnnotation, Expr value,
                          Location location) {
     this.identifier = identifier;
     this.typeAnnotation = typeAnnotation;
@@ -35,9 +34,10 @@ class ConstantDefinitionStmt extends Stmt {
   @Override
   void dump(int indent, StringBuilder builder) {
     builder.append(indentString(indent));
-    builder.append(
-        "ConstantDefinitionStmt (type: %s)\n".formatted(
-            typeAnnotation != null ? typeAnnotation.name() : "null"));
+    builder.append("ConstantDefinitionStmt\n");
+    if (typeAnnotation != null) {
+      typeAnnotation.dump(indent + 1, builder);
+    }
     identifier.dump(indent + 1, builder);
     value.dump(indent + 1, builder);
   }
@@ -46,7 +46,8 @@ class ConstantDefinitionStmt extends Stmt {
   void prettyPrint(int indent, StringBuilder builder) {
     builder.append("constant %s".formatted(identifier.name));
     if (typeAnnotation != null) {
-      builder.append(": %s".formatted(typeAnnotation.name()));
+      builder.append(": ");
+      typeAnnotation.prettyPrint(indent, builder);
     }
     builder.append(" = ");
     value.prettyPrint(indent, builder);

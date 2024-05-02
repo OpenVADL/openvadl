@@ -1,6 +1,7 @@
 package vadl.ast;
 
 import java.util.Objects;
+import javax.annotation.Nullable;
 
 /**
  * The Expression node of the AST.
@@ -49,6 +50,74 @@ class IntegerLiteral extends Expr {
   @Override
   public int hashCode() {
     return Long.hashCode(number);
+  }
+}
+
+/**
+ * TypeLiterals are needed as the types are not known during parsing.
+ * For example {@code Bits<counter>} depends on the constant {@code counter} used here and so some
+ * constant evaluation has to be performed for the concrete type to be known here.
+ */
+class TypeLiteral extends Expr {
+  Identifier baseType;
+
+  @Nullable
+  Expr sizeExpression;
+
+  Location loc;
+
+  public TypeLiteral(Identifier baseType, @Nullable Expr sizeExpression, Location loc) {
+    this.baseType = baseType;
+    this.sizeExpression = sizeExpression;
+    this.loc = loc;
+  }
+
+  @Override
+  Location location() {
+    return loc;
+  }
+
+  @Override
+  void dump(int indent, StringBuilder builder) {
+    builder.append(indentString(indent));
+    builder.append("TypeLiteral\n");
+    baseType.dump(indent + 1, builder);
+    if (sizeExpression != null) {
+      sizeExpression.dump(indent + 1, builder);
+    }
+  }
+
+  @Override
+  void prettyPrint(int indent, StringBuilder builder) {
+    builder.append(baseType.name);
+    if (sizeExpression != null) {
+      builder.append("<");
+      sizeExpression.prettyPrint(
+          indent, builder
+      );
+      builder.append(">");
+    }
+  }
+
+  @Override
+  public boolean equals(Object o) {
+    if (this == o) {
+      return true;
+    }
+    if (o == null || getClass() != o.getClass()) {
+      return false;
+    }
+
+    TypeLiteral that = (TypeLiteral) o;
+    return baseType.equals(that.baseType)
+        && Objects.equals(sizeExpression, that.sizeExpression);
+  }
+
+  @Override
+  public int hashCode() {
+    int result = baseType.hashCode();
+    result = 31 * result + Objects.hashCode(sizeExpression);
+    return result;
   }
 }
 

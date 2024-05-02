@@ -24,8 +24,8 @@ public class SIntType extends Type {
       return false;
     }
 
-    SIntType sIntType = (SIntType) o;
-    return bitWidth == sIntType.bitWidth;
+    SIntType type = (SIntType) o;
+    return bitWidth == type.bitWidth;
   }
 
   @Override
