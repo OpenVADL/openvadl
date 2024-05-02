@@ -46,6 +46,21 @@ subprojects {
     }
 
 
+    sourceSets {
+        main {
+            java {
+                srcDir("main")
+                exclude("main/resources/**")
+            }
+        }
+        test {
+            java {
+                srcDir("test")
+                exclude("test/resources/**")
+            }
+        }
+    }
+
     tasks.withType<JavaCompile> {
         sourceCompatibility = "17"
         targetCompatibility = "17"
