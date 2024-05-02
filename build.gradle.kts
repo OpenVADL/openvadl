@@ -52,11 +52,18 @@ subprojects {
                 srcDir("main")
                 exclude("main/resources/**")
             }
+            resources {
+                srcDir("main/resources")
+            }
         }
+
         test {
             java {
                 srcDir("test")
                 exclude("test/resources/**")
+            }
+            resources {
+                srcDir("test/resources")
             }
         }
     }
