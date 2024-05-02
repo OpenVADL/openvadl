@@ -6,6 +6,12 @@ import vadl.ast.Ast;
 import vadl.ast.Expr;
 import vadl.ast.Stmt;
 
+import vadl.types.BitsType;
+import vadl.types.BoolType;
+import vadl.types.Type;
+import vadl.types.SIntType;
+import vadl.types.UIntType;
+
 
 COMPILER vadl
     Ast ast = new Ast();
@@ -63,13 +69,28 @@ PRODUCTIONS
 
 
     // -- STATEMENTS ---------------------------------------------------------------------------------------------------
-    statement<out Stmt stmt>
-    = "constant" (. var startLocation = locationFromToken(t); .)
+    statement<out Stmt stmt>                (. Type type = null; .)
+    = "constant"                            (. var startLocation = locationFromToken(t); .)
         identifier<out Identifier id>       (. symbolTable.addDefinition(id); .)
-        '=' expression<out Expr expr>       (. stmt = new ConstantDefinitionStmt(id, expr, new Location(startLocation, locationFromToken(t))); .)
+        [
+            ':' typeLiteral<out Type t1>    (. type = t1; .)
+        ]
+        '=' expression<out Expr expr>       (. stmt = new ConstantDefinitionStmt(id, type, expr, new Location(startLocation, locationFromToken(t))); .)
     .
 
     // -- EXPRESSIONS ---------------------------------------------------------------------------------------------------
+
+    // FIXME: at some point there must also be some kind of
+    typeLiteral<out Type type>  (. type = null; .)
+    = "Bool"                (. type = new BoolType(); .)
+    | "Bits<" number        (. type = new BitsType(Integer.parseInt(t.val)); .)
+        ">"
+    | "SInt<" number        (. type = new SIntType(Integer.parseInt(t.val)); .)
+        ">"
+    | "UInt<" number        (. type = new UIntType(Integer.parseInt(t.val)); .)
+        ">"
+    .
+
     expression<out Expr expr>
     = term<out Expr expr1>  (. expr = expr1; .)
     .
@@ -98,5 +119,6 @@ PRODUCTIONS
 
     identifier<out Identifier identifier> = identifierToken (. identifier = new Identifier(t.val, locationFromToken(t)); .)
     .
+
 
 END vadl.
