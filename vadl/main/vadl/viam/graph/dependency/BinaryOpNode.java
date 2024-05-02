@@ -4,6 +4,10 @@ import java.util.List;
 import vadl.javaannotations.viam.DataValue;
 import vadl.types.Type;
 
+/**
+ * An infix operation with two operands.
+ */
+// TODO: This should probably be removed.
 public class BinaryOpNode extends BinaryNode {
 
   @DataValue

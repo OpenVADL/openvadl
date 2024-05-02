@@ -9,6 +9,9 @@ import vadl.viam.graph.Node;
 
 /**
  * Represents a let expression in the VADL Specification.
+ *
+ * <p>It stores the identifier as well as the label (once implemented)
+ * to allow generating code with meaningful variable names.
  */
 public class LetNode extends ExpressionNode {
   // TODO: Add label functionality
@@ -19,6 +22,12 @@ public class LetNode extends ExpressionNode {
   @Input
   protected ExpressionNode expression;
 
+  /**
+   * Constructs a let-node.
+   *
+   * @param identifier the name of the let assignment
+   * @param expression the value of the let assignment
+   */
   public LetNode(Identifier identifier, ExpressionNode expression) {
     super(expression.type());
     this.identifier = identifier;

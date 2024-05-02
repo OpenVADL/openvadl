@@ -6,6 +6,12 @@ import vadl.types.Type;
 import vadl.viam.graph.GraphVisitor;
 import vadl.viam.graph.Node;
 
+
+/**
+ * Represents a unary node in the VIAM graph.
+ * A unary node is an expression node with only one input node.
+ */
+// TODO: Check if we should remove this
 public abstract class UnaryNode extends ExpressionNode {
 
   @Input

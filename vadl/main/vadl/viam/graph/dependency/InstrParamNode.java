@@ -4,6 +4,10 @@ import java.util.List;
 import vadl.javaannotations.viam.DataValue;
 import vadl.types.DummyType;
 
+/**
+ * A format field reference that may be used as parameter to an instruction.
+ */
+// TODO: Think about an other name.
 public class InstrParamNode extends ParamNode {
 
   @DataValue

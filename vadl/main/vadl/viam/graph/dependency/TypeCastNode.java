@@ -4,6 +4,11 @@ import java.util.List;
 import vadl.javaannotations.viam.DataValue;
 import vadl.types.Type;
 
+
+/**
+ * Represents a type cast in the VIAM graph.
+ * A type cast node is a unary node that casts the value of its input node to a specified type.
+ */
 public class TypeCastNode extends UnaryNode {
 
   @DataValue

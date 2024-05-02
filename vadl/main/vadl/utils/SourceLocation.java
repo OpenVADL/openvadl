@@ -10,6 +10,13 @@ import java.util.stream.IntStream;
 import java.util.stream.Stream;
 import javax.annotation.Nullable;
 
+/**
+ * References a location span in source.
+ *
+ * @param uri uri to concrete source file
+ * @param begin the span begin with line and column
+ * @param end the span end with line and column
+ */
 public record SourceLocation(
     URI uri,
     SourcePosition begin,
@@ -38,6 +45,13 @@ public record SourceLocation(
     return !this.uri.equals(INVALID_MEMORY);
   }
 
+  /**
+   * Produces a concise version of a given location.
+   *
+   * <p>E.g.: {@code SourceLocation("/absolute/path/to/file.vadl", (1, 3), (2, 4))}
+   * becomes  {@code "file.vadl:1:3..2:4"}
+   * </p>
+   */
   public String toConciseString() {
     var uriAsString = this.uri.toString();
     var indexOfLastSlash = uriAsString.lastIndexOf('/');
@@ -48,6 +62,10 @@ public record SourceLocation(
         + this.end;
   }
 
+  /**
+   * Reads the content of the source file at this location and
+   * returns it as String.
+   */
   public @Nullable String toSourceString() {
     if (!this.isValid()) {
       return "Invalid source location: " + this;
@@ -88,7 +106,10 @@ public record SourceLocation(
     return uri + ":" + begin + ".." + end;
   }
 
-  final
+
+  /**
+   * Represents a position in the source file with line and column information.
+   */
   public record SourcePosition(
       int line,
       int column

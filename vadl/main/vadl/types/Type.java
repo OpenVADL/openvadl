@@ -21,14 +21,16 @@ public abstract class Type {
     return new BoolType();
   }
 
-  public static SIntType sInt(int bitWidth) {
+  public static SIntType signedInt(int bitWidth) {
     return new SIntType(bitWidth);
   }
 
-  public static UIntType uInt(int bitWidth) {
+  public static UIntType unsignedInt(int bitWidth) {
     return new UIntType(bitWidth);
   }
 
-  public static DummyType dummy() { return DummyType.INSTANCE; }
+  public static DummyType dummy() {
+    return DummyType.INSTANCE;
+  }
 
 }
