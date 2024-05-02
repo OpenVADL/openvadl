@@ -12,6 +12,8 @@ import static vadl.viam.graph.GraphMatchers.activeIn;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import vadl.types.Type;
+import vadl.viam.ConstantValue;
 import vadl.viam.graph.control.EndNode;
 import vadl.viam.graph.control.StartNode;
 import vadl.viam.graph.dependency.ConstantNode;
@@ -132,11 +134,11 @@ public class GraphBuildingTests {
     var sideEffects = new NodeList<SideEffectNode>(
         new WriteRegNode(
             new InstrParamNode("testReg"),
-            new ConstantNode(2)
+            new ConstantNode(ConstantValue.of(2, Type.sInt(32)))
         ),
         new WriteRegNode(
             new InstrParamNode("testReg"),
-            new ConstantNode(2)
+            new ConstantNode(ConstantValue.of(2, Type.sInt(32)))
         )
     );
     var end = testGraph.addWithInputs(new EndNode(sideEffects));

@@ -12,4 +12,23 @@ public abstract class Type {
    * @return the name of the type
    */
   public abstract String name();
+
+  public static BitsType bits(int bitWidth) {
+    return new BitsType(bitWidth);
+  }
+
+  public static BoolType bool() {
+    return new BoolType();
+  }
+
+  public static SIntType sInt(int bitWidth) {
+    return new SIntType(bitWidth);
+  }
+
+  public static UIntType uInt(int bitWidth) {
+    return new UIntType(bitWidth);
+  }
+
+  public static DummyType dummy() { return DummyType.INSTANCE; }
+
 }
