@@ -50,10 +50,7 @@ PRODUCTIONS
     .
 
     commonDefinition<out CommonDefinition common>
-    = statement<out Stmt stmt>      (. var statements = new ArrayList<Stmt>(List.of(stmt)); .)
-      {
-        statement<out Stmt stmt2>     (. statements.add(stmt2); .)
-      } (. common = new CommonDefinition(statements); .)
+    = statement<out Stmt stmt>      (. common = new CommonDefinition(stmt); .)
     .
 
     instructionsetDefinition<out InstructionSetDefinition isaDef> (. var statements = new ArrayList<Stmt>(); .)
@@ -80,11 +77,16 @@ PRODUCTIONS
 
     // -- EXPRESSIONS ---------------------------------------------------------------------------------------------------
 
-    typeLiteral<out TypeLiteral type>   (. type = null; Expr sizeExpr = null; .)
-    = identifier<out Identifier id>
-    [ "<"
-        term<out Expr expr>             (. sizeExpr = expr; .)
-    ">" ]                               (. type = new TypeLiteral(id, sizeExpr, new Location(id.location(), locationFromToken(t))) ;.)
+    typeLiteral<out TypeLiteral type>       (. type = null; Expr sizeExpr = null; .)
+    =
+    "Bool"                                  (. var loc = locationFromToken(t); type = new TypeLiteral(new Identifier(t.val, loc), null, loc); .)
+    |
+     (
+        identifier<out Identifier id>
+        [ "<"
+            term<out Expr expr>             (. sizeExpr = expr; .)
+        ">" ]                               (. type = new TypeLiteral(id, sizeExpr, new Location(id.location(), locationFromToken(t))) ;.)
+    )
     .
 
     expression<out Expr expr>

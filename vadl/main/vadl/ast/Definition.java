@@ -7,33 +7,27 @@ abstract class Definition extends Node {
 }
 
 class CommonDefinition extends Definition {
-  List<Stmt> statements;
+  Stmt statement;
 
-  CommonDefinition(List<Stmt> statements) {
-    this.statements = statements;
+  CommonDefinition(Stmt statement) {
+    this.statement = statement;
   }
 
   @Override
   Location location() {
-    return new Location(statements.get(0).location(),
-        statements.get(statements.size() - 1).location());
+    return statement.location();
   }
 
   @Override
   void dump(int indent, StringBuilder builder) {
     builder.append(indentString(indent));
     builder.append("CommonDefinition\n");
-
-    for (Stmt stmt : statements) {
-      stmt.dump(indent + 1, builder);
-    }
+    statement.dump(indent + 1, builder);
   }
 
   @Override
   void prettyPrint(int indent, StringBuilder builder) {
-    for (Stmt stmt : statements) {
-      stmt.prettyPrint(indent, builder);
-    }
+    statement.prettyPrint(indent, builder);
   }
 
   @Override
@@ -46,12 +40,12 @@ class CommonDefinition extends Definition {
     }
 
     CommonDefinition that = (CommonDefinition) o;
-    return Objects.equals(statements, that.statements);
+    return statement.equals(that.statement);
   }
 
   @Override
   public int hashCode() {
-    return Objects.hashCode(statements);
+    return Objects.hashCode(statement);
   }
 }
 

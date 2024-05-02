@@ -5,6 +5,7 @@ import java.io.ByteArrayOutputStream;
 import java.io.PrintStream;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import vadl.error.VadlError;
 import vadl.error.VadlException;
@@ -38,9 +39,15 @@ public class VadlParser {
     if (parser.errors.count > 0) {
       var lines = outStream.toString(StandardCharsets.UTF_8).split(System.lineSeparator(), -1);
       for (var line : lines) {
+        if (line.trim().isEmpty()) {
+          continue;
+        }
+
+        System.out.println(line);
         var fields = line.split(";", -1);
+        System.out.println(Arrays.toString(fields));
         var lineNum = Integer.parseInt(fields[0]);
-        var colNum = Integer.parseInt(fields[0]);
+        var colNum = Integer.parseInt(fields[1]);
         errors.add(new VadlError(
             fields[2],
             new Location("unknown.vadl", lineNum, lineNum, colNum, colNum), null, null)
