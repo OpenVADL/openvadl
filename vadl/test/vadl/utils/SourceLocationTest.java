@@ -9,10 +9,16 @@ import java.util.Objects;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 
+/**
+ * Tests the {@link SourceLocation} class. Especially the toSourceString() method.
+ */
 public class SourceLocationTest {
 
   private static URI miniVadlUri;
 
+  /**
+   * Loads the URI of the VADL test file from the bundled resources.
+   */
   @BeforeAll
   public static void setup() throws URISyntaxException {
     miniVadlUri =
@@ -32,9 +38,9 @@ public class SourceLocationTest {
   @Test
   public void testToSourceString_multipleLines() {
     SourceLocation location = new SourceLocation(miniVadlUri, 14, 16);
-    String expected = "  using Inst     = Bits<32>               // instruction word is 32 bit\n" +
-        "  using Regs     = Bits<MLen>             // untyped register word type\n" +
-        "  using Bits3    = Bits< 3>               // 3 bit type";
+    String expected = "  using Inst     = Bits<32>               // instruction word is 32 bit\n"
+        + "  using Regs     = Bits<MLen>             // untyped register word type\n"
+        + "  using Bits3    = Bits< 3>               // 3 bit type";
     assertEquals(expected, location.toSourceString());
   }
 
@@ -53,8 +59,8 @@ public class SourceLocationTest {
     SourceLocation.SourcePosition end = new SourceLocation.SourcePosition(34, 61);
     SourceLocation location = new SourceLocation(miniVadlUri, start, end);
     String expected =
-        "instruction ADD : Rtype =                        // 3 register operand instructions\n" +
-            "      X(rd) := ((X(rs1) as Bits) + (X(rs2) as Bits)) as Regs";
+        "instruction ADD : Rtype =                        // 3 register operand instructions\n"
+            + "      X(rd) := ((X(rs1) as Bits) + (X(rs2) as Bits)) as Regs";
     assertEquals(expected, location.toSourceString());
   }
 
