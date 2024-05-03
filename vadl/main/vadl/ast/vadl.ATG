@@ -5,6 +5,8 @@ import java.util.List;
 import vadl.ast.Ast;
 import vadl.ast.Expr;
 import vadl.ast.Stmt;
+import static vadl.ast.IndexDefinitionStmt.IndexKind.GROUP;
+import static vadl.ast.IndexDefinitionStmt.IndexKind.PROGRAM;
 
 import vadl.types.BitsType;
 import vadl.types.BoolType;
@@ -67,6 +69,7 @@ PRODUCTIONS
     isaStatement<out Stmt stmt>         (. stmt = null; .)
     = constantStatement<out Stmt s1>    (. stmt = s1; .)
     | memoryStatement<out Stmt s1>      (. stmt = s1; .)
+    | indexStatement<out Stmt s1>      (. stmt = s1; .)
     .
 
 
@@ -78,6 +81,15 @@ PRODUCTIONS
             ':' typeLiteral<out TypeLiteral t1>    (. type = t1; .)
         ]
         '=' expression<out Expr expr>       (. stmt = new ConstantDefinitionStmt(id, type, expr, new Location(startLocation, locationFromToken(t))); .)
+    .
+
+    indexStatement<out IndexDefinitionStmt stmt> (. IndexDefinitionStmt.IndexKind kind = null; .)
+    = ("program"                                (. kind = PROGRAM; .)
+    |  "group"                                  (. kind = GROUP; .)
+    )                                           (. var startLocation = locationFromToken(t); .)
+    "counter"
+        identifier<out Identifier id>           (. symbolTable.addDefinition(id); .)
+        ":" typeLiteral<out TypeLiteral t1>     (. stmt = new IndexDefinitionStmt(kind, id, t1, new Location(startLocation, locationFromToken(t))); .)
     .
 
     memoryStatement<out MemoryDefinitionStmt stmt>

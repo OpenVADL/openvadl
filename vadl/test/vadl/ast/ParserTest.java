@@ -104,4 +104,28 @@ public class ParserTest {
     var ast = Assertions.assertDoesNotThrow(() -> VadlParser.parse(prog), "Cannot parse input");
     verifyPrettifiedAst(ast);
   }
+
+  @Test
+  void programCounterDefinition() {
+    var prog = """
+        instruction set architecture FLO = {
+          program counter PC : Bits<32>   // PC = program counter
+        }
+        """;
+
+    var ast = Assertions.assertDoesNotThrow(() -> VadlParser.parse(prog), "Cannot parse input");
+    verifyPrettifiedAst(ast);
+  }
+
+  @Test
+  void groupCounterDefinition() {
+    var prog = """
+        instruction set architecture FLO = {
+          group counter PFC : Bits<32>    // PFC = program fetch counter
+        }
+        """;
+
+    var ast = Assertions.assertDoesNotThrow(() -> VadlParser.parse(prog), "Cannot parse input");
+    verifyPrettifiedAst(ast);
+  }
 }

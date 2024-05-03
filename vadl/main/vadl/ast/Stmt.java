@@ -79,6 +79,70 @@ class ConstantDefinitionStmt extends Stmt {
   }
 }
 
+class IndexDefinitionStmt extends Stmt {
+  IndexKind kind;
+  Identifier identifier;
+  TypeLiteral type;
+  Location loc;
+
+  enum IndexKind {
+    PROGRAM,
+    GROUP
+  }
+
+  public IndexDefinitionStmt(IndexKind kind, Identifier identifier, TypeLiteral type,
+                             Location location) {
+    this.kind = kind;
+    this.identifier = identifier;
+    this.type = type;
+    this.loc = location;
+  }
+
+  @Override
+  Location location() {
+    return loc;
+  }
+
+  @Override
+  void dump(int indent, StringBuilder builder) {
+    builder.append(dumpIndentString(indent));
+    builder.append("IndexDeclarationStmt (kind: %s)\n".formatted(kind.toString()));
+    identifier.dump(indent + 1, builder);
+    type.dump(indent + 1, builder);
+  }
+
+  @Override
+  void prettyPrint(int indent, StringBuilder builder) {
+    builder.append(prettyIndentString(indent));
+    builder.append("%s counter ".formatted(kind.toString().toLowerCase()));
+    identifier.prettyPrint(indent, builder);
+    builder.append(": ");
+    type.prettyPrint(indent, builder);
+    builder.append("\n");
+  }
+
+  @Override
+  public boolean equals(Object o) {
+    if (this == o) {
+      return true;
+    }
+    if (o == null || getClass() != o.getClass()) {
+      return false;
+    }
+
+    IndexDefinitionStmt that = (IndexDefinitionStmt) o;
+    return kind == that.kind && identifier.equals(that.identifier) && type.equals(that.type);
+  }
+
+  @Override
+  public int hashCode() {
+    int result = kind.hashCode();
+    result = 31 * result + identifier.hashCode();
+    result = 31 * result + type.hashCode();
+    return result;
+  }
+}
+
 class MemoryDefinitionStmt extends Stmt {
   Identifier identifier;
   TypeLiteral addressType;

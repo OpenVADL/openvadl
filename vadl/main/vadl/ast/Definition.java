@@ -82,7 +82,7 @@ class InstructionSetDefinition extends Definition {
     for (Stmt stmt : statements) {
       stmt.prettyPrint(indent + 1, builder);
     }
-    builder.append("}");
+    builder.append("}\n\n");
   }
 
   @Override
