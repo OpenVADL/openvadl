@@ -50,7 +50,7 @@ PRODUCTIONS
     .
 
     commonDefinition<out CommonDefinition common>
-    = statement<out Stmt stmt>      (. common = new CommonDefinition(stmt); .)
+    = constantStatement<out Stmt stmt>      (. common = new CommonDefinition(stmt); .)
     .
 
     instructionsetDefinition<out InstructionSetDefinition isaDef> (. var statements = new ArrayList<Stmt>(); .)
@@ -59,20 +59,32 @@ PRODUCTIONS
        "=" "{"
       {
         // FIXME: In the future this will be wrong as not all statements should be accepted here.
-        statement<out Stmt stmt>    (. statements.add(stmt); .)
+        isaStatement<out Stmt stmt>    (. statements.add(stmt); .)
       }
       "}"   (. isaDef = new InstructionSetDefinition(identifier, statements, new Location(startLocation, locationFromToken(t))); .)
       .
 
+    isaStatement<out Stmt stmt>         (. stmt = null; .)
+    = constantStatement<out Stmt s1>    (. stmt = s1; .)
+    | memoryStatement<out Stmt s1>      (. stmt = s1; .)
+    .
+
 
     // -- STATEMENTS ---------------------------------------------------------------------------------------------------
-    statement<out Stmt stmt>                (. TypeLiteral type = null; .)
+    constantStatement<out ConstantDefinitionStmt stmt>                (. TypeLiteral type = null; .)
     = "constant"                            (. var startLocation = locationFromToken(t); .)
         identifier<out Identifier id>       (. symbolTable.addDefinition(id); .)
         [
             ':' typeLiteral<out TypeLiteral t1>    (. type = t1; .)
         ]
         '=' expression<out Expr expr>       (. stmt = new ConstantDefinitionStmt(id, type, expr, new Location(startLocation, locationFromToken(t))); .)
+    .
+
+    memoryStatement<out MemoryDefinitionStmt stmt>
+    = "memory"                              (. var startLocation = locationFromToken(t); .)
+        identifier<out Identifier id>       (. symbolTable.addDefinition(id); .)
+        ":" typeLiteral<out TypeLiteral t1>
+        "->" typeLiteral<out TypeLiteral t2> (. stmt = new MemoryDefinitionStmt(id, t1, t2, new Location(startLocation, t2.location())); .)
     .
 
     // -- EXPRESSIONS ---------------------------------------------------------------------------------------------------

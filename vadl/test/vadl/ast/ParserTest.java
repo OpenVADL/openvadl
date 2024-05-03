@@ -92,4 +92,16 @@ public class ParserTest {
     var ast = Assertions.assertDoesNotThrow(() -> VadlParser.parse(prog), "Cannot parse input");
     verifyPrettifiedAst(ast);
   }
+
+  @Test
+  void memoryDefinition() {
+    var prog = """
+        instruction set architecture FLO = {
+          memory mem: Bits<32> -> Bits<8>
+        }
+        """;
+
+    var ast = Assertions.assertDoesNotThrow(() -> VadlParser.parse(prog), "Cannot parse input");
+    verifyPrettifiedAst(ast);
+  }
 }

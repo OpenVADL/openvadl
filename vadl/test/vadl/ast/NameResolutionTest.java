@@ -87,4 +87,28 @@ public class NameResolutionTest {
     Assertions.assertEquals(thrown.errors.size(), 1);
   }
    */
+
+  @Test
+  void resolveTwoMemoryDefinitions() {
+    var prog = """
+        instruction set architecture FLO = {
+          memory MEM: Bits<32> -> Bits<8>
+          memory SideMem: Bits<6> -> Bits<2>
+        }
+        """;
+    Assertions.assertDoesNotThrow(() -> VadlParser.parse(prog), "Cannot parse input");
+  }
+
+  @Test
+  void resolveTwoOverlappingMemoryDefinitions() {
+    var prog = """
+        instruction set architecture FLO = {
+          memory MEM: Bits<32> -> Bits<8>
+          memory MEM: Bits<6> -> Bits<2>
+        }
+        """;
+    var thrown = Assertions.assertThrows(VadlException.class, () -> VadlParser.parse(prog),
+        "Expected to throw name conflict");
+    Assertions.assertEquals(thrown.errors.size(), 1);
+  }
 }

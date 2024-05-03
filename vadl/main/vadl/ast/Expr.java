@@ -25,7 +25,7 @@ class IntegerLiteral extends Expr {
 
   @Override
   void dump(int indent, StringBuilder builder) {
-    builder.append(indentString(indent));
+    builder.append(dumpIndentString(indent));
     builder.append("IntegerLiteral (value: %d)\n".formatted(number));
   }
 
@@ -79,7 +79,7 @@ class TypeLiteral extends Expr {
 
   @Override
   void dump(int indent, StringBuilder builder) {
-    builder.append(indentString(indent));
+    builder.append(dumpIndentString(indent));
     builder.append("TypeLiteral\n");
     baseType.dump(indent + 1, builder);
     if (sizeExpression != null) {
@@ -135,7 +135,7 @@ class Variable extends Expr {
 
   @Override
   void dump(int indent, StringBuilder builder) {
-    builder.append(indentString(indent));
+    builder.append(dumpIndentString(indent));
     builder.append("Variable \"%s\"\n".formatted(identifier.name));
   }
 
@@ -193,7 +193,7 @@ class BinaryExpr extends Expr {
 
   @Override
   void dump(int indent, StringBuilder builder) {
-    builder.append(indentString(indent));
+    builder.append(dumpIndentString(indent));
     builder.append("BinaryExpr (operation: %s)\n".formatted(operationAsString(operation)));
     left.dump(indent + 1, builder);
     right.dump(indent + 1, builder);

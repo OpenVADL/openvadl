@@ -20,7 +20,7 @@ class CommonDefinition extends Definition {
 
   @Override
   void dump(int indent, StringBuilder builder) {
-    builder.append(indentString(indent));
+    builder.append(dumpIndentString(indent));
     builder.append("CommonDefinition\n");
     statement.dump(indent + 1, builder);
   }
@@ -67,7 +67,7 @@ class InstructionSetDefinition extends Definition {
 
   @Override
   void dump(int indent, StringBuilder builder) {
-    builder.append(indentString(indent));
+    builder.append(dumpIndentString(indent));
     builder.append("InstructionSetDefinition \"%s\"\n".formatted(identifier.name));
 
     for (Stmt stmt : statements) {
@@ -77,7 +77,7 @@ class InstructionSetDefinition extends Definition {
 
   @Override
   void prettyPrint(int indent, StringBuilder builder) {
-    builder.append(indentString(indent));
+    builder.append(dumpIndentString(indent));
     builder.append("instruction set architecture %s = {\n".formatted(identifier.name));
     for (Stmt stmt : statements) {
       stmt.prettyPrint(indent + 1, builder);

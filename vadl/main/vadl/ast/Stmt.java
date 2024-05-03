@@ -33,7 +33,7 @@ class ConstantDefinitionStmt extends Stmt {
 
   @Override
   void dump(int indent, StringBuilder builder) {
-    builder.append(indentString(indent));
+    builder.append(dumpIndentString(indent));
     builder.append("ConstantDefinitionStmt\n");
     if (typeAnnotation != null) {
       typeAnnotation.dump(indent + 1, builder);
@@ -44,6 +44,7 @@ class ConstantDefinitionStmt extends Stmt {
 
   @Override
   void prettyPrint(int indent, StringBuilder builder) {
+    builder.append(prettyIndentString(indent));
     builder.append("constant %s".formatted(identifier.name));
     if (typeAnnotation != null) {
       builder.append(": ");
@@ -74,6 +75,68 @@ class ConstantDefinitionStmt extends Stmt {
     int result = Objects.hashCode(identifier);
     result = 31 * result + Objects.hashCode(typeAnnotation);
     result = 31 * result + Objects.hashCode(value);
+    return result;
+  }
+}
+
+class MemoryDefinitionStmt extends Stmt {
+  Identifier identifier;
+  TypeLiteral addressType;
+  TypeLiteral dataType;
+  Location loc;
+
+  public MemoryDefinitionStmt(Identifier identifier, TypeLiteral addressType, TypeLiteral dataType,
+                              Location loc) {
+    this.identifier = identifier;
+    this.addressType = addressType;
+    this.dataType = dataType;
+    this.loc = loc;
+  }
+
+  @Override
+  Location location() {
+    return loc;
+  }
+
+  @Override
+  void dump(int indent, StringBuilder builder) {
+    builder.append(dumpIndentString(indent));
+    builder.append("MemoryDefinitionStmt\n");
+    addressType.dump(indent + 1, builder);
+    dataType.dump(indent + 1, builder);
+  }
+
+  @Override
+  void prettyPrint(int indent, StringBuilder builder) {
+    builder.append(prettyIndentString(indent));
+    builder.append("memory ");
+    identifier.prettyPrint(indent, builder);
+    builder.append(": ");
+    addressType.prettyPrint(indent, builder);
+    builder.append(" -> ");
+    dataType.prettyPrint(indent, builder);
+    builder.append("\n");
+  }
+
+  @Override
+  public boolean equals(Object o) {
+    if (this == o) {
+      return true;
+    }
+    if (o == null || getClass() != o.getClass()) {
+      return false;
+    }
+
+    MemoryDefinitionStmt that = (MemoryDefinitionStmt) o;
+    return identifier.equals(that.identifier) && addressType.equals(that.addressType)
+        && dataType.equals(that.dataType);
+  }
+
+  @Override
+  public int hashCode() {
+    int result = identifier.hashCode();
+    result = 31 * result + addressType.hashCode();
+    result = 31 * result + dataType.hashCode();
     return result;
   }
 }

@@ -4,13 +4,14 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
 
-/** The abstract syntax tree for the vadl language.
- *
+/**
+ * The abstract syntax tree for the vadl language.
  */
 public class Ast {
   List<Definition> definitions = new ArrayList<>();
 
-  /** Dump the AST into a tree like representation for debugging.
+  /**
+   * Dump the AST into a tree like representation for debugging.
    *
    * @return a String with the dumped tree.
    */
@@ -22,7 +23,8 @@ public class Ast {
     return builder.toString();
   }
 
-  /** Convert the tree back into sourcecode.
+  /**
+   * Convert the tree back into sourcecode.
    * The generated sourcecode might look quite different but is semantically equal. Some notable
    * details are however:
    * - All macros are expanded and macro definitions are no longer in the tree.
@@ -58,12 +60,17 @@ public class Ast {
 }
 
 abstract class Node {
-  protected String indentString(int indent) {
+  protected String dumpIndentString(int indent) {
     var indentBy = 2;
     var indentCharacters = ". : ' | ";
     var indentLenght = indent * indentBy;
     return indentCharacters.repeat(indentLenght / indentCharacters.length())
         + indentCharacters.substring(0, indentLenght % indentCharacters.length());
+  }
+
+  protected String prettyIndentString(int indent) {
+    var indentBy = 2;
+    return " ".repeat(indentBy * indent);
   }
 
   abstract Location location();
@@ -84,7 +91,7 @@ class Identifier extends Node {
 
   @Override
   void dump(int indent, StringBuilder builder) {
-    builder.append(indentString(indent));
+    builder.append(dumpIndentString(indent));
     builder.append("Identifier \"%s\"\n".formatted(name));
   }
 
