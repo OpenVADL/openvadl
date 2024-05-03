@@ -52,11 +52,18 @@ subprojects {
                 srcDir("main")
                 exclude("main/resources/**")
             }
+            resources {
+                srcDir("main/resources")
+            }
         }
+
         test {
             java {
                 srcDir("test")
                 exclude("test/resources/**")
+            }
+            resources {
+                srcDir("test/resources")
             }
         }
     }
@@ -128,18 +135,17 @@ val generateCheckstyleReport =
                 projectReportDir.mkdirs()
             }
 
-            if (failures.isNotEmpty()) {
-                val errorBlocks =
-                    failures.map { f ->
-                        """
-                        ```
-                        $f
-                        ```
-                        """.trimIndent()
-                    }.joinToString("\n")
-                bundledReportFile.writeText("### ❌ No Checkstyle Report\n$errorBlocks")
-                return@doLast
+        if (failures.isNotEmpty()) {
+            val errorBlocks = failures.joinToString("\n") { f ->
+                """
+                ```
+                $f
+                ```
+                """.trimIndent()
             }
+            bundledReportFile.writeText("### ❌ No Checkstyle Report\n$errorBlocks")
+            return@doLast
+        }
 
             logger.info("Generating Checkstyle markdown reports...")
             FileWriter(bundledReportFile).use { writer ->
