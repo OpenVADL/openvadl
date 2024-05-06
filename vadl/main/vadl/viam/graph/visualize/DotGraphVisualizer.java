@@ -71,6 +71,11 @@ public class DotGraphVisualizer implements GraphVisualizer<String, Graph> {
       label.append(" -> ");
       label.append(((ExpressionNode) node).type().name());
     }
+    if (node.sourceLocation().isValid()) {
+      label
+          .append("\\n@ ")
+          .append(node.sourceLocation().toConciseString());
+    }
     return label.toString();
   }
 
