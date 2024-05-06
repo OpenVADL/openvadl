@@ -20,6 +20,11 @@ public class TypeCastNode extends UnaryNode {
   }
 
   @Override
+  public Type type() {
+    return castType;
+  }
+
+  @Override
   protected void collectData(List<Object> collection) {
     super.collectData(collection);
     collection.add(castType);

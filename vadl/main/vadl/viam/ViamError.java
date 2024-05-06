@@ -5,6 +5,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.stream.Collectors;
+import vadl.viam.graph.ViamGraphError;
 
 /**
  * The {@link ViamError} indicates unintended failures during
@@ -68,4 +69,13 @@ public class ViamError extends RuntimeException {
   public String getMessage() {
     return "%s%s".formatted(super.getMessage(), context());
   }
+
+  @FormatMethod
+  public static void ensure(boolean condition, String format, Object... args) {
+    if (!condition) {
+      throw new ViamError(format.formatted(args))
+          .shrinkStacktrace(1);
+    }
+  }
+
 }

@@ -3,6 +3,7 @@ package vadl.viam.graph.dependency;
 import java.util.List;
 import vadl.javaannotations.viam.DataValue;
 import vadl.types.DummyType;
+import vadl.types.Type;
 
 /**
  * The ReadRegNode class is a subclass of ReadNode that represents
@@ -19,8 +20,15 @@ public class ReadRegNode extends ReadNode {
   }
 
   @Override
+  public Type type() {
+    // TODO: Refactor
+    return DummyType.INSTANCE;
+  }
+
+  @Override
   protected void collectData(List<Object> collection) {
     super.collectData(collection);
     collection.add(register);
   }
+
 }

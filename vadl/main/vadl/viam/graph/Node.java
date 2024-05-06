@@ -8,6 +8,7 @@ import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 import javax.annotation.Nullable;
+import org.jetbrains.annotations.Contract;
 import vadl.utils.SourceLocation;
 import vadl.viam.graph.dependency.DependencyNode;
 
@@ -470,6 +471,17 @@ public abstract class Node {
                               @Nullable Object... args) {
     if (!condition) {
       throw new ViamGraphError(format, args)
+          .addContext(this)
+          .addContext(this.graph)
+          .shrinkStacktrace(1);
+    }
+  }
+
+  @Contract("null, _  -> fail")
+  @FormatMethod
+  protected final void ensureNonNull(@Nullable Object obj, String msg) {
+    if (obj == null) {
+      throw new ViamGraphError(msg)
           .addContext(this)
           .addContext(this.graph)
           .shrinkStacktrace(1);

@@ -3,6 +3,7 @@ package vadl.viam.graph.dependency;
 import java.util.List;
 import vadl.javaannotations.viam.DataValue;
 import vadl.javaannotations.viam.Input;
+import vadl.types.Type;
 import vadl.viam.Identifier;
 import vadl.viam.graph.GraphVisitor;
 import vadl.viam.graph.Node;
@@ -32,6 +33,11 @@ public class LetNode extends ExpressionNode {
     super(expression.type());
     this.identifier = identifier;
     this.expression = expression;
+  }
+
+  @Override
+  public Type type() {
+    return expression.type();
   }
 
   @Override

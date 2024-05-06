@@ -2,6 +2,7 @@ package vadl.viam.graph.dependency;
 
 import java.util.List;
 import vadl.javaannotations.viam.DataValue;
+import vadl.types.DummyType;
 import vadl.types.Type;
 
 /**
@@ -16,6 +17,11 @@ public class BinaryOpNode extends BinaryNode {
   public BinaryOpNode(ExpressionNode x, ExpressionNode y, String op, Type type) {
     super(x, y, type);
     this.op = op;
+  }
+
+  @Override
+  public Type type() {
+    return DummyType.INSTANCE;
   }
 
   @Override

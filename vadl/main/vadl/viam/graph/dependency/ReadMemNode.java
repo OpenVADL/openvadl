@@ -1,6 +1,7 @@
 package vadl.viam.graph.dependency;
 
 import vadl.types.DummyType;
+import vadl.types.Type;
 
 /**
  * The ReadMemNode class is a concrete class that extends ReadNode.
@@ -9,5 +10,10 @@ import vadl.types.DummyType;
 public class ReadMemNode extends ReadNode {
   public ReadMemNode(ExpressionNode location) {
     super(location, DummyType.INSTANCE);
+  }
+
+  @Override
+  public Type type() {
+    return DummyType.INSTANCE;
   }
 }

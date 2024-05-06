@@ -3,6 +3,7 @@ package vadl.viam.graph.dependency;
 import java.util.List;
 import vadl.javaannotations.viam.DataValue;
 import vadl.types.DummyType;
+import vadl.types.Type;
 import vadl.viam.ConstantValue;
 
 /**
@@ -17,6 +18,11 @@ public class ConstantNode extends ExpressionNode {
   public ConstantNode(ConstantValue constant) {
     super(DummyType.INSTANCE);
     this.constant = constant;
+  }
+
+  @Override
+  public Type type() {
+    return constant.type();
   }
 
   @Override

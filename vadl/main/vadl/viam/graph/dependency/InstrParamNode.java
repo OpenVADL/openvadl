@@ -3,6 +3,7 @@ package vadl.viam.graph.dependency;
 import java.util.List;
 import vadl.javaannotations.viam.DataValue;
 import vadl.types.DummyType;
+import vadl.types.Type;
 
 /**
  * A format field reference that may be used as parameter to an instruction.
@@ -16,6 +17,12 @@ public class InstrParamNode extends ParamNode {
   public InstrParamNode(String reg) {
     super(DummyType.INSTANCE);
     this.reg = reg;
+  }
+
+  @Override
+  public Type type() {
+    // TODO: Refactor
+    return DummyType.INSTANCE;
   }
 
   @Override

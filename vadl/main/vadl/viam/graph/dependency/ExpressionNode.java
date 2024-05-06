@@ -7,7 +7,7 @@ import vadl.types.Type;
  * hold the type of the value. This is required to maintain
  * graph consistency during graph transformation.
  */
-public class ExpressionNode extends DependencyNode {
+public abstract class ExpressionNode extends DependencyNode {
 
   protected Type type;
 
@@ -15,7 +15,9 @@ public class ExpressionNode extends DependencyNode {
     this.type = type;
   }
 
-  public Type type() {
-    return type;
-  }
+
+  public abstract Type type();
+//  public Type type() {
+//    return type;
+//  }
 }
