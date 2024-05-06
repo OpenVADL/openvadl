@@ -19,10 +19,10 @@ public class BinaryOpNode extends BinaryNode {
     this.op = op;
   }
 
-  @Override
-  public Type type() {
-    return DummyType.INSTANCE;
-  }
+//  @Override
+//  public Type type() {
+//    return DummyType.INSTANCE;
+//  }
 
   @Override
   protected void collectData(List<Object> collection) {

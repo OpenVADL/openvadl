@@ -16,12 +16,12 @@ public class BuiltInCall extends AbstractFunctionCall {
     this.builtIn = builtIn;
   }
 
-  @Override
-  public Type type() {
-    var argTypes = args.toTypeList();
-    ensureNonNull(argTypes, "Type args cannot be null");
-    return builtIn.returnType(argTypes);
-  }
+//  @Override
+//  public Type type() {
+//    var argTypes = args.toTypeList();
+//    ensureNonNull(argTypes, "Type args cannot be null");
+//    return builtIn.returnType(argTypes);
+//  }
 
   @Override
   protected void collectData(List<Object> collection) {

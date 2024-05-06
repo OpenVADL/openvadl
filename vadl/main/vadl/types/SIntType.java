@@ -15,5 +15,5 @@ public class SIntType extends Type {
     return "SInt<%s>".formatted(bitWidth);
   }
 
-
+  
 }

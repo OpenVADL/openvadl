@@ -19,10 +19,10 @@ public class TypeCastNode extends UnaryNode {
     this.castType = type;
   }
 
-  @Override
-  public Type type() {
-    return castType;
-  }
+//  @Override
+//  public Type type() {
+//    return castType;
+//  }
 
   @Override
   protected void collectData(List<Object> collection) {

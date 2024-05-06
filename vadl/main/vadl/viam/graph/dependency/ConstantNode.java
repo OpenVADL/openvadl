@@ -15,15 +15,15 @@ public class ConstantNode extends ExpressionNode {
   @DataValue
   public final ConstantValue constant; // TODO: Replace this by appropriate type
 
-  public ConstantNode(ConstantValue constant) {
-    super(DummyType.INSTANCE);
+  public ConstantNode(ConstantValue constant, Type type) {
+    super(type);
     this.constant = constant;
   }
 
-  @Override
-  public Type type() {
-    return constant.type();
-  }
+//  @Override
+//  public Type type() {
+//    return constant.type();
+//  }
 
   @Override
   protected void collectData(List<Object> collection) {

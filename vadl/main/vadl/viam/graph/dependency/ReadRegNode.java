@@ -14,16 +14,16 @@ public class ReadRegNode extends ReadNode {
   @DataValue
   protected String register; // TODO: Replace by proper datastructure
 
-  public ReadRegNode(String register, ExpressionNode location) {
-    super(location, DummyType.INSTANCE);
+  public ReadRegNode(String register, ExpressionNode location, Type type) {
+    super(location, type);
     this.register = register;
   }
 
-  @Override
-  public Type type() {
-    // TODO: Refactor
-    return DummyType.INSTANCE;
-  }
+//  @Override
+//  public Type type() {
+//    // TODO: Refactor
+//    return DummyType.INSTANCE;
+//  }
 
   @Override
   protected void collectData(List<Object> collection) {

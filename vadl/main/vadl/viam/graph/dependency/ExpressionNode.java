@@ -15,9 +15,8 @@ public abstract class ExpressionNode extends DependencyNode {
     this.type = type;
   }
 
-
-  public abstract Type type();
-//  public Type type() {
-//    return type;
-//  }
+  //  public abstract Type type();
+  public Type type() {
+    return type;
+  }
 }

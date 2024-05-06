@@ -8,12 +8,12 @@ import vadl.types.Type;
  * It represents a node that reads a value from a memory location.
  */
 public class ReadMemNode extends ReadNode {
-  public ReadMemNode(ExpressionNode location) {
-    super(location, DummyType.INSTANCE);
+  public ReadMemNode(ExpressionNode location, Type type) {
+    super(location, type);
   }
 
-  @Override
-  public Type type() {
-    return DummyType.INSTANCE;
-  }
+//  @Override
+//  public Type type() {
+//    return DummyType.INSTANCE;
+//  }
 }

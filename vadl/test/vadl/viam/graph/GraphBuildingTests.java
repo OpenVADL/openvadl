@@ -10,8 +10,10 @@ import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static vadl.viam.graph.GraphMatchers.activeIn;
 
+import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import vadl.types.DummyType;
 import vadl.types.Type;
 import vadl.viam.ConstantValue;
 import vadl.viam.graph.control.EndNode;
@@ -20,6 +22,7 @@ import vadl.viam.graph.dependency.ConstantNode;
 import vadl.viam.graph.dependency.InstrParamNode;
 import vadl.viam.graph.dependency.SideEffectNode;
 import vadl.viam.graph.dependency.WriteRegNode;
+import vadl.viam.graph.visualize.DotGraphVisualizer;
 import vadl.viam.helper.TestGraph;
 import vadl.viam.helper.TestNodes.Plain;
 import vadl.viam.helper.TestNodes.PlainUnique;
@@ -43,6 +46,15 @@ public class GraphBuildingTests {
   @BeforeEach
   public void setUp() {
     testGraph = new TestGraph("VerificationTestGraph");
+  }
+
+  @AfterEach
+  public void tearDown() {
+    System.out.println(
+        new DotGraphVisualizer()
+            .load(testGraph)
+            .visualize()
+    );
   }
 
   @Test
@@ -133,18 +145,18 @@ public class GraphBuildingTests {
   void add_withNodeListInput_Failure() {
     var sideEffects = new NodeList<SideEffectNode>(
         new WriteRegNode(
-            new InstrParamNode("testReg"),
-            new ConstantNode(ConstantValue.of(2, Type.signedInt(32)))
+            new InstrParamNode("testReg", DummyType.INSTANCE),
+            new ConstantNode(ConstantValue.of(2, Type.signedInt(32)), DummyType.INSTANCE)
         ),
         new WriteRegNode(
-            new InstrParamNode("testReg"),
-            new ConstantNode(ConstantValue.of(2, Type.signedInt(32)))
+            new InstrParamNode("testReg", DummyType.INSTANCE),
+            new ConstantNode(ConstantValue.of(2, Type.signedInt(32)), DummyType.INSTANCE)
         )
     );
     var end = testGraph.addWithInputs(new EndNode(sideEffects));
     testGraph.add(new StartNode(end));
 
-    assertEquals(testGraph.getNodes().count(), 5);
+    assertEquals(5, testGraph.getNodes().count());
   }
 
 

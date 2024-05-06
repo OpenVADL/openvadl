@@ -14,4 +14,5 @@ public class BitsType extends Type {
   public String name() {
     return "Bits<%d>".formatted(bitWidth);
   }
+  
 }

@@ -14,16 +14,16 @@ public class InstrParamNode extends ParamNode {
   @DataValue
   String reg; // TODO: refactor to real datastructure
 
-  public InstrParamNode(String reg) {
-    super(DummyType.INSTANCE);
+  public InstrParamNode(String reg, Type type) {
+    super(type);
     this.reg = reg;
   }
 
-  @Override
-  public Type type() {
-    // TODO: Refactor
-    return DummyType.INSTANCE;
-  }
+//  @Override
+//  public Type type() {
+//    // TODO: Refactor
+//    return DummyType.INSTANCE;
+//  }
 
   @Override
   protected void collectData(List<Object> collection) {

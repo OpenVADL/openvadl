@@ -33,11 +33,11 @@ public class SelectNode extends ExpressionNode {
     this.falseCase = falseCase;
   }
 
-  @Override
-  public Type type() {
-    ensure(trueCase.type().equals(falseCase.type()), "True and false case must have the same type");
-    return trueCase.type();
-  }
+//  @Override
+//  public Type type() {
+//    ensure(trueCase.type().equals(falseCase.type()), "True and false case must have the same type");
+//    return trueCase.type();
+//  }
 
   @Override
   protected void collectInputs(List<Node> collection) {
