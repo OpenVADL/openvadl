@@ -14,10 +14,16 @@ import vadl.viam.graph.dependency.ExpressionNode;
 public class DotGraphVisualizer implements GraphVisualizer<String, Graph> {
 
   private @Nullable Graph graph;
+  private boolean withSourceLocation = false;
 
   @Override
   public DotGraphVisualizer load(Graph graph) {
     this.graph = graph;
+    return this;
+  }
+
+  public DotGraphVisualizer withSourceLocation(boolean option) {
+    withSourceLocation = option;
     return this;
   }
 
@@ -71,7 +77,7 @@ public class DotGraphVisualizer implements GraphVisualizer<String, Graph> {
       label.append(" -> ");
       label.append(((ExpressionNode) node).type().name());
     }
-    if (node.sourceLocation().isValid()) {
+    if (withSourceLocation && node.sourceLocation().isValid()) {
       label
           .append("\\n@ ")
           .append(node.sourceLocation().toConciseString());
