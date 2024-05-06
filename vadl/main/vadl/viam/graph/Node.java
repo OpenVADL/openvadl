@@ -38,7 +38,7 @@ public abstract class Node {
     this.id = new Id();
     this.usages = new ArrayList<>();
     this.predecessor = null;
-    this.sourceLocation = new SourceLocation();
+    this.sourceLocation = SourceLocation.INVALID_SOURCE_LOCATION;
   }
 
   public Id id() {

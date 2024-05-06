@@ -9,13 +9,14 @@ import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 import java.util.stream.Stream;
 import javax.annotation.Nullable;
+import org.jetbrains.annotations.NotNull;
 
 /**
  * References a location span in source.
  *
- * @param uri uri to concrete source file
+ * @param uri   uri to concrete source file
  * @param begin the span begin with line and column
- * @param end the span end with line and column
+ * @param end   the span end with line and column
  */
 public record SourceLocation(
     URI uri,
@@ -23,7 +24,10 @@ public record SourceLocation(
     SourcePosition end
 ) {
 
-  public static final URI INVALID_MEMORY = URI.create("memory://unknown");
+  private static final URI INVALID_MEMORY = URI.create("memory://unknown");
+
+  public static final SourceLocation INVALID_SOURCE_LOCATION =
+      new SourceLocation(INVALID_MEMORY, 0);
 
   public SourceLocation(URI uri, SourcePosition begin) {
     this(uri, begin, begin);
@@ -37,12 +41,65 @@ public record SourceLocation(
     this(uri, line, line);
   }
 
-  public SourceLocation() {
-    this(INVALID_MEMORY, 0);
-  }
-
   public boolean isValid() {
     return !this.uri.equals(INVALID_MEMORY);
+  }
+
+
+  /**
+   * Joins this source location with another source location.
+   *
+   * @param other The source location to join with.
+   * @return The joined source location  or the invalid one,
+   * if one of the original source locations are invalid
+   * @throws IllegalArgumentException if they point to different files.
+   */
+  public SourceLocation join(SourceLocation other) {
+    if (!this.isValid() || !other.isValid()) {
+      return INVALID_SOURCE_LOCATION;
+    }
+
+    if (!this.uri.equals(other.uri)) {
+      throw new IllegalArgumentException(
+          "Cannot join source locations that point to different files.");
+    }
+
+    SourcePosition begin = this.begin.compareTo(other.begin) < 0 ? this.begin : other.begin;
+    SourcePosition end = this.end.compareTo(other.end) > 0 ? this.end : other.end;
+
+    return new SourceLocation(this.uri, begin, end);
+  }
+
+
+  /**
+   * Returns a new {@code SourceLocation} object representing the intersection
+   * of this {@code SourceLocation} and the specified {@code SourceLocation} other.
+   *
+   * @param other the {@code SourceLocation} to intersect with this {@code SourceLocation}
+   * @return a new {@code SourceLocation} object representing the intersection
+   * of this {@code SourceLocation} and the specified {@code SourceLocation} or
+   * the invalid one, if one of the original source locations are invalid
+   * @throws IllegalArgumentException if this and other point to different files,
+   *                                  or if the source locations do not intersect
+   */
+  public SourceLocation meet(SourceLocation other) throws IllegalArgumentException {
+    if (!this.isValid() || !other.isValid()) {
+      return INVALID_SOURCE_LOCATION;
+    }
+
+    if (!this.uri.equals(other.uri)) {
+      throw new IllegalArgumentException(
+          "Cannot intersect source locations that point to different files.");
+    }
+
+    if (this.end.compareTo(other.begin) < 0 || other.end.compareTo(this.begin) < 0) {
+      throw new IllegalArgumentException("The source locations do not intersect.");
+    }
+
+    SourcePosition begin = (this.begin.compareTo(other.begin) > 0) ? this.begin : other.begin;
+    SourcePosition end = (this.end.compareTo(other.end) < 0) ? this.end : other.end;
+
+    return new SourceLocation(this.uri, begin, end);
   }
 
   /**
@@ -113,7 +170,7 @@ public record SourceLocation(
   public record SourcePosition(
       int line,
       int column
-  ) {
+  ) implements Comparable<SourcePosition> {
 
     public SourcePosition(int line) {
       this(line, -1);
@@ -125,6 +182,17 @@ public record SourceLocation(
         return "" + line;
       }
       return line + ":" + column;
+    }
+
+    @Override
+    public int compareTo(@NotNull SourceLocation.SourcePosition other) {
+      if (this.line < other.line) {
+        return -1;
+      } else if (this.line > other.line) {
+        return 1;
+      } else {
+        return Integer.compare(this.column, other.column);
+      }
     }
   }
 }

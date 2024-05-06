@@ -6,6 +6,7 @@ import java.util.ArrayList;
 import java.util.Objects;
 import java.util.stream.Stream;
 import javax.annotation.Nullable;
+import vadl.utils.SourceLocation;
 
 /**
  * The VIAM graph represents an execution flow definition
@@ -17,6 +18,7 @@ import javax.annotation.Nullable;
 public class Graph {
 
   public final String name;
+  private SourceLocation sourceLocation = SourceLocation.INVALID_SOURCE_LOCATION;
 
   ArrayList<Node> nodes;
   private long removedNodes = 0;
@@ -242,6 +244,14 @@ public class Graph {
             .shrinkStacktrace(1);
       }
     }
+  }
+
+  public SourceLocation sourceLocation() {
+    return sourceLocation;
+  }
+
+  public void setSourceLocation(SourceLocation sourceLocation) {
+    this.sourceLocation = sourceLocation;
   }
 }
 
