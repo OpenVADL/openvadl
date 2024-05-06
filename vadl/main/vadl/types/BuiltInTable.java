@@ -5,11 +5,25 @@ import javax.annotation.Nullable;
 
 public class BuiltInTable {
 
-  // TODO: Move init to specific type.
-  public static Binary.Add add = new Binary.Add() {
+  public final static Binary.Add EQUAL = new Binary.Add() {
     @Override
     public Type returnType(TypeList<Type> argTypes) {
       ensureCorrectTypes(argTypes);
+      return Type.bool();
+    }
+
+    @Override
+    public void ensureCorrectTypes(TypeList<Type> argTypes) {
+      argTypes.ensureLength(2, "equal must have exactly two arguments");
+    }
+  };
+
+  // TODO: Move init to specific type.
+  public final static Binary.Add ADD = new Binary.Add() {
+    @Override
+    public Type returnType(TypeList<Type> argTypes) {
+      ensureCorrectTypes(argTypes);
+      // TODO: This is not yet correct.
       return argTypes.get(0);
     }
 
@@ -76,7 +90,7 @@ public class BuiltInTable {
 
     public static abstract class Add extends Binary {
 
-      public Add() {
+      private Add() {
         super("ADD", "+");
       }
 
