@@ -11,7 +11,7 @@ public class BuiltInCall extends AbstractFunctionCall {
   @DataValue
   protected BuiltIn builtIn;
 
-  BuiltInCall(BuiltIn builtIn, NodeList<ExpressionNode> args, Type type) {
+  public BuiltInCall(BuiltIn builtIn, NodeList<ExpressionNode> args, Type type) {
     super(args, type);
     this.builtIn = builtIn;
   }
