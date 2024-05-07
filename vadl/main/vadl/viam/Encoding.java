@@ -16,12 +16,12 @@ import vadl.types.Type;
  */
 public class Encoding extends Definition {
 
-  private final Instruction instruction;
+  private final Type type;
   private final List<Field> fields = new ArrayList<Field>();
 
-  public Encoding(Identifier identifier, Instruction instruction) {
+  public Encoding(Identifier identifier, Type type) {
     super(identifier);
-    this.instruction = instruction;
+    this.type = type;
   }
 
   public Encoding addFields(Field... encodingFields) {
@@ -29,10 +29,9 @@ public class Encoding extends Definition {
     return this;
   }
 
-  public Instruction instruction() {
-    return instruction;
+  public Type type() {
+    return type;
   }
-
 
   /**
    * A field within an encoding.
