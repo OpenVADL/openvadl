@@ -33,4 +33,10 @@ public abstract class Type {
     return DummyType.INSTANCE;
   }
 
+  public static RangeType range(Type subtype) {
+    return new RangeType(subtype);
+  }
+
+  ;
+
 }

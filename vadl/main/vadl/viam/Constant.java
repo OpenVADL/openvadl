@@ -1,8 +1,14 @@
 package vadl.viam;
 
 import java.math.BigInteger;
+import java.util.ArrayList;
+import java.util.List;
+import vadl.types.RangeType;
 import vadl.types.Type;
 
+/**
+ * The Constant class represents some kind of constant with a specific type.
+ */
 public abstract class Constant {
 
   private final Type type;
@@ -53,6 +59,11 @@ public abstract class Constant {
     }
 
     @Override
+    public String toString() {
+      return value.toString();
+    }
+
+    @Override
     public boolean equals(Object o) {
       if (this == o) {
         return true;
@@ -77,13 +88,19 @@ public abstract class Constant {
   }
 
 
+  /**
+   * The Range class represents a constant range of values.
+   * A range is defined by a starting value (from) and an ending value (to) (both inclusive).
+   */
   public static class Range extends Constant {
 
     private final Value from;
     private final Value to;
 
-    public Range(Type type, Value from, Value to) {
-      super(type);
+    public Range(Value from, Value to) {
+      super(Type.range(from.type()));
+      ViamError.ensure(from.type().equals(to.type()),
+          "range boundary values must be of the same type. from=%s, to=%s", from.type(), to.type());
       this.from = from;
       this.to = to;
     }
@@ -94,6 +111,41 @@ public abstract class Constant {
 
     public Value to() {
       return to;
+    }
+
+    public boolean isIndex() {
+      return from.value.equals(to.value);
+    }
+
+    public boolean isRange() {
+      return !isIndex();
+    }
+
+    final int size() {
+      if (isIndex()) {
+        return 1;
+      }
+
+      var from = this.from.value.intValue();
+      var to = this.to.value.intValue();
+      return to - from + 1;
+    }
+
+
+    public List<Value> toList() {
+      List<Value> list = new ArrayList<>();
+      for (BigInteger i = from.value(); i.compareTo(to.value()) <= 0; i = i.add(BigInteger.ONE)) {
+        list.add(new Value(i, from.type()));
+      }
+      return list;
+    }
+
+    @Override
+    public String toString() {
+      return "Range{" +
+          "from=" + from +
+          ", to=" + to +
+          '}';
     }
 
     @Override
