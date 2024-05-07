@@ -16,7 +16,14 @@ public class Main {
    */
   public static void main(String[] args) {
     var program = """
-        constant a = 13
+        format I_TYPE : Bits<32> =
+        { funct6 [31..26]
+        , shamt  [25..20]
+        , rs1    [19..15]
+        , funct3 [14..12]
+        , rd     [11..7]
+        , opcode [6..0]
+        }
         """;
 
     try {

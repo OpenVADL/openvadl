@@ -53,6 +53,56 @@ class IntegerLiteral extends Expr {
   }
 }
 
+class RangeExpr extends Expr {
+  Expr from;
+  Expr to;
+
+  public RangeExpr(Expr from, Expr to) {
+    this.from = from;
+    this.to = to;
+  }
+
+  @Override
+  Location location() {
+    return new Location(from.location(), to.location());
+  }
+
+  @Override
+  void dump(int indent, StringBuilder builder) {
+    builder.append(dumpIndentString(indent));
+    builder.append("RangeExpr\n");
+    from.dump(indent + 1, builder);
+    to.dump(indent + 1, builder);
+  }
+
+  @Override
+  void prettyPrint(int indent, StringBuilder builder) {
+    from.prettyPrint(indent, builder);
+    builder.append("..");
+    to.prettyPrint(indent, builder);
+  }
+
+  @Override
+  public boolean equals(Object o) {
+    if (this == o) {
+      return true;
+    }
+    if (o == null || getClass() != o.getClass()) {
+      return false;
+    }
+
+    RangeExpr rangeExpr = (RangeExpr) o;
+    return from.equals(rangeExpr.from) && to.equals(rangeExpr.to);
+  }
+
+  @Override
+  public int hashCode() {
+    int result = from.hashCode();
+    result = 31 * result + to.hashCode();
+    return result;
+  }
+}
+
 /**
  * TypeLiterals are needed as the types are not known during parsing.
  * For example {@code Bits<counter>} depends on the constant {@code counter} used here and so some
