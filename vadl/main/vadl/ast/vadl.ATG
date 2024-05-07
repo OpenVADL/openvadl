@@ -66,10 +66,11 @@ PRODUCTIONS
       "}"   (. isaDef = new InstructionSetDefinition(identifier, statements, new Location(startLocation, locationFromToken(t))); .)
       .
 
-    isaStatement<out Stmt stmt>         (. stmt = null; .)
-    = constantStatement<out Stmt s1>    (. stmt = s1; .)
-    | memoryStatement<out Stmt s1>      (. stmt = s1; .)
-    | indexStatement<out Stmt s1>      (. stmt = s1; .)
+    isaStatement<out Stmt stmt>             (. stmt = null; .)
+    = constantStatement<out Stmt s1>        (. stmt = s1; .)
+    | memoryStatement<out Stmt s1>          (. stmt = s1; .)
+    | indexStatement<out Stmt s1>           (. stmt = s1; .)
+    | registerAndRegisterFileStatement<out Stmt s1>        (. stmt = s1; .)
     .
 
 
@@ -97,6 +98,19 @@ PRODUCTIONS
         identifier<out Identifier id>       (. symbolTable.addDefinition(id); .)
         ":" typeLiteral<out TypeLiteral t1>
         "->" typeLiteral<out TypeLiteral t2> (. stmt = new MemoryDefinitionStmt(id, t1, t2, new Location(startLocation, t2.location())); .)
+    .
+
+    registerAndRegisterFileStatement<out Stmt stmt> (. stmt = null; .)
+        = "register"                                (. var startLocation = locationFromToken(t); .)
+        (
+            "file"
+            identifier<out Identifier id>           (. symbolTable.addDefinition(id); .)
+            ":" typeLiteral<out TypeLiteral t1>
+            "->" typeLiteral<out TypeLiteral t2>    (. stmt = new RegisterFileDefinitionStmt(id, t1, t2, new Location(startLocation, t2.location())); .)
+        |
+            identifier<out Identifier id>           (. symbolTable.addDefinition(id); .)
+            ":" typeLiteral<out TypeLiteral t1>     (. stmt = new RegisterDefinitionStmt(id, t1, new Location(startLocation, t1.location())); .)
+        )
     .
 
     // -- EXPRESSIONS ---------------------------------------------------------------------------------------------------

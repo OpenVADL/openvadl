@@ -128,4 +128,28 @@ public class ParserTest {
     var ast = Assertions.assertDoesNotThrow(() -> VadlParser.parse(prog), "Cannot parse input");
     verifyPrettifiedAst(ast);
   }
+
+  @Test
+  void registerDefinition() {
+    var prog = """
+        instruction set architecture FLO = {
+          register Y : Bits<32>
+        }
+        """;
+
+    var ast = Assertions.assertDoesNotThrow(() -> VadlParser.parse(prog), "Cannot parse input");
+    verifyPrettifiedAst(ast);
+  }
+
+  @Test
+  void registerFileDefinition() {
+    var prog = """
+        instruction set architecture FLO = {
+          register file X : Bits<5> -> Bits<32>
+        }
+        """;
+
+    var ast = Assertions.assertDoesNotThrow(() -> VadlParser.parse(prog), "Cannot parse input");
+    verifyPrettifiedAst(ast);
+  }
 }

@@ -111,4 +111,30 @@ public class NameResolutionTest {
         "Expected to throw name conflict");
     Assertions.assertEquals(thrown.errors.size(), 1);
   }
+
+  @Test
+  void resolveTwoOverlappingRegisterDefinitions() {
+    var prog = """
+        instruction set architecture FLO = {
+          register X : Bits<5>
+          register X : Bits<2>
+        }
+        """;
+    var thrown = Assertions.assertThrows(VadlException.class, () -> VadlParser.parse(prog),
+        "Expected to throw name conflict");
+    Assertions.assertEquals(thrown.errors.size(), 1);
+  }
+
+  @Test
+  void resolveTwoOverlappingRegisterFileDefinitions() {
+    var prog = """
+        instruction set architecture FLO = {
+          register file X : Bits<5> -> Bits<32>
+          register file X : Bits<2> -> Bits<4>
+        }
+        """;
+    var thrown = Assertions.assertThrows(VadlException.class, () -> VadlParser.parse(prog),
+        "Expected to throw name conflict");
+    Assertions.assertEquals(thrown.errors.size(), 1);
+  }
 }
