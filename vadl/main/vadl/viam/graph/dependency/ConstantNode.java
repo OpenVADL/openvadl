@@ -4,7 +4,7 @@ import java.util.List;
 import vadl.javaannotations.viam.DataValue;
 import vadl.types.DummyType;
 import vadl.types.Type;
-import vadl.viam.ConstantValue;
+import vadl.viam.Constant;
 
 /**
  * The constant node represents a compile time constant value in the
@@ -13,9 +13,9 @@ import vadl.viam.ConstantValue;
 public class ConstantNode extends ExpressionNode {
 
   @DataValue
-  public final ConstantValue constant; // TODO: Replace this by appropriate type
+  public final Constant constant; // TODO: Replace this by appropriate type
 
-  public ConstantNode(ConstantValue constant, Type type) {
+  public ConstantNode(Constant constant, Type type) {
     super(type);
     this.constant = constant;
   }

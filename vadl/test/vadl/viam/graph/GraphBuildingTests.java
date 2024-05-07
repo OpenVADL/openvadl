@@ -15,7 +15,7 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import vadl.types.DummyType;
 import vadl.types.Type;
-import vadl.viam.ConstantValue;
+import vadl.viam.Constant;
 import vadl.viam.graph.control.EndNode;
 import vadl.viam.graph.control.StartNode;
 import vadl.viam.graph.dependency.ConstantNode;
@@ -146,11 +146,11 @@ public class GraphBuildingTests {
     var sideEffects = new NodeList<SideEffectNode>(
         new WriteRegNode(
             new InstrParamNode("testReg", DummyType.INSTANCE),
-            new ConstantNode(ConstantValue.of(2, Type.signedInt(32)), DummyType.INSTANCE)
+            new ConstantNode(Constant.Value.of(2, Type.signedInt(32)), DummyType.INSTANCE)
         ),
         new WriteRegNode(
             new InstrParamNode("testReg", DummyType.INSTANCE),
-            new ConstantNode(ConstantValue.of(2, Type.signedInt(32)), DummyType.INSTANCE)
+            new ConstantNode(Constant.Value.of(2, Type.signedInt(32)), DummyType.INSTANCE)
         )
     );
     var end = testGraph.addWithInputs(new EndNode(sideEffects));
