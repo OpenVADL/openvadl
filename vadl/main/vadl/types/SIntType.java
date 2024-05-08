@@ -3,11 +3,10 @@ package vadl.types;
 /**
  * An arbitrary sized signed integer.
  */
-public class SIntType extends Type {
-  public final int bitWidth;
-
+public class SIntType extends BitsType {
+  
   protected SIntType(int bitWidth) {
-    this.bitWidth = bitWidth;
+    super(bitWidth);
   }
 
   @Override

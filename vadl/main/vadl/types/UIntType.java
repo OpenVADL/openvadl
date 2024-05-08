@@ -1,17 +1,21 @@
 package vadl.types;
 
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
+
 /**
  * An arbitrary sized unsigned integer.
  */
-public class UIntType extends Type {
-  public final int bitWidth;
+public class UIntType extends BitsType {
 
   protected UIntType(int bitWidth) {
-    this.bitWidth = bitWidth;
+    super(bitWidth);
   }
 
   @Override
   public String name() {
     return "UInt<%s>".formatted(bitWidth);
   }
+
 }
