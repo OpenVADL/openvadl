@@ -67,7 +67,10 @@ public class Encoding extends Definition {
       );
 
       this.type = type;
-      ranges.sort(Comparator.comparing(a -> a.from().value()));
+      ranges.sort(Comparator
+          .comparing(a -> ((Constant.Range) a).from().value())
+          .reversed()
+      );
       this.ranges = ranges;
       this.encoding = encoding;
     }
