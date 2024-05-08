@@ -10,6 +10,10 @@ public class BitsType extends Type {
     this.bitWidth = bitWidth;
   }
 
+  public int bitWidth() {
+    return bitWidth;
+  }
+
   @Override
   public String name() {
     return "Bits<%d>".formatted(bitWidth);

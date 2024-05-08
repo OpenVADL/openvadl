@@ -135,6 +135,10 @@ public class Encoding extends Definition {
           .sum();
     }
 
+
+    // cached occupation array
+    private @Nullable int[] occupationArray = null;
+
     /**
      * Converts the occupation ranges to an array of integers.
      * The resulting array contains the indices of all bits, that are
@@ -143,15 +147,17 @@ public class Encoding extends Definition {
      * @return an array of integers representing the occupation ranges
      */
     public int[] toOccupationArray() {
-      var arr = new int[size()];
-      int index = 0;
-      for (Constant.Range range : ranges) {
-        List<Constant.Value> values = range.toList();
-        for (Constant.Value value : values) {
-          arr[index++] = value.value().intValue();
+      if (occupationArray == null) {
+        occupationArray = new int[size()];
+        int index = 0;
+        for (Constant.Range range : ranges) {
+          List<Constant.Value> values = range.toList();
+          for (Constant.Value value : values) {
+            occupationArray[index++] = value.value().intValue();
+          }
         }
       }
-      return arr;
+      return occupationArray;
     }
 
     @Override
