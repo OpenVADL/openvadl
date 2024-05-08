@@ -17,6 +17,10 @@ public abstract class Type {
    */
   public abstract String name();
 
+  @Override
+  public String toString() {
+    return name();
+  }
 
   private final static HashMap<Integer, BitsType> bitsTypes = new HashMap<>();
 
