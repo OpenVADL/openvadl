@@ -8,7 +8,7 @@ import java.util.Objects;
  * The abstract syntax tree for the vadl language.
  */
 public class Ast {
-  List<Definition> definitions = new ArrayList<>();
+  List<Section> sections = new ArrayList<>();
 
   /**
    * Dump the AST into a tree like representation for debugging.
@@ -17,7 +17,7 @@ public class Ast {
    */
   public String dump() {
     StringBuilder builder = new StringBuilder();
-    for (var stmt : definitions) {
+    for (var stmt : sections) {
       stmt.dump(0, builder);
     }
     return builder.toString();
@@ -34,8 +34,8 @@ public class Ast {
    */
   public String prettyPrint() {
     StringBuilder builder = new StringBuilder();
-    for (var stmt : definitions) {
-      stmt.prettyPrint(0, builder);
+    for (var section : sections) {
+      section.prettyPrint(0, builder);
     }
     return builder.toString();
   }
@@ -50,12 +50,12 @@ public class Ast {
     }
 
     Ast ast = (Ast) o;
-    return Objects.equals(definitions, ast.definitions);
+    return Objects.equals(sections, ast.sections);
   }
 
   @Override
   public int hashCode() {
-    return Objects.hashCode(definitions);
+    return Objects.hashCode(sections);
   }
 }
 
