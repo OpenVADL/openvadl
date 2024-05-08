@@ -21,7 +21,8 @@ class CommonDefinition extends Definition {
   @Override
   void dump(int indent, StringBuilder builder) {
     builder.append(dumpIndentString(indent));
-    builder.append("CommonDefinition\n");
+    builder.append(this.getClass().getSimpleName());
+    builder.append("\n");
     statement.dump(indent + 1, builder);
   }
 
@@ -68,7 +69,7 @@ class InstructionSetDefinition extends Definition {
   @Override
   void dump(int indent, StringBuilder builder) {
     builder.append(dumpIndentString(indent));
-    builder.append("InstructionSetDefinition \"%s\"\n".formatted(identifier.name));
+    builder.append("%s \"%s\"\n".formatted(this.getClass().getSimpleName(), identifier.name));
 
     for (Stmt stmt : statements) {
       stmt.dump(indent + 1, builder);

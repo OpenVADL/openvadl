@@ -26,7 +26,7 @@ class IntegerLiteral extends Expr {
   @Override
   void dump(int indent, StringBuilder builder) {
     builder.append(dumpIndentString(indent));
-    builder.append("IntegerLiteral (value: %d)\n".formatted(number));
+    builder.append("%s (value: %d)\n".formatted(this.getClass().getSimpleName(), number));
   }
 
   @Override
@@ -70,7 +70,8 @@ class RangeExpr extends Expr {
   @Override
   void dump(int indent, StringBuilder builder) {
     builder.append(dumpIndentString(indent));
-    builder.append("RangeExpr\n");
+    builder.append(this.getClass().getSimpleName());
+    builder.append("\n");
     from.dump(indent + 1, builder);
     to.dump(indent + 1, builder);
   }
@@ -130,7 +131,8 @@ class TypeLiteral extends Expr {
   @Override
   void dump(int indent, StringBuilder builder) {
     builder.append(dumpIndentString(indent));
-    builder.append("TypeLiteral\n");
+    builder.append(this.getClass().getSimpleName());
+    builder.append("\n");
     baseType.dump(indent + 1, builder);
     if (sizeExpression != null) {
       sizeExpression.dump(indent + 1, builder);
@@ -186,7 +188,9 @@ class Variable extends Expr {
   @Override
   void dump(int indent, StringBuilder builder) {
     builder.append(dumpIndentString(indent));
-    builder.append("Variable \"%s\"\n".formatted(identifier.name));
+    builder.append(this.getClass().getSimpleName());
+    builder.append("\n");
+    identifier.dump(indent + 1, builder);
   }
 
   @Override
@@ -244,7 +248,8 @@ class BinaryExpr extends Expr {
   @Override
   void dump(int indent, StringBuilder builder) {
     builder.append(dumpIndentString(indent));
-    builder.append("BinaryExpr (operation: %s)\n".formatted(operationAsString(operation)));
+    builder.append("%s (operation: %s)\n".formatted(this.getClass().getSimpleName(),
+        operationAsString(operation)));
     left.dump(indent + 1, builder);
     right.dump(indent + 1, builder);
   }

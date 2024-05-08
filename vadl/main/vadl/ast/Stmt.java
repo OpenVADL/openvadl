@@ -35,7 +35,8 @@ class ConstantDefinitionStmt extends Stmt {
   @Override
   void dump(int indent, StringBuilder builder) {
     builder.append(dumpIndentString(indent));
-    builder.append("ConstantDefinitionStmt\n");
+    builder.append(this.getClass().getSimpleName());
+    builder.append("\n");
     if (typeAnnotation != null) {
       typeAnnotation.dump(indent + 1, builder);
     }
@@ -103,7 +104,8 @@ class FormatDefinitionStmt extends Stmt {
     @Override
     void dump(int indent, StringBuilder builder) {
       builder.append(dumpIndentString(indent));
-      builder.append("FormatField\n");
+      builder.append(this.getClass().getSimpleName());
+      builder.append("\n");
       identifier.dump(indent + 1, builder);
       for (RangeExpr r : ranges) {
         r.dump(indent + 1, builder);
@@ -159,7 +161,8 @@ class FormatDefinitionStmt extends Stmt {
   @Override
   void dump(int indent, StringBuilder builder) {
     builder.append(dumpIndentString(indent));
-    builder.append("FormatDefinitionStmt\n");
+    builder.append(this.getClass().getSimpleName());
+    builder.append("\n");
     identifier.dump(indent + 1, builder);
     typeAnnotation.dump(indent + 1, builder);
     for (var field : fields) {
@@ -252,7 +255,7 @@ class IndexDefinitionStmt extends Stmt {
   @Override
   void dump(int indent, StringBuilder builder) {
     builder.append(dumpIndentString(indent));
-    builder.append("IndexDeclarationStmt (kind: %s)\n".formatted(kind.toString()));
+    builder.append("%s (kind: %s)\n".formatted(this.getClass().getSimpleName(), kind.toString()));
     identifier.dump(indent + 1, builder);
     type.dump(indent + 1, builder);
   }
@@ -311,7 +314,8 @@ class MemoryDefinitionStmt extends Stmt {
   @Override
   void dump(int indent, StringBuilder builder) {
     builder.append(dumpIndentString(indent));
-    builder.append("MemoryDefinitionStmt\n");
+    builder.append(this.getClass().getSimpleName());
+    builder.append("\n");
     addressType.dump(indent + 1, builder);
     dataType.dump(indent + 1, builder);
   }
@@ -371,7 +375,8 @@ class RegisterDefinitionStmt extends Stmt {
   @Override
   void dump(int indent, StringBuilder builder) {
     builder.append(dumpIndentString(indent));
-    builder.append("RegisterDefinitionStmt\n");
+    builder.append(this.getClass().getSimpleName());
+    builder.append("\n");
     identifier.dump(indent + 1, builder);
     type.dump(indent + 1, builder);
   }
@@ -430,7 +435,8 @@ class RegisterFileDefinitionStmt extends Stmt {
   @Override
   void dump(int indent, StringBuilder builder) {
     builder.append(dumpIndentString(indent));
-    builder.append("RegisterFileDefinitionStmt\n");
+    builder.append(this.getClass().getSimpleName());
+    builder.append("\n");
     identifier.dump(indent + 1, builder);
     addressType.dump(indent + 1, builder);
     registerType.dump(indent + 1, builder);
