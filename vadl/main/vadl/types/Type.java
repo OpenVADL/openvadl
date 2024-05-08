@@ -1,5 +1,6 @@
 package vadl.types;
 
+import java.util.Arrays;
 import java.util.HashMap;
 import javax.annotation.Nullable;
 import javax.xml.crypto.dsig.SignedInfo;
@@ -78,4 +79,24 @@ public abstract class Type {
     return bitSliceType;
   }
 
+  private final static HashMap<Integer, TupleType> tupleTypes = new HashMap<>();
+
+  public static TupleType tuple(Type... types) {
+    var hashCode = Arrays.hashCode(types);
+    var tupleType = tupleTypes.get(hashCode);
+    if (tupleType == null) {
+      tupleType = new TupleType(types);
+      tupleTypes.put(hashCode, tupleType);
+    }
+    return tupleType;
+  }
+
+  private static @Nullable StatusType statusType = null;
+
+  public static StatusType status() {
+    if (statusType == null) {
+      statusType = new StatusType();
+    }
+    return statusType;
+  }
 }
