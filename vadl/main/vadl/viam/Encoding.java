@@ -5,6 +5,7 @@ import java.util.Comparator;
 import java.util.List;
 import java.util.stream.Collectors;
 import javax.annotation.Nullable;
+import vadl.types.BitsType;
 import vadl.types.Type;
 
 /**
@@ -48,8 +49,8 @@ public class Encoding extends Definition {
    */
   public static class Field extends Definition {
 
-    private final Type type;
-    private final List<Constant.Range> ranges;
+    private final BitsType type;
+    private final Constant.BitSlice bitSlice;
     private @Nullable Constant value;
 
     private final Encoding encoding;
@@ -59,49 +60,27 @@ public class Encoding extends Definition {
      *
      * @param identifier the identifier of the field
      * @param type       the type of the field
-     * @param ranges     the list of constant ranges
+     * @param bitSlice   the constant bitslice of the instruction for this field
      * @param encoding   the parent encoding of the field
      */
     public Field(
         Identifier identifier,
-        Type type,
-        List<Constant.Range> ranges,
+        BitsType type,
+        Constant.BitSlice bitSlice,
         Encoding encoding) {
       super(identifier);
 
-      ViamError.ensure(ranges.stream()
-              .map(Constant::type)
-              .collect(Collectors.toSet()).size() == 1,
-          "Ranges must be of same type: %s", ranges
-      );
+      ensure(bitSlice.size() == type.bitWidth,
+          "Field type width of %s is different to slice size of %s", type.bitWidth,
+          bitSlice.size());
 
       this.type = type;
-      ranges.sort(Comparator
-          .comparing(a -> ((Constant.Range) a).from().value())
-          .reversed()
-      );
-      this.ranges = ranges;
+      this.bitSlice = bitSlice;
       this.encoding = encoding;
     }
 
-    /**
-     * Constructs a Field object with the given identifier, type, ranges, and encoding.
-     *
-     * @param identifier the identifier of the field
-     * @param type       the type of the field
-     * @param range      the constant range
-     * @param encoding   the parent encoding of the field
-     */
-    public Field(
-        Identifier identifier,
-        Type type,
-        Constant.Range range,
-        Encoding encoding) {
-      this(identifier, type, List.of(range), encoding);
-    }
-
     public void setValue(Constant value) {
-      ViamError.ensure(value.type().equals(type), "Value must be of type %s, was %s", type,
+      ensure(value.type().equals(type), "Value must be of type %s, was %s", type,
           value.type());
       this.value = value;
     }
@@ -115,8 +94,8 @@ public class Encoding extends Definition {
       return value != null;
     }
 
-    public List<Constant.Range> ranges() {
-      return ranges;
+    public Constant.BitSlice bitSlice() {
+      return bitSlice;
     }
 
     public Type type() {
@@ -127,43 +106,16 @@ public class Encoding extends Definition {
       return encoding;
     }
 
-
     public int size() {
-      return ranges
-          .stream()
-          .mapToInt(Constant.Range::size)
-          .sum();
-    }
-
-
-    // cached occupation array
-    private @Nullable int[] occupationArray = null;
-
-    /**
-     * Converts the occupation ranges to an array of integers.
-     * The resulting array contains the indices of all bits, that are
-     * occupied by this field.
-     *
-     * @return an array of integers representing the occupation ranges
-     */
-    public int[] toOccupationArray() {
-      if (occupationArray == null) {
-        occupationArray = ranges.stream()
-            .map(Constant.Range::toList)
-            .flatMap(List::stream)
-            .mapToInt(e -> e.value().intValue())
-            .sorted()
-            .toArray();
-      }
-      return occupationArray;
+      return bitSlice.size();
     }
 
     @Override
     public String toString() {
       return "Field{"
           + "name=" + identifier
-          + "type=" + type
-          + ", ranges=" + ranges
+          + ", type=" + type
+          + ", bitSlice=" + bitSlice
           + ", value=" + value
           + ", encoding=" + encoding.identifier
           + '}';

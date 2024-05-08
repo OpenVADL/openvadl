@@ -69,15 +69,13 @@ public abstract class Type {
     return DummyType.INSTANCE;
   }
 
-  private final static HashMap<Type, RangeType> rangeTypes = new HashMap<>();
+  private static @Nullable BitSliceType bitSliceType = null;
 
-  public static RangeType range(Type subtype) {
-    var rangeType = rangeTypes.get(subtype);
-    if (rangeType == null) {
-      rangeType = new RangeType(subtype);
-      rangeTypes.put(subtype, rangeType);
+  public static BitSliceType bitSlice() {
+    if (bitSliceType == null) {
+      bitSliceType = new BitSliceType();
     }
-    return rangeType;
+    return bitSliceType;
   }
 
 }

@@ -1,5 +1,6 @@
 package vadl.viam;
 
+import com.google.errorprone.annotations.FormatMethod;
 import vadl.utils.SourceLocation;
 
 public abstract class Definition {
@@ -21,6 +22,19 @@ public abstract class Definition {
 
   public void setSourceLocation(SourceLocation sourceLocation) {
     this.sourceLocation = sourceLocation;
+  }
+
+  @FormatMethod
+  protected void ensure(boolean condition, String message, Object... args) {
+    if (condition) {
+      return;
+    }
+    throw new ViamError(message.formatted(args))
+        .shrinkStacktrace(1)
+        .addContext("name", this.identifier.name())
+        .addContext("definition", this.toString())
+        .addContext("sourceLocation", sourceLocation.toConciseString())
+        .addContext("sourceCode", sourceLocation.toSourceString());
   }
 
 }

@@ -123,14 +123,14 @@ public record SourceLocation(
    * Reads the content of the source file at this location and
    * returns it as String.
    */
-  public @Nullable String toSourceString() {
+  public String toSourceString() {
     if (!this.isValid()) {
       return "Invalid source location: " + this;
     }
 
     try (Stream<String> lines = Files.lines(Paths.get(uri))) {
       if (begin.line <= 0) {
-        return null;
+        return "Invalid source location: " + this;
       }
 
       var lineDiff = end.line - begin.line;
@@ -154,7 +154,7 @@ public record SourceLocation(
 
     } catch (IOException e) {
       e.printStackTrace();
-      return null;
+      return "Failed to load source location " + this.toConciseString() + ": " + e.getMessage();
     }
   }
 
