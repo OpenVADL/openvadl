@@ -1,107 +1,122 @@
 package vadl.types;
 
+import java.util.List;
 import java.util.Objects;
+import java.util.stream.Collectors;
 import javax.annotation.Nullable;
+import vadl.viam.ViamError;
 
 public class BuiltInTable {
 
-  public final static Binary.Add EQUAL = new Binary.Add() {
-    @Override
-    public Type returnType(TypeList<Type> argTypes) {
-      ensureCorrectTypes(argTypes);
-      return Type.bool();
-    }
+  public static Binary.Add<BitsType, BitsType> ADD =
+      new Binary.Add<>(BitsType.class, BitsType.class) {
 
-    @Override
-    public void ensureCorrectTypes(TypeList<Type> argTypes) {
-      argTypes.ensureLength(2, "equal must have exactly two arguments");
-    }
-  };
+      };
 
-  // TODO: Move init to specific type.
-  public final static Binary.Add ADD = new Binary.Add() {
-    @Override
-    public Type returnType(TypeList<Type> argTypes) {
-      ensureCorrectTypes(argTypes);
-      // TODO: This is not yet correct.
-      return argTypes.get(0);
-    }
+  /**
+   * function adds( a : UInt<N>, b : UInt<N> ) -> ( UInt<N>, Status )
+   */
+  public static Binary.Adds<UIntType, UIntType> ADD_UU =
+      new Binary.Adds<>(UIntType.class, UIntType.class) {
 
-    @Override
-    public void ensureCorrectTypes(TypeList<Type> argTypes) {
-      argTypes.ensureLength(2, "addition must have exactly two arguments");
-    }
-  };
+      };
 
-
-  public static abstract class BuiltIn {
+  public static abstract class BuiltIn<R extends Type> {
 
     public final String name;
     public final @Nullable String operator;
+    public final List<Class<? extends Type>> typeClasses;
 
-
-    public BuiltIn(String name, @Nullable String operator) {
+    private BuiltIn(String name, @Nullable String operator,
+                    List<Class<? extends Type>> typeClasses) {
       this.name = name;
       this.operator = operator;
+      this.typeClasses = typeClasses;
     }
 
-    public abstract Type returnType(TypeList<Type> argTypes);
-
-    public abstract void ensureCorrectTypes(TypeList<Type> argTypes);
+    public abstract R returnType(List<Type> types);
 
     @Override
     public String toString() {
-      return "VADL::" + name;
-    }
-
-    @Override
-    public boolean equals(Object o) {
-      if (this == o) {
-        return true;
-      }
-      if (o == null || getClass() != o.getClass()) {
-        return false;
-      }
-
-      BuiltIn builtIn = (BuiltIn) o;
-      return Objects.equals(name, builtIn.name) &&
-          Objects.equals(operator, builtIn.operator);
-    }
-
-    @Override
-    public int hashCode() {
-      int result = Objects.hashCode(name);
-      result = 31 * result + Objects.hashCode(operator);
-      return result;
-    }
-  }
-
-  //  public static abstract class Unary extends BuiltIn {
-//
-//    public static abstract class
-//
-//  }
-//
-  public static abstract class Binary extends BuiltIn {
-
-    public Binary(String name, @Nullable String operator) {
-      super(name, operator);
-    }
-
-    public static abstract class Add extends Binary {
-
-      private Add() {
-        super("ADD", "+");
-      }
-
-
+      return "VADL::" + name + "("
+          + typeClasses.stream()
+          .map(Class::getSimpleName).collect(
+              Collectors.joining(", "))
+          + ")";
     }
 
   }
-//
-//  public static abstract class Nary extends BuiltIn {
-//
-//  }
+
+  public static abstract class Binary<A extends Type, B extends Type, R extends Type>
+      extends BuiltIn<R> {
+    public final Class<A> firstTypeClass;
+    public final Class<B> secondTypeClass;
+
+
+    @Override
+    public final R returnType(List<Type> list) {
+      // TODO: Ensure cast before
+      //noinspection unchecked
+      return returnType((A) list.get(0), (B) list.get(1));
+    }
+
+    public abstract R returnType(A first, B second);
+
+    private Binary(String name, @Nullable String operator, Class<A> first, Class<B> second) {
+      super(name, operator, List.of(first, second));
+      firstTypeClass = first;
+      secondTypeClass = second;
+    }
+
+    public static abstract class Add<A extends BitsType, B extends BitsType>
+        extends Binary<A, B, A> {
+      private Add(Class<A> first, Class<B> second) {
+        super("ADD", "+", first, second);
+      }
+
+      @Override
+      public A returnType(A first, B second) {
+        return first;
+      }
+    }
+
+    public static abstract class Adds<A extends BitsType, B extends BitsType>
+        extends Binary<A, B, TupleType> {
+      private Adds(Class<A> first, Class<B> second) {
+        super("ADDS", "+", first, second);
+      }
+
+      @Override
+      public TupleType returnType(A first, B second) {
+        return Type.tuple(first, Type.status());
+      }
+    }
+
+    public static abstract class Addc<A extends Type, B extends Type>
+        extends Binary<A, B, TupleType> {
+      private Addc(Class<A> first, Class<B> second) {
+        super("ADDC", null, first, second);
+      }
+
+      @Override
+      public TupleType returnType(A first, B second) {
+        return Type.tuple(first, Type.status());
+      }
+    }
+
+    public static abstract class Satadd<A extends Type, B extends Type> extends Binary<A, B, A> {
+      private Satadd(Class<A> first, Class<B> second) {
+        super("SATADD", "+", first, second);
+      }
+
+      @Override
+      public A returnType(A first, B second) {
+        return first;
+      }
+    }
+
+
+  }
 
 
 }
