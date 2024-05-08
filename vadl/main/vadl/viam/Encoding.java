@@ -33,6 +33,15 @@ public class Encoding extends Definition {
     return type;
   }
 
+  @Override
+  public String toString() {
+    return "Encoding{"
+        + "name=" + identifier
+        + "type=" + type
+        + ", fields=[\n" + fields.stream().map(Field::toString).collect(Collectors.joining(",\n"))
+        + "\n]}";
+  }
+
   /**
    * A field within an encoding.
    * Holds information about the type, ranges, and value of the field.
@@ -145,6 +154,16 @@ public class Encoding extends Definition {
       return arr;
     }
 
+    @Override
+    public String toString() {
+      return "Field{"
+          + "name=" + identifier
+          + "type=" + type
+          + ", ranges=" + ranges
+          + ", value=" + value
+          + ", encoding=" + encoding.identifier
+          + '}';
+    }
   }
 
 }
