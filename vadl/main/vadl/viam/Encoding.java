@@ -148,14 +148,12 @@ public class Encoding extends Definition {
      */
     public int[] toOccupationArray() {
       if (occupationArray == null) {
-        occupationArray = new int[size()];
-        int index = 0;
-        for (Constant.Range range : ranges) {
-          List<Constant.Value> values = range.toList();
-          for (Constant.Value value : values) {
-            occupationArray[index++] = value.value().intValue();
-          }
-        }
+        occupationArray = ranges.stream()
+            .map(Constant.Range::toList)
+            .flatMap(List::stream)
+            .mapToInt(e -> e.value().intValue())
+            .sorted()
+            .toArray();
       }
       return occupationArray;
     }

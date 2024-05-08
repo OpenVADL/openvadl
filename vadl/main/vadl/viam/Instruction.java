@@ -7,7 +7,7 @@ import vadl.viam.graph.Graph;
  */
 public class Instruction extends Definition {
 
-  private final Graph behaviour;
+  private final Graph behavior;
   private final Assembly assembly;
   private final Encoding encoding;
 
@@ -16,23 +16,23 @@ public class Instruction extends Definition {
   public Instruction(
       Identifier identifier,
       Format format,
-      Graph behaviour,
+      Graph behavior,
       Assembly assembly,
       Encoding encoding
   ) {
     super(identifier);
     this.format = format;
-    this.behaviour = behaviour;
+    this.behavior = behavior;
     this.assembly = assembly;
     this.encoding = encoding;
-    setSourceLocation(behaviour.sourceLocation()
+    setSourceLocation(behavior.sourceLocation()
         .join(assembly.sourceLocation())
         .join(encoding.sourceLocation())
     );
   }
 
-  public Graph behaviour() {
-    return behaviour;
+  public Graph behavior() {
+    return behavior;
   }
 
   public Assembly assembly() {
