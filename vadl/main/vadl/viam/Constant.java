@@ -3,7 +3,6 @@ package vadl.viam;
 import java.math.BigInteger;
 import java.util.ArrayList;
 import java.util.List;
-import vadl.types.RangeType;
 import vadl.types.Type;
 
 /**
@@ -91,18 +90,36 @@ public abstract class Constant {
   /**
    * The Range class represents a constant range of values.
    * A range is defined by a starting value (from) and an ending value (to) (both inclusive).
+   *
+   * <p>The range's from is always less or qual the to value. TODO: Discuss if this fine/good
    */
   public static class Range extends Constant {
 
     private final Value from;
     private final Value to;
 
-    public Range(Value from, Value to) {
-      super(Type.range(from.type()));
-      ViamError.ensure(from.type().equals(to.type()),
-          "range boundary values must be of the same type. from=%s, to=%s", from.type(), to.type());
-      this.from = from;
-      this.to = to;
+    /**
+     * Constructs a Range object with the given starting value (from) and ending value (to).
+     * The Range instance will have a starting value (from) less or equal the ending value (to).
+     * The boundary values must be of the same type.
+     *
+     * @param a first boundary value of the range
+     * @param b second boundary value of the range
+     */
+    public Range(Value a, Value b) {
+      super(Type.range(a.type()));
+
+      if (a.value.compareTo(b.value) < 0) {
+        this.from = a;
+        this.to = b;
+      } else {
+        this.from = b;
+        this.to = a;
+      }
+
+      ViamError.ensure(a.type().equals(b.type()),
+          "range boundary values must be of the same type. from=%s, to=%s", this.from.type(),
+          this.to.type());
     }
 
     public Value from() {
