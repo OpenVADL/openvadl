@@ -4,7 +4,7 @@ public class RangeType extends Type {
 
   private final Type subtype;
 
-  public RangeType(Type subtype) {
+  protected RangeType(Type subtype) {
     this.subtype = subtype;
   }
 

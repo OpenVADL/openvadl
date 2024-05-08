@@ -6,7 +6,7 @@ package vadl.types;
 public class BitsType extends Type {
   public final int bitWidth;
 
-  public BitsType(int bitWidth) {
+  protected BitsType(int bitWidth) {
     this.bitWidth = bitWidth;
   }
 
@@ -14,5 +14,5 @@ public class BitsType extends Type {
   public String name() {
     return "Bits<%d>".formatted(bitWidth);
   }
-  
+
 }

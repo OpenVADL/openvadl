@@ -6,7 +6,7 @@ package vadl.types;
 public class UIntType extends Type {
   public final int bitWidth;
 
-  public UIntType(int bitWidth) {
+  protected UIntType(int bitWidth) {
     this.bitWidth = bitWidth;
   }
 

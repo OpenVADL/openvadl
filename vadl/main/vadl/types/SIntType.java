@@ -6,7 +6,7 @@ package vadl.types;
 public class SIntType extends Type {
   public final int bitWidth;
 
-  public SIntType(int bitWidth) {
+  protected SIntType(int bitWidth) {
     this.bitWidth = bitWidth;
   }
 
@@ -15,5 +15,5 @@ public class SIntType extends Type {
     return "SInt<%s>".formatted(bitWidth);
   }
 
-  
+
 }
