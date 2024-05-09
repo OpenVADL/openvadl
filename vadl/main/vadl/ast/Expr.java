@@ -7,6 +7,101 @@ import javax.annotation.Nullable;
  * The Expression node of the AST.
  */
 public abstract class Expr extends Node {
+  abstract <R> R accept(ExprVisitor<R> visitor);
+}
+
+interface ExprVisitor<R> {
+  R visit(BinaryExpr expr);
+
+  R visit(IntegerLiteral expr);
+
+  R visit(RangeExpr expr);
+
+  R visit(TypeLiteral expr);
+
+  R visit(Variable expr);
+}
+
+/**
+ * Any kind of binary expression (often written with the infix notation in vadl).
+ */
+class BinaryExpr extends Expr {
+  Expr left;
+  Operation operation;
+  Expr right;
+
+  enum Operation {
+    ADD,
+    SUBTRACT,
+    MULTIPLY,
+    DIVIDE,
+  }
+
+  BinaryExpr(Expr left, Operation operation, Expr right) {
+    this.left = left;
+    this.operation = operation;
+    this.right = right;
+  }
+
+  String operationAsString(Operation op) {
+    return switch (op) {
+      case ADD -> "+";
+      case SUBTRACT -> "-";
+      case MULTIPLY -> "*";
+      case DIVIDE -> "/";
+    };
+  }
+
+  @Override
+  Location location() {
+    return new Location(left.location(), right.location());
+  }
+
+  @Override
+  void dump(int indent, StringBuilder builder) {
+    builder.append(dumpIndentString(indent));
+    builder.append("%s (operation: %s)\n".formatted(this.getClass().getSimpleName(),
+        operationAsString(operation)));
+    left.dump(indent + 1, builder);
+    right.dump(indent + 1, builder);
+  }
+
+  @Override
+  void prettyPrint(int indent, StringBuilder builder) {
+    // FIXME: Remove the parenthesis in the future and determine if they are needed
+    builder.append("(");
+    left.prettyPrint(indent, builder);
+    builder.append(" %s ".formatted(operationAsString(operation)));
+    right.prettyPrint(indent, builder);
+    builder.append(")");
+  }
+
+  @Override
+  <R> R accept(ExprVisitor<R> visitor) {
+    return visitor.visit(this);
+  }
+
+  @Override
+  public boolean equals(Object o) {
+    if (this == o) {
+      return true;
+    }
+    if (o == null || getClass() != o.getClass()) {
+      return false;
+    }
+
+    BinaryExpr that = (BinaryExpr) o;
+    return Objects.equals(left, that.left) && operation == that.operation
+        && Objects.equals(right, that.right);
+  }
+
+  @Override
+  public int hashCode() {
+    int result = Objects.hashCode(left);
+    result = 31 * result + Objects.hashCode(operation);
+    result = 31 * result + Objects.hashCode(right);
+    return result;
+  }
 }
 
 class IntegerLiteral extends Expr {
@@ -32,6 +127,11 @@ class IntegerLiteral extends Expr {
   @Override
   void prettyPrint(int indent, StringBuilder builder) {
     builder.append(number);
+  }
+
+  @Override
+  <R> R accept(ExprVisitor<R> visitor) {
+    return visitor.visit(this);
   }
 
   @Override
@@ -81,6 +181,11 @@ class RangeExpr extends Expr {
     from.prettyPrint(indent, builder);
     builder.append("..");
     to.prettyPrint(indent, builder);
+  }
+
+  @Override
+  <R> R accept(ExprVisitor<R> visitor) {
+    return null;
   }
 
   @Override
@@ -152,6 +257,11 @@ class TypeLiteral extends Expr {
   }
 
   @Override
+  <R> R accept(ExprVisitor<R> visitor) {
+    return null;
+  }
+
+  @Override
   public boolean equals(Object o) {
     if (this == o) {
       return true;
@@ -199,6 +309,11 @@ class Variable extends Expr {
   }
 
   @Override
+  <R> R accept(ExprVisitor<R> visitor) {
+    return null;
+  }
+
+  @Override
   public boolean equals(Object o) {
     if (this == o) {
       return true;
@@ -216,81 +331,3 @@ class Variable extends Expr {
     return Objects.hash(identifier);
   }
 }
-
-/**
- * Any kind of binary expression (often written with the infix notation in vadl).
- */
-class BinaryExpr extends Expr {
-  Expr left;
-  Operation operation;
-  Expr right;
-
-  BinaryExpr(Expr left, Operation operation, Expr right) {
-    this.left = left;
-    this.operation = operation;
-    this.right = right;
-  }
-
-  String operationAsString(Operation op) {
-    return switch (op) {
-      case ADD -> "+";
-      case SUBTRACT -> "-";
-      case MULTIPLY -> "*";
-      case DIVIDE -> "/";
-    };
-  }
-
-  @Override
-  Location location() {
-    return new Location(left.location(), right.location());
-  }
-
-  @Override
-  void dump(int indent, StringBuilder builder) {
-    builder.append(dumpIndentString(indent));
-    builder.append("%s (operation: %s)\n".formatted(this.getClass().getSimpleName(),
-        operationAsString(operation)));
-    left.dump(indent + 1, builder);
-    right.dump(indent + 1, builder);
-  }
-
-  @Override
-  void prettyPrint(int indent, StringBuilder builder) {
-    // FIXME: Remove the parenthesis in the future and determine if they are needed
-    builder.append("(");
-    left.prettyPrint(indent, builder);
-    builder.append(" %s ".formatted(operationAsString(operation)));
-    right.prettyPrint(indent, builder);
-    builder.append(")");
-  }
-
-  enum Operation {
-    ADD,
-    SUBTRACT,
-    MULTIPLY,
-    DIVIDE,
-  }
-
-  @Override
-  public boolean equals(Object o) {
-    if (this == o) {
-      return true;
-    }
-    if (o == null || getClass() != o.getClass()) {
-      return false;
-    }
-
-    BinaryExpr that = (BinaryExpr) o;
-    return Objects.equals(left, that.left) && operation == that.operation
-        && Objects.equals(right, that.right);
-  }
-
-  @Override
-  public int hashCode() {
-    int result = Objects.hashCode(left);
-    result = 31 * result + Objects.hashCode(operation);
-    result = 31 * result + Objects.hashCode(right);
-    return result;
-  }
-}
-

@@ -10,6 +10,23 @@ import javax.annotation.Nullable;
  * anything.
  */
 abstract class Definition extends Node {
+  abstract <R> R accept(DefinitionVisitor<R> visitor);
+}
+
+interface DefinitionVisitor<R> {
+  R visit(ConstantDefinition definition);
+
+  R visit(FormatDefinition definition);
+
+  R visit(InstructionSetDefinition definition);
+
+  R visit(IndexDefinition definition);
+
+  R visit(MemoryDefinition definition);
+
+  R visit(RegisterDefinition definition);
+
+  R visit(RegisterFileDefinition definition);
 }
 
 class ConstantDefinition extends Definition {
@@ -57,6 +74,11 @@ class ConstantDefinition extends Definition {
     builder.append(" = ");
     value.prettyPrint(indent, builder);
     builder.append("\n");
+  }
+
+  @Override
+  <R> R accept(DefinitionVisitor<R> visitor) {
+    return null;
   }
 
   @Override
@@ -205,6 +227,10 @@ class FormatDefinition extends Definition {
     builder.append("}");
   }
 
+  @Override
+  <R> R accept(DefinitionVisitor<R> visitor) {
+    return null;
+  }
 
   @Override
   public boolean equals(Object o) {
@@ -263,6 +289,11 @@ class InstructionSetDefinition extends Definition {
       definition.prettyPrint(indent + 1, builder);
     }
     builder.append("}\n\n");
+  }
+
+  @Override
+  <R> R accept(DefinitionVisitor<R> visitor) {
+    return null;
   }
 
   @Override
@@ -330,6 +361,11 @@ class IndexDefinition extends Definition {
   }
 
   @Override
+  <R> R accept(DefinitionVisitor<R> visitor) {
+    return null;
+  }
+
+  @Override
   public boolean equals(Object o) {
     if (this == o) {
       return true;
@@ -392,6 +428,11 @@ class MemoryDefinition extends Definition {
   }
 
   @Override
+  <R> R accept(DefinitionVisitor<R> visitor) {
+    return null;
+  }
+
+  @Override
   public boolean equals(Object o) {
     if (this == o) {
       return true;
@@ -448,6 +489,11 @@ class RegisterDefinition extends Definition {
     builder.append(": ");
     type.prettyPrint(indent, builder);
     builder.append("\n");
+  }
+
+  @Override
+  <R> R accept(DefinitionVisitor<R> visitor) {
+    return null;
   }
 
   @Override
@@ -511,6 +557,11 @@ class RegisterFileDefinition extends Definition {
     builder.append(" -> ");
     registerType.prettyPrint(indent, builder);
     builder.append("\n");
+  }
+
+  @Override
+  <R> R accept(DefinitionVisitor<R> visitor) {
+    return null;
   }
 
   @Override
