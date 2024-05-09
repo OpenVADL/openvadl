@@ -14,7 +14,7 @@ import vadl.viam.ViamError;
 public class BuiltInTable {
 
   /**
-   * {@code function add ( a : Bits<N>, b : Bits<N> ) -> Bits<N> }
+   * {@code function add ( a : Bits<N>, b : Bits<N> ) -> [UInt<N> | SInt<N>] }
    */
   public static Binary.Add<BitsType, BitsType> ADD =
       new Binary.Add<>(BitsType.class, BitsType.class) {

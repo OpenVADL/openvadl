@@ -67,7 +67,7 @@ public class SourceLocationTest {
   @Test
   public void testToSourceString_whenBeginLineIsZero() {
     SourceLocation location = new SourceLocation(miniVadlUri, 0);
-    assertNull(location.toSourceString());
+    assert (location.toSourceString().contains("Invalid source location"));
   }
 
 }

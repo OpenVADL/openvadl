@@ -37,7 +37,7 @@ public class BitsType extends Type {
         upperBound = other;
       }
     }
-    //noinspection ReassignedVariable
+    //noinspection Variable,unchecked
     return (T) upperBound;
   }
 
