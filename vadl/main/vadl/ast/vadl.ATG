@@ -42,28 +42,28 @@ IGNORE '\t' + '\r' + '\n'
 PRODUCTIONS
     vadl =
     {
-        section<out Section s>   (. ast.sections.add(s); .)
+        topLevelDefinitions<out Definition d>   (. ast.definitions.add(d); .)
     }.
 
-    // -- SECTIONS --------------------------------------------------------------------------------------.--------------
-    section<out Section section>                                        (. section = null; .)
-    = instructionsetSection<out InstructionSetSection isaSec>           (. section = isaSec; .)
-    | commonDefinitionSection<out CommonDefinitionSection commonDefSec> (. section = commonDefSec; .)
+    // -- DEFINITIONS --------------------------------------------------------------------------------------------------
+    topLevelDefinitions<out Definition definition>                      (. definition = null; .)
+    = instructionsetDefinition<out InstructionSetDefinition isaDef>        (. definition  = isaDef; .)
+    | commonDefinitionSection<out Definition def>                       (. definition  = def; .)
     .
 
-    commonDefinitionSection<out CommonDefinitionSection common>     (.common = null;.)
-    = constantDefinition<out Definition def>                        (. common = new CommonDefinitionSection(def); .)
-    | formatDefinition<out Definition def>                          (. common = new CommonDefinitionSection(def); .)
+    commonDefinitionSection<out Definition definition>              (. definition = null; .)
+    = constantDefinition<out Definition def>                        (. definition = def; .)
+    | formatDefinition<out Definition def>                          (. definition = def; .)
     .
 
-    instructionsetSection<out InstructionSetSection isaSec> (. var definitions = new ArrayList<Definition>(); .)
-    = "instruction" (. var startLocation = locationFromToken(t);.)
+    instructionsetDefinition<out InstructionSetDefinition isaDef>   (. var children = new ArrayList<Definition>(); .)
+    = "instruction"                                                 (. var startLocation = locationFromToken(t);.)
        "set" "architecture" identifier<out Identifier identifier>
        "=" "{"
       {
-        isaDefinition<out Definition def>    (. definitions.add(def); .)
+        isaDefinition<out Definition def>                           (. children.add(def); .)
       }
-      "}"   (. isaSec = new InstructionSetSection(identifier, definitions, new Location(startLocation, locationFromToken(t))); .)
+      "}"                                                           (. isaDef = new InstructionSetDefinition(identifier, children, new Location(startLocation, locationFromToken(t))); .)
       .
 
     isaDefinition<out Definition def>                       (. def = null; .)
@@ -75,8 +75,6 @@ PRODUCTIONS
     | registerAndRegisterFileDefinition<out Definition d>   (. def = d; .)
     .
 
-
-    // -- DEFINITIONS --------------------------------------------------------------------------------------------------
     constantDefinition<out ConstantDefinition def>      (. TypeLiteral type = null; .)
     = "constant"                                        (. var startLocation = locationFromToken(t); .)
         identifier<out Identifier id>                   (. symbolTable.addDefinition(id); .)

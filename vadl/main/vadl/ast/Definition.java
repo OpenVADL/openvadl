@@ -135,8 +135,8 @@ class FormatDefinition extends Definition {
       }
 
       FormatField that = (FormatField) o;
-      return Objects.equals(identifier, that.identifier) &&
-          Objects.equals(ranges, that.ranges);
+      return Objects.equals(identifier, that.identifier)
+          && Objects.equals(ranges, that.ranges);
     }
 
     @Override
@@ -229,6 +229,63 @@ class FormatDefinition extends Definition {
   }
 }
 
+class InstructionSetDefinition extends Definition {
+  final Identifier identifier;
+  final Location loc;
+  List<Definition> statements;
+
+  InstructionSetDefinition(Identifier identifier, List<Definition> statements, Location location) {
+    this.identifier = identifier;
+    this.statements = statements;
+    this.loc = location;
+  }
+
+  @Override
+  Location location() {
+    return loc;
+  }
+
+  @Override
+  void dump(int indent, StringBuilder builder) {
+    builder.append(dumpIndentString(indent));
+    builder.append("%s \"%s\"\n".formatted(this.getClass().getSimpleName(), identifier.name));
+
+    for (Definition definition : statements) {
+      definition.dump(indent + 1, builder);
+    }
+  }
+
+  @Override
+  void prettyPrint(int indent, StringBuilder builder) {
+    builder.append(dumpIndentString(indent));
+    builder.append("instruction set architecture %s = {\n".formatted(identifier.name));
+    for (Definition definition : statements) {
+      definition.prettyPrint(indent + 1, builder);
+    }
+    builder.append("}\n\n");
+  }
+
+  @Override
+  public boolean equals(Object o) {
+    if (this == o) {
+      return true;
+    }
+    if (o == null || getClass() != o.getClass()) {
+      return false;
+    }
+
+    var that = (InstructionSetDefinition) o;
+    return Objects.equals(identifier, that.identifier)
+        && Objects.equals(statements, that.statements);
+  }
+
+  @Override
+  public int hashCode() {
+    int result = Objects.hashCode(identifier);
+    result = 31 * result + Objects.hashCode(statements);
+    return result;
+  }
+}
 
 class IndexDefinition extends Definition {
   IndexKind kind;
