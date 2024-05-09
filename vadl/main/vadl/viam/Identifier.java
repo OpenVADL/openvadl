@@ -10,11 +10,11 @@ public record Identifier(
     SourceLocation sourceLocation
 ) {
 
-  Identifier(String name, SourceLocation sourceLocation) {
-    this(new String[] {name}, sourceLocation);
+  public Identifier(String name, SourceLocation sourceLocation) {
+    this(sourceLocation, name);
   }
 
-  Identifier(SourceLocation sourceLocation, String... parts) {
+  public Identifier(SourceLocation sourceLocation, String... parts) {
     this(parts, sourceLocation);
   }
 

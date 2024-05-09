@@ -38,7 +38,7 @@ public class Encoding extends Definition {
   public String toString() {
     return "Encoding{"
         + "name=" + identifier
-        + "type=" + type
+        + ", type=" + type
         + ", fields=[\n" + fields.stream().map(Field::toString).collect(Collectors.joining(",\n"))
         + "\n]}";
   }

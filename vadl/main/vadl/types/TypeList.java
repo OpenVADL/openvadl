@@ -19,6 +19,14 @@ public class TypeList<T extends Type> extends ArrayList<T> {
     super(c);
   }
 
+  public T first() {
+    return get(0);
+  }
+
+  public T second() {
+    return get(1);
+  }
+
   @FormatMethod
   public void ensureAllOfType(Type[] types, String format, Object... args) {
     for (var t : this) {
