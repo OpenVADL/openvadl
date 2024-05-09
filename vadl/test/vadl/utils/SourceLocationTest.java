@@ -16,9 +16,6 @@ public class SourceLocationTest {
 
   private static URI miniVadlUri;
 
-  /**
-   * Loads the URI of the VADL test file from the bundled resources.
-   */
   @BeforeAll
   public static void setup() throws URISyntaxException {
     miniVadlUri =

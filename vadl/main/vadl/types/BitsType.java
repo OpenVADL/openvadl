@@ -10,6 +10,7 @@ public class BitsType extends DataType {
     this.bitWidth = bitWidth;
   }
 
+  @Override
   public int bitWidth() {
     return bitWidth;
   }
