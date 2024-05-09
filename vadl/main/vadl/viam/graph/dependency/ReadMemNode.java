@@ -1,6 +1,5 @@
 package vadl.viam.graph.dependency;
 
-import vadl.types.DummyType;
 import vadl.types.Type;
 
 /**

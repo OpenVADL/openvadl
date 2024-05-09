@@ -3,7 +3,6 @@ package vadl.types;
 import java.util.Arrays;
 import java.util.HashMap;
 import javax.annotation.Nullable;
-import javax.xml.crypto.dsig.SignedInfo;
 
 /**
  * The top type of VADL's type system.

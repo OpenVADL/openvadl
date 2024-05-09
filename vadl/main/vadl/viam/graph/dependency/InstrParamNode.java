@@ -2,7 +2,6 @@ package vadl.viam.graph.dependency;
 
 import java.util.List;
 import vadl.javaannotations.viam.DataValue;
-import vadl.types.DummyType;
 import vadl.types.Type;
 
 /**

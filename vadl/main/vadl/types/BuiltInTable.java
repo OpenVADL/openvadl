@@ -1,10 +1,8 @@
 package vadl.types;
 
 import java.util.List;
-import java.util.Objects;
 import java.util.stream.Collectors;
 import javax.annotation.Nullable;
-import vadl.viam.ViamError;
 
 /**
  * The BuiltInTable class represents a collection of built-in functions and operations in VADL.
