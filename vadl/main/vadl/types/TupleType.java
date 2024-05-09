@@ -5,6 +5,9 @@ import java.util.List;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
+/**
+ * A class that represents a tuple type in VADL containing a list of subtypes.
+ */
 public class TupleType extends DataType {
 
   private final List<DataType> types;

@@ -14,7 +14,10 @@ import vadl.viam.ViamError;
 public class BuiltInTable {
 
   /**
-   * {@code function add ( a : Bits<N>, b : Bits<N> ) -> [UInt<N> | SInt<N>] }
+   * The {@code VADL::add} built-in function adds two Bits like operands and
+   * returns a UInt or SInt depending on the inputs.
+   *
+   * <p>{@code function add ( a : Bits<N>, b : Bits<N> ) -> [UInt<N> | SInt<N>] }
    */
   public static Binary.Add<BitsType, BitsType> ADD =
       new Binary.Add<>(BitsType.class, BitsType.class) {
@@ -22,7 +25,12 @@ public class BuiltInTable {
       };
 
   /**
-   * {@code function adds( a : UInt<N>, b : UInt<N> ) -> ( UInt<N>, Status ) }
+   * The {@code VADL::adds} built-in function adds two UInt values and returns the
+   * result together with the status flags.
+   *
+   * <p>The return type is a tuple of the result and the status.
+   *
+   * <p>{@code function adds( a : UInt<N>, b : UInt<N> ) -> ( UInt<N>, Status ) }
    */
   public static Binary.Adds<UIntType, UIntType> ADDS_UU =
       new Binary.Adds<>(UIntType.class, UIntType.class) {
@@ -30,7 +38,12 @@ public class BuiltInTable {
       };
 
   /**
-   * {@code function equ ( a : Bits<N>, b : Bits<N> ) -> Bool }
+   * The {@code VADL::equ} built-in function compares two values for equality
+   * and returns {@code true} if they are bitwise equal.
+   *
+   * <p>It takes two Bits like operands and returns a Bool.
+   *
+   * <p>{@code function equ ( a : Bits<N>, b : Bits<N> ) -> Bool }
    */
   public static Comparison.Equ<BitsType, BitsType> EQU =
       new Comparison.Equ<>(BitsType.class, BitsType.class) {
@@ -46,7 +59,7 @@ public class BuiltInTable {
    *
    * @param <R> The return type class of the built-in function
    */
-  public static abstract class BuiltIn<R extends Type> {
+  public abstract static class BuiltIn<R extends Type> {
 
     public final String name;
     public final @Nullable String operator;
@@ -59,6 +72,12 @@ public class BuiltInTable {
       this.typeClasses = typeClasses;
     }
 
+    /**
+     * Computes the concrete return type based on a list of types.
+     *
+     * @param types the list of input types
+     * @return the computed return type
+     */
     public abstract R returnType(List<Type> types);
 
     @Override
@@ -83,7 +102,7 @@ public class BuiltInTable {
    * @param <B> The second operand type class
    * @param <R> The return type class of the binary operation
    */
-  public static abstract class Binary<A extends Type, B extends Type, R extends Type>
+  public abstract static class Binary<A extends Type, B extends Type, R extends Type>
       extends BuiltIn<R> {
     public final Class<A> firstTypeClass;
     public final Class<B> secondTypeClass;
@@ -111,7 +130,13 @@ public class BuiltInTable {
       secondTypeClass = second;
     }
 
-    public static abstract class Add<A extends BitsType, B extends BitsType>
+    /**
+     * The Add class represents the binary addition operation in VADL.
+     *
+     * @param <A> The first operand type class, which extends BitsType
+     * @param <B> The second operand type class, which extends BitsType
+     */
+    public abstract static class Add<A extends BitsType, B extends BitsType>
         extends Binary<A, B, A> {
       private Add(Class<A> first, Class<B> second) {
         super("ADD", "+", first, second);
@@ -123,7 +148,14 @@ public class BuiltInTable {
       }
     }
 
-    public static abstract class Adds<A extends BitsType, B extends BitsType>
+    /**
+     * The Adds class represents the binary addition operation
+     * with additional status information in VADL.
+     *
+     * @param <A> The first operand type class, which extends BitsType
+     * @param <B> The second operand type class, which extends BitsType
+     */
+    public abstract static class Adds<A extends BitsType, B extends BitsType>
         extends Binary<A, B, TupleType> {
       private Adds(Class<A> first, Class<B> second) {
         super("ADDS", "+", first, second);
@@ -132,30 +164,6 @@ public class BuiltInTable {
       @Override
       public TupleType returnType(A first, B second) {
         return Type.tuple(first, Type.status());
-      }
-    }
-
-    public static abstract class Addc<A extends BitsType, B extends BitsType>
-        extends Binary<A, B, TupleType> {
-      private Addc(Class<A> first, Class<B> second) {
-        super("ADDC", null, first, second);
-      }
-
-      @Override
-      public TupleType returnType(A first, B second) {
-        return Type.tuple(first, Type.status());
-      }
-    }
-
-    public static abstract class Satadd<A extends BitsType, B extends BitsType>
-        extends Binary<A, B, A> {
-      private Satadd(Class<A> first, Class<B> second) {
-        super("SATADD", "+", first, second);
-      }
-
-      @Override
-      public A returnType(A first, B second) {
-        return first;
       }
     }
   }
@@ -171,7 +179,7 @@ public class BuiltInTable {
    * @param <A> The first operand type class, must extend BitsType
    * @param <B> The second operand type class, must extend BitsType
    */
-  public static abstract class Comparison<A extends BitsType, B extends BitsType>
+  public abstract static class Comparison<A extends BitsType, B extends BitsType>
       extends Binary<A, B, BoolType> {
 
     private Comparison(String name, @Nullable String operator,
@@ -185,7 +193,13 @@ public class BuiltInTable {
       return Type.bool();
     }
 
-    public static abstract class Equ<A extends BitsType, B extends BitsType>
+    /**
+     * The Equ class represents the equals to comparison operation in VADL.
+     *
+     * @param <A> The first operand type class, must extend BitsType
+     * @param <B> The second operand type class, must extend BitsType
+     */
+    public abstract static class Equ<A extends BitsType, B extends BitsType>
         extends Comparison<A, B> {
       private Equ(Class<A> first, Class<B> second) {
         super("EQU", "=", first, second);

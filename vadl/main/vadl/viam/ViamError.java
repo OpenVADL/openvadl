@@ -70,6 +70,14 @@ public class ViamError extends RuntimeException {
     return "%s%s".formatted(super.getMessage(), context());
   }
 
+  /**
+   * Ensure that a condition is true, otherwise throw a ViamError with a formatted error message.
+   *
+   * @param condition the condition to check
+   * @param format    the format string for the error message
+   * @param args      the arguments to format the error message
+   * @throws ViamError if the condition is false
+   */
   @FormatMethod
   public static void ensure(boolean condition, String format, Object... args) {
     if (!condition) {

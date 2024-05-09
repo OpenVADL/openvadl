@@ -3,6 +3,13 @@ package vadl.viam;
 import com.google.errorprone.annotations.FormatMethod;
 import vadl.utils.SourceLocation;
 
+/**
+ * An abstract VADL Definition, such as an Instruction, Format, Encoding, ...
+ *
+ * <p>
+ * A definition is identified by an Identifier and may have a SourceLocation associated with it.
+ * </p>
+ */
 public abstract class Definition {
 
   public final Identifier identifier;

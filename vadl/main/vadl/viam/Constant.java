@@ -92,10 +92,20 @@ public abstract class Constant {
     }
   }
 
+
+  /**
+   * The constant of a VADL bit-slice. It represents a statically known, non-overlapping
+   * list of bit indices. It allows iterating over it in an order preserving manner.
+   *
+   * @see vadl.types.BitSliceType
+   */
   public static class BitSlice extends Constant implements Iterable<Integer> {
 
     private final List<Part> parts;
 
+    /**
+     * The constructor of a BitSlice from an array of sub-ranges (parts).
+     */
     public BitSlice(Part[] parts) {
       super(Type.bitSlice());
 
@@ -174,11 +184,28 @@ public abstract class Constant {
     }
 
 
+    /**
+     * The {@code Part} class represents a part of a {@link BitSlice}.
+     * It is either a range of bit indices from the msb to the lsb, or a single index
+     * if both values are equal.
+     *
+     * <p>It implements the {@link Iterable} interface to allow iteration
+     * over the elements in the part.
+     */
     public static class Part implements Iterable<Integer> {
 
       private final int msb;
       private final int lsb;
 
+      /**
+       * Constructs a Part object with the specified most significant bit (msb)
+       * and least significant bit (lsb) indices.
+       *
+       * @param msb the most significant bit index
+       * @param lsb the least significant bit index
+       * @throws ViamError if the msb index is not greater than or equal to the lsb index,
+       *                   or if the lsb index is less than 0
+       */
       public Part(int msb, int lsb) {
         ViamError.ensure(msb >= lsb,
             "msb index must be greater or equal lsb index: %s", this);
@@ -209,6 +236,9 @@ public abstract class Constant {
         return !isIndex();
       }
 
+      /**
+       * Returns the size of this bit-slice sub-range.
+       */
       public final int size() {
         if (isIndex()) {
           return 1;

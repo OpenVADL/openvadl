@@ -19,12 +19,6 @@ public class ReadRegNode extends ReadNode {
     this.register = register;
   }
 
-//  @Override
-//  public Type type() {
-//    // TODO: Refactor
-//    return DummyType.INSTANCE;
-//  }
-
   @Override
   protected void collectData(List<Object> collection) {
     super.collectData(collection);

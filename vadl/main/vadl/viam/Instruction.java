@@ -13,6 +13,15 @@ public class Instruction extends Definition {
 
   private final Format format;
 
+  /**
+   * Creates an Instruction object with the given parameters.
+   *
+   * @param identifier The identifier of the instruction.
+   * @param format     The format definition of the instruction.
+   * @param behavior   The behavior graph of the instruction.
+   * @param assembly   The assembly of the instruction.
+   * @param encoding   The encoding of the instruction.
+   */
   public Instruction(
       Identifier identifier,
       Format format,

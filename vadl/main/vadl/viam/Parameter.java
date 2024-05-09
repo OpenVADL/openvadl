@@ -2,6 +2,9 @@ package vadl.viam;
 
 import vadl.types.Type;
 
+/**
+ * Represents a parameter in a VADL specification.
+ */
 public class Parameter extends Definition {
 
   private final Type type;

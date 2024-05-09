@@ -27,6 +27,11 @@ public class NodeList<T extends Node> extends ArrayList<T> {
     this(Arrays.stream(c).toList());
   }
 
+  /**
+   * Converts the NodeList to a TypeList containing the types of the ExpressionNodes.
+   *
+   * @return a TypeList containing the types, or null if any of the nodes is not an ExpressionNode
+   */
   public @Nullable TypeList<Type> toTypeList() {
     var result = new TypeList<Type>(this.size());
     for (var node : this) {

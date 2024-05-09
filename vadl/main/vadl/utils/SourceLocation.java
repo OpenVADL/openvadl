@@ -50,8 +50,7 @@ public record SourceLocation(
    * Joins this source location with another source location.
    *
    * @param other The source location to join with.
-   * @return The joined source location  or the invalid one,
-   * if one of the original source locations are invalid
+   * @return The joined source location or the invalid one, if an original one is invalid
    * @throws IllegalArgumentException if they point to different files.
    */
   public SourceLocation join(SourceLocation other) {
@@ -75,10 +74,12 @@ public record SourceLocation(
    * Returns a new {@code SourceLocation} object representing the intersection
    * of this {@code SourceLocation} and the specified {@code SourceLocation} other.
    *
+   * <p>It will return a new {@code SourceLocation} object representing the intersection
+   * of this {@code SourceLocation} and the specified {@code SourceLocation} or
+   * the invalid one, if one of the original source locations are invalid.</p>
+   *
    * @param other the {@code SourceLocation} to intersect with this {@code SourceLocation}
    * @return a new {@code SourceLocation} object representing the intersection
-   * of this {@code SourceLocation} and the specified {@code SourceLocation} or
-   * the invalid one, if one of the original source locations are invalid
    * @throws IllegalArgumentException if this and other point to different files,
    *                                  or if the source locations do not intersect
    */

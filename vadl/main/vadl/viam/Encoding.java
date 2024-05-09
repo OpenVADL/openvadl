@@ -79,6 +79,11 @@ public class Encoding extends Definition {
       this.encoding = encoding;
     }
 
+    /**
+     * Sets the statically known value of this encoding field.
+     *
+     * <p>The type of the constant value must match the type this field.
+     */
     public void setValue(Constant value) {
       ensure(value.type().equals(type), "Value must be of type %s, was %s", type,
           value.type());

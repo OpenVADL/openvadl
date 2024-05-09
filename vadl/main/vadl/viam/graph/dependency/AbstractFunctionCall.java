@@ -8,6 +8,10 @@ import vadl.viam.graph.GraphVisitor;
 import vadl.viam.graph.Node;
 import vadl.viam.graph.NodeList;
 
+/**
+ * An abstract function call node that has a list of arguments as input.
+ * A concrete subtype is the {@link BuiltInCall}.
+ */
 public abstract class AbstractFunctionCall extends ExpressionNode {
 
   @Input

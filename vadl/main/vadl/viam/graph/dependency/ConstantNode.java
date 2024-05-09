@@ -20,11 +20,6 @@ public class ConstantNode extends ExpressionNode {
     this.constant = constant;
   }
 
-//  @Override
-//  public Type type() {
-//    return constant.type();
-//  }
-
   @Override
   protected void collectData(List<Object> collection) {
     super.collectData(collection);

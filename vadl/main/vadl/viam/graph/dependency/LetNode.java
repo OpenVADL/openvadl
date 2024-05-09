@@ -35,10 +35,6 @@ public class LetNode extends ExpressionNode {
     this.expression = expression;
   }
 
-//  @Override
-//  public Type type() {
-//    return expression.type();
-//  }
 
   @Override
   protected void collectData(List<Object> collection) {

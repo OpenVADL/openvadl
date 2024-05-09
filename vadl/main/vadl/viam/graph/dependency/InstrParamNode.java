@@ -19,12 +19,6 @@ public class InstrParamNode extends ParamNode {
     this.reg = reg;
   }
 
-//  @Override
-//  public Type type() {
-//    // TODO: Refactor
-//    return DummyType.INSTANCE;
-//  }
-
   @Override
   protected void collectData(List<Object> collection) {
     super.collectData(collection);
