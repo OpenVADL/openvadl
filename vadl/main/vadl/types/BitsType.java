@@ -3,7 +3,7 @@ package vadl.types;
 /**
  * An arbitrary sized sequence of Bits to represent anything.
  */
-public class BitsType extends Type {
+public class BitsType extends DataType {
   public final int bitWidth;
 
   protected BitsType(int bitWidth) {

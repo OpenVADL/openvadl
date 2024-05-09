@@ -81,7 +81,7 @@ public abstract class Type {
 
   private final static HashMap<Integer, TupleType> tupleTypes = new HashMap<>();
 
-  public static TupleType tuple(Type... types) {
+  public static TupleType tuple(DataType... types) {
     var hashCode = Arrays.hashCode(types);
     var tupleType = tupleTypes.get(hashCode);
     if (tupleType == null) {

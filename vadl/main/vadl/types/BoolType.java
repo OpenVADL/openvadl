@@ -3,7 +3,7 @@ package vadl.types;
 /**
  * A Boolean which can only hold true/false.
  */
-public class BoolType extends Type {
+public class BoolType extends DataType {
 
   protected BoolType() {
   }
@@ -11,5 +11,10 @@ public class BoolType extends Type {
   @Override
   public String name() {
     return "Bool";
+  }
+
+  @Override
+  public int bitWidth() {
+    return 1;
   }
 }

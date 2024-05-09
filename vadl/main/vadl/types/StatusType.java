@@ -1,6 +1,6 @@
 package vadl.types;
 
-public class StatusType extends Type {
+public class StatusType extends DataType {
 
   private final TupleType alias;
 
@@ -22,7 +22,13 @@ public class StatusType extends Type {
   }
 
   @Override
+  public int bitWidth() {
+    return alias.bitWidth();
+  }
+
+  @Override
   public String name() {
     return "Status";
   }
+
 }

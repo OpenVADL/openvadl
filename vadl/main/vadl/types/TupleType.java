@@ -5,30 +5,30 @@ import java.util.List;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
-public class TupleType extends Type {
+public class TupleType extends DataType {
 
-  private final List<Type> types;
+  private final List<DataType> types;
 
-  protected TupleType(Type... types) {
+  protected TupleType(DataType... types) {
     this.types = Arrays.asList(types);
   }
 
-  public Type first() {
+  public DataType first() {
     // TODO: Ensure
     return types.get(0);
   }
 
-  public Type last() {
+  public DataType last() {
     // TODO: Ensure
     return types.get(types.size() - 1);
   }
 
-  public Type get(int i) {
+  public DataType get(int i) {
     // TODO: Ensure
     return types.get(0);
   }
 
-  public Stream<Type> types() {
+  public Stream<DataType> types() {
     return types.stream();
   }
 
@@ -41,5 +41,10 @@ public class TupleType extends Type {
     return "(%s)".formatted(types.stream()
         .map(Type::name)
         .collect(Collectors.joining(", ")));
+  }
+
+  @Override
+  public int bitWidth() {
+    return types().mapToInt(DataType::bitWidth).sum();
   }
 }

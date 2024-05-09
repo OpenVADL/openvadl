@@ -135,7 +135,7 @@ public class BuiltInTable {
       }
     }
 
-    public static abstract class Addc<A extends Type, B extends Type>
+    public static abstract class Addc<A extends BitsType, B extends BitsType>
         extends Binary<A, B, TupleType> {
       private Addc(Class<A> first, Class<B> second) {
         super("ADDC", null, first, second);
@@ -147,7 +147,8 @@ public class BuiltInTable {
       }
     }
 
-    public static abstract class Satadd<A extends Type, B extends Type> extends Binary<A, B, A> {
+    public static abstract class Satadd<A extends BitsType, B extends BitsType>
+        extends Binary<A, B, A> {
       private Satadd(Class<A> first, Class<B> second) {
         super("SATADD", "+", first, second);
       }
