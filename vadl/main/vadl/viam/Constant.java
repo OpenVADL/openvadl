@@ -92,7 +92,6 @@ public abstract class Constant {
     }
   }
 
-
   public static class BitSlice extends Constant implements Iterable<Integer> {
 
     private final List<Part> parts;
@@ -215,6 +214,11 @@ public abstract class Constant {
           return 1;
         }
         return msb - lsb + 1;
+      }
+
+      @Override
+      public String toString() {
+        return isIndex() ? "" + msb : msb + ".." + lsb;
       }
 
       @NotNull
