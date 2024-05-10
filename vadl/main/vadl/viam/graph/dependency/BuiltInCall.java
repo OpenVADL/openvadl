@@ -16,9 +16,9 @@ import vadl.viam.graph.NodeList;
 public class BuiltInCall extends AbstractFunctionCall {
 
   @DataValue
-  protected BuiltIn<Type> builtIn;
+  protected BuiltIn builtIn;
 
-  public BuiltInCall(BuiltIn<Type> builtIn, NodeList<ExpressionNode> args, Type type) {
+  public BuiltInCall(BuiltIn builtIn, NodeList<ExpressionNode> args, Type type) {
     super(args, type);
     this.builtIn = builtIn;
   }
