@@ -185,7 +185,7 @@ class RangeExpr extends Expr {
 
   @Override
   <R> R accept(ExprVisitor<R> visitor) {
-    return null;
+    return visitor.visit(this);
   }
 
   @Override
@@ -258,7 +258,7 @@ class TypeLiteral extends Expr {
 
   @Override
   <R> R accept(ExprVisitor<R> visitor) {
-    return null;
+    return visitor.visit(this);
   }
 
   @Override
@@ -310,7 +310,7 @@ class Variable extends Expr {
 
   @Override
   <R> R accept(ExprVisitor<R> visitor) {
-    return null;
+    return visitor.visit(this);
   }
 
   @Override

@@ -43,6 +43,7 @@ subprojects {
         add("compileOnly", "com.google.code.findbugs:jsr305:3.0.2")
         add("errorprone", "com.google.errorprone:error_prone_core:$errorProneVersion")
         add("compileOnly", "com.google.errorprone:error_prone_annotations:$errorProneVersion")
+        add("compileOnly", "org.jetbrains:annotations:24.0.1")
     }
 
 
@@ -118,6 +119,7 @@ val generateCheckstyleReport =
             var failures = mutableListOf<String>()
             subprojects.forEach { subproject ->
                 subproject.tasks.withType<JavaCompile> {
+                    @Suppress("SAFE_CALL_WILL_CHANGE_NULLABILITY", "UNNECESSARY_SAFE_CALL")
                     state.failure?.localizedMessage?.let {
                         failures.add(it)
                     }

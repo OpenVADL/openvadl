@@ -39,6 +39,6 @@ public class CollectSuccessorsChecker extends AbstractAnnotationChecker
   @Override
   protected List<String> expectedMethodStatements(List<String> paramNames,
                                                   List<VariableTree> fields) {
-    return defaultCollectStatements(methodName, paramNames, fields);
+    return defaultCollectStatements(methodName, paramNames, fields, true);
   }
 }

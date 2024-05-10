@@ -78,7 +78,7 @@ class ConstantDefinition extends Definition {
 
   @Override
   <R> R accept(DefinitionVisitor<R> visitor) {
-    return null;
+    return visitor.visit(this);
   }
 
   @Override
@@ -229,7 +229,7 @@ class FormatDefinition extends Definition {
 
   @Override
   <R> R accept(DefinitionVisitor<R> visitor) {
-    return null;
+    return visitor.visit(this);
   }
 
   @Override
@@ -293,7 +293,7 @@ class InstructionSetDefinition extends Definition {
 
   @Override
   <R> R accept(DefinitionVisitor<R> visitor) {
-    return null;
+    return visitor.visit(this);
   }
 
   @Override
@@ -362,7 +362,7 @@ class IndexDefinition extends Definition {
 
   @Override
   <R> R accept(DefinitionVisitor<R> visitor) {
-    return null;
+    return visitor.visit(this);
   }
 
   @Override
@@ -429,7 +429,7 @@ class MemoryDefinition extends Definition {
 
   @Override
   <R> R accept(DefinitionVisitor<R> visitor) {
-    return null;
+    return visitor.visit(this);
   }
 
   @Override
@@ -493,7 +493,7 @@ class RegisterDefinition extends Definition {
 
   @Override
   <R> R accept(DefinitionVisitor<R> visitor) {
-    return null;
+    return visitor.visit(this);
   }
 
   @Override
@@ -561,7 +561,7 @@ class RegisterFileDefinition extends Definition {
 
   @Override
   <R> R accept(DefinitionVisitor<R> visitor) {
-    return null;
+    return visitor.visit(this);
   }
 
   @Override
