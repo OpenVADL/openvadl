@@ -96,6 +96,25 @@ public class BuiltInTable {
     }
 
     /**
+     * Determines if the built takes the specified argument type classes.
+     *
+     * @param args the argument type classes to check
+     * @return true if the method takes the specified argument classes, false otherwise
+     */
+    public final boolean takes(Class<?>... args) {
+      if (typeClasses.size() != args.length) {
+        return false;
+      }
+
+      for (int i = 0; i < args.length; i++) {
+        if (typeClasses.get(i) != args[i]) {
+          return false;
+        }
+      }
+      return true;
+    }
+
+    /**
      * Computes the concrete return type based on a list of types.
      *
      * @param types the list of input types
@@ -126,16 +145,11 @@ public class BuiltInTable {
     public final Class<? extends DataType> firstTypeClass;
     public final Class<? extends DataType> secondTypeClass;
 
-
     @Override
     public final DataType returnType(List<DataType> list) {
       // TODO: Ensure cast before
       //noinspection unchecked
       return returnType(list.get(0), list.get(1));
-    }
-
-    public final boolean takes(Class<? extends DataType> arg1, Class<? extends DataType> arg2) {
-      return firstTypeClass == arg1 && secondTypeClass == arg2;
     }
 
     /**
