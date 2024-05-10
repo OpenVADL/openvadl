@@ -2,6 +2,7 @@ package vadl.ast;
 
 import java.util.Objects;
 import javax.annotation.Nullable;
+import vadl.utils.SourceLocation;
 
 /**
  * The Expression node of the AST.
@@ -53,8 +54,8 @@ class BinaryExpr extends Expr {
   }
 
   @Override
-  Location location() {
-    return new Location(left.location(), right.location());
+  SourceLocation location() {
+    return left.location().join(right.location());
   }
 
   @Override
@@ -106,15 +107,15 @@ class BinaryExpr extends Expr {
 
 class IntegerLiteral extends Expr {
   long number;
-  Location loc;
+  SourceLocation loc;
 
-  public IntegerLiteral(long number, Location loc) {
+  public IntegerLiteral(long number, SourceLocation loc) {
     this.number = number;
     this.loc = loc;
   }
 
   @Override
-  Location location() {
+  SourceLocation location() {
     return loc;
   }
 
@@ -163,8 +164,8 @@ class RangeExpr extends Expr {
   }
 
   @Override
-  Location location() {
-    return new Location(from.location(), to.location());
+  SourceLocation location() {
+    return from.location().join(to.location());
   }
 
   @Override
@@ -220,16 +221,16 @@ class TypeLiteral extends Expr {
   @Nullable
   Expr sizeExpression;
 
-  Location loc;
+  SourceLocation loc;
 
-  public TypeLiteral(Identifier baseType, @Nullable Expr sizeExpression, Location loc) {
+  public TypeLiteral(Identifier baseType, @Nullable Expr sizeExpression, SourceLocation loc) {
     this.baseType = baseType;
     this.sizeExpression = sizeExpression;
     this.loc = loc;
   }
 
   @Override
-  Location location() {
+  SourceLocation location() {
     return loc;
   }
 
@@ -291,7 +292,7 @@ class Variable extends Expr {
   }
 
   @Override
-  Location location() {
+  SourceLocation location() {
     return identifier.location();
   }
 

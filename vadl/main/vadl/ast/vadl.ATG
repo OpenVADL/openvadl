@@ -7,6 +7,7 @@ import vadl.ast.Expr;
 import vadl.ast.Definition;
 import static vadl.ast.IndexDefinition.IndexKind.GROUP;
 import static vadl.ast.IndexDefinition.IndexKind.PROGRAM;
+import vadl.utils.SourceLocation;
 
 import vadl.types.BitsType;
 import vadl.types.BoolType;
@@ -19,8 +20,11 @@ COMPILER vadl
     Ast ast = new Ast();
     SymbolTable symbolTable = new SymbolTable();
 
-    Location locationFromToken(Token token) {
-        return new Location("unknown.vadl", token.line,  token.line, token.col, token.col + token.val.length());
+    SourceLocation locationFromToken(Token token) {
+        return new SourceLocation(
+            SourceLocation.INVALID_SOURCE_LOCATION.uri(),
+            new SourceLocation.Position(token.line, token.col),
+            new SourceLocation.Position(token.line, token.col + t.val.length()));
     }
 
 
@@ -63,7 +67,7 @@ PRODUCTIONS
       {
         isaDefinition<out Definition def>                           (. children.add(def); .)
       }
-      "}"                                                           (. isaDef = new InstructionSetDefinition(identifier, children, new Location(startLocation, locationFromToken(t))); .)
+      "}"                                                           (. isaDef = new InstructionSetDefinition(identifier, children, startLocation.join(locationFromToken(t))); .)
       .
 
     isaDefinition<out Definition def>                       (. def = null; .)
@@ -81,7 +85,7 @@ PRODUCTIONS
         [
             ':' typeLiteral<out TypeLiteral t1>         (. type = t1; .)
         ]
-        '=' expression<out Expr expr>                   (. def = new ConstantDefinition(id, type, expr, new Location(startLocation, locationFromToken(t))); .)
+        '=' expression<out Expr expr>                   (. def = new ConstantDefinition(id, type, expr, startLocation.join(locationFromToken(t))); .)
     .
 
     formatDefinition<out FormatDefinition def>                      (. List<FormatDefinition.FormatField> fields = new ArrayList<>();.)
@@ -93,7 +97,7 @@ PRODUCTIONS
         {
         "," formatField<out FormatDefinition.FormatField f2>        (. fields.add(f2); .)
         }
-    "}"]                                                            (. def = new FormatDefinition(id, type, fields, new Location(startLoc, locationFromToken(t))); .)
+    "}"]                                                            (. def = new FormatDefinition(id, type, fields, startLoc.join(locationFromToken(t))); .)
     .
 
     // FIXME: more versions are missing here
@@ -112,7 +116,7 @@ PRODUCTIONS
     )                                               (. var startLocation = locationFromToken(t); .)
     "counter"
         identifier<out Identifier id>               (. symbolTable.addDefinition(id); .)
-        ":" typeLiteral<out TypeLiteral t1>         (. def = new IndexDefinition(kind, id, t1, new Location(startLocation, locationFromToken(t))); .)
+        ":" typeLiteral<out TypeLiteral t1>         (. def = new IndexDefinition(kind, id, t1, startLocation.join(locationFromToken(t))); .)
     .
 
 /*    instructionStatement<out InstructionDefinitionStmt stmt>
@@ -124,7 +128,7 @@ PRODUCTIONS
     = "memory"                                  (. var startLocation = locationFromToken(t); .)
         identifier<out Identifier id>           (. symbolTable.addDefinition(id); .)
         ":" typeLiteral<out TypeLiteral t1>
-        "->" typeLiteral<out TypeLiteral t2>    (. def = new MemoryDefinition(id, t1, t2, new Location(startLocation, t2.location())); .)
+        "->" typeLiteral<out TypeLiteral t2>    (. def = new MemoryDefinition(id, t1, t2, startLocation.join(t2.location())); .)
     .
 
     registerAndRegisterFileDefinition<out Definition def>   (. def = null; .)
@@ -133,10 +137,10 @@ PRODUCTIONS
             "file"
             identifier<out Identifier id>                   (. symbolTable.addDefinition(id); .)
             ":" typeLiteral<out TypeLiteral t1>
-            "->" typeLiteral<out TypeLiteral t2>            (. def = new RegisterFileDefinition(id, t1, t2, new Location(startLocation, t2.location())); .)
+            "->" typeLiteral<out TypeLiteral t2>            (. def = new RegisterFileDefinition(id, t1, t2, startLocation.join(t2.location())); .)
         |
             identifier<out Identifier id>                   (. symbolTable.addDefinition(id); .)
-            ":" typeLiteral<out TypeLiteral t1>             (. def = new RegisterDefinition(id, t1, new Location(startLocation, t1.location())); .)
+            ":" typeLiteral<out TypeLiteral t1>             (. def = new RegisterDefinition(id, t1, startLocation.join(t1.location())); .)
         )
     .
 
@@ -186,7 +190,7 @@ PRODUCTIONS
         identifier<out Identifier id>
         [ "<"
             term<out Expr expr>             (. sizeExpr = expr; .)
-        ">" ]                               (. type = new TypeLiteral(id, sizeExpr, new Location(id.location(), locationFromToken(t))) ;.)
+        ">" ]                               (. type = new TypeLiteral(id, sizeExpr, id.location().join(locationFromToken(t))) ;.)
     )
     .
 

@@ -3,6 +3,7 @@ package vadl.ast;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
+import vadl.utils.SourceLocation;
 
 /**
  * The abstract syntax tree for the vadl language.
@@ -73,7 +74,7 @@ abstract class Node {
     return " ".repeat(indentBy * indent);
   }
 
-  abstract Location location();
+  abstract SourceLocation location();
 
   abstract void dump(int indent, StringBuilder builder);
 
@@ -82,9 +83,9 @@ abstract class Node {
 
 class Identifier extends Node {
   String name;
-  Location loc;
+  SourceLocation loc;
 
-  public Identifier(String name, Location location) {
+  public Identifier(String name, SourceLocation location) {
     this.loc = location;
     this.name = name;
   }
@@ -96,7 +97,7 @@ class Identifier extends Node {
   }
 
   @Override
-  Location location() {
+  SourceLocation location() {
     return loc;
   }
 

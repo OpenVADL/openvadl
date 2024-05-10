@@ -19,8 +19,8 @@ import org.jetbrains.annotations.NotNull;
  */
 public record SourceLocation(
     URI uri,
-    SourcePosition begin,
-    SourcePosition end
+    Position begin,
+    Position end
 ) {
 
   private static final URI INVALID_MEMORY = URI.create("memory://unknown");
@@ -28,12 +28,12 @@ public record SourceLocation(
   public static final SourceLocation INVALID_SOURCE_LOCATION =
       new SourceLocation(INVALID_MEMORY, 0);
 
-  public SourceLocation(URI uri, SourcePosition begin) {
+  public SourceLocation(URI uri, Position begin) {
     this(uri, begin, begin);
   }
 
   public SourceLocation(URI uri, int lineBegin, int lineEnd) {
-    this(uri, new SourcePosition(lineBegin), new SourcePosition(lineEnd));
+    this(uri, new Position(lineBegin), new Position(lineEnd));
   }
 
   public SourceLocation(URI uri, int line) {
@@ -62,8 +62,8 @@ public record SourceLocation(
           "Cannot join source locations that point to different files.");
     }
 
-    SourcePosition begin = this.begin.compareTo(other.begin) < 0 ? this.begin : other.begin;
-    SourcePosition end = this.end.compareTo(other.end) > 0 ? this.end : other.end;
+    Position begin = this.begin.compareTo(other.begin) < 0 ? this.begin : other.begin;
+    Position end = this.end.compareTo(other.end) > 0 ? this.end : other.end;
 
     return new SourceLocation(this.uri, begin, end);
   }
@@ -96,8 +96,8 @@ public record SourceLocation(
       throw new IllegalArgumentException("The source locations do not intersect.");
     }
 
-    SourcePosition begin = (this.begin.compareTo(other.begin) > 0) ? this.begin : other.begin;
-    SourcePosition end = (this.end.compareTo(other.end) < 0) ? this.end : other.end;
+    Position begin = (this.begin.compareTo(other.begin) > 0) ? this.begin : other.begin;
+    Position end = (this.end.compareTo(other.end) < 0) ? this.end : other.end;
 
     return new SourceLocation(this.uri, begin, end);
   }
@@ -160,19 +160,20 @@ public record SourceLocation(
 
   @Override
   public String toString() {
-    return uri + ":" + begin + ".." + end;
+    var printPath = !uri.getPath().isEmpty() ? uri.getPath() : "unknown";
+    return printPath + ":" + begin + ".." + end;
   }
 
 
   /**
    * Represents a position in the source file with line and column information.
    */
-  public record SourcePosition(
+  public record Position(
       int line,
       int column
-  ) implements Comparable<SourcePosition> {
+  ) implements Comparable<Position> {
 
-    public SourcePosition(int line) {
+    public Position(int line) {
       this(line, -1);
     }
 
@@ -185,7 +186,7 @@ public record SourceLocation(
     }
 
     @Override
-    public int compareTo(@NotNull SourceLocation.SourcePosition other) {
+    public int compareTo(@NotNull SourceLocation.Position other) {
       if (this.line < other.line) {
         return -1;
       } else if (this.line > other.line) {

@@ -27,8 +27,7 @@ public class ErrorPrinter {
     // Header
     System.out.printf("%s%serror:%s%s %s%s\n", Ansi.Bold, Ansi.Red, Ansi.Reset, Ansi.Bold,
         error.reason, Ansi.Reset);
-    System.out.printf("    %s╭──[%s:%d:%d]\n", Ansi.Cyan, error.location.file,
-        error.location.startLine, error.location.startColumn);
+    System.out.printf("    %s╭──[%s]\n", Ansi.Cyan, error.location.toString());
 
     // Print preview
     System.out.println("    │");

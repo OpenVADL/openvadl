@@ -8,6 +8,7 @@ import java.util.ArrayList;
 import java.util.List;
 import vadl.error.VadlError;
 import vadl.error.VadlException;
+import vadl.utils.SourceLocation;
 
 /**
  * A parser for the VADL language, generated using Coco.
@@ -47,7 +48,11 @@ public class VadlParser {
         var colNum = Integer.parseInt(fields[1]);
         errors.add(new VadlError(
             fields[2],
-            new Location("unknown.vadl", lineNum, lineNum, colNum, colNum), null, null)
+            new SourceLocation(SourceLocation.INVALID_SOURCE_LOCATION.uri(),
+                new SourceLocation.Position(lineNum, colNum)),
+            null,
+            "Sometimes the expected is just something with what the parser could work with but"
+                + " maybe not what you intended.")
         );
       }
       ;

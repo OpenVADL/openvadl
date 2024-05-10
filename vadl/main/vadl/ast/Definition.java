@@ -3,6 +3,7 @@ package vadl.ast;
 import java.util.List;
 import java.util.Objects;
 import javax.annotation.Nullable;
+import vadl.utils.SourceLocation;
 
 /**
  * The Definition nodes inside the AST.
@@ -36,10 +37,10 @@ class ConstantDefinition extends Definition {
   final TypeLiteral typeAnnotation;
 
   final Expr value;
-  final Location loc;
+  final SourceLocation loc;
 
   ConstantDefinition(Identifier identifier, @Nullable TypeLiteral typeAnnotation, Expr value,
-                     Location location) {
+                     SourceLocation location) {
     this.identifier = identifier;
     this.typeAnnotation = typeAnnotation;
     this.value = value;
@@ -47,7 +48,7 @@ class ConstantDefinition extends Definition {
   }
 
   @Override
-  Location location() {
+  SourceLocation location() {
     return loc;
   }
 
@@ -109,7 +110,7 @@ class FormatDefinition extends Definition {
   Identifier identifier;
   TypeLiteral typeAnnotation;
   List<FormatField> fields;
-  Location loc;
+  SourceLocation loc;
 
   static class FormatField extends Node {
     Identifier identifier;
@@ -121,8 +122,8 @@ class FormatDefinition extends Definition {
     }
 
     @Override
-    Location location() {
-      return new Location(identifier.location(), ranges.get(ranges.size() - 1).location());
+    SourceLocation location() {
+      return identifier.location().join(ranges.get(ranges.size() - 1).location());
     }
 
     @Override
@@ -170,7 +171,7 @@ class FormatDefinition extends Definition {
   }
 
   public FormatDefinition(Identifier identifier, TypeLiteral typeAnnotation,
-                          List<FormatField> fields, Location location) {
+                          List<FormatField> fields, SourceLocation location) {
     this.identifier = identifier;
     this.typeAnnotation = typeAnnotation;
     this.fields = fields;
@@ -178,7 +179,7 @@ class FormatDefinition extends Definition {
   }
 
   @Override
-  Location location() {
+  SourceLocation location() {
     return loc;
   }
 
@@ -257,17 +258,18 @@ class FormatDefinition extends Definition {
 
 class InstructionSetDefinition extends Definition {
   final Identifier identifier;
-  final Location loc;
+  final SourceLocation loc;
   List<Definition> statements;
 
-  InstructionSetDefinition(Identifier identifier, List<Definition> statements, Location location) {
+  InstructionSetDefinition(Identifier identifier, List<Definition> statements,
+                           SourceLocation location) {
     this.identifier = identifier;
     this.statements = statements;
     this.loc = location;
   }
 
   @Override
-  Location location() {
+  SourceLocation location() {
     return loc;
   }
 
@@ -322,7 +324,7 @@ class IndexDefinition extends Definition {
   IndexKind kind;
   Identifier identifier;
   TypeLiteral type;
-  Location loc;
+  SourceLocation loc;
 
   enum IndexKind {
     PROGRAM,
@@ -330,7 +332,7 @@ class IndexDefinition extends Definition {
   }
 
   public IndexDefinition(IndexKind kind, Identifier identifier, TypeLiteral type,
-                         Location location) {
+                         SourceLocation location) {
     this.kind = kind;
     this.identifier = identifier;
     this.type = type;
@@ -338,7 +340,7 @@ class IndexDefinition extends Definition {
   }
 
   @Override
-  Location location() {
+  SourceLocation location() {
     return loc;
   }
 
@@ -391,10 +393,10 @@ class MemoryDefinition extends Definition {
   Identifier identifier;
   TypeLiteral addressType;
   TypeLiteral dataType;
-  Location loc;
+  SourceLocation loc;
 
   public MemoryDefinition(Identifier identifier, TypeLiteral addressType, TypeLiteral dataType,
-                          Location loc) {
+                          SourceLocation loc) {
     this.identifier = identifier;
     this.addressType = addressType;
     this.dataType = dataType;
@@ -402,7 +404,7 @@ class MemoryDefinition extends Definition {
   }
 
   @Override
-  Location location() {
+  SourceLocation location() {
     return loc;
   }
 
@@ -458,17 +460,17 @@ class MemoryDefinition extends Definition {
 class RegisterDefinition extends Definition {
   Identifier identifier;
   TypeLiteral type;
-  Location loc;
+  SourceLocation loc;
 
   public RegisterDefinition(Identifier identifier, TypeLiteral type,
-                            Location location) {
+                            SourceLocation location) {
     this.identifier = identifier;
     this.type = type;
     this.loc = location;
   }
 
   @Override
-  Location location() {
+  SourceLocation location() {
     return loc;
   }
 
@@ -521,11 +523,11 @@ class RegisterFileDefinition extends Definition {
   Identifier identifier;
   TypeLiteral addressType;
   TypeLiteral registerType;
-  Location loc;
+  SourceLocation loc;
 
   public RegisterFileDefinition(Identifier identifier, TypeLiteral addressType,
                                 TypeLiteral registerType,
-                                Location location) {
+                                SourceLocation location) {
     this.identifier = identifier;
     this.addressType = addressType;
     this.registerType = registerType;
@@ -533,7 +535,7 @@ class RegisterFileDefinition extends Definition {
   }
 
   @Override
-  Location location() {
+  SourceLocation location() {
     return loc;
   }
 
