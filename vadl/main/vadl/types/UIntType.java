@@ -3,15 +3,15 @@ package vadl.types;
 /**
  * An arbitrary sized unsigned integer.
  */
-public class UIntType extends Type {
-  public final int bitWidth;
+public class UIntType extends BitsType {
 
-  public UIntType(int bitWidth) {
-    this.bitWidth = bitWidth;
+  protected UIntType(int bitWidth) {
+    super(bitWidth);
   }
 
   @Override
   public String name() {
     return "UInt<%s>".formatted(bitWidth);
   }
+
 }

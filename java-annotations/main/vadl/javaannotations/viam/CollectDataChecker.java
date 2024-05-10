@@ -42,6 +42,6 @@ public class CollectDataChecker extends AbstractAnnotationChecker implements Def
   @Override
   protected List<String> expectedMethodStatements(List<String> paramNames,
                                                   List<VariableTree> fields) {
-    return defaultCollectStatements(methodName, paramNames, fields);
+    return defaultCollectStatements(methodName, paramNames, fields, false);
   }
 }

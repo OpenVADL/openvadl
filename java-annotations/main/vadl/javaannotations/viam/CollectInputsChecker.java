@@ -38,6 +38,6 @@ public class CollectInputsChecker extends AbstractAnnotationChecker implements D
   @Override
   protected List<String> expectedMethodStatements(List<String> paramNames,
                                                   List<VariableTree> fields) {
-    return defaultCollectStatements(methodName, paramNames, fields);
+    return defaultCollectStatements(methodName, paramNames, fields, true);
   }
 }
