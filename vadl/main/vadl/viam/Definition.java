@@ -40,8 +40,7 @@ public abstract class Definition {
         .shrinkStacktrace(1)
         .addContext("name", this.identifier.name())
         .addContext("definition", this.toString())
-        .addContext("sourceLocation", sourceLocation.toConciseString())
-        .addContext("sourceCode", sourceLocation.toSourceString());
+        .addLocation(sourceLocation);
   }
 
 }

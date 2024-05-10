@@ -5,6 +5,8 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.stream.Collectors;
+import vadl.error.VadlError;
+import vadl.utils.SourceLocation;
 
 /**
  * The {@link ViamError} indicates unintended failures during
@@ -15,6 +17,7 @@ import java.util.stream.Collectors;
 public class ViamError extends RuntimeException {
 
   private final List<String> context = new ArrayList<>();
+  private SourceLocation location = SourceLocation.INVALID_SOURCE_LOCATION;
 
   public ViamError(String message) {
     super(message);
@@ -22,6 +25,15 @@ public class ViamError extends RuntimeException {
 
   public ViamError(String message, Throwable cause) {
     super(message, cause);
+  }
+
+  public SourceLocation location() {
+    return location;
+  }
+
+  public ViamError addLocation(SourceLocation location) {
+    this.location = location;
+    return this;
   }
 
   public ViamError addContext(String context) {
@@ -38,6 +50,10 @@ public class ViamError extends RuntimeException {
   public ViamError addContext(String name, Object arg) {
     this.context.add(String.format("%s:\t%s", name, arg));
     return this;
+  }
+
+  public VadlError toVadlError() {
+    return new VadlError(getMessage(), location, null, null);
   }
 
   /**
