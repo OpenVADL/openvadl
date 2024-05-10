@@ -142,8 +142,19 @@ public class BuiltInTable {
    */
   public abstract static class Binary
       extends BuiltIn {
-    public final Class<? extends DataType> firstTypeClass;
-    public final Class<? extends DataType> secondTypeClass;
+
+    private Binary(String name, @Nullable String operator, Class<? extends DataType> first,
+                   Class<? extends DataType> second) {
+      super(name, operator, List.of(first, second));
+    }
+
+    public Class<? extends DataType> firstTypeClass() {
+      return typeClasses.get(0);
+    }
+
+    public Class<? extends DataType> secondTypeClass() {
+      return typeClasses.get(1);
+    }
 
     @Override
     public final DataType returnType(List<DataType> list) {
@@ -160,13 +171,6 @@ public class BuiltInTable {
      * @return return type
      */
     public abstract DataType returnType(DataType first, DataType second);
-
-    private Binary(String name, @Nullable String operator, Class<? extends DataType> first,
-                   Class<? extends DataType> second) {
-      super(name, operator, List.of(first, second));
-      firstTypeClass = first;
-      secondTypeClass = second;
-    }
 
     /**
      * The Add class represents the binary addition operation in VADL.
