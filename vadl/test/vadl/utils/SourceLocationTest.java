@@ -42,8 +42,8 @@ public class SourceLocationTest {
 
   @Test
   public void testToSourceString_withColumn() {
-    SourceLocation.SourcePosition start = new SourceLocation.SourcePosition(23, 10);
-    SourceLocation.SourcePosition end = new SourceLocation.SourcePosition(23, 15);
+    SourceLocation.Position start = new SourceLocation.Position(23, 10);
+    SourceLocation.Position end = new SourceLocation.Position(23, 15);
     SourceLocation location = new SourceLocation(miniVadlUri, start, end);
     String expected = "Rtype";
     assertEquals(expected, location.toSourceString());
@@ -51,8 +51,8 @@ public class SourceLocationTest {
 
   @Test
   public void testToSourceString_multipleLinesWithColumn() {
-    SourceLocation.SourcePosition start = new SourceLocation.SourcePosition(33, 3);
-    SourceLocation.SourcePosition end = new SourceLocation.SourcePosition(34, 61);
+    SourceLocation.Position start = new SourceLocation.Position(33, 3);
+    SourceLocation.Position end = new SourceLocation.Position(34, 61);
     SourceLocation location = new SourceLocation(miniVadlUri, start, end);
     String expected =
         "instruction ADD : Rtype =                        // 3 register operand instructions\n"

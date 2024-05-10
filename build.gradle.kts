@@ -19,7 +19,6 @@ plugins {
     id("net.ltgt.errorprone") version "2.0.1" apply false
 }
 
-
 subprojects {
     plugins.apply("java")
     plugins.apply("net.ltgt.errorprone")
@@ -33,7 +32,8 @@ subprojects {
 
     checkstyle {
         toolVersion = "10.15.0"
-        configFile = project.projectDir.resolve("../config/checkstyle/checkstyle.xml")
+        // configFile = project.projectDir.resolve("../config/checkstyle/checkstyle.xml")
+        configDirectory.set(project.projectDir.resolve("../config/checkstyle/"))
         sourceSets = listOf()
         maxWarnings = 0
     }
@@ -78,6 +78,7 @@ subprojects {
                 check("NullAway", CheckSeverity.ERROR)
                 option("NullAway:AnnotatedPackages", "vadl,java-annotations")
                 disable("EqualsGetClass")
+                excludedPaths.set(".*/generated/sources/coco/java/main/vadl/ast/*.*")
             }
         }
     }
@@ -87,18 +88,17 @@ subprojects {
             options.errorprone.isEnabled.set(false)
         }
     }
-
 }
-
 
 /**************
  * CHECKSTYLE TASK CONFIGS
  *************/
 
 tasks.register("checkstyleAll") {
-    val checkstyleTasks = subprojects
-        .map { setOf(it.tasks.checkstyleMain, it.tasks.checkstyleTest) }
-        .flatten()
+    val checkstyleTasks =
+        subprojects
+            .map { setOf(it.tasks.checkstyleMain, it.tasks.checkstyleTest) }
+            .flatten()
 
     dependsOn(checkstyleTasks)
 
@@ -111,31 +111,31 @@ tasks.register("checkstyleAll") {
     }
 }
 
+val generateCheckstyleReport =
+    tasks.register("generateCheckstyleReport") {
+        doLast {
 
-val generateCheckstyleReport = tasks.register("generateCheckstyleReport") {
-    doLast {
-
-        val projectCheckstylePairs = mutableListOf<Pair<Project, Checkstyle>>()
-        val failures = mutableListOf<String>()
-        subprojects.forEach { subproject ->
-            subproject.tasks.withType<JavaCompile> {
-                @Suppress("SAFE_CALL_WILL_CHANGE_NULLABILITY", "UNNECESSARY_SAFE_CALL")
-                state.failure?.localizedMessage?.let {
-                    failures.add(it)
+            val projectCheckstylePairs = mutableListOf<Pair<Project, Checkstyle>>()
+            var failures = mutableListOf<String>()
+            subprojects.forEach { subproject ->
+                subproject.tasks.withType<JavaCompile> {
+                    @Suppress("SAFE_CALL_WILL_CHANGE_NULLABILITY", "UNNECESSARY_SAFE_CALL")
+                    state.failure?.localizedMessage?.let {
+                        failures.add(it)
+                    }
+                }
+                subproject.tasks.withType<Checkstyle>().forEach { task ->
+                    projectCheckstylePairs.add(Pair(subproject, task))
                 }
             }
-            subproject.tasks.withType<Checkstyle>().forEach { task ->
-                projectCheckstylePairs.add(Pair(subproject, task))
+
+            val projectReportDir = tasks.checkstyleMain.get().reports.xml.outputLocation.asFile.get().parentFile
+            val bundledReportFile = File(projectReportDir, "report.md")
+
+            // create report dir if necessary
+            if (!projectReportDir.exists()) {
+                projectReportDir.mkdirs()
             }
-        }
-
-        val projectReportDir = tasks.checkstyleMain.get().reports.xml.outputLocation.asFile.get().parentFile
-        val bundledReportFile = File(projectReportDir, "report.md")
-
-        // create report dir if necessary
-        if (!projectReportDir.exists()) {
-            projectReportDir.mkdirs()
-        }
 
         if (failures.isNotEmpty()) {
             val errorBlocks = failures.joinToString("\n") { f ->
@@ -149,30 +149,30 @@ val generateCheckstyleReport = tasks.register("generateCheckstyleReport") {
             return@doLast
         }
 
-        logger.info("Generating Checkstyle markdown reports...")
-        FileWriter(bundledReportFile).use { writer ->
-            writer.append("### Checkstyle Report\n")
-            // same location as
-            projectCheckstylePairs.forEach { (project, task) ->
-                val checkName = "${project.name} (${task.name.removePrefix("checkstyle")})"
-                val subReport = genCheckstyleMdReport(checkName, task.reports.xml) ?: return@forEach
+            logger.info("Generating Checkstyle markdown reports...")
+            FileWriter(bundledReportFile).use { writer ->
+                writer.append("### Checkstyle Report\n")
+                // same location as
+                projectCheckstylePairs.forEach { (project, task) ->
+                    val checkName = "${project.name} (${task.name.removePrefix("checkstyle")})"
+                    val subReport = genCheckstyleMdReport(checkName, task.reports.xml) ?: return@forEach
 
-                // not very efficient but should be fine for the md sizes
-                writer.append(subReport)
-                writer.append("\n\n")
+                    // not very efficient but should be fine for the md sizes
+                    writer.append(subReport)
+                    writer.append("\n\n")
+                }
             }
 
+            logger.info("✅ Bundled report written to ${bundledReportFile.absolutePath}.")
         }
-
-        logger.info("✅ Bundled report written to ${bundledReportFile.absolutePath}.")
-
     }
 
-}
-
-///// Generates a markdown report for the given xml report
-///// in same directory as given report
-fun genCheckstyleMdReport(checkName: String, xmlReport: SingleFileReport): String? {
+// /// Generates a markdown report for the given xml report
+// /// in same directory as given report
+fun genCheckstyleMdReport(
+    checkName: String,
+    xmlReport: SingleFileReport,
+): String? {
     val reportFile = xmlReport.outputLocation.asFile.get()
 
     if (!reportFile.exists()) {
@@ -194,9 +194,8 @@ fun genCheckstyleMdReport(checkName: String, xmlReport: SingleFileReport): Strin
     // Start Markdown report
     val mdReport = StringBuilder()
     mdReport.append("<details>\n")
-    mdReport.append("<summary>&nbsp;$statusIcon <b>${checkName}</b>: Checkstyle found <b>${errors.length}</b> violations</summary>\n\n")
+    mdReport.append("<summary>&nbsp;$statusIcon <b>$checkName</b>: Checkstyle found <b>${errors.length}</b> violations</summary>\n\n")
     mdReport.append("```\n")
-
 
     // Iterate through XML nodes and append to Markdown
     val fileList = doc.getElementsByTagName("file")
@@ -208,8 +207,9 @@ fun genCheckstyleMdReport(checkName: String, xmlReport: SingleFileReport): Strin
             val fileName = elem.getAttribute("name")
 
             val errorList = elem.getElementsByTagName("error")
-            if (errorList.length != 0)
+            if (errorList.length != 0) {
                 mdReport.append("File: $fileName\n")
+            }
             for (j in 0 until errorList.length) {
                 val errorNode = errorList.item(j)
                 if (errorNode.nodeType == org.w3c.dom.Node.ELEMENT_NODE) {

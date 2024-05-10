@@ -1,0 +1,140 @@
+package vadl.ast;
+
+
+import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.Test;
+import vadl.error.VadlException;
+
+/**
+ * Checks if the name resolution in the parser works as expected.
+ */
+public class NameResolutionTest {
+  @Test
+  void resolveSingleConstant() {
+    var prog = "constant a = 13";
+    Assertions.assertDoesNotThrow(() -> VadlParser.parse(prog), "Cannot parse input");
+  }
+
+  @Test
+  void resolveTwoConstant() {
+    var prog = """
+          constant a = 13
+          constant b = 13
+        """;
+    Assertions.assertDoesNotThrow(() -> VadlParser.parse(prog), "Cannot parse input");
+  }
+
+  @Test
+  void resolveTwoOverlappingConstant() {
+    var prog = """
+          constant a = 13
+          constant a = 13
+        """;
+    var thrown = Assertions.assertThrows(VadlException.class, () -> VadlParser.parse(prog),
+        "Expected to throw name conflict");
+    Assertions.assertEquals(thrown.errors.size(), 1);
+  }
+
+  @Test
+  void resolveUndefinedVariable() {
+    var prog = """
+          constant a = b
+        """;
+    var thrown = Assertions.assertThrows(VadlException.class, () -> VadlParser.parse(prog),
+        "Expected to throw unresolved variable");
+    Assertions.assertEquals(thrown.errors.size(), 1);
+  }
+
+  @Test
+  void resolvePreviouslyDefinedVariable() {
+    var prog = """
+          constant a = 13
+          constant b = a
+        """;
+    Assertions.assertDoesNotThrow(() -> VadlParser.parse(prog), "Cannot parse input");
+  }
+
+  @Test
+  void resolveInTheFutureDefinedVariable() {
+    var prog = """
+          constant b = a
+          constant a = 13
+        """;
+    Assertions.assertDoesNotThrow(() -> VadlParser.parse(prog), "Cannot parse input");
+  }
+
+  // FIXME how should we solve this
+  /*@Test
+  void resolveCyclicDefinedVariable() {
+    var prog = """
+      constant a = a
+    """;
+    var thrown = Assertions.assertThrows(VadlException.class, () -> VadlParser.parse(prog),
+    "Expected to throw unresolved variable");
+    Assertions.assertEquals(thrown.errors.size(), 1);
+  }
+   */
+
+  // FIXME how should we solve this
+  /*@Test
+  void resolveTwoCyclicDefinedVariables() {
+    var prog = """
+      constant a = b
+      constant b = a
+    """;
+    var thrown = Assertions.assertThrows(VadlException.class, () -> VadlParser.parse(prog),
+    "Expected to throw unresolved variable");
+    Assertions.assertEquals(thrown.errors.size(), 1);
+  }
+   */
+
+  @Test
+  void resolveTwoMemoryDefinitions() {
+    var prog = """
+        instruction set architecture FLO = {
+          memory MEM: Bits<32> -> Bits<8>
+          memory SideMem: Bits<6> -> Bits<2>
+        }
+        """;
+    Assertions.assertDoesNotThrow(() -> VadlParser.parse(prog), "Cannot parse input");
+  }
+
+  @Test
+  void resolveTwoOverlappingMemoryDefinitions() {
+    var prog = """
+        instruction set architecture FLO = {
+          memory MEM: Bits<32> -> Bits<8>
+          memory MEM: Bits<6> -> Bits<2>
+        }
+        """;
+    var thrown = Assertions.assertThrows(VadlException.class, () -> VadlParser.parse(prog),
+        "Expected to throw name conflict");
+    Assertions.assertEquals(thrown.errors.size(), 1);
+  }
+
+  @Test
+  void resolveTwoOverlappingRegisterDefinitions() {
+    var prog = """
+        instruction set architecture FLO = {
+          register X : Bits<5>
+          register X : Bits<2>
+        }
+        """;
+    var thrown = Assertions.assertThrows(VadlException.class, () -> VadlParser.parse(prog),
+        "Expected to throw name conflict");
+    Assertions.assertEquals(thrown.errors.size(), 1);
+  }
+
+  @Test
+  void resolveTwoOverlappingRegisterFileDefinitions() {
+    var prog = """
+        instruction set architecture FLO = {
+          register file X : Bits<5> -> Bits<32>
+          register file X : Bits<2> -> Bits<4>
+        }
+        """;
+    var thrown = Assertions.assertThrows(VadlException.class, () -> VadlParser.parse(prog),
+        "Expected to throw name conflict");
+    Assertions.assertEquals(thrown.errors.size(), 1);
+  }
+}

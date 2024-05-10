@@ -1,0 +1,202 @@
+$package=vadl.ast
+import java.util.ArrayList;
+import java.util.List;
+
+import vadl.ast.Ast;
+import vadl.ast.Expr;
+import vadl.ast.Definition;
+import static vadl.ast.IndexDefinition.IndexKind.GROUP;
+import static vadl.ast.IndexDefinition.IndexKind.PROGRAM;
+import vadl.utils.SourceLocation;
+
+import vadl.types.BitsType;
+import vadl.types.BoolType;
+import vadl.types.Type;
+import vadl.types.SIntType;
+import vadl.types.UIntType;
+
+
+COMPILER vadl
+    Ast ast = new Ast();
+    SymbolTable symbolTable = new SymbolTable();
+
+    SourceLocation locationFromToken(Token token) {
+        return new SourceLocation(
+            SourceLocation.INVALID_SOURCE_LOCATION.uri(),
+            new SourceLocation.Position(token.line, token.col),
+            new SourceLocation.Position(token.line, token.col + t.val.length()));
+    }
+
+
+
+CHARACTERS
+    digit = '0' .. '9'.
+    letter = 'a' .. 'z' + 'A' .. 'Z'.
+
+TOKENS
+    number = digit {digit}.
+    identifierToken = letter {letter | digit | '_'}.
+
+COMMENTS FROM "//" TO '\n'
+COMMENTS FROM "/*" TO "*/" NESTED
+
+IGNORE '\t' + '\r' + '\n'
+
+
+PRODUCTIONS
+    vadl =
+    {
+        topLevelDefinitions<out Definition d>   (. ast.definitions.add(d); .)
+    }.
+
+    // -- DEFINITIONS --------------------------------------------------------------------------------------------------
+    topLevelDefinitions<out Definition definition>                      (. definition = null; .)
+    = instructionsetDefinition<out InstructionSetDefinition isaDef>        (. definition  = isaDef; .)
+    | commonDefinitionSection<out Definition def>                       (. definition  = def; .)
+    .
+
+    commonDefinitionSection<out Definition definition>              (. definition = null; .)
+    = constantDefinition<out Definition def>                        (. definition = def; .)
+    | formatDefinition<out Definition def>                          (. definition = def; .)
+    .
+
+    instructionsetDefinition<out InstructionSetDefinition isaDef>   (. var children = new ArrayList<Definition>(); .)
+    = "instruction"                                                 (. var startLocation = locationFromToken(t);.)
+       "set" "architecture" identifier<out Identifier identifier>
+       "=" "{"
+      {
+        isaDefinition<out Definition def>                           (. children.add(def); .)
+      }
+      "}"                                                           (. isaDef = new InstructionSetDefinition(identifier, children, startLocation.join(locationFromToken(t))); .)
+      .
+
+    isaDefinition<out Definition def>                       (. def = null; .)
+    = constantDefinition<out Definition d>                  (. def = d; .)
+    | formatDefinition<out Definition d>                    (. def = d; .)
+    | indexDefinition<out Definition d>                     (. def = d; .)
+    //| instructionStatement<out Definition d>              (. def = d; .)
+    | memoryDefinition<out Definition d>                    (. def = d; .)
+    | registerAndRegisterFileDefinition<out Definition d>   (. def = d; .)
+    .
+
+    constantDefinition<out ConstantDefinition def>      (. TypeLiteral type = null; .)
+    = "constant"                                        (. var startLocation = locationFromToken(t); .)
+        identifier<out Identifier id>                   (. symbolTable.addDefinition(id); .)
+        [
+            ':' typeLiteral<out TypeLiteral t1>         (. type = t1; .)
+        ]
+        '=' expression<out Expr expr>                   (. def = new ConstantDefinition(id, type, expr, startLocation.join(locationFromToken(t))); .)
+    .
+
+    formatDefinition<out FormatDefinition def>                      (. List<FormatDefinition.FormatField> fields = new ArrayList<>();.)
+    = "format"                                                      (. var startLoc = locationFromToken(t); .)
+    identifier<out Identifier id>
+    ":" typeLiteral<out TypeLiteral type>
+    ["=" "{"
+        formatField<out FormatDefinition.FormatField f1>            (. fields.add(f1); .)
+        {
+        "," formatField<out FormatDefinition.FormatField f2>        (. fields.add(f2); .)
+        }
+    "}"]                                                            (. def = new FormatDefinition(id, type, fields, startLoc.join(locationFromToken(t))); .)
+    .
+
+    // FIXME: more versions are missing here
+    formatField<out FormatDefinition.FormatField field>
+    = identifier<out Identifier id>  "["            (. List<RangeExpr> ranges = new ArrayList<>();.)
+        rangeExpression<out RangeExpr e1>           (. ranges.add(e1); .)
+        {
+            "," rangeExpression<out RangeExpr e2>   (. ranges.add(e2); .)
+        }
+    "]"                                             (. field = new FormatDefinition.FormatField(id, ranges); .)
+    .
+
+    indexDefinition<out IndexDefinition def>        (. IndexDefinition.IndexKind kind = null; .)
+    = ("program"                                    (. kind = PROGRAM; .)
+    |  "group"                                      (. kind = GROUP; .)
+    )                                               (. var startLocation = locationFromToken(t); .)
+    "counter"
+        identifier<out Identifier id>               (. symbolTable.addDefinition(id); .)
+        ":" typeLiteral<out TypeLiteral t1>         (. def = new IndexDefinition(kind, id, t1, startLocation.join(locationFromToken(t))); .)
+    .
+
+/*    instructionStatement<out InstructionDefinitionStmt stmt>
+    = "instruction"
+    identifier<out Identifier id> ":" <identifer<out Identifier tyeIdentifer> "=" "{"
+    .*/
+
+    memoryDefinition<out MemoryDefinition def>
+    = "memory"                                  (. var startLocation = locationFromToken(t); .)
+        identifier<out Identifier id>           (. symbolTable.addDefinition(id); .)
+        ":" typeLiteral<out TypeLiteral t1>
+        "->" typeLiteral<out TypeLiteral t2>    (. def = new MemoryDefinition(id, t1, t2, startLocation.join(t2.location())); .)
+    .
+
+    registerAndRegisterFileDefinition<out Definition def>   (. def = null; .)
+        = "register"                                        (. var startLocation = locationFromToken(t); .)
+        (
+            "file"
+            identifier<out Identifier id>                   (. symbolTable.addDefinition(id); .)
+            ":" typeLiteral<out TypeLiteral t1>
+            "->" typeLiteral<out TypeLiteral t2>            (. def = new RegisterFileDefinition(id, t1, t2, startLocation.join(t2.location())); .)
+        |
+            identifier<out Identifier id>                   (. symbolTable.addDefinition(id); .)
+            ":" typeLiteral<out TypeLiteral t1>             (. def = new RegisterDefinition(id, t1, startLocation.join(t1.location())); .)
+        )
+    .
+
+
+    // -- STATEMENTS ---------------------------------------------------------------------------------------------------
+    // comming soon to a vadl near you ;)
+
+    // -- EXPRESSIONS --------------------------------------------------------------------------------------------------
+
+    expression<out Expr expr>
+    = term<out Expr expr1>  (. expr = expr1; .)
+    .
+
+    term<out Expr expr>
+    = factor<out Expr expr1>                   (. expr = expr1; .)
+        {
+            '+' factor<out Expr expr2>         (. expr = new BinaryExpr(expr, BinaryExpr.Operation.ADD, expr2); .)
+        |   '-' factor<out Expr expr2>         (. expr = new BinaryExpr(expr, BinaryExpr.Operation.SUBTRACT, expr2); .)
+        }
+    .
+
+    factor<out Expr expr>
+    = primary<out Expr expr1>                 (. expr = expr1; .)
+        {
+            '*' primary<out Expr expr2>       (. expr = new BinaryExpr(expr, BinaryExpr.Operation.MULTIPLY, expr2); .)
+        |   '/' primary<out Expr expr2>       (. expr = new BinaryExpr(expr, BinaryExpr.Operation.DIVIDE, expr2); .)
+        }
+    .
+
+    primary<out Expr expr>                  (. expr = null; .)
+    = number                                (. expr = new IntegerLiteral(Integer.parseInt(t.val), locationFromToken(t)); .)
+    | identifier<out Identifier id>         (. expr = new Variable(id); symbolTable.addUsage(id); .)
+    | '(' expression<out Expr expr1> ')'    (. expr = expr1; .)
+    .
+
+    rangeExpression<out RangeExpr expr>
+    = expression<out Expr e1> ".." expression<out Expr e2> (. expr = new RangeExpr(e1, e2);.)
+    .
+
+    // -- PRIMETIVES ---------------------------------------------------------------------------------------------------
+
+    typeLiteral<out TypeLiteral type>       (. type = null; Expr sizeExpr = null; .)
+    =
+    "Bool"                                  (. var loc = locationFromToken(t); type = new TypeLiteral(new Identifier(t.val, loc), null, loc); .)
+    |
+     (
+        identifier<out Identifier id>
+        [ "<"
+            term<out Expr expr>             (. sizeExpr = expr; .)
+        ">" ]                               (. type = new TypeLiteral(id, sizeExpr, id.location().join(locationFromToken(t))) ;.)
+    )
+    .
+
+
+    identifier<out Identifier identifier> = identifierToken (. identifier = new Identifier(t.val, locationFromToken(t)); .)
+    .
+
+
+END vadl.
