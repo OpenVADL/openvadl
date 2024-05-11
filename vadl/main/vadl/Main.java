@@ -1,5 +1,6 @@
 package vadl;
 
+import vadl.ast.AstDumper;
 import vadl.ast.VadlParser;
 import vadl.error.ErrorPrinter;
 import vadl.error.VadlException;
@@ -16,20 +17,14 @@ public class Main {
    */
   public static void main(String[] args) {
     var program = """
-        format I_TYPE : Bits<32> =
-        { funct6 [31..26]
-        , shamt  [25..20]
-        , rs1    [19..15]
-        , funct3 [14..12]
-        , rd     [11..7]
-        , opcode [6..0]
-        }
+        constant x = 42
         """;
 
     try {
       var ast = VadlParser.parse(program);
       System.out.println("== AST DUMP ==");
-      System.out.println(ast.dump());
+      var dumper = new AstDumper();
+      System.out.println(dumper.dump(ast));
       System.out.println("== AST PRETTY PRINT ==");
       System.out.println(ast.prettyPrint());
     } catch (VadlException e) {

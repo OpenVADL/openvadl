@@ -59,15 +59,6 @@ class BinaryExpr extends Expr {
   }
 
   @Override
-  void dump(int indent, StringBuilder builder) {
-    builder.append(dumpIndentString(indent));
-    builder.append("%s (operation: %s)\n".formatted(this.getClass().getSimpleName(),
-        operationAsString(operation)));
-    left.dump(indent + 1, builder);
-    right.dump(indent + 1, builder);
-  }
-
-  @Override
   void prettyPrint(int indent, StringBuilder builder) {
     // FIXME: Remove the parenthesis in the future and determine if they are needed
     builder.append("(");
@@ -80,6 +71,12 @@ class BinaryExpr extends Expr {
   @Override
   <R> R accept(ExprVisitor<R> visitor) {
     return visitor.visit(this);
+  }
+
+  @Override
+  public String toString() {
+    return "%s operator: %s".formatted(this.getClass().getSimpleName(),
+        operationAsString(operation));
   }
 
   @Override
@@ -120,12 +117,6 @@ class IntegerLiteral extends Expr {
   }
 
   @Override
-  void dump(int indent, StringBuilder builder) {
-    builder.append(dumpIndentString(indent));
-    builder.append("%s (value: %d)\n".formatted(this.getClass().getSimpleName(), number));
-  }
-
-  @Override
   void prettyPrint(int indent, StringBuilder builder) {
     builder.append(number);
   }
@@ -133,6 +124,11 @@ class IntegerLiteral extends Expr {
   @Override
   <R> R accept(ExprVisitor<R> visitor) {
     return visitor.visit(this);
+  }
+
+  @Override
+  public String toString() {
+    return "%s number: %d".formatted(this.getClass().getSimpleName(), number);
   }
 
   @Override
@@ -169,15 +165,6 @@ class RangeExpr extends Expr {
   }
 
   @Override
-  void dump(int indent, StringBuilder builder) {
-    builder.append(dumpIndentString(indent));
-    builder.append(this.getClass().getSimpleName());
-    builder.append("\n");
-    from.dump(indent + 1, builder);
-    to.dump(indent + 1, builder);
-  }
-
-  @Override
   void prettyPrint(int indent, StringBuilder builder) {
     from.prettyPrint(indent, builder);
     builder.append("..");
@@ -187,6 +174,11 @@ class RangeExpr extends Expr {
   @Override
   <R> R accept(ExprVisitor<R> visitor) {
     return visitor.visit(this);
+  }
+
+  @Override
+  public String toString() {
+    return this.getClass().getSimpleName();
   }
 
   @Override
@@ -235,17 +227,6 @@ class TypeLiteral extends Expr {
   }
 
   @Override
-  void dump(int indent, StringBuilder builder) {
-    builder.append(dumpIndentString(indent));
-    builder.append(this.getClass().getSimpleName());
-    builder.append("\n");
-    baseType.dump(indent + 1, builder);
-    if (sizeExpression != null) {
-      sizeExpression.dump(indent + 1, builder);
-    }
-  }
-
-  @Override
   void prettyPrint(int indent, StringBuilder builder) {
     builder.append(baseType.name);
     if (sizeExpression != null) {
@@ -260,6 +241,11 @@ class TypeLiteral extends Expr {
   @Override
   <R> R accept(ExprVisitor<R> visitor) {
     return visitor.visit(this);
+  }
+
+  @Override
+  public String toString() {
+    return this.getClass().getSimpleName();
   }
 
   @Override
@@ -297,14 +283,6 @@ class Variable extends Expr {
   }
 
   @Override
-  void dump(int indent, StringBuilder builder) {
-    builder.append(dumpIndentString(indent));
-    builder.append(this.getClass().getSimpleName());
-    builder.append("\n");
-    identifier.dump(indent + 1, builder);
-  }
-
-  @Override
   void prettyPrint(int indent, StringBuilder builder) {
     identifier.prettyPrint(indent, builder);
   }
@@ -312,6 +290,11 @@ class Variable extends Expr {
   @Override
   <R> R accept(ExprVisitor<R> visitor) {
     return visitor.visit(this);
+  }
+
+  @Override
+  public String toString() {
+    return this.getClass().getSimpleName();
   }
 
   @Override
