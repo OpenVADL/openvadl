@@ -27,6 +27,20 @@ COMPILER vadl
             new SourceLocation.Position(token.line, token.col + t.val.length()));
     }
 
+    /**
+    * A simple lookahead helper that returns true if the token at the nth position matches the provided string.
+    *
+    * @param lookAheadPos the position to lookahead 0 is the next token.
+    * @param value to match
+    */
+    boolean matchN(int lookAheadPos, String value) {
+        for(int i = 0; i <= lookAheadPos -2; i++) {
+            var t = scanner.Peek();
+            System.out.println("token %s".formatted(t.val));
+        }
+        return scanner.Peek().val.equals(value);
+    }
+
 
 
 CHARACTERS
@@ -76,7 +90,8 @@ PRODUCTIONS
     | indexDefinition<out Definition d>                     (. def = d; .)
     //| instructionStatement<out Definition d>              (. def = d; .)
     | memoryDefinition<out Definition d>                    (. def = d; .)
-    | registerAndRegisterFileDefinition<out Definition d>   (. def = d; .)
+    | IF (matchN(1, "file")) registerFileDefinition<out Definition d>   (. def = d; .)
+    | registerDefinition<out Definition d>   (. def = d; .)
     .
 
     constantDefinition<out ConstantDefinition def>      (. TypeLiteral type = null; .)
@@ -131,17 +146,18 @@ PRODUCTIONS
         "->" typeLiteral<out TypeLiteral t2>    (. def = new MemoryDefinition(id, t1, t2, startLocation.join(t2.location())); .)
     .
 
-    registerAndRegisterFileDefinition<out Definition def>   (. def = null; .)
+    registerDefinition<out RegisterDefinition def>
         = "register"                                        (. var startLocation = locationFromToken(t); .)
-        (
-            "file"
-            identifier<out Identifier id>                   (. symbolTable.addDefinition(id); .)
-            ":" typeLiteral<out TypeLiteral t1>
-            "->" typeLiteral<out TypeLiteral t2>            (. def = new RegisterFileDefinition(id, t1, t2, startLocation.join(t2.location())); .)
-        |
-            identifier<out Identifier id>                   (. symbolTable.addDefinition(id); .)
-            ":" typeLiteral<out TypeLiteral t1>             (. def = new RegisterDefinition(id, t1, startLocation.join(t1.location())); .)
-        )
+          identifier<out Identifier id>                     (. symbolTable.addDefinition(id); .)
+          ":" typeLiteral<out TypeLiteral t1>               (. def = new RegisterDefinition(id, t1, startLocation.join(t1.location())); .)
+    .
+
+    registerFileDefinition<out Definition def>
+        = "register"                                        (. var startLocation = locationFromToken(t); .)
+              "file"
+              identifier<out Identifier id>                 (. symbolTable.addDefinition(id); .)
+              ":" typeLiteral<out TypeLiteral t1>
+              "->" typeLiteral<out TypeLiteral t2>          (. def = new RegisterFileDefinition(id, t1, t2, startLocation.join(t2.location())); .)
     .
 
 
