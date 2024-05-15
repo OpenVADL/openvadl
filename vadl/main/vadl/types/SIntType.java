@@ -4,7 +4,7 @@ package vadl.types;
  * An arbitrary sized signed integer.
  */
 public class SIntType extends BitsType {
-  
+
   protected SIntType(int bitWidth) {
     super(bitWidth);
   }
@@ -15,4 +15,16 @@ public class SIntType extends BitsType {
   }
 
 
+  @Override
+  public boolean canBeCastTo(DataType other) {
+    // SInt<N> ==> Bits<M> | N <= M and N > 1
+    if (other.getClass() == BitsType.class) {
+      return bitWidth <= other.bitWidth() && bitWidth > 1;
+    }
+
+    // as SInt<N> can be casted to Bits<N>
+    // all Bits<N> casting rules apply to SInt<N>
+    // TODO: Check if this is valid
+    return super.canBeCastTo(other);
+  }
 }

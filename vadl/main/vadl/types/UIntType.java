@@ -14,4 +14,23 @@ public class UIntType extends BitsType {
     return "UInt<%s>".formatted(bitWidth);
   }
 
+  @Override
+  public boolean canBeCastTo(DataType other) {
+    // UInt<N> ==> UInt<M> | N <= M
+    if (other.getClass() == UIntType.class) {
+      return bitWidth <= other.bitWidth();
+    }
+
+    // UInt<N> ==> Bits<M> | N <= M
+    // getClass instead of instanceof is important!
+    // we don't allow casting to SInt
+    if (other.getClass() == BitsType.class) {
+      return bitWidth <= other.bitWidth();
+    }
+
+    // as UInt<N> can be casted to Bits<N>
+    // all Bits<N> casting rules apply to UInt<N>
+    // TODO: Check if this is valid
+    return super.canBeCastTo(other);
+  }
 }

@@ -4,7 +4,7 @@ package vadl.types;
  * An arbitrary sized sequence of Bits to represent anything.
  */
 public class BitsType extends DataType {
-  public final int bitWidth;
+  protected final int bitWidth;
 
   protected BitsType(int bitWidth) {
     this.bitWidth = bitWidth;
@@ -13,6 +13,27 @@ public class BitsType extends DataType {
   @Override
   public int bitWidth() {
     return bitWidth;
+  }
+
+  @Override
+  public boolean canBeCastTo(DataType other) {
+    // Bits<1> ==> Bool
+    if (other.getClass() == BoolType.class) {
+      return bitWidth == 1;
+    }
+
+    // Bits<N> ==> SInt<N>
+    if (other.getClass() == SIntType.class) {
+      return bitWidth == other.bitWidth();
+    }
+
+    // Bits<N> ==> Bits<M> | N <= M
+    // getClass is important (we do not allow cast to UInt)
+    if (other.getClass() == BitsType.class) {
+      return bitWidth <= other.bitWidth();
+    }
+
+    return false;
   }
 
   @Override

@@ -50,4 +50,9 @@ public class TupleType extends DataType {
   public int bitWidth() {
     return types().mapToInt(DataType::bitWidth).sum();
   }
+
+  @Override
+  public boolean canBeCastTo(DataType other) {
+    return false;
+  }
 }
