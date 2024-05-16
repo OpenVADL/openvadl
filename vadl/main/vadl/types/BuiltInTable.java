@@ -17,10 +17,10 @@ public class BuiltInTable {
    * The {@code VADL::add} built-in function adds two Bits like operands and
    * returns a UInt or SInt depending on the inputs.
    *
-   * <p>{@code function add ( a : Bits<N>, b : Bits<N> ) -> [UInt<N> | SInt<N>] }
+   * <p>{@code function add ( a : Bits<N>, b : Bits<N> ) -> Bits<N> }
    */
   public static Binary.Add ADD =
-      new Binary.Add(BitsType.class, BitsType.class) {
+      new Binary.Add(BitsType.class, BitsType.class, BitsType.class) {
 
       };
 
@@ -33,7 +33,7 @@ public class BuiltInTable {
    * <p>{@code function adds( a : UInt<N>, b : UInt<N> ) -> ( UInt<N>, Status ) }
    */
   public static Binary.Adds ADDS_UU =
-      new Binary.Adds(UIntType.class, UIntType.class) {
+      new Binary.Adds(UIntType.class, UIntType.class, TupleType.class) {
 
       };
 
@@ -46,7 +46,7 @@ public class BuiltInTable {
    * <p>{@code function equ ( a : UInt<N>, b : UInt<N> ) -> Bool }
    */
   public static Comparison.Equ EQU_UU =
-      new Comparison.Equ(UIntType.class, UIntType.class) {
+      new Comparison.Equ(UIntType.class, UIntType.class, BoolType.class) {
 
       };
 
@@ -59,7 +59,7 @@ public class BuiltInTable {
    * <p>{@code function equ ( a : UInt<N>, b : UInt<N> ) -> Bool }
    */
   public static Comparison.Equ EQU_SS =
-      new Comparison.Equ(SIntType.class, SIntType.class) {
+      new Comparison.Equ(SIntType.class, SIntType.class, BoolType.class) {
 
       };
 
@@ -84,15 +84,27 @@ public class BuiltInTable {
    */
   public abstract static class BuiltIn {
 
-    public final String name;
-    public final @Nullable String operator;
-    public final List<Class<? extends DataType>> typeClasses;
+    private final String name;
+    private final @Nullable String operator;
+    protected final List<Class<? extends DataType>> typeClasses;
+    protected final Class<? extends DataType> returnTypeClass;
 
     private BuiltIn(String name, @Nullable String operator,
-                    List<Class<? extends DataType>> typeClasses) {
+                    List<Class<? extends DataType>> typeClasses,
+                    Class<? extends DataType> returnTypeClass) {
       this.name = name;
       this.operator = operator;
       this.typeClasses = typeClasses;
+      this.returnTypeClass = returnTypeClass;
+    }
+
+    public String name() {
+      return name;
+    }
+
+    @Nullable
+    public String operator() {
+      return operator;
     }
 
     /**
@@ -144,8 +156,8 @@ public class BuiltInTable {
       extends BuiltIn {
 
     private Binary(String name, @Nullable String operator, Class<? extends DataType> first,
-                   Class<? extends DataType> second) {
-      super(name, operator, List.of(first, second));
+                   Class<? extends DataType> second, Class<? extends DataType> returnType) {
+      super(name, operator, List.of(first, second), returnType);
     }
 
     public Class<? extends DataType> firstTypeClass() {
@@ -176,8 +188,10 @@ public class BuiltInTable {
      * The Add class represents the binary addition operation in VADL.
      */
     public abstract static class Add extends Binary {
-      private Add(Class<? extends DataType> first, Class<? extends DataType> second) {
-        super("ADD", "+", first, second);
+      private Add(Class<? extends DataType> first,
+                  Class<? extends DataType> second,
+                  Class<? extends DataType> returnType) {
+        super("ADD", "+", first, second, returnType);
       }
 
       @Override
@@ -192,8 +206,9 @@ public class BuiltInTable {
      */
     public abstract static class Adds
         extends Binary {
-      private Adds(Class<? extends DataType> first, Class<? extends DataType> second) {
-        super("ADDS", "+", first, second);
+      private Adds(Class<? extends DataType> first, Class<? extends DataType> second,
+                   Class<? extends DataType> returnType) {
+        super("ADDS", "+", first, second, returnType);
       }
 
       @Override
@@ -216,8 +231,9 @@ public class BuiltInTable {
 
     private Comparison(String name, @Nullable String operator,
                        Class<? extends DataType> first,
-                       Class<? extends DataType> second) {
-      super(name, operator, first, second);
+                       Class<? extends DataType> second,
+                       Class<? extends DataType> returnType) {
+      super(name, operator, first, second, returnType);
     }
 
     @Override
@@ -229,8 +245,10 @@ public class BuiltInTable {
      * The Equ class represents the equals to comparison operation in VADL.
      */
     public abstract static class Equ extends Comparison {
-      private Equ(Class<? extends DataType> first, Class<? extends DataType> second) {
-        super("EQU", "=", first, second);
+      private Equ(Class<? extends DataType> first,
+                  Class<? extends DataType> second,
+                  Class<? extends DataType> returnType) {
+        super("EQU", "=", first, second, returnType);
       }
     }
 
