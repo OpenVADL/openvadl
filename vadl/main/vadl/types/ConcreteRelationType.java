@@ -14,7 +14,7 @@ import java.util.stream.Collectors;
  *
  * @see RelationType
  */
-public class ConcreteRelationType {
+public class ConcreteRelationType extends Type {
 
   private final RelationType relationType;
 
@@ -43,5 +43,13 @@ public class ConcreteRelationType {
 
   public RelationType relationType() {
     return relationType;
+  }
+
+  @Override
+  public String name() {
+    return "("
+        + argTypes.stream().map(Type::name).collect(Collectors.joining(", "))
+        + ") -> "
+        + returnType.name();
   }
 }

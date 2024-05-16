@@ -1,6 +1,7 @@
 package vadl.types;
 
 import java.util.List;
+import java.util.stream.Collectors;
 
 /**
  * Represents a relation type in VADL's type system.
@@ -8,7 +9,7 @@ import java.util.List;
  * The argument types are represented as a list of subclasses of the base class Type.
  * The return type is represented using a subclass of the base class Type.
  */
-public class RelationType {
+public class RelationType extends Type {
 
   private final List<Class<? extends Type>> argTypeClass;
   private final Class<? extends Type> returnTypeClass;
@@ -24,5 +25,14 @@ public class RelationType {
 
   public Class<? extends Type> returnTypeClass() {
     return returnTypeClass;
+  }
+
+  @Override
+  public String name() {
+    return "("
+        + argTypeClass.stream().map(Class::getSimpleName)
+        .collect(Collectors.joining(", "))
+        + ") -> "
+        + returnTypeClass.getSimpleName();
   }
 }

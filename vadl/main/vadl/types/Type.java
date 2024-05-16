@@ -146,6 +146,14 @@ public abstract class Type {
     return statusType;
   }
 
+  private static @Nullable VoidType voidType = null;
+
+  public static VoidType void_() {
+    if (voidType == null) {
+      voidType = new VoidType();
+    }
+    return voidType;
+  }
 
   private static final HashMap<Integer, RelationType> relationTypes = new HashMap<>();
 
