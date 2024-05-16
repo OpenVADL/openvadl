@@ -31,6 +31,10 @@ public abstract class Definition {
     this.sourceLocation = sourceLocation;
   }
 
+  public String name() {
+    return identifier.simpleName();
+  }
+
   @FormatMethod
   protected void ensure(boolean condition, String message, Object... args) {
     if (condition) {

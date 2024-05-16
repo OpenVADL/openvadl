@@ -3,6 +3,7 @@ package vadl.viam;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 import vadl.types.DataType;
 import vadl.types.Type;
 
@@ -28,6 +29,10 @@ public class Format extends Definition {
 
   public void addFields(Field... fields) {
     this.fields.addAll(List.of(fields));
+  }
+
+  public Stream<Field> fields() {
+    return fields.stream();
   }
 
   public Type type() {

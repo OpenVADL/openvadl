@@ -50,19 +50,28 @@ public class Encoding extends Definition {
     return format;
   }
 
+  @Override
+  public String toString() {
+    return "Encoding{ " + identifier + " = {\n\t" +
+        fieldEncodings.values().stream().map(Field::toString).collect(
+            Collectors.joining(",\n\t")) + " \n}}";
+  }
+
   public static class Field extends Definition {
 
     private final Format.Field formatField;
     private final Constant.Value constant;
 
-    Field(Format.Field formatField, Constant.Value constant) {
-      super(formatField.identifier);
+    public Field(Identifier identifier, Format.Field formatField, Constant.Value constant) {
+      super(identifier);
 
-      ensure(constant.type() == formatField.type(),
-          "Constant is of type %s, but format field is of type %s", constant, formatField.type());
+      ensure(constant.type().canBeCastTo(formatField.type()),
+          "Constant is of type %s, but format field is of type %s which cannot be cast implicit",
+          constant.type(),
+          formatField.type());
 
       this.formatField = formatField;
-      this.constant = constant;
+      this.constant = new Constant.Value(constant.value(), formatField.type());
     }
 
     public Format.Field formatField() {
