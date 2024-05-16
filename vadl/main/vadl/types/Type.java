@@ -2,6 +2,8 @@ package vadl.types;
 
 import java.util.Arrays;
 import java.util.HashMap;
+import java.util.List;
+import java.util.Objects;
 import javax.annotation.Nullable;
 
 /**
@@ -126,12 +128,8 @@ public abstract class Type {
    */
   public static TupleType tuple(DataType... types) {
     var hashCode = Arrays.hashCode(types);
-    var tupleType = tupleTypes.get(hashCode);
-    if (tupleType == null) {
-      tupleType = new TupleType(types);
-      tupleTypes.put(hashCode, tupleType);
-    }
-    return tupleType;
+    return tupleTypes
+        .computeIfAbsent(hashCode, k -> new TupleType(types));
   }
 
   private static @Nullable StatusType statusType = null;
@@ -147,4 +145,112 @@ public abstract class Type {
     }
     return statusType;
   }
+
+
+  private static final HashMap<Integer, RelationType> relationTypes = new HashMap<>();
+
+  /**
+   * Retrieves the generic relation type.
+   *
+   * @param argTypes   the list of argument type classes
+   * @param returnType the return type class
+   * @return the RelationType instance
+   */
+  public static RelationType relation(List<Class<? extends Type>> argTypes,
+                                      Class<? extends Type> returnType) {
+    var hashCode = Objects.hash(argTypes, returnType);
+    return relationTypes
+        .computeIfAbsent(hashCode, k -> new RelationType(argTypes, returnType));
+  }
+
+  /**
+   * Retrieves the generic relation type without arguments.
+   *
+   * @param returnType the return type class
+   * @return the RelationType instance
+   */
+  public static RelationType relation(Class<? extends Type> returnType) {
+    return relation(List.of(), returnType);
+  }
+
+  /**
+   * Retrieves the generic relation type with one argument.
+   *
+   * @param argType    the argument type class
+   * @param returnType the return type class
+   * @return the RelationType instance
+   */
+  public static RelationType relation(Class<? extends Type> argType,
+                                      Class<? extends Type> returnType) {
+    return relation(List.of(argType), returnType);
+  }
+
+  /**
+   * Retrieves the generic relation type with two arguments.
+   *
+   * @param firstArg   the first argument type class
+   * @param secondArg  the second argument type class
+   * @param returnType the return type class
+   * @return the RelationType instance
+   */
+  public static RelationType relation(Class<? extends Type> firstArg,
+                                      Class<? extends Type> secondArg,
+                                      Class<? extends Type> returnType) {
+    return relation(List.of(firstArg, secondArg), returnType);
+  }
+
+  private static final HashMap<Integer, ConcreteRelationType> concreteRelationTypes =
+      new HashMap<>();
+
+  /**
+   * Retrieves the ConcreteRelationType based on the given argument types and return type.
+   *
+   * @param argTypes   the list of argument types
+   * @param returnType the return type
+   * @return the ConcreteRelationType instance
+   */
+  public static ConcreteRelationType concreteRelation(List<Type> argTypes,
+                                                      Type returnType) {
+    var hashCode = Objects.hash(argTypes, returnType);
+    return concreteRelationTypes
+        .computeIfAbsent(hashCode, k -> new ConcreteRelationType(argTypes, returnType));
+  }
+
+  /**
+   * Retrieves a concrete relation type without arguments.
+   *
+   * @param returnType the return type
+   * @return the ConcreteRelationType instance
+   */
+  public static ConcreteRelationType concreteRelation(Type returnType) {
+    return concreteRelation(returnType);
+  }
+
+  /**
+   * Retrieves a single argument concrete relation type.
+   *
+   * @param argType    the argument type
+   * @param returnType the return type
+   * @return the ConcreteRelationType instance
+   */
+  public static ConcreteRelationType concreteRelation(Type argType,
+                                                      Type returnType) {
+    return concreteRelation(List.of(argType), returnType);
+  }
+
+  /**
+   * Retrieves the concrete relation type with two arguments.
+   *
+   * @param firstType  the first argument type
+   * @param secondType the second argument type
+   * @param returnType the return type
+   * @return the ConcreteRelationType instance
+   */
+  public static ConcreteRelationType concreteRelation(Type firstType,
+                                                      Type secondType,
+                                                      Type returnType) {
+    return concreteRelation(List.of(firstType, secondType), returnType);
+  }
+
+
 }
