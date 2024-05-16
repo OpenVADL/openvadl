@@ -1,6 +1,5 @@
 package vadl.viam;
 
-import java.util.Arrays;
 import java.util.List;
 import vadl.utils.SourceLocation;
 
