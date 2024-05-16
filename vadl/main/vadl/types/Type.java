@@ -231,7 +231,7 @@ public abstract class Type {
    * @return the ConcreteRelationType instance
    */
   public static ConcreteRelationType concreteRelation(Type returnType) {
-    return concreteRelation(returnType);
+    return concreteRelation(List.of(), returnType);
   }
 
   /**
