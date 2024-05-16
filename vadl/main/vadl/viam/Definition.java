@@ -31,6 +31,10 @@ public abstract class Definition {
     this.sourceLocation = sourceLocation;
   }
 
+  public String name() {
+    return identifier.simpleName();
+  }
+
   @FormatMethod
   protected void ensure(boolean condition, String message, Object... args) {
     if (condition) {
@@ -40,8 +44,7 @@ public abstract class Definition {
         .shrinkStacktrace(1)
         .addContext("name", this.identifier.name())
         .addContext("definition", this.toString())
-        .addContext("sourceLocation", sourceLocation.toConciseString())
-        .addContext("sourceCode", sourceLocation.toSourceString());
+        .addLocation(sourceLocation);
   }
 
 }

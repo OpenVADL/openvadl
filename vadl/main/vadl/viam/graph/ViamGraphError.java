@@ -3,6 +3,7 @@ package vadl.viam.graph;
 import com.google.errorprone.annotations.FormatMethod;
 import javax.annotation.Nullable;
 import org.jetbrains.annotations.Contract;
+import vadl.utils.SourceLocation;
 import vadl.viam.ViamError;
 
 /**
@@ -18,6 +19,11 @@ public class ViamGraphError extends ViamError {
   @FormatMethod
   public ViamGraphError(String message, @Nullable Object... args) {
     super(message.formatted(args));
+  }
+
+  public ViamGraphError addLocation(SourceLocation location) {
+    super.addLocation(location);
+    return this;
   }
 
   /**

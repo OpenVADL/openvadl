@@ -7,6 +7,7 @@ import java.util.List;
 import java.util.NoSuchElementException;
 import java.util.stream.Collectors;
 import org.jetbrains.annotations.NotNull;
+import vadl.types.DataType;
 import vadl.types.Type;
 
 /**
@@ -48,17 +49,22 @@ public abstract class Constant {
   public static class Value extends Constant {
     private final BigInteger value;
 
-    public Value(BigInteger value, Type type) {
+    public Value(BigInteger value, DataType type) {
       super(type);
       this.value = value;
     }
 
-    public static Value of(long value, Type type) {
+    public static Value of(long value, DataType type) {
       return new Value(BigInteger.valueOf(value), type);
     }
 
     public BigInteger value() {
       return value;
+    }
+
+    @Override
+    public DataType type() {
+      return (DataType) super.type();
     }
 
     @Override

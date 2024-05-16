@@ -1,5 +1,6 @@
 package vadl.viam;
 
+import java.util.List;
 import vadl.utils.SourceLocation;
 
 /**
@@ -11,12 +12,13 @@ public record Identifier(
 ) {
 
   public Identifier(String name, SourceLocation sourceLocation) {
-    this(sourceLocation, name);
+    this(new String[] {name}, sourceLocation);
   }
 
-  public Identifier(SourceLocation sourceLocation, String... parts) {
-    this(parts, sourceLocation);
+  public Identifier(List<String> parts, SourceLocation sourceLocation) {
+    this(parts.toArray(String[]::new), sourceLocation);
   }
+
 
   @Override
   public String toString() {

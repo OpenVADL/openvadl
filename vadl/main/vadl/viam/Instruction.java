@@ -11,26 +11,21 @@ public class Instruction extends Definition {
   private final Assembly assembly;
   private final Encoding encoding;
 
-  private final Format format;
-
   /**
    * Creates an Instruction object with the given parameters.
    *
    * @param identifier The identifier of the instruction.
-   * @param format     The format definition of the instruction.
    * @param behavior   The behavior graph of the instruction.
    * @param assembly   The assembly of the instruction.
    * @param encoding   The encoding of the instruction.
    */
   public Instruction(
       Identifier identifier,
-      Format format,
       Graph behavior,
       Assembly assembly,
       Encoding encoding
   ) {
     super(identifier);
-    this.format = format;
     this.behavior = behavior;
     this.assembly = assembly;
     this.encoding = encoding;
@@ -53,7 +48,7 @@ public class Instruction extends Definition {
   }
 
   public Format format() {
-    return format;
+    return encoding.format();
   }
 
 }

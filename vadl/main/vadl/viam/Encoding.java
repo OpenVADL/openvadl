@@ -1,128 +1,112 @@
 package vadl.viam;
 
-import java.util.ArrayList;
-import java.util.List;
+import java.util.HashMap;
+import java.util.Map;
 import java.util.stream.Collectors;
-import javax.annotation.Nullable;
-import vadl.types.BitsType;
+import java.util.stream.Stream;
 import vadl.types.Type;
 
 /**
  * The encoding for a specific instruction.
  *
  * <p>It holds instruction encoded fields available to the instruction.
- * Each field has a bit range and type that specifies the location.
- * Optionally a field also has a constant value if it is known in advance.</p>
+ * Each field has a reference to the original format field definition and
+ * a constant that defines the encoding.</p>
  */
 public class Encoding extends Definition {
 
-  private final Type type;
-  private final List<Field> fields = new ArrayList<Field>();
+  private final Format format;
 
-  public Encoding(Identifier identifier, Type type) {
+  private final Map<Format.Field, Field> fieldEncodings = new HashMap<>();
+
+  public Encoding(Identifier identifier, Format format) {
     super(identifier);
-    this.type = type;
-  }
-
-  public Encoding addFields(Field... encodingFields) {
-    fields.addAll(List.of(encodingFields));
-    return this;
+    this.format = format;
   }
 
   public Type type() {
-    return type;
+    return format.type();
+  }
+
+  /**
+   * Adds a field encoding to the encoding.
+   * There must not be an encoding for this field already.
+   *
+   * @param fieldEncoding the field encoding to be added
+   */
+  public void add(Field fieldEncoding) {
+    ensure(!fieldEncodings.containsKey(fieldEncoding.formatField), "Field %s already has encoding",
+        fieldEncoding.identifier);
+    fieldEncodings.put(fieldEncoding.formatField, fieldEncoding);
+  }
+
+  public Stream<Field> fieldEncodings() {
+    return fieldEncodings.values().stream();
+  }
+
+  public Format format() {
+    return format;
   }
 
   @Override
   public String toString() {
-    return "Encoding{"
-        + "name=" + identifier
-        + ", type=" + type
-        + ", fields=[\n" + fields.stream().map(Field::toString).collect(Collectors.joining(",\n"))
-        + "\n]}";
+    return "Encoding{ " + identifier + " = {\n\t"
+        + fieldEncodings.values().stream().map(Field::toString).collect(
+        Collectors.joining(",\n\t")) + " \n}}";
   }
 
+
   /**
-   * A field within an encoding.
-   * Holds information about the type, ranges, and value of the field.
+   * A field of a VADL encoding.
+   * Holds information about the format field, constant value, and type of the field.
    */
   public static class Field extends Definition {
 
-    private final BitsType type;
-    private final Constant.BitSlice bitSlice;
-    private @Nullable Constant value;
-
-    private final Encoding encoding;
+    private final Format.Field formatField;
+    private final Constant.Value constant;
 
     /**
-     * Constructs a Field object with the given identifier, type, ranges, and encoding.
+     * Constructs a new Field object with the given identifier, format field, and constant value.
+     * The type of the constant must be implicitly cast able to the type of the format field.
      *
-     * @param identifier the identifier of the field
-     * @param type       the type of the field
-     * @param bitSlice   the constant bitslice of the instruction for this field
-     * @param encoding   the parent encoding of the field
+     * @param identifier  the identifier of the field
+     * @param formatField the format field of the field
+     * @param constant    the constant value of the field
      */
-    public Field(
-        Identifier identifier,
-        BitsType type,
-        Constant.BitSlice bitSlice,
-        Encoding encoding) {
+    public Field(Identifier identifier, Format.Field formatField, Constant.Value constant) {
       super(identifier);
 
-      ensure(bitSlice.size() == type.bitWidth,
-          "Field type width of %s is different to slice size of %s", type.bitWidth,
-          bitSlice.size());
+      ensure(constant.type().canBeCastTo(formatField.type()),
+          "Constant is of type %s, but format field is of type %s which cannot be cast implicit",
+          constant.type(),
+          formatField.type());
 
-      this.type = type;
-      this.bitSlice = bitSlice;
-      this.encoding = encoding;
+      this.formatField = formatField;
+      this.constant = new Constant.Value(constant.value(), formatField.type());
     }
 
-    /**
-     * Sets the statically known value of this encoding field.
-     *
-     * <p>The type of the constant value must match the type this field.
-     */
-    public void setValue(Constant value) {
-      ensure(value.type().equals(type), "Value must be of type %s, was %s", type,
-          value.type());
-      this.value = value;
-    }
-
-    @Nullable
-    public Constant value() {
-      return value;
-    }
-
-    public boolean hasValue() {
-      return value != null;
-    }
-
-    public Constant.BitSlice bitSlice() {
-      return bitSlice;
+    public Format.Field formatField() {
+      return formatField;
     }
 
     public Type type() {
-      return type;
+      return formatField.type();
     }
 
-    public Encoding encoding() {
-      return encoding;
-    }
-
-    public int size() {
-      return bitSlice.size();
+    public Constant constant() {
+      return constant;
     }
 
     @Override
     public String toString() {
-      return "Field{"
-          + "name=" + identifier
-          + ", type=" + type
-          + ", bitSlice=" + bitSlice
-          + ", value=" + value
-          + ", encoding=" + encoding.identifier
-          + '}';
+      return "Field{ " + identifier + " = " + constant + " }";
+    }
+
+    @Override
+    public int hashCode() {
+      int result = formatField.hashCode();
+      result = 31 * result + constant.hashCode();
+      return result;
     }
   }
 
