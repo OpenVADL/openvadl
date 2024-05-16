@@ -262,6 +262,54 @@ public class BuiltInTable {
 
 
   ///// LOGICAL //////
+  
+  /**
+   * {@code function not ( a : Bits<N> ) ->Bits<N> // <=> ~a }
+   */
+  public final static BuiltIn NOT =
+      new BuiltIn("NOT", "~", Type.relation(BitsType.class, BitsType.class));
+
+
+  /**
+   * {@code function and ( a : Bits<N>, b : Bits<N> ) -> Bits<N> // <=> a & b }
+   */
+  public final static BuiltIn AND =
+      new BuiltIn("AND", "&", Type.relation(BitsType.class, BitsType.class, BitsType.class));
+
+
+  /**
+   * {@code function ands( a : Bits<N>, b : Bits<N> ) -> ( Bits<N>, Status ) }
+   */
+  public final static BuiltIn ANDS =
+      new BuiltIn("ANDS", Type.relation(BitsType.class, BitsType.class, TupleType.class));
+
+
+  /**
+   * {@code function xor ( a : Bits<N>, b : Bits<N> ) -> [ SInt<N> | UInt<N> ] // <=> a ^ b }
+   */
+  public final static BuiltIn XOR =
+      new BuiltIn("XOR", "^", Type.relation(BitsType.class, BitsType.class, SIntType.class));
+
+
+  /**
+   * {@code function xors( a : Bits<N>, b : Bits<N> ) -> ( Bits<N>, Status ) }
+   */
+  public final static BuiltIn XORS =
+      new BuiltIn("XORS", Type.relation(BitsType.class, BitsType.class, TupleType.class));
+
+
+  /**
+   * {@code function or ( a : Bits<N>, b : Bits<N> ) -> [ SInt<N> | UInt<N> ] // <=> a | b }
+   */
+  public final static BuiltIn OR =
+      new BuiltIn("OR", "|", Type.relation(BitsType.class, BitsType.class, SIntType.class));
+
+
+  /**
+   * {@code function ors( a : Bits<N>, b : Bits<N> ) -> ( Bits<N>, Status ) }
+   */
+  public final static BuiltIn ORS =
+      new BuiltIn("ORS", Type.relation(BitsType.class, BitsType.class, TupleType.class));
 
   ///// COMPARISON //////
 
@@ -313,13 +361,21 @@ public class BuiltInTable {
       MOD_UU,
       MODS_SS,
       MODS_UU,
-      
+
       DIV_SS,
       DIV_UU,
       DIVS_SS,
-      DIVS_UU
+      DIVS_UU,
 
       // LOGICAL
+
+      NOT,
+      AND,
+      ANDS,
+      XOR,
+      XORS,
+      OR,
+      ORS
 
   );
 
