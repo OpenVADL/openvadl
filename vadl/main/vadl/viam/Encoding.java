@@ -19,7 +19,7 @@ import vadl.types.Type;
  *
  * <p>It holds instruction encoded fields available to the instruction.
  * Each field has a reference to the original format field definition and
- * a constant that defines the encoding</p>
+ * a constant that defines the encoding.</p>
  */
 public class Encoding extends Definition {
 
@@ -36,6 +36,12 @@ public class Encoding extends Definition {
     return format.type();
   }
 
+  /**
+   * Adds a field encoding to the encoding.
+   * There must not be an encoding for this field already.
+   *
+   * @param fieldEncoding the field encoding to be added
+   */
   public void add(Field fieldEncoding) {
     ensure(!fieldEncodings.containsKey(fieldEncoding.formatField), "Field %s already has encoding",
         fieldEncoding.identifier);
@@ -52,16 +58,29 @@ public class Encoding extends Definition {
 
   @Override
   public String toString() {
-    return "Encoding{ " + identifier + " = {\n\t" +
-        fieldEncodings.values().stream().map(Field::toString).collect(
-            Collectors.joining(",\n\t")) + " \n}}";
+    return "Encoding{ " + identifier + " = {\n\t"
+        + fieldEncodings.values().stream().map(Field::toString).collect(
+        Collectors.joining(",\n\t")) + " \n}}";
   }
 
+
+  /**
+   * A field of a VADL encoding.
+   * Holds information about the format field, constant value, and type of the field.
+   */
   public static class Field extends Definition {
 
     private final Format.Field formatField;
     private final Constant.Value constant;
 
+    /**
+     * Constructs a new Field object with the given identifier, format field, and constant value.
+     * The type of the constant must be implicitly cast able to the type of the format field.
+     *
+     * @param identifier  the identifier of the field
+     * @param formatField the format field of the field
+     * @param constant    the constant value of the field
+     */
     public Field(Identifier identifier, Format.Field formatField, Constant.Value constant) {
       super(identifier);
 

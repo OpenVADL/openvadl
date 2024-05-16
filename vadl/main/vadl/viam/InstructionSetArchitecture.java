@@ -12,6 +12,14 @@ public class InstructionSetArchitecture extends Definition {
   private final List<Format> formats;
   private final Specification specification;
 
+  /**
+   * Constructs an InstructionSetArchitecture object with the given parameters.
+   *
+   * @param identifier    the identifier of the InstructionSetArchitecture
+   * @param specification the parent specification of the InstructionSetArchitecture
+   * @param formats       the list of formats associated with the InstructionSetArchitecture
+   * @param instructions  the list of instructions associated with the InstructionSetArchitecture
+   */
   public InstructionSetArchitecture(Identifier identifier,
                                     Specification specification,
                                     List<Format> formats,

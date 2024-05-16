@@ -4,6 +4,9 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Stream;
 
+/**
+ * Represents a VIAM VADL specification.
+ */
 public class Specification {
 
   private final Identifier identifier;
@@ -14,6 +17,9 @@ public class Specification {
     this.identifier = identifier;
   }
 
+  /**
+   * Returns all format definitions as stream.
+   */
   public Stream<Format> formats() {
     return definitions.stream()
         .filter(Format.class::isInstance)

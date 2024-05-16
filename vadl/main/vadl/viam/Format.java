@@ -41,9 +41,9 @@ public class Format extends Definition {
 
   @Override
   public String toString() {
-    return "Format{ " + identifier + ": " + type + "{\n\t" +
-        fields.stream().map(Field::toString).collect(
-            Collectors.joining("\n\t")) + "\n}";
+    return "Format{ " + identifier + ": " + type + "{\n\t"
+        + fields.stream().map(Field::toString).collect(
+        Collectors.joining("\n\t")) + "\n}";
   }
 
   /**
