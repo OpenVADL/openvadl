@@ -3,6 +3,14 @@ package vadl.types;
 import java.util.List;
 import javax.annotation.Nullable;
 
+/**
+ * The BuiltInTable class represents a collection of built-in functions and operations in VADL.
+ * It provides information about the name, operator, and supported types of each built-in.
+ *
+ * <p>The current implementation of the {@link BuiltIn} is limited,
+ * e.g. no {@code compute} method exists.
+ */
+@SuppressWarnings("SummaryJavadoc")
 public class BuiltInTable {
 
   ///// ARITHMETIC //////
@@ -11,28 +19,28 @@ public class BuiltInTable {
    * {@code function neg( a : Bits<N> ) -> Bits<N> // <=> -a }
    */
   public static final BuiltIn NEG =
-      new BuiltIn("NEG", "-", Type.relation(BitsType.class, BitsType.class));
+      BuiltIn.func("NEG", "-", Type.relation(BitsType.class, BitsType.class));
 
 
   /**
    * {@code function add ( a : Bits<N>, b : Bits<N> ) -> Bits<N> // <=> a + b }
    */
   public static final BuiltIn ADD =
-      new BuiltIn("ADD", "+", Type.relation(BitsType.class, BitsType.class, BitsType.class));
+      BuiltIn.func("ADD", "+", Type.relation(BitsType.class, BitsType.class, BitsType.class));
 
 
   /**
    * {@code function adds( a : Bits<N>, b : Bits<N> ) -> ( Bits<N>, Status ) }
    */
   public static final BuiltIn ADDS =
-      new BuiltIn("ADDS", Type.relation(BitsType.class, BitsType.class, TupleType.class));
+      BuiltIn.func("ADDS", Type.relation(BitsType.class, BitsType.class, TupleType.class));
 
 
   /**
    * {@code function addc( a : Bits<N>, b : Bits<N>, c : Bool ) -> ( Bits<N>, Status ) }
    */
   public static final BuiltIn ADDC =
-      new BuiltIn("ADDC",
+      BuiltIn.func("ADDC",
           Type.relation(List.of(BitsType.class, BitsType.class, BoolType.class), TupleType.class));
 
 
@@ -40,35 +48,35 @@ public class BuiltInTable {
    * {@code function satadd ( a : SInt<N>, b : SInt<N> ) -> SInt<N> }
    */
   public static final BuiltIn SATADD_SS =
-      new BuiltIn("SATADD", Type.relation(SIntType.class, SIntType.class, SIntType.class));
+      BuiltIn.func("SATADD", Type.relation(SIntType.class, SIntType.class, SIntType.class));
 
 
   /**
    * {@code function satadd ( a : UInt<N>, b : UInt<N> ) -> UInt<N> }
    */
   public static final BuiltIn SATADD_UU =
-      new BuiltIn("SATADD", Type.relation(UIntType.class, UIntType.class, UIntType.class));
+      BuiltIn.func("SATADD", Type.relation(UIntType.class, UIntType.class, UIntType.class));
 
 
   /**
    * {@code function satadds( a : SInt<N>, b : SInt<N> ) -> ( SInt<N>, Status ) }
    */
   public static final BuiltIn SATADDS_SS =
-      new BuiltIn("SATADDS", Type.relation(SIntType.class, SIntType.class, TupleType.class));
+      BuiltIn.func("SATADDS", Type.relation(SIntType.class, SIntType.class, TupleType.class));
 
 
   /**
    * {@code function satadds( a : UInt<N>, b : UInt<N> ) -> ( UInt<N>, Status ) }
    */
   public static final BuiltIn SATADDS_UU =
-      new BuiltIn("SATADDS", Type.relation(UIntType.class, UIntType.class, TupleType.class));
+      BuiltIn.func("SATADDS", Type.relation(UIntType.class, UIntType.class, TupleType.class));
 
 
   /**
    * {@code function sataddc( a : SInt<N>, b : SInt<N>, c : Bool ) -> ( SInt<N>, Status ) }
    */
   public static final BuiltIn SATADDC_SS =
-      new BuiltIn("SATADDC",
+      BuiltIn.func("SATADDC",
           Type.relation(List.of(SIntType.class, SIntType.class, BoolType.class), TupleType.class));
 
 
@@ -76,7 +84,7 @@ public class BuiltInTable {
    * {@code function sataddc( a : UInt<N>, b : UInt<N>, c : Bool ) -> ( UInt<N>, Status ) }
    */
   public static final BuiltIn SATADDC_UU =
-      new BuiltIn("SATADDC",
+      BuiltIn.func("SATADDC",
           Type.relation(List.of(UIntType.class, UIntType.class, BoolType.class), TupleType.class));
 
 
@@ -84,28 +92,28 @@ public class BuiltInTable {
    * {@code function sub  ( a : Bits<N>, b : Bits<N> ) -> Bits<N> // <=> a - c }
    */
   public static final BuiltIn SUB =
-      new BuiltIn("SUB", "-", Type.relation(BitsType.class, BitsType.class, BitsType.class));
+      BuiltIn.func("SUB", "-", Type.relation(BitsType.class, BitsType.class, BitsType.class));
 
 
   /**
    * {@code function subsc( a : Bits<N>, b : Bits<N> ) -> ( Bits<N>, Status ) }
    */
   public static final BuiltIn SUBSC =
-      new BuiltIn("SUBSC", Type.relation(BitsType.class, BitsType.class, TupleType.class));
+      BuiltIn.func("SUBSC", Type.relation(BitsType.class, BitsType.class, TupleType.class));
 
 
   /**
    * {@code function subsb( a : Bits<N>, b : Bits<N> ) -> ( Bits<N>, Status ) }
    */
   public static final BuiltIn SUBSB =
-      new BuiltIn("SUBSB", Type.relation(BitsType.class, BitsType.class, TupleType.class));
+      BuiltIn.func("SUBSB", Type.relation(BitsType.class, BitsType.class, TupleType.class));
 
 
   /**
    * {@code function subc ( a : Bits<N>, b : Bits<N>, c : Bool ) -> ( Bits<N>, Status ) }
    */
   public static final BuiltIn SUBC =
-      new BuiltIn("SUBC",
+      BuiltIn.func("SUBC",
           Type.relation(List.of(BitsType.class, BitsType.class, BoolType.class), TupleType.class));
 
 
@@ -113,7 +121,7 @@ public class BuiltInTable {
    * {@code function subb ( a : Bits<N>, b : Bits<N>, c : Bool ) -> ( Bits<N>, Status ) }
    */
   public static final BuiltIn SUBB =
-      new BuiltIn("SUBB",
+      BuiltIn.func("SUBB",
           Type.relation(List.of(BitsType.class, BitsType.class, BoolType.class), TupleType.class));
 
 
@@ -121,35 +129,35 @@ public class BuiltInTable {
    * {@code function satsub ( a : SInt<N>, b : SInt<N> ) -> SInt<N> }
    */
   public static final BuiltIn SATSUB_SS =
-      new BuiltIn("SATSUB", Type.relation(SIntType.class, SIntType.class, SIntType.class));
+      BuiltIn.func("SATSUB", Type.relation(SIntType.class, SIntType.class, SIntType.class));
 
 
   /**
    * {@code function satsub ( a : UInt<N>, b : UInt<N> ) -> UInt<N> }
    */
   public static final BuiltIn SATSUB_UU =
-      new BuiltIn("SATSUB", Type.relation(UIntType.class, UIntType.class, UIntType.class));
+      BuiltIn.func("SATSUB", Type.relation(UIntType.class, UIntType.class, UIntType.class));
 
 
   /**
    * {@code function satsubs( a : SInt<N>, b : SInt<N> ) -> ( SInt<N>, Status ) }
    */
   public static final BuiltIn SATSUBS_SS =
-      new BuiltIn("SATSUBS", Type.relation(SIntType.class, SIntType.class, TupleType.class));
+      BuiltIn.func("SATSUBS", Type.relation(SIntType.class, SIntType.class, TupleType.class));
 
 
   /**
    * {@code function satsubs( a : UInt<N>, b : UInt<N> ) -> ( UInt<N>, Status ) }
    */
   public static final BuiltIn SATSUBS_UU =
-      new BuiltIn("SATSUBS", Type.relation(UIntType.class, UIntType.class, TupleType.class));
+      BuiltIn.func("SATSUBS", Type.relation(UIntType.class, UIntType.class, TupleType.class));
 
 
   /**
    * {@code function satsubc( a : SInt<N>, b : SInt<N>, c : Bool ) -> ( SInt<N>, Status ) }
    */
   public static final BuiltIn SATSUBC_SS =
-      new BuiltIn("SATSUBC",
+      BuiltIn.func("SATSUBC",
           Type.relation(List.of(SIntType.class, SIntType.class, BoolType.class), TupleType.class));
 
 
@@ -157,7 +165,7 @@ public class BuiltInTable {
    * {@code function satsubc( a : UInt<N>, b : UInt<N>, c : Bool ) -> ( UInt<N>, Status ) }
    */
   public static final BuiltIn SATSUBC_UU =
-      new BuiltIn("SATSUBC",
+      BuiltIn.func("SATSUBC",
           Type.relation(List.of(UIntType.class, UIntType.class, BoolType.class), TupleType.class));
 
 
@@ -165,7 +173,7 @@ public class BuiltInTable {
    * {@code function satsubb( a : SInt<N>, b : SInt<N>, c : Bool ) -> ( SInt<N>, Status ) }
    */
   public static final BuiltIn SATSUBB_SS =
-      new BuiltIn("SATSUBB",
+      BuiltIn.func("SATSUBB",
           Type.relation(List.of(SIntType.class, SIntType.class, BoolType.class), TupleType.class));
 
 
@@ -173,7 +181,7 @@ public class BuiltInTable {
    * {@code function satsubb( a : UInt<N>, b : UInt<N>, c : Bool ) -> ( UInt<N>, Status ) }
    */
   public static final BuiltIn SATSUBB_UU =
-      new BuiltIn("SATSUBB",
+      BuiltIn.func("SATSUBB",
           Type.relation(List.of(UIntType.class, UIntType.class, BoolType.class), TupleType.class));
 
 
@@ -181,84 +189,84 @@ public class BuiltInTable {
    * {@code function mul ( a : SInt<N>, b : SInt<N> ) -> SInt<2*N> // <=> a * b }
    */
   public static final BuiltIn MUL_SS =
-      new BuiltIn("MUL", "*", Type.relation(SIntType.class, SIntType.class, SIntType.class));
+      BuiltIn.func("MUL", "*", Type.relation(SIntType.class, SIntType.class, SIntType.class));
 
 
   /**
    * {@code function mul ( a : UInt<N>, b : UInt<N> ) -> UInt<2*N> // <=> a * b }
    */
   public static final BuiltIn MUL_UU =
-      new BuiltIn("MUL", "*", Type.relation(UIntType.class, UIntType.class, UIntType.class));
+      BuiltIn.func("MUL", "*", Type.relation(UIntType.class, UIntType.class, UIntType.class));
 
 
   /**
    * {@code function muls( a : SInt<N>, b : SInt<N> ) -> ( SInt<2*N>, Status ) }
    */
   public static final BuiltIn MULS_SS =
-      new BuiltIn("MULS", Type.relation(SIntType.class, SIntType.class, TupleType.class));
+      BuiltIn.func("MULS", Type.relation(SIntType.class, SIntType.class, TupleType.class));
 
 
   /**
    * {@code function muls( a : UInt<N>, b : UInt<N> ) -> ( UInt<2*N>, Status ) }
    */
   public static final BuiltIn MULS_UU =
-      new BuiltIn("MULS", Type.relation(UIntType.class, UIntType.class, TupleType.class));
+      BuiltIn.func("MULS", Type.relation(UIntType.class, UIntType.class, TupleType.class));
 
 
   /**
    * {@code function mod ( a : SInt<N>, b : SInt<N> ) -> SInt<N> // <=> a % b }
    */
   public static final BuiltIn MOD_SS =
-      new BuiltIn("MOD", "%", Type.relation(SIntType.class, SIntType.class, SIntType.class));
+      BuiltIn.func("MOD", "%", Type.relation(SIntType.class, SIntType.class, SIntType.class));
 
 
   /**
    * {@code function mod ( a : UInt<N>, b : UInt<N> ) -> UInt<N> // <=> a % b }
    */
   public static final BuiltIn MOD_UU =
-      new BuiltIn("MOD", "%", Type.relation(UIntType.class, UIntType.class, UIntType.class));
+      BuiltIn.func("MOD", "%", Type.relation(UIntType.class, UIntType.class, UIntType.class));
 
 
   /**
    * {@code function mods ( a : SInt<N>, b : SInt<N> ) -> ( SInt<N>, Status ) }
    */
   public static final BuiltIn MODS_SS =
-      new BuiltIn("MODS", Type.relation(SIntType.class, SIntType.class, TupleType.class));
+      BuiltIn.func("MODS", Type.relation(SIntType.class, SIntType.class, TupleType.class));
 
 
   /**
    * {@code function mods ( a : UInt<N>, b : UInt<N> ) -> ( UInt<N>, Status ) }
    */
   public static final BuiltIn MODS_UU =
-      new BuiltIn("MODS", Type.relation(UIntType.class, UIntType.class, TupleType.class));
+      BuiltIn.func("MODS", Type.relation(UIntType.class, UIntType.class, TupleType.class));
 
 
   /**
    * {@code function div ( a : SInt<N>, b : SInt<N> ) -> SInt<N> // <=> a / b }
    */
   public static final BuiltIn DIV_SS =
-      new BuiltIn("DIV", "/", Type.relation(SIntType.class, SIntType.class, SIntType.class));
+      BuiltIn.func("DIV", "/", Type.relation(SIntType.class, SIntType.class, SIntType.class));
 
 
   /**
    * {@code function div ( a : UInt<N>, b : UInt<N> ) -> UInt<N> // <=> a / b }
    */
   public static final BuiltIn DIV_UU =
-      new BuiltIn("DIV", "/", Type.relation(UIntType.class, UIntType.class, UIntType.class));
+      BuiltIn.func("DIV", "/", Type.relation(UIntType.class, UIntType.class, UIntType.class));
 
 
   /**
    * {@code function divs( a : SInt<N>, b : SInt<N> ) -> ( SInt<N>, Status ) }
    */
   public static final BuiltIn DIVS_SS =
-      new BuiltIn("DIVS", Type.relation(SIntType.class, SIntType.class, TupleType.class));
+      BuiltIn.func("DIVS", Type.relation(SIntType.class, SIntType.class, TupleType.class));
 
 
   /**
    * {@code function divs( a : UInt<N>, b : UInt<N> ) -> ( UInt<N>, Status ) }
    */
   public static final BuiltIn DIVS_UU =
-      new BuiltIn("DIVS", Type.relation(UIntType.class, UIntType.class, TupleType.class));
+      BuiltIn.func("DIVS", Type.relation(UIntType.class, UIntType.class, TupleType.class));
 
 
   ///// LOGICAL //////
@@ -267,49 +275,49 @@ public class BuiltInTable {
    * {@code function not ( a : Bits<N> ) ->Bits<N> // <=> ~a }
    */
   public static final BuiltIn NOT =
-      new BuiltIn("NOT", "~", Type.relation(BitsType.class, BitsType.class));
+      BuiltIn.func("NOT", "~", Type.relation(BitsType.class, BitsType.class));
 
 
   /**
    * {@code function and ( a : Bits<N>, b : Bits<N> ) -> Bits<N> // <=> a & b }
    */
   public static final BuiltIn AND =
-      new BuiltIn("AND", "&", Type.relation(BitsType.class, BitsType.class, BitsType.class));
+      BuiltIn.func("AND", "&", Type.relation(BitsType.class, BitsType.class, BitsType.class));
 
 
   /**
    * {@code function ands( a : Bits<N>, b : Bits<N> ) -> ( Bits<N>, Status ) }
    */
   public static final BuiltIn ANDS =
-      new BuiltIn("ANDS", Type.relation(BitsType.class, BitsType.class, TupleType.class));
+      BuiltIn.func("ANDS", Type.relation(BitsType.class, BitsType.class, TupleType.class));
 
 
   /**
    * {@code function xor ( a : Bits<N>, b : Bits<N> ) -> [ SInt<N> | UInt<N> ] // <=> a ^ b }
    */
   public static final BuiltIn XOR =
-      new BuiltIn("XOR", "^", Type.relation(BitsType.class, BitsType.class, SIntType.class));
+      BuiltIn.func("XOR", "^", Type.relation(BitsType.class, BitsType.class, SIntType.class));
 
 
   /**
    * {@code function xors( a : Bits<N>, b : Bits<N> ) -> ( Bits<N>, Status ) }
    */
   public static final BuiltIn XORS =
-      new BuiltIn("XORS", Type.relation(BitsType.class, BitsType.class, TupleType.class));
+      BuiltIn.func("XORS", Type.relation(BitsType.class, BitsType.class, TupleType.class));
 
 
   /**
    * {@code function or ( a : Bits<N>, b : Bits<N> ) -> [ SInt<N> | UInt<N> ] // <=> a | b }
    */
   public static final BuiltIn OR =
-      new BuiltIn("OR", "|", Type.relation(BitsType.class, BitsType.class, SIntType.class));
+      BuiltIn.func("OR", "|", Type.relation(BitsType.class, BitsType.class, SIntType.class));
 
 
   /**
    * {@code function ors( a : Bits<N>, b : Bits<N> ) -> ( Bits<N>, Status ) }
    */
   public static final BuiltIn ORS =
-      new BuiltIn("ORS", Type.relation(BitsType.class, BitsType.class, TupleType.class));
+      BuiltIn.func("ORS", Type.relation(BitsType.class, BitsType.class, TupleType.class));
 
   ///// COMPARISON //////
 
@@ -318,70 +326,70 @@ public class BuiltInTable {
    * {@code function equ ( a : Bits<N>, b : Bits<N> ) -> Bool // <=> a = b }
    */
   public static final BuiltIn EQU =
-      new BuiltIn("EQU", "=", Type.relation(BitsType.class, BitsType.class, BoolType.class));
+      BuiltIn.func("EQU", "=", Type.relation(BitsType.class, BitsType.class, BoolType.class));
 
 
   /**
    * {@code function neq ( a : Bits<N>, b : Bits<N> ) -> Bool // <=> a != b }
    */
   public static final BuiltIn NEQ =
-      new BuiltIn("NEQ", "!=", Type.relation(BitsType.class, BitsType.class, BoolType.class));
+      BuiltIn.func("NEQ", "!=", Type.relation(BitsType.class, BitsType.class, BoolType.class));
 
 
   /**
    * {@code function lth ( a : SInt<N>, b : SInt<N> ) -> Bool // <=> a < b }
    */
   public static final BuiltIn LTH_SS =
-      new BuiltIn("LTH", "<", Type.relation(SIntType.class, SIntType.class, BoolType.class));
+      BuiltIn.func("LTH", "<", Type.relation(SIntType.class, SIntType.class, BoolType.class));
 
 
   /**
    * {@code function lth ( a : UInt<N>, b : UInt<N> ) -> Bool // <=> a < b }
    */
   public static final BuiltIn LTH_UU =
-      new BuiltIn("LTH", "<", Type.relation(UIntType.class, UIntType.class, BoolType.class));
+      BuiltIn.func("LTH", "<", Type.relation(UIntType.class, UIntType.class, BoolType.class));
 
 
   /**
    * {@code function leq ( a : SInt<N>, b : SInt<N> ) -> Bool // <=> a <= b }
    */
   public static final BuiltIn LEQ_SS =
-      new BuiltIn("LEQ", "<=", Type.relation(SIntType.class, SIntType.class, BoolType.class));
+      BuiltIn.func("LEQ", "<=", Type.relation(SIntType.class, SIntType.class, BoolType.class));
 
 
   /**
    * {@code function leq ( a : UInt<N>, b : UInt<N> ) -> Bool // <=> a <= b }
    */
   public static final BuiltIn LEQ_UU =
-      new BuiltIn("LEQ", "<=", Type.relation(UIntType.class, UIntType.class, BoolType.class));
+      BuiltIn.func("LEQ", "<=", Type.relation(UIntType.class, UIntType.class, BoolType.class));
 
 
   /**
    * {@code function gth ( a : SInt<N>, b : SInt<N> ) -> Bool // <=> a > b }
    */
   public static final BuiltIn GTH_SS =
-      new BuiltIn("GTH", ">", Type.relation(SIntType.class, SIntType.class, BoolType.class));
+      BuiltIn.func("GTH", ">", Type.relation(SIntType.class, SIntType.class, BoolType.class));
 
 
   /**
    * {@code function gth ( a : UInt<N>, b : UInt<N> ) -> Bool // <=> a > b }
    */
   public static final BuiltIn GTH_UU =
-      new BuiltIn("GTH", ">", Type.relation(UIntType.class, UIntType.class, BoolType.class));
+      BuiltIn.func("GTH", ">", Type.relation(UIntType.class, UIntType.class, BoolType.class));
 
 
   /**
    * {@code function geq ( a : SInt<N>, b : SInt<N> ) -> Bool // <=> a >= b }
    */
   public static final BuiltIn GEQ_SS =
-      new BuiltIn("GEQ", ">=", Type.relation(SIntType.class, SIntType.class, BoolType.class));
+      BuiltIn.func("GEQ", ">=", Type.relation(SIntType.class, SIntType.class, BoolType.class));
 
 
   /**
    * {@code function geq ( a : UInt<N>, b : UInt<N> ) -> Bool // <=> a >= b }
    */
   public static final BuiltIn GEQ_UU =
-      new BuiltIn("GEQ", ">=", Type.relation(UIntType.class, UIntType.class, BoolType.class));
+      BuiltIn.func("GEQ", ">=", Type.relation(UIntType.class, UIntType.class, BoolType.class));
 
   ///// SHIFTING //////
 
@@ -390,21 +398,21 @@ public class BuiltInTable {
    * {@code function lsl ( a : Bits<N>, b : UInt<M> ) -> Bits<N> // <=> a << b }
    */
   public static final BuiltIn LSL =
-      new BuiltIn("LSL", "<<", Type.relation(BitsType.class, UIntType.class, BitsType.class));
+      BuiltIn.func("LSL", "<<", Type.relation(BitsType.class, UIntType.class, BitsType.class));
 
 
   /**
    * {@code function lsls( a : Bits<N>, b : UInt<M> ) -> ( Bits<N>, Status ) }
    */
   public static final BuiltIn LSLS =
-      new BuiltIn("LSLS", Type.relation(BitsType.class, UIntType.class, TupleType.class));
+      BuiltIn.func("LSLS", Type.relation(BitsType.class, UIntType.class, TupleType.class));
 
 
   /**
    * {@code function lslc( a : Bits<N>, b : UInt<M>, c : Bool ) -> ( Bits<N>, Status ) }
    */
   public static final BuiltIn LSLC =
-      new BuiltIn("LSLC",
+      BuiltIn.func("LSLC",
           Type.relation(List.of(BitsType.class, UIntType.class, BoolType.class), TupleType.class));
 
 
@@ -412,35 +420,35 @@ public class BuiltInTable {
    * {@code function asr ( a : SInt<N>, b : UInt<M> ) -> SInt<N> // <=> a >> b }
    */
   public static final BuiltIn ASR =
-      new BuiltIn("ASR", ">>", Type.relation(SIntType.class, UIntType.class, SIntType.class));
+      BuiltIn.func("ASR", ">>", Type.relation(SIntType.class, UIntType.class, SIntType.class));
 
 
   /**
    * {@code function lsr ( a : UInt<N>, b : UInt<M> ) -> UInt<N> // <=> a >> b }
    */
   public static final BuiltIn LSR =
-      new BuiltIn("LSR", ">>", Type.relation(UIntType.class, UIntType.class, UIntType.class));
+      BuiltIn.func("LSR", ">>", Type.relation(UIntType.class, UIntType.class, UIntType.class));
 
 
   /**
    * {@code function asrs( a : SInt<N>, b : UInt<M> ) -> ( SInt<N>, Status ) }
    */
   public static final BuiltIn ASRS =
-      new BuiltIn("ASRS", Type.relation(SIntType.class, UIntType.class, TupleType.class));
+      BuiltIn.func("ASRS", Type.relation(SIntType.class, UIntType.class, TupleType.class));
 
 
   /**
    * {@code function lsrs( a : UInt<N>, b : UInt<M> ) -> ( UInt<N>, Status ) }
    */
   public static final BuiltIn LSRS =
-      new BuiltIn("LSRS", Type.relation(UIntType.class, UIntType.class, TupleType.class));
+      BuiltIn.func("LSRS", Type.relation(UIntType.class, UIntType.class, TupleType.class));
 
 
   /**
    * {@code function asrc( a : SInt<N>, b : UInt<M>, c : Bool ) -> ( SInt<N>, Status ) }
    */
   public static final BuiltIn ASRC =
-      new BuiltIn("ASRC",
+      BuiltIn.func("ASRC",
           Type.relation(List.of(SIntType.class, UIntType.class, BoolType.class), TupleType.class));
 
 
@@ -448,7 +456,7 @@ public class BuiltInTable {
    * {@code function lsrc( a : UInt<N>, b : UInt<M>, c : Bool ) -> ( UInt<N>, Status ) }
    */
   public static final BuiltIn LSRC =
-      new BuiltIn("LSRC",
+      BuiltIn.func("LSRC",
           Type.relation(List.of(UIntType.class, UIntType.class, BoolType.class), TupleType.class));
 
 
@@ -456,21 +464,21 @@ public class BuiltInTable {
    * {@code function rol ( a : Bits<N>, b : UInt<M> ) ->Bits<N> }
    */
   public static final BuiltIn ROL =
-      new BuiltIn("ROL", Type.relation(BitsType.class, UIntType.class, BitsType.class));
+      BuiltIn.func("ROL", Type.relation(BitsType.class, UIntType.class, BitsType.class));
 
 
   /**
    * {@code function rols( a : Bits<N>, b : UInt<M> ) -> ( Bits<N>, Status ) }
    */
   public static final BuiltIn ROLS =
-      new BuiltIn("ROLS", Type.relation(BitsType.class, UIntType.class, TupleType.class));
+      BuiltIn.func("ROLS", Type.relation(BitsType.class, UIntType.class, TupleType.class));
 
 
   /**
    * {@code function rolc( a : Bits<N>, b : UInt<M>, c : Bool ) -> ( Bits<N>, Status ) }
    */
   public static final BuiltIn ROLC =
-      new BuiltIn("ROLC",
+      BuiltIn.func("ROLC",
           Type.relation(List.of(BitsType.class, UIntType.class, BoolType.class), TupleType.class));
 
 
@@ -478,21 +486,21 @@ public class BuiltInTable {
    * {@code function ror ( a : Bits<N>, b : UInt<M> ) -> Bits<N> }
    */
   public static final BuiltIn ROR =
-      new BuiltIn("ROR", Type.relation(BitsType.class, UIntType.class, BitsType.class));
+      BuiltIn.func("ROR", Type.relation(BitsType.class, UIntType.class, BitsType.class));
 
 
   /**
    * {@code function rors( a : Bits<N>, b : UInt<M> ) -> ( Bits<N>, Status ) }
    */
   public static final BuiltIn RORS =
-      new BuiltIn("RORS", Type.relation(BitsType.class, UIntType.class, TupleType.class));
+      BuiltIn.func("RORS", Type.relation(BitsType.class, UIntType.class, TupleType.class));
 
 
   /**
    * {@code function rorc( a : Bits<N>, b : UInt<M>, c : Bool ) -> ( Bits<N>, Status ) }
    */
   public static final BuiltIn RORC =
-      new BuiltIn("RORC",
+      BuiltIn.func("RORC",
           Type.relation(List.of(BitsType.class, UIntType.class, BoolType.class), TupleType.class));
 
 
@@ -500,7 +508,7 @@ public class BuiltInTable {
    * {@code function rrx ( a : Bits<N>, b : UInt<M>, c : Bool ) -> Bits<N> }
    */
   public static final BuiltIn RRX =
-      new BuiltIn("RRX",
+      BuiltIn.func("RRX",
           Type.relation(List.of(BitsType.class, UIntType.class, BoolType.class), BitsType.class));
 
 
@@ -508,38 +516,46 @@ public class BuiltInTable {
 
 
   /**
-   * {@code function cob( a : Bits<N> ) -> UInt<N> // counting one bits }
+   * Counting one bits.
+   *
+   * <p>{@code function cob( a : Bits<N> ) -> UInt<N> }
    */
   public static final BuiltIn COB =
-      new BuiltIn("COB", Type.relation(BitsType.class, UIntType.class));
+      BuiltIn.func("COB", Type.relation(BitsType.class, UIntType.class));
 
 
   /**
    * {@code function czb( a : Bits<N> ) -> UInt<N> // counting zero bits }
    */
   public static final BuiltIn CZB =
-      new BuiltIn("CZB", Type.relation(BitsType.class, UIntType.class));
+      BuiltIn.func("CZB", Type.relation(BitsType.class, UIntType.class));
 
 
   /**
-   * {@code function clz( a : Bits<N> ) -> UInt<N> // counting leading zeros }
+   * Counting leading zeros.
+   *
+   * <p>{@code function clz( a : Bits<N> ) -> UInt<N>  }
    */
   public static final BuiltIn CLZ =
-      new BuiltIn("CLZ", Type.relation(BitsType.class, UIntType.class));
+      BuiltIn.func("CLZ", Type.relation(BitsType.class, UIntType.class));
 
 
   /**
-   * {@code function clo( a : Bits<N> ) -> UInt<N> // counting leading ones }
+   * Counting leading ones.
+   *
+   * <p>{@code function clo( a : Bits<N> ) -> UInt<N> }
    */
   public static final BuiltIn CLO =
-      new BuiltIn("CLO", Type.relation(BitsType.class, UIntType.class));
+      BuiltIn.func("CLO", Type.relation(BitsType.class, UIntType.class));
 
 
   /**
-   * {@code function cls( a : Bits<N> ) -> UInt<N> // counting leading sign bits (without sign bit) }
+   * Counting leading sign bits (without sign bit).
+   *
+   * <p>{@code function cls( a : Bits<N> ) -> UInt<N>}
    */
   public static final BuiltIn CLS =
-      new BuiltIn("CLS", Type.relation(BitsType.class, TupleType.class));
+      BuiltIn.func("CLS", Type.relation(BitsType.class, TupleType.class));
 
 
   ///// FUNCTIONS //////
@@ -647,18 +663,28 @@ public class BuiltInTable {
   public static class BuiltIn {
     private final String name;
     private final @Nullable String operator;
-    protected final RelationType type;
+    private final RelationType type;
+    private final Kind kind;
 
     private BuiltIn(String name, @Nullable String operator,
-                    RelationType type) {
+                    RelationType type, Kind kind) {
       this.name = name;
       this.operator = operator;
       this.type = type;
+      this.kind = kind;
     }
 
-    private BuiltIn(String name,
-                    RelationType type) {
-      this(name, null, type);
+    private static BuiltIn func(String name, @Nullable String operator,
+                                RelationType type) {
+      return new BuiltIn(name, operator, type, Kind.FUNCTION);
+    }
+
+    private static BuiltIn func(String name, RelationType type) {
+      return new BuiltIn(name, null, type, Kind.FUNCTION);
+    }
+
+    private static BuiltIn proc(String name, RelationType type) {
+      return new BuiltIn(name, null, type, Kind.PROCESS);
     }
 
     public String name() {
@@ -668,6 +694,14 @@ public class BuiltInTable {
     @Nullable
     public String operator() {
       return operator;
+    }
+
+    public Kind kind() {
+      return kind;
+    }
+
+    public RelationType type() {
+      return type;
     }
 
     /**
@@ -692,6 +726,11 @@ public class BuiltInTable {
     @Override
     public String toString() {
       return "VADL::" + name + type;
+    }
+
+    public enum Kind {
+      FUNCTION,
+      PROCESS
     }
   }
 
