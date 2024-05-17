@@ -118,17 +118,17 @@ public class BuiltInTable {
 
 
   /**
-   * {@code function satsub ( a : SInt<N>, b : SInt<N> ) -> SInt<N> // <=> a - c }
+   * {@code function satsub ( a : SInt<N>, b : SInt<N> ) -> SInt<N> }
    */
   public final static BuiltIn SATSUB_SS =
-      new BuiltIn("SATSUB", "-", Type.relation(SIntType.class, SIntType.class, SIntType.class));
+      new BuiltIn("SATSUB", Type.relation(SIntType.class, SIntType.class, SIntType.class));
 
 
   /**
-   * {@code function satsub ( a : UInt<N>, b : UInt<N> ) -> UInt<N> // <=> a - b }
+   * {@code function satsub ( a : UInt<N>, b : UInt<N> ) -> UInt<N> }
    */
   public final static BuiltIn SATSUB_UU =
-      new BuiltIn("SATSUB", "-", Type.relation(UIntType.class, UIntType.class, UIntType.class));
+      new BuiltIn("SATSUB", Type.relation(UIntType.class, UIntType.class, UIntType.class));
 
 
   /**
@@ -262,7 +262,7 @@ public class BuiltInTable {
 
 
   ///// LOGICAL //////
-  
+
   /**
    * {@code function not ( a : Bits<N> ) ->Bits<N> // <=> ~a }
    */
@@ -312,6 +312,76 @@ public class BuiltInTable {
       new BuiltIn("ORS", Type.relation(BitsType.class, BitsType.class, TupleType.class));
 
   ///// COMPARISON //////
+
+
+  /**
+   * {@code function equ ( a : Bits<N>, b : Bits<N> ) -> Bool // <=> a = b }
+   */
+  public final static BuiltIn EQU =
+      new BuiltIn("EQU", "=", Type.relation(BitsType.class, BitsType.class, BoolType.class));
+
+
+  /**
+   * {@code function neq ( a : Bits<N>, b : Bits<N> ) -> Bool // <=> a != b }
+   */
+  public final static BuiltIn NEQ =
+      new BuiltIn("NEQ", "!=", Type.relation(BitsType.class, BitsType.class, BoolType.class));
+
+
+  /**
+   * {@code function lth ( a : SInt<N>, b : SInt<N> ) -> Bool // <=> a < b }
+   */
+  public final static BuiltIn LTH_SS =
+      new BuiltIn("LTH", "<", Type.relation(SIntType.class, SIntType.class, BoolType.class));
+
+
+  /**
+   * {@code function lth ( a : UInt<N>, b : UInt<N> ) -> Bool // <=> a < b }
+   */
+  public final static BuiltIn LTH_UU =
+      new BuiltIn("LTH", "<", Type.relation(UIntType.class, UIntType.class, BoolType.class));
+
+
+  /**
+   * {@code function leq ( a : SInt<N>, b : SInt<N> ) -> Bool // <=> a <= b }
+   */
+  public final static BuiltIn LEQ_SS =
+      new BuiltIn("LEQ", "<=", Type.relation(SIntType.class, SIntType.class, BoolType.class));
+
+
+  /**
+   * {@code function leq ( a : UInt<N>, b : UInt<N> ) -> Bool // <=> a <= b }
+   */
+  public final static BuiltIn LEQ_UU =
+      new BuiltIn("LEQ", "<=", Type.relation(UIntType.class, UIntType.class, BoolType.class));
+
+
+  /**
+   * {@code function gth ( a : SInt<N>, b : SInt<N> ) -> Bool // <=> a > b }
+   */
+  public final static BuiltIn GTH_SS =
+      new BuiltIn("GTH", ">", Type.relation(SIntType.class, SIntType.class, BoolType.class));
+
+
+  /**
+   * {@code function gth ( a : UInt<N>, b : UInt<N> ) -> Bool // <=> a > b }
+   */
+  public final static BuiltIn GTH_UU =
+      new BuiltIn("GTH", ">", Type.relation(UIntType.class, UIntType.class, BoolType.class));
+
+
+  /**
+   * {@code function geq ( a : SInt<N>, b : SInt<N> ) -> Bool // <=> a >= b }
+   */
+  public final static BuiltIn GEQ_SS =
+      new BuiltIn("GEQ", ">=", Type.relation(SIntType.class, SIntType.class, BoolType.class));
+
+
+  /**
+   * {@code function geq ( a : UInt<N>, b : UInt<N> ) -> Bool // <=> a >= b }
+   */
+  public final static BuiltIn GEQ_UU =
+      new BuiltIn("GEQ", ">=", Type.relation(UIntType.class, UIntType.class, BoolType.class));
 
   ///// SHIFTING //////
 
@@ -375,7 +445,20 @@ public class BuiltInTable {
       XOR,
       XORS,
       OR,
-      ORS
+      ORS,
+
+      // Comparison
+
+      EQU,
+      NEQ,
+      LTH_SS,
+      LTH_UU,
+      LEQ_SS,
+      LEQ_UU,
+      GTH_SS,
+      GTH_UU,
+      GEQ_SS,
+      GEQ_UU
 
   );
 
