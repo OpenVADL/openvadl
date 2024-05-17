@@ -37,12 +37,8 @@ public abstract class Type {
    * @return the BitsType object with the specified bit width
    */
   public static BitsType bits(int bitWidth) {
-    BitsType bitsType = bitsTypes.get(bitWidth);
-    if (bitsType == null) {
-      bitsType = new BitsType(bitWidth);
-      bitsTypes.put(bitWidth, bitsType);
-    }
-    return bitsType;
+    return bitsTypes
+        .computeIfAbsent(bitWidth, k -> new BitsType(bitWidth));
   }
 
   private static @Nullable BoolType bool;
@@ -69,12 +65,8 @@ public abstract class Type {
    * @return the SIntType object with the specified bit width
    */
   public static SIntType signedInt(int bitWidth) {
-    var signedIntType = signedIntTypes.get(bitWidth);
-    if (signedIntType == null) {
-      signedIntType = new SIntType(bitWidth);
-      signedIntTypes.put(bitWidth, signedIntType);
-    }
-    return signedIntType;
+    return signedIntTypes
+        .computeIfAbsent(bitWidth, k -> new SIntType(bitWidth));
   }
 
   private static final HashMap<Integer, UIntType> unsignedIntTyps = new HashMap<>();
@@ -86,12 +78,8 @@ public abstract class Type {
    * @return the UIntType object with the specified bit width
    */
   public static UIntType unsignedInt(int bitWidth) {
-    var unsignedIntType = unsignedIntTyps.get(bitWidth);
-    if (unsignedIntType == null) {
-      unsignedIntType = new UIntType(bitWidth);
-      unsignedIntTyps.put(bitWidth, unsignedIntType);
-    }
-    return unsignedIntType;
+    return unsignedIntTyps
+        .computeIfAbsent(bitWidth, k -> new UIntType(bitWidth));
   }
 
   /**

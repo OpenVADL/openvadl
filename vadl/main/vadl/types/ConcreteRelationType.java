@@ -14,6 +14,7 @@ import java.util.stream.Collectors;
  *
  * @see RelationType
  */
+// TODO: Do we actual need this?
 public class ConcreteRelationType extends Type {
 
   private final RelationType relationType;
