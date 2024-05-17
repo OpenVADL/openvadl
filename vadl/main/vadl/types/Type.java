@@ -148,6 +148,10 @@ public abstract class Type {
 
   private static @Nullable VoidType voidType = null;
 
+
+  /**
+   * Retrieves the instance of VoidType.
+   */
   public static VoidType void_() {
     if (voidType == null) {
       voidType = new VoidType();

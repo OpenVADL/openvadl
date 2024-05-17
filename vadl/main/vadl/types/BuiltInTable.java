@@ -660,6 +660,10 @@ public class BuiltInTable {
 
   );
 
+  /**
+   * The BuiltIn class represents a built-in function or process in VADL.
+   * It contains information about the name, operator, type, and kind of the built-in.
+   */
   public static class BuiltIn {
     private final String name;
     private final @Nullable String operator;
@@ -728,6 +732,9 @@ public class BuiltInTable {
       return "VADL::" + name + type;
     }
 
+    /**
+     * Describes if a built-in is a function (e.g. {@code add}) or process (e.g. {@code decode}).
+     */
     public enum Kind {
       FUNCTION,
       PROCESS
