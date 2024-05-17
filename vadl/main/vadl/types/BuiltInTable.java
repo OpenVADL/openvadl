@@ -385,7 +385,162 @@ public class BuiltInTable {
 
   ///// SHIFTING //////
 
+
+  /**
+   * {@code function lsl ( a : Bits<N>, b : UInt<M> ) -> Bits<N> // <=> a << b }
+   */
+  public final static BuiltIn LSL =
+      new BuiltIn("LSL", "<<", Type.relation(BitsType.class, UIntType.class, BitsType.class));
+
+
+  /**
+   * {@code function lsls( a : Bits<N>, b : UInt<M> ) -> ( Bits<N>, Status ) }
+   */
+  public final static BuiltIn LSLS =
+      new BuiltIn("LSLS", Type.relation(BitsType.class, UIntType.class, TupleType.class));
+
+
+  /**
+   * {@code function lslc( a : Bits<N>, b : UInt<M>, c : Bool ) -> ( Bits<N>, Status ) }
+   */
+  public final static BuiltIn LSLC =
+      new BuiltIn("LSLC",
+          Type.relation(List.of(BitsType.class, UIntType.class, BoolType.class), TupleType.class));
+
+
+  /**
+   * {@code function asr ( a : SInt<N>, b : UInt<M> ) -> SInt<N> // <=> a >> b }
+   */
+  public final static BuiltIn ASR =
+      new BuiltIn("ASR", ">>", Type.relation(SIntType.class, UIntType.class, SIntType.class));
+
+
+  /**
+   * {@code function lsr ( a : UInt<N>, b : UInt<M> ) -> UInt<N> // <=> a >> b }
+   */
+  public final static BuiltIn LSR =
+      new BuiltIn("LSR", ">>", Type.relation(UIntType.class, UIntType.class, UIntType.class));
+
+
+  /**
+   * {@code function asrs( a : SInt<N>, b : UInt<M> ) -> ( SInt<N>, Status ) }
+   */
+  public final static BuiltIn ASRS =
+      new BuiltIn("ASRS", Type.relation(SIntType.class, UIntType.class, TupleType.class));
+
+
+  /**
+   * {@code function lsrs( a : UInt<N>, b : UInt<M> ) -> ( UInt<N>, Status ) }
+   */
+  public final static BuiltIn LSRS =
+      new BuiltIn("LSRS", Type.relation(UIntType.class, UIntType.class, TupleType.class));
+
+
+  /**
+   * {@code function asrc( a : SInt<N>, b : UInt<M>, c : Bool ) -> ( SInt<N>, Status ) }
+   */
+  public final static BuiltIn ASRC =
+      new BuiltIn("ASRC",
+          Type.relation(List.of(SIntType.class, UIntType.class, BoolType.class), TupleType.class));
+
+
+  /**
+   * {@code function lsrc( a : UInt<N>, b : UInt<M>, c : Bool ) -> ( UInt<N>, Status ) }
+   */
+  public final static BuiltIn LSRC =
+      new BuiltIn("LSRC",
+          Type.relation(List.of(UIntType.class, UIntType.class, BoolType.class), TupleType.class));
+
+
+  /**
+   * {@code function rol ( a : Bits<N>, b : UInt<M> ) ->Bits<N> }
+   */
+  public final static BuiltIn ROL =
+      new BuiltIn("ROL", Type.relation(BitsType.class, UIntType.class, BitsType.class));
+
+
+  /**
+   * {@code function rols( a : Bits<N>, b : UInt<M> ) -> ( Bits<N>, Status ) }
+   */
+  public final static BuiltIn ROLS =
+      new BuiltIn("ROLS", Type.relation(BitsType.class, UIntType.class, TupleType.class));
+
+
+  /**
+   * {@code function rolc( a : Bits<N>, b : UInt<M>, c : Bool ) -> ( Bits<N>, Status ) }
+   */
+  public final static BuiltIn ROLC =
+      new BuiltIn("ROLC",
+          Type.relation(List.of(BitsType.class, UIntType.class, BoolType.class), TupleType.class));
+
+
+  /**
+   * {@code function ror ( a : Bits<N>, b : UInt<M> ) -> Bits<N> }
+   */
+  public final static BuiltIn ROR =
+      new BuiltIn("ROR", Type.relation(BitsType.class, UIntType.class, BitsType.class));
+
+
+  /**
+   * {@code function rors( a : Bits<N>, b : UInt<M> ) -> ( Bits<N>, Status ) }
+   */
+  public final static BuiltIn RORS =
+      new BuiltIn("RORS", Type.relation(BitsType.class, UIntType.class, TupleType.class));
+
+
+  /**
+   * {@code function rorc( a : Bits<N>, b : UInt<M>, c : Bool ) -> ( Bits<N>, Status ) }
+   */
+  public final static BuiltIn RORC =
+      new BuiltIn("RORC",
+          Type.relation(List.of(BitsType.class, UIntType.class, BoolType.class), TupleType.class));
+
+
+  /**
+   * {@code function rrx ( a : Bits<N>, b : UInt<M>, c : Bool ) -> Bits<N> }
+   */
+  public final static BuiltIn RRX =
+      new BuiltIn("RRX",
+          Type.relation(List.of(BitsType.class, UIntType.class, BoolType.class), BitsType.class));
+
+
   ///// BIT COUNTING //////
+
+
+  /**
+   * {@code function cob( a : Bits<N> ) -> UInt<N> // counting one bits }
+   */
+  public final static BuiltIn COB =
+      new BuiltIn("COB", Type.relation(BitsType.class, UIntType.class));
+
+
+  /**
+   * {@code function czb( a : Bits<N> ) -> UInt<N> // counting zero bits }
+   */
+  public final static BuiltIn CZB =
+      new BuiltIn("CZB", Type.relation(BitsType.class, UIntType.class));
+
+
+  /**
+   * {@code function clz( a : Bits<N> ) -> UInt<N> // counting leading zeros }
+   */
+  public final static BuiltIn CLZ =
+      new BuiltIn("CLZ", Type.relation(BitsType.class, UIntType.class));
+
+
+  /**
+   * {@code function clo( a : Bits<N> ) -> UInt<N> // counting leading ones }
+   */
+  public final static BuiltIn CLO =
+      new BuiltIn("CLO", Type.relation(BitsType.class, UIntType.class));
+
+
+  /**
+   * {@code function cls( a : Bits<N> ) -> UInt<N> // counting leading sign bits (without sign bit) }
+   */
+  public final static BuiltIn CLS =
+      new BuiltIn("CLS", Type.relation(BitsType.class, TupleType.class));
+
 
   ///// FUNCTIONS //////
 
@@ -458,7 +613,34 @@ public class BuiltInTable {
       GTH_SS,
       GTH_UU,
       GEQ_SS,
-      GEQ_UU
+      GEQ_UU,
+
+      // Shifting
+
+      LSL,
+      LSLS,
+      LSLC,
+      ASR,
+      LSR,
+      ASRS,
+      LSRS,
+      ASRC,
+      LSRC,
+      ROL,
+      ROLS,
+      ROLC,
+      ROR,
+      RORS,
+      RORC,
+      RRX,
+
+      // Bitwise Counting
+      
+      COB,
+      CZB,
+      CLZ,
+      CLO,
+      CLS
 
   );
 
