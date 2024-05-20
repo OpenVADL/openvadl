@@ -1,6 +1,8 @@
 package vadl.types;
 
+import java.util.Arrays;
 import java.util.List;
+import java.util.stream.Stream;
 import javax.annotation.Nullable;
 
 /**
@@ -560,6 +562,31 @@ public class BuiltInTable {
 
   ///// FUNCTIONS //////
 
+  /**
+   * TODO: describe function
+   * <p>{@code function mnemonic() -> String<N>}
+   */
+  public static final BuiltIn MNEMONIC =
+      BuiltIn.func("MNEMONIC", Type.relation(StringType.class));
+
+  /**
+   * Concatenates two strings to a new string.
+   *
+   * <p>{@code function concatenate(String<N>, String<M>) -> String<X>}
+   */
+  public static final BuiltIn CONCATENATE_STRINGS =
+      BuiltIn.func("CONCATENATE", "++",
+          Type.relation(StringType.class, StringType.class, StringType.class));
+
+  /**
+   * Formats the register file index.
+   *
+   * <p>{@code function register(Bits<N>) -> String<M>}
+   */
+  public static final BuiltIn REGISTER =
+      BuiltIn.func("REGISTER",
+          Type.relation(BitsType.class, StringType.class));
+
   ///// FIELDS /////
 
   public static final List<BuiltIn> BUILT_INS = List.of(
@@ -656,9 +683,19 @@ public class BuiltInTable {
       CZB,
       CLZ,
       CLO,
-      CLS
+      CLS,
+
+      // FUNCTIONS
+
+      MNEMONIC,
+      CONCATENATE_STRINGS,
+      REGISTER
 
   );
+
+  public static Stream<BuiltIn> builtIns() {
+    return BUILT_INS.stream();
+  }
 
   /**
    * The BuiltIn class represents a built-in function or process in VADL.
@@ -667,28 +704,28 @@ public class BuiltInTable {
   public static class BuiltIn {
     private final String name;
     private final @Nullable String operator;
-    private final RelationType type;
+    private final RelationType signature;
     private final Kind kind;
 
     private BuiltIn(String name, @Nullable String operator,
-                    RelationType type, Kind kind) {
+                    RelationType signature, Kind kind) {
       this.name = name;
       this.operator = operator;
-      this.type = type;
+      this.signature = signature;
       this.kind = kind;
     }
 
     private static BuiltIn func(String name, @Nullable String operator,
-                                RelationType type) {
-      return new BuiltIn(name, operator, type, Kind.FUNCTION);
+                                RelationType signature) {
+      return new BuiltIn(name, operator, signature, Kind.FUNCTION);
     }
 
-    private static BuiltIn func(String name, RelationType type) {
-      return new BuiltIn(name, null, type, Kind.FUNCTION);
+    private static BuiltIn func(String name, RelationType signature) {
+      return new BuiltIn(name, null, signature, Kind.FUNCTION);
     }
 
-    private static BuiltIn proc(String name, RelationType type) {
-      return new BuiltIn(name, null, type, Kind.PROCESS);
+    private static BuiltIn proc(String name, RelationType signature) {
+      return new BuiltIn(name, null, signature, Kind.PROCESS);
     }
 
     public String name() {
@@ -704,8 +741,8 @@ public class BuiltInTable {
       return kind;
     }
 
-    public RelationType type() {
-      return type;
+    public RelationType signature() {
+      return signature;
     }
 
     /**
@@ -715,21 +752,35 @@ public class BuiltInTable {
      * @return true if the method takes the specified argument classes, false otherwise
      */
     public final boolean takes(Class<?>... args) {
-      if (type.argTypeClass().size() != args.length) {
+      return takes(Arrays.stream(args).toList());
+    }
+
+    /**
+     * Determines if the built takes the specified argument type classes.
+     *
+     * @param args the argument type classes to check
+     * @return true if the method takes the specified argument classes, false otherwise
+     */
+    public final boolean takes(List<Class<?>> args) {
+      if (signature.argTypeClasses().size() != args.size()) {
         return false;
       }
 
-      for (int i = 0; i < args.length; i++) {
-        if (type.argTypeClass().get(i) != args[i]) {
+      for (int i = 0; i < args.size(); i++) {
+        if (signature.argTypeClasses().get(i) != args.get(i)) {
           return false;
         }
       }
       return true;
     }
 
+    public final boolean matches(RelationType type) {
+      return this.signature.equals(type);
+    }
+
     @Override
     public String toString() {
-      return "VADL::" + name + type;
+      return "VADL::" + name + signature;
     }
 
     /**
