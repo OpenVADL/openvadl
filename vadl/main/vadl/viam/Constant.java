@@ -246,10 +246,7 @@ public abstract class Constant {
      * <p>It implements the {@link Iterable} interface to allow iteration
      * over the elements in the part.
      */
-    public static class Part implements Iterable<Integer> {
-
-      private final int msb;
-      private final int lsb;
+    public record Part(int msb, int lsb) implements Iterable<Integer> {
 
       /**
        * Constructs a Part object with the specified most significant bit (msb)
@@ -260,33 +257,23 @@ public abstract class Constant {
        * @throws ViamError if the msb index is not greater than or equal to the lsb index,
        *                   or if the lsb index is less than 0
        */
-      public Part(int msb, int lsb) {
+      public Part {
         ViamError.ensure(msb >= lsb,
             "msb index must be greater or equal lsb index: %s", this);
         ViamError.ensure(lsb >= 0,
             "lsb index must be >= 0: %s", this);
 
-        this.msb = msb;
-        this.lsb = lsb;
       }
 
       public static Part of(int msb, int lsb) {
         return new Part(msb, lsb);
       }
 
-      public final int msb() {
-        return msb;
-      }
-
-      public final int lsb() {
-        return lsb;
-      }
-
-      public final boolean isIndex() {
+      public boolean isIndex() {
         return msb == lsb;
       }
 
-      public final boolean isRange() {
+      public boolean isRange() {
         return !isIndex();
       }
 
