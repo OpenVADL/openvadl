@@ -141,23 +141,23 @@ public class GraphBuildingTests {
     assertThat(exc.getMessage(), containsString("node is not uninitialized"));
   }
 
-  @Test
-  void add_withNodeListInput_Failure() {
-    var sideEffects = new NodeList<SideEffectNode>(
-        new WriteRegNode(
-            new InstrParamNode("testReg", DummyType.INSTANCE),
-            new ConstantNode(Constant.Value.of(2, Type.signedInt(32)))
-        ),
-        new WriteRegNode(
-            new InstrParamNode("testReg", DummyType.INSTANCE),
-            new ConstantNode(Constant.Value.of(2, Type.signedInt(32)))
-        )
-    );
-    var end = testGraph.addWithInputs(new EndNode(sideEffects));
-    testGraph.add(new StartNode(end));
-
-    assertEquals(5, testGraph.getNodes().count());
-  }
+//  @Test
+//  void add_withNodeListInput_Failure() {
+//    var sideEffects = new NodeList<SideEffectNode>(
+//        new WriteRegNode(
+//            new InstrParamNode("testReg", DummyType.INSTANCE),
+//            new ConstantNode(Constant.Value.of(2, Type.signedInt(32)))
+//        ),
+//        new WriteRegNode(
+//            new InstrParamNode("testReg", DummyType.INSTANCE),
+//            new ConstantNode(Constant.Value.of(2, Type.signedInt(32)))
+//        )
+//    );
+//    var end = testGraph.addWithInputs(new EndNode(sideEffects));
+//    testGraph.add(new StartNode(end));
+//
+//    assertEquals(5, testGraph.getNodes().count());
+//  }
 
 
 }

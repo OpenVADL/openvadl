@@ -39,6 +39,10 @@ public class StatusType extends DataType {
 
   @Override
   public boolean canBeCastTo(DataType other) {
+    if (this == other) {
+      return true;
+    }
+
     return alias.canBeCastTo(other);
   }
 

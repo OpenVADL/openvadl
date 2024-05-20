@@ -17,6 +17,10 @@ public class SIntType extends BitsType {
 
   @Override
   public boolean canBeCastTo(DataType other) {
+    if (this == other) {
+      return true;
+    }
+
     // SInt<N> ==> Bits<M> | N <= M and N > 1
     if (other.getClass() == BitsType.class) {
       return bitWidth <= other.bitWidth() && bitWidth > 1;

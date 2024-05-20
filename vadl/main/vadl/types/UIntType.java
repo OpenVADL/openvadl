@@ -16,6 +16,10 @@ public class UIntType extends BitsType {
 
   @Override
   public boolean canBeCastTo(DataType other) {
+    if (this == other) {
+      return true;
+    }
+
     // UInt<N> ==> UInt<M> | N <= M
     if (other.getClass() == UIntType.class) {
       return bitWidth <= other.bitWidth();

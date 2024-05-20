@@ -16,7 +16,7 @@ public class StringType extends DataType {
 
   @Override
   public boolean canBeCastTo(DataType other) {
-    return false;
+    return this == other;
   }
 
   @Override

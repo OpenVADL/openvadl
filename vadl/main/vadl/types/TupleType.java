@@ -53,6 +53,6 @@ public class TupleType extends DataType {
 
   @Override
   public boolean canBeCastTo(DataType other) {
-    return false;
+    return this == other;
   }
 }
