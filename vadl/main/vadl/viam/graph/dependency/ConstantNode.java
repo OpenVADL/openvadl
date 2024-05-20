@@ -14,8 +14,8 @@ public class ConstantNode extends ExpressionNode {
   @DataValue
   public final Constant constant; // TODO: Replace this by appropriate type
 
-  public ConstantNode(Constant constant, Type type) {
-    super(type);
+  public ConstantNode(Constant constant) {
+    super(constant.type());
     this.constant = constant;
   }
 

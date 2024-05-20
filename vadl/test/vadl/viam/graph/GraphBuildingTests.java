@@ -146,11 +146,11 @@ public class GraphBuildingTests {
     var sideEffects = new NodeList<SideEffectNode>(
         new WriteRegNode(
             new InstrParamNode("testReg", DummyType.INSTANCE),
-            new ConstantNode(Constant.Value.of(2, Type.signedInt(32)), DummyType.INSTANCE)
+            new ConstantNode(Constant.Value.of(2, Type.signedInt(32)))
         ),
         new WriteRegNode(
             new InstrParamNode("testReg", DummyType.INSTANCE),
-            new ConstantNode(Constant.Value.of(2, Type.signedInt(32)), DummyType.INSTANCE)
+            new ConstantNode(Constant.Value.of(2, Type.signedInt(32)))
         )
     );
     var end = testGraph.addWithInputs(new EndNode(sideEffects));
