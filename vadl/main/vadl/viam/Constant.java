@@ -68,7 +68,7 @@ public abstract class Constant {
     }
 
     @Override
-    public String toString() {
+    public java.lang.String toString() {
       return value.toString();
     }
 
@@ -86,6 +86,56 @@ public abstract class Constant {
 
       Value value1 = (Value) o;
       return value.equals(value1.value);
+    }
+
+    @Override
+    public int hashCode() {
+      int result = super.hashCode();
+      result = 31 * result + value.hashCode();
+      return result;
+    }
+  }
+
+  /**
+   * Represents a constant string.
+   */
+  public static class String extends Constant {
+
+    private final java.lang.String value;
+
+    public String(java.lang.String value) {
+      super(Type.string(value.length()));
+      this.value = value;
+    }
+
+    @Override
+    public DataType type() {
+      return (DataType) super.type();
+    }
+
+    public java.lang.String value() {
+      return value;
+    }
+
+    @Override
+    public java.lang.String toString() {
+      return value;
+    }
+
+    @Override
+    public boolean equals(Object o) {
+      if (this == o) {
+        return true;
+      }
+      if (o == null || getClass() != o.getClass()) {
+        return false;
+      }
+      if (!super.equals(o)) {
+        return false;
+      }
+
+      String string = (String) o;
+      return value.equals(string.value);
     }
 
     @Override
@@ -128,7 +178,7 @@ public abstract class Constant {
     }
 
     @Override
-    public String toString() {
+    public java.lang.String toString() {
       return "[" + parts.stream().map(Part::toString).collect(Collectors.joining(", ")) + "]";
     }
 
@@ -251,7 +301,7 @@ public abstract class Constant {
       }
 
       @Override
-      public String toString() {
+      public java.lang.String toString() {
         return isIndex() ? "" + msb : msb + ".." + lsb;
       }
 
