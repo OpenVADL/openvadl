@@ -4,8 +4,10 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
+import java.util.stream.StreamSupport;
 import vadl.types.DataType;
 import vadl.types.Type;
+import vadl.viam.graph.dependency.InstrParamNode;
 
 /**
  * The format definition of a VADL specification.
@@ -16,6 +18,7 @@ public class Format extends Definition {
 
   private final Type type;
   private final List<Field> fields = new ArrayList<>();
+  private final List<Immediate> immediates = new ArrayList<>();
 
 
   public Format(Identifier identifier, Type type) {
@@ -31,8 +34,16 @@ public class Format extends Definition {
     this.fields.addAll(List.of(fields));
   }
 
+  public void addImmediate(Immediate immediate) {
+    immediates.add(immediate);
+  }
+
   public Stream<Field> fields() {
     return fields.stream();
+  }
+
+  public Stream<Immediate> immediates() {
+    return immediates.stream();
   }
 
   public Type type() {
@@ -42,8 +53,10 @@ public class Format extends Definition {
   @Override
   public String toString() {
     return "Format{ " + identifier + ": " + type + "{\n\t"
-        + fields.stream().map(Field::toString).collect(
-        Collectors.joining("\n\t")) + "\n}";
+        + Stream.concat(fields.stream(), immediates.stream())
+        .map(Definition::toString)
+        .collect(Collectors.joining("\n\t"))
+        + "\n}";
   }
 
   /**
@@ -101,6 +114,72 @@ public class Format extends Definition {
     @Override
     public String toString() {
       return "Field{ " + identifier + " " + bitSlice + ": " + type + " }";
+    }
+  }
+
+
+  /**
+   * Represents an Immediate Definition.
+   *
+   * <p>An immediate contains a decode function, an encoding function (to encode the
+   * format field/fieldRef from the immediate content) and a predicate function (to
+   * test if an immediate is valid).
+   */
+  public static class Immediate extends Definition {
+
+    private final Function decoding;
+    private final Function encoding;
+    private final Function predicate;
+    private final Field fieldRef;
+
+
+    /**
+     * Constructs a new Immediate object with the given identifier, decoding function,
+     * encoding function, and predicate function.
+     *
+     * @param identifier The identifier of the Immediate.
+     * @param decoding   The decoding function of the Immediate.  {@code () -> T}
+     * @param encoding   The encoding function of the Immediate.  {@code (var: T) -> R}
+     * @param predicate  The predicate function of the Immediate. {@code (var: T) -> Bool}
+     */
+    public Immediate(Identifier identifier, Function decoding, Function encoding,
+                     Function predicate) {
+      super(identifier);
+
+      var decodeFormatRefs = decoding.behavior().getNodes(InstrParamNode.class).toList();
+      ensure(decodeFormatRefs.size() == 1,
+          "Immediate decode function must reference exactly one format field. Got: %s",
+          decodeFormatRefs);
+
+      this.fieldRef = decodeFormatRefs.get(0).formatField();
+      this.decoding = decoding;
+      this.encoding = encoding;
+      this.predicate = predicate;
+    }
+
+    public Function decoding() {
+      return decoding;
+    }
+
+    public Function encoding() {
+      return encoding;
+    }
+
+    public Function predicate() {
+      return predicate;
+    }
+
+    public Field fieldRef() {
+      return fieldRef;
+    }
+
+    public Type type() {
+      return decoding.returnType();
+    }
+
+    @Override
+    public String toString() {
+      return "Immediate{ " + decoding.name() + " = " + decoding.signature() + " }";
     }
   }
 

@@ -1,7 +1,7 @@
 package vadl.viam;
 
 import java.util.List;
-import java.util.stream.Collectors;
+import vadl.types.ConcreteRelationType;
 import vadl.types.Type;
 import vadl.viam.graph.Graph;
 
@@ -42,14 +42,16 @@ public class Function extends Definition {
     return parameters;
   }
 
+  public ConcreteRelationType signature() {
+    return Type.concreteRelation(parameters.stream().map(Parameter::type).toList(), returnType);
+  }
+
   public Type returnType() {
     return returnType;
   }
 
   @Override
   public String toString() {
-    return name() + "(" +
-        parameters.stream().map(Object::toString).collect(Collectors.joining(", ")) +
-        ") -> " + returnType;
+    return name() + signature();
   }
 }

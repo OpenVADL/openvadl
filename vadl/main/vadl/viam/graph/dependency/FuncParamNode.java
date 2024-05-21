@@ -5,14 +5,23 @@ import vadl.javaannotations.viam.DataValue;
 import vadl.types.Type;
 import vadl.viam.Parameter;
 
+/**
+ * Represents a parameter node for a function in VADL specification.
+ *
+ * <p>This node does only exist in graphs that belong to functions.
+ */
+// TODO: are function params always DataValues?
 public class FuncParamNode extends ParamNode {
 
   @DataValue
-  private final Parameter parameter;
+  protected Parameter parameter;
 
-  public FuncParamNode(Parameter parameter, Type type) {
-    super(type);
-    ensure(type.equals(parameter.type()), "Parameter type mismatch");
+  /**
+   * Constructs a FuncParamNode instance with a given parameter and type.
+   * The node type and parameter type must be equal.
+   */
+  public FuncParamNode(Parameter parameter) {
+    super(parameter.type());
     this.parameter = parameter;
   }
 
