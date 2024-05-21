@@ -24,9 +24,11 @@ import vadl.viam.graph.dependency.SideEffectNode;
 import vadl.viam.graph.dependency.WriteRegNode;
 import vadl.viam.graph.visualize.DotGraphVisualizer;
 import vadl.viam.helper.TestGraph;
+import vadl.viam.helper.TestNodes;
 import vadl.viam.helper.TestNodes.Plain;
 import vadl.viam.helper.TestNodes.PlainUnique;
 import vadl.viam.helper.TestNodes.WithDataUnique;
+import vadl.viam.helper.TestNodes.WithInputUnique;
 import vadl.viam.helper.TestNodes.WithTwoInputs;
 import vadl.viam.helper.TestNodes.WithTwoInputsUnique;
 
@@ -143,20 +145,13 @@ public class GraphBuildingTests {
 
   @Test
   void add_withNodeListInput_Failure() {
-    var sideEffects = new NodeList<SideEffectNode>(
-        new WriteRegNode(
-            new InstrParamNode("testReg", DummyType.INSTANCE),
-            new ConstantNode(Constant.Value.of(2, Type.signedInt(32)), DummyType.INSTANCE)
-        ),
-        new WriteRegNode(
-            new InstrParamNode("testReg", DummyType.INSTANCE),
-            new ConstantNode(Constant.Value.of(2, Type.signedInt(32)), DummyType.INSTANCE)
-        )
+    var inputs = new NodeList<Node>(
+        new WithInputUnique(new WithDataUnique(1)),
+        new WithInputUnique(new WithDataUnique(1))
     );
-    var end = testGraph.addWithInputs(new EndNode(sideEffects));
-    testGraph.add(new StartNode(end));
 
-    assertEquals(5, testGraph.getNodes().count());
+    testGraph.addWithInputs(new TestNodes.WithNodeListInput(inputs));
+    assertEquals(3, testGraph.getNodes().count());
   }
 
 

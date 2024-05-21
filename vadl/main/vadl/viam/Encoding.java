@@ -4,6 +4,7 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
+import javax.annotation.Nullable;
 import vadl.types.Type;
 
 /**
@@ -42,6 +43,10 @@ public class Encoding extends Definition {
 
   public Stream<Field> fieldEncodings() {
     return fieldEncodings.values().stream();
+  }
+
+  public @Nullable Field fieldEncodingOf(Format.Field field) {
+    return fieldEncodings.get(field);
   }
 
   public Format format() {

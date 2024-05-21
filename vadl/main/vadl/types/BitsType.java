@@ -17,6 +17,10 @@ public class BitsType extends DataType {
 
   @Override
   public boolean canBeCastTo(DataType other) {
+    if (this == other) {
+      return true;
+    }
+
     // Bits<1> ==> Bool
     if (other.getClass() == BoolType.class) {
       return bitWidth == 1;

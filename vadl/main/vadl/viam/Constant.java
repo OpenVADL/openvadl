@@ -68,7 +68,7 @@ public abstract class Constant {
     }
 
     @Override
-    public String toString() {
+    public java.lang.String toString() {
       return value.toString();
     }
 
@@ -86,6 +86,56 @@ public abstract class Constant {
 
       Value value1 = (Value) o;
       return value.equals(value1.value);
+    }
+
+    @Override
+    public int hashCode() {
+      int result = super.hashCode();
+      result = 31 * result + value.hashCode();
+      return result;
+    }
+  }
+
+  /**
+   * Represents a constant string.
+   */
+  public static class String extends Constant {
+
+    private final java.lang.String value;
+
+    public String(java.lang.String value) {
+      super(Type.string(value.length()));
+      this.value = value;
+    }
+
+    @Override
+    public DataType type() {
+      return (DataType) super.type();
+    }
+
+    public java.lang.String value() {
+      return value;
+    }
+
+    @Override
+    public java.lang.String toString() {
+      return value;
+    }
+
+    @Override
+    public boolean equals(Object o) {
+      if (this == o) {
+        return true;
+      }
+      if (o == null || getClass() != o.getClass()) {
+        return false;
+      }
+      if (!super.equals(o)) {
+        return false;
+      }
+
+      String string = (String) o;
+      return value.equals(string.value);
     }
 
     @Override
@@ -128,7 +178,7 @@ public abstract class Constant {
     }
 
     @Override
-    public String toString() {
+    public java.lang.String toString() {
       return "[" + parts.stream().map(Part::toString).collect(Collectors.joining(", ")) + "]";
     }
 
@@ -195,48 +245,36 @@ public abstract class Constant {
      *
      * <p>It implements the {@link Iterable} interface to allow iteration
      * over the elements in the part.
+     *
+     * @param msb the most significant bit index
+     * @param lsb the least significant bit index
      */
-    public static class Part implements Iterable<Integer> {
-
-      private final int msb;
-      private final int lsb;
+    public record Part(int msb, int lsb) implements Iterable<Integer> {
 
       /**
        * Constructs a Part object with the specified most significant bit (msb)
        * and least significant bit (lsb) indices.
        *
-       * @param msb the most significant bit index
-       * @param lsb the least significant bit index
        * @throws ViamError if the msb index is not greater than or equal to the lsb index,
        *                   or if the lsb index is less than 0
        */
-      public Part(int msb, int lsb) {
+      public Part {
         ViamError.ensure(msb >= lsb,
             "msb index must be greater or equal lsb index: %s", this);
         ViamError.ensure(lsb >= 0,
             "lsb index must be >= 0: %s", this);
 
-        this.msb = msb;
-        this.lsb = lsb;
       }
 
       public static Part of(int msb, int lsb) {
         return new Part(msb, lsb);
       }
 
-      public final int msb() {
-        return msb;
-      }
-
-      public final int lsb() {
-        return lsb;
-      }
-
-      public final boolean isIndex() {
+      public boolean isIndex() {
         return msb == lsb;
       }
 
-      public final boolean isRange() {
+      public boolean isRange() {
         return !isIndex();
       }
 
@@ -251,7 +289,7 @@ public abstract class Constant {
       }
 
       @Override
-      public String toString() {
+      public java.lang.String toString() {
         return isIndex() ? "" + msb : msb + ".." + lsb;
       }
 

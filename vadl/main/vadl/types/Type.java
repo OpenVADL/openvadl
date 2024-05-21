@@ -147,6 +147,14 @@ public abstract class Type {
     return voidType;
   }
 
+  private static final HashMap<Integer, StringType> stringTypes = new HashMap<>();
+
+  public static StringType string(int size) {
+    return stringTypes
+        .computeIfAbsent(size, k -> new StringType(size));
+  }
+
+
   private static final HashMap<Integer, RelationType> relationTypes = new HashMap<>();
 
   /**

@@ -2,25 +2,42 @@ package vadl.viam.graph.dependency;
 
 import java.util.List;
 import vadl.javaannotations.viam.DataValue;
+import vadl.types.DataType;
 import vadl.types.Type;
+import vadl.viam.Format;
 
 /**
  * A format field reference that may be used as parameter to an instruction.
+ *
+ * @see Format.Field
  */
-// TODO: Think about an other name.
 public class InstrParamNode extends ParamNode {
 
   @DataValue
-  String reg; // TODO: refactor to real datastructure
+  Format.Field formatField;
 
-  public InstrParamNode(String reg, Type type) {
+
+  /**
+   * Constructs a new InstrParamNode object with the given format field and data type.
+   * The type of the formatField must be implicitly cast-able to the given type of the
+   * node.
+   *
+   * @param formatField the format field of the instruction parameter
+   * @param type        the data type of the instruction parameter
+   */
+  public InstrParamNode(Format.Field formatField, DataType type) {
     super(type);
-    this.reg = reg;
+
+    ensure(formatField.type().canBeCastTo(type),
+        "Format field type cannot be cast to node type: %s vs %s",
+        formatField.type(), type);
+
+    this.formatField = formatField;
   }
 
   @Override
   protected void collectData(List<Object> collection) {
     super.collectData(collection);
-    collection.add(reg);
+    collection.add(formatField);
   }
 }
