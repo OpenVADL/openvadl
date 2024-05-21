@@ -1,11 +1,14 @@
 package vadl.viam.helper;
 
 import java.util.List;
+import java.util.stream.Collector;
+import java.util.stream.Collectors;
 import vadl.javaannotations.viam.DataValue;
 import vadl.javaannotations.viam.Input;
 import vadl.javaannotations.viam.Successor;
 import vadl.viam.graph.GraphVisitor;
 import vadl.viam.graph.Node;
+import vadl.viam.graph.NodeList;
 import vadl.viam.graph.UniqueNode;
 
 /**
@@ -141,6 +144,7 @@ public class TestNodes {
     }
   }
 
+
   /**
    * The WithTwoInputsUnique class is a subclass of WithTwoInputs that represents a
    * unique node with two input nodes.
@@ -150,6 +154,46 @@ public class TestNodes {
 
     public WithTwoInputsUnique(Node input1, Node input2) {
       super(input1, input2);
+    }
+  }
+
+  /**
+   * The WithNodeListInput class is a subclass of TestNode that represents a node
+   * with arbitrary many input nodes.
+   */
+  public static class WithNodeListInput extends TestNode {
+
+    public @Input NodeList<Node> inputs;
+
+    public WithNodeListInput(NodeList<Node> inputs) {
+      this.inputs = inputs;
+    }
+
+    @Override
+    protected void collectInputs(List<Node> collection) {
+      super.collectInputs(collection);
+      collection.addAll(inputs);
+    }
+
+    @Override
+    public void applyOnInputsUnsafe(GraphVisitor.Applier<Node> visitor) {
+      super.applyOnInputsUnsafe(visitor);
+      inputs = inputs.stream()
+          .map(e -> visitor.apply(this, e))
+          .collect(Collectors.toCollection(NodeList::new));
+    }
+  }
+
+
+  /**
+   * The WithNodeListInputUnique class is a subclass of WithNodeListInput that represents a
+   * unique node with arbitrary many nodes.
+   * It implements the UniqueNode interface, which marks the node as unique in the graph.
+   */
+  public static class WithNodeListInputUnique extends WithNodeListInput implements UniqueNode {
+
+    public WithNodeListInputUnique(NodeList<Node> inputs) {
+      super(inputs);
     }
   }
 
