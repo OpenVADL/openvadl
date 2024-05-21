@@ -14,7 +14,7 @@ import vadl.viam.Format;
 public class InstrParamNode extends ParamNode {
 
   @DataValue
-  Format.Field formatField;
+  protected Format.Field formatField;
 
 
   /**
@@ -33,6 +33,10 @@ public class InstrParamNode extends ParamNode {
         formatField.type(), type);
 
     this.formatField = formatField;
+  }
+
+  public Format.Field formatField() {
+    return formatField;
   }
 
   @Override
