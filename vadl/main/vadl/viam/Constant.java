@@ -245,6 +245,9 @@ public abstract class Constant {
      *
      * <p>It implements the {@link Iterable} interface to allow iteration
      * over the elements in the part.
+     *
+     * @param msb the most significant bit index
+     * @param lsb the least significant bit index
      */
     public record Part(int msb, int lsb) implements Iterable<Integer> {
 
@@ -252,8 +255,6 @@ public abstract class Constant {
        * Constructs a Part object with the specified most significant bit (msb)
        * and least significant bit (lsb) indices.
        *
-       * @param msb the most significant bit index
-       * @param lsb the least significant bit index
        * @throws ViamError if the msb index is not greater than or equal to the lsb index,
        *                   or if the lsb index is less than 0
        */

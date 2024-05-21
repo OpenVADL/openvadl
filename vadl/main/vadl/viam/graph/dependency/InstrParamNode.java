@@ -8,12 +8,23 @@ import vadl.viam.Format;
 
 /**
  * A format field reference that may be used as parameter to an instruction.
+ *
+ * @see Format.Field
  */
 public class InstrParamNode extends ParamNode {
 
   @DataValue
   Format.Field formatField;
 
+
+  /**
+   * Constructs a new InstrParamNode object with the given format field and data type.
+   * The type of the formatField must be implicitly cast-able to the given type of the
+   * node.
+   *
+   * @param formatField the format field of the instruction parameter
+   * @param type        the data type of the instruction parameter
+   */
   public InstrParamNode(Format.Field formatField, DataType type) {
     super(type);
 

@@ -564,6 +564,7 @@ public class BuiltInTable {
 
   /**
    * TODO: describe function
+   *
    * <p>{@code function mnemonic() -> String<N>}
    */
   public static final BuiltIn MNEMONIC =
