@@ -575,7 +575,7 @@ public class BuiltInTable {
    * <p>{@code function concatenate(String<N>, String<M>) -> String<X>}
    */
   public static final BuiltIn CONCATENATE_STRINGS =
-      BuiltIn.func("CONCATENATE", "++",
+      BuiltIn.func("CONCATENATE",
           Type.relation(StringType.class, StringType.class, StringType.class));
 
   /**
