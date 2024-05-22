@@ -17,4 +17,9 @@ public class Parameter extends Definition {
   public Type type() {
     return type;
   }
+
+  @Override
+  public String toString() {
+    return name() + ": " + type;
+  }
 }

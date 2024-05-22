@@ -1,0 +1,37 @@
+package vadl.viam.graph.dependency;
+
+import java.util.List;
+import vadl.javaannotations.viam.DataValue;
+import vadl.types.Type;
+import vadl.viam.Parameter;
+
+/**
+ * Represents a parameter node for a function in VADL specification.
+ *
+ * <p>This node does only exist in graphs that belong to functions.
+ */
+// TODO: are function params always DataValues?
+public class FuncParamNode extends ParamNode {
+
+  @DataValue
+  protected Parameter parameter;
+
+  /**
+   * Constructs a FuncParamNode instance with a given parameter and type.
+   * The node type and parameter type must be equal.
+   */
+  public FuncParamNode(Parameter parameter) {
+    super(parameter.type());
+    this.parameter = parameter;
+  }
+
+  public Parameter parameter() {
+    return parameter;
+  }
+
+  @Override
+  protected void collectData(List<Object> collection) {
+    super.collectData(collection);
+    collection.add(parameter);
+  }
+}

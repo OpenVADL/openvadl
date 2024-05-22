@@ -7,6 +7,9 @@ import java.util.Objects;
 import java.util.stream.Stream;
 import javax.annotation.Nullable;
 import vadl.utils.SourceLocation;
+import vadl.viam.graph.control.AbstractEndNode;
+import vadl.viam.graph.control.ReturnNode;
+import vadl.viam.graph.dependency.SideEffectNode;
 
 /**
  * The VIAM graph represents an execution flow definition
@@ -183,6 +186,20 @@ public class Graph {
         )
         .findFirst()
         .orElse(null);
+  }
+
+  /**
+   * Returns if the graph represents a pure function.
+   *
+   * <p>A pure function has no control flow (except for start and end),
+   * must end with a return node and must have no side effects.
+   *
+   * @return true if the graph is a pure function and false otherwise.
+   */
+  public boolean isPureFunction() {
+    var endNodes = getNodes(AbstractEndNode.class).toList();
+    return endNodes.size() == 1 && endNodes.get(0) instanceof ReturnNode
+        && getNodes(SideEffectNode.class).findAny().isEmpty();
   }
 
   /**

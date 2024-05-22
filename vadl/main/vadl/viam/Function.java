@@ -1,6 +1,7 @@
 package vadl.viam;
 
 import java.util.List;
+import vadl.types.ConcreteRelationType;
 import vadl.types.Type;
 import vadl.viam.graph.Graph;
 
@@ -14,34 +15,43 @@ import vadl.viam.graph.Graph;
 public class Function extends Definition {
   private final Graph behavior;
   private final Type returnType;
-  private final List<Parameter> arguments;
+  private final List<Parameter> parameters;
 
   /**
-   * Creates a new Function with the specified identifier, arguments, and return type.
+   * Creates a new Function with the specified identifier, parameters, and return type.
    *
    * <p>An empty behaviour-graph is automatically created.</p>
    *
    * @param identifier The identifier of the Function.
-   * @param arguments  The arguments of the Function.
+   * @param parameters The parameters of the Function.
    * @param returnType The return type of the Function.
    */
-  public Function(Identifier identifier, List<Parameter> arguments,
+  public Function(Identifier identifier, List<Parameter> parameters,
                   Type returnType) {
     super(identifier);
     this.behavior = new Graph(identifier.name());
     this.returnType = returnType;
-    this.arguments = arguments;
+    this.parameters = parameters;
   }
 
   public Graph behavior() {
     return behavior;
   }
 
-  public List<Parameter> arguments() {
-    return arguments;
+  public List<Parameter> parameters() {
+    return parameters;
+  }
+
+  public ConcreteRelationType signature() {
+    return Type.concreteRelation(parameters.stream().map(Parameter::type).toList(), returnType);
   }
 
   public Type returnType() {
     return returnType;
+  }
+
+  @Override
+  public String toString() {
+    return name() + signature();
   }
 }

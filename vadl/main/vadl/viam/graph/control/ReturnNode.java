@@ -2,6 +2,7 @@ package vadl.viam.graph.control;
 
 import java.util.List;
 import vadl.javaannotations.viam.Input;
+import vadl.types.Type;
 import vadl.viam.graph.GraphVisitor;
 import vadl.viam.graph.Node;
 import vadl.viam.graph.NodeList;
@@ -20,6 +21,10 @@ public class ReturnNode extends AbstractEndNode {
   public ReturnNode(ExpressionNode value, NodeList<SideEffectNode> sideEffects) {
     super(sideEffects);
     this.value = value;
+  }
+
+  public Type returnType() {
+    return value.type();
   }
 
   @Override

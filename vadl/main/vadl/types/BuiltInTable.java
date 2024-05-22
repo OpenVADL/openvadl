@@ -188,31 +188,59 @@ public class BuiltInTable {
 
 
   /**
-   * {@code function mul ( a : SInt<N>, b : SInt<N> ) -> SInt<2*N> // <=> a * b }
+   * {@code function mul ( a : Bits<N>, b : Bits<N> ) -> Bits<N> // <=> a * b }
    */
-  public static final BuiltIn MUL_SS =
-      BuiltIn.func("MUL", "*", Type.relation(SIntType.class, SIntType.class, SIntType.class));
+  public static final BuiltIn MUL =
+      BuiltIn.func("MUL", "*", Type.relation(BitsType.class, BitsType.class, BitsType.class));
 
 
   /**
-   * {@code function mul ( a : UInt<N>, b : UInt<N> ) -> UInt<2*N> // <=> a * b }
+   * {@code function muls( a : Bits<N>, b : Bits<N> ) -> ( Bits<N>, Status ) }
    */
-  public static final BuiltIn MUL_UU =
-      BuiltIn.func("MUL", "*", Type.relation(UIntType.class, UIntType.class, UIntType.class));
+  public static final BuiltIn MULS =
+      BuiltIn.func("MULS", Type.relation(BitsType.class, BitsType.class, TupleType.class));
 
 
   /**
-   * {@code function muls( a : SInt<N>, b : SInt<N> ) -> ( SInt<2*N>, Status ) }
+   * {@code function umull  ( a : UInt<N>, b : UInt<N> ) -> UInt<2*N> // <=> a *_ b }
    */
-  public static final BuiltIn MULS_SS =
-      BuiltIn.func("MULS", Type.relation(SIntType.class, SIntType.class, TupleType.class));
+  public static final BuiltIn UMULL =
+      BuiltIn.func("UMULL", "*", Type.relation(UIntType.class, UIntType.class, UIntType.class));
 
 
   /**
-   * {@code function muls( a : UInt<N>, b : UInt<N> ) -> ( UInt<2*N>, Status ) }
+   * {@code function smull  ( a : SInt<N>, b : SInt<N> ) -> SInt<2*N> // <=> a *_ b }
    */
-  public static final BuiltIn MULS_UU =
-      BuiltIn.func("MULS", Type.relation(UIntType.class, UIntType.class, TupleType.class));
+  public static final BuiltIn SMULL =
+      BuiltIn.func("SMULL", "*", Type.relation(SIntType.class, SIntType.class, SIntType.class));
+
+
+  /**
+   * {@code function sumull ( a : SInt<N>, b : UInt<N> ) -> SInt<2*N> // <=> a *_ b }
+   */
+  public static final BuiltIn SUMULL =
+      BuiltIn.func("SUMULL", "*", Type.relation(SIntType.class, UIntType.class, SIntType.class));
+
+
+  /**
+   * {@code function smulls ( a : SInt<N>, b : SInt<N> ) -> ( SInt<2*N>, Status ) }
+   */
+  public static final BuiltIn SMULLS =
+      BuiltIn.func("SMULLS", Type.relation(SIntType.class, SIntType.class, TupleType.class));
+
+
+  /**
+   * {@code function umulls ( a : UInt<N>, b : UInt<N> ) -> ( UInt<2*N>, Status ) }
+   */
+  public static final BuiltIn UMULLS =
+      BuiltIn.func("UMULLS", Type.relation(UIntType.class, UIntType.class, TupleType.class));
+
+
+  /**
+   * {@code function sumulls( a : SInt<N>, b : UInt<N> ) -> ( SInt<2*N>, Status ) }
+   */
+  public static final BuiltIn SUMULLS =
+      BuiltIn.func("SUMULLS", Type.relation(SIntType.class, UIntType.class, TupleType.class));
 
 
   /**
@@ -621,10 +649,14 @@ public class BuiltInTable {
       SATSUBB_SS,
       SATSUBB_UU,
 
-      MUL_SS,
-      MUL_UU,
-      MULS_SS,
-      MULS_UU,
+      MUL,
+      MULS,
+      UMULL,
+      SMULL,
+      SUMULL,
+      SMULLS,
+      UMULLS,
+      SUMULLS,
 
       MOD_SS,
       MOD_UU,
