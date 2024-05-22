@@ -176,8 +176,8 @@ PRODUCTIONS
     =  primary<out Expr expr1>                              (. expr = expr1; .)
         {
             binaryOperator <out BinaryExpr.Operation op>
-            primary<out Expr expr2>                          (. expr = BinaryExpr.reorder(new BinaryExpr(expr, op, expr2)); .)
-        }
+            primary<out Expr expr2>                         (. expr = BinaryExpr.reorder(new BinaryExpr(expr, op, expr2)); .)
+        }                                                   (. expr = PseudoGroupExpr.ungroup(expr); .)
     .
 
     binaryOperator <out BinaryExpr.Operation op>    (.op = null;.)
@@ -209,7 +209,7 @@ PRODUCTIONS
     primary<out Expr expr>                  (. expr = null; .)
     = number                                (. expr = new IntegerLiteral(Integer.parseInt(t.val), locationFromToken(t)); .)
     | identifier<out Identifier id>         (. expr = new Variable(id); symbolTable.addUsage(id); .)
-    | '(' expression<out Expr expr1> ')'    (. expr = expr1; .)
+    | '(' expression<out Expr expr1> ')'    (. expr = new PseudoGroupExpr(expr1); .)
     .
 
     rangeExpression<out RangeExpr expr>

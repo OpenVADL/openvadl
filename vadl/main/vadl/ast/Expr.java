@@ -91,7 +91,8 @@ class BinaryExpr extends Expr {
       return reorder(right);
     }
 
-
+    expr.left = PseudoGroupExpr.ungroup(expr.left);
+    expr.right = PseudoGroupExpr.ungroup(expr.right);
     return expr;
   }
 
@@ -189,6 +190,60 @@ class IntegerLiteral extends Expr {
   @Override
   public int hashCode() {
     return Long.hashCode(number);
+  }
+}
+
+/**
+ * A intermediate group expression during parsing.
+ * This node should never leave the parser.
+ */
+class PseudoGroupExpr extends Expr {
+  Expr expression;
+
+  public PseudoGroupExpr(Expr expression) {
+    this.expression = expression;
+  }
+
+  static Expr ungroup(Expr expr) {
+    while (expr instanceof PseudoGroupExpr) {
+      expr = ((PseudoGroupExpr) expr).expression;
+    }
+    return expr;
+  }
+
+  @Override
+  <R> R accept(ExprVisitor<R> visitor) {
+    // This node should never leave the parser and therefore never meet a visitor.
+    throw new RuntimeException("Intentionally not implemented");
+  }
+
+  @Override
+  SourceLocation location() {
+    return expression.location();
+  }
+
+  @Override
+  void prettyPrint(int indent, StringBuilder builder) {
+    // This node should never leave the parser and therefore never meet a visitor.
+    throw new RuntimeException("Intentionally not implemented");
+  }
+
+  @Override
+  public boolean equals(Object o) {
+    if (this == o) {
+      return true;
+    }
+    if (o == null || getClass() != o.getClass()) {
+      return false;
+    }
+
+    PseudoGroupExpr that = (PseudoGroupExpr) o;
+    return expression.equals(that.expression);
+  }
+
+  @Override
+  public int hashCode() {
+    return expression.hashCode();
   }
 }
 
