@@ -32,15 +32,65 @@ class BinaryExpr extends Expr {
   Expr right;
 
   enum Operation {
+    LOGICAL_OR,
+    LOGICAL_AND,
+    OR,
+    XOR,
+    AND,
+    EQUAL,
+    NOTEQUAL,
+    GREATER_EQUAL,
+    GREATER,
+    LESS_EQUAL,
+    LESS,
+    ROTATE_RIGHT,
+    ROTATE_LEFT,
+    SHIFT_RIGHT,
+    SHIFT_LEFT,
     ADD,
     SUBTRACT,
     MULTIPLY,
-    DIVIDE;
+    DIVIDE,
+    MODULO,
+    ;
 
     Precedence precedence() {
       return switch (this) {
+        case LOGICAL_OR -> Precedence.LOGICAL_OR;
+        case LOGICAL_AND -> Precedence.LOGICAL_AND;
+        case OR -> Precedence.OR;
+        case XOR -> Precedence.XOR;
+        case AND -> Precedence.AND;
+        case EQUAL, NOTEQUAL -> Precedence.EQUALITY;
+        case LESS, LESS_EQUAL, GREATER, GREATER_EQUAL -> Precedence.COMPARISON;
+        case SHIFT_LEFT, SHIFT_RIGHT, ROTATE_LEFT, ROTATE_RIGHT -> Precedence.SHIFT;
         case ADD, SUBTRACT -> Precedence.TERM;
-        case MULTIPLY, DIVIDE -> Precedence.FACTOR;
+        case MULTIPLY, DIVIDE, MODULO -> Precedence.FACTOR;
+      };
+    }
+
+    String toSymbol() {
+      return switch (this) {
+        case LOGICAL_OR -> "||";
+        case LOGICAL_AND -> "&&";
+        case OR -> "|";
+        case XOR -> "^";
+        case AND -> "&";
+        case NOTEQUAL -> "!=";
+        case EQUAL -> "==";
+        case GREATER_EQUAL -> ">=";
+        case GREATER -> ">";
+        case LESS_EQUAL -> "<=";
+        case LESS -> "<";
+        case ROTATE_RIGHT -> "<>>";
+        case ROTATE_LEFT -> "<<>";
+        case SHIFT_RIGHT -> ">>";
+        case SHIFT_LEFT -> "<<";
+        case ADD -> "+";
+        case SUBTRACT -> "-";
+        case MULTIPLY -> "*";
+        case DIVIDE -> "/";
+        case MODULO -> "%";
       };
     }
   }
@@ -49,15 +99,6 @@ class BinaryExpr extends Expr {
     this.left = left;
     this.operation = operation;
     this.right = right;
-  }
-
-  String operationAsString(Operation op) {
-    return switch (op) {
-      case ADD -> "+";
-      case SUBTRACT -> "-";
-      case MULTIPLY -> "*";
-      case DIVIDE -> "/";
-    };
   }
 
   /**
@@ -106,7 +147,7 @@ class BinaryExpr extends Expr {
     // FIXME: Remove the parenthesis in the future and determine if they are needed
     builder.append("(");
     left.prettyPrint(indent, builder);
-    builder.append(" %s ".formatted(operationAsString(operation)));
+    builder.append(" %s ".formatted(operation.toSymbol()));
     right.prettyPrint(indent, builder);
     builder.append(")");
   }
@@ -119,7 +160,7 @@ class BinaryExpr extends Expr {
   @Override
   public String toString() {
     return "%s operator: %s".formatted(this.getClass().getSimpleName(),
-        operationAsString(operation));
+        operation.toSymbol());
   }
 
   @Override

@@ -20,12 +20,31 @@ COMPILER vadl
     Ast ast = new Ast();
     SymbolTable symbolTable = new SymbolTable();
 
+    /**
+    * Converts a coco token to a vadl location.
+    */
     SourceLocation locationFromToken(Token token) {
         return new SourceLocation(
             SourceLocation.INVALID_SOURCE_LOCATION.uri(),
             new SourceLocation.Position(token.line, token.col),
             new SourceLocation.Position(token.line, token.col + t.val.length()));
     }
+
+    /**
+    *   Reorders wrongly parsed binary expressions
+    */
+    Expr reorderBinary(Expr expr) {
+        if (!(expr instanceof BinaryExpr)) {
+            return PseudoGroupExpr.ungroup(expr);
+        }
+
+        // FIXME: Only if not inside model parsing.
+        // FIXME: This doesn't completely work for model instantiation
+        // as we need to to pass through non-binary expressions to find all of them.
+        return BinaryExpr.reorder((BinaryExpr) expr);
+    }
+
+
 
     /**
     * A simple lookahead helper that returns true if the token at the nth position matches the provided string.
@@ -176,15 +195,31 @@ PRODUCTIONS
     =  primary<out Expr expr1>                              (. expr = expr1; .)
         {
             binaryOperator <out BinaryExpr.Operation op>
-            primary<out Expr expr2>                         (. expr = BinaryExpr.reorder(new BinaryExpr(expr, op, expr2)); .)
-        }                                                   (. expr = PseudoGroupExpr.ungroup(expr); .)
+            primary<out Expr expr2>                         (. expr = new BinaryExpr(expr, op, expr2); .)
+        }                                                   (. expr = reorderBinary(expr); .)
     .
 
     binaryOperator <out BinaryExpr.Operation op>    (.op = null;.)
-    = "+"   (. op = BinaryExpr.Operation.ADD; .)
+    = "||"  (. op = BinaryExpr.Operation.LOGICAL_OR; .)
+    | "&&"  (. op = BinaryExpr.Operation.LOGICAL_AND; .)
+    | "|"   (. op = BinaryExpr.Operation.OR; .)
+    | "^"   (. op = BinaryExpr.Operation.XOR; .)
+    | "&"   (. op = BinaryExpr.Operation.AND; .)
+    | "=="  (. op = BinaryExpr.Operation.EQUAL; .)
+    | "!="  (. op = BinaryExpr.Operation.NOTEQUAL; .)
+    | ">="  (. op = BinaryExpr.Operation.GREATER_EQUAL; .)
+    | ">"   (. op = BinaryExpr.Operation.GREATER; .)
+    | "<="  (. op = BinaryExpr.Operation.LESS_EQUAL; .)
+    | "<"   (. op = BinaryExpr.Operation.LESS; .)
+    | "<>>" (. op = BinaryExpr.Operation.ROTATE_RIGHT; .)
+    | "<<>" (. op = BinaryExpr.Operation.ROTATE_LEFT; .)
+    | ">>"  (. op = BinaryExpr.Operation.SHIFT_RIGHT; .)
+    | "<<"  (. op = BinaryExpr.Operation.SHIFT_LEFT; .)
+    | "+"   (. op = BinaryExpr.Operation.ADD; .)
     | "-"   (. op = BinaryExpr.Operation.SUBTRACT; .)
     | "*"   (. op = BinaryExpr.Operation.MULTIPLY; .)
-    | "/"     (. op = BinaryExpr.Operation.DIVIDE; .)
+    | "/"   (. op = BinaryExpr.Operation.DIVIDE; .)
+    | "%"   (. op = BinaryExpr.Operation.MODULO; .)
     .
 
 /*
@@ -225,7 +260,8 @@ PRODUCTIONS
      (
         identifier<out Identifier id>
         [ "<"
-            expression<out Expr expr>             (. sizeExpr = expr; .)
+            // FIXME: There is a LL(1) conflict if switching ot expression
+            primary<out Expr expr>             (. sizeExpr = expr; .)
         ">" ]                               (. type = new TypeLiteral(id, sizeExpr, id.location().join(locationFromToken(t))) ;.)
     )
     .
