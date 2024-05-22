@@ -35,7 +35,14 @@ class BinaryExpr extends Expr {
     ADD,
     SUBTRACT,
     MULTIPLY,
-    DIVIDE,
+    DIVIDE;
+
+    Precedence precedence() {
+      return switch (this) {
+        case ADD, SUBTRACT -> Precedence.TERM;
+        case MULTIPLY, DIVIDE -> Precedence.FACTOR;
+      };
+    }
   }
 
   BinaryExpr(Expr left, Operation operation, Expr right) {
@@ -51,6 +58,41 @@ class BinaryExpr extends Expr {
       case MULTIPLY -> "*";
       case DIVIDE -> "/";
     };
+  }
+
+  /**
+   * Reorders binary expression based on the correct precedence
+   *
+   * @param expr to reorder
+   * @return the new root of the reordered subtree
+   */
+  public static BinaryExpr reorder(BinaryExpr expr) {
+    var precedence = expr.operation.precedence();
+
+    // Reorder left
+    if (expr.left instanceof BinaryExpr left &&
+        precedence.greaterThan(left.operation.precedence())) {
+      var temp = left.right;
+      left.right = expr;
+      expr.left = temp;
+
+      // Since the reorder we maybe need to reorder the new top again:
+      return reorder(left);
+    }
+
+    // Reorder left
+    if (expr.right instanceof BinaryExpr right &&
+        precedence.greaterThan(right.operation.precedence())) {
+      var temp = right.left;
+      right.left = expr;
+      expr.right = temp;
+
+      // Since the reorder we maybe need to reorder the new top again:
+      return reorder(right);
+    }
+
+
+    return expr;
   }
 
   @Override
