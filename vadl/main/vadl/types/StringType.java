@@ -6,27 +6,13 @@ package vadl.types;
  * will probably change in the future.
  */
 // TODO: Discuss size of 0 for String of any length
-public class StringType extends DataType {
+public class StringType extends Type {
 
-  private static final int charWidth = 8;
-  private final int size;
-
-  protected StringType(int size) {
-    this.size = size;
+  protected StringType() {
   }
-
-  @Override
-  public int bitWidth() {
-    return size * charWidth;
-  }
-
-  @Override
-  public boolean canBeCastTo(DataType other) {
-    return this == other;
-  }
-
+  
   @Override
   public String name() {
-    return "String<" + size + ">";
+    return "String";
   }
 }
