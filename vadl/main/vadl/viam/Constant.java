@@ -105,13 +105,13 @@ public abstract class Constant {
     private final java.lang.String value;
 
     public Str(java.lang.String value) {
-      super(Type.string(value.length()));
+      super(Type.string());
       this.value = value;
     }
 
     @Override
-    public DataType type() {
-      return (DataType) super.type();
+    public Type type() {
+      return super.type();
     }
 
     public java.lang.String value() {

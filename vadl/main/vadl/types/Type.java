@@ -149,6 +149,9 @@ public abstract class Type {
 
   private static @Nullable StringType stringType = null;
 
+  /**
+   * Retrieves the instance of StringType.
+   */
   public static StringType string() {
     if (stringType == null) {
       stringType = new StringType();

@@ -1,6 +1,7 @@
 package vadl.viam;
 
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.List;
 import java.util.stream.Stream;
 
@@ -18,7 +19,7 @@ public class Specification {
   }
 
   /**
-   * Returns all format definitions as stream.
+   * Returns all global format definitions as stream.
    */
   public Stream<Format> formats() {
     return definitions.stream()
@@ -28,6 +29,10 @@ public class Specification {
 
   public void add(Definition definition) {
     definitions.add(definition);
+  }
+
+  public void addAll(Collection<Definition> definition) {
+    definitions.addAll(definition);
   }
 
   public Identifier identifier() {
