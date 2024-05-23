@@ -62,7 +62,9 @@ public class ViamError extends RuntimeException {
   public String context() {
     return context.stream()
         .map("\n\twith %s"::formatted)
-        .collect(Collectors.joining());
+        .collect(Collectors.joining())
+        + "\n\twith location:\t%s".formatted(location)
+        + "\n\twith source:\t%s".formatted(location.toSourceString());
   }
 
 
