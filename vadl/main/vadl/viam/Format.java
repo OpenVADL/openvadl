@@ -6,7 +6,7 @@ import java.util.stream.Collectors;
 import java.util.stream.Stream;
 import vadl.types.DataType;
 import vadl.types.Type;
-import vadl.viam.graph.dependency.InstrParamNode;
+import vadl.viam.graph.dependency.FieldRefNode;
 
 /**
  * The format definition of a VADL specification.
@@ -145,7 +145,7 @@ public class Format extends Definition {
                        Function predicate) {
       super(identifier);
 
-      var decodeFormatRefs = accessFunction.behavior().getNodes(InstrParamNode.class).toList();
+      var decodeFormatRefs = accessFunction.behavior().getNodes(FieldRefNode.class).toList();
       ensure(decodeFormatRefs.size() == 1,
           "Immediate decode function must reference exactly one format field. Got: %s",
           decodeFormatRefs);
