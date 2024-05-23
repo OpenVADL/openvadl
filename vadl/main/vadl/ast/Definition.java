@@ -1,6 +1,7 @@
 package vadl.ast;
 
 import java.util.List;
+import java.util.Locale;
 import java.util.Objects;
 import javax.annotation.Nullable;
 import vadl.utils.SourceLocation;
@@ -355,7 +356,7 @@ class IndexDefinition extends Definition {
   @Override
   void prettyPrint(int indent, StringBuilder builder) {
     builder.append(prettyIndentString(indent));
-    builder.append("%s counter ".formatted(kind.toString().toLowerCase()));
+    builder.append("%s counter ".formatted(kind.toString().toLowerCase(Locale.ENGLISH)));
     identifier.prettyPrint(indent, builder);
     builder.append(": ");
     type.prettyPrint(indent, builder);
