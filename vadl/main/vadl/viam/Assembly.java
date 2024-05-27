@@ -1,7 +1,6 @@
 package vadl.viam;
 
-import java.util.List;
-import vadl.types.DummyType;
+import vadl.types.Type;
 
 /**
  * The Assembly definition of an instruction in a VADL specification.
@@ -10,17 +9,19 @@ public class Assembly extends Definition {
 
   private final Function function;
 
-
   /**
    * Creates an Assembly object with the specified identifier and arguments.
    *
    * @param identifier the identifier of the Assembly definition
-   * @param arguments  the list of Parameter objects representing the arguments of the Assembly
+   * @param function   the function to create an assembly string
    */
-  public Assembly(Identifier identifier, List<Parameter> arguments) {
+  public Assembly(Identifier identifier, Function function) {
     super(identifier);
-    // TODO: Replace by correct type
-    this.function = new Function(identifier, arguments, DummyType.INSTANCE);
+
+    ensure(function.returnType().equals(Type.string()),
+        "Assembly function does not return a String, but %s", function.returnType());
+
+    this.function = function;
   }
 
   public Function function() {

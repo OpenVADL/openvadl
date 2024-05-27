@@ -4,10 +4,9 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
-import java.util.stream.StreamSupport;
 import vadl.types.DataType;
 import vadl.types.Type;
-import vadl.viam.graph.dependency.InstrParamNode;
+import vadl.viam.graph.dependency.FieldRefNode;
 
 /**
  * The format definition of a VADL specification.
@@ -18,7 +17,7 @@ public class Format extends Definition {
 
   private final Type type;
   private final List<Field> fields = new ArrayList<>();
-  private final List<Immediate> immediates = new ArrayList<>();
+  private final List<FieldAccess> fieldAccesses = new ArrayList<>();
 
 
   public Format(Identifier identifier, Type type) {
@@ -34,16 +33,16 @@ public class Format extends Definition {
     this.fields.addAll(List.of(fields));
   }
 
-  public void addImmediate(Immediate immediate) {
-    immediates.add(immediate);
+  public void addFieldAccess(FieldAccess fieldAccess) {
+    fieldAccesses.add(fieldAccess);
   }
 
   public Stream<Field> fields() {
     return fields.stream();
   }
 
-  public Stream<Immediate> immediates() {
-    return immediates.stream();
+  public Stream<FieldAccess> immediates() {
+    return fieldAccesses.stream();
   }
 
   public Type type() {
@@ -53,7 +52,7 @@ public class Format extends Definition {
   @Override
   public String toString() {
     return "Format{ " + identifier + ": " + type + "{\n\t"
-        + Stream.concat(fields.stream(), immediates.stream())
+        + Stream.concat(fields.stream(), fieldAccesses.stream())
         .map(Definition::toString)
         .collect(Collectors.joining("\n\t"))
         + "\n}";
@@ -119,46 +118,51 @@ public class Format extends Definition {
 
 
   /**
-   * Represents an Immediate Definition.
+   * Represents a field access in a VADL specification.
    *
    * <p>An immediate contains a decode function, an encoding function (to encode the
    * format field/fieldRef from the immediate content) and a predicate function (to
    * test if an immediate is valid).
    */
-  public static class Immediate extends Definition {
+  public static class FieldAccess extends Definition {
 
-    private final Function decoding;
+    private final Function accessFunction;
     private final Function encoding;
     private final Function predicate;
     private final Field fieldRef;
 
 
     /**
-     * Constructs a new Immediate object with the given identifier, decoding function,
+     * Constructs a new FieldAccess object with the given identifier, accessFunction function,
      * encoding function, and predicate function.
      *
-     * @param identifier The identifier of the Immediate.
-     * @param decoding   The decoding function of the Immediate.  {@code () -> T}
-     * @param encoding   The encoding function of the Immediate.  {@code (var: T) -> R}
-     * @param predicate  The predicate function of the Immediate. {@code (var: T) -> Bool}
+     * @param identifier     The identifier of the Immediate.
+     * @param accessFunction The access function of the FieldAccess.  {@code () -> T}
+     * @param encoding       The encoding function of the Immediate.  {@code (var: T) -> R}
+     * @param predicate      The predicate function of the Immediate. {@code (var: T) -> Bool}
      */
-    public Immediate(Identifier identifier, Function decoding, Function encoding,
-                     Function predicate) {
+    public FieldAccess(Identifier identifier, Function accessFunction, Function encoding,
+                       Function predicate) {
       super(identifier);
 
-      var decodeFormatRefs = decoding.behavior().getNodes(InstrParamNode.class).toList();
+      var decodeFormatRefs = accessFunction.behavior().getNodes(FieldRefNode.class).toList();
       ensure(decodeFormatRefs.size() == 1,
           "Immediate decode function must reference exactly one format field. Got: %s",
           decodeFormatRefs);
 
       this.fieldRef = decodeFormatRefs.get(0).formatField();
-      this.decoding = decoding;
+      this.accessFunction = accessFunction;
       this.encoding = encoding;
       this.predicate = predicate;
+
+      encoding.ensure(encoding.returnType() instanceof DataType
+              && ((DataType) encoding.returnType()).canBeCastTo(fieldRef.type()),
+          "Encoding type mismatch. Couldn't match encoding type %s with field reference type %s",
+          encoding.returnType(), fieldRef().type());
     }
 
     public Function decoding() {
-      return decoding;
+      return accessFunction;
     }
 
     public Function encoding() {
@@ -174,12 +178,12 @@ public class Format extends Definition {
     }
 
     public Type type() {
-      return decoding.returnType();
+      return accessFunction.returnType();
     }
 
     @Override
     public String toString() {
-      return "Immediate{ " + decoding.name() + " = " + decoding.signature() + " }";
+      return "FieldAccess{ " + accessFunction.name() + " = " + accessFunction.signature() + " }";
     }
   }
 

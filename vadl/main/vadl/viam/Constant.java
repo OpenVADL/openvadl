@@ -5,6 +5,7 @@ import java.util.Arrays;
 import java.util.Iterator;
 import java.util.List;
 import java.util.NoSuchElementException;
+import java.util.Objects;
 import java.util.stream.Collectors;
 import org.jetbrains.annotations.NotNull;
 import vadl.types.DataType;
@@ -99,18 +100,18 @@ public abstract class Constant {
   /**
    * Represents a constant string.
    */
-  public static class String extends Constant {
+  public static class Str extends Constant {
 
     private final java.lang.String value;
 
-    public String(java.lang.String value) {
-      super(Type.string(value.length()));
+    public Str(java.lang.String value) {
+      super(Type.string());
       this.value = value;
     }
 
     @Override
-    public DataType type() {
-      return (DataType) super.type();
+    public Type type() {
+      return super.type();
     }
 
     public java.lang.String value() {
@@ -134,8 +135,8 @@ public abstract class Constant {
         return false;
       }
 
-      String string = (String) o;
-      return value.equals(string.value);
+      Str str = (Str) o;
+      return value.equals(str.value);
     }
 
     @Override
@@ -234,7 +235,8 @@ public abstract class Constant {
     private boolean hasOverlappingParts() {
       return parts.stream()
           .anyMatch(part -> parts.stream()
-              .anyMatch(p -> p != part && p.msb() >= part.lsb() && p.lsb() <= part.msb()));
+              .anyMatch(
+                  p -> !Objects.equals(p, part) && p.msb() >= part.lsb() && p.lsb() <= part.msb()));
     }
 
 

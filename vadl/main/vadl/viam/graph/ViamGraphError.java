@@ -21,6 +21,7 @@ public class ViamGraphError extends ViamError {
     super(message.formatted(args));
   }
 
+  @Override
   public ViamGraphError addLocation(SourceLocation location) {
     super.addLocation(location);
     return this;

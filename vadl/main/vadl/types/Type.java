@@ -147,11 +147,16 @@ public abstract class Type {
     return voidType;
   }
 
-  private static final HashMap<Integer, StringType> stringTypes = new HashMap<>();
+  private static @Nullable StringType stringType = null;
 
-  public static StringType string(int size) {
-    return stringTypes
-        .computeIfAbsent(size, k -> new StringType(size));
+  /**
+   * Retrieves the instance of StringType.
+   */
+  public static StringType string() {
+    if (stringType == null) {
+      stringType = new StringType();
+    }
+    return stringType;
   }
 
 
