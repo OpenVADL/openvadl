@@ -51,4 +51,8 @@ public class Instruction extends Definition {
     return encoding.format();
   }
 
+  @Override
+  public String toString() {
+    return identifier.name() + ": " + format().identifier.name();
+  }
 }
