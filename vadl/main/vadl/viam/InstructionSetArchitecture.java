@@ -9,6 +9,7 @@ import java.util.stream.Stream;
 public class InstructionSetArchitecture extends Definition {
 
   private final List<Instruction> instructions;
+  private final List<PseudoInstruction> pseudoInstructions;
   private final List<Format> formats;
   private final Specification specification;
 
@@ -23,15 +24,21 @@ public class InstructionSetArchitecture extends Definition {
   public InstructionSetArchitecture(Identifier identifier,
                                     Specification specification,
                                     List<Format> formats,
-                                    List<Instruction> instructions) {
+                                    List<Instruction> instructions,
+                                    List<PseudoInstruction> pseudoInstructions) {
     super(identifier);
     this.specification = specification;
     this.formats = formats;
     this.instructions = instructions;
+    this.pseudoInstructions = pseudoInstructions;
   }
 
   public List<Instruction> instructions() {
     return instructions;
+  }
+
+  public List<PseudoInstruction> pseudoInstructions() {
+    return pseudoInstructions;
   }
 
   public Stream<Format> formats() {
