@@ -18,10 +18,16 @@ public class Assembly extends Definition {
   public Assembly(Identifier identifier, Function function) {
     super(identifier);
 
+    this.function = function;
+
+    verify();
+  }
+
+  @Override
+  public void verify() {
+    super.verify();
     ensure(function.returnType().equals(Type.string()),
         "Assembly function does not return a String, but %s", function.returnType());
-
-    this.function = function;
   }
 
   public Function function() {

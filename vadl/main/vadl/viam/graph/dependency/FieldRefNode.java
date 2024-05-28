@@ -27,15 +27,20 @@ public class FieldRefNode extends ParamNode {
   public FieldRefNode(Format.Field formatField, DataType type) {
     super(type);
 
-    ensure(formatField.type().canBeCastTo(type),
-        "Format field type cannot be cast to node type: %s vs %s",
-        formatField.type(), type);
-
     this.formatField = formatField;
   }
 
   public Format.Field formatField() {
     return formatField;
+  }
+
+  @Override
+  public void verifyState() {
+    super.verifyState();
+    
+    ensure(formatField.type().canBeCastTo((DataType) type()),
+        "Format field type cannot be cast to node type: %s vs %s",
+        formatField.type(), type);
   }
 
   @Override

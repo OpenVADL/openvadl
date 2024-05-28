@@ -81,13 +81,10 @@ public class Encoding extends Definition {
     public Field(Identifier identifier, Format.Field formatField, Constant.Value constant) {
       super(identifier);
 
-      ensure(constant.type().canBeCastTo(formatField.type()),
-          "Constant is of type %s, but format field is of type %s which cannot be cast implicit",
-          constant.type(),
-          formatField.type());
-
       this.formatField = formatField;
       this.constant = new Constant.Value(constant.value(), formatField.type());
+
+      verify();
     }
 
     public Format.Field formatField() {
@@ -100,6 +97,15 @@ public class Encoding extends Definition {
 
     public Constant constant() {
       return constant;
+    }
+
+    @Override
+    public void verify() {
+      super.verify();
+      ensure(constant.type().canBeCastTo(formatField.type()),
+          "Constant is of type %s, but format field is of type %s which cannot be cast implicit",
+          constant.type(),
+          formatField.type());
     }
 
     @Override

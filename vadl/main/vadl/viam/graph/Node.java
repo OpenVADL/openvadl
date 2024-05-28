@@ -314,6 +314,13 @@ public abstract class Node {
   }
 
   /**
+   * Updates the successors of this node by setting itself as the predecessor for each successor.
+   */
+  protected final void updateSuccessors() {
+    successorList().forEach(e -> e.setPredecessor(this));
+  }
+
+  /**
    * Removes this as usage from the {@code from} node and adds this
    * as usage to the {@code to} node.
    *
@@ -409,6 +416,16 @@ public abstract class Node {
     ensure(graph != null, "graph of node is null");
 
     verifyAllEdges();
+    verifyState();
+  }
+
+  /**
+   * Defines assertions that ensure a consistent state
+   * of the node.
+   *
+   * <p>This should be overridden by all nodes that have something to be checked against.</p>
+   */
+  public void verifyState() {
   }
 
   private void verifyAllEdges() {
@@ -466,9 +483,20 @@ public abstract class Node {
 
   /// RUNTIME CHECK HELPERS
 
+  /**
+   * Ensures that a given condition is true. If the condition is false, an exception is thrown
+   * with the provided format string and arguments.
+   *
+   * <p>The thrown exception has context information about the node and graph.</p>
+   *
+   * @param condition the condition to check
+   * @param format    the format string for the exception message
+   * @param args      the arguments to replace in the format string
+   * @throws ViamGraphError if the condition is false
+   */
   @FormatMethod
-  protected final void ensure(boolean condition, @FormatString String format,
-                              @Nullable Object... args) {
+  public final void ensure(boolean condition, @FormatString String format,
+                           @Nullable Object... args) {
     if (!condition) {
       throw new ViamGraphError(format, args)
           .addContext(this)
@@ -477,9 +505,19 @@ public abstract class Node {
     }
   }
 
+  /**
+   * Ensures that the given object is not null. If the object is null, an exception is thrown
+   * with the specified message.
+   *
+   * <p>The thrown exception has context information about the node and graph.</p>
+   *
+   * @param obj the object to check for null
+   * @param msg the message to include in the exception if the object is null
+   * @throws ViamGraphError if the object is null
+   */
   @Contract("null, _  -> fail")
   @FormatMethod
-  protected final void ensureNonNull(@Nullable Object obj, String msg) {
+  public final void ensureNonNull(@Nullable Object obj, String msg) {
     if (obj == null) {
       throw new ViamGraphError(msg)
           .addContext(this)

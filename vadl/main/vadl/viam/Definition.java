@@ -35,6 +35,17 @@ public abstract class Definition {
     return identifier.simpleName();
   }
 
+  /**
+   * Verifies the definition's state and properties.
+   *
+   * <p>This method should be overridden by all definitions that require some
+   * verification.</p>
+   */
+  public void verify() {
+
+  }
+
+
   @FormatMethod
   protected void ensure(boolean condition, String message, Object... args) {
     if (condition) {

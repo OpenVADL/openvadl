@@ -85,13 +85,11 @@ public class Format extends Definition {
         Format format) {
       super(identifier);
 
-      ensure(bitSlice.size() == type.bitWidth(),
-          "Field type width of %s is different to slice size of %s", type.bitWidth(),
-          bitSlice.size());
-
       this.type = type;
       this.bitSlice = bitSlice;
       this.format = format;
+
+      verify();
     }
 
     public Constant.BitSlice bitSlice() {
@@ -108,6 +106,14 @@ public class Format extends Definition {
 
     public int size() {
       return bitSlice.size();
+    }
+
+    @Override
+    public void verify() {
+      super.verify();
+      ensure(bitSlice.size() == type.bitWidth(),
+          "Field type width of %s is different to slice size of %s", type.bitWidth(),
+          bitSlice.size());
     }
 
     @Override
