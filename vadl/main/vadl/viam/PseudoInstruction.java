@@ -17,6 +17,7 @@ public class PseudoInstruction extends Definition {
 
   private final List<Parameter> parameters;
   private final Graph behavior;
+  private final Assembly assembly;
 
   /**
    * Instantiates a PseudoInstruction object and verifies it.
@@ -28,12 +29,14 @@ public class PseudoInstruction extends Definition {
   public PseudoInstruction(
       Identifier identifier,
       List<Parameter> parameters,
-      Graph behavior
+      Graph behavior,
+      Assembly assembly
   ) {
     super(identifier);
 
     this.parameters = parameters;
     this.behavior = behavior;
+    this.assembly = assembly;
 
     verify();
   }
@@ -44,6 +47,10 @@ public class PseudoInstruction extends Definition {
 
   public Graph behavior() {
     return behavior;
+  }
+
+  public Assembly assembly() {
+    return assembly;
   }
 
   @Override
