@@ -5,6 +5,7 @@ import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 import vadl.javaannotations.viam.DataValue;
 import vadl.javaannotations.viam.Input;
+import vadl.types.DataType;
 import vadl.viam.Format;
 import vadl.viam.Instruction;
 import vadl.viam.graph.GraphVisitor;
@@ -51,17 +52,11 @@ public class InstrCallNode extends DirectionalNode {
    */
   public InstrCallNode(Instruction target, List<Format.Field> paramFields,
                        NodeList<ExpressionNode> arguments) {
-    ensure(paramFields.size() == arguments.size(),
-        "Parameter fields and arguments do not match");
-    ensure(
-        IntStream.range(0, paramFields.size() - 1)
-            .allMatch(i -> arguments.get(i).type() == paramFields.get(i).type()),
-        "Parameter fields do not match concrete argument fields"
-    );
-
     this.target = target;
     this.paramFields = paramFields;
     this.arguments = arguments;
+
+    verifyState();
   }
 
   public Instruction target() {
@@ -76,11 +71,26 @@ public class InstrCallNode extends DirectionalNode {
     return arguments;
   }
 
+  public void verifyState() {
+    ensure(paramFields.size() == arguments.size(),
+        "Parameter fields and arguments do not match");
+    for (var arg : arguments) {
+      arg.ensure(arg.type() instanceof DataType,
+          "Instruction Call arguments must have a DataType type, but got %s", arg.type());
+    }
+    ensure(
+        IntStream.range(0, paramFields.size() - 1)
+            .allMatch(
+                i -> ((DataType) arguments.get(i).type()).canBeCastTo(paramFields.get(i).type())),
+        "Parameter fields do not match concrete argument fields"
+    );
+  }
+
   @Override
   protected void collectData(List<Object> collection) {
     super.collectData(collection);
-    collection.add(paramFields);
     collection.add(target);
+    collection.add(paramFields);
   }
 
   @Override
