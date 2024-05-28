@@ -28,6 +28,11 @@ public abstract class DirectionalNode extends ControlNode {
     this.ensure(this.next == null || next == this.next,
         "successor of DirectionalNode is only allowed to be set once");
     this.next = next;
+    this.updateSuccessors();
+  }
+
+  public @Nullable Node next() {
+    return next;
   }
 
   @Override

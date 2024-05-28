@@ -314,6 +314,13 @@ public abstract class Node {
   }
 
   /**
+   * Updates the successors of this node by setting itself as the predecessor for each successor.
+   */
+  protected final void updateSuccessors() {
+    successorList().forEach(e -> e.setPredecessor(this));
+  }
+
+  /**
    * Removes this as usage from the {@code from} node and adds this
    * as usage to the {@code to} node.
    *
@@ -467,8 +474,8 @@ public abstract class Node {
   /// RUNTIME CHECK HELPERS
 
   @FormatMethod
-  protected final void ensure(boolean condition, @FormatString String format,
-                              @Nullable Object... args) {
+  public final void ensure(boolean condition, @FormatString String format,
+                           @Nullable Object... args) {
     if (!condition) {
       throw new ViamGraphError(format, args)
           .addContext(this)
@@ -479,7 +486,7 @@ public abstract class Node {
 
   @Contract("null, _  -> fail")
   @FormatMethod
-  protected final void ensureNonNull(@Nullable Object obj, String msg) {
+  public final void ensureNonNull(@Nullable Object obj, String msg) {
     if (obj == null) {
       throw new ViamGraphError(msg)
           .addContext(this)
