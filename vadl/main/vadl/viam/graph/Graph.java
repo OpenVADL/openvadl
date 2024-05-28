@@ -8,7 +8,13 @@ import java.util.stream.Stream;
 import javax.annotation.Nullable;
 import vadl.utils.SourceLocation;
 import vadl.viam.graph.control.AbstractEndNode;
+import vadl.viam.graph.control.ControlNode;
+import vadl.viam.graph.control.EndNode;
+import vadl.viam.graph.control.InstrCallNode;
 import vadl.viam.graph.control.ReturnNode;
+import vadl.viam.graph.control.StartNode;
+import vadl.viam.graph.dependency.FuncParamNode;
+import vadl.viam.graph.dependency.ParamNode;
 import vadl.viam.graph.dependency.SideEffectNode;
 
 /**
@@ -200,6 +206,22 @@ public class Graph {
     var endNodes = getNodes(AbstractEndNode.class).toList();
     return endNodes.size() == 1 && endNodes.get(0) instanceof ReturnNode
         && getNodes(SideEffectNode.class).findAny().isEmpty();
+  }
+
+  /**
+   * Returns if the graph represents a pseudo instruction body.
+   *
+   * <p>A pseudo instruction has a simple control flow consisting of a {@link StartNode},
+   * arbitrary many {@link InstrCallNode} and a {@link EndNode}. It must only reference
+   * {@link FuncParamNode} but no other param nodes.</p>
+   */
+  public boolean isPseudoInstruction() {
+    return getNodes(ControlNode.class).allMatch(
+        e -> e instanceof InstrCallNode || e instanceof StartNode || e instanceof EndNode
+    )
+        && getNodes(ParamNode.class).allMatch(
+        e -> e instanceof FuncParamNode
+    );
   }
 
   /**
