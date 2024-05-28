@@ -10,7 +10,6 @@ import vadl.viam.Parameter;
  *
  * <p>This node does only exist in graphs that belong to functions.
  */
-// TODO: are function params always DataValues?
 public class FuncParamNode extends ParamNode {
 
   @DataValue

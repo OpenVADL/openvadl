@@ -71,6 +71,7 @@ public class InstrCallNode extends DirectionalNode {
     return arguments;
   }
 
+  @Override
   public void verifyState() {
     ensure(paramFields.size() == arguments.size(),
         "Parameter fields and arguments do not match");

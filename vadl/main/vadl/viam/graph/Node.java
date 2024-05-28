@@ -418,6 +418,15 @@ public abstract class Node {
     verifyAllEdges();
   }
 
+  /**
+   * Defines assertions that ensure a consistent state
+   * of the node.
+   *
+   * <p>This should be overridden by all nodes that have something to be checked against.</p>
+   */
+  public void verifyState() {
+  }
+
   private void verifyAllEdges() {
     inputs().forEach(this::verifyInput);
     usages().forEach(this::verifyUsage);
