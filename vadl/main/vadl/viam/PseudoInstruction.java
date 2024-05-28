@@ -46,6 +46,7 @@ public class PseudoInstruction extends Definition {
     return behavior;
   }
 
+  @Override
   public void verify() {
     ensure(behavior.isPseudoInstruction(),
         "The given behavior is not a valid pseudo instruction behaviour");

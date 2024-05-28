@@ -218,10 +218,7 @@ public class Graph {
   public boolean isPseudoInstruction() {
     return getNodes(ControlNode.class).allMatch(
         e -> e instanceof InstrCallNode || e instanceof StartNode || e instanceof EndNode
-    )
-        && getNodes(ParamNode.class).allMatch(
-        e -> e instanceof FuncParamNode
-    );
+    ) && getNodes(ParamNode.class).allMatch(e -> e instanceof FuncParamNode);
   }
 
   /**
