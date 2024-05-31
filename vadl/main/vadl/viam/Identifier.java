@@ -54,6 +54,12 @@ public record Identifier(
     );
   }
 
+  /**
+   * Returns a new Identifier object with the given source location.
+   *
+   * @param sourceLocation The source location to be set for the identifier.
+   * @return A new Identifier object with the given source location.
+   */
   public Identifier withSourceLocation(SourceLocation sourceLocation) {
     return new Identifier(
         Arrays.stream(this.parts).toArray(String[]::new),

@@ -1,5 +1,9 @@
 package vadl.viam;
 
+/**
+ * DefinitionVisitor is an interface that defines the visit methods for all types of
+ * definitions in a VADL specification.
+ */
 public interface DefinitionVisitor {
 
   void visit(Specification specification);
@@ -27,6 +31,12 @@ public interface DefinitionVisitor {
   void visit(PseudoInstruction pseudoInstruction);
 
 
+  /**
+   * DefinitionVisitor.Recursive is an abstract class that implements the DefinitionVisitor
+   * interface.
+   * It provides default implementations for the visit methods for all types of definitions in a
+   * VADL specification, allowing for recursive traversal of the definition hierarchy.
+   */
   abstract class Recursive implements DefinitionVisitor {
 
     public void beforeTraversal(Definition definition) {

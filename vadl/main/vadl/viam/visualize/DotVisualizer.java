@@ -19,6 +19,10 @@ import vadl.viam.Specification;
 import vadl.viam.ViamError;
 import vadl.viam.graph.Graph;
 
+/**
+ * DotVisualizer is a class that implements the ViamVisualizer interface to generate a visualization
+ * of a VADL Definition in DOT format.
+ */
 public class DotVisualizer implements ViamVisualizer<String> {
 
   private final Definition definition;

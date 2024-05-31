@@ -41,6 +41,12 @@ public class ViamError extends RuntimeException {
     return this;
   }
 
+  /**
+   * Adds additional context information to the {@link ViamError} object.
+   *
+   * @param definition The definition object to add as context.
+   * @return The updated ViamError object with added context.
+   */
   public ViamError addContext(Definition definition) {
     return this.addContext("name", definition.identifier.name())
         .addContext("definition", this.toString())
