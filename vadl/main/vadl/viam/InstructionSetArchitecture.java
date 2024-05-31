@@ -46,4 +46,8 @@ public class InstructionSetArchitecture extends Definition {
   }
 
 
+  @Override
+  public void accept(DefinitionVisitor visitor) {
+    visitor.visit(this);
+  }
 }

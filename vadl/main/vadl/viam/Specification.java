@@ -8,14 +8,17 @@ import java.util.stream.Stream;
 /**
  * Represents a VIAM VADL specification.
  */
-public class Specification {
+public class Specification extends Definition {
 
-  private final Identifier identifier;
   private final List<Definition> definitions = new ArrayList<>();
 
 
   public Specification(Identifier identifier) {
-    this.identifier = identifier;
+    super(identifier);
+  }
+
+  public Stream<Definition> definitions() {
+    return definitions.stream();
   }
 
   /**
@@ -35,7 +38,8 @@ public class Specification {
     definitions.addAll(definition);
   }
 
-  public Identifier identifier() {
-    return identifier;
+  @Override
+  public void accept(DefinitionVisitor visitor) {
+    visitor.visit(this);
   }
 }

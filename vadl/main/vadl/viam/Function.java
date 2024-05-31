@@ -54,4 +54,9 @@ public class Function extends Definition {
   public String toString() {
     return name() + signature();
   }
+
+  @Override
+  public void accept(DefinitionVisitor visitor) {
+    visitor.visit(this);
+  }
 }

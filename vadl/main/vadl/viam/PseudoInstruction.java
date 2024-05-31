@@ -64,4 +64,9 @@ public class PseudoInstruction extends Definition {
                 "The given parameter is not a known pseudo instruction parameter")
         );
   }
+
+  @Override
+  public void accept(DefinitionVisitor visitor) {
+    visitor.visit(this);
+  }
 }

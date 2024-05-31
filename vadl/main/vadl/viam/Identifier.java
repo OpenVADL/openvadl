@@ -1,6 +1,8 @@
 package vadl.viam;
 
+import java.util.Arrays;
 import java.util.List;
+import java.util.stream.Stream;
 import vadl.utils.SourceLocation;
 
 /**
@@ -19,14 +21,53 @@ public record Identifier(
     this(parts.toArray(String[]::new), sourceLocation);
   }
 
+  /**
+   * Prepend the given identifier scope to the current identifier.
+   *
+   * <p>The sourcelocation of the returned identifier is the same as of
+   * {@code this} identifier.</p>
+   *
+   * @param scope The identifier scope to prepend.
+   * @return The new identifier with the scope prepended.
+   */
+  public Identifier prepend(Identifier scope) {
+    return new Identifier(
+        Stream.concat(Arrays.stream(scope.parts), Arrays.stream(this.parts)).toArray(String[]::new),
+        this.sourceLocation
+    );
+  }
+
+  /**
+   * Appends the given parts to the existing parts of the Identifier and
+   * returns a new Identifier object.
+   *
+   * <p>The sourcelocation of the returned identifier is the same as of
+   * {@code this} identifier.</p>
+   *
+   * @param parts The parts to be appended to the existing parts of the Identifier.
+   * @return A new Identifier object with the appended parts.
+   */
+  public Identifier append(String... parts) {
+    return new Identifier(
+        Stream.concat(Arrays.stream(this.parts), Arrays.stream(parts)).toArray(String[]::new),
+        this.sourceLocation
+    );
+  }
+
+  public Identifier withSourceLocation(SourceLocation sourceLocation) {
+    return new Identifier(
+        Arrays.stream(this.parts).toArray(String[]::new),
+        sourceLocation
+    );
+  }
 
   @Override
   public String toString() {
-    return String.join("::", this.parts);
+    return name();
   }
 
   public String name() {
-    return String.join("::", this.parts);
+    return String.join(".", this.parts);
   }
 
   public String simpleName() {

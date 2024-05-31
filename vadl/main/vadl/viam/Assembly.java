@@ -23,6 +23,10 @@ public class Assembly extends Definition {
     verify();
   }
 
+  public Function function() {
+    return function;
+  }
+
   @Override
   public void verify() {
     super.verify();
@@ -30,7 +34,9 @@ public class Assembly extends Definition {
         "Assembly function does not return a String, but %s", function.returnType());
   }
 
-  public Function function() {
-    return function;
+  @Override
+  public void accept(DefinitionVisitor visitor) {
+    visitor.visit(this);
   }
+
 }
