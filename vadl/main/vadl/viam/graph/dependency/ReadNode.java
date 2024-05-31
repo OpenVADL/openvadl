@@ -1,35 +1,63 @@
 package vadl.viam.graph.dependency;
 
 import java.util.List;
+import javax.annotation.Nullable;
 import vadl.javaannotations.viam.Input;
+import vadl.types.DataType;
 import vadl.types.Type;
 import vadl.viam.graph.GraphVisitor;
 import vadl.viam.graph.Node;
 
 /**
  * The ReadNode class is an abstract class that extends ExpressionNode
- * and represents a node that reads a value from a location.
+ * and represents a node that reads a value from an address.
  * It provides a common structure and behavior for reading nodes.
  */
 public abstract class ReadNode extends ExpressionNode {
 
   @Input
-  ExpressionNode location;
+  @Nullable
+  private ExpressionNode address;
 
-  public ReadNode(ExpressionNode location, Type type) {
+  public ReadNode(@Nullable ExpressionNode address, DataType type) {
     super(type);
-    this.location = location;
+    this.address = address;
+  }
+
+  public ExpressionNode address() {
+    ensureNonNull(address, "Location is not set");
+    return address;
+  }
+
+  public boolean hasAddress() {
+    return address != null;
+  }
+
+  @Override
+  public DataType type() {
+    return (DataType) super.type();
+  }
+
+  @Override
+  public void verifyState() {
+    super.verifyState();
+    if (address != null) {
+      ensure(address.type() instanceof DataType,
+          "Address must be a DataValue, was %s", address.type());
+    }
   }
 
   @Override
   protected void collectInputs(List<Node> collection) {
     super.collectInputs(collection);
-    collection.add(location);
+    if (this.address != null) {
+      collection.add(address);
+    }
   }
 
   @Override
   public void applyOnInputsUnsafe(GraphVisitor.Applier<Node> visitor) {
     super.applyOnInputsUnsafe(visitor);
-    location = visitor.apply(this, location, ExpressionNode.class);
+    address = visitor.apply(this, address, ExpressionNode.class);
   }
 }

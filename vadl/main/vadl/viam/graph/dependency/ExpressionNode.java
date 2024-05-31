@@ -9,7 +9,8 @@ import vadl.types.Type;
  */
 public abstract class ExpressionNode extends DependencyNode {
 
-  protected Type type;
+  //TODO: Should this be DataType in any case?
+  private Type type;
 
   public ExpressionNode(Type type) {
     this.type = type;
@@ -18,5 +19,9 @@ public abstract class ExpressionNode extends DependencyNode {
   //  public abstract Type type();
   public Type type() {
     return type;
+  }
+
+  protected void setType(Type type) {
+    this.type = type;
   }
 }

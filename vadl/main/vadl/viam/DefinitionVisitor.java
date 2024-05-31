@@ -30,6 +30,8 @@ public interface DefinitionVisitor {
 
   void visit(PseudoInstruction pseudoInstruction);
 
+  void visit(Register register);
+
 
   /**
    * DefinitionVisitor.Recursive is an abstract class that implements the DefinitionVisitor
@@ -152,6 +154,12 @@ public interface DefinitionVisitor {
       pseudoInstruction.assembly()
           .accept(this);
       afterTraversal(pseudoInstruction);
+    }
+
+    @Override
+    public void visit(Register register) {
+      beforeTraversal(register);
+      afterTraversal(register);
     }
   }
 

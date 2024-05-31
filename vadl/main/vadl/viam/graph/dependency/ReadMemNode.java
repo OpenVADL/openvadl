@@ -1,5 +1,7 @@
 package vadl.viam.graph.dependency;
 
+import org.jetbrains.annotations.Nullable;
+import vadl.types.DataType;
 import vadl.types.Type;
 
 /**
@@ -7,12 +9,9 @@ import vadl.types.Type;
  * It represents a node that reads a value from a memory location.
  */
 public class ReadMemNode extends ReadNode {
-  public ReadMemNode(ExpressionNode location, Type type) {
-    super(location, type);
+
+  public ReadMemNode(ExpressionNode address, DataType type) {
+    super(address, type);
   }
 
-//  @Override
-//  public Type type() {
-//    return DummyType.INSTANCE;
-//  }
 }
