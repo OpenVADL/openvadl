@@ -49,6 +49,19 @@ public class Encoding extends Definition {
     return fieldEncodings.get(field);
   }
 
+  /**
+   * Returns a stream of non-encoded format fields.
+   *
+   * <p>This method filters the fields of the given format and returns only the fields
+   * that are not present in the set of encoded fields.</p>
+   *
+   * @return a stream of non-encoded format fields
+   */
+  public Stream<Format.Field> nonEncodedFormatFields() {
+    var encodedFields = fieldEncodings.keySet();
+    return format.fields().filter(f -> !encodedFields.contains(f));
+  }
+
   public Format format() {
     return format;
   }
