@@ -28,6 +28,10 @@ public class Register extends Definition {
     verify();
   }
 
+  /**
+   * Creates a new instance of a {@link Register} definition without
+   * address.
+   */
   public Register(Identifier identifier, DataType type) {
     this(identifier, Type.concreteRelation(type));
   }
@@ -42,7 +46,7 @@ public class Register extends Definition {
   }
 
   public DataType resultType() {
-    return (DataType) type.returnType();
+    return (DataType) type.resultType();
   }
 
   public ConcreteRelationType relationType() {
@@ -51,7 +55,7 @@ public class Register extends Definition {
 
   @Override
   public void verify() {
-    ensure(type.returnType() instanceof DataType,
+    ensure(type.resultType() instanceof DataType,
         "Invalid register type. Must result in DataType, was: %s", type);
     ensure(type.argTypes().size() <= 1, "Type must have at most one argument, was: %s", type);
     if (hasAddress()) {
