@@ -10,6 +10,7 @@ public class InstructionSetArchitecture extends Definition {
 
   private final List<Instruction> instructions;
   private final List<PseudoInstruction> pseudoInstructions;
+  private final List<Register> registers;
   private final List<Format> formats;
   private final Specification specification;
 
@@ -24,11 +25,14 @@ public class InstructionSetArchitecture extends Definition {
   public InstructionSetArchitecture(Identifier identifier,
                                     Specification specification,
                                     List<Format> formats,
+                                    List<Register> registers,
                                     List<Instruction> instructions,
-                                    List<PseudoInstruction> pseudoInstructions) {
+                                    List<PseudoInstruction> pseudoInstructions
+  ) {
     super(identifier);
     this.specification = specification;
     this.formats = formats;
+    this.registers = registers;
     this.instructions = instructions;
     this.pseudoInstructions = pseudoInstructions;
   }
@@ -39,6 +43,10 @@ public class InstructionSetArchitecture extends Definition {
 
   public List<PseudoInstruction> pseudoInstructions() {
     return pseudoInstructions;
+  }
+
+  public List<Register> registers() {
+    return registers;
   }
 
   public Stream<Format> formats() {
