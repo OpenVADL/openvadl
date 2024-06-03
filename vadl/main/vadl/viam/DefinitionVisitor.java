@@ -63,6 +63,9 @@ public interface DefinitionVisitor {
           .formats()
           .forEach(e -> e.accept(this));
       instructionSetArchitecture
+          .registers()
+          .forEach(e -> e.accept(this));
+      instructionSetArchitecture
           .instructions()
           .forEach(e -> e.accept(this));
       instructionSetArchitecture
