@@ -4,6 +4,7 @@ import com.google.auto.service.AutoService;
 import com.google.errorprone.BugPattern;
 import com.google.errorprone.bugpatterns.BugChecker;
 import com.google.errorprone.util.ASTHelpers;
+import com.sun.source.tree.AnnotationTree;
 import com.sun.source.tree.VariableTree;
 import java.util.ArrayList;
 import java.util.List;
@@ -52,6 +53,7 @@ public class ApplyOnInputsChecker extends AbstractAnnotationChecker {
    * @param fields     The list of VariableTree objects representing the fields used in the method.
    * @return A List of String objects representing the expected method statements.
    */
+  @SuppressWarnings("TreeToString")
   @Override
   protected List<String> expectedMethodStatements(List<String> paramNames,
                                                   List<VariableTree> fields) {
@@ -63,6 +65,9 @@ public class ApplyOnInputsChecker extends AbstractAnnotationChecker {
     for (var field : fields) {
       var fieldName = field.getName();
       var fieldType = ASTHelpers.getType(field);
+      var fieldAnnotations = ASTHelpers.getAnnotations(field);
+      var fieldIsNullable = fieldAnnotations.stream().map(e -> e.getAnnotationType().toString())
+          .anyMatch(e -> e.contains("Nullable"));
 
       assert fieldType != null;
       var typeOverload = "";
@@ -82,6 +87,7 @@ public class ApplyOnInputsChecker extends AbstractAnnotationChecker {
         typeOverload = ", " + simpleTypeName + ".class";
       }
 
+
       String stmt;
       if (fieldType.toString().startsWith(NODELIST)) {
         // if the field is a nodelist, we implement it as stream
@@ -90,9 +96,11 @@ public class ApplyOnInputsChecker extends AbstractAnnotationChecker {
                 + ".collect(Collectors.toCollection(NodeList::new));")
                 .formatted(fieldName, fieldName, paramNames.get(0), typeOverload);
       } else {
+        var applyMethod = fieldIsNullable ? "applyNullable" : "apply";
+
         // otherwise we use the default apply method
-        stmt = "%s = %s.apply(this, %s%s);".formatted(
-            fieldName, paramNames.get(0),
+        stmt = "%s = %s.%s(this, %s%s);".formatted(
+            fieldName, paramNames.get(0), applyMethod,
             fieldName, typeOverload);
       }
 
