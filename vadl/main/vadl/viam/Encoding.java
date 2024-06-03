@@ -60,6 +60,11 @@ public class Encoding extends Definition {
         Collectors.joining(",\n\t")) + " \n}}";
   }
 
+  @Override
+  public void accept(DefinitionVisitor visitor) {
+    visitor.visit(this);
+  }
+
 
   /**
    * A field of a VADL encoding.
@@ -118,6 +123,11 @@ public class Encoding extends Definition {
       int result = formatField.hashCode();
       result = 31 * result + constant.hashCode();
       return result;
+    }
+
+    @Override
+    public void accept(DefinitionVisitor visitor) {
+      visitor.visit(this);
     }
   }
 

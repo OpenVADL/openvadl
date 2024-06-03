@@ -41,6 +41,10 @@ public class Format extends Definition {
     return fields.stream();
   }
 
+  public Stream<FieldAccess> fieldAccesses() {
+    return fieldAccesses.stream();
+  }
+
   public Stream<FieldAccess> immediates() {
     return fieldAccesses.stream();
   }
@@ -56,6 +60,11 @@ public class Format extends Definition {
         .map(Definition::toString)
         .collect(Collectors.joining("\n\t"))
         + "\n}";
+  }
+
+  @Override
+  public void accept(DefinitionVisitor visitor) {
+    visitor.visit(this);
   }
 
   /**
@@ -114,6 +123,11 @@ public class Format extends Definition {
       ensure(bitSlice.size() == type.bitWidth(),
           "Field type width of %s is different to slice size of %s", type.bitWidth(),
           bitSlice.size());
+    }
+
+    @Override
+    public void accept(DefinitionVisitor visitor) {
+      visitor.visit(this);
     }
 
     @Override
@@ -190,6 +204,11 @@ public class Format extends Definition {
     @Override
     public String toString() {
       return "FieldAccess{ " + accessFunction.name() + " = " + accessFunction.signature() + " }";
+    }
+
+    @Override
+    public void accept(DefinitionVisitor visitor) {
+      visitor.visit(this);
     }
   }
 

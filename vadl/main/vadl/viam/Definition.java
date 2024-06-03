@@ -53,9 +53,9 @@ public abstract class Definition {
     }
     throw new ViamError(message.formatted(args))
         .shrinkStacktrace(1)
-        .addContext("name", this.identifier.name())
-        .addContext("definition", this.toString())
-        .addLocation(sourceLocation);
+        .addContext(this);
   }
+
+  public abstract void accept(DefinitionVisitor visitor);
 
 }

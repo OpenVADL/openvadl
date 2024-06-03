@@ -55,4 +55,9 @@ public class Instruction extends Definition {
   public String toString() {
     return identifier.name() + ": " + format().identifier.name();
   }
+
+  @Override
+  public void accept(DefinitionVisitor visitor) {
+    visitor.visit(this);
+  }
 }

@@ -22,4 +22,9 @@ public class Parameter extends Definition {
   public String toString() {
     return name() + ": " + type;
   }
+
+  @Override
+  public void accept(DefinitionVisitor visitor) {
+    visitor.visit(this);
+  }
 }
