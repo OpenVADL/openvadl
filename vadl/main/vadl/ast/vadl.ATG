@@ -19,6 +19,7 @@ import vadl.types.UIntType;
 COMPILER vadl
     Ast ast = new Ast();
     SymbolTable symbolTable = new SymbolTable();
+    Ungrouper ungrouper = new Ungrouper();
 
     /**
     * Converts a coco token to a vadl location.
@@ -35,7 +36,7 @@ COMPILER vadl
     */
     Expr reorderBinary(Expr expr) {
         if (!(expr instanceof BinaryExpr)) {
-            return PseudoGroupExpr.ungroup(expr);
+            return GroupExpr.ungroup(expr);
         }
 
         // FIXME: Only if not inside model parsing.
@@ -44,6 +45,13 @@ COMPILER vadl
         return BinaryExpr.reorder((BinaryExpr) expr);
     }
 
+    /**
+    * Removes all group expressions.
+    */
+    Expr ungroup(Expr expr) {
+        // FIXME: Only if not inside model parsing.
+        return ungrouper.ungroup(expr);
+    }
 
 
     /**
@@ -188,14 +196,14 @@ PRODUCTIONS
     // -- EXPRESSIONS --------------------------------------------------------------------------------------------------
 
     expression<out Expr expr>
-    = binary<out Expr expr1>                (. expr = expr1; .)
+    = binary<out Expr expr1>                (. expr = ungroup(expr1); .)
     .
 
     binary<out Expr expr>
-    =  primary<out Expr expr1>                              (. expr = expr1; .)
+    =  term<out Expr expr1>                              (. expr = expr1; .)
         {
             binaryOperator <out BinaryExpr.Operation op>
-            primary<out Expr expr2>                         (. expr = new BinaryExpr(expr, op, expr2); .)
+            term<out Expr expr2>                         (. expr = new BinaryExpr(expr, op, expr2); .)
         }                                                   (. expr = reorderBinary(expr); .)
     .
 
@@ -222,29 +230,10 @@ PRODUCTIONS
     | "%"   (. op = BinaryExpr.Operation.MODULO; .)
     .
 
-/*
-    term<out Expr expr>
-    = factor<out Expr expr1>                   (. expr = expr1; .)
-        {
-            '+' factor<out Expr expr2>         (. expr = new BinaryExpr(expr, BinaryExpr.Operation.ADD, expr2); .)
-        |   '-' factor<out Expr expr2>         (. expr = new BinaryExpr(expr, BinaryExpr.Operation.SUBTRACT, expr2); .)
-        }
-    .
-
-    factor<out Expr expr>
-    = primary<out Expr expr1>                 (. expr = expr1; .)
-        {
-            '*' primary<out Expr expr2>       (. expr = new BinaryExpr(expr, BinaryExpr.Operation.MULTIPLY, expr2); .)
-        |   '/' primary<out Expr expr2>       (. expr = new BinaryExpr(expr, BinaryExpr.Operation.DIVIDE, expr2); .)
-        }
-    .
-    */
-
-    // FIXME: The group expression will need a pseudo node till the reordering
-    primary<out Expr expr>                  (. expr = null; .)
+    term<out Expr expr>                  (. expr = null; .)
     = number                                (. expr = new IntegerLiteral(Integer.parseInt(t.val), locationFromToken(t)); .)
     | identifier<out Identifier id>         (. expr = new Variable(id); symbolTable.addUsage(id); .)
-    | '(' expression<out Expr expr1> ')'    (. expr = new PseudoGroupExpr(expr1); .)
+    | '(' binary<out Expr expr1> ')'        (. expr = new GroupExpr(expr1); .)
     .
 
     rangeExpression<out RangeExpr expr>
@@ -261,7 +250,7 @@ PRODUCTIONS
         identifier<out Identifier id>
         [ "<"
             // FIXME: There is a LL(1) conflict if switching ot expression
-            primary<out Expr expr>             (. sizeExpr = expr; .)
+            term<out Expr expr>             (. sizeExpr = expr; .)
         ">" ]                               (. type = new TypeLiteral(id, sizeExpr, id.location().join(locationFromToken(t))) ;.)
     )
     .

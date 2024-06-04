@@ -14,6 +14,8 @@ public abstract class Expr extends Node {
 interface ExprVisitor<R> {
   R visit(BinaryExpr expr);
 
+  R visit(GroupExpr expr);
+
   R visit(IntegerLiteral expr);
 
   R visit(RangeExpr expr);
@@ -110,30 +112,41 @@ class BinaryExpr extends Expr {
   public static BinaryExpr reorder(BinaryExpr expr) {
     var precedence = expr.operation.precedence();
 
-    // Reorder left
-    if (expr.left instanceof BinaryExpr left &&
-        precedence.greaterThan(left.operation.precedence())) {
-      var temp = left.right;
-      left.right = expr;
-      expr.left = temp;
+    if (expr.left instanceof BinaryExpr) {
+      // Reorder left subtree
+      expr.left = reorder((BinaryExpr) expr.left);
+      // NOTE: Your IDe might tell you to replace it with a pattern variable, but it is wrong!
+      var left = (BinaryExpr) expr.left;
 
-      // Since the reorder we maybe need to reorder the new top again:
-      return reorder(left);
+      // Reorder left
+      if (precedence.greaterThan(left.operation.precedence())) {
+        var temp = left.right;
+        left.right = expr;
+        expr.left = temp;
+
+        // Since the reorder we maybe need to reorder the new top again:
+        return reorder(left);
+      }
     }
 
-    // Reorder left
-    if (expr.right instanceof BinaryExpr right &&
-        precedence.greaterThan(right.operation.precedence())) {
-      var temp = right.left;
-      right.left = expr;
-      expr.right = temp;
+    if (expr.right instanceof BinaryExpr) {
+      // Reorder the right subtree
+      expr.right = reorder((BinaryExpr) expr.right);
 
-      // Since the reorder we maybe need to reorder the new top again:
-      return reorder(right);
+      // NOTE: Your IDe might tell you to replace it with a pattern variable, but it is wrong!
+      var right = (BinaryExpr) expr.right;
+
+      if (precedence.greaterThan(right.operation.precedence())) {
+        var temp = right.left;
+        right.left = expr;
+        expr.right = temp;
+
+        // Since the reorder we maybe need to reorder the left part again so do a recursion.
+        return reorder(right);
+      }
     }
 
-    expr.left = PseudoGroupExpr.ungroup(expr.left);
-    expr.right = PseudoGroupExpr.ungroup(expr.right);
+    // Resolve Groups
     return expr;
   }
 
@@ -235,19 +248,18 @@ class IntegerLiteral extends Expr {
 }
 
 /**
- * A intermediate group expression during parsing.
- * This node should never leave the parser.
+ * A group expression.
  */
-class PseudoGroupExpr extends Expr {
-  Expr expression;
+class GroupExpr extends Expr {
+  Expr inner;
 
-  public PseudoGroupExpr(Expr expression) {
-    this.expression = expression;
+  public GroupExpr(Expr expression) {
+    this.inner = expression;
   }
 
   static Expr ungroup(Expr expr) {
-    while (expr instanceof PseudoGroupExpr) {
-      expr = ((PseudoGroupExpr) expr).expression;
+    while (expr instanceof GroupExpr) {
+      expr = ((GroupExpr) expr).inner;
     }
     return expr;
   }
@@ -255,18 +267,21 @@ class PseudoGroupExpr extends Expr {
   @Override
   <R> R accept(ExprVisitor<R> visitor) {
     // This node should never leave the parser and therefore never meet a visitor.
-    throw new RuntimeException("Intentionally not implemented");
+    return visitor.visit(this);
   }
 
   @Override
   SourceLocation location() {
-    return expression.location();
+    return inner.location();
   }
 
   @Override
   void prettyPrint(int indent, StringBuilder builder) {
     // This node should never leave the parser and therefore never meet a visitor.
-    throw new RuntimeException("Intentionally not implemented");
+    builder.append("(");
+    inner.prettyPrint(indent, builder);
+    builder.append(")");
+
   }
 
   @Override
@@ -278,13 +293,13 @@ class PseudoGroupExpr extends Expr {
       return false;
     }
 
-    PseudoGroupExpr that = (PseudoGroupExpr) o;
-    return expression.equals(that.expression);
+    GroupExpr that = (GroupExpr) o;
+    return inner.equals(that.inner);
   }
 
   @Override
   public int hashCode() {
-    return expression.hashCode();
+    return inner.hashCode();
   }
 }
 
