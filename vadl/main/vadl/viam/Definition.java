@@ -1,6 +1,7 @@
 package vadl.viam;
 
 import com.google.errorprone.annotations.FormatMethod;
+import org.jetbrains.annotations.Contract;
 import vadl.utils.SourceLocation;
 
 /**
@@ -45,12 +46,18 @@ public abstract class Definition {
 
   }
 
-
   @FormatMethod
+  @Contract("false, _, _-> fail")
   protected void ensure(boolean condition, String message, Object... args) {
     if (condition) {
       return;
     }
+    throwWithContext(message, args);
+  }
+
+  @FormatMethod
+  @Contract("_, _-> fail")
+  protected void throwWithContext(String message, Object... args) {
     throw new ViamError(message.formatted(args))
         .shrinkStacktrace(1)
         .addContext(this);

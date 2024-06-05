@@ -43,7 +43,9 @@ public class ReadRegNode extends ReadNode {
     ensure(hasAddress() == register.hasAddress(),
         "This hasAddress() and registers' hasAddress() returned different results.");
     if (hasAddress()) {
-      ensure(((DataType) address().type()).canBeCastTo(register.addressType()),
+      var addrType = register.addressType();
+      ensure(addrType != null &&
+              ((DataType) address().type()).canBeCastTo(addrType),
           "Type of address node can not be cast to required register address type.");
     }
   }

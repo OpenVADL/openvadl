@@ -1,56 +1,55 @@
 package vadl.viam;
 
+import java.util.ArrayList;
+import java.util.List;
+import java.util.stream.Stream;
+import javax.annotation.Nullable;
 import vadl.types.ConcreteRelationType;
 import vadl.types.DataType;
 import vadl.types.Type;
 
-/**
- * Represents a register definition in VADL.
- *
- * <p>A register always has a resultType of {@link DataType} and an optional addressType of
- * {@link DataType} if it is a register file. Thus the type is a {@link ConcreteRelationType}
- * with at most one argument type and exactly one result type.</p>
- */
-public class Register extends Definition {
+public sealed abstract class Register extends Definition
+    permits Register.Cell, Register.Sub, Register.File {
 
   private final ConcreteRelationType type;
 
-  /**
-   * Creates a new instance of a {@link Register} definition.
-   *
-   * @param identifier The identifier of the register.
-   * @param type       The type of the register.
-   */
   public Register(Identifier identifier, ConcreteRelationType type) {
     super(identifier);
     this.type = type;
-
-    verify();
-  }
-
-  /**
-   * Creates a new instance of a {@link Register} definition without
-   * address.
-   */
-  public Register(Identifier identifier, DataType type) {
-    this(identifier, Type.concreteRelation(type));
-  }
-
-  public boolean hasAddress() {
-    return !type.argTypes().isEmpty();
-  }
-
-  public DataType addressType() {
-    ensure(hasAddress(), "Register has no address");
-    return (DataType) type.argTypes().get(0);
   }
 
   public DataType resultType() {
     return (DataType) type.resultType();
   }
 
+  public boolean hasAddress() {
+    return !type.argTypes().isEmpty();
+  }
+
+  public @Nullable DataType addressType() {
+    if (type.argTypes().isEmpty()) {
+      return null;
+    }
+    return (DataType) type.argTypes().get(0);
+  }
+
   public ConcreteRelationType relationType() {
     return type;
+  }
+
+  public File asFile() {
+    ensure(this instanceof File, "Not a register file");
+    return (File) this;
+  }
+
+  public Cell asCell() {
+    ensure(this instanceof Cell, "Not a register cell");
+    return (Cell) this;
+  }
+
+  public Sub asSubRegister() {
+    ensure(this instanceof Sub, "Not a sub register");
+    return (Sub) this;
   }
 
   @Override
@@ -69,8 +68,122 @@ public class Register extends Definition {
     visitor.visit(this);
   }
 
-  @Override
-  public String toString() {
-    return "register " + (hasAddress() ? "file " : "") + identifier + ": " + type;
+  public static final class Cell extends Register {
+
+    private final List<Sub> subRegisters;
+
+    public Cell(Identifier identifier, DataType resultType, List<Sub> subRegisters) {
+      super(identifier, Type.concreteRelation(resultType));
+      this.subRegisters = subRegisters;
+    }
+
+    public Cell(Identifier identifier, DataType resultType) {
+      this(identifier, resultType, List.of());
+    }
+
+    @Override
+    public void verify() {
+      super.verify();
+      subRegisters.forEach(e ->
+          e.ensure(e.parent == this, "SubRegister has invalid parent. %s instead of %s",
+              e.parent,
+              this)
+      );
+    }
+
+    public Stream<Sub> subRegisters() {
+      return subRegisters.stream();
+    }
+
+    @Override
+    public String toString() {
+      return "register " + identifier + ": " + resultType();
+    }
   }
+
+
+  public static final class Sub extends Register {
+
+    private final Format.Field fieldRef;
+    private final Cell parent;
+
+    public Sub(Identifier identifier, Format.Field fieldRef, Cell parent) {
+      super(identifier, Type.concreteRelation(fieldRef.type()));
+
+      this.fieldRef = fieldRef;
+      this.parent = parent;
+    }
+
+    public Format.Field formatField() {
+      return fieldRef;
+    }
+
+    public Cell parent() {
+      return parent;
+    }
+
+    @Override
+    public String toString() {
+      return "register " + identifier + ": " + resultType();
+    }
+  }
+
+
+  public static final class File extends Register {
+
+    private final List<Constraint> constraints;
+
+    public File(Identifier identifier,
+                DataType addressType,
+                DataType resultType
+    ) {
+      super(identifier, Type.concreteRelation(addressType, resultType));
+      constraints = new ArrayList<>();
+    }
+
+    public Stream<Constraint> constraints() {
+      return constraints.stream();
+    }
+
+    public void addConstraint(Constraint constraint) {
+      constraints.add(constraint);
+    }
+
+    @Override
+    public DataType addressType() {
+      return (DataType) relationType().argTypes().get(0);
+    }
+
+    @Override
+    public String toString() {
+      return "register file " + identifier + ": " + relationType();
+    }
+
+    public record Constraint(
+        File parent,
+        Constant.Value address,
+        Constant.Value value
+    ) {
+
+      public Constraint(File parent,
+                        Constant.Value address,
+                        Constant.Value value) {
+        this.parent = parent;
+        this.address = address;
+        this.value = value;
+
+        parent.ensure(address.type().canBeCastTo(parent.addressType()),
+            "Address value of register constraint is of wrong type. Constraint: %s", this);
+
+        parent.ensure(value.type().canBeCastTo(parent.resultType()),
+            "Value value of register constraint is of wrong type. Constraint: %s", this);
+      }
+
+      @Override
+      public String toString() {
+        return parent.identifier.name() + "(" + address + ") = " + value;
+      }
+    }
+  }
+
 }

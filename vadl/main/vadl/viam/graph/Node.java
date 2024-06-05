@@ -495,6 +495,7 @@ public abstract class Node {
    * @throws ViamGraphError if the condition is false
    */
   @FormatMethod
+  @Contract("false, _, _-> fail")
   public final void ensure(boolean condition, @FormatString String format,
                            @Nullable Object... args) {
     if (!condition) {
@@ -518,12 +519,7 @@ public abstract class Node {
   @Contract("null, _  -> fail")
   @FormatMethod
   public final void ensureNonNull(@Nullable Object obj, String msg) {
-    if (obj == null) {
-      throw new ViamGraphError(msg)
-          .addContext(this)
-          .addContext(this.graph)
-          .shrinkStacktrace(1);
-    }
+    ensure(obj != null, msg);
   }
 
   protected final void ensureDeleteIsPossible() {
