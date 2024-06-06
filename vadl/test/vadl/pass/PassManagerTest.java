@@ -1,14 +1,14 @@
 package vadl.pass;
 
+import java.net.URI;
+import java.net.URISyntaxException;
+import java.util.Map;
+
 import org.junit.jupiter.api.Test;
 import vadl.pass.exception.DuplicatedPassKeyException;
 import vadl.utils.SourceLocation;
 import vadl.viam.Identifier;
 import vadl.viam.Specification;
-
-import java.net.URI;
-import java.net.URISyntaxException;
-import java.util.HashMap;
 
 import static org.junit.jupiter.api.Assertions.*;
 
@@ -21,7 +21,7 @@ class PassManagerTest {
         }
 
         @Override
-        public Object execute(HashMap<PassKey, Object> passResults, Specification viam) {
+        public Object execute(final Map<PassKey, Object> passResults, Specification viam) {
             return 1337;
         }
     }

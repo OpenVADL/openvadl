@@ -1,8 +1,8 @@
 package vadl.pass;
 
-import vadl.viam.Specification;
+import java.util.Map;
 
-import java.util.HashMap;
+import vadl.viam.Specification;
 
 /**
  * A pass is a unit of execution. It analysis or transforms a VADL specification.
@@ -18,7 +18,8 @@ public interface Pass {
      *
      * @param passResults are the results from the different passes which have been executed so far.
      * @param viam        is latest VADL specification. Note that transformation passes are allowed to mutate the object.
-     * @return the result of the pass. This will be automatically stored into {@code passResults} for the next pass by the {@link PassManager}.
+     * @return the result of the pass. This will be automatically stored into {@code passResults} for the next pass by
+     * the {@link PassManager}.
      */
-    Object execute(final HashMap<PassKey, Object> passResults, Specification viam);
+    Object execute(final Map<PassKey, Object> passResults, Specification viam);
 }
