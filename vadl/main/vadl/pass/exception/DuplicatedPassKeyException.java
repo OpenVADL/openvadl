@@ -8,7 +8,7 @@ import vadl.pass.PassKey;
  * This is not allowed because key has to be unique.
  */
 public class DuplicatedPassKeyException extends Exception {
-    public DuplicatedPassKeyException(PassKey passKey) {
-        super("Pass with the key '" + passKey.value() + "' is duplicated.");
-    }
+  public DuplicatedPassKeyException(PassKey passKey) {
+    super("Pass with the key '" + passKey.value() + "' is duplicated.");
+  }
 }
