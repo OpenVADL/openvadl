@@ -8,7 +8,7 @@ import vadl.viam.graph.Node;
  * An example for such a subflow is an if branch.
  */
 public class BeginNode extends AbstractBeginNode {
-  public BeginNode(Node next) {
+  public BeginNode(ControlNode next) {
     super(next);
   }
 }

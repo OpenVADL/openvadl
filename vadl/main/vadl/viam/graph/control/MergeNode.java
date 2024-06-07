@@ -15,7 +15,7 @@ public class MergeNode extends AbstractBeginNode {
   @Input
   NodeList<EndNode> branchEnds;
 
-  public MergeNode(NodeList<EndNode> branchEnds, Node next) {
+  public MergeNode(NodeList<EndNode> branchEnds, ControlNode next) {
     super(next);
     this.branchEnds = branchEnds;
   }

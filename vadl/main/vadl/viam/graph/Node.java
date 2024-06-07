@@ -202,7 +202,7 @@ public abstract class Node {
    * <p><b>IMPORTANT</b>:
    * <li>This must be overridden by every node that has inputs
    * (annotated with {@link vadl.javaannotations.viam.Input}).</li>
-   * <li>The subclass must call {@code super.applyOnInputs(visitor)} before
+   * <li>The subclass must call {@code super.applyOnInputsUnsafe(visitor)} before
    * adding its own inputs!</li>
    *
    * @param visitor that produces new value for input.
