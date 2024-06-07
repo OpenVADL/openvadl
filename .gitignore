@@ -9,8 +9,11 @@ build/
 .idea/jarRepositories.xml
 .idea/compiler.xml
 .idea/libraries/
-.idea/
 .idea/*
+.idea/codeStyles/*
+!.idea/checkstyle-idea.xml
+!.idea/codeStyles
+!.idea/codeStyles/Project.xml
 *.iws
 *.iml
 *.ipr
