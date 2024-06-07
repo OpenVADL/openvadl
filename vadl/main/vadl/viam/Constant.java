@@ -3,6 +3,7 @@ package vadl.viam;
 import java.math.BigInteger;
 import java.util.*;
 import java.util.stream.Collectors;
+import java.util.stream.IntStream;
 import java.util.stream.Stream;
 
 import org.jetbrains.annotations.NotNull;
@@ -157,6 +158,9 @@ public abstract class Constant {
 
     private final List<Part> parts;
 
+    // cache the statistic summary for performance
+    private final IntSummaryStatistics statistics;
+
     /**
      * The constructor of a BitSlice from an array of sub-ranges (parts).
      *
@@ -168,16 +172,19 @@ public abstract class Constant {
       ViamError.ensure(parts.length > 0,
           "slice cannot be empty: %s", this);
       this.parts = normalized(parts);
+      this.statistics = stream().summaryStatistics();
       ViamError.ensure(
           !hasOverlappingParts(),
           "parts of slice must not overlap: %s", this);
     }
 
+    @Override
+    public Type type() {
+      return Type.bitSlice();
+    }
 
     public final int bitSize() {
-      return parts.stream()
-          .mapToInt(Part::size)
-          .sum();
+      return (int) statistics.getCount();
     }
 
     public final int partSize() {
@@ -189,13 +196,29 @@ public abstract class Constant {
     }
 
     public boolean isContinuous() {
+      // this works because the parts are normalized
       return parts.size() == 1;
+    }
+
+    /**
+     * Returns the most significant bit index of the bit-slice.
+     */
+    public int msb() {
+      return statistics.getMax();
+    }
+
+    /**
+     * Returns the least significant bit index of the bit-slice.
+     */
+    public int lsb() {
+      return statistics.getMin();
     }
 
     @Override
     public java.lang.String toString() {
       return "[" + parts.stream().map(Part::toString).collect(Collectors.joining(", ")) + "]";
     }
+
 
     @Override
     public boolean equals(Object o) {
@@ -220,11 +243,15 @@ public abstract class Constant {
       return result;
     }
 
+    public IntStream stream() {
+      return this.parts.stream()
+          .flatMapToInt(part -> StreamUtils.directionalRangeClosed(part.msb(), part.lsb()));
+    }
+
     @NotNull
     @Override
     public Iterator<Integer> iterator() {
-      return this.parts.stream()
-          .flatMapToInt(part -> StreamUtils.directionalRangeClosed(part.msb(), part.lsb()))
+      return stream()
           .iterator();
     }
 
