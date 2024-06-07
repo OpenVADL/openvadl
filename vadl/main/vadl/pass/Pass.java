@@ -19,8 +19,7 @@ public interface Pass {
    * @param viam        is latest VADL specification. Note that transformation passes are allowed
    *                    to mutate the object.
    * @return the result of the pass. This will be automatically stored into {@code passResults} for
-   * the next pass by
-   * the {@link PassManager}.
+   *     the next pass by the {@link PassManager}.
    */
   Object execute(final Map<PassKey, Object> passResults, Specification viam);
 }
