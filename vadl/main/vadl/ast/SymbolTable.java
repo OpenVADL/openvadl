@@ -4,6 +4,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import javax.annotation.Nullable;
 import vadl.error.VadlError;
 import vadl.error.VadlException;
 
@@ -11,30 +12,31 @@ import vadl.error.VadlException;
 /**
  * A symbol table to hold variable definition and usages and verify the later.
  */
-public class SymbolTable {
-  private Map<String, Identifier> definitions = new HashMap<>();
-  private List<Identifier> unresolvedUsages = new ArrayList<>();
-  private List<VadlError> errors = new ArrayList<>();
+class SymbolTable {
+  private final Map<String, Macro> macros = new HashMap<>();
+  private final Map<String, Identifier> symbolDefinitions = new HashMap<>();
+  private final List<Identifier> unresolvedUsages = new ArrayList<>();
+  private final List<VadlError> errors = new ArrayList<>();
 
   /**
    * Adds a new symbol definition.
    *
    * @param identifier of the symbol being defined.
    */
-  public void addDefinition(Identifier identifier) {
-    if (definitions.containsKey(identifier.name)) {
+  void addDefinition(Identifier identifier) {
+    if (symbolDefinitions.containsKey(identifier.name)) {
       errors.add(new VadlError(
           "Redefinition of variable '%s' is not allowed".formatted(identifier.name),
           identifier.location(),
           "Variables cannot be redefined or reassigned and a variable with the same name was "
               + "already defined in %s".formatted(
-              definitions.get(identifier.name).location().toString()),
+              symbolDefinitions.get(identifier.name).location().toString()),
           null
       ));
       return;
     }
 
-    definitions.put(identifier.name, identifier);
+    symbolDefinitions.put(identifier.name, identifier);
   }
 
   /**
@@ -44,8 +46,8 @@ public class SymbolTable {
    *
    * @param identifier of the symbol beeing used.
    */
-  public void addUsage(Identifier identifier) {
-    if (definitions.containsKey(identifier.name)) {
+  void addUsage(Identifier identifier) {
+    if (symbolDefinitions.containsKey(identifier.name)) {
       return;
     }
 
@@ -57,9 +59,9 @@ public class SymbolTable {
    *
    * @throws VadlException if not all usages have matching definitions.
    */
-  public void verifyAllUsages() {
+  void verifyAllUsages() {
     for (var unresovled : unresolvedUsages) {
-      if (!definitions.containsKey(unresovled.name)) {
+      if (!symbolDefinitions.containsKey(unresovled.name)) {
         // FIXME: We could do some fancy stuff here searching the symbol table for similarly named
         // variables and suggesting them.
         errors.add(new VadlError(
@@ -76,4 +78,22 @@ public class SymbolTable {
     }
   }
 
+  void addMacro(Macro macro) {
+    if (macros.containsKey(macro.name().name)) {
+      errors.add(new VadlError(
+          "Redefinition of macro '%s' is not allowed".formatted(macro.name().name),
+          macro.name().location(),
+          "A macro with that name was already defined in: %s".formatted(
+              macros.get(macro.name().name).name().location().toString()),
+          null
+      ));
+    }
+
+    macros.put(macro.name().name, macro);
+  }
+
+  @Nullable
+  Macro getMacro(String name) {
+    return macros.get(name);
+  }
 }

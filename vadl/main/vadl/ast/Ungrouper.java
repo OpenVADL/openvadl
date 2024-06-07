@@ -5,7 +5,7 @@ package vadl.ast;
  * Groups are needed in the AST during parsing until all binary expressions are reordered but then
  * can be removed.
  */
-public class Ungrouper implements ExprVisitor<Expr> {
+class Ungrouper implements ExprVisitor<Expr> {
 
   public Expr ungroup(Expr expr) {
     return expr.accept(this);
@@ -25,6 +25,11 @@ public class Ungrouper implements ExprVisitor<Expr> {
 
   @Override
   public Expr visit(IntegerLiteral expr) {
+    return expr;
+  }
+
+  @Override
+  public Expr visit(InternalErrorExpr expr) {
     return expr;
   }
 

@@ -18,6 +18,8 @@ interface ExprVisitor<R> {
 
   R visit(IntegerLiteral expr);
 
+  R visit(InternalErrorExpr expr);
+
   R visit(RangeExpr expr);
 
   R visit(TypeLiteral expr);
@@ -244,6 +246,26 @@ class IntegerLiteral extends Expr {
   @Override
   public int hashCode() {
     return Long.hashCode(number);
+  }
+}
+
+/**
+ * An internal temporary expression node.
+ */
+class InternalErrorExpr extends Expr {
+  @Override
+  <R> R accept(ExprVisitor<R> visitor) {
+    return visitor.visit(this);
+  }
+
+  @Override
+  SourceLocation location() {
+    return SourceLocation.INVALID_SOURCE_LOCATION;
+  }
+
+  @Override
+  void prettyPrint(int indent, StringBuilder builder) {
+    builder.append("/* INTERNAL ERROR */");
   }
 }
 

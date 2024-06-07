@@ -142,6 +142,12 @@ public class AstDumper implements DefinitionVisitor<Void>, ExprVisitor<Void> {
   }
 
   @Override
+  public Void visit(InternalErrorExpr expr) {
+    dumpNode(expr);
+    return null;
+  }
+
+  @Override
   public Void visit(RangeExpr expr) {
     dumpNode(expr);
     dumpChildren(expr.from, expr.to);

@@ -1,6 +1,7 @@
 $package=vadl.ast
 import java.util.ArrayList;
 import java.util.List;
+import javax.annotation.Nullable;
 
 import vadl.ast.Ast;
 import vadl.ast.Expr;
@@ -17,6 +18,7 @@ import vadl.types.UIntType;
 
 
 COMPILER vadl
+    boolean insideMacro = false;
     Ast ast = new Ast();
     SymbolTable symbolTable = new SymbolTable();
     Ungrouper ungrouper = new Ungrouper();
@@ -35,13 +37,13 @@ COMPILER vadl
     *   Reorders wrongly parsed binary expressions
     */
     Expr reorderBinary(Expr expr) {
-        if (!(expr instanceof BinaryExpr)) {
-            return GroupExpr.ungroup(expr);
+        // Only if not inside model parsing.
+        // Cause there we don't know yet what the order is.
+        if (insideMacro) {
+            return expr;
         }
 
-        // FIXME: Only if not inside model parsing.
         // FIXME: This doesn't completely work for model instantiation
-        // as we need to to pass through non-binary expressions to find all of them.
         return BinaryExpr.reorder((BinaryExpr) expr);
     }
 
@@ -49,8 +51,30 @@ COMPILER vadl
     * Removes all group expressions.
     */
     Expr ungroup(Expr expr) {
-        // FIXME: Only if not inside model parsing.
+        //  Only if not inside model parsing.
+        if (insideMacro) {
+          return expr;
+        }
+
         return ungrouper.ungroup(expr);
+    }
+
+    /**
+    * Expands a macro.
+    */
+    @Nullable Node expandMacro(String name, SyntaxType requiredReturnType) {
+        var macro = symbolTable.getMacro(name);
+         if (macro == null) {
+            errors.SemErr(t.line, t.col, "No macro named `%s` exists.".formatted(name));
+            return null;
+         }
+
+         if (!macro.returnType().isSubTypeOf(requiredReturnType)) {
+            errors.SemErr(t.line, t.col, "The macro returns `%s` but here a macro returning `%s` is expected.".formatted(macro.returnType(), requiredReturnType));
+            return null;
+         }
+
+         return macro.body();
     }
 
 
@@ -90,6 +114,7 @@ PRODUCTIONS
     vadl =
     {
         topLevelDefinitions<out Definition d>   (. ast.definitions.add(d); .)
+        | macroDef
     }.
 
     // -- DEFINITIONS --------------------------------------------------------------------------------------------------
@@ -230,10 +255,11 @@ PRODUCTIONS
     | "%"   (. op = BinaryExpr.Operation.MODULO; .)
     .
 
-    term<out Expr expr>                  (. expr = null; .)
-    = number                                (. expr = new IntegerLiteral(Integer.parseInt(t.val), locationFromToken(t)); .)
-    | identifier<out Identifier id>         (. expr = new Variable(id); symbolTable.addUsage(id); .)
-    | '(' binary<out Expr expr1> ')'        (. expr = new GroupExpr(expr1); .)
+    term<out Expr expr>                             (. expr = null; .)
+    = number                                        (. expr = new IntegerLiteral(Integer.parseInt(t.val), locationFromToken(t)); .)
+    | identifier<out Identifier id>                 (. expr = new Variable(id); symbolTable.addUsage(id); .)
+    | '(' binary<out Expr expr1> ')'                (. expr = new GroupExpr(expr1); .)
+    | macroInstance<out Node node1, CoreType.Ex()>  (. expr = node1 != null ? ((Expr)node1) : new InternalErrorExpr(); .)
     .
 
     rangeExpression<out RangeExpr expr>
@@ -258,6 +284,44 @@ PRODUCTIONS
 
     identifier<out Identifier identifier> = identifierToken (. identifier = new Identifier(t.val, locationFromToken(t)); .)
     .
+
+    // -- MACROS -------------------------------------------------------------------------------------------------------
+    macroInstance<out Node body, SyntaxType requiredType>  = "$" identifier<out Identifier id>
+    "("
+    ")"         (. body = expandMacro(id.name, requiredType); .)
+    .
+
+    // FIXME: Verify that the body is of the type the signature specified.
+    macroDef
+    = "model" identifier<out Identifier id>  "(" ")"
+    ":" syntaxType<out SyntaxType returnType> "="
+    "{"                                 (. Node body = null; insideMacro = true; .)
+        expression<out Expr bodyEx>     (. body = new GroupExpr(bodyEx); .)
+    "}"                                 (. insideMacro = false; symbolTable.addMacro(new Macro(id, List.of(), body, returnType));  .)
+    .
+
+    syntaxType<out SyntaxType typ> = syntaxCoreType<out CoreType coreType> (. typ = coreType; .)
+    .
+
+    syntaxCoreType<out CoreType typ>  (. typ = null; .)
+    = "Stats"       (. typ = CoreType.Stats(); .)
+    | "Stat"        (. typ = CoreType.Stat(); .)
+    | "Encs"        (. typ = CoreType.Encs(); .)
+    | "IsaDefs"     (. typ = CoreType.IsaDefs(); .)
+    | "Ex"          (. typ = CoreType.Ex(); .)
+    | "Lit"         (. typ = CoreType.Lit(); .)
+    | "Str"         (. typ = CoreType.Str(); .)
+    | "Val"         (. typ = CoreType.Val(); .)
+    | "Bool"        (. typ = CoreType.Bool(); .)
+    | "Int"         (. typ = CoreType.Int(); .)
+    | "Bin"         (. typ = CoreType.Bin(); .)
+    | "CallEx"      (. typ = CoreType.CallEx(); .)
+    | "SymEx"       (. typ = CoreType.SymEx(); .)
+    | "Id"          (. typ = CoreType.Id(); .)
+    | "BinOp"       (. typ = CoreType.BinOp(); .)
+    | "UnOp"        (. typ = CoreType.UnOp(); .)
+    .
+
 
 
 END vadl.
