@@ -30,7 +30,11 @@ public interface DefinitionVisitor {
 
   void visit(PseudoInstruction pseudoInstruction);
 
-  void visit(Register register);
+  void visit(Register.Cell register);
+
+  void visit(Register.Sub subRegister);
+
+  void visit(Register.File registerFile);
 
 
   /**
@@ -160,9 +164,23 @@ public interface DefinitionVisitor {
     }
 
     @Override
-    public void visit(Register register) {
+    public void visit(Register.Cell register) {
       beforeTraversal(register);
+      register.subRegisters()
+          .forEach(e -> e.accept(this));
       afterTraversal(register);
+    }
+
+    @Override
+    public void visit(Register.File registerFile) {
+      beforeTraversal(registerFile);
+      afterTraversal(registerFile);
+    }
+
+    @Override
+    public void visit(Register.Sub subRegister) {
+      beforeTraversal(subRegister);
+      afterTraversal(subRegister);
     }
   }
 

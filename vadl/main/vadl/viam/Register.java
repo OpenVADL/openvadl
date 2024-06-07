@@ -9,7 +9,7 @@ import vadl.types.DataType;
 import vadl.types.Type;
 
 public sealed abstract class Register extends Definition
-    permits Register.Cell, Register.File, Register.Slice, Register.Sub {
+    permits Register.Cell, Register.File, Register.Sub {
 
   private final ConcreteRelationType type;
 
@@ -63,11 +63,6 @@ public sealed abstract class Register extends Definition
     }
   }
 
-  @Override
-  public void accept(DefinitionVisitor visitor) {
-    visitor.visit(this);
-  }
-
   public enum AccessKind {
     FULL,
     PARTIAL
@@ -79,21 +74,20 @@ public sealed abstract class Register extends Definition
     private final AccessKind readAccess;
     private final AccessKind writeAccess;
 
-    public Cell(Identifier identifier, DataType resultType, List<Sub> subRegisters,
+    public Cell(Identifier identifier, DataType resultType,
                 AccessKind readAccess, AccessKind writeAccess) {
       super(identifier, Type.concreteRelation(resultType));
-      this.subRegisters = subRegisters;
+      this.subRegisters = new ArrayList<>();
       this.readAccess = readAccess;
       this.writeAccess = writeAccess;
     }
 
-    public Cell(Identifier identifier, DataType resultType, AccessKind readAccess,
-                AccessKind writeAccess) {
-      this(identifier, resultType, List.of(), writeAccess, readAccess);
-    }
-
     public Stream<Sub> subRegisters() {
       return subRegisters.stream();
+    }
+
+    public void addSubRegister(Sub subRegister) {
+      subRegisters.add(subRegister);
     }
 
     public AccessKind readAccess() {
@@ -114,6 +108,11 @@ public sealed abstract class Register extends Definition
       );
     }
 
+    @Override
+    public void accept(DefinitionVisitor visitor) {
+      visitor.visit(this);
+    }
+
 
     @Override
     public String toString() {
@@ -123,18 +122,12 @@ public sealed abstract class Register extends Definition
 
   public static final class Sub extends Register {
 
-    private final Format.Field fieldRef;
     private final Cell parent;
 
-    public Sub(Identifier identifier, Format.Field fieldRef, Cell parent) {
-      super(identifier, Type.concreteRelation(fieldRef.type()));
+    public Sub(Identifier identifier, DataType type, Cell parent) {
+      super(identifier, Type.concreteRelation(type));
 
-      this.fieldRef = fieldRef;
       this.parent = parent;
-    }
-
-    public Format.Field formatField() {
-      return fieldRef;
     }
 
     public Cell parent() {
@@ -153,21 +146,12 @@ public sealed abstract class Register extends Definition
     public String toString() {
       return "register " + identifier + ": " + resultType();
     }
-  }
 
-  public static final class Slice extends Register {
-
-    private final Format.Field fieldRef;
-    private final Cell parent;
-
-    public Slice(Identifier identifier, Format.Field fieldRef, Cell parent) {
-      super(identifier, Type.concreteRelation(fieldRef.type()));
-
-      this.fieldRef = fieldRef;
-      this.parent = parent;
+    @Override
+    public void accept(DefinitionVisitor visitor) {
+      visitor.visit(this);
     }
   }
-
 
   public static final class File extends Register {
 
@@ -199,6 +183,11 @@ public sealed abstract class Register extends Definition
       return "register file " + identifier + ": " + relationType();
     }
 
+    @Override
+    public void accept(DefinitionVisitor visitor) {
+      visitor.visit(this);
+    }
+
     public record Constraint(
         File parent,
         Constant.Value address,
@@ -223,6 +212,7 @@ public sealed abstract class Register extends Definition
       public String toString() {
         return parent.identifier.name() + "(" + address + ") = " + value;
       }
+
     }
   }
 
