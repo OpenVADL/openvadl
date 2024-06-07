@@ -7,9 +7,13 @@ import java.util.stream.Stream;
 
 import vadl.types.DataType;
 import vadl.types.Type;
+import vadl.viam.graph.control.ReturnNode;
+import vadl.viam.graph.control.StartNode;
 import vadl.viam.graph.dependency.FieldRefNode;
 
 import javax.annotation.Nullable;
+import vadl.viam.graph.dependency.FuncParamNode;
+import vadl.viam.graph.dependency.SliceNode;
 
 /**
  * The format definition of a VADL specification.
@@ -74,49 +78,41 @@ public class Format extends Definition {
    * A field of a format.
    * Holds information about the type, ranges, and value of the field.
    * This is not an immediate definition field.
+   *
+   * <p>It generates a function to extract the field from a passed value of the format type.</p>
    */
   public static class Field extends Definition {
 
     private final DataType type;
     private final Constant.BitSlice bitSlice;
+
+    // nullable because lazily initialized
     @Nullable
-    private final Field surrounding;
+    private Function extractFunction;
 
     private final Format format;
 
     /**
      * Constructs a Field object with the given identifier, type, ranges, and encoding.
      *
-     * @param identifier  the identifier of the field
-     * @param type        the type of the field
-     * @param bitSlice    the constant bitslice of the instruction for this field
-     * @param format      the parent format of the field
-     * @param surrounding the potentially surrounding field of this field
+     * @param identifier the identifier of the field
+     * @param type       the type of the field
+     * @param bitSlice   the constant bitslice of the instruction for this field
+     * @param format     the parent format of the field
      */
-    public Field(
-        Identifier identifier,
-        DataType type,
-        Constant.BitSlice bitSlice,
-        Format format,
-        @Nullable Field surrounding
-    ) {
-      super(identifier);
-
-      this.type = type;
-      this.bitSlice = bitSlice;
-      this.format = format;
-      this.surrounding = surrounding;
-
-      verify();
-    }
-
     public Field(
         Identifier identifier,
         DataType type,
         Constant.BitSlice bitSlice,
         Format format
     ) {
-      this(identifier, type, bitSlice, format, null);
+      super(identifier);
+
+      this.type = type;
+      this.bitSlice = bitSlice;
+      this.format = format;
+
+      verify();
     }
 
     public Constant.BitSlice bitSlice() {
@@ -131,12 +127,19 @@ public class Format extends Definition {
       return format;
     }
 
-    public @Nullable Field surrounding() {
-      return surrounding;
-    }
-
     public int size() {
       return bitSlice.bitSize();
+    }
+
+    /**
+     * Generates a function that extracts the field from the instruction.
+     * It takes one argument of the format type and returns a value of the field type.
+     */
+    public Function extractFunction() {
+      if (extractFunction == null) {
+        this.extractFunction = createExtractFunction();
+      }
+      return extractFunction;
     }
 
     @Override
@@ -145,20 +148,6 @@ public class Format extends Definition {
       ensure(bitSlice.bitSize() == type.bitWidth(),
           "Field type width of %s is different to slice size of %s", type.bitWidth(),
           bitSlice.bitSize());
-      if (surrounding != null) {
-        ensure(surrounding.format().equals(format),
-            "Surrounding field must be in the same format as the inner field");
-        // check if the inner field is surrounded by the surrounding field
-        ensure(bitSlice().isContinuous(), "Inner format fields must be continuous");
-        ensure(surrounding.bitSlice().isContinuous(),
-            "Surrounding format fields must be continuous");
-        var thisPart = bitSlice.parts().findFirst();
-        ensure(thisPart.isPresent(), "Inner format field must have at least one part");
-        var surroundingPart = surrounding.bitSlice.parts().findFirst();
-        ensure(surroundingPart.isPresent(), "Surrounding format field must have at least one part");
-        ensure(thisPart.get().isSurroundedBy(surroundingPart.get()),
-            "Inner format field must be surrounded by the surrounding field");
-      }
     }
 
     @Override
@@ -170,6 +159,32 @@ public class Format extends Definition {
     public String toString() {
       return "Field{ " + identifier + " " + bitSlice + ": " + type + " }";
     }
+
+    /**
+     * Generates a function that extracts the field from the instruction.
+     * It takes one argument of the format type and returns a value of the field type.
+     */
+    private Function createExtractFunction() {
+      var ident = identifier.extendSimpleName("_extract");
+      var paramIdent = ident.append("format");
+      var formatParam = new Parameter(paramIdent, format.type());
+      var function = new Function(ident, List.of(formatParam), this.type);
+
+      var behavior = function.behavior();
+      var funcParamNode = behavior.add(new FuncParamNode(formatParam));
+      var sliceNode = behavior.add(
+          new SliceNode(funcParamNode, bitSlice, Type.bits(bitSlice.bitSize()))
+      );
+      var returnNode = behavior.add(new ReturnNode(sliceNode));
+      // add start node
+      behavior.add(new StartNode(returnNode));
+
+      // verify that produced graph is correct
+      behavior.verify();
+
+      return function;
+    }
+
   }
 
 
