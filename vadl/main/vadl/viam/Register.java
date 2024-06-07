@@ -9,7 +9,7 @@ import vadl.types.DataType;
 import vadl.types.Type;
 
 public sealed abstract class Register extends Definition
-    permits Register.Cell, Register.Sub, Register.File {
+    permits Register.Cell, Register.File, Register.Slice, Register.Sub {
 
   private final ConcreteRelationType type;
 
@@ -68,17 +68,40 @@ public sealed abstract class Register extends Definition
     visitor.visit(this);
   }
 
+  public enum AccessKind {
+    FULL,
+    PARTIAL
+  }
+
   public static final class Cell extends Register {
 
     private final List<Sub> subRegisters;
+    private final AccessKind readAccess;
+    private final AccessKind writeAccess;
 
-    public Cell(Identifier identifier, DataType resultType, List<Sub> subRegisters) {
+    public Cell(Identifier identifier, DataType resultType, List<Sub> subRegisters,
+                AccessKind readAccess, AccessKind writeAccess) {
       super(identifier, Type.concreteRelation(resultType));
       this.subRegisters = subRegisters;
+      this.readAccess = readAccess;
+      this.writeAccess = writeAccess;
     }
 
-    public Cell(Identifier identifier, DataType resultType) {
-      this(identifier, resultType, List.of());
+    public Cell(Identifier identifier, DataType resultType, AccessKind readAccess,
+                AccessKind writeAccess) {
+      this(identifier, resultType, List.of(), writeAccess, readAccess);
+    }
+
+    public Stream<Sub> subRegisters() {
+      return subRegisters.stream();
+    }
+
+    public AccessKind readAccess() {
+      return readAccess;
+    }
+
+    public AccessKind writeAccess() {
+      return writeAccess;
     }
 
     @Override
@@ -91,16 +114,12 @@ public sealed abstract class Register extends Definition
       );
     }
 
-    public Stream<Sub> subRegisters() {
-      return subRegisters.stream();
-    }
 
     @Override
     public String toString() {
       return "register " + identifier + ": " + resultType();
     }
   }
-
 
   public static final class Sub extends Register {
 
@@ -122,9 +141,30 @@ public sealed abstract class Register extends Definition
       return parent;
     }
 
+    public AccessKind readAccess() {
+      return parent.readAccess();
+    }
+
+    public AccessKind writeAccess() {
+      return parent.writeAccess();
+    }
+
     @Override
     public String toString() {
       return "register " + identifier + ": " + resultType();
+    }
+  }
+
+  public static final class Slice extends Register {
+
+    private final Format.Field fieldRef;
+    private final Cell parent;
+
+    public Slice(Identifier identifier, Format.Field fieldRef, Cell parent) {
+      super(identifier, Type.concreteRelation(fieldRef.type()));
+
+      this.fieldRef = fieldRef;
+      this.parent = parent;
     }
   }
 
