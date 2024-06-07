@@ -54,6 +54,13 @@ public record Identifier(
     );
   }
 
+  public Identifier extendSimpleName(String suffix) {
+    return new Identifier(
+        Arrays.copyOf(this.parts, this.parts.length - 1),
+        this.sourceLocation
+    ).append(this.parts[this.parts.length - 1] + suffix);
+  }
+
   /**
    * Returns a new Identifier object with the given source location.
    *
