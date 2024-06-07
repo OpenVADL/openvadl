@@ -1,15 +1,14 @@
 package vadl.viam;
 
 import java.math.BigInteger;
-import java.util.Arrays;
-import java.util.Iterator;
-import java.util.List;
-import java.util.NoSuchElementException;
-import java.util.Objects;
+import java.util.*;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
+
 import org.jetbrains.annotations.NotNull;
 import vadl.types.DataType;
 import vadl.types.Type;
+import vadl.utils.StreamUtils;
 
 /**
  * The Constant class represents some kind of constant with a specific type.
@@ -160,22 +159,37 @@ public abstract class Constant {
 
     /**
      * The constructor of a BitSlice from an array of sub-ranges (parts).
+     *
+     * <p>The resulting BitSlice is normalized to the least necessary parts.</p>
      */
     public BitSlice(Part[] parts) {
       super(Type.bitSlice());
 
       ViamError.ensure(parts.length > 0,
           "slice cannot be empty: %s", this);
-      this.parts = Arrays.asList(parts);
+      this.parts = normalized(parts);
       ViamError.ensure(
           !hasOverlappingParts(),
           "parts of slice must not overlap: %s", this);
     }
 
-    final int size() {
+
+    public final int bitSize() {
       return parts.stream()
           .mapToInt(Part::size)
           .sum();
+    }
+
+    public final int partSize() {
+      return parts.size();
+    }
+
+    public final Stream<Part> parts() {
+      return parts.stream();
+    }
+
+    public boolean isContinuous() {
+      return parts.size() == 1;
     }
 
     @Override
@@ -209,34 +223,44 @@ public abstract class Constant {
     @NotNull
     @Override
     public Iterator<Integer> iterator() {
-      return new Iterator<>() {
-        private int nextPartIdx = 1;
-        private Iterator<Integer> currentPart = parts.get(0).iterator();
-
-        @Override
-        public boolean hasNext() {
-          return currentPart.hasNext()
-              || nextPartIdx < parts.size();
-        }
-
-        @Override
-        public Integer next() {
-          if (!hasNext()) {
-            throw new NoSuchElementException();
-          }
-          if (!currentPart.hasNext()) {
-            currentPart = parts.get(nextPartIdx++).iterator();
-          }
-          return currentPart.next();
-        }
-      };
+      return this.parts.stream()
+          .flatMapToInt(part -> StreamUtils.directionalRangeClosed(part.msb(), part.lsb()))
+          .iterator();
     }
 
     private boolean hasOverlappingParts() {
       return parts.stream()
           .anyMatch(part -> parts.stream()
               .anyMatch(
-                  p -> !Objects.equals(p, part) && p.msb() >= part.lsb() && p.lsb() <= part.msb()));
+                  p -> !Objects.equals(p, part) && p.isOverlapping(part)
+              ));
+    }
+
+    private static List<Part> normalized(Part[] parts) {
+      // flat map all parts to a single array of integers
+      var flattened = Arrays.stream(parts)
+          .flatMapToInt(p -> StreamUtils.directionalRangeClosed(p.msb(), p.lsb()))
+          .toArray();
+      var normalized = new ArrayList<Part>();
+
+      var current = new ArrayList<Integer>();
+      for (int i : flattened) {
+        if (current.isEmpty()) {
+          current.add(i);
+          continue;
+        }
+        var last = current.get(current.size() - 1);
+        if (last - 1 == i) {
+          current.add(i);
+        } else {
+          normalized.add(new Part(current.get(0), current.get(current.size() - 1)));
+          current = new ArrayList<>();
+          current.add(i);
+        }
+      }
+      normalized.add(new Part(current.get(0), current.get(current.size() - 1)));
+
+      return normalized;
     }
 
 
@@ -280,10 +304,22 @@ public abstract class Constant {
         return !isIndex();
       }
 
+      public Part join(Part other) {
+        return new Part(Math.max(msb, other.msb), Math.min(lsb, other.lsb));
+      }
+
+      public boolean isSurroundedBy(Part other) {
+        return this.join(other).equals(other);
+      }
+
+      public boolean isOverlapping(Part other) {
+        return this.msb >= other.lsb && this.lsb <= other.msb;
+      }
+
       /**
        * Returns the size of this bit-slice sub-range.
        */
-      public final int size() {
+      public int size() {
         if (isIndex()) {
           return 1;
         }
