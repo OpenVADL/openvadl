@@ -4,9 +4,12 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
+
 import vadl.types.DataType;
 import vadl.types.Type;
 import vadl.viam.graph.dependency.FieldRefNode;
+
+import javax.annotation.Nullable;
 
 /**
  * The format definition of a VADL specification.
@@ -76,29 +79,44 @@ public class Format extends Definition {
 
     private final DataType type;
     private final Constant.BitSlice bitSlice;
+    @Nullable
+    private final Field surrounding;
 
     private final Format format;
 
     /**
      * Constructs a Field object with the given identifier, type, ranges, and encoding.
      *
-     * @param identifier the identifier of the field
-     * @param type       the type of the field
-     * @param bitSlice   the constant bitslice of the instruction for this field
-     * @param format     the parent format of the field
+     * @param identifier  the identifier of the field
+     * @param type        the type of the field
+     * @param bitSlice    the constant bitslice of the instruction for this field
+     * @param format      the parent format of the field
+     * @param surrounding the potentially surrounding field of this field
      */
     public Field(
         Identifier identifier,
         DataType type,
         Constant.BitSlice bitSlice,
-        Format format) {
+        Format format,
+        @Nullable Field surrounding
+    ) {
       super(identifier);
 
       this.type = type;
       this.bitSlice = bitSlice;
       this.format = format;
+      this.surrounding = surrounding;
 
       verify();
+    }
+
+    public Field(
+        Identifier identifier,
+        DataType type,
+        Constant.BitSlice bitSlice,
+        Format format
+    ) {
+      this(identifier, type, bitSlice, format, null);
     }
 
     public Constant.BitSlice bitSlice() {
@@ -113,16 +131,34 @@ public class Format extends Definition {
       return format;
     }
 
+    public @Nullable Field surrounding() {
+      return surrounding;
+    }
+
     public int size() {
-      return bitSlice.size();
+      return bitSlice.bitSize();
     }
 
     @Override
     public void verify() {
       super.verify();
-      ensure(bitSlice.size() == type.bitWidth(),
+      ensure(bitSlice.bitSize() == type.bitWidth(),
           "Field type width of %s is different to slice size of %s", type.bitWidth(),
-          bitSlice.size());
+          bitSlice.bitSize());
+      if (surrounding != null) {
+        ensure(surrounding.format().equals(format),
+            "Surrounding field must be in the same format as the inner field");
+        // check if the inner field is surrounded by the surrounding field
+        ensure(bitSlice().isContinuous(), "Inner format fields must be continuous");
+        ensure(surrounding.bitSlice().isContinuous(),
+            "Surrounding format fields must be continuous");
+        var thisPart = bitSlice.parts().findFirst();
+        ensure(thisPart.isPresent(), "Inner format field must have at least one part");
+        var surroundingPart = surrounding.bitSlice.parts().findFirst();
+        ensure(surroundingPart.isPresent(), "Surrounding format field must have at least one part");
+        ensure(thisPart.get().isSurroundedBy(surroundingPart.get()),
+            "Inner format field must be surrounded by the surrounding field");
+      }
     }
 
     @Override
