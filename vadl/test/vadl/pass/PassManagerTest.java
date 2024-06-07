@@ -1,5 +1,8 @@
 package vadl.pass;
 
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertThrows;
+
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.util.Map;
@@ -8,8 +11,6 @@ import vadl.pass.exception.DuplicatedPassKeyException;
 import vadl.utils.SourceLocation;
 import vadl.viam.Identifier;
 import vadl.viam.Specification;
-
-import static org.junit.jupiter.api.Assertions.*;
 
 class PassManagerTest {
   static class PassTest implements Pass {
