@@ -26,7 +26,6 @@ public class Format extends Definition {
   private final List<Field> fields = new ArrayList<>();
   private final List<FieldAccess> fieldAccesses = new ArrayList<>();
 
-
   public Format(Identifier identifier, Type type) {
     super(identifier);
     this.type = type;
@@ -90,27 +89,29 @@ public class Format extends Definition {
     @Nullable
     private Function extractFunction;
 
-    private final Format format;
+    private final Format parentFormat;
+    @Nullable
+    private Format refFormat;
 
     /**
      * Constructs a Field object with the given identifier, type, ranges, and encoding.
      *
-     * @param identifier the identifier of the field
-     * @param type       the type of the field
-     * @param bitSlice   the constant bitslice of the instruction for this field
-     * @param format     the parent format of the field
+     * @param identifier   the identifier of the field
+     * @param type         the type of the field
+     * @param bitSlice     the constant bitslice of the instruction for this field
+     * @param parentFormat the parent format of the field
      */
     public Field(
         Identifier identifier,
         DataType type,
         Constant.BitSlice bitSlice,
-        Format format
+        Format parentFormat
     ) {
       super(identifier);
 
       this.type = type;
       this.bitSlice = bitSlice;
-      this.format = format;
+      this.parentFormat = parentFormat;
 
       verify();
     }
@@ -124,7 +125,7 @@ public class Format extends Definition {
     }
 
     public Format format() {
-      return format;
+      return parentFormat;
     }
 
     public int size() {
@@ -142,6 +143,22 @@ public class Format extends Definition {
       return extractFunction;
     }
 
+    /**
+     * Returns the reference format of the field.
+     */
+    @Nullable
+    public Format refFormat() {
+      return refFormat;
+    }
+
+    /**
+     * Adds a format reference to the field.
+     */
+    public void setRefFormat(Format refFormat) {
+      ensure(this.refFormat == null, "Field reference format already set");
+      this.refFormat = refFormat;
+    }
+
     @Override
     public void verify() {
       super.verify();
@@ -157,7 +174,8 @@ public class Format extends Definition {
 
     @Override
     public String toString() {
-      return "Field{ " + identifier + " " + bitSlice + ": " + type + " }";
+      var ref = refFormat != null ? " -> " + refFormat.identifier : "";
+      return "Field{ " + identifier + " " + bitSlice + ": " + type + ref + " }";
     }
 
     /**
@@ -167,7 +185,7 @@ public class Format extends Definition {
     private Function createExtractFunction() {
       var ident = identifier.extendSimpleName("_extract");
       var paramIdent = ident.append("format");
-      var formatParam = new Parameter(paramIdent, format.type());
+      var formatParam = new Parameter(paramIdent, parentFormat.type());
       var function = new Function(ident, List.of(formatParam), this.type);
 
       var behavior = function.behavior();
