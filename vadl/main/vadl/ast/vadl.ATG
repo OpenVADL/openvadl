@@ -39,7 +39,7 @@ COMPILER vadl
     Expr reorderBinary(Expr expr) {
         // Only if not inside model parsing.
         // Cause there we don't know yet what the order is.
-        if (insideMacro) {
+        if (insideMacro || !(expr instanceof BinaryExpr)) {
             return expr;
         }
 
@@ -74,7 +74,13 @@ COMPILER vadl
             return null;
          }
 
-         return macro.body();
+         // FIXME: There should be a real instantziator here
+         var body = macro.body();
+         if (body instanceof Expr) {
+            body = reorderBinary((Expr) body);
+            body = new GroupExpr((Expr) body);
+         }
+         return body;
     }
 
 
@@ -296,7 +302,7 @@ PRODUCTIONS
     = "model" identifier<out Identifier id>  "(" ")"
     ":" syntaxType<out SyntaxType returnType> "="
     "{"                                 (. Node body = null; insideMacro = true; .)
-        expression<out Expr bodyEx>     (. body = new GroupExpr(bodyEx); .)
+        expression<out Expr bodyEx>     (. body =bodyEx; .)
     "}"                                 (. insideMacro = false; symbolTable.addMacro(new Macro(id, List.of(), body, returnType));  .)
     .
 

@@ -105,51 +105,37 @@ class BinaryExpr extends Expr {
     this.right = right;
   }
 
+  static @Nullable BinaryExpr root = null;
+
   /**
    * Reorders binary expression based on the correct precedence
    *
    * @param expr to reorder
    * @return the new root of the reordered subtree
    */
-  public static BinaryExpr reorder(BinaryExpr expr) {
-    var precedence = expr.operation.precedence();
-
-    if (expr.left instanceof BinaryExpr) {
-      // Reorder left subtree
-      expr.left = reorder((BinaryExpr) expr.left);
-      // NOTE: Your IDe might tell you to replace it with a pattern variable, but it is wrong!
-      var left = (BinaryExpr) expr.left;
-
-      // Reorder left
-      if (precedence.greaterThan(left.operation.precedence())) {
-        var temp = left.right;
-        left.right = expr;
-        expr.left = temp;
-
-        // Since the reorder we maybe need to reorder the new top again:
-        return reorder(left);
-      }
+  static BinaryExpr reorder(BinaryExpr expr) {
+    root = expr;
+    transformRecRightToLeft(null, expr);
+    if (root == null) {
+      throw new RuntimeException("Should never happen");
     }
+    return root;
+  }
 
-    if (expr.right instanceof BinaryExpr) {
-      // Reorder the right subtree
-      expr.right = reorder((BinaryExpr) expr.right);
-
-      // NOTE: Your IDe might tell you to replace it with a pattern variable, but it is wrong!
-      var right = (BinaryExpr) expr.right;
-
-      if (precedence.greaterThan(right.operation.precedence())) {
-        var temp = right.left;
-        right.left = expr;
-        expr.right = temp;
-
-        // Since the reorder we maybe need to reorder the left part again so do a recursion.
-        return reorder(right);
+  static BinaryExpr transformRecRightToLeft(@Nullable BinaryExpr parpar, BinaryExpr par) {
+    while (par.left instanceof BinaryExpr curr) {
+      if (par.operation.precedence().greaterThan(curr.operation.precedence())) {
+        par.left = curr.right;
+        curr.right = par;
+        if ((par = parpar) != null) {
+          par.left = curr;
+          return par;
+        }
+        root = curr;
       }
+      par = transformRecRightToLeft(par, curr);
     }
-
-    // Resolve Groups
-    return expr;
+    return par;
   }
 
   @Override
