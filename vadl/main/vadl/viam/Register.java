@@ -74,12 +74,16 @@ public sealed abstract class Register extends Definition
     private final AccessKind readAccess;
     private final AccessKind writeAccess;
 
+    @Nullable
+    private final Format refFormat;
+
     public Cell(Identifier identifier, DataType resultType,
-                AccessKind readAccess, AccessKind writeAccess) {
+                AccessKind readAccess, AccessKind writeAccess, @Nullable Format refFormat) {
       super(identifier, Type.concreteRelation(resultType));
       this.subRegisters = new ArrayList<>();
       this.readAccess = readAccess;
       this.writeAccess = writeAccess;
+      this.refFormat = refFormat;
     }
 
     public Stream<Sub> subRegisters() {
@@ -96,6 +100,11 @@ public sealed abstract class Register extends Definition
 
     public AccessKind writeAccess() {
       return writeAccess;
+    }
+
+    @Nullable
+    public Format refFormat() {
+      return refFormat;
     }
 
     @Override
