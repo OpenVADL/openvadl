@@ -12,7 +12,7 @@ import vadl.viam.graph.UniqueNode;
  * <li>All reads must occur before all writes</li>
  * </p>
  */
-public class WriteRegNode extends WriteNode {
+public class WriteRegNode extends WriteResourceNode {
   public WriteRegNode(ExpressionNode location, ExpressionNode value) {
     super(location, value);
   }

@@ -1,10 +1,11 @@
 package vadl.viam.graph.dependency;
 
 import java.util.List;
+import java.util.Objects;
 import javax.annotation.Nullable;
 import vadl.javaannotations.viam.Input;
 import vadl.types.DataType;
-import vadl.types.Type;
+import vadl.viam.Resource;
 import vadl.viam.graph.GraphVisitor;
 import vadl.viam.graph.Node;
 
@@ -13,13 +14,13 @@ import vadl.viam.graph.Node;
  * and represents a node that reads a value from an address.
  * It provides a common structure and behavior for reading nodes.
  */
-public abstract class ReadNode extends ExpressionNode {
+public abstract class ReadResourceNode extends ExpressionNode {
 
   @Input
   @Nullable
   private ExpressionNode address;
 
-  public ReadNode(@Nullable ExpressionNode address, DataType type) {
+  public ReadResourceNode(@Nullable ExpressionNode address, DataType type) {
     super(type);
     this.address = address;
   }
@@ -38,12 +39,29 @@ public abstract class ReadNode extends ExpressionNode {
     return (DataType) super.type();
   }
 
+  protected abstract Resource resourceDefinition();
+
   @Override
   public void verifyState() {
     super.verifyState();
+    var resource = resourceDefinition();
+
+    ensure(resource.resultType().canBeCastTo(type()),
+        "Mismatching resource type. Resource's result type (%s) cannot be cast to node's type.",
+        resource.resultType());
+
+    ensure(resource.hasAddress() == hasAddress(),
+        "Resource takes address but this node has no address node.");
+
     if (address != null) {
-      ensure(address.type() instanceof DataType,
+      var addressType = address.type();
+      var resAddrType = resource.addressType();
+      Objects.requireNonNull(resAddrType); // just to satisfy errorprone
+      ensure(addressType instanceof DataType,
           "Address must be a DataValue, was %s", address.type());
+      ensure(((DataType) addressType).canBeCastTo(resAddrType),
+          "Address value cannot be cast to resource's address type. %s vs %s",
+          resource.addressType(), addressType);
     }
   }
 
