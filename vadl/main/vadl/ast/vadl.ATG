@@ -69,6 +69,11 @@ COMPILER vadl
             return null;
          }
 
+         // The macro itself was invalid but an error for it was already issued so we silently abort the expansion here.
+         if (macro.returnType() == CoreType.Invalid()) {
+            return null;
+         }
+
          if (!macro.returnType().isSubTypeOf(requiredReturnType)) {
             errors.SemErr(t.line, t.col, "The macro returns `%s` but here a macro returning `%s` is expected.".formatted(macro.returnType(), requiredReturnType));
             return null;
@@ -297,13 +302,21 @@ PRODUCTIONS
     ")"         (. body = expandMacro(id.name, requiredType); .)
     .
 
-    // FIXME: Verify that the body is of the type the signature specified.
     macroDef
     = "model" identifier<out Identifier id>  "(" ")"
     ":" syntaxType<out SyntaxType returnType> "="
     "{"                                 (. Node body = null; insideMacro = true; .)
-        expression<out Expr bodyEx>     (. body =bodyEx; .)
-    "}"                                 (. insideMacro = false; symbolTable.addMacro(new Macro(id, List.of(), body, returnType));  .)
+        expression<out Expr bodyEx>     (. body = bodyEx; .)
+    "}"                                 (.
+                                            insideMacro = false;
+                                            var bodyType = CoreType.fromNode(body);
+                                            if (!bodyType.isSubTypeOf(returnType)) {
+                                                errors.SemErr(t.line, t.col, "The macro signature promises to return `%s` but it's body is of type `%s`.".formatted(returnType, bodyType));
+                                                symbolTable.addMacro(new Macro(id, List.of(), body, CoreType.Invalid()));
+                                            } else {
+                                                symbolTable.addMacro(new Macro(id, List.of(), body, returnType));
+                                            }
+                                         .)
     .
 
     syntaxType<out SyntaxType typ> = syntaxCoreType<out CoreType coreType> (. typ = coreType; .)

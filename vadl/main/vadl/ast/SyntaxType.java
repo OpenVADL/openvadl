@@ -15,6 +15,18 @@ class CoreType extends SyntaxType {
     this.name = name;
   }
 
+  static CoreType fromNode(Node node) {
+    if (node instanceof Identifier) {
+      return CoreType.Id();
+    } else if (node instanceof IntegerLiteral) {
+      return CoreType.Int();
+    } else if (node instanceof BinaryExpr) {
+      return CoreType.Bin();
+    }
+    // FIXME: Add the other cases once implemented in the AST.
+    return invalidType;
+  }
+
   private static final CoreType statsType = new CoreType("Stats");
   private static final CoreType statType = new CoreType("Stat");
   private static final CoreType encsType = new CoreType("Encs");
@@ -31,6 +43,7 @@ class CoreType extends SyntaxType {
   private static final CoreType idType = new CoreType("Id");
   private static final CoreType binOpType = new CoreType("BinOp");
   private static final CoreType unOpType = new CoreType("UnOp");
+  private static final CoreType invalidType = new CoreType("InvalidType");
 
   static CoreType Stats() {
     return statsType;
@@ -96,6 +109,10 @@ class CoreType extends SyntaxType {
     return unOpType;
   }
 
+  static CoreType Invalid() {
+    return invalidType;
+  }
+
   private final Map<String, List<String>> superTypes = Map.ofEntries(
       Map.entry("Stats", List.of()),
       Map.entry("Stat", List.of("Stats")),
@@ -112,7 +129,8 @@ class CoreType extends SyntaxType {
       Map.entry("SynEx", List.of("Ex", "CallEx")),
       Map.entry("Id", List.of("Ex", "CallEx", "SymEx")),
       Map.entry("BinOp", List.of()),
-      Map.entry("UnOp", List.of())
+      Map.entry("UnOp", List.of()),
+      Map.entry("InvalidType", List.of())
   );
 
   @Override
@@ -131,5 +149,10 @@ class CoreType extends SyntaxType {
       throw new RuntimeException("Internal error: could not find supertype " + this.name);
     }
     return parents.contains(otherCore.name);
+  }
+
+  @Override
+  public String toString() {
+    return name;
   }
 }
