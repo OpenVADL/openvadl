@@ -28,80 +28,142 @@ interface ExprVisitor<R> {
 }
 
 /**
+ * The operator class provides singleton constructors for immutable instances for each operator.
+ */
+class Operator {
+  final String symbol;
+  final int precedence;
+
+  private Operator(String symbol, int precedence) {
+    this.symbol = symbol;
+    this.precedence = precedence;
+  }
+
+  private static final int precLogicalOr = 0;
+  private static final int precLogicalAnd = precLogicalOr + 1;
+  private static final int precOr = precLogicalAnd + 1;
+  private static final int precXor = precOr + 1;
+  private static final int precAnd = precXor + 1;
+  private static final int precEquality = precAnd + 1;
+  private static final int precComparison = precEquality + 1;
+  private static final int precShift = precComparison + 1;
+  private static final int precTerm = precShift + 1;
+  private static final int precFactor = precTerm + 1;
+
+  private static final Operator opLogicalOr = new Operator("||", precLogicalOr);
+  private static final Operator opLogicalAnd = new Operator("&&", precLogicalAnd);
+  private static final Operator opOr = new Operator("|", precOr);
+  private static final Operator opXor = new Operator("^", precXor);
+  private static final Operator opAnd = new Operator("&", precAnd);
+  private static final Operator opEqual = new Operator("=", precEquality);
+  private static final Operator opNotEqual = new Operator("!=", precEquality);
+  private static final Operator opGreaterEqual = new Operator(">=", precComparison);
+  private static final Operator opGreater = new Operator(">", precComparison);
+  private static final Operator opLessEqual = new Operator("<=", precComparison);
+  private static final Operator opLess = new Operator("<", precComparison);
+  private static final Operator opRotateRight = new Operator("<>>", precShift);
+  private static final Operator opRotateLeft = new Operator("<<>", precShift);
+  private static final Operator opShiftRight = new Operator(">>", precShift);
+  private static final Operator opShiftLeft = new Operator("<<", precShift);
+  private static final Operator opAdd = new Operator("+", precTerm);
+  private static final Operator opSubtract = new Operator("-", precTerm);
+  private static final Operator opMultiply = new Operator("*", precFactor);
+  private static final Operator opDivide = new Operator("/", precFactor);
+  private static final Operator opModulo = new Operator("%", precFactor);
+
+  static Operator LogicalOr() {
+    return opLogicalOr;
+  }
+
+  static Operator LogicalAnd() {
+    return opLogicalAnd;
+  }
+
+  static Operator Or() {
+    return opOr;
+  }
+
+  static Operator Xor() {
+    return opXor;
+  }
+
+  static Operator And() {
+    return opAnd;
+  }
+
+  static Operator Equal() {
+    return opEqual;
+  }
+
+  static Operator NotEqual() {
+    return opNotEqual;
+  }
+
+  static Operator GreaterEqual() {
+    return opGreaterEqual;
+  }
+
+  static Operator Greater() {
+    return opGreater;
+  }
+
+  static Operator LessEqual() {
+    return opLessEqual;
+  }
+
+  static Operator Less() {
+    return opLess;
+  }
+
+
+  static Operator RotateRight() {
+    return opRotateRight;
+  }
+
+  static Operator RotateLeft() {
+    return opRotateLeft;
+  }
+
+  static Operator ShiftRight() {
+    return opShiftRight;
+  }
+
+  static Operator ShiftLeft() {
+    return opShiftLeft;
+  }
+
+  static Operator Add() {
+    return opAdd;
+  }
+
+  static Operator Subtract() {
+    return opSubtract;
+  }
+
+  static Operator Multiply() {
+    return opMultiply;
+  }
+
+  static Operator Divide() {
+    return opDivide;
+  }
+
+  static Operator Modulo() {
+    return opModulo;
+  }
+}
+
+/**
  * Any kind of binary expression (often written with the infix notation in vadl).
  */
 class BinaryExpr extends Expr {
   Expr left;
-  Operation operation;
+  Operator operator;
   Expr right;
 
-  enum Operation {
-    LOGICAL_OR,
-    LOGICAL_AND,
-    OR,
-    XOR,
-    AND,
-    EQUAL,
-    NOTEQUAL,
-    GREATER_EQUAL,
-    GREATER,
-    LESS_EQUAL,
-    LESS,
-    ROTATE_RIGHT,
-    ROTATE_LEFT,
-    SHIFT_RIGHT,
-    SHIFT_LEFT,
-    ADD,
-    SUBTRACT,
-    MULTIPLY,
-    DIVIDE,
-    MODULO,
-    ;
-
-    Precedence precedence() {
-      return switch (this) {
-        case LOGICAL_OR -> Precedence.LOGICAL_OR;
-        case LOGICAL_AND -> Precedence.LOGICAL_AND;
-        case OR -> Precedence.OR;
-        case XOR -> Precedence.XOR;
-        case AND -> Precedence.AND;
-        case EQUAL, NOTEQUAL -> Precedence.EQUALITY;
-        case LESS, LESS_EQUAL, GREATER, GREATER_EQUAL -> Precedence.COMPARISON;
-        case SHIFT_LEFT, SHIFT_RIGHT, ROTATE_LEFT, ROTATE_RIGHT -> Precedence.SHIFT;
-        case ADD, SUBTRACT -> Precedence.TERM;
-        case MULTIPLY, DIVIDE, MODULO -> Precedence.FACTOR;
-      };
-    }
-
-    String toSymbol() {
-      return switch (this) {
-        case LOGICAL_OR -> "||";
-        case LOGICAL_AND -> "&&";
-        case OR -> "|";
-        case XOR -> "^";
-        case AND -> "&";
-        case NOTEQUAL -> "!=";
-        case EQUAL -> "==";
-        case GREATER_EQUAL -> ">=";
-        case GREATER -> ">";
-        case LESS_EQUAL -> "<=";
-        case LESS -> "<";
-        case ROTATE_RIGHT -> "<>>";
-        case ROTATE_LEFT -> "<<>";
-        case SHIFT_RIGHT -> ">>";
-        case SHIFT_LEFT -> "<<";
-        case ADD -> "+";
-        case SUBTRACT -> "-";
-        case MULTIPLY -> "*";
-        case DIVIDE -> "/";
-        case MODULO -> "%";
-      };
-    }
-  }
-
-  BinaryExpr(Expr left, Operation operation, Expr right) {
+  BinaryExpr(Expr left, Operator operation, Expr right) {
     this.left = left;
-    this.operation = operation;
+    this.operator = operation;
     this.right = right;
   }
 
@@ -124,7 +186,7 @@ class BinaryExpr extends Expr {
 
   static BinaryExpr transformRecRightToLeft(@Nullable BinaryExpr parpar, BinaryExpr par) {
     while (par.left instanceof BinaryExpr curr) {
-      if (par.operation.precedence().greaterThan(curr.operation.precedence())) {
+      if (par.operator.precedence > curr.operator.precedence) {
         par.left = curr.right;
         curr.right = par;
         if ((par = parpar) != null) {
@@ -148,7 +210,7 @@ class BinaryExpr extends Expr {
     // FIXME: Remove the parenthesis in the future and determine if they are needed
     builder.append("(");
     left.prettyPrint(indent, builder);
-    builder.append(" %s ".formatted(operation.toSymbol()));
+    builder.append(" %s ".formatted(operator.symbol));
     right.prettyPrint(indent, builder);
     builder.append(")");
   }
@@ -161,7 +223,7 @@ class BinaryExpr extends Expr {
   @Override
   public String toString() {
     return "%s operator: %s".formatted(this.getClass().getSimpleName(),
-        operation.toSymbol());
+        operator.symbol);
   }
 
   @Override
@@ -174,14 +236,14 @@ class BinaryExpr extends Expr {
     }
 
     BinaryExpr that = (BinaryExpr) o;
-    return Objects.equals(left, that.left) && operation == that.operation
+    return Objects.equals(left, that.left) && operator.equals(that.operator)
         && Objects.equals(right, that.right);
   }
 
   @Override
   public int hashCode() {
     int result = Objects.hashCode(left);
-    result = 31 * result + Objects.hashCode(operation);
+    result = 31 * result + Objects.hashCode(operator);
     result = 31 * result + Objects.hashCode(right);
     return result;
   }

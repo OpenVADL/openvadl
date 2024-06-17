@@ -23,12 +23,12 @@ public class MacroTests {
   void BinaryOrderInMacroTest() {
     var prog1 = """
         model example() : Ex =  {
-          1 + 2 * 3  == 8 && 7 + 9 > 10
+          1 + 2 * 3 = 8 && 7 + 9 > 10
         }
                 
         constant n = $example()
         """;
-    var prog2 = "constant n = ((1 + (2 * 3))  == 8) && ((7 + 9) > 10)";
+    var prog2 = "constant n = ((1 + (2 * 3))  = 8) && ((7 + 9) > 10)";
 
     Assertions.assertEquals(VadlParser.parse(prog1), VadlParser.parse(prog2));
   }
