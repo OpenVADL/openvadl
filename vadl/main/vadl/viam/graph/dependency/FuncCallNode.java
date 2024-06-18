@@ -1,0 +1,47 @@
+package vadl.viam.graph.dependency;
+
+import java.util.List;
+import vadl.javaannotations.viam.DataValue;
+import vadl.types.Type;
+import vadl.viam.Function;
+import vadl.viam.graph.NodeList;
+
+public class FuncCallNode extends AbstractFunctionCallNode {
+
+  @DataValue
+  protected Function function;
+
+  public FuncCallNode(NodeList<ExpressionNode> args, Function function, Type type) {
+    super(args, type);
+    this.function = function;
+  }
+
+  @Override
+  public void verifyState() {
+    super.verifyState();
+
+    var params = function.parameters();
+    var args = this.args;
+
+    ensure(params.size() == args.size(),
+        "Number of arguments does not match number of parameters, %s vs %s", args.size(),
+        params.size());
+
+    for (int i = 0; i < args.size(); i++) {
+      var arg = args.get(i);
+      var param = params.get(i);
+      ensure(param.type().equals(arg.type()),
+          "Argument does not match type of param %s, %s vs %s", param.name(), param.type(),
+          arg.type());
+    }
+    ensure(function.returnType().equals(type()),
+        "Return type of function does not match declared result type %s",
+        type());
+  }
+
+  @Override
+  protected void collectData(List<Object> collection) {
+    super.collectData(collection);
+    collection.add(function);
+  }
+}

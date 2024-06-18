@@ -29,6 +29,10 @@ public class ReadRegNode extends ReadResourceNode {
     verifyState();
   }
 
+  public Register register() {
+    return register;
+  }
+
   @Override
   public boolean hasAddress() {
     return false;
@@ -38,6 +42,7 @@ public class ReadRegNode extends ReadResourceNode {
   protected Resource resourceDefinition() {
     return register;
   }
+
 
   @Override
   protected void collectData(List<Object> collection) {

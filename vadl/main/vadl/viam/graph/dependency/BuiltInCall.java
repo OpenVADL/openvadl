@@ -11,9 +11,9 @@ import vadl.viam.graph.NodeList;
  * It holds a {@link BuiltIn} function from the {@link vadl.types.BuiltInTable}.
  *
  * @see vadl.types.BuiltInTable
- * @see AbstractFunctionCall
+ * @see AbstractFunctionCallNode
  */
-public class BuiltInCall extends AbstractFunctionCall {
+public class BuiltInCall extends AbstractFunctionCallNode {
 
   @DataValue
   protected BuiltIn builtIn;

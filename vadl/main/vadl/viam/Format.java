@@ -133,7 +133,7 @@ public class Format extends Definition {
     }
 
     /**
-     * Generates a function that extracts the field from the instruction.
+     * Returns a function that extracts the field from the instruction.
      * It takes one argument of the format type and returns a value of the field type.
      */
     public Function extractFunction() {

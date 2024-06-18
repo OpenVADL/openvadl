@@ -5,10 +5,18 @@ import vadl.types.ConcreteRelationType;
 import vadl.types.DataType;
 import vadl.types.Type;
 
+/**
+ * Represents a Register in a VADL specification.
+ *
+ * <p>It might have sub registers and it might be a sub register with a parent. Additionally,
+ * registers might have a reference format, used to access sub fields by slicing.
+ * If partial (sub register) or full (slicing) access is used, depends on the {@link AccessKind}.
+ * </p>
+ */
 public class Register extends Resource {
 
   /**
-   * Defines if a sub-register is access by loading the whole register and slicing the result,
+   * Defines if a sub-register is accessed by loading the whole register and slicing the result,
    * or by directly accessing the partial result. Same for writing a register.
    */
   public enum AccessKind {
@@ -29,7 +37,7 @@ public class Register extends Resource {
   private final Format refFormat;
 
   public Register(Identifier identifier, DataType resultType, AccessKind readAccess,
-                  AccessKind writeAccess, Format refFormat, Register[] subRegisters) {
+                  AccessKind writeAccess, @Nullable Format refFormat, Register[] subRegisters) {
     super(identifier);
     this.resultType = resultType;
     this.subRegisters = subRegisters;
@@ -93,4 +101,8 @@ public class Register extends Resource {
     visitor.visit(this);
   }
 
+  @Override
+  public String toString() {
+    return identifier.simpleName() + ": " + resultType;
+  }
 }

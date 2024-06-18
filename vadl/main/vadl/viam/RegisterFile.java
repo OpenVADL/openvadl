@@ -55,6 +55,10 @@ public class RegisterFile extends Resource {
     visitor.visit(this);
   }
 
+  @Override
+  public String toString() {
+    return identifier.simpleName() + ": " + accessType + " -> " + resultType;
+  }
 
   /**
    * A register file constraint that statically defines the result value for a specific

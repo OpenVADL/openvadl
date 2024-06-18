@@ -18,10 +18,12 @@ public class InstructionSetArchitecture extends Definition {
   /**
    * Constructs an InstructionSetArchitecture object with the given parameters.
    *
-   * @param identifier    the identifier of the InstructionSetArchitecture
-   * @param specification the parent specification of the InstructionSetArchitecture
-   * @param formats       the list of formats associated with the InstructionSetArchitecture
-   * @param instructions  the list of instructions associated with the InstructionSetArchitecture
+   * @param identifier    the identifier of the ISA
+   * @param specification the parent specification of the ISA
+   * @param registers     the registers in the ISA. This also includes sub-registers
+   * @param registerFiles the register files in the ISA
+   * @param formats       the list of formats associated with the ISA
+   * @param instructions  the list of instructions associated with the ISA
    */
   public InstructionSetArchitecture(Identifier identifier,
                                     Specification specification,

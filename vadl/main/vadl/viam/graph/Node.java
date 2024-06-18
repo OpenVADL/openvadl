@@ -503,6 +503,7 @@ public abstract class Node {
           .addContext(this)
           .addContext(this.graph)
           .shrinkStacktrace(1);
+      
     }
   }
 
