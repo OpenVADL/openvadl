@@ -1,5 +1,6 @@
 $package=vadl.ast
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 import javax.annotation.Nullable;
 
@@ -62,26 +63,32 @@ COMPILER vadl
     /**
     * Expands a macro.
     */
-    @Nullable Node expandMacro(String name, List<Node> args, SyntaxType requiredReturnType) {
-        var macro = symbolTable.getMacro(name);
+    @Nullable Node expandMacro(Identifier identifier, List<Node> args, SyntaxType requiredReturnType) {
+        var unexpanded = new PlaceHolderExpr(identifier, args, identifier.location());
+        if (insideMacro) {
+            return unexpanded;
+        }
+
+        var macro = symbolTable.getMacro(identifier.name);
         if (macro == null) {
-           errors.SemErr(t.line, t.col, "No macro named `%s` exists.".formatted(name));
-           return null;
+           errors.SemErr(t.line, t.col, "No macro named `%s` exists.".formatted(identifier.name));
+           return unexpanded;
         }
 
         // The macro itself was invalid but an error for it was already issued so we silently abort the expansion here.
         if (macro.returnType() == CoreType.Invalid()) {
-           return null;
+           return unexpanded;
         }
 
         boolean hasError = false;
 
         // Verify the arguments
         if (macro.params().size() != args.size()) {
-           errors.SemErr(t.line, t.col, "The macro `%s` expects %d arguments but %d were provided.".formatted(name, macro.params().size(), args.size()));
+           errors.SemErr(t.line, t.col, "The macro `%s` expects %d arguments but %d were provided.".formatted(identifier.name, macro.params().size(), args.size()));
            hasError = true;
         }
 
+        var argMap = new HashMap<String, Node>();
         if (!hasError)
         {
             for (int i = 0; i < args.size(); i ++) {
@@ -90,27 +97,31 @@ COMPILER vadl
                 var argType = CoreType.fromNode(arg);
 
                 if (!argType.isSubTypeOf(param.type())) {
-                    errors.SemErr(t.line, t.col, "The macro's `%s` parameter `%s` expects a `%s` but the argument provided is of type `%s`.".formatted(name, param.name().name, param.type(), argType));
+                    errors.SemErr(t.line, t.col, "The macro's `%s` parameter `%s` expects a `%s` but the argument provided is of type `%s`.".formatted(identifier.name, param.name().name, param.type(), argType));
                     hasError = true;
                 }
+                argMap.put(param.name().name, arg);
             }
         }
 
         // Verify the return type
         if (!macro.returnType().isSubTypeOf(requiredReturnType)) {
-           errors.SemErr(t.line, t.col, "The macro `%s` returns `%s` but here a macro returning `%s` is expected.".formatted(name, macro.returnType(), requiredReturnType));
+           errors.SemErr(t.line, t.col, "The macro `%s` returns `%s` but here a macro returning `%s` is expected.".formatted(identifier.name, macro.returnType(), requiredReturnType));
            hasError = true;
         }
 
         if (hasError) {
-           return null;
+           return unexpanded;
         }
 
          // FIXME: There should be a real instantziator here
          var body = macro.body();
          if (body instanceof Expr) {
-            body = reorderBinary((Expr) body);
+            var expander = new MacroExpander();
+            body = expander.expandExpr((Expr)body, argMap);
             body = new GroupExpr((Expr) body);
+         } else {
+            throw new RuntimeException("Expanding non expressions are not yet implemented");
          }
          return body;
     }
@@ -284,8 +295,8 @@ PRODUCTIONS
     | "<"   (. op = Operator.Less(); .)
     | "<>>" (. op = Operator.RotateRight(); .)
     | "<<>" (. op = Operator.RotateLeft(); .)
-    | ">>"  (. op = Operator.ShiftLeft(); .)
-    | "<<"  (. op = Operator.ShiftRight(); .)
+    | ">>"  (. op = Operator.ShiftRight(); .)
+    | "<<"  (. op = Operator.ShiftLeft(); .)
     | "+"   (. op = Operator.Add(); .)
     | "-"   (. op = Operator.Subtract(); .)
     | "*"   (. op = Operator.Multiply(); .)
@@ -297,7 +308,7 @@ PRODUCTIONS
     = number                                        (. expr = new IntegerLiteral(Integer.parseInt(t.val), locationFromToken(t)); .)
     | identifier<out Identifier id>                 (. expr = new Variable(id); symbolTable.addUsage(id); .)
     | '(' binary<out Expr expr1> ')'                (. expr = new GroupExpr(expr1); .)
-    | macroInstance<out Node node1, CoreType.Ex()>  (. expr = node1 != null ? ((Expr)node1) : new InternalErrorExpr(); .)
+    | macroInstanceOrPlaceholder<out Node node1, CoreType.Ex()>  (. expr = (Expr)node1; .)
     .
 
     rangeExpression<out RangeExpr expr>
@@ -319,11 +330,31 @@ PRODUCTIONS
     )
     .
 
-
     identifier<out Identifier identifier> = identifierToken (. identifier = new Identifier(t.val, locationFromToken(t)); .)
     .
 
     // -- MACROS -------------------------------------------------------------------------------------------------------
+    macroInstanceOrPlaceholder<out Node body, SyntaxType requiredType>      (. body = null; .)
+    = IF (!insideMacro) macroInstance<out Node b, requiredType>             (. body = b; .)
+    | placeHolder<out Node b, requiredType>                                 (. body = b;.)
+    .
+
+    placeHolder<out Node body, SyntaxType requiredType>
+    = "$"                                               (. var startloc = locationFromToken(t); var args = new ArrayList<Node>(); .)
+    identifier<out Identifier id>
+    [
+        "("
+            [
+                expression<out Expr arg1>               (. args.add(arg1); .)
+                {
+                    ";" expression<out Expr arg2>       (.args.add(arg2); .)
+                }
+            ]
+        ")"
+    ]                                                   (. body = new PlaceHolderExpr(id, args, startloc.join(locationFromToken(t))); .)
+    .
+
+
     macroInstance<out Node body, SyntaxType requiredType>  = "$" identifier<out Identifier id>
     "("                                             (. var args = new ArrayList<Node>(); .)
         [
@@ -332,7 +363,7 @@ PRODUCTIONS
                 ";" expression<out Expr arg2>       (.args.add(arg2); .)
             }
         ]
-    ")"         (. body = expandMacro(id.name, args, requiredType); .)
+    ")"         (. body = expandMacro(id, args, requiredType); .)
     .
 
     macroDef

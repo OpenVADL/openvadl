@@ -1,5 +1,6 @@
 package vadl.ast;
 
+import java.util.List;
 import java.util.Objects;
 import javax.annotation.Nullable;
 import vadl.utils.SourceLocation;
@@ -18,7 +19,7 @@ interface ExprVisitor<R> {
 
   R visit(IntegerLiteral expr);
 
-  R visit(InternalErrorExpr expr);
+  R visit(PlaceHolderExpr expr);
 
   R visit(RangeExpr expr);
 
@@ -298,9 +299,20 @@ class IntegerLiteral extends Expr {
 }
 
 /**
- * An internal temporary expression node.
+ * An internal temporary placeholder node inside model definitions.
+ * This node should never leave the parser.
  */
-class InternalErrorExpr extends Expr {
+class PlaceHolderExpr extends Expr {
+  Identifier identifier;
+  List<Node> arguments;
+  SourceLocation loc;
+
+  public PlaceHolderExpr(Identifier identifier, List<Node> arguments, SourceLocation loc) {
+    this.identifier = identifier;
+    this.arguments = arguments;
+    this.loc = loc;
+  }
+
   @Override
   <R> R accept(ExprVisitor<R> visitor) {
     return visitor.visit(this);
@@ -308,12 +320,31 @@ class InternalErrorExpr extends Expr {
 
   @Override
   SourceLocation location() {
-    return SourceLocation.INVALID_SOURCE_LOCATION;
+    return loc;
   }
 
   @Override
   void prettyPrint(int indent, StringBuilder builder) {
-    builder.append("/* INTERNAL ERROR */");
+    builder.append("$");
+    builder.append(identifier);
+  }
+
+  @Override
+  public boolean equals(Object o) {
+    if (this == o) {
+      return true;
+    }
+    if (o == null || getClass() != o.getClass()) {
+      return false;
+    }
+
+    PlaceHolderExpr that = (PlaceHolderExpr) o;
+    return identifier.equals(that.identifier);
+  }
+
+  @Override
+  public int hashCode() {
+    return identifier.hashCode();
   }
 }
 

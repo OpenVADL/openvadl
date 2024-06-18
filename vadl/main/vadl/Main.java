@@ -17,25 +17,14 @@ public class Main {
    */
   public static void main(String[] args) {
     var program = """
-        /**
-        * NOTES for first macros:
-        * - Multiple macros
-        * - Multiple invocations
-        * - Macro in macro
-        * - Correct binding in invocation
-        * - Correct reorder in macro
-        */
-                
-        model first() : Ex = {
-          1
+        model addOne(target: Ex) : Ex = {
+          1 + $target
         }
                 
-        model second() : Ex = {
-          1 + $first()
-        }
-                
-        constant a = $first()
-        constant b = $second()
+        constant two = $addOne(1)
+        constant three = $addOne(2)
+        constant four = $addOne(1 + 2)
+        constant five = $addOne(2 << 1)
         """;
 
     try {

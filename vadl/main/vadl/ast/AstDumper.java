@@ -142,7 +142,7 @@ public class AstDumper implements DefinitionVisitor<Void>, ExprVisitor<Void> {
   }
 
   @Override
-  public Void visit(InternalErrorExpr expr) {
+  public Void visit(PlaceHolderExpr expr) {
     dumpNode(expr);
     return null;
   }
