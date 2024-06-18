@@ -1,5 +1,7 @@
 package vadl.viam;
 
+import java.util.List;
+
 /**
  * DefinitionVisitor is an interface that defines the visit methods for all types of
  * definitions in a VADL specification.
@@ -100,9 +102,9 @@ public interface DefinitionVisitor {
     @Override
     public void visit(Encoding encoding) {
       beforeTraversal(encoding);
-      encoding
-          .fieldEncodings()
-          .forEach(e -> e.accept(this));
+      for (Encoding.Field field : encoding.fieldEncodings()) {
+        field.accept(this);
+      }
       afterTraversal(encoding);
     }
 

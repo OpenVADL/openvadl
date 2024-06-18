@@ -1,6 +1,8 @@
 package vadl.viam;
 
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
@@ -18,48 +20,41 @@ public class Encoding extends Definition {
 
   private final Format format;
 
-  private final Map<Format.Field, Field> fieldEncodings = new HashMap<>();
+  private final Field[] fieldEncodings;
+  private final Format.Field[] nonEncodedFormatFields;
 
-  public Encoding(Identifier identifier, Format format) {
+  public Encoding(Identifier identifier, Format format, Field[] fieldEncodings) {
     super(identifier);
     this.format = format;
+    this.fieldEncodings = fieldEncodings;
+    this.nonEncodedFormatFields = determineNoneEncodedFields(format, fieldEncodings);
   }
 
   public Type type() {
     return format.type();
   }
 
-  /**
-   * Adds a field encoding to the encoding.
-   * There must not be an encoding for this field already.
-   *
-   * @param fieldEncoding the field encoding to be added
-   */
-  public void add(Field fieldEncoding) {
-    ensure(!fieldEncodings.containsKey(fieldEncoding.formatField), "Field %s already has encoding",
-        fieldEncoding.identifier);
-    fieldEncodings.put(fieldEncoding.formatField, fieldEncoding);
-  }
-
-  public Stream<Field> fieldEncodings() {
-    return fieldEncodings.values().stream();
-  }
-
-  public @Nullable Field fieldEncodingOf(Format.Field field) {
-    return fieldEncodings.get(field);
+  public Field[] fieldEncodings() {
+    return fieldEncodings;
   }
 
   /**
-   * Returns a stream of non-encoded format fields.
+   * Returns all non-encoded format fields.
    *
    * <p>This method filters the fields of the given format and returns only the fields
    * that are not present in the set of encoded fields.</p>
-   *
-   * @return a stream of non-encoded format fields
    */
-  public Stream<Format.Field> nonEncodedFormatFields() {
-    var encodedFields = fieldEncodings.keySet();
-    return format.fields().filter(f -> !encodedFields.contains(f));
+  public Format.Field[] nonEncodedFormatFields() {
+    return nonEncodedFormatFields;
+  }
+
+  public @Nullable Field fieldEncodingOf(Format.Field formatField) {
+    for (Field fieldEncoding : fieldEncodings) {
+      if (fieldEncoding.formatField.equals(formatField)) {
+        return fieldEncoding;
+      }
+    }
+    return null;
   }
 
   public Format format() {
@@ -69,13 +64,35 @@ public class Encoding extends Definition {
   @Override
   public String toString() {
     return "Encoding{ " + identifier + " = {\n\t"
-        + fieldEncodings.values().stream().map(Field::toString).collect(
+        + Stream.of(fieldEncodings).map(Field::toString).collect(
         Collectors.joining(",\n\t")) + " \n}}";
   }
 
   @Override
   public void accept(DefinitionVisitor visitor) {
     visitor.visit(this);
+  }
+
+  /**
+   * Determines what format fields are not encoded by with the given fieldEncodings.
+   */
+  private static Format.Field[] determineNoneEncodedFields(Format format, Field[] fieldEncodings) {
+    var nonEncodedFormatFields = new ArrayList<Format.Field>();
+    // determine all format fields that are not encoded by this encoding
+    // TODO: do not use fields().toList()
+    for (Format.Field formatField : format.fields().toList()) {
+      boolean found = false;
+      for (Field encField : fieldEncodings) {
+        if (encField.formatField.equals(formatField)) {
+          found = true;
+          break;
+        }
+      }
+      if (found) {
+        nonEncodedFormatFields.add(formatField);
+      }
+    }
+    return nonEncodedFormatFields.toArray(Format.Field[]::new);
   }
 
 
