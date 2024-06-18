@@ -8,7 +8,8 @@ import java.util.stream.IntStream;
 public class StreamUtils {
 
   /**
-   * Creates an IntStream that goes from startInclusive to endExclusive, either in ascending or descending order.
+   * Creates an IntStream that goes from startInclusive to endExclusive, either in ascending or
+   * descending order.
    * If startInclusive is less than or equal to endExclusive, the stream is in ascending order.
    * Otherwise, the stream is in descending order.
    *
@@ -25,7 +26,8 @@ public class StreamUtils {
   }
 
   /**
-   * Creates an IntStream that goes from startInclusive to endInclusive, either in ascending or descending order.
+   * Creates an IntStream that goes from startInclusive to endInclusive, either in ascending or
+   * descending order.
    * If startInclusive is less than or equal to endInclusive, the stream is in ascending order.
    * Otherwise, the stream is in descending order.
    *

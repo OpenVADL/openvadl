@@ -7,6 +7,10 @@ import vadl.types.DataType;
 import vadl.viam.RegisterFile;
 import vadl.viam.Resource;
 
+/**
+ * A read of a register file in the behaviour graph. It takes one expression node as input
+ * that represents the address/index value.
+ */
 public class ReadRegFileNode extends ReadResourceNode {
 
   @DataValue

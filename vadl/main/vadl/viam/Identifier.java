@@ -54,6 +54,9 @@ public record Identifier(
     );
   }
 
+  /**
+   * Creates a new identifier by copy with an extended simple name {@code suffix}.
+   */
   public Identifier extendSimpleName(String suffix) {
     return new Identifier(
         Arrays.copyOf(this.parts, this.parts.length - 1),

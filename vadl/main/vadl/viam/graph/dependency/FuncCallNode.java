@@ -6,6 +6,12 @@ import vadl.types.Type;
 import vadl.viam.Function;
 import vadl.viam.graph.NodeList;
 
+/**
+ * A call to a function in a behaviour graph.
+ *
+ * <p>It has a list of arguments that must match the expected parameter by the given
+ * {@link Function} definition.</p>
+ */
 public class FuncCallNode extends AbstractFunctionCallNode {
 
   @DataValue

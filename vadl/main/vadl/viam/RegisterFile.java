@@ -7,13 +7,24 @@ import vadl.types.ConcreteRelationType;
 import vadl.types.DataType;
 import vadl.types.Type;
 
-
+/**
+ * The register file is related to the {@link Register} but takes an address/index when accessing
+ * it. It may also have constraints that restricts the possible values for statically defined
+ * addresses.
+ */
 public class RegisterFile extends Resource {
 
   private final DataType accessType;
   private final DataType resultType;
   private final List<Constraint> constraints;
 
+  /**
+   * Constructs a new RegisterFile object.
+   *
+   * @param identifier The identifier of the RegisterFile.
+   * @param accessType The data type of the file address/index.
+   * @param resultType The data type of the result value.
+   */
   public RegisterFile(Identifier identifier, DataType accessType, DataType resultType) {
     super(identifier);
     this.accessType = accessType;
@@ -83,6 +94,13 @@ public class RegisterFile extends Resource {
       RegisterFile registerFile
   ) {
 
+    /**
+     * Constructs the constraint of a given register file.
+     *
+     * @param address      the address constant
+     * @param value        the value constant that is always returned when using the address
+     * @param registerFile the register file to which this condition belongs
+     */
     public Constraint(
         Constant.Value address,
         Constant.Value value,

@@ -1,11 +1,15 @@
 package vadl.viam;
 
 import java.math.BigInteger;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.IntSummaryStatistics;
+import java.util.Iterator;
+import java.util.List;
+import java.util.Objects;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 import java.util.stream.Stream;
-
 import org.jetbrains.annotations.NotNull;
 import vadl.types.DataType;
 import vadl.types.Type;
@@ -146,7 +150,6 @@ public abstract class Constant {
       return result;
     }
   }
-
 
   /**
    * The constant of a VADL bit-slice. It represents a statically known, non-overlapping

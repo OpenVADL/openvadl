@@ -44,6 +44,22 @@ public interface GraphVisitor<R> {
           clazz);
       return clazz.cast(newNode);
     }
+    
+    /**
+     * Applies a transformation to the given nodes and returns the result.
+     *
+     * @param from the start of the edge (not input node)
+     * @param to   the end of the edge (input node)
+     * @return the result of the transformation
+     * @throws ViamGraphError if the applier produces a null node
+     */
+    default R apply(Node from, @Nullable Node to) {
+      var newNode = applyNullable(from, to);
+      ViamGraphError.ensureNonNull(newNode, from.graph(), from, to,
+          "applier produced a null node for apply(). Checkout the implementation of the "
+              + "from-node, you probably want to use applyNullable for the Nullable field.");
+      return newNode;
+    }
 
     /**
      * Applies a transformation to an edge and returns the result as an instance of the
@@ -68,23 +84,9 @@ public interface GraphVisitor<R> {
       return clazz.cast(newNode);
     }
 
-    /**
-     * Applies a transformation to the given nodes and returns the result.
-     *
-     * @param from the start of the edge (not input node)
-     * @param to   the end of the edge (input node)
-     * @return the result of the transformation
-     * @throws ViamGraphError if the applier produces a null node
-     */
-    default R apply(Node from, @Nullable Node to) {
-      var newNode = applyNullable(from, to);
-      ViamGraphError.ensureNonNull(newNode, from.graph(), from, to,
-          "applier produced a null node for apply(). Checkout the implementation of the "
-              + "from-node, you probably want to use applyNullable for the Nullable field.");
-      return newNode;
-    }
-
     @Nullable
     R applyNullable(Node from, @Nullable Node to);
+
+
   }
 }

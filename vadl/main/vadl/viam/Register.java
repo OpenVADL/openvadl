@@ -36,6 +36,16 @@ public class Register extends Resource {
   @Nullable
   private final Format refFormat;
 
+  /**
+   * Constructions a new register definition.
+   *
+   * @param identifier   the unique identifier of the definition
+   * @param resultType   the result type of the register
+   * @param readAccess   the read access of the register (see {@link AccessKind})
+   * @param writeAccess  the write access of the register (see {@link AccessKind})
+   * @param refFormat    the register's format, if it was used as type in the VADL specification
+   * @param subRegisters the sub-registers of the register
+   */
   public Register(Identifier identifier, DataType resultType, AccessKind readAccess,
                   AccessKind writeAccess, @Nullable Format refFormat, Register[] subRegisters) {
     super(identifier);
