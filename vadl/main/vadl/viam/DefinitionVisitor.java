@@ -117,10 +117,12 @@ public interface DefinitionVisitor {
     @Override
     public void visit(Format format) {
       beforeTraversal(format);
-      format.fields()
-          .forEach(e -> e.accept(this));
-      format.fieldAccesses()
-          .forEach(e -> e.accept(this));
+      for (var field : format.fields()) {
+        field.accept(this);
+      }
+      for (var fieldAccess : format.fieldAccesses()) {
+        fieldAccess.accept(this);
+      }
       afterTraversal(format);
     }
 
@@ -166,6 +168,7 @@ public interface DefinitionVisitor {
     @Override
     public void visit(Register register) {
       beforeTraversal(register);
+      // Do not travers sub registers, as they are included in upper call to registers
       afterTraversal(register);
     }
 

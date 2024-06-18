@@ -21,36 +21,37 @@ import vadl.viam.graph.dependency.SliceNode;
 public class Format extends Definition {
 
   private final Type type;
-  private final List<Field> fields = new ArrayList<>();
-  private final List<FieldAccess> fieldAccesses = new ArrayList<>();
+  private Field[] fields;
+  private FieldAccess[] fieldAccesses;
 
   public Format(Identifier identifier, Type type) {
     super(identifier);
     this.type = type;
+    this.fields = new Field[] {};
+    this.fieldAccesses = new FieldAccess[] {};
   }
 
-  public void addField(Field field) {
-    fields.add(field);
+
+  public Field[] fields() {
+    return fields;
   }
 
-  public void addFields(Field... fields) {
-    this.fields.addAll(List.of(fields));
+  /**
+   * Used by VIAM builder only.
+   */
+  public void setFields(Field[] fields) {
+    this.fields = fields;
   }
 
-  public void addFieldAccess(FieldAccess fieldAccess) {
-    fieldAccesses.add(fieldAccess);
+  public FieldAccess[] fieldAccesses() {
+    return fieldAccesses;
   }
 
-  public Stream<Field> fields() {
-    return fields.stream();
-  }
-
-  public Stream<FieldAccess> fieldAccesses() {
-    return fieldAccesses.stream();
-  }
-
-  public Stream<FieldAccess> immediates() {
-    return fieldAccesses.stream();
+  /**
+   * Used by VIAM builder only.
+   */
+  public void setFieldAccesses(FieldAccess[] fieldAccesses) {
+    this.fieldAccesses = fieldAccesses;
   }
 
   public Type type() {
@@ -60,7 +61,7 @@ public class Format extends Definition {
   @Override
   public String toString() {
     return "Format{ " + identifier + ": " + type + "{\n\t"
-        + Stream.concat(fields.stream(), fieldAccesses.stream())
+        + Stream.concat(Stream.of(fields), Stream.of(fieldAccesses))
         .map(Definition::toString)
         .collect(Collectors.joining("\n\t"))
         + "\n}";

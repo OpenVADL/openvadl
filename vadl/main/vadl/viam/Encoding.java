@@ -1,9 +1,6 @@
 package vadl.viam;
 
 import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 import javax.annotation.Nullable;
@@ -80,7 +77,7 @@ public class Encoding extends Definition {
     var nonEncodedFormatFields = new ArrayList<Format.Field>();
     // determine all format fields that are not encoded by this encoding
     // TODO: do not use fields().toList()
-    for (Format.Field formatField : format.fields().toList()) {
+    for (Format.Field formatField : format.fields()) {
       boolean found = false;
       for (Field encField : fieldEncodings) {
         if (encField.formatField.equals(formatField)) {
