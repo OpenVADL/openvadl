@@ -62,22 +62,49 @@ COMPILER vadl
     /**
     * Expands a macro.
     */
-    @Nullable Node expandMacro(String name, SyntaxType requiredReturnType) {
+    @Nullable Node expandMacro(String name, List<Node> args, SyntaxType requiredReturnType) {
         var macro = symbolTable.getMacro(name);
-         if (macro == null) {
-            errors.SemErr(t.line, t.col, "No macro named `%s` exists.".formatted(name));
-            return null;
-         }
+        if (macro == null) {
+           errors.SemErr(t.line, t.col, "No macro named `%s` exists.".formatted(name));
+           return null;
+        }
 
-         // The macro itself was invalid but an error for it was already issued so we silently abort the expansion here.
-         if (macro.returnType() == CoreType.Invalid()) {
-            return null;
-         }
+        // The macro itself was invalid but an error for it was already issued so we silently abort the expansion here.
+        if (macro.returnType() == CoreType.Invalid()) {
+           return null;
+        }
 
-         if (!macro.returnType().isSubTypeOf(requiredReturnType)) {
-            errors.SemErr(t.line, t.col, "The macro returns `%s` but here a macro returning `%s` is expected.".formatted(macro.returnType(), requiredReturnType));
-            return null;
-         }
+        boolean hasError = false;
+
+        // Verify the arguments
+        if (macro.params().size() != args.size()) {
+           errors.SemErr(t.line, t.col, "The macro `%s` expects %d arguments but %d were provided.".formatted(name, macro.params().size(), args.size()));
+           hasError = true;
+        }
+
+        if (!hasError)
+        {
+            for (int i = 0; i < args.size(); i ++) {
+                var arg = args.get(i);
+                var param = macro.params().get(i);
+                var argType = CoreType.fromNode(arg);
+
+                if (!argType.isSubTypeOf(param.type())) {
+                    errors.SemErr(t.line, t.col, "The macro's `%s` parameter `%s` expects a `%s` but the argument provided is of type `%s`.".formatted(name, param.name().name, param.type(), argType));
+                    hasError = true;
+                }
+            }
+        }
+
+        // Verify the return type
+        if (!macro.returnType().isSubTypeOf(requiredReturnType)) {
+           errors.SemErr(t.line, t.col, "The macro `%s` returns `%s` but here a macro returning `%s` is expected.".formatted(name, macro.returnType(), requiredReturnType));
+           hasError = true;
+        }
+
+        if (hasError) {
+           return null;
+        }
 
          // FIXME: There should be a real instantziator here
          var body = macro.body();
@@ -298,12 +325,27 @@ PRODUCTIONS
 
     // -- MACROS -------------------------------------------------------------------------------------------------------
     macroInstance<out Node body, SyntaxType requiredType>  = "$" identifier<out Identifier id>
-    "("
-    ")"         (. body = expandMacro(id.name, requiredType); .)
+    "("                                             (. var args = new ArrayList<Node>(); .)
+        [
+            expression<out Expr arg1>               (. args.add(arg1); .)
+            {
+                ";" expression<out Expr arg2>       (.args.add(arg2); .)
+            }
+        ]
+    ")"         (. body = expandMacro(id.name, args, requiredType); .)
     .
 
     macroDef
-    = "model" identifier<out Identifier id>  "(" ")"
+    = "model" identifier<out Identifier id>
+    "("                                 (. var params = new ArrayList<MacroParam>(); .)
+        [
+            identifier<out Identifier paramId1> ":" syntaxType<out SyntaxType synType1> (. params.add(new MacroParam(paramId1, synType1)); .)
+            {
+                ","
+                identifier<out Identifier paramId2> ":" syntaxType<out SyntaxType synType2> (. params.add(new MacroParam(paramId2, synType2)); .)
+            }
+        ]
+     ")"
     ":" syntaxType<out SyntaxType returnType> "="
     "{"                                 (. Node body = null; insideMacro = true; .)
         expression<out Expr bodyEx>     (. body = bodyEx; .)
@@ -312,9 +354,9 @@ PRODUCTIONS
                                             var bodyType = CoreType.fromNode(body);
                                             if (!bodyType.isSubTypeOf(returnType)) {
                                                 errors.SemErr(t.line, t.col, "The macro signature promises to return `%s` but it's body is of type `%s`.".formatted(returnType, bodyType));
-                                                symbolTable.addMacro(new Macro(id, List.of(), body, CoreType.Invalid()));
+                                                symbolTable.addMacro(new Macro(id, params, body, CoreType.Invalid()));
                                             } else {
-                                                symbolTable.addMacro(new Macro(id, List.of(), body, returnType));
+                                                symbolTable.addMacro(new Macro(id, params, body, returnType));
                                             }
                                          .)
     .

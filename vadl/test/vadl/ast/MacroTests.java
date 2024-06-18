@@ -59,4 +59,42 @@ public class MacroTests {
         """;
     Assertions.assertThrows(VadlException.class, () -> VadlParser.parse(prog));
   }
+
+  @Test
+  void MacroWithUnusedArguments() {
+    var prog1 = """
+        model example(first: Int, second: Ex) : Ex =  {
+          1 + 2
+        }
+               
+        constant n = 3 * $example(3 ; 5)
+        """;
+    var prog2 = "constant n = 3 * (1 + 2)";
+
+    Assertions.assertEquals(VadlParser.parse(prog1), VadlParser.parse(prog2));
+  }
+
+  @Test
+  void InvalidArgumentNumber() {
+    var prog = """
+        model example(arg: Ex) : Ex =  {
+           1 + 2
+        }
+               
+        constant n = 3 * $example()
+        """;
+    Assertions.assertThrows(VadlException.class, () -> VadlParser.parse(prog));
+  }
+
+  @Test
+  void InvalidProvidedArgumentType() {
+    var prog = """
+        model example(arg: Bool) : Ex =  {
+           1 + 2
+        }
+               
+        constant n = 3 * $example(5)
+        """;
+    Assertions.assertThrows(VadlException.class, () -> VadlParser.parse(prog));
+  }
 }
