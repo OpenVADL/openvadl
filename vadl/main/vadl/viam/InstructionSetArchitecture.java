@@ -58,7 +58,18 @@ public class InstructionSetArchitecture extends Definition {
     return registerFiles;
   }
 
-  public Stream<Format> formats() {
+  /**
+   * Returns the formats defined in this ISA.
+   */
+  public List<Format> formats() {
+    return formats;
+  }
+  
+  /**
+   * Returns a stream of all formats available in this ISA. This includes all formats of the
+   * outer specification scope.
+   */
+  public Stream<Format> availableFormats() {
     return Stream.concat(formats.stream(), specification.formats());
   }
 

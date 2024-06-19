@@ -1,5 +1,7 @@
 package vadl.viam;
 
+import java.util.List;
+
 /**
  * DefinitionVisitor is an interface that defines the visit methods for all types of
  * definitions in a VADL specification.
@@ -100,9 +102,9 @@ public interface DefinitionVisitor {
     @Override
     public void visit(Encoding encoding) {
       beforeTraversal(encoding);
-      encoding
-          .fieldEncodings()
-          .forEach(e -> e.accept(this));
+      for (Encoding.Field field : encoding.fieldEncodings()) {
+        field.accept(this);
+      }
       afterTraversal(encoding);
     }
 
@@ -115,10 +117,12 @@ public interface DefinitionVisitor {
     @Override
     public void visit(Format format) {
       beforeTraversal(format);
-      format.fields()
-          .forEach(e -> e.accept(this));
-      format.fieldAccesses()
-          .forEach(e -> e.accept(this));
+      for (var field : format.fields()) {
+        field.accept(this);
+      }
+      for (var fieldAccess : format.fieldAccesses()) {
+        fieldAccess.accept(this);
+      }
       afterTraversal(format);
     }
 
@@ -140,8 +144,9 @@ public interface DefinitionVisitor {
     @Override
     public void visit(Function function) {
       beforeTraversal(function);
-      function.parameters()
-          .forEach(e -> e.accept(this));
+      for (var param : function.parameters()) {
+        param.accept(this);
+      }
       afterTraversal(function);
     }
 
@@ -154,8 +159,9 @@ public interface DefinitionVisitor {
     @Override
     public void visit(PseudoInstruction pseudoInstruction) {
       beforeTraversal(pseudoInstruction);
-      pseudoInstruction.parameters()
-          .forEach(e -> e.accept(this));
+      for (var param : pseudoInstruction.parameters()) {
+        param.accept(this);
+      }
       pseudoInstruction.assembly()
           .accept(this);
       afterTraversal(pseudoInstruction);
@@ -164,6 +170,7 @@ public interface DefinitionVisitor {
     @Override
     public void visit(Register register) {
       beforeTraversal(register);
+      // Do not travers sub registers, as they are included in upper call to registers
       afterTraversal(register);
     }
 

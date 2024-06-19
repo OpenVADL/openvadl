@@ -29,13 +29,13 @@ public class FuncCallNode extends AbstractFunctionCallNode {
     var params = function.parameters();
     var args = this.args;
 
-    ensure(params.size() == args.size(),
+    ensure(params.length == args.size(),
         "Number of arguments does not match number of parameters, %s vs %s", args.size(),
-        params.size());
+        params.length);
 
     for (int i = 0; i < args.size(); i++) {
       var arg = args.get(i);
-      var param = params.get(i);
+      var param = params[i];
       ensure(param.type().equals(arg.type()),
           "Argument does not match type of param %s, %s vs %s", param.name(), param.type(),
           arg.type());
