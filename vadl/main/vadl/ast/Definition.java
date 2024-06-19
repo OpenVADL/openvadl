@@ -53,6 +53,10 @@ class ConstantDefinition extends Definition {
     return loc;
   }
 
+  @Override
+  SyntaxType syntaxType() {
+    return CoreType.IsaDefs();
+  }
 
   @Override
   void prettyPrint(int indent, StringBuilder builder) {
@@ -122,6 +126,11 @@ class FormatDefinition extends Definition {
     }
 
     @Override
+    SyntaxType syntaxType() {
+      return CoreType.Invalid();
+    }
+
+    @Override
     void prettyPrint(int indent, StringBuilder builder) {
       identifier.prettyPrint(indent, builder);
       builder.append("\t [");
@@ -170,6 +179,11 @@ class FormatDefinition extends Definition {
   @Override
   SourceLocation location() {
     return loc;
+  }
+
+  @Override
+  SyntaxType syntaxType() {
+    return CoreType.IsaDefs();
   }
 
   @Override
@@ -256,6 +270,11 @@ class InstructionSetDefinition extends Definition {
   }
 
   @Override
+  SyntaxType syntaxType() {
+    return CoreType.Invalid();
+  }
+
+  @Override
   void prettyPrint(int indent, StringBuilder builder) {
     builder.append(prettyIndentString(indent));
     builder.append("instruction set architecture %s = {\n".formatted(identifier.name));
@@ -322,6 +341,11 @@ class IndexDefinition extends Definition {
   }
 
   @Override
+  SyntaxType syntaxType() {
+    return CoreType.IsaDefs();
+  }
+
+  @Override
   void prettyPrint(int indent, StringBuilder builder) {
     builder.append(prettyIndentString(indent));
     builder.append("%s counter ".formatted(kind.toString().toLowerCase(Locale.ENGLISH)));
@@ -380,6 +404,11 @@ class MemoryDefinition extends Definition {
   @Override
   SourceLocation location() {
     return loc;
+  }
+
+  @Override
+  SyntaxType syntaxType() {
+    return CoreType.IsaDefs();
   }
 
   @Override
@@ -445,6 +474,11 @@ class RegisterDefinition extends Definition {
   }
 
   @Override
+  SyntaxType syntaxType() {
+    return CoreType.IsaDefs();
+  }
+
+  @Override
   void prettyPrint(int indent, StringBuilder builder) {
     builder.append(prettyIndentString(indent));
     builder.append("register ");
@@ -503,6 +537,11 @@ class RegisterFileDefinition extends Definition {
   @Override
   SourceLocation location() {
     return loc;
+  }
+
+  @Override
+  SyntaxType syntaxType() {
+    return CoreType.IsaDefs();
   }
 
   @Override

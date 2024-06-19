@@ -55,6 +55,8 @@ abstract class Node {
 
   abstract SourceLocation location();
 
+  abstract SyntaxType syntaxType();
+
   abstract void prettyPrint(int indent, StringBuilder builder);
 }
 
@@ -70,6 +72,11 @@ class Identifier extends Node {
   @Override
   SourceLocation location() {
     return loc;
+  }
+
+  @Override
+  SyntaxType syntaxType() {
+    return CoreType.Id();
   }
 
   @Override

@@ -94,7 +94,7 @@ COMPILER vadl
             for (int i = 0; i < args.size(); i ++) {
                 var arg = args.get(i);
                 var param = macro.params().get(i);
-                var argType = CoreType.fromNode(arg);
+                var argType = arg.syntaxType();
 
                 if (!argType.isSubTypeOf(param.type())) {
                     errors.SemErr(t.line, t.col, "The macro's `%s` parameter `%s` expects a `%s` but the argument provided is of type `%s`.".formatted(identifier.name, param.name().name, param.type(), argType));
@@ -382,7 +382,7 @@ PRODUCTIONS
         expression<out Expr bodyEx>     (. body = bodyEx; .)
     "}"                                 (.
                                             insideMacro = false;
-                                            var bodyType = CoreType.fromNode(body);
+                                            var bodyType = body.syntaxType();
                                             if (!bodyType.isSubTypeOf(returnType)) {
                                                 errors.SemErr(t.line, t.col, "The macro signature promises to return `%s` but it's body is of type `%s`.".formatted(returnType, bodyType));
                                                 symbolTable.addMacro(new Macro(id, params, body, CoreType.Invalid()));

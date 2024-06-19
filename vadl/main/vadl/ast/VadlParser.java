@@ -52,9 +52,9 @@ public class VadlParser {
             new SourceLocation(SourceLocation.INVALID_SOURCE_LOCATION.uri(),
                 new SourceLocation.Position(lineNum, colNum)),
             null,
-            title.contains("expected") ?
-                "Sometimes the expected is just something with what the parser could work with but"
-                    + " maybe not what you intended." : null)
+            title.contains("expected")
+                ? "Sometimes the expected is just something with what the parser could work with "
+                + " but maybe not what you intended." : null)
         );
       }
       ;

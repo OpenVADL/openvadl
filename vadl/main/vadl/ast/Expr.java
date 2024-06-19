@@ -31,6 +31,7 @@ interface ExprVisitor<R> {
 /**
  * The operator class provides singleton constructors for immutable instances for each operator.
  */
+@SuppressWarnings("checkstyle:methodname")
 class Operator {
   final String symbol;
   final int precedence;
@@ -171,10 +172,10 @@ class BinaryExpr extends Expr {
   static @Nullable BinaryExpr root = null;
 
   /**
-   * Reorders binary expression based on the correct precedence
+   * Reorders binary expression based on the correct precedence.
    *
-   * @param expr to reorder
-   * @return the new root of the reordered subtree
+   * @param expr to reorder.
+   * @return the new root of the reordered subtree.
    */
   static BinaryExpr reorder(BinaryExpr expr) {
     root = expr;
@@ -204,6 +205,11 @@ class BinaryExpr extends Expr {
   @Override
   SourceLocation location() {
     return left.location().join(right.location());
+  }
+
+  @Override
+  SyntaxType syntaxType() {
+    return CoreType.Bin();
   }
 
   @Override
@@ -262,6 +268,11 @@ class IntegerLiteral extends Expr {
   @Override
   SourceLocation location() {
     return loc;
+  }
+
+  @Override
+  SyntaxType syntaxType() {
+    return CoreType.Int();
   }
 
   @Override
@@ -324,6 +335,11 @@ class PlaceHolderExpr extends Expr {
   }
 
   @Override
+  SyntaxType syntaxType() {
+    return CoreType.Invalid();
+  }
+
+  @Override
   void prettyPrint(int indent, StringBuilder builder) {
     builder.append("$");
     builder.append(identifier);
@@ -377,6 +393,11 @@ class GroupExpr extends Expr {
   }
 
   @Override
+  SyntaxType syntaxType() {
+    return inner.syntaxType();
+  }
+
+  @Override
   void prettyPrint(int indent, StringBuilder builder) {
     // This node should never leave the parser and therefore never meet a visitor.
     builder.append("(");
@@ -416,6 +437,11 @@ class RangeExpr extends Expr {
   @Override
   SourceLocation location() {
     return from.location().join(to.location());
+  }
+
+  @Override
+  SyntaxType syntaxType() {
+    return CoreType.Invalid();
   }
 
   @Override
@@ -481,6 +507,11 @@ class TypeLiteral extends Expr {
   }
 
   @Override
+  SyntaxType syntaxType() {
+    return CoreType.Invalid();
+  }
+
+  @Override
   void prettyPrint(int indent, StringBuilder builder) {
     builder.append(baseType.name);
     if (sizeExpression != null) {
@@ -534,6 +565,11 @@ class Variable extends Expr {
   @Override
   SourceLocation location() {
     return identifier.location();
+  }
+
+  @Override
+  SyntaxType syntaxType() {
+    return CoreType.Id();
   }
 
   @Override

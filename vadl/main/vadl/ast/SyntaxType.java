@@ -14,18 +14,6 @@ class CoreType extends SyntaxType {
     this.name = name;
   }
 
-  static CoreType fromNode(Node node) {
-    if (node instanceof Identifier) {
-      return CoreType.Id();
-    } else if (node instanceof IntegerLiteral) {
-      return CoreType.Int();
-    } else if (node instanceof BinaryExpr) {
-      return CoreType.Bin();
-    }
-    // FIXME: Add the other cases once implemented in the AST.
-    return invalidType;
-  }
-
   private static final CoreType statsType = new CoreType("Stats");
   private static final CoreType statType = new CoreType("Stat");
   private static final CoreType encsType = new CoreType("Encs");
@@ -112,7 +100,7 @@ class CoreType extends SyntaxType {
     return invalidType;
   }
 
-  static private final Map<CoreType, CoreType[]> superTypes = Map.ofEntries(
+  private static final Map<CoreType, CoreType[]> superTypes = Map.ofEntries(
       Map.entry(statsType, new CoreType[] {}),
       Map.entry(statType, new CoreType[] {statsType}),
       Map.entry(encsType, new CoreType[] {}),
