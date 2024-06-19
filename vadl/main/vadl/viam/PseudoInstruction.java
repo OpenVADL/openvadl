@@ -15,7 +15,7 @@ import vadl.viam.graph.dependency.FuncParamNode;
  */
 public class PseudoInstruction extends Definition {
 
-  private final List<Parameter> parameters;
+  private final Parameter[] parameters;
   private final Graph behavior;
   private final Assembly assembly;
 
@@ -28,7 +28,7 @@ public class PseudoInstruction extends Definition {
    */
   public PseudoInstruction(
       Identifier identifier,
-      List<Parameter> parameters,
+      Parameter[] parameters,
       Graph behavior,
       Assembly assembly
   ) {
@@ -41,8 +41,8 @@ public class PseudoInstruction extends Definition {
     verify();
   }
 
-  public Stream<Parameter> parameters() {
-    return parameters.stream();
+  public Parameter[] parameters() {
+    return parameters;
   }
 
   public Graph behavior() {
@@ -60,7 +60,7 @@ public class PseudoInstruction extends Definition {
 
     behavior.getNodes(FuncParamNode.class)
         .forEach(node ->
-            node.ensure(parameters.contains(node.parameter()),
+            node.ensure(Stream.of(parameters).anyMatch(e -> e.equals(node.parameter())),
                 "The given parameter is not a known pseudo instruction parameter")
         );
   }

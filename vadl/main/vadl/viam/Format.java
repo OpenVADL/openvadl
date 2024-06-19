@@ -185,7 +185,7 @@ public class Format extends Definition {
       var ident = identifier.extendSimpleName("_extract");
       var paramIdent = ident.append("format");
       var formatParam = new Parameter(paramIdent, parentFormat.type());
-      var function = new Function(ident, List.of(formatParam), this.type);
+      var function = new Function(ident, new Parameter[] {formatParam}, this.type);
 
       var behavior = function.behavior();
       var funcParamNode = behavior.add(new FuncParamNode(formatParam));

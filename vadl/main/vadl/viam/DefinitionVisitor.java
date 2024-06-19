@@ -144,8 +144,9 @@ public interface DefinitionVisitor {
     @Override
     public void visit(Function function) {
       beforeTraversal(function);
-      function.parameters()
-          .forEach(e -> e.accept(this));
+      for (var param : function.parameters()) {
+        param.accept(this);
+      }
       afterTraversal(function);
     }
 
@@ -158,8 +159,9 @@ public interface DefinitionVisitor {
     @Override
     public void visit(PseudoInstruction pseudoInstruction) {
       beforeTraversal(pseudoInstruction);
-      pseudoInstruction.parameters()
-          .forEach(e -> e.accept(this));
+      for (var param : pseudoInstruction.parameters()) {
+        param.accept(this);
+      }
       pseudoInstruction.assembly()
           .accept(this);
       afterTraversal(pseudoInstruction);
