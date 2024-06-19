@@ -1,6 +1,5 @@
 package vadl.ast;
 
-import java.util.List;
 import java.util.Map;
 
 abstract class SyntaxType {
@@ -113,24 +112,24 @@ class CoreType extends SyntaxType {
     return invalidType;
   }
 
-  private final Map<String, List<String>> superTypes = Map.ofEntries(
-      Map.entry("Stats", List.of()),
-      Map.entry("Stat", List.of("Stats")),
-      Map.entry("Encs", List.of()),
-      Map.entry("IsaDef", List.of()),
-      Map.entry("Ex", List.of()),
-      Map.entry("Lit", List.of("Ex")),
-      Map.entry("Str", List.of("Ex", "Lit")),
-      Map.entry("Val", List.of("Ex", "Lit")),
-      Map.entry("Bool", List.of("Ex", "Lit", "Val")),
-      Map.entry("Int", List.of("Ex", "Lit", "Val")),
-      Map.entry("Bin", List.of("Ex", "Lit", "Val")),
-      Map.entry("CallEx", List.of("Ex")),
-      Map.entry("SynEx", List.of("Ex", "CallEx")),
-      Map.entry("Id", List.of("Ex", "CallEx", "SymEx")),
-      Map.entry("BinOp", List.of()),
-      Map.entry("UnOp", List.of()),
-      Map.entry("InvalidType", List.of())
+  static private final Map<CoreType, CoreType[]> superTypes = Map.ofEntries(
+      Map.entry(statsType, new CoreType[] {}),
+      Map.entry(statType, new CoreType[] {statsType}),
+      Map.entry(encsType, new CoreType[] {}),
+      Map.entry(isaDefsType, new CoreType[] {}),
+      Map.entry(exType, new CoreType[] {}),
+      Map.entry(litType, new CoreType[] {exType}),
+      Map.entry(strType, new CoreType[] {exType, litType}),
+      Map.entry(valType, new CoreType[] {exType, litType}),
+      Map.entry(boolType, new CoreType[] {exType, litType, valType}),
+      Map.entry(intType, new CoreType[] {exType, litType, valType}),
+      Map.entry(binType, new CoreType[] {exType, litType, valType}),
+      Map.entry(callExType, new CoreType[] {exType}),
+      Map.entry(symExType, new CoreType[] {exType, callExType}),
+      Map.entry(idType, new CoreType[] {exType, callExType, symExType}),
+      Map.entry(binOpType, new CoreType[] {}),
+      Map.entry(unOpType, new CoreType[] {}),
+      Map.entry(invalidType, new CoreType[] {})
   );
 
   @Override
@@ -144,11 +143,17 @@ class CoreType extends SyntaxType {
       return false;
     }
 
-    var parents = superTypes.get(this.name);
+    var parents = superTypes.get(this);
     if (parents == null) {
       throw new RuntimeException("Internal error: could not find supertype " + this.name);
     }
-    return parents.contains(otherCore.name);
+
+    for (CoreType superType : parents) {
+      if (superType == otherCore) {
+        return true;
+      }
+    }
+    return false;
   }
 
   @Override

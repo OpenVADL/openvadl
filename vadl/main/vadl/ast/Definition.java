@@ -487,15 +487,15 @@ class RegisterDefinition extends Definition {
 
 class RegisterFileDefinition extends Definition {
   Identifier identifier;
-  TypeLiteral addressType;
+  TypeLiteral indexType;
   TypeLiteral registerType;
   SourceLocation loc;
 
-  public RegisterFileDefinition(Identifier identifier, TypeLiteral addressType,
+  public RegisterFileDefinition(Identifier identifier, TypeLiteral indexType,
                                 TypeLiteral registerType,
                                 SourceLocation location) {
     this.identifier = identifier;
-    this.addressType = addressType;
+    this.indexType = indexType;
     this.registerType = registerType;
     this.loc = location;
   }
@@ -511,7 +511,7 @@ class RegisterFileDefinition extends Definition {
     builder.append("register file ");
     identifier.prettyPrint(indent, builder);
     builder.append(": ");
-    addressType.prettyPrint(indent, builder);
+    indexType.prettyPrint(indent, builder);
     builder.append(" -> ");
     registerType.prettyPrint(indent, builder);
     builder.append("\n");
@@ -537,14 +537,14 @@ class RegisterFileDefinition extends Definition {
     }
 
     RegisterFileDefinition that = (RegisterFileDefinition) o;
-    return identifier.equals(that.identifier) && addressType.equals(that.addressType)
+    return identifier.equals(that.identifier) && indexType.equals(that.indexType)
         && registerType.equals(that.registerType);
   }
 
   @Override
   public int hashCode() {
     int result = identifier.hashCode();
-    result = 31 * result + addressType.hashCode();
+    result = 31 * result + indexType.hashCode();
     result = 31 * result + registerType.hashCode();
     return result;
   }
