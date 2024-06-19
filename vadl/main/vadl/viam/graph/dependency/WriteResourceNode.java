@@ -9,7 +9,7 @@ import vadl.viam.graph.Node;
  * Represents a write operation to some location that produces a side
  * effect.
  */
-public abstract class WriteNode extends SideEffectNode {
+public abstract class WriteResourceNode extends SideEffectNode {
 
   @Input
   protected ExpressionNode location;
@@ -17,7 +17,7 @@ public abstract class WriteNode extends SideEffectNode {
   @Input
   protected ExpressionNode value;
 
-  public WriteNode(ExpressionNode location, ExpressionNode value) {
+  public WriteResourceNode(ExpressionNode location, ExpressionNode value) {
     this.location = location;
     this.value = value;
   }

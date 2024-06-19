@@ -202,7 +202,7 @@ public abstract class Node {
    * <p><b>IMPORTANT</b>:
    * <li>This must be overridden by every node that has inputs
    * (annotated with {@link vadl.javaannotations.viam.Input}).</li>
-   * <li>The subclass must call {@code super.applyOnInputs(visitor)} before
+   * <li>The subclass must call {@code super.applyOnInputsUnsafe(visitor)} before
    * adding its own inputs!</li>
    *
    * @param visitor that produces new value for input.
@@ -495,6 +495,7 @@ public abstract class Node {
    * @throws ViamGraphError if the condition is false
    */
   @FormatMethod
+  @Contract("false, _, _-> fail")
   public final void ensure(boolean condition, @FormatString String format,
                            @Nullable Object... args) {
     if (!condition) {
@@ -502,6 +503,7 @@ public abstract class Node {
           .addContext(this)
           .addContext(this.graph)
           .shrinkStacktrace(1);
+      
     }
   }
 
@@ -518,12 +520,7 @@ public abstract class Node {
   @Contract("null, _  -> fail")
   @FormatMethod
   public final void ensureNonNull(@Nullable Object obj, String msg) {
-    if (obj == null) {
-      throw new ViamGraphError(msg)
-          .addContext(this)
-          .addContext(this.graph)
-          .shrinkStacktrace(1);
-    }
+    ensure(obj != null, msg);
   }
 
   protected final void ensureDeleteIsPossible() {

@@ -267,6 +267,16 @@ public class Graph {
     return addSimpleInternal(node);
   }
 
+
+  public void verify() {
+    verifyNodes();
+  }
+
+  private void verifyNodes() {
+    getNodes().forEach(Node::verify);
+  }
+
+
   /**
    * Checks if all inputs were added to the graph.
    */

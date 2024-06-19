@@ -4,9 +4,14 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
+import javax.annotation.Nullable;
 import vadl.types.DataType;
 import vadl.types.Type;
+import vadl.viam.graph.control.ReturnNode;
+import vadl.viam.graph.control.StartNode;
 import vadl.viam.graph.dependency.FieldRefNode;
+import vadl.viam.graph.dependency.FuncParamNode;
+import vadl.viam.graph.dependency.SliceNode;
 
 /**
  * The format definition of a VADL specification.
@@ -18,7 +23,6 @@ public class Format extends Definition {
   private final Type type;
   private final List<Field> fields = new ArrayList<>();
   private final List<FieldAccess> fieldAccesses = new ArrayList<>();
-
 
   public Format(Identifier identifier, Type type) {
     super(identifier);
@@ -71,32 +75,41 @@ public class Format extends Definition {
    * A field of a format.
    * Holds information about the type, ranges, and value of the field.
    * This is not an immediate definition field.
+   *
+   * <p>It generates a function to extract the field from a passed value of the format type.</p>
    */
   public static class Field extends Definition {
 
     private final DataType type;
     private final Constant.BitSlice bitSlice;
 
-    private final Format format;
+    // nullable because lazily initialized
+    @Nullable
+    private Function extractFunction;
+
+    private final Format parentFormat;
+    @Nullable
+    private Format refFormat;
 
     /**
      * Constructs a Field object with the given identifier, type, ranges, and encoding.
      *
-     * @param identifier the identifier of the field
-     * @param type       the type of the field
-     * @param bitSlice   the constant bitslice of the instruction for this field
-     * @param format     the parent format of the field
+     * @param identifier   the identifier of the field
+     * @param type         the type of the field
+     * @param bitSlice     the constant bitslice of the instruction for this field
+     * @param parentFormat the parent format of the field
      */
     public Field(
         Identifier identifier,
         DataType type,
         Constant.BitSlice bitSlice,
-        Format format) {
+        Format parentFormat
+    ) {
       super(identifier);
 
       this.type = type;
       this.bitSlice = bitSlice;
-      this.format = format;
+      this.parentFormat = parentFormat;
 
       verify();
     }
@@ -110,19 +123,46 @@ public class Format extends Definition {
     }
 
     public Format format() {
-      return format;
+      return parentFormat;
     }
 
     public int size() {
-      return bitSlice.size();
+      return bitSlice.bitSize();
+    }
+
+    /**
+     * Returns a function that extracts the field from the instruction.
+     * It takes one argument of the format type and returns a value of the field type.
+     */
+    public Function extractFunction() {
+      if (extractFunction == null) {
+        this.extractFunction = createExtractFunction();
+      }
+      return extractFunction;
+    }
+
+    /**
+     * Returns the reference format of the field.
+     */
+    @Nullable
+    public Format refFormat() {
+      return refFormat;
+    }
+
+    /**
+     * Adds a format reference to the field.
+     */
+    public void setRefFormat(Format refFormat) {
+      ensure(this.refFormat == null, "Field reference format already set");
+      this.refFormat = refFormat;
     }
 
     @Override
     public void verify() {
       super.verify();
-      ensure(bitSlice.size() == type.bitWidth(),
+      ensure(bitSlice.bitSize() == type.bitWidth(),
           "Field type width of %s is different to slice size of %s", type.bitWidth(),
-          bitSlice.size());
+          bitSlice.bitSize());
     }
 
     @Override
@@ -132,8 +172,35 @@ public class Format extends Definition {
 
     @Override
     public String toString() {
-      return "Field{ " + identifier + " " + bitSlice + ": " + type + " }";
+      var ref = refFormat != null ? " -> " + refFormat.identifier : "";
+      return "Field{ " + identifier + " " + bitSlice + ": " + type + ref + " }";
     }
+
+    /**
+     * Generates a function that extracts the field from the instruction.
+     * It takes one argument of the format type and returns a value of the field type.
+     */
+    private Function createExtractFunction() {
+      var ident = identifier.extendSimpleName("_extract");
+      var paramIdent = ident.append("format");
+      var formatParam = new Parameter(paramIdent, parentFormat.type());
+      var function = new Function(ident, List.of(formatParam), this.type);
+
+      var behavior = function.behavior();
+      var funcParamNode = behavior.add(new FuncParamNode(formatParam));
+      var sliceNode = behavior.add(
+          new SliceNode(funcParamNode, bitSlice, Type.bits(bitSlice.bitSize()))
+      );
+      var returnNode = behavior.add(new ReturnNode(sliceNode));
+      // add start node
+      behavior.add(new StartNode(returnNode));
+
+      // verify that produced graph is correct
+      behavior.verify();
+
+      return function;
+    }
+
   }
 
 

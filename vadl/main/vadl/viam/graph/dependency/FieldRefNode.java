@@ -37,10 +37,10 @@ public class FieldRefNode extends ParamNode {
   @Override
   public void verifyState() {
     super.verifyState();
-    
+
     ensure(formatField.type().canBeCastTo((DataType) type()),
         "Format field type cannot be cast to node type: %s vs %s",
-        formatField.type(), type);
+        formatField.type(), type());
   }
 
   @Override

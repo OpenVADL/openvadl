@@ -5,6 +5,8 @@ import vadl.viam.graph.Graph;
 /**
  * The VADL ISA Instruction definition.
  */
+// TODO: Instruction should have information about source and destination registers
+//  (not from AST, computed by analysis).
 public class Instruction extends Definition {
 
   private final Graph behavior;

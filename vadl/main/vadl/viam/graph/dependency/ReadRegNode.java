@@ -1,22 +1,48 @@
 package vadl.viam.graph.dependency;
 
 import java.util.List;
+import javax.annotation.Nullable;
 import vadl.javaannotations.viam.DataValue;
-import vadl.types.Type;
+import vadl.types.DataType;
+import vadl.viam.Register;
+import vadl.viam.Resource;
 
 /**
  * The ReadRegNode class is a subclass of ReadNode that represents
  * a node that reads a value from a register location.
  */
-public class ReadRegNode extends ReadNode {
+public class ReadRegNode extends ReadResourceNode {
 
   @DataValue
-  protected String register; // TODO: Replace by proper datastructure
+  protected Register register;
 
-  public ReadRegNode(String register, ExpressionNode location, Type type) {
-    super(location, type);
+  /**
+   * Reads a value from a register.
+   *
+   * @param register the register to read from
+   * @param type     the data type of the value to be read
+   */
+  public ReadRegNode(Register register, DataType type) {
+    super(null, type);
     this.register = register;
+
+    verifyState();
   }
+
+  public Register register() {
+    return register;
+  }
+
+  @Override
+  public boolean hasAddress() {
+    return false;
+  }
+
+  @Override
+  protected Resource resourceDefinition() {
+    return register;
+  }
+
 
   @Override
   protected void collectData(List<Object> collection) {

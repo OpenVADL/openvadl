@@ -20,17 +20,17 @@ public class ConcreteRelationType extends Type {
   private final RelationType relationType;
 
   private final List<Type> argTypes;
-  private final Type returnType;
+  private final Type resultType;
 
-  protected ConcreteRelationType(List<Type> argTypes, Type returnType) {
+  protected ConcreteRelationType(List<Type> argTypes, Type resultType) {
     this.argTypes = argTypes;
-    this.returnType = returnType;
+    this.resultType = resultType;
 
     this.relationType = Type.relation(
         argTypes.stream()
             .map(e -> (Class<? extends Type>) e.getClass())
             .collect(Collectors.toList()),
-        returnType.getClass()
+        resultType.getClass()
     );
   }
 
@@ -38,8 +38,8 @@ public class ConcreteRelationType extends Type {
     return argTypes;
   }
 
-  public Type returnType() {
-    return returnType;
+  public Type resultType() {
+    return resultType;
   }
 
   public RelationType relationType() {
@@ -51,6 +51,6 @@ public class ConcreteRelationType extends Type {
     return "("
         + argTypes.stream().map(Type::name).collect(Collectors.joining(", "))
         + ") -> "
-        + returnType.name();
+        + resultType.name();
   }
 }

@@ -16,6 +16,9 @@
       </option>
       <option name="JD_INDENT_ON_CONTINUATION" value="true" />
     </JavaCodeStyleSettings>
+    <editorconfig>
+      <option name="ENABLED" value="false" />
+    </editorconfig>
     <codeStyleSettings language="Cookie">
       <indentOptions>
         <option name="USE_TAB_CHARACTER" value="false" />

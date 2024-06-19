@@ -12,12 +12,12 @@ import vadl.viam.graph.NodeList;
  * An abstract function call node that has a list of arguments as input.
  * A concrete subtype is the {@link BuiltInCall}.
  */
-public abstract class AbstractFunctionCall extends ExpressionNode {
+public abstract class AbstractFunctionCallNode extends ExpressionNode {
 
   @Input
   protected NodeList<ExpressionNode> args;
 
-  AbstractFunctionCall(NodeList<ExpressionNode> args, Type type) {
+  public AbstractFunctionCallNode(NodeList<ExpressionNode> args, Type type) {
     super(type);
     this.args = args;
   }

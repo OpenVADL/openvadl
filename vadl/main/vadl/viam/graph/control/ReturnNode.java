@@ -23,6 +23,11 @@ public class ReturnNode extends AbstractEndNode {
     this.value = value;
   }
 
+  public ReturnNode(ExpressionNode value) {
+    super(new NodeList<>());
+    this.value = value;
+  }
+
   public Type returnType() {
     return value.type();
   }

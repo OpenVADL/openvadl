@@ -8,7 +8,7 @@ import vadl.viam.graph.Node;
  */
 public class AbstractBeginNode extends DirectionalNode {
 
-  public AbstractBeginNode(Node next) {
+  public AbstractBeginNode(ControlNode next) {
     setNext(next);
   }
 

@@ -10,27 +10,36 @@ public class InstructionSetArchitecture extends Definition {
 
   private final List<Instruction> instructions;
   private final List<PseudoInstruction> pseudoInstructions;
+  private final List<Register> registers;
+  private final List<RegisterFile> registerFiles;
   private final List<Format> formats;
   private final Specification specification;
 
   /**
    * Constructs an InstructionSetArchitecture object with the given parameters.
    *
-   * @param identifier    the identifier of the InstructionSetArchitecture
-   * @param specification the parent specification of the InstructionSetArchitecture
-   * @param formats       the list of formats associated with the InstructionSetArchitecture
-   * @param instructions  the list of instructions associated with the InstructionSetArchitecture
+   * @param identifier    the identifier of the ISA
+   * @param specification the parent specification of the ISA
+   * @param registers     the registers in the ISA. This also includes sub-registers
+   * @param registerFiles the register files in the ISA
+   * @param formats       the list of formats associated with the ISA
+   * @param instructions  the list of instructions associated with the ISA
    */
   public InstructionSetArchitecture(Identifier identifier,
                                     Specification specification,
                                     List<Format> formats,
                                     List<Instruction> instructions,
-                                    List<PseudoInstruction> pseudoInstructions) {
+                                    List<PseudoInstruction> pseudoInstructions,
+                                    List<Register> registers,
+                                    List<RegisterFile> registerFiles
+  ) {
     super(identifier);
     this.specification = specification;
     this.formats = formats;
+    this.registers = registers;
     this.instructions = instructions;
     this.pseudoInstructions = pseudoInstructions;
+    this.registerFiles = registerFiles;
   }
 
   public List<Instruction> instructions() {
@@ -39,6 +48,14 @@ public class InstructionSetArchitecture extends Definition {
 
   public List<PseudoInstruction> pseudoInstructions() {
     return pseudoInstructions;
+  }
+
+  public List<Register> registers() {
+    return registers;
+  }
+
+  public List<RegisterFile> registerFiles() {
+    return registerFiles;
   }
 
   public Stream<Format> formats() {
