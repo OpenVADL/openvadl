@@ -24,6 +24,12 @@ public class Format extends Definition {
   private Field[] fields;
   private FieldAccess[] fieldAccesses;
 
+  /**
+   * Constructs a new instance of a VADL format.
+   *
+   * @param identifier The identifier of the format.
+   * @param type       The type of the format.
+   */
   public Format(Identifier identifier, Type type) {
     super(identifier);
     this.type = type;

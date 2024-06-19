@@ -20,6 +20,13 @@ public class Encoding extends Definition {
   private final Field[] fieldEncodings;
   private final Format.Field[] nonEncodedFormatFields;
 
+  /**
+   * Constructs the encoding of an {@link Instruction}.
+   *
+   * @param identifier     The identifier of the encoding.
+   * @param format         The format of the encoding.
+   * @param fieldEncodings The field encodings.
+   */
   public Encoding(Identifier identifier, Format format, Field[] fieldEncodings) {
     super(identifier);
     this.format = format;
@@ -45,6 +52,12 @@ public class Encoding extends Definition {
     return nonEncodedFormatFields;
   }
 
+  /**
+   * Returns the field encoding for the given format field.
+   *
+   * @param formatField The format field to search for.
+   * @return The field encoding for the given format field, or null if not found.
+   */
   public @Nullable Field fieldEncodingOf(Format.Field formatField) {
     for (Field fieldEncoding : fieldEncodings) {
       if (fieldEncoding.formatField.equals(formatField)) {
@@ -72,11 +85,11 @@ public class Encoding extends Definition {
 
   /**
    * Determines what format fields are not encoded by with the given fieldEncodings.
+   * E.i. all fields in the format that are not referenced by any field of the field encodings.
    */
   private static Format.Field[] determineNoneEncodedFields(Format format, Field[] fieldEncodings) {
     var nonEncodedFormatFields = new ArrayList<Format.Field>();
     // determine all format fields that are not encoded by this encoding
-    // TODO: do not use fields().toList()
     for (Format.Field formatField : format.fields()) {
       boolean found = false;
       for (Field encField : fieldEncodings) {
