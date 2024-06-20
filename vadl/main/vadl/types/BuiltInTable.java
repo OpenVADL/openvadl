@@ -757,6 +757,8 @@ public class BuiltInTable {
       return new BuiltIn(name, null, signature, Kind.FUNCTION);
     }
 
+    // TODO: removed as soon as used
+    @SuppressWarnings("unused")
     private static BuiltIn proc(String name, RelationType signature) {
       return new BuiltIn(name, null, signature, Kind.PROCESS);
     }
