@@ -1,0 +1,38 @@
+package vadl.lcb.lib.Object;
+
+import java.io.IOException;
+import java.util.Map;
+import vadl.gcb.valuetypes.ProcessorName;
+import vadl.lcb.config.LcbConfiguration;
+import vadl.lcb.template.CommonVarNames;
+import vadl.template.AbstractTemplateRenderingPass;
+import vadl.viam.Specification;
+
+/**
+ * This file contains ELF driver code.
+ */
+public class EmitElfCppFilePass extends AbstractTemplateRenderingPass {
+
+  private final ProcessorName processorName;
+
+  public EmitElfCppFilePass(LcbConfiguration lcbConfiguration, ProcessorName processorName)
+      throws IOException {
+    super(lcbConfiguration.outputPath());
+    this.processorName = processorName;
+  }
+
+  @Override
+  protected String getTemplatePath() {
+    return "lcb/llvm/lib/Object/ELF.cpp";
+  }
+
+  @Override
+  protected String getOutputPath() {
+    return "llvm/lib/Object/ELF.cpp";
+  }
+
+  @Override
+  protected Map<String, Object> createVariables(Specification specification) {
+    return Map.of(CommonVarNames.NAMESPACE, specification.name());
+  }
+}

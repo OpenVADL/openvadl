@@ -1,0 +1,226 @@
+#include "[(${namespace})]MCCodeEmitter.h"
+
+#include "MCTargetDesc/[(${namespace})]FixupKinds.h"
+#include "[(${namespace})]MCExpr.h"
+#include "[(${namespace})]MCTargetDesc.h"
+#include "llvm/ADT/SmallVector.h"
+#include "llvm/ADT/Statistic.h"
+#include "llvm/MC/MCAsmInfo.h"
+#include "llvm/MC/MCCodeEmitter.h"
+#include "llvm/MC/MCContext.h"
+#include "llvm/MC/MCExpr.h"
+#include "llvm/MC/MCFixup.h"
+#include "llvm/MC/MCInst.h"
+#include "llvm/MC/MCInstBuilder.h"
+#include "llvm/MC/MCInstrInfo.h"
+#include "llvm/MC/MCRegisterInfo.h"
+#include "llvm/MC/MCSubtargetInfo.h"
+#include "llvm/MC/MCSymbol.h"
+#include "llvm/TargetParser/SubtargetFeature.h"
+#include "llvm/Support/Casting.h"
+#include "llvm/Support/Endian.h"
+#include "llvm/Support/EndianStream.h"
+#include "llvm/Support/ErrorHandling.h"
+#include "llvm/Support/raw_ostream.h"
+#include <cassert>
+#include <cstdint>
+#include <iostream>
+#include <vector>
+#include "Utils/ImmediateUtils.h"
+
+#include "llvm/Support/Debug.h"
+#define DEBUG_TYPE "mc-code-emitter"
+
+using namespace llvm;
+
+[(${namespace})]MCCodeEmitter::[(${namespace})]MCCodeEmitter(const MCInstrInfo &mcii, MCContext &ctx, bool IsBigEndian) : MCII(mcii), Ctx(ctx), EndianEncoding(IsBigEndian ? support::big : support::little), MCInstExpander(ctx)
+{
+}
+
+/** Immediate Encoding **/
+
+MCFixupKind getFixupKind(unsigned Opcode, unsigned OpNo, const MCExpr *Expr)
+{
+    MCExpr::ExprKind kind = Expr->getKind();
+    if (kind == MCExpr::ExprKind::Target)
+    {
+        const [(${namespace})]MCExpr *targetExpr = cast<[(${namespace})]MCExpr>(Expr);
+        [(${namespace})]MCExpr::VariantKind targetKind = targetExpr->getKind();
+        switch (targetKind)
+        {
+        «FOR relocation : processor.list(Relocation)» case ([(${namespace})]MCExpr::VariantKind::«relocation.variantKindIdentifier»):
+        {
+            «FOR elfRelocation : processor.list(ElfRelocation)»
+                    «IF elfRelocation.relocation == relocation»
+                    «FOR target : elfRelocation.targets»
+                    «val operand = target.instruction.operand(target.field.simpleName)»
+                    «val expectedIndex = target.instruction.LLVMOperandToIndexMap.get(operand)» if (Opcode == [(${namespace})]::«target.instruction.simpleName» && OpNo == «expectedIndex»)
+            {
+                return MCFixupKind([(${namespace})]::«elfRelocation.mcFixupKindInfoIdentifier»);
+            }
+            «ENDFOR»
+                    «ENDIF»
+                    «ENDFOR»
+                assert(false && "Could not match variant kind «relocation.variantKindIdentifier»");
+            return MCFixupKind::FK_NONE;
+        }
+            «ENDFOR» default:
+            {
+                // This is an immediate variant kind. Emit fixup for sub expression.
+                return getFixupKind(Opcode, OpNo, targetExpr->getSubExpr());
+                break;
+            }
+        }
+    }
+    else if (kind == MCExpr::ExprKind::SymbolRef)
+    {
+        switch (Opcode)
+        {
+        «FOR instruction : machineInstructionsWithRelocations» case ([(${namespace})]::«instruction.simpleName»):
+        {
+            «FOR operand : instruction.LLVMInputOperands»
+                    «IF hasRelocation(instruction, operand)» if (OpNo == «instruction.LLVMOperandToIndexMap.get(operand)»)
+            {
+                return MCFixupKind([(${namespace})]::«getRelocationForOperand(instruction, operand).mcFixupKindInfoIdentifier»);
+            }
+            «ENDIF»
+                    «ENDFOR»
+                assert(false && "No immediate operand found.");
+            return MCFixupKind::FK_NONE;
+        }
+            «ENDFOR»
+        }
+    }
+    if (kind == MCExpr::ExprKind::Binary)
+    {
+        const MCBinaryExpr *Bin = static_cast<const MCBinaryExpr *>(Expr);
+        MCFixupKind lhs = getFixupKind(Opcode, OpNo, Bin->getLHS());
+        MCFixupKind rhs = getFixupKind(Opcode, OpNo, Bin->getRHS());
+        if (lhs == MCFixupKind::FK_NONE)
+        {
+            return rhs;
+        }
+        else if (rhs == MCFixupKind::FK_NONE)
+        {
+            return lhs;
+        }
+        else if (lhs == rhs)
+        {
+            return lhs;
+        }
+        else
+        {
+            report_fatal_error("Binary expression is too complex.");
+        }
+    }
+    return MCFixupKind::FK_NONE;
+}
+
+void [(${namespace})]MCCodeEmitter::emitFixups(const MCInst MI, unsigned OpNo, const MCExpr *Expr, SmallVectorImpl<MCFixup> &Fixups) const
+{
+    MCFixupKind fixupKind = getFixupKind(MI.getOpcode(), OpNo, Expr);
+    if (fixupKind != MCFixupKind::FK_NONE)
+    {
+        Fixups.push_back(
+            MCFixup::create(Offset, Expr, fixupKind, MI.getLoc()));
+    }
+}
+
+«FOR Immediate immediate : processor.list(Immediate) SEPARATOR "\n"» unsigned [(${namespace})]MCCodeEmitter::encode«immediate.loweredImmediate.identifier»(const MCInst &MI, unsigned OpNo, SmallVectorImpl<MCFixup> &Fixups, const MCSubtargetInfo &STI) const
+{
+    const MCOperand &MO = MI.getOperand(OpNo);
+
+    if (MO.isImm())
+        return «immediate.loweredImmediate.identifier»::«immediate.loweredImmediate.encoding.identifier»(MO.getImm());
+
+    int64_t imm;
+    if (AsmUtils::evaluateConstantImm(&MO, imm))
+        return «immediate.loweredImmediate.identifier»::«immediate.loweredImmediate.encoding.identifier»(imm);
+
+    assert(MO.isExpr() && "encode«immediate.loweredImmediate.identifier» expects only expressions or immediates");
+
+    emitFixups(MI, OpNo, MO.getExpr(), Fixups);
+
+    return 0;
+}
+«ENDFOR»
+
+    void [(${namespace})]MCCodeEmitter::encodeInstruction(const MCInst &MCI, raw_ostream &OS, SmallVectorImpl<MCFixup> &Fixups, const MCSubtargetInfo &STI) const
+{
+    Offset = 0;
+    std::vector<MCInst> resultVec;
+
+    if (MCInstExpander.isExpandable(MCI))
+    {
+        MCInstExpander.expand(MCI, resultVec);
+    }
+    else
+    {
+        resultVec.push_back(MCI);
+    }
+
+    for (auto it = std::begin(resultVec); it != std::end(resultVec); ++it)
+    {
+        MCInst MI = *it;
+        encodeNonPseudoInstruction(MI, OS, Fixups, STI);
+        const MCInstrDesc &Desc = MCII.get(MI.getOpcode());
+        unsigned Size = Desc.getSize();
+        Offset += Size;
+    }
+}
+
+void [(${namespace})]MCCodeEmitter::encodeNonPseudoInstruction(const MCInst &MI, raw_ostream &OS, SmallVectorImpl<MCFixup> &Fixups, const MCSubtargetInfo &STI) const
+{
+    // Get byte count of instruction.
+    const MCInstrDesc &Desc = MCII.get(MI.getOpcode());
+    unsigned Size = Desc.getSize();
+
+    switch (Size)
+    {
+    case 1:
+    {
+        uint8_t Bits = getBinaryCodeForInstr(MI, Fixups, STI);
+        support::endian::write<uint8_t>(OS, Bits, EndianEncoding);
+        break;
+    }
+    case 2:
+    {
+        uint16_t Bits = getBinaryCodeForInstr(MI, Fixups, STI);
+        support::endian::write<uint16_t>(OS, Bits, EndianEncoding);
+        break;
+    }
+    case 4:
+    {
+        uint32_t Bits = getBinaryCodeForInstr(MI, Fixups, STI);
+        support::endian::write<uint32_t>(OS, Bits, EndianEncoding);
+        break;
+    }
+    case 8:
+    {
+        uint64_t Bits = getBinaryCodeForInstr(MI, Fixups, STI);
+        support::endian::write<uint64_t>(OS, Bits, EndianEncoding);
+        break;
+    }
+    default:
+    {
+        llvm_unreachable("encodeInstruction() unimplemented byte size");
+    }
+    }
+}
+
+unsigned [(${namespace})]MCCodeEmitter::getMachineOpValue(const MCInst &MI, const MCOperand &MO, SmallVectorImpl<MCFixup> &Fixups, const MCSubtargetInfo &STI) const
+{
+    // TODO: @chochrainer FIXME: emit all expressions
+
+    if (MO.isReg())
+        return Ctx.getRegisterInfo()->getEncodingValue(MO.getReg());
+
+    if (MO.isImm())
+        return MO.getImm();
+
+    // expressions should have been handled with separate method and tablegen registering
+    llvm_unreachable("Unhandled expression!");
+    return 0;
+}
+
+#include "[(${namespace})]GenMCCodeEmitter.inc"

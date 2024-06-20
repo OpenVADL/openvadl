@@ -1,9 +1,7 @@
 package vadl.pass;
 
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.io.IOException;
+import java.util.*;
 import java.util.stream.Collectors;
 import vadl.pass.exception.DuplicatedPassKeyException;
 import vadl.viam.Specification;
@@ -42,15 +40,20 @@ public class PassManager {
   /**
    * Run the passes which have been added in order.
    */
-  public void run(Specification viam) {
+  public void run(Specification viam) throws IOException {
     for (var step : pipeline) {
-      var passResult = step.pass().execute(passResults, viam);
-      var previousResult = passResults.put(step.key(), passResult);
+      // Wrapping the passResults into an unmodifiable map so a pass cannot modify
+      // the results.
+      var passResult = step.pass().execute(Collections.unmodifiableMap(passResults), viam);
 
-      // The pipeline's steps should be deterministic.
-      // If we overwrite an already existing result then it is very likely
-      // that it is a bug because we schedule the same pass with the same key multiple times.
-      assert previousResult == null;
+      if (passResult != null) {
+        var previousResult = passResults.put(step.key(), passResult);
+
+        // The pipeline's steps should be deterministic.
+        // If we overwrite an already existing result then it is very likely
+        // that it is a bug because we schedule the same pass with the same key multiple times.
+        assert previousResult == null;
+      }
     }
   }
 
