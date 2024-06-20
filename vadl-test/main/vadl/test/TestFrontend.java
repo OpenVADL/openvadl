@@ -1,7 +1,6 @@
 package vadl.test;
 
-import java.nio.file.Path;
-import java.util.Optional;
+import java.net.URI;
 import javax.annotation.Nullable;
 import vadl.viam.Specification;
 
@@ -10,26 +9,49 @@ import vadl.viam.Specification;
  * This allows to define tests in open-vadl while executing them from the old vadl project.
  *
  * <p>The old vadl implements the interface and sets the
- * {@link TestFrontend.Provider#globalFrontend} before executing the tests in the
+ * {@link TestFrontend.Provider#globalProvider} before executing the tests in the
  * {@link vadl.test} package.</p>
  */
 public interface TestFrontend {
 
-  Optional<Specification> runSpecification(Path vadlFile);
+  /**
+   * Runs the specification until AST to VIAM conversion is done.
+   *
+   * @param vadlFile the specification file
+   * @return true if success, otherwise false
+   */
+  boolean runSpecification(URI vadlFile);
 
   /**
-   * Holds the global frontend that can be dynamically set by the test executor.
+   * Get the VIAM from the run result. This must be called after
+   * {@link TestFrontend#runSpecification}.
    */
-  class Provider {
+  Specification getViam();
+
+  /**
+   * Get the logs that were emitted during execution as String.
+   */
+  String getLogAsString();
+
+  /**
+   * Holds the global frontend provider that can be dynamically set by the test executor.
+   */
+  abstract class Provider {
 
     /**
-     * The global frontend.
+     * The global frontend provider.
      *
-     * <p>In order to run the tests defined here, the {@code globalFrontend} must be set
+     * <p>In order to run the tests defined here, the {@code globalProvider} must be set
      * before running the tests. This is currently done in the old vadl project.</p>
      */
     @Nullable
-    public static TestFrontend globalFrontend;
+    public static Provider globalProvider;
+
+    /**
+     * Creates a new instance of the {@link TestFrontend}.
+     */
+    abstract public TestFrontend createFrontend();
   }
+
 
 }
