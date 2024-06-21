@@ -1,0 +1,12 @@
+
+// format with slices
+format BYTE_SLICE : Bits<8> =
+  { HI  [7..4]
+  , LO  [3..0]
+  }
+
+// format with types
+format BYTE_TYPE : Bits<10> =
+  { HI : Bits<6>
+  , LO : Bits<4>
+  }
