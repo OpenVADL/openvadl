@@ -1,7 +1,6 @@
 package vadl.viam;
 
-import java.util.ArrayList;
-import java.util.List;
+import java.util.Comparator;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 import javax.annotation.Nullable;
@@ -46,7 +45,9 @@ public class Format extends Definition {
    * Used by VIAM builder only.
    */
   public void setFields(Field[] fields) {
-    this.fields = fields;
+    this.fields = Stream.of(fields)
+        .sorted(Comparator.comparingInt(a -> -a.bitSlice.msb()))
+        .toArray(Field[]::new);
   }
 
   public FieldAccess[] fieldAccesses() {
@@ -67,10 +68,10 @@ public class Format extends Definition {
   @Override
   public String toString() {
     return "Format{ " + identifier + ": " + type + "{\n\t"
-        + Stream.concat(Stream.of(fields), Stream.of(fieldAccesses))
-        .map(Definition::toString)
-        .collect(Collectors.joining("\n\t"))
-        + "\n}";
+           + Stream.concat(Stream.of(fields), Stream.of(fieldAccesses))
+               .map(Definition::toString)
+               .collect(Collectors.joining("\n\t"))
+           + "\n}";
   }
 
   @Override
@@ -250,12 +251,12 @@ public class Format extends Definition {
       this.predicate = predicate;
 
       encoding.ensure(encoding.returnType() instanceof DataType
-              && ((DataType) encoding.returnType()).canBeCastTo(fieldRef.type()),
+                      && ((DataType) encoding.returnType()).canBeCastTo(fieldRef.type()),
           "Encoding type mismatch. Couldn't match encoding type %s with field reference type %s",
           encoding.returnType(), fieldRef().type());
     }
 
-    public Function decoding() {
+    public Function accessFunction() {
       return accessFunction;
     }
 
