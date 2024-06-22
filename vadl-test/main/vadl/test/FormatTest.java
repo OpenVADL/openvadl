@@ -23,6 +23,7 @@ import vadl.viam.graph.dependency.BuiltInCall;
 import vadl.viam.graph.dependency.ConstantNode;
 import vadl.viam.graph.dependency.TypeCastNode;
 
+@SuppressWarnings({"Indentation", "LocalVariableName", "VariableDeclarationUsageDistance"})
 public class FormatTest extends AbstractTest {
 
   @ParameterizedTest(name = "{index} {0}")
@@ -33,8 +34,7 @@ public class FormatTest extends AbstractTest {
 
   public static Stream<Arguments> invalidFormatTestSources() {
     return getTestSourceArgsForParameterizedTest("format/invalid_",
-        arguments("fieldAccess_encFunc",
-            "No access function on field 'LO' found"),
+        arguments("fieldAccess_encFunc", "No access function on field 'LO' found"),
         arguments("fieldAccess_encFunc2", "Parameter `LO` not found in function parameters"),
         arguments("fieldAccess_encFunc3",
             "Missing encode definition for access function 'VAR' on field 'HI'"),

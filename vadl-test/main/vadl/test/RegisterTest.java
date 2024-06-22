@@ -31,6 +31,7 @@ import vadl.viam.graph.dependency.ReadRegNode;
 import vadl.viam.graph.dependency.WriteRegFileNode;
 import vadl.viam.graph.dependency.WriteRegNode;
 
+@SuppressWarnings({"Indentation", "LocalVariableName", "VariableDeclarationUsageDistance"})
 public class RegisterTest extends AbstractTest {
 
   @ParameterizedTest(name = "{index} {0}")
@@ -39,7 +40,7 @@ public class RegisterTest extends AbstractTest {
     runAndAssumeFailure(testSource, failureMessage);
   }
 
-  public static Stream<Arguments> invalidRegisterTestSources() {
+  private static Stream<Arguments> invalidRegisterTestSources() {
     return getTestSourceArgsForParameterizedTest("register/invalid_",
         arguments("reg_invalidFormat",
             "Format field must only contain proper slices without any unused gaps.")

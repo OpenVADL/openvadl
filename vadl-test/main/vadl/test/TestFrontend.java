@@ -50,7 +50,7 @@ public interface TestFrontend {
     /**
      * Creates a new instance of the {@link TestFrontend}.
      */
-    abstract public TestFrontend createFrontend();
+    public abstract TestFrontend createFrontend();
   }
 
 

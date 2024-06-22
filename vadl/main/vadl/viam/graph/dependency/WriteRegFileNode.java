@@ -21,9 +21,16 @@ public class WriteRegFileNode extends WriteResourceNode {
   @DataValue
   protected RegisterFile registerFile;
 
-  public WriteRegFileNode(RegisterFile registerFile, ExpressionNode location,
+  /**
+   * Writes a value to a register file node.
+   *
+   * @param registerFile The register file to write to.
+   * @param address      The index/address node of the register file.
+   * @param value        The value to be written.
+   */
+  public WriteRegFileNode(RegisterFile registerFile, ExpressionNode address,
                           ExpressionNode value) {
-    super(location, value);
+    super(address, value);
     this.registerFile = registerFile;
 
     verifyState();

@@ -48,8 +48,8 @@ public abstract class WriteResourceNode extends SideEffectNode {
     super.verifyState();
     var resource = resourceDefinition();
 
-    ensure(value.type() instanceof DataType &&
-           ((DataType) value.type()).canBeCastTo(resource.resultType()),
+    ensure(value.type() instanceof DataType
+           && ((DataType) value.type()).canBeCastTo(resource.resultType()),
         "Mismatching resource type. Value expression's type (%s) cannot be cast to "
         + "resource's result type (%s).",
         value.type(), resource.resultType());

@@ -21,6 +21,12 @@ public class WriteRegNode extends WriteResourceNode {
   @DataValue
   protected Register register;
 
+  /**
+   * Writes a value to a register node.
+   *
+   * @param register the register node to write to
+   * @param value    the value to write to the register
+   */
   public WriteRegNode(Register register, ExpressionNode value) {
     super(null, value);
     this.register = register;

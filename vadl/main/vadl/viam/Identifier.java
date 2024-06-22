@@ -13,12 +13,14 @@ public record Identifier(
     SourceLocation sourceLocation
 ) {
 
-  public Identifier(String[] parts, SourceLocation sourceLocation) {
+
+  /**
+   * Normalize the parts of the identifier by removing leading and trailing dots.
+   */
+  public Identifier {
     for (int i = 0; i < parts.length; i++) {
       parts[i] = normalizePart(parts[i]);
     }
-    this.parts = parts;
-    this.sourceLocation = sourceLocation;
   }
 
   public Identifier(String name, SourceLocation sourceLocation) {
