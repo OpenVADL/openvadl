@@ -98,7 +98,9 @@ public class AbstractTest {
     var sourceUri = getUriFromTestSource(testSourcePath);
     var success = testFrontend.runSpecification(sourceUri);
     if (!success) {
-      fail(testFrontend.getLogAsString());
+      var logs = testFrontend.getLogAsString();
+      var errorLogs = logs.substring(logs.indexOf(" error: "));
+      fail(errorLogs);
     }
     return testFrontend.getViam();
   }

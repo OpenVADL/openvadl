@@ -1,0 +1,38 @@
+
+instruction set architecture Test = {
+  using Regs = Bits<32>
+
+  register B: HELPER
+  [ write full ]
+  register C: HELPER
+
+  register file D: Regs -> Regs
+
+  // full write
+  instruction FIRST: HELPER = B := A
+
+  // partial write
+  instruction SECOND: HELPER = B.ONE := A
+
+  // partial write on full access
+  // not yet supported
+  //   instruction THIRD: HELPER = C.ONE := A
+
+  // register file write
+  instruction FOURTH: HELPER = D(B.ONE) := A
+
+
+  // Not so important definitions
+  register A: Regs
+
+  encoding FIRST = { ONE = 2 }
+  encoding SECOND = { ONE = 2 }
+//   encoding THIRD = { ONE = 2 }
+  encoding FOURTH = { ONE = 2 }
+  assembly FIRST, SECOND, FOURTH = "just a dummy"
+
+  format HELPER: Regs =
+  { ONE: Regs
+  }
+
+}
