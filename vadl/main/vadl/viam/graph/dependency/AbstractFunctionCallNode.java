@@ -22,6 +22,10 @@ public abstract class AbstractFunctionCallNode extends ExpressionNode {
     this.args = args;
   }
 
+  public NodeList<ExpressionNode> arguments() {
+    return args;
+  }
+
   @Override
   protected void collectInputs(List<Node> collection) {
     super.collectInputs(collection);

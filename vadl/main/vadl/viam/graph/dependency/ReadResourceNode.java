@@ -26,7 +26,7 @@ public abstract class ReadResourceNode extends ExpressionNode {
   }
 
   public ExpressionNode address() {
-    ensureNonNull(address, "Location is not set");
+    ensureNonNull(address, "Address is not set. Check hasAddress before access.");
     return address;
   }
 

@@ -1,7 +1,11 @@
 package vadl.viam.graph.dependency;
 
 import java.util.List;
+import java.util.Objects;
+import javax.annotation.Nullable;
 import vadl.javaannotations.viam.Input;
+import vadl.types.DataType;
+import vadl.viam.Resource;
 import vadl.viam.graph.GraphVisitor;
 import vadl.viam.graph.Node;
 
@@ -12,21 +16,66 @@ import vadl.viam.graph.Node;
 public abstract class WriteResourceNode extends SideEffectNode {
 
   @Input
-  protected ExpressionNode location;
+  @Nullable
+  protected ExpressionNode address;
 
   @Input
   protected ExpressionNode value;
 
-  public WriteResourceNode(ExpressionNode location, ExpressionNode value) {
-    this.location = location;
+  public WriteResourceNode(@Nullable ExpressionNode address, ExpressionNode value) {
+    this.address = address;
     this.value = value;
   }
 
+  public boolean hasAddress() {
+    return address != null;
+  }
+
+  @Nullable
+  public ExpressionNode address() {
+    ensureNonNull(address, "Address is not set. Check hasAddress() first.");
+    return address;
+  }
+
+  public ExpressionNode value() {
+    return value;
+  }
+
+  protected abstract Resource resourceDefinition();
+
+  @Override
+  public void verifyState() {
+    super.verifyState();
+    var resource = resourceDefinition();
+
+    ensure(value.type() instanceof DataType &&
+           ((DataType) value.type()).canBeCastTo(resource.resultType()),
+        "Mismatching resource type. Value expression's type (%s) cannot be cast to "
+        + "resource's result type (%s).",
+        value.type(), resource.resultType());
+
+    ensure(resource.hasAddress() == hasAddress(),
+        "Resource takes address but this node has no address node.");
+
+    if (address != null) {
+      var addressType = address.type();
+      var resAddrType = resource.addressType();
+      Objects.requireNonNull(resAddrType); // just to satisfy errorprone
+      ensure(addressType instanceof DataType,
+          "Address must be a DataValue, was %s", address.type());
+      ensure(((DataType) addressType).canBeCastTo(resAddrType),
+          "Address value cannot be cast to resource's address type. %s vs %s",
+          resource.addressType(), addressType);
+    }
+
+  }
 
   @Override
   protected void collectInputs(List<Node> collection) {
     super.collectInputs(collection);
-    collection.add(location);
+    if (this.address != null) {
+      collection.add(address);
+    }
     collection.add(value);
   }
 
@@ -34,7 +83,7 @@ public abstract class WriteResourceNode extends SideEffectNode {
   @Override
   public void applyOnInputsUnsafe(GraphVisitor.Applier<Node> visitor) {
     super.applyOnInputsUnsafe(visitor);
-    location = visitor.apply(this, location, ExpressionNode.class);
+    address = visitor.applyNullable(this, address, ExpressionNode.class);
     value = visitor.apply(this, value, ExpressionNode.class);
   }
 }
