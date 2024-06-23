@@ -45,7 +45,7 @@ public class TestUtils {
    * @return the format with the given name
    * @throws AssertionError if the number of formats found with the given name is not equal to 1
    */
-  static Format findFormatByName(String name, Specification spec) {
+  public static Format findFormatByName(String name, Specification spec) {
     var formats = spec.findAllFormats()
         .filter(f -> f.identifier.name().equals(name))
         .toList();
@@ -61,8 +61,8 @@ public class TestUtils {
    * @return the Definition with the given name
    * @throws AssertionError if the number of Definitions found with the given name is not equal to 1
    */
-  static <T extends Definition> T findDefinitionByNameIn(String name, Definition spec,
-                                                         Class<T> definitionClass) {
+  public static <T extends Definition> T findDefinitionByNameIn(String name, Definition spec,
+                                                                Class<T> definitionClass) {
     var result = filterAllDefinitionsIn(spec,
         (def) -> definitionClass.isInstance(def) && def.identifier.name().equals(name));
 
