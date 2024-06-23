@@ -84,20 +84,20 @@ public class RegisterTest extends AbstractTest {
     }
 
     var PP = (Register) findResourceByName("Test.PP", spec);
-    var PP_N = (Register) findResourceByName("Test.PP.N", spec);
-    var PP_N_H = (Register) findResourceByName("Test.PP.N.H", spec);
-    var PP_N_L = (Register) findResourceByName("Test.PP.N.L", spec);
-    var PP_P = (Register) findResourceByName("Test.PP.P", spec);
+    var PP_N = (Register) findResourceByName("Test.PP_N", spec);
+    var PP_N_H = (Register) findResourceByName("Test.PP_N_H", spec);
+    var PP_N_L = (Register) findResourceByName("Test.PP_N_L", spec);
+    var PP_P = (Register) findResourceByName("Test.PP_P", spec);
     var PF = (Register) findResourceByName("Test.PF", spec);
-    var PF_N = (Register) findResourceByName("Test.PF.N", spec);
-    var PF_N_H = (Register) findResourceByName("Test.PF.N.H", spec);
-    var PF_N_L = (Register) findResourceByName("Test.PF.N.L", spec);
-    var PF_P = (Register) findResourceByName("Test.PF.P", spec);
+    var PF_N = (Register) findResourceByName("Test.PF_N", spec);
+    var PF_N_H = (Register) findResourceByName("Test.PF_N_H", spec);
+    var PF_N_L = (Register) findResourceByName("Test.PF_N_L", spec);
+    var PF_P = (Register) findResourceByName("Test.PF_P", spec);
     var FP = (Register) findResourceByName("Test.FP", spec);
-    var FP_N = (Register) findResourceByName("Test.FP.N", spec);
-    var FP_N_H = (Register) findResourceByName("Test.FP.N.H", spec);
-    var FP_N_L = (Register) findResourceByName("Test.FP.N.L", spec);
-    var FP_P = (Register) findResourceByName("Test.FP.P", spec);
+    var FP_N = (Register) findResourceByName("Test.FP_N", spec);
+    var FP_N_H = (Register) findResourceByName("Test.FP_N_H", spec);
+    var FP_N_L = (Register) findResourceByName("Test.FP_N_L", spec);
+    var FP_P = (Register) findResourceByName("Test.FP_P", spec);
     var FF = (Register) findResourceByName("Test.FF", spec);
 
     var outer = findFormatByName("Test.OUTER", spec);
@@ -155,7 +155,7 @@ public class RegisterTest extends AbstractTest {
     var spec = runAndGetViamSpecification("register/valid_reg_read.vadl");
     var a = (Register) findResourceByName("Test.A", spec);
     var b = (Register) findResourceByName("Test.B", spec);
-    var b_one = (Register) findResourceByName("Test.B.ONE", spec);
+    var b_one = (Register) findResourceByName("Test.B_ONE", spec);
     var c = (Register) findResourceByName("Test.C", spec);
     var d = (RegisterFile) findResourceByName("Test.D", spec);
 
@@ -258,7 +258,7 @@ public class RegisterTest extends AbstractTest {
   void testWriteReg() {
     var spec = runAndGetViamSpecification("register/valid_reg_write.vadl");
     var b = (Register) findResourceByName("Test.B", spec);
-    var b_one = (Register) findResourceByName("Test.B.ONE", spec);
+    var b_one = (Register) findResourceByName("Test.B_ONE", spec);
     var d = (RegisterFile) findResourceByName("Test.D", spec);
 
     {

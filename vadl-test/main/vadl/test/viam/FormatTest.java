@@ -181,21 +181,21 @@ public class FormatTest extends AbstractTest {
       assertEquals("SIMPLE_ACCESS.VAR", var.identifier.name());
 
       var accessFunction = var.accessFunction();
-      assertEquals("SIMPLE_ACCESS.VAR.decode", accessFunction.identifier.name());
+      assertEquals("SIMPLE_ACCESS.VAR_decode", accessFunction.identifier.name());
       assertEquals(Type.concreteRelation(Type.bits(4)),
           accessFunction.signature());
       assertEquals(accessFunction.returnType(), var.type());
 
       var predicate = var.predicate();
-      assertEquals("SIMPLE_ACCESS.VAR.predicate", predicate.identifier.name());
+      assertEquals("SIMPLE_ACCESS.VAR_predicate", predicate.identifier.name());
       assertEquals(Type.concreteRelation(Type.bits(4), Type.bool()), predicate.signature());
       assertTrue(predicate.behavior().isPureFunction());
       assertEquals(1, predicate.behavior().getNodes(ConstantNode.class).count());
 
       var encoding = var.encoding();
-      assertEquals("SIMPLE_ACCESS.HI.encode0", encoding.identifier.name());
+      assertEquals("SIMPLE_ACCESS.HI_encode0", encoding.identifier.name());
       assertEquals(Type.concreteRelation(Type.bits(4), hi.type()), encoding.signature());
-      assertEquals("SIMPLE_ACCESS.HI.encode0.VAR",
+      assertEquals("SIMPLE_ACCESS.HI_encode0.VAR",
           encoding.parameters()[0].identifier.name());
     }
 
@@ -208,18 +208,18 @@ public class FormatTest extends AbstractTest {
       var var = fieldAccesses[0];
 
       var predicate = var.predicate();
-      assertEquals("AUXILIARY_ACCESS.VAR.predicate0", predicate.identifier.name());
+      assertEquals("AUXILIARY_ACCESS.VAR_predicate0", predicate.identifier.name());
       assertEquals(Type.concreteRelation(Type.bits(4), Type.bool()), predicate.signature());
       assertTrue(predicate.behavior().isPureFunction());
-      assertEquals("AUXILIARY_ACCESS.VAR.predicate0.VAR",
+      assertEquals("AUXILIARY_ACCESS.VAR_predicate0.VAR",
           predicate.parameters()[0].identifier.name());
       assertEquals(1, predicate.behavior().getNodes(BuiltInCall.class).count());
 
       var encoding = var.encoding();
-      assertEquals("AUXILIARY_ACCESS.HI.encode0", encoding.identifier.name());
+      assertEquals("AUXILIARY_ACCESS.HI_encode0", encoding.identifier.name());
       assertEquals(Type.concreteRelation(Type.bits(4), hi.type()), encoding.signature());
       assertTrue(encoding.behavior().isPureFunction());
-      assertEquals("AUXILIARY_ACCESS.HI.encode0.VAR",
+      assertEquals("AUXILIARY_ACCESS.HI_encode0.VAR",
           encoding.parameters()[0].identifier.name());
       assertEquals(1, encoding.behavior().getNodes(TypeCastNode.class).count());
     }
