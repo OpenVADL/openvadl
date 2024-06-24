@@ -1,0 +1,29 @@
+// Specification with extending ISA and ISA cross-accessing definitions
+
+instruction set architecture Base = {
+
+  // check 1
+  register A: Sub::X
+
+  format X: Bits<2> =
+  { A: Bits<1>
+  , B: Bits<1>
+  }
+
+}
+
+
+instruction set architecture Sub extending Base = {
+
+  register A: X
+  register B: Base::X
+
+  format Y: Bits<2> =
+  { A: Base::X
+  }
+
+  format X: Bits<1> =
+  { A: Bits<1>
+  }
+
+}
