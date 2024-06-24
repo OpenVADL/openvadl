@@ -30,7 +30,6 @@ public class Graph {
   private SourceLocation sourceLocation = SourceLocation.INVALID_SOURCE_LOCATION;
 
   ArrayList<Node> nodes;
-  private long removedNodes = 0;
 
   private static final int INITIAL_GRAPH_SIZE = 32;
 
@@ -243,7 +242,6 @@ public class Graph {
   protected void remove(Node node) {
     node.ensure(node.isActiveIn(this), "node is not active in this graph %s", this);
     nodes.set(node.id().numericId(), null);
-    removedNodes++;
     node.id().turnDeleted();
   }
 

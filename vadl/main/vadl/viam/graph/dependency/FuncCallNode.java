@@ -22,6 +22,11 @@ public class FuncCallNode extends AbstractFunctionCallNode {
     this.function = function;
   }
 
+
+  public Function function() {
+    return function;
+  }
+
   @Override
   public void verifyState() {
     super.verifyState();

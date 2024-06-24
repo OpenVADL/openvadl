@@ -12,6 +12,7 @@ import vadl.viam.Resource;
  */
 public class ReadMemNode extends ReadResourceNode {
 
+  // TODO: Change to memory definition
   @DataValue
   protected Register register;
 

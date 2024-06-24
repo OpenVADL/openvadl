@@ -16,7 +16,7 @@ public class RegisterFile extends Resource {
 
   private final DataType accessType;
   private final DataType resultType;
-  private final List<Constraint> constraints;
+  private final Constraint[] constraints;
 
   /**
    * Constructs a new RegisterFile object.
@@ -25,11 +25,12 @@ public class RegisterFile extends Resource {
    * @param accessType The data type of the file address/index.
    * @param resultType The data type of the result value.
    */
-  public RegisterFile(Identifier identifier, DataType accessType, DataType resultType) {
+  public RegisterFile(Identifier identifier, DataType accessType, DataType resultType,
+                      Constraint[] constraints) {
     super(identifier);
     this.accessType = accessType;
     this.resultType = resultType;
-    this.constraints = new ArrayList<>();
+    this.constraints = constraints;
   }
 
 
@@ -53,12 +54,23 @@ public class RegisterFile extends Resource {
     return Type.concreteRelation(accessType, resultType);
   }
 
-  public void addConstraint(Constant.Value address, Constant.Value value) {
-    constraints.add(new Constraint(address, value, this));
+  public Constraint[] constraints() {
+    return constraints;
   }
 
-  public List<Constraint> constraints() {
-    return constraints;
+  @Override
+  public void verify() {
+    super.verify();
+
+    for (Constraint constraint : constraints) {
+      ensure(constraint.value.type().canBeCastTo(resultType),
+          "Type missmatch: Can't cast value type %s to register file result type %s.",
+          constraint.value.type(), this.resultType);
+
+      ensure(constraint.address.type().canBeCastTo(accessType),
+          "Type missmatch: Can't cast address type %s to register file address type %s.",
+          constraint.address.type(), this.resultType);
+    }
   }
 
   @Override
@@ -84,40 +96,12 @@ public class RegisterFile extends Resource {
    * defines that the address 0 always results in 0 on register file X.
    * </p>
    *
-   * @param address      of constraint
-   * @param value        of constraint
-   * @param registerFile associated to constraint
+   * @param address of constraint
+   * @param value   of constraint
    */
   public record Constraint(
       Constant.Value address,
-      Constant.Value value,
-      RegisterFile registerFile
+      Constant.Value value
   ) {
-
-    /**
-     * Constructs the constraint of a given register file.
-     *
-     * @param address      the address constant
-     * @param value        the value constant that is always returned when using the address
-     * @param registerFile the register file to which this condition belongs
-     */
-    public Constraint(
-        Constant.Value address,
-        Constant.Value value,
-        RegisterFile registerFile
-    ) {
-      this.address = address;
-      this.value = value;
-      this.registerFile = registerFile;
-
-      registerFile.ensure(value.type().canBeCastTo(registerFile.resultType),
-          "Type missmatch: Can't cast value type %s to register file result type %s.",
-          value.type(), registerFile);
-
-      registerFile.ensure(address.type().canBeCastTo(registerFile.accessType),
-          "Type missmatch: Can't cast address type %s to register file address type %s.",
-          address.type(), registerFile);
-    }
-
   }
 }

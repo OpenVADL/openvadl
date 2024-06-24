@@ -2,12 +2,12 @@ package vadl.viam.graph.dependency;
 
 import java.util.List;
 import vadl.javaannotations.viam.DataValue;
-import vadl.viam.Register;
+import vadl.viam.RegisterFile;
 import vadl.viam.Resource;
 import vadl.viam.graph.UniqueNode;
 
 /**
- * Represents a write to register.
+ * Represents a write to register file.
  *
  * <p>Even though this is a side effect, it is both, a {@link DependencyNode}
  * and a {@link UniqueNode}. This is because of VADL's semantic constraints
@@ -16,36 +16,38 @@ import vadl.viam.graph.UniqueNode;
  * <li>All reads must occur before all writes</li>
  * </p>
  */
-public class WriteRegNode extends WriteResourceNode {
+public class WriteRegFileNode extends WriteResourceNode {
 
   @DataValue
-  protected Register register;
+  protected RegisterFile registerFile;
 
   /**
-   * Writes a value to a register node.
+   * Writes a value to a register file node.
    *
-   * @param register the register node to write to
-   * @param value    the value to write to the register
+   * @param registerFile The register file to write to.
+   * @param address      The index/address node of the register file.
+   * @param value        The value to be written.
    */
-  public WriteRegNode(Register register, ExpressionNode value) {
-    super(null, value);
-    this.register = register;
+  public WriteRegFileNode(RegisterFile registerFile, ExpressionNode address,
+                          ExpressionNode value) {
+    super(address, value);
+    this.registerFile = registerFile;
 
     verifyState();
   }
 
-  public Register register() {
-    return register;
+  public RegisterFile registerFile() {
+    return registerFile;
   }
 
   @Override
   protected Resource resourceDefinition() {
-    return register;
+    return registerFile;
   }
 
   @Override
   protected void collectData(List<Object> collection) {
     super.collectData(collection);
-    collection.add(register);
+    collection.add(registerFile);
   }
 }

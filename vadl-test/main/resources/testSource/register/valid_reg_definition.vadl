@@ -1,0 +1,33 @@
+
+instruction set architecture Test = {
+  using Regs = Bits<32>
+
+  register X: Regs
+
+  // read and write are partial by default
+  // (PartialPartial)
+  register PP: OUTER
+
+  // PartialFull
+  [ write full ]
+  register PF: OUTER
+
+  [ read full ]
+  register FP: OUTER
+
+  // shouldn't create any sub register
+  [ read full ]
+  [ write full ]
+  register FF: OUTER
+
+  format OUTER : Bits<18> =
+    { N : INNER
+    , P : Bits<8>
+    }
+}
+
+// moved to outer to add a little variety
+format INNER : Bits<10> =
+  { H  [9..4]
+  , L  [3..0]
+  }

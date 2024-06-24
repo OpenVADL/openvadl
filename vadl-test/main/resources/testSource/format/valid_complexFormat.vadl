@@ -1,0 +1,29 @@
+
+// format with slices
+format INNER_ONE : Bits<8> =
+  { HI  [7..4]
+  , LO  [3..0]
+  }
+
+format INNER_TWO : Bits<10> =
+  { HI  [9..4]
+  , LO  [3..0]
+  }
+
+// format with types
+format OUTER : Bits<18> =
+  { ONE : INNER_ONE
+  , TWO : INNER_TWO
+  }
+
+format SLICE_MIX: Bits<10> =
+  { FIRST  [2, 0, 9..7]
+  , SECOND [6..4, 1]
+  , THIRD  [3]
+  }
+
+format OUT_OF_ORDER: Bits<6> =
+  { SECOND [4, 2..0]
+  , THIRD  [3]
+  , FIRST  [5]
+  }

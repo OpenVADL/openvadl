@@ -22,6 +22,10 @@ public class ReadRegFileNode extends ReadResourceNode {
     this.registerFile = registerFile;
   }
 
+  public RegisterFile registerFile() {
+    return registerFile;
+  }
+
   @Override
   protected Resource resourceDefinition() {
     return registerFile;

@@ -1,5 +1,7 @@
 package vadl.viam.graph.dependency;
 
+import vadl.javaannotations.viam.DataValue;
+import vadl.viam.Resource;
 import vadl.viam.graph.UniqueNode;
 
 /**
@@ -13,7 +15,18 @@ import vadl.viam.graph.UniqueNode;
  * </p>
  */
 public class WriteMemNode extends WriteResourceNode {
+
+  // TODO: Add memory definition
+
   public WriteMemNode(ExpressionNode location, ExpressionNode value) {
     super(location, value);
+    // TODO: call verify state
+  }
+
+  @Override
+  @SuppressWarnings("NullAway")
+  protected Resource resourceDefinition() {
+    // TODO: Fix and remove suppression
+    return null;
   }
 }

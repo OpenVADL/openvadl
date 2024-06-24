@@ -13,12 +13,23 @@ public record Identifier(
     SourceLocation sourceLocation
 ) {
 
+
+  /**
+   * Normalize the parts of the identifier by removing leading and trailing dots.
+   */
+  public Identifier {
+    for (int i = 0; i < parts.length; i++) {
+      parts[i] = normalizePart(parts[i]);
+    }
+  }
+
   public Identifier(String name, SourceLocation sourceLocation) {
-    this(new String[] {name}, sourceLocation);
+    this(List.of(name), sourceLocation);
   }
 
   public Identifier(List<String> parts, SourceLocation sourceLocation) {
-    this(parts.toArray(String[]::new), sourceLocation);
+    this(parts.toArray(String[]::new),
+        sourceLocation);
   }
 
   /**
@@ -88,6 +99,17 @@ public record Identifier(
 
   public String simpleName() {
     return this.parts[this.parts.length - 1];
+  }
+
+  private static String normalizePart(String part) {
+    part = part.trim();
+    if (part.startsWith(".")) {
+      part = part.substring(1);
+    }
+    if (part.endsWith(".")) {
+      part = part.substring(0, part.length() - 1);
+    }
+    return part;
   }
 
 }

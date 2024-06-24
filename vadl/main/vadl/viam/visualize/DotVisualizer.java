@@ -92,6 +92,7 @@ class DotGraphContext {
 class DotVisitor extends DefinitionVisitor.Recursive {
 
   private final DotGraphContext context;
+  @SuppressWarnings("unused")
   private final Definition definition;
 
   private final ArrayDeque<Definition> lastSources = new ArrayDeque<>();

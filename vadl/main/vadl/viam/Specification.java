@@ -30,6 +30,20 @@ public class Specification extends Definition {
         .map(Format.class::cast);
   }
 
+  /**
+   * Returns a stream of all format definitions within the specification, including the ones
+   * nested within instruction set architectures.
+   *
+   * @return A stream of {@link Format} objects representing the format definitions.
+   */
+  public Stream<Format> findAllFormats() {
+    var innerFormats = definitions.stream()
+        .filter(InstructionSetArchitecture.class::isInstance)
+        .map(InstructionSetArchitecture.class::cast)
+        .flatMap(i -> i.formats().stream());
+    return Stream.concat(formats(), innerFormats);
+  }
+
   public void add(Definition definition) {
     definitions.add(definition);
   }
