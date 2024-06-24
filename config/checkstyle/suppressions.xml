@@ -5,8 +5,11 @@
     "https://checkstyle.org/dtds/suppressions_1_2.dtd">
 
 <suppressions>
-    <suppress
-        checks="MissingJavadoc"
-        files="[/\\]test[/\\]"
-    />
+  <suppress
+      checks="MissingJavadoc"
+      files="[/\\]test[/\\]"
+  />
+  <suppress
+      checks="PackageName"
+  />
 </suppressions>
