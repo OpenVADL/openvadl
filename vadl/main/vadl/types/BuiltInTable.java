@@ -616,6 +616,39 @@ public class BuiltInTable {
       BuiltIn.func("REGISTER",
           Type.relation(BitsType.class, StringType.class));
 
+  /**
+   * Formats value to binary string.
+   *
+   * <p>{@code function binary(Bits<N>) -> String<M>}
+   */
+  public static final BuiltIn BINARY =
+      BuiltIn.func("BINARY", Type.relation(BitsType.class, StringType.class));
+
+  /**
+   * Formats value to decimal string.
+   *
+   * <p>{@code function decimal(Bits<N>) -> String<M>}
+   */
+  public static final BuiltIn DECIMAL =
+      BuiltIn.func("DECIMAL",
+          Type.relation(BitsType.class, StringType.class));
+
+  /**
+   * Formats value to hex string.
+   *
+   * <p>{@code function hex(Bits<N>) -> String<M>}
+   */
+  public static final BuiltIn HEX =
+      BuiltIn.func("HEX", Type.relation(BitsType.class, StringType.class));
+
+  /**
+   * Formats value to octal string.
+   *
+   * <p>{@code function hex(Bits<N>) -> String<M>}
+   */
+  public static final BuiltIn OCTAL =
+      BuiltIn.func("octal", Type.relation(BitsType.class, StringType.class));
+
   ///// FIELDS /////
 
   public static final List<BuiltIn> BUILT_INS = List.of(
@@ -722,7 +755,12 @@ public class BuiltInTable {
 
       MNEMONIC,
       CONCATENATE_STRINGS,
-      REGISTER
+      REGISTER,
+
+      BINARY,
+      DECIMAL,
+      HEX,
+      OCTAL
 
   );
 

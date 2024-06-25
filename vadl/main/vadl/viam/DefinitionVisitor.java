@@ -34,6 +34,7 @@ public interface DefinitionVisitor {
 
   void visit(RegisterFile registerFile);
 
+  void visit(Memory memory);
 
   /**
    * DefinitionVisitor.Recursive is an abstract class that implements the DefinitionVisitor
@@ -178,6 +179,12 @@ public interface DefinitionVisitor {
     public void visit(RegisterFile registerFile) {
       beforeTraversal(registerFile);
       afterTraversal(registerFile);
+    }
+
+    @Override
+    public void visit(Memory memory) {
+      beforeTraversal(memory);
+      afterTraversal(memory);
     }
   }
 

@@ -1,6 +1,8 @@
 package vadl.viam.graph.dependency;
 
+import java.util.List;
 import vadl.javaannotations.viam.DataValue;
+import vadl.viam.Memory;
 import vadl.viam.Resource;
 import vadl.viam.graph.UniqueNode;
 
@@ -16,17 +18,35 @@ import vadl.viam.graph.UniqueNode;
  */
 public class WriteMemNode extends WriteResourceNode {
 
-  // TODO: Add memory definition
+  @DataValue
+  protected Memory memory;
 
-  public WriteMemNode(ExpressionNode location, ExpressionNode value) {
-    super(location, value);
-    // TODO: call verify state
+  /**
+   * Constructs a new WriteMemNode object.
+   *
+   * @param memory  the memory definition to write to
+   * @param address the expression representing the memory address
+   * @param value   the expression representing the value to write
+   */
+  public WriteMemNode(Memory memory, ExpressionNode address, ExpressionNode value) {
+    super(address, value);
+    this.memory = memory;
+
+    verifyState();
+  }
+
+  public Memory memory() {
+    return memory;
   }
 
   @Override
-  @SuppressWarnings("NullAway")
   protected Resource resourceDefinition() {
-    // TODO: Fix and remove suppression
-    return null;
+    return memory;
+  }
+
+  @Override
+  protected void collectData(List<Object> collection) {
+    super.collectData(collection);
+    collection.add(memory);
   }
 }
