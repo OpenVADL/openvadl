@@ -11,10 +11,11 @@ repositories {
 dependencies {
     annotationProcessor(project(":java-annotations"))
     implementation(project(":java-annotations"))
+    implementation("org.thymeleaf:thymeleaf:3.1.2.RELEASE")
 
     testImplementation(platform("org.junit:junit-bom:5.9.1"))
     testImplementation("org.junit.jupiter:junit-jupiter")
-    testImplementation("org.hamcrest:hamcrest:2.2")
+    testImplementation("org.hamcrest:hamcrest-all:1.3")
     testAnnotationProcessor(project(":java-annotations"))
 }
 

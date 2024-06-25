@@ -3,6 +3,7 @@ package vadl.pass;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 
+import java.io.IOException;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.util.Map;
@@ -13,7 +14,7 @@ import vadl.viam.Identifier;
 import vadl.viam.Specification;
 
 class PassManagerTest {
-  static class PassTest implements Pass {
+  static class PassTest extends Pass {
 
     @Override
     public PassName getName() {
@@ -44,7 +45,7 @@ class PassManagerTest {
   }
 
   @Test
-  void shouldStoreResult() throws DuplicatedPassKeyException, URISyntaxException {
+  void shouldStoreResult() throws DuplicatedPassKeyException, URISyntaxException, IOException {
     // Given
     var specification =
         new Specification(new Identifier("nameValue",
