@@ -15,9 +15,12 @@ instruction set architecture Base = {
 
 instruction set architecture Sub extending Base = {
 
+  // check 2
   register A: X
+  // check 3
   register B: Base::X
 
+  // check 4
   format Y: Bits<2> =
   { A: Base::X
   }
