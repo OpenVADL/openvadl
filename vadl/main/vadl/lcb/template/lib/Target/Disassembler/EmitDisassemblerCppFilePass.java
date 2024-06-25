@@ -57,7 +57,10 @@ public class EmitDisassemblerCppFilePass extends AbstractTemplateRenderingPass {
   @Override
   protected Map<String, Object> createVariables(Specification specification) {
     return Map.of(CommonVarNames.NAMESPACE, specification.name(),
-        "immediates", List.of(new Immediate(new LoweredImmediate("immediateValue", new Decode("decodingValue")),
+        "immediates",
+        List.of(new Immediate(
+            new LoweredImmediate("immediateValue",
+                new Decode("decodingValue")),
             8)),
         "instructionSize", 32, // bits
         CommonVarNames.REGISTERS_CLASSES,

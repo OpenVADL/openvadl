@@ -5,10 +5,10 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import javax.annotation.Nullable;
-import vadl.viam.ViamError;
-import vadl.viam.graph.Node;
-import vadl.viam.graph.ViamGraphError;
 
+/**
+ * This exception represents an error which happened during the pass execution.
+ */
 public class PassError extends RuntimeException {
 
   private final List<String> context = new ArrayList<>();
@@ -18,6 +18,11 @@ public class PassError extends RuntimeException {
     super(message.formatted(args));
   }
 
+  /**
+   * Removes the upper {@code n} stacktrace entries.
+   * This is useful if helper methods create exceptions but are not
+   * responsible for it.
+   */
   public PassError shrinkStacktrace(int n) {
     StackTraceElement[] stackTrace = this.getStackTrace();
     if (stackTrace.length > n) {

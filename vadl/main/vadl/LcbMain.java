@@ -24,7 +24,8 @@ public class LcbMain {
   public static void main(String[] args) throws IOException, DuplicatedPassKeyException {
     var passManager = new PassManager();
     var configuration = new LcbConfiguration("output");
-    passManager.add(new PassKey("lcbMakefile"), new EmitLcbCMakeFilePass(configuration, new ProcessorName("CPU")));
+    passManager.add(new PassKey("lcbMakefile"),
+        new EmitLcbCMakeFilePass(configuration, new ProcessorName("CPU")));
 
     passManager.run(
         new Specification(new Identifier("test", SourceLocation.INVALID_SOURCE_LOCATION)));

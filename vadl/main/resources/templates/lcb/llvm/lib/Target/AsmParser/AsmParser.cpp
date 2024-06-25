@@ -89,7 +89,7 @@ bool [(${namespace})]AsmParser::MatchAndEmitInstruction(SMLoc IDLoc, unsigned &O
     switch(Opcode) {
         [# th:each="instruction : ${instructions}" ]
         case [(${namespace})]::[(${instruction.simpleName})]: targets = {
-            [# th:each="op, iterStat : ${instruction.LLVMOperands}" ]
+            [# th:each="op, iterStat : ${instruction.llvmOperands}" ]
               [(${op.identifier})][# th:if="${!iterStat.last}"],[/]
             [/]
         }; break

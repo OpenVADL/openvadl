@@ -10,7 +10,7 @@ import vadl.template.AbstractTemplateRenderingPass;
 import vadl.viam.Specification;
 
 /**
- * TODO define what this does?
+ * TODO define what this does.
  */
 public class EmitLldManualEncodingHeaderFilePass extends AbstractTemplateRenderingPass {
 

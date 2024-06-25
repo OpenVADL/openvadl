@@ -37,7 +37,7 @@ public class EmitAsmParserCppFilePass extends AbstractTemplateRenderingPass {
 
   }
 
-  record Instruction(String simpleName, List<Operand> LLVMOperands) {
+  record Instruction(String simpleName, List<Operand> llvmOperands) {
 
   }
 

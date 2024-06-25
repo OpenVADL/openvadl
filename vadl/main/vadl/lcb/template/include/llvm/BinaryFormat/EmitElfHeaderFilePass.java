@@ -11,7 +11,7 @@ import vadl.viam.Specification;
 
 /**
  * This file contains common, non-processor-specific data structures and
- * constants for the ELF file format
+ * constants for the ELF file format.
  */
 public class EmitElfHeaderFilePass extends AbstractTemplateRenderingPass {
 
