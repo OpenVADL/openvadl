@@ -112,4 +112,23 @@ public record Identifier(
     return part;
   }
 
+  @Override
+  public boolean equals(Object o) {
+    if (this == o) {
+      return true;
+    }
+    if (o == null || getClass() != o.getClass()) {
+      return false;
+    }
+
+    Identifier that = (Identifier) o;
+    return Arrays.equals(parts, that.parts) && sourceLocation.equals(that.sourceLocation);
+  }
+
+  @Override
+  public int hashCode() {
+    int result = Arrays.hashCode(parts);
+    result = 31 * result + sourceLocation.hashCode();
+    return result;
+  }
 }
