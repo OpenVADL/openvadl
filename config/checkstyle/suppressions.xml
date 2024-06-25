@@ -5,11 +5,16 @@
     "https://checkstyle.org/dtds/suppressions_1_2.dtd">
 
 <suppressions>
+  <!-- Suppress for all -->
+  <suppress checks="PackageName"/>
+
+  <!-- Suppress for tests -->
   <suppress
       checks="MissingJavadoc"
       files="[/\\]test[/\\]"
   />
   <suppress
-      checks="PackageName"
+      checks="LineLength"
+      files="[/\\]test[/\\]"
   />
 </suppressions>
