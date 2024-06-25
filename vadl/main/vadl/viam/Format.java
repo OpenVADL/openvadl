@@ -222,7 +222,8 @@ public class Format extends Definition {
   public static class FieldAccess extends Definition {
 
     private final Function accessFunction;
-    private final Function encoding;
+    @Nullable
+    private Function encoding;
     private final Function predicate;
     private final Field fieldRef;
 
@@ -236,7 +237,7 @@ public class Format extends Definition {
      * @param encoding       The encoding function of the Immediate.  {@code (var: T) -> R}
      * @param predicate      The predicate function of the Immediate. {@code (var: T) -> Bool}
      */
-    public FieldAccess(Identifier identifier, Function accessFunction, Function encoding,
+    public FieldAccess(Identifier identifier, Function accessFunction, @Nullable Function encoding,
                        Function predicate) {
       super(identifier);
 
@@ -249,19 +250,24 @@ public class Format extends Definition {
       this.accessFunction = accessFunction;
       this.encoding = encoding;
       this.predicate = predicate;
-
-      encoding.ensure(encoding.returnType() instanceof DataType
-                      && ((DataType) encoding.returnType()).canBeCastTo(fieldRef.type()),
-          "Encoding type mismatch. Couldn't match encoding type %s with field reference type %s",
-          encoding.returnType(), fieldRef().type());
     }
 
     public Function accessFunction() {
       return accessFunction;
     }
 
+    /**
+     * If the encoding function is null, it wasn't yet inferred nor specified by the user.
+     */
+    @Nullable
     public Function encoding() {
       return encoding;
+    }
+
+    public void setEncoding(Function encoding) {
+      ensure(this.encoding != null, "Field access encoding already set");
+      this.encoding = encoding;
+      verify();
     }
 
     public Function predicate() {
@@ -274,6 +280,17 @@ public class Format extends Definition {
 
     public Type type() {
       return accessFunction.returnType();
+    }
+
+    @Override
+    public void verify() {
+      super.verify();
+      if (encoding != null) {
+        encoding.ensure(encoding.returnType() instanceof DataType
+                        && ((DataType) encoding.returnType()).canBeCastTo(fieldRef.type()),
+            "Encoding type mismatch. Couldn't match encoding type %s with field reference type %s",
+            encoding.returnType(), fieldRef().type());
+      }
     }
 
     @Override

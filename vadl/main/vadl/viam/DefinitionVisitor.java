@@ -134,7 +134,9 @@ public interface DefinitionVisitor {
     public void visit(Format.FieldAccess formatFieldAccess) {
       beforeTraversal(formatFieldAccess);
       formatFieldAccess.accessFunction().accept(this);
-      formatFieldAccess.encoding().accept(this);
+      if (formatFieldAccess.encoding() != null) {
+        formatFieldAccess.encoding().accept(this);
+      }
       formatFieldAccess.predicate().accept(this);
       afterTraversal(formatFieldAccess);
     }
