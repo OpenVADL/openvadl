@@ -19,7 +19,10 @@ steps:
     image: c2.complang.tuwien.ac.at:5000/vadl-ci:f7222374638bccc355ba51bfcc2b17e9561204a4
     commands:
       - ./gradlew checkstyleAll
-
+  - name: test
+    image: c2.complang.tuwien.ac.at:5000/vadl-ci:f7222374638bccc355ba51bfcc2b17e9561204a4
+    commands:
+      - ./gradlew test
   - name: comment checkstyle report
     image: c2.complang.tuwien.ac.at:5000/drone-gitea-message:1411b3d7e54329473da2717d2ef09a06f13b3bc4
     settings:
@@ -30,6 +33,8 @@ steps:
       delete_identifier: checkstyle-report-delete-id
     when:
       status: [ failure ]
+
+
 
 triggers:
   events:
