@@ -21,16 +21,21 @@ public class WriteMemNode extends WriteResourceNode {
   @DataValue
   protected Memory memory;
 
+  @DataValue
+  protected int words;
+
   /**
    * Constructs a new WriteMemNode object.
    *
    * @param memory  the memory definition to write to
+   * @param words   the number of words that are written to memory
    * @param address the expression representing the memory address
    * @param value   the expression representing the value to write
    */
-  public WriteMemNode(Memory memory, ExpressionNode address, ExpressionNode value) {
+  public WriteMemNode(Memory memory, int words, ExpressionNode address, ExpressionNode value) {
     super(address, value);
     this.memory = memory;
+    this.words = words;
 
     verifyState();
   }
@@ -39,14 +44,24 @@ public class WriteMemNode extends WriteResourceNode {
     return memory;
   }
 
+  public int words() {
+    return words;
+  }
+
   @Override
   protected Resource resourceDefinition() {
     return memory;
   }
 
   @Override
+  protected int writeBitWidth() {
+    return memory.wordSize() * words;
+  }
+
+  @Override
   protected void collectData(List<Object> collection) {
     super.collectData(collection);
     collection.add(memory);
+    collection.add(words);
   }
 }

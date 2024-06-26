@@ -15,6 +15,10 @@ public class Memory extends Resource {
     this.resultType = resultType;
   }
 
+  public int wordSize() {
+    return resultType.bitWidth();
+  }
+
   @Override
   public boolean hasAddress() {
     return true;
@@ -38,5 +42,10 @@ public class Memory extends Resource {
   @Override
   public void accept(DefinitionVisitor visitor) {
     visitor.visit(this);
+  }
+
+  @Override
+  public String toString() {
+    return identifier.simpleName() + ": " + addressType + " -> " + resultType;
   }
 }

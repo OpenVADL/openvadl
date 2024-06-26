@@ -4,6 +4,7 @@ import java.util.Comparator;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 import javax.annotation.Nullable;
+import vadl.types.BitsType;
 import vadl.types.DataType;
 import vadl.types.Type;
 import vadl.viam.graph.control.ReturnNode;
@@ -19,7 +20,7 @@ import vadl.viam.graph.dependency.SliceNode;
  */
 public class Format extends Definition {
 
-  private final Type type;
+  private final BitsType type;
   private Field[] fields;
   private FieldAccess[] fieldAccesses;
 
@@ -29,7 +30,7 @@ public class Format extends Definition {
    * @param identifier The identifier of the format.
    * @param type       The type of the format.
    */
-  public Format(Identifier identifier, Type type) {
+  public Format(Identifier identifier, BitsType type) {
     super(identifier);
     this.type = type;
     this.fields = new Field[] {};
@@ -61,7 +62,7 @@ public class Format extends Definition {
     this.fieldAccesses = fieldAccesses;
   }
 
-  public Type type() {
+  public BitsType type() {
     return type;
   }
 
