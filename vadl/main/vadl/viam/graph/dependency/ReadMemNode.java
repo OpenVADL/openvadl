@@ -45,6 +45,10 @@ public class ReadMemNode extends ReadResourceNode {
         type().bitWidth(), memory.wordSize() * words);
   }
 
+  public int words() {
+    return words;
+  }
+
   @Override
   protected Resource resourceDefinition() {
     return memory;

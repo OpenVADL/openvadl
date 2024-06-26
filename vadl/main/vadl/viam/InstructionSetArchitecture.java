@@ -13,6 +13,7 @@ public class InstructionSetArchitecture extends Definition {
   private final List<Register> registers;
   private final List<RegisterFile> registerFiles;
   private final List<Format> formats;
+  private final List<Memory> memories;
   private final Specification specification;
 
   /**
@@ -31,7 +32,8 @@ public class InstructionSetArchitecture extends Definition {
                                     List<Instruction> instructions,
                                     List<PseudoInstruction> pseudoInstructions,
                                     List<Register> registers,
-                                    List<RegisterFile> registerFiles
+                                    List<RegisterFile> registerFiles,
+                                    List<Memory> memories
   ) {
     super(identifier);
     this.specification = specification;
@@ -40,6 +42,7 @@ public class InstructionSetArchitecture extends Definition {
     this.instructions = instructions;
     this.pseudoInstructions = pseudoInstructions;
     this.registerFiles = registerFiles;
+    this.memories = memories;
   }
 
   public List<Instruction> instructions() {
@@ -64,7 +67,7 @@ public class InstructionSetArchitecture extends Definition {
   public List<Format> formats() {
     return formats;
   }
-  
+
   /**
    * Returns a stream of all formats available in this ISA. This includes all formats of the
    * outer specification scope.
@@ -73,6 +76,9 @@ public class InstructionSetArchitecture extends Definition {
     return Stream.concat(formats.stream(), specification.formats());
   }
 
+  public List<Memory> memories() {
+    return memories;
+  }
 
   @Override
   public void accept(DefinitionVisitor visitor) {
