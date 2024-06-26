@@ -265,6 +265,11 @@ public class Format extends Definition {
       return encoding;
     }
 
+    /**
+     * Sets the encoding to the given function. This must be called
+     * by the pass that infers the encoding function. It will fail
+     * if the encoding was already set before.
+     */
     public void setEncoding(Function encoding) {
       ensure(this.encoding != null, "Field access encoding already set");
       this.encoding = encoding;
