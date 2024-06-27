@@ -367,59 +367,60 @@ public class BuiltInTable {
 
 
   /**
-   * {@code function lth ( a : SInt<N>, b : SInt<N> ) -> Bool // <=> a < b }
+   * {@code function slth ( a : SInt<N>, b : SInt<N> ) -> Bool // <=> a < b }
    */
-  public static final BuiltIn LTH_SS =
-      BuiltIn.func("LTH", "<", Type.relation(SIntType.class, SIntType.class, BoolType.class));
+  public static final BuiltIn SLTH =
+      BuiltIn.func("SLTH", "<", Type.relation(SIntType.class, SIntType.class, BoolType.class));
 
 
   /**
-   * {@code function lth ( a : UInt<N>, b : UInt<N> ) -> Bool // <=> a < b }
+   * {@code function ulth ( a : UInt<N>, b : UInt<N> ) -> Bool // <=> a < b }
    */
-  public static final BuiltIn LTH_UU =
-      BuiltIn.func("LTH", "<", Type.relation(UIntType.class, UIntType.class, BoolType.class));
+  public static final BuiltIn ULTH =
+      BuiltIn.func("ULTH", "<", Type.relation(UIntType.class, UIntType.class, BoolType.class));
 
 
   /**
-   * {@code function leq ( a : SInt<N>, b : SInt<N> ) -> Bool // <=> a <= b }
+   * {@code function sleq ( a : SInt<N>, b : SInt<N> ) -> Bool // <=> a <= b }
    */
-  public static final BuiltIn LEQ_SS =
-      BuiltIn.func("LEQ", "<=", Type.relation(SIntType.class, SIntType.class, BoolType.class));
+  public static final BuiltIn SLEQ =
+      BuiltIn.func("SLEQ", "<=", Type.relation(SIntType.class, SIntType.class, BoolType.class));
 
 
   /**
-   * {@code function leq ( a : UInt<N>, b : UInt<N> ) -> Bool // <=> a <= b }
+   * {@code function uleq ( a : UInt<N>, b : UInt<N> ) -> Bool // <=> a <= b }
    */
-  public static final BuiltIn LEQ_UU =
-      BuiltIn.func("LEQ", "<=", Type.relation(UIntType.class, UIntType.class, BoolType.class));
+  public static final BuiltIn ULEQ =
+      BuiltIn.func("ULEQ", "<=", Type.relation(UIntType.class, UIntType.class, BoolType.class));
 
 
   /**
-   * {@code function gth ( a : SInt<N>, b : SInt<N> ) -> Bool // <=> a > b }
+   * {@code function sgth ( a : SInt<N>, b : SInt<N> ) -> Bool // <=> a > b }
    */
-  public static final BuiltIn GTH_SS =
-      BuiltIn.func("GTH", ">", Type.relation(SIntType.class, SIntType.class, BoolType.class));
+  public static final BuiltIn SGTH =
+      BuiltIn.func("SGTH", ">", Type.relation(SIntType.class, SIntType.class, BoolType.class));
 
 
   /**
-   * {@code function gth ( a : UInt<N>, b : UInt<N> ) -> Bool // <=> a > b }
+   * {@code function ugth ( a : UInt<N>, b : UInt<N> ) -> Bool // <=> a > b }
    */
-  public static final BuiltIn GTH_UU =
-      BuiltIn.func("GTH", ">", Type.relation(UIntType.class, UIntType.class, BoolType.class));
+  public static final BuiltIn UGTH =
+      BuiltIn.func("UGTH", ">", Type.relation(UIntType.class, UIntType.class, BoolType.class));
 
 
   /**
-   * {@code function geq ( a : SInt<N>, b : SInt<N> ) -> Bool // <=> a >= b }
+   * {@code function sgeq ( a : SInt<N>, b : SInt<N> ) -> Bool // <=> a >= b }
    */
-  public static final BuiltIn GEQ_SS =
-      BuiltIn.func("GEQ", ">=", Type.relation(SIntType.class, SIntType.class, BoolType.class));
+  public static final BuiltIn SGEQ =
+      BuiltIn.func("SGEQ", ">=", Type.relation(SIntType.class, SIntType.class, BoolType.class));
 
 
   /**
-   * {@code function geq ( a : UInt<N>, b : UInt<N> ) -> Bool // <=> a >= b }
+   * {@code function ugeq ( a : UInt<N>, b : UInt<N> ) -> Bool // <=> a >= b }
    */
-  public static final BuiltIn GEQ_UU =
-      BuiltIn.func("GEQ", ">=", Type.relation(UIntType.class, UIntType.class, BoolType.class));
+  public static final BuiltIn UGEQ =
+      BuiltIn.func("UGEQ", ">=", Type.relation(UIntType.class, UIntType.class, BoolType.class));
+
 
   ///// SHIFTING //////
 
@@ -616,6 +617,39 @@ public class BuiltInTable {
       BuiltIn.func("REGISTER",
           Type.relation(BitsType.class, StringType.class));
 
+  /**
+   * Formats value to binary string.
+   *
+   * <p>{@code function binary(Bits<N>) -> String<M>}
+   */
+  public static final BuiltIn BINARY =
+      BuiltIn.func("BINARY", Type.relation(BitsType.class, StringType.class));
+
+  /**
+   * Formats value to decimal string.
+   *
+   * <p>{@code function decimal(Bits<N>) -> String<M>}
+   */
+  public static final BuiltIn DECIMAL =
+      BuiltIn.func("DECIMAL",
+          Type.relation(BitsType.class, StringType.class));
+
+  /**
+   * Formats value to hex string.
+   *
+   * <p>{@code function hex(Bits<N>) -> String<M>}
+   */
+  public static final BuiltIn HEX =
+      BuiltIn.func("HEX", Type.relation(BitsType.class, StringType.class));
+
+  /**
+   * Formats value to octal string.
+   *
+   * <p>{@code function hex(Bits<N>) -> String<M>}
+   */
+  public static final BuiltIn OCTAL =
+      BuiltIn.func("octal", Type.relation(BitsType.class, StringType.class));
+
   ///// FIELDS /////
 
   public static final List<BuiltIn> BUILT_INS = List.of(
@@ -682,14 +716,14 @@ public class BuiltInTable {
 
       EQU,
       NEQ,
-      LTH_SS,
-      LTH_UU,
-      LEQ_SS,
-      LEQ_UU,
-      GTH_SS,
-      GTH_UU,
-      GEQ_SS,
-      GEQ_UU,
+      SLTH,
+      ULTH,
+      SLEQ,
+      ULEQ,
+      SGTH,
+      UGTH,
+      SGEQ,
+      UGEQ,
 
       // Shifting
 
@@ -722,7 +756,12 @@ public class BuiltInTable {
 
       MNEMONIC,
       CONCATENATE_STRINGS,
-      REGISTER
+      REGISTER,
+
+      BINARY,
+      DECIMAL,
+      HEX,
+      OCTAL
 
   );
 

@@ -34,6 +34,7 @@ public interface DefinitionVisitor {
 
   void visit(RegisterFile registerFile);
 
+  void visit(Memory memory);
 
   /**
    * DefinitionVisitor.Recursive is an abstract class that implements the DefinitionVisitor
@@ -66,6 +67,12 @@ public interface DefinitionVisitor {
           .forEach(e -> e.accept(this));
       instructionSetArchitecture
           .registers()
+          .forEach(e -> e.accept(this));
+      instructionSetArchitecture
+          .registerFiles()
+          .forEach(e -> e.accept(this));
+      instructionSetArchitecture
+          .memories()
           .forEach(e -> e.accept(this));
       instructionSetArchitecture
           .instructions()
@@ -134,7 +141,9 @@ public interface DefinitionVisitor {
     public void visit(Format.FieldAccess formatFieldAccess) {
       beforeTraversal(formatFieldAccess);
       formatFieldAccess.accessFunction().accept(this);
-      formatFieldAccess.encoding().accept(this);
+      if (formatFieldAccess.encoding() != null) {
+        formatFieldAccess.encoding().accept(this);
+      }
       formatFieldAccess.predicate().accept(this);
       afterTraversal(formatFieldAccess);
     }
@@ -176,6 +185,12 @@ public interface DefinitionVisitor {
     public void visit(RegisterFile registerFile) {
       beforeTraversal(registerFile);
       afterTraversal(registerFile);
+    }
+
+    @Override
+    public void visit(Memory memory) {
+      beforeTraversal(memory);
+      afterTraversal(memory);
     }
   }
 

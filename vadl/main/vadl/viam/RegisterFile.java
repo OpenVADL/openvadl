@@ -1,8 +1,5 @@
 package vadl.viam;
 
-import java.util.ArrayList;
-import java.util.List;
-import org.jetbrains.annotations.Nullable;
 import vadl.types.ConcreteRelationType;
 import vadl.types.DataType;
 import vadl.types.Type;
@@ -14,21 +11,21 @@ import vadl.types.Type;
  */
 public class RegisterFile extends Resource {
 
-  private final DataType accessType;
+  private final DataType addressType;
   private final DataType resultType;
   private final Constraint[] constraints;
 
   /**
    * Constructs a new RegisterFile object.
    *
-   * @param identifier The identifier of the RegisterFile.
-   * @param accessType The data type of the file address/index.
-   * @param resultType The data type of the result value.
+   * @param identifier  The identifier of the RegisterFile.
+   * @param addressType The data type of the file address/index.
+   * @param resultType  The data type of the result value.
    */
-  public RegisterFile(Identifier identifier, DataType accessType, DataType resultType,
+  public RegisterFile(Identifier identifier, DataType addressType, DataType resultType,
                       Constraint[] constraints) {
     super(identifier);
-    this.accessType = accessType;
+    this.addressType = addressType;
     this.resultType = resultType;
     this.constraints = constraints;
   }
@@ -41,7 +38,7 @@ public class RegisterFile extends Resource {
 
   @Override
   public DataType addressType() {
-    return accessType;
+    return addressType;
   }
 
   @Override
@@ -51,7 +48,7 @@ public class RegisterFile extends Resource {
 
   @Override
   public ConcreteRelationType relationType() {
-    return Type.concreteRelation(accessType, resultType);
+    return Type.concreteRelation(addressType, resultType);
   }
 
   public Constraint[] constraints() {
@@ -67,7 +64,7 @@ public class RegisterFile extends Resource {
           "Type missmatch: Can't cast value type %s to register file result type %s.",
           constraint.value.type(), this.resultType);
 
-      ensure(constraint.address.type().canBeCastTo(accessType),
+      ensure(constraint.address.type().canBeCastTo(addressType),
           "Type missmatch: Can't cast address type %s to register file address type %s.",
           constraint.address.type(), this.resultType);
     }
@@ -80,7 +77,7 @@ public class RegisterFile extends Resource {
 
   @Override
   public String toString() {
-    return identifier.simpleName() + ": " + accessType + " -> " + resultType;
+    return identifier.simpleName() + ": " + addressType + " -> " + resultType;
   }
 
   /**

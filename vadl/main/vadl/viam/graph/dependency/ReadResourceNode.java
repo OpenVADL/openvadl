@@ -47,8 +47,9 @@ public abstract class ReadResourceNode extends ExpressionNode {
     var resource = resourceDefinition();
 
     ensure(resource.resultType().canBeCastTo(type()),
-        "Mismatching resource type. Resource's result type (%s) cannot be cast to node's type.",
-        resource.resultType());
+        "Mismatching resource type. Resource's result type (%s) "
+        + "cannot be cast to node's type (%s).",
+        resource.resultType(), type());
 
     ensure(resource.hasAddress() == hasAddress(),
         "Resource takes address but this node has no address node.");

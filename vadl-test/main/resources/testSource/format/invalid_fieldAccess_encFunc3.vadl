@@ -1,6 +1,0 @@
-// Missing encoding function (currently cannot be inferred)
-format SIMPLE_ACCESS : Bits<8> =
-  { HI  : Bits<2>
-  , LO  : Bits<6>
-  , VAR = HI as Bits<4>
-  }

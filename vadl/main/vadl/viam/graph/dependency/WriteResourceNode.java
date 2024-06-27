@@ -43,16 +43,23 @@ public abstract class WriteResourceNode extends SideEffectNode {
 
   protected abstract Resource resourceDefinition();
 
+  /**
+   * The number of bits that is getting written to the resource.
+   */
+  protected int writeBitWidth() {
+    return resourceDefinition().resultType().bitWidth();
+  }
+
   @Override
   public void verifyState() {
     super.verifyState();
     var resource = resourceDefinition();
 
     ensure(value.type() instanceof DataType
-           && ((DataType) value.type()).canBeCastTo(resource.resultType()),
-        "Mismatching resource type. Value expression's type (%s) cannot be cast to "
-        + "resource's result type (%s).",
-        value.type(), resource.resultType());
+           && ((DataType) value.type()).bitWidth() == writeBitWidth(),
+        "Mismatching resource type. Value expression's type (%s) cannot has not the expected "
+        + "width of %s.",
+        value.type(), writeBitWidth());
 
     ensure(resource.hasAddress() == hasAddress(),
         "Resource takes address but this node has no address node.");
