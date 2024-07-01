@@ -3,10 +3,14 @@ package vadl.lcb.template.lib.Target.AsmParser;
 import java.io.IOException;
 import java.util.List;
 import java.util.Map;
+import java.util.stream.Stream;
 import vadl.gcb.valuetypes.ProcessorName;
 import vadl.lcb.config.LcbConfiguration;
 import vadl.lcb.template.CommonVarNames;
 import vadl.template.AbstractTemplateRenderingPass;
+import vadl.viam.Instruction;
+import vadl.viam.InstructionSetArchitecture;
+import vadl.viam.PseudoInstruction;
 import vadl.viam.Specification;
 
 /**
@@ -33,26 +37,30 @@ public class EmitAsmParserCppFilePass extends AbstractTemplateRenderingPass {
         + "AsmParser.cpp";
   }
 
-  record Operand(String identifier) {
-
-  }
-
-  record Instruction(String simpleName, List<Operand> llvmOperands) {
-
-  }
-
   record AliasDirective(String alias, String target) {
 
   }
 
+  private List<Instruction> mapInstructions(Stream<InstructionSetArchitecture> isas) {
+    return isas
+        .flatMap(x -> x.instructions().stream())
+        .toList();
+  }
+
+  private List<PseudoInstruction> mapPseudoInstructions(Stream<InstructionSetArchitecture> isas) {
+    return isas
+        .flatMap(x -> x.pseudoInstructions().stream())
+        .toList();
+  }
+
+
   @Override
   protected Map<String, Object> createVariables(Specification specification) {
+    //TODO: kper; add alias directives
     return Map.of(CommonVarNames.NAMESPACE, specification.name(),
-        "instructions", List.of(new Instruction("simpleNameValue", List
-            .of(new Operand("operandValue1"), new Operand("operandValue2")))),
-        "aliases", List.of(new AliasDirective(".dword", ".8byte"),
-            new AliasDirective(".word", ".4byte"),
-            new AliasDirective(".hword", ".2byte"),
-            new AliasDirective(".half", ".2byte")));
+        CommonVarNames.INSTRUCTIONS, mapInstructions(specification.isas()),
+        CommonVarNames.PSEUDO_INSTRUCTIONS, mapPseudoInstructions(specification.isas()),
+        CommonVarNames.ALIASES, List.of()
+    );
   }
 }

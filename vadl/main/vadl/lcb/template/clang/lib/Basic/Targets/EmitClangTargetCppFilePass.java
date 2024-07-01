@@ -1,8 +1,6 @@
 package vadl.lcb.clang.lib.Basic.Targets;
 
 import java.io.IOException;
-import java.io.StringWriter;
-import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import vadl.gcb.valuetypes.ProcessorName;
@@ -16,10 +14,6 @@ import vadl.viam.Specification;
  * This file contains the GCC reg names for clang.
  */
 public class EmitClangTargetCppFilePass extends AbstractTemplateRenderingPass {
-
-  record Register(String name, List<String> aliases) {
-
-  }
 
   private final ProcessorName processorName;
 
@@ -45,12 +39,9 @@ public class EmitClangTargetCppFilePass extends AbstractTemplateRenderingPass {
         CommonVarNames.REGISTERS, extractRegisters(specification));
   }
 
-
   private List<Register> extractRegisters(Specification specification) {
-    return specification.definitions()
-        .filter(x -> x instanceof vadl.viam.Register)
-        .map(x -> (vadl.viam.Register) x)
-        .map(x -> new Register(x.name(), List.of("aliasValue1", "aliasValue2")))
+    return specification.isas()
+        .flatMap(x -> x.registers().stream())
         .toList();
   }
 }

@@ -13,5 +13,8 @@ public class CommonVarNames {
   public static String MAX_INSTRUCTION_WORDSIZE = "maxInstructionWordSize";
   public static String RELOCATIONS = "relocations";
   public static String PRINTABLE_INSTRUCTIONS = "printableInstructions";
+  public static String INSTRUCTIONS = "instructions";
+  public static String PSEUDO_INSTRUCTIONS = "pseudoInstructions";
   public static String ASSEMBLY_DESCRIPTION = "assemblyDescription";
+  public static String ALIASES = "aliases";
 }

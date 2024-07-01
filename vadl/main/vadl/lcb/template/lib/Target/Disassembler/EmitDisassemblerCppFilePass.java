@@ -6,8 +6,11 @@ import java.util.List;
 import java.util.Map;
 import vadl.gcb.valuetypes.ProcessorName;
 import vadl.lcb.config.LcbConfiguration;
+import vadl.lcb.lib.Target.MCTargetDesc.EmitInstrPrinterHeaderFilePass;
 import vadl.lcb.template.CommonVarNames;
 import vadl.template.AbstractTemplateRenderingPass;
+import vadl.viam.Register;
+import vadl.viam.RegisterFile;
 import vadl.viam.Specification;
 
 /**
@@ -34,14 +37,6 @@ public class EmitDisassemblerCppFilePass extends AbstractTemplateRenderingPass {
         + "Disassembler.cpp";
   }
 
-  record Register(String simpleName) {
-
-  }
-
-  record RegisterClass(String simpleName, List<Register> registers) {
-
-  }
-
   record LoweredImmediate(String identifier, Decode decoding) {
 
   }
@@ -54,6 +49,12 @@ public class EmitDisassemblerCppFilePass extends AbstractTemplateRenderingPass {
 
   }
 
+  private List<RegisterFile> extractRegisterClasses(Specification specification) {
+    return specification.isas()
+        .flatMap(x -> x.registerFiles().stream())
+        .toList();
+  }
+
   @Override
   protected Map<String, Object> createVariables(Specification specification) {
     return Map.of(CommonVarNames.NAMESPACE, specification.name(),
@@ -63,8 +64,6 @@ public class EmitDisassemblerCppFilePass extends AbstractTemplateRenderingPass {
                 new Decode("decodingValue")),
             8)),
         "instructionSize", 32, // bits
-        CommonVarNames.REGISTERS_CLASSES,
-        List.of(new RegisterClass("registerClassValue",
-            List.of(new Register("simpleNameValue")))));
+        CommonVarNames.REGISTERS_CLASSES, extractRegisterClasses(specification));
   }
 }
