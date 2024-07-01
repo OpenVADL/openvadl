@@ -3,7 +3,7 @@ package vadl;
 import java.io.IOException;
 import vadl.gcb.valuetypes.ProcessorName;
 import vadl.lcb.config.LcbConfiguration;
-import vadl.lcb.template.EmitLcbCMakeFilePass;
+import vadl.lcb.template.EmitLcbMakeFilePass;
 import vadl.pass.PassKey;
 import vadl.pass.PassManager;
 import vadl.pass.exception.DuplicatedPassKeyException;
@@ -25,7 +25,7 @@ public class LcbMain {
     var passManager = new PassManager();
     var configuration = new LcbConfiguration("output");
     passManager.add(new PassKey("lcbMakefile"),
-        new EmitLcbCMakeFilePass(configuration, new ProcessorName("CPU")));
+        new EmitLcbMakeFilePass(configuration, new ProcessorName("CPU")));
 
     passManager.run(
         new Specification(new Identifier("test", SourceLocation.INVALID_SOURCE_LOCATION)));
