@@ -1,4 +1,4 @@
-#include "«processorName».h"
+#include "[(${namespace})].h"
 #include "clang/Basic/MacroBuilder.h"
 #include "llvm/ADT/StringSwitch.h"
 

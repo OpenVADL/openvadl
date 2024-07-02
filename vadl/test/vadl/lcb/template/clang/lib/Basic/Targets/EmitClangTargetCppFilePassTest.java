@@ -47,7 +47,7 @@ class EmitClangTargetCppFilePassTest {
 
     // Then
     assertThat(output, equalToIgnoringWhiteSpace("""
-           #include "«processorName».h"
+           #include "specificationValue.h"
            #include "clang/Basic/MacroBuilder.h"
            #include "llvm/ADT/StringSwitch.h"
            
@@ -58,9 +58,6 @@ class EmitClangTargetCppFilePassTest {
            {
                static const char *const GCCRegNames[] =
                {
-                       registerValue1,
-                       registerValue2,
-                       registerValue3
                };
                return llvm::makeArrayRef( GCCRegNames );
            }
@@ -69,21 +66,9 @@ class EmitClangTargetCppFilePassTest {
            {
                static const TargetInfo::GCCRegAlias GCCRegAliases[] =
                {
-                   {
-                       { aliasValue1,  aliasValue2 },
-                       registerValue1
-                   },
-                   {
-                       { aliasValue1,  aliasValue2 },
-                       registerValue2
-                   },
-                   {
-                       { aliasValue1,  aliasValue2 },
-                       registerValue3
-                   }
                };
                return llvm::makeArrayRef( GCCRegAliases );
-           }
+           } 
         """));
   }
 
