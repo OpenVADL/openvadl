@@ -21,6 +21,9 @@ public class Specification extends Definition {
     return definitions.stream();
   }
 
+  /**
+   * Returns all instruction set architectures as stream.
+   */
   public Stream<InstructionSetArchitecture> isas() {
     return definitions()
         .filter(InstructionSetArchitecture.class::isInstance)
