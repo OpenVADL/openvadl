@@ -37,26 +37,20 @@ class EmitDisassemblerCppFilePassTest {
         #include "specificationValueDisassembler.h"
         #include <iostream>
         #include "Utils/ImmediateUtils.h"
-                
+               
         #define DEBUG_TYPE "disassembler"
-                
+               
         using namespace llvm;
-                
+               
         specificationValueDisassembler::specificationValueDisassembler(const MCSubtargetInfo &STI, MCContext &Ctx, bool isBigEndian) : MCDisassembler(STI, Ctx), IsBigEndian(isBigEndian)
         {
         }
-                
+               
         /* == Register Classes == */
-                
-        static const unsigned registerClassValue[] = {
-           \s
-                specificationValue::simpleNameValue
-           \s
-        };
-                
-                
+               
+               
         /* == Immediate Decoding == */
-                
+               
         DecodeStatus decodeimmediateValue(MCInst &Inst, uint64_t Imm, int64_t Address, const void *Decoder)
         {
             Imm = Imm & 10 as long - 1;
@@ -64,34 +58,12 @@ class EmitDisassemblerCppFilePassTest {
             Inst.addOperand(MCOperand::createImm(Imm));
             return MCDisassembler::Success;
         }
-                
-                
-                
-        static DecodeStatus DecoderegisterClassValueRegisterClass
-            ( MCInst &Inst
-            , uint64_t RegNo
-            , uint64_t Address
-            , const void *Decoder
-            )
-        {
-            // check if register number is in range
-            if( RegNo >= 1 )
-                return MCDisassembler::Fail;
-                
-            // access custom generated decoder table in register info
-            Register reg = registerClassValueDecoderTableName[RegNo];
-                
-            // check if decoded register is valid
-            if( reg == specificationValue::NoRegister )
-                return MCDisassembler::Fail;
-                
-            Inst.addOperand( MCOperand::createReg(reg) );
-            return MCDisassembler::Success;
-        }
-                
-                
+               
+               
+               
+               
         #include "specificationValueGenDisassemblerTables.inc"
-                
+               
             DecodeStatus specificationValueDisassembler::getInstruction(MCInst &MI, uint64_t &Size, ArrayRef<uint8_t> Bytes, uint64_t Address, raw_ostream &CS) const
         {
             if (Bytes.size() < 4)
@@ -99,7 +71,7 @@ class EmitDisassemblerCppFilePassTest {
                 Size = 0;
                 return MCDisassembler::Fail;
             }
-                
+               
             uint4_t Instr;
            \s
            \s
@@ -112,17 +84,17 @@ class EmitDisassemblerCppFilePassTest {
                     Instr = support::endian::read32le(Bytes.data());
                 }
            \s
-                
+               
             auto Result = decodeInstruction(DecoderTable${instructionSize, MI, Instr, Address, this, STI);
             Size = 4;
             return Result;
         }
-                
+               
         static MCDisassembler *createspecificationValueDisassembler(const Target &T, const MCSubtargetInfo &STI, MCContext &Ctx)
         {
             return new specificationValueDisassembler(STI, Ctx, specificationValueBaseInfo::IsBigEndian());
         }
-                
+               
         extern "C" void LLVMInitializespecificationValueDisassembler()
         {
             // Register Target Disassembler

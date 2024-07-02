@@ -22,6 +22,15 @@ public class Specification extends Definition {
   }
 
   /**
+   * Returns all instruction set architectures as stream.
+   */
+  public Stream<InstructionSetArchitecture> isas() {
+    return definitions()
+        .filter(InstructionSetArchitecture.class::isInstance)
+        .map(InstructionSetArchitecture.class::cast);
+  }
+
+  /**
    * Returns all global format definitions as stream.
    */
   public Stream<Format> formats() {

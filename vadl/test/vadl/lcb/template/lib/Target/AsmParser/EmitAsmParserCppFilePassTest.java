@@ -90,11 +90,6 @@ class EmitAsmParserCppFilePassTest {
                         const MCInstrInfo &MII, const MCTargetOptions &Options)
                 : MCTargetAsmParser(Options, sti, MII), Parser(parser) {
                \s
-                    Parser.addAliasForDirective(".dword", ".8byte");
-                    Parser.addAliasForDirective(".word", ".4byte");
-                    Parser.addAliasForDirective(".hword", ".2byte");
-                    Parser.addAliasForDirective(".half", ".2byte");
-               \s
             }
                
         };
@@ -127,13 +122,6 @@ class EmitAsmParserCppFilePassTest {
             std::vector<size_t> OpIndex;
             std::vector<std::string> targets;
             switch(Opcode) {
-               \s
-                case specificationValue::simpleNameValue: targets = {
-                   \s
-                      operandValue1,
-                      operandValue2
-                   \s
-                }; break
                \s
             }
                
