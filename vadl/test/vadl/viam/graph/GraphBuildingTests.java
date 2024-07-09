@@ -7,7 +7,9 @@ import static org.hamcrest.Matchers.everyItem;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertNotSame;
 import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import static vadl.viam.graph.GraphMatchers.activeIn;
 
 import org.junit.jupiter.api.AfterEach;
@@ -145,5 +147,19 @@ public class GraphBuildingTests {
     assertEquals(3, testGraph.getNodes().count());
   }
 
+  @Test
+  void copy_MultipleUniqueNodes_Success() {
+    testGraph.add(new PlainUnique());
+    testGraph.add(new PlainUnique());
+    testGraph.add(new PlainUnique());
+
+    var copiedTestGraph = testGraph.copy();
+
+    assertThat(testGraph.getNodes().count(), equalTo(1L));
+    assertThat(copiedTestGraph.getNodes().count(), equalTo(1L));
+    assertNotSame(testGraph, copiedTestGraph);
+    assertNotSame(testGraph.getNodes().findFirst().get(),
+        copiedTestGraph.getNodes().findFirst().get());
+  }
 
 }

@@ -32,6 +32,15 @@ public class TestNodes {
    */
   public static class Plain extends TestNode {
 
+    @Override
+    public Node copy() {
+      return new Plain();
+    }
+
+    @Override
+    public Node shallowCopy() {
+      return new Plain();
+    }
   }
 
   /**
@@ -42,6 +51,15 @@ public class TestNodes {
    * @see UniqueNode
    */
   public static class PlainUnique extends TestNode implements UniqueNode {
+    @Override
+    public Node copy() {
+      return new PlainUnique();
+    }
+
+    @Override
+    public Node shallowCopy() {
+      return new PlainUnique();
+    }
   }
 
   /**
@@ -67,6 +85,16 @@ public class TestNodes {
     public void applyOnInputsUnsafe(GraphVisitor.Applier<Node> visitor) {
       super.applyOnInputsUnsafe(visitor);
       input = visitor.apply(this, input);
+    }
+
+    @Override
+    public Node copy() {
+      return new WithInput(input.copy());
+    }
+
+    @Override
+    public Node shallowCopy() {
+      return new WithInput(input);
     }
   }
 
@@ -100,6 +128,16 @@ public class TestNodes {
     protected void collectSuccessors(List<Node> collection) {
       super.collectSuccessors(collection);
       collection.add(successor);
+    }
+
+    @Override
+    public Node copy() {
+      return new WithSuccessor(successor.copy());
+    }
+
+    @Override
+    public Node shallowCopy() {
+      return new WithSuccessor(successor);
     }
   }
 
@@ -142,6 +180,16 @@ public class TestNodes {
       input1 = visitor.apply(this, input1);
       input2 = visitor.apply(this, input2);
     }
+
+    @Override
+    public Node copy() {
+      return new WithTwoInputs(input1.copy(), input2.copy());
+    }
+
+    @Override
+    public Node shallowCopy() {
+      return new WithTwoInputs(input1, input2);
+    }
   }
 
 
@@ -182,6 +230,17 @@ public class TestNodes {
           .map(e -> visitor.apply(this, e))
           .collect(Collectors.toCollection(NodeList::new));
     }
+
+    @Override
+    public Node copy() {
+      return new WithNodeListInput(
+          new NodeList<>(this.inputs.stream().map(Node::copy).toList()));
+    }
+
+    @Override
+    public Node shallowCopy() {
+      return new WithNodeListInput(this.inputs);
+    }
   }
 
 
@@ -212,6 +271,16 @@ public class TestNodes {
     protected void collectData(List<Object> collection) {
       super.collectData(collection);
       collection.add(val);
+    }
+
+    @Override
+    public Node copy() {
+      return new WithData(val);
+    }
+
+    @Override
+    public Node shallowCopy() {
+      return new WithData(val);
     }
   }
 

@@ -1,6 +1,7 @@
 package vadl.viam.graph.dependency;
 
 import java.util.List;
+import java.util.Objects;
 import vadl.javaannotations.viam.DataValue;
 import vadl.viam.RegisterFile;
 import vadl.viam.Resource;
@@ -57,11 +58,11 @@ public class WriteRegFileNode extends WriteResourceNode {
   @Override
   public Node copy() {
     return new WriteRegFileNode(registerFile,
-        address != null ? (ExpressionNode) address.copy() : null, (ExpressionNode) value.copy());
+        (ExpressionNode) Objects.requireNonNull(address).copy(), (ExpressionNode) value.copy());
   }
 
   @Override
   public Node shallowCopy() {
-    return new WriteRegFileNode(registerFile, address, value);
+    return new WriteRegFileNode(registerFile, Objects.requireNonNull(address), value);
   }
 }

@@ -304,6 +304,12 @@ public class Graph {
    * Copies the graph and returns it.
    */
   public Graph copy() {
+    // Why do we need the cache?
+    // It is possible that an object is unique. For example, every
+    // Addition BuiltIn Node with two values might exist only once in the graph.
+    // But it can still be used by multiple nodes. Without the cache, we would
+    // create a new BuiltIn Node for every occurrence.
+
     // Key is the old object
     // Value the copied object
     Map<Node, Node> cache = new HashMap<>();
@@ -317,16 +323,19 @@ public class Graph {
     // Now, we have added all the nodes from the old to new graph.
     // However, they are not linked yet because they are shallow copies.
     graph.nodes.forEach(newNode -> {
+      // Update the usages
       newNode.usages().forEach(oldUsage -> {
         var newUsage = cache.get(oldUsage);
-        newNode.transferUsageOfThis(oldUsage, newUsage);
+        newNode.transferUsageOfThis(oldUsage, Objects.requireNonNull(newUsage));
       });
 
+      // Update the inputs
       newNode.inputs().forEach(oldInput -> {
         var newInput = cache.get(oldInput);
-        newNode.replaceInput(oldInput, newInput);
+        newNode.replaceInput(oldInput, Objects.requireNonNull(newInput));
       });
 
+      // Update the predecessor (if it exists)
       var oldPred = newNode.predecessor();
       if (oldPred != null) {
         var newPred = cache.get(oldPred);

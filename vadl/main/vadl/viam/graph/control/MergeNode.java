@@ -1,6 +1,7 @@
 package vadl.viam.graph.control;
 
 import java.util.List;
+import java.util.Objects;
 import java.util.stream.Collectors;
 import vadl.javaannotations.viam.Input;
 import vadl.viam.graph.GraphVisitor;
@@ -51,11 +52,11 @@ public class MergeNode extends AbstractBeginNode {
   public Node copy() {
     return new MergeNode(
         new NodeList<>(this.branchEnds.stream().map(x -> (EndNode) x.copy()).toList()),
-        next != null ? (AbstractControlNode) next.copy() : null);
+        (AbstractControlNode) Objects.requireNonNull(next).copy());
   }
 
   @Override
   public Node shallowCopy() {
-    return new MergeNode(branchEnds, next);
+    return new MergeNode(branchEnds, Objects.requireNonNull(next));
   }
 }
