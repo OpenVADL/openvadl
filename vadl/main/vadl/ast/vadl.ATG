@@ -7,8 +7,8 @@ import javax.annotation.Nullable;
 import vadl.ast.Ast;
 import vadl.ast.Expr;
 import vadl.ast.Definition;
-import static vadl.ast.IndexDefinition.IndexKind.GROUP;
-import static vadl.ast.IndexDefinition.IndexKind.PROGRAM;
+import static vadl.ast.CounterDefinition.CounterKind.GROUP;
+import static vadl.ast.CounterDefinition.CounterKind.PROGRAM;
 import vadl.utils.SourceLocation;
 
 import vadl.types.BitsType;
@@ -191,7 +191,7 @@ PRODUCTIONS
     isaDefinition<out Definition def>                       (. def = null; .)
     = constantDefinition<out Definition d>                  (. def = d; .)
     | formatDefinition<out Definition d>                    (. def = d; .)
-    | indexDefinition<out Definition d>                     (. def = d; .)
+    | counterDefinition<out Definition d>                   (. def = d; .)
     | instructionDefinition<out Definition d>               (. def = d; .)
     | memoryDefinition<out Definition d>                    (. def = d; .)
     | IF (scanner.Peek().kind == _file) registerFileDefinition<out Definition d>   (. def = d; .)
@@ -229,13 +229,13 @@ PRODUCTIONS
     "]"                                             (. field = new FormatDefinition.FormatField(id, ranges); .)
     .
 
-    indexDefinition<out IndexDefinition def>        (. IndexDefinition.IndexKind kind = null; .)
+    counterDefinition<out CounterDefinition def>    (. CounterDefinition.CounterKind kind = null; .)
     = ("program"                                    (. kind = PROGRAM; .)
     |  "group"                                      (. kind = GROUP; .)
     )                                               (. var startLocation = locationFromToken(t); .)
     "counter"
         identifier<out Identifier id>               (. symbolTable.addDefinition(id); .)
-        ":" typeLiteral<out TypeLiteral t1>         (. def = new IndexDefinition(kind, id, t1, startLocation.join(locationFromToken(t))); .)
+        ":" typeLiteral<out TypeLiteral t1>         (. def = new CounterDefinition(kind, id, t1, startLocation.join(locationFromToken(t))); .)
     .
 
     instructionDefinition<out InstructionDefinition def> (. var startLocation = locationFromToken(t); .)

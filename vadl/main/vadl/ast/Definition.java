@@ -22,7 +22,7 @@ interface DefinitionVisitor<R> {
 
   R visit(InstructionSetDefinition definition);
 
-  R visit(IndexDefinition definition);
+  R visit(CounterDefinition definition);
 
   R visit(MemoryDefinition definition);
 
@@ -318,19 +318,19 @@ class InstructionSetDefinition extends Definition {
   }
 }
 
-class IndexDefinition extends Definition {
-  IndexKind kind;
+class CounterDefinition extends Definition {
+  CounterKind kind;
   Identifier identifier;
   TypeLiteral type;
   SourceLocation loc;
 
-  enum IndexKind {
+  enum CounterKind {
     PROGRAM,
     GROUP
   }
 
-  public IndexDefinition(IndexKind kind, Identifier identifier, TypeLiteral type,
-                         SourceLocation location) {
+  public CounterDefinition(CounterKind kind, Identifier identifier, TypeLiteral type,
+                           SourceLocation location) {
     this.kind = kind;
     this.identifier = identifier;
     this.type = type;
@@ -376,7 +376,7 @@ class IndexDefinition extends Definition {
       return false;
     }
 
-    IndexDefinition that = (IndexDefinition) o;
+    CounterDefinition that = (CounterDefinition) o;
     return kind == that.kind && identifier.equals(that.identifier) && type.equals(that.type);
   }
 

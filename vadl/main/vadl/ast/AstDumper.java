@@ -94,7 +94,7 @@ public class AstDumper implements DefinitionVisitor<Void>, ExprVisitor<Void> {
   }
 
   @Override
-  public Void visit(IndexDefinition definition) {
+  public Void visit(CounterDefinition definition) {
     dumpNode(definition);
     dumpChildren(definition.identifier, definition.type);
     return null;
