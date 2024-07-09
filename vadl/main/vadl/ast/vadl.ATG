@@ -152,6 +152,7 @@ CHARACTERS
 TOKENS
     number = digit {digit}.
     identifierToken = letter {letter | digit | '_'}.
+    file = "file".
 
 COMMENTS FROM "//" TO '\n'
 COMMENTS FROM "/*" TO "*/" NESTED
@@ -193,8 +194,7 @@ PRODUCTIONS
     | indexDefinition<out Definition d>                     (. def = d; .)
     //| instructionStatement<out Definition d>              (. def = d; .)
     | memoryDefinition<out Definition d>                    (. def = d; .)
-    // TODO Use token instead of string compare, la.kind
-    | IF (matchN(1, "file")) registerFileDefinition<out Definition d>   (. def = d; .)
+    | IF (scanner.Peek().kind == _file) registerFileDefinition<out Definition d>   (. def = d; .)
     | registerDefinition<out Definition d>   (. def = d; .)
     .
 
