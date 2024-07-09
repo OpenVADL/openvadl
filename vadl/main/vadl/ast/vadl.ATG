@@ -192,7 +192,7 @@ PRODUCTIONS
     = constantDefinition<out Definition d>                  (. def = d; .)
     | formatDefinition<out Definition d>                    (. def = d; .)
     | indexDefinition<out Definition d>                     (. def = d; .)
-    | instructionStatement<out Definition d>                (. def = d; .)
+    | instructionDefinition<out Definition d>               (. def = d; .)
     | memoryDefinition<out Definition d>                    (. def = d; .)
     | IF (scanner.Peek().kind == _file) registerFileDefinition<out Definition d>   (. def = d; .)
     | registerDefinition<out Definition d>   (. def = d; .)
@@ -238,9 +238,10 @@ PRODUCTIONS
         ":" typeLiteral<out TypeLiteral t1>         (. def = new IndexDefinition(kind, id, t1, startLocation.join(locationFromToken(t))); .)
     .
 
-    instructionStatement<out InstructionDefinition def> (. var startLocation = locationFromToken(t); .)
-    = "instruction" identifier<out Identifier id> ":" identifier<out Identifier typeIdentifier> "="
-      "{" block<out Block block> "}"                (. def = new InstructionDefinition(id, typeIdentifier, block, startLocation.join(locationFromToken(t))); .)
+    instructionDefinition<out InstructionDefinition def> (. var startLocation = locationFromToken(t); .)
+    = "instruction" identifier<out Identifier id>
+      ":" identifier<out Identifier typeIdentifier>
+      "=" "{" statement<out Statement behavior> "}"      (. def = new InstructionDefinition(id, typeIdentifier, behavior, startLocation.join(locationFromToken(t))); .)
     .
 
     memoryDefinition<out MemoryDefinition def>
@@ -267,16 +268,17 @@ PRODUCTIONS
 
     // -- STATEMENTS ---------------------------------------------------------------------------------------------------
 
-    block<out Block block>                 (. block = new Block();  .)
-    = {
-        statement<out Statement statement> (. block.add(statement); .)
-      }
-    .
-
     statement<out Statement statement>         (. statement = null; .)
     = letStatement<out Statement letStatement> (. statement = letStatement; .)
     | ifStatement<out Statement ifStatement>   (. statement = ifStatement; .)
     | assignment<out Statement assignment>     (. statement = assignment; .)
+    | blockStatement<out Statement block>      (. statement = block; .)
+    .
+
+    blockStatement<out BlockStatement block>   (. block = new BlockStatement(); .)
+    = "{" {
+        statement<out Statement statement>     (. block.add(statement); .)
+     } "}"
     .
 
     assignment<out Statement statement>
@@ -285,14 +287,14 @@ PRODUCTIONS
 
     letStatement<out Statement letStatement>
     = "let" identifier<out Identifier id> "=" expression<out Expr valueExpr>
-      "in" block<out Block block>           (. letStatement = new LetStatement(id, valueExpr, block);
+      "in" statement<out Statement body>    (. letStatement = new LetStatement(id, valueExpr, body);
                                                symbolTable.addDefinition(id); .)
     .
 
     ifStatement<out Statement ifStatement>
     = "if" expression<out Expr condition>
-      "then" block<out Block thenBlock>     (. ifStatement = new IfStatement(condition, thenBlock, null);      .)
-      [ "else" block<out Block elseBlock>   (. ifStatement = new IfStatement(condition, thenBlock, elseBlock); .) ]
+      "then" statement<out Statement thenStmt>     (. ifStatement = new IfStatement(condition, thenStmt, null);     .)
+      [ "else" statement<out Statement elseStmt>   (. ifStatement = new IfStatement(condition, thenStmt, elseStmt); .) ]
     .
 
     // -- EXPRESSIONS --------------------------------------------------------------------------------------------------

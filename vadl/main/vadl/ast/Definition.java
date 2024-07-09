@@ -594,14 +594,14 @@ class RegisterFileDefinition extends Definition {
 class InstructionDefinition extends Definition {
   final Identifier identifier;
   final Identifier typeIdentifier;
-  final Block block;
+  final Statement behavior;
   final SourceLocation loc;
 
-  InstructionDefinition(Identifier identifier, Identifier typeIdentifier, Block block,
-                           SourceLocation location) {
+  InstructionDefinition(Identifier identifier, Identifier typeIdentifier, Statement behavior,
+                        SourceLocation location) {
     this.identifier = identifier;
     this.typeIdentifier = typeIdentifier;
-    this.block = block;
+    this.behavior = behavior;
     this.loc = location;
   }
 
@@ -619,7 +619,7 @@ class InstructionDefinition extends Definition {
   void prettyPrint(int indent, StringBuilder builder) {
     builder.append(prettyIndentString(indent));
     builder.append("instruction %s : %s = {\n".formatted(identifier.name, typeIdentifier.name));
-    block.prettyPrint(indent + 1, builder);
+    behavior.prettyPrint(indent + 1, builder);
     builder.append(prettyIndentString(indent));
     builder.append("}\n");
   }
@@ -646,14 +646,14 @@ class InstructionDefinition extends Definition {
     var that = (InstructionDefinition) o;
     return Objects.equals(identifier, that.identifier)
         && Objects.equals(typeIdentifier, that.typeIdentifier)
-        && Objects.equals(block, that.block);
+        && Objects.equals(behavior, that.behavior);
   }
 
   @Override
   public int hashCode() {
     int result = Objects.hashCode(identifier);
     result = 31 * result + Objects.hashCode(typeIdentifier);
-    result = 31 * result + Objects.hashCode(block);
+    result = 31 * result + Objects.hashCode(behavior);
     return result;
   }
 }

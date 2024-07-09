@@ -60,6 +60,5 @@ public class StatementTest {
         """;
     var ast = Assertions.assertDoesNotThrow(() -> VadlParser.parse(prog), "Cannot parse input");
     verifyPrettifiedAst(ast);
-    System.out.println(ast.prettyPrint());
   }
 }

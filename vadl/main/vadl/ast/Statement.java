@@ -4,12 +4,13 @@ import java.util.ArrayList;
 import java.util.List;
 import javax.annotation.Nullable;
 
+// TODO Extend Node
 interface Statement {
   void prettyPrint(int indent, StringBuilder builder);
 }
 
-record Block(List<Statement> statements) implements Statement {
-  Block() {
+record BlockStatement(List<Statement> statements) implements Statement {
+  BlockStatement() {
     this(new ArrayList<>());
   }
 
@@ -19,11 +20,16 @@ record Block(List<Statement> statements) implements Statement {
 
   @Override
   public void prettyPrint(int indent, StringBuilder builder) {
-    statements.forEach(statement -> statement.prettyPrint(indent, builder));
+    builder.append(" ".repeat(2 * indent));
+    builder.append("{");
+    statements.forEach(statement -> statement.prettyPrint(indent + 1, builder));
+    builder.append(" ".repeat(2 * indent));
+    builder.append("}");
   }
 }
 
-record LetStatement(Identifier identifier, Expr valueExpression, Block block) implements Statement {
+record LetStatement(Identifier identifier, Expr valueExpression, Statement body)
+    implements Statement {
   @Override
   public void prettyPrint(int indent, StringBuilder builder) {
     builder.append(" ".repeat(2 * indent));
@@ -32,23 +38,24 @@ record LetStatement(Identifier identifier, Expr valueExpression, Block block) im
     builder.append(" = ");
     valueExpression.prettyPrint(indent + 1, builder);
     builder.append(" in\n");
-    block.prettyPrint(indent + 1, builder);
+    body.prettyPrint(indent + 1, builder);
   }
 }
 
-record IfStatement(Expr condition, Block thenBlock, @Nullable Block elseBlock) implements Statement {
+record IfStatement(Expr condition, Statement thenStmt, @Nullable Statement elseStmt)
+    implements Statement {
   @Override
   public void prettyPrint(int indent, StringBuilder builder) {
     builder.append(" ".repeat(2 * indent));
     builder.append("if ");
     condition.prettyPrint(indent + 1, builder);
     builder.append(" then\n");
-    thenBlock.prettyPrint(indent + 1, builder);
+    thenStmt.prettyPrint(indent + 1, builder);
     builder.append("\n");
-    if (elseBlock != null) {
+    if (elseStmt != null) {
       builder.append(" ".repeat(2 * indent));
       builder.append("else\n");
-      elseBlock.prettyPrint(indent + 1, builder);
+      elseStmt.prettyPrint(indent + 1, builder);
       builder.append("\n");
     }
   }
