@@ -87,9 +87,22 @@ public class Graph {
    */
   public <T extends Node> T add(T node) {
     if (node instanceof UniqueNode) {
-      return addUniqueInternal(node);
+      return addUniqueInternal(node, true);
     } else {
-      return addSimpleInternal(node);
+      return addSimpleInternal(node, true);
+    }
+  }
+
+  /**
+   * This method works like {@link Graph#add(Node)}. However,
+   * it will not check whether the inputs were also added because
+   * by cloning the graph, we know that we have an inconsistent state.
+   */
+  private <T extends Node> T unsafeAdd(T node) {
+    if (node instanceof UniqueNode) {
+      return addUniqueInternal(node, false);
+    } else {
+      return addSimpleInternal(node, false);
     }
   }
 
@@ -248,23 +261,27 @@ public class Graph {
   }
 
   // helper method to add node to graph
-  private <T extends Node> T addSimpleInternal(T node) {
+  private <T extends Node> T addSimpleInternal(T node, boolean assertInputsAdded) {
     node.ensure(node.isUninitialized(), "node is not uninitialized");
     // ensure that all input dependencies are already added
     // to the graph
-    ensureInputsAdded(node);
+    if (assertInputsAdded) {
+      // This check is optional because when cloning the graph,
+      // the graph will be inconsistent.
+      ensureInputsAdded(node);
+    }
 
     node.initialize(this);
     return node;
   }
 
-  private <T extends Node> T addUniqueInternal(T node) {
+  private <T extends Node> T addUniqueInternal(T node, boolean assertInputsAdded) {
     node.ensure(node.isUninitialized(), "node is not uninitialized");
     var result = findDuplicate(node);
     if (result != null) {
       return result;
     }
-    return addSimpleInternal(node);
+    return addSimpleInternal(node, assertInputsAdded);
   }
 
 
@@ -316,7 +333,7 @@ public class Graph {
     var graph = new Graph(name);
 
     this.nodes.forEach(oldNode -> {
-      var newNode = graph.add(oldNode.shallowCopy());
+      var newNode = graph.unsafeAdd(oldNode.shallowCopy());
       cache.put(oldNode, newNode);
     });
 

@@ -148,9 +148,7 @@ public class GraphBuildingTests {
   }
 
   @Test
-  void copy_MultipleUniqueNodes_Success() {
-    testGraph.add(new PlainUnique());
-    testGraph.add(new PlainUnique());
+  void copy_UniqueNode_Success() {
     testGraph.add(new PlainUnique());
 
     var copiedTestGraph = testGraph.copy();
@@ -160,6 +158,23 @@ public class GraphBuildingTests {
     assertNotSame(testGraph, copiedTestGraph);
     assertNotSame(testGraph.getNodes().findFirst().get(),
         copiedTestGraph.getNodes().findFirst().get());
+  }
+
+  @Test
+  void copy_MultipleDataNode_Success() {
+    var p1 = testGraph.add(new Plain());
+    var p2 = testGraph.add(new Plain());
+    var x = testGraph.add(new WithTwoInputs(p1, p2));
+
+    var copiedTestGraph = testGraph.copy();
+    var y = (WithTwoInputs) copiedTestGraph.getNodes(WithTwoInputs.class).findFirst().get();
+
+    assertThat(testGraph.getNodes().count(), equalTo(3L));
+    assertThat(copiedTestGraph.getNodes().count(), equalTo(3L));
+    assertNotSame(testGraph, copiedTestGraph);
+    assertNotSame(x, y);
+    assertNotSame(x.input1, y.input1);
+    assertNotSame(x.input2, y.input2);
   }
 
 }

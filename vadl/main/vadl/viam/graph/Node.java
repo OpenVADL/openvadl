@@ -301,7 +301,6 @@ public abstract class Node {
   }
 
   protected void addUsage(Node usage) {
-    ensure(usage.isActiveIn(graph), "usage must be active: %s", usage);
     usages.add(usage);
   }
 
