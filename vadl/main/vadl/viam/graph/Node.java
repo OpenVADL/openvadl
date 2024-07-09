@@ -420,6 +420,11 @@ public abstract class Node {
   }
 
   /**
+   * Creates a copy from {@code this} node and returns it.
+   */
+  public abstract Node copy();
+
+  /**
    * Defines assertions that ensure a consistent state
    * of the node.
    *
@@ -503,7 +508,7 @@ public abstract class Node {
           .addContext(this)
           .addContext(this.graph)
           .shrinkStacktrace(1);
-      
+
     }
   }
 

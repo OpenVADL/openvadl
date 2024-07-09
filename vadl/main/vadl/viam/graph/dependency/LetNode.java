@@ -6,6 +6,8 @@ import vadl.javaannotations.viam.Input;
 import vadl.viam.Identifier;
 import vadl.viam.graph.GraphVisitor;
 import vadl.viam.graph.Node;
+import vadl.viam.graph.NodeList;
+import vadl.viam.graph.control.InstrCallNode;
 
 /**
  * Represents a let expression in the VADL Specification.
@@ -51,5 +53,10 @@ public class LetNode extends ExpressionNode {
   protected void applyOnInputsUnsafe(GraphVisitor.Applier<Node> visitor) {
     super.applyOnInputsUnsafe(visitor);
     expression = visitor.apply(this, expression, ExpressionNode.class);
+  }
+
+  @Override
+  public Node copy() {
+    return new LetNode(identifier, (ExpressionNode) expression.copy());
   }
 }

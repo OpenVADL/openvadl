@@ -8,5 +8,5 @@ import vadl.viam.graph.Node;
  * <p>They are fixed at position and may not freely move/reorder.
  * </p>
  */
-public class ControlNode extends Node {
+public abstract class AbstractControlNode extends Node {
 }

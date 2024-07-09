@@ -6,6 +6,7 @@ import vadl.javaannotations.viam.Input;
 import vadl.viam.graph.GraphVisitor;
 import vadl.viam.graph.Node;
 import vadl.viam.graph.NodeList;
+import vadl.viam.graph.dependency.ExpressionNode;
 import vadl.viam.graph.dependency.SideEffectNode;
 
 /**
@@ -15,7 +16,7 @@ import vadl.viam.graph.dependency.SideEffectNode;
  * <p>It holds a list of side effects that are required
  * to be executed before the end of this branch.</p>
  */
-public abstract class AbstractEndNode extends ControlNode {
+public abstract class AbstractEndNode extends AbstractControlNode {
   @Input
   NodeList<SideEffectNode> sideEffects;
 

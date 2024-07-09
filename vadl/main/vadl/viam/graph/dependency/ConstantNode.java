@@ -4,6 +4,9 @@ import java.util.List;
 import vadl.javaannotations.viam.DataValue;
 import vadl.types.Type;
 import vadl.viam.Constant;
+import vadl.viam.graph.Node;
+import vadl.viam.graph.NodeList;
+import vadl.viam.graph.control.InstrCallNode;
 
 /**
  * The constant node represents a compile time constant value in the
@@ -23,5 +26,10 @@ public class ConstantNode extends ExpressionNode {
   protected void collectData(List<Object> collection) {
     super.collectData(collection);
     collection.add(constant);
+  }
+
+  @Override
+  public Node copy() {
+    return new ConstantNode(constant);
   }
 }

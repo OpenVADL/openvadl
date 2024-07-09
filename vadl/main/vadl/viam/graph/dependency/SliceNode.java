@@ -8,6 +8,8 @@ import vadl.types.Type;
 import vadl.viam.Constant;
 import vadl.viam.graph.GraphVisitor;
 import vadl.viam.graph.Node;
+import vadl.viam.graph.NodeList;
+import vadl.viam.graph.control.InstrCallNode;
 
 /**
  * A node that represents the bit slice operation on a value.
@@ -70,5 +72,10 @@ public class SliceNode extends ExpressionNode {
   protected void applyOnInputsUnsafe(GraphVisitor.Applier<Node> visitor) {
     super.applyOnInputsUnsafe(visitor);
     value = visitor.apply(this, value, ExpressionNode.class);
+  }
+
+  @Override
+  public Node copy() {
+    return new SliceNode((ExpressionNode) value.copy(), slice, type());
   }
 }
