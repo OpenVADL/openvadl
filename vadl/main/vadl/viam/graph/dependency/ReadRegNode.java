@@ -6,6 +6,10 @@ import vadl.javaannotations.viam.DataValue;
 import vadl.types.DataType;
 import vadl.viam.Register;
 import vadl.viam.Resource;
+import vadl.viam.graph.Node;
+import vadl.viam.graph.NodeList;
+import vadl.viam.graph.control.IfNode;
+import vadl.viam.graph.control.InstrCallNode;
 
 /**
  * The ReadRegNode class is a subclass of ReadNode that represents
@@ -50,4 +54,13 @@ public class ReadRegNode extends ReadResourceNode {
     collection.add(register);
   }
 
+  @Override
+  public Node copy() {
+    return new ReadRegNode(register, type());
+  }
+
+  @Override
+  public Node shallowCopy() {
+    return copy();
+  }
 }

@@ -1,11 +1,13 @@
 package vadl.viam.graph.control;
 
 import java.util.List;
+import java.util.Objects;
 import java.util.stream.Collectors;
 import vadl.javaannotations.viam.Input;
 import vadl.viam.graph.GraphVisitor;
 import vadl.viam.graph.Node;
 import vadl.viam.graph.NodeList;
+import vadl.viam.graph.dependency.ExpressionNode;
 
 /**
  * The MergeNode depends on a list of branches that merge control flow again.
@@ -15,7 +17,7 @@ public class MergeNode extends AbstractBeginNode {
   @Input
   NodeList<EndNode> branchEnds;
 
-  public MergeNode(NodeList<EndNode> branchEnds, ControlNode next) {
+  public MergeNode(NodeList<EndNode> branchEnds, AbstractControlNode next) {
     super(next);
     this.branchEnds = branchEnds;
   }
@@ -44,5 +46,17 @@ public class MergeNode extends AbstractBeginNode {
         .map(e -> "%s".formatted(e.id))
         .collect(Collectors.joining(", "));
     return "%s(%s)".formatted(super.toString(), ids);
+  }
+
+  @Override
+  public Node copy() {
+    return new MergeNode(
+        new NodeList<>(this.branchEnds.stream().map(x -> (EndNode) x.copy()).toList()),
+        (AbstractControlNode) Objects.requireNonNull(next).copy());
+  }
+
+  @Override
+  public Node shallowCopy() {
+    return new MergeNode(branchEnds, Objects.requireNonNull(next));
   }
 }

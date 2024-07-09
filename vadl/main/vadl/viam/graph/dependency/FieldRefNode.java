@@ -4,6 +4,10 @@ import java.util.List;
 import vadl.javaannotations.viam.DataValue;
 import vadl.types.DataType;
 import vadl.viam.Format;
+import vadl.viam.graph.Node;
+import vadl.viam.graph.NodeList;
+import vadl.viam.graph.control.IfNode;
+import vadl.viam.graph.control.InstrCallNode;
 
 /**
  * A node reference an instruction's format field.
@@ -47,5 +51,15 @@ public class FieldRefNode extends ParamNode {
   protected void collectData(List<Object> collection) {
     super.collectData(collection);
     collection.add(formatField);
+  }
+
+  @Override
+  public Node copy() {
+    return new FieldRefNode(formatField, (DataType) type());
+  }
+
+  @Override
+  public Node shallowCopy() {
+    return copy();
   }
 }

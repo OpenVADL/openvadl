@@ -301,7 +301,6 @@ public abstract class Node {
   }
 
   protected void addUsage(Node usage) {
-    ensure(usage.isActiveIn(graph), "usage must be active: %s", usage);
     usages.add(usage);
   }
 
@@ -420,6 +419,18 @@ public abstract class Node {
   }
 
   /**
+   * Creates a copy from {@code this} node and returns it. It will also copy all
+   * data values recursively.
+   */
+  public abstract Node copy();
+
+  /**
+   * Creates a copy from {@code this} node and returns it. It will *NOT* copy all
+   * data values recursively. Instead, it will use the old objects.
+   */
+  public abstract Node shallowCopy();
+
+  /**
    * Defines assertions that ensure a consistent state
    * of the node.
    *
@@ -503,7 +514,7 @@ public abstract class Node {
           .addContext(this)
           .addContext(this.graph)
           .shrinkStacktrace(1);
-      
+
     }
   }
 

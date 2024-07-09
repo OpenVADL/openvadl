@@ -3,8 +3,12 @@ package vadl.viam.graph.dependency;
 import java.util.List;
 import vadl.javaannotations.viam.Input;
 import vadl.types.BoolType;
+import vadl.types.Type;
 import vadl.viam.graph.GraphVisitor;
 import vadl.viam.graph.Node;
+import vadl.viam.graph.NodeList;
+import vadl.viam.graph.control.IfNode;
+import vadl.viam.graph.control.InstrCallNode;
 
 /**
  * Represents the If-Expression in a VADL specification.
@@ -52,5 +56,17 @@ public class SelectNode extends ExpressionNode {
   @Override
   public String toString() {
     return "%s(%s, %s)".formatted(super.toString(), trueCase.id, falseCase.id);
+  }
+
+  @Override
+  public Node copy() {
+    return new SelectNode((ExpressionNode) condition.copy(),
+        (ExpressionNode) trueCase.copy(),
+        (ExpressionNode) falseCase.copy());
+  }
+
+  @Override
+  public Node shallowCopy() {
+    return new SelectNode(condition, trueCase, falseCase);
   }
 }

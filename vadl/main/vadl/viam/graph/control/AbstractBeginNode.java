@@ -1,5 +1,6 @@
 package vadl.viam.graph.control;
 
+import java.util.Objects;
 import vadl.viam.graph.Node;
 
 /**
@@ -8,10 +9,20 @@ import vadl.viam.graph.Node;
  */
 public class AbstractBeginNode extends DirectionalNode {
 
-  public AbstractBeginNode(ControlNode next) {
+  public AbstractBeginNode(AbstractControlNode next) {
     setNext(next);
   }
 
   public AbstractBeginNode() {
+  }
+
+  @Override
+  public Node copy() {
+    return new AbstractBeginNode((AbstractControlNode) Objects.requireNonNull(next).copy());
+  }
+
+  @Override
+  public Node shallowCopy() {
+    return new AbstractBeginNode(Objects.requireNonNull(next));
   }
 }

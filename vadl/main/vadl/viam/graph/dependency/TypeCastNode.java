@@ -3,6 +3,9 @@ package vadl.viam.graph.dependency;
 import java.util.List;
 import vadl.javaannotations.viam.DataValue;
 import vadl.types.Type;
+import vadl.viam.graph.Node;
+import vadl.viam.graph.NodeList;
+import vadl.viam.graph.control.InstrCallNode;
 
 
 /**
@@ -23,5 +26,15 @@ public class TypeCastNode extends UnaryNode {
   protected void collectData(List<Object> collection) {
     super.collectData(collection);
     collection.add(castType);
+  }
+
+  @Override
+  public Node copy() {
+    return new TypeCastNode((ExpressionNode) value.copy(), type());
+  }
+
+  @Override
+  public Node shallowCopy() {
+    return new TypeCastNode(value, type());
   }
 }

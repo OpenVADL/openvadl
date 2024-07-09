@@ -4,7 +4,10 @@ import java.util.List;
 import vadl.javaannotations.viam.DataValue;
 import vadl.viam.Register;
 import vadl.viam.Resource;
+import vadl.viam.graph.Node;
+import vadl.viam.graph.NodeList;
 import vadl.viam.graph.UniqueNode;
+import vadl.viam.graph.control.InstrCallNode;
 
 /**
  * Represents a write to register.
@@ -47,5 +50,15 @@ public class WriteRegNode extends WriteResourceNode {
   protected void collectData(List<Object> collection) {
     super.collectData(collection);
     collection.add(register);
+  }
+
+  @Override
+  public Node copy() {
+    return new WriteRegNode(register, (ExpressionNode) value.copy());
+  }
+
+  @Override
+  public Node shallowCopy() {
+    return new WriteRegNode(register, value);
   }
 }

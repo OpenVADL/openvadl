@@ -1,10 +1,14 @@
 package vadl.viam.graph.dependency;
 
 import java.util.List;
+import java.util.Objects;
 import vadl.javaannotations.viam.DataValue;
 import vadl.viam.Memory;
 import vadl.viam.Resource;
+import vadl.viam.graph.Node;
+import vadl.viam.graph.NodeList;
 import vadl.viam.graph.UniqueNode;
+import vadl.viam.graph.control.InstrCallNode;
 
 /**
  * Represents a write to memory.
@@ -63,5 +67,17 @@ public class WriteMemNode extends WriteResourceNode {
     super.collectData(collection);
     collection.add(memory);
     collection.add(words);
+  }
+
+  @Override
+  public Node copy() {
+    return new WriteMemNode(memory, words,
+        (ExpressionNode) Objects.requireNonNull(address).copy(),
+        (ExpressionNode) value.copy());
+  }
+
+  @Override
+  public Node shallowCopy() {
+    return new WriteMemNode(memory, words, Objects.requireNonNull(address), value);
   }
 }

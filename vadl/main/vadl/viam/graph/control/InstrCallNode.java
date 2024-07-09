@@ -107,4 +107,15 @@ public class InstrCallNode extends DirectionalNode {
             visitor.apply(this, e, ExpressionNode.class))
         .collect(Collectors.toCollection(NodeList::new));
   }
+
+  @Override
+  public Node copy() {
+    return new InstrCallNode(target, paramFields,
+        new NodeList<>(this.arguments().stream().map(x -> (ExpressionNode) x.copy()).toList()));
+  }
+
+  @Override
+  public Node shallowCopy() {
+    return new InstrCallNode(target, paramFields, arguments);
+  }
 }

@@ -43,4 +43,14 @@ public class ReturnNode extends AbstractEndNode {
     super.collectInputs(collection);
     collection.add(value);
   }
+
+  @Override
+  public Node copy() {
+    return new ReturnNode((ExpressionNode) value.copy());
+  }
+
+  @Override
+  public Node shallowCopy() {
+    return new ReturnNode(value);
+  }
 }

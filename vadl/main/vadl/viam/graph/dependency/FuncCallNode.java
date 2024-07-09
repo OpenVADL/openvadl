@@ -4,7 +4,10 @@ import java.util.List;
 import vadl.javaannotations.viam.DataValue;
 import vadl.types.Type;
 import vadl.viam.Function;
+import vadl.viam.graph.Node;
 import vadl.viam.graph.NodeList;
+import vadl.viam.graph.control.IfNode;
+import vadl.viam.graph.control.InstrCallNode;
 
 /**
  * A call to a function in a behaviour graph.
@@ -54,5 +57,17 @@ public class FuncCallNode extends AbstractFunctionCallNode {
   protected void collectData(List<Object> collection) {
     super.collectData(collection);
     collection.add(function);
+  }
+
+  @Override
+  public Node copy() {
+    return new FuncCallNode(
+        new NodeList<>(this.arguments().stream().map(x -> (ExpressionNode) x.copy()).toList()),
+        function, type());
+  }
+
+  @Override
+  public Node shallowCopy() {
+    return new FuncCallNode(arguments(), function, type());
   }
 }

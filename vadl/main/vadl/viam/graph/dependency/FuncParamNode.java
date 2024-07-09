@@ -4,6 +4,10 @@ import java.util.List;
 import vadl.javaannotations.viam.DataValue;
 import vadl.types.Type;
 import vadl.viam.Parameter;
+import vadl.viam.graph.Node;
+import vadl.viam.graph.NodeList;
+import vadl.viam.graph.control.IfNode;
+import vadl.viam.graph.control.InstrCallNode;
 
 /**
  * Represents a parameter node for a function in VADL specification.
@@ -32,5 +36,15 @@ public class FuncParamNode extends ParamNode {
   protected void collectData(List<Object> collection) {
     super.collectData(collection);
     collection.add(parameter);
+  }
+
+  @Override
+  public Node copy() {
+    return new FuncParamNode(parameter);
+  }
+
+  @Override
+  public Node shallowCopy() {
+    return copy();
   }
 }

@@ -7,7 +7,9 @@ import static org.hamcrest.Matchers.everyItem;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertNotSame;
 import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import static vadl.viam.graph.GraphMatchers.activeIn;
 
 import org.junit.jupiter.api.AfterEach;
@@ -145,5 +147,34 @@ public class GraphBuildingTests {
     assertEquals(3, testGraph.getNodes().count());
   }
 
+  @Test
+  void copy_UniqueNode_Success() {
+    testGraph.add(new PlainUnique());
+
+    var copiedTestGraph = testGraph.copy();
+
+    assertThat(testGraph.getNodes().count(), equalTo(1L));
+    assertThat(copiedTestGraph.getNodes().count(), equalTo(1L));
+    assertNotSame(testGraph, copiedTestGraph);
+    assertNotSame(testGraph.getNodes().findFirst().get(),
+        copiedTestGraph.getNodes().findFirst().get());
+  }
+
+  @Test
+  void copy_MultipleDataNode_Success() {
+    final var p1 = testGraph.add(new Plain());
+    final var p2 = testGraph.add(new Plain());
+    final var x = testGraph.add(new WithTwoInputs(p1, p2));
+
+    var copiedTestGraph = testGraph.copy();
+    final var y = (WithTwoInputs) copiedTestGraph.getNodes(WithTwoInputs.class).findFirst().get();
+
+    assertThat(testGraph.getNodes().count(), equalTo(3L));
+    assertThat(copiedTestGraph.getNodes().count(), equalTo(3L));
+    assertNotSame(testGraph, copiedTestGraph);
+    assertNotSame(x, y);
+    assertNotSame(x.input1, y.input1);
+    assertNotSame(x.input2, y.input2);
+  }
 
 }

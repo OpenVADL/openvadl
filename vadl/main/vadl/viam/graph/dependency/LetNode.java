@@ -3,9 +3,13 @@ package vadl.viam.graph.dependency;
 import java.util.List;
 import vadl.javaannotations.viam.DataValue;
 import vadl.javaannotations.viam.Input;
+import vadl.types.Type;
 import vadl.viam.Identifier;
 import vadl.viam.graph.GraphVisitor;
 import vadl.viam.graph.Node;
+import vadl.viam.graph.NodeList;
+import vadl.viam.graph.control.IfNode;
+import vadl.viam.graph.control.InstrCallNode;
 
 /**
  * Represents a let expression in the VADL Specification.
@@ -34,7 +38,6 @@ public class LetNode extends ExpressionNode {
     this.expression = expression;
   }
 
-
   @Override
   protected void collectData(List<Object> collection) {
     super.collectData(collection);
@@ -51,5 +54,15 @@ public class LetNode extends ExpressionNode {
   protected void applyOnInputsUnsafe(GraphVisitor.Applier<Node> visitor) {
     super.applyOnInputsUnsafe(visitor);
     expression = visitor.apply(this, expression, ExpressionNode.class);
+  }
+
+  @Override
+  public Node copy() {
+    return new LetNode(identifier, (ExpressionNode) expression.copy());
+  }
+
+  @Override
+  public Node shallowCopy() {
+    return new LetNode(identifier, expression);
   }
 }

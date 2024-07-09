@@ -5,6 +5,7 @@ import vadl.javaannotations.viam.Input;
 import vadl.javaannotations.viam.Successor;
 import vadl.viam.graph.GraphVisitor;
 import vadl.viam.graph.Node;
+import vadl.viam.graph.NodeList;
 import vadl.viam.graph.dependency.ExpressionNode;
 
 
@@ -66,5 +67,15 @@ public class IfNode extends ControlSplitNode {
     super.collectSuccessors(collection);
     collection.add(trueBranch);
     collection.add(falseBranch);
+  }
+
+  @Override
+  public Node copy() {
+    return new IfNode((ExpressionNode) condition.copy(), trueBranch.copy(), falseBranch.copy());
+  }
+
+  @Override
+  public Node shallowCopy() {
+    return new IfNode(condition, trueBranch, falseBranch);
   }
 }

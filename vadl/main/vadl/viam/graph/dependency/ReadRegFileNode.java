@@ -6,6 +6,10 @@ import vadl.javaannotations.viam.DataValue;
 import vadl.types.DataType;
 import vadl.viam.RegisterFile;
 import vadl.viam.Resource;
+import vadl.viam.graph.Node;
+import vadl.viam.graph.NodeList;
+import vadl.viam.graph.control.IfNode;
+import vadl.viam.graph.control.InstrCallNode;
 
 /**
  * A read of a register file in the behaviour graph. It takes one expression node as input
@@ -37,4 +41,13 @@ public class ReadRegFileNode extends ReadResourceNode {
     collection.add(registerFile);
   }
 
+  @Override
+  public Node copy() {
+    return new ReadRegFileNode(registerFile, (ExpressionNode) address().copy(), type());
+  }
+
+  @Override
+  public Node shallowCopy() {
+    return new ReadRegFileNode(registerFile, address(), type());
+  }
 }

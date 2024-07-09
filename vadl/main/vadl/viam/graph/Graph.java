@@ -3,12 +3,14 @@ package vadl.viam.graph;
 import static java.util.Objects.requireNonNull;
 
 import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.Map;
 import java.util.Objects;
 import java.util.stream.Stream;
 import javax.annotation.Nullable;
 import vadl.utils.SourceLocation;
+import vadl.viam.graph.control.AbstractControlNode;
 import vadl.viam.graph.control.AbstractEndNode;
-import vadl.viam.graph.control.ControlNode;
 import vadl.viam.graph.control.EndNode;
 import vadl.viam.graph.control.InstrCallNode;
 import vadl.viam.graph.control.ReturnNode;
@@ -85,9 +87,22 @@ public class Graph {
    */
   public <T extends Node> T add(T node) {
     if (node instanceof UniqueNode) {
-      return addUniqueInternal(node);
+      return addUniqueInternal(node, true);
     } else {
-      return addSimpleInternal(node);
+      return addSimpleInternal(node, true);
+    }
+  }
+
+  /**
+   * This method works like {@link Graph#add(Node)}. However,
+   * it will not check whether the inputs were also added because
+   * by cloning the graph, we know that we have an inconsistent state.
+   */
+  private <T extends Node> T unsafeAdd(T node) {
+    if (node instanceof UniqueNode) {
+      return addUniqueInternal(node, false);
+    } else {
+      return addSimpleInternal(node, false);
     }
   }
 
@@ -215,7 +230,7 @@ public class Graph {
    * {@link FuncParamNode} but no other param nodes.</p>
    */
   public boolean isPseudoInstruction() {
-    return getNodes(ControlNode.class).allMatch(
+    return getNodes(AbstractControlNode.class).allMatch(
         e -> e instanceof InstrCallNode || e instanceof StartNode || e instanceof EndNode
     ) && getNodes(ParamNode.class).allMatch(e -> e instanceof FuncParamNode);
   }
@@ -246,23 +261,27 @@ public class Graph {
   }
 
   // helper method to add node to graph
-  private <T extends Node> T addSimpleInternal(T node) {
+  private <T extends Node> T addSimpleInternal(T node, boolean assertInputsAdded) {
     node.ensure(node.isUninitialized(), "node is not uninitialized");
     // ensure that all input dependencies are already added
     // to the graph
-    ensureInputsAdded(node);
+    if (assertInputsAdded) {
+      // This check is optional because when cloning the graph,
+      // the graph will be inconsistent.
+      ensureInputsAdded(node);
+    }
 
     node.initialize(this);
     return node;
   }
 
-  private <T extends Node> T addUniqueInternal(T node) {
+  private <T extends Node> T addUniqueInternal(T node, boolean assertInputsAdded) {
     node.ensure(node.isUninitialized(), "node is not uninitialized");
     var result = findDuplicate(node);
     if (result != null) {
       return result;
     }
-    return addSimpleInternal(node);
+    return addSimpleInternal(node, assertInputsAdded);
   }
 
 
@@ -296,6 +315,52 @@ public class Graph {
 
   public void setSourceLocation(SourceLocation sourceLocation) {
     this.sourceLocation = sourceLocation;
+  }
+
+  /**
+   * Copies the graph and returns it.
+   */
+  public Graph copy() {
+    // Why do we need the cache?
+    // It is possible that an object is unique. For example, every
+    // Addition BuiltIn Node with two values might exist only once in the graph.
+    // But it can still be used by multiple nodes. Without the cache, we would
+    // create a new BuiltIn Node for every occurrence.
+
+    // Key is the old object
+    // Value the copied object
+    Map<Node, Node> cache = new HashMap<>();
+    var graph = new Graph(name);
+
+    this.nodes.forEach(oldNode -> {
+      var newNode = graph.unsafeAdd(oldNode.shallowCopy());
+      cache.put(oldNode, newNode);
+    });
+
+    // Now, we have added all the nodes from the old to new graph.
+    // However, they are not linked yet because they are shallow copies.
+    graph.nodes.forEach(newNode -> {
+      // Update the usages
+      newNode.usages().forEach(oldUsage -> {
+        var newUsage = cache.get(oldUsage);
+        newNode.transferUsageOfThis(oldUsage, Objects.requireNonNull(newUsage));
+      });
+
+      // Update the inputs
+      newNode.inputs().forEach(oldInput -> {
+        var newInput = cache.get(oldInput);
+        newNode.replaceInput(oldInput, Objects.requireNonNull(newInput));
+      });
+
+      // Update the predecessor (if it exists)
+      var oldPred = newNode.predecessor();
+      if (oldPred != null) {
+        var newPred = cache.get(oldPred);
+        newNode.setPredecessor(newPred);
+      }
+    });
+
+    return graph;
   }
 }
 

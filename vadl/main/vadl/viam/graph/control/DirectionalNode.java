@@ -10,11 +10,11 @@ import vadl.viam.graph.Node;
  * The DirectionalNode is a type of control flow node with exactly one
  * successor node.
  */
-public abstract class DirectionalNode extends ControlNode {
+public abstract class DirectionalNode extends AbstractControlNode {
 
   @Successor
   // even though it is nullable, the next node is not optional!
-  protected @Nullable ControlNode next;
+  protected @Nullable AbstractControlNode next;
 
   /**
    * Sets the successor property of this node.
@@ -24,7 +24,7 @@ public abstract class DirectionalNode extends ControlNode {
    *
    * @param next the successor of this node
    */
-  public void setNext(@Nonnull ControlNode next) {
+  public void setNext(@Nonnull AbstractControlNode next) {
     this.ensure(this.next == null || next == this.next,
         "successor of DirectionalNode is only allowed to be set once");
     this.next = next;
