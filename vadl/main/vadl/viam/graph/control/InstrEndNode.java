@@ -20,4 +20,9 @@ public class InstrEndNode extends AbstractEndNode {
     return new InstrEndNode(
         new NodeList<>(sideEffects.stream().map(x -> (SideEffectNode) x.copy()).toList()));
   }
+
+  @Override
+  public Node shallowCopy() {
+    return new InstrEndNode(new NodeList<>());
+  }
 }

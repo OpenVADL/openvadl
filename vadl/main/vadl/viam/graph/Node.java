@@ -420,9 +420,16 @@ public abstract class Node {
   }
 
   /**
-   * Creates a copy from {@code this} node and returns it.
+   * Creates a copy from {@code this} node and returns it. It will also copy all
+   * data values recursively.
    */
   public abstract Node copy();
+
+  /**
+   * Creates a copy from {@code this} node and returns it. It will *NOT* copy all
+   * data values recursively. Instead, it will create an empty {@link NodeList}.
+   */
+  public abstract Node shallowCopy();
 
   /**
    * Defines assertions that ensure a consistent state

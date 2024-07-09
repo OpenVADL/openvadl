@@ -73,4 +73,9 @@ public class IfNode extends ControlSplitNode {
   public Node copy() {
     return new IfNode((ExpressionNode) condition.copy(), trueBranch.copy(), falseBranch.copy());
   }
+
+  @Override
+  public Node shallowCopy() {
+    return new IfNode(null, null, null);
+  }
 }

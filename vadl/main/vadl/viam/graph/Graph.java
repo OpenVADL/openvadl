@@ -3,12 +3,14 @@ package vadl.viam.graph;
 import static java.util.Objects.requireNonNull;
 
 import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.Map;
 import java.util.Objects;
 import java.util.stream.Stream;
 import javax.annotation.Nullable;
 import vadl.utils.SourceLocation;
+import vadl.viam.graph.control.AbstractControlNode;
 import vadl.viam.graph.control.AbstractEndNode;
-import vadl.viam.graph.control.ControlNode;
 import vadl.viam.graph.control.EndNode;
 import vadl.viam.graph.control.InstrCallNode;
 import vadl.viam.graph.control.ReturnNode;
@@ -215,7 +217,7 @@ public class Graph {
    * {@link FuncParamNode} but no other param nodes.</p>
    */
   public boolean isPseudoInstruction() {
-    return getNodes(ControlNode.class).allMatch(
+    return getNodes(AbstractControlNode.class).allMatch(
         e -> e instanceof InstrCallNode || e instanceof StartNode || e instanceof EndNode
     ) && getNodes(ParamNode.class).allMatch(e -> e instanceof FuncParamNode);
   }
@@ -296,6 +298,20 @@ public class Graph {
 
   public void setSourceLocation(SourceLocation sourceLocation) {
     this.sourceLocation = sourceLocation;
+  }
+
+  /**
+   * Copies the graph and returns it.
+   */
+  public Graph copy() {
+    // Key is the old object
+    // Value the copied object
+    Map<Node, Node> cache = new HashMap<>();
+    var graph = new Graph(name);
+
+
+
+    return null;
   }
 }
 

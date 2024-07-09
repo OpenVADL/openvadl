@@ -113,4 +113,9 @@ public class InstrCallNode extends DirectionalNode {
     return new InstrCallNode(target, paramFields,
         new NodeList<>(this.arguments().stream().map(x -> (ExpressionNode) x.copy()).toList()));
   }
+
+  @Override
+  public Node shallowCopy() {
+    return new InstrCallNode(target, paramFields, arguments);
+  }
 }

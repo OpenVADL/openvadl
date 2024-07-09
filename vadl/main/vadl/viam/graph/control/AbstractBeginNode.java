@@ -1,8 +1,6 @@
 package vadl.viam.graph.control;
 
 import vadl.viam.graph.Node;
-import vadl.viam.graph.NodeList;
-import vadl.viam.graph.dependency.ExpressionNode;
 
 /**
  * The AbstractBeginNode represents the start of a control flow.
@@ -19,6 +17,11 @@ public class AbstractBeginNode extends DirectionalNode {
 
   @Override
   public Node copy() {
-    return new AbstractBeginNode(next);
+    return new AbstractBeginNode(next != null ? (AbstractControlNode) next.copy() : null);
+  }
+
+  @Override
+  public Node shallowCopy() {
+    return new AbstractBeginNode();
   }
 }

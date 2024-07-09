@@ -32,4 +32,9 @@ public class TypeCastNode extends UnaryNode {
   public Node copy() {
     return new TypeCastNode((ExpressionNode) value.copy(), type());
   }
+
+  @Override
+  public Node shallowCopy() {
+    return new TypeCastNode(null, type());
+  }
 }

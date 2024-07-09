@@ -8,6 +8,7 @@ import vadl.viam.RegisterFile;
 import vadl.viam.Resource;
 import vadl.viam.graph.Node;
 import vadl.viam.graph.NodeList;
+import vadl.viam.graph.control.IfNode;
 import vadl.viam.graph.control.InstrCallNode;
 
 /**
@@ -43,5 +44,10 @@ public class ReadRegFileNode extends ReadResourceNode {
   @Override
   public Node copy() {
     return new ReadRegFileNode(registerFile, (ExpressionNode) address().copy(), type());
+  }
+
+  @Override
+  public Node shallowCopy() {
+    return new ReadRegFileNode(registerFile, null, type());
   }
 }

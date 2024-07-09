@@ -6,6 +6,7 @@ import vadl.types.DataType;
 import vadl.viam.Format;
 import vadl.viam.graph.Node;
 import vadl.viam.graph.NodeList;
+import vadl.viam.graph.control.IfNode;
 import vadl.viam.graph.control.InstrCallNode;
 
 /**
@@ -55,5 +56,10 @@ public class FieldRefNode extends ParamNode {
   @Override
   public Node copy() {
     return new FieldRefNode(formatField, (DataType) type());
+  }
+
+  @Override
+  public Node shallowCopy() {
+    return copy();
   }
 }

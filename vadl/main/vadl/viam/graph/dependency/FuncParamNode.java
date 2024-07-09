@@ -6,6 +6,7 @@ import vadl.types.Type;
 import vadl.viam.Parameter;
 import vadl.viam.graph.Node;
 import vadl.viam.graph.NodeList;
+import vadl.viam.graph.control.IfNode;
 import vadl.viam.graph.control.InstrCallNode;
 
 /**
@@ -40,5 +41,10 @@ public class FuncParamNode extends ParamNode {
   @Override
   public Node copy() {
     return new FuncParamNode(parameter);
+  }
+
+  @Override
+  public Node shallowCopy() {
+    return copy();
   }
 }

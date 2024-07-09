@@ -6,6 +6,7 @@ import vadl.types.BuiltInTable.BuiltIn;
 import vadl.types.Type;
 import vadl.viam.graph.Node;
 import vadl.viam.graph.NodeList;
+import vadl.viam.graph.control.IfNode;
 import vadl.viam.graph.control.InstrCallNode;
 
 /**
@@ -36,5 +37,10 @@ public class BuiltInCall extends AbstractFunctionCallNode {
     return new BuiltInCall(builtIn,
         new NodeList<>(this.arguments().stream().map(x -> (ExpressionNode) x.copy()).toList()),
         this.type());
+  }
+
+  @Override
+  public Node shallowCopy() {
+    return new BuiltInCall(builtIn, new NodeList<>(), type());
   }
 }

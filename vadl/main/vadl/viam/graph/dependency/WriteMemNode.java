@@ -74,4 +74,9 @@ public class WriteMemNode extends WriteResourceNode {
         address != null ? (ExpressionNode) address.copy() : null,
         (ExpressionNode) value.copy());
   }
+
+  @Override
+  public Node shallowCopy() {
+    return new WriteMemNode(memory, words, null, null);
+  }
 }

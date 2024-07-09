@@ -3,9 +3,11 @@ package vadl.viam.graph.dependency;
 import java.util.List;
 import vadl.javaannotations.viam.Input;
 import vadl.types.BoolType;
+import vadl.types.Type;
 import vadl.viam.graph.GraphVisitor;
 import vadl.viam.graph.Node;
 import vadl.viam.graph.NodeList;
+import vadl.viam.graph.control.IfNode;
 import vadl.viam.graph.control.InstrCallNode;
 
 /**
@@ -32,6 +34,13 @@ public class SelectNode extends ExpressionNode {
     this.condition = condition;
     this.trueCase = trueCase;
     this.falseCase = falseCase;
+  }
+
+  /**
+   * Constructor to instantiate a select node with a dummy type.
+   */
+  public SelectNode() {
+    super(Type.dummy());
   }
 
   @Override
@@ -61,5 +70,10 @@ public class SelectNode extends ExpressionNode {
     return new SelectNode((ExpressionNode) condition.copy(),
         (ExpressionNode) trueCase.copy(),
         (ExpressionNode) falseCase.copy());
+  }
+
+  @Override
+  public Node shallowCopy() {
+    return new SelectNode();
   }
 }

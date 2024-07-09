@@ -5,6 +5,7 @@ import vadl.javaannotations.viam.DataValue;
 import vadl.viam.Format;
 import vadl.viam.graph.Node;
 import vadl.viam.graph.NodeList;
+import vadl.viam.graph.control.IfNode;
 import vadl.viam.graph.control.InstrCallNode;
 
 /**
@@ -39,5 +40,10 @@ public class FieldAccessRefNode extends ParamNode {
   @Override
   public Node copy() {
     return new FieldAccessRefNode(fieldAccess);
+  }
+
+  @Override
+  public Node shallowCopy() {
+    return copy();
   }
 }

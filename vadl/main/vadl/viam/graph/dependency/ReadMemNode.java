@@ -7,6 +7,7 @@ import vadl.viam.Memory;
 import vadl.viam.Resource;
 import vadl.viam.graph.Node;
 import vadl.viam.graph.NodeList;
+import vadl.viam.graph.control.IfNode;
 import vadl.viam.graph.control.InstrCallNode;
 
 /**
@@ -67,5 +68,10 @@ public class ReadMemNode extends ReadResourceNode {
   @Override
   public Node copy() {
     return new ReadMemNode(memory, words, (ExpressionNode) address().copy(), type());
+  }
+
+  @Override
+  public Node shallowCopy() {
+    return new ReadMemNode(memory, words, null, type());
   }
 }

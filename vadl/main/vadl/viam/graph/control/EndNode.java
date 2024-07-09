@@ -19,4 +19,9 @@ public class EndNode extends AbstractEndNode {
     return new EndNode(
         new NodeList<>(sideEffects.stream().map(x -> (SideEffectNode) x.copy()).toList()));
   }
+
+  @Override
+  public Node shallowCopy() {
+    return new EndNode(new NodeList<>());
+  }
 }

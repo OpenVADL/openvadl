@@ -56,4 +56,9 @@ public class WriteRegNode extends WriteResourceNode {
   public Node copy() {
     return new WriteRegNode(register, (ExpressionNode) value.copy());
   }
+
+  @Override
+  public Node shallowCopy() {
+    return new WriteRegNode(register, null);
+  }
 }

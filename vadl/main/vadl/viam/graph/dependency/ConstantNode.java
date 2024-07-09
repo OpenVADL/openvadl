@@ -6,6 +6,7 @@ import vadl.types.Type;
 import vadl.viam.Constant;
 import vadl.viam.graph.Node;
 import vadl.viam.graph.NodeList;
+import vadl.viam.graph.control.IfNode;
 import vadl.viam.graph.control.InstrCallNode;
 
 /**
@@ -30,6 +31,11 @@ public class ConstantNode extends ExpressionNode {
 
   @Override
   public Node copy() {
+    return new ConstantNode(constant);
+  }
+
+  @Override
+  public Node shallowCopy() {
     return new ConstantNode(constant);
   }
 }

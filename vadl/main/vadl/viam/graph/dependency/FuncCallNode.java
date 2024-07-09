@@ -6,6 +6,7 @@ import vadl.types.Type;
 import vadl.viam.Function;
 import vadl.viam.graph.Node;
 import vadl.viam.graph.NodeList;
+import vadl.viam.graph.control.IfNode;
 import vadl.viam.graph.control.InstrCallNode;
 
 /**
@@ -63,5 +64,10 @@ public class FuncCallNode extends AbstractFunctionCallNode {
     return new FuncCallNode(
         new NodeList<>(this.arguments().stream().map(x -> (ExpressionNode) x.copy()).toList()),
         function, type());
+  }
+
+  @Override
+  public Node shallowCopy() {
+    return new FuncCallNode(new NodeList<>(), function, type());
   }
 }
