@@ -26,6 +26,8 @@ interface ExprVisitor<R> {
   R visit(TypeLiteral expr);
 
   R visit(Variable expr);
+
+  R visit(UnaryExpr expr);
 }
 
 /**
@@ -155,6 +157,16 @@ class Operator {
   }
 }
 
+enum UnaryOperator {
+  NEGATIVE("-"), LOG_NOT("!"), COMPLEMENT("~");
+
+  final String symbol;
+
+  UnaryOperator(String symbol) {
+    this.symbol = symbol;
+  }
+}
+
 /**
  * Any kind of binary expression (often written with the infix notation in vadl).
  */
@@ -172,10 +184,21 @@ class BinaryExpr extends Expr {
   static @Nullable BinaryExpr root = null;
 
   /**
-   * Reorders binary expression based on the correct precedence.
+   * This method reorders a left-sided source expression tree
+   * into operator precedence order (as shown in the graph).
+   * It mutates the "left" and "right" properties of the expression tree members.
+   * <pre>
+   *       *            -
+   *      / \          / \
+   *     *   4   =>   1   *
+   *    / \              / \
+   *   -   3            *   4
+   *  / \              / \
+   * 1   2            2   3
+   * </pre>
    *
-   * @param expr to reorder.
-   * @return the new root of the reordered subtree.
+   * @param   expr A left-sided binary expression tree.
+   * @return  the root of the expression tree in operator precedence order
    */
   static BinaryExpr reorder(BinaryExpr expr) {
     root = expr;
@@ -252,6 +275,62 @@ class BinaryExpr extends Expr {
     int result = Objects.hashCode(left);
     result = 31 * result + Objects.hashCode(operator);
     result = 31 * result + Objects.hashCode(right);
+    return result;
+  }
+}
+
+class UnaryExpr extends Expr {
+  UnaryOperator operator;
+  Expr operand;
+
+  UnaryExpr(UnaryOperator operation, Expr operand) {
+    this.operator = operation;
+    this.operand = operand;
+  }
+
+  @Override
+  SourceLocation location() {
+    return operand.location().join(operand.location());
+  }
+
+  @Override
+  SyntaxType syntaxType() {
+    return CoreType.UnOp();
+  }
+
+  @Override
+  void prettyPrint(int indent, StringBuilder builder) {
+    builder.append(operator.symbol);
+    operand.prettyPrint(indent, builder);
+  }
+
+  @Override
+  <R> R accept(ExprVisitor<R> visitor) {
+    return visitor.visit(this);
+  }
+
+  @Override
+  public String toString() {
+    return "%s operator: %s".formatted(this.getClass().getSimpleName(), operator.symbol);
+  }
+
+  @Override
+  public boolean equals(Object o) {
+    if (this == o) {
+      return true;
+    }
+    if (o == null || getClass() != o.getClass()) {
+      return false;
+    }
+
+    UnaryExpr that = (UnaryExpr) o;
+    return operator.equals(that.operator) && Objects.equals(operand, that.operand);
+  }
+
+  @Override
+  public int hashCode() {
+    int result = Objects.hashCode(operator);
+    result = 31 * result + Objects.hashCode(operand);
     return result;
   }
 }

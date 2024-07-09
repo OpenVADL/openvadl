@@ -49,4 +49,10 @@ class Ungrouper implements ExprVisitor<Expr> {
   public Expr visit(Variable expr) {
     return expr;
   }
+
+  @Override
+  public Expr visit(UnaryExpr expr) {
+    expr.operand = expr.operand.accept(this);
+    return expr;
+  }
 }

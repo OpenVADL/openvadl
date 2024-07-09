@@ -193,6 +193,7 @@ PRODUCTIONS
     | indexDefinition<out Definition d>                     (. def = d; .)
     //| instructionStatement<out Definition d>              (. def = d; .)
     | memoryDefinition<out Definition d>                    (. def = d; .)
+    // TODO Use token instead of string compare, la.kind
     | IF (matchN(1, "file")) registerFileDefinition<out Definition d>   (. def = d; .)
     | registerDefinition<out Definition d>   (. def = d; .)
     .
@@ -269,8 +270,9 @@ PRODUCTIONS
 
     // -- EXPRESSIONS --------------------------------------------------------------------------------------------------
 
-    expression<out Expr expr>
+    expression<out Expr expr>               (. expr = null; .)
     = binary<out Expr expr1>                (. expr = ungroup(expr1); .)
+    | unary<out Expr expr1>                 (. expr = ungroup(expr1); .)
     .
 
     binary<out Expr expr>
@@ -279,6 +281,16 @@ PRODUCTIONS
             binaryOperator <out Operator op>
             term<out Expr expr2>                         (. expr = new BinaryExpr(expr, op, expr2); .)
         }                                                   (. expr = reorderBinary(expr); .)
+    .
+
+    unary<out Expr expr>
+    = unaryOperator<out UnaryOperator op> term<out Expr operand> (. expr = new UnaryExpr(op, operand); .)
+    .
+
+    unaryOperator<out UnaryOperator op> (. op = null; .)
+    = "-" (. op = UnaryOperator.NEGATIVE; .)
+    | "!" (. op = UnaryOperator.LOG_NOT; .)
+    | "~" (. op = UnaryOperator.COMPLEMENT; .)
     .
 
     binaryOperator <out Operator op>    (.op = null;.)
@@ -307,7 +319,7 @@ PRODUCTIONS
     term<out Expr expr>                             (. expr = null; .)
     = number                                        (. expr = new IntegerLiteral(Integer.parseInt(t.val), locationFromToken(t)); .)
     | identifier<out Identifier id>                 (. expr = new Variable(id); symbolTable.addUsage(id); .)
-    | '(' binary<out Expr expr1> ')'                (. expr = new GroupExpr(expr1); .)
+    | '(' expression<out Expr expr1> ')'            (. expr = new GroupExpr(expr1); .)
     | macroInstanceOrPlaceholder<out Node node1, CoreType.Ex()>  (. expr = (Expr)node1; .)
     .
 

@@ -66,4 +66,9 @@ class MacroExpander implements ExprVisitor<Expr> {
   public Expr visit(Variable expr) {
     return new Variable(expr.identifier);
   }
+
+  @Override
+  public Expr visit(UnaryExpr expr) {
+    return new UnaryExpr(expr.operator, expr.operand.accept(this));
+  }
 }
