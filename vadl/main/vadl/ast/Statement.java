@@ -2,6 +2,7 @@ package vadl.ast;
 
 import java.util.ArrayList;
 import java.util.List;
+import javax.annotation.Nullable;
 
 interface Statement {
   void prettyPrint(int indent, StringBuilder builder);
@@ -32,6 +33,24 @@ record LetStatement(Identifier identifier, Expr valueExpression, Block block) im
     valueExpression.prettyPrint(indent + 1, builder);
     builder.append(" in\n");
     block.prettyPrint(indent + 1, builder);
+  }
+}
+
+record IfStatement(Expr condition, Block thenBlock, @Nullable Block elseBlock) implements Statement {
+  @Override
+  public void prettyPrint(int indent, StringBuilder builder) {
+    builder.append(" ".repeat(2 * indent));
+    builder.append("if ");
+    condition.prettyPrint(indent + 1, builder);
+    builder.append(" then\n");
+    thenBlock.prettyPrint(indent + 1, builder);
+    builder.append("\n");
+    if (elseBlock != null) {
+      builder.append(" ".repeat(2 * indent));
+      builder.append("else\n");
+      elseBlock.prettyPrint(indent + 1, builder);
+      builder.append("\n");
+    }
   }
 }
 

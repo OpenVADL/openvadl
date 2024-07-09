@@ -26,4 +26,40 @@ public class StatementTest {
     var ast = Assertions.assertDoesNotThrow(() -> VadlParser.parse(prog), "Cannot parse input");
     verifyPrettifiedAst(ast);
   }
+
+  @Test
+  void parseIfStatement() {
+    var prog = """
+        instruction set architecture ISA = {
+          constant a = 9
+          constant b = 2
+          program counter PC : Bits<32>
+          instruction BEQ : Btype = {
+            if a > b then
+              PC := PC + 4
+          }
+        }
+        """;
+    var ast = Assertions.assertDoesNotThrow(() -> VadlParser.parse(prog), "Cannot parse input");
+  }
+
+  @Test
+  void parseIfElseStatement() {
+    var prog = """
+        instruction set architecture ISA = {
+          constant a = 9
+          constant b = 2
+          program counter PC : Bits<32>
+          instruction BEQ : Btype = {
+            if a > b then
+              PC := PC + 4
+            else
+              PC := 0
+          }
+        }
+        """;
+    var ast = Assertions.assertDoesNotThrow(() -> VadlParser.parse(prog), "Cannot parse input");
+    verifyPrettifiedAst(ast);
+    System.out.println(ast.prettyPrint());
+  }
 }

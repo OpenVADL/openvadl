@@ -266,7 +266,6 @@ PRODUCTIONS
 
 
     // -- STATEMENTS ---------------------------------------------------------------------------------------------------
-    // comming soon to a vadl near you ;)
 
     block<out Block block>                 (. block = new Block();  .)
     = {
@@ -276,6 +275,7 @@ PRODUCTIONS
 
     statement<out Statement statement>         (. statement = null; .)
     = letStatement<out Statement letStatement> (. statement = letStatement; .)
+    | ifStatement<out Statement ifStatement>   (. statement = ifStatement; .)
     | assignment<out Statement assignment>     (. statement = assignment; .)
     .
 
@@ -287,6 +287,12 @@ PRODUCTIONS
     = "let" identifier<out Identifier id> "=" expression<out Expr valueExpr>
       "in" block<out Block block>           (. letStatement = new LetStatement(id, valueExpr, block);
                                                symbolTable.addDefinition(id); .)
+    .
+
+    ifStatement<out Statement ifStatement>
+    = "if" expression<out Expr condition>
+      "then" block<out Block thenBlock>     (. ifStatement = new IfStatement(condition, thenBlock, null);      .)
+      [ "else" block<out Block elseBlock>   (. ifStatement = new IfStatement(condition, thenBlock, elseBlock); .) ]
     .
 
     // -- EXPRESSIONS --------------------------------------------------------------------------------------------------
