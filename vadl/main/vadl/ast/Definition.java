@@ -29,6 +29,8 @@ interface DefinitionVisitor<R> {
   R visit(RegisterDefinition definition);
 
   R visit(RegisterFileDefinition definition);
+
+  R visit(InstructionDefinition definition);
 }
 
 class ConstantDefinition extends Definition {
@@ -585,6 +587,73 @@ class RegisterFileDefinition extends Definition {
     int result = identifier.hashCode();
     result = 31 * result + indexType.hashCode();
     result = 31 * result + registerType.hashCode();
+    return result;
+  }
+}
+
+class InstructionDefinition extends Definition {
+  final Identifier identifier;
+  final Identifier typeIdentifier;
+  final Block block;
+  final SourceLocation loc;
+
+  InstructionDefinition(Identifier identifier, Identifier typeIdentifier, Block block,
+                           SourceLocation location) {
+    this.identifier = identifier;
+    this.typeIdentifier = typeIdentifier;
+    this.block = block;
+    this.loc = location;
+  }
+
+  @Override
+  SourceLocation location() {
+    return loc;
+  }
+
+  @Override
+  SyntaxType syntaxType() {
+    return CoreType.IsaDefs();
+  }
+
+  @Override
+  void prettyPrint(int indent, StringBuilder builder) {
+    builder.append(prettyIndentString(indent));
+    builder.append("instruction %s : %s = {\n".formatted(identifier.name, typeIdentifier.name));
+    block.prettyPrint(indent + 1, builder);
+    builder.append(prettyIndentString(indent));
+    builder.append("}\n");
+  }
+
+  @Override
+  <R> R accept(DefinitionVisitor<R> visitor) {
+    return visitor.visit(this);
+  }
+
+  @Override
+  public String toString() {
+    return this.getClass().getSimpleName();
+  }
+
+  @Override
+  public boolean equals(Object o) {
+    if (this == o) {
+      return true;
+    }
+    if (o == null || getClass() != o.getClass()) {
+      return false;
+    }
+
+    var that = (InstructionDefinition) o;
+    return Objects.equals(identifier, that.identifier)
+        && Objects.equals(typeIdentifier, that.typeIdentifier)
+        && Objects.equals(block, that.block);
+  }
+
+  @Override
+  public int hashCode() {
+    int result = Objects.hashCode(identifier);
+    result = 31 * result + Objects.hashCode(typeIdentifier);
+    result = 31 * result + Objects.hashCode(block);
     return result;
   }
 }

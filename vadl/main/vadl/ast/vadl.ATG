@@ -192,7 +192,7 @@ PRODUCTIONS
     = constantDefinition<out Definition d>                  (. def = d; .)
     | formatDefinition<out Definition d>                    (. def = d; .)
     | indexDefinition<out Definition d>                     (. def = d; .)
-    //| instructionStatement<out Definition d>              (. def = d; .)
+    | instructionStatement<out Definition d>                (. def = d; .)
     | memoryDefinition<out Definition d>                    (. def = d; .)
     | IF (scanner.Peek().kind == _file) registerFileDefinition<out Definition d>   (. def = d; .)
     | registerDefinition<out Definition d>   (. def = d; .)
@@ -238,10 +238,10 @@ PRODUCTIONS
         ":" typeLiteral<out TypeLiteral t1>         (. def = new IndexDefinition(kind, id, t1, startLocation.join(locationFromToken(t))); .)
     .
 
-/*    instructionStatement<out InstructionDefinitionStmt stmt>
-    = "instruction"
-    identifier<out Identifier id> ":" <identifer<out Identifier tyeIdentifer> "=" "{"
-    .*/
+    instructionStatement<out InstructionDefinition def> (. var startLocation = locationFromToken(t); .)
+    = "instruction" identifier<out Identifier id> ":" identifier<out Identifier typeIdentifier> "="
+      "{" block<out Block block> "}"                (. def = new InstructionDefinition(id, typeIdentifier, block, startLocation.join(locationFromToken(t))); .)
+    .
 
     memoryDefinition<out MemoryDefinition def>
     = "memory"                                  (. var startLocation = locationFromToken(t); .)
@@ -267,6 +267,27 @@ PRODUCTIONS
 
     // -- STATEMENTS ---------------------------------------------------------------------------------------------------
     // comming soon to a vadl near you ;)
+
+    block<out Block block>                 (. block = new Block();  .)
+    = {
+        statement<out Statement statement> (. block.add(statement); .)
+      }
+    .
+
+    statement<out Statement statement>         (. statement = null; .)
+    = letStatement<out Statement letStatement> (. statement = letStatement; .)
+    | assignment<out Statement assignment>     (. statement = assignment; .)
+    .
+
+    assignment<out Statement statement>
+    = identifier<out Identifier id> ":=" expression<out Expr expr> (. statement = new AssignmentStatement(id, expr); .)
+    .
+
+    letStatement<out Statement letStatement>
+    = "let" identifier<out Identifier id> "=" expression<out Expr valueExpr>
+      "in" block<out Block block>           (. letStatement = new LetStatement(id, valueExpr, block);
+                                               symbolTable.addDefinition(id); .)
+    .
 
     // -- EXPRESSIONS --------------------------------------------------------------------------------------------------
 

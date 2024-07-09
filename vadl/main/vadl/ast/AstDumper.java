@@ -177,4 +177,11 @@ public class AstDumper implements DefinitionVisitor<Void>, ExprVisitor<Void> {
     dumpChildren(expr.operand);
     return null;
   }
+
+  @Override
+  public Void visit(InstructionDefinition definition) {
+    dumpNode(definition);
+    dumpChildren(definition.identifier, definition.typeIdentifier /*, definition.block */);
+    return null;
+  }
 }
