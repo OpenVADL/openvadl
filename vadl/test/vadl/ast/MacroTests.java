@@ -7,7 +7,7 @@ import vadl.error.VadlException;
 public class MacroTests {
 
   @Test
-  void SingleExpressionTest() {
+  void singleExpressionTest() {
     var prog1 = """
         model example() : Ex =  {
           1 + 2
@@ -21,7 +21,7 @@ public class MacroTests {
   }
 
   @Test
-  void BinaryOrderInMacroTest() {
+  void binaryOrderInMacroTest() {
     var prog1 = """
         model example() : Ex =  {
           1 + 2 * 3 = 8 && 7 + 9 > 10
@@ -35,7 +35,7 @@ public class MacroTests {
   }
 
   @Test
-  void GroupingOutsideMacroTest() {
+  void groupingOutsideMacroTest() {
     var prog1 = """
         model example() : Ex =  {
           1 + 2
@@ -49,7 +49,7 @@ public class MacroTests {
   }
 
   @Test
-  void InvalidMacroReturnType() {
+  void invalidMacroReturnType() {
     var prog = """
         model example() : Int =  {
            1 + 2
@@ -61,7 +61,7 @@ public class MacroTests {
   }
 
   @Test
-  void MacroWithUnusedArguments() {
+  void macroWithUnusedArguments() {
     var prog1 = """
         model example(first: Int, second: Ex) : Ex =  {
           1 + 2
@@ -75,7 +75,7 @@ public class MacroTests {
   }
 
   @Test
-  void InvalidArgumentNumber() {
+  void invalidArgumentNumber() {
     var prog = """
         model example(arg: Ex) : Ex =  {
            1 + 2
@@ -87,7 +87,7 @@ public class MacroTests {
   }
 
   @Test
-  void InvalidProvidedArgumentType() {
+  void invalidProvidedArgumentType() {
     var prog = """
         model example(arg: Bool) : Ex =  {
            1 + 2

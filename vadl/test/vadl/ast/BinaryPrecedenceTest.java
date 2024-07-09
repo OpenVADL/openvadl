@@ -6,7 +6,7 @@ import org.junit.jupiter.api.Test;
 public class BinaryPrecedenceTest {
 
   @Test
-  void TwoAddTest() {
+  void twoAddTest() {
     var prog1 = "constant n = 1 + 2 + 3";
     var prog2 = "constant n = ((1 + 2) + 3)";
 
@@ -14,7 +14,7 @@ public class BinaryPrecedenceTest {
   }
 
   @Test
-  void FiveAddTest() {
+  void fiveAddTest() {
     var prog1 = "constant n = 1 + 2 + 3 + 4 + 5 + 6";
     var prog2 = "constant n = ((((1 + 2) + 3) + 4) + 5) + 6";
 
@@ -22,7 +22,7 @@ public class BinaryPrecedenceTest {
   }
 
   @Test
-  void AddMulTest() {
+  void addMulTest() {
     var prog1 = "constant n = 40 + 4 * 8";
     var prog2 = "constant n = (40 + (4 * 8))";
 
@@ -30,7 +30,7 @@ public class BinaryPrecedenceTest {
   }
 
   @Test
-  void AddMulWrongOrderTest() {
+  void addMulWrongOrderTest() {
     var prog1 = "constant n = 40 + 4 * 8";
     var prog2 = "constant n = ((40 + 4) * 8)";
 
@@ -38,7 +38,7 @@ public class BinaryPrecedenceTest {
   }
 
   @Test
-  void MulAddTest() {
+  void mulAddTest() {
     var prog1 = "constant n = 40 * 4 + 8";
     var prog2 = "constant n = (40 * 4) + 8";
 
@@ -46,7 +46,7 @@ public class BinaryPrecedenceTest {
   }
 
   @Test
-  void MulAddWrongOrderTest() {
+  void mulAddWrongOrderTest() {
     var prog1 = "constant n = 40 * 4 + 8";
     var prog2 = "constant n = 40 * (4 + 8)";
 
@@ -54,7 +54,7 @@ public class BinaryPrecedenceTest {
   }
 
   @Test
-  void AddAddMulTest() {
+  void addAddMulTest() {
     var prog1 = "constant n = 1 + 2 + 3 * 4";
     var prog2 = "constant n = ((1 + 2) + (3 * 4))";
 
@@ -62,7 +62,7 @@ public class BinaryPrecedenceTest {
   }
 
   @Test
-  void AddAddAddMulTest() {
+  void addAddAddMulTest() {
     var prog1 = "constant n = 1 + 2 + 3 + 4 * 5";
     var prog2 = "constant n = ((1 + 2) + 3) + (4 * 5)";
 
@@ -70,7 +70,7 @@ public class BinaryPrecedenceTest {
   }
 
   @Test
-  void AddAddMulMulTest() {
+  void addAddMulMulTest() {
     var prog1 = "constant n = 1 + 2 + 3 * 4 * 5";
     var prog2 = "constant n = ((1 + 2) + ((3 * 4) * 5))";
 
@@ -78,7 +78,7 @@ public class BinaryPrecedenceTest {
   }
 
   @Test
-  void AddAddMulAddAddTest() {
+  void addAddMulAddAddTest() {
     var prog1 = "constant n = 1 + 2 + 3 * 4 + 5 + 6";
     var prog2 = "constant n = ((((1 + 2) + (3 * 4)) + 5) + 6)";
 
@@ -86,7 +86,7 @@ public class BinaryPrecedenceTest {
   }
 
   @Test
-  void AddAddMulAddMulTest() {
+  void addAddMulAddMulTest() {
     var prog1 = "constant n = 1 + 2 + 3 * 4 + 5 * 6";
     var prog2 = "constant n = (((1 + 2) + (3 * 4)) + (5 * 6))";
 
@@ -94,7 +94,7 @@ public class BinaryPrecedenceTest {
   }
 
   @Test
-  void AddAddMulMulMulTest() {
+  void addAddMulMulMulTest() {
     var prog1 = "constant n = 1 + 2 + 3 * 4 * 5 * 6";
     var prog2 = "constant n = ((1 + 2) + (((3 * 4) * 5) * 6))";
 
@@ -102,7 +102,7 @@ public class BinaryPrecedenceTest {
   }
 
   @Test
-  void AddAddMulAddMullAddTest() {
+  void addAddMulAddMullAddTest() {
     var prog1 = "constant n = 1 + 2 + 3 * 4 + 5 * 6 + 7";
     var prog2 = "constant n = ((((1 + 2) + (3 * 4)) + (5 * 6)) + 7)";
 
@@ -110,7 +110,7 @@ public class BinaryPrecedenceTest {
   }
 
   @Test
-  void ShiftAddMulTest() {
+  void shiftAddMulTest() {
     var prog1 = "constant n = 2 << 3 + 4 * 5";
     var prog2 = "constant n = (2 << (3 + (4 * 5)))";
 
@@ -118,7 +118,7 @@ public class BinaryPrecedenceTest {
   }
 
   @Test
-  void MulAddShiftTest() {
+  void mulAddShiftTest() {
     var prog1 = "constant n = 2 * 3 + 4 >> 5";
     var prog2 = "constant n = (((2 * 3) + 4) >> 5)";
 
@@ -126,7 +126,7 @@ public class BinaryPrecedenceTest {
   }
 
   @Test
-  void AddShiftMulAddAddCompare() {
+  void addShiftMulAddAddCompare() {
     var prog1 = "constant n = 1 + 2 << 3 * 4 + 5 + 6 < 7";
     var prog2 = "constant n = (1 + 2) << (((3 * 4) + 5) + 6) < 7";
 
@@ -134,7 +134,7 @@ public class BinaryPrecedenceTest {
   }
 
   @Test
-  void CompareAddMulAdd() {
+  void compareAddMulAdd() {
     var prog1 = "constant n = 1 < 2 + 3 * 4";
     var prog2 = "constant n = (1 < (2 + (3 * 4)))";
 
@@ -143,7 +143,7 @@ public class BinaryPrecedenceTest {
 
 
   @Test
-  void ContainingGroupExpressionTest() {
+  void containingGroupExpressionTest() {
     var prog1 = "constant n = 1 * (2 + 3) << 4";
     var prog2 = "constant n = ((1 * (2 + 3)) << 4)";
 

@@ -173,10 +173,10 @@ public class ParserTest {
   @Test
   void unaryOperators() {
     var prog = """
-      constant a = -9
-      constant b = !(a = 3)
-      constant c = ~a
-      """;
+        constant a = -9
+        constant b = !(a = 3)
+        constant c = ~a
+        """;
 
     var ast = Assertions.assertDoesNotThrow(() -> VadlParser.parse(prog), "Cannot parse input");
     verifyPrettifiedAst(ast);
