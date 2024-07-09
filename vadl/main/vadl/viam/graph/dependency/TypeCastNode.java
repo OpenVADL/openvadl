@@ -35,6 +35,6 @@ public class TypeCastNode extends UnaryNode {
 
   @Override
   public Node shallowCopy() {
-    return new TypeCastNode(null, type());
+    return new TypeCastNode(value, type());
   }
 }

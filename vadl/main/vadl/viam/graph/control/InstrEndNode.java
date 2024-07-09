@@ -23,6 +23,6 @@ public class InstrEndNode extends AbstractEndNode {
 
   @Override
   public Node shallowCopy() {
-    return new InstrEndNode(new NodeList<>());
+    return new InstrEndNode(sideEffects);
   }
 }

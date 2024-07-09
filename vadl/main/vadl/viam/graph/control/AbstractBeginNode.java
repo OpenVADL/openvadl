@@ -22,6 +22,6 @@ public class AbstractBeginNode extends DirectionalNode {
 
   @Override
   public Node shallowCopy() {
-    return new AbstractBeginNode();
+    return new AbstractBeginNode(next);
   }
 }

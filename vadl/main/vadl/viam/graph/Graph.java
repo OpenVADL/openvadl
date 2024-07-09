@@ -309,9 +309,32 @@ public class Graph {
     Map<Node, Node> cache = new HashMap<>();
     var graph = new Graph(name);
 
+    this.nodes.forEach(oldNode -> {
+      var newNode = graph.add(oldNode.shallowCopy());
+      cache.put(oldNode, newNode);
+    });
 
+    // Now, we have added all the nodes from the old to new graph.
+    // However, they are not linked yet because they are shallow copies.
+    graph.nodes.forEach(newNode -> {
+      newNode.usages().forEach(oldUsage -> {
+        var newUsage = cache.get(oldUsage);
+        newNode.transferUsageOfThis(oldUsage, newUsage);
+      });
 
-    return null;
+      newNode.inputs().forEach(oldInput -> {
+        var newInput = cache.get(oldInput);
+        newNode.replaceInput(oldInput, newInput);
+      });
+
+      var oldPred = newNode.predecessor();
+      if (oldPred != null) {
+        var newPred = cache.get(oldPred);
+        newNode.setPredecessor(newPred);
+      }
+    });
+
+    return graph;
   }
 }
 

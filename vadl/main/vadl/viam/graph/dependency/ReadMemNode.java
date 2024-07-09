@@ -72,6 +72,6 @@ public class ReadMemNode extends ReadResourceNode {
 
   @Override
   public Node shallowCopy() {
-    return new ReadMemNode(memory, words, null, type());
+    return new ReadMemNode(memory, words, address(), type());
   }
 }

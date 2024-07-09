@@ -22,6 +22,6 @@ public class EndNode extends AbstractEndNode {
 
   @Override
   public Node shallowCopy() {
-    return new EndNode(new NodeList<>());
+    return new EndNode(sideEffects);
   }
 }

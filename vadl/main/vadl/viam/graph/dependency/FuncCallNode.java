@@ -68,6 +68,6 @@ public class FuncCallNode extends AbstractFunctionCallNode {
 
   @Override
   public Node shallowCopy() {
-    return new FuncCallNode(new NodeList<>(), function, type());
+    return new FuncCallNode(arguments(), function, type());
   }
 }

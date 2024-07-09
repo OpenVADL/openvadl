@@ -427,7 +427,7 @@ public abstract class Node {
 
   /**
    * Creates a copy from {@code this} node and returns it. It will *NOT* copy all
-   * data values recursively. Instead, it will create an empty {@link NodeList}.
+   * data values recursively. Instead, it will use the old objects.
    */
   public abstract Node shallowCopy();
 

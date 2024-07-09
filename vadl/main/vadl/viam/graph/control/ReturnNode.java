@@ -51,6 +51,6 @@ public class ReturnNode extends AbstractEndNode {
 
   @Override
   public Node shallowCopy() {
-    return new ReturnNode(null);
+    return new ReturnNode(value);
   }
 }

@@ -36,13 +36,6 @@ public class SelectNode extends ExpressionNode {
     this.falseCase = falseCase;
   }
 
-  /**
-   * Constructor to instantiate a select node with a dummy type.
-   */
-  public SelectNode() {
-    super(Type.dummy());
-  }
-
   @Override
   protected void collectInputs(List<Node> collection) {
     super.collectInputs(collection);
@@ -74,6 +67,6 @@ public class SelectNode extends ExpressionNode {
 
   @Override
   public Node shallowCopy() {
-    return new SelectNode();
+    return new SelectNode(condition, trueCase, falseCase);
   }
 }

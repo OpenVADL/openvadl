@@ -48,6 +48,6 @@ public class ReadRegFileNode extends ReadResourceNode {
 
   @Override
   public Node shallowCopy() {
-    return new ReadRegFileNode(registerFile, null, type());
+    return new ReadRegFileNode(registerFile, address(), type());
   }
 }

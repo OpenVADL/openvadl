@@ -38,18 +38,6 @@ public class LetNode extends ExpressionNode {
     this.expression = expression;
   }
 
-
-  /**
-   * Constructs a let-node with a dummy type. When setting the {@code expression} the
-   * {@code type} needs to be adapted as well.
-   *
-   * @param identifier the name of the let assignment
-   */
-  public LetNode(Identifier identifier) {
-    super(Type.dummy());
-    this.identifier = identifier;
-  }
-
   @Override
   protected void collectData(List<Object> collection) {
     super.collectData(collection);
@@ -75,6 +63,6 @@ public class LetNode extends ExpressionNode {
 
   @Override
   public Node shallowCopy() {
-    return new LetNode(identifier);
+    return new LetNode(identifier, expression);
   }
 }

@@ -56,6 +56,6 @@ public class MergeNode extends AbstractBeginNode {
 
   @Override
   public Node shallowCopy() {
-    return new MergeNode(new NodeList<>());
+    return new MergeNode(branchEnds, next);
   }
 }

@@ -77,6 +77,6 @@ public class WriteMemNode extends WriteResourceNode {
 
   @Override
   public Node shallowCopy() {
-    return new WriteMemNode(memory, words, null, null);
+    return new WriteMemNode(memory, words, address, value);
   }
 }

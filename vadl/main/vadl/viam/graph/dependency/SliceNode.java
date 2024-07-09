@@ -81,6 +81,6 @@ public class SliceNode extends ExpressionNode {
 
   @Override
   public Node shallowCopy() {
-    return new SliceNode(null, slice, type());
+    return new SliceNode(value, slice, type());
   }
 }

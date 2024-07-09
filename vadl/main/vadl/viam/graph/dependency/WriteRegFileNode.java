@@ -62,6 +62,6 @@ public class WriteRegFileNode extends WriteResourceNode {
 
   @Override
   public Node shallowCopy() {
-    return new WriteRegFileNode(registerFile, null, null);
+    return new WriteRegFileNode(registerFile, address, value);
   }
 }

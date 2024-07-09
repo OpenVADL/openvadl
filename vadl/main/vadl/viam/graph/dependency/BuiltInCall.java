@@ -41,6 +41,6 @@ public class BuiltInCall extends AbstractFunctionCallNode {
 
   @Override
   public Node shallowCopy() {
-    return new BuiltInCall(builtIn, new NodeList<>(), type());
+    return new BuiltInCall(builtIn, args, type());
   }
 }
