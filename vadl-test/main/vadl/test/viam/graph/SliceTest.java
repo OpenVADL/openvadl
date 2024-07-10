@@ -10,6 +10,7 @@ import vadl.viam.Instruction;
 import vadl.viam.graph.dependency.LetNode;
 import vadl.viam.graph.dependency.SliceNode;
 
+@SuppressWarnings({"Indentation", "LocalVariableName", "VariableDeclarationUsageDistance"})
 public class SliceTest extends AbstractTest {
 
   @Test
