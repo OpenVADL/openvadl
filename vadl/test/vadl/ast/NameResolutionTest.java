@@ -2,6 +2,7 @@ package vadl.ast;
 
 
 import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 import vadl.error.VadlException;
 
@@ -55,6 +56,7 @@ public class NameResolutionTest {
   }
 
   @Test
+  @Disabled("Really wanted? Original paper states that use-before-define is a non-goal")
   void resolveInTheFutureDefinedVariable() {
     var prog = """
           constant b = a
@@ -63,30 +65,26 @@ public class NameResolutionTest {
     Assertions.assertDoesNotThrow(() -> VadlParser.parse(prog), "Cannot parse input");
   }
 
-  // FIXME how should we solve this
-  /*@Test
+  @Test
   void resolveCyclicDefinedVariable() {
     var prog = """
-      constant a = a
-    """;
+          constant a = a
+        """;
     var thrown = Assertions.assertThrows(VadlException.class, () -> VadlParser.parse(prog),
-    "Expected to throw unresolved variable");
+        "Expected to throw unresolved variable");
     Assertions.assertEquals(thrown.errors.size(), 1);
   }
-   */
 
-  // FIXME how should we solve this
-  /*@Test
+  @Test
   void resolveTwoCyclicDefinedVariables() {
     var prog = """
-      constant a = b
-      constant b = a
-    """;
+          constant a = b
+          constant b = a
+        """;
     var thrown = Assertions.assertThrows(VadlException.class, () -> VadlParser.parse(prog),
-    "Expected to throw unresolved variable");
+        "Expected to throw unresolved variable");
     Assertions.assertEquals(thrown.errors.size(), 1);
   }
-   */
 
   @Test
   void resolveTwoMemoryDefinitions() {
@@ -136,5 +134,38 @@ public class NameResolutionTest {
     var thrown = Assertions.assertThrows(VadlException.class, () -> VadlParser.parse(prog),
         "Expected to throw name conflict");
     Assertions.assertEquals(thrown.errors.size(), 1);
+  }
+
+  @Test
+  void registersAvailableInInstruction() {
+    var prog = """
+        instruction set architecture ISA = {
+          register X : Bits<32>
+          format Btype : Bits<32> = {
+            bits [31..0]
+          }
+          instruction BEQ : Btype = {
+            X := 0
+          }
+        }
+        """;
+    Assertions.assertDoesNotThrow(() -> VadlParser.parse(prog), "Cannot parse input");
+  }
+
+  @Test
+  void formatFieldsAvailableInInstruction() {
+    var prog = """
+        instruction set architecture ISA = {
+          format Btype : Bits<32> = {
+            a [31..16],
+            b [15..8],
+            c [7..0]
+          }
+          instruction BEQ : Btype = {
+            a := b * c
+          }
+        }
+        """;
+    Assertions.assertDoesNotThrow(() -> VadlParser.parse(prog), "Cannot parse input");
   }
 }

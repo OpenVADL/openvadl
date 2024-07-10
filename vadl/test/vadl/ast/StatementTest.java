@@ -17,6 +17,9 @@ public class StatementTest {
     var prog = """
         instruction set architecture ISA = {
           program counter PC : Bits<32>
+          format Btype : Bits<32> = {
+            bits [31..0]
+          }
           instruction BEQ : Btype = {
             let next = PC + 4 in
               PC := next
@@ -34,6 +37,9 @@ public class StatementTest {
           constant a = 9
           constant b = 2
           program counter PC : Bits<32>
+          format Btype : Bits<32> = {
+            bits [31..0]
+          }
           instruction BEQ : Btype = {
             if a > b then
               PC := PC + 4
@@ -51,6 +57,9 @@ public class StatementTest {
           constant a = 9
           constant b = 2
           program counter PC : Bits<32>
+          format Btype : Bits<32> = {
+            bits [31..0]
+          }
           instruction BEQ : Btype = {
             if a > b then
               PC := PC + 4

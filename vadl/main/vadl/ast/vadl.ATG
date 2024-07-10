@@ -21,7 +21,7 @@ import vadl.types.UIntType;
 COMPILER vadl
     boolean insideMacro = false;
     Ast ast = new Ast();
-    SymbolTable symbolTable = new SymbolTable();
+    SymbolTable currentSymbolTable = new SymbolTable();
     Ungrouper ungrouper = new Ungrouper();
 
     /**
@@ -69,7 +69,7 @@ COMPILER vadl
             return unexpanded;
         }
 
-        var macro = symbolTable.getMacro(identifier.name);
+        var macro = currentSymbolTable.getMacro(identifier.name);
         if (macro == null) {
            errors.SemErr(t.line, t.col, "No macro named `%s` exists.".formatted(identifier.name));
            return unexpanded;
@@ -141,9 +141,17 @@ COMPILER vadl
         return scanner.Peek().val.equals(value);
     }
 
+    void pushScope() {
+        currentSymbolTable = currentSymbolTable.createChild();
+    }
 
+    void popScope() {
+        currentSymbolTable = currentSymbolTable.parent;
+    }
 
-
+    SourceLocation loc() {
+        return locationFromToken(t);
+    }
 
 CHARACTERS
     digit = '0' .. '9'.
@@ -174,18 +182,23 @@ PRODUCTIONS
     .
 
     commonDefinitionSection<out Definition definition>              (. definition = null; .)
-    = constantDefinition<out Definition def>                        (. definition = def; .)
-    | formatDefinition<out Definition def>                          (. definition = def; .)
+    = constantDefinition<out Definition def>                        (. definition = def; def.accept(currentSymbolTable); .)
+    | formatDefinition<out Definition def>                          (. definition = def; def.accept(currentSymbolTable); .)
     .
 
-    instructionsetDefinition<out InstructionSetDefinition isaDef>   (. var children = new ArrayList<Definition>(); .)
-    = "instruction"                                                 (. var startLocation = locationFromToken(t);.)
+    instructionsetDefinition<out InstructionSetDefinition isaDef>   (. var children = new ArrayList<Definition>(); pushScope(); .)
+    = "instruction"                                                 (. var startLocation = loc(); .)
        "set" "architecture" identifier<out Identifier identifier>
        "=" "{"
       {
-        isaDefinition<out Definition def>                           (. children.add(def); .)
+        isaDefinition<out Definition def>                           (. children.add(def); def.accept(currentSymbolTable); .)
       }
-      "}"                                                           (. isaDef = new InstructionSetDefinition(identifier, children, startLocation.join(locationFromToken(t))); .)
+      "}"                                                           (. isaDef = new InstructionSetDefinition(identifier, children, startLocation.join(loc()));
+                                                                       popScope();
+                                                                       isaDef.accept(currentSymbolTable);
+                                                                     .)
+
+
       .
 
     isaDefinition<out Definition def>                       (. def = null; .)
@@ -199,16 +212,16 @@ PRODUCTIONS
     .
 
     constantDefinition<out ConstantDefinition def>      (. TypeLiteral type = null; .)
-    = "constant"                                        (. var startLocation = locationFromToken(t); .)
-        identifier<out Identifier id>                   (. symbolTable.addDefinition(id); .)
+    = "constant"                                        (. var startLocation = loc(); .)
+        identifier<out Identifier id>
         [
             ':' typeLiteral<out TypeLiteral t1>         (. type = t1; .)
         ]
-        '=' expression<out Expr expr>                   (. def = new ConstantDefinition(id, type, expr, startLocation.join(locationFromToken(t))); .)
+        '=' expression<out Expr expr>                   (. def = new ConstantDefinition(id, type, expr, startLocation.join(loc())); .)
     .
 
     formatDefinition<out FormatDefinition def>                      (. List<FormatDefinition.FormatField> fields = new ArrayList<>();.)
-    = "format"                                                      (. var startLoc = locationFromToken(t); .)
+    = "format"                                                      (. var startLoc = loc(); .)
     identifier<out Identifier id>
     ":" typeLiteral<out TypeLiteral type>
     ["=" "{"
@@ -216,7 +229,7 @@ PRODUCTIONS
         {
         "," formatField<out FormatDefinition.FormatField f2>        (. fields.add(f2); .)
         }
-    "}"]                                                            (. def = new FormatDefinition(id, type, fields, startLoc.join(locationFromToken(t))); .)
+    "}"]                                                            (. def = new FormatDefinition(id, type, fields, startLoc.join(loc())); .)
     .
 
     // FIXME: more versions are missing here
@@ -232,35 +245,36 @@ PRODUCTIONS
     counterDefinition<out CounterDefinition def>    (. CounterDefinition.CounterKind kind = null; .)
     = ("program"                                    (. kind = PROGRAM; .)
     |  "group"                                      (. kind = GROUP; .)
-    )                                               (. var startLocation = locationFromToken(t); .)
+    )                                               (. var startLocation = loc(); .)
     "counter"
-        identifier<out Identifier id>               (. symbolTable.addDefinition(id); .)
-        ":" typeLiteral<out TypeLiteral t1>         (. def = new CounterDefinition(kind, id, t1, startLocation.join(locationFromToken(t))); .)
+        identifier<out Identifier id>
+        ":" typeLiteral<out TypeLiteral t1>         (. def = new CounterDefinition(kind, id, t1, startLocation.join(loc())); .)
     .
 
-    instructionDefinition<out InstructionDefinition def> (. var startLocation = locationFromToken(t); .)
+    instructionDefinition<out InstructionDefinition def> (. var startLocation = loc(); .)
     = "instruction" identifier<out Identifier id>
-      ":" identifier<out Identifier typeIdentifier>
-      "=" blockStatement<out BlockStatement behavior>    (. def = new InstructionDefinition(id, typeIdentifier, behavior, startLocation.join(locationFromToken(t))); .)
+      ":" identifier<out Identifier formatIdentifier>    (. pushScope(); currentSymbolTable.loadFormat(formatIdentifier); .)
+      "=" blockStatement<out BlockStatement behavior>    (. def = new InstructionDefinition(id, formatIdentifier, behavior, loc());
+                                                            popScope(); .)
     .
 
     memoryDefinition<out MemoryDefinition def>
-    = "memory"                                  (. var startLocation = locationFromToken(t); .)
-        identifier<out Identifier id>           (. symbolTable.addDefinition(id); .)
+    = "memory"                                  (. var startLocation = loc(); .)
+        identifier<out Identifier id>
         ":" typeLiteral<out TypeLiteral t1>
         "->" typeLiteral<out TypeLiteral t2>    (. def = new MemoryDefinition(id, t1, t2, startLocation.join(t2.location())); .)
     .
 
     registerDefinition<out RegisterDefinition def>
-        = "register"                                        (. var startLocation = locationFromToken(t); .)
-          identifier<out Identifier id>                     (. symbolTable.addDefinition(id); .)
+        = "register"                                        (. var startLocation = loc(); .)
+          identifier<out Identifier id>
           ":" typeLiteral<out TypeLiteral t1>               (. def = new RegisterDefinition(id, t1, startLocation.join(t1.location())); .)
     .
 
     registerFileDefinition<out Definition def>
-        = "register"                                        (. var startLocation = locationFromToken(t); .)
+        = "register"                                        (. var startLocation = loc(); .)
               "file"
-              identifier<out Identifier id>                 (. symbolTable.addDefinition(id); .)
+              identifier<out Identifier id>
               ":" typeLiteral<out TypeLiteral t1>
               "->" typeLiteral<out TypeLiteral t2>          (. def = new RegisterFileDefinition(id, t1, t2, startLocation.join(t2.location())); .)
     .
@@ -275,10 +289,10 @@ PRODUCTIONS
     | blockStatement<out Statement block>      (. statement = block; .)
     .
 
-    blockStatement<out BlockStatement block>   (. block = new BlockStatement(); .)
+    blockStatement<out BlockStatement block>   (. block = new BlockStatement(); pushScope(); .)
     = "{" {
         statement<out Statement statement>     (. block.add(statement); .)
-     } "}"
+     } "}"                                     (. popScope(); .)
     .
 
     assignment<out Statement statement>
@@ -286,9 +300,9 @@ PRODUCTIONS
     .
 
     letStatement<out Statement letStatement>
-    = "let" identifier<out Identifier id> "=" expression<out Expr valueExpr>
-      "in" statement<out Statement body>    (. letStatement = new LetStatement(id, valueExpr, body);
-                                               symbolTable.addDefinition(id); .)
+    = "let" identifier<out Identifier id>   (. pushScope(); currentSymbolTable.defineConstant(id.name, loc()); .)
+      "=" expression<out Expr valueExpr>
+      "in" statement<out Statement body>    (. letStatement = new LetStatement(id, valueExpr, body); popScope(); .)
     .
 
     ifStatement<out Statement ifStatement>
@@ -346,8 +360,8 @@ PRODUCTIONS
     .
 
     term<out Expr expr>                             (. expr = null; .)
-    = number                                        (. expr = new IntegerLiteral(Integer.parseInt(t.val), locationFromToken(t)); .)
-    | identifier<out Identifier id>                 (. expr = new Variable(id); symbolTable.addUsage(id); .)
+    = number                                        (. expr = new IntegerLiteral(Integer.parseInt(t.val), loc()); .)
+    | identifier<out Identifier id>                 (. expr = new Variable(id); currentSymbolTable.requireValue(id.name, loc()); .)
     | '(' expression<out Expr expr1> ')'            (. expr = new GroupExpr(expr1); .)
     | macroInstanceOrPlaceholder<out Node node1, CoreType.Ex()>  (. expr = (Expr)node1; .)
     .
@@ -360,18 +374,18 @@ PRODUCTIONS
 
     typeLiteral<out TypeLiteral type>       (. type = null; Expr sizeExpr = null; .)
     =
-    "Bool"                                  (. var loc = locationFromToken(t); type = new TypeLiteral(new Identifier(t.val, loc), null, loc); .)
+    "Bool"                                  (. var loc = loc(); type = new TypeLiteral(new Identifier(t.val, loc), null, loc); .)
     |
      (
         identifier<out Identifier id>
         [ "<"
             // FIXME: There is a LL(1) conflict if switching ot expression
             term<out Expr expr>             (. sizeExpr = expr; .)
-        ">" ]                               (. type = new TypeLiteral(id, sizeExpr, id.location().join(locationFromToken(t))) ;.)
+        ">" ]                               (. type = new TypeLiteral(id, sizeExpr, id.location().join(loc())) ;.)
     )
     .
 
-    identifier<out Identifier identifier> = identifierToken (. identifier = new Identifier(t.val, locationFromToken(t)); .)
+    identifier<out Identifier identifier> = identifierToken (. identifier = new Identifier(t.val, loc()); .)
     .
 
     // -- MACROS -------------------------------------------------------------------------------------------------------
@@ -381,7 +395,7 @@ PRODUCTIONS
     .
 
     placeHolder<out Node body, SyntaxType requiredType>
-    = "$"                                               (. var startloc = locationFromToken(t); var args = new ArrayList<Node>(); .)
+    = "$"                                               (. var startloc = loc(); var args = new ArrayList<Node>(); .)
     identifier<out Identifier id>
     [
         "("
@@ -392,7 +406,7 @@ PRODUCTIONS
                 }
             ]
         ")"
-    ]                                                   (. body = new PlaceHolderExpr(id, args, startloc.join(locationFromToken(t))); .)
+    ]                                                   (. body = new PlaceHolderExpr(id, args, startloc.join(loc())); .)
     .
 
 
@@ -408,7 +422,8 @@ PRODUCTIONS
     .
 
     macroDef
-    = "model" identifier<out Identifier id>
+    = "model"                           (. var startLoc = loc(); .)
+    identifier<out Identifier id>
     "("                                 (. var params = new ArrayList<MacroParam>(); .)
         [
             identifier<out Identifier paramId1> ":" syntaxType<out SyntaxType synType1> (. params.add(new MacroParam(paramId1, synType1)); .)
@@ -426,9 +441,9 @@ PRODUCTIONS
                                             var bodyType = body.syntaxType();
                                             if (!bodyType.isSubTypeOf(returnType)) {
                                                 errors.SemErr(t.line, t.col, "The macro signature promises to return `%s` but it's body is of type `%s`.".formatted(returnType, bodyType));
-                                                symbolTable.addMacro(new Macro(id, params, body, CoreType.Invalid()));
+                                                currentSymbolTable.addMacro(new Macro(id, params, body, CoreType.Invalid()), startLoc.join(loc()));
                                             } else {
-                                                symbolTable.addMacro(new Macro(id, params, body, returnType));
+                                                currentSymbolTable.addMacro(new Macro(id, params, body, returnType), startLoc.join(loc()));
                                             }
                                          .)
     .
