@@ -9,8 +9,8 @@ import java.util.Objects;
 import java.util.stream.Stream;
 import javax.annotation.Nullable;
 import vadl.utils.SourceLocation;
-import vadl.viam.graph.control.AbstractControlNode;
 import vadl.viam.graph.control.AbstractEndNode;
+import vadl.viam.graph.control.ControlNode;
 import vadl.viam.graph.control.EndNode;
 import vadl.viam.graph.control.InstrCallNode;
 import vadl.viam.graph.control.ReturnNode;
@@ -230,7 +230,7 @@ public class Graph {
    * {@link FuncParamNode} but no other param nodes.</p>
    */
   public boolean isPseudoInstruction() {
-    return getNodes(AbstractControlNode.class).allMatch(
+    return getNodes(ControlNode.class).allMatch(
         e -> e instanceof InstrCallNode || e instanceof StartNode || e instanceof EndNode
     ) && getNodes(ParamNode.class).allMatch(e -> e instanceof FuncParamNode);
   }
