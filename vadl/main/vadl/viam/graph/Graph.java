@@ -81,7 +81,6 @@ public class Graph {
     var pred = toReplace.predecessor();
     if (pred != null) {
       node.setPredecessor(pred);
-      toReplace.removeUsage(pred);
     }
 
     // Remove the link from the children to toReplace.
