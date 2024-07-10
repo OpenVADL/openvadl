@@ -1,5 +1,6 @@
 package vadl.ast;
 
+import java.util.List;
 import java.util.Objects;
 import javax.annotation.Nullable;
 import vadl.utils.SourceLocation;
@@ -14,13 +15,156 @@ public abstract class Expr extends Node {
 interface ExprVisitor<R> {
   R visit(BinaryExpr expr);
 
+  R visit(GroupExpr expr);
+
   R visit(IntegerLiteral expr);
+
+  R visit(PlaceHolderExpr expr);
 
   R visit(RangeExpr expr);
 
   R visit(TypeLiteral expr);
 
   R visit(Variable expr);
+
+  R visit(UnaryExpr expr);
+}
+
+/**
+ * The operator class provides singleton constructors for immutable instances for each operator.
+ */
+@SuppressWarnings("checkstyle:methodname")
+class Operator {
+  final String symbol;
+  final int precedence;
+
+  private Operator(String symbol, int precedence) {
+    this.symbol = symbol;
+    this.precedence = precedence;
+  }
+
+  private static final int precLogicalOr = 0;
+  private static final int precLogicalAnd = precLogicalOr + 1;
+  private static final int precOr = precLogicalAnd + 1;
+  private static final int precXor = precOr + 1;
+  private static final int precAnd = precXor + 1;
+  private static final int precEquality = precAnd + 1;
+  private static final int precComparison = precEquality + 1;
+  private static final int precShift = precComparison + 1;
+  private static final int precTerm = precShift + 1;
+  private static final int precFactor = precTerm + 1;
+
+  private static final Operator opLogicalOr = new Operator("||", precLogicalOr);
+  private static final Operator opLogicalAnd = new Operator("&&", precLogicalAnd);
+  private static final Operator opOr = new Operator("|", precOr);
+  private static final Operator opXor = new Operator("^", precXor);
+  private static final Operator opAnd = new Operator("&", precAnd);
+  private static final Operator opEqual = new Operator("=", precEquality);
+  private static final Operator opNotEqual = new Operator("!=", precEquality);
+  private static final Operator opGreaterEqual = new Operator(">=", precComparison);
+  private static final Operator opGreater = new Operator(">", precComparison);
+  private static final Operator opLessEqual = new Operator("<=", precComparison);
+  private static final Operator opLess = new Operator("<", precComparison);
+  private static final Operator opRotateRight = new Operator("<>>", precShift);
+  private static final Operator opRotateLeft = new Operator("<<>", precShift);
+  private static final Operator opShiftRight = new Operator(">>", precShift);
+  private static final Operator opShiftLeft = new Operator("<<", precShift);
+  private static final Operator opAdd = new Operator("+", precTerm);
+  private static final Operator opSubtract = new Operator("-", precTerm);
+  private static final Operator opMultiply = new Operator("*", precFactor);
+  private static final Operator opDivide = new Operator("/", precFactor);
+  private static final Operator opModulo = new Operator("%", precFactor);
+
+  static Operator LogicalOr() {
+    return opLogicalOr;
+  }
+
+  static Operator LogicalAnd() {
+    return opLogicalAnd;
+  }
+
+  static Operator Or() {
+    return opOr;
+  }
+
+  static Operator Xor() {
+    return opXor;
+  }
+
+  static Operator And() {
+    return opAnd;
+  }
+
+  static Operator Equal() {
+    return opEqual;
+  }
+
+  static Operator NotEqual() {
+    return opNotEqual;
+  }
+
+  static Operator GreaterEqual() {
+    return opGreaterEqual;
+  }
+
+  static Operator Greater() {
+    return opGreater;
+  }
+
+  static Operator LessEqual() {
+    return opLessEqual;
+  }
+
+  static Operator Less() {
+    return opLess;
+  }
+
+
+  static Operator RotateRight() {
+    return opRotateRight;
+  }
+
+  static Operator RotateLeft() {
+    return opRotateLeft;
+  }
+
+  static Operator ShiftRight() {
+    return opShiftRight;
+  }
+
+  static Operator ShiftLeft() {
+    return opShiftLeft;
+  }
+
+  static Operator Add() {
+    return opAdd;
+  }
+
+  static Operator Subtract() {
+    return opSubtract;
+  }
+
+  static Operator Multiply() {
+    return opMultiply;
+  }
+
+  static Operator Divide() {
+    return opDivide;
+  }
+
+  static Operator Modulo() {
+    return opModulo;
+  }
+}
+
+enum UnaryOperator {
+  NEGATIVE("-"), LOG_NOT("!"), COMPLEMENT("~");
+
+  final String symbol;
+
+  UnaryOperator(String symbol) {
+    this.symbol = symbol;
+  }
 }
 
 /**
@@ -28,29 +172,57 @@ interface ExprVisitor<R> {
  */
 class BinaryExpr extends Expr {
   Expr left;
-  Operation operation;
+  Operator operator;
   Expr right;
 
-  enum Operation {
-    ADD,
-    SUBTRACT,
-    MULTIPLY,
-    DIVIDE,
-  }
-
-  BinaryExpr(Expr left, Operation operation, Expr right) {
+  BinaryExpr(Expr left, Operator operation, Expr right) {
     this.left = left;
-    this.operation = operation;
+    this.operator = operation;
     this.right = right;
   }
 
-  String operationAsString(Operation op) {
-    return switch (op) {
-      case ADD -> "+";
-      case SUBTRACT -> "-";
-      case MULTIPLY -> "*";
-      case DIVIDE -> "/";
-    };
+  static @Nullable BinaryExpr root = null;
+
+  /**
+   * This method reorders a left-sided source expression tree
+   * into operator precedence order (as shown in the graph).
+   * It mutates the "left" and "right" properties of the expression tree members.
+   * <pre>
+   *       *            -
+   *      / \          / \
+   *     *   4   =>   1   *
+   *    / \              / \
+   *   -   3            *   4
+   *  / \              / \
+   * 1   2            2   3
+   * </pre>
+   *
+   * @param   expr A left-sided binary expression tree.
+   * @return  the root of the expression tree in operator precedence order
+   */
+  static BinaryExpr reorder(BinaryExpr expr) {
+    root = expr;
+    transformRecRightToLeft(null, expr);
+    if (root == null) {
+      throw new RuntimeException("Should never happen");
+    }
+    return root;
+  }
+
+  static BinaryExpr transformRecRightToLeft(@Nullable BinaryExpr parpar, BinaryExpr par) {
+    while (par.left instanceof BinaryExpr curr) {
+      if (par.operator.precedence > curr.operator.precedence) {
+        par.left = curr.right;
+        curr.right = par;
+        if ((par = parpar) != null) {
+          par.left = curr;
+          return par;
+        }
+        root = curr;
+      }
+      par = transformRecRightToLeft(par, curr);
+    }
+    return par;
   }
 
   @Override
@@ -59,12 +231,8 @@ class BinaryExpr extends Expr {
   }
 
   @Override
-  void dump(int indent, StringBuilder builder) {
-    builder.append(dumpIndentString(indent));
-    builder.append("%s (operation: %s)\n".formatted(this.getClass().getSimpleName(),
-        operationAsString(operation)));
-    left.dump(indent + 1, builder);
-    right.dump(indent + 1, builder);
+  SyntaxType syntaxType() {
+    return CoreType.Bin();
   }
 
   @Override
@@ -72,7 +240,7 @@ class BinaryExpr extends Expr {
     // FIXME: Remove the parenthesis in the future and determine if they are needed
     builder.append("(");
     left.prettyPrint(indent, builder);
-    builder.append(" %s ".formatted(operationAsString(operation)));
+    builder.append(" %s ".formatted(operator.symbol));
     right.prettyPrint(indent, builder);
     builder.append(")");
   }
@@ -80,6 +248,12 @@ class BinaryExpr extends Expr {
   @Override
   <R> R accept(ExprVisitor<R> visitor) {
     return visitor.visit(this);
+  }
+
+  @Override
+  public String toString() {
+    return "%s operator: %s".formatted(this.getClass().getSimpleName(),
+        operator.symbol);
   }
 
   @Override
@@ -92,15 +266,71 @@ class BinaryExpr extends Expr {
     }
 
     BinaryExpr that = (BinaryExpr) o;
-    return Objects.equals(left, that.left) && operation == that.operation
+    return Objects.equals(left, that.left) && operator.equals(that.operator)
         && Objects.equals(right, that.right);
   }
 
   @Override
   public int hashCode() {
     int result = Objects.hashCode(left);
-    result = 31 * result + Objects.hashCode(operation);
+    result = 31 * result + Objects.hashCode(operator);
     result = 31 * result + Objects.hashCode(right);
+    return result;
+  }
+}
+
+class UnaryExpr extends Expr {
+  UnaryOperator operator;
+  Expr operand;
+
+  UnaryExpr(UnaryOperator operation, Expr operand) {
+    this.operator = operation;
+    this.operand = operand;
+  }
+
+  @Override
+  SourceLocation location() {
+    return operand.location().join(operand.location());
+  }
+
+  @Override
+  SyntaxType syntaxType() {
+    return CoreType.UnOp();
+  }
+
+  @Override
+  void prettyPrint(int indent, StringBuilder builder) {
+    builder.append(operator.symbol);
+    operand.prettyPrint(indent, builder);
+  }
+
+  @Override
+  <R> R accept(ExprVisitor<R> visitor) {
+    return visitor.visit(this);
+  }
+
+  @Override
+  public String toString() {
+    return "%s operator: %s".formatted(this.getClass().getSimpleName(), operator.symbol);
+  }
+
+  @Override
+  public boolean equals(Object o) {
+    if (this == o) {
+      return true;
+    }
+    if (o == null || getClass() != o.getClass()) {
+      return false;
+    }
+
+    UnaryExpr that = (UnaryExpr) o;
+    return operator.equals(that.operator) && Objects.equals(operand, that.operand);
+  }
+
+  @Override
+  public int hashCode() {
+    int result = Objects.hashCode(operator);
+    result = 31 * result + Objects.hashCode(operand);
     return result;
   }
 }
@@ -120,9 +350,8 @@ class IntegerLiteral extends Expr {
   }
 
   @Override
-  void dump(int indent, StringBuilder builder) {
-    builder.append(dumpIndentString(indent));
-    builder.append("%s (value: %d)\n".formatted(this.getClass().getSimpleName(), number));
+  SyntaxType syntaxType() {
+    return CoreType.Int();
   }
 
   @Override
@@ -133,6 +362,11 @@ class IntegerLiteral extends Expr {
   @Override
   <R> R accept(ExprVisitor<R> visitor) {
     return visitor.visit(this);
+  }
+
+  @Override
+  public String toString() {
+    return "%s number: %d".formatted(this.getClass().getSimpleName(), number);
   }
 
   @Override
@@ -154,6 +388,122 @@ class IntegerLiteral extends Expr {
   }
 }
 
+/**
+ * An internal temporary placeholder node inside model definitions.
+ * This node should never leave the parser.
+ */
+class PlaceHolderExpr extends Expr {
+  Identifier identifier;
+  List<Node> arguments;
+  SourceLocation loc;
+
+  public PlaceHolderExpr(Identifier identifier, List<Node> arguments, SourceLocation loc) {
+    this.identifier = identifier;
+    this.arguments = arguments;
+    this.loc = loc;
+  }
+
+  @Override
+  <R> R accept(ExprVisitor<R> visitor) {
+    return visitor.visit(this);
+  }
+
+  @Override
+  SourceLocation location() {
+    return loc;
+  }
+
+  @Override
+  SyntaxType syntaxType() {
+    return CoreType.Invalid();
+  }
+
+  @Override
+  void prettyPrint(int indent, StringBuilder builder) {
+    builder.append("$");
+    builder.append(identifier);
+  }
+
+  @Override
+  public boolean equals(Object o) {
+    if (this == o) {
+      return true;
+    }
+    if (o == null || getClass() != o.getClass()) {
+      return false;
+    }
+
+    PlaceHolderExpr that = (PlaceHolderExpr) o;
+    return identifier.equals(that.identifier);
+  }
+
+  @Override
+  public int hashCode() {
+    return identifier.hashCode();
+  }
+}
+
+/**
+ * A group expression.
+ */
+class GroupExpr extends Expr {
+  Expr inner;
+
+  public GroupExpr(Expr expression) {
+    this.inner = expression;
+  }
+
+  static Expr ungroup(Expr expr) {
+    while (expr instanceof GroupExpr) {
+      expr = ((GroupExpr) expr).inner;
+    }
+    return expr;
+  }
+
+  @Override
+  <R> R accept(ExprVisitor<R> visitor) {
+    // This node should never leave the parser and therefore never meet a visitor.
+    return visitor.visit(this);
+  }
+
+  @Override
+  SourceLocation location() {
+    return inner.location();
+  }
+
+  @Override
+  SyntaxType syntaxType() {
+    return inner.syntaxType();
+  }
+
+  @Override
+  void prettyPrint(int indent, StringBuilder builder) {
+    // This node should never leave the parser and therefore never meet a visitor.
+    builder.append("(");
+    inner.prettyPrint(indent, builder);
+    builder.append(")");
+
+  }
+
+  @Override
+  public boolean equals(Object o) {
+    if (this == o) {
+      return true;
+    }
+    if (o == null || getClass() != o.getClass()) {
+      return false;
+    }
+
+    GroupExpr that = (GroupExpr) o;
+    return inner.equals(that.inner);
+  }
+
+  @Override
+  public int hashCode() {
+    return inner.hashCode();
+  }
+}
+
 class RangeExpr extends Expr {
   Expr from;
   Expr to;
@@ -169,12 +519,8 @@ class RangeExpr extends Expr {
   }
 
   @Override
-  void dump(int indent, StringBuilder builder) {
-    builder.append(dumpIndentString(indent));
-    builder.append(this.getClass().getSimpleName());
-    builder.append("\n");
-    from.dump(indent + 1, builder);
-    to.dump(indent + 1, builder);
+  SyntaxType syntaxType() {
+    return CoreType.Invalid();
   }
 
   @Override
@@ -187,6 +533,11 @@ class RangeExpr extends Expr {
   @Override
   <R> R accept(ExprVisitor<R> visitor) {
     return visitor.visit(this);
+  }
+
+  @Override
+  public String toString() {
+    return this.getClass().getSimpleName();
   }
 
   @Override
@@ -235,14 +586,8 @@ class TypeLiteral extends Expr {
   }
 
   @Override
-  void dump(int indent, StringBuilder builder) {
-    builder.append(dumpIndentString(indent));
-    builder.append(this.getClass().getSimpleName());
-    builder.append("\n");
-    baseType.dump(indent + 1, builder);
-    if (sizeExpression != null) {
-      sizeExpression.dump(indent + 1, builder);
-    }
+  SyntaxType syntaxType() {
+    return CoreType.Invalid();
   }
 
   @Override
@@ -260,6 +605,11 @@ class TypeLiteral extends Expr {
   @Override
   <R> R accept(ExprVisitor<R> visitor) {
     return visitor.visit(this);
+  }
+
+  @Override
+  public String toString() {
+    return this.getClass().getSimpleName();
   }
 
   @Override
@@ -297,11 +647,8 @@ class Variable extends Expr {
   }
 
   @Override
-  void dump(int indent, StringBuilder builder) {
-    builder.append(dumpIndentString(indent));
-    builder.append(this.getClass().getSimpleName());
-    builder.append("\n");
-    identifier.dump(indent + 1, builder);
+  SyntaxType syntaxType() {
+    return CoreType.Id();
   }
 
   @Override
@@ -312,6 +659,11 @@ class Variable extends Expr {
   @Override
   <R> R accept(ExprVisitor<R> visitor) {
     return visitor.visit(this);
+  }
+
+  @Override
+  public String toString() {
+    return this.getClass().getSimpleName();
   }
 
   @Override

@@ -46,13 +46,15 @@ public class VadlParser {
         var fields = line.split(";", -1);
         var lineNum = Integer.parseInt(fields[0]);
         var colNum = Integer.parseInt(fields[1]);
+        var title = fields[2];
         errors.add(new VadlError(
             fields[2],
             new SourceLocation(SourceLocation.INVALID_SOURCE_LOCATION.uri(),
                 new SourceLocation.Position(lineNum, colNum)),
             null,
-            "Sometimes the expected is just something with what the parser could work with but"
-                + " maybe not what you intended.")
+            title.contains("expected")
+                ? "Sometimes the expected is just something with what the parser could work with "
+                + " but maybe not what you intended." : null)
         );
       }
       ;

@@ -8,7 +8,7 @@ import vadl.utils.SourceLocation;
 
 /**
  * The Definition nodes inside the AST.
- * A definition defines part of the architecture, but has no sideeffects and doesn't evaulate to
+ * A definition defines part of the architecture, but has no side effects and doesn't evaluate to
  * anything.
  */
 abstract class Definition extends Node {
@@ -22,13 +22,15 @@ interface DefinitionVisitor<R> {
 
   R visit(InstructionSetDefinition definition);
 
-  R visit(IndexDefinition definition);
+  R visit(CounterDefinition definition);
 
   R visit(MemoryDefinition definition);
 
   R visit(RegisterDefinition definition);
 
   R visit(RegisterFileDefinition definition);
+
+  R visit(InstructionDefinition definition);
 }
 
 class ConstantDefinition extends Definition {
@@ -54,15 +56,8 @@ class ConstantDefinition extends Definition {
   }
 
   @Override
-  void dump(int indent, StringBuilder builder) {
-    builder.append(dumpIndentString(indent));
-    builder.append(this.getClass().getSimpleName());
-    builder.append("\n");
-    if (typeAnnotation != null) {
-      typeAnnotation.dump(indent + 1, builder);
-    }
-    identifier.dump(indent + 1, builder);
-    value.dump(indent + 1, builder);
+  SyntaxType syntaxType() {
+    return CoreType.IsaDefs();
   }
 
   @Override
@@ -81,6 +76,11 @@ class ConstantDefinition extends Definition {
   @Override
   <R> R accept(DefinitionVisitor<R> visitor) {
     return visitor.visit(this);
+  }
+
+  @Override
+  public String toString() {
+    return this.getClass().getSimpleName();
   }
 
   @Override
@@ -128,14 +128,8 @@ class FormatDefinition extends Definition {
     }
 
     @Override
-    void dump(int indent, StringBuilder builder) {
-      builder.append(dumpIndentString(indent));
-      builder.append(this.getClass().getSimpleName());
-      builder.append("\n");
-      identifier.dump(indent + 1, builder);
-      for (RangeExpr r : ranges) {
-        r.dump(indent + 1, builder);
-      }
+    SyntaxType syntaxType() {
+      return CoreType.Invalid();
     }
 
     @Override
@@ -147,6 +141,11 @@ class FormatDefinition extends Definition {
         ranges.get(i).prettyPrint(indent, builder);
       }
       builder.append("]");
+    }
+
+    @Override
+    public String toString() {
+      return this.getClass().getSimpleName();
     }
 
     @Override
@@ -185,15 +184,8 @@ class FormatDefinition extends Definition {
   }
 
   @Override
-  void dump(int indent, StringBuilder builder) {
-    builder.append(dumpIndentString(indent));
-    builder.append(this.getClass().getSimpleName());
-    builder.append("\n");
-    identifier.dump(indent + 1, builder);
-    typeAnnotation.dump(indent + 1, builder);
-    for (var field : fields) {
-      field.dump(indent + 1, builder);
-    }
+  SyntaxType syntaxType() {
+    return CoreType.IsaDefs();
   }
 
   @Override
@@ -235,6 +227,11 @@ class FormatDefinition extends Definition {
   }
 
   @Override
+  public String toString() {
+    return this.getClass().getSimpleName();
+  }
+
+  @Override
   public boolean equals(Object o) {
     if (this == o) {
       return true;
@@ -260,12 +257,12 @@ class FormatDefinition extends Definition {
 class InstructionSetDefinition extends Definition {
   final Identifier identifier;
   final SourceLocation loc;
-  List<Definition> statements;
+  List<Definition> definitions;
 
   InstructionSetDefinition(Identifier identifier, List<Definition> statements,
                            SourceLocation location) {
     this.identifier = identifier;
-    this.statements = statements;
+    this.definitions = statements;
     this.loc = location;
   }
 
@@ -275,20 +272,15 @@ class InstructionSetDefinition extends Definition {
   }
 
   @Override
-  void dump(int indent, StringBuilder builder) {
-    builder.append(dumpIndentString(indent));
-    builder.append("%s \"%s\"\n".formatted(this.getClass().getSimpleName(), identifier.name));
-
-    for (Definition definition : statements) {
-      definition.dump(indent + 1, builder);
-    }
+  SyntaxType syntaxType() {
+    return CoreType.Invalid();
   }
 
   @Override
   void prettyPrint(int indent, StringBuilder builder) {
-    builder.append(dumpIndentString(indent));
+    builder.append(prettyIndentString(indent));
     builder.append("instruction set architecture %s = {\n".formatted(identifier.name));
-    for (Definition definition : statements) {
+    for (Definition definition : definitions) {
       definition.prettyPrint(indent + 1, builder);
     }
     builder.append("}\n\n");
@@ -297,6 +289,11 @@ class InstructionSetDefinition extends Definition {
   @Override
   <R> R accept(DefinitionVisitor<R> visitor) {
     return visitor.visit(this);
+  }
+
+  @Override
+  public String toString() {
+    return this.getClass().getSimpleName();
   }
 
   @Override
@@ -310,30 +307,30 @@ class InstructionSetDefinition extends Definition {
 
     var that = (InstructionSetDefinition) o;
     return Objects.equals(identifier, that.identifier)
-        && Objects.equals(statements, that.statements);
+        && Objects.equals(definitions, that.definitions);
   }
 
   @Override
   public int hashCode() {
     int result = Objects.hashCode(identifier);
-    result = 31 * result + Objects.hashCode(statements);
+    result = 31 * result + Objects.hashCode(definitions);
     return result;
   }
 }
 
-class IndexDefinition extends Definition {
-  IndexKind kind;
+class CounterDefinition extends Definition {
+  CounterKind kind;
   Identifier identifier;
   TypeLiteral type;
   SourceLocation loc;
 
-  enum IndexKind {
+  enum CounterKind {
     PROGRAM,
     GROUP
   }
 
-  public IndexDefinition(IndexKind kind, Identifier identifier, TypeLiteral type,
-                         SourceLocation location) {
+  public CounterDefinition(CounterKind kind, Identifier identifier, TypeLiteral type,
+                           SourceLocation location) {
     this.kind = kind;
     this.identifier = identifier;
     this.type = type;
@@ -346,11 +343,8 @@ class IndexDefinition extends Definition {
   }
 
   @Override
-  void dump(int indent, StringBuilder builder) {
-    builder.append(dumpIndentString(indent));
-    builder.append("%s (kind: %s)\n".formatted(this.getClass().getSimpleName(), kind.toString()));
-    identifier.dump(indent + 1, builder);
-    type.dump(indent + 1, builder);
+  SyntaxType syntaxType() {
+    return CoreType.IsaDefs();
   }
 
   @Override
@@ -369,6 +363,11 @@ class IndexDefinition extends Definition {
   }
 
   @Override
+  public String toString() {
+    return "%s kind: %s".formatted(this.getClass().getSimpleName(), kind.toString());
+  }
+
+  @Override
   public boolean equals(Object o) {
     if (this == o) {
       return true;
@@ -377,7 +376,7 @@ class IndexDefinition extends Definition {
       return false;
     }
 
-    IndexDefinition that = (IndexDefinition) o;
+    CounterDefinition that = (CounterDefinition) o;
     return kind == that.kind && identifier.equals(that.identifier) && type.equals(that.type);
   }
 
@@ -410,12 +409,8 @@ class MemoryDefinition extends Definition {
   }
 
   @Override
-  void dump(int indent, StringBuilder builder) {
-    builder.append(dumpIndentString(indent));
-    builder.append(this.getClass().getSimpleName());
-    builder.append("\n");
-    addressType.dump(indent + 1, builder);
-    dataType.dump(indent + 1, builder);
+  SyntaxType syntaxType() {
+    return CoreType.IsaDefs();
   }
 
   @Override
@@ -433,6 +428,11 @@ class MemoryDefinition extends Definition {
   @Override
   <R> R accept(DefinitionVisitor<R> visitor) {
     return visitor.visit(this);
+  }
+
+  @Override
+  public String toString() {
+    return this.getClass().getSimpleName();
   }
 
   @Override
@@ -476,12 +476,8 @@ class RegisterDefinition extends Definition {
   }
 
   @Override
-  void dump(int indent, StringBuilder builder) {
-    builder.append(dumpIndentString(indent));
-    builder.append(this.getClass().getSimpleName());
-    builder.append("\n");
-    identifier.dump(indent + 1, builder);
-    type.dump(indent + 1, builder);
+  SyntaxType syntaxType() {
+    return CoreType.IsaDefs();
   }
 
   @Override
@@ -497,6 +493,11 @@ class RegisterDefinition extends Definition {
   @Override
   <R> R accept(DefinitionVisitor<R> visitor) {
     return visitor.visit(this);
+  }
+
+  @Override
+  public String toString() {
+    return this.getClass().getSimpleName();
   }
 
   @Override
@@ -522,15 +523,15 @@ class RegisterDefinition extends Definition {
 
 class RegisterFileDefinition extends Definition {
   Identifier identifier;
-  TypeLiteral addressType;
+  TypeLiteral indexType;
   TypeLiteral registerType;
   SourceLocation loc;
 
-  public RegisterFileDefinition(Identifier identifier, TypeLiteral addressType,
+  public RegisterFileDefinition(Identifier identifier, TypeLiteral indexType,
                                 TypeLiteral registerType,
                                 SourceLocation location) {
     this.identifier = identifier;
-    this.addressType = addressType;
+    this.indexType = indexType;
     this.registerType = registerType;
     this.loc = location;
   }
@@ -541,13 +542,8 @@ class RegisterFileDefinition extends Definition {
   }
 
   @Override
-  void dump(int indent, StringBuilder builder) {
-    builder.append(dumpIndentString(indent));
-    builder.append(this.getClass().getSimpleName());
-    builder.append("\n");
-    identifier.dump(indent + 1, builder);
-    addressType.dump(indent + 1, builder);
-    registerType.dump(indent + 1, builder);
+  SyntaxType syntaxType() {
+    return CoreType.IsaDefs();
   }
 
   @Override
@@ -556,7 +552,7 @@ class RegisterFileDefinition extends Definition {
     builder.append("register file ");
     identifier.prettyPrint(indent, builder);
     builder.append(": ");
-    addressType.prettyPrint(indent, builder);
+    indexType.prettyPrint(indent, builder);
     builder.append(" -> ");
     registerType.prettyPrint(indent, builder);
     builder.append("\n");
@@ -565,6 +561,11 @@ class RegisterFileDefinition extends Definition {
   @Override
   <R> R accept(DefinitionVisitor<R> visitor) {
     return visitor.visit(this);
+  }
+
+  @Override
+  public String toString() {
+    return this.getClass().getSimpleName();
   }
 
   @Override
@@ -577,15 +578,81 @@ class RegisterFileDefinition extends Definition {
     }
 
     RegisterFileDefinition that = (RegisterFileDefinition) o;
-    return identifier.equals(that.identifier) && addressType.equals(that.addressType)
+    return identifier.equals(that.identifier) && indexType.equals(that.indexType)
         && registerType.equals(that.registerType);
   }
 
   @Override
   public int hashCode() {
     int result = identifier.hashCode();
-    result = 31 * result + addressType.hashCode();
+    result = 31 * result + indexType.hashCode();
     result = 31 * result + registerType.hashCode();
+    return result;
+  }
+}
+
+class InstructionDefinition extends Definition {
+  final Identifier identifier;
+  final Identifier typeIdentifier;
+  final BlockStatement behavior;
+  final SourceLocation loc;
+
+  InstructionDefinition(Identifier identifier, Identifier typeIdentifier, BlockStatement behavior,
+                        SourceLocation location) {
+    this.identifier = identifier;
+    this.typeIdentifier = typeIdentifier;
+    this.behavior = behavior;
+    this.loc = location;
+  }
+
+  @Override
+  SourceLocation location() {
+    return loc;
+  }
+
+  @Override
+  SyntaxType syntaxType() {
+    return CoreType.IsaDefs();
+  }
+
+  @Override
+  void prettyPrint(int indent, StringBuilder builder) {
+    builder.append(prettyIndentString(indent));
+    builder.append("instruction %s : %s = ".formatted(identifier.name, typeIdentifier.name));
+    behavior.prettyPrint(indent, builder);
+    builder.append("\n");
+  }
+
+  @Override
+  <R> R accept(DefinitionVisitor<R> visitor) {
+    return visitor.visit(this);
+  }
+
+  @Override
+  public String toString() {
+    return this.getClass().getSimpleName();
+  }
+
+  @Override
+  public boolean equals(Object o) {
+    if (this == o) {
+      return true;
+    }
+    if (o == null || getClass() != o.getClass()) {
+      return false;
+    }
+
+    var that = (InstructionDefinition) o;
+    return Objects.equals(identifier, that.identifier)
+        && Objects.equals(typeIdentifier, that.typeIdentifier)
+        && Objects.equals(behavior, that.behavior);
+  }
+
+  @Override
+  public int hashCode() {
+    int result = Objects.hashCode(identifier);
+    result = 31 * result + Objects.hashCode(typeIdentifier);
+    result = 31 * result + Objects.hashCode(behavior);
     return result;
   }
 }

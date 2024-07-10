@@ -27,7 +27,7 @@ public class ErrorPrinter {
     // Header
     System.out.printf("%s%serror:%s%s %s%s\n", Ansi.Bold, Ansi.Red, Ansi.Reset, Ansi.Bold,
         error.reason, Ansi.Reset);
-    System.out.printf("    %s╭──[%s]\n", Ansi.Cyan, error.location.toString());
+    System.out.printf("    %s╭──[%s]\n", Ansi.Cyan, error.location.toConciseString());
 
     // Print preview
     System.out.println("    │");
@@ -42,7 +42,7 @@ public class ErrorPrinter {
       System.out.println();
     }
     if (error.tip != null) {
-      System.out.printf("    %s%sTip:%s%s%s\n", Ansi.Bold, Ansi.Underline, Ansi.Reset, Ansi.Bold,
+      System.out.printf("    %s%sTip:%s %s%s\n", Ansi.Bold, Ansi.Underline, Ansi.Reset, Ansi.Bold,
           error.tip);
     }
     System.out.print(Ansi.Reset);

@@ -12,19 +12,6 @@ public class Ast {
   List<Definition> definitions = new ArrayList<>();
 
   /**
-   * Dump the AST into a tree like representation for debugging.
-   *
-   * @return a String with the dumped tree.
-   */
-  public String dump() {
-    StringBuilder builder = new StringBuilder();
-    for (var definition : definitions) {
-      definition.dump(0, builder);
-    }
-    return builder.toString();
-  }
-
-  /**
    * Convert the tree back into sourcecode.
    * The generated sourcecode might look quite different but is semantically equal. Some notable
    * details are however:
@@ -61,14 +48,6 @@ public class Ast {
 }
 
 abstract class Node {
-  protected String dumpIndentString(int indent) {
-    var indentBy = 2;
-    var indentCharacters = ". : ' | ";
-    var indentLenght = indent * indentBy;
-    return indentCharacters.repeat(indentLenght / indentCharacters.length())
-        + indentCharacters.substring(0, indentLenght % indentCharacters.length());
-  }
-
   protected String prettyIndentString(int indent) {
     var indentBy = 2;
     return " ".repeat(indentBy * indent);
@@ -76,7 +55,7 @@ abstract class Node {
 
   abstract SourceLocation location();
 
-  abstract void dump(int indent, StringBuilder builder);
+  abstract SyntaxType syntaxType();
 
   abstract void prettyPrint(int indent, StringBuilder builder);
 }
@@ -91,19 +70,23 @@ class Identifier extends Node {
   }
 
   @Override
-  void dump(int indent, StringBuilder builder) {
-    builder.append(dumpIndentString(indent));
-    builder.append("Identifier \"%s\"\n".formatted(name));
-  }
-
-  @Override
   SourceLocation location() {
     return loc;
   }
 
   @Override
+  SyntaxType syntaxType() {
+    return CoreType.Id();
+  }
+
+  @Override
   void prettyPrint(int indent, StringBuilder builder) {
     builder.append(name);
+  }
+
+  @Override
+  public String toString() {
+    return "%s name: \"%s\"".formatted(this.getClass().getSimpleName(), this.name);
   }
 
   @Override

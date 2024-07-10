@@ -1,12 +1,14 @@
 $package=vadl.ast
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import javax.annotation.Nullable;
 
 import vadl.ast.Ast;
 import vadl.ast.Expr;
 import vadl.ast.Definition;
-import static vadl.ast.IndexDefinition.IndexKind.GROUP;
-import static vadl.ast.IndexDefinition.IndexKind.PROGRAM;
+import static vadl.ast.CounterDefinition.CounterKind.GROUP;
+import static vadl.ast.CounterDefinition.CounterKind.PROGRAM;
 import vadl.utils.SourceLocation;
 
 import vadl.types.BitsType;
@@ -17,15 +19,129 @@ import vadl.types.UIntType;
 
 
 COMPILER vadl
+    boolean insideMacro = false;
     Ast ast = new Ast();
     SymbolTable symbolTable = new SymbolTable();
+    Ungrouper ungrouper = new Ungrouper();
 
+    /**
+    * Converts a coco token to a vadl location.
+    */
     SourceLocation locationFromToken(Token token) {
         return new SourceLocation(
             SourceLocation.INVALID_SOURCE_LOCATION.uri(),
             new SourceLocation.Position(token.line, token.col),
             new SourceLocation.Position(token.line, token.col + t.val.length()));
     }
+
+    /**
+    *   Reorders wrongly parsed binary expressions
+    */
+    Expr reorderBinary(Expr expr) {
+        // Only if not inside model parsing.
+        // Cause there we don't know yet what the order is.
+        if (insideMacro || !(expr instanceof BinaryExpr)) {
+            return expr;
+        }
+
+        // FIXME: This doesn't completely work for model instantiation
+        return BinaryExpr.reorder((BinaryExpr) expr);
+    }
+
+    /**
+    * Removes all group expressions.
+    */
+    Expr ungroup(Expr expr) {
+        //  Only if not inside model parsing.
+        if (insideMacro) {
+          return expr;
+        }
+
+        return ungrouper.ungroup(expr);
+    }
+
+    /**
+    * Expands a macro.
+    */
+    @Nullable Node expandMacro(Identifier identifier, List<Node> args, SyntaxType requiredReturnType) {
+        var unexpanded = new PlaceHolderExpr(identifier, args, identifier.location());
+        if (insideMacro) {
+            return unexpanded;
+        }
+
+        var macro = symbolTable.getMacro(identifier.name);
+        if (macro == null) {
+           errors.SemErr(t.line, t.col, "No macro named `%s` exists.".formatted(identifier.name));
+           return unexpanded;
+        }
+
+        // The macro itself was invalid but an error for it was already issued so we silently abort the expansion here.
+        if (macro.returnType() == CoreType.Invalid()) {
+           return unexpanded;
+        }
+
+        boolean hasError = false;
+
+        // Verify the arguments
+        if (macro.params().size() != args.size()) {
+           errors.SemErr(t.line, t.col, "The macro `%s` expects %d arguments but %d were provided.".formatted(identifier.name, macro.params().size(), args.size()));
+           hasError = true;
+        }
+
+        var argMap = new HashMap<String, Node>();
+        if (!hasError)
+        {
+            for (int i = 0; i < args.size(); i ++) {
+                var arg = args.get(i);
+                var param = macro.params().get(i);
+                var argType = arg.syntaxType();
+
+                if (!argType.isSubTypeOf(param.type())) {
+                    errors.SemErr(t.line, t.col, "The macro's `%s` parameter `%s` expects a `%s` but the argument provided is of type `%s`.".formatted(identifier.name, param.name().name, param.type(), argType));
+                    hasError = true;
+                }
+                argMap.put(param.name().name, arg);
+            }
+        }
+
+        // Verify the return type
+        if (!macro.returnType().isSubTypeOf(requiredReturnType)) {
+           errors.SemErr(t.line, t.col, "The macro `%s` returns `%s` but here a macro returning `%s` is expected.".formatted(identifier.name, macro.returnType(), requiredReturnType));
+           hasError = true;
+        }
+
+        if (hasError) {
+           return unexpanded;
+        }
+
+         // FIXME: There should be a real instantziator here
+         var body = macro.body();
+         if (body instanceof Expr) {
+            var expander = new MacroExpander();
+            body = expander.expandExpr((Expr)body, argMap);
+            body = new GroupExpr((Expr) body);
+         } else {
+            throw new RuntimeException("Expanding non expressions are not yet implemented");
+         }
+         return body;
+    }
+
+
+    /**
+    * A simple lookahead helper that returns true if the token at the nth position matches the provided string.
+    *
+    * @param lookAheadPos the position to lookahead 0 is the next token.
+    * @param value to match
+    */
+    boolean matchN(int lookAheadPos, String value) {
+        for(int i = 0; i <= lookAheadPos -2; i++) {
+            var t = scanner.Peek();
+            System.out.println("token %s".formatted(t.val));
+        }
+        return scanner.Peek().val.equals(value);
+    }
+
+
 
 
 
@@ -36,6 +152,7 @@ CHARACTERS
 TOKENS
     number = digit {digit}.
     identifierToken = letter {letter | digit | '_'}.
+    file = "file".
 
 COMMENTS FROM "//" TO '\n'
 COMMENTS FROM "/*" TO "*/" NESTED
@@ -47,6 +164,7 @@ PRODUCTIONS
     vadl =
     {
         topLevelDefinitions<out Definition d>   (. ast.definitions.add(d); .)
+        | macroDef
     }.
 
     // -- DEFINITIONS --------------------------------------------------------------------------------------------------
@@ -73,10 +191,11 @@ PRODUCTIONS
     isaDefinition<out Definition def>                       (. def = null; .)
     = constantDefinition<out Definition d>                  (. def = d; .)
     | formatDefinition<out Definition d>                    (. def = d; .)
-    | indexDefinition<out Definition d>                     (. def = d; .)
-    //| instructionStatement<out Definition d>              (. def = d; .)
+    | counterDefinition<out Definition d>                   (. def = d; .)
+    | instructionDefinition<out Definition d>               (. def = d; .)
     | memoryDefinition<out Definition d>                    (. def = d; .)
-    | registerAndRegisterFileDefinition<out Definition d>   (. def = d; .)
+    | IF (scanner.Peek().kind == _file) registerFileDefinition<out Definition d>   (. def = d; .)
+    | registerDefinition<out Definition d>   (. def = d; .)
     .
 
     constantDefinition<out ConstantDefinition def>      (. TypeLiteral type = null; .)
@@ -110,19 +229,20 @@ PRODUCTIONS
     "]"                                             (. field = new FormatDefinition.FormatField(id, ranges); .)
     .
 
-    indexDefinition<out IndexDefinition def>        (. IndexDefinition.IndexKind kind = null; .)
+    counterDefinition<out CounterDefinition def>    (. CounterDefinition.CounterKind kind = null; .)
     = ("program"                                    (. kind = PROGRAM; .)
     |  "group"                                      (. kind = GROUP; .)
     )                                               (. var startLocation = locationFromToken(t); .)
     "counter"
         identifier<out Identifier id>               (. symbolTable.addDefinition(id); .)
-        ":" typeLiteral<out TypeLiteral t1>         (. def = new IndexDefinition(kind, id, t1, startLocation.join(locationFromToken(t))); .)
+        ":" typeLiteral<out TypeLiteral t1>         (. def = new CounterDefinition(kind, id, t1, startLocation.join(locationFromToken(t))); .)
     .
 
-/*    instructionStatement<out InstructionDefinitionStmt stmt>
-    = "instruction"
-    identifier<out Identifier id> ":" <identifer<out Identifier tyeIdentifer> "=" "{"
-    .*/
+    instructionDefinition<out InstructionDefinition def> (. var startLocation = locationFromToken(t); .)
+    = "instruction" identifier<out Identifier id>
+      ":" identifier<out Identifier typeIdentifier>
+      "=" blockStatement<out BlockStatement behavior>    (. def = new InstructionDefinition(id, typeIdentifier, behavior, startLocation.join(locationFromToken(t))); .)
+    .
 
     memoryDefinition<out MemoryDefinition def>
     = "memory"                                  (. var startLocation = locationFromToken(t); .)
@@ -131,49 +251,105 @@ PRODUCTIONS
         "->" typeLiteral<out TypeLiteral t2>    (. def = new MemoryDefinition(id, t1, t2, startLocation.join(t2.location())); .)
     .
 
-    registerAndRegisterFileDefinition<out Definition def>   (. def = null; .)
+    registerDefinition<out RegisterDefinition def>
         = "register"                                        (. var startLocation = locationFromToken(t); .)
-        (
-            "file"
-            identifier<out Identifier id>                   (. symbolTable.addDefinition(id); .)
-            ":" typeLiteral<out TypeLiteral t1>
-            "->" typeLiteral<out TypeLiteral t2>            (. def = new RegisterFileDefinition(id, t1, t2, startLocation.join(t2.location())); .)
-        |
-            identifier<out Identifier id>                   (. symbolTable.addDefinition(id); .)
-            ":" typeLiteral<out TypeLiteral t1>             (. def = new RegisterDefinition(id, t1, startLocation.join(t1.location())); .)
-        )
+          identifier<out Identifier id>                     (. symbolTable.addDefinition(id); .)
+          ":" typeLiteral<out TypeLiteral t1>               (. def = new RegisterDefinition(id, t1, startLocation.join(t1.location())); .)
+    .
+
+    registerFileDefinition<out Definition def>
+        = "register"                                        (. var startLocation = locationFromToken(t); .)
+              "file"
+              identifier<out Identifier id>                 (. symbolTable.addDefinition(id); .)
+              ":" typeLiteral<out TypeLiteral t1>
+              "->" typeLiteral<out TypeLiteral t2>          (. def = new RegisterFileDefinition(id, t1, t2, startLocation.join(t2.location())); .)
     .
 
 
     // -- STATEMENTS ---------------------------------------------------------------------------------------------------
-    // comming soon to a vadl near you ;)
+
+    statement<out Statement statement>         (. statement = null; .)
+    = letStatement<out Statement letStatement> (. statement = letStatement; .)
+    | ifStatement<out Statement ifStatement>   (. statement = ifStatement; .)
+    | assignment<out Statement assignment>     (. statement = assignment; .)
+    | blockStatement<out Statement block>      (. statement = block; .)
+    .
+
+    blockStatement<out BlockStatement block>   (. block = new BlockStatement(); .)
+    = "{" {
+        statement<out Statement statement>     (. block.add(statement); .)
+     } "}"
+    .
+
+    assignment<out Statement statement>
+    = identifier<out Identifier id> ":=" expression<out Expr expr> (. statement = new AssignmentStatement(id, expr); .)
+    .
+
+    letStatement<out Statement letStatement>
+    = "let" identifier<out Identifier id> "=" expression<out Expr valueExpr>
+      "in" statement<out Statement body>    (. letStatement = new LetStatement(id, valueExpr, body);
+                                               symbolTable.addDefinition(id); .)
+    .
+
+    ifStatement<out Statement ifStatement>
+    = "if" expression<out Expr condition>
+      "then" statement<out Statement thenStmt>     (. ifStatement = new IfStatement(condition, thenStmt, null);     .)
+      [ "else" statement<out Statement elseStmt>   (. ifStatement = new IfStatement(condition, thenStmt, elseStmt); .) ]
+    .
 
     // -- EXPRESSIONS --------------------------------------------------------------------------------------------------
 
-    expression<out Expr expr>
-    = term<out Expr expr1>  (. expr = expr1; .)
+    expression<out Expr expr>               (. expr = null; .)
+    = binary<out Expr expr1>                (. expr = ungroup(expr1); .)
+    | unary<out Expr expr1>                 (. expr = ungroup(expr1); .)
     .
 
-    term<out Expr expr>
-    = factor<out Expr expr1>                   (. expr = expr1; .)
+    binary<out Expr expr>
+    =  term<out Expr expr1>                              (. expr = expr1; .)
         {
-            '+' factor<out Expr expr2>         (. expr = new BinaryExpr(expr, BinaryExpr.Operation.ADD, expr2); .)
-        |   '-' factor<out Expr expr2>         (. expr = new BinaryExpr(expr, BinaryExpr.Operation.SUBTRACT, expr2); .)
-        }
+            binaryOperator <out Operator op>
+            term<out Expr expr2>                         (. expr = new BinaryExpr(expr, op, expr2); .)
+        }                                                   (. expr = reorderBinary(expr); .)
     .
 
-    factor<out Expr expr>
-    = primary<out Expr expr1>                 (. expr = expr1; .)
-        {
-            '*' primary<out Expr expr2>       (. expr = new BinaryExpr(expr, BinaryExpr.Operation.MULTIPLY, expr2); .)
-        |   '/' primary<out Expr expr2>       (. expr = new BinaryExpr(expr, BinaryExpr.Operation.DIVIDE, expr2); .)
-        }
+    unary<out Expr expr>
+    = unaryOperator<out UnaryOperator op> term<out Expr operand> (. expr = new UnaryExpr(op, operand); .)
     .
 
-    primary<out Expr expr>                  (. expr = null; .)
-    = number                                (. expr = new IntegerLiteral(Integer.parseInt(t.val), locationFromToken(t)); .)
-    | identifier<out Identifier id>         (. expr = new Variable(id); symbolTable.addUsage(id); .)
-    | '(' expression<out Expr expr1> ')'    (. expr = expr1; .)
+    unaryOperator<out UnaryOperator op> (. op = null; .)
+    = "-" (. op = UnaryOperator.NEGATIVE; .)
+    | "!" (. op = UnaryOperator.LOG_NOT; .)
+    | "~" (. op = UnaryOperator.COMPLEMENT; .)
+    .
+
+    binaryOperator <out Operator op>    (.op = null;.)
+    = "||"  (. op = Operator.LogicalOr(); .)
+    | "&&"  (. op = Operator.LogicalAnd(); .)
+    | "|"   (. op = Operator.Or(); .)
+    | "^"   (. op = Operator.Xor(); .)
+    | "&"   (. op = Operator.And(); .)
+    | "="   (. op = Operator.Equal(); .)
+    | "!="  (. op = Operator.NotEqual(); .)
+    | ">="  (. op = Operator.GreaterEqual(); .)
+    | ">"   (. op = Operator.Greater(); .)
+    | "<="  (. op = Operator.LessEqual(); .)
+    | "<"   (. op = Operator.Less(); .)
+    | "<>>" (. op = Operator.RotateRight(); .)
+    | "<<>" (. op = Operator.RotateLeft(); .)
+    | ">>"  (. op = Operator.ShiftRight(); .)
+    | "<<"  (. op = Operator.ShiftLeft(); .)
+    | "+"   (. op = Operator.Add(); .)
+    | "-"   (. op = Operator.Subtract(); .)
+    | "*"   (. op = Operator.Multiply(); .)
+    | "/"   (. op = Operator.Divide(); .)
+    | "%"   (. op = Operator.Modulo(); .)
+    .
+
+    term<out Expr expr>                             (. expr = null; .)
+    = number                                        (. expr = new IntegerLiteral(Integer.parseInt(t.val), locationFromToken(t)); .)
+    | identifier<out Identifier id>                 (. expr = new Variable(id); symbolTable.addUsage(id); .)
+    | '(' expression<out Expr expr1> ')'            (. expr = new GroupExpr(expr1); .)
+    | macroInstanceOrPlaceholder<out Node node1, CoreType.Ex()>  (. expr = (Expr)node1; .)
     .
 
     rangeExpression<out RangeExpr expr>
@@ -189,14 +365,96 @@ PRODUCTIONS
      (
         identifier<out Identifier id>
         [ "<"
+            // FIXME: There is a LL(1) conflict if switching ot expression
             term<out Expr expr>             (. sizeExpr = expr; .)
         ">" ]                               (. type = new TypeLiteral(id, sizeExpr, id.location().join(locationFromToken(t))) ;.)
     )
     .
 
-
     identifier<out Identifier identifier> = identifierToken (. identifier = new Identifier(t.val, locationFromToken(t)); .)
     .
+
+    // -- MACROS -------------------------------------------------------------------------------------------------------
+    macroInstanceOrPlaceholder<out Node body, SyntaxType requiredType>      (. body = null; .)
+    = IF (!insideMacro) macroInstance<out Node b, requiredType>             (. body = b; .)
+    | placeHolder<out Node b, requiredType>                                 (. body = b;.)
+    .
+
+    placeHolder<out Node body, SyntaxType requiredType>
+    = "$"                                               (. var startloc = locationFromToken(t); var args = new ArrayList<Node>(); .)
+    identifier<out Identifier id>
+    [
+        "("
+            [
+                expression<out Expr arg1>               (. args.add(arg1); .)
+                {
+                    ";" expression<out Expr arg2>       (.args.add(arg2); .)
+                }
+            ]
+        ")"
+    ]                                                   (. body = new PlaceHolderExpr(id, args, startloc.join(locationFromToken(t))); .)
+    .
+
+
+    macroInstance<out Node body, SyntaxType requiredType>  = "$" identifier<out Identifier id>
+    "("                                             (. var args = new ArrayList<Node>(); .)
+        [
+            expression<out Expr arg1>               (. args.add(arg1); .)
+            {
+                ";" expression<out Expr arg2>       (.args.add(arg2); .)
+            }
+        ]
+    ")"         (. body = expandMacro(id, args, requiredType); .)
+    .
+
+    macroDef
+    = "model" identifier<out Identifier id>
+    "("                                 (. var params = new ArrayList<MacroParam>(); .)
+        [
+            identifier<out Identifier paramId1> ":" syntaxType<out SyntaxType synType1> (. params.add(new MacroParam(paramId1, synType1)); .)
+            {
+                ","
+                identifier<out Identifier paramId2> ":" syntaxType<out SyntaxType synType2> (. params.add(new MacroParam(paramId2, synType2)); .)
+            }
+        ]
+     ")"
+    ":" syntaxType<out SyntaxType returnType> "="
+    "{"                                 (. Node body = null; insideMacro = true; .)
+        expression<out Expr bodyEx>     (. body = bodyEx; .)
+    "}"                                 (.
+                                            insideMacro = false;
+                                            var bodyType = body.syntaxType();
+                                            if (!bodyType.isSubTypeOf(returnType)) {
+                                                errors.SemErr(t.line, t.col, "The macro signature promises to return `%s` but it's body is of type `%s`.".formatted(returnType, bodyType));
+                                                symbolTable.addMacro(new Macro(id, params, body, CoreType.Invalid()));
+                                            } else {
+                                                symbolTable.addMacro(new Macro(id, params, body, returnType));
+                                            }
+                                         .)
+    .
+
+    syntaxType<out SyntaxType typ> = syntaxCoreType<out CoreType coreType> (. typ = coreType; .)
+    .
+
+    syntaxCoreType<out CoreType typ>  (. typ = null; .)
+    = "Stats"       (. typ = CoreType.Stats(); .)
+    | "Stat"        (. typ = CoreType.Stat(); .)
+    | "Encs"        (. typ = CoreType.Encs(); .)
+    | "IsaDefs"     (. typ = CoreType.IsaDefs(); .)
+    | "Ex"          (. typ = CoreType.Ex(); .)
+    | "Lit"         (. typ = CoreType.Lit(); .)
+    | "Str"         (. typ = CoreType.Str(); .)
+    | "Val"         (. typ = CoreType.Val(); .)
+    | "Bool"        (. typ = CoreType.Bool(); .)
+    | "Int"         (. typ = CoreType.Int(); .)
+    | "Bin"         (. typ = CoreType.Bin(); .)
+    | "CallEx"      (. typ = CoreType.CallEx(); .)
+    | "SymEx"       (. typ = CoreType.SymEx(); .)
+    | "Id"          (. typ = CoreType.Id(); .)
+    | "BinOp"       (. typ = CoreType.BinOp(); .)
+    | "UnOp"        (. typ = CoreType.UnOp(); .)
+    .
+
 
 
 END vadl.
