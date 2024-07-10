@@ -388,6 +388,56 @@ class IntegerLiteral extends Expr {
   }
 }
 
+class VerbatimLiteral extends IntegerLiteral {
+
+  private final String token;
+
+  private static long parse(String token) {
+    token = token.replace("'", "");
+    if (token.startsWith("0x")) {
+      return Long.parseLong(token.substring(2), 16);
+    } else if (token.startsWith("0b")) {
+      return Long.parseLong(token.substring(2), 2);
+    } else {
+      return Long.parseLong(token);
+    }
+  }
+
+  public VerbatimLiteral(String token, SourceLocation loc) {
+    super(parse(token), loc);
+    this.token = token;
+  }
+
+  @Override
+  void prettyPrint(int indent, StringBuilder builder) {
+    builder.append(token);
+  }
+  @Override
+  public String toString() {
+    return "%s literal: %d (%s)".formatted(this.getClass().getSimpleName(), number, token);
+  }
+
+  @Override
+  public boolean equals(Object o) {
+    if (this == o) {
+      return true;
+    }
+    if (o == null || getClass() != o.getClass()) {
+      return false;
+    }
+
+    VerbatimLiteral that = (VerbatimLiteral) o;
+    return number == that.number && token.equals(that.token);
+  }
+
+  @Override
+  public int hashCode() {
+    int result = Long.hashCode(number);
+    result = 31 * result + Objects.hashCode(token);
+    return result;
+  }
+}
+
 /**
  * An internal temporary placeholder node inside model definitions.
  * This node should never leave the parser.

@@ -155,10 +155,15 @@ COMPILER vadl
 
 CHARACTERS
     digit = '0' .. '9'.
+    binDigit = '0' .. '1'.
+    hexDigit = '0' .. '9' + 'A' .. 'F' + 'a' .. 'f'.
     letter = 'a' .. 'z' + 'A' .. 'Z'.
 
 TOKENS
-    number = digit {digit}.
+    number = digit {digit | "'"}
+           | "0x" hexDigit {hexDigit | "'"}
+           | "0b" binDigit {binDigit | "'"}
+           .
     identifierToken = letter {letter | digit | '_'}.
     file = "file".
 
@@ -360,7 +365,7 @@ PRODUCTIONS
     .
 
     term<out Expr expr>                             (. expr = null; .)
-    = number                                        (. expr = new IntegerLiteral(Integer.parseInt(t.val), loc()); .)
+    = number                                        (. expr = new VerbatimLiteral(t.val, loc()); .)
     | identifier<out Identifier id>                 (. expr = new Variable(id); currentSymbolTable.requireValue(id.name, loc()); .)
     | '(' expression<out Expr expr1> ')'            (. expr = new GroupExpr(expr1); .)
     | macroInstanceOrPlaceholder<out Node node1, CoreType.Ex()>  (. expr = (Expr)node1; .)
