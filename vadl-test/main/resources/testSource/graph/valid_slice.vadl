@@ -1,0 +1,17 @@
+instruction set architecture Test = {
+  register A: Bits<8>
+
+  instruction SLICE_TEST: X = {
+    let a = 0b1'0011'0111 in
+    A := a(5..2)  // <-- !
+  }
+
+  // not important
+  format X: Bits<2> =
+  { F: Bits<2>
+  }
+
+  encoding SLICE_TEST = { F = 1 }
+  assembly SLICE_TEST = "just a dummy"
+
+}

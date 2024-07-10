@@ -38,6 +38,14 @@ public class LetNode extends ExpressionNode {
     this.expression = expression;
   }
 
+  public Identifier identifier() {
+    return identifier;
+  }
+
+  public ExpressionNode expression() {
+    return expression;
+  }
+
   @Override
   protected void collectData(List<Object> collection) {
     super.collectData(collection);
