@@ -4,7 +4,7 @@ import java.util.Objects;
 import javax.annotation.Nullable;
 import vadl.viam.graph.Graph;
 import vadl.viam.graph.Node;
-import vadl.viam.graph.control.AbstractControlNode;
+import vadl.viam.graph.control.ControlNode;
 import vadl.viam.graph.dependency.ExpressionNode;
 
 /**
@@ -86,7 +86,7 @@ public class DotGraphVisualizer implements GraphVisualizer<String, Graph> {
   }
 
   private String nodeStyle(Node node) {
-    if (node instanceof AbstractControlNode) {
+    if (node instanceof ControlNode) {
       return "shape=box";
     }
 

@@ -9,7 +9,7 @@ import vadl.viam.graph.Node;
  */
 public class AbstractBeginNode extends DirectionalNode {
 
-  public AbstractBeginNode(AbstractControlNode next) {
+  public AbstractBeginNode(ControlNode next) {
     setNext(next);
   }
 
@@ -18,7 +18,7 @@ public class AbstractBeginNode extends DirectionalNode {
 
   @Override
   public Node copy() {
-    return new AbstractBeginNode((AbstractControlNode) Objects.requireNonNull(next).copy());
+    return new AbstractBeginNode((ControlNode) Objects.requireNonNull(next).copy());
   }
 
   @Override
