@@ -4,12 +4,14 @@ import com.google.errorprone.annotations.FormatMethod;
 import com.google.errorprone.annotations.FormatString;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Optional;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 import javax.annotation.Nullable;
 import org.jetbrains.annotations.Contract;
 import vadl.utils.SourceLocation;
+import vadl.viam.graph.dependency.ConstantNode;
 import vadl.viam.graph.dependency.DependencyNode;
 
 /**
@@ -95,6 +97,13 @@ public abstract class Node {
    */
   public final <T extends Node> Stream<Node> input(Class<T> clazz) {
     return inputs().filter(clazz::isInstance);
+  }
+
+  /**
+   * This method checks whether it can be replaced by another node to avoid a computation.
+   */
+  public Optional<Node> normalize() {
+    return Optional.empty();
   }
 
   /**
