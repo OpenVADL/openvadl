@@ -100,8 +100,7 @@ public abstract class Node {
   }
 
   /**
-   * This method returns a {@link ConstantNode} when the inputs are constant.
-   * Otherwise, it will return {@code empty}.
+   * This method checks whether it can be replaced by another node to avoid a computation.
    */
   public Optional<Node> normalize() {
     return Optional.empty();
