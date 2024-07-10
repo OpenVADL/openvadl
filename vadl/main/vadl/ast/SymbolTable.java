@@ -10,7 +10,7 @@ import vadl.error.VadlException;
 
 
 /**
- * A symbol table to hold variable definition and usages and verify the later.
+ * A symbol table to hold variable definition and usages and verify the latter.
  */
 class SymbolTable {
   private final Map<String, Macro> macros = new HashMap<>();
@@ -44,7 +44,7 @@ class SymbolTable {
    * This always succeeds even if the symbol isn't defined yet because we allow usage before
    * definition.
    *
-   * @param identifier of the symbol beeing used.
+   * @param identifier of the symbol being used.
    */
   void addUsage(Identifier identifier) {
     if (symbolDefinitions.containsKey(identifier.name)) {
@@ -60,13 +60,13 @@ class SymbolTable {
    * @throws VadlException if not all usages have matching definitions.
    */
   void verifyAllUsages() {
-    for (var unresovled : unresolvedUsages) {
-      if (!symbolDefinitions.containsKey(unresovled.name)) {
+    for (var unresolved : unresolvedUsages) {
+      if (!symbolDefinitions.containsKey(unresolved.name)) {
         // FIXME: We could do some fancy stuff here searching the symbol table for similarly named
         // variables and suggesting them.
         errors.add(new VadlError(
-            "Cannot find variable '%s'".formatted(unresovled.name),
-            unresovled.location(),
+            "Cannot find variable '%s'".formatted(unresolved.name),
+            unresolved.location(),
             "No variable with such a name exists.",
             null
         ));

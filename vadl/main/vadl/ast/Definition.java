@@ -8,7 +8,7 @@ import vadl.utils.SourceLocation;
 
 /**
  * The Definition nodes inside the AST.
- * A definition defines part of the architecture, but has no sideeffects and doesn't evaulate to
+ * A definition defines part of the architecture, but has no side effects and doesn't evaluate to
  * anything.
  */
 abstract class Definition extends Node {
