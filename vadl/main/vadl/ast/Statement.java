@@ -21,7 +21,7 @@ record BlockStatement(List<Statement> statements) implements Statement {
   @Override
   public void prettyPrint(int indent, StringBuilder builder) {
     builder.append(" ".repeat(2 * indent));
-    builder.append("{");
+    builder.append("{\n");
     statements.forEach(statement -> statement.prettyPrint(indent + 1, builder));
     builder.append(" ".repeat(2 * indent));
     builder.append("}");

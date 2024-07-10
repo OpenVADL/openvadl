@@ -594,10 +594,10 @@ class RegisterFileDefinition extends Definition {
 class InstructionDefinition extends Definition {
   final Identifier identifier;
   final Identifier typeIdentifier;
-  final Statement behavior;
+  final BlockStatement behavior;
   final SourceLocation loc;
 
-  InstructionDefinition(Identifier identifier, Identifier typeIdentifier, Statement behavior,
+  InstructionDefinition(Identifier identifier, Identifier typeIdentifier, BlockStatement behavior,
                         SourceLocation location) {
     this.identifier = identifier;
     this.typeIdentifier = typeIdentifier;
@@ -618,10 +618,9 @@ class InstructionDefinition extends Definition {
   @Override
   void prettyPrint(int indent, StringBuilder builder) {
     builder.append(prettyIndentString(indent));
-    builder.append("instruction %s : %s = {\n".formatted(identifier.name, typeIdentifier.name));
-    behavior.prettyPrint(indent + 1, builder);
-    builder.append(prettyIndentString(indent));
-    builder.append("}\n");
+    builder.append("instruction %s : %s = ".formatted(identifier.name, typeIdentifier.name));
+    behavior.prettyPrint(indent, builder);
+    builder.append("\n");
   }
 
   @Override

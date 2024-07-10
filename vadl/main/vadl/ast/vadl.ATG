@@ -241,7 +241,7 @@ PRODUCTIONS
     instructionDefinition<out InstructionDefinition def> (. var startLocation = locationFromToken(t); .)
     = "instruction" identifier<out Identifier id>
       ":" identifier<out Identifier typeIdentifier>
-      "=" "{" statement<out Statement behavior> "}"      (. def = new InstructionDefinition(id, typeIdentifier, behavior, startLocation.join(locationFromToken(t))); .)
+      "=" blockStatement<out BlockStatement behavior>    (. def = new InstructionDefinition(id, typeIdentifier, behavior, startLocation.join(locationFromToken(t))); .)
     .
 
     memoryDefinition<out MemoryDefinition def>
