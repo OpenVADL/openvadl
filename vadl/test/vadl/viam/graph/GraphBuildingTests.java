@@ -177,4 +177,17 @@ public class GraphBuildingTests {
     assertNotSame(x.input2, y.input2);
   }
 
+  @Test
+  void replaceNode_Success() {
+    testGraph.add(new Plain());
+    var replace = testGraph.add(new Plain());
+    testGraph.add(new Plain());
+    var newNode = new Plain();
+    assertThat(testGraph.getNodes().count(), equalTo(3L));
+
+    testGraph.replaceNode(replace, newNode);
+
+    assertThat(testGraph.getNodes().count(), equalTo(3L));
+    assertTrue(replace.isDeleted());
+  }
 }

@@ -60,6 +60,54 @@ public class Graph {
   }
 
   /**
+   * Replaces the node {@code toReplace} with the given node {@code newNode}.
+   */
+  public <T extends Node> T replaceNode(Node toReplace, T newNode) {
+    var node = this.addWithInputs(newNode);
+
+    // All of toReplace's children are obsolete.
+    // But, we cannot delete them because they might be used by other nodes.
+
+    // First, keep track of the subtree of toReplace.
+    ArrayList<Node> children = new ArrayList<>();
+    toReplace.collectInputs(children);
+    toReplace.collectSuccessors(children);
+
+    // Relevant for data nodes.
+    this.nodes.forEach(x -> x.replaceInput(toReplace, newNode));
+    toReplace.usages().forEach(x -> x.transferUsageOfThis(toReplace, newNode));
+
+    // Relevant for control nodes.
+    var pred = toReplace.predecessor();
+    if (pred != null) {
+      node.setPredecessor(pred);
+      toReplace.removeUsage(pred);
+    }
+
+    // Remove the link from the children to toReplace.
+    toReplace.applyOnInputs(new GraphVisitor.Applier<>() {
+      @Nullable
+      @Override
+      public Node applyNullable(Node from, @Nullable Node to) {
+        if (to != null) {
+          to.removeUsage(from);
+          to.applyOnInputs(this);
+        }
+        return to;
+      }
+    });
+
+    // Remove all nodes which are obsolete
+    children.stream()
+        .filter(x -> x.predecessor() == null && x.usageCount() == 0 && x.successorList().isEmpty())
+        .distinct()
+        .forEach(Node::safeDelete);
+    toReplace.safeDelete();
+
+    return node;
+  }
+
+  /**
    * Adds the node to the graph (without its inputs).
    * If the node is a unique node, it will check for duplication int the graph.
    *
