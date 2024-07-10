@@ -271,7 +271,7 @@ public class Format extends Definition {
      * if the encoding was already set before.
      */
     public void setEncoding(Function encoding) {
-      ensure(this.encoding != null, "Field access encoding already set");
+      ensure(this.encoding == null, "Field access encoding already set");
       this.encoding = encoding;
       verify();
     }
