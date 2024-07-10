@@ -16,6 +16,11 @@ public class ConstantFolder {
 
   }
 
+  /**
+   * Apply constant folding as long as something changes on the given {@link Graph}.
+   *
+   * @param graph where the constant folding should be applied on.
+   */
   public static void run(Graph graph) {
 
     boolean hasChanged;

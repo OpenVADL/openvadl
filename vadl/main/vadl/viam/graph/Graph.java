@@ -74,8 +74,8 @@ public class Graph {
     toReplace.collectSuccessors(children);
 
     // Relevant for data nodes.
-    this.nodes.forEach(x -> x.replaceInput(toReplace, newNode));
-    toReplace.usages().forEach(x -> x.transferUsageOfThis(toReplace, newNode));
+    this.nodes.forEach(x -> x.replaceInput(toReplace, node));
+    toReplace.usages().forEach(x -> x.transferUsageOfThis(toReplace, node));
 
     // Relevant for control nodes.
     var pred = toReplace.predecessor();
