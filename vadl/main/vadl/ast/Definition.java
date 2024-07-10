@@ -31,6 +31,8 @@ interface DefinitionVisitor<R> {
   R visit(RegisterFileDefinition definition);
 
   R visit(InstructionDefinition definition);
+
+  R visit(EncodingDefinition definition);
 }
 
 class ConstantDefinition extends Definition {
@@ -655,4 +657,78 @@ class InstructionDefinition extends Definition {
     result = 31 * result + Objects.hashCode(behavior);
     return result;
   }
+}
+
+class EncodingDefinition extends Definition {
+  final Identifier instrIdentifier;
+  final List<Entry> entries;
+  final SourceLocation loc;
+
+  EncodingDefinition(Identifier instrIdentifier, List<Entry> entries, SourceLocation location) {
+    this.instrIdentifier = instrIdentifier;
+    this.entries = entries;
+    this.loc = location;
+  }
+
+  @Override
+  SourceLocation location() {
+    return loc;
+  }
+
+  @Override
+  SyntaxType syntaxType() {
+    return CoreType.IsaDefs();
+  }
+
+  @Override
+  void prettyPrint(int indent, StringBuilder builder) {
+    builder.append(prettyIndentString(indent));
+    builder.append("encoding %s =\n".formatted(instrIdentifier.name));
+    builder.append(prettyIndentString(indent)).append("{ ");
+    boolean first = true;
+    for (Entry entry : entries) {
+      if (!first) {
+        builder.append(prettyIndentString(indent)).append(", ");
+      }
+      entry.field.prettyPrint(0, builder);
+      builder.append(" = ");
+      entry.value.prettyPrint(0, builder);
+      builder.append("\n");
+      first = false;
+    }
+    builder.append(prettyIndentString(indent)).append("}\n");
+  }
+
+  @Override
+  <R> R accept(DefinitionVisitor<R> visitor) {
+    return visitor.visit(this);
+  }
+
+  @Override
+  public String toString() {
+    return this.getClass().getSimpleName();
+  }
+
+  @Override
+  public boolean equals(Object o) {
+    if (this == o) {
+      return true;
+    }
+    if (o == null || getClass() != o.getClass()) {
+      return false;
+    }
+
+    var that = (EncodingDefinition) o;
+    return Objects.equals(instrIdentifier, that.instrIdentifier)
+        && Objects.equals(entries, that.entries);
+  }
+
+  @Override
+  public int hashCode() {
+    int result = Objects.hashCode(instrIdentifier);
+    result = 31 * result + Objects.hashCode(entries);
+    return result;
+  }
+
+  record Entry(Identifier field, IntegerLiteral value) {}
 }

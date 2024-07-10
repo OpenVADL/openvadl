@@ -2,6 +2,7 @@ package vadl.ast;
 
 import java.util.Arrays;
 import java.util.List;
+import java.util.stream.Stream;
 
 /**
  * A pass over the AST that produces a textual representation of the AST.
@@ -182,6 +183,16 @@ public class AstDumper implements DefinitionVisitor<Void>, ExprVisitor<Void> {
   public Void visit(InstructionDefinition definition) {
     dumpNode(definition);
     dumpChildren(definition.identifier, definition.typeIdentifier /*, definition.block */);
+    return null;
+  }
+
+  @Override
+  public Void visit(EncodingDefinition definition) {
+    dumpNode(definition);
+    Stream<Node> entries = definition.entries.stream()
+        .flatMap(entry -> Stream.of(entry.field(), entry.value()));
+    Stream<Node> children = Stream.concat(Stream.of(definition.instrIdentifier), entries);
+    dumpChildren(children.toArray(Node[]::new));
     return null;
   }
 }

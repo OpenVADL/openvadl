@@ -37,7 +37,7 @@ class MacroExpander implements ExprVisitor<Expr> {
 
   @Override
   public Expr visit(IntegerLiteral expr) {
-    return new IntegerLiteral(expr.number, expr.loc);
+    return new IntegerLiteral(expr.token, expr.loc);
   }
 
   @Override

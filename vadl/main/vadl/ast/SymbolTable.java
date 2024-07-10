@@ -87,6 +87,27 @@ class SymbolTable implements DefinitionVisitor<Void> {
     return null;
   }
 
+  @Override
+  public Void visit(EncodingDefinition definition) {
+    var format = resolveInstructionFormat(definition.instrIdentifier.name);
+    if (format == null) {
+      errors.add(
+          new VadlError("Unknown instruction " + definition.instrIdentifier.name,
+              definition.location(), null, null));
+      return null;
+    }
+    for (EncodingDefinition.Entry entry : definition.entries) {
+      var name = entry.field().name;
+      var field = format.fields.stream().filter(f -> f.identifier.name.equals(name)).findFirst();
+      if (field.isEmpty()) {
+        errors.add(
+            new VadlError("Unknown field %s in format %s".formatted(name, format.identifier.name),
+                entry.field().location(), null, null));
+      }
+    }
+    return null;
+  }
+
   void addMacro(Macro macro, SourceLocation loc) {
     verifyAvailable(macro.name().name, loc);
     symbols.put(macro.name().name, new MacroSymbol(macro.name().name, macro));
@@ -110,18 +131,6 @@ class SymbolTable implements DefinitionVisitor<Void> {
       return parent.resolveSymbol(name);
     } else {
       return null;
-    }
-  }
-
-  void loadInstructionFormat(Identifier instructionName) {
-    var format = resolveInstructionFormat(instructionName.name);
-    if (format != null) {
-      format.fields.forEach(field ->
-          defineSymbol(field.identifier.name, SymbolType.FORMAT_FIELD, field.location()));
-    } else {
-      errors.add(new VadlError(
-          "Unknown instruction " + instructionName.name, instructionName.location(), null, null
-      ));
     }
   }
 

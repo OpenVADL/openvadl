@@ -1,5 +1,7 @@
 package vadl.ast;
 
+import static vadl.ast.AstTestUtils.verifyPrettifiedAst;
+
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 
@@ -9,8 +11,6 @@ public class InstructionTest {
   void parseCombinedInstructionDefinition() {
     var prog = """
         instruction set architecture RV32I = {
-          constant hex = 0x12'aDf2
-          constant bin = 0b01'010
           register file X : Bits<5> -> Bits<32>
           format R_TYPE : Bits<32> = {
             funct7 [31..25],
@@ -20,9 +20,19 @@ public class InstructionTest {
             rd     [11..7],
             opcode [6..0]
           }
+
+          instruction ADD : R_TYPE = {
+          }
+
+          encoding ADD = {
+            opcode = 0b011'0011,
+            funct3 = 0b000,
+            funct7 = 0b000'0000
+          }
         }
         """;
 
-    Assertions.assertDoesNotThrow(() -> VadlParser.parse(prog), "Cannot parse input");
+    var ast = Assertions.assertDoesNotThrow(() -> VadlParser.parse(prog), "Cannot parse input");
+    verifyPrettifiedAst(ast);
   }
 }

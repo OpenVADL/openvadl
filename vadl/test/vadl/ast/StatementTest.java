@@ -1,16 +1,11 @@
 package vadl.ast;
 
+import static vadl.ast.AstTestUtils.verifyPrettifiedAst;
+
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 
 public class StatementTest {
-
-  void verifyPrettifiedAst(Ast ast) {
-    var progPretty = ast.prettyPrint();
-    var astPretty = Assertions.assertDoesNotThrow(() -> VadlParser.parse(progPretty),
-        "Cannot parse prettified input");
-    Assertions.assertEquals(ast, astPretty, "Prettified input Ast does not match input Ast");
-  }
 
   @Test
   void parseLetStatement() {

@@ -211,6 +211,7 @@ PRODUCTIONS
     | formatDefinition<out Definition d>                    (. def = d; .)
     | counterDefinition<out Definition d>                   (. def = d; .)
     | instructionDefinition<out Definition d>               (. def = d; .)
+    | encodingDefinition<out Definition d>                  (. def = d; .)
     | memoryDefinition<out Definition d>                    (. def = d; .)
     | IF (scanner.Peek().kind == _file) registerFileDefinition<out Definition d>   (. def = d; .)
     | registerDefinition<out Definition d>   (. def = d; .)
@@ -259,8 +260,23 @@ PRODUCTIONS
     instructionDefinition<out InstructionDefinition def> (. var startLocation = loc(); .)
     = "instruction" identifier<out Identifier id>
       ":" identifier<out Identifier formatIdentifier>    (. pushScope(); currentSymbolTable.loadFormat(formatIdentifier); .)
-      "=" blockStatement<out BlockStatement behavior>    (. def = new InstructionDefinition(id, formatIdentifier, behavior, loc());
+      "=" blockStatement<out BlockStatement behavior>    (. def = new InstructionDefinition(id, formatIdentifier, behavior, startLocation.join(loc()));
                                                             popScope(); .)
+    .
+
+    encodingDefinition<out EncodingDefinition def>         (. var startLocation = loc(); var entries = new ArrayList<EncodingDefinition.Entry>(); .)
+    = "encoding" identifier<out Identifier instrId>
+      "=" "{"
+      encodingEntry<out EncodingDefinition.Entry e1>       (. entries.add(e1); .)
+      { "," encodingEntry<out EncodingDefinition.Entry e2> (. entries.add(e2); .)
+      }
+      "}"                                                  (. def = new EncodingDefinition(instrId, entries, startLocation.join(loc())); .)
+    .
+
+    encodingEntry<out EncodingDefinition.Entry e>
+    = identifier<out Identifier id>
+      "="
+      number                                               (. e = new EncodingDefinition.Entry(id, new IntegerLiteral(t.val, loc())); .)
     .
 
     memoryDefinition<out MemoryDefinition def>
@@ -365,7 +381,7 @@ PRODUCTIONS
     .
 
     term<out Expr expr>                             (. expr = null; .)
-    = number                                        (. expr = new VerbatimLiteral(t.val, loc()); .)
+    = number                                        (. expr = new IntegerLiteral(t.val, loc()); .)
     | identifier<out Identifier id>                 (. expr = new Variable(id); currentSymbolTable.requireValue(id.name, loc()); .)
     | '(' expression<out Expr expr1> ')'            (. expr = new GroupExpr(expr1); .)
     | macroInstanceOrPlaceholder<out Node node1, CoreType.Ex()>  (. expr = (Expr)node1; .)

@@ -197,8 +197,8 @@ class BinaryExpr extends Expr {
    * 1   2            2   3
    * </pre>
    *
-   * @param   expr A left-sided binary expression tree.
-   * @return  the root of the expression tree in operator precedence order
+   * @param expr A left-sided binary expression tree.
+   * @return the root of the expression tree in operator precedence order
    */
   static BinaryExpr reorder(BinaryExpr expr) {
     root = expr;
@@ -336,11 +336,24 @@ class UnaryExpr extends Expr {
 }
 
 class IntegerLiteral extends Expr {
+  String token;
   long number;
   SourceLocation loc;
 
-  public IntegerLiteral(long number, SourceLocation loc) {
-    this.number = number;
+  private static long parse(String token) {
+    token = token.replace("'", "");
+    if (token.startsWith("0x")) {
+      return Long.parseLong(token.substring(2), 16);
+    } else if (token.startsWith("0b")) {
+      return Long.parseLong(token.substring(2), 2);
+    } else {
+      return Long.parseLong(token);
+    }
+  }
+
+  public IntegerLiteral(String token, SourceLocation loc) {
+    this.token = token;
+    this.number = parse(token);
     this.loc = loc;
   }
 
@@ -356,7 +369,7 @@ class IntegerLiteral extends Expr {
 
   @Override
   void prettyPrint(int indent, StringBuilder builder) {
-    builder.append(number);
+    builder.append(token);
   }
 
   @Override
@@ -364,54 +377,6 @@ class IntegerLiteral extends Expr {
     return visitor.visit(this);
   }
 
-  @Override
-  public String toString() {
-    return "%s number: %d".formatted(this.getClass().getSimpleName(), number);
-  }
-
-  @Override
-  public boolean equals(Object o) {
-    if (this == o) {
-      return true;
-    }
-    if (o == null || getClass() != o.getClass()) {
-      return false;
-    }
-
-    IntegerLiteral that = (IntegerLiteral) o;
-    return number == that.number;
-  }
-
-  @Override
-  public int hashCode() {
-    return Long.hashCode(number);
-  }
-}
-
-class VerbatimLiteral extends IntegerLiteral {
-
-  private final String token;
-
-  private static long parse(String token) {
-    token = token.replace("'", "");
-    if (token.startsWith("0x")) {
-      return Long.parseLong(token.substring(2), 16);
-    } else if (token.startsWith("0b")) {
-      return Long.parseLong(token.substring(2), 2);
-    } else {
-      return Long.parseLong(token);
-    }
-  }
-
-  public VerbatimLiteral(String token, SourceLocation loc) {
-    super(parse(token), loc);
-    this.token = token;
-  }
-
-  @Override
-  void prettyPrint(int indent, StringBuilder builder) {
-    builder.append(token);
-  }
   @Override
   public String toString() {
     return "%s literal: %d (%s)".formatted(this.getClass().getSimpleName(), number, token);
@@ -426,7 +391,7 @@ class VerbatimLiteral extends IntegerLiteral {
       return false;
     }
 
-    VerbatimLiteral that = (VerbatimLiteral) o;
+    IntegerLiteral that = (IntegerLiteral) o;
     return number == that.number && token.equals(that.token);
   }
 
