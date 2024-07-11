@@ -55,7 +55,7 @@ public class NameResolutionTest {
     Assertions.assertDoesNotThrow(() -> VadlParser.parse(prog), "Cannot parse input");
   }
 
-  @Test
+  // @Test
   @Disabled("Really wanted? Original paper states that use-before-define is a non-goal")
   void resolveInTheFutureDefinedVariable() {
     var prog = """
