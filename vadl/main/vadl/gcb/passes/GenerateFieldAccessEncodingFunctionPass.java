@@ -35,7 +35,8 @@ public class GenerateFieldAccessEncodingFunctionPass extends Pass {
   @Override
   public Object execute(Map<PassKey, Object> passResults, Specification viam) {
     viam.isas()
-        .flatMap(x -> x.formats().stream())
+        .flatMap(x -> x.instructions().stream())
+        .map(Instruction::format)
         .distinct()
         .flatMap(x -> Arrays.stream(x.fieldAccesses()))
         .filter(x -> x.encoding() == null)
