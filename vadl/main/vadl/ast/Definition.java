@@ -220,7 +220,7 @@ class FormatDefinition extends Definition {
     }
 
     builder.append(prettyIndentString(indent));
-    builder.append("}");
+    builder.append("}\n");
   }
 
   @Override

@@ -14,8 +14,9 @@ record BlockStatement(List<Statement> statements) implements Statement {
     this(new ArrayList<>());
   }
 
-  void add(Statement statement) {
+  BlockStatement add(Statement statement) {
     statements.add(statement);
+    return this;
   }
 
   @Override

@@ -169,6 +169,7 @@ TOKENS
            .
     identifierToken = letter {letter | digit | '_'}.
     file = "file".
+    else = "else".
 
 COMMENTS FROM "//" TO '\n'
 COMMENTS FROM "/*" TO "*/" NESTED
@@ -333,7 +334,7 @@ PRODUCTIONS
     ifStatement<out Statement ifStatement>
     = "if" expression<out Expr condition>
       "then" statement<out Statement thenStmt>     (. ifStatement = new IfStatement(condition, thenStmt, null);     .)
-      [ "else" statement<out Statement elseStmt>   (. ifStatement = new IfStatement(condition, thenStmt, elseStmt); .) ]
+      [ IF (la.kind == _else) "else" statement<out Statement elseStmt>   (. ifStatement = new IfStatement(condition, thenStmt, elseStmt); .) ]
     .
 
     // -- EXPRESSIONS --------------------------------------------------------------------------------------------------
