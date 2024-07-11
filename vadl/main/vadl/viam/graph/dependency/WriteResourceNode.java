@@ -56,9 +56,9 @@ public abstract class WriteResourceNode extends SideEffectNode {
     var resource = resourceDefinition();
 
     ensure(value.type() instanceof DataType
-           && ((DataType) value.type()).bitWidth() == writeBitWidth(),
+            && ((DataType) value.type()).bitWidth() <= writeBitWidth(),
         "Mismatching resource type. Value expression's type (%s) cannot has not the expected "
-        + "width of %s.",
+            + "width of %s.",
         value.type(), writeBitWidth());
 
     ensure(resource.hasAddress() == hasAddress(),

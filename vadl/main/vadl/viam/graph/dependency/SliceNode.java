@@ -38,6 +38,14 @@ public class SliceNode extends ExpressionNode {
     verifyState();
   }
 
+  public Constant.BitSlice bitSlice() {
+    return slice;
+  }
+
+  public ExpressionNode value() {
+    return value;
+  }
+
   @Override
   public DataType type() {
     return (DataType) super.type();
