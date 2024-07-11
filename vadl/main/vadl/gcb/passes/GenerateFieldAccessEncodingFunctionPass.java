@@ -12,6 +12,7 @@ import vadl.types.BuiltInTable.BuiltIn;
 import vadl.utils.SourceLocation;
 import vadl.viam.Constant;
 import vadl.viam.Format;
+import vadl.viam.Format.Field;
 import vadl.viam.Function;
 import vadl.viam.Identifier;
 import vadl.viam.Instruction;
@@ -19,9 +20,12 @@ import vadl.viam.Parameter;
 import vadl.viam.Specification;
 import vadl.viam.ViamError;
 import vadl.viam.graph.Graph;
+import vadl.viam.graph.Node;
 import vadl.viam.graph.control.ReturnNode;
 import vadl.viam.graph.control.StartNode;
 import vadl.viam.graph.dependency.BuiltInCall;
+import vadl.viam.graph.dependency.ConstantNode;
+import vadl.viam.graph.dependency.ExpressionNode;
 import vadl.viam.graph.dependency.FuncParamNode;
 import vadl.viam.graph.dependency.SliceNode;
 
@@ -42,19 +46,46 @@ public class GenerateFieldAccessEncodingFunctionPass extends Pass {
         .filter(x -> x.encoding() == null)
         .forEach(fieldAccess -> {
           var behavior = fieldAccess.accessFunction().behavior();
+          var ident = fieldAccess.identifier.append("encoding");
+          var identParam = ident.append(fieldAccess.name());
+          var param = new Parameter(identParam, fieldAccess.accessFunction().returnType());
+          var function =
+              new Function(ident, new Parameter[] {param}, fieldAccess.fieldRef().type());
 
+          fieldAccess.setEncoding(function);
+
+          // We need to compute multiple encoding functions based on the field access function.
+          // Different field access functions require different heuristics for the encoding.
           if (trivialBehavior(behavior)) {
-            var ident = fieldAccess.identifier.append("encoding");
-            var identParam = ident.append(fieldAccess.name());
-            var param = new Parameter(identParam, fieldAccess.accessFunction().returnType());
-            var function =
-                new Function(ident, new Parameter[] {param}, fieldAccess.fieldRef().type());
-
-            fieldAccess.setEncoding(function);
+            // format Utype : Inst =
+            // {     imm    : Bits<20>
+            //     , rd     : Index
+            //     , opcode : Bits7
+            //     , immU = imm as UInt<32>
+            // }
+            //
+            // This branch should compute the following encoding function automatically:
+            //
+            // encode {
+            //  imm => immU(19..0)
+            // }
             generateTrivialEncodingFunction(param, fieldAccess.fieldRef(), Objects.requireNonNull(
                 fieldAccess.encoding()).behavior());
           } else if (hasOnlyShifts(behavior)) {
-
+            // format Utype : Inst =
+            // {     imm    : Bits<20>
+            //     , rd     : Index
+            //     , opcode : Bits7
+            //     , ImmediateU = ( imm, 0 as Bits<12> ) as UInt
+            // }
+            //
+            // This branch should compute the following encoding function automatically:
+            //
+            // encode {
+            //  imm => ImmediateU(31..12)
+            // }
+            generateShiftEncodingFunction(param, fieldAccess.fieldRef(), Objects.requireNonNull(
+                fieldAccess.encoding()).behavior(), fieldAccess.accessFunction());
           }
         });
 
@@ -75,9 +106,14 @@ public class GenerateFieldAccessEncodingFunctionPass extends Pass {
   /**
    * Generate a simple encoding for {@code fieldAccess} and adds nodes to
    * {@code behavior} graph.
+   *
+   * @param parameter is the {@link Parameter} which is the input for the function so
+   *                  it can be encoded as a field.
+   * @param fieldRef  is the {@link Field} which should be encoded.
+   * @param behavior  is the graph which contains new the encoding logic.
    */
   private void generateTrivialEncodingFunction(Parameter parameter,
-                                               Format.Field fieldRef,
+                                               Field fieldRef,
                                                Graph behavior) {
     // The field takes up a certain slice.
     // But we need to take a slice of the immediate of the same size.
@@ -95,8 +131,56 @@ public class GenerateFieldAccessEncodingFunctionPass extends Pass {
     behavior.add(startNode);
   }
 
+
   /**
-   * Checks whether the behavior only contains (logical or arithmetic) left or right shifts.
+   * Generate an encoding for {@code fieldAccess} and adds nodes to
+   * {@code behavior} graph.
+   *
+   * @param parameter      is the {@link Parameter} which is the input for the function so
+   *                       it can be encoded as a field.
+   * @param fieldRef       is the {@link Field} which should be encoded.
+   * @param behavior       is the graph which contains new the encoding logic.
+   * @param accessFunction the access function for the encoding.
+   */
+  private void generateShiftEncodingFunction(Parameter parameter,
+                                             Field fieldRef,
+                                             Graph behavior,
+                                             Function accessFunction) {
+    var originalShift =
+        (BuiltInCall) accessFunction.behavior().getNodes(BuiltInCall.class).findFirst().get();
+    var shiftValue =
+        ((Constant.Value) ((ConstantNode) originalShift.arguments()
+            .get(1)).constant).value();
+
+    ExpressionNode invertedSliceNode;
+    if (originalShift.builtIn() == BuiltInTable.LSL) {
+      // If the decode function has a left shift,
+      // then we need to extract the original shifted value.
+      // We compute an upper bound which is the shift value plus the size of the field
+      // and a lower bound which is the shifted value.
+      var upperBound = shiftValue.intValue() + fieldRef.size() - 1;
+      var lowerBound = shiftValue.intValue();
+      var slice = new Constant.BitSlice(
+          new Constant.BitSlice.Part[] {
+              Constant.BitSlice.Part.of(upperBound, lowerBound)});
+      invertedSliceNode = new SliceNode(new FuncParamNode(parameter), slice, fieldRef.type());
+    } else if (originalShift.builtIn() == BuiltInTable.LSR ||
+        originalShift.builtIn() == BuiltInTable.ASR) {
+      throw new ViamError("Not implemented now");
+    } else {
+      throw new ViamError("Inverting builtin is not supported");
+    }
+
+    var returnNode = new ReturnNode(invertedSliceNode);
+    var startNode = new StartNode(returnNode);
+
+    behavior.addWithInputs(returnNode);
+    behavior.add(startNode);
+  }
+
+  /**
+   * Checks whether the behavior only contains (logical or arithmetic) left or right shift.
+   * But only one logical operation is allowed.
    */
   private boolean hasOnlyShifts(Graph behavior) {
     return behavior.getNodes(BuiltInCall.class)
@@ -104,12 +188,13 @@ public class GenerateFieldAccessEncodingFunctionPass extends Pass {
           var cast = (BuiltInCall) x;
 
           if (cast.builtIn() == BuiltInTable.LSL
-              || cast.builtIn() == BuiltInTable.LSR) {
+              || cast.builtIn() == BuiltInTable.LSR
+              || cast.builtIn() == BuiltInTable.ASR) {
             return true;
           }
 
           return false;
-        });
+        }) && behavior.getNodes(BuiltInCall.class).count() == 1;
   }
 
   /**
