@@ -21,7 +21,8 @@ import vadl.types.UIntType;
 COMPILER vadl
     boolean insideMacro = false;
     Ast ast = new Ast();
-    SymbolTable currentSymbolTable = new SymbolTable();
+    NestedSymbolTable nestedSymbolTable = new NestedSymbolTable();
+    StackBasedSymbolTable stackBasedSymbolTable = new StackBasedSymbolTable();
     Ungrouper ungrouper = new Ungrouper();
 
     /**
@@ -69,7 +70,7 @@ COMPILER vadl
             return unexpanded;
         }
 
-        var macro = currentSymbolTable.getMacro(identifier.name);
+        var macro = nestedSymbolTable.getMacro(identifier.name);
         if (macro == null) {
            errors.SemErr(t.line, t.col, "No macro named `%s` exists.".formatted(identifier.name));
            return unexpanded;
@@ -142,11 +143,13 @@ COMPILER vadl
     }
 
     void pushScope() {
-        currentSymbolTable = currentSymbolTable.createChild();
+        nestedSymbolTable = nestedSymbolTable.createChild();
+        stackBasedSymbolTable.openScope();
     }
 
     void popScope() {
-        currentSymbolTable = currentSymbolTable.parent;
+        nestedSymbolTable = nestedSymbolTable.parent;
+        stackBasedSymbolTable.closeScope();
     }
 
     SourceLocation loc() {
@@ -187,8 +190,8 @@ PRODUCTIONS
     .
 
     commonDefinitionSection<out Definition definition>              (. definition = null; .)
-    = constantDefinition<out Definition def>                        (. definition = def; def.accept(currentSymbolTable); .)
-    | formatDefinition<out Definition def>                          (. definition = def; def.accept(currentSymbolTable); .)
+    = constantDefinition<out Definition def>                        (. definition = def; def.accept(nestedSymbolTable); def.accept(stackBasedSymbolTable); .)
+    | formatDefinition<out Definition def>                          (. definition = def; def.accept(nestedSymbolTable); def.accept(stackBasedSymbolTable); .)
     .
 
     instructionsetDefinition<out InstructionSetDefinition isaDef>   (. var children = new ArrayList<Definition>(); pushScope(); .)
@@ -196,11 +199,12 @@ PRODUCTIONS
        "set" "architecture" identifier<out Identifier identifier>
        "=" "{"
       {
-        isaDefinition<out Definition def>                           (. children.add(def); def.accept(currentSymbolTable); .)
+        isaDefinition<out Definition def>                           (. children.add(def); def.accept(nestedSymbolTable); def.accept(stackBasedSymbolTable); .)
       }
       "}"                                                           (. isaDef = new InstructionSetDefinition(identifier, children, startLocation.join(loc()));
                                                                        popScope();
-                                                                       isaDef.accept(currentSymbolTable);
+                                                                       isaDef.accept(nestedSymbolTable);
+                                                                       isaDef.accept(stackBasedSymbolTable);
                                                                      .)
 
 
@@ -259,7 +263,7 @@ PRODUCTIONS
 
     instructionDefinition<out InstructionDefinition def> (. var startLocation = loc(); .)
     = "instruction" identifier<out Identifier id>
-      ":" identifier<out Identifier formatIdentifier>    (. pushScope(); currentSymbolTable.loadFormat(formatIdentifier); .)
+      ":" identifier<out Identifier formatIdentifier>    (. pushScope(); nestedSymbolTable.loadFormat(formatIdentifier); stackBasedSymbolTable.loadFormat(formatIdentifier); .)
       "=" blockStatement<out BlockStatement behavior>    (. def = new InstructionDefinition(id, formatIdentifier, behavior, startLocation.join(loc()));
                                                             popScope(); .)
     .
@@ -321,7 +325,7 @@ PRODUCTIONS
     .
 
     letStatement<out Statement letStatement>
-    = "let" identifier<out Identifier id>   (. pushScope(); currentSymbolTable.defineConstant(id.name, loc()); .)
+    = "let" identifier<out Identifier id>   (. pushScope(); nestedSymbolTable.defineConstant(id.name, loc()); stackBasedSymbolTable.defineConstant(id.name, loc()); .)
       "=" expression<out Expr valueExpr>
       "in" statement<out Statement body>    (. letStatement = new LetStatement(id, valueExpr, body); popScope(); .)
     .
@@ -382,7 +386,7 @@ PRODUCTIONS
 
     term<out Expr expr>                             (. expr = null; .)
     = number                                        (. expr = new IntegerLiteral(t.val, loc()); .)
-    | identifier<out Identifier id>                 (. expr = new Variable(id); currentSymbolTable.requireValue(id.name, loc()); .)
+    | identifier<out Identifier id>                 (. expr = new Variable(id); nestedSymbolTable.requireValue(id.name, loc()); stackBasedSymbolTable.requireValue(id.name, loc()); .)
     | '(' expression<out Expr expr1> ')'            (. expr = new GroupExpr(expr1); .)
     | macroInstanceOrPlaceholder<out Node node1, CoreType.Ex()>  (. expr = (Expr)node1; .)
     .
@@ -462,9 +466,11 @@ PRODUCTIONS
                                             var bodyType = body.syntaxType();
                                             if (!bodyType.isSubTypeOf(returnType)) {
                                                 errors.SemErr(t.line, t.col, "The macro signature promises to return `%s` but it's body is of type `%s`.".formatted(returnType, bodyType));
-                                                currentSymbolTable.addMacro(new Macro(id, params, body, CoreType.Invalid()), startLoc.join(loc()));
+                                                nestedSymbolTable.addMacro(new Macro(id, params, body, CoreType.Invalid()), startLoc.join(loc()));
+                                                stackBasedSymbolTable.addMacro(new Macro(id, params, body, CoreType.Invalid()), startLoc.join(loc()));
                                             } else {
-                                                currentSymbolTable.addMacro(new Macro(id, params, body, returnType), startLoc.join(loc()));
+                                                nestedSymbolTable.addMacro(new Macro(id, params, body, returnType), startLoc.join(loc()));
+                                                stackBasedSymbolTable.addMacro(new Macro(id, params, body, returnType), startLoc.join(loc()));
                                             }
                                          .)
     .

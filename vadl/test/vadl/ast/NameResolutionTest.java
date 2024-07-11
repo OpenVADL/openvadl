@@ -33,7 +33,7 @@ public class NameResolutionTest {
         """;
     var thrown = Assertions.assertThrows(VadlException.class, () -> VadlParser.parse(prog),
         "Expected to throw name conflict");
-    Assertions.assertEquals(thrown.errors.size(), 1);
+    Assertions.assertEquals(1, thrown.errors.size());
   }
 
   @Test
@@ -43,7 +43,7 @@ public class NameResolutionTest {
         """;
     var thrown = Assertions.assertThrows(VadlException.class, () -> VadlParser.parse(prog),
         "Expected to throw unresolved variable");
-    Assertions.assertEquals(thrown.errors.size(), 1);
+    Assertions.assertEquals(1, thrown.errors.size());
   }
 
   @Test
@@ -72,7 +72,7 @@ public class NameResolutionTest {
         """;
     var thrown = Assertions.assertThrows(VadlException.class, () -> VadlParser.parse(prog),
         "Expected to throw unresolved variable");
-    Assertions.assertEquals(thrown.errors.size(), 1);
+    Assertions.assertEquals(1, thrown.errors.size());
   }
 
   @Test
@@ -83,7 +83,7 @@ public class NameResolutionTest {
         """;
     var thrown = Assertions.assertThrows(VadlException.class, () -> VadlParser.parse(prog),
         "Expected to throw unresolved variable");
-    Assertions.assertEquals(thrown.errors.size(), 1);
+    Assertions.assertEquals(1, thrown.errors.size());
   }
 
   @Test
@@ -107,7 +107,7 @@ public class NameResolutionTest {
         """;
     var thrown = Assertions.assertThrows(VadlException.class, () -> VadlParser.parse(prog),
         "Expected to throw name conflict");
-    Assertions.assertEquals(thrown.errors.size(), 1);
+    Assertions.assertEquals(1, thrown.errors.size());
   }
 
   @Test
@@ -120,7 +120,7 @@ public class NameResolutionTest {
         """;
     var thrown = Assertions.assertThrows(VadlException.class, () -> VadlParser.parse(prog),
         "Expected to throw name conflict");
-    Assertions.assertEquals(thrown.errors.size(), 1);
+    Assertions.assertEquals(1, thrown.errors.size());
   }
 
   @Test
@@ -133,7 +133,7 @@ public class NameResolutionTest {
         """;
     var thrown = Assertions.assertThrows(VadlException.class, () -> VadlParser.parse(prog),
         "Expected to throw name conflict");
-    Assertions.assertEquals(thrown.errors.size(), 1);
+    Assertions.assertEquals(1, thrown.errors.size());
   }
 
   @Test
