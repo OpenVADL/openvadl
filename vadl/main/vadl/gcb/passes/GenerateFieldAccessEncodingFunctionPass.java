@@ -14,8 +14,10 @@ import vadl.types.Type;
 import vadl.types.UIntType;
 import vadl.utils.SourceLocation;
 import vadl.viam.Constant;
+import vadl.viam.Encoding;
 import vadl.viam.Format;
 import vadl.viam.Format.Field;
+import vadl.viam.Format.FieldAccess;
 import vadl.viam.Function;
 import vadl.viam.Identifier;
 import vadl.viam.Instruction;
@@ -35,6 +37,10 @@ import vadl.viam.graph.dependency.FieldRefNode;
 import vadl.viam.graph.dependency.FuncParamNode;
 import vadl.viam.graph.dependency.SliceNode;
 
+/**
+ * This pass generate the behavior {@link Graph} of {@link FieldAccess} when the {@link Encoding}
+ * is {@code null}.
+ */
 public class GenerateFieldAccessEncodingFunctionPass extends Pass {
   @Override
   public PassName getName() {
@@ -188,8 +194,8 @@ public class GenerateFieldAccessEncodingFunctionPass extends Pass {
           new Constant.BitSlice.Part[] {
               Constant.BitSlice.Part.of(upperBound, lowerBound)});
       invertedSliceNode = new SliceNode(new FuncParamNode(parameter), slice, fieldRef.type());
-    } else if (originalShift.builtIn() == BuiltInTable.LSR ||
-        originalShift.builtIn() == BuiltInTable.ASR) {
+    } else if (originalShift.builtIn() == BuiltInTable.LSR
+        || originalShift.builtIn() == BuiltInTable.ASR) {
       throw new ViamError("Not implemented now");
     } else {
       throw new ViamError("Inverting builtin is not supported");

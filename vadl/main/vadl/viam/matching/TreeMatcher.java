@@ -13,6 +13,14 @@ import vadl.viam.graph.Node;
  * This class tries to match the given {@link Matcher} on a given {@link List} of {@link Node}.
  */
 public class TreeMatcher {
+  /**
+   * Returns the a {@link List} of {@link Node} when {@code nodes} matches the given
+   * {@link Matcher}.
+   *
+   * @param nodes   which will be checked by the {@code matcher}.
+   * @param matcher which checks whether a tree is considered matched.
+   * @return a {@link List} of {@link Node} where each node matches the {@link Matcher}.
+   */
   public static List<Node> matches(Stream<Node> nodes, Matcher matcher) {
     // Because cycles are allowed, we track all visited nodes to avoid computation.
     var visited = new HashSet<Node>();
