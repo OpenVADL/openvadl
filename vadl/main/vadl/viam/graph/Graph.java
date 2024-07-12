@@ -100,7 +100,11 @@ public class Graph {
     children.stream()
         .filter(x -> x.predecessor() == null && x.usageCount() == 0 && x.successorList().isEmpty())
         .distinct()
-        .forEach(Node::safeDelete);
+        .forEach(x -> {
+          this.nodes.remove(x);
+          x.safeDelete();
+        });
+    this.nodes.remove(toReplace);
     toReplace.safeDelete();
 
     return node;
