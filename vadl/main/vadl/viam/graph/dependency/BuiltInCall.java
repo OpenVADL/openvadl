@@ -49,6 +49,13 @@ public class BuiltInCall extends AbstractFunctionCallNode {
   }
 
   /**
+   * Update the builtin by the given value.
+   */
+  public void setBuiltIn(BuiltIn builtIn) {
+    this.builtIn = builtIn;
+  }
+
+  /**
    * Gets the {@link BuiltIn}.
    */
   public BuiltIn builtIn() {

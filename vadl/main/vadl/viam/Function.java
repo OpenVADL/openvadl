@@ -14,7 +14,7 @@ import vadl.viam.graph.Graph;
  * </p>
  */
 public class Function extends Definition {
-  private final Graph behavior;
+  private Graph behavior;
   private final Type returnType;
   private final Parameter[] parameters;
 
@@ -41,6 +41,10 @@ public class Function extends Definition {
 
   public Parameter[] parameters() {
     return parameters;
+  }
+
+  public void setBehavior(Graph graph) {
+    this.behavior = graph;
   }
 
   public ConcreteRelationType signature() {

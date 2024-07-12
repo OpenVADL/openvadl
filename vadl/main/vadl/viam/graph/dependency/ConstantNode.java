@@ -16,7 +16,7 @@ import vadl.viam.graph.control.InstrCallNode;
 public class ConstantNode extends ExpressionNode {
 
   @DataValue
-  public final Constant constant;
+  public Constant constant;
 
   public ConstantNode(Constant constant) {
     super(constant.type());

@@ -14,6 +14,13 @@ public class UIntType extends BitsType {
     return "UInt<%s>".formatted(bitWidth);
   }
 
+  /**
+   * Returns a signed integer with the same {@code bitWidth}.
+   */
+  public SIntType makeSigned() {
+    return new SIntType(bitWidth);
+  }
+
   @Override
   public boolean canBeCastTo(DataType other) {
     if (this == other) {
@@ -36,5 +43,16 @@ public class UIntType extends BitsType {
     // all Bits<N> casting rules apply to UInt<N>
     // TODO: Check if this is valid
     return super.canBeCastTo(other);
+  }
+
+  @Override
+  public boolean equals(Object obj) {
+    return this.getClass() == obj.getClass()
+        && super.equals(obj);
+  }
+
+  @Override
+  public int hashCode() {
+    return super.hashCode();
   }
 }

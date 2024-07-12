@@ -9,6 +9,9 @@ import vadl.pass.PassKey;
 import vadl.pass.PassName;
 import vadl.types.BuiltInTable;
 import vadl.types.BuiltInTable.BuiltIn;
+import vadl.types.DataType;
+import vadl.types.Type;
+import vadl.types.UIntType;
 import vadl.utils.SourceLocation;
 import vadl.viam.Constant;
 import vadl.viam.Format;
@@ -20,12 +23,15 @@ import vadl.viam.Parameter;
 import vadl.viam.Specification;
 import vadl.viam.ViamError;
 import vadl.viam.graph.Graph;
+import vadl.viam.graph.GraphVisitor;
 import vadl.viam.graph.Node;
+import vadl.viam.graph.NodeList;
 import vadl.viam.graph.control.ReturnNode;
 import vadl.viam.graph.control.StartNode;
 import vadl.viam.graph.dependency.BuiltInCall;
 import vadl.viam.graph.dependency.ConstantNode;
 import vadl.viam.graph.dependency.ExpressionNode;
+import vadl.viam.graph.dependency.FieldRefNode;
 import vadl.viam.graph.dependency.FuncParamNode;
 import vadl.viam.graph.dependency.SliceNode;
 
@@ -86,6 +92,24 @@ public class GenerateFieldAccessEncodingFunctionPass extends Pass {
             // }
             generateShiftEncodingFunction(param, fieldAccess.fieldRef(), Objects.requireNonNull(
                 fieldAccess.encoding()).behavior(), fieldAccess.accessFunction());
+          } else if (hasOnlyAddOrSub(behavior)) {
+            // format Utype : Inst =
+            //      { imm    : Bits<20>
+            //      , rd     : Index
+            //    , opcode : Bits7
+            //    , immU = ((31) as UInt<20>) - imm
+            // }
+            //
+            // This branch should compute the following encoding function automatically:
+            //
+            // encode {
+            //  imm => ((31) as UInt<20>) - immU
+            // }
+
+            var encodingGraph = generateAddOrSubEncodingFunction(param,
+                fieldAccess.accessFunction()
+            );
+            Objects.requireNonNull(fieldAccess.encoding()).setBehavior(encodingGraph);
           }
         });
 
@@ -179,6 +203,92 @@ public class GenerateFieldAccessEncodingFunctionPass extends Pass {
   }
 
   /**
+   * Generate an encoding for {@code fieldAccess} and adds nodes to
+   * {@code behavior} graph.
+   *
+   * @param parameter      is the {@link Parameter} which is the input for the function so
+   *                       it can be encoded as a field.
+   * @param accessFunction of the {@link Format}.
+   */
+  private Graph generateAddOrSubEncodingFunction(Parameter parameter,
+                                                 Function accessFunction) {
+    // We know that the access function only contains add or sub.
+    // Imagine the following function f(x):
+    // f(x) = 31 - x
+    // Let y = f(x)
+    // y = 31 - x
+    // then x = 31 - y
+    //
+    // and
+    //
+    // f(x) = 31 + x
+    // Let y = f(x)
+    // y = 31 + x
+    // then x = -31 + y
+
+    // So, let's replace the field ref by a function param
+    // and revert all operations and invert every constant.
+    var copy = accessFunction.behavior().copy();
+    var returnNode = copy.getNodes(ReturnNode.class).findFirst().get();
+    ensure(copy.getNodes(FieldRefNode.class).count() == 1,
+        "Only one field reference is allowed");
+    var fieldRefNode = copy.getNodes(FieldRefNode.class).findFirst().get();
+
+    // We have to check how the field is used.
+    // If the parent is a subtraction then we need to subtract the function parameter.
+    // If the parent is an addition then we need to invert every operation and add
+    // the function parameter.
+    var isSub = fieldRefNode.usages()
+        .anyMatch(x -> x instanceof BuiltInCall && ((BuiltInCall) x).builtIn() == BuiltInTable.SUB);
+
+    if (isSub) {
+      copy.replaceNode(fieldRefNode, new FuncParamNode(parameter));
+    } else {
+      returnNode.applyOnInputs(new GraphVisitor.Applier<>() {
+        @Nullable
+        @Override
+        public Node applyNullable(Node from, @Nullable Node to) {
+          if (to != null) {
+            to.applyOnInputs(this);
+
+            // Revert operations
+            if (to instanceof BuiltInCall) {
+              var cast = (BuiltInCall) to;
+              if (cast.builtIn() == BuiltInTable.ADD) {
+                cast.setBuiltIn(BuiltInTable.SUB);
+              } else if (cast.builtIn() == BuiltInTable.SUB) {
+                cast.setBuiltIn(BuiltInTable.ADD);
+              }
+            } else if (to instanceof ConstantNode) {
+              var cast = (ConstantNode) to;
+              if (cast.constant instanceof Constant.Value) {
+                var negated = ((Constant.Value) cast.constant).value().negate();
+                // If the type was unsigned then it has to be signed now.
+                var ty = cast.type() instanceof UIntType ? ((UIntType) cast.type()).makeSigned() :
+                    cast.type();
+
+                cast.constant = new Constant.Value(negated, (DataType) ty);
+                ((ConstantNode) to).setType(ty);
+              }
+            }
+          }
+
+          return to;
+        }
+      });
+
+      // We need to invert the function parameter because we have inverted it the operation with
+      // the visitor.
+      copy.replaceNode(fieldRefNode, new BuiltInCall(BuiltInTable.SUB, new NodeList<>(
+          new ConstantNode(Constant.Value.of(0, (DataType) parameter.type())),
+          new FuncParamNode(parameter)
+      ), parameter.type()));
+    }
+
+    return copy;
+  }
+
+  /**
    * Checks whether the behavior only contains (logical or arithmetic) left or right shift.
    * But only one logical operation is allowed.
    */
@@ -195,6 +305,24 @@ public class GenerateFieldAccessEncodingFunctionPass extends Pass {
 
           return false;
         }) && behavior.getNodes(BuiltInCall.class).count() == 1;
+  }
+
+
+  /**
+   * Checks whether the behavior only contains addition or subtraction.
+   */
+  private boolean hasOnlyAddOrSub(Graph behavior) {
+    return behavior.getNodes(BuiltInCall.class)
+        .allMatch(x -> {
+          var cast = (BuiltInCall) x;
+
+          if (cast.builtIn() == BuiltInTable.ADD
+              || cast.builtIn() == BuiltInTable.SUB) {
+            return true;
+          }
+
+          return false;
+        }) && behavior.getNodes(SliceNode.class).findAny().isEmpty();
   }
 
   /**

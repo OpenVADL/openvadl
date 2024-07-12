@@ -250,6 +250,7 @@ public class Graph {
                 && node.getClass() == user.getClass()
                 && node.equalInputs(user)
                 && node.equalData(user)
+                && user.graph() == this
         )
         .findFirst()
         .orElse(null);

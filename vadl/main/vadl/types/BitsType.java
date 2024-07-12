@@ -86,4 +86,13 @@ public class BitsType extends DataType {
     return (T) upperBound;
   }
 
+  @Override
+  public int hashCode() {
+    return super.hashCode();
+  }
+
+  @Override
+  public boolean equals(Object obj) {
+    return this.getClass() == obj.getClass() && this.bitWidth == ((BitsType) obj).bitWidth;
+  }
 }

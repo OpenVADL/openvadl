@@ -1,6 +1,7 @@
 package vadl.viam.graph.dependency;
 
 import vadl.types.Type;
+import vadl.types.UIntType;
 
 /**
  * Expression nodes produce some value and therefore also
@@ -21,7 +22,9 @@ public abstract class ExpressionNode extends DependencyNode {
     return type;
   }
 
-  protected void setType(Type type) {
+  public void setType(Type type) {
     this.type = type;
   }
+
+
 }

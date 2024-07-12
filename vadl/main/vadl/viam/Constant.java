@@ -20,7 +20,7 @@ import vadl.utils.StreamUtils;
  */
 public abstract class Constant {
 
-  private final Type type;
+  private Type type;
 
   public Constant(Type type) {
     this.type = type;
@@ -28,6 +28,10 @@ public abstract class Constant {
 
   public Type type() {
     return type;
+  }
+
+  public void setType(Type type) {
+    this.type = type;
   }
 
   @Override
