@@ -23,7 +23,6 @@ import vadl.viam.graph.dependency.BuiltInCall;
 import vadl.viam.graph.dependency.ConstantNode;
 import vadl.viam.graph.dependency.TypeCastNode;
 
-@SuppressWarnings({"Indentation", "LocalVariableName", "VariableDeclarationUsageDistance"})
 public class FormatTest extends AbstractTest {
 
   @ParameterizedTest(name = "{index} {0}")

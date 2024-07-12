@@ -11,7 +11,7 @@ import vadl.viam.Memory;
 import vadl.viam.graph.dependency.ReadMemNode;
 import vadl.viam.graph.dependency.WriteMemNode;
 
-@SuppressWarnings({"Indentation", "LocalVariableName", "VariableDeclarationUsageDistance"})
+
 public class MemoryTest extends AbstractTest {
 
   @Test
