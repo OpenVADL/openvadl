@@ -1,7 +1,6 @@
 package vadl.viam.matching.impl;
 
 import static org.assertj.core.api.AssertionsForClassTypes.assertThat;
-import static org.junit.jupiter.api.Assertions.*;
 
 import java.math.BigInteger;
 import java.util.Collections;

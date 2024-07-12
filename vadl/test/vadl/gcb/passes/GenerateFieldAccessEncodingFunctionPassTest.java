@@ -25,7 +25,6 @@ import vadl.viam.graph.dependency.FieldRefNode;
 import vadl.viam.graph.dependency.SliceNode;
 import vadl.viam.graph.dependency.TypeCastNode;
 import vadl.viam.matching.TreeMatcher;
-import vadl.viam.matching.impl.AnyConstantValueMatcher;
 import vadl.viam.matching.impl.BuiltInMatcher;
 import vadl.viam.matching.impl.ConstantValueMatcher;
 import vadl.viam.matching.impl.FuncParamMatcher;
