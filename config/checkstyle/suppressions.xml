@@ -1,20 +1,17 @@
 <?xml version="1.0"?>
 
 <!DOCTYPE suppressions PUBLIC
-    "-//Checkstyle//DTD SuppressionFilter Configuration 1.2//EN"
-    "https://checkstyle.org/dtds/suppressions_1_2.dtd">
+        "-//Checkstyle//DTD SuppressionFilter Configuration 1.2//EN"
+        "https://checkstyle.org/dtds/suppressions_1_2.dtd">
 
 <suppressions>
-  <!-- Suppress for all -->
-  <suppress checks="PackageName"/>
+    <!-- Suppress for all -->
+    <suppress checks="PackageName"/>
 
-  <!-- Suppress for tests -->
-  <suppress
-      checks="MissingJavadoc"
-      files="[/\\]test[/\\]"
-  />
-  <suppress
-      checks="LineLength"
-      files="[/\\]test[/\\]"
-  />
+    <!-- Suppress for tests -->
+    <suppress
+            checks="MissingJavadoc|LineLength|Indentation|VariableDeclarationUsageDistance|LocalVariableName"
+            files="[/\\]test[/\\]"
+    />
+
 </suppressions>

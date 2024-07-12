@@ -32,7 +32,7 @@ import vadl.viam.graph.dependency.ReadRegNode;
 import vadl.viam.graph.dependency.WriteRegFileNode;
 import vadl.viam.graph.dependency.WriteRegNode;
 
-@SuppressWarnings({"Indentation", "LocalVariableName", "VariableDeclarationUsageDistance"})
+
 public class RegisterTest extends AbstractTest {
 
   @ParameterizedTest(name = "{index} {0}")

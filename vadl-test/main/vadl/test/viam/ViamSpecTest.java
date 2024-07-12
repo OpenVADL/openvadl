@@ -11,7 +11,7 @@ import vadl.viam.Format;
 import vadl.viam.InstructionSetArchitecture;
 import vadl.viam.Register;
 
-@SuppressWarnings({"Indentation", "LocalVariableName", "VariableDeclarationUsageDistance"})
+
 public class ViamSpecTest extends AbstractTest {
 
   @Test
