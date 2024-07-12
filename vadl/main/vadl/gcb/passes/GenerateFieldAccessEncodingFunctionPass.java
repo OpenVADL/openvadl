@@ -277,7 +277,7 @@ public class GenerateFieldAccessEncodingFunctionPass extends Pass {
         }
       });
 
-      // We need to invert the function parameter because we have inverted it the operation with
+      // We need to invert the function parameter because we have inverted the operation with
       // the visitor.
       copy.replaceNode(fieldRefNode, new BuiltInCall(BuiltInTable.SUB, new NodeList<>(
           new ConstantNode(Constant.Value.of(0, (DataType) parameter.type())),
