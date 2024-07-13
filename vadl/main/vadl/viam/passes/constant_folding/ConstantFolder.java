@@ -4,6 +4,7 @@ import java.util.Optional;
 import vadl.viam.graph.Graph;
 import vadl.viam.graph.Node;
 import vadl.viam.graph.dependency.ConstantNode;
+import vadl.viam.passes.Pair;
 
 /**
  * This class contains the main logic for the constant propagation.
@@ -11,11 +12,6 @@ import vadl.viam.graph.dependency.ConstantNode;
  * pass as a subsequent step.
  */
 public class ConstantFolder {
-
-  record Pair(Node oldNode, ConstantNode newNode) {
-
-  }
-
   /**
    * Apply constant folding as long as something changes on the given {@link Graph}.
    *
@@ -30,14 +26,14 @@ public class ConstantFolder {
           .filter(Node::isActive)
           // When `normalize` returns an Optional
           // then create a `Pair`
-          .map(builtInNode -> builtInNode.normalize()
-              .map(y -> new Pair(builtInNode, (ConstantNode) y)))
+          .map(node -> node.normalize()
+              .map(y -> new Pair(node, y)))
           .flatMap(Optional::stream)
           .toList();
 
       for (var pair : result) {
-        var oldNode = pair.oldNode;
-        var newNode = pair.newNode;
+        var oldNode = pair.oldNode();
+        var newNode = pair.newNode();
 
         graph.replaceNode(oldNode, newNode);
         hasChanged = true;

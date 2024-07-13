@@ -1,9 +1,13 @@
 package vadl.gcb.passes;
 
+import java.math.BigInteger;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.Map;
 import java.util.Objects;
+import java.util.TreeMap;
 import org.jetbrains.annotations.Nullable;
+import vadl.javaannotations.viam.Input;
 import vadl.pass.Pass;
 import vadl.pass.PassKey;
 import vadl.pass.PassName;
@@ -22,17 +26,19 @@ import vadl.viam.Parameter;
 import vadl.viam.Specification;
 import vadl.viam.ViamError;
 import vadl.viam.graph.Graph;
-import vadl.viam.graph.GraphVisitor;
 import vadl.viam.graph.Node;
 import vadl.viam.graph.NodeList;
 import vadl.viam.graph.control.ReturnNode;
 import vadl.viam.graph.control.StartNode;
+import vadl.viam.graph.dependency.AbstractFunctionCallNode;
 import vadl.viam.graph.dependency.BuiltInCall;
 import vadl.viam.graph.dependency.ConstantNode;
 import vadl.viam.graph.dependency.ExpressionNode;
-import vadl.viam.graph.dependency.FieldRefNode;
 import vadl.viam.graph.dependency.FuncParamNode;
 import vadl.viam.graph.dependency.SliceNode;
+import vadl.viam.graph.dependency.UnaryNode;
+import vadl.viam.matching.TreeMatcher;
+import vadl.viam.matching.impl.BuiltInMatcher;
 
 /**
  * This pass generate the behavior {@link Graph} of {@link FieldAccess} when the {@link Encoding}
@@ -42,6 +48,48 @@ public class GenerateFieldAccessEncodingFunctionPass extends Pass {
   @Override
   public PassName getName() {
     return new PassName("GenerateFieldAccessEncodingFunctionPass");
+  }
+
+  /**
+   * Represents an equation operator.
+   * a = b + c
+   */
+  class EquationNode extends AbstractFunctionCallNode {
+
+    public EquationNode(NodeList<ExpressionNode> args) {
+      super(args, Type.dummy());
+    }
+
+    @Override
+    public Node copy() {
+      return new EquationNode(
+          new NodeList<>(this.arguments().stream().map(x -> (ExpressionNode) x.copy()).toList()));
+    }
+
+    @Override
+    public Node shallowCopy() {
+      return new EquationNode(args);
+    }
+  }
+
+  /**
+   * Represents a negative value in the graph. This helps us to remove subtraction in the graph.
+   */
+  public class NegatedNode extends UnaryNode {
+
+    public NegatedNode(ExpressionNode value, Type type) {
+      super(value, type);
+    }
+
+    @Override
+    public Node copy() {
+      return new NegatedNode((ExpressionNode) value.copy(), type());
+    }
+
+    @Override
+    public Node shallowCopy() {
+      return new NegatedNode(value, type());
+    }
   }
 
   @Nullable
@@ -233,6 +281,33 @@ public class GenerateFieldAccessEncodingFunctionPass extends Pass {
     // and revert all operations and invert every constant.
     var copy = accessFunction.behavior().copy();
     var returnNode = copy.getNodes(ReturnNode.class).findFirst().get();
+
+    // First, remove all usages of subtraction.
+    // We can replace them by addition with a NegatedNode
+    var subtractions = TreeMatcher.matches(copy.getNodes(),
+        new BuiltInMatcher(BuiltInTable.SUB, Collections.emptyList()));
+
+    subtractions.forEach(subtraction -> {
+      var cast = (BuiltInCall) subtraction;
+      cast.setBuiltIn(BuiltInTable.ADD);
+
+      // a - b will be changed to a + (-b)
+      var value = (ExpressionNode) cast.inputs().toList().get(1);
+      var negation = copy.add(new NegatedNode(value, value.type()));
+      cast.replaceInput(value, negation);
+    });
+
+    var equation = new EquationNode(new NodeList<>(
+        // left
+        copy.add(new ConstantNode(new Constant.Value(BigInteger.ZERO, (DataType) returnNode.returnType()))),
+        // right
+        returnNode.value
+    ));
+    var addedEquationNode = copy.add(equation);
+    returnNode.replaceInput(returnNode.value, addedEquationNode);
+
+
+    /*
     ensure(copy.getNodes(FieldRefNode.class).count() == 1,
         "Only one field reference is allowed");
     var fieldRefNode = copy.getNodes(FieldRefNode.class).findFirst().get();
@@ -287,6 +362,7 @@ public class GenerateFieldAccessEncodingFunctionPass extends Pass {
           new FuncParamNode(parameter)
       ), parameter.type()));
     }
+     */
 
     return copy;
   }
