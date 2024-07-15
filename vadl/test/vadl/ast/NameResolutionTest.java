@@ -168,4 +168,27 @@ public class NameResolutionTest {
         """;
     Assertions.assertDoesNotThrow(() -> VadlParser.parse(prog), "Cannot parse input");
   }
+
+  @Test
+  void nestedFormatFieldsResolve() {
+    var prog = """
+        instruction set architecture ISA = {
+          format Short : Bits<16> = {
+            byte1 [15..8],
+            byte2 [7..0]
+          }
+        
+          format Btype : Bits<32> = {
+            a [31..0]
+          }
+        
+          register X : Short
+        
+          instruction BEQ : Btype = {
+            X.byte1 := X.byte2 + X.byte1
+          }
+        }
+        """;
+    Assertions.assertDoesNotThrow(() -> VadlParser.parse(prog), "Cannot parse input");
+  }
 }

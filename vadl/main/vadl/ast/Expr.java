@@ -27,7 +27,7 @@ interface ExprVisitor<R> {
 
   R visit(TypeLiteral expr);
 
-  R visit(Variable expr);
+  R visit(VariableAccess expr);
 
   R visit(UnaryExpr expr);
 }
@@ -711,15 +711,20 @@ class TypeLiteral extends Expr {
   }
 }
 
-class Variable extends Expr {
+class VariableAccess extends Expr {
   Identifier identifier;
+  @Nullable VariableAccess next;
 
-  public Variable(Identifier identifier) {
+  public VariableAccess(Identifier identifier, @Nullable VariableAccess next) {
     this.identifier = identifier;
+    this.next = next;
   }
 
   @Override
   SourceLocation location() {
+    if (next != null) {
+      return identifier.location().join(next.location());
+    }
     return identifier.location();
   }
 
@@ -731,6 +736,10 @@ class Variable extends Expr {
   @Override
   void prettyPrint(int indent, StringBuilder builder) {
     identifier.prettyPrint(indent, builder);
+    if (next != null) {
+      builder.append(".");
+      next.prettyPrint(indent, builder);
+    }
   }
 
   @Override
@@ -752,12 +761,14 @@ class Variable extends Expr {
       return false;
     }
 
-    Variable that = (Variable) o;
-    return identifier.equals(that.identifier);
+    VariableAccess that = (VariableAccess) o;
+    return identifier.equals(that.identifier) && Objects.equals(next, that.next);
   }
 
   @Override
   public int hashCode() {
-    return Objects.hash(identifier);
+    int result = identifier.hashCode();
+    result = 31 * result + Objects.hashCode(next);
+    return result;
   }
 }

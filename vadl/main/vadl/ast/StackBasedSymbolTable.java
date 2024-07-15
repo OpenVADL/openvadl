@@ -28,12 +28,16 @@ class StackBasedSymbolTable implements DefinitionVisitor<Void> {
   }
 
   void defineConstant(String name, SourceLocation loc) {
-    defineSymbol(name, SymbolType.CONSTANT, loc);
+    defineSymbol(new ValuedSymbol(name, null, SymbolType.CONSTANT), loc);
   }
 
   void defineSymbol(String name, SymbolType type, SourceLocation loc) {
-    verifyAvailable(name, loc);
-    symbols.add(new BasicSymbol(name, type));
+    defineSymbol(new BasicSymbol(name, type), loc);
+  }
+
+  void defineSymbol(Symbol symbol, SourceLocation loc) {
+    verifyAvailable(symbol.name(), loc);
+    symbols.add(symbol);
   }
 
   @Override
@@ -57,7 +61,9 @@ class StackBasedSymbolTable implements DefinitionVisitor<Void> {
 
   @Override
   public Void visit(CounterDefinition definition) {
-    defineSymbol(definition.identifier.name, SymbolType.COUNTER, definition.location());
+    var typeSymbol = resolveSymbol(definition.type.baseType.name);
+    var typeDef = typeSymbol instanceof FormatSymbol s ? s.definition : null;
+    defineSymbol(new ValuedSymbol(definition.identifier.name, typeDef, SymbolType.COUNTER), definition.location());
     return null;
   }
 
@@ -69,7 +75,9 @@ class StackBasedSymbolTable implements DefinitionVisitor<Void> {
 
   @Override
   public Void visit(RegisterDefinition definition) {
-    defineSymbol(definition.identifier.name, SymbolType.REGISTER, definition.location());
+    var typeSymbol = resolveSymbol(definition.type.baseType.name);
+    var typeDef = typeSymbol instanceof FormatSymbol s ? s.definition : null;
+    defineSymbol(new ValuedSymbol(definition.identifier.name, typeDef, SymbolType.REGISTER), definition.location());
     return null;
   }
 
@@ -135,8 +143,9 @@ class StackBasedSymbolTable implements DefinitionVisitor<Void> {
   void loadFormat(Identifier formatIdentifier) {
     var format = resolveSymbol(formatIdentifier.name);
     if (format instanceof FormatSymbol formatSymbol) {
-      formatSymbol.definition.fields.forEach(field ->
-          defineSymbol(field.identifier.name, SymbolType.FORMAT_FIELD, field.location()));
+      formatSymbol.definition.fields.forEach(field -> symbols.add(
+          new ValuedSymbol(field.identifier.name, null,
+              SymbolType.FORMAT_FIELD)));
     } else {
       errors.add(new VadlError(
           "Unknown format " + formatIdentifier.name, formatIdentifier.location(), null, null
@@ -168,14 +177,37 @@ class StackBasedSymbolTable implements DefinitionVisitor<Void> {
     return null;
   }
 
-  void requireValue(String name, SourceLocation loc) {
-    var symbol = resolveSymbol(name);
+  void requireValue(VariableAccess var) {
+    var symbol = resolveSymbol(var.identifier.name);
     if (symbol == null) {
-      errors.add(new VadlError("Unresolved definition " + name, loc, null, null));
-    } else if (!SymbolType.valuedTypes.contains(symbol.type())) {
+      errors.add(
+          new VadlError("Unresolved definition " + var.identifier.name, var.location(), null,
+              null));
+    } else if (symbol instanceof ValuedSymbol valSymbol) {
+      var next = var.next;
+      if (next == null) {
+        return;
+      }
+      if (valSymbol.typeDefinition instanceof FormatDefinition formatDefinition) {
+        var field = formatDefinition.fields.stream()
+            .filter(f -> f.identifier.name.equals(next.identifier.name)).findFirst();
+        if (field.isEmpty()) {
+          errors.add(new VadlError(
+              "Invalid usage: format %s does not have field %s".formatted(
+                  formatDefinition.identifier.name, next.identifier.name), var.location(), null,
+              null));
+        }
+      } else {
+        errors.add(new VadlError(
+            "Invalid usage: symbol %s of type %s does not have a record type".formatted(
+                var.identifier.name,
+                symbol.type()), var.location(), null, null));
+      }
+    } else {
       errors.add(new VadlError(
-          "Invalid usage: symbol %s of type %s does not have a value".formatted(name,
-              symbol.type()), loc, null, null));
+          "Invalid usage: symbol %s of type %s does not have a value".formatted(
+              var.identifier.name,
+              symbol.type()), var.location(), null, null));
     }
   }
 
@@ -204,6 +236,10 @@ class StackBasedSymbolTable implements DefinitionVisitor<Void> {
   }
 
   record BasicSymbol(String name, SymbolType type) implements Symbol {
+  }
+
+  record ValuedSymbol(String name, @Nullable Definition typeDefinition, SymbolType type)
+      implements Symbol {
   }
 
   record MacroSymbol(String name, Macro macro) implements Symbol {

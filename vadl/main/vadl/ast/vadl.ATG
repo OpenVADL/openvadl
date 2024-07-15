@@ -341,7 +341,7 @@ PRODUCTIONS
     .
 
     assignment<out Statement statement>
-    = identifier<out Identifier id> ":=" expression<out Expr expr> (. statement = new AssignmentStatement(id, expr); .)
+    = variableAccess<out VariableAccess var> ":=" expression<out Expr expr> (. statement = new AssignmentStatement(var, expr); .)
     .
 
     letStatement<out Statement letStatement>
@@ -406,9 +406,14 @@ PRODUCTIONS
 
     term<out Expr expr>                             (. expr = null; .)
     = number                                        (. expr = new IntegerLiteral(t.val, loc()); .)
-    | identifier<out Identifier id>                 (. expr = new Variable(id); nestedSymbolTable.requireValue(id.name, loc()); stackBasedSymbolTable.requireValue(id.name, loc()); .)
+    | variableAccess<out VariableAccess var>        (. expr = var; nestedSymbolTable.requireValue(var); stackBasedSymbolTable.requireValue(var);.)
     | '(' expression<out Expr expr1> ')'            (. expr = new GroupExpr(expr1); .)
     | macroInstanceOrPlaceholder<out Node node1, CoreType.Ex()>  (. expr = (Expr)node1; .)
+    .
+
+    variableAccess<out VariableAccess var>
+    = identifier<out Identifier id>                 (. var = new VariableAccess(id, null); .)
+      [ "." variableAccess<out VariableAccess next> (. var = new VariableAccess(id, next); .)]
     .
 
     rangeExpression<out RangeExpr expr>

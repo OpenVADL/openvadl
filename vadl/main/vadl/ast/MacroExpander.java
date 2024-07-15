@@ -68,8 +68,8 @@ class MacroExpander implements ExprVisitor<Expr> {
   }
 
   @Override
-  public Expr visit(Variable expr) {
-    return new Variable(expr.identifier);
+  public Expr visit(VariableAccess expr) {
+    return new VariableAccess(expr.identifier, expr.next);
   }
 
   @Override

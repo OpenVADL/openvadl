@@ -51,7 +51,7 @@ class Ungrouper implements ExprVisitor<Expr> {
   }
 
   @Override
-  public Expr visit(Variable expr) {
+  public Expr visit(VariableAccess expr) {
     return expr;
   }
 
