@@ -1,7 +1,9 @@
 package vadl.viam.graph.dependency;
 
 import java.util.List;
+import java.util.stream.Collectors;
 import vadl.javaannotations.viam.DataValue;
+import vadl.oop.SymbolTable;
 import vadl.types.Type;
 import vadl.viam.Function;
 import vadl.viam.graph.Node;
@@ -69,5 +71,12 @@ public class FuncCallNode extends AbstractFunctionCallNode {
   @Override
   public Node shallowCopy() {
     return new FuncCallNode(arguments(), function, type());
+  }
+
+  @Override
+  public String generateOopExpression(SymbolTable symbolTable) {
+    return this.function.name() + "(" +
+        args.stream().map(x -> x.generateOopExpression(symbolTable)).collect(
+            Collectors.joining(",")) + ")";
   }
 }

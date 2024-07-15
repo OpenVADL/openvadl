@@ -2,6 +2,7 @@ package vadl.viam.graph.dependency;
 
 import java.util.List;
 import vadl.javaannotations.viam.DataValue;
+import vadl.oop.SymbolTable;
 import vadl.types.Type;
 import vadl.viam.Parameter;
 import vadl.viam.graph.Node;
@@ -46,5 +47,10 @@ public class FuncParamNode extends ParamNode {
   @Override
   public Node shallowCopy() {
     return copy();
+  }
+
+  @Override
+  public String generateOopExpression(SymbolTable symbolTable) {
+    return parameter.name();
   }
 }

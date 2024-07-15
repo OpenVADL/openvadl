@@ -2,6 +2,7 @@ package vadl.viam.graph.dependency;
 
 import java.util.List;
 import vadl.javaannotations.viam.DataValue;
+import vadl.oop.SymbolTable;
 import vadl.viam.Format;
 import vadl.viam.graph.Node;
 import vadl.viam.graph.NodeList;
@@ -45,5 +46,10 @@ public class FieldAccessRefNode extends ParamNode {
   @Override
   public Node shallowCopy() {
     return copy();
+  }
+
+  @Override
+  public String generateOopExpression(SymbolTable symbolTable) {
+    throw new RuntimeException("not implemented exception");
   }
 }

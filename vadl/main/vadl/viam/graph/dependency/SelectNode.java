@@ -2,6 +2,7 @@ package vadl.viam.graph.dependency;
 
 import java.util.List;
 import vadl.javaannotations.viam.Input;
+import vadl.oop.SymbolTable;
 import vadl.types.BoolType;
 import vadl.types.Type;
 import vadl.viam.graph.GraphVisitor;
@@ -68,5 +69,10 @@ public class SelectNode extends ExpressionNode {
   @Override
   public Node shallowCopy() {
     return new SelectNode(condition, trueCase, falseCase);
+  }
+
+  @Override
+  public String generateOopExpression(SymbolTable symbolTable) {
+    throw new RuntimeException("not implemented");
   }
 }
