@@ -12,7 +12,7 @@ import vadl.viam.graph.Node;
 public class ConstantNode extends ExpressionNode {
 
   @DataValue
-  public Constant constant;
+  private Constant constant;
 
   public ConstantNode(Constant constant) {
     super(constant.type());
@@ -23,6 +23,10 @@ public class ConstantNode extends ExpressionNode {
   protected void collectData(List<Object> collection) {
     super.collectData(collection);
     collection.add(constant);
+  }
+
+  public void setConstant(Constant constant) {
+    this.constant = constant;
   }
 
   @Override
