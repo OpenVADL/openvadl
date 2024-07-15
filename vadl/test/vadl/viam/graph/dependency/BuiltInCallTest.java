@@ -60,7 +60,7 @@ class BuiltInCallTest {
     var result = origin.normalize();
 
     assertTrue(result.isPresent());
-    var value = (Constant.Value) expected.constant;
-    assertEquals(value.value(), ((Constant.Value) ((ConstantNode) result.get()).constant).value());
+    var value = (Constant.Value) expected.constant();
+    assertEquals(value.value(), ((Constant.Value) ((ConstantNode) result.get()).constant()).value());
   }
 }

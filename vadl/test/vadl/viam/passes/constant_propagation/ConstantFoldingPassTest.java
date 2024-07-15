@@ -77,7 +77,7 @@ class ConstantFoldingPassTest {
     assertThat(behavior.getNodes().count(), equalTo(1L));
     assertThat(behavior.getNodes().findFirst().get().getClass(), equalTo(ConstantNode.class));
     assertThat(
-        ((Constant.Value) ((ConstantNode) behavior.getNodes().findFirst().get()).constant).value(),
+        ((Constant.Value) ((ConstantNode) behavior.getNodes().findFirst().get()).constant()).value(),
         equalTo(new BigInteger(String.valueOf(2))));
   }
 

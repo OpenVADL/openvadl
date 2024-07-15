@@ -2,12 +2,8 @@ package vadl.viam.graph.dependency;
 
 import java.util.List;
 import vadl.javaannotations.viam.DataValue;
-import vadl.types.Type;
 import vadl.viam.Constant;
 import vadl.viam.graph.Node;
-import vadl.viam.graph.NodeList;
-import vadl.viam.graph.control.IfNode;
-import vadl.viam.graph.control.InstrCallNode;
 
 /**
  * The constant node represents a compile time constant value in the
@@ -16,7 +12,7 @@ import vadl.viam.graph.control.InstrCallNode;
 public class ConstantNode extends ExpressionNode {
 
   @DataValue
-  public final Constant constant;
+  private Constant constant;
 
   public ConstantNode(Constant constant) {
     super(constant.type());
@@ -27,6 +23,20 @@ public class ConstantNode extends ExpressionNode {
   protected void collectData(List<Object> collection) {
     super.collectData(collection);
     collection.add(constant);
+  }
+
+  /**
+   * Set the {@link Constant}.
+   */
+  public void setConstant(Constant constant) {
+    this.constant = constant;
+  }
+
+  /**
+   * Return the {@link Constant}.
+   */
+  public Constant constant() {
+    return this.constant;
   }
 
   @Override
