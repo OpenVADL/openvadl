@@ -20,7 +20,7 @@ public class ConstantValueMatcher extends AnyConstantValueMatcher {
     var isConstantValue = super.matches(node);
 
     if (isConstantValue) {
-      return ((ConstantNode) node).constant.equals(constant);
+      return ((ConstantNode) node).constant().equals(constant);
     }
 
     return false;

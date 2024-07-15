@@ -13,7 +13,7 @@ public class AnyConstantValueMatcher implements Matcher {
   public boolean matches(Node node) {
     if (node instanceof ConstantNode) {
       var cast = (ConstantNode) node;
-      return cast.constant instanceof Constant.Value;
+      return cast.constant() instanceof Constant.Value;
     }
     return false;
   }

@@ -25,8 +25,18 @@ public class ConstantNode extends ExpressionNode {
     collection.add(constant);
   }
 
+  /**
+   * Set the {@link Constant}.
+   */
   public void setConstant(Constant constant) {
     this.constant = constant;
+  }
+
+  /**
+   * Return the {@link Constant}.
+   */
+  public Constant constant() {
+    return this.constant;
   }
 
   @Override

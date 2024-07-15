@@ -180,7 +180,7 @@ public class GenerateFieldAccessEncodingFunctionPass extends Pass {
         (BuiltInCall) accessFunction.behavior().getNodes(BuiltInCall.class).findFirst().get();
     var shiftValue =
         ((Constant.Value) ((ConstantNode) originalShift.arguments()
-            .get(1)).constant).value();
+            .get(1)).constant()).value();
 
     ExpressionNode invertedSliceNode;
     if (originalShift.builtIn() == BuiltInTable.LSL) {
@@ -267,13 +267,13 @@ public class GenerateFieldAccessEncodingFunctionPass extends Pass {
               }
             } else if (to instanceof ConstantNode) {
               var cast = (ConstantNode) to;
-              if (cast.constant instanceof Constant.Value) {
-                var negated = ((Constant.Value) cast.constant).value().negate();
+              if (cast.constant() instanceof Constant.Value) {
+                var negated = ((Constant.Value) cast.constant()).value().negate();
                 // If the type was unsigned then it has to be signed now.
                 var ty = cast.type() instanceof UIntType ? ((UIntType) cast.type()).makeSigned() :
                     cast.type();
 
-                cast.constant = new Constant.Value(negated, (DataType) ty);
+                cast.setConstant(new Constant.Value(negated, (DataType) ty));
                 ((ConstantNode) to).setType(ty);
               }
             }

@@ -97,8 +97,8 @@ public class BuiltInCall extends AbstractFunctionCallNode {
   private Optional<Node> reduce(BiFunction<BigInteger, BigInteger, BigInteger> function) {
     ensure(this.arguments().size() == 2, "Expecting only two inputs");
     // Cast is safe because already checked that is constant.
-    var x = (Constant.Value) ((ConstantNode) this.arguments().get(0)).constant;
-    var y = (Constant.Value) ((ConstantNode) this.arguments().get(1)).constant;
+    var x = (Constant.Value) ((ConstantNode) this.arguments().get(0)).constant();
+    var y = (Constant.Value) ((ConstantNode) this.arguments().get(1)).constant();
     ensure(x.type().equals(y.type()), "Types must match");
     return Optional.of(
         new ConstantNode(new Constant.Value(function.apply(x.value(), y.value()), x.type())));
@@ -108,8 +108,8 @@ public class BuiltInCall extends AbstractFunctionCallNode {
   private Optional<Node> reduceWithInt(BiFunction<BigInteger, Integer, BigInteger> function) {
     ensure(this.arguments().size() == 2, "Expecting only two inputs");
     // Cast is safe because already checked that is constant.
-    var x = (Constant.Value) ((ConstantNode) this.arguments().get(0)).constant;
-    var y = (Constant.Value) ((ConstantNode) this.arguments().get(1)).constant;
+    var x = (Constant.Value) ((ConstantNode) this.arguments().get(0)).constant();
+    var y = (Constant.Value) ((ConstantNode) this.arguments().get(1)).constant();
     return Optional.of(
         new ConstantNode(
             new Constant.Value(function.apply(x.value(), y.value().intValue()), x.type())));
