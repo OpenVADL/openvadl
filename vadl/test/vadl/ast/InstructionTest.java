@@ -29,6 +29,8 @@ public class InstructionTest {
             funct3 = 0b000,
             funct7 = 0b000'0000
           }
+
+          assembly ADD = (mnemonic, " ", rd, ", ", rs1, ", ", rs2)
         }
         """;
 

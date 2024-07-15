@@ -161,6 +161,7 @@ CHARACTERS
     binDigit = '0' .. '1'.
     hexDigit = '0' .. '9' + 'A' .. 'F' + 'a' .. 'f'.
     letter = 'a' .. 'z' + 'A' .. 'Z'.
+    anyButQuote = ANY - '"'.
 
 TOKENS
     number = digit {digit | "'"}
@@ -170,6 +171,7 @@ TOKENS
     identifierToken = letter {letter | digit | '_'}.
     file = "file".
     else = "else".
+    string = '"' {anyButQuote} '"'.
 
 COMMENTS FROM "//" TO '\n'
 COMMENTS FROM "/*" TO "*/" NESTED
@@ -217,6 +219,7 @@ PRODUCTIONS
     | counterDefinition<out Definition d>                   (. def = d; .)
     | instructionDefinition<out Definition d>               (. def = d; .)
     | encodingDefinition<out Definition d>                  (. def = d; .)
+    | assemblyDefinition<out Definition d>                  (. def = d; .)
     | memoryDefinition<out Definition d>                    (. def = d; .)
     | IF (scanner.Peek().kind == _file) registerFileDefinition<out Definition d>   (. def = d; .)
     | registerDefinition<out Definition d>   (. def = d; .)
@@ -282,6 +285,22 @@ PRODUCTIONS
     = identifier<out Identifier id>
       "="
       number                                               (. e = new EncodingDefinition.Entry(id, new IntegerLiteral(t.val, loc())); .)
+    .
+
+    assemblyDefinition<out AssemblyDefinition def>         (. List<Identifier> ids = new ArrayList<>(); var start = loc(); .)
+    = "assembly" identifier<out Identifier id>             (. ids.add(id); nestedSymbolTable.loadInstructionFormat(id); stackBasedSymbolTable.loadInstructionFormat(id); .)
+      { "," identifier <out Identifier additionalId>       (. ids.add(additionalId); nestedSymbolTable.loadInstructionFormat(id); stackBasedSymbolTable.loadInstructionFormat(id); .) }
+      "=" "("                                              (. var isMnemonic = false; List<Node> segments = new ArrayList<>(); .)
+      (  "mnemonic"                                        (. isMnemonic = true; .)
+        | stringLit<out StringLiteral lit1>                (. segments.add(lit1); .)
+      ) { "," (
+        stringLit<out StringLiteral lit2>                  (. segments.add(lit2); .)
+        | term<out Expr expr>                              (. segments.add(expr); .)
+      )} ")"                                               (. def = new AssemblyDefinition(ids, isMnemonic, segments, start.join(loc())); .)
+    .
+
+    stringLit<out StringLiteral lit>
+    = string                                               (. lit = new StringLiteral(t.val, loc()); .)
     .
 
     memoryDefinition<out MemoryDefinition def>

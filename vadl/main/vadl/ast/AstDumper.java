@@ -143,6 +143,12 @@ public class AstDumper implements DefinitionVisitor<Void>, ExprVisitor<Void> {
   }
 
   @Override
+  public Void visit(StringLiteral expr) {
+    dumpNode(expr);
+    return null;
+  }
+
+  @Override
   public Void visit(PlaceHolderExpr expr) {
     dumpNode(expr);
     return null;
@@ -193,6 +199,14 @@ public class AstDumper implements DefinitionVisitor<Void>, ExprVisitor<Void> {
         .flatMap(entry -> Stream.of(entry.field(), entry.value()));
     Stream<Node> children = Stream.concat(Stream.of(definition.instrIdentifier), entries);
     dumpChildren(children.toArray(Node[]::new));
+    return null;
+  }
+
+  @Override
+  public Void visit(AssemblyDefinition definition) {
+    dumpNode(definition);
+    dumpNode(definition);
+    dumpChildren(definition.segments.toArray(Node[]::new));
     return null;
   }
 }

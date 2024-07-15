@@ -41,6 +41,11 @@ class MacroExpander implements ExprVisitor<Expr> {
   }
 
   @Override
+  public Expr visit(StringLiteral expr) {
+    return new StringLiteral(expr.value, expr.loc);
+  }
+
+  @Override
   public Expr visit(PlaceHolderExpr expr) {
     // FIXME: This could also be another macro
     var arg = (Expr) args.get(expr.identifier.name);

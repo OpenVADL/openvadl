@@ -107,6 +107,11 @@ class StackBasedSymbolTable implements DefinitionVisitor<Void> {
     return null;
   }
 
+  @Override
+  public Void visit(AssemblyDefinition definition) {
+    return null;
+  }
+
   void addMacro(Macro macro, SourceLocation loc) {
     verifyAvailable(macro.name().name, loc);
     symbols.add(new MacroSymbol(macro.name().name, macro));
@@ -123,6 +128,7 @@ class StackBasedSymbolTable implements DefinitionVisitor<Void> {
 
   @Nullable
   Symbol resolveSymbol(String name) {
+    // todo reverse
     return symbols.stream().filter(s -> s.name().equals(name)).findFirst().orElse(null);
   }
 
@@ -134,6 +140,18 @@ class StackBasedSymbolTable implements DefinitionVisitor<Void> {
     } else {
       errors.add(new VadlError(
           "Unknown format " + formatIdentifier.name, formatIdentifier.location(), null, null
+      ));
+    }
+  }
+
+  void loadInstructionFormat(Identifier instructionName) {
+    var format = resolveInstructionFormat(instructionName.name);
+    if (format != null) {
+      loadFormat(format.identifier);
+    } else {
+      errors.add(new VadlError(
+          "Unknown format for instruction " + instructionName.name, instructionName.location(),
+          null, null
       ));
     }
   }

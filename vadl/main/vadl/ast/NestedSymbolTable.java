@@ -106,6 +106,11 @@ class NestedSymbolTable implements DefinitionVisitor<Void> {
     return null;
   }
 
+  @Override
+  public Void visit(AssemblyDefinition definition) {
+    return null;
+  }
+
   void addMacro(Macro macro, SourceLocation loc) {
     verifyAvailable(macro.name().name, loc);
     symbols.put(macro.name().name, new MacroSymbol(macro.name().name, macro));
@@ -135,11 +140,23 @@ class NestedSymbolTable implements DefinitionVisitor<Void> {
   void loadFormat(Identifier formatIdentifier) {
     var format = resolveSymbol(formatIdentifier.name);
     if (format instanceof FormatSymbol formatSymbol) {
-      formatSymbol.definition.fields.forEach(field ->
-          defineSymbol(field.identifier.name, SymbolType.FORMAT_FIELD, field.location()));
+      formatSymbol.definition.fields.forEach(field -> symbols.put(field.identifier.name,
+              new BasicSymbol(field.identifier.name, SymbolType.FORMAT_FIELD)));
     } else {
       errors.add(new VadlError(
           "Unknown format " + formatIdentifier.name, formatIdentifier.location(), null, null
+      ));
+    }
+  }
+
+  void loadInstructionFormat(Identifier instructionName) {
+    var format = resolveInstructionFormat(instructionName.name);
+    if (format != null) {
+      loadFormat(format.identifier);
+    } else {
+      errors.add(new VadlError(
+          "Unknown format for instruction " + instructionName.name, instructionName.location(),
+          null, null
       ));
     }
   }

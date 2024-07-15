@@ -29,6 +29,11 @@ class Ungrouper implements ExprVisitor<Expr> {
   }
 
   @Override
+  public Expr visit(StringLiteral expr) {
+    return expr;
+  }
+
+  @Override
   public Expr visit(PlaceHolderExpr expr) {
     return expr;
   }

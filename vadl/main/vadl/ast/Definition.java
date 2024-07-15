@@ -3,6 +3,7 @@ package vadl.ast;
 import java.util.List;
 import java.util.Locale;
 import java.util.Objects;
+import java.util.stream.Collectors;
 import javax.annotation.Nullable;
 import vadl.utils.SourceLocation;
 
@@ -33,6 +34,8 @@ interface DefinitionVisitor<R> {
   R visit(InstructionDefinition definition);
 
   R visit(EncodingDefinition definition);
+
+  R visit(AssemblyDefinition definition);
 }
 
 class ConstantDefinition extends Definition {
@@ -730,5 +733,84 @@ class EncodingDefinition extends Definition {
     return result;
   }
 
-  record Entry(Identifier field, IntegerLiteral value) {}
+  record Entry(Identifier field, IntegerLiteral value) {
+  }
+}
+
+class AssemblyDefinition extends Definition {
+  final List<Identifier> identifiers;
+  final boolean isMnemonic;
+  final List<Node> segments;
+  final SourceLocation loc;
+
+  AssemblyDefinition(List<Identifier> identifiers, boolean isMnemonic, List<Node> segments,
+                     SourceLocation location) {
+    this.identifiers = identifiers;
+    this.isMnemonic = isMnemonic;
+    this.segments = segments;
+    this.loc = location;
+  }
+
+  @Override
+  SourceLocation location() {
+    return loc;
+  }
+
+  @Override
+  SyntaxType syntaxType() {
+    return CoreType.IsaDefs();
+  }
+
+  @Override
+  void prettyPrint(int indent, StringBuilder builder) {
+    builder.append(prettyIndentString(indent));
+    builder.append("assembly ");
+    builder.append(identifiers.stream().map(id -> id.name).collect(Collectors.joining(", ")));
+    builder.append(" = (");
+    if (isMnemonic) {
+      builder.append("mnemonic");
+    }
+    var isFirst = !isMnemonic;
+    for (Node node : segments) {
+      if (!isFirst) {
+        builder.append(", ");
+      }
+      node.prettyPrint(indent + 1, builder);
+      isFirst = false;
+    }
+    builder.append(")\n");
+  }
+
+  @Override
+  <R> R accept(DefinitionVisitor<R> visitor) {
+    return visitor.visit(this);
+  }
+
+  @Override
+  public String toString() {
+    return this.getClass().getSimpleName();
+  }
+
+  @Override
+  public boolean equals(Object o) {
+    if (this == o) {
+      return true;
+    }
+    if (o == null || getClass() != o.getClass()) {
+      return false;
+    }
+
+    var that = (AssemblyDefinition) o;
+    return Objects.equals(identifiers, that.identifiers)
+        && isMnemonic == that.isMnemonic
+        && Objects.equals(segments, that.segments);
+  }
+
+  @Override
+  public int hashCode() {
+    int result = Objects.hashCode(identifiers);
+    result = 31 * result + Boolean.hashCode(isMnemonic);
+    result = 31 * result + Objects.hashCode(segments);
+    return result;
+  }
 }

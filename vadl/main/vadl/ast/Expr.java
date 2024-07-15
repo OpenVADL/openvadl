@@ -19,6 +19,8 @@ interface ExprVisitor<R> {
 
   R visit(IntegerLiteral expr);
 
+  R visit(StringLiteral expr);
+
   R visit(PlaceHolderExpr expr);
 
   R visit(RangeExpr expr);
@@ -400,6 +402,66 @@ class IntegerLiteral extends Expr {
     int result = Long.hashCode(number);
     result = 31 * result + Objects.hashCode(token);
     return result;
+  }
+}
+
+class StringLiteral extends Expr {
+  String token;
+  String value;
+  SourceLocation loc;
+
+  private static String parse(String token) {
+    // TODO String parsing, escape sequences, etc
+    return token.substring(1, token.length() - 1);
+  }
+
+  public StringLiteral(String token, SourceLocation loc) {
+    this.token = token;
+    this.value = parse(token);
+    this.loc = loc;
+  }
+
+  @Override
+  SourceLocation location() {
+    return loc;
+  }
+
+  @Override
+  SyntaxType syntaxType() {
+    return CoreType.Str();
+  }
+
+  @Override
+  void prettyPrint(int indent, StringBuilder builder) {
+    builder.append(token);
+  }
+
+  @Override
+  <R> R accept(ExprVisitor<R> visitor) {
+    return visitor.visit(this);
+  }
+
+  @Override
+  public String toString() {
+    return "%s literal: \"%s\" (%s)".formatted(this.getClass().getSimpleName(), value, token);
+  }
+
+  @Override
+  public boolean equals(Object o) {
+    if (this == o) {
+      return true;
+    }
+    if (o == null || getClass() != o.getClass()) {
+      return false;
+    }
+
+    StringLiteral that = (StringLiteral) o;
+    return token.equals(that.token);
+  }
+
+  @Override
+  public int hashCode() {
+    return token.hashCode();
   }
 }
 
