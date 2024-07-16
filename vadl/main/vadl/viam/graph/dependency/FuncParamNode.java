@@ -50,7 +50,7 @@ public class FuncParamNode extends ParamNode {
   }
 
   @Override
-  public String generateOopExpression(SymbolTable symbolTable) {
+  public String generateOopExpression() {
     return parameter.name();
   }
 }

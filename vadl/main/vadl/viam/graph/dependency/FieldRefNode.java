@@ -65,7 +65,7 @@ public class FieldRefNode extends ParamNode {
   }
 
   @Override
-  public String generateOopExpression(SymbolTable symbolTable) {
+  public String generateOopExpression() {
     throw new RuntimeException("not implemented");
   }
 }

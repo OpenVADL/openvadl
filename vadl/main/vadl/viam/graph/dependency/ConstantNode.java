@@ -51,7 +51,7 @@ public class ConstantNode extends ExpressionNode {
   }
 
   @Override
-  public String generateOopExpression(SymbolTable symbolTable) {
+  public String generateOopExpression() {
     if(constant instanceof Constant.BitSlice) {
       throw new RuntimeException("not implemented");
     }

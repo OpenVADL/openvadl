@@ -7,8 +7,6 @@ import java.util.stream.Stream;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.Arguments;
 import org.junit.jupiter.params.provider.MethodSource;
-import vadl.oop.SymbolTable;
-import vadl.types.BoolType;
 import vadl.types.DataType;
 import vadl.viam.Constant;
 
@@ -32,6 +30,6 @@ class TypeCastNodeTest {
   void shouldGenerateOopExpression(DataType type, String expected) {
     var constant = new Constant.Value(BigInteger.ONE, DataType.unsignedInt(32));
     var node = new ConstantNode(constant);
-    assertEquals(expected, new TypeCastNode(node, type).generateOopExpression(new SymbolTable()));
+    assertEquals(expected, new TypeCastNode(node, type).generateOopExpression());
   }
 }

@@ -57,7 +57,7 @@ public class ReturnNode extends AbstractEndNode implements OopGeneratable {
   }
 
   @Override
-  public String generateOopExpression(SymbolTable symbolTable) {
-    return "return " + value.generateOopExpression(symbolTable);
+  public String generateOopExpression() {
+    return "return " + value.generateOopExpression();
   }
 }

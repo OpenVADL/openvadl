@@ -76,7 +76,7 @@ public class LetNode extends ExpressionNode {
   }
 
   @Override
-  public String generateOopExpression(SymbolTable symbolTable) {
+  public String generateOopExpression() {
     throw new RuntimeException("not implemented");
   }
 }

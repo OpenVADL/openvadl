@@ -75,6 +75,6 @@ class BuiltInCallTest {
     var builtIn =
         new BuiltInCall(BuiltInTable.ADD, new NodeList<>(node, node), DataType.unsignedInt(32));
 
-    assertEquals("1 + 1", builtIn.generateOopExpression(new SymbolTable()));
+    assertEquals("1 + 1", builtIn.generateOopExpression());
   }
 }

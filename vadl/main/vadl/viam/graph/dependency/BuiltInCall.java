@@ -8,6 +8,7 @@ import java.util.function.BiFunction;
 import java.util.stream.Collectors;
 import org.jetbrains.annotations.NotNull;
 import vadl.javaannotations.viam.DataValue;
+import vadl.oop.OopGeneratable;
 import vadl.oop.SymbolTable;
 import vadl.types.BuiltInTable;
 import vadl.types.BuiltInTable.BuiltIn;
@@ -119,8 +120,8 @@ public class BuiltInCall extends AbstractFunctionCallNode {
   }
 
   @Override
-  public String generateOopExpression(SymbolTable symbolTable) {
-    return arguments().stream().map(x -> x.generateOopExpression(symbolTable))
+  public String generateOopExpression() {
+    return arguments().stream().map(OopGeneratable::generateOopExpression)
         .collect(Collectors.joining(" " +
             Objects.requireNonNull(builtIn().operator()) + " "));
   }

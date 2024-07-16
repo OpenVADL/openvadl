@@ -5,7 +5,6 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import java.math.BigInteger;
 import org.junit.jupiter.api.Test;
 import vadl.AbstractTest;
-import vadl.oop.SymbolTable;
 import vadl.types.DataType;
 import vadl.viam.Constant;
 import vadl.viam.Function;
@@ -22,7 +21,7 @@ class FuncCallNodeTest extends AbstractTest {
             new Parameter[] {createParameter("parameterValue", DataType.unsignedInt(32))},
             DataType.unsignedInt(32)), DataType.unsignedInt(32));
 
-    assertEquals("nameValue(1)", funcCallNode.generateOopExpression(new SymbolTable()));
+    assertEquals("nameValue(1)", funcCallNode.generateOopExpression());
   }
 
   @Test
@@ -34,7 +33,7 @@ class FuncCallNodeTest extends AbstractTest {
             new Parameter[] {createParameter("parameterValue", DataType.unsignedInt(32))},
             DataType.unsignedInt(32)), DataType.unsignedInt(32));
 
-    assertEquals("nameValue(1,1)", funcCallNode.generateOopExpression(new SymbolTable()));
+    assertEquals("nameValue(1,1)", funcCallNode.generateOopExpression());
   }
 
 }
