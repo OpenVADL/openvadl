@@ -1,5 +1,7 @@
 package vadl.ast;
 
+import static vadl.ast.AstTestUtils.assertAstEquality;
+
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 import vadl.error.VadlException;
@@ -17,7 +19,7 @@ public class MacroTests {
         """;
     var prog2 = "constant n = 1 + 2";
 
-    Assertions.assertEquals(VadlParser.parse(prog1), VadlParser.parse(prog2));
+    assertAstEquality(VadlParser.parse(prog1), VadlParser.parse(prog2));
   }
 
   @Test
@@ -31,7 +33,7 @@ public class MacroTests {
         """;
     var prog2 = "constant n = ((1 + (2 * 3))  = 8) && ((7 + 9) > 10)";
 
-    Assertions.assertEquals(VadlParser.parse(prog1), VadlParser.parse(prog2));
+    assertAstEquality(VadlParser.parse(prog1), VadlParser.parse(prog2));
   }
 
   @Test
@@ -45,7 +47,7 @@ public class MacroTests {
         """;
     var prog2 = "constant n = 3 * (1 + 2)";
 
-    Assertions.assertEquals(VadlParser.parse(prog1), VadlParser.parse(prog2));
+    assertAstEquality(VadlParser.parse(prog1), VadlParser.parse(prog2));
   }
 
   @Test
@@ -71,7 +73,7 @@ public class MacroTests {
         """;
     var prog2 = "constant n = 3 * (1 + 2)";
 
-    Assertions.assertEquals(VadlParser.parse(prog1), VadlParser.parse(prog2));
+    assertAstEquality(VadlParser.parse(prog1), VadlParser.parse(prog2));
   }
 
   @Test
@@ -113,7 +115,6 @@ public class MacroTests {
           $test(SET ; F)
         }
         """;
-    VadlParser.parse(prog1);
 
     var prog2 = """
         instruction set architecture Test = {
@@ -125,6 +126,6 @@ public class MacroTests {
         }
         """;
 
-    Assertions.assertEquals(VadlParser.parse(prog1), VadlParser.parse(prog2));
+    assertAstEquality(VadlParser.parse(prog1), VadlParser.parse(prog2));
   }
 }

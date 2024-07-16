@@ -7,6 +7,15 @@ public class AstTestUtils {
     var progPretty = ast.prettyPrint();
     var astPretty = Assertions.assertDoesNotThrow(() -> VadlParser.parse(progPretty),
         "Cannot parse prettified input");
-    Assertions.assertEquals(ast, astPretty, "Prettified input Ast does not match input Ast");
+    assertAstEquality(astPretty, ast);
+  }
+
+  static void assertAstEquality(Ast actual, Ast expected) {
+    if (!actual.equals(expected)) {
+      var prettyActual = actual.prettyPrint();
+      var prettyExpected = expected.prettyPrint();
+      Assertions.assertEquals(actual, expected,
+          "Expected: " + prettyExpected + "Actual: " + prettyActual);
+    }
   }
 }
