@@ -97,4 +97,34 @@ public class MacroTests {
         """;
     Assertions.assertThrows(VadlException.class, () -> VadlParser.parse(prog));
   }
+
+  @Test
+  void passIdAsParameter() {
+    var prog1 = """
+        instruction set architecture Test = {
+          format F : Bits<32> = { bits [31..0] }
+          register A : Bits<32>
+          model test(opName: Id, instrFormat : Id) : IsaDefs = {
+            instruction $opName : $instrFormat = {
+              A := bits
+            }
+          }
+        
+          $test(SET ; F)
+        }
+        """;
+    VadlParser.parse(prog1);
+
+    var prog2 = """
+        instruction set architecture Test = {
+          format F : Bits<32> = { bits [31..0] }
+          register A : Bits<32>
+          instruction SET : F = {
+            A := bits
+          }
+        }
+        """;
+
+    Assertions.assertEquals(VadlParser.parse(prog1), VadlParser.parse(prog2));
+  }
 }

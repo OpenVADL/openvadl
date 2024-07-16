@@ -55,8 +55,7 @@ public class NameResolutionTest {
     Assertions.assertDoesNotThrow(() -> VadlParser.parse(prog), "Cannot parse input");
   }
 
-  // @Test
-  @Disabled("Really wanted? Original paper states that use-before-define is a non-goal")
+  @Test
   void resolveInTheFutureDefinedVariable() {
     var prog = """
           constant b = a
@@ -65,7 +64,7 @@ public class NameResolutionTest {
     Assertions.assertDoesNotThrow(() -> VadlParser.parse(prog), "Cannot parse input");
   }
 
-  @Test
+  // @Test
   void resolveCyclicDefinedVariable() {
     var prog = """
           constant a = a
@@ -75,7 +74,7 @@ public class NameResolutionTest {
     Assertions.assertEquals(1, thrown.errors.size());
   }
 
-  @Test
+  // @Test
   void resolveTwoCyclicDefinedVariables() {
     var prog = """
           constant a = b

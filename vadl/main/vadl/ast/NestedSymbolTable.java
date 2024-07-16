@@ -14,6 +14,7 @@ class NestedSymbolTable implements DefinitionVisitor<Void> {
   NestedSymbolTable parent = null;
   final List<NestedSymbolTable> children = new ArrayList<>();
   final Map<String, Symbol> symbols = new HashMap<>();
+  List<Requirement> requirements = new ArrayList<>();
   List<VadlError> errors = new ArrayList<>();
 
   void defineConstant(String name, SourceLocation loc) {
@@ -34,6 +35,18 @@ class NestedSymbolTable implements DefinitionVisitor<Void> {
     child.parent = this;
     child.errors = this.errors;
     this.children.add(child);
+    return child;
+  }
+
+  NestedSymbolTable createFormatScope(Identifier formatId) {
+    NestedSymbolTable child = createChild();
+    child.requirements.add(new FormatRequirement(formatId));
+    return child;
+  }
+
+  NestedSymbolTable createInstructionScope(Identifier instrId) {
+    NestedSymbolTable child = createChild();
+    child.requirements.add(new InstructionRequirement(instrId));
     return child;
   }
 
@@ -61,7 +74,8 @@ class NestedSymbolTable implements DefinitionVisitor<Void> {
   public Void visit(CounterDefinition definition) {
     var typeSymbol = resolveSymbol(definition.type.baseType.name);
     var typeDef = typeSymbol instanceof FormatSymbol s ? s.definition : null;
-    defineSymbol(new ValuedSymbol(definition.identifier.name, typeDef, SymbolType.COUNTER), definition.location());
+    defineSymbol(new ValuedSymbol(definition.identifier.name, typeDef, SymbolType.COUNTER),
+        definition.location());
     return null;
   }
 
@@ -75,7 +89,8 @@ class NestedSymbolTable implements DefinitionVisitor<Void> {
   public Void visit(RegisterDefinition definition) {
     var typeSymbol = resolveSymbol(definition.type.baseType.name);
     var typeDef = typeSymbol instanceof FormatSymbol s ? s.definition : null;
-    defineSymbol(new ValuedSymbol(definition.identifier.name, typeDef, SymbolType.REGISTER), definition.location());
+    defineSymbol(new ValuedSymbol(definition.identifier.name, typeDef, SymbolType.REGISTER),
+        definition.location());
     return null;
   }
 
@@ -87,21 +102,23 @@ class NestedSymbolTable implements DefinitionVisitor<Void> {
 
   @Override
   public Void visit(InstructionDefinition definition) {
-    verifyAvailable(definition.identifier.name, definition.location());
-    symbols.put(definition.identifier.name,
-        new InstructionSymbol(definition.identifier.name, definition));
+    if (definition.identifier instanceof Identifier id && definition.typeIdentifier instanceof Identifier typeId) {
+      defineSymbol(new InstructionSymbol(id.name, definition), definition.loc);
+      requirements.add(new SymbolRequirement(typeId.name, SymbolType.FORMAT, typeId.loc));
+    }
     return null;
   }
 
   @Override
   public Void visit(EncodingDefinition definition) {
-    var format = resolveInstructionFormat(definition.instrIdentifier.name);
-    if (format == null) {
+    var formatSymbol = requireInstructionFormat(definition.instrIdentifier);
+    if (formatSymbol == null) {
       errors.add(
           new VadlError("Unknown instruction " + definition.instrIdentifier.name,
               definition.location(), null, null));
       return null;
     }
+    var format = formatSymbol.definition;
     for (EncodingDefinition.Entry entry : definition.entries) {
       var name = entry.field().name;
       var field = format.fields.stream().filter(f -> f.identifier.name.equals(name)).findFirst();
@@ -145,44 +162,65 @@ class NestedSymbolTable implements DefinitionVisitor<Void> {
     }
   }
 
-  void loadFormat(Identifier formatIdentifier) {
-    var format = resolveSymbol(formatIdentifier.name);
-    if (format instanceof FormatSymbol formatSymbol) {
+  @Nullable
+  FormatSymbol requireFormat(Identifier formatId) {
+    var symbol = resolveSymbol(formatId.name);
+    if (symbol instanceof FormatSymbol formatSymbol) {
       formatSymbol.definition.fields.forEach(field -> symbols.put(field.identifier.name,
           new ValuedSymbol(field.identifier.name, null, SymbolType.FORMAT_FIELD)));
+      return formatSymbol;
     } else {
-      errors.add(new VadlError(
-          "Unknown format " + formatIdentifier.name, formatIdentifier.location(), null, null
-      ));
+      errors.add(
+          new VadlError("Unresolved format " + formatId.name, formatId.location(),
+              null, null));
+      return null;
     }
   }
-
-  void loadInstructionFormat(Identifier instructionName) {
-    var format = resolveInstructionFormat(instructionName.name);
-    if (format != null) {
-      loadFormat(format.identifier);
-    } else {
-      errors.add(new VadlError(
-          "Unknown format for instruction " + instructionName.name, instructionName.location(),
-          null, null
-      ));
-    }
-  }
-
 
   @Nullable
-  FormatDefinition resolveInstructionFormat(String name) {
-    var instruction = resolveSymbol(name);
-    if (instruction instanceof InstructionSymbol instructionSymbol) {
-      var format = resolveSymbol(instructionSymbol.definition.typeIdentifier.name);
-      if (format instanceof FormatSymbol formatSymbol) {
-        return formatSymbol.definition;
-      }
+  FormatSymbol requireInstructionFormat(Identifier instrId) {
+    var symbol = resolveSymbol(instrId.name);
+    if (symbol instanceof InstructionSymbol instructionSymbol
+        && instructionSymbol.definition.typeIdentifier instanceof Identifier typeId) {
+      return requireFormat(typeId);
+    } else {
+      errors.add(
+          new VadlError("Unresolved instruction " + instrId.name, instrId.location(),
+              null, null));
+      return null;
     }
-    return null;
   }
 
   void requireValue(VariableAccess var) {
+    requirements.add(new VariableAccessRequirement(var));
+  }
+
+  void validate() {
+    for (Requirement requirement : requirements) {
+      if (requirement instanceof SymbolRequirement req) {
+        var symbol = resolveSymbol(req.name);
+        if (symbol == null) {
+          errors.add(
+              new VadlError("Unresolved definition " + req.name, req.loc, null,
+                  null));
+        } else if (symbol.type() != req.type()) {
+          errors.add(new VadlError(
+              "Mismatched type %s: required %s, found %s".formatted(req.name, req.type.name(),
+                  symbol.type().name()), req.loc, null, null));
+        }
+      } else if (requirement instanceof VariableAccessRequirement req) {
+        validateValueAccess(req);
+      } else if (requirement instanceof FormatRequirement req) {
+        requireFormat(req.formatId);
+      } else if (requirement instanceof InstructionRequirement req) {
+        requireInstructionFormat(req.instrId);
+      }
+    }
+    children.forEach(NestedSymbolTable::validate);
+  }
+
+  void validateValueAccess(VariableAccessRequirement variableAccessRequirement) {
+    var var = variableAccessRequirement.variableAccess;
     var symbol = resolveSymbol(var.identifier.name);
     if (symbol == null) {
       errors.add(
@@ -263,5 +301,23 @@ class NestedSymbolTable implements DefinitionVisitor<Void> {
     public SymbolType type() {
       return SymbolType.INSTRUCTION;
     }
+  }
+
+  interface Requirement {
+
+  }
+
+
+  record SymbolRequirement(String name, SymbolType type, SourceLocation loc)
+      implements Requirement {
+  }
+
+  record VariableAccessRequirement(VariableAccess variableAccess) implements Requirement {
+  }
+
+  record FormatRequirement(Identifier formatId) implements Requirement {
+  }
+
+  record InstructionRequirement(Identifier instrId) implements Requirement {
   }
 }

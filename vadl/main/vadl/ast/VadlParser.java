@@ -59,8 +59,8 @@ public class VadlParser {
       }
     }
 
-    // errors.addAll(parser.nestedSymbolTable.errors);
-    errors.addAll(parser.stackBasedSymbolTable.errors);
+    parser.symbolTable.validate();
+    errors.addAll(parser.symbolTable.errors);
 
     if (!errors.isEmpty()) {
       throw new VadlException(errors);

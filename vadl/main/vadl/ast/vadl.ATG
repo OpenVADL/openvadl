@@ -21,8 +21,7 @@ import vadl.types.UIntType;
 COMPILER vadl
     boolean insideMacro = false;
     Ast ast = new Ast();
-    NestedSymbolTable nestedSymbolTable = new NestedSymbolTable();
-    StackBasedSymbolTable stackBasedSymbolTable = new StackBasedSymbolTable();
+    NestedSymbolTable symbolTable = new NestedSymbolTable();
     Ungrouper ungrouper = new Ungrouper();
 
     /**
@@ -70,7 +69,7 @@ COMPILER vadl
             return unexpanded;
         }
 
-        var macro = nestedSymbolTable.getMacro(identifier.name);
+        var macro = symbolTable.getMacro(identifier.name);
         if (macro == null) {
            errors.SemErr(t.line, t.col, "No macro named `%s` exists.".formatted(identifier.name));
            return unexpanded;
@@ -117,10 +116,13 @@ COMPILER vadl
 
          // FIXME: There should be a real instantziator here
          var body = macro.body();
-         if (body instanceof Expr) {
+         if (body instanceof Expr expr) {
             var expander = new MacroExpander();
-            body = expander.expandExpr((Expr)body, argMap);
+            body = expander.expandExpr(expr, argMap);
             body = new GroupExpr((Expr) body);
+         } else if (body instanceof Definition def) {
+            var expander = new MacroExpander();
+            body = expander.expandDefinition(def, argMap);
          } else {
             throw new RuntimeException("Expanding non expressions are not yet implemented");
          }
@@ -143,13 +145,27 @@ COMPILER vadl
     }
 
     void pushScope() {
-        nestedSymbolTable = nestedSymbolTable.createChild();
-        stackBasedSymbolTable.openScope();
+        symbolTable = symbolTable.createChild();
+    }
+
+    void pushFormatScope(Node formatId) {
+        if (formatId instanceof Identifier id) {
+            symbolTable = symbolTable.createFormatScope(id);
+        } else {
+            pushScope();
+        }
+    }
+
+    void pushInstructionScope(Node instrId) {
+        if (instrId instanceof Identifier id) {
+            symbolTable = symbolTable.createInstructionScope(id);
+        } else {
+            pushScope();
+        }
     }
 
     void popScope() {
-        nestedSymbolTable = nestedSymbolTable.parent;
-        stackBasedSymbolTable.closeScope();
+        symbolTable = symbolTable.parent;
     }
 
     SourceLocation loc() {
@@ -193,21 +209,22 @@ PRODUCTIONS
     .
 
     commonDefinitionSection<out Definition definition>              (. definition = null; .)
-    = constantDefinition<out Definition def>                        (. definition = def; def.accept(nestedSymbolTable); def.accept(stackBasedSymbolTable); .)
-    | formatDefinition<out Definition def>                          (. definition = def; def.accept(nestedSymbolTable); def.accept(stackBasedSymbolTable); .)
+    = constantDefinition<out Definition def>                        (. definition = def; def.accept(symbolTable); .)
+    | formatDefinition<out Definition def>                          (. definition = def; def.accept(symbolTable); .)
     .
 
     instructionsetDefinition<out InstructionSetDefinition isaDef>   (. var children = new ArrayList<Definition>(); pushScope(); .)
     = "instruction"                                                 (. var startLocation = loc(); .)
        "set" "architecture" identifier<out Identifier identifier>
        "=" "{"
-      {
-        isaDefinition<out Definition def>                           (. children.add(def); def.accept(nestedSymbolTable); def.accept(stackBasedSymbolTable); .)
-      }
+      {(
+        isaDefinition<out Definition def>                           (. children.add(def); def.accept(symbolTable); .)
+        | macroDef
+        | macroInstance<out Node b, CoreType.IsaDefs()>             (. children.add((Definition) b); .)
+      )}
       "}"                                                           (. isaDef = new InstructionSetDefinition(identifier, children, startLocation.join(loc()));
                                                                        popScope();
-                                                                       isaDef.accept(nestedSymbolTable);
-                                                                       isaDef.accept(stackBasedSymbolTable);
+                                                                       isaDef.accept(symbolTable);
                                                                      .)
 
 
@@ -266,10 +283,15 @@ PRODUCTIONS
     .
 
     instructionDefinition<out InstructionDefinition def> (. var startLocation = loc(); .)
-    = "instruction" identifier<out Identifier id>
-      ":" identifier<out Identifier formatIdentifier>    (. pushScope(); nestedSymbolTable.loadFormat(formatIdentifier); stackBasedSymbolTable.loadFormat(formatIdentifier); .)
-      "=" blockStatement<out BlockStatement behavior>    (. def = new InstructionDefinition(id, formatIdentifier, behavior, startLocation.join(loc()));
+    = "instruction" instructionIdentifier<out Node id>
+      ":" instructionIdentifier<out Node formatId>       (. pushFormatScope(formatId); .)
+      "=" blockStatement<out BlockStatement behavior>    (. def = new InstructionDefinition(id, formatId, behavior, startLocation.join(loc()));
                                                             popScope(); .)
+    .
+
+    instructionIdentifier<out Node n>         (. n = null; .)
+    = identifier<out Identifier id>           (. n = id; .)
+    | placeHolder<out Node ph, CoreType.Id()> (. n = ph; .)
     .
 
     encodingDefinition<out EncodingDefinition def>         (. var startLocation = loc(); var entries = new ArrayList<EncodingDefinition.Entry>(); .)
@@ -288,15 +310,16 @@ PRODUCTIONS
     .
 
     assemblyDefinition<out AssemblyDefinition def>         (. List<Identifier> ids = new ArrayList<>(); var start = loc(); .)
-    = "assembly" identifier<out Identifier id>             (. ids.add(id); nestedSymbolTable.loadInstructionFormat(id); stackBasedSymbolTable.loadInstructionFormat(id); .)
-      { "," identifier <out Identifier additionalId>       (. ids.add(additionalId); nestedSymbolTable.loadInstructionFormat(id); stackBasedSymbolTable.loadInstructionFormat(id); .) }
+    = "assembly" identifier<out Identifier id>             (. ids.add(id); pushInstructionScope(id); .)
+      { "," identifier <out Identifier additionalId>       (. ids.add(additionalId); pushInstructionScope(id); .) }
       "=" "("                                              (. var isMnemonic = false; List<Node> segments = new ArrayList<>(); .)
       (  "mnemonic"                                        (. isMnemonic = true; .)
         | stringLit<out StringLiteral lit1>                (. segments.add(lit1); .)
       ) { "," (
         stringLit<out StringLiteral lit2>                  (. segments.add(lit2); .)
         | term<out Expr expr>                              (. segments.add(expr); .)
-      )} ")"                                               (. def = new AssemblyDefinition(ids, isMnemonic, segments, start.join(loc())); .)
+      )} ")"                                               (. def = new AssemblyDefinition(ids, isMnemonic, segments, start.join(loc()));
+                                                              popScope(); .)
     .
 
     stringLit<out StringLiteral lit>
@@ -345,7 +368,7 @@ PRODUCTIONS
     .
 
     letStatement<out Statement letStatement>
-    = "let" identifier<out Identifier id>   (. pushScope(); nestedSymbolTable.defineConstant(id.name, loc()); stackBasedSymbolTable.defineConstant(id.name, loc()); .)
+    = "let" identifier<out Identifier id>   (. pushScope(); symbolTable.defineConstant(id.name, loc()); .)
       "=" expression<out Expr valueExpr>
       "in" statement<out Statement body>    (. letStatement = new LetStatement(id, valueExpr, body); popScope(); .)
     .
@@ -406,7 +429,7 @@ PRODUCTIONS
 
     term<out Expr expr>                             (. expr = null; .)
     = number                                        (. expr = new IntegerLiteral(t.val, loc()); .)
-    | variableAccess<out VariableAccess var>        (. expr = var; nestedSymbolTable.requireValue(var); stackBasedSymbolTable.requireValue(var);.)
+    | variableAccess<out VariableAccess var>        (. expr = var; if (!insideMacro) symbolTable.requireValue(var); .)
     | '(' expression<out Expr expr1> ')'            (. expr = new GroupExpr(expr1); .)
     | macroInstanceOrPlaceholder<out Node node1, CoreType.Ex()>  (. expr = (Expr)node1; .)
     .
@@ -460,15 +483,21 @@ PRODUCTIONS
     .
 
 
-    macroInstance<out Node body, SyntaxType requiredType>  = "$" identifier<out Identifier id>
-    "("                                             (. var args = new ArrayList<Node>(); .)
+    macroInstance<out Node body, SyntaxType requiredType>   (. var args = new ArrayList<Node>(); .)
+    = "$" identifier<out Identifier id>
+    "("
         [
-            expression<out Expr arg1>               (. args.add(arg1); .)
+            macroInstanceParam<out Node arg1>               (. args.add(arg1); .)
             {
-                ";" expression<out Expr arg2>       (.args.add(arg2); .)
+                ";" macroInstanceParam<out Node arg2>       (. args.add(arg2); .)
             }
         ]
     ")"         (. body = expandMacro(id, args, requiredType); .)
+    .
+
+    macroInstanceParam<out Node arg> (. arg = null; .)
+    = identifier<out Identifier id>  (. arg = id; .)
+    | expression<out Expr expr>      (. arg = expr; .)
     .
 
     macroDef
@@ -484,20 +513,20 @@ PRODUCTIONS
         ]
      ")"
     ":" syntaxType<out SyntaxType returnType> "="
-    "{"                                 (. Node body = null; insideMacro = true; .)
-        expression<out Expr bodyEx>     (. body = bodyEx; .)
-    "}"                                 (.
+    "{"                                   (. Node body = null; insideMacro = true; .)
+        ( expression<out Expr bodyEx>     (. body = bodyEx; .)
+        | isaDefinition<out Definition d> (. body = d; .)
+        )
+    "}"                                   (.
                                             insideMacro = false;
                                             var bodyType = body.syntaxType();
                                             if (!bodyType.isSubTypeOf(returnType)) {
                                                 errors.SemErr(t.line, t.col, "The macro signature promises to return `%s` but it's body is of type `%s`.".formatted(returnType, bodyType));
-                                                nestedSymbolTable.addMacro(new Macro(id, params, body, CoreType.Invalid()), startLoc.join(loc()));
-                                                stackBasedSymbolTable.addMacro(new Macro(id, params, body, CoreType.Invalid()), startLoc.join(loc()));
+                                                symbolTable.addMacro(new Macro(id, params, body, CoreType.Invalid()), startLoc.join(loc()));
                                             } else {
-                                                nestedSymbolTable.addMacro(new Macro(id, params, body, returnType), startLoc.join(loc()));
-                                                stackBasedSymbolTable.addMacro(new Macro(id, params, body, returnType), startLoc.join(loc()));
+                                                symbolTable.addMacro(new Macro(id, params, body, returnType), startLoc.join(loc()));
                                             }
-                                         .)
+                                           .)
     .
 
     syntaxType<out SyntaxType typ> = syntaxCoreType<out CoreType coreType> (. typ = coreType; .)
