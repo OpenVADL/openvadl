@@ -177,15 +177,18 @@ CHARACTERS
     binDigit = '0' .. '1'.
     hexDigit = '0' .. '9' + 'A' .. 'F' + 'a' .. 'f'.
     letter = 'a' .. 'z' + 'A' .. 'Z'.
-    anyButQuote = ANY - '"'.
+    validDQStringCharacters = ANY - '"' - "\\".
+    validSQStringCharacters = ANY - "'" - "\\".
 
 TOKENS
     number = digit {digit | "'"}
            | "0x" hexDigit {hexDigit | "'"}
            | "0b" binDigit {binDigit | "'"}
            .
-    identifierToken = letter {letter | digit | '_'}.
-    string = '"' {anyButQuote} '"'.
+    identifierToken = letter {letter | digit | "_"}.
+    string =
+    ( '"' { ("\\" letter | '"' | "'" | "\\") | validDQStringCharacters } '"') |
+    ( "'" { ("\\" letter | '"' | "'" | "\\") | validSQStringCharacters } "'").
 
     T_STATS = "Stats".
     T_STAT = "Stat".

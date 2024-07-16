@@ -410,14 +410,9 @@ class StringLiteral extends Expr {
   String value;
   SourceLocation loc;
 
-  private static String parse(String token) {
-    // TODO String parsing, escape sequences, etc
-    return token.substring(1, token.length() - 1);
-  }
-
   public StringLiteral(String token, SourceLocation loc) {
     this.token = token;
-    this.value = parse(token);
+    this.value = StringLiteralParser.parseString(token.substring(1, token.length() - 1));
     this.loc = loc;
   }
 
