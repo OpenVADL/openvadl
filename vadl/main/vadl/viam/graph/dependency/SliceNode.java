@@ -3,6 +3,7 @@ package vadl.viam.graph.dependency;
 import java.util.List;
 import vadl.javaannotations.viam.DataValue;
 import vadl.javaannotations.viam.Input;
+import vadl.oop.SymbolTable;
 import vadl.types.DataType;
 import vadl.types.Type;
 import vadl.viam.Constant;
@@ -90,5 +91,10 @@ public class SliceNode extends ExpressionNode {
   @Override
   public Node shallowCopy() {
     return new SliceNode(value, slice, type());
+  }
+
+  @Override
+  public String generateOopExpression() {
+    throw new RuntimeException("not implemented");
   }
 }

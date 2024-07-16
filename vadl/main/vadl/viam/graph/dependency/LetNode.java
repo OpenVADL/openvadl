@@ -3,6 +3,7 @@ package vadl.viam.graph.dependency;
 import java.util.List;
 import vadl.javaannotations.viam.DataValue;
 import vadl.javaannotations.viam.Input;
+import vadl.oop.SymbolTable;
 import vadl.types.Type;
 import vadl.viam.Identifier;
 import vadl.viam.graph.GraphVisitor;
@@ -72,5 +73,10 @@ public class LetNode extends ExpressionNode {
   @Override
   public Node shallowCopy() {
     return new LetNode(identifier, expression);
+  }
+
+  @Override
+  public String generateOopExpression() {
+    throw new RuntimeException("not implemented");
   }
 }

@@ -2,6 +2,8 @@ package vadl.viam.graph.control;
 
 import java.util.List;
 import vadl.javaannotations.viam.Input;
+import vadl.oop.OopGeneratable;
+import vadl.oop.SymbolTable;
 import vadl.types.Type;
 import vadl.viam.graph.GraphVisitor;
 import vadl.viam.graph.Node;
@@ -13,7 +15,7 @@ import vadl.viam.graph.dependency.SideEffectNode;
 /**
  * Represents the end node of the control flow graph of a pure function.
  */
-public class ReturnNode extends AbstractEndNode {
+public class ReturnNode extends AbstractEndNode implements OopGeneratable {
 
   @Input
   public ExpressionNode value;
@@ -52,5 +54,10 @@ public class ReturnNode extends AbstractEndNode {
   @Override
   public Node shallowCopy() {
     return new ReturnNode(value);
+  }
+
+  @Override
+  public String generateOopExpression() {
+    return "return " + value.generateOopExpression();
   }
 }

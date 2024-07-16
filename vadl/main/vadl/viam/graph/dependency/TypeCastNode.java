@@ -1,8 +1,14 @@
 package vadl.viam.graph.dependency;
 
+import static vadl.oop.CppTypeMap.getCppTypeNameByVadlType;
+
 import java.util.List;
 import vadl.javaannotations.viam.DataValue;
+import vadl.oop.SymbolTable;
+import vadl.types.BoolType;
+import vadl.types.SIntType;
 import vadl.types.Type;
+import vadl.types.UIntType;
 import vadl.viam.graph.Node;
 import vadl.viam.graph.NodeList;
 import vadl.viam.graph.control.InstrCallNode;
@@ -36,5 +42,11 @@ public class TypeCastNode extends UnaryNode {
   @Override
   public Node shallowCopy() {
     return new TypeCastNode(value, type());
+  }
+
+  @Override
+  public String generateOopExpression() {
+    return "(" + getCppTypeNameByVadlType(castType) + ") "
+        + value.generateOopExpression();
   }
 }

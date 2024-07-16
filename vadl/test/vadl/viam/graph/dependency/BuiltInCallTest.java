@@ -5,10 +5,13 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.math.BigInteger;
 import java.util.stream.Stream;
+import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.Arguments;
 import org.junit.jupiter.params.provider.MethodSource;
+import vadl.oop.SymbolTable;
 import vadl.types.BuiltInTable;
+import vadl.types.DataType;
 import vadl.types.SIntType;
 import vadl.types.Type;
 import vadl.viam.Constant;
@@ -61,6 +64,17 @@ class BuiltInCallTest {
 
     assertTrue(result.isPresent());
     var value = (Constant.Value) expected.constant();
-    assertEquals(value.value(), ((Constant.Value) ((ConstantNode) result.get()).constant()).value());
+    assertEquals(value.value(),
+        ((Constant.Value) ((ConstantNode) result.get()).constant()).value());
+  }
+
+  @Test
+  void generateOopExpression_shouldGenerateOop() {
+    var constant = new Constant.Value(BigInteger.ONE, DataType.unsignedInt(32));
+    var node = new ConstantNode(constant);
+    var builtIn =
+        new BuiltInCall(BuiltInTable.ADD, new NodeList<>(node, node), DataType.unsignedInt(32));
+
+    assertEquals("1 + 1", builtIn.generateOopExpression());
   }
 }
