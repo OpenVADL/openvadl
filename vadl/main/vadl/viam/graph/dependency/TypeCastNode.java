@@ -46,7 +46,7 @@ public class TypeCastNode extends UnaryNode {
 
   @Override
   public String generateOopExpression() {
-    return "(" + getCppTypeNameByVadlType(castType) + ") " +
-        value.generateOopExpression();
+    return "(" + getCppTypeNameByVadlType(castType) + ") "
+        + value.generateOopExpression();
   }
 }

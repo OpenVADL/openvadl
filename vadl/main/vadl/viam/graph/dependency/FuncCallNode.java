@@ -76,8 +76,8 @@ public class FuncCallNode extends AbstractFunctionCallNode {
 
   @Override
   public String generateOopExpression() {
-    return this.function.name() + "(" +
-        args.stream().map(OopGeneratable::generateOopExpression).collect(
-            Collectors.joining(",")) + ")";
+    return this.function.name() + "("
+        + args.stream().map(OopGeneratable::generateOopExpression).collect(
+        Collectors.joining(",")) + ")";
   }
 }

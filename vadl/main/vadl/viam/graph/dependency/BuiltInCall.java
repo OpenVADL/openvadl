@@ -122,7 +122,7 @@ public class BuiltInCall extends AbstractFunctionCallNode {
   @Override
   public String generateOopExpression() {
     return arguments().stream().map(OopGeneratable::generateOopExpression)
-        .collect(Collectors.joining(" " +
-            Objects.requireNonNull(builtIn().operator()) + " "));
+        .collect(Collectors.joining(" "
+            + Objects.requireNonNull(builtIn().operator()) + " "));
   }
 }

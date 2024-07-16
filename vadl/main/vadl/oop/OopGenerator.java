@@ -34,6 +34,9 @@ public class OopGenerator {
     return returnNode.generateOopExpression();
   }
 
+  /**
+   * Generate a cpp function from the given {@link Function}.
+   */
   public String generateFunction(Function function) {
     return generateFunctionHeader(function) + " {\n" +
         generateFunctionBody(function) + ";\n}";

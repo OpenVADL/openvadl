@@ -5,7 +5,14 @@ import vadl.types.SIntType;
 import vadl.types.Type;
 import vadl.types.UIntType;
 
+/**
+ * This class is a mapping layer for {@link Type} and
+ * the corresponding cpp type.
+ */
 public class CppTypeMap {
+  /**
+   * Returns the cpp type given the {@link Type}.
+   */
   public static String getCppTypeNameByVadlType(Type type) {
     if (type instanceof BoolType) {
       return "bool";
