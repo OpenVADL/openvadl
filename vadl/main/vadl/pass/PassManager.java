@@ -7,6 +7,8 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import vadl.pass.exception.DuplicatedPassKeyException;
 import vadl.viam.Specification;
 
@@ -16,6 +18,7 @@ import vadl.viam.Specification;
  * The execution of the passes happens in the same order as they were inserted.
  */
 public class PassManager {
+  private static final Logger logger = LoggerFactory.getLogger(PassManager.class);
   /**
    * Stores the results of the passes.
    */
@@ -34,6 +37,7 @@ public class PassManager {
    *                                    was added.
    */
   public void add(PassKey key, Pass pass) throws DuplicatedPassKeyException {
+    logger.atDebug().log("Adding pass with key: {}", key.value());
     if (hasDuplicatedPassKey(key)) {
       throw new DuplicatedPassKeyException(key);
     }
@@ -46,11 +50,13 @@ public class PassManager {
    */
   public void run(Specification viam) throws IOException {
     for (var step : pipeline) {
+      logger.atDebug().log("Running pass with key: {}", step.key());
       // Wrapping the passResults into an unmodifiable map so a pass cannot modify
       // the results.
       var passResult = step.pass().execute(Collections.unmodifiableMap(passResults), viam);
 
       if (passResult != null) {
+        logger.atDebug().log("Storing result of pass with key: {}", step.key());
         var previousResult = passResults.put(step.key(), passResult);
 
         // The pipeline's steps should be deterministic.
@@ -58,6 +64,7 @@ public class PassManager {
         // that it is a bug because we schedule the same pass with the same key multiple times.
         assert previousResult == null;
       }
+      logger.atDebug().log("Pass completed with key: {}", step.key());
     }
   }
 
