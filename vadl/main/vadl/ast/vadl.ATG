@@ -185,9 +185,82 @@ TOKENS
            | "0b" binDigit {binDigit | "'"}
            .
     identifierToken = letter {letter | digit | '_'}.
-    file = "file".
-    else = "else".
     string = '"' {anyButQuote} '"'.
+
+    T_STATS = "Stats".
+    T_STAT = "Stat".
+    T_ENCS = "Encs".
+    T_ISA_DEFS = "IsaDefs".
+    T_EX = "Ex".
+    T_LIT = "Lit".
+    T_STR = "Str".
+    T_VAL = "Val".
+    T_BOOL = "Bool".
+    T_INT = "Int".
+    T_BIN = "Bin".
+    T_CALL_EX = "CallEx".
+    T_SYM_EX = "SymEx".
+    T_ID = "Id".
+    T_BIN_OP = "BinOp".
+    T_UN_OP = "UnOp".
+
+    INSTRUCTION = "instruction".
+    SET = "set".
+    ARCHITECTURE = "architecture".
+    CONSTANT = "constant".
+    FORMAT = "format".
+    PROGRAM = "program".
+    GROUP = "group".
+    COUNTER = "counter".
+    ENCODING = "encoding".
+    ASSEMBLY = "assembly".
+    MNEMONIC = "mnemonic".
+    MEMORY = "memory".
+    REGISTER = "register".
+    MODEL = "model".
+    FILE = "file".
+    LET = "let".
+    IN = "in".
+    KW_IF = "if".
+    THEN = "then".
+    ELSE = "else".
+
+    SYM_EQ = "=".
+    SYM_GT = ">".
+    SYM_LT = "<".
+    SYM_NEQ = "!=".
+    SYM_GTE = ">=".
+    SYM_LTE = "<=".
+    SYM_MUL = "*".
+    SYM_DIV = "/".
+    SYM_MOD = "%".
+    SYM_DOT = ".".
+    SYM_SHR = ">>".
+    SYM_SHL = "<<".
+    SYM_ROTR = "<>>".
+    SYM_ROTL = "<<>".
+    SYM_EXCL = "!".
+    SYM_PLUS = "+".
+    SYM_MINUS = "-".
+    SYM_TILDE = "~".
+    SYM_COLON = ":".
+    SYM_COMMA = ",".
+    SYM_CARET = "^".
+    SYM_BINOR = "|".
+    SYM_LOGOR = "||".
+    SYM_ARROW = "->".
+    SYM_RANGE = "..".
+    SYM_BINAND = "&".
+    SYM_LOGAND = "&&".
+    SYM_ASSIGN = ":=".
+    SYM_DOLLAR = "$".
+    SYM_SEMICOLON = ";".
+    SYM_PAREN_OPEN = "(".
+    SYM_BRACK_OPEN = "[".
+    SYM_BRACE_OPEN = "{".
+    SYM_PAREN_CLOSE = ")".
+    SYM_BRACK_CLOSE = "]".
+    SYM_BRACE_CLOSE = "}".
 
 COMMENTS FROM "//" TO '\n'
 COMMENTS FROM "/*" TO "*/" NESTED
@@ -214,20 +287,18 @@ PRODUCTIONS
     .
 
     instructionsetDefinition<out InstructionSetDefinition isaDef>   (. var children = new ArrayList<Definition>(); pushScope(); .)
-    = "instruction"                                                 (. var startLocation = loc(); .)
-       "set" "architecture" identifier<out Identifier identifier>
-       "=" "{"
+    = INSTRUCTION                                                   (. var startLocation = loc(); .)
+      SET ARCHITECTURE identifier<out Identifier identifier>
+      SYM_EQ SYM_BRACE_OPEN
       {(
         isaDefinition<out Definition def>                           (. children.add(def); def.accept(symbolTable); .)
         | macroDef
         | macroInstance<out Node b, CoreType.IsaDefs()>             (. children.add((Definition) b); .)
       )}
-      "}"                                                           (. isaDef = new InstructionSetDefinition(identifier, children, startLocation.join(loc()));
+      SYM_BRACE_CLOSE                                               (. isaDef = new InstructionSetDefinition(identifier, children, startLocation.join(loc()));
                                                                        popScope();
                                                                        isaDef.accept(symbolTable);
-                                                                     .)
-
-
+                                                                    .)
       .
 
     isaDefinition<out Definition def>                       (. def = null; .)
@@ -238,54 +309,50 @@ PRODUCTIONS
     | encodingDefinition<out Definition d>                  (. def = d; .)
     | assemblyDefinition<out Definition d>                  (. def = d; .)
     | memoryDefinition<out Definition d>                    (. def = d; .)
-    | IF (scanner.Peek().kind == _file) registerFileDefinition<out Definition d>   (. def = d; .)
+    | IF (scanner.Peek().kind == _FILE) registerFileDefinition<out Definition d>   (. def = d; .)
     | registerDefinition<out Definition d>   (. def = d; .)
     .
 
     constantDefinition<out ConstantDefinition def>      (. TypeLiteral type = null; .)
-    = "constant"                                        (. var startLocation = loc(); .)
+    = CONSTANT                                          (. var startLocation = loc(); .)
         identifier<out Identifier id>
-        [
-            ':' typeLiteral<out TypeLiteral t1>         (. type = t1; .)
-        ]
-        '=' expression<out Expr expr>                   (. def = new ConstantDefinition(id, type, expr, startLocation.join(loc())); .)
+        [ SYM_COLON typeLiteral<out TypeLiteral t1>     (. type = t1; .) ]
+        SYM_EQ expression<out Expr expr>                (. def = new ConstantDefinition(id, type, expr, startLocation.join(loc())); .)
     .
 
     formatDefinition<out FormatDefinition def>                      (. List<FormatDefinition.FormatField> fields = new ArrayList<>();.)
-    = "format"                                                      (. var startLoc = loc(); .)
+    = FORMAT                                                        (. var startLoc = loc(); .)
     identifier<out Identifier id>
-    ":" typeLiteral<out TypeLiteral type>
-    ["=" "{"
+    SYM_COLON typeLiteral<out TypeLiteral type>
+    [SYM_EQ SYM_BRACE_OPEN
         formatField<out FormatDefinition.FormatField f1>            (. fields.add(f1); .)
         {
-        "," formatField<out FormatDefinition.FormatField f2>        (. fields.add(f2); .)
+        SYM_COMMA formatField<out FormatDefinition.FormatField f2>  (. fields.add(f2); .)
         }
-    "}"]                                                            (. def = new FormatDefinition(id, type, fields, startLoc.join(loc())); .)
+    SYM_BRACE_CLOSE]                                                (. def = new FormatDefinition(id, type, fields, startLoc.join(loc())); .)
     .
 
     // FIXME: more versions are missing here
     formatField<out FormatDefinition.FormatField field>
-    = identifier<out Identifier id>  "["            (. List<RangeExpr> ranges = new ArrayList<>();.)
-        rangeExpression<out RangeExpr e1>           (. ranges.add(e1); .)
-        {
-            "," rangeExpression<out RangeExpr e2>   (. ranges.add(e2); .)
-        }
-    "]"                                             (. field = new FormatDefinition.FormatField(id, ranges); .)
+    = identifier<out Identifier id> SYM_BRACK_OPEN    (. List<RangeExpr> ranges = new ArrayList<>();.)
+        rangeExpression<out RangeExpr e1>             (. ranges.add(e1); .)
+        { SYM_COMMA rangeExpression<out RangeExpr e2> (. ranges.add(e2); .) }
+    SYM_BRACK_CLOSE                                   (. field = new FormatDefinition.FormatField(id, ranges); .)
     .
 
     counterDefinition<out CounterDefinition def>    (. CounterDefinition.CounterKind kind = null; .)
-    = ("program"                                    (. kind = PROGRAM; .)
-    |  "group"                                      (. kind = GROUP; .)
+    = ( PROGRAM                                     (. kind = PROGRAM; .)
+      | GROUP                                       (. kind = GROUP; .)
     )                                               (. var startLocation = loc(); .)
-    "counter"
+    COUNTER
         identifier<out Identifier id>
-        ":" typeLiteral<out TypeLiteral t1>         (. def = new CounterDefinition(kind, id, t1, startLocation.join(loc())); .)
+        SYM_COLON typeLiteral<out TypeLiteral t1>   (. def = new CounterDefinition(kind, id, t1, startLocation.join(loc())); .)
     .
 
     instructionDefinition<out InstructionDefinition def> (. var startLocation = loc(); .)
-    = "instruction" instructionIdentifier<out Node id>
-      ":" instructionIdentifier<out Node formatId>       (. pushFormatScope(formatId); .)
-      "=" blockStatement<out BlockStatement behavior>    (. def = new InstructionDefinition(id, formatId, behavior, startLocation.join(loc()));
+    = INSTRUCTION instructionIdentifier<out Node id>
+      SYM_COLON instructionIdentifier<out Node formatId> (. pushFormatScope(formatId); .)
+      SYM_EQ blockStatement<out BlockStatement behavior> (. def = new InstructionDefinition(id, formatId, behavior, startLocation.join(loc()));
                                                             popScope(); .)
     .
 
@@ -294,31 +361,29 @@ PRODUCTIONS
     | placeHolder<out Node ph, CoreType.Id()> (. n = ph; .)
     .
 
-    encodingDefinition<out EncodingDefinition def>         (. var startLocation = loc(); var entries = new ArrayList<EncodingDefinition.Entry>(); .)
-    = "encoding" identifier<out Identifier instrId>
-      "=" "{"
-      encodingEntry<out EncodingDefinition.Entry e1>       (. entries.add(e1); .)
-      { "," encodingEntry<out EncodingDefinition.Entry e2> (. entries.add(e2); .)
-      }
-      "}"                                                  (. def = new EncodingDefinition(instrId, entries, startLocation.join(loc())); .)
+    encodingDefinition<out EncodingDefinition def>               (. var startLocation = loc(); var entries = new ArrayList<EncodingDefinition.Entry>(); .)
+    = ENCODING identifier<out Identifier instrId>
+      SYM_EQ SYM_BRACE_OPEN
+      encodingEntry<out EncodingDefinition.Entry e1>             (. entries.add(e1); .)
+      { SYM_COMMA encodingEntry<out EncodingDefinition.Entry e2> (. entries.add(e2); .) }
+      SYM_BRACE_CLOSE                                            (. def = new EncodingDefinition(instrId, entries, startLocation.join(loc())); .)
     .
 
     encodingEntry<out EncodingDefinition.Entry e>
     = identifier<out Identifier id>
-      "="
-      number                                               (. e = new EncodingDefinition.Entry(id, new IntegerLiteral(t.val, loc())); .)
+      SYM_EQ number                                        (. e = new EncodingDefinition.Entry(id, new IntegerLiteral(t.val, loc())); .)
     .
 
     assemblyDefinition<out AssemblyDefinition def>         (. List<Identifier> ids = new ArrayList<>(); var start = loc(); .)
-    = "assembly" identifier<out Identifier id>             (. ids.add(id); pushInstructionScope(id); .)
-      { "," identifier <out Identifier additionalId>       (. ids.add(additionalId); pushInstructionScope(id); .) }
-      "=" "("                                              (. var isMnemonic = false; List<Node> segments = new ArrayList<>(); .)
-      (  "mnemonic"                                        (. isMnemonic = true; .)
+    = ASSEMBLY identifier<out Identifier id>               (. ids.add(id); pushInstructionScope(id); .)
+      { SYM_COMMA identifier <out Identifier additionalId> (. ids.add(additionalId); pushInstructionScope(id); .) }
+      SYM_EQ SYM_PAREN_OPEN                                (. var isMnemonic = false; List<Node> segments = new ArrayList<>(); .)
+      (  MNEMONIC                                          (. isMnemonic = true; .)
         | stringLit<out StringLiteral lit1>                (. segments.add(lit1); .)
-      ) { "," (
+      ) { SYM_COMMA (
         stringLit<out StringLiteral lit2>                  (. segments.add(lit2); .)
         | term<out Expr expr>                              (. segments.add(expr); .)
-      )} ")"                                               (. def = new AssemblyDefinition(ids, isMnemonic, segments, start.join(loc()));
+      )} SYM_PAREN_CLOSE                                   (. def = new AssemblyDefinition(ids, isMnemonic, segments, start.join(loc()));
                                                               popScope(); .)
     .
 
@@ -327,24 +392,24 @@ PRODUCTIONS
     .
 
     memoryDefinition<out MemoryDefinition def>
-    = "memory"                                  (. var startLocation = loc(); .)
-        identifier<out Identifier id>
-        ":" typeLiteral<out TypeLiteral t1>
-        "->" typeLiteral<out TypeLiteral t2>    (. def = new MemoryDefinition(id, t1, t2, startLocation.join(t2.location())); .)
+    = MEMORY                                    (. var startLocation = loc(); .)
+      identifier<out Identifier id>
+      SYM_COLON typeLiteral<out TypeLiteral t1>
+      SYM_ARROW typeLiteral<out TypeLiteral t2> (. def = new MemoryDefinition(id, t1, t2, startLocation.join(t2.location())); .)
     .
 
     registerDefinition<out RegisterDefinition def>
-        = "register"                                        (. var startLocation = loc(); .)
-          identifier<out Identifier id>
-          ":" typeLiteral<out TypeLiteral t1>               (. def = new RegisterDefinition(id, t1, startLocation.join(t1.location())); .)
+    = REGISTER                                          (. var startLocation = loc(); .)
+      identifier<out Identifier id>
+      SYM_COLON typeLiteral<out TypeLiteral t1>         (. def = new RegisterDefinition(id, t1, startLocation.join(t1.location())); .)
     .
 
     registerFileDefinition<out Definition def>
-        = "register"                                        (. var startLocation = loc(); .)
-              "file"
-              identifier<out Identifier id>
-              ":" typeLiteral<out TypeLiteral t1>
-              "->" typeLiteral<out TypeLiteral t2>          (. def = new RegisterFileDefinition(id, t1, t2, startLocation.join(t2.location())); .)
+    = REGISTER                                          (. var startLocation = loc(); .)
+      FILE
+      identifier<out Identifier id>
+      SYM_COLON typeLiteral<out TypeLiteral t1>
+      SYM_ARROW typeLiteral<out TypeLiteral t2>         (. def = new RegisterFileDefinition(id, t1, t2, startLocation.join(t2.location())); .)
     .
 
 
@@ -358,25 +423,27 @@ PRODUCTIONS
     .
 
     blockStatement<out BlockStatement block>   (. block = new BlockStatement(); pushScope(); .)
-    = "{" {
+    = SYM_BRACE_OPEN {
         statement<out Statement statement>     (. block.add(statement); .)
-     } "}"                                     (. popScope(); .)
+     } SYM_BRACE_CLOSE                         (. popScope(); .)
     .
 
     assignment<out Statement statement>
-    = variableAccess<out VariableAccess var> ":=" expression<out Expr expr> (. statement = new AssignmentStatement(var, expr); .)
+    = variableAccess<out VariableAccess var>
+      SYM_ASSIGN
+      expression<out Expr expr> (. statement = new AssignmentStatement(var, expr); .)
     .
 
     letStatement<out Statement letStatement>
-    = "let" identifier<out Identifier id>   (. pushScope(); symbolTable.defineConstant(id.name, loc()); .)
-      "=" expression<out Expr valueExpr>
-      "in" statement<out Statement body>    (. letStatement = new LetStatement(id, valueExpr, body); popScope(); .)
+    = LET identifier<out Identifier id>   (. pushScope(); symbolTable.defineConstant(id.name, loc()); .)
+      SYM_EQ expression<out Expr valueExpr>
+      IN statement<out Statement body>    (. letStatement = new LetStatement(id, valueExpr, body); popScope(); .)
     .
 
     ifStatement<out Statement ifStatement>
-    = "if" expression<out Expr condition>
-      "then" statement<out Statement thenStmt>     (. ifStatement = new IfStatement(condition, thenStmt, null);     .)
-      [ IF (la.kind == _else) "else" statement<out Statement elseStmt>   (. ifStatement = new IfStatement(condition, thenStmt, elseStmt); .) ]
+    = KW_IF expression<out Expr condition>
+      THEN statement<out Statement thenStmt>                         (. ifStatement = new IfStatement(condition, thenStmt, null);     .)
+      [ IF (la.kind == _ELSE) ELSE statement<out Statement elseStmt> (. ifStatement = new IfStatement(condition, thenStmt, elseStmt); .) ]
     .
 
     // -- EXPRESSIONS --------------------------------------------------------------------------------------------------
@@ -399,62 +466,62 @@ PRODUCTIONS
     .
 
     unaryOperator<out UnaryOperator op> (. op = null; .)
-    = "-" (. op = UnaryOperator.NEGATIVE; .)
-    | "!" (. op = UnaryOperator.LOG_NOT; .)
-    | "~" (. op = UnaryOperator.COMPLEMENT; .)
+    = SYM_MINUS (. op = UnaryOperator.NEGATIVE; .)
+    | SYM_EXCL  (. op = UnaryOperator.LOG_NOT; .)
+    | SYM_TILDE (. op = UnaryOperator.COMPLEMENT; .)
     .
 
     binaryOperator <out Operator op>    (.op = null;.)
-    = "||"  (. op = Operator.LogicalOr(); .)
-    | "&&"  (. op = Operator.LogicalAnd(); .)
-    | "|"   (. op = Operator.Or(); .)
-    | "^"   (. op = Operator.Xor(); .)
-    | "&"   (. op = Operator.And(); .)
-    | "="   (. op = Operator.Equal(); .)
-    | "!="  (. op = Operator.NotEqual(); .)
-    | ">="  (. op = Operator.GreaterEqual(); .)
-    | ">"   (. op = Operator.Greater(); .)
-    | "<="  (. op = Operator.LessEqual(); .)
-    | "<"   (. op = Operator.Less(); .)
-    | "<>>" (. op = Operator.RotateRight(); .)
-    | "<<>" (. op = Operator.RotateLeft(); .)
-    | ">>"  (. op = Operator.ShiftRight(); .)
-    | "<<"  (. op = Operator.ShiftLeft(); .)
-    | "+"   (. op = Operator.Add(); .)
-    | "-"   (. op = Operator.Subtract(); .)
-    | "*"   (. op = Operator.Multiply(); .)
-    | "/"   (. op = Operator.Divide(); .)
-    | "%"   (. op = Operator.Modulo(); .)
+    = SYM_LOGOR  (. op = Operator.LogicalOr(); .)
+    | SYM_LOGAND (. op = Operator.LogicalAnd(); .)
+    | SYM_BINOR  (. op = Operator.Or(); .)
+    | SYM_CARET  (. op = Operator.Xor(); .)
+    | SYM_BINAND (. op = Operator.And(); .)
+    | SYM_EQ     (. op = Operator.Equal(); .)
+    | SYM_NEQ    (. op = Operator.NotEqual(); .)
+    | SYM_GTE    (. op = Operator.GreaterEqual(); .)
+    | SYM_GT     (. op = Operator.Greater(); .)
+    | SYM_LTE    (. op = Operator.LessEqual(); .)
+    | SYM_LT     (. op = Operator.Less(); .)
+    | SYM_ROTR   (. op = Operator.RotateRight(); .)
+    | SYM_ROTL   (. op = Operator.RotateLeft(); .)
+    | SYM_SHR    (. op = Operator.ShiftRight(); .)
+    | SYM_SHL    (. op = Operator.ShiftLeft(); .)
+    | SYM_PLUS   (. op = Operator.Add(); .)
+    | SYM_MINUS  (. op = Operator.Subtract(); .)
+    | SYM_MUL    (. op = Operator.Multiply(); .)
+    | SYM_DIV    (. op = Operator.Divide(); .)
+    | SYM_MOD    (. op = Operator.Modulo(); .)
     .
 
-    term<out Expr expr>                             (. expr = null; .)
-    = number                                        (. expr = new IntegerLiteral(t.val, loc()); .)
-    | variableAccess<out VariableAccess var>        (. expr = var; if (!insideMacro) symbolTable.requireValue(var); .)
-    | '(' expression<out Expr expr1> ')'            (. expr = new GroupExpr(expr1); .)
-    | macroInstanceOrPlaceholder<out Node node1, CoreType.Ex()>  (. expr = (Expr)node1; .)
+    term<out Expr expr>                                         (. expr = null; .)
+    = number                                                    (. expr = new IntegerLiteral(t.val, loc()); .)
+    | variableAccess<out VariableAccess var>                    (. expr = var; if (!insideMacro) symbolTable.requireValue(var); .)
+    | SYM_PAREN_OPEN expression<out Expr expr1> SYM_PAREN_CLOSE (. expr = new GroupExpr(expr1); .)
+    | macroInstanceOrPlaceholder<out Node node1, CoreType.Ex()> (. expr = (Expr)node1; .)
     .
 
     variableAccess<out VariableAccess var>
-    = identifier<out Identifier id>                 (. var = new VariableAccess(id, null); .)
-      [ "." variableAccess<out VariableAccess next> (. var = new VariableAccess(id, next); .)]
+    = identifier<out Identifier id>                     (. var = new VariableAccess(id, null); .)
+      [ SYM_DOT variableAccess<out VariableAccess next> (. var = new VariableAccess(id, next); .)]
     .
 
     rangeExpression<out RangeExpr expr>
-    = expression<out Expr e1> ".." expression<out Expr e2> (. expr = new RangeExpr(e1, e2);.)
+    = expression<out Expr e1> SYM_RANGE expression<out Expr e2> (. expr = new RangeExpr(e1, e2);.)
     .
 
     // -- PRIMETIVES ---------------------------------------------------------------------------------------------------
 
     typeLiteral<out TypeLiteral type>       (. type = null; Expr sizeExpr = null; .)
     =
-    "Bool"                                  (. var loc = loc(); type = new TypeLiteral(new Identifier(t.val, loc), null, loc); .)
+    T_BOOL                                  (. var loc = loc(); type = new TypeLiteral(new Identifier(t.val, loc), null, loc); .)
     |
      (
         identifier<out Identifier id>
-        [ "<"
+        [ SYM_LT
             // FIXME: There is a LL(1) conflict if switching ot expression
             term<out Expr expr>             (. sizeExpr = expr; .)
-        ">" ]                               (. type = new TypeLiteral(id, sizeExpr, id.location().join(loc())) ;.)
+        SYM_GT ]                            (. type = new TypeLiteral(id, sizeExpr, id.location().join(loc())) ;.)
     )
     .
 
@@ -468,56 +535,60 @@ PRODUCTIONS
     .
 
     placeHolder<out Node body, SyntaxType requiredType>
-    = "$"                                               (. var startloc = loc(); var args = new ArrayList<Node>(); .)
+    = SYM_DOLLAR                                            (. var startloc = loc(); var args = new ArrayList<Node>(); .)
     identifier<out Identifier id>
     [
-        "("
+        SYM_PAREN_OPEN
             [
-                expression<out Expr arg1>               (. args.add(arg1); .)
+                expression<out Expr arg1>                   (. args.add(arg1); .)
                 {
-                    ";" expression<out Expr arg2>       (.args.add(arg2); .)
+                    SYM_SEMICOLON expression<out Expr arg2> (.args.add(arg2); .)
                 }
             ]
-        ")"
-    ]                                                   (. body = new PlaceHolderExpr(id, args, startloc.join(loc())); .)
+        SYM_PAREN_CLOSE
+    ]                                                       (. body = new PlaceHolderExpr(id, args, startloc.join(loc())); .)
     .
 
 
-    macroInstance<out Node body, SyntaxType requiredType>   (. var args = new ArrayList<Node>(); .)
-    = "$" identifier<out Identifier id>
-    "("
+    macroInstance<out Node body, SyntaxType requiredType>       (. var args = new ArrayList<Node>(); .)
+    = SYM_DOLLAR identifier<out Identifier id>
+    SYM_PAREN_OPEN
         [
-            macroInstanceParam<out Node arg1>               (. args.add(arg1); .)
+            macroInstanceParam<out Node arg1>                   (. args.add(arg1); .)
             {
-                ";" macroInstanceParam<out Node arg2>       (. args.add(arg2); .)
+                SYM_SEMICOLON macroInstanceParam<out Node arg2> (. args.add(arg2); .)
             }
         ]
-    ")"         (. body = expandMacro(id, args, requiredType); .)
+    SYM_PAREN_CLOSE                                             (. body = expandMacro(id, args, requiredType); .)
     .
 
-    macroInstanceParam<out Node arg> (. arg = null; .)
-    = identifier<out Identifier id>  (. arg = id; .)
-    | expression<out Expr expr>      (. arg = expr; .)
+    macroInstanceParam<out Node arg>                                 (. arg = null; .)
+    = IF (la.kind == _identifierToken) identifier<out Identifier id> (. arg = id; .)
+    | expression<out Expr expr>                                      (. arg = expr; .)
     .
 
     macroDef
-    = "model"                           (. var startLoc = loc(); .)
+    = MODEL                                         (. var startLoc = loc(); .)
     identifier<out Identifier id>
-    "("                                 (. var params = new ArrayList<MacroParam>(); .)
+    SYM_PAREN_OPEN                                  (. var params = new ArrayList<MacroParam>(); .)
         [
-            identifier<out Identifier paramId1> ":" syntaxType<out SyntaxType synType1> (. params.add(new MacroParam(paramId1, synType1)); .)
+            identifier<out Identifier paramId1>
+            SYM_COLON
+            syntaxType<out SyntaxType synType1>     (. params.add(new MacroParam(paramId1, synType1)); .)
             {
-                ","
-                identifier<out Identifier paramId2> ":" syntaxType<out SyntaxType synType2> (. params.add(new MacroParam(paramId2, synType2)); .)
+                SYM_COMMA
+                identifier<out Identifier paramId2>
+                SYM_COLON
+                syntaxType<out SyntaxType synType2> (. params.add(new MacroParam(paramId2, synType2)); .)
             }
         ]
-     ")"
-    ":" syntaxType<out SyntaxType returnType> "="
-    "{"                                   (. Node body = null; insideMacro = true; .)
+     SYM_PAREN_CLOSE
+    SYM_COLON syntaxType<out SyntaxType returnType> SYM_EQ
+    SYM_BRACE_OPEN                        (. Node body = null; insideMacro = true; .)
         ( expression<out Expr bodyEx>     (. body = bodyEx; .)
         | isaDefinition<out Definition d> (. body = d; .)
         )
-    "}"                                   (.
+    SYM_BRACE_CLOSE                       (.
                                             insideMacro = false;
                                             var bodyType = body.syntaxType();
                                             if (!bodyType.isSubTypeOf(returnType)) {
@@ -533,22 +604,22 @@ PRODUCTIONS
     .
 
     syntaxCoreType<out CoreType typ>  (. typ = null; .)
-    = "Stats"       (. typ = CoreType.Stats(); .)
-    | "Stat"        (. typ = CoreType.Stat(); .)
-    | "Encs"        (. typ = CoreType.Encs(); .)
-    | "IsaDefs"     (. typ = CoreType.IsaDefs(); .)
-    | "Ex"          (. typ = CoreType.Ex(); .)
-    | "Lit"         (. typ = CoreType.Lit(); .)
-    | "Str"         (. typ = CoreType.Str(); .)
-    | "Val"         (. typ = CoreType.Val(); .)
-    | "Bool"        (. typ = CoreType.Bool(); .)
-    | "Int"         (. typ = CoreType.Int(); .)
-    | "Bin"         (. typ = CoreType.Bin(); .)
-    | "CallEx"      (. typ = CoreType.CallEx(); .)
-    | "SymEx"       (. typ = CoreType.SymEx(); .)
-    | "Id"          (. typ = CoreType.Id(); .)
-    | "BinOp"       (. typ = CoreType.BinOp(); .)
-    | "UnOp"        (. typ = CoreType.UnOp(); .)
+    = T_STATS        (. typ = CoreType.Stats(); .)
+    | T_STAT         (. typ = CoreType.Stat(); .)
+    | T_ENCS         (. typ = CoreType.Encs(); .)
+    | T_ISA_DEFS     (. typ = CoreType.IsaDefs(); .)
+    | T_EX           (. typ = CoreType.Ex(); .)
+    | T_LIT          (. typ = CoreType.Lit(); .)
+    | T_STR          (. typ = CoreType.Str(); .)
+    | T_VAL          (. typ = CoreType.Val(); .)
+    | T_BOOL         (. typ = CoreType.Bool(); .)
+    | T_INT          (. typ = CoreType.Int(); .)
+    | T_BIN          (. typ = CoreType.Bin(); .)
+    | T_CALL_EX      (. typ = CoreType.CallEx(); .)
+    | T_SYM_EX       (. typ = CoreType.SymEx(); .)
+    | T_ID           (. typ = CoreType.Id(); .)
+    | T_BIN_OP       (. typ = CoreType.BinOp(); .)
+    | T_UN_OP        (. typ = CoreType.UnOp(); .)
     .
 
 
