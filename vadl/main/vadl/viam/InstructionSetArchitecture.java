@@ -14,6 +14,9 @@ public class InstructionSetArchitecture extends Definition {
 
   private final List<Register> registers;
   private final List<RegisterFile> registerFiles;
+
+  // The pc of the ISA. This field does not "own" the register
+  // but only references it. The pc register is "owned" by the `registers` field.
   @Nullable
   private final Register.Index pc;
 
