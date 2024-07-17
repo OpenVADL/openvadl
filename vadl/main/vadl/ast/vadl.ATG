@@ -114,15 +114,15 @@ COMPILER vadl
            return unexpanded;
         }
 
-         // FIXME: There should be a real instantziator here
+         // FIXME: There should be a real instantiator here
          var body = macro.body();
          if (body instanceof Expr expr) {
-            var expander = new MacroExpander();
-            body = expander.expandExpr(expr, argMap);
+            var expander = new MacroExpander(argMap, symbolTable);
+            body = expander.expandExpr(expr);
             body = new GroupExpr((Expr) body);
          } else if (body instanceof Definition def) {
-            var expander = new MacroExpander();
-            body = expander.expandDefinition(def, argMap);
+            var expander = new MacroExpander(argMap, symbolTable);
+            body = expander.expandDefinition(def);
          } else {
             throw new RuntimeException("Expanding non expressions are not yet implemented");
          }

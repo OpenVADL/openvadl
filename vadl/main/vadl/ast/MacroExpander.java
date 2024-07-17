@@ -1,21 +1,27 @@
 package vadl.ast;
 
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
+import java.util.Optional;
 import vadl.error.VadlError;
 import vadl.error.VadlException;
 
 /**
  * Expands and copies a macro template.
  */
-class MacroExpander implements ExprVisitor<Node>, DefinitionVisitor<Node> {
-  Map<String, Node> args = new HashMap<>();
+class MacroExpander implements ExprVisitor<Node>, DefinitionVisitor<Node>, StatementVisitor<Statement> {
+  final Map<String, Node> args;
+  NestedSymbolTable symbols;
   List<VadlError> errors = new ArrayList<>();
 
-  public Expr expandExpr(Expr expr, Map<String, Node> args) {
+  MacroExpander(Map<String, Node> args, NestedSymbolTable symbols) {
     this.args = args;
+    this.symbols = symbols;
+  }
+
+  public Expr expandExpr(Expr expr) {
     var result = expr.accept(this);
     if (!errors.isEmpty()) {
       throw new VadlException(errors);
@@ -23,8 +29,7 @@ class MacroExpander implements ExprVisitor<Node>, DefinitionVisitor<Node> {
     return (Expr) result;
   }
 
-  public Node expandDefinition(Definition def, Map<String, Node> args) {
-    this.args = args;
+  public Node expandDefinition(Definition def) {
     var result = def.accept(this);
     if (!errors.isEmpty()) {
       throw new VadlException(errors);
@@ -80,6 +85,7 @@ class MacroExpander implements ExprVisitor<Node>, DefinitionVisitor<Node> {
 
   @Override
   public Expr visit(VariableAccess expr) {
+    symbols.requireValue(expr);
     return new VariableAccess(expr.identifier, expr.next);
   }
 
@@ -125,12 +131,24 @@ class MacroExpander implements ExprVisitor<Node>, DefinitionVisitor<Node> {
 
   @Override
   public Definition visit(InstructionDefinition definition) {
-    return new InstructionDefinition(
-        definition.identifier instanceof PlaceHolderExpr p ? p.accept(this) : definition.identifier,
-        definition.typeIdentifier instanceof PlaceHolderExpr p ? p.accept(this) : definition.identifier,
-        definition.behavior,
+    var identifier = resolvePlaceholderOrIdentifier(definition.identifier);
+    var typeId = resolvePlaceholderOrIdentifier(definition.typeIdentifier);
+    symbols = symbols.createFormatScope(typeId);
+    var result = new InstructionDefinition(
+        identifier,
+        typeId,
+        visit(definition.behavior),
         definition.loc
     );
+    symbols = Objects.requireNonNull(symbols.parent);
+    return result;
+  }
+
+  private Identifier resolvePlaceholderOrIdentifier(Node n) {
+    if (n instanceof PlaceHolderExpr p) {
+      return (Identifier) p.accept(this);
+    }
+    return (Identifier) n;
   }
 
   @Override
@@ -141,5 +159,46 @@ class MacroExpander implements ExprVisitor<Node>, DefinitionVisitor<Node> {
   @Override
   public Definition visit(AssemblyDefinition definition) {
     return definition;
+  }
+
+  @Override
+  public BlockStatement visit(BlockStatement blockStatement) {
+    symbols = symbols.createChild();
+    var result = new BlockStatement(
+        blockStatement.statements().stream().map(s -> s.accept(this)).toList()
+    );
+    symbols = Objects.requireNonNull(symbols.parent);
+    return result;
+  }
+
+  @Override
+  public Statement visit(LetStatement letStatement) {
+    symbols = symbols.createChild();
+    symbols.defineConstant(letStatement.identifier().name, letStatement.identifier().loc);
+    var result = new LetStatement(
+        letStatement.identifier(),
+        (Expr) letStatement.valueExpression().accept(this),
+        letStatement.body().accept(this)
+    );
+    symbols = Objects.requireNonNull(symbols.parent);
+    return result;
+  }
+
+  @Override
+  public Statement visit(IfStatement ifStatement) {
+    return new IfStatement(
+        (Expr) ifStatement.condition().accept(this),
+        ifStatement.thenStmt().accept(this),
+        Optional.ofNullable(ifStatement.elseStmt()).map(s -> s.accept(this)).orElse(null)
+    );
+  }
+
+  @Override
+  public Statement visit(AssignmentStatement assignmentStatement) {
+    symbols.requireValue(assignmentStatement.target());
+    return new AssignmentStatement(
+        assignmentStatement.target(),
+        (Expr) assignmentStatement.valueExpression().accept(this)
+    );
   }
 }

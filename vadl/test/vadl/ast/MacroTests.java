@@ -128,4 +128,23 @@ public class MacroTests {
 
     assertAstEquality(VadlParser.parse(prog1), VadlParser.parse(prog2));
   }
+
+  @Test
+  void validatesSymbolAvailabilityAtCallSite() {
+    var prog = """
+        instruction set architecture Test = {
+          format F : Bits<32> = { bits [31..0] }
+          register A : Bits<32>
+          model test(opName: Id, instrFormat : Id) : IsaDefs = {
+            instruction $opName : $instrFormat = {
+              A := bots // Typo!
+            }
+          }
+        
+          $test(SET ; F)
+        }
+        """;
+
+    Assertions.assertThrows(VadlException.class, () -> VadlParser.parse(prog));
+  }
 }

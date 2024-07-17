@@ -5,8 +5,30 @@ import java.util.List;
 import javax.annotation.Nullable;
 
 // TODO Extend Node
-interface Statement {
+sealed interface Statement permits BlockStatement, LetStatement, IfStatement, AssignmentStatement {
   void prettyPrint(int indent, StringBuilder builder);
+
+  default <T> T accept(StatementVisitor<T> visitor) {
+    // TODO Use exhaustive switch with patterns in future Java versions
+    if (this instanceof BlockStatement b) {
+      return visitor.visit(b);
+    } else if (this instanceof LetStatement l) {
+      return visitor.visit(l);
+    } else if (this instanceof IfStatement i) {
+      return visitor.visit(i);
+    } else if (this instanceof AssignmentStatement a) {
+      return visitor.visit(a);
+    } else {
+      throw new IllegalStateException("Unhandled statement type " + getClass().getSimpleName());
+    }
+  }
+}
+
+interface StatementVisitor<T> {
+  T visit(BlockStatement blockStatement);
+  T visit(LetStatement letStatement);
+  T visit(IfStatement ifStatement);
+  T visit(AssignmentStatement assignmentStatement);
 }
 
 record BlockStatement(List<Statement> statements) implements Statement {
