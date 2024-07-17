@@ -2,6 +2,7 @@ package vadl.viam;
 
 import java.util.List;
 import java.util.stream.Stream;
+import javax.annotation.Nullable;
 
 /**
  * An Instruction Set Architecture (ISA) definition of a VADL specification.
@@ -10,10 +11,16 @@ public class InstructionSetArchitecture extends Definition {
 
   private final List<Instruction> instructions;
   private final List<PseudoInstruction> pseudoInstructions;
+
   private final List<Register> registers;
   private final List<RegisterFile> registerFiles;
+  @Nullable
+  private final Register.Index pc;
+
   private final List<Format> formats;
   private final List<Memory> memories;
+
+
   private final Specification specification;
 
   /**
@@ -23,6 +30,7 @@ public class InstructionSetArchitecture extends Definition {
    * @param specification the parent specification of the ISA
    * @param registers     the registers in the ISA. This also includes sub-registers
    * @param registerFiles the register files in the ISA
+   * @param pc            the program counter of the ISA
    * @param formats       the list of formats associated with the ISA
    * @param instructions  the list of instructions associated with the ISA
    */
@@ -33,6 +41,7 @@ public class InstructionSetArchitecture extends Definition {
                                     List<PseudoInstruction> pseudoInstructions,
                                     List<Register> registers,
                                     List<RegisterFile> registerFiles,
+                                    @Nullable Register.Index pc,
                                     List<Memory> memories
   ) {
     super(identifier);
@@ -42,6 +51,7 @@ public class InstructionSetArchitecture extends Definition {
     this.instructions = instructions;
     this.pseudoInstructions = pseudoInstructions;
     this.registerFiles = registerFiles;
+    this.pc = pc;
     this.memories = memories;
   }
 
@@ -59,6 +69,11 @@ public class InstructionSetArchitecture extends Definition {
 
   public List<RegisterFile> registerFiles() {
     return registerFiles;
+  }
+
+  @Nullable
+  public Register.Index pc() {
+    return pc;
   }
 
   /**

@@ -115,4 +115,50 @@ public class Register extends Resource {
   public String toString() {
     return identifier.simpleName() + ": " + resultType;
   }
+
+  /**
+   * The index register with its {@link Position} definition. E.g. the program counter
+   * and the group counter definitions are both {@link Index} definitions.
+   */
+  public static class Index extends Register {
+
+    /**
+     * The position of the index.
+     *
+     * <p>{@code CURRENT} defines the counter to point to the start of the currently defined
+     * instruction (group). When no annotation is given this is the default behavior.
+     * This mode is the best for ARM AArch64 and RISC-V architectures. {@code NEXT} defines the
+     * counter to point to the end of the currently defined instruction (group).
+     * This mode is the best for Alpha and MIPS architectures. {@code NEXT_NEXT} defines the program
+     * counter to point to the end of the instruction after the currently defined instruction
+     * which is required to have the same size of the currently defined instruction.
+     * If the sizes are different the behavior is undefined. The {@code NEXT_NEXT} is not
+     * valid for group counters.
+     */
+    public enum Position {
+      CURRENT,
+      NEXT,
+      NEXT_NEXT
+    }
+
+    private final Position position;
+
+    /**
+     * Constructions a new register definition.
+     *
+     * @param identifier the unique identifier of the definition
+     * @param resultType the result type of the register
+     * @param position   program pointer behavior of the PC
+     */
+    public Index(Identifier identifier, DataType resultType, Position position) {
+      super(identifier, resultType, AccessKind.PARTIAL, AccessKind.PARTIAL, null,
+          new Register[] {});
+      this.position = position;
+    }
+
+    public Position position() {
+      return position;
+    }
+  }
+
 }
