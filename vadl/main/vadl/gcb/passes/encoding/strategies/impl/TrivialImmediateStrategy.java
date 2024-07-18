@@ -1,7 +1,6 @@
 package vadl.gcb.passes.encoding.strategies.impl;
 
 import vadl.gcb.passes.encoding.strategies.EncodingGenerationStrategy;
-import vadl.types.BuiltInTable;
 import vadl.viam.Constant;
 import vadl.viam.Format;
 import vadl.viam.Parameter;
@@ -9,8 +8,6 @@ import vadl.viam.ViamError;
 import vadl.viam.graph.control.ReturnNode;
 import vadl.viam.graph.control.StartNode;
 import vadl.viam.graph.dependency.BuiltInCall;
-import vadl.viam.graph.dependency.ConstantNode;
-import vadl.viam.graph.dependency.ExpressionNode;
 import vadl.viam.graph.dependency.FuncParamNode;
 import vadl.viam.graph.dependency.SliceNode;
 
@@ -59,7 +56,5 @@ public class TrivialImmediateStrategy implements EncodingGenerationStrategy {
     } else {
       throw new ViamError("An encoding must already exist");
     }
-
-
   }
 }

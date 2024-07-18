@@ -1,7 +1,9 @@
 package vadl.gcb.passes.encoding.strategies.impl;
 
 import java.util.Collections;
+import java.util.List;
 import org.jetbrains.annotations.Nullable;
+import vadl.gcb.matching.impl.NegatedNodeMatcher;
 import vadl.gcb.passes.encoding.nodes.NegatedNode;
 import vadl.gcb.passes.encoding.strategies.EncodingGenerationStrategy;
 import vadl.types.BuiltInTable;
@@ -17,7 +19,9 @@ import vadl.viam.graph.dependency.FieldRefNode;
 import vadl.viam.graph.dependency.FuncParamNode;
 import vadl.viam.graph.dependency.SliceNode;
 import vadl.viam.matching.TreeMatcher;
+import vadl.viam.matching.impl.AnyNodeMatcher;
 import vadl.viam.matching.impl.BuiltInMatcher;
+import vadl.viam.matching.impl.FieldRefNodeMatcher;
 
 /**
  * This strategy will create an encoding when the access function only contains add or sub.
@@ -74,7 +78,12 @@ public class ArithmeticImmediateStrategy implements EncodingGenerationStrategy {
     var fieldRefs = copy.getNodes(FieldRefNode.class).toList();
     var fieldRef = fieldRefs.get(0);
 
-    var isFieldInAdditionOnRHS = fieldRef.usages().noneMatch(x -> x instanceof NegatedNode);
+    var hasFieldSubtractionOnRHS =
+        TreeMatcher.matches(copy.getNodes(), new BuiltInMatcher(BuiltInTable.ADD, List.of(
+            new AnyNodeMatcher(),
+            new NegatedNodeMatcher(new FieldRefNodeMatcher())
+        )));
+
     // We always create a negated parameter because the equation has always f(x) on the LHS.
     var negated = new NegatedNode(new FuncParamNode(
         parameter
@@ -83,7 +92,7 @@ public class ArithmeticImmediateStrategy implements EncodingGenerationStrategy {
 
     // The else branch is not required because the field is positive on the LHS.
     // Only when the field is subtracted on the LHS, we need to rewrite the equation.
-    if (isFieldInAdditionOnRHS) {
+    if (hasFieldSubtractionOnRHS.isEmpty()) {
       // This case is more complicated because the LHS has f(x) - field = XXX
       // If we subtract the f(x) then: - field = XXX is left
       // Which means that we have to invert every operand.
