@@ -1,6 +1,5 @@
 package vadl.gcb.passes.encoding.nodes;
 
-import vadl.gcb.passes.encoding.GenerateFieldAccessEncodingFunctionPass;
 import vadl.types.Type;
 import vadl.viam.graph.Node;
 import vadl.viam.graph.dependency.ExpressionNode;
@@ -23,5 +22,10 @@ public class NegatedNode extends UnaryNode {
   @Override
   public Node shallowCopy() {
     return new NegatedNode(value, type());
+  }
+
+  @Override
+  public String generateOopExpression() {
+    return "(-1 * " + value.generateOopExpression() + ")";
   }
 }
