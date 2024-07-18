@@ -9,6 +9,7 @@ import java.util.Collections;
 import java.util.List;
 import org.junit.jupiter.api.Test;
 import vadl.AbstractTest;
+import vadl.gcb.passes.encoding.GenerateFieldAccessEncodingFunctionPass;
 import vadl.types.BitsType;
 import vadl.types.BuiltInTable;
 import vadl.types.DataType;

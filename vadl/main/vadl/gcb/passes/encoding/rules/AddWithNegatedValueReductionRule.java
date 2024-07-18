@@ -1,14 +1,16 @@
-package vadl.viam.passes.algebraic_simplication.rules;
+package vadl.gcb.passes.encoding.rules;
 
 import java.math.BigInteger;
 import java.util.Optional;
-import vadl.gcb.passes.GenerateFieldAccessEncodingFunctionPass;
+import vadl.gcb.passes.encoding.GenerateFieldAccessEncodingFunctionPass;
+import vadl.gcb.passes.encoding.nodes.NegatedNode;
 import vadl.types.BuiltInTable;
 import vadl.types.DataType;
 import vadl.viam.Constant;
 import vadl.viam.graph.Node;
 import vadl.viam.graph.dependency.BuiltInCall;
 import vadl.viam.graph.dependency.ConstantNode;
+import vadl.viam.passes.algebraic_simplication.rules.AlgebraicSimplificationRule;
 
 /**
  * - (+ a a) and
@@ -24,7 +26,7 @@ public class AddWithNegatedValueReductionRule implements AlgebraicSimplification
         var arguments = cast.arguments().stream().toList();
 
         if (arguments
-            .get(1) instanceof GenerateFieldAccessEncodingFunctionPass.NegatedNode negatedNode) {
+            .get(1) instanceof NegatedNode negatedNode) {
           if (negatedNode.value().equals(arguments.get(0))) {
             return Optional.of(
                 new ConstantNode(new Constant.Value(BigInteger.ZERO, (DataType) cast.type())));
