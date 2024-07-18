@@ -17,21 +17,21 @@ public class CppTypeMap {
     if (type instanceof BoolType) {
       return "bool";
     } else if (type instanceof SIntType && ((SIntType) type).bitWidth() == 8) {
-      return "char";
+      return "int8_t";
     } else if (type instanceof SIntType && ((SIntType) type).bitWidth() == 16) {
-      return "short int";
+      return "int16_t";
     } else if (type instanceof SIntType && ((SIntType) type).bitWidth() == 32) {
-      return "long int";
+      return "int32_t";
     } else if (type instanceof SIntType && ((SIntType) type).bitWidth() == 64) {
-      return "long long int";
+      return "int64_t";
     } else if (type instanceof UIntType && ((UIntType) type).bitWidth() == 8) {
-      return "unsigned char";
+      return "uint8_t";
     } else if (type instanceof UIntType && ((UIntType) type).bitWidth() == 16) {
-      return "unsigned short int";
+      return "uint16_t";
     } else if (type instanceof UIntType && ((UIntType) type).bitWidth() == 32) {
-      return "unsigned long int";
+      return "uint32_t";
     } else if (type instanceof UIntType && ((UIntType) type).bitWidth() == 64) {
-      return "unsigned long long int";
+      return "uint64_t";
     }
 
     throw new RuntimeException("not implemented");

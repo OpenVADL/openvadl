@@ -14,14 +14,14 @@ class TypeCastNodeTest {
   public static Stream<Arguments> getTypes() {
     return Stream.of(
         Arguments.of(DataType.bool(), "(bool) 1"),
-        Arguments.of(DataType.signedInt(8), "(char) 1"),
-        Arguments.of(DataType.signedInt(16), "(short int) 1"),
-        Arguments.of(DataType.signedInt(32), "(long int) 1"),
-        Arguments.of(DataType.signedInt(64), "(long long int) 1"),
-        Arguments.of(DataType.unsignedInt(8), "(unsigned char) 1"),
-        Arguments.of(DataType.unsignedInt(16), "(unsigned short int) 1"),
-        Arguments.of(DataType.unsignedInt(32), "(unsigned long int) 1"),
-        Arguments.of(DataType.unsignedInt(64), "(unsigned long long int) 1")
+        Arguments.of(DataType.signedInt(8), "(int8_t) 1"),
+        Arguments.of(DataType.signedInt(16), "(int16_t) 1"),
+        Arguments.of(DataType.signedInt(32), "(int32_t) 1"),
+        Arguments.of(DataType.signedInt(64), "(int64_t) 1"),
+        Arguments.of(DataType.unsignedInt(8), "(uint8_t) 1"),
+        Arguments.of(DataType.unsignedInt(16), "(uint16_t) 1"),
+        Arguments.of(DataType.unsignedInt(32), "(uint32_t) 1"),
+        Arguments.of(DataType.unsignedInt(64), "(uint64_t) 1")
     );
   }
 
