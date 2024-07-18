@@ -4,7 +4,8 @@ import java.util.List;
 import vadl.javaannotations.viam.Input;
 import vadl.oop.OopGeneratable;
 import vadl.types.Type;
-import vadl.viam.graph.GraphEdgeVisitor;
+import vadl.viam.graph.GraphVisitor;
+import vadl.viam.graph.GraphNodeVisitor;
 import vadl.viam.graph.Node;
 import vadl.viam.graph.NodeList;
 import vadl.viam.graph.dependency.ExpressionNode;
@@ -34,7 +35,7 @@ public class ReturnNode extends AbstractEndNode implements OopGeneratable {
   }
 
   @Override
-  protected void applyOnInputsUnsafe(GraphEdgeVisitor.Applier<Node> visitor) {
+  protected void applyOnInputsUnsafe(GraphVisitor.Applier<Node> visitor) {
     super.applyOnInputsUnsafe(visitor);
     value = visitor.apply(this, value, ExpressionNode.class);
   }
@@ -53,6 +54,11 @@ public class ReturnNode extends AbstractEndNode implements OopGeneratable {
   @Override
   public Node shallowCopy() {
     return new ReturnNode(value);
+  }
+
+  @Override
+  public void accept(GraphNodeVisitor visitor) {
+    visitor.visit(this);
   }
 
   @Override

@@ -3,7 +3,8 @@ package vadl.viam.graph.control;
 import java.util.List;
 import vadl.javaannotations.viam.Input;
 import vadl.javaannotations.viam.Successor;
-import vadl.viam.graph.GraphEdgeVisitor;
+import vadl.viam.graph.GraphVisitor;
+import vadl.viam.graph.GraphNodeVisitor;
 import vadl.viam.graph.Node;
 import vadl.viam.graph.dependency.ExpressionNode;
 
@@ -56,7 +57,7 @@ public class IfNode extends ControlSplitNode {
   }
 
   @Override
-  protected void applyOnInputsUnsafe(GraphEdgeVisitor.Applier<Node> visitor) {
+  protected void applyOnInputsUnsafe(GraphVisitor.Applier<Node> visitor) {
     super.applyOnInputsUnsafe(visitor);
     condition = visitor.apply(this, condition, ExpressionNode.class);
   }
@@ -76,5 +77,10 @@ public class IfNode extends ControlSplitNode {
   @Override
   public Node shallowCopy() {
     return new IfNode(condition, trueBranch, falseBranch);
+  }
+
+  @Override
+  public void accept(GraphNodeVisitor visitor) {
+    visitor.visit(this);
   }
 }

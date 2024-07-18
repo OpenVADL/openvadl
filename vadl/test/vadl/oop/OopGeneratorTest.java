@@ -30,8 +30,8 @@ class OopGeneratorTest extends AbstractTest {
     String code = new OopGenerator().generateFunction(function);
 
     // Then
-    assertEquals("uint32_t functionNameValue(unsigned long int parameterValue) {\n"
-        + "return (long int) parameterValue;\n"
+    assertEquals("int32_t functionNameValue(uint32_t parameterValue) {\n"
+        + "return (int32_t) parameterValue;\n"
         + "}", code);
   }
 }

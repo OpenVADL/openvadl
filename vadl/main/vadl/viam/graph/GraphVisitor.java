@@ -3,12 +3,12 @@ package vadl.viam.graph;
 import javax.annotation.Nullable;
 
 /**
- * The {@link GraphEdgeVisitor} interface represents a visitor that can visit nodes in a graph and
+ * The {@link GraphVisitor} interface represents a visitor that can visit nodes in a graph and
  * obtain a result of type R.
  *
  * @param <R> the type of the result obtained from visiting the graph nodes
  */
-public interface GraphEdgeVisitor<R> {
+public interface GraphVisitor<R> {
 
   @Nullable
   R visit(Node from, @Nullable Node to);
@@ -19,7 +19,7 @@ public interface GraphEdgeVisitor<R> {
    *
    * @param <R> the type of the result that gets assigned to the node's inputs
    */
-  interface Applier<R extends Node> extends GraphEdgeVisitor<R> {
+  interface Applier<R extends Node> extends GraphVisitor<R> {
     @Nullable
     @Override
     default R visit(Node from, @Nullable Node to) {

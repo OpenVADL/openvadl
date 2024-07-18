@@ -22,7 +22,7 @@ import vadl.viam.Parameter;
 import vadl.viam.Specification;
 import vadl.viam.ViamError;
 import vadl.viam.graph.Graph;
-import vadl.viam.graph.GraphEdgeVisitor;
+import vadl.viam.graph.GraphVisitor;
 import vadl.viam.graph.Node;
 import vadl.viam.graph.NodeList;
 import vadl.viam.graph.control.ReturnNode;
@@ -247,7 +247,7 @@ public class GenerateFieldAccessEncodingFunctionPass extends Pass {
     if (isSub) {
       copy.replaceNode(fieldRefNode, new FuncParamNode(parameter));
     } else {
-      returnNode.applyOnInputs(new GraphEdgeVisitor.Applier<>() {
+      returnNode.applyOnInputs(new GraphVisitor.Applier<>() {
         @Nullable
         @Override
         public Node applyNullable(Node from, @Nullable Node to) {

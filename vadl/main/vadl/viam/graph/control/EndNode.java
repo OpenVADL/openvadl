@@ -1,5 +1,6 @@
 package vadl.viam.graph.control;
 
+import vadl.viam.graph.GraphNodeVisitor;
 import vadl.viam.graph.Node;
 import vadl.viam.graph.NodeList;
 import vadl.viam.graph.dependency.ExpressionNode;
@@ -23,5 +24,10 @@ public class EndNode extends AbstractEndNode {
   @Override
   public Node shallowCopy() {
     return new EndNode(sideEffects);
+  }
+
+  @Override
+  public void accept(GraphNodeVisitor visitor) {
+    visitor.visit(this);
   }
 }

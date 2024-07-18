@@ -204,7 +204,7 @@ public abstract class Node {
   /**
    * Applies visitor output on all inputs.
    * This is unsafe, as it may lead to an inconsistent graph, if the usages are not
-   * updated accordingly. Use {@link Node#applyOnInputs(GraphEdgeVisitor.Applier)} to
+   * updated accordingly. Use {@link Node#applyOnInputs(GraphVisitor.Applier)} to
    * let this be handled automatically.
    *
    * <p><b>IMPORTANT</b>:
@@ -215,7 +215,7 @@ public abstract class Node {
    *
    * @param visitor that produces new value for input.
    */
-  protected void applyOnInputsUnsafe(GraphEdgeVisitor.Applier<Node> visitor) {
+  protected void applyOnInputsUnsafe(GraphVisitor.Applier<Node> visitor) {
     // default none, must be overridden by subtypes
   }
 
@@ -224,7 +224,7 @@ public abstract class Node {
    * If the new input node differs from the old one, this method will automatically handle
    * the usage transfer.
    */
-  public final void applyOnInputs(GraphEdgeVisitor.Applier<Node> visitor) {
+  public final void applyOnInputs(GraphVisitor.Applier<Node> visitor) {
     applyOnInputsUnsafe((s, input) -> {
       var newInput = visitor.applyNullable(s, input);
       if (newInput != null) {
@@ -243,7 +243,7 @@ public abstract class Node {
    *
    * @param visitor the visitor that gets visited
    */
-  public final void visitInputs(GraphEdgeVisitor visitor) {
+  public final void visitInputs(GraphVisitor visitor) {
     applyOnInputsUnsafe((from, to) -> {
       visitor.visit(from, to);
       return to;
@@ -450,7 +450,7 @@ public abstract class Node {
   /**
    * Accepting method for the {@link GraphNodeVisitor}.
    */
-  public abstract void accept(GraphNodeVisitor visitor);
+  public abstract <T extends GraphNodeVisitor> void accept(T visitor);
 
   private void verifyAllEdges() {
     inputs().forEach(this::verifyInput);

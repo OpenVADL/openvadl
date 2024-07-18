@@ -6,7 +6,7 @@ import vadl.javaannotations.viam.Input;
 import vadl.types.DataType;
 import vadl.types.Type;
 import vadl.viam.Constant;
-import vadl.viam.graph.GraphEdgeVisitor;
+import vadl.viam.graph.GraphVisitor;
 import vadl.viam.graph.GraphNodeVisitor;
 import vadl.viam.graph.Node;
 
@@ -76,7 +76,7 @@ public class SliceNode extends ExpressionNode {
   }
 
   @Override
-  protected void applyOnInputsUnsafe(GraphEdgeVisitor.Applier<Node> visitor) {
+  protected void applyOnInputsUnsafe(GraphVisitor.Applier<Node> visitor) {
     super.applyOnInputsUnsafe(visitor);
     value = visitor.apply(this, value, ExpressionNode.class);
   }

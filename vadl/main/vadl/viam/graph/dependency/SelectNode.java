@@ -3,7 +3,7 @@ package vadl.viam.graph.dependency;
 import java.util.List;
 import vadl.javaannotations.viam.Input;
 import vadl.types.BoolType;
-import vadl.viam.graph.GraphEdgeVisitor;
+import vadl.viam.graph.GraphVisitor;
 import vadl.viam.graph.GraphNodeVisitor;
 import vadl.viam.graph.Node;
 
@@ -43,7 +43,7 @@ public class SelectNode extends ExpressionNode {
 
 
   @Override
-  protected void applyOnInputsUnsafe(GraphEdgeVisitor.Applier<Node> visitor) {
+  protected void applyOnInputsUnsafe(GraphVisitor.Applier<Node> visitor) {
     super.applyOnInputsUnsafe(visitor);
     condition = visitor.apply(this, condition, ExpressionNode.class);
     trueCase = visitor.apply(this, trueCase, ExpressionNode.class);

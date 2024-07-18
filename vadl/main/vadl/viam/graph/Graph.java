@@ -84,7 +84,7 @@ public class Graph {
     }
 
     // Remove the link from the children to toReplace.
-    toReplace.applyOnInputs(new GraphEdgeVisitor.Applier<>() {
+    toReplace.applyOnInputs(new GraphVisitor.Applier<>() {
       @Nullable
       @Override
       public Node applyNullable(Node from, @Nullable Node to) {

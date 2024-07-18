@@ -1,7 +1,15 @@
 package vadl.viam.graph;
 
+import vadl.viam.graph.control.AbstractBeginNode;
+import vadl.viam.graph.control.EndNode;
+import vadl.viam.graph.control.IfNode;
+import vadl.viam.graph.control.InstrCallNode;
+import vadl.viam.graph.control.InstrEndNode;
+import vadl.viam.graph.control.ReturnNode;
 import vadl.viam.graph.dependency.BuiltInCall;
 import vadl.viam.graph.dependency.ConstantNode;
+import vadl.viam.graph.dependency.FieldAccessRefNode;
+import vadl.viam.graph.dependency.FieldRefNode;
 import vadl.viam.graph.dependency.FuncCallNode;
 import vadl.viam.graph.dependency.FuncParamNode;
 import vadl.viam.graph.dependency.LetNode;
@@ -88,4 +96,44 @@ public interface GraphNodeVisitor {
    * Visit {@link FuncCallNode}.
    */
   void visit(FuncCallNode funcCallNode);
+
+  /**
+   * Visit {@link FieldRefNode}.
+   */
+  void visit(FieldRefNode fieldRefNode);
+
+  /**
+   * Visit {@link FieldAccessRefNode}.
+   */
+  void visit(FieldAccessRefNode fieldAccessRefNode);
+
+  /**
+   * Visit {@link AbstractBeginNode}.
+   */
+  void visit(AbstractBeginNode abstractBeginNode);
+
+  /**
+   * Visit {@link InstrEndNode}.
+   */
+  void visit(InstrEndNode instrEndNode);
+
+  /**
+   * Visit {@link ReturnNode}.
+   */
+  void visit(ReturnNode returnNode);
+
+  /**
+   * Visit {@link EndNode}.
+   */
+  void visit(EndNode endNode);
+
+  /**
+   * Visit {@link InstrCallNode}.
+   */
+  void visit(InstrCallNode instrCallNode);
+
+  /**
+   * Visit {@link IfNode}.
+   */
+  void visit(IfNode ifNode);
 }
