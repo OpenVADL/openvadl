@@ -6,6 +6,7 @@ import vadl.javaannotations.viam.DataValue;
 import vadl.types.DataType;
 import vadl.viam.Register;
 import vadl.viam.Resource;
+import vadl.viam.graph.GraphNodeVisitor;
 import vadl.viam.graph.Node;
 import vadl.viam.graph.NodeList;
 import vadl.viam.graph.control.IfNode;
@@ -62,5 +63,10 @@ public class ReadRegNode extends ReadResourceNode {
   @Override
   public Node shallowCopy() {
     return copy();
+  }
+
+  @Override
+  public void accept(GraphNodeVisitor visitor) {
+    visitor.visit(this);
   }
 }

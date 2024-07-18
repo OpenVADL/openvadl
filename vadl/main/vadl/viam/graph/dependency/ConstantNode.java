@@ -4,6 +4,7 @@ import java.util.List;
 import vadl.javaannotations.viam.DataValue;
 import vadl.oop.SymbolTable;
 import vadl.viam.Constant;
+import vadl.viam.graph.GraphNodeVisitor;
 import vadl.viam.graph.Node;
 
 /**
@@ -48,6 +49,11 @@ public class ConstantNode extends ExpressionNode {
   @Override
   public Node shallowCopy() {
     return new ConstantNode(constant);
+  }
+
+  @Override
+  public void accept(GraphNodeVisitor visitor) {
+    visitor.visit(this);
   }
 
   @Override

@@ -447,6 +447,11 @@ public abstract class Node {
   public void verifyState() {
   }
 
+  /**
+   * Accepting method for the {@link GraphNodeVisitor}.
+   */
+  public abstract void accept(GraphNodeVisitor visitor);
+
   private void verifyAllEdges() {
     inputs().forEach(this::verifyInput);
     usages().forEach(this::verifyUsage);
@@ -603,6 +608,6 @@ public abstract class Node {
         case DELETED -> "d(%s)".formatted(numericId);
       };
     }
-  }
 
+  }
 }

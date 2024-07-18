@@ -7,6 +7,7 @@ import vadl.types.DataType;
 import vadl.types.Type;
 import vadl.viam.Constant;
 import vadl.viam.graph.GraphEdgeVisitor;
+import vadl.viam.graph.GraphNodeVisitor;
 import vadl.viam.graph.Node;
 
 /**
@@ -93,5 +94,10 @@ public class SliceNode extends ExpressionNode {
   @Override
   public String generateOopExpression() {
     throw new RuntimeException("not implemented");
+  }
+
+  @Override
+  public void accept(GraphNodeVisitor visitor) {
+    visitor.visit(this);
   }
 }

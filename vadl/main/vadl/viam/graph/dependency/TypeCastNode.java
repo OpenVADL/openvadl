@@ -9,6 +9,7 @@ import vadl.types.BoolType;
 import vadl.types.SIntType;
 import vadl.types.Type;
 import vadl.types.UIntType;
+import vadl.viam.graph.GraphNodeVisitor;
 import vadl.viam.graph.Node;
 import vadl.viam.graph.NodeList;
 import vadl.viam.graph.control.InstrCallNode;
@@ -48,5 +49,10 @@ public class TypeCastNode extends UnaryNode {
   public String generateOopExpression() {
     return "(" + getCppTypeNameByVadlType(castType) + ") "
         + value.generateOopExpression();
+  }
+
+  @Override
+  public void accept(GraphNodeVisitor visitor) {
+    visitor.visit(this);
   }
 }

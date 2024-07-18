@@ -14,6 +14,7 @@ import vadl.types.BuiltInTable;
 import vadl.types.BuiltInTable.BuiltIn;
 import vadl.types.Type;
 import vadl.viam.Constant;
+import vadl.viam.graph.GraphNodeVisitor;
 import vadl.viam.graph.Node;
 import vadl.viam.graph.NodeList;
 
@@ -124,5 +125,10 @@ public class BuiltInCall extends AbstractFunctionCallNode {
     return arguments().stream().map(OopGeneratable::generateOopExpression)
         .collect(Collectors.joining(" "
             + Objects.requireNonNull(builtIn().operator()) + " "));
+  }
+
+  @Override
+  public void accept(GraphNodeVisitor visitor) {
+    visitor.visit(this);
   }
 }

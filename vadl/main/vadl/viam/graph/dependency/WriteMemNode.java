@@ -5,6 +5,7 @@ import java.util.Objects;
 import vadl.javaannotations.viam.DataValue;
 import vadl.viam.Memory;
 import vadl.viam.Resource;
+import vadl.viam.graph.GraphNodeVisitor;
 import vadl.viam.graph.Node;
 import vadl.viam.graph.NodeList;
 import vadl.viam.graph.UniqueNode;
@@ -79,5 +80,10 @@ public class WriteMemNode extends WriteResourceNode {
   @Override
   public Node shallowCopy() {
     return new WriteMemNode(memory, words, Objects.requireNonNull(address), value);
+  }
+
+  @Override
+  public void accept(GraphNodeVisitor visitor) {
+    visitor.visit(this);
   }
 }

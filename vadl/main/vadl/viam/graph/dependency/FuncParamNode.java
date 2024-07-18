@@ -5,6 +5,7 @@ import vadl.javaannotations.viam.DataValue;
 import vadl.oop.SymbolTable;
 import vadl.types.Type;
 import vadl.viam.Parameter;
+import vadl.viam.graph.GraphNodeVisitor;
 import vadl.viam.graph.Node;
 import vadl.viam.graph.NodeList;
 import vadl.viam.graph.control.IfNode;
@@ -52,5 +53,10 @@ public class FuncParamNode extends ParamNode {
   @Override
   public String generateOopExpression() {
     return parameter.name();
+  }
+
+  @Override
+  public void accept(GraphNodeVisitor visitor) {
+    visitor.visit(this);
   }
 }
