@@ -2,14 +2,9 @@ package vadl.viam.graph.dependency;
 
 import java.util.List;
 import vadl.javaannotations.viam.Input;
-import vadl.oop.SymbolTable;
 import vadl.types.BoolType;
-import vadl.types.Type;
-import vadl.viam.graph.GraphVisitor;
+import vadl.viam.graph.GraphEdgeVisitor;
 import vadl.viam.graph.Node;
-import vadl.viam.graph.NodeList;
-import vadl.viam.graph.control.IfNode;
-import vadl.viam.graph.control.InstrCallNode;
 
 /**
  * Represents the If-Expression in a VADL specification.
@@ -47,7 +42,7 @@ public class SelectNode extends ExpressionNode {
 
 
   @Override
-  protected void applyOnInputsUnsafe(GraphVisitor.Applier<Node> visitor) {
+  protected void applyOnInputsUnsafe(GraphEdgeVisitor.Applier<Node> visitor) {
     super.applyOnInputsUnsafe(visitor);
     condition = visitor.apply(this, condition, ExpressionNode.class);
     trueCase = visitor.apply(this, trueCase, ExpressionNode.class);

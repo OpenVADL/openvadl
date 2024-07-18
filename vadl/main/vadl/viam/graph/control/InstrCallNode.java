@@ -8,7 +8,7 @@ import vadl.javaannotations.viam.Input;
 import vadl.types.DataType;
 import vadl.viam.Format;
 import vadl.viam.Instruction;
-import vadl.viam.graph.GraphVisitor;
+import vadl.viam.graph.GraphEdgeVisitor;
 import vadl.viam.graph.Node;
 import vadl.viam.graph.NodeList;
 import vadl.viam.graph.dependency.ExpressionNode;
@@ -101,7 +101,7 @@ public class InstrCallNode extends DirectionalNode {
   }
 
   @Override
-  protected void applyOnInputsUnsafe(GraphVisitor.Applier<Node> visitor) {
+  protected void applyOnInputsUnsafe(GraphEdgeVisitor.Applier<Node> visitor) {
     super.applyOnInputsUnsafe(visitor);
     arguments = arguments.stream().map(e ->
             visitor.apply(this, e, ExpressionNode.class))

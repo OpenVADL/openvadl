@@ -6,7 +6,7 @@ import javax.annotation.Nullable;
 import vadl.javaannotations.viam.Input;
 import vadl.types.DataType;
 import vadl.viam.Resource;
-import vadl.viam.graph.GraphVisitor;
+import vadl.viam.graph.GraphEdgeVisitor;
 import vadl.viam.graph.Node;
 
 /**
@@ -88,7 +88,7 @@ public abstract class WriteResourceNode extends SideEffectNode {
 
 
   @Override
-  public void applyOnInputsUnsafe(GraphVisitor.Applier<Node> visitor) {
+  public void applyOnInputsUnsafe(GraphEdgeVisitor.Applier<Node> visitor) {
     super.applyOnInputsUnsafe(visitor);
     address = visitor.applyNullable(this, address, ExpressionNode.class);
     value = visitor.apply(this, value, ExpressionNode.class);

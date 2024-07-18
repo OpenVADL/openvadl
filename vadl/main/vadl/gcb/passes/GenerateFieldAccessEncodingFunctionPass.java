@@ -10,22 +10,19 @@ import vadl.pass.PassName;
 import vadl.types.BuiltInTable;
 import vadl.types.BuiltInTable.BuiltIn;
 import vadl.types.DataType;
-import vadl.types.Type;
 import vadl.types.UIntType;
-import vadl.utils.SourceLocation;
 import vadl.viam.Constant;
 import vadl.viam.Encoding;
 import vadl.viam.Format;
 import vadl.viam.Format.Field;
 import vadl.viam.Format.FieldAccess;
 import vadl.viam.Function;
-import vadl.viam.Identifier;
 import vadl.viam.Instruction;
 import vadl.viam.Parameter;
 import vadl.viam.Specification;
 import vadl.viam.ViamError;
 import vadl.viam.graph.Graph;
-import vadl.viam.graph.GraphVisitor;
+import vadl.viam.graph.GraphEdgeVisitor;
 import vadl.viam.graph.Node;
 import vadl.viam.graph.NodeList;
 import vadl.viam.graph.control.ReturnNode;
@@ -250,7 +247,7 @@ public class GenerateFieldAccessEncodingFunctionPass extends Pass {
     if (isSub) {
       copy.replaceNode(fieldRefNode, new FuncParamNode(parameter));
     } else {
-      returnNode.applyOnInputs(new GraphVisitor.Applier<>() {
+      returnNode.applyOnInputs(new GraphEdgeVisitor.Applier<>() {
         @Nullable
         @Override
         public Node applyNullable(Node from, @Nullable Node to) {

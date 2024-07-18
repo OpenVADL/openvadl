@@ -4,10 +4,9 @@ import java.util.List;
 import java.util.Objects;
 import javax.annotation.Nullable;
 import vadl.javaannotations.viam.Input;
-import vadl.oop.SymbolTable;
 import vadl.types.DataType;
 import vadl.viam.Resource;
-import vadl.viam.graph.GraphVisitor;
+import vadl.viam.graph.GraphEdgeVisitor;
 import vadl.viam.graph.Node;
 
 /**
@@ -76,7 +75,7 @@ public abstract class ReadResourceNode extends ExpressionNode {
   }
 
   @Override
-  public void applyOnInputsUnsafe(GraphVisitor.Applier<Node> visitor) {
+  public void applyOnInputsUnsafe(GraphEdgeVisitor.Applier<Node> visitor) {
     super.applyOnInputsUnsafe(visitor);
     address = visitor.applyNullable(this, address, ExpressionNode.class);
   }

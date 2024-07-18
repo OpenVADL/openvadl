@@ -4,7 +4,7 @@ import java.util.List;
 import java.util.stream.Collectors;
 import vadl.javaannotations.viam.Input;
 import vadl.types.Type;
-import vadl.viam.graph.GraphVisitor;
+import vadl.viam.graph.GraphEdgeVisitor;
 import vadl.viam.graph.Node;
 import vadl.viam.graph.NodeList;
 
@@ -33,7 +33,7 @@ public abstract class AbstractFunctionCallNode extends ExpressionNode {
   }
 
   @Override
-  protected void applyOnInputsUnsafe(GraphVisitor.Applier<Node> visitor) {
+  protected void applyOnInputsUnsafe(GraphEdgeVisitor.Applier<Node> visitor) {
     super.applyOnInputsUnsafe(visitor);
     args = args.stream()
         .map((e) -> visitor.apply(this, e, ExpressionNode.class))

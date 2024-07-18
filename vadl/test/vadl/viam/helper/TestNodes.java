@@ -1,12 +1,11 @@
 package vadl.viam.helper;
 
 import java.util.List;
-import java.util.stream.Collector;
 import java.util.stream.Collectors;
 import vadl.javaannotations.viam.DataValue;
 import vadl.javaannotations.viam.Input;
 import vadl.javaannotations.viam.Successor;
-import vadl.viam.graph.GraphVisitor;
+import vadl.viam.graph.GraphEdgeVisitor;
 import vadl.viam.graph.Node;
 import vadl.viam.graph.NodeList;
 import vadl.viam.graph.UniqueNode;
@@ -82,7 +81,7 @@ public class TestNodes {
     }
 
     @Override
-    public void applyOnInputsUnsafe(GraphVisitor.Applier<Node> visitor) {
+    public void applyOnInputsUnsafe(GraphEdgeVisitor.Applier<Node> visitor) {
       super.applyOnInputsUnsafe(visitor);
       input = visitor.apply(this, input);
     }
@@ -175,7 +174,7 @@ public class TestNodes {
     }
 
     @Override
-    public void applyOnInputsUnsafe(GraphVisitor.Applier<Node> visitor) {
+    public void applyOnInputsUnsafe(GraphEdgeVisitor.Applier<Node> visitor) {
       super.applyOnInputsUnsafe(visitor);
       input1 = visitor.apply(this, input1);
       input2 = visitor.apply(this, input2);
@@ -224,7 +223,7 @@ public class TestNodes {
     }
 
     @Override
-    public void applyOnInputsUnsafe(GraphVisitor.Applier<Node> visitor) {
+    public void applyOnInputsUnsafe(GraphEdgeVisitor.Applier<Node> visitor) {
       super.applyOnInputsUnsafe(visitor);
       inputs = inputs.stream()
           .map(e -> visitor.apply(this, e))
