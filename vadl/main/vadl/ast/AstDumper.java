@@ -78,9 +78,15 @@ public class AstDumper implements DefinitionVisitor<Void>, ExprVisitor<Void> {
     dumpNode(definition);
     this.indent++;
     for (var field : definition.fields) {
-      dumpNode(field);
-      dumpChildren(field.identifier);
-      dumpChildren(field.ranges);
+      if (field instanceof FormatDefinition.RangeFormatField f) {
+        dumpNode(f);
+        dumpChildren(f.identifier());
+        dumpChildren(f.ranges);
+      } else if (field instanceof FormatDefinition.TypedFormatField f) {
+        dumpNode(f);
+        dumpChildren(f.identifier());
+        dumpChildren(f.typeAnnotation);
+      }
     }
     this.indent--;
     return null;

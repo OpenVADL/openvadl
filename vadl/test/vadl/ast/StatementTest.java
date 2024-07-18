@@ -90,7 +90,7 @@ public class StatementTest {
         new FormatDefinition(
             new Identifier("F", loc),
             new TypeLiteral(new Identifier("Bits", loc), new IntegerLiteral("32", loc), loc),
-            List.of(new FormatDefinition.FormatField(
+            List.of(new FormatDefinition.RangeFormatField(
                 new Identifier("bits", loc),
                 List.of(new RangeExpr(new IntegerLiteral("31", loc), new IntegerLiteral("0", loc)))
             )),

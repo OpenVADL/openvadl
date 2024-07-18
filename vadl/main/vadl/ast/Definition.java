@@ -118,13 +118,24 @@ class FormatDefinition extends Definition {
   List<FormatField> fields;
   SourceLocation loc;
 
-  static class FormatField extends Node {
+  interface FormatField {
+    Identifier identifier();
+
+    void prettyPrint(int indent, StringBuilder builder);
+  }
+
+  static class RangeFormatField extends Node implements FormatField {
     Identifier identifier;
     List<RangeExpr> ranges;
 
-    public FormatField(Identifier identifier, List<RangeExpr> ranges) {
+    public RangeFormatField(Identifier identifier, List<RangeExpr> ranges) {
       this.identifier = identifier;
       this.ranges = ranges;
+    }
+
+    @Override
+    public Identifier identifier() {
+      return identifier;
     }
 
     @Override
@@ -138,7 +149,7 @@ class FormatDefinition extends Definition {
     }
 
     @Override
-    void prettyPrint(int indent, StringBuilder builder) {
+    public void prettyPrint(int indent, StringBuilder builder) {
       identifier.prettyPrint(indent, builder);
       builder.append("\t [");
       ranges.get(0).prettyPrint(indent, builder);
@@ -162,7 +173,7 @@ class FormatDefinition extends Definition {
         return false;
       }
 
-      FormatField that = (FormatField) o;
+      RangeFormatField that = (RangeFormatField) o;
       return Objects.equals(identifier, that.identifier)
           && Objects.equals(ranges, that.ranges);
     }
@@ -171,6 +182,68 @@ class FormatDefinition extends Definition {
     public int hashCode() {
       int result = Objects.hashCode(identifier);
       result = 31 * result + Objects.hashCode(ranges);
+      return result;
+    }
+  }
+
+  static class TypedFormatField extends Node implements FormatField {
+    final Identifier identifier;
+    final TypeLiteral typeAnnotation;
+    final NestedSymbolTable symbolTable;
+
+    public TypedFormatField(Identifier identifier, TypeLiteral typeAnnotation,
+                            NestedSymbolTable symbolTable) {
+      this.identifier = identifier;
+      this.typeAnnotation = typeAnnotation;
+      this.symbolTable = symbolTable;
+    }
+
+    @Override
+    public Identifier identifier() {
+      return identifier;
+    }
+
+    @Override
+    SourceLocation location() {
+      return identifier.location().join(typeAnnotation.location());
+    }
+
+    @Override
+    SyntaxType syntaxType() {
+      return CoreType.Invalid();
+    }
+
+    @Override
+    public void prettyPrint(int indent, StringBuilder builder) {
+      identifier.prettyPrint(indent, builder);
+      builder.append(" : ");
+      typeAnnotation.prettyPrint(indent, builder);
+    }
+
+    @Override
+    public String toString() {
+      return this.getClass().getSimpleName();
+    }
+
+    @Override
+    public boolean equals(Object o) {
+      if (this == o) {
+        return true;
+      }
+      if (o == null || getClass() != o.getClass()) {
+        return false;
+      }
+
+      TypedFormatField that = (TypedFormatField) o;
+      return Objects.equals(identifier, that.identifier)
+          && Objects.equals(typeAnnotation, that.typeAnnotation);
+    }
+
+    @Override
+    public int hashCode() {
+      int result = Objects.hashCode(identifier);
+      result = 31 * result + Objects.hashCode(typeAnnotation);
+      result = 31 * result + Objects.hashCode(symbolTable);
       return result;
     }
   }

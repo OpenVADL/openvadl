@@ -5,6 +5,7 @@ import java.util.EnumSet;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import javax.annotation.Nullable;
 import vadl.error.VadlError;
 import vadl.utils.SourceLocation;
@@ -102,7 +103,8 @@ class NestedSymbolTable implements DefinitionVisitor<Void> {
 
   @Override
   public Void visit(InstructionDefinition definition) {
-    if (definition.identifier instanceof Identifier id && definition.typeIdentifier instanceof Identifier typeId) {
+    if (definition.identifier instanceof Identifier id &&
+        definition.typeIdentifier instanceof Identifier typeId) {
       defineSymbol(new InstructionSymbol(id.name, definition), definition.loc);
       requirements.add(new SymbolRequirement(typeId.name, SymbolType.FORMAT, typeId.loc));
     }
@@ -121,7 +123,7 @@ class NestedSymbolTable implements DefinitionVisitor<Void> {
     var format = formatSymbol.definition;
     for (EncodingDefinition.Entry entry : definition.entries) {
       var name = entry.field().name;
-      var field = format.fields.stream().filter(f -> f.identifier.name.equals(name)).findFirst();
+      var field = format.fields.stream().filter(f -> f.identifier().name.equals(name)).findFirst();
       if (field.isEmpty()) {
         errors.add(
             new VadlError("Unknown field %s in format %s".formatted(name, format.identifier.name),
@@ -166,8 +168,8 @@ class NestedSymbolTable implements DefinitionVisitor<Void> {
   FormatSymbol requireFormat(Identifier formatId) {
     var symbol = resolveSymbol(formatId.name);
     if (symbol instanceof FormatSymbol formatSymbol) {
-      formatSymbol.definition.fields.forEach(field -> symbols.put(field.identifier.name,
-          new ValuedSymbol(field.identifier.name, null, SymbolType.FORMAT_FIELD)));
+      formatSymbol.definition.fields.forEach(field -> symbols.put(field.identifier().name,
+          new ValuedSymbol(field.identifier().name, null, SymbolType.FORMAT_FIELD)));
       return formatSymbol;
     } else {
       errors.add(
@@ -227,24 +229,62 @@ class NestedSymbolTable implements DefinitionVisitor<Void> {
           new VadlError("Unresolved definition " + var.identifier.name, var.location(), null,
               null));
     } else if (symbol instanceof ValuedSymbol valSymbol) {
-      var next = var.next;
-      if (next == null) {
+      if (var.next == null) {
         return;
       }
-      if (valSymbol.typeDefinition instanceof FormatDefinition formatDefinition) {
-        var field = formatDefinition.fields.stream()
-            .filter(f -> f.identifier.name.equals(next.identifier.name)).findFirst();
-        if (field.isEmpty()) {
-          errors.add(new VadlError(
-              "Invalid usage: format %s does not have field %s".formatted(
-                  formatDefinition.identifier.name, next.identifier.name), var.location(), null,
-              null));
-        }
-      } else {
+      if (!(valSymbol.typeDefinition instanceof FormatDefinition formatDefinition)) {
         errors.add(new VadlError(
             "Invalid usage: symbol %s of type %s does not have a record type".formatted(
                 var.identifier.name,
                 symbol.type()), var.location(), null, null));
+        return;
+      }
+      while (var.next != null) {
+        var next = var.next;
+        var field = formatDefinition.fields.stream()
+            .filter(f -> f.identifier().name.equals(next.identifier.name))
+            .findFirst().orElse(null);
+        if (field == null) {
+          errors.add(new VadlError(
+              "Invalid usage: format %s does not have field %s".formatted(
+                  formatDefinition.identifier.name, next.identifier.name), var.location(), null,
+              null));
+          return;
+        } else if (field instanceof FormatDefinition.RangeFormatField && next.next != null) {
+          errors.add(new VadlError(
+              "Invalid usage: field %s resolves to a range, does not provide fields to access".formatted(
+                  field.identifier().name), var.location(), null, null));
+          return;
+        } else if (field instanceof FormatDefinition.TypedFormatField f) {
+          if (isValuedAnnotation(f.typeAnnotation)) {
+            if (next.next != null) {
+              errors.add(new VadlError(
+                  "Invalid usage: field %s resolves to %s, does not provide fields to access".formatted(
+                      field.identifier().name, f.typeAnnotation.baseType), var.location(), null,
+                  null));
+              return;
+            }
+            return;
+          } else if (next.next == null) {
+            errors.add(new VadlError(
+                "Invalid usage: field %s resolves to %s, which does not provide a value".formatted(
+                    field.identifier().name, f.typeAnnotation.baseType.name), var.location(),
+                null, null));
+            return;
+          }
+          var typeSymbol = f.symbolTable.resolveSymbol(f.typeAnnotation.baseType.name);
+          if (typeSymbol instanceof FormatSymbol formatSymbol) {
+            var = var.next;
+            formatDefinition = formatSymbol.definition;
+          } else {
+            Objects.requireNonNull(typeSymbol);
+            errors.add(new VadlError(
+                "Invalid usage: symbol %s of type %s does not have a record type".formatted(
+                    f.identifier.name,
+                    typeSymbol.type().name()), var.location(), null, null));
+            return;
+          }
+        }
       }
     } else {
       errors.add(new VadlError(
@@ -252,6 +292,11 @@ class NestedSymbolTable implements DefinitionVisitor<Void> {
               var.identifier.name,
               symbol.type()), var.location(), null, null));
     }
+  }
+
+  private boolean isValuedAnnotation(TypeLiteral typeAnnotation) {
+    return typeAnnotation.baseType.name.equals("Bool") ||
+        typeAnnotation.baseType.name.equals("Bits");
   }
 
   private void verifyAvailable(String name, SourceLocation loc) {

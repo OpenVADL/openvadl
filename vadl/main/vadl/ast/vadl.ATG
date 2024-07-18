@@ -336,11 +336,26 @@ PRODUCTIONS
     .
 
     // FIXME: more versions are missing here
-    formatField<out FormatDefinition.FormatField field>
-    = identifier<out Identifier id> SYM_BRACK_OPEN    (. List<RangeExpr> ranges = new ArrayList<>();.)
-        rangeExpression<out RangeExpr e1>             (. ranges.add(e1); .)
-        { SYM_COMMA rangeExpression<out RangeExpr e2> (. ranges.add(e2); .) }
-    SYM_BRACK_CLOSE                                   (. field = new FormatDefinition.FormatField(id, ranges); .)
+    formatField<out FormatDefinition.FormatField field>                  (. field = null; .)
+    = identifier<out Identifier id>
+      ( formatFieldRange<out FormatDefinition.FormatField rangeField, id>  (. field = rangeField; .)
+        | formatFieldType<out FormatDefinition.FormatField typedField, id> (. field = typedField; .)
+      )
+    .
+
+    formatFieldRange<out FormatDefinition.FormatField field, Identifier id>
+    = SYM_BRACK_OPEN                      (. List<RangeExpr> ranges = new ArrayList<>();.)
+      rangeExpression<out RangeExpr e1>   (. ranges.add(e1); .)
+      {
+        SYM_COMMA
+        rangeExpression<out RangeExpr e2> (. ranges.add(e2); .)
+      }
+      SYM_BRACK_CLOSE                     (. field = new FormatDefinition.RangeFormatField(id, ranges); .)
+    .
+
+    formatFieldType<out FormatDefinition.FormatField field, Identifier id>
+    = SYM_COLON
+      typeLiteral<out TypeLiteral type>   (. field = new FormatDefinition.TypedFormatField(id, type, symbolTable); .)
     .
 
     counterDefinition<out CounterDefinition def>    (. CounterDefinition.CounterKind kind = null; .)
