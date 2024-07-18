@@ -7,6 +7,16 @@ import vadl.viam.graph.Node;
 import vadl.viam.passes.Pair;
 import vadl.viam.passes.algebraic_simplication.rules.AlgebraicSimplificationRule;
 
+/**
+ * This class contains the main driver logic to simplify algebraic expressions.
+ * When instantiating a new object, the user can give a list of rules which should be applied on
+ * each node.
+ * Usually, this list will be a static list in the {@link AlgebraicSimplificationPass}. However,
+ * it might be the case that the lcb (or others) requires special nodes. These rules with
+ * non VIAM nodes should not be applied when running the {@link AlgebraicSimplificationPass}.
+ * The passes with special requirements can individually define which
+ * {@link AlgebraicSimplificationRule} applies.
+ */
 public class AlgebraicSimplifier {
   private final List<AlgebraicSimplificationRule> rules;
 
