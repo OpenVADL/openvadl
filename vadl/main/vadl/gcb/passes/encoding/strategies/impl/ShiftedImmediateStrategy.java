@@ -80,7 +80,12 @@ public class ShiftedImmediateStrategy implements EncodingGenerationStrategy {
     var returnNode = new ReturnNode(invertedSliceNode);
     var startNode = new StartNode(returnNode);
 
-    fieldAccess.encoding().behavior().addWithInputs(returnNode);
-    fieldAccess.encoding().behavior().add(startNode);
+    var encoding = fieldAccess.encoding();
+    if (encoding != null && encoding.behavior() != null) {
+      encoding.behavior().addWithInputs(returnNode);
+      encoding.behavior().add(startNode);
+    } else {
+      throw new ViamError("An encoding must already exist");
+    }
   }
 }

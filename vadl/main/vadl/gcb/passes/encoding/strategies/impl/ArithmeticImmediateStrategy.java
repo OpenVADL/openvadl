@@ -7,6 +7,7 @@ import vadl.gcb.passes.encoding.strategies.EncodingGenerationStrategy;
 import vadl.types.BuiltInTable;
 import vadl.viam.Format;
 import vadl.viam.Parameter;
+import vadl.viam.ViamError;
 import vadl.viam.graph.GraphVisitor;
 import vadl.viam.graph.Node;
 import vadl.viam.graph.control.ReturnNode;
@@ -111,6 +112,13 @@ public class ArithmeticImmediateStrategy implements EncodingGenerationStrategy {
           return to;
         }
       });
+    }
+
+    var encoding = fieldAccess.encoding();
+    if (encoding != null) {
+      encoding.setBehavior(copy);
+    } else {
+      throw new ViamError("An encoding must already exist");
     }
   }
 }
