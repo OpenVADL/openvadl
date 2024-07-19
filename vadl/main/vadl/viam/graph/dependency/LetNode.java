@@ -4,8 +4,8 @@ import java.util.List;
 import vadl.javaannotations.viam.DataValue;
 import vadl.javaannotations.viam.Input;
 import vadl.viam.Identifier;
-import vadl.viam.graph.GraphVisitor;
 import vadl.viam.graph.GraphNodeVisitor;
+import vadl.viam.graph.GraphVisitor;
 import vadl.viam.graph.Node;
 
 /**

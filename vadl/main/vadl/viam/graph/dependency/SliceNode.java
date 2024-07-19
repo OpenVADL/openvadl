@@ -6,8 +6,8 @@ import vadl.javaannotations.viam.Input;
 import vadl.types.DataType;
 import vadl.types.Type;
 import vadl.viam.Constant;
-import vadl.viam.graph.GraphVisitor;
 import vadl.viam.graph.GraphNodeVisitor;
+import vadl.viam.graph.GraphVisitor;
 import vadl.viam.graph.Node;
 
 /**
