@@ -1,6 +1,6 @@
-package vadl.oop;
+package vadl.lcb.codegen;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.*;
 
 import org.junit.jupiter.api.Test;
 import vadl.AbstractTest;
@@ -12,7 +12,7 @@ import vadl.viam.graph.control.ReturnNode;
 import vadl.viam.graph.dependency.FuncParamNode;
 import vadl.viam.graph.dependency.TypeCastNode;
 
-class OopGeneratorTest extends AbstractTest {
+class EncodingCodeGeneratorTest extends AbstractTest {
   @Test
   void generateFunction_shouldGenerate() {
     // Given
@@ -27,7 +27,7 @@ class OopGeneratorTest extends AbstractTest {
     function.setBehavior(graph);
 
     // When
-    String code = new OopGenerator().generateFunction(function);
+    String code = new EncodingCodeGenerator().generateFunction(function);
 
     // Then
     assertEquals("int32_t functionNameValue(uint32_t parameterValue) {\n"

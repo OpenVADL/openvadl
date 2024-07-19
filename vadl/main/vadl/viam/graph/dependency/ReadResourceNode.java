@@ -79,9 +79,4 @@ public abstract class ReadResourceNode extends ExpressionNode {
     super.applyOnInputsUnsafe(visitor);
     address = visitor.applyNullable(this, address, ExpressionNode.class);
   }
-
-  @Override
-  public String generateOopExpression() {
-    throw new RuntimeException("not implemented");
-  }
 }

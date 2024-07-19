@@ -55,13 +55,4 @@ public class ConstantNode extends ExpressionNode {
   public void accept(GraphNodeVisitor visitor) {
     visitor.visit(this);
   }
-
-  @Override
-  public String generateOopExpression() {
-    if (constant instanceof Constant.BitSlice) {
-      throw new RuntimeException("not implemented");
-    }
-
-    return constant.toString();
-  }
 }

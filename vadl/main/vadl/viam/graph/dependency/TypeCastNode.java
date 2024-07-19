@@ -6,6 +6,7 @@ import java.util.List;
 import vadl.javaannotations.viam.DataValue;
 import vadl.oop.SymbolTable;
 import vadl.types.BoolType;
+import vadl.types.DataType;
 import vadl.types.SIntType;
 import vadl.types.Type;
 import vadl.types.UIntType;
@@ -35,6 +36,13 @@ public class TypeCastNode extends UnaryNode {
     collection.add(castType);
   }
 
+  /**
+   * Get the cast type.
+   */
+  public Type castType() {
+    return this.castType;
+  }
+
   @Override
   public Node copy() {
     return new TypeCastNode((ExpressionNode) value.copy(), type());
@@ -43,12 +51,6 @@ public class TypeCastNode extends UnaryNode {
   @Override
   public Node shallowCopy() {
     return new TypeCastNode(value, type());
-  }
-
-  @Override
-  public String generateOopExpression() {
-    return "(" + getCppTypeNameByVadlType(castType) + ") "
-        + value.generateOopExpression();
   }
 
   @Override

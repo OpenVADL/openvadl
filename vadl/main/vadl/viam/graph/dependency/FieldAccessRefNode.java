@@ -53,9 +53,4 @@ public class FieldAccessRefNode extends ParamNode {
   public void accept(GraphNodeVisitor visitor) {
     visitor.visit(this);
   }
-
-  @Override
-  public String generateOopExpression() {
-    throw new RuntimeException("not implemented exception");
-  }
 }

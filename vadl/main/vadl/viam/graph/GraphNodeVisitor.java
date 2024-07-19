@@ -8,6 +8,7 @@ import vadl.viam.graph.control.InstrEndNode;
 import vadl.viam.graph.control.ReturnNode;
 import vadl.viam.graph.dependency.BuiltInCall;
 import vadl.viam.graph.dependency.ConstantNode;
+import vadl.viam.graph.dependency.ExpressionNode;
 import vadl.viam.graph.dependency.FieldAccessRefNode;
 import vadl.viam.graph.dependency.FieldRefNode;
 import vadl.viam.graph.dependency.FuncCallNode;
@@ -136,4 +137,9 @@ public interface GraphNodeVisitor {
    * Visit {@link IfNode}.
    */
   void visit(IfNode ifNode);
+
+  /**
+   * Visit {@link ExpressionNode}.
+   */
+  void visit(ExpressionNode expressionNode);
 }

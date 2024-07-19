@@ -72,11 +72,6 @@ public class LetNode extends ExpressionNode {
   }
 
   @Override
-  public String generateOopExpression() {
-    throw new RuntimeException("not implemented");
-  }
-
-  @Override
   public void accept(GraphNodeVisitor visitor) {
     visitor.visit(this);
   }

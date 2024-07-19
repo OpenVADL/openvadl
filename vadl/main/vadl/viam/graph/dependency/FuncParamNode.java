@@ -51,11 +51,6 @@ public class FuncParamNode extends ParamNode {
   }
 
   @Override
-  public String generateOopExpression() {
-    return parameter.name();
-  }
-
-  @Override
   public void accept(GraphNodeVisitor visitor) {
     visitor.visit(this);
   }
