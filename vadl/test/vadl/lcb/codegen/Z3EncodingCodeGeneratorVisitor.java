@@ -1,11 +1,11 @@
 package vadl.lcb.codegen;
 
 import java.io.StringWriter;
-import java.util.logging.LogManager;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import vadl.gcb.passes.encoding.nodes.NegatedNode;
-import vadl.pass.PassManager;
+import vadl.types.SIntType;
+import vadl.types.UIntType;
+import vadl.viam.Constant;
+import vadl.viam.ViamError;
 import vadl.viam.graph.GraphNodeVisitor;
 import vadl.viam.graph.control.AbstractBeginNode;
 import vadl.viam.graph.control.EndNode;
@@ -34,6 +34,24 @@ import vadl.viam.graph.dependency.WriteRegNode;
 public class Z3EncodingCodeGeneratorVisitor implements GraphNodeVisitor {
 
   private final StringWriter writer = new StringWriter();
+  private final String symbolName;
+
+  // from z3 import *
+  // x = BitVec('x', 20) # field
+  // f_x = ZeroExt(12, x)
+  // f_z = Extract(19, 0, f_x)
+  // prove (x == f_z)
+  //
+  // The trick is that f_z references f_x and
+  // does all the inverse operations.
+  // However, we want to apply for both functions
+  // the same visitor.
+  // That's why we have 'symbolName' in the constructor.
+  // In the case of 'f_x' this is the field
+  // In the case of 'f_z' this is the function parameter
+  public Z3EncodingCodeGeneratorVisitor(String symbolName) {
+    this.symbolName = symbolName;
+  }
 
   public String getResult() {
     return writer.toString();
@@ -41,12 +59,16 @@ public class Z3EncodingCodeGeneratorVisitor implements GraphNodeVisitor {
 
   @Override
   public void visit(ConstantNode node) {
-
+    if (node.constant() instanceof Constant.Value) {
+      writer.write(node.toString());
+    } else {
+      throw new ViamError("not implemented");
+    }
   }
 
   @Override
   public void visit(BuiltInCall node) {
-
+    throw new ViamError("not implemented");
   }
 
   @Override
@@ -66,12 +88,24 @@ public class Z3EncodingCodeGeneratorVisitor implements GraphNodeVisitor {
 
   @Override
   public void visit(TypeCastNode typeCastNode) {
-
+    if (typeCastNode.castType() instanceof UIntType) {
+      writer.write("ZeroExt(" + ((UIntType) typeCastNode.castType()).bitWidth() + ", ");
+      visit(typeCastNode.value());
+      writer.write(")");
+    } else if (typeCastNode.castType() instanceof SIntType) {
+      writer.write("SignExt(" + ((SIntType) typeCastNode.castType()).bitWidth() + ", ");
+      visit(typeCastNode.value());
+      writer.write(")");
+    }
   }
 
   @Override
   public void visit(SliceNode sliceNode) {
-
+    writer.write("Extract(" +
+        sliceNode.bitSlice().msb() + ", " +
+        sliceNode.bitSlice().lsb() + ", ");
+    visit(sliceNode.value());
+    writer.write(")");
   }
 
   @Override
@@ -101,7 +135,7 @@ public class Z3EncodingCodeGeneratorVisitor implements GraphNodeVisitor {
 
   @Override
   public void visit(FuncParamNode funcParamNode) {
-
+    writer.write(symbolName);
   }
 
   @Override
@@ -111,7 +145,7 @@ public class Z3EncodingCodeGeneratorVisitor implements GraphNodeVisitor {
 
   @Override
   public void visit(FieldRefNode fieldRefNode) {
-
+    writer.write(symbolName);
   }
 
   @Override
@@ -131,7 +165,7 @@ public class Z3EncodingCodeGeneratorVisitor implements GraphNodeVisitor {
 
   @Override
   public void visit(ReturnNode returnNode) {
-
+    visit(returnNode.value);
   }
 
   @Override
@@ -151,7 +185,7 @@ public class Z3EncodingCodeGeneratorVisitor implements GraphNodeVisitor {
 
   @Override
   public void visit(ExpressionNode expressionNode) {
-
+    expressionNode.accept(this);
   }
 
   @Override

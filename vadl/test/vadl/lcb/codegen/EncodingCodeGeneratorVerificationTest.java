@@ -1,6 +1,7 @@
 package vadl.lcb.codegen;
 
 import static org.awaitility.Awaitility.await;
+import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
 import com.github.dockerjava.api.DockerClient;
@@ -11,6 +12,7 @@ import com.github.dockerjava.core.DockerClientImpl;
 import com.github.dockerjava.httpclient5.ApacheDockerHttpClient;
 import com.github.dockerjava.transport.DockerHttpClient;
 import java.io.File;
+import java.io.FileWriter;
 import java.io.IOException;
 import java.time.Duration;
 import java.util.Objects;
@@ -31,6 +33,8 @@ import vadl.viam.graph.dependency.TypeCastNode;
 
 public class EncodingCodeGeneratorVerificationTest extends AbstractTest {
 
+  private static final String GENERIC_FIELD_NAME = "x";
+  private static final String ENCODING_FUNCTION_NAME = "f_x";
   private final DockerClientConfig config =
       DefaultDockerClientConfig.createDefaultConfigBuilder().build();
   private final DockerHttpClient httpClient = new ApacheDockerHttpClient.Builder()
@@ -65,46 +69,41 @@ public class EncodingCodeGeneratorVerificationTest extends AbstractTest {
     var fieldAccess = new Format.FieldAccess(createIdentifier("fieldAccessIdentifierValue"),
         function, null, null);
 
-    var visitorDecode = new Z3EncodingCodeGeneratorVisitor();
+    var visitorDecode = new Z3EncodingCodeGeneratorVisitor(GENERIC_FIELD_NAME);
     visitorDecode.visit(addedReturnNode);
 
     // Generate encoding from decoding
     strategy.generateEncoding(fieldAccess);
 
     // Now the fieldAccess.decode function is set with an inverted behavior graph.
-    var visitorEncode = new Z3EncodingCodeGeneratorVisitor();
+    var visitorEncode = new Z3EncodingCodeGeneratorVisitor(ENCODING_FUNCTION_NAME);
     visitorEncode.visit(
         fieldAccess.encoding().behavior().getNodes(ReturnNode.class).findFirst().get());
 
     var generatedDecodeFunctionCode = visitorDecode.getResult();
-    var generatedEncodeFunctionCode = visitorEncode.getResult();
+    var generatedEncodeWithDecodeFunctionCode = visitorEncode.getResult();
     String x = """
         from z3 import *
                 
         # Define the variables
-        x = Int('x') # field
-        y = Int('y') # decoded immediate
+        x = BitVec('x', 20) # field
                 
-        s = Solver()
-                
-        f_x =
-        """;
+        f_x = """;
     x += generatedDecodeFunctionCode + "\n";
     x += """
-        f_y =
-        """;
-    x += generatedEncodeFunctionCode + "\n";
+        f_z = """;
+    x += generatedEncodeWithDecodeFunctionCode + "\n";
     x += """
-        s.add(ForAll([x], x == f_y(f_x(x))))
-        r = s.check()
-        if r == sat:
-            print(s.model())
-        else:
-            print(r)
+        prove(x == f_z)
         """;
 
-    File tempFile = File.createTempFile("encoding-z3", "py");
-    var createContainerCmd = dockerClient.createContainerCmd("py-z3");
+    var tempFile = File.createTempFile("encoding-z3", "py");
+    tempFile.deleteOnExit();
+    var writer = new FileWriter(tempFile);
+    writer.write(x);
+    writer.close();
+
+    var createContainerCmd = dockerClient.createContainerCmd("py-z3:latest");
     Objects.requireNonNull(createContainerCmd
             .getHostConfig())
         .withBinds(Bind.parse(tempFile.toPath() + ":/app/main.py"));
