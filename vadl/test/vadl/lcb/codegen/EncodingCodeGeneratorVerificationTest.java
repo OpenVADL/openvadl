@@ -88,10 +88,10 @@ public class EncodingCodeGeneratorVerificationTest extends AbstractTest {
         # Define the variables
         x = BitVec('x', 20) # field
                 
-        f_x = """;
+        f_x =  """;
     x += generatedDecodeFunctionCode + "\n";
     x += """
-        f_z = """;
+        f_z =  """;
     x += generatedEncodeWithDecodeFunctionCode + "\n";
     x += """
         prove(x == f_z)
