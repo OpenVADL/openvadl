@@ -22,6 +22,7 @@ public class InstructionTest {
           }
 
           instruction ADD : R_TYPE = {
+            X(rd) := X(rs1) + X(rs2)
           }
 
           encoding ADD = {

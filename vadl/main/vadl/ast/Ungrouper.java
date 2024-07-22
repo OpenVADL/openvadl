@@ -60,4 +60,9 @@ class Ungrouper implements ExprVisitor<Expr> {
     expr.operand = expr.operand.accept(this);
     return expr;
   }
+
+  @Override
+  public Expr visit(CallExpr expr) {
+    return new CallExpr(expr.identifier, expr.argument.accept(this));
+  }
 }

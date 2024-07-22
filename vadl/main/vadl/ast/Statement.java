@@ -84,7 +84,7 @@ record IfStatement(Expr condition, Statement thenStmt, @Nullable Statement elseS
   }
 }
 
-record AssignmentStatement(VariableAccess target, Expr valueExpression) implements Statement {
+record AssignmentStatement(Expr target, Expr valueExpression) implements Statement {
   @Override
   public void prettyPrint(int indent, StringBuilder builder) {
     builder.append(" ".repeat(2 * indent));

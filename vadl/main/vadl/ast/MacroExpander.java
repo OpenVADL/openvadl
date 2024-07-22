@@ -95,6 +95,11 @@ class MacroExpander implements ExprVisitor<Node>, DefinitionVisitor<Node>, State
   }
 
   @Override
+  public Node visit(CallExpr expr) {
+    return new CallExpr(expr.identifier, (Expr) expr.argument.accept(this));
+  }
+
+  @Override
   public Definition visit(ConstantDefinition definition) {
     return new ConstantDefinition(definition.identifier, definition.typeAnnotation, (Expr) definition.value.accept(this), definition.loc);
   }
@@ -195,7 +200,9 @@ class MacroExpander implements ExprVisitor<Node>, DefinitionVisitor<Node>, State
 
   @Override
   public Statement visit(AssignmentStatement assignmentStatement) {
-    symbols.requireValue(assignmentStatement.target());
+    if (assignmentStatement.target() instanceof VariableAccess var) {
+      symbols.requireValue(var);
+    }
     return new AssignmentStatement(
         assignmentStatement.target(),
         (Expr) assignmentStatement.valueExpression().accept(this)

@@ -2,6 +2,7 @@ package vadl.ast;
 
 import java.util.Arrays;
 import java.util.List;
+import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 /**
@@ -204,18 +205,25 @@ public class AstDumper implements DefinitionVisitor<Void>, ExprVisitor<Void> {
   @Override
   public Void visit(EncodingDefinition definition) {
     dumpNode(definition);
-    Stream<Node> entries = definition.entries.stream()
-        .flatMap(entry -> Stream.of(entry.field(), entry.value()));
-    Stream<Node> children = Stream.concat(Stream.of(definition.instrIdentifier), entries);
-    dumpChildren(children.toArray(Node[]::new));
+    List<Node> children = definition.entries.stream()
+        .flatMap(entry -> Stream.of(entry.field(), entry.value()))
+        .collect(Collectors.toList());
+    children.add(0, definition.instrIdentifier);
+    dumpChildren(children);
     return null;
   }
 
   @Override
   public Void visit(AssemblyDefinition definition) {
     dumpNode(definition);
-    dumpNode(definition);
-    dumpChildren(definition.segments.toArray(Node[]::new));
+    dumpChildren(definition.segments);
+    return null;
+  }
+
+  @Override
+  public Void visit(CallExpr expr) {
+    dumpNode(expr);
+    dumpChildren(expr.identifier, expr.argument);
     return null;
   }
 }

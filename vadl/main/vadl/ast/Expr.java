@@ -30,6 +30,8 @@ interface ExprVisitor<R> {
   R visit(VariableAccess expr);
 
   R visit(UnaryExpr expr);
+
+  R visit(CallExpr expr);
 }
 
 /**
@@ -764,6 +766,64 @@ class VariableAccess extends Expr {
   public int hashCode() {
     int result = identifier.hashCode();
     result = 31 * result + Objects.hashCode(next);
+    return result;
+  }
+}
+
+class CallExpr extends Expr {
+  Identifier identifier;
+  Expr argument;
+
+  public CallExpr(Identifier identifier, Expr argument) {
+    this.identifier = identifier;
+    this.argument = argument;
+  }
+
+  @Override
+  SourceLocation location() {
+    return identifier.location().join(argument.location());
+  }
+
+  @Override
+  SyntaxType syntaxType() {
+    return CoreType.Id();
+  }
+
+  @Override
+  void prettyPrint(int indent, StringBuilder builder) {
+    identifier.prettyPrint(indent, builder);
+    builder.append("(");
+    argument.prettyPrint(indent, builder);
+    builder.append(")");
+  }
+
+  @Override
+  <R> R accept(ExprVisitor<R> visitor) {
+    return visitor.visit(this);
+  }
+
+  @Override
+  public String toString() {
+    return this.getClass().getSimpleName();
+  }
+
+  @Override
+  public boolean equals(Object o) {
+    if (this == o) {
+      return true;
+    }
+    if (o == null || getClass() != o.getClass()) {
+      return false;
+    }
+
+    CallExpr that = (CallExpr) o;
+    return identifier.equals(that.identifier) && argument.equals(that.argument);
+  }
+
+  @Override
+  public int hashCode() {
+    int result = identifier.hashCode();
+    result = 31 * result + Objects.hashCode(argument);
     return result;
   }
 }

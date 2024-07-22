@@ -304,16 +304,17 @@ PRODUCTIONS
                                                                     .)
       .
 
-    isaDefinition<out Definition def>                       (. def = null; .)
-    = constantDefinition<out Definition d>                  (. def = d; .)
-    | formatDefinition<out Definition d>                    (. def = d; .)
-    | counterDefinition<out Definition d>                   (. def = d; .)
-    | instructionDefinition<out Definition d>               (. def = d; .)
-    | encodingDefinition<out Definition d>                  (. def = d; .)
-    | assemblyDefinition<out Definition d>                  (. def = d; .)
-    | memoryDefinition<out Definition d>                    (. def = d; .)
-    | IF (scanner.Peek().kind == _FILE) registerFileDefinition<out Definition d>   (. def = d; .)
-    | registerDefinition<out Definition d>   (. def = d; .)
+    isaDefinition<out Definition def>          (. def = null; .)
+    = constantDefinition<out Definition d>     (. def = d; .)
+    | formatDefinition<out Definition d>       (. def = d; .)
+    | counterDefinition<out Definition d>      (. def = d; .)
+    | instructionDefinition<out Definition d>  (. def = d; .)
+    | encodingDefinition<out Definition d>     (. def = d; .)
+    | assemblyDefinition<out Definition d>     (. def = d; .)
+    | memoryDefinition<out Definition d>       (. def = d; .)
+    | IF (la.kind == _REGISTER && scanner.Peek().kind == _FILE)
+      registerFileDefinition<out Definition d> (. def = d; .)
+    | registerDefinition<out Definition d>     (. def = d; .)
     .
 
     constantDefinition<out ConstantDefinition def>      (. TypeLiteral type = null; .)
@@ -336,7 +337,7 @@ PRODUCTIONS
     .
 
     // FIXME: more versions are missing here
-    formatField<out FormatDefinition.FormatField field>                  (. field = null; .)
+    formatField<out FormatDefinition.FormatField field>                    (. field = null; .)
     = identifier<out Identifier id>
       ( formatFieldRange<out FormatDefinition.FormatField rangeField, id>  (. field = rangeField; .)
         | formatFieldType<out FormatDefinition.FormatField typedField, id> (. field = typedField; .)
@@ -446,10 +447,14 @@ PRODUCTIONS
      } SYM_BRACE_CLOSE                         (. popScope(); .)
     .
 
-    assignment<out Statement statement>
-    = variableAccess<out VariableAccess var>
+    assignment<out Statement statement>        (. Expr target = null; .)
+    = (
+        IF (scanner.Peek().kind != _SYM_PAREN_OPEN)
+        variableAccess<out VariableAccess var> (. target = var; .)
+      | callExpression<out CallExpr call>      (. target = call; .)
+      )
       SYM_ASSIGN
-      expression<out Expr expr> (. statement = new AssignmentStatement(var, expr); .)
+      expression<out Expr expr>                (. statement = new AssignmentStatement(target, expr); .)
     .
 
     letStatement<out Statement letStatement>
@@ -467,26 +472,11 @@ PRODUCTIONS
     // -- EXPRESSIONS --------------------------------------------------------------------------------------------------
 
     expression<out Expr expr>               (. expr = null; .)
-    = binary<out Expr expr1>                (. expr = ungroup(expr1); .)
-    | unary<out Expr expr1>                 (. expr = ungroup(expr1); .)
-    .
-
-    binary<out Expr expr>
-    =  term<out Expr expr1>                              (. expr = expr1; .)
-        {
-            binaryOperator <out Operator op>
-            term<out Expr expr2>                         (. expr = new BinaryExpr(expr, op, expr2); .)
-        }                                                   (. expr = reorderBinary(expr); .)
-    .
-
-    unary<out Expr expr>
-    = unaryOperator<out UnaryOperator op> term<out Expr operand> (. expr = new UnaryExpr(op, operand); .)
-    .
-
-    unaryOperator<out UnaryOperator op> (. op = null; .)
-    = SYM_MINUS (. op = UnaryOperator.NEGATIVE; .)
-    | SYM_EXCL  (. op = UnaryOperator.LOG_NOT; .)
-    | SYM_TILDE (. op = UnaryOperator.COMPLEMENT; .)
+    = term<out Expr expr1>                  (. expr = expr1; .)
+      {
+          binaryOperator <out Operator op>
+          term<out Expr expr2>              (. expr = new BinaryExpr(expr, op, expr2); .)
+      }                                     (. expr = ungroup(reorderBinary(expr)); .)
     .
 
     binaryOperator <out Operator op>    (.op = null;.)
@@ -512,16 +502,36 @@ PRODUCTIONS
     | SYM_MOD    (. op = Operator.Modulo(); .)
     .
 
+    unary<out Expr expr>
+    = unaryOperator<out UnaryOperator op> term<out Expr operand> (. expr = new UnaryExpr(op, operand); .)
+    .
+
+    unaryOperator<out UnaryOperator op> (. op = null; .)
+    = SYM_MINUS (. op = UnaryOperator.NEGATIVE; .)
+    | SYM_EXCL  (. op = UnaryOperator.LOG_NOT; .)
+    | SYM_TILDE (. op = UnaryOperator.COMPLEMENT; .)
+    .
+
     term<out Expr expr>                                         (. expr = null; .)
     = number                                                    (. expr = new IntegerLiteral(t.val, loc()); .)
-    | variableAccess<out VariableAccess var>                    (. expr = var; if (!insideMacro) symbolTable.requireValue(var); .)
+    | IF (la.kind == _identifierToken && scanner.Peek().kind != _SYM_PAREN_OPEN)
+      variableAccess<out VariableAccess var>                    (. expr = var; if (!insideMacro) symbolTable.requireValue(var); .)
+    | callExpression<out CallExpr call>                         (. expr = call; .)
     | SYM_PAREN_OPEN expression<out Expr expr1> SYM_PAREN_CLOSE (. expr = new GroupExpr(expr1); .)
+    | unary<out Expr unary>                                     (. expr = unary; .)
     | macroInstanceOrPlaceholder<out Node node1, CoreType.Ex()> (. expr = (Expr)node1; .)
     .
 
     variableAccess<out VariableAccess var>
     = identifier<out Identifier id>                     (. var = new VariableAccess(id, null); .)
       [ SYM_DOT variableAccess<out VariableAccess next> (. var = new VariableAccess(id, next); .)]
+    .
+
+    callExpression<out CallExpr call>
+    = identifier<out Identifier id>
+      SYM_PAREN_OPEN
+      expression<out Expr argument>        (. call = new CallExpr(id, argument); .)
+      SYM_PAREN_CLOSE
     .
 
     rangeExpression<out RangeExpr expr>
