@@ -12,7 +12,6 @@ import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.Arguments;
 import org.junit.jupiter.params.provider.MethodSource;
 import vadl.AbstractTest;
-import vadl.gcb.matching.impl.NegatedNodeMatcher;
 import vadl.types.BitsType;
 import vadl.types.BuiltInTable;
 import vadl.types.DataType;
@@ -144,8 +143,9 @@ class ArithmeticImmediateStrategyTest extends AbstractTest {
             new ConstantValueMatcher(
                 new Constant.Value(BigInteger.valueOf(31), DataType.unsignedInt(32))
             ),
-            new NegatedNodeMatcher(
-                new NegatedNodeMatcher(new FuncParamMatcher(DataType.unsignedInt(32))))
+            new BuiltInMatcher(BuiltInTable.NEG,
+                new BuiltInMatcher(BuiltInTable.NEG,
+                    new FuncParamMatcher(DataType.unsignedInt(32))))
         )));
 
     assertThat(hasNotNegatedFuncParam).isNotEmpty();
@@ -197,7 +197,8 @@ class ArithmeticImmediateStrategyTest extends AbstractTest {
             new ConstantValueMatcher(
                 new Constant.Value(BigInteger.valueOf(31), DataType.unsignedInt(32))
             ),
-            new NegatedNodeMatcher(new FuncParamMatcher(DataType.unsignedInt(32)))
+            new BuiltInMatcher(BuiltInTable.NEG,
+                new FuncParamMatcher(DataType.unsignedInt(32)))
         )));
 
     assertThat(hasNegatedFuncParam).isNotEmpty();

@@ -1,6 +1,5 @@
 package vadl.viam.graph;
 
-import vadl.gcb.passes.encoding.nodes.NegatedNode;
 import vadl.viam.graph.control.AbstractBeginNode;
 import vadl.viam.graph.control.EndNode;
 import vadl.viam.graph.control.IfNode;
@@ -143,9 +142,4 @@ public interface GraphNodeVisitor {
    * Visit {@link ExpressionNode}.
    */
   void visit(ExpressionNode expressionNode);
-
-  /**
-   * Visit {@link NegatedNode}.
-   */
-  void visit(NegatedNode negatedNode);
 }

@@ -27,6 +27,11 @@ public class BuiltInMatcher implements Matcher {
     this.matchers = matchers;
   }
 
+  public BuiltInMatcher(BuiltInTable.BuiltIn builtIn,
+                        Matcher matcher) {
+    this.builtIn = builtIn;
+    this.matchers = List.of(matcher);
+  }
 
   @Override
   public boolean matches(Node node) {

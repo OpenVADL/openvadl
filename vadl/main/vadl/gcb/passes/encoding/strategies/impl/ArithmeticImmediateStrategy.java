@@ -3,8 +3,6 @@ package vadl.gcb.passes.encoding.strategies.impl;
 import java.util.Collections;
 import java.util.List;
 import org.jetbrains.annotations.Nullable;
-import vadl.gcb.matching.impl.NegatedNodeMatcher;
-import vadl.gcb.passes.encoding.nodes.NegatedNode;
 import vadl.gcb.passes.encoding.strategies.EncodingGenerationStrategy;
 import vadl.types.BuiltInTable;
 import vadl.viam.Format;
@@ -12,6 +10,7 @@ import vadl.viam.Parameter;
 import vadl.viam.ViamError;
 import vadl.viam.graph.GraphVisitor;
 import vadl.viam.graph.Node;
+import vadl.viam.graph.NodeList;
 import vadl.viam.graph.control.ReturnNode;
 import vadl.viam.graph.dependency.BuiltInCall;
 import vadl.viam.graph.dependency.ExpressionNode;
@@ -70,7 +69,8 @@ public class ArithmeticImmediateStrategy implements EncodingGenerationStrategy {
 
       // a - b will be changed to a + (-b)
       var value = (ExpressionNode) cast.inputs().toList().get(1);
-      var negation = copy.add(new NegatedNode(value, value.type()));
+      var negation =
+          copy.add(new BuiltInCall(BuiltInTable.NEG, new NodeList<>(List.of(value)), value.type()));
       cast.replaceInput(value, negation);
     });
 
@@ -81,13 +81,13 @@ public class ArithmeticImmediateStrategy implements EncodingGenerationStrategy {
     var hasFieldSubtractionOnRHS =
         TreeMatcher.matches(copy.getNodes(), new BuiltInMatcher(BuiltInTable.ADD, List.of(
             new AnyNodeMatcher(),
-            new NegatedNodeMatcher(new FieldRefNodeMatcher())
+            new BuiltInMatcher(BuiltInTable.NEG, List.of(new FieldRefNodeMatcher()))
         )));
 
     // We always create a negated parameter because the equation has always f(x) on the LHS.
-    var negated = new NegatedNode(new FuncParamNode(
+    var negated = new BuiltInCall(BuiltInTable.NEG, new NodeList<>(List.of(new FuncParamNode(
         parameter
-    ), parameter.type());
+    ))), parameter.type());
     copy.replaceNode(fieldRef, negated);
 
     // The else branch is not required because the field is positive on the LHS.
