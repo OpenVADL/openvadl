@@ -127,9 +127,7 @@ class ArithmeticImmediateStrategyTest extends AbstractTest {
         DataType.bits(20)));
 
     // When
-    strategy.generateEncoding(
-        new Parameter(createIdentifier("identifierValue"), DataType.unsignedInt(32)),
-        fieldAccess);
+    strategy.generateEncoding(fieldAccess);
 
     // Then
     assertNotNull(fieldAccess.encoding());
@@ -182,9 +180,7 @@ class ArithmeticImmediateStrategyTest extends AbstractTest {
         DataType.bits(20)));
 
     // When
-    strategy.generateEncoding(
-        new Parameter(createIdentifier("identifierValue"), DataType.unsignedInt(32)),
-        fieldAccess);
+    strategy.generateEncoding(fieldAccess);
 
     // Then
     assertNotNull(fieldAccess.encoding());

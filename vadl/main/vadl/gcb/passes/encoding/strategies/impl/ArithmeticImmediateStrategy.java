@@ -53,7 +53,8 @@ public class ArithmeticImmediateStrategy implements EncodingGenerationStrategy {
   }
 
   @Override
-  public void generateEncoding(Parameter parameter, Format.FieldAccess fieldAccess) {
+  public void generateEncoding(Format.FieldAccess fieldAccess) {
+    var parameter = setupEncodingForFieldAccess(fieldAccess);
     var accessFunction = fieldAccess.accessFunction();
     var copy = accessFunction.behavior().copy();
     var returnNode = copy.getNodes(ReturnNode.class).findFirst().get();

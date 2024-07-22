@@ -60,9 +60,7 @@ class ShiftedImmediateStrategyTest extends AbstractTest {
 
 
     // When
-    strategy.generateEncoding(
-        new Parameter(createIdentifier("identifierValue"), DataType.unsignedInt(32)),
-        fieldAccess);
+    strategy.generateEncoding(fieldAccess);
 
     // Then
     assertNotNull(fieldAccess.encoding());

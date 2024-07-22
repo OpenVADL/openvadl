@@ -46,19 +46,11 @@ public class GenerateFieldAccessEncodingFunctionPass extends Pass {
         .flatMap(x -> Arrays.stream(x.fieldAccesses()))
         .filter(x -> x.encoding() == null)
         .forEach(fieldAccess -> {
-          var ident = fieldAccess.identifier.append("encoding");
-          var identParam = ident.append(fieldAccess.name());
-          var param = new Parameter(identParam, fieldAccess.accessFunction().returnType());
-          var function =
-              new Function(ident, new Parameter[] {param}, fieldAccess.fieldRef().type());
-
-          fieldAccess.setEncoding(function);
-
           // We need to compute multiple encoding functions based on the field access function.
           // Different field access functions require different heuristics for the encoding.
           for (var strategy : strategies) {
             if (strategy.checkIfApplicable(fieldAccess)) {
-              strategy.generateEncoding(param, fieldAccess);
+              strategy.generateEncoding(fieldAccess);
             }
           }
         });

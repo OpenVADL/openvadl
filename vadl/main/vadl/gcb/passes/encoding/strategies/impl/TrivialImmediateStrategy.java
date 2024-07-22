@@ -35,7 +35,9 @@ public class TrivialImmediateStrategy implements EncodingGenerationStrategy {
   }
 
   @Override
-  public void generateEncoding(Parameter parameter, Format.FieldAccess fieldAccess) {
+  public void generateEncoding(Format.FieldAccess fieldAccess) {
+    var parameter = setupEncodingForFieldAccess(fieldAccess);
+
     var fieldRef = fieldAccess.fieldRef();
     // The field takes up a certain slice.
     // But we need to take a slice of the immediate of the same size.
