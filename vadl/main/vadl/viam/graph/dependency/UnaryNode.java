@@ -23,7 +23,7 @@ public abstract class UnaryNode extends ExpressionNode {
   }
 
   /**
-   * Get the value.
+   * Return the value of the node.
    */
   public ExpressionNode value() {
     return this.value;

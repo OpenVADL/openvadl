@@ -3,8 +3,6 @@ package vadl.lcb.codegen;
 import static vadl.oop.CppTypeMap.getCppTypeNameByVadlType;
 
 import java.io.StringWriter;
-import java.util.Objects;
-import java.util.stream.Collectors;
 import vadl.viam.graph.GraphNodeVisitor;
 import vadl.viam.graph.control.AbstractBeginNode;
 import vadl.viam.graph.control.EndNode;
