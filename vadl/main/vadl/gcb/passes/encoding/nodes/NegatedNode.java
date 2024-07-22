@@ -23,9 +23,4 @@ public class NegatedNode extends UnaryNode {
   public Node shallowCopy() {
     return new NegatedNode(value, type());
   }
-
-  @Override
-  public String generateOopExpression() {
-    return "(-1 * " + value.generateOopExpression() + ")";
-  }
 }

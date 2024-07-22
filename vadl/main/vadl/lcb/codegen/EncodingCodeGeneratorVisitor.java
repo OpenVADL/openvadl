@@ -5,6 +5,7 @@ import static vadl.oop.CppTypeMap.getCppTypeNameByVadlType;
 import java.io.StringWriter;
 import java.util.Objects;
 import java.util.stream.Collectors;
+import vadl.gcb.passes.encoding.nodes.NegatedNode;
 import vadl.viam.graph.GraphNodeVisitor;
 import vadl.viam.graph.control.AbstractBeginNode;
 import vadl.viam.graph.control.EndNode;
@@ -178,5 +179,11 @@ public class EncodingCodeGeneratorVisitor implements GraphNodeVisitor {
     // we would need a cast. However,
     // we do not want to create explicit casts by hand.
     expressionNode.accept(this);
+  }
+
+  @Override
+  public void visit(NegatedNode negatedNode) {
+    writer.write("-1 * ");
+    visit(negatedNode.value());
   }
 }
