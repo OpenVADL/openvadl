@@ -8,6 +8,7 @@ import vadl.javaannotations.viam.Input;
 import vadl.types.DataType;
 import vadl.viam.Format;
 import vadl.viam.Instruction;
+import vadl.viam.graph.GraphNodeVisitor;
 import vadl.viam.graph.GraphVisitor;
 import vadl.viam.graph.Node;
 import vadl.viam.graph.NodeList;
@@ -85,6 +86,11 @@ public class InstrCallNode extends DirectionalNode {
                 i -> ((DataType) arguments.get(i).type()).canBeCastTo(paramFields.get(i).type())),
         "Parameter fields do not match concrete argument fields"
     );
+  }
+
+  @Override
+  public void accept(GraphNodeVisitor visitor) {
+    visitor.visit(this);
   }
 
   @Override

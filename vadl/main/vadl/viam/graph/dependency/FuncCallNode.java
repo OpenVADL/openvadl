@@ -3,14 +3,11 @@ package vadl.viam.graph.dependency;
 import java.util.List;
 import java.util.stream.Collectors;
 import vadl.javaannotations.viam.DataValue;
-import vadl.oop.OopGeneratable;
-import vadl.oop.SymbolTable;
 import vadl.types.Type;
 import vadl.viam.Function;
+import vadl.viam.graph.GraphNodeVisitor;
 import vadl.viam.graph.Node;
 import vadl.viam.graph.NodeList;
-import vadl.viam.graph.control.IfNode;
-import vadl.viam.graph.control.InstrCallNode;
 
 /**
  * A call to a function in a behaviour graph.
@@ -75,9 +72,7 @@ public class FuncCallNode extends AbstractFunctionCallNode {
   }
 
   @Override
-  public String generateOopExpression() {
-    return this.function.name() + "("
-        + args.stream().map(OopGeneratable::generateOopExpression).collect(
-        Collectors.joining(",")) + ")";
+  public void accept(GraphNodeVisitor visitor) {
+    visitor.visit(this);
   }
 }

@@ -6,9 +6,11 @@ import java.util.List;
 import vadl.javaannotations.viam.DataValue;
 import vadl.oop.SymbolTable;
 import vadl.types.BoolType;
+import vadl.types.DataType;
 import vadl.types.SIntType;
 import vadl.types.Type;
 import vadl.types.UIntType;
+import vadl.viam.graph.GraphNodeVisitor;
 import vadl.viam.graph.Node;
 import vadl.viam.graph.NodeList;
 import vadl.viam.graph.control.InstrCallNode;
@@ -34,6 +36,13 @@ public class TypeCastNode extends UnaryNode {
     collection.add(castType);
   }
 
+  /**
+   * Get the cast type.
+   */
+  public Type castType() {
+    return this.castType;
+  }
+
   @Override
   public Node copy() {
     return new TypeCastNode((ExpressionNode) value.copy(), type());
@@ -45,8 +54,7 @@ public class TypeCastNode extends UnaryNode {
   }
 
   @Override
-  public String generateOopExpression() {
-    return "(" + getCppTypeNameByVadlType(castType) + ") "
-        + value.generateOopExpression();
+  public void accept(GraphNodeVisitor visitor) {
+    visitor.visit(this);
   }
 }

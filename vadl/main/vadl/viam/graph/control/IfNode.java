@@ -3,9 +3,9 @@ package vadl.viam.graph.control;
 import java.util.List;
 import vadl.javaannotations.viam.Input;
 import vadl.javaannotations.viam.Successor;
+import vadl.viam.graph.GraphNodeVisitor;
 import vadl.viam.graph.GraphVisitor;
 import vadl.viam.graph.Node;
-import vadl.viam.graph.NodeList;
 import vadl.viam.graph.dependency.ExpressionNode;
 
 
@@ -77,5 +77,10 @@ public class IfNode extends ControlSplitNode {
   @Override
   public Node shallowCopy() {
     return new IfNode(condition, trueBranch, falseBranch);
+  }
+
+  @Override
+  public void accept(GraphNodeVisitor visitor) {
+    visitor.visit(this);
   }
 }

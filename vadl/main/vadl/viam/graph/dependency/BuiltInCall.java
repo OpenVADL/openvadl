@@ -8,12 +8,11 @@ import java.util.function.BiFunction;
 import java.util.stream.Collectors;
 import org.jetbrains.annotations.NotNull;
 import vadl.javaannotations.viam.DataValue;
-import vadl.oop.OopGeneratable;
-import vadl.oop.SymbolTable;
 import vadl.types.BuiltInTable;
 import vadl.types.BuiltInTable.BuiltIn;
 import vadl.types.Type;
 import vadl.viam.Constant;
+import vadl.viam.graph.GraphNodeVisitor;
 import vadl.viam.graph.Node;
 import vadl.viam.graph.NodeList;
 
@@ -120,9 +119,7 @@ public class BuiltInCall extends AbstractFunctionCallNode {
   }
 
   @Override
-  public String generateOopExpression() {
-    return arguments().stream().map(OopGeneratable::generateOopExpression)
-        .collect(Collectors.joining(" "
-            + Objects.requireNonNull(builtIn().operator()) + " "));
+  public void accept(GraphNodeVisitor visitor) {
+    visitor.visit(this);
   }
 }

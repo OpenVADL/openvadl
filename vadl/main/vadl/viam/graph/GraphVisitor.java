@@ -3,7 +3,7 @@ package vadl.viam.graph;
 import javax.annotation.Nullable;
 
 /**
- * The GraphVisitor interface represents a visitor that can visit nodes in a graph and
+ * The {@link GraphVisitor} interface represents a visitor that can visit nodes in a graph and
  * obtain a result of type R.
  *
  * @param <R> the type of the result obtained from visiting the graph nodes
@@ -44,7 +44,7 @@ public interface GraphVisitor<R> {
           clazz);
       return clazz.cast(newNode);
     }
-    
+
     /**
      * Applies a transformation to the given nodes and returns the result.
      *

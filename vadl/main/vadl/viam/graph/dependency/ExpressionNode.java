@@ -1,15 +1,14 @@
 package vadl.viam.graph.dependency;
 
-import vadl.oop.OopGeneratable;
 import vadl.types.Type;
-import vadl.types.UIntType;
+import vadl.viam.graph.GraphNodeVisitor;
 
 /**
  * Expression nodes produce some value and therefore also
  * hold the type of the value. This is required to maintain
  * graph consistency during graph transformation.
  */
-public abstract class ExpressionNode extends DependencyNode implements OopGeneratable {
+public abstract class ExpressionNode extends DependencyNode {
 
   //TODO: Should this be DataType in any case?
   private Type type;
@@ -27,5 +26,8 @@ public abstract class ExpressionNode extends DependencyNode implements OopGenera
     this.type = type;
   }
 
-
+  @Override
+  public <T extends GraphNodeVisitor> void accept(T visitor) {
+    visitor.visit(this);
+  }
 }

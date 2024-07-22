@@ -5,6 +5,7 @@ import java.util.Objects;
 import vadl.javaannotations.viam.DataValue;
 import vadl.viam.RegisterFile;
 import vadl.viam.Resource;
+import vadl.viam.graph.GraphNodeVisitor;
 import vadl.viam.graph.Node;
 import vadl.viam.graph.NodeList;
 import vadl.viam.graph.UniqueNode;
@@ -64,5 +65,10 @@ public class WriteRegFileNode extends WriteResourceNode {
   @Override
   public Node shallowCopy() {
     return new WriteRegFileNode(registerFile, Objects.requireNonNull(address), value);
+  }
+
+  @Override
+  public void accept(GraphNodeVisitor visitor) {
+    visitor.visit(this);
   }
 }

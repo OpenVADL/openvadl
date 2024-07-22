@@ -3,14 +3,12 @@ package vadl.viam.graph.dependency;
 import java.util.List;
 import vadl.javaannotations.viam.DataValue;
 import vadl.javaannotations.viam.Input;
-import vadl.oop.SymbolTable;
 import vadl.types.DataType;
 import vadl.types.Type;
 import vadl.viam.Constant;
+import vadl.viam.graph.GraphNodeVisitor;
 import vadl.viam.graph.GraphVisitor;
 import vadl.viam.graph.Node;
-import vadl.viam.graph.NodeList;
-import vadl.viam.graph.control.InstrCallNode;
 
 /**
  * A node that represents the bit slice operation on a value.
@@ -94,7 +92,7 @@ public class SliceNode extends ExpressionNode {
   }
 
   @Override
-  public String generateOopExpression() {
-    throw new RuntimeException("not implemented");
+  public void accept(GraphNodeVisitor visitor) {
+    visitor.visit(this);
   }
 }

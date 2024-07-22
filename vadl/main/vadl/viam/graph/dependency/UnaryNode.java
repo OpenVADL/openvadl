@@ -22,6 +22,13 @@ public abstract class UnaryNode extends ExpressionNode {
     this.value = value;
   }
 
+  /**
+   * Get the value.
+   */
+  public ExpressionNode value() {
+    return this.value;
+  }
+
   @Override
   protected void collectInputs(List<Node> collection) {
     super.collectInputs(collection);

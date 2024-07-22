@@ -11,7 +11,6 @@ import java.util.stream.Stream;
 import javax.annotation.Nullable;
 import org.jetbrains.annotations.Contract;
 import vadl.utils.SourceLocation;
-import vadl.viam.graph.dependency.ConstantNode;
 import vadl.viam.graph.dependency.DependencyNode;
 
 /**
@@ -448,6 +447,11 @@ public abstract class Node {
   public void verifyState() {
   }
 
+  /**
+   * Accepting method for the {@link GraphNodeVisitor}.
+   */
+  public abstract <T extends GraphNodeVisitor> void accept(T visitor);
+
   private void verifyAllEdges() {
     inputs().forEach(this::verifyInput);
     usages().forEach(this::verifyUsage);
@@ -604,6 +608,6 @@ public abstract class Node {
         case DELETED -> "d(%s)".formatted(numericId);
       };
     }
-  }
 
+  }
 }

@@ -4,6 +4,7 @@ import java.util.List;
 import vadl.javaannotations.viam.DataValue;
 import vadl.oop.SymbolTable;
 import vadl.viam.Constant;
+import vadl.viam.graph.GraphNodeVisitor;
 import vadl.viam.graph.Node;
 
 /**
@@ -51,11 +52,7 @@ public class ConstantNode extends ExpressionNode {
   }
 
   @Override
-  public String generateOopExpression() {
-    if (constant instanceof Constant.BitSlice) {
-      throw new RuntimeException("not implemented");
-    }
-
-    return constant.toString();
+  public void accept(GraphNodeVisitor visitor) {
+    visitor.visit(this);
   }
 }

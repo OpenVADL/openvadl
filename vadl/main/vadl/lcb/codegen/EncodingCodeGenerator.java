@@ -1,10 +1,12 @@
-package vadl.oop;
+package vadl.lcb.codegen;
 
+import java.io.StringWriter;
 import java.util.Arrays;
 import java.util.stream.Collectors;
-import vadl.types.Type;
+import vadl.oop.CppTypeMap;
 import vadl.viam.Encoding;
 import vadl.viam.Function;
+import vadl.viam.ViamError;
 import vadl.viam.graph.Graph;
 import vadl.viam.graph.control.ReturnNode;
 
@@ -12,7 +14,7 @@ import vadl.viam.graph.control.ReturnNode;
  * Generates Cpp Code given a behavior {@link Graph}.
  * This class will be used to generate the {@link Encoding}.
  */
-public class OopGenerator {
+public class EncodingCodeGenerator {
   /**
    * Returns the function header of a {@link Function}.
    * For example: int testFunction(int param1, int param2)
@@ -30,8 +32,15 @@ public class OopGenerator {
   }
 
   private String generateFunctionBody(Function function) {
-    var returnNode = function.behavior().getNodes(ReturnNode.class).findFirst().get();
-    return returnNode.generateOopExpression();
+    var writer = new StringWriter();
+    var returnNode = function.behavior().getNodes(ReturnNode.class).findFirst();
+
+    if (returnNode.isEmpty()) {
+      throw new ViamError("For the encoding function is a return node required.");
+    }
+
+    new EncodingCodeGeneratorVisitor(writer).visit(returnNode.get());
+    return writer.toString();
   }
 
   /**

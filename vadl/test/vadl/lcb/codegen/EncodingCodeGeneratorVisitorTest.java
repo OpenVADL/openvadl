@@ -1,0 +1,131 @@
+package vadl.lcb.codegen;
+
+import static org.junit.jupiter.api.Assertions.assertEquals;
+
+import java.io.StringWriter;
+import java.math.BigInteger;
+import java.util.stream.Stream;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.Arguments;
+import org.junit.jupiter.params.provider.MethodSource;
+import vadl.AbstractTest;
+import vadl.types.BuiltInTable;
+import vadl.types.DataType;
+import vadl.viam.Constant;
+import vadl.viam.Function;
+import vadl.viam.Parameter;
+import vadl.viam.graph.NodeList;
+import vadl.viam.graph.dependency.BuiltInCall;
+import vadl.viam.graph.dependency.ConstantNode;
+import vadl.viam.graph.dependency.FuncCallNode;
+import vadl.viam.graph.dependency.TypeCastNode;
+
+class EncodingCodeGeneratorVisitorTest extends AbstractTest {
+  StringWriter writer;
+  EncodingCodeGeneratorVisitor visitor;
+
+  @BeforeEach
+  void beforeEach() {
+    writer = new StringWriter();
+    visitor = new EncodingCodeGeneratorVisitor(writer);
+  }
+
+  @Test
+  void constant_shouldReturnNumber() {
+    var constant = new Constant.Value(BigInteger.ONE, DataType.unsignedInt(32));
+    var node = new ConstantNode(constant);
+
+    // When
+    visitor.visit(node);
+
+    // Then
+    assertEquals("1", writer.toString());
+  }
+
+  @Test
+  void constant_shouldReturnString() {
+    var constant = new Constant.Str("testValue");
+    var node = new ConstantNode(constant);
+
+    // When
+    visitor.visit(node);
+
+    assertEquals("testValue", writer.toString());
+  }
+
+  @Test
+  void funcCallNode_shouldCreateFunctionalWithOneVar() {
+    var constant = new Constant.Value(BigInteger.ONE, DataType.unsignedInt(32));
+    var node = new ConstantNode(constant);
+    var funcCallNode =
+        new FuncCallNode(new NodeList<>(node), new Function(createIdentifier("nameValue"),
+            new Parameter[] {createParameter("parameterValue", DataType.unsignedInt(32))},
+            DataType.unsignedInt(32)), DataType.unsignedInt(32));
+
+    // When
+    visitor.visit(funcCallNode);
+
+    // Then
+    assertEquals("nameValue(1)", writer.toString());
+  }
+
+  @Test
+  void funcCallNode_shouldCreateFunctionalWithTwoVar() {
+    var constant = new Constant.Value(BigInteger.ONE, DataType.unsignedInt(32));
+    var node = new ConstantNode(constant);
+    var funcCallNode =
+        new FuncCallNode(new NodeList<>(node, node), new Function(createIdentifier("nameValue"),
+            new Parameter[] {createParameter("parameterValue", DataType.unsignedInt(32))},
+            DataType.unsignedInt(32)), DataType.unsignedInt(32));
+
+    // When
+    visitor.visit(funcCallNode);
+
+    // Then
+    assertEquals("nameValue(1,1)", writer.toString());
+  }
+
+  private static Stream<Arguments> getTypes() {
+    return Stream.of(
+        Arguments.of(DataType.bool(), "(bool) 1"),
+        Arguments.of(DataType.signedInt(8), "(int8_t) 1"),
+        Arguments.of(DataType.signedInt(16), "(int16_t) 1"),
+        Arguments.of(DataType.signedInt(32), "(int32_t) 1"),
+        Arguments.of(DataType.signedInt(64), "(int64_t) 1"),
+        Arguments.of(DataType.unsignedInt(8), "(uint8_t) 1"),
+        Arguments.of(DataType.unsignedInt(16), "(uint16_t) 1"),
+        Arguments.of(DataType.unsignedInt(32), "(uint32_t) 1"),
+        Arguments.of(DataType.unsignedInt(64), "(uint64_t) 1")
+    );
+  }
+
+  @ParameterizedTest
+  @MethodSource("getTypes")
+  void typeCastNode_shouldGenerateCpp(DataType type, String expected) {
+    var constant = new Constant.Value(BigInteger.ONE, DataType.unsignedInt(32));
+    var node = new ConstantNode(constant);
+
+    // When
+    visitor.visit(new TypeCastNode(node, type));
+
+    // Then
+    assertEquals(expected, writer.toString());
+  }
+
+
+  @Test
+  void builtIn_shouldGenerateCpp() {
+    var constant = new Constant.Value(BigInteger.ONE, DataType.unsignedInt(32));
+    var node = new ConstantNode(constant);
+    var builtIn =
+        new BuiltInCall(BuiltInTable.ADD, new NodeList<>(node, node), DataType.unsignedInt(32));
+
+    // When
+    visitor.visit(builtIn);
+
+    // Then
+    assertEquals("1 + 1", writer.toString());
+  }
+}

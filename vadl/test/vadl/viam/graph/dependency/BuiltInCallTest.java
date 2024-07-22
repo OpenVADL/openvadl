@@ -67,14 +67,4 @@ class BuiltInCallTest {
     assertEquals(value.value(),
         ((Constant.Value) ((ConstantNode) result.get()).constant()).value());
   }
-
-  @Test
-  void generateOopExpression_shouldGenerateOop() {
-    var constant = new Constant.Value(BigInteger.ONE, DataType.unsignedInt(32));
-    var node = new ConstantNode(constant);
-    var builtIn =
-        new BuiltInCall(BuiltInTable.ADD, new NodeList<>(node, node), DataType.unsignedInt(32));
-
-    assertEquals("1 + 1", builtIn.generateOopExpression());
-  }
 }

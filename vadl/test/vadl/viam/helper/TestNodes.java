@@ -1,14 +1,15 @@
 package vadl.viam.helper;
 
 import java.util.List;
-import java.util.stream.Collector;
 import java.util.stream.Collectors;
 import vadl.javaannotations.viam.DataValue;
 import vadl.javaannotations.viam.Input;
 import vadl.javaannotations.viam.Successor;
+import vadl.viam.graph.GraphNodeVisitor;
 import vadl.viam.graph.GraphVisitor;
 import vadl.viam.graph.Node;
 import vadl.viam.graph.NodeList;
+import vadl.viam.graph.TestGraphVisitor;
 import vadl.viam.graph.UniqueNode;
 
 /**
@@ -24,6 +25,12 @@ public class TestNodes {
    * It extends the Node class.
    */
   public abstract static class TestNode extends Node {
+    public abstract void accept(TestGraphVisitor visitor);
+
+    @Override
+    public <T extends GraphNodeVisitor> void accept(T visitor) {
+      accept((TestGraphVisitor) visitor);
+    }
   }
 
   /**
@@ -40,6 +47,11 @@ public class TestNodes {
     @Override
     public Node shallowCopy() {
       return new Plain();
+    }
+
+    @Override
+    public void accept(TestGraphVisitor visitor) {
+      visitor.visit(this);
     }
   }
 
@@ -59,6 +71,12 @@ public class TestNodes {
     @Override
     public Node shallowCopy() {
       return new PlainUnique();
+    }
+
+
+    @Override
+    public void accept(TestGraphVisitor visitor) {
+      visitor.visit(this);
     }
   }
 
@@ -95,6 +113,11 @@ public class TestNodes {
     @Override
     public Node shallowCopy() {
       return new WithInput(input);
+    }
+
+    @Override
+    public void accept(TestGraphVisitor visitor) {
+      visitor.visit(this);
     }
   }
 
@@ -138,6 +161,11 @@ public class TestNodes {
     @Override
     public Node shallowCopy() {
       return new WithSuccessor(successor);
+    }
+
+    @Override
+    public void accept(TestGraphVisitor visitor) {
+      visitor.visit(this);
     }
   }
 
@@ -190,6 +218,11 @@ public class TestNodes {
     public Node shallowCopy() {
       return new WithTwoInputs(input1, input2);
     }
+
+    @Override
+    public void accept(TestGraphVisitor visitor) {
+      visitor.visit(this);
+    }
   }
 
 
@@ -241,6 +274,11 @@ public class TestNodes {
     public Node shallowCopy() {
       return new WithNodeListInput(this.inputs);
     }
+
+    @Override
+    public void accept(TestGraphVisitor visitor) {
+      visitor.visit(this);
+    }
   }
 
 
@@ -281,6 +319,11 @@ public class TestNodes {
     @Override
     public Node shallowCopy() {
       return new WithData(val);
+    }
+
+    @Override
+    public void accept(TestGraphVisitor visitor) {
+      visitor.visit(this);
     }
   }
 

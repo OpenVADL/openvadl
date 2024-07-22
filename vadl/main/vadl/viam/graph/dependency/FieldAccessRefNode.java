@@ -4,6 +4,7 @@ import java.util.List;
 import vadl.javaannotations.viam.DataValue;
 import vadl.oop.SymbolTable;
 import vadl.viam.Format;
+import vadl.viam.graph.GraphNodeVisitor;
 import vadl.viam.graph.Node;
 import vadl.viam.graph.NodeList;
 import vadl.viam.graph.control.IfNode;
@@ -49,7 +50,7 @@ public class FieldAccessRefNode extends ParamNode {
   }
 
   @Override
-  public String generateOopExpression() {
-    throw new RuntimeException("not implemented exception");
+  public void accept(GraphNodeVisitor visitor) {
+    visitor.visit(this);
   }
 }

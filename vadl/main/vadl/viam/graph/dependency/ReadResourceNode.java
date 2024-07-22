@@ -4,7 +4,6 @@ import java.util.List;
 import java.util.Objects;
 import javax.annotation.Nullable;
 import vadl.javaannotations.viam.Input;
-import vadl.oop.SymbolTable;
 import vadl.types.DataType;
 import vadl.viam.Resource;
 import vadl.viam.graph.GraphVisitor;
@@ -79,10 +78,5 @@ public abstract class ReadResourceNode extends ExpressionNode {
   public void applyOnInputsUnsafe(GraphVisitor.Applier<Node> visitor) {
     super.applyOnInputsUnsafe(visitor);
     address = visitor.applyNullable(this, address, ExpressionNode.class);
-  }
-
-  @Override
-  public String generateOopExpression() {
-    throw new RuntimeException("not implemented");
   }
 }
