@@ -115,9 +115,7 @@ class NestedSymbolTable implements DefinitionVisitor<Void> {
   public Void visit(EncodingDefinition definition) {
     var formatSymbol = requireInstructionFormat(definition.instrIdentifier);
     if (formatSymbol == null) {
-      errors.add(
-          new VadlError("Unknown instruction " + definition.instrIdentifier.name,
-              definition.location(), null, null));
+      reportError("Unknown instruction " + definition.instrIdentifier.name, definition.location());
       return null;
     }
     var format = formatSymbol.definition;
@@ -125,9 +123,8 @@ class NestedSymbolTable implements DefinitionVisitor<Void> {
       var name = entry.field().name;
       var field = format.fields.stream().filter(f -> f.identifier().name.equals(name)).findFirst();
       if (field.isEmpty()) {
-        errors.add(
-            new VadlError("Unknown field %s in format %s".formatted(name, format.identifier.name),
-                entry.field().location(), null, null));
+        reportError("Unknown field %s in format %s".formatted(name, format.identifier.name),
+            entry.field().location());
       }
     }
     return null;
@@ -225,72 +222,66 @@ class NestedSymbolTable implements DefinitionVisitor<Void> {
     var var = variableAccessRequirement.variableAccess;
     var symbol = resolveSymbol(var.identifier.name);
     if (symbol == null) {
-      errors.add(
-          new VadlError("Unresolved definition " + var.identifier.name, var.location(), null,
-              null));
-    } else if (symbol instanceof ValuedSymbol valSymbol) {
+      reportError("Unresolved definition " + var.identifier.name, var.location());
+      return;
+    }
+    if (symbol instanceof ValuedSymbol valSymbol) {
       if (var.next == null) {
         return;
       }
       if (!(valSymbol.typeDefinition instanceof FormatDefinition formatDefinition)) {
-        errors.add(new VadlError(
-            "Invalid usage: symbol %s of type %s does not have a record type".formatted(
-                var.identifier.name,
-                symbol.type()), var.location(), null, null));
+        reportError("Invalid usage: symbol %s of type %s does not have a record type".formatted(
+            var.identifier.name, symbol.type()), var.location());
         return;
       }
-      while (var.next != null) {
-        var next = var.next;
-        var field = formatDefinition.fields.stream()
-            .filter(f -> f.identifier().name.equals(next.identifier.name))
-            .findFirst().orElse(null);
-        if (field == null) {
-          errors.add(new VadlError(
-              "Invalid usage: format %s does not have field %s".formatted(
-                  formatDefinition.identifier.name, next.identifier.name), var.location(), null,
-              null));
-          return;
-        } else if (field instanceof FormatDefinition.RangeFormatField && next.next != null) {
-          errors.add(new VadlError(
-              "Invalid usage: field %s resolves to a range, does not provide fields to access".formatted(
-                  field.identifier().name), var.location(), null, null));
-          return;
-        } else if (field instanceof FormatDefinition.TypedFormatField f) {
-          if (isValuedAnnotation(f.typeAnnotation)) {
-            if (next.next != null) {
-              errors.add(new VadlError(
-                  "Invalid usage: field %s resolves to %s, does not provide fields to access".formatted(
-                      field.identifier().name, f.typeAnnotation.baseType), var.location(), null,
-                  null));
-              return;
-            }
-            return;
-          } else if (next.next == null) {
-            errors.add(new VadlError(
-                "Invalid usage: field %s resolves to %s, which does not provide a value".formatted(
-                    field.identifier().name, f.typeAnnotation.baseType.name), var.location(),
-                null, null));
-            return;
-          }
-          var typeSymbol = f.symbolTable.resolveSymbol(f.typeAnnotation.baseType.name);
-          if (typeSymbol instanceof FormatSymbol formatSymbol) {
-            var = var.next;
-            formatDefinition = formatSymbol.definition;
-          } else {
-            Objects.requireNonNull(typeSymbol);
-            errors.add(new VadlError(
-                "Invalid usage: symbol %s of type %s does not have a record type".formatted(
-                    f.identifier.name,
-                    typeSymbol.type().name()), var.location(), null, null));
-            return;
-          }
+      verifyFormatAccess(formatDefinition, var.next);
+    } else {
+      reportError(
+          "Invalid usage: symbol %s of type %s does not have a value".formatted(var.identifier.name,
+              symbol.type()), var.location());
+    }
+  }
+
+  @Nullable
+  private FormatDefinition.FormatField findField(FormatDefinition format, String name) {
+    return format.fields.stream()
+        .filter(f -> f.identifier().name.equals(name))
+        .findFirst().orElse(null);
+  }
+
+  private void verifyFormatAccess(FormatDefinition format, VariableAccess access) {
+    var field = findField(format, access.identifier.name);
+    if (field == null) {
+      reportError(
+          "Invalid usage: format %s does not have field %s".formatted(format.identifier.name,
+              access.identifier.name), access.location());
+    } else if (field instanceof FormatDefinition.RangeFormatField && access.next != null) {
+      reportError(
+          "Invalid usage: field %s resolves to a range, does not provide fields to access".formatted(
+              field.identifier().name), access.location());
+    } else if (field instanceof FormatDefinition.TypedFormatField f) {
+      if (isValuedAnnotation(f.typeAnnotation)) {
+        if (access.next != null) {
+          reportError(
+              "Invalid usage: field %s resolves to %s, does not provide fields to access".formatted(
+                  field.identifier().name, f.typeAnnotation.baseType), access.location());
+        }
+      } else if (access.next == null) {
+        reportError(
+            "Invalid usage: field %s resolves to %s, which does not provide a value".formatted(
+                field.identifier().name, f.typeAnnotation.baseType.name), access.location());
+      } else {
+        var typeSymbol = f.symbolTable.resolveSymbol(f.typeAnnotation.baseType.name);
+        if (typeSymbol instanceof FormatSymbol formatSymbol) {
+          verifyFormatAccess(formatSymbol.definition, access.next);
+        } else if (typeSymbol == null) {
+          reportError("Invalid usage: type %s not found".formatted(f.identifier.name),
+              f.location());
+        } else {
+          reportError("Invalid usage: symbol %s of type %s does not have a record type".formatted(
+              f.identifier.name, typeSymbol.type().name()), access.location());
         }
       }
-    } else {
-      errors.add(new VadlError(
-          "Invalid usage: symbol %s of type %s does not have a value".formatted(
-              var.identifier.name,
-              symbol.type()), var.location(), null, null));
     }
   }
 
@@ -301,17 +292,18 @@ class NestedSymbolTable implements DefinitionVisitor<Void> {
 
   private void verifyAvailable(String name, SourceLocation loc) {
     if (symbols.containsKey(name)) {
-      errors.add(new VadlError("Duplicate definition " + name, loc, null, null));
+      reportError("Duplicate definition: " + name, loc);
     }
+  }
+
+  private void reportError(String error, SourceLocation location) {
+    errors.add(new VadlError(error, location, null, null));
   }
 
   enum SymbolType {
     // TODO Maybe unify with syntax types / core types?
     CONSTANT, COUNTER, FORMAT, INSTRUCTION, INSTRUCTION_SET, MEMORY, REGISTER, REGISTER_FILE,
     FORMAT_FIELD, MACRO;
-
-    static final EnumSet<SymbolType> valuedTypes =
-        EnumSet.of(CONSTANT, COUNTER, REGISTER, FORMAT_FIELD);
   }
 
   interface Symbol {
