@@ -48,7 +48,7 @@ public class Ast {
 }
 
 abstract class Node {
-  protected String prettyIndentString(int indent) {
+  static String prettyIndentString(int indent) {
     var indentBy = 2;
     return " ".repeat(indentBy * indent);
   }

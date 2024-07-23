@@ -1,5 +1,7 @@
 package vadl.ast;
 
+import static vadl.ast.Node.prettyIndentString;
+
 import java.util.ArrayList;
 import java.util.List;
 import javax.annotation.Nullable;
@@ -46,10 +48,10 @@ record BlockStatement(List<Statement> statements) implements Statement {
 
   @Override
   public void prettyPrint(int indent, StringBuilder builder) {
-    builder.append(" ".repeat(2 * indent));
+    builder.append(prettyIndentString(indent));
     builder.append("{\n");
     statements.forEach(statement -> statement.prettyPrint(indent + 1, builder));
-    builder.append(" ".repeat(2 * indent));
+    builder.append(prettyIndentString(indent));
     builder.append("}");
   }
 }
@@ -58,7 +60,7 @@ record LetStatement(Identifier identifier, Expr valueExpression, Statement body)
     implements Statement {
   @Override
   public void prettyPrint(int indent, StringBuilder builder) {
-    builder.append(" ".repeat(2 * indent));
+    builder.append(prettyIndentString(indent));
     builder.append("let ");
     builder.append(identifier.name);
     builder.append(" = ");
@@ -72,14 +74,14 @@ record IfStatement(Expr condition, Statement thenStmt, @Nullable Statement elseS
     implements Statement {
   @Override
   public void prettyPrint(int indent, StringBuilder builder) {
-    builder.append(" ".repeat(2 * indent));
+    builder.append(prettyIndentString(indent));
     builder.append("if ");
     condition.prettyPrint(indent + 1, builder);
     builder.append(" then\n");
     thenStmt.prettyPrint(indent + 1, builder);
     builder.append("\n");
     if (elseStmt != null) {
-      builder.append(" ".repeat(2 * indent));
+      builder.append(prettyIndentString(indent));
       builder.append("else\n");
       elseStmt.prettyPrint(indent + 1, builder);
       builder.append("\n");
@@ -90,7 +92,7 @@ record IfStatement(Expr condition, Statement thenStmt, @Nullable Statement elseS
 record AssignmentStatement(Expr target, Expr valueExpression) implements Statement {
   @Override
   public void prettyPrint(int indent, StringBuilder builder) {
-    builder.append(" ".repeat(2 * indent));
+    builder.append(prettyIndentString(indent));
     target.prettyPrint(0, builder);
     builder.append(" := ");
     valueExpression.prettyPrint(indent + 1, builder);

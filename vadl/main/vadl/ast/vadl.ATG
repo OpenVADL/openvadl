@@ -20,6 +20,7 @@ import vadl.types.UIntType;
 
 COMPILER vadl
     boolean insideMacro = false;
+    boolean insideAnnotation = false;
     Ast ast = new Ast();
     NestedSymbolTable symbolTable = new NestedSymbolTable();
     Ungrouper ungrouper = new Ungrouper();
@@ -294,7 +295,8 @@ PRODUCTIONS
       SET ARCHITECTURE identifier<out Identifier identifier>
       SYM_EQ SYM_BRACE_OPEN
       {(
-        isaDefinition<out Definition def>                           (. children.add(def); def.accept(symbolTable); .)
+        annotations<out Annotations annotations>
+        isaDefinition<out Definition def>                           (. def.addAnnotations(annotations); children.add(def); def.accept(symbolTable); .)
         | macroDef
         | macroInstance<out Node b, BasicSyntaxType.IsaDefs()>      (. children.add((Definition) b); .)
       )}
@@ -304,17 +306,31 @@ PRODUCTIONS
                                                                     .)
       .
 
-    isaDefinition<out Definition def>          (. def = null; .)
-    = constantDefinition<out Definition d>     (. def = d; .)
-    | formatDefinition<out Definition d>       (. def = d; .)
-    | counterDefinition<out Definition d>      (. def = d; .)
-    | instructionDefinition<out Definition d>  (. def = d; .)
-    | encodingDefinition<out Definition d>     (. def = d; .)
-    | assemblyDefinition<out Definition d>     (. def = d; .)
-    | memoryDefinition<out Definition d>       (. def = d; .)
+    annotations<out Annotations annotations>  (. annotations = new Annotations(); insideAnnotation = true; .)
+    = { annotation<out Annotation annotation> (. annotations.add(annotation); .) }
+                                              (. insideAnnotation = false; .)
+    .
+
+    annotation<out Annotation annotation> (. TypeLiteral type = null; Identifier property = null; .)
+    = SYM_BRACK_OPEN
+      expression<out Expr expr>
+      [ (SYM_COLON typeLiteral<out type>)
+      | identifier<out property>
+      ]
+      SYM_BRACK_CLOSE                     (. annotation = new Annotation(expr, type, property); .)
+    .
+
+    isaDefinition<out Definition def> (. def = null; .)
+    = constantDefinition<out def>
+    | formatDefinition<out def>
+    | counterDefinition<out def>
+    | instructionDefinition<out def>
+    | encodingDefinition<out def>
+    | assemblyDefinition<out def>
+    | memoryDefinition<out def>
     | IF (la.kind == _REGISTER && scanner.Peek().kind == _FILE)
-      registerFileDefinition<out Definition d> (. def = d; .)
-    | registerDefinition<out Definition d>     (. def = d; .)
+      registerFileDefinition<out def>
+    | registerDefinition<out def>
     .
 
     constantDefinition<out ConstantDefinition def>      (. TypeLiteral type = null; .)
@@ -517,7 +533,7 @@ PRODUCTIONS
     term<out Expr expr>                                                (. expr = null; .)
     = number                                                           (. expr = new IntegerLiteral(t.val, loc()); .)
     | IF (la.kind == _identifierToken && scanner.Peek().kind != _SYM_PAREN_OPEN)
-      identifierChain<out IdentifierChain chain>                       (. expr = chain; if (!insideMacro) symbolTable.requireValue(chain); .)
+      identifierChain<out IdentifierChain chain>                       (. expr = chain; if (!insideMacro && !insideAnnotation) symbolTable.requireValue(chain); .)
     | callExpression<out CallExpr call>                                (. expr = call; .)
     | SYM_PAREN_OPEN expression<out Expr expr1> SYM_PAREN_CLOSE        (. expr = new GroupExpr(expr1); .)
     | unary<out Expr unary>                                            (. expr = unary; .)

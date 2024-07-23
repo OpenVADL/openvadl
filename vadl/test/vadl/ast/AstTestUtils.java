@@ -6,7 +6,7 @@ public class AstTestUtils {
   static void verifyPrettifiedAst(Ast ast) {
     var progPretty = ast.prettyPrint();
     var astPretty = Assertions.assertDoesNotThrow(() -> VadlParser.parse(progPretty),
-        "Cannot parse prettified input");
+        "Cannot parse prettified input \n" + progPretty);
     assertAstEquality(astPretty, ast);
   }
 
