@@ -60,7 +60,9 @@ public class Z3EncodingCodeGeneratorVisitor implements GraphNodeVisitor {
   @Override
   public void visit(ConstantNode node) {
     if (node.constant() instanceof Constant.Value) {
-      writer.write(node.constant().toString());
+      writer.write(String.format("BitVecVal(%d, %d)",
+          ((Constant.Value) node.constant()).value(),
+          ((BitsType) node.constant().type()).bitWidth()));
     } else {
       throw new ViamError("not implemented");
     }

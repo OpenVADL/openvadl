@@ -16,6 +16,7 @@ import vadl.viam.graph.Node;
 import vadl.viam.graph.NodeList;
 import vadl.viam.graph.control.ReturnNode;
 import vadl.viam.graph.dependency.BuiltInCall;
+import vadl.viam.graph.dependency.ConstantNode;
 import vadl.viam.graph.dependency.ExpressionNode;
 import vadl.viam.graph.dependency.FieldRefNode;
 import vadl.viam.graph.dependency.FuncParamNode;
@@ -98,12 +99,9 @@ public class ArithmeticImmediateStrategy implements EncodingGenerationStrategy {
     // We also immediately cast the func parameter to the same size as the field.
     var fieldRefBits = (BitsType) fieldRef.type();
     var negated =
-        new BuiltInCall(BuiltInTable.NEG, new NodeList<>(List.of(new SliceNode(new FuncParamNode(
+        new BuiltInCall(BuiltInTable.NEG, new NodeList<>(List.of(new FuncParamNode(
             parameter
-        ), new Constant.BitSlice(new Constant.BitSlice.Part[] {
-            new Constant.BitSlice.Part(fieldRefBits.bitWidth() - 1, 0)}),
-            (DataType) fieldRef.type()
-        ))), fieldRef.type());
+        ))), parameter.type());
     copy.replaceNode(fieldRef, negated);
 
     // The else branch is not required because the field is positive on the LHS.
@@ -138,6 +136,14 @@ public class ArithmeticImmediateStrategy implements EncodingGenerationStrategy {
         }
       });
     }
+
+    // At the end of the encoding function, the type must be exactly as the field type
+    var sliceNode =
+        new SliceNode(returnNode.value, new Constant.BitSlice(new Constant.BitSlice.Part[] {
+            new Constant.BitSlice.Part(fieldRefBits.bitWidth() - 1, 0)
+        }), (DataType) fieldRef.type());
+    var addedSliceNode = copy.add(sliceNode);
+    returnNode.replaceInput(returnNode.value, addedSliceNode);
 
     var encoding = fieldAccess.encoding();
     if (encoding != null) {
