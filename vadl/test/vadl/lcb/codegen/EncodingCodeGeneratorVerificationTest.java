@@ -66,8 +66,14 @@ public class EncodingCodeGeneratorVerificationTest extends AbstractTest {
         Arguments.of(createUnsignedInt32ShiftDecodingFunction(), new ShiftedImmediateStrategy()),
         Arguments.of(createSignedInt32ShiftDecodingFunction(), new ShiftedImmediateStrategy()),
         Arguments.of(createUnsignedInt32WithAdditionDecodingFunction(),
+            new ArithmeticImmediateStrategy()),
+        Arguments.of(createSignedInt32WithAdditionDecodingFunction(),
+            new ArithmeticImmediateStrategy()),
+        Arguments.of(createUnsignedInt32WithSubtractionDecodingFunction(),
+            new ArithmeticImmediateStrategy()),
+        Arguments.of(createSignedInt32WithSubtractionDecodingFunction(),
             new ArithmeticImmediateStrategy())
-        );
+    );
   }
 
   @ParameterizedTest
@@ -212,6 +218,57 @@ public class EncodingCodeGeneratorVerificationTest extends AbstractTest {
             new TypeCastNode(new FieldRefNode(field, DataType.bits(20)), Type.unsignedInt(32)),
             new ConstantNode(new Constant.Value(BigInteger.valueOf(6), DataType.unsignedInt(32)))),
             Type.unsignedInt(32))
+    );
+    var graph = new Graph("graphValue");
+    graph.addWithInputs(returnNode);
+    function.setBehavior(graph);
+    return function;
+  }
+
+  private static Function createSignedInt32WithAdditionDecodingFunction() {
+    var function = createFunction("functionNameValue", Type.signedInt(32));
+    var field = createFieldWithParent("fieldNameIdentifierValue", DataType.bits(20),
+        new Constant.BitSlice(new Constant.BitSlice.Part[] {new Constant.BitSlice.Part(19, 0)}),
+        32);
+    var returnNode = new ReturnNode(
+        new BuiltInCall(BuiltInTable.ADD, new NodeList<>(
+            new TypeCastNode(new FieldRefNode(field, DataType.bits(20)), Type.signedInt(32)),
+            new ConstantNode(new Constant.Value(BigInteger.valueOf(6), DataType.signedInt(32)))),
+            Type.signedInt(32))
+    );
+    var graph = new Graph("graphValue");
+    graph.addWithInputs(returnNode);
+    function.setBehavior(graph);
+    return function;
+  }
+
+  private static Function createUnsignedInt32WithSubtractionDecodingFunction() {
+    var function = createFunction("functionNameValue", Type.unsignedInt(32));
+    var field = createFieldWithParent("fieldNameIdentifierValue", DataType.bits(20),
+        new Constant.BitSlice(new Constant.BitSlice.Part[] {new Constant.BitSlice.Part(19, 0)}),
+        32);
+    var returnNode = new ReturnNode(
+        new BuiltInCall(BuiltInTable.SUB, new NodeList<>(
+            new TypeCastNode(new FieldRefNode(field, DataType.bits(20)), Type.unsignedInt(32)),
+            new ConstantNode(new Constant.Value(BigInteger.valueOf(6), DataType.unsignedInt(32)))),
+            Type.unsignedInt(32))
+    );
+    var graph = new Graph("graphValue");
+    graph.addWithInputs(returnNode);
+    function.setBehavior(graph);
+    return function;
+  }
+
+  private static Function createSignedInt32WithSubtractionDecodingFunction() {
+    var function = createFunction("functionNameValue", Type.signedInt(32));
+    var field = createFieldWithParent("fieldNameIdentifierValue", DataType.bits(20),
+        new Constant.BitSlice(new Constant.BitSlice.Part[] {new Constant.BitSlice.Part(19, 0)}),
+        32);
+    var returnNode = new ReturnNode(
+        new BuiltInCall(BuiltInTable.SUB, new NodeList<>(
+            new TypeCastNode(new FieldRefNode(field, DataType.bits(20)), Type.signedInt(32)),
+            new ConstantNode(new Constant.Value(BigInteger.valueOf(6), DataType.signedInt(32)))),
+            Type.signedInt(32))
     );
     var graph = new Graph("graphValue");
     graph.addWithInputs(returnNode);
