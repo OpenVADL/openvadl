@@ -63,7 +63,11 @@ public class Graph {
    * Replaces the node {@code toReplace} with the given node {@code newNode}.
    */
   public <T extends Node> T replaceNode(Node toReplace, T newNode) {
-    var node = this.addWithInputs(newNode);
+    // The `addWithInputs` throws an exception when `newNode` already exists in the graph.
+    // So we first look if we already have the `newNode`.
+    var node = nodes.stream().filter(x -> x == newNode)
+        .findFirst()
+        .orElseGet(() -> this.addWithInputs(newNode));
 
     // All of toReplace's children are obsolete.
     // But, we cannot delete them because they might be used by other nodes.
@@ -74,7 +78,7 @@ public class Graph {
     toReplace.collectSuccessors(children);
 
     // Relevant for data nodes.
-    this.nodes.forEach(x -> x.replaceInput(toReplace, node));
+    this.nodes.stream().filter(Objects::nonNull).forEach(x -> x.replaceInput(toReplace, node));
     toReplace.usages().forEach(x -> x.transferUsageOfThis(toReplace, node));
 
     // Relevant for control nodes.
@@ -103,7 +107,8 @@ public class Graph {
         .forEach(Node::safeDelete);
     toReplace.safeDelete();
 
-    return node;
+    //noinspection unchecked
+    return (T) node;
   }
 
   /**

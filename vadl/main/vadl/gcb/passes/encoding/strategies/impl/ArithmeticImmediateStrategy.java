@@ -4,7 +4,10 @@ import java.util.Collections;
 import java.util.List;
 import org.jetbrains.annotations.Nullable;
 import vadl.gcb.passes.encoding.strategies.EncodingGenerationStrategy;
+import vadl.types.BitsType;
 import vadl.types.BuiltInTable;
+import vadl.types.DataType;
+import vadl.viam.Constant;
 import vadl.viam.Format;
 import vadl.viam.Parameter;
 import vadl.viam.ViamError;
@@ -17,6 +20,7 @@ import vadl.viam.graph.dependency.ExpressionNode;
 import vadl.viam.graph.dependency.FieldRefNode;
 import vadl.viam.graph.dependency.FuncParamNode;
 import vadl.viam.graph.dependency.SliceNode;
+import vadl.viam.graph.dependency.TypeCastNode;
 import vadl.viam.matching.TreeMatcher;
 import vadl.viam.matching.impl.AnyNodeMatcher;
 import vadl.viam.matching.impl.BuiltInMatcher;
@@ -59,6 +63,11 @@ public class ArithmeticImmediateStrategy implements EncodingGenerationStrategy {
     var copy = accessFunction.behavior().copy();
     var returnNode = copy.getNodes(ReturnNode.class).findFirst().get();
 
+    // Optimistic assumption: Remove all typecasts because they are not correct anymore when
+    // inverted.
+    copy.getNodes(TypeCastNode.class)
+        .forEach(typeCastNode -> copy.replaceNode(typeCastNode, typeCastNode.value()));
+
     // First, remove all usages of subtraction.
     // We can replace them by addition with a NegatedNode
     var subtractions = TreeMatcher.matches(copy.getNodes(),
@@ -86,9 +95,15 @@ public class ArithmeticImmediateStrategy implements EncodingGenerationStrategy {
         )));
 
     // We always create a negated parameter because the equation has always f(x) on the LHS.
-    var negated = new BuiltInCall(BuiltInTable.NEG, new NodeList<>(List.of(new FuncParamNode(
-        parameter
-    ))), parameter.type());
+    // We also immediately cast the func parameter to the same size as the field.
+    var fieldRefBits = (BitsType) fieldRef.type();
+    var negated =
+        new BuiltInCall(BuiltInTable.NEG, new NodeList<>(List.of(new SliceNode(new FuncParamNode(
+            parameter
+        ), new Constant.BitSlice(new Constant.BitSlice.Part[] {
+            new Constant.BitSlice.Part(fieldRefBits.bitWidth() - 1, 0)}),
+            (DataType) fieldRef.type()
+        ))), fieldRef.type());
     copy.replaceNode(fieldRef, negated);
 
     // The else branch is not required because the field is positive on the LHS.
