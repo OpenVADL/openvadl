@@ -1,5 +1,6 @@
 package vadl.viam.graph.dependency;
 
+import com.google.common.collect.Streams;
 import java.math.BigInteger;
 import java.util.List;
 import java.util.Objects;
@@ -49,6 +50,23 @@ public class BuiltInCall extends AbstractFunctionCallNode {
   @Override
   public Node shallowCopy() {
     return new BuiltInCall(builtIn, args, type());
+  }
+
+  @Override
+  public void verifyState() {
+    super.verifyState();
+    var args = builtIn.signature().argTypeClasses();
+    var result = builtIn.signature().resultTypeClass();
+
+    ensure(args.size() == this.arguments().size(),
+        "Number of arguments must match");
+    var argsMatched =
+        Streams.zip(this.arguments().stream().map(x -> x.type().getClass()), args.stream(),
+            (BiFunction<Class<? extends Type>, Class<? extends Type>, Object>) (a, b) -> !a.equals(
+                b)
+        ).findAny();
+    ensure(argsMatched.isPresent(), "Arguments' types do not match with the type of the builtin");
+    ensure(result.equals(this.type().getClass()), "Result type does not match");
   }
 
   /**
