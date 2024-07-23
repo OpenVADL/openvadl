@@ -1,11 +1,9 @@
 package vadl.ast;
 
 import java.util.ArrayList;
-import java.util.EnumSet;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Objects;
 import javax.annotation.Nullable;
 import vadl.error.VadlError;
 import vadl.utils.SourceLocation;
@@ -103,8 +101,8 @@ class NestedSymbolTable implements DefinitionVisitor<Void> {
 
   @Override
   public Void visit(InstructionDefinition definition) {
-    if (definition.identifier instanceof Identifier id &&
-        definition.typeIdentifier instanceof Identifier typeId) {
+    if (definition.identifier instanceof Identifier id
+        && definition.typeIdentifier instanceof Identifier typeId) {
       defineSymbol(new InstructionSymbol(id.name, definition), definition.loc);
       requirements.add(new SymbolRequirement(typeId.name, SymbolType.FORMAT, typeId.loc));
     }
@@ -256,9 +254,8 @@ class NestedSymbolTable implements DefinitionVisitor<Void> {
           "Invalid usage: format %s does not have field %s".formatted(format.identifier.name,
               access.identifier.name), access.location());
     } else if (field instanceof FormatDefinition.RangeFormatField && access.next != null) {
-      reportError(
-          "Invalid usage: field %s resolves to a range, does not provide fields to access".formatted(
-              field.identifier().name), access.location());
+      reportError("Invalid usage: field %s resolves to a range, does not provide fields to access"
+          .formatted(field.identifier().name), access.location());
     } else if (field instanceof FormatDefinition.TypedFormatField f) {
       if (isValuedAnnotation(f.typeAnnotation)) {
         if (access.next != null) {
@@ -286,8 +283,8 @@ class NestedSymbolTable implements DefinitionVisitor<Void> {
   }
 
   private boolean isValuedAnnotation(TypeLiteral typeAnnotation) {
-    return typeAnnotation.baseType.name.equals("Bool") ||
-        typeAnnotation.baseType.name.equals("Bits");
+    return typeAnnotation.baseType.name.equals("Bool")
+        || typeAnnotation.baseType.name.equals("Bits");
   }
 
   private void verifyAvailable(String name, SourceLocation loc) {
@@ -301,7 +298,6 @@ class NestedSymbolTable implements DefinitionVisitor<Void> {
   }
 
   enum SymbolType {
-    // TODO Maybe unify with syntax types / core types?
     CONSTANT, COUNTER, FORMAT, INSTRUCTION, INSTRUCTION_SET, MEMORY, REGISTER, REGISTER_FILE,
     FORMAT_FIELD, MACRO;
   }

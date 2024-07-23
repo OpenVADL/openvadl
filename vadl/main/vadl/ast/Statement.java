@@ -26,8 +26,11 @@ sealed interface Statement permits BlockStatement, LetStatement, IfStatement, As
 
 interface StatementVisitor<T> {
   T visit(BlockStatement blockStatement);
+
   T visit(LetStatement letStatement);
+
   T visit(IfStatement ifStatement);
+
   T visit(AssignmentStatement assignmentStatement);
 }
 

@@ -60,6 +60,6 @@ public class StringTest {
     var assembly = (AssemblyDefinition) ((InstructionSetDefinition) ast.definitions.get(0))
         .definitions.get(2);
     var actualString = (StringLiteral) assembly.segments.get(0);
-    assertThat(actualString.value, equalTo("\b\t\r\n\f'\"\\\uD83D\uDE02"));
+    assertThat(actualString.value, equalTo("\b\t\r\n\f'\"\\😂"));
   }
 }

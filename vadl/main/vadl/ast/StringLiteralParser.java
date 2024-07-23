@@ -1,6 +1,23 @@
 package vadl.ast;
 
-public class StringLiteralParser {
+/**
+ * Parses any valid VADL string literal into the represented {@link java.lang.String} value.
+ * An escape sequence starts with a backslash, followed by one or more characters.
+ * Supported escape sequences are:
+ * <ul>
+ *   <li>\ - Resolves to a single backslash</li>
+ *   <li>" - Resolves to a double quote</li>
+ *   <li>' - Resolves to a single quote</li>
+ *   <li>b - Resolves to a backspace character</li>
+ *   <li>t - Resolves to a tab character</li>
+ *   <li>r - Resolves to a carriage return character</li>
+ *   <li>n - Resolves to a newline character</li>
+ *   <li>f - Resolves to a form feed character</li>
+ *   <li>uXXXX where XXXX is a four-digit hex unicode codepoint</li>
+ * </ul>
+ *
+ */
+class StringLiteralParser {
 
   static String parseString(String token) {
     final StringBuilder str = new StringBuilder();

@@ -11,7 +11,8 @@ import vadl.error.VadlException;
 /**
  * Expands and copies a macro template.
  */
-class MacroExpander implements ExprVisitor<Node>, DefinitionVisitor<Node>, StatementVisitor<Statement> {
+class MacroExpander
+    implements ExprVisitor<Node>, DefinitionVisitor<Node>, StatementVisitor<Statement> {
   final Map<String, Node> args;
   NestedSymbolTable symbols;
   List<VadlError> errors = new ArrayList<>();
@@ -40,7 +41,8 @@ class MacroExpander implements ExprVisitor<Node>, DefinitionVisitor<Node>, State
   @Override
   public Expr visit(BinaryExpr expr) {
     // FIXME: Only if parent is not a binary operator cause otherwise it is O(n^2)
-    var result = new BinaryExpr((Expr) expr.left.accept(this), expr.operator, (Expr) expr.right.accept(this));
+    var result = new BinaryExpr((Expr) expr.left.accept(this), expr.operator,
+        (Expr) expr.right.accept(this));
     return BinaryExpr.reorder(result);
   }
 
@@ -101,12 +103,14 @@ class MacroExpander implements ExprVisitor<Node>, DefinitionVisitor<Node>, State
 
   @Override
   public Definition visit(ConstantDefinition definition) {
-    return new ConstantDefinition(definition.identifier, definition.typeAnnotation, (Expr) definition.value.accept(this), definition.loc);
+    return new ConstantDefinition(definition.identifier, definition.typeAnnotation,
+        (Expr) definition.value.accept(this), definition.loc);
   }
 
   @Override
   public Definition visit(FormatDefinition definition) {
-    return new FormatDefinition(definition.identifier, definition.typeAnnotation, definition.fields, definition.loc);
+    return new FormatDefinition(definition.identifier, definition.typeAnnotation, definition.fields,
+        definition.loc);
   }
 
   @Override
@@ -147,13 +151,6 @@ class MacroExpander implements ExprVisitor<Node>, DefinitionVisitor<Node>, State
     );
     symbols = Objects.requireNonNull(symbols.parent);
     return result;
-  }
-
-  private Identifier resolvePlaceholderOrIdentifier(Node n) {
-    if (n instanceof PlaceHolderExpr p) {
-      return (Identifier) p.accept(this);
-    }
-    return (Identifier) n;
   }
 
   @Override
@@ -207,5 +204,12 @@ class MacroExpander implements ExprVisitor<Node>, DefinitionVisitor<Node>, State
         assignmentStatement.target(),
         (Expr) assignmentStatement.valueExpression().accept(this)
     );
+  }
+
+  private Identifier resolvePlaceholderOrIdentifier(Node n) {
+    if (n instanceof PlaceHolderExpr p) {
+      return (Identifier) p.accept(this);
+    }
+    return (Identifier) n;
   }
 }
