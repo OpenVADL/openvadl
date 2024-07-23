@@ -86,9 +86,9 @@ class MacroExpander
   }
 
   @Override
-  public Expr visit(VariableAccess expr) {
+  public Expr visit(IdentifierChain expr) {
     symbols.requireValue(expr);
-    return new VariableAccess(expr.identifier, expr.next);
+    return new IdentifierChain(expr.identifier, expr.next);
   }
 
   @Override
@@ -197,8 +197,8 @@ class MacroExpander
 
   @Override
   public Statement visit(AssignmentStatement assignmentStatement) {
-    if (assignmentStatement.target() instanceof VariableAccess var) {
-      symbols.requireValue(var);
+    if (assignmentStatement.target() instanceof IdentifierChain chain) {
+      symbols.requireValue(chain);
     }
     return new AssignmentStatement(
         assignmentStatement.target(),

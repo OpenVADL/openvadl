@@ -27,7 +27,7 @@ interface ExprVisitor<R> {
 
   R visit(TypeLiteral expr);
 
-  R visit(VariableAccess expr);
+  R visit(IdentifierChain expr);
 
   R visit(UnaryExpr expr);
 
@@ -236,7 +236,7 @@ class BinaryExpr extends Expr {
 
   @Override
   SyntaxType syntaxType() {
-    return CoreType.Bin();
+    return BasicSyntaxType.Bin();
   }
 
   @Override
@@ -299,7 +299,7 @@ class UnaryExpr extends Expr {
 
   @Override
   SyntaxType syntaxType() {
-    return CoreType.UnOp();
+    return BasicSyntaxType.UnOp();
   }
 
   @Override
@@ -368,7 +368,7 @@ class IntegerLiteral extends Expr {
 
   @Override
   SyntaxType syntaxType() {
-    return CoreType.Int();
+    return BasicSyntaxType.Int();
   }
 
   @Override
@@ -425,7 +425,7 @@ class StringLiteral extends Expr {
 
   @Override
   SyntaxType syntaxType() {
-    return CoreType.Str();
+    return BasicSyntaxType.Str();
   }
 
   @Override
@@ -489,7 +489,7 @@ class PlaceHolderExpr extends Expr {
 
   @Override
   SyntaxType syntaxType() {
-    return CoreType.Invalid();
+    return BasicSyntaxType.Invalid();
   }
 
   @Override
@@ -594,7 +594,7 @@ class RangeExpr extends Expr {
 
   @Override
   SyntaxType syntaxType() {
-    return CoreType.Invalid();
+    return BasicSyntaxType.Invalid();
   }
 
   @Override
@@ -661,7 +661,7 @@ class TypeLiteral extends Expr {
 
   @Override
   SyntaxType syntaxType() {
-    return CoreType.Invalid();
+    return BasicSyntaxType.Invalid();
   }
 
   @Override
@@ -708,11 +708,12 @@ class TypeLiteral extends Expr {
   }
 }
 
-class VariableAccess extends Expr {
+class IdentifierChain extends Expr {
   Identifier identifier;
-  @Nullable VariableAccess next;
+  @Nullable
+  IdentifierChain next;
 
-  public VariableAccess(Identifier identifier, @Nullable VariableAccess next) {
+  public IdentifierChain(Identifier identifier, @Nullable IdentifierChain next) {
     this.identifier = identifier;
     this.next = next;
   }
@@ -727,7 +728,7 @@ class VariableAccess extends Expr {
 
   @Override
   SyntaxType syntaxType() {
-    return CoreType.Id();
+    return BasicSyntaxType.Id();
   }
 
   @Override
@@ -758,7 +759,7 @@ class VariableAccess extends Expr {
       return false;
     }
 
-    VariableAccess that = (VariableAccess) o;
+    IdentifierChain that = (IdentifierChain) o;
     return identifier.equals(that.identifier) && Objects.equals(next, that.next);
   }
 
@@ -786,7 +787,7 @@ class CallExpr extends Expr {
 
   @Override
   SyntaxType syntaxType() {
-    return CoreType.Id();
+    return BasicSyntaxType.Id();
   }
 
   @Override

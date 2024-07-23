@@ -6,24 +6,24 @@ import org.junit.jupiter.api.Test;
 public class SyntaxTypeTest {
   @Test
   void coreTypeEqualityTest() {
-    Assertions.assertEquals(CoreType.Stats(), CoreType.Stats());
+    Assertions.assertEquals(BasicSyntaxType.Stats(), BasicSyntaxType.Stats());
   }
 
   @Test
   void coreTypeSubtypeItselfTest() {
-    Assertions.assertTrue(CoreType.Stats().isSubTypeOf(CoreType.Stats()));
+    Assertions.assertTrue(BasicSyntaxType.Stats().isSubTypeOf(BasicSyntaxType.Stats()));
   }
 
   @Test
   void coreTypeSubtypeDirectParentTest() {
-    Assertions.assertTrue(CoreType.Stat().isSubTypeOf(CoreType.Stats()));
+    Assertions.assertTrue(BasicSyntaxType.Stat().isSubTypeOf(BasicSyntaxType.Stats()));
   }
 
   @Test
   void coreTypeSubtypeGrandparentsTest() {
-    Assertions.assertTrue(CoreType.Bin().isSubTypeOf(CoreType.Val()));
-    Assertions.assertTrue(CoreType.Bin().isSubTypeOf(CoreType.Lit()));
-    Assertions.assertTrue(CoreType.Bin().isSubTypeOf(CoreType.Ex()));
+    Assertions.assertTrue(BasicSyntaxType.Bin().isSubTypeOf(BasicSyntaxType.Val()));
+    Assertions.assertTrue(BasicSyntaxType.Bin().isSubTypeOf(BasicSyntaxType.Lit()));
+    Assertions.assertTrue(BasicSyntaxType.Bin().isSubTypeOf(BasicSyntaxType.Ex()));
   }
 }
 

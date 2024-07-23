@@ -62,7 +62,7 @@ class ConstantDefinition extends Definition {
 
   @Override
   SyntaxType syntaxType() {
-    return CoreType.IsaDefs();
+    return BasicSyntaxType.IsaDefs();
   }
 
   @Override
@@ -145,7 +145,7 @@ class FormatDefinition extends Definition {
 
     @Override
     SyntaxType syntaxType() {
-      return CoreType.Invalid();
+      return BasicSyntaxType.Invalid();
     }
 
     @Override
@@ -210,7 +210,7 @@ class FormatDefinition extends Definition {
 
     @Override
     SyntaxType syntaxType() {
-      return CoreType.Invalid();
+      return BasicSyntaxType.Invalid();
     }
 
     @Override
@@ -263,7 +263,7 @@ class FormatDefinition extends Definition {
 
   @Override
   SyntaxType syntaxType() {
-    return CoreType.IsaDefs();
+    return BasicSyntaxType.IsaDefs();
   }
 
   @Override
@@ -351,7 +351,7 @@ class InstructionSetDefinition extends Definition {
 
   @Override
   SyntaxType syntaxType() {
-    return CoreType.Invalid();
+    return BasicSyntaxType.Invalid();
   }
 
   @Override
@@ -422,7 +422,7 @@ class CounterDefinition extends Definition {
 
   @Override
   SyntaxType syntaxType() {
-    return CoreType.IsaDefs();
+    return BasicSyntaxType.IsaDefs();
   }
 
   @Override
@@ -488,7 +488,7 @@ class MemoryDefinition extends Definition {
 
   @Override
   SyntaxType syntaxType() {
-    return CoreType.IsaDefs();
+    return BasicSyntaxType.IsaDefs();
   }
 
   @Override
@@ -555,7 +555,7 @@ class RegisterDefinition extends Definition {
 
   @Override
   SyntaxType syntaxType() {
-    return CoreType.IsaDefs();
+    return BasicSyntaxType.IsaDefs();
   }
 
   @Override
@@ -621,7 +621,7 @@ class RegisterFileDefinition extends Definition {
 
   @Override
   SyntaxType syntaxType() {
-    return CoreType.IsaDefs();
+    return BasicSyntaxType.IsaDefs();
   }
 
   @Override
@@ -690,7 +690,7 @@ class InstructionDefinition extends Definition {
 
   @Override
   SyntaxType syntaxType() {
-    return CoreType.IsaDefs();
+    return BasicSyntaxType.IsaDefs();
   }
 
   @Override
@@ -757,7 +757,7 @@ class EncodingDefinition extends Definition {
 
   @Override
   SyntaxType syntaxType() {
-    return CoreType.IsaDefs();
+    return BasicSyntaxType.IsaDefs();
   }
 
   @Override
@@ -835,7 +835,7 @@ class AssemblyDefinition extends Definition {
 
   @Override
   SyntaxType syntaxType() {
-    return CoreType.IsaDefs();
+    return BasicSyntaxType.IsaDefs();
   }
 
   @Override

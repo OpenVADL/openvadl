@@ -76,7 +76,7 @@ COMPILER vadl
         }
 
         // The macro itself was invalid but an error for it was already issued so we silently abort the expansion here.
-        if (macro.returnType() == CoreType.Invalid()) {
+        if (macro.returnType() == BasicSyntaxType.Invalid()) {
            return unexpanded;
         }
 
@@ -296,7 +296,7 @@ PRODUCTIONS
       {(
         isaDefinition<out Definition def>                           (. children.add(def); def.accept(symbolTable); .)
         | macroDef
-        | macroInstance<out Node b, CoreType.IsaDefs()>             (. children.add((Definition) b); .)
+        | macroInstance<out Node b, BasicSyntaxType.IsaDefs()>      (. children.add((Definition) b); .)
       )}
       SYM_BRACE_CLOSE                                               (. isaDef = new InstructionSetDefinition(identifier, children, startLocation.join(loc()));
                                                                        popScope();
@@ -375,9 +375,9 @@ PRODUCTIONS
                                                             popScope(); .)
     .
 
-    instructionIdentifier<out Node n>         (. n = null; .)
-    = identifier<out Identifier id>           (. n = id; .)
-    | placeHolder<out Node ph, CoreType.Id()> (. n = ph; .)
+    instructionIdentifier<out Node n>                (. n = null; .)
+    = identifier<out Identifier id>                  (. n = id; .)
+    | placeHolder<out Node ph, BasicSyntaxType.Id()> (. n = ph; .)
     .
 
     encodingDefinition<out EncodingDefinition def>               (. var startLocation = loc(); var entries = new ArrayList<EncodingDefinition.Entry>(); .)
@@ -434,11 +434,11 @@ PRODUCTIONS
 
     // -- STATEMENTS ---------------------------------------------------------------------------------------------------
 
-    statement<out Statement statement>         (. statement = null; .)
-    = letStatement<out Statement letStatement> (. statement = letStatement; .)
-    | ifStatement<out Statement ifStatement>   (. statement = ifStatement; .)
-    | assignment<out Statement assignment>     (. statement = assignment; .)
-    | blockStatement<out Statement block>      (. statement = block; .)
+    statement<out Statement statement> (. statement = null; .)
+    = letStatement<out statement>
+    | ifStatement<out statement>
+    | assignment<out statement>
+    | blockStatement<out statement>
     .
 
     blockStatement<out BlockStatement block>   (. block = new BlockStatement(); pushScope(); .)
@@ -447,14 +447,14 @@ PRODUCTIONS
      } SYM_BRACE_CLOSE                         (. popScope(); .)
     .
 
-    assignment<out Statement statement>        (. Expr target = null; .)
+    assignment<out Statement statement>            (. Expr target = null; .)
     = (
         IF (scanner.Peek().kind != _SYM_PAREN_OPEN)
-        variableAccess<out VariableAccess var> (. target = var; .)
-      | callExpression<out CallExpr call>      (. target = call; .)
+        identifierChain<out IdentifierChain chain> (. target = chain; .)
+      | callExpression<out CallExpr call>          (. target = call; .)
       )
       SYM_ASSIGN
-      expression<out Expr expr>                (. statement = new AssignmentStatement(target, expr); .)
+      expression<out Expr expr>                    (. statement = new AssignmentStatement(target, expr); .)
     .
 
     letStatement<out Statement letStatement>
@@ -463,10 +463,12 @@ PRODUCTIONS
       IN statement<out Statement body>    (. letStatement = new LetStatement(id, valueExpr, body); popScope(); .)
     .
 
-    ifStatement<out Statement ifStatement>
+    ifStatement<out Statement ifStatement>     (. Statement elseStmt = null; .)
     = KW_IF expression<out Expr condition>
-      THEN statement<out Statement thenStmt>                         (. ifStatement = new IfStatement(condition, thenStmt, null);     .)
-      [ IF (la.kind == _ELSE) ELSE statement<out Statement elseStmt> (. ifStatement = new IfStatement(condition, thenStmt, elseStmt); .) ]
+      THEN statement<out Statement thenStmt>
+      [ IF (la.kind == _ELSE)
+        ELSE statement<out elseStmt>
+      ]                                        (. ifStatement = new IfStatement(condition, thenStmt, elseStmt); .)
     .
 
     // -- EXPRESSIONS --------------------------------------------------------------------------------------------------
@@ -512,19 +514,19 @@ PRODUCTIONS
     | SYM_TILDE (. op = UnaryOperator.COMPLEMENT; .)
     .
 
-    term<out Expr expr>                                         (. expr = null; .)
-    = number                                                    (. expr = new IntegerLiteral(t.val, loc()); .)
+    term<out Expr expr>                                                (. expr = null; .)
+    = number                                                           (. expr = new IntegerLiteral(t.val, loc()); .)
     | IF (la.kind == _identifierToken && scanner.Peek().kind != _SYM_PAREN_OPEN)
-      variableAccess<out VariableAccess var>                    (. expr = var; if (!insideMacro) symbolTable.requireValue(var); .)
-    | callExpression<out CallExpr call>                         (. expr = call; .)
-    | SYM_PAREN_OPEN expression<out Expr expr1> SYM_PAREN_CLOSE (. expr = new GroupExpr(expr1); .)
-    | unary<out Expr unary>                                     (. expr = unary; .)
-    | macroInstanceOrPlaceholder<out Node node1, CoreType.Ex()> (. expr = (Expr)node1; .)
+      identifierChain<out IdentifierChain chain>                       (. expr = chain; if (!insideMacro) symbolTable.requireValue(chain); .)
+    | callExpression<out CallExpr call>                                (. expr = call; .)
+    | SYM_PAREN_OPEN expression<out Expr expr1> SYM_PAREN_CLOSE        (. expr = new GroupExpr(expr1); .)
+    | unary<out Expr unary>                                            (. expr = unary; .)
+    | macroInstanceOrPlaceholder<out Node node1, BasicSyntaxType.Ex()> (. expr = (Expr)node1; .)
     .
 
-    variableAccess<out VariableAccess var>
-    = identifier<out Identifier id>                     (. var = new VariableAccess(id, null); .)
-      [ SYM_DOT variableAccess<out VariableAccess next> (. var = new VariableAccess(id, next); .)]
+    identifierChain<out IdentifierChain chain> (. IdentifierChain next = null; .)
+    = identifier<out Identifier id>
+      [ SYM_DOT identifierChain<out next> ]    (. chain = new IdentifierChain(id, next); .)
     .
 
     callExpression<out CallExpr call>
@@ -621,33 +623,34 @@ PRODUCTIONS
                                             var bodyType = body.syntaxType();
                                             if (!bodyType.isSubTypeOf(returnType)) {
                                                 errors.SemErr(t.line, t.col, "The macro signature promises to return `%s` but it's body is of type `%s`.".formatted(returnType, bodyType));
-                                                symbolTable.addMacro(new Macro(id, params, body, CoreType.Invalid()), startLoc.join(loc()));
+                                                symbolTable.addMacro(new Macro(id, params, body, BasicSyntaxType.Invalid()), startLoc.join(loc()));
                                             } else {
                                                 symbolTable.addMacro(new Macro(id, params, body, returnType), startLoc.join(loc()));
                                             }
                                            .)
     .
 
-    syntaxType<out SyntaxType typ> = syntaxCoreType<out CoreType coreType> (. typ = coreType; .)
+    syntaxType<out SyntaxType type>
+    = basicSyntaxType<out type>
     .
 
-    syntaxCoreType<out CoreType typ>  (. typ = null; .)
-    = T_STATS        (. typ = CoreType.Stats(); .)
-    | T_STAT         (. typ = CoreType.Stat(); .)
-    | T_ENCS         (. typ = CoreType.Encs(); .)
-    | T_ISA_DEFS     (. typ = CoreType.IsaDefs(); .)
-    | T_EX           (. typ = CoreType.Ex(); .)
-    | T_LIT          (. typ = CoreType.Lit(); .)
-    | T_STR          (. typ = CoreType.Str(); .)
-    | T_VAL          (. typ = CoreType.Val(); .)
-    | T_BOOL         (. typ = CoreType.Bool(); .)
-    | T_INT          (. typ = CoreType.Int(); .)
-    | T_BIN          (. typ = CoreType.Bin(); .)
-    | T_CALL_EX      (. typ = CoreType.CallEx(); .)
-    | T_SYM_EX       (. typ = CoreType.SymEx(); .)
-    | T_ID           (. typ = CoreType.Id(); .)
-    | T_BIN_OP       (. typ = CoreType.BinOp(); .)
-    | T_UN_OP        (. typ = CoreType.UnOp(); .)
+    basicSyntaxType<out BasicSyntaxType type> (. type = null; .)
+    = T_STATS                                 (. type = BasicSyntaxType.Stats(); .)
+    | T_STAT                                  (. type = BasicSyntaxType.Stat(); .)
+    | T_ENCS                                  (. type = BasicSyntaxType.Encs(); .)
+    | T_ISA_DEFS                              (. type = BasicSyntaxType.IsaDefs(); .)
+    | T_EX                                    (. type = BasicSyntaxType.Ex(); .)
+    | T_LIT                                   (. type = BasicSyntaxType.Lit(); .)
+    | T_STR                                   (. type = BasicSyntaxType.Str(); .)
+    | T_VAL                                   (. type = BasicSyntaxType.Val(); .)
+    | T_BOOL                                  (. type = BasicSyntaxType.Bool(); .)
+    | T_INT                                   (. type = BasicSyntaxType.Int(); .)
+    | T_BIN                                   (. type = BasicSyntaxType.Bin(); .)
+    | T_CALL_EX                               (. type = BasicSyntaxType.CallEx(); .)
+    | T_SYM_EX                                (. type = BasicSyntaxType.SymEx(); .)
+    | T_ID                                    (. type = BasicSyntaxType.Id(); .)
+    | T_BIN_OP                                (. type = BasicSyntaxType.BinOp(); .)
+    | T_UN_OP                                 (. type = BasicSyntaxType.UnOp(); .)
     .
 
 

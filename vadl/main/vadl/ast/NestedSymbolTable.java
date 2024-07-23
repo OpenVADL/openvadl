@@ -188,8 +188,8 @@ class NestedSymbolTable implements DefinitionVisitor<Void> {
     }
   }
 
-  void requireValue(VariableAccess var) {
-    requirements.add(new VariableAccessRequirement(var));
+  void requireValue(IdentifierChain var) {
+    requirements.add(new IdentifierRequirement(var));
   }
 
   void validate() {
@@ -205,7 +205,7 @@ class NestedSymbolTable implements DefinitionVisitor<Void> {
               "Mismatched type %s: required %s, found %s".formatted(req.name, req.type.name(),
                   symbol.type().name()), req.loc, null, null));
         }
-      } else if (requirement instanceof VariableAccessRequirement req) {
+      } else if (requirement instanceof IdentifierRequirement req) {
         validateValueAccess(req);
       } else if (requirement instanceof FormatRequirement req) {
         requireFormat(req.formatId);
@@ -216,27 +216,27 @@ class NestedSymbolTable implements DefinitionVisitor<Void> {
     children.forEach(NestedSymbolTable::validate);
   }
 
-  void validateValueAccess(VariableAccessRequirement variableAccessRequirement) {
-    var var = variableAccessRequirement.variableAccess;
-    var symbol = resolveSymbol(var.identifier.name);
+  void validateValueAccess(IdentifierRequirement requirement) {
+    var chain = requirement.identifierChain;
+    var symbol = resolveSymbol(chain.identifier.name);
     if (symbol == null) {
-      reportError("Unresolved definition " + var.identifier.name, var.location());
+      reportError("Unresolved definition " + chain.identifier.name, chain.location());
       return;
     }
     if (symbol instanceof ValuedSymbol valSymbol) {
-      if (var.next == null) {
+      if (chain.next == null) {
         return;
       }
       if (!(valSymbol.typeDefinition instanceof FormatDefinition formatDefinition)) {
         reportError("Invalid usage: symbol %s of type %s does not have a record type".formatted(
-            var.identifier.name, symbol.type()), var.location());
+            chain.identifier.name, symbol.type()), chain.location());
         return;
       }
-      verifyFormatAccess(formatDefinition, var.next);
+      verifyFormatAccess(formatDefinition, chain.next);
     } else {
       reportError(
-          "Invalid usage: symbol %s of type %s does not have a value".formatted(var.identifier.name,
-              symbol.type()), var.location());
+          "Invalid usage: symbol %s of type %s does not have a value".formatted(chain.identifier.name,
+              symbol.type()), chain.location());
     }
   }
 
@@ -247,36 +247,36 @@ class NestedSymbolTable implements DefinitionVisitor<Void> {
         .findFirst().orElse(null);
   }
 
-  private void verifyFormatAccess(FormatDefinition format, VariableAccess access) {
-    var field = findField(format, access.identifier.name);
+  private void verifyFormatAccess(FormatDefinition format, IdentifierChain chain) {
+    var field = findField(format, chain.identifier.name);
     if (field == null) {
       reportError(
           "Invalid usage: format %s does not have field %s".formatted(format.identifier.name,
-              access.identifier.name), access.location());
-    } else if (field instanceof FormatDefinition.RangeFormatField && access.next != null) {
-      reportError("Invalid usage: field %s resolves to a range, does not provide fields to access"
-          .formatted(field.identifier().name), access.location());
+              chain.identifier.name), chain.location());
+    } else if (field instanceof FormatDefinition.RangeFormatField && chain.next != null) {
+      reportError("Invalid usage: field %s resolves to a range, does not provide fields to chain"
+          .formatted(field.identifier().name), chain.location());
     } else if (field instanceof FormatDefinition.TypedFormatField f) {
       if (isValuedAnnotation(f.typeAnnotation)) {
-        if (access.next != null) {
+        if (chain.next != null) {
           reportError(
-              "Invalid usage: field %s resolves to %s, does not provide fields to access".formatted(
-                  field.identifier().name, f.typeAnnotation.baseType), access.location());
+              "Invalid usage: field %s resolves to %s, does not provide fields to chain".formatted(
+                  field.identifier().name, f.typeAnnotation.baseType), chain.location());
         }
-      } else if (access.next == null) {
+      } else if (chain.next == null) {
         reportError(
             "Invalid usage: field %s resolves to %s, which does not provide a value".formatted(
-                field.identifier().name, f.typeAnnotation.baseType.name), access.location());
+                field.identifier().name, f.typeAnnotation.baseType.name), chain.location());
       } else {
         var typeSymbol = f.symbolTable.resolveSymbol(f.typeAnnotation.baseType.name);
         if (typeSymbol instanceof FormatSymbol formatSymbol) {
-          verifyFormatAccess(formatSymbol.definition, access.next);
+          verifyFormatAccess(formatSymbol.definition, chain.next);
         } else if (typeSymbol == null) {
           reportError("Invalid usage: type %s not found".formatted(f.identifier.name),
               f.location());
         } else {
           reportError("Invalid usage: symbol %s of type %s does not have a record type".formatted(
-              f.identifier.name, typeSymbol.type().name()), access.location());
+              f.identifier.name, typeSymbol.type().name()), chain.location());
         }
       }
     }
@@ -345,7 +345,7 @@ class NestedSymbolTable implements DefinitionVisitor<Void> {
       implements Requirement {
   }
 
-  record VariableAccessRequirement(VariableAccess variableAccess) implements Requirement {
+  record IdentifierRequirement(IdentifierChain identifierChain) implements Requirement {
   }
 
   record FormatRequirement(Identifier formatId) implements Requirement {

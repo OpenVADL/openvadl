@@ -179,7 +179,7 @@ public class AstDumper implements DefinitionVisitor<Void>, ExprVisitor<Void> {
   }
 
   @Override
-  public Void visit(VariableAccess expr) {
+  public Void visit(IdentifierChain expr) {
     dumpNode(expr);
     dumpChildren(expr.identifier);
     if (expr.next != null) {

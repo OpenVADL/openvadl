@@ -76,7 +76,7 @@ class Identifier extends Node {
 
   @Override
   SyntaxType syntaxType() {
-    return CoreType.Id();
+    return BasicSyntaxType.Id();
   }
 
   @Override
