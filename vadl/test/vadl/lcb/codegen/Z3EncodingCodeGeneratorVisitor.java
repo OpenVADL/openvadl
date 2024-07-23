@@ -96,14 +96,14 @@ public class Z3EncodingCodeGeneratorVisitor implements GraphNodeVisitor {
   @Override
   public void visit(TypeCastNode typeCastNode) {
     if (typeCastNode.castType() instanceof UIntType) {
-      var width = ((UIntType) typeCastNode.castType()).bitWidth() -
-          ((BitsType) typeCastNode.value().type()).bitWidth();
+      var width = ((UIntType) typeCastNode.castType()).bitWidth()
+          - ((BitsType) typeCastNode.value().type()).bitWidth();
       writer.write("ZeroExt(" + width + ", ");
       visit(typeCastNode.value());
       writer.write(")");
     } else if (typeCastNode.castType() instanceof SIntType) {
-      var width = ((SIntType) typeCastNode.castType()).bitWidth() -
-          ((BitsType) typeCastNode.value().type()).bitWidth();
+      var width = ((SIntType) typeCastNode.castType()).bitWidth()
+          - ((BitsType) typeCastNode.value().type()).bitWidth();
       writer.write("SignExt(" + width + ", ");
       visit(typeCastNode.value());
       writer.write(")");
@@ -113,8 +113,8 @@ public class Z3EncodingCodeGeneratorVisitor implements GraphNodeVisitor {
   @Override
   public void visit(SliceNode sliceNode) {
     writer.write("Extract(" +
-        sliceNode.bitSlice().msb() + ", " +
-        sliceNode.bitSlice().lsb() + ", ");
+        sliceNode.bitSlice().msb() + ", "
+        + sliceNode.bitSlice().lsb() + ", ");
     visit(sliceNode.value());
     writer.write(")");
   }
