@@ -61,7 +61,7 @@ public class ArithmeticImmediateStrategy implements EncodingGenerationStrategy {
     var parameter = setupEncodingForFieldAccess(fieldAccess);
     var accessFunction = fieldAccess.accessFunction();
     var copy = accessFunction.behavior().copy();
-    var returnNode = copy.getNodes(ReturnNode.class).findFirst().get();
+    final var returnNode = copy.getNodes(ReturnNode.class).findFirst().get();
 
     // Optimistic assumption: Remove all typecasts because they are not correct anymore when
     // inverted.
