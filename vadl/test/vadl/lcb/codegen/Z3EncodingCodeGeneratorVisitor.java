@@ -1,6 +1,7 @@
 package vadl.lcb.codegen;
 
 import java.io.StringWriter;
+import vadl.types.BitsType;
 import vadl.types.SIntType;
 import vadl.types.UIntType;
 import vadl.viam.Constant;
@@ -95,11 +96,15 @@ public class Z3EncodingCodeGeneratorVisitor implements GraphNodeVisitor {
   @Override
   public void visit(TypeCastNode typeCastNode) {
     if (typeCastNode.castType() instanceof UIntType) {
-      writer.write("ZeroExt(" + ((UIntType) typeCastNode.castType()).bitWidth() + ", ");
+      var width = ((UIntType) typeCastNode.castType()).bitWidth() -
+          ((BitsType) typeCastNode.value().type()).bitWidth();
+      writer.write("ZeroExt(" + width + ", ");
       visit(typeCastNode.value());
       writer.write(")");
     } else if (typeCastNode.castType() instanceof SIntType) {
-      writer.write("SignExt(" + ((SIntType) typeCastNode.castType()).bitWidth() + ", ");
+      var width = ((SIntType) typeCastNode.castType()).bitWidth() -
+          ((BitsType) typeCastNode.value().type()).bitWidth();
+      writer.write("SignExt(" + width + ", ");
       visit(typeCastNode.value());
       writer.write(")");
     }
