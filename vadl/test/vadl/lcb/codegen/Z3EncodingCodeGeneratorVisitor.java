@@ -1,7 +1,6 @@
 package vadl.lcb.codegen;
 
 import java.io.StringWriter;
-import vadl.gcb.passes.encoding.nodes.NegatedNode;
 import vadl.types.SIntType;
 import vadl.types.UIntType;
 import vadl.viam.Constant;
@@ -60,7 +59,7 @@ public class Z3EncodingCodeGeneratorVisitor implements GraphNodeVisitor {
   @Override
   public void visit(ConstantNode node) {
     if (node.constant() instanceof Constant.Value) {
-      writer.write(node.toString());
+      writer.write(node.constant().toString());
     } else {
       throw new ViamError("not implemented");
     }
@@ -68,7 +67,14 @@ public class Z3EncodingCodeGeneratorVisitor implements GraphNodeVisitor {
 
   @Override
   public void visit(BuiltInCall node) {
-    throw new ViamError("not implemented");
+    for (int i = 0; i < node.arguments().size(); i++) {
+      visit(node.arguments().get(i));
+
+      // The last argument should not emit an operand.
+      if (i < node.arguments().size() - 1) {
+        writer.write(" " + node.builtIn().operator() + " ");
+      }
+    }
   }
 
   @Override
@@ -186,10 +192,5 @@ public class Z3EncodingCodeGeneratorVisitor implements GraphNodeVisitor {
   @Override
   public void visit(ExpressionNode expressionNode) {
     expressionNode.accept(this);
-  }
-
-  @Override
-  public void visit(NegatedNode negatedNode) {
-
   }
 }

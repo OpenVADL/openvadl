@@ -13,25 +13,37 @@ import com.github.dockerjava.transport.DockerHttpClient;
 import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
+import java.math.BigInteger;
 import java.time.Duration;
 import java.util.Objects;
 import java.util.stream.Stream;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.Arguments;
 import org.junit.jupiter.params.provider.MethodSource;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import vadl.AbstractTest;
+import vadl.gcb.passes.encoding.strategies.EncodingGenerationStrategy;
+import vadl.gcb.passes.encoding.strategies.impl.ArithmeticImmediateStrategy;
+import vadl.gcb.passes.encoding.strategies.impl.ShiftedImmediateStrategy;
 import vadl.gcb.passes.encoding.strategies.impl.TrivialImmediateStrategy;
+import vadl.types.BuiltInTable;
 import vadl.types.DataType;
 import vadl.types.Type;
 import vadl.viam.Constant;
 import vadl.viam.Format;
 import vadl.viam.Function;
 import vadl.viam.graph.Graph;
+import vadl.viam.graph.NodeList;
 import vadl.viam.graph.control.ReturnNode;
+import vadl.viam.graph.dependency.BuiltInCall;
+import vadl.viam.graph.dependency.ConstantNode;
 import vadl.viam.graph.dependency.FieldRefNode;
 import vadl.viam.graph.dependency.TypeCastNode;
 
 public class EncodingCodeGeneratorVerificationTest extends AbstractTest {
+  private static final Logger logger =
+      LoggerFactory.getLogger(EncodingCodeGeneratorVerificationTest.class);
 
   private static final String GENERIC_FIELD_NAME = "x";
   private static final String ENCODING_FUNCTION_NAME = "f_x";
@@ -47,15 +59,21 @@ public class EncodingCodeGeneratorVerificationTest extends AbstractTest {
       .build();
   private final DockerClient dockerClient = DockerClientImpl.getInstance(config, httpClient);
 
-  private static Stream<Arguments> createTrivialImmediateFunctions() {
-    return Stream.of(Arguments.of(createUnsignedInt32DecodingFunction()));
+  private static Stream<Arguments> createFieldAccessFunctions() {
+    return Stream.of(
+        Arguments.of(createUnsignedInt32DecodingFunction(), new TrivialImmediateStrategy()),
+        Arguments.of(createSignedInt32DecodingFunction(), new TrivialImmediateStrategy()),
+        Arguments.of(createUnsignedInt32ShiftDecodingFunction(), new ShiftedImmediateStrategy()),
+        Arguments.of(createSignedInt32ShiftDecodingFunction(), new ShiftedImmediateStrategy()),
+        Arguments.of(createUnsignedInt32WithAdditionDecodingFunction(),
+            new ArithmeticImmediateStrategy())
+        );
   }
 
   @ParameterizedTest
-  @MethodSource("createTrivialImmediateFunctions")
-  void verifyTrivialImmediateStrategy(Function encodingFunction) throws IOException {
-    var strategy = new TrivialImmediateStrategy();
-
+  @MethodSource("createFieldAccessFunctions")
+  void verifyStrategies(Function encodingFunction, EncodingGenerationStrategy strategy)
+      throws IOException {
     // Setup decoding
     var fieldAccess = new Format.FieldAccess(createIdentifier("fieldAccessIdentifierValue"),
         encodingFunction, null, null);
@@ -88,6 +106,7 @@ public class EncodingCodeGeneratorVerificationTest extends AbstractTest {
             """, fieldAccess.fieldRef().bitSlice().bitSize(),
         generatedDecodeFunctionCode,
         generatedEncodeWithDecodeFunctionCode);
+    logger.atDebug().log(z3Code);
 
     var tempFile = writeCodeIntoTempFile(z3Code);
     runContainer(tempFile);
@@ -135,4 +154,70 @@ public class EncodingCodeGeneratorVerificationTest extends AbstractTest {
     function.setBehavior(graph);
     return function;
   }
+
+  private static Function createSignedInt32DecodingFunction() {
+    var function = createFunction("functionNameValue", Type.signedInt(32));
+    var field = createFieldWithParent("fieldNameIdentifierValue", DataType.bits(20),
+        new Constant.BitSlice(new Constant.BitSlice.Part[] {new Constant.BitSlice.Part(19, 0)}),
+        32);
+    var returnNode = new ReturnNode(
+        new TypeCastNode(new FieldRefNode(field, DataType.bits(20)), Type.signedInt(32)));
+    var graph = new Graph("graphValue");
+    graph.addWithInputs(returnNode);
+    function.setBehavior(graph);
+    return function;
+  }
+
+  private static Function createUnsignedInt32ShiftDecodingFunction() {
+    var function = createFunction("functionNameValue", Type.unsignedInt(32));
+    var field = createFieldWithParent("fieldNameIdentifierValue", DataType.bits(20),
+        new Constant.BitSlice(new Constant.BitSlice.Part[] {new Constant.BitSlice.Part(19, 0)}),
+        32);
+    var returnNode = new ReturnNode(
+        new BuiltInCall(BuiltInTable.LSL, new NodeList<>(
+            new TypeCastNode(new FieldRefNode(field, DataType.bits(20)), Type.unsignedInt(32)),
+            new ConstantNode(new Constant.Value(BigInteger.valueOf(6), DataType.unsignedInt(32)))),
+            Type.unsignedInt(32))
+    );
+    var graph = new Graph("graphValue");
+    graph.addWithInputs(returnNode);
+    function.setBehavior(graph);
+    return function;
+  }
+
+  private static Function createSignedInt32ShiftDecodingFunction() {
+    var function = createFunction("functionNameValue", Type.signedInt(32));
+    var field = createFieldWithParent("fieldNameIdentifierValue", DataType.bits(20),
+        new Constant.BitSlice(new Constant.BitSlice.Part[] {new Constant.BitSlice.Part(19, 0)}),
+        32);
+    var returnNode = new ReturnNode(
+        new BuiltInCall(BuiltInTable.LSL, new NodeList<>(
+            new TypeCastNode(new FieldRefNode(field, DataType.bits(20)), Type.signedInt(32)),
+            new ConstantNode(new Constant.Value(BigInteger.valueOf(6), DataType.unsignedInt(32)))),
+            Type.signedInt(32))
+    );
+    var graph = new Graph("graphValue");
+    graph.addWithInputs(returnNode);
+    function.setBehavior(graph);
+    return function;
+  }
+
+  private static Function createUnsignedInt32WithAdditionDecodingFunction() {
+    var function = createFunction("functionNameValue", Type.unsignedInt(32));
+    var field = createFieldWithParent("fieldNameIdentifierValue", DataType.bits(20),
+        new Constant.BitSlice(new Constant.BitSlice.Part[] {new Constant.BitSlice.Part(19, 0)}),
+        32);
+    var returnNode = new ReturnNode(
+        new BuiltInCall(BuiltInTable.ADD, new NodeList<>(
+            new TypeCastNode(new FieldRefNode(field, DataType.bits(20)), Type.unsignedInt(32)),
+            new ConstantNode(new Constant.Value(BigInteger.valueOf(6), DataType.unsignedInt(32)))),
+            Type.unsignedInt(32))
+    );
+    var graph = new Graph("graphValue");
+    graph.addWithInputs(returnNode);
+    function.setBehavior(graph);
+    return function;
+  }
+
+
 }
