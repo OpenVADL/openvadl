@@ -39,15 +39,17 @@ public class AnnotationTest {
         }
         """;
     var ast = VadlParser.parse(prog);
+    verifyPrettifiedAst(ast);
+
     var isa = (InstructionSetDefinition) ast.definitions.get(0);
     var current = isa.definitions.get(0);
-    var nextNext = isa.definitions.get(1);
 
-    verifyPrettifiedAst(ast);
     assertThat(current.annotations.annotations().size(), is(1));
     assertThat(current.annotations.annotations().get(0).expr(),
         is(instanceOf(IdentifierChain.class)));
     assertThat(current.annotations.annotations().get(0).property(), is(nullValue()));
+
+    var nextNext = isa.definitions.get(1);
     assertThat(nextNext.annotations.annotations().size(), is(1));
     assertThat(nextNext.annotations.annotations().get(0).expr(),
         is(instanceOf(IdentifierChain.class)));

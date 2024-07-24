@@ -234,9 +234,8 @@ class NestedSymbolTable implements DefinitionVisitor<Void> {
       }
       verifyFormatAccess(formatDefinition, chain.next);
     } else {
-      reportError(
-          "Invalid usage: symbol %s of type %s does not have a value".formatted(chain.identifier.name,
-              symbol.type()), chain.location());
+      reportError("Invalid usage: symbol %s of type %s does not have a value"
+          .formatted(chain.identifier.name, symbol.type()), chain.location());
     }
   }
 
