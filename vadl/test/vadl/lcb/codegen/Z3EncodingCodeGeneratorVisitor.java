@@ -114,8 +114,8 @@ public class Z3EncodingCodeGeneratorVisitor implements GraphNodeVisitor {
 
   @Override
   public void visit(SliceNode sliceNode) {
-    writer.write("Extract(" +
-        sliceNode.bitSlice().msb() + ", "
+    writer.write("Extract("
+        + sliceNode.bitSlice().msb() + ", "
         + sliceNode.bitSlice().lsb() + ", ");
     visit(sliceNode.value());
     writer.write(")");
