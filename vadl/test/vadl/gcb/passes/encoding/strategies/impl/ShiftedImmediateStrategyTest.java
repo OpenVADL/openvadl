@@ -53,11 +53,6 @@ class ShiftedImmediateStrategyTest extends AbstractTest {
     var fieldAccess = createFieldAccess("fieldAccessValue",
         accessFunction);
     format.setFieldAccesses(new Format.FieldAccess[] {fieldAccess});
-    fieldAccess.setEncoding(new Function(createIdentifier("encodingFunctionName"),
-        new Parameter[]
-            {createParameter("parameterValue", DataType.unsignedInt(32))},
-        DataType.bits(20)));
-
 
     // When
     strategy.generateEncoding(fieldAccess);
