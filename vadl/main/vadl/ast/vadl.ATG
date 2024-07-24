@@ -490,9 +490,11 @@ PRODUCTIONS
     // -- EXPRESSIONS --------------------------------------------------------------------------------------------------
 
     expression<out Expr expr>               (. expr = null; .)
-    = term<out Expr expr1>                  (. expr = expr1; .)
+    = ifExpression<out expr>
+    | letExpression<out expr>
+    | term<out expr>
       {
-          binaryOperator <out Operator op>
+          binaryOperator<out Operator op>
           term<out Expr expr2>              (. expr = new BinaryExpr(expr, op, expr2); .)
       }                                     (. expr = ungroup(reorderBinary(expr)); .)
     .
@@ -554,6 +556,20 @@ PRODUCTIONS
 
     rangeExpression<out RangeExpr expr>
     = expression<out Expr e1> SYM_RANGE expression<out Expr e2> (. expr = new RangeExpr(e1, e2);.)
+    .
+
+    letExpression<out Expr expr>
+    = LET                           (. var startLoc = loc(); .)
+      identifier<out Identifier id> (. pushScope(); symbolTable.defineConstant(id.name, loc()); .)
+      SYM_EQ expression<out Expr valueExpr>
+      IN expression<out Expr body>  (. expr = new LetExpr(id, valueExpr, body, startLoc.join(loc())); popScope(); .)
+    .
+
+    ifExpression<out Expr expr>
+    = KW_IF                                (. var startLoc = loc(); .)
+      expression<out Expr condition>
+      THEN expression<out Expr thenExpr>
+      ELSE expression<out Expr elseExpr>   (. expr = new IfExpr(condition, thenExpr, elseExpr, startLoc.join(loc())); .)
     .
 
     // -- PRIMETIVES ---------------------------------------------------------------------------------------------------

@@ -32,6 +32,10 @@ interface ExprVisitor<R> {
   R visit(UnaryExpr expr);
 
   R visit(CallExpr expr);
+
+  R visit(IfExpr expr);
+
+  R visit(LetExpr expr);
 }
 
 /**
@@ -825,6 +829,142 @@ class CallExpr extends Expr {
   public int hashCode() {
     int result = identifier.hashCode();
     result = 31 * result + Objects.hashCode(argument);
+    return result;
+  }
+}
+
+class IfExpr extends Expr {
+  Expr condition;
+  Expr thenExpr;
+  Expr elseExpr;
+  SourceLocation location;
+
+  IfExpr(Expr condition, Expr thenExpr, Expr elseExpr, SourceLocation location) {
+    this.condition = condition;
+    this.thenExpr = thenExpr;
+    this.elseExpr = elseExpr;
+    this.location = location;
+  }
+
+  @Override
+  SourceLocation location() {
+    return location;
+  }
+
+  @Override
+  SyntaxType syntaxType() {
+    return BasicSyntaxType.Ex();
+  }
+
+  @Override
+  void prettyPrint(int indent, StringBuilder builder) {
+    builder.append(prettyIndentString(indent));
+    builder.append("if ");
+    condition.prettyPrint(indent, builder);
+    builder.append(" then\n");
+    thenExpr.prettyPrint(indent + 1, builder);
+    builder.append("\n").append(prettyIndentString(indent)).append("else\n");
+    elseExpr.prettyPrint(indent + 1, builder);
+  }
+
+  @Override
+  <R> R accept(ExprVisitor<R> visitor) {
+    return visitor.visit(this);
+  }
+
+  @Override
+  public String toString() {
+    return this.getClass().getSimpleName();
+  }
+
+  @Override
+  public boolean equals(Object o) {
+    if (this == o) {
+      return true;
+    }
+    if (o == null || getClass() != o.getClass()) {
+      return false;
+    }
+
+    IfExpr that = (IfExpr) o;
+    return condition.equals(that.condition)
+        && thenExpr.equals(that.thenExpr)
+        && elseExpr.equals(that.elseExpr);
+  }
+
+  @Override
+  public int hashCode() {
+    int result = condition.hashCode();
+    result = 31 * result + Objects.hashCode(thenExpr);
+    result = 31 * result + Objects.hashCode(elseExpr);
+    return result;
+  }
+}
+
+class LetExpr extends Expr {
+  Identifier identifier;
+  Expr valueExpr;
+  Expr body;
+  SourceLocation location;
+
+  LetExpr(Identifier identifier, Expr valueExpr, Expr body, SourceLocation location) {
+    this.identifier = identifier;
+    this.valueExpr = valueExpr;
+    this.body = body;
+    this.location = location;
+  }
+
+  @Override
+  SourceLocation location() {
+    return location;
+  }
+
+  @Override
+  SyntaxType syntaxType() {
+    return BasicSyntaxType.Ex();
+  }
+
+  @Override
+  void prettyPrint(int indent, StringBuilder builder) {
+    builder.append(prettyIndentString(indent));
+    builder.append("let ");
+    identifier.prettyPrint(indent, builder);
+    builder.append(" = ");
+    valueExpr.prettyPrint(indent + 1, builder);
+    builder.append(" in\n");
+    body.prettyPrint(indent + 1, builder);
+  }
+
+  @Override
+  <R> R accept(ExprVisitor<R> visitor) {
+    return visitor.visit(this);
+  }
+
+  @Override
+  public String toString() {
+    return this.getClass().getSimpleName();
+  }
+
+  @Override
+  public boolean equals(Object o) {
+    if (this == o) {
+      return true;
+    }
+    if (o == null || getClass() != o.getClass()) {
+      return false;
+    }
+
+    LetExpr that = (LetExpr) o;
+    return identifier.equals(that.identifier)
+        && valueExpr.equals(that.valueExpr)
+        && body.equals(that.body);
+  }
+
+  @Override
+  public int hashCode() {
+    int result = identifier.hashCode();
+    result = 31 * result + Objects.hashCode(valueExpr);
+    result = 31 * result + Objects.hashCode(body);
     return result;
   }
 }

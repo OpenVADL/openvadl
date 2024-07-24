@@ -102,6 +102,26 @@ class MacroExpander
   }
 
   @Override
+  public Node visit(IfExpr expr) {
+    return new IfExpr(
+        (Expr) expr.condition.accept(this),
+        (Expr) expr.thenExpr.accept(this),
+        (Expr) expr.elseExpr.accept(this),
+        expr.location
+    );
+  }
+
+  @Override
+  public Node visit(LetExpr expr) {
+    return new LetExpr(
+        expr.identifier,
+        (Expr) expr.valueExpr.accept(this),
+        (Expr) expr.body.accept(this),
+        expr.location
+    );
+  }
+
+  @Override
   public Definition visit(ConstantDefinition definition) {
     return new ConstantDefinition(definition.identifier, definition.typeAnnotation,
         (Expr) definition.value.accept(this), definition.loc);
