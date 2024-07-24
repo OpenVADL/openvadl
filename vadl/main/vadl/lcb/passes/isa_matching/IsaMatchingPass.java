@@ -1,15 +1,34 @@
 package vadl.lcb.passes.isa_matching;
 
 import java.io.IOException;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import org.jetbrains.annotations.Nullable;
 import vadl.pass.Pass;
 import vadl.pass.PassKey;
 import vadl.pass.PassName;
+import vadl.types.BitsType;
+import vadl.types.BuiltInTable;
+import vadl.types.SIntType;
+import vadl.types.Type;
+import vadl.types.UIntType;
 import vadl.viam.Instruction;
 import vadl.viam.InstructionSetArchitecture;
+import vadl.viam.Register;
 import vadl.viam.Specification;
+import vadl.viam.graph.Graph;
+import vadl.viam.graph.ViamGraphError;
+import vadl.viam.graph.control.EndNode;
+import vadl.viam.graph.control.IfNode;
+import vadl.viam.graph.dependency.BuiltInCall;
+import vadl.viam.graph.dependency.WriteRegFileNode;
+import vadl.viam.graph.dependency.WriteRegNode;
+import vadl.viam.matching.TreeMatcher;
+import vadl.viam.matching.impl.AnyConstantValueMatcher;
+import vadl.viam.matching.impl.AnyReadRegFileMatcher;
+import vadl.viam.matching.impl.BuiltInMatcher;
+import vadl.viam.matching.impl.TypcastMatcher;
 
 /**
  * A {@link InstructionSetArchitecture} contains a {@link List} of {@link Instruction}.
@@ -33,6 +52,87 @@ public class IsaMatchingPass extends Pass {
   @Override
   public Object execute(Map<PassKey, Object> passResults, Specification viam)
       throws IOException {
-    return null;
+    HashMap<InstructionLabel, Instruction> matched = new HashMap<>();
+
+    viam.isas().forEach(isa -> isa.instructions().forEach(instruction -> {
+      if (findUnsignedAdd32Bit(instruction.behavior())) {
+        matched.put(InstructionLabel.ADD_U_32, instruction);
+      } else if (findSignedAdd32Bit(instruction.behavior())) {
+        matched.put(InstructionLabel.ADD_S_32, instruction);
+      } else if (findAddWithImmediate32Bit(instruction.behavior())) {
+        matched.put(InstructionLabel.ADDI_32, instruction);
+      } else if (isa.pc() != null && findBeq(instruction.behavior(), isa.pc())) {
+        matched.put(InstructionLabel.BEQ, instruction);
+      }
+    }));
+
+    return matched;
+  }
+
+  private EndNode getEndNode(Graph behavior) {
+    return behavior.getNodes(EndNode.class).findFirst()
+        .orElseThrow(() -> new ViamGraphError("Graph %s has no EndNode", behavior.name));
+  }
+
+  private boolean writesOnlyOneRegisterFileWithResultType(EndNode node, Type resultType) {
+    return node.sideEffects.size() == 1 &&
+        node.sideEffects.stream()
+            .allMatch(sideEffectNode -> sideEffectNode instanceof WriteRegFileNode &&
+                ((WriteRegFileNode) sideEffectNode).registerFile().resultType() == resultType);
+  }
+
+  private boolean findUnsignedAdd32Bit(Graph behavior) {
+    var matched = TreeMatcher.matches(behavior.getNodes(),
+            new BuiltInMatcher(BuiltInTable.ADD, List.of(
+                new TypcastMatcher(Type.unsignedInt(32), new AnyReadRegFileMatcher()),
+                new TypcastMatcher(Type.unsignedInt(32), new AnyReadRegFileMatcher())
+            )))
+        .stream()
+        .map(x -> ((BuiltInCall) x).type())
+        .filter(ty -> ty instanceof UIntType && ((UIntType) ty).bitWidth() == 32)
+        .findFirst();
+
+    return matched.isPresent() &&
+        writesOnlyOneRegisterFileWithResultType(getEndNode(behavior), Type.unsignedInt(32));
+  }
+
+  private boolean findAddWithImmediate32Bit(Graph behavior) {
+    var matched = TreeMatcher.matches(behavior.getNodes(),
+            new BuiltInMatcher(List.of(BuiltInTable.ADD, BuiltInTable.ADDS),
+                List.of(new AnyConstantValueMatcher())))
+        .stream()
+        .map(x -> ((BuiltInCall) x).type())
+        .filter(ty -> ty instanceof BitsType && ((BitsType) ty).bitWidth() == 32)
+        .findFirst();
+
+    return matched.isPresent() &&
+        writesOnlyOneRegisterFileWithResultType(getEndNode(behavior), Type.signedInt(32));
+  }
+
+  private boolean findSignedAdd32Bit(Graph behavior) {
+    var matched = TreeMatcher.matches(behavior.getNodes(),
+            new BuiltInMatcher(List.of(BuiltInTable.ADD, BuiltInTable.ADDS), List.of(
+                new TypcastMatcher(Type.unsignedInt(32), new AnyReadRegFileMatcher()),
+                new TypcastMatcher(Type.unsignedInt(32), new AnyReadRegFileMatcher())
+            )))
+        .stream()
+        .map(x -> ((BuiltInCall) x).type())
+        .filter(ty -> ty instanceof SIntType && ((SIntType) ty).bitWidth() == 32)
+        .findFirst();
+
+    return matched.isPresent() &&
+        writesOnlyOneRegisterFileWithResultType(getEndNode(behavior), Type.signedInt(32));
+  }
+
+  private boolean findBeq(Graph behavior, Register.Counter pc) {
+    var hasCondition =
+        behavior.getNodes(IfNode.class)
+            .anyMatch(
+                x -> x.condition instanceof BuiltInCall
+                    && ((BuiltInCall) x.condition).builtIn() == BuiltInTable.EQU);
+    var writesPc = behavior.getNodes(WriteRegNode.class)
+        .anyMatch(x -> x.register() == pc);
+
+    return hasCondition && writesPc;
   }
 }

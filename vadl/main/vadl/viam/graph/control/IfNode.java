@@ -28,7 +28,7 @@ import vadl.viam.graph.dependency.ExpressionNode;
 public class IfNode extends ControlSplitNode {
 
   @Input
-  ExpressionNode condition;
+  public ExpressionNode condition;
 
   @Successor
   Node trueBranch;
