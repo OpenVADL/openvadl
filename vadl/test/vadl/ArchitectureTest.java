@@ -18,8 +18,9 @@ public class ArchitectureTest {
         .layer("Viam").definedBy("..viam..")
         .layer("Gcb").definedBy("..gcb..")
         .layer("Lcb").definedBy("..lcb..")
-        .whereLayer("Ast").mayNotAccessAnyLayer()
+        .whereLayer("Ast").mayOnlyAccessLayers("Viam")
         .whereLayer("Viam").mayOnlyAccessLayers("Ast")
+        .whereLayer("Gcb").mayOnlyAccessLayers("Viam")
         .whereLayer("Lcb").mayOnlyAccessLayers("Gcb", "Viam");
 
     layeredArchitecture.check(jc);
