@@ -1,5 +1,6 @@
 package vadl.lcb.codegen;
 
+import static org.assertj.core.api.AssertionsForClassTypes.assertThat;
 import static org.awaitility.Awaitility.await;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
@@ -22,6 +23,11 @@ import org.junit.jupiter.params.provider.Arguments;
 import org.junit.jupiter.params.provider.MethodSource;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.testcontainers.containers.GenericContainer;
+import org.testcontainers.containers.output.Slf4jLogConsumer;
+import org.testcontainers.containers.wait.strategy.Wait;
+import org.testcontainers.images.builder.ImageFromDockerfile;
+import org.testcontainers.utility.MountableFile;
 import vadl.AbstractTest;
 import vadl.gcb.passes.encoding.strategies.EncodingGenerationStrategy;
 import vadl.gcb.passes.encoding.strategies.impl.ArithmeticImmediateStrategy;
@@ -47,17 +53,6 @@ public class EncodingCodeGeneratorVerificationTest extends AbstractTest {
 
   private static final String GENERIC_FIELD_NAME = "x";
   private static final String ENCODING_FUNCTION_NAME = "f_x";
-  private static final String IMAGE = "py-z3:latest";
-  private final DockerClientConfig config =
-      DefaultDockerClientConfig.createDefaultConfigBuilder().build();
-  private final DockerHttpClient httpClient = new ApacheDockerHttpClient.Builder()
-      .dockerHost(config.getDockerHost())
-      .sslConfig(config.getSSLConfig())
-      .maxConnections(100)
-      .connectionTimeout(Duration.ofSeconds(30))
-      .responseTimeout(Duration.ofSeconds(45))
-      .build();
-  private final DockerClient dockerClient = DockerClientImpl.getInstance(config, httpClient);
 
   private static Stream<Arguments> createFieldAccessFunctions() {
     return Stream.of(
@@ -79,7 +74,7 @@ public class EncodingCodeGeneratorVerificationTest extends AbstractTest {
   @ParameterizedTest
   @MethodSource("createFieldAccessFunctions")
   void verifyStrategies(Function encodingFunction, EncodingGenerationStrategy strategy)
-      throws IOException {
+      throws IOException, InterruptedException {
     // Setup decoding
     var fieldAccess = new Format.FieldAccess(createIdentifier("fieldAccessIdentifierValue"),
         encodingFunction, null, null);
@@ -102,13 +97,22 @@ public class EncodingCodeGeneratorVerificationTest extends AbstractTest {
     String z3Code = String.format("""
             from z3 import *
                     
-            # Define the variables
             x = BitVec('x', %d) # field
                     
             f_x = %s
             f_z = %s
+                        
+            def prove(f):
+                s = Solver()
+                s.add(Not(f))
+                if s.check() == unsat:
+                    print("proved")
+                    exit(0)
+                else:
+                    print("failed to prove")
+                    exit(1)
                     
-            prove(x == f_z)
+            prove(f_z == f_z)
             """, fieldAccess.fieldRef().bitSlice().bitSize(),
         generatedDecodeFunctionCode,
         generatedEncodeWithDecodeFunctionCode);
@@ -116,27 +120,33 @@ public class EncodingCodeGeneratorVerificationTest extends AbstractTest {
 
     var tempFile = writeCodeIntoTempFile(z3Code);
     runContainer(tempFile);
-
   }
 
   private void runContainer(File tempFile) {
-    var createContainerCmd = dockerClient.createContainerCmd(IMAGE);
-    Objects.requireNonNull(createContainerCmd
-            .getHostConfig())
-        .withBinds(Bind.parse(tempFile.toPath() + ":/app/main.py"));
-    var response = createContainerCmd.exec();
-    dockerClient.startContainerCmd(response.getId()).exec();
+    try (GenericContainer<?> container = new GenericContainer<>(
+        new ImageFromDockerfile()
+            .withDockerfileFromBuilder(builder ->
+                builder
+                    .from("python:3.8")
+                    .run("python3 -m pip install z3 z3-solver")
+                    .cmd("python3", "/app/main.py")
+                    .build())).withCopyFileToContainer(
+        MountableFile.forHostPath(tempFile.getPath()), "/app/main.py")) {
+      container.start();
 
-    await()
-        .atMost(Duration.ofSeconds(10))
-        .until(() -> {
-          var execution = dockerClient.inspectContainerCmd(response.getId()).exec();
-          return execution.getState().getStatus().equals("exited");
-        });
+      await()
+          .atMost(Duration.ofSeconds(10))
+          .until(() -> {
+            var result =
+                container.getDockerClient().inspectContainerCmd(container.getContainerId());
+            var state = result.exec().getState();
+            return state.getStatus().equals("exited");
+          });
 
-    var execution = dockerClient.inspectContainerCmd(response.getId()).exec();
-    assertEquals(0, execution.getState().getExitCodeLong(),
-        "Failed in container " + execution.getName());
+      var result = container.getDockerClient().inspectContainerCmd(container.getContainerId());
+      var state = result.exec().getState();
+      assertThat(state.getExitCodeLong()).isZero();
+    }
   }
 
   private File writeCodeIntoTempFile(String z3Code) throws IOException {
@@ -182,7 +192,8 @@ public class EncodingCodeGeneratorVerificationTest extends AbstractTest {
     var returnNode = new ReturnNode(
         new BuiltInCall(BuiltInTable.LSL, new NodeList<>(
             new TypeCastNode(new FieldRefNode(field, DataType.bits(20)), Type.unsignedInt(32)),
-            new ConstantNode(new Constant.Value(BigInteger.valueOf(6), DataType.unsignedInt(32)))),
+            new ConstantNode(
+                new Constant.Value(BigInteger.valueOf(6), DataType.unsignedInt(32)))),
             Type.unsignedInt(32))
     );
     var graph = new Graph("graphValue");
@@ -199,7 +210,8 @@ public class EncodingCodeGeneratorVerificationTest extends AbstractTest {
     var returnNode = new ReturnNode(
         new BuiltInCall(BuiltInTable.LSL, new NodeList<>(
             new TypeCastNode(new FieldRefNode(field, DataType.bits(20)), Type.signedInt(32)),
-            new ConstantNode(new Constant.Value(BigInteger.valueOf(6), DataType.unsignedInt(32)))),
+            new ConstantNode(
+                new Constant.Value(BigInteger.valueOf(6), DataType.unsignedInt(32)))),
             Type.signedInt(32))
     );
     var graph = new Graph("graphValue");
@@ -216,7 +228,8 @@ public class EncodingCodeGeneratorVerificationTest extends AbstractTest {
     var returnNode = new ReturnNode(
         new BuiltInCall(BuiltInTable.ADD, new NodeList<>(
             new TypeCastNode(new FieldRefNode(field, DataType.bits(20)), Type.unsignedInt(32)),
-            new ConstantNode(new Constant.Value(BigInteger.valueOf(6), DataType.unsignedInt(32)))),
+            new ConstantNode(
+                new Constant.Value(BigInteger.valueOf(6), DataType.unsignedInt(32)))),
             Type.unsignedInt(32))
     );
     var graph = new Graph("graphValue");
@@ -250,7 +263,8 @@ public class EncodingCodeGeneratorVerificationTest extends AbstractTest {
     var returnNode = new ReturnNode(
         new BuiltInCall(BuiltInTable.SUB, new NodeList<>(
             new TypeCastNode(new FieldRefNode(field, DataType.bits(20)), Type.unsignedInt(32)),
-            new ConstantNode(new Constant.Value(BigInteger.valueOf(6), DataType.unsignedInt(32)))),
+            new ConstantNode(
+                new Constant.Value(BigInteger.valueOf(6), DataType.unsignedInt(32)))),
             Type.unsignedInt(32))
     );
     var graph = new Graph("graphValue");

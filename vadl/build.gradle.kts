@@ -15,9 +15,9 @@ dependencies {
     implementation("com.google.guava:guava:33.2.1-jre")
     implementation("ch.qos.logback:logback-classic:1.5.6")
 
-    testImplementation("com.github.docker-java:docker-java:3.3.6")
-    testImplementation("com.github.docker-java:docker-java-transport-httpclient5:3.3.6")
     testImplementation("org.awaitility:awaitility:4.2.1")
+    testImplementation("org.testcontainers:testcontainers:1.20.0")
+    testImplementation("org.testcontainers:junit-jupiter:1.20.0")
 
     testImplementation(platform("org.junit:junit-bom:5.9.1"))
     testImplementation("org.junit.jupiter:junit-jupiter")
@@ -69,9 +69,9 @@ open class GenerateCocoParserTask : DefaultTask() {
 
     @OutputDirectory
     val outputDir =
-        project.objects.directoryProperty().convention(
-            project.layout.buildDirectory.dir("generated/sources/coco/java/main"),
-        )
+            project.objects.directoryProperty().convention(
+                    project.layout.buildDirectory.dir("generated/sources/coco/java/main"),
+            )
 
     @TaskAction
     fun generate() {
