@@ -25,16 +25,19 @@ public class CppTypeNormalizer {
       DataType.unsignedInt(16),
       DataType.unsignedInt(32),
       DataType.unsignedInt(64),
+      DataType.unsignedInt(128),
       DataType.signedInt(1),
       DataType.signedInt(8),
       DataType.signedInt(16),
       DataType.signedInt(32),
       DataType.signedInt(64),
+      DataType.signedInt(128),
       DataType.bits(1),
       DataType.bits(8),
       DataType.bits(16),
       DataType.bits(32),
-      DataType.bits(64)
+      DataType.bits(64),
+      DataType.bits(128)
   ));
 
   /**
@@ -133,8 +136,10 @@ public class CppTypeNormalizer {
       return 32;
     } else if (old > 32 && old <= 64) {
       return 64;
+    } else if (old > 64 && old <= 128) {
+      return 128;
     }
 
-    throw new ViamError("Types with more than 64 bits are not supported");
+    throw new ViamError("Types with more than 128 bits are not supported");
   }
 }
