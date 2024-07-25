@@ -23,6 +23,11 @@ public class InstrEndNode extends AbstractEndNode {
   }
 
   @Override
+  public void canonicalize() {
+
+  }
+
+  @Override
   public Node shallowCopy() {
     return new InstrEndNode(sideEffects);
   }

@@ -27,6 +27,11 @@ public abstract class ExpressionNode extends DependencyNode {
   }
 
   @Override
+  public void canonicalize() {
+    // do nothing
+  }
+
+  @Override
   public <T extends GraphNodeVisitor> void accept(T visitor) {
     visitor.visit(this);
   }

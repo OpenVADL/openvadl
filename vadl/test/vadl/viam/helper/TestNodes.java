@@ -45,6 +45,11 @@ public class TestNodes {
     }
 
     @Override
+    public void canonicalize() {
+
+    }
+
+    @Override
     public Node shallowCopy() {
       return new Plain();
     }
@@ -66,6 +71,11 @@ public class TestNodes {
     @Override
     public Node copy() {
       return new PlainUnique();
+    }
+
+    @Override
+    public void canonicalize() {
+
     }
 
     @Override
@@ -108,6 +118,11 @@ public class TestNodes {
     @Override
     public Node copy() {
       return new WithInput(input.copy());
+    }
+
+    @Override
+    public void canonicalize() {
+      input.canonicalize();
     }
 
     @Override
@@ -156,6 +171,11 @@ public class TestNodes {
     @Override
     public Node copy() {
       return new WithSuccessor(successor.copy());
+    }
+
+    @Override
+    public void canonicalize() {
+
     }
 
     @Override
@@ -215,6 +235,12 @@ public class TestNodes {
     }
 
     @Override
+    public void canonicalize() {
+      this.input1.canonicalize();
+      this.input2.canonicalize();
+    }
+
+    @Override
     public Node shallowCopy() {
       return new WithTwoInputs(input1, input2);
     }
@@ -271,6 +297,11 @@ public class TestNodes {
     }
 
     @Override
+    public void canonicalize() {
+      inputs.forEach(Node::canonicalize);
+    }
+
+    @Override
     public Node shallowCopy() {
       return new WithNodeListInput(this.inputs);
     }
@@ -314,6 +345,11 @@ public class TestNodes {
     @Override
     public Node copy() {
       return new WithData(val);
+    }
+
+    @Override
+    public void canonicalize() {
+
     }
 
     @Override

@@ -2,10 +2,8 @@ package vadl.viam.graph.dependency;
 
 import java.math.BigInteger;
 import java.util.List;
-import java.util.Objects;
 import java.util.Optional;
 import java.util.function.BiFunction;
-import java.util.stream.Collectors;
 import org.jetbrains.annotations.NotNull;
 import vadl.javaannotations.viam.DataValue;
 import vadl.types.BuiltInTable;
@@ -121,5 +119,33 @@ public class BuiltInCall extends AbstractFunctionCallNode {
   @Override
   public void accept(GraphNodeVisitor visitor) {
     visitor.visit(this);
+  }
+
+  @Override
+  public void canonicalize() {
+    arguments().forEach(ExpressionNode::canonicalize);
+
+    if (BuiltInTable.commutative.contains(this.builtIn)) {
+      // Sort arguments s.t constants are last
+      // and when multiple constants then highest last
+      this.arguments().sort((o1, o2) -> {
+        if (o1 instanceof ConstantNode && !(o2 instanceof ConstantNode)) {
+          return 1;
+        } else if (!(o1 instanceof ConstantNode) && o2 instanceof ConstantNode) {
+          return -1;
+        } else if (o1 instanceof ConstantNode) { // && o2 instanceof ConstantNode
+          var c1 = (ConstantNode) o1;             // is statically known
+          var c2 = (ConstantNode) o2;
+
+          if (c1.constant() instanceof Constant.Value &&
+              c2.constant() instanceof Constant.Value) {
+            return ((Constant.Value) c1.constant()).value()
+                .compareTo(((Constant.Value) c2.constant()).value());
+          }
+        }
+
+        return 0;
+      });
+    }
   }
 }

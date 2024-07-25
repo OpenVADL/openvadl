@@ -1,6 +1,7 @@
 package vadl.types;
 
 import java.util.Arrays;
+import java.util.HashSet;
 import java.util.List;
 import java.util.stream.Stream;
 import javax.annotation.Nullable;
@@ -764,6 +765,36 @@ public class BuiltInTable {
       OCTAL
 
   );
+
+  public static final HashSet<BuiltIn> commutative = new HashSet<>(List.of(
+      // ARITHMETIC
+      ADD,
+      ADDS,
+      ADDC,
+      SATADD_UU,
+      SATADDS_UU,
+      SATADD_SS,
+      SATADDS_SS,
+      SATADDC_UU,
+      MUL,
+      MULS,
+      UMULL,
+      UMULLS,
+      SMULL,
+      SMULLS,
+      SUMULL,
+      SUMULLS,
+      // LOGIC
+      AND,
+      ANDS,
+      OR,
+      ORS,
+      XOR,
+      XORS,
+      // Comparisons
+      EQU,
+      NEQ
+  ));
 
   public static Stream<BuiltIn> builtIns() {
     return BUILT_INS.stream();

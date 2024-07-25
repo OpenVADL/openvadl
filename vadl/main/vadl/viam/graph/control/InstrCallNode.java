@@ -121,6 +121,11 @@ public class InstrCallNode extends DirectionalNode {
   }
 
   @Override
+  public void canonicalize() {
+    this.arguments().forEach(ExpressionNode::canonicalize);
+  }
+
+  @Override
   public Node shallowCopy() {
     return new InstrCallNode(target, paramFields, arguments);
   }

@@ -93,4 +93,12 @@ public abstract class WriteResourceNode extends SideEffectNode {
     address = visitor.applyNullable(this, address, ExpressionNode.class);
     value = visitor.apply(this, value, ExpressionNode.class);
   }
+
+  @Override
+  public void canonicalize() {
+    if (this.address != null) {
+      this.address.canonicalize();
+    }
+    this.value.canonicalize();
+  }
 }

@@ -433,6 +433,18 @@ public abstract class Node {
   public abstract Node copy();
 
   /**
+   * This method rearranges the node's input when the node is commutative.
+   * This is useful when adding new nodes to the graph because it simplifies
+   * the pattern matching.
+   * If it is commutative and has a constant node as input then it rearranges the inputs
+   * such that the constant node is last.
+   * If multiple constant nodes (when BigInteger) exist then it will sort them in ascending order.
+   * Note that this method requires that the constant node is directly an input of the commutative
+   * input. When the constant node is wrapped by a typecast node then it will not work.
+   */
+  public abstract void canonicalize();
+
+  /**
    * Creates a copy from {@code this} node and returns it. It will *NOT* copy all
    * data values recursively. Instead, it will use the old objects.
    */

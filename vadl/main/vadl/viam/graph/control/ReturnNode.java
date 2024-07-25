@@ -51,6 +51,11 @@ public class ReturnNode extends AbstractEndNode {
   }
 
   @Override
+  public void canonicalize() {
+    this.value.canonicalize();
+  }
+
+  @Override
   public Node shallowCopy() {
     return new ReturnNode(value);
   }

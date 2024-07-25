@@ -22,6 +22,11 @@ public class EndNode extends AbstractEndNode {
   }
 
   @Override
+  public void canonicalize() {
+
+  }
+
+  @Override
   public Node shallowCopy() {
     return new EndNode(sideEffects);
   }
