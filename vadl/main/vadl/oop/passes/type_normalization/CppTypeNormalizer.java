@@ -16,6 +16,9 @@ import vadl.viam.graph.Graph;
 import vadl.viam.graph.dependency.ConstantNode;
 import vadl.viam.graph.dependency.TypeCastNode;
 
+/**
+ * Core logic for transforming VADL into CPP types.
+ */
 public class CppTypeNormalizer {
   private static final Logger logger = LoggerFactory.getLogger(CppTypeNormalizer.class);
   private static final HashSet<Type> cppSupportedTypes = new HashSet<>(List.of(
@@ -88,8 +91,8 @@ public class CppTypeNormalizer {
     // Updating typecasts
     var typeNodes = graph.getNodes(TypeCastNode.class).toList();
     typeNodes.forEach(typeCastNode -> {
-      if (!cppSupportedTypes.contains(typeCastNode.castType()) &&
-          typeCastNode.castType() instanceof BitsType bitsType) {
+      if (!cppSupportedTypes.contains(typeCastNode.castType())
+          && typeCastNode.castType() instanceof BitsType bitsType) {
         var newBitSizeType = bitsType.withBitWidth(nextFittingType(
             bitsType.bitWidth()));
         var newTypeCastNode =
