@@ -193,7 +193,7 @@ class ArithmeticImmediateStrategyTest extends AbstractTest {
 
     // Checks whether the SUB has been inverted and a NegatedNode exists.
     var hasNegatedFuncParam = TreeMatcher.matches(fieldAccess.encoding().behavior().getNodes(),
-        new BuiltInMatcher(BuiltInTable.SUB, List.of(
+        new BuiltInMatcher(BuiltInTable.ADD, List.of(
             new BuiltInMatcher(BuiltInTable.NEG,
                 new FuncParamMatcher(DataType.unsignedInt(32))),
             new ConstantValueMatcher(
