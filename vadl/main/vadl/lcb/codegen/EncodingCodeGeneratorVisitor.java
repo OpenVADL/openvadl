@@ -45,6 +45,10 @@ public class EncodingCodeGeneratorVisitor implements OopGraphNodeVisitor {
     this.writer = writer;
   }
 
+  private String generateBitmask(int size) {
+    return String.format("(1U << %d) - 1", size);
+  }
+
   @Override
   public void visit(ConstantNode node) {
     writer.write(node.constant().toString());
@@ -81,10 +85,6 @@ public class EncodingCodeGeneratorVisitor implements OopGraphNodeVisitor {
   public void visit(TypeCastNode typeCastNode) {
     writer.write("(" + getCppTypeNameByVadlType(typeCastNode.castType()) + ") ");
     visit(typeCastNode.value());
-  }
-
-  private String generateBitmask(int size) {
-    return String.format("(1U << %d) - 1", size);
   }
 
   @Override
