@@ -150,8 +150,9 @@ class CppTypeNormalizerTest extends AbstractTest {
     var updatedFunction = new CppTypeNormalizer().makeTypesCppConform(function);
 
     // Then
-    assertThat(updatedFunction.behavior().getNodes(TypeCastNode.class).toList().get(0)
-        .castType()).isEqualTo(after);
+    var node = updatedFunction.behavior().getNodes(UpcastedTypeCastNode.class).toList().get(0);
+    assertThat(node.castType()).isEqualTo(after);
+    assertThat(node.originalType()).isEqualTo(before);
   }
 
   @ParameterizedTest
