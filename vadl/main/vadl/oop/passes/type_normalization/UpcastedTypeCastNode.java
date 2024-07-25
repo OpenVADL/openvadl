@@ -9,6 +9,13 @@ import vadl.viam.graph.Node;
 import vadl.viam.graph.dependency.ExpressionNode;
 import vadl.viam.graph.dependency.TypeCastNode;
 
+/**
+ * VADL and CPP have not the same types. VADL supports arbitrary bit sizes whereas CPP does not.
+ * The {@link CppTypeNormalizer} converts these types, however, we want to keep the original
+ * type information. This class extends the {@link TypeCastNode}. So the {@link TypeCastNode}
+ * contains the upcasted type and this {@link UpcastedTypeCastNode} has a member for the
+ * {@code originalType}.
+ */
 public class UpcastedTypeCastNode extends TypeCastNode {
   @DataValue
   private final Type originalType;

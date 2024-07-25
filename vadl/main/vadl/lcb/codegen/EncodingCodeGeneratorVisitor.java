@@ -3,6 +3,11 @@ package vadl.lcb.codegen;
 import static vadl.oop.CppTypeMap.getCppTypeNameByVadlType;
 
 import java.io.StringWriter;
+import vadl.oop.OopGraphNodeVisitor;
+import vadl.oop.passes.type_normalization.UpcastedTypeCastNode;
+import vadl.types.BitsType;
+import vadl.types.BoolType;
+import vadl.viam.ViamError;
 import vadl.viam.graph.GraphNodeVisitor;
 import vadl.viam.graph.control.AbstractBeginNode;
 import vadl.viam.graph.control.EndNode;
@@ -33,7 +38,7 @@ import vadl.viam.graph.dependency.WriteRegNode;
  * The tasks of this class is to generate the Cpp code for LLVM which
  * is called by tablegen to encode an immediate.
  */
-public class EncodingCodeGeneratorVisitor implements GraphNodeVisitor {
+public class EncodingCodeGeneratorVisitor implements OopGraphNodeVisitor {
   private final StringWriter writer;
 
   public EncodingCodeGeneratorVisitor(StringWriter writer) {
@@ -76,6 +81,24 @@ public class EncodingCodeGeneratorVisitor implements GraphNodeVisitor {
   public void visit(TypeCastNode typeCastNode) {
     writer.write("(" + getCppTypeNameByVadlType(typeCastNode.castType()) + ") ");
     visit(typeCastNode.value());
+  }
+
+  private String generateBitmask(int size) {
+    return String.format("(1U << %d) - 1", size);
+  }
+
+  @Override
+  public void visit(UpcastedTypeCastNode upcastedTypeCastNode) {
+    writer.write("((" + getCppTypeNameByVadlType(upcastedTypeCastNode.castType()) + ") ");
+    visit(upcastedTypeCastNode.value());
+    if (upcastedTypeCastNode.originalType() instanceof BitsType originalType) {
+      writer.write(
+          ") & " + generateBitmask(originalType.bitWidth()));
+    } else if (upcastedTypeCastNode.originalType() instanceof BoolType) {
+      writer.write(") & 1");
+    } else {
+      throw new ViamError("Cannot generate bitmask for unsupported type");
+    }
   }
 
   @Override
@@ -177,4 +200,5 @@ public class EncodingCodeGeneratorVisitor implements GraphNodeVisitor {
     // we do not want to create explicit casts by hand.
     expressionNode.accept(this);
   }
+
 }
