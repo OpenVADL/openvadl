@@ -700,9 +700,9 @@ class RegisterFileDefinition extends Definition {
 }
 
 class InstructionDefinition extends Definition {
-  final Node identifier;
-  final Node typeIdentifier;
-  final BlockStatement behavior;
+  Node identifier;
+  Node typeIdentifier;
+  BlockStatement behavior;
   final SourceLocation loc;
 
   InstructionDefinition(Node identifier, Node typeIdentifier, BlockStatement behavior,

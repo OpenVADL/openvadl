@@ -457,10 +457,10 @@ PRODUCTIONS
     | blockStatement<out statement>
     .
 
-    blockStatement<out BlockStatement block>   (. block = new BlockStatement(); pushScope(); .)
+    blockStatement<out BlockStatement block>   (. var start = loc(); block = new BlockStatement(start); pushScope(); .)
     = SYM_BRACE_OPEN {
         statement<out Statement statement>     (. block.add(statement); .)
-     } SYM_BRACE_CLOSE                         (. popScope(); .)
+     } SYM_BRACE_CLOSE                         (. popScope(); block.location = start.join(loc()); .)
     .
 
     assignment<out Statement statement>            (. Expr target = null; .)
@@ -474,17 +474,18 @@ PRODUCTIONS
     .
 
     letStatement<out Statement letStatement>
-    = LET identifier<out Identifier id>   (. pushScope(); symbolTable.defineConstant(id.name, loc()); .)
+    = LET                                   (. var start = loc(); .)
+    identifier<out Identifier id>           (. pushScope(); symbolTable.defineConstant(id.name, loc()); .)
       SYM_EQ expression<out Expr valueExpr>
-      IN statement<out Statement body>    (. letStatement = new LetStatement(id, valueExpr, body); popScope(); .)
+      IN statement<out Statement body>      (. letStatement = new LetStatement(id, valueExpr, body, start.join(loc())); popScope(); .)
     .
 
-    ifStatement<out Statement ifStatement>     (. Statement elseStmt = null; .)
+    ifStatement<out Statement ifStatement>     (. Statement elseStmt = null; var start = loc(); .)
     = KW_IF expression<out Expr condition>
       THEN statement<out Statement thenStmt>
       [ IF (la.kind == _ELSE)
         ELSE statement<out elseStmt>
-      ]                                        (. ifStatement = new IfStatement(condition, thenStmt, elseStmt); .)
+      ]                                        (. ifStatement = new IfStatement(condition, thenStmt, elseStmt, start.join(loc())); .)
     .
 
     // -- EXPRESSIONS --------------------------------------------------------------------------------------------------

@@ -8,7 +8,8 @@ import java.util.stream.Stream;
 /**
  * A pass over the AST that produces a textual representation of the AST.
  */
-public class AstDumper implements DefinitionVisitor<Void>, ExprVisitor<Void> {
+public class AstDumper
+    implements DefinitionVisitor<Void>, ExprVisitor<Void>, StatementVisitor<Void> {
   private StringBuilder builder = new StringBuilder();
   private int indent;
 
@@ -45,10 +46,12 @@ public class AstDumper implements DefinitionVisitor<Void>, ExprVisitor<Void> {
   private void dumpChildren(List<? extends Node> children) {
     indent++;
     for (var child : children) {
-      if (child instanceof Definition) {
-        ((Definition) child).accept(this);
-      } else if (child instanceof Expr) {
-        ((Expr) child).accept(this);
+      if (child instanceof Definition def) {
+        def.accept(this);
+      } else if (child instanceof Expr expr) {
+        expr.accept(this);
+      } else if (child instanceof Statement statement) {
+        statement.accept(this);
       } else if (child instanceof Identifier) {
         dumpNode(child);
       } else {
@@ -204,7 +207,7 @@ public class AstDumper implements DefinitionVisitor<Void>, ExprVisitor<Void> {
   @Override
   public Void visit(InstructionDefinition definition) {
     dumpNode(definition);
-    dumpChildren(definition.identifier, definition.typeIdentifier /*, definition.block */);
+    dumpChildren(definition.identifier, definition.typeIdentifier, definition.behavior);
     return null;
   }
 
@@ -244,6 +247,42 @@ public class AstDumper implements DefinitionVisitor<Void>, ExprVisitor<Void> {
   public Void visit(LetExpr expr) {
     dumpNode(expr);
     dumpChildren(expr.identifier, expr.valueExpr, expr.body);
+    return null;
+  }
+
+  @Override
+  public Void visit(BlockStatement blockStatement) {
+    dumpNode(blockStatement);
+    dumpChildren(blockStatement.statements);
+    return null;
+  }
+
+  @Override
+  public Void visit(LetStatement letStatement) {
+    dumpNode(letStatement);
+    dumpChildren(letStatement.valueExpression, letStatement.body);
+    return null;
+  }
+
+  @Override
+  public Void visit(IfStatement ifStatement) {
+    dumpNode(ifStatement);
+    dumpChildren(ifStatement.condition, ifStatement.thenStmt);
+    if (ifStatement.elseStmt != null) {
+      dumpChildren(ifStatement.elseStmt);
+    }
+    return null;
+  }
+
+  @Override
+  public Void visit(AssignmentStatement assignmentStatement) {
+    builder.append(indentString()).append("AssignmentStatement\n");
+    indent++;
+    builder.append(indentString()).append("Target:\n");
+    assignmentStatement.target.accept(this);
+    builder.append(indentString()).append("Value:");
+    assignmentStatement.valueExpression.accept(this);
+    indent--;
     return null;
   }
 }

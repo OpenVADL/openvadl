@@ -99,17 +99,19 @@ public class StatementTest {
         new InstructionDefinition(
             new Identifier("TEST", loc),
             new Identifier("F", loc),
-            new BlockStatement().add(
+            new BlockStatement(loc).add(
                 new IfStatement(
                     new BinaryExpr(new IntegerLiteral("3", loc), Operator.Greater(),
                         new IntegerLiteral("4", loc)),
                     new IfStatement(
                         new BinaryExpr(new IntegerLiteral("9", loc), Operator.Less(),
                             new IntegerLiteral("2", loc)),
-                        new BlockStatement(),
-                        new BlockStatement()
+                        new BlockStatement(loc),
+                        new BlockStatement(loc),
+                        loc
                     ),
-                    null
+                    null,
+                    loc
                 )),
             loc
         )

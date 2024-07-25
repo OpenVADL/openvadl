@@ -4,7 +4,6 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
-import java.util.Optional;
 import vadl.error.VadlError;
 import vadl.error.VadlException;
 
@@ -172,17 +171,15 @@ class MacroExpander
 
   @Override
   public Definition visit(InstructionDefinition definition) {
-    var identifier = resolvePlaceholderOrIdentifier(definition.identifier);
+    definition.identifier = resolvePlaceholderOrIdentifier(definition.identifier);
     var typeId = resolvePlaceholderOrIdentifier(definition.typeIdentifier);
+    definition.typeIdentifier = typeId;
+
     symbols = symbols.createFormatScope(typeId);
-    var result = new InstructionDefinition(
-        identifier,
-        typeId,
-        visit(definition.behavior),
-        definition.loc
-    );
+    definition.behavior = visit(definition.behavior);
     symbols = Objects.requireNonNull(symbols.parent);
-    return result;
+
+    return definition;
   }
 
   @Override
@@ -198,44 +195,40 @@ class MacroExpander
   @Override
   public BlockStatement visit(BlockStatement blockStatement) {
     symbols = symbols.createChild();
-    var result = new BlockStatement(
-        blockStatement.statements().stream().map(s -> s.accept(this)).toList()
-    );
+    blockStatement.statements = blockStatement.statements.stream()
+        .map(s -> s.accept(this))
+        .toList();
     symbols = Objects.requireNonNull(symbols.parent);
-    return result;
+    return blockStatement;
   }
 
   @Override
   public Statement visit(LetStatement letStatement) {
     symbols = symbols.createChild();
-    symbols.defineConstant(letStatement.identifier().name, letStatement.identifier().loc);
-    var result = new LetStatement(
-        letStatement.identifier(),
-        (Expr) letStatement.valueExpression().accept(this),
-        letStatement.body().accept(this)
-    );
+    symbols.defineConstant(letStatement.identifier.name, letStatement.identifier.loc);
+    letStatement.valueExpression = (Expr) letStatement.valueExpression.accept(this);
+    letStatement.body = letStatement.body.accept(this);
     symbols = Objects.requireNonNull(symbols.parent);
-    return result;
+    return letStatement;
   }
 
   @Override
   public Statement visit(IfStatement ifStatement) {
-    return new IfStatement(
-        (Expr) ifStatement.condition().accept(this),
-        ifStatement.thenStmt().accept(this),
-        Optional.ofNullable(ifStatement.elseStmt()).map(s -> s.accept(this)).orElse(null)
-    );
+    ifStatement.condition = (Expr) ifStatement.condition.accept(this);
+    ifStatement.thenStmt = ifStatement.thenStmt.accept(this);
+    if (ifStatement.elseStmt != null) {
+      ifStatement.elseStmt = ifStatement.elseStmt.accept(this);
+    }
+    return ifStatement;
   }
 
   @Override
   public Statement visit(AssignmentStatement assignmentStatement) {
-    if (assignmentStatement.target() instanceof IdentifierChain chain) {
+    if (assignmentStatement.target instanceof IdentifierChain chain) {
       symbols.requireValue(chain);
     }
-    return new AssignmentStatement(
-        assignmentStatement.target(),
-        (Expr) assignmentStatement.valueExpression().accept(this)
-    );
+    assignmentStatement.valueExpression = (Expr) assignmentStatement.valueExpression.accept(this);
+    return assignmentStatement;
   }
 
   private Identifier resolvePlaceholderOrIdentifier(Node n) {
