@@ -445,6 +445,15 @@ public abstract class Node {
   public abstract void canonicalize();
 
   /**
+   * Indicates whether the node has commutative inputs.
+   *
+   * @return true if the inputs can be rearranged.
+   */
+  public boolean isCommutative() {
+    return false;
+  }
+
+  /**
    * Creates a copy from {@code this} node and returns it. It will *NOT* copy all
    * data values recursively. Instead, it will use the old objects.
    */

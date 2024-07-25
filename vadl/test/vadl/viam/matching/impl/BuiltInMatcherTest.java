@@ -87,4 +87,25 @@ class BuiltInMatcherTest {
     // Then
     assertThat(result).isFalse();
   }
+
+  @Test
+  void matches_shouldReturnTrue_whenCommutativeAndInputs() {
+    // Here we specify no matchers,
+    // even though the node has two inputs.
+    var matcher = new BuiltInMatcher(BuiltInTable.ADD, List.of(
+        new ConstantValueMatcher(new Constant.Value(BigInteger.ZERO, DataType.unsignedInt(32))),
+        new ConstantValueMatcher(new Constant.Value(BigInteger.ONE, DataType.unsignedInt(32)))
+    ));
+    var input1 = new ConstantNode(new Constant.Value(BigInteger.ONE, DataType.unsignedInt(32)));
+    var input2 = new ConstantNode(new Constant.Value(BigInteger.ZERO, DataType.unsignedInt(32)));
+    var operation = new BuiltInCall(BuiltInTable.ADD, new NodeList<>(
+        input1, input2
+    ), Type.unsignedInt(32));
+
+    // When
+    var result = matcher.matches(operation);
+
+    // Then
+    assertThat(result).isTrue();
+  }
 }

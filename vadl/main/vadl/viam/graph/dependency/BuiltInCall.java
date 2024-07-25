@@ -125,7 +125,7 @@ public class BuiltInCall extends AbstractFunctionCallNode {
   public void canonicalize() {
     arguments().forEach(ExpressionNode::canonicalize);
 
-    if (BuiltInTable.commutative.contains(this.builtIn)) {
+    if (isCommutative()) {
       // Sort arguments s.t constants are last
       // and when multiple constants then highest last
       this.arguments().sort((o1, o2) -> {
@@ -147,5 +147,10 @@ public class BuiltInCall extends AbstractFunctionCallNode {
         return 0;
       });
     }
+  }
+
+  @Override
+  public boolean isCommutative() {
+    return BuiltInTable.commutative.contains(this.builtIn);
   }
 }
