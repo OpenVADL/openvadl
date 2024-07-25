@@ -25,14 +25,17 @@ class CppTypeNormalizerTest extends AbstractTest {
         Arguments.of(DataType.unsignedInt(9), DataType.unsignedInt(16)),
         Arguments.of(DataType.unsignedInt(17), DataType.unsignedInt(32)),
         Arguments.of(DataType.unsignedInt(33), DataType.unsignedInt(64)),
+        Arguments.of(DataType.unsignedInt(65), DataType.unsignedInt(128)),
         Arguments.of(DataType.signedInt(2), DataType.signedInt(8)),
         Arguments.of(DataType.signedInt(9), DataType.signedInt(16)),
         Arguments.of(DataType.signedInt(17), DataType.signedInt(32)),
         Arguments.of(DataType.signedInt(33), DataType.signedInt(64)),
+        Arguments.of(DataType.signedInt(65), DataType.signedInt(128)),
         Arguments.of(DataType.bits(2), DataType.bits(8)),
         Arguments.of(DataType.bits(9), DataType.bits(16)),
         Arguments.of(DataType.bits(17), DataType.bits(32)),
-        Arguments.of(DataType.bits(33), DataType.bits(64))
+        Arguments.of(DataType.bits(33), DataType.bits(64)),
+        Arguments.of(DataType.bits(65), DataType.bits(128))
     );
   }
 
