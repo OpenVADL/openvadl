@@ -81,7 +81,7 @@ public class CppTypeNormalizer {
   }
 
   /**
-   * This method checks all the typecasts and if upcasts the type if necessary.
+   * This method checks all the typecasts and upcasts the type if necessary.
    * Additionally, it will also check the constant if the type is ok.
    */
   private void updateGraph(Graph graph) {
@@ -90,10 +90,10 @@ public class CppTypeNormalizer {
     typeNodes.forEach(typeCastNode -> {
       if (!cppSupportedTypes.contains(typeCastNode.castType()) &&
           typeCastNode.castType() instanceof BitsType bitsType) {
-        var newSize = bitsType.withBitWidth(nextFittingType(
+        var newBitSizeType = bitsType.withBitWidth(nextFittingType(
             bitsType.bitWidth()));
         var newTypeCastNode =
-            new TypeCastNode(typeCastNode.value(), newSize);
+            new UpcastedTypeCastNode(typeCastNode.value(), newBitSizeType, typeCastNode.castType());
         graph.replaceNode(typeCastNode, newTypeCastNode);
       }
     });
