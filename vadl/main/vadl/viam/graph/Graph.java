@@ -193,7 +193,6 @@ public class Graph {
       if (newT != target) {
         // TODO: Check if we can use visit inputs for this lambda
         // as we are calling replaceInput on the node anyway
-        node.canonicalize();
         node.replaceInput(target, newT);
       }
       return newT;
