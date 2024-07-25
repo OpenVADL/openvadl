@@ -42,4 +42,10 @@ public class SIntType extends BitsType {
   public int hashCode() {
     return super.hashCode();
   }
+
+
+  @Override
+  public BitsType withBitWidth(int bitWidth) {
+    return new SIntType(bitWidth);
+  }
 }
