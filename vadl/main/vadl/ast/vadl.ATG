@@ -65,7 +65,7 @@ COMPILER vadl
     * Expands a macro.
     */
     @Nullable Node expandMacro(Identifier identifier, List<Node> args, SyntaxType requiredReturnType) {
-        var unexpanded = new PlaceHolderExpr(identifier, args, identifier.location());
+        var unexpanded = new MacroInstanceExpr(identifier, args, identifier.location());
         if (insideMacro) {
             return unexpanded;
         }
@@ -280,14 +280,14 @@ PRODUCTIONS
     }.
 
     // -- DEFINITIONS --------------------------------------------------------------------------------------------------
-    topLevelDefinitions<out Definition definition>                      (. definition = null; .)
-    = instructionsetDefinition<out InstructionSetDefinition isaDef>        (. definition  = isaDef; .)
-    | commonDefinitionSection<out Definition def>                       (. definition  = def; .)
+    topLevelDefinitions<out Definition def> (. def = null; .)
+    = instructionsetDefinition<out def>
+    | commonDefinition<out def>             (. def.accept(symbolTable); .)
     .
 
-    commonDefinitionSection<out Definition definition>              (. definition = null; .)
-    = constantDefinition<out Definition def>                        (. definition = def; def.accept(symbolTable); .)
-    | formatDefinition<out Definition def>                          (. definition = def; def.accept(symbolTable); .)
+    commonDefinition<out Definition def>    (. def = null; .)
+    = constantDefinition<out def>
+    | formatDefinition<out def>
     .
 
     instructionsetDefinition<out InstructionSetDefinition isaDef>   (. var children = new ArrayList<Definition>(); pushScope(); .)
@@ -321,8 +321,7 @@ PRODUCTIONS
     .
 
     isaDefinition<out Definition def> (. def = null; .)
-    = constantDefinition<out def>
-    | formatDefinition<out def>
+    = commonDefinition<out def>
     | counterDefinition<out def>
     | instructionDefinition<out def>
     | encodingDefinition<out def>
@@ -336,7 +335,7 @@ PRODUCTIONS
     constantDefinition<out ConstantDefinition def>      (. TypeLiteral type = null; .)
     = CONSTANT                                          (. var startLocation = loc(); .)
         identifier<out Identifier id>
-        [ SYM_COLON typeLiteral<out TypeLiteral t1>     (. type = t1; .) ]
+        [ SYM_COLON typeLiteral<out type> ]
         SYM_EQ expression<out Expr expr>                (. def = new ConstantDefinition(id, type, expr, startLocation.join(loc())); .)
     .
 
@@ -353,10 +352,10 @@ PRODUCTIONS
     .
 
     // FIXME: more versions are missing here
-    formatField<out FormatDefinition.FormatField field>                    (. field = null; .)
+    formatField<out FormatDefinition.FormatField field>             (. field = null; .)
     = identifier<out Identifier id>
-      ( formatFieldRange<out FormatDefinition.FormatField rangeField, id>  (. field = rangeField; .)
-        | formatFieldType<out FormatDefinition.FormatField typedField, id> (. field = typedField; .)
+      ( formatFieldRange<out field, id>
+        | formatFieldType<out field, id>
       )
     .
 
@@ -381,19 +380,19 @@ PRODUCTIONS
     )                                               (. var startLocation = loc(); .)
     COUNTER
         identifier<out Identifier id>
-        SYM_COLON typeLiteral<out TypeLiteral t1>   (. def = new CounterDefinition(kind, id, t1, startLocation.join(loc())); .)
+        SYM_COLON typeLiteral<out TypeLiteral type> (. def = new CounterDefinition(kind, id, type, startLocation.join(loc())); .)
     .
 
-    instructionDefinition<out InstructionDefinition def> (. var startLocation = loc(); .)
-    = INSTRUCTION instructionIdentifier<out Node id>
-      SYM_COLON instructionIdentifier<out Node formatId> (. pushFormatScope(formatId); .)
-      SYM_EQ blockStatement<out BlockStatement behavior> (. def = new InstructionDefinition(id, formatId, behavior, startLocation.join(loc()));
-                                                            popScope(); .)
+    instructionDefinition<out InstructionDefinition def>   (. var startLocation = loc(); .)
+    = INSTRUCTION identifierOrPlaceholder<out Node id>
+      SYM_COLON identifierOrPlaceholder<out Node formatId> (. pushFormatScope(formatId); .)
+      SYM_EQ blockStatement<out BlockStatement behavior>   (. def = new InstructionDefinition(id, formatId, behavior, startLocation.join(loc()));
+                                                              popScope(); .)
     .
 
-    instructionIdentifier<out Node n>                (. n = null; .)
-    = identifier<out Identifier id>                  (. n = id; .)
-    | placeHolder<out Node ph, BasicSyntaxType.Id()> (. n = ph; .)
+    identifierOrPlaceholder<out Node n> (. n = null; .)
+    = identifier<out n>
+    | placeholder<out n, BasicSyntaxType.Id()>
     .
 
     encodingDefinition<out EncodingDefinition def>               (. var startLocation = loc(); var entries = new ArrayList<EncodingDefinition.Entry>(); .)
@@ -466,8 +465,8 @@ PRODUCTIONS
     assignment<out Statement statement>            (. Expr target = null; .)
     = (
         IF (scanner.Peek().kind != _SYM_PAREN_OPEN)
-        identifierChain<out IdentifierChain chain> (. target = chain; .)
-      | callExpression<out CallExpr call>          (. target = call; .)
+        identifierChain<out target>
+      | callExpression<out target>
       )
       SYM_ASSIGN
       expression<out Expr expr>                    (. statement = new AssignmentStatement(target, expr); .)
@@ -523,7 +522,8 @@ PRODUCTIONS
     .
 
     unary<out Expr expr>
-    = unaryOperator<out UnaryOperator op> term<out Expr operand> (. expr = new UnaryExpr(op, operand); .)
+    = unaryOperator<out UnaryOperator op>
+      term<out Expr operand> (. expr = new UnaryExpr(op, operand); .)
     .
 
     unaryOperator<out UnaryOperator op> (. op = null; .)
@@ -532,14 +532,14 @@ PRODUCTIONS
     | SYM_TILDE (. op = UnaryOperator.COMPLEMENT; .)
     .
 
-    term<out Expr expr>                                                (. expr = null; .)
-    = number                                                           (. expr = new IntegerLiteral(t.val, loc()); .)
+    term<out Expr expr>                                               (. expr = null; .)
+    = number                                                          (. expr = new IntegerLiteral(t.val, loc()); .)
     | IF (la.kind == _identifierToken && scanner.Peek().kind != _SYM_PAREN_OPEN)
-      identifierChain<out IdentifierChain chain>                       (. expr = chain; if (!insideMacro && !insideAnnotation) symbolTable.requireValue(chain); .)
-    | callExpression<out CallExpr call>                                (. expr = call; .)
-    | SYM_PAREN_OPEN expression<out Expr expr1> SYM_PAREN_CLOSE        (. expr = new GroupExpr(expr1); .)
-    | unary<out Expr unary>                                            (. expr = unary; .)
-    | macroInstanceOrPlaceholder<out Node node1, BasicSyntaxType.Ex()> (. expr = (Expr)node1; .)
+      identifierChain<out IdentifierChain chain>                      (. expr = chain; if (!insideMacro && !insideAnnotation) symbolTable.requireValue(chain); .)
+    | callExpression<out expr>
+    | SYM_PAREN_OPEN expression<out expr> SYM_PAREN_CLOSE             (. expr = new GroupExpr(expr); .)
+    | unary<out expr>
+    | macroInstanceOrPlaceholder<out Node node, BasicSyntaxType.Ex()> (. expr = (Expr)node; .)
     .
 
     identifierChain<out IdentifierChain chain> (. IdentifierChain next = null; .)
@@ -572,7 +572,7 @@ PRODUCTIONS
       ELSE expression<out Expr elseExpr>   (. expr = new IfExpr(condition, thenExpr, elseExpr, startLoc.join(loc())); .)
     .
 
-    // -- PRIMETIVES ---------------------------------------------------------------------------------------------------
+    // -- PRIMITIVES ---------------------------------------------------------------------------------------------------
 
     typeLiteral<out TypeLiteral type>       (. type = null; Expr sizeExpr = null; .)
     =
@@ -582,7 +582,7 @@ PRODUCTIONS
         identifier<out Identifier id>
         [ SYM_LT
             // FIXME: There is a LL(1) conflict if switching ot expression
-            term<out Expr expr>             (. sizeExpr = expr; .)
+            term<out sizeExpr>
         SYM_GT ]                            (. type = new TypeLiteral(id, sizeExpr, id.location().join(loc())) ;.)
     )
     .
@@ -591,24 +591,14 @@ PRODUCTIONS
     .
 
     // -- MACROS -------------------------------------------------------------------------------------------------------
-    macroInstanceOrPlaceholder<out Node body, SyntaxType requiredType>      (. body = null; .)
-    = IF (!insideMacro) macroInstance<out Node b, requiredType>             (. body = b; .)
-    | placeHolder<out Node b, requiredType>                                 (. body = b;.)
+    macroInstanceOrPlaceholder<out Node body, SyntaxType requiredType> (. body = null; .)
+    = IF (!insideMacro) macroInstance<out body, requiredType>
+    | placeholder<out body, requiredType>
     .
 
-    placeHolder<out Node body, SyntaxType requiredType>
-    = SYM_DOLLAR                                            (. var startloc = loc(); var args = new ArrayList<Node>(); .)
-    identifier<out Identifier id>
-    [
-        SYM_PAREN_OPEN
-            [
-                expression<out Expr arg1>                   (. args.add(arg1); .)
-                {
-                    SYM_SEMICOLON expression<out Expr arg2> (.args.add(arg2); .)
-                }
-            ]
-        SYM_PAREN_CLOSE
-    ]                                                       (. body = new PlaceHolderExpr(id, args, startloc.join(loc())); .)
+    placeholder<out PlaceholderExpr placeholder, SyntaxType requiredType>
+    = SYM_DOLLAR                               (. var startloc = loc(); var args = new ArrayList<Node>(); .)
+    identifierChain<out IdentifierChain chain> (. placeholder = new PlaceholderExpr(chain, startloc.join(loc())); .)
     .
 
 
@@ -624,9 +614,9 @@ PRODUCTIONS
     SYM_PAREN_CLOSE                                             (. body = expandMacro(id, args, requiredType); .)
     .
 
-    macroInstanceParam<out Node arg>                                 (. arg = null; .)
-    = IF (la.kind == _identifierToken) identifier<out Identifier id> (. arg = id; .)
-    | expression<out Expr expr>                                      (. arg = expr; .)
+    macroInstanceParam<out Node arg> (. arg = null; .)
+    = IF (la.kind == _identifierToken) identifier<out arg>
+    | expression<out arg>
     .
 
     macroDef
@@ -647,8 +637,8 @@ PRODUCTIONS
      SYM_PAREN_CLOSE
     SYM_COLON syntaxType<out SyntaxType returnType> SYM_EQ
     SYM_BRACE_OPEN                        (. Node body = null; insideMacro = true; .)
-        ( expression<out Expr bodyEx>     (. body = bodyEx; .)
-        | isaDefinition<out Definition d> (. body = d; .)
+        ( expression<out body>
+        | isaDefinition<out body>
         )
     SYM_BRACE_CLOSE                       (.
                                             insideMacro = false;

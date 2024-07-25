@@ -21,7 +21,9 @@ interface ExprVisitor<R> {
 
   R visit(StringLiteral expr);
 
-  R visit(PlaceHolderExpr expr);
+  R visit(PlaceholderExpr expr);
+
+  R visit(MacroInstanceExpr expr);
 
   R visit(RangeExpr expr);
 
@@ -470,12 +472,65 @@ class StringLiteral extends Expr {
  * An internal temporary placeholder node inside model definitions.
  * This node should never leave the parser.
  */
-class PlaceHolderExpr extends Expr {
+class PlaceholderExpr extends Expr {
+  IdentifierChain identifierChain;
+  SourceLocation loc;
+
+  public PlaceholderExpr(IdentifierChain identifierChain, SourceLocation loc) {
+    this.identifierChain = identifierChain;
+    this.loc = loc;
+  }
+
+  @Override
+  <R> R accept(ExprVisitor<R> visitor) {
+    return visitor.visit(this);
+  }
+
+  @Override
+  SourceLocation location() {
+    return loc;
+  }
+
+  @Override
+  SyntaxType syntaxType() {
+    return BasicSyntaxType.Invalid();
+  }
+
+  @Override
+  void prettyPrint(int indent, StringBuilder builder) {
+    builder.append("$");
+    identifierChain.prettyPrint(indent, builder);
+  }
+
+  @Override
+  public boolean equals(Object o) {
+    if (this == o) {
+      return true;
+    }
+    if (o == null || getClass() != o.getClass()) {
+      return false;
+    }
+
+    PlaceholderExpr that = (PlaceholderExpr) o;
+    return identifierChain.equals(that.identifierChain);
+  }
+
+  @Override
+  public int hashCode() {
+    return identifierChain.hashCode();
+  }
+}
+
+/**
+ * An internal temporary placeholder of macro instantiations.
+ * This node should never leave the parser.
+ */
+class MacroInstanceExpr extends Expr {
   Identifier identifier;
   List<Node> arguments;
   SourceLocation loc;
 
-  public PlaceHolderExpr(Identifier identifier, List<Node> arguments, SourceLocation loc) {
+  public MacroInstanceExpr(Identifier identifier, List<Node> arguments, SourceLocation loc) {
     this.identifier = identifier;
     this.arguments = arguments;
     this.loc = loc;
@@ -511,13 +566,16 @@ class PlaceHolderExpr extends Expr {
       return false;
     }
 
-    PlaceHolderExpr that = (PlaceHolderExpr) o;
-    return identifier.equals(that.identifier);
+    MacroInstanceExpr that = (MacroInstanceExpr) o;
+    return identifier.equals(that.identifier)
+        && arguments.equals(that.arguments);
   }
 
   @Override
   public int hashCode() {
-    return identifier.hashCode();
+    int result = identifier.hashCode();
+    result = 31 * result + arguments.hashCode();
+    return result;
   }
 }
 

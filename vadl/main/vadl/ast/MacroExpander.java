@@ -62,7 +62,20 @@ class MacroExpander
   }
 
   @Override
-  public Node visit(PlaceHolderExpr expr) {
+  public Node visit(PlaceholderExpr expr) {
+    // FIXME: This could also be another macro
+    var arg = args.get(expr.identifierChain.identifier.name);
+    if (arg == null) {
+      throw new IllegalStateException("The parser should already have checked that.");
+    } else if (arg instanceof Identifier id) {
+      return id;
+    }
+
+    return ((Expr) arg).accept(this);
+  }
+
+  @Override
+  public Node visit(MacroInstanceExpr expr) {
     // FIXME: This could also be another macro
     var arg = args.get(expr.identifier.name);
     if (arg == null) {
@@ -227,7 +240,7 @@ class MacroExpander
   }
 
   private Identifier resolvePlaceholderOrIdentifier(Node n) {
-    if (n instanceof PlaceHolderExpr p) {
+    if (n instanceof PlaceholderExpr p) {
       return (Identifier) p.accept(this);
     }
     return (Identifier) n;

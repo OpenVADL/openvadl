@@ -156,7 +156,13 @@ public class AstDumper implements DefinitionVisitor<Void>, ExprVisitor<Void> {
   }
 
   @Override
-  public Void visit(PlaceHolderExpr expr) {
+  public Void visit(PlaceholderExpr expr) {
+    dumpNode(expr);
+    return null;
+  }
+
+  @Override
+  public Void visit(MacroInstanceExpr expr) {
     dumpNode(expr);
     return null;
   }

@@ -34,7 +34,12 @@ class Ungrouper implements ExprVisitor<Expr> {
   }
 
   @Override
-  public Expr visit(PlaceHolderExpr expr) {
+  public Expr visit(PlaceholderExpr expr) {
+    return expr;
+  }
+
+  @Override
+  public Expr visit(MacroInstanceExpr expr) {
     return expr;
   }
 
