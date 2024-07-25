@@ -1,0 +1,30 @@
+// SPDX-FileCopyrightText : © 2024 TU Wien <vadl@tuwien.ac.at>
+// SPDX-License-Identifier: Apache-2.0
+
+// Basic test file to check if approval tests are working. Will be replaced by actual "mini.vadl"
+
+instruction set architecture RV3264I = {
+
+  model ArchSize() : Id = {Arch32}        // invoke vadl -m "ArchSize=Arch64" for 64 bit arch
+
+  constant Arch32 = 32                    // 32 bit architecture
+
+  constant MLen   = $ArchSize()           // MLen = 32 or 64 depending on ArchSize
+
+  [X(0) = 0]                              // register with index 0 always is 0
+  register file    X : Bits<5>   -> Bits<MLen>    // integer register file with 32 registers of 32 bits
+
+  format Rtype : Bits<32> =                   // Rtype register 3 operand instruction format
+    { funct7 : Bits<7>                      // [31..25] 7 bit function code
+    , rs2    : Bits<5>                      // [24..20] 2nd source register index / shamt
+    , rs1    : Bits<5>                      // [19..15] 1st source register index
+    , funct3 : Bits<3>                      // [14..12] 3 bit function code
+    , rd     : Bits<5>                      // [11..7]  destination register index
+    , opcode : Bits<7>                      // [6..0]   7 bit operation code
+    }
+
+  instruction ADD : Rtype = {
+      X(rd) := X(rs1) + X(rs2)
+  }
+}
+

@@ -20,6 +20,7 @@ import vadl.types.UIntType;
 
 
 COMPILER vadl
+    java.net.URI sourceFile = SourceLocation.INVALID_SOURCE_LOCATION.uri();
     boolean insideMacro = false;
     boolean insideAnnotation = false;
     Ast ast = new Ast();
@@ -31,7 +32,7 @@ COMPILER vadl
     */
     SourceLocation locationFromToken(Token token) {
         return new SourceLocation(
-            SourceLocation.INVALID_SOURCE_LOCATION.uri(),
+            sourceFile,
             new SourceLocation.Position(token.line, token.col),
             new SourceLocation.Position(token.line, token.col + t.val.length()));
     }
