@@ -137,8 +137,8 @@ public class BuiltInCall extends AbstractFunctionCallNode {
           var c1 = (ConstantNode) o1;             // is statically known
           var c2 = (ConstantNode) o2;
 
-          if (c1.constant() instanceof Constant.Value &&
-              c2.constant() instanceof Constant.Value) {
+          if (c1.constant() instanceof Constant.Value
+              && c2.constant() instanceof Constant.Value) {
             return ((Constant.Value) c1.constant()).value()
                 .compareTo(((Constant.Value) c2.constant()).value());
           }
