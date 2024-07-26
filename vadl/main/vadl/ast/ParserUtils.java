@@ -14,7 +14,7 @@ class ParserUtils {
   static boolean[] BIN_OPS_EXCEPT_IN;
 
   static {
-    BIN_OPS = new boolean[Parser.maxT];
+    BIN_OPS = new boolean[Parser.maxT + 1];
     BIN_OPS[Parser._SYM_LOGOR] = true;
     BIN_OPS[Parser._SYM_LOGAND] = true;
     BIN_OPS[Parser._SYM_BINOR] = true;
@@ -47,7 +47,7 @@ class ParserUtils {
 
   /**
    * If the given expression is a binary expression and the parser is not currently parsing a model,
-   * it will reorder the expression's operand according to {@link BinaryExpr#reorder(BinaryExpr)}
+   * it will reorder the expression's operand according to {@link BinaryExpr#reorder(BinaryExpr)}.
    */
   static Expr reorderBinary(Parser parser, Expr expr) {
     // Only if not inside model parsing.
@@ -97,7 +97,8 @@ class ParserUtils {
       return unexpanded;
     }
 
-    // The macro itself was invalid but an error for it was already issued so we silently abort the expansion here.
+    // The macro itself was invalid but an error for it was already issued,
+    // so we silently abort the expansion here.
     if (macro.returnType() == BasicSyntaxType.Invalid()) {
       return unexpanded;
     }
@@ -121,8 +122,8 @@ class ParserUtils {
 
         if (!argType.isSubTypeOf(param.type())) {
           parser.errors.SemErr(parser.t.line, parser.t.col,
-              "The macro's `%s` parameter `%s` expects a `%s` but the argument provided is of type `%s`.".formatted(
-                  identifier.name, param.name().name, param.type(), argType));
+              ("The macro's `%s` parameter `%s` expects a `%s` but the argument provided is of type"
+                  + " `%s`.").formatted(identifier.name, param.name().name, param.type(), argType));
           hasError = true;
         }
         argMap.put(param.name().name, arg);
