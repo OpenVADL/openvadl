@@ -104,7 +104,7 @@ public class EncodingCodeGeneratorVerificationTest extends DockerExecutionTest {
                     print("failed to prove")
                     exit(1)
                     
-            prove(f_z == f_z)
+            prove(x == f_z)
             """, fieldAccess.fieldRef().bitSlice().bitSize(),
         generatedDecodeFunctionCode,
         generatedEncodeWithDecodeFunctionCode);

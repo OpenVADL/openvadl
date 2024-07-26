@@ -2,6 +2,7 @@ package vadl.lcb.codegen;
 
 import java.io.StringWriter;
 import vadl.types.BitsType;
+import vadl.types.BuiltInTable;
 import vadl.types.SIntType;
 import vadl.types.UIntType;
 import vadl.viam.Constant;
@@ -70,12 +71,21 @@ public class Z3EncodingCodeGeneratorVisitor implements GraphNodeVisitor {
 
   @Override
   public void visit(BuiltInCall node) {
-    for (int i = 0; i < node.arguments().size(); i++) {
-      visit(node.arguments().get(i));
+    if (node.builtIn() == BuiltInTable.NEG) {
+      writer.write("(");
+      writer.write("-1 * ");
+      visit(node.arguments().get(0));
+      writer.write(")");
+    } else {
+      node.ensure(node.arguments().size() > 1,
+          "This method only works for more than 1 arguments");
+      for (int i = 0; i < node.arguments().size(); i++) {
+        visit(node.arguments().get(i));
 
-      // The last argument should not emit an operand.
-      if (i < node.arguments().size() - 1) {
-        writer.write(" " + node.builtIn().operator() + " ");
+        // The last argument should not emit an operand.
+        if (i < node.arguments().size() - 1) {
+          writer.write(" " + node.builtIn().operator() + " ");
+        }
       }
     }
   }

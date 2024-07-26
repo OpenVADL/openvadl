@@ -93,18 +93,14 @@ public class ArithmeticImmediateStrategy implements EncodingGenerationStrategy {
             new BuiltInMatcher(BuiltInTable.NEG, List.of(new FieldRefNodeMatcher()))
         )));
 
-    // We always create a negated parameter because the equation has always f(x) on the LHS.
-    // We also immediately cast the func parameter to the same size as the field.
     var fieldRefBits = (BitsType) fieldRef.type();
-    var negated =
-        new BuiltInCall(BuiltInTable.NEG, new NodeList<>(List.of(new FuncParamNode(
-            parameter
-        ))), parameter.type());
-    copy.replaceNode(fieldRef, negated);
 
     // The else branch is not required because the field is positive on the LHS.
     // Only when the field is subtracted on the LHS, we need to rewrite the equation.
     if (hasFieldSubtractionOnRHS.isEmpty()) {
+      var funcParam = new FuncParamNode(parameter);
+      copy.replaceNode(fieldRef, funcParam);
+
       // This case is more complicated because the LHS has f(x) - field = XXX
       // If we subtract the f(x) then: - field = XXX is left
       // Which means that we have to invert every operand.
@@ -133,6 +129,14 @@ public class ArithmeticImmediateStrategy implements EncodingGenerationStrategy {
           return to;
         }
       });
+    } else {
+      var negated =
+          new BuiltInCall(BuiltInTable.NEG, new NodeList<>(List.of(new FuncParamNode(
+              parameter
+          ))), parameter.type());
+      copy.replaceNode(fieldRef, negated);
+
+
     }
 
     // At the end of the encoding function, the type must be exactly as the field type
