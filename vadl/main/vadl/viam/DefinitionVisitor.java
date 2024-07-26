@@ -62,6 +62,7 @@ public interface DefinitionVisitor {
     @Override
     public void visit(InstructionSetArchitecture instructionSetArchitecture) {
       beforeTraversal(instructionSetArchitecture);
+      // do not visit PC as it is included as register in registers()
       instructionSetArchitecture
           .formats()
           .forEach(e -> e.accept(this));
