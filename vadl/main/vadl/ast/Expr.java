@@ -63,6 +63,7 @@ class Operator {
   private static final int precShift = precComparison + 1;
   private static final int precTerm = precShift + 1;
   private static final int precFactor = precTerm + 1;
+  private static final int precIn = precFactor + 1;
 
   private static final Operator opLogicalOr = new Operator("||", precLogicalOr);
   private static final Operator opLogicalAnd = new Operator("&&", precLogicalAnd);
@@ -84,6 +85,8 @@ class Operator {
   private static final Operator opMultiply = new Operator("*", precFactor);
   private static final Operator opDivide = new Operator("/", precFactor);
   private static final Operator opModulo = new Operator("%", precFactor);
+  private static final Operator opIn = new Operator("in", precIn);
+  private static final Operator opNotIn = new Operator("!in", precIn);
 
   static Operator LogicalOr() {
     return opLogicalOr;
@@ -164,6 +167,14 @@ class Operator {
 
   static Operator Modulo() {
     return opModulo;
+  }
+
+  static Operator In() {
+    return opIn;
+  }
+
+  static Operator NotIn() {
+    return opNotIn;
   }
 }
 

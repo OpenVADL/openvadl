@@ -14,7 +14,11 @@ class Ungrouper implements ExprVisitor<Expr> {
   @Override
   public Expr visit(BinaryExpr expr) {
     expr.left = expr.left.accept(this);
-    expr.right = expr.right.accept(this);
+    if (expr.right != null) {
+      // Should never happen in a syntactically correct program.
+      // In an expression like "3 > =", the parser will throw an error only after "ungroup"  is run
+      expr.right = expr.right.accept(this);
+    }
     return expr;
   }
 

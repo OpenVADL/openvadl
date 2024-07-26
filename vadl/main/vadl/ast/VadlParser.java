@@ -18,6 +18,11 @@ import vadl.utils.SourceLocation;
  */
 public class VadlParser {
 
+  /**
+   * Parses the VADL source program at the specified path into an AST.
+   * Works just like {@link VadlParser#parse(String)},
+   * except errors will have the proper file locations set.
+   */
   public static Ast parse(Path path) throws IOException {
     var scanner = new Scanner(Files.newInputStream(path));
     var parser = new Parser(scanner);
