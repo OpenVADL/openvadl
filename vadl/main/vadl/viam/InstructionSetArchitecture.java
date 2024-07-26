@@ -18,7 +18,7 @@ public class InstructionSetArchitecture extends Definition {
   // The pc of the ISA. This field does not "own" the register
   // but only references it. The pc register is "owned" by the `registers` field.
   @Nullable
-  private final Register.Index pc;
+  private final Register.Counter pc;
 
   private final List<Format> formats;
   private final List<Memory> memories;
@@ -44,7 +44,7 @@ public class InstructionSetArchitecture extends Definition {
                                     List<PseudoInstruction> pseudoInstructions,
                                     List<Register> registers,
                                     List<RegisterFile> registerFiles,
-                                    @Nullable Register.Index pc,
+                                    @Nullable Register.Counter pc,
                                     List<Memory> memories
   ) {
     super(identifier);
@@ -75,8 +75,19 @@ public class InstructionSetArchitecture extends Definition {
   }
 
   @Nullable
-  public Register.Index pc() {
+  public Register.Counter pc() {
     return pc;
+  }
+
+  /**
+   * Get all group counters in this ISA.
+   */
+  public List<Register.Counter> groupCounters() {
+    return registers().stream()
+        .filter(Register.Counter.class::isInstance)
+        .map(Register.Counter.class::cast)
+        .filter(e -> e != pc)
+        .toList();
   }
 
   /**

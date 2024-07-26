@@ -117,13 +117,13 @@ public class Register extends Resource {
   }
 
   /**
-   * The index register with its {@link Position} definition. E.g. the program counter
-   * and the group counter definitions are both {@link Index} definitions.
+   * The counter register with its {@link Position} definition. E.g. the program counter
+   * and the group counter definitions are both {@link Counter} definitions.
    */
-  public static class Index extends Register {
+  public static class Counter extends Register {
 
     /**
-     * The position of the index.
+     * The position of the counter.
      *
      * <p>{@code CURRENT} defines the counter to point to the start of the currently defined
      * instruction (group). When no annotation is given this is the default behavior.
@@ -150,7 +150,7 @@ public class Register extends Resource {
      * @param resultType the result type of the register
      * @param position   program pointer behavior of the PC
      */
-    public Index(Identifier identifier, DataType resultType, Position position) {
+    public Counter(Identifier identifier, DataType resultType, Position position) {
       super(identifier, resultType, AccessKind.PARTIAL, AccessKind.PARTIAL, null,
           new Register[] {});
       this.position = position;

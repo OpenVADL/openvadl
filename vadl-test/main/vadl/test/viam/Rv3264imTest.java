@@ -3,7 +3,6 @@ package vadl.test.viam;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static vadl.test.TestUtils.findDefinitionByNameIn;
 
-import java.util.stream.Stream;
 import org.junit.jupiter.api.Test;
 import vadl.test.AbstractTest;
 import vadl.viam.InstructionSetArchitecture;
@@ -18,7 +17,7 @@ public class Rv3264imTest extends AbstractTest {
 
     // Correct program counter
     {
-      var pc = findDefinitionByNameIn("RV3264I.PC", rv3264i, Register.Index.class);
+      var pc = findDefinitionByNameIn("RV3264I.PC", rv3264i, Register.Counter.class);
       assertEquals(pc, rv3264i.pc());
     }
 
