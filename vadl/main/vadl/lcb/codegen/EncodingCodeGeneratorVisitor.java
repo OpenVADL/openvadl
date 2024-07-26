@@ -89,15 +89,19 @@ public class EncodingCodeGeneratorVisitor implements OopGraphNodeVisitor {
 
   @Override
   public void visit(UpcastedTypeCastNode upcastedTypeCastNode) {
-    writer.write("((" + getCppTypeNameByVadlType(upcastedTypeCastNode.castType()) + ") ");
+    var castType = upcastedTypeCastNode.castType();
+    var originalType = upcastedTypeCastNode.originalType();
+    writer.write("((" + getCppTypeNameByVadlType(castType) + ") ");
     visit(upcastedTypeCastNode.value());
-    if (upcastedTypeCastNode.originalType() instanceof BitsType originalType) {
+
+    upcastedTypeCastNode.ensure(originalType instanceof BitsType ||
+        originalType instanceof BoolType, "Type must be bits or bool");
+
+    if (originalType instanceof BitsType cast) {
       writer.write(
-          ") & " + generateBitmask(originalType.bitWidth()));
+          ") & " + generateBitmask(cast.bitWidth()));
     } else if (upcastedTypeCastNode.originalType() instanceof BoolType) {
       writer.write(") & 1");
-    } else {
-      throw new ViamError("Cannot generate bitmask for unsupported type");
     }
   }
 
