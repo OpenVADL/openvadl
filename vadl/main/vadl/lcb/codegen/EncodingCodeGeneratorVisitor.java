@@ -94,8 +94,8 @@ public class EncodingCodeGeneratorVisitor implements OopGraphNodeVisitor {
     writer.write("((" + getCppTypeNameByVadlType(castType) + ") ");
     visit(upcastedTypeCastNode.value());
 
-    upcastedTypeCastNode.ensure(originalType instanceof BitsType ||
-        originalType instanceof BoolType, "Type must be bits or bool");
+    upcastedTypeCastNode.ensure(originalType instanceof BitsType
+        || originalType instanceof BoolType, "Type must be bits or bool");
 
     if (originalType instanceof BitsType cast) {
       writer.write(
