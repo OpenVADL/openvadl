@@ -154,7 +154,9 @@ public abstract class Constant {
      */
     public Constant.Value castTo(DataType type) {
       ensure(this.type().canBeCastTo(type), "constant cannot be cast to %s", type);
-      return Value.of(value, type);
+      var truncatedValue = value
+          .and(mask(type.bitWidth(), 0));
+      return Value.of(truncatedValue, type);
     }
 
     /**

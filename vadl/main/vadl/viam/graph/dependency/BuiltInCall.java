@@ -1,15 +1,13 @@
 package vadl.viam.graph.dependency;
 
-import java.math.BigInteger;
 import java.util.List;
 import java.util.Optional;
-import java.util.function.BiFunction;
-import org.jetbrains.annotations.NotNull;
 import vadl.javaannotations.viam.DataValue;
 import vadl.types.BuiltInTable;
 import vadl.types.BuiltInTable.BuiltIn;
 import vadl.types.Type;
 import vadl.viam.Constant;
+import vadl.viam.graph.Canonicalizable;
 import vadl.viam.graph.GraphNodeVisitor;
 import vadl.viam.graph.Node;
 import vadl.viam.graph.NodeList;
@@ -21,7 +19,7 @@ import vadl.viam.graph.NodeList;
  * @see vadl.types.BuiltInTable
  * @see AbstractFunctionCallNode
  */
-public class BuiltInCall extends AbstractFunctionCallNode {
+public class BuiltInCall extends AbstractFunctionCallNode implements Canonicalizable {
 
   @DataValue
   protected BuiltIn builtIn;
@@ -29,24 +27,6 @@ public class BuiltInCall extends AbstractFunctionCallNode {
   public BuiltInCall(BuiltIn builtIn, NodeList<ExpressionNode> args, Type type) {
     super(args, type);
     this.builtIn = builtIn;
-  }
-
-  @Override
-  protected void collectData(List<Object> collection) {
-    super.collectData(collection);
-    collection.add(builtIn);
-  }
-
-  @Override
-  public Node copy() {
-    return new BuiltInCall(builtIn,
-        new NodeList<>(this.arguments().stream().map(x -> (ExpressionNode) x.copy()).toList()),
-        this.type());
-  }
-
-  @Override
-  public Node shallowCopy() {
-    return new BuiltInCall(builtIn, args, type());
   }
 
   /**
@@ -63,19 +43,10 @@ public class BuiltInCall extends AbstractFunctionCallNode {
     return this.builtIn;
   }
 
-  /**
-   * Checks whether all the inputs of the node are constant.
-   *
-   * @return {@code true} if all the inputs are {@link ConstantNode} and {@code false}
-   *     if any is not {@link ConstantNode}.
-   */
-  private boolean hasConstantInputs() {
-    return inputs().allMatch(x -> x instanceof ConstantNode);
-  }
 
   @Override
   public Optional<Node> normalize() {
-    if (!hasConstantInputs()) {
+    if (!hasConstantArgs()) {
       return Optional.empty();
     }
 
@@ -84,28 +55,6 @@ public class BuiltInCall extends AbstractFunctionCallNode {
         .toList();
 
     return builtIn.compute(args).map(ConstantNode::new);
-  }
-
-  @NotNull
-  private Optional<Node> reduce(BiFunction<BigInteger, BigInteger, BigInteger> function) {
-    ensure(this.arguments().size() == 2, "Expecting only two inputs");
-    // Cast is safe because already checked that is constant.
-    var x = (Constant.Value) ((ConstantNode) this.arguments().get(0)).constant();
-    var y = (Constant.Value) ((ConstantNode) this.arguments().get(1)).constant();
-    ensure(x.type().equals(y.type()), "Types must match");
-    return Optional.of(
-        new ConstantNode(Constant.Value.of(function.apply(x.value(), y.value()), x.type())));
-  }
-
-  @NotNull
-  private Optional<Node> reduceWithInt(BiFunction<BigInteger, Integer, BigInteger> function) {
-    ensure(this.arguments().size() == 2, "Expecting only two inputs");
-    // Cast is safe because already checked that is constant.
-    var x = (Constant.Value) ((ConstantNode) this.arguments().get(0)).constant();
-    var y = (Constant.Value) ((ConstantNode) this.arguments().get(1)).constant();
-    return Optional.of(
-        new ConstantNode(
-            Constant.Value.of(function.apply(x.value(), y.value().intValue()), x.type())));
   }
 
   @Override
@@ -141,8 +90,56 @@ public class BuiltInCall extends AbstractFunctionCallNode {
     }
   }
 
+
+  @Override
+  public Node canonical() {
+    if (hasConstantArgs()) {
+      var args = this.arguments().stream()
+          .map(x -> ((ConstantNode) x).constant())
+          .toList();
+
+      return builtIn
+          .compute(args)
+          .map(e -> (Node) new ConstantNode(e))
+          .orElse(this);
+    }
+
+    if (args.size() == 2) {
+      // binary operation
+
+      if (isCommutative() && args.get(0) instanceof ConstantNode) {
+        // place constant node on the right side
+        var copy = (BuiltInCall) copy();
+        //noinspection ComparatorMethodParameterNotUsed
+        copy.arguments().sort((a, b) -> 1);
+        return copy;
+      }
+
+    }
+
+    return this;
+  }
+
   @Override
   public boolean isCommutative() {
     return BuiltInTable.commutative.contains(this.builtIn);
+  }
+
+  @Override
+  public Node copy() {
+    return new BuiltInCall(builtIn,
+        new NodeList<>(this.arguments().stream().map(x -> (ExpressionNode) x.copy()).toList()),
+        this.type());
+  }
+
+  @Override
+  public Node shallowCopy() {
+    return new BuiltInCall(builtIn, args, type());
+  }
+
+  @Override
+  protected void collectData(List<Object> collection) {
+    super.collectData(collection);
+    collection.add(builtIn);
   }
 }

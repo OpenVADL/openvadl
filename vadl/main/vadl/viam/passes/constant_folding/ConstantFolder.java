@@ -35,7 +35,7 @@ public class ConstantFolder {
         var oldNode = pair.oldNode();
         var newNode = pair.newNode();
 
-        graph.replaceNode(oldNode, newNode);
+        oldNode.replaceAndDelete(newNode);
         hasChanged = true;
       }
     } while (hasChanged);

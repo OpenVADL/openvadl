@@ -1,6 +1,7 @@
 package vadl.viam.graph.dependency;
 
 import vadl.types.Type;
+import vadl.viam.Constant;
 import vadl.viam.graph.GraphNodeVisitor;
 
 /**
@@ -24,6 +25,10 @@ public abstract class ExpressionNode extends DependencyNode {
 
   public void setType(Type type) {
     this.type = type;
+  }
+
+  public boolean isConstant() {
+    return this instanceof ConstantNode;
   }
 
   @Override
