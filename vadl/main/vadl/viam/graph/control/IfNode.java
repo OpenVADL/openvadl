@@ -45,6 +45,29 @@ public class IfNode extends ControlSplitNode {
     this.falseBranch = falseBranch;
   }
 
+
+  @Override
+  public Node copy() {
+    return new IfNode((ExpressionNode) condition.copy(), trueBranch.copy(), falseBranch.copy());
+  }
+
+  @Override
+  public void canonicalize() {
+    this.condition.canonicalize();
+    this.trueBranch.canonicalize();
+    this.falseBranch.canonicalize();
+  }
+
+  @Override
+  public Node shallowCopy() {
+    return new IfNode(condition, trueBranch, falseBranch);
+  }
+
+  @Override
+  public void accept(GraphNodeVisitor visitor) {
+    visitor.visit(this);
+  }
+
   @Override
   public String toString() {
     return "%s(t: %s, f: %s)".formatted(super.toString(), trueBranch.id, falseBranch.id);
@@ -70,24 +93,9 @@ public class IfNode extends ControlSplitNode {
   }
 
   @Override
-  public Node copy() {
-    return new IfNode((ExpressionNode) condition.copy(), trueBranch.copy(), falseBranch.copy());
-  }
-
-  @Override
-  public void canonicalize() {
-    this.condition.canonicalize();
-    this.trueBranch.canonicalize();
-    this.falseBranch.canonicalize();
-  }
-
-  @Override
-  public Node shallowCopy() {
-    return new IfNode(condition, trueBranch, falseBranch);
-  }
-
-  @Override
-  public void accept(GraphNodeVisitor visitor) {
-    visitor.visit(this);
+  protected void applyOnSuccessorsUnsafe(GraphVisitor.Applier<Node> visitor) {
+    super.applyOnSuccessorsUnsafe(visitor);
+    trueBranch = visitor.apply(this, trueBranch);
+    falseBranch = visitor.apply(this, falseBranch);
   }
 }
