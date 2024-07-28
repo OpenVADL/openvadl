@@ -146,6 +146,18 @@ public abstract class Constant {
     }
 
     /**
+     * Casts the constant value to the specified data type.
+     *
+     * @param type the data type to cast the value to
+     * @return a new Constant.Value object representing the casted value
+     * @throws ViamError if the constant cannot be cast to the specified data type
+     */
+    public Constant.Value castTo(DataType type) {
+      ensure(this.type().canBeCastTo(type), "constant cannot be cast to %s", type);
+      return Value.of(value, type);
+    }
+
+    /**
      * Returns the addition of this and other together with the status.
      *
      * @return a tuple constant of form {@code ( result, ( z, c, o, n ) )}
@@ -233,7 +245,7 @@ public abstract class Constant {
      * Returns the logical negation of the current value object.
      *
      * @return the negation value of the current value object
-     * @throws IllegalArgumentException if the type of the value object is not BoolType.
+     * @throws ViamError if the type of the value object is not BoolType.
      */
     public Constant.Value not() {
       ensure(type() instanceof BoolType, "not() currently only available for bool type");
@@ -720,8 +732,8 @@ public abstract class Constant {
      * @param typeOfConstantClass The class type to cast the constant value to.
      * @param <T>                 The generic type parameter representing the class type.
      * @return The constant value at the specified index, casted to the given type.
-     * @throws IllegalArgumentException if the constant value at the specified
-     *                                  index is not of the given type.
+     * @throws ViamError if the constant value at the specified
+     *                   index is not of the given type.
      */
     public <T extends Constant> T get(int index, Class<T> typeOfConstantClass) {
       var val = values.get(index);
