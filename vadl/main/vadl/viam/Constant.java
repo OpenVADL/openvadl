@@ -65,6 +65,11 @@ public abstract class Constant {
 
   /**
    * Represents a constant value with a specific type.
+   *
+   * <p>It stores values of type bits and bool.
+   * The value itself is represented as two's complement, thus BigInteger value
+   * only a data container, not the actual number.
+   * The {@link #integer()} returns the integer value depending on the constant's type.
    */
   public static class Value extends Constant {
     private final BigInteger value;
@@ -114,6 +119,14 @@ public abstract class Constant {
       return value;
     }
 
+    /**
+     * Returns the integer value represented by this value object.
+     * If the type of the value is BoolType, the underlying BigInteger value is returned.
+     * Otherwise, the two's complement representation of the BigInteger value is converted
+     * to its original value based on the specified BitsType.
+     *
+     * @return the integer value represented by this value object
+     */
     public BigInteger integer() {
       if (type() instanceof BoolType) {
         return this.value;
@@ -145,7 +158,6 @@ public abstract class Constant {
       var truncated = result.and(mask(type().bitWidth(), 0));
 
       var isZero = truncated.equals(BigInteger.ZERO);
-
       // check msb
       var isNegative = result.testBit(type().bitWidth() - 1);
 
@@ -154,10 +166,6 @@ public abstract class Constant {
       // can be ignored for signed interpretation of result.
       // https://teaching.idallen.com/dat2343/10f/notes/040_overflow.txt
       var isCarry = result.bitLength() > type().bitWidth();
-
-      System.out.println(this.binary());
-      System.out.println(other.binary());
-      System.out.println("0b" + result.toString(2));
 
       // overflow if both operands have same sign and differ from result sign.
       // overflow is ignored for unsigned interpretation of result.
@@ -171,6 +179,16 @@ public abstract class Constant {
       );
     }
 
+    /**
+     * Subtracts the given value from this value.
+     *
+     * <p>It uses the {@link #add(Value)} function by negating the second operand.
+     * Therefore the carry flag must be inverse and the overflow must be specially
+     * handled if the second operand is the minimal signed value.</p>
+     *
+     * @param other the value to subtract from this value
+     * @return a tuple constant representing the result of the subtraction
+     */
     public Constant.Tuple subtract(Constant.Value other) {
       ensure(type() instanceof BitsType, "Invalid type for subtraction");
       ensure(type().equals(other.type()), "Types don't match, %s vs %s", type(), other.type());
@@ -204,15 +222,39 @@ public abstract class Constant {
       return new Constant.Tuple(result.get(0), status);
     }
 
+    /**
+     * Checks if the sign bit of the value is set.
+     */
     public boolean isSignBit() {
       return value.testBit(type().bitWidth() - 1);
     }
 
+    /**
+     * Returns the logical negation of the current value object.
+     *
+     * @return the negation value of the current value object
+     * @throws IllegalArgumentException if the type of the value object is not BoolType.
+     */
     public Constant.Value not() {
       ensure(type() instanceof BoolType, "not() currently only available for bool type");
       return Constant.Value.of(!this.bool());
     }
 
+    /**
+     * Negates the value represented by this Constant.Value object.
+     *
+     * <p>
+     * This method calculates the negation of the value by inverting all bits, adding one to it,
+     * and then truncating the result based on the number of bits specified by the DataType.
+     * The resulting negated value is returned as a new Constant.Value object.
+     * </p>
+     *
+     * <p><b>Note: </b>If the value is the minimal possible signed number, this will truncate the
+     * result and lead
+     * to a wrong value.
+     *
+     * @return a new Constant.Value object representing the negated value
+     */
     public Constant.Value negate() {
       var mask = mask(type().bitWidth(), 0);
       var negated = value
@@ -312,6 +354,7 @@ public abstract class Constant {
           break;
         case 16:
           padFactor = 4;
+          break;
         default:
           return "Invalid radix %s".formatted(radix);
       }
@@ -604,15 +647,30 @@ public abstract class Constant {
     }
   }
 
+  /**
+   * Represents a tuple constant containing other constants.
+   */
   public static class Tuple extends Constant {
     private final List<Constant> values;
 
 
+    /**
+     * Creates a Tuple constant with the given values and type.
+     *
+     * @param values The list of Constant values contained in the Tuple.
+     * @param type   The TupleType of the Tuple constant.
+     */
     public Tuple(List<Constant> values, TupleType type) {
       super(type);
       this.values = values;
     }
 
+    /**
+     * Creates a Tuple constant with the given values.
+     * The type of the tuple gets automatically inferred.
+     *
+     * @param values The list of Constant values contained in the Tuple.
+     */
     public Tuple(List<Constant> values) {
       this(values,
           TupleType.tuple(
@@ -623,6 +681,9 @@ public abstract class Constant {
       );
     }
 
+    /**
+     * Creates a Tuple constant with the given values.
+     */
     public Tuple(Constant... values) {
       this(List.of(values));
     }
@@ -642,13 +703,30 @@ public abstract class Constant {
       return values;
     }
 
+    /**
+     * Retrieves the Constant value at the specified index.
+     *
+     * @param index The index of the Constant value to retrieve.
+     * @return The Constant value at the specified index.
+     */
     public Constant get(int index) {
       return values.get(index);
     }
 
-    public <T extends Constant> T get(int index, Class<T> cType) {
+    /**
+     * Retrieves the constant value at the specified index and casts it to the given type.
+     *
+     * @param index               The index of the constant value to retrieve.
+     * @param typeOfConstantClass The class type to cast the constant value to.
+     * @param <T>                 The generic type parameter representing the class type.
+     * @return The constant value at the specified index, casted to the given type.
+     * @throws IllegalArgumentException if the constant value at the specified
+     *                                  index is not of the given type.
+     */
+    public <T extends Constant> T get(int index, Class<T> typeOfConstantClass) {
       var val = values.get(index);
-      ensure(cType.isInstance(val), "Expected constant of type %s but got %s", cType, val);
+      ensure(typeOfConstantClass.isInstance(val), "Expected constant of type %s but got %s",
+          typeOfConstantClass, val);
       //noinspection unchecked
       return (T) val;
     }
@@ -689,6 +767,15 @@ public abstract class Constant {
 
   // HELPER FUNCTIONS
 
+  /**
+   * Ensure that a condition is true, otherwise throw a ViamError with a formatted error message.
+   * It adds the constant as context in case of an error.
+   *
+   * @param condition the condition to check
+   * @param fmt       the format string for the error message
+   * @param args      the arguments to format the error message
+   * @throws ViamError if the condition is false
+   */
   @Contract("false, _, _ -> fail")
   @FormatMethod
   public void ensure(boolean condition, String fmt, Object... args) {

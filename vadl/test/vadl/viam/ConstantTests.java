@@ -4,9 +4,6 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
-import static vadl.utils.BigIntUtils.mask;
-import static vadl.utils.BigIntUtils.twosComplement;
-import static vadl.utils.BigIntUtils.unsigned;
 
 import java.math.BigInteger;
 import java.util.List;
@@ -238,12 +235,12 @@ public class ConstantTests {
     return Constant.Value.of(val, Type.signedInt(width));
   }
 
-  private static Constant.Value valU(int val, int width) {
-    return Constant.Value.of(val, Type.unsignedInt(width));
-  }
-
   private static Constant.Value valS(long val, int width) {
     return Constant.Value.of(val, Type.signedInt(width));
+  }
+
+  private static Constant.Value valU(int val, int width) {
+    return Constant.Value.of(val, Type.unsignedInt(width));
   }
 
   private static Constant.Value valU(long val, int width) {

@@ -84,25 +84,6 @@ public class BuiltInCall extends AbstractFunctionCallNode {
         .toList();
 
     return builtIn.compute(args).map(ConstantNode::new);
-
-
-//    if (hasConstantInputs()) {
-//      if (this.builtIn == BuiltInTable.ADD) {
-//        return reduce(BigInteger::add);
-//      } else if (this.builtIn == BuiltInTable.SUB) {
-//        return reduce(BigInteger::subtract);
-//      } else if (this.builtIn == BuiltInTable.MUL) {
-//        return reduce(BigInteger::multiply);
-//      } else if (this.builtIn == BuiltInTable.MULS) {
-//        return reduce(BigInteger::multiply);
-//      } else if (this.builtIn == BuiltInTable.LSL) {
-//        return reduceWithInt(BigInteger::shiftLeft);
-//      } else if (this.builtIn == BuiltInTable.LSR) {
-//        return reduceWithInt(BigInteger::shiftRight);
-//      }
-//    }
-//
-//    return Optional.empty();
   }
 
   @NotNull

@@ -837,6 +837,7 @@ public class BuiltInTable {
       this.kind = kind;
     }
 
+    @SuppressWarnings("LineLength")
     private static <T extends Constant, R extends Constant> BuiltIn func(String name,
                                                                          @Nullable String operator,
                                                                          RelationType signature,
@@ -872,13 +873,6 @@ public class BuiltInTable {
           (args) -> computeFunction.apply((T) args.get(0), (U) args.get(1)));
     }
 
-    private static <T extends Constant, U extends Constant, R extends Constant> BuiltIn func2(
-        String name, @Nullable String operator,
-        RelationType signature,
-        BiFunction<T, U, R> computeFunction) {
-      return func(name, operator, signature,
-          (args) -> computeFunction.apply((T) args.get(0), (U) args.get(1)));
-    }
 
     private static BuiltIn func(String name, RelationType signature,
                                 @Nullable Function<List<Constant>, Constant> compute) {

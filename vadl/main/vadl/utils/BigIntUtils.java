@@ -1,12 +1,24 @@
 package vadl.utils;
 
 import java.math.BigInteger;
-import vadl.error.VadlException;
 import vadl.types.BitsType;
 import vadl.viam.ViamError;
 
+
+/**
+ * The BigIntUtils class provides utility methods for performing operations
+ * on big integers.
+ */
 public class BigIntUtils {
 
+  /**
+   * Calculates the two's complement of a given value with a specified bit width.
+   *
+   * @param value    The value for which the two's complement is to be calculated.
+   * @param bitWidth The number of bits for the two's complement representation.
+   * @return The two's complement of the given value.
+   * @throws ViamError If the value does not fit in the specified bit width or is out of range.
+   */
   public static BigInteger twosComplement(BigInteger value, int bitWidth) {
     if (value.bitLength() > bitWidth) {
       throw new ViamError(
@@ -38,11 +50,14 @@ public class BigIntUtils {
     return absValue.subtract(BigInteger.ONE).xor(maxUnsigned);
   }
 
-  public static BigInteger onesComplement(BigInteger value, int bitWidth) {
-    var mask = mask(bitWidth, 0);
-    return value.xor(mask);
-  }
-
+  /**
+   * Converts a BigInteger value from two's complement representation
+   * to its original value, based on the provided BitsType.
+   *
+   * @param value The value in two's complement representation.
+   * @param type  The BitsType specifying the bit width and sign of the value.
+   * @return The original value represented by the two's complement.
+   */
   public static BigInteger fromTwosComplement(BigInteger value, BitsType type) {
     var maxUnsigned = BigInteger.ZERO.setBit(type.bitWidth()).subtract(BigInteger.ONE);
     var isSignBit = value.testBit(type.bitWidth() - 1); // check if sign bit active
@@ -55,7 +70,17 @@ public class BigIntUtils {
     return value;
   }
 
-  public static BigInteger setBitsInRange(BigInteger number, int from, int to) {
+  /**
+   * Sets the bits in the specified range in the given BigInteger value.
+   * The order of from and to is not important.
+   * Both boundaries are inclusive.
+   *
+   * @param value The BigInteger value to set the bits in.
+   * @param from  The starting index of the range (inclusive).
+   * @param to    The ending index of the range (inclusive).
+   * @return The BigInteger with the bits set in the specified range.
+   */
+  public static BigInteger setBitsInRange(BigInteger value, int from, int to) {
     var diff = Math.abs((from - to)) + 1;
     var lsb = Math.min(to, from);
 
@@ -63,27 +88,51 @@ public class BigIntUtils {
         .subtract(BigInteger.ONE)
         .shiftLeft(lsb);
 
-    return number.or(mask);
+    return value.or(mask);
   }
 
-  public static BigInteger clearBitsInRange(BigInteger number, int from, int to) {
+  /**
+   * Clears the bits in the specified range of a BigInteger value.
+   * The order of 'from' and 'to' is not important.
+   * Both boundaries are inclusive.
+   *
+   * @param value The BigInteger value to clear the bits in.
+   * @param from  The starting index of the range (inclusive).
+   * @param to    The ending index of the range (inclusive).
+   * @return The BigInteger with the bits cleared in the specified range.
+   */
+  public static BigInteger clearBitsInRange(BigInteger value, int from, int to) {
     var diff = Math.abs((from - to)) + 1;
     var lsb = Math.min(to, from);
 
-    var blackMask = BigInteger.ONE.shiftLeft(number.bitLength())
+    var blackMask = BigInteger.ONE.shiftLeft(value.bitLength())
         .subtract(BigInteger.ONE);
     var whiteMask = BigInteger.ONE.shiftLeft(diff)
         .subtract(BigInteger.ONE)
         .shiftLeft(lsb);
 
     var mask = blackMask.xor(whiteMask);
-    return number.and(mask);
+    return value.and(mask);
   }
 
+  /**
+   * Calculates the mask value for a given length and left-shift value.
+   * This is useful in combination of the {@link BigInteger#and(BigInteger)} method.
+   *
+   * @param len The number of bits in the mask.
+   * @param lsh The number of bits to shift the mask to the left.
+   * @return The calculated mask value.
+   */
   public static BigInteger mask(int len, int lsh) {
     return BigInteger.ONE.shiftLeft(len).subtract(BigInteger.ONE).shiftLeft(lsh);
   }
 
+  /**
+   * Converts a given signed BigInteger value to an unsigned BigInteger value.
+   *
+   * @param value The signed BigInteger value to convert.
+   * @return The corresponding unsigned BigInteger value.
+   */
   public static BigInteger unsigned(BigInteger value) {
     if (value.signum() >= 0) {
       return value;
