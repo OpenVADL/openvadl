@@ -6,6 +6,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.function.Consumer;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 import javax.annotation.Nullable;
@@ -200,6 +201,10 @@ public abstract class Node {
     return usages.size();
   }
 
+  public final boolean hasUsages() {
+    return usageCount() != 0;
+  }
+
 
   /**
    * Applies visitor output on all inputs.
@@ -220,21 +225,77 @@ public abstract class Node {
   }
 
   /**
+   * Applies visitor output on all successors.
+   * This is unsafe, as it may lead to an inconsistent graph, if the predecessors are not
+   * updated accordingly. Use {@link Node#applyOnSucessors(GraphVisitor.Applier)} to
+   * let this be handled automatically.
+   *
+   * <p><b>IMPORTANT</b>:
+   * <li>This must be overridden by every node that has successors
+   * (annotated with {@link vadl.javaannotations.viam.Successor}).</li>
+   * <li>The subclass must call {@code super.applyOnSuccessorsUnsafe(visitor)} before
+   * adding its own inputs!</li>
+   *
+   * @param visitor that produces new value for input.
+   */
+  protected void applyOnSuccessorsUnsafe(GraphVisitor.Applier<Node> visitor) {
+    // subtypes must override default
+  }
+
+
+  /**
    * Applies the visitor's output on each input of this node.
    * If the new input node differs from the old one, this method will automatically handle
    * the usage transfer.
    */
   public final void applyOnInputs(GraphVisitor.Applier<Node> visitor) {
-    applyOnInputsUnsafe((s, input) -> {
-      var newInput = visitor.applyNullable(s, input);
+    applyOnInputsUnsafe((self, oldInput) -> {
+      var newInput = visitor.applyNullable(self, oldInput);
+      if (newInput == oldInput) {
+        // if nothing changes just return newInput
+        return newInput;
+      }
       if (newInput != null) {
-        transferUsageOfThis(input, newInput);
+        // transfer usage of this from the old input to the new input
+        // -> the old input will not have this node as usage anymore
+        // -> the new input will have this node as usage
+        updateUsage(oldInput, newInput);
       } else {
-        if (input != null) {
-          input.removeUsage(this);
+        if (oldInput != null) {
+          // the old input must not have this node as usage
+          oldInput.removeUsage(this);
         }
       }
       return newInput;
+    });
+  }
+
+  /**
+   * Applies the visitor's output on each successor of this node.
+   * If the new successor node differs from the old one, this method will automatically handle
+   * the usage transfer.
+   */
+  public final void applyOnSuccessor(GraphVisitor.Applier<Node> visitor) {
+    applyOnSuccessorsUnsafe((self, oldSucc) -> {
+      // produce new successor
+      var newSucc = visitor.applyNullable(self, oldSucc);
+
+      if (newSucc == oldSucc) {
+        // if the old one remains the same, return it
+        return newSucc;
+      }
+
+      if (newSucc != null) {
+        // set the predecessor of oldSucc to null
+        // and the predecessor of newSucc to this
+        updatePredecessor(oldSucc, newSucc);
+      } else {
+        if (oldSucc != null) {
+          // remove this from being the predecessor
+          oldSucc.setPredecessor(null);
+        }
+      }
+      return newSucc;
     });
   }
 
@@ -275,6 +336,79 @@ public abstract class Node {
     if (graph != null) {
       graph.remove(this);
     }
+    deleteObsoleteChildrenOf(this);
+  }
+
+  /**
+   * Delete all children (inputs and successors) that are not used (no usages and predecessor).
+   *
+   * @param almostDeletedNode
+   */
+  private void deleteObsoleteChildrenOf(Node almostDeletedNode) {
+    Consumer<Node> tryToDelete = (Node i) -> {
+      var usagesOk = i.usages.isEmpty()
+          || (i.usageCount() == 1 && i.usages.get(0) == almostDeletedNode);
+      var predecessorOk = i.predecessor == null || i.predecessor == almostDeletedNode;
+      if (usagesOk && predecessorOk && i.isActiveIn(graph)) {
+        i.safeDelete();
+      }
+    };
+
+    almostDeletedNode.inputs()
+        .forEach(tryToDelete);
+    almostDeletedNode.successors()
+        .forEach(tryToDelete);
+  }
+
+  public void replaceAndDelete(Node replacement) {
+    if (replacement.isUninitialized() && graph != null) {
+      replacement = graph.addWithInputs(replacement);
+    }
+    checkReplaceWith(replacement);
+    replaceAtAllUsages(replacement);
+    replaceAtPredecessor(replacement);
+    this.safeDelete();
+  }
+
+  public void replaceAtAllUsages(Node replacement) {
+    checkReplaceWith(replacement);
+    for (var u : this.usages().toList()) {
+      u.replaceInput(this, replacement);
+    }
+  }
+
+  /**
+   * Sets the replacement as successor of the predecessor of this.
+   *
+   * @param replacement that replaces this node.
+   */
+  public void replaceAtPredecessor(Node replacement) {
+    checkReplaceWith(replacement);
+    if (predecessor != null) {
+      // Replace the successor of predecessor
+      // so predecessors successor will be replacement instead of this
+      predecessor.applyOnSuccessor((pred, succ) -> {
+        if (succ == this) {
+          return replacement;
+        }
+        return succ;
+      });
+      updatePredecessor(this, replacement);
+    }
+  }
+
+
+  /**
+   * Checks if it is valid to replace the node with the given node.
+   *
+   * @param node
+   * @return
+   */
+  private boolean checkReplaceWith(Node node) {
+    ensure(node != this, "cannot replace node with itself");
+    ensure(!isDeleted(), "cannot replace deleted node");
+    ensure(node.isActiveIn(graph), "node to replace must be active in same graph");
+    return true;
   }
 
   /**
@@ -303,7 +437,7 @@ public abstract class Node {
         // to the new node. This is done as asoon as this node gets added to the graph
         oldInput.removeUsage(this);
       } else {
-        transferUsageOfThis(oldInput, newInput);
+        updateUsage(oldInput, newInput);
       }
     }
   }
@@ -328,23 +462,60 @@ public abstract class Node {
   }
 
   /**
-   * Removes this as usage from the {@code from} node and adds this
-   * as usage to the {@code to} node.
+   * Removes {@code this} form usage list of the {@code oldInput} and
+   * adds {@code this} this to the usage list of the {@code newInput}.
    *
-   * @param from node that gets {@code this} removed
-   * @param to   node that gets {@code this} added
+   * <p>Below is the operation effect for the Usage-Relation:
+   * <pre>
+   *  Before:      This Node          |   After:    This Node
+   *                /                 |                     \
+   *               -                  |                      -
+   *            oldInput    newInput  |         oldInput     newInput
+   * </pre>
+   *
+   * @param oldInput will <b>not</b> have {@code this} as a usage after operation completed
+   * @param newInput will have {@code this} as a usage after operation completed
    */
-  public final void transferUsageOfThis(@Nullable Node from, Node to) {
+  protected final void updateUsage(@Nullable Node oldInput, Node newInput) {
     ensure(isActive(), "node must be active on usage transfer");
-    ensure(this.id.isInit() || to.isActiveIn(graph),
-        "cannot transfer usage to inactive node %s", to);
-    if (from == to) {
+    ensure(this.id.isInit() || newInput.isActiveIn(graph),
+        "cannot transfer usage to inactive node %s", newInput);
+    if (oldInput == newInput) {
       return;
     }
-    if (from != null) {
-      from.removeUsage(this);
+    if (oldInput != null) {
+      oldInput.removeUsage(this);
     }
-    to.addUsage(this);
+    newInput.addUsage(this);
+  }
+
+  /**
+   * Sets the predecessor of the {@code oldSucc} to null and
+   * sets the predecessor of {@code newSucc} to {@code this}.
+   *
+   * <p>Below is the operation effect for the Predecessor-Relation:
+   * <pre>
+   *  Before:      This Node          |   After:    This Node
+   *                /                 |                     \
+   *               -                  |                      -
+   *            oldSucc      newSucc  |         oldSucc     newSucc
+   * </pre>
+   *
+   * @param oldSuccessor will <b>not</b> have {@code this} as the predecessor after operation completed
+   * @param newSuccessor will have {@code this} as the predecessor after operation completed
+   */
+  private void updatePredecessor(@Nullable Node oldSuccessor, Node newSuccessor) {
+    ensure(isActive(), "node must be active on predecessor transfer");
+    ensure(newSuccessor.predecessor == null, "newSuccessor already has predecessor set");
+    if (oldSuccessor == newSuccessor) {
+      return;
+    }
+    if (oldSuccessor != null) {
+      ensure(oldSuccessor.predecessor == this,
+          "the oldSuccessor's predecessor should be this, but was %s", oldSuccessor.predecessor);
+      oldSuccessor.setPredecessor(null);
+    }
+    newSuccessor.setPredecessor(this);
   }
 
   /**
@@ -401,7 +572,8 @@ public abstract class Node {
    */
   private void clearInputsUsageOfThis() {
     ensure(isActive(), "node must be active on input clear");
-    inputs().forEach(e -> e.removeUsage(this));
+    inputs().forEach(e -> e.removeUsage(this)
+    );
   }
 
   /**

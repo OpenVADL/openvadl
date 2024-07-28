@@ -18,6 +18,7 @@ import vadl.viam.graph.control.StartNode;
 import vadl.viam.graph.dependency.FuncParamNode;
 import vadl.viam.graph.dependency.ParamNode;
 import vadl.viam.graph.dependency.SideEffectNode;
+import vadl.viam.graph.visualize.DotGraphVisualizer;
 
 /**
  * The VIAM graph represents an execution flow definition
@@ -55,55 +56,8 @@ public class Graph {
    * @param clazz of node type
    * @return iterable of all nodes of type clazz
    */
-  public final <T extends Node> Stream<T> getNodes(Class<T> clazz) {
+  public final <T> Stream<T> getNodes(Class<T> clazz) {
     return getNodes().filter(clazz::isInstance).map(clazz::cast);
-  }
-
-  /**
-   * Replaces the node {@code toReplace} with the given node {@code newNode}.
-   */
-  public <T extends Node> T replaceNode(Node toReplace, T newNode) {
-    var node = this.addWithInputs(newNode);
-
-    // All of toReplace's children are obsolete.
-    // But, we cannot delete them because they might be used by other nodes.
-
-    // First, keep track of the subtree of toReplace.
-    ArrayList<Node> children = new ArrayList<>();
-    toReplace.collectInputs(children);
-    toReplace.collectSuccessors(children);
-
-    // Relevant for data nodes.
-    this.nodes.forEach(x -> x.replaceInput(toReplace, node));
-    toReplace.usages().forEach(x -> x.transferUsageOfThis(toReplace, node));
-
-    // Relevant for control nodes.
-    var pred = toReplace.predecessor();
-    if (pred != null) {
-      node.setPredecessor(pred);
-    }
-
-    // Remove the link from the children to toReplace.
-    toReplace.applyOnInputs(new GraphVisitor.Applier<>() {
-      @Nullable
-      @Override
-      public Node applyNullable(Node from, @Nullable Node to) {
-        if (to != null) {
-          to.removeUsage(from);
-          to.applyOnInputs(this);
-        }
-        return to;
-      }
-    });
-
-    // Remove all nodes which are obsolete
-    children.stream()
-        .filter(x -> x.predecessor() == null && x.usageCount() == 0 && x.successorList().isEmpty())
-        .distinct()
-        .forEach(Node::safeDelete);
-    toReplace.safeDelete();
-
-    return node;
   }
 
   /**
@@ -393,7 +347,7 @@ public class Graph {
       // Update the usages
       newNode.usages().forEach(oldUsage -> {
         var newUsage = cache.get(oldUsage);
-        newNode.transferUsageOfThis(oldUsage, Objects.requireNonNull(newUsage));
+        newNode.updateUsage(oldUsage, Objects.requireNonNull(newUsage));
       });
 
       // Update the inputs
@@ -412,5 +366,46 @@ public class Graph {
 
     return graph;
   }
+
+  public String dotGraph() {
+    return new DotGraphVisualizer()
+        .load(this)
+        .visualize();
+  }
+
+  /**
+   * This canonicalizer determines the canonical form of nodes that are not yet
+   * added to the graph.
+   * This allows constant evaluation and better global value numbering from beginning on,
+   * without a significant performance input.
+   * It traverses all inputs of the root node, but only if the input wasn't added yet.
+   */
+  private static class NewNodesCanonicalizer implements GraphVisitor {
+
+    public Node canonical(Node node) {
+      if (!node.isUninitialized()) {
+        return node;
+      }
+
+      node.visitInputs(this);
+
+      if (node instanceof Canonicalizable) {
+        var res = ((Canonicalizable) node).canonical();
+        node.ensure(res != null, "cannot canonicalize, result is null");
+        return res;
+      }
+      return node;
+    }
+
+    @Nullable
+    @Override
+    public Object visit(Node from, @Nullable Node to) {
+      if (to != null) {
+        canonical(to);
+      }
+      return null;
+    }
+  }
+
 }
 

@@ -88,7 +88,7 @@ public class ArithmeticImmediateStrategy implements EncodingGenerationStrategy {
     var negated = new BuiltInCall(BuiltInTable.NEG, new NodeList<>(List.of(new FuncParamNode(
         parameter
     ))), parameter.type());
-    copy.replaceNode(fieldRef, negated);
+    fieldRef.replaceAndDelete(negated);
 
     // The else branch is not required because the field is positive on the LHS.
     // Only when the field is subtracted on the LHS, we need to rewrite the equation.
