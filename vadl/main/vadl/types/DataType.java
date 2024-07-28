@@ -49,4 +49,8 @@ public abstract class DataType extends Type {
     return false;
   }
 
+  public final boolean isSigned() {
+    return !(this instanceof UIntType);
+  }
+
 }

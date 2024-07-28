@@ -11,8 +11,9 @@ import vadl.viam.graph.dependency.ConstantNode;
 class ConstantValueMatcherTest {
   @Test
   void matches_shouldReturnTrue_whenConstantMatches() {
-    var matcher = new ConstantValueMatcher(new Constant.Value.Value(BigInteger.ONE, DataType.unsignedInt(32)));
-    var node = new ConstantNode(new Constant.Value(BigInteger.ONE, DataType.unsignedInt(32)));
+    var matcher =
+        new ConstantValueMatcher(Constant.Value.of(BigInteger.ONE, DataType.unsignedInt(32)));
+    var node = new ConstantNode(Constant.Value.of(BigInteger.ONE, DataType.unsignedInt(32)));
 
     // When
     var result = matcher.matches(node);
@@ -23,8 +24,9 @@ class ConstantValueMatcherTest {
 
   @Test
   void matches_shouldReturnFalse_whenConstantMismatches() {
-    var matcher = new ConstantValueMatcher(new Constant.Value.Value(BigInteger.ZERO, DataType.unsignedInt(32)));
-    var node = new ConstantNode(new Constant.Value(BigInteger.ONE, DataType.unsignedInt(32)));
+    var matcher = new ConstantValueMatcher(
+        Constant.Value.of(BigInteger.ZERO, DataType.unsignedInt(32)));
+    var node = new ConstantNode(Constant.Value.of(BigInteger.ONE, DataType.unsignedInt(32)));
 
     // When
     var result = matcher.matches(node);
@@ -35,8 +37,9 @@ class ConstantValueMatcherTest {
 
   @Test
   void matches_shouldReturnFalse_whenConstantTypeMismatches() {
-    var matcher = new ConstantValueMatcher(new Constant.Value.Value(BigInteger.ONE, DataType.unsignedInt(31)));
-    var node = new ConstantNode(new Constant.Value(BigInteger.ONE, DataType.unsignedInt(32)));
+    var matcher = new ConstantValueMatcher(
+        Constant.Value.of(BigInteger.ONE, DataType.unsignedInt(31)));
+    var node = new ConstantNode(Constant.Value.of(BigInteger.ONE, DataType.unsignedInt(32)));
 
     // When
     var result = matcher.matches(node);

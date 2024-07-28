@@ -25,7 +25,7 @@ import vadl.viam.graph.NodeList;
 class BuiltInCallTest {
 
   private static final SIntType SIGNED_INT = Type.signedInt(32);
-  private static final ConstantNode constantNode = new ConstantNode(new Constant.Value(
+  private static final ConstantNode constantNode = new ConstantNode(Constant.Value.of(
       BigInteger.ONE, SIGNED_INT)
   );
 
@@ -35,7 +35,7 @@ class BuiltInCallTest {
   }
 
   private static ConstantNode wrapConstant(BigInteger bigInteger) {
-    return new ConstantNode(new Constant.Value(bigInteger, SIGNED_INT));
+    return new ConstantNode(Constant.Value.of(bigInteger, SIGNED_INT));
   }
 
   public static Stream<Arguments> createNormalizeTestCases() {
@@ -87,7 +87,7 @@ class BuiltInCallTest {
   @MethodSource("getCanonicalizableBuiltin")
   void canonicalize_shouldSortConstantLast(BuiltInTable.BuiltIn builtin) {
     var node = new BuiltInCall(builtin, new NodeList<>(
-        new ConstantNode(new Constant.Value(BigInteger.ONE, DataType.unsignedInt(32))),
+        new ConstantNode(Constant.Value.of(BigInteger.ONE, DataType.unsignedInt(32))),
         new FieldRefNode(null, DataType.unsignedInt(32))
     ), Type.unsignedInt(32));
 
@@ -102,8 +102,8 @@ class BuiltInCallTest {
   @MethodSource("getCanonicalizableBuiltin")
   void canonicalize_shouldSortConstantAscending_whenSameType(BuiltInTable.BuiltIn builtin) {
     var node = new BuiltInCall(builtin, new NodeList<>(
-        new ConstantNode(new Constant.Value(BigInteger.ONE, DataType.unsignedInt(32))),
-        new ConstantNode(new Constant.Value(BigInteger.TWO, DataType.unsignedInt(32)))
+        new ConstantNode(Constant.Value.of(BigInteger.ONE, DataType.unsignedInt(32))),
+        new ConstantNode(Constant.Value.of(BigInteger.TWO, DataType.unsignedInt(32)))
     ), Type.unsignedInt(32));
 
     node.canonicalize();
@@ -122,7 +122,7 @@ class BuiltInCallTest {
   void canonicalize_shouldNotSwap_whenWrappedByTypedCastNode(BuiltInTable.BuiltIn builtin) {
     var node = new BuiltInCall(builtin, new NodeList<>(
         new TypeCastNode(
-            new ConstantNode(new Constant.Value(BigInteger.ONE, DataType.unsignedInt(32))),
+            new ConstantNode(Constant.Value.of(BigInteger.ONE, DataType.unsignedInt(32))),
             Type.unsignedInt(32)),
         new FieldRefNode(null, DataType.unsignedInt(32))
     ), Type.unsignedInt(32));
@@ -138,7 +138,7 @@ class BuiltInCallTest {
   @MethodSource("getNotCanonicalizBuiltin")
   void canonicalize_shouldNotSortConstantLast(BuiltInTable.BuiltIn builtin) {
     var node = new BuiltInCall(builtin, new NodeList<>(
-        new ConstantNode(new Constant.Value(BigInteger.ONE, DataType.unsignedInt(32))),
+        new ConstantNode(Constant.Value.of(BigInteger.ONE, DataType.unsignedInt(32))),
         new FieldRefNode(null, DataType.unsignedInt(32))
     ), Type.unsignedInt(32));
 

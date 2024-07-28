@@ -1,5 +1,11 @@
 package vadl.viam;
 
+import static vadl.utils.BigIntUtils.fromTwosComplement;
+import static vadl.utils.BigIntUtils.mask;
+import static vadl.utils.BigIntUtils.twosComplement;
+
+import com.google.errorprone.annotations.FormatMethod;
+import com.google.errorprone.annotations.FormatString;
 import java.math.BigInteger;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -10,9 +16,14 @@ import java.util.Objects;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 import java.util.stream.Stream;
+import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
+import vadl.types.BitsType;
+import vadl.types.BoolType;
 import vadl.types.DataType;
+import vadl.types.TupleType;
 import vadl.types.Type;
+import vadl.utils.BigIntUtils;
 import vadl.utils.StreamUtils;
 
 /**
@@ -58,17 +69,62 @@ public abstract class Constant {
   public static class Value extends Constant {
     private final BigInteger value;
 
-    public Value(BigInteger value, DataType type) {
+    private Value(BigInteger value, DataType type, boolean alreadyTwosComplement) {
       super(type);
-      this.value = value;
+
+      if (alreadyTwosComplement) {
+        // twos complement already normalized
+        ensure(value.signum() >= 0 || value.bitLength() <= type.bitWidth(),
+            "Internal error: value not in two's complement.");
+        this.value = value;
+        return;
+      }
+
+      if (type instanceof BoolType) {
+        this.value = value.compareTo(BigInteger.ZERO) == 0 ? value : BigInteger.ONE;
+      } else if (type instanceof BitsType) {
+        if (typeMinValue().compareTo(value) > 0 || typeMaxValue().compareTo(value) < 0) {
+          throw new ViamError(
+              "Value %s does not fit in type %s. Possible range: %s .. %s".formatted(value, type,
+                  typeMinValue(), typeMaxValue()));
+        }
+        this.value = twosComplement(value, type.bitWidth());
+      } else {
+        throw new ViamError("Only BitsType and BoolType are supported, but got %s".formatted(type));
+      }
+    }
+
+    public static Value unchecked(BigInteger value, DataType type) {
+      return new Value(value, type, true);
+    }
+
+    public static Value of(BigInteger value, DataType type) {
+      return new Value(value, type, false);
     }
 
     public static Value of(long value, DataType type) {
-      return new Value(BigInteger.valueOf(value), type);
+      return of(BigInteger.valueOf(value), type);
+    }
+
+    public static Value of(boolean value) {
+      return of(BigInteger.valueOf(value ? 1 : 0), Type.bool());
     }
 
     public BigInteger value() {
       return value;
+    }
+
+    public BigInteger integer() {
+      if (type() instanceof BoolType) {
+        return this.value;
+      } else {
+        return fromTwosComplement(value, (BitsType) type());
+      }
+    }
+
+    public boolean bool() {
+      ensure(type() instanceof BoolType, "constant must be of bool type");
+      return this.value.bitLength() != 0;
     }
 
     @Override
@@ -76,9 +132,130 @@ public abstract class Constant {
       return (DataType) super.type();
     }
 
+    /**
+     * Returns the addition of this and other together with the status.
+     *
+     * @return a tuple constant of form {@code ( result, ( z, c, o, n ) )}
+     */
+    public Constant.Tuple add(Constant.Value other) {
+      ensure(type() instanceof BitsType, "Invalid type for addition");
+      ensure(type().equals(other.type()), "Types don't match, %s vs %s", type(), other.type());
+
+      var result = value.add(other.value);
+      var truncated = result.and(mask(type().bitWidth(), 0));
+
+      var isZero = truncated.equals(BigInteger.ZERO);
+
+      // check msb
+      var isNegative = result.testBit(type().bitWidth() - 1);
+
+      // the carry flag is set if the addition of two numbers causes a carry
+      // out of the most significant (leftmost) bits added.
+      // can be ignored for signed interpretation of result.
+      // https://teaching.idallen.com/dat2343/10f/notes/040_overflow.txt
+      var isCarry = result.bitLength() > type().bitWidth();
+
+      System.out.println(this.binary());
+      System.out.println(other.binary());
+      System.out.println("0b" + result.toString(2));
+
+      // overflow if both operands have same sign and differ from result sign.
+      // overflow is ignored for unsigned interpretation of result.
+      // https://teaching.idallen.com/dat2343/10f/notes/040_overflow.txt
+      var isOverflow = this.isSignBit() == other.isSignBit() && (this.isSignBit() != isNegative);
+
+
+      return new Constant.Tuple(
+          Constant.Value.unchecked(truncated, type()),
+          Constant.Tuple.status(isZero, isCarry, isOverflow, isNegative)
+      );
+    }
+
+    public Constant.Tuple subtract(Constant.Value other) {
+      ensure(type() instanceof BitsType, "Invalid type for subtraction");
+      ensure(type().equals(other.type()), "Types don't match, %s vs %s", type(), other.type());
+
+      // from a - b to a + (-b)
+      var negatedOther = other.negate();
+      var result = this.add(negatedOther);
+
+      // swap the carry flag by inverse of addition open-vadl#76
+      var resStatus = result.get(1, Constant.Tuple.class);
+      // the carry of the subtraction is the inverse to the carry of the addition
+      var carry = resStatus.get(1, Constant.Value.class)
+          .not();
+
+      var overflow = resStatus.get(2, Constant.Value.class);
+      if (minSignedValue().equals(other.value)) {
+        // if b equals to minimal value (100..), the negation results in the same
+        // value. This will invalidate the overflow flag of the addition result, as
+        // the value is taken as negative eventhough it is actually positive (out of range).
+        // Therefore we want to invert the overflow flag from the addition.
+        overflow = overflow.not();
+      }
+
+      var status = new Constant.Tuple(
+          resStatus.get(0, Constant.Value.class),
+          carry,
+          overflow,
+          resStatus.get(3, Constant.Value.class)
+      );
+
+      return new Constant.Tuple(result.get(0), status);
+    }
+
+    public boolean isSignBit() {
+      return value.testBit(type().bitWidth() - 1);
+    }
+
+    public Constant.Value not() {
+      ensure(type() instanceof BoolType, "not() currently only available for bool type");
+      return Constant.Value.of(!this.bool());
+    }
+
+    public Constant.Value negate() {
+      var mask = mask(type().bitWidth(), 0);
+      var negated = value
+          .xor(mask) // invert all bits
+          .add(BigInteger.ONE) // add one to it
+          .and(mask); // truncate result
+      return Constant.Value.unchecked(negated, type());
+    }
+
+    private BigInteger typeMaxValue() {
+      if (type().isSigned()) {
+        return BigInteger.ONE.shiftLeft(type().bitWidth() - 1).subtract(BigInteger.ONE);
+      } else {
+        return BigInteger.ONE.shiftLeft(type().bitWidth()).subtract(BigInteger.ONE);
+      }
+    }
+
+    private BigInteger typeMinValue() {
+      if (type().isSigned()) {
+        return typeMaxValue().negate().subtract(BigInteger.ONE);
+      } else {
+        return BigInteger.ZERO;
+      }
+    }
+
+    private BigInteger maxUnsignedValue() {
+      // e.g. 4 bits: 1000 ... -8
+      return BigInteger.ZERO.setBit(type().bitWidth()).subtract(BigInteger.ONE);
+    }
+
+    private BigInteger maxSignedValue() {
+      // e.g. 4 bits: 1000 ... -8
+      return BigInteger.ZERO.setBit(type().bitWidth() - 1).subtract(BigInteger.ONE);
+    }
+
+    private BigInteger minSignedValue() {
+      // e.g. 4 bits: 1000 ... -8
+      return BigInteger.ZERO.setBit(type().bitWidth() - 1);
+    }
+
     @Override
     public java.lang.String toString() {
-      return value.toString();
+      return integer() + ": " + type().toString();
     }
 
     @Override
@@ -103,6 +280,53 @@ public abstract class Constant {
       result = 31 * result + value.hashCode();
       return result;
     }
+
+    public String decimal() {
+      return asString("", 10);
+    }
+
+    public String hexadecimal() {
+      return hexadecimal("0x");
+    }
+
+    public String hexadecimal(String prefix) {
+      return asString(prefix, 16);
+    }
+
+    public String binary() {
+      return binary("0b");
+    }
+
+    public String binary(String prefix) {
+      return asString(prefix, 2);
+    }
+
+    private String asString(String prefix, int radix) {
+      Integer padFactor = null;
+      switch (radix) {
+        case 2:
+          padFactor = 1;
+          break;
+        case 10:
+          padFactor = 0;
+          break;
+        case 16:
+          padFactor = 4;
+        default:
+          return "Invalid radix %s".formatted(radix);
+      }
+
+      if (type() instanceof BoolType) {
+        return prefix + this.value.toString(radix);
+      }
+
+      var str = this.value.toString(radix);
+      if (padFactor > 0) {
+        var padSize = (type().bitWidth() / padFactor) - str.length();
+        str = "0".repeat(padSize) + str;
+      }
+      return prefix + str;
+    }
   }
 
   /**
@@ -115,11 +339,6 @@ public abstract class Constant {
     public Str(java.lang.String value) {
       super(Type.string());
       this.value = value;
-    }
-
-    @Override
-    public Type type() {
-      return super.type();
     }
 
     public java.lang.String value() {
@@ -382,6 +601,101 @@ public abstract class Constant {
           }
         };
       }
+    }
+  }
+
+  public static class Tuple extends Constant {
+    private final List<Constant> values;
+
+
+    public Tuple(List<Constant> values, TupleType type) {
+      super(type);
+      this.values = values;
+    }
+
+    public Tuple(List<Constant> values) {
+      this(values,
+          TupleType.tuple(
+              values.stream()
+                  .map(e -> (DataType) e.type)
+                  .toArray(DataType[]::new)
+          )
+      );
+    }
+
+    public Tuple(Constant... values) {
+      this(List.of(values));
+    }
+
+    /**
+     * Constructs a tuple constant representing a status tuple.
+     */
+    public static Tuple status(boolean zero, boolean carry, boolean overflow, boolean negative) {
+      return new Tuple(
+          List.of(Constant.Value.of(zero), Constant.Value.of(carry), Constant.Value.of(overflow),
+              Constant.Value.of(negative)
+          ), Type.status().asTuple()
+      );
+    }
+
+    public List<Constant> values() {
+      return values;
+    }
+
+    public Constant get(int index) {
+      return values.get(index);
+    }
+
+    public <T extends Constant> T get(int index, Class<T> cType) {
+      var val = values.get(index);
+      ensure(cType.isInstance(val), "Expected constant of type %s but got %s", cType, val);
+      //noinspection unchecked
+      return (T) val;
+    }
+
+    public int size() {
+      return values.size();
+    }
+
+    @Override
+    public String toString() {
+      return "(" + values.stream().map(Constant::toString).collect(Collectors.joining(", ")) + ")";
+    }
+
+    @Override
+    public boolean equals(Object o) {
+      if (this == o) {
+        return true;
+      }
+      if (o == null || getClass() != o.getClass()) {
+        return false;
+      }
+      if (!super.equals(o)) {
+        return false;
+      }
+
+      Tuple tuple = (Tuple) o;
+      return values.equals(tuple.values);
+    }
+
+    @Override
+    public int hashCode() {
+      int result = super.hashCode();
+      result = 31 * result + values.hashCode();
+      return result;
+    }
+  }
+
+
+  // HELPER FUNCTIONS
+
+  @Contract("false, _, _ -> fail")
+  @FormatMethod
+  public void ensure(boolean condition, String fmt, Object... args) {
+    if (!condition) {
+      throw new ViamError(fmt.formatted(args))
+          .addContext("constant", this)
+          .shrinkStacktrace(1);
     }
   }
 }

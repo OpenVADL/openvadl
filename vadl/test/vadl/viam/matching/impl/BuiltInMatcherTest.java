@@ -21,8 +21,8 @@ class BuiltInMatcherTest {
         new AnyConstantValueMatcher(),
         new AnyConstantValueMatcher()
     ));
-    var input1 = new ConstantNode(new Constant.Value(BigInteger.ONE, DataType.unsignedInt(32)));
-    var input2 = new ConstantNode(new Constant.Value(BigInteger.ONE, DataType.unsignedInt(32)));
+    var input1 = new ConstantNode(Constant.Value.of(BigInteger.ONE, DataType.unsignedInt(32)));
+    var input2 = new ConstantNode(Constant.Value.of(BigInteger.ONE, DataType.unsignedInt(32)));
     var operation = new BuiltInCall(BuiltInTable.ADD, new NodeList<>(
         input1, input2
     ), Type.unsignedInt(32));
@@ -41,8 +41,8 @@ class BuiltInMatcherTest {
     var matcher = new BuiltInMatcher(BuiltInTable.ADD, List.of(
         new AnyConstantValueMatcher()
     ));
-    var input1 = new ConstantNode(new Constant.Value(BigInteger.ONE, DataType.unsignedInt(32)));
-    var input2 = new ConstantNode(new Constant.Value(BigInteger.ONE, DataType.unsignedInt(32)));
+    var input1 = new ConstantNode(Constant.Value.of(BigInteger.ONE, DataType.unsignedInt(32)));
+    var input2 = new ConstantNode(Constant.Value.of(BigInteger.ONE, DataType.unsignedInt(32)));
     var operation = new BuiltInCall(BuiltInTable.ADD, new NodeList<>(
         input1, input2
     ), Type.unsignedInt(32));
@@ -59,8 +59,8 @@ class BuiltInMatcherTest {
     // Here we specify no matchers,
     // even though the node has two inputs.
     var matcher = new BuiltInMatcher(BuiltInTable.ADD, Collections.emptyList());
-    var input1 = new ConstantNode(new Constant.Value(BigInteger.ONE, DataType.unsignedInt(32)));
-    var input2 = new ConstantNode(new Constant.Value(BigInteger.ONE, DataType.unsignedInt(32)));
+    var input1 = new ConstantNode(Constant.Value.of(BigInteger.ONE, DataType.unsignedInt(32)));
+    var input2 = new ConstantNode(Constant.Value.of(BigInteger.ONE, DataType.unsignedInt(32)));
     var operation = new BuiltInCall(BuiltInTable.ADD, new NodeList<>(
         input1, input2
     ), Type.unsignedInt(32));
@@ -75,8 +75,8 @@ class BuiltInMatcherTest {
   @Test
   void matches_shouldReturnFalse_whenBuiltInDoesNotMatch() {
     var matcher = new BuiltInMatcher(BuiltInTable.SUB, Collections.emptyList());
-    var input1 = new ConstantNode(new Constant.Value(BigInteger.ONE, DataType.unsignedInt(32)));
-    var input2 = new ConstantNode(new Constant.Value(BigInteger.ONE, DataType.unsignedInt(32)));
+    var input1 = new ConstantNode(Constant.Value.of(BigInteger.ONE, DataType.unsignedInt(32)));
+    var input2 = new ConstantNode(Constant.Value.of(BigInteger.ONE, DataType.unsignedInt(32)));
     var operation = new BuiltInCall(BuiltInTable.ADD, new NodeList<>(
         input1, input2
     ), Type.unsignedInt(32));
@@ -93,11 +93,11 @@ class BuiltInMatcherTest {
     // Here we specify no matchers,
     // even though the node has two inputs.
     var matcher = new BuiltInMatcher(BuiltInTable.ADD, List.of(
-        new ConstantValueMatcher(new Constant.Value(BigInteger.ZERO, DataType.unsignedInt(32))),
-        new ConstantValueMatcher(new Constant.Value(BigInteger.ONE, DataType.unsignedInt(32)))
+        new ConstantValueMatcher(Constant.Value.of(BigInteger.ZERO, DataType.unsignedInt(32))),
+        new ConstantValueMatcher(Constant.Value.of(BigInteger.ONE, DataType.unsignedInt(32)))
     ));
-    var input1 = new ConstantNode(new Constant.Value(BigInteger.ONE, DataType.unsignedInt(32)));
-    var input2 = new ConstantNode(new Constant.Value(BigInteger.ZERO, DataType.unsignedInt(32)));
+    var input1 = new ConstantNode(Constant.Value.of(BigInteger.ONE, DataType.unsignedInt(32)));
+    var input2 = new ConstantNode(Constant.Value.of(BigInteger.ZERO, DataType.unsignedInt(32)));
     var operation = new BuiltInCall(BuiltInTable.ADD, new NodeList<>(
         input1, input2
     ), Type.unsignedInt(32));

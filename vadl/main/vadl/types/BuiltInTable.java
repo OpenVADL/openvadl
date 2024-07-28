@@ -1,10 +1,22 @@
 package vadl.types;
 
+import static org.slf4j.LoggerFactory.getLogger;
+
+import java.math.BigInteger;
 import java.util.Arrays;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Optional;
+import java.util.function.BiFunction;
+import java.util.function.BinaryOperator;
+import java.util.function.Function;
 import java.util.stream.Stream;
+import javassist.bytecode.ConstantAttribute;
 import javax.annotation.Nullable;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import vadl.viam.Constant;
+import vadl.viam.ViamError;
 
 /**
  * The BuiltInTable class represents a collection of built-in functions and operations in VADL.
@@ -29,14 +41,18 @@ public class BuiltInTable {
    * {@code function add ( a : Bits<N>, b : Bits<N> ) -> Bits<N> // <=> a + b }
    */
   public static final BuiltIn ADD =
-      BuiltIn.func("ADD", "+", Type.relation(BitsType.class, BitsType.class, BitsType.class));
+      BuiltIn.func("ADD", "+", Type.relation(BitsType.class, BitsType.class, BitsType.class),
+          (Constant.Value a, Constant.Value b) -> a.add(b).get(0, Constant.Value.class)
+      );
 
 
   /**
    * {@code function adds( a : Bits<N>, b : Bits<N> ) -> ( Bits<N>, Status ) }
    */
   public static final BuiltIn ADDS =
-      BuiltIn.func("ADDS", Type.relation(BitsType.class, BitsType.class, TupleType.class));
+      BuiltIn.func("ADDS", null, Type.relation(BitsType.class, BitsType.class, TupleType.class),
+          Constant.Value::add
+      );
 
 
   /**
@@ -95,7 +111,9 @@ public class BuiltInTable {
    * {@code function sub  ( a : Bits<N>, b : Bits<N> ) -> Bits<N> // <=> a - c }
    */
   public static final BuiltIn SUB =
-      BuiltIn.func("SUB", "-", Type.relation(BitsType.class, BitsType.class, BitsType.class));
+      BuiltIn.func("SUB", "-", Type.relation(BitsType.class, BitsType.class, BitsType.class),
+          (Constant.Value a, Constant.Value b) -> a.subtract(b).get(0, Constant.Value.class)
+      );
 
 
   /**
@@ -192,14 +210,15 @@ public class BuiltInTable {
    * {@code function mul ( a : Bits<N>, b : Bits<N> ) -> Bits<N> // <=> a * b }
    */
   public static final BuiltIn MUL =
-      BuiltIn.func("MUL", "*", Type.relation(BitsType.class, BitsType.class, BitsType.class));
+      BuiltIn.func("MUL", "*", Type.relation(BitsType.class, BitsType.class, BitsType.class)
+      );
 
 
   /**
    * {@code function muls( a : Bits<N>, b : Bits<N> ) -> ( Bits<N>, Status ) }
    */
   public static final BuiltIn MULS =
-      BuiltIn.func("MULS", Type.relation(BitsType.class, BitsType.class, TupleType.class));
+      BuiltIn.func("MULS", null, Type.relation(BitsType.class, BitsType.class, TupleType.class));
 
 
   /**
@@ -818,13 +837,63 @@ public class BuiltInTable {
       this.kind = kind;
     }
 
+    private static <T extends Constant, R extends Constant> BuiltIn func(String name,
+                                                                         @Nullable String operator,
+                                                                         RelationType signature,
+                                                                         @Nullable
+                                                                         Function<List<T>, R> computeFunction) {
+      return new BuiltIn(name, operator, signature, Kind.FUNCTION) {
+        @Override
+        public Optional<Constant> compute(List<Constant> args) {
+          if (computeFunction == null) {
+            return super.compute(args);
+          }
+
+          var argTypes = args.stream()
+              .map(e -> (Class<?>) e.type().getClass())
+              .toArray(Class<?>[]::new);
+          if (!takes(argTypes)) {
+            throw new ViamError("Types of arguments does not match type signature of " + signature)
+                .addContext("built-in", this)
+                .addContext("constants", List.of(args));
+          }
+
+          var typedArgs = args.stream().map(e -> (T) e).toList();
+          return Optional.of(computeFunction.apply(typedArgs));
+        }
+      };
+    }
+
+    private static <T extends Constant, U extends Constant, R extends Constant> BuiltIn func(
+        String name, @Nullable String operator,
+        RelationType signature,
+        BiFunction<T, U, R> computeFunction) {
+      return func(name, operator, signature,
+          (args) -> computeFunction.apply((T) args.get(0), (U) args.get(1)));
+    }
+
+    private static <T extends Constant, U extends Constant, R extends Constant> BuiltIn func2(
+        String name, @Nullable String operator,
+        RelationType signature,
+        BiFunction<T, U, R> computeFunction) {
+      return func(name, operator, signature,
+          (args) -> computeFunction.apply((T) args.get(0), (U) args.get(1)));
+    }
+
+    private static BuiltIn func(String name, RelationType signature,
+                                @Nullable Function<List<Constant>, Constant> compute) {
+      return func(name, null, signature, compute);
+    }
+
+
+    // TODO: Eventually delete these two functions (with no compute function)
     private static BuiltIn func(String name, @Nullable String operator,
                                 RelationType signature) {
-      return new BuiltIn(name, operator, signature, Kind.FUNCTION);
+      return func(name, operator, signature, (Function<List<Constant>, Constant>) null);
     }
 
     private static BuiltIn func(String name, RelationType signature) {
-      return new BuiltIn(name, null, signature, Kind.FUNCTION);
+      return func(name, (String) null, signature, (Function<List<Constant>, Constant>) null);
     }
 
     // TODO: removed as soon as used
@@ -848,6 +917,11 @@ public class BuiltInTable {
 
     public RelationType signature() {
       return signature;
+    }
+
+    public Optional<Constant> compute(List<Constant> args) {
+      logger.atWarn().log("Computation of constants for built-in {} is not implemented", this);
+      return Optional.empty();
     }
 
     /**
@@ -895,6 +969,9 @@ public class BuiltInTable {
       FUNCTION,
       PROCESS
     }
+
+    private static final Logger logger = getLogger(BuiltIn.class);
+
   }
 
 }

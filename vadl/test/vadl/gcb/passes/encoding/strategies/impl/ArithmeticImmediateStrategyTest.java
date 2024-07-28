@@ -109,7 +109,7 @@ class ArithmeticImmediateStrategyTest extends AbstractTest {
     var returnNode =
         new ReturnNode(new TypeCastNode(new BuiltInCall(BuiltInTable.SUB,
             new NodeList<>(
-                new ConstantNode(new Constant.Value(
+                new ConstantNode(Constant.Value.of(
                     BigInteger.valueOf(31), DataType.unsignedInt(32))),
                 new FieldRefNode(field, DataType.bits(20))
             ), Type.unsignedInt(32)),
@@ -141,7 +141,7 @@ class ArithmeticImmediateStrategyTest extends AbstractTest {
     var hasNotNegatedFuncParam = TreeMatcher.matches(fieldAccess.encoding().behavior().getNodes(),
         new BuiltInMatcher(BuiltInTable.ADD, List.of(
             new ConstantValueMatcher(
-                new Constant.Value(BigInteger.valueOf(31), DataType.unsignedInt(32))
+                Constant.Value.of(BigInteger.valueOf(31), DataType.unsignedInt(32))
             ),
             new BuiltInMatcher(BuiltInTable.NEG,
                 new BuiltInMatcher(BuiltInTable.NEG,
@@ -164,7 +164,7 @@ class ArithmeticImmediateStrategyTest extends AbstractTest {
     var returnNode =
         new ReturnNode(new TypeCastNode(new BuiltInCall(BuiltInTable.ADD,
             new NodeList<>(
-                new ConstantNode(new Constant.Value(
+                new ConstantNode(Constant.Value.of(
                     BigInteger.valueOf(31), DataType.unsignedInt(32))),
                 new FieldRefNode(field, DataType.bits(20))
             ), Type.unsignedInt(32)),
@@ -197,7 +197,7 @@ class ArithmeticImmediateStrategyTest extends AbstractTest {
             new BuiltInMatcher(BuiltInTable.NEG,
                 new FuncParamMatcher(DataType.unsignedInt(32))),
             new ConstantValueMatcher(
-                new Constant.Value(BigInteger.valueOf(31), DataType.unsignedInt(32))
+                Constant.Value.of(BigInteger.valueOf(31), DataType.unsignedInt(32))
             )
         )));
 

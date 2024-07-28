@@ -75,23 +75,34 @@ public class BuiltInCall extends AbstractFunctionCallNode {
 
   @Override
   public Optional<Node> normalize() {
-    if (hasConstantInputs()) {
-      if (this.builtIn == BuiltInTable.ADD) {
-        return reduce(BigInteger::add);
-      } else if (this.builtIn == BuiltInTable.SUB) {
-        return reduce(BigInteger::subtract);
-      } else if (this.builtIn == BuiltInTable.MUL) {
-        return reduce(BigInteger::multiply);
-      } else if (this.builtIn == BuiltInTable.MULS) {
-        return reduce(BigInteger::multiply);
-      } else if (this.builtIn == BuiltInTable.LSL) {
-        return reduceWithInt(BigInteger::shiftLeft);
-      } else if (this.builtIn == BuiltInTable.LSR) {
-        return reduceWithInt(BigInteger::shiftRight);
-      }
+    if (!hasConstantInputs()) {
+      return Optional.empty();
     }
 
-    return Optional.empty();
+    var args = this.arguments().stream()
+        .map(x -> ((ConstantNode) x).constant())
+        .toList();
+
+    return builtIn.compute(args).map(ConstantNode::new);
+
+
+//    if (hasConstantInputs()) {
+//      if (this.builtIn == BuiltInTable.ADD) {
+//        return reduce(BigInteger::add);
+//      } else if (this.builtIn == BuiltInTable.SUB) {
+//        return reduce(BigInteger::subtract);
+//      } else if (this.builtIn == BuiltInTable.MUL) {
+//        return reduce(BigInteger::multiply);
+//      } else if (this.builtIn == BuiltInTable.MULS) {
+//        return reduce(BigInteger::multiply);
+//      } else if (this.builtIn == BuiltInTable.LSL) {
+//        return reduceWithInt(BigInteger::shiftLeft);
+//      } else if (this.builtIn == BuiltInTable.LSR) {
+//        return reduceWithInt(BigInteger::shiftRight);
+//      }
+//    }
+//
+//    return Optional.empty();
   }
 
   @NotNull
@@ -102,7 +113,7 @@ public class BuiltInCall extends AbstractFunctionCallNode {
     var y = (Constant.Value) ((ConstantNode) this.arguments().get(1)).constant();
     ensure(x.type().equals(y.type()), "Types must match");
     return Optional.of(
-        new ConstantNode(new Constant.Value(function.apply(x.value(), y.value()), x.type())));
+        new ConstantNode(Constant.Value.of(function.apply(x.value(), y.value()), x.type())));
   }
 
   @NotNull
@@ -113,7 +124,7 @@ public class BuiltInCall extends AbstractFunctionCallNode {
     var y = (Constant.Value) ((ConstantNode) this.arguments().get(1)).constant();
     return Optional.of(
         new ConstantNode(
-            new Constant.Value(function.apply(x.value(), y.value().intValue()), x.type())));
+            Constant.Value.of(function.apply(x.value(), y.value().intValue()), x.type())));
   }
 
   @Override
