@@ -153,7 +153,6 @@ public abstract class Constant {
      * @throws ViamError if the constant cannot be cast to the specified data type
      */
     public Constant.Value castTo(DataType type) {
-      ensure(this.type().canBeCastTo(type), "constant cannot be cast to %s", type);
       var truncatedValue = value
           .and(mask(type.bitWidth(), 0));
       return Value.of(truncatedValue, type);

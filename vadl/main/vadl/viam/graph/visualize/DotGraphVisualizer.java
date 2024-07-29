@@ -41,24 +41,24 @@ public class DotGraphVisualizer implements GraphVisualizer<String, Graph> {
     nodes.forEach(node -> {
       dotBuilder
           .append("     ")
-          .append(node.id())
+          .append(wrapStr(node.id()))
           .append(" [label=\"%s\" %s]".formatted(label(node), nodeStyle(node)))
           .append(";\n");
 
       node.inputs().forEach((input) -> {
         dotBuilder.append("     ")
-            .append(input.id)
+            .append(wrapStr(input.id))
             .append(" -> ")
-            .append(node.id)
+            .append(wrapStr(node.id))
             .append("[dir=back arrowtail=empty];\n");
       });
 
       node.successors().forEach(successor -> {
 
         dotBuilder.append("     ")
-            .append(node.id)
+            .append(wrapStr(node.id))
             .append(" -> ")
-            .append(successor.id())
+            .append(wrapStr(successor.id()))
             .append("[color=red];\n");
       });
 
@@ -68,6 +68,10 @@ public class DotGraphVisualizer implements GraphVisualizer<String, Graph> {
     dotBuilder.append("} \n");
     return dotBuilder.toString();
 
+  }
+
+  private static String wrapStr(Object str) {
+    return "\"%s\"".formatted(str);
   }
 
   private String label(Node node) {

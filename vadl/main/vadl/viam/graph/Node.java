@@ -305,10 +305,9 @@ public abstract class Node {
    * @param visitor the visitor that gets visited
    */
   public final void visitInputs(GraphVisitor visitor) {
-    applyOnInputsUnsafe((from, to) -> {
-      visitor.visit(from, to);
-      return to;
-    });
+    for (var input : inputs().toList()) {
+      visitor.visit(this, input);
+    }
   }
 
   /**

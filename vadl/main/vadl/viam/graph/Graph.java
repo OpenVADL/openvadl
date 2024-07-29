@@ -305,7 +305,8 @@ public class Graph {
     for (var input : node.inputList()) {
       if (!input.isActiveIn(this)) {
         throw new ViamGraphError(
-            "Failed to add `%s` as its input node `%s` is not yet initialized.}", node, input)
+            "Failed to add `%s` as its input node `%s` is not yet initialized. You might want use Graph#addWithInputs()",
+            node, input)
             .addContext(node)
             .addContext(this)
             .shrinkStacktrace(1);
@@ -372,40 +373,5 @@ public class Graph {
         .load(this)
         .visualize();
   }
-
-  /**
-   * This canonicalizer determines the canonical form of nodes that are not yet
-   * added to the graph.
-   * This allows constant evaluation and better global value numbering from beginning on,
-   * without a significant performance input.
-   * It traverses all inputs of the root node, but only if the input wasn't added yet.
-   */
-  private static class NewNodesCanonicalizer implements GraphVisitor {
-
-    public Node canonical(Node node) {
-      if (!node.isUninitialized()) {
-        return node;
-      }
-
-      node.visitInputs(this);
-
-      if (node instanceof Canonicalizable) {
-        var res = ((Canonicalizable) node).canonical();
-        node.ensure(res != null, "cannot canonicalize, result is null");
-        return res;
-      }
-      return node;
-    }
-
-    @Nullable
-    @Override
-    public Object visit(Node from, @Nullable Node to) {
-      if (to != null) {
-        canonical(to);
-      }
-      return null;
-    }
-  }
-
 }
 
