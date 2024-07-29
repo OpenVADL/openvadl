@@ -1,9 +1,9 @@
-package vadl.gcb.passes.encoding.strategies.impl;
+package vadl.gcb.passes.encoding_generation.strategies.impl;
 
 import java.util.Collections;
 import java.util.List;
 import org.jetbrains.annotations.Nullable;
-import vadl.gcb.passes.encoding.strategies.EncodingGenerationStrategy;
+import vadl.gcb.passes.encoding_generation.strategies.EncodingGenerationStrategy;
 import vadl.types.BitsType;
 import vadl.types.BuiltInTable;
 import vadl.types.DataType;

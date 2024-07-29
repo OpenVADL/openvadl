@@ -1,22 +1,18 @@
-package vadl.gcb.passes.encoding.strategies.impl;
+package vadl.gcb.passes.encoding_generation.strategies.impl;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 
 import java.math.BigInteger;
-import java.util.Collections;
 import org.junit.jupiter.api.Test;
 import vadl.AbstractTest;
-import vadl.gcb.passes.encoding.GenerateFieldAccessEncodingFunctionPass;
 import vadl.types.BitsType;
 import vadl.types.BuiltInTable;
 import vadl.types.DataType;
 import vadl.types.Type;
 import vadl.viam.Constant;
 import vadl.viam.Format;
-import vadl.viam.Function;
-import vadl.viam.Parameter;
 import vadl.viam.graph.NodeList;
 import vadl.viam.graph.control.ReturnNode;
 import vadl.viam.graph.control.StartNode;

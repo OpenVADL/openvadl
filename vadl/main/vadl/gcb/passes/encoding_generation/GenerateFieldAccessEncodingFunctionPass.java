@@ -1,21 +1,19 @@
-package vadl.gcb.passes.encoding;
+package vadl.gcb.passes.encoding_generation;
 
 import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 import org.jetbrains.annotations.Nullable;
-import vadl.gcb.passes.encoding.strategies.EncodingGenerationStrategy;
-import vadl.gcb.passes.encoding.strategies.impl.ArithmeticImmediateStrategy;
-import vadl.gcb.passes.encoding.strategies.impl.ShiftedImmediateStrategy;
-import vadl.gcb.passes.encoding.strategies.impl.TrivialImmediateStrategy;
+import vadl.gcb.passes.encoding_generation.strategies.EncodingGenerationStrategy;
+import vadl.gcb.passes.encoding_generation.strategies.impl.ArithmeticImmediateStrategy;
+import vadl.gcb.passes.encoding_generation.strategies.impl.ShiftedImmediateStrategy;
+import vadl.gcb.passes.encoding_generation.strategies.impl.TrivialImmediateStrategy;
 import vadl.pass.Pass;
 import vadl.pass.PassKey;
 import vadl.pass.PassName;
 import vadl.viam.Encoding;
 import vadl.viam.Format.FieldAccess;
-import vadl.viam.Function;
 import vadl.viam.Instruction;
-import vadl.viam.Parameter;
 import vadl.viam.Specification;
 import vadl.viam.ViamError;
 import vadl.viam.graph.Graph;

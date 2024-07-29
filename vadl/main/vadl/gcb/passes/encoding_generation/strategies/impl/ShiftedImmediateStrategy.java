@@ -1,10 +1,9 @@
-package vadl.gcb.passes.encoding.strategies.impl;
+package vadl.gcb.passes.encoding_generation.strategies.impl;
 
-import vadl.gcb.passes.encoding.strategies.EncodingGenerationStrategy;
+import vadl.gcb.passes.encoding_generation.strategies.EncodingGenerationStrategy;
 import vadl.types.BuiltInTable;
 import vadl.viam.Constant;
 import vadl.viam.Format;
-import vadl.viam.Parameter;
 import vadl.viam.ViamError;
 import vadl.viam.graph.control.ReturnNode;
 import vadl.viam.graph.control.StartNode;
