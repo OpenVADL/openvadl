@@ -1,12 +1,10 @@
 package vadl.viam.graph.dependency;
 
 import java.util.List;
-import java.util.Optional;
 import vadl.javaannotations.viam.DataValue;
 import vadl.types.BuiltInTable;
 import vadl.types.BuiltInTable.BuiltIn;
 import vadl.types.Type;
-import vadl.viam.Constant;
 import vadl.viam.graph.Canonicalizable;
 import vadl.viam.graph.GraphNodeVisitor;
 import vadl.viam.graph.Node;

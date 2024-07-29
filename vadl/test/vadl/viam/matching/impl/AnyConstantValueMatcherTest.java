@@ -2,7 +2,6 @@ package vadl.viam.matching.impl;
 
 import static org.assertj.core.api.AssertionsForClassTypes.assertThat;
 
-import java.math.BigInteger;
 import org.junit.jupiter.api.Test;
 import vadl.AbstractTest;
 import vadl.types.DataType;

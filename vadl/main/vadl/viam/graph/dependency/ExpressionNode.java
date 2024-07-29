@@ -1,7 +1,6 @@
 package vadl.viam.graph.dependency;
 
 import vadl.types.Type;
-import vadl.viam.Constant;
 import vadl.viam.graph.GraphNodeVisitor;
 
 /**

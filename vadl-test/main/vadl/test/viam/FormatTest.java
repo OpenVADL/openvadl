@@ -1,8 +1,5 @@
 package vadl.test.viam;
 
-import static org.hamcrest.MatcherAssert.assertThat;
-import static org.hamcrest.Matchers.contains;
-import static org.hamcrest.Matchers.containsInAnyOrder;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNull;
@@ -25,18 +22,24 @@ import vadl.viam.graph.dependency.TypeCastNode;
 
 public class FormatTest extends AbstractTest {
 
-  @ParameterizedTest(name = "{index} {0}")
-  @MethodSource("invalidFormatTestSources")
-  public void invalidFormat(String testSource, @Nullable String failureMessage) {
-    runAndAssumeFailure(testSource, failureMessage);
-  }
-
   public static Stream<Arguments> invalidFormatTestSources() {
     return getTestSourceArgsForParameterizedTest("format/invalid_",
         arguments("fieldAccess_encFunc", "No access function on field 'LO' found"),
         arguments("fieldAccess_encFunc2", "Parameter `LO` not found in function parameters"),
         arguments("overlappingField", "Field overlapping of 'HI' and 'LO' at bit 3")
     );
+  }
+
+  private static Format findFormatByName(List<Format> formats, String name) {
+    var opt = formats.stream().filter(e -> e.identifier.name().equals(name)).findFirst();
+    assertTrue(opt.isPresent(), "No format found with name " + name + " in " + formats);
+    return opt.get();
+  }
+
+  @ParameterizedTest(name = "{index} {0}")
+  @MethodSource("invalidFormatTestSources")
+  public void invalidFormat(String testSource, @Nullable String failureMessage) {
+    runAndAssumeFailure(testSource, failureMessage);
   }
 
   @Test
@@ -220,11 +223,5 @@ public class FormatTest extends AbstractTest {
           encoding.parameters()[0].identifier.name());
       assertEquals(1, encoding.behavior().getNodes(TypeCastNode.class).count());
     }
-  }
-
-  private static Format findFormatByName(List<Format> formats, String name) {
-    var opt = formats.stream().filter(e -> e.identifier.name().equals(name)).findFirst();
-    assertTrue(opt.isPresent(), "No format found with name " + name + " in " + formats);
-    return opt.get();
   }
 }

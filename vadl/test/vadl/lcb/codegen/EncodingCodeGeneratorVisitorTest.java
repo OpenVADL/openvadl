@@ -3,7 +3,6 @@ package vadl.lcb.codegen;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
 import java.io.StringWriter;
-import java.math.BigInteger;
 import java.util.stream.Stream;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;

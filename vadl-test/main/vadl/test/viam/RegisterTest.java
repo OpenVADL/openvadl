@@ -35,17 +35,17 @@ import vadl.viam.graph.dependency.WriteRegNode;
 
 public class RegisterTest extends AbstractTest {
 
-  @ParameterizedTest(name = "{index} {0}")
-  @MethodSource("invalidRegisterTestSources")
-  public void invalidRegister(String testSource, @Nullable String failureMessage) {
-    runAndAssumeFailure(testSource, failureMessage);
-  }
-
   private static Stream<Arguments> invalidRegisterTestSources() {
     return getTestSourceArgsForParameterizedTest("register/invalid_",
         arguments("reg_invalidFormat",
             "Format field must only contain proper slices without any unused gaps.")
     );
+  }
+
+  @ParameterizedTest(name = "{index} {0}")
+  @MethodSource("invalidRegisterTestSources")
+  public void invalidRegister(String testSource, @Nullable String failureMessage) {
+    runAndAssumeFailure(testSource, failureMessage);
   }
 
   @Test
