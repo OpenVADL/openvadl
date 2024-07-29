@@ -211,7 +211,7 @@ public class AstDumper implements DefinitionVisitor<Void>, ExprVisitor<Void> {
   @Override
   public Void visit(EncodingDefinition definition) {
     dumpNode(definition);
-    List<Node> children = definition.entries.stream()
+    List<Node> children = definition.fieldEncodings.stream()
         .flatMap(entry -> Stream.of(entry.field(), entry.value()))
         .collect(Collectors.toList());
     children.add(0, definition.instrIdentifier);

@@ -117,7 +117,7 @@ class NestedSymbolTable implements DefinitionVisitor<Void> {
       return null;
     }
     var format = formatSymbol.definition;
-    for (EncodingDefinition.Entry entry : definition.entries) {
+    for (EncodingDefinition.FieldEncoding entry : definition.fieldEncodings) {
       var name = entry.field().name;
       var field = format.fields.stream().filter(f -> f.identifier().name.equals(name)).findFirst();
       if (field.isEmpty()) {
@@ -192,7 +192,7 @@ class NestedSymbolTable implements DefinitionVisitor<Void> {
     requirements.add(new IdentifierRequirement(var));
   }
 
-  void validate() {
+  List<VadlError> validate() {
     for (Requirement requirement : requirements) {
       if (requirement instanceof SymbolRequirement req) {
         var symbol = resolveSymbol(req.name);
@@ -214,6 +214,7 @@ class NestedSymbolTable implements DefinitionVisitor<Void> {
       }
     }
     children.forEach(NestedSymbolTable::validate);
+    return errors;
   }
 
   void validateValueAccess(IdentifierRequirement requirement) {

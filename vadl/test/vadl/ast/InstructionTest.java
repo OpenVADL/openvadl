@@ -35,7 +35,7 @@ public class InstructionTest {
         }
         """;
 
-    var ast = Assertions.assertDoesNotThrow(() -> VadlParser.parse(prog), "Cannot parse input");
+    var ast = VadlParser.parse(prog);
     verifyPrettifiedAst(ast);
   }
 }

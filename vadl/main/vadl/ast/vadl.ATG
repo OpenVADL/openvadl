@@ -6,6 +6,7 @@ import javax.annotation.Nullable;
 
 import vadl.ast.Ast;
 import vadl.ast.Expr;
+import vadl.ast.EncodingDefinition.FieldEncoding;
 import vadl.ast.Definition;
 import static vadl.ast.CounterDefinition.CounterKind.GROUP;
 import static vadl.ast.CounterDefinition.CounterKind.PROGRAM;
@@ -295,8 +296,8 @@ PRODUCTIONS
       SET ARCHITECTURE identifier<out Identifier identifier>
       SYM_EQ SYM_BRACE_OPEN
       {(
-        annotations<out Annotations annotations>
-        isaDefinition<out Definition def>                           (. def.addAnnotations(annotations); children.add(def); def.accept(symbolTable); .)
+        annotations<.out List<Annotation> annotations.>
+        isaDefinition<out Definition def>                           (. def.annotations.annotations().addAll(annotations); children.add(def); def.accept(symbolTable); .)
         | macroDef
         | macroInstance<out Node b, BasicSyntaxType.IsaDefs()>      (. children.add((Definition) b); .)
       )}
@@ -306,9 +307,9 @@ PRODUCTIONS
                                                                     .)
       .
 
-    annotations<out Annotations annotations>  (. annotations = new Annotations(); insideAnnotation = true; .)
-    = { annotation<out Annotation annotation> (. annotations.add(annotation); .) }
-                                              (. insideAnnotation = false; .)
+    annotations<.out List<Annotation> annotations.> (. annotations = new ArrayList<>(); insideAnnotation = true; .)
+    = { annotation<out Annotation annotation>       (. annotations.add(annotation); .) }
+                                                    (. insideAnnotation = false; .)
     .
 
     annotation<out Annotation annotation> (. TypeLiteral type = null; Identifier property = null; .)
@@ -395,17 +396,17 @@ PRODUCTIONS
     | placeholder<out n, BasicSyntaxType.Id()>
     .
 
-    encodingDefinition<out EncodingDefinition def>               (. var startLocation = loc(); var entries = new ArrayList<EncodingDefinition.Entry>(); .)
+    encodingDefinition<out EncodingDefinition def>    (. var startLocation = loc(); var entries = new ArrayList<FieldEncoding>(); .)
     = ENCODING identifier<out Identifier instrId>
       SYM_EQ SYM_BRACE_OPEN
-      encodingEntry<out EncodingDefinition.Entry e1>             (. entries.add(e1); .)
-      { SYM_COMMA encodingEntry<out EncodingDefinition.Entry e2> (. entries.add(e2); .) }
-      SYM_BRACE_CLOSE                                            (. def = new EncodingDefinition(instrId, entries, startLocation.join(loc())); .)
+      encodingEntry<out FieldEncoding e1>             (. entries.add(e1); .)
+      { SYM_COMMA encodingEntry<out FieldEncoding e2> (. entries.add(e2); .) }
+      SYM_BRACE_CLOSE                                 (. def = new EncodingDefinition(instrId, entries, startLocation.join(loc())); .)
     .
 
-    encodingEntry<out EncodingDefinition.Entry e>
+    encodingEntry<out FieldEncoding e>
     = identifier<out Identifier id>
-      SYM_EQ number                                        (. e = new EncodingDefinition.Entry(id, new IntegerLiteral(t.val, loc())); .)
+      SYM_EQ number                    (. e = new FieldEncoding(id, new IntegerLiteral(t.val, loc())); .)
     .
 
     assemblyDefinition<out AssemblyDefinition def>         (. List<Identifier> ids = new ArrayList<>(); var start = loc(); .)

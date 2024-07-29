@@ -16,10 +16,6 @@ import vadl.utils.SourceLocation;
 abstract class Definition extends Node {
   Annotations annotations = new Annotations();
 
-  void addAnnotations(Annotations annotations) {
-    this.annotations.annotations().addAll(annotations.annotations());
-  }
-
   abstract <R> R accept(DefinitionVisitor<R> visitor);
 }
 
@@ -778,12 +774,13 @@ class InstructionDefinition extends Definition {
 
 class EncodingDefinition extends Definition {
   final Identifier instrIdentifier;
-  final List<Entry> entries;
+  final List<FieldEncoding> fieldEncodings;
   final SourceLocation loc;
 
-  EncodingDefinition(Identifier instrIdentifier, List<Entry> entries, SourceLocation location) {
+  EncodingDefinition(Identifier instrIdentifier, List<FieldEncoding> fieldEncodings,
+                     SourceLocation location) {
     this.instrIdentifier = instrIdentifier;
-    this.entries = entries;
+    this.fieldEncodings = fieldEncodings;
     this.loc = location;
   }
 
@@ -804,7 +801,7 @@ class EncodingDefinition extends Definition {
     builder.append("encoding %s =\n".formatted(instrIdentifier.name));
     builder.append(prettyIndentString(indent)).append("{ ");
     boolean first = true;
-    for (Entry entry : entries) {
+    for (FieldEncoding entry : fieldEncodings) {
       if (!first) {
         builder.append(prettyIndentString(indent)).append(", ");
       }
@@ -839,18 +836,18 @@ class EncodingDefinition extends Definition {
     var that = (EncodingDefinition) o;
     return Objects.equals(annotations, that.annotations)
         && Objects.equals(instrIdentifier, that.instrIdentifier)
-        && Objects.equals(entries, that.entries);
+        && Objects.equals(fieldEncodings, that.fieldEncodings);
   }
 
   @Override
   public int hashCode() {
     int result = Objects.hashCode(annotations);
     result = 31 * result + Objects.hashCode(instrIdentifier);
-    result = 31 * result + Objects.hashCode(entries);
+    result = 31 * result + Objects.hashCode(fieldEncodings);
     return result;
   }
 
-  record Entry(Identifier field, IntegerLiteral value) {
+  record FieldEncoding(Identifier field, IntegerLiteral value) {
   }
 }
 

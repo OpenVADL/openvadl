@@ -389,7 +389,7 @@ class IntegerLiteral extends Expr {
 
   @Override
   public String toString() {
-    return "%s literal: %d (%s)".formatted(this.getClass().getSimpleName(), number, token);
+    return "%s literal: %s (%d)".formatted(this.getClass().getSimpleName(), token, number);
   }
 
   @Override

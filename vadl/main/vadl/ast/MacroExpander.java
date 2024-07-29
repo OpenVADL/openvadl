@@ -76,7 +76,6 @@ class MacroExpander
 
   @Override
   public Node visit(MacroInstanceExpr expr) {
-    // FIXME: This could also be another macro
     var arg = args.get(expr.identifier.name);
     if (arg == null) {
       throw new IllegalStateException("The parser should already have checked that.");
