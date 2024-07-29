@@ -3,6 +3,7 @@ package vadl.oop;
 import static vadl.oop.CppTypeMap.getCppTypeNameByVadlType;
 
 import java.io.StringWriter;
+import java.util.Objects;
 import vadl.viam.graph.GraphNodeVisitor;
 import vadl.viam.graph.control.AbstractBeginNode;
 import vadl.viam.graph.control.EndNode;
@@ -49,12 +50,18 @@ public abstract class GenericCppCodeGeneratorVisitor implements GraphNodeVisitor
 
   @Override
   public void visit(BuiltInCall node) {
-    for (int i = 0; i < node.arguments().size(); i++) {
-      visit(node.arguments().get(i));
+    if (node.arguments().size() == 1) {
+      node.ensure(node.builtIn().operator() != null, "Operator must not be null");
+      writer.write(Objects.requireNonNull(node.builtIn().operator()));
+      visit(node.arguments().get(0));
+    } else if (node.arguments().size() > 1) {
+      for (int i = 0; i < node.arguments().size(); i++) {
+        visit(node.arguments().get(i));
 
-      // The last argument should not emit an operand.
-      if (i < node.arguments().size() - 1) {
-        writer.write(" " + node.builtIn().operator() + " ");
+        // The last argument should not emit an operand.
+        if (i < node.arguments().size() - 1) {
+          writer.write(" " + node.builtIn().operator() + " ");
+        }
       }
     }
   }
