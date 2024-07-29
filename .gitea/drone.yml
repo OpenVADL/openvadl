@@ -21,8 +21,12 @@ steps:
       - ./gradlew checkstyleAll
   - name: test
     image: c2.complang.tuwien.ac.at:5000/vadl-ci:f7222374638bccc355ba51bfcc2b17e9561204a4
+    privileged: true
     commands:
-      - ./gradlew test
+      - ./gradlew test -i
+    volumes:
+      - name: docker
+        path: /var/run/docker.sock
   - name: comment checkstyle report
     image: c2.complang.tuwien.ac.at:5000/drone-gitea-message:1411b3d7e54329473da2717d2ef09a06f13b3bc4
     settings:
@@ -34,7 +38,10 @@ steps:
     when:
       status: [ failure ]
 
-
+volumes:
+  - name: docker
+    host:
+      path: /var/run/docker.sock
 
 triggers:
   events:

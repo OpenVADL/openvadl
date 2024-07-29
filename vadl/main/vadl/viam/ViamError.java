@@ -5,6 +5,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.stream.Collectors;
+import org.jetbrains.annotations.Nullable;
 import vadl.error.VadlError;
 import vadl.utils.SourceLocation;
 
@@ -98,6 +99,14 @@ public class ViamError extends RuntimeException {
   @Override
   public String getMessage() {
     return "%s%s".formatted(super.getMessage(), context());
+  }
+
+  /**
+   * Get the message but without the context. This method is useful to assert the message in tests.
+   */
+  @Nullable
+  public String getContextlessMessage() {
+    return super.getMessage();
   }
 
   /**

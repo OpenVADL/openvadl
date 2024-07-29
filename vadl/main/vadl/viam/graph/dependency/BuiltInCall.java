@@ -1,6 +1,11 @@
 package vadl.viam.graph.dependency;
 
+import com.google.common.collect.Streams;
+import java.math.BigInteger;
 import java.util.List;
+import java.util.Optional;
+import java.util.function.BiFunction;
+import org.jetbrains.annotations.NotNull;
 import vadl.javaannotations.viam.DataValue;
 import vadl.types.BuiltInTable;
 import vadl.types.BuiltInTable.BuiltIn;
@@ -82,6 +87,23 @@ public class BuiltInCall extends AbstractFunctionCallNode implements Canonicaliz
   }
 
   @Override
+  public void verifyState() {
+    super.verifyState();
+    var args = builtIn.signature().argTypeClasses();
+    var result = builtIn.signature().resultTypeClass();
+
+    ensure(args.size() == this.arguments().size(),
+        "Number of arguments must match");
+    var argsMatched =
+        Streams.zip(this.arguments().stream().map(x -> x.type().getClass()), args.stream(),
+            (BiFunction<Class<? extends Type>, Class<? extends Type>, Object>) (a, b) -> !a.equals(
+                b)
+        ).findAny();
+    ensure(argsMatched.isPresent(), "Arguments' types do not match with the type of the builtin");
+    ensure(result.equals(this.type().getClass()), "Result type does not match");
+  }
+
+  @Override
   public Node copy() {
     return new BuiltInCall(builtIn,
         new NodeList<>(this.arguments().stream().map(x -> (ExpressionNode) x.copy()).toList()),
@@ -92,6 +114,7 @@ public class BuiltInCall extends AbstractFunctionCallNode implements Canonicaliz
   public Node shallowCopy() {
     return new BuiltInCall(builtIn, args, type());
   }
+
 
   @Override
   protected void collectData(List<Object> collection) {

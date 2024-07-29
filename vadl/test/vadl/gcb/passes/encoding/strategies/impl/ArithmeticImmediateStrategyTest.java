@@ -6,6 +6,7 @@ import static org.junit.jupiter.api.Assertions.assertNotNull;
 
 import java.util.List;
 import java.util.stream.Stream;
+import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.Arguments;
@@ -120,15 +121,9 @@ class ArithmeticImmediateStrategyTest extends AbstractTest {
     var fieldAccess = createFieldAccess("fieldAccessValue",
         accessFunction);
     format.setFieldAccesses(new Format.FieldAccess[] {fieldAccess});
-    fieldAccess.setEncoding(new Function(createIdentifier("encodingFunctionName"),
-        new Parameter[]
-            {createParameter("parameterValue", DataType.unsignedInt(32))},
-        DataType.bits(20)));
 
     // When
-    strategy.generateEncoding(
-        new Parameter(createIdentifier("identifierValue"), DataType.unsignedInt(32)),
-        fieldAccess);
+    strategy.generateEncoding(fieldAccess);
 
     // Then
     assertNotNull(fieldAccess.encoding());
@@ -175,15 +170,9 @@ class ArithmeticImmediateStrategyTest extends AbstractTest {
     var fieldAccess = createFieldAccess("fieldAccessValue",
         accessFunction);
     format.setFieldAccesses(new Format.FieldAccess[] {fieldAccess});
-    fieldAccess.setEncoding(new Function(createIdentifier("encodingFunctionName"),
-        new Parameter[]
-            {createParameter("parameterValue", DataType.unsignedInt(32))},
-        DataType.bits(20)));
 
     // When
-    strategy.generateEncoding(
-        new Parameter(createIdentifier("identifierValue"), DataType.unsignedInt(32)),
-        fieldAccess);
+    strategy.generateEncoding(fieldAccess);
 
     // Then
     assertNotNull(fieldAccess.encoding());
@@ -192,12 +181,11 @@ class ArithmeticImmediateStrategyTest extends AbstractTest {
 
     // Checks whether the SUB has been inverted and a NegatedNode exists.
     var hasNegatedFuncParam = TreeMatcher.matches(fieldAccess.encoding().behavior().getNodes(),
-        new BuiltInMatcher(BuiltInTable.ADD, List.of(
-            new BuiltInMatcher(BuiltInTable.NEG,
-                new FuncParamMatcher(DataType.unsignedInt(32))),
+        new BuiltInMatcher(BuiltInTable.SUB, List.of(
             new ConstantValueMatcher(
                 Constant.Value.of(31, DataType.unsignedInt(32))
-            )
+            ),
+            new FuncParamMatcher(DataType.unsignedInt(32))
         )));
 
     assertThat(hasNegatedFuncParam).isNotEmpty();

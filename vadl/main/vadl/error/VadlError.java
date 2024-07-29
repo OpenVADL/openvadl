@@ -29,4 +29,17 @@ public class VadlError {
     this.description = description;
     this.tip = tip;
   }
+
+  @Override
+  public String toString() {
+    StringBuilder builder = new StringBuilder();
+    builder.append(reason).append(" at ").append(location.toConciseString());
+    if (description != null) {
+      builder.append("\n\t").append(description);
+    }
+    if (tip != null) {
+      builder.append("\n\t(Tip: ").append(tip).append(")");
+    }
+    return builder.toString();
+  }
 }

@@ -65,6 +65,7 @@ class CanoicalizationPassTest {
         Collections.emptyList(),
         Collections.emptyList(),
         Collections.emptyList(),
+        null,
         Collections.emptyList());
 
     viam.add(isa);

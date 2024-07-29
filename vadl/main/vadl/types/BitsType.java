@@ -1,5 +1,7 @@
 package vadl.types;
 
+import vadl.viam.Parameter;
+
 /**
  * An arbitrary sized sequence of Bits to represent anything.
  */
@@ -102,5 +104,9 @@ public class BitsType extends DataType {
   @Override
   public boolean equals(Object obj) {
     return this.getClass() == obj.getClass() && this.bitWidth == ((BitsType) obj).bitWidth;
+  }
+
+  public BitsType withBitWidth(int bitWidth) {
+    return new BitsType(bitWidth);
   }
 }

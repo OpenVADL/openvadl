@@ -26,10 +26,26 @@ public class Function extends Definition {
    * @param parameters The parameters of the Function.
    * @param returnType The return type of the Function.
    */
-  public Function(Identifier identifier, Parameter[] parameters,
+  public Function(Identifier identifier,
+                  Parameter[] parameters,
                   Type returnType) {
+    this(identifier, parameters, returnType, new Graph(identifier.name()));
+  }
+
+  /**
+   * Creates a new Function with the specified identifier, parameters, and return type.
+   *
+   * @param identifier The identifier of the Function.
+   * @param parameters The parameters of the Function.
+   * @param returnType The return type of the Function.
+   * @param behavior   The behavior of the Function.
+   */
+  public Function(Identifier identifier,
+                  Parameter[] parameters,
+                  Type returnType,
+                  Graph behavior) {
     super(identifier);
-    this.behavior = new Graph(identifier.name());
+    this.behavior = behavior;
     this.returnType = returnType;
     this.parameters = parameters;
   }

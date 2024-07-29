@@ -1,8 +1,10 @@
 package vadl.ast;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
 import java.util.Objects;
+import java.util.stream.Collectors;
 import javax.annotation.Nullable;
 import vadl.utils.SourceLocation;
 
@@ -12,6 +14,8 @@ import vadl.utils.SourceLocation;
  * anything.
  */
 abstract class Definition extends Node {
+  Annotations annotations = new Annotations();
+
   abstract <R> R accept(DefinitionVisitor<R> visitor);
 }
 
@@ -31,6 +35,10 @@ interface DefinitionVisitor<R> {
   R visit(RegisterFileDefinition definition);
 
   R visit(InstructionDefinition definition);
+
+  R visit(EncodingDefinition definition);
+
+  R visit(AssemblyDefinition definition);
 }
 
 class ConstantDefinition extends Definition {
@@ -57,11 +65,12 @@ class ConstantDefinition extends Definition {
 
   @Override
   SyntaxType syntaxType() {
-    return CoreType.IsaDefs();
+    return BasicSyntaxType.IsaDefs();
   }
 
   @Override
   void prettyPrint(int indent, StringBuilder builder) {
+    annotations.prettyPrint(indent, builder);
     builder.append(prettyIndentString(indent));
     builder.append("constant %s".formatted(identifier.name));
     if (typeAnnotation != null) {
@@ -93,14 +102,16 @@ class ConstantDefinition extends Definition {
     }
 
     ConstantDefinition that = (ConstantDefinition) o;
-    return Objects.equals(identifier, that.identifier)
+    return Objects.equals(annotations, that.annotations)
+        && Objects.equals(identifier, that.identifier)
         && Objects.equals(typeAnnotation, that.typeAnnotation)
         && Objects.equals(value, that.value);
   }
 
   @Override
   public int hashCode() {
-    int result = Objects.hashCode(identifier);
+    int result = Objects.hashCode(annotations);
+    result = 31 * result + Objects.hashCode(identifier);
     result = 31 * result + Objects.hashCode(typeAnnotation);
     result = 31 * result + Objects.hashCode(value);
     return result;
@@ -113,13 +124,24 @@ class FormatDefinition extends Definition {
   List<FormatField> fields;
   SourceLocation loc;
 
-  static class FormatField extends Node {
+  interface FormatField {
+    Identifier identifier();
+
+    void prettyPrint(int indent, StringBuilder builder);
+  }
+
+  static class RangeFormatField extends Node implements FormatField {
     Identifier identifier;
     List<RangeExpr> ranges;
 
-    public FormatField(Identifier identifier, List<RangeExpr> ranges) {
+    public RangeFormatField(Identifier identifier, List<RangeExpr> ranges) {
       this.identifier = identifier;
       this.ranges = ranges;
+    }
+
+    @Override
+    public Identifier identifier() {
+      return identifier;
     }
 
     @Override
@@ -129,11 +151,11 @@ class FormatDefinition extends Definition {
 
     @Override
     SyntaxType syntaxType() {
-      return CoreType.Invalid();
+      return BasicSyntaxType.Invalid();
     }
 
     @Override
-    void prettyPrint(int indent, StringBuilder builder) {
+    public void prettyPrint(int indent, StringBuilder builder) {
       identifier.prettyPrint(indent, builder);
       builder.append("\t [");
       ranges.get(0).prettyPrint(indent, builder);
@@ -157,7 +179,7 @@ class FormatDefinition extends Definition {
         return false;
       }
 
-      FormatField that = (FormatField) o;
+      RangeFormatField that = (RangeFormatField) o;
       return Objects.equals(identifier, that.identifier)
           && Objects.equals(ranges, that.ranges);
     }
@@ -166,6 +188,68 @@ class FormatDefinition extends Definition {
     public int hashCode() {
       int result = Objects.hashCode(identifier);
       result = 31 * result + Objects.hashCode(ranges);
+      return result;
+    }
+  }
+
+  static class TypedFormatField extends Node implements FormatField {
+    final Identifier identifier;
+    final TypeLiteral typeAnnotation;
+    final NestedSymbolTable symbolTable;
+
+    public TypedFormatField(Identifier identifier, TypeLiteral typeAnnotation,
+                            NestedSymbolTable symbolTable) {
+      this.identifier = identifier;
+      this.typeAnnotation = typeAnnotation;
+      this.symbolTable = symbolTable;
+    }
+
+    @Override
+    public Identifier identifier() {
+      return identifier;
+    }
+
+    @Override
+    SourceLocation location() {
+      return identifier.location().join(typeAnnotation.location());
+    }
+
+    @Override
+    SyntaxType syntaxType() {
+      return BasicSyntaxType.Invalid();
+    }
+
+    @Override
+    public void prettyPrint(int indent, StringBuilder builder) {
+      identifier.prettyPrint(indent, builder);
+      builder.append(" : ");
+      typeAnnotation.prettyPrint(indent, builder);
+    }
+
+    @Override
+    public String toString() {
+      return this.getClass().getSimpleName();
+    }
+
+    @Override
+    public boolean equals(Object o) {
+      if (this == o) {
+        return true;
+      }
+      if (o == null || getClass() != o.getClass()) {
+        return false;
+      }
+
+      TypedFormatField that = (TypedFormatField) o;
+      return Objects.equals(identifier, that.identifier)
+          && Objects.equals(typeAnnotation, that.typeAnnotation);
+    }
+
+    @Override
+    public int hashCode() {
+      int result = Objects.hashCode(identifier);
+      result = 31 * result + Objects.hashCode(typeAnnotation);
+      result = 31 * result + Objects.hashCode(symbolTable);
       return result;
     }
   }
@@ -185,11 +269,12 @@ class FormatDefinition extends Definition {
 
   @Override
   SyntaxType syntaxType() {
-    return CoreType.IsaDefs();
+    return BasicSyntaxType.IsaDefs();
   }
 
   @Override
   void prettyPrint(int indent, StringBuilder builder) {
+    annotations.prettyPrint(indent, builder);
     builder.append(prettyIndentString(indent));
     builder.append("format ");
     identifier.prettyPrint(indent, builder);
@@ -218,7 +303,7 @@ class FormatDefinition extends Definition {
     }
 
     builder.append(prettyIndentString(indent));
-    builder.append("}");
+    builder.append("}\n");
   }
 
   @Override
@@ -241,13 +326,16 @@ class FormatDefinition extends Definition {
     }
 
     FormatDefinition that = (FormatDefinition) o;
-    return identifier.equals(that.identifier) && typeAnnotation.equals(that.typeAnnotation)
+    return annotations.equals(that.annotations)
+        && identifier.equals(that.identifier)
+        && typeAnnotation.equals(that.typeAnnotation)
         && fields.equals(that.fields);
   }
 
   @Override
   public int hashCode() {
-    int result = identifier.hashCode();
+    int result = annotations.hashCode();
+    result = 31 * result + identifier.hashCode();
     result = 31 * result + typeAnnotation.hashCode();
     result = 31 * result + fields.hashCode();
     return result;
@@ -273,11 +361,12 @@ class InstructionSetDefinition extends Definition {
 
   @Override
   SyntaxType syntaxType() {
-    return CoreType.Invalid();
+    return BasicSyntaxType.Invalid();
   }
 
   @Override
   void prettyPrint(int indent, StringBuilder builder) {
+    annotations.prettyPrint(indent, builder);
     builder.append(prettyIndentString(indent));
     builder.append("instruction set architecture %s = {\n".formatted(identifier.name));
     for (Definition definition : definitions) {
@@ -306,13 +395,15 @@ class InstructionSetDefinition extends Definition {
     }
 
     var that = (InstructionSetDefinition) o;
-    return Objects.equals(identifier, that.identifier)
+    return Objects.equals(annotations, that.annotations)
+        && Objects.equals(identifier, that.identifier)
         && Objects.equals(definitions, that.definitions);
   }
 
   @Override
   public int hashCode() {
-    int result = Objects.hashCode(identifier);
+    int result = Objects.hashCode(annotations);
+    result = 31 * result + Objects.hashCode(identifier);
     result = 31 * result + Objects.hashCode(definitions);
     return result;
   }
@@ -344,11 +435,12 @@ class CounterDefinition extends Definition {
 
   @Override
   SyntaxType syntaxType() {
-    return CoreType.IsaDefs();
+    return BasicSyntaxType.IsaDefs();
   }
 
   @Override
   void prettyPrint(int indent, StringBuilder builder) {
+    annotations.prettyPrint(indent, builder);
     builder.append(prettyIndentString(indent));
     builder.append("%s counter ".formatted(kind.toString().toLowerCase(Locale.ENGLISH)));
     identifier.prettyPrint(indent, builder);
@@ -377,12 +469,16 @@ class CounterDefinition extends Definition {
     }
 
     CounterDefinition that = (CounterDefinition) o;
-    return kind == that.kind && identifier.equals(that.identifier) && type.equals(that.type);
+    return annotations.equals(that.annotations)
+        && kind == that.kind
+        && identifier.equals(that.identifier)
+        && type.equals(that.type);
   }
 
   @Override
   public int hashCode() {
-    int result = kind.hashCode();
+    int result = annotations.hashCode();
+    result = 31 * result + kind.hashCode();
     result = 31 * result + identifier.hashCode();
     result = 31 * result + type.hashCode();
     return result;
@@ -410,11 +506,12 @@ class MemoryDefinition extends Definition {
 
   @Override
   SyntaxType syntaxType() {
-    return CoreType.IsaDefs();
+    return BasicSyntaxType.IsaDefs();
   }
 
   @Override
   void prettyPrint(int indent, StringBuilder builder) {
+    annotations.prettyPrint(indent, builder);
     builder.append(prettyIndentString(indent));
     builder.append("memory ");
     identifier.prettyPrint(indent, builder);
@@ -445,13 +542,16 @@ class MemoryDefinition extends Definition {
     }
 
     MemoryDefinition that = (MemoryDefinition) o;
-    return identifier.equals(that.identifier) && addressType.equals(that.addressType)
+    return annotations.equals(that.annotations)
+        && identifier.equals(that.identifier)
+        && addressType.equals(that.addressType)
         && dataType.equals(that.dataType);
   }
 
   @Override
   public int hashCode() {
-    int result = identifier.hashCode();
+    int result = annotations.hashCode();
+    result = 31 * result + identifier.hashCode();
     result = 31 * result + addressType.hashCode();
     result = 31 * result + dataType.hashCode();
     return result;
@@ -477,11 +577,12 @@ class RegisterDefinition extends Definition {
 
   @Override
   SyntaxType syntaxType() {
-    return CoreType.IsaDefs();
+    return BasicSyntaxType.IsaDefs();
   }
 
   @Override
   void prettyPrint(int indent, StringBuilder builder) {
+    annotations.prettyPrint(indent, builder);
     builder.append(prettyIndentString(indent));
     builder.append("register ");
     identifier.prettyPrint(indent, builder);
@@ -510,12 +611,15 @@ class RegisterDefinition extends Definition {
     }
 
     RegisterDefinition that = (RegisterDefinition) o;
-    return identifier.equals(that.identifier) && type.equals(that.type);
+    return annotations.equals(that.annotations)
+        && identifier.equals(that.identifier)
+        && type.equals(that.type);
   }
 
   @Override
   public int hashCode() {
-    int result = identifier.hashCode();
+    int result = annotations.hashCode();
+    result = 31 * result + identifier.hashCode();
     result = 31 * result + type.hashCode();
     return result;
   }
@@ -543,11 +647,12 @@ class RegisterFileDefinition extends Definition {
 
   @Override
   SyntaxType syntaxType() {
-    return CoreType.IsaDefs();
+    return BasicSyntaxType.IsaDefs();
   }
 
   @Override
   void prettyPrint(int indent, StringBuilder builder) {
+    annotations.prettyPrint(indent, builder);
     builder.append(prettyIndentString(indent));
     builder.append("register file ");
     identifier.prettyPrint(indent, builder);
@@ -578,13 +683,16 @@ class RegisterFileDefinition extends Definition {
     }
 
     RegisterFileDefinition that = (RegisterFileDefinition) o;
-    return identifier.equals(that.identifier) && indexType.equals(that.indexType)
+    return annotations.equals(that.annotations)
+        && identifier.equals(that.identifier)
+        && indexType.equals(that.indexType)
         && registerType.equals(that.registerType);
   }
 
   @Override
   public int hashCode() {
-    int result = identifier.hashCode();
+    int result = annotations.hashCode();
+    result = 31 * result + identifier.hashCode();
     result = 31 * result + indexType.hashCode();
     result = 31 * result + registerType.hashCode();
     return result;
@@ -592,12 +700,12 @@ class RegisterFileDefinition extends Definition {
 }
 
 class InstructionDefinition extends Definition {
-  final Identifier identifier;
-  final Identifier typeIdentifier;
-  final BlockStatement behavior;
+  Node identifier;
+  Node typeIdentifier;
+  BlockStatement behavior;
   final SourceLocation loc;
 
-  InstructionDefinition(Identifier identifier, Identifier typeIdentifier, BlockStatement behavior,
+  InstructionDefinition(Node identifier, Node typeIdentifier, BlockStatement behavior,
                         SourceLocation location) {
     this.identifier = identifier;
     this.typeIdentifier = typeIdentifier;
@@ -612,13 +720,18 @@ class InstructionDefinition extends Definition {
 
   @Override
   SyntaxType syntaxType() {
-    return CoreType.IsaDefs();
+    return BasicSyntaxType.IsaDefs();
   }
 
   @Override
   void prettyPrint(int indent, StringBuilder builder) {
+    annotations.prettyPrint(indent, builder);
     builder.append(prettyIndentString(indent));
-    builder.append("instruction %s : %s = ".formatted(identifier.name, typeIdentifier.name));
+    builder.append("instruction ");
+    identifier.prettyPrint(indent, builder);
+    builder.append(" : ");
+    typeIdentifier.prettyPrint(indent, builder);
+    builder.append(" = ");
     behavior.prettyPrint(indent, builder);
     builder.append("\n");
   }
@@ -643,16 +756,209 @@ class InstructionDefinition extends Definition {
     }
 
     var that = (InstructionDefinition) o;
-    return Objects.equals(identifier, that.identifier)
+    return Objects.equals(annotations, that.annotations)
+        && Objects.equals(identifier, that.identifier)
         && Objects.equals(typeIdentifier, that.typeIdentifier)
         && Objects.equals(behavior, that.behavior);
   }
 
   @Override
   public int hashCode() {
-    int result = Objects.hashCode(identifier);
+    int result = Objects.hashCode(annotations);
+    result = 31 * result + Objects.hashCode(identifier);
     result = 31 * result + Objects.hashCode(typeIdentifier);
     result = 31 * result + Objects.hashCode(behavior);
     return result;
+  }
+}
+
+class EncodingDefinition extends Definition {
+  final Identifier instrIdentifier;
+  final List<FieldEncoding> fieldEncodings;
+  final SourceLocation loc;
+
+  EncodingDefinition(Identifier instrIdentifier, List<FieldEncoding> fieldEncodings,
+                     SourceLocation location) {
+    this.instrIdentifier = instrIdentifier;
+    this.fieldEncodings = fieldEncodings;
+    this.loc = location;
+  }
+
+  @Override
+  SourceLocation location() {
+    return loc;
+  }
+
+  @Override
+  SyntaxType syntaxType() {
+    return BasicSyntaxType.IsaDefs();
+  }
+
+  @Override
+  void prettyPrint(int indent, StringBuilder builder) {
+    annotations.prettyPrint(indent, builder);
+    builder.append(prettyIndentString(indent));
+    builder.append("encoding %s =\n".formatted(instrIdentifier.name));
+    builder.append(prettyIndentString(indent)).append("{ ");
+    boolean first = true;
+    for (FieldEncoding entry : fieldEncodings) {
+      if (!first) {
+        builder.append(prettyIndentString(indent)).append(", ");
+      }
+      entry.field.prettyPrint(0, builder);
+      builder.append(" = ");
+      entry.value.prettyPrint(0, builder);
+      builder.append("\n");
+      first = false;
+    }
+    builder.append(prettyIndentString(indent)).append("}\n");
+  }
+
+  @Override
+  <R> R accept(DefinitionVisitor<R> visitor) {
+    return visitor.visit(this);
+  }
+
+  @Override
+  public String toString() {
+    return this.getClass().getSimpleName();
+  }
+
+  @Override
+  public boolean equals(Object o) {
+    if (this == o) {
+      return true;
+    }
+    if (o == null || getClass() != o.getClass()) {
+      return false;
+    }
+
+    var that = (EncodingDefinition) o;
+    return Objects.equals(annotations, that.annotations)
+        && Objects.equals(instrIdentifier, that.instrIdentifier)
+        && Objects.equals(fieldEncodings, that.fieldEncodings);
+  }
+
+  @Override
+  public int hashCode() {
+    int result = Objects.hashCode(annotations);
+    result = 31 * result + Objects.hashCode(instrIdentifier);
+    result = 31 * result + Objects.hashCode(fieldEncodings);
+    return result;
+  }
+
+  record FieldEncoding(Identifier field, IntegerLiteral value) {
+  }
+}
+
+class AssemblyDefinition extends Definition {
+  final List<Identifier> identifiers;
+  final boolean isMnemonic;
+  final List<Node> segments;
+  final SourceLocation loc;
+
+  AssemblyDefinition(List<Identifier> identifiers, boolean isMnemonic, List<Node> segments,
+                     SourceLocation location) {
+    this.identifiers = identifiers;
+    this.isMnemonic = isMnemonic;
+    this.segments = segments;
+    this.loc = location;
+  }
+
+  @Override
+  SourceLocation location() {
+    return loc;
+  }
+
+  @Override
+  SyntaxType syntaxType() {
+    return BasicSyntaxType.IsaDefs();
+  }
+
+  @Override
+  void prettyPrint(int indent, StringBuilder builder) {
+    annotations.prettyPrint(indent, builder);
+    builder.append(prettyIndentString(indent));
+    builder.append("assembly ");
+    builder.append(identifiers.stream().map(id -> id.name).collect(Collectors.joining(", ")));
+    builder.append(" = (");
+    if (isMnemonic) {
+      builder.append("mnemonic");
+    }
+    var isFirst = !isMnemonic;
+    for (Node node : segments) {
+      if (!isFirst) {
+        builder.append(", ");
+      }
+      node.prettyPrint(indent + 1, builder);
+      isFirst = false;
+    }
+    builder.append(")\n");
+  }
+
+  @Override
+  <R> R accept(DefinitionVisitor<R> visitor) {
+    return visitor.visit(this);
+  }
+
+  @Override
+  public String toString() {
+    return this.getClass().getSimpleName();
+  }
+
+  @Override
+  public boolean equals(Object o) {
+    if (this == o) {
+      return true;
+    }
+    if (o == null || getClass() != o.getClass()) {
+      return false;
+    }
+
+    var that = (AssemblyDefinition) o;
+    return Objects.equals(annotations, that.annotations)
+        && Objects.equals(identifiers, that.identifiers)
+        && isMnemonic == that.isMnemonic
+        && Objects.equals(segments, that.segments);
+  }
+
+  @Override
+  public int hashCode() {
+    int result = Objects.hashCode(annotations);
+    result = 31 * result + Objects.hashCode(identifiers);
+    result = 31 * result + Boolean.hashCode(isMnemonic);
+    result = 31 * result + Objects.hashCode(segments);
+    return result;
+  }
+}
+
+record Annotations(List<Annotation> annotations) {
+  Annotations() {
+    this(new ArrayList<>());
+  }
+
+  void add(Annotation annotation) {
+    annotations.add(annotation);
+  }
+
+  void prettyPrint(int indent, StringBuilder builder) {
+    annotations.forEach(annotation -> annotation.prettyPrint(indent, builder));
+  }
+}
+
+record Annotation(Expr expr, @Nullable TypeLiteral type, @Nullable Identifier property) {
+  void prettyPrint(int indent, StringBuilder builder) {
+    builder.append(Node.prettyIndentString(indent));
+    builder.append('[');
+    expr.prettyPrint(indent, builder);
+    if (type != null) {
+      builder.append(" : ");
+      type.prettyPrint(indent, builder);
+    }
+    if (property != null) {
+      builder.append(' ');
+      property.prettyPrint(indent, builder);
+    }
+    builder.append(" ]");
   }
 }

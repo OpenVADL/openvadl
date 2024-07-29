@@ -1,5 +1,7 @@
 package vadl.ast;
 
+import static vadl.ast.AstTestUtils.verifyPrettifiedAst;
+
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 
@@ -8,13 +10,6 @@ import org.junit.jupiter.api.Test;
  * class only focuses on correct parsing and the two other tasks are tested in different classes.
  */
 public class ParserTest {
-
-  void verifyPrettifiedAst(Ast ast) {
-    var progPretty = ast.prettyPrint();
-    var astPretty = Assertions.assertDoesNotThrow(() -> VadlParser.parse(progPretty),
-        "Cannot parse prettified input");
-    Assertions.assertEquals(ast, astPretty, "Prettified input Ast does not match input Ast");
-  }
 
   @Test
   void parseEmpty() {

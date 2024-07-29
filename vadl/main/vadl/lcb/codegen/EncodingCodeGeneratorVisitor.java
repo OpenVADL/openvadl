@@ -3,6 +3,11 @@ package vadl.lcb.codegen;
 import static vadl.oop.CppTypeMap.getCppTypeNameByVadlType;
 
 import java.io.StringWriter;
+import vadl.oop.OopGraphNodeVisitor;
+import vadl.oop.passes.type_normalization.UpcastedTypeCastNode;
+import vadl.types.BitsType;
+import vadl.types.BoolType;
+import vadl.viam.ViamError;
 import vadl.viam.Constant;
 import vadl.viam.graph.GraphNodeVisitor;
 import vadl.viam.graph.control.AbstractBeginNode;
@@ -34,11 +39,15 @@ import vadl.viam.graph.dependency.WriteRegNode;
  * The tasks of this class is to generate the Cpp code for LLVM which
  * is called by tablegen to encode an immediate.
  */
-public class EncodingCodeGeneratorVisitor implements GraphNodeVisitor {
+public class EncodingCodeGeneratorVisitor implements OopGraphNodeVisitor {
   private final StringWriter writer;
 
   public EncodingCodeGeneratorVisitor(StringWriter writer) {
     this.writer = writer;
+  }
+
+  private String generateBitmask(int size) {
+    return String.format("(1U << %d) - 1", size);
   }
 
   @Override
@@ -46,7 +55,7 @@ public class EncodingCodeGeneratorVisitor implements GraphNodeVisitor {
     var constant = node.constant();
     constant.ensure(constant instanceof Constant.Value || constant instanceof Constant.Str,
         "Only value and string constant are currently supported for CPP emitting");
-    
+
     if (constant instanceof Constant.Value) {
       writer.write(((Constant.Value) constant).integer().toString(10));
     } else {
@@ -85,6 +94,24 @@ public class EncodingCodeGeneratorVisitor implements GraphNodeVisitor {
   public void visit(TypeCastNode typeCastNode) {
     writer.write("(" + getCppTypeNameByVadlType(typeCastNode.castType()) + ") ");
     visit(typeCastNode.value());
+  }
+
+  @Override
+  public void visit(UpcastedTypeCastNode upcastedTypeCastNode) {
+    var castType = upcastedTypeCastNode.castType();
+    var originalType = upcastedTypeCastNode.originalType();
+    writer.write("((" + getCppTypeNameByVadlType(castType) + ") ");
+    visit(upcastedTypeCastNode.value());
+
+    upcastedTypeCastNode.ensure(originalType instanceof BitsType
+        || originalType instanceof BoolType, "Type must be bits or bool");
+
+    if (originalType instanceof BitsType cast) {
+      writer.write(
+          ") & " + generateBitmask(cast.bitWidth()));
+    } else if (upcastedTypeCastNode.originalType() instanceof BoolType) {
+      writer.write(") & 1");
+    }
   }
 
   @Override
@@ -186,4 +213,5 @@ public class EncodingCodeGeneratorVisitor implements GraphNodeVisitor {
     // we do not want to create explicit casts by hand.
     expressionNode.accept(this);
   }
+
 }

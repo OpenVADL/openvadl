@@ -48,7 +48,7 @@ public class Ast {
 }
 
 abstract class Node {
-  protected String prettyIndentString(int indent) {
+  static String prettyIndentString(int indent) {
     var indentBy = 2;
     return " ".repeat(indentBy * indent);
   }
@@ -76,7 +76,7 @@ class Identifier extends Node {
 
   @Override
   SyntaxType syntaxType() {
-    return CoreType.Id();
+    return BasicSyntaxType.Id();
   }
 
   @Override
