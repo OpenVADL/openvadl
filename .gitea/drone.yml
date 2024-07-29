@@ -20,7 +20,9 @@ steps:
     commands:
       - ./gradlew checkstyleAll
   - name: test
-    image: c2.complang.tuwien.ac.at:5000/vadl-ci:f7222374638bccc355ba51bfcc2b17e9561204a4
+    image: quay.io/testcontainers/dind-drone-plugin
+    settings:
+      build_image: c2.complang.tuwien.ac.at:5000/vadl-ci:f7222374638bccc355ba51bfcc2b17e9561204a4
     commands:
       - ./gradlew test
     volumes:
