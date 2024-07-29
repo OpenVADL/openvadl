@@ -53,6 +53,7 @@ public class EncodingCodeGeneratorCppVerificationTest extends DockerExecutionTes
     var encodeFunction = encodeCodeGenerator.generateFunction(normalizedEncodeFunction);
 
     String cppCode = String.format("""
+        #include <cstdint>
                 
         %s 
                 

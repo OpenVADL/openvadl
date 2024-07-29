@@ -40,7 +40,7 @@ public abstract class GenericCppCodeGeneratorVisitor implements GraphNodeVisitor
   }
 
   protected String generateBitmask(int size) {
-    return String.format("(1U << %d) - 1", size);
+    return String.format("((1U << %d) - 1)", size);
   }
 
   @Override
@@ -89,7 +89,16 @@ public abstract class GenericCppCodeGeneratorVisitor implements GraphNodeVisitor
 
   @Override
   public void visit(SliceNode sliceNode) {
-    throw new RuntimeException("not implemented");
+    visit(sliceNode.value());
+    sliceNode.bitSlice().parts().forEach(part -> {
+      if (part.lsb() > 0) {
+        writer.write(
+            " & " + generateBitmask(part.msb()) + " & ~((1 << " + part.lsb() + ") - 1)");
+      } else {
+        writer.write(
+            " & " + generateBitmask(part.msb()));
+      }
+    });
   }
 
   @Override
