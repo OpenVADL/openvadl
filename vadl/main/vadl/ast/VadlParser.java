@@ -57,14 +57,9 @@ public class VadlParser {
                 + " but maybe not what you intended." : null)
         );
       }
-      ;
     }
 
-    try {
-      parser.symbolTable.verifyAllUsages();
-    } catch (VadlException e) {
-      errors.addAll(e.errors);
-    }
+    errors.addAll(parser.symbolTable.validate());
 
     if (!errors.isEmpty()) {
       throw new VadlException(errors);

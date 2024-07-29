@@ -20,7 +20,7 @@ public class Main {
         model addOne(target: Ex) : Ex = {
           1 + $target
         }
-                
+
         constant two = $addOne(1)
         constant three = $addOne(2)
         constant four = $addOne(1 + 2)

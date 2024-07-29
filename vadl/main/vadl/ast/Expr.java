@@ -19,15 +19,25 @@ interface ExprVisitor<R> {
 
   R visit(IntegerLiteral expr);
 
-  R visit(PlaceHolderExpr expr);
+  R visit(StringLiteral expr);
+
+  R visit(PlaceholderExpr expr);
+
+  R visit(MacroInstanceExpr expr);
 
   R visit(RangeExpr expr);
 
   R visit(TypeLiteral expr);
 
-  R visit(Variable expr);
+  R visit(IdentifierChain expr);
 
   R visit(UnaryExpr expr);
+
+  R visit(CallExpr expr);
+
+  R visit(IfExpr expr);
+
+  R visit(LetExpr expr);
 }
 
 /**
@@ -197,8 +207,8 @@ class BinaryExpr extends Expr {
    * 1   2            2   3
    * </pre>
    *
-   * @param   expr A left-sided binary expression tree.
-   * @return  the root of the expression tree in operator precedence order
+   * @param expr A left-sided binary expression tree.
+   * @return the root of the expression tree in operator precedence order
    */
   static BinaryExpr reorder(BinaryExpr expr) {
     root = expr;
@@ -232,7 +242,7 @@ class BinaryExpr extends Expr {
 
   @Override
   SyntaxType syntaxType() {
-    return CoreType.Bin();
+    return BasicSyntaxType.Bin();
   }
 
   @Override
@@ -295,7 +305,7 @@ class UnaryExpr extends Expr {
 
   @Override
   SyntaxType syntaxType() {
-    return CoreType.UnOp();
+    return BasicSyntaxType.UnOp();
   }
 
   @Override
@@ -336,11 +346,24 @@ class UnaryExpr extends Expr {
 }
 
 class IntegerLiteral extends Expr {
+  String token;
   long number;
   SourceLocation loc;
 
-  public IntegerLiteral(long number, SourceLocation loc) {
-    this.number = number;
+  private static long parse(String token) {
+    token = token.replace("'", "");
+    if (token.startsWith("0x")) {
+      return Long.parseLong(token.substring(2), 16);
+    } else if (token.startsWith("0b")) {
+      return Long.parseLong(token.substring(2), 2);
+    } else {
+      return Long.parseLong(token);
+    }
+  }
+
+  public IntegerLiteral(String token, SourceLocation loc) {
+    this.token = token;
+    this.number = parse(token);
     this.loc = loc;
   }
 
@@ -351,12 +374,12 @@ class IntegerLiteral extends Expr {
 
   @Override
   SyntaxType syntaxType() {
-    return CoreType.Int();
+    return BasicSyntaxType.Int();
   }
 
   @Override
   void prettyPrint(int indent, StringBuilder builder) {
-    builder.append(number);
+    builder.append(token);
   }
 
   @Override
@@ -366,7 +389,7 @@ class IntegerLiteral extends Expr {
 
   @Override
   public String toString() {
-    return "%s number: %d".formatted(this.getClass().getSimpleName(), number);
+    return "%s literal: %s (%d)".formatted(this.getClass().getSimpleName(), token, number);
   }
 
   @Override
@@ -379,12 +402,69 @@ class IntegerLiteral extends Expr {
     }
 
     IntegerLiteral that = (IntegerLiteral) o;
-    return number == that.number;
+    return number == that.number && token.equals(that.token);
   }
 
   @Override
   public int hashCode() {
-    return Long.hashCode(number);
+    int result = Long.hashCode(number);
+    result = 31 * result + Objects.hashCode(token);
+    return result;
+  }
+}
+
+class StringLiteral extends Expr {
+  String token;
+  String value;
+  SourceLocation loc;
+
+  public StringLiteral(String token, SourceLocation loc) {
+    this.token = token;
+    this.value = StringLiteralParser.parseString(token.substring(1, token.length() - 1));
+    this.loc = loc;
+  }
+
+  @Override
+  SourceLocation location() {
+    return loc;
+  }
+
+  @Override
+  SyntaxType syntaxType() {
+    return BasicSyntaxType.Str();
+  }
+
+  @Override
+  void prettyPrint(int indent, StringBuilder builder) {
+    builder.append(token);
+  }
+
+  @Override
+  <R> R accept(ExprVisitor<R> visitor) {
+    return visitor.visit(this);
+  }
+
+  @Override
+  public String toString() {
+    return "%s literal: \"%s\" (%s)".formatted(this.getClass().getSimpleName(), value, token);
+  }
+
+  @Override
+  public boolean equals(Object o) {
+    if (this == o) {
+      return true;
+    }
+    if (o == null || getClass() != o.getClass()) {
+      return false;
+    }
+
+    StringLiteral that = (StringLiteral) o;
+    return token.equals(that.token);
+  }
+
+  @Override
+  public int hashCode() {
+    return token.hashCode();
   }
 }
 
@@ -392,12 +472,65 @@ class IntegerLiteral extends Expr {
  * An internal temporary placeholder node inside model definitions.
  * This node should never leave the parser.
  */
-class PlaceHolderExpr extends Expr {
+class PlaceholderExpr extends Expr {
+  IdentifierChain identifierChain;
+  SourceLocation loc;
+
+  public PlaceholderExpr(IdentifierChain identifierChain, SourceLocation loc) {
+    this.identifierChain = identifierChain;
+    this.loc = loc;
+  }
+
+  @Override
+  <R> R accept(ExprVisitor<R> visitor) {
+    return visitor.visit(this);
+  }
+
+  @Override
+  SourceLocation location() {
+    return loc;
+  }
+
+  @Override
+  SyntaxType syntaxType() {
+    return BasicSyntaxType.Invalid();
+  }
+
+  @Override
+  void prettyPrint(int indent, StringBuilder builder) {
+    builder.append("$");
+    identifierChain.prettyPrint(indent, builder);
+  }
+
+  @Override
+  public boolean equals(Object o) {
+    if (this == o) {
+      return true;
+    }
+    if (o == null || getClass() != o.getClass()) {
+      return false;
+    }
+
+    PlaceholderExpr that = (PlaceholderExpr) o;
+    return identifierChain.equals(that.identifierChain);
+  }
+
+  @Override
+  public int hashCode() {
+    return identifierChain.hashCode();
+  }
+}
+
+/**
+ * An internal temporary placeholder of macro instantiations.
+ * This node should never leave the parser.
+ */
+class MacroInstanceExpr extends Expr {
   Identifier identifier;
   List<Node> arguments;
   SourceLocation loc;
 
-  public PlaceHolderExpr(Identifier identifier, List<Node> arguments, SourceLocation loc) {
+  public MacroInstanceExpr(Identifier identifier, List<Node> arguments, SourceLocation loc) {
     this.identifier = identifier;
     this.arguments = arguments;
     this.loc = loc;
@@ -415,7 +548,7 @@ class PlaceHolderExpr extends Expr {
 
   @Override
   SyntaxType syntaxType() {
-    return CoreType.Invalid();
+    return BasicSyntaxType.Invalid();
   }
 
   @Override
@@ -433,13 +566,16 @@ class PlaceHolderExpr extends Expr {
       return false;
     }
 
-    PlaceHolderExpr that = (PlaceHolderExpr) o;
-    return identifier.equals(that.identifier);
+    MacroInstanceExpr that = (MacroInstanceExpr) o;
+    return identifier.equals(that.identifier)
+        && arguments.equals(that.arguments);
   }
 
   @Override
   public int hashCode() {
-    return identifier.hashCode();
+    int result = identifier.hashCode();
+    result = 31 * result + arguments.hashCode();
+    return result;
   }
 }
 
@@ -520,7 +656,7 @@ class RangeExpr extends Expr {
 
   @Override
   SyntaxType syntaxType() {
-    return CoreType.Invalid();
+    return BasicSyntaxType.Invalid();
   }
 
   @Override
@@ -587,7 +723,7 @@ class TypeLiteral extends Expr {
 
   @Override
   SyntaxType syntaxType() {
-    return CoreType.Invalid();
+    return BasicSyntaxType.Invalid();
   }
 
   @Override
@@ -634,26 +770,36 @@ class TypeLiteral extends Expr {
   }
 }
 
-class Variable extends Expr {
+class IdentifierChain extends Expr {
   Identifier identifier;
+  @Nullable
+  IdentifierChain next;
 
-  public Variable(Identifier identifier) {
+  public IdentifierChain(Identifier identifier, @Nullable IdentifierChain next) {
     this.identifier = identifier;
+    this.next = next;
   }
 
   @Override
   SourceLocation location() {
+    if (next != null) {
+      return identifier.location().join(next.location());
+    }
     return identifier.location();
   }
 
   @Override
   SyntaxType syntaxType() {
-    return CoreType.Id();
+    return BasicSyntaxType.Id();
   }
 
   @Override
   void prettyPrint(int indent, StringBuilder builder) {
     identifier.prettyPrint(indent, builder);
+    if (next != null) {
+      builder.append(".");
+      next.prettyPrint(indent, builder);
+    }
   }
 
   @Override
@@ -675,12 +821,208 @@ class Variable extends Expr {
       return false;
     }
 
-    Variable that = (Variable) o;
-    return identifier.equals(that.identifier);
+    IdentifierChain that = (IdentifierChain) o;
+    return identifier.equals(that.identifier) && Objects.equals(next, that.next);
   }
 
   @Override
   public int hashCode() {
-    return Objects.hash(identifier);
+    int result = identifier.hashCode();
+    result = 31 * result + Objects.hashCode(next);
+    return result;
+  }
+}
+
+class CallExpr extends Expr {
+  Identifier identifier;
+  Expr argument;
+
+  public CallExpr(Identifier identifier, Expr argument) {
+    this.identifier = identifier;
+    this.argument = argument;
+  }
+
+  @Override
+  SourceLocation location() {
+    return identifier.location().join(argument.location());
+  }
+
+  @Override
+  SyntaxType syntaxType() {
+    return BasicSyntaxType.Id();
+  }
+
+  @Override
+  void prettyPrint(int indent, StringBuilder builder) {
+    identifier.prettyPrint(indent, builder);
+    builder.append("(");
+    argument.prettyPrint(indent, builder);
+    builder.append(")");
+  }
+
+  @Override
+  <R> R accept(ExprVisitor<R> visitor) {
+    return visitor.visit(this);
+  }
+
+  @Override
+  public String toString() {
+    return this.getClass().getSimpleName();
+  }
+
+  @Override
+  public boolean equals(Object o) {
+    if (this == o) {
+      return true;
+    }
+    if (o == null || getClass() != o.getClass()) {
+      return false;
+    }
+
+    CallExpr that = (CallExpr) o;
+    return identifier.equals(that.identifier) && argument.equals(that.argument);
+  }
+
+  @Override
+  public int hashCode() {
+    int result = identifier.hashCode();
+    result = 31 * result + Objects.hashCode(argument);
+    return result;
+  }
+}
+
+class IfExpr extends Expr {
+  Expr condition;
+  Expr thenExpr;
+  Expr elseExpr;
+  SourceLocation location;
+
+  IfExpr(Expr condition, Expr thenExpr, Expr elseExpr, SourceLocation location) {
+    this.condition = condition;
+    this.thenExpr = thenExpr;
+    this.elseExpr = elseExpr;
+    this.location = location;
+  }
+
+  @Override
+  SourceLocation location() {
+    return location;
+  }
+
+  @Override
+  SyntaxType syntaxType() {
+    return BasicSyntaxType.Ex();
+  }
+
+  @Override
+  void prettyPrint(int indent, StringBuilder builder) {
+    builder.append(prettyIndentString(indent));
+    builder.append("if ");
+    condition.prettyPrint(indent, builder);
+    builder.append(" then\n");
+    thenExpr.prettyPrint(indent + 1, builder);
+    builder.append("\n").append(prettyIndentString(indent)).append("else\n");
+    elseExpr.prettyPrint(indent + 1, builder);
+  }
+
+  @Override
+  <R> R accept(ExprVisitor<R> visitor) {
+    return visitor.visit(this);
+  }
+
+  @Override
+  public String toString() {
+    return this.getClass().getSimpleName();
+  }
+
+  @Override
+  public boolean equals(Object o) {
+    if (this == o) {
+      return true;
+    }
+    if (o == null || getClass() != o.getClass()) {
+      return false;
+    }
+
+    IfExpr that = (IfExpr) o;
+    return condition.equals(that.condition)
+        && thenExpr.equals(that.thenExpr)
+        && elseExpr.equals(that.elseExpr);
+  }
+
+  @Override
+  public int hashCode() {
+    int result = condition.hashCode();
+    result = 31 * result + Objects.hashCode(thenExpr);
+    result = 31 * result + Objects.hashCode(elseExpr);
+    return result;
+  }
+}
+
+class LetExpr extends Expr {
+  Identifier identifier;
+  Expr valueExpr;
+  Expr body;
+  SourceLocation location;
+
+  LetExpr(Identifier identifier, Expr valueExpr, Expr body, SourceLocation location) {
+    this.identifier = identifier;
+    this.valueExpr = valueExpr;
+    this.body = body;
+    this.location = location;
+  }
+
+  @Override
+  SourceLocation location() {
+    return location;
+  }
+
+  @Override
+  SyntaxType syntaxType() {
+    return BasicSyntaxType.Ex();
+  }
+
+  @Override
+  void prettyPrint(int indent, StringBuilder builder) {
+    builder.append(prettyIndentString(indent));
+    builder.append("let ");
+    identifier.prettyPrint(indent, builder);
+    builder.append(" = ");
+    valueExpr.prettyPrint(indent + 1, builder);
+    builder.append(" in\n");
+    body.prettyPrint(indent + 1, builder);
+  }
+
+  @Override
+  <R> R accept(ExprVisitor<R> visitor) {
+    return visitor.visit(this);
+  }
+
+  @Override
+  public String toString() {
+    return this.getClass().getSimpleName();
+  }
+
+  @Override
+  public boolean equals(Object o) {
+    if (this == o) {
+      return true;
+    }
+    if (o == null || getClass() != o.getClass()) {
+      return false;
+    }
+
+    LetExpr that = (LetExpr) o;
+    return identifier.equals(that.identifier)
+        && valueExpr.equals(that.valueExpr)
+        && body.equals(that.body);
+  }
+
+  @Override
+  public int hashCode() {
+    int result = identifier.hashCode();
+    result = 31 * result + Objects.hashCode(valueExpr);
+    result = 31 * result + Objects.hashCode(body);
+    return result;
   }
 }

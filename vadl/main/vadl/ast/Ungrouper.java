@@ -29,7 +29,17 @@ class Ungrouper implements ExprVisitor<Expr> {
   }
 
   @Override
-  public Expr visit(PlaceHolderExpr expr) {
+  public Expr visit(StringLiteral expr) {
+    return expr;
+  }
+
+  @Override
+  public Expr visit(PlaceholderExpr expr) {
+    return expr;
+  }
+
+  @Override
+  public Expr visit(MacroInstanceExpr expr) {
     return expr;
   }
 
@@ -46,7 +56,7 @@ class Ungrouper implements ExprVisitor<Expr> {
   }
 
   @Override
-  public Expr visit(Variable expr) {
+  public Expr visit(IdentifierChain expr) {
     return expr;
   }
 
@@ -54,5 +64,30 @@ class Ungrouper implements ExprVisitor<Expr> {
   public Expr visit(UnaryExpr expr) {
     expr.operand = expr.operand.accept(this);
     return expr;
+  }
+
+  @Override
+  public Expr visit(CallExpr expr) {
+    return new CallExpr(expr.identifier, expr.argument.accept(this));
+  }
+
+  @Override
+  public Expr visit(IfExpr expr) {
+    return new IfExpr(
+        expr.condition.accept(this),
+        expr.thenExpr.accept(this),
+        expr.elseExpr.accept(this),
+        expr.location
+    );
+  }
+
+  @Override
+  public Expr visit(LetExpr expr) {
+    return new LetExpr(
+        expr.identifier,
+        expr.valueExpr.accept(this),
+        expr.body.accept(this),
+        expr.location
+    );
   }
 }
