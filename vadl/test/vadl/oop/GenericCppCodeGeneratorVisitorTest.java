@@ -138,4 +138,18 @@ class GenericCppCodeGeneratorVisitorTest extends AbstractTest {
     // Then
     assertEquals("1 + 1", writer.toString());
   }
+
+  @Test
+  void builtIn_shouldGenerateCpp_whenOnlyOneArgument() {
+    var constant = new Constant.Value(BigInteger.ONE, DataType.unsignedInt(32));
+    var node = new ConstantNode(constant);
+    var builtIn =
+        new BuiltInCall(BuiltInTable.NEG, new NodeList<>(node), DataType.unsignedInt(32));
+
+    // When
+    visitor.visit(builtIn);
+
+    // Then
+    assertEquals("-1", writer.toString());
+  }
 }
