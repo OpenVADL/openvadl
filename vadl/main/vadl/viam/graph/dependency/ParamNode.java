@@ -1,6 +1,5 @@
 package vadl.viam.graph.dependency;
 
-import vadl.oop.SymbolTable;
 import vadl.types.Type;
 
 /**

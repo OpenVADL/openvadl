@@ -1,10 +1,8 @@
 package vadl.viam.matching;
 
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
-import java.util.Map;
 import java.util.Objects;
 import java.util.stream.Stream;
 import vadl.viam.graph.Node;

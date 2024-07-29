@@ -1,21 +1,13 @@
 package vadl.viam.graph.dependency;
 
-import static vadl.oop.CppTypeMap.getCppTypeNameByVadlType;
-
 import java.util.List;
 import vadl.javaannotations.viam.DataValue;
-import vadl.oop.SymbolTable;
-import vadl.types.BoolType;
 import vadl.types.DataType;
-import vadl.types.SIntType;
 import vadl.types.Type;
-import vadl.types.UIntType;
 import vadl.viam.Constant;
 import vadl.viam.graph.Canonicalizable;
 import vadl.viam.graph.GraphNodeVisitor;
 import vadl.viam.graph.Node;
-import vadl.viam.graph.NodeList;
-import vadl.viam.graph.control.InstrCallNode;
 
 
 /**

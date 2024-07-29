@@ -11,7 +11,6 @@ import vadl.types.BitsType;
 import vadl.types.BuiltInTable;
 import vadl.types.DataType;
 import vadl.types.Type;
-import vadl.utils.SourceLocation;
 import vadl.viam.Assembly;
 import vadl.viam.Constant;
 import vadl.viam.Encoding;

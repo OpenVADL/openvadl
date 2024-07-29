@@ -2,19 +2,15 @@ package vadl.types;
 
 import static org.slf4j.LoggerFactory.getLogger;
 
-import java.math.BigInteger;
 import java.util.Arrays;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Optional;
 import java.util.function.BiFunction;
-import java.util.function.BinaryOperator;
 import java.util.function.Function;
 import java.util.stream.Stream;
-import javassist.bytecode.ConstantAttribute;
 import javax.annotation.Nullable;
 import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import vadl.viam.Constant;
 import vadl.viam.ViamError;
 

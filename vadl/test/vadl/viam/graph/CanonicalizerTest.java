@@ -4,7 +4,6 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static vadl.viam.helper.TestGraphUtils.binaryOp;
 import static vadl.viam.helper.TestGraphUtils.bits;
 import static vadl.viam.helper.TestGraphUtils.cast;
-import static vadl.viam.helper.TestGraphUtils.intS;
 
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
@@ -12,7 +11,6 @@ import org.junit.jupiter.api.Test;
 import vadl.types.BuiltInTable;
 import vadl.types.Type;
 import vadl.viam.Constant;
-import vadl.viam.graph.dependency.BuiltInCall;
 import vadl.viam.graph.dependency.ConstantNode;
 import vadl.viam.graph.visualize.DotGraphVisualizer;
 import vadl.viam.helper.TestGraph;

@@ -3,7 +3,6 @@ package vadl.viam.passes.constant_folding;
 import java.util.Optional;
 import vadl.viam.graph.Graph;
 import vadl.viam.graph.Node;
-import vadl.viam.graph.dependency.ConstantNode;
 import vadl.viam.passes.Pair;
 
 /**

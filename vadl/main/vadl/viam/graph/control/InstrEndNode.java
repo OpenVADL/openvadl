@@ -4,7 +4,6 @@ package vadl.viam.graph.control;
 import vadl.viam.graph.GraphNodeVisitor;
 import vadl.viam.graph.Node;
 import vadl.viam.graph.NodeList;
-import vadl.viam.graph.dependency.ExpressionNode;
 import vadl.viam.graph.dependency.SideEffectNode;
 
 /**

@@ -5,10 +5,8 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 
 import java.math.BigInteger;
-import java.util.Collections;
 import org.junit.jupiter.api.Test;
 import vadl.AbstractTest;
-import vadl.gcb.passes.encoding.GenerateFieldAccessEncodingFunctionPass;
 import vadl.types.BitsType;
 import vadl.types.BuiltInTable;
 import vadl.types.DataType;

@@ -1,7 +1,6 @@
 package vadl.viam.graph.dependency;
 
 import java.util.List;
-import java.util.stream.Collectors;
 import vadl.javaannotations.viam.DataValue;
 import vadl.types.Type;
 import vadl.viam.Function;

@@ -5,7 +5,6 @@ import static vadl.utils.BigIntUtils.mask;
 import static vadl.utils.BigIntUtils.twosComplement;
 
 import com.google.errorprone.annotations.FormatMethod;
-import com.google.errorprone.annotations.FormatString;
 import java.math.BigInteger;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -23,7 +22,6 @@ import vadl.types.BoolType;
 import vadl.types.DataType;
 import vadl.types.TupleType;
 import vadl.types.Type;
-import vadl.utils.BigIntUtils;
 import vadl.utils.StreamUtils;
 
 /**

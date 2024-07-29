@@ -2,7 +2,6 @@ package vadl.gcb.passes.encoding.strategies;
 
 import vadl.viam.Format;
 import vadl.viam.Parameter;
-import vadl.viam.graph.Graph;
 
 /**
  * The implementor of this interface can generate a field access encoding function.

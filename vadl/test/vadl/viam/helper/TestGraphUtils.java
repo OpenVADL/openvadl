@@ -1,6 +1,5 @@
 package vadl.viam.helper;
 
-import java.math.BigInteger;
 import vadl.types.BuiltInTable;
 import vadl.types.Type;
 import vadl.viam.Constant;

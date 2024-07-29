@@ -8,9 +8,6 @@ import vadl.viam.RegisterFile;
 import vadl.viam.Resource;
 import vadl.viam.graph.GraphNodeVisitor;
 import vadl.viam.graph.Node;
-import vadl.viam.graph.NodeList;
-import vadl.viam.graph.control.IfNode;
-import vadl.viam.graph.control.InstrCallNode;
 
 /**
  * A read of a register file in the behaviour graph. It takes one expression node as input

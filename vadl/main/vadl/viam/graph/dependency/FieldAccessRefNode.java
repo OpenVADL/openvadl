@@ -2,13 +2,9 @@ package vadl.viam.graph.dependency;
 
 import java.util.List;
 import vadl.javaannotations.viam.DataValue;
-import vadl.oop.SymbolTable;
 import vadl.viam.Format;
 import vadl.viam.graph.GraphNodeVisitor;
 import vadl.viam.graph.Node;
-import vadl.viam.graph.NodeList;
-import vadl.viam.graph.control.IfNode;
-import vadl.viam.graph.control.InstrCallNode;
 
 /**
  * Represents a node that holds a reference to a format field access.

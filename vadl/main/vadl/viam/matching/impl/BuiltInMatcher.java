@@ -2,10 +2,7 @@ package vadl.viam.matching.impl;
 
 import com.google.common.collect.Streams;
 import java.util.List;
-import java.util.function.BiFunction;
-import java.util.stream.Stream;
 import vadl.types.BuiltInTable;
-import vadl.viam.Parameter;
 import vadl.viam.graph.Node;
 import vadl.viam.graph.dependency.BuiltInCall;
 import vadl.viam.matching.Matcher;

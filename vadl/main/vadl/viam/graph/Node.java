@@ -227,7 +227,7 @@ public abstract class Node {
   /**
    * Applies visitor output on all successors.
    * This is unsafe, as it may lead to an inconsistent graph, if the predecessors are not
-   * updated accordingly. Use {@link Node#applyOnSucessors(GraphVisitor.Applier)} to
+   * updated accordingly. Use {@link Node#applyOnSuccessors(GraphVisitor.Applier)} to
    * let this be handled automatically.
    *
    * <p><b>IMPORTANT</b>:
@@ -275,7 +275,7 @@ public abstract class Node {
    * If the new successor node differs from the old one, this method will automatically handle
    * the usage transfer.
    */
-  public final void applyOnSuccessor(GraphVisitor.Applier<Node> visitor) {
+  public final void applyOnSuccessors(GraphVisitor.Applier<Node> visitor) {
     applyOnSuccessorsUnsafe((self, oldSucc) -> {
       // produce new successor
       var newSucc = visitor.applyNullable(self, oldSucc);
@@ -386,7 +386,7 @@ public abstract class Node {
     if (predecessor != null) {
       // Replace the successor of predecessor
       // so predecessors successor will be replacement instead of this
-      predecessor.applyOnSuccessor((pred, succ) -> {
+      predecessor.applyOnSuccessors((pred, succ) -> {
         if (succ == this) {
           return replacement;
         }

@@ -1,7 +1,6 @@
 package vadl.lcb.lib.Target.MCTargetDesc;
 
 import java.io.IOException;
-import java.io.StringWriter;
 import java.util.List;
 import java.util.Map;
 import vadl.gcb.valuetypes.ProcessorName;
