@@ -335,30 +335,39 @@ public abstract class Node {
     if (graph != null) {
       graph.remove(this);
     }
-    deleteObsoleteChildrenOf(this);
+    deleteObsoleteChildrenOf();
   }
 
   /**
    * Delete all children (inputs and successors) that are not used (no usages and predecessor).
-   *
-   * @param almostDeletedNode
    */
-  private void deleteObsoleteChildrenOf(Node almostDeletedNode) {
+  private void deleteObsoleteChildrenOf() {
+    ensure(isDeleted(), "Deletion of obsolete children is only possible for deleted nodes");
+    var deletedNode = this;
     Consumer<Node> tryToDelete = (Node i) -> {
       var usagesOk = i.usages.isEmpty()
-          || (i.usageCount() == 1 && i.usages.get(0) == almostDeletedNode);
-      var predecessorOk = i.predecessor == null || i.predecessor == almostDeletedNode;
+          || (i.usageCount() == 1 && i.usages.get(0) == deletedNode);
+      var predecessorOk = i.predecessor == null || i.predecessor == deletedNode;
       if (usagesOk && predecessorOk && i.isActiveIn(graph)) {
         i.safeDelete();
       }
     };
 
-    almostDeletedNode.inputs()
+    deletedNode.inputs()
         .forEach(tryToDelete);
-    almostDeletedNode.successors()
+    deletedNode.successors()
         .forEach(tryToDelete);
   }
 
+  /**
+   * Replaces this node by the given node.
+   * If the given node is uninitialized, it is getting added to the graph first.
+   *
+   * <p>This method also handles replacement of usages and predecessor, so no further
+   * handling is required.</p>
+   *
+   * @param replacement node that replaces this node
+   */
   public void replaceAndDelete(Node replacement) {
     if (replacement.isUninitialized() && graph != null) {
       replacement = graph.addWithInputs(replacement);
@@ -369,6 +378,12 @@ public abstract class Node {
     this.safeDelete();
   }
 
+  /**
+   * Replaces this node at all usages.
+   * I.e., every node that uses this node as input will afterwards use the replacement as input.
+   *
+   * @param replacement new input of this node's usages.
+   */
   public void replaceAtAllUsages(Node replacement) {
     checkReplaceWith(replacement);
     for (var u : this.usages().toList()) {
@@ -377,7 +392,9 @@ public abstract class Node {
   }
 
   /**
-   * Sets the replacement as successor of the predecessor of this.
+   * Sets the replacement as successor of this node's predecessor.
+   * So the node that has this node as successor will use the replacement node as successor
+   * after the operation is done.
    *
    * @param replacement that replaces this node.
    */
@@ -399,9 +416,6 @@ public abstract class Node {
 
   /**
    * Checks if it is valid to replace the node with the given node.
-   *
-   * @param node
-   * @return
    */
   private boolean checkReplaceWith(Node node) {
     ensure(node != this, "cannot replace node with itself");
@@ -500,7 +514,8 @@ public abstract class Node {
    *            oldSucc      newSucc  |         oldSucc     newSucc
    * </pre>
    *
-   * @param oldSuccessor will <b>not</b> have {@code this} as the predecessor after operation completed
+   * @param oldSuccessor will <b>not</b> have {@code this} as the predecessor after operation
+   *                     completed
    * @param newSuccessor will have {@code this} as the predecessor after operation completed
    */
   private void updatePredecessor(@Nullable Node oldSuccessor, Node newSuccessor) {

@@ -305,8 +305,8 @@ public class Graph {
     for (var input : node.inputList()) {
       if (!input.isActiveIn(this)) {
         throw new ViamGraphError(
-            "Failed to add `%s` as its input node `%s` is not yet initialized. You might want use Graph#addWithInputs()",
-            node, input)
+            "Failed to add `%s` as its input node `%s` is not yet initialized. %s",
+            node, input, "You might want use Graph#addWithInputs()")
             .addContext(node)
             .addContext(this)
             .shrinkStacktrace(1);
@@ -368,6 +368,9 @@ public class Graph {
     return graph;
   }
 
+  /**
+   * Returns the dot representation of this graph as String.
+   */
   public String dotGraph() {
     return new DotGraphVisualizer()
         .load(this)
