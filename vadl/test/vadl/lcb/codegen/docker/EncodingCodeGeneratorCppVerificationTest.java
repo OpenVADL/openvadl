@@ -47,9 +47,10 @@ public class EncodingCodeGeneratorCppVerificationTest extends DockerExecutionTes
 
     // We are testing that the generation is correct.
     strategy.generateEncoding(fieldAccess);
+    var normalizedEncodeFunction = CppTypeNormalizationPass.makeTypesCppConform(fieldAccess.encoding());
 
     var decodeFunction = decodeCodeGenerator.generateFunction(normalizedDecodeFunction);
-    var encodeFunction = encodeCodeGenerator.generateFunction(fieldAccess.encoding());
+    var encodeFunction = encodeCodeGenerator.generateFunction(normalizedEncodeFunction);
 
     String cppCode = String.format("""
                 
