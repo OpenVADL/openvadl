@@ -29,7 +29,7 @@ public abstract class DataType extends Type {
   public abstract boolean canBeCastTo(DataType other);
 
   /**
-   * Checks if this type can be implicitly cast to other type.
+   * Checks if this type can be implicitly cast to another type.
    *
    * <p>The following implicit casting rules are defined:
    * <li>{@code Bits<1> <=> Bool}</li>
@@ -49,8 +49,8 @@ public abstract class DataType extends Type {
     return false;
   }
 
-  public final boolean isSigned() {
-    return !(this instanceof UIntType);
+  public boolean isSigned() {
+    return false;
   }
 
 }

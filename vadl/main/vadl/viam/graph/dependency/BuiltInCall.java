@@ -80,8 +80,8 @@ public class BuiltInCall extends AbstractFunctionCallNode implements Canonicaliz
 
           if (c1.constant() instanceof Constant.Value
               && c2.constant() instanceof Constant.Value) {
-            return ((Constant.Value) c1.constant()).value()
-                .compareTo(((Constant.Value) c2.constant()).value());
+            return ((Constant.Value) c1.constant()).integer()
+                .compareTo(((Constant.Value) c2.constant()).integer());
           }
         }
 

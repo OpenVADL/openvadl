@@ -12,8 +12,8 @@ class ConstantValueMatcherTest {
   @Test
   void matches_shouldReturnTrue_whenConstantMatches() {
     var matcher =
-        new ConstantValueMatcher(Constant.Value.of(BigInteger.ONE, DataType.unsignedInt(32)));
-    var node = new ConstantNode(Constant.Value.of(BigInteger.ONE, DataType.unsignedInt(32)));
+        new ConstantValueMatcher(Constant.Value.of(1, DataType.unsignedInt(32)));
+    var node = new ConstantNode(Constant.Value.of(1, DataType.unsignedInt(32)));
 
     // When
     var result = matcher.matches(node);
@@ -25,8 +25,8 @@ class ConstantValueMatcherTest {
   @Test
   void matches_shouldReturnFalse_whenConstantMismatches() {
     var matcher = new ConstantValueMatcher(
-        Constant.Value.of(BigInteger.ZERO, DataType.unsignedInt(32)));
-    var node = new ConstantNode(Constant.Value.of(BigInteger.ONE, DataType.unsignedInt(32)));
+        Constant.Value.of(0, DataType.unsignedInt(32)));
+    var node = new ConstantNode(Constant.Value.of(1, DataType.unsignedInt(32)));
 
     // When
     var result = matcher.matches(node);
@@ -38,8 +38,8 @@ class ConstantValueMatcherTest {
   @Test
   void matches_shouldReturnFalse_whenConstantTypeMismatches() {
     var matcher = new ConstantValueMatcher(
-        Constant.Value.of(BigInteger.ONE, DataType.unsignedInt(31)));
-    var node = new ConstantNode(Constant.Value.of(BigInteger.ONE, DataType.unsignedInt(32)));
+        Constant.Value.of(1, DataType.unsignedInt(31)));
+    var node = new ConstantNode(Constant.Value.of(1, DataType.unsignedInt(32)));
 
     // When
     var result = matcher.matches(node);

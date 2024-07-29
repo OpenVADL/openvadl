@@ -14,7 +14,7 @@ class AnyConstantValueMatcherTest extends AbstractTest {
   @Test
   void matches_shouldReturnTrue_whenConstantValue() {
     var matcher = new AnyConstantValueMatcher();
-    var node = new ConstantNode(Constant.Value.of(BigInteger.ONE, DataType.unsignedInt(32)));
+    var node = new ConstantNode(Constant.Value.of(0, DataType.unsignedInt(32)));
 
     // When
     var result = matcher.matches(node);

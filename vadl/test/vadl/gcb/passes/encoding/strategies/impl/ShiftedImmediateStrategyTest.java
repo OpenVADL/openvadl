@@ -40,8 +40,7 @@ class ShiftedImmediateStrategyTest extends AbstractTest {
     var returnNode =
         new ReturnNode(new TypeCastNode(new BuiltInCall(BuiltInTable.LSL,
             new NodeList<>(new FieldRefNode(field, DataType.bits(20)),
-                new ConstantNode(Constant.Value.of(
-                    BigInteger.valueOf(12), DataType.unsignedInt(32)))),
+                new ConstantNode(Constant.Value.of(12, DataType.unsignedInt(32)))),
             Type.unsignedInt(32)),
             Type.bits(32)));
     var startNode = new StartNode(returnNode);

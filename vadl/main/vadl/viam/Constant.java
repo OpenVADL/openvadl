@@ -1,6 +1,5 @@
 package vadl.viam;
 
-import static vadl.utils.BigIntUtils.fromTwosComplement;
 import static vadl.utils.BigIntUtils.mask;
 import static vadl.utils.BigIntUtils.twosComplement;
 
@@ -22,6 +21,7 @@ import vadl.types.BoolType;
 import vadl.types.DataType;
 import vadl.types.TupleType;
 import vadl.types.Type;
+import vadl.utils.BigIntUtils;
 import vadl.utils.StreamUtils;
 
 /**
@@ -65,56 +65,79 @@ public abstract class Constant {
    * Represents a constant value with a specific type.
    *
    * <p>It stores values of type bits and bool.
-   * The value itself is represented as two's complement, thus BigInteger value
+   * The value itself is represented as two's complement; thus BigInteger value is
    * only a data container, not the actual number.
    * The {@link #integer()} returns the integer value depending on the constant's type.
    */
   public static class Value extends Constant {
+    // not really an integer, just a data container
     private final BigInteger value;
 
-    private Value(BigInteger value, DataType type, boolean alreadyTwosComplement) {
+    /**
+     * WARNING: Never use this constructor directly!
+     * Always use either {@link #fromInteger(BigInteger, DataType)} or
+     * {@link #fromTwosComplement(BigInteger, DataType)}.
+     *
+     * <p>All public construction overloads of {@link #of} take an integer as input.</p>
+     */
+    private Value(BigInteger value, DataType type) {
       super(type);
+      this.value = value;
+    }
 
-      if (alreadyTwosComplement) {
-        // twos complement already normalized
-        ensure(value.signum() >= 0 || value.bitLength() <= type.bitWidth(),
-            "Internal error: value not in two's complement.");
-        this.value = value;
-        return;
+    /**
+     * Constructor for input values that are in two's complement.
+     * This means the {@code value} argument is NOT an integer, but binary representation
+     * of a number in two's compliment.
+     */
+    private static Value fromTwosComplement(BigInteger value, DataType type) {
+      if (value.signum() < 0 || value.bitLength() > type.bitWidth()) {
+        throw new ViamError("Internal error; value not in two's complement.");
       }
+      return new Value(value, type);
+    }
 
+    /**
+     * Constructor of a constant value from an integer (that is not in two's complement form).
+     * So the {@code integer} argument might be negative.
+     */
+    private static Value fromInteger(BigInteger integer, DataType type) {
       if (type instanceof BoolType) {
-        this.value = value.compareTo(BigInteger.ZERO) == 0 ? value : BigInteger.ONE;
-      } else if (type instanceof BitsType) {
-        if (typeMinValue().compareTo(value) > 0 || typeMaxValue().compareTo(value) < 0) {
+        // hard code boolean value
+        var val = integer.compareTo(BigInteger.ZERO) == 0 ? integer : BigInteger.ONE;
+        return new Value(val, type);
+      } else if (type instanceof BitsType bitsType) {
+        if (bitsType.getClass() == BitsType.class) {
+          // for bitsType, it must just fit into the bit width, but it has no integer value boundaries
+          if (integer.bitLength() > bitsType.bitWidth()) {
+            throw new ViamError("Value %s does not fit in type %s".formatted(integer.toString(16),
+                bitsType.getClass()));
+          }
+        } else if (minValueOf(bitsType).integer().compareTo(integer) > 0 ||
+            maxValueOf(bitsType).integer().compareTo(integer) < 0) {
+          // for SInt and UInt types the integer value must fit in the allowed range
           throw new ViamError(
-              "Value %s does not fit in type %s. Possible range: %s .. %s".formatted(value, type,
-                  typeMinValue(), typeMaxValue()));
+              "Value %s does not fit in type %s. Possible range: %s .. %s".formatted(
+                  integer.toString(16), type,
+                  minValueOf(bitsType), maxValueOf(bitsType)));
         }
-        this.value = twosComplement(value, type.bitWidth());
+        var value = twosComplement(integer, type.bitWidth());
+        return new Value(value, type);
       } else {
         throw new ViamError("Only BitsType and BoolType are supported, but got %s".formatted(type));
       }
     }
 
-    public static Value unchecked(BigInteger value, DataType type) {
-      return new Value(value, type, true);
-    }
-
-    public static Value of(BigInteger value, DataType type) {
-      return new Value(value, type, false);
-    }
-
     public static Value of(long value, DataType type) {
-      return of(BigInteger.valueOf(value), type);
+      return fromInteger(BigInteger.valueOf(value), type);
     }
 
     public static Value of(boolean value) {
-      return of(BigInteger.valueOf(value ? 1 : 0), Type.bool());
+      return fromInteger(BigInteger.valueOf(value ? 1 : 0), Type.bool());
     }
 
-    public BigInteger value() {
-      return value;
+    public static Value of(String value, DataType type) {
+      return fromInteger(new BigInteger(value), Type.bool());
     }
 
     /**
@@ -129,8 +152,16 @@ public abstract class Constant {
       if (type() instanceof BoolType) {
         return this.value;
       } else {
-        return fromTwosComplement(value, (BitsType) type());
+        return BigIntUtils.fromTwosComplement(value, (BitsType) type());
       }
+    }
+
+    public int intValue() {
+      return integer().intValue();
+    }
+
+    public long longValue() {
+      return integer().longValue();
     }
 
     public boolean bool() {
@@ -153,7 +184,7 @@ public abstract class Constant {
     public Constant.Value castTo(DataType type) {
       var truncatedValue = value
           .and(mask(type.bitWidth(), 0));
-      return Value.of(truncatedValue, type);
+      return Value.fromTwosComplement(truncatedValue, type);
     }
 
     /**
@@ -185,7 +216,7 @@ public abstract class Constant {
 
 
       return new Constant.Tuple(
-          Constant.Value.unchecked(truncated, type()),
+          Constant.Value.fromTwosComplement(truncated, type()),
           Constant.Tuple.status(isZero, isCarry, isOverflow, isNegative)
       );
     }
@@ -272,23 +303,7 @@ public abstract class Constant {
           .xor(mask) // invert all bits
           .add(BigInteger.ONE) // add one to it
           .and(mask); // truncate result
-      return Constant.Value.unchecked(negated, type());
-    }
-
-    private BigInteger typeMaxValue() {
-      if (type().isSigned()) {
-        return BigInteger.ONE.shiftLeft(type().bitWidth() - 1).subtract(BigInteger.ONE);
-      } else {
-        return BigInteger.ONE.shiftLeft(type().bitWidth()).subtract(BigInteger.ONE);
-      }
-    }
-
-    private BigInteger typeMinValue() {
-      if (type().isSigned()) {
-        return typeMaxValue().negate().subtract(BigInteger.ONE);
-      } else {
-        return BigInteger.ZERO;
-      }
+      return Constant.Value.fromTwosComplement(negated, type());
     }
 
     private BigInteger maxUnsignedValue() {
@@ -309,6 +324,26 @@ public abstract class Constant {
     @Override
     public java.lang.String toString() {
       return integer() + ": " + type().toString();
+    }
+
+    public static Constant.Value maxValueOf(BitsType type) {
+      BigInteger result;
+      if (type.isSigned()) {
+        result = BigInteger.ONE.shiftLeft(type.bitWidth() - 1).subtract(BigInteger.ONE);
+      } else {
+        result = BigInteger.ONE.shiftLeft(type.bitWidth()).subtract(BigInteger.ONE);
+      }
+      return fromTwosComplement(result, type);
+    }
+
+    public static Constant.Value minValueOf(BitsType type) {
+      BigInteger result;
+      if (type.isSigned()) {
+        result = BigInteger.ZERO.setBit(type.bitWidth() - 1);
+      } else {
+        result = BigInteger.ZERO;
+      }
+      return fromTwosComplement(result, type);
     }
 
     @Override

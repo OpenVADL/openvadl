@@ -25,7 +25,7 @@ class BuiltInCallTest {
 
   private static final SIntType SIGNED_INT = Type.signedInt(32);
   private static final ConstantNode constantNode = new ConstantNode(Constant.Value.of(
-      BigInteger.ONE, SIGNED_INT)
+      1, SIGNED_INT)
   );
 
   private static BuiltInCall getBuiltInCall(BuiltInTable.BuiltIn built) {
@@ -33,30 +33,30 @@ class BuiltInCallTest {
         new NodeList<>(constantNode, constantNode), SIGNED_INT);
   }
 
-  private static ConstantNode wrapConstant(BigInteger bigInteger) {
-    return new ConstantNode(Constant.Value.of(bigInteger, SIGNED_INT));
+  private static ConstantNode wrapConstant(int integer) {
+    return new ConstantNode(Constant.Value.of(integer, SIGNED_INT));
   }
 
   public static Stream<Arguments> createNormalizeTestCases() {
     return Stream.of(
         Arguments.of(
             getBuiltInCall(ADD),
-            wrapConstant(BigInteger.TWO)),
+            wrapConstant(2)),
         Arguments.of(
             getBuiltInCall(BuiltInTable.SUB),
-            wrapConstant(BigInteger.ZERO)),
+            wrapConstant(0)),
         Arguments.of(
             getBuiltInCall(MUL),
-            wrapConstant(BigInteger.ONE)),
+            wrapConstant(1)),
         Arguments.of(
             getBuiltInCall(MULS),
-            wrapConstant(BigInteger.ONE)),
+            wrapConstant(1)),
         Arguments.of(
             getBuiltInCall(BuiltInTable.LSL),
-            wrapConstant(BigInteger.TWO)),
+            wrapConstant(2)),
         Arguments.of(
             getBuiltInCall(BuiltInTable.LSR),
-            wrapConstant(BigInteger.ZERO))
+            wrapConstant(0))
     );
   }
 
@@ -67,8 +67,8 @@ class BuiltInCallTest {
 
     assertTrue(result.isPresent());
     var value = (Constant.Value) expected.constant();
-    assertEquals(value.value(),
-        ((Constant.Value) ((ConstantNode) result.get()).constant()).value());
+    assertEquals(value.integer(),
+        ((Constant.Value) ((ConstantNode) result.get()).constant()).integer());
   }
 
   private static Stream<Arguments> getCanonicalizableBuiltin() {
@@ -86,7 +86,7 @@ class BuiltInCallTest {
   @MethodSource("getCanonicalizableBuiltin")
   void canonicalize_shouldSortConstantLast(BuiltInTable.BuiltIn builtin) {
     var node = new BuiltInCall(builtin, new NodeList<>(
-        new ConstantNode(Constant.Value.of(BigInteger.ONE, DataType.unsignedInt(32))),
+        new ConstantNode(Constant.Value.of(1, DataType.unsignedInt(32))),
         new FieldRefNode(null, DataType.unsignedInt(32))
     ), Type.unsignedInt(32));
 
@@ -101,17 +101,17 @@ class BuiltInCallTest {
   @MethodSource("getCanonicalizableBuiltin")
   void canonicalize_shouldSortConstantAscending_whenSameType(BuiltInTable.BuiltIn builtin) {
     var node = new BuiltInCall(builtin, new NodeList<>(
-        new ConstantNode(Constant.Value.of(BigInteger.ONE, DataType.unsignedInt(32))),
-        new ConstantNode(Constant.Value.of(BigInteger.TWO, DataType.unsignedInt(32)))
+        new ConstantNode(Constant.Value.of(1, DataType.unsignedInt(32))),
+        new ConstantNode(Constant.Value.of(2, DataType.unsignedInt(32)))
     ), Type.unsignedInt(32));
 
     node.canonicalize();
 
     assertThat(node.arguments().size()).isEqualTo(2);
     assertThat(node.arguments().get(0).getClass()).isEqualTo(ConstantNode.class);
-    assertThat(((Constant.Value) ((ConstantNode) node.arguments().get(0)).constant()).value()
+    assertThat(((Constant.Value) ((ConstantNode) node.arguments().get(0)).constant()).integer()
         .intValue()).isEqualTo(1);
-    assertThat(((Constant.Value) ((ConstantNode) node.arguments().get(1)).constant()).value()
+    assertThat(((Constant.Value) ((ConstantNode) node.arguments().get(1)).constant()).integer()
         .intValue()).isEqualTo(2);
   }
 
@@ -121,7 +121,7 @@ class BuiltInCallTest {
   void canonicalize_shouldNotSwap_whenWrappedByTypedCastNode(BuiltInTable.BuiltIn builtin) {
     var node = new BuiltInCall(builtin, new NodeList<>(
         new TypeCastNode(
-            new ConstantNode(Constant.Value.of(BigInteger.ONE, DataType.unsignedInt(32))),
+            new ConstantNode(Constant.Value.of(1, DataType.unsignedInt(32))),
             Type.unsignedInt(32)),
         new FieldRefNode(null, DataType.unsignedInt(32))
     ), Type.unsignedInt(32));
@@ -137,7 +137,7 @@ class BuiltInCallTest {
   @MethodSource("getNotCanonicalizBuiltin")
   void canonicalize_shouldNotSortConstantLast(BuiltInTable.BuiltIn builtin) {
     var node = new BuiltInCall(builtin, new NodeList<>(
-        new ConstantNode(Constant.Value.of(BigInteger.ONE, DataType.unsignedInt(32))),
+        new ConstantNode(Constant.Value.of(1, DataType.unsignedInt(32))),
         new FieldRefNode(null, DataType.unsignedInt(32))
     ), Type.unsignedInt(32));
 

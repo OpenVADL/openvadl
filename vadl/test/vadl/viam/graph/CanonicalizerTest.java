@@ -51,7 +51,7 @@ public class CanonicalizerTest {
     assertEquals(1, testGraph.getNodes().count());
     assertEquals(15,
         ((Constant.Value) ((ConstantNode) testGraph.getNodes().findFirst()
-            .get()).constant()).value().intValue());
+            .get()).constant()).integer().intValue());
   }
 
   @Test

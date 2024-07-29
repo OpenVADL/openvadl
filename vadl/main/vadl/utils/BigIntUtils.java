@@ -62,7 +62,10 @@ public class BigIntUtils {
     var maxUnsigned = BigInteger.ZERO.setBit(type.bitWidth()).subtract(BigInteger.ONE);
     var isSignBit = value.testBit(type.bitWidth() - 1); // check if sign bit active
 
-    if (type.isSigned() && isSignBit) {
+    // As the bits type is automatically cast to SInt, we interpret it as signed integer
+    var isSigned = type.isSigned();
+
+    if (isSigned && isSignBit) {
       //  negate  inverse        inc
       // - ((value ^ maxUnsigned) + 1)
       return value.xor(maxUnsigned).add(BigInteger.ONE).negate();

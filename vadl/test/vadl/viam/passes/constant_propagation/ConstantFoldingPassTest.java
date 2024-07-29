@@ -36,9 +36,9 @@ class ConstantFoldingPassTest {
 
     var behavior = new Graph("graphNameValue");
     var p1 =
-        behavior.add(new ConstantNode(Constant.Value.of(BigInteger.ONE, DataType.bits(32))));
+        behavior.add(new ConstantNode(Constant.Value.of(1, DataType.bits(32))));
     var p2 =
-        behavior.add(new ConstantNode(Constant.Value.of(BigInteger.ONE, DataType.bits(32))));
+        behavior.add(new ConstantNode(Constant.Value.of(1, DataType.bits(32))));
     behavior.add(new BuiltInCall(BuiltInTable.ADD, new NodeList<>(p1, p2), Type.bits(32)));
 
     var assembly = new Assembly(
@@ -77,7 +77,7 @@ class ConstantFoldingPassTest {
     assertThat(behavior.getNodes().findFirst().get().getClass(), equalTo(ConstantNode.class));
     assertThat(
         ((Constant.Value) ((ConstantNode) behavior.getNodes().findFirst()
-            .get()).constant()).value(),
+            .get()).constant()).integer(),
         equalTo(new BigInteger(String.valueOf(2))));
   }
 

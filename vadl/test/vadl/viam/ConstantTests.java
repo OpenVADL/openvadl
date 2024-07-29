@@ -13,6 +13,8 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.Arguments;
 import org.junit.jupiter.params.provider.MethodSource;
+import vadl.types.BitsType;
+import vadl.types.DataType;
 import vadl.types.Type;
 
 
@@ -224,6 +226,46 @@ public class ConstantTests {
         Arguments.of(valS(-2147483648, 32), valS(0x1, 32), 0x7FFFFFFF, false, false, true, false),
 
         Arguments.of(valU(0x1, 32), valU(0x80000000L, 32), -2147483647, false, true, true, true)
+    );
+  }
+
+  @ParameterizedTest
+  @MethodSource("testValueOutOfRanges_Sources")
+  void testValueOutOfRanges(long value, DataType type) {
+    assertThrows(ViamError.class, () -> Constant.Value.of(value, type));
+  }
+
+
+  static Stream<Arguments> testValueOutOfRanges_Sources() {
+    return Stream.of(
+        Arguments.of(0b111, Type.unsignedInt(2)),
+        Arguments.of(0b100, Type.signedInt(3)),
+        Arguments.of(-0b1, Type.unsignedInt(3)),
+        Arguments.of(-5, Type.signedInt(3)),
+        Arguments.of(0b1000, Type.bits(3)),
+        Arguments.of(1, Type.signedInt(1), 1)
+    );
+  }
+
+  @ParameterizedTest
+  @MethodSource("testValueInRanges_Sources")
+  void testValueInRange(long value, DataType type, long expected) {
+    var val = Constant.Value.of(value, type);
+    assertEquals(expected, val.integer().longValue());
+  }
+
+
+  static Stream<Arguments> testValueInRanges_Sources() {
+    return Stream.of(
+        Arguments.of(0b111, Type.bits(3), -1),
+        Arguments.of(-4, Type.bits(3), -4),
+        Arguments.of(0b111, Type.unsignedInt(3), 0b111),
+        Arguments.of(0b0, Type.unsignedInt(3), 0b0),
+        Arguments.of(0b011, Type.signedInt(3), 0b011),
+        Arguments.of(1, Type.bool(), 1),
+        Arguments.of(0, Type.bool(), 0),
+        Arguments.of(1, Type.unsignedInt(1), 1),
+        Arguments.of(-1, Type.signedInt(1), -1)
     );
   }
 

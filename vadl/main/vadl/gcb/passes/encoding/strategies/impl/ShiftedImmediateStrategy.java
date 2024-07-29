@@ -56,7 +56,7 @@ public class ShiftedImmediateStrategy implements EncodingGenerationStrategy {
         (BuiltInCall) accessFunction.behavior().getNodes(BuiltInCall.class).findFirst().get();
     var shiftValue =
         ((Constant.Value) ((ConstantNode) originalShift.arguments()
-            .get(1)).constant()).value();
+            .get(1)).constant()).integer();
 
     ExpressionNode invertedSliceNode;
     if (originalShift.builtIn() == BuiltInTable.LSL) {

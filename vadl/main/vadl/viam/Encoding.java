@@ -127,7 +127,7 @@ public class Encoding extends Definition {
       super(identifier);
 
       this.formatField = formatField;
-      this.constant = Constant.Value.of(constant.value(), formatField.type());
+      this.constant = constant;
 
       verify();
     }

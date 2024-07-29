@@ -34,7 +34,7 @@ class EncodingCodeGeneratorVisitorTest extends AbstractTest {
 
   @Test
   void constant_shouldReturnNumber() {
-    var constant = Constant.Value.of(BigInteger.ONE, DataType.unsignedInt(32));
+    var constant = Constant.Value.of(1, DataType.unsignedInt(32));
     var node = new ConstantNode(constant);
 
     // When
@@ -57,7 +57,7 @@ class EncodingCodeGeneratorVisitorTest extends AbstractTest {
 
   @Test
   void funcCallNode_shouldCreateFunctionalWithOneVar() {
-    var constant = Constant.Value.of(BigInteger.ONE, DataType.unsignedInt(32));
+    var constant = Constant.Value.of(1, DataType.unsignedInt(32));
     var node = new ConstantNode(constant);
     var funcCallNode =
         new FuncCallNode(new NodeList<>(node), new Function(createIdentifier("nameValue"),
@@ -73,7 +73,7 @@ class EncodingCodeGeneratorVisitorTest extends AbstractTest {
 
   @Test
   void funcCallNode_shouldCreateFunctionalWithTwoVar() {
-    var constant = Constant.Value.of(BigInteger.ONE, DataType.unsignedInt(32));
+    var constant = Constant.Value.of(1, DataType.unsignedInt(32));
     var node = new ConstantNode(constant);
     var funcCallNode =
         new FuncCallNode(new NodeList<>(node, node), new Function(createIdentifier("nameValue"),
@@ -104,7 +104,7 @@ class EncodingCodeGeneratorVisitorTest extends AbstractTest {
   @ParameterizedTest
   @MethodSource("getTypes")
   void typeCastNode_shouldGenerateCpp(DataType type, String expected) {
-    var constant = Constant.Value.of(BigInteger.ONE, DataType.unsignedInt(32));
+    var constant = Constant.Value.of(1, DataType.unsignedInt(32));
     var node = new ConstantNode(constant);
 
     // When
@@ -117,7 +117,7 @@ class EncodingCodeGeneratorVisitorTest extends AbstractTest {
 
   @Test
   void builtIn_shouldGenerateCpp() {
-    var constant = Constant.Value.of(BigInteger.ONE, DataType.unsignedInt(32));
+    var constant = Constant.Value.of(1, DataType.unsignedInt(32));
     var node = new ConstantNode(constant);
     var builtIn =
         new BuiltInCall(BuiltInTable.ADD, new NodeList<>(node, node), DataType.unsignedInt(32));
