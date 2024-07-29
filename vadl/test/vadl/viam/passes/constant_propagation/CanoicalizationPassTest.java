@@ -25,9 +25,9 @@ import vadl.viam.graph.Graph;
 import vadl.viam.graph.NodeList;
 import vadl.viam.graph.dependency.BuiltInCall;
 import vadl.viam.graph.dependency.ConstantNode;
-import vadl.viam.passes.constant_folding.ConstantFoldingPass;
+import vadl.viam.passes.constant_folding.CanoicalizationPass;
 
-class ConstantFoldingPassTest {
+class CanoicalizationPassTest {
   @Test
   void shouldReplaceAdditionWithConstant() {
     // Given
@@ -70,7 +70,7 @@ class ConstantFoldingPassTest {
     viam.add(isa);
 
     // When
-    var pass = new ConstantFoldingPass();
+    var pass = new CanoicalizationPass();
     pass.execute(Collections.emptyMap(), viam);
 
     assertThat(behavior.getNodes().count(), equalTo(1L));

@@ -52,13 +52,6 @@ public class IfNode extends ControlSplitNode {
   }
 
   @Override
-  public void canonicalize() {
-    this.condition.canonicalize();
-    this.trueBranch.canonicalize();
-    this.falseBranch.canonicalize();
-  }
-
-  @Override
   public Node shallowCopy() {
     return new IfNode(condition, trueBranch, falseBranch);
   }

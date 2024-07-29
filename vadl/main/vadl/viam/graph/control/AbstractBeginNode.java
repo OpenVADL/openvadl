@@ -21,11 +21,7 @@ public class AbstractBeginNode extends DirectionalNode {
   public Node copy() {
     return new AbstractBeginNode((ControlNode) Objects.requireNonNull(next).copy());
   }
-
-  @Override
-  public void canonicalize() {
-
-  }
+  
 
   @Override
   public Node shallowCopy() {

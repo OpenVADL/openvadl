@@ -1,7 +1,11 @@
-package vadl.viam.graph;
+package vadl.viam.passes.constant_folding;
 
 import java.util.HashSet;
 import org.jetbrains.annotations.Nullable;
+import vadl.viam.graph.Canonicalizable;
+import vadl.viam.graph.Graph;
+import vadl.viam.graph.GraphVisitor;
+import vadl.viam.graph.Node;
 
 /**
  * Applies the canonical form of nodes to the graph.

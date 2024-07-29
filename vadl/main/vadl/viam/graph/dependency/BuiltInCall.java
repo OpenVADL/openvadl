@@ -45,55 +45,14 @@ public class BuiltInCall extends AbstractFunctionCallNode implements Canonicaliz
 
 
   @Override
-  public Optional<Node> normalize() {
-    if (!hasConstantArgs()) {
-      return Optional.empty();
-    }
-
-    var args = this.arguments().stream()
-        .map(x -> ((ConstantNode) x).constant())
-        .toList();
-
-    return builtIn.compute(args).map(ConstantNode::new);
-  }
-
-  @Override
   public void accept(GraphNodeVisitor visitor) {
     visitor.visit(this);
   }
 
   @Override
-  public void canonicalize() {
-    arguments().forEach(ExpressionNode::canonicalize);
-
-    if (isCommutative()) {
-      // Sort arguments s.t constants are last
-      // and when multiple constants then highest last
-      this.arguments().sort((o1, o2) -> {
-        if (o1 instanceof ConstantNode && !(o2 instanceof ConstantNode)) {
-          return 1;
-        } else if (!(o1 instanceof ConstantNode) && o2 instanceof ConstantNode) {
-          return -1;
-        } else if (o1 instanceof ConstantNode) { // && o2 instanceof ConstantNode
-          var c1 = (ConstantNode) o1;             // is statically known
-          var c2 = (ConstantNode) o2;
-
-          if (c1.constant() instanceof Constant.Value
-              && c2.constant() instanceof Constant.Value) {
-            return ((Constant.Value) c1.constant()).integer()
-                .compareTo(((Constant.Value) c2.constant()).integer());
-          }
-        }
-
-        return 0;
-      });
-    }
-  }
-
-
-  @Override
   public Node canonical() {
     if (hasConstantArgs()) {
+      // constant evaluation
       var args = this.arguments().stream()
           .map(x -> ((ConstantNode) x).constant())
           .toList();
@@ -108,13 +67,12 @@ public class BuiltInCall extends AbstractFunctionCallNode implements Canonicaliz
       // binary operation
 
       if (isCommutative() && args.get(0) instanceof ConstantNode) {
-        // place constant node on the right side
-        var copy = (BuiltInCall) copy();
+        // place constant node on the right side of operator
+        var copy = (BuiltInCall) shallowCopy();
         //noinspection ComparatorMethodParameterNotUsed
-        copy.arguments().sort((a, b) -> 1);
+        copy.arguments().sort((a, b) -> -1);
         return copy;
       }
-
     }
 
     return this;

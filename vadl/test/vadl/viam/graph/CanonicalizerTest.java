@@ -14,6 +14,7 @@ import vadl.viam.Constant;
 import vadl.viam.graph.dependency.ConstantNode;
 import vadl.viam.graph.visualize.DotGraphVisualizer;
 import vadl.viam.helper.TestGraph;
+import vadl.viam.passes.constant_folding.Canonicalizer;
 
 public class CanonicalizerTest {
 

@@ -11,6 +11,7 @@ import static vadl.types.BuiltInTable.commutative;
 import java.math.BigInteger;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
+import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.Arguments;
 import org.junit.jupiter.params.provider.MethodSource;
@@ -60,16 +61,6 @@ class BuiltInCallTest {
     );
   }
 
-  @ParameterizedTest
-  @MethodSource("createNormalizeTestCases")
-  void normalize_shouldReturnConstant(BuiltInCall origin, ConstantNode expected) {
-    var result = origin.normalize();
-
-    assertTrue(result.isPresent());
-    var value = (Constant.Value) expected.constant();
-    assertEquals(value.integer(),
-        ((Constant.Value) ((ConstantNode) result.get()).constant()).integer());
-  }
 
   private static Stream<Arguments> getCanonicalizableBuiltin() {
     return commutative.stream().map(Arguments::of);
@@ -90,61 +81,11 @@ class BuiltInCallTest {
         new FieldRefNode(null, DataType.unsignedInt(32))
     ), Type.unsignedInt(32));
 
-    node.canonicalize();
+    node = (BuiltInCall) node.canonical();
 
     assertThat(node.arguments().size()).isEqualTo(2);
     assertThat(node.arguments().get(0).getClass()).isEqualTo(FieldRefNode.class);
     assertThat(node.arguments().get(1).getClass()).isEqualTo(ConstantNode.class);
   }
-
-  @ParameterizedTest
-  @MethodSource("getCanonicalizableBuiltin")
-  void canonicalize_shouldSortConstantAscending_whenSameType(BuiltInTable.BuiltIn builtin) {
-    var node = new BuiltInCall(builtin, new NodeList<>(
-        new ConstantNode(Constant.Value.of(1, DataType.unsignedInt(32))),
-        new ConstantNode(Constant.Value.of(2, DataType.unsignedInt(32)))
-    ), Type.unsignedInt(32));
-
-    node.canonicalize();
-
-    assertThat(node.arguments().size()).isEqualTo(2);
-    assertThat(node.arguments().get(0).getClass()).isEqualTo(ConstantNode.class);
-    assertThat(((Constant.Value) ((ConstantNode) node.arguments().get(0)).constant()).integer()
-        .intValue()).isEqualTo(1);
-    assertThat(((Constant.Value) ((ConstantNode) node.arguments().get(1)).constant()).integer()
-        .intValue()).isEqualTo(2);
-  }
-
-
-  @ParameterizedTest
-  @MethodSource("getCanonicalizableBuiltin")
-  void canonicalize_shouldNotSwap_whenWrappedByTypedCastNode(BuiltInTable.BuiltIn builtin) {
-    var node = new BuiltInCall(builtin, new NodeList<>(
-        new TypeCastNode(
-            new ConstantNode(Constant.Value.of(1, DataType.unsignedInt(32))),
-            Type.unsignedInt(32)),
-        new FieldRefNode(null, DataType.unsignedInt(32))
-    ), Type.unsignedInt(32));
-
-    node.canonicalize();
-
-    assertThat(node.arguments().size()).isEqualTo(2);
-    assertThat(node.arguments().get(0).getClass()).isEqualTo(TypeCastNode.class);
-    assertThat(node.arguments().get(1).getClass()).isEqualTo(FieldRefNode.class);
-  }
-
-  @ParameterizedTest
-  @MethodSource("getNotCanonicalizBuiltin")
-  void canonicalize_shouldNotSortConstantLast(BuiltInTable.BuiltIn builtin) {
-    var node = new BuiltInCall(builtin, new NodeList<>(
-        new ConstantNode(Constant.Value.of(1, DataType.unsignedInt(32))),
-        new FieldRefNode(null, DataType.unsignedInt(32))
-    ), Type.unsignedInt(32));
-
-    node.canonicalize();
-
-    assertThat(node.arguments().size()).isEqualTo(2);
-    assertThat(node.arguments().get(0).getClass()).isEqualTo(ConstantNode.class);
-    assertThat(node.arguments().get(1).getClass()).isEqualTo(FieldRefNode.class);
-  }
+  
 }

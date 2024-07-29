@@ -40,10 +40,5 @@ public abstract class UnaryNode extends ExpressionNode {
     super.applyOnInputsUnsafe(visitor);
     value = visitor.apply(this, value, ExpressionNode.class);
   }
-
-  @Override
-  public void canonicalize() {
-    super.canonicalize();
-    this.value.canonicalize();
-  }
+  
 }

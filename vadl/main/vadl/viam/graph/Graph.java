@@ -87,7 +87,6 @@ public class Graph {
    * @return the node added to the graph or its duplicate
    */
   public <T extends Node> T add(T node) {
-    node.canonicalize();
     if (node instanceof UniqueNode) {
       return addUniqueInternal(node, true);
     } else {
@@ -101,7 +100,6 @@ public class Graph {
    * by cloning the graph, we know that we have an inconsistent state.
    */
   private <T extends Node> T unsafeAdd(T node) {
-    node.canonicalize();
     if (node instanceof UniqueNode) {
       return addUniqueInternal(node, false);
     } else {

@@ -20,11 +20,7 @@ public class InstrEndNode extends AbstractEndNode {
     return new InstrEndNode(
         new NodeList<>(sideEffects.stream().map(x -> (SideEffectNode) x.copy()).toList()));
   }
-
-  @Override
-  public void canonicalize() {
-
-  }
+  
 
   @Override
   public Node shallowCopy() {
