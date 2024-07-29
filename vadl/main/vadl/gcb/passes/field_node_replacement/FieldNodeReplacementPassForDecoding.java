@@ -1,15 +1,9 @@
 package vadl.gcb.passes.field_node_replacement;
 
-import java.io.IOException;
 import java.util.Arrays;
-import java.util.Map;
 import java.util.Objects;
 import java.util.stream.Stream;
-import org.jetbrains.annotations.Nullable;
 import vadl.oop.passes.field_node_replacement.FieldNodeReplacementPass;
-import vadl.oop.passes.type_normalization.CppTypeNormalizer;
-import vadl.pass.Pass;
-import vadl.pass.PassKey;
 import vadl.pass.PassName;
 import vadl.viam.Format;
 import vadl.viam.Function;

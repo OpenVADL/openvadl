@@ -1,13 +1,19 @@
 package vadl.oop.passes.field_node_replacement;
 
 import java.io.IOException;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Map;
 import java.util.stream.Stream;
 import org.jetbrains.annotations.Nullable;
 import vadl.pass.Pass;
 import vadl.pass.PassKey;
+import vadl.utils.SourceLocation;
 import vadl.viam.Function;
+import vadl.viam.Identifier;
+import vadl.viam.Parameter;
 import vadl.viam.Specification;
+import vadl.viam.graph.dependency.FieldRefNode;
 import vadl.viam.graph.dependency.FuncParamNode;
 
 /**
@@ -26,11 +32,24 @@ public abstract class FieldNodeReplacementPass extends Pass {
   public Object execute(Map<PassKey, Object> passResults, Specification viam)
       throws IOException {
 
-    getApplicable(viam).forEach(function -> {
-
-    });
+    getApplicable(viam).forEach(FieldNodeReplacementPass::replaceFieldRefNodes);
 
     return null;
+  }
+
+  public static void replaceFieldRefNodes(Function function) {
+    var params = new ArrayList<>(List.of(function.parameters()));
+
+    var fieldRefs = function.behavior().getNodes(FieldRefNode.class).toList();
+
+    for (var fieldRef : fieldRefs) {
+      var param = new Parameter(new Identifier("temp", SourceLocation.INVALID_SOURCE_LOCATION),
+          fieldRef.type());
+      function.behavior().replaceNode(fieldRef, new FuncParamNode(param));
+      params.add(param);
+    }
+
+    function.setParameters(params.toArray(Parameter[]::new));
   }
 
 }

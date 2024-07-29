@@ -43,6 +43,6 @@ public class CppTypeMap {
       return "uint128_t";
     }
 
-    throw new RuntimeException("not implemented");
+    throw new RuntimeException(String.format("not implemented: type %s", type.toString()));
   }
 }

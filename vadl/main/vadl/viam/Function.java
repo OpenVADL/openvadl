@@ -15,8 +15,8 @@ import vadl.viam.graph.Graph;
  */
 public class Function extends Definition {
   private Graph behavior;
-  private final Type returnType;
-  private final Parameter[] parameters;
+  private Type returnType;
+  private Parameter[] parameters;
 
   /**
    * Creates a new Function with the specified identifier, parameters, and return type.
@@ -69,6 +69,14 @@ public class Function extends Definition {
 
   public Type returnType() {
     return returnType;
+  }
+
+  public void setReturnType(Type returnType) {
+    this.returnType = returnType;
+  }
+
+  public void setParameters(Parameter[] parameters) {
+    this.parameters = parameters;
   }
 
   @Override
