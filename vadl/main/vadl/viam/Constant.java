@@ -108,13 +108,14 @@ public abstract class Constant {
         return new Value(val, type);
       } else if (type instanceof BitsType bitsType) {
         if (bitsType.getClass() == BitsType.class) {
-          // for bitsType, it must just fit into the bit width, but it has no integer value boundaries
+          // for bitsType, it must just fit into the bit width, but it has no
+          // integer value boundaries
           if (integer.bitLength() > bitsType.bitWidth()) {
             throw new ViamError("Value %s does not fit in type %s".formatted(integer.toString(16),
                 bitsType.getClass()));
           }
-        } else if (minValueOf(bitsType).integer().compareTo(integer) > 0 ||
-            maxValueOf(bitsType).integer().compareTo(integer) < 0) {
+        } else if (minValueOf(bitsType).integer().compareTo(integer) > 0
+            || maxValueOf(bitsType).integer().compareTo(integer) < 0) {
           // for SInt and UInt types the integer value must fit in the allowed range
           throw new ViamError(
               "Value %s does not fit in type %s. Possible range: %s .. %s".formatted(
@@ -326,6 +327,9 @@ public abstract class Constant {
       return integer() + ": " + type().toString();
     }
 
+    /**
+     * Returns the maximal value for the given bits type as Constant.Value.
+     */
     public static Constant.Value maxValueOf(BitsType type) {
       BigInteger result;
       if (type.isSigned()) {
@@ -336,6 +340,9 @@ public abstract class Constant {
       return fromTwosComplement(result, type);
     }
 
+    /**
+     * Returns the minimal value for the given bits type as Constant.Value.
+     */
     public static Constant.Value minValueOf(BitsType type) {
       BigInteger result;
       if (type.isSigned()) {
