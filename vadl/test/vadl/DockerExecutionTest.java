@@ -7,11 +7,16 @@ import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.time.Duration;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.testcontainers.containers.GenericContainer;
+import org.testcontainers.containers.output.Slf4jLogConsumer;
 import org.testcontainers.images.builder.ImageFromDockerfile;
 import org.testcontainers.utility.MountableFile;
 
 public abstract class DockerExecutionTest extends AbstractTest {
+
+  private static final Logger logger = LoggerFactory.getLogger(DockerExecutionTest.class);
 
   private File writeCodeIntoTempFile(String content, String prefix, String suffix)
       throws IOException {
@@ -60,7 +65,8 @@ public abstract class DockerExecutionTest extends AbstractTest {
    */
   protected void runContainerWithFile(ImageFromDockerfile image, String path, String mountPath) {
     try (GenericContainer<?> container = new GenericContainer<>(image).withCopyFileToContainer(
-        MountableFile.forHostPath(path), mountPath)) {
+            MountableFile.forHostPath(path), mountPath)
+        .withLogConsumer(new Slf4jLogConsumer(logger))) {
       container.start();
 
       await()
