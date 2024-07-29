@@ -7,6 +7,7 @@ import static org.junit.jupiter.api.Assertions.assertNotNull;
 import java.math.BigInteger;
 import java.util.List;
 import java.util.stream.Stream;
+import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.Arguments;
@@ -121,15 +122,9 @@ class ArithmeticImmediateStrategyTest extends AbstractTest {
     var fieldAccess = createFieldAccess("fieldAccessValue",
         accessFunction);
     format.setFieldAccesses(new Format.FieldAccess[] {fieldAccess});
-    fieldAccess.setEncoding(new Function(createIdentifier("encodingFunctionName"),
-        new Parameter[]
-            {createParameter("parameterValue", DataType.unsignedInt(32))},
-        DataType.bits(20)));
 
     // When
-    strategy.generateEncoding(
-        new Parameter(createIdentifier("identifierValue"), DataType.unsignedInt(32)),
-        fieldAccess);
+    strategy.generateEncoding(fieldAccess);
 
     // Then
     assertNotNull(fieldAccess.encoding());
@@ -176,15 +171,9 @@ class ArithmeticImmediateStrategyTest extends AbstractTest {
     var fieldAccess = createFieldAccess("fieldAccessValue",
         accessFunction);
     format.setFieldAccesses(new Format.FieldAccess[] {fieldAccess});
-    fieldAccess.setEncoding(new Function(createIdentifier("encodingFunctionName"),
-        new Parameter[]
-            {createParameter("parameterValue", DataType.unsignedInt(32))},
-        DataType.bits(20)));
 
     // When
-    strategy.generateEncoding(
-        new Parameter(createIdentifier("identifierValue"), DataType.unsignedInt(32)),
-        fieldAccess);
+    strategy.generateEncoding(fieldAccess);
 
     // Then
     assertNotNull(fieldAccess.encoding());
@@ -197,8 +186,7 @@ class ArithmeticImmediateStrategyTest extends AbstractTest {
             new ConstantValueMatcher(
                 new Constant.Value(BigInteger.valueOf(31), DataType.unsignedInt(32))
             ),
-            new BuiltInMatcher(BuiltInTable.NEG,
-                new FuncParamMatcher(DataType.unsignedInt(32)))
+            new FuncParamMatcher(DataType.unsignedInt(32))
         )));
 
     assertThat(hasNegatedFuncParam).isNotEmpty();

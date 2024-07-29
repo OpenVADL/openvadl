@@ -4,9 +4,11 @@ import java.util.Collections;
 import java.util.List;
 import org.jetbrains.annotations.Nullable;
 import vadl.gcb.passes.encoding.strategies.EncodingGenerationStrategy;
+import vadl.types.BitsType;
 import vadl.types.BuiltInTable;
+import vadl.types.DataType;
+import vadl.viam.Constant;
 import vadl.viam.Format;
-import vadl.viam.Parameter;
 import vadl.viam.ViamError;
 import vadl.viam.graph.GraphVisitor;
 import vadl.viam.graph.Node;
@@ -17,6 +19,7 @@ import vadl.viam.graph.dependency.ExpressionNode;
 import vadl.viam.graph.dependency.FieldRefNode;
 import vadl.viam.graph.dependency.FuncParamNode;
 import vadl.viam.graph.dependency.SliceNode;
+import vadl.viam.graph.dependency.TypeCastNode;
 import vadl.viam.matching.TreeMatcher;
 import vadl.viam.matching.impl.AnyNodeMatcher;
 import vadl.viam.matching.impl.BuiltInMatcher;
@@ -53,10 +56,16 @@ public class ArithmeticImmediateStrategy implements EncodingGenerationStrategy {
   }
 
   @Override
-  public void generateEncoding(Parameter parameter, Format.FieldAccess fieldAccess) {
+  public void generateEncoding(Format.FieldAccess fieldAccess) {
+    var parameter = setupEncodingForFieldAccess(fieldAccess);
     var accessFunction = fieldAccess.accessFunction();
     var copy = accessFunction.behavior().copy();
-    var returnNode = copy.getNodes(ReturnNode.class).findFirst().get();
+    final var returnNode = copy.getNodes(ReturnNode.class).findFirst().get();
+
+    // Optimistic assumption: Remove all typecasts because they are not correct anymore when
+    // inverted.
+    copy.getNodes(TypeCastNode.class)
+        .forEach(typeCastNode -> copy.replaceNode(typeCastNode, typeCastNode.value()));
 
     // First, remove all usages of subtraction.
     // We can replace them by addition with a NegatedNode
@@ -84,15 +93,14 @@ public class ArithmeticImmediateStrategy implements EncodingGenerationStrategy {
             new BuiltInMatcher(BuiltInTable.NEG, List.of(new FieldRefNodeMatcher()))
         )));
 
-    // We always create a negated parameter because the equation has always f(x) on the LHS.
-    var negated = new BuiltInCall(BuiltInTable.NEG, new NodeList<>(List.of(new FuncParamNode(
-        parameter
-    ))), parameter.type());
-    copy.replaceNode(fieldRef, negated);
+    var fieldRefBits = (BitsType) fieldRef.type();
 
     // The else branch is not required because the field is positive on the LHS.
     // Only when the field is subtracted on the LHS, we need to rewrite the equation.
     if (hasFieldSubtractionOnRHS.isEmpty()) {
+      var funcParam = new FuncParamNode(parameter);
+      copy.replaceNode(fieldRef, funcParam);
+
       // This case is more complicated because the LHS has f(x) - field = XXX
       // If we subtract the f(x) then: - field = XXX is left
       // Which means that we have to invert every operand.
@@ -121,7 +129,23 @@ public class ArithmeticImmediateStrategy implements EncodingGenerationStrategy {
           return to;
         }
       });
+    } else {
+      var negated =
+          new BuiltInCall(BuiltInTable.NEG, new NodeList<>(List.of(new FuncParamNode(
+              parameter
+          ))), parameter.type());
+      copy.replaceNode(fieldRef, negated);
+
+
     }
+
+    // At the end of the encoding function, the type must be exactly as the field type
+    var sliceNode =
+        new SliceNode(returnNode.value, new Constant.BitSlice(new Constant.BitSlice.Part[] {
+            new Constant.BitSlice.Part(fieldRefBits.bitWidth() - 1, 0)
+        }), (DataType) fieldRef.type());
+    var addedSliceNode = copy.add(sliceNode);
+    returnNode.replaceInput(returnNode.value, addedSliceNode);
 
     var encoding = fieldAccess.encoding();
     if (encoding != null) {
