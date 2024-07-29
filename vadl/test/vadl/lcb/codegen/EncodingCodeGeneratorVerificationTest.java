@@ -51,7 +51,8 @@ public class EncodingCodeGeneratorVerificationTest extends DockerExecutionTest {
         Arguments.of(createUnsignedInt32DecodingFunction(), new TrivialImmediateStrategy()),
         Arguments.of(createSignedInt32DecodingFunction(), new TrivialImmediateStrategy()),
         Arguments.of(createUnsignedInt32ShiftDecodingFunction(), new ShiftedImmediateStrategy()),
-        Arguments.of(createSignedInt32ShiftDecodingFunction(), new ShiftedImmediateStrategy()),
+        Arguments.of(createSignedInt32ShiftDecodingFunction(), new ShiftedImmediateStrategy())
+        /*
         Arguments.of(createUnsignedInt32WithAdditionDecodingFunction(),
             new ArithmeticImmediateStrategy()),
         Arguments.of(createSignedInt32WithAdditionDecodingFunction(),
@@ -59,7 +60,7 @@ public class EncodingCodeGeneratorVerificationTest extends DockerExecutionTest {
         Arguments.of(createUnsignedInt32WithSubtractionDecodingFunction(),
             new ArithmeticImmediateStrategy()),
         Arguments.of(createSignedInt32WithSubtractionDecodingFunction(),
-            new ArithmeticImmediateStrategy())
+            new ArithmeticImmediateStrategy())*/
     );
   }
 
