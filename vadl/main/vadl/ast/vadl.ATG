@@ -76,6 +76,7 @@ TOKENS
   ELSE = "else".
 
   SYM_IN = "in".
+  SYM_AS = "as".
   SYM_EQ = "=".
   SYM_GT = ">".
   SYM_LT = "<".
@@ -339,11 +340,11 @@ PRODUCTIONS
   // -- EXPRESSIONS --------------------------------------------------------------------------------------------------
 
   expression<out Expr expr, boolean[] allowedOps> (. expr = null; .)
-  = term<out expr>
+  = termWithOptionalCast<out expr>
     {
       IF (allowedOps[la.kind])
       binaryOperator<out Operator op>
-      term<out Expr expr2>                        (. expr = new BinaryExpr(expr, op, expr2); .)
+      termWithOptionalCast<out Expr expr2>        (. expr = new BinaryExpr(expr, op, expr2); .)
     }                                             (. expr = ungroup(this, reorderBinary(this, expr)); .)
   .
 
@@ -384,12 +385,21 @@ PRODUCTIONS
   | SYM_TILDE (. op = UnaryOperator.COMPLEMENT; .)
   .
 
+  termWithOptionalCast<out Expr expr>
+  = term<out expr>
+    {
+      IF (la.kind == _SYM_AS)
+      SYM_AS
+      typeLiteral<out TypeLiteral type> (. expr = new CastExpr(expr, type); .)
+    }
+  .
+
   term<out Expr expr>                                               (. expr = null; .)
   = number                                                          (. expr = new IntegerLiteral(t.val, loc()); .)
   | IF (la.kind == _identifierToken && scanner.Peek().kind != _SYM_PAREN_OPEN)
     identifierChain<out IdentifierChain chain>                      (. expr = chain; if (!insideMacro && !insideAnnotation) symbolTable.requireValue(chain); .)
   | callExpression<out expr>
-  | SYM_PAREN_OPEN expression<out expr, BIN_OPS> SYM_PAREN_CLOSE             (. expr = new GroupExpr(expr); .)
+  | SYM_PAREN_OPEN expression<out expr, BIN_OPS> SYM_PAREN_CLOSE    (. expr = new GroupExpr(expr); .)
   | unary<out expr>
   | ifExpression<out expr>
   | letExpression<out expr>
@@ -438,9 +448,13 @@ PRODUCTIONS
   |
    (
       identifier<out Identifier id>
-      [ SYM_LT
+      [
+        // In an expression like `b as Int < 9`, it would be ambiguous whether the < is part of the type --> YES
+        IF (la.kind == _SYM_LT)
+        SYM_LT
         expression<out sizeExpr, BIN_OPS_EXCEPT_GT>
-        SYM_GT ]                          (. type = new TypeLiteral(id, sizeExpr, id.location().join(loc())) ;.)
+        SYM_GT
+      ]                                   (. type = new TypeLiteral(id, sizeExpr, id.location().join(loc())) ;.)
   )
   .
 

@@ -251,6 +251,13 @@ public class AstDumper
   }
 
   @Override
+  public Void visit(CastExpr expr) {
+    dumpNode(expr);
+    dumpChildren(expr.value, expr.type);
+    return null;
+  }
+
+  @Override
   public Void visit(BlockStatement blockStatement) {
     dumpNode(blockStatement);
     dumpChildren(blockStatement.statements);

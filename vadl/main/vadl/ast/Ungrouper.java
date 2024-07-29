@@ -94,4 +94,10 @@ class Ungrouper implements ExprVisitor<Expr> {
         expr.location
     );
   }
+
+  @Override
+  public Expr visit(CastExpr expr) {
+    expr.value = expr.value.accept(this);
+    return expr;
+  }
 }

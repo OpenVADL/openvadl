@@ -133,6 +133,13 @@ class MacroExpander
   }
 
   @Override
+  public Node visit(CastExpr expr) {
+    expr.value = (Expr) expr.value.accept(this);
+    expr.type = (TypeLiteral) expr.type.accept(this);
+    return expr;
+  }
+
+  @Override
   public Definition visit(ConstantDefinition definition) {
     return new ConstantDefinition(definition.identifier, definition.typeAnnotation,
         (Expr) definition.value.accept(this), definition.loc);
