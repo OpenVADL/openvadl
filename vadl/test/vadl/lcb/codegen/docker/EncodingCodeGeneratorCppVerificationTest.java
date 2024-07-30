@@ -37,11 +37,6 @@ public class EncodingCodeGeneratorCppVerificationTest extends DockerExecutionTes
     var fieldAccess = new Format.FieldAccess(createIdentifier("fieldAccessIdentifierValue"),
         decodingFunction, null, null);
 
-    // Replace first field accesses
-    FieldNodeReplacementPass.replaceFieldRefNodes(decodingFunction);
-    // then upcast
-    var normalizedDecodeFunction = CppTypeNormalizationPass.makeTypesCppConform(decodingFunction);
-
     var decodeCodeGenerator = new EncodingCodeGenerator();
     var encodeCodeGenerator = new EncodingCodeGenerator();
 
@@ -49,6 +44,8 @@ public class EncodingCodeGeneratorCppVerificationTest extends DockerExecutionTes
     strategy.generateEncoding(fieldAccess);
     var normalizedEncodeFunction = CppTypeNormalizationPass.makeTypesCppConform(fieldAccess.encoding());
 
+    FieldNodeReplacementPass.replaceFieldRefNodes(decodingFunction);
+    var normalizedDecodeFunction = CppTypeNormalizationPass.makeTypesCppConform(decodingFunction);
     var decodeFunction = decodeCodeGenerator.generateFunction(normalizedDecodeFunction);
     var encodeFunction = encodeCodeGenerator.generateFunction(normalizedEncodeFunction);
 
