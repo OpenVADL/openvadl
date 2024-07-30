@@ -137,10 +137,8 @@ class ArithmeticImmediateStrategyTest extends AbstractTest {
             new ConstantValueMatcher(
                 Constant.Value.of(31, DataType.unsignedInt(32))
             ),
-            new BuiltInMatcher(BuiltInTable.NEG,
-                new BuiltInMatcher(BuiltInTable.NEG,
-                    new FuncParamMatcher(DataType.unsignedInt(32))))
-        )));
+            new FuncParamMatcher(DataType.unsignedInt(32))))
+    );
 
     assertThat(hasNotNegatedFuncParam).isNotEmpty();
   }
