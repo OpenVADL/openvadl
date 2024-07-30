@@ -65,7 +65,9 @@ public abstract class GenericCppCodeGeneratorVisitor implements GraphNodeVisitor
       visit(node.arguments().get(0));
     } else if (node.arguments().size() > 1) {
       for (int i = 0; i < node.arguments().size(); i++) {
+        writer.write("(");
         visit(node.arguments().get(i));
+        writer.write(")");
 
         // The last argument should not emit an operand.
         if (i < node.arguments().size() - 1) {
@@ -92,20 +94,23 @@ public abstract class GenericCppCodeGeneratorVisitor implements GraphNodeVisitor
 
   @Override
   public void visit(TypeCastNode typeCastNode) {
-    writer.write("(" + getCppTypeNameByVadlType(typeCastNode.castType()) + ") ");
+    writer.write("((" + getCppTypeNameByVadlType(typeCastNode.castType()) + ") ");
     visit(typeCastNode.value());
+    writer.write(")");
   }
 
   @Override
   public void visit(SliceNode sliceNode) {
+    writer.write("(");
     visit(sliceNode.value());
+    writer.write(")");
     sliceNode.bitSlice().parts().forEach(part -> {
       if (part.lsb() > 0) {
         writer.write(
-            " & " + generateBitmask(part.msb()) + " & ~((1 << " + part.lsb() + ") - 1)");
+            " & " + generateBitmask(part.msb() + 1) + " & ~((1 << " + part.lsb() + ") - 1)");
       } else {
         writer.write(
-            " & " + generateBitmask(part.msb()));
+            " & " + generateBitmask(part.msb() + 1));
       }
     });
   }

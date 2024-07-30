@@ -51,7 +51,8 @@ public class EncodingCodeGeneratorCppVerificationTest extends DockerExecutionTes
     var normalizedDecodeFunction = CppTypeNormalizationPass.makeTypesCppConform(decodingFunction);
     var decodeFunction = decodeCodeGenerator.generateFunction(normalizedDecodeFunction);
     var encodeFunction = encodeCodeGenerator.generateFunction(normalizedEncodeFunction);
-    String expectedReturnType = CppTypeMap.getCppTypeNameByVadlType(normalizedDecodeFunction.returnType());
+    String expectedReturnType =
+        CppTypeMap.getCppTypeNameByVadlType(normalizedEncodeFunction.returnType());
 
     String cppCode = String.format("""
             #include <cstdint>
@@ -77,8 +78,8 @@ public class EncodingCodeGeneratorCppVerificationTest extends DockerExecutionTes
         encodeFunction,
         expectedReturnType,
         100L,
-        normalizedDecodeFunction.identifier.simpleName(),
-        normalizedEncodeFunction.identifier.simpleName());
+        normalizedEncodeFunction.identifier.simpleName(),
+        normalizedDecodeFunction.identifier.simpleName());
 
     logger.atInfo().log(cppCode);
     runContainerWithContent(DOCKER_IMAGE, cppCode, MOUNT_PATH, TEMPFILE_PREFIX, TEMPFILE_SUFFIX);

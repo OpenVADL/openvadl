@@ -1,10 +1,12 @@
 package vadl.gcb.passes.encoding_generation.strategies.impl;
 
+import java.util.List;
 import vadl.gcb.passes.encoding_generation.strategies.EncodingGenerationStrategy;
 import vadl.types.BuiltInTable;
 import vadl.viam.Constant;
 import vadl.viam.Format;
 import vadl.viam.ViamError;
+import vadl.viam.graph.NodeList;
 import vadl.viam.graph.control.ReturnNode;
 import vadl.viam.graph.control.StartNode;
 import vadl.viam.graph.dependency.BuiltInCall;
@@ -54,9 +56,10 @@ public class ShiftedImmediateStrategy implements EncodingGenerationStrategy {
 
     var originalShift =
         (BuiltInCall) accessFunction.behavior().getNodes(BuiltInCall.class).findFirst().get();
-    var shiftValue =
-        ((Constant.Value) ((ConstantNode) originalShift.arguments()
-            .get(1)).constant()).integer();
+    var shift = ((Constant.Value) ((ConstantNode) originalShift.arguments()
+        .get(1)).constant());
+    var shiftValue = shift
+        .integer();
 
     ExpressionNode invertedSliceNode;
     if (originalShift.builtIn() == BuiltInTable.LSL) {
@@ -69,7 +72,10 @@ public class ShiftedImmediateStrategy implements EncodingGenerationStrategy {
       var slice = new Constant.BitSlice(
           new Constant.BitSlice.Part[] {
               Constant.BitSlice.Part.of(upperBound, lowerBound)});
-      invertedSliceNode = new SliceNode(new FuncParamNode(parameter), slice, fieldRef.type());
+      invertedSliceNode = new BuiltInCall(BuiltInTable.LSR, new NodeList<>(List.of(
+          new SliceNode(new FuncParamNode(parameter), slice, fieldRef.type()),
+          new ConstantNode(Constant.Value.of(shiftValue.intValue(), shift.type())))),
+          originalShift.type());
     } else if (originalShift.builtIn() == BuiltInTable.LSR
         || originalShift.builtIn() == BuiltInTable.ASR) {
       throw new ViamError("Not implemented now");
