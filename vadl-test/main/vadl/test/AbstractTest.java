@@ -55,58 +55,6 @@ public class AbstractTest {
   }
 
   /**
-   * Creates a new test frontend for every test execution.
-   */
-  @BeforeEach
-  public void beforeEach() {
-    testFrontend = frontendProvider.createFrontend();
-  }
-
-  public TestFrontend testFrontend() {
-    return testFrontend;
-  }
-
-
-  /**
-   * Runs the given test source file and assumes that it will fail. If the test source file does
-   * not fail or if the provided failure message is not found in the error logs, the method
-   * will fail.
-   *
-   * @param testSourcePath the path of the test source file
-   * @param failureMessage the message to search for in the error logs (optional)
-   */
-  public void runAndAssumeFailure(String testSourcePath, @Nullable String failureMessage) {
-    var sourceUri = getUriFromTestSource(testSourcePath);
-    var success = testFrontend.runSpecification(sourceUri);
-    if (success) {
-      fail("Assumed failure for specification " + testSourcePath + " but succeeded");
-    }
-    if (failureMessage != null) {
-      var logs = testFrontend.getLogAsString();
-      var errorLogs = logs.substring(logs.indexOf(" error: "));
-      assertThat(errorLogs, containsString(failureMessage));
-    }
-  }
-
-  /**
-   * Runs the specification and returns the VIAM representation.
-   *
-   * @param testSourcePath the path of the test source file
-   * @return the VIAM specification
-   */
-  public Specification runAndGetViamSpecification(String testSourcePath) {
-    var sourceUri = getUriFromTestSource(testSourcePath);
-    var success = testFrontend.runSpecification(sourceUri);
-    if (!success) {
-      var logs = testFrontend.getLogAsString();
-      var errorLogs = logs.substring(logs.indexOf(" error: "));
-      fail(errorLogs);
-    }
-    return testFrontend.getViam();
-  }
-
-
-  /**
    * Retrieves the URI from the given Vadl source code.
    *
    * @param vadlSourceCode the Vadl source code
@@ -139,7 +87,7 @@ public class AbstractTest {
       // create temporary file for test source
       var tempFile =
           File.createTempFile("OpenVADL-", "-"
-                                           + path.substring(path.lastIndexOf("/") + 1));
+              + path.substring(path.lastIndexOf("/") + 1));
       tempFile.deleteOnExit();
 
       // copy resource stream into temporary file
@@ -179,7 +127,6 @@ public class AbstractTest {
 
     return preparedArgs.stream();
   }
-
 
   /**
    * Finds all test sources with the given prefix.
@@ -244,5 +191,55 @@ public class AbstractTest {
       }
       return fileNames;
     }
+  }
+
+  /**
+   * Creates a new test frontend for every test execution.
+   */
+  @BeforeEach
+  public void beforeEach() {
+    testFrontend = frontendProvider.createFrontend();
+  }
+
+  public TestFrontend testFrontend() {
+    return testFrontend;
+  }
+
+  /**
+   * Runs the given test source file and assumes that it will fail. If the test source file does
+   * not fail or if the provided failure message is not found in the error logs, the method
+   * will fail.
+   *
+   * @param testSourcePath the path of the test source file
+   * @param failureMessage the message to search for in the error logs (optional)
+   */
+  public void runAndAssumeFailure(String testSourcePath, @Nullable String failureMessage) {
+    var sourceUri = getUriFromTestSource(testSourcePath);
+    var success = testFrontend.runSpecification(sourceUri);
+    if (success) {
+      fail("Assumed failure for specification " + testSourcePath + " but succeeded");
+    }
+    if (failureMessage != null) {
+      var logs = testFrontend.getLogAsString();
+      var errorLogs = logs.substring(logs.indexOf(" error: "));
+      assertThat(errorLogs, containsString(failureMessage));
+    }
+  }
+
+  /**
+   * Runs the specification and returns the VIAM representation.
+   *
+   * @param testSourcePath the path of the test source file
+   * @return the VIAM specification
+   */
+  public Specification runAndGetViamSpecification(String testSourcePath) {
+    var sourceUri = getUriFromTestSource(testSourcePath);
+    var success = testFrontend.runSpecification(sourceUri);
+    if (!success) {
+      var logs = testFrontend.getLogAsString();
+      var errorLogs = logs.substring(logs.indexOf(" error: "));
+      fail(errorLogs);
+    }
+    return testFrontend.getViam();
   }
 }

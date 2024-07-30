@@ -93,4 +93,5 @@ public abstract class WriteResourceNode extends SideEffectNode {
     address = visitor.applyNullable(this, address, ExpressionNode.class);
     value = visitor.apply(this, value, ExpressionNode.class);
   }
+
 }

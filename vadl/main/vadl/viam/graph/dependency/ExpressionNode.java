@@ -26,6 +26,10 @@ public abstract class ExpressionNode extends DependencyNode {
     this.type = type;
   }
 
+  public boolean isConstant() {
+    return this instanceof ConstantNode;
+  }
+
   @Override
   public <T extends GraphNodeVisitor> void accept(T visitor) {
     visitor.visit(this);

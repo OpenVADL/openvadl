@@ -56,7 +56,8 @@ public class BitsType extends DataType {
    * @param others the BitsType objects to find the meet of
    * @return the meet (lower bound) of the given BitsType types
    */
-  public <T extends BitsType> T meet(T... others) {
+  @SafeVarargs
+  public final <T extends BitsType> T meet(T... others) {
     var lowerBound = this;
     for (var other : others) {
       if (lowerBound.bitWidth > other.bitWidth) {
@@ -77,7 +78,8 @@ public class BitsType extends DataType {
    * @param <T>    a subtype of BitsType
    * @return the BitsType object with the largest bit width
    */
-  public <T extends BitsType> T join(T... others) {
+  @SafeVarargs
+  public final <T extends BitsType> T join(T... others) {
     var upperBound = this;
     for (var other : others) {
       if (upperBound.bitWidth < other.bitWidth) {
@@ -86,6 +88,12 @@ public class BitsType extends DataType {
     }
     //noinspection Variable,unchecked
     return (T) upperBound;
+  }
+
+  @Override
+  public boolean isSigned() {
+    // bits type is signed (as auto cast to sint) but unsigned will override it
+    return true;
   }
 
   @Override

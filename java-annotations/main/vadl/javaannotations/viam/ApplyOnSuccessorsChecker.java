@@ -16,15 +16,14 @@ import vadl.javaannotations.AbstractAnnotationChecker;
  */
 @AutoService(BugChecker.class)
 @BugPattern(
-    name = "ApplyOnInputs",
-    summary = "Classes with @Input annotated fields must override applyOnInputsUnsafe method",
+    name = "ApplyOnSuccessors",
+    summary = "Classes with @Successor annotated fields must override applyOnInputsUnsafe method",
     severity = BugPattern.SeverityLevel.ERROR
 )
 @SuppressWarnings("BugPatternNaming")
-public class ApplyOnInputsChecker extends AbstractAnnotationChecker {
+public class ApplyOnSuccessorsChecker extends AbstractAnnotationChecker {
 
   private static String GRAPH_PKG = "vadl.viam.graph.";
-  private static String NODELIST = GRAPH_PKG + "NodeList";
   private static String NODE = GRAPH_PKG + "Node";
   private static String GRAPH_APPLIER = GRAPH_PKG + "GraphVisitor.Applier";
 
@@ -35,10 +34,10 @@ public class ApplyOnInputsChecker extends AbstractAnnotationChecker {
    * annotated with @Input and ensures that they override the applyOnInputsUnsafe method.
    * It will fail if its implementation is not as expected.
    */
-  public ApplyOnInputsChecker() {
+  public ApplyOnSuccessorsChecker() {
     super(
-        Input.class,
-        "applyOnInputsUnsafe",
+        Successor.class,
+        "applyOnSuccessorsUnsafe",
         "void",
         List.of(PARAM_TYPE)
     );
@@ -88,20 +87,14 @@ public class ApplyOnInputsChecker extends AbstractAnnotationChecker {
 
 
       String stmt;
-      if (fieldType.toString().startsWith(NODELIST)) {
-        // if the field is a nodelist, we implement it as stream
-        stmt =
-            ("%s = %s.stream().map((e) -> %s.apply(this, e%s))"
-                + ".collect(Collectors.toCollection(NodeList::new));")
-                .formatted(fieldName, fieldName, paramNames.get(0), typeOverload);
-      } else {
-        var applyMethod = fieldIsNullable ? "applyNullable" : "apply";
 
-        // otherwise we use the default apply method
-        stmt = "%s = %s.%s(this, %s%s);".formatted(
-            fieldName, paramNames.get(0), applyMethod,
-            fieldName, typeOverload);
-      }
+      var applyMethod = fieldIsNullable ? "applyNullable" : "apply";
+
+      // otherwise we use the default apply method
+      stmt = "%s = %s.%s(this, %s%s);".formatted(
+          fieldName, paramNames.get(0), applyMethod,
+          fieldName, typeOverload);
+
 
       stmts.add(stmt);
     }

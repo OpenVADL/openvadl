@@ -7,7 +7,7 @@ import vadl.oop.OopGraphNodeVisitor;
 import vadl.oop.passes.type_normalization.UpcastedTypeCastNode;
 import vadl.types.BitsType;
 import vadl.types.BoolType;
-import vadl.viam.ViamError;
+import vadl.viam.Constant;
 import vadl.viam.graph.GraphNodeVisitor;
 import vadl.viam.graph.control.AbstractBeginNode;
 import vadl.viam.graph.control.EndNode;
@@ -51,7 +51,15 @@ public class EncodingCodeGeneratorVisitor implements OopGraphNodeVisitor {
 
   @Override
   public void visit(ConstantNode node) {
-    writer.write(node.constant().toString());
+    var constant = node.constant();
+    constant.ensure(constant instanceof Constant.Value || constant instanceof Constant.Str,
+        "Only value and string constant are currently supported for CPP emitting");
+
+    if (constant instanceof Constant.Value) {
+      writer.write(((Constant.Value) constant).integer().toString(10));
+    } else {
+      writer.write(((Constant.Str) constant).value());
+    }
   }
 
   @Override

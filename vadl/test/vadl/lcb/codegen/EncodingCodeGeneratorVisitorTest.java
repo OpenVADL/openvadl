@@ -3,7 +3,6 @@ package vadl.lcb.codegen;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
 import java.io.StringWriter;
-import java.math.BigInteger;
 import java.util.stream.Stream;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -35,7 +34,7 @@ class EncodingCodeGeneratorVisitorTest extends AbstractTest {
 
   @Test
   void constant_shouldReturnNumber() {
-    var constant = new Constant.Value(BigInteger.ONE, DataType.unsignedInt(32));
+    var constant = Constant.Value.of(1, DataType.unsignedInt(32));
     var node = new ConstantNode(constant);
 
     // When
@@ -58,7 +57,7 @@ class EncodingCodeGeneratorVisitorTest extends AbstractTest {
 
   @Test
   void funcCallNode_shouldCreateFunctionalWithOneVar() {
-    var constant = new Constant.Value(BigInteger.ONE, DataType.unsignedInt(32));
+    var constant = Constant.Value.of(1, DataType.unsignedInt(32));
     var node = new ConstantNode(constant);
     var funcCallNode =
         new FuncCallNode(new NodeList<>(node), new Function(createIdentifier("nameValue"),
@@ -74,7 +73,7 @@ class EncodingCodeGeneratorVisitorTest extends AbstractTest {
 
   @Test
   void funcCallNode_shouldCreateFunctionalWithTwoVar() {
-    var constant = new Constant.Value(BigInteger.ONE, DataType.unsignedInt(32));
+    var constant = Constant.Value.of(1, DataType.unsignedInt(32));
     var node = new ConstantNode(constant);
     var funcCallNode =
         new FuncCallNode(new NodeList<>(node, node), new Function(createIdentifier("nameValue"),
@@ -123,7 +122,7 @@ class EncodingCodeGeneratorVisitorTest extends AbstractTest {
   @ParameterizedTest
   @MethodSource("getTypesWithCastExpression")
   void typeCastNode_shouldGenerateCpp(DataType type, String expected) {
-    var constant = new Constant.Value(BigInteger.ONE, DataType.unsignedInt(32));
+    var constant = Constant.Value.of(1, DataType.unsignedInt(32));
     var node = new ConstantNode(constant);
 
     // When
@@ -136,7 +135,7 @@ class EncodingCodeGeneratorVisitorTest extends AbstractTest {
   @ParameterizedTest
   @MethodSource("getTypesWithCastExpressionAndBitMask")
   void upcastedTypeCastNode_shouldGenerateCpp(DataType type, String expected) {
-    var constant = new Constant.Value(BigInteger.ONE, DataType.unsignedInt(32));
+    var constant = Constant.Value.of(1, DataType.unsignedInt(32));
     var node = new ConstantNode(constant);
 
     // When
@@ -150,7 +149,7 @@ class EncodingCodeGeneratorVisitorTest extends AbstractTest {
 
   @Test
   void builtIn_shouldGenerateCpp() {
-    var constant = new Constant.Value(BigInteger.ONE, DataType.unsignedInt(32));
+    var constant = Constant.Value.of(1, DataType.unsignedInt(32));
     var node = new ConstantNode(constant);
     var builtIn =
         new BuiltInCall(BuiltInTable.ADD, new NodeList<>(node, node), DataType.unsignedInt(32));

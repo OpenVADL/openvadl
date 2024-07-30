@@ -185,9 +185,41 @@ public class GraphBuildingTests {
     var newNode = new Plain();
     assertThat(testGraph.getNodes().count(), equalTo(3L));
 
-    testGraph.replaceNode(replace, newNode);
+    replace.replaceAndDelete(newNode);
 
     assertThat(testGraph.getNodes().count(), equalTo(3L));
     assertTrue(replace.isDeleted());
+  }
+
+  @Test
+  void replaceNodeWithInputs_Success() {
+    testGraph.add(new Plain());
+    var replace = testGraph.addWithInputs(new TestNodes.WithTwoInputs(new Plain(), new Plain()));
+    testGraph.add(new Plain());
+    var newNode = new Plain();
+    assertThat(testGraph.getNodes().count(), equalTo(5L));
+
+    testGraph.verify();
+
+    replace.replaceAndDelete(newNode);
+
+    testGraph.verify();
+    assertThat(testGraph.getNodes().count(), equalTo(3L));
+    assertTrue(replace.isDeleted());
+  }
+
+  @Test
+  void replaceNodeWithSuccessor_Success() {
+    var second = testGraph.add(new Plain());
+    var replace = testGraph.add(new TestNodes.WithSuccessor(second));
+    testGraph.add(new Plain());
+    var newNode = new Plain();
+    assertThat(testGraph.getNodes().count(), equalTo(3L));
+
+    replace.replaceAndDelete(newNode);
+
+    assertThat(testGraph.getNodes().count(), equalTo(2L));
+    assertTrue(replace.isDeleted());
+    assertTrue(second.isDeleted());
   }
 }

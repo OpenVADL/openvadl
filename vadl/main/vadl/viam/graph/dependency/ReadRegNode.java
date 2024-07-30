@@ -1,16 +1,12 @@
 package vadl.viam.graph.dependency;
 
 import java.util.List;
-import javax.annotation.Nullable;
 import vadl.javaannotations.viam.DataValue;
 import vadl.types.DataType;
 import vadl.viam.Register;
 import vadl.viam.Resource;
 import vadl.viam.graph.GraphNodeVisitor;
 import vadl.viam.graph.Node;
-import vadl.viam.graph.NodeList;
-import vadl.viam.graph.control.IfNode;
-import vadl.viam.graph.control.InstrCallNode;
 
 /**
  * The ReadRegNode class is a subclass of ReadNode that represents

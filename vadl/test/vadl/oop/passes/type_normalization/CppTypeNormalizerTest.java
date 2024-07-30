@@ -143,7 +143,7 @@ class CppTypeNormalizerTest extends AbstractTest {
         createIdentifier("parameterValue"), DataType.bool()
     ), DataType.bool());
     function.behavior().addWithInputs(
-        new TypeCastNode(new ConstantNode(new Constant.Value(BigInteger.ZERO, Type.signedInt(8))),
+        new TypeCastNode(new ConstantNode(Constant.Value.of(0, Type.signedInt(8))),
             before));
 
     // When
@@ -163,7 +163,7 @@ class CppTypeNormalizerTest extends AbstractTest {
         createIdentifier("parameterValue"), DataType.bool()
     ), DataType.bool());
     function.behavior().addWithInputs(
-        new TypeCastNode(new ConstantNode(new Constant.Value(BigInteger.ZERO, Type.signedInt(8))),
+        new TypeCastNode(new ConstantNode(Constant.Value.of(0, Type.signedInt(8))),
             type));
 
     // When
@@ -182,7 +182,7 @@ class CppTypeNormalizerTest extends AbstractTest {
         createIdentifier("parameterValue"), DataType.bool()
     ), DataType.bool());
     function.behavior().addWithInputs(
-        new ConstantNode(new Constant.Value(BigInteger.ZERO, before)));
+        new ConstantNode(Constant.Value.of(0, before)));
 
     // When
     var updatedFunction = new CppTypeNormalizer().makeTypesCppConform(function);
@@ -190,7 +190,7 @@ class CppTypeNormalizerTest extends AbstractTest {
     // Then
     var node = updatedFunction.behavior().getNodes(ConstantNode.class).toList().get(0);
     var constant = (Constant.Value) node.constant();
-    assertThat(constant.value().intValue()).isEqualTo(0);
+    assertThat(constant.intValue()).isEqualTo(0);
     assertThat(constant.type()).isEqualTo(after);
   }
 
@@ -203,7 +203,7 @@ class CppTypeNormalizerTest extends AbstractTest {
         createIdentifier("parameterValue"), DataType.bool()
     ), DataType.bool());
     function.behavior().addWithInputs(
-        new ConstantNode(new Constant.Value(BigInteger.ZERO, type)));
+        new ConstantNode(Constant.Value.of(0, type)));
 
     // When
     var updatedFunction = new CppTypeNormalizer().makeTypesCppConform(function);
@@ -211,7 +211,7 @@ class CppTypeNormalizerTest extends AbstractTest {
     // Then
     var node = updatedFunction.behavior().getNodes(ConstantNode.class).toList().get(0);
     var constant = (Constant.Value) node.constant();
-    assertThat(constant.value().intValue()).isEqualTo(0);
+    assertThat(constant.intValue()).isEqualTo(0);
     assertThat(constant.type()).isEqualTo(type);
   }
 

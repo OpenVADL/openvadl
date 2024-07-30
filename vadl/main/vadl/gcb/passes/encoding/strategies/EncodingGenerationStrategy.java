@@ -4,7 +4,6 @@ import vadl.viam.Encoding;
 import vadl.viam.Format;
 import vadl.viam.Function;
 import vadl.viam.Parameter;
-import vadl.viam.graph.Graph;
 
 /**
  * The implementor of this interface can generate a field access encoding function.

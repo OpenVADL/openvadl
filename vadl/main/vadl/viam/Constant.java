@@ -1,5 +1,9 @@
 package vadl.viam;
 
+import static vadl.utils.BigIntUtils.mask;
+import static vadl.utils.BigIntUtils.twosComplement;
+
+import com.google.errorprone.annotations.FormatMethod;
 import java.math.BigInteger;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -10,9 +14,14 @@ import java.util.Objects;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 import java.util.stream.Stream;
+import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
+import vadl.types.BitsType;
+import vadl.types.BoolType;
 import vadl.types.DataType;
+import vadl.types.TupleType;
 import vadl.types.Type;
+import vadl.utils.BigIntUtils;
 import vadl.utils.StreamUtils;
 
 /**
@@ -54,21 +63,126 @@ public abstract class Constant {
 
   /**
    * Represents a constant value with a specific type.
+   *
+   * <p>It stores values of type bits and bool.
+   * The value itself is represented as two's complement; thus BigInteger value is
+   * only a data container, not the actual number.
+   * The {@link #integer()} returns the integer value depending on the constant's type.
    */
   public static class Value extends Constant {
+    // not really an integer, just a data container
     private final BigInteger value;
 
-    public Value(BigInteger value, DataType type) {
+    /**
+     * WARNING: Never use this constructor directly!
+     * Always use either {@link #fromInteger(BigInteger, DataType)} or
+     * {@link #fromTwosComplement(BigInteger, DataType)}.
+     *
+     * <p>All public construction overloads of {@link #of} take an integer as input.</p>
+     */
+    private Value(BigInteger value, DataType type) {
       super(type);
       this.value = value;
     }
 
-    public static Value of(long value, DataType type) {
-      return new Value(BigInteger.valueOf(value), type);
+    /**
+     * Constructor for input values that are in two's complement.
+     * This means the {@code value} argument is NOT an integer, but binary representation
+     * of a number in two's compliment.
+     */
+    private static Value fromTwosComplement(BigInteger value, DataType type) {
+      if (value.signum() < 0 || value.bitLength() > type.bitWidth()) {
+        throw new ViamError("Internal error; value not in two's complement.");
+      }
+      return new Value(value, type);
     }
 
-    public BigInteger value() {
-      return value;
+    /**
+     * Constructor of a constant value from an integer (that is not in two's complement form).
+     * So the {@code integer} argument might be negative.
+     */
+    private static Value fromInteger(BigInteger integer, DataType type) {
+      if (type instanceof BoolType) {
+        // hard code boolean value
+        var val = integer.compareTo(BigInteger.ZERO) == 0 ? integer : BigInteger.ONE;
+        return new Value(val, type);
+      } else if (type instanceof BitsType bitsType) {
+        if (bitsType.getClass() == BitsType.class) {
+          // for bitsType, it must just fit into the bit width, but it has no
+          // integer value boundaries
+          if (integer.bitLength() > bitsType.bitWidth()) {
+            throw new ViamError("Value %s does not fit in type %s".formatted(integer.toString(16),
+                bitsType.getClass()));
+          }
+        } else if (minValueOf(bitsType).integer().compareTo(integer) > 0
+            || maxValueOf(bitsType).integer().compareTo(integer) < 0) {
+          // for SInt and UInt types the integer value must fit in the allowed range
+          throw new ViamError(
+              "Value %s does not fit in type %s. Possible range: %s .. %s".formatted(
+                  integer.toString(16), type,
+                  minValueOf(bitsType), maxValueOf(bitsType)));
+        }
+        var value = twosComplement(integer, type.bitWidth());
+        return new Value(value, type);
+      } else {
+        throw new ViamError("Only BitsType and BoolType are supported, but got %s".formatted(type));
+      }
+    }
+
+    public static Value of(long value, DataType type) {
+      return fromInteger(BigInteger.valueOf(value), type);
+    }
+
+    public static Value of(boolean value) {
+      return fromInteger(BigInteger.valueOf(value ? 1 : 0), Type.bool());
+    }
+
+    public static Value of(String value, DataType type) {
+      return fromInteger(new BigInteger(value), Type.bool());
+    }
+
+    /**
+     * Translates a byte array containing the two's-complement binary representation of an integer
+     * into a Value.
+     * The input array is assumed to be in big-endian byte-order: the most
+     * significant byte is in the zeroth element.
+     * The {@code value} array is assumed to be unchanged for the duration of the constructor call.
+     *
+     * @param value value in two's complement.
+     * @param type  type of the value
+     */
+    public static Value of(byte[] value, DataType type) {
+      return fromInteger(new BigInteger(value), type);
+    }
+
+
+    /**
+     * Returns the integer value represented by this value object.
+     * If the type of the value is BoolType, the underlying BigInteger value is returned.
+     * Otherwise, the two's complement representation of the BigInteger value is converted
+     * to its original value based on the specified BitsType.
+     *
+     * @return the integer value represented by this value object
+     */
+    public BigInteger integer() {
+      if (type() instanceof BoolType) {
+        return this.value;
+      } else {
+        return BigIntUtils.fromTwosComplement(value, (BitsType) type());
+      }
+    }
+
+    public int intValue() {
+      return integer().intValue();
+    }
+
+    public long longValue() {
+      return integer().longValue();
+    }
+
+    public boolean bool() {
+      ensure(type() instanceof BoolType, "constant must be of bool type");
+      return this.value.bitLength() != 0;
     }
 
     @Override
@@ -76,9 +190,182 @@ public abstract class Constant {
       return (DataType) super.type();
     }
 
+    /**
+     * Casts the constant value to the specified data type.
+     *
+     * @param type the data type to cast the value to
+     * @return a new Constant.Value object representing the casted value
+     * @throws ViamError if the constant cannot be cast to the specified data type
+     */
+    public Constant.Value castTo(DataType type) {
+      var truncatedValue = value
+          .and(mask(type.bitWidth(), 0));
+      return Value.fromTwosComplement(truncatedValue, type);
+    }
+
+    /**
+     * Returns the addition of this and other together with the status.
+     *
+     * @return a tuple constant of form {@code ( result, ( z, c, o, n ) )}
+     */
+    public Constant.Tuple add(Constant.Value other) {
+      ensure(type() instanceof BitsType, "Invalid type for addition");
+      ensure(type().equals(other.type()), "Types don't match, %s vs %s", type(), other.type());
+
+      var result = value.add(other.value);
+      var truncated = result.and(mask(type().bitWidth(), 0));
+
+      var isZero = truncated.equals(BigInteger.ZERO);
+      // check msb
+      var isNegative = result.testBit(type().bitWidth() - 1);
+
+      // the carry flag is set if the addition of two numbers causes a carry
+      // out of the most significant (leftmost) bits added.
+      // can be ignored for signed interpretation of result.
+      // https://teaching.idallen.com/dat2343/10f/notes/040_overflow.txt
+      var isCarry = result.bitLength() > type().bitWidth();
+
+      // overflow if both operands have same sign and differ from result sign.
+      // overflow is ignored for unsigned interpretation of result.
+      // https://teaching.idallen.com/dat2343/10f/notes/040_overflow.txt
+      var isOverflow = this.isSignBit() == other.isSignBit() && (this.isSignBit() != isNegative);
+
+
+      return new Constant.Tuple(
+          Constant.Value.fromTwosComplement(truncated, type()),
+          Constant.Tuple.status(isZero, isCarry, isOverflow, isNegative)
+      );
+    }
+
+    /**
+     * Subtracts the given value from this value.
+     *
+     * <p>It uses the {@link #add(Value)} function by negating the second operand.
+     * Therefore the carry flag must be inverse and the overflow must be specially
+     * handled if the second operand is the minimal signed value.</p>
+     *
+     * @param other the value to subtract from this value
+     * @return a tuple constant representing the result of the subtraction
+     */
+    public Constant.Tuple subtract(Constant.Value other) {
+      ensure(type() instanceof BitsType, "Invalid type for subtraction");
+      ensure(type().equals(other.type()), "Types don't match, %s vs %s", type(), other.type());
+
+      // from a - b to a + (-b)
+      var negatedOther = other.negate();
+      var result = this.add(negatedOther);
+
+      // swap the carry flag by inverse of addition open-vadl#76
+      var resStatus = result.get(1, Constant.Tuple.class);
+      // the carry of the subtraction is the inverse to the carry of the addition
+      var carry = resStatus.get(1, Constant.Value.class)
+          .not();
+
+      var overflow = resStatus.get(2, Constant.Value.class);
+      if (minSignedValue().equals(other.value)) {
+        // if b equals to minimal value (100..), the negation results in the same
+        // value. This will invalidate the overflow flag of the addition result, as
+        // the value is taken as negative eventhough it is actually positive (out of range).
+        // Therefore we want to invert the overflow flag from the addition.
+        overflow = overflow.not();
+      }
+
+      var status = new Constant.Tuple(
+          resStatus.get(0, Constant.Value.class),
+          carry,
+          overflow,
+          resStatus.get(3, Constant.Value.class)
+      );
+
+      return new Constant.Tuple(result.get(0), status);
+    }
+
+    /**
+     * Checks if the sign bit of the value is set.
+     */
+    public boolean isSignBit() {
+      return value.testBit(type().bitWidth() - 1);
+    }
+
+    /**
+     * Returns the logical negation of the current value object.
+     *
+     * @return the negation value of the current value object
+     * @throws ViamError if the type of the value object is not BoolType.
+     */
+    public Constant.Value not() {
+      ensure(type() instanceof BoolType, "not() currently only available for bool type");
+      return Constant.Value.of(!this.bool());
+    }
+
+    /**
+     * Negates the value represented by this Constant.Value object.
+     *
+     * <p>
+     * This method calculates the negation of the value by inverting all bits, adding one to it,
+     * and then truncating the result based on the number of bits specified by the DataType.
+     * The resulting negated value is returned as a new Constant.Value object.
+     * </p>
+     *
+     * <p><b>Note: </b>If the value is the minimal possible signed number, this will truncate the
+     * result and lead
+     * to a wrong value.
+     *
+     * @return a new Constant.Value object representing the negated value
+     */
+    public Constant.Value negate() {
+      var mask = mask(type().bitWidth(), 0);
+      var negated = value
+          .xor(mask) // invert all bits
+          .add(BigInteger.ONE) // add one to it
+          .and(mask); // truncate result
+      return Constant.Value.fromTwosComplement(negated, type());
+    }
+
+    private BigInteger maxUnsignedValue() {
+      // e.g. 4 bits: 1000 ... -8
+      return BigInteger.ZERO.setBit(type().bitWidth()).subtract(BigInteger.ONE);
+    }
+
+    private BigInteger maxSignedValue() {
+      // e.g. 4 bits: 1000 ... -8
+      return BigInteger.ZERO.setBit(type().bitWidth() - 1).subtract(BigInteger.ONE);
+    }
+
+    private BigInteger minSignedValue() {
+      // e.g. 4 bits: 1000 ... -8
+      return BigInteger.ZERO.setBit(type().bitWidth() - 1);
+    }
+
     @Override
     public java.lang.String toString() {
-      return value.toString();
+      return integer() + ": " + type().toString();
+    }
+
+    /**
+     * Returns the maximal value for the given bits type as Constant.Value.
+     */
+    public static Constant.Value maxValueOf(BitsType type) {
+      BigInteger result;
+      if (type.isSigned()) {
+        result = BigInteger.ONE.shiftLeft(type.bitWidth() - 1).subtract(BigInteger.ONE);
+      } else {
+        result = BigInteger.ONE.shiftLeft(type.bitWidth()).subtract(BigInteger.ONE);
+      }
+      return fromTwosComplement(result, type);
+    }
+
+    /**
+     * Returns the minimal value for the given bits type as Constant.Value.
+     */
+    public static Constant.Value minValueOf(BitsType type) {
+      BigInteger result;
+      if (type.isSigned()) {
+        result = BigInteger.ZERO.setBit(type.bitWidth() - 1);
+      } else {
+        result = BigInteger.ZERO;
+      }
+      return fromTwosComplement(result, type);
     }
 
     @Override
@@ -103,6 +390,54 @@ public abstract class Constant {
       result = 31 * result + value.hashCode();
       return result;
     }
+
+    public String decimal() {
+      return asString("", 10);
+    }
+
+    public String hexadecimal() {
+      return hexadecimal("0x");
+    }
+
+    public String hexadecimal(String prefix) {
+      return asString(prefix, 16);
+    }
+
+    public String binary() {
+      return binary("0b");
+    }
+
+    public String binary(String prefix) {
+      return asString(prefix, 2);
+    }
+
+    private String asString(String prefix, int radix) {
+      Integer padFactor = null;
+      switch (radix) {
+        case 2:
+          padFactor = 1;
+          break;
+        case 10:
+          padFactor = 0;
+          break;
+        case 16:
+          padFactor = 4;
+          break;
+        default:
+          return "Invalid radix %s".formatted(radix);
+      }
+
+      if (type() instanceof BoolType) {
+        return prefix + this.value.toString(radix);
+      }
+
+      var str = this.value.toString(radix);
+      if (padFactor > 0) {
+        var padSize = (type().bitWidth() / padFactor) - str.length();
+        str = "0".repeat(padSize) + str;
+      }
+      return prefix + str;
+    }
   }
 
   /**
@@ -115,11 +450,6 @@ public abstract class Constant {
     public Str(java.lang.String value) {
       super(Type.string());
       this.value = value;
-    }
-
-    @Override
-    public Type type() {
-      return super.type();
     }
 
     public java.lang.String value() {
@@ -382,6 +712,145 @@ public abstract class Constant {
           }
         };
       }
+    }
+  }
+
+  /**
+   * Represents a tuple constant containing other constants.
+   */
+  public static class Tuple extends Constant {
+    private final List<Constant> values;
+
+
+    /**
+     * Creates a Tuple constant with the given values and type.
+     *
+     * @param values The list of Constant values contained in the Tuple.
+     * @param type   The TupleType of the Tuple constant.
+     */
+    public Tuple(List<Constant> values, TupleType type) {
+      super(type);
+      this.values = values;
+    }
+
+    /**
+     * Creates a Tuple constant with the given values.
+     * The type of the tuple gets automatically inferred.
+     *
+     * @param values The list of Constant values contained in the Tuple.
+     */
+    public Tuple(List<Constant> values) {
+      this(values,
+          TupleType.tuple(
+              values.stream()
+                  .map(e -> (DataType) e.type)
+                  .toArray(DataType[]::new)
+          )
+      );
+    }
+
+    /**
+     * Creates a Tuple constant with the given values.
+     */
+    public Tuple(Constant... values) {
+      this(List.of(values));
+    }
+
+    /**
+     * Constructs a tuple constant representing a status tuple.
+     */
+    public static Tuple status(boolean zero, boolean carry, boolean overflow, boolean negative) {
+      return new Tuple(
+          List.of(Constant.Value.of(zero), Constant.Value.of(carry), Constant.Value.of(overflow),
+              Constant.Value.of(negative)
+          ), Type.status().asTuple()
+      );
+    }
+
+    public List<Constant> values() {
+      return values;
+    }
+
+    /**
+     * Retrieves the Constant value at the specified index.
+     *
+     * @param index The index of the Constant value to retrieve.
+     * @return The Constant value at the specified index.
+     */
+    public Constant get(int index) {
+      return values.get(index);
+    }
+
+    /**
+     * Retrieves the constant value at the specified index and casts it to the given type.
+     *
+     * @param index               The index of the constant value to retrieve.
+     * @param typeOfConstantClass The class type to cast the constant value to.
+     * @param <T>                 The generic type parameter representing the class type.
+     * @return The constant value at the specified index, casted to the given type.
+     * @throws ViamError if the constant value at the specified
+     *                   index is not of the given type.
+     */
+    public <T extends Constant> T get(int index, Class<T> typeOfConstantClass) {
+      var val = values.get(index);
+      ensure(typeOfConstantClass.isInstance(val), "Expected constant of type %s but got %s",
+          typeOfConstantClass, val);
+      //noinspection unchecked
+      return (T) val;
+    }
+
+    public int size() {
+      return values.size();
+    }
+
+    @Override
+    public String toString() {
+      return "(" + values.stream().map(Constant::toString).collect(Collectors.joining(", ")) + ")";
+    }
+
+    @Override
+    public boolean equals(Object o) {
+      if (this == o) {
+        return true;
+      }
+      if (o == null || getClass() != o.getClass()) {
+        return false;
+      }
+      if (!super.equals(o)) {
+        return false;
+      }
+
+      Tuple tuple = (Tuple) o;
+      return values.equals(tuple.values);
+    }
+
+    @Override
+    public int hashCode() {
+      int result = super.hashCode();
+      result = 31 * result + values.hashCode();
+      return result;
+    }
+  }
+
+
+  // HELPER FUNCTIONS
+
+  /**
+   * Ensure that a condition is true, otherwise throw a ViamError with a formatted error message.
+   * It adds the constant as context in case of an error.
+   *
+   * @param condition the condition to check
+   * @param fmt       the format string for the error message
+   * @param args      the arguments to format the error message
+   * @throws ViamError if the condition is false
+   */
+  @Contract("false, _, _ -> fail")
+  @FormatMethod
+  public void ensure(boolean condition, String fmt, Object... args) {
+    if (!condition) {
+      throw new ViamError(fmt.formatted(args))
+          .addContext("constant", this)
+          .shrinkStacktrace(1);
     }
   }
 }

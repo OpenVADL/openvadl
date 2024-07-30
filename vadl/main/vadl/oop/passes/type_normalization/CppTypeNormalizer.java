@@ -97,7 +97,7 @@ public class CppTypeNormalizer {
             bitsType.bitWidth()));
         var newTypeCastNode =
             new UpcastedTypeCastNode(typeCastNode.value(), newBitSizeType, typeCastNode.castType());
-        graph.replaceNode(typeCastNode, newTypeCastNode);
+        typeCastNode.replaceAndDelete(newTypeCastNode);
       }
     });
 
@@ -107,9 +107,9 @@ public class CppTypeNormalizer {
         .forEach(constantNode -> {
           if (constantNode.constant() instanceof Constant.Value constantValue
               && !cppSupportedTypes.contains(constantValue.type())) {
-            constantNode.setConstant(new Constant.Value(
-                constantValue.value(), upcast(constantValue.type())
-            ));
+            constantNode.setConstant(
+                constantValue.castTo(upcast(constantValue.type()))
+            );
           }
         });
   }

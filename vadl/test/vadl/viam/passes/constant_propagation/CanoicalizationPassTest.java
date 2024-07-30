@@ -11,7 +11,6 @@ import vadl.types.BitsType;
 import vadl.types.BuiltInTable;
 import vadl.types.DataType;
 import vadl.types.Type;
-import vadl.utils.SourceLocation;
 import vadl.viam.Assembly;
 import vadl.viam.Constant;
 import vadl.viam.Encoding;
@@ -26,40 +25,40 @@ import vadl.viam.graph.Graph;
 import vadl.viam.graph.NodeList;
 import vadl.viam.graph.dependency.BuiltInCall;
 import vadl.viam.graph.dependency.ConstantNode;
-import vadl.viam.passes.constant_folding.ConstantFoldingPass;
+import vadl.viam.passes.constant_folding.CanoicalizationPass;
 
-class ConstantFoldingPassTest {
+class CanoicalizationPassTest {
   @Test
   void shouldReplaceAdditionWithConstant() {
     // Given
     var viam = new Specification(
-        new Identifier("identifierValue", SourceLocation.INVALID_SOURCE_LOCATION));
+        Identifier.noLocation("identifierValue"));
 
     var behavior = new Graph("graphNameValue");
     var p1 =
-        behavior.add(new ConstantNode(new Constant.Value(BigInteger.ONE, DataType.signedInt(32))));
+        behavior.add(new ConstantNode(Constant.Value.of(1, DataType.bits(32))));
     var p2 =
-        behavior.add(new ConstantNode(new Constant.Value(BigInteger.ONE, DataType.signedInt(32))));
-    behavior.add(new BuiltInCall(BuiltInTable.ADD, new NodeList<>(p1, p2), Type.signedInt(32)));
+        behavior.add(new ConstantNode(Constant.Value.of(1, DataType.bits(32))));
+    behavior.add(new BuiltInCall(BuiltInTable.ADD, new NodeList<>(p1, p2), Type.bits(32)));
 
     var assembly = new Assembly(
-        new Identifier("assemblyIdentifierValue", SourceLocation.INVALID_SOURCE_LOCATION),
+        Identifier.noLocation("assemblyIdentifierValue"),
         new Function(
-            new Identifier("functionIdentifierValue", SourceLocation.INVALID_SOURCE_LOCATION),
+            Identifier.noLocation("functionIdentifierValue"),
             new Parameter[] {},
             Type.string()));
     var encoding = new Encoding(
-        new Identifier("encodingIdentifierValue", SourceLocation.INVALID_SOURCE_LOCATION),
-        new Format(new Identifier("formatIdentifierValue", SourceLocation.INVALID_SOURCE_LOCATION),
+        Identifier.noLocation("encodingIdentifierValue"),
+        new Format(Identifier.noLocation("formatIdentifierValue"),
             BitsType.bits(32)),
         new Encoding.Field[] {});
 
     var isa = new InstructionSetArchitecture(
-        new Identifier("isaIdentifierValue", SourceLocation.INVALID_SOURCE_LOCATION),
+        Identifier.noLocation("isaIdentifierValue"),
         viam,
         Collections.emptyList(),
         List.of(new Instruction(
-            new Identifier("instructionValue", SourceLocation.INVALID_SOURCE_LOCATION),
+            Identifier.noLocation("instructionValue"),
             behavior,
             assembly,
             encoding)),
@@ -72,14 +71,14 @@ class ConstantFoldingPassTest {
     viam.add(isa);
 
     // When
-    var pass = new ConstantFoldingPass();
+    var pass = new CanoicalizationPass();
     pass.execute(Collections.emptyMap(), viam);
 
     assertThat(behavior.getNodes().count(), equalTo(1L));
     assertThat(behavior.getNodes().findFirst().get().getClass(), equalTo(ConstantNode.class));
     assertThat(
         ((Constant.Value) ((ConstantNode) behavior.getNodes().findFirst()
-            .get()).constant()).value(),
+            .get()).constant()).integer(),
         equalTo(new BigInteger(String.valueOf(2))));
   }
 

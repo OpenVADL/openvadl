@@ -65,79 +65,48 @@ public class ArithmeticImmediateStrategy implements EncodingGenerationStrategy {
     // Optimistic assumption: Remove all typecasts because they are not correct anymore when
     // inverted.
     copy.getNodes(TypeCastNode.class)
-        .forEach(typeCastNode -> copy.replaceNode(typeCastNode, typeCastNode.value()));
-
-    // First, remove all usages of subtraction.
-    // We can replace them by addition with a NegatedNode
-    var subtractions = TreeMatcher.matches(copy.getNodes(),
-        new BuiltInMatcher(BuiltInTable.SUB, Collections.emptyList()));
-
-    subtractions.forEach(subtraction -> {
-      var cast = (BuiltInCall) subtraction;
-      cast.setBuiltIn(BuiltInTable.ADD);
-
-      // a - b will be changed to a + (-b)
-      var value = (ExpressionNode) cast.inputs().toList().get(1);
-      var negation =
-          copy.add(new BuiltInCall(BuiltInTable.NEG, new NodeList<>(List.of(value)), value.type()));
-      cast.replaceInput(value, negation);
-    });
+        .forEach(typeCastNode -> typeCastNode.replaceAndDelete(typeCastNode.value()));
 
     // After that we need to find the field and add it to the other side.
     var fieldRefs = copy.getNodes(FieldRefNode.class).toList();
     var fieldRef = fieldRefs.get(0);
-
-    var hasFieldSubtractionOnRHS =
-        TreeMatcher.matches(copy.getNodes(), new BuiltInMatcher(BuiltInTable.ADD, List.of(
-            new AnyNodeMatcher(),
-            new BuiltInMatcher(BuiltInTable.NEG, List.of(new FieldRefNodeMatcher()))
-        )));
-
     var fieldRefBits = (BitsType) fieldRef.type();
 
-    // The else branch is not required because the field is positive on the LHS.
-    // Only when the field is subtracted on the LHS, we need to rewrite the equation.
-    if (hasFieldSubtractionOnRHS.isEmpty()) {
-      var funcParam = new FuncParamNode(parameter);
-      copy.replaceNode(fieldRef, funcParam);
+    // Example
+    // f(x) = x + 6
+    // Let y = f(x)
+    // y = x + 6
+    // y - 6 = x
+    // and
+    // f(x) = x - 6
+    // Let y = f(x)
+    // y = x - 6
+    // y + 6 = x
+    // The heuristic just swaps the operators.
 
-      // This case is more complicated because the LHS has f(x) - field = XXX
-      // If we subtract the f(x) then: - field = XXX is left
-      // Which means that we have to invert every operand.
+    var funcParam = new FuncParamNode(parameter);
+    fieldRef.replaceAndDelete(funcParam);
 
-      // We need to invert every operand of a builtin.
-      // (1) We can create NegatedNodes and remove NegatedNodes
-      // (2) Or we can just change the builtin.
-      // I preferred (2) because it is easier.
-      returnNode.applyOnInputs(new GraphVisitor.Applier<>() {
-        @Nullable
-        @Override
-        public Node applyNullable(Node from, @Nullable Node to) {
-          if (to != null) {
-            to.applyOnInputs(this);
-          }
-
-          if (to instanceof BuiltInCall) {
-            var cast = (BuiltInCall) to;
-            if (cast.builtIn() == BuiltInTable.ADD) {
-              cast.setBuiltIn(BuiltInTable.SUB);
-            } else if (cast.builtIn() == BuiltInTable.SUB) {
-              cast.setBuiltIn(BuiltInTable.ADD);
-            }
-          }
-
-          return to;
+    returnNode.applyOnInputs(new GraphVisitor.Applier<>() {
+      @Nullable
+      @Override
+      public Node applyNullable(Node from, @Nullable Node to) {
+        if (to != null) {
+          to.applyOnInputs(this);
         }
-      });
-    } else {
-      var negated =
-          new BuiltInCall(BuiltInTable.NEG, new NodeList<>(List.of(new FuncParamNode(
-              parameter
-          ))), parameter.type());
-      copy.replaceNode(fieldRef, negated);
 
+        if (to instanceof BuiltInCall) {
+          var cast = (BuiltInCall) to;
+          if (cast.builtIn() == BuiltInTable.ADD) {
+            cast.setBuiltIn(BuiltInTable.SUB);
+          } else if (cast.builtIn() == BuiltInTable.SUB) {
+            cast.setBuiltIn(BuiltInTable.ADD);
+          }
+        }
 
-    }
+        return to;
+      }
+    });
 
     // At the end of the encoding function, the type must be exactly as the field type
     var sliceNode =

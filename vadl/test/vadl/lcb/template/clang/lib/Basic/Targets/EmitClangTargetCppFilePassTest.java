@@ -1,7 +1,6 @@
 package vadl.lcb.template.clang.lib.Basic.Targets;
 
 import static org.hamcrest.MatcherAssert.assertThat;
-import static org.hamcrest.Matchers.containsString;
 import static org.hamcrest.Matchers.equalToIgnoringWhiteSpace;
 
 import java.io.IOException;

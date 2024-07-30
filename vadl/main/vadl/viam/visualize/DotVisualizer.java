@@ -4,7 +4,6 @@ import java.util.ArrayDeque;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Set;
-import java.util.Stack;
 import vadl.viam.Assembly;
 import vadl.viam.Definition;
 import vadl.viam.DefinitionVisitor;

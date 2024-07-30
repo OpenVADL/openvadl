@@ -108,7 +108,7 @@ public class EncodingCodeGeneratorVerificationTest extends DockerExecutionTest {
             """, fieldAccess.fieldRef().bitSlice().bitSize(),
         generatedDecodeFunctionCode,
         generatedEncodeWithDecodeFunctionCode);
-    logger.atDebug().log(z3Code);
+    logger.atInfo().log(z3Code);
     runContainerWithContent(DOCKER_IMAGE, z3Code, MOUNT_PATH, TEMPFILE_PREFIX, TEMPFILE_SUFFIX);
   }
 
@@ -147,7 +147,7 @@ public class EncodingCodeGeneratorVerificationTest extends DockerExecutionTest {
         new BuiltInCall(BuiltInTable.LSL, new NodeList<>(
             new TypeCastNode(new FieldRefNode(field, DataType.bits(20)), Type.unsignedInt(32)),
             new ConstantNode(
-                new Constant.Value(BigInteger.valueOf(6), DataType.unsignedInt(32)))),
+                Constant.Value.of(6, DataType.unsignedInt(32)))),
             Type.unsignedInt(32))
     );
     var graph = new Graph("graphValue");
@@ -165,7 +165,7 @@ public class EncodingCodeGeneratorVerificationTest extends DockerExecutionTest {
         new BuiltInCall(BuiltInTable.LSL, new NodeList<>(
             new TypeCastNode(new FieldRefNode(field, DataType.bits(20)), Type.signedInt(32)),
             new ConstantNode(
-                new Constant.Value(BigInteger.valueOf(6), DataType.unsignedInt(32)))),
+                Constant.Value.of(6, DataType.unsignedInt(32)))),
             Type.signedInt(32))
     );
     var graph = new Graph("graphValue");
@@ -183,7 +183,7 @@ public class EncodingCodeGeneratorVerificationTest extends DockerExecutionTest {
         new BuiltInCall(BuiltInTable.ADD, new NodeList<>(
             new TypeCastNode(new FieldRefNode(field, DataType.bits(20)), Type.unsignedInt(32)),
             new ConstantNode(
-                new Constant.Value(BigInteger.valueOf(6), DataType.unsignedInt(32)))),
+                Constant.Value.of(6, DataType.unsignedInt(32)))),
             Type.unsignedInt(32))
     );
     var graph = new Graph("graphValue");
@@ -200,7 +200,7 @@ public class EncodingCodeGeneratorVerificationTest extends DockerExecutionTest {
     var returnNode = new ReturnNode(
         new BuiltInCall(BuiltInTable.ADD, new NodeList<>(
             new TypeCastNode(new FieldRefNode(field, DataType.bits(20)), Type.signedInt(32)),
-            new ConstantNode(new Constant.Value(BigInteger.valueOf(6), DataType.signedInt(32)))),
+            new ConstantNode(Constant.Value.of(6, DataType.signedInt(32)))),
             Type.signedInt(32))
     );
     var graph = new Graph("graphValue");
@@ -218,7 +218,7 @@ public class EncodingCodeGeneratorVerificationTest extends DockerExecutionTest {
         new BuiltInCall(BuiltInTable.SUB, new NodeList<>(
             new TypeCastNode(new FieldRefNode(field, DataType.bits(20)), Type.unsignedInt(32)),
             new ConstantNode(
-                new Constant.Value(BigInteger.valueOf(6), DataType.unsignedInt(32)))),
+                Constant.Value.of(6, DataType.unsignedInt(32)))),
             Type.unsignedInt(32))
     );
     var graph = new Graph("graphValue");
@@ -235,7 +235,7 @@ public class EncodingCodeGeneratorVerificationTest extends DockerExecutionTest {
     var returnNode = new ReturnNode(
         new BuiltInCall(BuiltInTable.SUB, new NodeList<>(
             new TypeCastNode(new FieldRefNode(field, DataType.bits(20)), Type.signedInt(32)),
-            new ConstantNode(new Constant.Value(BigInteger.valueOf(6), DataType.signedInt(32)))),
+            new ConstantNode(Constant.Value.of(6, DataType.signedInt(32)))),
             Type.signedInt(32))
     );
     var graph = new Graph("graphValue");

@@ -1,7 +1,6 @@
 package vadl.lcb.clang.lib.CodeGen;
 
 import java.io.IOException;
-import java.io.StringWriter;
 import java.util.Map;
 import vadl.gcb.valuetypes.ProcessorName;
 import vadl.lcb.config.LcbConfiguration;

@@ -1,6 +1,5 @@
 package vadl.viam;
 
-import java.util.List;
 import java.util.stream.Stream;
 import vadl.types.ConcreteRelationType;
 import vadl.types.Type;
