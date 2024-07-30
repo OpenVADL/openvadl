@@ -142,6 +142,21 @@ public abstract class Constant {
     }
 
     /**
+     * Translates a byte array containing the two's-complement binary representation of an integer
+     * into a Value.
+     * The input array is assumed to be in big-endian byte-order: the most
+     * significant byte is in the zeroth element.
+     * The {@code value} array is assumed to be unchanged for the duration of the constructor call.
+     *
+     * @param value value in two's complement.
+     * @param type  type of the value
+     */
+    public static Value of(byte[] value, DataType type) {
+      return fromInteger(new BigInteger(value), type);
+    }
+
+
+    /**
      * Returns the integer value represented by this value object.
      * If the type of the value is BoolType, the underlying BigInteger value is returned.
      * Otherwise, the two's complement representation of the BigInteger value is converted
