@@ -952,6 +952,14 @@ public class BuiltInTable {
       return "VADL::" + name + signature;
     }
 
+    public List<Class<? extends Type>> argTypeClasses() {
+      return signature.argTypeClasses();
+    }
+
+    public Class<? extends Type> resultTypeClass() {
+      return signature.resultTypeClass();
+    }
+
     /**
      * Describes if a built-in is a function (e.g. {@code add}) or process (e.g. {@code decode}).
      */

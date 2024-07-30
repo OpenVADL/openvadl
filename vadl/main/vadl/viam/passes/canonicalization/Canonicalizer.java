@@ -81,7 +81,8 @@ public class Canonicalizer implements GraphVisitor<Object> {
       return canonicalNode;
     } else {
       // not canonicalizable
-      return processedNodes.put(node, node);
+      processedNodes.put(node, node);
+      return node;
     }
   }
 

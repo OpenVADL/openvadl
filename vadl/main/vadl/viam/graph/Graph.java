@@ -374,6 +374,7 @@ public class Graph {
   public String dotGraph() {
     return new DotGraphVisualizer()
         .load(this)
+        .withSourceLocation(true)
         .visualize();
   }
 }

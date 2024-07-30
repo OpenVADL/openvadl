@@ -93,12 +93,35 @@ public class CanonicalizerTest {
 
     assertEquals(4, testGraph.getNodes().count());
 
-    Canonicalizer.canonicalizeSubGraph(addition);
+    var result = Canonicalizer.canonicalizeSubGraph(addition);
 
     assertEquals(2, testGraph.getNodes().count());
     assertEquals(-5,
         ((Constant.Value) testGraph.getNodes(ConstantNode.class).findFirst()
             .get().constant()).integer().intValue());
+    assertEquals(-5,
+        ((Constant.Value) ((ConstantNode) result).constant()).integer().intValue());
+
+    testGraph.verify();
+  }
+
+  @Test
+  void constantEvaluationSubGraph_simpleConstant() {
+
+    var t = testGraph.add(new ConstantNode(bits(5, 10)));
+
+    testGraph.verify();
+
+    assertEquals(1, testGraph.getNodes().count());
+
+    var result = Canonicalizer.canonicalizeSubGraph(t);
+
+    assertEquals(1, testGraph.getNodes().count());
+    assertEquals(5,
+        ((Constant.Value) testGraph.getNodes(ConstantNode.class).findFirst()
+            .get().constant()).integer().intValue());
+    assertEquals(5,
+        ((Constant.Value) ((ConstantNode) result).constant()).integer().intValue());
 
     testGraph.verify();
   }
