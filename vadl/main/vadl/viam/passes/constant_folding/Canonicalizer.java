@@ -1,5 +1,6 @@
 package vadl.viam.passes.constant_folding;
 
+import java.util.HashMap;
 import java.util.HashSet;
 import org.jetbrains.annotations.Nullable;
 import vadl.viam.graph.Canonicalizable;
@@ -14,10 +15,11 @@ import vadl.viam.graph.Node;
  */
 public class Canonicalizer implements GraphVisitor<Object> {
 
-  private final HashSet<Node> processedNodes;
+  // Stores the processed nodes with their respective canonical forms
+  private final HashMap<Node, Node> processedNodes;
 
   private Canonicalizer() {
-    processedNodes = new HashSet<>();
+    processedNodes = new HashMap<>();
   }
 
   /**
@@ -34,9 +36,11 @@ public class Canonicalizer implements GraphVisitor<Object> {
    * Applies the canonicalization on a subgraph.
    * It traverses all inputs (from leaves to the given node) and replaces them by their
    * canonical form.
+   *
+   * @return The replacement of the subgraph root / node argument
    */
-  public static void canonicalizeSubGraph(Node node) {
-    new Canonicalizer()
+  public static Node canonicalizeSubGraph(Node node) {
+    return new Canonicalizer()
         .canonicalizeNode(node);
   }
 
@@ -49,31 +53,36 @@ public class Canonicalizer implements GraphVisitor<Object> {
     }
   }
 
-  private void canonicalizeNode(Node node) {
+  private Node canonicalizeNode(Node node) {
     node.ensure(node.isActive(), "cannot canonicalize in active node");
-    processNode(node);
+    return processNode(node);
   }
 
-  private void processNode(Node node) {
-    if (processedNodes.contains(node)) {
+  private Node processNode(Node node) {
+    var canonicalNode = processedNodes.get(node);
+    if (canonicalNode != null) {
       // node was already processed before
-      return;
+      return canonicalNode;
     }
-    processedNodes.add(node);
 
     // first visit all inputs to receive their canonical form
     node.visitInputs(this);
 
     if (node instanceof Canonicalizable) {
       // retrieve the canonical form of node
-      var canonicalized = ((Canonicalizable) node).canonical();
-      if (canonicalized == node) {
-        // canonical form is same as original one
-        return;
+      canonicalNode = ((Canonicalizable) node).canonical();
+
+      processedNodes.put(node, canonicalNode);
+
+      if (canonicalNode != node) {
+        // replace original one by new one
+        node.replaceAndDelete(canonicalNode);
       }
 
-      // replace original one by new one
-      node.replaceAndDelete(canonicalized);
+      return canonicalNode;
+    } else {
+      // not canonicalizable
+      return processedNodes.put(node, node);
     }
   }
 
