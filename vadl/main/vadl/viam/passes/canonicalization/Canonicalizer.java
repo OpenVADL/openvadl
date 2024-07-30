@@ -1,7 +1,6 @@
-package vadl.viam.passes.constant_folding;
+package vadl.viam.passes.canonicalization;
 
 import java.util.HashMap;
-import java.util.HashSet;
 import org.jetbrains.annotations.Nullable;
 import vadl.viam.graph.Canonicalizable;
 import vadl.viam.graph.Graph;

@@ -1,4 +1,4 @@
-package vadl.viam.passes.constant_folding;
+package vadl.viam.passes.canonicalization;
 
 import java.util.Arrays;
 import java.util.Map;
