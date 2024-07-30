@@ -7,7 +7,6 @@ import vadl.oop.OopGraphNodeVisitor;
 import vadl.oop.passes.type_normalization.UpcastedTypeCastNode;
 import vadl.types.BitsType;
 import vadl.types.BoolType;
-import vadl.viam.ViamError;
 import vadl.viam.Constant;
 import vadl.viam.graph.GraphNodeVisitor;
 import vadl.viam.graph.control.AbstractBeginNode;

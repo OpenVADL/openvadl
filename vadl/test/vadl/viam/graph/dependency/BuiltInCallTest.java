@@ -1,18 +1,11 @@
 package vadl.viam.graph.dependency;
 
 import static org.assertj.core.api.AssertionsForClassTypes.assertThat;
-import static vadl.types.BuiltInTable.ADD;
-import static vadl.types.BuiltInTable.MUL;
-import static vadl.types.BuiltInTable.MULS;
-import static vadl.types.BuiltInTable.commutative;
-import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
-import static org.junit.jupiter.api.Assertions.assertTrue;
+import static vadl.types.BuiltInTable.commutative;
 
-import java.math.BigInteger;
 import java.util.List;
-import java.util.stream.Collectors;
 import java.util.stream.Stream;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
@@ -23,7 +16,6 @@ import vadl.types.DataType;
 import vadl.types.SIntType;
 import vadl.types.Type;
 import vadl.viam.Constant;
-import vadl.viam.ViamError;
 import vadl.viam.graph.NodeList;
 import vadl.viam.graph.ViamGraphError;
 
