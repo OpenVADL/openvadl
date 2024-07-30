@@ -76,7 +76,7 @@ public class EncodingCodeGeneratorSymbolicVerificationTest extends DockerExecuti
             """, fieldAccess.fieldRef().bitSlice().bitSize(),
         generatedDecodeFunctionCode,
         generatedEncodeWithDecodeFunctionCode);
-    logger.atDebug().log(z3Code);
+    logger.atInfo().log(z3Code);
     runContainerWithContent(DOCKER_IMAGE, z3Code, MOUNT_PATH, TEMPFILE_PREFIX, TEMPFILE_SUFFIX);
   }
 }

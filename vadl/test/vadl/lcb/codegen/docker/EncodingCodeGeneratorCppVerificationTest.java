@@ -9,8 +9,10 @@ import org.testcontainers.images.builder.ImageFromDockerfile;
 import vadl.DockerExecutionTest;
 import vadl.gcb.passes.encoding_generation.strategies.EncodingGenerationStrategy;
 import vadl.lcb.codegen.EncodingCodeGenerator;
+import vadl.oop.CppTypeMap;
 import vadl.oop.passes.field_node_replacement.FieldNodeReplacementPass;
 import vadl.oop.passes.type_normalization.CppTypeNormalizationPass;
+import vadl.oop.passes.type_normalization.CppTypeNormalizer;
 import vadl.viam.Format;
 import vadl.viam.Function;
 
@@ -24,7 +26,7 @@ public class EncodingCodeGeneratorCppVerificationTest extends DockerExecutionTes
       .withDockerfileFromBuilder(builder ->
           builder
               .from("gcc:12.4.0")
-              .cmd("c++", "-Wall", MOUNT_PATH)
+              .cmd(String.format("c++ -Wall -Werror %s && /a.out", MOUNT_PATH))
               .build());
 
   private static final String TEMPFILE_PREFIX = "encoding";
@@ -42,26 +44,43 @@ public class EncodingCodeGeneratorCppVerificationTest extends DockerExecutionTes
 
     // We are testing that the generation is correct.
     strategy.generateEncoding(fieldAccess);
-    var normalizedEncodeFunction = CppTypeNormalizationPass.makeTypesCppConform(fieldAccess.encoding());
+    var normalizedEncodeFunction =
+        CppTypeNormalizationPass.makeTypesCppConform(fieldAccess.encoding());
 
     FieldNodeReplacementPass.replaceFieldRefNodes(decodingFunction);
     var normalizedDecodeFunction = CppTypeNormalizationPass.makeTypesCppConform(decodingFunction);
     var decodeFunction = decodeCodeGenerator.generateFunction(normalizedDecodeFunction);
     var encodeFunction = encodeCodeGenerator.generateFunction(normalizedEncodeFunction);
+    String expectedReturnType = CppTypeMap.getCppTypeNameByVadlType(normalizedDecodeFunction.returnType());
 
     String cppCode = String.format("""
-        #include <cstdint>
-                
-        %s 
-                
-        %s
-                
-        int main() {
-           
-        }
-        """, decodeFunction, encodeFunction);
+            #include <cstdint>
+            #include <iostream>
+                    
+            %s 
+                    
+            %s
+                    
+            int main() {
+              %s expected = %d;
+              auto actual = %s(%s(expected));
+              if(actual == expected) {
+                std::cout << "ok" << std::endl;
+                return 0; 
+              } else {
+                 std::cout << "Actual: " << actual << std::endl; 
+                return -1; 
+              }
+            }
+            """,
+        decodeFunction,
+        encodeFunction,
+        expectedReturnType,
+        100L,
+        normalizedDecodeFunction.identifier.simpleName(),
+        normalizedEncodeFunction.identifier.simpleName());
 
-    logger.atDebug().log(cppCode);
+    logger.atInfo().log(cppCode);
     runContainerWithContent(DOCKER_IMAGE, cppCode, MOUNT_PATH, TEMPFILE_PREFIX, TEMPFILE_SUFFIX);
   }
 }
