@@ -190,7 +190,7 @@ class CppTypeNormalizationPassTest extends AbstractTest {
     // Then
     var node = updatedFunction.behavior().getNodes(ConstantNode.class).toList().get(0);
     var constant = (Constant.Value) node.constant();
-    assertThat(constant.integer()).isEqualTo(0);
+    assertThat(constant.intValue()).isEqualTo(0);
     assertThat(constant.type()).isEqualTo(after);
   }
 
@@ -211,7 +211,7 @@ class CppTypeNormalizationPassTest extends AbstractTest {
     // Then
     var node = updatedFunction.behavior().getNodes(ConstantNode.class).toList().get(0);
     var constant = (Constant.Value) node.constant();
-    assertThat(constant.integer()).isEqualTo(0);
+    assertThat(constant.intValue()).isEqualTo(0);
     assertThat(constant.type()).isEqualTo(type);
   }
 

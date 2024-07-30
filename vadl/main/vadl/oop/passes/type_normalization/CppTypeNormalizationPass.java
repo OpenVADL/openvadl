@@ -139,7 +139,7 @@ public abstract class CppTypeNormalizationPass extends Pass {
         .forEach(constantNode -> {
           if (constantNode.constant() instanceof Constant.Value constantValue
               && !cppSupportedTypes.contains(constantValue.type())) {
-            constantValue.castTo(upcast(constantValue.type()));
+            constantNode.setConstant(constantValue.castTo(upcast(constantValue.type())));
           }
         });
   }
