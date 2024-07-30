@@ -1,22 +1,22 @@
 package vadl.ast;
 
+import static vadl.ast.AstTestUtils.verifyPrettifiedAst;
+
+import java.util.List;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
+import vadl.utils.SourceLocation;
 
 public class StatementTest {
-
-  void verifyPrettifiedAst(Ast ast) {
-    var progPretty = ast.prettyPrint();
-    var astPretty = Assertions.assertDoesNotThrow(() -> VadlParser.parse(progPretty),
-        "Cannot parse prettified input");
-    Assertions.assertEquals(ast, astPretty, "Prettified input Ast does not match input Ast");
-  }
 
   @Test
   void parseLetStatement() {
     var prog = """
         instruction set architecture ISA = {
           program counter PC : Bits<32>
+          format Btype : Bits<32> = {
+            bits [31..0]
+          }
           instruction BEQ : Btype = {
             let next = PC + 4 in
               PC := next
@@ -34,6 +34,9 @@ public class StatementTest {
           constant a = 9
           constant b = 2
           program counter PC : Bits<32>
+          format Btype : Bits<32> = {
+            bits [31..0]
+          }
           instruction BEQ : Btype = {
             if a > b then
               PC := PC + 4
@@ -51,6 +54,9 @@ public class StatementTest {
           constant a = 9
           constant b = 2
           program counter PC : Bits<32>
+          format Btype : Bits<32> = {
+            bits [31..0]
+          }
           instruction BEQ : Btype = {
             if a > b then
               PC := PC + 4
@@ -61,5 +67,62 @@ public class StatementTest {
         """;
     var ast = Assertions.assertDoesNotThrow(() -> VadlParser.parse(prog), "Cannot parse input");
     verifyPrettifiedAst(ast);
+  }
+
+  @Test
+  void parseNestedIfElseStatement() {
+    var prog = """
+        instruction set architecture ISA = {
+          format F : Bits<32> = {
+            bits [31..0]
+          }
+          instruction TEST : F = {
+            if 3 > 4 then
+              if 9 < 2 then {}
+              else {}
+          }
+        }
+        """;
+    var ast = Assertions.assertDoesNotThrow(() -> VadlParser.parse(prog), "Cannot parse input");
+    var expectedAst = new Ast();
+    var loc = SourceLocation.INVALID_SOURCE_LOCATION;
+    var definitions = List.of(
+        new FormatDefinition(
+            new Identifier("F", loc),
+            new TypeLiteral(new Identifier("Bits", loc), new IntegerLiteral("32", loc), loc),
+            List.of(new FormatDefinition.RangeFormatField(
+                new Identifier("bits", loc),
+                List.of(new RangeExpr(new IntegerLiteral("31", loc), new IntegerLiteral("0", loc)))
+            )),
+            loc
+        ),
+        new InstructionDefinition(
+            new Identifier("TEST", loc),
+            new Identifier("F", loc),
+            new BlockStatement(loc).add(
+                new IfStatement(
+                    new BinaryExpr(new IntegerLiteral("3", loc), Operator.Greater(),
+                        new IntegerLiteral("4", loc)),
+                    new IfStatement(
+                        new BinaryExpr(new IntegerLiteral("9", loc), Operator.Less(),
+                            new IntegerLiteral("2", loc)),
+                        new BlockStatement(loc),
+                        new BlockStatement(loc),
+                        loc
+                    ),
+                    null,
+                    loc
+                )),
+            loc
+        )
+    );
+    expectedAst.definitions.add(new InstructionSetDefinition(
+        new Identifier("ISA", loc),
+        definitions,
+        loc
+    ));
+    verifyPrettifiedAst(ast);
+    Assertions.assertEquals(expectedAst.prettyPrint(), ast.prettyPrint());
+    Assertions.assertEquals(expectedAst, ast);
   }
 }

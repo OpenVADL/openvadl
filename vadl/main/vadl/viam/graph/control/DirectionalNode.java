@@ -4,6 +4,7 @@ import java.util.List;
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
 import vadl.javaannotations.viam.Successor;
+import vadl.viam.graph.GraphVisitor;
 import vadl.viam.graph.Node;
 
 /**
@@ -41,5 +42,11 @@ public abstract class DirectionalNode extends ControlNode {
     if (this.next != null) {
       collection.add(next);
     }
+  }
+
+  @Override
+  public void applyOnSuccessorsUnsafe(GraphVisitor.Applier<Node> visitor) {
+    super.applyOnSuccessorsUnsafe(visitor);
+    next = visitor.applyNullable(this, next, ControlNode.class);
   }
 }

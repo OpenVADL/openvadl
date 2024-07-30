@@ -45,7 +45,7 @@ public abstract class FieldNodeReplacementPass extends Pass {
     for (var fieldRef : fieldRefs) {
       var param = new Parameter(new Identifier("temp", SourceLocation.INVALID_SOURCE_LOCATION),
           fieldRef.type());
-      function.behavior().replaceNode(fieldRef, new FuncParamNode(param));
+      fieldRef.replaceAndDelete(new FuncParamNode(param));
       params.add(param);
     }
 

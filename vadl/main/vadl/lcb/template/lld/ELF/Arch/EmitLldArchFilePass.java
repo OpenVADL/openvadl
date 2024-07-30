@@ -1,7 +1,6 @@
 package vadl.lcb.lld.ELF.Arch;
 
 import java.io.IOException;
-import java.io.StringWriter;
 import java.util.List;
 import java.util.Map;
 import vadl.gcb.valuetypes.ProcessorName;

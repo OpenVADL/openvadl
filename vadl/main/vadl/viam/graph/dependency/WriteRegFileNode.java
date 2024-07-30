@@ -7,9 +7,7 @@ import vadl.viam.RegisterFile;
 import vadl.viam.Resource;
 import vadl.viam.graph.GraphNodeVisitor;
 import vadl.viam.graph.Node;
-import vadl.viam.graph.NodeList;
 import vadl.viam.graph.UniqueNode;
-import vadl.viam.graph.control.InstrCallNode;
 
 /**
  * Represents a write to register file.

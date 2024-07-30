@@ -1,15 +1,12 @@
 package vadl.lcb.lib.Target.Disassembler;
 
 import java.io.IOException;
-import java.io.StringWriter;
 import java.util.List;
 import java.util.Map;
 import vadl.gcb.valuetypes.ProcessorName;
 import vadl.lcb.config.LcbConfiguration;
-import vadl.lcb.lib.Target.MCTargetDesc.EmitInstrPrinterHeaderFilePass;
 import vadl.lcb.template.CommonVarNames;
 import vadl.template.AbstractTemplateRenderingPass;
-import vadl.viam.Register;
 import vadl.viam.RegisterFile;
 import vadl.viam.Specification;
 

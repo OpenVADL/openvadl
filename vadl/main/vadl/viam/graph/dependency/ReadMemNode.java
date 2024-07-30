@@ -7,9 +7,6 @@ import vadl.viam.Memory;
 import vadl.viam.Resource;
 import vadl.viam.graph.GraphNodeVisitor;
 import vadl.viam.graph.Node;
-import vadl.viam.graph.NodeList;
-import vadl.viam.graph.control.IfNode;
-import vadl.viam.graph.control.InstrCallNode;
 
 /**
  * The ReadMemNode class is a concrete class that extends ReadNode.

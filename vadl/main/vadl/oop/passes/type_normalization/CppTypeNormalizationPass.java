@@ -129,7 +129,7 @@ public abstract class CppTypeNormalizationPass extends Pass {
             bitsType.bitWidth()));
         var newTypeCastNode =
             new UpcastedTypeCastNode(typeCastNode.value(), newBitSizeType, typeCastNode.castType());
-        graph.replaceNode(typeCastNode, newTypeCastNode);
+        typeCastNode.replaceAndDelete(newTypeCastNode);
       }
     });
 
@@ -139,9 +139,7 @@ public abstract class CppTypeNormalizationPass extends Pass {
         .forEach(constantNode -> {
           if (constantNode.constant() instanceof Constant.Value constantValue
               && !cppSupportedTypes.contains(constantValue.type())) {
-            constantNode.setConstant(new Constant.Value(
-                constantValue.value(), upcast(constantValue.type())
-            ));
+            constantValue.castTo(upcast(constantValue.type()));
           }
         });
   }

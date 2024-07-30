@@ -46,6 +46,11 @@ public class UIntType extends BitsType {
   }
 
   @Override
+  public boolean isSigned() {
+    return false;
+  }
+
+  @Override
   public boolean equals(Object obj) {
     return this.getClass() == obj.getClass()
         && super.equals(obj);

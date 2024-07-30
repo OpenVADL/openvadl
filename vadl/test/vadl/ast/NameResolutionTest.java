@@ -32,7 +32,7 @@ public class NameResolutionTest {
         """;
     var thrown = Assertions.assertThrows(VadlException.class, () -> VadlParser.parse(prog),
         "Expected to throw name conflict");
-    Assertions.assertEquals(thrown.errors.size(), 1);
+    Assertions.assertEquals(1, thrown.errors.size());
   }
 
   @Test
@@ -42,7 +42,7 @@ public class NameResolutionTest {
         """;
     var thrown = Assertions.assertThrows(VadlException.class, () -> VadlParser.parse(prog),
         "Expected to throw unresolved variable");
-    Assertions.assertEquals(thrown.errors.size(), 1);
+    Assertions.assertEquals(1, thrown.errors.size());
   }
 
   @Test
@@ -63,30 +63,26 @@ public class NameResolutionTest {
     Assertions.assertDoesNotThrow(() -> VadlParser.parse(prog), "Cannot parse input");
   }
 
-  // FIXME how should we solve this
-  /*@Test
+  // @Test
   void resolveCyclicDefinedVariable() {
     var prog = """
-      constant a = a
-    """;
+          constant a = a
+        """;
     var thrown = Assertions.assertThrows(VadlException.class, () -> VadlParser.parse(prog),
-    "Expected to throw unresolved variable");
-    Assertions.assertEquals(thrown.errors.size(), 1);
+        "Expected to throw unresolved variable");
+    Assertions.assertEquals(1, thrown.errors.size());
   }
-   */
 
-  // FIXME how should we solve this
-  /*@Test
+  // @Test
   void resolveTwoCyclicDefinedVariables() {
     var prog = """
-      constant a = b
-      constant b = a
-    """;
+          constant a = b
+          constant b = a
+        """;
     var thrown = Assertions.assertThrows(VadlException.class, () -> VadlParser.parse(prog),
-    "Expected to throw unresolved variable");
-    Assertions.assertEquals(thrown.errors.size(), 1);
+        "Expected to throw unresolved variable");
+    Assertions.assertEquals(1, thrown.errors.size());
   }
-   */
 
   @Test
   void resolveTwoMemoryDefinitions() {
@@ -109,7 +105,7 @@ public class NameResolutionTest {
         """;
     var thrown = Assertions.assertThrows(VadlException.class, () -> VadlParser.parse(prog),
         "Expected to throw name conflict");
-    Assertions.assertEquals(thrown.errors.size(), 1);
+    Assertions.assertEquals(1, thrown.errors.size());
   }
 
   @Test
@@ -122,7 +118,7 @@ public class NameResolutionTest {
         """;
     var thrown = Assertions.assertThrows(VadlException.class, () -> VadlParser.parse(prog),
         "Expected to throw name conflict");
-    Assertions.assertEquals(thrown.errors.size(), 1);
+    Assertions.assertEquals(1, thrown.errors.size());
   }
 
   @Test
@@ -135,6 +131,93 @@ public class NameResolutionTest {
         """;
     var thrown = Assertions.assertThrows(VadlException.class, () -> VadlParser.parse(prog),
         "Expected to throw name conflict");
-    Assertions.assertEquals(thrown.errors.size(), 1);
+    Assertions.assertEquals(1, thrown.errors.size());
+  }
+
+  @Test
+  void registersAvailableInInstruction() {
+    var prog = """
+        instruction set architecture ISA = {
+          register X : Bits<32>
+          format Btype : Bits<32> = {
+            bits [31..0]
+          }
+          instruction BEQ : Btype = {
+            X := 0
+          }
+        }
+        """;
+    Assertions.assertDoesNotThrow(() -> VadlParser.parse(prog), "Cannot parse input");
+  }
+
+  @Test
+  void formatFieldsAvailableInInstruction() {
+    var prog = """
+        instruction set architecture ISA = {
+          format Btype : Bits<32> = {
+            a [31..16],
+            b [15..8],
+            c [7..0]
+          }
+          instruction BEQ : Btype = {
+            a := b * c
+          }
+        }
+        """;
+    Assertions.assertDoesNotThrow(() -> VadlParser.parse(prog), "Cannot parse input");
+  }
+
+  @Test
+  void nestedFormatFieldsResolve() {
+    var prog = """
+        instruction set architecture ISA = {
+          format Byte : Bits<8> = {
+            bits: Bits<8>
+          }
+        
+          format Short : Bits<16> = {
+            byte1: Byte,
+            byte2: Byte
+          }
+        
+          format Btype : Bits<32> = {
+            a [31..0]
+          }
+        
+          register X : Short
+        
+          instruction BEQ : Btype = {
+            X.byte1 := X.byte2.bits + X.byte1.bits
+          }
+        }
+        """;
+    Assertions.assertDoesNotThrow(() -> VadlParser.parse(prog), "Cannot parse input");
+  }
+
+  @Test
+  void rejectsMistypedNestedFieldAccess() {
+    var prog = """
+        instruction set architecture ISA = {
+          format Byte : Bits<8> = {
+            bits: Bits<8>
+          }
+        
+          format Short : Bits<16> = {
+            byte1: Byte,
+            byte2: Byte
+          }
+        
+          format Btype : Bits<32> = {
+            a [31..0]
+          }
+        
+          register X : Short
+        
+          instruction BEQ : Btype = {
+            X.byte1 := X.byte2.bats + X.byte1.bits
+          }
+        }
+        """;
+    Assertions.assertThrows(VadlException.class, () -> VadlParser.parse(prog), "Should reject typos");
   }
 }

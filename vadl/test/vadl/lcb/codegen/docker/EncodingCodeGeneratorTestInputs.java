@@ -73,7 +73,7 @@ public class EncodingCodeGeneratorTestInputs extends AbstractTest {
         new BuiltInCall(BuiltInTable.LSL, new NodeList<>(
             new TypeCastNode(new FieldRefNode(field, DataType.bits(20)), Type.unsignedInt(32)),
             new ConstantNode(
-                new Constant.Value(BigInteger.valueOf(6), DataType.unsignedInt(32)))),
+                Constant.Value.of(6, DataType.unsignedInt(32)))),
             Type.unsignedInt(32))
     );
     var graph = new Graph("graphValue");
@@ -91,7 +91,7 @@ public class EncodingCodeGeneratorTestInputs extends AbstractTest {
         new BuiltInCall(BuiltInTable.LSL, new NodeList<>(
             new TypeCastNode(new FieldRefNode(field, DataType.bits(20)), Type.signedInt(32)),
             new ConstantNode(
-                new Constant.Value(BigInteger.valueOf(6), DataType.unsignedInt(32)))),
+                Constant.Value.of(6, DataType.unsignedInt(32)))),
             Type.signedInt(32))
     );
     var graph = new Graph("graphValue");
@@ -109,7 +109,7 @@ public class EncodingCodeGeneratorTestInputs extends AbstractTest {
         new BuiltInCall(BuiltInTable.ADD, new NodeList<>(
             new TypeCastNode(new FieldRefNode(field, DataType.bits(20)), Type.unsignedInt(32)),
             new ConstantNode(
-                new Constant.Value(BigInteger.valueOf(6), DataType.unsignedInt(32)))),
+                Constant.Value.of(6, DataType.unsignedInt(32)))),
             Type.unsignedInt(32))
     );
     var graph = new Graph("graphValue");
@@ -126,7 +126,7 @@ public class EncodingCodeGeneratorTestInputs extends AbstractTest {
     var returnNode = new ReturnNode(
         new BuiltInCall(BuiltInTable.ADD, new NodeList<>(
             new TypeCastNode(new FieldRefNode(field, DataType.bits(20)), Type.signedInt(32)),
-            new ConstantNode(new Constant.Value(BigInteger.valueOf(6), DataType.signedInt(32)))),
+            new ConstantNode(Constant.Value.of(6, DataType.signedInt(32)))),
             Type.signedInt(32))
     );
     var graph = new Graph("graphValue");
@@ -144,7 +144,7 @@ public class EncodingCodeGeneratorTestInputs extends AbstractTest {
         new BuiltInCall(BuiltInTable.SUB, new NodeList<>(
             new TypeCastNode(new FieldRefNode(field, DataType.bits(20)), Type.unsignedInt(32)),
             new ConstantNode(
-                new Constant.Value(BigInteger.valueOf(6), DataType.unsignedInt(32)))),
+                Constant.Value.of(6, DataType.unsignedInt(32)))),
             Type.unsignedInt(32))
     );
     var graph = new Graph("graphValue");
@@ -161,7 +161,7 @@ public class EncodingCodeGeneratorTestInputs extends AbstractTest {
     var returnNode = new ReturnNode(
         new BuiltInCall(BuiltInTable.SUB, new NodeList<>(
             new TypeCastNode(new FieldRefNode(field, DataType.bits(20)), Type.signedInt(32)),
-            new ConstantNode(new Constant.Value(BigInteger.valueOf(6), DataType.signedInt(32)))),
+            new ConstantNode(Constant.Value.of(6, DataType.signedInt(32)))),
             Type.signedInt(32))
     );
     var graph = new Graph("graphValue");

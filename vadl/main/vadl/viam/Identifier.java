@@ -32,6 +32,10 @@ public record Identifier(
         sourceLocation);
   }
 
+  public static Identifier noLocation(String name) {
+    return new Identifier(name, SourceLocation.INVALID_SOURCE_LOCATION);
+  }
+
   /**
    * Prepend the given identifier scope to the current identifier.
    *

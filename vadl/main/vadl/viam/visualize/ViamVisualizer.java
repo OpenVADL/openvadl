@@ -1,7 +1,5 @@
 package vadl.viam.visualize;
 
-import vadl.viam.Definition;
-
 /**
  * The ViamVisualizer interface represents a visualizer that generates a visualization of
  * a certain type.

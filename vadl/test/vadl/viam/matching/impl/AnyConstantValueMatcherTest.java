@@ -2,7 +2,6 @@ package vadl.viam.matching.impl;
 
 import static org.assertj.core.api.AssertionsForClassTypes.assertThat;
 
-import java.math.BigInteger;
 import org.junit.jupiter.api.Test;
 import vadl.AbstractTest;
 import vadl.types.DataType;
@@ -14,7 +13,7 @@ class AnyConstantValueMatcherTest extends AbstractTest {
   @Test
   void matches_shouldReturnTrue_whenConstantValue() {
     var matcher = new AnyConstantValueMatcher();
-    var node = new ConstantNode(new Constant.Value(BigInteger.ONE, DataType.unsignedInt(32)));
+    var node = new ConstantNode(Constant.Value.of(0, DataType.unsignedInt(32)));
 
     // When
     var result = matcher.matches(node);

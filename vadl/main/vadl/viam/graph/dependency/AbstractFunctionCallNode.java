@@ -26,6 +26,16 @@ public abstract class AbstractFunctionCallNode extends ExpressionNode {
     return args;
   }
 
+  /**
+   * Checks whether all the inputs of the node are constant.
+   *
+   * @return {@code true} if all the inputs are {@link ConstantNode} and {@code false}
+   *     if any is not {@link ConstantNode}.
+   */
+  protected boolean hasConstantArgs() {
+    return inputs().allMatch(x -> x instanceof ConstantNode);
+  }
+
   @Override
   protected void collectInputs(List<Node> collection) {
     super.collectInputs(collection);

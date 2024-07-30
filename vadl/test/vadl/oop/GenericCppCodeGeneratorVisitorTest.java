@@ -43,7 +43,7 @@ class GenericCppCodeGeneratorVisitorTest extends AbstractTest {
 
   @Test
   void constant_shouldReturnNumber() {
-    var constant = new Constant.Value(BigInteger.ONE, DataType.unsignedInt(32));
+    var constant = Constant.Value.of(1, DataType.unsignedInt(32));
     var node = new ConstantNode(constant);
 
     // When
@@ -66,7 +66,7 @@ class GenericCppCodeGeneratorVisitorTest extends AbstractTest {
 
   @Test
   void funcCallNode_shouldCreateFunctionalWithOneVar() {
-    var constant = new Constant.Value(BigInteger.ONE, DataType.unsignedInt(32));
+    var constant = Constant.Value.of(1, DataType.unsignedInt(32));
     var node = new ConstantNode(constant);
     var funcCallNode =
         new FuncCallNode(new NodeList<>(node), new Function(createIdentifier("nameValue"),
@@ -82,7 +82,7 @@ class GenericCppCodeGeneratorVisitorTest extends AbstractTest {
 
   @Test
   void funcCallNode_shouldCreateFunctionalWithTwoVar() {
-    var constant = new Constant.Value(BigInteger.ONE, DataType.unsignedInt(32));
+    var constant = Constant.Value.of(1, DataType.unsignedInt(32));
     var node = new ConstantNode(constant);
     var funcCallNode =
         new FuncCallNode(new NodeList<>(node, node), new Function(createIdentifier("nameValue"),
@@ -115,7 +115,7 @@ class GenericCppCodeGeneratorVisitorTest extends AbstractTest {
   @ParameterizedTest
   @MethodSource("getTypesWithCastExpression")
   void typeCastNode_shouldGenerateCpp(DataType type, String expected) {
-    var constant = new Constant.Value(BigInteger.ONE, DataType.unsignedInt(32));
+    var constant = Constant.Value.of(1, DataType.unsignedInt(32));
     var node = new ConstantNode(constant);
 
     // When
@@ -127,7 +127,7 @@ class GenericCppCodeGeneratorVisitorTest extends AbstractTest {
 
   @Test
   void builtIn_shouldGenerateCpp() {
-    var constant = new Constant.Value(BigInteger.ONE, DataType.unsignedInt(32));
+    var constant = Constant.Value.of(1, DataType.unsignedInt(32));
     var node = new ConstantNode(constant);
     var builtIn =
         new BuiltInCall(BuiltInTable.ADD, new NodeList<>(node, node), DataType.unsignedInt(32));
@@ -141,7 +141,7 @@ class GenericCppCodeGeneratorVisitorTest extends AbstractTest {
 
   @Test
   void builtIn_shouldGenerateCpp_whenOnlyOneArgument() {
-    var constant = new Constant.Value(BigInteger.ONE, DataType.unsignedInt(32));
+    var constant = Constant.Value.of(1, DataType.unsignedInt(32));
     var node = new ConstantNode(constant);
     var builtIn =
         new BuiltInCall(BuiltInTable.NEG, new NodeList<>(node), DataType.unsignedInt(32));

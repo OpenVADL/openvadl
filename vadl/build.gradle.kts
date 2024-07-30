@@ -23,6 +23,7 @@ dependencies {
     testImplementation("org.junit.jupiter:junit-jupiter")
     testImplementation("org.hamcrest:hamcrest-all:1.3")
     testImplementation("org.assertj:assertj-core:3.26.3")
+    testImplementation("com.tngtech.archunit:archunit-junit5:1.3.0")
     testAnnotationProcessor(project(":java-annotations"))
 }
 

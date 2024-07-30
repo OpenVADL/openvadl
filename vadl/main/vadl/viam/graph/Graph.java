@@ -18,6 +18,7 @@ import vadl.viam.graph.control.StartNode;
 import vadl.viam.graph.dependency.FuncParamNode;
 import vadl.viam.graph.dependency.ParamNode;
 import vadl.viam.graph.dependency.SideEffectNode;
+import vadl.viam.graph.visualize.DotGraphVisualizer;
 
 /**
  * The VIAM graph represents an execution flow definition
@@ -55,60 +56,8 @@ public class Graph {
    * @param clazz of node type
    * @return iterable of all nodes of type clazz
    */
-  public final <T extends Node> Stream<T> getNodes(Class<T> clazz) {
+  public final <T> Stream<T> getNodes(Class<T> clazz) {
     return getNodes().filter(clazz::isInstance).map(clazz::cast);
-  }
-
-  /**
-   * Replaces the node {@code toReplace} with the given node {@code newNode}.
-   */
-  public <T extends Node> T replaceNode(Node toReplace, T newNode) {
-    // The `addWithInputs` throws an exception when `newNode` already exists in the graph.
-    // So we first look if we already have the `newNode`.
-    var node = nodes.stream().filter(x -> x == newNode)
-        .findFirst()
-        .orElseGet(() -> this.addWithInputs(newNode));
-
-    // All of toReplace's children are obsolete.
-    // But, we cannot delete them because they might be used by other nodes.
-
-    // First, keep track of the subtree of toReplace.
-    ArrayList<Node> children = new ArrayList<>();
-    toReplace.collectInputs(children);
-    toReplace.collectSuccessors(children);
-
-    // Relevant for data nodes.
-    this.nodes.stream().filter(Objects::nonNull).forEach(x -> x.replaceInput(toReplace, node));
-    toReplace.usages().forEach(x -> x.transferUsageOfThis(toReplace, node));
-
-    // Relevant for control nodes.
-    var pred = toReplace.predecessor();
-    if (pred != null) {
-      node.setPredecessor(pred);
-    }
-
-    // Remove the link from the children to toReplace.
-    toReplace.applyOnInputs(new GraphVisitor.Applier<>() {
-      @Nullable
-      @Override
-      public Node applyNullable(Node from, @Nullable Node to) {
-        if (to != null) {
-          to.removeUsage(from);
-          to.applyOnInputs(this);
-        }
-        return to;
-      }
-    });
-
-    // Remove all nodes which are obsolete
-    children.stream()
-        .filter(x -> x.predecessor() == null && x.usageCount() == 0 && x.successorList().isEmpty())
-        .distinct()
-        .forEach(Node::safeDelete);
-    toReplace.safeDelete();
-
-    //noinspection unchecked
-    return (T) node;
   }
 
   /**
@@ -354,7 +303,8 @@ public class Graph {
     for (var input : node.inputList()) {
       if (!input.isActiveIn(this)) {
         throw new ViamGraphError(
-            "Failed to add `%s` as its input node `%s` is not yet initialized.}", node, input)
+            "Failed to add `%s` as its input node `%s` is not yet initialized. %s",
+            node, input, "You might want use Graph#addWithInputs()")
             .addContext(node)
             .addContext(this)
             .shrinkStacktrace(1);
@@ -396,7 +346,7 @@ public class Graph {
       // Update the usages
       newNode.usages().forEach(oldUsage -> {
         var newUsage = cache.get(oldUsage);
-        newNode.transferUsageOfThis(oldUsage, Objects.requireNonNull(newUsage));
+        newNode.updateUsage(oldUsage, Objects.requireNonNull(newUsage));
       });
 
       // Update the inputs
@@ -414,6 +364,15 @@ public class Graph {
     });
 
     return graph;
+  }
+
+  /**
+   * Returns the dot representation of this graph as String.
+   */
+  public String dotGraph() {
+    return new DotGraphVisualizer()
+        .load(this)
+        .visualize();
   }
 }
 
