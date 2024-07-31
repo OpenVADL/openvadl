@@ -98,7 +98,7 @@ public class Encoding extends Definition {
           break;
         }
       }
-      if (found) {
+      if (!found) {
         nonEncodedFormatFields.add(formatField);
       }
     }
@@ -140,7 +140,7 @@ public class Encoding extends Definition {
       return formatField.type();
     }
 
-    public Constant constant() {
+    public Constant.Value constant() {
       return constant;
     }
 

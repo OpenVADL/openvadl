@@ -1,0 +1,144 @@
+package vadl.lcb.tablegen.model;
+
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.BitSet;
+import java.util.Collections;
+import java.util.List;
+import java.util.Optional;
+import java.util.stream.Stream;
+import vadl.viam.Instruction;
+import vadl.viam.Register;
+
+/**
+ * Models an {@link Instruction} for TableGen.
+ */
+public class TableGenInstruction extends TableGenRecord {
+  private final String namespace;
+  private final List<String> pattern;
+  private final List<Register> uses;
+  private final List<Register> defs;
+  private final int size;
+  private final int codeSize;
+  private final Flags flags;
+  private final List<BitBlock> bitBlocks;
+  private final List<FieldEncoding> fieldEncodings;
+
+  public TableGenInstruction(String namespace,
+                             Instruction instruction,
+                             Flags flags,
+                             List<Register> uses,
+                             List<Register> defs) {
+    this(namespace, instruction, flags, uses, defs, Collections.emptyList());
+  }
+
+  public TableGenInstruction(String namespace,
+                             Instruction instruction,
+                             Flags flags,
+                             List<Register> uses,
+                             List<Register> defs,
+                             List<String> pattern) {
+    this.namespace = namespace;
+    this.size = instruction.encoding().format().type().bitWidth() / 8;
+    this.codeSize = instruction.encoding().format().type().bitWidth() / 8;
+    this.bitBlocks = BitBlock.from(instruction.encoding());
+    this.fieldEncodings = FieldEncoding.from(instruction.encoding());
+    this.flags = flags;
+    this.uses = uses;
+    this.defs = defs;
+    this.pattern = pattern;
+  }
+
+  public String getNamespace() {
+    return namespace;
+  }
+
+  public List<String> getPattern() {
+    return pattern;
+  }
+
+  public List<Register> getUses() {
+    return uses;
+  }
+
+  public List<Register> getDefs() {
+    return defs;
+  }
+
+  public int getSize() {
+    return size;
+  }
+
+  public int getCodeSize() {
+    return codeSize;
+  }
+
+  /**
+   * A {@link TableGenInstruction} has many boolean flags which are required for the
+   * code generation.
+   */
+  public record Flags(boolean isTerminator,
+                      boolean isBranch,
+                      boolean isCall,
+                      boolean isReturn,
+                      boolean isPseudo,
+                      boolean isCodeGenOnly,
+                      boolean mayLoad,
+                      boolean mayStore) {
+
+  }
+
+  /**
+   * A machine instruction has certain encoding parts which are fixed like the opcode.
+   * A {@link BitBlock} represents constant bits in an instruction.
+   */
+  static class BitBlock {
+    private final int size;
+    private final String name;
+    private final Optional<BitSet> bitSet;
+
+    private BitBlock(int size, String name, Optional<BitSet> bitSet) {
+      this.size = size;
+      this.name = name;
+      this.bitSet = bitSet;
+    }
+
+    public static List<BitBlock> from(vadl.viam.Encoding encoding) {
+      var encodedFields = Arrays.stream(encoding.fieldEncodings())
+          .map(field -> new BitBlock(field.formatField().size(), field.name(),
+              Optional.of(BitSet.valueOf(new long[] {field.constant().longValue()}))));
+      var nonEncodedFields = Arrays.stream(encoding.nonEncodedFormatFields())
+          .map(field -> new BitBlock(field.size(), field.name(), Optional.empty()));
+
+      return Stream.concat(encodedFields, nonEncodedFields).toList();
+    }
+  }
+
+  /**
+   * It defines the mapping from a {@link BitBlock} to a {@link TableGenInstruction}.
+   */
+  static class FieldEncoding {
+    private final int targetHigh;
+    private final int targetLow;
+    private final String sourceBitBlockName;
+    private final int sourceHigh;
+    private final int sourceLow;
+
+    private FieldEncoding(int targetHigh, int targetLow, String sourceBitBlockName, int sourceHigh,
+                          int sourceLow) {
+      this.targetHigh = targetHigh;
+      this.targetLow = targetLow;
+      this.sourceBitBlockName = sourceBitBlockName;
+      this.sourceHigh = sourceHigh;
+      this.sourceLow = sourceLow;
+    }
+
+    public static List<FieldEncoding> from(vadl.viam.Encoding encoding) {
+      return Arrays.stream(encoding.format().fields()).map(field -> {
+        field.bitSlice().ensure(field.bitSlice().isContinuous(), "bitSlice must be continuous");
+        return new FieldEncoding(field.bitSlice().msb(), field.bitSlice().lsb(), field.name(),
+            field.size(), 0);
+      }).toList();
+    }
+  }
+}
