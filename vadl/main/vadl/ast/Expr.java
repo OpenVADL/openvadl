@@ -38,6 +38,8 @@ interface ExprVisitor<R> {
   R visit(IfExpr expr);
 
   R visit(LetExpr expr);
+
+  R visit(CastExpr expr);
 }
 
 /**
@@ -55,7 +57,8 @@ class Operator {
 
   private static final int precLogicalOr = 0;
   private static final int precLogicalAnd = precLogicalOr + 1;
-  private static final int precOr = precLogicalAnd + 1;
+  private static final int precIn = precLogicalAnd + 1;
+  private static final int precOr = precIn + 1;
   private static final int precXor = precOr + 1;
   private static final int precAnd = precXor + 1;
   private static final int precEquality = precAnd + 1;
@@ -84,6 +87,8 @@ class Operator {
   private static final Operator opMultiply = new Operator("*", precFactor);
   private static final Operator opDivide = new Operator("/", precFactor);
   private static final Operator opModulo = new Operator("%", precFactor);
+  private static final Operator opIn = new Operator("in", precIn);
+  private static final Operator opNotIn = new Operator("!in", precIn);
 
   static Operator LogicalOr() {
     return opLogicalOr;
@@ -164,6 +169,14 @@ class Operator {
 
   static Operator Modulo() {
     return opModulo;
+  }
+
+  static Operator In() {
+    return opIn;
+  }
+
+  static Operator NotIn() {
+    return opNotIn;
   }
 }
 
@@ -587,13 +600,6 @@ class GroupExpr extends Expr {
 
   public GroupExpr(Expr expression) {
     this.inner = expression;
-  }
-
-  static Expr ungroup(Expr expr) {
-    while (expr instanceof GroupExpr) {
-      expr = ((GroupExpr) expr).inner;
-    }
-    return expr;
   }
 
   @Override
@@ -1023,6 +1029,63 @@ class LetExpr extends Expr {
     int result = identifier.hashCode();
     result = 31 * result + Objects.hashCode(valueExpr);
     result = 31 * result + Objects.hashCode(body);
+    return result;
+  }
+}
+
+class CastExpr extends Expr {
+  Expr value;
+  TypeLiteral type;
+
+  public CastExpr(Expr value, TypeLiteral type) {
+    this.value = value;
+    this.type = type;
+  }
+
+  @Override
+  SourceLocation location() {
+    return value.location().join(type.location());
+  }
+
+  @Override
+  SyntaxType syntaxType() {
+    return BasicSyntaxType.Ex();
+  }
+
+  @Override
+  void prettyPrint(int indent, StringBuilder builder) {
+    value.prettyPrint(indent, builder);
+    builder.append(" as ");
+    type.prettyPrint(indent, builder);
+  }
+
+  @Override
+  <R> R accept(ExprVisitor<R> visitor) {
+    return visitor.visit(this);
+  }
+
+  @Override
+  public String toString() {
+    return this.getClass().getSimpleName();
+  }
+
+  @Override
+  public boolean equals(Object o) {
+    if (this == o) {
+      return true;
+    }
+    if (o == null || getClass() != o.getClass()) {
+      return false;
+    }
+
+    CastExpr that = (CastExpr) o;
+    return value.equals(that.value) && type.equals(that.type);
+  }
+
+  @Override
+  public int hashCode() {
+    int result = value.hashCode();
+    result = 31 * result + Objects.hashCode(type);
     return result;
   }
 }

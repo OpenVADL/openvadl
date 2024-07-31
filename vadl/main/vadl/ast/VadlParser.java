@@ -2,8 +2,11 @@ package vadl.ast;
 
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
+import java.io.IOException;
 import java.io.PrintStream;
 import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
 import vadl.error.VadlError;
@@ -16,6 +19,18 @@ import vadl.utils.SourceLocation;
 public class VadlParser {
 
   /**
+   * Parses the VADL source program at the specified path into an AST.
+   * Works just like {@link VadlParser#parse(String)},
+   * except errors will have the proper file locations set.
+   */
+  public static Ast parse(Path path) throws IOException {
+    var scanner = new Scanner(Files.newInputStream(path));
+    var parser = new Parser(scanner);
+    parser.sourceFile = path.toUri();
+    return parse(parser);
+  }
+
+  /**
    * Parses a source program into an AST.
    *
    * @param program a source code file to parse
@@ -24,8 +39,11 @@ public class VadlParser {
    */
   public static Ast parse(String program) {
     var scanner = new Scanner(new ByteArrayInputStream(program.getBytes(StandardCharsets.UTF_8)));
-    var parser = new vadl.ast.Parser(scanner);
+    var parser = new Parser(scanner);
+    return parse(parser);
+  }
 
+  private static Ast parse(Parser parser) {
     // Setting up the Error printing so we can parse it again.
     // This is mainly because coco/r doesn't give us access to the errors internally but always
     // want's to print them.
@@ -49,7 +67,7 @@ public class VadlParser {
         var title = fields[2];
         errors.add(new VadlError(
             fields[2],
-            new SourceLocation(SourceLocation.INVALID_SOURCE_LOCATION.uri(),
+            new SourceLocation(parser.sourceFile,
                 new SourceLocation.Position(lineNum, colNum)),
             null,
             title.contains("expected")

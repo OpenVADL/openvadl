@@ -1,5 +1,8 @@
 package vadl.utils;
 
+import static org.hamcrest.MatcherAssert.assertThat;
+import static org.hamcrest.Matchers.endsWith;
+import static org.hamcrest.Matchers.startsWith;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
 import java.net.URI;
@@ -66,4 +69,10 @@ public class SourceLocationTest {
     assert (location.toSourceString().contains("Invalid source location"));
   }
 
+  @Test
+  public void testToUriString() {
+    SourceLocation location = new SourceLocation(miniVadlUri, new SourceLocation.Position(1, 5));
+    assertThat(location.toUriString(), startsWith("file:/"));
+    assertThat(location.toUriString(), endsWith("mini.vadl:1:5 .. 1:5"));
+  }
 }

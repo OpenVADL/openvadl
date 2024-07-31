@@ -158,6 +158,16 @@ public record SourceLocation(
     }
   }
 
+  /**
+   * Produces a URI-based representation of this source location.
+   * All used IDEs should recognize this representation as clickable in console output.
+   * For example, SourceLocation("/path/file.vadl", (1, 3), (2, 4))
+   * becomes "file:///path/file.vadl:1:3 .. 2:4"
+   */
+  public String toUriString() {
+    return uri.toString() + ":" + begin + " .. " + end;
+  }
+
   @Override
   public String toString() {
     var printPath = !uri.getPath().isEmpty() ? uri.getPath() : "unknown";

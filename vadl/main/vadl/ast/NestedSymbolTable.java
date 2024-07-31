@@ -283,8 +283,10 @@ class NestedSymbolTable implements DefinitionVisitor<Void> {
   }
 
   private boolean isValuedAnnotation(TypeLiteral typeAnnotation) {
+    // TODO Built-in types should be configurable, not hardcoded
     return typeAnnotation.baseType.name.equals("Bool")
-        || typeAnnotation.baseType.name.equals("Bits");
+        || typeAnnotation.baseType.name.equals("Bits")
+        || typeAnnotation.baseType.name.equals("SInt");
   }
 
   private void verifyAvailable(String name, SourceLocation loc) {

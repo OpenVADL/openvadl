@@ -33,7 +33,7 @@ public class VadlError {
   @Override
   public String toString() {
     StringBuilder builder = new StringBuilder();
-    builder.append(reason).append(" at ").append(location.toConciseString());
+    builder.append(reason).append(" at ").append(location.toUriString());
     if (description != null) {
       builder.append("\n\t").append(description);
     }
