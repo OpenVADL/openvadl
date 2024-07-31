@@ -80,7 +80,8 @@ class NestedSymbolTable implements DefinitionVisitor<Void> {
 
   @Override
   public Void visit(MemoryDefinition definition) {
-    defineSymbol(definition.identifier.name, SymbolType.MEMORY, definition.location());
+    defineSymbol(new ValuedSymbol(definition.identifier.name, definition, SymbolType.MEMORY),
+        definition.location());
     return null;
   }
 

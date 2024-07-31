@@ -214,11 +214,11 @@ public class AstDumper
   @Override
   public Void visit(EncodingDefinition definition) {
     dumpNode(definition);
-    List<Node> children = definition.fieldEncodings.stream()
+    dumpChildren(definition.instrIdentifier);
+    dumpChildren(definition.fieldEncodings.stream()
         .flatMap(entry -> Stream.of(entry.field(), entry.value()))
-        .collect(Collectors.toList());
-    children.add(0, definition.instrIdentifier);
-    dumpChildren(children);
+        .toList()
+    );
     return null;
   }
 
@@ -232,7 +232,8 @@ public class AstDumper
   @Override
   public Void visit(CallExpr expr) {
     dumpNode(expr);
-    dumpChildren(expr.identifier, expr.argument);
+    dumpChildren(expr.target);
+    dumpChildren(expr.arguments);
     return null;
   }
 
@@ -254,6 +255,16 @@ public class AstDumper
   public Void visit(CastExpr expr) {
     dumpNode(expr);
     dumpChildren(expr.value, expr.type);
+    return null;
+  }
+
+  @Override
+  public Void visit(SymbolExpr expr) {
+    dumpNode(expr);
+    dumpChildren(expr.target);
+    if (expr.address != null) {
+      dumpChildren(expr.address);
+    }
     return null;
   }
 

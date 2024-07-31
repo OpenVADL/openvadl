@@ -1,5 +1,7 @@
 package vadl.ast;
 
+import java.util.ArrayList;
+
 /**
  * Ungrouper, removes all group expressions recursively.
  * Groups are needed in the AST during parsing until all binary expressions are reordered but then
@@ -72,7 +74,13 @@ class Ungrouper implements ExprVisitor<Expr> {
 
   @Override
   public Expr visit(CallExpr expr) {
-    return new CallExpr(expr.identifier, expr.argument.accept(this));
+    expr.target = (SymbolExpr) expr.target.accept(this);
+    var args = expr.arguments;
+    expr.arguments = new ArrayList<>(args.size());
+    for (var arg : args) {
+      expr.arguments.add(arg.accept(this));
+    }
+    return expr;
   }
 
   @Override
@@ -98,6 +106,12 @@ class Ungrouper implements ExprVisitor<Expr> {
   @Override
   public Expr visit(CastExpr expr) {
     expr.value = expr.value.accept(this);
+    return expr;
+  }
+
+  @Override
+  public Expr visit(SymbolExpr expr) {
+    expr.address = expr.address == null ? null : expr.address.accept(this);
     return expr;
   }
 }

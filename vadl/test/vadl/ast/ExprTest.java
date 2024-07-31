@@ -60,4 +60,20 @@ public class ExprTest {
     var expected = VadlParser.parse(equiv);
     assertAstEquality(ast, expected);
   }
+
+  @Test
+  void symbolExpressions() {
+    var prog = """
+        instruction set architecture TEST = {
+          memory MEM : Bits<8> -> Bits<32>
+          constant a = MEM
+          constant b = MEM<0x0a> + 2
+          constant c = MEM<0x0a>(9)
+          constant d = a < 2 && b > 2
+        }
+        """;
+
+    var ast = VadlParser.parse(prog);
+    verifyPrettifiedAst(ast);
+  }
 }

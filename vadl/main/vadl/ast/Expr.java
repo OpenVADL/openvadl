@@ -40,6 +40,8 @@ interface ExprVisitor<R> {
   R visit(LetExpr expr);
 
   R visit(CastExpr expr);
+
+  R visit(SymbolExpr expr);
 }
 
 /**
@@ -840,29 +842,38 @@ class IdentifierChain extends Expr {
 }
 
 class CallExpr extends Expr {
-  Identifier identifier;
-  Expr argument;
+  SymbolExpr target;
+  List<Expr> arguments;
+  SourceLocation location;
 
-  public CallExpr(Identifier identifier, Expr argument) {
-    this.identifier = identifier;
-    this.argument = argument;
+  public CallExpr(SymbolExpr target, List<Expr> arguments, SourceLocation location) {
+    this.target = target;
+    this.arguments = arguments;
+    this.location = location;
   }
 
   @Override
   SourceLocation location() {
-    return identifier.location().join(argument.location());
+    return location;
   }
 
   @Override
   SyntaxType syntaxType() {
-    return BasicSyntaxType.Id();
+    return BasicSyntaxType.CallEx();
   }
 
   @Override
   void prettyPrint(int indent, StringBuilder builder) {
-    identifier.prettyPrint(indent, builder);
+    target.prettyPrint(indent, builder);
     builder.append("(");
-    argument.prettyPrint(indent, builder);
+    boolean first = true;
+    for (var arg : arguments) {
+      if (!first) {
+        builder.append(", ");
+      }
+      arg.prettyPrint(indent, builder);
+      first = false;
+    }
     builder.append(")");
   }
 
@@ -886,13 +897,13 @@ class CallExpr extends Expr {
     }
 
     CallExpr that = (CallExpr) o;
-    return identifier.equals(that.identifier) && argument.equals(that.argument);
+    return target.equals(that.target) && arguments.equals(that.arguments);
   }
 
   @Override
   public int hashCode() {
-    int result = identifier.hashCode();
-    result = 31 * result + Objects.hashCode(argument);
+    int result = target.hashCode();
+    result = 31 * result + Objects.hashCode(arguments);
     return result;
   }
 }
@@ -1086,6 +1097,71 @@ class CastExpr extends Expr {
   public int hashCode() {
     int result = value.hashCode();
     result = 31 * result + Objects.hashCode(type);
+    return result;
+  }
+}
+
+/**
+ * A representation of terms of form <code>"MEM<9>"</code>.
+ */
+class SymbolExpr extends Expr {
+  Identifier target;
+  @Nullable Expr address;
+  SourceLocation location;
+
+  SymbolExpr(Identifier target, @Nullable Expr address, SourceLocation location) {
+    this.target = target;
+    this.address = address;
+    this.location = location;
+  }
+
+  @Override
+  SourceLocation location() {
+    return location;
+  }
+
+  @Override
+  SyntaxType syntaxType() {
+    return BasicSyntaxType.SymEx();
+  }
+
+  @Override
+  void prettyPrint(int indent, StringBuilder builder) {
+    target.prettyPrint(indent, builder);
+    if (address != null) {
+      builder.append("< ");
+      address.prettyPrint(indent, builder);
+      builder.append(" >");
+    }
+  }
+
+  @Override
+  <R> R accept(ExprVisitor<R> visitor) {
+    return visitor.visit(this);
+  }
+
+  @Override
+  public String toString() {
+    return this.getClass().getSimpleName();
+  }
+
+  @Override
+  public boolean equals(Object o) {
+    if (this == o) {
+      return true;
+    }
+    if (o == null || getClass() != o.getClass()) {
+      return false;
+    }
+
+    SymbolExpr that = (SymbolExpr) o;
+    return target.equals(that.target) && Objects.equals(address, that.address);
+  }
+
+  @Override
+  public int hashCode() {
+    int result = target.hashCode();
+    result = 31 * result + Objects.hashCode(address);
     return result;
   }
 }

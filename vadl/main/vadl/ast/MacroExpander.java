@@ -109,7 +109,13 @@ class MacroExpander
 
   @Override
   public Node visit(CallExpr expr) {
-    return new CallExpr(expr.identifier, (Expr) expr.argument.accept(this));
+    expr.target = (SymbolExpr) expr.target.accept(this);
+    var args = expr.arguments;
+    expr.arguments = new ArrayList<>(args.size());
+    for (var arg : args) {
+      expr.arguments.add((Expr) arg.accept(this));
+    }
+    return expr;
   }
 
   @Override
@@ -136,6 +142,12 @@ class MacroExpander
   public Node visit(CastExpr expr) {
     expr.value = (Expr) expr.value.accept(this);
     expr.type = (TypeLiteral) expr.type.accept(this);
+    return expr;
+  }
+
+  @Override
+  public Node visit(SymbolExpr expr) {
+    expr.address = expr.address == null ? null : (Expr) expr.address.accept(this);
     return expr;
   }
 

@@ -54,15 +54,18 @@ InstructionSetDefinition
 . : ' AssignmentStatement
 . : ' | Target:
 . : ' | CallExpr
-. : ' | . Identifier name: "X"
+. : ' | . SymbolExpr
+. : ' | . : Identifier name: "X"
 . : ' | . IdentifierChain
 . : ' | . : Identifier name: "rd"
 . : ' | Value:. : ' | BinaryExpr operator: +
 . : ' | . CallExpr
-. : ' | . : Identifier name: "X"
+. : ' | . : SymbolExpr
+. : ' | . : ' Identifier name: "X"
 . : ' | . : IdentifierChain
 . : ' | . : ' Identifier name: "rs1"
 . : ' | . CallExpr
-. : ' | . : Identifier name: "X"
+. : ' | . : SymbolExpr
+. : ' | . : ' Identifier name: "X"
 . : ' | . : IdentifierChain
 . : ' | . : ' Identifier name: "rs2"

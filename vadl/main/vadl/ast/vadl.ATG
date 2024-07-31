@@ -315,7 +315,7 @@ PRODUCTIONS
   = (
       IF (scanner.Peek().kind != _SYM_PAREN_OPEN)
       identifierChain<out target>
-    | callExpression<out target>
+    | simpleCallExpression<out target>
     )
     SYM_ASSIGN
     expression<out Expr expr, BIN_OPS>                    (. statement = new AssignmentStatement(target, expr); .)
@@ -339,13 +339,46 @@ PRODUCTIONS
 
   // -- EXPRESSIONS --------------------------------------------------------------------------------------------------
 
-  expression<out Expr expr, boolean[] allowedOps> (. expr = null; .)
+  expression<out Expr expr, boolean[] allowedOps>  (. expr = null; .)
   = termWithOptionalCast<out expr>
-    {
-      IF (allowedOps[la.kind])
-      binaryOperator<out Operator op>
-      termWithOptionalCast<out Expr expr2>        (. expr = new BinaryExpr(expr, op, expr2); .)
-    }                                             (. expr = ungroup(this, reorderBinary(this, expr)); .)
+  (
+    [
+      IF (expr instanceof IdentifierChain chain && chain.next == null && la.kind == _SYM_LT)
+      potentialDirectCall<out expr, chain, allowedOps>
+    ]
+    binaryTerms<out expr, expr, allowedOps>
+  )                                                (. expr = ungroup(this, reorderBinary(this, expr)); .)
+  .
+
+  /// Helper rule to distinguish between "MEM<9>" and "a < 9 && b > 2".
+  /// If a different operator is found between < and >, or no > is found at all,
+  /// the leading < is interpreted as the binary operator and a BinaryExpr returned.
+  // TODO Target can be of shape "a::b", not just "a.b"
+  potentialDirectCall<out Expr expr, IdentifierChain target, boolean[] allowedOps>
+  = SYM_LT                                         (. expr = null; .)
+    termWithOptionalCast<out Expr term>
+    (
+      IF (la.kind == _SYM_GT)
+      SYM_GT                                       (. var symEx = new SymbolExpr(target.identifier, term, target.location().join(loc())); expr = symEx; .)
+      [
+        SYM_PAREN_OPEN                             (. var arguments = new ArrayList<Expr>(); .)
+        expression<out Expr arg, allowedOps>       (. arguments.add(arg); .)
+        {
+          SYM_COMMA
+          expression<out Expr nextArg, allowedOps> (. arguments.add(nextArg); .)
+        }
+        SYM_PAREN_CLOSE                            (. expr = new CallExpr(symEx, arguments, symEx.location().join(loc())); .)
+      ]
+    | binaryTerms<out expr, new BinaryExpr(target, Operator.Less(), term), allowedOps>
+    )
+  .
+
+  binaryTerms<out Expr expr, Expr left, boolean[] allowedOps> (. expr = left; .)
+  = {
+    IF (allowedOps[la.kind])
+    binaryOperator<out Operator op>
+    termWithOptionalCast<out Expr right> (. expr = new BinaryExpr(expr, op, right); .)
+  }
   .
 
   binaryOperator<out Operator op>    (.op = null;.)
@@ -398,7 +431,7 @@ PRODUCTIONS
   = number                                                          (. expr = new IntegerLiteral(t.val, loc()); .)
   | IF (la.kind == _identifierToken && scanner.Peek().kind != _SYM_PAREN_OPEN)
     identifierChain<out IdentifierChain chain>                      (. expr = chain; if (!insideMacro && !insideAnnotation) symbolTable.requireValue(chain); .)
-  | callExpression<out expr>
+  | simpleCallExpression<out expr>
   | SYM_PAREN_OPEN expression<out expr, BIN_OPS> SYM_PAREN_CLOSE    (. expr = new GroupExpr(expr); .)
   | unary<out expr>
   | ifExpression<out expr>
@@ -411,10 +444,11 @@ PRODUCTIONS
     [ SYM_DOT identifierChain<out next> ]    (. chain = new IdentifierChain(id, next); .)
   .
 
-  callExpression<out CallExpr call>
+  // TODO Unify with more complex call expression above, maybe move out of "term"s
+  simpleCallExpression<out CallExpr call>
   = identifier<out Identifier id>
     SYM_PAREN_OPEN
-    expression<out Expr argument, BIN_OPS>        (. call = new CallExpr(id, argument); .)
+    expression<out Expr argument, BIN_OPS>        (. call = new CallExpr(new SymbolExpr(id, null, id.location()), List.of(argument), id.location().join(loc())); .)
     SYM_PAREN_CLOSE
   .
 
