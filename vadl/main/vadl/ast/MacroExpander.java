@@ -11,7 +11,7 @@ import vadl.error.VadlException;
  * Expands and copies a macro template.
  */
 class MacroExpander
-    implements ExprVisitor<Node>, DefinitionVisitor<Node>, StatementVisitor<Statement> {
+    implements ExprVisitor<Expr>, DefinitionVisitor<Definition>, StatementVisitor<Statement> {
   final Map<String, Node> args;
   NestedSymbolTable symbols;
   List<VadlError> errors = new ArrayList<>();
@@ -26,10 +26,10 @@ class MacroExpander
     if (!errors.isEmpty()) {
       throw new VadlException(errors);
     }
-    return (Expr) result;
+    return result;
   }
 
-  public Node expandDefinition(Definition def) {
+  public Definition expandDefinition(Definition def) {
     var result = def.accept(this);
     if (!errors.isEmpty()) {
       throw new VadlException(errors);
@@ -40,14 +40,14 @@ class MacroExpander
   @Override
   public Expr visit(BinaryExpr expr) {
     // FIXME: Only if parent is not a binary operator cause otherwise it is O(n^2)
-    var result = new BinaryExpr((Expr) expr.left.accept(this), expr.operator,
-        (Expr) expr.right.accept(this));
+    var result = new BinaryExpr(
+        expr.left.accept(this), expr.operator, expr.right.accept(this));
     return BinaryExpr.reorder(result);
   }
 
   @Override
   public Expr visit(GroupExpr expr) {
-    return new GroupExpr((Expr) expr.accept(this));
+    return new GroupExpr(expr.accept(this));
   }
 
   @Override
@@ -61,25 +61,25 @@ class MacroExpander
   }
 
   @Override
-  public Node visit(PlaceholderExpr expr) {
+  public Expr visit(PlaceholderExpr expr) {
     // FIXME: This could also be another macro
     var arg = args.get(expr.identifierChain.identifier.name);
     if (arg == null) {
       throw new IllegalStateException("The parser should already have checked that.");
     } else if (arg instanceof Identifier id) {
-      return id;
+      return new IdentifierChain(id, null);
     }
 
     return ((Expr) arg).accept(this);
   }
 
   @Override
-  public Node visit(MacroInstanceExpr expr) {
+  public Expr visit(MacroInstanceExpr expr) {
     var arg = args.get(expr.identifier.name);
     if (arg == null) {
       throw new IllegalStateException("The parser should already have checked that.");
     } else if (arg instanceof Identifier id) {
-      return id;
+      return new IdentifierChain(id, null);
     }
 
     return ((Expr) arg).accept(this);
@@ -87,13 +87,13 @@ class MacroExpander
 
   @Override
   public Expr visit(RangeExpr expr) {
-    return new RangeExpr((Expr) expr.from.accept(this), (Expr) expr.to.accept(this));
+    return new RangeExpr(expr.from.accept(this), expr.to.accept(this));
   }
 
   @Override
   public Expr visit(TypeLiteral expr) {
     var sizeExpression = expr.sizeExpression == null ? null : expr.sizeExpression.accept(this);
-    return new TypeLiteral(expr.baseType, (Expr) sizeExpression, expr.loc);
+    return new TypeLiteral(expr.baseType, sizeExpression, expr.loc);
   }
 
   @Override
@@ -104,57 +104,57 @@ class MacroExpander
 
   @Override
   public Expr visit(UnaryExpr expr) {
-    return new UnaryExpr(expr.operator, (Expr) expr.operand.accept(this));
+    return new UnaryExpr(expr.operator, expr.operand.accept(this));
   }
 
   @Override
-  public Node visit(CallExpr expr) {
+  public Expr visit(CallExpr expr) {
     expr.target = (SymbolExpr) expr.target.accept(this);
     var args = expr.arguments;
     expr.arguments = new ArrayList<>(args.size());
     for (var arg : args) {
-      expr.arguments.add((Expr) arg.accept(this));
+      expr.arguments.add(arg.accept(this));
     }
     return expr;
   }
 
   @Override
-  public Node visit(IfExpr expr) {
+  public Expr visit(IfExpr expr) {
     return new IfExpr(
-        (Expr) expr.condition.accept(this),
-        (Expr) expr.thenExpr.accept(this),
-        (Expr) expr.elseExpr.accept(this),
+        expr.condition.accept(this),
+        expr.thenExpr.accept(this),
+        expr.elseExpr.accept(this),
         expr.location
     );
   }
 
   @Override
-  public Node visit(LetExpr expr) {
+  public Expr visit(LetExpr expr) {
     return new LetExpr(
         expr.identifier,
-        (Expr) expr.valueExpr.accept(this),
-        (Expr) expr.body.accept(this),
+        expr.valueExpr.accept(this),
+        expr.body.accept(this),
         expr.location
     );
   }
 
   @Override
-  public Node visit(CastExpr expr) {
-    expr.value = (Expr) expr.value.accept(this);
+  public Expr visit(CastExpr expr) {
+    expr.value = expr.value.accept(this);
     expr.type = (TypeLiteral) expr.type.accept(this);
     return expr;
   }
 
   @Override
-  public Node visit(SymbolExpr expr) {
-    expr.address = expr.address == null ? null : (Expr) expr.address.accept(this);
+  public Expr visit(SymbolExpr expr) {
+    expr.address = expr.address == null ? null : expr.address.accept(this);
     return expr;
   }
 
   @Override
   public Definition visit(ConstantDefinition definition) {
     return new ConstantDefinition(definition.identifier, definition.typeAnnotation,
-        (Expr) definition.value.accept(this), definition.loc);
+        definition.value.accept(this), definition.loc);
   }
 
   @Override
@@ -225,7 +225,7 @@ class MacroExpander
   public Statement visit(LetStatement letStatement) {
     symbols = symbols.createChild();
     symbols.defineConstant(letStatement.identifier.name, letStatement.identifier.loc);
-    letStatement.valueExpression = (Expr) letStatement.valueExpression.accept(this);
+    letStatement.valueExpression = letStatement.valueExpression.accept(this);
     letStatement.body = letStatement.body.accept(this);
     symbols = Objects.requireNonNull(symbols.parent);
     return letStatement;
@@ -233,7 +233,7 @@ class MacroExpander
 
   @Override
   public Statement visit(IfStatement ifStatement) {
-    ifStatement.condition = (Expr) ifStatement.condition.accept(this);
+    ifStatement.condition = ifStatement.condition.accept(this);
     ifStatement.thenStmt = ifStatement.thenStmt.accept(this);
     if (ifStatement.elseStmt != null) {
       ifStatement.elseStmt = ifStatement.elseStmt.accept(this);
@@ -246,14 +246,17 @@ class MacroExpander
     if (assignmentStatement.target instanceof IdentifierChain chain) {
       symbols.requireValue(chain);
     }
-    assignmentStatement.valueExpression = (Expr) assignmentStatement.valueExpression.accept(this);
+    assignmentStatement.valueExpression = assignmentStatement.valueExpression.accept(this);
     return assignmentStatement;
   }
 
   private Identifier resolvePlaceholderOrIdentifier(Node n) {
     if (n instanceof PlaceholderExpr p) {
-      return (Identifier) p.accept(this);
+      return ((IdentifierChain) p.accept(this)).identifier;
     }
-    return (Identifier) n;
+    if (n instanceof Identifier id) {
+      return id;
+    }
+    throw new IllegalStateException("Unknown resolved placeholder type " + n);
   }
 }
