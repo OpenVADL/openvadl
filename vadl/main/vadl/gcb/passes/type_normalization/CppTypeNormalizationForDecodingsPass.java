@@ -13,7 +13,7 @@ import vadl.viam.Specification;
 /**
  * When transforming a graph into a CPP code, we have to take care of unsupported types.
  * For example, VADL allows arbitrary bit sizes, however CPP has only fixed size types.
- * This pass inserts bit mask to ensure that the code generation works for decodings.
+ * This pass inserts a bit mask to ensure that the code generation works for decodings.
  */
 public class CppTypeNormalizationForDecodingsPass extends CppTypeNormalizationPass {
 
