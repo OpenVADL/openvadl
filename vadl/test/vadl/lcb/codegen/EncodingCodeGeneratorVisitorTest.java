@@ -144,6 +144,6 @@ class EncodingCodeGeneratorVisitorTest extends AbstractTest {
     visitor.visit(builtIn);
 
     // Then
-    assertEquals("1 + 1", writer.toString());
+    assertEquals("(1) + (1)", writer.toString());
   }
 }

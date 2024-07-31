@@ -101,17 +101,21 @@ public abstract class GenericCppCodeGeneratorVisitor implements GraphNodeVisitor
 
   @Override
   public void visit(SliceNode sliceNode) {
-    writer.write("(");
+    writer.write("(((");
     visit(sliceNode.value());
     writer.write(")");
     sliceNode.bitSlice().parts().forEach(part -> {
       if (part.lsb() > 0) {
         writer.write(
-            " & " + generateBitmask(part.msb() + 1) + " & ~((1 << " + part.lsb() + ") - 1)");
+            " & " + generateBitmask(part.msb() + 1) + " & ~((1 << " + part.lsb() + ") - 1))");
       } else {
         writer.write(
-            " & " + generateBitmask(part.msb() + 1));
+            " & " + generateBitmask(part.msb() + 1) + ")");
       }
+
+      // First, we cleared the bits
+      // Now, extract the bits by shifting the lowest bits.
+      writer.write(" >> " + part.lsb() + ")");
     });
   }
 

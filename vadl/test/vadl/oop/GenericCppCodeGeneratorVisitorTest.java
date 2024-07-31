@@ -98,17 +98,17 @@ class GenericCppCodeGeneratorVisitorTest extends AbstractTest {
 
   private static Stream<Arguments> getTypesWithCastExpression() {
     return Stream.of(
-        Arguments.of(DataType.bool(), "(bool) 1"),
-        Arguments.of(DataType.signedInt(8), "(int8_t) 1"),
-        Arguments.of(DataType.signedInt(16), "(int16_t) 1"),
-        Arguments.of(DataType.signedInt(32), "(int32_t) 1"),
-        Arguments.of(DataType.signedInt(64), "(int64_t) 1"),
-        Arguments.of(DataType.signedInt(128), "(int128_t) 1"),
-        Arguments.of(DataType.unsignedInt(8), "(uint8_t) 1"),
-        Arguments.of(DataType.unsignedInt(16), "(uint16_t) 1"),
-        Arguments.of(DataType.unsignedInt(32), "(uint32_t) 1"),
-        Arguments.of(DataType.unsignedInt(64), "(uint64_t) 1"),
-        Arguments.of(DataType.unsignedInt(128), "(uint128_t) 1")
+        Arguments.of(DataType.bool(), "((bool) 1)"),
+        Arguments.of(DataType.signedInt(8), "((int8_t) 1)"),
+        Arguments.of(DataType.signedInt(16), "((int16_t) 1)"),
+        Arguments.of(DataType.signedInt(32), "((int32_t) 1)"),
+        Arguments.of(DataType.signedInt(64), "((int64_t) 1)"),
+        Arguments.of(DataType.signedInt(128), "((int128_t) 1)"),
+        Arguments.of(DataType.unsignedInt(8), "((uint8_t) 1)"),
+        Arguments.of(DataType.unsignedInt(16), "((uint16_t) 1)"),
+        Arguments.of(DataType.unsignedInt(32), "((uint32_t) 1)"),
+        Arguments.of(DataType.unsignedInt(64), "((uint64_t) 1)"),
+        Arguments.of(DataType.unsignedInt(128), "((uint128_t) 1)")
     );
   }
 
@@ -136,7 +136,7 @@ class GenericCppCodeGeneratorVisitorTest extends AbstractTest {
     visitor.visit(builtIn);
 
     // Then
-    assertEquals("1 + 1", writer.toString());
+    assertEquals("(1) + (1)", writer.toString());
   }
 
   @Test
