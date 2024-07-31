@@ -43,6 +43,16 @@ public abstract class Constant {
     this.type = type;
   }
 
+  public Constant.Value asVal() {
+    ensure(this instanceof Value, "Constant is not a value");
+    return (Constant.Value) this;
+  }
+
+  public Constant.Tuple asTuple() {
+    ensure(this instanceof Tuple, "Constant is not a tuple");
+    return (Constant.Tuple) this;
+  }
+
   @Override
   public boolean equals(Object o) {
     if (this == o) {
@@ -288,14 +298,14 @@ public abstract class Constant {
     }
 
     /**
-     * Returns the logical negation of the current value object.
+     * Returns the bitwise negation of the current value object.
      *
-     * @return the negation value of the current value object
-     * @throws ViamError if the type of the value object is not BoolType.
+     * @return the bitwise negation value of the current value object
      */
     public Constant.Value not() {
-      ensure(type() instanceof BoolType, "not() currently only available for bool type");
-      return Constant.Value.of(!this.bool());
+      var mask = mask(type().bitWidth(), 0);
+      var notResult = value.xor(mask);
+      return fromTwosComplement(notResult, type());
     }
 
     /**
@@ -320,6 +330,13 @@ public abstract class Constant {
           .add(BigInteger.ONE) // add one to it
           .and(mask); // truncate result
       return Constant.Value.fromTwosComplement(negated, type());
+    }
+
+    public Constant.Value and(Constant.Value other) {
+      ensureSameWidth(other);
+      var andResult = this.value.and(other.value);
+
+      return Constant.Value.fromTwosComplement(andResult, type());
     }
 
     private BigInteger maxUnsignedValue() {
@@ -437,6 +454,13 @@ public abstract class Constant {
         str = "0".repeat(padSize) + str;
       }
       return prefix + str;
+    }
+
+    // Helper functions
+
+    public void ensureSameWidth(Constant.Value other) {
+      ensure(type().bitWidth() == other.type().bitWidth(),
+          "Type has not the same bit width as %s", other);
     }
   }
 

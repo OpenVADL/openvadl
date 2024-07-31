@@ -39,5 +39,9 @@ public class TestGraphUtils {
     return Constant.Value.of(val, Type.bits(width));
   }
 
+  public static Constant.Value bool(boolean val) {
+    return Constant.Value.of(val);
+  }
+
 
 }
