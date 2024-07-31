@@ -4,6 +4,7 @@ import static vadl.oop.CppTypeMap.getCppTypeNameByVadlType;
 
 import java.io.StringWriter;
 import java.util.Objects;
+import vadl.types.Type;
 import vadl.viam.Constant;
 import vadl.viam.graph.GraphNodeVisitor;
 import vadl.viam.graph.control.AbstractBeginNode;
@@ -94,9 +95,17 @@ public abstract class GenericCppCodeGeneratorVisitor implements GraphNodeVisitor
 
   @Override
   public void visit(TypeCastNode typeCastNode) {
-    writer.write("((" + getCppTypeNameByVadlType(typeCastNode.castType()) + ") ");
-    visit(typeCastNode.value());
-    writer.write(")");
+    if (typeCastNode.castType() == Type.bool()) {
+      // Integer downcasts truncated the higher bits
+      // but, boolean downcasts (v != 0)
+      writer.write("((" + getCppTypeNameByVadlType(typeCastNode.castType()) + ") ");
+      visit(typeCastNode.value());
+      writer.write(" & 0x1)");
+    } else {
+      writer.write("((" + getCppTypeNameByVadlType(typeCastNode.castType()) + ") ");
+      visit(typeCastNode.value());
+      writer.write(")");
+    }
   }
 
   @Override

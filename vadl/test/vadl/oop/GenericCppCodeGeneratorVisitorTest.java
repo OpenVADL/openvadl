@@ -98,7 +98,7 @@ class GenericCppCodeGeneratorVisitorTest extends AbstractTest {
 
   private static Stream<Arguments> getTypesWithCastExpression() {
     return Stream.of(
-        Arguments.of(DataType.bool(), "((bool) 1)"),
+        Arguments.of(DataType.bool(), "((bool) 1 & 0x1)"),
         Arguments.of(DataType.signedInt(8), "((int8_t) 1)"),
         Arguments.of(DataType.signedInt(16), "((int16_t) 1)"),
         Arguments.of(DataType.signedInt(32), "((int32_t) 1)"),

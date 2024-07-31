@@ -26,17 +26,26 @@ public class EncodingCodeGeneratorVisitor extends GenericCppCodeGeneratorVisitor
   public void visit(UpcastedTypeCastNode upcastedTypeCastNode) {
     var castType = upcastedTypeCastNode.castType();
     var originalType = upcastedTypeCastNode.originalType();
-    writer.write("((" + getCppTypeNameByVadlType(castType) + ") ");
-    visit(upcastedTypeCastNode.value());
 
-    upcastedTypeCastNode.ensure(originalType instanceof BitsType
-        || originalType instanceof BoolType, "Type must be bits or bool");
+    if (castType == BoolType.bool()) {
+      // Integer downcasts truncated the higher bits
+      // but, boolean downcasts (v != 0)
+      writer.write("((" + getCppTypeNameByVadlType(castType) + ") ");
+      visit(upcastedTypeCastNode.value());
+      writer.write(" & 0x1)");
+    } else {
+      writer.write("((" + getCppTypeNameByVadlType(castType) + ") ");
+      visit(upcastedTypeCastNode.value());
 
-    if (originalType instanceof BitsType cast) {
-      writer.write(
-          ") & " + generateBitmask(cast.bitWidth()));
-    } else if (upcastedTypeCastNode.originalType() instanceof BoolType) {
-      writer.write(") & 1");
+      upcastedTypeCastNode.ensure(originalType instanceof BitsType
+          || originalType instanceof BoolType, "Type must be bits or bool");
+
+      if (originalType instanceof BitsType cast) {
+        writer.write(
+            ") & " + generateBitmask(cast.bitWidth()));
+      } else if (upcastedTypeCastNode.originalType() instanceof BoolType) {
+        writer.write(") & 1");
+      }
     }
   }
 }
