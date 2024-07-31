@@ -1,25 +1,26 @@
-package vadl.gcb.passes.type_normalization;
+package vadl.gcb.passes.field_node_replacement;
 
 import java.util.Arrays;
 import java.util.Objects;
 import java.util.stream.Stream;
-import vadl.oop.passes.type_normalization.CppTypeNormalizationPass;
+import vadl.oop.passes.field_node_replacement.FieldNodeReplacementPass;
 import vadl.pass.PassName;
 import vadl.viam.Format;
 import vadl.viam.Function;
 import vadl.viam.Instruction;
 import vadl.viam.Specification;
+import vadl.viam.graph.dependency.FieldRefNode;
+import vadl.viam.graph.dependency.FuncParamNode;
 
 /**
- * When transforming a graph into a CPP code, we have to take care of unsupported types.
- * For example, VADL allows arbitrary bit sizes, however CPP has only fixed size types.
- * This pass inserts a bit mask to ensure that the code generation works for encodings.
+ * Replaces all {@link FieldRefNode} by {@link FuncParamNode} but only in the
+ * {@link Format.FieldAccess#accessFunction()}.
  */
-public class CppTypeNormalizationForEncodingsPass extends CppTypeNormalizationPass {
+public class FieldNodeReplacementPassForDecoding extends FieldNodeReplacementPass {
 
   @Override
   public PassName getName() {
-    return new PassName("CppTypeNormalizationForEncodings");
+    return new PassName("FieldNodeReplacementPassForDecoding");
   }
 
   @Override
@@ -29,7 +30,7 @@ public class CppTypeNormalizationForEncodingsPass extends CppTypeNormalizationPa
         .map(Instruction::format)
         .distinct()
         .flatMap(x -> Arrays.stream(x.fieldAccesses()))
-        .map(Format.FieldAccess::encoding)
+        .map(Format.FieldAccess::accessFunction)
         .filter(Objects::nonNull);
   }
 }

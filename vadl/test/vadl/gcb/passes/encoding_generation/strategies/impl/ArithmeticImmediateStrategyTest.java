@@ -1,4 +1,4 @@
-package vadl.gcb.passes.encoding.strategies.impl;
+package vadl.gcb.passes.encoding_generation.strategies.impl;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -6,7 +6,6 @@ import static org.junit.jupiter.api.Assertions.assertNotNull;
 
 import java.util.List;
 import java.util.stream.Stream;
-import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.Arguments;
@@ -18,7 +17,6 @@ import vadl.types.DataType;
 import vadl.types.Type;
 import vadl.viam.Constant;
 import vadl.viam.Format;
-import vadl.viam.Function;
 import vadl.viam.Parameter;
 import vadl.viam.graph.NodeList;
 import vadl.viam.graph.control.ReturnNode;

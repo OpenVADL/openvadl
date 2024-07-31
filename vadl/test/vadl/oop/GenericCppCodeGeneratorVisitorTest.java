@@ -1,8 +1,9 @@
-package vadl.lcb.codegen;
+package vadl.oop;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
 import java.io.StringWriter;
+import java.math.BigInteger;
 import java.util.stream.Stream;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -10,6 +11,7 @@ import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.Arguments;
 import org.junit.jupiter.params.provider.MethodSource;
 import vadl.AbstractTest;
+import vadl.lcb.codegen.EncodingCodeGeneratorVisitor;
 import vadl.oop.passes.type_normalization.UpcastedTypeCastNode;
 import vadl.types.BuiltInTable;
 import vadl.types.DataType;
@@ -20,15 +22,23 @@ import vadl.viam.graph.NodeList;
 import vadl.viam.graph.dependency.BuiltInCall;
 import vadl.viam.graph.dependency.ConstantNode;
 import vadl.viam.graph.dependency.FuncCallNode;
+import vadl.viam.graph.dependency.TypeCastNode;
 
-class EncodingCodeGeneratorVisitorTest extends AbstractTest {
+class GenericCppCodeGeneratorVisitorTest extends AbstractTest {
   StringWriter writer;
-  EncodingCodeGeneratorVisitor visitor;
+  GenericCppCodeGeneratorVisitor visitor;
+
+  class DummyCodeGenerator extends GenericCppCodeGeneratorVisitor {
+
+    public DummyCodeGenerator(StringWriter writer) {
+      super(writer);
+    }
+  }
 
   @BeforeEach
   void beforeEach() {
     writer = new StringWriter();
-    visitor = new EncodingCodeGeneratorVisitor(writer);
+    visitor = new DummyCodeGenerator(writer);
   }
 
   @Test
@@ -88,50 +98,32 @@ class EncodingCodeGeneratorVisitorTest extends AbstractTest {
 
   private static Stream<Arguments> getTypesWithCastExpression() {
     return Stream.of(
-        Arguments.of(DataType.bool(), "(bool) 1"),
-        Arguments.of(DataType.signedInt(8), "(int8_t) 1"),
-        Arguments.of(DataType.signedInt(16), "(int16_t) 1"),
-        Arguments.of(DataType.signedInt(32), "(int32_t) 1"),
-        Arguments.of(DataType.signedInt(64), "(int64_t) 1"),
-        Arguments.of(DataType.signedInt(128), "(int128_t) 1"),
-        Arguments.of(DataType.unsignedInt(8), "(uint8_t) 1"),
-        Arguments.of(DataType.unsignedInt(16), "(uint16_t) 1"),
-        Arguments.of(DataType.unsignedInt(32), "(uint32_t) 1"),
-        Arguments.of(DataType.unsignedInt(64), "(uint64_t) 1"),
-        Arguments.of(DataType.unsignedInt(128), "(uint128_t) 1")
-    );
-  }
-
-  private static Stream<Arguments> getTypesWithCastExpressionAndBitMask() {
-    return Stream.of(
-        Arguments.of(DataType.bool(), "((uint128_t) 1) & 1"),
-        Arguments.of(DataType.signedInt(8), "((uint128_t) 1) & ((1U << 8) - 1)"),
-        Arguments.of(DataType.signedInt(16), "((uint128_t) 1) & ((1U << 16) - 1)"),
-        Arguments.of(DataType.signedInt(32), "((uint128_t) 1) & ((1U << 32) - 1)"),
-        Arguments.of(DataType.signedInt(64), "((uint128_t) 1) & ((1U << 64) - 1)"),
-        Arguments.of(DataType.signedInt(128), "((uint128_t) 1) & ((1U << 128) - 1)"),
-        Arguments.of(DataType.unsignedInt(8), "((uint128_t) 1) & ((1U << 8) - 1)"),
-        Arguments.of(DataType.unsignedInt(16), "((uint128_t) 1) & ((1U << 16) - 1)"),
-        Arguments.of(DataType.unsignedInt(32), "((uint128_t) 1) & ((1U << 32) - 1)"),
-        Arguments.of(DataType.unsignedInt(64), "((uint128_t) 1) & ((1U << 64) - 1)"),
-        Arguments.of(DataType.unsignedInt(128), "((uint128_t) 1) & ((1U << 128) - 1)")
+        Arguments.of(DataType.bool(), "((bool) 1 & 0x1)"),
+        Arguments.of(DataType.signedInt(8), "((int8_t) 1)"),
+        Arguments.of(DataType.signedInt(16), "((int16_t) 1)"),
+        Arguments.of(DataType.signedInt(32), "((int32_t) 1)"),
+        Arguments.of(DataType.signedInt(64), "((int64_t) 1)"),
+        Arguments.of(DataType.signedInt(128), "((int128_t) 1)"),
+        Arguments.of(DataType.unsignedInt(8), "((uint8_t) 1)"),
+        Arguments.of(DataType.unsignedInt(16), "((uint16_t) 1)"),
+        Arguments.of(DataType.unsignedInt(32), "((uint32_t) 1)"),
+        Arguments.of(DataType.unsignedInt(64), "((uint64_t) 1)"),
+        Arguments.of(DataType.unsignedInt(128), "((uint128_t) 1)")
     );
   }
 
   @ParameterizedTest
-  @MethodSource("getTypesWithCastExpressionAndBitMask")
-  void upcastedTypeCastNode_shouldGenerateCpp(DataType type, String expected) {
+  @MethodSource("getTypesWithCastExpression")
+  void typeCastNode_shouldGenerateCpp(DataType type, String expected) {
     var constant = Constant.Value.of(1, DataType.unsignedInt(32));
     var node = new ConstantNode(constant);
 
     // When
-    // We cast to the largest bitWidth
-    visitor.visit(new UpcastedTypeCastNode(node, DataType.unsignedInt(128), type));
+    visitor.visit(new TypeCastNode(node, type));
 
     // Then
     assertEquals(expected, writer.toString());
   }
-
 
   @Test
   void builtIn_shouldGenerateCpp() {
@@ -145,5 +137,19 @@ class EncodingCodeGeneratorVisitorTest extends AbstractTest {
 
     // Then
     assertEquals("(1) + (1)", writer.toString());
+  }
+
+  @Test
+  void builtIn_shouldGenerateCpp_whenOnlyOneArgument() {
+    var constant = Constant.Value.of(1, DataType.unsignedInt(32));
+    var node = new ConstantNode(constant);
+    var builtIn =
+        new BuiltInCall(BuiltInTable.NEG, new NodeList<>(node), DataType.unsignedInt(32));
+
+    // When
+    visitor.visit(builtIn);
+
+    // Then
+    assertEquals("-1", writer.toString());
   }
 }

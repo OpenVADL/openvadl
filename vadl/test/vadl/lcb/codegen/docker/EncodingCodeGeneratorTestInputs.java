@@ -1,24 +1,16 @@
-package vadl.lcb.codegen;
+package vadl.lcb.codegen.docker;
 
-import java.io.IOException;
 import java.math.BigInteger;
 import java.util.stream.Stream;
-import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.Arguments;
-import org.junit.jupiter.params.provider.MethodSource;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-import org.testcontainers.images.builder.ImageFromDockerfile;
-import vadl.DockerExecutionTest;
-import vadl.gcb.passes.encoding.strategies.EncodingGenerationStrategy;
-import vadl.gcb.passes.encoding.strategies.impl.ArithmeticImmediateStrategy;
-import vadl.gcb.passes.encoding.strategies.impl.ShiftedImmediateStrategy;
-import vadl.gcb.passes.encoding.strategies.impl.TrivialImmediateStrategy;
+import vadl.AbstractTest;
+import vadl.gcb.passes.encoding_generation.strategies.impl.ArithmeticImmediateStrategy;
+import vadl.gcb.passes.encoding_generation.strategies.impl.ShiftedImmediateStrategy;
+import vadl.gcb.passes.encoding_generation.strategies.impl.TrivialImmediateStrategy;
 import vadl.types.BuiltInTable;
 import vadl.types.DataType;
 import vadl.types.Type;
 import vadl.viam.Constant;
-import vadl.viam.Format;
 import vadl.viam.Function;
 import vadl.viam.graph.Graph;
 import vadl.viam.graph.NodeList;
@@ -28,25 +20,8 @@ import vadl.viam.graph.dependency.ConstantNode;
 import vadl.viam.graph.dependency.FieldRefNode;
 import vadl.viam.graph.dependency.TypeCastNode;
 
-public class EncodingCodeGeneratorVerificationTest extends DockerExecutionTest {
-  private static final Logger logger =
-      LoggerFactory.getLogger(EncodingCodeGeneratorVerificationTest.class);
-
-  private static final String GENERIC_FIELD_NAME = "x";
-  private static final String ENCODING_FUNCTION_NAME = "f_x";
-  private static final String MOUNT_PATH = "/app/main.py";
-
-  private static final ImageFromDockerfile DOCKER_IMAGE = new ImageFromDockerfile()
-      .withDockerfileFromBuilder(builder ->
-          builder
-              .from("python:3.8")
-              .run("python3 -m pip install z3 z3-solver")
-              .cmd("python3", "/app/main.py")
-              .build());
-  private static final String TEMPFILE_PREFIX = "encoding-z3";
-  private static final String TEMPFILE_SUFFIX = "py";
-
-  private static Stream<Arguments> createFieldAccessFunctions() {
+public class EncodingCodeGeneratorTestInputs extends AbstractTest {
+  public static Stream<Arguments> createFieldAccessFunctions() {
     return Stream.of(
         Arguments.of(createUnsignedInt32DecodingFunction(), new TrivialImmediateStrategy()),
         Arguments.of(createSignedInt32DecodingFunction(), new TrivialImmediateStrategy()),
@@ -61,55 +36,6 @@ public class EncodingCodeGeneratorVerificationTest extends DockerExecutionTest {
         Arguments.of(createSignedInt32WithSubtractionDecodingFunction(),
             new ArithmeticImmediateStrategy())
     );
-  }
-
-  @ParameterizedTest
-  @MethodSource("createFieldAccessFunctions")
-  void verifyStrategies(Function encodingFunction, EncodingGenerationStrategy strategy)
-      throws IOException {
-    // Setup decoding
-    var fieldAccess = new Format.FieldAccess(createIdentifier("fieldAccessIdentifierValue"),
-        encodingFunction, null, null);
-
-    // Then generate the z3 code for the f_x
-    var visitorDecode = new Z3EncodingCodeGeneratorVisitor(GENERIC_FIELD_NAME);
-    visitorDecode.visit(encodingFunction.behavior().getNodes(ReturnNode.class).findFirst().get());
-
-    // Generate encoding from decoding.
-    // This is what we would like to test for.
-    strategy.generateEncoding(fieldAccess);
-
-    // Now the fieldAccess.encoding().behavior function is set with an inverted behavior graph.
-    var visitorEncode = new Z3EncodingCodeGeneratorVisitor(ENCODING_FUNCTION_NAME);
-    visitorEncode.visit(
-        fieldAccess.encoding().behavior().getNodes(ReturnNode.class).findFirst().get());
-
-    var generatedDecodeFunctionCode = visitorDecode.getResult();
-    var generatedEncodeWithDecodeFunctionCode = visitorEncode.getResult();
-    String z3Code = String.format("""
-            from z3 import *
-                    
-            x = BitVec('x', %d) # field
-                    
-            f_x = %s
-            f_z = %s
-                        
-            def prove(f):
-                s = Solver()
-                s.add(Not(f))
-                if s.check() == unsat:
-                    print("proved")
-                    exit(0)
-                else:
-                    print("failed to prove")
-                    exit(1)
-                    
-            prove(x == f_z)
-            """, fieldAccess.fieldRef().bitSlice().bitSize(),
-        generatedDecodeFunctionCode,
-        generatedEncodeWithDecodeFunctionCode);
-    logger.atInfo().log(z3Code);
-    runContainerWithContent(DOCKER_IMAGE, z3Code, MOUNT_PATH, TEMPFILE_PREFIX, TEMPFILE_SUFFIX);
   }
 
   private static Function createUnsignedInt32DecodingFunction() {
@@ -243,6 +169,4 @@ public class EncodingCodeGeneratorVerificationTest extends DockerExecutionTest {
     function.setBehavior(graph);
     return function;
   }
-
-
 }

@@ -335,18 +335,20 @@ public class Graph {
     Map<Node, Node> cache = new HashMap<>();
     var graph = new Graph(name);
 
-    this.nodes.forEach(oldNode -> {
+    this.nodes.stream().filter(Objects::nonNull).forEach(oldNode -> {
       var newNode = graph.unsafeAdd(oldNode.shallowCopy());
       cache.put(oldNode, newNode);
     });
 
     // Now, we have added all the nodes from the old to new graph.
     // However, they are not linked yet because they are shallow copies.
-    graph.nodes.forEach(newNode -> {
+    graph.nodes.stream().filter(Objects::nonNull).forEach(newNode -> {
       // Update the usages
       newNode.usages().forEach(oldUsage -> {
         var newUsage = cache.get(oldUsage);
-        newNode.updateUsage(oldUsage, Objects.requireNonNull(newUsage));
+        if (newUsage != null) {
+          newNode.updateUsage(oldUsage, Objects.requireNonNull(newUsage));
+        }
       });
 
       // Update the inputs

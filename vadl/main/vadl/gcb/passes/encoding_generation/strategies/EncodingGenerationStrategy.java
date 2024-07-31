@@ -1,4 +1,4 @@
-package vadl.gcb.passes.encoding.strategies;
+package vadl.gcb.passes.encoding_generation.strategies;
 
 import vadl.viam.Encoding;
 import vadl.viam.Format;

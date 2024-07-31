@@ -31,7 +31,7 @@ class EncodingCodeGeneratorTest extends AbstractTest {
 
     // Then
     assertEquals("int32_t functionNameValue(uint32_t parameterValue) {\n"
-        + "return (int32_t) parameterValue;\n"
+        + "return ((int32_t) parameterValue);\n"
         + "}", code);
   }
 }

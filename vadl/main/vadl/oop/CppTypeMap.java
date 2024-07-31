@@ -1,6 +1,6 @@
 package vadl.oop;
 
-import org.checkerframework.checker.guieffect.qual.UI;
+import vadl.types.BitsType;
 import vadl.types.BoolType;
 import vadl.types.SIntType;
 import vadl.types.Type;
@@ -41,8 +41,18 @@ public class CppTypeMap {
       return "uint64_t";
     } else if (type instanceof UIntType && ((UIntType) type).bitWidth() == 128) {
       return "uint128_t";
+    } else if (type instanceof BitsType && ((BitsType) type).bitWidth() == 8) {
+      return "uint8_t";
+    } else if (type instanceof BitsType && ((BitsType) type).bitWidth() == 16) {
+      return "uint16_t";
+    } else if (type instanceof BitsType && ((BitsType) type).bitWidth() == 32) {
+      return "uint32_t";
+    } else if (type instanceof BitsType && ((BitsType) type).bitWidth() == 64) {
+      return "uint64_t";
+    } else if (type instanceof BitsType && ((BitsType) type).bitWidth() == 128) {
+      return "uint128_t";
     }
 
-    throw new RuntimeException("not implemented");
+    throw new RuntimeException(String.format("not implemented: type %s", type.toString()));
   }
 }
