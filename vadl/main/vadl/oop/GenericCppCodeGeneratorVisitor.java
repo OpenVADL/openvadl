@@ -110,6 +110,7 @@ public abstract class GenericCppCodeGeneratorVisitor implements GraphNodeVisitor
 
   @Override
   public void visit(SliceNode sliceNode) {
+    sliceNode.ensure(sliceNode.bitSlice().isContinuous(), "We only support continuous slices");
     writer.write("(((");
     visit(sliceNode.value());
     writer.write(")");

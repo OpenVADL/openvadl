@@ -9,7 +9,13 @@ import vadl.viam.Format;
 import vadl.viam.Function;
 import vadl.viam.Instruction;
 import vadl.viam.Specification;
+import vadl.viam.graph.dependency.FieldRefNode;
+import vadl.viam.graph.dependency.FuncParamNode;
 
+/**
+ * Replaces all {@link FieldRefNode} by {@link FuncParamNode} but only in the
+ * {@link Format.FieldAccess#accessFunction()}.
+ */
 public class FieldNodeReplacementPassForDecoding extends FieldNodeReplacementPass {
 
   @Override

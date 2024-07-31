@@ -37,14 +37,17 @@ public abstract class FieldNodeReplacementPass extends Pass {
     return null;
   }
 
+  /**
+   * Given {@link Function} then replace all field references with {@link FuncParamNode}.
+   * This function has side effects on the parameter {@code function}.
+   */
   public static void replaceFieldRefNodes(Function function) {
     var params = new ArrayList<>(List.of(function.parameters()));
 
     var fieldRefs = function.behavior().getNodes(FieldRefNode.class).toList();
 
     for (var fieldRef : fieldRefs) {
-      var param = new Parameter(new Identifier("temp", SourceLocation.INVALID_SOURCE_LOCATION),
-          fieldRef.type());
+      var param = new Parameter(fieldRef.formatField().identifier.append("param"), fieldRef.type());
       fieldRef.replaceAndDelete(new FuncParamNode(param));
       params.add(param);
     }
