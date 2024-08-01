@@ -33,6 +33,11 @@ public class SIntType extends BitsType {
   }
 
   @Override
+  public boolean isSigned() {
+    return true;
+  }
+
+  @Override
   public boolean equals(Object obj) {
     return this.getClass() == obj.getClass()
         && super.equals(obj);

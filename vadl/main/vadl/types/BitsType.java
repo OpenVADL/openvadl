@@ -92,8 +92,9 @@ public class BitsType extends DataType {
 
   @Override
   public boolean isSigned() {
-    // bits type is signed (as auto cast to sint) but unsigned will override it
-    return true;
+    // while it is possible to auto cast bits to SInt, the BitsType is not
+    // signed, as it doesn't make sense for most bits purposes
+    return false;
   }
 
   @Override

@@ -1,12 +1,17 @@
 package vadl.viam;
 
+import static org.hamcrest.MatcherAssert.assertThat;
+import static org.hamcrest.Matchers.contains;
+import static org.hamcrest.Matchers.containsString;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
+import static vadl.viam.helper.TestGraphUtils.bits;
 import static vadl.viam.helper.TestGraphUtils.bool;
 import static vadl.viam.helper.TestGraphUtils.intS;
 import static vadl.viam.helper.TestGraphUtils.intU;
+import static vadl.viam.helper.TestGraphUtils.status;
 
 import java.math.BigInteger;
 import java.util.List;
@@ -145,90 +150,309 @@ public class ConstantTests {
   @ParameterizedTest
   @MethodSource("testAddSources")
   void constantAddition_shouldYieldCorrectValue(Constant.Value a, Constant.Value b, long result,
-                                                boolean isZero, boolean carry,
-                                                boolean overflow, boolean isNegative) {
-    var actual = a.add(b);
-    testResultAndStatus(actual, result, isZero, carry, overflow, isNegative);
+                                                Constant.Tuple.Status status) {
+    var actual = a.add(b, false);
+    testResultAndStatus(actual, result, status);
   }
 
 
   static Stream<Arguments> testAddSources() {
     return Stream.of(
-        Arguments.of(intS(2, 4), intS(3, 4), 5, false, false, false, false),
-        Arguments.of(intS(-2, 4), intS(3, 4), 1, false, true, false, false),
-        Arguments.of(intS(7, 4), intS(1, 4), -8, false, false, true, true),
-        Arguments.of(intS(-7, 4), intS(-2, 4), 7, false, true, true, false),
+        Arguments.of(intS(2, 4), intS(3, 4), 5, status(false, false, false, false)),
+        Arguments.of(intS(-2, 4), intS(3, 4), 1, status(false, false, true, false)),
+        Arguments.of(intS(7, 4), intS(1, 4), -8, status(true, false, false, true)),
+        Arguments.of(intS(-7, 4), intS(-2, 4), 7, status(false, false, true, true)),
 
-        Arguments.of(intU(1, 4), intU(4, 4), 5, false, false, false, false),
-        Arguments.of(intU(7, 4), intU(1, 4), 8, false, false, true, true),
-        Arguments.of(intU(8, 4), intU(8, 4), 0, true, true, true, false),
+        Arguments.of(intU(1, 4), intU(4, 4), 5, status(false, false, false, false)),
+        Arguments.of(intU(7, 4), intU(1, 4), 8, status(true, false, false, true)),
+        Arguments.of(intU(8, 4), intU(8, 4), 0, status(false, true, true, true)),
 
-        Arguments.of(intU(80, 8), intU(80, 8), 160, false, false, true, true),
-        Arguments.of(intS(80, 8), intS(80, 8), -96, false, false, true, true),
-        Arguments.of(intS(80, 8), intS(-48, 8), 32, false, true, false, false),
+        Arguments.of(intU(80, 8), intU(80, 8), 160, status(true, false, false, true)),
+        Arguments.of(intS(80, 8), intS(80, 8), -96, status(true, false, false, true)),
+        Arguments.of(intS(80, 8), intS(-48, 8), 32, status(false, false, true, false)),
 
-        Arguments.of(intS(0b111, 4), intS(0b0001, 4), -8, false, false, true, true),
-        Arguments.of(intU(0b111, 4), intU(0b0001, 4), 0b1000, false, false, true, true),
-        Arguments.of(intU(0b1000, 4), intU(0b1111, 4), 0b111, false, true, true, false),
+        Arguments.of(intS(0b111, 4), intS(0b0001, 4), -8, status(true, false, false, true)),
+        Arguments.of(intU(0b111, 4), intU(0b0001, 4), 0b1000, status(true, false, false, true)),
+        Arguments.of(intU(0b1000, 4), intU(0b1111, 4), 0b111, status(false, false, true, true)),
 
-        Arguments.of(intU(0b1111, 4), intU(0b1111, 4), 0b1110, false, true, false, true)
+        Arguments.of(intU(0b1111, 4), intU(0b1111, 4), 0b1110, status(true, false, true, false))
     );
   }
 
   @ParameterizedTest
-  @MethodSource("testSubSources")
-  void constantSubtraction_shouldYieldCorrectValue(Constant.Value a, Constant.Value b, long result,
-                                                   boolean isZero, boolean carry,
-                                                   boolean overflow, boolean isNegative) {
-    var actual = a.subtract(b);
-    testResultAndStatus(actual, result, isZero, carry, overflow, isNegative);
+  @MethodSource("testAddWithCarrySources")
+  void constantAddition_withCarry_shouldYieldCorrectValue(Constant.Value a, Constant.Value b,
+                                                          long result,
+                                                          Constant.Tuple.Status status) {
+    var actual = a.add(b, true);
+    testResultAndStatus(actual, result, status);
   }
 
-  // TODO: Update as soon as https://ea.complang.tuwien.ac.at/vadl/open-vadl/issues/76 is resolved
-  static Stream<Arguments> testSubSources() {
+
+  static Stream<Arguments> testAddWithCarrySources() {
     return Stream.of(
-        Arguments.of(intS(-2, 4), intS(3, 4), -5, false, false, false, true),
+        Arguments.of(intS(2, 4), intS(3, 4), 6, status(false, false, false, false)),
+        Arguments.of(intS(-2, 4), intS(3, 4), 2, status(false, false, true, false)),
+        Arguments.of(intS(7, 4), intS(1, 4), -7, status(true, false, false, true)),
+        Arguments.of(intS(-7, 4), intS(-2, 4), -8, status(true, false, true, false)),
 
-        Arguments.of(intU(80, 8), intU(176, 8), 160, false, true, true, true),
-        Arguments.of(intS(2, 3), intS(-4, 3), -2, false, true, true, true),
-        Arguments.of(intS(-2, 3), intS(-4, 3), 2, false, false, false, false),
+        Arguments.of(intU(1, 4), intU(4, 4), 6, status(false, false, false, false)),
+        Arguments.of(intU(7, 4), intU(1, 4), 9, status(true, false, false, true)),
+        Arguments.of(intU(8, 4), intU(8, 4), 1, status(false, false, true, true)),
 
-        Arguments.of(intS(0, 4), intS(1, 4), -1, false, true, false, true),
-        Arguments.of(intS(-8, 4), intS(0b0001, 4), 0b111, false, false, true, false),
-        Arguments.of(intU(0b1111, 4), intU(0b0001, 4), 0b1110, false, false, false, true),
+        Arguments.of(intU(80, 8), intU(80, 8), 161, status(true, false, false, true)),
+        Arguments.of(intS(80, 8), intS(80, 8), -95, status(true, false, false, true)),
+        Arguments.of(intS(80, 8), intS(-48, 8), 33, status(false, false, true, false)),
 
-        Arguments.of(intU(0b1000, 4), intU(0b1000, 4), 0b0, true, false, false, false),
+        Arguments.of(intS(0b111, 4), intS(0b0001, 4), -7, status(true, false, false, true)),
+        Arguments.of(intU(0b111, 4), intU(0b0001, 4), 0b1001, status(true, false, false, true)),
+        Arguments.of(intU(0b1000, 4), intU(0b1111, 4), 0b1000, status(true, false, true, false)),
 
-        Arguments.of(intU(0b0000, 4), intU(0b1000, 4), 0b1000, false, true, true, true),
+        Arguments.of(intU(0b1111, 4), intU(0b1111, 4), 0b1111, status(true, false, true, false))
+    );
+  }
+
+  @ParameterizedTest
+  @MethodSource("testSubX86NoCarrySource")
+  void constantSubtraction_withX86ModeAndNoCarry_shouldYieldCorrectValue(Constant.Value a,
+                                                                         Constant.Value b,
+                                                                         long result,
+                                                                         Constant.Tuple.Status status) {
+    var actual = a.subtract(b, Constant.Value.SubMode.X86_LIKE, false);
+    testResultAndStatus(actual, result, status);
+  }
+  
+  static Stream<Arguments> testSubX86NoCarrySource() {
+    return Stream.of(
+
+        // X86 LIKE MODE
+        // NO CARRY SET
+
+        Arguments.of(intS(-2, 4), intS(3, 4), -5, status(true, false, false, false)),
+
+        Arguments.of(intU(80, 8), intU(176, 8), 160, status(true, false, true, true)),
+        Arguments.of(intS(2, 3), intS(-4, 3), -2, status(true, false, true, true)),
+        Arguments.of(bits(0b010, 3), bits(0b100, 3), 0b110, status(true, false, true, true)),
+        Arguments.of(intS(-2, 3), intS(-4, 3), 2, status(false, false, false, false)),
+
+        Arguments.of(intS(0, 4), intS(1, 4), -1, status(true, false, true, false)),
+        Arguments.of(intS(-8, 4), intS(0b0001, 4), 0b111, status(false, false, false, true)),
+        Arguments.of(intU(0b1111, 4), intU(0b0001, 4), 0b1110, status(true, false, false, false)),
+
+        Arguments.of(intU(0b1000, 4), intU(0b1000, 4), 0b0, status(false, true, false, false)),
+
+        Arguments.of(intU(0b0000, 4), intU(0b1000, 4), 0b1000, status(true, false, true, true)),
 
         // Tested on m1 ARM64
         // Every test is done in signed and unsigned form. In both cases the flags must be the same.
-        Arguments.of(intU(0xFFFFFFFFL, 32), intU(0xFFFFFFFFL, 32), 0x0, true, false, false, false),
-        Arguments.of(intS(-0x1, 32), intS(-0x1, 32), 0x0, true, false, false, false),
+        Arguments.of(intU(0xFFFFFFFFL, 32), intU(0xFFFFFFFFL, 32), 0x0,
+            status(false, true, false, false)),
+        Arguments.of(intS(-0x1, 32), intS(-0x1, 32), 0x0, status(false, true, false, false)),
 
-        Arguments.of(intU(0x0, 32), intU(0x1, 32), 0xFFFFFFFF, false, true, false, true),
-        Arguments.of(intS(0x0, 32), intS(0x1, 32), -0x1, false, true, false, true),
+        Arguments.of(intU(0x0, 32), intU(0x1, 32), 0xFFFFFFFFL, status(true, false, true, false)),
+        Arguments.of(intS(0x0, 32), intS(0x1, 32), -0x1, status(true, false, true, false)),
 
-        Arguments.of(intU(0x80000000L, 32), intU(0x1, 32), 0x7FFFFFFF, false, false, true, false),
-        Arguments.of(intS(-2147483648, 32), intS(0x1, 32), 0x7FFFFFFF, false, false, true, false),
+        Arguments.of(intU(0x0, 32), intU(0xFFFFFFFFL, 32), 0x1L,
+            status(false, false, true, false)),
 
-        Arguments.of(intU(0x1, 32), intU(0x80000000L, 32), -2147483647, false, true, true, true)
+        Arguments.of(intU(0x80000000L, 32), intU(0x1, 32), 0x7FFFFFFFL,
+            status(false, false, false, true)),
+        Arguments.of(intS(-2147483648, 32), intS(0x1, 32), 0x7FFFFFFFL,
+            status(false, false, false, true)),
+
+        Arguments.of(intU(0x1, 32), intU(0x80000000L, 32), 0x80000001L,
+            status(true, false, true, true)),
+
+        Arguments.of(intU(0x0, 32), intU(0x0, 32), 0x0L,
+            status(false, true, false, false))
+    );
+  }
+
+  @ParameterizedTest
+  @MethodSource("testSubtraction_X86WithCarry_Source")
+  void constantSubtraction_withX86ModeAndCarrySet_shouldYieldCorrectValue(Constant.Value a,
+                                                                          Constant.Value b,
+                                                                          long result,
+                                                                          Constant.Tuple.Status status) {
+    var actual = a.subtract(b, Constant.Value.SubMode.X86_LIKE, true);
+    testResultAndStatus(actual, result, status);
+  }
+
+  static Stream<Arguments> testSubtraction_X86WithCarry_Source() {
+    return Stream.of(
+
+        // X86 LIKE MODE
+        // WITH CARRY SET
+
+        Arguments.of(intU(0xFFFFFFFFL, 32), intU(0xFFFFFFFFL, 32), 0xFFFFFFFFL,
+            status(true, false, true, false)),
+        Arguments.of(intS(-0x1, 32), intS(-0x1, 32), -0x1, status(true, false, true, false)),
+
+        Arguments.of(intU(0x0, 32), intU(0x1, 32), 0xFFFFFFFEL, status(true, false, true, false)),
+        Arguments.of(intS(0x0, 32), intS(0x1, 32), -2, status(true, false, true, false)),
+
+        Arguments.of(intU(0x80000000L, 32), intU(0x1, 32), 0x7FFFFFFE,
+            status(false, false, false, true)),
+        Arguments.of(intS(-2147483648, 32), intS(0x1, 32), 0x7FFFFFFE,
+            status(false, false, false, true)),
+
+        Arguments.of(intU(0x1, 32), intU(0x80000000L, 32), 0x80000000L,
+            status(true, false, true, true)),
+
+        Arguments.of(intU(0x8, 32), intU(0x3, 32), 0x4L,
+            status(false, false, false, false)),
+
+        Arguments.of(intU(0x0, 32), intU(0x0, 32), 0xFFFFFFFFL,
+            status(true, false, true, false))
+    );
+  }
+
+  @ParameterizedTest
+  @MethodSource("testSubtraction_ArmWithNoCarry_Source")
+  void constantSubtraction_withArmModeAndNoCarrySet_shouldYieldCorrectValue(Constant.Value a,
+                                                                            Constant.Value b,
+                                                                            long result,
+                                                                            Constant.Tuple.Status status) {
+    var actual = a.subtract(b, Constant.Value.SubMode.ARM_LIKE, false);
+    testResultAndStatus(actual, result, status);
+  }
+
+  static Stream<Arguments> testSubtraction_ArmWithNoCarry_Source() {
+    return Stream.of(
+
+        // ARM LIKE MODE
+        // NO CARRY SET
+
+        Arguments.of(intU(0xFFFFFFFFL, 32), intU(0xFFFFFFFFL, 32), 0xFFFFFFFFL,
+            status(true, false, false, false)),
+        Arguments.of(intS(-0x1, 32), intS(-0x1, 32), -0x1, status(true, false, false, false)),
+
+        Arguments.of(intU(0x0, 32), intU(0x1, 32), 0xFFFFFFFEL, status(true, false, false, false)),
+        Arguments.of(intS(0x0, 32), intS(0x1, 32), -2, status(true, false, false, false)),
+
+        Arguments.of(intU(0x80000000L, 32), intU(0x1, 32), 0x7FFFFFFE,
+            status(false, false, true, true)),
+        Arguments.of(intS(-2147483648, 32), intS(0x1, 32), 0x7FFFFFFE,
+            status(false, false, true, true)),
+
+        Arguments.of(intU(0x1, 32), intU(0x80000000L, 32), 0x80000000L,
+            status(true, false, false, true)),
+
+        Arguments.of(intU(0x8, 32), intU(0x3, 32), 0x4L,
+            status(false, false, true, false)),
+
+        Arguments.of(intU(0x0, 32), intU(0x0, 32), 0xFFFFFFFFL,
+            status(true, false, false, false))
+    );
+  }
+
+  @ParameterizedTest
+  @MethodSource("testSubtraction_ArmWithCarry_Source")
+  void constantSubtraction_withArmModeAndCarrySet_shouldYieldCorrectValue(Constant.Value a,
+                                                                          Constant.Value b,
+                                                                          long result,
+                                                                          Constant.Tuple.Status status) {
+    var actual = a.subtract(b, Constant.Value.SubMode.ARM_LIKE, true);
+    testResultAndStatus(actual, result, status);
+  }
+
+  static Stream<Arguments> testSubtraction_ArmWithCarry_Source() {
+    return Stream.of(
+
+        // ARM LIKE MODE
+        // NO CARRY SET
+
+        Arguments.of(intU(0xFFFFFFFFL, 32), intU(0xFFFFFFFFL, 32), 0x0,
+            status(false, true, true, false)),
+        Arguments.of(intS(-0x1, 32), intS(-0x1, 32), 0x0, status(false, true, true, false)),
+
+        Arguments.of(intU(0x0, 32), intU(0x1, 32), 0xFFFFFFFFL, status(true, false, false, false)),
+        Arguments.of(intS(0x0, 32), intS(0x1, 32), -1, status(true, false, false, false)),
+
+        Arguments.of(intU(0x0, 32), intU(0xFFFFFFFFL, 32), 0x1L,
+            status(false, false, false, false)),
+
+        Arguments.of(intU(0x80000000L, 32), intU(0x1, 32), 0x7FFFFFFFL,
+            status(false, false, true, true)),
+        Arguments.of(intS(-2147483648, 32), intS(0x1, 32), 0x7FFFFFFFL,
+            status(false, false, true, true)),
+
+        Arguments.of(intU(0x1, 32), intU(0x80000000L, 32), 0x80000001L,
+            status(true, false, false, true)),
+
+        Arguments.of(intU(0x8, 32), intU(0x3, 32), 0x5L,
+            status(false, false, true, false)),
+
+        Arguments.of(intU(0x0, 32), intU(0x0, 32), 0x0L,
+            status(false, true, true, false))
+    );
+  }
+
+
+  @ParameterizedTest
+  @MethodSource("truncateTestSource")
+  void constantTruncate_shouldYieldCorrectValue(Constant.Value a, DataType type,
+                                                Constant.Value expected) {
+    var actual = a.truncate(type);
+    assertEquals(expected, actual);
+  }
+
+  static Stream<Arguments> truncateTestSource() {
+    return Stream.of(
+        Arguments.of(bits(0b0000, 4), Type.bits(3), bits(0b0, 3)),
+        Arguments.of(bits(0b1000, 4), Type.bits(3), bits(0b0, 3)),
+        Arguments.of(bits(0b1100, 4), Type.bits(3), bits(0b100, 3)),
+
+        Arguments.of(intS(-1, 4), Type.signedInt(3), intS(-1, 3)),
+        Arguments.of(intS(0b111, 4), Type.signedInt(2), intS(-1, 2)),
+
+        Arguments.of(intU(0b1111, 4), Type.unsignedInt(3), intU(0b111, 3))
+    );
+  }
+
+  @ParameterizedTest
+  @MethodSource("truncateFailTestSource")
+  void constantTruncate_shouldFail(Constant.Value a, DataType type, String errorMsg) {
+    var error = assertThrows(ViamError.class, () -> a.truncate(type));
+    assertThat(error.getMessage(), containsString(errorMsg));
+  }
+
+  static Stream<Arguments> truncateFailTestSource() {
+    return Stream.of(
+        Arguments.of(intU(1, 4), Type.bits(3), "Can not truncate to other type"),
+        Arguments.of(intS(1, 4), Type.bits(3), "Can not truncate to other type"),
+        Arguments.of(bits(1, 4), Type.signedInt(3), "Can not truncate to other type"),
+        Arguments.of(bits(1, 4), Type.unsignedInt(3), "Can not truncate to other type"),
+        Arguments.of(intU(1, 4), Type.signedInt(3), "Can not truncate to other type"),
+        Arguments.of(intS(1, 4), Type.unsignedInt(3), "Can not truncate to other type"),
+
+        Arguments.of(intS(1, 4), Type.signedInt(5),
+            "Truncated value's bitwidth must be less or equal"),
+        Arguments.of(bits(1, 4), Type.bits(5), "Truncated value's bitwidth must be less or equal"),
+        Arguments.of(intU(1, 4), Type.unsignedInt(5),
+            "Truncated value's bitwidth must be less or equal")
     );
   }
 
 
   @ParameterizedTest
   @MethodSource("negTestSource")
-  void constantNegation_shouldYieldCorrectValue(Constant.Value a, long result,
-                                                boolean isZero, boolean carry,
-                                                boolean overflow, boolean isNegative) {
+  void constantNegation_shouldYieldCorrectValue(Constant.Value a, long result, DataType type) {
     var actual = a.negate();
-//    testResultAndStatus(actual, result, isZero, carry, overflow, isNegative);
+    assertEquals(result, actual.longValue());
+    assertEquals(type, actual.type());
   }
 
   static Stream<Arguments> negTestSource() {
     return Stream.of(
-//        Arguments.of(intS(-2, 4), intS(3, 4), -5, false, false, false, true)
+        Arguments.of(intU(0b1000, 4), 0b1000, Type.unsignedInt(4)),
+        Arguments.of(bits(0b1000, 4), 0b1000, Type.bits(4)),
+        Arguments.of(bits(0b0000, 4), 0b0000, Type.bits(4)),
+        Arguments.of(bits(0b0001, 4), 0b1111, Type.bits(4)),
+        Arguments.of(bits(0b1111, 4), 0b0001, Type.bits(4)),
+
+        Arguments.of(intS(-8, 4), -8, Type.signedInt(4)),
+        Arguments.of(intS(-1, 4), 1, Type.signedInt(4))
     );
   }
 
@@ -237,12 +461,21 @@ public class ConstantTests {
   void constantAnd_shouldYieldCorrectValue(Constant.Value a, Constant.Value b, long result,
                                            DataType type) {
     var actual = a.and(b);
-//    testResultAndStatus(actual, result, isZero, carry, overflow, isNegative);
+    assertEquals(result, actual.longValue());
+    assertEquals(type, actual.type());
   }
 
   static Stream<Arguments> andTestSource() {
     return Stream.of(
-//        Arguments.of(intS(-2, 4), intS(3, 4), -5, false, false, false, true)
+        Arguments.of(intU(0b0000, 4), intU(0b0000, 4), 0, Type.unsignedInt(4)),
+        Arguments.of(intU(0b1111, 4), intU(0b0000, 4), 0, Type.unsignedInt(4)),
+        Arguments.of(intU(0b0000, 4), intU(0b1111, 4), 0, Type.unsignedInt(4)),
+        Arguments.of(intU(0b1111, 4), intU(0b1111, 4), 0b1111, Type.unsignedInt(4)),
+        Arguments.of(intU(0b1100, 4), intU(0b0101, 4), 0b0100, Type.unsignedInt(4)),
+
+        Arguments.of(bool(false), bool(false), 0, Type.bool()),
+        Arguments.of(bool(false), bool(true), 0, Type.bool()),
+        Arguments.of(bool(true), bool(true), 1, Type.bool())
     );
   }
 
@@ -299,37 +532,39 @@ public class ConstantTests {
 
   static Stream<Arguments> testValueInRanges_Sources() {
     return Stream.of(
-        Arguments.of(0b111, Type.bits(3), -1),
-        Arguments.of(-4, Type.bits(3), -4),
+        Arguments.of(0b111, Type.bits(3), 0b111),
+        Arguments.of(-4, Type.bits(3), 0b100),
         Arguments.of(0b111, Type.unsignedInt(3), 0b111),
         Arguments.of(0b0, Type.unsignedInt(3), 0b0),
         Arguments.of(0b011, Type.signedInt(3), 0b011),
         Arguments.of(1, Type.bool(), 1),
         Arguments.of(0, Type.bool(), 0),
         Arguments.of(1, Type.unsignedInt(1), 1),
-        Arguments.of(-1, Type.signedInt(1), -1)
+        Arguments.of(-1, Type.signedInt(1), -1),
+        Arguments.of(-4, Type.signedInt(4), -4)
     );
   }
 
 
   // Helper functions
 
-  private void testResultAndStatus(Constant.Tuple actual, long result, boolean isZero,
-                                   boolean carry,
-                                   boolean overflow, boolean isNegative) {
+  private void testResultAndStatus(Constant.Tuple actual, long result,
+                                   Constant.Tuple.Status expectedStatus) {
     var res = actual.get(0, Constant.Value.class);
 
-    assertEquals(result, res.integer().intValue(), "Wrong result value");
+    assertEquals(result, res.integer().longValue(), "Wrong result value");
     // test status
-    var status = actual.get(1, Constant.Tuple.class);
-    assertEquals(isZero, status.get(0, Constant.Value.class).integer().equals(BigInteger.ONE),
-        "Wrong zero flag");
-    assertEquals(carry, status.get(1, Constant.Value.class).integer().equals(BigInteger.ONE),
-        "Wrong carry flag");
-    assertEquals(overflow, status.get(2, Constant.Value.class).integer().equals(BigInteger.ONE),
-        "Wrong overflow flag");
-    assertEquals(isNegative, status.get(3, Constant.Value.class).integer().equals(BigInteger.ONE),
+    var status = actual.get(1, Constant.Tuple.Status.class);
+    assertEquals(expectedStatus.negative().bool(),
+        status.negative().integer().equals(BigInteger.ONE),
         "Wrong negative flag");
+    assertEquals(expectedStatus.zero().bool(), status.zero().integer().equals(BigInteger.ONE),
+        "Wrong zero flag");
+    assertEquals(expectedStatus.carry().bool(), status.carry().integer().equals(BigInteger.ONE),
+        "Wrong carry flag");
+    assertEquals(expectedStatus.overflow().bool(),
+        status.overflow().integer().equals(BigInteger.ONE),
+        "Wrong overflow flag");
   }
 
 

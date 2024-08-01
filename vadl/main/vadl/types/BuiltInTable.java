@@ -11,6 +11,7 @@ import java.util.function.Function;
 import java.util.stream.Stream;
 import javax.annotation.Nullable;
 import org.slf4j.Logger;
+import vadl.utils.functionInterfaces.TriFunction;
 import vadl.viam.Constant;
 import vadl.viam.ViamError;
 
@@ -38,7 +39,7 @@ public class BuiltInTable {
    */
   public static final BuiltIn ADD =
       BuiltIn.func("ADD", "+", Type.relation(BitsType.class, BitsType.class, BitsType.class),
-          (Constant.Value a, Constant.Value b) -> a.add(b).get(0, Constant.Value.class)
+          (Constant.Value a, Constant.Value b) -> a.add(b, false).get(0, Constant.Value.class)
       );
 
 
@@ -47,7 +48,7 @@ public class BuiltInTable {
    */
   public static final BuiltIn ADDS =
       BuiltIn.func("ADDS", null, Type.relation(BitsType.class, BitsType.class, TupleType.class),
-          Constant.Value::add
+          (Constant.Value a, Constant.Value b) -> a.add(b, false)
       );
 
 
@@ -55,8 +56,9 @@ public class BuiltInTable {
    * {@code function addc( a : Bits<N>, b : Bits<N>, c : Bool ) -> ( Bits<N>, Status ) }
    */
   public static final BuiltIn ADDC =
-      BuiltIn.func("ADDC",
-          Type.relation(List.of(BitsType.class, BitsType.class, BoolType.class), TupleType.class));
+      BuiltIn.func("ADDC", null,
+          Type.relation(List.of(BitsType.class, BitsType.class, BoolType.class), TupleType.class),
+          (Constant.Value a, Constant.Value b, Constant.Value carry) -> a.add(b, carry.bool()));
 
 
   /**
@@ -105,41 +107,66 @@ public class BuiltInTable {
 
   /**
    * {@code function sub  ( a : Bits<N>, b : Bits<N> ) -> Bits<N> // <=> a - c }
+   *
+   * @see Constant.Value#subtract(Constant.Value, Constant.Value.SubMode, boolean)
    */
   public static final BuiltIn SUB =
       BuiltIn.func("SUB", "-", Type.relation(BitsType.class, BitsType.class, BitsType.class),
-          (Constant.Value a, Constant.Value b) -> a.subtract(b).get(0, Constant.Value.class)
+          (Constant.Value a, Constant.Value b) -> a.subtract(b, Constant.Value.SubMode.X86_LIKE,
+              false).firstValue()
       );
 
 
   /**
    * {@code function subsc( a : Bits<N>, b : Bits<N> ) -> ( Bits<N>, Status ) }
+   *
+   * <p>Subtract without carry (subsc) acts as if the carry bit were set.
+   *
+   * @see Constant.Value#subtract(Constant.Value, Constant.Value.SubMode, boolean)
    */
   public static final BuiltIn SUBSC =
-      BuiltIn.func("SUBSC", Type.relation(BitsType.class, BitsType.class, TupleType.class));
+      BuiltIn.func("SUBSC", null, Type.relation(BitsType.class, BitsType.class, TupleType.class),
+          (Constant.Value a, Constant.Value b) -> a.subtract(b,
+              Constant.Value.SubMode.ARM_LIKE, true));
 
 
   /**
    * {@code function subsb( a : Bits<N>, b : Bits<N> ) -> ( Bits<N>, Status ) }
+   *
+   * <p>Subtract without borrow (subsb) acts as if the borrow bit were clear.</p>
+   *
+   * @see Constant.Value#subtract(Constant.Value, Constant.Value.SubMode, boolean)
    */
   public static final BuiltIn SUBSB =
-      BuiltIn.func("SUBSB", Type.relation(BitsType.class, BitsType.class, TupleType.class));
+      BuiltIn.func("SUBSB", null, Type.relation(BitsType.class, BitsType.class, TupleType.class),
+          (Constant.Value a, Constant.Value b) -> a.subtract(b,
+              Constant.Value.SubMode.X86_LIKE, false));
 
 
   /**
    * {@code function subc ( a : Bits<N>, b : Bits<N>, c : Bool ) -> ( Bits<N>, Status ) }
+   *
+   * @see Constant.Value#subtract(Constant.Value, Constant.Value.SubMode, boolean)
    */
   public static final BuiltIn SUBC =
-      BuiltIn.func("SUBC",
-          Type.relation(List.of(BitsType.class, BitsType.class, BoolType.class), TupleType.class));
+      BuiltIn.func("SUBC", null,
+          Type.relation(List.of(BitsType.class, BitsType.class, BoolType.class), TupleType.class),
+          (Constant.Value a, Constant.Value b, Constant.Value carry) ->
+              a.subtract(b, Constant.Value.SubMode.ARM_LIKE, carry.bool())
+      );
 
 
   /**
    * {@code function subb ( a : Bits<N>, b : Bits<N>, c : Bool ) -> ( Bits<N>, Status ) }
+   *
+   * @see Constant.Value#subtract(Constant.Value, Constant.Value.SubMode, boolean)
    */
   public static final BuiltIn SUBB =
-      BuiltIn.func("SUBB",
-          Type.relation(List.of(BitsType.class, BitsType.class, BoolType.class), TupleType.class));
+      BuiltIn.func("SUBB", null,
+          Type.relation(List.of(BitsType.class, BitsType.class, BoolType.class), TupleType.class),
+          (Constant.Value a, Constant.Value b, Constant.Value carry) ->
+              a.subtract(b, Constant.Value.SubMode.X86_LIKE, carry.bool())
+      );
 
 
   /**
@@ -867,6 +894,14 @@ public class BuiltInTable {
         BiFunction<T, U, R> computeFunction) {
       return func(name, operator, signature,
           (args) -> computeFunction.apply((T) args.get(0), (U) args.get(1)));
+    }
+
+    private static <A extends Constant, B extends Constant, C extends Constant, R extends Constant> BuiltIn func(
+        String name, @Nullable String operator,
+        RelationType signature,
+        TriFunction<A, B, C, R> computeFunction) {
+      return func(name, operator, signature,
+          (args) -> computeFunction.apply((A) args.get(0), (B) args.get(1), (C) args.get(2)));
     }
 
 
