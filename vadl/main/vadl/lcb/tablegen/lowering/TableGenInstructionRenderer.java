@@ -4,6 +4,8 @@ import java.util.BitSet;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 import vadl.lcb.tablegen.model.TableGenInstruction;
+import vadl.lcb.tablegen.model.TableGenInstructionOperand;
+import vadl.viam.Definition;
 
 /**
  * Utility class for mapping into tablegen.
@@ -14,12 +16,12 @@ public final class TableGenInstructionRenderer {
    */
   public static String lower(TableGenInstruction instruction) {
     return String.format("""
-            def ADD : Instruction
+            def %s : Instruction
             {
                  let Namespace = "%s";
              
-                 let Size = %d; // Bits<32>
-                 let CodeSize = %d; // Bits<32>, used for ISEL cost
+                 let Size = %d;
+                 let CodeSize = %d;
              
                  let OutOperandList = ( outs %s );
                  let InOperandList = ( ins %s );
@@ -50,15 +52,16 @@ public final class TableGenInstructionRenderer {
              
                  let Pattern = [];
              
-                 let Uses = [ ];
-                 let Defs = [ ];
+                 let Uses = [ %s ];
+                 let Defs = [ %s ];
             }
             """,
+        instruction.getName(),
         instruction.getNamespace(),
         instruction.getSize(),
         instruction.getCodeSize(),
-        "out",
-        "in",
+        instruction.getOutOperands().stream().map(TableGenInstructionRenderer::lower),
+        instruction.getInOperands().stream().map(TableGenInstructionRenderer::lower),
         instruction.getBitBlocks().stream().map(TableGenInstructionRenderer::lower)
             .collect(Collectors.joining("\n")),
         instruction.getFieldEncodings().stream().map(TableGenInstructionRenderer::lower)
@@ -70,8 +73,16 @@ public final class TableGenInstructionRenderer {
         toInt(instruction.getFlags().isPseudo()),
         toInt(instruction.getFlags().isCodeGenOnly()),
         toInt(instruction.getFlags().mayLoad()),
-        toInt(instruction.getFlags().mayStore())
+        toInt(instruction.getFlags().mayStore()),
+        instruction.getUses().stream().map(Definition::name).collect(Collectors.joining(",")),
+        instruction.getDefs().stream().map(Definition::name).collect(Collectors.joining(","))
     );
+  }
+
+  private static String lower(TableGenInstructionOperand operand) {
+    return String.format("""
+        %s:$%s
+        """, operand.type(), operand.name());
   }
 
   private static String lower(TableGenInstruction.BitBlock bitBlock) {

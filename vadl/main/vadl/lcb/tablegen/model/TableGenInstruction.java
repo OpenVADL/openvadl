@@ -14,8 +14,11 @@ import vadl.viam.Register;
  * Models an {@link Instruction} for TableGen.
  */
 public class TableGenInstruction extends TableGenRecord {
+  private final String name;
   private final String namespace;
   private final List<String> pattern;
+  private final List<TableGenInstructionOperand> inOperands;
+  private final List<TableGenInstructionOperand> outOperands;
   private final List<Register> uses;
   private final List<Register> defs;
   private final int size;
@@ -24,26 +27,36 @@ public class TableGenInstruction extends TableGenRecord {
   private final List<BitBlock> bitBlocks;
   private final List<FieldEncoding> fieldEncodings;
 
-  public TableGenInstruction(String namespace,
+  public TableGenInstruction(String name,
+                             String namespace,
                              Instruction instruction,
                              Flags flags,
+                             List<TableGenInstructionOperand> inOperands,
+                             List<TableGenInstructionOperand> outOperands,
                              List<Register> uses,
                              List<Register> defs) {
-    this(namespace, instruction, flags, uses, defs, Collections.emptyList());
+    this(name, namespace, instruction, flags, inOperands, outOperands, uses, defs,
+        Collections.emptyList());
   }
 
-  public TableGenInstruction(String namespace,
+  public TableGenInstruction(String name,
+                             String namespace,
                              Instruction instruction,
                              Flags flags,
+                             List<TableGenInstructionOperand> inOperands,
+                             List<TableGenInstructionOperand> outOperands,
                              List<Register> uses,
                              List<Register> defs,
                              List<String> pattern) {
+    this.name = name;
     this.namespace = namespace;
     this.size = instruction.encoding().format().type().bitWidth() / 8;
     this.codeSize = instruction.encoding().format().type().bitWidth() / 8;
     this.bitBlocks = BitBlock.from(instruction.encoding());
     this.fieldEncodings = FieldEncoding.from(instruction.encoding());
     this.flags = flags;
+    this.inOperands = inOperands;
+    this.outOperands = outOperands;
     this.uses = uses;
     this.defs = defs;
     this.pattern = pattern;
@@ -83,6 +96,18 @@ public class TableGenInstruction extends TableGenRecord {
 
   public List<FieldEncoding> getFieldEncodings() {
     return fieldEncodings;
+  }
+
+  public List<TableGenInstructionOperand> getInOperands() {
+    return inOperands;
+  }
+
+  public List<TableGenInstructionOperand> getOutOperands() {
+    return outOperands;
+  }
+
+  public String getName() {
+    return name;
   }
 
   /**
