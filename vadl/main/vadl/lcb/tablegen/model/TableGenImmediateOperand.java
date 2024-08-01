@@ -8,4 +8,5 @@ package vadl.lcb.tablegen.model;
  * }
  */
 public class TableGenImmediateOperand {
+
 }

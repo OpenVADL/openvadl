@@ -73,6 +73,18 @@ public class TableGenInstruction extends TableGenRecord {
     return codeSize;
   }
 
+  public Flags getFlags() {
+    return flags;
+  }
+
+  public List<BitBlock> getBitBlocks() {
+    return bitBlocks;
+  }
+
+  public List<FieldEncoding> getFieldEncodings() {
+    return fieldEncodings;
+  }
+
   /**
    * A {@link TableGenInstruction} has many boolean flags which are required for the
    * code generation.
@@ -92,7 +104,7 @@ public class TableGenInstruction extends TableGenRecord {
    * A machine instruction has certain encoding parts which are fixed like the opcode.
    * A {@link BitBlock} represents constant bits in an instruction.
    */
-  static class BitBlock {
+  public static class BitBlock {
     private final int size;
     private final String name;
     private final Optional<BitSet> bitSet;
@@ -112,12 +124,24 @@ public class TableGenInstruction extends TableGenRecord {
 
       return Stream.concat(encodedFields, nonEncodedFields).toList();
     }
+
+    public int getSize() {
+      return size;
+    }
+
+    public String getName() {
+      return name;
+    }
+
+    public Optional<BitSet> getBitSet() {
+      return bitSet;
+    }
   }
 
   /**
    * It defines the mapping from a {@link BitBlock} to a {@link TableGenInstruction}.
    */
-  static class FieldEncoding {
+  public static class FieldEncoding {
     private final int targetHigh;
     private final int targetLow;
     private final String sourceBitBlockName;
@@ -139,6 +163,26 @@ public class TableGenInstruction extends TableGenRecord {
         return new FieldEncoding(field.bitSlice().msb(), field.bitSlice().lsb(), field.name(),
             field.size(), 0);
       }).toList();
+    }
+
+    public int getTargetHigh() {
+      return targetHigh;
+    }
+
+    public int getTargetLow() {
+      return targetLow;
+    }
+
+    public String getSourceBitBlockName() {
+      return sourceBitBlockName;
+    }
+
+    public int getSourceHigh() {
+      return sourceHigh;
+    }
+
+    public int getSourceLow() {
+      return sourceLow;
     }
   }
 }

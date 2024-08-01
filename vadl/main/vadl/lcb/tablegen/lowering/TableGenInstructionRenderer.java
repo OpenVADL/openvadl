@@ -1,5 +1,8 @@
 package vadl.lcb.tablegen.lowering;
 
+import java.util.BitSet;
+import java.util.stream.Collectors;
+import java.util.stream.IntStream;
 import vadl.lcb.tablegen.model.TableGenInstruction;
 
 /**
@@ -29,19 +32,9 @@ public final class TableGenInstructionRenderer {
                  // to build the decode table.
                  field bits<32> SoftFail = 0;
                 \s
-                 bits<3> funct3 = 0b000;
-                 bits<7> funct7 = 0b0000000;
-                 bits<7> opcode = 0b0110011;
-                 bits<5> rs2;
-                 bits<5> rs1;
-                 bits<5> rd;
+                 %s
              
-                 let Inst{14-12} = funct3{2-0};
-                 let Inst{31-25} = funct7{6-0};
-                 let Inst{6-0} = opcode{6-0};
-                 let Inst{24-20} = rs2{4-0};
-                 let Inst{19-15} = rs1{4-0};
-                 let Inst{11-7} = rd{4-0};
+                 %s
              
                  let isTerminator  = %d;
                  let isBranch      = %d;
@@ -66,15 +59,51 @@ public final class TableGenInstructionRenderer {
         instruction.getCodeSize(),
         "out",
         "in",
-        toInt(instruction.isTerminator()),
-        toInt(instruction.isBranch()),
-        toInt(instruction.isCall()),
-        toInt(instruction.isReturn()),
-        toInt(instruction.isPseudo()),
-        toInt(instruction.isCodeGenOnly()),
-        toInt(instruction.isMayLoad()),
-        toInt(instruction.isMayStore())
+        instruction.getBitBlocks().stream().map(TableGenInstructionRenderer::lower)
+            .collect(Collectors.joining("\n")),
+        instruction.getFieldEncodings().stream().map(TableGenInstructionRenderer::lower)
+            .collect(Collectors.joining("\n")),
+        toInt(instruction.getFlags().isTerminator()),
+        toInt(instruction.getFlags().isBranch()),
+        toInt(instruction.getFlags().isCall()),
+        toInt(instruction.getFlags().isReturn()),
+        toInt(instruction.getFlags().isPseudo()),
+        toInt(instruction.getFlags().isCodeGenOnly()),
+        toInt(instruction.getFlags().mayLoad()),
+        toInt(instruction.getFlags().mayStore())
     );
+  }
+
+  private static String lower(TableGenInstruction.BitBlock bitBlock) {
+    if (bitBlock.getBitSet().isPresent()) {
+      return String.format("bits<%s> %s = 0b%s", bitBlock.getSize(), bitBlock.getName(),
+          toBinaryString(bitBlock.getBitSet().get()));
+    } else {
+      return String.format("bits<%s> %s;", bitBlock.getSize(), bitBlock.getName());
+    }
+  }
+
+  private static String lower(TableGenInstruction.FieldEncoding fieldEncoding) {
+    return String.format("""
+            let Inst{%s-%s} = %s{%s-%s};
+            """, fieldEncoding.getTargetHigh(),
+        fieldEncoding.getTargetLow(),
+        fieldEncoding.getSourceBitBlockName(),
+        fieldEncoding.getSourceHigh(),
+        fieldEncoding.getSourceLow());
+  }
+
+  /**
+   * @param bitSet bitset
+   * @return "01010000" binary string
+   */
+  private static String toBinaryString(BitSet bitSet) {
+    if (bitSet == null) {
+      return null;
+    }
+    return IntStream.range(0, bitSet.length())
+        .mapToObj(b -> String.valueOf(bitSet.get(b) ? 1 : 0))
+        .collect(Collectors.joining());
   }
 
   private static int toInt(boolean b) {
