@@ -267,8 +267,8 @@ public class AstDumper
   public Void visit(SymbolExpr expr) {
     dumpNode(expr);
     dumpChildren(expr.target);
-    if (expr.address != null) {
-      dumpChildren(expr.address);
+    if (expr.size != null) {
+      dumpChildren(expr.size);
     }
     return null;
   }

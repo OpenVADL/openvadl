@@ -115,7 +115,7 @@ class Ungrouper implements ExprVisitor<Expr> {
 
   @Override
   public Expr visit(SymbolExpr expr) {
-    expr.address = expr.address == null ? null : expr.address.accept(this);
+    expr.size = expr.size == null ? null : expr.size.accept(this);
     return expr;
   }
 }

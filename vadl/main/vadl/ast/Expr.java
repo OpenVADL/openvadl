@@ -1108,12 +1108,12 @@ class CastExpr extends Expr {
  */
 class SymbolExpr extends Expr {
   Identifier target;
-  @Nullable Expr address;
+  @Nullable Expr size;
   SourceLocation location;
 
-  SymbolExpr(Identifier target, @Nullable Expr address, SourceLocation location) {
+  SymbolExpr(Identifier target, @Nullable Expr size, SourceLocation location) {
     this.target = target;
-    this.address = address;
+    this.size = size;
     this.location = location;
   }
 
@@ -1130,9 +1130,9 @@ class SymbolExpr extends Expr {
   @Override
   void prettyPrint(int indent, StringBuilder builder) {
     target.prettyPrint(indent, builder);
-    if (address != null) {
+    if (size != null) {
       builder.append("< ");
-      address.prettyPrint(indent, builder);
+      size.prettyPrint(indent, builder);
       builder.append(" >");
     }
   }
@@ -1157,13 +1157,13 @@ class SymbolExpr extends Expr {
     }
 
     SymbolExpr that = (SymbolExpr) o;
-    return target.equals(that.target) && Objects.equals(address, that.address);
+    return target.equals(that.target) && Objects.equals(size, that.size);
   }
 
   @Override
   public int hashCode() {
     int result = target.hashCode();
-    result = 31 * result + Objects.hashCode(address);
+    result = 31 * result + Objects.hashCode(size);
     return result;
   }
 }
