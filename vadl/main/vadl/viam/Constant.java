@@ -270,11 +270,12 @@ public abstract class Constant {
      * acts as if the borrow bit were clear. The 8080, 6800, Z80, 8051, x86 and 68k families of
      * instruction set architectures use a borrow bit.
      *
-     * <p>The second uses the identity that -x = not(x)+1 directly (i.e. without storing the carry bit
-     * inverted) and computes a-b as a+not(b)+1. The carry flag is set according to this addition,
+     * <p>The second uses the identity that -x = not(x)+1 directly (i.e. without storing the carry
+     * bit inverted) and computes a-b as a+not(b)+1.
+     * The carry flag is set according to this addition,
      * and subtract with carry (subc) computes a+not(b)+C, while subtract without carry (subsc)
      * acts as if the carry bit were set. The result is that the carry bit is set if a>=b, and
-     * clear if a<b. The System/360, 6502, MSP430, COP8, ARM and PowerPC instruction set
+     * clear if a < b. The System/360, 6502, MSP430, COP8, ARM and PowerPC instruction set
      * architectures use this convention. The 6502 is a particularly well-known example because it
      * does not have a subtract without carry operation, so programmers must ensure that the carry
      * flag is set before every subtract operation where a borrow is not required.</p>
@@ -333,6 +334,14 @@ public abstract class Constant {
           .firstValue();
     }
 
+    /**
+     * Enumeration of available subtraction modes.
+     *
+     * <p>The X86 like mode is also called <i>subtract with borrow</i>, while the
+     * ARM like mode is also called <i>subtract with carry</i>. </p>
+     *
+     * @see #subtract(Value, SubMode, boolean)
+     */
     public enum SubMode {
       X86_LIKE,
       ARM_LIKE
@@ -376,12 +385,20 @@ public abstract class Constant {
           .subtract(this);
     }
 
+    /**
+     * Performs a bitwise AND. Both operands must have the same width.
+     */
     public Constant.Value and(Constant.Value other) {
       ensureSameWidth(other);
       var andResult = this.value.and(other.value);
       return Constant.Value.fromTwosComplement(andResult, type());
     }
 
+    /**
+     * Truncates this value to the width of the newType argument.
+     * The newType must have the same type class as this type and its with must be
+     * less or equal to this constant's width.
+     */
     public Constant.Value truncate(DataType newType) {
       ensure(type().getClass().equals(newType.getClass()),
           "Can not truncate to other type of class: %s.", newType);
@@ -888,6 +905,9 @@ public abstract class Constant {
       return (T) val;
     }
 
+    /**
+     * Retrieves the first constant value in the tuple.
+     */
     public Constant.Value firstValue() {
       var val = values.stream().filter(e -> e instanceof Value).findFirst();
       ensure(val.isPresent(), "No constant value found in tuple");
@@ -926,8 +946,14 @@ public abstract class Constant {
       return result;
     }
 
+    /**
+     * The constant of a status tuple containing the NZCV values (negative, zero, carry, overflow).
+     */
     public static class Status extends Tuple {
 
+      /**
+       * Constructs a status constant by Java boolean value.
+       */
       public Status(boolean negative, boolean zero, boolean carry, boolean overflow) {
         super(
             List.of(Constant.Value.of(negative), Constant.Value.of(zero), Constant.Value.of(carry),
@@ -936,6 +962,10 @@ public abstract class Constant {
         );
       }
 
+      /**
+       * Constructs a status constant by value constants.
+       * All constants must have the type boolean.
+       */
       public Status(Constant.Value negative, Constant.Value zero, Constant.Value carry,
                     Constant.Value overflow
       ) {

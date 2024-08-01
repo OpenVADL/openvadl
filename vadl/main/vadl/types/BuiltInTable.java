@@ -56,7 +56,7 @@ public class BuiltInTable {
    * {@code function addc( a : Bits<N>, b : Bits<N>, c : Bool ) -> ( Bits<N>, Status ) }
    */
   public static final BuiltIn ADDC =
-      BuiltIn.func("ADDC", null,
+      BuiltIn.func("ADDC",
           Type.relation(List.of(BitsType.class, BitsType.class, BoolType.class), TupleType.class),
           (Constant.Value a, Constant.Value b, Constant.Value carry) -> a.add(b, carry.bool()));
 
@@ -149,7 +149,7 @@ public class BuiltInTable {
    * @see Constant.Value#subtract(Constant.Value, Constant.Value.SubMode, boolean)
    */
   public static final BuiltIn SUBC =
-      BuiltIn.func("SUBC", null,
+      BuiltIn.func("SUBC",
           Type.relation(List.of(BitsType.class, BitsType.class, BoolType.class), TupleType.class),
           (Constant.Value a, Constant.Value b, Constant.Value carry) ->
               a.subtract(b, Constant.Value.SubMode.ARM_LIKE, carry.bool())
@@ -162,7 +162,7 @@ public class BuiltInTable {
    * @see Constant.Value#subtract(Constant.Value, Constant.Value.SubMode, boolean)
    */
   public static final BuiltIn SUBB =
-      BuiltIn.func("SUBB", null,
+      BuiltIn.func("SUBB",
           Type.relation(List.of(BitsType.class, BitsType.class, BoolType.class), TupleType.class),
           (Constant.Value a, Constant.Value b, Constant.Value carry) ->
               a.subtract(b, Constant.Value.SubMode.X86_LIKE, carry.bool())
@@ -896,11 +896,12 @@ public class BuiltInTable {
           (args) -> computeFunction.apply((T) args.get(0), (U) args.get(1)));
     }
 
+    @SuppressWarnings("LineLength")
     private static <A extends Constant, B extends Constant, C extends Constant, R extends Constant> BuiltIn func(
-        String name, @Nullable String operator,
+        String name,
         RelationType signature,
         TriFunction<A, B, C, R> computeFunction) {
-      return func(name, operator, signature,
+      return func(name, null, signature,
           (args) -> computeFunction.apply((A) args.get(0), (B) args.get(1), (C) args.get(2)));
     }
 
