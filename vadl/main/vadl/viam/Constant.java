@@ -958,7 +958,7 @@ public abstract class Constant {
         super(
             List.of(Constant.Value.of(negative), Constant.Value.of(zero), Constant.Value.of(carry),
                 Constant.Value.of(overflow)
-            ), Type.status().asTuple()
+            ), Type.status()
         );
       }
 
