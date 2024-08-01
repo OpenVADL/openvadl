@@ -233,7 +233,12 @@ public class AstDumper
   public Void visit(CallExpr expr) {
     dumpNode(expr);
     dumpChildren(expr.target);
-    dumpChildren(expr.arguments);
+    indent++;
+    for (List<Expr> invocation : expr.invocations) {
+      builder.append(indentString()).append("INVOCATION\n");
+      dumpChildren(invocation);
+    }
+    indent--;
     return null;
   }
 

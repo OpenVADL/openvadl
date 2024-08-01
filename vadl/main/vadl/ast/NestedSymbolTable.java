@@ -96,7 +96,8 @@ class NestedSymbolTable implements DefinitionVisitor<Void> {
 
   @Override
   public Void visit(RegisterFileDefinition definition) {
-    defineSymbol(definition.identifier.name, SymbolType.REGISTER_FILE, definition.location());
+    defineSymbol(new ValuedSymbol(definition.identifier.name, definition, SymbolType.REGISTER_FILE),
+        definition.location());
     return null;
   }
 

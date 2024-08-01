@@ -56,16 +56,19 @@ InstructionSetDefinition
 . : ' | CallExpr
 . : ' | . SymbolExpr
 . : ' | . : Identifier name: "X"
-. : ' | . IdentifierChain
-. : ' | . : Identifier name: "rd"
+. : ' | . INVOCATION
+. : ' | . : IdentifierChain
+. : ' | . : ' Identifier name: "rd"
 . : ' | Value:. : ' | BinaryExpr operator: +
 . : ' | . CallExpr
 . : ' | . : SymbolExpr
 . : ' | . : ' Identifier name: "X"
-. : ' | . : IdentifierChain
-. : ' | . : ' Identifier name: "rs1"
+. : ' | . : INVOCATION
+. : ' | . : ' IdentifierChain
+. : ' | . : ' | Identifier name: "rs1"
 . : ' | . CallExpr
 . : ' | . : SymbolExpr
 . : ' | . : ' Identifier name: "X"
-. : ' | . : IdentifierChain
-. : ' | . : ' Identifier name: "rs2"
+. : ' | . : INVOCATION
+. : ' | . : ' IdentifierChain
+. : ' | . : ' | Identifier name: "rs2"

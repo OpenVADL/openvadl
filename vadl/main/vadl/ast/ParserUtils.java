@@ -9,12 +9,15 @@ import vadl.utils.SourceLocation;
 class ParserUtils {
 
   private static final Ungrouper UNGROUPER = new Ungrouper();
+  static boolean[] NO_OPS;
   static boolean[] BIN_OPS;
   static boolean[] BIN_OPS_EXCEPT_GT;
   static boolean[] BIN_OPS_EXCEPT_IN;
 
   static {
-    BIN_OPS = new boolean[Parser.maxT + 1];
+    NO_OPS = new boolean[Parser.maxT + 1];
+
+    BIN_OPS = NO_OPS.clone();
     BIN_OPS[Parser._SYM_LOGOR] = true;
     BIN_OPS[Parser._SYM_LOGAND] = true;
     BIN_OPS[Parser._SYM_BINOR] = true;
@@ -64,7 +67,8 @@ class ParserUtils {
    * @see Ungrouper#ungroup(Expr)
    */
   static Expr ungroup(Parser parser, Expr expr) {
-    if (parser.insideMacro) {
+    // Expr should never be null, but it can happen if a parser error occurs.
+    if (parser.insideMacro || expr == null) {
       return expr;
     }
     return UNGROUPER.ungroup(expr);

@@ -843,12 +843,12 @@ class IdentifierChain extends Expr {
 
 class CallExpr extends Expr {
   SymbolExpr target;
-  List<Expr> arguments;
+  List<List<Expr>> invocations;
   SourceLocation location;
 
-  public CallExpr(SymbolExpr target, List<Expr> arguments, SourceLocation location) {
+  public CallExpr(SymbolExpr target, List<List<Expr>> invocations, SourceLocation location) {
     this.target = target;
-    this.arguments = arguments;
+    this.invocations = invocations;
     this.location = location;
   }
 
@@ -866,13 +866,15 @@ class CallExpr extends Expr {
   void prettyPrint(int indent, StringBuilder builder) {
     target.prettyPrint(indent, builder);
     builder.append("(");
-    boolean first = true;
-    for (var arg : arguments) {
-      if (!first) {
-        builder.append(", ");
+    for (var invocation : invocations) {
+      boolean first = true;
+      for (var arg : invocation) {
+        if (!first) {
+          builder.append(", ");
+        }
+        arg.prettyPrint(indent, builder);
+        first = false;
       }
-      arg.prettyPrint(indent, builder);
-      first = false;
     }
     builder.append(")");
   }
@@ -897,13 +899,13 @@ class CallExpr extends Expr {
     }
 
     CallExpr that = (CallExpr) o;
-    return target.equals(that.target) && arguments.equals(that.arguments);
+    return target.equals(that.target) && invocations.equals(that.invocations);
   }
 
   @Override
   public int hashCode() {
     int result = target.hashCode();
-    result = 31 * result + Objects.hashCode(arguments);
+    result = 31 * result + Objects.hashCode(invocations);
     return result;
   }
 }
@@ -1163,5 +1165,60 @@ class SymbolExpr extends Expr {
     int result = target.hashCode();
     result = 31 * result + Objects.hashCode(address);
     return result;
+  }
+}
+
+/**
+ * Represents a vector size, like the <code>9</code> in <code>MEM<9></code>.
+ * Only exists as a marker for the Parser - should be eliminated before any AST transformation.
+ */
+class SizeExpr extends Expr {
+  Expr size;
+
+  public SizeExpr(Expr size) {
+    this.size = size;
+  }
+
+  @Override
+  SourceLocation location() {
+    return size.location();
+  }
+
+  @Override
+  SyntaxType syntaxType() {
+    return BasicSyntaxType.Ex();
+  }
+
+  @Override
+  void prettyPrint(int indent, StringBuilder builder) {
+    size.prettyPrint(indent, builder);
+  }
+
+  @Override
+  <R> R accept(ExprVisitor<R> visitor) {
+    throw new IllegalStateException("Should have been removed in parsing");
+  }
+
+  @Override
+  public String toString() {
+    return this.getClass().getSimpleName();
+  }
+
+  @Override
+  public boolean equals(Object o) {
+    if (this == o) {
+      return true;
+    }
+    if (o == null || getClass() != o.getClass()) {
+      return false;
+    }
+
+    SizeExpr that = (SizeExpr) o;
+    return size.equals(that.size);
+  }
+
+  @Override
+  public int hashCode() {
+    return size.hashCode();
   }
 }

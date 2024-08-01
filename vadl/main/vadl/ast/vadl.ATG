@@ -312,11 +312,10 @@ PRODUCTIONS
   .
 
   assignment<out Statement statement>            (. Expr target = null; .)
-  = (
-      IF (scanner.Peek().kind != _SYM_PAREN_OPEN)
-      identifierChain<out target>
-    | simpleCallExpression<out target>
-    )
+  = identifierChain<out IdentifierChain chain>   (. target = chain; .)
+    [
+      callOrBinaryExpression<out target, chain, NO_OPS>
+    ]
     SYM_ASSIGN
     expression<out Expr expr, BIN_OPS>                    (. statement = new AssignmentStatement(target, expr); .)
   .
@@ -343,32 +342,70 @@ PRODUCTIONS
   = termWithOptionalCast<out expr>
   (
     [
-      IF (expr instanceof IdentifierChain chain && chain.next == null && la.kind == _SYM_LT)
-      potentialDirectCall<out expr, chain, allowedOps>
+      IF (expr instanceof IdentifierChain chain && chain.next == null &&
+        (la.kind == _SYM_LT  || la.kind == _SYM_PAREN_OPEN))
+      callOrBinaryExpression<out expr, chain, allowedOps>
     ]
     binaryTerms<out expr, expr, allowedOps>
   )                                                (. expr = ungroup(this, reorderBinary(this, expr)); .)
   .
 
-  /// Helper rule to distinguish between "MEM<9>" and "a < 9 && b > 2".
+  /// Helper rule to figure out if a valid identifier path like "a::b" is a call like "a::b(c)",
+  /// optionally with a vector size like "a::b<9>(c)" or named parameters like "a::b{c=d}".
+  callOrBinaryExpression<out Expr expr, IdentifierChain target, boolean[] allowedOps> (. expr = null; var id = target.identifier; .)
+  = (
+      vectorSizeOrBinaryExpression<out expr, target, allowedOps> (. if (expr instanceof SizeExpr sizeExpr) {
+                                                                      var symEx = new SymbolExpr(id, sizeExpr.size, target.location().join(loc()));
+                                                                      expr = symEx;
+                                                                      if (la.kind == _SYM_PAREN_OPEN) {
+                                                                        expr = new CallExpr(symEx, new ArrayList<>(), expr.location());
+                                                                      }
+                                                                    }
+                                                                 .)
+
+      {
+        // Check if we received a vector size -> collect arguments
+        // Otherwise, just return the collected binary expression
+        // TODO Also collect pseudo-instruction arguments in {...}
+        IF (la.kind == _SYM_PAREN_OPEN && (expr instanceof CallExpr callExpr))
+        arguments<.out List<Expr> args, allowedOps.>     (. callExpr.invocations.add(args); callExpr.location = callExpr.location.join(loc()); .)
+      }
+    ) | (
+      arguments<.out List<Expr> args, allowedOps.>       (. var callExpr = new CallExpr(new SymbolExpr(id, null, id.location()), new ArrayList<>(), id.location().join(loc()));
+                                                            callExpr.invocations.add(args);
+                                                            expr = callExpr; .)
+      {
+        // TODO Also collect pseudo-instruction arguments in {...}
+        IF (la.kind == _SYM_PAREN_OPEN)
+        arguments<.out List<Expr> nextArgs, allowedOps.> (. callExpr.invocations.add(nextArgs); callExpr.location = callExpr.location.join(loc()); .)
+      }
+    )
+  .
+
+  /// Represents one set of invocation arguments.
+  /// Multiple invocations (e.g. multi-dimensional access) will need multiple #arguments
+  arguments<.out List<Expr> args, boolean[] allowedOps.>
+  = SYM_PAREN_OPEN                                 (. args = new ArrayList<>(); .)
+    expression<out Expr arg, allowedOps>           (. args.add(arg); .)
+    {
+        SYM_COMMA
+        expression<out Expr nextArg, allowedOps>   (. args.add(arg); .)
+    }
+    SYM_PAREN_CLOSE
+  .
+
+  /// Helper rule to distinguish between the size of a type like "Type<width>"
+  /// and the binary expression < like "a < 9 && b > 2".
   /// If a different operator is found between < and >, or no > is found at all,
   /// the leading < is interpreted as the binary operator and a BinaryExpr returned.
-  // TODO Target can be of shape "a::b", not just "a.b"
-  potentialDirectCall<out Expr expr, IdentifierChain target, boolean[] allowedOps>
-  = SYM_LT                                         (. expr = null; .)
+  /// Otherwise, a vector size is returned wrapped in a SizeExpr.
+  /// If this rule is used in a place where no binary expression is valid, use NO_OPS as allowedOps.
+  vectorSizeOrBinaryExpression<out Expr expr, Expr target, boolean[] allowedOps>
+  = SYM_LT                              (. expr = null; .)
     termWithOptionalCast<out Expr term>
     (
       IF (la.kind == _SYM_GT)
-      SYM_GT                                       (. var symEx = new SymbolExpr(target.identifier, term, target.location().join(loc())); expr = symEx; .)
-      [
-        SYM_PAREN_OPEN                             (. var arguments = new ArrayList<Expr>(); .)
-        expression<out Expr arg, allowedOps>       (. arguments.add(arg); .)
-        {
-          SYM_COMMA
-          expression<out Expr nextArg, allowedOps> (. arguments.add(nextArg); .)
-        }
-        SYM_PAREN_CLOSE                            (. expr = new CallExpr(symEx, arguments, symEx.location().join(loc())); .)
-      ]
+      SYM_GT                            (. expr = new SizeExpr(term); .)
     | binaryTerms<out expr, new BinaryExpr(target, Operator.Less(), term), allowedOps>
     )
   .
@@ -377,7 +414,7 @@ PRODUCTIONS
   = {
     IF (allowedOps[la.kind])
     binaryOperator<out Operator op>
-    termWithOptionalCast<out Expr right> (. expr = new BinaryExpr(expr, op, right); .)
+    expression<out Expr right, NO_OPS> (. expr = new BinaryExpr(expr, op, right); .)
   }
   .
 
@@ -429,9 +466,7 @@ PRODUCTIONS
 
   term<out Expr expr>                                               (. expr = null; .)
   = number                                                          (. expr = new IntegerLiteral(t.val, loc()); .)
-  | IF (la.kind == _identifierToken && scanner.Peek().kind != _SYM_PAREN_OPEN)
-    identifierChain<out IdentifierChain chain>                      (. expr = chain; if (!insideMacro && !insideAnnotation) symbolTable.requireValue(chain); .)
-  | simpleCallExpression<out expr>
+  | identifierChain<out IdentifierChain chain>                      (. expr = chain; if (!insideMacro && !insideAnnotation) symbolTable.requireValue(chain); .)
   | SYM_PAREN_OPEN expression<out expr, BIN_OPS> SYM_PAREN_CLOSE    (. expr = new GroupExpr(expr); .)
   | unary<out expr>
   | ifExpression<out expr>
@@ -442,14 +477,6 @@ PRODUCTIONS
   identifierChain<out IdentifierChain chain> (. IdentifierChain next = null; .)
   = identifier<out Identifier id>
     [ SYM_DOT identifierChain<out next> ]    (. chain = new IdentifierChain(id, next); .)
-  .
-
-  // TODO Unify with more complex call expression above, maybe move out of "term"s
-  simpleCallExpression<out CallExpr call>
-  = identifier<out Identifier id>
-    SYM_PAREN_OPEN
-    expression<out Expr argument, BIN_OPS>        (. call = new CallExpr(new SymbolExpr(id, null, id.location()), List.of(argument), id.location().join(loc())); .)
-    SYM_PAREN_CLOSE
   .
 
   rangeExpression<out RangeExpr expr>
@@ -485,9 +512,9 @@ PRODUCTIONS
       [
         // In an expression like `b as Int < 9`, it would be ambiguous whether the < is part of the type --> YES
         IF (la.kind == _SYM_LT)
-        SYM_LT
-        expression<out sizeExpr, BIN_OPS_EXCEPT_GT>
-        SYM_GT
+        vectorSizeOrBinaryExpression<out Expr expr, new IdentifierChain(id, null), BIN_OPS_EXCEPT_GT>
+                                          (. if (expr instanceof SizeExpr s) sizeExpr = s.size;
+                                             else errors.SemErr(t.line, t.col, "Invalid type expression"); .)
       ]                                   (. type = new TypeLiteral(id, sizeExpr, id.location().join(loc())) ;.)
   )
   .

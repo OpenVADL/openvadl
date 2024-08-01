@@ -75,10 +75,14 @@ class Ungrouper implements ExprVisitor<Expr> {
   @Override
   public Expr visit(CallExpr expr) {
     expr.target = (SymbolExpr) expr.target.accept(this);
-    var args = expr.arguments;
-    expr.arguments = new ArrayList<>(args.size());
-    for (var arg : args) {
-      expr.arguments.add(arg.accept(this));
+    var invocations = expr.invocations;
+    expr.invocations = new ArrayList<>(invocations.size());
+    for (var invocation : invocations) {
+      var args = new ArrayList<Expr>(invocation.size());
+      for (var arg : invocation) {
+        args.add(arg.accept(this));
+      }
+      expr.invocations.add(args);
     }
     return expr;
   }
