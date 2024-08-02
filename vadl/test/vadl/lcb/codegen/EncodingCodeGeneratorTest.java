@@ -1,5 +1,6 @@
 package vadl.lcb.codegen;
 
+import static org.assertj.core.api.AssertionsForClassTypes.assertThat;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
 import org.junit.jupiter.api.Test;
@@ -30,13 +31,10 @@ class EncodingCodeGeneratorTest extends AbstractTest {
     String code = new EncodingCodeGenerator().generateFunction(function);
 
     // Then
-<<<<<<< HEAD
-    assertEquals("int32_t functionNameValue(uint32_t parameterValue) {\n"
-        + "return ((int32_t) parameterValue);\n"
-=======
-    assertEquals("int32_t encodefunctionNameValue(uint32_t parameterValue) {\n"
-        + "return (int32_t) parameterValue;\n"
->>>>>>> 01d188e (lcb: Setup lowering of immediate operands)
-        + "}", code);
+    assertThat(code).isEqualToIgnoringWhitespace("""
+        int32_t encodefunctionNameValue(uint32_t parameterValue) {
+          return ((int32_t) parameterValue);
+        }
+        """);
   }
 }
