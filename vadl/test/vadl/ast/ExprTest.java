@@ -66,10 +66,19 @@ public class ExprTest {
     var prog = """
         instruction set architecture TEST = {
           memory MEM : Bits<8> -> Bits<32>
-          constant a = MEM
-          constant b = MEM<0x0a> + 2
-          constant c = MEM<0x0a>(9)
-          constant d = a < 2 && b > 2
+          constant a = 1
+          constant b = 2
+          constant simple = MEM
+          constant vector = MEM<0x0a>
+          constant vectorCall = MEM<0x0a>(9)
+          constant simpleCall = MEM(9)
+          constant onlyComparisons = a < 2 && b > 2
+          constant vectorAddLhs = MEM<0x0a> + 2
+          constant vectorAddRhs = 1 + MEM<3>
+          constant vectorAddBoth = MEM<9> + MEM<3>
+          constant vectorCmpLhs = MEM<3> < a
+          constant vectorCmpRhs = a < MEM<3>
+          constant vectorCmpBoth = MEM<9> < MEM<3>
         }
         """;
 

@@ -362,7 +362,13 @@ PRODUCTIONS
                                                                       }
                                                                     }
                                                                  .)
-
+      [
+        // If the left side of a < operator is NOT a call, the right side might still be one  e.g. a < MEM<9>.
+        // In this case, we exchange the RHS of the parsed binExpr "a < MEM" with the actual rhs "MEM<9>"
+        IF (la.kind == _SYM_LT && expr instanceof BinaryExpr binExpr &&
+            binExpr.right instanceof IdentifierChain chain && chain.next == null)
+        callOrBinaryExpression<out Expr right, chain, NO_OPS> (. expr = new BinaryExpr(binExpr.left, Operator.Less(), right); .)
+      ]
       {
         // Check if we received a vector size -> collect arguments
         // Otherwise, just return the collected binary expression
@@ -401,13 +407,12 @@ PRODUCTIONS
   /// Otherwise, a vector size is returned wrapped in a SizeExpr.
   /// If this rule is used in a place where no binary expression is valid, use NO_OPS as allowedOps.
   vectorSizeOrBinaryExpression<out Expr expr, Expr target, boolean[] allowedOps>
-  = SYM_LT                              (. expr = null; .)
-    termWithOptionalCast<out Expr term>
-    (
+  = SYM_LT
+    termWithOptionalCast<out Expr term> (. expr = new BinaryExpr(target, Operator.Less(), term); .)
+    [
       IF (la.kind == _SYM_GT)
       SYM_GT                            (. expr = new SizeExpr(term); .)
-    | binaryTerms<out expr, new BinaryExpr(target, Operator.Less(), term), allowedOps>
-    )
+    ]
   .
 
   binaryTerms<out Expr expr, Expr left, boolean[] allowedOps> (. expr = left; .)
