@@ -1,15 +1,12 @@
 package vadl.lcb.codegen.mappers;
 
 import java.util.Arrays;
-import java.util.List;
 import java.util.Objects;
 import java.util.stream.Stream;
 import vadl.lcb.codegen.DecodingCodeGenerator;
 import vadl.lcb.codegen.EncodingCodeGenerator;
 import vadl.lcb.codegen.model.ImmediateOperand;
 import vadl.lcb.codegen.model.llvm.ValueType;
-import vadl.lcb.tablegen.model.TableGenImmediateOperand;
-import vadl.types.Type;
 import vadl.viam.Specification;
 
 /**
