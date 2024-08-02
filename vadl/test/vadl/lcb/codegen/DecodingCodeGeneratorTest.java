@@ -12,7 +12,7 @@ import vadl.viam.graph.control.ReturnNode;
 import vadl.viam.graph.dependency.FuncParamNode;
 import vadl.viam.graph.dependency.TypeCastNode;
 
-class EncodingCodeGeneratorTest extends AbstractTest {
+class DecodingCodeGeneratorTest extends AbstractTest {
   @Test
   void generateFunction_shouldGenerate() {
     // Given
@@ -27,16 +27,11 @@ class EncodingCodeGeneratorTest extends AbstractTest {
     function.setBehavior(graph);
 
     // When
-    String code = new EncodingCodeGenerator().generateFunction(function);
+    String code = new DecodingCodeGenerator().generateFunction(function);
 
     // Then
-<<<<<<< HEAD
-    assertEquals("int32_t functionNameValue(uint32_t parameterValue) {\n"
-        + "return ((int32_t) parameterValue);\n"
-=======
-    assertEquals("int32_t encodefunctionNameValue(uint32_t parameterValue) {\n"
+    assertEquals("int32_t decodefunctionNameValue(uint32_t parameterValue) {\n"
         + "return (int32_t) parameterValue;\n"
->>>>>>> 01d188e (lcb: Setup lowering of immediate operands)
         + "}", code);
   }
 }

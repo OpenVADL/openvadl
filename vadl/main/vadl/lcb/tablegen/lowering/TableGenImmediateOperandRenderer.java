@@ -13,12 +13,24 @@ public final class TableGenImmediateOperandRenderer {
    */
   public static String lower(TableGenImmediateOperand operand) {
     return String.format("""
-        
-        class %s<ValueType ty> : Operand<ty>
-        {
-          let EncoderMethod = "%s";
-          let DecoderMethod = "%s";
-        }
-        """, operand.getName(), operand.getEncoderMethod(), operand.getDecoderMethod());
+                    
+            class %s<ValueType ty> : Operand<ty>
+            {
+              let EncoderMethod = "%s";
+              let DecoderMethod = "%s";
+            }
+                    
+            def %sAs%s
+                : %s<%s>
+                , ImmLeaf<%s, [{ return true; }]>;
+            """, operand.getName(),
+        operand.getEncoderMethod(),
+        operand.getDecoderMethod(),
+        operand.getName(),
+        operand.getType().getFancyName(),
+        operand.getName(),
+        operand.getType().getLlvmType(),
+        operand.getType().getLlvmType()
+    );
   }
 }

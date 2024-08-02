@@ -15,10 +15,9 @@ import vadl.viam.graph.GraphNodeVisitor;
  * The tasks of this class is to generate the Cpp code for LLVM which
  * is called by tablegen to encode an immediate.
  */
-public class EncodingCodeGeneratorVisitor extends GenericCppCodeGeneratorVisitor
+public class EncoderDecoderCodeGeneratorVisitor extends GenericCppCodeGeneratorVisitor
     implements OopGraphNodeVisitor {
-
-  public EncodingCodeGeneratorVisitor(StringWriter writer) {
+  public EncoderDecoderCodeGeneratorVisitor(StringWriter writer) {
     super(writer);
   }
 
