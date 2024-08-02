@@ -39,6 +39,9 @@ public class TableGenInstruction extends TableGenRecord {
         Collections.emptyList());
   }
 
+  /**
+   * Constructor for an instruction in TableGen.
+   */
   public TableGenInstruction(String name,
                              String namespace,
                              Instruction instruction,
@@ -145,6 +148,9 @@ public class TableGenInstruction extends TableGenRecord {
       this.bitSet = bitSet;
     }
 
+    /**
+     * Convert an encoding into a bitblock set for TableGen.
+     */
     public static List<BitBlock> from(vadl.viam.Encoding encoding) {
       var encodedFields = Arrays.stream(encoding.fieldEncodings())
           .map(field -> new BitBlock(field.formatField().size(), field.name(),
@@ -187,6 +193,9 @@ public class TableGenInstruction extends TableGenRecord {
       this.sourceLow = sourceLow;
     }
 
+    /**
+     * Convert an encoding to a TableGen model.
+     */
     public static List<FieldEncoding> from(vadl.viam.Encoding encoding) {
       return Arrays.stream(encoding.format().fields()).map(field -> {
         field.bitSlice().ensure(field.bitSlice().isContinuous(), "bitSlice must be continuous");

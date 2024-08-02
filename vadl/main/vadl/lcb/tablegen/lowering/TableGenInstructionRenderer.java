@@ -112,6 +112,8 @@ public final class TableGenInstructionRenderer {
   }
 
   /**
+   * Converts a bitset into string representation.
+   *
    * @param bitSet bitset
    * @return "01010000" binary string
    */

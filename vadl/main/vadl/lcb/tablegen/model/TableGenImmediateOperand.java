@@ -11,7 +11,12 @@ public class TableGenImmediateOperand extends TableGenClass {
   private final String decoderMethod;
   private final ValueType type;
 
-  public TableGenImmediateOperand(String name, String encoderMethod, String decoderMethod,
+  /**
+   * Constructor for an immediate operand.
+   */
+  public TableGenImmediateOperand(String name,
+                                  String encoderMethod,
+                                  String decoderMethod,
                                   ValueType type) {
     this.name = name;
     this.encoderMethod = encoderMethod;
