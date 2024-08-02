@@ -13,11 +13,12 @@ public final class TableGenImmediateOperandRenderer {
    */
   public static String lower(TableGenImmediateOperand operand) {
     return String.format("""
-           class %s<ValueType ty> : Operand<ty>
-           {
-            let EncoderMethod = "%s";
-            let DecoderMethod = "%s";
-           }
+        
+        class %s<ValueType ty> : Operand<ty>
+        {
+          let EncoderMethod = "%s";
+          let DecoderMethod = "%s";
+        }
         """, operand.getName(), operand.getEncoderMethod(), operand.getDecoderMethod());
   }
 }

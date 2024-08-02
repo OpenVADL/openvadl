@@ -3,6 +3,7 @@ package vadl.lcb.tablegen.lowering;
 import java.util.BitSet;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
+import org.jetbrains.annotations.Nullable;
 import vadl.lcb.tablegen.model.TableGenInstruction;
 import vadl.lcb.tablegen.model.TableGenInstructionOperand;
 import vadl.viam.Definition;
@@ -16,6 +17,7 @@ public final class TableGenInstructionRenderer {
    */
   public static String lower(TableGenInstruction instruction) {
     return String.format("""
+                        
             def %s : Instruction
             {
                  let Namespace = "%s";
@@ -26,14 +28,14 @@ public final class TableGenInstructionRenderer {
                  let OutOperandList = ( outs %s );
                  let InOperandList = ( ins %s );
              
-                 field bits<32> Inst;
-                \s
+                 field bits<%s> Inst;
+                 \s
                  // SoftFail is a field the disassembler can use to provide a way for
                  // instructions to not match without killing the whole decode process. It is
                  // mainly used for ARM, but Tablegen expects this field to exist or it fails
                  // to build the decode table.
-                 field bits<32> SoftFail = 0;
-                \s
+                 field bits<%s> SoftFail = 0;
+                 \s
                  %s
              
                  %s
@@ -60,8 +62,12 @@ public final class TableGenInstructionRenderer {
         instruction.getNamespace(),
         instruction.getSize(),
         instruction.getCodeSize(),
-        instruction.getOutOperands().stream().map(TableGenInstructionRenderer::lower),
-        instruction.getInOperands().stream().map(TableGenInstructionRenderer::lower),
+        instruction.getOutOperands().stream().map(TableGenInstructionRenderer::lower).collect(
+            Collectors.joining("\n")),
+        instruction.getInOperands().stream().map(TableGenInstructionRenderer::lower).collect(
+            Collectors.joining("\n")),
+        instruction.getFormatSize(),
+        instruction.getFormatSize(),
         instruction.getBitBlocks().stream().map(TableGenInstructionRenderer::lower)
             .collect(Collectors.joining("\n")),
         instruction.getFieldEncodings().stream().map(TableGenInstructionRenderer::lower)
@@ -81,13 +87,14 @@ public final class TableGenInstructionRenderer {
 
   private static String lower(TableGenInstructionOperand operand) {
     return String.format("""
+                
         %s:$%s
         """, operand.type(), operand.name());
   }
 
   private static String lower(TableGenInstruction.BitBlock bitBlock) {
     if (bitBlock.getBitSet().isPresent()) {
-      return String.format("bits<%s> %s = 0b%s", bitBlock.getSize(), bitBlock.getName(),
+      return String.format("bits<%s> %s = 0b%s;", bitBlock.getSize(), bitBlock.getName(),
           toBinaryString(bitBlock.getBitSet().get()));
     } else {
       return String.format("bits<%s> %s;", bitBlock.getSize(), bitBlock.getName());
@@ -108,6 +115,7 @@ public final class TableGenInstructionRenderer {
    * @param bitSet bitset
    * @return "01010000" binary string
    */
+  @Nullable
   private static String toBinaryString(BitSet bitSet) {
     if (bitSet == null) {
       return null;

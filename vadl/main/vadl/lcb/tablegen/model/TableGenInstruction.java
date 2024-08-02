@@ -1,6 +1,5 @@
 package vadl.lcb.tablegen.model;
 
-import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.BitSet;
 import java.util.Collections;
@@ -21,6 +20,7 @@ public class TableGenInstruction extends TableGenRecord {
   private final List<TableGenInstructionOperand> outOperands;
   private final List<Register> uses;
   private final List<Register> defs;
+  private final int formatSize;
   private final int size;
   private final int codeSize;
   private final Flags flags;
@@ -50,6 +50,7 @@ public class TableGenInstruction extends TableGenRecord {
                              List<String> pattern) {
     this.name = name;
     this.namespace = namespace;
+    this.formatSize = instruction.encoding().format().type().bitWidth();
     this.size = instruction.encoding().format().type().bitWidth() / 8;
     this.codeSize = instruction.encoding().format().type().bitWidth() / 8;
     this.bitBlocks = BitBlock.from(instruction.encoding());
@@ -108,6 +109,10 @@ public class TableGenInstruction extends TableGenRecord {
 
   public String getName() {
     return name;
+  }
+
+  public int getFormatSize() {
+    return formatSize;
   }
 
   /**
@@ -186,7 +191,7 @@ public class TableGenInstruction extends TableGenRecord {
       return Arrays.stream(encoding.format().fields()).map(field -> {
         field.bitSlice().ensure(field.bitSlice().isContinuous(), "bitSlice must be continuous");
         return new FieldEncoding(field.bitSlice().msb(), field.bitSlice().lsb(), field.name(),
-            field.size(), 0);
+            field.size() - 1, 0);
       }).toList();
     }
 
