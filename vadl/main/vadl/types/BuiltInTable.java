@@ -320,14 +320,16 @@ public class BuiltInTable {
    * {@code function sdiv ( a : SInt<N>, b : SInt<N> ) -> SInt<N> // <=> a / b }
    */
   public static final BuiltIn SDIV =
-      BuiltIn.func("SDIV", "/", Type.relation(SIntType.class, SIntType.class, SIntType.class));
+      BuiltIn.func("SDIV", "/", Type.relation(SIntType.class, SIntType.class, SIntType.class),
+          Constant.Value::divide);
 
 
   /**
    * {@code function udiv ( a : UInt<N>, b : UInt<N> ) -> UInt<N> // <=> a / b }
    */
   public static final BuiltIn UDIV =
-      BuiltIn.func("UDIV", "/", Type.relation(UIntType.class, UIntType.class, UIntType.class));
+      BuiltIn.func("UDIV", "/", Type.relation(UIntType.class, UIntType.class, UIntType.class),
+          Constant.Value::divide);
 
 
   /**
