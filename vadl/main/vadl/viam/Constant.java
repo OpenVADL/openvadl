@@ -19,8 +19,10 @@ import org.jetbrains.annotations.NotNull;
 import vadl.types.BitsType;
 import vadl.types.BoolType;
 import vadl.types.DataType;
+import vadl.types.SIntType;
 import vadl.types.TupleType;
 import vadl.types.Type;
+import vadl.types.UIntType;
 import vadl.utils.BigIntUtils;
 import vadl.utils.StreamUtils;
 
@@ -208,6 +210,7 @@ public abstract class Constant {
      * @throws ViamError if the constant cannot be cast to the specified data type
      */
     public Constant.Value castTo(DataType type) {
+      // TODO: Make this right
       var truncatedValue = value
           .and(mask(type.bitWidth(), 0));
       return Value.fromTwosComplement(truncatedValue, type);
@@ -334,6 +337,29 @@ public abstract class Constant {
           .firstValue();
     }
 
+    public Constant.Value multiply(Constant.Value other) {
+      ensure(type() == other.type(), "Multiplication requires same type but other was %s",
+          other.type());
+
+      var newValue = value
+          .multiply(other.value) // multiply with other value
+          .and(mask(type().bitWidth(), 0)); // truncate result
+
+      return fromTwosComplement(newValue, type());
+    }
+
+    public Constant.Value divide(Constant.Value other) {
+      ensure(type() == other.type(), "Division must be of same type, but other was %s",
+          other.type());
+
+      ensure(type().getClass() == SIntType.class || type().getClass() == UIntType.class,
+          "Division must be either signed or unsigned integer typed");
+
+      var newIntegerValue = integer()
+          .divide(other.integer());
+      return fromInteger(newIntegerValue, type());
+    }
+
     /**
      * Enumeration of available subtraction modes.
      *
@@ -392,6 +418,16 @@ public abstract class Constant {
       ensureSameWidth(other);
       var andResult = this.value.and(other.value);
       return Constant.Value.fromTwosComplement(andResult, type());
+    }
+
+    public Constant.Value lsl(Constant.Value other) {
+      ensure(other.type().getClass() == UIntType.class,
+          "LSL shift argument must be an unsigned integer.");
+
+      var newValue = value
+          .shiftLeft(other.intValue()) // shift value by other
+          .and(mask(type().bitWidth(), 0)); // truncate value
+      return fromTwosComplement(newValue, type());
     }
 
     /**

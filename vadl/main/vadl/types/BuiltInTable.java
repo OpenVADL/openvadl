@@ -31,7 +31,8 @@ public class BuiltInTable {
    * {@code function neg( a : Bits<N> ) -> Bits<N> // <=> -a }
    */
   public static final BuiltIn NEG =
-      BuiltIn.func("NEG", "-", Type.relation(BitsType.class, BitsType.class));
+      BuiltIn.func("NEG", "-", Type.relation(BitsType.class, BitsType.class),
+          (List<Constant.Value> args) -> args.get(0).negate());
 
 
   /**
@@ -233,7 +234,8 @@ public class BuiltInTable {
    * {@code function mul ( a : Bits<N>, b : Bits<N> ) -> Bits<N> // <=> a * b }
    */
   public static final BuiltIn MUL =
-      BuiltIn.func("MUL", "*", Type.relation(BitsType.class, BitsType.class, BitsType.class)
+      BuiltIn.func("MUL", "*", Type.relation(BitsType.class, BitsType.class, BitsType.class),
+          Constant.Value::multiply
       );
 
 
@@ -318,14 +320,16 @@ public class BuiltInTable {
    * {@code function div ( a : SInt<N>, b : SInt<N> ) -> SInt<N> // <=> a / b }
    */
   public static final BuiltIn DIV_SS =
-      BuiltIn.func("DIV", "/", Type.relation(SIntType.class, SIntType.class, SIntType.class));
+      BuiltIn.func("DIV", "/", Type.relation(SIntType.class, SIntType.class, SIntType.class),
+          Constant.Value::divide);
 
 
   /**
    * {@code function div ( a : UInt<N>, b : UInt<N> ) -> UInt<N> // <=> a / b }
    */
   public static final BuiltIn DIV_UU =
-      BuiltIn.func("DIV", "/", Type.relation(UIntType.class, UIntType.class, UIntType.class));
+      BuiltIn.func("DIV", "/", Type.relation(UIntType.class, UIntType.class, UIntType.class),
+          Constant.Value::divide);
 
 
   /**
@@ -472,7 +476,8 @@ public class BuiltInTable {
    * {@code function lsl ( a : Bits<N>, b : UInt<M> ) -> Bits<N> // <=> a << b }
    */
   public static final BuiltIn LSL =
-      BuiltIn.func("LSL", "<<", Type.relation(BitsType.class, UIntType.class, BitsType.class));
+      BuiltIn.func("LSL", "<<", Type.relation(BitsType.class, UIntType.class, BitsType.class),
+          Constant.Value::lsl);
 
 
   /**

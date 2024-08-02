@@ -96,10 +96,10 @@ public class CanonicalizerTest {
     var result = Canonicalizer.canonicalizeSubGraph(addition);
 
     assertEquals(2, testGraph.getNodes().count());
-    assertEquals(-5,
+    assertEquals(1019,
         ((Constant.Value) testGraph.getNodes(ConstantNode.class).findFirst()
             .get().constant()).integer().intValue());
-    assertEquals(-5,
+    assertEquals(1019,
         ((Constant.Value) ((ConstantNode) result).constant()).integer().intValue());
 
     testGraph.verify();

@@ -7,6 +7,7 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
+import static vadl.utils.BigIntUtils.mask;
 import static vadl.viam.helper.TestGraphUtils.bits;
 import static vadl.viam.helper.TestGraphUtils.bool;
 import static vadl.viam.helper.TestGraphUtils.intS;
@@ -221,7 +222,7 @@ public class ConstantTests {
     var actual = a.subtract(b, Constant.Value.SubMode.X86_LIKE, false);
     testResultAndStatus(actual, result, status);
   }
-  
+
   static Stream<Arguments> testSubX86NoCarrySource() {
     return Stream.of(
 
@@ -409,6 +410,70 @@ public class ConstantTests {
         Arguments.of(intU(0b1111, 4), Type.unsignedInt(3), intU(0b111, 3))
     );
   }
+
+  @ParameterizedTest
+  @MethodSource("lslTestSource")
+  void constantLsl_shouldYieldCorrectValue(Constant.Value a, Constant.Value b,
+                                           Constant.Value expected) {
+    var actual = a.lsl(b);
+    assertEquals(expected, actual);
+  }
+
+  static Stream<Arguments> lslTestSource() {
+    return Stream.of(
+        Arguments.of(bits(0b0000, 4), intU(2, 5), bits(0b0, 4)),
+        Arguments.of(bits(0b0001, 4), intU(2, 5), bits(0b0100, 4)),
+        Arguments.of(bits(0b0101, 4), intU(2, 5), bits(0b0100, 4)),
+        Arguments.of(bits(0b1111, 4), intU(0, 5), bits(0b1111, 4))
+    );
+  }
+
+  @Test
+  void toBeRemoved() {
+    var a = BigInteger.valueOf(0xFFFFFFFFL);
+    var b = BigInteger.valueOf(0xFFFFFFFFL);
+
+    var res = a.multiply(b);
+    var res32 = res.and(mask(32, 0));
+    System.out.println(res.toString(16));
+    System.out.println(res32.toString(16));
+  }
+
+  @ParameterizedTest
+  @MethodSource("multiplyTestSource")
+  void constantMultiply_shouldYieldCorrectValue(Constant.Value a, Constant.Value b,
+                                                Constant.Value expected) {
+    var actual = a.multiply(b);
+    assertEquals(expected, actual);
+  }
+
+  static Stream<Arguments> multiplyTestSource() {
+    return Stream.of(
+        Arguments.of(bits(0xFFFFFFFFL, 32), bits(0xFFFFFFFFL, 32), bits(0x1, 32)),
+        Arguments.of(bits(0xFFFFFFFFL, 32), bits(0x1L, 32), bits(0xFFFFFFFFL, 32)),
+        Arguments.of(bits(0xFFFFFFFFL, 32), bits(0x0L, 32), bits(0x0L, 32)),
+        Arguments.of(bits(0xFFFFFFFFL, 32), bits(0x2L, 32), bits(0xFFFFFFFEL, 32))
+    );
+  }
+
+  @ParameterizedTest
+  @MethodSource("divideTestSource")
+  void constantDivide_shouldYieldCorrectValue(Constant.Value a, Constant.Value b,
+                                              Constant.Value expected) {
+    var actual = a.divide(b);
+    assertEquals(expected, actual);
+  }
+
+  static Stream<Arguments> divideTestSource() {
+    return Stream.of(
+        Arguments.of(intS(-1, 32), intS(0x2L, 32), intS(0x0, 32)),
+        Arguments.of(intU(0xFFFFFFFFL, 32), intU(0x2L, 32), intU(0x7FFFFFFFL, 32)),
+
+        Arguments.of(intS(-1, 32), intS(Integer.MIN_VALUE, 32), intS(0x0, 32)),
+        Arguments.of(intU(0xFFFFFFFFL, 32), intU(0x80000000L, 32), intU(0x1L, 32))
+    );
+  }
+
 
   @ParameterizedTest
   @MethodSource("truncateFailTestSource")
