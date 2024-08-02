@@ -28,9 +28,10 @@ public class BitsType extends DataType {
       return bitWidth == 1;
     }
 
-    // Bits<N> ==> SInt<N>
+    // TODO: Check if this is valid <= or ==
+    // Bits<N> ==> SInt<M> | N <= M
     if (other.getClass() == SIntType.class) {
-      return bitWidth == other.bitWidth();
+      return bitWidth <= other.bitWidth();
     }
 
     // Bits<N> ==> Bits<M> | N <= M
