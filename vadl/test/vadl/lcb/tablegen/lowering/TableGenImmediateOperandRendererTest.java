@@ -19,13 +19,17 @@ class TableGenImmediateOperandRendererTest {
     var result = TableGenImmediateOperandRenderer.lower(operand);
 
     // Then
-    assertThat(result).isEqualTo("""
+    assertThat(result).isEqualToIgnoringWhitespace("""
                
         class nameValue<ValueType ty> : Operand<ty>
         {
           let EncoderMethod = "encoderMethodValue";
           let DecoderMethod = "decoderMethodValue";
         } 
+        
+        def nameValueAsInt32
+              : nameValue<i32>
+              , ImmLeaf<i32, [{ return true; }]>;
         """);
   }
 }
