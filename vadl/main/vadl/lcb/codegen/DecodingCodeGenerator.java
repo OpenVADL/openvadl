@@ -5,14 +5,14 @@ import vadl.viam.graph.Graph;
 
 /**
  * Generates Cpp Code given a behavior {@link Graph}.
- * This class will be used to generate the {@link Encoding}.
+ * This class will be used to generate the {@code AccessFunction}.
  */
-public class EncodingCodeGenerator extends EncoderDecoderCodeGenerator {
+public class DecodingCodeGenerator extends EncoderDecoderCodeGenerator {
 
 
   @Override
   protected String getPrefix() {
-    return "encode";
+    return "decode";
   }
 
 

@@ -8,6 +8,7 @@ import org.slf4j.LoggerFactory;
 import org.testcontainers.images.builder.ImageFromDockerfile;
 import vadl.DockerExecutionTest;
 import vadl.gcb.passes.encoding_generation.strategies.EncodingGenerationStrategy;
+import vadl.lcb.codegen.DecodingCodeGenerator;
 import vadl.lcb.codegen.EncodingCodeGenerator;
 import vadl.oop.CppTypeMap;
 import vadl.oop.passes.field_node_replacement.FieldNodeReplacementPass;
@@ -39,7 +40,7 @@ public class EncodingCodeGeneratorCppVerificationTest extends DockerExecutionTes
     var fieldAccess = new Format.FieldAccess(createIdentifier("fieldAccessIdentifierValue"),
         decodingFunction, null, null);
 
-    var decodeCodeGenerator = new EncodingCodeGenerator();
+    var decodeCodeGenerator = new DecodingCodeGenerator();
     var encodeCodeGenerator = new EncodingCodeGenerator();
 
     // We are testing that the generation is correct.
@@ -78,8 +79,8 @@ public class EncodingCodeGeneratorCppVerificationTest extends DockerExecutionTes
         encodeFunction,
         expectedReturnType,
         100L,
-        normalizedEncodeFunction.identifier.simpleName(),
-        normalizedDecodeFunction.identifier.simpleName());
+        new EncodingCodeGenerator().generateFunctionName(normalizedEncodeFunction),
+        new DecodingCodeGenerator().generateFunctionName(normalizedDecodeFunction));
 
     logger.atInfo().log(cppCode);
     runContainerWithContent(DOCKER_IMAGE, cppCode, MOUNT_PATH, TEMPFILE_PREFIX, TEMPFILE_SUFFIX);

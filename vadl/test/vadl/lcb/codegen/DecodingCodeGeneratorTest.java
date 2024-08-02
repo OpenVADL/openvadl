@@ -1,6 +1,5 @@
 package vadl.lcb.codegen;
 
-import static org.assertj.core.api.AssertionsForClassTypes.assertThat;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
 import org.junit.jupiter.api.Test;
@@ -13,7 +12,7 @@ import vadl.viam.graph.control.ReturnNode;
 import vadl.viam.graph.dependency.FuncParamNode;
 import vadl.viam.graph.dependency.TypeCastNode;
 
-class EncodingCodeGeneratorTest extends AbstractTest {
+class DecodingCodeGeneratorTest extends AbstractTest {
   @Test
   void generateFunction_shouldGenerate() {
     // Given
@@ -28,13 +27,11 @@ class EncodingCodeGeneratorTest extends AbstractTest {
     function.setBehavior(graph);
 
     // When
-    String code = new EncodingCodeGenerator().generateFunction(function);
+    String code = new DecodingCodeGenerator().generateFunction(function);
 
     // Then
-    assertThat(code).isEqualToIgnoringWhitespace("""
-        int32_t encodefunctionNameValue(uint32_t parameterValue) {
-          return ((int32_t) parameterValue);
-        }
-        """);
+    assertEquals("int32_t decodefunctionNameValue(uint32_t parameterValue) {\n"
+        + "return ((int32_t) parameterValue);\n"
+        + "}", code);
   }
 }

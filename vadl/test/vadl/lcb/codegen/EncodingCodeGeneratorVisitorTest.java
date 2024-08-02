@@ -23,12 +23,12 @@ import vadl.viam.graph.dependency.FuncCallNode;
 
 class EncodingCodeGeneratorVisitorTest extends AbstractTest {
   StringWriter writer;
-  EncodingCodeGeneratorVisitor visitor;
+  EncoderDecoderCodeGeneratorVisitor visitor;
 
   @BeforeEach
   void beforeEach() {
     writer = new StringWriter();
-    visitor = new EncodingCodeGeneratorVisitor(writer);
+    visitor = new EncoderDecoderCodeGeneratorVisitor(writer);
   }
 
   @Test
