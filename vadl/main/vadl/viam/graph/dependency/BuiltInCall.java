@@ -94,13 +94,15 @@ public class BuiltInCall extends AbstractFunctionCallNode implements Canonicaliz
 
     ensure(argTypeClasses.size() == this.arguments().size(),
         "Number of arguments must match");
+
+    var actualArgTypes = this.arguments().stream().map(x -> x.type().getClass()).toList();
     var argsMatched =
-        Streams.zip(this.arguments().stream().map(x -> x.type().getClass()),
+        Streams.zip(actualArgTypes.stream(),
             argTypeClasses.stream(),
             Object::equals
         ).allMatch(isSameClass -> isSameClass);
     ensure(argsMatched, "Arguments' types do not match with the type of the builtin. Args: %s",
-        argTypeClasses);
+        actualArgTypes);
     ensure(resultTypeClass.equals(this.type().getClass()), "Result type does not match");
   }
 

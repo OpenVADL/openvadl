@@ -274,7 +274,11 @@ $Arch3264 ( // ((((((((((((((((((((((((((((((((((((((((
 
 instruction set architecture RV3264IM extending RV3264I = {
 
-  constant MLen2   = MLen  * 2
+  // The MLen type cast is very important, as the new MUL operation in open-vadl does not
+  // return the doubled bitwidth, but the same as the operands. However the old-vadl
+  // type inverence assigned Bits<6> to the operands, which leads to a 6 bit invalid result.
+  // constant MLen2   = MLen  * 2
+  constant MLen2   = (MLen as Bits<12>)  * 2
   constant MLen2_1 = MLen2 - 1
 
   constant TopBitSet = ((1 as Regs) << (MLen - 1)) as Regs
@@ -315,30 +319,30 @@ instruction set architecture RV3264IM extending RV3264I = {
     }
 
   $MtypeInstr (MUL    ; 0b000 ; SInt ; SInt ; result as Regs       ) // multiply signed
-  // $MtypeInstr (MULH   ; 0b001 ; SInt ; SInt ; result(MLen2_1..MLen)) // multiply high signed * signed
-  // $MtypeInstr (MULHSU ; 0b010 ; SInt ; UInt ; result(MLen2_1..MLen)) // multiply high signed * unsigned
-  // $MtypeInstr (MULHU  ; 0b011 ; UInt ; UInt ; result(MLen2_1..MLen)) // multiply high unsigned * unsigned
+  $MtypeInstr (MULH   ; 0b001 ; SInt ; SInt ; result(MLen2_1..MLen)) // multiply high signed * signed
+  $MtypeInstr (MULHSU ; 0b010 ; SInt ; UInt ; result(MLen2_1..MLen)) // multiply high signed * unsigned
+  $MtypeInstr (MULHU  ; 0b011 ; UInt ; UInt ; result(MLen2_1..MLen)) // multiply high unsigned * unsigned
 
-  // $DivModInstr(DIV   ; div ; 0b100 ; 0b011'0011 ; SIntR)               // signed division
-  // $DivModInstr(DIVU  ; div ; 0b101 ; 0b011'0011 ; UIntR)               // unsigned division
-  // $DivModInstr(REM   ; mod ; 0b110 ; 0b011'0011 ; SIntR)               // signed remainder
+  $DivModInstr(DIV   ; div ; 0b100 ; 0b011'0011 ; SIntR)               // signed division
+  $DivModInstr(DIVU  ; div ; 0b101 ; 0b011'0011 ; UIntR)               // unsigned division
+  $DivModInstr(REM   ; mod ; 0b110 ; 0b011'0011 ; SIntR)               // signed remainder
 
-// $Arch3264 ( // ((((((((((((((((((((((((((((((((((((((((
+$Arch3264 ( // ((((((((((((((((((((((((((((((((((((((((
 
-//   $DivModInstr(REMU  ; mod ; 0b111 ; 0b011'0011 ; UIntR)               // unsigned remainder
+  $DivModInstr(REMU  ; mod ; 0b111 ; 0b011'0011 ; UIntR)               // unsigned remainder
 
-// ;           // ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;           // ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
-//   $DivModInstr(REMU  ; mod ; 0b111 ; 0b011'0011 ; UIntR)               // unsigned remainder
+  $DivModInstr(REMU  ; mod ; 0b111 ; 0b011'0011 ; UIntR)               // unsigned remainder
 
-//   $WtypeInstr (MULW  ;  *  ; 0b000 ; 0b000'0001 ; SIntW ; SIntW)       // multiply signed word
+  $WtypeInstr (MULW  ;  *  ; 0b000 ; 0b000'0001 ; SIntW ; SIntW)       // multiply signed word
 
-//   $DivModInstr(DIVW  ; div ; 0b100 ; 0b011'1011 ; SIntW)               // signed division word
-//   $DivModInstr(DIVUW ; div ; 0b101 ; 0b011'1011 ; UIntW)               // unsigned division word
-//   $DivModInstr(REMW  ; mod ; 0b110 ; 0b011'1011 ; SIntW)               // signed remainder word
-//   $DivModInstr(REMUW ; mod ; 0b111 ; 0b011'1011 ; UIntW)               // unsigned remainder word
+  $DivModInstr(DIVW  ; div ; 0b100 ; 0b011'1011 ; SIntW)               // signed division word
+  $DivModInstr(DIVUW ; div ; 0b101 ; 0b011'1011 ; UIntW)               // unsigned division word
+  $DivModInstr(REMW  ; mod ; 0b110 ; 0b011'1011 ; SIntW)               // signed remainder word
+  $DivModInstr(REMUW ; mod ; 0b111 ; 0b011'1011 ; UIntW)               // unsigned remainder word
 
-// )           // ))))))))))))))))))))))))))))))))))))))))
+)           // ))))))))))))))))))))))))))))))))))))))))
 
   }
 

@@ -20,6 +20,9 @@ public class SIntType extends BitsType {
     if (this == other) {
       return true;
     }
+    if (other.getClass() == SIntType.class) {
+      return bitWidth <= ((SIntType) other).bitWidth;
+    }
 
     // SInt<N> ==> Bits<M> | N <= M and N > 1
     if (other.getClass() == BitsType.class) {

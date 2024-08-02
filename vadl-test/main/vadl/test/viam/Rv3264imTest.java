@@ -5,6 +5,8 @@ import static vadl.test.TestUtils.findDefinitionByNameIn;
 
 import org.junit.jupiter.api.Test;
 import vadl.test.AbstractTest;
+import vadl.viam.Assembly;
+import vadl.viam.Instruction;
 import vadl.viam.InstructionSetArchitecture;
 import vadl.viam.Register;
 

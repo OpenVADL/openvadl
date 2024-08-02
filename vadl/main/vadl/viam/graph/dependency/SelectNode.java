@@ -26,11 +26,13 @@ public class SelectNode extends ExpressionNode {
    */
   public SelectNode(ExpressionNode condition, ExpressionNode trueCase, ExpressionNode falseCase) {
     super(trueCase.type());
-    ensure(trueCase.type().equals(falseCase.type()), "True and false case must have the same type");
-    ensure(condition.type() instanceof BoolType, "Condition must have type Bool");
     this.condition = condition;
     this.trueCase = trueCase;
     this.falseCase = falseCase;
+
+    ensure(trueCase.type().equals(falseCase.type()),
+        "True and false case must have the same type. %s vs %s", trueCase.type(), falseCase.type());
+    ensure(condition.type() instanceof BoolType, "Condition must have type Bool");
   }
 
   @Override

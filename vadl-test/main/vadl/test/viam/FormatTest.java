@@ -25,7 +25,7 @@ public class FormatTest extends AbstractTest {
   public static Stream<Arguments> invalidFormatTestSources() {
     return getTestSourceArgsForParameterizedTest("format/invalid_",
         arguments("fieldAccess_encFunc", "No access function on field 'LO' found"),
-        arguments("fieldAccess_encFunc2", "Parameter `LO` not found in function parameters"),
+        arguments("fieldAccess_encFunc2", "Field `LO` not found"),
         arguments("overlappingField", "Field overlapping of 'HI' and 'LO' at bit 3")
     );
   }
