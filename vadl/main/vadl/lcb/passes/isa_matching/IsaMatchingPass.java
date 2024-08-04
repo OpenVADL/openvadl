@@ -90,8 +90,8 @@ public class IsaMatchingPass extends Pass {
         .filter(ty -> ty instanceof UIntType && ((UIntType) ty).bitWidth() == 32)
         .findFirst();
 
-    return matched.isPresent() &&
-        writesExactlyOneRegisterClassWithType(behavior, Type.unsignedInt(32));
+    return matched.isPresent()
+        && writesExactlyOneRegisterClassWithType(behavior, Type.unsignedInt(32));
   }
 
   private boolean findAddWithImmediate32Bit(Graph behavior) {
@@ -103,8 +103,8 @@ public class IsaMatchingPass extends Pass {
         .filter(ty -> ty instanceof BitsType && ((BitsType) ty).bitWidth() == 32)
         .findFirst();
 
-    return matched.isPresent() &&
-        writesExactlyOneRegisterClassWithType(behavior, Type.signedInt(32));
+    return matched.isPresent()
+        && writesExactlyOneRegisterClassWithType(behavior, Type.signedInt(32));
   }
 
   private boolean findSignedAdd32Bit(Graph behavior) {
@@ -118,8 +118,8 @@ public class IsaMatchingPass extends Pass {
         .filter(ty -> ty instanceof SIntType && ((SIntType) ty).bitWidth() == 32)
         .findFirst();
 
-    return matched.isPresent() &&
-        writesExactlyOneRegisterClassWithType(behavior, Type.signedInt(32));
+    return matched.isPresent()
+        && writesExactlyOneRegisterClassWithType(behavior, Type.signedInt(32));
   }
 
   private boolean findBeq(Graph behavior, Register.Counter pc) {
