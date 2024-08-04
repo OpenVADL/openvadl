@@ -69,8 +69,8 @@ public class AstDumper
   public Void visit(ConstantDefinition definition) {
     dumpNode(definition);
     dumpChildren(definition.identifier);
-    if (definition.typeAnnotation != null) {
-      dumpChildren(definition.typeAnnotation);
+    if (definition.type != null) {
+      dumpChildren(definition.type);
     }
     dumpChildren(definition.value);
     return null;
@@ -88,7 +88,7 @@ public class AstDumper
       } else if (field instanceof FormatDefinition.TypedFormatField f) {
         dumpNode(f);
         dumpChildren(f.identifier());
-        dumpChildren(f.typeAnnotation);
+        dumpChildren(f.type);
       }
     }
     this.indent--;

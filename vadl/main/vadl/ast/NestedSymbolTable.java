@@ -265,14 +265,14 @@ class NestedSymbolTable implements DefinitionVisitor<Void> {
       reportError("Invalid usage: field %s resolves to a range, does not provide fields to chain"
           .formatted(field.identifier().name), next.location());
     } else if (field instanceof FormatDefinition.TypedFormatField f) {
-      if (isValuedAnnotation(f.typeAnnotation)) {
+      if (isValuedAnnotation(f.type)) {
         if (subCalls.size() > 1) {
           reportError(
               "Invalid usage: field %s resolves to %s, does not provide fields to chain".formatted(
-                  field.identifier().name, f.typeAnnotation.baseType), next.location());
+                  field.identifier().name, f.type.baseType), next.location());
         }
       } else if (subCalls.size() > 1) {
-        var typeSymbol = f.symbolTable.resolveSymbol(f.typeAnnotation.baseType.name);
+        var typeSymbol = f.symbolTable.resolveSymbol(f.type.baseType.name);
         if (typeSymbol instanceof FormatSymbol formatSymbol) {
           verifyFormatAccess(formatSymbol.definition, subCalls.subList(1, subCalls.size()));
         } else if (typeSymbol == null) {
@@ -286,11 +286,11 @@ class NestedSymbolTable implements DefinitionVisitor<Void> {
     }
   }
 
-  private boolean isValuedAnnotation(TypeLiteral typeAnnotation) {
+  private boolean isValuedAnnotation(TypeLiteral type) {
     // TODO Built-in types should be configurable, not hardcoded
-    return typeAnnotation.baseType.name.equals("Bool")
-        || typeAnnotation.baseType.name.equals("Bits")
-        || typeAnnotation.baseType.name.equals("SInt");
+    return type.baseType.name.equals("Bool")
+        || type.baseType.name.equals("Bits")
+        || type.baseType.name.equals("SInt");
   }
 
   private void verifyAvailable(String name, SourceLocation loc) {

@@ -170,13 +170,13 @@ class MacroExpander
 
   @Override
   public Definition visit(ConstantDefinition definition) {
-    return new ConstantDefinition(definition.identifier, definition.typeAnnotation,
+    return new ConstantDefinition(definition.identifier, definition.type,
         definition.value.accept(this), definition.loc);
   }
 
   @Override
   public Definition visit(FormatDefinition definition) {
-    return new FormatDefinition(definition.identifier, definition.typeAnnotation, definition.fields,
+    return new FormatDefinition(definition.identifier, definition.type, definition.fields,
         definition.loc);
   }
 
