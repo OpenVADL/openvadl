@@ -69,16 +69,14 @@ public class IsaMatchingPass extends Pass {
     return matched;
   }
 
-  private EndNode getEndNode(Graph behavior) {
-    return behavior.getNodes(EndNode.class).findFirst()
-        .orElseThrow(() -> new ViamGraphError("Graph %s has no EndNode", behavior.name));
-  }
+  private boolean writesExactlyOneRegisterClassWithType(Graph graph, Type resultType) {
+    var writes = graph.getNodes(WriteRegFileNode.class).toList();
 
-  private boolean writesOnlyOneRegisterFileWithResultType(EndNode node, Type resultType) {
-    return node.sideEffects.size() == 1 &&
-        node.sideEffects.stream()
-            .allMatch(sideEffectNode -> sideEffectNode instanceof WriteRegFileNode &&
-                ((WriteRegFileNode) sideEffectNode).registerFile().resultType() == resultType);
+    if (writes.size() > 1) {
+      return false;
+    }
+
+    return writes.get(0).registerFile().resultType() == resultType;
   }
 
   private boolean findUnsignedAdd32Bit(Graph behavior) {
@@ -93,7 +91,7 @@ public class IsaMatchingPass extends Pass {
         .findFirst();
 
     return matched.isPresent() &&
-        writesOnlyOneRegisterFileWithResultType(getEndNode(behavior), Type.unsignedInt(32));
+        writesExactlyOneRegisterClassWithType(behavior, Type.unsignedInt(32));
   }
 
   private boolean findAddWithImmediate32Bit(Graph behavior) {
@@ -106,7 +104,7 @@ public class IsaMatchingPass extends Pass {
         .findFirst();
 
     return matched.isPresent() &&
-        writesOnlyOneRegisterFileWithResultType(getEndNode(behavior), Type.signedInt(32));
+        writesExactlyOneRegisterClassWithType(behavior, Type.signedInt(32));
   }
 
   private boolean findSignedAdd32Bit(Graph behavior) {
@@ -121,7 +119,7 @@ public class IsaMatchingPass extends Pass {
         .findFirst();
 
     return matched.isPresent() &&
-        writesOnlyOneRegisterFileWithResultType(getEndNode(behavior), Type.signedInt(32));
+        writesExactlyOneRegisterClassWithType(behavior, Type.signedInt(32));
   }
 
   private boolean findBeq(Graph behavior, Register.Counter pc) {
