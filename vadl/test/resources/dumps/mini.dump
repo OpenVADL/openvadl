@@ -5,8 +5,10 @@ InstructionSetDefinition
 . : IntegerLiteral literal: 32 (32)
 . ConstantDefinition
 . : Identifier name: "MLen"
-. : IdentifierChain
-. : ' Identifier name: "Arch32"
+. : CallExpr
+. : ' SymbolExpr
+. : ' | IdentifierPath
+. : ' | . Identifier name: "Arch32"
 . RegisterFileDefinition
 . : Identifier name: "X"
 . : TypeLiteral
@@ -14,8 +16,10 @@ InstructionSetDefinition
 . : ' IntegerLiteral literal: 5 (5)
 . : TypeLiteral
 . : ' Identifier name: "Bits"
-. : ' IdentifierChain
-. : ' | Identifier name: "MLen"
+. : ' CallExpr
+. : ' | SymbolExpr
+. : ' | . IdentifierPath
+. : ' | . : Identifier name: "MLen"
 . FormatDefinition
 . : TypedFormatField
 . : ' Identifier name: "funct7"
@@ -52,23 +56,31 @@ InstructionSetDefinition
 . : Identifier name: "Rtype"
 . : BlockStatement
 . : ' AssignmentStatement
-. : ' | Target:
 . : ' | CallExpr
 . : ' | . SymbolExpr
-. : ' | . : Identifier name: "X"
-. : ' | . INVOCATION
-. : ' | . : IdentifierChain
-. : ' | . : ' Identifier name: "rd"
-. : ' | Value:. : ' | BinaryExpr operator: +
+. : ' | . : IdentifierPath
+. : ' | . : ' Identifier name: "X"
+. : ' | . ArgsIndices
+. : ' | . : CallExpr
+. : ' | . : ' SymbolExpr
+. : ' | . : ' | IdentifierPath
+. : ' | . : ' | . Identifier name: "rd"
+. : ' | BinaryExpr operator: +
 . : ' | . CallExpr
 . : ' | . : SymbolExpr
-. : ' | . : ' Identifier name: "X"
-. : ' | . : INVOCATION
-. : ' | . : ' IdentifierChain
-. : ' | . : ' | Identifier name: "rs1"
+. : ' | . : ' IdentifierPath
+. : ' | . : ' | Identifier name: "X"
+. : ' | . : ArgsIndices
+. : ' | . : ' CallExpr
+. : ' | . : ' | SymbolExpr
+. : ' | . : ' | . IdentifierPath
+. : ' | . : ' | . : Identifier name: "rs1"
 . : ' | . CallExpr
 . : ' | . : SymbolExpr
-. : ' | . : ' Identifier name: "X"
-. : ' | . : INVOCATION
-. : ' | . : ' IdentifierChain
-. : ' | . : ' | Identifier name: "rs2"
+. : ' | . : ' IdentifierPath
+. : ' | . : ' | Identifier name: "X"
+. : ' | . : ArgsIndices
+. : ' | . : ' CallExpr
+. : ' | . : ' | SymbolExpr
+. : ' | . : ' | . IdentifierPath
+. : ' | . : ' | . : Identifier name: "rs2"

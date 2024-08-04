@@ -62,12 +62,12 @@ class MacroExpander
 
   @Override
   public Expr visit(PlaceholderExpr expr) {
-    // FIXME: This could also be another macro
-    var arg = args.get(expr.identifierChain.identifier.name);
+    // TODO Proper handling of placeholders with format "$a.b.c"
+    var arg = args.get(expr.identifierPath.segments.get(0).name);
     if (arg == null) {
       throw new IllegalStateException("The parser should already have checked that.");
     } else if (arg instanceof Identifier id) {
-      return new IdentifierChain(id, null);
+      return new IdentifierPath(List.of(id));
     }
 
     return ((Expr) arg).accept(this);
@@ -79,7 +79,7 @@ class MacroExpander
     if (arg == null) {
       throw new IllegalStateException("The parser should already have checked that.");
     } else if (arg instanceof Identifier id) {
-      return new IdentifierChain(id, null);
+      return new IdentifierPath(List.of(id));
     }
 
     return ((Expr) arg).accept(this);
@@ -97,9 +97,8 @@ class MacroExpander
   }
 
   @Override
-  public Expr visit(IdentifierChain expr) {
-    symbols.requireValue(expr);
-    return new IdentifierChain(expr.identifier, expr.next);
+  public Expr visit(IdentifierPath expr) {
+    return expr;
   }
 
   @Override
@@ -110,15 +109,29 @@ class MacroExpander
   @Override
   public Expr visit(CallExpr expr) {
     expr.target = (SymbolExpr) expr.target.accept(this);
-    var invocations = expr.invocations;
-    expr.invocations = new ArrayList<>(invocations.size());
-    for (var invocation : invocations) {
-      var args = new ArrayList<Expr>(invocation.size());
-      for (var arg : invocation) {
+    var argsIndices = expr.argsIndices;
+    expr.argsIndices = new ArrayList<>(argsIndices.size());
+    for (var entry : argsIndices) {
+      var args = new ArrayList<Expr>(entry.size());
+      for (var arg : entry) {
         args.add(arg.accept(this));
       }
-      expr.invocations.add(args);
+      expr.argsIndices.add(args);
     }
+    var subCalls = expr.subCalls;
+    expr.subCalls = new ArrayList<>(subCalls.size());
+    for (var subCall : subCalls) {
+      argsIndices = new ArrayList<>(subCall.argsIndices().size());
+      for (var entry : subCall.argsIndices()) {
+        var args = new ArrayList<Expr>(entry.size());
+        for (var arg : entry) {
+          args.add(arg.accept(this));
+        }
+        argsIndices.add(args);
+      }
+      expr.subCalls.add(new CallExpr.SubCall(subCall.id(), argsIndices));
+    }
+    symbols.requireValue(expr);
     return expr;
   }
 
@@ -247,8 +260,10 @@ class MacroExpander
 
   @Override
   public Statement visit(AssignmentStatement assignmentStatement) {
-    if (assignmentStatement.target instanceof IdentifierChain chain) {
-      symbols.requireValue(chain);
+    if (assignmentStatement.target instanceof IdentifierPath path) {
+      symbols.requireValue(
+          new CallExpr(new SymbolExpr(path, null, path.location()), List.of(), List.of(),
+              path.location()));
     }
     assignmentStatement.valueExpression = assignmentStatement.valueExpression.accept(this);
     return assignmentStatement;
@@ -256,7 +271,8 @@ class MacroExpander
 
   private Identifier resolvePlaceholderOrIdentifier(Node n) {
     if (n instanceof PlaceholderExpr p) {
-      return ((IdentifierChain) p.accept(this)).identifier;
+      var path = (IdentifierPath) p.accept(this);
+      return path.segments.get(path.segments.size() - 1);
     }
     if (n instanceof Identifier id) {
       return id;

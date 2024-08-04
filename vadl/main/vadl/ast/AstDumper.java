@@ -2,7 +2,6 @@ package vadl.ast;
 
 import java.util.Arrays;
 import java.util.List;
-import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 /**
@@ -188,12 +187,9 @@ public class AstDumper
   }
 
   @Override
-  public Void visit(IdentifierChain expr) {
+  public Void visit(IdentifierPath expr) {
     dumpNode(expr);
-    dumpChildren(expr.identifier);
-    if (expr.next != null) {
-      dumpChildren(expr.next);
-    }
+    dumpChildren(expr.segments);
     return null;
   }
 
@@ -234,9 +230,17 @@ public class AstDumper
     dumpNode(expr);
     dumpChildren(expr.target);
     indent++;
-    for (List<Expr> invocation : expr.invocations) {
-      builder.append(indentString()).append("INVOCATION\n");
-      dumpChildren(invocation);
+    for (List<Expr> args : expr.argsIndices) {
+      builder.append(indentString()).append("ArgsIndices\n");
+      dumpChildren(args);
+    }
+    for (CallExpr.SubCall subCall : expr.subCalls) {
+      builder.append(indentString()).append("SubCall\n");
+      dumpChildren(subCall.id());
+      for (List<Expr> args : subCall.argsIndices()) {
+        builder.append(indentString()).append("ArgsIndices\n");
+        dumpChildren(args);
+      }
     }
     indent--;
     return null;
@@ -266,7 +270,7 @@ public class AstDumper
   @Override
   public Void visit(SymbolExpr expr) {
     dumpNode(expr);
-    dumpChildren(expr.target);
+    dumpChildren(expr.path);
     if (expr.size != null) {
       dumpChildren(expr.size);
     }
@@ -301,9 +305,7 @@ public class AstDumper
   public Void visit(AssignmentStatement assignmentStatement) {
     builder.append(indentString()).append("AssignmentStatement\n");
     indent++;
-    builder.append(indentString()).append("Target:\n");
     assignmentStatement.target.accept(this);
-    builder.append(indentString()).append("Value:");
     assignmentStatement.valueExpression.accept(this);
     indent--;
     return null;

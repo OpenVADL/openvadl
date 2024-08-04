@@ -108,6 +108,7 @@ TOKENS
   SYM_ASSIGN = ":=".
   SYM_DOLLAR = "$".
   SYM_SEMICOLON = ";".
+  SYM_NAMESPACE = "::".
   SYM_PAREN_OPEN = "(".
   SYM_BRACK_OPEN = "[".
   SYM_BRACE_OPEN = "{".
@@ -265,7 +266,7 @@ PRODUCTIONS
       | stringLit<out StringLiteral lit1>                (. segments.add(lit1); .)
     ) { SYM_COMMA (
       stringLit<out StringLiteral lit2>                  (. segments.add(lit2); .)
-      | term<out Expr expr>                              (. segments.add(expr); .)
+      | term<out Expr expr, false>                       (. segments.add(expr); .)
     )} SYM_PAREN_CLOSE                                   (. def = new AssemblyDefinition(ids, isMnemonic, segments, start.join(loc()));
                                                             popScope(this); .)
   .
@@ -311,13 +312,10 @@ PRODUCTIONS
    } SYM_BRACE_CLOSE                         (. popScope(this); block.location = start.join(loc()); .)
   .
 
-  assignment<out Statement statement>            (. Expr target = null; .)
-  = identifierChain<out IdentifierChain chain>   (. target = chain; .)
-    [
-      callOrBinaryExpression<out target, chain, NO_OPS>
-    ]
+  assignment<out Statement statement>
+  = callOrBinaryExpression<out Expr target, false>
     SYM_ASSIGN
-    expression<out Expr expr, BIN_OPS>                    (. statement = new AssignmentStatement(target, expr); .)
+    expression<out Expr expr, BIN_OPS>      (. statement = new AssignmentStatement(target, expr); .)
   .
 
   letStatement<out Statement letStatement>
@@ -338,80 +336,73 @@ PRODUCTIONS
 
   // -- EXPRESSIONS --------------------------------------------------------------------------------------------------
 
-  expression<out Expr expr, boolean[] allowedOps>  (. expr = null; .)
-  = termWithOptionalCast<out expr>
-  (
-    [
-      IF (expr instanceof IdentifierChain chain && chain.next == null &&
-        (la.kind == _SYM_LT  || la.kind == _SYM_PAREN_OPEN))
-      callOrBinaryExpression<out expr, chain, allowedOps>
-    ]
-    binaryTerms<out expr, expr, allowedOps>
-  )                                                (. expr = ungroup(this, reorderBinary(this, expr)); .)
+  expression<out Expr expr, boolean[] allowedOps>
+  = termWithOptionalCast<out expr, true>
+    binaryTerms<out expr, expr, allowedOps> (. expr = ungroup(this, reorderBinary(this, expr)); .)
   .
 
   /// Helper rule to figure out if a valid identifier path like "a::b" is a call like "a::b(c)",
   /// optionally with a vector size like "a::b<9>(c)" or named parameters like "a::b{c=d}".
-  callOrBinaryExpression<out Expr expr, IdentifierChain target, boolean[] allowedOps> (. expr = null; var id = target.identifier; .)
-  = (
-      vectorSizeOrBinaryExpression<out expr, target, allowedOps> (. if (expr instanceof SizeExpr sizeExpr) {
-                                                                      var symEx = new SymbolExpr(id, sizeExpr.size, target.location().join(loc()));
-                                                                      expr = symEx;
-                                                                      if (la.kind == _SYM_PAREN_OPEN) {
-                                                                        expr = new CallExpr(symEx, new ArrayList<>(), expr.location());
-                                                                      }
-                                                                    }
-                                                                 .)
-      [
-        // If the left side of a < operator is NOT a call, the right side might still be one  e.g. a < MEM<9>.
-        // In this case, we exchange the RHS of the parsed binExpr "a < MEM" with the actual rhs "MEM<9>"
-        IF (la.kind == _SYM_LT && expr instanceof BinaryExpr binExpr &&
-            binExpr.right instanceof IdentifierChain chain && chain.next == null)
-        callOrBinaryExpression<out Expr right, chain, NO_OPS> (. expr = new BinaryExpr(binExpr.left, Operator.Less(), right); .)
-      ]
+  callOrBinaryExpression<out Expr expr, boolean allowLtOp>
+  = symbolOrBinaryExpression<out expr, allowLtOp> (. if (expr instanceof SymbolExpr symExpr) {
+                                                       expr = new CallExpr(symExpr, new ArrayList<>(), new ArrayList<>(), expr.location());
+                                                     }
+                                                  .)
+    {
+      // Check if we received a symbol expression -> collect arguments
+      // Otherwise, just return the collected binary expression
+      // TODO Also collect pseudo-instruction arguments in {...}
+      IF (la.kind == _SYM_PAREN_OPEN && (expr instanceof CallExpr callExpr))
+      arguments<.out List<Expr> args.> (. callExpr.argsIndices.add(args); callExpr.location = callExpr.location.join(loc()); .)
+    }
+    {
+      IF (la.kind == _SYM_DOT && (expr instanceof CallExpr callExpr))
+      SYM_DOT                            (. var argsIndices = new ArrayList<List<Expr>>(); .)
+      identifier<out Identifier id>
       {
-        // Check if we received a vector size -> collect arguments
-        // Otherwise, just return the collected binary expression
-        // TODO Also collect pseudo-instruction arguments in {...}
-        IF (la.kind == _SYM_PAREN_OPEN && (expr instanceof CallExpr callExpr))
-        arguments<.out List<Expr> args, allowedOps.>     (. callExpr.invocations.add(args); callExpr.location = callExpr.location.join(loc()); .)
-      }
-    ) | (
-      arguments<.out List<Expr> args, allowedOps.>       (. var callExpr = new CallExpr(new SymbolExpr(id, null, id.location()), new ArrayList<>(), id.location().join(loc()));
-                                                            callExpr.invocations.add(args);
-                                                            expr = callExpr; .)
-      {
-        // TODO Also collect pseudo-instruction arguments in {...}
         IF (la.kind == _SYM_PAREN_OPEN)
-        arguments<.out List<Expr> nextArgs, allowedOps.> (. callExpr.invocations.add(nextArgs); callExpr.location = callExpr.location.join(loc()); .)
-      }
-    )
+        arguments<.out List<Expr> args.> (. argsIndices.add(args); .)
+      }                                  (. callExpr.subCalls.add(new CallExpr.SubCall(id, argsIndices)); callExpr.location = callExpr.location.join(loc()); .)
+    }                                    (. if (expr instanceof CallExpr callExpr && !insideMacro && !insideAnnotation) symbolTable.requireValue(callExpr); .)
   .
 
   /// Represents one set of invocation arguments.
   /// Multiple invocations (e.g. multi-dimensional access) will need multiple #arguments
-  arguments<.out List<Expr> args, boolean[] allowedOps.>
-  = SYM_PAREN_OPEN                                 (. args = new ArrayList<>(); .)
-    expression<out Expr arg, allowedOps>           (. args.add(arg); .)
+  arguments<.out List<Expr> args.>
+  = SYM_PAREN_OPEN                            (. args = new ArrayList<>(); .)
+    expression<out Expr arg, BIN_OPS>         (. args.add(arg); .)
     {
         SYM_COMMA
-        expression<out Expr nextArg, allowedOps>   (. args.add(arg); .)
+        expression<out Expr nextArg, BIN_OPS> (. args.add(arg); .)
     }
     SYM_PAREN_CLOSE
   .
+
+  symbolOrBinaryExpression<out Expr expr, boolean allowLtOp>
+  = identifierPath<out IdentifierPath path>        (. expr = new SymbolExpr(path, null, path.location()); .)
+    [
+      IF (la.kind == _SYM_LT)
+      vectorSizeOrBinaryExpression<out expr, path> (. if (expr instanceof SizeExpr sizeExpr) {
+                                                        expr = new SymbolExpr(path, sizeExpr.size, path.location().join(loc()));
+                                                      } else if (!allowLtOp) {
+                                                        semError(this, expr.location(), "Binary operator '<' not allowed here");
+                                                      }
+                                                   .)
+    ]
+  .
+
 
   /// Helper rule to distinguish between the size of a type like "Type<width>"
   /// and the binary expression < like "a < 9 && b > 2".
   /// If a different operator is found between < and >, or no > is found at all,
   /// the leading < is interpreted as the binary operator and a BinaryExpr returned.
   /// Otherwise, a vector size is returned wrapped in a SizeExpr.
-  /// If this rule is used in a place where no binary expression is valid, use NO_OPS as allowedOps.
-  vectorSizeOrBinaryExpression<out Expr expr, Expr target, boolean[] allowedOps>
+  vectorSizeOrBinaryExpression<out Expr expr, Expr target>
   = SYM_LT
-    termWithOptionalCast<out Expr term> (. expr = new BinaryExpr(target, Operator.Less(), term); .)
+    termWithOptionalCast<out Expr term, false> (. expr = new BinaryExpr(target, Operator.Less(), term); .)
     [
       IF (la.kind == _SYM_GT)
-      SYM_GT                            (. expr = new SizeExpr(term); .)
+      SYM_GT                                   (. expr = new SizeExpr(term); .)
     ]
   .
 
@@ -451,7 +442,7 @@ PRODUCTIONS
 
   unary<out Expr expr>
   = unaryOperator<out UnaryOperator op>
-    term<out Expr operand> (. expr = new UnaryExpr(op, operand); .)
+    term<out Expr operand, false> (. expr = new UnaryExpr(op, operand); .)
   .
 
   unaryOperator<out UnaryOperator op> (. op = null; .)
@@ -460,8 +451,8 @@ PRODUCTIONS
   | SYM_TILDE (. op = UnaryOperator.COMPLEMENT; .)
   .
 
-  termWithOptionalCast<out Expr expr>
-  = term<out expr>
+  termWithOptionalCast<out Expr expr, boolean allowLtOp>
+  = term<out expr, allowLtOp>
     {
       IF (la.kind == _SYM_AS)
       SYM_AS
@@ -469,9 +460,9 @@ PRODUCTIONS
     }
   .
 
-  term<out Expr expr>                                               (. expr = null; .)
+  term<out Expr expr, boolean allowLtOp>                            (. expr = null; .)
   = number                                                          (. expr = new IntegerLiteral(t.val, loc()); .)
-  | identifierChain<out IdentifierChain chain>                      (. expr = chain; if (!insideMacro && !insideAnnotation) symbolTable.requireValue(chain); .)
+  | callOrBinaryExpression<out expr, allowLtOp>
   | SYM_PAREN_OPEN expression<out expr, BIN_OPS> SYM_PAREN_CLOSE    (. expr = new GroupExpr(expr); .)
   | unary<out expr>
   | ifExpression<out expr>
@@ -479,9 +470,12 @@ PRODUCTIONS
   | macroInstanceOrPlaceholder<out Node node, BasicSyntaxType.Ex()> (. expr = (Expr)node; .)
   .
 
-  identifierChain<out IdentifierChain chain> (. IdentifierChain next = null; .)
-  = identifier<out Identifier id>
-    [ SYM_DOT identifierChain<out next> ]    (. chain = new IdentifierChain(id, next); .)
+  identifierPath<out IdentifierPath path> (. List<Identifier> segments = new ArrayList<>(); .)
+  = identifier<out Identifier id>         (. segments.add(id); .)
+    {
+      SYM_NAMESPACE
+      identifier<out Identifier next>     (. segments.add(next); .)
+    }                                     (. path = new IdentifierPath(segments); .)
   .
 
   rangeExpression<out RangeExpr expr>
@@ -517,7 +511,7 @@ PRODUCTIONS
       [
         // In an expression like `b as Int < 9`, it would be ambiguous whether the < is part of the type --> YES
         IF (la.kind == _SYM_LT)
-        vectorSizeOrBinaryExpression<out Expr expr, new IdentifierChain(id, null), BIN_OPS_EXCEPT_GT>
+        vectorSizeOrBinaryExpression<out Expr expr, new IdentifierPath(List.of(id))>
                                           (. if (expr instanceof SizeExpr s) sizeExpr = s.size;
                                              else errors.SemErr(t.line, t.col, "Invalid type expression"); .)
       ]                                   (. type = new TypeLiteral(id, sizeExpr, id.location().join(loc())) ;.)
@@ -534,8 +528,8 @@ PRODUCTIONS
   .
 
   placeholder<out PlaceholderExpr placeholder, SyntaxType requiredType>
-  = SYM_DOLLAR                               (. var startloc = loc(); var args = new ArrayList<Node>(); .)
-  identifierChain<out IdentifierChain chain> (. placeholder = new PlaceholderExpr(chain, startloc.join(loc())); .)
+  = SYM_DOLLAR                            (. var startloc = loc(); .)
+  identifierPath<out IdentifierPath path> (. placeholder = new PlaceholderExpr(path, startloc.join(loc())); .)
   .
 
 
@@ -579,7 +573,7 @@ PRODUCTIONS
       )
   SYM_BRACE_CLOSE                       (.
                                           insideMacro = false;
-                                          var bodyType = body.syntaxType();
+                                          var bodyType = narrowNode(body).syntaxType();
                                           if (!bodyType.isSubTypeOf(returnType)) {
                                               errors.SemErr(t.line, t.col, "The macro signature promises to return `%s` but it's body is of type `%s`.".formatted(returnType, bodyType));
                                               symbolTable.addMacro(new Macro(id, params, body, BasicSyntaxType.Invalid()), startLoc.join(loc()));

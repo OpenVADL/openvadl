@@ -155,10 +155,24 @@ class ParserUtils {
     } else if (body instanceof Definition def) {
       var expander = new MacroExpander(argMap, parser.symbolTable);
       body = expander.expandDefinition(def);
+    } else if (body instanceof Identifier id) {
+      body = id;
     } else {
-      throw new RuntimeException("Expanding non expressions are not yet implemented");
+      throw new RuntimeException("Expanding %s not yet implemented".formatted(body.getClass()));
     }
     return body;
+  }
+
+  static Node narrowNode(Node node) {
+    // TODO Consider making IdentifierPath actually extend SymbolExpr / CallExpr
+    if (node instanceof CallExpr callExpr
+        && callExpr.argsIndices.isEmpty() && callExpr.subCalls.isEmpty()) {
+      node = callExpr.target;
+    }
+    if (node instanceof SymbolExpr symExpr && symExpr.size == null) {
+      node = symExpr.path;
+    }
+    return node;
   }
 
   static void pushScope(Parser parser) {
@@ -183,5 +197,9 @@ class ParserUtils {
 
   static void popScope(Parser parser) {
     parser.symbolTable = Objects.requireNonNull(parser.symbolTable.parent);
+  }
+
+  static void semError(Parser parser, SourceLocation location, String message) {
+    parser.errors.SemErr(location.begin().line(), location.begin().column(), message);
   }
 }
