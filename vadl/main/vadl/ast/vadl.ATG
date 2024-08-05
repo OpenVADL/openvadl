@@ -337,8 +337,30 @@ PRODUCTIONS
   // -- EXPRESSIONS --------------------------------------------------------------------------------------------------
 
   expression<out Expr expr, boolean[] allowedOps>
-  = termWithOptionalCast<out expr, true>
-    binaryTerms<out expr, expr, allowedOps> (. expr = ungroup(this, reorderBinary(this, expr)); .)
+  = term<out expr, true>
+    {
+        IF (allowedOps[la.kind] || la.kind == _SYM_AS)
+        (
+          binaryOperator<out Operator op>
+          term<out Expr right, true>                        (. expr = new BinaryExpr(expr, op, right); .)
+        | SYM_AS
+          symbolOrBinaryExpression<out Expr symOrBin, true> (. // Since 'as' has a higher precedence than any other bin op, we might have to repack the previously collected binary expression.
+                                                               if (symOrBin instanceof BinaryExpr binExpr) {
+                                                                 if (expr instanceof BinaryExpr b) {
+                                                                   b.right = new CastExpr(b.right, new TypeLiteral((SymbolExpr) binExpr.left));
+                                                                   binExpr.left = b;
+                                                                 } else {
+                                                                   binExpr.left = new CastExpr(expr, new TypeLiteral((SymbolExpr) binExpr.left));
+                                                                 }
+                                                                 expr = binExpr;
+                                                               } else if (expr instanceof BinaryExpr b) {
+                                                                 b.right = new CastExpr(b.right, new TypeLiteral((SymbolExpr) symOrBin));
+                                                               } else {
+                                                                 expr = new CastExpr(expr, new TypeLiteral((SymbolExpr) symOrBin));
+                                                               }
+                                                            .)
+        )
+    }                                                       (. expr = ungroup(this, reorderBinary(this, expr)); .)
   .
 
   /// Helper rule to figure out if a valid identifier path like "a::b" is a call like "a::b(c)",
@@ -373,7 +395,7 @@ PRODUCTIONS
     expression<out Expr arg, BIN_OPS>         (. args.add(arg); .)
     {
         SYM_COMMA
-        expression<out Expr nextArg, BIN_OPS> (. args.add(arg); .)
+        expression<out Expr nextArg, BIN_OPS> (. args.add(nextArg); .)
     }
     SYM_PAREN_CLOSE
   .
@@ -382,7 +404,7 @@ PRODUCTIONS
   = identifierPath<out IdentifierPath path>        (. expr = new SymbolExpr(path, null, path.location()); .)
     [
       IF (la.kind == _SYM_LT)
-      vectorSizeOrBinaryExpression<out expr, path> (. if (expr instanceof SizeExpr sizeExpr) {
+      vectorSizeOrBinaryExpression<out expr, expr> (. if (expr instanceof SizeExpr sizeExpr) {
                                                         expr = new SymbolExpr(path, sizeExpr.size, path.location().join(loc()));
                                                       } else if (!allowLtOp) {
                                                         semError(this, expr.location(), "Binary operator '<' not allowed here");
@@ -399,19 +421,11 @@ PRODUCTIONS
   /// Otherwise, a vector size is returned wrapped in a SizeExpr.
   vectorSizeOrBinaryExpression<out Expr expr, Expr target>
   = SYM_LT
-    termWithOptionalCast<out Expr term, false> (. expr = new BinaryExpr(target, Operator.Less(), term); .)
+    term<out Expr term, false> (. expr = new BinaryExpr(target, Operator.Less(), term); .)
     [
       IF (la.kind == _SYM_GT)
-      SYM_GT                                   (. expr = new SizeExpr(term); .)
+      SYM_GT                   (. expr = new SizeExpr(term); .)
     ]
-  .
-
-  binaryTerms<out Expr expr, Expr left, boolean[] allowedOps> (. expr = left; .)
-  = {
-    IF (allowedOps[la.kind])
-    binaryOperator<out Operator op>
-    expression<out Expr right, NO_OPS> (. expr = new BinaryExpr(expr, op, right); .)
-  }
   .
 
   binaryOperator<out Operator op>    (.op = null;.)
@@ -449,15 +463,6 @@ PRODUCTIONS
   = SYM_MINUS (. op = UnaryOperator.NEGATIVE; .)
   | SYM_EXCL  (. op = UnaryOperator.LOG_NOT; .)
   | SYM_TILDE (. op = UnaryOperator.COMPLEMENT; .)
-  .
-
-  termWithOptionalCast<out Expr expr, boolean allowLtOp>
-  = term<out expr, allowLtOp>
-    {
-      IF (la.kind == _SYM_AS)
-      SYM_AS
-      typeLiteral<out TypeLiteral type> (. expr = new CastExpr(expr, type); .)
-    }
   .
 
   term<out Expr expr, boolean allowLtOp>                            (. expr = null; .)
@@ -503,19 +508,13 @@ PRODUCTIONS
   // -- PRIMITIVES ---------------------------------------------------------------------------------------------------
 
   typeLiteral<out TypeLiteral type>       (. type = null; Expr sizeExpr = null; .)
-  =
-  T_BOOL                                  (. var loc = loc(); type = new TypeLiteral(new Identifier(t.val, loc), null, loc); .)
-  |
-   (
-      identifier<out Identifier id>
-      [
-        // In an expression like `b as Int < 9`, it would be ambiguous whether the < is part of the type --> YES
-        IF (la.kind == _SYM_LT)
-        vectorSizeOrBinaryExpression<out Expr expr, new IdentifierPath(List.of(id))>
-                                          (. if (expr instanceof SizeExpr s) sizeExpr = s.size;
-                                             else errors.SemErr(t.line, t.col, "Invalid type expression"); .)
-      ]                                   (. type = new TypeLiteral(id, sizeExpr, id.location().join(loc())) ;.)
-  )
+  = T_BOOL                                (. var loc = loc(); type = new TypeLiteral(new Identifier(t.val, loc), null, loc); .)
+  | identifier<out Identifier id>
+    [
+      SYM_LT
+      expression<out sizeExpr, BIN_OPS_EXCEPT_GT>
+      SYM_GT
+    ]                                     (. type = new TypeLiteral(id, sizeExpr, id.location().join(loc())); .)
   .
 
   identifier<out Identifier identifier> = identifierToken (. identifier = new Identifier(t.val, loc()); .)

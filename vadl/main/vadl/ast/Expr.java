@@ -725,6 +725,12 @@ class TypeLiteral extends Expr {
     this.loc = loc;
   }
 
+  public TypeLiteral(SymbolExpr symbolExpr) {
+    this.baseType = symbolExpr.path.segments.get(symbolExpr.path.segments.size() - 1);
+    this.sizeExpression = symbolExpr.size;
+    this.loc = symbolExpr.location();
+  }
+
   @Override
   SourceLocation location() {
     return loc;

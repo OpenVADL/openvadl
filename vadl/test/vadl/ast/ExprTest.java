@@ -37,9 +37,13 @@ public class ExprTest {
   void castPrecedence() {
     var prog = """
         constant a = -4 as Bits<3> + 2
+        constant b = 5 * 2 + 3 as Bits < 3
+        constant c = 9 + 1 as Bits<3>
         """;
     var equiv = """
         constant a = ((-4) as Bits<3>) + 2
+        constant b = ((5 * 2) + (3 as Bits)) < 3
+        constant c = 9 + (1 as Bits<3>)
         """;
 
     var ast = VadlParser.parse(prog);
