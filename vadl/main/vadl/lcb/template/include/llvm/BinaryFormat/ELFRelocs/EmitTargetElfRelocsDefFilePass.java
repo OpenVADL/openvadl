@@ -6,6 +6,7 @@ import java.util.Map;
 import vadl.gcb.valuetypes.ProcessorName;
 import vadl.lcb.config.LcbConfiguration;
 import vadl.lcb.template.CommonVarNames;
+import vadl.pass.PassKey;
 import vadl.template.AbstractTemplateRenderingPass;
 import vadl.viam.Specification;
 
@@ -37,7 +38,8 @@ public class EmitTargetElfRelocsDefFilePass extends AbstractTemplateRenderingPas
   }
 
   @Override
-  protected Map<String, Object> createVariables(Specification specification) {
+  protected Map<String, Object> createVariables(final Map<PassKey, Object> passResults,
+                                                Specification specification) {
     return Map.of(CommonVarNames.NAMESPACE, specification.name(),
         CommonVarNames.RELOCATIONS, List.of(new Relocation("relocationIdentifierValue")));
   }

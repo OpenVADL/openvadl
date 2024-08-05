@@ -41,7 +41,7 @@ class EmitClangTargetCppFilePassTest {
     var writer = new StringWriter();
 
     // When
-    template.renderToString(specification, writer);
+    template.renderToString(null, specification, writer);
     var output = writer.toString();
 
     // Then
