@@ -62,6 +62,34 @@ class ParserUtils {
   }
 
   /**
+   * Reorders the tail end of a left-aligned binary expression tree, * applying a cast on
+   * its last element or, if the given expr is not a binary expression, simply casts that expr.
+   * Since the right hand of a cast result symOrBin can also be a binary expression with the target
+   * type wrapped in a 'lt' comparison, this function also unpacks the binary symOrBin's lhs.
+   *
+   * @param expr A left-aligned binary expression tree.
+   * @param symOrBin Either a SymbolExpr of the cast target type, or a BinaryExpr with the
+   *                 SymbolExpr as the left operand.
+   * @return A left-aligned binary expression tree with a CastExpr as its leaf or a simple CastExpr.
+   */
+  static Expr reorderCastExpr(Expr expr, Expr symOrBin) {
+    if (symOrBin instanceof BinaryExpr binSym) {
+      if (expr instanceof BinaryExpr binExpr) {
+        binExpr.right = new CastExpr(binExpr.right, new TypeLiteral((SymbolExpr) binSym.left));
+        binSym.left = binExpr;
+      } else {
+        binSym.left = new CastExpr(expr, new TypeLiteral((SymbolExpr) binSym.left));
+      }
+      return binSym;
+    } else if (expr instanceof BinaryExpr binExpr) {
+      binExpr.right = new CastExpr(binExpr.right, new TypeLiteral((SymbolExpr) symOrBin));
+      return binExpr;
+    } else {
+      return new CastExpr(expr, new TypeLiteral((SymbolExpr) symOrBin));
+    }
+  }
+
+  /**
    * Will ungroup expressions if the parser is not currently parsing a model.
    *
    * @see Ungrouper#ungroup(Expr)
@@ -164,15 +192,21 @@ class ParserUtils {
   }
 
   static Node narrowNode(Node node) {
-    // TODO Consider making IdentifierPath actually extend SymbolExpr / CallExpr
-    if (node instanceof CallExpr callExpr
-        && callExpr.argsIndices.isEmpty() && callExpr.subCalls.isEmpty()) {
-      node = callExpr.target;
-    }
-    if (node instanceof SymbolExpr symExpr && symExpr.size == null) {
-      node = symExpr.path;
+    if (node instanceof Expr expr) {
+      return narrowExpr(expr);
     }
     return node;
+  }
+
+  static Expr narrowExpr(Expr expr) {
+    if (expr instanceof CallExpr callExpr
+        && callExpr.argsIndices.isEmpty() && callExpr.subCalls.isEmpty()) {
+      expr = callExpr.target;
+    }
+    if (expr instanceof SymbolExpr symExpr && symExpr.size == null) {
+      expr = symExpr.path;
+    }
+    return expr;
   }
 
   static void pushScope(Parser parser) {

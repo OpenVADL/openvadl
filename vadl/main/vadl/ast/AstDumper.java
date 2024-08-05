@@ -180,9 +180,12 @@ public class AstDumper
   public Void visit(TypeLiteral expr) {
     dumpNode(expr);
     dumpChildren(expr.baseType);
-    if (expr.sizeExpression != null) {
-      dumpChildren(expr.sizeExpression);
+    indent++;
+    for (List<Expr> sizes : expr.sizeIndices) {
+      builder.append(indentString()).append("Sizes\n");
+      dumpChildren(sizes);
     }
+    indent--;
     return null;
   }
 

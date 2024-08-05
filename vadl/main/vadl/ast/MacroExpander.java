@@ -92,8 +92,13 @@ class MacroExpander
 
   @Override
   public Expr visit(TypeLiteral expr) {
-    var sizeExpression = expr.sizeExpression == null ? null : expr.sizeExpression.accept(this);
-    return new TypeLiteral(expr.baseType, sizeExpression, expr.loc);
+    for (int i = 0; i < expr.sizeIndices.size(); i++) {
+      var sizes = expr.sizeIndices.get(i);
+      for (int j = 0; j < sizes.size(); j++) {
+        sizes.set(j, sizes.get(j).accept(this));
+      }
+    }
+    return expr;
   }
 
   @Override

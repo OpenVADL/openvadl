@@ -712,22 +712,25 @@ class RangeExpr extends Expr {
  * constant evaluation has to be performed for the concrete type to be known here.
  */
 class TypeLiteral extends Expr {
-  Identifier baseType;
+  IdentifierPath baseType;
 
-  @Nullable
-  Expr sizeExpression;
+  /**
+   * The sizes of the type literal. An expression of <code>T<1,2><3,4></code> is equivalent to
+   * a sizeIndices of <code>List.of(List.of(1, 2), List.of(3, 4))</code>
+   */
+  List<List<Expr>> sizeIndices;
 
   SourceLocation loc;
 
-  public TypeLiteral(Identifier baseType, @Nullable Expr sizeExpression, SourceLocation loc) {
+  public TypeLiteral(IdentifierPath baseType, List<List<Expr>> sizeIndices, SourceLocation loc) {
     this.baseType = baseType;
-    this.sizeExpression = sizeExpression;
+    this.sizeIndices = sizeIndices;
     this.loc = loc;
   }
 
   public TypeLiteral(SymbolExpr symbolExpr) {
-    this.baseType = symbolExpr.path.segments.get(symbolExpr.path.segments.size() - 1);
-    this.sizeExpression = symbolExpr.size;
+    this.baseType = symbolExpr.path;
+    this.sizeIndices = symbolExpr.size == null ? List.of() : List.of(List.of(symbolExpr.size));
     this.loc = symbolExpr.location();
   }
 
@@ -743,12 +746,17 @@ class TypeLiteral extends Expr {
 
   @Override
   void prettyPrint(int indent, StringBuilder builder) {
-    builder.append(baseType.name);
-    if (sizeExpression != null) {
+    builder.append(baseType.pathToString());
+    for (var sizes : sizeIndices) {
       builder.append("<");
-      sizeExpression.prettyPrint(
-          indent, builder
-      );
+      var isFirst = true;
+      for (var size : sizes) {
+        if (!isFirst) {
+          builder.append(", ");
+        }
+        isFirst = false;
+        size.prettyPrint(0, builder);
+      }
       builder.append(">");
     }
   }
@@ -774,13 +782,13 @@ class TypeLiteral extends Expr {
 
     TypeLiteral that = (TypeLiteral) o;
     return baseType.equals(that.baseType)
-        && Objects.equals(sizeExpression, that.sizeExpression);
+        && Objects.equals(sizeIndices, that.sizeIndices);
   }
 
   @Override
   public int hashCode() {
     int result = baseType.hashCode();
-    result = 31 * result + Objects.hashCode(sizeExpression);
+    result = 31 * result + Objects.hashCode(sizeIndices);
     return result;
   }
 }

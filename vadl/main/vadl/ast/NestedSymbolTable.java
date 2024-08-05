@@ -71,7 +71,7 @@ class NestedSymbolTable implements DefinitionVisitor<Void> {
 
   @Override
   public Void visit(CounterDefinition definition) {
-    var typeSymbol = resolveSymbol(definition.type.baseType.name);
+    var typeSymbol = resolveSymbol(definition.type.baseType.pathToString());
     var typeDef = typeSymbol instanceof FormatSymbol s ? s.definition : null;
     defineSymbol(new ValuedSymbol(definition.identifier.name, typeDef, SymbolType.COUNTER),
         definition.location());
@@ -87,7 +87,7 @@ class NestedSymbolTable implements DefinitionVisitor<Void> {
 
   @Override
   public Void visit(RegisterDefinition definition) {
-    var typeSymbol = resolveSymbol(definition.type.baseType.name);
+    var typeSymbol = resolveSymbol(definition.type.baseType.pathToString());
     var typeDef = typeSymbol instanceof FormatSymbol s ? s.definition : null;
     defineSymbol(new ValuedSymbol(definition.identifier.name, typeDef, SymbolType.REGISTER),
         definition.location());
@@ -272,7 +272,7 @@ class NestedSymbolTable implements DefinitionVisitor<Void> {
                   field.identifier().name, f.type.baseType), next.location());
         }
       } else if (subCalls.size() > 1) {
-        var typeSymbol = f.symbolTable.resolveSymbol(f.type.baseType.name);
+        var typeSymbol = f.symbolTable.resolveSymbol(f.type.baseType.pathToString());
         if (typeSymbol instanceof FormatSymbol formatSymbol) {
           verifyFormatAccess(formatSymbol.definition, subCalls.subList(1, subCalls.size()));
         } else if (typeSymbol == null) {
@@ -288,9 +288,9 @@ class NestedSymbolTable implements DefinitionVisitor<Void> {
 
   private boolean isValuedAnnotation(TypeLiteral type) {
     // TODO Built-in types should be configurable, not hardcoded
-    return type.baseType.name.equals("Bool")
-        || type.baseType.name.equals("Bits")
-        || type.baseType.name.equals("SInt");
+    return type.baseType.pathToString().equals("Bool")
+        || type.baseType.pathToString().equals("Bits")
+        || type.baseType.pathToString().equals("SInt");
   }
 
   private void verifyAvailable(String name, SourceLocation loc) {
@@ -305,7 +305,7 @@ class NestedSymbolTable implements DefinitionVisitor<Void> {
 
   enum SymbolType {
     CONSTANT, COUNTER, FORMAT, INSTRUCTION, INSTRUCTION_SET, MEMORY, REGISTER, REGISTER_FILE,
-    FORMAT_FIELD, MACRO;
+    FORMAT_FIELD, MACRO
   }
 
   interface Symbol {

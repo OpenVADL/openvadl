@@ -266,7 +266,7 @@ PRODUCTIONS
       | stringLit<out StringLiteral lit1>                (. segments.add(lit1); .)
     ) { SYM_COMMA (
       stringLit<out StringLiteral lit2>                  (. segments.add(lit2); .)
-      | term<out Expr expr, false>                       (. segments.add(expr); .)
+      | term<out Expr expr>                              (. segments.add(expr); .)
     )} SYM_PAREN_CLOSE                                   (. def = new AssemblyDefinition(ids, isMnemonic, segments, start.join(loc()));
                                                             popScope(this); .)
   .
@@ -337,28 +337,14 @@ PRODUCTIONS
   // -- EXPRESSIONS --------------------------------------------------------------------------------------------------
 
   expression<out Expr expr, boolean[] allowedOps>
-  = term<out expr, true>
+  = term<out expr>
     {
         IF (allowedOps[la.kind] || la.kind == _SYM_AS)
         (
           binaryOperator<out Operator op>
-          term<out Expr right, true>                        (. expr = new BinaryExpr(expr, op, right); .)
+          term<out Expr right>                              (. expr = new BinaryExpr(expr, op, right); .)
         | SYM_AS
-          symbolOrBinaryExpression<out Expr symOrBin, true> (. // Since 'as' has a higher precedence than any other bin op, we might have to repack the previously collected binary expression.
-                                                               if (symOrBin instanceof BinaryExpr binExpr) {
-                                                                 if (expr instanceof BinaryExpr b) {
-                                                                   b.right = new CastExpr(b.right, new TypeLiteral((SymbolExpr) binExpr.left));
-                                                                   binExpr.left = b;
-                                                                 } else {
-                                                                   binExpr.left = new CastExpr(expr, new TypeLiteral((SymbolExpr) binExpr.left));
-                                                                 }
-                                                                 expr = binExpr;
-                                                               } else if (expr instanceof BinaryExpr b) {
-                                                                 b.right = new CastExpr(b.right, new TypeLiteral((SymbolExpr) symOrBin));
-                                                               } else {
-                                                                 expr = new CastExpr(expr, new TypeLiteral((SymbolExpr) symOrBin));
-                                                               }
-                                                            .)
+          symbolOrBinaryExpression<out Expr symOrBin, true> (. expr = reorderCastExpr(expr, symOrBin); .)
         )
     }                                                       (. expr = ungroup(this, reorderBinary(this, expr)); .)
   .
@@ -421,7 +407,7 @@ PRODUCTIONS
   /// Otherwise, a vector size is returned wrapped in a SizeExpr.
   vectorSizeOrBinaryExpression<out Expr expr, Expr target>
   = SYM_LT
-    term<out Expr term, false> (. expr = new BinaryExpr(target, Operator.Less(), term); .)
+    term<out Expr term>        (. expr = new BinaryExpr(target, Operator.Less(), term); .)
     [
       IF (la.kind == _SYM_GT)
       SYM_GT                   (. expr = new SizeExpr(term); .)
@@ -456,7 +442,12 @@ PRODUCTIONS
 
   unary<out Expr expr>
   = unaryOperator<out UnaryOperator op>
-    term<out Expr operand, false> (. expr = new UnaryExpr(op, operand); .)
+    term<out Expr operand> (. if (operand instanceof BinaryExpr binExpr) {
+                                expr = new BinaryExpr(new UnaryExpr(op, narrowExpr(binExpr.left)), binExpr.operator, narrowExpr(binExpr.right));
+                              } else {
+                                expr = new UnaryExpr(op, narrowExpr(operand));
+                              }
+                           .)
   .
 
   unaryOperator<out UnaryOperator op> (. op = null; .)
@@ -465,9 +456,9 @@ PRODUCTIONS
   | SYM_TILDE (. op = UnaryOperator.COMPLEMENT; .)
   .
 
-  term<out Expr expr, boolean allowLtOp>                            (. expr = null; .)
+  term<out Expr expr>                            (. expr = null; .)
   = number                                                          (. expr = new IntegerLiteral(t.val, loc()); .)
-  | callOrBinaryExpression<out expr, allowLtOp>
+  | callOrBinaryExpression<out expr, true>
   | SYM_PAREN_OPEN expression<out expr, BIN_OPS> SYM_PAREN_CLOSE    (. expr = new GroupExpr(expr); .)
   | unary<out expr>
   | ifExpression<out expr>
@@ -507,17 +498,26 @@ PRODUCTIONS
 
   // -- PRIMITIVES ---------------------------------------------------------------------------------------------------
 
-  typeLiteral<out TypeLiteral type>       (. type = null; Expr sizeExpr = null; .)
-  = T_BOOL                                (. var loc = loc(); type = new TypeLiteral(new Identifier(t.val, loc), null, loc); .)
-  | identifier<out Identifier id>
-    [
-      SYM_LT
-      expression<out sizeExpr, BIN_OPS_EXCEPT_GT>
-      SYM_GT
-    ]                                     (. type = new TypeLiteral(id, sizeExpr, id.location().join(loc())); .)
+  typeLiteral<out TypeLiteral type>
+  = identifierPath<out IdentifierPath path>              (. List<List<Expr>> sizeIndices = new ArrayList<>(); .)
+    {
+      SYM_LT                                             (. List<Expr> sizes = new ArrayList<>(); .)
+      expression<out Expr sizeExpr, BIN_OPS_EXCEPT_GT>   (. sizes.add(sizeExpr); .)
+      {
+        SYM_COMMA
+        expression<out Expr nextSize, BIN_OPS_EXCEPT_GT> (. sizes.add(nextSize); .)
+      }
+      SYM_GT                                             (. sizeIndices.add(sizes); .)
+    }                                                    (. type = new TypeLiteral(path, sizeIndices, path.location().join(loc())); .)
   .
 
-  identifier<out Identifier identifier> = identifierToken (. identifier = new Identifier(t.val, loc()); .)
+  identifier<out Identifier identifier>
+  = (identifierToken | allowedIdentifierKeywords) (. identifier = new Identifier(t.val, loc()); .)
+  .
+
+  allowedIdentifierKeywords
+  = T_BOOL
+  // TODO Add all allowed keywords
   .
 
   // -- MACROS -------------------------------------------------------------------------------------------------------
