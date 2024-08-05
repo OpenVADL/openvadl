@@ -39,6 +39,8 @@ interface DefinitionVisitor<R> {
   R visit(EncodingDefinition definition);
 
   R visit(AssemblyDefinition definition);
+
+  R visit(UsingDefinition definition);
 }
 
 class ConstantDefinition extends Definition {
@@ -250,6 +252,64 @@ class FormatDefinition extends Definition {
       int result = Objects.hashCode(identifier);
       result = 31 * result + Objects.hashCode(type);
       result = 31 * result + Objects.hashCode(symbolTable);
+      return result;
+    }
+  }
+
+  static class DerivedFormatField extends Node implements FormatField {
+    Identifier identifier;
+    Expr expr;
+
+    public DerivedFormatField(Identifier identifier, Expr expr) {
+      this.identifier = identifier;
+      this.expr = expr;
+    }
+
+    @Override
+    public Identifier identifier() {
+      return identifier;
+    }
+
+    @Override
+    SourceLocation location() {
+      return identifier.location().join(expr.location());
+    }
+
+    @Override
+    SyntaxType syntaxType() {
+      return BasicSyntaxType.Invalid();
+    }
+
+    @Override
+    public void prettyPrint(int indent, StringBuilder builder) {
+      identifier.prettyPrint(indent, builder);
+      builder.append(" = ");
+      expr.prettyPrint(indent, builder);
+    }
+
+    @Override
+    public String toString() {
+      return this.getClass().getSimpleName();
+    }
+
+    @Override
+    public boolean equals(Object o) {
+      if (this == o) {
+        return true;
+      }
+      if (o == null || getClass() != o.getClass()) {
+        return false;
+      }
+
+      DerivedFormatField that = (DerivedFormatField) o;
+      return Objects.equals(identifier, that.identifier)
+          && Objects.equals(expr, that.expr);
+    }
+
+    @Override
+    public int hashCode() {
+      int result = Objects.hashCode(identifier);
+      result = 31 * result + Objects.hashCode(expr);
       return result;
     }
   }
@@ -702,10 +762,10 @@ class RegisterFileDefinition extends Definition {
 class InstructionDefinition extends Definition {
   Node identifier;
   Node typeIdentifier;
-  BlockStatement behavior;
+  Statement behavior;
   final SourceLocation loc;
 
-  InstructionDefinition(Node identifier, Node typeIdentifier, BlockStatement behavior,
+  InstructionDefinition(Node identifier, Node typeIdentifier, Statement behavior,
                         SourceLocation location) {
     this.identifier = identifier;
     this.typeIdentifier = typeIdentifier;
@@ -932,13 +992,73 @@ class AssemblyDefinition extends Definition {
   }
 }
 
+class UsingDefinition extends Definition {
+  final Identifier id;
+  final TypeLiteral type;
+  final SourceLocation loc;
+
+  UsingDefinition(Identifier id, TypeLiteral type, SourceLocation location) {
+    this.id = id;
+    this.type = type;
+    this.loc = location;
+  }
+
+  @Override
+  SourceLocation location() {
+    return loc;
+  }
+
+  @Override
+  SyntaxType syntaxType() {
+    return BasicSyntaxType.IsaDefs();
+  }
+
+  @Override
+  void prettyPrint(int indent, StringBuilder builder) {
+    builder.append(prettyIndentString(indent));
+    builder.append("using ");
+    id.prettyPrint(indent, builder);
+    builder.append(" = ");
+    type.prettyPrint(indent, builder);
+  }
+
+  @Override
+  <R> R accept(DefinitionVisitor<R> visitor) {
+    return visitor.visit(this);
+  }
+
+  @Override
+  public String toString() {
+    return this.getClass().getSimpleName();
+  }
+
+  @Override
+  public boolean equals(Object o) {
+    if (this == o) {
+      return true;
+    }
+    if (o == null || getClass() != o.getClass()) {
+      return false;
+    }
+
+    var that = (UsingDefinition) o;
+    return Objects.equals(annotations, that.annotations)
+        && Objects.equals(id, that.id)
+        && Objects.equals(type, that.type);
+  }
+
+  @Override
+  public int hashCode() {
+    int result = Objects.hashCode(annotations);
+    result = 31 * result + Objects.hashCode(id);
+    result = 31 * result + Objects.hashCode(type);
+    return result;
+  }
+}
+
 record Annotations(List<Annotation> annotations) {
   Annotations() {
     this(new ArrayList<>());
-  }
-
-  void add(Annotation annotation) {
-    annotations.add(annotation);
   }
 
   void prettyPrint(int indent, StringBuilder builder) {

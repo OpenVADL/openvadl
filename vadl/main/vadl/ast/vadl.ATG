@@ -74,6 +74,7 @@ TOKENS
   KW_IF = "if".
   THEN = "then".
   ELSE = "else".
+  USING = "using".
 
   SYM_IN = "in".
   SYM_AS = "as".
@@ -180,6 +181,7 @@ PRODUCTIONS
   | IF (la.kind == _REGISTER && scanner.Peek().kind == _FILE)
     registerFileDefinition<out def>
   | registerDefinition<out def>
+  | usingDefinition<out def>
   .
 
   constantDefinition<out ConstantDefinition def>    (. TypeLiteral type = null; .)
@@ -193,19 +195,20 @@ PRODUCTIONS
   = FORMAT                                                        (. var startLoc = loc(); .)
   identifier<out Identifier id>
   SYM_COLON typeLiteral<out TypeLiteral type>
-  [SYM_EQ SYM_BRACE_OPEN
-      formatField<out FormatDefinition.FormatField f1>            (. fields.add(f1); .)
-      {
-      SYM_COMMA formatField<out FormatDefinition.FormatField f2>  (. fields.add(f2); .)
+  [SYM_EQ SYM_BRACE_OPEN                                          (. pushFormatScope(this, id); .)
+      formatField<out FormatDefinition.FormatField f1>            (. fields.add(f1); popScope(this); .)
+      {                                                           (. pushFormatScope(this, id); .)
+      SYM_COMMA formatField<out FormatDefinition.FormatField f2>  (. fields.add(f2); popScope(this); .)
       }
   SYM_BRACE_CLOSE]                                                (. def = new FormatDefinition(id, type, fields, startLoc.join(loc())); .)
   .
 
-  // FIXME: more versions are missing here
+  // TODO Auxiliary fields ": predicate" and ": encode" are missing
   formatField<out FormatDefinition.FormatField field>             (. field = null; .)
   = identifier<out Identifier id>
     ( formatFieldRange<out field, id>
-      | formatFieldType<out field, id>
+    | formatFieldType<out field, id>
+    | formatFieldDerived<out field, id>
     )
   .
 
@@ -224,6 +227,11 @@ PRODUCTIONS
     typeLiteral<out TypeLiteral type>   (. field = new FormatDefinition.TypedFormatField(id, type, symbolTable); .)
   .
 
+  formatFieldDerived<out FormatDefinition.FormatField field, Identifier id>
+  = SYM_EQ
+    expression<out Expr expr, BIN_OPS> (. field = new FormatDefinition.DerivedFormatField(id, expr); .)
+  .
+
   counterDefinition<out CounterDefinition def>  (. CounterDefinition.CounterKind kind = null; .)
   = ( PROGRAM                                   (. kind = PROGRAM; .)
     | GROUP                                     (. kind = GROUP; .)
@@ -236,7 +244,7 @@ PRODUCTIONS
   instructionDefinition<out InstructionDefinition def>   (. var startLocation = loc(); .)
   = INSTRUCTION identifierOrPlaceholder<out Node id>
     SYM_COLON identifierOrPlaceholder<out Node formatId> (. pushFormatScope(this, formatId); .)
-    SYM_EQ blockStatement<out BlockStatement behavior>   (. def = new InstructionDefinition(id, formatId, behavior, startLocation.join(loc()));
+    SYM_EQ statement<out Statement behavior>             (. def = new InstructionDefinition(id, formatId, behavior, startLocation.join(loc()));
                                                             popScope(this); .)
   .
 
@@ -296,6 +304,12 @@ PRODUCTIONS
     SYM_ARROW typeLiteral<out TypeLiteral t2>         (. def = new RegisterFileDefinition(id, t1, t2, startLocation.join(t2.location())); .)
   .
 
+  usingDefinition<out Definition def>
+  = USING                             (. var start = loc(); .)
+    identifier<out Identifier id>
+    SYM_EQ
+    typeLiteral<out TypeLiteral type> (. def = new UsingDefinition(id, type, start.join(loc())); .)
+  .
 
   // -- STATEMENTS ---------------------------------------------------------------------------------------------------
 

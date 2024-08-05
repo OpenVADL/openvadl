@@ -83,12 +83,14 @@ public class AstDumper
     for (var field : definition.fields) {
       if (field instanceof FormatDefinition.RangeFormatField f) {
         dumpNode(f);
-        dumpChildren(f.identifier());
+        dumpChildren(f.identifier);
         dumpChildren(f.ranges);
       } else if (field instanceof FormatDefinition.TypedFormatField f) {
         dumpNode(f);
-        dumpChildren(f.identifier());
-        dumpChildren(f.type);
+        dumpChildren(f.identifier, f.type);
+      } else if (field instanceof FormatDefinition.DerivedFormatField f) {
+        dumpNode(f);
+        dumpChildren(f.identifier, f.expr);
       }
     }
     this.indent--;
@@ -225,6 +227,13 @@ public class AstDumper
   public Void visit(AssemblyDefinition definition) {
     dumpNode(definition);
     dumpChildren(definition.segments);
+    return null;
+  }
+
+  @Override
+  public Void visit(UsingDefinition definition) {
+    dumpNode(definition);
+    dumpChildren(definition.id, definition.type);
     return null;
   }
 

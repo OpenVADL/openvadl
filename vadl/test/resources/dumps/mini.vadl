@@ -1,7 +1,7 @@
 // SPDX-FileCopyrightText : © 2024 TU Wien <vadl@tuwien.ac.at>
 // SPDX-License-Identifier: Apache-2.0
 
-// Basic test file to check if approval tests are working. Will be replaced by actual "mini.vadl"
+// RISC-V 32 / 64 I common instruction set
 
 instruction set architecture RV3264I = {
 
@@ -11,20 +11,31 @@ instruction set architecture RV3264I = {
 
   constant MLen   = $ArchSize()           // MLen = 32 or 64 depending on ArchSize
 
-  [X(0) = 0]                              // register with index 0 always is 0
-  register file    X : Bits<5>   -> Bits<MLen>    // integer register file with 32 registers of 32 bits
+  using Inst     = Bits<32>               // instruction word is 32 bit
+  using Regs     = Bits<MLen>             // untyped register word type
+  using Bits3    = Bits< 3>               // 3 bit type
+  using Bits7    = Bits< 7>               // 7 bit type
+  using Index    = Bits< 5>               // 5 bit register index type for 32 registers
 
-  format Rtype : Bits<32> =                   // Rtype register 3 operand instruction format
-    { funct7 : Bits<7>                      // [31..25] 7 bit function code
-    , rs2    : Bits<5>                      // [24..20] 2nd source register index / shamt
-    , rs1    : Bits<5>                      // [19..15] 1st source register index
-    , funct3 : Bits<3>                      // [14..12] 3 bit function code
-    , rd     : Bits<5>                      // [11..7]  destination register index
-    , opcode : Bits<7>                      // [6..0]   7 bit operation code
+  [X(0) = 0]                              // register with index 0 always is 0
+  register file    X : Index   -> Regs    // integer register file with 32 registers of 32 bits
+
+  format Rtype : Inst =                   // Rtype register 3 operand instruction format
+    { funct7 : Bits7                      // [31..25] 7 bit function code
+    , rs2    : Index                      // [24..20] 2nd source register index / shamt
+    , rs1    : Index                      // [19..15] 1st source register index
+    , funct3 : Bits3                      // [14..12] 3 bit function code
+    , rd     : Index                      // [11..7]  destination register index
+    , opcode : Bits7                      // [6..0]   7 bit operation code
+    , shamt  = rs2 as UInt                // 5 bit unsigned shift amount
     }
 
-  instruction ADD : Rtype = {
-      X(rd) := X(rs1) + X(rs2)
+  instruction ADD : Rtype =               // 3 register operand instructions
+      X(rd) := ((X(rs1) as Bits) + (X(rs2) as Bits)) as Regs
+
+  instruction ADD2 : Rtype = {
+      X(rd) := ((X(rs1) as Bits) + (X(rs2) as Bits)) as Regs
+
   }
 }
 

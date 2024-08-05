@@ -181,6 +181,11 @@ class MacroExpander
 
   @Override
   public Definition visit(FormatDefinition definition) {
+    for (var field : definition.fields) {
+      if (field instanceof FormatDefinition.DerivedFormatField derivedFormatField) {
+        derivedFormatField.expr = derivedFormatField.expr.accept(this);
+      }
+    }
     return new FormatDefinition(definition.identifier, definition.type, definition.fields,
         definition.loc);
   }
@@ -217,7 +222,7 @@ class MacroExpander
     definition.typeIdentifier = typeId;
 
     symbols = symbols.createFormatScope(typeId);
-    definition.behavior = visit(definition.behavior);
+    definition.behavior = definition.behavior.accept(this);
     symbols = Objects.requireNonNull(symbols.parent);
 
     return definition;
@@ -230,6 +235,11 @@ class MacroExpander
 
   @Override
   public Definition visit(AssemblyDefinition definition) {
+    return definition;
+  }
+
+  @Override
+  public Definition visit(UsingDefinition definition) {
     return definition;
   }
 
