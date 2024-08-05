@@ -16,7 +16,7 @@ buildscript {
 plugins {
     id("java")
     checkstyle
-    id("net.ltgt.errorprone") version "2.0.1" apply false
+    id("net.ltgt.errorprone") version "4.0.1" apply false
 }
 
 subprojects {
@@ -137,17 +137,17 @@ val generateCheckstyleReport =
                 projectReportDir.mkdirs()
             }
 
-        if (failures.isNotEmpty()) {
-            val errorBlocks = failures.joinToString("\n") { f ->
-                """
+            if (failures.isNotEmpty()) {
+                val errorBlocks = failures.joinToString("\n") { f ->
+                    """
                 ```
                 $f
                 ```
                 """.trimIndent()
+                }
+                bundledReportFile.writeText("### ❌ No Checkstyle Report\n$errorBlocks")
+                return@doLast
             }
-            bundledReportFile.writeText("### ❌ No Checkstyle Report\n$errorBlocks")
-            return@doLast
-        }
 
             logger.info("Generating Checkstyle markdown reports...")
             FileWriter(bundledReportFile).use { writer ->
