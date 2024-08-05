@@ -17,7 +17,7 @@ import vadl.viam.graph.dependency.BuiltInCall;
 public class CanoicalizationPass extends Pass {
   @Override
   public PassName getName() {
-    return new PassName("constantFolding");
+    return new PassName("canonicalization");
   }
 
   @Nullable
