@@ -25,7 +25,7 @@ import vadl.viam.graph.Graph;
 import vadl.viam.graph.NodeList;
 import vadl.viam.graph.dependency.BuiltInCall;
 import vadl.viam.graph.dependency.ConstantNode;
-import vadl.viam.passes.constant_folding.CanoicalizationPass;
+import vadl.viam.passes.canonicalization.CanoicalizationPass;
 
 class CanoicalizationPassTest {
   @Test

@@ -1,6 +1,7 @@
 package vadl.viam;
 
 import static vadl.utils.BigIntUtils.mask;
+import static vadl.utils.BigIntUtils.setBitsInRange;
 import static vadl.utils.BigIntUtils.twosComplement;
 
 import com.google.errorprone.annotations.FormatMethod;
@@ -19,8 +20,10 @@ import org.jetbrains.annotations.NotNull;
 import vadl.types.BitsType;
 import vadl.types.BoolType;
 import vadl.types.DataType;
+import vadl.types.SIntType;
 import vadl.types.TupleType;
 import vadl.types.Type;
+import vadl.types.UIntType;
 import vadl.utils.BigIntUtils;
 import vadl.utils.StreamUtils;
 
@@ -41,6 +44,16 @@ public abstract class Constant {
 
   public void setType(Type type) {
     this.type = type;
+  }
+
+  public Constant.Value asVal() {
+    ensure(this instanceof Value, "Constant is not a value");
+    return (Constant.Value) this;
+  }
+
+  public Constant.Tuple asTuple() {
+    ensure(this instanceof Tuple, "Constant is not a tuple");
+    return (Constant.Tuple) this;
   }
 
   @Override
@@ -198,6 +211,7 @@ public abstract class Constant {
      * @throws ViamError if the constant cannot be cast to the specified data type
      */
     public Constant.Value castTo(DataType type) {
+      // TODO: Make this right
       var truncatedValue = value
           .and(mask(type.bitWidth(), 0));
       return Value.fromTwosComplement(truncatedValue, type);
@@ -208,11 +222,14 @@ public abstract class Constant {
      *
      * @return a tuple constant of form {@code ( result, ( z, c, o, n ) )}
      */
-    public Constant.Tuple add(Constant.Value other) {
+    public Constant.Tuple add(Constant.Value other, boolean withCarrySet) {
       ensure(type() instanceof BitsType, "Invalid type for addition");
       ensure(type().equals(other.type()), "Types don't match, %s vs %s", type(), other.type());
 
-      var result = value.add(other.value);
+      // a + b + c where c is the carry flag
+      var c = withCarrySet ? BigInteger.ONE : BigInteger.ZERO;
+      var result = value.add(other.value).add(c);
+
       var truncated = result.and(mask(type().bitWidth(), 0));
 
       var isZero = truncated.equals(BigInteger.ZERO);
@@ -233,51 +250,145 @@ public abstract class Constant {
 
       return new Constant.Tuple(
           Constant.Value.fromTwosComplement(truncated, type()),
-          Constant.Tuple.status(isZero, isCarry, isOverflow, isNegative)
+          Constant.Tuple.status(isNegative, isZero, isCarry, isOverflow)
       );
     }
 
     /**
      * Subtracts the given value from this value.
      *
-     * <p>It uses the {@link #add(Value)} function by negating the second operand.
-     * Therefore the carry flag must be inverse and the overflow must be specially
-     * handled if the second operand is the minimal signed value.</p>
+     * <p>While the carry flag is well-defined for addition, there are two ways in common use to
+     * use the carry flag for subtraction operations.
+     * The first uses the bit as a borrow flag, setting it if a < b when computing a-b, and a
+     * borrow must be performed. If a>=b, the bit is cleared. The subtract with borrow (subb)
+     * built-in function will compute a-b-C = a-(b+C), while a subtract without borrow (subsb)
+     * acts as if the borrow bit were clear. The 8080, 6800, Z80, 8051, x86 and 68k families of
+     * instruction set architectures use a borrow bit.
      *
-     * @param other the value to subtract from this value
-     * @return a tuple constant representing the result of the subtraction
+     * <p>The second uses the identity that -x = not(x)+1 directly (i.e. without storing the carry
+     * bit inverted) and computes a-b as a+not(b)+1.
+     * The carry flag is set according to this addition,
+     * and subtract with carry (subc) computes a+not(b)+C, while subtract without carry (subsc)
+     * acts as if the carry bit were set. The result is that the carry bit is set if a>=b, and
+     * clear if a < b. The System/360, 6502, MSP430, COP8, ARM and PowerPC instruction set
+     * architectures use this convention. The 6502 is a particularly well-known example because it
+     * does not have a subtract without carry operation, so programmers must ensure that the carry
+     * flag is set before every subtract operation where a borrow is not required.</p>
+     *
+     * @param b the value to subtract from this value
+     * @return a tuple constant representing the result of the subtraction (including status)
+     * @see <a href="https://arc.net/l/quote/fmdsnowl">Wikipedia carry vs. borrow flag</a>
      */
-    public Constant.Tuple subtract(Constant.Value other) {
+    public Constant.Tuple subtract(Constant.Value b, SubMode mode, boolean withCarryBorrowSet) {
       ensure(type() instanceof BitsType, "Invalid type for subtraction");
-      ensure(type().equals(other.type()), "Types don't match, %s vs %s", type(), other.type());
+      ensure(type().equals(b.type()), "Types don't match, %s vs %s", type(), b.type());
 
-      // from a - b to a + (-b)
-      var negatedOther = other.negate();
-      var result = this.add(negatedOther);
+      // calculation options:
+      // X86_LIKE: a + not(b) + not(withCarryBorrow)
+      // ARM_LIKE: a + not(b) + withCarryBorrow
+      // checkout wikipedia for more
+      //noinspection SimplifiableConditionalExpression
+      var c = mode == SubMode.X86_LIKE
+          ? !withCarryBorrowSet
+          : withCarryBorrowSet;
+
+      // The subtraction is performed by `a+not(b)+c`.
+      // The value of c is either 0 or 1. Depending on the mode, the `c` is flipped.
+      // Read more on the wiki page (https://en.wikipedia.org/wiki/Carry_flag)
+      var notB = b.not();
+      var result = this.add(notB, c);
 
       // swap the carry flag by inverse of addition open-vadl#76
-      var resStatus = result.get(1, Constant.Tuple.class);
-      // the carry of the subtraction is the inverse to the carry of the addition
-      var carry = resStatus.get(1, Constant.Value.class)
-          .not();
+      var resStatus = result.get(1, Constant.Tuple.Status.class);
+      var carry = resStatus.carry();
 
-      var overflow = resStatus.get(2, Constant.Value.class);
-      if (minSignedValue().equals(other.value)) {
-        // if b equals to minimal value (100..), the negation results in the same
-        // value. This will invalidate the overflow flag of the addition result, as
-        // the value is taken as negative eventhough it is actually positive (out of range).
-        // Therefore we want to invert the overflow flag from the addition.
-        overflow = overflow.not();
+      if (mode == SubMode.X86_LIKE) {
+        // the carry of the subtraction is the inverse to the carry of the addition
+        // in case of X86
+        // -> a > b ... carry set, otherwise not
+        carry = carry.not();
       }
 
-      var status = new Constant.Tuple(
-          resStatus.get(0, Constant.Value.class),
+      var overflow = resStatus.overflow();
+
+      var status = new Constant.Tuple.Status(
+          resStatus.negative(),
+          resStatus.zero(),
           carry,
-          overflow,
-          resStatus.get(3, Constant.Value.class)
+          overflow
       );
 
       return new Constant.Tuple(result.get(0), status);
+    }
+
+    /**
+     * This utility subtraction will discard the status tuple.
+     */
+    private Constant.Value subtract(Constant.Value other) {
+      return subtract(other, SubMode.X86_LIKE, false)
+          .firstValue();
+    }
+
+    /**
+     * Multiplies two constant values.
+     *
+     * @param other       the second operand
+     * @param longVersion if the result should be double the size of the operands.
+     * @return the result of the multiplication. If longVersion is true, then the result type
+     *     will be double the size of the operands, otherwise it will be the same size
+     */
+    public Constant.Value multiply(Constant.Value other, boolean longVersion) {
+      ensure(type() == other.type(), "Multiplication requires same type but other was %s",
+          other.type());
+
+      if (longVersion) {
+        // long version doubles the size of the result type
+        ensure(type() instanceof SIntType || type() instanceof UIntType,
+            "Long versioned multiplication must be on integer type");
+
+        var newValue = this.integer()
+            .multiply(other.integer()); // multiply with other value
+
+        var newType = type() instanceof SIntType
+            ? Type.signedInt(2 * type().bitWidth())
+            : Type.unsignedInt(2 * type().bitWidth());
+
+        return fromInteger(newValue, newType);
+      } else {
+        // for non-long version we truncate the result
+        var newValue = value
+            .multiply(other.value)
+            .and(mask(type().bitWidth(), 0)); // truncate result
+        return fromTwosComplement(newValue, type());
+      }
+    }
+
+    /**
+     * Divides this constant by the other one.
+     */
+    public Constant.Value divide(Constant.Value other) {
+      ensure(type() == other.type(), "Division must be of same type, but other was %s",
+          other.type());
+
+      ensure(type().getClass() == SIntType.class || type().getClass() == UIntType.class,
+          "Division must be either signed or unsigned integer typed");
+
+      var newIntegerValue = integer()
+          .divide(other.integer());
+      return fromInteger(newIntegerValue, type());
+    }
+
+    /**
+     * Enumeration of available subtraction modes.
+     *
+     * <p>The X86 like mode is also called <i>subtract with borrow</i>, while the
+     * ARM like mode is also called <i>subtract with carry</i>. </p>
+     *
+     * @see #subtract(Value, SubMode, boolean)
+     */
+    public enum SubMode {
+      X86_LIKE,
+      ARM_LIKE
     }
 
     /**
@@ -288,14 +399,14 @@ public abstract class Constant {
     }
 
     /**
-     * Returns the logical negation of the current value object.
+     * Returns the bitwise negation of the current value object.
      *
-     * @return the negation value of the current value object
-     * @throws ViamError if the type of the value object is not BoolType.
+     * @return the bitwise negation value of the current value object
      */
     public Constant.Value not() {
-      ensure(type() instanceof BoolType, "not() currently only available for bool type");
-      return Constant.Value.of(!this.bool());
+      var mask = mask(type().bitWidth(), 0);
+      var notResult = value.xor(mask);
+      return fromTwosComplement(notResult, type());
     }
 
     /**
@@ -308,18 +419,59 @@ public abstract class Constant {
      * </p>
      *
      * <p><b>Note: </b>If the value is the minimal possible signed number, this will truncate the
-     * result and lead
-     * to a wrong value.
+     * result and lead to a wrong value.
      *
      * @return a new Constant.Value object representing the negated value
      */
     public Constant.Value negate() {
-      var mask = mask(type().bitWidth(), 0);
-      var negated = value
-          .xor(mask) // invert all bits
-          .add(BigInteger.ONE) // add one to it
-          .and(mask); // truncate result
-      return Constant.Value.fromTwosComplement(negated, type());
+      // calculate using 0 - this
+      return zero(type())
+          .subtract(this);
+    }
+
+    /**
+     * Performs a bitwise AND. Both operands must have the same width.
+     */
+    public Constant.Value and(Constant.Value other) {
+      ensureSameWidth(other);
+      var andResult = this.value.and(other.value);
+      return Constant.Value.fromTwosComplement(andResult, type());
+    }
+
+    /**
+     * Performs a logical shift left of this constant value by the specified amount
+     * of the other value (which must be an unsigned integer).
+     * The resulting type is the same as this type, the result is truncated on overflow.
+     */
+    public Constant.Value lsl(Constant.Value other) {
+      ensure(other.type().getClass() == UIntType.class,
+          "LSL shift argument must be an unsigned integer.");
+
+      var newValue = value
+          .shiftLeft(other.intValue()) // shift value by other
+          .and(mask(type().bitWidth(), 0)); // truncate value
+      return fromTwosComplement(newValue, type());
+    }
+
+    /**
+     * Truncates this value to the width of the newType argument.
+     * The newType must have the same type class as this type and its with must be
+     * less or equal to this constant's width.
+     */
+    public Constant.Value truncate(DataType newType) {
+      ensure(type().getClass().equals(newType.getClass()),
+          "Can not truncate to other type of class: %s.", newType);
+      ensure(type().bitWidth() >= newType.bitWidth(),
+          "Truncated value's bitwidth must be less or equal to truncate type: %s", newType);
+
+      if (newType.bitWidth() == type().bitWidth()) {
+        // no truncation required
+        return this;
+      }
+
+      var mask = mask(newType.bitWidth(), 0);
+      var result = value.and(mask);
+      return fromTwosComplement(result, newType);
     }
 
     private BigInteger maxUnsignedValue() {
@@ -367,6 +519,15 @@ public abstract class Constant {
       }
       return fromTwosComplement(result, type);
     }
+
+    public Constant.Value zero(DataType type) {
+      return fromInteger(BigInteger.ZERO, type);
+    }
+
+    public Constant.Value one(DataType type) {
+      return fromInteger(BigInteger.ONE, type);
+    }
+
 
     @Override
     public boolean equals(Object o) {
@@ -437,6 +598,13 @@ public abstract class Constant {
         str = "0".repeat(padSize) + str;
       }
       return prefix + str;
+    }
+
+    // Helper functions
+
+    public void ensureSameWidth(Constant.Value other) {
+      ensure(type().bitWidth() == other.type().bitWidth(),
+          "Type has not the same bit width as %s", other);
     }
   }
 
@@ -759,12 +927,9 @@ public abstract class Constant {
     /**
      * Constructs a tuple constant representing a status tuple.
      */
-    public static Tuple status(boolean zero, boolean carry, boolean overflow, boolean negative) {
-      return new Tuple(
-          List.of(Constant.Value.of(zero), Constant.Value.of(carry), Constant.Value.of(overflow),
-              Constant.Value.of(negative)
-          ), Type.status().asTuple()
-      );
+    public static Tuple.Status status(boolean negative, boolean zero, boolean carry,
+                                      boolean overflow) {
+      return new Tuple.Status(negative, zero, carry, overflow);
     }
 
     public List<Constant> values() {
@@ -799,6 +964,15 @@ public abstract class Constant {
       return (T) val;
     }
 
+    /**
+     * Retrieves the first constant value in the tuple.
+     */
+    public Constant.Value firstValue() {
+      var val = values.stream().filter(e -> e instanceof Value).findFirst();
+      ensure(val.isPresent(), "No constant value found in tuple");
+      return (Constant.Value) val.get();
+    }
+
     public int size() {
       return values.size();
     }
@@ -829,6 +1003,53 @@ public abstract class Constant {
       int result = super.hashCode();
       result = 31 * result + values.hashCode();
       return result;
+    }
+
+    /**
+     * The constant of a status tuple containing the NZCV values (negative, zero, carry, overflow).
+     */
+    public static class Status extends Tuple {
+
+      /**
+       * Constructs a status constant by Java boolean value.
+       */
+      public Status(boolean negative, boolean zero, boolean carry, boolean overflow) {
+        super(
+            List.of(Constant.Value.of(negative), Constant.Value.of(zero), Constant.Value.of(carry),
+                Constant.Value.of(overflow)
+            ), Type.status()
+        );
+      }
+
+      /**
+       * Constructs a status constant by value constants.
+       * All constants must have the type boolean.
+       */
+      public Status(Constant.Value negative, Constant.Value zero, Constant.Value carry,
+                    Constant.Value overflow
+      ) {
+        super(negative, zero, carry, overflow);
+
+        ensure(values().stream().allMatch(e -> e.type() == Type.bool()),
+            "A status' values must all be bools");
+      }
+
+      public Constant.Value negative() {
+        return get(0, Value.class);
+      }
+
+      public Constant.Value zero() {
+        return get(1, Value.class);
+      }
+
+      public Constant.Value carry() {
+        return get(2, Value.class);
+      }
+
+      public Constant.Value overflow() {
+        return get(3, Value.class);
+      }
+
     }
   }
 

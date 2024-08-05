@@ -307,6 +307,7 @@ public class Graph {
             node, input, "You might want use Graph#addWithInputs()")
             .addContext(node)
             .addContext(this)
+            .addLocation(sourceLocation)
             .shrinkStacktrace(1);
       }
     }
@@ -374,7 +375,13 @@ public class Graph {
   public String dotGraph() {
     return new DotGraphVisualizer()
         .load(this)
+        .withSourceLocation(true)
         .visualize();
+  }
+
+  @Override
+  public String toString() {
+    return "Graph{ name='" + name + "', sourceLocation=" + sourceLocation + "}";
   }
 }
 

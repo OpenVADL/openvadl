@@ -33,8 +33,6 @@ public class SliceNode extends ExpressionNode {
 
     this.value = value;
     this.slice = slice;
-
-    verifyState();
   }
 
   public Constant.BitSlice bitSlice() {
@@ -56,7 +54,7 @@ public class SliceNode extends ExpressionNode {
 
     ensure(Type.bits(slice.bitSize()).canBeCastTo(type()),
         "Slice type cannot be cast to node type: %s vs %s",
-        slice.type(), type());
+        Type.bits(slice.bitSize()), type());
     ensure(value.type() instanceof DataType, "Value node must have a data type.");
     ensure(((DataType) value.type()).bitWidth() > slice.msb(),
         "Value node must have at least %d bits to be sliceable by %s",

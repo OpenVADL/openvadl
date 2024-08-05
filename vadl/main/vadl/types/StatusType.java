@@ -11,41 +11,12 @@ package vadl.types;
  * <li>overflow</li>
  * in that order.
  */
-public class StatusType extends DataType {
-
-  private final TupleType alias;
+public class StatusType extends TupleType {
 
   protected StatusType() {
-    alias = Type.tuple(
-        Type.bool(),
-        Type.bool(),
-        Type.bool(),
-        Type.bool()
-    );
+    super(Type.bool(), Type.bool(), Type.bool(), Type.bool());
   }
-
-  public TupleType asTuple() {
-    return alias;
-  }
-
-  public int size() {
-    return alias.size();
-  }
-
-  @Override
-  public int bitWidth() {
-    return alias.bitWidth();
-  }
-
-  @Override
-  public boolean canBeCastTo(DataType other) {
-    if (this == other) {
-      return true;
-    }
-
-    return alias.canBeCastTo(other);
-  }
-
+  
   @Override
   public String name() {
     return "Status";

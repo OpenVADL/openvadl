@@ -1,6 +1,6 @@
 package vadl.viam.graph;
 
-import vadl.viam.passes.constant_folding.Canonicalizer;
+import vadl.viam.passes.canonicalization.Canonicalizer;
 
 /**
  * Marks nodes that provide a canonical form via the {@link Canonicalizable#canonical()} method.
