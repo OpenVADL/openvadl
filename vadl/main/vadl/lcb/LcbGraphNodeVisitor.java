@@ -1,0 +1,19 @@
+package vadl.lcb;
+
+import vadl.oop.passes.type_normalization.UpcastedTypeCastNode;
+import vadl.viam.ViamError;
+import vadl.viam.graph.GraphNodeVisitor;
+import vadl.viam.graph.Node;
+
+/**
+ * Visitor for nodes of the lcb layer.
+ */
+public interface LcbGraphNodeVisitor extends GraphNodeVisitor {
+  /**
+   * Default method for this visitor. Note that this is a fallback
+   * and must not be reached.
+   */
+  default void visit(Node node) {
+    throw new ViamError("Node type is not implemented.");
+  }
+}
