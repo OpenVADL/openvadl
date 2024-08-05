@@ -49,6 +49,7 @@ public class GenerateFieldAccessEncodingFunctionPass extends Pass {
           for (var strategy : strategies) {
             if (strategy.checkIfApplicable(fieldAccess)) {
               strategy.generateEncoding(fieldAccess);
+              break;
             }
           }
         });
