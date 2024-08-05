@@ -40,5 +40,4 @@ public abstract class UnaryNode extends ExpressionNode {
     super.applyOnInputsUnsafe(visitor);
     value = visitor.apply(this, value, ExpressionNode.class);
   }
-  
 }

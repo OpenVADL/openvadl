@@ -17,7 +17,7 @@ import vadl.viam.graph.dependency.SideEffectNode;
  */
 public abstract class AbstractEndNode extends ControlNode {
   @Input
-  NodeList<SideEffectNode> sideEffects;
+  public NodeList<SideEffectNode> sideEffects;
 
   public AbstractEndNode(NodeList<SideEffectNode> sideEffects) {
     this.sideEffects = sideEffects;

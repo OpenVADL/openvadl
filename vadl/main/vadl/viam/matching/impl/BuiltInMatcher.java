@@ -1,7 +1,9 @@
 package vadl.viam.matching.impl;
 
 import com.google.common.collect.Streams;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 import vadl.types.BuiltInTable;
 import vadl.viam.graph.Node;
 import vadl.viam.graph.dependency.BuiltInCall;
@@ -15,24 +17,35 @@ import vadl.viam.matching.Matcher;
  */
 public class BuiltInMatcher implements Matcher {
 
-  private final BuiltInTable.BuiltIn builtIn;
+  private final Set<BuiltInTable.BuiltIn> builtIns;
   private final List<Matcher> matchers;
 
   public BuiltInMatcher(BuiltInTable.BuiltIn builtIn,
                         List<Matcher> matchers) {
-    this.builtIn = builtIn;
+    this.builtIns = Set.of(builtIn);
+    this.matchers = matchers;
+  }
+
+  /**
+   * Constructor for matcher.
+   *
+   * @param builtIns is a list of accepted builtins.
+   * @param matchers for children nodes.
+   */
+  public BuiltInMatcher(List<BuiltInTable.BuiltIn> builtIns, List<Matcher> matchers) {
+    this.builtIns = new HashSet<>(builtIns);
     this.matchers = matchers;
   }
 
   public BuiltInMatcher(BuiltInTable.BuiltIn builtIn,
                         Matcher matcher) {
-    this.builtIn = builtIn;
+    this.builtIns = Set.of(builtIn);
     this.matchers = List.of(matcher);
   }
 
   @Override
   public boolean matches(Node node) {
-    if (node instanceof BuiltInCall && ((BuiltInCall) node).builtIn() == builtIn) {
+    if (node instanceof BuiltInCall && builtIns.contains(((BuiltInCall) node).builtIn())) {
       if (this.matchers.isEmpty()) {
         // Edge case: when no matchers exist and the builtIn is matched then return true.
         return true;
