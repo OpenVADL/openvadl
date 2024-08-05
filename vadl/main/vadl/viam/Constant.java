@@ -343,7 +343,8 @@ public abstract class Constant {
      *
      * @param other       the second operand
      * @param longVersion if the result should be double the size of the operands.
-     * @return
+     * @return the result of the multiplication. If longVersion is true, then the result type
+     *     will be double the size of the operands, otherwise it will be the same size
      */
     public Constant.Value multiply(Constant.Value other, boolean longVersion) {
       ensure(type() == other.type(), "Multiplication requires same type but other was %s",
@@ -371,6 +372,9 @@ public abstract class Constant {
       }
     }
 
+    /**
+     * Divides this constant by the other one.
+     */
     public Constant.Value divide(Constant.Value other) {
       ensure(type() == other.type(), "Division must be of same type, but other was %s",
           other.type());
@@ -443,6 +447,11 @@ public abstract class Constant {
       return Constant.Value.fromTwosComplement(andResult, type());
     }
 
+    /**
+     * Performs a logical shift left of this constant value by the specified amount
+     * of the other value (which must be an unsigned integer).
+     * The resulting type is the same as this type, the result is truncated on overflow.
+     */
     public Constant.Value lsl(Constant.Value other) {
       ensure(other.type().getClass() == UIntType.class,
           "LSL shift argument must be an unsigned integer.");
