@@ -68,7 +68,8 @@ class BuiltInCallTest {
         DataType.unsignedInt(32));
 
     var throwable = assertThrows(ViamGraphError.class, operation::verifyState);
-    assertEquals("Result type does not match", throwable.getContextlessMessage());
+    assertThat(throwable.getContextlessMessage()).contains(
+        "Arguments' types do not match with the type of the builtin");
   }
 
 }
