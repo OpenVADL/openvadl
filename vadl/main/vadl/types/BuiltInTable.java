@@ -235,7 +235,7 @@ public class BuiltInTable {
    */
   public static final BuiltIn MUL =
       BuiltIn.func("MUL", "*", Type.relation(BitsType.class, BitsType.class, BitsType.class),
-          Constant.Value::multiply
+          (Constant.Value a, Constant.Value b) -> a.multiply(b, false)
       );
 
 
@@ -250,14 +250,16 @@ public class BuiltInTable {
    * {@code function smull   ( a : SInt<N>, b : SInt<N> ) -> SInt<2*N> // <=> a *# b }
    */
   public static final BuiltIn SMULL =
-      BuiltIn.func("SMULL", "*#", Type.relation(SIntType.class, SIntType.class, SIntType.class));
+      BuiltIn.func("SMULL", "*#", Type.relation(SIntType.class, SIntType.class, SIntType.class),
+          (Constant.Value a, Constant.Value b) -> a.multiply(b, true));
 
 
   /**
    * {@code function umull   ( a : UInt<N>, b : UInt<N> ) -> UInt<2*N> // <=> a *# b }
    */
   public static final BuiltIn UMULL =
-      BuiltIn.func("UMULL", "*#", Type.relation(UIntType.class, UIntType.class, UIntType.class));
+      BuiltIn.func("UMULL", "*#", Type.relation(UIntType.class, UIntType.class, UIntType.class),
+          (Constant.Value a, Constant.Value b) -> a.multiply(b, true));
 
 
   /**

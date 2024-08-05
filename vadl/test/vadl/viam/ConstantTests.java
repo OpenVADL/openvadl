@@ -442,17 +442,25 @@ public class ConstantTests {
   @ParameterizedTest
   @MethodSource("multiplyTestSource")
   void constantMultiply_shouldYieldCorrectValue(Constant.Value a, Constant.Value b,
+                                                boolean longVersion,
                                                 Constant.Value expected) {
-    var actual = a.multiply(b);
+    var actual = a.multiply(b, longVersion);
     assertEquals(expected, actual);
   }
 
   static Stream<Arguments> multiplyTestSource() {
     return Stream.of(
-        Arguments.of(bits(0xFFFFFFFFL, 32), bits(0xFFFFFFFFL, 32), bits(0x1, 32)),
-        Arguments.of(bits(0xFFFFFFFFL, 32), bits(0x1L, 32), bits(0xFFFFFFFFL, 32)),
-        Arguments.of(bits(0xFFFFFFFFL, 32), bits(0x0L, 32), bits(0x0L, 32)),
-        Arguments.of(bits(0xFFFFFFFFL, 32), bits(0x2L, 32), bits(0xFFFFFFFEL, 32))
+        Arguments.of(bits(0xFFFFFFFFL, 32), bits(0xFFFFFFFFL, 32), false, bits(0x1, 32)),
+        Arguments.of(bits(0xFFFFFFFFL, 32), bits(0x1L, 32), false, bits(0xFFFFFFFFL, 32)),
+        Arguments.of(bits(0xFFFFFFFFL, 32), bits(0x0L, 32), false, bits(0x0L, 32)),
+        Arguments.of(bits(0xFFFFFFFFL, 32), bits(0x2L, 32), false, bits(0xFFFFFFFEL, 32)),
+
+        Arguments.of(intU(0xFFFFFFFFL, 32), intU(0x2L, 32), true, intU(0xFFFFFFFFL * 2L, 64)),
+        Arguments.of(intS(-1, 32), intS(0x2, 32), true, intS(-2, 64)),
+        Arguments.of(intU(0xFFFFL, 16), intU(0xFFFFL, 16), true, intU(0xFFFE0001L, 32)),
+        Arguments.of(intS(-1, 16), intS(-1, 16), true, intS(1, 32)),
+        Arguments.of(intU(0x4L, 16), intU(0x3L, 16), true, intU(12, 32))
+
     );
   }
 

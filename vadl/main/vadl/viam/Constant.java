@@ -1,6 +1,7 @@
 package vadl.viam;
 
 import static vadl.utils.BigIntUtils.mask;
+import static vadl.utils.BigIntUtils.setBitsInRange;
 import static vadl.utils.BigIntUtils.twosComplement;
 
 import com.google.errorprone.annotations.FormatMethod;
@@ -337,15 +338,37 @@ public abstract class Constant {
           .firstValue();
     }
 
-    public Constant.Value multiply(Constant.Value other) {
+    /**
+     * Multiplies two constant values.
+     *
+     * @param other       the second operand
+     * @param longVersion if the result should be double the size of the operands.
+     * @return
+     */
+    public Constant.Value multiply(Constant.Value other, boolean longVersion) {
       ensure(type() == other.type(), "Multiplication requires same type but other was %s",
           other.type());
 
-      var newValue = value
-          .multiply(other.value) // multiply with other value
-          .and(mask(type().bitWidth(), 0)); // truncate result
+      if (longVersion) {
+        // long version doubles the size of the result type
+        ensure(type() instanceof SIntType || type() instanceof UIntType,
+            "Long versioned multiplication must be on integer type");
 
-      return fromTwosComplement(newValue, type());
+        var newValue = this.integer()
+            .multiply(other.integer()); // multiply with other value
+
+        var newType = type() instanceof SIntType
+            ? Type.signedInt(2 * type().bitWidth())
+            : Type.unsignedInt(2 * type().bitWidth());
+
+        return fromInteger(newValue, newType);
+      } else {
+        // for non-long version we truncate the result
+        var newValue = value
+            .multiply(other.value)
+            .and(mask(type().bitWidth(), 0)); // truncate result
+        return fromTwosComplement(newValue, type());
+      }
     }
 
     public Constant.Value divide(Constant.Value other) {
