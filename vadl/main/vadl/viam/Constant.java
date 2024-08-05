@@ -254,15 +254,6 @@ public abstract class Constant {
       );
     }
 
-
-    /**
-     * Utility method for {@link #add(Value, boolean)} that discards the status tuple from the
-     * result and only returns the value.
-     */
-    private Constant.Value add(Constant.Value other) {
-      return add(other, false).firstValue();
-    }
-
     /**
      * Subtracts the given value from this value.
      *
