@@ -38,9 +38,7 @@ public class GenerateFieldAccessEncodingFunctionPass extends Pass {
   @Override
   public Object execute(Map<PassKey, Object> passResults, Specification viam) {
     viam.isas()
-        .flatMap(x -> x.instructions().stream())
-        .map(Instruction::format)
-        .distinct()
+        .flatMap(x -> x.formats().stream())
         .flatMap(x -> Arrays.stream(x.fieldAccesses()))
         .filter(x -> x.encoding() == null)
         .forEach(fieldAccess -> {
@@ -54,14 +52,12 @@ public class GenerateFieldAccessEncodingFunctionPass extends Pass {
           }
         });
 
-    var allHaveEncoding = viam.isas()
-        .flatMap(x -> x.instructions().stream())
-        .map(Instruction::format)
+    var hasNoEncoding = viam.isas()
+        .flatMap(x -> x.formats().stream())
         .flatMap(x -> Arrays.stream(x.fieldAccesses()))
-        .filter(x -> x.encoding() == null)
-        .toList();
+        .noneMatch(x -> x.encoding() == null);
 
-    if (!allHaveEncoding.isEmpty()) {
+    if (!hasNoEncoding) {
       throw new ViamError("Not all formats have an encoding");
     }
 
