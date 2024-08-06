@@ -8,11 +8,11 @@ import vadl.viam.Instruction;
  * {@link InstructionLabel}. This label can be used to quickly search for instructions.
  * How do I read this?
  * You can say the following: An {@link Instruction} with the semantics of summing two unsigned
- * 32bit registers will get the {@link InstructionLabel#ADD_U_32} assigned.
+ * 32bit registers will get the {@link InstructionLabel#ADD_32} assigned.
  */
 public enum InstructionLabel {
-  ADD_U_32,
-  ADD_S_32,
+  ADD_32,
+  ADD_64,
   ADDI_32,
   BEQ,
 }

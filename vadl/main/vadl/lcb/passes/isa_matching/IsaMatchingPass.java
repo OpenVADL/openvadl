@@ -10,25 +10,25 @@ import vadl.pass.PassKey;
 import vadl.pass.PassName;
 import vadl.types.BitsType;
 import vadl.types.BuiltInTable;
-import vadl.types.SIntType;
 import vadl.types.Type;
-import vadl.types.UIntType;
 import vadl.viam.Instruction;
 import vadl.viam.InstructionSetArchitecture;
 import vadl.viam.Register;
 import vadl.viam.Specification;
 import vadl.viam.graph.Graph;
-import vadl.viam.graph.ViamGraphError;
-import vadl.viam.graph.control.EndNode;
+import vadl.viam.graph.Node;
 import vadl.viam.graph.control.IfNode;
 import vadl.viam.graph.dependency.BuiltInCall;
+import vadl.viam.graph.dependency.ReadMemNode;
+import vadl.viam.graph.dependency.WriteMemNode;
 import vadl.viam.graph.dependency.WriteRegFileNode;
 import vadl.viam.graph.dependency.WriteRegNode;
 import vadl.viam.matching.TreeMatcher;
+import vadl.viam.matching.impl.AnyChildMatcher;
 import vadl.viam.matching.impl.AnyConstantValueMatcher;
 import vadl.viam.matching.impl.AnyReadRegFileMatcher;
 import vadl.viam.matching.impl.BuiltInMatcher;
-import vadl.viam.matching.impl.TypcastMatcher;
+import vadl.viam.matching.impl.FuncCallMatcher;
 
 /**
  * A {@link InstructionSetArchitecture} contains a {@link List} of {@link Instruction}.
@@ -55,10 +55,10 @@ public class IsaMatchingPass extends Pass {
     HashMap<InstructionLabel, Instruction> matched = new HashMap<>();
 
     viam.isas().forEach(isa -> isa.instructions().forEach(instruction -> {
-      if (findUnsignedAdd32Bit(instruction.behavior())) {
-        matched.put(InstructionLabel.ADD_U_32, instruction);
-      } else if (findSignedAdd32Bit(instruction.behavior())) {
-        matched.put(InstructionLabel.ADD_S_32, instruction);
+      if (findAdd32Bit(instruction.behavior())) {
+        matched.put(InstructionLabel.ADD_32, instruction);
+      } else if (findAdd64Bit(instruction.behavior())) {
+        matched.put(InstructionLabel.ADD_64, instruction);
       } else if (findAddWithImmediate32Bit(instruction.behavior())) {
         matched.put(InstructionLabel.ADDI_32, instruction);
       } else if (isa.pc() != null && findBeq(instruction.behavior(), isa.pc())) {
@@ -70,56 +70,56 @@ public class IsaMatchingPass extends Pass {
   }
 
   private boolean writesExactlyOneRegisterClassWithType(Graph graph, Type resultType) {
-    var writes = graph.getNodes(WriteRegFileNode.class).toList();
+    var writesRegFiles = graph.getNodes(WriteRegFileNode.class).toList();
+    var writesReg = graph.getNodes(WriteRegNode.class).toList();
+    var writesMem = graph.getNodes(WriteMemNode.class).toList();
+    var readMem = graph.getNodes(ReadMemNode.class).toList();
 
-    if (writes.size() > 1) {
+    if (writesRegFiles.size() != 1
+        || !writesReg.isEmpty()
+        || !writesMem.isEmpty()
+        || !readMem.isEmpty()) {
       return false;
     }
 
-    return writes.get(0).registerFile().resultType() == resultType;
+    return writesRegFiles.get(0).registerFile().resultType() == resultType;
   }
 
-  private boolean findUnsignedAdd32Bit(Graph behavior) {
-    var matched = TreeMatcher.matches(behavior.getNodes(),
+  private boolean findAdd32Bit(Graph behavior) {
+    return findAdd(behavior, 32);
+  }
+
+  private boolean findAdd64Bit(Graph behavior) {
+    return findAdd(behavior, 64);
+  }
+
+  private boolean findAdd(Graph behavior, int bitWidth) {
+    var matched = TreeMatcher.matches(behavior.getNodes(BuiltInCall.class).map(x -> x),
             new BuiltInMatcher(BuiltInTable.ADD, List.of(
-                new TypcastMatcher(Type.unsignedInt(32), new AnyReadRegFileMatcher()),
-                new TypcastMatcher(Type.unsignedInt(32), new AnyReadRegFileMatcher())
+                new AnyChildMatcher(new AnyReadRegFileMatcher()),
+                new AnyChildMatcher(new AnyReadRegFileMatcher())
             )))
         .stream()
         .map(x -> ((BuiltInCall) x).type())
-        .filter(ty -> ty instanceof UIntType && ((UIntType) ty).bitWidth() == 32)
+        .filter(ty -> ty instanceof BitsType bi && bi.bitWidth() == bitWidth)
         .findFirst();
 
     return matched.isPresent()
-        && writesExactlyOneRegisterClassWithType(behavior, Type.unsignedInt(32));
+        && writesExactlyOneRegisterClassWithType(behavior, Type.bits(bitWidth));
   }
 
   private boolean findAddWithImmediate32Bit(Graph behavior) {
-    var matched = TreeMatcher.matches(behavior.getNodes(),
+    var matched = TreeMatcher.matches(behavior.getNodes(BuiltInCall.class).map(x -> x),
             new BuiltInMatcher(List.of(BuiltInTable.ADD, BuiltInTable.ADDS),
-                List.of(new AnyConstantValueMatcher())))
+                List.of(new AnyChildMatcher(new AnyReadRegFileMatcher()),
+                    new AnyChildMatcher(new FuncCallMatcher(Type.signedInt(32))))))
         .stream()
         .map(x -> ((BuiltInCall) x).type())
         .filter(ty -> ty instanceof BitsType && ((BitsType) ty).bitWidth() == 32)
         .findFirst();
 
     return matched.isPresent()
-        && writesExactlyOneRegisterClassWithType(behavior, Type.signedInt(32));
-  }
-
-  private boolean findSignedAdd32Bit(Graph behavior) {
-    var matched = TreeMatcher.matches(behavior.getNodes(),
-            new BuiltInMatcher(List.of(BuiltInTable.ADD, BuiltInTable.ADDS), List.of(
-                new TypcastMatcher(Type.unsignedInt(32), new AnyReadRegFileMatcher()),
-                new TypcastMatcher(Type.unsignedInt(32), new AnyReadRegFileMatcher())
-            )))
-        .stream()
-        .map(x -> ((BuiltInCall) x).type())
-        .filter(ty -> ty instanceof SIntType && ((SIntType) ty).bitWidth() == 32)
-        .findFirst();
-
-    return matched.isPresent()
-        && writesExactlyOneRegisterClassWithType(behavior, Type.signedInt(32));
+        && writesExactlyOneRegisterClassWithType(behavior, Type.bits(32));
   }
 
   private boolean findBeq(Graph behavior, Register.Counter pc) {

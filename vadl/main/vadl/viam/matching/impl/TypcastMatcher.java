@@ -15,28 +15,28 @@ import vadl.viam.matching.Matcher;
  */
 public class TypcastMatcher implements Matcher {
 
-  private final Type type;
-  private final Optional<Matcher> matcher;
+  private final Optional<Type> type;
+  private final Matcher matcher;
 
   public TypcastMatcher(Type type, Matcher matcher) {
-    this.type = type;
-    this.matcher = Optional.of(matcher);
+    this.type = Optional.ofNullable(type);
+    this.matcher = matcher;
   }
 
-  public TypcastMatcher(Type type) {
-    this.type = type;
-    this.matcher = Optional.empty();
+  /**
+   * Match any typecast when {@link Matcher} matches the value.
+   */
+  protected TypcastMatcher(Matcher matcher) {
+    this.type = Optional.empty();
+    this.matcher = matcher;
   }
-
 
   @Override
   public boolean matches(Node node) {
-    if (node instanceof TypeCastNode && ((TypeCastNode) node).type() == this.type) {
-      if (this.matcher.isPresent()) {
-        return this.matches(((TypeCastNode) node).value());
-      } else {
-        return true;
-      }
+    if (node instanceof TypeCastNode && type.isEmpty()) {
+      return matcher.matches(node);
+    } else if (node instanceof TypeCastNode && ((TypeCastNode) node).type() == this.type.get()) {
+      return this.matches(((TypeCastNode) node).value());
     }
 
     return false;
