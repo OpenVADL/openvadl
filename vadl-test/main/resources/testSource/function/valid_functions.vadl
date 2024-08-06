@@ -1,0 +1,24 @@
+
+instruction set architecture FunctionTest = {
+
+  constant simpleConst = 30 as Bits<30>
+
+  function noArg -> Bits<30> = 20
+
+  function callFunc -> Bits<30> = noArg
+
+  function useConst -> Bits<30> = simpleConst
+
+  function withArgs( a: UInt<10>, b: UInt<10>) -> UInt<10> = a + b
+
+  function callFuncOutsideISA -> Bits<30> = outSideISA
+
+  constant constUseFunc = noArg
+
+  function useConstOfFunc -> Bits<30> = constUseFunc
+
+}
+
+function outSideISA -> Bits<30> = 20
+
+function callFuncInsideISA -> Bits<30> = FunctionTest::noArg
