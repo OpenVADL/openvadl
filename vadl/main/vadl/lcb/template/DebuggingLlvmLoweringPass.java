@@ -3,6 +3,7 @@ package vadl.lcb.template;
 import java.io.IOException;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Optional;
 import org.jetbrains.annotations.Nullable;
 import vadl.gcb.valuetypes.ProcessorName;
 import vadl.lcb.config.LcbConfiguration;
@@ -46,16 +47,14 @@ public class DebuggingLlvmLoweringPass extends AbstractTemplateRenderingPass {
         (HashMap<InstructionLabel, Instruction>) passResults.get(new PassKey("IsaMatchingPass"));
 
     if (isaMatching != null) {
-      isaMatching.forEach((key, value) -> variables.put("isa." + key.name(), value.name()));
+
+      for (var label : InstructionLabel.values()) {
+        variables.put("isa_" + label.name(), Optional.ofNullable(isaMatching.get(label)));
+      }
+
+      //isaMatching.forEach((key, value) -> );
     }
 
     return variables;
-  }
-
-  @Nullable
-  @Override
-  public Object execute(Map<PassKey, Object> passResults, Specification viam)
-      throws IOException {
-    return null;
   }
 }

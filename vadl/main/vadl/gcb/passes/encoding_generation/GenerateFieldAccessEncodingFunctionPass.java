@@ -54,13 +54,14 @@ public class GenerateFieldAccessEncodingFunctionPass extends Pass {
           }
         });
 
-    var haveEncoding = viam.isas()
-        .flatMap(x -> x.formats().stream())
-        .distinct()
+    var allHaveEncoding = viam.isas()
+        .flatMap(x -> x.instructions().stream())
+        .map(Instruction::format)
         .flatMap(x -> Arrays.stream(x.fieldAccesses()))
-        .allMatch(x -> x.encoding() != null);
+        .filter(x -> x.encoding() == null)
+        .toList();
 
-    if (!haveEncoding) {
+    if (!allHaveEncoding.isEmpty()) {
       throw new ViamError("Not all formats have an encoding");
     }
 

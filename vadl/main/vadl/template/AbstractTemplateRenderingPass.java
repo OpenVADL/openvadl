@@ -57,9 +57,11 @@ public abstract class AbstractTemplateRenderingPass extends Pass {
   protected abstract String getOutputPath();
 
   /**
-   * The map with the variables for the template.
+   * The map with the variables for the template. This method has access to the {@code passResults}
+   * from the passes which have run before.
    */
-  protected abstract Map<String, Object> createVariables(Specification specification);
+  protected abstract Map<String, Object> createVariables(final Map<PassKey, Object> passResults,
+                                                Specification specification);
 
   public AbstractTemplateRenderingPass(String outputPathPrefix) throws IOException {
     this.outputPathPrefix = outputPathPrefix;
@@ -88,7 +90,7 @@ public abstract class AbstractTemplateRenderingPass extends Pass {
   @Override
   public Object execute(final Map<PassKey, Object> passResults, Specification viam)
       throws IOException {
-    renderTemplate(viam, createFileWriter());
+    renderTemplate(passResults, viam, createFileWriter());
 
     // This pass emits files and does not need to store data.
     return null;
@@ -98,15 +100,17 @@ public abstract class AbstractTemplateRenderingPass extends Pass {
    * Renders the template into a {@link StringWriter}. Additionally, this will not create a
    * folder in the output path.
    */
-  public void renderToString(Specification viam, StringWriter writer) {
-    renderTemplate(viam, writer);
+  public void renderToString(final Map<PassKey, Object> passResults, Specification viam,
+                             StringWriter writer) {
+    renderTemplate(passResults, viam, writer);
   }
 
-  private void renderTemplate(Specification viam, Writer writer) {
+  private void renderTemplate(final Map<PassKey, Object> passResults, Specification viam,
+                              Writer writer) {
     var ctx = new Context();
 
     // Map the variables into thymeleaf's context
-    createVariables(viam).forEach(ctx::setVariable);
+    createVariables(passResults, viam).forEach(ctx::setVariable);
 
     templateEngine.process(getTemplatePath(), ctx, writer);
   }
