@@ -222,6 +222,8 @@ class BinaryExpr extends Expr {
    *  / \              / \
    * 1   2            2   3
    * </pre>
+   * Terminology and proof of this algorithm is presented in the article
+   * <a href="https://dl.acm.org/doi/pdf/10.1145/357121.357127">by Lalonde and Des Rivieres</a>.
    *
    * @param expr A left-sided binary expression tree.
    * @return the root of the expression tree in operator precedence order
@@ -715,8 +717,8 @@ class TypeLiteral extends Expr {
   IdentifierPath baseType;
 
   /**
-   * The sizes of the type literal. An expression of <code>T<1,2><3,4></code> is equivalent to
-   * a sizeIndices of <code>List.of(List.of(1, 2), List.of(3, 4))</code>
+   * The sizes of the type literal. An expression of {@code <1,2><3,4>} is equivalent to
+   * a sizeIndices of {@code List.of(List.of(1, 2), List.of(3, 4))}
    */
   List<List<Expr>> sizeIndices;
 
@@ -874,7 +876,7 @@ class CallExpr extends Expr {
    */
   List<List<Expr>> argsIndices;
   /**
-   * A list of method or sub-field access, e.g. the ".bar()" in <code>Namespace::Foo.bar()</code>.
+   * A list of method or sub-field access, e.g. the {@code .bar()} in {@code Namespace::Foo.bar()}.
    * Each sub-call can itself also have single- and multidimensional arguments.
    */
   List<SubCall> subCalls;
@@ -1154,7 +1156,7 @@ class CastExpr extends Expr {
 }
 
 /**
- * A representation of terms of form <code>"MEM<9>"</code>.
+ * A representation of terms of form {@code "MEM<9>"}.
  */
 class SymbolExpr extends Expr {
   IdentifierPath path;
@@ -1216,60 +1218,5 @@ class SymbolExpr extends Expr {
     int result = path.hashCode();
     result = 31 * result + Objects.hashCode(size);
     return result;
-  }
-}
-
-/**
- * Represents a vector size, like the <code>9</code> in <code>MEM<9></code>.
- * Only exists as a marker for the Parser - should be eliminated before any AST transformation.
- */
-class SizeExpr extends Expr {
-  Expr size;
-
-  public SizeExpr(Expr size) {
-    this.size = size;
-  }
-
-  @Override
-  SourceLocation location() {
-    return size.location();
-  }
-
-  @Override
-  SyntaxType syntaxType() {
-    return BasicSyntaxType.Ex();
-  }
-
-  @Override
-  void prettyPrint(int indent, StringBuilder builder) {
-    size.prettyPrint(indent, builder);
-  }
-
-  @Override
-  <R> R accept(ExprVisitor<R> visitor) {
-    throw new IllegalStateException("Should have been removed in parsing");
-  }
-
-  @Override
-  public String toString() {
-    return this.getClass().getSimpleName();
-  }
-
-  @Override
-  public boolean equals(Object o) {
-    if (this == o) {
-      return true;
-    }
-    if (o == null || getClass() != o.getClass()) {
-      return false;
-    }
-
-    SizeExpr that = (SizeExpr) o;
-    return size.equals(that.size);
-  }
-
-  @Override
-  public int hashCode() {
-    return size.hashCode();
   }
 }

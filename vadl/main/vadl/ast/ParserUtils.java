@@ -62,15 +62,17 @@ class ParserUtils {
   }
 
   /**
-   * Reorders the tail end of a left-aligned binary expression tree, * applying a cast on
-   * its last element or, if the given expr is not a binary expression, simply casts that expr.
-   * Since the right hand of a cast result symOrBin can also be a binary expression with the target
-   * type wrapped in a 'lt' comparison, this function also unpacks the binary symOrBin's lhs.
+   * Reorders the tail end of a left-sided binary expression tree "expr" to apply a cast.
+   * If the given "symOrBin" is a symbol expression, it will be converted to the type to cast to.
+   * If the given "symOrBin" is a binary expression, it has to have a SymbolExpr in its left side,
+   * which will be interpreted as the target type.
+   * If the given "expr" is not a binary expression, the cast operand will be the whole "expr".
+   * If the given "expr" is a binary expression, only its right leaf will be the cast operand.
    *
-   * @param expr A left-aligned binary expression tree.
+   * @param expr A left-sided binary expression tree or a non-binary expression.
    * @param symOrBin Either a SymbolExpr of the cast target type, or a BinaryExpr with the
    *                 SymbolExpr as the left operand.
-   * @return A left-aligned binary expression tree with a CastExpr as its leaf or a simple CastExpr.
+   * @return A left-sided binary expression tree with a CastExpr as its leaf — or a simple CastExpr.
    */
   static Expr reorderCastExpr(Expr expr, Expr symOrBin) {
     if (symOrBin instanceof BinaryExpr binSym) {

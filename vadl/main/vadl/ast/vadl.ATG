@@ -349,8 +349,9 @@ PRODUCTIONS
     }                                                       (. expr = ungroup(this, reorderBinary(this, expr)); .)
   .
 
-  /// Helper rule to figure out if a valid identifier path like "a::b" is a call like "a::b(c)",
-  /// optionally with a vector size like "a::b<9>(c)" or named parameters like "a::b{c=d}".
+  /// Call expressions of form "a::b<3>().c()".
+  /// Due to the "<"-ambiguity with the less-than operator, this rule can also return a BinaryExpr.
+  /// Use the "allowLtOp" parameter to disallow this behavior, e.g. in type literals.
   callOrBinaryExpression<out Expr expr, boolean allowLtOp>
   = symbolOrBinaryExpression<out expr, allowLtOp> (. if (expr instanceof SymbolExpr symExpr) {
                                                        expr = new CallExpr(symExpr, new ArrayList<>(), new ArrayList<>(), expr.location());
@@ -386,31 +387,22 @@ PRODUCTIONS
     SYM_PAREN_CLOSE
   .
 
+  /// Symbol expressions of form "a::b<3>".
+  /// Due to the "<"-ambiguity with the less-than operator, this rule can also return a BinaryExpr.
+  /// Use the "allowLtOp" parameter to disallow this behavior, e.g. in type literals.
   symbolOrBinaryExpression<out Expr expr, boolean allowLtOp>
-  = identifierPath<out IdentifierPath path>        (. expr = new SymbolExpr(path, null, path.location()); .)
+  = identifierPath<out IdentifierPath path> (. expr = new SymbolExpr(path, null, path.location()); .)
     [
       IF (la.kind == _SYM_LT)
-      vectorSizeOrBinaryExpression<out expr, expr> (. if (expr instanceof SizeExpr sizeExpr) {
-                                                        expr = new SymbolExpr(path, sizeExpr.size, path.location().join(loc()));
-                                                      } else if (!allowLtOp) {
-                                                        semError(this, expr.location(), "Binary operator '<' not allowed here");
-                                                      }
-                                                   .)
-    ]
-  .
-
-
-  /// Helper rule to distinguish between the size of a type like "Type<width>"
-  /// and the binary expression < like "a < 9 && b > 2".
-  /// If a different operator is found between < and >, or no > is found at all,
-  /// the leading < is interpreted as the binary operator and a BinaryExpr returned.
-  /// Otherwise, a vector size is returned wrapped in a SizeExpr.
-  vectorSizeOrBinaryExpression<out Expr expr, Expr target>
-  = SYM_LT
-    term<out Expr term>        (. expr = new BinaryExpr(target, Operator.Less(), term); .)
-    [
-      IF (la.kind == _SYM_GT)
-      SYM_GT                   (. expr = new SizeExpr(term); .)
+      SYM_LT
+      term<out Expr term>                   (. expr = new BinaryExpr(expr, Operator.Less(), term); .)
+      [
+        IF (la.kind == _SYM_GT)
+        SYM_GT                              (. expr = new SymbolExpr(path, term, path.location().join(loc())); .)
+      ]                                     (. if (!allowLtOp && expr instanceof BinaryExpr) {
+                                                 semError(this, expr.location(), "Binary operator '<' not allowed here");
+                                               }
+                                            .)
     ]
   .
 
