@@ -45,15 +45,15 @@ class ConstantDefinition extends Definition {
   final Identifier identifier;
 
   @Nullable
-  final TypeLiteral typeAnnotation;
+  final TypeLiteral type;
 
   final Expr value;
   final SourceLocation loc;
 
-  ConstantDefinition(Identifier identifier, @Nullable TypeLiteral typeAnnotation, Expr value,
+  ConstantDefinition(Identifier identifier, @Nullable TypeLiteral type, Expr value,
                      SourceLocation location) {
     this.identifier = identifier;
-    this.typeAnnotation = typeAnnotation;
+    this.type = type;
     this.value = value;
     this.loc = location;
   }
@@ -73,9 +73,9 @@ class ConstantDefinition extends Definition {
     annotations.prettyPrint(indent, builder);
     builder.append(prettyIndentString(indent));
     builder.append("constant %s".formatted(identifier.name));
-    if (typeAnnotation != null) {
+    if (type != null) {
       builder.append(": ");
-      typeAnnotation.prettyPrint(indent, builder);
+      type.prettyPrint(indent, builder);
     }
     builder.append(" = ");
     value.prettyPrint(indent, builder);
@@ -104,7 +104,7 @@ class ConstantDefinition extends Definition {
     ConstantDefinition that = (ConstantDefinition) o;
     return Objects.equals(annotations, that.annotations)
         && Objects.equals(identifier, that.identifier)
-        && Objects.equals(typeAnnotation, that.typeAnnotation)
+        && Objects.equals(type, that.type)
         && Objects.equals(value, that.value);
   }
 
@@ -112,7 +112,7 @@ class ConstantDefinition extends Definition {
   public int hashCode() {
     int result = Objects.hashCode(annotations);
     result = 31 * result + Objects.hashCode(identifier);
-    result = 31 * result + Objects.hashCode(typeAnnotation);
+    result = 31 * result + Objects.hashCode(type);
     result = 31 * result + Objects.hashCode(value);
     return result;
   }
@@ -120,7 +120,7 @@ class ConstantDefinition extends Definition {
 
 class FormatDefinition extends Definition {
   Identifier identifier;
-  TypeLiteral typeAnnotation;
+  TypeLiteral type;
   List<FormatField> fields;
   SourceLocation loc;
 
@@ -194,13 +194,13 @@ class FormatDefinition extends Definition {
 
   static class TypedFormatField extends Node implements FormatField {
     final Identifier identifier;
-    final TypeLiteral typeAnnotation;
+    final TypeLiteral type;
     final NestedSymbolTable symbolTable;
 
-    public TypedFormatField(Identifier identifier, TypeLiteral typeAnnotation,
+    public TypedFormatField(Identifier identifier, TypeLiteral type,
                             NestedSymbolTable symbolTable) {
       this.identifier = identifier;
-      this.typeAnnotation = typeAnnotation;
+      this.type = type;
       this.symbolTable = symbolTable;
     }
 
@@ -211,7 +211,7 @@ class FormatDefinition extends Definition {
 
     @Override
     SourceLocation location() {
-      return identifier.location().join(typeAnnotation.location());
+      return identifier.location().join(type.location());
     }
 
     @Override
@@ -223,7 +223,7 @@ class FormatDefinition extends Definition {
     public void prettyPrint(int indent, StringBuilder builder) {
       identifier.prettyPrint(indent, builder);
       builder.append(" : ");
-      typeAnnotation.prettyPrint(indent, builder);
+      type.prettyPrint(indent, builder);
     }
 
     @Override
@@ -242,22 +242,22 @@ class FormatDefinition extends Definition {
 
       TypedFormatField that = (TypedFormatField) o;
       return Objects.equals(identifier, that.identifier)
-          && Objects.equals(typeAnnotation, that.typeAnnotation);
+          && Objects.equals(type, that.type);
     }
 
     @Override
     public int hashCode() {
       int result = Objects.hashCode(identifier);
-      result = 31 * result + Objects.hashCode(typeAnnotation);
+      result = 31 * result + Objects.hashCode(type);
       result = 31 * result + Objects.hashCode(symbolTable);
       return result;
     }
   }
 
-  public FormatDefinition(Identifier identifier, TypeLiteral typeAnnotation,
+  public FormatDefinition(Identifier identifier, TypeLiteral type,
                           List<FormatField> fields, SourceLocation location) {
     this.identifier = identifier;
-    this.typeAnnotation = typeAnnotation;
+    this.type = type;
     this.fields = fields;
     this.loc = location;
   }
@@ -279,7 +279,7 @@ class FormatDefinition extends Definition {
     builder.append("format ");
     identifier.prettyPrint(indent, builder);
     builder.append(": ");
-    typeAnnotation.prettyPrint(indent, builder);
+    type.prettyPrint(indent, builder);
 
     if (fields.isEmpty()) {
       builder.append("\n");
@@ -328,7 +328,7 @@ class FormatDefinition extends Definition {
     FormatDefinition that = (FormatDefinition) o;
     return annotations.equals(that.annotations)
         && identifier.equals(that.identifier)
-        && typeAnnotation.equals(that.typeAnnotation)
+        && type.equals(that.type)
         && fields.equals(that.fields);
   }
 
@@ -336,7 +336,7 @@ class FormatDefinition extends Definition {
   public int hashCode() {
     int result = annotations.hashCode();
     result = 31 * result + identifier.hashCode();
-    result = 31 * result + typeAnnotation.hashCode();
+    result = 31 * result + type.hashCode();
     result = 31 * result + fields.hashCode();
     return result;
   }

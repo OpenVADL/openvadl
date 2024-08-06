@@ -9,12 +9,15 @@ import vadl.utils.SourceLocation;
 class ParserUtils {
 
   private static final Ungrouper UNGROUPER = new Ungrouper();
+  static boolean[] NO_OPS;
   static boolean[] BIN_OPS;
   static boolean[] BIN_OPS_EXCEPT_GT;
   static boolean[] BIN_OPS_EXCEPT_IN;
 
   static {
-    BIN_OPS = new boolean[Parser.maxT + 1];
+    NO_OPS = new boolean[Parser.maxT + 1];
+
+    BIN_OPS = NO_OPS.clone();
     BIN_OPS[Parser._SYM_LOGOR] = true;
     BIN_OPS[Parser._SYM_LOGAND] = true;
     BIN_OPS[Parser._SYM_BINOR] = true;
@@ -59,12 +62,43 @@ class ParserUtils {
   }
 
   /**
+   * Reorders the tail end of a left-sided binary expression tree "expr" to apply a cast.
+   * If the given "symOrBin" is a symbol expression, it will be converted to the type to cast to.
+   * If the given "symOrBin" is a binary expression, it has to have a SymbolExpr in its left side,
+   * which will be interpreted as the target type.
+   * If the given "expr" is not a binary expression, the cast operand will be the whole "expr".
+   * If the given "expr" is a binary expression, only its right leaf will be the cast operand.
+   *
+   * @param expr A left-sided binary expression tree or a non-binary expression.
+   * @param symOrBin Either a SymbolExpr of the cast target type, or a BinaryExpr with the
+   *                 SymbolExpr as the left operand.
+   * @return A left-sided binary expression tree with a CastExpr as its leaf — or a simple CastExpr.
+   */
+  static Expr reorderCastExpr(Expr expr, Expr symOrBin) {
+    if (symOrBin instanceof BinaryExpr binSym) {
+      if (expr instanceof BinaryExpr binExpr) {
+        binExpr.right = new CastExpr(binExpr.right, new TypeLiteral((SymbolExpr) binSym.left));
+        binSym.left = binExpr;
+      } else {
+        binSym.left = new CastExpr(expr, new TypeLiteral((SymbolExpr) binSym.left));
+      }
+      return binSym;
+    } else if (expr instanceof BinaryExpr binExpr) {
+      binExpr.right = new CastExpr(binExpr.right, new TypeLiteral((SymbolExpr) symOrBin));
+      return binExpr;
+    } else {
+      return new CastExpr(expr, new TypeLiteral((SymbolExpr) symOrBin));
+    }
+  }
+
+  /**
    * Will ungroup expressions if the parser is not currently parsing a model.
    *
    * @see Ungrouper#ungroup(Expr)
    */
   static Expr ungroup(Parser parser, Expr expr) {
-    if (parser.insideMacro) {
+    // Expr should never be null, but it can happen if a parser error occurs.
+    if (parser.insideMacro || expr == null) {
       return expr;
     }
     return UNGROUPER.ungroup(expr);
@@ -151,10 +185,30 @@ class ParserUtils {
     } else if (body instanceof Definition def) {
       var expander = new MacroExpander(argMap, parser.symbolTable);
       body = expander.expandDefinition(def);
+    } else if (body instanceof Identifier id) {
+      body = id;
     } else {
-      throw new RuntimeException("Expanding non expressions are not yet implemented");
+      throw new RuntimeException("Expanding %s not yet implemented".formatted(body.getClass()));
     }
     return body;
+  }
+
+  static Node narrowNode(Node node) {
+    if (node instanceof Expr expr) {
+      return narrowExpr(expr);
+    }
+    return node;
+  }
+
+  static Expr narrowExpr(Expr expr) {
+    if (expr instanceof CallExpr callExpr
+        && callExpr.argsIndices.isEmpty() && callExpr.subCalls.isEmpty()) {
+      expr = callExpr.target;
+    }
+    if (expr instanceof SymbolExpr symExpr && symExpr.size == null) {
+      expr = symExpr.path;
+    }
+    return expr;
   }
 
   static void pushScope(Parser parser) {
@@ -179,5 +233,9 @@ class ParserUtils {
 
   static void popScope(Parser parser) {
     parser.symbolTable = Objects.requireNonNull(parser.symbolTable.parent);
+  }
+
+  static void semError(Parser parser, SourceLocation location, String message) {
+    parser.errors.SemErr(location.begin().line(), location.begin().column(), message);
   }
 }

@@ -1,5 +1,6 @@
 package vadl.ast;
 
+import com.google.common.base.Preconditions;
 import java.util.List;
 import java.util.Objects;
 import javax.annotation.Nullable;
@@ -29,7 +30,7 @@ interface ExprVisitor<R> {
 
   R visit(TypeLiteral expr);
 
-  R visit(IdentifierChain expr);
+  R visit(IdentifierPath expr);
 
   R visit(UnaryExpr expr);
 
@@ -40,6 +41,8 @@ interface ExprVisitor<R> {
   R visit(LetExpr expr);
 
   R visit(CastExpr expr);
+
+  R visit(SymbolExpr expr);
 }
 
 /**
@@ -219,6 +222,8 @@ class BinaryExpr extends Expr {
    *  / \              / \
    * 1   2            2   3
    * </pre>
+   * Terminology and proof of this algorithm is presented in the article
+   * <a href="https://dl.acm.org/doi/pdf/10.1145/357121.357127">by Lalonde and Des Rivieres</a>.
    *
    * @param expr A left-sided binary expression tree.
    * @return the root of the expression tree in operator precedence order
@@ -486,11 +491,11 @@ class StringLiteral extends Expr {
  * This node should never leave the parser.
  */
 class PlaceholderExpr extends Expr {
-  IdentifierChain identifierChain;
+  IdentifierPath identifierPath;
   SourceLocation loc;
 
-  public PlaceholderExpr(IdentifierChain identifierChain, SourceLocation loc) {
-    this.identifierChain = identifierChain;
+  public PlaceholderExpr(IdentifierPath identifierPath, SourceLocation loc) {
+    this.identifierPath = identifierPath;
     this.loc = loc;
   }
 
@@ -512,7 +517,7 @@ class PlaceholderExpr extends Expr {
   @Override
   void prettyPrint(int indent, StringBuilder builder) {
     builder.append("$");
-    identifierChain.prettyPrint(indent, builder);
+    identifierPath.prettyPrint(indent, builder);
   }
 
   @Override
@@ -525,12 +530,12 @@ class PlaceholderExpr extends Expr {
     }
 
     PlaceholderExpr that = (PlaceholderExpr) o;
-    return identifierChain.equals(that.identifierChain);
+    return identifierPath.equals(that.identifierPath);
   }
 
   @Override
   public int hashCode() {
-    return identifierChain.hashCode();
+    return identifierPath.hashCode();
   }
 }
 
@@ -709,17 +714,26 @@ class RangeExpr extends Expr {
  * constant evaluation has to be performed for the concrete type to be known here.
  */
 class TypeLiteral extends Expr {
-  Identifier baseType;
+  IdentifierPath baseType;
 
-  @Nullable
-  Expr sizeExpression;
+  /**
+   * The sizes of the type literal. An expression of {@code <1,2><3,4>} is equivalent to
+   * a sizeIndices of {@code List.of(List.of(1, 2), List.of(3, 4))}
+   */
+  List<List<Expr>> sizeIndices;
 
   SourceLocation loc;
 
-  public TypeLiteral(Identifier baseType, @Nullable Expr sizeExpression, SourceLocation loc) {
+  public TypeLiteral(IdentifierPath baseType, List<List<Expr>> sizeIndices, SourceLocation loc) {
     this.baseType = baseType;
-    this.sizeExpression = sizeExpression;
+    this.sizeIndices = sizeIndices;
     this.loc = loc;
+  }
+
+  public TypeLiteral(SymbolExpr symbolExpr) {
+    this.baseType = symbolExpr.path;
+    this.sizeIndices = symbolExpr.size == null ? List.of() : List.of(List.of(symbolExpr.size));
+    this.loc = symbolExpr.location();
   }
 
   @Override
@@ -734,12 +748,17 @@ class TypeLiteral extends Expr {
 
   @Override
   void prettyPrint(int indent, StringBuilder builder) {
-    builder.append(baseType.name);
-    if (sizeExpression != null) {
+    builder.append(baseType.pathToString());
+    for (var sizes : sizeIndices) {
       builder.append("<");
-      sizeExpression.prettyPrint(
-          indent, builder
-      );
+      var isFirst = true;
+      for (var size : sizes) {
+        if (!isFirst) {
+          builder.append(", ");
+        }
+        isFirst = false;
+        size.prettyPrint(0, builder);
+      }
       builder.append(">");
     }
   }
@@ -765,33 +784,36 @@ class TypeLiteral extends Expr {
 
     TypeLiteral that = (TypeLiteral) o;
     return baseType.equals(that.baseType)
-        && Objects.equals(sizeExpression, that.sizeExpression);
+        && Objects.equals(sizeIndices, that.sizeIndices);
   }
 
   @Override
   public int hashCode() {
     int result = baseType.hashCode();
-    result = 31 * result + Objects.hashCode(sizeExpression);
+    result = 31 * result + Objects.hashCode(sizeIndices);
     return result;
   }
 }
 
-class IdentifierChain extends Expr {
-  Identifier identifier;
-  @Nullable
-  IdentifierChain next;
+class IdentifierPath extends Expr {
+  /**
+   * List of segments in this path; the first N-1 segments are (nested) namespaces,
+   * the last segment is an identifier in the (nested) namespace.
+   * Size has to be at least 1
+   */
+  List<Identifier> segments;
 
-  public IdentifierChain(Identifier identifier, @Nullable IdentifierChain next) {
-    this.identifier = identifier;
-    this.next = next;
+  public IdentifierPath(List<Identifier> segments) {
+    Preconditions.checkArgument(!segments.isEmpty(),
+        "IdentifierPath needs at least one Identifier");
+    this.segments = segments;
   }
 
   @Override
   SourceLocation location() {
-    if (next != null) {
-      return identifier.location().join(next.location());
-    }
-    return identifier.location();
+    var first = segments.get(0);
+    var last = segments.get(segments.size() - 1);
+    return first.location().join(last.location());
   }
 
   @Override
@@ -799,12 +821,21 @@ class IdentifierChain extends Expr {
     return BasicSyntaxType.Id();
   }
 
+  String pathToString() {
+    StringBuilder sb = new StringBuilder();
+    prettyPrint(0, sb);
+    return sb.toString();
+  }
+
   @Override
   void prettyPrint(int indent, StringBuilder builder) {
-    identifier.prettyPrint(indent, builder);
-    if (next != null) {
-      builder.append(".");
-      next.prettyPrint(indent, builder);
+    var isFirst = true;
+    for (Identifier segment : segments) {
+      if (!isFirst) {
+        builder.append("::");
+      }
+      isFirst = false;
+      segment.prettyPrint(indent, builder);
     }
   }
 
@@ -827,43 +858,72 @@ class IdentifierChain extends Expr {
       return false;
     }
 
-    IdentifierChain that = (IdentifierChain) o;
-    return identifier.equals(that.identifier) && Objects.equals(next, that.next);
+    IdentifierPath that = (IdentifierPath) o;
+    return segments.equals(that.segments);
   }
 
   @Override
   public int hashCode() {
-    int result = identifier.hashCode();
-    result = 31 * result + Objects.hashCode(next);
-    return result;
+    return segments.hashCode();
   }
 }
 
 class CallExpr extends Expr {
-  Identifier identifier;
-  Expr argument;
+  SymbolExpr target;
+  /**
+   * A list of function arguments or register/memory indices,
+   * where multidimensional index access is represented as multiple list entries.
+   */
+  List<List<Expr>> argsIndices;
+  /**
+   * A list of method or sub-field access, e.g. the {@code .bar()} in {@code Namespace::Foo.bar()}.
+   * Each sub-call can itself also have single- and multidimensional arguments.
+   */
+  List<SubCall> subCalls;
+  SourceLocation location;
 
-  public CallExpr(Identifier identifier, Expr argument) {
-    this.identifier = identifier;
-    this.argument = argument;
+  public CallExpr(SymbolExpr target, List<List<Expr>> argsIndices,
+                  List<SubCall> subCalls, SourceLocation location) {
+    this.target = target;
+    this.argsIndices = argsIndices;
+    this.subCalls = subCalls;
+    this.location = location;
   }
 
   @Override
   SourceLocation location() {
-    return identifier.location().join(argument.location());
+    return location;
   }
 
   @Override
   SyntaxType syntaxType() {
-    return BasicSyntaxType.Id();
+    return BasicSyntaxType.CallEx();
   }
 
   @Override
   void prettyPrint(int indent, StringBuilder builder) {
-    identifier.prettyPrint(indent, builder);
-    builder.append("(");
-    argument.prettyPrint(indent, builder);
-    builder.append(")");
+    target.prettyPrint(indent, builder);
+    printArgsIndices(argsIndices, builder);
+    for (var subCall : subCalls) {
+      builder.append(".");
+      subCall.id.prettyPrint(0, builder);
+      printArgsIndices(subCall.argsIndices, builder);
+    }
+  }
+
+  private void printArgsIndices(List<List<Expr>> argsIndices, StringBuilder builder) {
+    for (var args : argsIndices) {
+      builder.append("(");
+      boolean first = true;
+      for (var arg : args) {
+        if (!first) {
+          builder.append(", ");
+        }
+        arg.prettyPrint(0, builder);
+        first = false;
+      }
+      builder.append(")");
+    }
   }
 
   @Override
@@ -886,15 +946,20 @@ class CallExpr extends Expr {
     }
 
     CallExpr that = (CallExpr) o;
-    return identifier.equals(that.identifier) && argument.equals(that.argument);
+    return target.equals(that.target)
+        && argsIndices.equals(that.argsIndices)
+        && subCalls.equals(that.subCalls);
   }
 
   @Override
   public int hashCode() {
-    int result = identifier.hashCode();
-    result = 31 * result + Objects.hashCode(argument);
+    int result = target.hashCode();
+    result = 31 * result + Objects.hashCode(argsIndices);
+    result = 31 * result + Objects.hashCode(subCalls);
     return result;
   }
+
+  record SubCall(Identifier id, List<List<Expr>> argsIndices) {}
 }
 
 class IfExpr extends Expr {
@@ -1086,6 +1151,72 @@ class CastExpr extends Expr {
   public int hashCode() {
     int result = value.hashCode();
     result = 31 * result + Objects.hashCode(type);
+    return result;
+  }
+}
+
+/**
+ * A representation of terms of form {@code "MEM<9>"}.
+ */
+class SymbolExpr extends Expr {
+  IdentifierPath path;
+  @Nullable
+  Expr size;
+  SourceLocation location;
+
+  SymbolExpr(IdentifierPath path, @Nullable Expr size, SourceLocation location) {
+    this.path = path;
+    this.size = size;
+    this.location = location;
+  }
+
+  @Override
+  SourceLocation location() {
+    return location;
+  }
+
+  @Override
+  SyntaxType syntaxType() {
+    return BasicSyntaxType.SymEx();
+  }
+
+  @Override
+  void prettyPrint(int indent, StringBuilder builder) {
+    path.prettyPrint(indent, builder);
+    if (size != null) {
+      builder.append("< ");
+      size.prettyPrint(indent, builder);
+      builder.append(" >");
+    }
+  }
+
+  @Override
+  <R> R accept(ExprVisitor<R> visitor) {
+    return visitor.visit(this);
+  }
+
+  @Override
+  public String toString() {
+    return this.getClass().getSimpleName();
+  }
+
+  @Override
+  public boolean equals(Object o) {
+    if (this == o) {
+      return true;
+    }
+    if (o == null || getClass() != o.getClass()) {
+      return false;
+    }
+
+    SymbolExpr that = (SymbolExpr) o;
+    return path.equals(that.path) && Objects.equals(size, that.size);
+  }
+
+  @Override
+  public int hashCode() {
+    int result = path.hashCode();
+    result = 31 * result + Objects.hashCode(size);
     return result;
   }
 }

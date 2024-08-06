@@ -2,7 +2,6 @@ package vadl.ast;
 
 import java.util.Arrays;
 import java.util.List;
-import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 /**
@@ -70,8 +69,8 @@ public class AstDumper
   public Void visit(ConstantDefinition definition) {
     dumpNode(definition);
     dumpChildren(definition.identifier);
-    if (definition.typeAnnotation != null) {
-      dumpChildren(definition.typeAnnotation);
+    if (definition.type != null) {
+      dumpChildren(definition.type);
     }
     dumpChildren(definition.value);
     return null;
@@ -89,7 +88,7 @@ public class AstDumper
       } else if (field instanceof FormatDefinition.TypedFormatField f) {
         dumpNode(f);
         dumpChildren(f.identifier());
-        dumpChildren(f.typeAnnotation);
+        dumpChildren(f.type);
       }
     }
     this.indent--;
@@ -181,19 +180,19 @@ public class AstDumper
   public Void visit(TypeLiteral expr) {
     dumpNode(expr);
     dumpChildren(expr.baseType);
-    if (expr.sizeExpression != null) {
-      dumpChildren(expr.sizeExpression);
+    indent++;
+    for (List<Expr> sizes : expr.sizeIndices) {
+      builder.append(indentString()).append("Sizes\n");
+      dumpChildren(sizes);
     }
+    indent--;
     return null;
   }
 
   @Override
-  public Void visit(IdentifierChain expr) {
+  public Void visit(IdentifierPath expr) {
     dumpNode(expr);
-    dumpChildren(expr.identifier);
-    if (expr.next != null) {
-      dumpChildren(expr.next);
-    }
+    dumpChildren(expr.segments);
     return null;
   }
 
@@ -214,11 +213,11 @@ public class AstDumper
   @Override
   public Void visit(EncodingDefinition definition) {
     dumpNode(definition);
-    List<Node> children = definition.fieldEncodings.stream()
+    dumpChildren(definition.instrIdentifier);
+    dumpChildren(definition.fieldEncodings.stream()
         .flatMap(entry -> Stream.of(entry.field(), entry.value()))
-        .collect(Collectors.toList());
-    children.add(0, definition.instrIdentifier);
-    dumpChildren(children);
+        .toList()
+    );
     return null;
   }
 
@@ -232,7 +231,21 @@ public class AstDumper
   @Override
   public Void visit(CallExpr expr) {
     dumpNode(expr);
-    dumpChildren(expr.identifier, expr.argument);
+    dumpChildren(expr.target);
+    indent++;
+    for (List<Expr> args : expr.argsIndices) {
+      builder.append(indentString()).append("ArgsIndices\n");
+      dumpChildren(args);
+    }
+    for (CallExpr.SubCall subCall : expr.subCalls) {
+      builder.append(indentString()).append("SubCall\n");
+      dumpChildren(subCall.id());
+      for (List<Expr> args : subCall.argsIndices()) {
+        builder.append(indentString()).append("ArgsIndices\n");
+        dumpChildren(args);
+      }
+    }
+    indent--;
     return null;
   }
 
@@ -254,6 +267,16 @@ public class AstDumper
   public Void visit(CastExpr expr) {
     dumpNode(expr);
     dumpChildren(expr.value, expr.type);
+    return null;
+  }
+
+  @Override
+  public Void visit(SymbolExpr expr) {
+    dumpNode(expr);
+    dumpChildren(expr.path);
+    if (expr.size != null) {
+      dumpChildren(expr.size);
+    }
     return null;
   }
 
@@ -285,9 +308,7 @@ public class AstDumper
   public Void visit(AssignmentStatement assignmentStatement) {
     builder.append(indentString()).append("AssignmentStatement\n");
     indent++;
-    builder.append(indentString()).append("Target:\n");
     assignmentStatement.target.accept(this);
-    builder.append(indentString()).append("Value:");
     assignmentStatement.valueExpression.accept(this);
     indent--;
     return null;

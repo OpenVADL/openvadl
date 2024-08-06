@@ -11,7 +11,7 @@ import vadl.error.VadlException;
  * Expands and copies a macro template.
  */
 class MacroExpander
-    implements ExprVisitor<Node>, DefinitionVisitor<Node>, StatementVisitor<Statement> {
+    implements ExprVisitor<Expr>, DefinitionVisitor<Definition>, StatementVisitor<Statement> {
   final Map<String, Node> args;
   NestedSymbolTable symbols;
   List<VadlError> errors = new ArrayList<>();
@@ -26,10 +26,10 @@ class MacroExpander
     if (!errors.isEmpty()) {
       throw new VadlException(errors);
     }
-    return (Expr) result;
+    return result;
   }
 
-  public Node expandDefinition(Definition def) {
+  public Definition expandDefinition(Definition def) {
     var result = def.accept(this);
     if (!errors.isEmpty()) {
       throw new VadlException(errors);
@@ -40,14 +40,14 @@ class MacroExpander
   @Override
   public Expr visit(BinaryExpr expr) {
     // FIXME: Only if parent is not a binary operator cause otherwise it is O(n^2)
-    var result = new BinaryExpr((Expr) expr.left.accept(this), expr.operator,
-        (Expr) expr.right.accept(this));
+    var result = new BinaryExpr(
+        expr.left.accept(this), expr.operator, expr.right.accept(this));
     return BinaryExpr.reorder(result);
   }
 
   @Override
   public Expr visit(GroupExpr expr) {
-    return new GroupExpr((Expr) expr.accept(this));
+    return new GroupExpr(expr.accept(this));
   }
 
   @Override
@@ -61,25 +61,25 @@ class MacroExpander
   }
 
   @Override
-  public Node visit(PlaceholderExpr expr) {
-    // FIXME: This could also be another macro
-    var arg = args.get(expr.identifierChain.identifier.name);
+  public Expr visit(PlaceholderExpr expr) {
+    // TODO Proper handling of placeholders with format "$a.b.c"
+    var arg = args.get(expr.identifierPath.segments.get(0).name);
     if (arg == null) {
       throw new IllegalStateException("The parser should already have checked that.");
     } else if (arg instanceof Identifier id) {
-      return id;
+      return new IdentifierPath(List.of(id));
     }
 
     return ((Expr) arg).accept(this);
   }
 
   @Override
-  public Node visit(MacroInstanceExpr expr) {
+  public Expr visit(MacroInstanceExpr expr) {
     var arg = args.get(expr.identifier.name);
     if (arg == null) {
       throw new IllegalStateException("The parser should already have checked that.");
     } else if (arg instanceof Identifier id) {
-      return id;
+      return new IdentifierPath(List.of(id));
     }
 
     return ((Expr) arg).accept(this);
@@ -87,67 +87,101 @@ class MacroExpander
 
   @Override
   public Expr visit(RangeExpr expr) {
-    return new RangeExpr((Expr) expr.from.accept(this), (Expr) expr.to.accept(this));
+    return new RangeExpr(expr.from.accept(this), expr.to.accept(this));
   }
 
   @Override
   public Expr visit(TypeLiteral expr) {
-    var sizeExpression = expr.sizeExpression == null ? null : expr.sizeExpression.accept(this);
-    return new TypeLiteral(expr.baseType, (Expr) sizeExpression, expr.loc);
+    for (int i = 0; i < expr.sizeIndices.size(); i++) {
+      var sizes = expr.sizeIndices.get(i);
+      for (int j = 0; j < sizes.size(); j++) {
+        sizes.set(j, sizes.get(j).accept(this));
+      }
+    }
+    return expr;
   }
 
   @Override
-  public Expr visit(IdentifierChain expr) {
-    symbols.requireValue(expr);
-    return new IdentifierChain(expr.identifier, expr.next);
+  public Expr visit(IdentifierPath expr) {
+    return expr;
   }
 
   @Override
   public Expr visit(UnaryExpr expr) {
-    return new UnaryExpr(expr.operator, (Expr) expr.operand.accept(this));
+    return new UnaryExpr(expr.operator, expr.operand.accept(this));
   }
 
   @Override
-  public Node visit(CallExpr expr) {
-    return new CallExpr(expr.identifier, (Expr) expr.argument.accept(this));
+  public Expr visit(CallExpr expr) {
+    expr.target = (SymbolExpr) expr.target.accept(this);
+    var argsIndices = expr.argsIndices;
+    expr.argsIndices = new ArrayList<>(argsIndices.size());
+    for (var entry : argsIndices) {
+      var args = new ArrayList<Expr>(entry.size());
+      for (var arg : entry) {
+        args.add(arg.accept(this));
+      }
+      expr.argsIndices.add(args);
+    }
+    var subCalls = expr.subCalls;
+    expr.subCalls = new ArrayList<>(subCalls.size());
+    for (var subCall : subCalls) {
+      argsIndices = new ArrayList<>(subCall.argsIndices().size());
+      for (var entry : subCall.argsIndices()) {
+        var args = new ArrayList<Expr>(entry.size());
+        for (var arg : entry) {
+          args.add(arg.accept(this));
+        }
+        argsIndices.add(args);
+      }
+      expr.subCalls.add(new CallExpr.SubCall(subCall.id(), argsIndices));
+    }
+    symbols.requireValue(expr);
+    return expr;
   }
 
   @Override
-  public Node visit(IfExpr expr) {
+  public Expr visit(IfExpr expr) {
     return new IfExpr(
-        (Expr) expr.condition.accept(this),
-        (Expr) expr.thenExpr.accept(this),
-        (Expr) expr.elseExpr.accept(this),
+        expr.condition.accept(this),
+        expr.thenExpr.accept(this),
+        expr.elseExpr.accept(this),
         expr.location
     );
   }
 
   @Override
-  public Node visit(LetExpr expr) {
+  public Expr visit(LetExpr expr) {
     return new LetExpr(
         expr.identifier,
-        (Expr) expr.valueExpr.accept(this),
-        (Expr) expr.body.accept(this),
+        expr.valueExpr.accept(this),
+        expr.body.accept(this),
         expr.location
     );
   }
 
   @Override
-  public Node visit(CastExpr expr) {
-    expr.value = (Expr) expr.value.accept(this);
+  public Expr visit(CastExpr expr) {
+    expr.value = expr.value.accept(this);
     expr.type = (TypeLiteral) expr.type.accept(this);
     return expr;
   }
 
   @Override
+  public Expr visit(SymbolExpr expr) {
+    expr.size = expr.size == null ? null : expr.size.accept(this);
+    return expr;
+  }
+
+  @Override
   public Definition visit(ConstantDefinition definition) {
-    return new ConstantDefinition(definition.identifier, definition.typeAnnotation,
-        (Expr) definition.value.accept(this), definition.loc);
+    return new ConstantDefinition(definition.identifier, definition.type,
+        definition.value.accept(this), definition.loc);
   }
 
   @Override
   public Definition visit(FormatDefinition definition) {
-    return new FormatDefinition(definition.identifier, definition.typeAnnotation, definition.fields,
+    return new FormatDefinition(definition.identifier, definition.type, definition.fields,
         definition.loc);
   }
 
@@ -213,7 +247,7 @@ class MacroExpander
   public Statement visit(LetStatement letStatement) {
     symbols = symbols.createChild();
     symbols.defineConstant(letStatement.identifier.name, letStatement.identifier.loc);
-    letStatement.valueExpression = (Expr) letStatement.valueExpression.accept(this);
+    letStatement.valueExpression = letStatement.valueExpression.accept(this);
     letStatement.body = letStatement.body.accept(this);
     symbols = Objects.requireNonNull(symbols.parent);
     return letStatement;
@@ -221,7 +255,7 @@ class MacroExpander
 
   @Override
   public Statement visit(IfStatement ifStatement) {
-    ifStatement.condition = (Expr) ifStatement.condition.accept(this);
+    ifStatement.condition = ifStatement.condition.accept(this);
     ifStatement.thenStmt = ifStatement.thenStmt.accept(this);
     if (ifStatement.elseStmt != null) {
       ifStatement.elseStmt = ifStatement.elseStmt.accept(this);
@@ -231,17 +265,23 @@ class MacroExpander
 
   @Override
   public Statement visit(AssignmentStatement assignmentStatement) {
-    if (assignmentStatement.target instanceof IdentifierChain chain) {
-      symbols.requireValue(chain);
+    if (assignmentStatement.target instanceof IdentifierPath path) {
+      symbols.requireValue(
+          new CallExpr(new SymbolExpr(path, null, path.location()), List.of(), List.of(),
+              path.location()));
     }
-    assignmentStatement.valueExpression = (Expr) assignmentStatement.valueExpression.accept(this);
+    assignmentStatement.valueExpression = assignmentStatement.valueExpression.accept(this);
     return assignmentStatement;
   }
 
   private Identifier resolvePlaceholderOrIdentifier(Node n) {
     if (n instanceof PlaceholderExpr p) {
-      return (Identifier) p.accept(this);
+      var path = (IdentifierPath) p.accept(this);
+      return path.segments.get(path.segments.size() - 1);
     }
-    return (Identifier) n;
+    if (n instanceof Identifier id) {
+      return id;
+    }
+    throw new IllegalStateException("Unknown resolved placeholder type " + n);
   }
 }

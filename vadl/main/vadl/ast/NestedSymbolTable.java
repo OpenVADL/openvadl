@@ -71,7 +71,7 @@ class NestedSymbolTable implements DefinitionVisitor<Void> {
 
   @Override
   public Void visit(CounterDefinition definition) {
-    var typeSymbol = resolveSymbol(definition.type.baseType.name);
+    var typeSymbol = resolveSymbol(definition.type.baseType.pathToString());
     var typeDef = typeSymbol instanceof FormatSymbol s ? s.definition : null;
     defineSymbol(new ValuedSymbol(definition.identifier.name, typeDef, SymbolType.COUNTER),
         definition.location());
@@ -80,13 +80,14 @@ class NestedSymbolTable implements DefinitionVisitor<Void> {
 
   @Override
   public Void visit(MemoryDefinition definition) {
-    defineSymbol(definition.identifier.name, SymbolType.MEMORY, definition.location());
+    defineSymbol(new ValuedSymbol(definition.identifier.name, definition, SymbolType.MEMORY),
+        definition.location());
     return null;
   }
 
   @Override
   public Void visit(RegisterDefinition definition) {
-    var typeSymbol = resolveSymbol(definition.type.baseType.name);
+    var typeSymbol = resolveSymbol(definition.type.baseType.pathToString());
     var typeDef = typeSymbol instanceof FormatSymbol s ? s.definition : null;
     defineSymbol(new ValuedSymbol(definition.identifier.name, typeDef, SymbolType.REGISTER),
         definition.location());
@@ -95,7 +96,8 @@ class NestedSymbolTable implements DefinitionVisitor<Void> {
 
   @Override
   public Void visit(RegisterFileDefinition definition) {
-    defineSymbol(definition.identifier.name, SymbolType.REGISTER_FILE, definition.location());
+    defineSymbol(new ValuedSymbol(definition.identifier.name, definition, SymbolType.REGISTER_FILE),
+        definition.location());
     return null;
   }
 
@@ -188,8 +190,8 @@ class NestedSymbolTable implements DefinitionVisitor<Void> {
     }
   }
 
-  void requireValue(IdentifierChain var) {
-    requirements.add(new IdentifierRequirement(var));
+  void requireValue(CallExpr callExpr) {
+    requirements.add(new ValueRequirement(callExpr));
   }
 
   List<VadlError> validate() {
@@ -205,7 +207,7 @@ class NestedSymbolTable implements DefinitionVisitor<Void> {
               "Mismatched type %s: required %s, found %s".formatted(req.name, req.type.name(),
                   symbol.type().name()), req.loc, null, null));
         }
-      } else if (requirement instanceof IdentifierRequirement req) {
+      } else if (requirement instanceof ValueRequirement req) {
         validateValueAccess(req);
       } else if (requirement instanceof FormatRequirement req) {
         requireFormat(req.formatId);
@@ -217,26 +219,28 @@ class NestedSymbolTable implements DefinitionVisitor<Void> {
     return errors;
   }
 
-  void validateValueAccess(IdentifierRequirement requirement) {
-    var chain = requirement.identifierChain;
-    var symbol = resolveSymbol(chain.identifier.name);
+  void validateValueAccess(ValueRequirement requirement) {
+    var expr = requirement.callExpr;
+    var path = expr.target.path.pathToString();
+    var symbol = resolveSymbol(path);
     if (symbol == null) {
-      reportError("Unresolved definition " + chain.identifier.name, chain.location());
+      reportError("Unresolved definition " + path, expr.location());
       return;
     }
+
     if (symbol instanceof ValuedSymbol valSymbol) {
-      if (chain.next == null) {
+      if (expr.subCalls.isEmpty()) {
         return;
       }
       if (!(valSymbol.typeDefinition instanceof FormatDefinition formatDefinition)) {
         reportError("Invalid usage: symbol %s of type %s does not have a record type".formatted(
-            chain.identifier.name, symbol.type()), chain.location());
+            path, symbol.type()), expr.location());
         return;
       }
-      verifyFormatAccess(formatDefinition, chain.next);
+      verifyFormatAccess(formatDefinition, expr.subCalls);
     } else {
       reportError("Invalid usage: symbol %s of type %s does not have a value"
-          .formatted(chain.identifier.name, symbol.type()), chain.location());
+          .formatted(path, symbol.type()), expr.location());
     }
   }
 
@@ -247,46 +251,46 @@ class NestedSymbolTable implements DefinitionVisitor<Void> {
         .findFirst().orElse(null);
   }
 
-  private void verifyFormatAccess(FormatDefinition format, IdentifierChain chain) {
-    var field = findField(format, chain.identifier.name);
+  private void verifyFormatAccess(FormatDefinition format, List<CallExpr.SubCall> subCalls) {
+    if (subCalls.isEmpty()) {
+      return;
+    }
+    var next = subCalls.get(0).id();
+    var field = findField(format, next.name);
     if (field == null) {
       reportError(
           "Invalid usage: format %s does not have field %s".formatted(format.identifier.name,
-              chain.identifier.name), chain.location());
-    } else if (field instanceof FormatDefinition.RangeFormatField && chain.next != null) {
+              next.name), next.location());
+    } else if (field instanceof FormatDefinition.RangeFormatField && subCalls.size() > 1) {
       reportError("Invalid usage: field %s resolves to a range, does not provide fields to chain"
-          .formatted(field.identifier().name), chain.location());
+          .formatted(field.identifier().name), next.location());
     } else if (field instanceof FormatDefinition.TypedFormatField f) {
-      if (isValuedAnnotation(f.typeAnnotation)) {
-        if (chain.next != null) {
+      if (isValuedAnnotation(f.type)) {
+        if (subCalls.size() > 1) {
           reportError(
               "Invalid usage: field %s resolves to %s, does not provide fields to chain".formatted(
-                  field.identifier().name, f.typeAnnotation.baseType), chain.location());
+                  field.identifier().name, f.type.baseType), next.location());
         }
-      } else if (chain.next == null) {
-        reportError(
-            "Invalid usage: field %s resolves to %s, which does not provide a value".formatted(
-                field.identifier().name, f.typeAnnotation.baseType.name), chain.location());
-      } else {
-        var typeSymbol = f.symbolTable.resolveSymbol(f.typeAnnotation.baseType.name);
+      } else if (subCalls.size() > 1) {
+        var typeSymbol = f.symbolTable.resolveSymbol(f.type.baseType.pathToString());
         if (typeSymbol instanceof FormatSymbol formatSymbol) {
-          verifyFormatAccess(formatSymbol.definition, chain.next);
+          verifyFormatAccess(formatSymbol.definition, subCalls.subList(1, subCalls.size()));
         } else if (typeSymbol == null) {
           reportError("Invalid usage: type %s not found".formatted(f.identifier.name),
               f.location());
         } else {
           reportError("Invalid usage: symbol %s of type %s does not have a record type".formatted(
-              f.identifier.name, typeSymbol.type().name()), chain.location());
+              f.identifier.name, typeSymbol.type().name()), next.location());
         }
       }
     }
   }
 
-  private boolean isValuedAnnotation(TypeLiteral typeAnnotation) {
+  private boolean isValuedAnnotation(TypeLiteral type) {
     // TODO Built-in types should be configurable, not hardcoded
-    return typeAnnotation.baseType.name.equals("Bool")
-        || typeAnnotation.baseType.name.equals("Bits")
-        || typeAnnotation.baseType.name.equals("SInt");
+    return type.baseType.pathToString().equals("Bool")
+        || type.baseType.pathToString().equals("Bits")
+        || type.baseType.pathToString().equals("SInt");
   }
 
   private void verifyAvailable(String name, SourceLocation loc) {
@@ -301,7 +305,7 @@ class NestedSymbolTable implements DefinitionVisitor<Void> {
 
   enum SymbolType {
     CONSTANT, COUNTER, FORMAT, INSTRUCTION, INSTRUCTION_SET, MEMORY, REGISTER, REGISTER_FILE,
-    FORMAT_FIELD, MACRO;
+    FORMAT_FIELD, MACRO
   }
 
   interface Symbol {
@@ -347,7 +351,7 @@ class NestedSymbolTable implements DefinitionVisitor<Void> {
       implements Requirement {
   }
 
-  record IdentifierRequirement(IdentifierChain identifierChain) implements Requirement {
+  record ValueRequirement(CallExpr callExpr) implements Requirement {
   }
 
   record FormatRequirement(Identifier formatId) implements Requirement {

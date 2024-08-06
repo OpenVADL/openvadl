@@ -143,11 +143,23 @@ public class BinaryPrecedenceTest {
     assertAstEquality(VadlParser.parse(prog1), VadlParser.parse(prog2));
   }
 
-
   @Test
   void containingGroupExpressionTest() {
     var prog1 = "constant n = 1 * (2 + 3) << 4";
     var prog2 = "constant n = ((1 * (2 + 3)) << 4)";
+
+    assertAstEquality(VadlParser.parse(prog1), VadlParser.parse(prog2));
+  }
+
+  @Test
+  void unaryWinsOverLessThan() {
+    var prog1 = """
+        constant a = 2
+        constant b = -a < 2
+        """;
+    var prog2 = """
+        constant a = 2
+        constant b = (-a) < 2""";
 
     assertAstEquality(VadlParser.parse(prog1), VadlParser.parse(prog2));
   }

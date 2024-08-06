@@ -1,5 +1,7 @@
 package vadl.ast;
 
+import java.util.ArrayList;
+
 /**
  * Ungrouper, removes all group expressions recursively.
  * Groups are needed in the AST during parsing until all binary expressions are reordered but then
@@ -60,7 +62,7 @@ class Ungrouper implements ExprVisitor<Expr> {
   }
 
   @Override
-  public Expr visit(IdentifierChain expr) {
+  public Expr visit(IdentifierPath expr) {
     return expr;
   }
 
@@ -72,7 +74,30 @@ class Ungrouper implements ExprVisitor<Expr> {
 
   @Override
   public Expr visit(CallExpr expr) {
-    return new CallExpr(expr.identifier, expr.argument.accept(this));
+    expr.target = (SymbolExpr) expr.target.accept(this);
+    var argsIndices = expr.argsIndices;
+    expr.argsIndices = new ArrayList<>(argsIndices.size());
+    for (var entry : argsIndices) {
+      var args = new ArrayList<Expr>(entry.size());
+      for (var arg : entry) {
+        args.add(arg.accept(this));
+      }
+      expr.argsIndices.add(args);
+    }
+    var subCalls = expr.subCalls;
+    expr.subCalls = new ArrayList<>(subCalls.size());
+    for (var subCall : subCalls) {
+      argsIndices = new ArrayList<>(subCall.argsIndices().size());
+      for (var entry : subCall.argsIndices()) {
+        var args = new ArrayList<Expr>(entry.size());
+        for (var arg : entry) {
+          args.add(arg.accept(this));
+        }
+        argsIndices.add(args);
+      }
+      expr.subCalls.add(new CallExpr.SubCall(subCall.id(), argsIndices));
+    }
+    return expr;
   }
 
   @Override
@@ -98,6 +123,12 @@ class Ungrouper implements ExprVisitor<Expr> {
   @Override
   public Expr visit(CastExpr expr) {
     expr.value = expr.value.accept(this);
+    return expr;
+  }
+
+  @Override
+  public Expr visit(SymbolExpr expr) {
+    expr.size = expr.size == null ? null : expr.size.accept(this);
     return expr;
   }
 }

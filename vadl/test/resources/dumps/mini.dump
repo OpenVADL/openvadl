@@ -5,64 +5,98 @@ InstructionSetDefinition
 . : IntegerLiteral literal: 32 (32)
 . ConstantDefinition
 . : Identifier name: "MLen"
-. : IdentifierChain
-. : ' Identifier name: "Arch32"
+. : CallExpr
+. : ' SymbolExpr
+. : ' | IdentifierPath
+. : ' | . Identifier name: "Arch32"
 . RegisterFileDefinition
 . : Identifier name: "X"
 . : TypeLiteral
-. : ' Identifier name: "Bits"
-. : ' IntegerLiteral literal: 5 (5)
+. : ' IdentifierPath
+. : ' | Identifier name: "Bits"
+. : ' Sizes
+. : ' | IntegerLiteral literal: 5 (5)
 . : TypeLiteral
-. : ' Identifier name: "Bits"
-. : ' IdentifierChain
-. : ' | Identifier name: "MLen"
+. : ' IdentifierPath
+. : ' | Identifier name: "Bits"
+. : ' Sizes
+. : ' | CallExpr
+. : ' | . SymbolExpr
+. : ' | . : IdentifierPath
+. : ' | . : ' Identifier name: "MLen"
 . FormatDefinition
 . : TypedFormatField
 . : ' Identifier name: "funct7"
 . : ' TypeLiteral
-. : ' | Identifier name: "Bits"
-. : ' | IntegerLiteral literal: 7 (7)
+. : ' | IdentifierPath
+. : ' | . Identifier name: "Bits"
+. : ' | Sizes
+. : ' | . IntegerLiteral literal: 7 (7)
 . : TypedFormatField
 . : ' Identifier name: "rs2"
 . : ' TypeLiteral
-. : ' | Identifier name: "Bits"
-. : ' | IntegerLiteral literal: 5 (5)
+. : ' | IdentifierPath
+. : ' | . Identifier name: "Bits"
+. : ' | Sizes
+. : ' | . IntegerLiteral literal: 5 (5)
 . : TypedFormatField
 . : ' Identifier name: "rs1"
 . : ' TypeLiteral
-. : ' | Identifier name: "Bits"
-. : ' | IntegerLiteral literal: 5 (5)
+. : ' | IdentifierPath
+. : ' | . Identifier name: "Bits"
+. : ' | Sizes
+. : ' | . IntegerLiteral literal: 5 (5)
 . : TypedFormatField
 . : ' Identifier name: "funct3"
 . : ' TypeLiteral
-. : ' | Identifier name: "Bits"
-. : ' | IntegerLiteral literal: 3 (3)
+. : ' | IdentifierPath
+. : ' | . Identifier name: "Bits"
+. : ' | Sizes
+. : ' | . IntegerLiteral literal: 3 (3)
 . : TypedFormatField
 . : ' Identifier name: "rd"
 . : ' TypeLiteral
-. : ' | Identifier name: "Bits"
-. : ' | IntegerLiteral literal: 5 (5)
+. : ' | IdentifierPath
+. : ' | . Identifier name: "Bits"
+. : ' | Sizes
+. : ' | . IntegerLiteral literal: 5 (5)
 . : TypedFormatField
 . : ' Identifier name: "opcode"
 . : ' TypeLiteral
-. : ' | Identifier name: "Bits"
-. : ' | IntegerLiteral literal: 7 (7)
+. : ' | IdentifierPath
+. : ' | . Identifier name: "Bits"
+. : ' | Sizes
+. : ' | . IntegerLiteral literal: 7 (7)
 . InstructionDefinition
 . : Identifier name: "ADD"
 . : Identifier name: "Rtype"
 . : BlockStatement
 . : ' AssignmentStatement
-. : ' | Target:
 . : ' | CallExpr
-. : ' | . Identifier name: "X"
-. : ' | . IdentifierChain
-. : ' | . : Identifier name: "rd"
-. : ' | Value:. : ' | BinaryExpr operator: +
+. : ' | . SymbolExpr
+. : ' | . : IdentifierPath
+. : ' | . : ' Identifier name: "X"
+. : ' | . ArgsIndices
+. : ' | . : CallExpr
+. : ' | . : ' SymbolExpr
+. : ' | . : ' | IdentifierPath
+. : ' | . : ' | . Identifier name: "rd"
+. : ' | BinaryExpr operator: +
 . : ' | . CallExpr
-. : ' | . : Identifier name: "X"
-. : ' | . : IdentifierChain
-. : ' | . : ' Identifier name: "rs1"
+. : ' | . : SymbolExpr
+. : ' | . : ' IdentifierPath
+. : ' | . : ' | Identifier name: "X"
+. : ' | . : ArgsIndices
+. : ' | . : ' CallExpr
+. : ' | . : ' | SymbolExpr
+. : ' | . : ' | . IdentifierPath
+. : ' | . : ' | . : Identifier name: "rs1"
 . : ' | . CallExpr
-. : ' | . : Identifier name: "X"
-. : ' | . : IdentifierChain
-. : ' | . : ' Identifier name: "rs2"
+. : ' | . : SymbolExpr
+. : ' | . : ' IdentifierPath
+. : ' | . : ' | Identifier name: "X"
+. : ' | . : ArgsIndices
+. : ' | . : ' CallExpr
+. : ' | . : ' | SymbolExpr
+. : ' | . : ' | . IdentifierPath
+. : ' | . : ' | . : Identifier name: "rs2"
