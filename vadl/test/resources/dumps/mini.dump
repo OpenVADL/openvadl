@@ -5,10 +5,7 @@ InstructionSetDefinition
 . : IntegerLiteral literal: 32 (32)
 . ConstantDefinition
 . : Identifier name: "MLen"
-. : CallExpr
-. : ' SymbolExpr
-. : ' | IdentifierPath
-. : ' | . Identifier name: "Arch32"
+. : Identifier name: "Arch32"
 . UsingDefinition
 . : Identifier name: "Inst"
 . : TypeLiteral
@@ -22,10 +19,7 @@ InstructionSetDefinition
 . : ' IdentifierPath
 . : ' | Identifier name: "Bits"
 . : ' Sizes
-. : ' | CallExpr
-. : ' | . SymbolExpr
-. : ' | . : IdentifierPath
-. : ' | . : ' Identifier name: "MLen"
+. : ' | Identifier name: "MLen"
 . UsingDefinition
 . : Identifier name: "Bits3"
 . : TypeLiteral
@@ -89,10 +83,7 @@ InstructionSetDefinition
 . : DerivedFormatField
 . : ' Identifier name: "shamt"
 . : ' CastExpr
-. : ' | CallExpr
-. : ' | . SymbolExpr
-. : ' | . : IdentifierPath
-. : ' | . : ' Identifier name: "rs2"
+. : ' | Identifier name: "rs2"
 . : ' | TypeLiteral
 . : ' | . IdentifierPath
 . : ' | . : Identifier name: "UInt"
@@ -105,10 +96,7 @@ InstructionSetDefinition
 . : ' | . IdentifierPath
 . : ' | . : Identifier name: "X"
 . : ' | ArgsIndices
-. : ' | . CallExpr
-. : ' | . : SymbolExpr
-. : ' | . : ' IdentifierPath
-. : ' | . : ' | Identifier name: "rd"
+. : ' | . Identifier name: "rd"
 . : ' CastExpr
 . : ' | BinaryExpr operator: +
 . : ' | . CastExpr
@@ -117,10 +105,7 @@ InstructionSetDefinition
 . : ' | . : ' | IdentifierPath
 . : ' | . : ' | . Identifier name: "X"
 . : ' | . : ' ArgsIndices
-. : ' | . : ' | CallExpr
-. : ' | . : ' | . SymbolExpr
-. : ' | . : ' | . : IdentifierPath
-. : ' | . : ' | . : ' Identifier name: "rs1"
+. : ' | . : ' | Identifier name: "rs1"
 . : ' | . : TypeLiteral
 . : ' | . : ' IdentifierPath
 . : ' | . : ' | Identifier name: "Bits"
@@ -130,10 +115,7 @@ InstructionSetDefinition
 . : ' | . : ' | IdentifierPath
 . : ' | . : ' | . Identifier name: "X"
 . : ' | . : ' ArgsIndices
-. : ' | . : ' | CallExpr
-. : ' | . : ' | . SymbolExpr
-. : ' | . : ' | . : IdentifierPath
-. : ' | . : ' | . : ' Identifier name: "rs2"
+. : ' | . : ' | Identifier name: "rs2"
 . : ' | . : TypeLiteral
 . : ' | . : ' IdentifierPath
 . : ' | . : ' | Identifier name: "Bits"
@@ -150,10 +132,7 @@ InstructionSetDefinition
 . : ' | . : IdentifierPath
 . : ' | . : ' Identifier name: "X"
 . : ' | . ArgsIndices
-. : ' | . : CallExpr
-. : ' | . : ' SymbolExpr
-. : ' | . : ' | IdentifierPath
-. : ' | . : ' | . Identifier name: "rd"
+. : ' | . : Identifier name: "rd"
 . : ' | CastExpr
 . : ' | . BinaryExpr operator: +
 . : ' | . : CastExpr
@@ -162,10 +141,7 @@ InstructionSetDefinition
 . : ' | . : ' | . IdentifierPath
 . : ' | . : ' | . : Identifier name: "X"
 . : ' | . : ' | ArgsIndices
-. : ' | . : ' | . CallExpr
-. : ' | . : ' | . : SymbolExpr
-. : ' | . : ' | . : ' IdentifierPath
-. : ' | . : ' | . : ' | Identifier name: "rs1"
+. : ' | . : ' | . Identifier name: "rs1"
 . : ' | . : ' TypeLiteral
 . : ' | . : ' | IdentifierPath
 . : ' | . : ' | . Identifier name: "Bits"
@@ -175,10 +151,7 @@ InstructionSetDefinition
 . : ' | . : ' | . IdentifierPath
 . : ' | . : ' | . : Identifier name: "X"
 . : ' | . : ' | ArgsIndices
-. : ' | . : ' | . CallExpr
-. : ' | . : ' | . : SymbolExpr
-. : ' | . : ' | . : ' IdentifierPath
-. : ' | . : ' | . : ' | Identifier name: "rs2"
+. : ' | . : ' | . Identifier name: "rs2"
 . : ' | . : ' TypeLiteral
 . : ' | . : ' | IdentifierPath
 . : ' | . : ' | . Identifier name: "Bits"

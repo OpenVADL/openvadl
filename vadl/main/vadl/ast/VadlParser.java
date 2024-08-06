@@ -49,11 +49,17 @@ public class VadlParser {
     // want's to print them.
     var outStream = new ByteArrayOutputStream();
     parser.errors.errorStream = new PrintStream(outStream);
-    parser.errors.errMsgFormat = "{0};{1};{2}"; // FIXME: there could be problems with the delimiter
-
-    parser.Parse();
+    parser.errors.errMsgFormat = "{0};{1};{2}";
 
     List<VadlError> errors = new ArrayList<>();
+
+    try {
+      parser.Parse();
+    } catch (Exception e) {
+      errors.add(new VadlError("Exception caught during parsing: " + e,
+          SourceLocation.INVALID_SOURCE_LOCATION, null, null));
+    }
+
     if (parser.errors.count > 0) {
       var lines = outStream.toString(StandardCharsets.UTF_8).split("\n", -1);
       for (var line : lines) {
@@ -61,7 +67,7 @@ public class VadlParser {
           continue;
         }
 
-        var fields = line.split(";", -1);
+        var fields = line.split(";", 3);
         var lineNum = Integer.parseInt(fields[0]);
         var colNum = Integer.parseInt(fields[1]);
         var title = fields[2];

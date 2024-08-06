@@ -1,5 +1,6 @@
 package vadl.ast;
 
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Objects;
@@ -107,11 +108,11 @@ class ParserUtils {
   /**
    * Converts the parser's current token position to a vadl location.
    */
-  static SourceLocation locationFromToken(Parser parser) {
+  static SourceLocation locationFromToken(Parser parser, Token token) {
     return new SourceLocation(
         parser.sourceFile,
-        new SourceLocation.Position(parser.t.line, parser.t.col),
-        new SourceLocation.Position(parser.t.line, parser.t.col + parser.t.val.length()));
+        new SourceLocation.Position(token.line, token.col),
+        new SourceLocation.Position(token.line, token.col + token.val.length()));
   }
 
   /**
@@ -177,25 +178,39 @@ class ParserUtils {
     }
 
     // FIXME: There should be a real instantiator here
+    var expander = new MacroExpander(argMap, parser.symbolTable);
     var body = macro.body();
     if (body instanceof Expr expr) {
-      var expander = new MacroExpander(argMap, parser.symbolTable);
-      body = expander.expandExpr(expr);
-      body = new GroupExpr((Expr) body);
+      var expanded = expander.expandExpr(expr);
+      return new GroupExpr(narrowExpr(expanded));
     } else if (body instanceof Definition def) {
-      var expander = new MacroExpander(argMap, parser.symbolTable);
-      body = expander.expandDefinition(def);
-    } else if (body instanceof Identifier id) {
-      body = id;
+      return expander.expandDefinition(def);
+    } else if (body instanceof StatementList statementList) {
+      var items = new ArrayList<Statement>(statementList.items.size());
+      for (Statement item : statementList.items) {
+        Statement statement = expander.expandStatement(item);
+        items.add(statement);
+      }
+      return new StatementList(items, statementList.location);
+    } else if (body instanceof DefinitionList definitionList) {
+      var items = new ArrayList<Definition>(definitionList.items.size());
+      for (Definition item : definitionList.items) {
+        Definition definition = expander.expandDefinition(item);
+        items.add(definition);
+      }
+      return new DefinitionList(items, definitionList.location);
+    } else if (body instanceof Statement statement) {
+      return expander.expandStatement(statement);
     } else {
       throw new RuntimeException("Expanding %s not yet implemented".formatted(body.getClass()));
     }
-    return body;
   }
 
   static Node narrowNode(Node node) {
     if (node instanceof Expr expr) {
       return narrowExpr(expr);
+    } else if (node instanceof StatementList statementList) {
+      return statementList.items.get(0);
     }
     return node;
   }
@@ -207,6 +222,9 @@ class ParserUtils {
     }
     if (expr instanceof SymbolExpr symExpr && symExpr.size == null) {
       expr = symExpr.path;
+    }
+    if (expr instanceof IdentifierPath path && path.segments.size() == 1) {
+      expr = path.segments.get(0);
     }
     return expr;
   }

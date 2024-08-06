@@ -134,6 +134,12 @@ public class AstDumper
   }
 
   @Override
+  public Void visit(Identifier expr) {
+    dumpNode(expr);
+    return null;
+  }
+
+  @Override
   public Void visit(BinaryExpr expr) {
     dumpNode(expr);
     dumpChildren(expr.left, expr.right);

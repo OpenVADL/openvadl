@@ -17,7 +17,16 @@ COMPILER vadl
   NestedSymbolTable symbolTable = new NestedSymbolTable();
 
   SourceLocation loc() {
-    return locationFromToken(this);
+    return locationFromToken(this, t);
+  }
+
+  SourceLocation lookaheadLoc() {
+    return locationFromToken(this, la);
+  }
+
+  boolean isMacroParamType(SyntaxType syntaxType) {
+    // TODO Analyze next few tokens do determine syntax type of parameter
+    return scanner.Peek().val.equals("targetReg");
   }
 
 CHARACTERS
@@ -141,25 +150,29 @@ PRODUCTIONS
   | formatDefinition<out def>
   .
 
-  instructionsetDefinition<out InstructionSetDefinition isaDef>   (. var children = new ArrayList<Definition>(); pushScope(this); .)
-  = INSTRUCTION                                                   (. var startLocation = loc(); .)
+  instructionsetDefinition<out InstructionSetDefinition isaDef> (. pushScope(this); .)
+  = INSTRUCTION                                                 (. var startLocation = loc(); .)
     SET ARCHITECTURE identifier<out Identifier identifier>
     SYM_EQ SYM_BRACE_OPEN
-    {(
-      annotations<.out List<Annotation> annotations.>
-      isaDefinition<out Definition def>                           (. def.annotations.annotations().addAll(annotations); children.add(def); def.accept(symbolTable); .)
-      | macroDef
-      | macroInstance<out Node b, BasicSyntaxType.IsaDefs()>      (. children.add((Definition) b); .)
-    )}
-    SYM_BRACE_CLOSE                                               (. isaDef = new InstructionSetDefinition(identifier, children, startLocation.join(loc()));
-                                                                     popScope(this);
-                                                                     isaDef.accept(symbolTable);
-                                                                  .)
-    .
+    isaDefinitionList<.out List<Definition> definitions.>
+    SYM_BRACE_CLOSE                                             (. isaDef = new InstructionSetDefinition(identifier, definitions, startLocation.join(loc()));
+                                                                   popScope(this);
+                                                                   isaDef.accept(symbolTable);
+                                                                .)
+  .
+
+  isaDefinitionList<. out List<Definition> definitions .>  (. definitions = new ArrayList<>(); .)
+  = {(
+    annotations<.out List<Annotation> annotations.>
+    isaDefinition<out Definition def>                      (. def.annotations.annotations().addAll(annotations); definitions.add(def); if (!insideMacro) def.accept(symbolTable); .)
+    | macroDef
+    | macroInstance<out Node b, BasicSyntaxType.IsaDefs()> (. definitions.addAll(((DefinitionList) b).items); .)
+  )}
+  .
 
   annotations<.out List<Annotation> annotations.> (. annotations = new ArrayList<>(); insideAnnotation = true; .)
-  = { annotation<out Annotation annotation> (. annotations.add(annotation); .) }
-                                            (. insideAnnotation = false; .)
+  = { annotation<out Annotation annotation>       (. annotations.add(annotation); .) }
+                                                  (. insideAnnotation = false; .)
   .
 
   annotation<out Annotation annotation> (. TypeLiteral type = null; Identifier property = null; .)
@@ -253,12 +266,16 @@ PRODUCTIONS
   | placeholder<out n, BasicSyntaxType.Id()>
   .
 
-  encodingDefinition<out EncodingDefinition def>    (. var startLocation = loc(); var entries = new ArrayList<FieldEncoding>(); .)
+  encodingDefinition<out EncodingDefinition def> (. var startLocation = loc(); .)
   = ENCODING identifier<out Identifier instrId>
     SYM_EQ SYM_BRACE_OPEN
-    encodingEntry<out FieldEncoding e1>             (. entries.add(e1); .)
-    { SYM_COMMA encodingEntry<out FieldEncoding e2> (. entries.add(e2); .) }
-    SYM_BRACE_CLOSE                                 (. def = new EncodingDefinition(instrId, entries, startLocation.join(loc())); .)
+    encodingDefinitionList<.out List<FieldEncoding> fieldEncodings.>
+    SYM_BRACE_CLOSE                              (. def = new EncodingDefinition(instrId, fieldEncodings, startLocation.join(loc())); .)
+  .
+
+  encodingDefinitionList<.out List<FieldEncoding> entries.> (. entries = new ArrayList<>(); .)
+  = encodingEntry<out FieldEncoding e1>                     (. entries.add(e1); .)
+    { SYM_COMMA encodingEntry<out FieldEncoding e2>         (. entries.add(e2); .) }
   .
 
   encodingEntry<out FieldEncoding e>
@@ -316,20 +333,30 @@ PRODUCTIONS
   statement<out Statement statement> (. statement = null; .)
   = letStatement<out statement>
   | ifStatement<out statement>
-  | assignment<out statement>
   | blockStatement<out statement>
+  | IF (la.kind == _identifierToken || isMacroParamType(BasicSyntaxType.Id()))
+    assignment<out statement>
+  | macroInstanceOrPlaceholder<out Node s, BasicSyntaxType.Stats()> (. if (s instanceof Statement stmt) statement = stmt;
+                                                                       else if (s instanceof StatementList stmts) statement = new BlockStatement(stmts.items, stmts.location());
+                                                                    .)
   .
 
-  blockStatement<out BlockStatement block>   (. var start = loc(); block = new BlockStatement(start); pushScope(this); .)
-  = SYM_BRACE_OPEN {
-      statement<out Statement statement>     (. block.add(statement); .)
-   } SYM_BRACE_CLOSE                         (. popScope(this); block.location = start.join(loc()); .)
+  blockStatement<out BlockStatement block>     (. var start = loc(); pushScope(this); .)
+  = SYM_BRACE_OPEN
+    statementList<.out List<Statement> stmts.>
+    SYM_BRACE_CLOSE                            (. popScope(this); block = new BlockStatement(stmts, start.join(loc())); .)
   .
 
-  assignment<out Statement statement>
-  = callOrBinaryExpression<out Expr target, false>
+  statementList<.out List<Statement> stmts.> (. stmts = new ArrayList<>(); .)
+  = { statement<out Statement statement>     (. stmts.add(statement); .) }
+  .
+
+  assignment<out Statement statement>                                    (. Expr target = null; .)
+  = ( callOrBinaryExpression<out target, false>
+    | macroInstanceOrPlaceholder<out Node t, BasicSyntaxType.CallEx()> (. target = (Expr) t; .)
+    )
     SYM_ASSIGN
-    expression<out Expr expr, BIN_OPS>      (. statement = new AssignmentStatement(target, expr); .)
+    expression<out Expr expr, BIN_OPS>                                   (. statement = new AssignmentStatement(target, expr); .)
   .
 
   letStatement<out Statement letStatement>
@@ -391,6 +418,7 @@ PRODUCTIONS
         arguments<.out List<Expr> args.> (. argsIndices.add(args); .)
       }                                  (. callExpr.subCalls.add(new CallExpr.SubCall(id, argsIndices)); callExpr.location = callExpr.location.join(loc()); .)
     }                                    (. if (expr instanceof CallExpr callExpr && !insideMacro && !insideAnnotation) symbolTable.requireValue(callExpr); .)
+                                         (. expr = narrowExpr(expr); .)
   .
 
   /// Represents one set of invocation arguments.
@@ -473,7 +501,7 @@ PRODUCTIONS
   | unary<out expr>
   | ifExpression<out expr>
   | letExpression<out expr>
-  | macroInstanceOrPlaceholder<out Node node, BasicSyntaxType.Ex()> (. expr = (Expr)node; .)
+  | macroInstanceOrPlaceholder<out Node node, BasicSyntaxType.Ex()> (. expr = (Expr) node; .)
   .
 
   identifierPath<out IdentifierPath path> (. List<Identifier> segments = new ArrayList<>(); .)
@@ -581,9 +609,7 @@ PRODUCTIONS
    SYM_PAREN_CLOSE
   SYM_COLON syntaxType<out SyntaxType returnType> SYM_EQ
   SYM_BRACE_OPEN                        (. Node body = null; insideMacro = true; .)
-      ( expression<out body, BIN_OPS>
-      | isaDefinition<out body>
-      )
+  macroBody<out body, returnType>
   SYM_BRACE_CLOSE                       (.
                                           insideMacro = false;
                                           var bodyType = narrowNode(body).syntaxType();
@@ -594,6 +620,21 @@ PRODUCTIONS
                                               symbolTable.addMacro(new Macro(id, params, body, returnType), startLoc.join(loc()));
                                           }
                                          .)
+  .
+
+  macroBody<out Node body, SyntaxType type>                            (. body = null; var loc = lookaheadLoc(); .)
+  = IF (type == BasicSyntaxType.Id())
+    identifier<out body>
+  | IF (type == BasicSyntaxType.Ex() || type == BasicSyntaxType.Int())
+    expression<out body, BIN_OPS>
+  | IF (type == BasicSyntaxType.Stat())
+    statement<out body>
+  | IF (type == BasicSyntaxType.Stats())
+    statementList<.out List<Statement> stmts.>                         (. body = narrowNode(new StatementList(stmts, loc.join(loc()))); .)
+  | // IF (type == BasicSyntaxType.IsaDefs())
+    isaDefinitionList<.out List<Definition> defs.>                     (. body = new DefinitionList(defs, loc.join(loc())); .)
+  | // IF (type == BasicSyntaxType.Encs())
+    encodingDefinitionList<.out List<FieldEncoding> entries.>          (. body = null; /* new NodeList(entries, BasicSyntaxType.Encs(), loc.join(loc())); */ .)
   .
 
   syntaxType<out SyntaxType type>

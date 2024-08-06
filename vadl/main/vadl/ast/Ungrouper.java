@@ -14,6 +14,11 @@ class Ungrouper implements ExprVisitor<Expr> {
   }
 
   @Override
+  public Expr visit(Identifier expr) {
+    return expr;
+  }
+
+  @Override
   public Expr visit(BinaryExpr expr) {
     expr.left = expr.left.accept(this);
     if (expr.right != null) {

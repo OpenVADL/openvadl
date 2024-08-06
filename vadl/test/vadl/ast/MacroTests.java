@@ -147,4 +147,71 @@ public class MacroTests {
 
     Assertions.assertThrows(VadlException.class, () -> VadlParser.parse(prog));
   }
+
+  @Test
+  void macroProducingStatements() {
+    var prog1 = """
+        instruction set architecture Test = {
+          format F : Bits<32> = { bits [31..0] }
+          register A : Bits<32>
+          register B : Bits<32>
+          register C : Bits<32>
+          model test(targetReg: Id, sourceReg1: Id, sourceReg2: Id) : Stats = {
+            $targetReg := $sourceReg1 + $sourceReg2
+          }
+          instruction ADD : F = {
+            $test(A ; B ; C)
+          }
+        }
+        """;
+
+    var prog2 = """
+        instruction set architecture Test = {
+          format F : Bits<32> = { bits [31..0] }
+          register A : Bits<32>
+          register B : Bits<32>
+          register C : Bits<32>
+          instruction ADD : F = {
+            A := B + C
+          }
+        }
+        """;
+
+    assertAstEquality(VadlParser.parse(prog1), VadlParser.parse(prog2));
+  }
+
+  @Test
+  void canHandleMultipleInvocations() {
+    var prog1 = """
+        instruction set architecture Test = {
+          format F : Bits<32> = { bits [31..0] }
+          format G : Bits<32> = { bits [31..0] }
+          register A : Bits<32>
+          model test(opName: Id, instrFormat : Id) : IsaDefs = {
+            instruction $opName : $instrFormat = {
+              A := bits
+            }
+          }
+        
+          $test(SET_F ; F)
+          $test(SET_G ; G)
+        }
+        """;
+
+    var prog2 = """
+        instruction set architecture Test = {
+          format F : Bits<32> = { bits [31..0] }
+          format G : Bits<32> = { bits [31..0] }
+          register A : Bits<32>
+          instruction SET_F : F = {
+            A := bits
+          }
+          instruction SET_G : G = {
+            A := bits
+          }
+        }
+        """;
+
+    assertAstEquality(VadlParser.parse(prog1), VadlParser.parse(prog2));
+  }
 }

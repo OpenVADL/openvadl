@@ -37,11 +37,27 @@ class MacroExpander
     return result;
   }
 
+  public Statement expandStatement(Statement statement) {
+    var result = statement.accept(this);
+    if (!errors.isEmpty()) {
+      throw new VadlException(errors);
+    }
+    return result;
+  }
+
+  @Override
+  public Expr visit(Identifier expr) {
+    symbols.requireValue(
+        new CallExpr(new SymbolExpr(new IdentifierPath(List.of(expr)), null, expr.location()),
+            List.of(), List.of(), expr.location()));
+    return expr;
+  }
+
   @Override
   public Expr visit(BinaryExpr expr) {
     // FIXME: Only if parent is not a binary operator cause otherwise it is O(n^2)
-    var result = new BinaryExpr(
-        expr.left.accept(this), expr.operator, expr.right.accept(this));
+    var result = new BinaryExpr(expr.left.accept(this), expr.operator,
+        expr.right.accept(this));
     return BinaryExpr.reorder(result);
   }
 
@@ -67,7 +83,7 @@ class MacroExpander
     if (arg == null) {
       throw new IllegalStateException("The parser should already have checked that.");
     } else if (arg instanceof Identifier id) {
-      return new IdentifierPath(List.of(id));
+      return id;
     }
 
     return ((Expr) arg).accept(this);
@@ -101,6 +117,9 @@ class MacroExpander
 
   @Override
   public Expr visit(IdentifierPath expr) {
+    symbols.requireValue(
+        new CallExpr(new SymbolExpr(expr, null, expr.location()), List.of(), List.of(),
+            expr.location()));
     return expr;
   }
 
@@ -217,15 +236,14 @@ class MacroExpander
 
   @Override
   public Definition visit(InstructionDefinition definition) {
-    definition.identifier = resolvePlaceholderOrIdentifier(definition.identifier);
+    var identifier = resolvePlaceholderOrIdentifier(definition.identifier);
     var typeId = resolvePlaceholderOrIdentifier(definition.typeIdentifier);
-    definition.typeIdentifier = typeId;
 
     symbols = symbols.createFormatScope(typeId);
-    definition.behavior = definition.behavior.accept(this);
+    var behavior = definition.behavior.accept(this);
     symbols = Objects.requireNonNull(symbols.parent);
 
-    return definition;
+    return new InstructionDefinition(identifier, typeId, behavior, definition.loc);
   }
 
   @Override
@@ -246,11 +264,11 @@ class MacroExpander
   @Override
   public BlockStatement visit(BlockStatement blockStatement) {
     symbols = symbols.createChild();
-    blockStatement.statements = blockStatement.statements.stream()
+    var statements = blockStatement.statements.stream()
         .map(s -> s.accept(this))
         .toList();
     symbols = Objects.requireNonNull(symbols.parent);
-    return blockStatement;
+    return new BlockStatement(statements, blockStatement.location);
   }
 
   @Override
@@ -277,19 +295,14 @@ class MacroExpander
 
   @Override
   public Statement visit(AssignmentStatement assignmentStatement) {
-    if (assignmentStatement.target instanceof IdentifierPath path) {
-      symbols.requireValue(
-          new CallExpr(new SymbolExpr(path, null, path.location()), List.of(), List.of(),
-              path.location()));
-    }
-    assignmentStatement.valueExpression = assignmentStatement.valueExpression.accept(this);
-    return assignmentStatement;
+    var target = assignmentStatement.target.accept(this);
+    var valueExpr = assignmentStatement.valueExpression.accept(this);
+    return new AssignmentStatement(target, valueExpr);
   }
 
   private Identifier resolvePlaceholderOrIdentifier(Node n) {
     if (n instanceof PlaceholderExpr p) {
-      var path = (IdentifierPath) p.accept(this);
-      return path.segments.get(path.segments.size() - 1);
+      return (Identifier) p.accept(this);
     }
     if (n instanceof Identifier id) {
       return id;

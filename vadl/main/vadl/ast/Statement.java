@@ -263,3 +263,29 @@ final class AssignmentStatement extends Statement {
     return getClass().getSimpleName();
   }
 }
+
+class StatementList extends Node {
+
+  List<Statement> items;
+  SourceLocation location;
+
+  StatementList(List<Statement> items, SourceLocation location) {
+    this.items = items;
+    this.location = location;
+  }
+
+  @Override
+  SourceLocation location() {
+    return location;
+  }
+
+  @Override
+  SyntaxType syntaxType() {
+    return BasicSyntaxType.Stats();
+  }
+
+  @Override
+  void prettyPrint(int indent, StringBuilder builder) {
+    items.forEach(item -> item.prettyPrint(indent, builder));
+  }
+}

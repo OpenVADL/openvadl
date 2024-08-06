@@ -45,12 +45,12 @@ public class AnnotationTest {
     var current = isa.definitions.get(0);
 
     assertThat(current.annotations.annotations().size(), is(1));
-    assertThat(current.annotations.annotations().get(0).expr(), is(instanceOf(CallExpr.class)));
+    assertThat(current.annotations.annotations().get(0).expr(), is(instanceOf(Identifier.class)));
     assertThat(current.annotations.annotations().get(0).property(), is(nullValue()));
 
     var nextNext = isa.definitions.get(1);
     assertThat(nextNext.annotations.annotations().size(), is(1));
-    assertThat(nextNext.annotations.annotations().get(0).expr(), is(instanceOf(CallExpr.class)));
+    assertThat(nextNext.annotations.annotations().get(0).expr(), is(instanceOf(Identifier.class)));
     assertThat(nextNext.annotations.annotations().get(0).property(),
         is(instanceOf(Identifier.class)));
   }

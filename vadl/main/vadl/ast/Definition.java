@@ -1082,3 +1082,29 @@ record Annotation(Expr expr, @Nullable TypeLiteral type, @Nullable Identifier pr
     builder.append(" ]");
   }
 }
+
+class DefinitionList extends Node {
+
+  List<Definition> items;
+  SourceLocation location;
+
+  DefinitionList(List<Definition> items, SourceLocation location) {
+    this.items = items;
+    this.location = location;
+  }
+
+  @Override
+  SourceLocation location() {
+    return location;
+  }
+
+  @Override
+  SyntaxType syntaxType() {
+    return BasicSyntaxType.IsaDefs();
+  }
+
+  @Override
+  void prettyPrint(int indent, StringBuilder builder) {
+    items.forEach(item -> item.prettyPrint(indent, builder));
+  }
+}

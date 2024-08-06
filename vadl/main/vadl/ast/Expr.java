@@ -14,6 +14,8 @@ public abstract class Expr extends Node {
 }
 
 interface ExprVisitor<R> {
+  R visit(Identifier expr);
+
   R visit(BinaryExpr expr);
 
   R visit(GroupExpr expr);
@@ -43,6 +45,59 @@ interface ExprVisitor<R> {
   R visit(CastExpr expr);
 
   R visit(SymbolExpr expr);
+}
+
+class Identifier extends Expr {
+  String name;
+  SourceLocation loc;
+
+  public Identifier(String name, SourceLocation location) {
+    this.loc = location;
+    this.name = name;
+  }
+
+  @Override
+  SourceLocation location() {
+    return loc;
+  }
+
+  @Override
+  SyntaxType syntaxType() {
+    return BasicSyntaxType.Id();
+  }
+
+  @Override
+  void prettyPrint(int indent, StringBuilder builder) {
+    builder.append(name);
+  }
+
+  @Override
+  public String toString() {
+    return "%s name: \"%s\"".formatted(this.getClass().getSimpleName(), this.name);
+  }
+
+  @Override
+  public boolean equals(Object o) {
+    if (this == o) {
+      return true;
+    }
+    if (o == null || getClass() != o.getClass()) {
+      return false;
+    }
+
+    Identifier that = (Identifier) o;
+    return name.equals(that.name);
+  }
+
+  @Override
+  public int hashCode() {
+    return name.hashCode();
+  }
+
+  @Override
+  <R> R accept(ExprVisitor<R> visitor) {
+    return visitor.visit(this);
+  }
 }
 
 /**
