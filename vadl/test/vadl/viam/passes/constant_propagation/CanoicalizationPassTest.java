@@ -56,6 +56,7 @@ class CanoicalizationPassTest {
     var isa = new InstructionSetArchitecture(
         Identifier.noLocation("isaIdentifierValue"),
         viam,
+        List.of(),
         Collections.emptyList(),
         List.of(new Instruction(
             Identifier.noLocation("instructionValue"),

@@ -21,6 +21,7 @@ public class InstructionSetArchitecture extends Definition {
   private final Register.Counter pc;
 
   private final List<Format> formats;
+  private final List<Function> functions;
   private final List<Memory> memories;
 
 
@@ -40,6 +41,7 @@ public class InstructionSetArchitecture extends Definition {
   public InstructionSetArchitecture(Identifier identifier,
                                     Specification specification,
                                     List<Format> formats,
+                                    List<Function> functions,
                                     List<Instruction> instructions,
                                     List<PseudoInstruction> pseudoInstructions,
                                     List<Register> registers,
@@ -50,6 +52,7 @@ public class InstructionSetArchitecture extends Definition {
     super(identifier);
     this.specification = specification;
     this.formats = formats;
+    this.functions = functions;
     this.registers = registers;
     this.instructions = instructions;
     this.pseudoInstructions = pseudoInstructions;
@@ -60,6 +63,10 @@ public class InstructionSetArchitecture extends Definition {
 
   public List<Instruction> instructions() {
     return instructions;
+  }
+
+  public List<Function> functions() {
+    return functions;
   }
 
   public List<PseudoInstruction> pseudoInstructions() {

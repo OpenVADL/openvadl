@@ -355,7 +355,7 @@ public abstract class Constant {
 
         return fromInteger(newValue, newType);
       } else {
-        // for non-long version we truncate the result
+        // for the non-long version we truncate the result
         var newValue = value
             .multiply(other.value)
             .and(mask(type().bitWidth(), 0)); // truncate result

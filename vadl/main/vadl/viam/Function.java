@@ -50,6 +50,12 @@ public class Function extends Definition {
     this.parameters = parameters;
   }
 
+  @Override
+  public void verify() {
+    super.verify();
+    ensure(behavior.isPureFunction(), "The function must be pure (no side effects)");
+  }
+
   public Graph behavior() {
     return behavior;
   }

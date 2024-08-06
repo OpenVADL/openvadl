@@ -1,5 +1,6 @@
 package vadl.viam;
 
+import javax.annotation.Nullable;
 import vadl.types.Type;
 
 /**
@@ -9,9 +10,19 @@ public class Parameter extends Definition {
 
   private final Type type;
 
+  // the parent of this parameter (e.g. a function definition)
+  @Nullable
+  private Function parent;
+
   public Parameter(Identifier identifier, Type type) {
     super(identifier);
     this.type = type;
+  }
+
+  @Override
+  public void verify() {
+    super.verify();
+    ensure(parent != null, "Parent definition is null, but should always be set after creation");
   }
 
   public Type type() {
@@ -21,6 +32,16 @@ public class Parameter extends Definition {
   @Override
   public String toString() {
     return name() + ": " + type;
+  }
+
+
+  public Function parent() {
+    ensure(parent != null, "Parent definition is null but this should not happen");
+    return parent;
+  }
+
+  public void setParent(@SuppressWarnings("NullableProblems") Function parent) {
+    this.parent = parent;
   }
 
   @Override
