@@ -94,9 +94,7 @@ class MacroExpander
   public Expr visit(TypeLiteral expr) {
     for (int i = 0; i < expr.sizeIndices.size(); i++) {
       var sizes = expr.sizeIndices.get(i);
-      for (int j = 0; j < sizes.size(); j++) {
-        sizes.set(j, sizes.get(j).accept(this));
-      }
+      sizes.replaceAll(size -> size.accept(this));
     }
     return expr;
   }
@@ -152,12 +150,14 @@ class MacroExpander
 
   @Override
   public Expr visit(LetExpr expr) {
-    return new LetExpr(
-        expr.identifier,
-        expr.valueExpr.accept(this),
-        expr.body.accept(this),
-        expr.location
-    );
+    symbols = symbols.createChild();
+    for (var identifier : expr.identifiers) {
+      symbols.defineConstant(identifier.name, identifier.loc);
+    }
+    var valueExpression = expr.valueExpr.accept(this);
+    var body = expr.body.accept(this);
+    symbols = Objects.requireNonNull(symbols.parent);
+    return new LetExpr(expr.identifiers, valueExpression, body, expr.location);
   }
 
   @Override
@@ -256,7 +256,9 @@ class MacroExpander
   @Override
   public Statement visit(LetStatement letStatement) {
     symbols = symbols.createChild();
-    symbols.defineConstant(letStatement.identifier.name, letStatement.identifier.loc);
+    for (var identifier : letStatement.identifiers) {
+      symbols.defineConstant(identifier.name, identifier.loc);
+    }
     letStatement.valueExpression = letStatement.valueExpression.accept(this);
     letStatement.body = letStatement.body.accept(this);
     symbols = Objects.requireNonNull(symbols.parent);

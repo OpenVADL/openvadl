@@ -113,7 +113,7 @@ class Ungrouper implements ExprVisitor<Expr> {
   @Override
   public Expr visit(LetExpr expr) {
     return new LetExpr(
-        expr.identifier,
+        expr.identifiers,
         expr.valueExpr.accept(this),
         expr.body.accept(this),
         expr.location

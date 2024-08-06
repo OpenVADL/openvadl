@@ -28,6 +28,26 @@ public class StatementTest {
   }
 
   @Test
+  void parseLetStatementWithMultipleVariables() {
+    var prog = """
+        instruction set architecture ISA = {
+          program counter PC : Bits<32>
+          format Btype : Bits<32> = {
+            bits [31..0]
+          }
+          instruction BEQ : Btype = {
+            // Contrived example, would use VADL::adds in the real world
+            let next, status = PC + 4 in
+              if status = 0 then
+                PC := next
+          }
+        }
+        """;
+    var ast = Assertions.assertDoesNotThrow(() -> VadlParser.parse(prog), "Cannot parse input");
+    verifyPrettifiedAst(ast);
+  }
+
+  @Test
   void parseIfStatement() {
     var prog = """
         instruction set architecture ISA = {

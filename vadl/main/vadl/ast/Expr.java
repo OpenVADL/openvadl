@@ -959,7 +959,8 @@ class CallExpr extends Expr {
     return result;
   }
 
-  record SubCall(Identifier id, List<List<Expr>> argsIndices) {}
+  record SubCall(Identifier id, List<List<Expr>> argsIndices) {
+  }
 }
 
 class IfExpr extends Expr {
@@ -1031,13 +1032,13 @@ class IfExpr extends Expr {
 }
 
 class LetExpr extends Expr {
-  Identifier identifier;
+  List<Identifier> identifiers;
   Expr valueExpr;
   Expr body;
   SourceLocation location;
 
-  LetExpr(Identifier identifier, Expr valueExpr, Expr body, SourceLocation location) {
-    this.identifier = identifier;
+  LetExpr(List<Identifier> identifiers, Expr valueExpr, Expr body, SourceLocation location) {
+    this.identifiers = identifiers;
     this.valueExpr = valueExpr;
     this.body = body;
     this.location = location;
@@ -1057,7 +1058,14 @@ class LetExpr extends Expr {
   void prettyPrint(int indent, StringBuilder builder) {
     builder.append(prettyIndentString(indent));
     builder.append("let ");
-    identifier.prettyPrint(indent, builder);
+    var isFirst = true;
+    for (var identifier : identifiers) {
+      if (!isFirst) {
+        builder.append(", ");
+      }
+      isFirst = false;
+      identifier.prettyPrint(indent, builder);
+    }
     builder.append(" = ");
     valueExpr.prettyPrint(indent + 1, builder);
     builder.append(" in\n");
@@ -1084,14 +1092,14 @@ class LetExpr extends Expr {
     }
 
     LetExpr that = (LetExpr) o;
-    return identifier.equals(that.identifier)
+    return identifiers.equals(that.identifiers)
         && valueExpr.equals(that.valueExpr)
         && body.equals(that.body);
   }
 
   @Override
   public int hashCode() {
-    int result = identifier.hashCode();
+    int result = identifiers.hashCode();
     result = 31 * result + Objects.hashCode(valueExpr);
     result = 31 * result + Objects.hashCode(body);
     return result;

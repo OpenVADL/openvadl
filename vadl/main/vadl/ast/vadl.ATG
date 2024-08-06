@@ -333,19 +333,23 @@ PRODUCTIONS
   .
 
   letStatement<out Statement letStatement>
-  = LET                                   (. var start = loc(); .)
-    identifier<out Identifier id>         (. pushScope(this); symbolTable.defineConstant(id.name, loc()); .)
+  = LET                                 (. var start = loc(); var identifiers = new ArrayList<Identifier>(); .)
+    identifier<out Identifier id>       (. pushScope(this); identifiers.add(id); symbolTable.defineConstant(id.name, loc()); .)
+    {
+      SYM_COMMA
+      identifier<out Identifier nextId> (. identifiers.add(nextId); symbolTable.defineConstant(nextId.name, loc()); .)
+    }
     SYM_EQ expression<out Expr valueExpr, BIN_OPS_EXCEPT_IN>
     SYM_IN
-    statement<out Statement body>         (. letStatement = new LetStatement(id, valueExpr, body, start.join(loc())); popScope(this); .)
+    statement<out Statement body>       (. letStatement = new LetStatement(identifiers, valueExpr, body, start.join(loc())); popScope(this); .)
   .
 
-  ifStatement<out Statement ifStatement>     (. Statement elseStmt = null; var start = loc(); .)
+  ifStatement<out Statement ifStatement> (. Statement elseStmt = null; var start = loc(); .)
   = KW_IF expression<out Expr condition, BIN_OPS>
     THEN statement<out Statement thenStmt>
     [ IF (la.kind == _ELSE)
       ELSE statement<out elseStmt>
-    ]                                        (. ifStatement = new IfStatement(condition, thenStmt, elseStmt, start.join(loc())); .)
+    ]                                    (. ifStatement = new IfStatement(condition, thenStmt, elseStmt, start.join(loc())); .)
   .
 
   // -- EXPRESSIONS --------------------------------------------------------------------------------------------------
@@ -487,19 +491,23 @@ PRODUCTIONS
   .
 
   letExpression<out Expr expr>
-  = LET                           (. var startLoc = loc(); .)
-    identifier<out Identifier id> (. pushScope(this); symbolTable.defineConstant(id.name, loc()); .)
+  = LET                                 (. var start = loc(); var identifiers = new ArrayList<Identifier>(); .)
+    identifier<out Identifier id>       (. pushScope(this); identifiers.add(id); symbolTable.defineConstant(id.name, loc()); .)
+    {
+      SYM_COMMA
+      identifier<out Identifier nextId> (. identifiers.add(nextId); symbolTable.defineConstant(nextId.name, loc()); .)
+    }
     SYM_EQ
     expression<out Expr valueExpr, BIN_OPS_EXCEPT_IN>
     SYM_IN
-    expression<out Expr body, BIN_OPS> (. expr = new LetExpr(id, valueExpr, body, startLoc.join(loc())); popScope(this); .)
+    expression<out Expr body, BIN_OPS>  (. expr = new LetExpr(identifiers, valueExpr, body, start.join(loc())); popScope(this); .)
   .
 
   ifExpression<out Expr expr>
-  = KW_IF                                (. var startLoc = loc(); .)
+  = KW_IF                                       (. var startLoc = loc(); .)
     expression<out Expr condition, BIN_OPS>
     THEN expression<out Expr thenExpr, BIN_OPS>
-    ELSE expression<out Expr elseExpr, BIN_OPS>   (. expr = new IfExpr(condition, thenExpr, elseExpr, startLoc.join(loc())); .)
+    ELSE expression<out Expr elseExpr, BIN_OPS> (. expr = new IfExpr(condition, thenExpr, elseExpr, startLoc.join(loc())); .)
   .
 
   // -- PRIMITIVES ---------------------------------------------------------------------------------------------------

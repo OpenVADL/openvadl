@@ -268,7 +268,8 @@ public class AstDumper
   @Override
   public Void visit(LetExpr expr) {
     dumpNode(expr);
-    dumpChildren(expr.identifier, expr.valueExpr, expr.body);
+    dumpChildren(expr.identifiers);
+    dumpChildren(expr.valueExpr, expr.body);
     return null;
   }
 

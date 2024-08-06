@@ -95,14 +95,14 @@ final class BlockStatement extends Statement {
 }
 
 final class LetStatement extends Statement {
-  Identifier identifier;
+  List<Identifier> identifiers;
   Expr valueExpression;
   Statement body;
   SourceLocation location;
 
-  LetStatement(Identifier identifier, Expr valueExpression, Statement body,
+  LetStatement(List<Identifier> identifiers, Expr valueExpression, Statement body,
                SourceLocation location) {
-    this.identifier = identifier;
+    this.identifiers = identifiers;
     this.valueExpression = valueExpression;
     this.body = body;
     this.location = location;
@@ -117,7 +117,14 @@ final class LetStatement extends Statement {
   public void prettyPrint(int indent, StringBuilder builder) {
     builder.append(prettyIndentString(indent));
     builder.append("let ");
-    builder.append(identifier.name);
+    var isFirst = true;
+    for (var identifier : identifiers) {
+      if (!isFirst) {
+        builder.append(", ");
+      }
+      isFirst = false;
+      identifier.prettyPrint(indent, builder);
+    }
     builder.append(" = ");
     valueExpression.prettyPrint(indent + 1, builder);
     builder.append(" in\n");
@@ -133,19 +140,19 @@ final class LetStatement extends Statement {
       return false;
     }
     var that = (LetStatement) obj;
-    return Objects.equals(this.identifier, that.identifier)
+    return Objects.equals(this.identifiers, that.identifiers)
         && Objects.equals(this.valueExpression, that.valueExpression)
         && Objects.equals(this.body, that.body);
   }
 
   @Override
   public int hashCode() {
-    return Objects.hash(identifier, valueExpression, body);
+    return Objects.hash(identifiers, valueExpression, body);
   }
 
   @Override
   public String toString() {
-    return getClass().getSimpleName() + " name=" + identifier.name;
+    return getClass().getSimpleName();
   }
 }
 

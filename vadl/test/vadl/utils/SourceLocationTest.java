@@ -58,7 +58,7 @@ public class SourceLocationTest {
     SourceLocation.Position end = new SourceLocation.Position(34, 61);
     SourceLocation location = new SourceLocation(miniVadlUri, start, end);
     String expected =
-        "instruction ADD : Rtype =                        // 3 register operand instructions\n"
+        "instruction ADD : Rtype =               // 3 register operand instructions\n"
             + "      X(rd) := ((X(rs1) as Bits) + (X(rs2) as Bits)) as Regs";
     assertEquals(expected, location.toSourceString());
   }
