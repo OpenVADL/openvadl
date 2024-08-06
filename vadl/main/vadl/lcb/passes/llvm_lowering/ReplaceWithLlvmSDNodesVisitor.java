@@ -69,13 +69,13 @@ public class ReplaceWithLlvmSDNodesVisitor implements LcbGraphNodeVisitor {
       node.replaceAndDelete(new LlvmSubSD(node.arguments(), node.type()));
     } else if (node.builtIn() == BuiltInTable.MUL || node.builtIn() == BuiltInTable.MULS) {
       node.replaceAndDelete(new LlvmMulSD(node.arguments(), node.type()));
-    } else if (node.builtIn() == BuiltInTable.DIV_SS || node.builtIn() == BuiltInTable.DIVS_SS) {
+    } else if (node.builtIn() == BuiltInTable.SDIV) {
       node.replaceAndDelete(new LlvmSDivSD(node.arguments(), node.type()));
-    } else if (node.builtIn() == BuiltInTable.DIV_UU || node.builtIn() == BuiltInTable.DIVS_UU) {
+    } else if (node.builtIn() == BuiltInTable.UDIV) {
       node.replaceAndDelete(new LlvmUDivSD(node.arguments(), node.type()));
-    } else if (node.builtIn() == BuiltInTable.MOD_SS || node.builtIn() == BuiltInTable.MODS_SS) {
+    } else if (node.builtIn() == BuiltInTable.SMOD || node.builtIn() == BuiltInTable.SMODS) {
       node.replaceAndDelete(new LlvmSRemSD(node.arguments(), node.type()));
-    } else if (node.builtIn() == BuiltInTable.MOD_UU || node.builtIn() == BuiltInTable.MODS_UU) {
+    } else if (node.builtIn() == BuiltInTable.UMOD || node.builtIn() == BuiltInTable.UMODS) {
       node.replaceAndDelete(new LlvmURemSD(node.arguments(), node.type()));
     } else if (node.builtIn() == BuiltInTable.AND || node.builtIn() == BuiltInTable.ANDS) {
       node.replaceAndDelete(new LlvmAndSD(node.arguments(), node.type()));

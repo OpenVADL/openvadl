@@ -2,4 +2,6 @@ Namespace: [(${namespace})]
 Processor Name: [(${processorName})]
 
 ISA Matching:
-ADD_U_32: [(${#objects.nullSafe(isa_ADD_U_32, "---")})]
+[# th:each="instruction : ${isa}" ]
+[(${instruction.label})]: [(${instruction.matchedInstruction})]
+[/]

@@ -1,6 +1,7 @@
 package vadl.lcb.template;
 
 import java.io.IOException;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Optional;
@@ -10,6 +11,7 @@ import vadl.lcb.config.LcbConfiguration;
 import vadl.lcb.passes.isa_matching.InstructionLabel;
 import vadl.pass.PassKey;
 import vadl.template.AbstractTemplateRenderingPass;
+import vadl.viam.Definition;
 import vadl.viam.Instruction;
 import vadl.viam.Specification;
 
@@ -36,6 +38,10 @@ public class DebuggingLlvmLoweringPass extends AbstractTemplateRenderingPass {
     return "DebuggingLlvmLowering.txt";
   }
 
+  record IsaMatchingPair(InstructionLabel label, String matchedInstruction) {
+
+  }
+
   @Override
   protected Map<String, Object> createVariables(final Map<PassKey, Object> passResults,
                                                 Specification specification) {
@@ -47,12 +53,10 @@ public class DebuggingLlvmLoweringPass extends AbstractTemplateRenderingPass {
         (HashMap<InstructionLabel, Instruction>) passResults.get(new PassKey("IsaMatchingPass"));
 
     if (isaMatching != null) {
-
-      for (var label : InstructionLabel.values()) {
-        variables.put("isa_" + label.name(), Optional.ofNullable(isaMatching.get(label)));
-      }
-
-      //isaMatching.forEach((key, value) -> );
+      var matched = Arrays.stream(InstructionLabel.values()).map(l -> new IsaMatchingPair(l,
+              Optional.ofNullable(isaMatching.get(l)).map(x -> x.identifier.name()).orElse("---")))
+          .toList();
+      variables.put("isa", matched);
     }
 
     return variables;

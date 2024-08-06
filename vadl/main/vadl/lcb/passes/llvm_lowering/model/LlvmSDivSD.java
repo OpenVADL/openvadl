@@ -10,7 +10,7 @@ import vadl.viam.graph.dependency.ExpressionNode;
 public class LlvmSDivSD extends BuiltInCall implements LlvmNodeLowerable {
   public LlvmSDivSD(NodeList<ExpressionNode> args,
                     Type type) {
-    super(BuiltInTable.DIV_SS, args, type);
+    super(BuiltInTable.SDIV, args, type);
   }
 
   @Override

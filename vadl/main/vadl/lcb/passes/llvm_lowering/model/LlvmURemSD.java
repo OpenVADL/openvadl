@@ -10,7 +10,7 @@ import vadl.viam.graph.dependency.ExpressionNode;
 public class LlvmURemSD extends BuiltInCall implements LlvmNodeLowerable {
   public LlvmURemSD(NodeList<ExpressionNode> args,
                     Type type) {
-    super(BuiltInTable.MOD_UU, args, type);
+    super(BuiltInTable.UMOD, args, type);
   }
 
   @Override
