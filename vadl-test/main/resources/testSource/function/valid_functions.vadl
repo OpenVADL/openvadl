@@ -13,6 +13,10 @@ instruction set architecture FunctionTest = {
 
   function callFuncOutsideISA -> Bits<30> = outSideISA
 
+  constant constUseFunc = noArg
+
+  function useConstOfFunc -> Bits<30> = constUseFunc
+
 }
 
 function outSideISA -> Bits<30> = 20

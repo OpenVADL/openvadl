@@ -3,12 +3,14 @@ package vadl.test.viam;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static vadl.test.TestUtils.findDefinitionByNameIn;
 
+import java.util.List;
 import org.junit.jupiter.api.Test;
 import vadl.test.AbstractTest;
 import vadl.types.BuiltInTable;
 import vadl.types.Type;
 import vadl.viam.Constant;
 import vadl.viam.Function;
+import vadl.viam.Instruction;
 import vadl.viam.graph.control.ReturnNode;
 import vadl.viam.graph.dependency.BuiltInCall;
 import vadl.viam.graph.dependency.ConstantNode;
@@ -31,6 +33,8 @@ public class FunctionTest extends AbstractTest {
         findDefinitionByNameIn("FunctionTest.callFuncOutsideISA", spec, Function.class);
     var outSideISA = findDefinitionByNameIn("outSideISA", spec, Function.class);
     var callFuncInsideISA = findDefinitionByNameIn("callFuncInsideISA", spec, Function.class);
+    var useConstOfFunc =
+        findDefinitionByNameIn("FunctionTest.useConstOfFunc", spec, Function.class);
 
     {
       var ret = noArg.behavior().getNodes(ReturnNode.class).findFirst().get();
@@ -72,7 +76,32 @@ public class FunctionTest extends AbstractTest {
       assertEquals(noArg, func);
     }
 
+    {
+      var ret = useConstOfFunc.behavior().getNodes(ReturnNode.class).findFirst().get();
+      var func = ((FuncCallNode) ret.value).function();
+      assertEquals(noArg, func);
+    }
 
+  }
+
+
+  @Test
+  void callFunctionInInstruction() {
+    var spec = runAndGetViamSpecification("function/valid_functionUsage.vadl");
+
+    var noArg = findDefinitionByNameIn("FunctionCallTest.noArg", spec, Function.class);
+    var addition = findDefinitionByNameIn("FunctionCallTest.addition", spec, Function.class);
+    var funcCallTest =
+        findDefinitionByNameIn("FunctionCallTest.FuncCallTest", spec, Instruction.class);
+
+    var additionCall =
+        funcCallTest.behavior().getNodes(FuncCallNode.class).filter(e -> e.arguments().size() == 2)
+            .findFirst().get();
+
+    assertEquals(addition, additionCall.function());
+
+    var args = additionCall.arguments();
+    assertEquals(noArg, ((FuncCallNode) args.get(1)).function());
   }
 
 }
