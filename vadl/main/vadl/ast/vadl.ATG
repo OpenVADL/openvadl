@@ -398,27 +398,27 @@ PRODUCTIONS
   /// Due to the "<"-ambiguity with the less-than operator, this rule can also return a BinaryExpr.
   /// Use the "allowLtOp" parameter to disallow this behavior, e.g. in type literals.
   callOrBinaryExpression<out Expr expr, boolean allowLtOp>
-  = symbolOrBinaryExpression<out expr, allowLtOp> (. if (expr instanceof SymbolExpr symExpr) {
-                                                       expr = new CallExpr(symExpr, new ArrayList<>(), new ArrayList<>(), expr.location());
-                                                     }
-                                                  .)
+  = symbolOrBinaryExpression<out expr, allowLtOp> (. List<List<Expr>> argsIndices = new ArrayList<>(); .)
     {
       // Check if we received a symbol expression -> collect arguments
       // Otherwise, just return the collected binary expression
       // TODO Also collect pseudo-instruction arguments in {...}
-      IF (la.kind == _SYM_PAREN_OPEN && (expr instanceof CallExpr callExpr))
-      arguments<.out List<Expr> args.> (. callExpr.argsIndices.add(args); callExpr.location = callExpr.location.join(loc()); .)
-    }
+      IF (la.kind == _SYM_PAREN_OPEN && expr instanceof IsSymExpr)
+      arguments<.out List<Expr> args.>           (. argsIndices.add(args); .)
+    }                                            (. List<CallExpr.SubCall> subCalls = new ArrayList<>(); .)
     {
-      IF (la.kind == _SYM_DOT && (expr instanceof CallExpr callExpr))
-      SYM_DOT                            (. var argsIndices = new ArrayList<List<Expr>>(); .)
+      IF (la.kind == _SYM_DOT && (expr instanceof IsSymExpr))
+      SYM_DOT                                    (. var subCallArgsIndices = new ArrayList<List<Expr>>(); .)
       identifier<out Identifier id>
       {
         IF (la.kind == _SYM_PAREN_OPEN)
-        arguments<.out List<Expr> args.> (. argsIndices.add(args); .)
-      }                                  (. callExpr.subCalls.add(new CallExpr.SubCall(id, argsIndices)); callExpr.location = callExpr.location.join(loc()); .)
-    }                                    (. if (expr instanceof CallExpr callExpr && !insideMacro && !insideAnnotation) symbolTable.requireValue(callExpr); .)
-                                         (. expr = narrowExpr(expr); .)
+        arguments<.out List<Expr> args.>         (. subCallArgsIndices.add(args); .)
+      }                                          (. subCalls.add(new CallExpr.SubCall(id, argsIndices)); .)
+    }                                            (. if (expr instanceof IsSymExpr symExpr && (!argsIndices.isEmpty() || !subCalls.isEmpty()))
+                                                      expr = new CallExpr(symExpr, argsIndices, subCalls, expr.location().join(loc()));
+                                                    if (expr instanceof IsCallExpr callExpr && !insideMacro && !insideAnnotation)
+                                                      symbolTable.requireValue(callExpr);
+                                                 .)
   .
 
   /// Represents one set of invocation arguments.
@@ -437,19 +437,16 @@ PRODUCTIONS
   /// Due to the "<"-ambiguity with the less-than operator, this rule can also return a BinaryExpr.
   /// Use the "allowLtOp" parameter to disallow this behavior, e.g. in type literals.
   symbolOrBinaryExpression<out Expr expr, boolean allowLtOp>
-  = identifierPath<out IdentifierPath path> (. expr = new SymbolExpr(path, null, path.location()); .)
+  = identifierPath<out IsId path> (. expr = null; .)
     [
       IF (la.kind == _SYM_LT)
       SYM_LT
-      term<out Expr term>                   (. expr = new BinaryExpr(expr, Operator.Less(), term); .)
+      term<out Expr term>
       [
-        IF (la.kind == _SYM_GT)
+        IF (!allowLtOp || la.kind == _SYM_GT)
         SYM_GT                              (. expr = new SymbolExpr(path, term, path.location().join(loc())); .)
-      ]                                     (. if (!allowLtOp && expr instanceof BinaryExpr) {
-                                                 semError(this, expr.location(), "Binary operator '<' not allowed here");
-                                               }
-                                            .)
-    ]
+      ]                                     (. if (expr == null) expr = new BinaryExpr((Expr) path, Operator.Less(), term); .)
+    ]                                       (. if (expr == null) expr = (Expr) path; .)
   .
 
   binaryOperator<out Operator op>    (.op = null;.)
@@ -481,9 +478,9 @@ PRODUCTIONS
   unary<out Expr expr>
   = unaryOperator<out UnaryOperator op>
     term<out Expr operand> (. if (operand instanceof BinaryExpr binExpr) {
-                                expr = new BinaryExpr(new UnaryExpr(op, narrowExpr(binExpr.left)), binExpr.operator, narrowExpr(binExpr.right));
+                                expr = new BinaryExpr(new UnaryExpr(op, binExpr.left), binExpr.operator, binExpr.right);
                               } else {
-                                expr = new UnaryExpr(op, narrowExpr(operand));
+                                expr = new UnaryExpr(op, operand);
                               }
                            .)
   .
@@ -504,12 +501,13 @@ PRODUCTIONS
   | macroInstanceOrPlaceholder<out Node node, BasicSyntaxType.Ex()> (. expr = (Expr) node; .)
   .
 
-  identifierPath<out IdentifierPath path> (. List<Identifier> segments = new ArrayList<>(); .)
+  identifierPath<out IsId path> (. List<Identifier> segments = new ArrayList<>(); .)
   = identifier<out Identifier id>         (. segments.add(id); .)
     {
       SYM_NAMESPACE
       identifier<out Identifier next>     (. segments.add(next); .)
-    }                                     (. path = new IdentifierPath(segments); .)
+    }                                     (. if (segments.size() == 1) path = segments.get(0);
+                                             else path = new IdentifierPath(segments); .)
   .
 
   rangeExpression<out RangeExpr expr>
@@ -541,7 +539,7 @@ PRODUCTIONS
   // -- PRIMITIVES ---------------------------------------------------------------------------------------------------
 
   typeLiteral<out TypeLiteral type>
-  = identifierPath<out IdentifierPath path>              (. List<List<Expr>> sizeIndices = new ArrayList<>(); .)
+  = identifierPath<out IsId path>                        (. List<List<Expr>> sizeIndices = new ArrayList<>(); .)
     {
       SYM_LT                                             (. List<Expr> sizes = new ArrayList<>(); .)
       expression<out Expr sizeExpr, BIN_OPS_EXCEPT_GT>   (. sizes.add(sizeExpr); .)
@@ -570,7 +568,7 @@ PRODUCTIONS
 
   placeholder<out PlaceholderExpr placeholder, SyntaxType requiredType>
   = SYM_DOLLAR                            (. var startloc = loc(); .)
-  identifierPath<out IdentifierPath path> (. placeholder = new PlaceholderExpr(path, startloc.join(loc())); .)
+  identifierPath<out IsId path>           (. placeholder = new PlaceholderExpr(path, startloc.join(loc())); .)
   .
 
 

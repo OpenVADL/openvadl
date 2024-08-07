@@ -195,7 +195,7 @@ class NestedSymbolTable implements DefinitionVisitor<Void> {
     }
   }
 
-  void requireValue(CallExpr callExpr) {
+  void requireValue(IsCallExpr callExpr) {
     requirements.add(new ValueRequirement(callExpr));
   }
 
@@ -226,7 +226,7 @@ class NestedSymbolTable implements DefinitionVisitor<Void> {
 
   void validateValueAccess(ValueRequirement requirement) {
     var expr = requirement.callExpr;
-    var path = expr.target.path.pathToString();
+    var path = expr.path().pathToString();
     var symbol = resolveSymbol(path);
     if (symbol == null) {
       reportError("Unresolved definition " + path, expr.location());
@@ -234,7 +234,7 @@ class NestedSymbolTable implements DefinitionVisitor<Void> {
     }
 
     if (symbol instanceof ValuedSymbol valSymbol) {
-      if (expr.subCalls.isEmpty()) {
+      if (expr.subCalls().isEmpty()) {
         return;
       }
       if (!(valSymbol.typeDefinition instanceof FormatDefinition formatDefinition)) {
@@ -242,7 +242,7 @@ class NestedSymbolTable implements DefinitionVisitor<Void> {
             path, symbol.type()), expr.location());
         return;
       }
-      verifyFormatAccess(formatDefinition, expr.subCalls);
+      verifyFormatAccess(formatDefinition, expr.subCalls());
     } else {
       reportError("Invalid usage: symbol %s of type %s does not have a value"
           .formatted(path, symbol.type()), expr.location());
@@ -377,7 +377,7 @@ class NestedSymbolTable implements DefinitionVisitor<Void> {
       implements Requirement {
   }
 
-  record ValueRequirement(CallExpr callExpr) implements Requirement {
+  record ValueRequirement(IsCallExpr callExpr) implements Requirement {
   }
 
   record FormatRequirement(Identifier formatId) implements Requirement {

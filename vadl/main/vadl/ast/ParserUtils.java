@@ -78,17 +78,17 @@ class ParserUtils {
   static Expr reorderCastExpr(Expr expr, Expr symOrBin) {
     if (symOrBin instanceof BinaryExpr binSym) {
       if (expr instanceof BinaryExpr binExpr) {
-        binExpr.right = new CastExpr(binExpr.right, new TypeLiteral((SymbolExpr) binSym.left));
+        binExpr.right = new CastExpr(binExpr.right, new TypeLiteral((IsSymExpr) binSym.left));
         binSym.left = binExpr;
       } else {
-        binSym.left = new CastExpr(expr, new TypeLiteral((SymbolExpr) binSym.left));
+        binSym.left = new CastExpr(expr, new TypeLiteral((IsSymExpr) binSym.left));
       }
       return binSym;
     } else if (expr instanceof BinaryExpr binExpr) {
-      binExpr.right = new CastExpr(binExpr.right, new TypeLiteral((SymbolExpr) symOrBin));
+      binExpr.right = new CastExpr(binExpr.right, new TypeLiteral((IsSymExpr) symOrBin));
       return binExpr;
     } else {
-      return new CastExpr(expr, new TypeLiteral((SymbolExpr) symOrBin));
+      return new CastExpr(expr, new TypeLiteral((IsSymExpr) symOrBin));
     }
   }
 
@@ -182,7 +182,7 @@ class ParserUtils {
     var body = macro.body();
     if (body instanceof Expr expr) {
       var expanded = expander.expandExpr(expr);
-      return new GroupExpr(narrowExpr(expanded));
+      return new GroupExpr(expanded);
     } else if (body instanceof Definition def) {
       return expander.expandDefinition(def);
     } else if (body instanceof StatementList statementList) {
@@ -207,26 +207,10 @@ class ParserUtils {
   }
 
   static Node narrowNode(Node node) {
-    if (node instanceof Expr expr) {
-      return narrowExpr(expr);
-    } else if (node instanceof StatementList statementList) {
+    if (node instanceof StatementList statementList) {
       return statementList.items.get(0);
     }
     return node;
-  }
-
-  static Expr narrowExpr(Expr expr) {
-    if (expr instanceof CallExpr callExpr
-        && callExpr.argsIndices.isEmpty() && callExpr.subCalls.isEmpty()) {
-      expr = callExpr.target;
-    }
-    if (expr instanceof SymbolExpr symExpr && symExpr.size == null) {
-      expr = symExpr.path;
-    }
-    if (expr instanceof IdentifierPath path && path.segments.size() == 1) {
-      expr = path.segments.get(0);
-    }
-    return expr;
   }
 
   static void pushScope(Parser parser) {
@@ -251,9 +235,5 @@ class ParserUtils {
 
   static void popScope(Parser parser) {
     parser.symbolTable = Objects.requireNonNull(parser.symbolTable.parent);
-  }
-
-  static void semError(Parser parser, SourceLocation location, String message) {
-    parser.errors.SemErr(location.begin().line(), location.begin().column(), message);
   }
 }

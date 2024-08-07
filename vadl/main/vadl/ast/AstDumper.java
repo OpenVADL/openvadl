@@ -51,8 +51,6 @@ public class AstDumper
         expr.accept(this);
       } else if (child instanceof Statement statement) {
         statement.accept(this);
-      } else if (child instanceof Identifier) {
-        dumpNode(child);
       } else {
         System.out.println(child);
         throw new RuntimeException("NOT IMPLEMENTED");
@@ -79,6 +77,7 @@ public class AstDumper
   @Override
   public Void visit(FormatDefinition definition) {
     dumpNode(definition);
+    dumpChildren(definition.identifier, definition.type);
     this.indent++;
     for (var field : definition.fields) {
       if (field instanceof FormatDefinition.RangeFormatField f) {
@@ -187,7 +186,7 @@ public class AstDumper
   @Override
   public Void visit(TypeLiteral expr) {
     dumpNode(expr);
-    dumpChildren(expr.baseType);
+    dumpChildren((Expr) expr.baseType);
     indent++;
     for (List<Expr> sizes : expr.sizeIndices) {
       builder.append(indentString()).append("Sizes\n");
@@ -246,7 +245,7 @@ public class AstDumper
   @Override
   public Void visit(CallExpr expr) {
     dumpNode(expr);
-    dumpChildren(expr.target);
+    dumpChildren((Expr) expr.target);
     indent++;
     for (List<Expr> args : expr.argsIndices) {
       builder.append(indentString()).append("ArgsIndices\n");
@@ -289,7 +288,7 @@ public class AstDumper
   @Override
   public Void visit(SymbolExpr expr) {
     dumpNode(expr);
-    dumpChildren(expr.path);
+    dumpChildren((Expr) expr.path);
     if (expr.size != null) {
       dumpChildren(expr.size);
     }

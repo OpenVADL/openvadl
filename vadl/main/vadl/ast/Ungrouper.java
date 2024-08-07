@@ -79,7 +79,7 @@ class Ungrouper implements ExprVisitor<Expr> {
 
   @Override
   public Expr visit(CallExpr expr) {
-    expr.target = (SymbolExpr) expr.target.accept(this);
+    expr.target = (IsSymExpr) ((Expr) expr.target).accept(this);
     var argsIndices = expr.argsIndices;
     expr.argsIndices = new ArrayList<>(argsIndices.size());
     for (var entry : argsIndices) {
@@ -133,7 +133,7 @@ class Ungrouper implements ExprVisitor<Expr> {
 
   @Override
   public Expr visit(SymbolExpr expr) {
-    expr.size = expr.size == null ? null : expr.size.accept(this);
+    expr.size = expr.size.accept(this);
     return expr;
   }
 }

@@ -47,9 +47,7 @@ class MacroExpander
 
   @Override
   public Expr visit(Identifier expr) {
-    symbols.requireValue(
-        new CallExpr(new SymbolExpr(new IdentifierPath(List.of(expr)), null, expr.location()),
-            List.of(), List.of(), expr.location()));
+    symbols.requireValue(expr);
     return expr;
   }
 
@@ -79,7 +77,7 @@ class MacroExpander
   @Override
   public Expr visit(PlaceholderExpr expr) {
     // TODO Proper handling of placeholders with format "$a.b.c"
-    var arg = args.get(expr.identifierPath.segments.get(0).name);
+    var arg = args.get(expr.identifierPath.pathToString());
     if (arg == null) {
       throw new IllegalStateException("The parser should already have checked that.");
     } else if (arg instanceof Identifier id) {
@@ -117,9 +115,7 @@ class MacroExpander
 
   @Override
   public Expr visit(IdentifierPath expr) {
-    symbols.requireValue(
-        new CallExpr(new SymbolExpr(expr, null, expr.location()), List.of(), List.of(),
-            expr.location()));
+    symbols.requireValue(expr);
     return expr;
   }
 
@@ -130,7 +126,7 @@ class MacroExpander
 
   @Override
   public Expr visit(CallExpr expr) {
-    expr.target = (SymbolExpr) expr.target.accept(this);
+    expr.target = (IsSymExpr) ((Expr) expr.target).accept(this);
     var argsIndices = expr.argsIndices;
     expr.argsIndices = new ArrayList<>(argsIndices.size());
     for (var entry : argsIndices) {
@@ -188,7 +184,7 @@ class MacroExpander
 
   @Override
   public Expr visit(SymbolExpr expr) {
-    expr.size = expr.size == null ? null : expr.size.accept(this);
+    expr.size = expr.size.accept(this);
     return expr;
   }
 

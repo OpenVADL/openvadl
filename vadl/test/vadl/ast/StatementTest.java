@@ -109,7 +109,7 @@ public class StatementTest {
     var definitions = List.of(
         new FormatDefinition(
             new Identifier("F", loc),
-            new TypeLiteral(new IdentifierPath(List.of(new Identifier("Bits", loc))),
+            new TypeLiteral(new Identifier("Bits", loc),
                 List.of(List.of(new IntegerLiteral("32", loc))), loc),
             List.of(new FormatDefinition.RangeFormatField(
                 new Identifier("bits", loc),

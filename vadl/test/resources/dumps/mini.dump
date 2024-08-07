@@ -9,152 +9,123 @@ InstructionSetDefinition
 . UsingDefinition
 . : Identifier name: "Inst"
 . : TypeLiteral
-. : ' IdentifierPath
-. : ' | Identifier name: "Bits"
+. : ' Identifier name: "Bits"
 . : ' Sizes
 . : ' | IntegerLiteral literal: 32 (32)
 . UsingDefinition
 . : Identifier name: "Regs"
 . : TypeLiteral
-. : ' IdentifierPath
-. : ' | Identifier name: "Bits"
+. : ' Identifier name: "Bits"
 . : ' Sizes
 . : ' | Identifier name: "MLen"
 . UsingDefinition
 . : Identifier name: "Bits3"
 . : TypeLiteral
-. : ' IdentifierPath
-. : ' | Identifier name: "Bits"
+. : ' Identifier name: "Bits"
 . : ' Sizes
 . : ' | IntegerLiteral literal: 3 (3)
 . UsingDefinition
 . : Identifier name: "Bits7"
 . : TypeLiteral
-. : ' IdentifierPath
-. : ' | Identifier name: "Bits"
+. : ' Identifier name: "Bits"
 . : ' Sizes
 . : ' | IntegerLiteral literal: 7 (7)
 . UsingDefinition
 . : Identifier name: "Index"
 . : TypeLiteral
-. : ' IdentifierPath
-. : ' | Identifier name: "Bits"
+. : ' Identifier name: "Bits"
 . : ' Sizes
 . : ' | IntegerLiteral literal: 5 (5)
 . RegisterFileDefinition
 . : Identifier name: "X"
 . : TypeLiteral
-. : ' IdentifierPath
-. : ' | Identifier name: "Index"
+. : ' Identifier name: "Index"
 . : TypeLiteral
-. : ' IdentifierPath
-. : ' | Identifier name: "Regs"
+. : ' Identifier name: "Regs"
 . FormatDefinition
+. : Identifier name: "Rtype"
+. : TypeLiteral
+. : ' Identifier name: "Inst"
 . : TypedFormatField
 . : ' Identifier name: "funct7"
 . : ' TypeLiteral
-. : ' | IdentifierPath
-. : ' | . Identifier name: "Bits7"
+. : ' | Identifier name: "Bits7"
 . : TypedFormatField
 . : ' Identifier name: "rs2"
 . : ' TypeLiteral
-. : ' | IdentifierPath
-. : ' | . Identifier name: "Index"
+. : ' | Identifier name: "Index"
 . : TypedFormatField
 . : ' Identifier name: "rs1"
 . : ' TypeLiteral
-. : ' | IdentifierPath
-. : ' | . Identifier name: "Index"
+. : ' | Identifier name: "Index"
 . : TypedFormatField
 . : ' Identifier name: "funct3"
 . : ' TypeLiteral
-. : ' | IdentifierPath
-. : ' | . Identifier name: "Bits3"
+. : ' | Identifier name: "Bits3"
 . : TypedFormatField
 . : ' Identifier name: "rd"
 . : ' TypeLiteral
-. : ' | IdentifierPath
-. : ' | . Identifier name: "Index"
+. : ' | Identifier name: "Index"
 . : TypedFormatField
 . : ' Identifier name: "opcode"
 . : ' TypeLiteral
-. : ' | IdentifierPath
-. : ' | . Identifier name: "Bits7"
+. : ' | Identifier name: "Bits7"
 . : DerivedFormatField
 . : ' Identifier name: "shamt"
 . : ' CastExpr
 . : ' | Identifier name: "rs2"
 . : ' | TypeLiteral
-. : ' | . IdentifierPath
-. : ' | . : Identifier name: "UInt"
+. : ' | . Identifier name: "UInt"
 . InstructionDefinition
 . : Identifier name: "ADD"
 . : Identifier name: "Rtype"
 . : AssignmentStatement
 . : ' CallExpr
-. : ' | SymbolExpr
-. : ' | . IdentifierPath
-. : ' | . : Identifier name: "X"
+. : ' | Identifier name: "X"
 . : ' | ArgsIndices
 . : ' | . Identifier name: "rd"
 . : ' CastExpr
 . : ' | BinaryExpr operator: +
 . : ' | . CastExpr
 . : ' | . : CallExpr
-. : ' | . : ' SymbolExpr
-. : ' | . : ' | IdentifierPath
-. : ' | . : ' | . Identifier name: "X"
+. : ' | . : ' Identifier name: "X"
 . : ' | . : ' ArgsIndices
 . : ' | . : ' | Identifier name: "rs1"
 . : ' | . : TypeLiteral
-. : ' | . : ' IdentifierPath
-. : ' | . : ' | Identifier name: "Bits"
+. : ' | . : ' Identifier name: "Bits"
 . : ' | . CastExpr
 . : ' | . : CallExpr
-. : ' | . : ' SymbolExpr
-. : ' | . : ' | IdentifierPath
-. : ' | . : ' | . Identifier name: "X"
+. : ' | . : ' Identifier name: "X"
 . : ' | . : ' ArgsIndices
 . : ' | . : ' | Identifier name: "rs2"
 . : ' | . : TypeLiteral
-. : ' | . : ' IdentifierPath
-. : ' | . : ' | Identifier name: "Bits"
+. : ' | . : ' Identifier name: "Bits"
 . : ' | TypeLiteral
-. : ' | . IdentifierPath
-. : ' | . : Identifier name: "Regs"
+. : ' | . Identifier name: "Regs"
 . InstructionDefinition
 . : Identifier name: "ADD2"
 . : Identifier name: "Rtype"
 . : BlockStatement
 . : ' AssignmentStatement
 . : ' | CallExpr
-. : ' | . SymbolExpr
-. : ' | . : IdentifierPath
-. : ' | . : ' Identifier name: "X"
+. : ' | . Identifier name: "X"
 . : ' | . ArgsIndices
 . : ' | . : Identifier name: "rd"
 . : ' | CastExpr
 . : ' | . BinaryExpr operator: +
 . : ' | . : CastExpr
 . : ' | . : ' CallExpr
-. : ' | . : ' | SymbolExpr
-. : ' | . : ' | . IdentifierPath
-. : ' | . : ' | . : Identifier name: "X"
+. : ' | . : ' | Identifier name: "X"
 . : ' | . : ' | ArgsIndices
 . : ' | . : ' | . Identifier name: "rs1"
 . : ' | . : ' TypeLiteral
-. : ' | . : ' | IdentifierPath
-. : ' | . : ' | . Identifier name: "Bits"
+. : ' | . : ' | Identifier name: "Bits"
 . : ' | . : CastExpr
 . : ' | . : ' CallExpr
-. : ' | . : ' | SymbolExpr
-. : ' | . : ' | . IdentifierPath
-. : ' | . : ' | . : Identifier name: "X"
+. : ' | . : ' | Identifier name: "X"
 . : ' | . : ' | ArgsIndices
 . : ' | . : ' | . Identifier name: "rs2"
 . : ' | . : ' TypeLiteral
-. : ' | . : ' | IdentifierPath
-. : ' | . : ' | . Identifier name: "Bits"
+. : ' | . : ' | Identifier name: "Bits"
 . : ' | . TypeLiteral
-. : ' | . : IdentifierPath
-. : ' | . : ' Identifier name: "Regs"
+. : ' | . : Identifier name: "Regs"
