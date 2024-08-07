@@ -53,7 +53,7 @@ public class RegisterTest extends AbstractTest {
     var spec = runAndGetViamSpecification("register/valid_regfile.vadl");
 
     {
-      var x = (RegisterFile) findResourceByName("Test.X", spec);
+      var x = (RegisterFile) findResourceByName("Test::X", spec);
       assertTrue(x.hasAddress());
       assertEquals(Type.bits(5), x.addressType());
       assertEquals(Type.bits(32), x.resultType());
@@ -61,7 +61,7 @@ public class RegisterTest extends AbstractTest {
     }
 
     {
-      var y = (RegisterFile) findResourceByName("Test.Y", spec);
+      var y = (RegisterFile) findResourceByName("Test::Y", spec);
       var constraints = y.constraints();
       assertEquals(1, constraints.length);
       var constraint = constraints[0];
@@ -78,29 +78,29 @@ public class RegisterTest extends AbstractTest {
     var parAcc = Register.AccessKind.PARTIAL;
     var fulAcc = Register.AccessKind.FULL;
 
-    var x = (Register) findResourceByName("Test.X", spec);
+    var x = (Register) findResourceByName("Test::X", spec);
     {
       testRegister(x, Type.bits(32), Set.of(), null, null, parAcc, parAcc);
     }
 
-    var PP = (Register) findResourceByName("Test.PP", spec);
-    var PP_N = (Register) findResourceByName("Test.PP_N", spec);
-    var PP_N_H = (Register) findResourceByName("Test.PP_N_H", spec);
-    var PP_N_L = (Register) findResourceByName("Test.PP_N_L", spec);
-    var PP_P = (Register) findResourceByName("Test.PP_P", spec);
-    var PF = (Register) findResourceByName("Test.PF", spec);
-    var PF_N = (Register) findResourceByName("Test.PF_N", spec);
-    var PF_N_H = (Register) findResourceByName("Test.PF_N_H", spec);
-    var PF_N_L = (Register) findResourceByName("Test.PF_N_L", spec);
-    var PF_P = (Register) findResourceByName("Test.PF_P", spec);
-    var FP = (Register) findResourceByName("Test.FP", spec);
-    var FP_N = (Register) findResourceByName("Test.FP_N", spec);
-    var FP_N_H = (Register) findResourceByName("Test.FP_N_H", spec);
-    var FP_N_L = (Register) findResourceByName("Test.FP_N_L", spec);
-    var FP_P = (Register) findResourceByName("Test.FP_P", spec);
-    var FF = (Register) findResourceByName("Test.FF", spec);
+    var PP = (Register) findResourceByName("Test::PP", spec);
+    var PP_N = (Register) findResourceByName("Test::PP_N", spec);
+    var PP_N_H = (Register) findResourceByName("Test::PP_N_H", spec);
+    var PP_N_L = (Register) findResourceByName("Test::PP_N_L", spec);
+    var PP_P = (Register) findResourceByName("Test::PP_P", spec);
+    var PF = (Register) findResourceByName("Test::PF", spec);
+    var PF_N = (Register) findResourceByName("Test::PF_N", spec);
+    var PF_N_H = (Register) findResourceByName("Test::PF_N_H", spec);
+    var PF_N_L = (Register) findResourceByName("Test::PF_N_L", spec);
+    var PF_P = (Register) findResourceByName("Test::PF_P", spec);
+    var FP = (Register) findResourceByName("Test::FP", spec);
+    var FP_N = (Register) findResourceByName("Test::FP_N", spec);
+    var FP_N_H = (Register) findResourceByName("Test::FP_N_H", spec);
+    var FP_N_L = (Register) findResourceByName("Test::FP_N_L", spec);
+    var FP_P = (Register) findResourceByName("Test::FP_P", spec);
+    var FF = (Register) findResourceByName("Test::FF", spec);
 
-    var outer = findFormatByName("Test.OUTER", spec);
+    var outer = findFormatByName("Test::OUTER", spec);
     var inner = findFormatByName("INNER", spec);
 
     var outer_t = Type.bits(18);
@@ -153,14 +153,14 @@ public class RegisterTest extends AbstractTest {
   @Test
   void testRegRead() {
     var spec = runAndGetViamSpecification("register/valid_reg_read.vadl");
-    var a = (Register) findResourceByName("Test.A", spec);
-    var b = (Register) findResourceByName("Test.B", spec);
-    var b_one = (Register) findResourceByName("Test.B_ONE", spec);
-    var c = (Register) findResourceByName("Test.C", spec);
-    var d = (RegisterFile) findResourceByName("Test.D", spec);
+    var a = (Register) findResourceByName("Test::A", spec);
+    var b = (Register) findResourceByName("Test::B", spec);
+    var b_one = (Register) findResourceByName("Test::B_ONE", spec);
+    var c = (Register) findResourceByName("Test::C", spec);
+    var d = (RegisterFile) findResourceByName("Test::D", spec);
 
     {
-      var first = findDefinitionByNameIn("Test.FIRST", spec, Instruction.class);
+      var first = findDefinitionByNameIn("Test::FIRST", spec, Instruction.class);
       var behavior = first.behavior();
       behavior.verify();
       var depNodes = behavior.getNodes(DependencyNode.class).toList();
@@ -183,7 +183,7 @@ public class RegisterTest extends AbstractTest {
     }
 
     {
-      var second = findDefinitionByNameIn("Test.SECOND", spec, Instruction.class);
+      var second = findDefinitionByNameIn("Test::SECOND", spec, Instruction.class);
       var behavior = second.behavior();
       behavior.verify();
       var depNodes = behavior.getNodes(DependencyNode.class).toList();
@@ -206,7 +206,7 @@ public class RegisterTest extends AbstractTest {
     }
 
     {
-      var third = findDefinitionByNameIn("Test.THIRD", spec, Instruction.class);
+      var third = findDefinitionByNameIn("Test::THIRD", spec, Instruction.class);
       var behavior = third.behavior();
       behavior.verify();
       var depNodes = behavior.getNodes(DependencyNode.class).toList();
@@ -235,7 +235,7 @@ public class RegisterTest extends AbstractTest {
     }
 
     {
-      var fourth = findDefinitionByNameIn("Test.FOURTH", spec, Instruction.class);
+      var fourth = findDefinitionByNameIn("Test::FOURTH", spec, Instruction.class);
       var behavior = fourth.behavior();
       behavior.verify();
       var depNodes = behavior.getNodes(DependencyNode.class).toList();
@@ -257,12 +257,12 @@ public class RegisterTest extends AbstractTest {
   @Test
   void testWriteReg() {
     var spec = runAndGetViamSpecification("register/valid_reg_write.vadl");
-    var b = (Register) findResourceByName("Test.B", spec);
-    var b_one = (Register) findResourceByName("Test.B_ONE", spec);
-    var d = (RegisterFile) findResourceByName("Test.D", spec);
+    var b = (Register) findResourceByName("Test::B", spec);
+    var b_one = (Register) findResourceByName("Test::B_ONE", spec);
+    var d = (RegisterFile) findResourceByName("Test::D", spec);
 
     {
-      var instr = findDefinitionByNameIn("Test.FIRST", spec, Instruction.class);
+      var instr = findDefinitionByNameIn("Test::FIRST", spec, Instruction.class);
       var behavior = instr.behavior();
       behavior.verify();
       var depNodes = behavior.getNodes(DependencyNode.class).toList();
@@ -275,7 +275,7 @@ public class RegisterTest extends AbstractTest {
     }
 
     {
-      var instr = findDefinitionByNameIn("Test.SECOND", spec, Instruction.class);
+      var instr = findDefinitionByNameIn("Test::SECOND", spec, Instruction.class);
       var behavior = instr.behavior();
       behavior.verify();
       var depNodes = behavior.getNodes(DependencyNode.class).toList();
@@ -288,7 +288,7 @@ public class RegisterTest extends AbstractTest {
     }
 
     {
-      var instr = findDefinitionByNameIn("Test.FOURTH", spec, Instruction.class);
+      var instr = findDefinitionByNameIn("Test::FOURTH", spec, Instruction.class);
       var behavior = instr.behavior();
       behavior.verify();
       var depNodes = behavior.getNodes(DependencyNode.class).toList();

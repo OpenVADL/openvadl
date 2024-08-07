@@ -18,11 +18,11 @@ public class MemoryTest extends AbstractTest {
   void testMemory() {
     var spec = runAndGetViamSpecification("memory/valid_memory.vadl");
 
-    var mem = findDefinitionByNameIn("Test.MEM", spec, Memory.class);
-    var read_1 = findDefinitionByNameIn("Test.READ_1", spec, Instruction.class);
-    var read_2 = findDefinitionByNameIn("Test.READ_2", spec, Instruction.class);
-    var write_1 = findDefinitionByNameIn("Test.WRITE_1", spec, Instruction.class);
-    var write_2 = findDefinitionByNameIn("Test.WRITE_2", spec, Instruction.class);
+    var mem = findDefinitionByNameIn("Test::MEM", spec, Memory.class);
+    var read_1 = findDefinitionByNameIn("Test::READ_1", spec, Instruction.class);
+    var read_2 = findDefinitionByNameIn("Test::READ_2", spec, Instruction.class);
+    var write_1 = findDefinitionByNameIn("Test::WRITE_1", spec, Instruction.class);
+    var write_2 = findDefinitionByNameIn("Test::WRITE_2", spec, Instruction.class);
 
     assertEquals(32, mem.wordSize());
 

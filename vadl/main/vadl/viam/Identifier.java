@@ -98,7 +98,7 @@ public record Identifier(
   }
 
   public String name() {
-    return String.join(".", this.parts);
+    return String.join("::", this.parts);
   }
 
   public String simpleName() {
@@ -106,6 +106,7 @@ public record Identifier(
   }
 
   private static String normalizePart(String part) {
+    // remove leading and trailing dots
     part = part.trim();
     if (part.startsWith(".")) {
       part = part.substring(1);

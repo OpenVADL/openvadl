@@ -17,7 +17,7 @@ public class Rv3264imTest extends AbstractTest {
 
     // Correct program counter
     {
-      var pc = findDefinitionByNameIn("RV3264I.PC", rv3264i, Register.Counter.class);
+      var pc = findDefinitionByNameIn("RV3264I::PC", rv3264i, Register.Counter.class);
       assertEquals(pc, rv3264i.pc());
     }
 
