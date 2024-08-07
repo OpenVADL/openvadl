@@ -1,12 +1,13 @@
 # The `vadl-test` Module
 
-This module exist to run integration tests on OpenVADL. To write integration tests
-(tests from VADL source code) we need a frontend. As the current OpenVADL frontend
-is in very early stages, we have to use the (old-)VADL frontend. While the `vadl`
-projects has `open-vadl` as dependency, this is not the case for the other why
-arround. So we cannot use the VADL frontend directly within OpenVADL.
+This module exists to run integration tests on OpenVADL.
+To write integration tests (tests from VADL source code), we need a frontend.
+As the current OpenVADL frontend is in very early stages, we have to use the (old-)VADL frontend.
+While the `vadl` project has `open-vadl` as dependency,
+this is not the case for the other way around.
+So we can’t use the VADL frontend directly within OpenVADL.
 
-To still have a way of writing integration test, this module provides the
+To still write integration test, this module provides the
 `TestFrontend` and the `TestFrontend.Provider` interface. In the `vadl` project
 is a class called `OpenVADLTestSuite` which provides and sets an implementation
 of these interfaces before calling the tests written in this module. So you can
@@ -26,11 +27,11 @@ of the `AbstractTest` class.
 ## Running the tests
 
 All tests that use the frontend (or extend `AbstractTest`) must be started
-from the (old-)`vadl` project. Currently there is no way to execute specific
-tests, so you will always run all test in the module. This is because
+from the (old-)`vadl` project. Currently, there is no way to execute specific
+tests, so you will always run all tests in the module. This is because
 we use a junit Suite annotation to specify that all tests in this module should
-be executed. JUnit does not provide a cli way to include or exclude
-specific tests. However if we would implement our own test runner, we could
+be executed. JUnit doesn’t provide a cli way to include or exclude
+specific tests. However, if we implement our own test runner, we could
 implement such a functionality.
 
 The command to run the OpenVADLTestSuite (all tests in `vadl-test`)
