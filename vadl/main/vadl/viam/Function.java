@@ -4,6 +4,7 @@ import java.util.stream.Stream;
 import vadl.types.ConcreteRelationType;
 import vadl.types.Type;
 import vadl.viam.graph.Graph;
+import vadl.viam.graph.control.ReturnNode;
 
 /**
  * Represents a Function in a VADL specification.
@@ -54,6 +55,10 @@ public class Function extends Definition {
   public void verify() {
     super.verify();
     ensure(behavior.isPureFunction(), "The function must be pure (no side effects)");
+
+    var returnNode = behavior().getNodes(ReturnNode.class).findFirst().get();
+    ensure(returnNode.value.type() == returnType,
+        "The function's behavior does not return same type as signature suggests: %s", returnType);
   }
 
   public Graph behavior() {
