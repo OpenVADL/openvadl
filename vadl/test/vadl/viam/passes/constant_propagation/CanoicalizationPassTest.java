@@ -1,7 +1,13 @@
 package vadl.viam.passes.constant_propagation;
 
 import static org.hamcrest.MatcherAssert.assertThat;
+import static org.hamcrest.Matchers.contains;
 import static org.hamcrest.Matchers.equalTo;
+import static org.hamcrest.Matchers.hasSize;
+import static org.hamcrest.Matchers.instanceOf;
+import static vadl.viam.helper.TestGraphUtils.binaryOp;
+import static vadl.viam.helper.TestGraphUtils.cast;
+import static vadl.viam.helper.TestGraphUtils.intSNode;
 
 import java.math.BigInteger;
 import java.util.Collections;
@@ -25,7 +31,9 @@ import vadl.viam.graph.Graph;
 import vadl.viam.graph.NodeList;
 import vadl.viam.graph.dependency.BuiltInCall;
 import vadl.viam.graph.dependency.ConstantNode;
+import vadl.viam.graph.dependency.TypeCastNode;
 import vadl.viam.passes.canonicalization.CanoicalizationPass;
+import vadl.viam.passes.canonicalization.Canonicalizer;
 
 class CanoicalizationPassTest {
   @Test
@@ -82,5 +90,33 @@ class CanoicalizationPassTest {
             .get()).constant()).integer(),
         equalTo(new BigInteger(String.valueOf(2))));
   }
+
+
+  @Test
+  void shouldEvaluateConstant_withUniqueNodeReplacement() {
+    var graph = new Graph("test graph");
+
+    graph.addWithInputs(
+        cast(
+            Type.signedInt(4),
+            binaryOp(
+                BuiltInTable.ADD,
+                Type.bits(4),
+                cast(intSNode(2, 4), Type.bits(4)),
+                cast(intSNode(2, 4), Type.bits(4))
+            )
+        )
+    );
+
+    Canonicalizer.canonicalize(graph);
+
+    var nodes = graph.getNodes().toList();
+    assertThat(nodes, hasSize(1));
+    assertThat(nodes.get(0), instanceOf(ConstantNode.class));
+    var constant = ((ConstantNode) nodes.get(0)).constant();
+    assertThat(constant.asVal().intValue(), equalTo(4));
+
+  }
+
 
 }

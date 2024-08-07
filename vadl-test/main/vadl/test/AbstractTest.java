@@ -8,20 +8,27 @@ import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.fail;
 import static org.junit.jupiter.params.provider.Arguments.arguments;
 
+import java.io.BufferedReader;
 import java.io.File;
+import java.io.FileNotFoundException;
+import java.io.FileReader;
+import java.io.FileWriter;
 import java.io.IOException;
+import java.io.InputStreamReader;
+import java.io.OutputStreamWriter;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.net.URL;
-import java.nio.file.Files;
-import java.nio.file.StandardCopyOption;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
+import java.util.Scanner;
 import java.util.jar.JarFile;
 import java.util.stream.Stream;
 import java.util.zip.ZipEntry;
 import javax.annotation.Nullable;
+import org.apache.velocity.VelocityContext;
+import org.apache.velocity.app.Velocity;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.params.provider.Arguments;
@@ -39,7 +46,10 @@ public class AbstractTest {
    */
   public static final String TEST_SOURCE_DIR = "testSource";
   private static TestFrontend.Provider frontendProvider;
+
   private TestFrontend testFrontend;
+  @Nullable
+  private URI currentTestSource;
 
   /**
    * Checks if the test frontend provider is available.
@@ -76,7 +86,7 @@ public class AbstractTest {
   /**
    * Loads the test source file from the resources and returns a URI.
    */
-  public static URI getUriFromTestSource(String path) {
+  public static URI processAndLoadTestSourceFileInTempFile(String path) {
     var name =
         path.startsWith("/" + TEST_SOURCE_DIR + "/") ? path : "/" + TEST_SOURCE_DIR + "/" + path;
 
@@ -84,16 +94,22 @@ public class AbstractTest {
     try (var resourceStream = frontendProvider.getClass().getResourceAsStream(name)) {
       assertNotNull(resourceStream, "Resource not found: " + name);
 
+      var isr = new InputStreamReader(resourceStream);
+      var reader = new BufferedReader(isr);
+
       // create temporary file for test source
       var tempFile =
           File.createTempFile("OpenVADL-", "-"
               + path.substring(path.lastIndexOf("/") + 1));
       tempFile.deleteOnExit();
 
-      // copy resource stream into temporary file
-      // this is required as the source file is in the resource directory within
-      // a jar, and therefore vadl cannot directly access it via a path.
-      Files.copy(resourceStream, tempFile.toPath(), StandardCopyOption.REPLACE_EXISTING);
+      // create a file writer to write test into tempfile
+      try (var outFileWriter = new FileWriter(tempFile)) {
+        // call velocity to evaluate the potential template and write the result
+        // into the outFileWriter.
+        // we use an empty context
+        Velocity.evaluate(new VelocityContext(), outFileWriter, "OpenVADL", reader);
+      }
 
       return tempFile.toURI();
     } catch (IOException e) {
@@ -199,6 +215,7 @@ public class AbstractTest {
   @BeforeEach
   public void beforeEach() {
     testFrontend = frontendProvider.createFrontend();
+    currentTestSource = null;
   }
 
   public TestFrontend testFrontend() {
@@ -214,7 +231,7 @@ public class AbstractTest {
    * @param failureMessage the message to search for in the error logs (optional)
    */
   public void runAndAssumeFailure(String testSourcePath, @Nullable String failureMessage) {
-    var sourceUri = getUriFromTestSource(testSourcePath);
+    var sourceUri = processAndLoadTestSourceFileInTempFile(testSourcePath);
     var success = testFrontend.runSpecification(sourceUri);
     if (success) {
       fail("Assumed failure for specification " + testSourcePath + " but succeeded");
@@ -233,13 +250,55 @@ public class AbstractTest {
    * @return the VIAM specification
    */
   public Specification runAndGetViamSpecification(String testSourcePath) {
-    var sourceUri = getUriFromTestSource(testSourcePath);
-    var success = testFrontend.runSpecification(sourceUri);
+    currentTestSource = processAndLoadTestSourceFileInTempFile(testSourcePath);
+    var success = testFrontend.runSpecification(currentTestSource);
     if (!success) {
       var logs = testFrontend.getLogAsString();
       var errorLogs = logs.substring(logs.indexOf(" error: "));
+
+      System.out.println(
+          "Test source: ---------------\n" + currentTestSourceAsString() + "\n---------------");
       fail(errorLogs);
     }
+    "Test".split(" ");
     return testFrontend.getViam();
+  }
+
+  /**
+   * Returns the current test source code as a formatted string.
+   * This must be called after calling {@link #runAndGetViamSpecification(String)}.
+   * The output also includes line numbers.
+   */
+  public String currentTestSourceAsString() {
+    StringBuilder result = new StringBuilder();
+    try {
+      assert currentTestSource != null;
+      var sourceFile = new File(currentTestSource);
+      // Determine the total number of lines to calculate padding
+      int totalLines = 0;
+      try (BufferedReader lineCounter = new BufferedReader(
+          new FileReader(sourceFile))) {
+        while (lineCounter.readLine() != null) {
+          totalLines++;
+        }
+      }
+
+      // Calculate the number of digits in the last line number
+      int maxDigits = String.valueOf(totalLines).length();
+
+      // Read and format each line with padded line numbers
+      try (BufferedReader reader = new BufferedReader(new FileReader(sourceFile))) {
+        String line;
+        int lineNumber = 1;
+        String numberFormat = "%-" + maxDigits + "d|  ";  // Create a left-padded number format
+        while ((line = reader.readLine()) != null) {
+          result.append(String.format(numberFormat, lineNumber)).append(line).append("\n");
+          lineNumber++;
+        }
+      }
+    } catch (IOException e) {
+      throw new RuntimeException(e);
+    }
+    return result.toString();
   }
 }

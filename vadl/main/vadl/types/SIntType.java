@@ -25,8 +25,9 @@ public class SIntType extends BitsType {
     }
 
     // SInt<N> ==> Bits<M> | N <= M and N > 1
+    // TODO: Why would N >= 1 not work?
     if (other.getClass() == BitsType.class) {
-      return bitWidth <= other.bitWidth() && bitWidth > 1;
+      return bitWidth <= other.bitWidth() && bitWidth >= 1;
     }
 
     // as SInt<N> can be casted to Bits<N>
