@@ -3,6 +3,7 @@ package vadl.viam.graph;
 import com.google.errorprone.annotations.FormatMethod;
 import com.google.errorprone.annotations.FormatString;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.function.Consumer;
@@ -452,7 +453,9 @@ public abstract class Node {
   }
 
   protected final void removeUsage(Node usage) {
-    usages.remove(usage);
+    // remove() would only remove the first occurrence,
+    // but we want to delete all occurrences of the usage node
+    usages.removeAll(Collections.singleton(usage));
   }
 
   protected final void setPredecessor(@Nullable Node predecessor) {
