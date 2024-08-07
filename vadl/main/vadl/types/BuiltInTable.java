@@ -354,14 +354,16 @@ public class BuiltInTable {
    * {@code function not ( a : Bits<N> ) ->Bits<N> // <=> ~a }
    */
   public static final BuiltIn NOT =
-      BuiltIn.func("NOT", "~", Type.relation(BitsType.class, BitsType.class));
+      BuiltIn.func("NOT", "~", Type.relation(BitsType.class, BitsType.class),
+          (List<Constant.Value> args) -> args.get(0).not());
 
 
   /**
    * {@code function and ( a : Bits<N>, b : Bits<N> ) -> Bits<N> // <=> a & b }
    */
   public static final BuiltIn AND =
-      BuiltIn.func("AND", "&", Type.relation(BitsType.class, BitsType.class, BitsType.class));
+      BuiltIn.func("AND", "&", Type.relation(BitsType.class, BitsType.class, BitsType.class),
+          Constant.Value::and);
 
 
   /**
