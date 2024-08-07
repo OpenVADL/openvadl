@@ -2,27 +2,39 @@ package vadl.lcb.passes.llvm_lowering;
 
 import java.io.IOException;
 import java.util.IdentityHashMap;
+import java.util.List;
 import java.util.Map;
 import org.jetbrains.annotations.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import vadl.lcb.tablegen.model.TableGenInstructionOperand;
 import vadl.pass.Pass;
 import vadl.pass.PassKey;
 import vadl.pass.PassName;
 import vadl.viam.Instruction;
 import vadl.viam.Specification;
 import vadl.viam.graph.Graph;
+import vadl.viam.graph.Node;
 import vadl.viam.graph.control.AbstractBeginNode;
 import vadl.viam.graph.control.ControlNode;
 import vadl.viam.graph.control.EndNode;
 import vadl.viam.graph.dependency.DependencyNode;
 import vadl.viam.graph.dependency.FuncParamNode;
+import vadl.viam.graph.dependency.ReadRegFileNode;
+import vadl.viam.graph.dependency.WriteMemNode;
+import vadl.viam.graph.dependency.WriteRegFileNode;
 
 /**
  * Lowers the {@link Instruction#behavior()} into a LLVM tree pattern for tablegen.
  */
 public class LlvmLoweringPass extends Pass {
   private static final Logger logger = LoggerFactory.getLogger(LlvmLoweringPass.class);
+
+  public record LlvmLoweringIntermediateResult(Graph behavior,
+                                               List<TableGenInstructionOperand> inputs,
+                                               List<TableGenInstructionOperand> outputs) {
+
+  }
 
   @Override
   public PassName getName() {
@@ -33,7 +45,7 @@ public class LlvmLoweringPass extends Pass {
   @Override
   public Object execute(Map<PassKey, Object> passResults, Specification viam)
       throws IOException {
-    Map<Instruction, Graph> llvmPattern = new IdentityHashMap<>();
+    Map<Instruction, LlvmLoweringIntermediateResult> llvmPatterns = new IdentityHashMap<>();
 
     viam.isas()
         .flatMap(isa -> isa.instructions().stream())
@@ -48,6 +60,9 @@ public class LlvmLoweringPass extends Pass {
             return;
           }
 
+          var inputOperands = getTableGenInputOperands(copy);
+          var outputOperands = getTableGenOutputOperands(copy);
+
           // Continue with lowering of nodes
           for (var node : nodes) {
             visitor.visit(node);
@@ -60,11 +75,12 @@ public class LlvmLoweringPass extends Pass {
           }
 
           if (visitor.isPatternLowerable()) {
-            llvmPattern.put(instruction, copy);
+            llvmPatterns.put(instruction,
+                new LlvmLoweringIntermediateResult(copy, inputOperands, outputOperands));
           }
         });
 
-    return llvmPattern;
+    return llvmPatterns;
   }
 
   /**
@@ -87,5 +103,34 @@ public class LlvmLoweringPass extends Pass {
   private boolean checkIfNotAllowedDataflowNodes(Graph behavior) {
     return behavior.getNodes(DependencyNode.class)
         .noneMatch(x -> x instanceof FuncParamNode);
+  }
+
+  private List<TableGenInstructionOperand> getTableGenOutputOperands(Graph graph) {
+    return getOutputOperands(graph)
+        .stream().map(operand -> new TableGenInstructionOperand(operand.registerFile().name(),
+            operand.nodeName()))
+        .toList();
+  }
+
+  private List<TableGenInstructionOperand> getTableGenInputOperands(Graph graph) {
+    return getInputOperands(graph)
+        .stream().map(operand -> new TableGenInstructionOperand(operand.registerFile().name(),
+            operand.nodeName()))
+        .toList();
+  }
+
+  /**
+   * Most instruction's behaviors have inputs. Those are the results which the instruction requires.
+   */
+  private List<ReadRegFileNode> getInputOperands(Graph graph) {
+    // TODO: Implement immediates
+    return graph.getNodes(ReadRegFileNode.class).toList();
+  }
+
+  /**
+   * Most instruction's behaviors have outputs. Those are the results which the instruction emits.
+   */
+  private List<WriteRegFileNode> getOutputOperands(Graph graph) {
+    return graph.getNodes(WriteRegFileNode.class).toList();
   }
 }
