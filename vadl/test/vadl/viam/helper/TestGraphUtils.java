@@ -22,8 +22,36 @@ public class TestGraphUtils {
     );
   }
 
+  public static BuiltInCall binaryOp(BuiltInTable.BuiltIn op, Type resultType, ExpressionNode a,
+                                     ExpressionNode b) {
+    return new BuiltInCall(
+        op,
+        new NodeList<>(
+            a,
+            b
+        ),
+        resultType
+    );
+  }
+
   public static TypeCastNode cast(ExpressionNode val, Type type) {
     return new TypeCastNode(val, type);
+  }
+
+  public static TypeCastNode cast(Type type, ExpressionNode val) {
+    return new TypeCastNode(val, type);
+  }
+
+  public static ConstantNode intSNode(long val, int width) {
+    return new ConstantNode(intS(val, width));
+  }
+
+  public static ConstantNode intUNode(long val, int width) {
+    return new ConstantNode(intU(val, width));
+  }
+
+  public static ConstantNode bitsNode(long val, int width) {
+    return new ConstantNode(bits(val, width));
   }
 
   // constant value construction
@@ -38,6 +66,7 @@ public class TestGraphUtils {
   public static Constant.Value bits(long val, int width) {
     return Constant.Value.of(val, Type.bits(width));
   }
+
 
   public static Constant.Value bool(boolean val) {
     return Constant.Value.of(val);
