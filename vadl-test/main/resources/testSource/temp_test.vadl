@@ -2,3 +2,6 @@
 // used to debug small problems without creating new test files.
 
 
+instruction set architecture Playground = {
+}
+

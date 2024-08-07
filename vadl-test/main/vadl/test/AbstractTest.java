@@ -264,6 +264,11 @@ public class AbstractTest {
     return testFrontend.getViam();
   }
 
+  /**
+   * Returns the current test source code as a formatted string.
+   * This must be called after calling {@link #runAndGetViamSpecification(String)}.
+   * The output also includes line numbers.
+   */
   public String currentTestSourceAsString() {
     StringBuilder result = new StringBuilder();
     try {
