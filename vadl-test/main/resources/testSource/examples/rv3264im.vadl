@@ -274,11 +274,7 @@ $Arch3264 ( // ((((((((((((((((((((((((((((((((((((((((
 
 instruction set architecture RV3264IM extending RV3264I = {
 
-  // The MLen type cast is very important, as the new MUL operation in open-vadl does not
-  // return the doubled bitwidth, but the same as the operands. However the old-vadl
-  // type inverence assigned Bits<6> to the operands, which leads to a 6 bit invalid result.
-  // constant MLen2   = MLen  * 2
-  constant MLen2   = (MLen as Bits<12>)  * 2
+  constant MLen2   = MLen  * 2
   constant MLen2_1 = MLen2 - 1
 
   constant TopBitSet = ((1 as Regs) << (MLen - 1)) as Regs
