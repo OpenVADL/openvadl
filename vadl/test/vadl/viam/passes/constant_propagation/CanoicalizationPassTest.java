@@ -5,7 +5,9 @@ import static org.hamcrest.Matchers.contains;
 import static org.hamcrest.Matchers.equalTo;
 import static org.hamcrest.Matchers.hasSize;
 import static org.hamcrest.Matchers.instanceOf;
-import static vadl.viam.helper.TestGraphUtils.*;
+import static vadl.viam.helper.TestGraphUtils.binaryOp;
+import static vadl.viam.helper.TestGraphUtils.cast;
+import static vadl.viam.helper.TestGraphUtils.intSNode;
 
 import java.math.BigInteger;
 import java.util.Collections;
