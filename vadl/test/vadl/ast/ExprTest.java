@@ -66,7 +66,7 @@ public class ExprTest {
   }
 
   @Test
-  void symbolExpressions() {
+  void callExpressions() {
     var prog = """
         instruction set architecture TEST = {
           memory MEM : Bits<8> -> Bits<32>
@@ -76,6 +76,7 @@ public class ExprTest {
           constant vector = MEM<0x0a>
           constant vectorCall = MEM<0x0a>(9)
           constant simpleCall = MEM(9)
+          constant rangeCall = MEM(9..2)
           constant onlyComparisons = a < 2 && b > 2
           constant vectorAddLhs = MEM<0x0a> + 2
           constant vectorAddRhs = 1 + MEM<3>

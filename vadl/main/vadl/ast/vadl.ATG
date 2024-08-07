@@ -426,10 +426,12 @@ PRODUCTIONS
   arguments<.out List<Expr> args.>
   = SYM_PAREN_OPEN                            (. args = new ArrayList<>(); .)
     expression<out Expr arg, BIN_OPS>         (. args.add(arg); .)
-    {
-        SYM_COMMA
-        expression<out Expr nextArg, BIN_OPS> (. args.add(nextArg); .)
-    }
+    ( SYM_RANGE
+      expression<out Expr rangeTo, BIN_OPS>   (. args.set(0, new RangeExpr(arg, rangeTo)); .)
+    | {
+      SYM_COMMA
+      expression<out Expr nextArg, BIN_OPS>   (. args.add(nextArg); .)
+    })
     SYM_PAREN_CLOSE
   .
 
