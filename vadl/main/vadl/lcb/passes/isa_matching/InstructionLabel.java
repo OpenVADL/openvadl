@@ -14,5 +14,6 @@ public enum InstructionLabel {
   ADD_32,
   ADD_64,
   ADDI_32,
+  ADDI_64,
   BEQ,
 }

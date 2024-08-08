@@ -61,6 +61,8 @@ public class IsaMatchingPass extends Pass {
         matched.put(InstructionLabel.ADD_64, instruction);
       } else if (findAddWithImmediate32Bit(instruction.behavior())) {
         matched.put(InstructionLabel.ADDI_32, instruction);
+      } else if (findAddWithImmediate64Bit(instruction.behavior())) {
+        matched.put(InstructionLabel.ADDI_64, instruction);
       } else if (isa.pc() != null && findBeq(instruction.behavior(), isa.pc())) {
         matched.put(InstructionLabel.BEQ, instruction);
       }
@@ -109,17 +111,25 @@ public class IsaMatchingPass extends Pass {
   }
 
   private boolean findAddWithImmediate32Bit(Graph behavior) {
+    return findAddWithImmediate(behavior, 32);
+  }
+
+  private boolean findAddWithImmediate64Bit(Graph behavior) {
+    return findAddWithImmediate(behavior, 64);
+  }
+
+  private boolean findAddWithImmediate(Graph behavior, int bitWidth) {
     var matched = TreeMatcher.matches(behavior.getNodes(BuiltInCall.class).map(x -> x),
             new BuiltInMatcher(List.of(BuiltInTable.ADD, BuiltInTable.ADDS),
                 List.of(new AnyChildMatcher(new AnyReadRegFileMatcher()),
                     new AnyChildMatcher(new FuncCallMatcher(Type.signedInt(32))))))
         .stream()
         .map(x -> ((BuiltInCall) x).type())
-        .filter(ty -> ty instanceof BitsType && ((BitsType) ty).bitWidth() == 32)
+        .filter(ty -> ty instanceof BitsType && ((BitsType) ty).bitWidth() == bitWidth)
         .findFirst();
 
     return matched.isPresent()
-        && writesExactlyOneRegisterClassWithType(behavior, Type.bits(32));
+        && writesExactlyOneRegisterClassWithType(behavior, Type.bits(bitWidth));
   }
 
   private boolean findBeq(Graph behavior, Register.Counter pc) {

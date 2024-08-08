@@ -1,0 +1,65 @@
+package vadl.viam.passes;
+
+import com.google.common.collect.Streams;
+import java.io.IOException;
+import java.util.Arrays;
+import java.util.Map;
+import org.jetbrains.annotations.Nullable;
+import vadl.pass.Pass;
+import vadl.pass.PassKey;
+import vadl.pass.PassName;
+import vadl.viam.Parameter;
+import vadl.viam.Specification;
+import vadl.viam.graph.control.ReturnNode;
+import vadl.viam.graph.dependency.ExpressionNode;
+import vadl.viam.graph.dependency.FuncCallNode;
+import vadl.viam.graph.dependency.FuncParamNode;
+
+/**
+ * A pass which inlines all the function with the given function.
+ * Note that the function must be {@code pure} to be inlined.
+ */
+public class FunctionInlinerPass extends Pass {
+  @Override
+  public PassName getName() {
+    return new PassName("FunctionInlinerPass");
+  }
+
+  record Pair(ExpressionNode arg, Parameter parameter) {
+
+  }
+
+  @Nullable
+  @Override
+  public Object execute(Map<PassKey, Object> passResults, Specification viam)
+      throws IOException {
+
+    viam.isas()
+        .flatMap(isa -> isa.instructions().stream())
+        .filter(instruction -> instruction.behavior().isPureFunction())
+        .forEach(instruction -> {
+          var functionCalls = instruction.behavior().getNodes(FuncCallNode.class).toList();
+
+          functionCalls.forEach(functionCall -> {
+            var inlinedBehavior = functionCall.function().behavior().copy();
+            var returnNodes = inlinedBehavior.getNodes(ReturnNode.class).toList();
+            ensure(returnNodes.size() == 1, "Inlined function must only have one return node");
+            var returnNode = returnNodes.get(0);
+
+            // Replace every occurrence of `FuncParamNode` by the
+            // given argument from the `FunctionCallNode`.
+            Streams.zip(functionCall.arguments().stream(),
+                    Arrays.stream(functionCall.function().parameters()),
+                    Pair::new)
+                .forEach(pair -> inlinedBehavior.getNodes(FuncParamNode.class)
+                    .filter(n -> n.parameter() == pair.parameter())
+                    .forEach(usedParam -> usedParam.replaceAndDelete(pair.arg)));
+
+            // Actual inlining
+            functionCall.replaceAndDelete(returnNode.value);
+          });
+        });
+
+    return null;
+  }
+}
