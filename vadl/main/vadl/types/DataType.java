@@ -49,6 +49,21 @@ public abstract class DataType extends Type {
     return false;
   }
 
+  /**
+   * Checks if this type can be implicitly cast to another type,
+   * such that the bit representation must not be changed in any way.
+   *
+   * @param other the type to potentially cast to.
+   * @return true if it is possible, false otherwise
+   */
+  public final boolean isImplicitlyCastTo(Type other) {
+    if (other instanceof DataType otherDataType) {
+      var sameLength = otherDataType.bitWidth() == bitWidth();
+      return sameLength && (other instanceof BitsType || other instanceof BoolType);
+    }
+    return false;
+  }
+
   public boolean isSigned() {
     return false;
   }
