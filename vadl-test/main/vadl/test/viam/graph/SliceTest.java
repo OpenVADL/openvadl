@@ -18,7 +18,7 @@ public class SliceTest extends AbstractTest {
     var spec = runAndGetViamSpecification("graph/valid_slice.vadl");
 
     {
-      var slice_test = findDefinitionByNameIn("Test.SLICE_TEST", spec, Instruction.class);
+      var slice_test = findDefinitionByNameIn("Test::SLICE_TEST", spec, Instruction.class);
       var behavior = slice_test.behavior();
 
       // first slice

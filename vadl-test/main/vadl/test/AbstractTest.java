@@ -260,7 +260,7 @@ public class AbstractTest {
           "Test source: ---------------\n" + currentTestSourceAsString() + "\n---------------");
       fail(errorLogs);
     }
-    "Test".split(" ");
+    
     return testFrontend.getViam();
   }
 

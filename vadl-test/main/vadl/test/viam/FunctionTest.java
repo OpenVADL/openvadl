@@ -26,16 +26,16 @@ public class FunctionTest extends AbstractTest {
   void testValidFunctions() {
     var spec = runAndGetViamSpecification("function/valid_functions.vadl");
 
-    var noArg = findDefinitionByNameIn("FunctionTest.noArg", spec, Function.class);
-    var callFunc = findDefinitionByNameIn("FunctionTest.callFunc", spec, Function.class);
-    var useConst = findDefinitionByNameIn("FunctionTest.useConst", spec, Function.class);
-    var withArgs = findDefinitionByNameIn("FunctionTest.withArgs", spec, Function.class);
+    var noArg = findDefinitionByNameIn("FunctionTest::noArg", spec, Function.class);
+    var callFunc = findDefinitionByNameIn("FunctionTest::callFunc", spec, Function.class);
+    var useConst = findDefinitionByNameIn("FunctionTest::useConst", spec, Function.class);
+    var withArgs = findDefinitionByNameIn("FunctionTest::withArgs", spec, Function.class);
     var callFuncOutsideISA =
-        findDefinitionByNameIn("FunctionTest.callFuncOutsideISA", spec, Function.class);
+        findDefinitionByNameIn("FunctionTest::callFuncOutsideISA", spec, Function.class);
     var outSideISA = findDefinitionByNameIn("outSideISA", spec, Function.class);
     var callFuncInsideISA = findDefinitionByNameIn("callFuncInsideISA", spec, Function.class);
     var useConstOfFunc =
-        findDefinitionByNameIn("FunctionTest.useConstOfFunc", spec, Function.class);
+        findDefinitionByNameIn("FunctionTest::useConstOfFunc", spec, Function.class);
 
     {
       assertEquals(4, noArg.behavior().getNodes().count());
@@ -92,10 +92,10 @@ public class FunctionTest extends AbstractTest {
   void callFunctionInInstruction() {
     var spec = runAndGetViamSpecification("function/valid_functionUsage.vadl");
 
-    var noArg = findDefinitionByNameIn("FunctionCallTest.noArg", spec, Function.class);
-    var addition = findDefinitionByNameIn("FunctionCallTest.addition", spec, Function.class);
+    var noArg = findDefinitionByNameIn("FunctionCallTest::noArg", spec, Function.class);
+    var addition = findDefinitionByNameIn("FunctionCallTest::addition", spec, Function.class);
     var funcCallTest =
-        findDefinitionByNameIn("FunctionCallTest.FuncCallTest", spec, Instruction.class);
+        findDefinitionByNameIn("FunctionCallTest::FuncCallTest", spec, Instruction.class);
 
     var additionCall =
         funcCallTest.behavior().getNodes(FuncCallNode.class).filter(e -> e.arguments().size() == 2)
