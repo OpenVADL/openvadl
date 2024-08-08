@@ -18,12 +18,15 @@ import vadl.viam.graph.dependency.BuiltInCall;
 import vadl.viam.graph.dependency.ConstantNode;
 import vadl.viam.graph.dependency.ExpressionNode;
 import vadl.viam.graph.dependency.FieldAccessRefNode;
+import vadl.viam.graph.dependency.FieldRefNode;
 import vadl.viam.graph.dependency.FuncCallNode;
+import vadl.viam.graph.dependency.FuncParamNode;
 import vadl.viam.graph.dependency.LetNode;
 import vadl.viam.graph.dependency.ReadMemNode;
 import vadl.viam.graph.dependency.ReadRegFileNode;
 import vadl.viam.graph.dependency.ReadRegNode;
 import vadl.viam.graph.dependency.SelectNode;
+import vadl.viam.graph.dependency.SideEffectNode;
 import vadl.viam.graph.dependency.SliceNode;
 import vadl.viam.graph.dependency.TypeCastNode;
 import vadl.viam.graph.dependency.WriteMemNode;
@@ -113,17 +116,23 @@ public class Z3CodeGeneratorVisitor implements GraphNodeVisitor {
 
   @Override
   public void visit(SelectNode selectNode) {
-
+    writer.write("If(");
+    visit(selectNode.condition());
+    writer.write(",");
+    visit(selectNode.trueCase());
+    writer.write(",");
+    visit(selectNode.falseCase());
+    writer.write(")");
   }
 
   @Override
   public void visit(ReadRegNode readRegNode) {
-
+    writer.write(readRegNode.register().simpleName());
   }
 
   @Override
   public void visit(ReadRegFileNode readRegFileNode) {
-
+    writer.write(readRegFileNode.registerFile().simpleName());
   }
 
   @Override
@@ -133,22 +142,31 @@ public class Z3CodeGeneratorVisitor implements GraphNodeVisitor {
 
   @Override
   public void visit(LetNode letNode) {
+    throw new RuntimeException("not implemented");
+  }
 
+  @Override
+  public void visit(FuncParamNode funcParamNode) {
+    writer.write(funcParamNode.parameter().simpleName());
   }
 
   @Override
   public void visit(FuncCallNode funcCallNode) {
+    throw new RuntimeException("not implemented");
+  }
 
+  @Override
+  public void visit(FieldRefNode fieldRefNode) {
+    writer.write(fieldRefNode.formatField().simpleName());
   }
 
   @Override
   public void visit(FieldAccessRefNode fieldAccessRefNode) {
-
+    writer.write(fieldAccessRefNode.fieldAccess().simpleName());
   }
 
   @Override
   public void visit(AbstractBeginNode abstractBeginNode) {
-
   }
 
   @Override
@@ -163,7 +181,6 @@ public class Z3CodeGeneratorVisitor implements GraphNodeVisitor {
 
   @Override
   public void visit(EndNode endNode) {
-
   }
 
   @Override
@@ -173,11 +190,22 @@ public class Z3CodeGeneratorVisitor implements GraphNodeVisitor {
 
   @Override
   public void visit(IfNode ifNode) {
-
+    writer.write("If(");
+    visit(ifNode.condition);
+    writer.write(",");
+    visit(ifNode.trueBranch());
+    writer.write(",");
+    visit(ifNode.falseBranch());
+    writer.write(")");
   }
 
   @Override
   public void visit(ExpressionNode expressionNode) {
     expressionNode.accept(this);
+  }
+
+  @Override
+  public void visit(SideEffectNode sideEffectNode) {
+    sideEffectNode.accept(this);
   }
 }

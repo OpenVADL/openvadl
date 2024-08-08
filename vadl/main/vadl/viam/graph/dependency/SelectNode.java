@@ -73,4 +73,16 @@ public class SelectNode extends ExpressionNode {
   public void accept(GraphNodeVisitor visitor) {
     visitor.visit(this);
   }
+
+  public ExpressionNode condition() {
+    return condition;
+  }
+
+  public ExpressionNode trueCase() {
+    return trueCase;
+  }
+
+  public ExpressionNode falseCase() {
+    return falseCase;
+  }
 }
