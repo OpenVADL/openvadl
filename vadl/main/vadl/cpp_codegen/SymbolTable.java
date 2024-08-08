@@ -10,10 +10,13 @@ public class SymbolTable {
    * Generate a variable name. For example, "a", "ab", "xy" etc.
    */
   public String getNextVariable() {
-    return str(state++);
+    return getVariableBasedOnState(state++);
   }
 
-  private static String str(int i) {
-    return i < 0 ? "" : str((i / 26) - 1) + (char) (97 + i % 26);
+  /**
+   * Generates a variable for a given index.
+   */
+  public static String getVariableBasedOnState(int i) {
+    return i < 0 ? "" : getVariableBasedOnState((i / 26) - 1) + (char) (97 + i % 26);
   }
 }
