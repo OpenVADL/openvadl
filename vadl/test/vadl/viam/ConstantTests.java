@@ -619,6 +619,101 @@ public class ConstantTests {
   }
 
 
+  @ParameterizedTest
+  @MethodSource("testCastConstant_Sources")
+  void constantValueCast_shouldResultInCorrectValue(Constant.Value value, DataType newType,
+                                                    Constant.Value expected) {
+    var casted = value.castTo(newType);
+    assertEquals(expected, casted);
+  }
+
+
+  static Stream<Arguments> testCastConstant_Sources() {
+    return Stream.of(
+        // intS -> bits
+        Arguments.of(intS(5, 4), Type.bits(4), bits(0b101, 4)),
+        Arguments.of(intS(5, 4), Type.bits(6), bits(0b101, 6)),
+        Arguments.of(intS(5, 4), Type.bits(2), bits(0b01, 2)),
+        Arguments.of(intS(-5, 4), Type.bits(4), bits(0b1011, 4)),
+        Arguments.of(intS(-5, 4), Type.bits(6), bits(0b001011, 6)),
+        Arguments.of(intS(-5, 4), Type.bits(2), bits(0b11, 2)),
+
+        // intS -> uInt
+        Arguments.of(intS(5, 4), Type.unsignedInt(4), intU(0b101, 4)),
+        Arguments.of(intS(5, 4), Type.unsignedInt(6), intU(0b101, 6)),
+        Arguments.of(intS(5, 4), Type.unsignedInt(2), intU(0b01, 2)),
+        Arguments.of(intS(-5, 4), Type.unsignedInt(4), intU(0b1011, 4)),
+        Arguments.of(intS(-5, 4), Type.unsignedInt(6), intU(0b001011, 6)),
+        Arguments.of(intS(-5, 4), Type.unsignedInt(2), intU(0b11, 2)),
+
+        // intS -> bool
+        Arguments.of(intS(5, 4), Type.bool(), bool(true)),
+        Arguments.of(intS(0, 4), Type.bool(), bool(false)),
+        Arguments.of(intS(-5, 4), Type.bool(), bool(true)),
+
+        // bits -> intS
+        Arguments.of(bits(0b0101, 4), Type.signedInt(4), intS(5, 4)),
+        Arguments.of(bits(0b0101, 4), Type.signedInt(6), intS(5, 6)),
+        Arguments.of(bits(0b0101, 4), Type.signedInt(2), intS(1, 2)),
+        Arguments.of(bits(0b1011, 4), Type.signedInt(4), intS(-5, 4)),
+        Arguments.of(bits(0b1011, 4), Type.signedInt(6), intS(-5, 6)),
+        Arguments.of(bits(0b1011, 4), Type.signedInt(2), intS(-1, 2)),
+
+        // bits -> intU
+        Arguments.of(bits(0b0101, 4), Type.unsignedInt(4), intU(5, 4)),
+        Arguments.of(bits(0b0101, 4), Type.unsignedInt(6), intU(5, 6)),
+        Arguments.of(bits(0b0101, 4), Type.unsignedInt(2), intU(1, 2)),
+        Arguments.of(bits(0b1011, 4), Type.unsignedInt(4), intU(11, 4)),
+        Arguments.of(bits(0b1011, 4), Type.unsignedInt(6), intU(11, 6)),
+        Arguments.of(bits(0b1011, 4), Type.unsignedInt(2), intU(3, 2)),
+
+        // bits -> bool
+        Arguments.of(bits(0b0101, 4), Type.bool(), bool(true)),
+        Arguments.of(bits(0b0, 4), Type.bool(), bool(false)),
+        Arguments.of(bits(0b1011, 4), Type.bool(), bool(true)),
+
+        // intU -> intS
+        Arguments.of(intU(0b0101, 4), Type.signedInt(4), intS(5, 4)),
+        Arguments.of(intU(0b0101, 4), Type.signedInt(6), intS(5, 6)),
+        Arguments.of(intU(0b0101, 4), Type.signedInt(2), intS(1, 2)),
+        Arguments.of(intU(0b1011, 4), Type.signedInt(4), intS(-5, 4)),
+        Arguments.of(intU(0b1011, 4), Type.signedInt(6), intS(11, 6)),
+        Arguments.of(intU(0b1011, 4), Type.signedInt(2), intS(-1, 2)),
+
+        // intU -> bits
+        Arguments.of(intU(0b0101, 4), Type.bits(4), bits(5, 4)),
+        Arguments.of(intU(0b0101, 4), Type.bits(6), bits(5, 6)),
+        Arguments.of(intU(0b0101, 4), Type.bits(2), bits(1, 2)),
+        Arguments.of(intU(0b1011, 4), Type.bits(4), bits(11, 4)),
+        Arguments.of(intU(0b1011, 4), Type.bits(6), bits(11, 6)),
+        Arguments.of(intU(0b1011, 4), Type.bits(2), bits(3, 2)),
+
+        // intU -> bool
+        Arguments.of(intU(0b0101, 4), Type.bool(), bool(true)),
+        Arguments.of(intU(0b0, 4), Type.bool(), bool(false)),
+        Arguments.of(intU(0b1011, 4), Type.bool(), bool(true)),
+
+        // bool -> intS
+        Arguments.of(bool(true), Type.signedInt(1), intS(-1, 1)),
+        Arguments.of(bool(true), Type.signedInt(3), intS(1, 3)),
+        Arguments.of(bool(false), Type.signedInt(1), intS(0, 1)),
+        Arguments.of(bool(false), Type.signedInt(3), intS(0, 3)),
+
+        // bool -> intU
+        Arguments.of(bool(true), Type.unsignedInt(1), intU(1, 1)),
+        Arguments.of(bool(true), Type.unsignedInt(3), intU(1, 3)),
+        Arguments.of(bool(false), Type.unsignedInt(1), intU(0, 1)),
+        Arguments.of(bool(false), Type.unsignedInt(3), intU(0, 3)),
+
+        // bool -> bits
+        Arguments.of(bool(true), Type.bits(1), bits(1, 1)),
+        Arguments.of(bool(true), Type.bits(3), bits(1, 3)),
+        Arguments.of(bool(false), Type.bits(1), bits(0, 1)),
+        Arguments.of(bool(false), Type.bits(3), bits(0, 3))
+    );
+  }
+
+
   // Helper functions
 
   private void testResultAndStatus(Constant.Tuple actual, long result,

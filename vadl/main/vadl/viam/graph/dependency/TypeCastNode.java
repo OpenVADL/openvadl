@@ -31,17 +31,28 @@ public class TypeCastNode extends UnaryNode implements Canonicalizable {
     ensure(value.type() instanceof DataType, "Type to cast must be DataType");
   }
 
-  @Override
-  protected void collectData(List<Object> collection) {
-    super.collectData(collection);
-    collection.add(castType);
-  }
 
   /**
    * Get the cast type.
    */
   public Type castType() {
     return this.castType;
+  }
+
+  @Override
+  public Node canonical() {
+    if (value.isConstant()) {
+      var constant = ((ConstantNode) value).constant();
+      ensure(constant instanceof Constant.Value, "Only value constants may be cast");
+      return new ConstantNode(((Constant.Value) constant).castTo((DataType) castType));
+    }
+    return this;
+  }
+
+  @Override
+  protected void collectData(List<Object> collection) {
+    super.collectData(collection);
+    collection.add(castType);
   }
 
   @Override
@@ -59,13 +70,4 @@ public class TypeCastNode extends UnaryNode implements Canonicalizable {
     visitor.visit(this);
   }
 
-  @Override
-  public Node canonical() {
-    if (value.isConstant()) {
-      var constant = ((ConstantNode) value).constant();
-      ensure(constant instanceof Constant.Value, "Only value constants may be cast");
-      return new ConstantNode(((Constant.Value) constant).castTo((DataType) castType));
-    }
-    return this;
-  }
 }
