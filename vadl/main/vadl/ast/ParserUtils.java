@@ -217,7 +217,7 @@ class ParserUtils {
     parser.symbolTable = parser.symbolTable.createChild();
   }
 
-  static void pushFormatScope(Parser parser, Node formatId) {
+  static void pushFormatScope(Parser parser, IdentifierOrPlaceholder formatId) {
     if (formatId instanceof Identifier id) {
       parser.symbolTable = parser.symbolTable.createFormatScope(id);
     } else {
@@ -225,7 +225,7 @@ class ParserUtils {
     }
   }
 
-  static void pushInstructionScope(Parser parser, Node instrId) {
+  static void pushInstructionScope(Parser parser, IdentifierOrPlaceholder instrId) {
     if (instrId instanceof Identifier id) {
       parser.symbolTable = parser.symbolTable.createInstructionScope(id);
     } else {

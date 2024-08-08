@@ -760,17 +760,25 @@ class RegisterFileDefinition extends Definition {
 }
 
 class InstructionDefinition extends Definition {
-  Node identifier;
-  Node typeIdentifier;
+  IdentifierOrPlaceholder identifier;
+  IdentifierOrPlaceholder typeIdentifier;
   Statement behavior;
   final SourceLocation loc;
 
-  InstructionDefinition(Node identifier, Node typeIdentifier, Statement behavior,
-                        SourceLocation location) {
+  InstructionDefinition(IdentifierOrPlaceholder identifier, IdentifierOrPlaceholder typeIdentifier,
+                        Statement behavior, SourceLocation location) {
     this.identifier = identifier;
     this.typeIdentifier = typeIdentifier;
     this.behavior = behavior;
     this.loc = location;
+  }
+
+  Identifier id() {
+    return (Identifier) identifier;
+  }
+
+  Identifier type() {
+    return (Identifier) typeIdentifier;
   }
 
   @Override

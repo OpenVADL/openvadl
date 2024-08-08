@@ -47,7 +47,7 @@ interface ExprVisitor<R> {
   R visit(SymbolExpr expr);
 }
 
-final class Identifier extends Expr implements IsId {
+final class Identifier extends Expr implements IsId, IdentifierOrPlaceholder {
   String name;
   SourceLocation loc;
 
@@ -546,11 +546,15 @@ class StringLiteral extends Expr {
   }
 }
 
+sealed interface IdentifierOrPlaceholder permits Identifier, PlaceholderExpr {
+  void prettyPrint(int indent, StringBuilder builder);
+}
+
 /**
  * An internal temporary placeholder node inside model definitions.
  * This node should never leave the parser.
  */
-class PlaceholderExpr extends Expr {
+final class PlaceholderExpr extends Expr implements IdentifierOrPlaceholder {
   IsId identifierPath;
   SourceLocation loc;
 
@@ -575,7 +579,7 @@ class PlaceholderExpr extends Expr {
   }
 
   @Override
-  void prettyPrint(int indent, StringBuilder builder) {
+  public void prettyPrint(int indent, StringBuilder builder) {
     builder.append("$");
     identifierPath.prettyPrint(indent, builder);
   }

@@ -103,11 +103,9 @@ class NestedSymbolTable implements DefinitionVisitor<Void> {
 
   @Override
   public Void visit(InstructionDefinition definition) {
-    if (definition.identifier instanceof Identifier id
-        && definition.typeIdentifier instanceof Identifier typeId) {
-      defineSymbol(new InstructionSymbol(id.name, definition), definition.loc);
-      requirements.add(new SymbolRequirement(typeId.name, SymbolType.FORMAT, typeId.loc));
-    }
+    defineSymbol(new InstructionSymbol(definition.id().name, definition), definition.loc);
+    requirements.add(new SymbolRequirement(definition.type().name, SymbolType.FORMAT,
+        definition.type().loc));
     return null;
   }
 

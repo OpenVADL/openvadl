@@ -296,13 +296,13 @@ class MacroExpander
     return new AssignmentStatement(target, valueExpr);
   }
 
-  private Identifier resolvePlaceholderOrIdentifier(Node n) {
-    if (n instanceof PlaceholderExpr p) {
+  private Identifier resolvePlaceholderOrIdentifier(IdentifierOrPlaceholder idOrPlaceholder) {
+    if (idOrPlaceholder instanceof PlaceholderExpr p) {
       return (Identifier) p.accept(this);
     }
-    if (n instanceof Identifier id) {
+    if (idOrPlaceholder instanceof Identifier id) {
       return id;
     }
-    throw new IllegalStateException("Unknown resolved placeholder type " + n);
+    throw new IllegalStateException("Unknown resolved placeholder type " + idOrPlaceholder);
   }
 }

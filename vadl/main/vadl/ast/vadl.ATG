@@ -254,16 +254,16 @@ PRODUCTIONS
     SYM_COLON typeLiteral<out TypeLiteral type> (. def = new CounterDefinition(kind, id, type, startLocation.join(loc())); .)
   .
 
-  instructionDefinition<out InstructionDefinition def>   (. var startLocation = loc(); .)
-  = INSTRUCTION identifierOrPlaceholder<out Node id>
-    SYM_COLON identifierOrPlaceholder<out Node formatId> (. pushFormatScope(this, formatId); .)
-    SYM_EQ statement<out Statement behavior>             (. def = new InstructionDefinition(id, formatId, behavior, startLocation.join(loc()));
-                                                            popScope(this); .)
+  instructionDefinition<out InstructionDefinition def>                      (. var startLocation = loc(); .)
+  = INSTRUCTION identifierOrPlaceholder<out IdentifierOrPlaceholder id>
+    SYM_COLON identifierOrPlaceholder<out IdentifierOrPlaceholder formatId> (. pushFormatScope(this, formatId); .)
+    SYM_EQ statement<out Statement behavior>                                (. def = new InstructionDefinition(id, formatId, behavior, startLocation.join(loc()));
+                                                                               popScope(this); .)
   .
 
-  identifierOrPlaceholder<out Node n> (. n = null; .)
-  = identifier<out n>
-  | placeholder<out n, BasicSyntaxType.Id()>
+  identifierOrPlaceholder<out IdentifierOrPlaceholder id> (. id = null; .)
+  = identifier<out id>
+  | placeholder<out Node node, BasicSyntaxType.Id()>      (. id = (IdentifierOrPlaceholder) node; .)
   .
 
   encodingDefinition<out EncodingDefinition def> (. var startLocation = loc(); .)

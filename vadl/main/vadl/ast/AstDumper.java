@@ -213,7 +213,7 @@ public class AstDumper
   @Override
   public Void visit(InstructionDefinition definition) {
     dumpNode(definition);
-    dumpChildren(definition.identifier, definition.typeIdentifier, definition.behavior);
+    dumpChildren(definition.id(), definition.type(), definition.behavior);
     return null;
   }
 
