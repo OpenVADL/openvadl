@@ -203,7 +203,7 @@ public abstract class Node {
 
   /**
    * Applies visitor output on all inputs.
-   * This is unsafe, as it may lead to an inconsistent graph, if the usages are not
+   * This is unsafe, as it may lead to an inconsistent graph, if the usages aren’t
    * updated accordingly. Use {@link Node#applyOnInputs(GraphVisitor.Applier)} to
    * let this be handled automatically.
    *
@@ -221,7 +221,7 @@ public abstract class Node {
 
   /**
    * Applies visitor output on all successors.
-   * This is unsafe, as it may lead to an inconsistent graph, if the predecessors are not
+   * This is unsafe, as it may lead to an inconsistent graph, if the predecessors aren’t
    * updated accordingly. Use {@link Node#applyOnSuccessors(GraphVisitor.Applier)} to
    * let this be handled automatically.
    *
@@ -334,7 +334,7 @@ public abstract class Node {
   }
 
   /**
-   * Delete all children (inputs and successors) that are not used (no usages and predecessor).
+   * Delete all children (inputs and successors) that aren’t used (no usages and predecessor).
    */
   private void deleteObsoleteChildrenOf() {
     ensure(isDeleted(), "Deletion of obsolete children is only possible for deleted nodes");
@@ -362,8 +362,11 @@ public abstract class Node {
    * handling is required.</p>
    *
    * @param replacement node that replaces this node
+   * @return the replacement node.
+   *     This might be useful if the replacement is not yet added to the graph, as the
+   *     new node might be a different object
    */
-  public void replaceAndDelete(Node replacement) {
+  public Node replaceAndDelete(Node replacement) {
     if (replacement.isUninitialized() && graph != null) {
       replacement = graph.addWithInputs(replacement);
     }
@@ -371,6 +374,7 @@ public abstract class Node {
     replaceAtAllUsages(replacement);
     replaceAtPredecessor(replacement);
     this.safeDelete();
+    return replacement;
   }
 
   /**
@@ -450,14 +454,21 @@ public abstract class Node {
     }
   }
 
+
   protected void addUsage(Node usage) {
     usages.add(usage);
   }
 
-  protected final void removeUsage(Node usage) {
+  /**
+   * Removes the given node of the set of usages from this node.
+   *
+   * @param usage the node to remove from usages
+   * @return if there was something found to remove
+   */
+  public final boolean removeUsage(Node usage) {
     // remove() would only remove the first occurrence,
     // but we want to delete all occurrences of the usage node
-    usages.removeAll(Collections.singleton(usage));
+    return usages.removeAll(Collections.singleton(usage));
   }
 
   protected final void setPredecessor(@Nullable Node predecessor) {
@@ -599,7 +610,7 @@ public abstract class Node {
 
   /**
    * Verifies the consistency of this node to all its
-   * inputs, successors, usages and predecessor.
+   * inputs, successors, usages, and predecessor.
    */
   public final void verify() {
     ensure(isActive(), "node is not active");
