@@ -1,0 +1,31 @@
+instruction set architecture IsaDefsTest = {
+  register file X: Bits<5> -> Bits<32>
+  format Rtype: Bits<32> =
+  { rd : Bits<5>
+  , rs1 : Bits<5>
+  , rs2 : Bits<5>
+  , opcode : Bits<7>
+  }
+  instruction ADD : Rtype =   {
+    X(rd) := (X(rs1) + X(rs2))
+  }
+  encoding ADD =
+  { opcode = 0b011'0011
+  }
+  assembly ADD = (mnemonic, " ", register(rd), ",", register(rs1), ",", register(rs2))
+  instruction SUB : Rtype =   {
+    X(rd) := (X(rs1) + X(rs2))
+  }
+  encoding SUB =
+  { opcode = 0b100'1100
+  }
+  assembly SUB = (mnemonic, " ", register(rd), ",", register(rs1), ",", register(rs2))
+  instruction SQU : Rtype =   {
+    X(rd) := (X(rs1) + X(rs1))
+  }
+  encoding SQU =
+  { opcode = 0b101'0101
+  }
+  assembly SQU = (mnemonic, " ", register(rd), ",", register(rs1), ",", register(rs1))
+}
+

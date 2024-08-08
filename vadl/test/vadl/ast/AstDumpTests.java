@@ -1,5 +1,6 @@
 package vadl.ast;
 
+import static vadl.ast.AstTestUtils.loadVadlFiles;
 import static vadl.ast.AstTestUtils.verifyPrettifiedAst;
 
 import java.io.IOException;
@@ -24,16 +25,11 @@ public class AstDumpTests {
    * If that file is the correct dump, simply replace the old dump with it.
    */
   @TestFactory
-  Collection<DynamicTest> astDumpTests() throws URISyntaxException, IOException {
-    var directory = Objects.requireNonNull(getClass().getClassLoader().getResource("dumps"));
-    var sourceDir = Path.of(directory.toURI()).toAbsolutePath().toString()
-        .replace("/build/resources/test", "/test/resources");
-    try (Stream<Path> files = Files.list(Path.of(sourceDir))) {
-      return files.filter(path -> path.getFileName().toString().endsWith(".vadl"))
+  Stream<DynamicTest> astDumpTests() throws URISyntaxException, IOException {
+      return loadVadlFiles("dumps").stream()
+          .filter(path -> path.getFileName().toString().endsWith(".vadl"))
           .map(path -> DynamicTest.dynamicTest("Parse " + path.getFileName(),
-              () -> assertDumpEquality(path)))
-          .toList();
-    }
+              () -> assertDumpEquality(path)));
   }
 
   private void assertDumpEquality(Path vadlPath) throws IOException {
@@ -41,10 +37,9 @@ public class AstDumpTests {
     verifyPrettifiedAst(ast);
 
     var actualDump = new AstDumper().dump(ast);
-    var expectedDumpPath = vadlPath.resolveSibling(vadlPath.getFileName().toString()
-        .replace(".vadl", ".dump"));
+    var expectedDumpPath = dumpPath(vadlPath);
     if (!Files.isRegularFile(expectedDumpPath)) {
-      writeDump(dumpPath(vadlPath), actualDump);
+      writeDump(actualDumpPath(vadlPath), actualDump);
       Assertions.fail("File " + expectedDumpPath + " does not exist");
     }
     var expectedDump = Files.readString(expectedDumpPath).replaceAll("\r\n", "\n");

@@ -423,7 +423,7 @@ class UnaryExpr extends Expr {
   }
 }
 
-class IntegerLiteral extends Expr {
+final class IntegerLiteral extends Expr implements ValOrPlaceholder {
   String token;
   long number;
   SourceLocation loc;
@@ -456,7 +456,7 @@ class IntegerLiteral extends Expr {
   }
 
   @Override
-  void prettyPrint(int indent, StringBuilder builder) {
+  public void prettyPrint(int indent, StringBuilder builder) {
     builder.append(token);
   }
 
@@ -550,11 +550,15 @@ sealed interface IdentifierOrPlaceholder permits Identifier, PlaceholderExpr {
   void prettyPrint(int indent, StringBuilder builder);
 }
 
+sealed interface ValOrPlaceholder permits IntegerLiteral, PlaceholderExpr {
+  void prettyPrint(int indent, StringBuilder builder);
+}
+
 /**
  * An internal temporary placeholder node inside model definitions.
  * This node should never leave the parser.
  */
-final class PlaceholderExpr extends Expr implements IdentifierOrPlaceholder {
+final class PlaceholderExpr extends Expr implements IdentifierOrPlaceholder, ValOrPlaceholder {
   IsId identifierPath;
   SourceLocation loc;
 

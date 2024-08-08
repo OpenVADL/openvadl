@@ -16,6 +16,8 @@ COMPILER vadl
   Ast ast = new Ast();
   NestedSymbolTable symbolTable = new NestedSymbolTable();
 
+  { symbolTable.loadBuiltins(); }
+
   SourceLocation loc() {
     return locationFromToken(this, t);
   }
@@ -44,8 +46,8 @@ TOKENS
          .
   identifierToken = letter {letter | digit | "_"}.
   string =
-  ( '"' { ("\\" letter | '"' | "'" | "\\") | validDQStringCharacters } '"') |
-  ( "'" { ("\\" letter | '"' | "'" | "\\") | validSQStringCharacters } "'").
+  ( '"' { "\\" (letter | '"' | "'" | "\\") | validDQStringCharacters } '"') |
+  ( "'" { "\\" (letter | '"' | "'" | "\\") | validSQStringCharacters } "'").
 
   T_STATS = "Stats".
   T_STAT = "Stat".
@@ -267,7 +269,7 @@ PRODUCTIONS
   .
 
   encodingDefinition<out EncodingDefinition def> (. var startLocation = loc(); .)
-  = ENCODING identifier<out Identifier instrId>
+  = ENCODING identifierOrPlaceholder<out IdentifierOrPlaceholder instrId>
     SYM_EQ SYM_BRACE_OPEN
     encodingDefinitionList<.out List<FieldEncoding> fieldEncodings.>
     SYM_BRACE_CLOSE                              (. def = new EncodingDefinition(instrId, fieldEncodings, startLocation.join(loc())); .)
@@ -278,22 +280,29 @@ PRODUCTIONS
     { SYM_COMMA encodingEntry<out FieldEncoding e2>         (. entries.add(e2); .) }
   .
 
-  encodingEntry<out FieldEncoding e>
+  encodingEntry<out FieldEncoding enc>                  (. ValOrPlaceholder val = null; .)
   = identifier<out Identifier id>
-    SYM_EQ number                    (. e = new FieldEncoding(id, new IntegerLiteral(t.val, loc())); .)
+    SYM_EQ (
+      number                                            (. val = new IntegerLiteral(t.val, loc()); .)
+    | placeholder<out Node node, BasicSyntaxType.Val()> (. val = (ValOrPlaceholder) node; .)
+    )                                                   (. enc = new FieldEncoding(id, val); .)
   .
 
-  assemblyDefinition<out AssemblyDefinition def>         (. List<Identifier> ids = new ArrayList<>(); var start = loc(); .)
-  = ASSEMBLY identifier<out Identifier id>               (. ids.add(id); pushInstructionScope(this, id); .)
-    { SYM_COMMA identifier <out Identifier additionalId> (. ids.add(additionalId); pushInstructionScope(this, id); .) }
-    SYM_EQ SYM_PAREN_OPEN                                (. var isMnemonic = false; List<Node> segments = new ArrayList<>(); .)
-    (  MNEMONIC                                          (. isMnemonic = true; .)
-      | stringLit<out StringLiteral lit1>                (. segments.add(lit1); .)
+  assemblyDefinition<out AssemblyDefinition def>                        (. List<IdentifierOrPlaceholder> ids = new ArrayList<>(); var start = loc(); .)
+  = ASSEMBLY
+    identifierOrPlaceholder<out IdentifierOrPlaceholder id>             (. ids.add(id); pushInstructionScope(this, id); .)
+    {
+      SYM_COMMA
+      identifierOrPlaceholder<out IdentifierOrPlaceholder additionalId> (. ids.add(additionalId); pushInstructionScope(this, id); .)
+    }
+    SYM_EQ SYM_PAREN_OPEN                                               (. var isMnemonic = false; List<Expr> segments = new ArrayList<>(); .)
+    (  MNEMONIC                                                         (. isMnemonic = true; .)
+      | stringLit<out StringLiteral lit1>                               (. segments.add(lit1); .)
     ) { SYM_COMMA (
-      stringLit<out StringLiteral lit2>                  (. segments.add(lit2); .)
-      | term<out Expr expr>                              (. segments.add(expr); .)
-    )} SYM_PAREN_CLOSE                                   (. def = new AssemblyDefinition(ids, isMnemonic, segments, start.join(loc()));
-                                                            popScope(this); .)
+      stringLit<out StringLiteral lit2>                                 (. segments.add(lit2); .)
+      | term<out Expr expr>                                             (. segments.add(expr); .)
+    )} SYM_PAREN_CLOSE                                                  (. def = new AssemblyDefinition(ids, isMnemonic, segments, start.join(loc()));
+                                                                           popScope(this); .)
   .
 
   stringLit<out StringLiteral lit>
@@ -559,6 +568,7 @@ PRODUCTIONS
 
   allowedIdentifierKeywords
   = T_BOOL
+  | REGISTER
   // TODO Add all allowed keywords
   .
 

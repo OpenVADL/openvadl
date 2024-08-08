@@ -62,4 +62,19 @@ public class StringTest {
     var actualString = (StringLiteral) assembly.segments.get(0);
     assertThat(actualString.value, equalTo("\b\t\r\n\f'\"\\😂"));
   }
+
+  @Test
+  void onlyParsesUntilClosingQuote() {
+    String prog = """
+        instruction set architecture TEST = {
+          format T : Bits<1> = { a [0..0] }
+          instruction I : T = {}
+          assembly I = ("a", "b", 'c', 'd')
+        }
+        """;
+    var ast = VadlParser.parse(prog);
+    var assembly = (AssemblyDefinition) ((InstructionSetDefinition) ast.definitions.get(0))
+        .definitions.get(2);
+    assertThat(assembly.segments.size(), equalTo(4));
+  }
 }

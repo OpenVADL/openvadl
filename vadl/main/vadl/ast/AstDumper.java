@@ -220,9 +220,9 @@ public class AstDumper
   @Override
   public Void visit(EncodingDefinition definition) {
     dumpNode(definition);
-    dumpChildren(definition.instrIdentifier);
+    dumpChildren(definition.instrId());
     dumpChildren(definition.fieldEncodings.stream()
-        .flatMap(entry -> Stream.of(entry.field(), entry.value()))
+        .flatMap(entry -> Stream.of(entry.field(), (Node) entry.value()))
         .toList()
     );
     return null;

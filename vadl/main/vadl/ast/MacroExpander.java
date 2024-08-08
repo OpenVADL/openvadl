@@ -66,12 +66,12 @@ class MacroExpander
 
   @Override
   public Expr visit(IntegerLiteral expr) {
-    return new IntegerLiteral(expr.token, expr.loc);
+    return expr;
   }
 
   @Override
   public Expr visit(StringLiteral expr) {
-    return new StringLiteral(expr.value, expr.loc);
+    return expr;
   }
 
   @Override
@@ -82,6 +82,8 @@ class MacroExpander
       throw new IllegalStateException("The parser should already have checked that.");
     } else if (arg instanceof Identifier id) {
       return id;
+    } else if (arg instanceof IntegerLiteral lit) {
+      return lit;
     }
 
     return ((Expr) arg).accept(this);
@@ -106,11 +108,13 @@ class MacroExpander
 
   @Override
   public Expr visit(TypeLiteral expr) {
-    for (int i = 0; i < expr.sizeIndices.size(); i++) {
-      var sizes = expr.sizeIndices.get(i);
-      sizes.replaceAll(size -> size.accept(this));
-    }
-    return expr;
+    List<List<Expr>> sizeIndices = new ArrayList<>(expr.sizeIndices);
+    sizeIndices.replaceAll(sizes -> {
+      var copy = new ArrayList<>(sizes);
+      copy.replaceAll(size -> size.accept(this));
+      return copy;
+    });
+    return new TypeLiteral(expr.baseType, sizeIndices, expr.loc);
   }
 
   @Override
@@ -126,31 +130,26 @@ class MacroExpander
 
   @Override
   public Expr visit(CallExpr expr) {
-    expr.target = (IsSymExpr) ((Expr) expr.target).accept(this);
-    var argsIndices = expr.argsIndices;
-    expr.argsIndices = new ArrayList<>(argsIndices.size());
-    for (var entry : argsIndices) {
-      var args = new ArrayList<Expr>(entry.size());
-      for (var arg : entry) {
-        args.add(arg.accept(this));
-      }
-      expr.argsIndices.add(args);
-    }
-    var subCalls = expr.subCalls;
-    expr.subCalls = new ArrayList<>(subCalls.size());
-    for (var subCall : subCalls) {
-      argsIndices = new ArrayList<>(subCall.argsIndices().size());
-      for (var entry : subCall.argsIndices()) {
-        var args = new ArrayList<Expr>(entry.size());
-        for (var arg : entry) {
-          args.add(arg.accept(this));
-        }
-        argsIndices.add(args);
-      }
-      expr.subCalls.add(new CallExpr.SubCall(subCall.id(), argsIndices));
-    }
-    symbols.requireValue(expr);
-    return expr;
+    var target = (IsSymExpr) ((Expr) expr.target).accept(this);
+    var argsIndices = new ArrayList<>(expr.argsIndices);
+    argsIndices.replaceAll(args -> {
+      var copy = new ArrayList<>(args);
+      copy.replaceAll(arg -> arg.accept(this));
+      return copy;
+    });
+    var subCalls = new ArrayList<>(expr.subCalls);
+    subCalls.replaceAll(subCall -> {
+      var subCallArgsIndices = new ArrayList<>(subCall.argsIndices());
+      subCallArgsIndices.replaceAll(args -> {
+        var copy = new ArrayList<>(args);
+        copy.replaceAll(arg -> arg.accept(this));
+        return copy;
+      });
+      return new CallExpr.SubCall(subCall.id(), subCallArgsIndices);
+    });
+    var expandedExpr = new CallExpr(target, argsIndices, subCalls, expr.location);
+    symbols.requireValue(expandedExpr);
+    return expandedExpr;
   }
 
   @Override
@@ -244,12 +243,20 @@ class MacroExpander
 
   @Override
   public Definition visit(EncodingDefinition definition) {
-    return definition;
+    var instrId = resolvePlaceholderOrIdentifier(definition.instrIdentifier);
+    var fieldEncodings = new ArrayList<>(definition.fieldEncodings);
+    fieldEncodings.replaceAll(enc ->
+        new EncodingDefinition.FieldEncoding(enc.field(), resolvePlaceholderOrVal(enc.value())));
+    return new EncodingDefinition(instrId, fieldEncodings, definition.loc);
   }
 
   @Override
   public Definition visit(AssemblyDefinition definition) {
-    return definition;
+    var identifiers = new ArrayList<>(definition.identifiers);
+    identifiers.replaceAll(this::resolvePlaceholderOrIdentifier);
+    var segments = new ArrayList<>(definition.segments);
+    segments.replaceAll(expr -> expr.accept(this));
+    return new AssemblyDefinition(identifiers, definition.isMnemonic, segments, definition.loc);
   }
 
   @Override
@@ -304,5 +311,15 @@ class MacroExpander
       return id;
     }
     throw new IllegalStateException("Unknown resolved placeholder type " + idOrPlaceholder);
+  }
+
+  private IntegerLiteral resolvePlaceholderOrVal(ValOrPlaceholder valOrPlaceholder) {
+    if (valOrPlaceholder instanceof PlaceholderExpr p) {
+      return (IntegerLiteral) p.accept(this);
+    }
+    if (valOrPlaceholder instanceof IntegerLiteral lit) {
+      return lit;
+    }
+    throw new IllegalStateException("Unknown resolved placeholder type " + valOrPlaceholder);
   }
 }

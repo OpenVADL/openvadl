@@ -16,6 +16,11 @@ class NestedSymbolTable implements DefinitionVisitor<Void> {
   List<Requirement> requirements = new ArrayList<>();
   List<VadlError> errors = new ArrayList<>();
 
+  void loadBuiltins() {
+    defineSymbol(new ValuedSymbol("register", null, SymbolType.BUILTIN),
+        SourceLocation.INVALID_SOURCE_LOCATION);
+  }
+
   void defineConstant(String name, SourceLocation loc) {
     defineSymbol(new ValuedSymbol(name, null, SymbolType.CONSTANT), loc);
   }
@@ -111,9 +116,9 @@ class NestedSymbolTable implements DefinitionVisitor<Void> {
 
   @Override
   public Void visit(EncodingDefinition definition) {
-    var formatSymbol = requireInstructionFormat(definition.instrIdentifier);
+    var formatSymbol = requireInstructionFormat(definition.instrId());
     if (formatSymbol == null) {
-      reportError("Unknown instruction " + definition.instrIdentifier.name, definition.location());
+      reportError("Unknown instruction " + definition.instrId().name, definition.location());
       return null;
     }
     var format = formatSymbol.definition;
@@ -322,7 +327,7 @@ class NestedSymbolTable implements DefinitionVisitor<Void> {
 
   enum SymbolType {
     CONSTANT, COUNTER, FORMAT, INSTRUCTION, INSTRUCTION_SET, MEMORY, REGISTER, REGISTER_FILE,
-    FORMAT_FIELD, MACRO, ALIAS
+    FORMAT_FIELD, MACRO, ALIAS, BUILTIN
   }
 
   interface Symbol {

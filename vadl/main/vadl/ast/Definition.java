@@ -841,15 +841,19 @@ class InstructionDefinition extends Definition {
 }
 
 class EncodingDefinition extends Definition {
-  final Identifier instrIdentifier;
+  final IdentifierOrPlaceholder instrIdentifier;
   final List<FieldEncoding> fieldEncodings;
   final SourceLocation loc;
 
-  EncodingDefinition(Identifier instrIdentifier, List<FieldEncoding> fieldEncodings,
+  EncodingDefinition(IdentifierOrPlaceholder instrIdentifier, List<FieldEncoding> fieldEncodings,
                      SourceLocation location) {
     this.instrIdentifier = instrIdentifier;
     this.fieldEncodings = fieldEncodings;
     this.loc = location;
+  }
+
+  Identifier instrId() {
+    return (Identifier) instrIdentifier;
   }
 
   @Override
@@ -866,7 +870,7 @@ class EncodingDefinition extends Definition {
   void prettyPrint(int indent, StringBuilder builder) {
     annotations.prettyPrint(indent, builder);
     builder.append(prettyIndentString(indent));
-    builder.append("encoding %s =\n".formatted(instrIdentifier.name));
+    builder.append("encoding %s =\n".formatted(instrId().name));
     builder.append(prettyIndentString(indent)).append("{ ");
     boolean first = true;
     for (FieldEncoding entry : fieldEncodings) {
@@ -915,18 +919,18 @@ class EncodingDefinition extends Definition {
     return result;
   }
 
-  record FieldEncoding(Identifier field, IntegerLiteral value) {
+  record FieldEncoding(Identifier field, ValOrPlaceholder value) {
   }
 }
 
 class AssemblyDefinition extends Definition {
-  final List<Identifier> identifiers;
+  final List<IdentifierOrPlaceholder> identifiers;
   final boolean isMnemonic;
-  final List<Node> segments;
+  final List<Expr> segments;
   final SourceLocation loc;
 
-  AssemblyDefinition(List<Identifier> identifiers, boolean isMnemonic, List<Node> segments,
-                     SourceLocation location) {
+  AssemblyDefinition(List<IdentifierOrPlaceholder> identifiers, boolean isMnemonic,
+                     List<Expr> segments, SourceLocation location) {
     this.identifiers = identifiers;
     this.isMnemonic = isMnemonic;
     this.segments = segments;
@@ -948,7 +952,8 @@ class AssemblyDefinition extends Definition {
     annotations.prettyPrint(indent, builder);
     builder.append(prettyIndentString(indent));
     builder.append("assembly ");
-    builder.append(identifiers.stream().map(id -> id.name).collect(Collectors.joining(", ")));
+    builder.append(identifiers.stream().map(id -> ((Identifier) id).name)
+        .collect(Collectors.joining(", ")));
     builder.append(" = (");
     if (isMnemonic) {
       builder.append("mnemonic");
