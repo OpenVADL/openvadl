@@ -17,7 +17,7 @@ class NestedSymbolTable implements DefinitionVisitor<Void> {
   List<VadlError> errors = new ArrayList<>();
 
   void loadBuiltins() {
-    defineSymbol(new ValuedSymbol("register", null, SymbolType.BUILTIN),
+    defineSymbol(new ValuedSymbol("register", null, SymbolType.FUNCTION),
         SourceLocation.INVALID_SOURCE_LOCATION);
   }
 
@@ -51,6 +51,15 @@ class NestedSymbolTable implements DefinitionVisitor<Void> {
   NestedSymbolTable createInstructionScope(Identifier instrId) {
     NestedSymbolTable child = createChild();
     child.requirements.add(new InstructionRequirement(instrId));
+    return child;
+  }
+
+  NestedSymbolTable createFunctionScope(List<FunctionDefinition.Parameter> params) {
+    NestedSymbolTable child = createChild();
+    for (FunctionDefinition.Parameter param : params) {
+      defineSymbol(new ValuedSymbol(param.name().name, null, SymbolType.CONSTANT),
+          param.name().loc);
+    }
     return child;
   }
 
@@ -140,6 +149,12 @@ class NestedSymbolTable implements DefinitionVisitor<Void> {
 
   @Override
   public Void visit(UsingDefinition definition) {
+    return null;
+  }
+
+  @Override
+  public Void visit(FunctionDefinition definition) {
+    defineSymbol(new ValuedSymbol(definition.name.name, null, SymbolType.FUNCTION), definition.loc);
     return null;
   }
 
@@ -327,7 +342,7 @@ class NestedSymbolTable implements DefinitionVisitor<Void> {
 
   enum SymbolType {
     CONSTANT, COUNTER, FORMAT, INSTRUCTION, INSTRUCTION_SET, MEMORY, REGISTER, REGISTER_FILE,
-    FORMAT_FIELD, MACRO, ALIAS, BUILTIN
+    FORMAT_FIELD, MACRO, ALIAS, FUNCTION
   }
 
   interface Symbol {

@@ -243,6 +243,17 @@ public class AstDumper
   }
 
   @Override
+  public Void visit(FunctionDefinition definition) {
+    dumpNode(definition);
+    dumpChildren(definition.name);
+    for (var param : definition.params) {
+      dumpChildren(param.name(), param.type());
+    }
+    dumpChildren(definition.retType, definition.expr);
+    return null;
+  }
+
+  @Override
   public Void visit(CallExpr expr) {
     dumpNode(expr);
     dumpChildren((Expr) expr.target);

@@ -3,6 +3,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 import vadl.ast.EncodingDefinition.FieldEncoding;
+import vadl.ast.FunctionDefinition.Parameter;
 import vadl.utils.SourceLocation;
 
 import static vadl.ast.CounterDefinition.CounterKind.GROUP;
@@ -86,6 +87,7 @@ TOKENS
   THEN = "then".
   ELSE = "else".
   USING = "using".
+  FUNCTION = "function".
 
   SYM_IN = "in".
   SYM_AS = "as".
@@ -150,6 +152,8 @@ PRODUCTIONS
   commonDefinition<out Definition def>    (. def = null; .)
   = constantDefinition<out def>
   | formatDefinition<out def>
+  | usingDefinition<out def>
+  | functionDefinition<out def>
   .
 
   instructionsetDefinition<out InstructionSetDefinition isaDef> (. pushScope(this); .)
@@ -196,7 +200,6 @@ PRODUCTIONS
   | IF (la.kind == _REGISTER && scanner.Peek().kind == _FILE)
     registerFileDefinition<out def>
   | registerDefinition<out def>
-  | usingDefinition<out def>
   .
 
   constantDefinition<out ConstantDefinition def>    (. TypeLiteral type = null; .)
@@ -335,6 +338,32 @@ PRODUCTIONS
     identifier<out Identifier id>
     SYM_EQ
     typeLiteral<out TypeLiteral type> (. def = new UsingDefinition(id, type, start.join(loc())); .)
+  .
+
+  functionDefinition<out Definition def>
+  = FUNCTION                           (. var start = loc(); .)
+    identifier<out Identifier name>
+    functionParameters<.out List<Parameter> params.>
+    SYM_ARROW
+    typeLiteral<out TypeLiteral retType>
+    SYM_EQ                             (. pushFunctionScope(this, params); .)
+    expression<out Expr expr, BIN_OPS> (. def = new FunctionDefinition(name, params, retType, expr, start.join(loc())); popScope(this); .)
+  .
+
+  functionParameters<.out List<Parameter> params.>
+  = SYM_PAREN_OPEN                  (. params = new ArrayList<>(); .)
+    parameter<out Parameter param>  (. params.add(param); .)
+    {
+      SYM_COMMA
+      parameter<out Parameter next> (. params.add(next); .)
+    }
+    SYM_PAREN_CLOSE
+  .
+
+  parameter<out Parameter param>
+  = identifier<out Identifier name>
+    SYM_COLON
+    typeLiteral<out TypeLiteral type> (. param = new Parameter(name, type); .)
   .
 
   // -- STATEMENTS ---------------------------------------------------------------------------------------------------
@@ -641,7 +670,7 @@ PRODUCTIONS
     statement<out body>
   | IF (type == BasicSyntaxType.Stats())
     statementList<.out List<Statement> stmts.>                         (. body = narrowNode(new StatementList(stmts, loc.join(loc()))); .)
-  | // IF (type == BasicSyntaxType.IsaDefs())
+  | IF (type == BasicSyntaxType.IsaDefs())
     isaDefinitionList<.out List<Definition> defs.>                     (. body = new DefinitionList(defs, loc.join(loc())); .)
   | // IF (type == BasicSyntaxType.Encs())
     encodingDefinitionList<.out List<FieldEncoding> entries.>          (. body = null; /* new NodeList(entries, BasicSyntaxType.Encs(), loc.join(loc())); */ .)

@@ -265,6 +265,12 @@ class MacroExpander
   }
 
   @Override
+  public Definition visit(FunctionDefinition definition) {
+    return new FunctionDefinition(definition.name, definition.params, definition.retType,
+        definition.expr.accept(this), definition.loc);
+  }
+
+  @Override
   public BlockStatement visit(BlockStatement blockStatement) {
     symbols = symbols.createChild();
     var statements = blockStatement.statements.stream()

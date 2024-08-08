@@ -41,6 +41,8 @@ interface DefinitionVisitor<R> {
   R visit(AssemblyDefinition definition);
 
   R visit(UsingDefinition definition);
+
+  R visit(FunctionDefinition definition);
 }
 
 class ConstantDefinition extends Definition {
@@ -1066,6 +1068,99 @@ class UsingDefinition extends Definition {
     result = 31 * result + Objects.hashCode(id);
     result = 31 * result + Objects.hashCode(type);
     return result;
+  }
+}
+
+class FunctionDefinition extends Definition {
+  Identifier name;
+  List<Parameter> params;
+  TypeLiteral retType;
+  Expr expr;
+  SourceLocation loc;
+
+  FunctionDefinition(Identifier name, List<Parameter> params, TypeLiteral retType, Expr expr,
+                  SourceLocation location) {
+    this.name = name;
+    this.params = params;
+    this.retType = retType;
+    this.expr = expr;
+    this.loc = location;
+  }
+
+  @Override
+  SourceLocation location() {
+    return loc;
+  }
+
+  @Override
+  SyntaxType syntaxType() {
+    return BasicSyntaxType.IsaDefs();
+  }
+
+  @Override
+  void prettyPrint(int indent, StringBuilder builder) {
+    builder.append(prettyIndentString(indent));
+    builder.append("function ");
+    name.prettyPrint(indent, builder);
+    if (!params.isEmpty()) {
+      builder.append("(");
+      var isFirst = true;
+      for (var param : params) {
+        if (!isFirst) {
+          builder.append(", ");
+        }
+        isFirst = false;
+        param.name.prettyPrint(0, builder);
+        builder.append(" : ");
+        param.type.prettyPrint(0, builder);
+      }
+      builder.append(")");
+    }
+    builder.append(" -> ");
+    retType.prettyPrint(0, builder);
+    builder.append(" = ");
+    expr.prettyPrint(indent + 1, builder);
+    builder.append("\n");
+  }
+
+  @Override
+  <R> R accept(DefinitionVisitor<R> visitor) {
+    return visitor.visit(this);
+  }
+
+  @Override
+  public String toString() {
+    return this.getClass().getSimpleName();
+  }
+
+  @Override
+  public boolean equals(Object o) {
+    if (this == o) {
+      return true;
+    }
+    if (o == null || getClass() != o.getClass()) {
+      return false;
+    }
+
+    var that = (FunctionDefinition) o;
+    return Objects.equals(annotations, that.annotations)
+        && Objects.equals(name, that.name)
+        && Objects.equals(params, that.params)
+        && Objects.equals(retType, that.retType)
+        && Objects.equals(expr, that.expr);
+  }
+
+  @Override
+  public int hashCode() {
+    int result = Objects.hashCode(annotations);
+    result = 31 * result + Objects.hashCode(name);
+    result = 31 * result + Objects.hashCode(params);
+    result = 31 * result + Objects.hashCode(retType);
+    result = 31 * result + Objects.hashCode(expr);
+    return result;
+  }
+
+  record Parameter(Identifier name, TypeLiteral type) {
   }
 }
 

@@ -233,6 +233,10 @@ class ParserUtils {
     }
   }
 
+  static void pushFunctionScope(Parser parser, List<FunctionDefinition.Parameter> params) {
+    parser.symbolTable = parser.symbolTable.createFunctionScope(params);
+  }
+
   static void popScope(Parser parser) {
     parser.symbolTable = Objects.requireNonNull(parser.symbolTable.parent);
   }
