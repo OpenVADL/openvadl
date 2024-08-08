@@ -1,5 +1,6 @@
 package vadl.viam;
 
+import java.util.List;
 import java.util.stream.Stream;
 import vadl.types.ConcreteRelationType;
 import vadl.types.Type;
@@ -13,7 +14,7 @@ import vadl.viam.graph.control.ReturnNode;
  * A Function is a type of Definition that has a behavior (body), return type, and arguments.
  * </p>
  */
-public class Function extends Definition {
+public class Function extends Definition implements WithBehavior {
   private Graph behavior;
   private Type returnType;
   private Parameter[] parameters;
@@ -97,5 +98,10 @@ public class Function extends Definition {
   @Override
   public void accept(DefinitionVisitor visitor) {
     visitor.visit(this);
+  }
+
+  @Override
+  public List<Graph> behaviors() {
+    return List.of(behavior);
   }
 }
