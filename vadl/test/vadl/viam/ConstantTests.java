@@ -646,6 +646,14 @@ public class ConstantTests {
         Arguments.of(intS(-5, 4), Type.unsignedInt(6), intU(0b001011, 6)),
         Arguments.of(intS(-5, 4), Type.unsignedInt(2), intU(0b11, 2)),
 
+        // intS -> intS
+        Arguments.of(intS(5, 4), Type.signedInt(4), intS(5, 4)),
+        Arguments.of(intS(5, 4), Type.signedInt(6), intS(5, 6)),
+        Arguments.of(intS(5, 4), Type.signedInt(2), intS(1, 2)),
+        Arguments.of(intS(-5, 4), Type.signedInt(4), intS(-5, 4)),
+        Arguments.of(intS(-5, 4), Type.signedInt(6), intS(-5, 6)),
+        Arguments.of(intS(-5, 4), Type.signedInt(2), intS(-1, 2)),
+
         // intS -> bool
         Arguments.of(intS(5, 4), Type.bool(), bool(true)),
         Arguments.of(intS(0, 4), Type.bool(), bool(false)),
