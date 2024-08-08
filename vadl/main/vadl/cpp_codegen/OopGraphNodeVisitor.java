@@ -1,6 +1,6 @@
-package vadl.oop;
+package vadl.cpp_codegen;
 
-import vadl.oop.passes.type_normalization.UpcastedTypeCastNode;
+import vadl.cpp_codegen.passes.type_normalization.UpcastedTypeCastNode;
 import vadl.viam.graph.GraphNodeVisitor;
 
 /**

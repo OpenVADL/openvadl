@@ -1,8 +1,7 @@
-package vadl.oop.passes.type_normalization;
+package vadl.cpp_codegen.passes.type_normalization;
 
 import static org.assertj.core.api.AssertionsForClassTypes.assertThat;
 
-import java.math.BigInteger;
 import java.util.Arrays;
 import java.util.stream.Stream;
 import org.junit.jupiter.params.ParameterizedTest;

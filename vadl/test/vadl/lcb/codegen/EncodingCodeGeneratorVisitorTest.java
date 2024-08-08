@@ -10,7 +10,7 @@ import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.Arguments;
 import org.junit.jupiter.params.provider.MethodSource;
 import vadl.AbstractTest;
-import vadl.oop.passes.type_normalization.UpcastedTypeCastNode;
+import vadl.cpp_codegen.passes.type_normalization.UpcastedTypeCastNode;
 import vadl.types.BuiltInTable;
 import vadl.types.DataType;
 import vadl.viam.Constant;

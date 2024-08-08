@@ -1,11 +1,11 @@
 package vadl.lcb.codegen;
 
-import static vadl.oop.CppTypeMap.getCppTypeNameByVadlType;
+import static vadl.cpp_codegen.CppTypeMap.getCppTypeNameByVadlType;
 
 import java.io.StringWriter;
-import vadl.oop.GenericCppCodeGeneratorVisitor;
-import vadl.oop.OopGraphNodeVisitor;
-import vadl.oop.passes.type_normalization.UpcastedTypeCastNode;
+import vadl.cpp_codegen.GenericCppCodeGeneratorVisitor;
+import vadl.cpp_codegen.OopGraphNodeVisitor;
+import vadl.cpp_codegen.passes.type_normalization.UpcastedTypeCastNode;
 import vadl.types.BitsType;
 import vadl.types.BoolType;
 import vadl.viam.graph.GraphNodeVisitor;

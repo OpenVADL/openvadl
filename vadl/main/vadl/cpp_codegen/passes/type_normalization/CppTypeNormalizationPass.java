@@ -1,26 +1,56 @@
-package vadl.oop.passes.type_normalization;
+package vadl.cpp_codegen.passes.type_normalization;
 
+import java.io.IOException;
 import java.util.Arrays;
 import java.util.HashSet;
+import java.util.IdentityHashMap;
 import java.util.List;
+import java.util.Map;
+import java.util.stream.Stream;
+import org.jetbrains.annotations.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import vadl.pass.Pass;
+import vadl.pass.PassKey;
 import vadl.types.BitsType;
 import vadl.types.DataType;
 import vadl.types.Type;
 import vadl.viam.Constant;
 import vadl.viam.Function;
 import vadl.viam.Parameter;
+import vadl.viam.Specification;
 import vadl.viam.ViamError;
 import vadl.viam.graph.Graph;
 import vadl.viam.graph.dependency.ConstantNode;
 import vadl.viam.graph.dependency.TypeCastNode;
 
 /**
- * Core logic for transforming VADL into CPP types.
+ * When transforming a graph into a CPP code, we have to take care of unsupported types.
+ * For example, VADL allows arbitrary bit sizes, however CPP has only fixed size types.
+ * This pass inserts bit mask to ensure that the code generation works.
  */
-public class CppTypeNormalizer {
-  private static final Logger logger = LoggerFactory.getLogger(CppTypeNormalizer.class);
+public abstract class CppTypeNormalizationPass extends Pass {
+  private static final Logger logger = LoggerFactory.getLogger(CppTypeNormalizationPass.class);
+
+  /**
+   * Get a list of functions on which the pass should be applied on.
+   */
+  protected abstract Stream<Function> getApplicable(Specification viam);
+
+  @Nullable
+  @Override
+  public Object execute(Map<PassKey, Object> passResults, Specification viam)
+      throws IOException {
+    IdentityHashMap<Function, Function> results = new IdentityHashMap<>();
+
+    getApplicable(viam).forEach(function -> {
+      var cppFunction = makeTypesCppConform(function);
+      results.put(function, cppFunction);
+    });
+
+    return results;
+  }
+
   private static final HashSet<Type> cppSupportedTypes = new HashSet<>(List.of(
       DataType.bool(),
       DataType.unsignedInt(1),
@@ -47,7 +77,7 @@ public class CppTypeNormalizer {
    * Changes the function so that all vadl types conform to CPP types
    * which simplifies the code generation.
    */
-  public Function makeTypesCppConform(Function function) {
+  public static Function makeTypesCppConform(Function function) {
     var liftedParameters = getParameters(function);
     var liftedResultTy = getResultTy(function);
     updateGraph(function.behavior());
@@ -59,7 +89,7 @@ public class CppTypeNormalizer {
         function.behavior());
   }
 
-  private List<Parameter> getParameters(Function function) {
+  private static List<Parameter> getParameters(Function function) {
     return Arrays.stream(function.parameters())
         .map(parameter -> {
           if (!cppSupportedTypes.contains(parameter.type())) {
@@ -75,7 +105,7 @@ public class CppTypeNormalizer {
         }).toList();
   }
 
-  private Type getResultTy(Function function) {
+  private static Type getResultTy(Function function) {
     if (!cppSupportedTypes.contains(function.returnType())) {
       return upcast(function.returnType());
     } else {
@@ -87,7 +117,7 @@ public class CppTypeNormalizer {
    * This method checks all the typecasts and upcasts the type if necessary.
    * Additionally, it will also check the constant if the type is ok.
    */
-  private void updateGraph(Graph graph) {
+  private static void updateGraph(Graph graph) {
     // Updating typecasts
     var typeNodes = graph.getNodes(TypeCastNode.class).toList();
     typeNodes.forEach(typeCastNode -> {
@@ -107,20 +137,17 @@ public class CppTypeNormalizer {
         .forEach(constantNode -> {
           if (constantNode.constant() instanceof Constant.Value constantValue
               && !cppSupportedTypes.contains(constantValue.type())) {
-            constantNode.setConstant(
-                constantValue.castTo(upcast(constantValue.type()))
-            );
+            constantNode.setConstant(constantValue.castTo(upcast(constantValue.type())));
           }
         });
   }
 
-
-  private Parameter upcast(Parameter parameter) {
+  private static Parameter upcast(Parameter parameter) {
     return new Parameter(parameter.identifier,
         upcast(parameter.type()));
   }
 
-  private BitsType upcast(Type type) {
+  private static BitsType upcast(Type type) {
     if (type instanceof BitsType cast) {
       return cast.withBitWidth(nextFittingType(cast.bitWidth()));
     } else {
@@ -128,7 +155,7 @@ public class CppTypeNormalizer {
     }
   }
 
-  private int nextFittingType(int old) {
+  private static int nextFittingType(int old) {
     if (old == 1) {
       return 1;
     } else if (old > 1 && old <= 8) {
