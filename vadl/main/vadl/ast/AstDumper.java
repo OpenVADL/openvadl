@@ -159,6 +159,12 @@ public class AstDumper
   }
 
   @Override
+  public Void visit(BinaryLiteral expr) {
+    dumpNode(expr);
+    return null;
+  }
+
+  @Override
   public Void visit(StringLiteral expr) {
     dumpNode(expr);
     return null;

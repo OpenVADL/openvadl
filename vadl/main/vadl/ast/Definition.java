@@ -921,7 +921,7 @@ class EncodingDefinition extends Definition {
     return result;
   }
 
-  record FieldEncoding(Identifier field, ValOrPlaceholder value) {
+  record FieldEncoding(Identifier field, Expr value) {
   }
 }
 

@@ -71,6 +71,11 @@ class MacroExpander
   }
 
   @Override
+  public Expr visit(BinaryLiteral expr) {
+    return expr;
+  }
+
+  @Override
   public Expr visit(StringLiteral expr) {
     return expr;
   }
@@ -254,7 +259,7 @@ class MacroExpander
     var instrId = resolvePlaceholderOrIdentifier(definition.instrIdentifier);
     var fieldEncodings = new ArrayList<>(definition.fieldEncodings);
     fieldEncodings.replaceAll(enc ->
-        new EncodingDefinition.FieldEncoding(enc.field(), resolvePlaceholderOrVal(enc.value())));
+        new EncodingDefinition.FieldEncoding(enc.field(), enc.value().accept(this)));
     return new EncodingDefinition(instrId, fieldEncodings, definition.loc);
   }
 
@@ -325,15 +330,5 @@ class MacroExpander
       return id;
     }
     throw new IllegalStateException("Unknown resolved placeholder type " + idOrPlaceholder);
-  }
-
-  private IntegerLiteral resolvePlaceholderOrVal(ValOrPlaceholder valOrPlaceholder) {
-    if (valOrPlaceholder instanceof PlaceholderExpr p) {
-      return (IntegerLiteral) p.accept(this);
-    }
-    if (valOrPlaceholder instanceof IntegerLiteral lit) {
-      return lit;
-    }
-    throw new IllegalStateException("Unknown resolved placeholder type " + valOrPlaceholder);
   }
 }

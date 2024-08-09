@@ -12,7 +12,7 @@ instruction set architecture IsaDefsTest = {
     , opcode: Bits<7>
     }
 
-  model RTypeInstr(instrName: Id, instrFormat: Id, opcode: Val, op: BinOp, destReg: Id, srcReg1: Id, srcReg2: Id): IsaDefs = {
+  model RTypeInstr(instrName: Id, instrFormat: Id, opcode: Bin, op: BinOp, destReg: Id, srcReg1: Id, srcReg2: Id): IsaDefs = {
     instruction $instrName: $instrFormat = {
       X($destReg) := X($srcReg1) $op X($srcReg2)
     }

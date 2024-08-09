@@ -22,6 +22,8 @@ interface ExprVisitor<R> {
 
   R visit(IntegerLiteral expr);
 
+  R visit(BinaryLiteral expr);
+
   R visit(StringLiteral expr);
 
   R visit(PlaceholderExpr expr);
@@ -491,14 +493,7 @@ final class IntegerLiteral extends Expr implements ValOrPlaceholder {
   SourceLocation loc;
 
   private static long parse(String token) {
-    token = token.replace("'", "");
-    if (token.startsWith("0x")) {
-      return Long.parseLong(token.substring(2), 16);
-    } else if (token.startsWith("0b")) {
-      return Long.parseLong(token.substring(2), 2);
-    } else {
-      return Long.parseLong(token);
-    }
+    return Long.parseLong(token.replace("'", ""));
   }
 
   public IntegerLiteral(String token, SourceLocation loc) {
@@ -542,6 +537,74 @@ final class IntegerLiteral extends Expr implements ValOrPlaceholder {
     }
 
     IntegerLiteral that = (IntegerLiteral) o;
+    return number == that.number && token.equals(that.token);
+  }
+
+  @Override
+  public int hashCode() {
+    int result = Long.hashCode(number);
+    result = 31 * result + Objects.hashCode(token);
+    return result;
+  }
+}
+
+final class BinaryLiteral extends Expr implements ValOrPlaceholder {
+  String token;
+  long number;
+  SourceLocation loc;
+
+  private static long parse(String token) {
+    token = token.replace("'", "");
+    if (token.startsWith("0x")) {
+      return Long.parseLong(token.substring(2), 16);
+    } else if (token.startsWith("0b")) {
+      return Long.parseLong(token.substring(2), 2);
+    } else {
+      throw new IllegalArgumentException("No conversion implemented for binary literal " + token);
+    }
+  }
+
+  public BinaryLiteral(String token, SourceLocation loc) {
+    this.token = token;
+    this.number = parse(token);
+    this.loc = loc;
+  }
+
+  @Override
+  SourceLocation location() {
+    return loc;
+  }
+
+  @Override
+  SyntaxType syntaxType() {
+    return BasicSyntaxType.Bin();
+  }
+
+  @Override
+  public void prettyPrint(int indent, StringBuilder builder) {
+    builder.append(token);
+  }
+
+  @Override
+  <R> R accept(ExprVisitor<R> visitor) {
+    return visitor.visit(this);
+  }
+
+  @Override
+  public String toString() {
+    return "%s literal: %s (%d)".formatted(this.getClass().getSimpleName(), token, number);
+  }
+
+  @Override
+  public boolean equals(Object o) {
+    if (this == o) {
+      return true;
+    }
+    if (o == null || getClass() != o.getClass()) {
+      return false;
+    }
+
+    BinaryLiteral that = (BinaryLiteral) o;
     return number == that.number && token.equals(that.token);
   }
 
@@ -612,7 +675,7 @@ sealed interface IdentifierOrPlaceholder permits Identifier, PlaceholderExpr {
   void prettyPrint(int indent, StringBuilder builder);
 }
 
-sealed interface ValOrPlaceholder permits IntegerLiteral, PlaceholderExpr {
+sealed interface ValOrPlaceholder permits IntegerLiteral, BinaryLiteral, PlaceholderExpr {
   void prettyPrint(int indent, StringBuilder builder);
 }
 

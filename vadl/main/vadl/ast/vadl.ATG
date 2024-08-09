@@ -1,6 +1,7 @@
 $package=vadl.ast
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
 
 import vadl.ast.EncodingDefinition.FieldEncoding;
 import vadl.ast.FunctionDefinition.Parameter;
@@ -41,10 +42,10 @@ CHARACTERS
   validSQStringCharacters = ANY - "'" - "\\".
 
 TOKENS
-  number = digit {digit | "'"}
-         | "0x" hexDigit {hexDigit | "'"}
-         | "0b" binDigit {binDigit | "'"}
-         .
+  hexLit = "0x" hexDigit {hexDigit | "'"}.
+  binLit = "0b" binDigit {binDigit | "'"}.
+  decLit = digit {digit | "'"}.
+
   identifierToken = letter {letter | digit | "_"}.
   string =
   ( '"' { "\\" (letter | '"' | "'" | "\\") | validDQStringCharacters } '"') |
@@ -286,9 +287,9 @@ PRODUCTIONS
   encodingEntry<out FieldEncoding enc>                  (. ValOrPlaceholder val = null; .)
   = identifier<out Identifier id>
     SYM_EQ (
-      number                                            (. val = new IntegerLiteral(t.val, loc()); .)
+      number<out Expr expr>                             (. val = (ValOrPlaceholder) expr; .)
     | placeholder<out Node node, BasicSyntaxType.Val()> (. val = (ValOrPlaceholder) node; .)
-    )                                                   (. enc = new FieldEncoding(id, val); .)
+    )                                                   (. enc = new FieldEncoding(id, (Expr) val); .)
   .
 
   assemblyDefinition<out AssemblyDefinition def>                        (. List<IdentifierOrPlaceholder> ids = new ArrayList<>(); var start = loc(); .)
@@ -534,13 +535,25 @@ PRODUCTIONS
   .
 
   term<out Expr expr>                            (. expr = null; .)
-  = number                                                          (. expr = new IntegerLiteral(t.val, loc()); .)
+  = number<out expr>
   | callOrBinaryExpression<out expr, true>
   | SYM_PAREN_OPEN expression<out expr, BIN_OPS> SYM_PAREN_CLOSE    (. expr = new GroupExpr(expr); .)
   | unary<out expr>
   | ifExpression<out expr>
   | letExpression<out expr>
   | macroInstanceOrPlaceholder<out Node node, BasicSyntaxType.Ex()> (. expr = (Expr) node; .)
+  .
+
+  number<out Expr expr> (. expr = null; .)
+  = decimalLiteral<out expr> | binaryLiteral<out expr>
+  .
+
+  decimalLiteral<out Expr expr>
+  = decLit (. expr = new IntegerLiteral(t.val, loc()); .)
+  .
+
+  binaryLiteral<out Expr expr>
+  = (hexLit | binLit) (. expr = new BinaryLiteral(t.val, loc()); .)
   .
 
   identifierPath<out IsId path> (. List<Identifier> segments = new ArrayList<>(); .)
@@ -615,53 +628,63 @@ PRODUCTIONS
   .
 
 
-  macroInstance<out Node body, SyntaxType requiredType>       (. var args = new ArrayList<Node>(); .)
-  = SYM_DOLLAR identifier<out Identifier id>
-  SYM_PAREN_OPEN
-      [
-          macroInstanceParam<out Node arg1>                   (. args.add(arg1); .)
-          {
-              SYM_SEMICOLON macroInstanceParam<out Node arg2> (. args.add(arg2); .)
-          }
-      ]
-  SYM_PAREN_CLOSE                                             (. body = expandMacro(this, id, args, requiredType); .)
+  macroInstance<out Node body, SyntaxType requiredType>         (. var args = new ArrayList<Node>(); .)
+  = SYM_DOLLAR
+    identifier<out Identifier id>                               (. var macro = Objects.requireNonNull(symbolTable.getMacro(id.name)); .)
+    SYM_PAREN_OPEN                                              (. var params = macro.params().iterator(); .)
+    [
+      macroInstanceParam<out Node arg1, params.next().type()>   (. args.add(arg1); .)
+      {
+        SYM_SEMICOLON
+        macroInstanceParam<out Node arg2, params.next().type()> (. args.add(arg2); .)
+      }
+    ]
+    SYM_PAREN_CLOSE                                             (. body = expandMacro(this, id, args, requiredType); .)
   .
 
-  macroInstanceParam<out Node arg> (. arg = null; .)
-  = IF (la.kind == _identifierToken) identifier<out arg>
-  | binaryOperator<out Operator op> (. arg = new OperatorExpr(op, loc()); .)
+  macroInstanceParam<out Node arg, SyntaxType syntaxType> (. arg = null; .)
+  = IF (syntaxType == BasicSyntaxType.Id())
+    identifier<out arg>
+  | IF (syntaxType == BasicSyntaxType.BinOp())
+    binaryOperator<out Operator op>                       (. arg = new OperatorExpr(op, loc()); .)
+  | IF (syntaxType == BasicSyntaxType.Bin())
+    binaryLiteral<out arg>
+  | IF (syntaxType == BasicSyntaxType.Int())
+    decimalLiteral<out arg>
+  | IF (syntaxType == BasicSyntaxType.Val())
+    number<out arg>
   | expression<out arg, BIN_OPS>
   .
 
   macroDef
-  = MODEL                                         (. var startLoc = loc(); .)
-  identifier<out Identifier id>
-  SYM_PAREN_OPEN                                  (. var params = new ArrayList<MacroParam>(); .)
-      [
-          identifier<out Identifier paramId1>
-          SYM_COLON
-          syntaxType<out SyntaxType synType1>     (. params.add(new MacroParam(paramId1, synType1)); .)
-          {
-              SYM_COMMA
-              identifier<out Identifier paramId2>
-              SYM_COLON
-              syntaxType<out SyntaxType synType2> (. params.add(new MacroParam(paramId2, synType2)); .)
-          }
-      ]
-   SYM_PAREN_CLOSE
-  SYM_COLON syntaxType<out SyntaxType returnType> SYM_EQ
-  SYM_BRACE_OPEN                        (. Node body = null; insideMacro = true; .)
-  macroBody<out body, returnType>
-  SYM_BRACE_CLOSE                       (.
-                                          insideMacro = false;
-                                          var bodyType = narrowNode(body).syntaxType();
-                                          if (!bodyType.isSubTypeOf(returnType)) {
-                                              errors.SemErr(t.line, t.col, "The macro signature promises to return `%s` but it's body is of type `%s`.".formatted(returnType, bodyType));
-                                              symbolTable.addMacro(new Macro(id, params, body, BasicSyntaxType.Invalid()), startLoc.join(loc()));
-                                          } else {
-                                              symbolTable.addMacro(new Macro(id, params, body, returnType), startLoc.join(loc()));
-                                          }
-                                         .)
+  = MODEL                                   (. var startLoc = loc(); .)
+    identifier<out Identifier id>
+    SYM_PAREN_OPEN                          (. var params = new ArrayList<MacroParam>(); .)
+    [
+      identifier<out Identifier paramId1>
+      SYM_COLON
+      syntaxType<out SyntaxType synType1>   (. params.add(new MacroParam(paramId1, synType1)); .)
+      {
+        SYM_COMMA
+        identifier<out Identifier paramId2>
+        SYM_COLON
+        syntaxType<out SyntaxType synType2> (. params.add(new MacroParam(paramId2, synType2)); .)
+      }
+    ]
+    SYM_PAREN_CLOSE
+    SYM_COLON syntaxType<out SyntaxType returnType> SYM_EQ
+    SYM_BRACE_OPEN                          (. Node body = null; insideMacro = true; .)
+    macroBody<out body, returnType>
+    SYM_BRACE_CLOSE                         (.
+                                              insideMacro = false;
+                                              var bodyType = narrowNode(body).syntaxType();
+                                              if (!bodyType.isSubTypeOf(returnType)) {
+                                                errors.SemErr(t.line, t.col, "The macro signature promises to return `%s` but it's body is of type `%s`.".formatted(returnType, bodyType));
+                                                symbolTable.addMacro(new Macro(id, params, body, BasicSyntaxType.Invalid()), startLoc.join(loc()));
+                                              } else {
+                                                symbolTable.addMacro(new Macro(id, params, body, returnType), startLoc.join(loc()));
+                                              }
+                                            .)
   .
 
   macroBody<out Node body, SyntaxType type>                            (. body = null; var loc = lookaheadLoc(); .)
