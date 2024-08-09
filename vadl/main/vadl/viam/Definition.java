@@ -48,7 +48,7 @@ public abstract class Definition {
 
   @FormatMethod
   @Contract("false, _, _-> fail")
-  protected void ensure(boolean condition, String message, Object... args) {
+  public void ensure(boolean condition, String message, Object... args) {
     if (condition) {
       return;
     }

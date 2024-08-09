@@ -73,6 +73,12 @@ public abstract class Node {
     this.sourceLocation = sourceLocation;
   }
 
+  public void setSourceLocationIfNotSet(SourceLocation sourceLocation) {
+    if (this.sourceLocation == SourceLocation.INVALID_SOURCE_LOCATION) {
+      this.sourceLocation = sourceLocation;
+    }
+  }
+
   /**
    * Checks if the node is a leaf node, such that it a {@link DependencyNode} and
    * has no further inputs.
@@ -367,6 +373,7 @@ public abstract class Node {
    *     new node might be a different object
    */
   public Node replaceAndDelete(Node replacement) {
+    replacement.setSourceLocationIfNotSet(this.sourceLocation);
     if (replacement.isUninitialized() && graph != null) {
       replacement = graph.addWithInputs(replacement);
     }
