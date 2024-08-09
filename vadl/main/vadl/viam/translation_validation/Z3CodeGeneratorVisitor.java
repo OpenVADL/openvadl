@@ -77,7 +77,7 @@ public class Z3CodeGeneratorVisitor implements GraphNodeVisitor {
 
         // The last argument should not emit an operand.
         if (i < node.arguments().size() - 1) {
-          if(node.builtIn() == BuiltInTable.EQU) {
+          if (node.builtIn() == BuiltInTable.EQU) {
             writer.write(" == ");
           } else {
             writer.write(" " + node.builtIn().operator() + " ");
@@ -105,18 +105,34 @@ public class Z3CodeGeneratorVisitor implements GraphNodeVisitor {
 
   @Override
   public void visit(TypeCastNode typeCastNode) {
-    if (typeCastNode.castType() instanceof UIntType) {
-      var width = ((UIntType) typeCastNode.castType()).bitWidth()
+    if (typeCastNode.castType() instanceof UIntType uint) {
+      var width = uint.bitWidth()
           - ((BitsType) typeCastNode.value().type()).bitWidth();
-      writer.write("ZeroExt(" + width + ", ");
-      visit(typeCastNode.value());
-      writer.write(")");
-    } else if (typeCastNode.castType() instanceof SIntType) {
-      var width = ((SIntType) typeCastNode.castType()).bitWidth()
+      if (width > 0) {
+        writer.write("ZeroExt(" + width + ", ");
+        visit(typeCastNode.value());
+        writer.write(")");
+      } else if (width < 0) {
+        writer.write("Extract(" + uint.bitWidth() + ", 0, ");
+        visit(typeCastNode.value());
+        writer.write(")");
+      } else {
+        visit(typeCastNode.value());
+      }
+    } else if (typeCastNode.castType() instanceof SIntType sint) {
+      var width = sint.bitWidth()
           - ((BitsType) typeCastNode.value().type()).bitWidth();
-      writer.write("SignExt(" + width + ", ");
-      visit(typeCastNode.value());
-      writer.write(")");
+      if (width > 0) {
+        writer.write("SignExt(" + width + ", ");
+        visit(typeCastNode.value());
+        writer.write(")");
+      } else if (width < 0) {
+        writer.write("Extract(" + sint.bitWidth() + ", 0, ");
+        visit(typeCastNode.value());
+        writer.write(")");
+      } else {
+        visit(typeCastNode.value());
+      }
     } else {
       visit(typeCastNode.value());
     }
