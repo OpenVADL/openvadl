@@ -204,8 +204,10 @@ class MacroExpander
 
   @Override
   public Definition visit(ConstantDefinition definition) {
-    return new ConstantDefinition(definition.identifier, definition.type,
-        definition.value.accept(this), definition.loc);
+    var id = resolvePlaceholderOrIdentifier(definition.identifier);
+    var value = definition.value.accept(this);
+    symbols.defineConstant(id.name, definition.loc);
+    return new ConstantDefinition(id, definition.type, value, definition.loc);
   }
 
   @Override
@@ -215,8 +217,10 @@ class MacroExpander
         derivedFormatField.expr = derivedFormatField.expr.accept(this);
       }
     }
-    return new FormatDefinition(definition.identifier, definition.type, definition.fields,
-        definition.loc);
+    var id = resolvePlaceholderOrIdentifier(definition.identifier);
+    var def = new FormatDefinition(id, definition.type, definition.fields, definition.loc);
+    def.accept(symbols);
+    return def;
   }
 
   @Override
@@ -226,22 +230,33 @@ class MacroExpander
 
   @Override
   public Definition visit(CounterDefinition definition) {
-    return definition;
+    var id = resolvePlaceholderOrIdentifier(definition.identifier);
+    return new CounterDefinition(definition.kind, id, definition.type, definition.loc);
   }
 
   @Override
   public Definition visit(MemoryDefinition definition) {
-    return definition;
+    var id = resolvePlaceholderOrIdentifier(definition.identifier);
+    var def = new MemoryDefinition(id, definition.addressType, definition.dataType, definition.loc);
+    def.accept(symbols);
+    return def;
   }
 
   @Override
   public Definition visit(RegisterDefinition definition) {
-    return definition;
+    var id = resolvePlaceholderOrIdentifier(definition.identifier);
+    var def = new RegisterDefinition(id, definition.type, definition.loc);
+    def.accept(symbols);
+    return def;
   }
 
   @Override
   public Definition visit(RegisterFileDefinition definition) {
-    return definition;
+    var id = resolvePlaceholderOrIdentifier(definition.identifier);
+    var def = new RegisterFileDefinition(id, definition.indexType, definition.registerType,
+        definition.loc);
+    def.accept(symbols);
+    return def;
   }
 
   @Override
@@ -253,7 +268,9 @@ class MacroExpander
     var behavior = definition.behavior.accept(this);
     symbols = Objects.requireNonNull(symbols.parent);
 
-    return new InstructionDefinition(identifier, typeId, behavior, definition.loc);
+    var def = new InstructionDefinition(identifier, typeId, behavior, definition.loc);
+    def.accept(symbols);
+    return def;
   }
 
   @Override
@@ -262,7 +279,9 @@ class MacroExpander
     var fieldEncodings = new ArrayList<>(definition.fieldEncodings);
     fieldEncodings.replaceAll(enc ->
         new EncodingDefinition.FieldEncoding(enc.field(), enc.value().accept(this)));
-    return new EncodingDefinition(instrId, fieldEncodings, definition.loc);
+    var def = new EncodingDefinition(instrId, fieldEncodings, definition.loc);
+    def.accept(symbols);
+    return def;
   }
 
   @Override
@@ -276,13 +295,19 @@ class MacroExpander
 
   @Override
   public Definition visit(UsingDefinition definition) {
-    return definition;
+    var id = resolvePlaceholderOrIdentifier(definition.id);
+    var def = new UsingDefinition(id, definition.type, definition.loc);
+    def.accept(symbols);
+    return def;
   }
 
   @Override
   public Definition visit(FunctionDefinition definition) {
-    return new FunctionDefinition(definition.name, definition.params, definition.retType,
+    var name = resolvePlaceholderOrIdentifier(definition.name);
+    var def = new FunctionDefinition(name, definition.params, definition.retType,
         definition.expr.accept(this), definition.loc);
+    def.accept(symbols);
+    return def;
   }
 
   @Override

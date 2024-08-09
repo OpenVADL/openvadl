@@ -65,15 +65,15 @@ class NestedSymbolTable implements DefinitionVisitor<Void> {
 
   @Override
   public Void visit(ConstantDefinition definition) {
-    defineConstant(definition.identifier.name, definition.location());
+    defineConstant(definition.identifier().name, definition.location());
     return null;
   }
 
   @Override
   public Void visit(FormatDefinition definition) {
-    verifyAvailable(definition.identifier.name, definition.location());
-    symbols.put(definition.identifier.name,
-        new FormatSymbol(definition.identifier.name, definition));
+    verifyAvailable(definition.identifier().name, definition.location());
+    symbols.put(definition.identifier().name,
+        new FormatSymbol(definition.identifier().name, definition));
     return null;
   }
 
@@ -87,14 +87,14 @@ class NestedSymbolTable implements DefinitionVisitor<Void> {
   public Void visit(CounterDefinition definition) {
     var typeSymbol = resolveSymbol(definition.type.baseType.pathToString());
     var typeDef = typeSymbol instanceof FormatSymbol s ? s.definition : null;
-    defineSymbol(new ValuedSymbol(definition.identifier.name, typeDef, SymbolType.COUNTER),
+    defineSymbol(new ValuedSymbol(definition.identifier().name, typeDef, SymbolType.COUNTER),
         definition.location());
     return null;
   }
 
   @Override
   public Void visit(MemoryDefinition definition) {
-    defineSymbol(new ValuedSymbol(definition.identifier.name, definition, SymbolType.MEMORY),
+    defineSymbol(new ValuedSymbol(definition.identifier().name, definition, SymbolType.MEMORY),
         definition.location());
     return null;
   }
@@ -103,14 +103,15 @@ class NestedSymbolTable implements DefinitionVisitor<Void> {
   public Void visit(RegisterDefinition definition) {
     var typeSymbol = resolveSymbol(definition.type.baseType.pathToString());
     var typeDef = typeSymbol instanceof FormatSymbol s ? s.definition : null;
-    defineSymbol(new ValuedSymbol(definition.identifier.name, typeDef, SymbolType.REGISTER),
+    defineSymbol(new ValuedSymbol(definition.identifier().name, typeDef, SymbolType.REGISTER),
         definition.location());
     return null;
   }
 
   @Override
   public Void visit(RegisterFileDefinition definition) {
-    defineSymbol(new ValuedSymbol(definition.identifier.name, definition, SymbolType.REGISTER_FILE),
+    defineSymbol(
+        new ValuedSymbol(definition.identifier().name, definition, SymbolType.REGISTER_FILE),
         definition.location());
     return null;
   }
@@ -135,7 +136,7 @@ class NestedSymbolTable implements DefinitionVisitor<Void> {
       var name = entry.field().name;
       var field = format.fields.stream().filter(f -> f.identifier().name.equals(name)).findFirst();
       if (field.isEmpty()) {
-        reportError("Unknown field %s in format %s".formatted(name, format.identifier.name),
+        reportError("Unknown field %s in format %s".formatted(name, format.identifier().name),
             entry.field().location());
       }
     }
@@ -149,12 +150,14 @@ class NestedSymbolTable implements DefinitionVisitor<Void> {
 
   @Override
   public Void visit(UsingDefinition definition) {
+    defineSymbol(new AliasSymbol(definition.identifier().name, definition.type), definition.loc);
     return null;
   }
 
   @Override
   public Void visit(FunctionDefinition definition) {
-    defineSymbol(new ValuedSymbol(definition.name.name, null, SymbolType.FUNCTION), definition.loc);
+    defineSymbol(new ValuedSymbol(definition.name().name, null, SymbolType.FUNCTION),
+        definition.loc);
     return null;
   }
 
@@ -282,7 +285,7 @@ class NestedSymbolTable implements DefinitionVisitor<Void> {
     var field = findField(format, next.name);
     if (field == null) {
       reportError(
-          "Invalid usage: format %s does not have field %s".formatted(format.identifier.name,
+          "Invalid usage: format %s does not have field %s".formatted(format.identifier().name,
               next.name), next.location());
     } else if (field instanceof FormatDefinition.RangeFormatField && subCalls.size() > 1) {
       reportError("Invalid usage: field %s resolves to a range, does not provide fields to chain"

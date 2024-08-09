@@ -66,7 +66,7 @@ public class AstDumper
   @Override
   public Void visit(ConstantDefinition definition) {
     dumpNode(definition);
-    dumpChildren(definition.identifier);
+    dumpChildren(definition.identifier());
     if (definition.type != null) {
       dumpChildren(definition.type);
     }
@@ -77,7 +77,7 @@ public class AstDumper
   @Override
   public Void visit(FormatDefinition definition) {
     dumpNode(definition);
-    dumpChildren(definition.identifier, definition.type);
+    dumpChildren(definition.identifier(), definition.type);
     this.indent++;
     for (var field : definition.fields) {
       if (field instanceof FormatDefinition.RangeFormatField f) {
@@ -107,28 +107,28 @@ public class AstDumper
   @Override
   public Void visit(CounterDefinition definition) {
     dumpNode(definition);
-    dumpChildren(definition.identifier, definition.type);
+    dumpChildren(definition.identifier(), definition.type);
     return null;
   }
 
   @Override
   public Void visit(MemoryDefinition definition) {
     dumpNode(definition);
-    dumpChildren(definition.identifier, definition.addressType, definition.dataType);
+    dumpChildren(definition.identifier(), definition.addressType, definition.dataType);
     return null;
   }
 
   @Override
   public Void visit(RegisterDefinition definition) {
     dumpNode(definition);
-    dumpChildren(definition.identifier, definition.type);
+    dumpChildren(definition.identifier(), definition.type);
     return null;
   }
 
   @Override
   public Void visit(RegisterFileDefinition definition) {
     dumpNode(definition);
-    dumpChildren(definition.identifier, definition.indexType, definition.registerType);
+    dumpChildren(definition.identifier(), definition.indexType, definition.registerType);
     return null;
   }
 
@@ -244,14 +244,14 @@ public class AstDumper
   @Override
   public Void visit(UsingDefinition definition) {
     dumpNode(definition);
-    dumpChildren(definition.id, definition.type);
+    dumpChildren(definition.identifier(), definition.type);
     return null;
   }
 
   @Override
   public Void visit(FunctionDefinition definition) {
     dumpNode(definition);
-    dumpChildren(definition.name);
+    dumpChildren(definition.name());
     for (var param : definition.params) {
       dumpChildren(param.name(), param.type());
     }

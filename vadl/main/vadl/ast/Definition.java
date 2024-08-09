@@ -46,7 +46,7 @@ interface DefinitionVisitor<R> {
 }
 
 class ConstantDefinition extends Definition {
-  final Identifier identifier;
+  final IdentifierOrPlaceholder identifier;
 
   @Nullable
   final TypeLiteral type;
@@ -54,12 +54,16 @@ class ConstantDefinition extends Definition {
   final Expr value;
   final SourceLocation loc;
 
-  ConstantDefinition(Identifier identifier, @Nullable TypeLiteral type, Expr value,
+  ConstantDefinition(IdentifierOrPlaceholder identifier, @Nullable TypeLiteral type, Expr value,
                      SourceLocation location) {
     this.identifier = identifier;
     this.type = type;
     this.value = value;
     this.loc = location;
+  }
+
+  Identifier identifier() {
+    return (Identifier) identifier;
   }
 
   @Override
@@ -76,7 +80,7 @@ class ConstantDefinition extends Definition {
   void prettyPrint(int indent, StringBuilder builder) {
     annotations.prettyPrint(indent, builder);
     builder.append(prettyIndentString(indent));
-    builder.append("constant %s".formatted(identifier.name));
+    builder.append("constant %s".formatted(identifier().name));
     if (type != null) {
       builder.append(": ");
       type.prettyPrint(indent, builder);
@@ -123,7 +127,7 @@ class ConstantDefinition extends Definition {
 }
 
 class FormatDefinition extends Definition {
-  Identifier identifier;
+  IdentifierOrPlaceholder identifier;
   TypeLiteral type;
   List<FormatField> fields;
   SourceLocation loc;
@@ -316,12 +320,16 @@ class FormatDefinition extends Definition {
     }
   }
 
-  public FormatDefinition(Identifier identifier, TypeLiteral type,
+  public FormatDefinition(IdentifierOrPlaceholder identifier, TypeLiteral type,
                           List<FormatField> fields, SourceLocation location) {
     this.identifier = identifier;
     this.type = type;
     this.fields = fields;
     this.loc = location;
+  }
+
+  Identifier identifier() {
+    return (Identifier) identifier;
   }
 
   @Override
@@ -473,7 +481,7 @@ class InstructionSetDefinition extends Definition {
 
 class CounterDefinition extends Definition {
   CounterKind kind;
-  Identifier identifier;
+  IdentifierOrPlaceholder identifier;
   TypeLiteral type;
   SourceLocation loc;
 
@@ -482,12 +490,16 @@ class CounterDefinition extends Definition {
     GROUP
   }
 
-  public CounterDefinition(CounterKind kind, Identifier identifier, TypeLiteral type,
+  public CounterDefinition(CounterKind kind, IdentifierOrPlaceholder identifier, TypeLiteral type,
                            SourceLocation location) {
     this.kind = kind;
     this.identifier = identifier;
     this.type = type;
     this.loc = location;
+  }
+
+  Identifier identifier() {
+    return (Identifier) identifier;
   }
 
   @Override
@@ -548,17 +560,21 @@ class CounterDefinition extends Definition {
 }
 
 class MemoryDefinition extends Definition {
-  Identifier identifier;
+  IdentifierOrPlaceholder identifier;
   TypeLiteral addressType;
   TypeLiteral dataType;
   SourceLocation loc;
 
-  public MemoryDefinition(Identifier identifier, TypeLiteral addressType, TypeLiteral dataType,
-                          SourceLocation loc) {
+  public MemoryDefinition(IdentifierOrPlaceholder identifier, TypeLiteral addressType,
+                          TypeLiteral dataType, SourceLocation loc) {
     this.identifier = identifier;
     this.addressType = addressType;
     this.dataType = dataType;
     this.loc = loc;
+  }
+
+  Identifier identifier() {
+    return (Identifier) identifier;
   }
 
   @Override
@@ -621,15 +637,19 @@ class MemoryDefinition extends Definition {
 }
 
 class RegisterDefinition extends Definition {
-  Identifier identifier;
+  IdentifierOrPlaceholder identifier;
   TypeLiteral type;
   SourceLocation loc;
 
-  public RegisterDefinition(Identifier identifier, TypeLiteral type,
+  public RegisterDefinition(IdentifierOrPlaceholder identifier, TypeLiteral type,
                             SourceLocation location) {
     this.identifier = identifier;
     this.type = type;
     this.loc = location;
+  }
+
+  Identifier identifier() {
+    return (Identifier) identifier;
   }
 
   @Override
@@ -688,18 +708,21 @@ class RegisterDefinition extends Definition {
 }
 
 class RegisterFileDefinition extends Definition {
-  Identifier identifier;
+  IdentifierOrPlaceholder identifier;
   TypeLiteral indexType;
   TypeLiteral registerType;
   SourceLocation loc;
 
-  public RegisterFileDefinition(Identifier identifier, TypeLiteral indexType,
-                                TypeLiteral registerType,
-                                SourceLocation location) {
+  public RegisterFileDefinition(IdentifierOrPlaceholder identifier, TypeLiteral indexType,
+                                TypeLiteral registerType, SourceLocation location) {
     this.identifier = identifier;
     this.indexType = indexType;
     this.registerType = registerType;
     this.loc = location;
+  }
+
+  Identifier identifier() {
+    return (Identifier) identifier;
   }
 
   @Override
@@ -1008,15 +1031,20 @@ class AssemblyDefinition extends Definition {
 }
 
 class UsingDefinition extends Definition {
-  final Identifier id;
+  final IdentifierOrPlaceholder id;
   final TypeLiteral type;
   final SourceLocation loc;
 
-  UsingDefinition(Identifier id, TypeLiteral type, SourceLocation location) {
+  UsingDefinition(IdentifierOrPlaceholder id, TypeLiteral type, SourceLocation location) {
     this.id = id;
     this.type = type;
     this.loc = location;
   }
+
+  Identifier identifier() {
+    return (Identifier) id;
+  }
+
 
   @Override
   SourceLocation location() {
@@ -1073,19 +1101,23 @@ class UsingDefinition extends Definition {
 }
 
 class FunctionDefinition extends Definition {
-  Identifier name;
+  IdentifierOrPlaceholder name;
   List<Parameter> params;
   TypeLiteral retType;
   Expr expr;
   SourceLocation loc;
 
-  FunctionDefinition(Identifier name, List<Parameter> params, TypeLiteral retType, Expr expr,
-                  SourceLocation location) {
+  FunctionDefinition(IdentifierOrPlaceholder name, List<Parameter> params, TypeLiteral retType,
+                     Expr expr, SourceLocation location) {
     this.name = name;
     this.params = params;
     this.retType = retType;
     this.expr = expr;
     this.loc = location;
+  }
+
+  Identifier name() {
+    return (Identifier) name;
   }
 
   @Override

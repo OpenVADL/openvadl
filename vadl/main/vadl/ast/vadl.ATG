@@ -208,14 +208,14 @@ PRODUCTIONS
 
   constantDefinition<out ConstantDefinition def>    (. TypeLiteral type = null; .)
   = CONSTANT                                        (. var startLocation = loc(); .)
-    identifier<out Identifier id>
+    identifierOrPlaceholder<out IdentifierOrPlaceholder id>
     [ SYM_COLON typeLiteral<out type> ]
     SYM_EQ expression<out Expr expr, BIN_OPS>                (. def = new ConstantDefinition(id, type, expr, startLocation.join(loc())); .)
   .
 
   formatDefinition<out FormatDefinition def>                      (. List<FormatDefinition.FormatField> fields = new ArrayList<>();.)
   = FORMAT                                                        (. var startLoc = loc(); .)
-  identifier<out Identifier id>
+  identifierOrPlaceholder<out IdentifierOrPlaceholder id>
   SYM_COLON typeLiteral<out TypeLiteral type>
   [SYM_EQ SYM_BRACE_OPEN                                          (. pushFormatScope(this, id); .)
       formatField<out FormatDefinition.FormatField f1>            (. fields.add(f1); popScope(this); .)
@@ -259,7 +259,7 @@ PRODUCTIONS
     | GROUP                                     (. kind = GROUP; .)
     )                                           (. var startLocation = loc(); .)
     COUNTER
-    identifier<out Identifier id>
+    identifierOrPlaceholder<out IdentifierOrPlaceholder id>
     SYM_COLON typeLiteral<out TypeLiteral type> (. def = new CounterDefinition(kind, id, type, startLocation.join(loc())); .)
   .
 
@@ -318,35 +318,35 @@ PRODUCTIONS
 
   memoryDefinition<out MemoryDefinition def>
   = MEMORY                                    (. var startLocation = loc(); .)
-    identifier<out Identifier id>
+    identifierOrPlaceholder<out IdentifierOrPlaceholder id>
     SYM_COLON typeLiteral<out TypeLiteral t1>
     SYM_ARROW typeLiteral<out TypeLiteral t2> (. def = new MemoryDefinition(id, t1, t2, startLocation.join(t2.location())); .)
   .
 
   registerDefinition<out RegisterDefinition def>
   = REGISTER                                          (. var startLocation = loc(); .)
-    identifier<out Identifier id>
+    identifierOrPlaceholder<out IdentifierOrPlaceholder id>
     SYM_COLON typeLiteral<out TypeLiteral t1>         (. def = new RegisterDefinition(id, t1, startLocation.join(t1.location())); .)
   .
 
   registerFileDefinition<out Definition def>
   = REGISTER                                          (. var startLocation = loc(); .)
     FILE
-    identifier<out Identifier id>
+    identifierOrPlaceholder<out IdentifierOrPlaceholder id>
     SYM_COLON typeLiteral<out TypeLiteral t1>
     SYM_ARROW typeLiteral<out TypeLiteral t2>         (. def = new RegisterFileDefinition(id, t1, t2, startLocation.join(t2.location())); .)
   .
 
   usingDefinition<out Definition def>
   = USING                             (. var start = loc(); .)
-    identifier<out Identifier id>
+    identifierOrPlaceholder<out IdentifierOrPlaceholder id>
     SYM_EQ
     typeLiteral<out TypeLiteral type> (. def = new UsingDefinition(id, type, start.join(loc())); .)
   .
 
   functionDefinition<out Definition def>
   = FUNCTION                           (. var start = loc(); .)
-    identifier<out Identifier name>
+    identifierOrPlaceholder<out IdentifierOrPlaceholder name>
     functionParameters<.out List<Parameter> params.>
     SYM_ARROW
     typeLiteral<out TypeLiteral retType>
