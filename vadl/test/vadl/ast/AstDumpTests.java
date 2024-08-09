@@ -7,8 +7,7 @@ import java.io.IOException;
 import java.net.URISyntaxException;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.util.Collection;
-import java.util.Objects;
+import java.util.Map;
 import java.util.stream.Stream;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.DynamicTest;
@@ -33,7 +32,7 @@ public class AstDumpTests {
   }
 
   private void assertDumpEquality(Path vadlPath) throws IOException {
-    var ast = VadlParser.parse(vadlPath.toAbsolutePath());
+    var ast = VadlParser.parse(vadlPath.toAbsolutePath(), Map.of());
     verifyPrettifiedAst(ast);
 
     var actualDump = new AstDumper().dump(ast);

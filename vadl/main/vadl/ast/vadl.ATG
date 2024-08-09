@@ -1,6 +1,8 @@
 $package=vadl.ast
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
+import java.util.HashMap;
 import java.util.Objects;
 
 import vadl.ast.EncodingDefinition.FieldEncoding;
@@ -17,6 +19,7 @@ COMPILER vadl
   boolean insideAnnotation = false;
   Ast ast = new Ast();
   NestedSymbolTable symbolTable = new NestedSymbolTable();
+  Map<String, Identifier> macroOverrides = new HashMap<>();
 
   { symbolTable.loadBuiltins(); }
 
@@ -267,9 +270,9 @@ PRODUCTIONS
                                                                                popScope(this); .)
   .
 
-  identifierOrPlaceholder<out IdentifierOrPlaceholder id> (. id = null; .)
+  identifierOrPlaceholder<out IdentifierOrPlaceholder id>           (. id = null; .)
   = identifier<out id>
-  | placeholder<out Node node, BasicSyntaxType.Id()>      (. id = (IdentifierOrPlaceholder) node; .)
+  | macroInstanceOrPlaceholder<out Node node, BasicSyntaxType.Id()> (. id = (IdentifierOrPlaceholder) node; .)
   .
 
   encodingDefinition<out EncodingDefinition def> (. var startLocation = loc(); .)

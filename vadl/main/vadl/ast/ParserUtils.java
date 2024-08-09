@@ -143,6 +143,11 @@ class ParserUtils {
       return unexpanded;
     }
 
+    if (BasicSyntaxType.Id().isSubTypeOf(requiredReturnType)
+        && parser.macroOverrides.containsKey(identifier.name)) {
+      return parser.macroOverrides.get(identifier.name);
+    }
+
     var macro = parser.symbolTable.getMacro(identifier.name);
     if (macro == null) {
       parser.errors.SemErr(parser.t.line, parser.t.col,

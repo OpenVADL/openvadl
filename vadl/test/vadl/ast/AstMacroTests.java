@@ -7,6 +7,7 @@ import java.io.IOException;
 import java.net.URISyntaxException;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.Map;
 import java.util.stream.Stream;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.DynamicTest;
@@ -32,7 +33,7 @@ public class AstMacroTests {
   }
 
   private void assertAstEquality(Path vadlPath) throws IOException {
-    var ast = VadlParser.parse(vadlPath.toAbsolutePath());
+    var ast = VadlParser.parse(vadlPath.toAbsolutePath(), Map.of());
     verifyPrettifiedAst(ast);
 
     var actualExpandedAst = ast.prettyPrint();
