@@ -77,7 +77,11 @@ public class Z3CodeGeneratorVisitor implements GraphNodeVisitor {
 
         // The last argument should not emit an operand.
         if (i < node.arguments().size() - 1) {
-          writer.write(" " + node.builtIn().operator() + " ");
+          if(node.builtIn() == BuiltInTable.EQU) {
+            writer.write(" == ");
+          } else {
+            writer.write(" " + node.builtIn().operator() + " ");
+          }
         }
       }
     }

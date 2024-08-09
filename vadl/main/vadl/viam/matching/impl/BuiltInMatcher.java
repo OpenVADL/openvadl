@@ -49,16 +49,10 @@ public class BuiltInMatcher implements Matcher {
       if (this.matchers.isEmpty()) {
         // Edge case: when no matchers exist and the builtIn is matched then return true.
         return true;
-      } else if (!node.isCommutative()) {
+      } else {
         // The matchers must perfectly fit because the inputs cannot be rearranged.
         return Streams.zip(node.inputs(), this.matchers.stream(),
             (inputNode, matcher) -> matcher.matches(inputNode)).allMatch(x -> x);
-      } else {
-        // Any matcher can be applied on every input of the node.
-        // Unfortunately, this increases the computational complexity enormously.
-        // For commutative node, it is advised to keep the number of inputs and matchers low.
-        return ((BuiltInCall) node).arguments().stream()
-            .allMatch(arg -> matchers.stream().anyMatch(matcher -> matcher.matches(arg)));
       }
     }
 

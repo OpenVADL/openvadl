@@ -149,7 +149,7 @@ public class TranslationValidation {
       var addrSort = getZ3Sort(memoryDef.addressType());
       var resSort = getZ3Sort(memoryDef.resultType());
       memoryDefinitions.add(
-          String.format("%s = Array('%s', %s(), %s())", name, addrSort, resSort, name));
+          String.format("%s = Array('%s', %s, %s)", name, name, addrSort, resSort));
     }
 
     // Second, declare all variables
@@ -219,7 +219,7 @@ public class TranslationValidation {
                 
             prove(%s)
             """,
-        mems,
+        String.join("\n", memoryDefinitions),
         vars,
         formulas,
         generatedMatchings
