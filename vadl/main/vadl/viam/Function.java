@@ -58,7 +58,7 @@ public class Function extends Definition implements WithBehavior {
     ensure(behavior.isPureFunction(), "The function must be pure (no side effects)");
 
     var returnNode = behavior().getNodes(ReturnNode.class).findFirst().get();
-    ensure(returnNode.value.type() == returnType,
+    ensure(returnNode.value().type() == returnType,
         "The function's behavior does not return same type as signature suggests: %s", returnType);
   }
 

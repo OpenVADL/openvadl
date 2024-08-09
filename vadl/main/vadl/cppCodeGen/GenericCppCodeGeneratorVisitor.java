@@ -198,7 +198,7 @@ public abstract class GenericCppCodeGeneratorVisitor implements GraphNodeVisitor
   @Override
   public void visit(ReturnNode returnNode) {
     writer.write("return ");
-    visit(returnNode.value);
+    visit(returnNode.value());
   }
 
   @Override
