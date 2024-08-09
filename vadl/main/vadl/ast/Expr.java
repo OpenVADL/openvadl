@@ -683,8 +683,8 @@ sealed interface ValOrPlaceholder permits IntegerLiteral, BinaryLiteral, Placeho
  * An internal temporary placeholder node inside model definitions.
  * This node should never leave the parser.
  */
-final class PlaceholderExpr extends Expr
-    implements IdentifierOrPlaceholder, ValOrPlaceholder, OperatorOrPlaceholder {
+final class PlaceholderExpr extends Expr implements IdentifierOrPlaceholder, ValOrPlaceholder,
+    OperatorOrPlaceholder, TypeLiteralOrPlaceholder {
   IsId identifierPath;
   SourceLocation loc;
 
@@ -902,12 +902,15 @@ class RangeExpr extends Expr {
   }
 }
 
+sealed interface TypeLiteralOrPlaceholder permits TypeLiteral, PlaceholderExpr {
+}
+
 /**
  * TypeLiterals are needed as the types are not known during parsing.
  * For example {@code Bits<counter>} depends on the constant {@code counter} used here and so some
  * constant evaluation has to be performed for the concrete type to be known here.
  */
-class TypeLiteral extends Expr {
+final class TypeLiteral extends Expr implements TypeLiteralOrPlaceholder {
   IsId baseType;
 
   /**
@@ -1450,16 +1453,16 @@ class LetExpr extends Expr {
 
 class CastExpr extends Expr {
   Expr value;
-  TypeLiteral type;
+  TypeLiteralOrPlaceholder type;
 
-  public CastExpr(Expr value, TypeLiteral type) {
+  public CastExpr(Expr value, TypeLiteralOrPlaceholder type) {
     this.value = value;
     this.type = type;
   }
 
   @Override
   SourceLocation location() {
-    return value.location().join(type.location());
+    return value.location().join(((Expr) type).location());
   }
 
   @Override
@@ -1471,7 +1474,7 @@ class CastExpr extends Expr {
   void prettyPrint(int indent, StringBuilder builder) {
     value.prettyPrint(indent, builder);
     builder.append(" as ");
-    type.prettyPrint(indent, builder);
+    ((Expr) type).prettyPrint(indent, builder);
   }
 
   @Override

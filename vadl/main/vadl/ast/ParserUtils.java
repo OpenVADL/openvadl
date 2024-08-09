@@ -76,19 +76,37 @@ class ParserUtils {
    * @return A left-sided binary expression tree with a CastExpr as its leaf — or a simple CastExpr.
    */
   static Expr reorderCastExpr(Expr expr, Expr symOrBin) {
+    Expr castee = expr instanceof BinaryExpr binExpr ? binExpr.right : expr;
+    if (castee instanceof GroupExpr groupExpr) {
+      castee = groupExpr.inner;
+    }
     if (symOrBin instanceof BinaryExpr binSym) {
+      var castExpr = new CastExpr(castee, typeLiteral(binSym.left));
       if (expr instanceof BinaryExpr binExpr) {
-        binExpr.right = new CastExpr(binExpr.right, new TypeLiteral((IsSymExpr) binSym.left));
+        binExpr.right = castExpr;
         binSym.left = binExpr;
       } else {
-        binSym.left = new CastExpr(expr, new TypeLiteral((IsSymExpr) binSym.left));
+        binSym.left = castExpr;
       }
       return binSym;
-    } else if (expr instanceof BinaryExpr binExpr) {
-      binExpr.right = new CastExpr(binExpr.right, new TypeLiteral((IsSymExpr) symOrBin));
-      return binExpr;
     } else {
-      return new CastExpr(expr, new TypeLiteral((IsSymExpr) symOrBin));
+      var castExpr = new CastExpr(castee, typeLiteral(symOrBin));
+      if (expr instanceof BinaryExpr binExpr) {
+        binExpr.right = castExpr;
+        return binExpr;
+      } else {
+        return castExpr;
+      }
+    }
+  }
+
+  private static TypeLiteralOrPlaceholder typeLiteral(Expr expr) {
+    if (expr instanceof IsSymExpr symExpr) {
+      return new TypeLiteral(symExpr);
+    } else if (expr instanceof PlaceholderExpr placeholderExpr) {
+      return placeholderExpr;
+    } else {
+      throw new IllegalArgumentException("Unknown type literal node " + expr);
     }
   }
 

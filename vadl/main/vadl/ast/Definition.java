@@ -1035,6 +1035,7 @@ class UsingDefinition extends Definition {
     id.prettyPrint(indent, builder);
     builder.append(" = ");
     type.prettyPrint(indent, builder);
+    builder.append("\n");
   }
 
   @Override

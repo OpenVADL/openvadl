@@ -423,16 +423,19 @@ PRODUCTIONS
   expression<out Expr expr, boolean[] allowedOps>
   = term<out expr>
     {
-        IF (allowedOps[la.kind] || la.kind == _SYM_AS || la.kind == _SYM_DOLLAR)
+      IF (allowedOps[la.kind] || la.kind == _SYM_AS || la.kind == _SYM_DOLLAR)
+      (
+        binaryOperator<out Operator op>                                   (. var operator = new OperatorExpr(op, loc()); .)
+        term<out Expr right>                                              (. expr = new BinaryExpr(expr, operator, right); .)
+      | macroInstanceOrPlaceholder<out Node node, BasicSyntaxType.Bin()>
+        term<out Expr right>                                              (. expr = new BinaryExpr(expr, (OperatorOrPlaceholder) node, right); .)
+      | SYM_AS
         (
-          binaryOperator<out Operator op>                   (. var operator = new OperatorExpr(op, loc()); .)
-          term<out Expr right>                              (. expr = new BinaryExpr(expr, operator, right); .)
-        | macroInstanceOrPlaceholder<out Node node, BasicSyntaxType.Bin()>
-          term<out Expr right>                              (. expr = new BinaryExpr(expr, (OperatorOrPlaceholder) node, right); .)
-        | SYM_AS
-          symbolOrBinaryExpression<out Expr symOrBin, true> (. expr = reorderCastExpr(expr, symOrBin); .)
+          symbolOrBinaryExpression<out Expr symOrBin, true>               (. expr = reorderCastExpr(expr, symOrBin); .)
+        | macroInstanceOrPlaceholder<out Node node, BasicSyntaxType.Id()> (. expr = reorderCastExpr(expr, (Expr) node); .)
         )
-    }                                                       (. expr = ungroup(this, reorderBinary(this, expr)); .)
+      )
+    }                                                                     (. expr = ungroup(this, reorderBinary(this, expr)); .)
   .
 
   /// Call expressions of form "a::b<3>().c()".

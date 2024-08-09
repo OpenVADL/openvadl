@@ -62,7 +62,7 @@ class MacroExpander
 
   @Override
   public Expr visit(GroupExpr expr) {
-    return new GroupExpr(expr.accept(this));
+    return new GroupExpr(expr.inner.accept(this));
   }
 
   @Override
@@ -184,9 +184,11 @@ class MacroExpander
 
   @Override
   public Expr visit(CastExpr expr) {
-    expr.value = expr.value.accept(this);
-    expr.type = (TypeLiteral) expr.type.accept(this);
-    return expr;
+    var value = expr.value.accept(this);
+    var type = expr.type instanceof PlaceholderExpr p
+        ? new TypeLiteral(resolvePlaceholderOrIdentifier(p))
+        : expr.type;
+    return new CastExpr(value, type);
   }
 
   @Override

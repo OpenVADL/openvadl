@@ -298,7 +298,7 @@ public class AstDumper
   @Override
   public Void visit(CastExpr expr) {
     dumpNode(expr);
-    dumpChildren(expr.value, expr.type);
+    dumpChildren(expr.value, (Expr) expr.type);
     return null;
   }
 
