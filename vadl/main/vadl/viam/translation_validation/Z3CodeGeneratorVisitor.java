@@ -2,6 +2,7 @@ package vadl.viam.translation_validation;
 
 import java.io.StringWriter;
 import java.util.Map;
+import java.util.Objects;
 import vadl.types.BitsType;
 import vadl.types.BuiltInTable;
 import vadl.types.SIntType;
@@ -99,8 +100,13 @@ public class Z3CodeGeneratorVisitor implements GraphNodeVisitor {
 
   @Override
   public void visit(WriteMemNode writeMemNode) {
-    // TODO: What about the address?
+    var mem = memoryMap.get(writeMemNode.memory().identifier);
+    writer.write("Store(" + mem + ", ");
+    writeMemNode.ensureNonNull(writeMemNode.address(), "Address must not be null");
+    visit(Objects.requireNonNull(writeMemNode.address()));
+    writer.write(", ");
     visit(writeMemNode.value());
+    writer.write(")");
   }
 
   @Override
@@ -170,7 +176,10 @@ public class Z3CodeGeneratorVisitor implements GraphNodeVisitor {
 
   @Override
   public void visit(ReadMemNode readMemNode) {
-    writer.write(memoryMap.get(readMemNode.memory().identifier));
+    var mem = memoryMap.get(readMemNode.memory().identifier);
+    writer.write("Select(" + mem + ", ");
+    visit(readMemNode.address());
+    writer.write(")");
   }
 
   @Override
