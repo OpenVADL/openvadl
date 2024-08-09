@@ -14,21 +14,18 @@ import vadl.types.BitsType;
 import vadl.types.Type;
 import vadl.viam.Instruction;
 import vadl.viam.Specification;
-import vadl.viam.graph.Graph;
-import vadl.viam.graph.Node;
 import vadl.viam.graph.dependency.BuiltInCall;
 import vadl.viam.graph.dependency.ExpressionNode;
 import vadl.viam.graph.dependency.TypeCastNode;
-import vadl.viam.passes.Pair;
 import vadl.viam.passes.Triple;
 
 /**
- * The {@link TranslationValidation#lower(Instruction, Instruction)} can only work with
+ * The {@link TranslationValidation#lower(Specification, Instruction, Instruction)} can only work with
  * explicit types. However, that is usually not required for the VIAM's happy flow since the code
  * generation works better on fewer nodes. This pass helps to verify the
  * {@link Instruction#behavior()} by inserting explicit types.
  */
-public class ExplicitTypingPass extends Pass {
+public class ExplicitBitSizesInTypingPass extends Pass {
   @Override
   public PassName getName() {
     return new PassName("ExplicitTypingPass");

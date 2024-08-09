@@ -9,6 +9,7 @@ import vadl.types.UIntType;
 import vadl.viam.Constant;
 import vadl.viam.ViamError;
 import vadl.viam.graph.GraphNodeVisitor;
+import vadl.viam.graph.Node;
 import vadl.viam.graph.control.AbstractBeginNode;
 import vadl.viam.graph.control.EndNode;
 import vadl.viam.graph.control.IfNode;
@@ -45,7 +46,7 @@ public class Z3CodeGeneratorVisitor implements GraphNodeVisitor {
   public void visit(ConstantNode node) {
     if (node.constant() instanceof Constant.Value) {
       writer.write(String.format("BitVecVal(%d, %d)",
-          ((Constant.Value) node.constant()).integer(),
+          ((Constant.Value) node.constant()).intValue(),
           ((BitsType) node.constant().type()).bitWidth()));
     } else {
       throw new ViamError("not implemented");
@@ -104,31 +105,45 @@ public class Z3CodeGeneratorVisitor implements GraphNodeVisitor {
     if (typeCastNode.castType() instanceof UIntType uint) {
       var width = uint.bitWidth()
           - ((BitsType) typeCastNode.value().type()).bitWidth();
-      if (width > 0) {
-        writer.write("ZeroExt(" + width + ", ");
-        visit(typeCastNode.value());
-        writer.write(")");
-      } else if (width < 0) {
-        writer.write("Extract(" + (uint.bitWidth() - 1) + ", 0, ");
-        visit(typeCastNode.value());
-        writer.write(")");
-      } else {
-        visit(typeCastNode.value());
-      }
+      typeCast(width, "ZeroExt(", typeCastNode, uint.bitWidth());
     } else if (typeCastNode.castType() instanceof SIntType sint) {
       var width = sint.bitWidth()
           - ((BitsType) typeCastNode.value().type()).bitWidth();
-      if (width > 0) {
-        writer.write("SignExt(" + width + ", ");
-        visit(typeCastNode.value());
-        writer.write(")");
-      } else if (width < 0) {
-        writer.write("Extract(" + (sint.bitWidth() - 1) + ", 0, ");
-        visit(typeCastNode.value());
-        writer.write(")");
-      } else {
-        visit(typeCastNode.value());
-      }
+      typeCast(width, "SignExt(", typeCastNode, sint.bitWidth());
+    } else if (typeCastNode.castType() instanceof BitsType bitsType) {
+      var width = bitsType.bitWidth()
+          - ((BitsType) typeCastNode.value().type()).bitWidth();
+      typeCast(width, "SignExt(", typeCastNode, bitsType.bitWidth());
+    } else {
+      throw new RuntimeException("not supported type");
+    }
+  }
+
+  /**
+   * Creates z3 functions for typecasting.
+   * There are three cases:
+   * 1. The difference is larger than 0. Then, the target type's bit size is larger than the
+   * source type's. We sign extend or zero extend based on the target type.
+   * 2. The difference is smaller than 0. Then, the target type's bit size is smaller than the
+   * source type's. We slice with the {@code Extract} function.
+   * 3. The difference is zero. Then, no casting or slicing is required.
+   *
+   * @param relativeBitSizeDifference is the difference between the bit sizes of the target type and
+   *                                  source type.
+   * @param z3CastingOperation        defines the z3 function: whether sign extend or zero extend.
+   * @param typeCastNode              is the {@link Node} which should be visited next.
+   * @param targetBitSize             is the absolute bit size of the target type.
+   */
+  private void typeCast(int relativeBitSizeDifference, String z3CastingOperation,
+                        TypeCastNode typeCastNode, int targetBitSize) {
+    if (relativeBitSizeDifference > 0) {
+      writer.write(z3CastingOperation + relativeBitSizeDifference + ", ");
+      visit(typeCastNode.value());
+      writer.write(")");
+    } else if (relativeBitSizeDifference < 0) {
+      writer.write("Extract(" + (targetBitSize - 1) + ", 0, ");
+      visit(typeCastNode.value());
+      writer.write(")");
     } else {
       visit(typeCastNode.value());
     }
