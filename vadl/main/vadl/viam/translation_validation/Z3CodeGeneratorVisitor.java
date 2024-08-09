@@ -190,7 +190,7 @@ public class Z3CodeGeneratorVisitor implements GraphNodeVisitor {
 
   @Override
   public void visit(IfNode ifNode) {
-    
+
   }
 
   @Override

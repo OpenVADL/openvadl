@@ -8,7 +8,6 @@ import java.util.stream.IntStream;
 import java.util.stream.Stream;
 import vadl.cpp_codegen.SymbolTable;
 import vadl.types.BitsType;
-import vadl.types.Type;
 import vadl.viam.Instruction;
 import vadl.viam.ViamError;
 import vadl.viam.graph.Graph;

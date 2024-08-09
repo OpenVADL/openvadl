@@ -22,6 +22,10 @@ dependencies {
     implementation("org.junit.platform:junit-platform-launcher:1.10.2")
     implementation("org.junit.jupiter:junit-jupiter-engine:5.10.2")
 
+    implementation("org.awaitility:awaitility:4.2.1")
+    implementation("org.testcontainers:testcontainers:1.20.0")
+    implementation("org.testcontainers:junit-jupiter:1.20.0")
+
     // Helps getting test files small and concise
     implementation("org.apache.velocity:velocity-engine-core:2.3")
 }
