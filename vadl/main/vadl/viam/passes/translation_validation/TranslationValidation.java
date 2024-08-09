@@ -1,4 +1,4 @@
-package vadl.viam.translation_validation;
+package vadl.viam.passes.translation_validation;
 
 import java.util.List;
 import java.util.Map;
@@ -95,9 +95,6 @@ public class TranslationValidation {
       return n.formatField().identifier.simpleName();
     } else if (node instanceof FieldAccessRefNode n) {
       return n.fieldAccess().identifier.simpleName();
-    } else if (node instanceof ReadMemNode) {
-      // Currently hardcoded in the visitor
-      return "MEM";
     }
 
     throw new ViamError("Human Readable Labelling not implemented");

@@ -1,4 +1,4 @@
-package vadl.viam.translation_validation;
+package vadl.viam.passes.translation_validation;
 
 import java.io.StringWriter;
 import java.util.Objects;

@@ -7,16 +7,14 @@ import java.util.Collections;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 import org.junit.jupiter.api.DynamicTest;
-import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.TestFactory;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.testcontainers.images.builder.ImageFromDockerfile;
 import vadl.test.DockerExecutionTest;
 import vadl.viam.Instruction;
-import vadl.viam.Specification;
 import vadl.viam.passes.algebraic_simplication.AlgebraicSimplificationPass;
-import vadl.viam.translation_validation.TranslationValidation;
+import vadl.viam.passes.translation_validation.TranslationValidation;
 
 public class AlgebraicSimplificationTest extends DockerExecutionTest {
   private static final Logger logger = LoggerFactory.getLogger(AlgebraicSimplificationTest.class);
