@@ -24,6 +24,7 @@ public class Z3EncodingCodeGeneratorVisitor extends Z3CodeGeneratorVisitor {
   // In the case of 'f_x' this is the field
   // In the case of 'f_z' this is the function parameter
   public Z3EncodingCodeGeneratorVisitor(String symbolName) {
+    super();
     this.symbolName = symbolName;
   }
 

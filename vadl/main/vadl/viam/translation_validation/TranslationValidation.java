@@ -1,13 +1,19 @@
 package vadl.viam.translation_validation;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
-import java.util.Optional;
+import java.util.Objects;
+import java.util.Set;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 import java.util.stream.Stream;
 import vadl.cpp_codegen.SymbolTable;
 import vadl.types.BitsType;
+import vadl.types.SIntType;
+import vadl.types.Type;
+import vadl.types.UIntType;
+import vadl.viam.Identifier;
 import vadl.viam.Instruction;
 import vadl.viam.ViamError;
 import vadl.viam.graph.Graph;
@@ -17,6 +23,7 @@ import vadl.viam.graph.dependency.FieldAccessRefNode;
 import vadl.viam.graph.dependency.FieldRefNode;
 import vadl.viam.graph.dependency.FuncCallNode;
 import vadl.viam.graph.dependency.FuncParamNode;
+import vadl.viam.graph.dependency.ReadMemNode;
 import vadl.viam.graph.dependency.ReadRegFileNode;
 import vadl.viam.graph.dependency.ReadRegNode;
 import vadl.viam.graph.dependency.SideEffectNode;
@@ -33,18 +40,9 @@ public class TranslationValidation {
 
   }
 
-  /**
-   * Holds the result of a matching. The {@code before} holds
-   * the generated translation from the behavior before.
-   * While, {@code after} holds the translation after a transformation happened.
-   * It can be {@link Optional} because side effects can be removed with an optimisation.
-   */
-  private record TranslationIntermediateResult(SideEffectNode node, Z3Code before,
-                                               Optional<Z3Code> after) {
-
-  }
-
-  public record TranslationResult(List<Node> inputNodes, Z3Code before, Z3Code after) {
+  public record TranslationResult(Node.Id nodeId,
+                                  Z3Code before,
+                                  Z3Code after) {
 
   }
 
@@ -53,32 +51,35 @@ public class TranslationValidation {
    * We only return a value when a 1:1 matching exists. When a side effect was removed by
    * an optimization then it is not part of Z3 code.
    */
-  public List<TranslationResult> computeTranslationAndReturnMatchings(Instruction before,
-                                                                      Instruction after) {
+  private List<TranslationResult> computeTranslationAndReturnMatchings(
+      Map<Identifier, String> memoryMap,
+      Instruction before,
+      Instruction after) {
     // The goal is to verify that `before` and `after` have semantically the same
     // behavior.
     // To achieve that, we translate all the side effects because they **MUST** stay
     // the same.
     // Afterward, we match the translated side effects in a comparison for the SMT solver
     // to verify that they have the same results.
-    var translatedSideEffectsForBeforeInstruction = translateSideEffects(before.behavior());
-    var translatedSideEffectsForAfterInstruction = translateSideEffects(after.behavior());
+    var translatedSideEffectsForBeforeInstruction =
+        translateSideEffects(memoryMap, before.behavior());
+    var translatedSideEffectsForAfterInstruction =
+        translateSideEffects(memoryMap, after.behavior());
 
     return translatedSideEffectsForBeforeInstruction.keySet().stream().map(
-            sideEffectNode -> {
-              var beforeZ3Code = translatedSideEffectsForBeforeInstruction.get(sideEffectNode);
-              var afterZ3Code = translatedSideEffectsForAfterInstruction.get(sideEffectNode);
+            sideEffectNodeId -> {
+              var beforeZ3Code =
+                  Objects.requireNonNull(
+                      translatedSideEffectsForBeforeInstruction.get(sideEffectNodeId));
+              var afterZ3Code =
+                  Objects.requireNonNull(
+                      translatedSideEffectsForAfterInstruction.get(sideEffectNodeId));
 
-              return new TranslationIntermediateResult(sideEffectNode, beforeZ3Code,
-                  Optional.ofNullable(afterZ3Code));
+              return new TranslationResult(sideEffectNodeId,
+                  beforeZ3Code,
+                  afterZ3Code);
             })
-        .filter(translationIntermediateResult -> translationIntermediateResult.after.isPresent())
-        .map(translationIntermediateResult -> {
-          var inputNodes = getInputNodes(translationIntermediateResult.node);
-          return new TranslationResult(inputNodes,
-              translationIntermediateResult.before,
-              translationIntermediateResult.after.get());
-        })
+        .filter(translationIntermediateResult -> translationIntermediateResult.after != null)
         .toList();
   }
 
@@ -104,6 +105,9 @@ public class TranslationValidation {
       return n.formatField().simpleName();
     } else if (node instanceof FieldAccessRefNode n) {
       return n.fieldAccess().simpleName();
+    } else if (node instanceof ReadMemNode) {
+      // Currently hardcoded in the visitor
+      return "MEM";
     }
 
     throw new ViamError("Human Readable Labelling not implemented");
@@ -120,30 +124,83 @@ public class TranslationValidation {
     throw new ViamError("Other vadl types are not supported for translation validation");
   }
 
+  private String getZ3Sort(Type type) {
+    if (type instanceof SIntType || type instanceof UIntType) {
+      return "IntSort()";
+    } else if (type instanceof BitsType bitsType) {
+      return String.format("BitVecSort(%s)", bitsType.bitWidth());
+    }
+
+    throw new ViamError(
+        String.format("Other vadl types are not supported for translation validation: %s",
+            type.toString()));
+  }
+
   /**
-   * Lower the machings into one template which can be then checked.
+   * Lower the matchings into one template which can be then checked.
    */
-  public Z3Code lower(List<TranslationResult> matchings) {
-    var vars = matchings.stream().flatMap(matching -> matching.inputNodes.stream())
-        .map(node -> String.format("%s = %s", getHumanReadableName(node), getZ3Type(node)))
+  public Z3Code lower(Instruction before, Instruction after) {
+    var memorySymbolTable = new SymbolTable();
+    // A Z3 program contains the memory definitions, register inputs, side effect translations
+    // and finally an equality comparison between old side effect and new side effect.
+
+    // First, find the memory definitions and declare them
+    var mems = before.behavior().getNodes(ReadMemNode.class)
+        .map(ReadMemNode::memory)
+        .distinct()
+        .toList();
+    var memoryMap = mems.stream().collect(
+        Collectors.toMap(memory -> memory.identifier,
+            memory -> "MEM" + memorySymbolTable.getNextVariable()));
+    ArrayList<String> memoryDefinitions = new ArrayList<>();
+    for (var memoryDef : mems) {
+      var name = memoryMap.get(memoryDef.identifier);
+      var addrSort = getZ3Sort(memoryDef.addressType());
+      var resSort = getZ3Sort(memoryDef.resultType());
+      memoryDefinitions.add(
+          String.format("%s = Array('%s', %s(), %s())", name, addrSort, resSort, name));
+    }
+
+    // Second, declare all variables
+    var vars = before.behavior().getNodes(Set.of(
+            ReadRegNode.class,
+            ReadRegFileNode.class,
+            FuncParamNode.class,
+            FuncCallNode.class,
+            FieldRefNode.class,
+            FieldAccessRefNode.class
+        ))
+        .map(this::declareVariable)
         .collect(Collectors.joining("\n"));
-    var formulas = IntStream.range(0, 2 * matchings.size())
-        .mapToObj(i -> {
-          var beforeTranslationSymbol = SymbolTable.getVariableBasedOnState(i);
-          var afterTranslationSymbol = SymbolTable.getVariableBasedOnState(i + matchings.size());
+
+    // Then, generate the side effect translation
+    var matchings = computeTranslationAndReturnMatchings(memoryMap, before, after);
+
+    // Finally, generate all the matchings
+    var symbolTableBefore = new SymbolTable();
+    var symbolTableAfter = new SymbolTable(matchings.size());
+
+    var formulas = matchings.stream().map(matching -> {
+          var beforeTranslationSymbol = symbolTableBefore.getNextVariable();
+          var afterTranslationSymbol = symbolTableAfter.getNextVariable();
 
           return String.format(
               """
                   %s = %s
                   %s = %s 
-                  """, beforeTranslationSymbol, matchings.get(i).before.value(),
-              afterTranslationSymbol, matchings.get(i).after.value());
+                  """, beforeTranslationSymbol, matching.before.value(),
+              afterTranslationSymbol, matching.after.value());
         })
         .collect(Collectors.joining("\n"));
-    var generatedMatchings = IntStream.range(0, 2 * matchings.size())
+
+    // Restart
+    var symbolTableBeforeMatching = new SymbolTable();
+    var symbolTableAfterMatching = new SymbolTable(matchings.size());
+
+    var generatedMatchings = IntStream.range(0, matchings.size())
         .mapToObj(i -> {
-          var beforeTranslationSymbol = SymbolTable.getVariableBasedOnState(i);
-          var afterTranslationSymbol = SymbolTable.getVariableBasedOnState(i + matchings.size());
+          var beforeTranslationSymbol = symbolTableBeforeMatching.getNextVariable();
+          var afterTranslationSymbol = symbolTableAfterMatching.getNextVariable();
 
           return String.format("%s == %s", beforeTranslationSymbol, afterTranslationSymbol);
         })
@@ -152,6 +209,8 @@ public class TranslationValidation {
     return new Z3Code(String.format(
         """
             from z3 import *
+                        
+            %s
                     
             %s
                     
@@ -169,21 +228,30 @@ public class TranslationValidation {
                 
             prove(%s)
             """,
+        mems,
         vars,
         formulas,
         generatedMatchings
     ));
   }
 
+
+  private String declareVariable(Node node) {
+    return String.format("%s = %s", getHumanReadableName(node), getZ3Type(node));
+  }
+
   /**
    * Apply the visitor on every side effect and return the translated code.
    */
-  private Map<SideEffectNode, Z3Code> translateSideEffects(Graph behavior) {
+  private Map<Node.Id, Z3Code> translateSideEffects(
+      Map<Identifier, String> memoryMap,
+      Graph behavior) {
     return getSideEffect(behavior)
         .map(sideEffectNode -> {
-          var visitor = new Z3CodeGeneratorVisitor();
+          var visitor = new Z3CodeGeneratorVisitor(memoryMap);
           visitor.visit(sideEffectNode);
-          return Map.entry(sideEffectNode, new Z3Code(visitor.getResult()));
+          return Map.entry(sideEffectNode.id(),
+              new Z3Code(visitor.getResult()));
         })
         .collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue));
   }

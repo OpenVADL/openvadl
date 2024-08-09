@@ -127,13 +127,11 @@ public record Identifier(
     }
 
     Identifier that = (Identifier) o;
-    return Arrays.equals(parts, that.parts) && sourceLocation.equals(that.sourceLocation);
+    return Arrays.equals(parts, that.parts);
   }
 
   @Override
   public int hashCode() {
-    int result = Arrays.hashCode(parts);
-    result = 31 * result + sourceLocation.hashCode();
-    return result;
+    return Arrays.hashCode(parts);
   }
 }

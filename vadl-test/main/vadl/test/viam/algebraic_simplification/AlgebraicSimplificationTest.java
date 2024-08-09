@@ -2,11 +2,15 @@ package vadl.test.viam.algebraic_simplification;
 
 import java.io.IOException;
 import java.util.Collections;
+import java.util.Map;
+import java.util.function.Function;
+import java.util.stream.Collectors;
 import org.apache.commons.lang3.tuple.Pair;
 import org.junit.jupiter.api.Test;
 import org.testcontainers.images.builder.ImageFromDockerfile;
 import org.testcontainers.shaded.com.google.common.collect.Streams;
 import vadl.test.DockerExecutionTest;
+import vadl.viam.Instruction;
 import vadl.viam.passes.algebraic_simplication.AlgebraicSimplificationPass;
 import vadl.viam.translation_validation.TranslationValidation;
 
@@ -33,21 +37,20 @@ public class AlgebraicSimplificationTest extends DockerExecutionTest {
     pass.execute(Collections.emptyMap(), spec);
 
     // Then
+    var allBeforeInstructions = initialSpec.isas().flatMap(x -> x.instructions().stream()).toList();
+    var allAfterInstructions = spec.isas().flatMap(x -> x.instructions().stream()).collect(
+        Collectors.toMap(Instruction::name, Function.identity()));
 
-    Streams.zip(initialSpec.isas().flatMap(i -> i.instructions().stream()),
-            spec.isas().flatMap(i -> i.instructions().stream()), Pair::of)
-        .forEach(pair -> {
-          var translationValidation = new TranslationValidation();
-          var matchings = translationValidation.computeTranslationAndReturnMatchings(
-              pair.getLeft(),
-              pair.getRight());
-          var code = translationValidation.lower(matchings);
-          try {
-            runContainerWithContent(DOCKER_IMAGE, code.value(), MOUNT_PATH, "algebraic",
-                "simplification");
-          } catch (IOException e) {
-            throw new RuntimeException(e);
-          }
-        });
+    for (Instruction left : allBeforeInstructions) {
+      var right = allAfterInstructions.get(left.name());
+      var translationValidation = new TranslationValidation();
+      var code = translationValidation.lower(left, right);
+      try {
+        runContainerWithContent(DOCKER_IMAGE, code.value(), MOUNT_PATH, "algebraic",
+            "simplification");
+      } catch (IOException e) {
+        throw new RuntimeException(e);
+      }
+    }
   }
 }

@@ -6,6 +6,17 @@ package vadl.cpp_codegen;
 public class SymbolTable {
   private int state = 0;
 
+  public SymbolTable() {
+
+  }
+
+  /**
+   * Offset the SymbolTable so it starts not with "a".
+   */
+  public SymbolTable(int offset) {
+    this.state = offset;
+  }
+
   /**
    * Generate a variable name. For example, "a", "ab", "xy" etc.
    */

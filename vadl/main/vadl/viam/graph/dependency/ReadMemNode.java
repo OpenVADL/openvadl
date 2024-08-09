@@ -77,4 +77,8 @@ public class ReadMemNode extends ReadResourceNode {
   public void accept(GraphNodeVisitor visitor) {
     visitor.visit(this);
   }
+
+  public Memory memory() {
+    return memory;
+  }
 }

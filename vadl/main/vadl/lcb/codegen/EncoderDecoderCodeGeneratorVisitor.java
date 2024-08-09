@@ -9,6 +9,7 @@ import vadl.cpp_codegen.passes.type_normalization.UpcastedTypeCastNode;
 import vadl.types.BitsType;
 import vadl.types.BoolType;
 import vadl.viam.graph.GraphNodeVisitor;
+import vadl.viam.graph.dependency.SideEffectNode;
 
 /**
  * The {@link GraphNodeVisitor} for the {@link EncodingCodeGenerator}.
@@ -46,5 +47,10 @@ public class EncoderDecoderCodeGeneratorVisitor extends GenericCppCodeGeneratorV
         writer.write(") & 1");
       }
     }
+  }
+
+  @Override
+  public void visit(SideEffectNode sideEffectNode) {
+    sideEffectNode.accept(this);
   }
 }

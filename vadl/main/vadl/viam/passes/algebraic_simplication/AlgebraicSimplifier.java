@@ -40,13 +40,13 @@ public class AlgebraicSimplifier {
             .filter(Node::isActive)
             // When `normalize` returns an Optional
             // then create a `Pair`
-            .map(node -> rule.simplify(node).map(y -> new Pair(node, y)))
+            .map(node -> rule.simplify(node).map(y -> new Pair<>(node, y)))
             .flatMap(Optional::stream)
             .toList();
 
         for (var pair : result) {
-          var oldNode = pair.oldNode();
-          var newNode = pair.newNode();
+          var oldNode = pair.left();
+          var newNode = pair.right();
 
           oldNode.replaceAndDelete(newNode);
           hasChanged = true;

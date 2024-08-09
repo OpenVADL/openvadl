@@ -5,6 +5,7 @@ import com.google.errorprone.annotations.FormatString;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.Objects;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.function.Consumer;
 import java.util.stream.Collectors;
@@ -781,6 +782,23 @@ public abstract class Node {
     protected int numericId() {
       ensure(state != IdState.INIT, "id in Init state has no numeric id");
       return numericId;
+    }
+
+    @Override
+    public boolean equals(Object o) {
+      if (this == o) {
+        return true;
+      }
+      if (o == null || getClass() != o.getClass()) {
+        return false;
+      }
+      Id id = (Id) o;
+      return numericId == id.numericId && state == id.state;
+    }
+
+    @Override
+    public int hashCode() {
+      return Objects.hash(state, numericId);
     }
 
     private enum IdState {
