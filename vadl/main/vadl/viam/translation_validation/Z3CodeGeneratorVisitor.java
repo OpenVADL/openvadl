@@ -1,14 +1,12 @@
 package vadl.viam.translation_validation;
 
 import java.io.StringWriter;
-import java.util.Map;
 import java.util.Objects;
 import vadl.types.BitsType;
 import vadl.types.BuiltInTable;
 import vadl.types.SIntType;
 import vadl.types.UIntType;
 import vadl.viam.Constant;
-import vadl.viam.Identifier;
 import vadl.viam.ViamError;
 import vadl.viam.graph.GraphNodeVisitor;
 import vadl.viam.graph.control.AbstractBeginNode;
@@ -38,14 +36,6 @@ import vadl.viam.graph.dependency.WriteRegNode;
 
 public class Z3CodeGeneratorVisitor implements GraphNodeVisitor {
   private final StringWriter writer = new StringWriter();
-
-  // VADL can have multiple memories. This symbol table keeps track of different
-  // kinds of memory.
-  private final Map<Identifier, String> memoryMap;
-
-  public Z3CodeGeneratorVisitor(Map<Identifier, String> memoryMap) {
-    this.memoryMap = memoryMap;
-  }
 
   public String getResult() {
     return writer.toString();
@@ -100,7 +90,7 @@ public class Z3CodeGeneratorVisitor implements GraphNodeVisitor {
 
   @Override
   public void visit(WriteMemNode writeMemNode) {
-    var mem = memoryMap.get(writeMemNode.memory().identifier);
+    var mem = writeMemNode.memory().identifier.simpleName();
     writer.write("Store(" + mem + ", ");
     writeMemNode.ensureNonNull(writeMemNode.address(), "Address must not be null");
     visit(Objects.requireNonNull(writeMemNode.address()));
@@ -176,7 +166,7 @@ public class Z3CodeGeneratorVisitor implements GraphNodeVisitor {
 
   @Override
   public void visit(ReadMemNode readMemNode) {
-    var mem = memoryMap.get(readMemNode.memory().identifier);
+    var mem = readMemNode.memory().identifier.simpleName();
     writer.write("Select(" + mem + ", ");
     visit(readMemNode.address());
     writer.write(")");

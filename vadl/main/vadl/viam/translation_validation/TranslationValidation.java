@@ -27,6 +27,7 @@ import vadl.viam.graph.dependency.ReadMemNode;
 import vadl.viam.graph.dependency.ReadRegFileNode;
 import vadl.viam.graph.dependency.ReadRegNode;
 import vadl.viam.graph.dependency.SideEffectNode;
+import vadl.viam.graph.dependency.WriteMemNode;
 
 /**
  * This class checks whether two instructions have identical behavior.
@@ -52,7 +53,6 @@ public class TranslationValidation {
    * an optimization then it is not part of Z3 code.
    */
   private List<TranslationResult> computeTranslationAndReturnMatchings(
-      Map<Identifier, String> memoryMap,
       Instruction before,
       Instruction after) {
     // The goal is to verify that `before` and `after` have semantically the same
@@ -62,9 +62,9 @@ public class TranslationValidation {
     // Afterward, we match the translated side effects in a comparison for the SMT solver
     // to verify that they have the same results.
     var translatedSideEffectsForBeforeInstruction =
-        translateSideEffects(memoryMap, before.behavior());
+        translateSideEffects(before.behavior());
     var translatedSideEffectsForAfterInstruction =
-        translateSideEffects(memoryMap, after.behavior());
+        translateSideEffects(after.behavior());
 
     return translatedSideEffectsForBeforeInstruction.keySet().stream().map(
             sideEffectNodeId -> {
@@ -131,26 +131,22 @@ public class TranslationValidation {
    * Lower the matchings into one template which can be then checked.
    */
   public Z3Code lower(Instruction before, Instruction after) {
-    var memorySymbolTable = new SymbolTable();
     // A Z3 program contains the memory definitions, register inputs, side effect translations
     // and finally an equality comparison between old side effect and new side effect.
 
     // First, find the memory definitions and declare them
-    var mems = before.behavior().getNodes(ReadMemNode.class)
-        .map(ReadMemNode::memory)
-        .distinct()
-        .toList();
-    var memoryMap = mems.stream().collect(
-        Collectors.toMap(memory -> memory.identifier,
-            memory -> "MEM" + memorySymbolTable.getNextVariable()));
-    ArrayList<String> memoryDefinitions = new ArrayList<>();
-    for (var memoryDef : mems) {
-      var name = memoryMap.get(memoryDef.identifier);
-      var addrSort = getZ3Sort(memoryDef.addressType());
-      var resSort = getZ3Sort(memoryDef.resultType());
-      memoryDefinitions.add(
-          String.format("%s = Array('%s', %s, %s)", name, name, addrSort, resSort));
-    }
+    var memRead = before.behavior().getNodes(ReadMemNode.class)
+        .map(ReadMemNode::memory);
+    var memWriter = before.behavior().getNodes(WriteMemNode.class)
+        .map(WriteMemNode::memory);
+    var memoryDefinitions = Stream.concat(memRead, memWriter).distinct()
+        .map(memory -> {
+          var name = memory.identifier.simpleName();
+          var addrSort = getZ3Sort(memory.addressType());
+          var resSort = getZ3Sort(memory.resultType());
+          return String.format("%s = Array('%s', %s, %s)", name, name, addrSort, resSort);
+        })
+        .collect(Collectors.joining("\n"));
 
     // Second, declare all variables
     var vars = before.behavior().getNodes(Set.of(
@@ -165,7 +161,7 @@ public class TranslationValidation {
         .collect(Collectors.joining("\n"));
 
     // Then, generate the side effect translation
-    var matchings = computeTranslationAndReturnMatchings(memoryMap, before, after);
+    var matchings = computeTranslationAndReturnMatchings(before, after);
 
     // Finally, generate all the matchings
     var symbolTableBefore = new SymbolTable();
@@ -219,7 +215,7 @@ public class TranslationValidation {
                 
             prove(%s)
             """,
-        String.join("\n", memoryDefinitions),
+        memoryDefinitions,
         vars,
         formulas,
         generatedMatchings
@@ -236,11 +232,10 @@ public class TranslationValidation {
    * Apply the visitor on every side effect and return the translated code.
    */
   private Map<Node.Id, Z3Code> translateSideEffects(
-      Map<Identifier, String> memoryMap,
       Graph behavior) {
     return getSideEffect(behavior)
         .map(sideEffectNode -> {
-          var visitor = new Z3CodeGeneratorVisitor(memoryMap);
+          var visitor = new Z3CodeGeneratorVisitor();
           visitor.visit(sideEffectNode);
           return Map.entry(sideEffectNode.id(),
               new Z3Code(visitor.getResult()));
