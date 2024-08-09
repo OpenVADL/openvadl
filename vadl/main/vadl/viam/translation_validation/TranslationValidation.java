@@ -83,28 +83,19 @@ public class TranslationValidation {
         .toList();
   }
 
-  /**
-   * Z3 requires variables for inputs like fields or func params.
-   */
-  private List<Node> getInputNodes(SideEffectNode node) {
-    var visitor = new ExtractInputNodesVisitor();
-    visitor.visit(node);
-    return visitor.getInputs();
-  }
-
   private String getHumanReadableName(Node node) {
     if (node instanceof ReadRegNode n) {
-      return n.register().simpleName();
+      return n.register().identifier.simpleName();
     } else if (node instanceof ReadRegFileNode n) {
-      return n.registerFile().simpleName();
+      return n.registerFile().identifier.simpleName();
     } else if (node instanceof FuncParamNode n) {
-      return n.parameter().simpleName();
+      return n.parameter().identifier.simpleName();
     } else if (node instanceof FuncCallNode n) {
-      return n.function().simpleName();
+      return n.function().identifier.simpleName();
     } else if (node instanceof FieldRefNode n) {
-      return n.formatField().simpleName();
+      return n.formatField().identifier.simpleName();
     } else if (node instanceof FieldAccessRefNode n) {
-      return n.fieldAccess().simpleName();
+      return n.fieldAccess().identifier.simpleName();
     } else if (node instanceof ReadMemNode) {
       // Currently hardcoded in the visitor
       return "MEM";
@@ -113,12 +104,12 @@ public class TranslationValidation {
     throw new ViamError("Human Readable Labelling not implemented");
   }
 
-  private String getZ3Type(Node node) {
+  private String getZ3Type(String name, Node node) {
     node.ensure(node instanceof ExpressionNode, "Node type must be ExpressionNode");
     var ty = ((ExpressionNode) node).type();
 
     if (ty instanceof BitsType bits) {
-      return String.format("BitVec(%s)", bits.bitWidth());
+      return String.format("BitVec('%s', %s)", name, bits.bitWidth());
     }
 
     throw new ViamError("Other vadl types are not supported for translation validation");
@@ -237,7 +228,8 @@ public class TranslationValidation {
 
 
   private String declareVariable(Node node) {
-    return String.format("%s = %s", getHumanReadableName(node), getZ3Type(node));
+    var name = getHumanReadableName(node);
+    return String.format("%s = %s", name, getZ3Type(name, node));
   }
 
   /**

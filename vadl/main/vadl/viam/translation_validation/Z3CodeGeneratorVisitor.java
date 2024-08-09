@@ -113,6 +113,8 @@ public class Z3CodeGeneratorVisitor implements GraphNodeVisitor {
       writer.write("SignExt(" + width + ", ");
       visit(typeCastNode.value());
       writer.write(")");
+    } else {
+      visit(typeCastNode.value());
     }
   }
 
@@ -138,17 +140,16 @@ public class Z3CodeGeneratorVisitor implements GraphNodeVisitor {
 
   @Override
   public void visit(ReadRegNode readRegNode) {
-    writer.write(readRegNode.register().simpleName());
+    writer.write(readRegNode.register().identifier.simpleName());
   }
 
   @Override
   public void visit(ReadRegFileNode readRegFileNode) {
-    writer.write(readRegFileNode.registerFile().simpleName());
+    writer.write(readRegFileNode.registerFile().identifier.simpleName());
   }
 
   @Override
   public void visit(ReadMemNode readMemNode) {
-    assert memoryMap.containsKey(readMemNode.memory().identifier);
     writer.write(memoryMap.get(readMemNode.memory().identifier));
   }
 
@@ -159,12 +160,12 @@ public class Z3CodeGeneratorVisitor implements GraphNodeVisitor {
 
   @Override
   public void visit(FuncParamNode funcParamNode) {
-    writer.write(funcParamNode.parameter().simpleName());
+    writer.write(funcParamNode.parameter().identifier.simpleName());
   }
 
   @Override
   public void visit(FuncCallNode funcCallNode) {
-    throw new RuntimeException("not implemented");
+    writer.write(funcCallNode.function().identifier.simpleName());
   }
 
   @Override
