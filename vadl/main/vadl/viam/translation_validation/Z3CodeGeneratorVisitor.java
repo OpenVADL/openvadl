@@ -147,9 +147,9 @@ public class Z3CodeGeneratorVisitor implements GraphNodeVisitor {
   public void visit(SelectNode selectNode) {
     writer.write("If(");
     visit(selectNode.condition());
-    writer.write(",");
+    writer.write(", ");
     visit(selectNode.trueCase());
-    writer.write(",");
+    writer.write(", ");
     visit(selectNode.falseCase());
     writer.write(")");
   }

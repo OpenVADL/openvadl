@@ -1,6 +1,5 @@
 package vadl.viam.translation_validation;
 
-import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
@@ -8,12 +7,12 @@ import java.util.Set;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 import java.util.stream.Stream;
+import org.jetbrains.annotations.NotNull;
 import vadl.cpp_codegen.SymbolTable;
 import vadl.types.BitsType;
 import vadl.types.SIntType;
 import vadl.types.Type;
 import vadl.types.UIntType;
-import vadl.viam.Identifier;
 import vadl.viam.Instruction;
 import vadl.viam.ViamError;
 import vadl.viam.graph.Graph;
@@ -41,9 +40,9 @@ public class TranslationValidation {
 
   }
 
-  public record TranslationResult(Node.Id nodeId,
-                                  Z3Code before,
-                                  Z3Code after) {
+  private record TranslationResult(Node.Id nodeId,
+                                   Z3Code before,
+                                   Z3Code after) {
 
   }
 
@@ -128,70 +127,30 @@ public class TranslationValidation {
   }
 
   /**
-   * Lower the matchings into one template which can be then checked.
+   * Lower the matchings into a template which can be then checked by a python z3 setup.
+   * A Z3 program contains the memory definitions, register inputs, side effect translations
+   * and finally an equality comparison between old side effect and new side effect.
+   * Note that {@code after} is allowed to have less side effects then {@code before} because
+   * it is allowed to optimize side effects away.
+   * Also, **note** that {@code before} and {@code after} do not have to share the same nodes.
+   * Therefore, it is ok that they have been copied. However, the side effect nodes in the graph
+   * **MUST** have the same {@link Node#id}. Otherwise, they cannot be matched.
    */
   public Z3Code lower(Instruction before, Instruction after) {
-    // A Z3 program contains the memory definitions, register inputs, side effect translations
-    // and finally an equality comparison between old side effect and new side effect.
-
     // First, find the memory definitions and declare them
-    var memRead = before.behavior().getNodes(ReadMemNode.class)
-        .map(ReadMemNode::memory);
-    var memWriter = before.behavior().getNodes(WriteMemNode.class)
-        .map(WriteMemNode::memory);
-    var memoryDefinitions = Stream.concat(memRead, memWriter).distinct()
-        .map(memory -> {
-          var name = memory.identifier.simpleName();
-          var addrSort = getZ3Sort(memory.addressType());
-          var resSort = getZ3Sort(memory.resultType());
-          return String.format("%s = Array('%s', %s, %s)", name, name, addrSort, resSort);
-        })
-        .collect(Collectors.joining("\n"));
+    var memoryDefinitions = getMemoryDefinitions(before);
 
     // Second, declare all variables
-    var vars = before.behavior().getNodes(Set.of(
-            ReadRegNode.class,
-            ReadRegFileNode.class,
-            FuncParamNode.class,
-            FuncCallNode.class,
-            FieldRefNode.class,
-            FieldAccessRefNode.class
-        ))
-        .map(this::declareVariable)
-        .collect(Collectors.joining("\n"));
+    var vars = getVariableDefinitions(before);
 
     // Then, generate the side effect translation
     var matchings = computeTranslationAndReturnMatchings(before, after);
 
-    // Finally, generate all the matchings
-    var symbolTableBefore = new SymbolTable();
-    var symbolTableAfter = new SymbolTable(matchings.size());
+    // Generate all the predicates
+    var predicates = getPredicates(matchings);
 
-    var formulas = matchings.stream().map(matching -> {
-          var beforeTranslationSymbol = symbolTableBefore.getNextVariable();
-          var afterTranslationSymbol = symbolTableAfter.getNextVariable();
-
-          return String.format(
-              """
-                  %s = %s
-                  %s = %s 
-                  """, beforeTranslationSymbol, matching.before.value(),
-              afterTranslationSymbol, matching.after.value());
-        })
-        .collect(Collectors.joining("\n"));
-
-    // Restart
-    var symbolTableBeforeMatching = new SymbolTable();
-    var symbolTableAfterMatching = new SymbolTable(matchings.size());
-
-    var generatedMatchings = IntStream.range(0, matchings.size())
-        .mapToObj(i -> {
-          var beforeTranslationSymbol = symbolTableBeforeMatching.getNextVariable();
-          var afterTranslationSymbol = symbolTableAfterMatching.getNextVariable();
-
-          return String.format("%s == %s", beforeTranslationSymbol, afterTranslationSymbol);
-        })
-        .collect(Collectors.joining("&&"));
+    // Finally, match the predicate from the old and the new instruction.
+    var formula = generateFormula(matchings);
 
     return new Z3Code(String.format(
         """
@@ -217,9 +176,70 @@ public class TranslationValidation {
             """,
         memoryDefinitions,
         vars,
-        formulas,
-        generatedMatchings
+        predicates,
+        formula
     ));
+  }
+
+  @NotNull
+  private static String generateFormula(List<TranslationResult> matchings) {
+    var symbolTableBeforeMatching = new SymbolTable();
+    var symbolTableAfterMatching = new SymbolTable(matchings.size());
+
+    return IntStream.range(0, matchings.size())
+        .mapToObj(i -> {
+          var beforeTranslationSymbol = symbolTableBeforeMatching.getNextVariable();
+          var afterTranslationSymbol = symbolTableAfterMatching.getNextVariable();
+
+          return String.format("%s == %s", beforeTranslationSymbol, afterTranslationSymbol);
+        })
+        .collect(Collectors.joining("&&"));
+  }
+
+  private String getPredicates(List<TranslationResult> matchings) {
+    var symbolTableBefore = new SymbolTable();
+    var symbolTableAfter = new SymbolTable(matchings.size());
+    return matchings.stream().map(matching -> {
+          var beforeTranslationSymbol = symbolTableBefore.getNextVariable();
+          var afterTranslationSymbol = symbolTableAfter.getNextVariable();
+
+          return String.format(
+              """
+                  %s = %s
+                  %s = %s
+                  """, beforeTranslationSymbol, matching.before.value(),
+              afterTranslationSymbol, matching.after.value());
+        })
+        .collect(Collectors.joining("\n"));
+  }
+
+  private String getVariableDefinitions(Instruction before) {
+    return before.behavior().getNodes(Set.of(
+            ReadRegNode.class,
+            ReadRegFileNode.class,
+            FuncParamNode.class,
+            FuncCallNode.class,
+            FieldRefNode.class,
+            FieldAccessRefNode.class
+        ))
+        .map(this::declareVariable)
+        .collect(Collectors.joining("\n"));
+  }
+
+  @NotNull
+  private String getMemoryDefinitions(Instruction before) {
+    var memRead = before.behavior().getNodes(ReadMemNode.class)
+        .map(ReadMemNode::memory);
+    var memWriter = before.behavior().getNodes(WriteMemNode.class)
+        .map(WriteMemNode::memory);
+    return Stream.concat(memRead, memWriter).distinct()
+        .map(memory -> {
+          var name = memory.identifier.simpleName();
+          var addrSort = getZ3Sort(memory.addressType());
+          var resSort = getZ3Sort(memory.resultType());
+          return String.format("%s = Array('%s', %s, %s)", name, name, addrSort, resSort);
+        })
+        .collect(Collectors.joining("\n"));
   }
 
 
