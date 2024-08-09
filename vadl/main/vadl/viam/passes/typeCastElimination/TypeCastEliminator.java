@@ -1,4 +1,4 @@
-package vadl.viam.passes.type_cast_elimination;
+package vadl.viam.passes.typeCastElimination;
 
 import java.util.HashMap;
 import org.jetbrains.annotations.Nullable;

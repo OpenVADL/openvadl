@@ -1,0 +1,57 @@
+// The test source for the type cast elimination pass test.
+// It is also meant as documentation for how type casts are eliminated.
+
+//// TRIVIAL CAST TESTS ////
+function Trivial_Bits_Bits(a: Bits<10>) -> Bits<10> = a as Bits<10>
+function Trivial_SInt_Bits(a: SInt<10>) -> Bits<10> = a as Bits<10>
+function Trivial_UInt_Bits(a: UInt<10>) -> Bits<10> = a as Bits<10>
+function Trivial_Bool_Bits(a: Bool) -> Bits<1> = a as Bits<1>
+
+function Trivial_Bits_UInt(a: Bits<10>) -> UInt<10> = a as UInt<10>
+function Trivial_SInt_UInt(a: SInt<10>) -> UInt<10> = a as UInt<10>
+function Trivial_UInt_UInt(a: UInt<10>) -> UInt<10> = a as UInt<10>
+function Trivial_Bool_UInt(a: Bool) -> UInt<1> = a as UInt<1>
+
+function Trivial_Bits_SInt(a: Bits<10>) -> SInt<10> = a as SInt<10>
+function Trivial_SInt_SInt(a: SInt<10>) -> SInt<10> = a as SInt<10>
+function Trivial_UInt_SInt(a: UInt<10>) -> SInt<10> = a as SInt<10>
+function Trivial_Bool_SInt(a: Bool) -> SInt<1> = a as SInt<1>
+
+// more complicated tests
+function Trivial_Sint_Uint_Bits(a: SInt<10>) -> Bits<10> = (a as UInt<10>) as Bits<10>
+
+//// TRUNCATE TESTS ////
+function Truncate_SInt10_SInt5(a: SInt<10>) -> SInt<5> = a as SInt<5>
+// TODO: Add more
+
+//// ZERO EXTEND TESTS ////
+function ZeroExtend_SInt10_UInt20(a: SInt<10>) -> UInt<20> = a as UInt<20>
+// TODO: Add more
+
+//// SIGN EXTEND TESTS ////
+function SignExtend_SInt_SInt(a: SInt<10>) -> SInt<20> = a as SInt<20>
+function SignExtend_Bits_SInt(a: Bits<10>) -> SInt<20> = a as SInt<20>
+function SignExtend_UInt_SInt(a: UInt<10>) -> SInt<20> = a as SInt<20>
+function SignExtend_Bool_SInt(a: Bool) -> SInt<20> = a as SInt<20>
+// TODO: Add more
+
+// TODO: Come back to this if we now the exact semantics of sign extension
+// If there would be no sign extend for UInts this would be a zero extend!
+// function NoSignExtend(a: SInt<10>) -> SInt<20> = (a as UInt<10>) as SInt<20>
+// However this would create a sign extend
+// function SignExtend_NonTrivial(a: SInt<10>) -> UInt<20> = (a as SInt<20>) as UInt<20>
+
+//// BOOL CAST TESTS ////
+function BoolCast_Bits1(a: Bits<1>) -> Bool = a as Bool
+function BoolCast_SInt1(a: SInt<1>) -> Bool = a as Bool
+function BoolCast_UInt1(a: UInt<1>) -> Bool = a as Bool
+function BoolCast_Bool1(a: Bool) -> Bool = a as Bool
+function BoolCast_SInt10(a: SInt<10>) -> Bool = a as Bool
+
+
+//// CASES WITH OPTIMIZATION POTENTIAL ////
+
+// This is not optimal but we keep it for now.
+// Both (sign extend and truncate should be removed)
+function NonOptimalExample(a: SInt<10>) -> SInt<10> = (a as SInt<20>) as SInt<10>
+

@@ -1,4 +1,4 @@
-package vadl.viam.passes.type_cast_elimination;
+package vadl.viam.passes.typeCastElimination;
 
 import java.io.IOException;
 import java.util.Map;
