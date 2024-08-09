@@ -54,7 +54,8 @@ class MacroExpander
   @Override
   public Expr visit(BinaryExpr expr) {
     // FIXME: Only if parent is not a binary operator cause otherwise it is O(n^2)
-    var result = new BinaryExpr(expr.left.accept(this), expr.operator,
+    var operator = expr.operator instanceof PlaceholderExpr p ? p.accept(this) : expr.operator;
+    var result = new BinaryExpr(expr.left.accept(this), (OperatorOrPlaceholder) operator,
         expr.right.accept(this));
     return BinaryExpr.reorder(result);
   }
@@ -84,6 +85,8 @@ class MacroExpander
       return id;
     } else if (arg instanceof IntegerLiteral lit) {
       return lit;
+    } else if (arg instanceof OperatorExpr op) {
+      return op;
     }
 
     return ((Expr) arg).accept(this);
@@ -184,6 +187,11 @@ class MacroExpander
   @Override
   public Expr visit(SymbolExpr expr) {
     expr.size = expr.size.accept(this);
+    return expr;
+  }
+
+  @Override
+  public Expr visit(OperatorExpr expr) {
     return expr;
   }
 

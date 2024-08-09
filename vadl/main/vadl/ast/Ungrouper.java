@@ -136,4 +136,9 @@ class Ungrouper implements ExprVisitor<Expr> {
     expr.size = expr.size.accept(this);
     return expr;
   }
+
+  @Override
+  public Expr visit(OperatorExpr expr) {
+    return expr;
+  }
 }

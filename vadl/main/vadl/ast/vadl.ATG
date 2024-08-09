@@ -422,10 +422,12 @@ PRODUCTIONS
   expression<out Expr expr, boolean[] allowedOps>
   = term<out expr>
     {
-        IF (allowedOps[la.kind] || la.kind == _SYM_AS)
+        IF (allowedOps[la.kind] || la.kind == _SYM_AS || la.kind == _SYM_DOLLAR)
         (
-          binaryOperator<out Operator op>
-          term<out Expr right>                              (. expr = new BinaryExpr(expr, op, right); .)
+          binaryOperator<out Operator op>                   (. var operator = new OperatorExpr(op, loc()); .)
+          term<out Expr right>                              (. expr = new BinaryExpr(expr, operator, right); .)
+        | macroInstanceOrPlaceholder<out Node node, BasicSyntaxType.Bin()>
+          term<out Expr right>                              (. expr = new BinaryExpr(expr, (OperatorOrPlaceholder) node, right); .)
         | SYM_AS
           symbolOrBinaryExpression<out Expr symOrBin, true> (. expr = reorderCastExpr(expr, symOrBin); .)
         )
@@ -480,12 +482,12 @@ PRODUCTIONS
   = identifierPath<out IsId path> (. expr = null; .)
     [
       IF (la.kind == _SYM_LT)
-      SYM_LT
+      SYM_LT                                (. var lessLoc = loc(); .)
       term<out Expr term>
       [
         IF (!allowLtOp || la.kind == _SYM_GT)
         SYM_GT                              (. expr = new SymbolExpr(path, term, path.location().join(loc())); .)
-      ]                                     (. if (expr == null) expr = new BinaryExpr((Expr) path, Operator.Less(), term); .)
+      ]                                     (. if (expr == null) expr = new BinaryExpr((Expr) path, new OperatorExpr(Operator.Less(), lessLoc), term); .)
     ]                                       (. if (expr == null) expr = (Expr) path; .)
   .
 
@@ -627,6 +629,7 @@ PRODUCTIONS
 
   macroInstanceParam<out Node arg> (. arg = null; .)
   = IF (la.kind == _identifierToken) identifier<out arg>
+  | binaryOperator<out Operator op> (. arg = new OperatorExpr(op, loc()); .)
   | expression<out arg, BIN_OPS>
   .
 

@@ -14,14 +14,14 @@ instruction set architecture IsaDefsTest = {
   }
   assembly ADD = (mnemonic, " ", register(rd), ",", register(rs1), ",", register(rs2))
   instruction SUB : Rtype =   {
-    X(rd) := (X(rs1) + X(rs2))
+    X(rd) := (X(rs1) - X(rs2))
   }
   encoding SUB =
   { opcode = 0b100'1100
   }
   assembly SUB = (mnemonic, " ", register(rd), ",", register(rs1), ",", register(rs2))
   instruction SQU : Rtype =   {
-    X(rd) := (X(rs1) + X(rs1))
+    X(rd) := (X(rs1) * X(rs1))
   }
   encoding SQU =
   { opcode = 0b101'0101

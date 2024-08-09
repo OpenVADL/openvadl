@@ -45,6 +45,8 @@ interface ExprVisitor<R> {
   R visit(CastExpr expr);
 
   R visit(SymbolExpr expr);
+
+  R visit(OperatorExpr expr);
 }
 
 final class Identifier extends Expr implements IsId, IdentifierOrPlaceholder {
@@ -103,6 +105,9 @@ final class Identifier extends Expr implements IsId, IdentifierOrPlaceholder {
   <R> R accept(ExprVisitor<R> visitor) {
     return visitor.visit(this);
   }
+}
+
+sealed interface OperatorOrPlaceholder permits OperatorExpr, PlaceholderExpr {
 }
 
 /**
@@ -253,17 +258,70 @@ enum UnaryOperator {
   }
 }
 
+final class OperatorExpr extends Expr implements OperatorOrPlaceholder {
+
+  Operator operator;
+  SourceLocation location;
+
+  OperatorExpr(Operator operator, SourceLocation location) {
+    this.operator = operator;
+    this.location = location;
+  }
+
+  @Override
+  SourceLocation location() {
+    return location;
+  }
+
+  @Override
+  SyntaxType syntaxType() {
+    return BasicSyntaxType.BinOp();
+  }
+
+  @Override
+  void prettyPrint(int indent, StringBuilder builder) {
+    builder.append(operator.symbol);
+  }
+
+  @Override
+  public String toString() {
+    return getClass().getSimpleName() + " " + operator.symbol;
+  }
+
+  @Override
+  public boolean equals(Object o) {
+    if (this == o) {
+      return true;
+    }
+    if (o == null || getClass() != o.getClass()) {
+      return false;
+    }
+    OperatorExpr that = (OperatorExpr) o;
+    return Objects.equals(operator, that.operator);
+  }
+
+  @Override
+  public int hashCode() {
+    return operator.hashCode();
+  }
+
+  @Override
+  <R> R accept(ExprVisitor<R> visitor) {
+    return visitor.visit(this);
+  }
+}
+
 /**
  * Any kind of binary expression (often written with the infix notation in vadl).
  */
 class BinaryExpr extends Expr {
   Expr left;
-  Operator operator;
+  OperatorOrPlaceholder operator;
   Expr right;
 
-  BinaryExpr(Expr left, Operator operation, Expr right) {
+  BinaryExpr(Expr left, OperatorOrPlaceholder operator, Expr right) {
     this.left = left;
-    this.operator = operation;
+    this.operator = operator;
     this.right = right;
   }
 
@@ -299,7 +357,7 @@ class BinaryExpr extends Expr {
 
   static BinaryExpr transformRecRightToLeft(@Nullable BinaryExpr parpar, BinaryExpr par) {
     while (par.left instanceof BinaryExpr curr) {
-      if (par.operator.precedence > curr.operator.precedence) {
+      if (par.operator().precedence > curr.operator().precedence) {
         par.left = curr.right;
         curr.right = par;
         if ((par = parpar) != null) {
@@ -313,6 +371,10 @@ class BinaryExpr extends Expr {
     return par;
   }
 
+  Operator operator() {
+    return ((OperatorExpr) operator).operator;
+  }
+
   @Override
   SourceLocation location() {
     return left.location().join(right.location());
@@ -320,7 +382,7 @@ class BinaryExpr extends Expr {
 
   @Override
   SyntaxType syntaxType() {
-    return BasicSyntaxType.Bin();
+    return BasicSyntaxType.Ex();
   }
 
   @Override
@@ -328,7 +390,7 @@ class BinaryExpr extends Expr {
     // FIXME: Remove the parenthesis in the future and determine if they are needed
     builder.append("(");
     left.prettyPrint(indent, builder);
-    builder.append(" %s ".formatted(operator.symbol));
+    builder.append(" %s ".formatted(operator().symbol));
     right.prettyPrint(indent, builder);
     builder.append(")");
   }
@@ -341,7 +403,7 @@ class BinaryExpr extends Expr {
   @Override
   public String toString() {
     return "%s operator: %s".formatted(this.getClass().getSimpleName(),
-        operator.symbol);
+        operator().symbol);
   }
 
   @Override
@@ -558,7 +620,8 @@ sealed interface ValOrPlaceholder permits IntegerLiteral, PlaceholderExpr {
  * An internal temporary placeholder node inside model definitions.
  * This node should never leave the parser.
  */
-final class PlaceholderExpr extends Expr implements IdentifierOrPlaceholder, ValOrPlaceholder {
+final class PlaceholderExpr extends Expr
+    implements IdentifierOrPlaceholder, ValOrPlaceholder, OperatorOrPlaceholder {
   IsId identifierPath;
   SourceLocation loc;
 
@@ -867,7 +930,8 @@ class TypeLiteral extends Expr {
 sealed interface IsCallExpr permits CallExpr, IsSymExpr {
   IsId path();
 
-  @Nullable Expr size();
+  @Nullable
+  Expr size();
 
   List<List<Expr>> argsIndices();
 
@@ -878,12 +942,13 @@ sealed interface IsCallExpr permits CallExpr, IsSymExpr {
   void prettyPrint(int indent, StringBuilder builder);
 }
 
-sealed interface IsSymExpr extends IsCallExpr permits SymbolExpr, IsId  {
+sealed interface IsSymExpr extends IsCallExpr permits SymbolExpr, IsId {
   @Override
   IsId path();
 
   @Override
-  @Nullable Expr size();
+  @Nullable
+  Expr size();
 
   @Override
   default List<List<Expr>> argsIndices() {

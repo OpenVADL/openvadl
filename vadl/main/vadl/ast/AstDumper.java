@@ -141,7 +141,7 @@ public class AstDumper
   @Override
   public Void visit(BinaryExpr expr) {
     dumpNode(expr);
-    dumpChildren(expr.left, expr.right);
+    dumpChildren(expr.left, (Node) expr.operator, expr.right);
     return null;
   }
 
@@ -303,6 +303,12 @@ public class AstDumper
     if (expr.size != null) {
       dumpChildren(expr.size);
     }
+    return null;
+  }
+
+  @Override
+  public Void visit(OperatorExpr expr) {
+    dumpNode(expr);
     return null;
   }
 

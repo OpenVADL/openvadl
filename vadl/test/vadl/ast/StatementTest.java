@@ -122,10 +122,14 @@ public class StatementTest {
             new Identifier("F", loc),
             new BlockStatement(loc).add(
                 new IfStatement(
-                    new BinaryExpr(new IntegerLiteral("3", loc), Operator.Greater(),
+                    new BinaryExpr(
+                        new IntegerLiteral("3", loc),
+                        new OperatorExpr(Operator.Greater(), loc),
                         new IntegerLiteral("4", loc)),
                     new IfStatement(
-                        new BinaryExpr(new IntegerLiteral("9", loc), Operator.Less(),
+                        new BinaryExpr(
+                            new IntegerLiteral("9", loc),
+                            new OperatorExpr(Operator.Less(), loc),
                             new IntegerLiteral("2", loc)),
                         new BlockStatement(loc),
                         new BlockStatement(loc),

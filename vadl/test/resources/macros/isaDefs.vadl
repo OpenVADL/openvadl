@@ -12,16 +12,16 @@ instruction set architecture IsaDefsTest = {
     , opcode: Bits<7>
     }
 
-  model RTypeInstr(instrName: Id, instrFormat: Id, opcode: Val, destReg: Id, srcReg1: Id, srcReg2: Id): IsaDefs = {
+  model RTypeInstr(instrName: Id, instrFormat: Id, opcode: Val, op: BinOp, destReg: Id, srcReg1: Id, srcReg2: Id): IsaDefs = {
     instruction $instrName: $instrFormat = {
-      X($destReg) := X($srcReg1) + X($srcReg2)
+      X($destReg) := X($srcReg1) $op X($srcReg2)
     }
     encoding $instrName = { opcode = $opcode }
     assembly $instrName = (mnemonic, " ", register($destReg), ",", register($srcReg1), ",", register($srcReg2))
   }
 
-  $RTypeInstr(ADD ; Rtype ; 0b011'0011 ; rd ; rs1 ; rs2)
-  $RTypeInstr(SUB ; Rtype ; 0b100'1100 ; rd ; rs1 ; rs2)
-  $RTypeInstr(SQU ; Rtype ; 0b101'0101 ; rd ; rs1 ; rs1)
+  $RTypeInstr(ADD ; Rtype ; 0b011'0011 ; + ; rd ; rs1 ; rs2)
+  $RTypeInstr(SUB ; Rtype ; 0b100'1100 ; - ; rd ; rs1 ; rs2)
+  $RTypeInstr(SQU ; Rtype ; 0b101'0101 ; * ; rd ; rs1 ; rs1)
 }
 
