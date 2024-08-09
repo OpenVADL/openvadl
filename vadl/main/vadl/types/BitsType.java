@@ -1,5 +1,7 @@
 package vadl.types;
 
+import java.util.Collection;
+import java.util.List;
 import vadl.viam.Parameter;
 
 /**
@@ -81,6 +83,20 @@ public class BitsType extends DataType {
    */
   @SafeVarargs
   public final <T extends BitsType> T join(T... others) {
+    return join(List.of(others));
+  }
+
+  /**
+   * Finds the join (upper bound) for the given BitsType types
+   * by returning the one with the largest bit width.
+   *
+   * <p>E.g. {@code Type.bits(3).meet(Type.bits(4)) == Type.bits(4)}
+   *
+   * @param others the BitsType objects to join
+   * @param <T>    a subtype of BitsType
+   * @return the BitsType object with the largest bit width
+   */
+  public final <T extends BitsType> T join(Collection<T> others) {
     var upperBound = this;
     for (var other : others) {
       if (upperBound.bitWidth < other.bitWidth) {
@@ -90,6 +106,8 @@ public class BitsType extends DataType {
     //noinspection Variable,unchecked
     return (T) upperBound;
   }
+
+
 
   @Override
   public boolean isSigned() {

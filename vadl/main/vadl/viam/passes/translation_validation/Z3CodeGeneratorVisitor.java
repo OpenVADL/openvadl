@@ -109,7 +109,7 @@ public class Z3CodeGeneratorVisitor implements GraphNodeVisitor {
         visit(typeCastNode.value());
         writer.write(")");
       } else if (width < 0) {
-        writer.write("Extract(" + uint.bitWidth() + ", 0, ");
+        writer.write("Extract(" + (uint.bitWidth() - 1) + ", 0, ");
         visit(typeCastNode.value());
         writer.write(")");
       } else {
@@ -123,7 +123,7 @@ public class Z3CodeGeneratorVisitor implements GraphNodeVisitor {
         visit(typeCastNode.value());
         writer.write(")");
       } else if (width < 0) {
-        writer.write("Extract(" + sint.bitWidth() + ", 0, ");
+        writer.write("Extract(" + (sint.bitWidth() - 1) + ", 0, ");
         visit(typeCastNode.value());
         writer.write(")");
       } else {
@@ -161,7 +161,12 @@ public class Z3CodeGeneratorVisitor implements GraphNodeVisitor {
 
   @Override
   public void visit(ReadRegFileNode readRegFileNode) {
-    writer.write(readRegFileNode.registerFile().identifier.simpleName());
+    // Do not write the register file because we actually care about the address.
+    // a = X << X (wrong)
+    // a = rs1 << rs2 (correct)
+    writer.write("Select(" + readRegFileNode.registerFile().identifier.simpleName() + ", ");
+    visit(readRegFileNode.address());
+    writer.write(")");
   }
 
   @Override
@@ -189,12 +194,12 @@ public class Z3CodeGeneratorVisitor implements GraphNodeVisitor {
 
   @Override
   public void visit(FieldRefNode fieldRefNode) {
-    writer.write(fieldRefNode.formatField().simpleName());
+    writer.write(fieldRefNode.formatField().identifier.simpleName());
   }
 
   @Override
   public void visit(FieldAccessRefNode fieldAccessRefNode) {
-    writer.write(fieldAccessRefNode.fieldAccess().simpleName());
+    writer.write(fieldAccessRefNode.fieldAccess().identifier.simpleName());
   }
 
   @Override

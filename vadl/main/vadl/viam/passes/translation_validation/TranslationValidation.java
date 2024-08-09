@@ -14,6 +14,9 @@ import vadl.types.SIntType;
 import vadl.types.Type;
 import vadl.types.UIntType;
 import vadl.viam.Instruction;
+import vadl.viam.Register;
+import vadl.viam.RegisterFile;
+import vadl.viam.Specification;
 import vadl.viam.ViamError;
 import vadl.viam.graph.Graph;
 import vadl.viam.graph.Node;
@@ -100,11 +103,8 @@ public class TranslationValidation {
     throw new ViamError("Human Readable Labelling not implemented");
   }
 
-  private String getZ3Type(String name, Node node) {
-    node.ensure(node instanceof ExpressionNode, "Node type must be ExpressionNode");
-    var ty = ((ExpressionNode) node).type();
-
-    if (ty instanceof BitsType bits) {
+  private String getZ3Type(String name, Type type) {
+    if (type instanceof BitsType bits) {
       return String.format("BitVec('%s', %s)", name, bits.bitWidth());
     }
 
@@ -133,12 +133,12 @@ public class TranslationValidation {
    * Therefore, it is ok that they have been copied. However, the side effect nodes in the graph
    * **MUST** have the same {@link Node#id}. Otherwise, they cannot be matched.
    */
-  public Z3Code lower(Instruction before, Instruction after) {
+  public Z3Code lower(Specification specification, Instruction before, Instruction after) {
     // First, find the memory definitions and declare them
     var memoryDefinitions = getMemoryDefinitions(before);
 
     // Second, declare all variables
-    var vars = getVariableDefinitions(before);
+    var vars = getVariableDefinitions(specification, before);
 
     // Then, generate the side effect translation
     var matchings = computeTranslationAndReturnMatchings(before, after);
@@ -210,17 +210,23 @@ public class TranslationValidation {
         .collect(Collectors.joining("\n"));
   }
 
-  private String getVariableDefinitions(Instruction before) {
-    return before.behavior().getNodes(Set.of(
-            ReadRegNode.class,
-            ReadRegFileNode.class,
-            FuncParamNode.class,
-            FuncCallNode.class,
-            FieldRefNode.class,
-            FieldAccessRefNode.class
-        ))
-        .map(this::declareVariable)
-        .collect(Collectors.joining("\n"));
+  private String getVariableDefinitions(Specification specification, Instruction before) {
+    return
+        Stream.concat(
+                Stream.concat(
+                    Stream.concat(Stream.concat(specification.registerFiles()
+                                .map(this::declareVariable),
+                            specification.registers()
+                                .map(this::declareVariable)
+                        ), before.behavior().getNodes(FuncCallNode.class)
+                            .map(this::declareVariable)
+                    ),
+                    before.behavior().getNodes(FieldRefNode.class)
+                        .map(this::declareVariable)),
+                before.behavior().getNodes(FuncParamNode.class)
+                    .map(this::declareVariable)
+            )
+            .collect(Collectors.joining("\n"));
   }
 
   @NotNull
@@ -240,9 +246,31 @@ public class TranslationValidation {
   }
 
 
-  private String declareVariable(Node node) {
-    var name = getHumanReadableName(node);
-    return String.format("%s = %s", name, getZ3Type(name, node));
+  private String declareVariable(RegisterFile registerFile) {
+    var name = registerFile.identifier.simpleName();
+    var addrSort = getZ3Sort(registerFile.addressType());
+    var resSort = getZ3Sort(registerFile.resultType());
+    return String.format("%s = Array('%s', %s, %s)", name, name, addrSort, resSort);
+  }
+
+  private String declareVariable(Register register) {
+    var name = register.identifier.simpleName();
+    return String.format("%s = %s", name, getZ3Type(name, register.resultType()));
+  }
+
+  private String declareVariable(FieldRefNode node) {
+    var name = node.formatField().identifier.simpleName();
+    return String.format("%s = %s", name, getZ3Type(name, node.type()));
+  }
+
+  private String declareVariable(FuncCallNode node) {
+    var name = node.function().identifier.simpleName();
+    return String.format("%s = %s", name, getZ3Type(name, node.type()));
+  }
+
+  private String declareVariable(FuncParamNode node) {
+    var name = node.parameter().identifier.simpleName();
+    return String.format("%s = %s", name, getZ3Type(name, node.type()));
   }
 
   /**

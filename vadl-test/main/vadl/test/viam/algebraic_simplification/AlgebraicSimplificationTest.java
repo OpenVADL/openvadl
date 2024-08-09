@@ -13,7 +13,9 @@ import org.slf4j.LoggerFactory;
 import org.testcontainers.images.builder.ImageFromDockerfile;
 import vadl.test.DockerExecutionTest;
 import vadl.viam.Instruction;
+import vadl.viam.Specification;
 import vadl.viam.passes.algebraic_simplication.AlgebraicSimplificationPass;
+import vadl.viam.passes.translation_validation.ExplicitTypingPass;
 import vadl.viam.passes.translation_validation.TranslationValidation;
 
 public class AlgebraicSimplificationTest extends DockerExecutionTest {
@@ -30,9 +32,14 @@ public class AlgebraicSimplificationTest extends DockerExecutionTest {
               .build());
 
   @TestFactory
-  Collection<DynamicTest> instructions() {
+  Collection<DynamicTest> instructions() throws IOException {
     var initialSpec = runAndGetViamSpecification("examples/rv3264im.vadl");
     var spec = runAndGetViamSpecification("examples/rv3264im.vadl");
+
+    // Add explicit bit sizes
+    new ExplicitTypingPass().execute(Collections.emptyMap(), initialSpec);
+    new ExplicitTypingPass().execute(Collections.emptyMap(), spec);
+
     var allBeforeInstructions = initialSpec.isas().flatMap(x -> x.instructions().stream()).toList();
     var allAfterInstructions = spec.isas().flatMap(x -> x.instructions().stream()).collect(
         Collectors.toMap(Instruction::name, Function.identity()));
@@ -45,16 +52,16 @@ public class AlgebraicSimplificationTest extends DockerExecutionTest {
     for (Instruction left : allBeforeInstructions) {
       var right = allAfterInstructions.get(left.name());
       tests.add(DynamicTest.dynamicTest(left.name(), () -> {
-        testInstruction(left, right);
+        testInstruction(spec, left, right);
       }));
     }
 
     return tests;
   }
 
-  void testInstruction(Instruction before, Instruction after) {
+  void testInstruction(Specification specification, Instruction before, Instruction after) {
     var translationValidation = new TranslationValidation();
-    var code = translationValidation.lower(before, after);
+    var code = translationValidation.lower(specification, before, after);
     logger.info(code.value());
     try {
       runContainerWithContent(DOCKER_IMAGE, code.value(), MOUNT_PATH, "algebraic",
