@@ -4,7 +4,6 @@ import java.io.StringWriter;
 import java.util.Objects;
 import vadl.types.BitsType;
 import vadl.types.BoolType;
-import vadl.types.BuiltInTable;
 import vadl.types.SIntType;
 import vadl.types.UIntType;
 import vadl.viam.Constant;
@@ -149,25 +148,35 @@ public class Z3CodeGeneratorVisitor implements GraphNodeVisitor {
   @Override
   public void visit(TypeCastNode typeCastNode) {
     if (typeCastNode.castType() instanceof UIntType uint) {
-      var width = getWidth(typeCastNode, uint);
-      typeCast(width, "ZeroExt(", typeCastNode, uint.bitWidth());
+      visit(typeCastNode, uint);
     } else if (typeCastNode.castType() instanceof SIntType sint) {
-      var width = getWidth(typeCastNode, sint);
-      typeCast(width, "SignExt(", typeCastNode, sint.bitWidth());
+      visit(typeCastNode, sint);
     } else if (typeCastNode.castType() instanceof BitsType bitsType) {
-      var width = getWidth(typeCastNode, bitsType);
-      typeCast(width, "SignExt(", typeCastNode, bitsType.bitWidth());
+      visit(typeCastNode, bitsType);
     } else {
       throw new RuntimeException("not supported type");
     }
   }
 
-  private static int getWidth(TypeCastNode typeCastNode, BitsType bitsType) {
+  private void visit(TypeCastNode typeCastNode, UIntType uIntType) {
+    typeCast("ZeroExt(", typeCastNode, uIntType.bitWidth());
+  }
+
+  private void visit(TypeCastNode typeCastNode, SIntType sIntType) {
+    typeCast("SignExt(", typeCastNode, sIntType.bitWidth());
+  }
+
+  private void visit(TypeCastNode typeCastNode, BitsType bitsType) {
+    typeCast("SignExt(", typeCastNode, bitsType.bitWidth());
+  }
+
+
+  private static int getBitwidthDifference(TypeCastNode typeCastNode, int bitsType) {
     if (typeCastNode.value().type() instanceof BitsType valBitsType) {
-      return bitsType.bitWidth()
+      return bitsType
           - valBitsType.bitWidth();
     } else if (typeCastNode.value().type() instanceof BoolType) {
-      return bitsType.bitWidth() - 1;
+      return bitsType - 1;
     }
 
     throw new ViamError("not implemented for other types");
@@ -182,25 +191,50 @@ public class Z3CodeGeneratorVisitor implements GraphNodeVisitor {
    * source type's. We slice with the {@code Extract} function.
    * 3. The difference is zero. Then, no casting or slicing is required.
    *
-   * @param relativeBitSizeDifference is the difference between the bit sizes of the target type and
-   *                                  source type.
-   * @param z3CastingOperation        defines the z3 function: whether sign extend or zero extend.
-   * @param typeCastNode              is the {@link Node} which should be visited next.
-   * @param targetBitSize             is the absolute bit size of the target type.
+   * @param z3CastingOperation defines the z3 function: whether sign extend or zero extend.
+   * @param typeCastNode       is the {@link Node} which should be visited next.
+   * @param targetBitSize      is the absolute bit size of the target type.
    */
-  private void typeCast(int relativeBitSizeDifference, String z3CastingOperation,
+  private void typeCast(String z3CastingOperation,
                         TypeCastNode typeCastNode, int targetBitSize) {
+    // `relativeBitSizeDifference` is the difference between the bit sizes of the target type
+    // and source type because z3 works with relative values.
+    int relativeBitSizeDifference = getBitwidthDifference(typeCastNode, targetBitSize);
+
     if (relativeBitSizeDifference > 0) {
-      writer.write(z3CastingOperation + relativeBitSizeDifference + ", ");
-      visit(typeCastNode.value());
-      writer.write(")");
+      upcastType(relativeBitSizeDifference, z3CastingOperation, typeCastNode, targetBitSize);
     } else if (relativeBitSizeDifference < 0) {
-      writer.write("Extract(" + (targetBitSize - 1) + ", 0, ");
-      visit(typeCastNode.value());
-      writer.write(")");
+      downcastType(typeCastNode, targetBitSize);
     } else {
+      // Otherwise, no casting required
       visit(typeCastNode.value());
     }
+  }
+
+
+  private void upcastType(int relativeBitSizeDifference, String z3CastingOperation,
+                          TypeCastNode typeCastNode, int targetBitSize) {
+    writer.write(z3CastingOperation + relativeBitSizeDifference + ", ");
+    var requiresBoolConversion = typeCastNode.value().type() instanceof BoolType &&
+        !(typeCastNode.castType() instanceof BoolType);
+    if (requiresBoolConversion) {
+      // z3 cannot handle implicit typecasts
+      // we need to do it ourselves
+      writer.write("If(");
+      visit(typeCastNode.value());
+      writer.write(
+          String.format(", BitVecVal(1, %s), BitVecVal(0, %s))", targetBitSize, targetBitSize));
+    } else {
+      // No implicit bool casting required
+      visit(typeCastNode.value());
+    }
+    writer.write(")");
+  }
+
+  private void downcastType(TypeCastNode typeCastNode, int targetBitSize) {
+    writer.write("Extract(" + (targetBitSize - 1) + ", 0, ");
+    visit(typeCastNode.value());
+    writer.write(")");
   }
 
   @Override
