@@ -53,8 +53,11 @@ public class Z3CodeGeneratorVisitor implements GraphNodeVisitor {
           bitsType.bitWidth()));
     } else if (node.constant() instanceof Constant.Value value &&
         value.type() instanceof BoolType) {
-      writer.write(String.format("BitVecVal(%d, 1)",
-          value.intValue()));
+      if (value.bool()) {
+        writer.write("True");
+      } else {
+        writer.write("False");
+      }
     } else {
       throw new ViamError("not implemented");
     }
