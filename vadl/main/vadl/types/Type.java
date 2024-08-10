@@ -114,7 +114,7 @@ public abstract class Type {
    * @param types the subtypes of the tuple
    * @return the tuple type with the specified subtypes
    */
-  public static TupleType tuple(DataType... types) {
+  public static TupleType tuple(Type... types) {
     var hashCode = Arrays.hashCode(types);
     return tupleTypes
         .computeIfAbsent(hashCode, k -> new TupleType(types));

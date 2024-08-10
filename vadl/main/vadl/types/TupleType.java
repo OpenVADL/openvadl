@@ -8,30 +8,30 @@ import java.util.stream.Stream;
 /**
  * A class that represents a tuple type in VADL containing a list of subtypes.
  */
-public class TupleType extends DataType {
+public class TupleType extends Type {
 
-  private final List<DataType> types;
+  private final List<Type> types;
 
-  protected TupleType(DataType... types) {
+  protected TupleType(Type... types) {
     this.types = Arrays.asList(types);
   }
 
-  public DataType first() {
+  public Type first() {
     // TODO: Ensure
     return types.get(0);
   }
 
-  public DataType last() {
+  public Type last() {
     // TODO: Ensure
     return types.get(types.size() - 1);
   }
 
-  public DataType get(int i) {
+  public Type get(int i) {
     // TODO: Ensure
     return types.get(0);
   }
 
-  public Stream<DataType> types() {
+  public Stream<Type> types() {
     return types.stream();
   }
 
@@ -46,9 +46,9 @@ public class TupleType extends DataType {
         .collect(Collectors.joining(", ")));
   }
 
-  @Override
-  public int bitWidth() {
-    return types().mapToInt(DataType::bitWidth).sum();
-  }
+//  @Override
+//  public int bitWidth() {
+//    return types().mapToInt(DataType::bitWidth).sum();
+//  }
 
 }

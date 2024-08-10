@@ -6,7 +6,6 @@ package vadl.types;
  *
  * @see BitsType
  * @see BoolType
- * @see TupleType
  */
 public abstract class DataType extends Type {
 

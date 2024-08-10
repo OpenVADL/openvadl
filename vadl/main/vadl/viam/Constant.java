@@ -929,8 +929,8 @@ public abstract class Constant {
       this(values,
           TupleType.tuple(
               values.stream()
-                  .map(e -> (DataType) e.type)
-                  .toArray(DataType[]::new)
+                  .map(e -> e.type)
+                  .toArray(Type[]::new)
           )
       );
     }
