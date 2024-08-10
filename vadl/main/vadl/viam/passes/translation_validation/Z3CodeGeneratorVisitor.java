@@ -3,6 +3,7 @@ package vadl.viam.passes.translation_validation;
 import java.io.StringWriter;
 import java.util.Objects;
 import vadl.types.BitsType;
+import vadl.types.BoolType;
 import vadl.types.BuiltInTable;
 import vadl.types.SIntType;
 import vadl.types.UIntType;
@@ -127,20 +128,28 @@ public class Z3CodeGeneratorVisitor implements GraphNodeVisitor {
   @Override
   public void visit(TypeCastNode typeCastNode) {
     if (typeCastNode.castType() instanceof UIntType uint) {
-      var width = uint.bitWidth()
-          - ((BitsType) typeCastNode.value().type()).bitWidth();
+      var width = getWidth(typeCastNode, uint);
       typeCast(width, "ZeroExt(", typeCastNode, uint.bitWidth());
     } else if (typeCastNode.castType() instanceof SIntType sint) {
-      var width = sint.bitWidth()
-          - ((BitsType) typeCastNode.value().type()).bitWidth();
+      var width = getWidth(typeCastNode, sint);
       typeCast(width, "SignExt(", typeCastNode, sint.bitWidth());
     } else if (typeCastNode.castType() instanceof BitsType bitsType) {
-      var width = bitsType.bitWidth()
-          - ((BitsType) typeCastNode.value().type()).bitWidth();
+      var width = getWidth(typeCastNode, bitsType);
       typeCast(width, "SignExt(", typeCastNode, bitsType.bitWidth());
     } else {
       throw new RuntimeException("not supported type");
     }
+  }
+
+  private static int getWidth(TypeCastNode typeCastNode, BitsType bitsType) {
+    if (typeCastNode.value().type() instanceof BitsType valBitsType) {
+      return bitsType.bitWidth()
+          - valBitsType.bitWidth();
+    } else if (typeCastNode.value().type() instanceof BoolType) {
+      return bitsType.bitWidth() - 1;
+    }
+
+    throw new ViamError("not implemented for other types");
   }
 
   /**
