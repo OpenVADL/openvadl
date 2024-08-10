@@ -1,12 +1,35 @@
 package vadl.viam.graph.dependency;
 
+import vadl.types.DataType;
 import vadl.types.Type;
 import vadl.viam.graph.Node;
 
+/**
+ * Represents a truncation of the node's value the assigned type.
+ * This node is constructed during the
+ * {@link vadl.viam.passes.typeCastElimination.TypeCastEliminationPass}.
+ *
+ * @see vadl.viam.passes.typeCastElimination.TypeCastEliminator
+ */
 public class TruncateNode extends UnaryNode {
 
-  public TruncateNode(ExpressionNode value, Type type) {
+  public TruncateNode(ExpressionNode value, DataType type) {
     super(value, type);
+  }
+
+  @Override
+  public void verifyState() {
+    super.verifyState();
+
+    ensure(super.type() instanceof DataType, "Type must be a data type");
+    ensure(value.type() instanceof DataType, "Value must be a data type");
+    ensure(((DataType) value.type()).bitWidth() >= type().bitWidth(),
+        "Value's type bit-width must be greater or equal node's type");
+  }
+
+  @Override
+  public DataType type() {
+    return (DataType) super.type();
   }
 
   @Override

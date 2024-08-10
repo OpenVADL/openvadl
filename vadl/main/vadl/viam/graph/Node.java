@@ -73,6 +73,9 @@ public abstract class Node {
     this.sourceLocation = sourceLocation;
   }
 
+  /**
+   * Sets the source location of the node if it wasn't already set.
+   */
   public void setSourceLocationIfNotSet(SourceLocation sourceLocation) {
     if (this.sourceLocation == SourceLocation.INVALID_SOURCE_LOCATION) {
       this.sourceLocation = sourceLocation;

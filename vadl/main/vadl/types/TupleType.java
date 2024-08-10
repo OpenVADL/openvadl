@@ -46,9 +46,4 @@ public class TupleType extends Type {
         .collect(Collectors.joining(", ")));
   }
 
-//  @Override
-//  public int bitWidth() {
-//    return types().mapToInt(DataType::bitWidth).sum();
-//  }
-
 }

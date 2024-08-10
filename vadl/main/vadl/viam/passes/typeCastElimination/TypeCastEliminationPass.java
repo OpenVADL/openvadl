@@ -10,6 +10,11 @@ import vadl.utils.ViamUtils;
 import vadl.viam.Specification;
 import vadl.viam.WithBehavior;
 
+/**
+ * Runs the type cast elimination on ALL behaviors in the given VIAM specification.
+ *
+ * @see TypeCastEliminator
+ */
 public class TypeCastEliminationPass extends Pass {
   @Override
   public PassName getName() {

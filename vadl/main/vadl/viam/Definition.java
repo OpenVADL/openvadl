@@ -40,12 +40,19 @@ public abstract class Definition {
    * Verifies the definition's state and properties.
    *
    * <p>This method should be overridden by all definitions that require some
-   * verification.</p>
+   * verification. It is called by the {@link vadl.viam.passes.verification.ViamVerifier}.</p>
+   *
+   * @see vadl.viam.passes.verification.ViamVerificationPass
+   * @see vadl.viam.passes.verification.ViamVerifier
    */
   public void verify() {
 
   }
 
+  /**
+   * Ensures that the condition is true. Otherwise, it will throw an error with the
+   * definition's context.
+   */
   @FormatMethod
   @Contract("false, _, _-> fail")
   public void ensure(boolean condition, String message, Object... args) {

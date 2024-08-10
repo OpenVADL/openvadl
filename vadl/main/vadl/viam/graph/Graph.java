@@ -401,6 +401,10 @@ public class Graph {
   }
 
 
+  /**
+   * Ensures the condition. If the condition is not met, it will throw an error with
+   * the Graph's context.
+   */
   @FormatMethod
   public void ensure(boolean condition, @FormatString String fmt, Object... args) {
     if (!condition) {
