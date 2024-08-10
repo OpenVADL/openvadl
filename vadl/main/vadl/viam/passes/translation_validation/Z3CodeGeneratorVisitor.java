@@ -46,10 +46,15 @@ public class Z3CodeGeneratorVisitor implements GraphNodeVisitor {
 
   @Override
   public void visit(ConstantNode node) {
-    if (node.constant() instanceof Constant.Value) {
+    if (node.constant() instanceof Constant.Value value &&
+        value.type() instanceof BitsType bitsType) {
       writer.write(String.format("BitVecVal(%d, %d)",
-          ((Constant.Value) node.constant()).intValue(),
-          ((BitsType) node.constant().type()).bitWidth()));
+          value.intValue(),
+          bitsType.bitWidth()));
+    } else if (node.constant() instanceof Constant.Value value &&
+        value.type() instanceof BoolType) {
+      writer.write(String.format("BitVecVal(%d, 1)",
+          value.intValue()));
     } else {
       throw new ViamError("not implemented");
     }
@@ -58,24 +63,37 @@ public class Z3CodeGeneratorVisitor implements GraphNodeVisitor {
 
   @Override
   public void visit(BuiltInCall node) {
-    if (node.builtIn() == BuiltInTable.NEG) {
-      writer.write("(");
-      writer.write("-1 * ");
-      visit(node.arguments().get(0));
-      writer.write(")");
-    } else {
-      node.ensure(node.arguments().size() > 1,
-          "This method only works for more than 1 arguments");
-      for (int i = 0; i < node.arguments().size(); i++) {
-        visit(node.arguments().get(i));
+    var operator = Z3BuiltinTranslationMap.lower(node.builtIn());
 
-        // The last argument should not emit an operand.
-        if (i < node.arguments().size() - 1) {
-          if (node.builtIn() == BuiltInTable.EQU) {
-            writer.write(" == ");
-          } else {
-            writer.write(" " + node.builtIn().operator() + " ");
+    switch (operator.right()) {
+      case INFIX -> {
+        node.ensure(node.arguments().size() > 1,
+            "This method only works for more than 1 arguments");
+        for (int i = 0; i < node.arguments().size(); i++) {
+          visit(node.arguments().get(i));
+
+          // The last argument should not emit an operand.
+          if (i < node.arguments().size() - 1) {
+            writer.write(" " + operator.left().value() + " ");
           }
+        }
+      }
+      case PREFIX -> {
+        if (node.arguments().size() == 1) {
+          writer.write(operator.left().value() + "(");
+          visit(node.arguments().get(0));
+          writer.write(operator.left().value() + ")");
+        } else {
+          writer.write(operator.left().value() + "(");
+          for (int i = 0; i < node.arguments().size(); i++) {
+            visit(node.arguments().get(i));
+
+            // The last argument should not emit a comma
+            if (i < node.arguments().size() - 1) {
+              writer.write(", ");
+            }
+          }
+          writer.write(")");
         }
       }
     }

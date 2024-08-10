@@ -17,6 +17,7 @@ import vadl.viam.Specification;
 import vadl.viam.passes.algebraic_simplication.AlgebraicSimplificationPass;
 import vadl.viam.passes.translation_validation.ExplicitBitSizesInTypingPass;
 import vadl.viam.passes.translation_validation.TranslationValidation;
+import vadl.viam.passes.translation_validation.WrapBooleanPass;
 
 public class AlgebraicSimplificationTest extends DockerExecutionTest {
   private static final Logger logger = LoggerFactory.getLogger(AlgebraicSimplificationTest.class);
@@ -35,6 +36,10 @@ public class AlgebraicSimplificationTest extends DockerExecutionTest {
   Collection<DynamicTest> instructions() throws IOException {
     var initialSpec = runAndGetViamSpecification("examples/rv3264im.vadl");
     var spec = runAndGetViamSpecification("examples/rv3264im.vadl");
+
+    // Conditionals need to return BitVec and not Boolean
+    new WrapBooleanPass().execute(Collections.emptyMap(), initialSpec);
+    new WrapBooleanPass().execute(Collections.emptyMap(), spec);
 
     // Add explicit bit sizes
     new ExplicitBitSizesInTypingPass().execute(Collections.emptyMap(), initialSpec);

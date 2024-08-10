@@ -85,24 +85,6 @@ public class TranslationValidation {
         .toList();
   }
 
-  private String getHumanReadableName(Node node) {
-    if (node instanceof ReadRegNode n) {
-      return n.register().identifier.simpleName();
-    } else if (node instanceof ReadRegFileNode n) {
-      return n.registerFile().identifier.simpleName();
-    } else if (node instanceof FuncParamNode n) {
-      return n.parameter().identifier.simpleName();
-    } else if (node instanceof FuncCallNode n) {
-      return n.function().identifier.simpleName();
-    } else if (node instanceof FieldRefNode n) {
-      return n.formatField().identifier.simpleName();
-    } else if (node instanceof FieldAccessRefNode n) {
-      return n.fieldAccess().identifier.simpleName();
-    }
-
-    throw new ViamError("Human Readable Labelling not implemented");
-  }
-
   private String getZ3Type(String name, Type type) {
     if (type instanceof BitsType bits) {
       return String.format("BitVec('%s', %s)", name, bits.bitWidth());
