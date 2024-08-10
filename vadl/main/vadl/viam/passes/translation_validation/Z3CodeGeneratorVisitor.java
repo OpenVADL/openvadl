@@ -7,6 +7,7 @@ import vadl.types.BuiltInTable;
 import vadl.types.SIntType;
 import vadl.types.UIntType;
 import vadl.viam.Constant;
+import vadl.viam.Memory;
 import vadl.viam.ViamError;
 import vadl.viam.graph.GraphNodeVisitor;
 import vadl.viam.graph.Node;
@@ -91,13 +92,36 @@ public class Z3CodeGeneratorVisitor implements GraphNodeVisitor {
 
   @Override
   public void visit(WriteMemNode writeMemNode) {
-    var mem = writeMemNode.memory().identifier.simpleName();
-    writer.write("Store(" + mem + ", ");
+    // Z3's theory of array defines only `Store` for one position.
+    // Usually, the memory will be defined for a byte. So writing
+    // multiple bytes requires recursion.
     writeMemNode.ensureNonNull(writeMemNode.address(), "Address must not be null");
-    visit(Objects.requireNonNull(writeMemNode.address()));
-    writer.write(", ");
-    visit(writeMemNode.value());
-    writer.write(")");
+    writeMultipleBytes(writeMemNode.memory(), writeMemNode.address(), writeMemNode.value(),
+        writeMemNode.words(), 0, 0);
+  }
+
+  private void writeMultipleBytes(Memory memory, ExpressionNode address, ExpressionNode value,
+                                  int words, int wordsWritten, int low) {
+    var mem = memory.identifier.simpleName();
+    var hi = low + memory.wordSize() - 1;
+    if (words == 1) {
+      writer.write("Store(" + mem + ", ");
+      visit(Objects.requireNonNull(address));
+      writer.write(" + " + wordsWritten + ", ");
+      writer.write("Extract(" + hi + ", " + low + ", ");
+      visit(value);
+      writer.write("))");
+    } else if (words > 1) {
+      writer.write("Store(");
+      writeMultipleBytes(memory, address, value, words - 1, wordsWritten + 1,
+          low + memory.wordSize());
+      writer.write(", ");
+      visit(Objects.requireNonNull(address));
+      writer.write(" + " + wordsWritten + ", ");
+      writer.write("Extract(" + hi + ", " + low + ", ");
+      visit(value);
+      writer.write("))");
+    }
   }
 
   @Override
