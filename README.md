@@ -23,6 +23,8 @@ We are using Checkstyle to ensure a consistent format and documentation of the s
 Install the Checkstyle plugin for your IDE and import our Checkstyle configuration.
 The configuration is located under `config/checkstyle/checkstyle.xml`.
 
+To locally test if the checkstyle CI pipeline would fail, run the `checkstyleAll` gradle task.
+
 #### Using Intellij
 
 To use the Checkstyle confirm IntelliJ code style follow these steps:

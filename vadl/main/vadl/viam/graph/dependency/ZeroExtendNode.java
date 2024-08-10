@@ -1,8 +1,6 @@
 package vadl.viam.graph.dependency;
 
 import vadl.types.DataType;
-import vadl.types.SIntType;
-import vadl.types.Type;
 import vadl.viam.graph.Node;
 
 /**
