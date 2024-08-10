@@ -6,6 +6,7 @@ import static vadl.test.TestUtils.findDefinitionByNameIn;
 import static vadl.utils.GraphUtils.getSingleNode;
 
 import java.io.IOException;
+import java.util.List;
 import java.util.Map;
 import java.util.stream.Stream;
 import org.junit.jupiter.api.BeforeAll;
@@ -16,7 +17,10 @@ import org.junit.jupiter.params.provider.MethodSource;
 import vadl.test.AbstractTest;
 import vadl.test.TestFrontend;
 import vadl.types.BuiltInTable;
+import vadl.utils.ViamUtils;
+import vadl.viam.Definition;
 import vadl.viam.Function;
+import vadl.viam.Specification;
 import vadl.viam.graph.Graph;
 import vadl.viam.graph.control.ReturnNode;
 import vadl.viam.graph.control.StartNode;
@@ -56,21 +60,7 @@ public class TypeCastEliminationPassTest extends AbstractTest {
   }
 
   static Stream<Arguments> testTrivial_Source() {
-    return Stream.of(
-        Arguments.of("Trivial_Bits_Bits"),
-        Arguments.of("Trivial_SInt_Bits"),
-        Arguments.of("Trivial_UInt_Bits"),
-        Arguments.of("Trivial_Bool_Bits"),
-        Arguments.of("Trivial_Bits_UInt"),
-        Arguments.of("Trivial_SInt_UInt"),
-        Arguments.of("Trivial_UInt_UInt"),
-        Arguments.of("Trivial_Bool_UInt"),
-        Arguments.of("Trivial_Bits_SInt"),
-        Arguments.of("Trivial_SInt_SInt"),
-        Arguments.of("Trivial_UInt_SInt"),
-        Arguments.of("Trivial_Bool_SInt"),
-        Arguments.of("Trivial_Sint_Uint_Bits")
-    );
+    return findFuncNameArgumentsByPrefix("Trivial_", validFrontend.getViam());
   }
 
   @ParameterizedTest
@@ -82,9 +72,7 @@ public class TypeCastEliminationPassTest extends AbstractTest {
   }
 
   static Stream<Arguments> testTruncate_Source() {
-    return Stream.of(
-        Arguments.of("Truncate_SInt10_SInt5")
-    );
+    return findFuncNameArgumentsByPrefix("Truncate_", validFrontend.getViam());
   }
 
   @ParameterizedTest
@@ -98,9 +86,7 @@ public class TypeCastEliminationPassTest extends AbstractTest {
   }
 
   static Stream<Arguments> testZeroExtend_Source() {
-    return Stream.of(
-        Arguments.of("ZeroExtend_SInt10_UInt20")
-    );
+    return findFuncNameArgumentsByPrefix("ZeroExtend_", validFrontend.getViam());
   }
 
 
@@ -115,12 +101,7 @@ public class TypeCastEliminationPassTest extends AbstractTest {
   }
 
   static Stream<Arguments> testSignedExtend_Source() {
-    return Stream.of(
-        Arguments.of("SignExtend_SInt_SInt"),
-        Arguments.of("SignExtend_Bits_SInt"),
-        Arguments.of("SignExtend_UInt_SInt"),
-        Arguments.of("SignExtend_Bool_SInt")
-    );
+    return findFuncNameArgumentsByPrefix("SignExtend_", validFrontend.getViam());
   }
 
 
@@ -141,13 +122,7 @@ public class TypeCastEliminationPassTest extends AbstractTest {
   }
 
   static Stream<Arguments> testBoolCast_Source() {
-    return Stream.of(
-        Arguments.of("BoolCast_Bits1"),
-        Arguments.of("BoolCast_SInt1"),
-        Arguments.of("BoolCast_UInt1"),
-        Arguments.of("BoolCast_Bool1"),
-        Arguments.of("BoolCast_SInt10")
-    );
+    return findFuncNameArgumentsByPrefix("BoolCast_", validFrontend.getViam());
   }
 
   @Test
@@ -172,5 +147,15 @@ public class TypeCastEliminationPassTest extends AbstractTest {
     return behavior;
   }
 
+  private static Stream<Arguments> findFuncNameArgumentsByPrefix(String prefix,
+                                                                 Specification spec) {
+    return
+        ViamUtils.findDefinitionByFilter(spec,
+                (def) -> def.identifier.name().startsWith(prefix)
+                    && def instanceof Function)
+            .stream()
+            .map(Definition::name)
+            .map(Arguments::of);
+  }
 
 }
