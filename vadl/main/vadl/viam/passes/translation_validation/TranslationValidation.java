@@ -172,7 +172,7 @@ public class TranslationValidation {
 
           return String.format("%s == %s", beforeTranslationSymbol, afterTranslationSymbol);
         })
-        .collect(Collectors.joining("&&"));
+        .reduce("True", (f, element) -> String.format("And(%s, %s)", f, element));
   }
 
   private String getPredicates(List<TranslationResult> matchings) {
