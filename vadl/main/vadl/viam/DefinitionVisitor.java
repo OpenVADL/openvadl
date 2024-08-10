@@ -36,6 +36,8 @@ public interface DefinitionVisitor {
 
   void visit(Memory memory);
 
+  void visit(Relocation relocation);
+
   /**
    * DefinitionVisitor.Recursive is an abstract class that implements the DefinitionVisitor
    * interface.
@@ -195,6 +197,15 @@ public interface DefinitionVisitor {
     public void visit(Memory memory) {
       beforeTraversal(memory);
       afterTraversal(memory);
+    }
+
+    @Override
+    public void visit(Relocation relocation) {
+      beforeTraversal(relocation);
+      for (var param : relocation.parameters()) {
+        param.accept(this);
+      }
+      afterTraversal(relocation);
     }
   }
 
