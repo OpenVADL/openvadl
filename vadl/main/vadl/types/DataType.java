@@ -50,13 +50,13 @@ public abstract class DataType extends Type {
   }
 
   /**
-   * Checks if this type can be implicitly cast to another type,
+   * Checks if this type can be trivially cast to another type,
    * such that the bit representation must not be changed in any way.
    *
    * @param other the type to potentially cast to.
    * @return true if it is possible, false otherwise
    */
-  public final boolean isImplicitlyCastTo(Type other) {
+  public final boolean isTrivialCastTo(Type other) {
     if (other instanceof DataType otherDataType) {
       var sameLength = otherDataType.bitWidth() == bitWidth();
       return sameLength && (other instanceof BitsType || other instanceof BoolType);

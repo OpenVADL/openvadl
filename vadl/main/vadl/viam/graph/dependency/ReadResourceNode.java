@@ -46,11 +46,6 @@ public abstract class ReadResourceNode extends ExpressionNode {
     super.verifyState();
     var resource = resourceDefinition();
 
-    ensure(resource.resultType().canBeCastTo(type()),
-        "Mismatching resource type. Resource's result type (%s) "
-        + "cannot be cast to node's type (%s).",
-        resource.resultType(), type());
-
     ensure(resource.hasAddress() == hasAddress(),
         "Resource takes address but this node has no address node.");
 
@@ -60,8 +55,8 @@ public abstract class ReadResourceNode extends ExpressionNode {
       Objects.requireNonNull(resAddrType); // just to satisfy errorprone
       ensure(addressType instanceof DataType,
           "Address must be a DataValue, was %s", address.type());
-      ensure(((DataType) addressType).canBeCastTo(resAddrType),
-          "Address value cannot be cast to resource's address type. %s vs %s",
+      ensure(((DataType) addressType).isTrivialCastTo(resAddrType),
+          "Address value cannot be trivially cast to resource's address type. %s vs %s",
           resource.addressType(), addressType);
     }
   }

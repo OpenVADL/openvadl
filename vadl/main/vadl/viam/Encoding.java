@@ -147,7 +147,7 @@ public class Encoding extends Definition {
     @Override
     public void verify() {
       super.verify();
-      ensure(constant.type().canBeCastTo(formatField.type()),
+      ensure(constant.type().isTrivialCastTo(formatField.type()),
           "Constant is of type %s, but format field is of type %s which cannot be cast implicit",
           constant.type(),
           formatField.type());

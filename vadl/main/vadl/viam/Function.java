@@ -60,6 +60,7 @@ public class Function extends Definition implements WithBehavior {
     var returnNode = behavior().getNodes(ReturnNode.class).findFirst().get();
     ensure(returnNode.value().type() == returnType,
         "The function's behavior does not return same type as signature suggests: %s", returnType);
+    behavior.verify();
   }
 
   public Graph behavior() {

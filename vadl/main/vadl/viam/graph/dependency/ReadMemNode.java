@@ -35,8 +35,6 @@ public class ReadMemNode extends ReadResourceNode {
     super(address, type);
     this.memory = memory;
     this.words = words;
-
-    verifyState();
   }
 
   @Override

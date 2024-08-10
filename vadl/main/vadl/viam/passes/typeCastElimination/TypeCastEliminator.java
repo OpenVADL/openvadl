@@ -27,18 +27,19 @@ import vadl.viam.graph.dependency.ZeroExtendNode;
  * The rules are checked in the following order, and the first matching rule is
  * applied, while no further rule will be checked.
  * So the list can be seen as {@code else if} statements.
+ * If the target type ...
  * <ol>
- * <li>If the target type has the <b>same bit representation</b> as the source type,
+ * <li>has the <b>same bit representation</b> as the source type,
  * the type cast is removed without a replacement. However, the result type of the source node
- * is changed to the target type. See {@link DataType#isImplicitlyCastTo(Type)}
+ * is changed to the target type. See {@link DataType#isTrivialCastTo(Type)}
  * for an more concrete definition of nodes with <i>same bit representations</i>.</li>
- * <li>If the target type has a <b>smaller bit-width</b> than the source type,
+ * <li>has a <b>smaller bit-width</b> than the source type,
  * the type cast is replaced by a {@link TruncateNode}. The result type of the new node
  * will have the same type as the target type.</li>
- * <li>If the target type is a signed integer ({@code SInt}) and the source type is either
+ * <li>is a signed integer ({@code SInt}) and the source type is either
  * a signed integer or a bits type ({@code Bits}), the node will be replaced by
  * a {@link SignExtendNode}.</li>
- * <li>If the target type is a unsigned integer, signed integer or bits ({@code SInt, Bits}),
+ * <li>is a unsigned integer, signed integer or bits ({@code SInt, Bits}),
  * the node will be replaced by a {@link ZeroExtendNode}.</li>
  * </ol>
  *
@@ -96,7 +97,7 @@ public class TypeCastEliminator implements GraphVisitor<Object> {
     ExpressionNode replacement = null;
 
     // check the different rules and apply them accordingly
-    if (inputType.isImplicitlyCastTo(castType)) {
+    if (inputType.isTrivialCastTo(castType)) {
       // match 1. rule: same bit representation
       // -> set the cast type as type of the source node
       source.setType(castType);

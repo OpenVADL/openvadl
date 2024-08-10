@@ -70,7 +70,7 @@ public abstract class WriteResourceNode extends SideEffectNode {
       Objects.requireNonNull(resAddrType); // just to satisfy errorprone
       ensure(addressType instanceof DataType,
           "Address must be a DataValue, was %s", address.type());
-      ensure(((DataType) addressType).canBeCastTo(resAddrType),
+      ensure(((DataType) addressType).isTrivialCastTo(resAddrType),
           "Address value cannot be cast to resource's address type. %s vs %s",
           resource.addressType(), addressType);
     }

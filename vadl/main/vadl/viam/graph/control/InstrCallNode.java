@@ -83,7 +83,8 @@ public class InstrCallNode extends DirectionalNode {
     ensure(
         IntStream.range(0, paramFields.size() - 1)
             .allMatch(
-                i -> ((DataType) arguments.get(i).type()).canBeCastTo(paramFields.get(i).type())),
+                i -> ((DataType) arguments.get(i).type()).isTrivialCastTo(
+                    paramFields.get(i).type())),
         "Parameter fields do not match concrete argument fields"
     );
   }
@@ -119,7 +120,7 @@ public class InstrCallNode extends DirectionalNode {
     return new InstrCallNode(target, paramFields,
         new NodeList<>(this.arguments().stream().map(x -> (ExpressionNode) x.copy()).toList()));
   }
-  
+
   @Override
   public Node shallowCopy() {
     return new InstrCallNode(target, paramFields, arguments);

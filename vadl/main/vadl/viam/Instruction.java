@@ -55,6 +55,13 @@ public class Instruction extends Definition implements WithBehavior {
   }
 
   @Override
+  public void verify() {
+    super.verify();
+
+    behavior.verify();
+  }
+
+  @Override
   public String toString() {
     return identifier.name() + ": " + format().identifier.name();
   }
