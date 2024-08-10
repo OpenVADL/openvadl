@@ -18,20 +18,4 @@ public class BoolType extends DataType {
     return 1;
   }
 
-  @Override
-  public boolean canBeCastTo(DataType other) {
-    if (this == other) {
-      return true;
-    }
-
-    // Bool ==> Bits<1>
-    if (other.getClass() == BoolType.class) {
-      return other.bitWidth() == 1;
-    }
-
-    // as Bool can be cast to Bits<1>
-    // all Bits<1> casting rules apply to Bool
-    // TODO: Check if this is valid
-    return Type.bits(1).canBeCastTo(other);
-  }
 }
