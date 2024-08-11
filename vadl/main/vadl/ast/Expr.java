@@ -24,6 +24,8 @@ interface ExprVisitor<R> {
 
   R visit(BinaryLiteral expr);
 
+  R visit(BoolLiteral expr);
+
   R visit(StringLiteral expr);
 
   R visit(PlaceholderExpr expr);
@@ -487,7 +489,7 @@ class UnaryExpr extends Expr {
   }
 }
 
-final class IntegerLiteral extends Expr implements ValOrPlaceholder {
+class IntegerLiteral extends Expr {
   String token;
   long number;
   SourceLocation loc;
@@ -548,7 +550,7 @@ final class IntegerLiteral extends Expr implements ValOrPlaceholder {
   }
 }
 
-final class BinaryLiteral extends Expr implements ValOrPlaceholder {
+class BinaryLiteral extends Expr {
   String token;
   long number;
   SourceLocation loc;
@@ -616,6 +618,59 @@ final class BinaryLiteral extends Expr implements ValOrPlaceholder {
   }
 }
 
+class BoolLiteral extends Expr {
+  boolean value;
+  SourceLocation loc;
+
+  BoolLiteral(boolean value, SourceLocation loc) {
+    this.value = value;
+    this.loc = loc;
+  }
+
+  @Override
+  SourceLocation location() {
+    return loc;
+  }
+
+  @Override
+  SyntaxType syntaxType() {
+    return BasicSyntaxType.Bool();
+  }
+
+  @Override
+  public void prettyPrint(int indent, StringBuilder builder) {
+    builder.append(value);
+  }
+
+  @Override
+  <R> R accept(ExprVisitor<R> visitor) {
+    return visitor.visit(this);
+  }
+
+  @Override
+  public String toString() {
+    return "%s literal: %s".formatted(this.getClass().getSimpleName(), value);
+  }
+
+  @Override
+  public boolean equals(Object o) {
+    if (this == o) {
+      return true;
+    }
+    if (o == null || getClass() != o.getClass()) {
+      return false;
+    }
+
+    BoolLiteral that = (BoolLiteral) o;
+    return value == that.value;
+  }
+
+  @Override
+  public int hashCode() {
+    return Boolean.hashCode(value);
+  }
+}
+
 class StringLiteral extends Expr {
   String token;
   String value;
@@ -675,16 +730,12 @@ sealed interface IdentifierOrPlaceholder permits Identifier, PlaceholderExpr {
   void prettyPrint(int indent, StringBuilder builder);
 }
 
-sealed interface ValOrPlaceholder permits IntegerLiteral, BinaryLiteral, PlaceholderExpr {
-  void prettyPrint(int indent, StringBuilder builder);
-}
-
 /**
  * An internal temporary placeholder node inside model definitions.
  * This node should never leave the parser.
  */
-final class PlaceholderExpr extends Expr implements IdentifierOrPlaceholder, ValOrPlaceholder,
-    OperatorOrPlaceholder, TypeLiteralOrPlaceholder {
+final class PlaceholderExpr extends Expr implements IdentifierOrPlaceholder,
+    OperatorOrPlaceholder, TypeLiteralOrPlaceholder, FieldEncodingsOrPlaceholder {
   IsId identifierPath;
   SourceLocation loc;
 
@@ -795,10 +846,12 @@ class MacroInstanceExpr extends Expr {
  * A group expression.
  */
 class GroupExpr extends Expr {
-  Expr inner;
+  List<Expr> expressions;
+  SourceLocation loc;
 
-  public GroupExpr(Expr expression) {
-    this.inner = expression;
+  public GroupExpr(List<Expr> expressions, SourceLocation loc) {
+    this.expressions = expressions;
+    this.loc = loc;
   }
 
   @Override
@@ -809,21 +862,26 @@ class GroupExpr extends Expr {
 
   @Override
   SourceLocation location() {
-    return inner.location();
+    return loc;
   }
 
   @Override
   SyntaxType syntaxType() {
-    return inner.syntaxType();
+    return BasicSyntaxType.Ex();
   }
 
   @Override
   void prettyPrint(int indent, StringBuilder builder) {
-    // This node should never leave the parser and therefore never meet a visitor.
     builder.append("(");
-    inner.prettyPrint(indent, builder);
+    var isFirst = true;
+    for (var expr : expressions) {
+      if (!isFirst) {
+        builder.append(", ");
+      }
+      isFirst = false;
+      expr.prettyPrint(0, builder);
+    }
     builder.append(")");
-
   }
 
   @Override
@@ -836,12 +894,12 @@ class GroupExpr extends Expr {
     }
 
     GroupExpr that = (GroupExpr) o;
-    return inner.equals(that.inner);
+    return expressions.equals(that.expressions);
   }
 
   @Override
   public int hashCode() {
-    return inner.hashCode();
+    return expressions.hashCode();
   }
 }
 

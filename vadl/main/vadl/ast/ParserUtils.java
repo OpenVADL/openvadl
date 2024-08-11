@@ -76,9 +76,6 @@ class ParserUtils {
    */
   static Expr reorderCastExpr(Expr expr, Expr symOrBin) {
     Expr castee = expr instanceof BinaryExpr binExpr ? binExpr.right : expr;
-    if (castee instanceof GroupExpr groupExpr) {
-      castee = groupExpr.inner;
-    }
     if (symOrBin instanceof BinaryExpr binSym) {
       var castExpr = new CastExpr(castee, typeLiteral(binSym.left));
       if (expr instanceof BinaryExpr binExpr) {
@@ -161,6 +158,11 @@ class ParserUtils {
     if (!hasError) {
       for (int i = 0; i < args.size(); i++) {
         var arg = args.get(i);
+        if (arg == null) {
+          // Syntax error during arg parsing - skip
+          hasError = true;
+          continue;
+        }
         var param = macro.params().get(i);
         var argType = arg.syntaxType();
 
@@ -186,12 +188,13 @@ class ParserUtils {
       return unexpanded;
     }
 
-    // FIXME: There should be a real instantiator here
     var expander = new MacroExpander(argMap, parser.symbolTable);
     var body = macro.body();
     if (body instanceof Expr expr) {
       var expanded = expander.expandExpr(expr);
-      return new GroupExpr(expanded);
+      var group = new GroupExpr(new ArrayList<>(), expr.location());
+      group.expressions.add(expanded);
+      return group;
     } else if (body instanceof DefinitionList definitionList) {
       var items = new ArrayList<Definition>(definitionList.items.size());
       for (Definition item : definitionList.items) {

@@ -872,13 +872,17 @@ class InstructionDefinition extends Definition {
   }
 }
 
-class EncodingDefinition extends Definition {
-  final IdentifierOrPlaceholder instrIdentifier;
-  final List<FieldEncoding> fieldEncodings;
-  final SourceLocation loc;
+sealed interface FieldEncodingsOrPlaceholder permits EncodingDefinition.FieldEncodings, PlaceholderExpr {
 
-  EncodingDefinition(IdentifierOrPlaceholder instrIdentifier, List<FieldEncoding> fieldEncodings,
-                     SourceLocation location) {
+}
+
+class EncodingDefinition extends Definition {
+  IdentifierOrPlaceholder instrIdentifier;
+  FieldEncodingsOrPlaceholder fieldEncodings;
+  SourceLocation loc;
+
+  EncodingDefinition(IdentifierOrPlaceholder instrIdentifier,
+                     FieldEncodingsOrPlaceholder fieldEncodings, SourceLocation location) {
     this.instrIdentifier = instrIdentifier;
     this.fieldEncodings = fieldEncodings;
     this.loc = location;
@@ -886,6 +890,10 @@ class EncodingDefinition extends Definition {
 
   Identifier instrId() {
     return (Identifier) instrIdentifier;
+  }
+
+  FieldEncodings fieldEncodings() {
+    return (FieldEncodings) fieldEncodings;
   }
 
   @Override
@@ -904,17 +912,7 @@ class EncodingDefinition extends Definition {
     builder.append(prettyIndentString(indent));
     builder.append("encoding %s =\n".formatted(instrId().name));
     builder.append(prettyIndentString(indent)).append("{ ");
-    boolean first = true;
-    for (FieldEncoding entry : fieldEncodings) {
-      if (!first) {
-        builder.append(prettyIndentString(indent)).append(", ");
-      }
-      entry.field.prettyPrint(0, builder);
-      builder.append(" = ");
-      entry.value.prettyPrint(0, builder);
-      builder.append("\n");
-      first = false;
-    }
+    fieldEncodings().prettyPrint(indent, builder);
     builder.append(prettyIndentString(indent)).append("}\n");
   }
 
@@ -951,21 +949,70 @@ class EncodingDefinition extends Definition {
     return result;
   }
 
+  static final class FieldEncodings extends Node implements FieldEncodingsOrPlaceholder {
+    List<FieldEncoding> encodings;
+
+    FieldEncodings(List<FieldEncoding> encodings) {
+      this.encodings = encodings;
+    }
+
+    @Override
+    SourceLocation location() {
+      return encodings.get(0).field().location()
+          .join(encodings.get(encodings.size() - 1).value().location());
+    }
+
+    @Override
+    SyntaxType syntaxType() {
+      return BasicSyntaxType.Encs();
+    }
+
+    @Override
+    void prettyPrint(int indent, StringBuilder builder) {
+      boolean first = true;
+      for (FieldEncoding entry : encodings) {
+        if (!first) {
+          builder.append(prettyIndentString(indent)).append(", ");
+        }
+        entry.field.prettyPrint(0, builder);
+        builder.append(" = ");
+        entry.value.prettyPrint(0, builder);
+        builder.append("\n");
+        first = false;
+      }
+    }
+
+    @Override
+    public boolean equals(Object o) {
+      if (this == o) {
+        return true;
+      }
+      if (o == null || getClass() != o.getClass()) {
+        return false;
+      }
+      FieldEncodings that = (FieldEncodings) o;
+      return Objects.equals(encodings, that.encodings);
+    }
+
+    @Override
+    public int hashCode() {
+      return Objects.hashCode(encodings);
+    }
+  }
+
   record FieldEncoding(Identifier field, Expr value) {
   }
 }
 
 class AssemblyDefinition extends Definition {
-  final List<IdentifierOrPlaceholder> identifiers;
-  final boolean isMnemonic;
-  final List<Expr> segments;
-  final SourceLocation loc;
+  List<IdentifierOrPlaceholder> identifiers;
+  Expr expr;
+  SourceLocation loc;
 
-  AssemblyDefinition(List<IdentifierOrPlaceholder> identifiers, boolean isMnemonic,
-                     List<Expr> segments, SourceLocation location) {
+  AssemblyDefinition(List<IdentifierOrPlaceholder> identifiers, Expr expr,
+                     SourceLocation location) {
     this.identifiers = identifiers;
-    this.isMnemonic = isMnemonic;
-    this.segments = segments;
+    this.expr = expr;
     this.loc = location;
   }
 
@@ -986,19 +1033,9 @@ class AssemblyDefinition extends Definition {
     builder.append("assembly ");
     builder.append(identifiers.stream().map(id -> ((Identifier) id).name)
         .collect(Collectors.joining(", ")));
-    builder.append(" = (");
-    if (isMnemonic) {
-      builder.append("mnemonic");
-    }
-    var isFirst = !isMnemonic;
-    for (Node node : segments) {
-      if (!isFirst) {
-        builder.append(", ");
-      }
-      node.prettyPrint(indent + 1, builder);
-      isFirst = false;
-    }
-    builder.append(")\n");
+    builder.append(" = ");
+    expr.prettyPrint(indent, builder);
+    builder.append("\n");
   }
 
   @Override
@@ -1023,16 +1060,14 @@ class AssemblyDefinition extends Definition {
     var that = (AssemblyDefinition) o;
     return Objects.equals(annotations, that.annotations)
         && Objects.equals(identifiers, that.identifiers)
-        && isMnemonic == that.isMnemonic
-        && Objects.equals(segments, that.segments);
+        && Objects.equals(expr, that.expr);
   }
 
   @Override
   public int hashCode() {
     int result = Objects.hashCode(annotations);
     result = 31 * result + Objects.hashCode(identifiers);
-    result = 31 * result + Boolean.hashCode(isMnemonic);
-    result = 31 * result + Objects.hashCode(segments);
+    result = 31 * result + Objects.hashCode(expr);
     return result;
   }
 }
@@ -1204,7 +1239,7 @@ class FunctionDefinition extends Definition {
   }
 }
 
-class PlaceholderDefinition extends Definition {
+final class PlaceholderDefinition extends Definition {
 
   IsId identifierPath;
   SourceLocation loc;

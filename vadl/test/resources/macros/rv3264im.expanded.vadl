@@ -245,7 +245,7 @@ instruction set architecture RV3264I = {
   }
   assembly LW = (mnemonic, " ", register(rd), ",", decimal(imm), "(", register(rs1), ")")
   instruction SB : Stype =   let addr = (X(rs1) + immS) in
-    X(0) := X(rs2) as Byte
+    MEM(addr) := X(rs2) as Byte
 
   encoding SB =
   { opcode = 0b010'0011
@@ -253,7 +253,7 @@ instruction set architecture RV3264I = {
   }
   assembly SB = (mnemonic, " ", register(rs2), ",", decimal(imm), "(", register(rs1), ")")
   instruction SH : Stype =   let addr = (X(rs1) + immS) in
-    X(0) := X(rs2) as Byte
+    MEM(addr) := X(rs2) as Byte
 
   encoding SH =
   { opcode = 0b010'0011
@@ -261,7 +261,7 @@ instruction set architecture RV3264I = {
   }
   assembly SH = (mnemonic, " ", register(rs2), ",", decimal(imm), "(", register(rs1), ")")
   instruction SW : Stype =   let addr = (X(rs1) + immS) in
-    X(0) := X(rs2) as Byte
+    MEM(addr) := X(rs2) as Byte
 
   encoding SW =
   { opcode = 0b010'0011
@@ -322,6 +322,16 @@ instruction set architecture RV3264I = {
   , funct3 = 0b110
   }
   assembly BLTU = (mnemonic, " ", register(rs1), ",", register(rs2), ",", decimal(imm))
+  instruction JALR : Itype =   let retaddr = PC.next in
+    {
+      PC := ((X(rs1) + immS) as UInt & 0xffff'fffe)
+      X(rd) := retaddr
+    }
+  encoding JALR =
+  { opcode = 0b110'0111
+  , funct3 = 0b000
+  }
+  assembly JALR = (mnemonic, " ", register(rd), ",", decimal(imm), ("(", register(rs1), ")"))
   instruction ECALL : Itype =   {
   }
   encoding ECALL =
@@ -368,7 +378,7 @@ instruction set architecture RV3264I = {
   }
   assembly LD = (mnemonic, " ", register(rd), ",", decimal(imm), "(", register(rs1), ")")
   instruction SD : Stype =   let addr = (X(rs1) + immS) in
-    X(0) := X(rs2) as Byte
+    MEM(addr) := X(rs2) as Byte
 
   encoding SD =
   { opcode = 0b010'0011

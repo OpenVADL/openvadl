@@ -166,7 +166,7 @@ instruction set architecture RV3264I = {
   model StypeInstr (name : Id, funct3 : Bin, memEx : CallEx, exTy: Id) : IsaDefs = {
     instruction $name : Stype =                        // store instructions
       let addr = X(rs1) + immS in
-        X(0) := X(rs2) as $exTy // TODO revert assignee to $memEx!!!
+        $memEx := X(rs2) as $exTy
     encoding $name = {opcode = 0b010'0011, funct3 = $funct3}
     assembly $name = (mnemonic, " ", register(rs2), ",", decimal(imm), "(", register(rs1), ")")
     }
@@ -179,7 +179,6 @@ instruction set architecture RV3264I = {
     assembly $name = (mnemonic, " ", register(rs1), ",", register(rs2), ",", decimal(imm))
     }
 
-  /* TODO uncomment once Encs support lands
   model JLinkInstr (name : Id, iFormat : Id, reg : Ex, opcode : Encs, asm : Ex) : IsaDefs = {
     instruction $name : $iFormat =                     // jump and link (register)
       let retaddr = PC.next in {
@@ -189,7 +188,6 @@ instruction set architecture RV3264I = {
     encoding $name = {$opcode}
     assembly $name = (mnemonic, " ", register(rd), ",", decimal(imm), $asm)
     }
-  */
 
   model ECallInstr (name : Id, imm : Lit) : IsaDefs = {
     instruction $name : Itype =  {}                    // ecall / ebreak instructions
@@ -234,10 +232,9 @@ instruction set architecture RV3264I = {
   $BtypeInstr (BLT  ; <  ; 0b100 ; SInt)               // branch less than
   $BtypeInstr (BLTU ; <  ; 0b110 ; UInt)               // branch less than unsigned
 
-  // TODO uncomment once Encs support lands
-  //// $JLinkInstr (JAL  ; Jtype ; PC     ; opcode = 0b110'1111 ; "") // jump and link
-  //$JLinkInstr (JALR ; Itype ; X(rs1) ; opcode = 0b110'0111,      // jump and link register
-  //                                     funct3 = 0b000 ; ("(", register(rs1), ")"))
+  // $JLinkInstr (JAL  ; Jtype ; PC     ; opcode = 0b110'1111 ; "") // jump and link
+  $JLinkInstr (JALR ; Itype ; X(rs1) ; opcode = 0b110'0111,      // jump and link register
+                                       funct3 = 0b000 ; ("(", register(rs1), ")"))
 
   $ECallInstr (ECALL ; 0)                              // environment (sys) call
   $ECallInstr (EBREAK; 1)                              // environment (sys) break

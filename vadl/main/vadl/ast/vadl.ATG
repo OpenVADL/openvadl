@@ -1,8 +1,10 @@
 $package=vadl.ast
+import java.util.ArrayDeque;
 import java.util.ArrayList;
+import java.util.Deque;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.HashMap;
 import java.util.Objects;
 
 import vadl.ast.EncodingDefinition.FieldEncoding;
@@ -16,8 +18,8 @@ import static vadl.ast.ParserUtils.*;
 COMPILER vadl
   java.net.URI sourceFile = SourceLocation.INVALID_SOURCE_LOCATION.uri();
   boolean insideMacro = false;
-  boolean insideAnnotation = false;
   boolean disableSymbolChecking = false;
+  Deque<Boolean> disableSymbolStack = new ArrayDeque<>();
   Ast ast = new Ast();
   NestedSymbolTable symbolTable = new NestedSymbolTable();
   Map<String, Identifier> macroOverrides = new HashMap<>();
@@ -34,7 +36,17 @@ COMPILER vadl
 
   boolean isMacroParamType(SyntaxType syntaxType) {
     // TODO Analyze next few tokens do determine syntax type of parameter
-    return scanner.Peek().val.equals("targetReg");
+    var name = scanner.Peek().val;
+    return name.equals("targetReg") || name.equals("memEx");
+  }
+
+  void disableSymbolChecking() {
+    disableSymbolStack.addFirst(disableSymbolChecking);
+    disableSymbolChecking = true;
+  }
+
+  void enableSymbolChecking() {
+    disableSymbolChecking = disableSymbolStack.removeFirst();
   }
 
 CHARACTERS
@@ -82,7 +94,6 @@ TOKENS
   COUNTER = "counter".
   ENCODING = "encoding".
   ASSEMBLY = "assembly".
-  MNEMONIC = "mnemonic".
   MEMORY = "memory".
   REGISTER = "register".
   MODEL = "model".
@@ -93,6 +104,8 @@ TOKENS
   ELSE = "else".
   USING = "using".
   FUNCTION = "function".
+  TRUE = "true".
+  FALSE = "false".
 
   SYM_IN = "in".
   SYM_AS = "as".
@@ -182,9 +195,10 @@ PRODUCTIONS
   )}
   .
 
-  annotations<.out List<Annotation> annotations.> (. annotations = new ArrayList<>(); insideAnnotation = true; .)
-  = { annotation<out Annotation annotation>       (. annotations.add(annotation); .) }
-                                                  (. insideAnnotation = false; .)
+  annotations<.out List<Annotation> annotations.> (. annotations = new ArrayList<>(); disableSymbolChecking(); .)
+  = {
+    annotation<out Annotation annotation>         (. annotations.add(annotation); .)
+  }                                               (. enableSymbolChecking(); .)
   .
 
   annotation<out Annotation annotation> (. TypeLiteral type = null; Identifier property = null; .)
@@ -277,24 +291,31 @@ PRODUCTIONS
   | macroInstanceOrPlaceholder<out Node node, BasicSyntaxType.Id()> (. id = (IdentifierOrPlaceholder) node; .)
   .
 
-  encodingDefinition<out EncodingDefinition def> (. var startLocation = loc(); .)
-  = ENCODING identifierOrPlaceholder<out IdentifierOrPlaceholder instrId>
+  encodingDefinition<out EncodingDefinition def>                     (. var startLocation = loc(); .)
+  = ENCODING                                                         (. FieldEncodingsOrPlaceholder encodings = null; .)
+    identifierOrPlaceholder<out IdentifierOrPlaceholder instrId>
     SYM_EQ SYM_BRACE_OPEN
-    encodingDefinitionList<.out List<FieldEncoding> fieldEncodings.>
-    SYM_BRACE_CLOSE                              (. def = new EncodingDefinition(instrId, fieldEncodings, startLocation.join(loc())); .)
+    (
+      encodingDefinitionList<out encodings>
+    | macroInstanceOrPlaceholder<out Node n, BasicSyntaxType.Encs()> (. encodings = (FieldEncodingsOrPlaceholder) n; .)
+    )
+    SYM_BRACE_CLOSE                                                  (. def = new EncodingDefinition(instrId, encodings, startLocation.join(loc())); .)
   .
 
-  encodingDefinitionList<.out List<FieldEncoding> entries.> (. entries = new ArrayList<>(); .)
-  = encodingEntry<out FieldEncoding e1>                     (. entries.add(e1); .)
-    { SYM_COMMA encodingEntry<out FieldEncoding e2>         (. entries.add(e2); .) }
+  encodingDefinitionList<out EncodingDefinition.FieldEncodings encs> (. var entries = new ArrayList<EncodingDefinition.FieldEncoding>(); .)
+  = encodingEntry<out FieldEncoding e1>                              (. entries.add(e1); .)
+    {
+      SYM_COMMA
+      encodingEntry<out FieldEncoding e2>                            (. entries.add(e2); .)
+    }                                                                (. encs = new EncodingDefinition.FieldEncodings(entries); .)
   .
 
-  encodingEntry<out FieldEncoding enc>                  (. ValOrPlaceholder val = null; .)
+  encodingEntry<out FieldEncoding enc>                  (. Expr expr = null; .)
   = identifier<out Identifier id>
     SYM_EQ (
-      number<out Expr expr>                             (. val = (ValOrPlaceholder) expr; .)
-    | placeholder<out Node node, BasicSyntaxType.Val()> (. val = (ValOrPlaceholder) node; .)
-    )                                                   (. enc = new FieldEncoding(id, (Expr) val); .)
+      valLiteral<out expr>
+    | placeholder<out Node node, BasicSyntaxType.Val()> (. expr = (Expr) node; .)
+    )                                                   (. enc = new FieldEncoding(id, expr); .)
   .
 
   assemblyDefinition<out AssemblyDefinition def>                        (. List<IdentifierOrPlaceholder> ids = new ArrayList<>(); var start = loc(); .)
@@ -304,17 +325,12 @@ PRODUCTIONS
       SYM_COMMA
       identifierOrPlaceholder<out IdentifierOrPlaceholder additionalId> (. ids.add(additionalId); pushInstructionScope(this, id); .)
     }
-    SYM_EQ SYM_PAREN_OPEN                                               (. var isMnemonic = false; List<Expr> segments = new ArrayList<>(); .)
-    (  MNEMONIC                                                         (. isMnemonic = true; .)
-      | stringLit<out StringLiteral lit1>                               (. segments.add(lit1); .)
-    ) { SYM_COMMA (
-      stringLit<out StringLiteral lit2>                                 (. segments.add(lit2); .)
-      | term<out Expr expr>                                             (. segments.add(expr); .)
-    )} SYM_PAREN_CLOSE                                                  (. def = new AssemblyDefinition(ids, isMnemonic, segments, start.join(loc()));
+    SYM_EQ
+    expression<out Expr expr, BIN_OPS>                                  (. def = new AssemblyDefinition(ids, expr, start.join(loc()));
                                                                            popScope(this); .)
   .
 
-  stringLit<out StringLiteral lit>
+  stringLiteral<out StringLiteral lit>
   = string                                               (. lit = new StringLiteral(t.val, loc()); .)
   .
 
@@ -397,7 +413,7 @@ PRODUCTIONS
 
   assignment<out Statement statement>                                    (. Expr target = null; .)
   = ( callOrBinaryExpression<out target, false>
-    | macroInstanceOrPlaceholder<out Node t, BasicSyntaxType.CallEx()> (. target = (Expr) t; .)
+    | macroInstanceOrPlaceholder<out Node t, BasicSyntaxType.CallEx()>   (. target = (Expr) t; .)
     )
     SYM_ASSIGN
     expression<out Expr expr, BIN_OPS>                                   (. statement = new AssignmentStatement(target, expr); .)
@@ -465,7 +481,7 @@ PRODUCTIONS
       }                                          (. subCalls.add(new CallExpr.SubCall(id, argsIndices)); .)
     }                                            (. if (expr instanceof IsSymExpr symExpr && (!argsIndices.isEmpty() || !subCalls.isEmpty()))
                                                       expr = new CallExpr(symExpr, argsIndices, subCalls, expr.location().join(loc()));
-                                                    if (expr instanceof IsCallExpr callExpr && !insideMacro && !insideAnnotation)
+                                                    if (expr instanceof IsCallExpr callExpr && !disableSymbolChecking)
                                                       symbolTable.requireValue(callExpr);
                                                  .)
   .
@@ -543,25 +559,47 @@ PRODUCTIONS
   .
 
   term<out Expr expr>                            (. expr = null; .)
-  = number<out expr>
+  = literal<out expr>
   | callOrBinaryExpression<out expr, true>
-  | SYM_PAREN_OPEN expression<out expr, BIN_OPS> SYM_PAREN_CLOSE    (. expr = new GroupExpr(expr); .)
+  | groupExpression<out expr>
   | unary<out expr>
   | ifExpression<out expr>
   | letExpression<out expr>
   | macroInstanceOrPlaceholder<out Node node, BasicSyntaxType.Ex()> (. expr = (Expr) node; .)
   .
 
-  number<out Expr expr> (. expr = null; .)
-  = decimalLiteral<out expr> | binaryLiteral<out expr>
+  groupExpression<out GroupExpr group>       (. group = new GroupExpr(new ArrayList<>(), loc()); .)
+  = SYM_PAREN_OPEN
+    expression<out Expr expr, BIN_OPS>       (. group.expressions.add(expr); .)
+    {
+      SYM_COMMA
+      expression<out Expr next, BIN_OPS> (. group.expressions.add(next); .)
+    }
+    SYM_PAREN_CLOSE                          (. group.loc = group.loc.join(loc()); .)
   .
 
-  decimalLiteral<out Expr expr>
+  literal<out Expr expr> (. expr = null; .)
+  = valLiteral<out expr>
+  | stringLiteral<out expr>
+  .
+
+  valLiteral<out Expr expr> (. expr = null; .)
+  = boolLiteral<out expr>
+  | intLiteral<out expr>
+  | binLiteral<out expr>
+  .
+
+  intLiteral<out Expr expr>
   = decLit (. expr = new IntegerLiteral(t.val, loc()); .)
   .
 
-  binaryLiteral<out Expr expr>
+  binLiteral<out Expr expr>
   = (hexLit | binLit) (. expr = new BinaryLiteral(t.val, loc()); .)
+  .
+
+  boolLiteral<out Expr expr> (. expr = null; .)
+  = TRUE                     (. expr = new BoolLiteral(true, loc()); .)
+  | FALSE                    (. expr = new BoolLiteral(false, loc()); .)
   .
 
   identifierPath<out IsId path> (. List<Identifier> segments = new ArrayList<>(); .)
@@ -642,10 +680,9 @@ PRODUCTIONS
   .
 
 
-  macroInstance<out Node body, SyntaxType requiredType>
+  macroInstance<out Node body, SyntaxType requiredType>         (. disableSymbolChecking(); .)
   = SYM_DOLLAR                                                  (. var args = new ArrayList<Node>(); .)
     identifier<out Identifier id>                               (. var macro = Objects.requireNonNull(symbolTable.getMacro(id.name)); .)
-                                                                (. disableSymbolChecking = true; .)
     SYM_PAREN_OPEN                                              (. var params = macro.params().iterator(); .)
     (
       IF (!params.hasNext())
@@ -656,23 +693,36 @@ PRODUCTIONS
         macroInstanceParam<out Node arg2, params.next().type()> (. args.add(arg2); .)
       }
       SYM_PAREN_CLOSE
-    )                                                           (. disableSymbolChecking = false; .)
-                                                                (. body = expandMacro(this, id, args, requiredType); .)
+    )                                                           (. body = expandMacro(this, id, args, requiredType); enableSymbolChecking(); .)
   .
 
-  macroInstanceParam<out Node arg, SyntaxType syntaxType> (. arg = null; .)
-  = IF (syntaxType == BasicSyntaxType.Id())
+  macroInstanceParam<out Node arg, SyntaxType syntaxType>     (. arg = null; var start = loc(); .)
+  = IF (syntaxType == BasicSyntaxType.BinOp())
+    binaryOperator<out Operator op>                           (. arg = new OperatorExpr(op, loc()); .)
+  | IF (syntaxType == BasicSyntaxType.IsaDefs())
+    isaDefinitionList<.out List<Definition> defs.>            (. arg = new DefinitionList(defs, start.join(loc())); .)
+  | IF (syntaxType == BasicSyntaxType.Encs())
+    encodingDefinitionList<out arg>
+  | IF (syntaxType == BasicSyntaxType.Ex())
+    expression<out arg, BIN_OPS>
+  | IF (syntaxType == BasicSyntaxType.CallEx())
+    callOrBinaryExpression<out arg, false>
+  | IF (syntaxType == BasicSyntaxType.SymEx())
+    symbolOrBinaryExpression<out arg, false>
+  | IF (syntaxType == BasicSyntaxType.Id())
     identifier<out arg>
-  | IF (syntaxType == BasicSyntaxType.BinOp())
-    binaryOperator<out Operator op>                       (. arg = new OperatorExpr(op, loc()); .)
-  | IF (syntaxType == BasicSyntaxType.Bin())
-    binaryLiteral<out arg>
-  | IF (syntaxType == BasicSyntaxType.Int())
-    decimalLiteral<out arg>
+  | IF (syntaxType == BasicSyntaxType.Lit())
+    literal<out arg>
+  | IF (syntaxType == BasicSyntaxType.Str())
+    stringLiteral<out arg>
   | IF (syntaxType == BasicSyntaxType.Val())
-    number<out arg>
-  | IF (syntaxType == BasicSyntaxType.IsaDefs())          (. var loc = loc(); .)
-    isaDefinitionList<.out List<Definition> defs.>        (. arg = new DefinitionList(defs, loc.join(loc())); .)
+    valLiteral<out arg>
+  | IF (syntaxType == BasicSyntaxType.Bool())
+    boolLiteral<out arg>
+  | IF (syntaxType == BasicSyntaxType.Int())
+    intLiteral<out arg>
+  | IF (syntaxType == BasicSyntaxType.Bin())
+    binLiteral<out arg>
   | expression<out arg, BIN_OPS>
   .
 
@@ -693,11 +743,11 @@ PRODUCTIONS
     ]
     SYM_PAREN_CLOSE
     SYM_COLON syntaxType<out SyntaxType returnType> SYM_EQ
-    SYM_BRACE_OPEN                          (. Node body = null; insideMacro = true; disableSymbolChecking = true; .)
+    SYM_BRACE_OPEN                          (. Node body = null; insideMacro = true; disableSymbolChecking(); .)
     macroBody<out body, returnType>
     SYM_BRACE_CLOSE                         (.
                                               insideMacro = false;
-                                              disableSymbolChecking = false;
+                                              enableSymbolChecking();
                                               var bodyType = narrowNode(body).syntaxType();
                                               if (!bodyType.isSubTypeOf(returnType)) {
                                                 errors.SemErr(t.line, t.col, "The macro signature promises to return `%s` but it's body is of type `%s`.".formatted(returnType, bodyType));
@@ -720,7 +770,7 @@ PRODUCTIONS
   | IF (type == BasicSyntaxType.IsaDefs())
     isaDefinitionList<.out List<Definition> defs.>                     (. body = new DefinitionList(defs, loc.join(loc())); .)
   | // IF (type == BasicSyntaxType.Encs())
-    encodingDefinitionList<.out List<FieldEncoding> entries.>          (. body = null; /* new NodeList(entries, BasicSyntaxType.Encs(), loc.join(loc())); */ .)
+    encodingDefinitionList<out body>
   .
 
   syntaxType<out SyntaxType type>

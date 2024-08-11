@@ -28,7 +28,12 @@ class Ungrouper
 
   @Override
   public Expr visit(GroupExpr expr) {
-    return expr.inner.accept(this);
+    if (expr.expressions.size() == 1) {
+      return expr.expressions.get(0).accept(this);
+    }
+    var expressions = new ArrayList<>(expr.expressions);
+    expressions.replaceAll(e -> e.accept(this));
+    return new GroupExpr(expressions, expr.loc);
   }
 
   @Override
@@ -38,6 +43,11 @@ class Ungrouper
 
   @Override
   public Expr visit(BinaryLiteral expr) {
+    return expr;
+  }
+
+  @Override
+  public Expr visit(BoolLiteral expr) {
     return expr;
   }
 
@@ -205,7 +215,7 @@ class Ungrouper
   @Override
   public Definition visit(EncodingDefinition definition) {
     ungroupAnnotations(definition);
-    definition.fieldEncodings.replaceAll(
+    definition.fieldEncodings().encodings.replaceAll(
         encoding -> new EncodingDefinition.FieldEncoding(encoding.field(),
             encoding.value().accept(this)));
     return definition;

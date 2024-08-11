@@ -62,7 +62,9 @@ class MacroExpander
 
   @Override
   public Expr visit(GroupExpr expr) {
-    return new GroupExpr(expr.inner.accept(this));
+    var expressions = new ArrayList<>(expr.expressions);
+    expressions.replaceAll(expression -> expression.accept(this));
+    return new GroupExpr(expressions, expr.loc);
   }
 
   @Override
@@ -72,6 +74,11 @@ class MacroExpander
 
   @Override
   public Expr visit(BinaryLiteral expr) {
+    return expr;
+  }
+
+  @Override
+  public Expr visit(BoolLiteral expr) {
     return expr;
   }
 
@@ -281,10 +288,12 @@ class MacroExpander
   @Override
   public Definition visit(EncodingDefinition definition) {
     var instrId = resolvePlaceholderOrIdentifier(definition.instrIdentifier);
-    var fieldEncodings = new ArrayList<>(definition.fieldEncodings);
+    var fieldEncodings = new ArrayList<>(resolveEncs(definition.fieldEncodings).encodings);
     fieldEncodings.replaceAll(enc ->
         new EncodingDefinition.FieldEncoding(enc.field(), enc.value().accept(this)));
-    var def = new EncodingDefinition(instrId, fieldEncodings, definition.loc);
+
+    var def = new EncodingDefinition(instrId, new EncodingDefinition.FieldEncodings(fieldEncodings),
+        definition.loc);
     def.accept(symbols);
     return def;
   }
@@ -293,9 +302,8 @@ class MacroExpander
   public Definition visit(AssemblyDefinition definition) {
     var identifiers = new ArrayList<>(definition.identifiers);
     identifiers.replaceAll(this::resolvePlaceholderOrIdentifier);
-    var segments = new ArrayList<>(definition.segments);
-    segments.replaceAll(expr -> expr.accept(this));
-    return new AssemblyDefinition(identifiers, definition.isMnemonic, segments, definition.loc);
+    var expr = definition.expr.accept(this);
+    return new AssemblyDefinition(identifiers, expr, definition.loc);
   }
 
   @Override
@@ -373,5 +381,13 @@ class MacroExpander
     return type instanceof PlaceholderExpr p
         ? new TypeLiteral(resolvePlaceholderOrIdentifier(p))
         : (TypeLiteral) type;
+  }
+
+  private EncodingDefinition.FieldEncodings resolveEncs(FieldEncodingsOrPlaceholder encodings) {
+    if (encodings instanceof PlaceholderExpr p) {
+      var arg = (EncodingDefinition.FieldEncodings) args.get(p.identifierPath.pathToString());
+      return Objects.requireNonNull(arg);
+    }
+    return (EncodingDefinition.FieldEncodings) encodings;
   }
 }

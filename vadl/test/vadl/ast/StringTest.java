@@ -13,16 +13,15 @@ public class StringTest {
         instruction set architecture TEST = {
           format T : Bits<1> = { a [0..0] }
           instruction I : T = {}
-          assembly I = ('Hello, \\'world\\"')
+          assembly I = 'Hello, \\'world\\"'
         }
         """;
     var ast = VadlParser.parse(prog);
     var assembly = (AssemblyDefinition) ((InstructionSetDefinition) ast.definitions.get(0))
         .definitions.get(2);
-    var actualString = (StringLiteral) assembly.segments.get(0);
+    var actualString = (StringLiteral) assembly.expr;
     var expectedString =
         new StringLiteral("'Hello, \\'world\\\"'", SourceLocation.INVALID_SOURCE_LOCATION);
-    assertThat(assembly.segments.size(), equalTo(1));
     assertThat(actualString, equalTo(expectedString));
     assertThat(actualString.value, equalTo("Hello, 'world\""));
   }
@@ -33,16 +32,15 @@ public class StringTest {
         instruction set architecture TEST = {
           format T : Bits<1> = { a [0..0] }
           instruction I : T = {}
-          assembly I = ("Hello, \\'world\\"")
+          assembly I = "Hello, \\'world\\""
         }
         """;
     var ast = VadlParser.parse(prog);
     var assembly = (AssemblyDefinition) ((InstructionSetDefinition) ast.definitions.get(0))
         .definitions.get(2);
-    var actualString = (StringLiteral) assembly.segments.get(0);
+    var actualString = (StringLiteral) assembly.expr;
     var expectedString =
         new StringLiteral("\"Hello, \\'world\\\"\"", SourceLocation.INVALID_SOURCE_LOCATION);
-    assertThat(assembly.segments.size(), equalTo(1));
     assertThat(actualString, equalTo(expectedString));
     assertThat(actualString.value, equalTo("Hello, 'world\""));
   }
@@ -53,13 +51,13 @@ public class StringTest {
         instruction set architecture TEST = {
           format T : Bits<1> = { a [0..0] }
           instruction I : T = {}
-          assembly I = ("\\b\\t\\r\\n\\f\\'\\"\\\\\\ud83d\\ude02")
+          assembly I = "\\b\\t\\r\\n\\f\\'\\"\\\\\\ud83d\\ude02"
         }
         """;
     var ast = VadlParser.parse(prog);
     var assembly = (AssemblyDefinition) ((InstructionSetDefinition) ast.definitions.get(0))
         .definitions.get(2);
-    var actualString = (StringLiteral) assembly.segments.get(0);
+    var actualString = (StringLiteral) assembly.expr;
     assertThat(actualString.value, equalTo("\b\t\r\n\f'\"\\😂"));
   }
 
@@ -75,6 +73,7 @@ public class StringTest {
     var ast = VadlParser.parse(prog);
     var assembly = (AssemblyDefinition) ((InstructionSetDefinition) ast.definitions.get(0))
         .definitions.get(2);
-    assertThat(assembly.segments.size(), equalTo(4));
+    var group = (GroupExpr) assembly.expr;
+    assertThat(group.expressions.size(), equalTo(4));
   }
 }

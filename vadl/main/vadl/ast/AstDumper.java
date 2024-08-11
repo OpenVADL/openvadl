@@ -148,7 +148,7 @@ public class AstDumper
   @Override
   public Void visit(GroupExpr expr) {
     dumpNode(expr);
-    dumpChildren(expr.inner);
+    dumpChildren(expr.expressions);
     return null;
   }
 
@@ -160,6 +160,12 @@ public class AstDumper
 
   @Override
   public Void visit(BinaryLiteral expr) {
+    dumpNode(expr);
+    return null;
+  }
+
+  @Override
+  public Void visit(BoolLiteral expr) {
     dumpNode(expr);
     return null;
   }
@@ -227,7 +233,7 @@ public class AstDumper
   public Void visit(EncodingDefinition definition) {
     dumpNode(definition);
     dumpChildren(definition.instrId());
-    dumpChildren(definition.fieldEncodings.stream()
+    dumpChildren(definition.fieldEncodings().encodings.stream()
         .flatMap(entry -> Stream.of(entry.field(), (Node) entry.value()))
         .toList()
     );
@@ -237,7 +243,7 @@ public class AstDumper
   @Override
   public Void visit(AssemblyDefinition definition) {
     dumpNode(definition);
-    dumpChildren(definition.segments);
+    dumpChildren(definition.expr);
     return null;
   }
 

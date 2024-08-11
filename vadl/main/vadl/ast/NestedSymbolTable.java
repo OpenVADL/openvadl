@@ -23,7 +23,7 @@ class NestedSymbolTable implements DefinitionVisitor<Void> {
         SourceLocation.INVALID_SOURCE_LOCATION);
     defineSymbol(new ValuedSymbol("hex", null, SymbolType.FUNCTION),
         SourceLocation.INVALID_SOURCE_LOCATION);
-    defineSymbol(new ValuedSymbol("addr", null, SymbolType.FUNCTION),
+    defineSymbol(new ValuedSymbol("mnemonic", null, SymbolType.CONSTANT),
         SourceLocation.INVALID_SOURCE_LOCATION);
   }
 
@@ -138,13 +138,15 @@ class NestedSymbolTable implements DefinitionVisitor<Void> {
       return null;
     }
     var format = formatSymbol.definition;
-    for (EncodingDefinition.FieldEncoding entry : definition.fieldEncodings) {
+    for (EncodingDefinition.FieldEncoding entry : definition.fieldEncodings().encodings) {
       var name = entry.field().name;
-      var field = format.fields.stream().filter(f -> f.identifier().name.equals(name)).findFirst();
-      if (field.isEmpty()) {
-        reportError("Unknown field %s in format %s".formatted(name, format.identifier().name),
-            entry.field().location());
+      for (FormatDefinition.FormatField f : format.fields) {
+        if (f.identifier().name.equals(name)) {
+          return null;
+        }
       }
+      reportError("Unknown field %s in format %s".formatted(name, format.identifier().name),
+          entry.field().location());
     }
     return null;
   }
@@ -269,6 +271,13 @@ class NestedSymbolTable implements DefinitionVisitor<Void> {
       if (expr.subCalls().isEmpty()) {
         return;
       }
+      if (expr.subCalls().size() == 1 && symbol.type() == SymbolType.COUNTER
+          && expr.subCalls().size() == 1
+          && expr.subCalls().get(0).id().name.equals("next")
+          && expr.subCalls().get(0).argsIndices().isEmpty()) {
+        // Counters have a property "next" that is always available
+        return;
+      }
       if (!(valSymbol.typeDefinition instanceof FormatDefinition formatDefinition)) {
         reportError("Invalid usage: symbol %s of type %s does not have a record type".formatted(
             path, symbol.type()), expr.location());
@@ -312,7 +321,8 @@ class NestedSymbolTable implements DefinitionVisitor<Void> {
                   field.identifier().name, f.type().baseType), next.location());
         }
       } else if (subCalls.size() > 1) {
-        var typeSymbol = resolveAlias(f.symbolTable.resolveSymbol(f.type().baseType.pathToString()));
+        var typeSymbol =
+            resolveAlias(f.symbolTable.resolveSymbol(f.type().baseType.pathToString()));
         if (typeSymbol instanceof FormatSymbol formatSymbol) {
           verifyFormatAccess(formatSymbol.definition, subCalls.subList(1, subCalls.size()));
         } else if (typeSymbol == null) {
