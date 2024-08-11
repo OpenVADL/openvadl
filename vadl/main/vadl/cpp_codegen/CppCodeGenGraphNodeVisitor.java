@@ -1,7 +1,7 @@
 package vadl.cpp_codegen;
 
-import vadl.cpp_codegen.passes.type_normalization.UpcastedTypeCastNode;
 import vadl.viam.graph.GraphNodeVisitor;
+import vadl.cpp_codegen.passes.type_normalization.UpcastedTypeCastNode;
 
 /**
  * Visitor for nodes of the cpp codegen layer.
