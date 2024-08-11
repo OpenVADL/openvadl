@@ -7,7 +7,6 @@ import vadl.viam.passes.translation_validation.Z3CodeGeneratorVisitor;
 
 public class Z3EncodingCodeGeneratorVisitor extends Z3CodeGeneratorVisitor {
 
-  private final StringWriter writer = new StringWriter();
   private final String symbolName;
 
   // from z3 import *

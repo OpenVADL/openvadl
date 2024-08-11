@@ -40,7 +40,7 @@ import vadl.viam.graph.dependency.WriteRegNode;
  * Visitor which lowers {@link Node} into z3 predicates.
  */
 public class Z3CodeGeneratorVisitor implements GraphNodeVisitor {
-  private final StringWriter writer = new StringWriter();
+  protected final StringWriter writer = new StringWriter();
 
   public String getResult() {
     return writer.toString();

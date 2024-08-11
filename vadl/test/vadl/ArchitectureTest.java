@@ -20,10 +20,10 @@ public class ArchitectureTest {
         .layer("Lcb").definedBy("..lcb..")
         .layer("CppGen").definedBy("..cpp_codegen..")
         .whereLayer("Ast").mayOnlyAccessLayers("Viam")
-        .whereLayer("Viam").mayOnlyAccessLayers("Ast")
-        .whereLayer("Gcb").mayOnlyAccessLayers("Viam")
+        .whereLayer("Viam").mayOnlyAccessLayers("Ast", "CppGen")
+        .whereLayer("Gcb").mayOnlyAccessLayers("Viam", "CppGen")
         .whereLayer("CppGen").mayOnlyAccessLayers("Viam")
-        .whereLayer("Lcb").mayOnlyAccessLayers("Gcb", "Viam");
+        .whereLayer("Lcb").mayOnlyAccessLayers("Gcb", "Viam", "CppGen");
 
     layeredArchitecture.check(jc);
   }
