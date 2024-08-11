@@ -19,6 +19,7 @@ import vadl.viam.graph.NodeList;
 import vadl.viam.graph.dependency.BuiltInCall;
 import vadl.viam.graph.dependency.ConstantNode;
 import vadl.viam.graph.dependency.FuncCallNode;
+import vadl.viam.graph.dependency.SideEffectNode;
 import vadl.viam.graph.dependency.TypeCastNode;
 
 class GenericCppCodeGeneratorVisitorTest extends AbstractTest {
@@ -29,6 +30,11 @@ class GenericCppCodeGeneratorVisitorTest extends AbstractTest {
 
     public DummyCodeGenerator(StringWriter writer) {
       super(writer);
+    }
+
+    @Override
+    public void visit(SideEffectNode sideEffectNode) {
+      sideEffectNode.accept(this);
     }
   }
 
