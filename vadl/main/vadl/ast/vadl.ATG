@@ -440,7 +440,7 @@ PRODUCTIONS
         | macroInstanceOrPlaceholder<out Node node, BasicSyntaxType.Id()> (. expr = reorderCastExpr(expr, (Expr) node); .)
         )
       )
-    }                                                                     (. expr = ungroup(this, reorderBinary(this, expr)); .)
+    }                                                                     (. expr = reorderBinary(this, expr); .)
   .
 
   /// Call expressions of form "a::b<3>().c()".

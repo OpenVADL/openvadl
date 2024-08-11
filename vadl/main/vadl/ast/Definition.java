@@ -48,13 +48,13 @@ interface DefinitionVisitor<R> {
 }
 
 class ConstantDefinition extends Definition {
-  final IdentifierOrPlaceholder identifier;
+  IdentifierOrPlaceholder identifier;
 
   @Nullable
-  final TypeLiteral type;
+  TypeLiteral type;
 
-  final Expr value;
-  final SourceLocation loc;
+  Expr value;
+  SourceLocation loc;
 
   ConstantDefinition(IdentifierOrPlaceholder identifier, @Nullable TypeLiteral type, Expr value,
                      SourceLocation location) {

@@ -324,9 +324,8 @@ class MacroExpander
   @Override
   public BlockStatement visit(BlockStatement blockStatement) {
     symbols = symbols.createChild();
-    var statements = blockStatement.statements.stream()
-        .map(s -> s.accept(this))
-        .toList();
+    var statements = new ArrayList<>(blockStatement.statements);
+    statements.replaceAll(statement -> statement.accept(this));
     symbols = Objects.requireNonNull(symbols.parent);
     return new BlockStatement(statements, blockStatement.location);
   }

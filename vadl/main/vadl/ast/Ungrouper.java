@@ -7,10 +7,11 @@ import java.util.ArrayList;
  * Groups are needed in the AST during parsing until all binary expressions are reordered but then
  * can be removed.
  */
-class Ungrouper implements ExprVisitor<Expr> {
+class Ungrouper
+    implements ExprVisitor<Expr>, DefinitionVisitor<Definition>, StatementVisitor<Statement> {
 
-  public Expr ungroup(Expr expr) {
-    return expr.accept(this);
+  public void ungroup(Ast ast) {
+    ast.definitions.replaceAll(definition -> definition.accept(this));
   }
 
   @Override
@@ -21,11 +22,7 @@ class Ungrouper implements ExprVisitor<Expr> {
   @Override
   public Expr visit(BinaryExpr expr) {
     expr.left = expr.left.accept(this);
-    if (expr.right != null) {
-      // Should never happen in a syntactically correct program.
-      // In an expression like "3 > =", the parser will throw an error only after "ungroup"  is run
-      expr.right = expr.right.accept(this);
-    }
+    expr.right = expr.right.accept(this);
     return expr;
   }
 
@@ -145,5 +142,131 @@ class Ungrouper implements ExprVisitor<Expr> {
   @Override
   public Expr visit(OperatorExpr expr) {
     return expr;
+  }
+
+  @Override
+  public Definition visit(ConstantDefinition definition) {
+    ungroupAnnotations(definition);
+    definition.value = definition.value.accept(this);
+    return definition;
+  }
+
+  @Override
+  public Definition visit(FormatDefinition definition) {
+    ungroupAnnotations(definition);
+    for (FormatDefinition.FormatField field : definition.fields) {
+      if (field instanceof FormatDefinition.RangeFormatField f) {
+        f.ranges.replaceAll(range -> range.accept(this));
+      } else if (field instanceof FormatDefinition.DerivedFormatField f) {
+        f.expr = f.expr.accept(this);
+      }
+    }
+    return definition;
+  }
+
+  @Override
+  public Definition visit(InstructionSetDefinition definition) {
+    ungroupAnnotations(definition);
+    definition.definitions.replaceAll(d -> d.accept(this));
+    return definition;
+  }
+
+  @Override
+  public Definition visit(CounterDefinition definition) {
+    ungroupAnnotations(definition);
+    return definition;
+  }
+
+  @Override
+  public Definition visit(MemoryDefinition definition) {
+    ungroupAnnotations(definition);
+    return definition;
+  }
+
+  @Override
+  public Definition visit(RegisterDefinition definition) {
+    ungroupAnnotations(definition);
+    return definition;
+  }
+
+  @Override
+  public Definition visit(RegisterFileDefinition definition) {
+    ungroupAnnotations(definition);
+    return definition;
+  }
+
+  @Override
+  public Definition visit(InstructionDefinition definition) {
+    ungroupAnnotations(definition);
+    definition.behavior = definition.behavior.accept(this);
+    return definition;
+  }
+
+  @Override
+  public Definition visit(EncodingDefinition definition) {
+    ungroupAnnotations(definition);
+    definition.fieldEncodings.replaceAll(
+        encoding -> new EncodingDefinition.FieldEncoding(encoding.field(),
+            encoding.value().accept(this)));
+    return definition;
+  }
+
+  @Override
+  public Definition visit(AssemblyDefinition definition) {
+    ungroupAnnotations(definition);
+    return definition;
+  }
+
+  @Override
+  public Definition visit(UsingDefinition definition) {
+    ungroupAnnotations(definition);
+    return definition;
+  }
+
+  @Override
+  public Definition visit(FunctionDefinition definition) {
+    ungroupAnnotations(definition);
+    definition.expr = definition.expr.accept(this);
+    return definition;
+  }
+
+  @Override
+  public Definition visit(PlaceholderDefinition definition) {
+    ungroupAnnotations(definition);
+    return definition;
+  }
+
+  @Override
+  public Statement visit(BlockStatement blockStatement) {
+    blockStatement.statements.replaceAll(statement -> statement.accept(this));
+    return blockStatement;
+  }
+
+  @Override
+  public Statement visit(LetStatement letStatement) {
+    letStatement.valueExpression = letStatement.valueExpression.accept(this);
+    letStatement.body = letStatement.body.accept(this);
+    return letStatement;
+  }
+
+  @Override
+  public Statement visit(IfStatement ifStatement) {
+    ifStatement.condition = ifStatement.condition.accept(this);
+    ifStatement.thenStmt = ifStatement.thenStmt.accept(this);
+    ifStatement.elseStmt = ifStatement.elseStmt == null ? null : ifStatement.elseStmt.accept(this);
+    return ifStatement;
+  }
+
+  @Override
+  public Statement visit(AssignmentStatement assignmentStatement) {
+    assignmentStatement.target = assignmentStatement.target.accept(this);
+    assignmentStatement.valueExpression = assignmentStatement.valueExpression.accept(this);
+    return assignmentStatement;
+  }
+
+  private void ungroupAnnotations(Definition definition) {
+    definition.annotations.annotations().replaceAll(
+        annotation -> new Annotation(annotation.expr().accept(this), annotation.type(),
+            annotation.property()));
   }
 }

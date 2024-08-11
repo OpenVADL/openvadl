@@ -1,0 +1,474 @@
+instruction set architecture RV3264I = {
+  constant Arch32 = 32
+  constant Arch64 = 64
+  constant MLen = Arch64
+  constant SftLen = ((MLen / 32) + 4)
+  constant WLen = 32
+  using Byte = Bits<8>
+  using Half = Bits<16>
+  using Word = Bits<32>
+  using Dble = Bits<64>
+  using Inst = Bits<32>
+  using SIntW = SInt<32>
+  using UIntW = UInt<32>
+  using Regs = Bits<MLen>
+  using SIntR = SInt<MLen>
+  using UIntR = UInt<MLen>
+  using Address = Regs
+  using Bits3 = Bits<3>
+  using Bits5 = Bits<5>
+  using Bits6 = Bits<6>
+  using Bits7 = Bits<7>
+  using Index = Bits<5>
+  using UInt5 = UInt<5>
+  using UShft = UInt<SftLen>
+  [(X(0) = 0) ]  register file X: Index -> Regs
+  program counter PC: Address
+  memory MEM: Address -> Byte
+  format Rtype: Inst =
+  { funct7 : Bits7
+  , rs2 : Index
+  , rs1 : Index
+  , funct3 : Bits3
+  , rd : Index
+  , opcode : Bits7
+  , shamt = rs2 as UInt
+  }
+  format Itype: Inst =
+  { imm : Bits<12>
+  , rs1 : Index
+  , funct3 : Bits3
+  , rd : Index
+  , opcode : Bits7
+  , immS = imm as SIntR
+  }
+  format Utype: Inst =
+  { imm : Bits<20>
+  , rd : Index
+  , opcode : Bits7
+  , immU = (imm as UIntR << 12)
+  }
+  format Stype: Inst =
+  { imm	 [31..25, 11..7]
+  , rs2	 [24..20]
+  , rs1	 [19..15]
+  , funct3	 [14..12]
+  , opcode	 [6..0]
+  , immS = imm as SIntR
+  }
+  format Btype: Inst =
+  { imm	 [31, 7, 30..25, 11..8]
+  , rs2	 [24..20]
+  , rs1	 [19..15]
+  , funct3	 [14..12]
+  , opcode	 [6..0]
+  , immS = (imm as SIntR << 1)
+  }
+  format Jtype: Inst =
+  { imm	 [31, 19..12, 20, 30..21]
+  , rd	 [11..7]
+  , opcode	 [6..0]
+  , immS = (imm as SIntR << 1)
+  }
+  instruction ADD : Rtype =   X(rd) := (X(rs1) as Bits + X(rs2) as Bits) as Regs
+
+  encoding ADD =
+  { opcode = 0b011'0011
+  , funct3 = 0b000
+  , funct7 = 0b000'0000
+  }
+  assembly ADD = (mnemonic, " ", register(rd), ",", register(rs1), ",", register(rs2))
+  instruction SUB : Rtype =   X(rd) := (X(rs1) as Bits - X(rs2) as Bits) as Regs
+
+  encoding SUB =
+  { opcode = 0b011'0011
+  , funct3 = 0b000
+  , funct7 = 0b010'0000
+  }
+  assembly SUB = (mnemonic, " ", register(rd), ",", register(rs1), ",", register(rs2))
+  instruction AND : Rtype =   X(rd) := (X(rs1) as Bits & X(rs2) as Bits) as Regs
+
+  encoding AND =
+  { opcode = 0b011'0011
+  , funct3 = 0b111
+  , funct7 = 0b000'0000
+  }
+  assembly AND = (mnemonic, " ", register(rd), ",", register(rs1), ",", register(rs2))
+  instruction OR : Rtype =   X(rd) := (X(rs1) as Bits | X(rs2) as Bits) as Regs
+
+  encoding OR =
+  { opcode = 0b011'0011
+  , funct3 = 0b110
+  , funct7 = 0b000'0000
+  }
+  assembly OR = (mnemonic, " ", register(rd), ",", register(rs1), ",", register(rs2))
+  instruction XOR : Rtype =   X(rd) := (X(rs1) as Bits ^ X(rs2) as Bits) as Regs
+
+  encoding XOR =
+  { opcode = 0b011'0011
+  , funct3 = 0b100
+  , funct7 = 0b000'0000
+  }
+  assembly XOR = (mnemonic, " ", register(rd), ",", register(rs1), ",", register(rs2))
+  instruction SLT : Rtype =   X(rd) := (X(rs1) as SInt < X(rs2) as SInt) as Regs
+
+  encoding SLT =
+  { opcode = 0b011'0011
+  , funct3 = 0b010
+  , funct7 = 0b000'0000
+  }
+  assembly SLT = (mnemonic, " ", register(rd), ",", register(rs1), ",", register(rs2))
+  instruction SLTU : Rtype =   X(rd) := (X(rs1) as UInt < X(rs2) as UInt) as Regs
+
+  encoding SLTU =
+  { opcode = 0b011'0011
+  , funct3 = 0b011
+  , funct7 = 0b000'0000
+  }
+  assembly SLTU = (mnemonic, " ", register(rd), ",", register(rs1), ",", register(rs2))
+  instruction SLL : Rtype =   X(rd) := (X(rs1) as UInt << X(rs2) as UShft) as Regs
+
+  encoding SLL =
+  { opcode = 0b011'0011
+  , funct3 = 0b001
+  , funct7 = 0b000'0000
+  }
+  assembly SLL = (mnemonic, " ", register(rd), ",", register(rs1), ",", register(rs2))
+  instruction SRL : Rtype =   X(rd) := (X(rs1) as UInt >> X(rs2) as UShft) as Regs
+
+  encoding SRL =
+  { opcode = 0b011'0011
+  , funct3 = 0b101
+  , funct7 = 0b000'0000
+  }
+  assembly SRL = (mnemonic, " ", register(rd), ",", register(rs1), ",", register(rs2))
+  instruction SRA : Rtype =   X(rd) := (X(rs1) as SInt >> X(rs2) as UShft) as Regs
+
+  encoding SRA =
+  { opcode = 0b011'0011
+  , funct3 = 0b101
+  , funct7 = 0b010'0000
+  }
+  assembly SRA = (mnemonic, " ", register(rd), ",", register(rs1), ",", register(rs2))
+  instruction ADDI : Itype =   X(rd) := (X(rs1) as SInt + immS as SInt) as Regs
+
+  encoding ADDI =
+  { opcode = 0b001'0011
+  , funct3 = 0b000
+  }
+  assembly ADDI = (mnemonic, " ", register(rd), ",", register(rs1), ",", decimal(imm))
+  instruction ANDI : Itype =   X(rd) := (X(rs1) as SInt & immS as SInt) as Regs
+
+  encoding ANDI =
+  { opcode = 0b001'0011
+  , funct3 = 0b111
+  }
+  assembly ANDI = (mnemonic, " ", register(rd), ",", register(rs1), ",", decimal(imm))
+  instruction ORI : Itype =   X(rd) := (X(rs1) as SInt | immS as SInt) as Regs
+
+  encoding ORI =
+  { opcode = 0b001'0011
+  , funct3 = 0b110
+  }
+  assembly ORI = (mnemonic, " ", register(rd), ",", register(rs1), ",", decimal(imm))
+  instruction XORI : Itype =   X(rd) := (X(rs1) as SInt ^ immS as SInt) as Regs
+
+  encoding XORI =
+  { opcode = 0b001'0011
+  , funct3 = 0b100
+  }
+  assembly XORI = (mnemonic, " ", register(rd), ",", register(rs1), ",", decimal(imm))
+  instruction SLTI : Itype =   X(rd) := (X(rs1) as SInt < immS as SInt) as Regs
+
+  encoding SLTI =
+  { opcode = 0b001'0011
+  , funct3 = 0b010
+  }
+  assembly SLTI = (mnemonic, " ", register(rd), ",", register(rs1), ",", decimal(imm))
+  instruction SLTIU : Itype =   X(rd) := (X(rs1) as UInt < immS as UInt) as Regs
+
+  encoding SLTIU =
+  { opcode = 0b001'0011
+  , funct3 = 0b011
+  }
+  assembly SLTIU = (mnemonic, " ", register(rd), ",", register(rs1), ",", decimal(imm))
+  instruction AUIPC : Utype =   X(rd) := (PC + immU)
+
+  encoding AUIPC =
+  { opcode = 0b001'0111
+  }
+  assembly AUIPC = (mnemonic, " ", register(rd), ",", hex(imm))
+  instruction LUI : Utype =   X(rd) := immU
+
+  encoding LUI =
+  { opcode = 0b011'0111
+  }
+  assembly LUI = (mnemonic, " ", register(rd), ",", hex(imm))
+  instruction LB : Itype =   let addr = (X(rs1) + immS) in
+    X(rd) := MEM(addr) as SIntR
+
+  encoding LB =
+  { opcode = 0b000'0011
+  , funct3 = 0b000
+  }
+  assembly LB = (mnemonic, " ", register(rd), ",", decimal(imm), "(", register(rs1), ")")
+  instruction LBU : Itype =   let addr = (X(rs1) + immS) in
+    X(rd) := MEM(addr) as SIntR
+
+  encoding LBU =
+  { opcode = 0b000'0011
+  , funct3 = 0b100
+  }
+  assembly LBU = (mnemonic, " ", register(rd), ",", decimal(imm), "(", register(rs1), ")")
+  instruction LH : Itype =   let addr = (X(rs1) + immS) in
+    X(rd) := MEM(addr) as SIntR
+
+  encoding LH =
+  { opcode = 0b000'0011
+  , funct3 = 0b001
+  }
+  assembly LH = (mnemonic, " ", register(rd), ",", decimal(imm), "(", register(rs1), ")")
+  instruction LHU : Itype =   let addr = (X(rs1) + immS) in
+    X(rd) := MEM(addr) as SIntR
+
+  encoding LHU =
+  { opcode = 0b000'0011
+  , funct3 = 0b101
+  }
+  assembly LHU = (mnemonic, " ", register(rd), ",", decimal(imm), "(", register(rs1), ")")
+  instruction LW : Itype =   let addr = (X(rs1) + immS) in
+    X(rd) := MEM(addr) as SIntR
+
+  encoding LW =
+  { opcode = 0b000'0011
+  , funct3 = 0b010
+  }
+  assembly LW = (mnemonic, " ", register(rd), ",", decimal(imm), "(", register(rs1), ")")
+  instruction SB : Stype =   let addr = (X(rs1) + immS) in
+    X(0) := X(rs2) as Byte
+
+  encoding SB =
+  { opcode = 0b010'0011
+  , funct3 = 0b000
+  }
+  assembly SB = (mnemonic, " ", register(rs2), ",", decimal(imm), "(", register(rs1), ")")
+  instruction SH : Stype =   let addr = (X(rs1) + immS) in
+    X(0) := X(rs2) as Byte
+
+  encoding SH =
+  { opcode = 0b010'0011
+  , funct3 = 0b001
+  }
+  assembly SH = (mnemonic, " ", register(rs2), ",", decimal(imm), "(", register(rs1), ")")
+  instruction SW : Stype =   let addr = (X(rs1) + immS) in
+    X(0) := X(rs2) as Byte
+
+  encoding SW =
+  { opcode = 0b010'0011
+  , funct3 = 0b010
+  }
+  assembly SW = (mnemonic, " ", register(rs2), ",", decimal(imm), "(", register(rs1), ")")
+  instruction BEQ : Btype =   if (X(rs1) as Bits = X(rs2)) then
+    PC := (PC + immS)
+
+
+  encoding BEQ =
+  { opcode = 0b110'0011
+  , funct3 = 0b000
+  }
+  assembly BEQ = (mnemonic, " ", register(rs1), ",", register(rs2), ",", decimal(imm))
+  instruction BNE : Btype =   if (X(rs1) as Bits = X(rs2)) then
+    PC := (PC + immS)
+
+
+  encoding BNE =
+  { opcode = 0b110'0011
+  , funct3 = 0b001
+  }
+  assembly BNE = (mnemonic, " ", register(rs1), ",", register(rs2), ",", decimal(imm))
+  instruction BGE : Btype =   if (X(rs1) as Bits = X(rs2)) then
+    PC := (PC + immS)
+
+
+  encoding BGE =
+  { opcode = 0b110'0011
+  , funct3 = 0b101
+  }
+  assembly BGE = (mnemonic, " ", register(rs1), ",", register(rs2), ",", decimal(imm))
+  instruction BGEU : Btype =   if (X(rs1) as Bits = X(rs2)) then
+    PC := (PC + immS)
+
+
+  encoding BGEU =
+  { opcode = 0b110'0011
+  , funct3 = 0b111
+  }
+  assembly BGEU = (mnemonic, " ", register(rs1), ",", register(rs2), ",", decimal(imm))
+  instruction BLT : Btype =   if (X(rs1) as Bits = X(rs2)) then
+    PC := (PC + immS)
+
+
+  encoding BLT =
+  { opcode = 0b110'0011
+  , funct3 = 0b100
+  }
+  assembly BLT = (mnemonic, " ", register(rs1), ",", register(rs2), ",", decimal(imm))
+  instruction BLTU : Btype =   if (X(rs1) as Bits = X(rs2)) then
+    PC := (PC + immS)
+
+
+  encoding BLTU =
+  { opcode = 0b110'0011
+  , funct3 = 0b110
+  }
+  assembly BLTU = (mnemonic, " ", register(rs1), ",", register(rs2), ",", decimal(imm))
+  instruction ECALL : Itype =   {
+  }
+  encoding ECALL =
+  { opcode = 0b111'0011
+  , funct3 = 0b000
+  , rd = 0b0'0000
+  , rd = 0b0'0000
+  , imm = 0
+  }
+  assembly ECALL = (mnemonic)
+  instruction EBREAK : Itype =   {
+  }
+  encoding EBREAK =
+  { opcode = 0b111'0011
+  , funct3 = 0b000
+  , rd = 0b0'0000
+  , rd = 0b0'0000
+  , imm = 1
+  }
+  assembly EBREAK = (mnemonic)
+  format Ftype: Inst =
+  { fun67 : Bits6
+  , sft : Bits6
+  , rs1 : Index
+  , funct3 : Bits3
+  , rd : Index
+  , opcode : Bits7
+  , shamt = sft as UInt
+  }
+  instruction LWU : Itype =   let addr = (X(rs1) + immS) in
+    X(rd) := MEM(addr) as SIntR
+
+  encoding LWU =
+  { opcode = 0b000'0011
+  , funct3 = 0b110
+  }
+  assembly LWU = (mnemonic, " ", register(rd), ",", decimal(imm), "(", register(rs1), ")")
+  instruction LD : Itype =   let addr = (X(rs1) + immS) in
+    X(rd) := MEM(addr) as SIntR
+
+  encoding LD =
+  { opcode = 0b000'0011
+  , funct3 = 0b011
+  }
+  assembly LD = (mnemonic, " ", register(rd), ",", decimal(imm), "(", register(rs1), ")")
+  instruction SD : Stype =   let addr = (X(rs1) + immS) in
+    X(0) := X(rs2) as Byte
+
+  encoding SD =
+  { opcode = 0b010'0011
+  , funct3 = 0b011
+  }
+  assembly SD = (mnemonic, " ", register(rs2), ",", decimal(imm), "(", register(rs1), ")")
+  instruction ADDIW : Itype =   X(rd) := (X(rs1) as SIntW + immS as SIntW) as SIntR
+
+  encoding ADDIW =
+  { opcode = 0b001'1011
+  , funct3 = 0b000
+  }
+  assembly ADDIW = (mnemonic, " ", register(rd), ",", register(rs1), ",", decimal(imm))
+  instruction SLLIW : Rtype =   X(rd) := (X(rs1) as UIntW << shamt) as SIntR
+
+  encoding SLLIW =
+  { opcode = 0b001'1011
+  , funct3 = 0b001
+  , funct7 = 0b000'0000
+  }
+  assembly SLLIW = (mnemonic, " ", register(rd), ",", register(rs1), ",", decimal(shamt))
+  instruction SRLIW : Rtype =   X(rd) := (X(rs1) as UIntW >> shamt) as SIntR
+
+  encoding SRLIW =
+  { opcode = 0b001'1011
+  , funct3 = 0b101
+  , funct7 = 0b000'0000
+  }
+  assembly SRLIW = (mnemonic, " ", register(rd), ",", register(rs1), ",", decimal(shamt))
+  instruction SRAIW : Rtype =   X(rd) := (X(rs1) as SIntW >> shamt) as SIntR
+
+  encoding SRAIW =
+  { opcode = 0b001'1011
+  , funct3 = 0b101
+  , funct7 = 0b010'0000
+  }
+  assembly SRAIW = (mnemonic, " ", register(rd), ",", register(rs1), ",", decimal(shamt))
+  instruction ADDW : Rtype =   X(rd) := (X(rs1) as Word + X(rs2) as Word) as SIntR
+
+  encoding ADDW =
+  { opcode = 0b011'1011
+  , funct3 = 0b000
+  , funct7 = 0b000'0000
+  }
+  assembly ADDW = (mnemonic, " ", register(rd), ",", register(rs1), ",", register(rs2))
+  instruction SUBW : Rtype =   X(rd) := (X(rs1) as Word - X(rs2) as Word) as SIntR
+
+  encoding SUBW =
+  { opcode = 0b011'1011
+  , funct3 = 0b000
+  , funct7 = 0b010'0000
+  }
+  assembly SUBW = (mnemonic, " ", register(rd), ",", register(rs1), ",", register(rs2))
+  instruction SLLW : Rtype =   X(rd) := (X(rs1) as UIntW << X(rs2) as UInt5) as SIntR
+
+  encoding SLLW =
+  { opcode = 0b011'1011
+  , funct3 = 0b001
+  , funct7 = 0b000'0000
+  }
+  assembly SLLW = (mnemonic, " ", register(rd), ",", register(rs1), ",", register(rs2))
+  instruction SRLW : Rtype =   X(rd) := (X(rs1) as UIntW >> X(rs2) as UInt5) as SIntR
+
+  encoding SRLW =
+  { opcode = 0b011'1011
+  , funct3 = 0b101
+  , funct7 = 0b000'0000
+  }
+  assembly SRLW = (mnemonic, " ", register(rd), ",", register(rs1), ",", register(rs2))
+  instruction SRAW : Rtype =   X(rd) := (X(rs1) as SIntW >> X(rs2) as UInt5) as SIntR
+
+  encoding SRAW =
+  { opcode = 0b011'1011
+  , funct3 = 0b101
+  , funct7 = 0b010'0000
+  }
+  assembly SRAW = (mnemonic, " ", register(rd), ",", register(rs1), ",", register(rs2))
+  instruction SLLI : Ftype =   X(rd) := (X(rs1) as UInt << shamt) as Regs
+
+  encoding SLLI =
+  { opcode = 0b001'0011
+  , funct3 = 0b001
+  , fun67 = 0b000'0000
+  }
+  assembly SLLI = (mnemonic, " ", register(rd), ",", register(rs1), ",", decimal(sft))
+  instruction SRLI : Ftype =   X(rd) := (X(rs1) as UInt >> shamt) as Regs
+
+  encoding SRLI =
+  { opcode = 0b001'0011
+  , funct3 = 0b101
+  , fun67 = 0b000'0000
+  }
+  assembly SRLI = (mnemonic, " ", register(rd), ",", register(rs1), ",", decimal(sft))
+  instruction SRAI : Ftype =   X(rd) := (X(rs1) as SInt >> shamt) as Regs
+
+  encoding SRAI =
+  { opcode = 0b001'0011
+  , funct3 = 0b101
+  , fun67 = 0b010'0000
+  }
+  assembly SRAI = (mnemonic, " ", register(rd), ",", register(rs1), ",", decimal(sft))
+}
+

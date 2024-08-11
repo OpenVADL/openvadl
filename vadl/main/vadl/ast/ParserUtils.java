@@ -9,7 +9,6 @@ import vadl.utils.SourceLocation;
 
 class ParserUtils {
 
-  private static final Ungrouper UNGROUPER = new Ungrouper();
   static boolean[] NO_OPS;
   static boolean[] BIN_OPS;
   static boolean[] BIN_OPS_EXCEPT_GT;
@@ -111,19 +110,6 @@ class ParserUtils {
   }
 
   /**
-   * Will ungroup expressions if the parser is not currently parsing a model.
-   *
-   * @see Ungrouper#ungroup(Expr)
-   */
-  static Expr ungroup(Parser parser, Expr expr) {
-    // Expr should never be null, but it can happen if a parser error occurs.
-    if (parser.insideMacro || expr == null) {
-      return expr;
-    }
-    return UNGROUPER.ungroup(expr);
-  }
-
-  /**
    * Converts the parser's current token position to a vadl location.
    */
   static SourceLocation locationFromToken(Parser parser, Token token) {
@@ -210,7 +196,11 @@ class ParserUtils {
       var items = new ArrayList<Definition>(definitionList.items.size());
       for (Definition item : definitionList.items) {
         Definition definition = expander.expandDefinition(item);
-        items.add(definition);
+        if (definition instanceof DefinitionList list) {
+          items.addAll(list.items);
+        } else {
+          items.add(definition);
+        }
       }
       return new DefinitionList(items, definitionList.location);
     } else if (body instanceof Definition def) {
