@@ -3,8 +3,8 @@ package vadl.lcb.codegen;
 import static vadl.cpp_codegen.CppTypeMap.getCppTypeNameByVadlType;
 
 import java.io.StringWriter;
-import vadl.cpp_codegen.GenericCppCodeGeneratorVisitor;
 import vadl.cpp_codegen.CppCodeGenGraphNodeVisitor;
+import vadl.cpp_codegen.GenericCppCodeGeneratorVisitor;
 import vadl.cpp_codegen.passes.type_normalization.UpcastedTypeCastNode;
 import vadl.types.BitsType;
 import vadl.types.BoolType;
