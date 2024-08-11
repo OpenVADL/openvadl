@@ -4,9 +4,9 @@ import vadl.cpp_codegen.passes.type_normalization.UpcastedTypeCastNode;
 import vadl.viam.graph.GraphNodeVisitor;
 
 /**
- * Visitor for nodes of the oop layer.
+ * Visitor for nodes of the cpp codegen layer.
  */
-public interface OopGraphNodeVisitor extends GraphNodeVisitor {
+public interface CppCodeGenGraphNodeVisitor extends GraphNodeVisitor {
   /**
    * Visit {@link UpcastedTypeCastNode}.
    */

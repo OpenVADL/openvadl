@@ -13,6 +13,11 @@ import vadl.viam.passes.translation_validation.TranslationValidation.Z3Code;
  * {@link BuiltIn} require translation to Z3 methods.
  */
 public class Z3BuiltinTranslationMap {
+  /**
+   * Indicates how the operation should be used.
+   * There are infix operations like +,- etc.
+   * And prefix like AND, OR etc.
+   */
   public enum OperationsMode {
     INFIX,
     PREFIX

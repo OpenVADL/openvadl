@@ -184,8 +184,8 @@ public record SourceLocation(
       return false;
     }
     SourceLocation that = (SourceLocation) o;
-    return Objects.equals(uri, that.uri) && Objects.equals(begin, that.begin) &&
-        Objects.equals(end, that.end);
+    return Objects.equals(uri, that.uri) && Objects.equals(begin, that.begin)
+        && Objects.equals(end, that.end);
   }
 
   @Override

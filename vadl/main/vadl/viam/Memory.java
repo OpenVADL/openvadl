@@ -68,8 +68,8 @@ public class Memory extends Resource {
 
   @Override
   public boolean equals(Object obj) {
-    if(obj instanceof Memory mem) {
-        return mem.identifier.equals(this.identifier);
+    if (obj instanceof Memory mem) {
+      return mem.identifier.equals(this.identifier);
     }
 
     return false;

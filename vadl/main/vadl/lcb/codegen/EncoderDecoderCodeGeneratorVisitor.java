@@ -4,7 +4,7 @@ import static vadl.cpp_codegen.CppTypeMap.getCppTypeNameByVadlType;
 
 import java.io.StringWriter;
 import vadl.cpp_codegen.GenericCppCodeGeneratorVisitor;
-import vadl.cpp_codegen.OopGraphNodeVisitor;
+import vadl.cpp_codegen.CppCodeGenGraphNodeVisitor;
 import vadl.cpp_codegen.passes.type_normalization.UpcastedTypeCastNode;
 import vadl.types.BitsType;
 import vadl.types.BoolType;
@@ -17,7 +17,7 @@ import vadl.viam.graph.dependency.SideEffectNode;
  * is called by tablegen to encode an immediate.
  */
 public class EncoderDecoderCodeGeneratorVisitor extends GenericCppCodeGeneratorVisitor
-    implements OopGraphNodeVisitor {
+    implements CppCodeGenGraphNodeVisitor {
   public EncoderDecoderCodeGeneratorVisitor(StringWriter writer) {
     super(writer);
   }

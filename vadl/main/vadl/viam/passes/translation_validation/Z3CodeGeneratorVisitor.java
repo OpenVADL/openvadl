@@ -36,6 +36,9 @@ import vadl.viam.graph.dependency.WriteMemNode;
 import vadl.viam.graph.dependency.WriteRegFileNode;
 import vadl.viam.graph.dependency.WriteRegNode;
 
+/**
+ * Visitor which lowers {@link Node} into z3 predicates.
+ */
 public class Z3CodeGeneratorVisitor implements GraphNodeVisitor {
   private final StringWriter writer = new StringWriter();
 
@@ -45,13 +48,13 @@ public class Z3CodeGeneratorVisitor implements GraphNodeVisitor {
 
   @Override
   public void visit(ConstantNode node) {
-    if (node.constant() instanceof Constant.Value value &&
-        value.type() instanceof BitsType bitsType) {
+    if (node.constant() instanceof Constant.Value value
+        && value.type() instanceof BitsType bitsType) {
       writer.write(String.format("BitVecVal(%d, %d)",
           value.intValue(),
           bitsType.bitWidth()));
-    } else if (node.constant() instanceof Constant.Value value &&
-        value.type() instanceof BoolType) {
+    } else if (node.constant() instanceof Constant.Value value
+        && value.type() instanceof BoolType) {
       if (value.bool()) {
         writer.write("True");
       } else {
@@ -98,6 +101,7 @@ public class Z3CodeGeneratorVisitor implements GraphNodeVisitor {
           writer.write(")");
         }
       }
+      default -> throw new ViamError("Operator not covered");
     }
   }
 
@@ -121,30 +125,6 @@ public class Z3CodeGeneratorVisitor implements GraphNodeVisitor {
         writeMemNode.words(), 0, 0);
   }
 
-  private void writeMultipleBytes(Memory memory, ExpressionNode address, ExpressionNode value,
-                                  int words, int wordsWritten, int low) {
-    var mem = memory.identifier.simpleName();
-    var hi = low + memory.wordSize() - 1;
-    if (words == 1) {
-      writer.write("Store(" + mem + ", ");
-      visit(Objects.requireNonNull(address));
-      writer.write(" + " + wordsWritten + ", ");
-      writer.write("Extract(" + hi + ", " + low + ", ");
-      visit(value);
-      writer.write("))");
-    } else if (words > 1) {
-      writer.write("Store(");
-      writeMultipleBytes(memory, address, value, words - 1, wordsWritten + 1,
-          low + memory.wordSize());
-      writer.write(", ");
-      visit(Objects.requireNonNull(address));
-      writer.write(" + " + wordsWritten + ", ");
-      writer.write("Extract(" + hi + ", " + low + ", ");
-      visit(value);
-      writer.write("))");
-    }
-  }
-
   @Override
   public void visit(TypeCastNode typeCastNode) {
     if (typeCastNode.castType() instanceof UIntType uint) {
@@ -158,84 +138,18 @@ public class Z3CodeGeneratorVisitor implements GraphNodeVisitor {
     }
   }
 
-  private void visit(TypeCastNode typeCastNode, UIntType uIntType) {
-    typeCast("ZeroExt(", typeCastNode, uIntType.bitWidth());
+  private void visit(TypeCastNode typeCastNode, UIntType uintType) {
+    typeCast("ZeroExt(", typeCastNode, uintType.bitWidth());
   }
 
-  private void visit(TypeCastNode typeCastNode, SIntType sIntType) {
-    typeCast("SignExt(", typeCastNode, sIntType.bitWidth());
+  private void visit(TypeCastNode typeCastNode, SIntType sintType) {
+    typeCast("SignExt(", typeCastNode, sintType.bitWidth());
   }
 
   private void visit(TypeCastNode typeCastNode, BitsType bitsType) {
     typeCast("SignExt(", typeCastNode, bitsType.bitWidth());
   }
 
-
-  private static int getBitwidthDifference(TypeCastNode typeCastNode, int bitsType) {
-    if (typeCastNode.value().type() instanceof BitsType valBitsType) {
-      return bitsType
-          - valBitsType.bitWidth();
-    } else if (typeCastNode.value().type() instanceof BoolType) {
-      return bitsType - 1;
-    }
-
-    throw new ViamError("not implemented for other types");
-  }
-
-  /**
-   * Creates z3 functions for typecasting.
-   * There are three cases:
-   * 1. The difference is larger than 0. Then, the target type's bit size is larger than the
-   * source type's. We sign extend or zero extend based on the target type.
-   * 2. The difference is smaller than 0. Then, the target type's bit size is smaller than the
-   * source type's. We slice with the {@code Extract} function.
-   * 3. The difference is zero. Then, no casting or slicing is required.
-   *
-   * @param z3CastingOperation defines the z3 function: whether sign extend or zero extend.
-   * @param typeCastNode       is the {@link Node} which should be visited next.
-   * @param targetBitSize      is the absolute bit size of the target type.
-   */
-  private void typeCast(String z3CastingOperation,
-                        TypeCastNode typeCastNode, int targetBitSize) {
-    // `relativeBitSizeDifference` is the difference between the bit sizes of the target type
-    // and source type because z3 works with relative values.
-    int relativeBitSizeDifference = getBitwidthDifference(typeCastNode, targetBitSize);
-
-    if (relativeBitSizeDifference > 0) {
-      upcastType(relativeBitSizeDifference, z3CastingOperation, typeCastNode, targetBitSize);
-    } else if (relativeBitSizeDifference < 0) {
-      downcastType(typeCastNode, targetBitSize);
-    } else {
-      // Otherwise, no casting required
-      visit(typeCastNode.value());
-    }
-  }
-
-
-  private void upcastType(int relativeBitSizeDifference, String z3CastingOperation,
-                          TypeCastNode typeCastNode, int targetBitSize) {
-    writer.write(z3CastingOperation + relativeBitSizeDifference + ", ");
-    var requiresBoolConversion = typeCastNode.value().type() instanceof BoolType &&
-        !(typeCastNode.castType() instanceof BoolType);
-    if (requiresBoolConversion) {
-      // z3 cannot handle implicit typecasts
-      // we need to do it ourselves
-      writer.write("If(");
-      visit(typeCastNode.value());
-      writer.write(
-          String.format(", BitVecVal(1, %s), BitVecVal(0, %s))", targetBitSize, targetBitSize));
-    } else {
-      // No implicit bool casting required
-      visit(typeCastNode.value());
-    }
-    writer.write(")");
-  }
-
-  private void downcastType(TypeCastNode typeCastNode, int targetBitSize) {
-    writer.write("Extract(" + (targetBitSize - 1) + ", 0, ");
-    visit(typeCastNode.value());
-    writer.write(")");
-  }
 
   @Override
   public void visit(SliceNode sliceNode) {
@@ -341,5 +255,95 @@ public class Z3CodeGeneratorVisitor implements GraphNodeVisitor {
   @Override
   public void visit(SideEffectNode sideEffectNode) {
     sideEffectNode.accept(this);
+  }
+
+  /**
+   * Creates z3 functions for typecasting.
+   * There are three cases:
+   * 1. The difference is larger than 0. Then, the target type's bit size is larger than the
+   * source type's. We sign extend or zero extend based on the target type.
+   * 2. The difference is smaller than 0. Then, the target type's bit size is smaller than the
+   * source type's. We slice with the {@code Extract} function.
+   * 3. The difference is zero. Then, no casting or slicing is required.
+   *
+   * @param z3CastingOperation defines the z3 function: whether sign extend or zero extend.
+   * @param typeCastNode       is the {@link Node} which should be visited next.
+   * @param targetBitSize      is the absolute bit size of the target type.
+   */
+  private void typeCast(String z3CastingOperation,
+                        TypeCastNode typeCastNode, int targetBitSize) {
+    // `relativeBitSizeDifference` is the difference between the bit sizes of the target type
+    // and source type because z3 works with relative values.
+    int relativeBitSizeDifference = getBitwidthDifference(typeCastNode, targetBitSize);
+
+    if (relativeBitSizeDifference > 0) {
+      upcastType(relativeBitSizeDifference, z3CastingOperation, typeCastNode, targetBitSize);
+    } else if (relativeBitSizeDifference < 0) {
+      downcastType(typeCastNode, targetBitSize);
+    } else {
+      // Otherwise, no casting required
+      visit(typeCastNode.value());
+    }
+  }
+
+
+  private void upcastType(int relativeBitSizeDifference, String z3CastingOperation,
+                          TypeCastNode typeCastNode, int targetBitSize) {
+    writer.write(z3CastingOperation + relativeBitSizeDifference + ", ");
+    var requiresBoolConversion = typeCastNode.value().type() instanceof BoolType
+        && !(typeCastNode.castType() instanceof BoolType);
+    if (requiresBoolConversion) {
+      // z3 cannot handle implicit typecasts
+      // we need to do it ourselves
+      writer.write("If(");
+      visit(typeCastNode.value());
+      writer.write(
+          String.format(", BitVecVal(1, %s), BitVecVal(0, %s))", targetBitSize, targetBitSize));
+    } else {
+      // No implicit bool casting required
+      visit(typeCastNode.value());
+    }
+    writer.write(")");
+  }
+
+  private void downcastType(TypeCastNode typeCastNode, int targetBitSize) {
+    writer.write("Extract(" + (targetBitSize - 1) + ", 0, ");
+    visit(typeCastNode.value());
+    writer.write(")");
+  }
+
+  private void writeMultipleBytes(Memory memory, ExpressionNode address, ExpressionNode value,
+                                  int words, int wordsWritten, int low) {
+    var mem = memory.identifier.simpleName();
+    var hi = low + memory.wordSize() - 1;
+    if (words == 1) {
+      writer.write("Store(" + mem + ", ");
+      visit(Objects.requireNonNull(address));
+      writer.write(" + " + wordsWritten + ", ");
+      writer.write("Extract(" + hi + ", " + low + ", ");
+      visit(value);
+      writer.write("))");
+    } else if (words > 1) {
+      writer.write("Store(");
+      writeMultipleBytes(memory, address, value, words - 1, wordsWritten + 1,
+          low + memory.wordSize());
+      writer.write(", ");
+      visit(Objects.requireNonNull(address));
+      writer.write(" + " + wordsWritten + ", ");
+      writer.write("Extract(" + hi + ", " + low + ", ");
+      visit(value);
+      writer.write("))");
+    }
+  }
+
+  private static int getBitwidthDifference(TypeCastNode typeCastNode, int bitsType) {
+    if (typeCastNode.value().type() instanceof BitsType valBitsType) {
+      return bitsType
+          - valBitsType.bitWidth();
+    } else if (typeCastNode.value().type() instanceof BoolType) {
+      return bitsType - 1;
+    }
+
+    throw new ViamError("not implemented for other types");
   }
 }

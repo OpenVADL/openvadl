@@ -20,9 +20,9 @@ import vadl.viam.graph.dependency.TypeCastNode;
 import vadl.viam.passes.Triple;
 
 /**
- * The {@link TranslationValidation#lower(Specification, Instruction, Instruction)} can only work with
- * explicit types. However, that is usually not required for the VIAM's happy flow since the code
- * generation works better on fewer nodes. This pass helps to verify the
+ * The {@link TranslationValidation#lower(Specification, Instruction, Instruction)} can only work
+ * with explicit types. However, that is usually not required for the VIAM's happy flow since the
+ * code generation works better on fewer nodes. This pass helps to verify the
  * {@link Instruction#behavior()} by inserting explicit types.
  */
 public class ExplicitBitSizesInTypingPass extends Pass {

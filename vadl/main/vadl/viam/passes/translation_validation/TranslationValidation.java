@@ -178,18 +178,22 @@ public class TranslationValidation {
   private String getPredicates(List<TranslationResult> matchings) {
     var symbolTableBefore = new SymbolTable();
     var symbolTableAfter = new SymbolTable(matchings.size());
-    return matchings.stream().map(matching -> {
-          var beforeTranslationSymbol = symbolTableBefore.getNextVariable();
-          var afterTranslationSymbol = symbolTableAfter.getNextVariable();
-
-          return String.format(
-              """
-                  %s = %s
-                  %s = %s
-                  """, beforeTranslationSymbol, matching.before.value(),
-              afterTranslationSymbol, matching.after.value());
-        })
+    return matchings.stream()
+        .map(matching -> lowerSideEffect(matching, symbolTableBefore, symbolTableAfter))
         .collect(Collectors.joining("\n"));
+  }
+
+  private String lowerSideEffect(TranslationResult matching, SymbolTable symbolTableBefore,
+                                 SymbolTable symbolTableAfter) {
+    var beforeTranslationSymbol = symbolTableBefore.getNextVariable();
+    var afterTranslationSymbol = symbolTableAfter.getNextVariable();
+
+    return String.format(
+        """
+            %s = %s
+            %s = %s
+            """, beforeTranslationSymbol, matching.before.value(),
+        afterTranslationSymbol, matching.after.value());
   }
 
   private String getVariableDefinitions(Specification specification, Instruction before) {
