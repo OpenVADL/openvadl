@@ -53,6 +53,10 @@ public class Z3BuiltinTranslationMap {
       return new Pair<>(new Z3Code("UDiv"), PREFIX);
     } else if (builtin == BuiltInTable.NEG) {
       return new Pair<>(new Z3Code("~"), PREFIX);
+    } else if (builtin == BuiltInTable.SMULL
+        || builtin == BuiltInTable.UMULL
+        || builtin == BuiltInTable.SUMULL) {
+      return new Pair<>(new Z3Code("*"), INFIX);
     } else {
       return new Pair<>(new Z3Code(Objects.requireNonNull(builtin.operator())), INFIX);
     }

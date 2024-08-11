@@ -16,6 +16,7 @@ import vadl.viam.Instruction;
 import vadl.viam.Specification;
 import vadl.viam.passes.algebraic_simplication.AlgebraicSimplificationPass;
 import vadl.viam.passes.translation_validation.ExplicitBitSizesInTypingPass;
+import vadl.viam.passes.translation_validation.ExtendMultiplicationPass;
 import vadl.viam.passes.translation_validation.TranslationValidation;
 
 public class AlgebraicSimplificationTest extends DockerExecutionTest {
@@ -35,6 +36,9 @@ public class AlgebraicSimplificationTest extends DockerExecutionTest {
   Collection<DynamicTest> instructions() throws IOException {
     var initialSpec = runAndGetViamSpecification("examples/rv3264im.vadl");
     var spec = runAndGetViamSpecification("examples/rv3264im.vadl");
+
+    new ExtendMultiplicationPass().execute(Collections.emptyMap(), initialSpec);
+    new ExtendMultiplicationPass().execute(Collections.emptyMap(), spec);
 
     // Add explicit bit sizes
     new ExplicitBitSizesInTypingPass().execute(Collections.emptyMap(), initialSpec);
