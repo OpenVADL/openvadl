@@ -17,6 +17,7 @@ COMPILER vadl
   java.net.URI sourceFile = SourceLocation.INVALID_SOURCE_LOCATION.uri();
   boolean insideMacro = false;
   boolean insideAnnotation = false;
+  boolean disableSymbolChecking = false;
   Ast ast = new Ast();
   NestedSymbolTable symbolTable = new NestedSymbolTable();
   Map<String, Identifier> macroOverrides = new HashMap<>();
@@ -171,12 +172,13 @@ PRODUCTIONS
                                                                 .)
   .
 
-  isaDefinitionList<. out List<Definition> definitions .>  (. definitions = new ArrayList<>(); .)
+  isaDefinitionList<. out List<Definition> definitions .>             (. definitions = new ArrayList<>(); .)
   = {(
     annotations<.out List<Annotation> annotations.>
-    isaDefinition<out Definition def>                      (. def.annotations.annotations().addAll(annotations); definitions.add(def); if (!insideMacro) def.accept(symbolTable); .)
-    | macroDef
-    | macroInstance<out Node b, BasicSyntaxType.IsaDefs()> (. definitions.addAll(((DefinitionList) b).items); .)
+    isaDefinition<out Definition def>                                 (. def.annotations.annotations().addAll(annotations); definitions.add(def); if (!disableSymbolChecking) def.accept(symbolTable); .)
+  | macroDef
+  | macroInstanceOrPlaceholder<out Node n, BasicSyntaxType.IsaDefs()> (. if (n instanceof DefinitionList defs) definitions.addAll(defs.items);
+                                                                         else definitions.add((Definition) n); .)
   )}
   .
 
@@ -235,18 +237,18 @@ PRODUCTIONS
   .
 
   formatFieldRange<out FormatDefinition.FormatField field, Identifier id>
-  = SYM_BRACK_OPEN                      (. List<RangeExpr> ranges = new ArrayList<>();.)
-    rangeExpression<out RangeExpr e1>   (. ranges.add(e1); .)
+  = SYM_BRACK_OPEN                      (. List<Expr> ranges = new ArrayList<>();.)
+    rangeExpression<out Expr e1>        (. ranges.add(e1); .)
     {
       SYM_COMMA
-      rangeExpression<out RangeExpr e2> (. ranges.add(e2); .)
+      rangeExpression<out Expr e2>      (. ranges.add(e2); .)
     }
     SYM_BRACK_CLOSE                     (. field = new FormatDefinition.RangeFormatField(id, ranges); .)
   .
 
   formatFieldType<out FormatDefinition.FormatField field, Identifier id>
   = SYM_COLON
-    typeLiteral<out TypeLiteral type>   (. field = new FormatDefinition.TypedFormatField(id, type, symbolTable); .)
+    typeLiteralOrPlaceholder<out TypeLiteralOrPlaceholder type> (. field = new FormatDefinition.TypedFormatField(id, type, symbolTable); .)
   .
 
   formatFieldDerived<out FormatDefinition.FormatField field, Identifier id>
@@ -571,10 +573,9 @@ PRODUCTIONS
                                              else path = new IdentifierPath(segments); .)
   .
 
-  rangeExpression<out RangeExpr expr>
-  = expression<out Expr e1, BIN_OPS>
-    SYM_RANGE
-    expression<out Expr e2, BIN_OPS> (. expr = new RangeExpr(e1, e2);.)
+  rangeExpression<out Expr expr>
+  = expression<out expr, BIN_OPS>
+    [ SYM_RANGE expression<out Expr to, BIN_OPS> (. expr = new RangeExpr(expr, to); .) ]
   .
 
   letExpression<out Expr expr>
@@ -598,6 +599,12 @@ PRODUCTIONS
   .
 
   // -- PRIMITIVES ---------------------------------------------------------------------------------------------------
+
+  typeLiteralOrPlaceholder<out TypeLiteralOrPlaceholder type>    (. type = null; .)
+  = typeLiteral<out type>
+  | macroInstanceOrPlaceholder<out Node n, BasicSyntaxType.Id()> (. if (n instanceof IsId id) type = new TypeLiteral(id, List.of(), id.location());
+                                                                    else type = (PlaceholderExpr) n; .)
+  .
 
   typeLiteral<out TypeLiteral type>
   = identifierPath<out IsId path>                        (. List<List<Expr>> sizeIndices = new ArrayList<>(); .)
@@ -628,24 +635,29 @@ PRODUCTIONS
   | placeholder<out body, requiredType>
   .
 
-  placeholder<out PlaceholderExpr placeholder, SyntaxType requiredType>
+  placeholder<out Node placeholder, SyntaxType requiredType>
   = SYM_DOLLAR                            (. var startloc = loc(); .)
-  identifierPath<out IsId path>           (. placeholder = new PlaceholderExpr(path, startloc.join(loc())); .)
+  identifierPath<out IsId path>           (. if (isDefType(requiredType)) placeholder = new PlaceholderDefinition(path, startloc.join(loc()));
+                                             else placeholder = new PlaceholderExpr(path, startloc.join(loc())); .)
   .
 
 
-  macroInstance<out Node body, SyntaxType requiredType>         (. var args = new ArrayList<Node>(); .)
-  = SYM_DOLLAR
+  macroInstance<out Node body, SyntaxType requiredType>
+  = SYM_DOLLAR                                                  (. var args = new ArrayList<Node>(); .)
     identifier<out Identifier id>                               (. var macro = Objects.requireNonNull(symbolTable.getMacro(id.name)); .)
+                                                                (. disableSymbolChecking = true; .)
     SYM_PAREN_OPEN                                              (. var params = macro.params().iterator(); .)
-    [
-      macroInstanceParam<out Node arg1, params.next().type()>   (. args.add(arg1); .)
+    (
+      IF (!params.hasNext())
+      SYM_PAREN_CLOSE
+    | macroInstanceParam<out Node arg1, params.next().type()>   (. args.add(arg1); .)
       {
         SYM_SEMICOLON
         macroInstanceParam<out Node arg2, params.next().type()> (. args.add(arg2); .)
       }
-    ]
-    SYM_PAREN_CLOSE                                             (. body = expandMacro(this, id, args, requiredType); .)
+      SYM_PAREN_CLOSE
+    )                                                           (. disableSymbolChecking = false; .)
+                                                                (. body = expandMacro(this, id, args, requiredType); .)
   .
 
   macroInstanceParam<out Node arg, SyntaxType syntaxType> (. arg = null; .)
@@ -659,6 +671,8 @@ PRODUCTIONS
     decimalLiteral<out arg>
   | IF (syntaxType == BasicSyntaxType.Val())
     number<out arg>
+  | IF (syntaxType == BasicSyntaxType.IsaDefs())          (. var loc = loc(); .)
+    isaDefinitionList<.out List<Definition> defs.>        (. arg = new DefinitionList(defs, loc.join(loc())); .)
   | expression<out arg, BIN_OPS>
   .
 
@@ -679,10 +693,11 @@ PRODUCTIONS
     ]
     SYM_PAREN_CLOSE
     SYM_COLON syntaxType<out SyntaxType returnType> SYM_EQ
-    SYM_BRACE_OPEN                          (. Node body = null; insideMacro = true; .)
+    SYM_BRACE_OPEN                          (. Node body = null; insideMacro = true; disableSymbolChecking = true; .)
     macroBody<out body, returnType>
     SYM_BRACE_CLOSE                         (.
                                               insideMacro = false;
+                                              disableSymbolChecking = false;
                                               var bodyType = narrowNode(body).syntaxType();
                                               if (!bodyType.isSubTypeOf(returnType)) {
                                                 errors.SemErr(t.line, t.col, "The macro signature promises to return `%s` but it's body is of type `%s`.".formatted(returnType, bodyType));

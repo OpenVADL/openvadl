@@ -19,6 +19,12 @@ class NestedSymbolTable implements DefinitionVisitor<Void> {
   void loadBuiltins() {
     defineSymbol(new ValuedSymbol("register", null, SymbolType.FUNCTION),
         SourceLocation.INVALID_SOURCE_LOCATION);
+    defineSymbol(new ValuedSymbol("decimal", null, SymbolType.FUNCTION),
+        SourceLocation.INVALID_SOURCE_LOCATION);
+    defineSymbol(new ValuedSymbol("hex", null, SymbolType.FUNCTION),
+        SourceLocation.INVALID_SOURCE_LOCATION);
+    defineSymbol(new ValuedSymbol("addr", null, SymbolType.FUNCTION),
+        SourceLocation.INVALID_SOURCE_LOCATION);
   }
 
   void defineConstant(String name, SourceLocation loc) {
@@ -161,6 +167,11 @@ class NestedSymbolTable implements DefinitionVisitor<Void> {
     return null;
   }
 
+  @Override
+  public Void visit(PlaceholderDefinition definition) {
+    return null;
+  }
+
   void addMacro(Macro macro, SourceLocation loc) {
     verifyAvailable(macro.name().name, loc);
     symbols.put(macro.name().name, new MacroSymbol(macro.name().name, macro));
@@ -294,14 +305,14 @@ class NestedSymbolTable implements DefinitionVisitor<Void> {
       reportError("Invalid usage: field %s is derived, does not provide fields to chain"
           .formatted(field.identifier().name), next.location());
     } else if (field instanceof FormatDefinition.TypedFormatField f) {
-      if (isValuedAnnotation(f.type)) {
+      if (isValuedAnnotation(f.type())) {
         if (subCalls.size() > 1) {
           reportError(
               "Invalid usage: field %s resolves to %s, does not provide fields to chain".formatted(
-                  field.identifier().name, f.type.baseType), next.location());
+                  field.identifier().name, f.type().baseType), next.location());
         }
       } else if (subCalls.size() > 1) {
-        var typeSymbol = resolveAlias(f.symbolTable.resolveSymbol(f.type.baseType.pathToString()));
+        var typeSymbol = resolveAlias(f.symbolTable.resolveSymbol(f.type().baseType.pathToString()));
         if (typeSymbol instanceof FormatSymbol formatSymbol) {
           verifyFormatAccess(formatSymbol.definition, subCalls.subList(1, subCalls.size()));
         } else if (typeSymbol == null) {
@@ -335,7 +346,8 @@ class NestedSymbolTable implements DefinitionVisitor<Void> {
 
   private void verifyAvailable(String name, SourceLocation loc) {
     if (symbols.containsKey(name)) {
-      reportError("Duplicate definition: " + name, loc);
+      // TODO Fix duplicate definitions if only one of the definitions will be accepted into the AST
+      // reportError("Duplicate definition: " + name, loc);
     }
   }
 

@@ -43,6 +43,8 @@ interface DefinitionVisitor<R> {
   R visit(UsingDefinition definition);
 
   R visit(FunctionDefinition definition);
+
+  R visit(PlaceholderDefinition definition);
 }
 
 class ConstantDefinition extends Definition {
@@ -140,9 +142,9 @@ class FormatDefinition extends Definition {
 
   static class RangeFormatField extends Node implements FormatField {
     Identifier identifier;
-    List<RangeExpr> ranges;
+    List<Expr> ranges;
 
-    public RangeFormatField(Identifier identifier, List<RangeExpr> ranges) {
+    public RangeFormatField(Identifier identifier, List<Expr> ranges) {
       this.identifier = identifier;
       this.ranges = ranges;
     }
@@ -168,6 +170,7 @@ class FormatDefinition extends Definition {
       builder.append("\t [");
       ranges.get(0).prettyPrint(indent, builder);
       for (int i = 1; i < ranges.size(); i++) {
+        builder.append(", ");
         ranges.get(i).prettyPrint(indent, builder);
       }
       builder.append("]");
@@ -202,10 +205,10 @@ class FormatDefinition extends Definition {
 
   static class TypedFormatField extends Node implements FormatField {
     final Identifier identifier;
-    final TypeLiteral type;
+    final TypeLiteralOrPlaceholder type;
     final NestedSymbolTable symbolTable;
 
-    public TypedFormatField(Identifier identifier, TypeLiteral type,
+    public TypedFormatField(Identifier identifier, TypeLiteralOrPlaceholder type,
                             NestedSymbolTable symbolTable) {
       this.identifier = identifier;
       this.type = type;
@@ -217,9 +220,13 @@ class FormatDefinition extends Definition {
       return identifier;
     }
 
+    TypeLiteral type() {
+      return (TypeLiteral) type;
+    }
+
     @Override
     SourceLocation location() {
-      return identifier.location().join(type.location());
+      return identifier().location().join(type().location());
     }
 
     @Override
@@ -231,7 +238,7 @@ class FormatDefinition extends Definition {
     public void prettyPrint(int indent, StringBuilder builder) {
       identifier.prettyPrint(indent, builder);
       builder.append(" : ");
-      type.prettyPrint(indent, builder);
+      type().prettyPrint(indent, builder);
     }
 
     @Override
@@ -1197,6 +1204,38 @@ class FunctionDefinition extends Definition {
   }
 }
 
+class PlaceholderDefinition extends Definition {
+
+  IsId identifierPath;
+  SourceLocation loc;
+
+  PlaceholderDefinition(IsId identifierPath, SourceLocation loc) {
+    this.identifierPath = identifierPath;
+    this.loc = loc;
+  }
+
+  @Override
+  <R> R accept(DefinitionVisitor<R> visitor) {
+    return visitor.visit(this);
+  }
+
+  @Override
+  SourceLocation location() {
+    return loc;
+  }
+
+  @Override
+  SyntaxType syntaxType() {
+    return BasicSyntaxType.IsaDefs();
+  }
+
+  @Override
+  void prettyPrint(int indent, StringBuilder builder) {
+    builder.append("$");
+    identifierPath.prettyPrint(indent, builder);
+  }
+}
+
 record Annotations(List<Annotation> annotations) {
   Annotations() {
     this(new ArrayList<>());
@@ -1224,7 +1263,7 @@ record Annotation(Expr expr, @Nullable TypeLiteral type, @Nullable Identifier pr
   }
 }
 
-class DefinitionList extends Node {
+class DefinitionList extends Definition {
 
   List<Definition> items;
   SourceLocation location;
@@ -1247,5 +1286,10 @@ class DefinitionList extends Node {
   @Override
   void prettyPrint(int indent, StringBuilder builder) {
     items.forEach(item -> item.prettyPrint(indent, builder));
+  }
+
+  @Override
+  <R> R accept(DefinitionVisitor<R> visitor) {
+    throw new IllegalStateException("A DefinitionList should not exist in the finished AST");
   }
 }

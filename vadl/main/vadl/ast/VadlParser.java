@@ -69,6 +69,7 @@ public class VadlParser {
     try {
       parser.Parse();
     } catch (Exception e) {
+      e.printStackTrace();
       errors.add(new VadlError("Exception caught during parsing: " + e,
           SourceLocation.INVALID_SOURCE_LOCATION, null, null));
     }

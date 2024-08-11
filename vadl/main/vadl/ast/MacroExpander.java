@@ -185,9 +185,7 @@ class MacroExpander
   @Override
   public Expr visit(CastExpr expr) {
     var value = expr.value.accept(this);
-    var type = expr.type instanceof PlaceholderExpr p
-        ? new TypeLiteral(resolvePlaceholderOrIdentifier(p))
-        : expr.type;
+    var type = resolveTypeLiteral(expr.type);
     return new CastExpr(value, type);
   }
 
@@ -212,13 +210,20 @@ class MacroExpander
 
   @Override
   public Definition visit(FormatDefinition definition) {
-    for (var field : definition.fields) {
+    var fields = new ArrayList<>(definition.fields);
+    fields.replaceAll(field -> {
       if (field instanceof FormatDefinition.DerivedFormatField derivedFormatField) {
-        derivedFormatField.expr = derivedFormatField.expr.accept(this);
+        return new FormatDefinition.DerivedFormatField(derivedFormatField.identifier,
+            derivedFormatField.expr.accept(this));
+      } else if (field instanceof FormatDefinition.TypedFormatField typedFormatField) {
+        return new FormatDefinition.TypedFormatField(typedFormatField.identifier,
+            resolveTypeLiteral(typedFormatField.type), typedFormatField.symbolTable);
+      } else {
+        return field;
       }
-    }
+    });
     var id = resolvePlaceholderOrIdentifier(definition.identifier);
-    var def = new FormatDefinition(id, definition.type, definition.fields, definition.loc);
+    var def = new FormatDefinition(id, definition.type, fields, definition.loc);
     def.accept(symbols);
     return def;
   }
@@ -311,6 +316,12 @@ class MacroExpander
   }
 
   @Override
+  public Definition visit(PlaceholderDefinition definition) {
+    var arg = Objects.requireNonNull(args.get(definition.identifierPath.pathToString()));
+    return (Definition) arg;
+  }
+
+  @Override
   public BlockStatement visit(BlockStatement blockStatement) {
     symbols = symbols.createChild();
     var statements = blockStatement.statements.stream()
@@ -357,5 +368,11 @@ class MacroExpander
       return id;
     }
     throw new IllegalStateException("Unknown resolved placeholder type " + idOrPlaceholder);
+  }
+
+  private TypeLiteral resolveTypeLiteral(TypeLiteralOrPlaceholder type) {
+    return type instanceof PlaceholderExpr p
+        ? new TypeLiteral(resolvePlaceholderOrIdentifier(p))
+        : (TypeLiteral) type;
   }
 }

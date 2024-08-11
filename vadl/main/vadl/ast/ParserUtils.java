@@ -206,6 +206,13 @@ class ParserUtils {
     if (body instanceof Expr expr) {
       var expanded = expander.expandExpr(expr);
       return new GroupExpr(expanded);
+    } else if (body instanceof DefinitionList definitionList) {
+      var items = new ArrayList<Definition>(definitionList.items.size());
+      for (Definition item : definitionList.items) {
+        Definition definition = expander.expandDefinition(item);
+        items.add(definition);
+      }
+      return new DefinitionList(items, definitionList.location);
     } else if (body instanceof Definition def) {
       return expander.expandDefinition(def);
     } else if (body instanceof StatementList statementList) {
@@ -215,13 +222,6 @@ class ParserUtils {
         items.add(statement);
       }
       return new StatementList(items, statementList.location);
-    } else if (body instanceof DefinitionList definitionList) {
-      var items = new ArrayList<Definition>(definitionList.items.size());
-      for (Definition item : definitionList.items) {
-        Definition definition = expander.expandDefinition(item);
-        items.add(definition);
-      }
-      return new DefinitionList(items, definitionList.location);
     } else if (body instanceof Statement statement) {
       return expander.expandStatement(statement);
     } else {
@@ -262,5 +262,13 @@ class ParserUtils {
 
   static void popScope(Parser parser) {
     parser.symbolTable = Objects.requireNonNull(parser.symbolTable.parent);
+  }
+
+  static boolean isExprType(SyntaxType type) {
+    return type.isSubTypeOf(BasicSyntaxType.Ex());
+  }
+
+  static boolean isDefType(SyntaxType type) {
+    return type.isSubTypeOf(BasicSyntaxType.IsaDefs());
   }
 }

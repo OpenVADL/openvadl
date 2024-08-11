@@ -86,7 +86,7 @@ public class AstDumper
         dumpChildren(f.ranges);
       } else if (field instanceof FormatDefinition.TypedFormatField f) {
         dumpNode(f);
-        dumpChildren(f.identifier, f.type);
+        dumpChildren(f.identifier, f.type());
       } else if (field instanceof FormatDefinition.DerivedFormatField f) {
         dumpNode(f);
         dumpChildren(f.identifier, f.expr);
@@ -256,6 +256,12 @@ public class AstDumper
       dumpChildren(param.name(), param.type());
     }
     dumpChildren(definition.retType, definition.expr);
+    return null;
+  }
+
+  @Override
+  public Void visit(PlaceholderDefinition definition) {
+    dumpNode(definition);
     return null;
   }
 
