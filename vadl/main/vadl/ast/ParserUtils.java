@@ -97,11 +97,11 @@ class ParserUtils {
   }
 
   private static TypeLiteralOrPlaceholder typeLiteral(Expr expr) {
-    if (expr instanceof IsSymExpr symExpr) {
-      return new TypeLiteral(symExpr);
-    } else if (expr instanceof PlaceholderExpr placeholderExpr) {
+    if (expr instanceof PlaceholderExpr placeholderExpr) {
       return placeholderExpr;
-    } else {
+    } else if (expr instanceof IsSymExpr symExpr) {
+      return new TypeLiteral(symExpr);
+    } else  {
       throw new IllegalArgumentException("Unknown type literal node " + expr);
     }
   }

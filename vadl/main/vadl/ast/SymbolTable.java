@@ -25,14 +25,12 @@ class SymbolTable implements DefinitionVisitor<Void> {
         SourceLocation.INVALID_SOURCE_LOCATION);
     defineSymbol(new ValuedSymbol("mnemonic", null, SymbolType.CONSTANT),
         SourceLocation.INVALID_SOURCE_LOCATION);
+    defineSymbol(new ValuedSymbol("VADL::div", null, SymbolType.CONSTANT),
+        SourceLocation.INVALID_SOURCE_LOCATION);
   }
 
   void defineConstant(String name, SourceLocation loc) {
     defineSymbol(new ValuedSymbol(name, null, SymbolType.CONSTANT), loc);
-  }
-
-  void defineSymbol(String name, SymbolType type, SourceLocation loc) {
-    defineSymbol(new BasicSymbol(name, type), loc);
   }
 
   void defineSymbol(Symbol symbol, SourceLocation loc) {
@@ -85,7 +83,8 @@ class SymbolTable implements DefinitionVisitor<Void> {
 
   @Override
   public Void visit(InstructionSetDefinition definition) {
-    defineSymbol(definition.identifier.name, SymbolType.INSTRUCTION_SET, definition.location());
+    defineSymbol(new IsaSymbol(definition.identifier.name, definition, SymbolType.INSTRUCTION_SET),
+        definition.location());
     return null;
   }
 
@@ -208,9 +207,7 @@ class SymbolTable implements DefinitionVisitor<Void> {
           new ValuedSymbol(field.identifier().name, null, SymbolType.FORMAT_FIELD)));
       return formatSymbol;
     } else {
-      errors.add(
-          new VadlError("Unresolved format " + formatId.name, formatId.location(),
-              null, null));
+      reportError("Unresolved format " + formatId.name, formatId.location());
       return null;
     }
   }
@@ -222,11 +219,23 @@ class SymbolTable implements DefinitionVisitor<Void> {
         && instructionSymbol.definition.typeIdentifier instanceof Identifier typeId) {
       return requireFormat(typeId);
     } else {
-      errors.add(
-          new VadlError("Unresolved instruction " + instrId.name, instrId.location(),
-              null, null));
+      reportError("Unresolved instruction " + instrId.name, instrId.location());
       return null;
     }
+  }
+
+  @Nullable
+  InstructionSetDefinition findIsa(Identifier isa) {
+    var symbol = resolveSymbol(isa.name);
+    if (symbol instanceof IsaSymbol isaSymbol) {
+      return isaSymbol.definition;
+    }
+    reportError("Unresolved ISA " + isa.name, isa.location());
+    return null;
+  }
+
+  void copyFrom(SymbolTable other) {
+    symbols.putAll(other.symbols);
   }
 
   void requireValue(IsCallExpr callExpr) {
@@ -238,13 +247,10 @@ class SymbolTable implements DefinitionVisitor<Void> {
       if (requirement instanceof SymbolRequirement req) {
         var symbol = resolveSymbol(req.name);
         if (symbol == null) {
-          errors.add(
-              new VadlError("Unresolved definition " + req.name, req.loc, null,
-                  null));
+          reportError("Unresolved definition " + req.name, req.loc);
         } else if (symbol.type() != req.type()) {
-          errors.add(new VadlError(
-              "Mismatched type %s: required %s, found %s".formatted(req.name, req.type.name(),
-                  symbol.type().name()), req.loc, null, null));
+          reportError("Mismatched type %s: required %s, found %s"
+              .formatted(req.name, req.type.name(), symbol.type().name()), req.loc);
         }
       } else if (requirement instanceof ValueRequirement req) {
         validateValueAccess(req);
@@ -376,7 +382,8 @@ class SymbolTable implements DefinitionVisitor<Void> {
     SymbolType type();
   }
 
-  record BasicSymbol(String name, SymbolType type) implements Symbol {
+  record IsaSymbol(String name, InstructionSetDefinition definition, SymbolType type)
+      implements Symbol {
   }
 
   record ValuedSymbol(String name, @Nullable Definition typeDefinition, SymbolType type)

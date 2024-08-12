@@ -100,7 +100,10 @@ public class AstDumper
   public Void visit(InstructionSetDefinition definition) {
     dumpNode(definition);
     dumpChildren(definition.identifier);
-    dumpChildren(definition.definitions.toArray(new Node[0]));
+    if (definition.extending != null) {
+      dumpChildren(definition.extending.identifier);
+    }
+    dumpChildren(definition.definitions);
     return null;
   }
 
@@ -211,7 +214,7 @@ public class AstDumper
   @Override
   public Void visit(IdentifierPath expr) {
     dumpNode(expr);
-    dumpChildren(expr.segments);
+    dumpChildren(expr.segments.stream().map(Node.class::cast).toList());
     return null;
   }
 

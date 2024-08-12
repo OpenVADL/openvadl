@@ -134,8 +134,11 @@ class MacroExpander
 
   @Override
   public Expr visit(IdentifierPath expr) {
-    symbols.requireValue(expr);
-    return expr;
+    var segments = new ArrayList<>(expr.segments);
+    segments.replaceAll(this::resolvePlaceholderOrIdentifier);
+    var expanded = new IdentifierPath(segments);
+    symbols.requireValue(expanded);
+    return expanded;
   }
 
   @Override

@@ -482,3 +482,183 @@ instruction set architecture RV3264I = {
   assembly SRAI = (mnemonic, " ", register(rd), ",", register(rs1), ",", decimal(sft))
 }
 
+instruction set architecture RV3264IM extending RV3264I = {
+  constant MLen2 = (MLen * 2)
+  constant MLen2_1 = (MLen2 - 1)
+  constant TopBitSet = (1 as Regs << (MLen - 1)) as Regs
+  constant AllOnes = -1 as SIntR as Regs
+  function isOverflow(dividend : Regs, divisor : Regs) -> Bool = ((dividend = TopBitSet) & (dividend = AllOnes))
+  instruction MUL : Rtype =   let result = (X(rs1) as SInt * X(rs2) as SInt) in
+    X(rd) := result as Regs
+
+  encoding MUL =
+  { opcode = 0b011'0011
+  , funct3 = 0b000
+  , funct7 = 0b000'0001
+  }
+  assembly MUL = (mnemonic, " ", register(rd), ",", register(rs1), ",", register(rs2))
+  instruction MULH : Rtype =   let result = (X(rs1) as SInt * X(rs2) as SInt) in
+    X(rd) := result as Regs
+
+  encoding MULH =
+  { opcode = 0b011'0011
+  , funct3 = 0b001
+  , funct7 = 0b000'0001
+  }
+  assembly MULH = (mnemonic, " ", register(rd), ",", register(rs1), ",", register(rs2))
+  instruction MULHSU : Rtype =   let result = (X(rs1) as SInt * X(rs2) as SInt) in
+    X(rd) := result as Regs
+
+  encoding MULHSU =
+  { opcode = 0b011'0011
+  , funct3 = 0b010
+  , funct7 = 0b000'0001
+  }
+  assembly MULHSU = (mnemonic, " ", register(rd), ",", register(rs1), ",", register(rs2))
+  instruction MULHU : Rtype =   let result = (X(rs1) as SInt * X(rs2) as SInt) in
+    X(rd) := result as Regs
+
+  encoding MULHU =
+  { opcode = 0b011'0011
+  , funct3 = 0b011
+  , funct7 = 0b000'0001
+  }
+  assembly MULHU = (mnemonic, " ", register(rd), ",", register(rs1), ",", register(rs2))
+  instruction DIV : Rtype =   let dividend = X(rs1) as SIntR in
+    let divisor = X(rs2) as SIntR in
+      X(rd) :=         if (divisor = 0 as SIntR) then
+AllOnes
+        else
+          if isOverflow(dividend, divisor) then
+TopBitSet
+          else
+VADL::div(dividend, divisor) as SIntR
+
+  encoding DIV =
+  { opcode = 0b011'0011
+  , funct3 = 0b100
+  , funct7 = 0b000'0001
+  }
+  assembly DIV = (mnemonic, " ", register(rd), ",", register(rs1), ",", register(rs2))
+  instruction DIVU : Rtype =   let dividend = X(rs1) as SIntR in
+    let divisor = X(rs2) as SIntR in
+      X(rd) :=         if (divisor = 0 as SIntR) then
+AllOnes
+        else
+          if isOverflow(dividend, divisor) then
+TopBitSet
+          else
+VADL::div(dividend, divisor) as SIntR
+
+  encoding DIVU =
+  { opcode = 0b011'0011
+  , funct3 = 0b101
+  , funct7 = 0b000'0001
+  }
+  assembly DIVU = (mnemonic, " ", register(rd), ",", register(rs1), ",", register(rs2))
+  instruction REM : Rtype =   let dividend = X(rs1) as SIntR in
+    let divisor = X(rs2) as SIntR in
+      X(rd) :=         if (divisor = 0 as SIntR) then
+AllOnes
+        else
+          if isOverflow(dividend, divisor) then
+TopBitSet
+          else
+VADL::div(dividend, divisor) as SIntR
+
+  encoding REM =
+  { opcode = 0b011'0011
+  , funct3 = 0b110
+  , funct7 = 0b000'0001
+  }
+  assembly REM = (mnemonic, " ", register(rd), ",", register(rs1), ",", register(rs2))
+  instruction REMU : Rtype =   let dividend = X(rs1) as SIntR in
+    let divisor = X(rs2) as SIntR in
+      X(rd) :=         if (divisor = 0 as SIntR) then
+AllOnes
+        else
+          if isOverflow(dividend, divisor) then
+TopBitSet
+          else
+VADL::div(dividend, divisor) as SIntR
+
+  encoding REMU =
+  { opcode = 0b011'0011
+  , funct3 = 0b111
+  , funct7 = 0b000'0001
+  }
+  assembly REMU = (mnemonic, " ", register(rd), ",", register(rs1), ",", register(rs2))
+  instruction MULW : Rtype =   X(rd) := (X(rs1) as SIntW * X(rs2) as SIntW) as SIntR
+
+  encoding MULW =
+  { opcode = 0b011'1011
+  , funct3 = 0b000
+  , funct7 = 0b000'0001
+  }
+  assembly MULW = (mnemonic, " ", register(rd), ",", register(rs1), ",", register(rs2))
+  instruction DIVW : Rtype =   let dividend = X(rs1) as SIntR in
+    let divisor = X(rs2) as SIntR in
+      X(rd) :=         if (divisor = 0 as SIntR) then
+AllOnes
+        else
+          if isOverflow(dividend, divisor) then
+TopBitSet
+          else
+VADL::div(dividend, divisor) as SIntR
+
+  encoding DIVW =
+  { opcode = 0b011'1011
+  , funct3 = 0b100
+  , funct7 = 0b000'0001
+  }
+  assembly DIVW = (mnemonic, " ", register(rd), ",", register(rs1), ",", register(rs2))
+  instruction DIVUW : Rtype =   let dividend = X(rs1) as SIntR in
+    let divisor = X(rs2) as SIntR in
+      X(rd) :=         if (divisor = 0 as SIntR) then
+AllOnes
+        else
+          if isOverflow(dividend, divisor) then
+TopBitSet
+          else
+VADL::div(dividend, divisor) as SIntR
+
+  encoding DIVUW =
+  { opcode = 0b011'1011
+  , funct3 = 0b101
+  , funct7 = 0b000'0001
+  }
+  assembly DIVUW = (mnemonic, " ", register(rd), ",", register(rs1), ",", register(rs2))
+  instruction REMW : Rtype =   let dividend = X(rs1) as SIntR in
+    let divisor = X(rs2) as SIntR in
+      X(rd) :=         if (divisor = 0 as SIntR) then
+AllOnes
+        else
+          if isOverflow(dividend, divisor) then
+TopBitSet
+          else
+VADL::div(dividend, divisor) as SIntR
+
+  encoding REMW =
+  { opcode = 0b011'1011
+  , funct3 = 0b110
+  , funct7 = 0b000'0001
+  }
+  assembly REMW = (mnemonic, " ", register(rd), ",", register(rs1), ",", register(rs2))
+  instruction REMUW : Rtype =   let dividend = X(rs1) as SIntR in
+    let divisor = X(rs2) as SIntR in
+      X(rd) :=         if (divisor = 0 as SIntR) then
+AllOnes
+        else
+          if isOverflow(dividend, divisor) then
+TopBitSet
+          else
+VADL::div(dividend, divisor) as SIntR
+
+  encoding REMUW =
+  { opcode = 0b011'1011
+  , funct3 = 0b111
+  , funct7 = 0b000'0001
+  }
+  assembly REMUW = (mnemonic, " ", register(rd), ",", register(rs1), ",", register(rs2))
+}
+

@@ -143,7 +143,9 @@ public class StatementTest {
     );
     expectedAst.definitions.add(new InstructionSetDefinition(
         new Identifier("ISA", loc),
+        null,
         definitions,
+        null,
         loc
     ));
     verifyPrettifiedAst(ast);

@@ -420,14 +420,19 @@ class FormatDefinition extends Definition {
 }
 
 class InstructionSetDefinition extends Definition {
-  final Identifier identifier;
-  final SourceLocation loc;
+  Identifier identifier;
+  @Nullable InstructionSetDefinition extending;
   List<Definition> definitions;
+  SymbolTable symbolTable;
+  SourceLocation loc;
 
-  InstructionSetDefinition(Identifier identifier, List<Definition> statements,
+  InstructionSetDefinition(Identifier identifier, @Nullable InstructionSetDefinition extending,
+                           List<Definition> statements, SymbolTable symbolTable,
                            SourceLocation location) {
     this.identifier = identifier;
+    this.extending = extending;
     this.definitions = statements;
+    this.symbolTable = symbolTable;
     this.loc = location;
   }
 
@@ -445,7 +450,11 @@ class InstructionSetDefinition extends Definition {
   void prettyPrint(int indent, StringBuilder builder) {
     annotations.prettyPrint(indent, builder);
     builder.append(prettyIndentString(indent));
-    builder.append("instruction set architecture %s = {\n".formatted(identifier.name));
+    builder.append("instruction set architecture ").append(identifier.name);
+    if (extending != null) {
+      builder.append(" extending ").append(extending.identifier.name);
+    }
+    builder.append(" = {\n");
     for (Definition definition : definitions) {
       definition.prettyPrint(indent + 1, builder);
     }
@@ -474,6 +483,7 @@ class InstructionSetDefinition extends Definition {
     var that = (InstructionSetDefinition) o;
     return Objects.equals(annotations, that.annotations)
         && Objects.equals(identifier, that.identifier)
+        && Objects.equals(extending, that.extending)
         && Objects.equals(definitions, that.definitions);
   }
 
@@ -481,6 +491,7 @@ class InstructionSetDefinition extends Definition {
   public int hashCode() {
     int result = Objects.hashCode(annotations);
     result = 31 * result + Objects.hashCode(identifier);
+    result = 31 * result + Objects.hashCode(extending);
     result = 31 * result + Objects.hashCode(definitions);
     return result;
   }
@@ -872,7 +883,8 @@ class InstructionDefinition extends Definition {
   }
 }
 
-sealed interface FieldEncodingsOrPlaceholder permits EncodingDefinition.FieldEncodings, PlaceholderExpr {
+sealed interface FieldEncodingsOrPlaceholder
+    permits EncodingDefinition.FieldEncodings, PlaceholderExpr {
 
 }
 

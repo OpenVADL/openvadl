@@ -735,7 +735,7 @@ sealed interface IdentifierOrPlaceholder permits Identifier, PlaceholderExpr {
  * This node should never leave the parser.
  */
 final class PlaceholderExpr extends Expr implements IdentifierOrPlaceholder,
-    OperatorOrPlaceholder, TypeLiteralOrPlaceholder, FieldEncodingsOrPlaceholder {
+    OperatorOrPlaceholder, TypeLiteralOrPlaceholder, FieldEncodingsOrPlaceholder, IsId {
   IsId identifierPath;
   SourceLocation loc;
 
@@ -750,7 +750,7 @@ final class PlaceholderExpr extends Expr implements IdentifierOrPlaceholder,
   }
 
   @Override
-  SourceLocation location() {
+  public SourceLocation location() {
     return loc;
   }
 
@@ -781,6 +781,11 @@ final class PlaceholderExpr extends Expr implements IdentifierOrPlaceholder,
   @Override
   public int hashCode() {
     return identifierPath.hashCode();
+  }
+
+  @Override
+  public String pathToString() {
+    return "$" + identifierPath.pathToString();
   }
 }
 
@@ -1087,7 +1092,7 @@ sealed interface IsSymExpr extends IsCallExpr permits SymbolExpr, IsId {
   }
 }
 
-sealed interface IsId extends IsSymExpr permits IdentifierPath, Identifier {
+sealed interface IsId extends IsSymExpr permits IdentifierPath, Identifier, PlaceholderExpr {
   @Override
   default IsId path() {
     return this;
@@ -1107,23 +1112,18 @@ final class IdentifierPath extends Expr implements IsId {
    * the last segment is an identifier in the (nested) namespace.
    * Size has to be at least 1
    */
-  List<Identifier> segments;
+  List<IdentifierOrPlaceholder> segments;
 
-  public IdentifierPath(List<Identifier> segments) {
+  public IdentifierPath(List<IdentifierOrPlaceholder> segments) {
     Preconditions.checkArgument(!segments.isEmpty(),
         "IdentifierPath needs at least one Identifier");
     this.segments = segments;
   }
 
   @Override
-  public IsId path() {
-    return this;
-  }
-
-  @Override
   public SourceLocation location() {
-    var first = segments.get(0);
-    var last = segments.get(segments.size() - 1);
+    var first = (Node) segments.get(0);
+    var last = (Node) segments.get(segments.size() - 1);
     return first.location().join(last.location());
   }
 
@@ -1142,12 +1142,12 @@ final class IdentifierPath extends Expr implements IsId {
   @Override
   public void prettyPrint(int indent, StringBuilder builder) {
     var isFirst = true;
-    for (Identifier segment : segments) {
+    for (var segment : segments) {
       if (!isFirst) {
         builder.append("::");
       }
       isFirst = false;
-      segment.prettyPrint(indent, builder);
+      ((Node) segment).prettyPrint(indent, builder);
     }
   }
 

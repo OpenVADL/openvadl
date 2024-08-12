@@ -106,6 +106,7 @@ TOKENS
   FUNCTION = "function".
   TRUE = "true".
   FALSE = "false".
+  EXTENDING = "extending".
 
   SYM_IN = "in".
   SYM_AS = "as".
@@ -174,12 +175,16 @@ PRODUCTIONS
   | functionDefinition<out def>
   .
 
-  instructionsetDefinition<out InstructionSetDefinition isaDef> (. pushScope(this); .)
-  = INSTRUCTION                                                 (. var startLocation = loc(); .)
-    SET ARCHITECTURE identifier<out Identifier identifier>
+  instructionsetDefinition<out InstructionSetDefinition isaDef> (. pushScope(this); InstructionSetDefinition extending = null; .)
+  = INSTRUCTION SET ARCHITECTURE                                (. var startLocation = loc(); .)
+    identifier<out Identifier identifier>
+    [
+      EXTENDING
+      identifier<out Identifier extendingId>                    (. extending = symbolTable.findIsa(extendingId); if (extending != null) symbolTable.copyFrom(extending.symbolTable); .)
+    ]
     SYM_EQ SYM_BRACE_OPEN
     isaDefinitionList<.out List<Definition> definitions.>
-    SYM_BRACE_CLOSE                                             (. isaDef = new InstructionSetDefinition(identifier, definitions, startLocation.join(loc()));
+    SYM_BRACE_CLOSE                                             (. isaDef = new InstructionSetDefinition(identifier, extending, definitions, symbolTable, startLocation.join(loc()));
                                                                    popScope(this);
                                                                    isaDef.accept(symbolTable);
                                                                 .)
@@ -603,13 +608,14 @@ PRODUCTIONS
   | FALSE                    (. expr = new BoolLiteral(false, loc()); .)
   .
 
-  identifierPath<out IsId path>       (. List<Identifier> segments = new ArrayList<>(); .)
-  = identifier<out Identifier id>     (. segments.add(id); .)
+  identifierPath<out IsId path>                                 (. List<IdentifierOrPlaceholder> segments = new ArrayList<>(); .)
+  = identifier<out Identifier id>                               (. segments.add(id); .)
     {
+      IF (la.kind == _SYM_NAMESPACE)
       SYM_NAMESPACE
-      identifier<out Identifier next> (. segments.add(next); .)
-    }                                 (. if (segments.size() == 1) path = segments.get(0);
-                                         else path = new IdentifierPath(segments); .)
+      identifierOrPlaceholder<out IdentifierOrPlaceholder next> (. segments.add(next); .)
+    }                                                           (. if (segments.size() == 1) path = id;
+                                                                   else path = new IdentifierPath(segments); .)
   .
 
   rangeExpression<out Expr expr>
@@ -641,8 +647,8 @@ PRODUCTIONS
 
   typeLiteralOrPlaceholder<out TypeLiteralOrPlaceholder type>    (. type = null; .)
   = typeLiteral<out type>
-  | macroInstanceOrPlaceholder<out Node n, BasicSyntaxType.Id()> (. if (n instanceof IsId id) type = new TypeLiteral(id, List.of(), id.location());
-                                                                    else type = (PlaceholderExpr) n; .)
+  | macroInstanceOrPlaceholder<out Node n, BasicSyntaxType.Id()> (. if (n instanceof PlaceholderExpr p) type = p;
+                                                                    else type = new TypeLiteral((IsId) n, List.of(), n.location()); .)
   .
 
   typeLiteral<out TypeLiteral type>

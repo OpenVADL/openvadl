@@ -271,7 +271,6 @@ $Arch3264 ( // ((((((((((((((((((((((((((((((((((((((((
 
   }
 
-/* TODO Waiting for "extending" functionality
 instruction set architecture RV3264IM extending RV3264I = {
 
   constant MLen2   = MLen  * 2
@@ -302,14 +301,14 @@ instruction set architecture RV3264IM extending RV3264I = {
     instruction $name : Rtype =                        // division and remainder instructions
       let dividend = X(rs1) as $opTy in let divisor = X(rs2) as $opTy in
         X(rd) :=  if divisor = (0 as $opTy)
-                    then match : Ex ($opName = div => AllOnes; _  => dividend)
-                  else match : Ex ($opTy = SInt =>
+                    then /* TODO match : Ex ($opName = div => */ AllOnes /*; _  => dividend)*/
+                  else /* match : Ex ($opTy = SInt => */
                     if isOverflow (dividend, divisor)
-                      then match : Ex ($opName = div => TopBitSet; _  => 0)
+                      then /* match : Ex ($opName = div => */ TopBitSet // ; _  => 0)
                       else VADL::$opName(dividend, divisor) as SIntR
-                    ; _  =>
-                           VADL::$opName(dividend, divisor) as SIntR
-                    )
+                    //; _  =>
+                    //       VADL::$opName(dividend, divisor) as SIntR
+                    //)
       encoding $name = { opcode = $opCode, funct3 = $funct3, funct7 = 0b000'0001}
       assembly $name = (mnemonic, " ", register(rd), ",", register(rs1), ",", register(rs2))
     }
@@ -341,7 +340,6 @@ $Arch3264 ( // ((((((((((((((((((((((((((((((((((((((((
 )           // ))))))))))))))))))))))))))))))))))))))))
 
   }
-*/
 
 //   application binary interface ABI for RV3264IM = {}
 
