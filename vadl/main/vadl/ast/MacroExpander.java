@@ -13,10 +13,10 @@ import vadl.error.VadlException;
 class MacroExpander
     implements ExprVisitor<Expr>, DefinitionVisitor<Definition>, StatementVisitor<Statement> {
   final Map<String, Node> args;
-  NestedSymbolTable symbols;
+  SymbolTable symbols;
   List<VadlError> errors = new ArrayList<>();
 
-  MacroExpander(Map<String, Node> args, NestedSymbolTable symbols) {
+  MacroExpander(Map<String, Node> args, SymbolTable symbols) {
     this.args = args;
     this.symbols = symbols;
   }
@@ -61,10 +61,10 @@ class MacroExpander
   }
 
   @Override
-  public Expr visit(GroupExpr expr) {
+  public Expr visit(GroupedExpr expr) {
     var expressions = new ArrayList<>(expr.expressions);
     expressions.replaceAll(expression -> expression.accept(this));
-    return new GroupExpr(expressions, expr.loc);
+    return new GroupedExpr(expressions, expr.loc);
   }
 
   @Override

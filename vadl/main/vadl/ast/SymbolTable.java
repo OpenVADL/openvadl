@@ -8,10 +8,10 @@ import javax.annotation.Nullable;
 import vadl.error.VadlError;
 import vadl.utils.SourceLocation;
 
-class NestedSymbolTable implements DefinitionVisitor<Void> {
+class SymbolTable implements DefinitionVisitor<Void> {
   @Nullable
-  NestedSymbolTable parent = null;
-  final List<NestedSymbolTable> children = new ArrayList<>();
+  SymbolTable parent = null;
+  final List<SymbolTable> children = new ArrayList<>();
   final Map<String, Symbol> symbols = new HashMap<>();
   List<Requirement> requirements = new ArrayList<>();
   List<VadlError> errors = new ArrayList<>();
@@ -40,28 +40,28 @@ class NestedSymbolTable implements DefinitionVisitor<Void> {
     symbols.put(symbol.name(), symbol);
   }
 
-  NestedSymbolTable createChild() {
-    NestedSymbolTable child = new NestedSymbolTable();
+  SymbolTable createChild() {
+    SymbolTable child = new SymbolTable();
     child.parent = this;
     child.errors = this.errors;
     this.children.add(child);
     return child;
   }
 
-  NestedSymbolTable createFormatScope(Identifier formatId) {
-    NestedSymbolTable child = createChild();
+  SymbolTable createFormatScope(Identifier formatId) {
+    SymbolTable child = createChild();
     child.requirements.add(new FormatRequirement(formatId));
     return child;
   }
 
-  NestedSymbolTable createInstructionScope(Identifier instrId) {
-    NestedSymbolTable child = createChild();
+  SymbolTable createInstructionScope(Identifier instrId) {
+    SymbolTable child = createChild();
     child.requirements.add(new InstructionRequirement(instrId));
     return child;
   }
 
-  NestedSymbolTable createFunctionScope(List<FunctionDefinition.Parameter> params) {
-    NestedSymbolTable child = createChild();
+  SymbolTable createFunctionScope(List<FunctionDefinition.Parameter> params) {
+    SymbolTable child = createChild();
     for (FunctionDefinition.Parameter param : params) {
       defineSymbol(new ValuedSymbol(param.name().name, null, SymbolType.CONSTANT),
           param.name().loc);
@@ -254,7 +254,7 @@ class NestedSymbolTable implements DefinitionVisitor<Void> {
         requireInstructionFormat(req.instrId);
       }
     }
-    children.forEach(NestedSymbolTable::validate);
+    children.forEach(SymbolTable::validate);
     return errors;
   }
 

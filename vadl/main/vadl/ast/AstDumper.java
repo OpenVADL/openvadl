@@ -146,7 +146,7 @@ public class AstDumper
   }
 
   @Override
-  public Void visit(GroupExpr expr) {
+  public Void visit(GroupedExpr expr) {
     dumpNode(expr);
     dumpChildren(expr.expressions);
     return null;

@@ -192,7 +192,7 @@ class ParserUtils {
     var body = macro.body();
     if (body instanceof Expr expr) {
       var expanded = expander.expandExpr(expr);
-      var group = new GroupExpr(new ArrayList<>(), expr.location());
+      var group = new GroupedExpr(new ArrayList<>(), expr.location());
       group.expressions.add(expanded);
       return group;
     } else if (body instanceof DefinitionList definitionList) {

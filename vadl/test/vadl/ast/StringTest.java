@@ -73,7 +73,7 @@ public class StringTest {
     var ast = VadlParser.parse(prog);
     var assembly = (AssemblyDefinition) ((InstructionSetDefinition) ast.definitions.get(0))
         .definitions.get(2);
-    var group = (GroupExpr) assembly.expr;
+    var group = (GroupedExpr) assembly.expr;
     assertThat(group.expressions.size(), equalTo(4));
   }
 }

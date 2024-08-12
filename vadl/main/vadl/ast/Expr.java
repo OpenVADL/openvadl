@@ -18,7 +18,7 @@ interface ExprVisitor<R> {
 
   R visit(BinaryExpr expr);
 
-  R visit(GroupExpr expr);
+  R visit(GroupedExpr expr);
 
   R visit(IntegerLiteral expr);
 
@@ -843,13 +843,15 @@ class MacroInstanceExpr extends Expr {
 }
 
 /**
- * A group expression.
+ * A grouped expression.
+ * Grouped expressions can either be single expressions wrapped in parantheses like {@code (1 + 2)},
+ * or multiple expressions separated by a comma like {@code (a, 1 + 2, c())}.
  */
-class GroupExpr extends Expr {
+class GroupedExpr extends Expr {
   List<Expr> expressions;
   SourceLocation loc;
 
-  public GroupExpr(List<Expr> expressions, SourceLocation loc) {
+  public GroupedExpr(List<Expr> expressions, SourceLocation loc) {
     this.expressions = expressions;
     this.loc = loc;
   }
@@ -893,7 +895,7 @@ class GroupExpr extends Expr {
       return false;
     }
 
-    GroupExpr that = (GroupExpr) o;
+    GroupedExpr that = (GroupedExpr) o;
     return expressions.equals(that.expressions);
   }
 

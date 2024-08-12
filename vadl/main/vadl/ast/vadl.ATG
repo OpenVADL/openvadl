@@ -21,7 +21,7 @@ COMPILER vadl
   boolean disableSymbolChecking = false;
   Deque<Boolean> disableSymbolStack = new ArrayDeque<>();
   Ast ast = new Ast();
-  NestedSymbolTable symbolTable = new NestedSymbolTable();
+  SymbolTable symbolTable = new SymbolTable();
   Map<String, Identifier> macroOverrides = new HashMap<>();
 
   { symbolTable.loadBuiltins(); }
@@ -35,7 +35,7 @@ COMPILER vadl
   }
 
   boolean isMacroParamType(SyntaxType syntaxType) {
-    // TODO Analyze next few tokens do determine syntax type of parameter
+    // TODO Analyze next few tokens to determine syntax type of parameter
     var name = scanner.Peek().val;
     return name.equals("targetReg") || name.equals("memEx");
   }
@@ -222,11 +222,12 @@ PRODUCTIONS
   | registerDefinition<out def>
   .
 
-  constantDefinition<out ConstantDefinition def>    (. TypeLiteral type = null; .)
-  = CONSTANT                                        (. var startLocation = loc(); .)
+  constantDefinition<out ConstantDefinition def> (. TypeLiteral type = null; .)
+  = CONSTANT                                     (. var startLocation = loc(); .)
     identifierOrPlaceholder<out IdentifierOrPlaceholder id>
     [ SYM_COLON typeLiteral<out type> ]
-    SYM_EQ expression<out Expr expr, BIN_OPS>                (. def = new ConstantDefinition(id, type, expr, startLocation.join(loc())); .)
+    SYM_EQ
+    expression<out Expr expr, BIN_OPS>           (. def = new ConstantDefinition(id, type, expr, startLocation.join(loc())); .)
   .
 
   formatDefinition<out FormatDefinition def>                      (. List<FormatDefinition.FormatField> fields = new ArrayList<>();.)
@@ -394,7 +395,7 @@ PRODUCTIONS
   = letStatement<out statement>
   | ifStatement<out statement>
   | blockStatement<out statement>
-  | IF (la.kind == _identifierToken || isMacroParamType(BasicSyntaxType.Id()))
+  | IF (la.kind == _identifierToken || isMacroParamType(BasicSyntaxType.CallEx()))
     assignment<out statement>
   | macroInstanceOrPlaceholder<out Node s, BasicSyntaxType.Stats()> (. if (s instanceof Statement stmt) statement = stmt;
                                                                        else if (s instanceof StatementList stmts) statement = new BlockStatement(stmts.items, stmts.location());
@@ -561,21 +562,21 @@ PRODUCTIONS
   term<out Expr expr>                            (. expr = null; .)
   = literal<out expr>
   | callOrBinaryExpression<out expr, true>
-  | groupExpression<out expr>
+  | groupedExpression<out expr>
   | unary<out expr>
   | ifExpression<out expr>
   | letExpression<out expr>
   | macroInstanceOrPlaceholder<out Node node, BasicSyntaxType.Ex()> (. expr = (Expr) node; .)
   .
 
-  groupExpression<out GroupExpr group>       (. group = new GroupExpr(new ArrayList<>(), loc()); .)
+  groupedExpression<out GroupedExpr expr> (. expr = new GroupedExpr(new ArrayList<>(), loc()); .)
   = SYM_PAREN_OPEN
-    expression<out Expr expr, BIN_OPS>       (. group.expressions.add(expr); .)
+    expression<out Expr inner, BIN_OPS>   (. expr.expressions.add(inner); .)
     {
       SYM_COMMA
-      expression<out Expr next, BIN_OPS> (. group.expressions.add(next); .)
+      expression<out Expr next, BIN_OPS>  (. expr.expressions.add(next); .)
     }
-    SYM_PAREN_CLOSE                          (. group.loc = group.loc.join(loc()); .)
+    SYM_PAREN_CLOSE                       (. expr.loc = expr.loc.join(loc()); .)
   .
 
   literal<out Expr expr> (. expr = null; .)
@@ -602,13 +603,13 @@ PRODUCTIONS
   | FALSE                    (. expr = new BoolLiteral(false, loc()); .)
   .
 
-  identifierPath<out IsId path> (. List<Identifier> segments = new ArrayList<>(); .)
-  = identifier<out Identifier id>         (. segments.add(id); .)
+  identifierPath<out IsId path>       (. List<Identifier> segments = new ArrayList<>(); .)
+  = identifier<out Identifier id>     (. segments.add(id); .)
     {
       SYM_NAMESPACE
-      identifier<out Identifier next>     (. segments.add(next); .)
-    }                                     (. if (segments.size() == 1) path = segments.get(0);
-                                             else path = new IdentifierPath(segments); .)
+      identifier<out Identifier next> (. segments.add(next); .)
+    }                                 (. if (segments.size() == 1) path = segments.get(0);
+                                         else path = new IdentifierPath(segments); .)
   .
 
   rangeExpression<out Expr expr>
@@ -696,11 +697,11 @@ PRODUCTIONS
     )                                                           (. body = expandMacro(this, id, args, requiredType); enableSymbolChecking(); .)
   .
 
-  macroInstanceParam<out Node arg, SyntaxType syntaxType>     (. arg = null; var start = loc(); .)
+  macroInstanceParam<out Node arg, SyntaxType syntaxType> (. arg = null; var start = loc(); .)
   = IF (syntaxType == BasicSyntaxType.BinOp())
-    binaryOperator<out Operator op>                           (. arg = new OperatorExpr(op, loc()); .)
+    binaryOperator<out Operator op>                       (. arg = new OperatorExpr(op, loc()); .)
   | IF (syntaxType == BasicSyntaxType.IsaDefs())
-    isaDefinitionList<.out List<Definition> defs.>            (. arg = new DefinitionList(defs, start.join(loc())); .)
+    isaDefinitionList<.out List<Definition> defs.>        (. arg = new DefinitionList(defs, start.join(loc())); .)
   | IF (syntaxType == BasicSyntaxType.Encs())
     encodingDefinitionList<out arg>
   | IF (syntaxType == BasicSyntaxType.Ex())
@@ -758,7 +759,7 @@ PRODUCTIONS
                                             .)
   .
 
-  macroBody<out Node body, SyntaxType type>                            (. body = null; var loc = lookaheadLoc(); .)
+  macroBody<out Node body, SyntaxType type>        (. body = null; var loc = lookaheadLoc(); .)
   = IF (type == BasicSyntaxType.Id())
     identifier<out body>
   | IF (type == BasicSyntaxType.Ex() || type == BasicSyntaxType.Int())
@@ -766,9 +767,9 @@ PRODUCTIONS
   | IF (type == BasicSyntaxType.Stat())
     statement<out body>
   | IF (type == BasicSyntaxType.Stats())
-    statementList<.out List<Statement> stmts.>                         (. body = narrowNode(new StatementList(stmts, loc.join(loc()))); .)
+    statementList<.out List<Statement> stmts.>     (. body = narrowNode(new StatementList(stmts, loc.join(loc()))); .)
   | IF (type == BasicSyntaxType.IsaDefs())
-    isaDefinitionList<.out List<Definition> defs.>                     (. body = new DefinitionList(defs, loc.join(loc())); .)
+    isaDefinitionList<.out List<Definition> defs.> (. body = new DefinitionList(defs, loc.join(loc())); .)
   | // IF (type == BasicSyntaxType.Encs())
     encodingDefinitionList<out body>
   .
@@ -795,7 +796,5 @@ PRODUCTIONS
   | T_BIN_OP                                (. type = BasicSyntaxType.BinOp(); .)
   | T_UN_OP                                 (. type = BasicSyntaxType.UnOp(); .)
   .
-
-
 
 END vadl.

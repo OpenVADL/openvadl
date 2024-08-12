@@ -27,13 +27,13 @@ class Ungrouper
   }
 
   @Override
-  public Expr visit(GroupExpr expr) {
+  public Expr visit(GroupedExpr expr) {
     if (expr.expressions.size() == 1) {
       return expr.expressions.get(0).accept(this);
     }
     var expressions = new ArrayList<>(expr.expressions);
     expressions.replaceAll(e -> e.accept(this));
-    return new GroupExpr(expressions, expr.loc);
+    return new GroupedExpr(expressions, expr.loc);
   }
 
   @Override

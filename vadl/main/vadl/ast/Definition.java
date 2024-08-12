@@ -206,10 +206,10 @@ class FormatDefinition extends Definition {
   static class TypedFormatField extends Node implements FormatField {
     final Identifier identifier;
     final TypeLiteralOrPlaceholder type;
-    final NestedSymbolTable symbolTable;
+    final SymbolTable symbolTable;
 
     public TypedFormatField(Identifier identifier, TypeLiteralOrPlaceholder type,
-                            NestedSymbolTable symbolTable) {
+                            SymbolTable symbolTable) {
       this.identifier = identifier;
       this.type = type;
       this.symbolTable = symbolTable;
