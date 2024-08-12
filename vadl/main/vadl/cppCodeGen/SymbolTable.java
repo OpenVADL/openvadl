@@ -1,4 +1,4 @@
-package vadl.cpp_codegen;
+package vadl.cppCodeGen;
 
 /**
  * This is a helper class for generating variable names for the OOP layer.

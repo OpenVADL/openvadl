@@ -3,7 +3,7 @@ package vadl.lcb.codegen;
 import java.io.StringWriter;
 import java.util.Arrays;
 import java.util.stream.Collectors;
-import vadl.cpp_codegen.CppTypeMap;
+import vadl.cppCodeGen.CppTypeMap;
 import vadl.viam.Function;
 import vadl.viam.ViamError;
 import vadl.viam.graph.control.ReturnNode;

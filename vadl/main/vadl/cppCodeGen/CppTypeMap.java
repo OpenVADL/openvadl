@@ -1,4 +1,4 @@
-package vadl.cpp_codegen;
+package vadl.cppCodeGen;
 
 import vadl.types.BitsType;
 import vadl.types.BoolType;

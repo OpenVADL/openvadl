@@ -3,7 +3,7 @@ package vadl.gcb.passes.type_normalization;
 import java.util.Arrays;
 import java.util.Objects;
 import java.util.stream.Stream;
-import vadl.cpp_codegen.passes.type_normalization.CppTypeNormalizationPass;
+import vadl.cppCodeGen.passes.type_normalization.CppTypeNormalizationPass;
 import vadl.pass.PassName;
 import vadl.viam.Format;
 import vadl.viam.Function;

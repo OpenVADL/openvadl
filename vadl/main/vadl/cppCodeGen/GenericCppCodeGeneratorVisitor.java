@@ -1,6 +1,6 @@
-package vadl.cpp_codegen;
+package vadl.cppCodeGen;
 
-import static vadl.cpp_codegen.CppTypeMap.getCppTypeNameByVadlType;
+import static vadl.cppCodeGen.CppTypeMap.getCppTypeNameByVadlType;
 
 import java.io.StringWriter;
 import java.util.Objects;

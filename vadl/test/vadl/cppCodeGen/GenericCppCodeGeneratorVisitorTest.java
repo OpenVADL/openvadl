@@ -1,4 +1,4 @@
-package vadl.cpp_codegen;
+package vadl.cppCodeGen;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 

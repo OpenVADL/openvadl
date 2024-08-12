@@ -4,7 +4,7 @@ import java.util.List;
 import java.util.Optional;
 import vadl.viam.graph.Graph;
 import vadl.viam.graph.Node;
-import vadl.viam.passes.Pair;
+import vadl.utils.Pair;
 import vadl.viam.passes.algebraic_simplication.rules.AlgebraicSimplificationRule;
 
 /**

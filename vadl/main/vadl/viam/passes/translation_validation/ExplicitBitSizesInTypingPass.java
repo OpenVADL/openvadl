@@ -17,7 +17,7 @@ import vadl.viam.Specification;
 import vadl.viam.graph.dependency.BuiltInCall;
 import vadl.viam.graph.dependency.ExpressionNode;
 import vadl.viam.graph.dependency.TypeCastNode;
-import vadl.viam.passes.Triple;
+import vadl.utils.Triple;
 
 /**
  * The {@link TranslationValidation#lower(Specification, Instruction, Instruction)} can only work

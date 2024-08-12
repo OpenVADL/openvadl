@@ -1,7 +1,7 @@
-package vadl.cpp_codegen.passes.type_normalization;
+package vadl.cppCodeGen.passes.type_normalization;
 
 import java.util.List;
-import vadl.cpp_codegen.CppCodeGenGraphNodeVisitor;
+import vadl.cppCodeGen.CppCodeGenGraphNodeVisitor;
 import vadl.javaannotations.viam.DataValue;
 import vadl.types.Type;
 import vadl.viam.graph.GraphNodeVisitor;

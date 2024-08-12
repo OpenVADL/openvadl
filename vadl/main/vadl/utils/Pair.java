@@ -1,4 +1,4 @@
-package vadl.viam.passes;
+package vadl.utils;
 
 /**
  * A helper construct to define a tuple.

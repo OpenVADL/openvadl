@@ -16,8 +16,7 @@ import vadl.viam.graph.Node;
 import vadl.viam.graph.dependency.BuiltInCall;
 import vadl.viam.graph.dependency.ExpressionNode;
 import vadl.viam.graph.dependency.TypeCastNode;
-import vadl.viam.passes.Pair;
-import vadl.viam.passes.Triple;
+import vadl.utils.Triple;
 
 /**
  * Z3 has not the semantic for multiplication.

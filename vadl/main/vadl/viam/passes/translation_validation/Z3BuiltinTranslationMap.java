@@ -6,7 +6,7 @@ import static vadl.viam.passes.translation_validation.Z3BuiltinTranslationMap.Op
 import java.util.Objects;
 import vadl.types.BuiltInTable;
 import vadl.types.BuiltInTable.BuiltIn;
-import vadl.viam.passes.Pair;
+import vadl.utils.Pair;
 import vadl.viam.passes.translation_validation.TranslationValidation.Z3Code;
 
 /**
