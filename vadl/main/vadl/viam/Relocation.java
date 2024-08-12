@@ -10,7 +10,8 @@ import vadl.viam.graph.Graph;
  * address is unknown. The assembler emits these relocations in the object file when expanding
  * pseudo instructions or sequences.
  * Relocations are used to change immediate values during link time.
- * They are needed either for optimization purposes or because the value is not known beforehand.</p>
+ * They are needed either for optimization purposes or because the value is not known beforehand.
+ * </p>
  */
 public class Relocation extends Function {
   public Relocation(Identifier identifier, Parameter[] parameters, Type returnType) {
