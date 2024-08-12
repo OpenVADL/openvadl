@@ -2,6 +2,7 @@ package vadl.viam.passes.translation_validation;
 
 import java.io.StringWriter;
 import java.util.Objects;
+import java.util.function.Supplier;
 import vadl.types.BitsType;
 import vadl.types.BoolType;
 import vadl.types.SIntType;
@@ -35,6 +36,7 @@ import vadl.viam.graph.dependency.SignExtendNode;
 import vadl.viam.graph.dependency.SliceNode;
 import vadl.viam.graph.dependency.TruncateNode;
 import vadl.viam.graph.dependency.TypeCastNode;
+import vadl.viam.graph.dependency.UnaryNode;
 import vadl.viam.graph.dependency.WriteMemNode;
 import vadl.viam.graph.dependency.WriteRegFileNode;
 import vadl.viam.graph.dependency.WriteRegNode;
@@ -260,15 +262,16 @@ public class Z3CodeGeneratorVisitor implements GraphNodeVisitor {
   public void visit(ZeroExtendNode node) {
     var diff = node.type().bitWidth() - getBitWidth(node.value().type());
     writer.write("ZeroExt(" + diff + ", ");
-    visit(node.value());
+    wrapImplicitBooleanWhenTypeBoolean(node);
     writer.write(")");
   }
+
 
   @Override
   public void visit(SignExtendNode node) {
     var diff = node.type().bitWidth() - getBitWidth(node.value().type());
     writer.write("SignExt(" + diff + ", ");
-    visit(node.value());
+    wrapImplicitBooleanWhenTypeBoolean(node);
     writer.write(")");
   }
 
@@ -277,7 +280,7 @@ public class Z3CodeGeneratorVisitor implements GraphNodeVisitor {
     var diff = getBitWidth(node.value().type()) - node.type().bitWidth() - 1;
     writer.write("Extract(" + diff);
     writer.write(", 0, ");
-    visit(node.value());
+    wrapImplicitBooleanWhenTypeBoolean(node);
     writer.write(")");
   }
 
@@ -384,5 +387,16 @@ public class Z3CodeGeneratorVisitor implements GraphNodeVisitor {
     }
 
     throw new RuntimeException("not supported");
+  }
+
+  private void wrapImplicitBooleanWhenTypeBoolean(UnaryNode node) {
+    if (node.value().type() instanceof BoolType) {
+      writer.write("If((");
+      visit(node.value());
+      writer.write(String.format(") == True, BitVecVal(1, %s), BitVecVal(0, %s))",
+          getBitWidth(node.type()), getBitWidth(node.type())));
+    } else {
+      visit(node.value());
+    }
   }
 }
