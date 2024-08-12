@@ -2,9 +2,9 @@ package vadl.viam.passes.algebraic_simplication;
 
 import java.util.List;
 import java.util.Optional;
+import vadl.utils.Pair;
 import vadl.viam.graph.Graph;
 import vadl.viam.graph.Node;
-import vadl.utils.Pair;
 import vadl.viam.passes.algebraic_simplication.rules.AlgebraicSimplificationRule;
 
 /**

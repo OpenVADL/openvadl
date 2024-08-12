@@ -12,12 +12,12 @@ import vadl.pass.PassKey;
 import vadl.pass.PassName;
 import vadl.types.BitsType;
 import vadl.types.Type;
+import vadl.utils.Triple;
 import vadl.viam.Instruction;
 import vadl.viam.Specification;
 import vadl.viam.graph.dependency.BuiltInCall;
 import vadl.viam.graph.dependency.ExpressionNode;
 import vadl.viam.graph.dependency.TypeCastNode;
-import vadl.utils.Triple;
 
 /**
  * The {@link TranslationValidation#lower(Specification, Instruction, Instruction)} can only work

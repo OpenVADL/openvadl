@@ -11,12 +11,12 @@ import vadl.pass.PassName;
 import vadl.types.BitsType;
 import vadl.types.BuiltInTable;
 import vadl.types.Type;
+import vadl.utils.Triple;
 import vadl.viam.Specification;
 import vadl.viam.graph.Node;
 import vadl.viam.graph.dependency.BuiltInCall;
 import vadl.viam.graph.dependency.ExpressionNode;
 import vadl.viam.graph.dependency.TypeCastNode;
-import vadl.utils.Triple;
 
 /**
  * Z3 has not the semantic for multiplication.
