@@ -23,8 +23,9 @@ public class MultiplicationWithOneSimplificationRule implements AlgebraicSimplif
   public Optional<Node> simplify(Node node) {
     if (node instanceof ExpressionNode n) {
       var matcher =
-          new BuiltInMatcher(List.of(BuiltInTable.MUL, BuiltInTable.MULS, BuiltInTable.SMULL, BuiltInTable.SMULLS,
-              BuiltInTable.UMULL, BuiltInTable.SUMULL, BuiltInTable.SUMULLS),
+          new BuiltInMatcher(
+              List.of(BuiltInTable.MUL, BuiltInTable.MULS, BuiltInTable.SMULL, BuiltInTable.SMULLS,
+                  BuiltInTable.UMULL, BuiltInTable.SUMULL, BuiltInTable.SUMULLS),
               List.of(new AnyNodeMatcher(), new ConstantValueMatcher(
                   Constant.Value.of(1, (DataType) n.type()))));
 
