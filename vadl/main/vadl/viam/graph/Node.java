@@ -74,6 +74,15 @@ public abstract class Node {
   }
 
   /**
+   * Sets the source location of the node if it wasn't already set.
+   */
+  public void setSourceLocationIfNotSet(SourceLocation sourceLocation) {
+    if (this.sourceLocation == SourceLocation.INVALID_SOURCE_LOCATION) {
+      this.sourceLocation = sourceLocation;
+    }
+  }
+
+  /**
    * Checks if the node is a leaf node, such that it a {@link DependencyNode} and
    * has no further inputs.
    *
@@ -203,7 +212,7 @@ public abstract class Node {
 
   /**
    * Applies visitor output on all inputs.
-   * This is unsafe, as it may lead to an inconsistent graph, if the usages are not
+   * This is unsafe, as it may lead to an inconsistent graph, if the usages aren’t
    * updated accordingly. Use {@link Node#applyOnInputs(GraphVisitor.Applier)} to
    * let this be handled automatically.
    *
@@ -221,7 +230,7 @@ public abstract class Node {
 
   /**
    * Applies visitor output on all successors.
-   * This is unsafe, as it may lead to an inconsistent graph, if the predecessors are not
+   * This is unsafe, as it may lead to an inconsistent graph, if the predecessors aren’t
    * updated accordingly. Use {@link Node#applyOnSuccessors(GraphVisitor.Applier)} to
    * let this be handled automatically.
    *
@@ -242,6 +251,18 @@ public abstract class Node {
    * Applies the visitor's output on each input of this node.
    * If the new input node differs from the old one, this method will automatically handle
    * the usage transfer.
+   *
+   * <p>An example that replaces a specific input. Note that there is a dedicate method
+   * for that purpose: {@link #replaceInput(Node, Node)}<pre>
+   * node.applyOnInputs((from, toInput) -> {
+   *  if (toInput == toReplace) {
+   *    // we found the input to replace
+   *    return replacee;
+   *  }
+   *  // we must apply the old value to leave it the same
+   *  return toInput;
+   * });
+   * </pre></p>
    */
   public final void applyOnInputs(GraphVisitor.Applier<Node> visitor) {
     applyOnInputsUnsafe((self, oldInput) -> {
@@ -334,7 +355,7 @@ public abstract class Node {
   }
 
   /**
-   * Delete all children (inputs and successors) that are not used (no usages and predecessor).
+   * Delete all children (inputs and successors) that aren’t used (no usages and predecessor).
    */
   private void deleteObsoleteChildrenOf() {
     ensure(isDeleted(), "Deletion of obsolete children is only possible for deleted nodes");
@@ -362,8 +383,12 @@ public abstract class Node {
    * handling is required.</p>
    *
    * @param replacement node that replaces this node
+   * @return the replacement node.
+   *     This might be useful if the replacement is not yet added to the graph, as the
+   *     new node might be a different object
    */
-  public void replaceAndDelete(Node replacement) {
+  public Node replaceAndDelete(Node replacement) {
+    replacement.setSourceLocationIfNotSet(this.sourceLocation);
     if (replacement.isUninitialized() && graph != null) {
       replacement = graph.addWithInputs(replacement);
     }
@@ -371,10 +396,11 @@ public abstract class Node {
     replaceAtAllUsages(replacement);
     replaceAtPredecessor(replacement);
     this.safeDelete();
+    return replacement;
   }
 
   /**
-   * Replaces this node at all usages.
+   * Replaces this node with the given one at all usages.
    * I.e., every node that uses this node as input will afterwards use the replacement as input.
    *
    * @param replacement new input of this node's usages.
@@ -450,14 +476,21 @@ public abstract class Node {
     }
   }
 
+
   protected void addUsage(Node usage) {
     usages.add(usage);
   }
 
-  protected final void removeUsage(Node usage) {
+  /**
+   * Removes the given node of the set of usages from this node.
+   *
+   * @param usage the node to remove from usages
+   * @return if there was something found to remove
+   */
+  public final boolean removeUsage(Node usage) {
     // remove() would only remove the first occurrence,
     // but we want to delete all occurrences of the usage node
-    usages.removeAll(Collections.singleton(usage));
+    return usages.removeAll(Collections.singleton(usage));
   }
 
   protected final void setPredecessor(@Nullable Node predecessor) {
@@ -599,7 +632,7 @@ public abstract class Node {
 
   /**
    * Verifies the consistency of this node to all its
-   * inputs, successors, usages and predecessor.
+   * inputs, successors, usages, and predecessor.
    */
   public final void verify() {
     ensure(isActive(), "node is not active");

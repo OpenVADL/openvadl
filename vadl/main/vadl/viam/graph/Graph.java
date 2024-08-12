@@ -2,6 +2,8 @@ package vadl.viam.graph;
 
 import static java.util.Objects.requireNonNull;
 
+import com.google.errorprone.annotations.FormatMethod;
+import com.google.errorprone.annotations.FormatString;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -153,6 +155,7 @@ public class Graph {
         return target;
       }
 
+      target.setSourceLocationIfNotSet(node.sourceLocation());
       target.ensure(!target.isDeleted(), "cannot add deleted input node");
       var newT = addWithInputs(target);
       if (newT != target) {
@@ -396,5 +399,21 @@ public class Graph {
   public String toString() {
     return "Graph{ name='" + name + "', sourceLocation=" + sourceLocation + "}";
   }
+
+
+  /**
+   * Ensures the condition. If the condition is not met, it will throw an error with
+   * the Graph's context.
+   */
+  @FormatMethod
+  public void ensure(boolean condition, @FormatString String fmt, Object... args) {
+    if (!condition) {
+      throw new ViamGraphError(fmt, args)
+          .addContext(this)
+          .addLocation(this.sourceLocation)
+          .shrinkStacktrace(1);
+    }
+  }
+
 }
 

@@ -32,8 +32,6 @@ public class WriteRegNode extends WriteResourceNode {
   public WriteRegNode(Register register, ExpressionNode value) {
     super(null, value);
     this.register = register;
-
-    verifyState();
   }
 
   public Register register() {

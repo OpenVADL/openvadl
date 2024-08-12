@@ -110,11 +110,11 @@ public class ArithmeticImmediateStrategy implements EncodingGenerationStrategy {
 
     // At the end of the encoding function, the type must be exactly as the field type
     var sliceNode =
-        new SliceNode(returnNode.value, new Constant.BitSlice(new Constant.BitSlice.Part[] {
+        new SliceNode(returnNode.value(), new Constant.BitSlice(new Constant.BitSlice.Part[] {
             new Constant.BitSlice.Part(fieldRefBits.bitWidth() - 1, 0)
         }), (DataType) fieldRef.type());
     var addedSliceNode = copy.add(sliceNode);
-    returnNode.replaceInput(returnNode.value, addedSliceNode);
+    returnNode.replaceInput(returnNode.value(), addedSliceNode);
 
     var encoding = fieldAccess.encoding();
     if (encoding != null) {

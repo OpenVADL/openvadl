@@ -1,5 +1,7 @@
 package vadl.types;
 
+import java.util.stream.Stream;
+
 /**
  * A class that represents the VADL status type.
  *
@@ -16,7 +18,22 @@ public class StatusType extends TupleType {
   protected StatusType() {
     super(Type.bool(), Type.bool(), Type.bool(), Type.bool());
   }
-  
+
+  @Override
+  public DataType last() {
+    return Type.bool();
+  }
+
+  @Override
+  public DataType first() {
+    return Type.bool();
+  }
+
+  @Override
+  public DataType get(int i) {
+    return (DataType) super.get(i);
+  }
+
   @Override
   public String name() {
     return "Status";

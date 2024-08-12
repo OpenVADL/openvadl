@@ -12,7 +12,7 @@ public class Parameter extends Definition {
 
   // the parent of this parameter (e.g. a function definition)
   @Nullable
-  private Function parent;
+  private Definition parent;
 
   public Parameter(Identifier identifier, Type type) {
     super(identifier);
@@ -35,12 +35,12 @@ public class Parameter extends Definition {
   }
 
 
-  public Function parent() {
+  public Definition parent() {
     ensure(parent != null, "Parent definition is null but this should not happen");
     return parent;
   }
 
-  public void setParent(@SuppressWarnings("NullableProblems") Function parent) {
+  public void setParent(@SuppressWarnings("NullableProblems") Definition parent) {
     this.parent = parent;
   }
 

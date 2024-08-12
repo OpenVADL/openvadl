@@ -6,45 +6,22 @@ package vadl.types;
  *
  * @see BitsType
  * @see BoolType
- * @see TupleType
  */
 public abstract class DataType extends Type {
 
   public abstract int bitWidth();
 
   /**
-   * Checks if this type can be implicitly cast to other type.
+   * Checks if this type can be trivially cast to another type,
+   * such that the bit representation must not be changed in any way.
    *
-   * <p>The following implicit casting rules are defined:
-   * <li>{@code Bits<1> <=> Bool}</li>
-   * <li>{@code Bits<N> ==> SInt<M> | N = M}</li>
-   * <li>{@code Bits<N> ==> Bits<M> | N <= M}</li>
-   * <li>{@code UInt<N> ==> Bits<M> | N <= M}</li>
-   * <li>{@code SInt<N> ==> Bits<M> | N <= M}</li>
-   * </p>
-   *
-   * @param other target cast type
-   * @return true if this can be cast to other implicitly, false otherwise
+   * @param other the type to potentially cast to.
+   * @return true if it is possible, false otherwise
    */
-  public abstract boolean canBeCastTo(DataType other);
-
-  /**
-   * Checks if this type can be implicitly cast to another type.
-   *
-   * <p>The following implicit casting rules are defined:
-   * <li>{@code Bits<1> <=> Bool}</li>
-   * <li>{@code Bits<N> ==> SInt<M> | N = M}</li>
-   * <li>{@code Bits<N> ==> Bits<M> | N <= M}</li>
-   * <li>{@code UInt<N> ==> Bits<M> | N <= M}</li>
-   * <li>{@code SInt<N> ==> Bits<M> | N <= M}</li>
-   * </p>
-   *
-   * @param other target cast type
-   * @return true if this can be cast to other implicitly, false otherwise
-   */
-  public final boolean canBeCastTo(Type other) {
-    if (other instanceof DataType) {
-      return canBeCastTo((DataType) other);
+  public final boolean isTrivialCastTo(Type other) {
+    if (other instanceof DataType otherDataType) {
+      var sameLength = otherDataType.bitWidth() == bitWidth();
+      return sameLength && (other instanceof BitsType || other instanceof BoolType);
     }
     return false;
   }

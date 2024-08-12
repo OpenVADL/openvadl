@@ -7,6 +7,7 @@ import javax.annotation.Nullable;
 import vadl.types.BitsType;
 import vadl.types.DataType;
 import vadl.types.Type;
+import vadl.viam.graph.Graph;
 import vadl.viam.graph.control.ReturnNode;
 import vadl.viam.graph.control.StartNode;
 import vadl.viam.graph.dependency.FieldRefNode;
@@ -69,10 +70,10 @@ public class Format extends Definition {
   @Override
   public String toString() {
     return "Format{ " + identifier + ": " + type + "{\n\t"
-           + Stream.concat(Stream.of(fields), Stream.of(fieldAccesses))
-               .map(Definition::toString)
-               .collect(Collectors.joining("\n\t"))
-           + "\n}";
+        + Stream.concat(Stream.of(fields), Stream.of(fieldAccesses))
+        .map(Definition::toString)
+        .collect(Collectors.joining("\n\t"))
+        + "\n}";
   }
 
   @Override
@@ -293,7 +294,7 @@ public class Format extends Definition {
       super.verify();
       if (encoding != null) {
         encoding.ensure(encoding.returnType() instanceof DataType
-                        && ((DataType) encoding.returnType()).canBeCastTo(fieldRef.type()),
+                && ((DataType) encoding.returnType()).isTrivialCastTo(fieldRef.type()),
             "Encoding type mismatch. Couldn't match encoding type %s with field reference type %s",
             encoding.returnType(), fieldRef().type());
       }

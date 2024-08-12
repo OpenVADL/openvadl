@@ -47,13 +47,13 @@ public class FunctionTest extends AbstractTest {
 
     {
       var ret = useConst.behavior().getNodes(ReturnNode.class).findFirst().get();
-      var constant = ((ConstantNode) ret.value).constant();
+      var constant = ((ConstantNode) ret.value()).constant();
       assertEquals(Constant.Value.of(30, Type.bits(30)), constant);
     }
 
     {
       var ret = callFunc.behavior().getNodes(ReturnNode.class).findFirst().get();
-      var func = ((FuncCallNode) ret.value).function();
+      var func = ((FuncCallNode) ret.value()).function();
       assertEquals(noArg, func);
     }
 
@@ -69,19 +69,19 @@ public class FunctionTest extends AbstractTest {
 
     {
       var ret = callFuncOutsideISA.behavior().getNodes(ReturnNode.class).findFirst().get();
-      var func = ((FuncCallNode) ret.value).function();
+      var func = ((FuncCallNode) ret.value()).function();
       assertEquals(outSideISA, func);
     }
 
     {
       var ret = callFuncInsideISA.behavior().getNodes(ReturnNode.class).findFirst().get();
-      var func = ((FuncCallNode) ret.value).function();
+      var func = ((FuncCallNode) ret.value()).function();
       assertEquals(noArg, func);
     }
 
     {
       var ret = useConstOfFunc.behavior().getNodes(ReturnNode.class).findFirst().get();
-      var func = ((FuncCallNode) ret.value).function();
+      var func = ((FuncCallNode) ret.value()).function();
       assertEquals(noArg, func);
     }
 

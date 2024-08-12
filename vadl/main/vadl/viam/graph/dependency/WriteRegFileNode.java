@@ -35,8 +35,6 @@ public class WriteRegFileNode extends WriteResourceNode {
                           ExpressionNode value) {
     super(address, value);
     this.registerFile = registerFile;
-
-    verifyState();
   }
 
   public RegisterFile registerFile() {

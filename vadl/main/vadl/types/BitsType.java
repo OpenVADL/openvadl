@@ -20,32 +20,6 @@ public class BitsType extends DataType {
   }
 
   @Override
-  public boolean canBeCastTo(DataType other) {
-    if (this == other) {
-      return true;
-    }
-
-    // Bits<1> ==> Bool
-    if (other.getClass() == BoolType.class) {
-      return bitWidth == 1;
-    }
-
-    // TODO: Check if this is valid <= or ==
-    // Bits<N> ==> SInt<M> | N <= M
-    if (other.getClass() == SIntType.class) {
-      return bitWidth <= other.bitWidth();
-    }
-
-    // Bits<N> ==> Bits<M> | N <= M
-    // getClass is important (we do not allow cast to UInt)
-    if (other.getClass() == BitsType.class) {
-      return bitWidth <= other.bitWidth();
-    }
-
-    return false;
-  }
-
-  @Override
   public String name() {
     return "Bits<%d>".formatted(bitWidth);
   }

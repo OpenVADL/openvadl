@@ -10,19 +10,16 @@ import static org.junit.jupiter.params.provider.Arguments.arguments;
 
 import java.io.BufferedReader;
 import java.io.File;
-import java.io.FileNotFoundException;
 import java.io.FileReader;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.io.InputStreamReader;
-import java.io.OutputStreamWriter;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.net.URL;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
-import java.util.Scanner;
 import java.util.jar.JarFile;
 import java.util.stream.Stream;
 import java.util.zip.ZipEntry;
@@ -33,6 +30,7 @@ import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.params.provider.Arguments;
 import vadl.viam.Specification;
+import vadl.viam.passes.verification.ViamVerifier;
 
 /**
  * The super type of all integration tests.
@@ -48,8 +46,6 @@ public class AbstractTest {
   private static TestFrontend.Provider frontendProvider;
 
   private TestFrontend testFrontend;
-  @Nullable
-  private URI currentTestSource;
 
   /**
    * Checks if the test frontend provider is available.
@@ -62,25 +58,6 @@ public class AbstractTest {
       Objects.requireNonNull(globalFrontendProvider);
     }
     frontendProvider = globalFrontendProvider;
-  }
-
-  /**
-   * Retrieves the URI from the given Vadl source code.
-   *
-   * @param vadlSourceCode the Vadl source code
-   * @return the URI of the temporary source file created from the source code
-   * @throws RuntimeException if an IO exception occurs
-   */
-  public static URI getUriFromSourceCode(String vadlSourceCode) {
-    File tempSourceFile = null;
-    try {
-      tempSourceFile = File.createTempFile("OpenVADL-", "-TestSource.vadl");
-    } catch (IOException e) {
-      throw new RuntimeException(e);
-    }
-    tempSourceFile.deleteOnExit();
-
-    return tempSourceFile.toURI();
   }
 
   /**
@@ -215,7 +192,6 @@ public class AbstractTest {
   @BeforeEach
   public void beforeEach() {
     testFrontend = frontendProvider.createFrontend();
-    currentTestSource = null;
   }
 
   public TestFrontend testFrontend() {
@@ -250,18 +226,35 @@ public class AbstractTest {
    * @return the VIAM specification
    */
   public Specification runAndGetViamSpecification(String testSourcePath) {
-    currentTestSource = processAndLoadTestSourceFileInTempFile(testSourcePath);
-    var success = testFrontend.runSpecification(currentTestSource);
+    tryToRunSpecificationWithFrontend(testSourcePath, testFrontend);
+    var viam = testFrontend.getViam();
+    // verify state of viam before returning it
+    ViamVerifier.verifyAllIn(viam);
+    return viam;
+  }
+
+  public static TestFrontend runViamSpecificationWithNewFrontend(String testSourcePath) {
+    var newFrontend = frontendProvider.createFrontend();
+    tryToRunSpecificationWithFrontend(testSourcePath, newFrontend);
+    return newFrontend;
+  }
+
+  /**
+   * Tries to run the given test source path (not the resolved one) with the given frontend.
+   * It will fail if the run was not successful.
+   */
+  private static void tryToRunSpecificationWithFrontend(String testSourcePath,
+                                                        TestFrontend frontend) {
+    var testSource = processAndLoadTestSourceFileInTempFile(testSourcePath);
+    var success = frontend.runSpecification(testSource);
     if (!success) {
-      var logs = testFrontend.getLogAsString();
+      var logs = frontend.getLogAsString();
       var errorLogs = logs.substring(logs.indexOf(" error: "));
 
       System.out.println(
-          "Test source: ---------------\n" + currentTestSourceAsString() + "\n---------------");
+          "Test source: ---------------\n" + testSourceToString(testSource) + "\n---------------");
       fail(errorLogs);
     }
-    
-    return testFrontend.getViam();
   }
 
   /**
@@ -269,11 +262,10 @@ public class AbstractTest {
    * This must be called after calling {@link #runAndGetViamSpecification(String)}.
    * The output also includes line numbers.
    */
-  public String currentTestSourceAsString() {
+  public static String testSourceToString(URI sourceUri) {
     StringBuilder result = new StringBuilder();
     try {
-      assert currentTestSource != null;
-      var sourceFile = new File(currentTestSource);
+      var sourceFile = new File(sourceUri);
       // Determine the total number of lines to calculate padding
       int totalLines = 0;
       try (BufferedReader lineCounter = new BufferedReader(

@@ -53,8 +53,6 @@ public class BuiltInConstantEvaluationTest extends AbstractTest {
   Stream<Arguments> constantEvalSources() {
     spec = runAndGetViamSpecification("canonicalization/valid_builtin_constant_evaluation.vadl");
 
-    System.out.println(currentTestSourceAsString());
-
     // Find all tests and corresponding solutions
     return spec.definitions()
         .filter(Function.class::isInstance)
@@ -65,8 +63,6 @@ public class BuiltInConstantEvaluationTest extends AbstractTest {
           var solution = findDefinitionByNameIn("solution_" + testName, spec, Function.class);
           return Arguments.of(f, solution);
         });
-
-
   }
 
 
@@ -74,8 +70,8 @@ public class BuiltInConstantEvaluationTest extends AbstractTest {
     assertEquals(3, func.behavior().getNodes().count(),
         "Wrong number of nodes in behavior. Test function was probably not correctly inlined.");
     var returnNode = func.behavior().getNodes(ReturnNode.class).findFirst().get();
-    assertInstanceOf(ConstantNode.class, returnNode.value);
-    var constant = ((ConstantNode) returnNode.value).constant();
+    assertInstanceOf(ConstantNode.class, returnNode.value());
+    var constant = ((ConstantNode) returnNode.value()).constant();
     assertInstanceOf(Constant.Value.class, constant);
     return (Constant.Value) constant;
   }

@@ -6,7 +6,13 @@ import java.util.List;
 import java.util.stream.Stream;
 
 /**
- * Represents a VIAM VADL specification.
+ * The Specification is the root of the VIAM, as it contains all other definitions of a
+ * specification.
+ * Note that the hierarchy of definitions is the same as in the textual VADL specification.
+ * E.g., a {@link Function} could be in the global scope, which means it is directly held by the
+ * Specification, or it could be defined in a
+ * {@link InstructionSetArchitecture} definition, which means that
+ * it is hold by the respective ISA definition instance and not by the Specification itself.
  */
 public class Specification extends Definition {
 

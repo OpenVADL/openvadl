@@ -1,5 +1,6 @@
 package vadl.viam;
 
+import java.util.List;
 import vadl.viam.graph.Graph;
 
 /**
@@ -7,7 +8,7 @@ import vadl.viam.graph.Graph;
  */
 // TODO: Instruction should have information about source and destination registers
 //  (not from AST, computed by analysis).
-public class Instruction extends Definition {
+public class Instruction extends Definition implements WithBehavior {
 
   private final Graph behavior;
   private final Assembly assembly;
@@ -54,6 +55,13 @@ public class Instruction extends Definition {
   }
 
   @Override
+  public void verify() {
+    super.verify();
+
+    behavior.verify();
+  }
+
+  @Override
   public String toString() {
     return identifier.name() + ": " + format().identifier.name();
   }
@@ -61,5 +69,10 @@ public class Instruction extends Definition {
   @Override
   public void accept(DefinitionVisitor visitor) {
     visitor.visit(this);
+  }
+
+  @Override
+  public List<Graph> behaviors() {
+    return List.of(behavior);
   }
 }

@@ -26,8 +26,6 @@ public class ReadRegNode extends ReadResourceNode {
   public ReadRegNode(Register register, DataType type) {
     super(null, type);
     this.register = register;
-
-    verifyState();
   }
 
   public Register register() {
@@ -44,6 +42,15 @@ public class ReadRegNode extends ReadResourceNode {
     return register;
   }
 
+  @Override
+  public void verifyState() {
+    super.verifyState();
+    
+    ensure(register.resultType().isTrivialCastTo(type()),
+        "Mismatching register type. Register's result type (%s) "
+            + "cannot be trivially cast to node's type (%s).",
+        register.resultType(), type());
+  }
 
   @Override
   protected void collectData(List<Object> collection) {

@@ -6,6 +6,7 @@ import java.util.HashSet;
 import java.util.Set;
 import java.util.function.Function;
 import java.util.stream.Stream;
+import vadl.utils.ViamUtils;
 import vadl.viam.Definition;
 import vadl.viam.DefinitionVisitor;
 import vadl.viam.Format;
@@ -73,21 +74,6 @@ public class TestUtils {
 
   private static Set<Definition> filterAllDefinitionsIn(Definition def,
                                                         Function<Definition, Boolean> filter) {
-    return new DefinitionVisitor.Recursive() {
-      private Set<Definition> allDefs = new HashSet<>();
-
-      public Set<Definition> findAllIn(Definition definition) {
-        definition.accept(this);
-        return this.allDefs;
-      }
-
-      @Override
-      public void beforeTraversal(Definition definition) {
-        super.beforeTraversal(definition);
-        if (filter.apply(definition)) {
-          allDefs.add(definition);
-        }
-      }
-    }.findAllIn(def);
+    return ViamUtils.findDefinitionByFilter(def, filter);
   }
 }

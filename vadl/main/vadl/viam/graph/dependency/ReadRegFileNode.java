@@ -34,6 +34,16 @@ public class ReadRegFileNode extends ReadResourceNode {
   }
 
   @Override
+  public void verifyState() {
+    super.verifyState();
+
+    ensure(registerFile.resultType().isTrivialCastTo(type()),
+        "Mismatching register file type. Register file's result type (%s) "
+            + "cannot be trivially cast to node's type (%s).",
+        registerFile.resultType(), type());
+  }
+
+  @Override
   protected void collectData(List<Object> collection) {
     super.collectData(collection);
     collection.add(registerFile);

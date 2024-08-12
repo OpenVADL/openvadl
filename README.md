@@ -12,6 +12,10 @@ The `open-vadl` project includes multiple Gradle modules.
   Additionally it provides `errorprone` bug detectors, that statically check if certain properties
   in the VIAM are correctly implemented.
 
+## Getting Started
+
+To get started, please read the introduction in [our wiki](https://ea.complang.tuwien.ac.at/vadl/open-vadl/wiki/Home).
+
 ## Development
 
 Before contributing, please read [OpenVADL's coding guidelines](https://ea.complang.tuwien.ac.at/vadl/vadl/issues/1573).
@@ -22,6 +26,8 @@ We are using Checkstyle to ensure a consistent format and documentation of the s
 
 Install the Checkstyle plugin for your IDE and import our Checkstyle configuration.
 The configuration is located under `config/checkstyle/checkstyle.xml`.
+
+To locally test if the checkstyle CI pipeline would fail, run the `checkstyleAll` gradle task.
 
 #### Using Intellij
 

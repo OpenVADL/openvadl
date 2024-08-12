@@ -17,7 +17,7 @@ import vadl.viam.graph.dependency.SideEffectNode;
 public class ReturnNode extends AbstractEndNode {
 
   @Input
-  public ExpressionNode value;
+  private ExpressionNode value;
 
   public ReturnNode(ExpressionNode value, NodeList<SideEffectNode> sideEffects) {
     super(sideEffects);
@@ -31,6 +31,10 @@ public class ReturnNode extends AbstractEndNode {
 
   public Type returnType() {
     return value.type();
+  }
+
+  public ExpressionNode value() {
+    return value;
   }
 
   @Override

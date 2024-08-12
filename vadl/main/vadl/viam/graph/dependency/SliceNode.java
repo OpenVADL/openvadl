@@ -52,7 +52,7 @@ public class SliceNode extends ExpressionNode {
   public void verifyState() {
     super.verifyState();
 
-    ensure(Type.bits(slice.bitSize()).canBeCastTo(type()),
+    ensure(Type.bits(slice.bitSize()).isTrivialCastTo(type()),
         "Slice type cannot be cast to node type: %s vs %s",
         Type.bits(slice.bitSize()), type());
     ensure(value.type() instanceof DataType, "Value node must have a data type.");

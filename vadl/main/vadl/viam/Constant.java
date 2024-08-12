@@ -206,15 +206,33 @@ public abstract class Constant {
     /**
      * Casts the constant value to the specified data type.
      *
-     * @param type the data type to cast the value to
+     * @param newType the data type to cast the value to
      * @return a new Constant.Value object representing the casted value
      * @throws ViamError if the constant cannot be cast to the specified data type
      */
-    public Constant.Value castTo(DataType type) {
-      // TODO: Make this right
-      var truncatedValue = value
-          .and(mask(type.bitWidth(), 0));
-      return Value.fromTwosComplement(truncatedValue, type);
+    public Constant.Value castTo(DataType newType) {
+      if (type().bitWidth() >= newType.bitWidth()) {
+        // the current type is larger (so we just truncate)
+        var truncatedValue = value
+            .and(mask(newType.bitWidth(), 0));
+        return Value.fromTwosComplement(truncatedValue, newType);
+      } else {
+        if (newType.isSigned()) {
+          // we have to sign extend the value
+          var val = this;
+          if (this.type().getClass() == BitsType.class) {
+            // we want bits type to be signed extended
+            // so we have to convert this value to a integer value first
+            val = fromTwosComplement(value, Type.signedInt(type().bitWidth()));
+          }
+          // now we use the big integer value (which is signed) to construct the new type
+          return fromInteger(val.integer(), newType);
+        } else {
+          // we just have to zero extend it... so the current bit representation
+          // is correct, we just pass a new type
+          return fromTwosComplement(value, newType);
+        }
+      }
     }
 
     /**
@@ -911,8 +929,8 @@ public abstract class Constant {
       this(values,
           TupleType.tuple(
               values.stream()
-                  .map(e -> (DataType) e.type)
-                  .toArray(DataType[]::new)
+                  .map(e -> e.type)
+                  .toArray(Type[]::new)
           )
       );
     }
