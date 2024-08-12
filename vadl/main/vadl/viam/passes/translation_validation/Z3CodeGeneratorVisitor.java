@@ -230,7 +230,7 @@ public class Z3CodeGeneratorVisitor implements GraphNodeVisitor {
 
   @Override
   public void visit(ReturnNode returnNode) {
-    visit(returnNode.value);
+    visit(returnNode.value());
   }
 
   @Override
