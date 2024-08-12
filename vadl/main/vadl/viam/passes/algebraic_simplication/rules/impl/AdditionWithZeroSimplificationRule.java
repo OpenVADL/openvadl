@@ -21,9 +21,10 @@ public class AdditionWithZeroSimplificationRule implements AlgebraicSimplificati
   @Override
   public Optional<Node> simplify(Node node) {
     if (node instanceof ExpressionNode n) {
-      var matcher = new BuiltInMatcher(BuiltInTable.ADD,
-          List.of(new AnyNodeMatcher(), new ConstantValueMatcher(
-              Constant.Value.of(0, (DataType) n.type()))));
+      var matcher =
+          new BuiltInMatcher(List.of(BuiltInTable.ADD, BuiltInTable.ADD, BuiltInTable.ADDC),
+              List.of(new AnyNodeMatcher(), new ConstantValueMatcher(
+                  Constant.Value.of(0, (DataType) n.type()))));
 
       var matchings = TreeMatcher.matches(Stream.of(node), matcher);
       if (!matchings.isEmpty()) {
