@@ -27,7 +27,7 @@ public class SliceTest extends AbstractTest {
           new Constant.BitSlice(new Constant.BitSlice.Part[] {new Constant.BitSlice.Part(5, 2)}),
           sliceNode.bitSlice());
 
-      assertEquals("a", ((LetNode) sliceNode.value()).identifier().name());
+      assertEquals("a", ((LetNode) sliceNode.value()).letName().name());
     }
   }
 
