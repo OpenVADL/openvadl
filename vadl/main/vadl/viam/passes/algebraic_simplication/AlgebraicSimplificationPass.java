@@ -25,7 +25,7 @@ import vadl.viam.passes.algebraic_simplication.rules.impl.RemainderWithZeroSimpl
  * It will only consider machine instructions.
  */
 public class AlgebraicSimplificationPass extends Pass {
-  private static final List<AlgebraicSimplificationRule> rules = new ArrayList<>();
+  public static final List<AlgebraicSimplificationRule> rules = new ArrayList<>();
 
   static {
     rules.add(new AdditionWithZeroSimplificationRule());

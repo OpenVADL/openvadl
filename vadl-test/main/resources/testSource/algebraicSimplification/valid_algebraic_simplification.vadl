@@ -1,0 +1,137 @@
+/// This file holds all tests for algebraic simplification.
+///
+/// We use Apache Velocity macros to provide a concise test definition.
+/// The `test` macro is used to define two functions, one holding the test and one holding the
+/// expected solution. The `ntest` normalizes tests, by generating a name from the arguments and types,
+/// and passes the result to the `test` macro.
+/// Each tested built-in has its own macros to define the body for the test.
+
+
+/// VARIABLE SHORTCUTS
+#set($b1 = "Bool")
+#set($u1 = "UInt<1>")
+#set($s1 = "SInt<1>")
+#set($u2 = "UInt<2>")
+#set($s2 = "SInt<2>")
+#set($b2 = "Bits<2>")
+#set($u3 = "UInt<3>")
+#set($s3 = "SInt<3>")
+#set($b3 = "Bits<3>")
+#set($s4 = "SInt<4>")
+#set($u4 = "UInt<4>")
+#set($b4 = "Bits<4>")
+#set($s8 = "SInt<8>")
+#set($u8 = "UInt<8>")
+#set($b8 = "Bits<8>")
+#set($s16 = "SInt<16>")
+#set($u16 = "UInt<16>")
+#set($b16 = "Bits<16>")
+#set($u32 = "UInt<32>")
+#set($s32 = "SInt<32>")
+#set($b32 = "Bits<32>")
+#set($u64 = "UInt<64>")
+#set($s64 = "SInt<64>")
+#set($b64 = "Bits<64>")
+
+#macro(input_func $name, $ty)
+function input_$name -> $ty = 1 as $ty
+#end
+
+#input_func("u1", $u1)
+#input_func("s1", "$s1)
+#input_func("u32", $u32)
+#input_func("s32", $s32)
+#input_func("u64", $u64)
+#input_func("s64", $s64)
+
+/////////////// ARITHMETIC OPERATIONS /////////////////
+
+// VADL::add
+
+#macro(add $a, $at, $b, $bt, $result, $resultType)
+#ntest("add", {$a: $at, $b: $bt}, "VADL::add($a as $at, $b as $bt)", $result, $resultType )
+#end
+
+#add(input_u32, $u32, 0, $u32, input_u32, $u32)
+
+// VADL::sub
+
+#macro(sub $a, $at, $b, $bt, $result, $resultType)
+#ntest("sub", {$a: $at, $b: $bt}, "VADL::sub($a as $at, $b as $bt)", $result, $resultType )
+#end
+
+
+
+
+// VADL::mul
+// NOTE: This will change with the new frontend (the mul semantics are different)
+// In fact, this VADL::mul will generate a umull or smull call on the VIAM
+// (https://ea.complang.tuwien.ac.at/vadl/vadl/issues/1647)
+// You will have to replace the tests to fit the OpenVADL semantics
+
+#macro(mul $a, $at, $b, $bt, $result, $resultType)
+#ntest("mul", {$a: $at, $b: $bt}, "VADL::mul($a as $at, $b as $bt)", $result, $resultType )
+#end
+
+#mul(input_u32, $u32, 0, $u32, 0, $u32)
+#mul(input_u32, $u32, 1, $u32, input_u32, $u32)
+
+
+// VADL::div
+
+#macro(div $a, $at, $b, $bt, $result, $resultType)
+#ntest("div", {$a: $at, $b: $bt}, "VADL::div($a as $at, $b as $bt)", $result, $resultType )
+#end
+
+#div(input_u32, $u32, 1, $u32, input_u32, $u32)
+
+// VADL::smod
+
+#macro(smod $a, $at, $b, $bt, $result, $resultType)
+#ntest("smod", {$a: $at, $b: $bt}, "VADL::smod($a as $at, $b as $bt)", $result, $resultType )
+#end
+
+#smod(input_s32, $s32, 0, $s32, 0, $s32)
+
+// VADL::umod
+
+#macro(umod $a, $at, $b, $bt, $result, $resultType)
+#ntest("umod", {$a: $at, $b: $bt}, "VADL::umod($a as $at, $b as $bt)", $result, $resultType )
+#end
+
+#smod(input_u32, $u32, 0, $u32, 0, $u32)
+
+
+///////// TEST MACROS Implementation ///////////
+
+## Normalizes the test name. The $opes parameter is a map of {value: type}
+#macro(ntest $op_name, $opes, $expr, $result, $resultType)
+#set($testName = $op_name)
+## Normalize all strings (so no minus (-) or <> occurs)
+#foreach($key in $opes.keySet())
+  #set($value = $opes.get($key).replace('<', '').replace('>', ''))
+  #set($cleanKey = $key.toString())
+  #if($cleanKey.startsWith("-"))
+   #set($cleanKey = "minus" + $cleanKey.substring(1))
+  #end
+  #set($testName = "${testName}_${cleanKey}_${value}")
+#end
+##
+#set($cleanRes = $result.toString())
+#if($cleanRes.startsWith("-"))
+ #set($cleanRes = "minus" + $cleanRes.substring(1))
+#end
+#set($retTypeStr = $resultType.toString().replace('<', '').replace('>', ''))
+#set($testName = "${testName}_${cleanRes}_${retTypeStr}" )
+##
+#test($testName, $expr, $result, $resultType)
+#end
+
+
+#macro(test $name, $expr, $result, $type)
+function exercise_$name -> $type = $expr
+function solution_$name -> $type = $result
+
+#end
+
+
