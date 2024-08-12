@@ -22,7 +22,7 @@ public class AdditionWithZeroSimplificationRule implements AlgebraicSimplificati
   public Optional<Node> simplify(Node node) {
     if (node instanceof ExpressionNode n) {
       var matcher =
-          new BuiltInMatcher(List.of(BuiltInTable.ADD, BuiltInTable.ADD, BuiltInTable.ADDC),
+          new BuiltInMatcher(List.of(BuiltInTable.ADD, BuiltInTable.ADDS, BuiltInTable.ADDC),
               List.of(new AnyNodeMatcher(), new ConstantValueMatcher(
                   Constant.Value.of(0, (DataType) n.type()))));
 
