@@ -31,6 +31,11 @@ public class SignExtendNode extends UnaryNode {
   }
 
   @Override
+  public <T extends GraphNodeVisitor> void accept(T visitor) {
+    visitor.visit(this);
+  }
+
+  @Override
   public DataType type() {
     return (DataType) super.type();
   }

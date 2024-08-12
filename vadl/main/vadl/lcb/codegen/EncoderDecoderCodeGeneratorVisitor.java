@@ -10,6 +10,9 @@ import vadl.types.BitsType;
 import vadl.types.BoolType;
 import vadl.viam.graph.GraphNodeVisitor;
 import vadl.viam.graph.dependency.SideEffectNode;
+import vadl.viam.graph.dependency.SignExtendNode;
+import vadl.viam.graph.dependency.TruncateNode;
+import vadl.viam.graph.dependency.ZeroExtendNode;
 
 /**
  * The {@link GraphNodeVisitor} for the {@link EncodingCodeGenerator}.
@@ -52,5 +55,20 @@ public class EncoderDecoderCodeGeneratorVisitor extends GenericCppCodeGeneratorV
   @Override
   public void visit(SideEffectNode sideEffectNode) {
     sideEffectNode.accept(this);
+  }
+
+  @Override
+  public void visit(ZeroExtendNode node) {
+
+  }
+
+  @Override
+  public void visit(SignExtendNode node) {
+
+  }
+
+  @Override
+  public void visit(TruncateNode node) {
+
   }
 }

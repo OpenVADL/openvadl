@@ -5,6 +5,7 @@ import java.util.Objects;
 import vadl.types.BitsType;
 import vadl.types.BoolType;
 import vadl.types.SIntType;
+import vadl.types.Type;
 import vadl.types.UIntType;
 import vadl.viam.Constant;
 import vadl.viam.Memory;
@@ -30,11 +31,14 @@ import vadl.viam.graph.dependency.ReadRegFileNode;
 import vadl.viam.graph.dependency.ReadRegNode;
 import vadl.viam.graph.dependency.SelectNode;
 import vadl.viam.graph.dependency.SideEffectNode;
+import vadl.viam.graph.dependency.SignExtendNode;
 import vadl.viam.graph.dependency.SliceNode;
+import vadl.viam.graph.dependency.TruncateNode;
 import vadl.viam.graph.dependency.TypeCastNode;
 import vadl.viam.graph.dependency.WriteMemNode;
 import vadl.viam.graph.dependency.WriteRegFileNode;
 import vadl.viam.graph.dependency.WriteRegNode;
+import vadl.viam.graph.dependency.ZeroExtendNode;
 
 /**
  * Visitor which lowers {@link Node} into z3 predicates.
@@ -248,13 +252,38 @@ public class Z3CodeGeneratorVisitor implements GraphNodeVisitor {
   }
 
   @Override
-  public void visit(ExpressionNode expressionNode) {
-    expressionNode.accept(this);
+  public void visit(SideEffectNode sideEffectNode) {
+    sideEffectNode.accept(this);
   }
 
   @Override
-  public void visit(SideEffectNode sideEffectNode) {
-    sideEffectNode.accept(this);
+  public void visit(ZeroExtendNode node) {
+    var diff = node.type().bitWidth() - getBitWidth(node.value().type());
+    writer.write("ZeroExt(" + diff + ", ");
+    visit(node.value());
+    writer.write(")");
+  }
+
+  @Override
+  public void visit(SignExtendNode node) {
+    var diff = node.type().bitWidth() - getBitWidth(node.value().type());
+    writer.write("SignExt(" + diff + ", ");
+    visit(node.value());
+    writer.write(")");
+  }
+
+  @Override
+  public void visit(TruncateNode node) {
+    var diff = getBitWidth(node.value().type()) - node.type().bitWidth() - 1;
+    writer.write("Extract(" + diff);
+    writer.write(", 0, ");
+    visit(node.value());
+    writer.write(")");
+  }
+
+  @Override
+  public void visit(ExpressionNode expressionNode) {
+    expressionNode.accept(this);
   }
 
   /**
@@ -345,5 +374,15 @@ public class Z3CodeGeneratorVisitor implements GraphNodeVisitor {
     }
 
     throw new ViamError("not implemented for other types");
+  }
+
+  private int getBitWidth(Type type) {
+    if (type instanceof BitsType b) {
+      return b.bitWidth();
+    } else if (type instanceof BoolType b) {
+      return b.bitWidth();
+    }
+
+    throw new RuntimeException("not supported");
   }
 }
