@@ -16,6 +16,7 @@ import vadl.viam.graph.dependency.SignExtendNode;
 import vadl.viam.graph.dependency.TruncateNode;
 import vadl.viam.graph.dependency.TypeCastNode;
 import vadl.viam.graph.dependency.ZeroExtendNode;
+import vadl.viam.passes.GraphProcessor;
 
 /**
  * The type cast eliminator handles the complete elimination of all
@@ -48,10 +49,13 @@ import vadl.viam.graph.dependency.ZeroExtendNode;
  */
 // TODO: @jzottele revisit when https://ea.complang.tuwien.ac.at/vadl/open-vadl/issues/93 is resolved
 // TODO: abstract this type of graph processor (it is quite common, see e.g. Canoicalizer)
-public class TypeCastEliminator implements GraphVisitor<Object> {
+public class TypeCastEliminator extends GraphProcessor {
 
   public static void runOnGraph(Graph graph) {
-    new TypeCastEliminator().processGraph(graph);
+    new TypeCastEliminator().processGraph(graph,
+        // only get nodes that are not used (root nodes)
+        node -> node.usageCount() == 0
+    );
   }
 
   public static Node runOnSubgraph(Node root) {
@@ -61,13 +65,6 @@ public class TypeCastEliminator implements GraphVisitor<Object> {
   @Nullable
   public static ExpressionNode eliminate(TypeCastNode node) {
     return new TypeCastEliminator().eliminateTypeCast(node);
-  }
-
-  // Stores the processed nodes with their respective canonical forms
-  private final HashMap<Node, Node> processedNodes;
-
-  private TypeCastEliminator() {
-    this.processedNodes = new HashMap<>();
   }
 
   /**
@@ -138,21 +135,8 @@ public class TypeCastEliminator implements GraphVisitor<Object> {
     return replacement;
   }
 
-  private void processGraph(Graph graph) {
-    for (var n : graph.getNodes()
-        // only get nodes that are not used (root nodes) / control
-        .filter(e -> e.usageCount() == 0)
-        .toList()) {
-      processNode(n);
-    }
-  }
-
-  private Node processNode(Node toProcess) {
-    var resultNode = processedNodes.get(toProcess);
-    if (resultNode != null) {
-      return resultNode;
-    }
-
+  @Override
+  protected Node processUnprocessedNode(Node toProcess) {
     // visit all inputs first, so type casts near to leaves
     // are eliminated earlier
     toProcess.visitInputs(this);
@@ -162,28 +146,14 @@ public class TypeCastEliminator implements GraphVisitor<Object> {
       var input = typeCastNode.value();
 
       // now we eliminate this type cast node
-      resultNode = eliminateTypeCast(typeCastNode);
+      var resultNode = eliminateTypeCast(typeCastNode);
 
-      if (resultNode == null) {
-        // if the type cast resulted in a deletion without a replacement
-        // we use the input node as result
-        resultNode = input;
-      }
-    } else {
-      resultNode = toProcess;
+      // if the type cast resulted in a deletion without a replacement
+      // we use the input node as result
+      return resultNode != null ? resultNode : input;
     }
 
-    processedNodes.put(toProcess, resultNode);
-    return resultNode;
+    return toProcess;
   }
 
-
-  @Nullable
-  @Override
-  public Object visit(Node from, @Nullable Node to) {
-    if (to != null) {
-      processNode(to);
-    }
-    return processedNodes.get(from);
-  }
 }

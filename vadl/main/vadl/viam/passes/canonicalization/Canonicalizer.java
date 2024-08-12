@@ -6,20 +6,14 @@ import vadl.viam.graph.Canonicalizable;
 import vadl.viam.graph.Graph;
 import vadl.viam.graph.GraphVisitor;
 import vadl.viam.graph.Node;
+import vadl.viam.passes.GraphProcessor;
 
 /**
  * Applies the canonical form of nodes to the graph.
  * Either it is applied to the whole graph, so the canonical form of all nodes is evaluated
  * and applied. Or it is applied to a subgraph (a node and all its inputs).
  */
-public class Canonicalizer implements GraphVisitor<Object> {
-
-  // Stores the processed nodes with their respective canonical forms
-  private final HashMap<Node, Node> processedNodes;
-
-  private Canonicalizer() {
-    processedNodes = new HashMap<>();
-  }
+public class Canonicalizer extends GraphProcessor {
 
   /**
    * Applies the canonicalization on the whole graph.
@@ -28,7 +22,10 @@ public class Canonicalizer implements GraphVisitor<Object> {
    */
   public static void canonicalize(Graph graph) {
     new Canonicalizer()
-        .canonicalizeGraph(graph);
+        .processGraph(graph,
+            // only get nodes that are not used (root nodes)
+            node -> node.usageCount() == 0
+        );
   }
 
   /**
@@ -39,60 +36,30 @@ public class Canonicalizer implements GraphVisitor<Object> {
    * @return The replacement of the subgraph root / node argument
    */
   public static Node canonicalizeSubGraph(Node node) {
-    return new Canonicalizer()
-        .canonicalizeNode(node);
-  }
-
-
-  private void canonicalizeGraph(Graph graph) {
-    for (var n : graph.getNodes()
-        .filter(e -> e.usageCount() == 0) // only get nodes that are not used (root nodes)
-        .toList()) {
-      processNode(n);
-    }
-  }
-
-  private Node canonicalizeNode(Node node) {
     node.ensure(node.isActive(), "cannot canonicalize in active node");
-    return processNode(node);
-  }
-
-  private Node processNode(Node node) {
-    var canonicalNode = processedNodes.get(node);
-    if (canonicalNode != null) {
-      // node was already processed before
-      return canonicalNode;
-    }
-
-    // first visit all inputs to receive their canonical form
-    node.visitInputs(this);
-
-    if (node instanceof Canonicalizable) {
-      // retrieve the canonical form of node
-      canonicalNode = ((Canonicalizable) node).canonical();
-
-      processedNodes.put(node, canonicalNode);
-
-      if (canonicalNode != node) {
-        // replace original one by new one
-        node.replaceAndDelete(canonicalNode);
-      }
-
-      return canonicalNode;
-    } else {
-      // not canonicalizable
-      processedNodes.put(node, node);
-      return node;
-    }
+    return new Canonicalizer()
+        .processNode(node);
   }
 
 
-  @Nullable
   @Override
-  public Object visit(Node from, @Nullable Node to) {
-    if (to != null) {
-      processNode(to);
+  protected Node processUnprocessedNode(Node toProcess) {
+    // first visit all inputs to receive their canonical form
+    toProcess.visitInputs(this);
+
+    if (toProcess instanceof Canonicalizable) {
+      // retrieve the canonical form of node
+      var canonicalNode = ((Canonicalizable) toProcess).canonical();
+
+      if (canonicalNode != toProcess) {
+        // replace original one by new one
+        toProcess.replaceAndDelete(canonicalNode);
+      }
+      return canonicalNode;
     }
-    return null;
+
+    // by default return original node
+    return toProcess;
   }
+
 }
