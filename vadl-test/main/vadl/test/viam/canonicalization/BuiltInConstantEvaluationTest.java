@@ -28,15 +28,9 @@ import vadl.viam.passes.canonicalization.Canonicalizer;
  * to produce a constant value.
  * This constant value is then compared to the constant value in the solution function.
  */
-@TestInstance(TestInstance.Lifecycle.PER_CLASS)
 public class BuiltInConstantEvaluationTest extends AbstractTest {
 
-  Specification spec;
-
-  @Test
-  public void emptyTest() {
-    // just to prevent the real tests running before frontend initialization
-  }
+  private static Specification spec;
 
   @ParameterizedTest
   @MethodSource("constantEvalSources")
@@ -50,8 +44,10 @@ public class BuiltInConstantEvaluationTest extends AbstractTest {
     assertEquals(expected, actual);
   }
 
-  Stream<Arguments> constantEvalSources() {
-    spec = runAndGetViamSpecification("canonicalization/valid_builtin_constant_evaluation.vadl");
+  static Stream<Arguments> constantEvalSources() {
+    var frontend = runViamSpecificationWithNewFrontend(
+        "canonicalization/valid_builtin_constant_evaluation.vadl");
+    spec = frontend.getViam();
 
     // Find all tests and corresponding solutions
     return spec.definitions()

@@ -22,6 +22,7 @@ public class InstructionSetArchitecture extends Definition {
 
   private final List<Format> formats;
   private final List<Function> functions;
+  private final List<Relocation> relocations;
   private final List<Memory> memories;
 
 
@@ -42,6 +43,7 @@ public class InstructionSetArchitecture extends Definition {
                                     Specification specification,
                                     List<Format> formats,
                                     List<Function> functions,
+                                    List<Relocation> relocations,
                                     List<Instruction> instructions,
                                     List<PseudoInstruction> pseudoInstructions,
                                     List<Register> registers,
@@ -53,6 +55,7 @@ public class InstructionSetArchitecture extends Definition {
     this.specification = specification;
     this.formats = formats;
     this.functions = functions;
+    this.relocations = relocations;
     this.registers = registers;
     this.instructions = instructions;
     this.pseudoInstructions = pseudoInstructions;
@@ -69,6 +72,10 @@ public class InstructionSetArchitecture extends Definition {
     return functions;
   }
 
+  public List<Relocation> relocations() {
+    return relocations;
+  }
+  
   public List<PseudoInstruction> pseudoInstructions() {
     return pseudoInstructions;
   }
@@ -80,6 +87,7 @@ public class InstructionSetArchitecture extends Definition {
   public List<RegisterFile> registerFiles() {
     return registerFiles;
   }
+
 
   @Nullable
   public Register.Counter pc() {
