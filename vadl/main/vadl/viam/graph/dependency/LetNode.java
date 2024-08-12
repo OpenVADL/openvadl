@@ -3,7 +3,7 @@ package vadl.viam.graph.dependency;
 import java.util.List;
 import vadl.javaannotations.viam.DataValue;
 import vadl.javaannotations.viam.Input;
-import vadl.viam.Identifier;
+import vadl.utils.SourceLocation;
 import vadl.viam.graph.GraphNodeVisitor;
 import vadl.viam.graph.GraphVisitor;
 import vadl.viam.graph.Node;
@@ -18,7 +18,7 @@ public class LetNode extends ExpressionNode {
   // TODO: Add label functionality
 
   @DataValue
-  protected Identifier identifier;
+  protected Name name;
 
   @Input
   protected ExpressionNode expression;
@@ -26,17 +26,17 @@ public class LetNode extends ExpressionNode {
   /**
    * Constructs a let-node.
    *
-   * @param identifier the name of the let assignment
+   * @param name       the name of the let assignment
    * @param expression the value of the let assignment
    */
-  public LetNode(Identifier identifier, ExpressionNode expression) {
+  public LetNode(Name name, ExpressionNode expression) {
     super(expression.type());
-    this.identifier = identifier;
+    this.name = name;
     this.expression = expression;
   }
 
-  public Identifier identifier() {
-    return identifier;
+  public Name letName() {
+    return name;
   }
 
   public ExpressionNode expression() {
@@ -46,7 +46,7 @@ public class LetNode extends ExpressionNode {
   @Override
   protected void collectData(List<Object> collection) {
     super.collectData(collection);
-    collection.add(identifier);
+    collection.add(name);
   }
 
   @Override
@@ -63,16 +63,26 @@ public class LetNode extends ExpressionNode {
 
   @Override
   public Node copy() {
-    return new LetNode(identifier, (ExpressionNode) expression.copy());
+    return new LetNode(name, (ExpressionNode) expression.copy());
   }
 
   @Override
   public Node shallowCopy() {
-    return new LetNode(identifier, expression);
+    return new LetNode(name, expression);
   }
 
   @Override
   public void accept(GraphNodeVisitor visitor) {
     visitor.visit(this);
+  }
+
+
+  /**
+   * The name of a let expression with source location.
+   */
+  public record Name(
+      String name,
+      SourceLocation location
+  ) {
   }
 }
