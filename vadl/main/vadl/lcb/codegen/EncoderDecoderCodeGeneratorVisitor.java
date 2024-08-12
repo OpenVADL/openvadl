@@ -59,16 +59,28 @@ public class EncoderDecoderCodeGeneratorVisitor extends GenericCppCodeGeneratorV
 
   @Override
   public void visit(ZeroExtendNode node) {
-
+    writer.write("((" + getCppTypeNameByVadlType(node.type()) + ") ");
+    visit(node.value());
+    writer.write(")");
   }
 
   @Override
   public void visit(SignExtendNode node) {
-
+    writer.write("((" + getCppTypeNameByVadlType(node.type()) + ") ");
+    visit(node.value());
+    writer.write(")");
   }
 
   @Override
   public void visit(TruncateNode node) {
-
+    if (node.type() instanceof BoolType) {
+      writer.write("((" + getCppTypeNameByVadlType(node.type()) + ") ");
+      visit(node.value());
+      writer.write(" & 0x1)");
+    } else {
+      writer.write("((" + getCppTypeNameByVadlType(node.type()) + ") ");
+      visit(node.value());
+      writer.write(")");
+    }
   }
 }

@@ -22,7 +22,6 @@ import vadl.viam.graph.dependency.SideEffectNode;
 import vadl.viam.graph.dependency.SignExtendNode;
 import vadl.viam.graph.dependency.SliceNode;
 import vadl.viam.graph.dependency.TruncateNode;
-import vadl.viam.graph.dependency.TypeCastNode;
 import vadl.viam.graph.dependency.WriteMemNode;
 import vadl.viam.graph.dependency.WriteRegFileNode;
 import vadl.viam.graph.dependency.WriteRegNode;
@@ -63,11 +62,6 @@ public interface GraphNodeVisitor {
    * Visit {@link WriteMemNode}.
    */
   void visit(WriteMemNode writeMemNode);
-
-  /**
-   * Visit {@link TypeCastNode}.
-   */
-  void visit(TypeCastNode typeCastNode);
 
   /**
    * Visit {@link SliceNode}.

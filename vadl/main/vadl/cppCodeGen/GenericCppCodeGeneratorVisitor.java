@@ -1,10 +1,7 @@
 package vadl.cppCodeGen;
 
-import static vadl.cppCodeGen.CppTypeMap.getCppTypeNameByVadlType;
-
 import java.io.StringWriter;
 import java.util.Objects;
-import vadl.types.Type;
 import vadl.viam.Constant;
 import vadl.viam.graph.GraphNodeVisitor;
 import vadl.viam.graph.control.AbstractBeginNode;
@@ -26,7 +23,6 @@ import vadl.viam.graph.dependency.ReadRegFileNode;
 import vadl.viam.graph.dependency.ReadRegNode;
 import vadl.viam.graph.dependency.SelectNode;
 import vadl.viam.graph.dependency.SliceNode;
-import vadl.viam.graph.dependency.TypeCastNode;
 import vadl.viam.graph.dependency.WriteMemNode;
 import vadl.viam.graph.dependency.WriteRegFileNode;
 import vadl.viam.graph.dependency.WriteRegNode;
@@ -91,21 +87,6 @@ public abstract class GenericCppCodeGeneratorVisitor implements GraphNodeVisitor
   @Override
   public void visit(WriteMemNode writeMemNode) {
     throw new RuntimeException("not implemented");
-  }
-
-  @Override
-  public void visit(TypeCastNode typeCastNode) {
-    if (typeCastNode.castType() == Type.bool()) {
-      // Integer downcasts truncated the higher bits
-      // but, boolean downcasts (v != 0)
-      writer.write("((" + getCppTypeNameByVadlType(typeCastNode.castType()) + ") ");
-      visit(typeCastNode.value());
-      writer.write(" & 0x1)");
-    } else {
-      writer.write("((" + getCppTypeNameByVadlType(typeCastNode.castType()) + ") ");
-      visit(typeCastNode.value());
-      writer.write(")");
-    }
   }
 
   @Override
