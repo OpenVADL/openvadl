@@ -1,8 +1,8 @@
-package vadl.oop.passes.type_normalization;
+package vadl.cppCodeGen.passes.type_normalization;
 
 import java.util.List;
+import vadl.cppCodeGen.CppCodeGenGraphNodeVisitor;
 import vadl.javaannotations.viam.DataValue;
-import vadl.oop.OopGraphNodeVisitor;
 import vadl.types.Type;
 import vadl.viam.graph.GraphNodeVisitor;
 import vadl.viam.graph.Node;
@@ -50,10 +50,10 @@ public class UpcastedTypeCastNode extends TypeCastNode {
 
   @Override
   public void accept(GraphNodeVisitor visitor) {
-    accept((OopGraphNodeVisitor) visitor);
+    accept((CppCodeGenGraphNodeVisitor) visitor);
   }
 
-  public void accept(OopGraphNodeVisitor visitor) {
+  public void accept(CppCodeGenGraphNodeVisitor visitor) {
     visitor.visit(this);
   }
 }

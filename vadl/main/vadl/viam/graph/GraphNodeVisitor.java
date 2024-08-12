@@ -18,6 +18,7 @@ import vadl.viam.graph.dependency.ReadMemNode;
 import vadl.viam.graph.dependency.ReadRegFileNode;
 import vadl.viam.graph.dependency.ReadRegNode;
 import vadl.viam.graph.dependency.SelectNode;
+import vadl.viam.graph.dependency.SideEffectNode;
 import vadl.viam.graph.dependency.SliceNode;
 import vadl.viam.graph.dependency.TypeCastNode;
 import vadl.viam.graph.dependency.WriteMemNode;
@@ -28,6 +29,13 @@ import vadl.viam.graph.dependency.WriteRegNode;
  * Interface for visiting multiple {@link Node} and its subtypes.
  */
 public interface GraphNodeVisitor {
+  /**
+   * Catchall method when overloading did not work.
+   */
+  default void visit(Node node) {
+    throw new RuntimeException("Node type is not implemented");
+  }
+
   /**
    * Visit {@link ConstantNode}.
    */
@@ -142,4 +150,9 @@ public interface GraphNodeVisitor {
    * Visit {@link ExpressionNode}.
    */
   void visit(ExpressionNode expressionNode);
+
+  /**
+   * Visit {@link SideEffectNode}.
+   */
+  void visit(SideEffectNode sideEffectNode);
 }

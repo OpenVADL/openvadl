@@ -1,4 +1,4 @@
-package vadl.oop.passes.type_normalization;
+package vadl.cppCodeGen.passes.type_normalization;
 
 import java.util.Arrays;
 import java.util.HashSet;

@@ -5,6 +5,7 @@ import java.net.URI;
 import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.util.ArrayList;
+import java.util.Objects;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 import java.util.stream.Stream;
@@ -174,6 +175,24 @@ public record SourceLocation(
     return printPath + ":" + begin + ".." + end;
   }
 
+  @Override
+  public boolean equals(Object o) {
+    if (this == o) {
+      return true;
+    }
+    if (o == null || getClass() != o.getClass()) {
+      return false;
+    }
+    SourceLocation that = (SourceLocation) o;
+    return Objects.equals(uri, that.uri) && Objects.equals(begin, that.begin)
+        && Objects.equals(end, that.end);
+  }
+
+  @Override
+  public int hashCode() {
+    return Objects.hash(uri, begin, end);
+  }
+
 
   /**
    * Represents a position in the source file with line and column information.
@@ -204,6 +223,23 @@ public record SourceLocation(
       } else {
         return Integer.compare(this.column, other.column);
       }
+    }
+
+    @Override
+    public boolean equals(Object o) {
+      if (this == o) {
+        return true;
+      }
+      if (o == null || getClass() != o.getClass()) {
+        return false;
+      }
+      Position position = (Position) o;
+      return line == position.line && column == position.column;
+    }
+
+    @Override
+    public int hashCode() {
+      return Objects.hash(line, column);
     }
   }
 }

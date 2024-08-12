@@ -1,14 +1,8 @@
 package vadl.gcb.passes.type_normalization;
 
-import java.io.IOException;
 import java.util.Arrays;
-import java.util.Map;
 import java.util.stream.Stream;
-import org.jetbrains.annotations.Nullable;
-import vadl.oop.passes.type_normalization.CppTypeNormalizationPass;
-import vadl.oop.passes.type_normalization.CppTypeNormalizer;
-import vadl.pass.Pass;
-import vadl.pass.PassKey;
+import vadl.cppCodeGen.passes.type_normalization.CppTypeNormalizationPass;
 import vadl.pass.PassName;
 import vadl.viam.Format;
 import vadl.viam.Function;

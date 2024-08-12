@@ -1,14 +1,15 @@
 package vadl.lcb.codegen;
 
-import static vadl.oop.CppTypeMap.getCppTypeNameByVadlType;
+import static vadl.cppCodeGen.CppTypeMap.getCppTypeNameByVadlType;
 
 import java.io.StringWriter;
-import vadl.oop.GenericCppCodeGeneratorVisitor;
-import vadl.oop.OopGraphNodeVisitor;
-import vadl.oop.passes.type_normalization.UpcastedTypeCastNode;
+import vadl.cppCodeGen.CppCodeGenGraphNodeVisitor;
+import vadl.cppCodeGen.GenericCppCodeGeneratorVisitor;
+import vadl.cppCodeGen.passes.type_normalization.UpcastedTypeCastNode;
 import vadl.types.BitsType;
 import vadl.types.BoolType;
 import vadl.viam.graph.GraphNodeVisitor;
+import vadl.viam.graph.dependency.SideEffectNode;
 
 /**
  * The {@link GraphNodeVisitor} for the {@link EncodingCodeGenerator}.
@@ -16,7 +17,7 @@ import vadl.viam.graph.GraphNodeVisitor;
  * is called by tablegen to encode an immediate.
  */
 public class EncoderDecoderCodeGeneratorVisitor extends GenericCppCodeGeneratorVisitor
-    implements OopGraphNodeVisitor {
+    implements CppCodeGenGraphNodeVisitor {
   public EncoderDecoderCodeGeneratorVisitor(StringWriter writer) {
     super(writer);
   }
@@ -46,5 +47,10 @@ public class EncoderDecoderCodeGeneratorVisitor extends GenericCppCodeGeneratorV
         writer.write(") & 1");
       }
     }
+  }
+
+  @Override
+  public void visit(SideEffectNode sideEffectNode) {
+    sideEffectNode.accept(this);
   }
 }

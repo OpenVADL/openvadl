@@ -3,7 +3,7 @@ package vadl.gcb.passes.field_node_replacement;
 import java.util.Arrays;
 import java.util.Objects;
 import java.util.stream.Stream;
-import vadl.oop.passes.field_node_replacement.FieldNodeReplacementPass;
+import vadl.cppCodeGen.passes.field_node_replacement.FieldNodeReplacementPass;
 import vadl.pass.PassName;
 import vadl.viam.Format;
 import vadl.viam.Function;

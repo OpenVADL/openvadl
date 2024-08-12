@@ -4,8 +4,10 @@ import static java.util.Objects.requireNonNull;
 
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.Objects;
+import java.util.Set;
 import java.util.stream.Stream;
 import javax.annotation.Nullable;
 import vadl.utils.SourceLocation;
@@ -58,6 +60,17 @@ public class Graph {
    */
   public final <T> Stream<T> getNodes(Class<T> clazz) {
     return getNodes().filter(clazz::isInstance).map(clazz::cast);
+  }
+
+  /**
+   * Gets all nodes of a specific type of this graph.
+   *
+   * @param clazz of node type
+   * @return iterable of all nodes with one of the given types.
+   */
+  public final Stream<Node> getNodes(Set<Class> clazz) {
+    return getNodes().filter(Objects::nonNull)
+        .filter(x -> clazz.stream().anyMatch(y -> x.getClass() == y));
   }
 
   /**

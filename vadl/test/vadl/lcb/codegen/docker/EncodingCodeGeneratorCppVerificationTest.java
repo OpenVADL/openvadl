@@ -7,13 +7,12 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.testcontainers.images.builder.ImageFromDockerfile;
 import vadl.DockerExecutionTest;
+import vadl.cppCodeGen.CppTypeMap;
+import vadl.cppCodeGen.passes.field_node_replacement.FieldNodeReplacementPass;
+import vadl.cppCodeGen.passes.type_normalization.CppTypeNormalizationPass;
 import vadl.gcb.passes.encoding_generation.strategies.EncodingGenerationStrategy;
 import vadl.lcb.codegen.DecodingCodeGenerator;
 import vadl.lcb.codegen.EncodingCodeGenerator;
-import vadl.oop.CppTypeMap;
-import vadl.oop.passes.field_node_replacement.FieldNodeReplacementPass;
-import vadl.oop.passes.type_normalization.CppTypeNormalizationPass;
-import vadl.oop.passes.type_normalization.CppTypeNormalizer;
 import vadl.viam.Format;
 import vadl.viam.Function;
 

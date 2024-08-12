@@ -40,6 +40,24 @@ public class Specification extends Definition {
   }
 
   /**
+   * Returns all registers as stream.
+   */
+  public Stream<Register> registers() {
+    return isas()
+        .flatMap(x -> x.registers().stream())
+        .map(Register.class::cast);
+  }
+
+  /**
+   * Returns all register files as stream.
+   */
+  public Stream<RegisterFile> registerFiles() {
+    return isas()
+        .flatMap(x -> x.registerFiles().stream())
+        .map(RegisterFile.class::cast);
+  }
+
+  /**
    * Returns a stream of all format definitions within the specification, including the ones
    * nested within instruction set architectures.
    *

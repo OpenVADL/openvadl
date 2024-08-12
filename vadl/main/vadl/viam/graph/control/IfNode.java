@@ -91,4 +91,12 @@ public class IfNode extends ControlSplitNode {
     trueBranch = visitor.apply(this, trueBranch);
     falseBranch = visitor.apply(this, falseBranch);
   }
+
+  public Node trueBranch() {
+    return trueBranch;
+  }
+
+  public Node falseBranch() {
+    return falseBranch;
+  }
 }

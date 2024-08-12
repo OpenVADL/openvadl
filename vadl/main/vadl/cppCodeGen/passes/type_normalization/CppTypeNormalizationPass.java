@@ -1,4 +1,4 @@
-package vadl.oop.passes.type_normalization;
+package vadl.cppCodeGen.passes.type_normalization;
 
 import java.io.IOException;
 import java.util.Arrays;
@@ -12,13 +12,11 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import vadl.pass.Pass;
 import vadl.pass.PassKey;
-import vadl.pass.PassName;
 import vadl.types.BitsType;
 import vadl.types.DataType;
 import vadl.types.Type;
 import vadl.viam.Constant;
 import vadl.viam.Function;
-import vadl.viam.Instruction;
 import vadl.viam.Parameter;
 import vadl.viam.Specification;
 import vadl.viam.ViamError;

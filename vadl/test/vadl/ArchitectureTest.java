@@ -18,10 +18,12 @@ public class ArchitectureTest {
         .layer("Viam").definedBy("..viam..")
         .layer("Gcb").definedBy("..gcb..")
         .layer("Lcb").definedBy("..lcb..")
+        .layer("CppGen").definedBy("..cppCodeGen..")
         .whereLayer("Ast").mayOnlyAccessLayers("Viam")
-        .whereLayer("Viam").mayOnlyAccessLayers("Ast")
-        .whereLayer("Gcb").mayOnlyAccessLayers("Viam")
-        .whereLayer("Lcb").mayOnlyAccessLayers("Gcb", "Viam");
+        .whereLayer("Viam").mayOnlyAccessLayers("Ast", "CppGen")
+        .whereLayer("Gcb").mayOnlyAccessLayers("Viam", "CppGen")
+        .whereLayer("CppGen").mayOnlyAccessLayers("Viam")
+        .whereLayer("Lcb").mayOnlyAccessLayers("Gcb", "Viam", "CppGen");
 
     layeredArchitecture.check(jc);
   }

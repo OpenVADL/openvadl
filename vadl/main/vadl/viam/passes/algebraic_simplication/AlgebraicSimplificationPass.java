@@ -11,6 +11,7 @@ import vadl.pass.PassName;
 import vadl.viam.Specification;
 import vadl.viam.graph.dependency.BuiltInCall;
 import vadl.viam.passes.algebraic_simplication.rules.AlgebraicSimplificationRule;
+import vadl.viam.passes.algebraic_simplication.rules.impl.AdditionWithZeroSimplificationRule;
 
 /**
  * It looks at all the {@link BuiltInCall} nodes and tries to match a static set of rules.
@@ -20,6 +21,10 @@ import vadl.viam.passes.algebraic_simplication.rules.AlgebraicSimplificationRule
  */
 public class AlgebraicSimplificationPass extends Pass {
   private static final List<AlgebraicSimplificationRule> rules = new ArrayList<>();
+
+  static {
+    rules.add(new AdditionWithZeroSimplificationRule());
+  }
 
   @Override
   public PassName getName() {
