@@ -1253,11 +1253,11 @@ class FunctionDefinition extends Definition {
 
 final class PlaceholderDefinition extends Definition {
 
-  IsId identifierPath;
+  IsCallExpr placeholder;
   SourceLocation loc;
 
-  PlaceholderDefinition(IsId identifierPath, SourceLocation loc) {
-    this.identifierPath = identifierPath;
+  PlaceholderDefinition(IsCallExpr placeholder, SourceLocation loc) {
+    this.placeholder = placeholder;
     this.loc = loc;
   }
 
@@ -1279,7 +1279,7 @@ final class PlaceholderDefinition extends Definition {
   @Override
   void prettyPrint(int indent, StringBuilder builder) {
     builder.append("$");
-    identifierPath.prettyPrint(indent, builder);
+    placeholder.prettyPrint(indent, builder);
   }
 }
 

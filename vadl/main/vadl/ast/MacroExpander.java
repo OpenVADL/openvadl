@@ -90,7 +90,7 @@ class MacroExpander
   @Override
   public Expr visit(PlaceholderExpr expr) {
     // TODO Proper handling of placeholders with format "$a.b.c"
-    var arg = args.get(expr.identifierPath.pathToString());
+    var arg = args.get(expr.placeholder.path().pathToString());
     if (arg == null) {
       throw new IllegalStateException("The parser should already have checked that.");
     } else if (arg instanceof Identifier id) {
@@ -328,7 +328,7 @@ class MacroExpander
 
   @Override
   public Definition visit(PlaceholderDefinition definition) {
-    var arg = Objects.requireNonNull(args.get(definition.identifierPath.pathToString()));
+    var arg = Objects.requireNonNull(args.get(definition.placeholder.path().pathToString()));
     return (Definition) arg;
   }
 
@@ -388,7 +388,7 @@ class MacroExpander
 
   private EncodingDefinition.FieldEncodings resolveEncs(FieldEncodingsOrPlaceholder encodings) {
     if (encodings instanceof PlaceholderExpr p) {
-      var arg = (EncodingDefinition.FieldEncodings) args.get(p.identifierPath.pathToString());
+      var arg = (EncodingDefinition.FieldEncodings) args.get(p.placeholder.path().pathToString());
       return Objects.requireNonNull(arg);
     }
     return (EncodingDefinition.FieldEncodings) encodings;

@@ -736,11 +736,11 @@ sealed interface IdentifierOrPlaceholder permits Identifier, PlaceholderExpr {
  */
 final class PlaceholderExpr extends Expr implements IdentifierOrPlaceholder,
     OperatorOrPlaceholder, TypeLiteralOrPlaceholder, FieldEncodingsOrPlaceholder, IsId {
-  IsId identifierPath;
+  IsCallExpr placeholder;
   SourceLocation loc;
 
-  public PlaceholderExpr(IsId identifierPath, SourceLocation loc) {
-    this.identifierPath = identifierPath;
+  public PlaceholderExpr(IsCallExpr placeholder, SourceLocation loc) {
+    this.placeholder = placeholder;
     this.loc = loc;
   }
 
@@ -762,7 +762,7 @@ final class PlaceholderExpr extends Expr implements IdentifierOrPlaceholder,
   @Override
   public void prettyPrint(int indent, StringBuilder builder) {
     builder.append("$");
-    identifierPath.prettyPrint(indent, builder);
+    placeholder.prettyPrint(indent, builder);
   }
 
   @Override
@@ -775,17 +775,17 @@ final class PlaceholderExpr extends Expr implements IdentifierOrPlaceholder,
     }
 
     PlaceholderExpr that = (PlaceholderExpr) o;
-    return identifierPath.equals(that.identifierPath);
+    return placeholder.equals(that.placeholder);
   }
 
   @Override
   public int hashCode() {
-    return identifierPath.hashCode();
+    return placeholder.hashCode();
   }
 
   @Override
   public String pathToString() {
-    return "$" + identifierPath.pathToString();
+    return "$" + placeholder.path().pathToString();
   }
 }
 

@@ -6,6 +6,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
+import javax.annotation.Nullable;
 
 import vadl.ast.EncodingDefinition.FieldEncoding;
 import vadl.ast.FunctionDefinition.Parameter;
@@ -20,6 +21,7 @@ COMPILER vadl
   boolean insideMacro = false;
   boolean disableSymbolChecking = false;
   Deque<Boolean> disableSymbolStack = new ArrayDeque<>();
+  Deque<List<MacroParam>> macroContext = new ArrayDeque<>();
   Ast ast = new Ast();
   SymbolTable symbolTable = new SymbolTable();
   Map<String, Identifier> macroOverrides = new HashMap<>();
@@ -32,12 +34,6 @@ COMPILER vadl
 
   SourceLocation lookaheadLoc() {
     return locationFromToken(this, la);
-  }
-
-  boolean isMacroParamType(SyntaxType syntaxType) {
-    // TODO Analyze next few tokens to determine syntax type of parameter
-    var name = scanner.Peek().val;
-    return name.equals("targetReg") || name.equals("memEx");
   }
 
   void disableSymbolChecking() {
@@ -400,7 +396,7 @@ PRODUCTIONS
   = letStatement<out statement>
   | ifStatement<out statement>
   | blockStatement<out statement>
-  | IF (la.kind == _identifierToken || isMacroParamType(BasicSyntaxType.CallEx()))
+  | IF (la.kind == _identifierToken || isMacroParamType(this, BasicSyntaxType.CallEx()))
     assignment<out statement>
   | macroInstanceOrPlaceholder<out Node s, BasicSyntaxType.Stats()> (. if (s instanceof Statement stmt) statement = stmt;
                                                                        else if (s instanceof StatementList stmts) statement = new BlockStatement(stmts.items, stmts.location());
@@ -454,7 +450,8 @@ PRODUCTIONS
       (
         binaryOperator<out Operator op>                                   (. var operator = new OperatorExpr(op, loc()); .)
         term<out Expr right>                                              (. expr = new BinaryExpr(expr, operator, right); .)
-      | macroInstanceOrPlaceholder<out Node node, BasicSyntaxType.Bin()>
+      | IF (isMacroParamType(this, BasicSyntaxType.BinOp()))
+        maximumMacroExpr<out Node node>
         term<out Expr right>                                              (. expr = new BinaryExpr(expr, (OperatorOrPlaceholder) node, right); .)
       | SYM_AS
         (
@@ -686,6 +683,26 @@ PRODUCTIONS
                                              else placeholder = new PlaceholderExpr(path, startloc.join(loc())); .)
   .
 
+  maximumMacroExpr<out Node node>                                 (. node = null; .)
+  = SYM_DOLLAR
+    identifier<out Identifier id>                                 (. disableSymbolChecking(); .)
+    [
+      IF (symbolTable.getMacro(id.name) != null)                  (. var macro = symbolTable.getMacro(id.name); .)
+      SYM_PAREN_OPEN                                              (. var params = macro.params().iterator(); .)
+                                                                  (. var args = new ArrayList<Node>(); .)
+      (
+        IF (!params.hasNext())
+        SYM_PAREN_CLOSE
+      | macroInstanceParam<out Node arg1, params.next().type()>   (. args.add(arg1); .)
+        {
+          SYM_SEMICOLON
+          macroInstanceParam<out Node arg2, params.next().type()> (. args.add(arg2); .)
+        }
+        SYM_PAREN_CLOSE
+      )                                                           (. node = new MacroInstanceExpr(id, args, loc()); .)
+    ]                                                             (. enableSymbolChecking();
+                                                                     if (node == null) node = new PlaceholderExpr(id, loc()); .)
+  .
 
   macroInstance<out Node body, SyntaxType requiredType>         (. disableSymbolChecking(); .)
   = SYM_DOLLAR                                                  (. var args = new ArrayList<Node>(); .)
@@ -748,11 +765,12 @@ PRODUCTIONS
         syntaxType<out SyntaxType synType2> (. params.add(new MacroParam(paramId2, synType2)); .)
       }
     ]
-    SYM_PAREN_CLOSE
+    SYM_PAREN_CLOSE                         (. macroContext.addFirst(params); .)
     SYM_COLON syntaxType<out SyntaxType returnType> SYM_EQ
     SYM_BRACE_OPEN                          (. Node body = null; insideMacro = true; disableSymbolChecking(); .)
     macroBody<out body, returnType>
     SYM_BRACE_CLOSE                         (.
+                                              macroContext.removeFirst();
                                               insideMacro = false;
                                               enableSymbolChecking();
                                               var bodyType = narrowNode(body).syntaxType();

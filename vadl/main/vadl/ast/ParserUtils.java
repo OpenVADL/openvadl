@@ -69,7 +69,7 @@ class ParserUtils {
    * If the given "expr" is not a binary expression, the cast operand will be the whole "expr".
    * If the given "expr" is a binary expression, only its right leaf will be the cast operand.
    *
-   * @param expr A left-sided binary expression tree or a non-binary expression.
+   * @param expr     A left-sided binary expression tree or a non-binary expression.
    * @param symOrBin Either a SymbolExpr of the cast target type, or a BinaryExpr with the
    *                 SymbolExpr as the left operand.
    * @return A left-sided binary expression tree with a CastExpr as its leaf — or a simple CastExpr.
@@ -101,7 +101,7 @@ class ParserUtils {
       return placeholderExpr;
     } else if (expr instanceof IsSymExpr symExpr) {
       return new TypeLiteral(symExpr);
-    } else  {
+    } else {
       throw new IllegalArgumentException("Unknown type literal node " + expr);
     }
   }
@@ -263,5 +263,44 @@ class ParserUtils {
 
   static boolean isDefType(SyntaxType type) {
     return type.isSubTypeOf(BasicSyntaxType.IsaDefs());
+  }
+
+  static boolean isMacroParamType(Parser parser, SyntaxType syntaxType) {
+    if (parser.la.kind != Parser._SYM_DOLLAR) {
+      return false;
+    }
+    var parserT = parser.t;
+    var parserLA = parser.la;
+    var scanner = parser.scanner;
+    var scannerT = scanner.t;
+    var scannerCh = scanner.ch;
+    var scannerCol = scanner.col;
+    var scannerLine = scanner.line;
+    var scannerCharPos = scanner.charPos;
+    var bufferPos = scanner.buffer.getPos();
+    var maxExpr = parser.maximumMacroExpr();
+    parser.t = parserT;
+    parser.la = parserLA;
+    scanner.t = scannerT;
+    scanner.col = scannerCol;
+    scanner.line = scannerLine;
+    scanner.charPos = scannerCharPos;
+    scanner.buffer.setPos(bufferPos);
+    scanner.ch = scannerCh;
+
+    if (maxExpr instanceof MacroInstanceExpr macroInstanceExpr) {
+      var macro = parser.symbolTable.getMacro(macroInstanceExpr.identifier.name);
+      return macro != null && macro.returnType().isSubTypeOf(syntaxType);
+    }
+    if (maxExpr instanceof PlaceholderExpr placeholderExpr) {
+      for (List<MacroParam> params : parser.macroContext) {
+        for (MacroParam param : params) {
+          if (param.name().name.equals(placeholderExpr.placeholder.path().pathToString())) {
+            return param.type().isSubTypeOf(syntaxType);
+          }
+        }
+      }
+    }
+    return maxExpr.syntaxType().isSubTypeOf(syntaxType);
   }
 }
