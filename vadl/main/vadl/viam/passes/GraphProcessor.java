@@ -10,8 +10,8 @@ import vadl.viam.graph.Node;
 /**
  * The GraphProcessor class is an abstract class that provides functionality for
  * processing nodes in a graph.
- * <p>
- * Extending classes should implement the processUnprocessedNode method to define the processing
+ *
+ * <p>Extending classes should implement the processUnprocessedNode method to define the processing
  * logic for nodes.
  * The GraphProcessor class maintains a list of already processed nodes and only calls the
  * {@link #processUnprocessedNode(Node)} if the node was not yet processed.
@@ -52,7 +52,7 @@ public abstract class GraphProcessor implements GraphVisitor<Object> {
     return resultNode;
   }
 
-  abstract protected Node processUnprocessedNode(Node toProcess);
+  protected abstract Node processUnprocessedNode(Node toProcess);
 
   @Nullable
   @Override

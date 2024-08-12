@@ -48,9 +48,12 @@ import vadl.viam.passes.GraphProcessor;
  * <p>If non of the rules matches, an error is thrown.</p>
  */
 // TODO: @jzottele revisit when https://ea.complang.tuwien.ac.at/vadl/open-vadl/issues/93 is resolved
-// TODO: abstract this type of graph processor (it is quite common, see e.g. Canoicalizer)
 public class TypeCastEliminator extends GraphProcessor {
 
+  /**
+   * Runs the type cast eliminator on the whole graph.
+   * The given graph instance will be manipulated.
+   */
   public static void runOnGraph(Graph graph) {
     new TypeCastEliminator().processGraph(graph,
         // only get nodes that are not used (root nodes)
@@ -58,10 +61,20 @@ public class TypeCastEliminator extends GraphProcessor {
     );
   }
 
+  /**
+   * Runs the eliminator on a subgraph, where root defines the start of the subgraph.
+   * It will process all dependencies/inputs of the root.
+   * The graph of root will be manipulated.
+   */
   public static Node runOnSubgraph(Node root) {
     return new TypeCastEliminator().processNode(root);
   }
 
+  /**
+   * Eliminates the single type cast node.
+   * It will return the replacement (if there is any).
+   * This operation will manipulate the graph of node.
+   */
   @Nullable
   public static ExpressionNode eliminate(TypeCastNode node) {
     return new TypeCastEliminator().eliminateTypeCast(node);

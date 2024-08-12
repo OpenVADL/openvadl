@@ -24,8 +24,7 @@ public class Canonicalizer extends GraphProcessor {
     new Canonicalizer()
         .processGraph(graph,
             // only get nodes that are not used (root nodes)
-            node -> node.usageCount() == 0
-        );
+            node -> node.usageCount() == 0);
   }
 
   /**
