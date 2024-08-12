@@ -7,6 +7,7 @@ import javax.annotation.Nullable;
 import vadl.types.BitsType;
 import vadl.types.DataType;
 import vadl.types.Type;
+import vadl.viam.graph.Graph;
 import vadl.viam.graph.control.ReturnNode;
 import vadl.viam.graph.control.StartNode;
 import vadl.viam.graph.dependency.FieldRefNode;

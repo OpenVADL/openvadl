@@ -3,12 +3,16 @@ package vadl.viam;
 import com.google.errorprone.annotations.FormatMethod;
 import org.jetbrains.annotations.Contract;
 import vadl.utils.SourceLocation;
+import vadl.viam.graph.Graph;
 
 /**
- * An abstract VADL Definition, such as an Instruction, Format, Encoding, ...
+ * An abstract VADL Definition, such as an {@link Instruction}, {@link Format}, {@link Encoding},...
  *
  * <p>
  * A definition is identified by an Identifier and may have a SourceLocation associated with it.
+ * As creator of a definition, the source location should be set where possible.
+ * Use the {@link #ensure(boolean, String, Object...)} method to check for conditions that
+ * must be met. It will throw an error with the definition as context if the condition is not true.
  * </p>
  */
 public abstract class Definition {
@@ -40,7 +44,11 @@ public abstract class Definition {
    * Verifies the definition's state and properties.
    *
    * <p>This method should be overridden by all definitions that require some
-   * verification. It is called by the {@link vadl.viam.passes.verification.ViamVerifier}.</p>
+   * verification. The implementation should ensure that thinks like type consistency and other
+   * properties are given. If the definition contains a behavior,
+   * it should call {@link Graph#verify()} in its own verify method.
+   * It is called by the {@link vadl.viam.passes.verification.ViamVerifier} during the
+   * {@link vadl.viam.passes.verification.ViamVerificationPass}.</p>
    *
    * @see vadl.viam.passes.verification.ViamVerificationPass
    * @see vadl.viam.passes.verification.ViamVerifier

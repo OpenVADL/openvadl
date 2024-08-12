@@ -12,6 +12,10 @@ The `open-vadl` project includes multiple Gradle modules.
   Additionally it provides `errorprone` bug detectors, that statically check if certain properties
   in the VIAM are correctly implemented.
 
+## Getting Started
+
+To get started, please read the introduction in [our wiki](https://ea.complang.tuwien.ac.at/vadl/open-vadl/wiki/Home).
+
 ## Development
 
 Before contributing, please read [OpenVADL's coding guidelines](https://ea.complang.tuwien.ac.at/vadl/vadl/issues/1573).

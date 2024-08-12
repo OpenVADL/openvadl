@@ -251,6 +251,18 @@ public abstract class Node {
    * Applies the visitor's output on each input of this node.
    * If the new input node differs from the old one, this method will automatically handle
    * the usage transfer.
+   *
+   * <p>An example that replaces a specific input. Note that there is a dedicate method
+   * for that purpose: {@link #replaceInput(Node, Node)}<pre>
+   * node.applyOnInputs((from, toInput) -> {
+   *  if (toInput == toReplace) {
+   *    // we found the input to replace
+   *    return replacee;
+   *  }
+   *  // we must apply the old value to leave it the same
+   *  return toInput;
+   * });
+   * </pre></p>
    */
   public final void applyOnInputs(GraphVisitor.Applier<Node> visitor) {
     applyOnInputsUnsafe((self, oldInput) -> {
@@ -388,7 +400,7 @@ public abstract class Node {
   }
 
   /**
-   * Replaces this node at all usages.
+   * Replaces this node with the given one at all usages.
    * I.e., every node that uses this node as input will afterwards use the replacement as input.
    *
    * @param replacement new input of this node's usages.

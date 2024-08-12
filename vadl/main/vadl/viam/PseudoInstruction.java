@@ -1,5 +1,6 @@
 package vadl.viam;
 
+import java.util.List;
 import java.util.stream.Stream;
 import vadl.viam.graph.Graph;
 import vadl.viam.graph.dependency.FuncParamNode;
@@ -12,7 +13,7 @@ import vadl.viam.graph.dependency.FuncParamNode;
  * using the {@link Graph#isPseudoInstruction()} method. The most
  * important graph node to handle is the {@link vadl.viam.graph.control.InstrCallNode}.</p>
  */
-public class PseudoInstruction extends Definition {
+public class PseudoInstruction extends Definition implements WithBehavior {
 
   private final Parameter[] parameters;
   private final Graph behavior;
@@ -67,5 +68,10 @@ public class PseudoInstruction extends Definition {
   @Override
   public void accept(DefinitionVisitor visitor) {
     visitor.visit(this);
+  }
+
+  @Override
+  public List<Graph> behaviors() {
+    return List.of(behavior);
   }
 }

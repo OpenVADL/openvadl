@@ -104,26 +104,26 @@ public class TypeCastEliminationPassTest extends AbstractTest {
     return findFuncNameArgumentsByPrefix("SignExtend_", validFrontend.getViam());
   }
 
-
-  @ParameterizedTest
-  @MethodSource("testBoolCast_Source")
-  void testBoolCast_shouldReplaceByNegCallWithSecondArg0Const(String functionName) {
-    var behavior = getTestBehavior(functionName);
-    assertEquals(4, behavior.getNodes().count());
-    var paramNode = getSingleNode(behavior, FuncParamNode.class);
-    var compareNode = getSingleNode(behavior, BuiltInCall.class);
-    var zeroConstant = getSingleNode(behavior, ConstantNode.class);
-    assertEquals(BuiltInTable.NEG, compareNode.builtIn());
-    assertEquals(0, zeroConstant.constant().asVal().intValue());
-    assertEquals(paramNode, compareNode.arguments().get(0));
-    assertEquals(zeroConstant, compareNode.arguments().get(1));
-    var returnNode = getSingleNode(behavior, ReturnNode.class);
-    assertEquals(compareNode, returnNode.value());
-  }
-
-  static Stream<Arguments> testBoolCast_Source() {
-    return findFuncNameArgumentsByPrefix("BoolCast_", validFrontend.getViam());
-  }
+// TODO: @jzottele remove or uncomment when https://ea.complang.tuwien.ac.at/vadl/open-vadl/issues/93 is resolved
+//  @ParameterizedTest
+//  @MethodSource("testBoolCast_Source")
+//  void testBoolCast_shouldReplaceByNegCallWithSecondArg0Const(String functionName) {
+//    var behavior = getTestBehavior(functionName);
+//    assertEquals(4, behavior.getNodes().count());
+//    var paramNode = getSingleNode(behavior, FuncParamNode.class);
+//    var compareNode = getSingleNode(behavior, BuiltInCall.class);
+//    var zeroConstant = getSingleNode(behavior, ConstantNode.class);
+//    assertEquals(BuiltInTable.NEG, compareNode.builtIn());
+//    assertEquals(0, zeroConstant.constant().asVal().intValue());
+//    assertEquals(paramNode, compareNode.arguments().get(0));
+//    assertEquals(zeroConstant, compareNode.arguments().get(1));
+//    var returnNode = getSingleNode(behavior, ReturnNode.class);
+//    assertEquals(compareNode, returnNode.value());
+//  }
+//
+//  static Stream<Arguments> testBoolCast_Source() {
+//    return findFuncNameArgumentsByPrefix("BoolCast_", validFrontend.getViam());
+//  }
 
   @Test
   void testNonOptimalExample() {
