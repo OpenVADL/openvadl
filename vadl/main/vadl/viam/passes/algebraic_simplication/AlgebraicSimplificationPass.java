@@ -12,6 +12,11 @@ import vadl.viam.Specification;
 import vadl.viam.graph.dependency.BuiltInCall;
 import vadl.viam.passes.algebraic_simplication.rules.AlgebraicSimplificationRule;
 import vadl.viam.passes.algebraic_simplication.rules.impl.AdditionWithZeroSimplificationRule;
+import vadl.viam.passes.algebraic_simplication.rules.impl.DivisionWithOneSimplificationRule;
+import vadl.viam.passes.algebraic_simplication.rules.impl.MultiplicationWithOneSimplificationRule;
+import vadl.viam.passes.algebraic_simplication.rules.impl.MultiplicationWithZeroSimplificationRule;
+import vadl.viam.passes.algebraic_simplication.rules.impl.RemainderWithOneSimplificationRule;
+import vadl.viam.passes.algebraic_simplication.rules.impl.RemainderWithZeroSimplificationRule;
 
 /**
  * It looks at all the {@link BuiltInCall} nodes and tries to match a static set of rules.
@@ -24,6 +29,11 @@ public class AlgebraicSimplificationPass extends Pass {
 
   static {
     rules.add(new AdditionWithZeroSimplificationRule());
+    rules.add(new MultiplicationWithZeroSimplificationRule());
+    rules.add(new MultiplicationWithOneSimplificationRule());
+    rules.add(new DivisionWithOneSimplificationRule());
+    rules.add(new RemainderWithZeroSimplificationRule());
+    rules.add(new RemainderWithOneSimplificationRule());
   }
 
   @Override
