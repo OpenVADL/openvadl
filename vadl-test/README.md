@@ -27,12 +27,7 @@ of the `AbstractTest` class.
 ## Running the tests
 
 All tests that use the frontend (or extend `AbstractTest`) must be started
-from the (old-)`vadl` project. Currently, there is no way to execute specific
-tests, so you will always run all tests in the module. This is because
-we use a junit Suite annotation to specify that all tests in this module should
-be executed. JUnit doesn’t provide a cli way to include or exclude
-specific tests. However, if we implement our own test runner, we could
-implement such a functionality.
+from the (old-)`vadl` project.
 
 The command to run the OpenVADLTestSuite (all tests in `vadl-test`)
 
@@ -43,6 +38,20 @@ The command to run the OpenVADLTestSuite (all tests in `vadl-test`)
 The `-PnoXtendCompile` prevents that Gradle recompiles the `xtend` source code when something in `open-vadl` changes.
 However, if you made changes to the `vadl` project, you have to either remove the flag from the command
 or rebuilt the project in another way.
+
+### Running specific tests
+
+I you don't want to run all tests, you can specify the `-PopenVadl.tests` property.
+The value format is `(<className>[#<methodName>],)+`.
+The following example executes all tests in the `FormatTest` class.
+
+```bash
+./.gradlew test --tests at.ac.tuwien.complang.vadl.tests.OpenVADLTestSuite -PnoXtendCompile -PopenVadl.tests=FormatTest
+```
+
+**Note:** If you use `@ParameterizedTest` or `@TestFactory` in your tests, you won't be able to execute
+them specifically.
+However, they’re executed when executing all of them.
 
 ### Using Intellij
 

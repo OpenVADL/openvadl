@@ -65,6 +65,7 @@ class CanoicalizationPassTest {
         Identifier.noLocation("isaIdentifierValue"),
         viam,
         List.of(),
+        List.of(),
         Collections.emptyList(),
         List.of(new Instruction(
             Identifier.noLocation("instructionValue"),

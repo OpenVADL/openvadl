@@ -1,0 +1,12 @@
+
+instruction set architecture Test = {
+
+  relocation R1(a: Bits<32>) -> Bits<32> = a
+
+  function F1(a: Bits<32>) -> Bits<32> = a
+
+}
+
+
+
+
