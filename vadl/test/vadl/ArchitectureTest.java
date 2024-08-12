@@ -18,7 +18,7 @@ public class ArchitectureTest {
         .layer("Viam").definedBy("..viam..")
         .layer("Gcb").definedBy("..gcb..")
         .layer("Lcb").definedBy("..lcb..")
-        .layer("CppGen").definedBy("..cpp_codegen..")
+        .layer("CppGen").definedBy("..cppCodeGen..")
         .whereLayer("Ast").mayOnlyAccessLayers("Viam")
         .whereLayer("Viam").mayOnlyAccessLayers("Ast", "CppGen")
         .whereLayer("Gcb").mayOnlyAccessLayers("Viam", "CppGen")
