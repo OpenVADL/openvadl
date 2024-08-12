@@ -278,10 +278,14 @@ public class Z3CodeGeneratorVisitor implements GraphNodeVisitor {
   @Override
   public void visit(TruncateNode node) {
     var diff = getBitWidth(node.value().type()) - node.type().bitWidth() - 1;
-    writer.write("Extract(" + diff);
-    writer.write(", 0, ");
-    wrapImplicitBooleanWhenTypeBoolean(node);
-    writer.write(")");
+    if (diff > 0) {
+      writer.write("Extract(" + diff);
+      writer.write(", 0, ");
+      wrapImplicitBooleanWhenTypeBoolean(node);
+      writer.write(")");
+    } else {
+      visit(node.value());
+    }
   }
 
   @Override
