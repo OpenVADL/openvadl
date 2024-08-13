@@ -2,6 +2,8 @@ package vadl.viam.passes.verification;
 
 import vadl.viam.Definition;
 import vadl.viam.DefinitionVisitor;
+import vadl.viam.graph.Node;
+import vadl.viam.passes.GraphProcessor;
 
 /**
  * Calls the verification method on all definitions in the given one and all its
@@ -24,5 +26,24 @@ public class ViamVerifier extends DefinitionVisitor.Recursive {
   public void afterTraversal(Definition definition) {
     super.afterTraversal(definition);
     definition.verify();
+  }
+
+
+  /**
+   * Calls the verify method on all nodes in the given subgraph.
+   */
+  public static class Graph extends GraphProcessor {
+
+    public static void verifySubGraph(Node node) {
+      new Graph().processNode(node);
+    }
+
+    @Override
+    protected Node processUnprocessedNode(Node toProcess) {
+      // verify inputs
+      toProcess.visitInputs(this);
+      toProcess.verify();
+      return toProcess;
+    }
   }
 }
