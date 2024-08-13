@@ -70,7 +70,7 @@ public abstract class DockerExecutionTest extends AbstractTest {
       container.start();
 
       await()
-          .atMost(Duration.ofSeconds(10))
+          .atMost(Duration.ofSeconds(20))
           .until(() -> {
             var result =
                 container.getDockerClient().inspectContainerCmd(container.getContainerId());
