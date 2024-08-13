@@ -21,9 +21,9 @@ class EncodingCodeGeneratorTest extends AbstractTest {
         new Parameter[] {new Parameter(createIdentifier("parameterValue"), Type.unsignedInt(32))},
         Type.signedInt(32));
     var graph = new Graph("graphValue");
-    var returnNode = new ReturnNode(new TypeCastNode(new FuncParamNode(new Parameter(
+    var returnNode = new ReturnNode(new FuncParamNode(new Parameter(
         createIdentifier("parameterValue"), Type.unsignedInt(32)
-    )), Type.signedInt(32)));
+    )));
     graph.addWithInputs(returnNode);
     function.setBehavior(graph);
 
@@ -33,7 +33,7 @@ class EncodingCodeGeneratorTest extends AbstractTest {
     // Then
     assertThat(code).isEqualToIgnoringWhitespace("""
         int32_t encodefunctionNameValue(uint32_t parameterValue) {
-          return ((int32_t) parameterValue);
+          return parameterValue;
         }
         """);
   }

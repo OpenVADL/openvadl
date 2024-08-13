@@ -1,4 +1,4 @@
-package vadl.cppCodeGen.passes.type_normalization;
+package vadl.cppCodeGen.passes.typeNormalization;
 
 import static org.assertj.core.api.AssertionsForClassTypes.assertThat;
 
@@ -15,7 +15,7 @@ import vadl.viam.Parameter;
 import vadl.viam.graph.dependency.ConstantNode;
 import vadl.viam.graph.dependency.TypeCastNode;
 
-class CppTypeNormalizerTest extends AbstractTest {
+class CppTypeNormalizationPassTest extends AbstractTest {
 
   private static Stream<Arguments> generateTypesWhichRequireUpcast() {
     // (type, upcasted type)
@@ -67,7 +67,7 @@ class CppTypeNormalizerTest extends AbstractTest {
     ), DataType.bool());
 
     // When
-    var updatedFunction = new CppTypeNormalizer().makeTypesCppConform(function);
+    var updatedFunction = CppTypeNormalizationPass.makeTypesCppConform(function);
 
     // Then
     assertThat(updatedFunction).isNotNull();
@@ -88,7 +88,7 @@ class CppTypeNormalizerTest extends AbstractTest {
     ), DataType.bool());
 
     // When
-    var updatedFunction = new CppTypeNormalizer().makeTypesCppConform(function);
+    var updatedFunction = CppTypeNormalizationPass.makeTypesCppConform(function);
 
     // Then
     assertThat(updatedFunction).isNotNull();
@@ -109,7 +109,7 @@ class CppTypeNormalizerTest extends AbstractTest {
     ), before);
 
     // When
-    var updatedFunction = new CppTypeNormalizer().makeTypesCppConform(function);
+    var updatedFunction = CppTypeNormalizationPass.makeTypesCppConform(function);
 
     // Then
     assertThat(updatedFunction).isNotNull();
@@ -126,32 +126,12 @@ class CppTypeNormalizerTest extends AbstractTest {
     ), type);
 
     // When
-    var updatedFunction = new CppTypeNormalizer().makeTypesCppConform(function);
+    var updatedFunction = CppTypeNormalizationPass.makeTypesCppConform(function);
 
     // Then
     assertThat(updatedFunction).isNotNull();
     assertThat(updatedFunction.parameters().length).isEqualTo(1);
     assertThat(updatedFunction.returnType()).isEqualTo(type);
-  }
-
-  @ParameterizedTest
-  @MethodSource("generateTypesWhichRequireUpcast")
-  void makeTypesCppConform_shouldUpdateTypeCast(DataType before, DataType after) {
-    // Given
-    var function = createFunction("functionValueName", new Parameter(
-        createIdentifier("parameterValue"), DataType.bool()
-    ), DataType.bool());
-    function.behavior().addWithInputs(
-        new TypeCastNode(new ConstantNode(Constant.Value.of(0, Type.signedInt(8))),
-            before));
-
-    // When
-    var updatedFunction = new CppTypeNormalizer().makeTypesCppConform(function);
-
-    // Then
-    var node = updatedFunction.behavior().getNodes(UpcastedTypeCastNode.class).toList().get(0);
-    assertThat(node.castType()).isEqualTo(after);
-    assertThat(node.originalType()).isEqualTo(before);
   }
 
   @ParameterizedTest
@@ -166,7 +146,7 @@ class CppTypeNormalizerTest extends AbstractTest {
             type));
 
     // When
-    var updatedFunction = new CppTypeNormalizer().makeTypesCppConform(function);
+    var updatedFunction = CppTypeNormalizationPass.makeTypesCppConform(function);
 
     // Then
     assertThat(updatedFunction.behavior().getNodes(TypeCastNode.class).toList().get(0)
@@ -184,7 +164,7 @@ class CppTypeNormalizerTest extends AbstractTest {
         new ConstantNode(Constant.Value.of(0, before)));
 
     // When
-    var updatedFunction = new CppTypeNormalizer().makeTypesCppConform(function);
+    var updatedFunction = CppTypeNormalizationPass.makeTypesCppConform(function);
 
     // Then
     var node = updatedFunction.behavior().getNodes(ConstantNode.class).toList().get(0);
@@ -205,7 +185,7 @@ class CppTypeNormalizerTest extends AbstractTest {
         new ConstantNode(Constant.Value.of(0, type)));
 
     // When
-    var updatedFunction = new CppTypeNormalizer().makeTypesCppConform(function);
+    var updatedFunction = CppTypeNormalizationPass.makeTypesCppConform(function);
 
     // Then
     var node = updatedFunction.behavior().getNodes(ConstantNode.class).toList().get(0);

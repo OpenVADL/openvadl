@@ -18,9 +18,13 @@ import vadl.viam.Parameter;
 import vadl.viam.graph.NodeList;
 import vadl.viam.graph.dependency.BuiltInCall;
 import vadl.viam.graph.dependency.ConstantNode;
+import vadl.viam.graph.dependency.ExpressionNode;
 import vadl.viam.graph.dependency.FuncCallNode;
 import vadl.viam.graph.dependency.SideEffectNode;
+import vadl.viam.graph.dependency.SignExtendNode;
+import vadl.viam.graph.dependency.TruncateNode;
 import vadl.viam.graph.dependency.TypeCastNode;
+import vadl.viam.graph.dependency.ZeroExtendNode;
 
 class GenericCppCodeGeneratorVisitorTest extends AbstractTest {
   StringWriter writer;
@@ -30,6 +34,26 @@ class GenericCppCodeGeneratorVisitorTest extends AbstractTest {
 
     public DummyCodeGenerator(StringWriter writer) {
       super(writer);
+    }
+
+    @Override
+    public void visit(ZeroExtendNode node) {
+
+    }
+
+    @Override
+    public void visit(SignExtendNode node) {
+
+    }
+
+    @Override
+    public void visit(TruncateNode node) {
+
+    }
+
+    @Override
+    public void visit(ExpressionNode expressionNode) {
+      expressionNode.accept(this);
     }
 
     @Override
@@ -97,35 +121,6 @@ class GenericCppCodeGeneratorVisitorTest extends AbstractTest {
 
     // Then
     assertEquals("nameValue(1,1)", writer.toString());
-  }
-
-  private static Stream<Arguments> getTypesWithCastExpression() {
-    return Stream.of(
-        Arguments.of(DataType.bool(), "((bool) 1 & 0x1)"),
-        Arguments.of(DataType.signedInt(8), "((int8_t) 1)"),
-        Arguments.of(DataType.signedInt(16), "((int16_t) 1)"),
-        Arguments.of(DataType.signedInt(32), "((int32_t) 1)"),
-        Arguments.of(DataType.signedInt(64), "((int64_t) 1)"),
-        Arguments.of(DataType.signedInt(128), "((int128_t) 1)"),
-        Arguments.of(DataType.unsignedInt(8), "((uint8_t) 1)"),
-        Arguments.of(DataType.unsignedInt(16), "((uint16_t) 1)"),
-        Arguments.of(DataType.unsignedInt(32), "((uint32_t) 1)"),
-        Arguments.of(DataType.unsignedInt(64), "((uint64_t) 1)"),
-        Arguments.of(DataType.unsignedInt(128), "((uint128_t) 1)")
-    );
-  }
-
-  @ParameterizedTest
-  @MethodSource("getTypesWithCastExpression")
-  void typeCastNode_shouldGenerateCpp(DataType type, String expected) {
-    var constant = Constant.Value.of(1, DataType.unsignedInt(32));
-    var node = new ConstantNode(constant);
-
-    // When
-    visitor.visit(new TypeCastNode(node, type));
-
-    // Then
-    assertEquals(expected, writer.toString());
   }
 
   @Test

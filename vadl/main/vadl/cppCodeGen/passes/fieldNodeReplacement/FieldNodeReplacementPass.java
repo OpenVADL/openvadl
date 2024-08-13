@@ -1,4 +1,4 @@
-package vadl.cppCodeGen.passes.field_node_replacement;
+package vadl.cppCodeGen.passes.fieldNodeReplacement;
 
 import java.io.IOException;
 import java.util.ArrayList;

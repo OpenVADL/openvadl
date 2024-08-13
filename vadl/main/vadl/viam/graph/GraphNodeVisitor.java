@@ -19,11 +19,13 @@ import vadl.viam.graph.dependency.ReadRegFileNode;
 import vadl.viam.graph.dependency.ReadRegNode;
 import vadl.viam.graph.dependency.SelectNode;
 import vadl.viam.graph.dependency.SideEffectNode;
+import vadl.viam.graph.dependency.SignExtendNode;
 import vadl.viam.graph.dependency.SliceNode;
-import vadl.viam.graph.dependency.TypeCastNode;
+import vadl.viam.graph.dependency.TruncateNode;
 import vadl.viam.graph.dependency.WriteMemNode;
 import vadl.viam.graph.dependency.WriteRegFileNode;
 import vadl.viam.graph.dependency.WriteRegNode;
+import vadl.viam.graph.dependency.ZeroExtendNode;
 
 /**
  * Interface for visiting multiple {@link Node} and its subtypes.
@@ -60,11 +62,6 @@ public interface GraphNodeVisitor {
    * Visit {@link WriteMemNode}.
    */
   void visit(WriteMemNode writeMemNode);
-
-  /**
-   * Visit {@link TypeCastNode}.
-   */
-  void visit(TypeCastNode typeCastNode);
 
   /**
    * Visit {@link SliceNode}.
@@ -145,6 +142,21 @@ public interface GraphNodeVisitor {
    * Visit {@link IfNode}.
    */
   void visit(IfNode ifNode);
+
+  /**
+   * Visit {@link ZeroExtendNode}.
+   */
+  void visit(ZeroExtendNode node);
+
+  /**
+   * Visit {@link SignExtendNode}.
+   */
+  void visit(SignExtendNode node);
+
+  /**
+   * Visit {@link TruncateNode}.
+   */
+  void visit(TruncateNode node);
 
   /**
    * Visit {@link ExpressionNode}.

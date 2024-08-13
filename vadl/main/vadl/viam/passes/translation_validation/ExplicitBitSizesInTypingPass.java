@@ -54,19 +54,9 @@ public class ExplicitBitSizesInTypingPass extends Pass {
           var join = ((BitsType) node.arguments().get(0).type()).join(types);
 
           node.arguments().forEach(arg -> {
-            if (arg.type() != join) {
-              // Insert typecast to match the sizes.
-              // We use a separate list to avoid a concurrent modification exception.
-              worklist.add(new Triple<>(node, arg, join));
-            }
+            arg.setType(join);
           });
         });
-
-    for (var item : worklist) {
-      var newCast = Objects.requireNonNull(item.left().graph())
-          .add(new TypeCastNode(item.middle(), item.right()));
-      item.left().replaceInput(item.middle(), newCast);
-    }
 
     return null;
   }

@@ -1,6 +1,7 @@
 package vadl.viam.graph.dependency;
 
 import vadl.types.DataType;
+import vadl.viam.graph.GraphNodeVisitor;
 import vadl.viam.graph.Node;
 
 /**
@@ -25,6 +26,11 @@ public class ZeroExtendNode extends UnaryNode {
     ensure(value.type() instanceof DataType, "Value must be a data type");
     ensure(((DataType) value.type()).bitWidth() <= type().bitWidth(),
         "Value's type bit-width must be less or equal node's type");
+  }
+
+  @Override
+  public <T extends GraphNodeVisitor> void accept(T visitor) {
+    visitor.visit(this);
   }
 
   @Override
