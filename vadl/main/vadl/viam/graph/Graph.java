@@ -415,5 +415,12 @@ public class Graph {
     }
   }
 
+  /**
+   * When {@link #copy()} then all the nodes remain activated. This can lead to crashes
+   * when calling e.g {@link Node#replaceAndDelete(Node)}. This method deactivates all the ids.
+   */
+  public void deinitialize_nodes() {
+    this.nodes.stream().map(node -> node.id).forEach(Node.Id::deactivate);
+  }
 }
 

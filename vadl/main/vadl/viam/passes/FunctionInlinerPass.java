@@ -36,12 +36,16 @@ public class FunctionInlinerPass extends Pass {
 
     viam.isas()
         .flatMap(isa -> isa.instructions().stream())
-        .filter(instruction -> instruction.behavior().isPureFunction())
         .forEach(instruction -> {
-          var functionCalls = instruction.behavior().getNodes(FuncCallNode.class).toList();
+          var functionCalls = instruction.behavior().getNodes(FuncCallNode.class)
+              .filter(funcCallNode -> funcCallNode.function().behavior().isPureFunction())
+              .toList();
 
           functionCalls.forEach(functionCall -> {
             var inlinedBehavior = functionCall.function().behavior().copy();
+            // We deinitialize the nodes so we can add them when we inline. Otherwise,
+            // get an exception because it is already initialized.
+            inlinedBehavior.deinitialize_nodes();
             var returnNodes = inlinedBehavior.getNodes(ReturnNode.class).toList();
             ensure(returnNodes.size() == 1, "Inlined function must only have one return node");
             var returnNode = returnNodes.get(0);

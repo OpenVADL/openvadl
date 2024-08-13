@@ -28,6 +28,7 @@ import vadl.viam.matching.impl.AnyChildMatcher;
 import vadl.viam.matching.impl.AnyConstantValueMatcher;
 import vadl.viam.matching.impl.AnyReadRegFileMatcher;
 import vadl.viam.matching.impl.BuiltInMatcher;
+import vadl.viam.matching.impl.FieldRefNodeMatcher;
 import vadl.viam.matching.impl.FuncCallMatcher;
 
 /**
@@ -122,7 +123,7 @@ public class IsaMatchingPass extends Pass {
     var matched = TreeMatcher.matches(behavior.getNodes(BuiltInCall.class).map(x -> x),
             new BuiltInMatcher(List.of(BuiltInTable.ADD, BuiltInTable.ADDS),
                 List.of(new AnyChildMatcher(new AnyReadRegFileMatcher()),
-                    new AnyChildMatcher(new FuncCallMatcher(Type.signedInt(32))))))
+                    new AnyChildMatcher(new FieldRefNodeMatcher()))))
         .stream()
         .map(x -> ((BuiltInCall) x).type())
         .filter(ty -> ty instanceof BitsType && ((BitsType) ty).bitWidth() == bitWidth)

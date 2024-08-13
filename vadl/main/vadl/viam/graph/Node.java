@@ -790,6 +790,15 @@ public abstract class Node {
       numericId = -1;
     }
 
+    /**
+     * When copying a {@link Node} it must be possible to reset the id so the node can added to
+     * a different graph.
+     */
+    public void deactivate() {
+      state = IdState.INIT;
+      numericId = -1;
+    }
+
     boolean isInit() {
       return state == IdState.INIT;
     }
