@@ -1,7 +1,5 @@
 package vadl.lcb;
 
-import vadl.oop.passes.type_normalization.UpcastedTypeCastNode;
-import vadl.viam.ViamError;
 import vadl.viam.graph.GraphNodeVisitor;
 import vadl.viam.graph.Node;
 

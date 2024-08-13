@@ -15,7 +15,6 @@ import vadl.lcb.passes.llvm_lowering.model.LlvmSraSD;
 import vadl.lcb.passes.llvm_lowering.model.LlvmSubSD;
 import vadl.lcb.passes.llvm_lowering.model.LlvmUDivSD;
 import vadl.lcb.passes.llvm_lowering.model.LlvmURemSD;
-import vadl.pass.PassManager;
 import vadl.types.BuiltInTable;
 import vadl.viam.graph.control.AbstractBeginNode;
 import vadl.viam.graph.control.EndNode;
@@ -35,11 +34,15 @@ import vadl.viam.graph.dependency.ReadMemNode;
 import vadl.viam.graph.dependency.ReadRegFileNode;
 import vadl.viam.graph.dependency.ReadRegNode;
 import vadl.viam.graph.dependency.SelectNode;
+import vadl.viam.graph.dependency.SideEffectNode;
+import vadl.viam.graph.dependency.SignExtendNode;
 import vadl.viam.graph.dependency.SliceNode;
+import vadl.viam.graph.dependency.TruncateNode;
 import vadl.viam.graph.dependency.TypeCastNode;
 import vadl.viam.graph.dependency.WriteMemNode;
 import vadl.viam.graph.dependency.WriteRegFileNode;
 import vadl.viam.graph.dependency.WriteRegNode;
+import vadl.viam.graph.dependency.ZeroExtendNode;
 
 public class ReplaceWithLlvmSDNodesVisitor implements LcbGraphNodeVisitor {
 
@@ -105,11 +108,6 @@ public class ReplaceWithLlvmSDNodesVisitor implements LcbGraphNodeVisitor {
   @Override
   public void visit(WriteMemNode writeMemNode) {
     //throw new RuntimeException("not implemented");
-  }
-
-  @Override
-  public void visit(TypeCastNode typeCastNode) {
-    //throw new RuntimeException("Must not exist");
   }
 
   @Override
@@ -196,7 +194,27 @@ public class ReplaceWithLlvmSDNodesVisitor implements LcbGraphNodeVisitor {
   }
 
   @Override
+  public void visit(ZeroExtendNode node) {
+
+  }
+
+  @Override
+  public void visit(SignExtendNode node) {
+
+  }
+
+  @Override
+  public void visit(TruncateNode node) {
+
+  }
+
+  @Override
   public void visit(ExpressionNode expressionNode) {
     expressionNode.accept(this);
+  }
+
+  @Override
+  public void visit(SideEffectNode sideEffectNode) {
+    sideEffectNode.accept(this);
   }
 }

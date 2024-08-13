@@ -56,7 +56,7 @@ public class FunctionInlinerPass extends Pass {
                     .forEach(usedParam -> usedParam.replaceAndDelete(pair.arg)));
 
             // Actual inlining
-            functionCall.replaceAndDelete(returnNode.value);
+            functionCall.replaceAndDelete(returnNode.value());
           });
         });
 

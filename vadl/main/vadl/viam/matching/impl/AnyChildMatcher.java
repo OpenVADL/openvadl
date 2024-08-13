@@ -20,11 +20,15 @@ import vadl.viam.graph.dependency.ReadMemNode;
 import vadl.viam.graph.dependency.ReadRegFileNode;
 import vadl.viam.graph.dependency.ReadRegNode;
 import vadl.viam.graph.dependency.SelectNode;
+import vadl.viam.graph.dependency.SideEffectNode;
+import vadl.viam.graph.dependency.SignExtendNode;
 import vadl.viam.graph.dependency.SliceNode;
+import vadl.viam.graph.dependency.TruncateNode;
 import vadl.viam.graph.dependency.TypeCastNode;
 import vadl.viam.graph.dependency.WriteMemNode;
 import vadl.viam.graph.dependency.WriteRegFileNode;
 import vadl.viam.graph.dependency.WriteRegNode;
+import vadl.viam.graph.dependency.ZeroExtendNode;
 import vadl.viam.matching.Matcher;
 
 /**
@@ -84,12 +88,6 @@ public class AnyChildMatcher implements Matcher {
     @Override
     public void visit(WriteMemNode node) {
       matched |= matcher.matches(node);
-    }
-
-    @Override
-    public void visit(TypeCastNode node) {
-      matched |= matcher.matches(node.value());
-      visit(node.value());
     }
 
     @Override
@@ -185,8 +183,31 @@ public class AnyChildMatcher implements Matcher {
     }
 
     @Override
+    public void visit(ZeroExtendNode node) {
+      matched |= matcher.matches(node);
+      visit(node.value());
+    }
+
+    @Override
+    public void visit(SignExtendNode node) {
+      matched |= matcher.matches(node);
+      visit(node.value());
+    }
+
+    @Override
+    public void visit(TruncateNode node) {
+      matched |= matcher.matches(node);
+      visit(node.value());
+    }
+
+    @Override
     public void visit(ExpressionNode node) {
       node.accept(this);
+    }
+
+    @Override
+    public void visit(SideEffectNode sideEffectNode) {
+      sideEffectNode.accept(this);
     }
 
     public void visit(Node node) {
