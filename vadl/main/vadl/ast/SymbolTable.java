@@ -4,16 +4,16 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import javax.annotation.Nullable;
 import vadl.error.VadlError;
 import vadl.utils.SourceLocation;
 
-class SymbolTable implements DefinitionVisitor<Void> {
+class SymbolTable {
   @Nullable
   SymbolTable parent = null;
   final List<SymbolTable> children = new ArrayList<>();
   final Map<String, Symbol> symbols = new HashMap<>();
-  List<Requirement> requirements = new ArrayList<>();
   List<VadlError> errors = new ArrayList<>();
 
   void loadBuiltins() {
@@ -26,6 +26,8 @@ class SymbolTable implements DefinitionVisitor<Void> {
     defineSymbol(new ValuedSymbol("mnemonic", null, SymbolType.CONSTANT),
         SourceLocation.INVALID_SOURCE_LOCATION);
     defineSymbol(new ValuedSymbol("VADL::div", null, SymbolType.CONSTANT),
+        SourceLocation.INVALID_SOURCE_LOCATION);
+    defineSymbol(new ValuedSymbol("VADL::mod", null, SymbolType.CONSTANT),
         SourceLocation.INVALID_SOURCE_LOCATION);
   }
 
@@ -44,133 +46,6 @@ class SymbolTable implements DefinitionVisitor<Void> {
     child.errors = this.errors;
     this.children.add(child);
     return child;
-  }
-
-  SymbolTable createFormatScope(Identifier formatId) {
-    SymbolTable child = createChild();
-    child.requirements.add(new FormatRequirement(formatId));
-    return child;
-  }
-
-  SymbolTable createInstructionScope(Identifier instrId) {
-    SymbolTable child = createChild();
-    child.requirements.add(new InstructionRequirement(instrId));
-    return child;
-  }
-
-  SymbolTable createFunctionScope(List<FunctionDefinition.Parameter> params) {
-    SymbolTable child = createChild();
-    for (FunctionDefinition.Parameter param : params) {
-      defineSymbol(new ValuedSymbol(param.name().name, null, SymbolType.CONSTANT),
-          param.name().loc);
-    }
-    return child;
-  }
-
-  @Override
-  public Void visit(ConstantDefinition definition) {
-    defineConstant(definition.identifier().name, definition.location());
-    return null;
-  }
-
-  @Override
-  public Void visit(FormatDefinition definition) {
-    verifyAvailable(definition.identifier().name, definition.location());
-    symbols.put(definition.identifier().name,
-        new FormatSymbol(definition.identifier().name, definition));
-    return null;
-  }
-
-  @Override
-  public Void visit(InstructionSetDefinition definition) {
-    defineSymbol(new IsaSymbol(definition.identifier.name, definition, SymbolType.INSTRUCTION_SET),
-        definition.location());
-    return null;
-  }
-
-  @Override
-  public Void visit(CounterDefinition definition) {
-    var typeSymbol = resolveSymbol(definition.type.baseType.pathToString());
-    var typeDef = typeSymbol instanceof FormatSymbol s ? s.definition : null;
-    defineSymbol(new ValuedSymbol(definition.identifier().name, typeDef, SymbolType.COUNTER),
-        definition.location());
-    return null;
-  }
-
-  @Override
-  public Void visit(MemoryDefinition definition) {
-    defineSymbol(new ValuedSymbol(definition.identifier().name, definition, SymbolType.MEMORY),
-        definition.location());
-    return null;
-  }
-
-  @Override
-  public Void visit(RegisterDefinition definition) {
-    var typeSymbol = resolveSymbol(definition.type.baseType.pathToString());
-    var typeDef = typeSymbol instanceof FormatSymbol s ? s.definition : null;
-    defineSymbol(new ValuedSymbol(definition.identifier().name, typeDef, SymbolType.REGISTER),
-        definition.location());
-    return null;
-  }
-
-  @Override
-  public Void visit(RegisterFileDefinition definition) {
-    defineSymbol(
-        new ValuedSymbol(definition.identifier().name, definition, SymbolType.REGISTER_FILE),
-        definition.location());
-    return null;
-  }
-
-  @Override
-  public Void visit(InstructionDefinition definition) {
-    defineSymbol(new InstructionSymbol(definition.id().name, definition), definition.loc);
-    requirements.add(new SymbolRequirement(definition.type().name, SymbolType.FORMAT,
-        definition.type().loc));
-    return null;
-  }
-
-  @Override
-  public Void visit(EncodingDefinition definition) {
-    var formatSymbol = requireInstructionFormat(definition.instrId());
-    if (formatSymbol == null) {
-      reportError("Unknown instruction " + definition.instrId().name, definition.location());
-      return null;
-    }
-    var format = formatSymbol.definition;
-    for (EncodingDefinition.FieldEncoding entry : definition.fieldEncodings().encodings) {
-      var name = entry.field().name;
-      for (FormatDefinition.FormatField f : format.fields) {
-        if (f.identifier().name.equals(name)) {
-          return null;
-        }
-      }
-      reportError("Unknown field %s in format %s".formatted(name, format.identifier().name),
-          entry.field().location());
-    }
-    return null;
-  }
-
-  @Override
-  public Void visit(AssemblyDefinition definition) {
-    return null;
-  }
-
-  @Override
-  public Void visit(UsingDefinition definition) {
-    defineSymbol(new AliasSymbol(definition.identifier().name, definition.type), definition.loc);
-    return null;
-  }
-
-  @Override
-  public Void visit(FunctionDefinition definition) {
-    defineSymbol(new ValuedSymbol(definition.name().name, null, SymbolType.FUNCTION),
-        definition.loc);
-    return null;
-  }
-
-  @Override
-  public Void visit(PlaceholderDefinition definition) {
-    return null;
   }
 
   void addMacro(Macro macro, SourceLocation loc) {
@@ -238,132 +113,9 @@ class SymbolTable implements DefinitionVisitor<Void> {
     symbols.putAll(other.symbols);
   }
 
-  void requireValue(IsCallExpr callExpr) {
-    requirements.add(new ValueRequirement(callExpr));
-  }
-
-  List<VadlError> validate() {
-    for (Requirement requirement : requirements) {
-      if (requirement instanceof SymbolRequirement req) {
-        var symbol = resolveSymbol(req.name);
-        if (symbol == null) {
-          reportError("Unresolved definition " + req.name, req.loc);
-        } else if (symbol.type() != req.type()) {
-          reportError("Mismatched type %s: required %s, found %s"
-              .formatted(req.name, req.type.name(), symbol.type().name()), req.loc);
-        }
-      } else if (requirement instanceof ValueRequirement req) {
-        validateValueAccess(req);
-      } else if (requirement instanceof FormatRequirement req) {
-        requireFormat(req.formatId);
-      } else if (requirement instanceof InstructionRequirement req) {
-        requireInstructionFormat(req.instrId);
-      }
-    }
-    children.forEach(SymbolTable::validate);
-    return errors;
-  }
-
-  void validateValueAccess(ValueRequirement requirement) {
-    var expr = requirement.callExpr;
-    var path = expr.path().pathToString();
-    var symbol = resolveSymbol(path);
-    if (symbol == null) {
-      reportError("Unresolved definition " + path, expr.location());
-      return;
-    }
-
-    if (symbol instanceof ValuedSymbol valSymbol) {
-      if (expr.subCalls().isEmpty()) {
-        return;
-      }
-      if (expr.subCalls().size() == 1 && symbol.type() == SymbolType.COUNTER
-          && expr.subCalls().size() == 1
-          && expr.subCalls().get(0).id().name.equals("next")
-          && expr.subCalls().get(0).argsIndices().isEmpty()) {
-        // Counters have a property "next" that is always available
-        return;
-      }
-      if (!(valSymbol.typeDefinition instanceof FormatDefinition formatDefinition)) {
-        reportError("Invalid usage: symbol %s of type %s does not have a record type".formatted(
-            path, symbol.type()), expr.location());
-        return;
-      }
-      verifyFormatAccess(formatDefinition, expr.subCalls());
-    } else {
-      reportError("Invalid usage: symbol %s of type %s does not have a value"
-          .formatted(path, symbol.type()), expr.location());
-    }
-  }
-
-  @Nullable
-  private FormatDefinition.FormatField findField(FormatDefinition format, String name) {
-    return format.fields.stream()
-        .filter(f -> f.identifier().name.equals(name))
-        .findFirst().orElse(null);
-  }
-
-  private void verifyFormatAccess(FormatDefinition format, List<CallExpr.SubCall> subCalls) {
-    if (subCalls.isEmpty()) {
-      return;
-    }
-    var next = subCalls.get(0).id();
-    var field = findField(format, next.name);
-    if (field == null) {
-      reportError(
-          "Invalid usage: format %s does not have field %s".formatted(format.identifier().name,
-              next.name), next.location());
-    } else if (field instanceof FormatDefinition.RangeFormatField && subCalls.size() > 1) {
-      reportError("Invalid usage: field %s resolves to a range, does not provide fields to chain"
-          .formatted(field.identifier().name), next.location());
-    } else if (field instanceof FormatDefinition.DerivedFormatField && subCalls.size() > 1) {
-      reportError("Invalid usage: field %s is derived, does not provide fields to chain"
-          .formatted(field.identifier().name), next.location());
-    } else if (field instanceof FormatDefinition.TypedFormatField f) {
-      if (isValuedAnnotation(f.type())) {
-        if (subCalls.size() > 1) {
-          reportError(
-              "Invalid usage: field %s resolves to %s, does not provide fields to chain".formatted(
-                  field.identifier().name, f.type().baseType), next.location());
-        }
-      } else if (subCalls.size() > 1) {
-        var typeSymbol =
-            resolveAlias(f.symbolTable.resolveSymbol(f.type().baseType.pathToString()));
-        if (typeSymbol instanceof FormatSymbol formatSymbol) {
-          verifyFormatAccess(formatSymbol.definition, subCalls.subList(1, subCalls.size()));
-        } else if (typeSymbol == null) {
-          reportError("Invalid usage: type %s not found".formatted(f.identifier.name),
-              f.location());
-        } else {
-          reportError("Invalid usage: symbol %s of type %s does not have a record type".formatted(
-              f.identifier.name, typeSymbol.type().name()), next.location());
-        }
-      }
-    }
-  }
-
-  private @Nullable Symbol resolveAlias(@Nullable Symbol symbol) {
-    if (symbol instanceof AliasSymbol alias) {
-      return resolveAlias(resolveSymbol(alias.aliasType.baseType.pathToString()));
-    }
-    return symbol;
-  }
-
-  private boolean isValuedAnnotation(TypeLiteral type) {
-    String baseType = type.baseType.pathToString();
-    if (resolveSymbol(baseType) instanceof AliasSymbol alias) {
-      return isValuedAnnotation(alias.aliasType);
-    }
-    // TODO Built-in types should be configurable, not hardcoded
-    return baseType.equals("Bool")
-        || baseType.equals("Bits")
-        || baseType.equals("SInt");
-  }
-
   private void verifyAvailable(String name, SourceLocation loc) {
     if (symbols.containsKey(name)) {
-      // TODO Fix duplicate definitions if only one of the definitions will be accepted into the AST
-      // reportError("Duplicate definition: " + name, loc);
+      reportError("Duplicate definition: " + name, loc);
     }
   }
 
@@ -382,8 +134,12 @@ class SymbolTable implements DefinitionVisitor<Void> {
     SymbolType type();
   }
 
-  record IsaSymbol(String name, InstructionSetDefinition definition, SymbolType type)
+  record IsaSymbol(String name, InstructionSetDefinition definition)
       implements Symbol {
+    @Override
+    public SymbolType type() {
+      return SymbolType.INSTRUCTION_SET;
+    }
   }
 
   record ValuedSymbol(String name, @Nullable Definition typeDefinition, SymbolType type)
@@ -418,21 +174,288 @@ class SymbolTable implements DefinitionVisitor<Void> {
     }
   }
 
-  interface Requirement {
+  /**
+   * Distributes "SymbolTable" instances across the nodes in the AST.
+   * For "let" expressions and statements, symbols for the declared variables are created here.
+   * For "instruction" and "assembly" definitions, only an empty child table is created,
+   * with a further pass {@link VerificationPass} actually gathering the fields declared
+   * in the linked "format" definition.
+   * Before: Ast is fully Macro-expanded
+   * After: Ast is fully Macro-expanded and all relevant nodes have "symbolTable" set.
+   */
+  static class SymbolCollector {
+    static void collectSymbols(Ast ast) {
+      ast.rootSymbolTable = new SymbolTable();
+      ast.rootSymbolTable.loadBuiltins();
+      for (Definition definition : ast.definitions) {
+        collectSymbols(ast.rootSymbolTable, definition);
+      }
+    }
 
+    static void collectSymbols(SymbolTable symbols, Definition definition) {
+      definition.symbolTable = symbols;
+      if (definition instanceof InstructionSetDefinition isa) {
+        symbols.defineSymbol(new IsaSymbol(isa.identifier.name, isa), isa.identifier.location());
+        isa.symbolTable = symbols.createChild();
+        for (Definition childDef : isa.definitions) {
+          collectSymbols(isa.symbolTable, childDef);
+        }
+      } else if (definition instanceof ConstantDefinition constant) {
+        symbols.defineSymbol(
+            new ValuedSymbol(constant.identifier().name, null, SymbolType.CONSTANT),
+            constant.identifier().location());
+        collectSymbols(symbols, constant.value);
+      } else if (definition instanceof CounterDefinition counter) {
+        symbols.defineSymbol(
+            new ValuedSymbol(counter.identifier().name, null, SymbolType.COUNTER),
+            counter.identifier().location());
+      } else if (definition instanceof RegisterDefinition register) {
+        symbols.defineSymbol(
+            new ValuedSymbol(register.identifier().name, null, SymbolType.REGISTER),
+            register.identifier().location());
+      } else if (definition instanceof RegisterFileDefinition registerFile) {
+        symbols.defineSymbol(
+            new ValuedSymbol(registerFile.identifier().name, null, SymbolType.REGISTER_FILE),
+            registerFile.identifier().location());
+      } else if (definition instanceof MemoryDefinition memory) {
+        symbols.defineSymbol(
+            new ValuedSymbol(memory.identifier().name, null, SymbolType.MEMORY),
+            memory.identifier().location());
+      } else if (definition instanceof UsingDefinition using) {
+        symbols.defineSymbol(new AliasSymbol(using.identifier().name, using.type), using.loc);
+      } else if (definition instanceof FunctionDefinition function) {
+        symbols.defineSymbol(new ValuedSymbol(function.name().name, null, SymbolType.FUNCTION),
+            function.loc);
+        function.symbolTable = symbols.createChild();
+        for (FunctionDefinition.Parameter param : function.params) {
+          function.symbolTable.defineConstant(param.name().name, param.name().location());
+        }
+        collectSymbols(function.symbolTable, function.expr);
+      } else if (definition instanceof FormatDefinition format) {
+        format.symbolTable = symbols.createChild();
+        symbols.defineSymbol(new FormatSymbol(format.identifier().name, format), format.location());
+        for (FormatDefinition.FormatField field : format.fields) {
+          format.symbolTable().defineSymbol(new ValuedSymbol(field.identifier().name, null,
+              SymbolType.FORMAT_FIELD), field.identifier().location());
+        }
+      } else if (definition instanceof InstructionDefinition instr) {
+        symbols.defineSymbol(new InstructionSymbol(instr.id().name, instr), instr.location());
+        instr.symbolTable = symbols.createChild();
+        collectSymbols(instr.symbolTable, instr.behavior);
+      } else if (definition instanceof AssemblyDefinition assembly) {
+        assembly.symbolTable = symbols.createChild();
+        collectSymbols(assembly.symbolTable, assembly.expr);
+      } else if (definition instanceof EncodingDefinition encoding) {
+        encoding.symbolTable = symbols.createChild();
+        for (EncodingDefinition.FieldEncoding fieldEncoding : encoding.fieldEncodings().encodings) {
+          collectSymbols(encoding.symbolTable, fieldEncoding.value());
+        }
+      }
+    }
+
+    static void collectSymbols(SymbolTable symbols, Statement stmt) {
+      stmt.symbolTable = symbols;
+      if (stmt instanceof BlockStatement block) {
+        for (Statement inner : block.statements) {
+          collectSymbols(symbols, inner);
+        }
+      } else if (stmt instanceof LetStatement let) {
+        let.symbolTable = symbols.createChild();
+        for (var identifier : let.identifiers) {
+          let.symbolTable.defineConstant(identifier.name, identifier.location());
+        }
+        collectSymbols(symbols, let.valueExpression);
+        collectSymbols(let.symbolTable, let.body);
+      } else if (stmt instanceof IfStatement ifStmt) {
+        collectSymbols(symbols, ifStmt.condition);
+        collectSymbols(symbols, ifStmt.thenStmt);
+        if (ifStmt.elseStmt != null) {
+          collectSymbols(symbols, ifStmt.elseStmt);
+        }
+      } else if (stmt instanceof AssignmentStatement assignment) {
+        collectSymbols(symbols, assignment.target);
+        collectSymbols(symbols, assignment.valueExpression);
+      }
+    }
+
+    static void collectSymbols(SymbolTable symbols, Expr expr) {
+      expr.symbolTable = symbols;
+      if (expr instanceof LetExpr letExpr) {
+        letExpr.symbolTable = symbols.createChild();
+        for (var identifier : letExpr.identifiers) {
+          letExpr.symbolTable.defineConstant(identifier.name, identifier.location());
+        }
+        collectSymbols(symbols, letExpr.valueExpr);
+        collectSymbols(letExpr.symbolTable, letExpr.body);
+      } else if (expr instanceof IfExpr ifExpr) {
+        collectSymbols(symbols, ifExpr.condition);
+        collectSymbols(symbols, ifExpr.thenExpr);
+        collectSymbols(symbols, ifExpr.elseExpr);
+      } else if (expr instanceof GroupedExpr group) {
+        for (Expr inner : group.expressions) {
+          collectSymbols(symbols, inner);
+        }
+      } else if (expr instanceof UnaryExpr unary) {
+        collectSymbols(symbols, unary.operand);
+      } else if (expr instanceof BinaryExpr binary) {
+        collectSymbols(symbols, binary.left);
+        collectSymbols(symbols, binary.right);
+      } else if (expr instanceof CastExpr cast) {
+        collectSymbols(symbols, cast.value);
+      } else if (expr instanceof CallExpr call) {
+        collectSymbols(symbols, (Expr) call.target);
+        for (List<Expr> argsIndex : call.argsIndices) {
+          for (Expr index : argsIndex) {
+            collectSymbols(symbols, index);
+          }
+        }
+        for (CallExpr.SubCall subCall : call.subCalls) {
+          for (List<Expr> argsIndex : subCall.argsIndices()) {
+            for (Expr index : argsIndex) {
+              collectSymbols(symbols, index);
+            }
+          }
+        }
+      } else if (expr instanceof SymbolExpr sym) {
+        collectSymbols(symbols, (Expr) sym.path());
+        collectSymbols(symbols, sym.size);
+      } else if (expr instanceof IdentifierPath path) {
+        for (IdentifierOrPlaceholder segment : path.segments) {
+          collectSymbols(symbols, (Expr) segment);
+        }
+      }
+    }
   }
 
+  /**
+   * Verifies that identifiers used in expressions, as well as types used in definitions,
+   * actually exist in the VADL file.
+   * The AST is not modified in this pass, only errors are gathered.
+   * Before & After: Ast is fully Macro-expanded and all relevant nodes have "symbolTable" set.
+   */
+  static class VerificationPass {
+    static List<VadlError> verifyUsages(Ast ast) {
+      for (Definition definition : ast.definitions) {
+        verifyUsages(definition);
+      }
+      return Objects.requireNonNull(ast.rootSymbolTable).errors;
+    }
 
-  record SymbolRequirement(String name, SymbolType type, SourceLocation loc)
-      implements Requirement {
-  }
+    static void verifyUsages(Definition definition) {
+      if (definition instanceof InstructionSetDefinition isa) {
+        if (isa.extending != null) {
+          var extending = isa.symbolTable().findIsa(isa.extending);
+          if (extending != null) {
+            isa.symbolTable().copyFrom(extending.symbolTable());
+          }
+        }
+        for (Definition childDef : isa.definitions) {
+          verifyUsages(childDef);
+        }
+      } else if (definition instanceof ConstantDefinition constant) {
+        verifyUsages(constant.value);
+      } else if (definition instanceof FunctionDefinition function) {
+        verifyUsages(function.expr);
+      } else if (definition instanceof InstructionDefinition instr) {
+        var format = instr.symbolTable().requireFormat(instr.type());
+        if (format != null) {
+          instr.symbolTable().copyFrom(format.definition().symbolTable());
+        }
+        verifyUsages(instr.behavior);
+      } else if (definition instanceof AssemblyDefinition assembly) {
+        for (IdentifierOrPlaceholder identifier : assembly.identifiers) {
+          var format = assembly.symbolTable().requireInstructionFormat((Identifier) identifier);
+          if (format != null) {
+            assembly.symbolTable().copyFrom(format.definition().symbolTable());
+          }
+        }
+        verifyUsages(assembly.expr);
+      } else if (definition instanceof EncodingDefinition encoding) {
+        var format = encoding.symbolTable().requireInstructionFormat(encoding.instrId());
+        if (format != null) {
+          for (EncodingDefinition.FieldEncoding fieldEncoding : encoding.fieldEncodings().encodings) {
+            var field = fieldEncoding.field();
+            if (findField(format.definition, field.name) == null) {
+              encoding.symbolTable()
+                  .reportError("Format field %s not found".formatted(field.name), field.location());
+            }
+          }
+        }
+      }
+    }
 
-  record ValueRequirement(IsCallExpr callExpr) implements Requirement {
-  }
+    static void verifyUsages(Statement stmt) {
+      if (stmt instanceof BlockStatement block) {
+        for (Statement inner : block.statements) {
+          verifyUsages(inner);
+        }
+      } else if (stmt instanceof LetStatement let) {
+        verifyUsages(let.valueExpression);
+        verifyUsages(let.body);
+      } else if (stmt instanceof IfStatement ifStmt) {
+        verifyUsages(ifStmt.condition);
+        verifyUsages(ifStmt.thenStmt);
+        if (ifStmt.elseStmt != null) {
+          verifyUsages(ifStmt.elseStmt);
+        }
+      } else if (stmt instanceof AssignmentStatement assignment) {
+        verifyUsages(assignment.target);
+        verifyUsages(assignment.valueExpression);
+      }
+    }
 
-  record FormatRequirement(Identifier formatId) implements Requirement {
-  }
+    static void verifyUsages(Expr expr) {
+      if (expr instanceof LetExpr letExpr) {
+        verifyUsages(letExpr.valueExpr);
+        verifyUsages(letExpr.body);
+      } else if (expr instanceof IfExpr ifExpr) {
+        verifyUsages(ifExpr.condition);
+        verifyUsages(ifExpr.thenExpr);
+        verifyUsages(ifExpr.elseExpr);
+      } else if (expr instanceof GroupedExpr group) {
+        for (Expr inner : group.expressions) {
+          verifyUsages(inner);
+        }
+      } else if (expr instanceof UnaryExpr unary) {
+        verifyUsages(unary.operand);
+      } else if (expr instanceof BinaryExpr binary) {
+        verifyUsages(binary.left);
+        verifyUsages(binary.right);
+      } else if (expr instanceof CastExpr cast) {
+        verifyUsages(cast.value);
+      } else if (expr instanceof CallExpr call) {
+        verifyUsages((Expr) call.target);
+        for (List<Expr> argsIndex : call.argsIndices) {
+          for (Expr index : argsIndex) {
+            verifyUsages(index);
+          }
+        }
+        for (CallExpr.SubCall subCall : call.subCalls) {
+          for (List<Expr> argsIndex : subCall.argsIndices()) {
+            for (Expr index : argsIndex) {
+              verifyUsages(index);
+            }
+          }
+        }
+      } else if (expr instanceof SymbolExpr sym) {
+        verifyUsages((Expr) sym.path());
+        verifyUsages(sym.size);
+      } else if (expr instanceof IsId id) {
+        var symbol = expr.symbolTable().resolveSymbol(id.pathToString());
+        if (symbol == null) {
+          expr.symbolTable().reportError("Symbol not found: " + id.pathToString(), id.location());
+        }
+      }
+    }
 
-  record InstructionRequirement(Identifier instrId) implements Requirement {
+    @Nullable
+    private static FormatDefinition.FormatField findField(FormatDefinition format, String name) {
+      for (FormatDefinition.FormatField f : format.fields) {
+        if (f.identifier().name.equals(name)) {
+          return f;
+        }
+      }
+      return null;
+    }
   }
 }

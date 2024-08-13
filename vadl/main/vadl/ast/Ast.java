@@ -3,6 +3,7 @@ package vadl.ast;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
+import javax.annotation.Nullable;
 import vadl.utils.SourceLocation;
 
 /**
@@ -10,6 +11,7 @@ import vadl.utils.SourceLocation;
  */
 public class Ast {
   List<Definition> definitions = new ArrayList<>();
+  @Nullable SymbolTable rootSymbolTable;
 
   /**
    * Convert the tree back into sourcecode.
@@ -48,6 +50,17 @@ public class Ast {
 }
 
 abstract class Node {
+  @Nullable
+  SymbolTable symbolTable;
+
+  SymbolTable symbolTable() {
+    if (symbolTable == null) {
+      throw new IllegalStateException(
+          "Node " + this + " should have received a symbol table in a previous pass");
+    }
+    return symbolTable;
+  }
+
   static String prettyIndentString(int indent) {
     var indentBy = 2;
     return " ".repeat(indentBy * indent);

@@ -97,7 +97,10 @@ public class VadlParser {
       }
     }
 
-    errors.addAll(parser.symbolTable.validate());
+    if (errors.isEmpty()) {
+      SymbolTable.SymbolCollector.collectSymbols(parser.ast);
+      errors.addAll(SymbolTable.VerificationPass.verifyUsages(parser.ast));
+    }
 
     if (!errors.isEmpty()) {
       throw new VadlException(errors);

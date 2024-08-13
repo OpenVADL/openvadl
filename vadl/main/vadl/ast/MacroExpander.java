@@ -45,7 +45,7 @@ class MacroExpander
 
   @Override
   public Expr visit(Identifier expr) {
-    return expr;
+    return new Identifier(expr.name, expr.location());
   }
 
   @Override
@@ -91,7 +91,7 @@ class MacroExpander
     if (arg == null) {
       throw new IllegalStateException("The parser should already have checked that.");
     } else if (arg instanceof Identifier id) {
-      return id;
+      return id.accept(this);
     } else if (arg instanceof IntegerLiteral lit) {
       return lit;
     } else if (arg instanceof OperatorExpr op) {
@@ -189,8 +189,8 @@ class MacroExpander
 
   @Override
   public Expr visit(SymbolExpr expr) {
-    expr.size = expr.size.accept(this);
-    return expr;
+    var size = expr.size.accept(this);
+    return new SymbolExpr(expr.path, size, expr.location);
   }
 
   @Override
@@ -214,7 +214,7 @@ class MacroExpander
             derivedFormatField.expr.accept(this));
       } else if (field instanceof FormatDefinition.TypedFormatField typedFormatField) {
         return new FormatDefinition.TypedFormatField(typedFormatField.identifier,
-            resolveTypeLiteral(typedFormatField.type), typedFormatField.symbolTable);
+            resolveTypeLiteral(typedFormatField.type));
       } else {
         return field;
       }

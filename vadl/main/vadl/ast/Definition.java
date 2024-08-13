@@ -206,13 +206,10 @@ class FormatDefinition extends Definition {
   static class TypedFormatField extends Node implements FormatField {
     final Identifier identifier;
     final TypeLiteralOrPlaceholder type;
-    final SymbolTable symbolTable;
 
-    public TypedFormatField(Identifier identifier, TypeLiteralOrPlaceholder type,
-                            SymbolTable symbolTable) {
+    public TypedFormatField(Identifier identifier, TypeLiteralOrPlaceholder type) {
       this.identifier = identifier;
       this.type = type;
-      this.symbolTable = symbolTable;
     }
 
     @Override
@@ -424,16 +421,13 @@ class InstructionSetDefinition extends Definition {
   @Nullable
   Identifier extending;
   List<Definition> definitions;
-  SymbolTable symbolTable;
   SourceLocation loc;
 
   InstructionSetDefinition(Identifier identifier, @Nullable Identifier extending,
-                           List<Definition> statements, SymbolTable symbolTable,
-                           SourceLocation location) {
+                           List<Definition> statements, SourceLocation location) {
     this.identifier = identifier;
     this.extending = extending;
     this.definitions = statements;
-    this.symbolTable = symbolTable;
     this.loc = location;
   }
 

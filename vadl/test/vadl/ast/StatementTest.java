@@ -145,7 +145,6 @@ public class StatementTest {
         new Identifier("ISA", loc),
         null,
         definitions,
-        null,
         loc
     ));
     verifyPrettifiedAst(ast);

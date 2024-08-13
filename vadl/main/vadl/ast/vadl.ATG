@@ -19,8 +19,6 @@ import static vadl.ast.ParserUtils.*;
 COMPILER vadl
   java.net.URI sourceFile = SourceLocation.INVALID_SOURCE_LOCATION.uri();
   boolean insideMacro = false;
-  boolean disableSymbolChecking = false;
-  Deque<Boolean> disableSymbolStack = new ArrayDeque<>();
   Deque<List<MacroParam>> macroContext = new ArrayDeque<>();
   Ast ast = new Ast();
   SymbolTable symbolTable = new SymbolTable();
@@ -34,15 +32,6 @@ COMPILER vadl
 
   SourceLocation lookaheadLoc() {
     return locationFromToken(this, la);
-  }
-
-  void disableSymbolChecking() {
-    disableSymbolStack.addFirst(disableSymbolChecking);
-    disableSymbolChecking = true;
-  }
-
-  void enableSymbolChecking() {
-    disableSymbolChecking = disableSymbolStack.removeFirst();
   }
 
 CHARACTERS
@@ -161,7 +150,7 @@ PRODUCTIONS
   // -- DEFINITIONS --------------------------------------------------------------------------------------------------
   topLevelDefinitions<out Definition def> (. def = null; .)
   = instructionsetDefinition<out def>
-  | commonDefinition<out def>             (. def.accept(symbolTable); .)
+  | commonDefinition<out def>
   .
 
   commonDefinition<out Definition def>    (. def = null; .)
@@ -180,23 +169,23 @@ PRODUCTIONS
     ]
     SYM_EQ SYM_BRACE_OPEN
     isaDefinitionList<.out List<Definition> definitions.>
-    SYM_BRACE_CLOSE                                             (. isaDef = new InstructionSetDefinition(identifier, extending, definitions, symbolTable, startLocation.join(loc())); .)
+    SYM_BRACE_CLOSE                                             (. isaDef = new InstructionSetDefinition(identifier, extending, definitions, startLocation.join(loc())); .)
   .
 
   isaDefinitionList<. out List<Definition> definitions .>             (. definitions = new ArrayList<>(); .)
   = {(
     annotations<.out List<Annotation> annotations.>
-    isaDefinition<out Definition def>                                 (. def.annotations.annotations().addAll(annotations); definitions.add(def); if (!disableSymbolChecking) def.accept(symbolTable); .)
+    isaDefinition<out Definition def>                                 (. def.annotations.annotations().addAll(annotations); definitions.add(def); .)
   | macroDef
   | macroInstanceOrPlaceholder<out Node n, BasicSyntaxType.IsaDefs()> (. if (n instanceof DefinitionList defs) definitions.addAll(defs.items);
                                                                          else definitions.add((Definition) n); .)
   )}
   .
 
-  annotations<.out List<Annotation> annotations.> (. annotations = new ArrayList<>(); disableSymbolChecking(); .)
+  annotations<.out List<Annotation> annotations.> (. annotations = new ArrayList<>(); .)
   = {
     annotation<out Annotation annotation>         (. annotations.add(annotation); .)
-  }                                               (. enableSymbolChecking(); .)
+  }
   .
 
   annotation<out Annotation annotation> (. TypeLiteral type = null; Identifier property = null; .)
@@ -263,7 +252,7 @@ PRODUCTIONS
 
   formatFieldType<out FormatDefinition.FormatField field, Identifier id>
   = SYM_COLON
-    typeLiteralOrPlaceholder<out TypeLiteralOrPlaceholder type> (. field = new FormatDefinition.TypedFormatField(id, type, symbolTable); .)
+    typeLiteralOrPlaceholder<out TypeLiteralOrPlaceholder type> (. field = new FormatDefinition.TypedFormatField(id, type); .)
   .
 
   formatFieldDerived<out FormatDefinition.FormatField field, Identifier id>
@@ -423,7 +412,7 @@ PRODUCTIONS
     identifier<out Identifier id>       (. identifiers.add(id); .)
     {
       SYM_COMMA
-      identifier<out Identifier nextId> (. identifiers.add(nextId); symbolTable.defineConstant(nextId.name, loc()); .)
+      identifier<out Identifier nextId> (. identifiers.add(nextId); .)
     }
     SYM_EQ expression<out Expr valueExpr, BIN_OPS_EXCEPT_IN>
     SYM_IN
@@ -679,7 +668,7 @@ PRODUCTIONS
 
   maximumMacroExpr<out Node node>                                 (. node = null; .)
   = SYM_DOLLAR
-    identifier<out Identifier id>                                 (. disableSymbolChecking(); .)
+    identifier<out Identifier id>
     [
       IF (symbolTable.getMacro(id.name) != null)                  (. var macro = symbolTable.getMacro(id.name); .)
       SYM_PAREN_OPEN                                              (. var params = macro.params().iterator(); .)
@@ -694,11 +683,10 @@ PRODUCTIONS
         }
         SYM_PAREN_CLOSE
       )                                                           (. node = new MacroInstanceExpr(id, args, loc()); .)
-    ]                                                             (. enableSymbolChecking();
-                                                                     if (node == null) node = new PlaceholderExpr(id, loc()); .)
+    ]                                                             (. if (node == null) node = new PlaceholderExpr(id, loc()); .)
   .
 
-  macroInstance<out Node body, SyntaxType requiredType>         (. disableSymbolChecking(); .)
+  macroInstance<out Node body, SyntaxType requiredType>
   = SYM_DOLLAR                                                  (. var args = new ArrayList<Node>(); .)
     identifier<out Identifier id>                               (. var macro = Objects.requireNonNull(symbolTable.getMacro(id.name)); .)
     SYM_PAREN_OPEN                                              (. var params = macro.params().iterator(); .)
@@ -711,7 +699,7 @@ PRODUCTIONS
         macroInstanceParam<out Node arg2, params.next().type()> (. args.add(arg2); .)
       }
       SYM_PAREN_CLOSE
-    )                                                           (. body = expandMacro(this, id, args, requiredType); enableSymbolChecking(); .)
+    )                                                           (. body = expandMacro(this, id, args, requiredType); .)
   .
 
   macroInstanceParam<out Node arg, SyntaxType syntaxType> (. arg = null; var start = loc(); .)
@@ -761,12 +749,11 @@ PRODUCTIONS
     ]
     SYM_PAREN_CLOSE                         (. macroContext.addFirst(params); .)
     SYM_COLON syntaxType<out SyntaxType returnType> SYM_EQ
-    SYM_BRACE_OPEN                          (. Node body = null; insideMacro = true; disableSymbolChecking(); .)
+    SYM_BRACE_OPEN                          (. Node body = null; insideMacro = true; .)
     macroBody<out body, returnType>
     SYM_BRACE_CLOSE                         (.
                                               macroContext.removeFirst();
                                               insideMacro = false;
-                                              enableSymbolChecking();
                                               var bodyType = narrowNode(body).syntaxType();
                                               if (!bodyType.isSubTypeOf(returnType)) {
                                                 errors.SemErr(t.line, t.col, "The macro signature promises to return `%s` but it's body is of type `%s`.".formatted(returnType, bodyType));
