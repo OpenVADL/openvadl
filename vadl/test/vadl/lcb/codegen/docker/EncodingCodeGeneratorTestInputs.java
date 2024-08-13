@@ -18,7 +18,9 @@ import vadl.viam.graph.control.ReturnNode;
 import vadl.viam.graph.dependency.BuiltInCall;
 import vadl.viam.graph.dependency.ConstantNode;
 import vadl.viam.graph.dependency.FieldRefNode;
+import vadl.viam.graph.dependency.SignExtendNode;
 import vadl.viam.graph.dependency.TypeCastNode;
+import vadl.viam.graph.dependency.ZeroExtendNode;
 
 public class EncodingCodeGeneratorTestInputs extends AbstractTest {
   public static Stream<Arguments> createFieldAccessFunctions() {
@@ -44,7 +46,7 @@ public class EncodingCodeGeneratorTestInputs extends AbstractTest {
         new Constant.BitSlice(new Constant.BitSlice.Part[] {new Constant.BitSlice.Part(19, 0)}),
         32);
     var returnNode = new ReturnNode(
-        new TypeCastNode(new FieldRefNode(field, DataType.bits(20)), Type.unsignedInt(32)));
+        new ZeroExtendNode(new FieldRefNode(field, DataType.bits(20)), Type.unsignedInt(32)));
     var graph = new Graph("graphValue");
     graph.addWithInputs(returnNode);
     function.setBehavior(graph);
@@ -57,7 +59,7 @@ public class EncodingCodeGeneratorTestInputs extends AbstractTest {
         new Constant.BitSlice(new Constant.BitSlice.Part[] {new Constant.BitSlice.Part(19, 0)}),
         32);
     var returnNode = new ReturnNode(
-        new TypeCastNode(new FieldRefNode(field, DataType.bits(20)), Type.signedInt(32)));
+        new SignExtendNode(new FieldRefNode(field, DataType.bits(20)), Type.signedInt(32)));
     var graph = new Graph("graphValue");
     graph.addWithInputs(returnNode);
     function.setBehavior(graph);
@@ -71,7 +73,7 @@ public class EncodingCodeGeneratorTestInputs extends AbstractTest {
         32);
     var returnNode = new ReturnNode(
         new BuiltInCall(BuiltInTable.LSL, new NodeList<>(
-            new TypeCastNode(new FieldRefNode(field, DataType.bits(20)), Type.unsignedInt(32)),
+            new ZeroExtendNode(new FieldRefNode(field, DataType.bits(20)), Type.unsignedInt(32)),
             new ConstantNode(
                 Constant.Value.of(6, DataType.unsignedInt(32)))),
             Type.unsignedInt(32))
@@ -89,7 +91,7 @@ public class EncodingCodeGeneratorTestInputs extends AbstractTest {
         32);
     var returnNode = new ReturnNode(
         new BuiltInCall(BuiltInTable.LSL, new NodeList<>(
-            new TypeCastNode(new FieldRefNode(field, DataType.bits(20)), Type.signedInt(32)),
+            new SignExtendNode(new FieldRefNode(field, DataType.bits(20)), Type.signedInt(32)),
             new ConstantNode(
                 Constant.Value.of(6, DataType.unsignedInt(32)))),
             Type.signedInt(32))
@@ -107,7 +109,7 @@ public class EncodingCodeGeneratorTestInputs extends AbstractTest {
         32);
     var returnNode = new ReturnNode(
         new BuiltInCall(BuiltInTable.ADD, new NodeList<>(
-            new TypeCastNode(new FieldRefNode(field, DataType.bits(20)), Type.unsignedInt(32)),
+            new ZeroExtendNode(new FieldRefNode(field, DataType.bits(20)), Type.unsignedInt(32)),
             new ConstantNode(
                 Constant.Value.of(6, DataType.unsignedInt(32)))),
             Type.unsignedInt(32))
@@ -125,7 +127,7 @@ public class EncodingCodeGeneratorTestInputs extends AbstractTest {
         32);
     var returnNode = new ReturnNode(
         new BuiltInCall(BuiltInTable.ADD, new NodeList<>(
-            new TypeCastNode(new FieldRefNode(field, DataType.bits(20)), Type.signedInt(32)),
+            new SignExtendNode(new FieldRefNode(field, DataType.bits(20)), Type.signedInt(32)),
             new ConstantNode(Constant.Value.of(6, DataType.signedInt(32)))),
             Type.signedInt(32))
     );
@@ -142,7 +144,7 @@ public class EncodingCodeGeneratorTestInputs extends AbstractTest {
         32);
     var returnNode = new ReturnNode(
         new BuiltInCall(BuiltInTable.SUB, new NodeList<>(
-            new TypeCastNode(new FieldRefNode(field, DataType.bits(20)), Type.unsignedInt(32)),
+            new ZeroExtendNode(new FieldRefNode(field, DataType.bits(20)), Type.unsignedInt(32)),
             new ConstantNode(
                 Constant.Value.of(6, DataType.unsignedInt(32)))),
             Type.unsignedInt(32))
@@ -160,7 +162,7 @@ public class EncodingCodeGeneratorTestInputs extends AbstractTest {
         32);
     var returnNode = new ReturnNode(
         new BuiltInCall(BuiltInTable.SUB, new NodeList<>(
-            new TypeCastNode(new FieldRefNode(field, DataType.bits(20)), Type.signedInt(32)),
+            new SignExtendNode(new FieldRefNode(field, DataType.bits(20)), Type.signedInt(32)),
             new ConstantNode(Constant.Value.of(6, DataType.signedInt(32)))),
             Type.signedInt(32))
     );

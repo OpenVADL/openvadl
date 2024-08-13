@@ -5,7 +5,9 @@ import static vadl.cppCodeGen.CppTypeMap.getCppTypeNameByVadlType;
 import java.io.StringWriter;
 import vadl.cppCodeGen.CppCodeGenGraphNodeVisitor;
 import vadl.cppCodeGen.GenericCppCodeGeneratorVisitor;
-import vadl.cppCodeGen.passes.type_normalization.UpcastedTypeCastNode;
+import vadl.cppCodeGen.passes.type_normalization.CppSignExtendNode;
+import vadl.cppCodeGen.passes.type_normalization.CppTruncateNode;
+import vadl.cppCodeGen.passes.type_normalization.CppZeroExtendNode;
 import vadl.types.BitsType;
 import vadl.types.BoolType;
 import vadl.viam.graph.GraphNodeVisitor;
@@ -23,33 +25,6 @@ public class EncoderDecoderCodeGeneratorVisitor extends GenericCppCodeGeneratorV
     implements CppCodeGenGraphNodeVisitor {
   public EncoderDecoderCodeGeneratorVisitor(StringWriter writer) {
     super(writer);
-  }
-
-  @Override
-  public void visit(UpcastedTypeCastNode upcastedTypeCastNode) {
-    var castType = upcastedTypeCastNode.castType();
-    var originalType = upcastedTypeCastNode.originalType();
-
-    if (castType == BoolType.bool()) {
-      // Integer downcasts truncated the higher bits
-      // but, boolean downcasts (v != 0)
-      writer.write("((" + getCppTypeNameByVadlType(castType) + ") ");
-      visit(upcastedTypeCastNode.value());
-      writer.write(" & 0x1)");
-    } else {
-      writer.write("((" + getCppTypeNameByVadlType(castType) + ") ");
-      visit(upcastedTypeCastNode.value());
-
-      upcastedTypeCastNode.ensure(originalType instanceof BitsType
-          || originalType instanceof BoolType, "Type must be bits or bool");
-
-      if (originalType instanceof BitsType cast) {
-        writer.write(
-            ") & " + generateBitmask(cast.bitWidth()));
-      } else if (upcastedTypeCastNode.originalType() instanceof BoolType) {
-        writer.write(") & 1");
-      }
-    }
   }
 
   @Override
@@ -82,5 +57,28 @@ public class EncoderDecoderCodeGeneratorVisitor extends GenericCppCodeGeneratorV
       visit(node.value());
       writer.write(")");
     }
+  }
+
+  @Override
+  public void visit(CppSignExtendNode node) {
+    visit((SignExtendNode) node);
+
+    if (node.originalType() instanceof BitsType bitsType) {
+      writer.write(" & " + generateBitmask(bitsType.bitWidth()));
+    }
+  }
+
+  @Override
+  public void visit(CppZeroExtendNode node) {
+    visit((ZeroExtendNode) node);
+
+    if (node.originalType() instanceof BitsType bitsType) {
+      writer.write(" & " + generateBitmask(bitsType.bitWidth()));
+    }
+  }
+
+  @Override
+  public void visit(CppTruncateNode node) {
+    visit((TruncateNode) node);
   }
 }

@@ -135,26 +135,6 @@ class CppTypeNormalizationPassTest extends AbstractTest {
   }
 
   @ParameterizedTest
-  @MethodSource("generateTypesWhichRequireUpcast")
-  void makeTypesCppConform_shouldUpdateTypeCast(DataType before, DataType after) {
-    // Given
-    var function = createFunction("functionValueName", new Parameter(
-        createIdentifier("parameterValue"), DataType.bool()
-    ), DataType.bool());
-    function.behavior().addWithInputs(
-        new TypeCastNode(new ConstantNode(Constant.Value.of(0, Type.signedInt(8))),
-            before));
-
-    // When
-    var updatedFunction = CppTypeNormalizationPass.makeTypesCppConform(function);
-
-    // Then
-    var node = updatedFunction.behavior().getNodes(UpcastedTypeCastNode.class).toList().get(0);
-    assertThat(node.castType()).isEqualTo(after);
-    assertThat(node.originalType()).isEqualTo(before);
-  }
-
-  @ParameterizedTest
   @MethodSource("generateTypesWhichDontRequireUpcast")
   void makeTypesCppConform_shouldNotUpdateTypeCast_whenTypeOk(DataType type) {
     // Given

@@ -6,6 +6,10 @@ import java.util.HashSet;
 import java.util.IdentityHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.Callable;
+import java.util.function.BiConsumer;
+import java.util.function.BiFunction;
+import java.util.function.Supplier;
 import java.util.stream.Stream;
 import org.jetbrains.annotations.Nullable;
 import org.slf4j.Logger;
@@ -21,8 +25,13 @@ import vadl.viam.Parameter;
 import vadl.viam.Specification;
 import vadl.viam.ViamError;
 import vadl.viam.graph.Graph;
+import vadl.viam.graph.Node;
 import vadl.viam.graph.dependency.ConstantNode;
+import vadl.viam.graph.dependency.SignExtendNode;
+import vadl.viam.graph.dependency.TruncateNode;
 import vadl.viam.graph.dependency.TypeCastNode;
+import vadl.viam.graph.dependency.UnaryNode;
+import vadl.viam.graph.dependency.ZeroExtendNode;
 
 /**
  * When transforming a graph into a CPP code, we have to take care of unsupported types.
@@ -113,23 +122,38 @@ public abstract class CppTypeNormalizationPass extends Pass {
     }
   }
 
+  private static void cast(UnaryNode node, java.util.function.Function<BitsType, Node> buildNode) {
+    var bitsType = (BitsType) node.type();
+    var newBitSizeType = bitsType.withBitWidth(nextFittingType(
+        bitsType.bitWidth()));
+    var newNode = buildNode.apply(newBitSizeType);
+    node.replaceAndDelete(newNode);
+  }
+
   /**
    * This method checks all the typecasts and upcasts the type if necessary.
    * Additionally, it will also check the constant if the type is ok.
    */
   private static void updateGraph(Graph graph) {
     // Updating typecasts
-    var typeNodes = graph.getNodes(TypeCastNode.class).toList();
-    typeNodes.forEach(typeCastNode -> {
-      if (!cppSupportedTypes.contains(typeCastNode.castType())
-          && typeCastNode.castType() instanceof BitsType bitsType) {
-        var newBitSizeType = bitsType.withBitWidth(nextFittingType(
-            bitsType.bitWidth()));
-        var newTypeCastNode =
-            new UpcastedTypeCastNode(typeCastNode.value(), newBitSizeType, typeCastNode.castType());
-        typeCastNode.replaceAndDelete(newTypeCastNode);
-      }
-    });
+    graph.getNodes(SignExtendNode.class)
+        .filter(signExtendNode -> !cppSupportedTypes.contains(signExtendNode.type()))
+        .forEach((signExtendNode -> cast(signExtendNode,
+            (newType) -> new CppSignExtendNode(signExtendNode.value(), newType,
+                signExtendNode.type()))));
+
+    graph.getNodes(ZeroExtendNode.class)
+        .filter(zeroExtendNode -> !cppSupportedTypes.contains(zeroExtendNode.type()))
+        .forEach((zeroExtendNode -> cast(zeroExtendNode,
+            (newType) -> new CppZeroExtendNode(zeroExtendNode.value(), newType,
+                zeroExtendNode.type()))));
+
+    graph.getNodes(TruncateNode.class)
+        .filter(truncateNode -> !cppSupportedTypes.contains(truncateNode.type()))
+        .forEach((truncateNode -> cast(truncateNode,
+            (newType) -> new CppTruncateNode(truncateNode.value(), newType,
+                truncateNode.type()))));
+
 
     // Updating constants
     var constantNodes = graph.getNodes(ConstantNode.class).toList();

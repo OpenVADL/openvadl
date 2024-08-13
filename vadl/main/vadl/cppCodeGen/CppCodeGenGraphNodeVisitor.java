@@ -1,6 +1,8 @@
 package vadl.cppCodeGen;
 
-import vadl.cppCodeGen.passes.type_normalization.UpcastedTypeCastNode;
+import vadl.cppCodeGen.passes.type_normalization.CppSignExtendNode;
+import vadl.cppCodeGen.passes.type_normalization.CppTruncateNode;
+import vadl.cppCodeGen.passes.type_normalization.CppZeroExtendNode;
 import vadl.viam.graph.GraphNodeVisitor;
 
 /**
@@ -8,7 +10,17 @@ import vadl.viam.graph.GraphNodeVisitor;
  */
 public interface CppCodeGenGraphNodeVisitor extends GraphNodeVisitor {
   /**
-   * Visit {@link UpcastedTypeCastNode}.
+   * Visit {@link CppSignExtendNode}.
    */
-  void visit(UpcastedTypeCastNode upcastedTypeCastNode);
+  void visit(CppSignExtendNode node);
+
+  /**
+   * Visit {@link CppZeroExtendNode}.
+   */
+  void visit(CppZeroExtendNode node);
+
+  /**
+   * Visit {@link CppTruncateNode}.
+   */
+  void visit(CppTruncateNode node);
 }

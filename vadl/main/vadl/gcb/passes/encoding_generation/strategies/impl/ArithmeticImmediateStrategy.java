@@ -18,8 +18,11 @@ import vadl.viam.graph.dependency.BuiltInCall;
 import vadl.viam.graph.dependency.ExpressionNode;
 import vadl.viam.graph.dependency.FieldRefNode;
 import vadl.viam.graph.dependency.FuncParamNode;
+import vadl.viam.graph.dependency.SignExtendNode;
 import vadl.viam.graph.dependency.SliceNode;
+import vadl.viam.graph.dependency.TruncateNode;
 import vadl.viam.graph.dependency.TypeCastNode;
+import vadl.viam.graph.dependency.ZeroExtendNode;
 import vadl.viam.matching.TreeMatcher;
 import vadl.viam.matching.impl.AnyNodeMatcher;
 import vadl.viam.matching.impl.BuiltInMatcher;
@@ -64,7 +67,11 @@ public class ArithmeticImmediateStrategy implements EncodingGenerationStrategy {
 
     // Optimistic assumption: Remove all typecasts because they are not correct anymore when
     // inverted.
-    copy.getNodes(TypeCastNode.class)
+    copy.getNodes(SignExtendNode.class)
+        .forEach(typeCastNode -> typeCastNode.replaceAndDelete(typeCastNode.value()));
+    copy.getNodes(ZeroExtendNode.class)
+        .forEach(typeCastNode -> typeCastNode.replaceAndDelete(typeCastNode.value()));
+    copy.getNodes(TruncateNode.class)
         .forEach(typeCastNode -> typeCastNode.replaceAndDelete(typeCastNode.value()));
 
     // After that we need to find the field and add it to the other side.
