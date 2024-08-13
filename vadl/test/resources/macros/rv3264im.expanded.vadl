@@ -213,7 +213,7 @@ instruction set architecture RV3264I = {
   }
   assembly LB = (mnemonic, " ", register(rd), ",", decimal(imm), "(", register(rs1), ")")
   instruction LBU : Itype =   let addr = (X(rs1) + immS) in
-    X(rd) := MEM(addr) as SIntR
+    X(rd) := MEM(addr) as UIntR
 
   encoding LBU =
   { opcode = 0b000'0011
@@ -221,7 +221,7 @@ instruction set architecture RV3264I = {
   }
   assembly LBU = (mnemonic, " ", register(rd), ",", decimal(imm), "(", register(rs1), ")")
   instruction LH : Itype =   let addr = (X(rs1) + immS) in
-    X(rd) := MEM(addr) as SIntR
+    X(rd) := MEM< 2 >(addr) as SIntR
 
   encoding LH =
   { opcode = 0b000'0011
@@ -229,7 +229,7 @@ instruction set architecture RV3264I = {
   }
   assembly LH = (mnemonic, " ", register(rd), ",", decimal(imm), "(", register(rs1), ")")
   instruction LHU : Itype =   let addr = (X(rs1) + immS) in
-    X(rd) := MEM(addr) as SIntR
+    X(rd) := MEM< 2 >(addr) as UIntR
 
   encoding LHU =
   { opcode = 0b000'0011
@@ -237,7 +237,7 @@ instruction set architecture RV3264I = {
   }
   assembly LHU = (mnemonic, " ", register(rd), ",", decimal(imm), "(", register(rs1), ")")
   instruction LW : Itype =   let addr = (X(rs1) + immS) in
-    X(rd) := MEM(addr) as SIntR
+    X(rd) := MEM< 4 >(addr) as SIntR
 
   encoding LW =
   { opcode = 0b000'0011
@@ -253,7 +253,7 @@ instruction set architecture RV3264I = {
   }
   assembly SB = (mnemonic, " ", register(rs2), ",", decimal(imm), "(", register(rs1), ")")
   instruction SH : Stype =   let addr = (X(rs1) + immS) in
-    MEM(addr) := X(rs2) as Byte
+    MEM< 2 >(addr) := X(rs2) as Half
 
   encoding SH =
   { opcode = 0b010'0011
@@ -261,7 +261,7 @@ instruction set architecture RV3264I = {
   }
   assembly SH = (mnemonic, " ", register(rs2), ",", decimal(imm), "(", register(rs1), ")")
   instruction SW : Stype =   let addr = (X(rs1) + immS) in
-    MEM(addr) := X(rs2) as Byte
+    MEM< 4 >(addr) := X(rs2) as Word
 
   encoding SW =
   { opcode = 0b010'0011
@@ -277,7 +277,7 @@ instruction set architecture RV3264I = {
   , funct3 = 0b000
   }
   assembly BEQ = (mnemonic, " ", register(rs1), ",", register(rs2), ",", decimal(imm))
-  instruction BNE : Btype =   if (X(rs1) as Bits = X(rs2)) then
+  instruction BNE : Btype =   if (X(rs1) as Bits != X(rs2)) then
     PC := (PC + immS)
 
 
@@ -286,7 +286,7 @@ instruction set architecture RV3264I = {
   , funct3 = 0b001
   }
   assembly BNE = (mnemonic, " ", register(rs1), ",", register(rs2), ",", decimal(imm))
-  instruction BGE : Btype =   if (X(rs1) as Bits = X(rs2)) then
+  instruction BGE : Btype =   if (X(rs1) as SInt >= X(rs2)) then
     PC := (PC + immS)
 
 
@@ -295,7 +295,7 @@ instruction set architecture RV3264I = {
   , funct3 = 0b101
   }
   assembly BGE = (mnemonic, " ", register(rs1), ",", register(rs2), ",", decimal(imm))
-  instruction BGEU : Btype =   if (X(rs1) as Bits = X(rs2)) then
+  instruction BGEU : Btype =   if (X(rs1) as UInt >= X(rs2)) then
     PC := (PC + immS)
 
 
@@ -304,7 +304,7 @@ instruction set architecture RV3264I = {
   , funct3 = 0b111
   }
   assembly BGEU = (mnemonic, " ", register(rs1), ",", register(rs2), ",", decimal(imm))
-  instruction BLT : Btype =   if (X(rs1) as Bits = X(rs2)) then
+  instruction BLT : Btype =   if (X(rs1) as SInt < X(rs2)) then
     PC := (PC + immS)
 
 
@@ -313,7 +313,7 @@ instruction set architecture RV3264I = {
   , funct3 = 0b100
   }
   assembly BLT = (mnemonic, " ", register(rs1), ",", register(rs2), ",", decimal(imm))
-  instruction BLTU : Btype =   if (X(rs1) as Bits = X(rs2)) then
+  instruction BLTU : Btype =   if (X(rs1) as UInt < X(rs2)) then
     PC := (PC + immS)
 
 
@@ -362,7 +362,7 @@ instruction set architecture RV3264I = {
   , shamt = sft as UInt
   }
   instruction LWU : Itype =   let addr = (X(rs1) + immS) in
-    X(rd) := MEM(addr) as SIntR
+    X(rd) := MEM< 4 >(addr) as UIntR
 
   encoding LWU =
   { opcode = 0b000'0011
@@ -370,7 +370,7 @@ instruction set architecture RV3264I = {
   }
   assembly LWU = (mnemonic, " ", register(rd), ",", decimal(imm), "(", register(rs1), ")")
   instruction LD : Itype =   let addr = (X(rs1) + immS) in
-    X(rd) := MEM(addr) as SIntR
+    X(rd) := MEM< 8 >(addr) as Dble
 
   encoding LD =
   { opcode = 0b000'0011
@@ -378,7 +378,7 @@ instruction set architecture RV3264I = {
   }
   assembly LD = (mnemonic, " ", register(rd), ",", decimal(imm), "(", register(rs1), ")")
   instruction SD : Stype =   let addr = (X(rs1) + immS) in
-    MEM(addr) := X(rs2) as Byte
+    MEM< 8 >(addr) := X(rs2) as Dble
 
   encoding SD =
   { opcode = 0b010'0011
@@ -498,7 +498,7 @@ instruction set architecture RV3264IM extending RV3264I = {
   }
   assembly MUL = (mnemonic, " ", register(rd), ",", register(rs1), ",", register(rs2))
   instruction MULH : Rtype =   let result = (X(rs1) as SInt * X(rs2) as SInt) in
-    X(rd) := result as Regs
+    X(rd) := result(MLen2_1..MLen)
 
   encoding MULH =
   { opcode = 0b011'0011
@@ -506,8 +506,8 @@ instruction set architecture RV3264IM extending RV3264I = {
   , funct7 = 0b000'0001
   }
   assembly MULH = (mnemonic, " ", register(rd), ",", register(rs1), ",", register(rs2))
-  instruction MULHSU : Rtype =   let result = (X(rs1) as SInt * X(rs2) as SInt) in
-    X(rd) := result as Regs
+  instruction MULHSU : Rtype =   let result = (X(rs1) as SInt * X(rs2) as UInt) in
+    X(rd) := result(MLen2_1..MLen)
 
   encoding MULHSU =
   { opcode = 0b011'0011
@@ -515,8 +515,8 @@ instruction set architecture RV3264IM extending RV3264I = {
   , funct7 = 0b000'0001
   }
   assembly MULHSU = (mnemonic, " ", register(rd), ",", register(rs1), ",", register(rs2))
-  instruction MULHU : Rtype =   let result = (X(rs1) as SInt * X(rs2) as SInt) in
-    X(rd) := result as Regs
+  instruction MULHU : Rtype =   let result = (X(rs1) as UInt * X(rs2) as UInt) in
+    X(rd) := result(MLen2_1..MLen)
 
   encoding MULHU =
   { opcode = 0b011'0011
@@ -540,9 +540,9 @@ VADL::div(dividend, divisor) as SIntR
   , funct7 = 0b000'0001
   }
   assembly DIV = (mnemonic, " ", register(rd), ",", register(rs1), ",", register(rs2))
-  instruction DIVU : Rtype =   let dividend = X(rs1) as SIntR in
-    let divisor = X(rs2) as SIntR in
-      X(rd) :=         if (divisor = 0 as SIntR) then
+  instruction DIVU : Rtype =   let dividend = X(rs1) as UIntR in
+    let divisor = X(rs2) as UIntR in
+      X(rd) :=         if (divisor = 0 as UIntR) then
 AllOnes
         else
           if isOverflow(dividend, divisor) then
@@ -564,7 +564,7 @@ AllOnes
           if isOverflow(dividend, divisor) then
 TopBitSet
           else
-VADL::div(dividend, divisor) as SIntR
+VADL::mod(dividend, divisor) as SIntR
 
   encoding REM =
   { opcode = 0b011'0011
@@ -572,15 +572,15 @@ VADL::div(dividend, divisor) as SIntR
   , funct7 = 0b000'0001
   }
   assembly REM = (mnemonic, " ", register(rd), ",", register(rs1), ",", register(rs2))
-  instruction REMU : Rtype =   let dividend = X(rs1) as SIntR in
-    let divisor = X(rs2) as SIntR in
-      X(rd) :=         if (divisor = 0 as SIntR) then
+  instruction REMU : Rtype =   let dividend = X(rs1) as UIntR in
+    let divisor = X(rs2) as UIntR in
+      X(rd) :=         if (divisor = 0 as UIntR) then
 AllOnes
         else
           if isOverflow(dividend, divisor) then
 TopBitSet
           else
-VADL::div(dividend, divisor) as SIntR
+VADL::mod(dividend, divisor) as SIntR
 
   encoding REMU =
   { opcode = 0b011'0011
@@ -596,9 +596,9 @@ VADL::div(dividend, divisor) as SIntR
   , funct7 = 0b000'0001
   }
   assembly MULW = (mnemonic, " ", register(rd), ",", register(rs1), ",", register(rs2))
-  instruction DIVW : Rtype =   let dividend = X(rs1) as SIntR in
-    let divisor = X(rs2) as SIntR in
-      X(rd) :=         if (divisor = 0 as SIntR) then
+  instruction DIVW : Rtype =   let dividend = X(rs1) as SIntW in
+    let divisor = X(rs2) as SIntW in
+      X(rd) :=         if (divisor = 0 as SIntW) then
 AllOnes
         else
           if isOverflow(dividend, divisor) then
@@ -612,9 +612,9 @@ VADL::div(dividend, divisor) as SIntR
   , funct7 = 0b000'0001
   }
   assembly DIVW = (mnemonic, " ", register(rd), ",", register(rs1), ",", register(rs2))
-  instruction DIVUW : Rtype =   let dividend = X(rs1) as SIntR in
-    let divisor = X(rs2) as SIntR in
-      X(rd) :=         if (divisor = 0 as SIntR) then
+  instruction DIVUW : Rtype =   let dividend = X(rs1) as UIntW in
+    let divisor = X(rs2) as UIntW in
+      X(rd) :=         if (divisor = 0 as UIntW) then
 AllOnes
         else
           if isOverflow(dividend, divisor) then
@@ -628,15 +628,15 @@ VADL::div(dividend, divisor) as SIntR
   , funct7 = 0b000'0001
   }
   assembly DIVUW = (mnemonic, " ", register(rd), ",", register(rs1), ",", register(rs2))
-  instruction REMW : Rtype =   let dividend = X(rs1) as SIntR in
-    let divisor = X(rs2) as SIntR in
-      X(rd) :=         if (divisor = 0 as SIntR) then
+  instruction REMW : Rtype =   let dividend = X(rs1) as SIntW in
+    let divisor = X(rs2) as SIntW in
+      X(rd) :=         if (divisor = 0 as SIntW) then
 AllOnes
         else
           if isOverflow(dividend, divisor) then
 TopBitSet
           else
-VADL::div(dividend, divisor) as SIntR
+VADL::mod(dividend, divisor) as SIntR
 
   encoding REMW =
   { opcode = 0b011'1011
@@ -644,15 +644,15 @@ VADL::div(dividend, divisor) as SIntR
   , funct7 = 0b000'0001
   }
   assembly REMW = (mnemonic, " ", register(rd), ",", register(rs1), ",", register(rs2))
-  instruction REMUW : Rtype =   let dividend = X(rs1) as SIntR in
-    let divisor = X(rs2) as SIntR in
-      X(rd) :=         if (divisor = 0 as SIntR) then
+  instruction REMUW : Rtype =   let dividend = X(rs1) as UIntW in
+    let divisor = X(rs2) as UIntW in
+      X(rd) :=         if (divisor = 0 as UIntW) then
 AllOnes
         else
           if isOverflow(dividend, divisor) then
 TopBitSet
           else
-VADL::div(dividend, divisor) as SIntR
+VADL::mod(dividend, divisor) as SIntR
 
   encoding REMUW =
   { opcode = 0b011'1011

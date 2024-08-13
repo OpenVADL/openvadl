@@ -188,7 +188,7 @@ class ParserUtils {
       return unexpanded;
     }
 
-    var expander = new MacroExpander(argMap, parser.symbolTable);
+    var expander = new MacroExpander(argMap);
     var body = macro.body();
     if (body instanceof Expr expr) {
       var expanded = expander.expandExpr(expr);
@@ -227,34 +227,6 @@ class ParserUtils {
       return statementList.items.get(0);
     }
     return node;
-  }
-
-  static void pushScope(Parser parser) {
-    parser.symbolTable = parser.symbolTable.createChild();
-  }
-
-  static void pushFormatScope(Parser parser, IdentifierOrPlaceholder formatId) {
-    if (formatId instanceof Identifier id) {
-      parser.symbolTable = parser.symbolTable.createFormatScope(id);
-    } else {
-      pushScope(parser);
-    }
-  }
-
-  static void pushInstructionScope(Parser parser, IdentifierOrPlaceholder instrId) {
-    if (instrId instanceof Identifier id) {
-      parser.symbolTable = parser.symbolTable.createInstructionScope(id);
-    } else {
-      pushScope(parser);
-    }
-  }
-
-  static void pushFunctionScope(Parser parser, List<FunctionDefinition.Parameter> params) {
-    parser.symbolTable = parser.symbolTable.createFunctionScope(params);
-  }
-
-  static void popScope(Parser parser) {
-    parser.symbolTable = Objects.requireNonNull(parser.symbolTable.parent);
   }
 
   static boolean isExprType(SyntaxType type) {

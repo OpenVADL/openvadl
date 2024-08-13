@@ -101,7 +101,7 @@ public class AstDumper
     dumpNode(definition);
     dumpChildren(definition.identifier);
     if (definition.extending != null) {
-      dumpChildren(definition.extending.identifier);
+      dumpChildren(definition.extending);
     }
     dumpChildren(definition.definitions);
     return null;

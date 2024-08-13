@@ -13,12 +13,10 @@ import vadl.error.VadlException;
 class MacroExpander
     implements ExprVisitor<Expr>, DefinitionVisitor<Definition>, StatementVisitor<Statement> {
   final Map<String, Node> args;
-  SymbolTable symbols;
   List<VadlError> errors = new ArrayList<>();
 
-  MacroExpander(Map<String, Node> args, SymbolTable symbols) {
+  MacroExpander(Map<String, Node> args) {
     this.args = args;
-    this.symbols = symbols;
   }
 
   public Expr expandExpr(Expr expr) {
@@ -47,7 +45,6 @@ class MacroExpander
 
   @Override
   public Expr visit(Identifier expr) {
-    symbols.requireValue(expr);
     return expr;
   }
 
@@ -136,9 +133,7 @@ class MacroExpander
   public Expr visit(IdentifierPath expr) {
     var segments = new ArrayList<>(expr.segments);
     segments.replaceAll(this::resolvePlaceholderOrIdentifier);
-    var expanded = new IdentifierPath(segments);
-    symbols.requireValue(expanded);
-    return expanded;
+    return new IdentifierPath(segments);
   }
 
   @Override
@@ -165,9 +160,7 @@ class MacroExpander
       });
       return new CallExpr.SubCall(subCall.id(), subCallArgsIndices);
     });
-    var expandedExpr = new CallExpr(target, argsIndices, subCalls, expr.location);
-    symbols.requireValue(expandedExpr);
-    return expandedExpr;
+    return new CallExpr(target, argsIndices, subCalls, expr.location);
   }
 
   @Override
@@ -182,13 +175,8 @@ class MacroExpander
 
   @Override
   public Expr visit(LetExpr expr) {
-    symbols = symbols.createChild();
-    for (var identifier : expr.identifiers) {
-      symbols.defineConstant(identifier.name, identifier.loc);
-    }
     var valueExpression = expr.valueExpr.accept(this);
     var body = expr.body.accept(this);
-    symbols = Objects.requireNonNull(symbols.parent);
     return new LetExpr(expr.identifiers, valueExpression, body, expr.location);
   }
 
@@ -214,7 +202,6 @@ class MacroExpander
   public Definition visit(ConstantDefinition definition) {
     var id = resolvePlaceholderOrIdentifier(definition.identifier);
     var value = definition.value.accept(this);
-    symbols.defineConstant(id.name, definition.loc);
     return new ConstantDefinition(id, definition.type, value, definition.loc);
   }
 
@@ -233,9 +220,7 @@ class MacroExpander
       }
     });
     var id = resolvePlaceholderOrIdentifier(definition.identifier);
-    var def = new FormatDefinition(id, definition.type, fields, definition.loc);
-    def.accept(symbols);
-    return def;
+    return new FormatDefinition(id, definition.type, fields, definition.loc);
   }
 
   @Override
@@ -252,40 +237,29 @@ class MacroExpander
   @Override
   public Definition visit(MemoryDefinition definition) {
     var id = resolvePlaceholderOrIdentifier(definition.identifier);
-    var def = new MemoryDefinition(id, definition.addressType, definition.dataType, definition.loc);
-    def.accept(symbols);
-    return def;
+    return new MemoryDefinition(id, definition.addressType, definition.dataType, definition.loc);
   }
 
   @Override
   public Definition visit(RegisterDefinition definition) {
     var id = resolvePlaceholderOrIdentifier(definition.identifier);
-    var def = new RegisterDefinition(id, definition.type, definition.loc);
-    def.accept(symbols);
-    return def;
+    return new RegisterDefinition(id, definition.type, definition.loc);
   }
 
   @Override
   public Definition visit(RegisterFileDefinition definition) {
     var id = resolvePlaceholderOrIdentifier(definition.identifier);
-    var def = new RegisterFileDefinition(id, definition.indexType, definition.registerType,
+    return new RegisterFileDefinition(id, definition.indexType, definition.registerType,
         definition.loc);
-    def.accept(symbols);
-    return def;
   }
 
   @Override
   public Definition visit(InstructionDefinition definition) {
     var identifier = resolvePlaceholderOrIdentifier(definition.identifier);
     var typeId = resolvePlaceholderOrIdentifier(definition.typeIdentifier);
-
-    symbols = symbols.createFormatScope(typeId);
     var behavior = definition.behavior.accept(this);
-    symbols = Objects.requireNonNull(symbols.parent);
 
-    var def = new InstructionDefinition(identifier, typeId, behavior, definition.loc);
-    def.accept(symbols);
-    return def;
+    return new InstructionDefinition(identifier, typeId, behavior, definition.loc);
   }
 
   @Override
@@ -295,10 +269,8 @@ class MacroExpander
     fieldEncodings.replaceAll(enc ->
         new EncodingDefinition.FieldEncoding(enc.field(), enc.value().accept(this)));
 
-    var def = new EncodingDefinition(instrId, new EncodingDefinition.FieldEncodings(fieldEncodings),
+    return new EncodingDefinition(instrId, new EncodingDefinition.FieldEncodings(fieldEncodings),
         definition.loc);
-    def.accept(symbols);
-    return def;
   }
 
   @Override
@@ -312,18 +284,14 @@ class MacroExpander
   @Override
   public Definition visit(UsingDefinition definition) {
     var id = resolvePlaceholderOrIdentifier(definition.id);
-    var def = new UsingDefinition(id, definition.type, definition.loc);
-    def.accept(symbols);
-    return def;
+    return new UsingDefinition(id, definition.type, definition.loc);
   }
 
   @Override
   public Definition visit(FunctionDefinition definition) {
     var name = resolvePlaceholderOrIdentifier(definition.name);
-    var def = new FunctionDefinition(name, definition.params, definition.retType,
+    return new FunctionDefinition(name, definition.params, definition.retType,
         definition.expr.accept(this), definition.loc);
-    def.accept(symbols);
-    return def;
   }
 
   @Override
@@ -334,33 +302,24 @@ class MacroExpander
 
   @Override
   public BlockStatement visit(BlockStatement blockStatement) {
-    symbols = symbols.createChild();
     var statements = new ArrayList<>(blockStatement.statements);
     statements.replaceAll(statement -> statement.accept(this));
-    symbols = Objects.requireNonNull(symbols.parent);
     return new BlockStatement(statements, blockStatement.location);
   }
 
   @Override
   public Statement visit(LetStatement letStatement) {
-    symbols = symbols.createChild();
-    for (var identifier : letStatement.identifiers) {
-      symbols.defineConstant(identifier.name, identifier.loc);
-    }
-    letStatement.valueExpression = letStatement.valueExpression.accept(this);
-    letStatement.body = letStatement.body.accept(this);
-    symbols = Objects.requireNonNull(symbols.parent);
-    return letStatement;
+    var valueExpression = letStatement.valueExpression.accept(this);
+    var body = letStatement.body.accept(this);
+    return new LetStatement(letStatement.identifiers, valueExpression, body, letStatement.location);
   }
 
   @Override
   public Statement visit(IfStatement ifStatement) {
-    ifStatement.condition = ifStatement.condition.accept(this);
-    ifStatement.thenStmt = ifStatement.thenStmt.accept(this);
-    if (ifStatement.elseStmt != null) {
-      ifStatement.elseStmt = ifStatement.elseStmt.accept(this);
-    }
-    return ifStatement;
+    var condition = ifStatement.condition.accept(this);
+    var thenStmt = ifStatement.thenStmt.accept(this);
+    var elseStmt = ifStatement.elseStmt == null ? null : ifStatement.elseStmt.accept(this);
+    return new IfStatement(condition, thenStmt, elseStmt, ifStatement.location);
   }
 
   @Override

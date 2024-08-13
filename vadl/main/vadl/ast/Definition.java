@@ -421,12 +421,13 @@ class FormatDefinition extends Definition {
 
 class InstructionSetDefinition extends Definition {
   Identifier identifier;
-  @Nullable InstructionSetDefinition extending;
+  @Nullable
+  Identifier extending;
   List<Definition> definitions;
   SymbolTable symbolTable;
   SourceLocation loc;
 
-  InstructionSetDefinition(Identifier identifier, @Nullable InstructionSetDefinition extending,
+  InstructionSetDefinition(Identifier identifier, @Nullable Identifier extending,
                            List<Definition> statements, SymbolTable symbolTable,
                            SourceLocation location) {
     this.identifier = identifier;
@@ -452,7 +453,7 @@ class InstructionSetDefinition extends Definition {
     builder.append(prettyIndentString(indent));
     builder.append("instruction set architecture ").append(identifier.name);
     if (extending != null) {
-      builder.append(" extending ").append(extending.identifier.name);
+      builder.append(" extending ").append(extending.name);
     }
     builder.append(" = {\n");
     for (Definition definition : definitions) {

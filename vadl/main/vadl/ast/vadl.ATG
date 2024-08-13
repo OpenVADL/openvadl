@@ -171,19 +171,16 @@ PRODUCTIONS
   | functionDefinition<out def>
   .
 
-  instructionsetDefinition<out InstructionSetDefinition isaDef> (. pushScope(this); InstructionSetDefinition extending = null; .)
+  instructionsetDefinition<out InstructionSetDefinition isaDef>
   = INSTRUCTION SET ARCHITECTURE                                (. var startLocation = loc(); .)
-    identifier<out Identifier identifier>
+    identifier<out Identifier identifier>                       (. Identifier extending = null; .)
     [
       EXTENDING
-      identifier<out Identifier extendingId>                    (. extending = symbolTable.findIsa(extendingId); if (extending != null) symbolTable.copyFrom(extending.symbolTable); .)
+      identifier<out extending>
     ]
     SYM_EQ SYM_BRACE_OPEN
     isaDefinitionList<.out List<Definition> definitions.>
-    SYM_BRACE_CLOSE                                             (. isaDef = new InstructionSetDefinition(identifier, extending, definitions, symbolTable, startLocation.join(loc()));
-                                                                   popScope(this);
-                                                                   isaDef.accept(symbolTable);
-                                                                .)
+    SYM_BRACE_CLOSE                                             (. isaDef = new InstructionSetDefinition(identifier, extending, definitions, symbolTable, startLocation.join(loc())); .)
   .
 
   isaDefinitionList<. out List<Definition> definitions .>             (. definitions = new ArrayList<>(); .)
@@ -231,16 +228,18 @@ PRODUCTIONS
     expression<out Expr expr, BIN_OPS>           (. def = new ConstantDefinition(id, type, expr, startLocation.join(loc())); .)
   .
 
-  formatDefinition<out FormatDefinition def>                      (. List<FormatDefinition.FormatField> fields = new ArrayList<>();.)
-  = FORMAT                                                        (. var startLoc = loc(); .)
+  formatDefinition<out FormatDefinition def>                     (. List<FormatDefinition.FormatField> fields = new ArrayList<>();.)
+  = FORMAT                                                       (. var startLoc = loc(); .)
   identifierOrPlaceholder<out IdentifierOrPlaceholder id>
   SYM_COLON typeLiteral<out TypeLiteral type>
-  [SYM_EQ SYM_BRACE_OPEN                                          (. pushFormatScope(this, id); .)
-      formatField<out FormatDefinition.FormatField f1>            (. fields.add(f1); popScope(this); .)
-      {                                                           (. pushFormatScope(this, id); .)
-      SYM_COMMA formatField<out FormatDefinition.FormatField f2>  (. fields.add(f2); popScope(this); .)
-      }
-  SYM_BRACE_CLOSE]                                                (. def = new FormatDefinition(id, type, fields, startLoc.join(loc())); .)
+  [
+    SYM_EQ SYM_BRACE_OPEN
+    formatField<out FormatDefinition.FormatField f1>             (. fields.add(f1); .)
+    {
+      SYM_COMMA formatField<out FormatDefinition.FormatField f2> (. fields.add(f2); .)
+    }
+    SYM_BRACE_CLOSE
+  ]                                                              (. def = new FormatDefinition(id, type, fields, startLoc.join(loc())); .)
   .
 
   // TODO Auxiliary fields ": predicate" and ": encode" are missing
@@ -283,9 +282,8 @@ PRODUCTIONS
 
   instructionDefinition<out InstructionDefinition def>                      (. var startLocation = loc(); .)
   = INSTRUCTION identifierOrPlaceholder<out IdentifierOrPlaceholder id>
-    SYM_COLON identifierOrPlaceholder<out IdentifierOrPlaceholder formatId> (. pushFormatScope(this, formatId); .)
-    SYM_EQ statement<out Statement behavior>                                (. def = new InstructionDefinition(id, formatId, behavior, startLocation.join(loc()));
-                                                                               popScope(this); .)
+    SYM_COLON identifierOrPlaceholder<out IdentifierOrPlaceholder formatId>
+    SYM_EQ statement<out Statement behavior>                                (. def = new InstructionDefinition(id, formatId, behavior, startLocation.join(loc())); .)
   .
 
   identifierOrPlaceholder<out IdentifierOrPlaceholder id>           (. id = null; .)
@@ -322,14 +320,13 @@ PRODUCTIONS
 
   assemblyDefinition<out AssemblyDefinition def>                        (. List<IdentifierOrPlaceholder> ids = new ArrayList<>(); var start = loc(); .)
   = ASSEMBLY
-    identifierOrPlaceholder<out IdentifierOrPlaceholder id>             (. ids.add(id); pushInstructionScope(this, id); .)
+    identifierOrPlaceholder<out IdentifierOrPlaceholder id>             (. ids.add(id); .)
     {
       SYM_COMMA
-      identifierOrPlaceholder<out IdentifierOrPlaceholder additionalId> (. ids.add(additionalId); pushInstructionScope(this, id); .)
+      identifierOrPlaceholder<out IdentifierOrPlaceholder additionalId> (. ids.add(additionalId); .)
     }
     SYM_EQ
-    expression<out Expr expr, BIN_OPS>                                  (. def = new AssemblyDefinition(ids, expr, start.join(loc()));
-                                                                           popScope(this); .)
+    expression<out Expr expr, BIN_OPS>                                  (. def = new AssemblyDefinition(ids, expr, start.join(loc())); .)
   .
 
   stringLiteral<out StringLiteral lit>
@@ -370,8 +367,8 @@ PRODUCTIONS
     functionParameters<.out List<Parameter> params.>
     SYM_ARROW
     typeLiteral<out TypeLiteral retType>
-    SYM_EQ                             (. pushFunctionScope(this, params); .)
-    expression<out Expr expr, BIN_OPS> (. def = new FunctionDefinition(name, params, retType, expr, start.join(loc())); popScope(this); .)
+    SYM_EQ
+    expression<out Expr expr, BIN_OPS> (. def = new FunctionDefinition(name, params, retType, expr, start.join(loc())); .)
   .
 
   functionParameters<.out List<Parameter> params.>
@@ -403,10 +400,10 @@ PRODUCTIONS
                                                                     .)
   .
 
-  blockStatement<out BlockStatement block>     (. var start = loc(); pushScope(this); .)
+  blockStatement<out BlockStatement block>     (. var start = loc(); .)
   = SYM_BRACE_OPEN
     statementList<.out List<Statement> stmts.>
-    SYM_BRACE_CLOSE                            (. popScope(this); block = new BlockStatement(stmts, start.join(loc())); .)
+    SYM_BRACE_CLOSE                            (. block = new BlockStatement(stmts, start.join(loc())); .)
   .
 
   statementList<.out List<Statement> stmts.> (. stmts = new ArrayList<>(); .)
@@ -423,14 +420,14 @@ PRODUCTIONS
 
   letStatement<out Statement letStatement>
   = LET                                 (. var start = loc(); var identifiers = new ArrayList<Identifier>(); .)
-    identifier<out Identifier id>       (. pushScope(this); identifiers.add(id); symbolTable.defineConstant(id.name, loc()); .)
+    identifier<out Identifier id>       (. identifiers.add(id); .)
     {
       SYM_COMMA
       identifier<out Identifier nextId> (. identifiers.add(nextId); symbolTable.defineConstant(nextId.name, loc()); .)
     }
     SYM_EQ expression<out Expr valueExpr, BIN_OPS_EXCEPT_IN>
     SYM_IN
-    statement<out Statement body>       (. letStatement = new LetStatement(identifiers, valueExpr, body, start.join(loc())); popScope(this); .)
+    statement<out Statement body>       (. letStatement = new LetStatement(identifiers, valueExpr, body, start.join(loc())); .)
   .
 
   ifStatement<out Statement ifStatement> (. Statement elseStmt = null; var start = loc(); .)
@@ -446,12 +443,11 @@ PRODUCTIONS
   expression<out Expr expr, boolean[] allowedOps>
   = term<out expr>
     {
-      IF (allowedOps[la.kind] || la.kind == _SYM_AS || la.kind == _SYM_DOLLAR)
+      IF (allowedOps[la.kind] || la.kind == _SYM_AS || (la.kind == _SYM_DOLLAR && isMacroParamType(this, BasicSyntaxType.BinOp())))
       (
         binaryOperator<out Operator op>                                   (. var operator = new OperatorExpr(op, loc()); .)
         term<out Expr right>                                              (. expr = new BinaryExpr(expr, operator, right); .)
-      | IF (isMacroParamType(this, BasicSyntaxType.BinOp()))
-        maximumMacroExpr<out Node node>
+      | maximumMacroExpr<out Node node>
         term<out Expr right>                                              (. expr = new BinaryExpr(expr, (OperatorOrPlaceholder) node, right); .)
       | SYM_AS
         (
@@ -484,8 +480,6 @@ PRODUCTIONS
       }                                          (. subCalls.add(new CallExpr.SubCall(id, argsIndices)); .)
     }                                            (. if (expr instanceof IsSymExpr symExpr && (!argsIndices.isEmpty() || !subCalls.isEmpty()))
                                                       expr = new CallExpr(symExpr, argsIndices, subCalls, expr.location().join(loc()));
-                                                    if (expr instanceof IsCallExpr callExpr && !disableSymbolChecking)
-                                                      symbolTable.requireValue(callExpr);
                                                  .)
   .
 
@@ -622,15 +616,15 @@ PRODUCTIONS
 
   letExpression<out Expr expr>
   = LET                                 (. var start = loc(); var identifiers = new ArrayList<Identifier>(); .)
-    identifier<out Identifier id>       (. pushScope(this); identifiers.add(id); symbolTable.defineConstant(id.name, loc()); .)
+    identifier<out Identifier id>       (. identifiers.add(id); .)
     {
       SYM_COMMA
-      identifier<out Identifier nextId> (. identifiers.add(nextId); symbolTable.defineConstant(nextId.name, loc()); .)
+      identifier<out Identifier nextId> (. identifiers.add(nextId); .)
     }
     SYM_EQ
     expression<out Expr valueExpr, BIN_OPS_EXCEPT_IN>
     SYM_IN
-    expression<out Expr body, BIN_OPS>  (. expr = new LetExpr(identifiers, valueExpr, body, start.join(loc())); popScope(this); .)
+    expression<out Expr body, BIN_OPS>  (. expr = new LetExpr(identifiers, valueExpr, body, start.join(loc())); .)
   .
 
   ifExpression<out Expr expr>
