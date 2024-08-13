@@ -373,7 +373,8 @@ class SymbolTable {
       } else if (definition instanceof EncodingDefinition encoding) {
         var format = encoding.symbolTable().requireInstructionFormat(encoding.instrId());
         if (format != null) {
-          for (EncodingDefinition.FieldEncoding fieldEncoding : encoding.fieldEncodings().encodings) {
+          var encodings = encoding.fieldEncodings().encodings;
+          for (EncodingDefinition.FieldEncoding fieldEncoding : encodings) {
             var field = fieldEncoding.field();
             if (findField(format.definition, field.name) == null) {
               encoding.symbolTable()

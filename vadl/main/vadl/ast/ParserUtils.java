@@ -237,28 +237,20 @@ class ParserUtils {
     return type.isSubTypeOf(BasicSyntaxType.IsaDefs());
   }
 
+  /**
+   * Pre-parses the next few tokens to determine the type of the following placeholder / macro.
+   * Before: parser must be in a state where the lookahead token is the "$" symbol.
+   * After: parser is in the same state as before.
+   */
   static boolean isMacroParamType(Parser parser, SyntaxType syntaxType) {
     if (parser.la.kind != Parser._SYM_DOLLAR) {
       return false;
     }
-    var parserT = parser.t;
-    var parserLA = parser.la;
-    var scanner = parser.scanner;
-    var scannerT = scanner.t;
-    var scannerCh = scanner.ch;
-    var scannerCol = scanner.col;
-    var scannerLine = scanner.line;
-    var scannerCharPos = scanner.charPos;
-    var bufferPos = scanner.buffer.getPos();
+    var parserSnapshot = ParserSnapshot.create(parser);
+    var scannerSnapshot = ScannerSnapshot.create(parser.scanner);
     var maxExpr = parser.maximumMacroExpr();
-    parser.t = parserT;
-    parser.la = parserLA;
-    scanner.t = scannerT;
-    scanner.col = scannerCol;
-    scanner.line = scannerLine;
-    scanner.charPos = scannerCharPos;
-    scanner.buffer.setPos(bufferPos);
-    scanner.ch = scannerCh;
+    parserSnapshot.reset(parser);
+    scannerSnapshot.reset(parser.scanner);
 
     if (maxExpr instanceof MacroInstanceExpr macroInstanceExpr) {
       var macro = parser.symbolTable.getMacro(macroInstanceExpr.identifier.name);
@@ -274,5 +266,31 @@ class ParserUtils {
       }
     }
     return maxExpr.syntaxType().isSubTypeOf(syntaxType);
+  }
+
+  record ParserSnapshot(Token t, Token la) {
+    static ParserSnapshot create(Parser parser) {
+      return new ParserSnapshot(parser.t, parser.la);
+    }
+
+    void reset(Parser parser) {
+      parser.t = t;
+      parser.la = la;
+    }
+  }
+
+  record ScannerSnapshot(Token t, int ch, int col, int line, int charPos, int bufferPos) {
+    static ScannerSnapshot create(Scanner scanner) {
+      return new ScannerSnapshot(scanner.t, scanner.ch, scanner.col, scanner.line, scanner.charPos,
+          scanner.buffer.getPos());
+    }
+
+    void reset(Scanner scanner) {
+      scanner.t = t;
+      scanner.ch = ch;
+      scanner.col = col;
+      scanner.line = line;
+      scanner.buffer.setPos(bufferPos);
+    }
   }
 }

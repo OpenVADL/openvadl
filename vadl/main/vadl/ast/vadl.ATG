@@ -666,6 +666,8 @@ PRODUCTIONS
                                              else placeholder = new PlaceholderExpr(path, startloc.join(loc())); .)
   .
 
+  /// Parses the maximum macro expression (either instance or placeholder) from the parser.
+  /// Needs to be side-effect free, so the parser can be reset afterwards.
   maximumMacroExpr<out Node node>                                 (. node = null; .)
   = SYM_DOLLAR
     identifier<out Identifier id>
