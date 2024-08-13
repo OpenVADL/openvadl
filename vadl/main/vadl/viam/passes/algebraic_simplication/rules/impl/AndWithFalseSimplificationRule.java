@@ -24,7 +24,7 @@ public class AndWithFalseSimplificationRule implements AlgebraicSimplificationRu
       var matcher =
           new BuiltInMatcher(List.of(BuiltInTable.AND, BuiltInTable.ANDS),
               List.of(new AnyNodeMatcher(), new ConstantValueMatcher(
-                  Constant.Value.of(true))));
+                  Constant.Value.of(false))));
 
       var matchings = TreeMatcher.matches(Stream.of(node), matcher);
       if (!matchings.isEmpty()) {
