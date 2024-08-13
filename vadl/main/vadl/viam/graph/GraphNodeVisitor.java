@@ -154,7 +154,7 @@ public interface GraphNodeVisitor {
   void visit(SignExtendNode node);
 
   /**
-   * Visit {@link TruncateNode}
+   * Visit {@link TruncateNode}.
    */
   void visit(TruncateNode node);
 
