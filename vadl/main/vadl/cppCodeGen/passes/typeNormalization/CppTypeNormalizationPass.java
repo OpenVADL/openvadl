@@ -1,4 +1,4 @@
-package vadl.cppCodeGen.passes.type_normalization;
+package vadl.cppCodeGen.passes.typeNormalization;
 
 import java.io.IOException;
 import java.util.Arrays;
@@ -6,10 +6,6 @@ import java.util.HashSet;
 import java.util.IdentityHashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.concurrent.Callable;
-import java.util.function.BiConsumer;
-import java.util.function.BiFunction;
-import java.util.function.Supplier;
 import java.util.stream.Stream;
 import org.jetbrains.annotations.Nullable;
 import org.slf4j.Logger;
@@ -29,7 +25,6 @@ import vadl.viam.graph.Node;
 import vadl.viam.graph.dependency.ConstantNode;
 import vadl.viam.graph.dependency.SignExtendNode;
 import vadl.viam.graph.dependency.TruncateNode;
-import vadl.viam.graph.dependency.TypeCastNode;
 import vadl.viam.graph.dependency.UnaryNode;
 import vadl.viam.graph.dependency.ZeroExtendNode;
 

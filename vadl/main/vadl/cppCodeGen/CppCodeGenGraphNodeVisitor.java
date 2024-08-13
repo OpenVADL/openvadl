@@ -1,8 +1,8 @@
 package vadl.cppCodeGen;
 
-import vadl.cppCodeGen.passes.type_normalization.CppSignExtendNode;
-import vadl.cppCodeGen.passes.type_normalization.CppTruncateNode;
-import vadl.cppCodeGen.passes.type_normalization.CppZeroExtendNode;
+import vadl.cppCodeGen.passes.typeNormalization.CppSignExtendNode;
+import vadl.cppCodeGen.passes.typeNormalization.CppTruncateNode;
+import vadl.cppCodeGen.passes.typeNormalization.CppZeroExtendNode;
 import vadl.viam.graph.GraphNodeVisitor;
 
 /**

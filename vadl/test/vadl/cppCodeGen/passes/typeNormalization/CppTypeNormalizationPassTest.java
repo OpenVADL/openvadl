@@ -1,4 +1,4 @@
-package vadl.cppCodeGen.passes.type_normalization;
+package vadl.cppCodeGen.passes.typeNormalization;
 
 import static org.assertj.core.api.AssertionsForClassTypes.assertThat;
 

@@ -1,25 +1,25 @@
-package vadl.cppCodeGen.passes.type_normalization;
+package vadl.cppCodeGen.passes.typeNormalization;
 
 import java.util.List;
 import vadl.javaannotations.viam.DataValue;
 import vadl.types.DataType;
 import vadl.types.Type;
 import vadl.viam.graph.dependency.ExpressionNode;
-import vadl.viam.graph.dependency.SignExtendNode;
+import vadl.viam.graph.dependency.ZeroExtendNode;
 
 
 /**
  * VADL and CPP have not the same types. VADL supports arbitrary bit sizes whereas CPP does not.
  * The {@link CppTypeNormalizer} converts these types, however, we want to keep the original
- * type information. This class extends the {@link SignExtendNode}. So the {@link SignExtendNode}
- * contains the upcasted type and this {@link CppSignExtendNode} has a member for the
+ * type information. This class extends the {@link ZeroExtendNode}. So the {@link ZeroExtendNode}
+ * contains the upcasted type and this {@link CppZeroExtendNode} has a member for the
  * {@code originalType}.
  */
-public class CppSignExtendNode extends SignExtendNode {
+public class CppZeroExtendNode extends ZeroExtendNode {
   @DataValue
   private final Type originalType;
 
-  public CppSignExtendNode(ExpressionNode value,
+  public CppZeroExtendNode(ExpressionNode value,
                            DataType type,
                            Type originalType) {
     super(value, type);
