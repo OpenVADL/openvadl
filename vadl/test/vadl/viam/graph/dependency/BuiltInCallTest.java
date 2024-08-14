@@ -55,7 +55,7 @@ class BuiltInCallTest {
         DataType.unsignedInt(32));
 
     var throwable = assertThrows(ViamGraphError.class, operation::verifyState);
-    assertEquals("Number of arguments must match", throwable.getContextlessMessage());
+    assertEquals("Number of arguments must match, 2 vs 1", throwable.getContextlessMessage());
   }
 
   @Test
