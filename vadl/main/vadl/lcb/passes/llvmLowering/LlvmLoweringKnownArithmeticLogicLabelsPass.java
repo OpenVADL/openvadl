@@ -1,6 +1,7 @@
 package vadl.lcb.passes.llvmLowering;
 
 import java.io.IOException;
+import java.util.Collection;
 import java.util.HashMap;
 import java.util.IdentityHashMap;
 import java.util.List;
@@ -59,12 +60,13 @@ public class LlvmLoweringKnownArithmeticLogicLabelsPass extends LlvmLoweringPass
       throws IOException {
     Map<Instruction, LlvmLoweringIntermediateResult> llvmPatterns = new IdentityHashMap<>();
     var isaMatched =
-        (HashMap<InstructionLabel, Instruction>) passResults.get(new PassKey("IsaMatchingPass"));
+        (HashMap<InstructionLabel, List<Instruction>>) passResults.get(new PassKey("IsaMatchingPass"));
     ensure(isaMatched != null, "Cannot find pass results from isaMatched");
 
     supported.stream().map(isaMatched::get)
         .filter(Objects::nonNull)
-        .forEach(instruction -> {
+        .flatMap(Collection::stream)
+        .forEach(instruction-> {
           var visitor = new ReplaceWithLlvmSDNodesVisitor();
           var copy = instruction.behavior().copy();
           var nodes = copy.getNodes().toList();

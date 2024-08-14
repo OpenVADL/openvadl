@@ -1,19 +1,22 @@
 package vadl.test.lcb.passes;
 
+import static org.junit.Assert.assertTrue;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 
 import java.io.IOException;
 import java.util.HashMap;
+import java.util.List;
 import java.util.stream.Stream;
+import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.Arguments;
 import org.junit.jupiter.params.provider.MethodSource;
 import vadl.lcb.passes.isaMatching.InstructionLabel;
 import vadl.lcb.passes.isaMatching.IsaMatchingPass;
 import vadl.pass.PassKey;
-import vadl.pass.PassManager;
 import vadl.test.AbstractTest;
+import vadl.viam.Definition;
 import vadl.viam.Instruction;
 import vadl.viam.passes.FunctionInlinerPass;
 import vadl.viam.passes.typeCastElimination.TypeCastEliminationPass;
@@ -24,14 +27,24 @@ public class IsaMatchingPassTest extends AbstractTest {
 
   private static Stream<Arguments> getExpectedMatchings() {
     return Stream.of(
-        Arguments.of("ADD", InstructionLabel.ADD_64),
-        Arguments.of("ADDI", InstructionLabel.ADDI_64)
+        Arguments.of(List.of("ADD"), InstructionLabel.ADD_64),
+        Arguments.of(List.of("ADDI"), InstructionLabel.ADDI_64),
+        Arguments.of(List.of("BEQ"), InstructionLabel.BEQ),
+        Arguments.of(List.of("AND"), InstructionLabel.AND),
+        Arguments.of(List.of("SUB", "SUBW"), InstructionLabel.SUB),
+        Arguments.of(List.of("OR"), InstructionLabel.OR),
+        Arguments.of(List.of("XOR"), InstructionLabel.XOR),
+        Arguments.of(List.of("MUL", "MULW", "MULHSU", "MULH"), InstructionLabel.MUL),
+        Arguments.of(List.of("DIV", "DIVW"), InstructionLabel.SDIV),
+        Arguments.of(List.of("DIVU", "DIVUW"), InstructionLabel.UDIV),
+        Arguments.of(List.of("REMU", "REMUW"), InstructionLabel.UMOD),
+        Arguments.of(List.of("REM", "REMW"), InstructionLabel.SMOD)
     );
   }
 
   @ParameterizedTest
   @MethodSource("getExpectedMatchings")
-  void shouldFindMatchings(String expectedInstructionName, InstructionLabel label)
+  void shouldFindMatchings(List<String> expectedInstructionName, InstructionLabel label)
       throws IOException {
     // Given
     var spec = runAndGetViamSpecification("examples/rv3264im.vadl");
@@ -42,11 +55,12 @@ public class IsaMatchingPassTest extends AbstractTest {
         new FunctionInlinerPass().execute(passResults, spec));
 
     // When
-    HashMap<InstructionLabel, Instruction> matchings =
-        (HashMap<InstructionLabel, Instruction>) pass.execute(passResults, spec);
+    HashMap<InstructionLabel, List<Instruction>> matchings =
+        (HashMap<InstructionLabel, List<Instruction>>) pass.execute(passResults, spec);
 
     // Then
     assertFalse(matchings.isEmpty());
-    assertEquals(expectedInstructionName, matchings.get(label).name());
+    var result = matchings.get(label).stream().map(Definition::name).sorted().toList();
+    assertEquals(expectedInstructionName.stream().sorted().toList(), result);
   }
 }

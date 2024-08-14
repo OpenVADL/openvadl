@@ -16,4 +16,7 @@ public enum InstructionLabel {
   ADDI_32,
   ADDI_64,
   BEQ,
+  AND,
+  OR,
+  SUB, MUL, SUBB, SUBC, SDIV, UDIV, SMOD, UMOD, XOR,
 }

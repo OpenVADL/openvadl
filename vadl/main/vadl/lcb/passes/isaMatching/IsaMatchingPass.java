@@ -1,6 +1,9 @@
 package vadl.lcb.passes.isaMatching;
 
+import static vadl.types.BuiltInTable.*;
+
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.IdentityHashMap;
 import java.util.List;
@@ -14,6 +17,7 @@ import vadl.types.BuiltInTable;
 import vadl.types.Type;
 import vadl.viam.Instruction;
 import vadl.viam.InstructionSetArchitecture;
+import vadl.viam.Parameter;
 import vadl.viam.Register;
 import vadl.viam.Specification;
 import vadl.viam.graph.Graph;
@@ -56,26 +60,101 @@ public class IsaMatchingPass extends Pass {
     IdentityHashMap<Instruction, Graph> inlined =
         (IdentityHashMap<Instruction, Graph>) passResults.get(new PassKey("FunctionInlinerPass"));
     ensureNonNull(inlined, "Inlining data must exist");
-    HashMap<InstructionLabel, Instruction> matched = new HashMap<>();
+    HashMap<InstructionLabel, List<Instruction>> matched = new HashMap<>();
 
     viam.isas().forEach(isa -> isa.instructions().forEach(instruction -> {
       // Get inlined or the normal behavior if nothing was inlined.
       var behavior = inlined.getOrDefault(instruction, instruction.behavior());
 
       if (findAdd32Bit(behavior)) {
-        matched.put(InstructionLabel.ADD_32, instruction);
+        matched.put(InstructionLabel.ADD_32, List.of(instruction));
       } else if (findAdd64Bit(behavior)) {
-        matched.put(InstructionLabel.ADD_64, instruction);
+        matched.put(InstructionLabel.ADD_64, List.of(instruction));
       } else if (findAddWithImmediate32Bit(behavior)) {
-        matched.put(InstructionLabel.ADDI_32, instruction);
+        matched.put(InstructionLabel.ADDI_32, List.of(instruction));
       } else if (findAddWithImmediate64Bit(behavior)) {
-        matched.put(InstructionLabel.ADDI_64, instruction);
+        matched.put(InstructionLabel.ADDI_64, List.of(instruction));
+      } else if (findRR(behavior, SUB)) {
+        extend(matched, InstructionLabel.SUB, instruction);
+      } else if (findRR(behavior, List.of(SUBB, SUBSB))) {
+        extend(matched, InstructionLabel.SUBB, instruction);
+      } else if (findRR(behavior, List.of(SUBC, SUBSC))) {
+        extend(matched, InstructionLabel.SUBC, instruction);
+      } else if (findRR(behavior, List.of(AND, ADDS))) {
+        extend(matched, InstructionLabel.AND, instruction);
+      } else if (findRR(behavior, List.of(OR, ORS))) {
+        extend(matched, InstructionLabel.OR, instruction);
+      } else if (findRR(behavior, List.of(XOR, XORS))) {
+        extend(matched, InstructionLabel.XOR, instruction);
+      } else if (findRR(behavior, List.of(MUL, SMULL, SMULLS))) {
+        extend(matched, InstructionLabel.MUL, instruction);
+      } else if (findRR(behavior, List.of(SDIV, SDIVS))) {
+        extend(matched, InstructionLabel.SDIV, instruction);
+      } else if (findRR(behavior, List.of(UDIV, UDIVS))) {
+        extend(matched, InstructionLabel.UDIV, instruction);
+      } else if (findRR(behavior, List.of(SMOD, SMODS))) {
+        extend(matched, InstructionLabel.SMOD, instruction);
+      } else if (findRR(behavior, List.of(UMOD, UMODS))) {
+        extend(matched, InstructionLabel.UMOD, instruction);
       } else if (isa.pc() != null && findBeq(behavior, isa.pc())) {
-        matched.put(InstructionLabel.BEQ, instruction);
+        matched.put(InstructionLabel.BEQ, List.of(instruction));
       }
     }));
 
     return matched;
+  }
+
+  private void extend(HashMap<InstructionLabel, List<Instruction>> matched,
+                      InstructionLabel instructionLabel, Instruction instruction) {
+    matched.compute(instructionLabel, (k, v) -> {
+      if (v == null) {
+        return new ArrayList<>(List.of(instruction));
+      } else {
+        v.add(instruction);
+        return v;
+      }
+    });
+  }
+
+  private boolean findRR(Graph behavior, BuiltIn builtin) {
+    return findRR(behavior, List.of(builtin));
+  }
+
+  private boolean findRR(Graph behavior, List<BuiltIn> builtins) {
+    var matched = TreeMatcher.matches(behavior.getNodes(BuiltInCall.class).map(x -> x),
+        new BuiltInMatcher(builtins, List.of(
+            new AnyChildMatcher(new AnyReadRegFileMatcher()),
+            new AnyChildMatcher(new AnyReadRegFileMatcher())
+        )));
+
+    return !matched.isEmpty() && writesExactlyOneRegisterClass(behavior);
+  }
+
+
+  private boolean findRI(Graph behavior, BuiltIn builtin) {
+    var matched = TreeMatcher.matches(behavior.getNodes(BuiltInCall.class).map(x -> x),
+        new BuiltInMatcher(builtin, List.of(
+            new AnyChildMatcher(new AnyReadRegFileMatcher()),
+            new AnyChildMatcher(new FieldRefNodeMatcher())
+        )));
+
+    return !matched.isEmpty() && writesExactlyOneRegisterClass(behavior);
+  }
+
+  private boolean writesExactlyOneRegisterClass(Graph graph) {
+    var writesRegFiles = graph.getNodes(WriteRegFileNode.class).toList();
+    var writesReg = graph.getNodes(WriteRegNode.class).toList();
+    var writesMem = graph.getNodes(WriteMemNode.class).toList();
+    var readMem = graph.getNodes(ReadMemNode.class).toList();
+
+    if (writesRegFiles.size() != 1
+        || !writesReg.isEmpty()
+        || !writesMem.isEmpty()
+        || !readMem.isEmpty()) {
+      return false;
+    }
+
+    return true;
   }
 
   private boolean writesExactlyOneRegisterClassWithType(Graph graph, Type resultType) {
@@ -104,7 +183,7 @@ public class IsaMatchingPass extends Pass {
 
   private boolean findAdd(Graph behavior, int bitWidth) {
     var matched = TreeMatcher.matches(behavior.getNodes(BuiltInCall.class).map(x -> x),
-            new BuiltInMatcher(BuiltInTable.ADD, List.of(
+            new BuiltInMatcher(ADD, List.of(
                 new AnyChildMatcher(new AnyReadRegFileMatcher()),
                 new AnyChildMatcher(new AnyReadRegFileMatcher())
             )))
@@ -127,7 +206,7 @@ public class IsaMatchingPass extends Pass {
 
   private boolean findAddWithImmediate(Graph behavior, int bitWidth) {
     var matched = TreeMatcher.matches(behavior.getNodes(BuiltInCall.class).map(x -> x),
-            new BuiltInMatcher(List.of(BuiltInTable.ADD, BuiltInTable.ADDS),
+            new BuiltInMatcher(List.of(ADD, ADDS),
                 List.of(new AnyChildMatcher(new AnyReadRegFileMatcher()),
                     new AnyChildMatcher(new FieldRefNodeMatcher()))))
         .stream()
@@ -144,7 +223,7 @@ public class IsaMatchingPass extends Pass {
         behavior.getNodes(IfNode.class)
             .anyMatch(
                 x -> x.condition instanceof BuiltInCall
-                    && ((BuiltInCall) x.condition).builtIn() == BuiltInTable.EQU);
+                    && ((BuiltInCall) x.condition).builtIn() == EQU);
     var writesPc = behavior.getNodes(WriteRegNode.class)
         .anyMatch(x -> x.register() == pc);
 
