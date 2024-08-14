@@ -2,6 +2,7 @@ package vadl.viam.graph.dependency;
 
 import java.util.List;
 import vadl.javaannotations.viam.DataValue;
+import vadl.viam.Definition;
 import vadl.viam.Parameter;
 import vadl.viam.graph.GraphNodeVisitor;
 import vadl.viam.graph.Node;
@@ -48,5 +49,10 @@ public class FuncParamNode extends ParamNode {
   @Override
   public void accept(GraphNodeVisitor visitor) {
     visitor.visit(this);
+  }
+
+  @Override
+  public Definition definition() {
+    return parameter;
   }
 }

@@ -3,6 +3,7 @@ package vadl.viam.graph.dependency;
 import java.util.List;
 import vadl.javaannotations.viam.DataValue;
 import vadl.types.DataType;
+import vadl.viam.Definition;
 import vadl.viam.Format;
 import vadl.viam.graph.GraphNodeVisitor;
 import vadl.viam.graph.Node;
@@ -64,5 +65,10 @@ public class FieldRefNode extends ParamNode {
   @Override
   public void accept(GraphNodeVisitor visitor) {
     visitor.visit(this);
+  }
+
+  @Override
+  public Definition definition() {
+    return formatField;
   }
 }
