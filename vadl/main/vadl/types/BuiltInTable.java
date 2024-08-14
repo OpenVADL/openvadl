@@ -1141,7 +1141,7 @@ public class BuiltInTable {
    * The BuiltIn class represents a built-in function or process in VADL.
    * It contains information about the name, operator, type, and kind of the built-in.
    */
-  abstract public static class BuiltIn {
+  public abstract static class BuiltIn {
     private final String name;
     private final @Nullable String operator;
     private final RelationType signature;
@@ -1200,19 +1200,19 @@ public class BuiltInTable {
       // otherwise true.
       // overrides should further constraint the properties of the given types.
       return Streams.zip(argTypes.stream(), argTypeClasses().stream(),
-          (t, tc) -> {
-            if (t.getClass() == tc) {
+          (argType, argTypeClass) -> {
+            if (argType.getClass() == argTypeClass) {
               // if the class is the same, we know that the argument type is correct
               return true;
             }
-            if (t instanceof DataType tDataType) {
+            if (argType instanceof DataType argDataType) {
               // if the concrete type is a data type we try to construct a data type
               // with the same bit width from the built-ins argument type class.
               // if this fails, we know that the type can't be correct.
-              var constructedType = constructDataType(tc, tDataType.bitWidth());
+              var constructedType = constructDataType(argTypeClass, argDataType.bitWidth());
               if (constructedType != null) {
                 // check that the argument type can be trivially cast to the constructed type
-                return tDataType.isTrivialCastTo(tDataType);
+                return argDataType.isTrivialCastTo(argDataType);
               }
               return false;
             }
@@ -1232,7 +1232,7 @@ public class BuiltInTable {
      * @param argTypes concrete types of argument for call.
      * @return the concrete type that is return by this built-in
      */
-    abstract public Type returns(List<Type> argTypes);
+    public abstract Type returns(List<Type> argTypes);
 
 
     public final boolean matches(RelationType type) {
@@ -1334,16 +1334,16 @@ public class BuiltInTable {
     }
 
     public BuiltInBuilder takesData(BiFunction<DataType, DataType, Boolean> takesFunction) {
-      this.takesFunction = (args) -> args.size() == 2 &&
-          takesFunction.apply((DataType) args.get(0), (DataType) args.get(1));
+      this.takesFunction = (args) -> args.size() == 2
+          && takesFunction.apply((DataType) args.get(0), (DataType) args.get(1));
       return this;
     }
 
     public BuiltInBuilder takesData(
         TriFunction<DataType, DataType, DataType, Boolean> takesFunction) {
-      this.takesFunction = (args) -> args.size() == 3 &&
-          takesFunction.apply((DataType) args.get(0), (DataType) args.get(1),
-              (DataType) args.get(2));
+      this.takesFunction = (args) -> args.size() == 3
+          && takesFunction.apply((DataType) args.get(0), (DataType) args.get(1),
+          (DataType) args.get(2));
       return this;
     }
 
@@ -1358,17 +1358,22 @@ public class BuiltInTable {
     }
 
     public BuiltInBuilder takesAllWithSameBitWidths() {
-      takesData((args) -> !args.isEmpty() &&
-          args.stream().allMatch(a -> a.bitWidth() == args.get(0).bitWidth()));
+      takesData((args) -> !args.isEmpty()
+          && args.stream().allMatch(a -> a.bitWidth() == args.get(0).bitWidth()));
       return this;
     }
 
     public BuiltInBuilder takesFirstTwoWithSameBitWidths() {
-      takesData((args) -> args.size() >= 2 &&
-          args.get(0).bitWidth() == args.get(1).bitWidth());
+      takesData((args) -> args.size() >= 2
+          && args.get(0).bitWidth() == args.get(1).bitWidth());
       return this;
     }
 
+    public BuiltInBuilder returns(Type returnType) {
+      returns((args) -> returnType);
+      return this;
+    }
+    
     public BuiltInBuilder returns(Function<List<Type>, Type> returnsFunction) {
       this.returnsFunction = returnsFunction;
       return this;
@@ -1394,10 +1399,6 @@ public class BuiltInTable {
       return this;
     }
 
-    public BuiltInBuilder returns(Type returnType) {
-      returns((args) -> returnType);
-      return this;
-    }
 
     public BuiltInBuilder returnsFromFirstAsDataType(Function<DataType, Type> returnFunction) {
       returns((args) -> {

@@ -53,6 +53,7 @@ public class Function extends Definition implements WithBehavior {
   }
 
   @Override
+  @SuppressWarnings("LineLength")
   public void verify() {
     super.verify();
     ensure(behavior.isPureFunction(), "The function must be pure (no side effects)");
