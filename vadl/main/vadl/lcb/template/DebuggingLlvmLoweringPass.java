@@ -5,13 +5,11 @@ import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Optional;
-import org.jetbrains.annotations.Nullable;
 import vadl.gcb.valuetypes.ProcessorName;
 import vadl.lcb.config.LcbConfiguration;
-import vadl.lcb.passes.isa_matching.InstructionLabel;
+import vadl.lcb.passes.isaMatching.InstructionLabel;
 import vadl.pass.PassKey;
 import vadl.template.AbstractTemplateRenderingPass;
-import vadl.viam.Definition;
 import vadl.viam.Instruction;
 import vadl.viam.Specification;
 

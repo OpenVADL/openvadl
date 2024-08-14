@@ -1,4 +1,4 @@
-package vadl.lcb.passes.llvm_lowering;
+package vadl.lcb.passes.llvmLowering;
 
 /**
  * This interface indicates how a SelectionDagNode in LLVM should be lowered in TableGen.

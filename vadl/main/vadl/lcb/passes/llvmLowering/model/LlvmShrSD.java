@@ -1,6 +1,6 @@
-package vadl.lcb.passes.llvm_lowering.model;
+package vadl.lcb.passes.llvmLowering.model;
 
-import vadl.lcb.passes.llvm_lowering.LlvmNodeLowerable;
+import vadl.lcb.passes.llvmLowering.LlvmNodeLowerable;
 import vadl.types.BuiltInTable;
 import vadl.types.Type;
 import vadl.viam.graph.NodeList;

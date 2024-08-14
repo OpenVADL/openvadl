@@ -1,4 +1,4 @@
-package vadl.lcb.passes.llvm_lowering;
+package vadl.lcb.passes.llvmLowering;
 
 import java.io.IOException;
 import java.util.IdentityHashMap;
@@ -14,14 +14,12 @@ import vadl.pass.PassName;
 import vadl.viam.Instruction;
 import vadl.viam.Specification;
 import vadl.viam.graph.Graph;
-import vadl.viam.graph.Node;
 import vadl.viam.graph.control.AbstractBeginNode;
 import vadl.viam.graph.control.ControlNode;
 import vadl.viam.graph.control.EndNode;
 import vadl.viam.graph.dependency.DependencyNode;
 import vadl.viam.graph.dependency.FuncParamNode;
 import vadl.viam.graph.dependency.ReadRegFileNode;
-import vadl.viam.graph.dependency.WriteMemNode;
 import vadl.viam.graph.dependency.WriteRegFileNode;
 
 /**

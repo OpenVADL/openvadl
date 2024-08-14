@@ -1,4 +1,4 @@
-package vadl.lcb.passes.isa_matching;
+package vadl.lcb.passes.isaMatching;
 
 import java.io.IOException;
 import java.util.HashMap;
@@ -16,7 +16,6 @@ import vadl.viam.InstructionSetArchitecture;
 import vadl.viam.Register;
 import vadl.viam.Specification;
 import vadl.viam.graph.Graph;
-import vadl.viam.graph.Node;
 import vadl.viam.graph.control.IfNode;
 import vadl.viam.graph.dependency.BuiltInCall;
 import vadl.viam.graph.dependency.ReadMemNode;
@@ -25,11 +24,9 @@ import vadl.viam.graph.dependency.WriteRegFileNode;
 import vadl.viam.graph.dependency.WriteRegNode;
 import vadl.viam.matching.TreeMatcher;
 import vadl.viam.matching.impl.AnyChildMatcher;
-import vadl.viam.matching.impl.AnyConstantValueMatcher;
 import vadl.viam.matching.impl.AnyReadRegFileMatcher;
 import vadl.viam.matching.impl.BuiltInMatcher;
 import vadl.viam.matching.impl.FieldRefNodeMatcher;
-import vadl.viam.matching.impl.FuncCallMatcher;
 
 /**
  * A {@link InstructionSetArchitecture} contains a {@link List} of {@link Instruction}.

@@ -1,4 +1,4 @@
-package vadl.lcb.passes.isa_matching;
+package vadl.lcb.passes.isaMatching;
 
 import vadl.viam.Instruction;
 
