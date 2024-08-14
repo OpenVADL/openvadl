@@ -12,9 +12,11 @@ import org.junit.jupiter.params.provider.MethodSource;
 import vadl.lcb.passes.isaMatching.InstructionLabel;
 import vadl.lcb.passes.isaMatching.IsaMatchingPass;
 import vadl.pass.PassKey;
+import vadl.pass.PassManager;
 import vadl.test.AbstractTest;
 import vadl.viam.Instruction;
 import vadl.viam.passes.FunctionInlinerPass;
+import vadl.viam.passes.typeCastElimination.TypeCastEliminationPass;
 
 public class IsaMatchingPassTest extends AbstractTest {
 
@@ -35,7 +37,9 @@ public class IsaMatchingPassTest extends AbstractTest {
     var spec = runAndGetViamSpecification("examples/rv3264im.vadl");
     var passResults = new HashMap<PassKey, Object>();
 
-    new FunctionInlinerPass().execute(passResults, spec);
+    new TypeCastEliminationPass().execute(passResults, spec);
+    passResults.put(new PassKey("FunctionInlinerPass"),
+        new FunctionInlinerPass().execute(passResults, spec));
 
     // When
     HashMap<InstructionLabel, Instruction> matchings =
