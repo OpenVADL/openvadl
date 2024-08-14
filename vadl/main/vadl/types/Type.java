@@ -23,6 +23,16 @@ public abstract class Type {
    */
   public abstract String name();
 
+  /**
+   * Checks if the value with this type can be used as it has the other type.
+   * This is only relevant for {@link DataType}s, as they might have the same bit
+   * representation.
+   * For all other types, it is the same as {@code this == other}
+   */
+  public boolean isTrivialCastTo(Type other) {
+    return other == this;
+  }
+
   @Override
   public String toString() {
     return name();

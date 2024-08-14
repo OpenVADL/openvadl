@@ -18,6 +18,7 @@ public abstract class DataType extends Type {
    * @param other the type to potentially cast to.
    * @return true if it is possible, false otherwise
    */
+  @Override
   public final boolean isTrivialCastTo(Type other) {
     if (other instanceof DataType otherDataType) {
       var sameLength = otherDataType.bitWidth() == bitWidth();
