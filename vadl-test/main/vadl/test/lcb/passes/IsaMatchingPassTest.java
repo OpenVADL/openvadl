@@ -1,5 +1,6 @@
 package vadl.test.lcb.passes;
 
+import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
@@ -59,7 +60,8 @@ public class IsaMatchingPassTest extends AbstractTest {
         (HashMap<InstructionLabel, List<Instruction>>) pass.execute(passResults, spec);
 
     // Then
-    assertFalse(matchings.isEmpty());
+    Assertions.assertNotNull(matchings);
+    Assertions.assertFalse(matchings.isEmpty());
     var result = matchings.get(label).stream().map(Definition::name).sorted().toList();
     assertEquals(expectedInstructionName.stream().sorted().toList(), result);
   }

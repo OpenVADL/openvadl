@@ -12,6 +12,5 @@ public interface LcbGraphNodeVisitor extends GraphNodeVisitor {
    * and must not be reached.
    */
   default void visit(Node node) {
-    //throw new ViamError("Node type is not implemented.");
   }
 }

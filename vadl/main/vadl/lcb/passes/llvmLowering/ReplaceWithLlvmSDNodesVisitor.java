@@ -96,22 +96,18 @@ public class ReplaceWithLlvmSDNodesVisitor implements LcbGraphNodeVisitor {
 
   @Override
   public void visit(WriteRegNode writeRegNode) {
-    //throw new RuntimeException("not implemented");
   }
 
   @Override
   public void visit(WriteRegFileNode writeRegFileNode) {
-    //throw new RuntimeException("not implemented");
   }
 
   @Override
   public void visit(WriteMemNode writeMemNode) {
-    //throw new RuntimeException("not implemented");
   }
 
   @Override
   public void visit(SliceNode sliceNode) {
-    //throw new RuntimeException("not implemented");
   }
 
   @Override
@@ -122,17 +118,14 @@ public class ReplaceWithLlvmSDNodesVisitor implements LcbGraphNodeVisitor {
 
   @Override
   public void visit(ReadRegNode readRegNode) {
-    //throw new RuntimeException("not implemented");
   }
 
   @Override
   public void visit(ReadRegFileNode readRegFileNode) {
-    //throw new RuntimeException("not implemented");
   }
 
   @Override
   public void visit(ReadMemNode readMemNode) {
-    //throw new RuntimeException("not implemented");
   }
 
   @Override
@@ -142,7 +135,6 @@ public class ReplaceWithLlvmSDNodesVisitor implements LcbGraphNodeVisitor {
 
   @Override
   public void visit(FuncParamNode funcParamNode) {
-    //throw new RuntimeException("not implemented");
   }
 
   @Override

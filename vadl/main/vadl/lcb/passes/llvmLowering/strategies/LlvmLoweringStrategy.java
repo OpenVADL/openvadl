@@ -66,8 +66,16 @@ public interface LlvmLoweringStrategy {
 
   default List<TableGenInstructionOperand> getTableGenOutputOperands(Graph graph) {
     return getOutputOperands(graph)
-        .stream().map(operand -> new TableGenInstructionOperand(operand.registerFile().name(),
-            operand.nodeName()))
+        .stream().map(operand -> {
+          var address = (FieldRefNode) operand.address();
+
+          if (address == null || address.formatField() == null) {
+            throw new ViamError("address must not be null");
+          }
+
+          return new TableGenInstructionOperand(operand.registerFile().name(),
+              address.formatField().identifier.simpleName());
+        })
         .toList();
   }
 

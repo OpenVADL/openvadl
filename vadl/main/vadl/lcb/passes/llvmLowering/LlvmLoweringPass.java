@@ -33,7 +33,8 @@ public class LlvmLoweringPass extends Pass {
 
   public record LlvmLoweringIntermediateResult(Graph behavior,
                                                List<TableGenInstructionOperand> inputs,
-                                               List<TableGenInstructionOperand> outputs) {
+                                               List<TableGenInstructionOperand> outputs,
+                                               List<Graph> patterns) {
 
   }
 
