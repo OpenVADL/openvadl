@@ -247,6 +247,12 @@ class Ungrouper
   }
 
   @Override
+  public Definition visit(AliasDefinition definition) {
+    definition.value = definition.value.accept(this);
+    return definition;
+  }
+
+  @Override
   public Definition visit(PlaceholderDefinition definition) {
     ungroupAnnotations(definition);
     return definition;

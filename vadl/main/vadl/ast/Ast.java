@@ -4,6 +4,8 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
 import javax.annotation.Nullable;
+import vadl.error.VadlError;
+import vadl.error.VadlException;
 import vadl.utils.SourceLocation;
 
 /**
@@ -11,7 +13,8 @@ import vadl.utils.SourceLocation;
  */
 public class Ast {
   List<Definition> definitions = new ArrayList<>();
-  @Nullable SymbolTable rootSymbolTable;
+  @Nullable
+  SymbolTable rootSymbolTable;
 
   /**
    * Convert the tree back into sourcecode.
@@ -55,8 +58,9 @@ abstract class Node {
 
   SymbolTable symbolTable() {
     if (symbolTable == null) {
-      throw new IllegalStateException(
-          "Node " + this + " should have received a symbol table in a previous pass");
+      throw new VadlException(List.of(
+          new VadlError("Node " + this + " should have received a symbol table in a previous pass",
+              location(), null, null)));
     }
     return symbolTable;
   }

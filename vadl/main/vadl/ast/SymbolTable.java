@@ -250,6 +250,14 @@ class SymbolTable {
         for (EncodingDefinition.FieldEncoding fieldEncoding : encoding.fieldEncodings().encodings) {
           collectSymbols(encoding.symbolTable, fieldEncoding.value());
         }
+      } else if (definition instanceof AliasDefinition alias) {
+        var type = switch (alias.kind) {
+          case REGISTER -> SymbolType.REGISTER;
+          case REGISTER_FILE -> SymbolType.REGISTER_FILE;
+          case PROGRAM_COUNTER -> SymbolType.COUNTER;
+        };
+        symbols.defineSymbol(new ValuedSymbol(alias.id().name, null, type), alias.loc);
+        collectSymbols(symbols, alias.value);
       }
     }
 
@@ -382,6 +390,8 @@ class SymbolTable {
             }
           }
         }
+      } else if (definition instanceof AliasDefinition alias) {
+        verifyUsages(alias.value);
       }
     }
 

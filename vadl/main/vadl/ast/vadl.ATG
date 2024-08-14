@@ -82,6 +82,7 @@ TOKENS
   REGISTER = "register".
   MODEL = "model".
   FILE = "file".
+  ALIAS = "alias".
   LET = "let".
   KW_IF = "if".
   THEN = "then".
@@ -210,6 +211,7 @@ PRODUCTIONS
   | IF (la.kind == _REGISTER && scanner.Peek().kind == _FILE)
     registerFileDefinition<out def>
   | registerDefinition<out def>
+  | aliasDefinition<out def>
   .
 
   constantDefinition<out ConstantDefinition def> (. TypeLiteral type = null; .)
@@ -349,6 +351,34 @@ PRODUCTIONS
     SYM_ARROW typeLiteral<out TypeLiteral t2>         (. def = new RegisterFileDefinition(id, t1, t2, startLocation.join(t2.location())); .)
   .
 
+  aliasDefinition<out Definition def>
+  = ALIAS                                             (. var startLocation = loc(); AliasDefinition.Kind kind = null;
+                                                         TypeLiteral aliasType = null; TypeLiteral targetType = null;
+                                                         IdentifierOrPlaceholder id = null;
+                                                      .)
+    (
+      REGISTER                                        (. kind = AliasDefinition.Kind.REGISTER; .)
+      [ FILE                                          (. kind = AliasDefinition.Kind.REGISTER_FILE; .) ]
+      identifierOrPlaceholder<out id>
+      [
+        SYM_COLON
+        typeLiteral<out aliasType>
+        [
+          SYM_ARROW
+          typeLiteral<out targetType>
+        ]
+      ]
+    | PROGRAM COUNTER                                 (. kind = AliasDefinition.Kind.PROGRAM_COUNTER; .)
+      identifierOrPlaceholder<out id>
+      [
+        SYM_COLON
+        typeLiteral<out aliasType>
+      ]
+    )
+    SYM_EQ
+    callOrBinaryExpression<out Expr value, false>     (. def = new AliasDefinition(id, kind, aliasType, targetType, value, startLocation.join(loc())); .)
+  .
+
   usingDefinition<out Definition def>
   = USING                             (. var start = loc(); .)
     identifierOrPlaceholder<out IdentifierOrPlaceholder id>
@@ -357,9 +387,9 @@ PRODUCTIONS
   .
 
   functionDefinition<out Definition def>
-  = FUNCTION                           (. var start = loc(); .)
+  = FUNCTION                           (. var start = loc(); List<Parameter> params = new ArrayList<>(); .)
     identifierOrPlaceholder<out IdentifierOrPlaceholder name>
-    functionParameters<.out List<Parameter> params.>
+    [ functionParameters<.out params.> ]
     SYM_ARROW
     typeLiteral<out TypeLiteral retType>
     SYM_EQ

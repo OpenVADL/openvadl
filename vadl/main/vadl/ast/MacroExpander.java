@@ -374,6 +374,14 @@ class MacroExpander
   }
 
   @Override
+  public Definition visit(AliasDefinition definition) {
+    var id = resolvePlaceholderOrIdentifier(definition.id);
+    var value = definition.value.accept(this);
+    return new AliasDefinition(id, definition.kind, definition.aliasType, definition.targetType,
+        value, definition.loc);
+  }
+
+  @Override
   public Definition visit(PlaceholderDefinition definition) {
     var arg = Objects.requireNonNull(args.get(definition.placeholder.path().pathToString()));
     return (Definition) arg;

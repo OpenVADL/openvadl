@@ -49,6 +49,8 @@ interface DefinitionVisitor<R> {
 
   R visit(FunctionDefinition definition);
 
+  R visit(AliasDefinition definition);
+
   R visit(PlaceholderDefinition definition);
 
   R visit(MacroInstanceDefinition definition);
@@ -1252,6 +1254,106 @@ class FunctionDefinition extends Definition {
   }
 
   record Parameter(Identifier name, TypeLiteral type) {
+  }
+}
+
+class AliasDefinition extends Definition {
+  IdentifierOrPlaceholder id;
+  Kind kind;
+  @Nullable
+  TypeLiteral aliasType;
+  @Nullable
+  TypeLiteral targetType;
+  Expr value;
+  SourceLocation loc;
+
+  AliasDefinition(IdentifierOrPlaceholder id, Kind kind, @Nullable TypeLiteral aliasType,
+                  @Nullable TypeLiteral targetType, Expr value, SourceLocation location) {
+    this.id = id;
+    this.kind = kind;
+    this.aliasType = aliasType;
+    this.targetType = targetType;
+    this.value = value;
+    this.loc = location;
+  }
+
+  Identifier id() {
+    return (Identifier) id;
+  }
+
+  @Override
+  SourceLocation location() {
+    return loc;
+  }
+
+  @Override
+  SyntaxType syntaxType() {
+    return BasicSyntaxType.IsaDefs();
+  }
+
+  @Override
+  void prettyPrint(int indent, StringBuilder builder) {
+    builder.append(prettyIndentString(indent)).append("alias ");
+    switch (kind) {
+      case REGISTER -> builder.append("register ");
+      case REGISTER_FILE -> builder.append("register file ");
+      case PROGRAM_COUNTER -> builder.append("program counter ");
+    }
+    id.prettyPrint(0, builder);
+    if (aliasType != null) {
+      builder.append(" : ");
+      aliasType.prettyPrint(0, builder);
+      if (targetType != null) {
+        builder.append(" -> ");
+        targetType.prettyPrint(0, builder);
+      }
+    }
+    builder.append(" = ");
+    value.prettyPrint(0, builder);
+    builder.append("\n");
+  }
+
+  @Override
+  <R> R accept(DefinitionVisitor<R> visitor) {
+    return visitor.visit(this);
+  }
+
+  @Override
+  public String toString() {
+    return this.getClass().getSimpleName();
+  }
+
+  @Override
+  public boolean equals(Object o) {
+    if (this == o) {
+      return true;
+    }
+    if (o == null || getClass() != o.getClass()) {
+      return false;
+    }
+
+    var that = (AliasDefinition) o;
+    return Objects.equals(annotations, that.annotations)
+        && Objects.equals(id, that.id)
+        && Objects.equals(kind, that.kind)
+        && Objects.equals(aliasType, that.aliasType)
+        && Objects.equals(targetType, that.targetType)
+        && Objects.equals(value, that.value);
+  }
+
+  @Override
+  public int hashCode() {
+    int result = Objects.hashCode(annotations);
+    result = 31 * result + Objects.hashCode(id);
+    result = 31 * result + Objects.hashCode(kind);
+    result = 31 * result + Objects.hashCode(aliasType);
+    result = 31 * result + Objects.hashCode(targetType);
+    result = 31 * result + Objects.hashCode(value);
+    return result;
+  }
+
+  enum Kind {
+    REGISTER, REGISTER_FILE, PROGRAM_COUNTER
   }
 }
 

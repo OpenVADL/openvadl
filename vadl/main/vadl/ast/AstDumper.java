@@ -51,6 +51,8 @@ public class AstDumper
         expr.accept(this);
       } else if (child instanceof Statement statement) {
         statement.accept(this);
+      } else if (child == null) {
+        builder.append(indentString()).append("null");
       } else {
         throw new RuntimeException("NOT IMPLEMENTED");
       }
@@ -59,7 +61,7 @@ public class AstDumper
   }
 
   private void dumpChildren(Node... children) {
-    dumpChildren(Arrays.stream(children).toList());
+    dumpChildren(Arrays.asList(children));
   }
 
   @Override
@@ -264,6 +266,20 @@ public class AstDumper
       dumpChildren(param.name(), param.type());
     }
     dumpChildren(definition.retType, definition.expr);
+    return null;
+  }
+
+  @Override
+  public Void visit(AliasDefinition definition) {
+    dumpNode(definition);
+    dumpChildren(definition.id());
+    if (definition.aliasType != null) {
+      dumpChildren(definition.aliasType);
+    }
+    if (definition.targetType != null) {
+      dumpChildren(definition.targetType);
+    }
+    dumpChildren(definition.value);
     return null;
   }
 
