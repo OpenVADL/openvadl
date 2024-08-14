@@ -53,13 +53,15 @@ public class Function extends Definition implements WithBehavior {
   }
 
   @Override
+  @SuppressWarnings("LineLength")
   public void verify() {
     super.verify();
     ensure(behavior.isPureFunction(), "The function must be pure (no side effects)");
 
     var returnNode = behavior().getNodes(ReturnNode.class).findFirst().get();
-    ensure(returnNode.value().type() == returnType,
-        "The function's behavior does not return same type as signature suggests: %s", returnType);
+    ensure(returnNode.value().type().isTrivialCastTo(returnType),
+        "The function's behavior does not return a value that can be trivially cast to the as signature's result type: %s",
+        returnNode.value().type());
     behavior.verify();
   }
 

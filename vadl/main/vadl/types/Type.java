@@ -23,6 +23,16 @@ public abstract class Type {
    */
   public abstract String name();
 
+  /**
+   * Checks if the value with this type can be used as it has the other type.
+   * This is only relevant for {@link DataType}s, as they might have the same bit
+   * representation.
+   * For all other types, it is the same as {@code this == other}
+   */
+  public boolean isTrivialCastTo(Type other) {
+    return other == this;
+  }
+
   @Override
   public String toString() {
     return name();
@@ -263,6 +273,27 @@ public abstract class Type {
                                                       Type secondType,
                                                       Type returnType) {
     return concreteRelation(List.of(firstType, secondType), returnType);
+  }
+
+
+  /**
+   * Tries to construct a data type with a given bit-width from a given type class.
+   *
+   * <p>If it is not possible to construct the data type, it will return null.</p>
+   */
+  @Nullable
+  public static <T extends Type> DataType constructDataType(Class<T> typeClass, int bitWidth) {
+    if (typeClass == BoolType.class) {
+      return bitWidth == 1 ? Type.bool() : null;
+    } else if (typeClass == BitsType.class) {
+      return Type.bits(bitWidth);
+    } else if (typeClass == SIntType.class) {
+      return Type.signedInt(bitWidth);
+    } else if (typeClass == UIntType.class) {
+      return Type.unsignedInt(bitWidth);
+    } else {
+      return null;
+    }
   }
 
 

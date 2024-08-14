@@ -5,6 +5,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.stream.Collectors;
+import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.Nullable;
 import vadl.error.VadlError;
 import vadl.utils.SourceLocation;
@@ -117,6 +118,7 @@ public class ViamError extends RuntimeException {
    * @param args      the arguments to format the error message
    * @throws ViamError if the condition is false
    */
+  @Contract("false, _, _ -> fail")
   @FormatMethod
   public static void ensure(boolean condition, String format, Object... args) {
     if (!condition) {

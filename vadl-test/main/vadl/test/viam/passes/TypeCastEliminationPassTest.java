@@ -45,6 +45,7 @@ public class TypeCastEliminationPassTest extends AbstractTest {
             "passes/typeCastElimination/valid_type_cast_elimination.vadl");
     // execute type cast elimination
     new TypeCastEliminationPass().execute(Map.of(), validFrontend.getViam());
+    ViamVerifier.verifyAllIn(validFrontend.getViam());
   }
 
 
@@ -56,7 +57,6 @@ public class TypeCastEliminationPassTest extends AbstractTest {
     var returnNode = getSingleNode(behavior, ReturnNode.class);
     var paramNode = getSingleNode(behavior, FuncParamNode.class);
     assertEquals(returnNode.returnType(), paramNode.type());
-    behavior.verify();
   }
 
   static Stream<Arguments> testTrivial_Source() {

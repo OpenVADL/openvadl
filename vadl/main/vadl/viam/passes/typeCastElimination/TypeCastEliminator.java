@@ -31,8 +31,7 @@ import vadl.viam.passes.GraphProcessor;
  * If the target type ...
  * <ol>
  * <li>has the <b>same bit representation</b> as the source type,
- * the type cast is removed without a replacement. However, the result type of the source node
- * is changed to the target type. See {@link DataType#isTrivialCastTo(Type)}
+ * the type cast is removed without a replacement. See {@link DataType#isTrivialCastTo(Type)}
  * for an more concrete definition of nodes with <i>same bit representations</i>.</li>
  * <li>has a <b>smaller bit-width</b> than the source type,
  * the type cast is replaced by a {@link TruncateNode}. The result type of the new node
@@ -111,9 +110,7 @@ public class TypeCastEliminator extends GraphProcessor {
     // check the different rules and apply them accordingly
     if (inputType.isTrivialCastTo(castType)) {
       // match 1. rule: same bit representation
-      // -> set the cast type as type of the source node
-      source.setType(castType);
-      // remove the node and remap edges
+      // -> remove the node and remap edges
       castNode.replaceByNothingAndDelete();
       // no new node was created
       replacement = null;

@@ -90,20 +90,19 @@ public class BuiltInCall extends AbstractFunctionCallNode implements Canonicaliz
   public void verifyState() {
     super.verifyState();
     var argTypeClasses = builtIn.signature().argTypeClasses();
-    var resultTypeClass = builtIn.signature().resultTypeClass();
 
     ensure(argTypeClasses.size() == this.arguments().size(),
-        "Number of arguments must match");
+        "Number of arguments must match, %s vs %s", argTypeClasses.size(), this.arguments().size());
 
-    var actualArgTypes = this.arguments().stream().map(x -> x.type().getClass()).toList();
-    var argsMatched =
-        Streams.zip(actualArgTypes.stream(),
-            argTypeClasses.stream(),
-            Object::equals
-        ).allMatch(isSameClass -> isSameClass);
-    ensure(argsMatched, "Arguments' types do not match with the type of the builtin. Args: %s",
+    var actualArgTypes = this.arguments().stream().map(ExpressionNode::type).toList();
+    ensure(builtIn.takes(actualArgTypes),
+        "Arguments' types do not match with the type of the builtin. Args: %s",
         actualArgTypes);
-    ensure(resultTypeClass.equals(this.type().getClass()), "Result type does not match");
+
+    var builtInResultType = builtIn.returns(actualArgTypes);
+    ensure(builtInResultType.isTrivialCastTo(this.type()),
+        "BuiltIns' result type does not match node's type. %s vs %s", builtInResultType, this.type()
+    );
   }
 
   @Override

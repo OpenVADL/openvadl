@@ -64,18 +64,11 @@ public abstract class Definition {
   @FormatMethod
   @Contract("false, _, _-> fail")
   public void ensure(boolean condition, String message, Object... args) {
-    if (condition) {
-      return;
+    if (!condition) {
+      throw new ViamError(message.formatted(args))
+          .shrinkStacktrace(1)
+          .addContext(this);
     }
-    throwWithContext(message, args);
-  }
-
-  @FormatMethod
-  @Contract("_, _-> fail")
-  protected void throwWithContext(String message, Object... args) {
-    throw new ViamError(message.formatted(args))
-        .shrinkStacktrace(1)
-        .addContext(this);
   }
 
   public abstract void accept(DefinitionVisitor visitor);
