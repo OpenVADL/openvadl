@@ -280,6 +280,12 @@ public class AstDumper
   }
 
   @Override
+  public Void visit(MacroMatchDefinition definition) {
+    dumpNode(definition);
+    return null;
+  }
+
+  @Override
   public Void visit(CallExpr expr) {
     dumpNode(expr);
     dumpChildren((Expr) expr.target);
@@ -339,6 +345,12 @@ public class AstDumper
   }
 
   @Override
+  public Void visit(MacroMatchExpr expr) {
+    dumpNode(expr);
+    return null;
+  }
+
+  @Override
   public Void visit(BlockStatement blockStatement) {
     dumpNode(blockStatement);
     dumpChildren(blockStatement.statements);
@@ -381,6 +393,12 @@ public class AstDumper
   @Override
   public Void visit(MacroInstanceStatement macroInstanceStatement) {
     dumpNode(macroInstanceStatement);
+    return null;
+  }
+
+  @Override
+  public Void visit(MacroMatchStatement macroMatchStatement) {
+    dumpNode(macroMatchStatement);
     return null;
   }
 }

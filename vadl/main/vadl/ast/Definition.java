@@ -52,6 +52,8 @@ interface DefinitionVisitor<R> {
   R visit(PlaceholderDefinition definition);
 
   R visit(MacroInstanceDefinition definition);
+
+  R visit(MacroMatchDefinition definition);
 }
 
 class ConstantDefinition extends Definition {
@@ -886,7 +888,7 @@ class InstructionDefinition extends Definition {
 }
 
 sealed interface FieldEncodingsOrPlaceholder
-    permits EncodingDefinition.FieldEncodings, PlaceholderExpr, MacroInstanceExpr {
+    permits EncodingDefinition.FieldEncodings, PlaceholderExpr, MacroInstanceExpr, MacroMatchExpr {
 
 }
 
@@ -1256,10 +1258,12 @@ class FunctionDefinition extends Definition {
 final class PlaceholderDefinition extends Definition {
 
   IsCallExpr placeholder;
+  SyntaxType type;
   SourceLocation loc;
 
-  PlaceholderDefinition(IsCallExpr placeholder, SourceLocation loc) {
+  PlaceholderDefinition(IsCallExpr placeholder, SyntaxType type, SourceLocation loc) {
     this.placeholder = placeholder;
+    this.type = type;
     this.loc = loc;
   }
 
@@ -1275,7 +1279,7 @@ final class PlaceholderDefinition extends Definition {
 
   @Override
   SyntaxType syntaxType() {
-    return BasicSyntaxType.IsaDefs();
+    return type;
   }
 
   @Override
@@ -1351,6 +1355,56 @@ final class MacroInstanceDefinition extends Definition {
     int result = macro.hashCode();
     result = 31 * result + arguments.hashCode();
     return result;
+  }
+}
+
+/**
+ * An internal temporary placeholder of a macro-level "match" construct.
+ * This node should never leave the parser.
+ */
+final class MacroMatchDefinition extends Definition {
+  MacroMatch macroMatch;
+
+  MacroMatchDefinition(MacroMatch macroMatch) {
+    this.macroMatch = macroMatch;
+  }
+
+  @Override
+  <R> R accept(DefinitionVisitor<R> visitor) {
+    return visitor.visit(this);
+  }
+
+  @Override
+  public SourceLocation location() {
+    return macroMatch.sourceLocation();
+  }
+
+  @Override
+  SyntaxType syntaxType() {
+    return macroMatch.resultType();
+  }
+
+  @Override
+  public void prettyPrint(int indent, StringBuilder builder) {
+    macroMatch.prettyPrint(indent, builder);
+  }
+
+  @Override
+  public boolean equals(Object o) {
+    if (this == o) {
+      return true;
+    }
+    if (o == null || getClass() != o.getClass()) {
+      return false;
+    }
+
+    MacroMatchDefinition that = (MacroMatchDefinition) o;
+    return macroMatch.equals(that.macroMatch);
+  }
+
+  @Override
+  public int hashCode() {
+    return macroMatch.hashCode();
   }
 }
 

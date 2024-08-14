@@ -6,7 +6,6 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
-import javax.annotation.Nullable;
 
 import vadl.ast.EncodingDefinition.FieldEncoding;
 import vadl.ast.FunctionDefinition.Parameter;
@@ -92,6 +91,7 @@ TOKENS
   TRUE = "true".
   FALSE = "false".
   EXTENDING = "extending".
+  MATCH = "match".
 
   SYM_IN = "in".
   SYM_AS = "as".
@@ -125,8 +125,10 @@ TOKENS
   SYM_LOGAND = "&&".
   SYM_ASSIGN = ":=".
   SYM_DOLLAR = "$".
+  SYM_BIGARROW = "=>".
   SYM_SEMICOLON = ";".
   SYM_NAMESPACE = "::".
+  SYM_UNDERSCORE = "_".
   SYM_PAREN_OPEN = "(".
   SYM_BRACK_OPEN = "[".
   SYM_BRACE_OPEN = "{".
@@ -173,13 +175,14 @@ PRODUCTIONS
   .
 
   isaDefinitionList<. out List<Definition> definitions .>             (. definitions = new ArrayList<>(); .)
-  = {(
+  = {
     annotations<.out List<Annotation> annotations.>
     isaDefinition<out Definition def>                                 (. def.annotations.annotations().addAll(annotations); definitions.add(def); .)
   | macroDef
-  | macroInstanceOrPlaceholder<out Node n, BasicSyntaxType.IsaDefs()> (. if (n instanceof DefinitionList defs) definitions.addAll(defs.items);
+  | // IF (isMacroReplacementOfType(this, BasicSyntaxType.IsaDefs()))
+    macroReplacement<out Node n>                                      (. if (n instanceof DefinitionList defs) definitions.addAll(defs.items);
                                                                          else definitions.add((Definition) n); .)
-  )}
+  }
   .
 
   annotations<.out List<Annotation> annotations.> (. annotations = new ArrayList<>(); .)
@@ -275,20 +278,22 @@ PRODUCTIONS
     SYM_EQ statement<out Statement behavior>                                (. def = new InstructionDefinition(id, formatId, behavior, startLocation.join(loc())); .)
   .
 
-  identifierOrPlaceholder<out IdentifierOrPlaceholder id>           (. id = null; .)
+  identifierOrPlaceholder<out IdentifierOrPlaceholder id> (. id = null; .)
   = identifier<out id>
-  | macroInstanceOrPlaceholder<out Node node, BasicSyntaxType.Id()> (. id = (IdentifierOrPlaceholder) node; .)
+  | // IF (isMacroReplacementOfType(this, BasicSyntaxType.Id()))
+    macroReplacement<out Node node>                       (. id = (IdentifierOrPlaceholder) node; .)
   .
 
-  encodingDefinition<out EncodingDefinition def>                     (. var startLocation = loc(); .)
-  = ENCODING                                                         (. FieldEncodingsOrPlaceholder encodings = null; .)
+  encodingDefinition<out EncodingDefinition def> (. var startLocation = loc(); .)
+  = ENCODING                                     (. FieldEncodingsOrPlaceholder encodings = null; .)
     identifierOrPlaceholder<out IdentifierOrPlaceholder instrId>
     SYM_EQ SYM_BRACE_OPEN
     (
       encodingDefinitionList<out encodings>
-    | macroInstanceOrPlaceholder<out Node n, BasicSyntaxType.Encs()> (. encodings = (FieldEncodingsOrPlaceholder) n; .)
+    | // IF (isMacroReplacementOfType(this, BasicSyntaxType.Encs()))
+      macroReplacement<out Node n>               (. encodings = (FieldEncodingsOrPlaceholder) n; .)
     )
-    SYM_BRACE_CLOSE                                                  (. def = new EncodingDefinition(instrId, encodings, startLocation.join(loc())); .)
+    SYM_BRACE_CLOSE                              (. def = new EncodingDefinition(instrId, encodings, startLocation.join(loc())); .)
   .
 
   encodingDefinitionList<out EncodingDefinition.FieldEncodings encs> (. var entries = new ArrayList<EncodingDefinition.FieldEncoding>(); .)
@@ -299,12 +304,13 @@ PRODUCTIONS
     }                                                                (. encs = new EncodingDefinition.FieldEncodings(entries); .)
   .
 
-  encodingEntry<out FieldEncoding enc>                  (. Expr expr = null; .)
+  encodingEntry<out FieldEncoding enc> (. Expr expr = null; .)
   = identifier<out Identifier id>
     SYM_EQ (
       valLiteral<out expr>
-    | placeholder<out Node node, BasicSyntaxType.Val()> (. expr = (Expr) node; .)
-    )                                                   (. enc = new FieldEncoding(id, expr); .)
+    | // IF (isMacroReplacementOfType(this, BasicSyntaxType.Val()))
+      macroReplacement<out Node node>  (. expr = (Expr) node; .)
+    )                                  (. enc = new FieldEncoding(id, expr); .)
   .
 
   assemblyDefinition<out AssemblyDefinition def>                        (. List<IdentifierOrPlaceholder> ids = new ArrayList<>(); var start = loc(); .)
@@ -382,11 +388,10 @@ PRODUCTIONS
   = letStatement<out statement>
   | ifStatement<out statement>
   | blockStatement<out statement>
-  | IF (la.kind == _identifierToken || isMacroParamType(this, BasicSyntaxType.CallEx()))
+  | IF (la.kind == _identifierToken || isMacroReplacementOfType(this, BasicSyntaxType.CallEx()))
     assignment<out statement>
-  | macroInstanceOrPlaceholder<out Node s, BasicSyntaxType.Stats()> (. if (s instanceof Statement stmt) statement = stmt;
-                                                                       else if (s instanceof StatementList stmts) statement = new BlockStatement(stmts.items, stmts.location());
-                                                                    .)
+  | // IF (isMacroReplacementOfType(this, BasicSyntaxType.Stmts()))
+    macroReplacement<out Node n>     (. statement = (Statement) n; .)
   .
 
   blockStatement<out BlockStatement block>     (. var start = loc(); .)
@@ -399,12 +404,13 @@ PRODUCTIONS
   = { statement<out Statement statement>     (. stmts.add(statement); .) }
   .
 
-  assignment<out Statement statement>                                    (. Expr target = null; .)
+  assignment<out Statement statement>  (. Expr target = null; .)
   = ( callOrBinaryExpression<out target, false>
-    | macroInstanceOrPlaceholder<out Node t, BasicSyntaxType.CallEx()>   (. target = (Expr) t; .)
+    | // IF (isMacroReplacementOfType(this, BasicSyntaxType.CallEx()))
+      macroReplacement<out Node node>  (. target = (Expr) node; .)
     )
     SYM_ASSIGN
-    expression<out Expr expr, BIN_OPS>                                   (. statement = new AssignmentStatement(target, expr); .)
+    expression<out Expr expr, BIN_OPS> (. statement = new AssignmentStatement(target, expr); .)
   .
 
   letStatement<out Statement letStatement>
@@ -432,19 +438,20 @@ PRODUCTIONS
   expression<out Expr expr, boolean[] allowedOps>
   = term<out expr>
     {
-      IF (allowedOps[la.kind] || la.kind == _SYM_AS || (la.kind == _SYM_DOLLAR && isMacroParamType(this, BasicSyntaxType.BinOp())))
+      IF (allowedOps[la.kind] || la.kind == _SYM_AS || (la.kind == _SYM_DOLLAR && isMacroReplacementOfType(this, BasicSyntaxType.BinOp())))
       (
-        binaryOperator<out Operator op>                                   (. var operator = new OperatorExpr(op, loc()); .)
-        term<out Expr right>                                              (. expr = new BinaryExpr(expr, operator, right); .)
+        binaryOperator<out Operator op>                     (. var operator = new OperatorExpr(op, loc()); .)
+        term<out Expr right>                                (. expr = new BinaryExpr(expr, operator, right); .)
       | maximumMacroExpr<out Node node>
-        term<out Expr right>                                              (. expr = new BinaryExpr(expr, (OperatorOrPlaceholder) node, right); .)
+        term<out Expr right>                                (. expr = new BinaryExpr(expr, (OperatorOrPlaceholder) node, right); .)
       | SYM_AS
         (
-          symbolOrBinaryExpression<out Expr symOrBin, true>               (. expr = reorderCastExpr(expr, symOrBin); .)
-        | macroInstanceOrPlaceholder<out Node node, BasicSyntaxType.Id()> (. expr = reorderCastExpr(expr, (Expr) node); .)
+          symbolOrBinaryExpression<out Expr symOrBin, true> (. expr = reorderCastExpr(expr, symOrBin); .)
+        | // IF (isMacroReplacementOfType(this, BasicSyntaxType.IsaDefs()))
+          macroReplacement<out Node node>                   (. expr = reorderCastExpr(expr, (Expr) node); .)
         )
       )
-    }                                                                     (. expr = reorderBinary(this, expr); .)
+    }                                                       (. expr = reorderBinary(this, expr); .)
   .
 
   /// Call expressions of form "a::b<3>().c()".
@@ -466,7 +473,7 @@ PRODUCTIONS
       {
         IF (la.kind == _SYM_PAREN_OPEN)
         arguments<.out List<Expr> args.>         (. subCallArgsIndices.add(args); .)
-      }                                          (. subCalls.add(new CallExpr.SubCall(id, argsIndices)); .)
+      }                                          (. subCalls.add(new CallExpr.SubCall(id, subCallArgsIndices)); .)
     }                                            (. if (expr instanceof IsSymExpr symExpr && (!argsIndices.isEmpty() || !subCalls.isEmpty()))
                                                       expr = new CallExpr(symExpr, argsIndices, subCalls, expr.location().join(loc()));
                                                  .)
@@ -544,14 +551,15 @@ PRODUCTIONS
   | SYM_TILDE (. op = UnaryOperator.COMPLEMENT; .)
   .
 
-  term<out Expr expr>                            (. expr = null; .)
+  term<out Expr expr>            (. expr = null; .)
   = literal<out expr>
   | callOrBinaryExpression<out expr, true>
   | groupedExpression<out expr>
   | unary<out expr>
   | ifExpression<out expr>
   | letExpression<out expr>
-  | macroInstanceOrPlaceholder<out Node node, BasicSyntaxType.Ex()> (. expr = (Expr) node; .)
+  | // IF (isMacroReplacementOfType(this, BasicSyntaxType.Ex()))
+    macroReplacement<out Node n> (. expr = (Expr) n; .)
   .
 
   groupedExpression<out GroupedExpr expr> (. expr = new GroupedExpr(new ArrayList<>(), loc()); .)
@@ -591,7 +599,6 @@ PRODUCTIONS
   identifierPath<out IsId path>                                 (. List<IdentifierOrPlaceholder> segments = new ArrayList<>(); .)
   = identifier<out Identifier id>                               (. segments.add(id); .)
     {
-      IF (la.kind == _SYM_NAMESPACE)
       SYM_NAMESPACE
       identifierOrPlaceholder<out IdentifierOrPlaceholder next> (. segments.add(next); .)
     }                                                           (. if (segments.size() == 1) path = id;
@@ -625,10 +632,11 @@ PRODUCTIONS
 
   // -- PRIMITIVES ---------------------------------------------------------------------------------------------------
 
-  typeLiteralOrPlaceholder<out TypeLiteralOrPlaceholder type>    (. type = null; .)
+  typeLiteralOrPlaceholder<out TypeLiteralOrPlaceholder type> (. type = null; .)
   = typeLiteral<out type>
-  | macroInstanceOrPlaceholder<out Node n, BasicSyntaxType.Id()> (. if (n instanceof PlaceholderExpr p) type = p;
-                                                                    else type = new TypeLiteral((IsId) n, List.of(), n.location()); .)
+  | // IF (isMacroReplacementOfType(this, BasicSyntaxType.Id()))
+    macroReplacement<out Node n>                              (. if (n instanceof PlaceholderExpr p) type = p;
+                                                                 else type = new TypeLiteral((IsId) n, List.of(), n.location()); .)
   .
 
   typeLiteral<out TypeLiteral type>
@@ -655,82 +663,57 @@ PRODUCTIONS
   .
 
   // -- MACROS -------------------------------------------------------------------------------------------------------
-  macroInstanceOrPlaceholder<out Node body, SyntaxType requiredType> (. body = null; .)
-  = IF (!insideMacro) macroInstance<out body, requiredType>
-  | placeholder<out body, requiredType>
+
+  macroReplacement<out Node body> (. body = null; .)
+  = macroMatch<out body>
+  | maximumMacroExpr<out body>
   .
 
-  placeholder<out Node placeholder, SyntaxType requiredType>
-  = SYM_DOLLAR                            (. var startLoc = loc(); .)
-  identifierPath<out IsId path>           (. placeholder = createPlaceholder(requiredType, path, startLoc.join(loc())); .)
+  macroMatch<out Node node>
+  = MATCH                                (. var start = loc(); .)
+    SYM_COLON
+    basicSyntaxType<out SyntaxType type>
+    SYM_PAREN_OPEN                       (. var choices = new ArrayList<MacroMatch.Choice>(); .)
+    macroReplacement<out Node candidate>
+    (SYM_EQ | SYM_NEQ )                  (. var comparison = t.kind == _SYM_EQ ? MacroMatch.Comparison.EQUAL : MacroMatch.Comparison.NOT_EQUAL; .)
+    macroBody<out Node match, candidate.syntaxType()>
+    SYM_BIGARROW
+    macroBody<out Node result, type>     (. choices.add(new MacroMatch.Choice(candidate, comparison, match, result)); .)
+    SYM_SEMICOLON
+    {
+      macroReplacement<out candidate>
+      (SYM_EQ | SYM_NEQ )                (. comparison = t.kind == _SYM_EQ ? MacroMatch.Comparison.EQUAL : MacroMatch.Comparison.NOT_EQUAL; .)
+      macroBody<out match, candidate.syntaxType()>
+      SYM_BIGARROW
+      macroBody<out result, type>        (. choices.add(new MacroMatch.Choice(candidate, comparison, match, result)); .)
+      SYM_SEMICOLON
+    }
+    SYM_UNDERSCORE
+    SYM_BIGARROW
+    macroBody<out Node defaultChoice, type>
+    SYM_PAREN_CLOSE                      (. node = createMacroMatch(type, choices, defaultChoice, start.join(loc())); .)
   .
 
   /// Parses the maximum macro expression (either instance or placeholder) from the parser.
   /// Needs to be side-effect free, so the parser can be reset afterwards.
-  maximumMacroExpr<out Node node>                                 (. node = null; .)
+  maximumMacroExpr<out Node node>                        (. node = null; .)
   = SYM_DOLLAR
-    identifier<out Identifier id>
+    identifier<out Identifier id>                        (. var macro = symbolTable.getMacro(id.name); .)
     [
-      IF (symbolTable.getMacro(id.name) != null)                  (. var macro = symbolTable.getMacro(id.name); .)
-      SYM_PAREN_OPEN                                              (. var params = macro.params().iterator(); .)
-                                                                  (. var args = new ArrayList<Node>(); .)
+      IF (macro != null)
+      SYM_PAREN_OPEN                                     (. var params = macro.params().iterator(); .)
+                                                         (. var args = new ArrayList<Node>(); .)
       (
         IF (!params.hasNext())
         SYM_PAREN_CLOSE
-      | macroInstanceParam<out Node arg1, params.next().type()>   (. args.add(arg1); .)
+      | macroBody<out Node arg1, params.next().type()>   (. args.add(arg1); .)
         {
           SYM_SEMICOLON
-          macroInstanceParam<out Node arg2, params.next().type()> (. args.add(arg2); .)
+          macroBody<out Node arg2, params.next().type()> (. args.add(arg2); .)
         }
         SYM_PAREN_CLOSE
-      )                                                           (. node = createMacroInstance(macro, args, loc()); .)
-    ]                                                             (. if (node == null) node = new PlaceholderExpr(id, loc()); .)
-  .
-
-  macroInstance<out Node body, SyntaxType requiredType>
-  = SYM_DOLLAR                                                  (. var args = new ArrayList<Node>(); var start = loc(); .)
-    identifier<out Identifier id>                               (. var macro = Objects.requireNonNull(symbolTable.getMacro(id.name)); .)
-    SYM_PAREN_OPEN                                              (. var params = macro.params().iterator(); .)
-    (
-      IF (!params.hasNext())
-      SYM_PAREN_CLOSE
-    | macroInstanceParam<out Node arg1, params.next().type()>   (. args.add(arg1); .)
-      {
-        SYM_SEMICOLON
-        macroInstanceParam<out Node arg2, params.next().type()> (. args.add(arg2); .)
-      }
-      SYM_PAREN_CLOSE
-    )                                                           (. body = createMacroInstance(macro, args, start.join(loc())); .)
-  .
-
-  macroInstanceParam<out Node arg, SyntaxType syntaxType> (. arg = null; var start = loc(); .)
-  = IF (syntaxType == BasicSyntaxType.BinOp())
-    binaryOperator<out Operator op>                       (. arg = new OperatorExpr(op, loc()); .)
-  | IF (syntaxType == BasicSyntaxType.IsaDefs())
-    isaDefinitionList<.out List<Definition> defs.>        (. arg = new DefinitionList(defs, start.join(loc())); .)
-  | IF (syntaxType == BasicSyntaxType.Encs())
-    encodingDefinitionList<out arg>
-  | IF (syntaxType == BasicSyntaxType.Ex())
-    expression<out arg, BIN_OPS>
-  | IF (syntaxType == BasicSyntaxType.CallEx())
-    callOrBinaryExpression<out arg, false>
-  | IF (syntaxType == BasicSyntaxType.SymEx())
-    symbolOrBinaryExpression<out arg, false>
-  | IF (syntaxType == BasicSyntaxType.Id())
-    identifier<out arg>
-  | IF (syntaxType == BasicSyntaxType.Lit())
-    literal<out arg>
-  | IF (syntaxType == BasicSyntaxType.Str())
-    stringLiteral<out arg>
-  | IF (syntaxType == BasicSyntaxType.Val())
-    valLiteral<out arg>
-  | IF (syntaxType == BasicSyntaxType.Bool())
-    boolLiteral<out arg>
-  | IF (syntaxType == BasicSyntaxType.Int())
-    intLiteral<out arg>
-  | IF (syntaxType == BasicSyntaxType.Bin())
-    binLiteral<out arg>
-  | expression<out arg, BIN_OPS>
+      )                                                  (. node = createMacroInstance(macro, args, loc()); .)
+    ]                                                    (. node = Objects.requireNonNullElse(node, createPlaceholder(this, id, loc())); .)
   .
 
   macroDef
@@ -750,8 +733,8 @@ PRODUCTIONS
     ]
     SYM_PAREN_CLOSE                         (. macroContext.addFirst(params); .)
     SYM_COLON syntaxType<out SyntaxType returnType> SYM_EQ
-    SYM_BRACE_OPEN                          (. Node body = null; insideMacro = true; .)
-    macroBody<out body, returnType>
+    SYM_BRACE_OPEN                          (. insideMacro = true; .)
+    macroBody<out Node body, returnType>
     SYM_BRACE_CLOSE                         (.
                                               macroContext.removeFirst();
                                               insideMacro = false;
@@ -765,19 +748,37 @@ PRODUCTIONS
                                             .)
   .
 
-  macroBody<out Node body, SyntaxType type>        (. body = null; var loc = lookaheadLoc(); .)
-  = IF (type == BasicSyntaxType.Id())
-    identifier<out body>
-  | IF (type == BasicSyntaxType.Ex() || type == BasicSyntaxType.Int())
-    expression<out body, BIN_OPS>
+  macroBody<out Node body, SyntaxType type>        (. body = null; var start = lookaheadLoc(); .)
+  = IF (type == BasicSyntaxType.Stats())
+    statementList<.out List<Statement> stmts.>     (. body = narrowNode(new StatementList(stmts, start.join(loc()))); .)
   | IF (type == BasicSyntaxType.Stat())
     statement<out body>
-  | IF (type == BasicSyntaxType.Stats())
-    statementList<.out List<Statement> stmts.>     (. body = narrowNode(new StatementList(stmts, loc.join(loc()))); .)
-  | IF (type == BasicSyntaxType.IsaDefs())
-    isaDefinitionList<.out List<Definition> defs.> (. body = new DefinitionList(defs, loc.join(loc())); .)
-  | // IF (type == BasicSyntaxType.Encs())
+  | IF (type == BasicSyntaxType.Encs())
     encodingDefinitionList<out body>
+  | IF (type == BasicSyntaxType.IsaDefs())
+    isaDefinitionList<.out List<Definition> defs.> (. body = new DefinitionList(defs, start.join(loc())); .)
+  | IF (type == BasicSyntaxType.Ex())
+    expression<out body, BIN_OPS>
+  | IF (type == BasicSyntaxType.Lit())
+    literal<out body>
+  | // IF (type == BasicSyntaxType.Str())
+    stringLiteral<out body>
+  | IF (type == BasicSyntaxType.Val())
+    valLiteral<out body>
+  | // IF (type == BasicSyntaxType.Bool())
+    boolLiteral<out body>
+  | // IF (type == BasicSyntaxType.Int())
+    intLiteral<out body>
+  | // IF (type == BasicSyntaxType.Bin())
+    binLiteral<out body>
+  | IF (type == BasicSyntaxType.CallEx())
+    callOrBinaryExpression<out body, false>
+  | IF (type == BasicSyntaxType.SymEx())
+    symbolOrBinaryExpression<out body, false>
+  | // IF (type == BasicSyntaxType.Id())
+    identifier<out body>
+  | // IF (type == BasicSyntaxType.BinOp())
+    binaryOperator<out Operator op>                (. body = new OperatorExpr(op, loc()); .)
   .
 
   syntaxType<out SyntaxType type>

@@ -134,13 +134,37 @@ class ParserUtils {
     }
   }
 
-  static Node createPlaceholder(SyntaxType type, IsId path, SourceLocation sourceLocation) {
+  static Node createPlaceholder(Parser parser, IsId path, SourceLocation sourceLocation) {
+    var type = paramSyntaxType(parser, path.pathToString());
     if (isDefType(type)) {
-      return new PlaceholderDefinition(path, sourceLocation);
+      return new PlaceholderDefinition(path, type, sourceLocation);
     } else if (isStmtType(type)) {
-      return new PlaceholderStatement(path, sourceLocation);
+      return new PlaceholderStatement(path, type, sourceLocation);
     } else {
-      return new PlaceholderExpr(path, sourceLocation);
+      return new PlaceholderExpr(path, type, sourceLocation);
+    }
+  }
+
+  private static SyntaxType paramSyntaxType(Parser parser, String name) {
+    for (List<MacroParam> params : parser.macroContext) {
+      for (MacroParam param : params) {
+        if (param.name().name.equals(name)) {
+          return param.type();
+        }
+      }
+    }
+    return BasicSyntaxType.Invalid();
+  }
+
+  static Node createMacroMatch(SyntaxType resultType, List<MacroMatch.Choice> choices,
+                               Node defaultChoice, SourceLocation sourceLocation) {
+    var macroMatch = new MacroMatch(resultType, choices, defaultChoice, sourceLocation);
+    if (isDefType(resultType)) {
+      return new MacroMatchDefinition(macroMatch);
+    } else if (isStmtType(resultType)) {
+      return new MacroMatchStatement(macroMatch);
+    } else {
+      return new MacroMatchExpr(macroMatch);
     }
   }
 
@@ -156,7 +180,7 @@ class ParserUtils {
    * Before: parser must be in a state where the lookahead token is the "$" symbol.
    * After: parser is in the same state as before.
    */
-  static boolean isMacroParamType(Parser parser, SyntaxType syntaxType) {
+  static boolean isMacroReplacementOfType(Parser parser, SyntaxType syntaxType) {
     if (parser.la.kind != Parser._SYM_DOLLAR) {
       return false;
     }

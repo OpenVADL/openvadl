@@ -8,7 +8,7 @@ import vadl.utils.SourceLocation;
 
 abstract sealed class Statement extends Node
     permits BlockStatement, LetStatement, IfStatement, AssignmentStatement, StatementList,
-    PlaceholderStatement, MacroInstanceStatement {
+    PlaceholderStatement, MacroInstanceStatement, MacroMatchStatement {
   <T> T accept(StatementVisitor<T> visitor) {
     // TODO Use exhaustive switch with patterns in future Java versions
     if (this instanceof BlockStatement b) {
@@ -22,6 +22,8 @@ abstract sealed class Statement extends Node
     } else if (this instanceof PlaceholderStatement p) {
       return visitor.visit(p);
     } else if (this instanceof MacroInstanceStatement m) {
+      return visitor.visit(m);
+    } else if (this instanceof MacroMatchStatement m) {
       return visitor.visit(m);
     } else {
       throw new IllegalStateException("Unhandled statement type " + getClass().getSimpleName());
@@ -46,6 +48,8 @@ interface StatementVisitor<T> {
   T visit(PlaceholderStatement placeholderStatement);
 
   T visit(MacroInstanceStatement macroInstanceStatement);
+
+  T visit(MacroMatchStatement macroMatchStatement);
 }
 
 final class BlockStatement extends Statement {
@@ -302,10 +306,12 @@ final class StatementList extends Statement {
 final class PlaceholderStatement extends Statement {
 
   IsCallExpr placeholder;
+  SyntaxType type;
   SourceLocation loc;
 
-  PlaceholderStatement(IsCallExpr placeholder, SourceLocation loc) {
+  PlaceholderStatement(IsCallExpr placeholder, SyntaxType type, SourceLocation loc) {
     this.placeholder = placeholder;
+    this.type = type;
     this.loc = loc;
   }
 
@@ -321,7 +327,7 @@ final class PlaceholderStatement extends Statement {
 
   @Override
   SyntaxType syntaxType() {
-    return BasicSyntaxType.IsaDefs();
+    return type;
   }
 
   @Override
@@ -344,11 +350,6 @@ final class MacroInstanceStatement extends Statement {
     this.macro = macro;
     this.arguments = arguments;
     this.loc = loc;
-  }
-
-  @Override
-  <R> R accept(StatementVisitor<R> visitor) {
-    return visitor.visit(this);
   }
 
   @Override
@@ -376,5 +377,50 @@ final class MacroInstanceStatement extends Statement {
       arg.prettyPrint(0, builder);
     }
     builder.append(")");
+  }
+}
+
+/**
+ * An internal temporary placeholder of a macro-level "match" construct.
+ * This node should never leave the parser.
+ */
+final class MacroMatchStatement extends Statement {
+  MacroMatch macroMatch;
+
+  MacroMatchStatement(MacroMatch macroMatch) {
+    this.macroMatch = macroMatch;
+  }
+
+  @Override
+  public SourceLocation location() {
+    return macroMatch.sourceLocation();
+  }
+
+  @Override
+  SyntaxType syntaxType() {
+    return macroMatch.resultType();
+  }
+
+  @Override
+  public void prettyPrint(int indent, StringBuilder builder) {
+    macroMatch.prettyPrint(indent, builder);
+  }
+
+  @Override
+  public boolean equals(Object o) {
+    if (this == o) {
+      return true;
+    }
+    if (o == null || getClass() != o.getClass()) {
+      return false;
+    }
+
+    MacroMatchStatement that = (MacroMatchStatement) o;
+    return macroMatch.equals(that.macroMatch);
+  }
+
+  @Override
+  public int hashCode() {
+    return macroMatch.hashCode();
   }
 }

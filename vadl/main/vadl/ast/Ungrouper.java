@@ -3,9 +3,10 @@ package vadl.ast;
 import java.util.ArrayList;
 
 /**
- * Ungrouper, removes all group expressions recursively.
- * Groups are needed in the AST during parsing until all binary expressions are reordered but then
- * can be removed.
+ * Removes all group expressions recursively.
+ * Groups are needed in the AST during parsing until all binary expressions are reordered, but can
+ * then be removed. This is especially useful for testing, where two AST trees are often tested
+ * for semantic equality and thus ungrouped before comparison.
  */
 class Ungrouper
     implements ExprVisitor<Expr>, DefinitionVisitor<Definition>, StatementVisitor<Statement> {
@@ -155,6 +156,11 @@ class Ungrouper
   }
 
   @Override
+  public Expr visit(MacroMatchExpr expr) {
+    return expr;
+  }
+
+  @Override
   public Definition visit(ConstantDefinition definition) {
     ungroupAnnotations(definition);
     definition.value = definition.value.accept(this);
@@ -253,6 +259,11 @@ class Ungrouper
   }
 
   @Override
+  public Definition visit(MacroMatchDefinition definition) {
+    return definition;
+  }
+
+  @Override
   public Statement visit(BlockStatement blockStatement) {
     blockStatement.statements.replaceAll(statement -> statement.accept(this));
     return blockStatement;
@@ -288,6 +299,11 @@ class Ungrouper
   @Override
   public Statement visit(MacroInstanceStatement macroInstanceStatement) {
     return macroInstanceStatement;
+  }
+
+  @Override
+  public Statement visit(MacroMatchStatement macroMatchStatement) {
+    return macroMatchStatement;
   }
 
   private void ungroupAnnotations(Definition definition) {

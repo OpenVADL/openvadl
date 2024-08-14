@@ -51,6 +51,8 @@ interface ExprVisitor<R> {
   R visit(SymbolExpr expr);
 
   R visit(OperatorExpr expr);
+
+  R visit(MacroMatchExpr expr);
 }
 
 final class Identifier extends Expr implements IsId, IdentifierOrPlaceholder {
@@ -111,7 +113,8 @@ final class Identifier extends Expr implements IsId, IdentifierOrPlaceholder {
   }
 }
 
-sealed interface OperatorOrPlaceholder permits OperatorExpr, PlaceholderExpr, MacroInstanceExpr {
+sealed interface OperatorOrPlaceholder
+    permits OperatorExpr, PlaceholderExpr, MacroInstanceExpr, MacroMatchExpr {
 }
 
 /**
@@ -726,7 +729,8 @@ class StringLiteral extends Expr {
   }
 }
 
-sealed interface IdentifierOrPlaceholder permits Identifier, PlaceholderExpr, MacroInstanceExpr {
+sealed interface IdentifierOrPlaceholder
+    permits Identifier, PlaceholderExpr, MacroInstanceExpr, MacroMatchExpr {
   void prettyPrint(int indent, StringBuilder builder);
 }
 
@@ -737,10 +741,12 @@ sealed interface IdentifierOrPlaceholder permits Identifier, PlaceholderExpr, Ma
 final class PlaceholderExpr extends Expr implements IdentifierOrPlaceholder,
     OperatorOrPlaceholder, TypeLiteralOrPlaceholder, FieldEncodingsOrPlaceholder, IsId {
   IsCallExpr placeholder;
+  SyntaxType type;
   SourceLocation loc;
 
-  public PlaceholderExpr(IsCallExpr placeholder, SourceLocation loc) {
+  public PlaceholderExpr(IsCallExpr placeholder, SyntaxType type, SourceLocation loc) {
     this.placeholder = placeholder;
+    this.type = type;
     this.loc = loc;
   }
 
@@ -756,7 +762,7 @@ final class PlaceholderExpr extends Expr implements IdentifierOrPlaceholder,
 
   @Override
   SyntaxType syntaxType() {
-    return BasicSyntaxType.Invalid();
+    return type;
   }
 
   @Override
@@ -863,6 +869,62 @@ final class MacroInstanceExpr extends Expr implements IdentifierOrPlaceholder,
     var sb = new StringBuilder();
     prettyPrint(0, sb);
     return sb.toString();
+  }
+}
+
+/**
+ * An internal temporary placeholder of a macro-level "match" construct.
+ * This node should never leave the parser.
+ */
+final class MacroMatchExpr extends Expr implements IdentifierOrPlaceholder,
+    OperatorOrPlaceholder, TypeLiteralOrPlaceholder, FieldEncodingsOrPlaceholder, IsId {
+  MacroMatch macroMatch;
+
+  MacroMatchExpr(MacroMatch macroMatch) {
+    this.macroMatch = macroMatch;
+  }
+
+  @Override
+  <R> R accept(ExprVisitor<R> visitor) {
+    return visitor.visit(this);
+  }
+
+  @Override
+  public SourceLocation location() {
+    return macroMatch.sourceLocation();
+  }
+
+  @Override
+  SyntaxType syntaxType() {
+    return macroMatch.resultType();
+  }
+
+  @Override
+  public void prettyPrint(int indent, StringBuilder builder) {
+    macroMatch.prettyPrint(indent, builder);
+  }
+
+  @Override
+  public boolean equals(Object o) {
+    if (this == o) {
+      return true;
+    }
+    if (o == null || getClass() != o.getClass()) {
+      return false;
+    }
+
+    MacroMatchExpr that = (MacroMatchExpr) o;
+    return macroMatch.equals(that.macroMatch);
+  }
+
+  @Override
+  public int hashCode() {
+    return macroMatch.hashCode();
+  }
+
+  @Override
+  public String pathToString() {
+    return "/* Match - can't be rendered! */";
   }
 }
 
@@ -986,7 +1048,8 @@ class RangeExpr extends Expr {
   }
 }
 
-sealed interface TypeLiteralOrPlaceholder permits TypeLiteral, PlaceholderExpr, MacroInstanceExpr {
+sealed interface TypeLiteralOrPlaceholder
+    permits TypeLiteral, PlaceholderExpr, MacroInstanceExpr, MacroMatchExpr {
 }
 
 /**
@@ -1112,7 +1175,7 @@ sealed interface IsSymExpr extends IsCallExpr permits SymbolExpr, IsId {
 }
 
 sealed interface IsId extends IsSymExpr
-    permits IdentifierPath, Identifier, PlaceholderExpr, MacroInstanceExpr {
+    permits IdentifierPath, Identifier, PlaceholderExpr, MacroInstanceExpr, MacroMatchExpr {
   @Override
   default IsId path() {
     return this;

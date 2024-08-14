@@ -264,6 +264,11 @@ class MacroExpander
   }
 
   @Override
+  public Expr visit(MacroMatchExpr expr) {
+    return (Expr) resolveMacroMatch(expr.macroMatch);
+  }
+
+  @Override
   public Definition visit(ConstantDefinition definition) {
     var id = resolvePlaceholderOrIdentifier(definition.identifier);
     var value = definition.value.accept(this);
@@ -395,6 +400,11 @@ class MacroExpander
   }
 
   @Override
+  public Definition visit(MacroMatchDefinition definition) {
+    return (Definition) resolveMacroMatch(definition.macroMatch);
+  }
+
+  @Override
   public BlockStatement visit(BlockStatement blockStatement) {
     var statements = new ArrayList<>(blockStatement.statements);
     statements.replaceAll(statement -> statement.accept(this));
@@ -446,6 +456,11 @@ class MacroExpander
       reportError(e.message, e.sourceLocation);
       return stmt;
     }
+  }
+
+  @Override
+  public Statement visit(MacroMatchStatement macroMatchStatement) {
+    return (Statement) resolveMacroMatch(macroMatchStatement.macroMatch);
   }
 
   private void assertValidMacro(Macro macro, SourceLocation sourceLocation)
@@ -504,6 +519,18 @@ class MacroExpander
       return Objects.requireNonNull(arg);
     }
     return (EncodingDefinition.FieldEncodings) encodings;
+  }
+
+  private Node resolveMacroMatch(MacroMatch macroMatch) {
+    for (var choice : macroMatch.choices()) {
+      var candidate = expandNode(choice.candidate());
+      var equals = candidate.equals(choice.match());
+      var shouldEqual = choice.comparison() == MacroMatch.Comparison.EQUAL;
+      if (equals == shouldEqual) {
+        return expandNode(choice.result());
+      }
+    }
+    return expandNode(macroMatch.defaultChoice());
   }
 
   private void reportError(String error, SourceLocation location) {

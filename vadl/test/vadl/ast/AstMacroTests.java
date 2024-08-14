@@ -8,12 +8,15 @@ import java.net.URISyntaxException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.Map;
+import java.util.stream.Collectors;
 import java.util.stream.Stream;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.DynamicTest;
 import org.junit.jupiter.api.TestFactory;
 
 public class AstMacroTests {
+
+  private static final String MACRO_REPLACEMENTS_MARKER = "/// MACRO REPLACEMENTS";
 
   /**
    * Compares the computed expanded AST of files in "test/resources/macros/*.vadl" with the
@@ -22,6 +25,17 @@ public class AstMacroTests {
    * adapted as well.
    * In this case, a file "*.actual.expanded.vadl" will be generated.
    * If that file is a correct AST, simply replace the old AST with it.
+   * To pass macro overrides like the CLI "-m" flag, create a comment section
+   * anywhere in the VADL file with the following template:
+   * {@code
+   * /// MACRO REPLACEMENTS
+   * /// key=value
+   * /// key=value
+   * /// key=value
+   * /// MACRO REPLACEMENTS
+   * }
+   * Any key-value pairs between the MACRO REPLACEMENTS section will be interpreted as macro
+   * overrides.
    */
   @TestFactory
   Stream<DynamicTest> astMacroTests() throws URISyntaxException, IOException {
@@ -33,7 +47,8 @@ public class AstMacroTests {
   }
 
   private void assertAstEquality(Path vadlPath) throws IOException {
-    var ast = VadlParser.parse(vadlPath.toAbsolutePath(), Map.of());
+    var replacements = parseMacroReplacements(vadlPath.toAbsolutePath());
+    var ast = VadlParser.parse(vadlPath.toAbsolutePath(), replacements);
     verifyPrettifiedAst(ast);
 
     var actualExpandedAst = ast.prettyPrint();
@@ -52,6 +67,18 @@ public class AstMacroTests {
     }
 
     Assertions.assertEquals(expectedAst, actualExpandedAst);
+  }
+
+  private Map<String, String> parseMacroReplacements(Path vadlPath) throws IOException {
+    var content = Files.readString(vadlPath);
+    return content.lines()
+        .dropWhile(line -> !line.equals(MACRO_REPLACEMENTS_MARKER))
+        .skip(1)
+        .takeWhile(line -> !line.equals(MACRO_REPLACEMENTS_MARKER))
+        .map(line -> line.substring(line.indexOf("/// ") + 4))
+        .collect(Collectors.toMap(
+            line -> line.substring(0, line.indexOf("=")),
+            line -> line.substring(line.indexOf("=") + 1)));
   }
 
   private void writeAst(Path astPath, String ast) throws IOException {

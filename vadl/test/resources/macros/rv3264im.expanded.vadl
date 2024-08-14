@@ -529,9 +529,6 @@ instruction set architecture RV3264IM extending RV3264I = {
       X(rd) :=         if (divisor = 0 as SIntR) then
 AllOnes
         else
-          if isOverflow(dividend, divisor) then
-TopBitSet
-          else
 VADL::div(dividend, divisor) as SIntR
 
   encoding DIV =
@@ -545,9 +542,6 @@ VADL::div(dividend, divisor) as SIntR
       X(rd) :=         if (divisor = 0 as UIntR) then
 AllOnes
         else
-          if isOverflow(dividend, divisor) then
-TopBitSet
-          else
 VADL::div(dividend, divisor) as SIntR
 
   encoding DIVU =
@@ -559,11 +553,8 @@ VADL::div(dividend, divisor) as SIntR
   instruction REM : Rtype =   let dividend = X(rs1) as SIntR in
     let divisor = X(rs2) as SIntR in
       X(rd) :=         if (divisor = 0 as SIntR) then
-AllOnes
+dividend
         else
-          if isOverflow(dividend, divisor) then
-TopBitSet
-          else
 VADL::mod(dividend, divisor) as SIntR
 
   encoding REM =
@@ -575,11 +566,8 @@ VADL::mod(dividend, divisor) as SIntR
   instruction REMU : Rtype =   let dividend = X(rs1) as UIntR in
     let divisor = X(rs2) as UIntR in
       X(rd) :=         if (divisor = 0 as UIntR) then
-AllOnes
+dividend
         else
-          if isOverflow(dividend, divisor) then
-TopBitSet
-          else
 VADL::mod(dividend, divisor) as SIntR
 
   encoding REMU =
@@ -601,9 +589,6 @@ VADL::mod(dividend, divisor) as SIntR
       X(rd) :=         if (divisor = 0 as SIntW) then
 AllOnes
         else
-          if isOverflow(dividend, divisor) then
-TopBitSet
-          else
 VADL::div(dividend, divisor) as SIntR
 
   encoding DIVW =
@@ -617,9 +602,6 @@ VADL::div(dividend, divisor) as SIntR
       X(rd) :=         if (divisor = 0 as UIntW) then
 AllOnes
         else
-          if isOverflow(dividend, divisor) then
-TopBitSet
-          else
 VADL::div(dividend, divisor) as SIntR
 
   encoding DIVUW =
@@ -631,11 +613,8 @@ VADL::div(dividend, divisor) as SIntR
   instruction REMW : Rtype =   let dividend = X(rs1) as SIntW in
     let divisor = X(rs2) as SIntW in
       X(rd) :=         if (divisor = 0 as SIntW) then
-AllOnes
+dividend
         else
-          if isOverflow(dividend, divisor) then
-TopBitSet
-          else
 VADL::mod(dividend, divisor) as SIntR
 
   encoding REMW =
@@ -647,11 +626,8 @@ VADL::mod(dividend, divisor) as SIntR
   instruction REMUW : Rtype =   let dividend = X(rs1) as UIntW in
     let divisor = X(rs2) as UIntW in
       X(rd) :=         if (divisor = 0 as UIntW) then
-AllOnes
+dividend
         else
-          if isOverflow(dividend, divisor) then
-TopBitSet
-          else
 VADL::mod(dividend, divisor) as SIntR
 
   encoding REMUW =

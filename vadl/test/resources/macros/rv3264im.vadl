@@ -1,6 +1,11 @@
 // SPDX-FileCopyrightText : © 2024 TU Wien <vadl@tuwien.ac.at>
 // SPDX-License-Identifier: Apache-2.0
 
+// The section starting with MACRO REPLACEMENTS will be interpreted by the test runner as arguments passed like vadl -m.
+/// MACRO REPLACEMENTS
+/// ArchSize=Arch64
+/// MACRO REPLACEMENTS
+
 // RISC-V 32 / 64 I common instruction set
 
 instruction set architecture RV3264I = {
@@ -9,8 +14,8 @@ instruction set architecture RV3264I = {
 
   // if $ArchSize() equals Arch64 expands to second arg else to first arg
   model Arch3264 (arch32 : IsaDefs, arch64 : IsaDefs) : IsaDefs = {
-    $arch64
-  }
+    match : IsaDefs ($ArchSize() = Arch64 => $arch64; _  => $arch32)
+    }
 
   constant Arch32 = 32                    // 32 bit architecture
   constant Arch64 = 64                    // 64 bit architecture
@@ -271,6 +276,7 @@ $Arch3264 ( // ((((((((((((((((((((((((((((((((((((((((
 
   }
 
+
 instruction set architecture RV3264IM extending RV3264I = {
 
   constant MLen2   = MLen  * 2
@@ -301,14 +307,14 @@ instruction set architecture RV3264IM extending RV3264I = {
     instruction $name : Rtype =                        // division and remainder instructions
       let dividend = X(rs1) as $opTy in let divisor = X(rs2) as $opTy in
         X(rd) :=  if divisor = (0 as $opTy)
-                    then /* TODO match : Ex ($opName = div => */ AllOnes /*; _  => dividend)*/
-                  else /* match : Ex ($opTy = SInt => */
+                    then match : Ex ($opName = div => AllOnes; _  => dividend)
+                  else match : Ex ($opTy = SInt =>
                     if isOverflow (dividend, divisor)
-                      then /* match : Ex ($opName = div => */ TopBitSet // ; _  => 0)
+                      then match : Ex ($opName = div => TopBitSet; _  => 0)
                       else VADL::$opName(dividend, divisor) as SIntR
-                    //; _  =>
-                    //       VADL::$opName(dividend, divisor) as SIntR
-                    //)
+                    ; _  =>
+                           VADL::$opName(dividend, divisor) as SIntR
+                    )
       encoding $name = { opcode = $opCode, funct3 = $funct3, funct7 = 0b000'0001}
       assembly $name = (mnemonic, " ", register(rd), ",", register(rs1), ",", register(rs2))
     }
