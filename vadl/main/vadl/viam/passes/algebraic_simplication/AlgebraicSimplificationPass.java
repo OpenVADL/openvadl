@@ -12,6 +12,15 @@ import vadl.viam.Specification;
 import vadl.viam.graph.dependency.BuiltInCall;
 import vadl.viam.passes.algebraic_simplication.rules.AlgebraicSimplificationRule;
 import vadl.viam.passes.algebraic_simplication.rules.impl.AdditionWithZeroSimplificationRule;
+import vadl.viam.passes.algebraic_simplication.rules.impl.AndWithFalseSimplificationRule;
+import vadl.viam.passes.algebraic_simplication.rules.impl.AndWithTrueSimplificationRule;
+import vadl.viam.passes.algebraic_simplication.rules.impl.DivisionWithOneSimplificationRule;
+import vadl.viam.passes.algebraic_simplication.rules.impl.MultiplicationWithOneSimplificationRule;
+import vadl.viam.passes.algebraic_simplication.rules.impl.MultiplicationWithZeroSimplificationRule;
+import vadl.viam.passes.algebraic_simplication.rules.impl.OrWithFalseSimplificationRule;
+import vadl.viam.passes.algebraic_simplication.rules.impl.OrWithTrueSimplificationRule;
+import vadl.viam.passes.algebraic_simplication.rules.impl.RemainderWithOneSimplificationRule;
+import vadl.viam.passes.algebraic_simplication.rules.impl.RemainderWithZeroSimplificationRule;
 
 /**
  * It looks at all the {@link BuiltInCall} nodes and tries to match a static set of rules.
@@ -20,10 +29,19 @@ import vadl.viam.passes.algebraic_simplication.rules.impl.AdditionWithZeroSimpli
  * It will only consider machine instructions.
  */
 public class AlgebraicSimplificationPass extends Pass {
-  private static final List<AlgebraicSimplificationRule> rules = new ArrayList<>();
+  public static final List<AlgebraicSimplificationRule> rules = new ArrayList<>();
 
   static {
     rules.add(new AdditionWithZeroSimplificationRule());
+    rules.add(new MultiplicationWithZeroSimplificationRule());
+    rules.add(new MultiplicationWithOneSimplificationRule());
+    rules.add(new DivisionWithOneSimplificationRule());
+    rules.add(new RemainderWithZeroSimplificationRule());
+    rules.add(new RemainderWithOneSimplificationRule());
+    rules.add(new AndWithFalseSimplificationRule());
+    rules.add(new AndWithTrueSimplificationRule());
+    rules.add(new OrWithTrueSimplificationRule());
+    rules.add(new OrWithFalseSimplificationRule());
   }
 
   @Override

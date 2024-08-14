@@ -15,16 +15,18 @@ import vadl.viam.matching.impl.ConstantValueMatcher;
 import vadl.viam.passes.algebraic_simplication.rules.AlgebraicSimplificationRule;
 
 /**
- * Simplification rule when addition with zero then return the first operand of the addition.
+ * Simplification rule when remainder with one then return the first operand of
+ * the operation.
  */
-public class AdditionWithZeroSimplificationRule implements AlgebraicSimplificationRule {
+public class RemainderWithZeroSimplificationRule implements AlgebraicSimplificationRule {
   @Override
   public Optional<Node> simplify(Node node) {
     if (node instanceof ExpressionNode n) {
       var matcher =
-          new BuiltInMatcher(List.of(BuiltInTable.ADD, BuiltInTable.ADDS, BuiltInTable.ADDC),
+          new BuiltInMatcher(
+              List.of(BuiltInTable.SMOD, BuiltInTable.UMOD, BuiltInTable.SMODS, BuiltInTable.UMODS),
               List.of(new AnyNodeMatcher(), new ConstantValueMatcher(
-                  Constant.Value.of(0, (DataType) n.type()))));
+                  Constant.Value.of(1, (DataType) n.type()))));
 
       var matchings = TreeMatcher.matches(Stream.of(node), matcher);
       if (!matchings.isEmpty()) {

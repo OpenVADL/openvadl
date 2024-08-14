@@ -4,7 +4,6 @@ import java.util.List;
 import java.util.Optional;
 import java.util.stream.Stream;
 import vadl.types.BuiltInTable;
-import vadl.types.DataType;
 import vadl.viam.Constant;
 import vadl.viam.graph.Node;
 import vadl.viam.graph.dependency.ExpressionNode;
@@ -15,16 +14,16 @@ import vadl.viam.matching.impl.ConstantValueMatcher;
 import vadl.viam.passes.algebraic_simplication.rules.AlgebraicSimplificationRule;
 
 /**
- * Simplification rule when addition with zero then return the first operand of the addition.
+ * Simplification rule when OR with {@code false} then return the first operand of the OR.
  */
-public class AdditionWithZeroSimplificationRule implements AlgebraicSimplificationRule {
+public class OrWithFalseSimplificationRule implements AlgebraicSimplificationRule {
   @Override
   public Optional<Node> simplify(Node node) {
     if (node instanceof ExpressionNode n) {
       var matcher =
-          new BuiltInMatcher(List.of(BuiltInTable.ADD, BuiltInTable.ADDS, BuiltInTable.ADDC),
+          new BuiltInMatcher(List.of(BuiltInTable.OR, BuiltInTable.ORS),
               List.of(new AnyNodeMatcher(), new ConstantValueMatcher(
-                  Constant.Value.of(0, (DataType) n.type()))));
+                  Constant.Value.of(false))));
 
       var matchings = TreeMatcher.matches(Stream.of(node), matcher);
       if (!matchings.isEmpty()) {
