@@ -1321,29 +1321,11 @@ public class BuiltInTable {
           (args) -> computeFunction.apply((A) args.get(0), (B) args.get(1), (C) args.get(2));
       return this;
     }
-
-    public BuiltInBuilder takes(Function<List<Type>, Boolean> takesFunction) {
-      this.takesFunction = takesFunction;
-      return this;
-    }
+    
 
     public BuiltInBuilder takesData(Function<List<DataType>, Boolean> takesFunction) {
       this.takesFunction = (args) -> args.stream().allMatch(DataType.class::isInstance)
           && takesFunction.apply(args.stream().map(DataType.class::cast).toList());
-      return this;
-    }
-
-    public BuiltInBuilder takesData(BiFunction<DataType, DataType, Boolean> takesFunction) {
-      this.takesFunction = (args) -> args.size() == 2
-          && takesFunction.apply((DataType) args.get(0), (DataType) args.get(1));
-      return this;
-    }
-
-    public BuiltInBuilder takesData(
-        TriFunction<DataType, DataType, DataType, Boolean> takesFunction) {
-      this.takesFunction = (args) -> args.size() == 3
-          && takesFunction.apply((DataType) args.get(0), (DataType) args.get(1),
-          (DataType) args.get(2));
       return this;
     }
 
@@ -1373,7 +1355,7 @@ public class BuiltInTable {
       returns((args) -> returnType);
       return this;
     }
-    
+
     public BuiltInBuilder returns(Function<List<Type>, Type> returnsFunction) {
       this.returnsFunction = returnsFunction;
       return this;
