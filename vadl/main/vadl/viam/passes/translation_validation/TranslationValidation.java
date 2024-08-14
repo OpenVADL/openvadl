@@ -1,5 +1,6 @@
 package vadl.viam.passes.translation_validation;
 
+import com.google.common.collect.Streams;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
@@ -22,6 +23,7 @@ import vadl.viam.graph.Node;
 import vadl.viam.graph.dependency.FieldRefNode;
 import vadl.viam.graph.dependency.FuncCallNode;
 import vadl.viam.graph.dependency.FuncParamNode;
+import vadl.viam.graph.dependency.ParamNode;
 import vadl.viam.graph.dependency.ReadMemNode;
 import vadl.viam.graph.dependency.SideEffectNode;
 import vadl.viam.graph.dependency.WriteMemNode;
@@ -192,22 +194,16 @@ public class TranslationValidation {
   }
 
   private String getVariableDefinitions(Specification specification, Instruction before) {
-    return
-        Stream.concat(
-                Stream.concat(
-                    Stream.concat(Stream.concat(specification.registerFiles()
-                                .map(this::declareVariable),
-                            specification.registers()
-                                .map(this::declareVariable)
-                        ), before.behavior().getNodes(FuncCallNode.class)
-                            .map(this::declareVariable)
-                    ),
-                    before.behavior().getNodes(FieldRefNode.class)
-                        .map(this::declareVariable)),
-                before.behavior().getNodes(FuncParamNode.class)
-                    .map(this::declareVariable)
-            )
-            .collect(Collectors.joining("\n"));
+    return Streams.concat(
+        specification.registerFiles()
+            .map(this::declareVariable),
+        specification.registers()
+            .map(this::declareVariable),
+        before.behavior().getNodes(FuncCallNode.class)
+            .map(this::declareVariable),
+        before.behavior().getNodes(ParamNode.class)
+            .map(this::declareVariable)
+    ).collect(Collectors.joining("\n"));
   }
 
   @NotNull
@@ -239,18 +235,13 @@ public class TranslationValidation {
     return String.format("%s = %s", name, getZ3Type(name, register.resultType()));
   }
 
-  private String declareVariable(FieldRefNode node) {
-    var name = node.formatField().identifier.simpleName();
-    return String.format("%s = %s", name, getZ3Type(name, node.type()));
-  }
-
   private String declareVariable(FuncCallNode node) {
     var name = node.function().identifier.simpleName();
     return String.format("%s = %s", name, getZ3Type(name, node.type()));
   }
 
-  private String declareVariable(FuncParamNode node) {
-    var name = node.parameter().identifier.simpleName();
+  private String declareVariable(ParamNode node) {
+    var name = node.definition().identifier.simpleName();
     return String.format("%s = %s", name, getZ3Type(name, node.type()));
   }
 
