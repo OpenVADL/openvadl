@@ -266,4 +266,25 @@ public abstract class Type {
   }
 
 
+  /**
+   * Tries to construct a data type with a given bit-width from a given type class.
+   *
+   * <p>If it is not possible to construct the data type, it will return null.</p>
+   */
+  @Nullable
+  public static <T extends Type> DataType constructDataType(Class<T> typeClass, int bitWidth) {
+    if (typeClass == BoolType.class) {
+      return bitWidth == 1 ? Type.bool() : null;
+    } else if (typeClass == BitsType.class) {
+      return Type.bits(bitWidth);
+    } else if (typeClass == SIntType.class) {
+      return Type.signedInt(bitWidth);
+    } else if (typeClass == UIntType.class) {
+      return Type.unsignedInt(bitWidth);
+    } else {
+      return null;
+    }
+  }
+
+
 }
