@@ -7,7 +7,8 @@ import javax.annotation.Nullable;
 import vadl.utils.SourceLocation;
 
 abstract sealed class Statement extends Node
-    permits BlockStatement, LetStatement, IfStatement, AssignmentStatement {
+    permits BlockStatement, LetStatement, IfStatement, AssignmentStatement, StatementList,
+    PlaceholderStatement, MacroInstanceStatement {
   <T> T accept(StatementVisitor<T> visitor) {
     // TODO Use exhaustive switch with patterns in future Java versions
     if (this instanceof BlockStatement b) {
@@ -18,6 +19,10 @@ abstract sealed class Statement extends Node
       return visitor.visit(i);
     } else if (this instanceof AssignmentStatement a) {
       return visitor.visit(a);
+    } else if (this instanceof PlaceholderStatement p) {
+      return visitor.visit(p);
+    } else if (this instanceof MacroInstanceStatement m) {
+      return visitor.visit(m);
     } else {
       throw new IllegalStateException("Unhandled statement type " + getClass().getSimpleName());
     }
@@ -37,6 +42,10 @@ interface StatementVisitor<T> {
   T visit(IfStatement ifStatement);
 
   T visit(AssignmentStatement assignmentStatement);
+
+  T visit(PlaceholderStatement placeholderStatement);
+
+  T visit(MacroInstanceStatement macroInstanceStatement);
 }
 
 final class BlockStatement extends Statement {
@@ -264,7 +273,7 @@ final class AssignmentStatement extends Statement {
   }
 }
 
-class StatementList extends Node {
+final class StatementList extends Statement {
 
   List<Statement> items;
   SourceLocation location;
@@ -287,5 +296,85 @@ class StatementList extends Node {
   @Override
   void prettyPrint(int indent, StringBuilder builder) {
     items.forEach(item -> item.prettyPrint(indent, builder));
+  }
+}
+
+final class PlaceholderStatement extends Statement {
+
+  IsCallExpr placeholder;
+  SourceLocation loc;
+
+  PlaceholderStatement(IsCallExpr placeholder, SourceLocation loc) {
+    this.placeholder = placeholder;
+    this.loc = loc;
+  }
+
+  @Override
+  <R> R accept(StatementVisitor<R> visitor) {
+    return visitor.visit(this);
+  }
+
+  @Override
+  SourceLocation location() {
+    return loc;
+  }
+
+  @Override
+  SyntaxType syntaxType() {
+    return BasicSyntaxType.IsaDefs();
+  }
+
+  @Override
+  void prettyPrint(int indent, StringBuilder builder) {
+    builder.append("$");
+    placeholder.prettyPrint(indent, builder);
+  }
+}
+
+/**
+ * An internal temporary placeholder of macro instantiations.
+ * This node should never leave the parser.
+ */
+final class MacroInstanceStatement extends Statement {
+  Macro macro;
+  List<Node> arguments;
+  SourceLocation loc;
+
+  public MacroInstanceStatement(Macro macro, List<Node> arguments, SourceLocation loc) {
+    this.macro = macro;
+    this.arguments = arguments;
+    this.loc = loc;
+  }
+
+  @Override
+  <R> R accept(StatementVisitor<R> visitor) {
+    return visitor.visit(this);
+  }
+
+  @Override
+  SourceLocation location() {
+    return loc;
+  }
+
+  @Override
+  SyntaxType syntaxType() {
+    return BasicSyntaxType.Invalid();
+  }
+
+  @Override
+  void prettyPrint(int indent, StringBuilder builder) {
+    builder.append(prettyIndentString(indent));
+    builder.append("$");
+    builder.append(macro.name().name);
+    builder.append("(");
+    var isFirst = true;
+    for (var arg : arguments) {
+      if (!isFirst) {
+        builder.append(" ; ");
+      }
+      isFirst = false;
+      arg.prettyPrint(0, builder);
+    }
+    builder.append(")");
   }
 }

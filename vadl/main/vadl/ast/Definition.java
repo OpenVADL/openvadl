@@ -16,6 +16,11 @@ import vadl.utils.SourceLocation;
 abstract class Definition extends Node {
   Annotations annotations = new Annotations();
 
+  Definition withAnnotations(Annotations annotations) {
+    this.annotations = annotations;
+    return this;
+  }
+
   abstract <R> R accept(DefinitionVisitor<R> visitor);
 }
 
@@ -45,6 +50,8 @@ interface DefinitionVisitor<R> {
   R visit(FunctionDefinition definition);
 
   R visit(PlaceholderDefinition definition);
+
+  R visit(MacroInstanceDefinition definition);
 }
 
 class ConstantDefinition extends Definition {
@@ -879,7 +886,7 @@ class InstructionDefinition extends Definition {
 }
 
 sealed interface FieldEncodingsOrPlaceholder
-    permits EncodingDefinition.FieldEncodings, PlaceholderExpr {
+    permits EncodingDefinition.FieldEncodings, PlaceholderExpr, MacroInstanceExpr {
 
 }
 
@@ -1275,6 +1282,75 @@ final class PlaceholderDefinition extends Definition {
   void prettyPrint(int indent, StringBuilder builder) {
     builder.append("$");
     placeholder.prettyPrint(indent, builder);
+  }
+}
+
+/**
+ * An internal temporary placeholder of macro instantiations.
+ * This node should never leave the parser.
+ */
+final class MacroInstanceDefinition extends Definition {
+  Macro macro;
+  List<Node> arguments;
+  SourceLocation loc;
+
+  public MacroInstanceDefinition(Macro macro, List<Node> arguments, SourceLocation loc) {
+    this.macro = macro;
+    this.arguments = arguments;
+    this.loc = loc;
+  }
+
+  @Override
+  <R> R accept(DefinitionVisitor<R> visitor) {
+    return visitor.visit(this);
+  }
+
+  @Override
+  SourceLocation location() {
+    return loc;
+  }
+
+  @Override
+  SyntaxType syntaxType() {
+    return BasicSyntaxType.Invalid();
+  }
+
+  @Override
+  void prettyPrint(int indent, StringBuilder builder) {
+    builder.append(prettyIndentString(indent));
+    builder.append("$");
+    builder.append(macro.name().name);
+    builder.append("(");
+    var isFirst = true;
+    for (var arg : arguments) {
+      if (!isFirst) {
+        builder.append(" ; ");
+      }
+      isFirst = false;
+      arg.prettyPrint(0, builder);
+    }
+    builder.append(")");
+  }
+
+  @Override
+  public boolean equals(Object o) {
+    if (this == o) {
+      return true;
+    }
+    if (o == null || getClass() != o.getClass()) {
+      return false;
+    }
+
+    MacroInstanceDefinition that = (MacroInstanceDefinition) o;
+    return macro.equals(that.macro)
+        && arguments.equals(that.arguments);
+  }
+
+  @Override
+  public int hashCode() {
+    int result = macro.hashCode();
+    result = 31 * result + arguments.hashCode();
+    return result;
   }
 }
 

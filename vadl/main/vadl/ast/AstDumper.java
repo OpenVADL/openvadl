@@ -52,7 +52,6 @@ public class AstDumper
       } else if (child instanceof Statement statement) {
         statement.accept(this);
       } else {
-        System.out.println(child);
         throw new RuntimeException("NOT IMPLEMENTED");
       }
     }
@@ -275,6 +274,12 @@ public class AstDumper
   }
 
   @Override
+  public Void visit(MacroInstanceDefinition definition) {
+    dumpNode(definition);
+    return null;
+  }
+
+  @Override
   public Void visit(CallExpr expr) {
     dumpNode(expr);
     dumpChildren((Expr) expr.target);
@@ -364,6 +369,18 @@ public class AstDumper
     assignmentStatement.target.accept(this);
     assignmentStatement.valueExpression.accept(this);
     indent--;
+    return null;
+  }
+
+  @Override
+  public Void visit(PlaceholderStatement placeholderStatement) {
+    dumpNode(placeholderStatement);
+    return null;
+  }
+
+  @Override
+  public Void visit(MacroInstanceStatement macroInstanceStatement) {
+    dumpNode(macroInstanceStatement);
     return null;
   }
 }

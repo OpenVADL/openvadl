@@ -1,10 +1,6 @@
 package vadl.ast;
 
-import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Objects;
-import javax.annotation.Nullable;
 import vadl.utils.SourceLocation;
 
 class ParserUtils {
@@ -116,109 +112,35 @@ class ParserUtils {
         new SourceLocation.Position(token.line, token.col + token.val.length()));
   }
 
-  /**
-   * Expands a macro.
-   */
-  static @Nullable Node expandMacro(Parser parser, Identifier identifier, List<Node> args,
-                                    SyntaxType requiredReturnType) {
-    var unexpanded = new MacroInstanceExpr(identifier, args, identifier.location());
-    if (parser.insideMacro) {
-      return unexpanded;
-    }
+  static boolean isExprType(SyntaxType type) {
+    return type.isSubTypeOf(BasicSyntaxType.Ex());
+  }
 
-    if (BasicSyntaxType.Id().isSubTypeOf(requiredReturnType)
-        && parser.macroOverrides.containsKey(identifier.name)) {
-      return parser.macroOverrides.get(identifier.name);
-    }
+  static boolean isDefType(SyntaxType type) {
+    return type.isSubTypeOf(BasicSyntaxType.IsaDefs());
+  }
 
-    var macro = parser.symbolTable.getMacro(identifier.name);
-    if (macro == null) {
-      parser.errors.SemErr(parser.t.line, parser.t.col,
-          "No macro named `%s` exists.".formatted(identifier.name));
-      return unexpanded;
-    }
+  static boolean isStmtType(SyntaxType type) {
+    return type.isSubTypeOf(BasicSyntaxType.Stats());
+  }
 
-    // The macro itself was invalid but an error for it was already issued,
-    // so we silently abort the expansion here.
-    if (macro.returnType() == BasicSyntaxType.Invalid()) {
-      return unexpanded;
-    }
-
-    boolean hasError = false;
-
-    // Verify the arguments
-    if (macro.params().size() != args.size()) {
-      parser.errors.SemErr(parser.t.line, parser.t.col,
-          "The macro `%s` expects %d arguments but %d were provided.".formatted(identifier.name,
-              macro.params().size(), args.size()));
-      hasError = true;
-    }
-
-    var argMap = new HashMap<String, Node>();
-    if (!hasError) {
-      for (int i = 0; i < args.size(); i++) {
-        var arg = args.get(i);
-        if (arg == null) {
-          // Syntax error during arg parsing - skip
-          hasError = true;
-          continue;
-        }
-        var param = macro.params().get(i);
-        var argType = arg.syntaxType();
-
-        if (!argType.isSubTypeOf(param.type())) {
-          parser.errors.SemErr(parser.t.line, parser.t.col,
-              ("The macro's `%s` parameter `%s` expects a `%s` but the argument provided is of type"
-                  + " `%s`.").formatted(identifier.name, param.name().name, param.type(), argType));
-          hasError = true;
-        }
-        argMap.put(param.name().name, arg);
-      }
-    }
-
-    // Verify the return type
-    if (!macro.returnType().isSubTypeOf(requiredReturnType)) {
-      parser.errors.SemErr(parser.t.line, parser.t.col,
-          "The macro `%s` returns `%s` but here a macro returning `%s` is expected.".formatted(
-              identifier.name, macro.returnType(), requiredReturnType));
-      hasError = true;
-    }
-
-    if (hasError) {
-      return unexpanded;
-    }
-
-    var expander = new MacroExpander(argMap);
-    var body = macro.body();
-    if (body instanceof Expr expr) {
-      var expanded = expander.expandExpr(expr);
-      var group = new GroupedExpr(new ArrayList<>(), expr.location());
-      group.expressions.add(expanded);
-      return group;
-    } else if (body instanceof DefinitionList definitionList) {
-      var items = new ArrayList<Definition>(definitionList.items.size());
-      for (Definition item : definitionList.items) {
-        Definition definition = expander.expandDefinition(item);
-        if (definition instanceof DefinitionList list) {
-          items.addAll(list.items);
-        } else {
-          items.add(definition);
-        }
-      }
-      return new DefinitionList(items, definitionList.location);
-    } else if (body instanceof Definition def) {
-      return expander.expandDefinition(def);
-    } else if (body instanceof StatementList statementList) {
-      var items = new ArrayList<Statement>(statementList.items.size());
-      for (Statement item : statementList.items) {
-        Statement statement = expander.expandStatement(item);
-        items.add(statement);
-      }
-      return new StatementList(items, statementList.location);
-    } else if (body instanceof Statement statement) {
-      return expander.expandStatement(statement);
+  static Node createMacroInstance(Macro macro, List<Node> args, SourceLocation sourceLocation) {
+    if (isDefType(macro.returnType())) {
+      return new MacroInstanceDefinition(macro, args, sourceLocation);
+    } else if (isStmtType(macro.returnType())) {
+      return new MacroInstanceStatement(macro, args, sourceLocation);
     } else {
-      throw new RuntimeException("Expanding %s not yet implemented".formatted(body.getClass()));
+      return new MacroInstanceExpr(macro, args, sourceLocation);
+    }
+  }
+
+  static Node createPlaceholder(SyntaxType type, IsId path, SourceLocation sourceLocation) {
+    if (isDefType(type)) {
+      return new PlaceholderDefinition(path, sourceLocation);
+    } else if (isStmtType(type)) {
+      return new PlaceholderStatement(path, sourceLocation);
+    } else {
+      return new PlaceholderExpr(path, sourceLocation);
     }
   }
 
@@ -227,14 +149,6 @@ class ParserUtils {
       return statementList.items.get(0);
     }
     return node;
-  }
-
-  static boolean isExprType(SyntaxType type) {
-    return type.isSubTypeOf(BasicSyntaxType.Ex());
-  }
-
-  static boolean isDefType(SyntaxType type) {
-    return type.isSubTypeOf(BasicSyntaxType.IsaDefs());
   }
 
   /**
@@ -253,7 +167,7 @@ class ParserUtils {
     scannerSnapshot.reset(parser.scanner);
 
     if (maxExpr instanceof MacroInstanceExpr macroInstanceExpr) {
-      var macro = parser.symbolTable.getMacro(macroInstanceExpr.identifier.name);
+      var macro = parser.symbolTable.getMacro(macroInstanceExpr.macro.name().name);
       return macro != null && macro.returnType().isSubTypeOf(syntaxType);
     }
     if (maxExpr instanceof PlaceholderExpr placeholderExpr) {

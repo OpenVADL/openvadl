@@ -111,7 +111,7 @@ final class Identifier extends Expr implements IsId, IdentifierOrPlaceholder {
   }
 }
 
-sealed interface OperatorOrPlaceholder permits OperatorExpr, PlaceholderExpr {
+sealed interface OperatorOrPlaceholder permits OperatorExpr, PlaceholderExpr, MacroInstanceExpr {
 }
 
 /**
@@ -726,7 +726,7 @@ class StringLiteral extends Expr {
   }
 }
 
-sealed interface IdentifierOrPlaceholder permits Identifier, PlaceholderExpr {
+sealed interface IdentifierOrPlaceholder permits Identifier, PlaceholderExpr, MacroInstanceExpr {
   void prettyPrint(int indent, StringBuilder builder);
 }
 
@@ -793,13 +793,14 @@ final class PlaceholderExpr extends Expr implements IdentifierOrPlaceholder,
  * An internal temporary placeholder of macro instantiations.
  * This node should never leave the parser.
  */
-class MacroInstanceExpr extends Expr {
-  Identifier identifier;
+final class MacroInstanceExpr extends Expr implements IdentifierOrPlaceholder,
+    OperatorOrPlaceholder, TypeLiteralOrPlaceholder, FieldEncodingsOrPlaceholder, IsId {
+  Macro macro;
   List<Node> arguments;
   SourceLocation loc;
 
-  public MacroInstanceExpr(Identifier identifier, List<Node> arguments, SourceLocation loc) {
-    this.identifier = identifier;
+  public MacroInstanceExpr(Macro macro, List<Node> arguments, SourceLocation loc) {
+    this.macro = macro;
     this.arguments = arguments;
     this.loc = loc;
   }
@@ -810,7 +811,7 @@ class MacroInstanceExpr extends Expr {
   }
 
   @Override
-  SourceLocation location() {
+  public SourceLocation location() {
     return loc;
   }
 
@@ -820,9 +821,20 @@ class MacroInstanceExpr extends Expr {
   }
 
   @Override
-  void prettyPrint(int indent, StringBuilder builder) {
+  public void prettyPrint(int indent, StringBuilder builder) {
+    builder.append(prettyIndentString(indent));
     builder.append("$");
-    builder.append(identifier);
+    builder.append(macro.name().name);
+    builder.append("(");
+    var isFirst = true;
+    for (var arg : arguments) {
+      if (!isFirst) {
+        builder.append(" ; ");
+      }
+      isFirst = false;
+      arg.prettyPrint(0, builder);
+    }
+    builder.append(")");
   }
 
   @Override
@@ -835,15 +847,22 @@ class MacroInstanceExpr extends Expr {
     }
 
     MacroInstanceExpr that = (MacroInstanceExpr) o;
-    return identifier.equals(that.identifier)
+    return macro.equals(that.macro)
         && arguments.equals(that.arguments);
   }
 
   @Override
   public int hashCode() {
-    int result = identifier.hashCode();
+    int result = macro.hashCode();
     result = 31 * result + arguments.hashCode();
     return result;
+  }
+
+  @Override
+  public String pathToString() {
+    var sb = new StringBuilder();
+    prettyPrint(0, sb);
+    return sb.toString();
   }
 }
 
@@ -967,7 +986,7 @@ class RangeExpr extends Expr {
   }
 }
 
-sealed interface TypeLiteralOrPlaceholder permits TypeLiteral, PlaceholderExpr {
+sealed interface TypeLiteralOrPlaceholder permits TypeLiteral, PlaceholderExpr, MacroInstanceExpr {
 }
 
 /**
@@ -1092,7 +1111,8 @@ sealed interface IsSymExpr extends IsCallExpr permits SymbolExpr, IsId {
   }
 }
 
-sealed interface IsId extends IsSymExpr permits IdentifierPath, Identifier, PlaceholderExpr {
+sealed interface IsId extends IsSymExpr
+    permits IdentifierPath, Identifier, PlaceholderExpr, MacroInstanceExpr {
   @Override
   default IsId path() {
     return this;

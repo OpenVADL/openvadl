@@ -661,9 +661,8 @@ PRODUCTIONS
   .
 
   placeholder<out Node placeholder, SyntaxType requiredType>
-  = SYM_DOLLAR                            (. var startloc = loc(); .)
-  identifierPath<out IsId path>           (. if (isDefType(requiredType)) placeholder = new PlaceholderDefinition(path, startloc.join(loc()));
-                                             else placeholder = new PlaceholderExpr(path, startloc.join(loc())); .)
+  = SYM_DOLLAR                            (. var startLoc = loc(); .)
+  identifierPath<out IsId path>           (. placeholder = createPlaceholder(requiredType, path, startLoc.join(loc())); .)
   .
 
   /// Parses the maximum macro expression (either instance or placeholder) from the parser.
@@ -684,12 +683,12 @@ PRODUCTIONS
           macroInstanceParam<out Node arg2, params.next().type()> (. args.add(arg2); .)
         }
         SYM_PAREN_CLOSE
-      )                                                           (. node = new MacroInstanceExpr(id, args, loc()); .)
+      )                                                           (. node = createMacroInstance(macro, args, loc()); .)
     ]                                                             (. if (node == null) node = new PlaceholderExpr(id, loc()); .)
   .
 
   macroInstance<out Node body, SyntaxType requiredType>
-  = SYM_DOLLAR                                                  (. var args = new ArrayList<Node>(); .)
+  = SYM_DOLLAR                                                  (. var args = new ArrayList<Node>(); var start = loc(); .)
     identifier<out Identifier id>                               (. var macro = Objects.requireNonNull(symbolTable.getMacro(id.name)); .)
     SYM_PAREN_OPEN                                              (. var params = macro.params().iterator(); .)
     (
@@ -701,7 +700,7 @@ PRODUCTIONS
         macroInstanceParam<out Node arg2, params.next().type()> (. args.add(arg2); .)
       }
       SYM_PAREN_CLOSE
-    )                                                           (. body = expandMacro(this, id, args, requiredType); .)
+    )                                                           (. body = createMacroInstance(macro, args, start.join(loc())); .)
   .
 
   macroInstanceParam<out Node arg, SyntaxType syntaxType> (. arg = null; var start = loc(); .)

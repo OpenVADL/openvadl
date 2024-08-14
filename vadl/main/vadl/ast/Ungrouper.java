@@ -247,6 +247,12 @@ class Ungrouper
   }
 
   @Override
+  public Definition visit(MacroInstanceDefinition definition) {
+    ungroupAnnotations(definition);
+    return definition;
+  }
+
+  @Override
   public Statement visit(BlockStatement blockStatement) {
     blockStatement.statements.replaceAll(statement -> statement.accept(this));
     return blockStatement;
@@ -272,6 +278,16 @@ class Ungrouper
     assignmentStatement.target = assignmentStatement.target.accept(this);
     assignmentStatement.valueExpression = assignmentStatement.valueExpression.accept(this);
     return assignmentStatement;
+  }
+
+  @Override
+  public Statement visit(PlaceholderStatement placeholderStatement) {
+    return placeholderStatement;
+  }
+
+  @Override
+  public Statement visit(MacroInstanceStatement macroInstanceStatement) {
+    return macroInstanceStatement;
   }
 
   private void ungroupAnnotations(Definition definition) {

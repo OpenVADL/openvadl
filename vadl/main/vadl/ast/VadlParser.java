@@ -97,15 +97,20 @@ public class VadlParser {
       }
     }
 
-    if (errors.isEmpty()) {
-      SymbolTable.SymbolCollector.collectSymbols(parser.ast);
-      errors.addAll(SymbolTable.VerificationPass.verifyUsages(parser.ast));
+    if (!errors.isEmpty()) {
+      throw new VadlException(errors);
     }
+
+    var ast = parser.ast;
+
+    MacroExpander.expandAst(ast, parser.macroOverrides);
+    SymbolTable.SymbolCollector.collectSymbols(ast);
+    errors.addAll(SymbolTable.VerificationPass.verifyUsages(ast));
 
     if (!errors.isEmpty()) {
       throw new VadlException(errors);
     }
 
-    return parser.ast;
+    return ast;
   }
 }
