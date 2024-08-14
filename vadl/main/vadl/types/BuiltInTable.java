@@ -1,10 +1,12 @@
 package vadl.types;
 
 import static org.slf4j.LoggerFactory.getLogger;
+import static vadl.types.Type.constructDataType;
 
 import com.google.common.collect.Streams;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.function.BiFunction;
 import java.util.function.Function;
@@ -34,6 +36,7 @@ public class BuiltInTable {
       func("NEG", "-", Type.relation(BitsType.class, BitsType.class))
           .computeUnary(Constant.Value::negate)
           .takesDefault()
+          .returnsFirstBitWidth(BitsType.class)
           .build();
 
 
@@ -45,6 +48,7 @@ public class BuiltInTable {
           .compute(
               (Constant.Value a, Constant.Value b) -> a.add(b, false).get(0, Constant.Value.class))
           .takesAllWithSameBitWidths()
+          .returnsFirstBitWidth(BitsType.class)
           .build();
 
 
@@ -55,6 +59,7 @@ public class BuiltInTable {
       func("ADDS", null, Type.relation(BitsType.class, BitsType.class, TupleType.class))
           .compute((Constant.Value a, Constant.Value b) -> a.add(b, false))
           .takesAllWithSameBitWidths()
+          .returnsFirstBitWidthAndStatus(BitsType.class)
           .build();
 
 
@@ -67,6 +72,7 @@ public class BuiltInTable {
           .compute(
               (Constant.Value a, Constant.Value b, Constant.Value carry) -> a.add(b, carry.bool()))
           .takesAllWithSameBitWidths()
+          .returnsFirstBitWidthAndStatus(BitsType.class)
           .build();
 
 
@@ -76,6 +82,7 @@ public class BuiltInTable {
   public static final BuiltIn SSATADD =
       func("SSATADD", "+|", Type.relation(SIntType.class, SIntType.class, SIntType.class))
           .takesAllWithSameBitWidths()
+          .returnsFirstBitWidth(SIntType.class)
           .build();
 
 
@@ -85,6 +92,7 @@ public class BuiltInTable {
   public static final BuiltIn USATADD =
       func("USATADD", "+|", Type.relation(UIntType.class, UIntType.class, UIntType.class))
           .takesAllWithSameBitWidths()
+          .returnsFirstBitWidth(UIntType.class)
           .build();
 
 
@@ -94,6 +102,7 @@ public class BuiltInTable {
   public static final BuiltIn SSATADDS =
       func("SSATADDS", Type.relation(SIntType.class, SIntType.class, TupleType.class))
           .takesAllWithSameBitWidths()
+          .returnsFirstBitWidthAndStatus(SIntType.class)
           .build();
 
 
@@ -103,6 +112,7 @@ public class BuiltInTable {
   public static final BuiltIn USATADDS =
       func("USATADDS", Type.relation(UIntType.class, UIntType.class, TupleType.class))
           .takesAllWithSameBitWidths()
+          .returnsFirstBitWidthAndStatus(UIntType.class)
           .build();
 
 
@@ -114,6 +124,7 @@ public class BuiltInTable {
           Type.relation(List.of(SIntType.class, SIntType.class, BoolType.class),
               TupleType.class))
           .takesFirstTwoWithSameBitWidths()
+          .returnsFirstBitWidthAndStatus(SIntType.class)
           .build();
 
 
@@ -125,6 +136,7 @@ public class BuiltInTable {
           Type.relation(List.of(UIntType.class, UIntType.class, BoolType.class),
               TupleType.class))
           .takesFirstTwoWithSameBitWidths()
+          .returnsFirstBitWidthAndStatus(UIntType.class)
           .build();
 
 
@@ -139,6 +151,7 @@ public class BuiltInTable {
               (Constant.Value a, Constant.Value b) -> a.subtract(b, Constant.Value.SubMode.X86_LIKE,
                   false).firstValue())
           .takesAllWithSameBitWidths()
+          .returnsFirstBitWidth(BitsType.class)
           .build();
 
 
@@ -154,6 +167,7 @@ public class BuiltInTable {
           .compute((Constant.Value a, Constant.Value b) -> a.subtract(b,
               Constant.Value.SubMode.ARM_LIKE, true))
           .takesAllWithSameBitWidths()
+          .returnsFirstBitWidthAndStatus(BitsType.class)
           .build();
 
 
@@ -170,6 +184,7 @@ public class BuiltInTable {
               (Constant.Value a, Constant.Value b) -> a.subtract(b, Constant.Value.SubMode.X86_LIKE,
                   false))
           .takesAllWithSameBitWidths()
+          .returnsFirstBitWidthAndStatus(BitsType.class)
           .build();
 
 
@@ -185,6 +200,7 @@ public class BuiltInTable {
               a.subtract(b, Constant.Value.SubMode.ARM_LIKE, carry.bool())
           )
           .takesFirstTwoWithSameBitWidths()
+          .returnsFirstBitWidthAndStatus(BitsType.class)
           .build();
 
 
@@ -200,6 +216,7 @@ public class BuiltInTable {
               a.subtract(b, Constant.Value.SubMode.X86_LIKE, carry.bool())
           )
           .takesFirstTwoWithSameBitWidths()
+          .returnsFirstBitWidthAndStatus(BitsType.class)
           .build();
 
 
@@ -209,6 +226,7 @@ public class BuiltInTable {
   public static final BuiltIn SSATSUB =
       func("SSATSUB", "-|", Type.relation(SIntType.class, SIntType.class, SIntType.class))
           .takesAllWithSameBitWidths()
+          .returnsFirstBitWidth(SIntType.class)
           .build();
 
 
@@ -218,6 +236,7 @@ public class BuiltInTable {
   public static final BuiltIn USATSUB =
       func("USATSUB", "-|", Type.relation(UIntType.class, UIntType.class, UIntType.class))
           .takesAllWithSameBitWidths()
+          .returnsFirstBitWidth(UIntType.class)
           .build();
 
 
@@ -227,6 +246,7 @@ public class BuiltInTable {
   public static final BuiltIn SSATSUBS =
       func("SSATSUBS", Type.relation(SIntType.class, SIntType.class, TupleType.class))
           .takesAllWithSameBitWidths()
+          .returnsFirstBitWidthAndStatus(SIntType.class)
           .build();
 
 
@@ -236,6 +256,7 @@ public class BuiltInTable {
   public static final BuiltIn USATSUBS =
       func("USATSUBS", Type.relation(UIntType.class, UIntType.class, TupleType.class))
           .takesAllWithSameBitWidths()
+          .returnsFirstBitWidthAndStatus(UIntType.class)
           .build();
 
 
@@ -247,6 +268,7 @@ public class BuiltInTable {
           Type.relation(List.of(SIntType.class, SIntType.class, BoolType.class),
               TupleType.class))
           .takesFirstTwoWithSameBitWidths()
+          .returnsFirstBitWidthAndStatus(SIntType.class)
           .build();
 
 
@@ -258,6 +280,7 @@ public class BuiltInTable {
           Type.relation(List.of(UIntType.class, UIntType.class, BoolType.class),
               TupleType.class))
           .takesFirstTwoWithSameBitWidths()
+          .returnsFirstBitWidthAndStatus(UIntType.class)
           .build();
 
 
@@ -269,6 +292,7 @@ public class BuiltInTable {
           Type.relation(List.of(SIntType.class, SIntType.class, BoolType.class),
               TupleType.class))
           .takesFirstTwoWithSameBitWidths()
+          .returnsFirstBitWidthAndStatus(SIntType.class)
           .build();
 
 
@@ -280,6 +304,7 @@ public class BuiltInTable {
           Type.relation(List.of(UIntType.class, UIntType.class, BoolType.class),
               TupleType.class))
           .takesFirstTwoWithSameBitWidths()
+          .returnsFirstBitWidthAndStatus(UIntType.class)
           .build();
 
 
@@ -291,6 +316,7 @@ public class BuiltInTable {
           .compute((Constant.Value a, Constant.Value b) -> a.multiply(b, false)
           )
           .takesAllWithSameBitWidths()
+          .returnsFirstBitWidth(BitsType.class)
           .build();
 
 
@@ -300,6 +326,7 @@ public class BuiltInTable {
   public static final BuiltIn MULS =
       func("MULS", null, Type.relation(BitsType.class, BitsType.class, TupleType.class))
           .takesAllWithSameBitWidths()
+          .returnsFirstBitWidthAndStatus(BitsType.class)
           .build();
 
 
@@ -310,6 +337,7 @@ public class BuiltInTable {
       func("SMULL", "*#", Type.relation(SIntType.class, SIntType.class, SIntType.class)).compute(
               (Constant.Value a, Constant.Value b) -> a.multiply(b, true))
           .takesAllWithSameBitWidths()
+          .returnsFromFirstAsDataType((a) -> Type.signedInt(2 * a.bitWidth()))
           .build();
 
 
@@ -320,6 +348,7 @@ public class BuiltInTable {
       func("UMULL", "*#", Type.relation(UIntType.class, UIntType.class, UIntType.class)).compute(
               (Constant.Value a, Constant.Value b) -> a.multiply(b, true))
           .takesAllWithSameBitWidths()
+          .returnsFromFirstAsDataType((a) -> Type.unsignedInt(2 * a.bitWidth()))
           .build();
 
 
@@ -329,6 +358,7 @@ public class BuiltInTable {
   public static final BuiltIn SUMULL =
       func("SUMULL", "*#", Type.relation(SIntType.class, UIntType.class, SIntType.class))
           .takesAllWithSameBitWidths()
+          .returnsFromFirstAsDataType((a) -> Type.signedInt(2 * a.bitWidth()))
           .build();
 
 
@@ -338,6 +368,10 @@ public class BuiltInTable {
   public static final BuiltIn SMULLS =
       func("SMULLS", Type.relation(SIntType.class, SIntType.class, TupleType.class))
           .takesAllWithSameBitWidths()
+          .returnsFromFirstAsDataType((a) -> Type.tuple(
+              Type.signedInt(2 * a.bitWidth()),
+              Type.status()
+          ))
           .build();
 
 
@@ -347,6 +381,10 @@ public class BuiltInTable {
   public static final BuiltIn UMULLS =
       func("UMULLS", Type.relation(UIntType.class, UIntType.class, TupleType.class))
           .takesAllWithSameBitWidths()
+          .returnsFromFirstAsDataType((a) -> Type.tuple(
+              Type.unsignedInt(2 * a.bitWidth()),
+              Type.status()
+          ))
           .build();
 
 
@@ -356,6 +394,10 @@ public class BuiltInTable {
   public static final BuiltIn SUMULLS =
       func("SUMULLS", Type.relation(SIntType.class, UIntType.class, TupleType.class))
           .takesAllWithSameBitWidths()
+          .returnsFromFirstAsDataType((a) -> Type.tuple(
+              Type.signedInt(2 * a.bitWidth()),
+              Type.status()
+          ))
           .build();
 
 
@@ -365,6 +407,7 @@ public class BuiltInTable {
   public static final BuiltIn SMOD =
       func("SMOD", "%", Type.relation(SIntType.class, SIntType.class, SIntType.class))
           .takesAllWithSameBitWidths()
+          .returnsFirstBitWidth(SIntType.class)
           .build();
 
 
@@ -374,6 +417,7 @@ public class BuiltInTable {
   public static final BuiltIn UMOD =
       func("UMOD", "%", Type.relation(UIntType.class, UIntType.class, UIntType.class))
           .takesAllWithSameBitWidths()
+          .returnsFirstBitWidth(UIntType.class)
           .build();
 
 
@@ -383,6 +427,7 @@ public class BuiltInTable {
   public static final BuiltIn SMODS =
       func("SMODS", Type.relation(SIntType.class, SIntType.class, TupleType.class))
           .takesAllWithSameBitWidths()
+          .returnsFirstBitWidth(SIntType.class)
           .build();
 
 
@@ -392,6 +437,7 @@ public class BuiltInTable {
   public static final BuiltIn UMODS =
       func("UMODS", Type.relation(UIntType.class, UIntType.class, TupleType.class))
           .takesAllWithSameBitWidths()
+          .returnsFirstBitWidthAndStatus(UIntType.class)
           .build();
 
 
@@ -402,6 +448,7 @@ public class BuiltInTable {
       func("SDIV", "/", Type.relation(SIntType.class, SIntType.class, SIntType.class))
           .compute(Constant.Value::divide)
           .takesAllWithSameBitWidths()
+          .returnsFirstBitWidth(SIntType.class)
           .build();
 
 
@@ -412,6 +459,7 @@ public class BuiltInTable {
       func("UDIV", "/", Type.relation(UIntType.class, UIntType.class, UIntType.class))
           .compute(Constant.Value::divide)
           .takesAllWithSameBitWidths()
+          .returnsFirstBitWidth(UIntType.class)
           .build();
 
 
@@ -421,6 +469,7 @@ public class BuiltInTable {
   public static final BuiltIn SDIVS =
       func("SDIVS", Type.relation(SIntType.class, SIntType.class, TupleType.class))
           .takesAllWithSameBitWidths()
+          .returnsFirstBitWidthAndStatus(SIntType.class)
           .build();
 
 
@@ -430,18 +479,20 @@ public class BuiltInTable {
   public static final BuiltIn UDIVS =
       func("UDIVS", Type.relation(UIntType.class, UIntType.class, TupleType.class))
           .takesAllWithSameBitWidths()
+          .returnsFirstBitWidthAndStatus(UIntType.class)
           .build();
 
 
   ///// LOGICAL //////
 
   /**
-   * {@code function not ( a : Bits<N> ) ->Bits<N> // <=> ~a }
+   * {@code function not ( a : Bits<N> ) -> Bits<N> // <=> ~a }
    */
   public static final BuiltIn NOT =
       func("NOT", "~", Type.relation(BitsType.class, BitsType.class))
           .compute((List<Constant.Value> args) -> args.get(0).not())
           .takesDefault()
+          .returnsFirstBitWidth(BitsType.class)
           .build();
 
 
@@ -452,6 +503,7 @@ public class BuiltInTable {
       func("AND", "&", Type.relation(BitsType.class, BitsType.class, BitsType.class))
           .compute(Constant.Value::and)
           .takesAllWithSameBitWidths()
+          .returnsFirstBitWidth(BitsType.class)
           .build();
 
 
@@ -461,6 +513,7 @@ public class BuiltInTable {
   public static final BuiltIn ANDS =
       func("ANDS", Type.relation(BitsType.class, BitsType.class, TupleType.class))
           .takesAllWithSameBitWidths()
+          .returnsFirstBitWidthAndStatus(BitsType.class)
           .build();
 
 
@@ -470,6 +523,8 @@ public class BuiltInTable {
   public static final BuiltIn XOR =
       func("XOR", "^", Type.relation(BitsType.class, BitsType.class, SIntType.class))
           .takesAllWithSameBitWidths()
+          // as it is not known but effectively irrelevant, we use bits
+          .returnsFirstBitWidth(BitsType.class)
           .build();
 
 
@@ -479,6 +534,7 @@ public class BuiltInTable {
   public static final BuiltIn XORS =
       func("XORS", Type.relation(BitsType.class, BitsType.class, TupleType.class))
           .takesAllWithSameBitWidths()
+          .returnsFirstBitWidthAndStatus(BitsType.class)
           .build();
 
 
@@ -488,6 +544,8 @@ public class BuiltInTable {
   public static final BuiltIn OR =
       func("OR", "|", Type.relation(BitsType.class, BitsType.class, SIntType.class))
           .takesAllWithSameBitWidths()
+          // as it is not known and effectively relevant, we return bits
+          .returnsFirstBitWidth(BitsType.class)
           .build();
 
 
@@ -497,6 +555,7 @@ public class BuiltInTable {
   public static final BuiltIn ORS =
       func("ORS", Type.relation(BitsType.class, BitsType.class, TupleType.class))
           .takesAllWithSameBitWidths()
+          .returnsFirstBitWidthAndStatus(BitsType.class)
           .build();
 
   ///// COMPARISON //////
@@ -508,6 +567,7 @@ public class BuiltInTable {
   public static final BuiltIn EQU =
       func("EQU", "=", Type.relation(BitsType.class, BitsType.class, BoolType.class))
           .takesAllWithSameBitWidths()
+          .returns(Type.bool())
           .build();
 
 
@@ -517,6 +577,7 @@ public class BuiltInTable {
   public static final BuiltIn NEQ =
       func("NEQ", "!=", Type.relation(BitsType.class, BitsType.class, BoolType.class))
           .takesAllWithSameBitWidths()
+          .returns(Type.bool())
           .build();
 
 
@@ -526,6 +587,7 @@ public class BuiltInTable {
   public static final BuiltIn SLTH =
       func("SLTH", "<", Type.relation(SIntType.class, SIntType.class, BoolType.class))
           .takesAllWithSameBitWidths()
+          .returns(Type.bool())
           .build();
 
 
@@ -535,6 +597,7 @@ public class BuiltInTable {
   public static final BuiltIn ULTH =
       func("ULTH", "<", Type.relation(UIntType.class, UIntType.class, BoolType.class))
           .takesAllWithSameBitWidths()
+          .returns(Type.bool())
           .build();
 
 
@@ -545,6 +608,7 @@ public class BuiltInTable {
       func("SLEQ", "<=",
           Type.relation(SIntType.class, SIntType.class, BoolType.class))
           .takesAllWithSameBitWidths()
+          .returns(Type.bool())
           .build();
 
 
@@ -555,6 +619,7 @@ public class BuiltInTable {
       func("ULEQ", "<=",
           Type.relation(UIntType.class, UIntType.class, BoolType.class))
           .takesAllWithSameBitWidths()
+          .returns(Type.bool())
           .build();
 
 
@@ -565,6 +630,7 @@ public class BuiltInTable {
       func("SGTH", ">",
           Type.relation(SIntType.class, SIntType.class, BoolType.class))
           .takesAllWithSameBitWidths()
+          .returns(Type.bool())
           .build();
 
 
@@ -575,6 +641,7 @@ public class BuiltInTable {
       func("UGTH", ">",
           Type.relation(UIntType.class, UIntType.class, BoolType.class))
           .takesAllWithSameBitWidths()
+          .returns(Type.bool())
           .build();
 
 
@@ -585,6 +652,7 @@ public class BuiltInTable {
       func("SGEQ", ">=",
           Type.relation(SIntType.class, SIntType.class, BoolType.class))
           .takesAllWithSameBitWidths()
+          .returns(Type.bool())
           .build();
 
 
@@ -595,6 +663,7 @@ public class BuiltInTable {
       func("UGEQ", ">=",
           Type.relation(UIntType.class, UIntType.class, BoolType.class))
           .takesAllWithSameBitWidths()
+          .returns(Type.bool())
           .build();
 
 
@@ -608,6 +677,7 @@ public class BuiltInTable {
       func("LSL", "<<", Type.relation(BitsType.class, UIntType.class, BitsType.class))
           .compute(Constant.Value::lsl)
           .takesDefault()
+          .returnsFirstBitWidth(BitsType.class)
           .build();
 
 
@@ -617,6 +687,7 @@ public class BuiltInTable {
   public static final BuiltIn LSLS =
       func("LSLS", Type.relation(BitsType.class, UIntType.class, TupleType.class))
           .takesDefault()
+          .returnsFirstBitWidthAndStatus(BitsType.class)
           .build();
 
 
@@ -628,6 +699,7 @@ public class BuiltInTable {
           Type.relation(List.of(BitsType.class, UIntType.class, BoolType.class),
               TupleType.class))
           .takesDefault()
+          .returnsFirstBitWidthAndStatus(BitsType.class)
           .build();
 
 
@@ -637,6 +709,7 @@ public class BuiltInTable {
   public static final BuiltIn ASR =
       func("ASR", ">>", Type.relation(SIntType.class, UIntType.class, SIntType.class))
           .takesDefault()
+          .returnsFirstBitWidth(SIntType.class)
           .build();
 
 
@@ -646,6 +719,7 @@ public class BuiltInTable {
   public static final BuiltIn LSR =
       func("LSR", ">>", Type.relation(UIntType.class, UIntType.class, UIntType.class))
           .takesDefault()
+          .returnsFirstBitWidth(UIntType.class)
           .build();
 
 
@@ -655,6 +729,7 @@ public class BuiltInTable {
   public static final BuiltIn ASRS =
       func("ASRS", Type.relation(SIntType.class, UIntType.class, TupleType.class))
           .takesDefault()
+          .returnsFirstBitWidthAndStatus(SIntType.class)
           .build();
 
 
@@ -664,6 +739,7 @@ public class BuiltInTable {
   public static final BuiltIn LSRS =
       func("LSRS", Type.relation(UIntType.class, UIntType.class, TupleType.class))
           .takesDefault()
+          .returnsFirstBitWidthAndStatus(UIntType.class)
           .build();
 
 
@@ -675,6 +751,7 @@ public class BuiltInTable {
           Type.relation(List.of(SIntType.class, UIntType.class, BoolType.class),
               TupleType.class))
           .takesDefault()
+          .returnsFirstBitWidthAndStatus(SIntType.class)
           .build();
 
 
@@ -686,6 +763,7 @@ public class BuiltInTable {
           Type.relation(List.of(UIntType.class, UIntType.class, BoolType.class),
               TupleType.class))
           .takesDefault()
+          .returnsFirstBitWidthAndStatus(UIntType.class)
           .build();
 
 
@@ -695,6 +773,7 @@ public class BuiltInTable {
   public static final BuiltIn ROL =
       func("ROL", Type.relation(BitsType.class, UIntType.class, BitsType.class))
           .takesDefault()
+          .returnsFirstBitWidth(BitsType.class)
           .build();
 
 
@@ -704,6 +783,7 @@ public class BuiltInTable {
   public static final BuiltIn ROLS =
       func("ROLS", Type.relation(BitsType.class, UIntType.class, TupleType.class))
           .takesDefault()
+          .returnsFirstBitWidthAndStatus(BitsType.class)
           .build();
 
 
@@ -715,6 +795,7 @@ public class BuiltInTable {
           Type.relation(List.of(BitsType.class, UIntType.class, BoolType.class),
               TupleType.class))
           .takesDefault()
+          .returnsFirstBitWidthAndStatus(BitsType.class)
           .build();
 
 
@@ -724,6 +805,7 @@ public class BuiltInTable {
   public static final BuiltIn ROR =
       func("ROR", Type.relation(BitsType.class, UIntType.class, BitsType.class))
           .takesDefault()
+          .returnsFirstBitWidth(BitsType.class)
           .build();
 
 
@@ -733,6 +815,7 @@ public class BuiltInTable {
   public static final BuiltIn RORS =
       func("RORS", Type.relation(BitsType.class, UIntType.class, TupleType.class))
           .takesDefault()
+          .returnsFirstBitWidthAndStatus(BitsType.class)
           .build();
 
 
@@ -744,6 +827,7 @@ public class BuiltInTable {
           Type.relation(List.of(BitsType.class, UIntType.class, BoolType.class),
               TupleType.class))
           .takesDefault()
+          .returnsFirstBitWidthAndStatus(BitsType.class)
           .build();
 
 
@@ -755,6 +839,7 @@ public class BuiltInTable {
           Type.relation(List.of(BitsType.class, UIntType.class, BoolType.class),
               BitsType.class))
           .takesDefault()
+          .returnsFirstBitWidth(BitsType.class)
           .build();
 
 
@@ -769,6 +854,7 @@ public class BuiltInTable {
   public static final BuiltIn COB =
       func("COB", Type.relation(BitsType.class, UIntType.class))
           .takesDefault()
+          .returnsFirstBitWidth(UIntType.class)
           .build();
 
 
@@ -778,6 +864,7 @@ public class BuiltInTable {
   public static final BuiltIn CZB =
       func("CZB", Type.relation(BitsType.class, UIntType.class))
           .takesDefault()
+          .returnsFirstBitWidth(UIntType.class)
           .build();
 
 
@@ -789,6 +876,7 @@ public class BuiltInTable {
   public static final BuiltIn CLZ =
       func("CLZ", Type.relation(BitsType.class, UIntType.class))
           .takesDefault()
+          .returnsFirstBitWidth(UIntType.class)
           .build();
 
 
@@ -800,6 +888,7 @@ public class BuiltInTable {
   public static final BuiltIn CLO =
       func("CLO", Type.relation(BitsType.class, UIntType.class))
           .takesDefault()
+          .returnsFirstBitWidth(UIntType.class)
           .build();
 
 
@@ -811,6 +900,7 @@ public class BuiltInTable {
   public static final BuiltIn CLS =
       func("CLS", Type.relation(BitsType.class, TupleType.class))
           .takesDefault()
+          .returnsFirstBitWidth(UIntType.class)
           .build();
 
 
@@ -824,6 +914,7 @@ public class BuiltInTable {
   public static final BuiltIn MNEMONIC =
       func("MNEMONIC", Type.relation(StringType.class))
           .takesDefault()
+          .returns(Type.string())
           .build();
 
   /**
@@ -835,6 +926,7 @@ public class BuiltInTable {
       func("CONCATENATE",
           Type.relation(StringType.class, StringType.class, StringType.class))
           .takesDefault()
+          .returns(Type.string())
           .build();
 
   /**
@@ -846,6 +938,7 @@ public class BuiltInTable {
       func("REGISTER",
           Type.relation(BitsType.class, StringType.class))
           .takesDefault()
+          .returns(Type.string())
           .build();
 
   /**
@@ -856,6 +949,7 @@ public class BuiltInTable {
   public static final BuiltIn BINARY =
       func("BINARY", Type.relation(BitsType.class, StringType.class))
           .takesDefault()
+          .returns(Type.string())
           .build();
 
   /**
@@ -867,6 +961,7 @@ public class BuiltInTable {
       func("DECIMAL",
           Type.relation(BitsType.class, StringType.class))
           .takesDefault()
+          .returns(Type.string())
           .build();
 
   /**
@@ -877,6 +972,7 @@ public class BuiltInTable {
   public static final BuiltIn HEX =
       func("HEX", Type.relation(BitsType.class, StringType.class))
           .takesDefault()
+          .returns(Type.string())
           .build();
 
   /**
@@ -887,6 +983,7 @@ public class BuiltInTable {
   public static final BuiltIn OCTAL =
       func("octal", Type.relation(BitsType.class, StringType.class))
           .takesDefault()
+          .returns(Type.string())
           .build();
 
   ///// FIELDS /////
@@ -1044,7 +1141,7 @@ public class BuiltInTable {
    * The BuiltIn class represents a built-in function or process in VADL.
    * It contains information about the name, operator, type, and kind of the built-in.
    */
-  public static class BuiltIn {
+  abstract public static class BuiltIn {
     private final String name;
     private final @Nullable String operator;
     private final RelationType signature;
@@ -1081,8 +1178,17 @@ public class BuiltInTable {
     }
 
 
-    public boolean takes(List<Type> types) {
-      if (argTypeClasses().size() != types.size()) {
+    /**
+     * Checks whether the given concrete types are valid argument types for this BuiltIn.
+     * The default implementation will only check if the type classes are equal to the ones
+     * in the built-in definition, and if not, if it is possible to produce a type of the
+     * parameter type class that can be trivially cast from the argument type.
+     *
+     * @param argTypes of the concrete arguments
+     * @return true if argument types are correct, false otherwise
+     */
+    public boolean takes(List<Type> argTypes) {
+      if (argTypeClasses().size() != argTypes.size()) {
         // if the number of arguments is not correct, this can't be true
         return false;
       }
@@ -1093,7 +1199,7 @@ public class BuiltInTable {
       // to an constructed type of the parameter type, we return false.
       // otherwise true.
       // overrides should further constraint the properties of the given types.
-      return Streams.zip(types.stream(), argTypeClasses().stream(),
+      return Streams.zip(argTypes.stream(), argTypeClasses().stream(),
           (t, tc) -> {
             if (t.getClass() == tc) {
               // if the class is the same, we know that the argument type is correct
@@ -1103,7 +1209,7 @@ public class BuiltInTable {
               // if the concrete type is a data type we try to construct a data type
               // with the same bit width from the built-ins argument type class.
               // if this fails, we know that the type can't be correct.
-              var constructedType = Type.constructDataType(tc, tDataType.bitWidth());
+              var constructedType = constructDataType(tc, tDataType.bitWidth());
               if (constructedType != null) {
                 // check that the argument type can be trivially cast to the constructed type
                 return tDataType.isTrivialCastTo(tDataType);
@@ -1116,6 +1222,18 @@ public class BuiltInTable {
           }
       ).allMatch(p -> p);
     }
+
+
+    /**
+     * Returns the result type of the built-in when called with the given argument types.
+     * It assumes that the argument types are valid, such as a call to
+     * {@link #takes(List)} would return true.
+     *
+     * @param argTypes concrete types of argument for call.
+     * @return the concrete type that is return by this built-in
+     */
+    abstract public Type returns(List<Type> argTypes);
+
 
     public final boolean matches(RelationType type) {
       return this.signature.equals(type);
@@ -1164,6 +1282,8 @@ public class BuiltInTable {
     private Function<List<Constant>, Constant> computeFunction;
     @Nullable
     private Function<List<Type>, Boolean> takesFunction;
+    @Nullable
+    private Function<List<Type>, Type> returnsFunction;
 
     BuiltInBuilder(String name, @Nullable String operator, RelationType signature,
                    BuiltIn.Kind kind) {
@@ -1249,14 +1369,58 @@ public class BuiltInTable {
       return this;
     }
 
+    public BuiltInBuilder returns(Function<List<Type>, Type> returnsFunction) {
+      this.returnsFunction = returnsFunction;
+      return this;
+    }
+
+    public <T extends DataType> BuiltInBuilder returnsFirstBitWidth(Class<T> returnTypeClass) {
+      returnsFromFirstAsDataType(
+          (firstDataType) -> {
+            var result = constructDataType(returnTypeClass, firstDataType.bitWidth());
+            Objects.requireNonNull(result);
+            return result;
+          });
+      return this;
+    }
+
+    public <T extends DataType> BuiltInBuilder returnsFirstBitWidthAndStatus(
+        Class<T> returnTypeClass) {
+      returnsFromFirstAsDataType((firstDataType) -> {
+        var valType = constructDataType(returnTypeClass, firstDataType.bitWidth());
+        Objects.requireNonNull(valType);
+        return Type.tuple(valType, Type.status());
+      });
+      return this;
+    }
+
+    public BuiltInBuilder returns(Type returnType) {
+      returns((args) -> returnType);
+      return this;
+    }
+
+    public BuiltInBuilder returnsFromFirstAsDataType(Function<DataType, Type> returnFunction) {
+      returns((args) -> {
+        ViamError.ensure(!args.isEmpty(), "Expected at least one argument, but found none.");
+        var a = args.get(0);
+        ViamError.ensure(a instanceof DataType, "Expected a data type, but found %s", a);
+        return returnFunction.apply((DataType) a);
+      });
+      return this;
+    }
+
+
     BuiltIn build() {
 
       var takesFunction = this.takesFunction;
-      if (takesFunction == null) {
-        throw new ViamError(
-            "Built-in construction failed: No takes function specified for built-in %s".formatted(
-                name));
-      }
+      ViamError.ensure(takesFunction != null,
+          "Built-in construction failed: No `takes` function specified for built-in %s",
+          name);
+
+      var returnsFunction = this.returnsFunction;
+      ViamError.ensure(returnsFunction != null,
+          "Built-in construction failed: No `returns` function specified for built-in %s",
+          name);
 
       return new BuiltIn(name, operator, signature, kind) {
         @Override
@@ -1277,14 +1441,19 @@ public class BuiltInTable {
         }
 
         @Override
-        public boolean takes(List<Type> types) {
+        public boolean takes(List<Type> argTypes) {
           // always check general case first
-          var generalConstraintsValid = super.takes(types);
+          var generalConstraintsValid = super.takes(argTypes);
           if (generalConstraintsValid) {
             // if general case doesn't fail, then test specific constraints
-            return takesFunction.apply(types);
+            return takesFunction.apply(argTypes);
           }
           return generalConstraintsValid;
+        }
+
+        @Override
+        public Type returns(List<Type> argTypes) {
+          return returnsFunction.apply(argTypes);
         }
       };
     }
