@@ -3,13 +3,16 @@ package vadl.viam.passes;
 import com.google.common.collect.Streams;
 import java.io.IOException;
 import java.util.Arrays;
+import java.util.IdentityHashMap;
 import java.util.Map;
 import org.jetbrains.annotations.Nullable;
 import vadl.pass.Pass;
 import vadl.pass.PassKey;
 import vadl.pass.PassName;
+import vadl.viam.Instruction;
 import vadl.viam.Parameter;
 import vadl.viam.Specification;
+import vadl.viam.graph.Graph;
 import vadl.viam.graph.control.ReturnNode;
 import vadl.viam.graph.dependency.ExpressionNode;
 import vadl.viam.graph.dependency.FuncCallNode;
@@ -33,11 +36,13 @@ public class FunctionInlinerPass extends Pass {
   @Override
   public Object execute(Map<PassKey, Object> passResults, Specification viam)
       throws IOException {
+    Map<Instruction, Graph> inlined = new IdentityHashMap<>();
 
     viam.isas()
         .flatMap(isa -> isa.instructions().stream())
         .forEach(instruction -> {
-          var functionCalls = instruction.behavior().getNodes(FuncCallNode.class)
+          var copy = instruction.behavior().copy();
+          var functionCalls = copy.getNodes(FuncCallNode.class)
               .filter(funcCallNode -> funcCallNode.function().behavior().isPureFunction())
               .toList();
 
@@ -62,8 +67,10 @@ public class FunctionInlinerPass extends Pass {
             // Actual inlining
             functionCall.replaceAndDelete(returnNode.value());
           });
+
+          inlined.put(instruction, copy);
         });
 
-    return null;
+    return inlined;
   }
 }

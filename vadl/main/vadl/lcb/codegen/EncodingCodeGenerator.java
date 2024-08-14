@@ -15,5 +15,4 @@ public class EncodingCodeGenerator extends EncoderDecoderCodeGenerator {
     return "encode";
   }
 
-
 }

@@ -2,6 +2,7 @@ package vadl.lcb.passes.isaMatching;
 
 import java.io.IOException;
 import java.util.HashMap;
+import java.util.IdentityHashMap;
 import java.util.List;
 import java.util.Map;
 import org.jetbrains.annotations.Nullable;
@@ -50,18 +51,26 @@ public class IsaMatchingPass extends Pass {
   @Override
   public Object execute(Map<PassKey, Object> passResults, Specification viam)
       throws IOException {
+    // The instruction matching happens on the inlined graph
+    // because the field accesses are inlined.
+    IdentityHashMap<Instruction, Graph> inlined =
+        (IdentityHashMap<Instruction, Graph>) passResults.get(new PassKey("FunctionInlinerPass"));
+    ensureNonNull(inlined, "Inlining data must exist");
     HashMap<InstructionLabel, Instruction> matched = new HashMap<>();
 
     viam.isas().forEach(isa -> isa.instructions().forEach(instruction -> {
-      if (findAdd32Bit(instruction.behavior())) {
+      // Get inlined or the normal behavior if nothing was inlined.
+      var behavior = inlined.getOrDefault(instruction, instruction.behavior());
+
+      if (findAdd32Bit(behavior)) {
         matched.put(InstructionLabel.ADD_32, instruction);
-      } else if (findAdd64Bit(instruction.behavior())) {
+      } else if (findAdd64Bit(behavior)) {
         matched.put(InstructionLabel.ADD_64, instruction);
-      } else if (findAddWithImmediate32Bit(instruction.behavior())) {
+      } else if (findAddWithImmediate32Bit(behavior)) {
         matched.put(InstructionLabel.ADDI_32, instruction);
-      } else if (findAddWithImmediate64Bit(instruction.behavior())) {
+      } else if (findAddWithImmediate64Bit(behavior)) {
         matched.put(InstructionLabel.ADDI_64, instruction);
-      } else if (isa.pc() != null && findBeq(instruction.behavior(), isa.pc())) {
+      } else if (isa.pc() != null && findBeq(behavior, isa.pc())) {
         matched.put(InstructionLabel.BEQ, instruction);
       }
     }));

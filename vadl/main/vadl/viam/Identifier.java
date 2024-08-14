@@ -105,6 +105,10 @@ public record Identifier(
     return this.parts[this.parts.length - 1];
   }
 
+  public String lower() {
+    return String.join("_", this.parts);
+  }
+
   private static String normalizePart(String part) {
     // remove leading and trailing dots
     part = part.trim();

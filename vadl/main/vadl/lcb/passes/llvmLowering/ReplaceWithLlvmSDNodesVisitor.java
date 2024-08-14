@@ -194,17 +194,29 @@ public class ReplaceWithLlvmSDNodesVisitor implements LcbGraphNodeVisitor {
 
   @Override
   public void visit(ZeroExtendNode node) {
-
+    // Remove all nodes
+    for (var usage : node.usages().toList()) {
+      usage.replaceInput(node, node.value());
+    }
+    visit(node.value());
   }
 
   @Override
   public void visit(SignExtendNode node) {
-
+    // Remove all nodes
+    for (var usage : node.usages().toList()) {
+      usage.replaceInput(node, node.value());
+    }
+    visit(node.value());
   }
 
   @Override
   public void visit(TruncateNode node) {
-
+    // Remove all nodes
+    for (var usage : node.usages().toList()) {
+      usage.replaceInput(node, node.value());
+    }
+    visit(node.value());
   }
 
   @Override
