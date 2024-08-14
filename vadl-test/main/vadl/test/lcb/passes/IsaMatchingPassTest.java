@@ -9,11 +9,12 @@ import java.util.stream.Stream;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.Arguments;
 import org.junit.jupiter.params.provider.MethodSource;
-import vadl.lcb.passes.isa_matching.InstructionLabel;
-import vadl.lcb.passes.isa_matching.IsaMatchingPass;
+import vadl.lcb.passes.isaMatching.InstructionLabel;
+import vadl.lcb.passes.isaMatching.IsaMatchingPass;
 import vadl.pass.PassKey;
 import vadl.test.AbstractTest;
 import vadl.viam.Instruction;
+import vadl.viam.passes.FunctionInlinerPass;
 
 public class IsaMatchingPassTest extends AbstractTest {
 
@@ -23,7 +24,7 @@ public class IsaMatchingPassTest extends AbstractTest {
     return Stream.of(
         Arguments.of("ADD", InstructionLabel.ADD_64),
         Arguments.of("ADDI", InstructionLabel.ADDI_64)
-        );
+    );
   }
 
   @ParameterizedTest
@@ -33,6 +34,8 @@ public class IsaMatchingPassTest extends AbstractTest {
     // Given
     var spec = runAndGetViamSpecification("examples/rv3264im.vadl");
     var passResults = new HashMap<PassKey, Object>();
+
+    new FunctionInlinerPass().execute(passResults, spec);
 
     // When
     HashMap<InstructionLabel, Instruction> matchings =
