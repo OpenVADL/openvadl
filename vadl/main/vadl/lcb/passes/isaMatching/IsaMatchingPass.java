@@ -80,27 +80,27 @@ public class IsaMatchingPass extends Pass {
         matched.put(InstructionLabel.ADDI_32, List.of(instruction));
       } else if (findAddWithImmediate64Bit(behavior)) {
         matched.put(InstructionLabel.ADDI_64, List.of(instruction));
-      } else if (findRR(behavior, SUB)) {
+      } else if (findRR_OR_findRI(behavior, SUB)) {
         extend(matched, InstructionLabel.SUB, instruction);
-      } else if (findRR(behavior, List.of(SUBB, SUBSB))) {
+      } else if (findRR_OR_findRI(behavior, List.of(SUBB, SUBSB))) {
         extend(matched, InstructionLabel.SUBB, instruction);
-      } else if (findRR(behavior, List.of(SUBC, SUBSC))) {
+      } else if (findRR_OR_findRI(behavior, List.of(SUBC, SUBSC))) {
         extend(matched, InstructionLabel.SUBC, instruction);
-      } else if (findRR(behavior, List.of(AND, ADDS))) {
+      } else if (findRR_OR_findRI(behavior, List.of(AND, ANDS))) {
         extend(matched, InstructionLabel.AND, instruction);
-      } else if (findRR(behavior, List.of(OR, ORS))) {
+      } else if (findRR_OR_findRI(behavior, List.of(OR, ORS))) {
         extend(matched, InstructionLabel.OR, instruction);
-      } else if (findRR(behavior, List.of(XOR, XORS))) {
+      } else if (findRR_OR_findRI(behavior, List.of(XOR, XORS))) {
         extend(matched, InstructionLabel.XOR, instruction);
-      } else if (findRR(behavior, List.of(MUL, SMULL, SMULLS))) {
+      } else if (findRR_OR_findRI(behavior, List.of(MUL, SMULL, SMULLS))) {
         extend(matched, InstructionLabel.MUL, instruction);
-      } else if (findRR(behavior, List.of(SDIV, SDIVS))) {
+      } else if (findRR_OR_findRI(behavior, List.of(SDIV, SDIVS))) {
         extend(matched, InstructionLabel.SDIV, instruction);
-      } else if (findRR(behavior, List.of(UDIV, UDIVS))) {
+      } else if (findRR_OR_findRI(behavior, List.of(UDIV, UDIVS))) {
         extend(matched, InstructionLabel.UDIV, instruction);
-      } else if (findRR(behavior, List.of(SMOD, SMODS))) {
+      } else if (findRR_OR_findRI(behavior, List.of(SMOD, SMODS))) {
         extend(matched, InstructionLabel.SMOD, instruction);
-      } else if (findRR(behavior, List.of(UMOD, UMODS))) {
+      } else if (findRR_OR_findRI(behavior, List.of(UMOD, UMODS))) {
         extend(matched, InstructionLabel.UMOD, instruction);
       } else if (isa.pc() != null && findBranchWithConditional(behavior, isa.pc(), EQU)) {
         extend(matched, InstructionLabel.BEQ, instruction);
@@ -176,6 +176,14 @@ public class IsaMatchingPass extends Pass {
 
   private boolean findRR(Graph behavior, BuiltIn builtin) {
     return findRR(behavior, List.of(builtin));
+  }
+
+  private boolean findRR_OR_findRI(Graph behavior, BuiltIn builtin) {
+    return findRR(behavior, List.of(builtin)) || findRI(behavior, List.of(builtin));
+  }
+
+  private boolean findRR_OR_findRI(Graph behavior, List<BuiltIn> builtins) {
+    return findRR(behavior, builtins) || findRI(behavior, builtins);
   }
 
   /**

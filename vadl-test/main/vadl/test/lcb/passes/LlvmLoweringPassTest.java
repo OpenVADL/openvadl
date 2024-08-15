@@ -38,6 +38,13 @@ public class LlvmLoweringPassTest extends AbstractTest {
         List.of(String.format("(%s X:$rs1, X:$rs2)", dagNode)));
   }
 
+  private static TestOutput createTestOutputRI(String dagNode) {
+    return new TestOutput(
+        List.of(new TableGenInstructionOperand("X", "rs1")),
+        List.of(new TableGenInstructionOperand("X", "rd")),
+        List.of(String.format("(%s X:$rs1, X:$rs2)", dagNode)));
+  }
+
   static {
     expectedResults.put("ADD", createTestOutputRR("add"));
     expectedResults.put("SUB", createTestOutputRR("sub"));
@@ -45,9 +52,9 @@ public class LlvmLoweringPassTest extends AbstractTest {
     expectedResults.put("XOR", createTestOutputRR("xor"));
     expectedResults.put("AND", createTestOutputRR("and"));
     expectedResults.put("OR", createTestOutputRR("or"));
-    expectedResults.put("ADDI", createTestOutputRR("add"));
-    expectedResults.put("ORI", createTestOutputRR("or"));
-    expectedResults.put("ANDI", createTestOutputRR("andi"));
+    expectedResults.put("ADDI", createTestOutputRI("add"));
+    expectedResults.put("ORI", createTestOutputRI("or"));
+    expectedResults.put("ANDI", createTestOutputRI("and"));
   }
 
   @TestFactory
