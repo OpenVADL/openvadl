@@ -3,8 +3,8 @@ package vadl.lcb.tablegen.lowering;
 import java.io.StringWriter;
 import vadl.lcb.LcbGraphNodeVisitor;
 import vadl.lcb.passes.llvmLowering.LlvmNodeLowerable;
+import vadl.lcb.passes.llvmLowering.strategies.LlvmLoweringStrategy;
 import vadl.viam.Constant;
-import vadl.viam.Parameter;
 import vadl.viam.graph.control.AbstractBeginNode;
 import vadl.viam.graph.control.EndNode;
 import vadl.viam.graph.control.IfNode;
@@ -102,17 +102,14 @@ public class TableGenPatternVisitor implements LcbGraphNodeVisitor {
 
   @Override
   public void visit(ReadRegNode readRegNode) {
-    // same as in LlvmLoweringStrategy#getTableGenInputOperands
-    writer.write(readRegNode.register().name() + ":$" +
-        readRegNode.nodeName());
+    var operand = LlvmLoweringStrategy.generateTableGenInputOutput(readRegNode);
+    writer.write(operand.render());
   }
 
   @Override
   public void visit(ReadRegFileNode readRegFileNode) {
-    // same as in LlvmLoweringStrategy#getTableGenInputOperands
-    var address = (FieldRefNode) readRegFileNode.address();
-    writer.write(readRegFileNode.registerFile().name() + ":$" +
-        address.formatField().identifier.simpleName());
+    var operand = LlvmLoweringStrategy.generateTableGenInputOutput(readRegFileNode);
+    writer.write(operand.render());
   }
 
   @Override
@@ -132,9 +129,7 @@ public class TableGenPatternVisitor implements LcbGraphNodeVisitor {
 
   @Override
   public void visit(FuncCallNode funcCallNode) {
-    // same as in LlvmLoweringStrategy#getTableGenInputOperands
-    writer.write(funcCallNode.function().identifier.lower() + ":$" +
-        funcCallNode.function().identifier.simpleName());
+
   }
 
   @Override
@@ -144,9 +139,8 @@ public class TableGenPatternVisitor implements LcbGraphNodeVisitor {
 
   @Override
   public void visit(FieldAccessRefNode fieldAccessRefNode) {
-    // same as in LlvmLoweringStrategy#getTableGenInputOperands
-    writer.write(fieldAccessRefNode.fieldAccess().accessFunction().name() + ":$" +
-        fieldAccessRefNode.nodeName());
+    var operand = LlvmLoweringStrategy.generateTableGenInputOutput(fieldAccessRefNode);
+    writer.write(operand.render());
   }
 
   @Override

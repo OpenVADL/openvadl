@@ -23,8 +23,7 @@ public class TableGenWithImmediateOperandsDecorator extends TableGenAbstractDeco
 
     ImmediateOperandExtractor.extract(specification)
         .map(immediateOperand -> new TableGenImmediateOperand(immediateOperand.name(),
-            immediateOperand.encoderMethod(),
-            immediateOperand.decoderMethod(), immediateOperand.type()))
+            immediateOperand.type()))
         .forEach(imm -> {
           var lowered = TableGenImmediateOperandRenderer.lower(imm);
           writer.write(lowered + "\n");

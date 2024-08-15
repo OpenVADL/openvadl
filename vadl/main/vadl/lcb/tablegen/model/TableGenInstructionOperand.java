@@ -5,4 +5,7 @@ package vadl.lcb.tablegen.model;
  * This class represent one element of the inputs or outputs.
  */
 public record TableGenInstructionOperand(String type, String name) {
+  public String render() {
+    return String.format("%s:$%s", type, name);
+  }
 }

@@ -12,7 +12,7 @@ class TableGenImmediateOperandRendererTest {
   void shouldRenderOperand() {
     // Given
     var operand =
-        new TableGenImmediateOperand("nameValue", "encoderMethodValue", "decoderMethodValue",
+        new TableGenImmediateOperand("nameValue",
             ValueType.I32);
 
     // When

@@ -6,6 +6,7 @@ import vadl.lcb.LcbGraphNodeVisitor;
 import vadl.lcb.passes.llvmLowering.model.LlvmAddSD;
 import vadl.lcb.passes.llvmLowering.model.LlvmAndSD;
 import vadl.lcb.passes.llvmLowering.model.LlvmCondCode;
+import vadl.lcb.passes.llvmLowering.model.LlvmFieldAccessRefNode;
 import vadl.lcb.passes.llvmLowering.model.LlvmMulSD;
 import vadl.lcb.passes.llvmLowering.model.LlvmOrSD;
 import vadl.lcb.passes.llvmLowering.model.LlvmSDivSD;
@@ -100,7 +101,7 @@ public class ReplaceWithLlvmSDNodesVisitor implements LcbGraphNodeVisitor {
       node.replaceAndDelete(new LlvmAndSD(node.arguments(), node.type()));
     } else if (node.builtIn() == BuiltInTable.OR || node.builtIn() == BuiltInTable.ORS) {
       node.replaceAndDelete(new LlvmOrSD(node.arguments(), node.type()));
-    } else if(node.builtIn() == BuiltInTable.XOR || node.builtIn() == BuiltInTable.XORS) {
+    } else if (node.builtIn() == BuiltInTable.XOR || node.builtIn() == BuiltInTable.XORS) {
       node.replaceAndDelete(new LlvmXorSD(node.arguments(), node.type()));
     } else if (node.builtIn() == BuiltInTable.LSL || node.builtIn() == BuiltInTable.LSLS) {
       node.replaceAndDelete(new LlvmShlSD(node.arguments(), node.type()));
@@ -174,6 +175,11 @@ public class ReplaceWithLlvmSDNodesVisitor implements LcbGraphNodeVisitor {
 
   @Override
   public void visit(FieldAccessRefNode fieldAccessRefNode) {
+    if (!(fieldAccessRefNode instanceof LlvmFieldAccessRefNode)) {
+      fieldAccessRefNode.replaceAndDelete(
+          new LlvmFieldAccessRefNode(fieldAccessRefNode.fieldAccess(),
+              fieldAccessRefNode.type()));
+    }
   }
 
   @Override

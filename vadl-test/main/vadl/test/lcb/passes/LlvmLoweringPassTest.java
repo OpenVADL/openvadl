@@ -9,9 +9,11 @@ import java.util.stream.Stream;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.DynamicTest;
 import org.junit.jupiter.api.TestFactory;
+import vadl.lcb.codegen.model.llvm.ValueType;
 import vadl.lcb.passes.isaMatching.IsaMatchingPass;
 import vadl.lcb.passes.llvmLowering.LlvmLoweringPass;
 import vadl.lcb.tablegen.lowering.TableGenPatternVisitor;
+import vadl.lcb.tablegen.model.TableGenImmediateOperand;
 import vadl.lcb.tablegen.model.TableGenInstructionOperand;
 import vadl.pass.PassKey;
 import vadl.test.AbstractTest;
@@ -38,11 +40,14 @@ public class LlvmLoweringPassTest extends AbstractTest {
         List.of(String.format("(%s X:$rs1, X:$rs2)", dagNode)));
   }
 
-  private static TestOutput createTestOutputRI(String dagNode) {
+  private static TestOutput createTestOutputRI(String immediateOperand,
+                                               String immediateName,
+                                               String dagNode) {
     return new TestOutput(
-        List.of(new TableGenInstructionOperand("X", "rs1")),
+        List.of(new TableGenInstructionOperand("X", "rs1"),
+            new TableGenInstructionOperand(immediateOperand, immediateName)),
         List.of(new TableGenInstructionOperand("X", "rd")),
-        List.of(String.format("(%s X:$rs1, X:$rs2)", dagNode)));
+        List.of(String.format("(%s X:$rs1, %s:$%s)", dagNode, immediateOperand, immediateName)));
   }
 
   static {
@@ -52,9 +57,9 @@ public class LlvmLoweringPassTest extends AbstractTest {
     expectedResults.put("XOR", createTestOutputRR("xor"));
     expectedResults.put("AND", createTestOutputRR("and"));
     expectedResults.put("OR", createTestOutputRR("or"));
-    expectedResults.put("ADDI", createTestOutputRI("add"));
-    expectedResults.put("ORI", createTestOutputRI("or"));
-    expectedResults.put("ANDI", createTestOutputRI("and"));
+    expectedResults.put("ADDI", createTestOutputRI("immS_decodeAsInt64", "immS", "add"));
+    expectedResults.put("ORI", createTestOutputRI("immS_decodeAsInt64", "immS", "or"));
+    expectedResults.put("ANDI", createTestOutputRI("immS_decodeAsInt64", "immS", "and"));
   }
 
   @TestFactory

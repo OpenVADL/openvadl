@@ -1,5 +1,7 @@
 package vadl.lcb.tablegen.model;
 
+import vadl.lcb.codegen.DecodingCodeGenerator;
+import vadl.lcb.codegen.EncodingCodeGenerator;
 import vadl.lcb.codegen.model.llvm.ValueType;
 
 /**
@@ -14,17 +16,15 @@ public class TableGenImmediateOperand extends TableGenClass {
   /**
    * Constructor for an immediate operand.
    */
-  public TableGenImmediateOperand(String name,
-                                  String encoderMethod,
-                                  String decoderMethod,
+  public TableGenImmediateOperand(String rawName,
                                   ValueType type) {
-    this.name = name;
-    this.encoderMethod = encoderMethod;
-    this.decoderMethod = decoderMethod;
+    this.name = rawName;
+    this.encoderMethod = EncodingCodeGenerator.getFunctionPrefix() + rawName;
+    this.decoderMethod = DecodingCodeGenerator.getFunctionPrefix() + rawName;
     this.type = type;
   }
 
-  public String getName() {
+  public String getRawName() {
     return name;
   }
 
@@ -38,5 +38,9 @@ public class TableGenImmediateOperand extends TableGenClass {
 
   public ValueType getType() {
     return type;
+  }
+
+  public String getFullName() {
+    return String.format("%sAs%s", this.name, type.getFancyName());
   }
 }

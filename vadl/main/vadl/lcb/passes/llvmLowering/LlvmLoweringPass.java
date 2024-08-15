@@ -47,6 +47,9 @@ public class LlvmLoweringPass extends Pass {
   @Override
   public Object execute(Map<PassKey, Object> passResults, Specification viam)
       throws IOException {
+    IdentityHashMap<Instruction, Graph> uninlined =
+        (IdentityHashMap<Instruction, Graph>) passResults.get(new PassKey("FunctionInlinerPass"));
+    ensureNonNull(uninlined, "Inlined Function data must exist");
     Map<Instruction, LlvmLoweringIntermediateResult>
         llvmPatterns = new IdentityHashMap<>();
     var isaMatched =
@@ -58,12 +61,13 @@ public class LlvmLoweringPass extends Pass {
 
     viam.isas().flatMap(isa -> isa.instructions().stream())
         .forEach(instruction -> {
+          var uninlinedBehavior = uninlined.getOrDefault(instruction, instruction.behavior());
           for (var strategy : strategies) {
             if (!strategy.isApplicable(instructionLookup, instruction)) {
               continue;
             }
 
-            var res = strategy.lower(instruction);
+            var res = strategy.lower(instruction.identifier, uninlinedBehavior);
 
             res.ifPresent(llvmLoweringIntermediateResult -> llvmPatterns.put(instruction,
                 llvmLoweringIntermediateResult));

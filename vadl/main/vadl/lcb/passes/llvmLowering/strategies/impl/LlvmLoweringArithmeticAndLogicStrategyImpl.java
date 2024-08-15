@@ -14,6 +14,7 @@ import vadl.lcb.passes.llvmLowering.LlvmLoweringPass;
 import vadl.lcb.passes.llvmLowering.ReplaceWithLlvmSDNodesVisitor;
 import vadl.lcb.passes.llvmLowering.strategies.LlvmLoweringStrategy;
 import vadl.lcb.tablegen.model.TableGenInstruction;
+import vadl.viam.Identifier;
 import vadl.viam.Instruction;
 import vadl.viam.graph.Graph;
 import vadl.viam.graph.dependency.WriteResourceNode;
@@ -43,19 +44,17 @@ public class LlvmLoweringArithmeticAndLogicStrategyImpl implements LlvmLoweringS
   }
 
   @Override
-  public Optional<LlvmLoweringPass.LlvmLoweringIntermediateResult> lower(Instruction instruction) {
+  public Optional<LlvmLoweringPass.LlvmLoweringIntermediateResult> lower(
+      Identifier instructionIdentifier, Graph behavior) {
     var visitor = new ReplaceWithLlvmSDNodesVisitor();
-    var copy = instruction.behavior().copy();
+    var copy = behavior.copy();
     var nodes = copy.getNodes().toList();
 
     if (!checkIfNoControlFlow(copy) && !checkIfNotAllowedDataflowNodes(copy)) {
       logger.atWarn().log("Instruction '{}' is not lowerable and will be skipped",
-          instruction.identifier.toString());
+          instructionIdentifier.toString());
       return Optional.empty();
     }
-
-    var inputOperands = getTableGenInputOperands(copy);
-    var outputOperands = getTableGenOutputOperands(copy);
 
     // Continue with lowering of nodes
     for (var node : nodes) {
@@ -63,10 +62,13 @@ public class LlvmLoweringArithmeticAndLogicStrategyImpl implements LlvmLoweringS
 
       if (!visitor.isPatternLowerable()) {
         logger.atWarn().log("Instruction '{}' is not lowerable and wil be skipped",
-            instruction.identifier.toString());
+            instructionIdentifier.toString());
         break;
       }
     }
+
+    var inputOperands = LlvmLoweringStrategy.getTableGenInputOperands(copy);
+    var outputOperands = LlvmLoweringStrategy.getTableGenOutputOperands(copy);
 
     copy.deinitializeNodes();
 
@@ -76,7 +78,7 @@ public class LlvmLoweringArithmeticAndLogicStrategyImpl implements LlvmLoweringS
           inputOperands, outputOperands, patterns));
     }
 
-    logger.atWarn().log("Instruction '{}' is not lowerable", instruction.identifier.toString());
+    logger.atWarn().log("Instruction '{}' is not lowerable", instructionIdentifier.toString());
     return Optional.empty();
   }
 
