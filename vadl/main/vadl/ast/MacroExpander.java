@@ -394,6 +394,12 @@ class MacroExpander
   }
 
   @Override
+  public Definition visit(ExceptionDefinition definition) {
+    var id = resolvePlaceholderOrIdentifier(definition.id);
+    return new ExceptionDefinition(id, definition.statement.accept(this), definition.loc);
+  }
+
+  @Override
   public Definition visit(PlaceholderDefinition definition) {
     var arg = Objects.requireNonNull(args.get(definition.placeholder.path().pathToString()));
     return (Definition) arg;
@@ -449,6 +455,16 @@ class MacroExpander
     var target = assignmentStatement.target.accept(this);
     var valueExpr = assignmentStatement.valueExpression.accept(this);
     return new AssignmentStatement(target, valueExpr);
+  }
+
+  @Override
+  public Statement visit(RaiseStatement raiseStatement) {
+    return new RaiseStatement(raiseStatement.statement.accept(this), raiseStatement.location);
+  }
+
+  @Override
+  public Statement visit(CallStatement callStatement) {
+    return new CallStatement(callStatement.expr.accept(this));
   }
 
   @Override

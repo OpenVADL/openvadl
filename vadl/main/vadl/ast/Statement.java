@@ -8,7 +8,8 @@ import vadl.utils.SourceLocation;
 
 abstract sealed class Statement extends Node
     permits BlockStatement, LetStatement, IfStatement, AssignmentStatement, StatementList,
-    PlaceholderStatement, MacroInstanceStatement, MacroMatchStatement {
+    CallStatement, RaiseStatement, PlaceholderStatement, MacroInstanceStatement,
+    MacroMatchStatement {
   <T> T accept(StatementVisitor<T> visitor) {
     // TODO Use exhaustive switch with patterns in future Java versions
     if (this instanceof BlockStatement b) {
@@ -19,6 +20,10 @@ abstract sealed class Statement extends Node
       return visitor.visit(i);
     } else if (this instanceof AssignmentStatement a) {
       return visitor.visit(a);
+    } else if (this instanceof RaiseStatement r) {
+      return visitor.visit(r);
+    } else if (this instanceof CallStatement c) {
+      return visitor.visit(c);
     } else if (this instanceof PlaceholderStatement p) {
       return visitor.visit(p);
     } else if (this instanceof MacroInstanceStatement m) {
@@ -44,6 +49,10 @@ interface StatementVisitor<T> {
   T visit(IfStatement ifStatement);
 
   T visit(AssignmentStatement assignmentStatement);
+
+  T visit(RaiseStatement raiseStatement);
+
+  T visit(CallStatement callStatement);
 
   T visit(PlaceholderStatement placeholderStatement);
 
@@ -303,6 +312,47 @@ final class StatementList extends Statement {
   }
 }
 
+final class RaiseStatement extends Statement {
+
+  Statement statement;
+  SourceLocation location;
+
+  RaiseStatement(Statement statement, SourceLocation location) {
+    this.statement = statement;
+    this.location = location;
+  }
+
+  @Override
+  SourceLocation location() {
+    return location;
+  }
+
+  @Override
+  void prettyPrint(int indent, StringBuilder builder) {
+    builder.append("raise ");
+    statement.prettyPrint(indent + 1, builder);
+  }
+}
+
+final class CallStatement extends Statement {
+
+  Expr expr;
+
+  CallStatement(Expr expr) {
+    this.expr = expr;
+  }
+
+  @Override
+  SourceLocation location() {
+    return expr.location();
+  }
+
+  @Override
+  void prettyPrint(int indent, StringBuilder builder) {
+    expr.prettyPrint(indent, builder);
+  }
+}
+
 final class PlaceholderStatement extends Statement {
 
   IsCallExpr placeholder;
@@ -359,7 +409,7 @@ final class MacroInstanceStatement extends Statement {
 
   @Override
   SyntaxType syntaxType() {
-    return BasicSyntaxType.Invalid();
+    return macro.returnType();
   }
 
   @Override

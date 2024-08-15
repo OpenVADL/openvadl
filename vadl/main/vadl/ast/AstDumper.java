@@ -303,6 +303,14 @@ public class AstDumper
   }
 
   @Override
+  public Void visit(ExceptionDefinition definition) {
+    dumpNode(definition);
+    dumpChildren(definition.id());
+    dumpChildren(definition.statement);
+    return null;
+  }
+
+  @Override
   public Void visit(PlaceholderDefinition definition) {
     dumpNode(definition);
     return null;
@@ -427,6 +435,20 @@ public class AstDumper
     assignmentStatement.target.accept(this);
     assignmentStatement.valueExpression.accept(this);
     indent--;
+    return null;
+  }
+
+  @Override
+  public Void visit(RaiseStatement raiseStatement) {
+    dumpNode(raiseStatement);
+    dumpChildren(raiseStatement.statement);
+    return null;
+  }
+
+  @Override
+  public Void visit(CallStatement callStatement) {
+    dumpNode(callStatement);
+    dumpChildren(callStatement.expr);
     return null;
   }
 

@@ -95,6 +95,8 @@ TOKENS
   MATCH = "match".
   ENUMERATION = "enumeration".
   WITH = "with".
+  RAISE = "raise".
+  EXCEPTION = "exception".
 
   SYM_IN = "in".
   SYM_AS = "as".
@@ -215,6 +217,7 @@ PRODUCTIONS
   | registerDefinition<out def>
   | aliasDefinition<out def>
   | enumerationDefinition<out def>
+  | exceptionDefinition<out def>
   .
 
   constantDefinition<out ConstantDefinition def> (. TypeLiteral type = null; .)
@@ -445,14 +448,22 @@ PRODUCTIONS
     SYM_BRACE_CLOSE                         (. def = new EnumerationDefinition(id, enumType, entries, start.join(loc())); .)
   .
 
+  exceptionDefinition<out Definition def>
+  = EXCEPTION                          (. var start = loc(); .)
+    identifierOrPlaceholder<out IdentifierOrPlaceholder id>
+    SYM_EQ
+    statement<out Statement statement> (. def = new ExceptionDefinition(id, statement, start.join(loc())); .)
+  .
+
   // -- STATEMENTS ---------------------------------------------------------------------------------------------------
 
   statement<out Statement statement> (. statement = null; .)
   = letStatement<out statement>
   | ifStatement<out statement>
   | blockStatement<out statement>
+  | raiseStatement<out statement>
   | IF (la.kind == _identifierToken || isMacroReplacementOfType(this, BasicSyntaxType.CallEx()))
-    assignment<out statement>
+    assignmentOrCallStmt<out statement>
   | // IF (isMacroReplacementOfType(this, BasicSyntaxType.Stmts()))
     macroReplacement<out Node n>     (. statement = (Statement) n; .)
   .
@@ -467,13 +478,15 @@ PRODUCTIONS
   = { statement<out Statement statement>     (. stmts.add(statement); .) }
   .
 
-  assignment<out Statement statement>  (. Expr target = null; .)
+  assignmentOrCallStmt<out Statement statement> (. statement = null; Expr target = null; .)
   = ( callOrBinaryExpression<out target, false>
     | // IF (isMacroReplacementOfType(this, BasicSyntaxType.CallEx()))
       macroReplacement<out Node node>  (. target = (Expr) node; .)
     )
-    SYM_ASSIGN
-    expression<out Expr expr, BIN_OPS> (. statement = new AssignmentStatement(target, expr); .)
+    [
+      SYM_ASSIGN
+      expression<out Expr expr, BIN_OPS>        (. statement = new AssignmentStatement(target, expr); .)
+    ]                                           (. if (statement == null) statement = new CallStatement(target); .)
   .
 
   letStatement<out Statement letStatement>
@@ -494,6 +507,11 @@ PRODUCTIONS
     [ IF (la.kind == _ELSE)
       ELSE statement<out elseStmt>
     ]                                    (. ifStatement = new IfStatement(condition, thenStmt, elseStmt, start.join(loc())); .)
+  .
+
+  raiseStatement<out Statement raise>
+  = RAISE                              (. var start = loc(); .)
+    statement<out Statement statement> (. raise = new RaiseStatement(statement, start.join(loc())); .)
   .
 
   // -- EXPRESSIONS --------------------------------------------------------------------------------------------------
@@ -749,6 +767,7 @@ PRODUCTIONS
   allowedIdentifierKeywords
   = T_BOOL
   | REGISTER
+  | EXCEPTION
   // TODO Add all allowed keywords
   .
 
@@ -838,15 +857,15 @@ PRODUCTIONS
                                             .)
   .
 
-  macroBody<out Node body, SyntaxType type>        (. body = null; var start = lookaheadLoc(); .)
+  macroBody<out Node body, SyntaxType type>                 (. body = null; var start = lookaheadLoc(); .)
   = IF (type == BasicSyntaxType.Stats())
-    statementList<.out List<Statement> stmts.>     (. body = narrowNode(new StatementList(stmts, start.join(loc()))); .)
+    statementList<.out List<Statement> stmts.>              (. body = narrowNode(new StatementList(stmts, start.join(loc()))); .)
   | IF (type == BasicSyntaxType.Stat())
     statement<out body>
   | IF (type == BasicSyntaxType.Encs())
     encodingDefinitionList<out body>
   | IF (type == BasicSyntaxType.IsaDefs())
-    isaDefinitionList<.out List<Definition> defs.> (. body = new DefinitionList(defs, start.join(loc())); .)
+    isaDefinitionList<.out List<Definition> defs.>          (. body = new DefinitionList(defs, start.join(loc())); .)
   | IF (type == BasicSyntaxType.Ex())
     expression<out body, BIN_OPS>
   | IF (type == BasicSyntaxType.Lit())
@@ -866,9 +885,9 @@ PRODUCTIONS
   | IF (type == BasicSyntaxType.SymEx())
     symbolOrBinaryExpression<out body, false>
   | // IF (type == BasicSyntaxType.Id())
-    identifier<out body>
+    identifierOrPlaceholder<out IdentifierOrPlaceholder id> (. body = (Node) id; .)
   | // IF (type == BasicSyntaxType.BinOp())
-    binaryOperator<out Operator op>                (. body = new OperatorExpr(op, loc()); .)
+    binaryOperator<out Operator op>                         (. body = new OperatorExpr(op, loc()); .)
   .
 
   syntaxType<out SyntaxType type>

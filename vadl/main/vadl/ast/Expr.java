@@ -825,7 +825,7 @@ final class MacroInstanceExpr extends Expr implements IdentifierOrPlaceholder,
 
   @Override
   SyntaxType syntaxType() {
-    return BasicSyntaxType.Invalid();
+    return macro.returnType();
   }
 
   @Override

@@ -272,6 +272,12 @@ class Ungrouper
   }
 
   @Override
+  public Definition visit(ExceptionDefinition definition) {
+    definition.statement = definition.statement.accept(this);
+    return definition;
+  }
+
+  @Override
   public Definition visit(PlaceholderDefinition definition) {
     ungroupAnnotations(definition);
     return definition;
@@ -314,6 +320,18 @@ class Ungrouper
     assignmentStatement.target = assignmentStatement.target.accept(this);
     assignmentStatement.valueExpression = assignmentStatement.valueExpression.accept(this);
     return assignmentStatement;
+  }
+
+  @Override
+  public Statement visit(RaiseStatement raiseStatement) {
+    raiseStatement.statement = raiseStatement.statement.accept(this);
+    return raiseStatement;
+  }
+
+  @Override
+  public Statement visit(CallStatement callStatement) {
+    callStatement.expr = callStatement.expr.accept(this);
+    return callStatement;
   }
 
   @Override

@@ -53,6 +53,8 @@ interface DefinitionVisitor<R> {
 
   R visit(EnumerationDefinition definition);
 
+  R visit(ExceptionDefinition definition);
+
   R visit(PlaceholderDefinition definition);
 
   R visit(MacroInstanceDefinition definition);
@@ -1456,6 +1458,73 @@ final class EnumerationDefinition extends Definition {
   record Entry(Identifier name, @Nullable Expr value, @Nullable Expr behavior) {}
 }
 
+final class ExceptionDefinition extends Definition {
+  IdentifierOrPlaceholder id;
+  Statement statement;
+  SourceLocation loc;
+
+  ExceptionDefinition(IdentifierOrPlaceholder id, Statement statement, SourceLocation location) {
+    this.id = id;
+    this.statement = statement;
+    this.loc = location;
+  }
+
+  Identifier id() {
+    return (Identifier) id;
+  }
+
+  @Override
+  SourceLocation location() {
+    return loc;
+  }
+
+  @Override
+  SyntaxType syntaxType() {
+    return BasicSyntaxType.IsaDefs();
+  }
+
+  @Override
+  void prettyPrint(int indent, StringBuilder builder) {
+    builder.append(prettyIndentString(indent)).append("exception ");
+    id.prettyPrint(0, builder);
+    builder.append(" = ");
+    statement.prettyPrint(indent + 1, builder);
+  }
+
+  @Override
+  <R> R accept(DefinitionVisitor<R> visitor) {
+    return visitor.visit(this);
+  }
+
+  @Override
+  public String toString() {
+    return this.getClass().getSimpleName();
+  }
+
+  @Override
+  public boolean equals(Object o) {
+    if (this == o) {
+      return true;
+    }
+    if (o == null || getClass() != o.getClass()) {
+      return false;
+    }
+
+    var that = (ExceptionDefinition) o;
+    return Objects.equals(annotations, that.annotations)
+        && Objects.equals(id, that.id)
+        && Objects.equals(statement, that.statement);
+  }
+
+  @Override
+  public int hashCode() {
+    int result = Objects.hashCode(annotations);
+    result = 31 * result + Objects.hashCode(id);
+    result = 31 * result + Objects.hashCode(statement);
+    return result;
+  }
+}
+
 final class PlaceholderDefinition extends Definition {
 
   IsCallExpr placeholder;
@@ -1517,7 +1586,7 @@ final class MacroInstanceDefinition extends Definition {
 
   @Override
   SyntaxType syntaxType() {
-    return BasicSyntaxType.Invalid();
+    return macro.returnType();
   }
 
   @Override

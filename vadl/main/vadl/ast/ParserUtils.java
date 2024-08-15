@@ -190,19 +190,6 @@ class ParserUtils {
     parserSnapshot.reset(parser);
     scannerSnapshot.reset(parser.scanner);
 
-    if (maxExpr instanceof MacroInstanceExpr macroInstanceExpr) {
-      var macro = parser.symbolTable.getMacro(macroInstanceExpr.macro.name().name);
-      return macro != null && macro.returnType().isSubTypeOf(syntaxType);
-    }
-    if (maxExpr instanceof PlaceholderExpr placeholderExpr) {
-      for (List<MacroParam> params : parser.macroContext) {
-        for (MacroParam param : params) {
-          if (param.name().name.equals(placeholderExpr.placeholder.path().pathToString())) {
-            return param.type().isSubTypeOf(syntaxType);
-          }
-        }
-      }
-    }
     return maxExpr.syntaxType().isSubTypeOf(syntaxType);
   }
 

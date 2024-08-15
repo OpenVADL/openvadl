@@ -25,9 +25,11 @@ class SymbolTable {
         SourceLocation.INVALID_SOURCE_LOCATION);
     defineSymbol(new ValuedSymbol("mnemonic", null, SymbolType.CONSTANT),
         SourceLocation.INVALID_SOURCE_LOCATION);
-    defineSymbol(new ValuedSymbol("VADL::div", null, SymbolType.CONSTANT),
+    defineSymbol(new ValuedSymbol("VADL::div", null, SymbolType.FUNCTION),
         SourceLocation.INVALID_SOURCE_LOCATION);
-    defineSymbol(new ValuedSymbol("VADL::mod", null, SymbolType.CONSTANT),
+    defineSymbol(new ValuedSymbol("VADL::mod", null, SymbolType.FUNCTION),
+        SourceLocation.INVALID_SOURCE_LOCATION);
+    defineSymbol(new ValuedSymbol("VADL::ror", null, SymbolType.FUNCTION),
         SourceLocation.INVALID_SOURCE_LOCATION);
   }
 
@@ -125,7 +127,7 @@ class SymbolTable {
 
   enum SymbolType {
     CONSTANT, COUNTER, FORMAT, INSTRUCTION, INSTRUCTION_SET, MEMORY, REGISTER, REGISTER_FILE,
-    FORMAT_FIELD, MACRO, ALIAS, FUNCTION, ENUM_FIELD
+    FORMAT_FIELD, MACRO, ALIAS, FUNCTION, ENUM_FIELD, EXCEPTION
   }
 
   interface Symbol {
@@ -270,6 +272,10 @@ class SymbolTable {
             collectSymbols(symbols, entry.behavior());
           }
         }
+      } else if (definition instanceof ExceptionDefinition exception) {
+        symbols.defineSymbol(new ValuedSymbol(exception.id().name, null, SymbolType.EXCEPTION),
+            exception.loc);
+        collectSymbols(symbols, exception.statement);
       }
     }
 
@@ -295,6 +301,10 @@ class SymbolTable {
       } else if (stmt instanceof AssignmentStatement assignment) {
         collectSymbols(symbols, assignment.target);
         collectSymbols(symbols, assignment.valueExpression);
+      } else if (stmt instanceof RaiseStatement raise) {
+        collectSymbols(symbols, raise.statement);
+      } else if (stmt instanceof CallStatement call) {
+        collectSymbols(symbols, call.expr);
       }
     }
 
@@ -422,6 +432,8 @@ class SymbolTable {
             verifyUsages(entry.behavior());
           }
         }
+      } else if (definition instanceof ExceptionDefinition exception) {
+        verifyUsages(exception.statement);
       }
     }
 
@@ -442,6 +454,10 @@ class SymbolTable {
       } else if (stmt instanceof AssignmentStatement assignment) {
         verifyUsages(assignment.target);
         verifyUsages(assignment.valueExpression);
+      } else if (stmt instanceof RaiseStatement raise) {
+        verifyUsages(raise.statement);
+      } else if (stmt instanceof CallStatement call) {
+        verifyUsages(call.expr);
       }
     }
 
