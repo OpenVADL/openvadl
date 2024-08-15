@@ -22,6 +22,8 @@ import vadl.viam.graph.dependency.FuncParamNode;
 /**
  * A pass which inlines all the function with the given function.
  * Note that the function must be {@code pure} to be inlined.
+ * Also, the given {@link Specification} will be mutated in-place. However, the pass
+ * saves the original uninlined instruction's behavior as pass result.
  */
 public class FunctionInlinerPass extends Pass {
   @Override

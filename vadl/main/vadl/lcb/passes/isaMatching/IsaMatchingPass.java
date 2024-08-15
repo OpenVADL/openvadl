@@ -55,16 +55,16 @@ public class IsaMatchingPass extends Pass {
   @Override
   public Object execute(Map<PassKey, Object> passResults, Specification viam)
       throws IOException {
-    // The instruction matching happens on the unlined graph
-    // because the field accesses are unlined.
-    IdentityHashMap<Instruction, Graph> unlined =
+    // The instruction matching happens on the uninlined graph
+    // because the field accesses are uninlined.
+    IdentityHashMap<Instruction, Graph> uninlined =
         (IdentityHashMap<Instruction, Graph>) passResults.get(new PassKey("FunctionInlinerPass"));
-    ensureNonNull(unlined, "Inlining data must exist");
+    ensureNonNull(uninlined, "Inlining data must exist");
     HashMap<InstructionLabel, List<Instruction>> matched = new HashMap<>();
 
     viam.isas().forEach(isa -> isa.instructions().forEach(instruction -> {
-      // Get unlined or the normal behavior if nothing was unlined.
-      var behavior = unlined.getOrDefault(instruction, instruction.behavior());
+      // Get uninlined or the normal behavior if nothing was uninlined.
+      var behavior = uninlined.getOrDefault(instruction, instruction.behavior());
 
       if (findAdd32Bit(behavior)) {
         matched.put(InstructionLabel.ADD_32, List.of(instruction));
