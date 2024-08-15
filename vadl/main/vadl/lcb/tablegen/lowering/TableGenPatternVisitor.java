@@ -46,9 +46,12 @@ public class TableGenPatternVisitor implements LcbGraphNodeVisitor {
 
   @Override
   public void visit(ConstantNode node) {
-    node.ensure(node.constant() instanceof Constant.Value, "constant must be value");
+    node.ensure(node.constant() instanceof Constant.Value
+        || node.constant() instanceof Constant.Str, "constant must be value or string");
     if (node.constant() instanceof Constant.Value constant) {
       writer.write(constant.intValue());
+    } else if (node.constant() instanceof Constant.Str str) {
+      writer.write(str.value());
     }
   }
 

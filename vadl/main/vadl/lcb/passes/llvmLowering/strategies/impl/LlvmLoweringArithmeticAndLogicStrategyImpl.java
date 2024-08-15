@@ -1,5 +1,7 @@
 package vadl.lcb.passes.llvmLowering.strategies.impl;
 
+import static vadl.lcb.passes.isaMatching.InstructionLabel.*;
+
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -24,8 +26,9 @@ public class LlvmLoweringArithmeticAndLogicStrategyImpl implements LlvmLoweringS
   private static final Logger logger = LoggerFactory.getLogger(
       LlvmLoweringArithmeticAndLogicStrategyImpl.class);
 
-  private final Set<InstructionLabel> supported = Set.of(InstructionLabel.ADD_32,
-      InstructionLabel.ADD_64, InstructionLabel.ADDI_32, InstructionLabel.ADDI_64);
+  private final Set<InstructionLabel> supported = Set.of(ADD_32,
+      ADD_64, ADDI_32, ADDI_64, AND, OR, SUB, MUL, SUBB, SUBC, SDIV, UDIV, SMOD, UMOD, XOR, LT
+  );
 
   @Override
   public boolean isApplicable(Map<Instruction, InstructionLabel> matching,

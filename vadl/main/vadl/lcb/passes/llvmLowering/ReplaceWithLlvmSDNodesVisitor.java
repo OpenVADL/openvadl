@@ -5,16 +5,21 @@ import org.slf4j.LoggerFactory;
 import vadl.lcb.LcbGraphNodeVisitor;
 import vadl.lcb.passes.llvmLowering.model.LlvmAddSD;
 import vadl.lcb.passes.llvmLowering.model.LlvmAndSD;
+import vadl.lcb.passes.llvmLowering.model.LlvmCondCode;
 import vadl.lcb.passes.llvmLowering.model.LlvmMulSD;
 import vadl.lcb.passes.llvmLowering.model.LlvmOrSD;
 import vadl.lcb.passes.llvmLowering.model.LlvmSDivSD;
+import vadl.lcb.passes.llvmLowering.model.LlvmSMulSD;
 import vadl.lcb.passes.llvmLowering.model.LlvmSRemSD;
+import vadl.lcb.passes.llvmLowering.model.LlvmSetccSD;
 import vadl.lcb.passes.llvmLowering.model.LlvmShlSD;
 import vadl.lcb.passes.llvmLowering.model.LlvmShrSD;
 import vadl.lcb.passes.llvmLowering.model.LlvmSraSD;
 import vadl.lcb.passes.llvmLowering.model.LlvmSubSD;
 import vadl.lcb.passes.llvmLowering.model.LlvmUDivSD;
+import vadl.lcb.passes.llvmLowering.model.LlvmUMulSD;
 import vadl.lcb.passes.llvmLowering.model.LlvmURemSD;
+import vadl.lcb.passes.llvmLowering.model.LlvmXorSD;
 import vadl.types.BuiltInTable;
 import vadl.viam.graph.control.AbstractBeginNode;
 import vadl.viam.graph.control.EndNode;
@@ -65,15 +70,27 @@ public class ReplaceWithLlvmSDNodesVisitor implements LcbGraphNodeVisitor {
 
   @Override
   public void visit(BuiltInCall node) {
+    if (node instanceof LlvmNodeLowerable) {
+      for (var arg : node.arguments()) {
+        visit(arg);
+      }
+
+      return;
+    }
+
     if (node.builtIn() == BuiltInTable.ADD || node.builtIn() == BuiltInTable.ADDS) {
       node.replaceAndDelete(new LlvmAddSD(node.arguments(), node.type()));
     } else if (node.builtIn() == BuiltInTable.SUB) {
       node.replaceAndDelete(new LlvmSubSD(node.arguments(), node.type()));
     } else if (node.builtIn() == BuiltInTable.MUL || node.builtIn() == BuiltInTable.MULS) {
       node.replaceAndDelete(new LlvmMulSD(node.arguments(), node.type()));
-    } else if (node.builtIn() == BuiltInTable.SDIV) {
+    } else if (node.builtIn() == BuiltInTable.SMULL || node.builtIn() == BuiltInTable.SMULLS) {
+      node.replaceAndDelete(new LlvmSMulSD(node.arguments(), node.type()));
+    } else if (node.builtIn() == BuiltInTable.UMULL || node.builtIn() == BuiltInTable.UMULLS) {
+      node.replaceAndDelete(new LlvmUMulSD(node.arguments(), node.type()));
+    } else if (node.builtIn() == BuiltInTable.SDIV || node.builtIn() == BuiltInTable.SDIVS) {
       node.replaceAndDelete(new LlvmSDivSD(node.arguments(), node.type()));
-    } else if (node.builtIn() == BuiltInTable.UDIV) {
+    } else if (node.builtIn() == BuiltInTable.UDIV || node.builtIn() == BuiltInTable.UDIVS) {
       node.replaceAndDelete(new LlvmUDivSD(node.arguments(), node.type()));
     } else if (node.builtIn() == BuiltInTable.SMOD || node.builtIn() == BuiltInTable.SMODS) {
       node.replaceAndDelete(new LlvmSRemSD(node.arguments(), node.type()));
@@ -83,14 +100,22 @@ public class ReplaceWithLlvmSDNodesVisitor implements LcbGraphNodeVisitor {
       node.replaceAndDelete(new LlvmAndSD(node.arguments(), node.type()));
     } else if (node.builtIn() == BuiltInTable.OR || node.builtIn() == BuiltInTable.ORS) {
       node.replaceAndDelete(new LlvmOrSD(node.arguments(), node.type()));
+    } else if(node.builtIn() == BuiltInTable.XOR || node.builtIn() == BuiltInTable.XORS) {
+      node.replaceAndDelete(new LlvmXorSD(node.arguments(), node.type()));
     } else if (node.builtIn() == BuiltInTable.LSL || node.builtIn() == BuiltInTable.LSLS) {
       node.replaceAndDelete(new LlvmShlSD(node.arguments(), node.type()));
     } else if (node.builtIn() == BuiltInTable.LSR || node.builtIn() == BuiltInTable.LSRS) {
       node.replaceAndDelete(new LlvmShrSD(node.arguments(), node.type()));
     } else if (node.builtIn() == BuiltInTable.ASR || node.builtIn() == BuiltInTable.ASRS) {
       node.replaceAndDelete(new LlvmSraSD(node.arguments(), node.type()));
+    } else if (LlvmSetccSD.supported.contains(node.builtIn())) {
+      node.replaceAndDelete(new LlvmSetccSD(node.builtIn(), node.arguments(), node.type()));
     } else {
       throw new RuntimeException("not implemented: " + node.builtIn());
+    }
+
+    for (var arg : node.arguments()) {
+      visit(arg);
     }
   }
 

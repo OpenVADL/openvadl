@@ -26,19 +26,28 @@ public class LlvmLoweringPassTest extends AbstractTest {
                     List<String> patterns) {
   }
 
-  ;
-
   private final static HashMap<String, TestOutput>
       expectedResults =
       new HashMap<>();
 
-  static {
-    expectedResults.put("ADD", new TestOutput(
+  private static TestOutput createTestOutputRR(String dagNode) {
+    return new TestOutput(
         List.of(new TableGenInstructionOperand("X", "rs1"),
             new TableGenInstructionOperand("X", "rs2")),
         List.of(new TableGenInstructionOperand("X", "rd")),
-        List.of("(add X:$rs1, X:$rs2)")
-    ));
+        List.of(String.format("(%s X:$rs1, X:$rs2)", dagNode)));
+  }
+
+  static {
+    expectedResults.put("ADD", createTestOutputRR("add"));
+    expectedResults.put("SUB", createTestOutputRR("sub"));
+    expectedResults.put("MUL", createTestOutputRR("smul_lohi"));
+    expectedResults.put("XOR", createTestOutputRR("xor"));
+    expectedResults.put("AND", createTestOutputRR("and"));
+    expectedResults.put("OR", createTestOutputRR("or"));
+    expectedResults.put("ADDI", createTestOutputRR("add"));
+    expectedResults.put("ORI", createTestOutputRR("or"));
+    expectedResults.put("ANDI", createTestOutputRR("andi"));
   }
 
   @TestFactory
@@ -77,7 +86,8 @@ public class LlvmLoweringPassTest extends AbstractTest {
                 visitor.visit(rootNode.get());
                 return visitor.getResult();
               }).toList();
-          Assertions.assertEquals(expectedResults.get(t.identifier.simpleName()).patterns, patterns);
+          Assertions.assertEquals(expectedResults.get(t.identifier.simpleName()).patterns,
+              patterns);
         }));
   }
 
