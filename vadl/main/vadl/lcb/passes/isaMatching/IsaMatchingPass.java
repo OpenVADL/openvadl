@@ -8,17 +8,15 @@ import java.util.HashMap;
 import java.util.IdentityHashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.stream.Stream;
+import java.util.Set;
 import org.jetbrains.annotations.Nullable;
 import vadl.pass.Pass;
 import vadl.pass.PassKey;
 import vadl.pass.PassName;
 import vadl.types.BitsType;
-import vadl.types.BuiltInTable;
 import vadl.types.Type;
 import vadl.viam.Instruction;
 import vadl.viam.InstructionSetArchitecture;
-import vadl.viam.Parameter;
 import vadl.viam.Register;
 import vadl.viam.Specification;
 import vadl.viam.graph.Graph;
@@ -104,12 +102,26 @@ public class IsaMatchingPass extends Pass {
         extend(matched, InstructionLabel.SMOD, instruction);
       } else if (findRR(behavior, List.of(UMOD, UMODS))) {
         extend(matched, InstructionLabel.UMOD, instruction);
-      } else if (isa.pc() != null && findBeq(behavior, isa.pc())) {
-        matched.put(InstructionLabel.BEQ, List.of(instruction));
+      } else if (isa.pc() != null && findBranchWithConditional(behavior, isa.pc(), EQU)) {
+        extend(matched, InstructionLabel.BEQ, instruction);
+      } else if (isa.pc() != null && findBranchWithConditional(behavior, isa.pc(), NEQ)) {
+        extend(matched, InstructionLabel.BNEQ, instruction);
+      } else if (isa.pc() != null &&
+          findBranchWithConditional(behavior, isa.pc(), Set.of(SGEQ, UGEQ))) {
+        extend(matched, InstructionLabel.BGEQ, instruction);
+      } else if (isa.pc() != null &&
+          findBranchWithConditional(behavior, isa.pc(), Set.of(SLEQ, ULEQ))) {
+        extend(matched, InstructionLabel.BLEQ, instruction);
+      } else if (isa.pc() != null &&
+          findBranchWithConditional(behavior, isa.pc(), Set.of(SLTH, ULTH))) {
+        extend(matched, InstructionLabel.BLTH, instruction);
+      } else if (isa.pc() != null &&
+          findBranchWithConditional(behavior, isa.pc(), Set.of(SGTH, UGTH))) {
+        extend(matched, InstructionLabel.BGTH, instruction);
       } else if (findRR(behavior, List.of(SLTH, ULTH))) {
-        extend(matched, InstructionLabel.SLT, instruction);
+        extend(matched, InstructionLabel.LT, instruction);
       } else if (findRI(behavior, List.of(SLTH, ULTH))) {
-        extend(matched, InstructionLabel.SLT, instruction);
+        extend(matched, InstructionLabel.LT, instruction);
       } else if (findWriteMem(behavior)) {
         extend(matched, InstructionLabel.STORE_MEM, instruction);
       } else if (findLoadMem(behavior)) {
@@ -275,12 +287,20 @@ public class IsaMatchingPass extends Pass {
         && writesExactlyOneRegisterClassWithType(behavior, Type.bits(bitWidth));
   }
 
-  private boolean findBeq(Graph behavior, Register.Counter pc) {
+  private boolean findBranchWithConditional(Graph behavior,
+                                            Register.Counter pc,
+                                            BuiltIn builtin) {
+    return findBranchWithConditional(behavior, pc, Set.of(builtin));
+  }
+
+  private boolean findBranchWithConditional(Graph behavior,
+                                            Register.Counter pc,
+                                            Set<BuiltIn> builtins) {
     var hasCondition =
         behavior.getNodes(IfNode.class)
             .anyMatch(
                 x -> x.condition instanceof BuiltInCall
-                    && ((BuiltInCall) x.condition).builtIn() == EQU);
+                    && builtins.contains(((BuiltInCall) x.condition).builtIn()));
     var writesPc = behavior.getNodes(WriteRegNode.class)
         .anyMatch(x -> x.register() == pc);
 

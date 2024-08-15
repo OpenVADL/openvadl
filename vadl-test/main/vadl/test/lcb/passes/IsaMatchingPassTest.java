@@ -31,6 +31,9 @@ public class IsaMatchingPassTest extends AbstractTest {
         Arguments.of(List.of("ADD"), InstructionLabel.ADD_64),
         Arguments.of(List.of("ADDI"), InstructionLabel.ADDI_64),
         Arguments.of(List.of("BEQ"), InstructionLabel.BEQ),
+        Arguments.of(List.of("BNE"), InstructionLabel.BNEQ),
+        Arguments.of(List.of("BGE", "BGEU"), InstructionLabel.BGEQ),
+        Arguments.of(List.of("BLT", "BLTU"), InstructionLabel.BLTH),
         Arguments.of(List.of("AND"), InstructionLabel.AND),
         Arguments.of(List.of("SUB", "SUBW"), InstructionLabel.SUB),
         Arguments.of(List.of("OR"), InstructionLabel.OR),
@@ -40,7 +43,7 @@ public class IsaMatchingPassTest extends AbstractTest {
         Arguments.of(List.of("DIVU", "DIVUW"), InstructionLabel.UDIV),
         Arguments.of(List.of("REMU", "REMUW"), InstructionLabel.UMOD),
         Arguments.of(List.of("REM", "REMW"), InstructionLabel.SMOD),
-        Arguments.of(List.of("SLT", "SLTU", "SLTI", "SLTIU"), InstructionLabel.SLT),
+        Arguments.of(List.of("SLT", "SLTU", "SLTI", "SLTIU"), InstructionLabel.LT),
         Arguments.of(List.of("LB", "LBU", "LD", "LH", "LHU", "LW", "LWU"),
             InstructionLabel.LOAD_MEM),
         Arguments.of(List.of("SB", "SD", "SH", "SW"), InstructionLabel.STORE_MEM)
