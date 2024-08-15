@@ -67,6 +67,9 @@ public interface LlvmLoweringStrategy {
         .noneMatch(x -> x instanceof FuncParamNode);
   }
 
+  /**
+   * Extract the output parameters of {@link Graph}.
+   */
   static List<TableGenInstructionOperand> getTableGenOutputOperands(Graph graph) {
     return getOutputOperands(graph)
         .stream().map(operand -> {
@@ -82,6 +85,9 @@ public interface LlvmLoweringStrategy {
         .toList();
   }
 
+  /**
+   * Extract the input operands from the {@link Graph}.
+   */
   static List<TableGenInstructionOperand> getTableGenInputOperands(Graph graph) {
     return getInputOperands(graph)
         .stream()
@@ -106,22 +112,34 @@ public interface LlvmLoweringStrategy {
     }
   }
 
+  /**
+   * Returns an {@link TableGenInstructionOperand} given a {@link Node}.
+   */
   static TableGenInstructionOperand generateInstructionOperand(ReadRegNode node) {
     return new TableGenInstructionOperand(node.register().name(),
         node.register().identifier.simpleName());
   }
 
+  /**
+   * Returns an {@link TableGenInstructionOperand} given a {@link Node}.
+   */
   static TableGenInstructionOperand generateInstructionOperand(ReadRegFileNode node) {
     var address = (FieldRefNode) node.address();
     return new TableGenInstructionOperand(node.registerFile().name(),
         address.formatField().identifier.simpleName());
   }
 
+  /**
+   * Returns an {@link TableGenInstructionOperand} given a {@link Node}.
+   */
   static TableGenInstructionOperand generateInstructionOperand(LlvmFieldAccessRefNode node) {
     return new TableGenInstructionOperand(node.immediateOperand().getFullName(),
         node.fieldAccess().identifier.simpleName());
   }
 
+  /**
+   * Returns an {@link TableGenInstructionOperand} given a {@link Node}.
+   */
   static TableGenInstructionOperand generateInstructionOperand(FuncCallNode node) {
     return new TableGenInstructionOperand(node.function().identifier.lower(),
         node.function().identifier.simpleName());

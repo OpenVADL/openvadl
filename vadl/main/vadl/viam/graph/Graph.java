@@ -49,7 +49,7 @@ public class Graph {
    *
    * @return iterable over all nodes of graph.
    */
-  public final Stream<? extends Node> getNodes() {
+  public final Stream<Node> getNodes() {
     return nodes.stream().filter(Objects::nonNull);
   }
 
@@ -69,7 +69,7 @@ public class Graph {
    * @param clazz of node type
    * @return iterable of all nodes with one of the given types.
    */
-  public final Stream<? extends Node> getNodes(Set<Class> clazz) {
+  public final Stream<Node> getNodes(Set<Class> clazz) {
     return getNodes().filter(Objects::nonNull)
         .filter(x -> clazz.stream().anyMatch(y -> x.getClass() == y));
   }
@@ -420,7 +420,8 @@ public class Graph {
    * This method is idempotent.
    */
   public void deinitializeNodes() {
-    this.nodes.stream().filter(Objects::nonNull).filter(node -> node.id() != null).map(node -> node.id)
+    this.nodes.stream().filter(Objects::nonNull).filter(node -> node.id() != null)
+        .map(node -> node.id)
         .forEach(Node.Id::deactivate);
   }
 }

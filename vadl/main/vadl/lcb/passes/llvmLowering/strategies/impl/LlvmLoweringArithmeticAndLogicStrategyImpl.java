@@ -1,6 +1,21 @@
 package vadl.lcb.passes.llvmLowering.strategies.impl;
 
-import static vadl.lcb.passes.isaMatching.InstructionLabel.*;
+import static vadl.lcb.passes.isaMatching.InstructionLabel.ADDI_32;
+import static vadl.lcb.passes.isaMatching.InstructionLabel.ADDI_64;
+import static vadl.lcb.passes.isaMatching.InstructionLabel.ADD_32;
+import static vadl.lcb.passes.isaMatching.InstructionLabel.ADD_64;
+import static vadl.lcb.passes.isaMatching.InstructionLabel.AND;
+import static vadl.lcb.passes.isaMatching.InstructionLabel.LT;
+import static vadl.lcb.passes.isaMatching.InstructionLabel.MUL;
+import static vadl.lcb.passes.isaMatching.InstructionLabel.OR;
+import static vadl.lcb.passes.isaMatching.InstructionLabel.SDIV;
+import static vadl.lcb.passes.isaMatching.InstructionLabel.SMOD;
+import static vadl.lcb.passes.isaMatching.InstructionLabel.SUB;
+import static vadl.lcb.passes.isaMatching.InstructionLabel.SUBB;
+import static vadl.lcb.passes.isaMatching.InstructionLabel.SUBC;
+import static vadl.lcb.passes.isaMatching.InstructionLabel.UDIV;
+import static vadl.lcb.passes.isaMatching.InstructionLabel.UMOD;
+import static vadl.lcb.passes.isaMatching.InstructionLabel.XOR;
 
 import java.util.ArrayList;
 import java.util.List;

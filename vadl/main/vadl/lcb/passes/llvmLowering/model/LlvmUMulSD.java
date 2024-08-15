@@ -7,6 +7,9 @@ import vadl.viam.graph.NodeList;
 import vadl.viam.graph.dependency.BuiltInCall;
 import vadl.viam.graph.dependency.ExpressionNode;
 
+/**
+ * LLVM node for unsigned multiplication.
+ */
 public class LlvmUMulSD extends BuiltInCall implements LlvmNodeLowerable {
   public LlvmUMulSD(NodeList<ExpressionNode> args,
                     Type type) {

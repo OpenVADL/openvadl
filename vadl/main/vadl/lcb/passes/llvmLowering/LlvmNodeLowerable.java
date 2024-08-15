@@ -9,5 +9,5 @@ public interface LlvmNodeLowerable {
    *
    * @return a string for TableGen.
    */
-   String lower();
+  String lower();
 }

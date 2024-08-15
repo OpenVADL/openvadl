@@ -7,6 +7,9 @@ import vadl.viam.graph.NodeList;
 import vadl.viam.graph.dependency.BuiltInCall;
 import vadl.viam.graph.dependency.ExpressionNode;
 
+/**
+ * LLVM Node for addition.
+ */
 public class LlvmAddSD extends BuiltInCall implements LlvmNodeLowerable {
 
   public LlvmAddSD(NodeList<ExpressionNode> args,

@@ -7,6 +7,9 @@ import vadl.viam.graph.NodeList;
 import vadl.viam.graph.dependency.BuiltInCall;
 import vadl.viam.graph.dependency.ExpressionNode;
 
+/**
+ * LLVM node for unsigned modulo.
+ */
 public class LlvmURemSD extends BuiltInCall implements LlvmNodeLowerable {
   public LlvmURemSD(NodeList<ExpressionNode> args,
                     Type type) {

@@ -1,6 +1,39 @@
 package vadl.lcb.passes.isaMatching;
 
-import static vadl.types.BuiltInTable.*;
+import static vadl.types.BuiltInTable.ADD;
+import static vadl.types.BuiltInTable.ADDS;
+import static vadl.types.BuiltInTable.AND;
+import static vadl.types.BuiltInTable.ANDS;
+import static vadl.types.BuiltInTable.EQU;
+import static vadl.types.BuiltInTable.MUL;
+import static vadl.types.BuiltInTable.NEQ;
+import static vadl.types.BuiltInTable.OR;
+import static vadl.types.BuiltInTable.ORS;
+import static vadl.types.BuiltInTable.SDIV;
+import static vadl.types.BuiltInTable.SDIVS;
+import static vadl.types.BuiltInTable.SGEQ;
+import static vadl.types.BuiltInTable.SGTH;
+import static vadl.types.BuiltInTable.SLEQ;
+import static vadl.types.BuiltInTable.SLTH;
+import static vadl.types.BuiltInTable.SMOD;
+import static vadl.types.BuiltInTable.SMODS;
+import static vadl.types.BuiltInTable.SMULL;
+import static vadl.types.BuiltInTable.SMULLS;
+import static vadl.types.BuiltInTable.SUB;
+import static vadl.types.BuiltInTable.SUBB;
+import static vadl.types.BuiltInTable.SUBC;
+import static vadl.types.BuiltInTable.SUBSB;
+import static vadl.types.BuiltInTable.SUBSC;
+import static vadl.types.BuiltInTable.UDIV;
+import static vadl.types.BuiltInTable.UDIVS;
+import static vadl.types.BuiltInTable.UGEQ;
+import static vadl.types.BuiltInTable.UGTH;
+import static vadl.types.BuiltInTable.ULEQ;
+import static vadl.types.BuiltInTable.ULTH;
+import static vadl.types.BuiltInTable.UMOD;
+import static vadl.types.BuiltInTable.UMODS;
+import static vadl.types.BuiltInTable.XOR;
+import static vadl.types.BuiltInTable.XORS;
 
 import java.io.IOException;
 import java.util.ArrayList;
@@ -14,6 +47,7 @@ import vadl.pass.Pass;
 import vadl.pass.PassKey;
 import vadl.pass.PassName;
 import vadl.types.BitsType;
+import vadl.types.BuiltInTable;
 import vadl.types.Type;
 import vadl.viam.Instruction;
 import vadl.viam.InstructionSetArchitecture;
@@ -106,17 +140,17 @@ public class IsaMatchingPass extends Pass {
         extend(matched, InstructionLabel.BEQ, instruction);
       } else if (isa.pc() != null && findBranchWithConditional(behavior, isa.pc(), NEQ)) {
         extend(matched, InstructionLabel.BNEQ, instruction);
-      } else if (isa.pc() != null &&
-          findBranchWithConditional(behavior, isa.pc(), Set.of(SGEQ, UGEQ))) {
+      } else if (isa.pc() != null
+          && findBranchWithConditional(behavior, isa.pc(), Set.of(SGEQ, UGEQ))) {
         extend(matched, InstructionLabel.BGEQ, instruction);
-      } else if (isa.pc() != null &&
-          findBranchWithConditional(behavior, isa.pc(), Set.of(SLEQ, ULEQ))) {
+      } else if (isa.pc() != null
+          && findBranchWithConditional(behavior, isa.pc(), Set.of(SLEQ, ULEQ))) {
         extend(matched, InstructionLabel.BLEQ, instruction);
-      } else if (isa.pc() != null &&
-          findBranchWithConditional(behavior, isa.pc(), Set.of(SLTH, ULTH))) {
+      } else if (isa.pc() != null
+          && findBranchWithConditional(behavior, isa.pc(), Set.of(SLTH, ULTH))) {
         extend(matched, InstructionLabel.BLTH, instruction);
-      } else if (isa.pc() != null &&
-          findBranchWithConditional(behavior, isa.pc(), Set.of(SGTH, UGTH))) {
+      } else if (isa.pc() != null
+          && findBranchWithConditional(behavior, isa.pc(), Set.of(SGTH, UGTH))) {
         extend(matched, InstructionLabel.BGTH, instruction);
       } else if (findRR(behavior, List.of(SLTH, ULTH))) {
         extend(matched, InstructionLabel.LT, instruction);
@@ -174,23 +208,20 @@ public class IsaMatchingPass extends Pass {
     });
   }
 
-  private boolean findRR(Graph behavior, BuiltIn builtin) {
-    return findRR(behavior, List.of(builtin));
-  }
-
-  private boolean findRR_OR_findRI(Graph behavior, BuiltIn builtin) {
+  private boolean findRR_OR_findRI(Graph behavior, BuiltInTable.BuiltIn builtin) {
     return findRR(behavior, List.of(builtin)) || findRI(behavior, List.of(builtin));
   }
 
-  private boolean findRR_OR_findRI(Graph behavior, List<BuiltIn> builtins) {
+  private boolean findRR_OR_findRI(Graph behavior, List<BuiltInTable.BuiltIn> builtins) {
     return findRR(behavior, builtins) || findRI(behavior, builtins);
   }
 
   /**
-   * Find register-registers instructions when it matches one of the given {@link BuiltIn}.
+   * Find register-registers instructions when it matches one of the given
+   * {@link BuiltInTable.BuiltIn}.
    * Also, it must only write one register result.
    */
-  private boolean findRR(Graph behavior, List<BuiltIn> builtins) {
+  private boolean findRR(Graph behavior, List<BuiltInTable.BuiltIn> builtins) {
     var matched = TreeMatcher.matches(behavior.getNodes(BuiltInCall.class).map(x -> x),
         new BuiltInMatcher(builtins, List.of(
             new AnyChildMatcher(new AnyReadRegFileMatcher()),
@@ -200,15 +231,16 @@ public class IsaMatchingPass extends Pass {
     return !matched.isEmpty() && writesExactlyOneRegisterClass(behavior);
   }
 
-  private boolean findRI(Graph behavior, BuiltIn builtin) {
+  private boolean findRI(Graph behavior, BuiltInTable.BuiltIn builtin) {
     return findRI(behavior, List.of(builtin));
   }
 
   /**
-   * Find register-immediate instructions when it matches one of the given {@link BuiltIn}.
+   * Find register-immediate instructions when it matches one of the given
+   * {@link BuiltInTable.BuiltIn}.
    * Also, it must only write one register result.
    */
-  private boolean findRI(Graph behavior, List<BuiltIn> builtins) {
+  private boolean findRI(Graph behavior, List<BuiltInTable.BuiltIn> builtins) {
     var matched = TreeMatcher.matches(behavior.getNodes(BuiltInCall.class).map(x -> x),
         new BuiltInMatcher(builtins, List.of(
             new AnyChildMatcher(new AnyReadRegFileMatcher()),
@@ -297,13 +329,13 @@ public class IsaMatchingPass extends Pass {
 
   private boolean findBranchWithConditional(Graph behavior,
                                             Register.Counter pc,
-                                            BuiltIn builtin) {
+                                            BuiltInTable.BuiltIn builtin) {
     return findBranchWithConditional(behavior, pc, Set.of(builtin));
   }
 
   private boolean findBranchWithConditional(Graph behavior,
                                             Register.Counter pc,
-                                            Set<BuiltIn> builtins) {
+                                            Set<BuiltInTable.BuiltIn> builtins) {
     var hasCondition =
         behavior.getNodes(IfNode.class)
             .anyMatch(

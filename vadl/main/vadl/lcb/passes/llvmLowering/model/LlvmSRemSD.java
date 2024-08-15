@@ -7,6 +7,9 @@ import vadl.viam.graph.NodeList;
 import vadl.viam.graph.dependency.BuiltInCall;
 import vadl.viam.graph.dependency.ExpressionNode;
 
+/**
+ * LLVM node for signed modulo.
+ */
 public class LlvmSRemSD extends BuiltInCall implements LlvmNodeLowerable {
   public LlvmSRemSD(NodeList<ExpressionNode> args,
                     Type type) {

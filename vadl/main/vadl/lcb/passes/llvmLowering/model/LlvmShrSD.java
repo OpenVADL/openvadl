@@ -7,6 +7,9 @@ import vadl.viam.graph.NodeList;
 import vadl.viam.graph.dependency.BuiltInCall;
 import vadl.viam.graph.dependency.ExpressionNode;
 
+/**
+ * LLVM node for logical shift right.
+ */
 public class LlvmShrSD extends BuiltInCall implements LlvmNodeLowerable {
   public LlvmShrSD(NodeList<ExpressionNode> args,
                    Type type) {

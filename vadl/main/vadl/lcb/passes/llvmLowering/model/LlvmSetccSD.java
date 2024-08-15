@@ -6,12 +6,14 @@ import vadl.types.BuiltInTable;
 import vadl.types.Type;
 import vadl.viam.Constant;
 import vadl.viam.ViamError;
-import vadl.viam.graph.Node;
 import vadl.viam.graph.NodeList;
 import vadl.viam.graph.dependency.BuiltInCall;
 import vadl.viam.graph.dependency.ConstantNode;
 import vadl.viam.graph.dependency.ExpressionNode;
 
+/**
+ * LLVM Node for logical comparison.
+ */
 public class LlvmSetccSD extends BuiltInCall implements LlvmNodeLowerable {
 
   public static Set<BuiltInTable.BuiltIn> supported = Set.of(

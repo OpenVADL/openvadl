@@ -7,6 +7,9 @@ import vadl.viam.graph.NodeList;
 import vadl.viam.graph.dependency.BuiltInCall;
 import vadl.viam.graph.dependency.ExpressionNode;
 
+/**
+ * LLVM node for unsigned division.
+ */
 public class LlvmUDivSD extends BuiltInCall implements LlvmNodeLowerable {
   public LlvmUDivSD(NodeList<ExpressionNode> args,
                     Type type) {
