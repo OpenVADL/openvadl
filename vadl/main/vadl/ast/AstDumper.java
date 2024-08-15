@@ -284,6 +284,25 @@ public class AstDumper
   }
 
   @Override
+  public Void visit(EnumerationDefinition definition) {
+    dumpNode(definition);
+    dumpChildren(definition.id());
+    if (definition.enumType != null) {
+      dumpChildren(definition.enumType);
+    }
+    for (var entry : definition.entries) {
+      dumpChildren(entry.name());
+      if (entry.value() != null) {
+        dumpChildren(entry.value());
+      }
+      if (entry.behavior() != null) {
+        dumpChildren(entry.behavior());
+      }
+    }
+    return null;
+  }
+
+  @Override
   public Void visit(PlaceholderDefinition definition) {
     dumpNode(definition);
     return null;

@@ -51,6 +51,8 @@ interface DefinitionVisitor<R> {
 
   R visit(AliasDefinition definition);
 
+  R visit(EnumerationDefinition definition);
+
   R visit(PlaceholderDefinition definition);
 
   R visit(MacroInstanceDefinition definition);
@@ -1355,6 +1357,103 @@ class AliasDefinition extends Definition {
   enum Kind {
     REGISTER, REGISTER_FILE, PROGRAM_COUNTER
   }
+}
+
+final class EnumerationDefinition extends Definition {
+  IdentifierOrPlaceholder id;
+  @Nullable
+  TypeLiteral enumType;
+  List<Entry> entries;
+  SourceLocation loc;
+
+  EnumerationDefinition(IdentifierOrPlaceholder id, @Nullable TypeLiteral enumType,
+                        List<Entry> entries, SourceLocation location) {
+    this.id = id;
+    this.enumType = enumType;
+    this.entries = entries;
+    this.loc = location;
+  }
+
+  Identifier id() {
+    return (Identifier) id;
+  }
+
+  @Override
+  SourceLocation location() {
+    return loc;
+  }
+
+  @Override
+  SyntaxType syntaxType() {
+    return BasicSyntaxType.IsaDefs();
+  }
+
+  @Override
+  void prettyPrint(int indent, StringBuilder builder) {
+    builder.append(prettyIndentString(indent)).append("enumeration ");
+    id.prettyPrint(0, builder);
+    if (enumType != null) {
+      builder.append(" : ");
+      enumType.prettyPrint(0, builder);
+    }
+    builder.append(" = \n");
+    builder.append(prettyIndentString(indent + 1)).append("{ ");
+    var isFirst = true;
+    for (var entry : entries) {
+      if (!isFirst) {
+        builder.append(prettyIndentString(indent + 1)).append(", ");
+      }
+      isFirst = false;
+      entry.name.prettyPrint(0, builder);
+      if (entry.value != null) {
+        builder.append(" = ");
+        entry.value.prettyPrint(0, builder);
+      }
+      if (entry.behavior != null) {
+        builder.append(" => ");
+        entry.behavior.prettyPrint(0, builder);
+      }
+      builder.append("\n");
+    }
+    builder.append(prettyIndentString(indent + 1)).append("}\n");
+  }
+
+  @Override
+  <R> R accept(DefinitionVisitor<R> visitor) {
+    return visitor.visit(this);
+  }
+
+  @Override
+  public String toString() {
+    return this.getClass().getSimpleName();
+  }
+
+  @Override
+  public boolean equals(Object o) {
+    if (this == o) {
+      return true;
+    }
+    if (o == null || getClass() != o.getClass()) {
+      return false;
+    }
+
+    var that = (EnumerationDefinition) o;
+    return Objects.equals(annotations, that.annotations)
+        && Objects.equals(id, that.id)
+        && Objects.equals(enumType, that.enumType)
+        && Objects.equals(entries, that.entries);
+  }
+
+  @Override
+  public int hashCode() {
+    int result = Objects.hashCode(annotations);
+    result = 31 * result + Objects.hashCode(id);
+    result = 31 * result + Objects.hashCode(enumType);
+    result = 31 * result + Objects.hashCode(entries);
+    return result;
+  }
+
+  record Entry(Identifier name, @Nullable Expr value, @Nullable Expr behavior) {}
 }
 
 final class PlaceholderDefinition extends Definition {

@@ -93,6 +93,7 @@ TOKENS
   FALSE = "false".
   EXTENDING = "extending".
   MATCH = "match".
+  ENUMERATION = "enumeration".
 
   SYM_IN = "in".
   SYM_AS = "as".
@@ -212,6 +213,7 @@ PRODUCTIONS
     registerFileDefinition<out def>
   | registerDefinition<out def>
   | aliasDefinition<out def>
+  | enumerationDefinition<out def>
   .
 
   constantDefinition<out ConstantDefinition def> (. TypeLiteral type = null; .)
@@ -410,6 +412,36 @@ PRODUCTIONS
   = identifier<out Identifier name>
     SYM_COLON
     typeLiteral<out TypeLiteral type> (. param = new Parameter(name, type); .)
+  .
+
+  enumerationDefinition<out Definition def> (. TypeLiteral enumType = null; .)
+  = ENUMERATION                             (. var start = loc(); .)
+    identifierOrPlaceholder<out IdentifierOrPlaceholder id>
+    [ SYM_COLON typeLiteral<out enumType> ]
+    SYM_EQ                                  (. var entries = new ArrayList<EnumerationDefinition.Entry>(); .)
+    SYM_BRACE_OPEN                          (. Expr value = null; Expr behavior = null; .)
+    identifier<out Identifier name>
+    [
+      SYM_EQ
+      valLiteral<out value>
+    ]
+    [
+      SYM_BIGARROW
+      callOrBinaryExpression<out behavior, false>
+    ]                                       (. entries.add(new EnumerationDefinition.Entry(name, value, behavior)); .)
+    {
+      SYM_COMMA
+      identifier<out name>
+      [
+        SYM_EQ
+        valLiteral<out value>
+      ]
+      [
+        SYM_BIGARROW
+        callOrBinaryExpression<out behavior, false>
+      ]                                     (. entries.add(new EnumerationDefinition.Entry(name, value, behavior)); .)
+    }
+    SYM_BRACE_CLOSE                         (. def = new EnumerationDefinition(id, enumType, entries, start.join(loc())); .)
   .
 
   // -- STATEMENTS ---------------------------------------------------------------------------------------------------

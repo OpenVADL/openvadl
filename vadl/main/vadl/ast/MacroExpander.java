@@ -382,6 +382,16 @@ class MacroExpander
   }
 
   @Override
+  public Definition visit(EnumerationDefinition definition) {
+    var id = resolvePlaceholderOrIdentifier(definition.id);
+    var entries = new ArrayList<>(definition.entries);
+    entries.replaceAll(entry -> new EnumerationDefinition.Entry(entry.name(),
+        entry.value() == null ? null : entry.value().accept(this),
+        entry.behavior() == null ? null : entry.behavior().accept(this)));
+    return new EnumerationDefinition(id, definition.enumType, entries, definition.loc);
+  }
+
+  @Override
   public Definition visit(PlaceholderDefinition definition) {
     var arg = Objects.requireNonNull(args.get(definition.placeholder.path().pathToString()));
     return (Definition) arg;

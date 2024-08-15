@@ -125,7 +125,7 @@ class SymbolTable {
 
   enum SymbolType {
     CONSTANT, COUNTER, FORMAT, INSTRUCTION, INSTRUCTION_SET, MEMORY, REGISTER, REGISTER_FILE,
-    FORMAT_FIELD, MACRO, ALIAS, FUNCTION
+    FORMAT_FIELD, MACRO, ALIAS, FUNCTION, ENUM_FIELD
   }
 
   interface Symbol {
@@ -258,6 +258,18 @@ class SymbolTable {
         };
         symbols.defineSymbol(new ValuedSymbol(alias.id().name, null, type), alias.loc);
         collectSymbols(symbols, alias.value);
+      } else if (definition instanceof EnumerationDefinition enumeration) {
+        for (EnumerationDefinition.Entry entry : enumeration.entries) {
+          String path = enumeration.id().name + "::" + entry.name().name;
+          symbols.defineSymbol(new ValuedSymbol(path, null, SymbolType.ENUM_FIELD),
+              entry.name().location());
+          if (entry.value() != null) {
+            collectSymbols(symbols, entry.value());
+          }
+          if (entry.behavior() != null) {
+            collectSymbols(symbols, entry.behavior());
+          }
+        }
       }
     }
 
@@ -392,6 +404,15 @@ class SymbolTable {
         }
       } else if (definition instanceof AliasDefinition alias) {
         verifyUsages(alias.value);
+      } else if (definition instanceof EnumerationDefinition enumeration) {
+        for (EnumerationDefinition.Entry entry : enumeration.entries) {
+          if (entry.value() != null) {
+            verifyUsages(entry.value());
+          }
+          if (entry.behavior() != null) {
+            verifyUsages(entry.behavior());
+          }
+        }
       }
     }
 

@@ -253,6 +253,14 @@ class Ungrouper
   }
 
   @Override
+  public Definition visit(EnumerationDefinition definition) {
+    definition.entries.replaceAll(entry -> new EnumerationDefinition.Entry(entry.name(),
+        entry.value() == null ? null : entry.value().accept(this),
+        entry.behavior() == null ? null : entry.behavior().accept(this)));
+    return definition;
+  }
+
+  @Override
   public Definition visit(PlaceholderDefinition definition) {
     ungroupAnnotations(definition);
     return definition;
