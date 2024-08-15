@@ -1,5 +1,6 @@
 package vadl.lcb;
 
+import vadl.viam.ViamError;
 import vadl.viam.graph.GraphNodeVisitor;
 import vadl.viam.graph.Node;
 import vadl.viam.graph.control.AbstractBeginNode;
@@ -91,7 +92,7 @@ public interface LcbGraphNodeVisitor extends GraphNodeVisitor {
     } else if (node instanceof SideEffectNode sideEffectNode) {
       visit(sideEffectNode);
     } else {
-      visit(node);
+      throw new ViamError("not implemented");
     }
   }
 }

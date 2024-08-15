@@ -4,10 +4,13 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 import org.jetbrains.annotations.Nullable;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import vadl.gcb.passes.encoding_generation.strategies.EncodingGenerationStrategy;
 import vadl.gcb.passes.encoding_generation.strategies.impl.ArithmeticImmediateStrategy;
 import vadl.gcb.passes.encoding_generation.strategies.impl.ShiftedImmediateStrategy;
 import vadl.gcb.passes.encoding_generation.strategies.impl.TrivialImmediateStrategy;
+import vadl.lcb.passes.llvmLowering.LlvmLoweringPass;
 import vadl.pass.Pass;
 import vadl.pass.PassKey;
 import vadl.pass.PassName;
@@ -23,6 +26,9 @@ import vadl.viam.graph.Graph;
  * is {@code null}.
  */
 public class GenerateFieldAccessEncodingFunctionPass extends Pass {
+
+  private static final Logger logger = LoggerFactory.getLogger(
+      GenerateFieldAccessEncodingFunctionPass.class);
 
   private final List<EncodingGenerationStrategy> strategies = List.of(
       new TrivialImmediateStrategy(),
@@ -52,12 +58,15 @@ public class GenerateFieldAccessEncodingFunctionPass extends Pass {
           }
         });
 
-    var hasNoEncoding = viam.isas()
-        .flatMap(x -> x.formats().stream())
+    var hasNoEncoding = viam.findAllFormats()
         .flatMap(x -> Arrays.stream(x.fieldAccesses()))
-        .noneMatch(x -> x.encoding() == null);
+        .filter(x -> x.encoding() == null)
+        .toList();
 
-    if (!hasNoEncoding) {
+    if (!hasNoEncoding.isEmpty()) {
+      for (var format : hasNoEncoding) {
+        logger.atError().log("Format {} has no encoding", format.name());
+      }
       throw new ViamError("Not all formats have an encoding");
     }
 

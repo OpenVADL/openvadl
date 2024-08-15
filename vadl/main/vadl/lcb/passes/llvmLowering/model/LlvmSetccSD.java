@@ -31,6 +31,9 @@ public class LlvmSetccSD extends BuiltInCall implements LlvmNodeLowerable {
 
   private LlvmCondCode llvmCondCode;
 
+  /**
+   * Constructor for LlvmSetccSD.
+   */
   public LlvmSetccSD(BuiltInTable.BuiltIn built,
                      NodeList<ExpressionNode> args,
                      Type type) {

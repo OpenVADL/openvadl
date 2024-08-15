@@ -49,6 +49,10 @@ import vadl.viam.graph.dependency.WriteRegFileNode;
 import vadl.viam.graph.dependency.WriteRegNode;
 import vadl.viam.graph.dependency.ZeroExtendNode;
 
+/**
+ * Replaces VIAM nodes with LLVM nodes which have more
+ * information for the lowering.
+ */
 public class ReplaceWithLlvmSDNodesVisitor implements LcbGraphNodeVisitor {
 
   private static final Logger logger = LoggerFactory.getLogger(ReplaceWithLlvmSDNodesVisitor.class);

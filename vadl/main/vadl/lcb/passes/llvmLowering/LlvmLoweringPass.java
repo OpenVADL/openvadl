@@ -24,13 +24,20 @@ import vadl.viam.graph.Graph;
  * This is a wrapper class which contains utility functions for the lowering.
  */
 public class LlvmLoweringPass extends Pass {
-  private static final Logger logger = LoggerFactory.getLogger(
-      LlvmLoweringPass.class);
 
   private final List<LlvmLoweringStrategy> strategies = List.of(
       new LlvmLoweringArithmeticAndLogicStrategyImpl()
   );
 
+  /**
+   * Contains information for the lowering of instructions.
+   *
+   * @param behavior has replaced nodes from {@link ReplaceWithLlvmSDNodesVisitor}.
+   * @param inputs   are the input operands for the tablegen instruction.
+   * @param outputs  are the output operands for the tablegen instruction.
+   * @param patterns are a list of {@link Graph} which contain the pattern selectors for the
+   *                 tablegen instruction.
+   */
   public record LlvmLoweringIntermediateResult(Graph behavior,
                                                List<TableGenInstructionOperand> inputs,
                                                List<TableGenInstructionOperand> outputs,

@@ -9,11 +9,9 @@ import java.util.stream.Stream;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.DynamicTest;
 import org.junit.jupiter.api.TestFactory;
-import vadl.lcb.codegen.model.llvm.ValueType;
 import vadl.lcb.passes.isaMatching.IsaMatchingPass;
 import vadl.lcb.passes.llvmLowering.LlvmLoweringPass;
 import vadl.lcb.tablegen.lowering.TableGenPatternVisitor;
-import vadl.lcb.tablegen.model.TableGenImmediateOperand;
 import vadl.lcb.tablegen.model.TableGenInstructionOperand;
 import vadl.pass.PassKey;
 import vadl.test.AbstractTest;
@@ -28,7 +26,7 @@ public class LlvmLoweringPassTest extends AbstractTest {
                     List<String> patterns) {
   }
 
-  private final static HashMap<String, TestOutput>
+  private static final HashMap<String, TestOutput>
       expectedResults =
       new HashMap<>();
 
