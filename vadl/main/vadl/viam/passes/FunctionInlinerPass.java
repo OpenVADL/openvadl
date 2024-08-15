@@ -53,7 +53,7 @@ public class FunctionInlinerPass extends Pass {
             var inlinedBehavior = functionCall.function().behavior().copy();
             // We deinitialize the nodes so we can add them when we inline. Otherwise,
             // get an exception because it is already initialized.
-            inlinedBehavior.deinitialize_nodes();
+            inlinedBehavior.deinitializeNodes();
             var returnNodes = inlinedBehavior.getNodes(ReturnNode.class).toList();
             ensure(returnNodes.size() == 1, "Inlined function must only have one return node");
             var returnNode = returnNodes.get(0);
@@ -79,7 +79,7 @@ public class FunctionInlinerPass extends Pass {
                 fieldAccessRefNode.fieldAccess().accessFunction().behavior().copy();
             // We deinitialize the nodes so we can add them when we inline. Otherwise,
             // get an exception because it is already initialized.
-            inlinedBehavior.deinitialize_nodes();
+            inlinedBehavior.deinitializeNodes();
             var returnNodes = inlinedBehavior.getNodes(ReturnNode.class).toList();
             ensure(returnNodes.size() == 1, "Inlined function must only have one return node");
             var returnNode = returnNodes.get(0);

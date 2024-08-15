@@ -6,7 +6,6 @@ import com.google.errorprone.annotations.FormatMethod;
 import com.google.errorprone.annotations.FormatString;
 import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
@@ -50,7 +49,7 @@ public class Graph {
    *
    * @return iterable over all nodes of graph.
    */
-  public final Stream<Node> getNodes() {
+  public final Stream<? extends Node> getNodes() {
     return nodes.stream().filter(Objects::nonNull);
   }
 
@@ -70,7 +69,7 @@ public class Graph {
    * @param clazz of node type
    * @return iterable of all nodes with one of the given types.
    */
-  public final Stream<Node> getNodes(Set<Class> clazz) {
+  public final Stream<? extends Node> getNodes(Set<Class> clazz) {
     return getNodes().filter(Objects::nonNull)
         .filter(x -> clazz.stream().anyMatch(y -> x.getClass() == y));
   }
@@ -418,9 +417,11 @@ public class Graph {
   /**
    * When {@link #copy()} then all the nodes remain activated. This can lead to crashes
    * when calling e.g {@link Node#replaceAndDelete(Node)}. This method deactivates all the ids.
+   * This method is idempotent.
    */
-  public void deinitialize_nodes() {
-    this.nodes.stream().map(node -> node.id).forEach(Node.Id::deactivate);
+  public void deinitializeNodes() {
+    this.nodes.stream().filter(Objects::nonNull).filter(node -> node.id() != null).map(node -> node.id)
+        .forEach(Node.Id::deactivate);
   }
 }
 

@@ -5,8 +5,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
-import java.util.stream.Collectors;
-import java.util.stream.Stream;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import vadl.lcb.passes.isaMatching.InstructionLabel;
@@ -45,7 +43,6 @@ public class LlvmLoweringArithmeticAndLogicStrategyImpl implements LlvmLoweringS
   public Optional<LlvmLoweringPass.LlvmLoweringIntermediateResult> lower(Instruction instruction) {
     var visitor = new ReplaceWithLlvmSDNodesVisitor();
     var copy = instruction.behavior().copy();
-    copy.deinitialize_nodes();
     var nodes = copy.getNodes().toList();
 
     if (!checkIfNoControlFlow(copy) && !checkIfNotAllowedDataflowNodes(copy)) {
@@ -68,6 +65,8 @@ public class LlvmLoweringArithmeticAndLogicStrategyImpl implements LlvmLoweringS
       }
     }
 
+    copy.deinitializeNodes();
+
     if (visitor.isPatternLowerable()) {
       var patterns = generatePatterns(copy.getNodes(WriteResourceNode.class).toList());
       return Optional.of(new LlvmLoweringPass.LlvmLoweringIntermediateResult(copy,
@@ -83,7 +82,9 @@ public class LlvmLoweringArithmeticAndLogicStrategyImpl implements LlvmLoweringS
 
     sideEffectNodes.forEach(sideEffectNode -> {
       var graph = new Graph(sideEffectNode.id().toString() + ".lowering");
-      graph.addWithInputs(sideEffectNode.value());
+      var root = sideEffectNode.value();
+      root.clearUsages();
+      graph.addWithInputs(root);
       patterns.add(graph);
     });
 

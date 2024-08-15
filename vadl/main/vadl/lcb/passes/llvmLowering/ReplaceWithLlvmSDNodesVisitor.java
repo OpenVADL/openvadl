@@ -89,9 +89,9 @@ public class ReplaceWithLlvmSDNodesVisitor implements LcbGraphNodeVisitor {
       node.replaceAndDelete(new LlvmShrSD(node.arguments(), node.type()));
     } else if (node.builtIn() == BuiltInTable.ASR || node.builtIn() == BuiltInTable.ASRS) {
       node.replaceAndDelete(new LlvmSraSD(node.arguments(), node.type()));
+    } else {
+      throw new RuntimeException("not implemented: " + node.builtIn());
     }
-
-    throw new RuntimeException("not implemented");
   }
 
   @Override
@@ -149,7 +149,6 @@ public class ReplaceWithLlvmSDNodesVisitor implements LcbGraphNodeVisitor {
 
   @Override
   public void visit(FieldAccessRefNode fieldAccessRefNode) {
-    //throw new RuntimeException("not implemented");
   }
 
   @Override
