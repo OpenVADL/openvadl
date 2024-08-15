@@ -39,7 +39,11 @@ public class IsaMatchingPassTest extends AbstractTest {
         Arguments.of(List.of("DIV", "DIVW"), InstructionLabel.SDIV),
         Arguments.of(List.of("DIVU", "DIVUW"), InstructionLabel.UDIV),
         Arguments.of(List.of("REMU", "REMUW"), InstructionLabel.UMOD),
-        Arguments.of(List.of("REM", "REMW"), InstructionLabel.SMOD)
+        Arguments.of(List.of("REM", "REMW"), InstructionLabel.SMOD),
+        Arguments.of(List.of("SLT", "SLTU", "SLTI", "SLTIU"), InstructionLabel.SLT),
+        Arguments.of(List.of("LB", "LBU", "LD", "LH", "LHU", "LW", "LWU"),
+            InstructionLabel.LOAD_MEM),
+        Arguments.of(List.of("SB", "SD", "SH", "SW"), InstructionLabel.STORE_MEM)
     );
   }
 

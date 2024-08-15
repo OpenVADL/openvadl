@@ -18,5 +18,5 @@ public enum InstructionLabel {
   BEQ,
   AND,
   OR,
-  SUB, MUL, SUBB, SUBC, SDIV, UDIV, SMOD, UMOD, XOR,
+  SUB, MUL, SUBB, SUBC, SDIV, UDIV, SMOD, UMOD, XOR, SLT, STORE_MEM, LOAD_MEM,
 }

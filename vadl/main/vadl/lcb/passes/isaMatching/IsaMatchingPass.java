@@ -8,6 +8,7 @@ import java.util.HashMap;
 import java.util.IdentityHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.stream.Stream;
 import org.jetbrains.annotations.Nullable;
 import vadl.pass.Pass;
 import vadl.pass.PassKey;
@@ -27,11 +28,14 @@ import vadl.viam.graph.dependency.ReadMemNode;
 import vadl.viam.graph.dependency.WriteMemNode;
 import vadl.viam.graph.dependency.WriteRegFileNode;
 import vadl.viam.graph.dependency.WriteRegNode;
+import vadl.viam.graph.dependency.WriteResourceNode;
 import vadl.viam.matching.TreeMatcher;
 import vadl.viam.matching.impl.AnyChildMatcher;
+import vadl.viam.matching.impl.AnyReadMemMatcher;
 import vadl.viam.matching.impl.AnyReadRegFileMatcher;
 import vadl.viam.matching.impl.BuiltInMatcher;
 import vadl.viam.matching.impl.FieldAccessRefMatcher;
+import vadl.viam.matching.impl.WriteResourceMatcher;
 
 /**
  * A {@link InstructionSetArchitecture} contains a {@link List} of {@link Instruction}.
@@ -66,6 +70,10 @@ public class IsaMatchingPass extends Pass {
       // Get uninlined or the normal behavior if nothing was uninlined.
       var behavior = uninlined.getOrDefault(instruction, instruction.behavior());
 
+      // Some are typed and some aren't.
+      // The reason is that most of the time we do not care because
+      // the instruction selection will figure out the types anyway.
+      // The raw cases where we need the type are typed like addition.
       if (findAdd32Bit(behavior)) {
         matched.put(InstructionLabel.ADD_32, List.of(instruction));
       } else if (findAdd64Bit(behavior)) {
@@ -98,12 +106,50 @@ public class IsaMatchingPass extends Pass {
         extend(matched, InstructionLabel.UMOD, instruction);
       } else if (isa.pc() != null && findBeq(behavior, isa.pc())) {
         matched.put(InstructionLabel.BEQ, List.of(instruction));
+      } else if (findRR(behavior, List.of(SLTH, ULTH))) {
+        extend(matched, InstructionLabel.SLT, instruction);
+      } else if (findRI(behavior, List.of(SLTH, ULTH))) {
+        extend(matched, InstructionLabel.SLT, instruction);
+      } else if (findWriteMem(behavior)) {
+        extend(matched, InstructionLabel.STORE_MEM, instruction);
+      } else if (findLoadMem(behavior)) {
+        extend(matched, InstructionLabel.LOAD_MEM, instruction);
       }
     }));
 
     return matched;
   }
 
+  private boolean findLoadMem(Graph graph) {
+    var writesRegFile = graph.getNodes(WriteRegFileNode.class).toList().size();
+    var writesReg = graph.getNodes(WriteRegNode.class).toList().size();
+
+    if ((writesRegFile == 1) == (writesReg == 1)) {
+      return false;
+    }
+
+    var matched = TreeMatcher.matches(
+        graph.getNodes(WriteResourceNode.class).map(x -> x),
+        new WriteResourceMatcher(new AnyChildMatcher(new AnyReadMemMatcher())));
+
+    return !matched.isEmpty();
+  }
+
+  private boolean findWriteMem(Graph graph) {
+    if (graph.getNodes(WriteMemNode.class).toList().size() != 1) {
+      return false;
+    }
+
+    var matched = TreeMatcher.matches(graph.getNodes(WriteResourceNode.class).map(x -> x),
+        new WriteResourceMatcher(new AnyChildMatcher(new AnyReadRegFileMatcher())));
+
+    return !matched.isEmpty();
+  }
+
+  /**
+   * The {@code matched} hashmap contains a list of {@link Instruction} as value.
+   * This value extends this list with the given {@link Instruction} when the key is matched.
+   */
   private void extend(HashMap<InstructionLabel, List<Instruction>> matched,
                       InstructionLabel instructionLabel, Instruction instruction) {
     matched.compute(instructionLabel, (k, v) -> {
@@ -120,6 +166,10 @@ public class IsaMatchingPass extends Pass {
     return findRR(behavior, List.of(builtin));
   }
 
+  /**
+   * Find register-registers instructions when it matches one of the given {@link BuiltIn}.
+   * Also, it must only write one register result.
+   */
   private boolean findRR(Graph behavior, List<BuiltIn> builtins) {
     var matched = TreeMatcher.matches(behavior.getNodes(BuiltInCall.class).map(x -> x),
         new BuiltInMatcher(builtins, List.of(
@@ -130,10 +180,17 @@ public class IsaMatchingPass extends Pass {
     return !matched.isEmpty() && writesExactlyOneRegisterClass(behavior);
   }
 
-
   private boolean findRI(Graph behavior, BuiltIn builtin) {
+    return findRI(behavior, List.of(builtin));
+  }
+
+  /**
+   * Find register-immediate instructions when it matches one of the given {@link BuiltIn}.
+   * Also, it must only write one register result.
+   */
+  private boolean findRI(Graph behavior, List<BuiltIn> builtins) {
     var matched = TreeMatcher.matches(behavior.getNodes(BuiltInCall.class).map(x -> x),
-        new BuiltInMatcher(builtin, List.of(
+        new BuiltInMatcher(builtins, List.of(
             new AnyChildMatcher(new AnyReadRegFileMatcher()),
             new AnyChildMatcher(new FieldAccessRefMatcher())
         )));
