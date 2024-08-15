@@ -31,7 +31,7 @@ import vadl.viam.matching.TreeMatcher;
 import vadl.viam.matching.impl.AnyChildMatcher;
 import vadl.viam.matching.impl.AnyReadRegFileMatcher;
 import vadl.viam.matching.impl.BuiltInMatcher;
-import vadl.viam.matching.impl.FieldRefNodeMatcher;
+import vadl.viam.matching.impl.FieldAccessRefMatcher;
 
 /**
  * A {@link InstructionSetArchitecture} contains a {@link List} of {@link Instruction}.
@@ -55,16 +55,16 @@ public class IsaMatchingPass extends Pass {
   @Override
   public Object execute(Map<PassKey, Object> passResults, Specification viam)
       throws IOException {
-    // The instruction matching happens on the inlined graph
-    // because the field accesses are inlined.
-    IdentityHashMap<Instruction, Graph> inlined =
+    // The instruction matching happens on the unlined graph
+    // because the field accesses are unlined.
+    IdentityHashMap<Instruction, Graph> unlined =
         (IdentityHashMap<Instruction, Graph>) passResults.get(new PassKey("FunctionInlinerPass"));
-    ensureNonNull(inlined, "Inlining data must exist");
+    ensureNonNull(unlined, "Inlining data must exist");
     HashMap<InstructionLabel, List<Instruction>> matched = new HashMap<>();
 
     viam.isas().forEach(isa -> isa.instructions().forEach(instruction -> {
-      // Get inlined or the normal behavior if nothing was inlined.
-      var behavior = inlined.getOrDefault(instruction, instruction.behavior());
+      // Get unlined or the normal behavior if nothing was unlined.
+      var behavior = unlined.getOrDefault(instruction, instruction.behavior());
 
       if (findAdd32Bit(behavior)) {
         matched.put(InstructionLabel.ADD_32, List.of(instruction));
@@ -135,7 +135,7 @@ public class IsaMatchingPass extends Pass {
     var matched = TreeMatcher.matches(behavior.getNodes(BuiltInCall.class).map(x -> x),
         new BuiltInMatcher(builtin, List.of(
             new AnyChildMatcher(new AnyReadRegFileMatcher()),
-            new AnyChildMatcher(new FieldRefNodeMatcher())
+            new AnyChildMatcher(new FieldAccessRefMatcher())
         )));
 
     return !matched.isEmpty() && writesExactlyOneRegisterClass(behavior);
@@ -208,7 +208,7 @@ public class IsaMatchingPass extends Pass {
     var matched = TreeMatcher.matches(behavior.getNodes(BuiltInCall.class).map(x -> x),
             new BuiltInMatcher(List.of(ADD, ADDS),
                 List.of(new AnyChildMatcher(new AnyReadRegFileMatcher()),
-                    new AnyChildMatcher(new FieldRefNodeMatcher()))))
+                    new AnyChildMatcher(new FieldAccessRefMatcher()))))
         .stream()
         .map(x -> ((BuiltInCall) x).type())
         .filter(ty -> ty instanceof BitsType && ((BitsType) ty).bitWidth() == bitWidth)

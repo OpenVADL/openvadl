@@ -30,7 +30,7 @@ public class SelectNode extends ExpressionNode {
     this.trueCase = trueCase;
     this.falseCase = falseCase;
 
-    ensure(trueCase.type().equals(falseCase.type()),
+    ensure(trueCase.type().isTrivialCastTo(falseCase.type()),
         "True and false case must have the same type. %s vs %s", trueCase.type(), falseCase.type());
     ensure(condition.type() instanceof BoolType, "Condition must have type Bool");
   }

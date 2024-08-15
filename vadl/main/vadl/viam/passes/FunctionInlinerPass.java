@@ -15,6 +15,7 @@ import vadl.viam.Specification;
 import vadl.viam.graph.Graph;
 import vadl.viam.graph.control.ReturnNode;
 import vadl.viam.graph.dependency.ExpressionNode;
+import vadl.viam.graph.dependency.FieldAccessRefNode;
 import vadl.viam.graph.dependency.FuncCallNode;
 import vadl.viam.graph.dependency.FuncParamNode;
 
@@ -36,13 +37,13 @@ public class FunctionInlinerPass extends Pass {
   @Override
   public Object execute(Map<PassKey, Object> passResults, Specification viam)
       throws IOException {
-    Map<Instruction, Graph> inlined = new IdentityHashMap<>();
+    IdentityHashMap<Instruction, Graph> original = new IdentityHashMap<>();
 
     viam.isas()
         .flatMap(isa -> isa.instructions().stream())
         .forEach(instruction -> {
           var copy = instruction.behavior().copy();
-          var functionCalls = copy.getNodes(FuncCallNode.class)
+          var functionCalls = instruction.behavior().getNodes(FuncCallNode.class)
               .filter(funcCallNode -> funcCallNode.function().behavior().isPureFunction())
               .toList();
 
@@ -68,9 +69,25 @@ public class FunctionInlinerPass extends Pass {
             functionCall.replaceAndDelete(returnNode.value());
           });
 
-          inlined.put(instruction, copy);
+          var fieldAccesses = instruction.behavior().getNodes(FieldAccessRefNode.class)
+              .toList();
+
+          fieldAccesses.forEach(fieldAccessRefNode -> {
+            var inlinedBehavior =
+                fieldAccessRefNode.fieldAccess().accessFunction().behavior().copy();
+            // We deinitialize the nodes so we can add them when we inline. Otherwise,
+            // get an exception because it is already initialized.
+            inlinedBehavior.deinitialize_nodes();
+            var returnNodes = inlinedBehavior.getNodes(ReturnNode.class).toList();
+            ensure(returnNodes.size() == 1, "Inlined function must only have one return node");
+            var returnNode = returnNodes.get(0);
+
+            fieldAccessRefNode.replaceAndDelete(returnNode.value());
+          });
+
+          original.put(instruction, copy);
         });
 
-    return inlined;
+    return original;
   }
 }
