@@ -161,6 +161,17 @@ class Ungrouper
   }
 
   @Override
+  public Expr visit(MatchExpr expr) {
+    expr.candidate = expr.candidate.accept(this);
+    expr.defaultResult = expr.defaultResult.accept(this);
+    expr.cases.replaceAll(matchCase -> {
+      matchCase.patterns().replaceAll(pattern -> pattern.accept(this));
+      return new MatchExpr.Case(matchCase.patterns(), matchCase.result().accept(this));
+    });
+    return expr;
+  }
+
+  @Override
   public Definition visit(ConstantDefinition definition) {
     ungroupAnnotations(definition);
     definition.value = definition.value.accept(this);

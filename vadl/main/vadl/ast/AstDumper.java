@@ -386,6 +386,17 @@ public class AstDumper
   }
 
   @Override
+  public Void visit(MatchExpr expr) {
+    dumpNode(expr);
+    dumpChildren(expr.candidate, expr.defaultResult);
+    for (var matchCase : expr.cases) {
+      dumpChildren(matchCase.patterns());
+      dumpChildren(matchCase.result());
+    }
+    return null;
+  }
+
+  @Override
   public Void visit(BlockStatement blockStatement) {
     dumpNode(blockStatement);
     dumpChildren(blockStatement.statements);

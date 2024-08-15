@@ -38,6 +38,12 @@ class MacroExpander
     return result;
   }
 
+  public List<Expr> expandExprs(List<Expr> expressions) {
+    var copy = new ArrayList<>(expressions);
+    copy.replaceAll(this::expandExpr);
+    return copy;
+  }
+
   public List<Definition> expandDefinitions(List<Definition> definitions) {
     var defs = new ArrayList<Definition>(definitions.size());
     for (var def : definitions) {
@@ -114,9 +120,7 @@ class MacroExpander
 
   @Override
   public Expr visit(GroupedExpr expr) {
-    var expressions = new ArrayList<>(expr.expressions);
-    expressions.replaceAll(expression -> expression.accept(this));
-    return new GroupedExpr(expressions, expr.loc);
+    return new GroupedExpr(expandExprs(expr.expressions), expr.loc);
   }
 
   @Override
@@ -186,11 +190,7 @@ class MacroExpander
   @Override
   public Expr visit(TypeLiteral expr) {
     List<List<Expr>> sizeIndices = new ArrayList<>(expr.sizeIndices);
-    sizeIndices.replaceAll(sizes -> {
-      var copy = new ArrayList<>(sizes);
-      copy.replaceAll(size -> size.accept(this));
-      return copy;
-    });
+    sizeIndices.replaceAll(this::expandExprs);
     return new TypeLiteral(expr.baseType, sizeIndices, expr.loc);
   }
 
@@ -210,19 +210,11 @@ class MacroExpander
   public Expr visit(CallExpr expr) {
     var target = (IsSymExpr) ((Expr) expr.target).accept(this);
     var argsIndices = new ArrayList<>(expr.argsIndices);
-    argsIndices.replaceAll(args -> {
-      var copy = new ArrayList<>(args);
-      copy.replaceAll(arg -> arg.accept(this));
-      return copy;
-    });
+    argsIndices.replaceAll(this::expandExprs);
     var subCalls = new ArrayList<>(expr.subCalls);
     subCalls.replaceAll(subCall -> {
       var subCallArgsIndices = new ArrayList<>(subCall.argsIndices());
-      subCallArgsIndices.replaceAll(args -> {
-        var copy = new ArrayList<>(args);
-        copy.replaceAll(arg -> arg.accept(this));
-        return copy;
-      });
+      subCallArgsIndices.replaceAll(this::expandExprs);
       return new CallExpr.SubCall(subCall.id(), subCallArgsIndices);
     });
     return new CallExpr(target, argsIndices, subCalls, expr.location);
@@ -266,6 +258,16 @@ class MacroExpander
   @Override
   public Expr visit(MacroMatchExpr expr) {
     return (Expr) resolveMacroMatch(expr.macroMatch);
+  }
+
+  @Override
+  public Expr visit(MatchExpr expr) {
+    var candidate = expr.candidate.accept(this);
+    var defaultResult = expr.defaultResult.accept(this);
+    var cases = new ArrayList<>(expr.cases);
+    cases.replaceAll(matchCase -> new MatchExpr.Case(expandExprs(matchCase.patterns()),
+        matchCase.result().accept(this)));
+    return new MatchExpr(candidate, cases, defaultResult, expr.loc);
   }
 
   @Override
@@ -424,9 +426,7 @@ class MacroExpander
 
   @Override
   public BlockStatement visit(BlockStatement blockStatement) {
-    var statements = new ArrayList<>(blockStatement.statements);
-    statements.replaceAll(statement -> statement.accept(this));
-    return new BlockStatement(statements, blockStatement.location);
+    return new BlockStatement(expandStatements(blockStatement.statements), blockStatement.location);
   }
 
   @Override

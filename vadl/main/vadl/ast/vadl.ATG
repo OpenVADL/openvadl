@@ -94,6 +94,7 @@ TOKENS
   EXTENDING = "extending".
   MATCH = "match".
   ENUMERATION = "enumeration".
+  WITH = "with".
 
   SYM_IN = "in".
   SYM_AS = "as".
@@ -615,6 +616,8 @@ PRODUCTIONS
 
   term<out Expr expr>            (. expr = null; .)
   = literal<out expr>
+  | IF (la.kind == _MATCH && scanner.Peek().kind != _SYM_COLON) // Disambiguate from macro match
+    matchExpression<out expr>
   | callOrBinaryExpression<out expr, true>
   | groupedExpression<out expr>
   | unary<out expr>
@@ -690,6 +693,31 @@ PRODUCTIONS
     expression<out Expr condition, BIN_OPS>
     THEN expression<out Expr thenExpr, BIN_OPS>
     ELSE expression<out Expr elseExpr, BIN_OPS> (. expr = new IfExpr(condition, thenExpr, elseExpr, startLoc.join(loc())); .)
+  .
+
+  matchExpression<out Expr expr>
+  = MATCH                                     (. var start = loc(); .)
+    expression<out Expr candidate, BIN_OPS>
+    WITH
+    SYM_BRACE_OPEN                            (. var cases = new ArrayList<MatchExpr.Case>();  .)
+    {                                         (. var patterns = new ArrayList<Expr>(); .)
+      ( expression<out Expr pattern, BIN_OPS> (. patterns.add(pattern); .)
+      | SYM_BRACE_OPEN
+        expression<out Expr pattern, BIN_OPS> (. patterns.add(pattern); .)
+        {
+          SYM_COMMA
+          expression<out pattern, BIN_OPS>    (. patterns.add(pattern); .)
+        }
+        SYM_BRACE_CLOSE
+      )
+      SYM_BIGARROW
+      expression<out Expr result, BIN_OPS>    (. cases.add(new MatchExpr.Case(patterns, result)); .)
+      SYM_COMMA
+    }
+    SYM_UNDERSCORE
+    SYM_BIGARROW
+    expression<out Expr defaultResult, BIN_OPS>
+    SYM_BRACE_CLOSE                           (. expr = new MatchExpr(candidate, cases, defaultResult, start.join(loc())); .)
   .
 
   // -- PRIMITIVES ---------------------------------------------------------------------------------------------------

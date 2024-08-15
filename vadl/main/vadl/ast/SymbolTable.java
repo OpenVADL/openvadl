@@ -343,6 +343,15 @@ class SymbolTable {
         for (IdentifierOrPlaceholder segment : path.segments) {
           collectSymbols(symbols, (Expr) segment);
         }
+      } else if (expr instanceof MatchExpr match) {
+        collectSymbols(symbols, match.candidate);
+        collectSymbols(symbols, match.defaultResult);
+        for (MatchExpr.Case matchCase : match.cases) {
+          collectSymbols(symbols, matchCase.result());
+          for (Expr pattern : matchCase.patterns()) {
+            collectSymbols(symbols, pattern);
+          }
+        }
       }
     }
   }
@@ -476,6 +485,15 @@ class SymbolTable {
         var symbol = expr.symbolTable().resolveSymbol(id.pathToString());
         if (symbol == null) {
           expr.symbolTable().reportError("Symbol not found: " + id.pathToString(), id.location());
+        }
+      } else if (expr instanceof MatchExpr match) {
+        verifyUsages(match.candidate);
+        verifyUsages(match.defaultResult);
+        for (MatchExpr.Case matchCase : match.cases) {
+          verifyUsages(matchCase.result());
+          for (Expr pattern : matchCase.patterns()) {
+            verifyUsages(pattern);
+          }
         }
       }
     }
