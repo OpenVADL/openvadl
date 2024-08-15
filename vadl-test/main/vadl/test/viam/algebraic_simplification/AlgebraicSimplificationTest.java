@@ -14,6 +14,7 @@ import org.testcontainers.images.builder.ImageFromDockerfile;
 import vadl.test.DockerExecutionTest;
 import vadl.viam.Instruction;
 import vadl.viam.Specification;
+import vadl.viam.passes.FunctionInlinerPass;
 import vadl.viam.passes.algebraic_simplication.AlgebraicSimplificationPass;
 import vadl.viam.passes.translation_validation.ExplicitBitSizesInTypingPass;
 import vadl.viam.passes.translation_validation.ExtendMultiplicationPass;
@@ -37,6 +38,9 @@ public class AlgebraicSimplificationTest extends DockerExecutionTest {
   Collection<DynamicTest> instructions() throws IOException {
     var initialSpec = runAndGetViamSpecification("examples/rv3264im.vadl");
     var spec = runAndGetViamSpecification("examples/rv3264im.vadl");
+
+    new FunctionInlinerPass().execute(Collections.emptyMap(), initialSpec);
+    new FunctionInlinerPass().execute(Collections.emptyMap(), spec);
 
     new TypeCastEliminationPass().execute(Collections.emptyMap(), initialSpec);
     new TypeCastEliminationPass().execute(Collections.emptyMap(), spec);
