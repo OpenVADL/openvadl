@@ -2,7 +2,6 @@ package vadl.lcb.passes.llvmLowering.visitors;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import vadl.lcb.visitors.LcbGraphNodeVisitor;
 import vadl.lcb.passes.llvmLowering.LlvmNodeLowerable;
 import vadl.lcb.passes.llvmLowering.model.LlvmAddSD;
 import vadl.lcb.passes.llvmLowering.model.LlvmAndSD;
@@ -21,6 +20,7 @@ import vadl.lcb.passes.llvmLowering.model.LlvmUDivSD;
 import vadl.lcb.passes.llvmLowering.model.LlvmUMulSD;
 import vadl.lcb.passes.llvmLowering.model.LlvmURemSD;
 import vadl.lcb.passes.llvmLowering.model.LlvmXorSD;
+import vadl.lcb.visitors.LcbGraphNodeVisitor;
 import vadl.types.BuiltInTable;
 import vadl.viam.graph.control.AbstractBeginNode;
 import vadl.viam.graph.control.EndNode;

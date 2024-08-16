@@ -1,11 +1,11 @@
 package vadl.lcb.tablegen.lowering;
 
 import java.io.StringWriter;
+import vadl.lcb.passes.llvmLowering.LlvmNodeLowerable;
 import vadl.lcb.passes.llvmLowering.model.MachineInstructionNode;
+import vadl.lcb.passes.llvmLowering.strategies.LlvmLoweringStrategy;
 import vadl.lcb.passes.llvmLowering.visitors.MachineInstructionLcbVisitor;
 import vadl.lcb.visitors.LcbGraphNodeVisitor;
-import vadl.lcb.passes.llvmLowering.LlvmNodeLowerable;
-import vadl.lcb.passes.llvmLowering.strategies.LlvmLoweringStrategy;
 import vadl.viam.Constant;
 import vadl.viam.graph.NodeList;
 import vadl.viam.graph.control.AbstractBeginNode;
