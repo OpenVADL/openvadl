@@ -23,8 +23,8 @@ class TableGenImmediateOperandRendererTest {
                
         class nameValue<ValueType ty> : Operand<ty>
         {
-          let EncoderMethod = "encoderMethodValue";
-          let DecoderMethod = "decoderMethodValue";
+          let EncoderMethod = "encodenameValue";
+          let DecoderMethod = "decodenameValue";
         } 
         
         def nameValueAsInt32
