@@ -152,9 +152,7 @@ public class IsaMatchingPass extends Pass {
       } else if (isa.pc() != null
           && findBranchWithConditional(behavior, isa.pc(), Set.of(SGTH, UGTH))) {
         extend(matched, InstructionLabel.BGTH, instruction);
-      } else if (findRR(behavior, List.of(SLTH, ULTH))) {
-        extend(matched, InstructionLabel.LT, instruction);
-      } else if (findRI(behavior, List.of(SLTH, ULTH))) {
+      } else if (findRR_OR_findRI(behavior, List.of(SLTH, ULTH))) {
         extend(matched, InstructionLabel.LT, instruction);
       } else if (findWriteMem(behavior)) {
         extend(matched, InstructionLabel.STORE_MEM, instruction);
