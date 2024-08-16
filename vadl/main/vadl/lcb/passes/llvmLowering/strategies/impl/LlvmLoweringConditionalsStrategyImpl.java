@@ -22,8 +22,11 @@ public class LlvmLoweringConditionalsStrategyImpl extends LlvmLoweringStrategy {
   @Override
   protected List<Graph> generatePatternVariations(
       HashMap<InstructionLabel, List<Instruction>> supportedInstructions,
-      InstructionLabel instructionLabel, Graph copy, List<TableGenInstructionOperand> inputOperands,
-      List<TableGenInstructionOperand> outputOperands, List<Graph> patterns) {
+      InstructionLabel instructionLabel,
+      Graph copy,
+      List<TableGenInstructionOperand> inputOperands,
+      List<TableGenInstructionOperand> outputOperands,
+      List<Graph> patterns) {
     return Collections.emptyList();
   }
 }
