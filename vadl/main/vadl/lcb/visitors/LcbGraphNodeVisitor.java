@@ -1,4 +1,4 @@
-package vadl.lcb;
+package vadl.lcb.visitors;
 
 import vadl.viam.ViamError;
 import vadl.viam.graph.GraphNodeVisitor;

@@ -27,7 +27,7 @@ public class LlvmLoweringConditionalsStrategyImpl extends LlvmLoweringStrategy {
       Graph copy,
       List<TableGenInstructionOperand> inputOperands,
       List<TableGenInstructionOperand> outputOperands,
-      List<Graph> patterns) {
+      List<LlvmLoweringPass.LlvmLoweringTableGenPattern> patterns) {
     return Collections.emptyList();
   }
 }

@@ -18,7 +18,6 @@ import static vadl.lcb.passes.isaMatching.InstructionLabel.XOR;
 
 import java.util.Collections;
 import java.util.HashMap;
-import java.util.IdentityHashMap;
 import java.util.List;
 import java.util.Set;
 import vadl.lcb.passes.isaMatching.InstructionLabel;
@@ -46,7 +45,8 @@ public class LlvmLoweringArithmeticAndLogicStrategyImpl extends LlvmLoweringStra
   protected List<LlvmLoweringPass.LlvmLoweringTableGenPattern> generatePatternVariations(
       HashMap<InstructionLabel, List<Instruction>> supportedInstructions,
       InstructionLabel instructionLabel, Graph copy, List<TableGenInstructionOperand> inputOperands,
-      List<TableGenInstructionOperand> outputOperands, List<Graph> patterns) {
+      List<TableGenInstructionOperand> outputOperands,
+      List<LlvmLoweringPass.LlvmLoweringTableGenPattern> patterns) {
     return Collections.emptyList();
   }
 }

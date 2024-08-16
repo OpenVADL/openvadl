@@ -1,33 +1,34 @@
 package vadl.lcb.passes.llvmLowering.strategies;
 
-import com.google.common.collect.ImmutableList;
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.HashMap;
-import java.util.IdentityHashMap;
 import java.util.List;
-import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Stream;
+import org.jetbrains.annotations.NotNull;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import vadl.lcb.passes.isaMatching.InstructionLabel;
 import vadl.lcb.passes.llvmLowering.LlvmLoweringPass;
-import vadl.lcb.passes.llvmLowering.ReplaceWithLlvmSDNodesVisitor;
+import vadl.lcb.passes.llvmLowering.model.MachineInstructionNode;
+import vadl.lcb.passes.llvmLowering.visitors.ReplaceWithLlvmSDNodesVisitor;
 import vadl.lcb.passes.llvmLowering.model.LlvmFieldAccessRefNode;
 import vadl.lcb.tablegen.model.TableGenInstruction;
 import vadl.lcb.tablegen.model.TableGenInstructionOperand;
-import vadl.viam.Identifier;
+import vadl.viam.Constant;
 import vadl.viam.Instruction;
 import vadl.viam.InstructionSetArchitecture;
 import vadl.viam.ViamError;
 import vadl.viam.graph.Graph;
 import vadl.viam.graph.Node;
+import vadl.viam.graph.NodeList;
 import vadl.viam.graph.control.AbstractBeginNode;
 import vadl.viam.graph.control.ControlNode;
 import vadl.viam.graph.control.EndNode;
+import vadl.viam.graph.dependency.ConstantNode;
 import vadl.viam.graph.dependency.DependencyNode;
+import vadl.viam.graph.dependency.ExpressionNode;
 import vadl.viam.graph.dependency.FieldAccessRefNode;
 import vadl.viam.graph.dependency.FieldRefNode;
 import vadl.viam.graph.dependency.FuncCallNode;
@@ -63,12 +64,13 @@ public abstract class LlvmLoweringStrategy {
    */
   public Optional<LlvmLoweringPass.LlvmLoweringIntermediateResult> lower(
       HashMap<InstructionLabel, List<Instruction>> supportedInstructions,
-      Identifier instructionIdentifier,
+      Instruction instruction,
       InstructionLabel instructionLabel,
-      Graph behavior) {
+      Graph uninlinedBehavior) {
     var visitor = new ReplaceWithLlvmSDNodesVisitor();
-    var copy = behavior.copy();
+    var copy = uninlinedBehavior.copy();
     var nodes = copy.getNodes().toList();
+    var instructionIdentifier = instruction.identifier;
 
     if (!checkIfNoControlFlow(copy) && !checkIfNotAllowedDataflowNodes(copy)) {
       logger.atWarn().log("Instruction '{}' is not lowerable and will be skipped",
@@ -93,7 +95,9 @@ public abstract class LlvmLoweringStrategy {
     copy.deinitializeNodes();
 
     if (visitor.isPatternLowerable()) {
-      var patterns = generatePatterns(copy.getNodes(WriteResourceNode.class).toList());
+      var patterns = generatePatterns(instruction,
+          inputOperands,
+          copy.getNodes(WriteResourceNode.class).toList());
       var alternativePatterns =
           generatePatternVariations(supportedInstructions,
               instructionLabel,
@@ -169,7 +173,7 @@ public abstract class LlvmLoweringStrategy {
   }
 
   /**
-   * Extract the input operands from the {@link Graph}.
+   * Extracts the input operands from the {@link Graph}.
    */
   private List<TableGenInstructionOperand> getTableGenInputOperands(Graph graph) {
     return getInputOperands(graph)
@@ -196,7 +200,7 @@ public abstract class LlvmLoweringStrategy {
   }
 
   /**
-   * Returns an {@link TableGenInstructionOperand} given a {@link Node}.
+   * Returns a {@link TableGenInstructionOperand} given a {@link Node}.
    */
   private static TableGenInstructionOperand generateInstructionOperand(ReadRegNode node) {
     return new TableGenInstructionOperand(node.register().name(),
@@ -204,7 +208,7 @@ public abstract class LlvmLoweringStrategy {
   }
 
   /**
-   * Returns an {@link TableGenInstructionOperand} given a {@link Node}.
+   * Returns a {@link TableGenInstructionOperand} given a {@link Node}.
    */
   private static TableGenInstructionOperand generateInstructionOperand(ReadRegFileNode node) {
     var address = (FieldRefNode) node.address();
@@ -213,7 +217,7 @@ public abstract class LlvmLoweringStrategy {
   }
 
   /**
-   * Returns an {@link TableGenInstructionOperand} given a {@link Node}.
+   * Returns a {@link TableGenInstructionOperand} given a {@link Node}.
    */
   private static TableGenInstructionOperand generateInstructionOperand(
       LlvmFieldAccessRefNode node) {
@@ -245,17 +249,41 @@ public abstract class LlvmLoweringStrategy {
     return graph.getNodes(WriteRegFileNode.class).toList();
   }
 
-  protected List<LlvmLoweringPass.LlvmLoweringTableGenPattern> generatePatterns(List<WriteResourceNode> sideEffectNodes) {
-    ArrayList<Graph> patterns = new ArrayList<>();
+  protected List<LlvmLoweringPass.LlvmLoweringTableGenPattern> generatePatterns(
+      Instruction instruction,
+      List<TableGenInstructionOperand> inputOperands,
+      List<WriteResourceNode> sideEffectNodes) {
+    ArrayList<LlvmLoweringPass.LlvmLoweringTableGenPattern> patterns = new ArrayList<>();
 
     sideEffectNodes.forEach(sideEffectNode -> {
-      var graph = new Graph(sideEffectNode.id().toString() + ".selector.lowering");
-      var root = sideEffectNode.value();
-      root.clearUsages();
-      graph.addWithInputs(root);
-      patterns.add(graph);
+      var patternSelector = getPatternSelector(sideEffectNode);
+      var machineInstruction = getMachinePattern(instruction, inputOperands);
+      patterns.add(
+          new LlvmLoweringPass.LlvmLoweringTableGenPattern(patternSelector, machineInstruction));
     });
 
     return patterns;
+  }
+
+  @NotNull
+  private static Graph getPatternSelector(WriteResourceNode sideEffectNode) {
+    var graph = new Graph(sideEffectNode.id().toString() + ".selector.lowering");
+    var root = sideEffectNode.value();
+    root.clearUsages();
+    graph.addWithInputs(root);
+    return graph;
+  }
+
+  @NotNull
+  private static Graph getMachinePattern(Instruction instruction,
+                                         List<TableGenInstructionOperand> inputOperands) {
+    var graph = new Graph(instruction.name() + ".machine.lowering");
+    var params = new NodeList<>(
+        inputOperands.stream()
+            .map(operand -> (ExpressionNode) new ConstantNode(new Constant.Str(operand.render())))
+            .toList());
+    var node = new MachineInstructionNode(params, instruction);
+    graph.addWithInputs(node);
+    return graph;
   }
 }

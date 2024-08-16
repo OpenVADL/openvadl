@@ -11,6 +11,7 @@ import vadl.lcb.passes.isaMatching.IsaMatchingPass;
 import vadl.lcb.passes.llvmLowering.strategies.LlvmLoweringStrategy;
 import vadl.lcb.passes.llvmLowering.strategies.impl.LlvmLoweringArithmeticAndLogicStrategyImpl;
 import vadl.lcb.passes.llvmLowering.strategies.impl.LlvmLoweringConditionalsStrategyImpl;
+import vadl.lcb.passes.llvmLowering.visitors.ReplaceWithLlvmSDNodesVisitor;
 import vadl.lcb.tablegen.model.TableGenInstructionOperand;
 import vadl.pass.Pass;
 import vadl.pass.PassKey;
@@ -89,7 +90,7 @@ public class LlvmLoweringPass extends Pass {
             }
 
             var res =
-                strategy.lower(supportedInstructions, instruction.identifier, instructionLabel,
+                strategy.lower(supportedInstructions, instruction, instructionLabel,
                     uninlinedBehavior);
 
             res.ifPresent(llvmLoweringIntermediateResult -> llvmPatterns.put(instruction,

@@ -1,11 +1,11 @@
-package vadl.lcb.passes.llvmLowering;
+package vadl.lcb.passes.llvmLowering.visitors;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import vadl.lcb.LcbGraphNodeVisitor;
+import vadl.lcb.visitors.LcbGraphNodeVisitor;
+import vadl.lcb.passes.llvmLowering.LlvmNodeLowerable;
 import vadl.lcb.passes.llvmLowering.model.LlvmAddSD;
 import vadl.lcb.passes.llvmLowering.model.LlvmAndSD;
-import vadl.lcb.passes.llvmLowering.model.LlvmCondCode;
 import vadl.lcb.passes.llvmLowering.model.LlvmFieldAccessRefNode;
 import vadl.lcb.passes.llvmLowering.model.LlvmMulSD;
 import vadl.lcb.passes.llvmLowering.model.LlvmOrSD;

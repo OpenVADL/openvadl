@@ -1,6 +1,7 @@
 package vadl.lcb.passes.isaMatching;
 
 import static vadl.types.BuiltInTable.ADD;
+import static vadl.types.BuiltInTable.ADDC;
 import static vadl.types.BuiltInTable.ADDS;
 import static vadl.types.BuiltInTable.AND;
 import static vadl.types.BuiltInTable.ANDS;
