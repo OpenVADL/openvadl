@@ -11,6 +11,9 @@ import vadl.lcb.tablegen.model.TableGenInstructionOperand;
 import vadl.viam.Instruction;
 import vadl.viam.graph.Graph;
 
+/**
+ * Lowering of conditionals into TableGen.
+ */
 public class LlvmLoweringConditionalsStrategyImpl extends LlvmLoweringStrategy {
 
   private final Set<InstructionLabel> supported = Set.of(InstructionLabel.LT);
