@@ -2,6 +2,8 @@ package vadl.lcb.tablegen.lowering;
 
 import java.io.StringWriter;
 import vadl.lcb.passes.llvmLowering.LlvmNodeLowerable;
+import vadl.lcb.passes.llvmLowering.model.LlvmBrCcSD;
+import vadl.lcb.passes.llvmLowering.model.LlvmFieldAccessRefNode;
 import vadl.lcb.passes.llvmLowering.model.MachineInstructionNode;
 import vadl.lcb.passes.llvmLowering.strategies.LlvmLoweringStrategy;
 import vadl.lcb.passes.llvmLowering.visitors.MachineInstructionLcbVisitor;
@@ -99,8 +101,7 @@ public class TableGenPatternVisitor implements LcbGraphNodeVisitor, MachineInstr
 
   @Override
   public void visit(ReadRegNode readRegNode) {
-    var operand = LlvmLoweringStrategy.generateTableGenInputOutput(readRegNode);
-    writer.write(operand.render());
+
   }
 
   @Override
@@ -136,6 +137,11 @@ public class TableGenPatternVisitor implements LcbGraphNodeVisitor, MachineInstr
 
   @Override
   public void visit(FieldAccessRefNode fieldAccessRefNode) {
+
+  }
+
+  @Override
+  public void visit(LlvmFieldAccessRefNode fieldAccessRefNode) {
     var operand = LlvmLoweringStrategy.generateTableGenInputOutput(fieldAccessRefNode);
     writer.write(operand.render());
   }
@@ -192,6 +198,18 @@ public class TableGenPatternVisitor implements LcbGraphNodeVisitor, MachineInstr
 
     joinArgumentsWithComma(node.arguments());
 
+    writer.write(")");
+  }
+
+  @Override
+  public void visit(LlvmBrCcSD node) {
+    writer.write("(");
+    writer.write(node.lower() + " " + node.condition() + " ");
+    visit(node.first());
+    writer.write(", ");
+    visit(node.second());
+    writer.write(", ");
+    visit(node.immOffset());
     writer.write(")");
   }
 

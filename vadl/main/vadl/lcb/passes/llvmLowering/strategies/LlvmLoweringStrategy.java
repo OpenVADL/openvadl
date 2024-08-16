@@ -14,8 +14,10 @@ import vadl.lcb.passes.llvmLowering.LlvmLoweringPass;
 import vadl.lcb.passes.llvmLowering.model.LlvmFieldAccessRefNode;
 import vadl.lcb.passes.llvmLowering.model.MachineInstructionNode;
 import vadl.lcb.passes.llvmLowering.visitors.ReplaceWithLlvmSDNodesVisitor;
+import vadl.lcb.passes.llvmLowering.visitors.TableGenPatternLowerable;
 import vadl.lcb.tablegen.model.TableGenInstruction;
 import vadl.lcb.tablegen.model.TableGenInstructionOperand;
+import vadl.lcb.visitors.LcbGraphNodeVisitor;
 import vadl.viam.Constant;
 import vadl.viam.Instruction;
 import vadl.viam.InstructionSetArchitecture;
@@ -59,6 +61,15 @@ public abstract class LlvmLoweringStrategy {
   }
 
   /**
+   * This returns an instance of the visitor which lowers graph into a lowerable pattern.
+   * The default {@link ReplaceWithLlvmSDNodesVisitor} will reject any control flow like
+   * if-conditions and mark them as not lowerable.
+   */
+  protected LcbGraphNodeVisitor getVisitorForPatternSelectorLowering() {
+    return new ReplaceWithLlvmSDNodesVisitor();
+  }
+
+  /**
    * Generate a lowering result for the given {@link Graph}.
    * If it is not lowerable then return {@link Optional#empty()}.
    */
@@ -67,7 +78,7 @@ public abstract class LlvmLoweringStrategy {
       Instruction instruction,
       InstructionLabel instructionLabel,
       Graph uninlinedBehavior) {
-    var visitor = new ReplaceWithLlvmSDNodesVisitor();
+    var visitor = getVisitorForPatternSelectorLowering();
     var copy = uninlinedBehavior.copy();
     var nodes = copy.getNodes().toList();
     var instructionIdentifier = instruction.identifier;
@@ -82,7 +93,7 @@ public abstract class LlvmLoweringStrategy {
     for (var node : nodes) {
       visitor.visit(node);
 
-      if (!visitor.isPatternLowerable()) {
+      if (!((TableGenPatternLowerable) visitor).isPatternLowerable()) {
         logger.atWarn().log("Instruction '{}' is not lowerable and wil be skipped",
             instructionIdentifier.toString());
         break;
@@ -94,7 +105,7 @@ public abstract class LlvmLoweringStrategy {
 
     copy.deinitializeNodes();
 
-    if (visitor.isPatternLowerable()) {
+    if (((TableGenPatternLowerable) visitor).isPatternLowerable()) {
       var patterns = generatePatterns(instruction,
           inputOperands,
           copy.getNodes(WriteResourceNode.class).toList());
@@ -157,7 +168,7 @@ public abstract class LlvmLoweringStrategy {
   /**
    * Extract the output parameters of {@link Graph}.
    */
-  private List<TableGenInstructionOperand> getTableGenOutputOperands(Graph graph) {
+  protected List<TableGenInstructionOperand> getTableGenOutputOperands(Graph graph) {
     return getOutputOperands(graph)
         .stream().map(operand -> {
           var address = (FieldRefNode) operand.address();
@@ -175,7 +186,7 @@ public abstract class LlvmLoweringStrategy {
   /**
    * Extracts the input operands from the {@link Graph}.
    */
-  private List<TableGenInstructionOperand> getTableGenInputOperands(Graph graph) {
+  protected List<TableGenInstructionOperand> getTableGenInputOperands(Graph graph) {
     return getInputOperands(graph)
         .stream()
         .map(LlvmLoweringStrategy::generateTableGenInputOutput)
@@ -188,8 +199,6 @@ public abstract class LlvmLoweringStrategy {
   public static TableGenInstructionOperand generateTableGenInputOutput(Node operand) {
     if (operand instanceof ReadRegFileNode node) {
       return generateInstructionOperand(node);
-    } else if (operand instanceof ReadRegNode node) {
-      return generateInstructionOperand(node);
     } else if (operand instanceof LlvmFieldAccessRefNode node) {
       return generateInstructionOperand(node);
     } else if (operand instanceof FuncCallNode node) {
@@ -197,14 +206,6 @@ public abstract class LlvmLoweringStrategy {
     } else {
       throw new ViamError("Input operand not supported yet: " + operand);
     }
-  }
-
-  /**
-   * Returns a {@link TableGenInstructionOperand} given a {@link Node}.
-   */
-  private static TableGenInstructionOperand generateInstructionOperand(ReadRegNode node) {
-    return new TableGenInstructionOperand(node.register().name(),
-        node.register().identifier.simpleName());
   }
 
   /**
@@ -237,7 +238,7 @@ public abstract class LlvmLoweringStrategy {
    * Most instruction's behaviors have inputs. Those are the results which the instruction requires.
    */
   private static List<Node> getInputOperands(Graph graph) {
-    return Stream.concat(Stream.concat(graph.getNodes(ReadResourceNode.class),
+    return Stream.concat(Stream.concat(graph.getNodes(ReadRegFileNode.class),
             graph.getNodes(FieldAccessRefNode.class)), graph.getNodes(FuncCallNode.class))
         .map(x -> (Node) x).toList();
   }
