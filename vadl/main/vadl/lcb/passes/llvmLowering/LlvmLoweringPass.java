@@ -41,8 +41,16 @@ public class LlvmLoweringPass extends Pass {
   public record LlvmLoweringIntermediateResult(Graph behavior,
                                                List<TableGenInstructionOperand> inputs,
                                                List<TableGenInstructionOperand> outputs,
-                                               List<Graph> patterns) {
+                                               List<LlvmLoweringTableGenPattern> patterns) {
 
+  }
+
+  /**
+   * TableGen pattern has a tree for LLVM Dag nodes to select a pattern in the instruction
+   * selection. This is represented by {@code selector}.
+   * And a tree for the emitted machine instruction. This is represented by {@code machine}.
+   */
+  public record LlvmLoweringTableGenPattern(Graph selector, Graph machine) {
   }
 
   @Override

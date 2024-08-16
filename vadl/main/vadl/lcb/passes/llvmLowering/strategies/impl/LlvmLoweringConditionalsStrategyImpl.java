@@ -5,6 +5,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Set;
 import vadl.lcb.passes.isaMatching.InstructionLabel;
+import vadl.lcb.passes.llvmLowering.LlvmLoweringPass;
 import vadl.lcb.passes.llvmLowering.strategies.LlvmLoweringStrategy;
 import vadl.lcb.tablegen.model.TableGenInstructionOperand;
 import vadl.viam.Instruction;
@@ -20,7 +21,7 @@ public class LlvmLoweringConditionalsStrategyImpl extends LlvmLoweringStrategy {
   }
 
   @Override
-  protected List<Graph> generatePatternVariations(
+  protected List<LlvmLoweringPass.LlvmLoweringTableGenPattern> generatePatternVariations(
       HashMap<InstructionLabel, List<Instruction>> supportedInstructions,
       InstructionLabel instructionLabel,
       Graph copy,

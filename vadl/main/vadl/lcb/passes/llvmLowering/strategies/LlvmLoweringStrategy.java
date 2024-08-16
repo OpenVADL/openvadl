@@ -120,13 +120,13 @@ public abstract class LlvmLoweringStrategy {
    * direction should work as well. So when there is only a greater-than comparison
    * then this method should generate a pattern for the less-than.
    */
-  protected abstract List<Graph> generatePatternVariations(
+  protected abstract List<LlvmLoweringPass.LlvmLoweringTableGenPattern> generatePatternVariations(
       HashMap<InstructionLabel, List<Instruction>> supportedInstructions,
       InstructionLabel instructionLabel,
       Graph copy,
       List<TableGenInstructionOperand> inputOperands,
       List<TableGenInstructionOperand> outputOperands,
-      List<Graph> patterns);
+      List<LlvmLoweringPass.LlvmLoweringTableGenPattern> patterns);
 
   /**
    * LLvm's TableGen cannot work with control flow. So if statements and other constructs are not
@@ -245,11 +245,11 @@ public abstract class LlvmLoweringStrategy {
     return graph.getNodes(WriteRegFileNode.class).toList();
   }
 
-  protected List<Graph> generatePatterns(List<WriteResourceNode> sideEffectNodes) {
+  protected List<LlvmLoweringPass.LlvmLoweringTableGenPattern> generatePatterns(List<WriteResourceNode> sideEffectNodes) {
     ArrayList<Graph> patterns = new ArrayList<>();
 
     sideEffectNodes.forEach(sideEffectNode -> {
-      var graph = new Graph(sideEffectNode.id().toString() + ".lowering");
+      var graph = new Graph(sideEffectNode.id().toString() + ".selector.lowering");
       var root = sideEffectNode.value();
       root.clearUsages();
       graph.addWithInputs(root);
