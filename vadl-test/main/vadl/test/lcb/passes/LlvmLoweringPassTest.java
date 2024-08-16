@@ -11,6 +11,7 @@ import org.junit.jupiter.api.DynamicTest;
 import org.junit.jupiter.api.TestFactory;
 import vadl.lcb.passes.isaMatching.IsaMatchingPass;
 import vadl.lcb.passes.llvmLowering.LlvmLoweringPass;
+import vadl.lcb.passes.llvmLowering.model.LlvmCondCode;
 import vadl.lcb.tablegen.lowering.TableGenPatternVisitor;
 import vadl.lcb.tablegen.model.TableGenInstructionOperand;
 import vadl.pass.PassKey;
@@ -38,6 +39,15 @@ public class LlvmLoweringPassTest extends AbstractTest {
         List.of(String.format("(%s X:$rs1, X:$rs2)", dagNode)));
   }
 
+  private static TestOutput createTestOutputRRWithConditional(String dagNode,
+                                                              LlvmCondCode condCode) {
+    return new TestOutput(
+        List.of(new TableGenInstructionOperand("X", "rs1"),
+            new TableGenInstructionOperand("X", "rs2")),
+        List.of(new TableGenInstructionOperand("X", "rd")),
+        List.of(String.format("(%s X:$rs1, X:$rs2, %s)", dagNode, condCode)));
+  }
+
   private static TestOutput createTestOutputRI(String immediateOperand,
                                                String immediateName,
                                                String dagNode) {
@@ -48,6 +58,18 @@ public class LlvmLoweringPassTest extends AbstractTest {
         List.of(String.format("(%s X:$rs1, %s:$%s)", dagNode, immediateOperand, immediateName)));
   }
 
+  private static TestOutput createTestOutputRIWithConditional(String immediateOperand,
+                                                              String immediateName,
+                                                              String dagNode,
+                                                              LlvmCondCode condCode) {
+    return new TestOutput(
+        List.of(new TableGenInstructionOperand("X", "rs1"),
+            new TableGenInstructionOperand(immediateOperand, immediateName)),
+        List.of(new TableGenInstructionOperand("X", "rd")),
+        List.of(String.format("(%s X:$rs1, %s:$%s, %s)", dagNode, immediateOperand, immediateName,
+            condCode)));
+  }
+
   static {
     expectedResults.put("ADD", createTestOutputRR("add"));
     expectedResults.put("SUB", createTestOutputRR("sub"));
@@ -55,9 +77,17 @@ public class LlvmLoweringPassTest extends AbstractTest {
     expectedResults.put("XOR", createTestOutputRR("xor"));
     expectedResults.put("AND", createTestOutputRR("and"));
     expectedResults.put("OR", createTestOutputRR("or"));
+    expectedResults.put("SLT", createTestOutputRRWithConditional("setcc", LlvmCondCode.SETLT));
+    expectedResults.put("SLTU", createTestOutputRRWithConditional("setcc", LlvmCondCode.SETULT));
     expectedResults.put("ADDI", createTestOutputRI("immS_decodeAsInt64", "immS", "add"));
     expectedResults.put("ORI", createTestOutputRI("immS_decodeAsInt64", "immS", "or"));
     expectedResults.put("ANDI", createTestOutputRI("immS_decodeAsInt64", "immS", "and"));
+    expectedResults.put("SLTI",
+        createTestOutputRIWithConditional("immS_decodeAsInt64", "immS", "setcc",
+            LlvmCondCode.SETLT));
+    expectedResults.put("SLTUI",
+        createTestOutputRIWithConditional("immS_decodeAsInt64", "immS", "setcc",
+            LlvmCondCode.SETULT));
   }
 
   @TestFactory
