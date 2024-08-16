@@ -6,12 +6,11 @@ import java.util.IdentityHashMap;
 import java.util.List;
 import java.util.Map;
 import org.jetbrains.annotations.Nullable;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import vadl.lcb.passes.isaMatching.InstructionLabel;
 import vadl.lcb.passes.isaMatching.IsaMatchingPass;
 import vadl.lcb.passes.llvmLowering.strategies.LlvmLoweringStrategy;
 import vadl.lcb.passes.llvmLowering.strategies.impl.LlvmLoweringArithmeticAndLogicStrategyImpl;
+import vadl.lcb.passes.llvmLowering.strategies.impl.LlvmLoweringConditionalsStrategyImpl;
 import vadl.lcb.tablegen.model.TableGenInstructionOperand;
 import vadl.pass.Pass;
 import vadl.pass.PassKey;
@@ -26,7 +25,8 @@ import vadl.viam.graph.Graph;
 public class LlvmLoweringPass extends Pass {
 
   private final List<LlvmLoweringStrategy> strategies = List.of(
-      new LlvmLoweringArithmeticAndLogicStrategyImpl()
+      new LlvmLoweringArithmeticAndLogicStrategyImpl(),
+      new LlvmLoweringConditionalsStrategyImpl()
   );
 
   /**
@@ -57,24 +57,32 @@ public class LlvmLoweringPass extends Pass {
     IdentityHashMap<Instruction, Graph> uninlined =
         (IdentityHashMap<Instruction, Graph>) passResults.get(new PassKey("FunctionInlinerPass"));
     ensureNonNull(uninlined, "Inlined Function data must exist");
-    Map<Instruction, LlvmLoweringIntermediateResult>
+    IdentityHashMap<Instruction, LlvmLoweringIntermediateResult>
         llvmPatterns = new IdentityHashMap<>();
-    var isaMatched =
+    var supportedInstructions =
         (HashMap<InstructionLabel, List<Instruction>>) passResults.get(
             new PassKey("IsaMatchingPass"));
-    ensure(isaMatched != null, "Cannot find pass results from isaMatched");
+    ensure(supportedInstructions != null, "Cannot find pass results from IsaMatchPass");
 
-    var instructionLookup = flipIsaMatching(isaMatched);
+    var instructionLookup = flipIsaMatching(supportedInstructions);
 
     viam.isas().flatMap(isa -> isa.instructions().stream())
         .forEach(instruction -> {
+          var instructionLabel = instructionLookup.get(instruction);
+
+          if (instructionLabel == null) {
+            return;
+          }
+
           var uninlinedBehavior = uninlined.getOrDefault(instruction, instruction.behavior());
           for (var strategy : strategies) {
-            if (!strategy.isApplicable(instructionLookup, instruction)) {
+            if (!strategy.isApplicable(instructionLabel)) {
               continue;
             }
 
-            var res = strategy.lower(instruction.identifier, uninlinedBehavior);
+            var res =
+                strategy.lower(supportedInstructions, instruction.identifier, instructionLabel,
+                    uninlinedBehavior);
 
             res.ifPresent(llvmLoweringIntermediateResult -> llvmPatterns.put(instruction,
                 llvmLoweringIntermediateResult));

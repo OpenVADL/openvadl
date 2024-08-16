@@ -1,30 +1,29 @@
 package vadl.lcb.passes.llvmLowering.strategies.impl;
 
-import static vadl.lcb.passes.isaMatching.InstructionLabel.ADD_32;
-
-import java.util.Map;
-import java.util.Optional;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.List;
 import java.util.Set;
 import vadl.lcb.passes.isaMatching.InstructionLabel;
-import vadl.lcb.passes.llvmLowering.LlvmLoweringPass;
 import vadl.lcb.passes.llvmLowering.strategies.LlvmLoweringStrategy;
-import vadl.viam.Identifier;
+import vadl.lcb.tablegen.model.TableGenInstructionOperand;
 import vadl.viam.Instruction;
 import vadl.viam.graph.Graph;
 
-public class LlvmLoweringConditionalsStrategyImpl implements LlvmLoweringStrategy {
+public class LlvmLoweringConditionalsStrategyImpl extends LlvmLoweringStrategy {
 
   private final Set<InstructionLabel> supported = Set.of(InstructionLabel.LT);
 
   @Override
-  public boolean isApplicable(Map<Instruction, InstructionLabel> matching,
-                              Instruction instruction) {
-    return false;
+  protected Set<InstructionLabel> getSupportedInstructionLabels() {
+    return this.supported;
   }
 
   @Override
-  public Optional<LlvmLoweringPass.LlvmLoweringIntermediateResult> lower(
-      Identifier instructionIdentifier, Graph behavior) {
-    return Optional.empty();
+  protected List<Graph> generatePatternVariations(
+      HashMap<InstructionLabel, List<Instruction>> supportedInstructions,
+      InstructionLabel instructionLabel, Graph copy, List<TableGenInstructionOperand> inputOperands,
+      List<TableGenInstructionOperand> outputOperands, List<Graph> patterns) {
+    return Collections.emptyList();
   }
 }
