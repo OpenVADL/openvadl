@@ -9,11 +9,17 @@ import vadl.viam.graph.Graph;
  */
 public class EncodingCodeGenerator extends EncoderDecoderCodeGenerator {
 
-
   @Override
   protected String getPrefix() {
-    return "encode";
+    return getFunctionPrefix();
   }
 
-
+  /**
+   * The generator generates a function with a name. This function returns the prefix.
+   *
+   * @return a string for a function prefix.
+   */
+  public static String getFunctionPrefix() {
+    return "encode";
+  }
 }

@@ -4,10 +4,13 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 import org.jetbrains.annotations.Nullable;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import vadl.gcb.passes.encoding_generation.strategies.EncodingGenerationStrategy;
 import vadl.gcb.passes.encoding_generation.strategies.impl.ArithmeticImmediateStrategy;
 import vadl.gcb.passes.encoding_generation.strategies.impl.ShiftedImmediateStrategy;
 import vadl.gcb.passes.encoding_generation.strategies.impl.TrivialImmediateStrategy;
+import vadl.lcb.passes.llvmLowering.LlvmLoweringPass;
 import vadl.pass.Pass;
 import vadl.pass.PassKey;
 import vadl.pass.PassName;
@@ -24,6 +27,9 @@ import vadl.viam.graph.Graph;
  */
 public class GenerateFieldAccessEncodingFunctionPass extends Pass {
 
+  private static final Logger logger = LoggerFactory.getLogger(
+      GenerateFieldAccessEncodingFunctionPass.class);
+
   private final List<EncodingGenerationStrategy> strategies = List.of(
       new TrivialImmediateStrategy(),
       new ShiftedImmediateStrategy(),
@@ -38,9 +44,7 @@ public class GenerateFieldAccessEncodingFunctionPass extends Pass {
   @Override
   public Object execute(Map<PassKey, Object> passResults, Specification viam) {
     viam.isas()
-        .flatMap(x -> x.instructions().stream())
-        .map(Instruction::format)
-        .distinct()
+        .flatMap(x -> x.formats().stream())
         .flatMap(x -> Arrays.stream(x.fieldAccesses()))
         .filter(x -> x.encoding() == null)
         .forEach(fieldAccess -> {
@@ -54,13 +58,15 @@ public class GenerateFieldAccessEncodingFunctionPass extends Pass {
           }
         });
 
-    var haveEncoding = viam.isas()
-        .flatMap(x -> x.formats().stream())
-        .distinct()
+    var hasNoEncoding = viam.findAllFormats()
         .flatMap(x -> Arrays.stream(x.fieldAccesses()))
-        .allMatch(x -> x.encoding() != null);
+        .filter(x -> x.encoding() == null)
+        .toList();
 
-    if (!haveEncoding) {
+    if (!hasNoEncoding.isEmpty()) {
+      for (var format : hasNoEncoding) {
+        logger.atError().log("Format {} has no encoding", format.name());
+      }
       throw new ViamError("Not all formats have an encoding");
     }
 

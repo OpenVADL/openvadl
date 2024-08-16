@@ -779,6 +779,15 @@ public abstract class Node {
   }
 
   /**
+   * Clears all the usages from the {@link Node}.
+   * This is helpful when adding a node from another graph. An
+   * empty list of usages indicates that the node is a root node.
+   */
+  public void clearUsages() {
+    usages.clear();
+  }
+
+  /**
    * The node's id class. It can be in Init, Active and Deleted state.
    */
   public class Id {
@@ -786,6 +795,15 @@ public abstract class Node {
     private int numericId;
 
     private Id() {
+      state = IdState.INIT;
+      numericId = -1;
+    }
+
+    /**
+     * When copying a {@link Node} it must be possible to reset the id so the node can added to
+     * a different graph.
+     */
+    public void deactivate() {
       state = IdState.INIT;
       numericId = -1;
     }

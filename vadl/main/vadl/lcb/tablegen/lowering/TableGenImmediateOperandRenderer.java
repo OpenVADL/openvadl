@@ -20,15 +20,14 @@ public final class TableGenImmediateOperandRenderer {
               let DecoderMethod = "%s";
             }
                     
-            def %sAs%s
+            def %s
                 : %s<%s>
                 , ImmLeaf<%s, [{ return true; }]>;
-            """, operand.getName(),
+            """, operand.getRawName(),
         operand.getEncoderMethod(),
         operand.getDecoderMethod(),
-        operand.getName(),
-        operand.getType().getFancyName(),
-        operand.getName(),
+        operand.getFullName(),
+        operand.getRawName(),
         operand.getType().getLlvmType(),
         operand.getType().getLlvmType()
     );

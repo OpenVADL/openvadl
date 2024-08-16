@@ -35,7 +35,7 @@ public interface GraphNodeVisitor {
    * Catchall method when overloading did not work.
    */
   default void visit(Node node) {
-    throw new RuntimeException("Node type is not implemented");
+    throw new RuntimeException("Node type is not implemented: " + node.getClass());
   }
 
   /**

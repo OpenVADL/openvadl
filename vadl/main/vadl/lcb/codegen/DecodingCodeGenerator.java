@@ -1,6 +1,5 @@
 package vadl.lcb.codegen;
 
-import vadl.viam.Encoding;
 import vadl.viam.graph.Graph;
 
 /**
@@ -8,12 +7,18 @@ import vadl.viam.graph.Graph;
  * This class will be used to generate the {@code AccessFunction}.
  */
 public class DecodingCodeGenerator extends EncoderDecoderCodeGenerator {
-
-
   @Override
   protected String getPrefix() {
-    return "decode";
+    return getFunctionPrefix();
   }
 
 
+  /**
+   * The generator generates a function with a name. This function returns the prefix.
+   *
+   * @return a string for a function prefix.
+   */
+  public static String getFunctionPrefix() {
+    return "decode";
+  }
 }

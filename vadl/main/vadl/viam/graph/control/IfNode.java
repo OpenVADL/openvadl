@@ -31,10 +31,10 @@ public class IfNode extends ControlSplitNode {
   public ExpressionNode condition;
 
   @Successor
-  Node trueBranch;
+  public Node trueBranch;
 
   @Successor
-  Node falseBranch;
+  public Node falseBranch;
 
   /**
    * The constructor to instantiate a IfNode.

@@ -1,23 +1,18 @@
 package vadl.viam.passes.translation_validation;
 
 import java.io.IOException;
-import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
-import java.util.Objects;
 import java.util.stream.Collectors;
 import org.jetbrains.annotations.Nullable;
 import vadl.pass.Pass;
 import vadl.pass.PassKey;
 import vadl.pass.PassName;
 import vadl.types.BitsType;
-import vadl.types.Type;
-import vadl.utils.Triple;
 import vadl.viam.Instruction;
 import vadl.viam.Specification;
 import vadl.viam.graph.dependency.BuiltInCall;
 import vadl.viam.graph.dependency.ExpressionNode;
-import vadl.viam.graph.dependency.TypeCastNode;
 
 /**
  * The {@link TranslationValidation#lower(Specification, Instruction, Instruction)} can only work
@@ -35,7 +30,6 @@ public class ExplicitBitSizesInTypingPass extends Pass {
   @Override
   public Object execute(Map<PassKey, Object> passResults, Specification viam)
       throws IOException {
-    ArrayList<Triple<BuiltInCall, ExpressionNode, Type>> worklist = new ArrayList<>();
     viam.isas()
         .flatMap(isa -> isa.instructions().stream())
         .flatMap(instruction -> instruction.behavior().getNodes(BuiltInCall.class))
@@ -53,9 +47,7 @@ public class ExplicitBitSizesInTypingPass extends Pass {
               node.arguments().stream().map(ExpressionNode::type).map(x -> (BitsType) x).toList();
           var join = ((BitsType) node.arguments().get(0).type()).join(types);
 
-          node.arguments().forEach(arg -> {
-            arg.setType(join);
-          });
+          node.arguments().forEach(arg -> arg.setType(join));
         });
 
     return null;
