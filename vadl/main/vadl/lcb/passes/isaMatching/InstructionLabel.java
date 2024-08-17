@@ -11,11 +11,13 @@ import vadl.viam.Instruction;
  * 32bit registers will get the {@link InstructionLabel#ADD_32} assigned.
  */
 public enum InstructionLabel {
+  /*
+  ARITHMETIC AND LOGIC
+   */
   ADD_32,
   ADD_64,
   ADDI_32,
   ADDI_64,
-  BEQ,
   AND,
   OR,
   SUB,
@@ -27,12 +29,23 @@ public enum InstructionLabel {
   SMOD,
   UMOD,
   XOR,
+  XORI,
+  /*
+  COMPARISONS
+   */
   LT,
+  /*
+  MEMORY
+   */
   STORE_MEM,
   LOAD_MEM,
+  /*
+  CONDITIONAL BRANCHES
+   */
+  BEQ,
   BNEQ,
   BGEQ,
   BLEQ,
   BLTH,
-  BGTH, XORI,
+  BGTH,
 }

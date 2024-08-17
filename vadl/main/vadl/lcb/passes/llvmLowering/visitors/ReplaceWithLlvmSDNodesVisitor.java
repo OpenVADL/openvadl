@@ -22,6 +22,7 @@ import vadl.lcb.passes.llvmLowering.model.LlvmURemSD;
 import vadl.lcb.passes.llvmLowering.model.LlvmXorSD;
 import vadl.lcb.visitors.LcbGraphNodeVisitor;
 import vadl.types.BuiltInTable;
+import vadl.viam.graph.Node;
 import vadl.viam.graph.control.AbstractBeginNode;
 import vadl.viam.graph.control.EndNode;
 import vadl.viam.graph.control.IfNode;
@@ -53,19 +54,20 @@ import vadl.viam.graph.dependency.ZeroExtendNode;
  * Replaces VIAM nodes with LLVM nodes which have more
  * information for the lowering.
  */
-public class ReplaceWithLlvmSDNodesVisitor implements LcbGraphNodeVisitor {
+public class ReplaceWithLlvmSDNodesVisitor
+    implements LcbGraphNodeVisitor, TableGenPatternLowerable {
 
   private static final Logger logger = LoggerFactory.getLogger(ReplaceWithLlvmSDNodesVisitor.class);
   private boolean patternLowerable = true;
 
-  /**
-   * Returns whether the {@link ReplaceWithLlvmSDNodesVisitor} encountered nodes which are not
-   * lowerable.
-   *
-   * @return {@code true} when the graph is ok.
-   */
+  @Override
   public boolean isPatternLowerable() {
     return this.patternLowerable;
+  }
+
+  @Override
+  public void visit(Node node) {
+    node.accept(this);
   }
 
   @Override

@@ -39,26 +39,9 @@ public class LlvmSetccSD extends BuiltInCall implements LlvmNodeLowerable {
                      Type type) {
     super(built, args, type);
 
-    if (built == BuiltInTable.EQU) {
-      llvmCondCode = LlvmCondCode.SETEQ;
-    } else if (built == BuiltInTable.NEQ) {
-      llvmCondCode = LlvmCondCode.SETNE;
-    } else if (built == BuiltInTable.SGTH) {
-      llvmCondCode = LlvmCondCode.SETGT;
-    } else if (built == BuiltInTable.UGTH) {
-      llvmCondCode = LlvmCondCode.SETUGT;
-    } else if (built == BuiltInTable.SLTH) {
-      llvmCondCode = LlvmCondCode.SETLT;
-    } else if (built == BuiltInTable.ULTH) {
-      llvmCondCode = LlvmCondCode.SETULT;
-    } else if (built == BuiltInTable.SLEQ) {
-      llvmCondCode = LlvmCondCode.SETLE;
-    } else if (built == BuiltInTable.ULEQ) {
-      llvmCondCode = LlvmCondCode.SETULE;
-    } else if (built == BuiltInTable.SGEQ) {
-      llvmCondCode = LlvmCondCode.SETGE;
-    } else if (built == BuiltInTable.UGEQ) {
-      llvmCondCode = LlvmCondCode.SETUGE;
+    var condCode = LlvmCondCode.from(built);
+    if (condCode != null) {
+      llvmCondCode = condCode;
     } else {
       throw new ViamError("not supported cond code");
     }

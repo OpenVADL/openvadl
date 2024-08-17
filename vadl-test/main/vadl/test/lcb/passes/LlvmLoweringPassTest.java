@@ -53,6 +53,18 @@ public class LlvmLoweringPassTest extends AbstractTest {
     );
   }
 
+  private static TestOutput createTestOutputRRWithConditionalBranch(LlvmCondCode condCode,
+                                                                    String machineInstruction) {
+    return new TestOutput(
+        List.of(new TableGenInstructionOperand("X", "rs1"),
+            new TableGenInstructionOperand("X", "rs2"),
+            new TableGenInstructionOperand("immS_decodeAsInt64", "immS")),
+        List.of(),
+        List.of(String.format("(%s (%s X:$rs1, X:$rs2), immS_decodeAsInt64:$immS)", "brcc", condCode)),
+        List.of(String.format("(%s X:$rs1, X:$rs2, immS_decodeAsInt64:$immS)", machineInstruction))
+    );
+  }
+
   private static TestOutput createTestOutputRI(String immediateOperand,
                                                String immediateName,
                                                String dagNode,
@@ -82,25 +94,40 @@ public class LlvmLoweringPassTest extends AbstractTest {
   }
 
   static {
+    /*
+    ARITHMETIC AND LOGIC
+     */
     expectedResults.put("ADD", createTestOutputRR("add", "ADD"));
     expectedResults.put("SUB", createTestOutputRR("sub", "SUB"));
     expectedResults.put("MUL", createTestOutputRR("smul_lohi", "MUL"));
     expectedResults.put("XOR", createTestOutputRR("xor", "XOR"));
     expectedResults.put("AND", createTestOutputRR("and", "AND"));
     expectedResults.put("OR", createTestOutputRR("or", "OR"));
+    expectedResults.put("ADDI", createTestOutputRI("immS_decodeAsInt64", "immS", "add", "ADDI"));
+    expectedResults.put("ORI", createTestOutputRI("immS_decodeAsInt64", "immS", "or", "ORI"));
+    expectedResults.put("ANDI", createTestOutputRI("immS_decodeAsInt64", "immS", "and", "ANDI"));
+    /*
+    CONDITIONALS
+     */
     expectedResults.put("SLT",
         createTestOutputRRWithConditional(LlvmCondCode.SETLT, "SLT"));
     expectedResults.put("SLTU",
         createTestOutputRRWithConditional(LlvmCondCode.SETULT, "SLTU"));
-    expectedResults.put("ADDI", createTestOutputRI("immS_decodeAsInt64", "immS", "add", "ADDI"));
-    expectedResults.put("ORI", createTestOutputRI("immS_decodeAsInt64", "immS", "or", "ORI"));
-    expectedResults.put("ANDI", createTestOutputRI("immS_decodeAsInt64", "immS", "and", "ANDI"));
     expectedResults.put("SLTI",
         createTestOutputRIWithConditional("immS_decodeAsInt64", "immS",
             LlvmCondCode.SETLT, "SLTI"));
     expectedResults.put("SLTUI",
         createTestOutputRIWithConditional("immS_decodeAsInt64", "immS",
             LlvmCondCode.SETULT, "SLTUI"));
+    /*
+    CONDITIONAL BRANCHES
+     */
+    expectedResults.put("BEQ", createTestOutputRRWithConditionalBranch(LlvmCondCode.SETEQ, "BEQ"));
+    expectedResults.put("BGE", createTestOutputRRWithConditionalBranch(LlvmCondCode.SETGE, "BGE"));
+    expectedResults.put("BGEU", createTestOutputRRWithConditionalBranch(LlvmCondCode.SETUGE, "BGEU"));
+    expectedResults.put("BLT", createTestOutputRRWithConditionalBranch(LlvmCondCode.SETLT, "BLT"));
+    expectedResults.put("BLTU", createTestOutputRRWithConditionalBranch(LlvmCondCode.SETULT, "BLTU"));
+    expectedResults.put("BNE", createTestOutputRRWithConditionalBranch(LlvmCondCode.SETNE, "BNE"));
   }
 
   @TestFactory
