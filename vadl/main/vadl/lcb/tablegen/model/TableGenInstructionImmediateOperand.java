@@ -1,8 +1,5 @@
 package vadl.lcb.tablegen.model;
 
-import vadl.lcb.codegen.model.ImmediateOperand;
-import vadl.lcb.codegen.model.llvm.ValueType;
-
 /**
  * Indicates that the operand is an immediate.
  */
