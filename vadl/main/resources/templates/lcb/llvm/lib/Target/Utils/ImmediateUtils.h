@@ -19,6 +19,11 @@ __extension__ typedef unsigned __int128 uint128_t;
 [(${function})]
 [/]
 
+
+[# th:each="function : ${predicateFunctions}" ]
+[(${function})]
+[/]
+
 namespace
 {
     class ImmediateUtils

@@ -8,9 +8,11 @@ import java.util.List;
 import java.util.Map;
 import vadl.gcb.passes.type_normalization.CppTypeNormalizationForDecodingsPass;
 import vadl.gcb.passes.type_normalization.CppTypeNormalizationForEncodingsPass;
+import vadl.gcb.passes.type_normalization.CppTypeNormalizationForPredicatesPass;
 import vadl.gcb.valuetypes.ProcessorName;
 import vadl.lcb.codegen.DecodingCodeGenerator;
 import vadl.lcb.codegen.EncodingCodeGenerator;
+import vadl.lcb.codegen.PredicateCodeGenerator;
 import vadl.lcb.config.LcbConfiguration;
 import vadl.lcb.template.CommonVarNames;
 import vadl.pass.PassKey;
@@ -55,15 +57,22 @@ public class EmitImmediateFilePass extends AbstractTemplateRenderingPass {
         (IdentityHashMap<Function, Function>) ensureNonNull(
             passResults.get(new PassKey(CppTypeNormalizationForEncodingsPass.class.toString())),
             "encodings must exist");
+    var predicateVadlFunctions =
+        (IdentityHashMap<Function, Function>) ensureNonNull(
+            passResults.get(new PassKey(CppTypeNormalizationForPredicatesPass.class.toString())),
+            "predicates must exist");
 
     var decodeFunctions = generateDecodeFunctions(specification, decodeVadlFunctions);
     var encodeFunctions = generateEncodeFunctions(specification, encodeVadlFunctions);
+    var predicateFunctions = generatePredicateFunctions(specification, predicateVadlFunctions);
 
     return Map.of(CommonVarNames.NAMESPACE, specification.name(),
         "decodeFunctions", decodeFunctions,
         "decodeFunctionNames", generateDecodeFunctionNames(specification),
-        "encodeFunctions", encodeFunctions);
+        "encodeFunctions", encodeFunctions,
+        "predicateFunctions", predicateFunctions);
   }
+
 
   record DecodeFunctionEntry(String loweredName, String functionName) {
 
@@ -109,6 +118,22 @@ public class EmitImmediateFilePass extends AbstractTemplateRenderingPass {
           // We need to do a lookup because encodeVadlFunctions because it contains the cpp
           // upcasts.
           var upcasted = ensureNonNull(encodeVadlFunctions.get(function), "upcast must exist");
+          return generator.generateFunction(upcasted);
+        })
+        .toList();
+  }
+
+  private List<String> generatePredicateFunctions(Specification specification,
+                                                  IdentityHashMap<Function, Function> predicateVadlFunctions) {
+    return specification.isas().flatMap(isa -> isa.formats().stream())
+        .flatMap(format -> Arrays.stream(format.fieldAccesses()))
+        .map(Format.FieldAccess::predicate)
+        .sorted(Comparator.comparing(Definition::name))
+        .map(function -> {
+          var generator = new PredicateCodeGenerator();
+          // We need to do a lookup because encodeVadlFunctions because it contains the cpp
+          // upcasts.
+          var upcasted = ensureNonNull(predicateVadlFunctions.get(function), "upcast must exist");
           return generator.generateFunction(upcasted);
         })
         .toList();
