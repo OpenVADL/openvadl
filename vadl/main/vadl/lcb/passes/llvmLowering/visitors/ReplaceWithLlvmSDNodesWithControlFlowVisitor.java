@@ -71,21 +71,6 @@ public class ReplaceWithLlvmSDNodesWithControlFlowVisitor
     }
   }
 
-  private BuiltInCall getConditional(Graph behavior) {
-    var builtIn = behavior.getNodes(BuiltInCall.class)
-        .filter(
-            x -> Set.of(BuiltInTable.EQU, BuiltInTable.NEQ, BuiltInTable.SLTH, BuiltInTable.ULTH,
-                    BuiltInTable.SGEQ, BuiltInTable.UGEQ, BuiltInTable.SLEQ, BuiltInTable.ULEQ)
-                .contains(x.builtIn()))
-        .findFirst();
-
-    if (builtIn.isEmpty()) {
-      throw new ViamError(
-          "Visitor wrongly used. Are you sure this is a conditional branch instruction?");
-    }
-
-    return builtIn.get();
-  }
 
   @Override
   public void visit(IfNode ifNode) {
@@ -105,5 +90,21 @@ public class ReplaceWithLlvmSDNodesWithControlFlowVisitor
   @Override
   public void visit(Node node) {
     node.accept(this);
+  }
+
+  private BuiltInCall getConditional(Graph behavior) {
+    var builtIn = behavior.getNodes(BuiltInCall.class)
+        .filter(
+            x -> Set.of(BuiltInTable.EQU, BuiltInTable.NEQ, BuiltInTable.SLTH, BuiltInTable.ULTH,
+                    BuiltInTable.SGEQ, BuiltInTable.UGEQ, BuiltInTable.SLEQ, BuiltInTable.ULEQ)
+                .contains(x.builtIn()))
+        .findFirst();
+
+    if (builtIn.isEmpty()) {
+      throw new ViamError(
+          "Visitor wrongly used. Are you sure this is a conditional branch instruction?");
+    }
+
+    return builtIn.get();
   }
 }

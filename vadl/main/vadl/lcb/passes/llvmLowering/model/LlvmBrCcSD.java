@@ -5,7 +5,6 @@ import vadl.javaannotations.viam.DataValue;
 import vadl.javaannotations.viam.Input;
 import vadl.lcb.passes.llvmLowering.LlvmNodeLowerable;
 import vadl.lcb.passes.llvmLowering.visitors.MachineInstructionLcbVisitor;
-import vadl.lcb.tablegen.lowering.TableGenPatternVisitor;
 import vadl.types.Type;
 import vadl.viam.graph.GraphNodeVisitor;
 import vadl.viam.graph.GraphVisitor;
@@ -29,6 +28,9 @@ public class LlvmBrCcSD extends ExpressionNode implements LlvmNodeLowerable {
   @Input
   private ExpressionNode immOffset;
 
+  /**
+   * Constructor for the LLVM node "brcc".
+   */
   public LlvmBrCcSD(LlvmCondCode condition,
                     ExpressionNode first,
                     ExpressionNode second,
