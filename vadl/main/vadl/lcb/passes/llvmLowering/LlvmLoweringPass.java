@@ -15,6 +15,7 @@ import vadl.lcb.passes.llvmLowering.strategies.impl.LlvmLoweringConditionalsStra
 import vadl.lcb.passes.llvmLowering.strategies.impl.LlvmLoweringIndirectJumpStrategyImpl;
 import vadl.lcb.passes.llvmLowering.visitors.ReplaceWithLlvmSDNodesVisitor;
 import vadl.lcb.tablegen.model.TableGenInstructionOperand;
+import vadl.lcb.tablegen.model.TableGenPattern;
 import vadl.pass.Pass;
 import vadl.pass.PassKey;
 import vadl.pass.PassName;
@@ -47,16 +48,8 @@ public class LlvmLoweringPass extends Pass {
   public record LlvmLoweringIntermediateResult(Graph behavior,
                                                List<TableGenInstructionOperand> inputs,
                                                List<TableGenInstructionOperand> outputs,
-                                               List<LlvmLoweringTableGenPattern> patterns) {
+                                               List<TableGenPattern> patterns) {
 
-  }
-
-  /**
-   * TableGen pattern has a tree for LLVM Dag nodes to select a pattern in the instruction
-   * selection. This is represented by {@code selector}.
-   * And a tree for the emitted machine instruction. This is represented by {@code machine}.
-   */
-  public record LlvmLoweringTableGenPattern(Graph selector, Graph machine) {
   }
 
   @Override

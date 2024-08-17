@@ -17,6 +17,7 @@ import vadl.lcb.passes.llvmLowering.visitors.ReplaceWithLlvmSDNodesVisitor;
 import vadl.lcb.passes.llvmLowering.visitors.TableGenPatternLowerable;
 import vadl.lcb.tablegen.model.TableGenInstruction;
 import vadl.lcb.tablegen.model.TableGenInstructionOperand;
+import vadl.lcb.tablegen.model.TableGenPattern;
 import vadl.lcb.visitors.LcbGraphNodeVisitor;
 import vadl.viam.Constant;
 import vadl.viam.Instruction;
@@ -133,13 +134,13 @@ public abstract class LlvmLoweringStrategy {
    * direction should work as well. So when there is only a greater-than comparison
    * then this method should generate a pattern for the less-than.
    */
-  protected abstract List<LlvmLoweringPass.LlvmLoweringTableGenPattern> generatePatternVariations(
+  protected abstract List<TableGenPattern> generatePatternVariations(
       HashMap<InstructionLabel, List<Instruction>> supportedInstructions,
       InstructionLabel instructionLabel,
       Graph copy,
       List<TableGenInstructionOperand> inputOperands,
       List<TableGenInstructionOperand> outputOperands,
-      List<LlvmLoweringPass.LlvmLoweringTableGenPattern> patterns);
+      List<TableGenPattern> patterns);
 
   /**
    * LLvm's TableGen cannot work with control flow. So if statements and other constructs are not
@@ -248,17 +249,17 @@ public abstract class LlvmLoweringStrategy {
     return graph.getNodes(WriteRegFileNode.class).toList();
   }
 
-  protected List<LlvmLoweringPass.LlvmLoweringTableGenPattern> generatePatterns(
+  protected List<TableGenPattern> generatePatterns(
       Instruction instruction,
       List<TableGenInstructionOperand> inputOperands,
       List<WriteResourceNode> sideEffectNodes) {
-    ArrayList<LlvmLoweringPass.LlvmLoweringTableGenPattern> patterns = new ArrayList<>();
+    ArrayList<TableGenPattern> patterns = new ArrayList<>();
 
     sideEffectNodes.forEach(sideEffectNode -> {
       var patternSelector = getPatternSelector(sideEffectNode);
       var machineInstruction = getMachinePattern(instruction, inputOperands);
       patterns.add(
-          new LlvmLoweringPass.LlvmLoweringTableGenPattern(patternSelector, machineInstruction));
+          new TableGenPattern(patternSelector, machineInstruction));
     });
 
     return patterns;

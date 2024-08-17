@@ -1,12 +1,19 @@
 package vadl.lcb.lib.Target;
 
 import java.io.IOException;
+import java.util.Collections;
 import java.util.Map;
 import vadl.gcb.valuetypes.ProcessorName;
 import vadl.lcb.config.LcbConfiguration;
+import vadl.lcb.passes.llvmLowering.LlvmLoweringPass;
+import vadl.lcb.tablegen.lowering.TableGenInstructionRenderer;
+import vadl.lcb.tablegen.lowering.TableGenPatternVisitor;
+import vadl.lcb.tablegen.model.TableGenInstruction;
+import vadl.lcb.tablegen.model.TableGenRecord;
 import vadl.lcb.template.CommonVarNames;
 import vadl.pass.PassKey;
 import vadl.template.AbstractTemplateRenderingPass;
+import vadl.viam.Instruction;
 import vadl.viam.Specification;
 
 /**
@@ -29,12 +36,37 @@ public class EmitInstrInfoTableGenFilePass extends AbstractTemplateRenderingPass
 
   @Override
   protected String getOutputPath() {
-    return "llvm/lib/Target/" + processorName.value() + "/" + processorName.value() + "InstrInfo.td";
+    return "llvm/lib/Target/" + processorName.value() + "/" + processorName.value() +
+        "InstrInfo.td";
   }
 
   @Override
   protected Map<String, Object> createVariables(final Map<PassKey, Object> passResults,
                                                 Specification specification) {
-    return Map.of(CommonVarNames.NAMESPACE, specification.name());
+    Map<Instruction, LlvmLoweringPass.LlvmLoweringIntermediateResult> instructions =
+        (Map<Instruction, LlvmLoweringPass.LlvmLoweringIntermediateResult>) ensureNonNull(
+            passResults.get(new PassKey(LlvmLoweringPass.class.toString())),
+            "llvmLowering must exist");
+
+    var tableGenRecords = instructions.entrySet().stream().map(entry -> {
+          var instruction = entry.getKey();
+          var result = entry.getValue();
+          return new TableGenInstruction(
+              instruction.identifier.simpleName(),
+              "dummyNamespaceValue",
+              instruction,
+              new TableGenInstruction.Flags(false, false, false, false, false, false, false, false),
+              result.inputs(),
+              result.outputs(),
+              Collections.emptyList(),
+              Collections.emptyList(),
+              result.patterns()
+          );
+        })
+        .map(TableGenInstructionRenderer::lower)
+        .toList();
+
+    return Map.of(CommonVarNames.NAMESPACE, specification.name(),
+        "instructions", tableGenRecords);
   }
 }

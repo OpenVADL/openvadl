@@ -15,6 +15,7 @@ import vadl.lcb.passes.llvmLowering.LlvmLoweringPass;
 import vadl.lcb.passes.llvmLowering.model.LlvmCondCode;
 import vadl.lcb.tablegen.lowering.TableGenPatternVisitor;
 import vadl.lcb.tablegen.model.TableGenInstructionOperand;
+import vadl.lcb.tablegen.model.TableGenPattern;
 import vadl.pass.PassKey;
 import vadl.test.AbstractTest;
 import vadl.viam.Instruction;
@@ -173,7 +174,7 @@ public class LlvmLoweringPassTest extends AbstractTest {
           Assertions.assertEquals(expectedResults.get(t.identifier.simpleName()).outputs(),
               res.outputs());
           var selectorPatterns = res.patterns().stream()
-              .map(LlvmLoweringPass.LlvmLoweringTableGenPattern::selector)
+              .map(TableGenPattern::selector)
               .map(pattern -> pattern.getNodes().filter(x -> x.usageCount() == 0).findFirst())
               .filter(Optional::isPresent)
               .map(rootNode -> {
@@ -184,7 +185,7 @@ public class LlvmLoweringPassTest extends AbstractTest {
           Assertions.assertEquals(expectedResults.get(t.identifier.simpleName()).selectorPatterns,
               selectorPatterns);
           var machinePatterns = res.patterns().stream()
-              .map(LlvmLoweringPass.LlvmLoweringTableGenPattern::machine)
+              .map(TableGenPattern::machine)
               .map(pattern -> pattern.getNodes().filter(x -> x.usageCount() == 0).findFirst())
               .filter(Optional::isPresent)
               .map(rootNode -> {

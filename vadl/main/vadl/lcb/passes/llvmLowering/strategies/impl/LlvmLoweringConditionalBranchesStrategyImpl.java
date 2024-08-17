@@ -17,6 +17,7 @@ import vadl.lcb.passes.llvmLowering.LlvmLoweringPass;
 import vadl.lcb.passes.llvmLowering.strategies.LlvmLoweringStrategy;
 import vadl.lcb.passes.llvmLowering.visitors.ReplaceWithLlvmSDNodesWithControlFlowVisitor;
 import vadl.lcb.tablegen.model.TableGenInstructionOperand;
+import vadl.lcb.tablegen.model.TableGenPattern;
 import vadl.lcb.visitors.LcbGraphNodeVisitor;
 import vadl.viam.Instruction;
 import vadl.viam.graph.Graph;
@@ -73,11 +74,11 @@ public class LlvmLoweringConditionalBranchesStrategyImpl extends LlvmLoweringStr
   }
 
   @Override
-  protected List<LlvmLoweringPass.LlvmLoweringTableGenPattern> generatePatternVariations(
+  protected List<TableGenPattern> generatePatternVariations(
       HashMap<InstructionLabel, List<Instruction>> supportedInstructions,
       InstructionLabel instructionLabel, Graph copy, List<TableGenInstructionOperand> inputOperands,
       List<TableGenInstructionOperand> outputOperands,
-      List<LlvmLoweringPass.LlvmLoweringTableGenPattern> patterns) {
+      List<TableGenPattern> patterns) {
 
 
     return Collections.emptyList();
