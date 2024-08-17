@@ -1,6 +1,7 @@
 package vadl.lcb.passes.isaMatching;
 
 import static vadl.types.BuiltInTable.ADD;
+import static vadl.types.BuiltInTable.ADDC;
 import static vadl.types.BuiltInTable.ADDS;
 import static vadl.types.BuiltInTable.AND;
 import static vadl.types.BuiltInTable.ANDS;
@@ -124,8 +125,14 @@ public class IsaMatchingPass extends Pass {
         extend(matched, InstructionLabel.AND, instruction);
       } else if (findRR_OR_findRI(behavior, List.of(OR, ORS))) {
         extend(matched, InstructionLabel.OR, instruction);
-      } else if (findRR_OR_findRI(behavior, List.of(XOR, XORS))) {
+      } else if (findRR(behavior, List.of(XOR, XORS))) {
         extend(matched, InstructionLabel.XOR, instruction);
+      } else if (findRI(behavior, List.of(XOR, XORS))) {
+        // Here is an exception:
+        // Usually, it is good enough to group RR and RI together.
+        // However, when generating alternative patterns for conditionals,
+        // then we need the XORI instruction. Therefore, we put it extra.
+        extend(matched, InstructionLabel.XORI, instruction);
       } else if (findRR_OR_findRI(behavior, List.of(MUL, SMULL, SMULLS))) {
         extend(matched, InstructionLabel.MUL, instruction);
       } else if (findRR_OR_findRI(behavior, List.of(SDIV, SDIVS))) {
@@ -152,9 +159,7 @@ public class IsaMatchingPass extends Pass {
       } else if (isa.pc() != null
           && findBranchWithConditional(behavior, isa.pc(), Set.of(SGTH, UGTH))) {
         extend(matched, InstructionLabel.BGTH, instruction);
-      } else if (findRR(behavior, List.of(SLTH, ULTH))) {
-        extend(matched, InstructionLabel.LT, instruction);
-      } else if (findRI(behavior, List.of(SLTH, ULTH))) {
+      } else if (findRR_OR_findRI(behavior, List.of(SLTH, ULTH))) {
         extend(matched, InstructionLabel.LT, instruction);
       } else if (findWriteMem(behavior)) {
         extend(matched, InstructionLabel.STORE_MEM, instruction);

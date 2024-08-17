@@ -34,5 +34,5 @@ public enum InstructionLabel {
   BGEQ,
   BLEQ,
   BLTH,
-  BGTH,
+  BGTH, XORI,
 }

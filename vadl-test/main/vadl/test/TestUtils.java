@@ -2,13 +2,11 @@ package vadl.test;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
-import java.util.HashSet;
 import java.util.Set;
 import java.util.function.Function;
 import java.util.stream.Stream;
 import vadl.utils.ViamUtils;
 import vadl.viam.Definition;
-import vadl.viam.DefinitionVisitor;
 import vadl.viam.Format;
 import vadl.viam.InstructionSetArchitecture;
 import vadl.viam.Resource;

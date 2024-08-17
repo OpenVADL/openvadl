@@ -11,6 +11,7 @@ import org.junit.jupiter.api.DynamicTest;
 import org.junit.jupiter.api.TestFactory;
 import vadl.lcb.passes.isaMatching.IsaMatchingPass;
 import vadl.lcb.passes.llvmLowering.LlvmLoweringPass;
+import vadl.lcb.passes.llvmLowering.model.LlvmCondCode;
 import vadl.lcb.tablegen.lowering.TableGenPatternVisitor;
 import vadl.lcb.tablegen.model.TableGenInstructionOperand;
 import vadl.pass.PassKey;
@@ -23,41 +24,83 @@ public class LlvmLoweringPassTest extends AbstractTest {
 
   record TestOutput(List<TableGenInstructionOperand> inputs,
                     List<TableGenInstructionOperand> outputs,
-                    List<String> patterns) {
+                    List<String> selectorPatterns,
+                    List<String> machinePatterns) {
   }
 
   private static final HashMap<String, TestOutput>
       expectedResults =
       new HashMap<>();
 
-  private static TestOutput createTestOutputRR(String dagNode) {
+  private static TestOutput createTestOutputRR(String dagNode, String machineInstruction) {
     return new TestOutput(
         List.of(new TableGenInstructionOperand("X", "rs1"),
             new TableGenInstructionOperand("X", "rs2")),
         List.of(new TableGenInstructionOperand("X", "rd")),
-        List.of(String.format("(%s X:$rs1, X:$rs2)", dagNode)));
+        List.of(String.format("(%s X:$rs1, X:$rs2)", dagNode)),
+        List.of(String.format("(%s X:$rs1, X:$rs2)", machineInstruction))
+    );
+  }
+
+  private static TestOutput createTestOutputRRWithConditional(LlvmCondCode condCode,
+                                                              String machineInstruction) {
+    return new TestOutput(
+        List.of(new TableGenInstructionOperand("X", "rs1"),
+            new TableGenInstructionOperand("X", "rs2")),
+        List.of(new TableGenInstructionOperand("X", "rd")),
+        List.of(String.format("(%s X:$rs1, X:$rs2, %s)", "setcc", condCode)),
+        List.of(String.format("(%s X:$rs1, X:$rs2)", machineInstruction))
+    );
   }
 
   private static TestOutput createTestOutputRI(String immediateOperand,
                                                String immediateName,
-                                               String dagNode) {
+                                               String dagNode,
+                                               String machineInstruction) {
     return new TestOutput(
         List.of(new TableGenInstructionOperand("X", "rs1"),
             new TableGenInstructionOperand(immediateOperand, immediateName)),
         List.of(new TableGenInstructionOperand("X", "rd")),
-        List.of(String.format("(%s X:$rs1, %s:$%s)", dagNode, immediateOperand, immediateName)));
+        List.of(String.format("(%s X:$rs1, %s:$%s)", dagNode, immediateOperand, immediateName)),
+        List.of(String.format("(%s X:$rs1, %s:$%s)", machineInstruction, immediateOperand,
+            immediateName)));
+  }
+
+  private static TestOutput createTestOutputRIWithConditional(String immediateOperand,
+                                                              String immediateName,
+                                                              LlvmCondCode condCode,
+                                                              String machineInstruction) {
+    return new TestOutput(
+        List.of(new TableGenInstructionOperand("X", "rs1"),
+            new TableGenInstructionOperand(immediateOperand, immediateName)),
+        List.of(new TableGenInstructionOperand("X", "rd")),
+        List.of(String.format("(%s X:$rs1, %s:$%s, %s)", "setcc", immediateOperand, immediateName,
+            condCode)),
+        List.of(String.format("(%s X:$rs1, %s:$%s)", machineInstruction, immediateOperand,
+            immediateName))
+    );
   }
 
   static {
-    expectedResults.put("ADD", createTestOutputRR("add"));
-    expectedResults.put("SUB", createTestOutputRR("sub"));
-    expectedResults.put("MUL", createTestOutputRR("smul_lohi"));
-    expectedResults.put("XOR", createTestOutputRR("xor"));
-    expectedResults.put("AND", createTestOutputRR("and"));
-    expectedResults.put("OR", createTestOutputRR("or"));
-    expectedResults.put("ADDI", createTestOutputRI("immS_decodeAsInt64", "immS", "add"));
-    expectedResults.put("ORI", createTestOutputRI("immS_decodeAsInt64", "immS", "or"));
-    expectedResults.put("ANDI", createTestOutputRI("immS_decodeAsInt64", "immS", "and"));
+    expectedResults.put("ADD", createTestOutputRR("add", "ADD"));
+    expectedResults.put("SUB", createTestOutputRR("sub", "SUB"));
+    expectedResults.put("MUL", createTestOutputRR("smul_lohi", "MUL"));
+    expectedResults.put("XOR", createTestOutputRR("xor", "XOR"));
+    expectedResults.put("AND", createTestOutputRR("and", "AND"));
+    expectedResults.put("OR", createTestOutputRR("or", "OR"));
+    expectedResults.put("SLT",
+        createTestOutputRRWithConditional(LlvmCondCode.SETLT, "SLT"));
+    expectedResults.put("SLTU",
+        createTestOutputRRWithConditional(LlvmCondCode.SETULT, "SLTU"));
+    expectedResults.put("ADDI", createTestOutputRI("immS_decodeAsInt64", "immS", "add", "ADDI"));
+    expectedResults.put("ORI", createTestOutputRI("immS_decodeAsInt64", "immS", "or", "ORI"));
+    expectedResults.put("ANDI", createTestOutputRI("immS_decodeAsInt64", "immS", "and", "ANDI"));
+    expectedResults.put("SLTI",
+        createTestOutputRIWithConditional("immS_decodeAsInt64", "immS",
+            LlvmCondCode.SETLT, "SLTI"));
+    expectedResults.put("SLTUI",
+        createTestOutputRIWithConditional("immS_decodeAsInt64", "immS",
+            LlvmCondCode.SETULT, "SLTUI"));
   }
 
   @TestFactory
@@ -88,7 +131,8 @@ public class LlvmLoweringPassTest extends AbstractTest {
               res.inputs());
           Assertions.assertEquals(expectedResults.get(t.identifier.simpleName()).outputs(),
               res.outputs());
-          var patterns = res.patterns().stream()
+          var selectorPatterns = res.patterns().stream()
+              .map(LlvmLoweringPass.LlvmLoweringTableGenPattern::selector)
               .map(pattern -> pattern.getNodes().filter(x -> x.usageCount() == 0).findFirst())
               .filter(Optional::isPresent)
               .map(rootNode -> {
@@ -96,8 +140,19 @@ public class LlvmLoweringPassTest extends AbstractTest {
                 visitor.visit(rootNode.get());
                 return visitor.getResult();
               }).toList();
-          Assertions.assertEquals(expectedResults.get(t.identifier.simpleName()).patterns,
-              patterns);
+          Assertions.assertEquals(expectedResults.get(t.identifier.simpleName()).selectorPatterns,
+              selectorPatterns);
+          var machinePatterns = res.patterns().stream()
+              .map(LlvmLoweringPass.LlvmLoweringTableGenPattern::machine)
+              .map(pattern -> pattern.getNodes().filter(x -> x.usageCount() == 0).findFirst())
+              .filter(Optional::isPresent)
+              .map(rootNode -> {
+                var visitor = new TableGenPatternVisitor();
+                visitor.visit(rootNode.get());
+                return visitor.getResult();
+              }).toList();
+          Assertions.assertEquals(expectedResults.get(t.identifier.simpleName()).machinePatterns,
+              machinePatterns);
         }));
   }
 
