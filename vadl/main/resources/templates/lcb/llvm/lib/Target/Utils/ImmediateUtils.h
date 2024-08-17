@@ -27,8 +27,10 @@ namespace
         // Enum to control which immediate functions to use.
         // Currently this is only used in the pseudo expansion pass.
         enum [(${namespace})]ImmediateKind{IK_UNKNOWN_IMMEDIATE // used for side effect registers which are interpreted as immediate
-                    «FOR immediate : immediates», «immediate.loweredImmediate.immediateKindIdentifier»
-                    «ENDFOR»};
+                      [#th:block th:each="function, iterStat : ${decodeFunctionNames}" ]
+                      , IK_[(${function.loweredName})]
+                      [/th:block]
+                    };
 
         static uint64_t applyDecoding(const uint64_t value, [(${namespace})]ImmediateKind kind)
         {
@@ -38,9 +40,10 @@ namespace
                 llvm_unreachable("Unsupported immediate kind to use for decoding!");
             case IK_UNKNOWN_IMMEDIATE:
                 return value;
-            «FOR immediate : immediates» case «immediate.loweredImmediate.immediateKindIdentifier»:
-                return «immediate.loweredImmediate.identifier»::«immediate.loweredImmediate.decoding.identifier»(value);
-                «ENDFOR»
+            [#th:block th:each="function, iterStat : ${decodeFunctionNames}" ]
+              case IK_[(${function.loweredName})][#th:block th:if="${!iterStat.last}"]:[/th:block]
+                return [(${function.functionName})](value);
+            [/th:block]
             }
         }
     };

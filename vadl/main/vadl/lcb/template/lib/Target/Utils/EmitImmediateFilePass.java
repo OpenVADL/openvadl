@@ -61,7 +61,25 @@ public class EmitImmediateFilePass extends AbstractTemplateRenderingPass {
 
     return Map.of(CommonVarNames.NAMESPACE, specification.name(),
         "decodeFunctions", decodeFunctions,
+        "decodeFunctionNames", generateDecodeFunctionNames(specification),
         "encodeFunctions", encodeFunctions);
+  }
+
+  record DecodeFunctionEntry(String loweredName, String functionName) {
+
+  }
+
+  private List<DecodeFunctionEntry> generateDecodeFunctionNames(Specification specification) {
+    return specification.isas().flatMap(isa -> isa.formats().stream())
+        .flatMap(format -> Arrays.stream(format.fieldAccesses()))
+        .map(Format.FieldAccess::accessFunction)
+        .sorted(Comparator.comparing(Definition::name))
+        .map(function -> {
+          var generator = new DecodingCodeGenerator();
+          return new DecodeFunctionEntry(function.identifier.lower(),
+              generator.generateFunctionName(function));
+        })
+        .toList();
   }
 
   private List<String> generateDecodeFunctions(Specification specification,
