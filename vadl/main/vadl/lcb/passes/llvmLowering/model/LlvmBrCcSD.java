@@ -4,6 +4,7 @@ import java.util.List;
 import vadl.javaannotations.viam.DataValue;
 import vadl.javaannotations.viam.Input;
 import vadl.lcb.passes.llvmLowering.LlvmNodeLowerable;
+import vadl.lcb.passes.llvmLowering.visitors.MachineInstructionLcbVisitor;
 import vadl.lcb.tablegen.lowering.TableGenPatternVisitor;
 import vadl.types.Type;
 import vadl.viam.graph.GraphNodeVisitor;
@@ -59,7 +60,11 @@ public class LlvmBrCcSD extends ExpressionNode implements LlvmNodeLowerable {
 
   @Override
   public void accept(GraphNodeVisitor visitor) {
-    ((TableGenPatternVisitor) visitor).visit(this);
+    if (visitor instanceof MachineInstructionLcbVisitor v) {
+      v.visit(this);
+    } else {
+      visitor.visit(this);
+    }
   }
 
   public LlvmCondCode condition() {

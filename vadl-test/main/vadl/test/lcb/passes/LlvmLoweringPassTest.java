@@ -60,8 +60,8 @@ public class LlvmLoweringPassTest extends AbstractTest {
             new TableGenInstructionOperand("X", "rs2"),
             new TableGenInstructionOperand("immS_decodeAsInt64", "immS")),
         List.of(),
-        List.of(String.format("(%s (i32 (%s X:$rs1, X:$rs2)), bb:$imm12 ", "brcond", condCode)),
-        List.of(String.format("(%s X:$rs1, X:$rs2, bb:$imm12)", machineInstruction))
+        List.of(String.format("(%s (%s X:$rs1, X:$rs2), immS_decodeAsInt64:$immS)", "brcc", condCode)),
+        List.of(String.format("(%s X:$rs1, X:$rs2, immS_decodeAsInt64:$immS)", machineInstruction))
     );
   }
 

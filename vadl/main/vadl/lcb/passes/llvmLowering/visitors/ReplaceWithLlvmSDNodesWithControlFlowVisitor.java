@@ -2,7 +2,6 @@ package vadl.lcb.passes.llvmLowering.visitors;
 
 import java.util.Objects;
 import java.util.Set;
-import vadl.lcb.passes.llvmLowering.LlvmNodeLowerable;
 import vadl.lcb.passes.llvmLowering.model.LlvmBrCcSD;
 import vadl.lcb.passes.llvmLowering.model.LlvmCondCode;
 import vadl.lcb.passes.llvmLowering.model.LlvmFieldAccessRefNode;
@@ -13,6 +12,8 @@ import vadl.viam.graph.Graph;
 import vadl.viam.graph.Node;
 import vadl.viam.graph.control.IfNode;
 import vadl.viam.graph.dependency.BuiltInCall;
+import vadl.viam.graph.dependency.ExpressionNode;
+import vadl.viam.graph.dependency.SideEffectNode;
 import vadl.viam.graph.dependency.WriteRegNode;
 
 /**
@@ -24,7 +25,7 @@ public class ReplaceWithLlvmSDNodesWithControlFlowVisitor
 
   @Override
   public void visit(WriteRegNode writeRegNode) {
-    if (writeRegNode.value() instanceof LlvmNodeLowerable) {
+    if (writeRegNode.value() instanceof LlvmBrCcSD) {
       // already lowered, so skip
       return;
     }
@@ -88,7 +89,17 @@ public class ReplaceWithLlvmSDNodesWithControlFlowVisitor
 
   @Override
   public void visit(IfNode ifNode) {
-    // If we touch the PC then this is not a normal builtin but a jump
+
+  }
+
+  @Override
+  public void visit(SideEffectNode node) {
+    node.accept(this);
+  }
+
+  @Override
+  public void visit(ExpressionNode node) {
+    node.accept(this);
   }
 
   @Override

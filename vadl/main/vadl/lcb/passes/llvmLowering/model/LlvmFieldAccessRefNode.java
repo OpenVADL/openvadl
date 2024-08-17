@@ -39,8 +39,6 @@ public class LlvmFieldAccessRefNode extends FieldAccessRefNode {
   public void accept(GraphNodeVisitor visitor) {
     if (visitor instanceof MachineInstructionLcbVisitor v) {
       v.visit(this);
-    } else if (visitor instanceof TableGenPatternVisitor v) {
-      v.visit(this);
     } else {
       visitor.visit(this);
     }

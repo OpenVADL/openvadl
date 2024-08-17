@@ -15,7 +15,6 @@ import java.util.Set;
 import vadl.lcb.passes.isaMatching.InstructionLabel;
 import vadl.lcb.passes.llvmLowering.LlvmLoweringPass;
 import vadl.lcb.passes.llvmLowering.strategies.LlvmLoweringStrategy;
-import vadl.lcb.passes.llvmLowering.visitors.ReplaceWithLlvmSDNodesVisitor;
 import vadl.lcb.passes.llvmLowering.visitors.ReplaceWithLlvmSDNodesWithControlFlowVisitor;
 import vadl.lcb.tablegen.model.TableGenInstructionOperand;
 import vadl.lcb.visitors.LcbGraphNodeVisitor;
@@ -48,29 +47,25 @@ public class LlvmLoweringConditionalBranchesStrategyImpl extends LlvmLoweringStr
       Graph uninlinedBehavior) {
 
     var visitor = getVisitorForPatternSelectorLowering();
+    var copy = uninlinedBehavior.copy();
 
-    for (var node : uninlinedBehavior.getNodes().toList()) {
+    for (var node : copy.getNodes().toList()) {
       visitor.visit(node);
     }
 
-    if (instructionLabel == InstructionLabel.BEQ) {
-      return Optional.of(handleBeq(instruction, uninlinedBehavior));
-    }
-
-    return Optional.empty();
+    copy.deinitializeNodes();
+    return Optional.of(createIntermediateResult(instruction, copy));
   }
 
-  private LlvmLoweringPass.LlvmLoweringIntermediateResult handleBeq(
-      Instruction instruction, Graph uninlinedBehavior) {
-    var inputOperands = getTableGenInputOperands(uninlinedBehavior);
-    var outputOperands = getTableGenOutputOperands(uninlinedBehavior);
+  private LlvmLoweringPass.LlvmLoweringIntermediateResult createIntermediateResult(
+      Instruction instruction, Graph visitedGraph) {
+    var inputOperands = getTableGenInputOperands(visitedGraph);
+    var outputOperands = getTableGenOutputOperands(visitedGraph);
 
-    var copy = uninlinedBehavior.copy();
-    copy.deinitializeNodes();
-    var writes = copy.getNodes(WriteResourceNode.class).toList();
+    var writes = visitedGraph.getNodes(WriteResourceNode.class).toList();
 
     return new LlvmLoweringPass.LlvmLoweringIntermediateResult(
-        copy,
+        visitedGraph,
         inputOperands,
         outputOperands,
         generatePatterns(instruction, inputOperands, writes)
@@ -87,17 +82,4 @@ public class LlvmLoweringConditionalBranchesStrategyImpl extends LlvmLoweringStr
 
     return Collections.emptyList();
   }
-
-  /*
-
-  @Override
-  protected List<LlvmLoweringPass.LlvmLoweringTableGenPattern> generatePatterns(
-      Instruction instruction, List<TableGenInstructionOperand> inputOperands,
-      List<WriteResourceNode> sideEffectNodes) {
-
-    return List.of(
-        new LlvmLoweringPass.LlvmLoweringTableGenPattern()
-    );
-  }
-   */
 }

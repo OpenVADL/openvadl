@@ -211,11 +211,11 @@ public class TableGenPatternVisitor implements LcbGraphNodeVisitor, MachineInstr
   @Override
   public void visit(LlvmBrCcSD node) {
     writer.write("(");
-    writer.write(node.lower() + " " + node.condition() + " ");
+    writer.write(node.lower() + " (" + node.condition() + " ");
     visit(node.first());
     writer.write(", ");
     visit(node.second());
-    writer.write(", ");
+    writer.write("), ");
     visit(node.immOffset());
     writer.write(")");
   }
