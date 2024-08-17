@@ -2,10 +2,12 @@ package vadl.lcb.template.lib.Target.Utils;
 
 import java.io.IOException;
 import java.util.Arrays;
+import java.util.Comparator;
 import java.util.IdentityHashMap;
 import java.util.List;
 import java.util.Map;
 import vadl.gcb.passes.type_normalization.CppTypeNormalizationForDecodingsPass;
+import vadl.gcb.passes.type_normalization.CppTypeNormalizationForEncodingsPass;
 import vadl.gcb.valuetypes.ProcessorName;
 import vadl.lcb.codegen.DecodingCodeGenerator;
 import vadl.lcb.codegen.EncodingCodeGenerator;
@@ -13,6 +15,7 @@ import vadl.lcb.config.LcbConfiguration;
 import vadl.lcb.template.CommonVarNames;
 import vadl.pass.PassKey;
 import vadl.template.AbstractTemplateRenderingPass;
+import vadl.viam.Definition;
 import vadl.viam.Format;
 import vadl.viam.Function;
 import vadl.viam.Specification;
@@ -50,8 +53,8 @@ public class EmitImmediateFilePass extends AbstractTemplateRenderingPass {
             "decodings must exist");
     var encodeVadlFunctions =
         (IdentityHashMap<Function, Function>) ensureNonNull(
-            passResults.get(new PassKey(CppTypeNormalizationForDecodingsPass.class.toString())),
-            "decodings must exist");
+            passResults.get(new PassKey(CppTypeNormalizationForEncodingsPass.class.toString())),
+            "encodings must exist");
 
     var decodeFunctions = generateDecodeFunctions(specification, decodeVadlFunctions);
     var encodeFunctions = generateEncodeFunctions(specification, encodeVadlFunctions);
@@ -66,6 +69,7 @@ public class EmitImmediateFilePass extends AbstractTemplateRenderingPass {
     return specification.isas().flatMap(isa -> isa.formats().stream())
         .flatMap(format -> Arrays.stream(format.fieldAccesses()))
         .map(Format.FieldAccess::accessFunction)
+        .sorted(Comparator.comparing(Definition::name))
         .map(function -> {
           var generator = new DecodingCodeGenerator();
           // We need to do a lookup because decodeVadlFunctions because it contains the cpp
@@ -80,7 +84,8 @@ public class EmitImmediateFilePass extends AbstractTemplateRenderingPass {
                                                IdentityHashMap<Function, Function> encodeVadlFunctions) {
     return specification.isas().flatMap(isa -> isa.formats().stream())
         .flatMap(format -> Arrays.stream(format.fieldAccesses()))
-        .map(Format.FieldAccess::accessFunction)
+        .map(Format.FieldAccess::encoding)
+        .sorted(Comparator.comparing(Definition::name))
         .map(function -> {
           var generator = new EncodingCodeGenerator();
           // We need to do a lookup because encodeVadlFunctions because it contains the cpp

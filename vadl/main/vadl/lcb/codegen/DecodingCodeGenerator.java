@@ -8,17 +8,17 @@ import vadl.viam.graph.Graph;
  */
 public class DecodingCodeGenerator extends EncoderDecoderCodeGenerator {
   @Override
-  protected String getPrefix() {
-    return getFunctionPrefix();
+  protected String getSuffix() {
+    return getFunctionSuffix();
   }
 
 
   /**
-   * The generator generates a function with a name. This function returns the prefix.
+   * The generator generates a function with a name. This function returns the suffix.
    *
-   * @return a string for a function prefix.
+   * @return a string for a function suffix.
    */
-  public static String getFunctionPrefix() {
+  public static String getFunctionSuffix() {
     return "decode";
   }
 }
