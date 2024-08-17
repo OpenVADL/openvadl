@@ -9,6 +9,7 @@ import vadl.lcb.passes.llvmLowering.strategies.LlvmLoweringStrategy;
 import vadl.lcb.passes.llvmLowering.visitors.MachineInstructionLcbVisitor;
 import vadl.lcb.visitors.LcbGraphNodeVisitor;
 import vadl.viam.Constant;
+import vadl.viam.graph.Node;
 import vadl.viam.graph.NodeList;
 import vadl.viam.graph.control.AbstractBeginNode;
 import vadl.viam.graph.control.EndNode;
@@ -47,6 +48,11 @@ public class TableGenPatternVisitor implements LcbGraphNodeVisitor, MachineInstr
 
   public String getResult() {
     return writer.toString();
+  }
+
+  @Override
+  public void visit(Node node) {
+    node.accept(this);
   }
 
   @Override
@@ -135,15 +141,16 @@ public class TableGenPatternVisitor implements LcbGraphNodeVisitor, MachineInstr
 
   }
 
-  @Override
-  public void visit(FieldAccessRefNode fieldAccessRefNode) {
-
-  }
 
   @Override
   public void visit(LlvmFieldAccessRefNode fieldAccessRefNode) {
     var operand = LlvmLoweringStrategy.generateTableGenInputOutput(fieldAccessRefNode);
     writer.write(operand.render());
+  }
+
+  @Override
+  public void visit(FieldAccessRefNode fieldAccessRefNode) {
+
   }
 
   @Override

@@ -22,6 +22,7 @@ import vadl.lcb.passes.llvmLowering.model.LlvmURemSD;
 import vadl.lcb.passes.llvmLowering.model.LlvmXorSD;
 import vadl.lcb.visitors.LcbGraphNodeVisitor;
 import vadl.types.BuiltInTable;
+import vadl.viam.graph.Node;
 import vadl.viam.graph.control.AbstractBeginNode;
 import vadl.viam.graph.control.EndNode;
 import vadl.viam.graph.control.IfNode;
@@ -62,6 +63,11 @@ public class ReplaceWithLlvmSDNodesVisitor
   @Override
   public boolean isPatternLowerable() {
     return this.patternLowerable;
+  }
+
+  @Override
+  public void visit(Node node) {
+    node.accept(this);
   }
 
   @Override

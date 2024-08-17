@@ -23,5 +23,5 @@ public interface MachineInstructionLcbVisitor extends LcbGraphNodeVisitor {
   /**
    * Visit {@link LlvmFieldAccessRefNode}.
    */
-  void visit(LlvmFieldAccessRefNode node);
+  void visit(LlvmFieldAccessRefNode llvmFieldAccessRefNode);
 }
