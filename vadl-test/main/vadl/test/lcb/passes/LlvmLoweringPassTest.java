@@ -123,6 +123,11 @@ public class LlvmLoweringPassTest extends AbstractTest {
     CONDITIONAL BRANCHES
      */
     expectedResults.put("BEQ", createTestOutputRRWithConditionalBranch(LlvmCondCode.SETEQ, "BEQ"));
+    expectedResults.put("BGE", createTestOutputRRWithConditionalBranch(LlvmCondCode.SETGE, "BGE"));
+    expectedResults.put("BGEU", createTestOutputRRWithConditionalBranch(LlvmCondCode.SETUGE, "BGEU"));
+    expectedResults.put("BLT", createTestOutputRRWithConditionalBranch(LlvmCondCode.SETLT, "BLT"));
+    expectedResults.put("BLTU", createTestOutputRRWithConditionalBranch(LlvmCondCode.SETULT, "BLTU"));
+    expectedResults.put("BNE", createTestOutputRRWithConditionalBranch(LlvmCondCode.SETNE, "BNE"));
   }
 
   @TestFactory
