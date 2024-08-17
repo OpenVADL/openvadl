@@ -69,6 +69,7 @@ import vadl.viam.matching.impl.AnyReadRegFileMatcher;
 import vadl.viam.matching.impl.BuiltInMatcher;
 import vadl.viam.matching.impl.FieldAccessRefMatcher;
 import vadl.viam.matching.impl.WriteResourceMatcher;
+import vadl.viam.passes.FunctionInlinerPass;
 
 /**
  * A {@link InstructionSetArchitecture} contains a {@link List} of {@link Instruction}.
@@ -95,7 +96,8 @@ public class IsaMatchingPass extends Pass {
     // The instruction matching happens on the uninlined graph
     // because the field accesses are uninlined.
     IdentityHashMap<Instruction, Graph> uninlined =
-        (IdentityHashMap<Instruction, Graph>) passResults.get(new PassKey("FunctionInlinerPass"));
+        (IdentityHashMap<Instruction, Graph>) passResults.get(
+            new PassKey(FunctionInlinerPass.class.toString()));
     ensureNonNull(uninlined, "Inlining data must exist");
     HashMap<InstructionLabel, List<Instruction>> matched = new HashMap<>();
 

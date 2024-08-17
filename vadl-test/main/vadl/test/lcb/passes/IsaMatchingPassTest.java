@@ -61,7 +61,7 @@ public class IsaMatchingPassTest extends AbstractTest {
     var passResults = new HashMap<PassKey, Object>();
 
     new TypeCastEliminationPass().execute(passResults, spec);
-    passResults.put(new PassKey("FunctionInlinerPass"),
+    passResults.put(new PassKey(FunctionInlinerPass.class.toString()),
         new FunctionInlinerPass().execute(passResults, spec));
 
     // When

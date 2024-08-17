@@ -21,6 +21,7 @@ import vadl.pass.PassName;
 import vadl.viam.Instruction;
 import vadl.viam.Specification;
 import vadl.viam.graph.Graph;
+import vadl.viam.passes.FunctionInlinerPass;
 
 /**
  * This is a wrapper class which contains utility functions for the lowering.
@@ -68,13 +69,14 @@ public class LlvmLoweringPass extends Pass {
   public Object execute(Map<PassKey, Object> passResults, Specification viam)
       throws IOException {
     IdentityHashMap<Instruction, Graph> uninlined =
-        (IdentityHashMap<Instruction, Graph>) passResults.get(new PassKey("FunctionInlinerPass"));
+        (IdentityHashMap<Instruction, Graph>) passResults.get(
+            new PassKey(FunctionInlinerPass.class.toString()));
     ensureNonNull(uninlined, "Inlined Function data must exist");
     IdentityHashMap<Instruction, LlvmLoweringIntermediateResult>
         llvmPatterns = new IdentityHashMap<>();
     var supportedInstructions =
         (HashMap<InstructionLabel, List<Instruction>>) passResults.get(
-            new PassKey("IsaMatchingPass"));
+            new PassKey(IsaMatchingPass.class.toString()));
     ensure(supportedInstructions != null, "Cannot find pass results from IsaMatchPass");
 
     var instructionLookup = flipIsaMatching(supportedInstructions);

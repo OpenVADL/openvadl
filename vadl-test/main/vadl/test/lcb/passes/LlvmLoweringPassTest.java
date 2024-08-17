@@ -151,9 +151,9 @@ public class LlvmLoweringPassTest extends AbstractTest {
     var passResults = new HashMap<PassKey, Object>();
 
     new TypeCastEliminationPass().execute(passResults, spec);
-    passResults.put(new PassKey("FunctionInlinerPass"),
+    passResults.put(new PassKey(FunctionInlinerPass.class.toString()),
         new FunctionInlinerPass().execute(passResults, spec));
-    passResults.put(new PassKey("IsaMatchingPass"),
+    passResults.put(new PassKey(IsaMatchingPass.class.toString()),
         new IsaMatchingPass().execute(passResults, spec));
 
     // When
