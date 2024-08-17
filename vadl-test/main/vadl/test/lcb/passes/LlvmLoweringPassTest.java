@@ -1,6 +1,8 @@
 package vadl.test.lcb.passes;
 
 import java.io.IOException;
+import java.util.ArrayList;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -60,7 +62,8 @@ public class LlvmLoweringPassTest extends AbstractTest {
             new TableGenInstructionOperand("X", "rs2"),
             new TableGenInstructionOperand("immS_decodeAsInt64", "immS")),
         List.of(),
-        List.of(String.format("(%s (%s X:$rs1, X:$rs2), immS_decodeAsInt64:$immS)", "brcc", condCode)),
+        List.of(
+            String.format("(%s (%s X:$rs1, X:$rs2), immS_decodeAsInt64:$immS)", "brcc", condCode)),
         List.of(String.format("(%s X:$rs1, X:$rs2, immS_decodeAsInt64:$immS)", machineInstruction))
     );
   }
@@ -124,10 +127,22 @@ public class LlvmLoweringPassTest extends AbstractTest {
      */
     expectedResults.put("BEQ", createTestOutputRRWithConditionalBranch(LlvmCondCode.SETEQ, "BEQ"));
     expectedResults.put("BGE", createTestOutputRRWithConditionalBranch(LlvmCondCode.SETGE, "BGE"));
-    expectedResults.put("BGEU", createTestOutputRRWithConditionalBranch(LlvmCondCode.SETUGE, "BGEU"));
+    expectedResults.put("BGEU",
+        createTestOutputRRWithConditionalBranch(LlvmCondCode.SETUGE, "BGEU"));
     expectedResults.put("BLT", createTestOutputRRWithConditionalBranch(LlvmCondCode.SETLT, "BLT"));
-    expectedResults.put("BLTU", createTestOutputRRWithConditionalBranch(LlvmCondCode.SETULT, "BLTU"));
+    expectedResults.put("BLTU",
+        createTestOutputRRWithConditionalBranch(LlvmCondCode.SETULT, "BLTU"));
     expectedResults.put("BNE", createTestOutputRRWithConditionalBranch(LlvmCondCode.SETNE, "BNE"));
+    /*
+    INDIRECT CALL
+     */
+    expectedResults.put("JALR", new TestOutput(
+        List.of(new TableGenInstructionOperand("X", "rs1"),
+            new TableGenInstructionOperand("immS_decodeAsInt64", "immS")),
+        Collections.emptyList(),
+        Collections.emptyList(),
+        Collections.emptyList()
+    ));
   }
 
   @TestFactory

@@ -12,6 +12,7 @@ import vadl.lcb.passes.llvmLowering.strategies.LlvmLoweringStrategy;
 import vadl.lcb.passes.llvmLowering.strategies.impl.LlvmLoweringArithmeticAndLogicStrategyImpl;
 import vadl.lcb.passes.llvmLowering.strategies.impl.LlvmLoweringConditionalBranchesStrategyImpl;
 import vadl.lcb.passes.llvmLowering.strategies.impl.LlvmLoweringConditionalsStrategyImpl;
+import vadl.lcb.passes.llvmLowering.strategies.impl.LlvmLoweringIndirectJumpStrategyImpl;
 import vadl.lcb.passes.llvmLowering.visitors.ReplaceWithLlvmSDNodesVisitor;
 import vadl.lcb.tablegen.model.TableGenInstructionOperand;
 import vadl.pass.Pass;
@@ -29,7 +30,8 @@ public class LlvmLoweringPass extends Pass {
   private final List<LlvmLoweringStrategy> strategies = List.of(
       new LlvmLoweringArithmeticAndLogicStrategyImpl(),
       new LlvmLoweringConditionalsStrategyImpl(),
-      new LlvmLoweringConditionalBranchesStrategyImpl()
+      new LlvmLoweringConditionalBranchesStrategyImpl(),
+      new LlvmLoweringIndirectJumpStrategyImpl()
   );
 
   /**
