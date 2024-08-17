@@ -27,7 +27,7 @@ public class LlvmFieldAccessRefNode extends FieldAccessRefNode {
   public LlvmFieldAccessRefNode(Format.FieldAccess fieldAccess, Type type) {
     super(fieldAccess, type);
     this.immediateOperand =
-        new TableGenImmediateOperand(fieldAccess.accessFunction().name(), ValueType.from(type));
+        new TableGenImmediateOperand(fieldAccess.accessFunction().identifier.lower(), ValueType.from(type));
   }
 
   public TableGenImmediateOperand immediateOperand() {
