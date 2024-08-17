@@ -67,7 +67,8 @@ public abstract class Pass {
    */
   @Contract("null, _  -> fail")
   @FormatMethod
-  protected final void ensureNonNull(@Nullable Object obj, String msg) {
+  protected final <T> T ensureNonNull(@Nullable T obj, String msg) {
     ensure(obj != null, msg);
+    return obj;
   }
 }

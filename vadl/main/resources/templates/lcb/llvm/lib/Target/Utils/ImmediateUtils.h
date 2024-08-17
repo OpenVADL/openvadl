@@ -3,14 +3,19 @@
 
 #include "llvm/Support/ErrorHandling.h"
 #include <cstdint>
+#include <unordered_map>
+#include <vector>
+#include <stdio.h>
 
-// collection of all available immediates
+// "__extension__" suppresses warning
+__extension__ typedef          __int128 int128_t;
+__extension__ typedef unsigned __int128 uint128_t;
 
-«FOR immediate : immediates»
-#include "Immediates/«immediate.loweredImmediate.identifier».hpp"
-        «ENDFOR»
+[# th:each="function : ${decodeFunctions}" ]
+[(${function})]
+[/]
 
-                 namespace
+namespace
 {
     class ImmediateUtils
     {

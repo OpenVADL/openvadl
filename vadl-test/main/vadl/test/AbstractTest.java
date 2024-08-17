@@ -28,6 +28,7 @@ import org.apache.velocity.app.Velocity;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.params.provider.Arguments;
+import vadl.lcb.config.LcbConfiguration;
 import vadl.viam.Specification;
 import vadl.viam.passes.verification.ViamVerifier;
 
@@ -286,5 +287,12 @@ public class AbstractTest {
       throw new RuntimeException(e);
     }
     return result.toString();
+  }
+
+  /**
+   * Returns a dummy configuration.
+   */
+  public static LcbConfiguration createLcbConfiguration() {
+    return new LcbConfiguration("dummyValue");
   }
 }

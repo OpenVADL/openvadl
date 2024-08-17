@@ -17,15 +17,13 @@ import vadl.viam.Specification;
 public class CppTypeNormalizationForPredicatesPass extends CppTypeNormalizationPass {
   @Override
   public PassName getName() {
-    return new PassName("CppTypeNormalizationForPredicates");
+    return new PassName(CppTypeNormalizationForPredicatesPass.class.toString());
   }
 
   @Override
   protected Stream<Function> getApplicable(Specification viam) {
     return viam.isas()
-        .flatMap(x -> x.instructions().stream())
-        .map(Instruction::format)
-        .distinct()
+        .flatMap(x -> x.formats().stream())
         .flatMap(x -> Arrays.stream(x.fieldAccesses()))
         .filter(x -> x.encoding() != null)
         .map(Format.FieldAccess::predicate);

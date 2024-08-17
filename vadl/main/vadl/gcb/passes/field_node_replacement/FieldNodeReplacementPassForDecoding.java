@@ -20,15 +20,13 @@ public class FieldNodeReplacementPassForDecoding extends FieldNodeReplacementPas
 
   @Override
   public PassName getName() {
-    return new PassName("FieldNodeReplacementPassForDecoding");
+    return new PassName(FieldNodeReplacementPassForDecoding.class.toString());
   }
 
   @Override
   protected Stream<Function> getApplicable(Specification viam) {
     return viam.isas()
-        .flatMap(x -> x.instructions().stream())
-        .map(Instruction::format)
-        .distinct()
+        .flatMap(x -> x.formats().stream())
         .flatMap(x -> Arrays.stream(x.fieldAccesses()))
         .map(Format.FieldAccess::accessFunction)
         .filter(Objects::nonNull);
