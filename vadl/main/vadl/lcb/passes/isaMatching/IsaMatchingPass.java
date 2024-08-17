@@ -165,6 +165,8 @@ public class IsaMatchingPass extends Pass {
         extend(matched, InstructionLabel.STORE_MEM, instruction);
       } else if (findLoadMem(behavior)) {
         extend(matched, InstructionLabel.LOAD_MEM, instruction);
+      } else if (isa.pc() != null && findJalr(behavior, isa.pc())) {
+        extend(matched, InstructionLabel.JALR, instruction);
       }
     }));
 
@@ -234,10 +236,6 @@ public class IsaMatchingPass extends Pass {
         )));
 
     return !matched.isEmpty() && writesExactlyOneRegisterClass(behavior);
-  }
-
-  private boolean findRI(Graph behavior, BuiltInTable.BuiltIn builtin) {
-    return findRI(behavior, List.of(builtin));
   }
 
   /**
@@ -350,5 +348,20 @@ public class IsaMatchingPass extends Pass {
         .anyMatch(x -> x.register() == pc);
 
     return hasCondition && writesPc;
+  }
+
+  /**
+   * Match Jump and Link Register when {@link Instruction} writes PC and writes
+   * a register file.
+   */
+  private boolean findJalr(Graph behavior, Register.Counter pcRegister) {
+    var writesPc =
+        behavior.getNodes(WriteRegNode.class).filter(x -> x.register().equals(pcRegister))
+            .toList();
+    var writesRegFile = behavior.getNodes(WriteRegFileNode.class).toList();
+
+    // Idea: if this check is not sufficient in the future
+    // then check whether the regfile node also reads from PC.
+    return writesPc.size() == 1 && writesRegFile.size() == 1;
   }
 }

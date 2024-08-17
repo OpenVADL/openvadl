@@ -48,4 +48,8 @@ public enum InstructionLabel {
   BLEQ,
   BLTH,
   BGTH,
+  /*
+  UNCONDITIONAL JUMPS
+   */
+  JALR,
 }
