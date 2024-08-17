@@ -2,6 +2,7 @@ package vadl.lcb.lib.Target;
 
 import java.io.IOException;
 import java.util.Collections;
+import java.util.Comparator;
 import java.util.Map;
 import vadl.gcb.valuetypes.ProcessorName;
 import vadl.lcb.config.LcbConfiguration;
@@ -48,7 +49,10 @@ public class EmitInstrInfoTableGenFilePass extends AbstractTemplateRenderingPass
             passResults.get(new PassKey(LlvmLoweringPass.class.toString())),
             "llvmLowering must exist");
 
-    var tableGenRecords = instructions.entrySet().stream().map(entry -> {
+    var tableGenRecords = instructions.entrySet().stream()
+        .sorted(
+            Comparator.comparing(o -> o.getKey().identifier.simpleName()))
+        .map(entry -> {
           var instruction = entry.getKey();
           var result = entry.getValue();
           return new TableGenInstruction(

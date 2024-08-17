@@ -1,5 +1,6 @@
 package vadl.lcb.tablegen.model;
 
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.BitSet;
 import java.util.Collections;
@@ -198,11 +199,17 @@ public class TableGenInstruction extends TableGenRecord {
      * Convert an encoding to a TableGen model.
      */
     public static List<FieldEncoding> from(vadl.viam.Encoding encoding) {
-      return Arrays.stream(encoding.format().fields()).map(field -> {
-        field.bitSlice().ensure(field.bitSlice().isContinuous(), "bitSlice must be continuous");
-        return new FieldEncoding(field.bitSlice().msb(), field.bitSlice().lsb(), field.name(),
-            field.size() - 1, 0);
-      }).toList();
+      ArrayList<FieldEncoding> encodings = new ArrayList<>();
+      for (var field : encoding.format().fields()) {
+        var offset = 0;
+        for (var part : field.bitSlice().parts().toList()) {
+          encodings.add(
+              new FieldEncoding(part.msb(), part.lsb(), field.name(), offset + part.size() - 1,
+                  offset));
+          offset += part.size() + 1;
+        }
+      }
+      return encodings;
     }
 
     public int getTargetHigh() {
