@@ -11,6 +11,7 @@ import vadl.gcb.passes.type_normalization.CppTypeNormalizationForEncodingsPass;
 import vadl.gcb.passes.type_normalization.CppTypeNormalizationForPredicatesPass;
 import vadl.gcb.valuetypes.ProcessorName;
 import vadl.lcb.codegen.DecodingCodeGenerator;
+import vadl.lcb.codegen.EncoderDecoderCodeGenerator;
 import vadl.lcb.codegen.EncodingCodeGenerator;
 import vadl.lcb.codegen.PredicateCodeGenerator;
 import vadl.lcb.config.LcbConfiguration;
@@ -84,9 +85,8 @@ public class EmitImmediateFilePass extends AbstractTemplateRenderingPass {
         .map(Format.FieldAccess::accessFunction)
         .sorted(Comparator.comparing(Definition::name))
         .map(function -> {
-          var generator = new DecodingCodeGenerator();
           return new DecodeFunctionEntry(function.identifier.lower(),
-              generator.generateFunctionName(function));
+              DecodingCodeGenerator.generateFunctionName(function.identifier.lower()));
         })
         .toList();
   }

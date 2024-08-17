@@ -16,6 +16,7 @@ import vadl.lcb.passes.llvmLowering.model.MachineInstructionNode;
 import vadl.lcb.passes.llvmLowering.visitors.ReplaceWithLlvmSDNodesVisitor;
 import vadl.lcb.passes.llvmLowering.visitors.TableGenPatternLowerable;
 import vadl.lcb.tablegen.model.TableGenInstruction;
+import vadl.lcb.tablegen.model.TableGenInstructionImmediateOperand;
 import vadl.lcb.tablegen.model.TableGenInstructionOperand;
 import vadl.lcb.tablegen.model.TableGenPattern;
 import vadl.lcb.visitors.LcbGraphNodeVisitor;
@@ -221,8 +222,10 @@ public abstract class LlvmLoweringStrategy {
    */
   private static TableGenInstructionOperand generateInstructionOperand(
       LlvmFieldAccessRefNode node) {
-    return new TableGenInstructionOperand(node.immediateOperand().getFullName(),
-        node.fieldAccess().identifier.simpleName());
+    return new TableGenInstructionImmediateOperand(
+        node.immediateOperand().getFullName(),
+        node.fieldAccess().identifier.simpleName(),
+        node.immediateOperand());
   }
 
   /**

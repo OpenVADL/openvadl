@@ -1,9 +1,6 @@
 package vadl.lcb.tablegen.decorators;
 
 import java.io.StringWriter;
-import vadl.lcb.codegen.mappers.ImmediateOperandExtractor;
-import vadl.lcb.tablegen.lowering.TableGenImmediateOperandRenderer;
-import vadl.lcb.tablegen.model.TableGenImmediateOperand;
 import vadl.viam.Specification;
 
 /**
@@ -20,13 +17,5 @@ public class TableGenWithImmediateOperandsDecorator extends TableGenAbstractDeco
     if (parent != null) {
       parent.render(writer, specification);
     }
-
-    ImmediateOperandExtractor.extract(specification)
-        .map(immediateOperand -> new TableGenImmediateOperand(immediateOperand.name(),
-            immediateOperand.type()))
-        .forEach(imm -> {
-          var lowered = TableGenImmediateOperandRenderer.lower(imm);
-          writer.write(lowered + "\n");
-        });
   }
 }
