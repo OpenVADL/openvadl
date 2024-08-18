@@ -92,7 +92,8 @@ public class EmitImmediateFilePass extends AbstractTemplateRenderingPass {
   }
 
   private List<String> generateDecodeFunctions(Specification specification,
-                                               IdentityHashMap<Function, Function> decodeVadlFunctions) {
+                                               IdentityHashMap<Function, Function>
+                                                   decodeVadlFunctions) {
     return specification.isas().flatMap(isa -> isa.formats().stream())
         .flatMap(format -> Arrays.stream(format.fieldAccesses()))
         .map(Format.FieldAccess::accessFunction)
@@ -108,7 +109,8 @@ public class EmitImmediateFilePass extends AbstractTemplateRenderingPass {
   }
 
   private List<String> generateEncodeFunctions(Specification specification,
-                                               IdentityHashMap<Function, Function> encodeVadlFunctions) {
+                                               IdentityHashMap<Function, Function>
+                                                   encodeVadlFunctions) {
     return specification.isas().flatMap(isa -> isa.formats().stream())
         .flatMap(format -> Arrays.stream(format.fieldAccesses()))
         .map(Format.FieldAccess::encoding)
@@ -124,7 +126,8 @@ public class EmitImmediateFilePass extends AbstractTemplateRenderingPass {
   }
 
   private List<String> generatePredicateFunctions(Specification specification,
-                                                  IdentityHashMap<Function, Function> predicateVadlFunctions) {
+                                                  IdentityHashMap<Function, Function>
+                                                      predicateVadlFunctions) {
     return specification.isas().flatMap(isa -> isa.formats().stream())
         .flatMap(format -> Arrays.stream(format.fieldAccesses()))
         .map(Format.FieldAccess::predicate)
