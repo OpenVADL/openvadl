@@ -232,7 +232,7 @@ instruction set architecture RV3264I = {
   $BtypeInstr (BLT  ; <  ; 0b100 ; SInt)               // branch less than
   $BtypeInstr (BLTU ; <  ; 0b110 ; UInt)               // branch less than unsigned
 
-  // $JLinkInstr (JAL  ; Jtype ; PC     ; opcode = 0b110'1111 ; "") // jump and link
+  $JLinkInstr (JAL  ; Jtype ; PC     ; opcode = 0b110'1111 ; "") // jump and link
   $JLinkInstr (JALR ; Itype ; X(rs1) ; opcode = 0b110'0111,      // jump and link register
                                        funct3 = 0b000 ; ("(", register(rs1), ")"))
 
