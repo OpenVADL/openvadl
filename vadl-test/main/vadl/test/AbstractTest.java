@@ -291,11 +291,4 @@ public class AbstractTest {
     }
     return result.toString();
   }
-
-  /**
-   * Returns a dummy configuration.
-   */
-  public static LcbConfiguration createLcbConfiguration() {
-    return new LcbConfiguration("dummyValue");
-  }
 }

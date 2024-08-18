@@ -15,9 +15,10 @@ import vadl.pass.PassKey;
 import vadl.pass.PassManager;
 import vadl.pass.exception.DuplicatedPassKeyException;
 import vadl.test.AbstractTest;
+import vadl.test.lcb.AbstractLcbTest;
 import vadl.viam.passes.typeCastElimination.TypeCastEliminationPass;
 
-public class EmitImmediateFilePassTest extends AbstractTest {
+public class EmitImmediateFilePassTest extends AbstractLcbTest {
   @Test
   void testLowering() throws IOException, DuplicatedPassKeyException {
     // Given
