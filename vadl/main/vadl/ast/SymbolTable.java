@@ -111,6 +111,19 @@ class SymbolTable {
     return null;
   }
 
+  void addRecord(Identifier name, RecordType recordType) {
+    defineSymbol(new RecordSymbol(name.name, recordType), name.location());
+  }
+
+  SyntaxType findRecord(Identifier recordName) {
+    var symbol = resolveSymbol(recordName.name);
+    if (symbol instanceof RecordSymbol recordSymbol) {
+      return recordSymbol.recordType();
+    }
+    reportError("Unresolved record " + recordName.name, recordName.location());
+    return BasicSyntaxType.INVALID;
+  }
+
   void copyFrom(SymbolTable other) {
     symbols.putAll(other.symbols);
   }
@@ -127,7 +140,7 @@ class SymbolTable {
 
   enum SymbolType {
     CONSTANT, COUNTER, FORMAT, INSTRUCTION, INSTRUCTION_SET, MEMORY, REGISTER, REGISTER_FILE,
-    FORMAT_FIELD, MACRO, ALIAS, FUNCTION, ENUM_FIELD, EXCEPTION
+    FORMAT_FIELD, MACRO, ALIAS, FUNCTION, ENUM_FIELD, EXCEPTION, RECORD
   }
 
   interface Symbol {
@@ -173,6 +186,13 @@ class SymbolTable {
     @Override
     public SymbolType type() {
       return SymbolType.INSTRUCTION;
+    }
+  }
+
+  record RecordSymbol(String name, RecordType recordType) implements Symbol {
+    @Override
+    public SymbolType type() {
+      return SymbolType.RECORD;
     }
   }
 

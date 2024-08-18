@@ -96,6 +96,7 @@ public class VadlParser {
         );
       }
     }
+    errors.addAll(parser.symbolTable.errors);
 
     if (!errors.isEmpty()) {
       throw new VadlException(errors);

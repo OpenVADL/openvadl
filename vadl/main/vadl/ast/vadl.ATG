@@ -97,6 +97,7 @@ TOKENS
   WITH = "with".
   RAISE = "raise".
   EXCEPTION = "exception".
+  RECORD = "record".
 
   SYM_IN = "in".
   SYM_AS = "as".
@@ -152,6 +153,7 @@ PRODUCTIONS
   {
     topLevelDefinitions<out Definition d>   (. ast.definitions.add(d); .)
     | macroDef
+    | recordDefinition
   }.
 
   // -- DEFINITIONS --------------------------------------------------------------------------------------------------
@@ -184,6 +186,7 @@ PRODUCTIONS
     annotations<.out List<Annotation> annotations.>
     isaDefinition<out Definition def>                                 (. def.annotations.annotations().addAll(annotations); definitions.add(def); .)
   | macroDef
+  | recordDefinition
   | // IF (isMacroReplacementOfType(this, BasicSyntaxType.ISA_DEFS))
     macroReplacement<out Node n>                                      (. if (n instanceof DefinitionList defs) definitions.addAll(defs.items);
                                                                          else definitions.add((Definition) n); .)
@@ -453,6 +456,22 @@ PRODUCTIONS
     identifierOrPlaceholder<out IdentifierOrPlaceholder id>
     SYM_EQ
     statement<out Statement statement> (. def = new ExceptionDefinition(id, statement, start.join(loc())); .)
+  .
+
+  recordDefinition
+  = RECORD
+    identifier<out Identifier recordName>
+    SYM_PAREN_OPEN
+    identifier<out Identifier paramName>
+    SYM_COLON                       (. var entries = new ArrayList<RecordType.Entry>(); .)
+    syntaxType<out SyntaxType type> (. entries.add(new RecordType.Entry(paramName.name, type)); .)
+    {
+      SYM_COMMA
+      identifier<out paramName>
+      SYM_COLON
+      syntaxType<out type>          (. entries.add(new RecordType.Entry(paramName.name, type)); .)
+    }
+    SYM_PAREN_CLOSE                 (. symbolTable.addRecord(recordName, new RecordType(recordName.name, entries)); .)
   .
 
   // -- STATEMENTS ---------------------------------------------------------------------------------------------------
@@ -808,24 +827,31 @@ PRODUCTIONS
 
   /// Parses the maximum macro expression (either instance or placeholder) from the parser.
   /// Needs to be side-effect free, so the parser can be reset afterwards.
-  maximumMacroExpr<out Node node>                        (. node = null; .)
-  = SYM_DOLLAR
-    identifier<out Identifier id>                        (. var macro = symbolTable.getMacro(id.name); .)
+  maximumMacroExpr<out Node node>                 (. node = null; .)
+  = SYM_DOLLAR                                    (. var segments = new ArrayList<String>(); .)
+    identifier<out Identifier id>                 (. var macro = symbolTable.getMacro(id.name);
+                                                     var paramType = paramSyntaxType(this, id.name);
+                                                     segments.add(id.name); .)
+    { IF (macro == null && la.kind == _SYM_DOT && paramType instanceof RecordType record)
+      SYM_DOT
+      identifier<out Identifier next>             (. paramType = record.findEntry(next.name); segments.add(next.name); .)
+    }
     [
-      IF (macro != null)
-      SYM_PAREN_OPEN                                     (. var params = macro.params().iterator(); .)
-                                                         (. var args = new ArrayList<Node>(); .)
+      IF (macro != null || paramType instanceof ProjectionType)
+      SYM_PAREN_OPEN                              (. var macroOrPlaceholder = macroOrPlaceholder(macro, paramType, segments);
+                                                     var params = instanceParamTypes(macroOrPlaceholder);
+                                                     var args = new ArrayList<Node>(); .)
       (
         IF (!params.hasNext())
         SYM_PAREN_CLOSE
-      | macroBody<out Node arg1, params.next().type()>   (. args.add(arg1); .)
+      | macroBody<out Node arg1, params.next()>   (. args.add(arg1); .)
         {
           SYM_SEMICOLON
-          macroBody<out Node arg2, params.next().type()> (. args.add(arg2); .)
+          macroBody<out Node arg2, params.next()> (. args.add(arg2); .)
         }
         SYM_PAREN_CLOSE
-      )                                                  (. node = createMacroInstance(macro, args, loc()); .)
-    ]                                                    (. node = Objects.requireNonNullElse(node, createPlaceholder(this, id, loc())); .)
+      )                                           (. node = createMacroInstance(macroOrPlaceholder, args, loc()); .)
+    ]                                             (. node = Objects.requireNonNullElse(node, createPlaceholder(paramType, segments, loc())); .)
   .
 
   macroDef
@@ -844,7 +870,7 @@ PRODUCTIONS
       }
     ]
     SYM_PAREN_CLOSE                         (. macroContext.addFirst(params); .)
-    SYM_COLON syntaxType<out SyntaxType returnType> SYM_EQ
+    SYM_COLON basicSyntaxType<out SyntaxType returnType> SYM_EQ
     SYM_BRACE_OPEN                          (. insideMacro = true; .)
     macroBody<out Node body, returnType>
     SYM_BRACE_CLOSE                         (.
@@ -887,14 +913,40 @@ PRODUCTIONS
     callOrBinaryExpression<out body, false>
   | IF (type == BasicSyntaxType.SYM_EX)
     symbolOrBinaryExpression<out body, false>
-  | // IF (type == BasicSyntaxType.ID)
+  | IF (type == BasicSyntaxType.ID)
     identifierOrPlaceholder<out IdentifierOrPlaceholder id> (. body = (Node) id; .)
   | // IF (type == BasicSyntaxType.BIN_OP)
     binaryOperator<out Operator op>                         (. body = new OperatorExpr(op, loc()); .)
+  | // IF (type instanceof RecordType record)
+    SYM_PAREN_OPEN                                          (. var recordType = (RecordType) type;
+                                                               var entries = new ArrayList<Node>();
+                                                               var nextEntry = recordType.entries.iterator(); .)
+    macroBody<out Node entry, nextEntry.next().type()>      (. entries.add(entry); .)
+    {
+      SYM_SEMICOLON
+      macroBody<out entry, nextEntry.next().type()>         (. entries.add(entry); .)
+    }
+    SYM_PAREN_CLOSE                                         (. body = new Tuple(recordType, entries, start.join(loc())); .)
+  | identifier<out Identifier id>                           (. body = new MacroReference(symbolTable.getMacro(id.name), (ProjectionType) type, id.location()); .)
+  | maximumMacroExpr<out body>
   .
 
-  syntaxType<out SyntaxType type>
-  = basicSyntaxType<out type>
+  syntaxType<out SyntaxType type> (. type = null; .)
+  = IF (la.kind == _identifierToken)
+    identifier<out Identifier id> (. type = symbolTable.findRecord(id); .)
+  | projectionType<out type>
+  | basicSyntaxType<out type>
+  .
+
+  projectionType<out SyntaxType type>     (. var arguments = new ArrayList<SyntaxType>(); .)
+  = SYM_PAREN_OPEN
+    [
+      syntaxType<out SyntaxType argType>  (. arguments.add(argType); .)
+      { SYM_COMMA syntaxType<out argType> (. arguments.add(argType); .) }
+    ]
+    SYM_PAREN_CLOSE
+    SYM_ARROW
+    syntaxType<out SyntaxType resultType> (. type = new ProjectionType(arguments, resultType); .)
   .
 
   basicSyntaxType<out BasicSyntaxType type> (. type = null; .)

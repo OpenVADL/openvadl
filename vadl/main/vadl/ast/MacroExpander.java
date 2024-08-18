@@ -145,11 +145,8 @@ class MacroExpander
 
   @Override
   public Expr visit(PlaceholderExpr expr) {
-    var arg = args.get(expr.placeholder.path().pathToString());
-    if (arg == null) {
-      throw new IllegalStateException(
-          "Argument not found: " + expr.placeholder.path().pathToString());
-    } else if (arg instanceof Identifier id) {
+    Node arg = resolveArg(expr.segments);
+    if (arg instanceof Identifier id) {
       return id.accept(this);
     } else if (arg instanceof IntegerLiteral lit) {
       return lit;
@@ -162,15 +159,17 @@ class MacroExpander
 
   @Override
   public Expr visit(MacroInstanceExpr expr) {
+    var macro = resolveMacro(expr.macro);
+
     // Overrides can be passed via the CLI or the API
-    if (expr.macro.returnType().equals(BasicSyntaxType.ID)
-        && macroOverrides.containsKey(expr.macro.name().name)) {
-      return macroOverrides.get(expr.macro.name().name);
+    if (macro.returnType().equals(BasicSyntaxType.ID)
+        && macroOverrides.containsKey(macro.name().name)) {
+      return macroOverrides.get(macro.name().name);
     }
     try {
-      assertValidMacro(expr.macro, expr.location());
-      var arguments = collectMacroParameters(expr.macro, expr.arguments, expr.location());
-      var body = (Expr) expr.macro.body();
+      assertValidMacro(macro, expr.location());
+      var arguments = collectMacroParameters(macro, expr.arguments, expr.location());
+      var body = (Expr) macro.body();
       var subpass = new MacroExpander(arguments, macroOverrides);
       var expanded = subpass.expandExpr(body);
       var group = new GroupedExpr(new ArrayList<>(), expr.location());
@@ -401,17 +400,18 @@ class MacroExpander
 
   @Override
   public Definition visit(PlaceholderDefinition definition) {
-    var arg = Objects.requireNonNull(args.get(definition.placeholder.path().pathToString()));
+    var arg = resolveArg(definition.segments);
     return (Definition) arg;
   }
 
   @Override
   public Definition visit(MacroInstanceDefinition definition) {
     try {
-      assertValidMacro(definition.macro, definition.location());
+      var macro = resolveMacro(definition.macro);
+      assertValidMacro(macro, definition.location());
       var arguments =
-          collectMacroParameters(definition.macro, definition.arguments, definition.location());
-      var body = (Definition) definition.macro.body();
+          collectMacroParameters(macro, definition.arguments, definition.location());
+      var body = (Definition) macro.body();
       var subpass = new MacroExpander(arguments, macroOverrides);
       if (body instanceof DefinitionList definitionList) {
         var definitions = subpass.expandDefinitions(definitionList.items);
@@ -469,16 +469,17 @@ class MacroExpander
 
   @Override
   public Statement visit(PlaceholderStatement statement) {
-    var arg = Objects.requireNonNull(args.get(statement.placeholder.path().pathToString()));
+    var arg = resolveArg(statement.segments);
     return (Statement) arg;
   }
 
   @Override
   public Statement visit(MacroInstanceStatement stmt) {
     try {
-      assertValidMacro(stmt.macro, stmt.location());
-      var arguments = collectMacroParameters(stmt.macro, stmt.arguments, stmt.location());
-      var body = (Statement) stmt.macro.body();
+      var macro = resolveMacro(stmt.macro);
+      assertValidMacro(macro, stmt.location());
+      var arguments = collectMacroParameters(macro, stmt.arguments, stmt.location());
+      var body = (Statement) macro.body();
       var subpass = new MacroExpander(arguments, macroOverrides);
       if (body instanceof StatementList statementList) {
         var statements = subpass.expandStatements(statementList.items);
@@ -519,6 +520,9 @@ class MacroExpander
     for (int i = 0; i < formalParams.size(); i++) {
       var formalParam = formalParams.get(i);
       var actualParam = expandNode(actualParams.get(i));
+      if (actualParam instanceof PlaceholderRecord placeholderRecord) {
+        actualParam = resolveArg(placeholderRecord.segments);
+      }
       if (actualParam.syntaxType().isSubTypeOf(formalParam.type())) {
         arguments.put(formalParam.name().name, actualParam);
       } else {
@@ -549,7 +553,7 @@ class MacroExpander
 
   private EncodingDefinition.FieldEncodings resolveEncs(FieldEncodingsOrPlaceholder encodings) {
     if (encodings instanceof PlaceholderExpr p) {
-      var arg = (EncodingDefinition.FieldEncodings) args.get(p.placeholder.path().pathToString());
+      var arg = (EncodingDefinition.FieldEncodings) resolveArg(p.segments);
       return Objects.requireNonNull(arg);
     }
     return (EncodingDefinition.FieldEncodings) encodings;
@@ -565,6 +569,31 @@ class MacroExpander
       }
     }
     return expandNode(macroMatch.defaultChoice());
+  }
+
+  private Node resolveArg(List<String> segments) {
+    Node arg = args.get(segments.get(0));
+    if (arg == null) {
+      throw new IllegalStateException("Could not resolve argument " + segments);
+    }
+    for (int i = 1; i < segments.size(); i++) {
+      var nextName = segments.get(i);
+      var tuple = (Tuple) arg;
+      for (int j = 0; j < tuple.type.entries.size(); j++) {
+        if (tuple.type.entries.get(j).name().equals(nextName)) {
+          arg = tuple.entries.get(j);
+          break;
+        }
+      }
+    }
+    return arg;
+  }
+
+  private Macro resolveMacro(MacroOrPlaceholder macroOrPlaceholder) {
+    if (macroOrPlaceholder instanceof Macro macro) {
+      return macro;
+    }
+    return ((MacroReference) resolveArg(((MacroPlaceholder) macroOrPlaceholder).segments())).macro;
   }
 
   private void reportError(String error, SourceLocation location) {

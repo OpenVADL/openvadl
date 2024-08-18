@@ -1455,7 +1455,8 @@ final class EnumerationDefinition extends Definition {
     return result;
   }
 
-  record Entry(Identifier name, @Nullable Expr value, @Nullable Expr behavior) {}
+  record Entry(Identifier name, @Nullable Expr value, @Nullable Expr behavior) {
+  }
 }
 
 final class ExceptionDefinition extends Definition {
@@ -1527,12 +1528,12 @@ final class ExceptionDefinition extends Definition {
 
 final class PlaceholderDefinition extends Definition {
 
-  IsCallExpr placeholder;
+  List<String> segments;
   SyntaxType type;
   SourceLocation loc;
 
-  PlaceholderDefinition(IsCallExpr placeholder, SyntaxType type, SourceLocation loc) {
-    this.placeholder = placeholder;
+  PlaceholderDefinition(List<String> segments, SyntaxType type, SourceLocation loc) {
+    this.segments = segments;
     this.type = type;
     this.loc = loc;
   }
@@ -1555,7 +1556,7 @@ final class PlaceholderDefinition extends Definition {
   @Override
   void prettyPrint(int indent, StringBuilder builder) {
     builder.append("$");
-    placeholder.prettyPrint(indent, builder);
+    builder.append(String.join(".", segments));
   }
 }
 
@@ -1564,11 +1565,12 @@ final class PlaceholderDefinition extends Definition {
  * This node should never leave the parser.
  */
 final class MacroInstanceDefinition extends Definition {
-  Macro macro;
+  MacroOrPlaceholder macro;
   List<Node> arguments;
   SourceLocation loc;
 
-  public MacroInstanceDefinition(Macro macro, List<Node> arguments, SourceLocation loc) {
+  public MacroInstanceDefinition(MacroOrPlaceholder macro, List<Node> arguments,
+                                 SourceLocation loc) {
     this.macro = macro;
     this.arguments = arguments;
     this.loc = loc;
@@ -1593,7 +1595,11 @@ final class MacroInstanceDefinition extends Definition {
   void prettyPrint(int indent, StringBuilder builder) {
     builder.append(prettyIndentString(indent));
     builder.append("$");
-    builder.append(macro.name().name);
+    if (macro instanceof Macro m) {
+      builder.append(m.name().name);
+    } else if (macro instanceof MacroPlaceholder mp) {
+      builder.append(String.join(",", mp.segments()));
+    }
     builder.append("(");
     var isFirst = true;
     for (var arg : arguments) {

@@ -355,12 +355,12 @@ final class CallStatement extends Statement {
 
 final class PlaceholderStatement extends Statement {
 
-  IsCallExpr placeholder;
+  List<String> segments;
   SyntaxType type;
   SourceLocation loc;
 
-  PlaceholderStatement(IsCallExpr placeholder, SyntaxType type, SourceLocation loc) {
-    this.placeholder = placeholder;
+  PlaceholderStatement(List<String> segments, SyntaxType type, SourceLocation loc) {
+    this.segments = segments;
     this.type = type;
     this.loc = loc;
   }
@@ -383,7 +383,7 @@ final class PlaceholderStatement extends Statement {
   @Override
   void prettyPrint(int indent, StringBuilder builder) {
     builder.append("$");
-    placeholder.prettyPrint(indent, builder);
+    builder.append(String.join(".", segments));
   }
 }
 
@@ -392,11 +392,12 @@ final class PlaceholderStatement extends Statement {
  * This node should never leave the parser.
  */
 final class MacroInstanceStatement extends Statement {
-  Macro macro;
+  MacroOrPlaceholder macro;
   List<Node> arguments;
   SourceLocation loc;
 
-  public MacroInstanceStatement(Macro macro, List<Node> arguments, SourceLocation loc) {
+  public MacroInstanceStatement(MacroOrPlaceholder macro, List<Node> arguments,
+                                SourceLocation loc) {
     this.macro = macro;
     this.arguments = arguments;
     this.loc = loc;
@@ -416,7 +417,11 @@ final class MacroInstanceStatement extends Statement {
   void prettyPrint(int indent, StringBuilder builder) {
     builder.append(prettyIndentString(indent));
     builder.append("$");
-    builder.append(macro.name().name);
+    if (macro instanceof Macro m) {
+      builder.append(m.name().name);
+    } else if (macro instanceof MacroPlaceholder mp) {
+      builder.append(String.join(",", mp.segments()));
+    }
     builder.append("(");
     var isFirst = true;
     for (var arg : arguments) {

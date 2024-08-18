@@ -742,12 +742,12 @@ sealed interface IdentifierOrPlaceholder
  */
 final class PlaceholderExpr extends Expr implements IdentifierOrPlaceholder,
     OperatorOrPlaceholder, TypeLiteralOrPlaceholder, FieldEncodingsOrPlaceholder, IsId {
-  IsCallExpr placeholder;
+  List<String> segments;
   SyntaxType type;
   SourceLocation loc;
 
-  public PlaceholderExpr(IsCallExpr placeholder, SyntaxType type, SourceLocation loc) {
-    this.placeholder = placeholder;
+  public PlaceholderExpr(List<String> segments, SyntaxType type, SourceLocation loc) {
+    this.segments = segments;
     this.type = type;
     this.loc = loc;
   }
@@ -770,7 +770,7 @@ final class PlaceholderExpr extends Expr implements IdentifierOrPlaceholder,
   @Override
   public void prettyPrint(int indent, StringBuilder builder) {
     builder.append("$");
-    placeholder.prettyPrint(indent, builder);
+    builder.append(String.join(".", segments));
   }
 
   @Override
@@ -783,17 +783,19 @@ final class PlaceholderExpr extends Expr implements IdentifierOrPlaceholder,
     }
 
     PlaceholderExpr that = (PlaceholderExpr) o;
-    return placeholder.equals(that.placeholder);
+    return segments.equals(that.segments);
   }
 
   @Override
   public int hashCode() {
-    return placeholder.hashCode();
+    return segments.hashCode();
   }
 
   @Override
   public String pathToString() {
-    return "$" + placeholder.path().pathToString();
+    var sb = new StringBuilder();
+    prettyPrint(0, sb);
+    return sb.toString();
   }
 }
 
@@ -803,11 +805,11 @@ final class PlaceholderExpr extends Expr implements IdentifierOrPlaceholder,
  */
 final class MacroInstanceExpr extends Expr implements IdentifierOrPlaceholder,
     OperatorOrPlaceholder, TypeLiteralOrPlaceholder, FieldEncodingsOrPlaceholder, IsId {
-  Macro macro;
+  MacroOrPlaceholder macro;
   List<Node> arguments;
   SourceLocation loc;
 
-  public MacroInstanceExpr(Macro macro, List<Node> arguments, SourceLocation loc) {
+  public MacroInstanceExpr(MacroOrPlaceholder macro, List<Node> arguments, SourceLocation loc) {
     this.macro = macro;
     this.arguments = arguments;
     this.loc = loc;
@@ -832,7 +834,11 @@ final class MacroInstanceExpr extends Expr implements IdentifierOrPlaceholder,
   public void prettyPrint(int indent, StringBuilder builder) {
     builder.append(prettyIndentString(indent));
     builder.append("$");
-    builder.append(macro.name().name);
+    if (macro instanceof Macro m) {
+      builder.append(m.name().name);
+    } else if (macro instanceof MacroPlaceholder mp) {
+      builder.append(String.join(",", mp.segments()));
+    }
     builder.append("(");
     var isFirst = true;
     for (var arg : arguments) {

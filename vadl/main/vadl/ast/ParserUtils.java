@@ -1,6 +1,8 @@
 package vadl.ast;
 
+import java.util.Iterator;
 import java.util.List;
+import javax.annotation.Nullable;
 import vadl.utils.SourceLocation;
 
 class ParserUtils {
@@ -124,28 +126,41 @@ class ParserUtils {
     return type.isSubTypeOf(BasicSyntaxType.STATS);
   }
 
-  static Node createMacroInstance(Macro macro, List<Node> args, SourceLocation sourceLocation) {
-    if (isDefType(macro.returnType())) {
-      return new MacroInstanceDefinition(macro, args, sourceLocation);
-    } else if (isStmtType(macro.returnType())) {
-      return new MacroInstanceStatement(macro, args, sourceLocation);
+  static MacroOrPlaceholder macroOrPlaceholder(@Nullable Macro macro, SyntaxType syntaxType,
+                                               List<String> segments) {
+    if (macro != null) {
+      return macro;
+    }
+    return new MacroPlaceholder((ProjectionType) syntaxType, segments);
+  }
+
+  static Node createMacroInstance(MacroOrPlaceholder macroOrPlaceholder, List<Node> args,
+                                  SourceLocation sourceLocation) {
+    if (isDefType(macroOrPlaceholder.returnType())) {
+      return new MacroInstanceDefinition(macroOrPlaceholder, args, sourceLocation);
+    } else if (isStmtType(macroOrPlaceholder.returnType())) {
+      return new MacroInstanceStatement(macroOrPlaceholder, args, sourceLocation);
     } else {
-      return new MacroInstanceExpr(macro, args, sourceLocation);
+      return new MacroInstanceExpr(macroOrPlaceholder, args, sourceLocation);
     }
   }
 
-  static Node createPlaceholder(Parser parser, IsId path, SourceLocation sourceLocation) {
-    var type = paramSyntaxType(parser, path.pathToString());
+  static Node createPlaceholder(SyntaxType type, List<String> path, SourceLocation sourceLocation) {
     if (isDefType(type)) {
       return new PlaceholderDefinition(path, type, sourceLocation);
     } else if (isStmtType(type)) {
       return new PlaceholderStatement(path, type, sourceLocation);
+    } else if (isExprType(type)) {
+      return new PlaceholderExpr(path, type, sourceLocation);
+    } else if (type instanceof RecordType) {
+      return new PlaceholderRecord(path, type, sourceLocation);
     } else {
+      // TODO Handle all possible nodes, don't just wrap into expr if it isn't an expr
       return new PlaceholderExpr(path, type, sourceLocation);
     }
   }
 
-  private static SyntaxType paramSyntaxType(Parser parser, String name) {
+  static SyntaxType paramSyntaxType(Parser parser, String name) {
     for (List<MacroParam> params : parser.macroContext) {
       for (MacroParam param : params) {
         if (param.name().name.equals(name)) {
@@ -166,6 +181,29 @@ class ParserUtils {
     } else {
       return new MacroMatchExpr(macroMatch);
     }
+  }
+
+  /**
+   * Returns either the given macro's parameter types or, if null, the given syntax type's
+   * {@link ProjectionType#arguments}.
+   */
+  static Iterator<SyntaxType> instanceParamTypes(MacroOrPlaceholder macroOrPlaceholder) {
+    if (macroOrPlaceholder instanceof Macro macro) {
+      return new Iterator<>() {
+        final Iterator<MacroParam> params = macro.params().iterator();
+
+        @Override
+        public boolean hasNext() {
+          return params.hasNext();
+        }
+
+        @Override
+        public SyntaxType next() {
+          return params.next().type();
+        }
+      };
+    }
+    return ((MacroPlaceholder) macroOrPlaceholder).syntaxType().arguments.iterator();
   }
 
   static Node narrowNode(Node node) {
