@@ -105,8 +105,9 @@ public class VADLFileUtils {
    * @param destination     the destination path to copy the directory to
    * @param fileTransformer the consumer function to transform each file in the directory (optional)
    */
-  public static void copyDir(URI source, Path destination, @Nullable
-  Consumer<Pair<BufferedReader, Writer>> fileTransformer) throws IOException {
+  public static void copyDir(URI source, Path destination,
+                             @Nullable Consumer<Pair<BufferedReader, Writer>> fileTransformer)
+      throws IOException {
     if (source.getScheme().equals("jar")) {
       copyDirInJar(source, destination, fileTransformer);
     } else {
@@ -114,8 +115,10 @@ public class VADLFileUtils {
     }
   }
 
-  private static void copyNormalDir(File from, File to, @Nullable
-  Consumer<Pair<BufferedReader, Writer>> fileTransformer) throws IOException {
+  private static void copyNormalDir(File from, File to,
+                                    @Nullable
+                                    Consumer<Pair<BufferedReader, Writer>> fileTransformer)
+      throws IOException {
     if (fileTransformer == null) {
       // use apache utility function for normal copy (assume to be more perfomant)
       FileUtils.copyDirectory(
@@ -127,8 +130,9 @@ public class VADLFileUtils {
     }
   }
 
-  private static void copyDirInJar(URI jarDir, Path target, @Nullable
-  Consumer<Pair<BufferedReader, Writer>> fileTransformer) throws IOException {
+  private static void copyDirInJar(URI jarDir, Path target,
+                                   @Nullable Consumer<Pair<BufferedReader, Writer>> fileTransformer)
+      throws IOException {
     if (!jarDir.getScheme().equals("jar")) {
       throw new IllegalArgumentException("jarDir must be a jar file");
     }
@@ -139,8 +143,10 @@ public class VADLFileUtils {
     }
   }
 
-  private static void walktreeDirCopy(Path sourceDir, Path destinationDir, @Nullable
-  Consumer<Pair<BufferedReader, Writer>> fileTransformer) throws IOException {
+  private static void walktreeDirCopy(Path sourceDir, Path destinationDir,
+                                      @Nullable
+                                      Consumer<Pair<BufferedReader, Writer>> fileTransformer)
+      throws IOException {
     Files.walkFileTree(sourceDir, new SimpleFileVisitor<>() {
 
       @Override
@@ -196,7 +202,7 @@ public class VADLFileUtils {
    *
    * @param dir the directory to be deleted
    */
-  synchronized public static void deleteDirectoryOnExit(File dir) {
+  public static synchronized void deleteDirectoryOnExit(File dir) {
     if (dirsToDeleteOnExit.isEmpty()) {
       // If it is the first registration, set the hook
       Runtime.getRuntime().addShutdownHook(deleteExecutorThread);

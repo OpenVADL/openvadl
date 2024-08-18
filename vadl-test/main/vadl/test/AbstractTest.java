@@ -53,7 +53,7 @@ public class AbstractTest {
    * Checks if the test frontend provider is available.
    */
   @BeforeAll
-  public synchronized static void beforeAll() throws URISyntaxException, IOException {
+  public static synchronized void beforeAll() throws URISyntaxException, IOException {
     // check if global provider is set
     var globalFrontendProvider = TestFrontend.Provider.globalProvider;
     if (globalFrontendProvider == null) {
