@@ -2,8 +2,6 @@ package vadl.test;
 
 import java.io.BufferedReader;
 import java.io.File;
-import java.io.FileOutputStream;
-import java.io.FileReader;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.io.InputStreamReader;
@@ -18,12 +16,8 @@ import java.nio.file.StandardCopyOption;
 import java.nio.file.attribute.BasicFileAttributes;
 import java.util.Collections;
 import java.util.function.Consumer;
-import java.util.function.DoubleConsumer;
 import javax.annotation.Nullable;
-import org.apache.velocity.VelocityContext;
-import org.apache.velocity.app.Velocity;
 import vadl.utils.Pair;
-import vadl.viam.Function;
 
 /**
  * A collection of useful methods to handle files.
