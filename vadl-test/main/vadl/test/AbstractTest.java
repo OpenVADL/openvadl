@@ -28,8 +28,8 @@ import org.apache.velocity.app.Velocity;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.params.provider.Arguments;
-import vadl.utils.VADLFileUtils;
 import vadl.lcb.config.LcbConfiguration;
+import vadl.utils.VADLFileUtils;
 import vadl.viam.Specification;
 import vadl.viam.passes.verification.ViamVerifier;
 
