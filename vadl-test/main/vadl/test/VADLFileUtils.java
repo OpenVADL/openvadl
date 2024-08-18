@@ -14,7 +14,10 @@ import java.nio.file.Path;
 import java.nio.file.SimpleFileVisitor;
 import java.nio.file.StandardCopyOption;
 import java.nio.file.attribute.BasicFileAttributes;
+import java.util.ArrayList;
 import java.util.Collections;
+import java.util.HashSet;
+import java.util.Set;
 import java.util.function.Consumer;
 import javax.annotation.Nullable;
 import vadl.utils.Pair;
@@ -22,7 +25,7 @@ import vadl.utils.Pair;
 /**
  * A collection of useful methods to handle files.
  */
-public class FileUtils {
+public class VADLFileUtils {
 
 
   /**
@@ -71,8 +74,9 @@ public class FileUtils {
     // Create a temporary directory
     Path tempDir = Files.createTempDirectory(prefix);
     var tempFile = tempDir.toFile();
-    // delete temp afterwards
-    tempFile.deleteOnExit();
+    // delete temp dir on jvm shutdown
+    // (file.deleteOnExit is not enough as it only deletes if no files in dir)
+    deleteDirectoryOnExit(tempFile);
 
     copyDir(dirPath, tempDir, fileTransformer);
 
@@ -163,4 +167,43 @@ public class FileUtils {
       }
     });
   }
+
+  /// DELETION API ///
+
+  private static final Set<File> toDeleteDirs = new HashSet<>();
+  private static final Thread deleteExecutorThread = new Thread(() -> {
+    var errors = new ArrayList<IOException>();
+    for (var dir : toDeleteDirs) {
+      try {
+        deleteDirectory(dir);
+      } catch (IOException e) {
+        errors.add(e);
+      }
+    }
+    if (!errors.isEmpty()) {
+      throw new RuntimeException("Failed to delete directories: " + errors, errors.get(0));
+    }
+  });
+
+  synchronized public static void deleteDirectoryOnExit(File dir) throws IOException {
+    if (toDeleteDirs.isEmpty()) {
+      // If it is the first registration, set the hook
+      Runtime.getRuntime().addShutdownHook(deleteExecutorThread);
+    }
+
+    toDeleteDirs.add(dir);
+  }
+
+  private static void deleteDirectory(File dir) throws IOException {
+    if (!dir.exists()) {
+      return;
+    }
+    if (dir.isFile()) {
+      dir.delete();
+      return;
+    }
+    org.testcontainers.shaded.org.apache.commons.io.FileUtils.deleteDirectory(dir);
+  }
 }
+
+
