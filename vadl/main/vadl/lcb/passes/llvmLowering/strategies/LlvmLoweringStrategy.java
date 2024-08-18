@@ -16,11 +16,14 @@ import vadl.lcb.passes.llvmLowering.model.MachineInstructionNode;
 import vadl.lcb.passes.llvmLowering.visitors.ReplaceWithLlvmSDNodesVisitor;
 import vadl.lcb.passes.llvmLowering.visitors.TableGenPatternLowerable;
 import vadl.lcb.tablegen.model.TableGenInstruction;
+import vadl.lcb.tablegen.model.TableGenInstructionImmediateOperand;
 import vadl.lcb.tablegen.model.TableGenInstructionOperand;
+import vadl.lcb.tablegen.model.TableGenPattern;
 import vadl.lcb.visitors.LcbGraphNodeVisitor;
 import vadl.viam.Constant;
 import vadl.viam.Instruction;
 import vadl.viam.InstructionSetArchitecture;
+import vadl.viam.Register;
 import vadl.viam.ViamError;
 import vadl.viam.graph.Graph;
 import vadl.viam.graph.Node;
@@ -36,7 +39,9 @@ import vadl.viam.graph.dependency.FieldRefNode;
 import vadl.viam.graph.dependency.FuncCallNode;
 import vadl.viam.graph.dependency.FuncParamNode;
 import vadl.viam.graph.dependency.ReadRegFileNode;
+import vadl.viam.graph.dependency.ReadRegNode;
 import vadl.viam.graph.dependency.WriteRegFileNode;
+import vadl.viam.graph.dependency.WriteRegNode;
 import vadl.viam.graph.dependency.WriteResourceNode;
 
 /**
@@ -100,6 +105,8 @@ public abstract class LlvmLoweringStrategy {
 
     var inputOperands = getTableGenInputOperands(copy);
     var outputOperands = getTableGenOutputOperands(copy);
+    var registerUses = getRegisterUses(copy);
+    var registerDefs = getRegisterDefs(copy);
 
     copy.deinitializeNodes();
 
@@ -116,11 +123,32 @@ public abstract class LlvmLoweringStrategy {
               patterns);
       return Optional.of(new LlvmLoweringPass.LlvmLoweringIntermediateResult(copy,
           inputOperands, outputOperands,
-          Stream.concat(patterns.stream(), alternativePatterns.stream()).toList()));
+          Stream.concat(patterns.stream(), alternativePatterns.stream()).toList(),
+          registerUses,
+          registerDefs
+      ));
     }
 
     logger.atWarn().log("Instruction '{}' is not lowerable", instructionIdentifier.toString());
     return Optional.empty();
+  }
+
+  /**
+   * Get a list of {@link Register} which are written.
+   */
+  protected List<Register> getRegisterDefs(Graph behavior) {
+    return behavior.getNodes(WriteRegNode.class)
+        .map(WriteRegNode::register)
+        .toList();
+  }
+
+  /**
+   * Get a list of {@link Register} which are read.
+   */
+  protected List<Register> getRegisterUses(Graph behavior) {
+    return behavior.getNodes(ReadRegNode.class)
+        .map(ReadRegNode::register)
+        .toList();
   }
 
   /**
@@ -133,13 +161,13 @@ public abstract class LlvmLoweringStrategy {
    * direction should work as well. So when there is only a greater-than comparison
    * then this method should generate a pattern for the less-than.
    */
-  protected abstract List<LlvmLoweringPass.LlvmLoweringTableGenPattern> generatePatternVariations(
+  protected abstract List<TableGenPattern> generatePatternVariations(
       HashMap<InstructionLabel, List<Instruction>> supportedInstructions,
       InstructionLabel instructionLabel,
       Graph copy,
       List<TableGenInstructionOperand> inputOperands,
       List<TableGenInstructionOperand> outputOperands,
-      List<LlvmLoweringPass.LlvmLoweringTableGenPattern> patterns);
+      List<TableGenPattern> patterns);
 
   /**
    * LLvm's TableGen cannot work with control flow. So if statements and other constructs are not
@@ -220,8 +248,10 @@ public abstract class LlvmLoweringStrategy {
    */
   private static TableGenInstructionOperand generateInstructionOperand(
       LlvmFieldAccessRefNode node) {
-    return new TableGenInstructionOperand(node.immediateOperand().getFullName(),
-        node.fieldAccess().identifier.simpleName());
+    return new TableGenInstructionImmediateOperand(
+        node.immediateOperand().getFullName(),
+        node.fieldAccess().identifier.simpleName(),
+        node.immediateOperand());
   }
 
   /**
@@ -248,17 +278,17 @@ public abstract class LlvmLoweringStrategy {
     return graph.getNodes(WriteRegFileNode.class).toList();
   }
 
-  protected List<LlvmLoweringPass.LlvmLoweringTableGenPattern> generatePatterns(
+  protected List<TableGenPattern> generatePatterns(
       Instruction instruction,
       List<TableGenInstructionOperand> inputOperands,
       List<WriteResourceNode> sideEffectNodes) {
-    ArrayList<LlvmLoweringPass.LlvmLoweringTableGenPattern> patterns = new ArrayList<>();
+    ArrayList<TableGenPattern> patterns = new ArrayList<>();
 
     sideEffectNodes.forEach(sideEffectNode -> {
       var patternSelector = getPatternSelector(sideEffectNode);
       var machineInstruction = getMachinePattern(instruction, inputOperands);
       patterns.add(
-          new LlvmLoweringPass.LlvmLoweringTableGenPattern(patternSelector, machineInstruction));
+          new TableGenPattern(patternSelector, machineInstruction));
     });
 
     return patterns;

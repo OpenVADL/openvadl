@@ -1,6 +1,7 @@
 package vadl.lcb.tablegen.model;
 
 import vadl.lcb.codegen.DecodingCodeGenerator;
+import vadl.lcb.codegen.EncoderDecoderCodeGenerator;
 import vadl.lcb.codegen.EncodingCodeGenerator;
 import vadl.lcb.codegen.model.llvm.ValueType;
 
@@ -19,8 +20,8 @@ public class TableGenImmediateOperand extends TableGenClass {
   public TableGenImmediateOperand(String rawName,
                                   ValueType type) {
     this.name = rawName;
-    this.encoderMethod = EncodingCodeGenerator.getFunctionSuffix() + rawName;
-    this.decoderMethod = DecodingCodeGenerator.getFunctionSuffix() + rawName;
+    this.encoderMethod = EncodingCodeGenerator.generateFunctionName(rawName);
+    this.decoderMethod = DecodingCodeGenerator.generateFunctionName(rawName);
     this.type = type;
   }
 

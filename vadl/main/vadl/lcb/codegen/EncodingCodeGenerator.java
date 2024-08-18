@@ -9,17 +9,12 @@ import vadl.viam.graph.Graph;
  */
 public class EncodingCodeGenerator extends EncoderDecoderCodeGenerator {
 
-  @Override
-  protected String getSuffix() {
-    return getFunctionSuffix();
+  public static String generateFunctionName(String rawName) {
+    return rawName.trim() + "_" + "encode";
   }
 
-  /**
-   * The generator generates a function with a name. This function returns the suffix.
-   *
-   * @return a string for a function suffix.
-   */
-  public static String getFunctionSuffix() {
-    return "encode";
+  @Override
+  protected String getFunctionName(String rawName) {
+    return generateFunctionName(rawName);
   }
 }

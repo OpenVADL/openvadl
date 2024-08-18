@@ -7,18 +7,14 @@ import vadl.viam.graph.Graph;
  * This class will be used to generate the {@code AccessFunction}.
  */
 public class DecodingCodeGenerator extends EncoderDecoderCodeGenerator {
-  @Override
-  protected String getSuffix() {
-    return getFunctionSuffix();
+
+  public static String generateFunctionName(String rawName) {
+    return rawName.trim() + "_" + "decode";
   }
 
 
-  /**
-   * The generator generates a function with a name. This function returns the suffix.
-   *
-   * @return a string for a function suffix.
-   */
-  public static String getFunctionSuffix() {
-    return "decode";
+  @Override
+  protected String getFunctionName(String rawName) {
+    return generateFunctionName(rawName);
   }
 }

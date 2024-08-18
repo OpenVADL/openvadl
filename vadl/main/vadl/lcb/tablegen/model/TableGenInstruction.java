@@ -1,11 +1,13 @@
 package vadl.lcb.tablegen.model;
 
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.BitSet;
 import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
 import java.util.stream.Stream;
+import vadl.lcb.passes.llvmLowering.LlvmLoweringPass;
 import vadl.viam.Instruction;
 import vadl.viam.Register;
 
@@ -15,7 +17,7 @@ import vadl.viam.Register;
 public class TableGenInstruction extends TableGenRecord {
   private final String name;
   private final String namespace;
-  private final List<String> pattern;
+  private final List<TableGenPattern> pattern;
   private final List<TableGenInstructionOperand> inOperands;
   private final List<TableGenInstructionOperand> outOperands;
   private final List<Register> uses;
@@ -50,7 +52,7 @@ public class TableGenInstruction extends TableGenRecord {
                              List<TableGenInstructionOperand> outOperands,
                              List<Register> uses,
                              List<Register> defs,
-                             List<String> pattern) {
+                             List<TableGenPattern> pattern) {
     this.name = name;
     this.namespace = namespace;
     this.formatSize = instruction.encoding().format().type().bitWidth();
@@ -70,7 +72,7 @@ public class TableGenInstruction extends TableGenRecord {
     return namespace;
   }
 
-  public List<String> getPattern() {
+  public List<TableGenPattern> getPattern() {
     return pattern;
   }
 
@@ -197,11 +199,17 @@ public class TableGenInstruction extends TableGenRecord {
      * Convert an encoding to a TableGen model.
      */
     public static List<FieldEncoding> from(vadl.viam.Encoding encoding) {
-      return Arrays.stream(encoding.format().fields()).map(field -> {
-        field.bitSlice().ensure(field.bitSlice().isContinuous(), "bitSlice must be continuous");
-        return new FieldEncoding(field.bitSlice().msb(), field.bitSlice().lsb(), field.name(),
-            field.size() - 1, 0);
-      }).toList();
+      ArrayList<FieldEncoding> encodings = new ArrayList<>();
+      for (var field : encoding.format().fields()) {
+        var offset = 0;
+        for (var part : field.bitSlice().parts().toList()) {
+          encodings.add(
+              new FieldEncoding(part.msb(), part.lsb(), field.name(), offset + part.size() - 1,
+                  offset));
+          offset += part.size() + 1;
+        }
+      }
+      return encodings;
     }
 
     public int getTargetHigh() {

@@ -10,6 +10,7 @@ import vadl.lcb.passes.llvmLowering.LlvmLoweringPass;
 import vadl.lcb.passes.llvmLowering.LlvmLoweringPass.LlvmLoweringIntermediateResult;
 import vadl.lcb.passes.llvmLowering.strategies.LlvmLoweringStrategy;
 import vadl.lcb.tablegen.model.TableGenInstructionOperand;
+import vadl.lcb.tablegen.model.TableGenPattern;
 import vadl.viam.Instruction;
 import vadl.viam.graph.Graph;
 
@@ -38,16 +39,18 @@ public class LlvmLoweringIndirectJumpStrategyImpl extends LlvmLoweringStrategy {
         copy,
         getTableGenInputOperands(copy),
         Collections.emptyList(), // expecting no outputs
-        Collections.emptyList() // TODO: currently do not generate indirect call
+        Collections.emptyList(), // TODO: currently do not generate indirect call
+        getRegisterUses(copy),
+        getRegisterDefs(copy)
     ));
   }
 
   @Override
-  protected List<LlvmLoweringPass.LlvmLoweringTableGenPattern> generatePatternVariations(
+  protected List<TableGenPattern> generatePatternVariations(
       HashMap<InstructionLabel, List<Instruction>> supportedInstructions,
       InstructionLabel instructionLabel, Graph copy, List<TableGenInstructionOperand> inputOperands,
       List<TableGenInstructionOperand> outputOperands,
-      List<LlvmLoweringPass.LlvmLoweringTableGenPattern> patterns) {
+      List<TableGenPattern> patterns) {
     return Collections.emptyList();
   }
 }

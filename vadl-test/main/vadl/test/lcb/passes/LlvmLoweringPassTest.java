@@ -15,6 +15,7 @@ import vadl.lcb.passes.llvmLowering.LlvmLoweringPass;
 import vadl.lcb.passes.llvmLowering.model.LlvmCondCode;
 import vadl.lcb.tablegen.lowering.TableGenPatternVisitor;
 import vadl.lcb.tablegen.model.TableGenInstructionOperand;
+import vadl.lcb.tablegen.model.TableGenPattern;
 import vadl.pass.PassKey;
 import vadl.test.AbstractTest;
 import vadl.viam.Instruction;
@@ -59,11 +60,13 @@ public class LlvmLoweringPassTest extends AbstractTest {
     return new TestOutput(
         List.of(new TableGenInstructionOperand("X", "rs1"),
             new TableGenInstructionOperand("X", "rs2"),
-            new TableGenInstructionOperand("immS_decodeAsInt64", "immS")),
+            new TableGenInstructionOperand("RV3264I_Btype_immS_decodeAsInt64", "immS")),
         List.of(),
         List.of(
-            String.format("(%s (%s X:$rs1, X:$rs2), immS_decodeAsInt64:$immS)", "brcc", condCode)),
-        List.of(String.format("(%s X:$rs1, X:$rs2, immS_decodeAsInt64:$immS)", machineInstruction))
+            String.format("(%s (%s X:$rs1, X:$rs2), RV3264I_Btype_immS_decodeAsInt64:$immS)",
+                "brcc", condCode)),
+        List.of(String.format("(%s X:$rs1, X:$rs2, RV3264I_Btype_immS_decodeAsInt64:$immS)",
+            machineInstruction))
     );
   }
 
@@ -105,9 +108,12 @@ public class LlvmLoweringPassTest extends AbstractTest {
     expectedResults.put("XOR", createTestOutputRR("xor", "XOR"));
     expectedResults.put("AND", createTestOutputRR("and", "AND"));
     expectedResults.put("OR", createTestOutputRR("or", "OR"));
-    expectedResults.put("ADDI", createTestOutputRI("immS_decodeAsInt64", "immS", "add", "ADDI"));
-    expectedResults.put("ORI", createTestOutputRI("immS_decodeAsInt64", "immS", "or", "ORI"));
-    expectedResults.put("ANDI", createTestOutputRI("immS_decodeAsInt64", "immS", "and", "ANDI"));
+    expectedResults.put("ADDI",
+        createTestOutputRI("RV3264I_Itype_immS_decodeAsInt64", "immS", "add", "ADDI"));
+    expectedResults.put("ORI",
+        createTestOutputRI("RV3264I_Itype_immS_decodeAsInt64", "immS", "or", "ORI"));
+    expectedResults.put("ANDI",
+        createTestOutputRI("RV3264I_Itype_immS_decodeAsInt64", "immS", "and", "ANDI"));
     /*
     CONDITIONALS
      */
@@ -116,10 +122,10 @@ public class LlvmLoweringPassTest extends AbstractTest {
     expectedResults.put("SLTU",
         createTestOutputRRWithConditional(LlvmCondCode.SETULT, "SLTU"));
     expectedResults.put("SLTI",
-        createTestOutputRIWithConditional("immS_decodeAsInt64", "immS",
+        createTestOutputRIWithConditional("RV3264I_Itype_immS_decodeAsInt64", "immS",
             LlvmCondCode.SETLT, "SLTI"));
     expectedResults.put("SLTUI",
-        createTestOutputRIWithConditional("immS_decodeAsInt64", "immS",
+        createTestOutputRIWithConditional("RV3264I_Btype_immS_decodeAsInt64", "immS",
             LlvmCondCode.SETULT, "SLTUI"));
     /*
     CONDITIONAL BRANCHES
@@ -137,7 +143,7 @@ public class LlvmLoweringPassTest extends AbstractTest {
      */
     expectedResults.put("JALR", new TestOutput(
         List.of(new TableGenInstructionOperand("X", "rs1"),
-            new TableGenInstructionOperand("immS_decodeAsInt64", "immS")),
+            new TableGenInstructionOperand("RV3264I_Itype_immS_decodeAsInt64", "immS")),
         Collections.emptyList(),
         Collections.emptyList(),
         Collections.emptyList()
@@ -151,9 +157,9 @@ public class LlvmLoweringPassTest extends AbstractTest {
     var passResults = new HashMap<PassKey, Object>();
 
     new TypeCastEliminationPass().execute(passResults, spec);
-    passResults.put(new PassKey("FunctionInlinerPass"),
+    passResults.put(new PassKey(FunctionInlinerPass.class.toString()),
         new FunctionInlinerPass().execute(passResults, spec));
-    passResults.put(new PassKey("IsaMatchingPass"),
+    passResults.put(new PassKey(IsaMatchingPass.class.toString()),
         new IsaMatchingPass().execute(passResults, spec));
 
     // When
@@ -173,7 +179,7 @@ public class LlvmLoweringPassTest extends AbstractTest {
           Assertions.assertEquals(expectedResults.get(t.identifier.simpleName()).outputs(),
               res.outputs());
           var selectorPatterns = res.patterns().stream()
-              .map(LlvmLoweringPass.LlvmLoweringTableGenPattern::selector)
+              .map(TableGenPattern::selector)
               .map(pattern -> pattern.getNodes().filter(x -> x.usageCount() == 0).findFirst())
               .filter(Optional::isPresent)
               .map(rootNode -> {
@@ -184,7 +190,7 @@ public class LlvmLoweringPassTest extends AbstractTest {
           Assertions.assertEquals(expectedResults.get(t.identifier.simpleName()).selectorPatterns,
               selectorPatterns);
           var machinePatterns = res.patterns().stream()
-              .map(LlvmLoweringPass.LlvmLoweringTableGenPattern::machine)
+              .map(TableGenPattern::machine)
               .map(pattern -> pattern.getNodes().filter(x -> x.usageCount() == 0).findFirst())
               .filter(Optional::isPresent)
               .map(rootNode -> {

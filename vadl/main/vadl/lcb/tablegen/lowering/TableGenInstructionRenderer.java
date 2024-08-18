@@ -18,54 +18,54 @@ public final class TableGenInstructionRenderer {
   public static String lower(TableGenInstruction instruction) {
     return String.format("""
                         
-            def %s : Instruction
-            {
-                 let Namespace = "%s";
+def %s : Instruction
+{
+let Namespace = "%s";
+
+let Size = %d;
+let CodeSize = %d;
+
+let OutOperandList = ( outs %s );
+let InOperandList = ( ins %s );
+
+field bits<%s> Inst;
+
+// SoftFail is a field the disassembler can use to provide a way for
+// instructions to not match without killing the whole decode process. It is
+// mainly used for ARM, but Tablegen expects this field to exist or it fails
+// to build the decode table.
+field bits<%s> SoftFail = 0;
+                 
+%s
              
-                 let Size = %d;
-                 let CodeSize = %d;
+%s
              
-                 let OutOperandList = ( outs %s );
-                 let InOperandList = ( ins %s );
-             
-                 field bits<%s> Inst;
-                 \s
-                 // SoftFail is a field the disassembler can use to provide a way for
-                 // instructions to not match without killing the whole decode process. It is
-                 // mainly used for ARM, but Tablegen expects this field to exist or it fails
-                 // to build the decode table.
-                 field bits<%s> SoftFail = 0;
-                 \s
-                 %s
-             
-                 %s
-             
-                 let isTerminator  = %d;
-                 let isBranch      = %d;
-                 let isCall        = %d;
-                 let isReturn      = %d;
-                 let isPseudo      = %d;
-                 let isCodeGenOnly = %d;
-                 let mayLoad       = %d;
-                 let mayStore      = %d;
-             
-                 let Constraints = "";
-                 let AddedComplexity = 0;
-             
-                 let Pattern = [];
-             
-                 let Uses = [ %s ];
-                 let Defs = [ %s ];
-            }
-            """,
+let isTerminator  = %d;
+let isBranch      = %d;
+let isCall        = %d;
+let isReturn      = %d;
+let isPseudo      = %d;
+let isCodeGenOnly = %d;
+let mayLoad       = %d;
+let mayStore      = %d;
+
+let Constraints = "";
+let AddedComplexity = 0;
+
+let Pattern = [];
+
+let Uses = [ %s ];
+let Defs = [ %s ];
+}
+""",
         instruction.getName(),
         instruction.getNamespace(),
         instruction.getSize(),
         instruction.getCodeSize(),
         instruction.getOutOperands().stream().map(TableGenInstructionRenderer::lower).collect(
-            Collectors.joining("\n")),
+            Collectors.joining(", ")),
         instruction.getInOperands().stream().map(TableGenInstructionRenderer::lower).collect(
-            Collectors.joining("\n")),
+            Collectors.joining(", ")),
         instruction.getFormatSize(),
         instruction.getFormatSize(),
         instruction.getBitBlocks().stream().map(TableGenInstructionRenderer::lower)
@@ -86,10 +86,7 @@ public final class TableGenInstructionRenderer {
   }
 
   private static String lower(TableGenInstructionOperand operand) {
-    return String.format("""
-                
-        %s:$%s
-        """, operand.type(), operand.name());
+    return String.format("%s:$%s", operand.type(), operand.name());
   }
 
   private static String lower(TableGenInstruction.BitBlock bitBlock) {
@@ -102,9 +99,7 @@ public final class TableGenInstructionRenderer {
   }
 
   private static String lower(TableGenInstruction.FieldEncoding fieldEncoding) {
-    return String.format("""
-            let Inst{%s-%s} = %s{%s-%s};
-            """, fieldEncoding.getTargetHigh(),
+    return String.format("let Inst{%s-%s} = %s{%s-%s};", fieldEncoding.getTargetHigh(),
         fieldEncoding.getTargetLow(),
         fieldEncoding.getSourceBitBlockName(),
         fieldEncoding.getSourceHigh(),

@@ -15,12 +15,15 @@ import vadl.lcb.passes.llvmLowering.strategies.impl.LlvmLoweringConditionalsStra
 import vadl.lcb.passes.llvmLowering.strategies.impl.LlvmLoweringIndirectJumpStrategyImpl;
 import vadl.lcb.passes.llvmLowering.visitors.ReplaceWithLlvmSDNodesVisitor;
 import vadl.lcb.tablegen.model.TableGenInstructionOperand;
+import vadl.lcb.tablegen.model.TableGenPattern;
 import vadl.pass.Pass;
 import vadl.pass.PassKey;
 import vadl.pass.PassName;
 import vadl.viam.Instruction;
+import vadl.viam.Register;
 import vadl.viam.Specification;
 import vadl.viam.graph.Graph;
+import vadl.viam.passes.FunctionInlinerPass;
 
 /**
  * This is a wrapper class which contains utility functions for the lowering.
@@ -42,20 +45,17 @@ public class LlvmLoweringPass extends Pass {
    * @param outputs  are the output operands for the tablegen instruction.
    * @param patterns are a list of {@link Graph} which contain the pattern selectors for the
    *                 tablegen instruction.
+   * @param uses     a list of {@link Register} which are read.
+   * @param defs     a list of {@link Register} which are written but are not part of the
+   *                 {@code outputs}
    */
   public record LlvmLoweringIntermediateResult(Graph behavior,
                                                List<TableGenInstructionOperand> inputs,
                                                List<TableGenInstructionOperand> outputs,
-                                               List<LlvmLoweringTableGenPattern> patterns) {
+                                               List<TableGenPattern> patterns,
+                                               List<Register> uses,
+                                               List<Register> defs) {
 
-  }
-
-  /**
-   * TableGen pattern has a tree for LLVM Dag nodes to select a pattern in the instruction
-   * selection. This is represented by {@code selector}.
-   * And a tree for the emitted machine instruction. This is represented by {@code machine}.
-   */
-  public record LlvmLoweringTableGenPattern(Graph selector, Graph machine) {
   }
 
   @Override
@@ -68,13 +68,14 @@ public class LlvmLoweringPass extends Pass {
   public Object execute(Map<PassKey, Object> passResults, Specification viam)
       throws IOException {
     IdentityHashMap<Instruction, Graph> uninlined =
-        (IdentityHashMap<Instruction, Graph>) passResults.get(new PassKey("FunctionInlinerPass"));
+        (IdentityHashMap<Instruction, Graph>) passResults.get(
+            new PassKey(FunctionInlinerPass.class.toString()));
     ensureNonNull(uninlined, "Inlined Function data must exist");
     IdentityHashMap<Instruction, LlvmLoweringIntermediateResult>
         llvmPatterns = new IdentityHashMap<>();
     var supportedInstructions =
         (HashMap<InstructionLabel, List<Instruction>>) passResults.get(
-            new PassKey("IsaMatchingPass"));
+            new PassKey(IsaMatchingPass.class.toString()));
     ensure(supportedInstructions != null, "Cannot find pass results from IsaMatchPass");
 
     var instructionLookup = flipIsaMatching(supportedInstructions);
