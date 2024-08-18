@@ -11,12 +11,11 @@ import static org.junit.jupiter.params.provider.Arguments.arguments;
 import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileReader;
-import java.io.FileWriter;
 import java.io.IOException;
-import java.io.InputStreamReader;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.net.URL;
+import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
@@ -44,6 +43,7 @@ public class AbstractTest {
    */
   public static final String TEST_SOURCE_DIR = "testSource";
   private static TestFrontend.Provider frontendProvider;
+  private static Path testSouceRootPath;
 
   private TestFrontend testFrontend;
 
@@ -51,47 +51,41 @@ public class AbstractTest {
    * Checks if the test frontend provider is available.
    */
   @BeforeAll
-  public static void beforeAll() {
+  public static void beforeAll() throws URISyntaxException, IOException {
+    // check if global provider is set
     var globalFrontendProvider = TestFrontend.Provider.globalProvider;
     if (globalFrontendProvider == null) {
       fail("Global frontend provider not set");
       Objects.requireNonNull(globalFrontendProvider);
     }
     frontendProvider = globalFrontendProvider;
+
+    // load all testsources in a temporary directory
+    var testSourceDir = AbstractTest.class.getResource("/" + TEST_SOURCE_DIR);
+    testSouceRootPath = FileUtils.copyDirToTempDir(
+        Objects.requireNonNull(testSourceDir).toURI(),
+        "OpenVADL-testSource-",
+        (pair) -> {
+          var reader = pair.left();
+          var writer = pair.right();
+          // call velocity to evaluate the potential template and write the result
+          // into the outFileWriter.
+          // we use an empty context
+          Velocity.evaluate(new VelocityContext(), writer, "OpenVADL", reader);
+        }
+    );
   }
 
   /**
-   * Loads the test source file from the resources and returns a URI.
+   * Resolves the test source's path to an absolute URI.
    */
-  public static URI processAndLoadTestSourceFileInTempFile(String path) {
-    var name =
-        path.startsWith("/" + TEST_SOURCE_DIR + "/") ? path : "/" + TEST_SOURCE_DIR + "/" + path;
+  public static URI getTestSourcePath(String path) {
+    var prefixToRemove = "/" + TEST_SOURCE_DIR + "/";
+    var subPath = path.startsWith(prefixToRemove)
+        ? path.substring(prefixToRemove.length())
+        : path;
 
-    // open resource as stream
-    try (var resourceStream = frontendProvider.getClass().getResourceAsStream(name)) {
-      assertNotNull(resourceStream, "Resource not found: " + name);
-
-      var isr = new InputStreamReader(resourceStream);
-      var reader = new BufferedReader(isr);
-
-      // create temporary file for test source
-      var tempFile =
-          File.createTempFile("OpenVADL-", "-"
-              + path.substring(path.lastIndexOf("/") + 1));
-      tempFile.deleteOnExit();
-
-      // create a file writer to write test into tempfile
-      try (var outFileWriter = new FileWriter(tempFile)) {
-        // call velocity to evaluate the potential template and write the result
-        // into the outFileWriter.
-        // we use an empty context
-        Velocity.evaluate(new VelocityContext(), outFileWriter, "OpenVADL", reader);
-      }
-
-      return tempFile.toURI();
-    } catch (IOException e) {
-      throw new RuntimeException(e);
-    }
+    return testSouceRootPath.resolve(subPath).toUri();
   }
 
   /**
@@ -207,7 +201,7 @@ public class AbstractTest {
    * @param failureMessage the message to search for in the error logs (optional)
    */
   public void runAndAssumeFailure(String testSourcePath, @Nullable String failureMessage) {
-    var sourceUri = processAndLoadTestSourceFileInTempFile(testSourcePath);
+    var sourceUri = getTestSourcePath(testSourcePath);
     var success = testFrontend.runSpecification(sourceUri);
     if (success) {
       fail("Assumed failure for specification " + testSourcePath + " but succeeded");
@@ -245,7 +239,7 @@ public class AbstractTest {
    */
   private static void tryToRunSpecificationWithFrontend(String testSourcePath,
                                                         TestFrontend frontend) {
-    var testSource = processAndLoadTestSourceFileInTempFile(testSourcePath);
+    var testSource = getTestSourcePath(testSourcePath);
     var success = frontend.runSpecification(testSource);
     if (!success) {
       var logs = frontend.getLogAsString();

@@ -18,16 +18,6 @@ public abstract class DockerExecutionTest extends AbstractTest {
 
   private static final Logger logger = LoggerFactory.getLogger(DockerExecutionTest.class);
 
-  private File writeCodeIntoTempFile(String content, String prefix, String suffix)
-      throws IOException {
-    var tempFile = File.createTempFile(prefix, suffix);
-    tempFile.deleteOnExit();
-    var writer = new FileWriter(tempFile);
-    writer.write(content);
-    writer.close();
-    return tempFile;
-  }
-
   /**
    * Starts a container and checks the status code for the exited container.
    * It will write the given {@code content} into a temporary file. The
@@ -49,7 +39,7 @@ public abstract class DockerExecutionTest extends AbstractTest {
                                          String mountPath,
                                          String prefix,
                                          String suffix) throws IOException {
-    var file = writeCodeIntoTempFile(content, prefix, suffix);
+    var file = FileUtils.writeToTempFile(content, prefix, suffix);
     runContainerWithFile(image, file.getPath(), mountPath);
   }
 
