@@ -184,7 +184,7 @@ PRODUCTIONS
     annotations<.out List<Annotation> annotations.>
     isaDefinition<out Definition def>                                 (. def.annotations.annotations().addAll(annotations); definitions.add(def); .)
   | macroDef
-  | // IF (isMacroReplacementOfType(this, BasicSyntaxType.IsaDefs()))
+  | // IF (isMacroReplacementOfType(this, BasicSyntaxType.ISA_DEFS))
     macroReplacement<out Node n>                                      (. if (n instanceof DefinitionList defs) definitions.addAll(defs.items);
                                                                          else definitions.add((Definition) n); .)
   }
@@ -288,7 +288,7 @@ PRODUCTIONS
 
   identifierOrPlaceholder<out IdentifierOrPlaceholder id> (. id = null; .)
   = identifier<out id>
-  | // IF (isMacroReplacementOfType(this, BasicSyntaxType.Id()))
+  | // IF (isMacroReplacementOfType(this, BasicSyntaxType.ID))
     macroReplacement<out Node node>                       (. id = (IdentifierOrPlaceholder) node; .)
   .
 
@@ -298,7 +298,7 @@ PRODUCTIONS
     SYM_EQ SYM_BRACE_OPEN
     (
       encodingDefinitionList<out encodings>
-    | // IF (isMacroReplacementOfType(this, BasicSyntaxType.Encs()))
+    | // IF (isMacroReplacementOfType(this, BasicSyntaxType.ENCS))
       macroReplacement<out Node n>               (. encodings = (FieldEncodingsOrPlaceholder) n; .)
     )
     SYM_BRACE_CLOSE                              (. def = new EncodingDefinition(instrId, encodings, startLocation.join(loc())); .)
@@ -316,7 +316,7 @@ PRODUCTIONS
   = identifier<out Identifier id>
     SYM_EQ (
       valLiteral<out expr>
-    | // IF (isMacroReplacementOfType(this, BasicSyntaxType.Val()))
+    | // IF (isMacroReplacementOfType(this, BasicSyntaxType.VAL))
       macroReplacement<out Node node>  (. expr = (Expr) node; .)
     )                                  (. enc = new FieldEncoding(id, expr); .)
   .
@@ -462,9 +462,9 @@ PRODUCTIONS
   | ifStatement<out statement>
   | blockStatement<out statement>
   | raiseStatement<out statement>
-  | IF (la.kind == _identifierToken || isMacroReplacementOfType(this, BasicSyntaxType.CallEx()))
+  | IF (la.kind == _identifierToken || isMacroReplacementOfType(this, BasicSyntaxType.CALL_EX))
     assignmentOrCallStmt<out statement>
-  | // IF (isMacroReplacementOfType(this, BasicSyntaxType.Stmts()))
+  | // IF (isMacroReplacementOfType(this, BasicSyntaxType.STATS))
     macroReplacement<out Node n>     (. statement = (Statement) n; .)
   .
 
@@ -480,7 +480,7 @@ PRODUCTIONS
 
   assignmentOrCallStmt<out Statement statement> (. statement = null; Expr target = null; .)
   = ( callOrBinaryExpression<out target, false>
-    | // IF (isMacroReplacementOfType(this, BasicSyntaxType.CallEx()))
+    | // IF (isMacroReplacementOfType(this, BasicSyntaxType.CALL_EX))
       macroReplacement<out Node node>  (. target = (Expr) node; .)
     )
     [
@@ -519,7 +519,7 @@ PRODUCTIONS
   expression<out Expr expr, boolean[] allowedOps>
   = term<out expr>
     {
-      IF (allowedOps[la.kind] || la.kind == _SYM_AS || (la.kind == _SYM_DOLLAR && isMacroReplacementOfType(this, BasicSyntaxType.BinOp())))
+      IF (allowedOps[la.kind] || la.kind == _SYM_AS || (la.kind == _SYM_DOLLAR && isMacroReplacementOfType(this, BasicSyntaxType.BIN_OP)))
       (
         binaryOperator<out Operator op>                     (. var operator = new OperatorExpr(op, loc()); .)
         term<out Expr right>                                (. expr = new BinaryExpr(expr, operator, right); .)
@@ -528,7 +528,7 @@ PRODUCTIONS
       | SYM_AS
         (
           symbolOrBinaryExpression<out Expr symOrBin, true> (. expr = reorderCastExpr(expr, symOrBin); .)
-        | // IF (isMacroReplacementOfType(this, BasicSyntaxType.IsaDefs()))
+        | // IF (isMacroReplacementOfType(this, BasicSyntaxType.ISA_DEFS))
           macroReplacement<out Node node>                   (. expr = reorderCastExpr(expr, (Expr) node); .)
         )
       )
@@ -641,7 +641,7 @@ PRODUCTIONS
   | unary<out expr>
   | ifExpression<out expr, BIN_OPS>
   | letExpression<out expr>
-  | // IF (isMacroReplacementOfType(this, BasicSyntaxType.Ex()))
+  | // IF (isMacroReplacementOfType(this, BasicSyntaxType.EX))
     macroReplacement<out Node n> (. expr = (Expr) n; .)
   .
 
@@ -745,7 +745,7 @@ PRODUCTIONS
 
   typeLiteralOrPlaceholder<out TypeLiteralOrPlaceholder type> (. type = null; .)
   = typeLiteral<out type>
-  | // IF (isMacroReplacementOfType(this, BasicSyntaxType.Id()))
+  | // IF (isMacroReplacementOfType(this, BasicSyntaxType.ID))
     macroReplacement<out Node n>                              (. if (n instanceof PlaceholderExpr p) type = p;
                                                                  else type = new TypeLiteral((IsId) n, List.of(), n.location()); .)
   .
@@ -853,7 +853,7 @@ PRODUCTIONS
                                               var bodyType = narrowNode(body).syntaxType();
                                               if (!bodyType.isSubTypeOf(returnType)) {
                                                 errors.SemErr(t.line, t.col, "The macro signature promises to return `%s` but it's body is of type `%s`.".formatted(returnType, bodyType));
-                                                symbolTable.addMacro(new Macro(id, params, body, BasicSyntaxType.Invalid()), startLoc.join(loc()));
+                                                symbolTable.addMacro(new Macro(id, params, body, BasicSyntaxType.INVALID), startLoc.join(loc()));
                                               } else {
                                                 symbolTable.addMacro(new Macro(id, params, body, returnType), startLoc.join(loc()));
                                               }
@@ -861,35 +861,35 @@ PRODUCTIONS
   .
 
   macroBody<out Node body, SyntaxType type>                 (. body = null; var start = lookaheadLoc(); .)
-  = IF (type == BasicSyntaxType.Stats())
+  = IF (type == BasicSyntaxType.STATS)
     statementList<.out List<Statement> stmts.>              (. body = narrowNode(new StatementList(stmts, start.join(loc()))); .)
-  | IF (type == BasicSyntaxType.Stat())
+  | IF (type == BasicSyntaxType.STAT)
     statement<out body>
-  | IF (type == BasicSyntaxType.Encs())
+  | IF (type == BasicSyntaxType.ENCS)
     encodingDefinitionList<out body>
-  | IF (type == BasicSyntaxType.IsaDefs())
+  | IF (type == BasicSyntaxType.ISA_DEFS)
     isaDefinitionList<.out List<Definition> defs.>          (. body = new DefinitionList(defs, start.join(loc())); .)
-  | IF (type == BasicSyntaxType.Ex())
+  | IF (type == BasicSyntaxType.EX)
     expression<out body, BIN_OPS>
-  | IF (type == BasicSyntaxType.Lit())
+  | IF (type == BasicSyntaxType.LIT)
     literal<out body>
-  | // IF (type == BasicSyntaxType.Str())
+  | // IF (type == BasicSyntaxType.STR)
     stringLiteral<out body>
-  | IF (type == BasicSyntaxType.Val())
+  | IF (type == BasicSyntaxType.VAL)
     valLiteral<out body>
-  | // IF (type == BasicSyntaxType.Bool())
+  | // IF (type == BasicSyntaxType.BOOL)
     boolLiteral<out body>
-  | // IF (type == BasicSyntaxType.Int())
+  | // IF (type == BasicSyntaxType.INT)
     intLiteral<out body>
-  | // IF (type == BasicSyntaxType.Bin())
+  | // IF (type == BasicSyntaxType.BIN)
     binLiteral<out body>
-  | IF (type == BasicSyntaxType.CallEx())
+  | IF (type == BasicSyntaxType.CALL_EX)
     callOrBinaryExpression<out body, false>
-  | IF (type == BasicSyntaxType.SymEx())
+  | IF (type == BasicSyntaxType.SYM_EX)
     symbolOrBinaryExpression<out body, false>
-  | // IF (type == BasicSyntaxType.Id())
+  | // IF (type == BasicSyntaxType.ID)
     identifierOrPlaceholder<out IdentifierOrPlaceholder id> (. body = (Node) id; .)
-  | // IF (type == BasicSyntaxType.BinOp())
+  | // IF (type == BasicSyntaxType.BIN_OP)
     binaryOperator<out Operator op>                         (. body = new OperatorExpr(op, loc()); .)
   .
 
@@ -898,22 +898,22 @@ PRODUCTIONS
   .
 
   basicSyntaxType<out BasicSyntaxType type> (. type = null; .)
-  = T_STATS                                 (. type = BasicSyntaxType.Stats(); .)
-  | T_STAT                                  (. type = BasicSyntaxType.Stat(); .)
-  | T_ENCS                                  (. type = BasicSyntaxType.Encs(); .)
-  | T_ISA_DEFS                              (. type = BasicSyntaxType.IsaDefs(); .)
-  | T_EX                                    (. type = BasicSyntaxType.Ex(); .)
-  | T_LIT                                   (. type = BasicSyntaxType.Lit(); .)
-  | T_STR                                   (. type = BasicSyntaxType.Str(); .)
-  | T_VAL                                   (. type = BasicSyntaxType.Val(); .)
-  | T_BOOL                                  (. type = BasicSyntaxType.Bool(); .)
-  | T_INT                                   (. type = BasicSyntaxType.Int(); .)
-  | T_BIN                                   (. type = BasicSyntaxType.Bin(); .)
-  | T_CALL_EX                               (. type = BasicSyntaxType.CallEx(); .)
-  | T_SYM_EX                                (. type = BasicSyntaxType.SymEx(); .)
-  | T_ID                                    (. type = BasicSyntaxType.Id(); .)
-  | T_BIN_OP                                (. type = BasicSyntaxType.BinOp(); .)
-  | T_UN_OP                                 (. type = BasicSyntaxType.UnOp(); .)
+  = T_STATS                                 (. type = BasicSyntaxType.STATS; .)
+  | T_STAT                                  (. type = BasicSyntaxType.STAT; .)
+  | T_ENCS                                  (. type = BasicSyntaxType.ENCS; .)
+  | T_ISA_DEFS                              (. type = BasicSyntaxType.ISA_DEFS; .)
+  | T_EX                                    (. type = BasicSyntaxType.EX; .)
+  | T_LIT                                   (. type = BasicSyntaxType.LIT; .)
+  | T_STR                                   (. type = BasicSyntaxType.STR; .)
+  | T_VAL                                   (. type = BasicSyntaxType.VAL; .)
+  | T_BOOL                                  (. type = BasicSyntaxType.BOOL; .)
+  | T_INT                                   (. type = BasicSyntaxType.INT; .)
+  | T_BIN                                   (. type = BasicSyntaxType.BIN; .)
+  | T_CALL_EX                               (. type = BasicSyntaxType.CALL_EX; .)
+  | T_SYM_EX                                (. type = BasicSyntaxType.SYM_EX; .)
+  | T_ID                                    (. type = BasicSyntaxType.ID; .)
+  | T_BIN_OP                                (. type = BasicSyntaxType.BIN_OP; .)
+  | T_UN_OP                                 (. type = BasicSyntaxType.UN_OP; .)
   .
 
 END vadl.

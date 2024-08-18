@@ -73,7 +73,7 @@ final class Identifier extends Expr implements IsId, IdentifierOrPlaceholder {
 
   @Override
   SyntaxType syntaxType() {
-    return BasicSyntaxType.Id();
+    return BasicSyntaxType.ID;
   }
 
   @Override
@@ -284,7 +284,7 @@ final class OperatorExpr extends Expr implements OperatorOrPlaceholder {
 
   @Override
   SyntaxType syntaxType() {
-    return BasicSyntaxType.BinOp();
+    return BasicSyntaxType.BIN_OP;
   }
 
   @Override
@@ -391,7 +391,7 @@ class BinaryExpr extends Expr {
 
   @Override
   SyntaxType syntaxType() {
-    return BasicSyntaxType.Ex();
+    return BasicSyntaxType.EX;
   }
 
   @Override
@@ -454,7 +454,7 @@ class UnaryExpr extends Expr {
 
   @Override
   SyntaxType syntaxType() {
-    return BasicSyntaxType.UnOp();
+    return BasicSyntaxType.UN_OP;
   }
 
   @Override
@@ -516,7 +516,7 @@ class IntegerLiteral extends Expr {
 
   @Override
   SyntaxType syntaxType() {
-    return BasicSyntaxType.Int();
+    return BasicSyntaxType.INT;
   }
 
   @Override
@@ -584,7 +584,7 @@ class BinaryLiteral extends Expr {
 
   @Override
   SyntaxType syntaxType() {
-    return BasicSyntaxType.Bin();
+    return BasicSyntaxType.BIN;
   }
 
   @Override
@@ -639,7 +639,7 @@ class BoolLiteral extends Expr {
 
   @Override
   SyntaxType syntaxType() {
-    return BasicSyntaxType.Bool();
+    return BasicSyntaxType.BOOL;
   }
 
   @Override
@@ -694,7 +694,7 @@ class StringLiteral extends Expr {
 
   @Override
   SyntaxType syntaxType() {
-    return BasicSyntaxType.Str();
+    return BasicSyntaxType.STR;
   }
 
   @Override
@@ -957,7 +957,7 @@ class GroupedExpr extends Expr {
 
   @Override
   SyntaxType syntaxType() {
-    return BasicSyntaxType.Ex();
+    return BasicSyntaxType.EX;
   }
 
   @Override
@@ -1009,7 +1009,7 @@ class RangeExpr extends Expr {
 
   @Override
   SyntaxType syntaxType() {
-    return BasicSyntaxType.Invalid();
+    return BasicSyntaxType.INVALID;
   }
 
   @Override
@@ -1090,7 +1090,7 @@ final class TypeLiteral extends Expr implements TypeLiteralOrPlaceholder {
 
   @Override
   SyntaxType syntaxType() {
-    return BasicSyntaxType.Invalid();
+    return BasicSyntaxType.INVALID;
   }
 
   @Override
@@ -1214,7 +1214,7 @@ final class IdentifierPath extends Expr implements IsId {
 
   @Override
   SyntaxType syntaxType() {
-    return BasicSyntaxType.Id();
+    return BasicSyntaxType.ID;
   }
 
   @Override
@@ -1296,7 +1296,7 @@ final class SymbolExpr extends Expr implements IsSymExpr {
 
   @Override
   SyntaxType syntaxType() {
-    return BasicSyntaxType.SymEx();
+    return BasicSyntaxType.SYM_EX;
   }
 
   @Override
@@ -1387,7 +1387,7 @@ final class CallExpr extends Expr implements IsCallExpr {
 
   @Override
   SyntaxType syntaxType() {
-    return BasicSyntaxType.CallEx();
+    return BasicSyntaxType.CALL_EX;
   }
 
   @Override
@@ -1473,7 +1473,7 @@ class IfExpr extends Expr {
 
   @Override
   SyntaxType syntaxType() {
-    return BasicSyntaxType.Ex();
+    return BasicSyntaxType.EX;
   }
 
   @Override
@@ -1541,7 +1541,7 @@ class LetExpr extends Expr {
 
   @Override
   SyntaxType syntaxType() {
-    return BasicSyntaxType.Ex();
+    return BasicSyntaxType.EX;
   }
 
   @Override
@@ -1612,7 +1612,7 @@ class CastExpr extends Expr {
 
   @Override
   SyntaxType syntaxType() {
-    return BasicSyntaxType.Ex();
+    return BasicSyntaxType.EX;
   }
 
   @Override
@@ -1673,7 +1673,7 @@ class MatchExpr extends Expr {
 
   @Override
   SyntaxType syntaxType() {
-    return BasicSyntaxType.Ex();
+    return BasicSyntaxType.EX;
   }
 
   @Override

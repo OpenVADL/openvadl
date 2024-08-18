@@ -90,7 +90,7 @@ class ConstantDefinition extends Definition {
 
   @Override
   SyntaxType syntaxType() {
-    return BasicSyntaxType.IsaDefs();
+    return BasicSyntaxType.ISA_DEFS;
   }
 
   @Override
@@ -176,7 +176,7 @@ class FormatDefinition extends Definition {
 
     @Override
     SyntaxType syntaxType() {
-      return BasicSyntaxType.Invalid();
+      return BasicSyntaxType.INVALID;
     }
 
     @Override
@@ -243,7 +243,7 @@ class FormatDefinition extends Definition {
 
     @Override
     SyntaxType syntaxType() {
-      return BasicSyntaxType.Invalid();
+      return BasicSyntaxType.INVALID;
     }
 
     @Override
@@ -302,7 +302,7 @@ class FormatDefinition extends Definition {
 
     @Override
     SyntaxType syntaxType() {
-      return BasicSyntaxType.Invalid();
+      return BasicSyntaxType.INVALID;
     }
 
     @Override
@@ -358,7 +358,7 @@ class FormatDefinition extends Definition {
 
   @Override
   SyntaxType syntaxType() {
-    return BasicSyntaxType.IsaDefs();
+    return BasicSyntaxType.ISA_DEFS;
   }
 
   @Override
@@ -453,7 +453,7 @@ class InstructionSetDefinition extends Definition {
 
   @Override
   SyntaxType syntaxType() {
-    return BasicSyntaxType.Invalid();
+    return BasicSyntaxType.INVALID;
   }
 
   @Override
@@ -537,7 +537,7 @@ class CounterDefinition extends Definition {
 
   @Override
   SyntaxType syntaxType() {
-    return BasicSyntaxType.IsaDefs();
+    return BasicSyntaxType.ISA_DEFS;
   }
 
   @Override
@@ -612,7 +612,7 @@ class MemoryDefinition extends Definition {
 
   @Override
   SyntaxType syntaxType() {
-    return BasicSyntaxType.IsaDefs();
+    return BasicSyntaxType.ISA_DEFS;
   }
 
   @Override
@@ -687,7 +687,7 @@ class RegisterDefinition extends Definition {
 
   @Override
   SyntaxType syntaxType() {
-    return BasicSyntaxType.IsaDefs();
+    return BasicSyntaxType.ISA_DEFS;
   }
 
   @Override
@@ -760,7 +760,7 @@ class RegisterFileDefinition extends Definition {
 
   @Override
   SyntaxType syntaxType() {
-    return BasicSyntaxType.IsaDefs();
+    return BasicSyntaxType.ISA_DEFS;
   }
 
   @Override
@@ -841,7 +841,7 @@ class InstructionDefinition extends Definition {
 
   @Override
   SyntaxType syntaxType() {
-    return BasicSyntaxType.IsaDefs();
+    return BasicSyntaxType.ISA_DEFS;
   }
 
   @Override
@@ -925,7 +925,7 @@ class EncodingDefinition extends Definition {
 
   @Override
   SyntaxType syntaxType() {
-    return BasicSyntaxType.IsaDefs();
+    return BasicSyntaxType.ISA_DEFS;
   }
 
   @Override
@@ -986,7 +986,7 @@ class EncodingDefinition extends Definition {
 
     @Override
     SyntaxType syntaxType() {
-      return BasicSyntaxType.Encs();
+      return BasicSyntaxType.ENCS;
     }
 
     @Override
@@ -1045,7 +1045,7 @@ class AssemblyDefinition extends Definition {
 
   @Override
   SyntaxType syntaxType() {
-    return BasicSyntaxType.IsaDefs();
+    return BasicSyntaxType.ISA_DEFS;
   }
 
   @Override
@@ -1117,7 +1117,7 @@ class UsingDefinition extends Definition {
 
   @Override
   SyntaxType syntaxType() {
-    return BasicSyntaxType.IsaDefs();
+    return BasicSyntaxType.ISA_DEFS;
   }
 
   @Override
@@ -1191,7 +1191,7 @@ class FunctionDefinition extends Definition {
 
   @Override
   SyntaxType syntaxType() {
-    return BasicSyntaxType.IsaDefs();
+    return BasicSyntaxType.ISA_DEFS;
   }
 
   @Override
@@ -1292,7 +1292,7 @@ class AliasDefinition extends Definition {
 
   @Override
   SyntaxType syntaxType() {
-    return BasicSyntaxType.IsaDefs();
+    return BasicSyntaxType.ISA_DEFS;
   }
 
   @Override
@@ -1387,7 +1387,7 @@ final class EnumerationDefinition extends Definition {
 
   @Override
   SyntaxType syntaxType() {
-    return BasicSyntaxType.IsaDefs();
+    return BasicSyntaxType.ISA_DEFS;
   }
 
   @Override
@@ -1480,7 +1480,7 @@ final class ExceptionDefinition extends Definition {
 
   @Override
   SyntaxType syntaxType() {
-    return BasicSyntaxType.IsaDefs();
+    return BasicSyntaxType.ISA_DEFS;
   }
 
   @Override
@@ -1722,7 +1722,7 @@ class DefinitionList extends Definition {
 
   @Override
   SyntaxType syntaxType() {
-    return BasicSyntaxType.IsaDefs();
+    return BasicSyntaxType.ISA_DEFS;
   }
 
   @Override

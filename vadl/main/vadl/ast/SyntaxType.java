@@ -1,151 +1,101 @@
 package vadl.ast;
 
-import java.util.Map;
-
-abstract class SyntaxType {
-  abstract boolean isSubTypeOf(SyntaxType other);
+interface SyntaxType {
+  boolean isSubTypeOf(SyntaxType other);
 }
 
-@SuppressWarnings("checkstyle:methodname")
-class BasicSyntaxType extends SyntaxType {
+// We're using the ordinal() to construct a two-dimensional alternative to the EnumSet builtin.
+@SuppressWarnings("EnumOrdinal")
+enum BasicSyntaxType implements SyntaxType {
+  STATS("Stats"),
+  STAT("Stat"),
+  ENCS("Encs"),
+  ISA_DEFS("IsaDefs"),
+  EX("Ex"),
+  LIT("Lit"),
+  STR("Str"),
+  VAL("Val"),
+  BOOL("Bool"),
+  INT("Int"),
+  BIN("Bin"),
+  CALL_EX("CallEx"),
+  SYM_EX("SymEx"),
+  ID("Id"),
+  BIN_OP("BinOp"),
+  UN_OP("UnOp"),
+  INVALID("InvalidType");
+
+  static final boolean[][] SUBTYPES;
+
   private final String name;
 
-  private BasicSyntaxType(String name) {
+  BasicSyntaxType(String name) {
     this.name = name;
   }
 
-  private static final BasicSyntaxType statsType = new BasicSyntaxType("Stats");
-  private static final BasicSyntaxType statType = new BasicSyntaxType("Stat");
-  private static final BasicSyntaxType encsType = new BasicSyntaxType("Encs");
-  private static final BasicSyntaxType isaDefsType = new BasicSyntaxType("IsaDefs");
-  private static final BasicSyntaxType exType = new BasicSyntaxType("Ex");
-  private static final BasicSyntaxType litType = new BasicSyntaxType("Lit");
-  private static final BasicSyntaxType strType = new BasicSyntaxType("Str");
-  private static final BasicSyntaxType valType = new BasicSyntaxType("Val");
-  private static final BasicSyntaxType boolType = new BasicSyntaxType("Bool");
-  private static final BasicSyntaxType intType = new BasicSyntaxType("Int");
-  private static final BasicSyntaxType binType = new BasicSyntaxType("Bin");
-  private static final BasicSyntaxType callExType = new BasicSyntaxType("CallEx");
-  private static final BasicSyntaxType symExType = new BasicSyntaxType("SymEx");
-  private static final BasicSyntaxType idType = new BasicSyntaxType("Id");
-  private static final BasicSyntaxType binOpType = new BasicSyntaxType("BinOp");
-  private static final BasicSyntaxType unOpType = new BasicSyntaxType("UnOp");
-  private static final BasicSyntaxType invalidType = new BasicSyntaxType("InvalidType");
-
-  static BasicSyntaxType Stats() {
-    return statsType;
-  }
-
-  static BasicSyntaxType Stat() {
-    return statType;
-  }
-
-  static BasicSyntaxType Encs() {
-    return encsType;
-  }
-
-  static BasicSyntaxType IsaDefs() {
-    return isaDefsType;
-  }
-
-  static BasicSyntaxType Ex() {
-    return exType;
-  }
-
-  static BasicSyntaxType Lit() {
-    return litType;
-  }
-
-  static BasicSyntaxType Str() {
-    return strType;
-  }
-
-  static BasicSyntaxType Val() {
-    return valType;
-  }
-
-  static BasicSyntaxType Bool() {
-    return boolType;
-  }
-
-  static BasicSyntaxType Int() {
-    return intType;
-  }
-
-  static BasicSyntaxType Bin() {
-    return binType;
-  }
-
-  static BasicSyntaxType CallEx() {
-    return callExType;
-  }
-
-  static BasicSyntaxType SymEx() {
-    return symExType;
-  }
-
-  static BasicSyntaxType Id() {
-    return idType;
-  }
-
-  static BasicSyntaxType BinOp() {
-    return binOpType;
-  }
-
-  static BasicSyntaxType UnOp() {
-    return unOpType;
-  }
-
-  static BasicSyntaxType Invalid() {
-    return invalidType;
-  }
-
-  private static final Map<BasicSyntaxType, BasicSyntaxType[]> superTypes = Map.ofEntries(
-      Map.entry(statsType, new BasicSyntaxType[] {}),
-      Map.entry(statType, new BasicSyntaxType[] {statsType}),
-      Map.entry(encsType, new BasicSyntaxType[] {}),
-      Map.entry(isaDefsType, new BasicSyntaxType[] {}),
-      Map.entry(exType, new BasicSyntaxType[] {}),
-      Map.entry(litType, new BasicSyntaxType[] {exType}),
-      Map.entry(strType, new BasicSyntaxType[] {exType, litType}),
-      Map.entry(valType, new BasicSyntaxType[] {exType, litType}),
-      Map.entry(boolType, new BasicSyntaxType[] {exType, litType, valType}),
-      Map.entry(intType, new BasicSyntaxType[] {exType, litType, valType}),
-      Map.entry(binType, new BasicSyntaxType[] {exType, litType, valType}),
-      Map.entry(callExType, new BasicSyntaxType[] {exType}),
-      Map.entry(symExType, new BasicSyntaxType[] {exType, callExType}),
-      Map.entry(idType, new BasicSyntaxType[] {exType, callExType, symExType}),
-      Map.entry(binOpType, new BasicSyntaxType[] {}),
-      Map.entry(unOpType, new BasicSyntaxType[] {}),
-      Map.entry(invalidType, new BasicSyntaxType[] {})
-  );
-
-  @Override
-  boolean isSubTypeOf(SyntaxType other) {
-    // Each BasicSyntaxType is only once instantiated, so compare references.
-    if (this == other) {
-      return true;
-    }
-
-    if (!(other instanceof BasicSyntaxType otherCore)) {
-      return false;
-    }
-
-    var parents = superTypes.get(this);
-    if (parents == null) {
-      throw new RuntimeException("Internal error: could not find supertype " + this.name);
-    }
-
-    for (BasicSyntaxType superType : parents) {
-      if (superType == otherCore) {
-        return true;
-      }
-    }
-    return false;
-  }
-
-  @Override
-  public String toString() {
+  String getName() {
     return name;
+  }
+
+  @Override
+  public boolean isSubTypeOf(SyntaxType other) {
+    return other instanceof BasicSyntaxType bst && SUBTYPES[this.ordinal()][bst.ordinal()];
+  }
+
+  static {
+    SUBTYPES = new boolean[BasicSyntaxType.values().length][BasicSyntaxType.values().length];
+
+    SUBTYPES[STATS.ordinal()   ][STATS.ordinal()   ] = true;
+
+    SUBTYPES[STAT.ordinal()    ][STAT.ordinal()    ] = true;
+    SUBTYPES[STAT.ordinal()    ][STATS.ordinal()   ] = true;
+
+    SUBTYPES[ENCS.ordinal()    ][ENCS.ordinal()    ] = true;
+
+    SUBTYPES[ISA_DEFS.ordinal()][ISA_DEFS.ordinal()] = true;
+
+    SUBTYPES[EX.ordinal()      ][EX.ordinal()      ] = true;
+
+    SUBTYPES[LIT.ordinal()     ][LIT.ordinal()     ] = true;
+    SUBTYPES[LIT.ordinal()     ][EX.ordinal()      ] = true;
+
+    SUBTYPES[STR.ordinal()     ][STR.ordinal()     ] = true;
+    SUBTYPES[STR.ordinal()     ][LIT.ordinal()     ] = true;
+    SUBTYPES[STR.ordinal()     ][EX.ordinal()      ] = true;
+
+    SUBTYPES[VAL.ordinal()     ][VAL.ordinal()     ] = true;
+    SUBTYPES[VAL.ordinal()     ][LIT.ordinal()     ] = true;
+    SUBTYPES[VAL.ordinal()     ][EX.ordinal()      ] = true;
+
+    SUBTYPES[BOOL.ordinal()    ][BOOL.ordinal()    ] = true;
+    SUBTYPES[BOOL.ordinal()    ][VAL.ordinal()     ] = true;
+    SUBTYPES[BOOL.ordinal()    ][LIT.ordinal()     ] = true;
+    SUBTYPES[BOOL.ordinal()    ][EX.ordinal()      ] = true;
+
+    SUBTYPES[INT.ordinal()     ][INT.ordinal()     ] = true;
+    SUBTYPES[INT.ordinal()     ][VAL.ordinal()     ] = true;
+    SUBTYPES[INT.ordinal()     ][LIT.ordinal()     ] = true;
+    SUBTYPES[INT.ordinal()     ][EX.ordinal()      ] = true;
+
+    SUBTYPES[BIN.ordinal()     ][BIN.ordinal()     ] = true;
+    SUBTYPES[BIN.ordinal()     ][VAL.ordinal()     ] = true;
+    SUBTYPES[BIN.ordinal()     ][LIT.ordinal()     ] = true;
+    SUBTYPES[BIN.ordinal()     ][EX.ordinal()      ] = true;
+
+    SUBTYPES[CALL_EX.ordinal() ][CALL_EX.ordinal() ] = true;
+    SUBTYPES[CALL_EX.ordinal() ][EX.ordinal()      ] = true;
+
+    SUBTYPES[SYM_EX.ordinal()  ][SYM_EX.ordinal()  ] = true;
+    SUBTYPES[SYM_EX.ordinal()  ][CALL_EX.ordinal() ] = true;
+    SUBTYPES[SYM_EX.ordinal()  ][EX.ordinal()      ] = true;
+
+    SUBTYPES[ID.ordinal()      ][ID.ordinal()      ] = true;
+    SUBTYPES[ID.ordinal()      ][CALL_EX.ordinal() ] = true;
+    SUBTYPES[ID.ordinal()      ][SYM_EX.ordinal()  ] = true;
+    SUBTYPES[ID.ordinal()      ][EX.ordinal()      ] = true;
+
+    SUBTYPES[BIN_OP.ordinal()  ][BIN_OP.ordinal()  ] = true;
+
+    SUBTYPES[UN_OP.ordinal()   ][UN_OP.ordinal()   ] = true;
   }
 }

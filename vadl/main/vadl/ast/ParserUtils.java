@@ -113,15 +113,15 @@ class ParserUtils {
   }
 
   static boolean isExprType(SyntaxType type) {
-    return type.isSubTypeOf(BasicSyntaxType.Ex());
+    return type.isSubTypeOf(BasicSyntaxType.EX);
   }
 
   static boolean isDefType(SyntaxType type) {
-    return type.isSubTypeOf(BasicSyntaxType.IsaDefs());
+    return type.isSubTypeOf(BasicSyntaxType.ISA_DEFS);
   }
 
   static boolean isStmtType(SyntaxType type) {
-    return type.isSubTypeOf(BasicSyntaxType.Stats());
+    return type.isSubTypeOf(BasicSyntaxType.STATS);
   }
 
   static Node createMacroInstance(Macro macro, List<Node> args, SourceLocation sourceLocation) {
@@ -153,7 +153,7 @@ class ParserUtils {
         }
       }
     }
-    return BasicSyntaxType.Invalid();
+    return BasicSyntaxType.INVALID;
   }
 
   static Node createMacroMatch(SyntaxType resultType, List<MacroMatch.Choice> choices,

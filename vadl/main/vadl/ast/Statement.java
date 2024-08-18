@@ -37,7 +37,7 @@ abstract sealed class Statement extends Node
 
   @Override
   SyntaxType syntaxType() {
-    return BasicSyntaxType.Stat();
+    return BasicSyntaxType.STAT;
   }
 }
 
@@ -303,7 +303,7 @@ final class StatementList extends Statement {
 
   @Override
   SyntaxType syntaxType() {
-    return BasicSyntaxType.Stats();
+    return BasicSyntaxType.STATS;
   }
 
   @Override

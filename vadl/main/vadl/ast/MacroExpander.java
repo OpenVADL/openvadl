@@ -163,7 +163,7 @@ class MacroExpander
   @Override
   public Expr visit(MacroInstanceExpr expr) {
     // Overrides can be passed via the CLI or the API
-    if (expr.macro.returnType().equals(BasicSyntaxType.Id())
+    if (expr.macro.returnType().equals(BasicSyntaxType.ID)
         && macroOverrides.containsKey(expr.macro.name().name)) {
       return macroOverrides.get(expr.macro.name().name);
     }
@@ -499,7 +499,7 @@ class MacroExpander
 
   private void assertValidMacro(Macro macro, SourceLocation sourceLocation)
       throws MacroExpansionException {
-    if (macro.returnType() == BasicSyntaxType.Invalid()) {
+    if (macro.returnType() == BasicSyntaxType.INVALID) {
       throw new MacroExpansionException(
           "Skipped expanding macro %s due to previous error".formatted(macro.name().name),
           sourceLocation);
