@@ -46,7 +46,7 @@ namespace
             case IK_UNKNOWN_IMMEDIATE:
                 return value;
             [#th:block th:each="function, iterStat : ${decodeFunctionNames}" ]
-              case IK_[(${function.loweredName})][#th:block th:if="${!iterStat.last}"]:[/th:block]
+              case IK_[(${function.loweredName})]:
                 return [(${function.functionName})](value);
             [/th:block]
             }
