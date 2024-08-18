@@ -32,6 +32,8 @@ import vadl.viam.graph.dependency.ZeroExtendNode;
  * When transforming a graph into a CPP code, we have to take care of unsupported types.
  * For example, VADL allows arbitrary bit sizes, however CPP has only fixed size types.
  * This pass inserts bit mask to ensure that the code generation works.
+ * This pass does mutate the {@link Specification} because it needs to update the {@link Function}
+ * which is immutable.
  */
 public abstract class CppTypeNormalizationPass extends Pass {
   private static final Logger logger = LoggerFactory.getLogger(CppTypeNormalizationPass.class);

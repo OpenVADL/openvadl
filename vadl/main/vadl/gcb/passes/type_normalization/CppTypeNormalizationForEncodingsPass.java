@@ -19,15 +19,13 @@ public class CppTypeNormalizationForEncodingsPass extends CppTypeNormalizationPa
 
   @Override
   public PassName getName() {
-    return new PassName("CppTypeNormalizationForEncodings");
+    return new PassName(CppTypeNormalizationForEncodingsPass.class.toString());
   }
 
   @Override
   protected Stream<Function> getApplicable(Specification viam) {
     return viam.isas()
-        .flatMap(x -> x.instructions().stream())
-        .map(Instruction::format)
-        .distinct()
+        .flatMap(x -> x.formats().stream())
         .flatMap(x -> Arrays.stream(x.fieldAccesses()))
         .map(Format.FieldAccess::encoding)
         .filter(Objects::nonNull);

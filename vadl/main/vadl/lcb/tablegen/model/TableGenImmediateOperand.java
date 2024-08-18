@@ -19,8 +19,8 @@ public class TableGenImmediateOperand extends TableGenClass {
   public TableGenImmediateOperand(String rawName,
                                   ValueType type) {
     this.name = rawName;
-    this.encoderMethod = EncodingCodeGenerator.getFunctionPrefix() + rawName;
-    this.decoderMethod = DecodingCodeGenerator.getFunctionPrefix() + rawName;
+    this.encoderMethod = EncodingCodeGenerator.getFunctionSuffix() + rawName;
+    this.decoderMethod = DecodingCodeGenerator.getFunctionSuffix() + rawName;
     this.type = type;
   }
 

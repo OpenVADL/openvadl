@@ -12,13 +12,13 @@ import vadl.viam.graph.control.ReturnNode;
  * A superclass for generating CPP functions for encoding and decoding.
  */
 public abstract class EncoderDecoderCodeGenerator {
-  protected abstract String getPrefix();
+  protected abstract String getSuffix();
 
   /**
    * Returns a function name for the CPP encoding function.
    */
   public String generateFunctionName(Function function) {
-    return getPrefix() + function.name();
+    return function.identifier.lower() + "_" + getSuffix();
   }
 
   /**

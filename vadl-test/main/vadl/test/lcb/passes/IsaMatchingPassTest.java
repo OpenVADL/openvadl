@@ -48,7 +48,7 @@ public class IsaMatchingPassTest extends AbstractTest {
         Arguments.of(List.of("LB", "LBU", "LD", "LH", "LHU", "LW", "LWU"),
             InstructionLabel.LOAD_MEM),
         Arguments.of(List.of("SB", "SD", "SH", "SW"), InstructionLabel.STORE_MEM),
-        Arguments.of(List.of("JALR"), InstructionLabel.JALR)
+        Arguments.of(List.of("JALR", "JAL"), InstructionLabel.JALR)
     );
   }
 
