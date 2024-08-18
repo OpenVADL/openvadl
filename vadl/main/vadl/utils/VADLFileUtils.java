@@ -1,4 +1,4 @@
-package vadl.test;
+package vadl.utils;
 
 import java.io.BufferedReader;
 import java.io.File;
@@ -20,7 +20,7 @@ import java.util.HashSet;
 import java.util.Set;
 import java.util.function.Consumer;
 import javax.annotation.Nullable;
-import vadl.utils.Pair;
+import org.apache.commons.io.FileUtils;
 
 /**
  * A collection of useful methods to handle files.
@@ -115,7 +115,7 @@ public class VADLFileUtils {
   Consumer<Pair<BufferedReader, Writer>> fileTransformer) throws IOException {
     if (fileTransformer == null) {
       // use apache utility function for normal copy (assume to be more perfomant)
-      org.testcontainers.shaded.org.apache.commons.io.FileUtils.copyDirectory(
+      FileUtils.copyDirectory(
           from, to
       );
     } else {
@@ -170,12 +170,15 @@ public class VADLFileUtils {
 
   /// DELETION API ///
 
-  private static final Set<File> toDeleteDirs = new HashSet<>();
+  // A set of directories to delete on exit
+  private static final Set<File> dirsToDeleteOnExit = new HashSet<>();
+  // a thread that is applied as a shutdown hook.
+  // it will delete all directories in the dirsToDeleteOnExit set
   private static final Thread deleteExecutorThread = new Thread(() -> {
     var errors = new ArrayList<IOException>();
-    for (var dir : toDeleteDirs) {
+    for (var dir : dirsToDeleteOnExit) {
       try {
-        deleteDirectory(dir);
+        deleteDirectoryOrFile(dir);
       } catch (IOException e) {
         errors.add(e);
       }
@@ -185,16 +188,26 @@ public class VADLFileUtils {
     }
   });
 
-  synchronized public static void deleteDirectoryOnExit(File dir) throws IOException {
-    if (toDeleteDirs.isEmpty()) {
+  /**
+   * Deletes the specified directory on JVM shutdown (including sub-dirs and files).
+   *
+   * @param dir the directory to be deleted
+   */
+  synchronized public static void deleteDirectoryOnExit(File dir) {
+    if (dirsToDeleteOnExit.isEmpty()) {
       // If it is the first registration, set the hook
       Runtime.getRuntime().addShutdownHook(deleteExecutorThread);
     }
 
-    toDeleteDirs.add(dir);
+    dirsToDeleteOnExit.add(dir);
   }
 
-  private static void deleteDirectory(File dir) throws IOException {
+  /**
+   * Deletes the specified directory or file.
+   *
+   * @param dir the directory or file to be deleted
+   */
+  public static void deleteDirectoryOrFile(File dir) throws IOException {
     if (!dir.exists()) {
       return;
     }
@@ -202,7 +215,7 @@ public class VADLFileUtils {
       dir.delete();
       return;
     }
-    org.testcontainers.shaded.org.apache.commons.io.FileUtils.deleteDirectory(dir);
+    FileUtils.deleteDirectory(dir);
   }
 }
 
