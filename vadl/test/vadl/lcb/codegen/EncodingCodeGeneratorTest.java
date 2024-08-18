@@ -32,7 +32,7 @@ class EncodingCodeGeneratorTest extends AbstractTest {
 
     // Then
     assertThat(code).isEqualToIgnoringWhitespace("""
-        int32_t encodefunctionNameValue(uint32_t parameterValue) {
+        int32_t functionNameValue_encode(uint32_t parameterValue) {
           return parameterValue;
         }
         """);
