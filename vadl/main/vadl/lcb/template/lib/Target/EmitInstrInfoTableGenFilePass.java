@@ -42,8 +42,8 @@ public class EmitInstrInfoTableGenFilePass extends AbstractTemplateRenderingPass
 
   @Override
   protected String getOutputPath() {
-    return "llvm/lib/Target/" + processorName.value() + "/" + processorName.value() +
-        "InstrInfo.td";
+    return "llvm/lib/Target/" + processorName.value() + "/" + processorName.value()
+        + "InstrInfo.td";
   }
 
   @Override

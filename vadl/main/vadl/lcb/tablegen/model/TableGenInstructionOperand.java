@@ -39,10 +39,10 @@ public class TableGenInstructionOperand {
 
   @Override
   public String toString() {
-    return "TableGenInstructionOperand{" +
-        "type='" + type + '\'' +
-        ", name='" + name + '\'' +
-        '}';
+    return "TableGenInstructionOperand{"
+        + "type='" + type + '\''
+        + ", name='" + name + '\''
+        + '}';
   }
 
   @Override
