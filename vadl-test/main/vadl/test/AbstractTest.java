@@ -29,6 +29,7 @@ import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.params.provider.Arguments;
 import vadl.lcb.config.LcbConfiguration;
+import vadl.utils.VADLFileUtils;
 import vadl.viam.Specification;
 import vadl.viam.passes.verification.ViamVerifier;
 
@@ -44,7 +45,7 @@ public class AbstractTest {
    */
   public static final String TEST_SOURCE_DIR = "testSource";
   private static TestFrontend.Provider frontendProvider;
-  private static Path testSouceRootPath;
+  private static Path testSourceRootPath;
 
   private TestFrontend testFrontend;
 
@@ -52,7 +53,7 @@ public class AbstractTest {
    * Checks if the test frontend provider is available.
    */
   @BeforeAll
-  public static void beforeAll() throws URISyntaxException, IOException {
+  public static synchronized void beforeAll() throws URISyntaxException, IOException {
     // check if global provider is set
     var globalFrontendProvider = TestFrontend.Provider.globalProvider;
     if (globalFrontendProvider == null) {
@@ -61,20 +62,22 @@ public class AbstractTest {
     }
     frontendProvider = globalFrontendProvider;
 
-    // load all testsources in a temporary directory
-    var testSourceDir = AbstractTest.class.getResource("/" + TEST_SOURCE_DIR);
-    testSouceRootPath = FileUtils.copyDirToTempDir(
-        Objects.requireNonNull(testSourceDir).toURI(),
-        "OpenVADL-testSource-",
-        (pair) -> {
-          var reader = pair.left();
-          var writer = pair.right();
-          // call velocity to evaluate the potential template and write the result
-          // into the outFileWriter.
-          // we use an empty context
-          Velocity.evaluate(new VelocityContext(), writer, "OpenVADL", reader);
-        }
-    );
+    if (testSourceRootPath == null) {
+      // load all testsources in a temporary directory
+      var testSourceDir = AbstractTest.class.getResource("/" + TEST_SOURCE_DIR);
+      testSourceRootPath = VADLFileUtils.copyDirToTempDir(
+          Objects.requireNonNull(testSourceDir).toURI(),
+          "OpenVADL-testSource-",
+          (pair) -> {
+            var reader = pair.left();
+            var writer = pair.right();
+            // call velocity to evaluate the potential template and write the result
+            // into the outFileWriter.
+            // we use an empty context
+            Velocity.evaluate(new VelocityContext(), writer, "OpenVADL", reader);
+          }
+      );
+    }
   }
 
   /**
@@ -86,7 +89,7 @@ public class AbstractTest {
         ? path.substring(prefixToRemove.length())
         : path;
 
-    return testSouceRootPath.resolve(subPath).toUri();
+    return testSourceRootPath.resolve(subPath).toUri();
   }
 
   /**

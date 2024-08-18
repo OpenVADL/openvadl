@@ -1,4 +1,4 @@
-package vadl.test;
+package vadl.utils;
 
 import java.io.BufferedReader;
 import java.io.File;
@@ -14,15 +14,21 @@ import java.nio.file.Path;
 import java.nio.file.SimpleFileVisitor;
 import java.nio.file.StandardCopyOption;
 import java.nio.file.attribute.BasicFileAttributes;
+import java.util.ArrayList;
 import java.util.Collections;
+import java.util.HashSet;
+import java.util.Set;
 import java.util.function.Consumer;
 import javax.annotation.Nullable;
-import vadl.utils.Pair;
+import org.apache.commons.io.FileUtils;
 
 /**
  * A collection of useful methods to handle files.
+ *
+ * <p>The name prefixes VADL to prevent confusion with Apache's
+ * {@link org.apache.commons.io.FileUtils}.
  */
-public class FileUtils {
+public class VADLFileUtils {
 
 
   /**
@@ -71,8 +77,9 @@ public class FileUtils {
     // Create a temporary directory
     Path tempDir = Files.createTempDirectory(prefix);
     var tempFile = tempDir.toFile();
-    // delete temp afterwards
-    tempFile.deleteOnExit();
+    // delete temp dir on jvm shutdown
+    // (file.deleteOnExit is not enough as it only deletes if no files in dir)
+    deleteDirectoryOnExit(tempFile);
 
     copyDir(dirPath, tempDir, fileTransformer);
 
@@ -98,8 +105,9 @@ public class FileUtils {
    * @param destination     the destination path to copy the directory to
    * @param fileTransformer the consumer function to transform each file in the directory (optional)
    */
-  public static void copyDir(URI source, Path destination, @Nullable
-  Consumer<Pair<BufferedReader, Writer>> fileTransformer) throws IOException {
+  public static void copyDir(URI source, Path destination,
+                             @Nullable Consumer<Pair<BufferedReader, Writer>> fileTransformer)
+      throws IOException {
     if (source.getScheme().equals("jar")) {
       copyDirInJar(source, destination, fileTransformer);
     } else {
@@ -107,11 +115,13 @@ public class FileUtils {
     }
   }
 
-  private static void copyNormalDir(File from, File to, @Nullable
-  Consumer<Pair<BufferedReader, Writer>> fileTransformer) throws IOException {
+  private static void copyNormalDir(File from, File to,
+                                    @Nullable
+                                    Consumer<Pair<BufferedReader, Writer>> fileTransformer)
+      throws IOException {
     if (fileTransformer == null) {
       // use apache utility function for normal copy (assume to be more perfomant)
-      org.testcontainers.shaded.org.apache.commons.io.FileUtils.copyDirectory(
+      FileUtils.copyDirectory(
           from, to
       );
     } else {
@@ -120,8 +130,9 @@ public class FileUtils {
     }
   }
 
-  private static void copyDirInJar(URI jarDir, Path target, @Nullable
-  Consumer<Pair<BufferedReader, Writer>> fileTransformer) throws IOException {
+  private static void copyDirInJar(URI jarDir, Path target,
+                                   @Nullable Consumer<Pair<BufferedReader, Writer>> fileTransformer)
+      throws IOException {
     if (!jarDir.getScheme().equals("jar")) {
       throw new IllegalArgumentException("jarDir must be a jar file");
     }
@@ -132,8 +143,10 @@ public class FileUtils {
     }
   }
 
-  private static void walktreeDirCopy(Path sourceDir, Path destinationDir, @Nullable
-  Consumer<Pair<BufferedReader, Writer>> fileTransformer) throws IOException {
+  private static void walktreeDirCopy(Path sourceDir, Path destinationDir,
+                                      @Nullable
+                                      Consumer<Pair<BufferedReader, Writer>> fileTransformer)
+      throws IOException {
     Files.walkFileTree(sourceDir, new SimpleFileVisitor<>() {
 
       @Override
@@ -163,4 +176,56 @@ public class FileUtils {
       }
     });
   }
+
+  /// DELETION API ///
+
+  // A set of directories to delete on exit
+  private static final Set<File> dirsToDeleteOnExit = new HashSet<>();
+  // a thread that is applied as a shutdown hook.
+  // it will delete all directories in the dirsToDeleteOnExit set
+  private static final Thread deleteExecutorThread = new Thread(() -> {
+    var errors = new ArrayList<IOException>();
+    for (var dir : dirsToDeleteOnExit) {
+      try {
+        deleteDirectoryOrFile(dir);
+      } catch (IOException e) {
+        errors.add(e);
+      }
+    }
+    if (!errors.isEmpty()) {
+      throw new RuntimeException("Failed to delete directories: " + errors, errors.get(0));
+    }
+  });
+
+  /**
+   * Deletes the specified directory on JVM shutdown (including sub-dirs and files).
+   *
+   * @param dir the directory to be deleted
+   */
+  public static synchronized void deleteDirectoryOnExit(File dir) {
+    if (dirsToDeleteOnExit.isEmpty()) {
+      // If it is the first registration, set the hook
+      Runtime.getRuntime().addShutdownHook(deleteExecutorThread);
+    }
+
+    dirsToDeleteOnExit.add(dir);
+  }
+
+  /**
+   * Deletes the specified directory or file.
+   *
+   * @param dir the directory or file to be deleted
+   */
+  public static void deleteDirectoryOrFile(File dir) throws IOException {
+    if (!dir.exists()) {
+      return;
+    }
+    if (dir.isFile()) {
+      dir.delete();
+      return;
+    }
+    FileUtils.deleteDirectory(dir);
+  }
 }
+
+

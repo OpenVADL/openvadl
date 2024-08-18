@@ -14,6 +14,7 @@ dependencies {
     implementation("org.thymeleaf:thymeleaf:3.1.2.RELEASE")
     implementation("com.google.guava:guava:33.2.1-jre")
     implementation("ch.qos.logback:logback-classic:1.5.6")
+    implementation("commons-io:commons-io:2.16.1")
 
     testImplementation("org.awaitility:awaitility:4.2.1")
     testImplementation("org.testcontainers:testcontainers:1.20.0")
@@ -70,9 +71,9 @@ open class GenerateCocoParserTask : DefaultTask() {
 
     @OutputDirectory
     val outputDir =
-            project.objects.directoryProperty().convention(
-                    project.layout.buildDirectory.dir("generated/sources/coco/java/main"),
-            )
+        project.objects.directoryProperty().convention(
+            project.layout.buildDirectory.dir("generated/sources/coco/java/main"),
+        )
 
     @TaskAction
     fun generate() {
