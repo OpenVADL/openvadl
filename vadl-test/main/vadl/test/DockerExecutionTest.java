@@ -3,8 +3,6 @@ package vadl.test;
 import static org.awaitility.Awaitility.await;
 import static org.junit.Assert.assertEquals;
 
-import java.io.File;
-import java.io.FileWriter;
 import java.io.IOException;
 import java.time.Duration;
 import org.slf4j.Logger;
@@ -13,6 +11,7 @@ import org.testcontainers.containers.GenericContainer;
 import org.testcontainers.containers.output.Slf4jLogConsumer;
 import org.testcontainers.images.builder.ImageFromDockerfile;
 import org.testcontainers.utility.MountableFile;
+import vadl.utils.VADLFileUtils;
 
 public abstract class DockerExecutionTest extends AbstractTest {
 
@@ -39,7 +38,7 @@ public abstract class DockerExecutionTest extends AbstractTest {
                                          String mountPath,
                                          String prefix,
                                          String suffix) throws IOException {
-    var file = FileUtils.writeToTempFile(content, prefix, suffix);
+    var file = VADLFileUtils.writeToTempFile(content, prefix, suffix);
     runContainerWithFile(image, file.getPath(), mountPath);
   }
 

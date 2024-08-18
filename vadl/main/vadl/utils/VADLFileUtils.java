@@ -24,6 +24,9 @@ import org.apache.commons.io.FileUtils;
 
 /**
  * A collection of useful methods to handle files.
+ *
+ * <p>The name prefixes VADL to prevent confusion with Apache's
+ * {@link org.apache.commons.io.FileUtils}.
  */
 public class VADLFileUtils {
 
