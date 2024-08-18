@@ -69,7 +69,9 @@ public class LlvmLoweringConditionalBranchesStrategyImpl extends LlvmLoweringStr
         visitedGraph,
         inputOperands,
         outputOperands,
-        generatePatterns(instruction, inputOperands, writes)
+        generatePatterns(instruction, inputOperands, writes),
+        getRegisterUses(visitedGraph),
+        getRegisterDefs(visitedGraph)
     );
   }
 

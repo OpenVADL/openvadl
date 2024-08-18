@@ -39,7 +39,9 @@ public class LlvmLoweringIndirectJumpStrategyImpl extends LlvmLoweringStrategy {
         copy,
         getTableGenInputOperands(copy),
         Collections.emptyList(), // expecting no outputs
-        Collections.emptyList() // TODO: currently do not generate indirect call
+        Collections.emptyList(), // TODO: currently do not generate indirect call
+        getRegisterUses(copy),
+        getRegisterDefs(copy)
     ));
   }
 

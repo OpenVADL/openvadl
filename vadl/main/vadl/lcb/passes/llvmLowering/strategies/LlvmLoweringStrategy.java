@@ -23,6 +23,7 @@ import vadl.lcb.visitors.LcbGraphNodeVisitor;
 import vadl.viam.Constant;
 import vadl.viam.Instruction;
 import vadl.viam.InstructionSetArchitecture;
+import vadl.viam.Register;
 import vadl.viam.ViamError;
 import vadl.viam.graph.Graph;
 import vadl.viam.graph.Node;
@@ -38,7 +39,9 @@ import vadl.viam.graph.dependency.FieldRefNode;
 import vadl.viam.graph.dependency.FuncCallNode;
 import vadl.viam.graph.dependency.FuncParamNode;
 import vadl.viam.graph.dependency.ReadRegFileNode;
+import vadl.viam.graph.dependency.ReadRegNode;
 import vadl.viam.graph.dependency.WriteRegFileNode;
+import vadl.viam.graph.dependency.WriteRegNode;
 import vadl.viam.graph.dependency.WriteResourceNode;
 
 /**
@@ -102,6 +105,8 @@ public abstract class LlvmLoweringStrategy {
 
     var inputOperands = getTableGenInputOperands(copy);
     var outputOperands = getTableGenOutputOperands(copy);
+    var registerUses = getRegisterUses(copy);
+    var registerDefs = getRegisterDefs(copy);
 
     copy.deinitializeNodes();
 
@@ -118,11 +123,32 @@ public abstract class LlvmLoweringStrategy {
               patterns);
       return Optional.of(new LlvmLoweringPass.LlvmLoweringIntermediateResult(copy,
           inputOperands, outputOperands,
-          Stream.concat(patterns.stream(), alternativePatterns.stream()).toList()));
+          Stream.concat(patterns.stream(), alternativePatterns.stream()).toList(),
+          registerUses,
+          registerDefs
+      ));
     }
 
     logger.atWarn().log("Instruction '{}' is not lowerable", instructionIdentifier.toString());
     return Optional.empty();
+  }
+
+  /**
+   * Get a list of {@link Register} which are written.
+   */
+  protected List<Register> getRegisterDefs(Graph behavior) {
+    return behavior.getNodes(WriteRegNode.class)
+        .map(WriteRegNode::register)
+        .toList();
+  }
+
+  /**
+   * Get a list of {@link Register} which are read.
+   */
+  protected List<Register> getRegisterUses(Graph behavior) {
+    return behavior.getNodes(ReadRegNode.class)
+        .map(ReadRegNode::register)
+        .toList();
   }
 
   /**

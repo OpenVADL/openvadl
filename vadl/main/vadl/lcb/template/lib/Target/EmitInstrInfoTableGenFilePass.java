@@ -67,8 +67,8 @@ public class EmitInstrInfoTableGenFilePass extends AbstractTemplateRenderingPass
               new TableGenInstruction.Flags(false, false, false, false, false, false, false, false),
               result.inputs(),
               result.outputs(),
-              Collections.emptyList(),
-              Collections.emptyList(),
+              result.uses(),
+              result.defs(),
               result.patterns()
           );
         })

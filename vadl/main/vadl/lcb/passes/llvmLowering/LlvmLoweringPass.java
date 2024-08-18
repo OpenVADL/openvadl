@@ -20,6 +20,7 @@ import vadl.pass.Pass;
 import vadl.pass.PassKey;
 import vadl.pass.PassName;
 import vadl.viam.Instruction;
+import vadl.viam.Register;
 import vadl.viam.Specification;
 import vadl.viam.graph.Graph;
 import vadl.viam.passes.FunctionInlinerPass;
@@ -44,11 +45,16 @@ public class LlvmLoweringPass extends Pass {
    * @param outputs  are the output operands for the tablegen instruction.
    * @param patterns are a list of {@link Graph} which contain the pattern selectors for the
    *                 tablegen instruction.
+   * @param uses     a list of {@link Register} which are read.
+   * @param defs     a list of {@link Register} which are written but are not part of the
+   *                 {@code outputs}
    */
   public record LlvmLoweringIntermediateResult(Graph behavior,
                                                List<TableGenInstructionOperand> inputs,
                                                List<TableGenInstructionOperand> outputs,
-                                               List<TableGenPattern> patterns) {
+                                               List<TableGenPattern> patterns,
+                                               List<Register> uses,
+                                               List<Register> defs) {
 
   }
 
