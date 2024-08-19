@@ -115,12 +115,6 @@ public class VADLFileUtils {
     }
   }
 
-  public static Path getTempDirectory(String prefix) throws IOException {
-    var dir = Files.createTempDirectory(prefix);
-    deleteDirectoryOnExit(dir.toFile());
-    return dir;
-  }
-
   private static void copyNormalDir(File from, File to,
                                     @Nullable
                                     Consumer<Pair<BufferedReader, Writer>> fileTransformer)
@@ -236,11 +230,12 @@ public class VADLFileUtils {
   /**
    * Creates a directory and schedules it for deletion.
    */
-  public static Path createTempDirectory(String name) throws IOException {
-    var directory = Files.createTempDirectory(name);
+  public static Path createTempDirectory(String prefix) throws IOException {
+    var directory = Files.createTempDirectory(prefix);
     deleteDirectoryOnExit(new File(String.valueOf(directory)));
     return directory;
   }
+  
 }
 
 

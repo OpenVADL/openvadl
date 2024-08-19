@@ -57,7 +57,8 @@ abstract public class QemuExecutionTest extends DockerExecutionTest {
     super.beforeEach();
     try {
       testDirectory =
-          VADLFileUtils.getTempDirectory("QEMU-Exec-Test-" + this.getClass().getSimpleName() + "-");
+          VADLFileUtils.createTempDirectory(
+              "QEMU-Exec-Test-" + this.getClass().getSimpleName() + "-");
     } catch (IOException e) {
       throw new RuntimeException(e);
     }
