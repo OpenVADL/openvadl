@@ -10,18 +10,13 @@ import java.util.stream.Stream;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.DynamicTest;
 import org.junit.jupiter.api.TestFactory;
-import vadl.gcb.valuetypes.ProcessorName;
-import vadl.lcb.config.LcbConfiguration;
 import vadl.lcb.passes.llvmLowering.LlvmLoweringPass;
 import vadl.lcb.passes.llvmLowering.model.LlvmCondCode;
 import vadl.lcb.tablegen.lowering.TableGenPatternVisitor;
 import vadl.lcb.tablegen.model.TableGenInstructionOperand;
 import vadl.lcb.tablegen.model.TableGenPattern;
 import vadl.pass.PassKey;
-import vadl.pass.PassManager;
-import vadl.pass.PassOrder;
 import vadl.pass.exception.DuplicatedPassKeyException;
-import vadl.test.AbstractTest;
 import vadl.test.lcb.AbstractLcbTest;
 import vadl.viam.Instruction;
 

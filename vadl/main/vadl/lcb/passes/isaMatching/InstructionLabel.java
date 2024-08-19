@@ -52,4 +52,5 @@ public enum InstructionLabel {
   UNCONDITIONAL JUMPS
    */
   JALR,
+  JAL,
 }

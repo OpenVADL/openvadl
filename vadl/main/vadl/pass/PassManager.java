@@ -51,7 +51,7 @@ public class PassManager {
    *                                    was added.
    */
   public void add(Pass pass) throws DuplicatedPassKeyException {
-    add(new PassKey(pass.getClass().toString()), pass);
+    add(new PassKey(pass.getClass().getName()), pass);
   }
 
   /**

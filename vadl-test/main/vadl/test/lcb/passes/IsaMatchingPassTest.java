@@ -10,13 +10,9 @@ import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.Arguments;
 import org.junit.jupiter.params.provider.MethodSource;
-import vadl.gcb.valuetypes.ProcessorName;
-import vadl.lcb.config.LcbConfiguration;
 import vadl.lcb.passes.isaMatching.InstructionLabel;
 import vadl.lcb.passes.isaMatching.IsaMatchingPass;
 import vadl.pass.PassKey;
-import vadl.pass.PassManager;
-import vadl.pass.PassOrder;
 import vadl.pass.exception.DuplicatedPassKeyException;
 import vadl.test.lcb.AbstractLcbTest;
 import vadl.viam.Definition;
@@ -46,7 +42,8 @@ public class IsaMatchingPassTest extends AbstractLcbTest {
         Arguments.of(List.of("LB", "LBU", "LD", "LH", "LHU", "LW", "LWU"),
             InstructionLabel.LOAD_MEM),
         Arguments.of(List.of("SB", "SD", "SH", "SW"), InstructionLabel.STORE_MEM),
-        Arguments.of(List.of("JALR", "JAL"), InstructionLabel.JALR)
+        Arguments.of(List.of("JALR") , InstructionLabel.JALR),
+        Arguments.of(List.of("JAL") , InstructionLabel.JAL)
     );
   }
 

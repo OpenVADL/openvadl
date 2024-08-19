@@ -62,10 +62,12 @@ import vadl.viam.graph.dependency.WriteRegNode;
 import vadl.viam.graph.dependency.WriteResourceNode;
 import vadl.viam.matching.TreeMatcher;
 import vadl.viam.matching.impl.AnyChildMatcher;
+import vadl.viam.matching.impl.AnyNodeMatcher;
 import vadl.viam.matching.impl.AnyReadMemMatcher;
 import vadl.viam.matching.impl.AnyReadRegFileMatcher;
 import vadl.viam.matching.impl.BuiltInMatcher;
 import vadl.viam.matching.impl.FieldAccessRefMatcher;
+import vadl.viam.matching.impl.IsReadRegMatcher;
 import vadl.viam.matching.impl.WriteResourceMatcher;
 import vadl.viam.passes.functionInliner.FunctionInlinerPass;
 import vadl.viam.passes.functionInliner.UninlinedGraph;
@@ -169,6 +171,8 @@ public class IsaMatchingPass extends Pass {
         extend(matched, InstructionLabel.LOAD_MEM, instruction);
       } else if (isa.pc() != null && findJalr(behavior, isa.pc())) {
         extend(matched, InstructionLabel.JALR, instruction);
+      } else if(isa.pc() != null && findJal(behavior, isa.pc())) {
+        extend(matched, InstructionLabel.JAL, instruction);
       }
     }));
 
@@ -353,17 +357,38 @@ public class IsaMatchingPass extends Pass {
   }
 
   /**
-   * Match Jump and Link Register when {@link Instruction} writes PC and writes
-   * a register file.
+   * Match Jump and Link Register when {@link Instruction} writes PC, writes
+   * a register file and has an operation (ADD, SUB) where one input is a registerfile.
    */
   private boolean findJalr(UninlinedGraph behavior, Register.Counter pcRegister) {
     var writesPc =
         behavior.getNodes(WriteRegNode.class).filter(x -> x.register().equals(pcRegister))
             .toList();
     var writesRegFile = behavior.getNodes(WriteRegFileNode.class).toList();
+    var inputRegister = TreeMatcher.matches(behavior.getNodes(BuiltInCall.class).map(x -> x),
+        new BuiltInMatcher(List.of(BuiltInTable.ADD, BuiltInTable.ADDS, SUB), List.of(
+            new AnyChildMatcher(new AnyReadRegFileMatcher()),
+            new AnyNodeMatcher()
+        )));
 
-    // Idea: if this check is not sufficient in the future
-    // then check whether the regfile node also reads from PC.
-    return writesPc.size() == 1 && writesRegFile.size() == 1;
+    return writesPc.size() == 1 && writesRegFile.size() == 1 && !inputRegister.isEmpty();
+  }
+
+  /**
+   * Match Jump and Link when {@link Instruction} writes PC, writes
+   * a register file and has an operation (ADD, SUB) where one input is a PC.
+   */
+  private boolean findJal(UninlinedGraph behavior, Register.Counter pcRegister) {
+    var writesPc =
+        behavior.getNodes(WriteRegNode.class).filter(x -> x.register().equals(pcRegister))
+            .toList();
+    var writesRegFile = behavior.getNodes(WriteRegFileNode.class).toList();
+    var inputRegister = TreeMatcher.matches(behavior.getNodes(BuiltInCall.class).map(x -> x),
+        new BuiltInMatcher(List.of(BuiltInTable.ADD, BuiltInTable.ADDS, SUB), List.of(
+            new AnyChildMatcher(new IsReadRegMatcher(pcRegister)),
+            new AnyNodeMatcher()
+        )));
+
+    return writesPc.size() == 1 && writesRegFile.size() == 1 && !inputRegister.isEmpty();
   }
 }

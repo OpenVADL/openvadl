@@ -17,15 +17,9 @@ public class EmitInstrInfoTableGenFilePassTest extends AbstractLcbTest {
   @Test
   void testLowering() throws IOException, DuplicatedPassKeyException {
     // Given
-    var passManager = new PassManager();
-    var spec = runAndGetViamSpecification("examples/rv3264im.vadl");
-
-    passManager.add(new TypeCastEliminationPass());
-    passManager.add(new FunctionInlinerPass());
-    passManager.add(new IsaMatchingPass());
-    passManager.add(new LlvmLoweringPass());
-
-    passManager.run(spec);
+    var pair = setupPassManagerAndRunSpec("examples/rv3264im.vadl");
+    var passManager = pair.left();
+    var spec = pair.right();
 
     // When
     var template =
