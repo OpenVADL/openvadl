@@ -57,6 +57,8 @@ interface ExprVisitor<R> {
   R visit(MatchExpr expr);
 
   R visit(ExtendIdExpr expr);
+
+  R visit(IdToStrExpr expr);
 }
 
 final class Identifier extends Expr implements IsId, IdentifierOrPlaceholder {
@@ -118,7 +120,7 @@ final class Identifier extends Expr implements IsId, IdentifierOrPlaceholder {
 }
 
 sealed interface OperatorOrPlaceholder
-    permits OperatorExpr, PlaceholderExpr, MacroInstanceExpr, MacroMatchExpr {
+    permits OperatorExpr, PlaceholderNode, MacroInstanceExpr, MacroMatchExpr {
 }
 
 /**
@@ -689,6 +691,13 @@ class StringLiteral extends Expr {
     this.loc = loc;
   }
 
+  public StringLiteral(Identifier fromId, SourceLocation loc) {
+    this.token = fromId.toString();
+    this.value = fromId.name;
+    this.loc = loc;
+  }
+
+
   @Override
   SourceLocation location() {
     return loc;
@@ -741,8 +750,8 @@ sealed interface IdentifierOrPlaceholder extends IsId
  * An internal temporary placeholder node inside model definitions.
  * This node should never leave the parser.
  */
-final class PlaceholderExpr extends Expr implements IdentifierOrPlaceholder,
-    OperatorOrPlaceholder, TypeLiteralOrPlaceholder, FieldEncodingOrPlaceholder, IsId {
+final class PlaceholderExpr extends Expr
+    implements IdentifierOrPlaceholder, TypeLiteralOrPlaceholder, IsId {
   List<String> segments;
   SyntaxType type;
   SourceLocation loc;
@@ -999,6 +1008,60 @@ final class ExtendIdExpr extends Expr
 }
 
 /**
+ * An internal temporary node representing the IdToStr built-in.
+ * This node should never leave the parser.
+ */
+final class IdToStrExpr extends Expr {
+  IdentifierOrPlaceholder id;
+  SourceLocation loc;
+
+  IdToStrExpr(IdentifierOrPlaceholder id, SourceLocation loc) {
+    this.id = id;
+    this.loc = loc;
+  }
+
+  @Override
+  <R> R accept(ExprVisitor<R> visitor) {
+    return visitor.visit(this);
+  }
+
+  @Override
+  public SourceLocation location() {
+    return loc;
+  }
+
+  @Override
+  SyntaxType syntaxType() {
+    return BasicSyntaxType.STR;
+  }
+
+  @Override
+  public void prettyPrint(int indent, StringBuilder builder) {
+    builder.append("IdToStr (");
+    id.prettyPrint(0, builder);
+    builder.append(")");
+  }
+
+  @Override
+  public boolean equals(Object o) {
+    if (this == o) {
+      return true;
+    }
+    if (o == null || getClass() != o.getClass()) {
+      return false;
+    }
+
+    IdToStrExpr that = (IdToStrExpr) o;
+    return id.equals(that.id);
+  }
+
+  @Override
+  public int hashCode() {
+    return id.hashCode();
+  }
+}
+
+/**
  * A grouped expression.
  * Grouped expressions can either be single expressions wrapped in parantheses like {@code (1 + 2)},
  * or multiple expressions separated by a comma like {@code (a, 1 + 2, c())}.
@@ -1216,10 +1279,6 @@ sealed interface IsCallExpr permits CallExpr, IsSymExpr {
   @Nullable
   Expr size();
 
-  List<List<Expr>> argsIndices();
-
-  List<CallExpr.SubCall> subCalls();
-
   SourceLocation location();
 
   void prettyPrint(int indent, StringBuilder builder);
@@ -1232,16 +1291,6 @@ sealed interface IsSymExpr extends IsCallExpr permits SymbolExpr, IsId {
   @Override
   @Nullable
   Expr size();
-
-  @Override
-  default List<List<Expr>> argsIndices() {
-    return List.of();
-  }
-
-  @Override
-  default List<CallExpr.SubCall> subCalls() {
-    return List.of();
-  }
 }
 
 sealed interface IsId extends IsSymExpr
@@ -1410,6 +1459,10 @@ final class SymbolExpr extends Expr implements IsSymExpr {
 final class CallExpr extends Expr implements IsCallExpr {
   IsSymExpr target;
   /**
+   * When calling pseudo instructions, their parameters are passed in a name=value fashion.
+   */
+  List<NamedArgument> namedArguments;
+  /**
    * A list of function arguments or register/memory indices,
    * where multidimensional index access is represented as multiple list entries.
    */
@@ -1421,9 +1474,10 @@ final class CallExpr extends Expr implements IsCallExpr {
   List<SubCall> subCalls;
   SourceLocation location;
 
-  public CallExpr(IsSymExpr target, List<List<Expr>> argsIndices,
-                  List<SubCall> subCalls, SourceLocation location) {
+  public CallExpr(IsSymExpr target, List<NamedArgument> namedArguments,
+                  List<List<Expr>> argsIndices, List<SubCall> subCalls, SourceLocation location) {
     this.target = target;
+    this.namedArguments = namedArguments;
     this.argsIndices = argsIndices;
     this.subCalls = subCalls;
     this.location = location;
@@ -1440,16 +1494,6 @@ final class CallExpr extends Expr implements IsCallExpr {
   }
 
   @Override
-  public List<List<Expr>> argsIndices() {
-    return argsIndices;
-  }
-
-  @Override
-  public List<SubCall> subCalls() {
-    return subCalls;
-  }
-
-  @Override
   public SourceLocation location() {
     return location;
   }
@@ -1462,6 +1506,20 @@ final class CallExpr extends Expr implements IsCallExpr {
   @Override
   public void prettyPrint(int indent, StringBuilder builder) {
     target.prettyPrint(indent, builder);
+    if (!namedArguments.isEmpty()) {
+      builder.append("{");
+      var isFirst = true;
+      for (var arg : namedArguments) {
+        if (!isFirst) {
+          builder.append(", ");
+        }
+        isFirst = false;
+        arg.name.prettyPrint(0, builder);
+        builder.append(" = ");
+        arg.value.prettyPrint(0, builder);
+      }
+      builder.append("}");
+    }
     printArgsIndices(argsIndices, builder);
     for (var subCall : subCalls) {
       builder.append(".");
@@ -1516,6 +1574,9 @@ final class CallExpr extends Expr implements IsCallExpr {
     result = 31 * result + Objects.hashCode(argsIndices);
     result = 31 * result + Objects.hashCode(subCalls);
     return result;
+  }
+
+  record NamedArgument(Identifier name, Expr value) {
   }
 
   record SubCall(Identifier id, List<List<Expr>> argsIndices) {

@@ -152,11 +152,8 @@ class ParserUtils {
       return new PlaceholderStatement(path, type, sourceLocation);
     } else if (isExprType(type)) {
       return new PlaceholderExpr(path, type, sourceLocation);
-    } else if (type instanceof RecordType) {
-      return new PlaceholderRecord(path, type, sourceLocation);
     } else {
-      // TODO Handle all possible nodes, don't just wrap into expr if it isn't an expr
-      return new PlaceholderExpr(path, type, sourceLocation);
+      return new PlaceholderNode(path, type, sourceLocation);
     }
   }
 
@@ -235,11 +232,14 @@ class ParserUtils {
    */
   static boolean isMacroReplacementOfType(Parser parser, SyntaxType syntaxType) {
     if (parser.la.kind != Parser._SYM_DOLLAR && parser.la.kind != Parser._EXTEND_ID
-        && !isMacroMatch(parser)) {
+        && parser.la.kind != Parser._ID_TO_STR && !isMacroMatch(parser)) {
       return false;
     }
     if (parser.la.kind == Parser._EXTEND_ID) {
       return BasicSyntaxType.ID.isSubTypeOf(syntaxType);
+    }
+    if (parser.la.kind == Parser._ID_TO_STR) {
+      return BasicSyntaxType.STR.isSubTypeOf(syntaxType);
     }
 
     var parserSnapshot = ParserSnapshot.create(parser);

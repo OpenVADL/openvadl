@@ -100,6 +100,9 @@ TOKENS
   RECORD = "record".
   MODEL_TYPE = "model-type".
   EXTEND_ID = "ExtendId".
+  ID_TO_STR = "IdToStr".
+  PSEUDO = "pseudo".
+  KW_COMPILER = "compiler".
 
   SYM_IN = "in".
   SYM_AS = "as".
@@ -216,6 +219,7 @@ PRODUCTIONS
   = commonDefinition<out def>
   | counterDefinition<out def>
   | instructionDefinition<out def>
+  | pseudoInstructionDefinition<out def>
   | encodingDefinition<out def>
   | assemblyDefinition<out def>
   | memoryDefinition<out def>
@@ -291,6 +295,29 @@ PRODUCTIONS
   = INSTRUCTION identifierOrPlaceholder<out IdentifierOrPlaceholder id>
     SYM_COLON identifierOrPlaceholder<out IdentifierOrPlaceholder formatId>
     SYM_EQ statement<out Statement behavior>                                (. def = new InstructionDefinition(id, formatId, behavior, startLocation.join(loc())); .)
+  .
+
+  pseudoInstructionDefinition<out Definition def>           (. PseudoInstructionDefinition.Kind kind = null; .)
+  = ( PSEUDO                                                (. kind = PseudoInstructionDefinition.Kind.PSEUDO; .)
+    | KW_COMPILER                                           (. kind = PseudoInstructionDefinition.Kind.COMPILER; .)
+    )                                                       (. var start = loc(); .)
+    INSTRUCTION
+    identifierOrPlaceholder<out IdentifierOrPlaceholder id> (. var params = new ArrayList<PseudoInstructionDefinition.Param>(); .)
+    [
+      SYM_PAREN_OPEN
+      identifier<out Identifier paramName>
+      SYM_COLON
+      typeLiteral<out TypeLiteral paramType>                (. params.add(new PseudoInstructionDefinition.Param(paramName, paramType)); .)
+      {
+        SYM_COMMA
+        identifier<out paramName>
+        SYM_COLON
+        typeLiteral<out paramType>                          (. params.add(new PseudoInstructionDefinition.Param(paramName, paramType)); .)
+      }
+      SYM_PAREN_CLOSE
+    ]
+    SYM_EQ
+    statement<out Statement behavior>                       (. def = new PseudoInstructionDefinition(id, kind, params, behavior, start.join(loc())); .)
   .
 
   identifierOrPlaceholder<out IdentifierOrPlaceholder id> (. id = null; .)
@@ -582,24 +609,37 @@ PRODUCTIONS
   /// Use the "allowLtOp" parameter to disallow this behavior, e.g. in type literals.
   callOrBinaryExpression<out Expr expr, boolean allowLtOp> (. expr = null; .)
   = IF (isIdentifierToken(la) || isMacroReplacementOfType(this, BasicSyntaxType.SYM_EX))
-    symbolOrBinaryExpression<out expr, allowLtOp>          (. List<List<Expr>> argsIndices = new ArrayList<>(); .)
+    symbolOrBinaryExpression<out expr, allowLtOp>          (. List<List<Expr>> argsIndices = new ArrayList<>(); List<CallExpr.NamedArgument> namedArguments = new ArrayList<>(); .)
+    [
+      IF (la.kind == _SYM_BRACE_OPEN && expr instanceof IsSymExpr)
+      SYM_BRACE_OPEN
+      identifier<out Identifier argName>
+      SYM_EQ
+      expression<out Expr argExpr, BIN_OPS>              (. namedArguments.add(new CallExpr.NamedArgument(argName, argExpr)); .)
+      {
+        SYM_COMMA
+        identifier<out argName>
+        SYM_EQ
+        expression<out argExpr, BIN_OPS>                 (. namedArguments.add(new CallExpr.NamedArgument(argName, argExpr)); .)
+      }
+      SYM_BRACE_CLOSE
+    ]
     {
       // Check if we received a symbol expression -> collect arguments
       // Otherwise, just return the collected binary expression
-      // TODO Also collect pseudo-instruction arguments in {...}
       IF (la.kind == _SYM_PAREN_OPEN && expr instanceof IsSymExpr)
       arguments<.out List<Expr> args.>                     (. argsIndices.add(args); .)
     }                                                      (. List<CallExpr.SubCall> subCalls = new ArrayList<>(); .)
     {
-      IF (la.kind == _SYM_DOT && (expr instanceof IsSymExpr))
+      IF (la.kind == _SYM_DOT && expr instanceof IsSymExpr)
       SYM_DOT                                              (. var subCallArgsIndices = new ArrayList<List<Expr>>(); .)
       identifier<out Identifier id>
       {
         IF (la.kind == _SYM_PAREN_OPEN)
         arguments<.out List<Expr> args.>                   (. subCallArgsIndices.add(args); .)
       }                                                    (. subCalls.add(new CallExpr.SubCall(id, subCallArgsIndices)); .)
-    }                                                      (. if (expr instanceof IsSymExpr symExpr && (!argsIndices.isEmpty() || !subCalls.isEmpty()))
-                                                                expr = new CallExpr(symExpr, argsIndices, subCalls, expr.location().join(loc()));
+    }                                                      (. if (expr instanceof IsSymExpr symExpr && (!namedArguments.isEmpty() || !argsIndices.isEmpty() || !subCalls.isEmpty()))
+                                                                expr = new CallExpr(symExpr, namedArguments, argsIndices, subCalls, expr.location().join(loc()));
                                                            .)
   | macroReplacement<out Node node>                        (. expr = (Expr) node; .)
   .
@@ -828,11 +868,19 @@ PRODUCTIONS
   = macroMatch<out body>
   | maximumMacroExpr<out body>
   | extendId<out body>
+  | idToStr<out body>
   .
 
   extendId<out Node body>
   = EXTEND_ID                               (. var start = loc(); .)
     groupedExpression<out GroupedExpr expr> (. body = new ExtendIdExpr(expr, start.join(loc())); .)
+  .
+
+  idToStr<out Node body>
+  = ID_TO_STR       (. var start = loc(); .)
+    SYM_PAREN_OPEN
+    identifierOrPlaceholder<out IdentifierOrPlaceholder id>
+    SYM_PAREN_CLOSE (. body = new IdToStrExpr(id, start.join(loc())); .)
   .
 
   macroMatch<out Node node>

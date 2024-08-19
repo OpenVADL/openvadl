@@ -177,6 +177,11 @@ class Ungrouper
   }
 
   @Override
+  public Expr visit(IdToStrExpr expr) {
+    return expr;
+  }
+
+  @Override
   public Definition visit(ConstantDefinition definition) {
     ungroupAnnotations(definition);
     definition.value = definition.value.accept(this);
@@ -230,6 +235,12 @@ class Ungrouper
   @Override
   public Definition visit(InstructionDefinition definition) {
     ungroupAnnotations(definition);
+    definition.behavior = definition.behavior.accept(this);
+    return definition;
+  }
+
+  @Override
+  public Definition visit(PseudoInstructionDefinition definition) {
     definition.behavior = definition.behavior.accept(this);
     return definition;
   }

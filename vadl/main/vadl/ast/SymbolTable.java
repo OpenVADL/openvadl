@@ -17,20 +17,12 @@ class SymbolTable {
   List<VadlError> errors = new ArrayList<>();
 
   void loadBuiltins() {
-    defineSymbol(new ValuedSymbol("register", null, SymbolType.FUNCTION),
-        SourceLocation.INVALID_SOURCE_LOCATION);
-    defineSymbol(new ValuedSymbol("decimal", null, SymbolType.FUNCTION),
-        SourceLocation.INVALID_SOURCE_LOCATION);
-    defineSymbol(new ValuedSymbol("hex", null, SymbolType.FUNCTION),
-        SourceLocation.INVALID_SOURCE_LOCATION);
     defineSymbol(new ValuedSymbol("mnemonic", null, SymbolType.CONSTANT),
         SourceLocation.INVALID_SOURCE_LOCATION);
-    defineSymbol(new ValuedSymbol("VADL::div", null, SymbolType.FUNCTION),
-        SourceLocation.INVALID_SOURCE_LOCATION);
-    defineSymbol(new ValuedSymbol("VADL::mod", null, SymbolType.FUNCTION),
-        SourceLocation.INVALID_SOURCE_LOCATION);
-    defineSymbol(new ValuedSymbol("VADL::ror", null, SymbolType.FUNCTION),
-        SourceLocation.INVALID_SOURCE_LOCATION);
+    for (String builtinFunction : Builtins.BUILTIN_FUNCTIONS) {
+      defineSymbol(new ValuedSymbol(builtinFunction, null, SymbolType.FUNCTION),
+          SourceLocation.INVALID_SOURCE_LOCATION);
+    }
   }
 
   void defineConstant(String name, SourceLocation loc) {
@@ -85,6 +77,16 @@ class SymbolTable {
       return formatSymbol;
     } else {
       reportError("Unresolved format " + formatId.name, formatId.location());
+      return null;
+    }
+  }
+
+  @Nullable
+  PseudoInstructionDefinition findPseudoInstruction(Identifier pseudoInstrId) {
+    var symbol = resolveSymbol(pseudoInstrId.name);
+    if (symbol instanceof PseudoInstructionSymbol pseudoInstructionSymbol) {
+      return pseudoInstructionSymbol.definition;
+    } else {
       return null;
     }
   }
@@ -145,8 +147,9 @@ class SymbolTable {
   }
 
   enum SymbolType {
-    CONSTANT, COUNTER, FORMAT, INSTRUCTION, INSTRUCTION_SET, MEMORY, REGISTER, REGISTER_FILE,
-    FORMAT_FIELD, MACRO, ALIAS, FUNCTION, ENUM_FIELD, EXCEPTION, RECORD, MODEL_TYPE
+    CONSTANT, COUNTER, FORMAT, INSTRUCTION, PSEUDO_INSTRUCTION, INSTRUCTION_SET, MEMORY, REGISTER,
+    REGISTER_FILE, FORMAT_FIELD, MACRO, ALIAS, FUNCTION, ENUM_FIELD, EXCEPTION, RECORD, MODEL_TYPE,
+    PARAMETER
   }
 
   interface Symbol {
@@ -192,6 +195,14 @@ class SymbolTable {
     @Override
     public SymbolType type() {
       return SymbolType.INSTRUCTION;
+    }
+  }
+
+  record PseudoInstructionSymbol(String name, PseudoInstructionDefinition definition)
+      implements Symbol {
+    @Override
+    public SymbolType type() {
+      return SymbolType.PSEUDO_INSTRUCTION;
     }
   }
 
@@ -263,7 +274,9 @@ class SymbolTable {
             function.loc);
         function.symbolTable = symbols.createChild();
         for (FunctionDefinition.Parameter param : function.params) {
-          function.symbolTable.defineConstant(param.name().name, param.name().location());
+          function.symbolTable.defineSymbol(
+              new ValuedSymbol(param.name().name, null, SymbolType.PARAMETER),
+              param.name().location());
         }
         collectSymbols(function.symbolTable, function.expr);
       } else if (definition instanceof FormatDefinition format) {
@@ -277,6 +290,15 @@ class SymbolTable {
         symbols.defineSymbol(new InstructionSymbol(instr.id().name, instr), instr.location());
         instr.symbolTable = symbols.createChild();
         collectSymbols(instr.symbolTable, instr.behavior);
+      } else if (definition instanceof PseudoInstructionDefinition pseudo) {
+        symbols.defineSymbol(new PseudoInstructionSymbol(pseudo.id().name, pseudo),
+            pseudo.location());
+        pseudo.symbolTable = symbols.createChild();
+        for (var param : pseudo.params) {
+          pseudo.symbolTable.defineSymbol(
+              new ValuedSymbol(param.id().name, null, SymbolType.PARAMETER), param.id().location());
+        }
+        collectSymbols(pseudo.symbolTable, pseudo.behavior);
       } else if (definition instanceof AssemblyDefinition assembly) {
         assembly.symbolTable = symbols.createChild();
         collectSymbols(assembly.symbolTable, assembly.expr);
@@ -377,6 +399,9 @@ class SymbolTable {
         collectSymbols(symbols, cast.value);
       } else if (expr instanceof CallExpr call) {
         collectSymbols(symbols, (Expr) call.target);
+        for (CallExpr.NamedArgument namedArgument : call.namedArguments) {
+          collectSymbols(symbols, namedArgument.value());
+        }
         for (List<Expr> argsIndex : call.argsIndices) {
           for (Expr index : argsIndex) {
             collectSymbols(symbols, index);
@@ -444,11 +469,18 @@ class SymbolTable {
           instr.symbolTable().copyFrom(format.definition().symbolTable());
         }
         verifyUsages(instr.behavior);
+      } else if (definition instanceof PseudoInstructionDefinition pseudo) {
+        verifyUsages(pseudo.behavior);
       } else if (definition instanceof AssemblyDefinition assembly) {
         for (IdentifierOrPlaceholder identifier : assembly.identifiers) {
-          var format = assembly.symbolTable().requireInstructionFormat((Identifier) identifier);
-          if (format != null) {
-            assembly.symbolTable().copyFrom(format.definition().symbolTable());
+          var pseudoInstr = assembly.symbolTable().findPseudoInstruction((Identifier) identifier);
+          if (pseudoInstr != null) {
+            assembly.symbolTable().copyFrom(pseudoInstr.symbolTable());
+          } else {
+            var format = assembly.symbolTable().requireInstructionFormat((Identifier) identifier);
+            if (format != null) {
+              assembly.symbolTable().copyFrom(format.definition().symbolTable());
+            }
           }
         }
         verifyUsages(assembly.expr);
@@ -534,6 +566,32 @@ class SymbolTable {
       } else if (expr instanceof CastExpr cast) {
         verifyUsages(cast.value);
       } else if (expr instanceof CallExpr call) {
+        if (!call.namedArguments.isEmpty()) {
+          var pseudoInstruction = call.symbolTable()
+              .findPseudoInstruction((Identifier) call.target.path());
+          if (pseudoInstruction == null) {
+            call.symbolTable()
+                .reportError("Unknown pseudo instruction " + call.target.path().pathToString(),
+                    call.location);
+          } else {
+            for (var namedArgument : call.namedArguments) {
+              PseudoInstructionDefinition.Param foundParam = null;
+              for (var param : pseudoInstruction.params) {
+                if (param.id().name.equals(namedArgument.name().name)) {
+                  foundParam = param;
+                  break;
+                }
+              }
+              if (foundParam == null) {
+                call.symbolTable()
+                    .reportError("Unknown pseudo instruction param " + namedArgument.name().name,
+                        namedArgument.name().location());
+              }
+              verifyUsages(namedArgument.value());
+            }
+          }
+          return;
+        }
         verifyUsages((Expr) call.target);
         for (List<Expr> argsIndex : call.argsIndices) {
           for (Expr index : argsIndex) {

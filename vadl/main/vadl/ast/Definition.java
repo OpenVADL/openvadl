@@ -41,6 +41,8 @@ interface DefinitionVisitor<R> {
 
   R visit(InstructionDefinition definition);
 
+  R visit(PseudoInstructionDefinition definition);
+
   R visit(EncodingDefinition definition);
 
   R visit(AssemblyDefinition definition);
@@ -893,8 +895,113 @@ class InstructionDefinition extends Definition {
   }
 }
 
+class PseudoInstructionDefinition extends Definition {
+  IdentifierOrPlaceholder identifier;
+  PseudoInstructionDefinition.Kind kind;
+  List<Param> params;
+  Statement behavior;
+  SourceLocation loc;
+
+  PseudoInstructionDefinition(IdentifierOrPlaceholder identifier,
+                              PseudoInstructionDefinition.Kind kind, List<Param> params,
+                              Statement behavior, SourceLocation loc) {
+    this.identifier = identifier;
+    this.kind = kind;
+    this.params = params;
+    this.behavior = behavior;
+    this.loc = loc;
+  }
+
+  Identifier id() {
+    return (Identifier) identifier;
+  }
+
+  @Override
+  SourceLocation location() {
+    return loc;
+  }
+
+  @Override
+  SyntaxType syntaxType() {
+    return BasicSyntaxType.ISA_DEFS;
+  }
+
+  @Override
+  void prettyPrint(int indent, StringBuilder builder) {
+    annotations.prettyPrint(indent, builder);
+    builder.append(prettyIndentString(indent));
+    var kindStr = switch (kind) {
+      case PSEUDO -> "pseudo";
+      case COMPILER -> "compiler";
+    };
+    builder.append(kindStr).append(" instruction ");
+    identifier.prettyPrint(indent, builder);
+    if (!params.isEmpty()) {
+      builder.append("(");
+      var isFirst = true;
+      for (var param : params) {
+        if (!isFirst) {
+          builder.append(", ");
+        }
+        isFirst = false;
+        param.id.prettyPrint(0, builder);
+        builder.append(" : ");
+        param.type.prettyPrint(0, builder);
+      }
+      builder.append(")");
+    }
+    builder.append(" = ");
+    behavior.prettyPrint(indent, builder);
+    builder.append("\n");
+  }
+
+  @Override
+  <R> R accept(DefinitionVisitor<R> visitor) {
+    return visitor.visit(this);
+  }
+
+  @Override
+  public String toString() {
+    return this.getClass().getSimpleName();
+  }
+
+  @Override
+  public boolean equals(Object o) {
+    if (this == o) {
+      return true;
+    }
+    if (o == null || getClass() != o.getClass()) {
+      return false;
+    }
+
+    var that = (PseudoInstructionDefinition) o;
+    return Objects.equals(annotations, that.annotations)
+        && Objects.equals(identifier, that.identifier)
+        && Objects.equals(kind, that.kind)
+        && Objects.equals(params, that.params)
+        && Objects.equals(behavior, that.behavior);
+  }
+
+  @Override
+  public int hashCode() {
+    int result = Objects.hashCode(annotations);
+    result = 31 * result + Objects.hashCode(identifier);
+    result = 31 * result + Objects.hashCode(kind);
+    result = 31 * result + Objects.hashCode(params);
+    result = 31 * result + Objects.hashCode(behavior);
+    return result;
+  }
+
+  enum Kind {
+    PSEUDO, COMPILER
+  }
+
+  record Param(Identifier id, TypeLiteral type) {
+  }
+}
+
 sealed interface FieldEncodingOrPlaceholder
-    permits EncodingDefinition.FieldEncoding, PlaceholderExpr, MacroInstanceExpr, MacroMatchExpr {
+    permits EncodingDefinition.FieldEncoding, PlaceholderNode, MacroInstanceExpr, MacroMatchExpr {
   SourceLocation location();
 
   void prettyPrint(int indent, StringBuilder builder);
@@ -1274,7 +1381,7 @@ class FunctionDefinition extends Definition {
 
 class AliasDefinition extends Definition {
   IdentifierOrPlaceholder id;
-  Kind kind;
+  AliasDefinition.Kind kind;
   @Nullable
   TypeLiteral aliasType;
   @Nullable
@@ -1282,8 +1389,9 @@ class AliasDefinition extends Definition {
   Expr value;
   SourceLocation loc;
 
-  AliasDefinition(IdentifierOrPlaceholder id, Kind kind, @Nullable TypeLiteral aliasType,
-                  @Nullable TypeLiteral targetType, Expr value, SourceLocation location) {
+  AliasDefinition(IdentifierOrPlaceholder id, AliasDefinition.Kind kind,
+                  @Nullable TypeLiteral aliasType, @Nullable TypeLiteral targetType, Expr value,
+                  SourceLocation location) {
     this.id = id;
     this.kind = kind;
     this.aliasType = aliasType;

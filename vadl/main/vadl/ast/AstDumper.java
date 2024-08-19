@@ -234,6 +234,16 @@ public class AstDumper
   }
 
   @Override
+  public Void visit(PseudoInstructionDefinition definition) {
+    dumpNode(definition);
+    dumpChildren(definition.id());
+    dumpChildren(definition.params.stream()
+        .flatMap(param -> Stream.of(param.id(), param.type())).toList());
+    dumpChildren(definition.behavior);
+    return null;
+  }
+
+  @Override
   public Void visit(EncodingDefinition definition) {
     dumpNode(definition);
     dumpChildren(definition.instrId());
@@ -407,6 +417,12 @@ public class AstDumper
 
   @Override
   public Void visit(ExtendIdExpr expr) {
+    dumpNode(expr);
+    return null;
+  }
+
+  @Override
+  public Void visit(IdToStrExpr expr) {
     dumpNode(expr);
     return null;
   }

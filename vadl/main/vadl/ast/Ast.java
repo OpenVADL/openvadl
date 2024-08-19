@@ -140,20 +140,21 @@ class MacroReference extends Node {
   }
 }
 
-class PlaceholderRecord extends Node {
+final class PlaceholderNode extends Node implements OperatorOrPlaceholder,
+    FieldEncodingOrPlaceholder {
 
   List<String> segments;
   SyntaxType syntaxType;
   SourceLocation sourceLocation;
 
-  PlaceholderRecord(List<String> segments, SyntaxType syntaxType, SourceLocation sourceLocation) {
+  PlaceholderNode(List<String> segments, SyntaxType syntaxType, SourceLocation sourceLocation) {
     this.segments = segments;
     this.syntaxType = syntaxType;
     this.sourceLocation = sourceLocation;
   }
 
   @Override
-  SourceLocation location() {
+  public SourceLocation location() {
     return sourceLocation;
   }
 
@@ -163,7 +164,7 @@ class PlaceholderRecord extends Node {
   }
 
   @Override
-  void prettyPrint(int indent, StringBuilder builder) {
+  public void prettyPrint(int indent, StringBuilder builder) {
     builder.append("$");
     builder.append(String.join(".", segments));
   }

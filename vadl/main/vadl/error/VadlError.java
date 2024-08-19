@@ -1,5 +1,6 @@
 package vadl.error;
 
+import java.util.Objects;
 import javax.annotation.Nullable;
 import vadl.utils.SourceLocation;
 
@@ -41,5 +42,25 @@ public class VadlError {
       builder.append("\n\t(Tip: ").append(tip).append(")");
     }
     return builder.toString();
+  }
+
+  @Override
+  public boolean equals(Object o) {
+    if (this == o) {
+      return true;
+    }
+    if (o == null || getClass() != o.getClass()) {
+      return false;
+    }
+    VadlError vadlError = (VadlError) o;
+    return Objects.equals(reason, vadlError.reason) &&
+        Objects.equals(location, vadlError.location) &&
+        Objects.equals(description, vadlError.description) &&
+        Objects.equals(tip, vadlError.tip);
+  }
+
+  @Override
+  public int hashCode() {
+    return Objects.hash(reason, location, description, tip);
   }
 }

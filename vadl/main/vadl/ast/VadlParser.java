@@ -99,7 +99,7 @@ public class VadlParser {
     errors.addAll(parser.symbolTable.errors);
 
     if (!errors.isEmpty()) {
-      throw new VadlException(errors);
+      throw new VadlException(errors.stream().distinct().toList());
     }
 
     var ast = parser.ast;
@@ -109,7 +109,7 @@ public class VadlParser {
     errors.addAll(SymbolTable.VerificationPass.verifyUsages(ast));
 
     if (!errors.isEmpty()) {
-      throw new VadlException(errors);
+      throw new VadlException(errors.stream().distinct().toList());
     }
 
     return ast;

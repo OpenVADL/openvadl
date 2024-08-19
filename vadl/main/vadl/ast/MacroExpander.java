@@ -85,6 +85,10 @@ class MacroExpander
       return new StatementList(statements, statementList.location());
     } else if (node instanceof Statement statement) {
       return expandStatement(statement);
+    } else if (node instanceof Tuple tuple) {
+      var entries = new ArrayList<>(tuple.entries);
+      entries.replaceAll(this::expandNode);
+      return new Tuple(tuple.type, entries, tuple.sourceLocation);
     } else {
       return node;
     }
@@ -103,6 +107,13 @@ class MacroExpander
     return stmts;
   }
 
+  Annotations expandAnnotations(Annotations annotations) {
+    var list = new ArrayList<>(annotations.annotations());
+    list.replaceAll(annotation -> new Annotation(
+        annotation.expr().accept(this), annotation.type(), annotation.property()));
+    return new Annotations(list);
+  }
+
   @Override
   public Expr visit(Identifier expr) {
     return new Identifier(expr.name, expr.location());
@@ -111,7 +122,8 @@ class MacroExpander
   @Override
   public Expr visit(BinaryExpr expr) {
     // FIXME: Only if parent is not a binary operator cause otherwise it is O(n^2)
-    var operator = expr.operator instanceof PlaceholderExpr p ? p.accept(this) : expr.operator;
+    var operator = expr.operator instanceof PlaceholderNode p
+        ? resolveArg(p.segments) : expr.operator;
     var result = new BinaryExpr(expr.left.accept(this), (OperatorOrPlaceholder) operator,
         expr.right.accept(this));
     return BinaryExpr.reorder(result);
@@ -207,6 +219,9 @@ class MacroExpander
   @Override
   public Expr visit(CallExpr expr) {
     var target = (IsSymExpr) ((Expr) expr.target).accept(this);
+    var namedArguments = new ArrayList<>(expr.namedArguments);
+    namedArguments.replaceAll(namedArgument ->
+        new CallExpr.NamedArgument(namedArgument.name(), namedArgument.value().accept(this)));
     var argsIndices = new ArrayList<>(expr.argsIndices);
     argsIndices.replaceAll(this::expandExprs);
     var subCalls = new ArrayList<>(expr.subCalls);
@@ -215,7 +230,7 @@ class MacroExpander
       subCallArgsIndices.replaceAll(this::expandExprs);
       return new CallExpr.SubCall(subCall.id(), subCallArgsIndices);
     });
-    return new CallExpr(target, argsIndices, subCalls, expr.location);
+    return new CallExpr(target, namedArguments, argsIndices, subCalls, expr.location);
   }
 
   @Override
@@ -244,8 +259,9 @@ class MacroExpander
 
   @Override
   public Expr visit(SymbolExpr expr) {
+    var path = (IsId) ((Expr) expr.path).accept(this);
     var size = expr.size.accept(this);
-    return new SymbolExpr(expr.path, size, expr.location);
+    return new SymbolExpr(path, size, expr.location);
   }
 
   @Override
@@ -271,16 +287,24 @@ class MacroExpander
   @Override
   public Expr visit(ExtendIdExpr expr) {
     var name = new StringBuilder();
-    for (var inner : expr.expr.expressions) {
+    var expressions = expandExprs(expr.expr.expressions);
+    for (var inner : expressions) {
       if (inner instanceof Identifier id) {
         name.append(id.name);
       } else if (inner instanceof StringLiteral string) {
         name.append(string.value);
       } else {
-        name.append(inner.toString());
+        reportError("Unsupported 'ExtendId' parameter " + inner, inner.location());
+        name.append(inner);
       }
     }
     return new Identifier(name.toString(), expr.location());
+  }
+
+  @Override
+  public Expr visit(IdToStrExpr expr) {
+    var id = resolvePlaceholderOrIdentifier(expr.id);
+    return new StringLiteral(id, expr.location());
   }
 
   @Override
@@ -288,7 +312,7 @@ class MacroExpander
     var id = resolvePlaceholderOrIdentifier(definition.identifier);
     var value = definition.value.accept(this);
     return new ConstantDefinition(id, definition.type, value, definition.loc)
-        .withAnnotations(definition.annotations);
+        .withAnnotations(expandAnnotations(definition.annotations));
   }
 
   @Override
@@ -307,7 +331,7 @@ class MacroExpander
     });
     var id = resolvePlaceholderOrIdentifier(definition.identifier);
     return new FormatDefinition(id, definition.type, fields, definition.loc)
-        .withAnnotations(definition.annotations);
+        .withAnnotations(expandAnnotations(definition.annotations));
   }
 
   @Override
@@ -320,28 +344,28 @@ class MacroExpander
   public Definition visit(CounterDefinition definition) {
     var id = resolvePlaceholderOrIdentifier(definition.identifier);
     return new CounterDefinition(definition.kind, id, definition.type, definition.loc)
-        .withAnnotations(definition.annotations);
+        .withAnnotations(expandAnnotations(definition.annotations));
   }
 
   @Override
   public Definition visit(MemoryDefinition definition) {
     var id = resolvePlaceholderOrIdentifier(definition.identifier);
     return new MemoryDefinition(id, definition.addressType, definition.dataType, definition.loc)
-        .withAnnotations(definition.annotations);
+        .withAnnotations(expandAnnotations(definition.annotations));
   }
 
   @Override
   public Definition visit(RegisterDefinition definition) {
     var id = resolvePlaceholderOrIdentifier(definition.identifier);
     return new RegisterDefinition(id, definition.type, definition.loc)
-        .withAnnotations(definition.annotations);
+        .withAnnotations(expandAnnotations(definition.annotations));
   }
 
   @Override
   public Definition visit(RegisterFileDefinition definition) {
     var id = resolvePlaceholderOrIdentifier(definition.identifier);
     return new RegisterFileDefinition(id, definition.indexType, definition.registerType,
-        definition.loc).withAnnotations(definition.annotations);
+        definition.loc).withAnnotations(expandAnnotations(definition.annotations));
   }
 
   @Override
@@ -351,7 +375,16 @@ class MacroExpander
     var behavior = definition.behavior.accept(this);
 
     return new InstructionDefinition(identifier, typeId, behavior, definition.loc)
-        .withAnnotations(definition.annotations);
+        .withAnnotations(expandAnnotations(definition.annotations));
+  }
+
+  @Override
+  public Definition visit(PseudoInstructionDefinition definition) {
+    var identifier = resolvePlaceholderOrIdentifier(definition.identifier);
+    var behavior = definition.behavior.accept(this);
+
+    return new PseudoInstructionDefinition(identifier, definition.kind, definition.params, behavior,
+        definition.loc).withAnnotations(expandAnnotations(definition.annotations));
   }
 
   @Override
@@ -364,7 +397,7 @@ class MacroExpander
     }
 
     return new EncodingDefinition(instrId, new EncodingDefinition.FieldEncodings(fieldEncodings),
-        definition.loc).withAnnotations(definition.annotations);
+        definition.loc).withAnnotations(expandAnnotations(definition.annotations));
   }
 
   @Override
@@ -373,21 +406,21 @@ class MacroExpander
     identifiers.replaceAll(this::resolvePlaceholderOrIdentifier);
     var expr = definition.expr.accept(this);
     return new AssemblyDefinition(identifiers, expr, definition.loc)
-        .withAnnotations(definition.annotations);
+        .withAnnotations(expandAnnotations(definition.annotations));
   }
 
   @Override
   public Definition visit(UsingDefinition definition) {
     var id = resolvePlaceholderOrIdentifier(definition.id);
     return new UsingDefinition(id, definition.type, definition.loc)
-        .withAnnotations(definition.annotations);
+        .withAnnotations(expandAnnotations(definition.annotations));
   }
 
   @Override
   public Definition visit(FunctionDefinition definition) {
     var name = resolvePlaceholderOrIdentifier(definition.name);
     return new FunctionDefinition(name, definition.params, definition.retType,
-        definition.expr.accept(this), definition.loc).withAnnotations(definition.annotations);
+        definition.expr.accept(this), definition.loc).withAnnotations(expandAnnotations(definition.annotations));
   }
 
   @Override
@@ -546,8 +579,8 @@ class MacroExpander
     for (int i = 0; i < formalParams.size(); i++) {
       var formalParam = formalParams.get(i);
       var actualParam = expandNode(actualParams.get(i));
-      if (actualParam instanceof PlaceholderRecord placeholderRecord) {
-        actualParam = resolveArg(placeholderRecord.segments);
+      if (actualParam instanceof PlaceholderNode placeholderNode) {
+        actualParam = resolveArg(placeholderNode.segments);
       }
       if (actualParam.syntaxType().isSubTypeOf(formalParam.type())) {
         arguments.put(formalParam.name().name, actualParam);
@@ -571,16 +604,20 @@ class MacroExpander
   }
 
   private TypeLiteral resolveTypeLiteral(TypeLiteralOrPlaceholder type) {
-    return type instanceof PlaceholderExpr p
+    var typeLiteral = type instanceof PlaceholderExpr p
         ? new TypeLiteral(resolvePlaceholderOrIdentifier(p))
         : (TypeLiteral) type;
+    var baseType = (Identifier) ((Expr) typeLiteral.baseType).accept(this);
+    var sizeIndices = new ArrayList<>(typeLiteral.sizeIndices);
+    sizeIndices.replaceAll(this::expandExprs);
+    return new TypeLiteral(baseType, sizeIndices, typeLiteral.location());
   }
 
   private List<FieldEncodingOrPlaceholder> resolveEncs(FieldEncodingOrPlaceholder encodings) {
     if (encodings instanceof EncodingDefinition.FieldEncoding fieldEncoding) {
       return List.of(new EncodingDefinition.FieldEncoding(fieldEncoding.field(),
           fieldEncoding.value().accept(this)));
-    } else if (encodings instanceof PlaceholderExpr p) {
+    } else if (encodings instanceof PlaceholderNode p) {
       var arg = (EncodingDefinition.FieldEncodings) resolveArg(p.segments);
       return arg.encodings;
     } else if (encodings instanceof MacroMatchExpr macroMatchExpr) {
