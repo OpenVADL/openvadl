@@ -165,7 +165,7 @@ public class LlvmLoweringPassTest extends AbstractLcbTest {
         llvmResults =
         (IdentityHashMap<Instruction, LlvmLoweringPass.LlvmLoweringIntermediateResult>)
             passManager.getPassResults()
-                .get(new PassKey(LlvmLoweringPass.class.toString()));
+                .get(new PassKey(LlvmLoweringPass.class.getName()));
 
     // Then
     return spec.isas().flatMap(x -> x.instructions().stream())

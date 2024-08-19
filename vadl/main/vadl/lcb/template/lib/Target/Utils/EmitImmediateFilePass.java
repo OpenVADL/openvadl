@@ -52,15 +52,15 @@ public class EmitImmediateFilePass extends AbstractTemplateRenderingPass {
                                                 Specification specification) {
     var decodeVadlFunctions =
         (IdentityHashMap<Function, Function>) ensureNonNull(
-            passResults.get(new PassKey(CppTypeNormalizationForDecodingsPass.class.toString())),
+            passResults.get(new PassKey(CppTypeNormalizationForDecodingsPass.class.getName())),
             "decodings must exist");
     var encodeVadlFunctions =
         (IdentityHashMap<Function, Function>) ensureNonNull(
-            passResults.get(new PassKey(CppTypeNormalizationForEncodingsPass.class.toString())),
+            passResults.get(new PassKey(CppTypeNormalizationForEncodingsPass.class.getName())),
             "encodings must exist");
     var predicateVadlFunctions =
         (IdentityHashMap<Function, Function>) ensureNonNull(
-            passResults.get(new PassKey(CppTypeNormalizationForPredicatesPass.class.toString())),
+            passResults.get(new PassKey(CppTypeNormalizationForPredicatesPass.class.getName())),
             "predicates must exist");
 
     var decodeFunctions = generateDecodeFunctions(specification, decodeVadlFunctions);

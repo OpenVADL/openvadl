@@ -20,7 +20,7 @@ public class FieldNodeReplacementPassForDecoding extends FieldNodeReplacementPas
 
   @Override
   public PassName getName() {
-    return new PassName(FieldNodeReplacementPassForDecoding.class.toString());
+    return new PassName(FieldNodeReplacementPassForDecoding.class.getName());
   }
 
   @Override

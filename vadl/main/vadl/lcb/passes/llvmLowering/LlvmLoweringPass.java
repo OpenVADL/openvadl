@@ -69,13 +69,13 @@ public class LlvmLoweringPass extends Pass {
       throws IOException {
     IdentityHashMap<Instruction, Graph> uninlined =
         (IdentityHashMap<Instruction, Graph>) passResults.get(
-            new PassKey(FunctionInlinerPass.class.toString()));
+            new PassKey(FunctionInlinerPass.class.getName()));
     ensureNonNull(uninlined, "Inlined Function data must exist");
     IdentityHashMap<Instruction, LlvmLoweringIntermediateResult>
         llvmPatterns = new IdentityHashMap<>();
     var supportedInstructions =
         (HashMap<InstructionLabel, List<Instruction>>) passResults.get(
-            new PassKey(IsaMatchingPass.class.toString()));
+            new PassKey(IsaMatchingPass.class.getName()));
     ensure(supportedInstructions != null, "Cannot find pass results from IsaMatchPass");
 
     var instructionLookup = flipIsaMatching(supportedInstructions);

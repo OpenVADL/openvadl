@@ -61,7 +61,7 @@ public class IsaMatchingPassTest extends AbstractLcbTest {
     // When
     HashMap<InstructionLabel, List<Instruction>> matchings =
         (HashMap<InstructionLabel, List<Instruction>>) passManager.getPassResults()
-            .get(new PassKey(IsaMatchingPass.class.toString()));
+            .get(new PassKey(IsaMatchingPass.class.getName()));
 
     // Then
     Assertions.assertNotNull(matchings);

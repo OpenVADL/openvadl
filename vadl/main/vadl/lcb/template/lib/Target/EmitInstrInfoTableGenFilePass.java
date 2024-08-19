@@ -51,7 +51,7 @@ public class EmitInstrInfoTableGenFilePass extends AbstractTemplateRenderingPass
                                                 Specification specification) {
     Map<Instruction, LlvmLoweringPass.LlvmLoweringIntermediateResult> instructions =
         (Map<Instruction, LlvmLoweringPass.LlvmLoweringIntermediateResult>) ensureNonNull(
-            passResults.get(new PassKey(LlvmLoweringPass.class.toString())),
+            passResults.get(new PassKey(LlvmLoweringPass.class.getName())),
             "llvmLowering must exist");
 
     var tableGenRecords = instructions.entrySet().stream()

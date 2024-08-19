@@ -97,7 +97,7 @@ public class IsaMatchingPass extends Pass {
     // because the field accesses are uninlined.
     IdentityHashMap<Instruction, Graph> uninlined =
         (IdentityHashMap<Instruction, Graph>) passResults.get(
-            new PassKey(FunctionInlinerPass.class.toString()));
+            new PassKey(FunctionInlinerPass.class.getName()));
     ensureNonNull(uninlined, "Inlining data must exist");
     HashMap<InstructionLabel, List<Instruction>> matched = new HashMap<>();
 

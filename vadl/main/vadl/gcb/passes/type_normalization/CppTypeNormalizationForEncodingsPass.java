@@ -19,7 +19,7 @@ public class CppTypeNormalizationForEncodingsPass extends CppTypeNormalizationPa
 
   @Override
   public PassName getName() {
-    return new PassName(CppTypeNormalizationForEncodingsPass.class.toString());
+    return new PassName(CppTypeNormalizationForEncodingsPass.class.getName());
   }
 
   @Override
