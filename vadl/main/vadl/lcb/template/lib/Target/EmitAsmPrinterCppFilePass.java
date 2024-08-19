@@ -29,7 +29,8 @@ public class EmitAsmPrinterCppFilePass extends AbstractTemplateRenderingPass {
 
   @Override
   protected String getOutputPath() {
-    return "llvm/lib/Target/" + processorName.value() + "/" + processorName.value() + "AsmPrinter.cpp";
+    return "llvm/lib/Target/" + processorName.value() + "/" + processorName.value()
+        + "AsmPrinter.cpp";
   }
 
   @Override

@@ -29,7 +29,8 @@ public class EmitTargetObjectFileCppFilePass extends AbstractTemplateRenderingPa
 
   @Override
   protected String getOutputPath() {
-    return "llvm/lib/Target/" + processorName.value() + "/" + processorName.value() + "/ObjectFile.cpp";
+    return "llvm/lib/Target/" + processorName.value() + "/" + processorName.value()
+        + "/ObjectFile.cpp";
   }
 
   @Override

@@ -29,7 +29,8 @@ public class EmitTargetObjectFileHeaderFilePass extends AbstractTemplateRenderin
 
   @Override
   protected String getOutputPath() {
-    return "llvm/lib/Target/" + processorName.value() + "/" + processorName.value() + "/ObjectFile.h";
+    return "llvm/lib/Target/" + processorName.value() + "/" + processorName.value()
+        + "/ObjectFile.h";
   }
 
   @Override

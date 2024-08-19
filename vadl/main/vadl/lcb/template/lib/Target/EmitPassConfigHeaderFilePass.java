@@ -29,7 +29,8 @@ public class EmitPassConfigHeaderFilePass extends AbstractTemplateRenderingPass 
 
   @Override
   protected String getOutputPath() {
-    return "llvm/lib/Target/" + processorName.value() + "/" + processorName.value() + "PassConfig.h";
+    return "llvm/lib/Target/" + processorName.value() + "/" + processorName.value()
+        + "PassConfig.h";
   }
 
   @Override

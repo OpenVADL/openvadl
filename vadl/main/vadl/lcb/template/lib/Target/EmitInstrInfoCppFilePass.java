@@ -29,7 +29,8 @@ public class EmitInstrInfoCppFilePass extends AbstractTemplateRenderingPass {
 
   @Override
   protected String getOutputPath() {
-    return "llvm/lib/Target/" + processorName.value() + "/" + processorName.value() + "InstrInfo.cpp";
+    return "llvm/lib/Target/" + processorName.value() + "/" + processorName.value()
+        + "InstrInfo.cpp";
   }
 
   @Override

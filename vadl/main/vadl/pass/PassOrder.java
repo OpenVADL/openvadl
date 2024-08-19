@@ -12,6 +12,9 @@ import vadl.lcb.template.lib.Target.EmitMCInstLowerHeaderFilePass;
  * This class defines the order in which the {@link PassManager} should run them.
  */
 public final class PassOrder {
+  /**
+   * This is the pass order which must be executed to get a LLVM compiler.
+   */
   public static List<Pass> viamLcb(LcbConfiguration configuration, ProcessorName processorName)
       throws IOException {
     List<Pass> passes = new ArrayList<>();
