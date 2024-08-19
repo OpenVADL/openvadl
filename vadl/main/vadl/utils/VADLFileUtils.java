@@ -115,6 +115,12 @@ public class VADLFileUtils {
     }
   }
 
+  public static Path getTempDirectory(String prefix) throws IOException {
+    var dir = Files.createTempDirectory(prefix);
+    deleteDirectoryOnExit(dir.toFile());
+    return dir;
+  }
+
   private static void copyNormalDir(File from, File to,
                                     @Nullable
                                     Consumer<Pair<BufferedReader, Writer>> fileTransformer)

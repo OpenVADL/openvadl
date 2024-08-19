@@ -18,6 +18,7 @@ dependencies {
     implementation(platform("org.junit:junit-bom:5.10.2"))
     implementation("org.junit.jupiter:junit-jupiter")
     implementation("org.hamcrest:hamcrest:2.2")
+    implementation("org.yaml:snakeyaml:2.2")
 
     implementation("org.awaitility:awaitility:4.2.1")
     implementation("org.testcontainers:testcontainers:1.20.0")
