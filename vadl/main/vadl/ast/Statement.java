@@ -336,6 +336,23 @@ final class RaiseStatement extends Statement {
     builder.append("raise ");
     statement.prettyPrint(indent + 1, builder);
   }
+
+  @Override
+  public boolean equals(Object o) {
+    if (this == o) {
+      return true;
+    }
+    if (o == null || getClass() != o.getClass()) {
+      return false;
+    }
+    RaiseStatement that = (RaiseStatement) o;
+    return Objects.equals(statement, that.statement);
+  }
+
+  @Override
+  public int hashCode() {
+    return Objects.hash(statement, location);
+  }
 }
 
 final class CallStatement extends Statement {
@@ -354,6 +371,23 @@ final class CallStatement extends Statement {
   @Override
   void prettyPrint(int indent, StringBuilder builder) {
     expr.prettyPrint(indent, builder);
+  }
+
+  @Override
+  public boolean equals(Object o) {
+    if (this == o) {
+      return true;
+    }
+    if (o == null || getClass() != o.getClass()) {
+      return false;
+    }
+    CallStatement that = (CallStatement) o;
+    return Objects.equals(expr, that.expr);
+  }
+
+  @Override
+  public int hashCode() {
+    return Objects.hashCode(expr);
   }
 }
 

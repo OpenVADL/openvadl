@@ -336,18 +336,21 @@ class SymbolTable {
     }
 
     static void collectSymbols(SymbolTable symbols, Statement stmt) {
+      if (stmt.symbolTable != null) {
+        throw new IllegalStateException("Tried to populate already set symbol table " + stmt);
+      }
       stmt.symbolTable = symbols;
       if (stmt instanceof BlockStatement block) {
         for (Statement inner : block.statements) {
           collectSymbols(symbols, inner);
         }
       } else if (stmt instanceof LetStatement let) {
-        let.symbolTable = symbols.createChild();
-        for (var identifier : let.identifiers) {
-          let.symbolTable.defineConstant(identifier.name, identifier.location());
-        }
         collectSymbols(symbols, let.valueExpression);
-        collectSymbols(let.symbolTable, let.body);
+        var child = symbols.createChild();
+        for (var identifier : let.identifiers) {
+          child.defineConstant(identifier.name, identifier.location());
+        }
+        collectSymbols(child, let.body);
       } else if (stmt instanceof IfStatement ifStmt) {
         collectSymbols(symbols, ifStmt.condition);
         collectSymbols(symbols, ifStmt.thenStmt);
@@ -567,24 +570,20 @@ class SymbolTable {
         verifyUsages(cast.value);
       } else if (expr instanceof CallExpr call) {
         if (!call.namedArguments.isEmpty()) {
-          var pseudoInstruction = call.symbolTable()
-              .findPseudoInstruction((Identifier) call.target.path());
-          if (pseudoInstruction == null) {
-            call.symbolTable()
-                .reportError("Unknown pseudo instruction " + call.target.path().pathToString(),
-                    call.location);
-          } else {
+          var format = call.symbolTable()
+              .requireInstructionFormat((Identifier) call.target.path());
+          if (format != null) {
             for (var namedArgument : call.namedArguments) {
-              PseudoInstructionDefinition.Param foundParam = null;
-              for (var param : pseudoInstruction.params) {
-                if (param.id().name.equals(namedArgument.name().name)) {
-                  foundParam = param;
+              FormatDefinition.FormatField foundField = null;
+              for (var field : format.definition().fields) {
+                if (field.identifier().name.equals(namedArgument.name().name)) {
+                  foundField = field;
                   break;
                 }
               }
-              if (foundParam == null) {
+              if (foundField == null) {
                 call.symbolTable()
-                    .reportError("Unknown pseudo instruction param " + namedArgument.name().name,
+                    .reportError("Unknown format field " + namedArgument.name().name,
                         namedArgument.name().location());
               }
               verifyUsages(namedArgument.value());

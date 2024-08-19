@@ -93,6 +93,8 @@ class Ungrouper
   @Override
   public Expr visit(CallExpr expr) {
     expr.target = (IsSymExpr) ((Expr) expr.target).accept(this);
+    expr.namedArguments.replaceAll(namedArgument ->
+        new CallExpr.NamedArgument(namedArgument.name(), namedArgument.value().accept(this)));
     var argsIndices = expr.argsIndices;
     expr.argsIndices = new ArrayList<>(argsIndices.size());
     for (var entry : argsIndices) {

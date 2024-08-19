@@ -544,7 +544,11 @@ PRODUCTIONS
       SYM_COMMA
       identifier<out Identifier nextId> (. identifiers.add(nextId); .)
     }
-    SYM_EQ expression<out Expr valueExpr, BIN_OPS_EXCEPT_IN>
+    SYM_EQ                              (. Expr valueExpr = null; .)
+    ( IF (la.kind == _KW_IF)
+      ifExpression<out valueExpr, BIN_OPS_EXCEPT_IN>
+    | expression<out valueExpr, BIN_OPS_EXCEPT_IN>
+    )
     SYM_IN
     statement<out Statement body>       (. letStatement = new LetStatement(identifiers, valueExpr, body, start.join(loc())); .)
   .

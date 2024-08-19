@@ -89,6 +89,8 @@ class MacroExpander
       var entries = new ArrayList<>(tuple.entries);
       entries.replaceAll(this::expandNode);
       return new Tuple(tuple.type, entries, tuple.sourceLocation);
+    } else if (node instanceof EncodingDefinition.FieldEncodings encs) {
+      return resolveEncs(encs);
     } else {
       return node;
     }
@@ -157,14 +159,6 @@ class MacroExpander
   @Override
   public Expr visit(PlaceholderExpr expr) {
     Node arg = resolveArg(expr.segments);
-    if (arg instanceof Identifier id) {
-      return id.accept(this);
-    } else if (arg instanceof IntegerLiteral lit) {
-      return lit;
-    } else if (arg instanceof OperatorExpr op) {
-      return op;
-    }
-
     return ((Expr) arg).accept(this);
   }
 
@@ -390,14 +384,10 @@ class MacroExpander
   @Override
   public Definition visit(EncodingDefinition definition) {
     var instrId = resolvePlaceholderOrIdentifier(definition.instrIdentifier);
-    var fieldEncodings =
-        new ArrayList<FieldEncodingOrPlaceholder>(definition.fieldEncodings.encodings.size());
-    for (var enc : definition.fieldEncodings.encodings) {
-      fieldEncodings.addAll(resolveEncs(enc));
-    }
+    var fieldEncodings = resolveEncs(definition.fieldEncodings);
 
-    return new EncodingDefinition(instrId, new EncodingDefinition.FieldEncodings(fieldEncodings),
-        definition.loc).withAnnotations(expandAnnotations(definition.annotations));
+    return new EncodingDefinition(instrId, fieldEncodings, definition.loc)
+        .withAnnotations(expandAnnotations(definition.annotations));
   }
 
   @Override
@@ -520,7 +510,7 @@ class MacroExpander
   @Override
   public Statement visit(PlaceholderStatement statement) {
     var arg = resolveArg(statement.segments);
-    return (Statement) arg;
+    return ((Statement) arg).accept(this);
   }
 
   @Override
@@ -581,7 +571,7 @@ class MacroExpander
       var formalParam = formalParams.get(i);
       var actualParam = expandNode(actualParams.get(i));
       if (actualParam instanceof PlaceholderNode placeholderNode) {
-        actualParam = resolveArg(placeholderNode.segments);
+        actualParam = expandNode(resolveArg(placeholderNode.segments));
       }
       if (actualParam.syntaxType().isSubTypeOf(formalParam.type())) {
         arguments.put(formalParam.name().name, actualParam);
@@ -597,7 +587,7 @@ class MacroExpander
 
   private Identifier resolvePlaceholderOrIdentifier(IdentifierOrPlaceholder idOrPlaceholder) {
     if (idOrPlaceholder instanceof Identifier id) {
-      return id;
+      return (Identifier) id.accept(this);
     } else if (idOrPlaceholder instanceof Expr expr) {
       return (Identifier) expr.accept(this);
     }
@@ -614,18 +604,27 @@ class MacroExpander
     return new TypeLiteral(baseType, sizeIndices, typeLiteral.location());
   }
 
-  private List<FieldEncodingOrPlaceholder> resolveEncs(FieldEncodingOrPlaceholder encodings) {
-    if (encodings instanceof EncodingDefinition.FieldEncoding fieldEncoding) {
+
+  private EncodingDefinition.FieldEncodings resolveEncs(EncodingDefinition.FieldEncodings encs) {
+    var fieldEncodings = new ArrayList<FieldEncodingOrPlaceholder>(encs.encodings.size());
+    for (var enc : encs.encodings) {
+      fieldEncodings.addAll(resolveEnc(enc));
+    }
+    return new EncodingDefinition.FieldEncodings(fieldEncodings);
+  }
+
+  private List<FieldEncodingOrPlaceholder> resolveEnc(FieldEncodingOrPlaceholder encoding) {
+    if (encoding instanceof EncodingDefinition.FieldEncoding fieldEncoding) {
       return List.of(new EncodingDefinition.FieldEncoding(fieldEncoding.field(),
           fieldEncoding.value().accept(this)));
-    } else if (encodings instanceof PlaceholderNode p) {
+    } else if (encoding instanceof PlaceholderNode p) {
       var arg = (EncodingDefinition.FieldEncodings) resolveArg(p.segments);
       return arg.encodings;
-    } else if (encodings instanceof MacroMatchExpr macroMatchExpr) {
+    } else if (encoding instanceof MacroMatchExpr macroMatchExpr) {
       var match = (EncodingDefinition.FieldEncodings) resolveMacroMatch(macroMatchExpr.macroMatch);
       return match.encodings;
     }
-    return List.of(encodings);
+    return List.of(encoding);
   }
 
   private Node resolveMacroMatch(MacroMatch macroMatch) {

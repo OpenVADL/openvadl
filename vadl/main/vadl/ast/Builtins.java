@@ -2,8 +2,29 @@ package vadl.ast;
 
 class Builtins {
   static final String[] BUILTIN_FUNCTIONS = new String[] {
-      "register", "decimal", "hex", "VADL::div", "VADL::mod", "VADL::ror", "VADL::adds",
-      "VADL::subsc", "VADL::addc", "VADL::mul", "VADL::add", "VADL::sub", "VADL::xor", "VADL::or",
-      "VADL::and", "VADL::not", "VADL::ands", "VADL::subc", "VADL::asr", "VADL::lsl", "VADL::lsr"
+      "decimal",
+      "hex",
+      "register",
+      "VADL::add",
+      "VADL::addc",
+      "VADL::adds",
+      "VADL::and",
+      "VADL::ands",
+      "VADL::asr",
+      "VADL::div",
+      "VADL::equ",
+      "VADL::lsl",
+      "VADL::lsr",
+      "VADL::mod",
+      "VADL::mul",
+      "VADL::neg",
+      "VADL::neq",
+      "VADL::not",
+      "VADL::or",
+      "VADL::ror",
+      "VADL::sub",
+      "VADL::subc",
+      "VADL::subsc",
+      "VADL::xor"
   };
 }
