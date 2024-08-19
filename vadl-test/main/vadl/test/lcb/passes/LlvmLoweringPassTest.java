@@ -5,7 +5,6 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.IdentityHashMap;
 import java.util.List;
-import java.util.Map;
 import java.util.Optional;
 import java.util.stream.Stream;
 import org.junit.jupiter.api.Assertions;
@@ -13,24 +12,20 @@ import org.junit.jupiter.api.DynamicTest;
 import org.junit.jupiter.api.TestFactory;
 import vadl.gcb.valuetypes.ProcessorName;
 import vadl.lcb.config.LcbConfiguration;
-import vadl.lcb.passes.isaMatching.InstructionLabel;
-import vadl.lcb.passes.isaMatching.IsaMatchingPass;
 import vadl.lcb.passes.llvmLowering.LlvmLoweringPass;
 import vadl.lcb.passes.llvmLowering.model.LlvmCondCode;
 import vadl.lcb.tablegen.lowering.TableGenPatternVisitor;
 import vadl.lcb.tablegen.model.TableGenInstructionOperand;
 import vadl.lcb.tablegen.model.TableGenPattern;
-import vadl.pass.Pass;
 import vadl.pass.PassKey;
 import vadl.pass.PassManager;
 import vadl.pass.PassOrder;
 import vadl.pass.exception.DuplicatedPassKeyException;
 import vadl.test.AbstractTest;
+import vadl.test.lcb.AbstractLcbTest;
 import vadl.viam.Instruction;
-import vadl.viam.passes.FunctionInlinerPass;
-import vadl.viam.passes.typeCastElimination.TypeCastEliminationPass;
 
-public class LlvmLoweringPassTest extends AbstractTest {
+public class LlvmLoweringPassTest extends AbstractLcbTest {
 
   record TestOutput(List<TableGenInstructionOperand> inputs,
                     List<TableGenInstructionOperand> outputs,
@@ -161,13 +156,9 @@ public class LlvmLoweringPassTest extends AbstractTest {
   @TestFactory
   Stream<DynamicTest> testLowering() throws IOException, DuplicatedPassKeyException {
     // Given
-    var spec = runAndGetViamSpecification("examples/rv3264im.vadl");
-
-    var passManager = new PassManager();
-    passManager.add(
-        PassOrder.viamLcb(new LcbConfiguration("test"), new ProcessorName("dummyNamespaceValue")));
-
-    passManager.run(spec);
+    var setup = setupPassManagerAndRunSpec("examples/rv3264im.vadl");
+    var passManager = setup.left();
+    var spec = setup.right();
 
     // When
     IdentityHashMap<Instruction, LlvmLoweringPass.LlvmLoweringIntermediateResult>

@@ -18,13 +18,11 @@ import vadl.pass.PassKey;
 import vadl.pass.PassManager;
 import vadl.pass.PassOrder;
 import vadl.pass.exception.DuplicatedPassKeyException;
-import vadl.test.AbstractTest;
+import vadl.test.lcb.AbstractLcbTest;
 import vadl.viam.Definition;
 import vadl.viam.Instruction;
 
-public class IsaMatchingPassTest extends AbstractTest {
-
-  IsaMatchingPass pass = new IsaMatchingPass();
+public class IsaMatchingPassTest extends AbstractLcbTest {
 
   private static Stream<Arguments> getExpectedMatchings() {
     return Stream.of(
@@ -57,13 +55,8 @@ public class IsaMatchingPassTest extends AbstractTest {
   void shouldFindMatchings(List<String> expectedInstructionName, InstructionLabel label)
       throws IOException, DuplicatedPassKeyException {
     // Given
-    var spec = runAndGetViamSpecification("examples/rv3264im.vadl");
-
-    var passManager = new PassManager();
-    passManager.add(
-        PassOrder.viamLcb(new LcbConfiguration("test"), new ProcessorName("dummyNamespaceValue")));
-
-    passManager.run(spec);
+    var setup = setupPassManagerAndRunSpec("examples/rv3264im.vadl");
+    var passManager = setup.left();
 
     // When
     HashMap<InstructionLabel, List<Instruction>> matchings =
