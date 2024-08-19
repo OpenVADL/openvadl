@@ -103,6 +103,8 @@ TOKENS
   ID_TO_STR = "IdToStr".
   PSEUDO = "pseudo".
   KW_COMPILER = "compiler".
+  PREDICATE = "predicate".
+  ENCODE = "encode".
 
   SYM_IN = "in".
   SYM_AS = "as".
@@ -239,27 +241,48 @@ PRODUCTIONS
     expression<out Expr expr, BIN_OPS>           (. def = new ConstantDefinition(id, type, expr, startLocation.join(loc())); .)
   .
 
-  formatDefinition<out FormatDefinition def>                     (. List<FormatDefinition.FormatField> fields = new ArrayList<>();.)
+  formatDefinition<out FormatDefinition def>
   = FORMAT                                                       (. var startLoc = loc(); .)
-  identifierOrPlaceholder<out IdentifierOrPlaceholder id>
-  SYM_COLON typeLiteral<out TypeLiteral type>
+  identifierOrPlaceholder<out IdentifierOrPlaceholder id>        (. var fields = new ArrayList<FormatDefinition.FormatField>();.)
+  SYM_COLON typeLiteral<out TypeLiteral type>                    (. var auxFields = new ArrayList<FormatDefinition.AuxiliaryField>();.)
   [
     SYM_EQ SYM_BRACE_OPEN
     formatField<out FormatDefinition.FormatField f1>             (. fields.add(f1); .)
     {
       SYM_COMMA formatField<out FormatDefinition.FormatField f2> (. fields.add(f2); .)
     }
+    {
+      SYM_COLON
+      auxiliaryField<out FormatDefinition.AuxiliaryField aux>    (. auxFields.add(aux); .)
+    }
     SYM_BRACE_CLOSE
-  ]                                                              (. def = new FormatDefinition(id, type, fields, startLoc.join(loc())); .)
+  ]                                                              (. def = new FormatDefinition(id, type, fields, auxFields, startLoc.join(loc())); .)
   .
 
-  // TODO Auxiliary fields ": predicate" and ": encode" are missing
   formatField<out FormatDefinition.FormatField field>             (. field = null; .)
   = identifier<out Identifier id>
     ( formatFieldRange<out field, id>
     | formatFieldType<out field, id>
     | formatFieldDerived<out field, id>
     )
+  .
+
+  auxiliaryField<out FormatDefinition.AuxiliaryField auxField> (. FormatDefinition.AuxiliaryFieldKind kind = null; .)
+  = (
+    PREDICATE                                                  (. kind = FormatDefinition.AuxiliaryFieldKind.PREDICATE; .)
+  | ENCODE                                                     (. kind = FormatDefinition.AuxiliaryFieldKind.ENCODE; .)
+  )
+    SYM_BRACE_OPEN                                             (. var auxEntries = new ArrayList<FormatDefinition.AuxiliaryFieldEntry>(); .)
+    identifier<out Identifier fieldId>
+    SYM_BIGARROW
+    expression<out Expr fieldExpr, BIN_OPS>                    (. auxEntries.add(new FormatDefinition.AuxiliaryFieldEntry(fieldId, fieldExpr)); .)
+    {
+      SYM_COMMA
+      identifier<out fieldId>
+      SYM_BIGARROW
+      expression<out fieldExpr, BIN_OPS>                       (. auxEntries.add(new FormatDefinition.AuxiliaryFieldEntry(fieldId, fieldExpr)); .)
+    }
+    SYM_BRACE_CLOSE                                            (. auxField = new FormatDefinition.AuxiliaryField(kind, auxEntries); .)
   .
 
   formatFieldRange<out FormatDefinition.FormatField field, Identifier id>
@@ -529,8 +552,8 @@ PRODUCTIONS
   = { statement<out Statement statement>     (. stmts.add(statement); .) }
   .
 
-  assignmentOrCallStmt<out Statement statement> (. statement = null; Expr target = null; .)
-  = callOrBinaryExpression<out target, false>
+  assignmentOrCallStmt<out Statement statement> (. statement = null; .)
+  = callOrBinaryExpression<out Expr target, false>
     [
       SYM_ASSIGN
       expression<out Expr expr, BIN_OPS>        (. statement = new AssignmentStatement(target, expr); .)

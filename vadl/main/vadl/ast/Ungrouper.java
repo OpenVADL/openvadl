@@ -95,6 +95,9 @@ class Ungrouper
     expr.target = (IsSymExpr) ((Expr) expr.target).accept(this);
     expr.namedArguments.replaceAll(namedArgument ->
         new CallExpr.NamedArgument(namedArgument.name(), namedArgument.value().accept(this)));
+    for (CallExpr.NamedArgument namedArgument : expr.namedArguments) {
+      namedArgument.value().accept(this);
+    }
     var argsIndices = expr.argsIndices;
     expr.argsIndices = new ArrayList<>(argsIndices.size());
     for (var entry : argsIndices) {
@@ -199,6 +202,10 @@ class Ungrouper
       } else if (field instanceof FormatDefinition.DerivedFormatField f) {
         f.expr = f.expr.accept(this);
       }
+    }
+    for (FormatDefinition.AuxiliaryField auxiliaryField : definition.auxiliaryFields) {
+      auxiliaryField.entries().replaceAll(entry ->
+          new FormatDefinition.AuxiliaryFieldEntry(entry.id(), entry.expr().accept(this)));
     }
     return definition;
   }

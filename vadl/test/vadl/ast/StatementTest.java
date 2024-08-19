@@ -115,6 +115,7 @@ public class StatementTest {
                 new Identifier("bits", loc),
                 List.of(new RangeExpr(new IntegerLiteral("31", loc), new IntegerLiteral("0", loc)))
             )),
+            List.of(),
             loc
         ),
         new InstructionDefinition(

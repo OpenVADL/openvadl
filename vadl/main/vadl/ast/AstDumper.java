@@ -93,6 +93,12 @@ public class AstDumper
         dumpChildren(f.identifier, f.expr);
       }
     }
+    for (var auxField : definition.auxiliaryFields) {
+      for (FormatDefinition.AuxiliaryFieldEntry entry : auxField.entries()) {
+        dumpChildren(entry.id());
+        dumpChildren(entry.expr());
+      }
+    }
     this.indent--;
     return null;
   }

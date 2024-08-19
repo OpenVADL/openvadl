@@ -323,8 +323,15 @@ class MacroExpander
         return field;
       }
     });
+    var auxFields = new ArrayList<>(definition.auxiliaryFields);
+    auxFields.replaceAll(auxField -> {
+      var entries = new ArrayList<>(auxField.entries());
+      entries.replaceAll(entry ->
+          new FormatDefinition.AuxiliaryFieldEntry(entry.id(), entry.expr().accept(this)));
+      return new FormatDefinition.AuxiliaryField(auxField.kind(), entries);
+    });
     var id = resolvePlaceholderOrIdentifier(definition.identifier);
-    return new FormatDefinition(id, definition.type, fields, definition.loc)
+    return new FormatDefinition(id, definition.type, fields, auxFields, definition.loc)
         .withAnnotations(expandAnnotations(definition.annotations));
   }
 

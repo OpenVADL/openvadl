@@ -1,5 +1,10 @@
 constant a = 5
+
 constant b = 3
+
 constant c = (a + b)
+
 constant d = (a / b)
+
 constant e = (a * b)
+

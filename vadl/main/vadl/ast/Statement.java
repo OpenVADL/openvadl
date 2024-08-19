@@ -94,7 +94,7 @@ final class BlockStatement extends Statement {
     builder.append("{\n");
     statements.forEach(statement -> statement.prettyPrint(indent + 1, builder));
     builder.append(prettyIndentString(indent));
-    builder.append("}");
+    builder.append("}\n");
   }
 
   @Override
@@ -370,6 +370,7 @@ final class CallStatement extends Statement {
 
   @Override
   void prettyPrint(int indent, StringBuilder builder) {
+    builder.append(prettyIndentString(indent));
     expr.prettyPrint(indent, builder);
   }
 
