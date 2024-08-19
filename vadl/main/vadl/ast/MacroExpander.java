@@ -218,7 +218,6 @@ class MacroExpander
 
   @Override
   public Expr visit(CallExpr expr) {
-    var target = (IsSymExpr) ((Expr) expr.target).accept(this);
     var namedArguments = new ArrayList<>(expr.namedArguments);
     namedArguments.replaceAll(namedArgument ->
         new CallExpr.NamedArgument(namedArgument.name(), namedArgument.value().accept(this)));
@@ -230,6 +229,7 @@ class MacroExpander
       subCallArgsIndices.replaceAll(this::expandExprs);
       return new CallExpr.SubCall(subCall.id(), subCallArgsIndices);
     });
+    var target = (IsSymExpr) ((Expr) expr.target).accept(this);
     return new CallExpr(target, namedArguments, argsIndices, subCalls, expr.location);
   }
 
@@ -420,7 +420,8 @@ class MacroExpander
   public Definition visit(FunctionDefinition definition) {
     var name = resolvePlaceholderOrIdentifier(definition.name);
     return new FunctionDefinition(name, definition.params, definition.retType,
-        definition.expr.accept(this), definition.loc).withAnnotations(expandAnnotations(definition.annotations));
+        definition.expr.accept(this), definition.loc
+    ).withAnnotations(expandAnnotations(definition.annotations));
   }
 
   @Override

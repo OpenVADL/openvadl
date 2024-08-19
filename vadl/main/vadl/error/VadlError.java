@@ -53,10 +53,10 @@ public class VadlError {
       return false;
     }
     VadlError vadlError = (VadlError) o;
-    return Objects.equals(reason, vadlError.reason) &&
-        Objects.equals(location, vadlError.location) &&
-        Objects.equals(description, vadlError.description) &&
-        Objects.equals(tip, vadlError.tip);
+    return Objects.equals(reason, vadlError.reason)
+        && Objects.equals(location, vadlError.location)
+        && Objects.equals(description, vadlError.description)
+        && Objects.equals(tip, vadlError.tip);
   }
 
   @Override
