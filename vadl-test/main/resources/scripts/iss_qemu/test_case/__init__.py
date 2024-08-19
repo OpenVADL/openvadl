@@ -23,7 +23,7 @@ class TestSpec:
     """Specifies a test case"""
     id: str
     asm_core: str
-    reg_tests: {str: str}
+    reg_tests: Dict[str, str]
 
 
 RegResultType = Dict[str, Dict[Literal['expected', 'actual'], str]]

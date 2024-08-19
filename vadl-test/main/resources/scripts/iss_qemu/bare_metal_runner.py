@@ -1,40 +1,45 @@
 import time
 import asyncio
 import traceback
+from dataclasses import dataclass
+from typing import List
+
+import yaml
 
 from test_case import TestCase, TestSpec
 
 
-async def main():
-    test_specs = [TestSpec(
-        id=str(i), reg_tests={'a0': 'Abcdef9876543210'},
-        asm_core="""
-        li a0, 0xABCDEF9876543210
-        li a1, 0x10000000
-        li a2, 0xFFFFFF0001000FFF
-        """
+@dataclass
+class TestSuiteConfig:
+    tests: List[TestSpec]
 
-    ) for i in range(1)]
-    test_cases = [TestCase(spec, 1200 + i) for (i, spec) in enumerate(test_specs)]
+
+async def main():
+    test_config = load_test_config("test-suite.yaml")
+
+    # produces testcases
+    test_cases = [TestCase(spec, 1200 + i) for (i, spec) in enumerate(test_config.tests)]
+
     start_time = time.time()
 
     # Create a semaphore to limit concurrent test cases
     semaphore = asyncio.Semaphore(10)
 
+    # define how tests should be executed
     async def run_test(test_case):
         async with semaphore:
             print(f"Start test case {test_case.spec.id}...")
-            start_time = time.time()
+            test_start_time = time.time()
             try:
                 await test_case.compile_and_link()
                 await test_case.exec()
             except Exception as e:
                 test_case.test_result.status = 'FAIL'
-                test_case.test_result.errors.append(repr(e))
+                test_case.test_result.errors.append(str(e))
                 print(traceback.format_exc())
             finally:
-                end_time = time.time()
-                test_case.test_result.duration = f"{(end_time - start_time) * 1000:.2f}ms"
+                test_end_time = time.time()
+                test_case.test_result.duration = f"{(test_end_time - test_start_time) * 1000:.2f}ms"
                 print(f"Finish test case {test_case.spec.id} in {test_case.test_result.duration}")
                 await test_case.emit_result(dir="results", prefix="result-")
 
@@ -46,6 +51,13 @@ async def main():
 
     end_time = time.time()
     print(f"Total time: {end_time - start_time:.3f}s")
+
+
+def load_test_config(filename: str) -> TestSuiteConfig:
+    with open(filename, 'r') as file:
+        data = yaml.safe_load(file)  # Load the YAML file
+        tests = [TestSpec(**test) for test in data['tests']]  # Create TestSpec instances
+        return TestSuiteConfig(tests=tests)  # Create TestSuiteConfig instance
 
 
 if __name__ == "__main__":
