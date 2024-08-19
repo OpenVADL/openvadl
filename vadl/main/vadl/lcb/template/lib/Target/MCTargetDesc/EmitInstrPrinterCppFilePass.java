@@ -1,4 +1,4 @@
-package vadl.lcb.lib.Target.MCTargetDesc;
+package vadl.lcb.template.lib.Target.MCTargetDesc;
 
 import java.io.IOException;
 import java.util.List;

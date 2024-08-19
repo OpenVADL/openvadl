@@ -1,4 +1,4 @@
-package vadl.lcb.lib.Target.AsmParser;
+package vadl.lcb.template.lib.Target.AsmParser;
 
 import java.io.IOException;
 import java.util.Map;

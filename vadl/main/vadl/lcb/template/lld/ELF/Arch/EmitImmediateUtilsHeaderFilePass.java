@@ -1,4 +1,4 @@
-package vadl.lcb.lld.ELF.Arch;
+package vadl.lcb.template.lld.ELF.Arch;
 
 import java.io.IOException;
 import java.util.Map;

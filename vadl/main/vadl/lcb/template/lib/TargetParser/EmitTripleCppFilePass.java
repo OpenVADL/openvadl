@@ -1,4 +1,4 @@
-package vadl.lcb.lib.TargetParser;
+package vadl.lcb.template.lib.TargetParser;
 
 import java.io.IOException;
 import java.util.Map;
