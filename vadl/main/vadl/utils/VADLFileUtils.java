@@ -231,11 +231,11 @@ public class VADLFileUtils {
    * Creates a directory and schedules it for deletion.
    */
   public static Path createTempDirectory(String prefix) throws IOException {
-    var directory = Files.createTempDirectory(prefix);
+    var directory = Files.createTempDirectory("OpenVADL-" + prefix);
     deleteDirectoryOnExit(new File(String.valueOf(directory)));
     return directory;
   }
-  
+
 }
 
 
