@@ -4,7 +4,6 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Objects;
 import vadl.error.VadlError;
 import vadl.error.VadlException;
 import vadl.utils.SourceLocation;
@@ -267,6 +266,21 @@ class MacroExpander
     cases.replaceAll(matchCase -> new MatchExpr.Case(expandExprs(matchCase.patterns()),
         matchCase.result().accept(this)));
     return new MatchExpr(candidate, cases, defaultResult, expr.loc);
+  }
+
+  @Override
+  public Expr visit(ExtendIdExpr expr) {
+    var name = new StringBuilder();
+    for (var inner : expr.expr.expressions) {
+      if (inner instanceof Identifier id) {
+        name.append(id.name);
+      } else if (inner instanceof StringLiteral string) {
+        name.append(string.value);
+      } else {
+        name.append(inner.toString());
+      }
+    }
+    return new Identifier(name.toString(), expr.location());
   }
 
   @Override
@@ -538,11 +552,10 @@ class MacroExpander
   }
 
   private Identifier resolvePlaceholderOrIdentifier(IdentifierOrPlaceholder idOrPlaceholder) {
-    if (idOrPlaceholder instanceof PlaceholderExpr p) {
-      return (Identifier) p.accept(this);
-    }
     if (idOrPlaceholder instanceof Identifier id) {
       return id;
+    } else if (idOrPlaceholder instanceof Expr expr) {
+      return (Identifier) expr.accept(this);
     }
     throw new IllegalStateException("Unknown resolved placeholder type " + idOrPlaceholder);
   }

@@ -55,6 +55,8 @@ interface ExprVisitor<R> {
   R visit(MacroMatchExpr expr);
 
   R visit(MatchExpr expr);
+
+  R visit(ExtendIdExpr expr);
 }
 
 final class Identifier extends Expr implements IsId, IdentifierOrPlaceholder {
@@ -732,8 +734,7 @@ class StringLiteral extends Expr {
 }
 
 sealed interface IdentifierOrPlaceholder extends IsId
-    permits Identifier, PlaceholderExpr, MacroInstanceExpr, MacroMatchExpr {
-  void prettyPrint(int indent, StringBuilder builder);
+    permits Identifier, MacroInstanceExpr, MacroMatchExpr, PlaceholderExpr, ExtendIdExpr {
 }
 
 /**
@@ -937,6 +938,67 @@ final class MacroMatchExpr extends Expr implements IdentifierOrPlaceholder,
 }
 
 /**
+ * An internal temporary node representing the ExtendId built-in.
+ * This node should never leave the parser.
+ */
+final class ExtendIdExpr extends Expr
+    implements IdentifierOrPlaceholder, TypeLiteralOrPlaceholder, IsId {
+  GroupedExpr expr;
+  SourceLocation loc;
+
+  ExtendIdExpr(GroupedExpr expr, SourceLocation loc) {
+    this.expr = expr;
+    this.loc = loc;
+  }
+
+  @Override
+  <R> R accept(ExprVisitor<R> visitor) {
+    return visitor.visit(this);
+  }
+
+  @Override
+  public SourceLocation location() {
+    return loc;
+  }
+
+  @Override
+  SyntaxType syntaxType() {
+    return BasicSyntaxType.ID;
+  }
+
+  @Override
+  public void prettyPrint(int indent, StringBuilder builder) {
+    builder.append("ExtendId ");
+    expr.prettyPrint(0, builder);
+  }
+
+  @Override
+  public boolean equals(Object o) {
+    if (this == o) {
+      return true;
+    }
+    if (o == null || getClass() != o.getClass()) {
+      return false;
+    }
+
+    ExtendIdExpr that = (ExtendIdExpr) o;
+    return expr.equals(that.expr);
+  }
+
+  @Override
+  public int hashCode() {
+    return expr.hashCode();
+  }
+
+  @Override
+  public String pathToString() {
+    var sb = new StringBuilder();
+    prettyPrint(0, sb);
+    return sb.toString();
+  }
+}
+
+/**
  * A grouped expression.
  * Grouped expressions can either be single expressions wrapped in parantheses like {@code (1 + 2)},
  * or multiple expressions separated by a comma like {@code (a, 1 + 2, c())}.
@@ -1057,7 +1119,7 @@ class RangeExpr extends Expr {
 }
 
 sealed interface TypeLiteralOrPlaceholder
-    permits TypeLiteral, PlaceholderExpr, MacroInstanceExpr, MacroMatchExpr {
+    permits ExtendIdExpr, MacroInstanceExpr, MacroMatchExpr, PlaceholderExpr, TypeLiteral {
 }
 
 /**
@@ -1183,8 +1245,8 @@ sealed interface IsSymExpr extends IsCallExpr permits SymbolExpr, IsId {
 }
 
 sealed interface IsId extends IsSymExpr
-    permits IdentifierPath, Identifier, PlaceholderExpr, MacroInstanceExpr, MacroMatchExpr,
-    IdentifierOrPlaceholder {
+    permits ExtendIdExpr, Identifier, IdentifierOrPlaceholder, IdentifierPath, MacroInstanceExpr,
+    MacroMatchExpr, PlaceholderExpr {
   @Override
   default IsId path() {
     return this;

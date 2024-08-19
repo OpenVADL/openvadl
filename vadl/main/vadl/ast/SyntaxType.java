@@ -171,8 +171,8 @@ class ProjectionType implements SyntaxType {
 
   @Override
   public String toString() {
-    return arguments.stream().map(Object::toString).collect(Collectors.joining(", ", "(", ")")) +
-        " -> " + resultType;
+    return arguments.stream().map(Object::toString).collect(Collectors.joining(", ", "(", ")"))
+        + " -> " + resultType;
   }
 
   @Override

@@ -1313,6 +1313,8 @@ class AliasDefinition extends Definition {
       case REGISTER -> builder.append("register ");
       case REGISTER_FILE -> builder.append("register file ");
       case PROGRAM_COUNTER -> builder.append("program counter ");
+      default -> {
+      }
     }
     id.prettyPrint(0, builder);
     if (aliasType != null) {

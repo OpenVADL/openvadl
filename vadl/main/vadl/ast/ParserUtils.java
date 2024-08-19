@@ -217,6 +217,7 @@ class ParserUtils {
    * Checks whether the token is an identifier token.
    * Since some keywords are allowed as identifiers, this is not as simple as checking the type.
    * Must be kept in sync with the "allowedIdentifierKeywords" rule.
+   *
    * @param token The token to inspect
    * @return Whether the token is suitable for "identifier" substitution
    */
@@ -233,16 +234,28 @@ class ParserUtils {
    * After: parser is in the same state as before.
    */
   static boolean isMacroReplacementOfType(Parser parser, SyntaxType syntaxType) {
-    if (parser.la.kind != Parser._SYM_DOLLAR) {
+    if (parser.la.kind != Parser._SYM_DOLLAR && parser.la.kind != Parser._EXTEND_ID
+        && !isMacroMatch(parser)) {
       return false;
     }
+    if (parser.la.kind == Parser._EXTEND_ID) {
+      return BasicSyntaxType.ID.isSubTypeOf(syntaxType);
+    }
+
     var parserSnapshot = ParserSnapshot.create(parser);
     var scannerSnapshot = ScannerSnapshot.create(parser.scanner);
-    var maxExpr = parser.maximumMacroExpr();
+    var maxExpr = parser.macroReplacement();
     parserSnapshot.reset(parser);
     scannerSnapshot.reset(parser.scanner);
 
     return maxExpr.syntaxType().isSubTypeOf(syntaxType);
+  }
+
+  private static boolean isMacroMatch(Parser parser) {
+    boolean result = parser.la.kind == Parser._MATCH
+        && parser.scanner.Peek().kind == Parser._SYM_COLON;
+    parser.scanner.ResetPeek();
+    return result;
   }
 
   record ParserSnapshot(Token t, Token la) {

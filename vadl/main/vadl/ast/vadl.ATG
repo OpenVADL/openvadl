@@ -99,6 +99,7 @@ TOKENS
   EXCEPTION = "exception".
   RECORD = "record".
   MODEL_TYPE = "model-type".
+  EXTEND_ID = "ExtendId".
 
   SYM_IN = "in".
   SYM_AS = "as".
@@ -294,7 +295,7 @@ PRODUCTIONS
 
   identifierOrPlaceholder<out IdentifierOrPlaceholder id> (. id = null; .)
   = identifier<out id>
-  | maximumMacroExpr<out Node node>                       (. id = (IdentifierOrPlaceholder) node; .)
+  | macroReplacement<out Node node>                       (. id = (IdentifierOrPlaceholder) node; .)
   .
 
   encodingDefinition<out EncodingDefinition def>
@@ -314,8 +315,7 @@ PRODUCTIONS
   .
 
   encodingEntry<out FieldEncodingOrPlaceholder enc> (. enc = null; .)
-  = IF (isMacroReplacementOfType(this, BasicSyntaxType.ENCS))
-    maximumMacroExpr<out Node node>                 (. enc = (FieldEncodingOrPlaceholder) node; .)
+  = macroReplacement<out Node node>                 (. enc = (FieldEncodingOrPlaceholder) node; .)
   | identifier<out Identifier id>
     SYM_EQ
     expression<out Expr expr, BIN_OPS>              (. enc = new FieldEncoding(id, expr); .)
@@ -543,7 +543,7 @@ PRODUCTIONS
       (
         binaryOperator<out Operator op>                     (. var operator = new OperatorExpr(op, loc()); .)
         term<out Expr right>                                (. expr = new BinaryExpr(expr, operator, right); .)
-      | maximumMacroExpr<out Node node>
+      | macroReplacement<out Node node>
         term<out Expr right>                                (. expr = new BinaryExpr(expr, (OperatorOrPlaceholder) node, right); .)
       | SYM_AS
         symbolOrBinaryExpression<out Expr symOrBin, true> (. expr = reorderCastExpr(expr, symOrBin); .)
@@ -575,7 +575,7 @@ PRODUCTIONS
     }                                                      (. if (expr instanceof IsSymExpr symExpr && (!argsIndices.isEmpty() || !subCalls.isEmpty()))
                                                                 expr = new CallExpr(symExpr, argsIndices, subCalls, expr.location().join(loc()));
                                                            .)
-  | maximumMacroExpr<out Node node>                        (. expr = (Expr) node; .)
+  | macroReplacement<out Node node>                        (. expr = (Expr) node; .)
   .
 
   /// Represents one set of invocation arguments.
@@ -607,7 +607,7 @@ PRODUCTIONS
         SYM_GT                                               (. expr = new SymbolExpr(path, term, path.location().join(loc())); .)
       ]                                                      (. if (expr == null) expr = new BinaryExpr((Expr) path, new OperatorExpr(Operator.Less(), lessLoc), term); .)
     ]                                                        (. if (expr == null) expr = (Expr) path; .)
-  | maximumMacroExpr<out Node node>                          (. expr = (Expr) node; .)
+  | macroReplacement<out Node node>                          (. expr = (Expr) node; .)
   .
 
   binaryOperator<out Operator op>    (.op = null;.)
@@ -801,6 +801,12 @@ PRODUCTIONS
   macroReplacement<out Node body> (. body = null; .)
   = macroMatch<out body>
   | maximumMacroExpr<out body>
+  | extendId<out body>
+  .
+
+  extendId<out Node body>
+  = EXTEND_ID                               (. var start = loc(); .)
+    groupedExpression<out GroupedExpr expr> (. body = new ExtendIdExpr(expr, start.join(loc())); .)
   .
 
   macroMatch<out Node node>
@@ -840,7 +846,7 @@ PRODUCTIONS
       identifier<out Identifier next>             (. paramType = record.findEntry(next.name); segments.add(next.name); .)
     }
     [
-      IF (macro != null || paramType instanceof ProjectionType)
+      IF (la.kind == _SYM_PAREN_OPEN && (macro != null || paramType instanceof ProjectionType))
       SYM_PAREN_OPEN                              (. var macroOrPlaceholder = macroOrPlaceholder(macro, paramType, segments);
                                                      var params = instanceParamTypes(macroOrPlaceholder);
                                                      var args = new ArrayList<Node>(); .)
@@ -931,7 +937,7 @@ PRODUCTIONS
     }
     SYM_PAREN_CLOSE                                         (. body = new Tuple(recordType, entries, start.join(loc())); .)
   | identifier<out Identifier id>                           (. body = new MacroReference(symbolTable.getMacro(id.name), (ProjectionType) type, id.location()); .)
-  | maximumMacroExpr<out body>
+  | macroReplacement<out body>
   .
 
   syntaxType<out SyntaxType type> (. type = null; .)
