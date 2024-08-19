@@ -6,7 +6,7 @@ import vadl.types.Type;
 /**
  * Represents a parameter in a VADL specification.
  */
-public class Parameter extends Definition {
+public class Parameter extends Definition implements DefProp.WithType {
 
   private final Type type;
 

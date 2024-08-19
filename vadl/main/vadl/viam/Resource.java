@@ -3,13 +3,14 @@ package vadl.viam;
 import javax.annotation.Nullable;
 import vadl.types.ConcreteRelationType;
 import vadl.types.DataType;
+import vadl.types.Type;
 
 /**
  * Represents a resource in the VADL specification.
  *
  * <p>Such resources are registers and memory definitions.</p>
  */
-public abstract class Resource extends Definition {
+public abstract class Resource extends Definition implements DefProp.WithType {
 
   public Resource(Identifier identifier) {
     super(identifier);
@@ -39,4 +40,8 @@ public abstract class Resource extends Definition {
    */
   public abstract ConcreteRelationType relationType();
 
+  @Override
+  public Type type() {
+    return resultType();
+  }
 }

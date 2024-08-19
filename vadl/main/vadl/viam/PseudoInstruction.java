@@ -13,7 +13,7 @@ import vadl.viam.graph.dependency.FuncParamNode;
  * using the {@link Graph#isPseudoInstruction()} method. The most
  * important graph node to handle is the {@link vadl.viam.graph.control.InstrCallNode}.</p>
  */
-public class PseudoInstruction extends Definition implements WithBehavior {
+public class PseudoInstruction extends Definition implements DefProp.WithBehavior {
 
   private final Parameter[] parameters;
   private final Graph behavior;

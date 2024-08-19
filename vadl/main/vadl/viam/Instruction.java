@@ -8,7 +8,7 @@ import vadl.viam.graph.Graph;
  */
 // TODO: Instruction should have information about source and destination registers
 //  (not from AST, computed by analysis).
-public class Instruction extends Definition implements WithBehavior {
+public class Instruction extends Definition implements DefProp.WithBehavior {
 
   private final Graph behavior;
   private final Assembly assembly;
