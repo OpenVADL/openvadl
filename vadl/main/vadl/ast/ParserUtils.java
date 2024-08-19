@@ -252,6 +252,7 @@ class ParserUtils {
   }
 
   private static boolean isMacroMatch(Parser parser) {
+    parser.scanner.ResetPeek();
     boolean result = parser.la.kind == Parser._MATCH
         && parser.scanner.Peek().kind == Parser._SYM_COLON;
     parser.scanner.ResetPeek();
@@ -269,18 +270,36 @@ class ParserUtils {
     }
   }
 
-  record ScannerSnapshot(Token t, int ch, int col, int line, int charPos, int bufferPos) {
+  record ScannerSnapshot(Token t, @Nullable Token next, int ch, int col, int line, int charPos,
+                         int bufferPos) {
     static ScannerSnapshot create(Scanner scanner) {
-      return new ScannerSnapshot(scanner.t, scanner.ch, scanner.col, scanner.line, scanner.charPos,
-          scanner.buffer.getPos());
+      return new ScannerSnapshot(scanner.t, copyOf(scanner.tokens.next), scanner.ch, scanner.col,
+          scanner.line, scanner.charPos, scanner.buffer.getPos());
     }
 
+    @SuppressWarnings("NullAway")
     void reset(Scanner scanner) {
       scanner.t = t;
+      scanner.tokens.next = next;
       scanner.ch = ch;
       scanner.col = col;
       scanner.line = line;
+      scanner.charPos = charPos;
       scanner.buffer.setPos(bufferPos);
+    }
+
+    private static @Nullable Token copyOf(@Nullable Token token) {
+      if (token == null) {
+        return null;
+      }
+      var copy = new Token();
+      copy.kind = token.kind;
+      copy.pos = token.pos;
+      copy.charPos = token.charPos;
+      copy.col = token.col;
+      copy.line = token.line;
+      copy.val = token.val;
+      return copy;
     }
   }
 }

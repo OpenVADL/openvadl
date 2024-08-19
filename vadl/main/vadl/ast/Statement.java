@@ -7,9 +7,9 @@ import javax.annotation.Nullable;
 import vadl.utils.SourceLocation;
 
 abstract sealed class Statement extends Node
-    permits BlockStatement, LetStatement, IfStatement, AssignmentStatement, StatementList,
-    CallStatement, RaiseStatement, PlaceholderStatement, MacroInstanceStatement,
-    MacroMatchStatement {
+    permits AssignmentStatement, BlockStatement, CallStatement, IfStatement, LetStatement,
+    MacroInstanceStatement, MacroMatchStatement, MatchStatement, PlaceholderStatement,
+    RaiseStatement, StatementList {
   <T> T accept(StatementVisitor<T> visitor) {
     // TODO Use exhaustive switch with patterns in future Java versions
     if (this instanceof BlockStatement b) {
@@ -29,6 +29,8 @@ abstract sealed class Statement extends Node
     } else if (this instanceof MacroInstanceStatement m) {
       return visitor.visit(m);
     } else if (this instanceof MacroMatchStatement m) {
+      return visitor.visit(m);
+    } else if (this instanceof MatchStatement m) {
       return visitor.visit(m);
     } else {
       throw new IllegalStateException("Unhandled statement type " + getClass().getSimpleName());
@@ -59,6 +61,8 @@ interface StatementVisitor<T> {
   T visit(MacroInstanceStatement macroInstanceStatement);
 
   T visit(MacroMatchStatement macroMatchStatement);
+
+  T visit(MatchStatement matchStatement);
 }
 
 final class BlockStatement extends Statement {
@@ -477,5 +481,90 @@ final class MacroMatchStatement extends Statement {
   @Override
   public int hashCode() {
     return macroMatch.hashCode();
+  }
+}
+
+final class MatchStatement extends Statement {
+  Expr candidate;
+  List<Case> cases;
+  Statement defaultResult;
+  SourceLocation loc;
+
+  MatchStatement(Expr candidate, List<Case> cases, Statement defaultResult, SourceLocation loc) {
+    this.candidate = candidate;
+    this.cases = cases;
+    this.defaultResult = defaultResult;
+    this.loc = loc;
+  }
+
+  @Override
+  SourceLocation location() {
+    return loc;
+  }
+
+  @Override
+  SyntaxType syntaxType() {
+    return BasicSyntaxType.EX;
+  }
+
+  @Override
+  void prettyPrint(int indent, StringBuilder builder) {
+    builder.append("match ");
+    candidate.prettyPrint(0, builder);
+    builder.append(" with\n");
+    builder.append(prettyIndentString(indent + 1)).append("{ ");
+    var isFirst = true;
+    for (var matchCase : cases) {
+      if (!isFirst) {
+        builder.append(prettyIndentString(indent + 1)).append(", ");
+      }
+      isFirst = false;
+      if (matchCase.patterns.size() == 1) {
+        matchCase.patterns.get(0).prettyPrint(0, builder);
+      } else {
+        builder.append("{");
+        var isFirstPattern = true;
+        for (var pattern : matchCase.patterns) {
+          if (!isFirstPattern) {
+            builder.append(", ");
+          }
+          isFirstPattern = false;
+          pattern.prettyPrint(0, builder);
+        }
+        builder.append("}");
+      }
+      builder.append(" => ");
+      matchCase.result.prettyPrint(0, builder);
+      builder.append("\n");
+    }
+    builder.append(prettyIndentString(indent + 1)).append(", _ => ");
+    defaultResult.prettyPrint(0, builder);
+    builder.append("\n").append(prettyIndentString(indent + 1)).append("}\n");
+  }
+
+  @Override
+  public boolean equals(Object o) {
+    if (this == o) {
+      return true;
+    }
+    if (o == null || getClass() != o.getClass()) {
+      return false;
+    }
+
+    MatchStatement that = (MatchStatement) o;
+    return Objects.equals(candidate, that.candidate)
+        && Objects.equals(cases, that.cases)
+        && Objects.equals(defaultResult, that.defaultResult);
+  }
+
+  @Override
+  public int hashCode() {
+    int result = cases.hashCode();
+    result = 31 * result + cases.hashCode();
+    result = 31 * result + defaultResult.hashCode();
+    return result;
+  }
+
+  record Case(List<Expr> patterns, Statement result) {
   }
 }

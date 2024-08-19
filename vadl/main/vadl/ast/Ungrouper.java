@@ -355,6 +355,17 @@ class Ungrouper
     return macroMatchStatement;
   }
 
+  @Override
+  public Statement visit(MatchStatement matchStatement) {
+    matchStatement.candidate = matchStatement.candidate.accept(this);
+    matchStatement.defaultResult = matchStatement.defaultResult.accept(this);
+    matchStatement.cases.replaceAll(matchCase -> {
+      matchCase.patterns().replaceAll(pattern -> pattern.accept(this));
+      return new MatchStatement.Case(matchCase.patterns(), matchCase.result().accept(this));
+    });
+    return matchStatement;
+  }
+
   private void ungroupAnnotations(Definition definition) {
     definition.annotations.annotations().replaceAll(
         annotation -> new Annotation(annotation.expr().accept(this), annotation.type(),

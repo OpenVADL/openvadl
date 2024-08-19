@@ -476,4 +476,15 @@ public class AstDumper
     dumpNode(macroMatchStatement);
     return null;
   }
+
+  @Override
+  public Void visit(MatchStatement matchStatement) {
+    dumpNode(matchStatement);
+    dumpChildren(matchStatement.candidate, matchStatement.defaultResult);
+    for (var matchCase : matchStatement.cases) {
+      dumpChildren(matchCase.patterns());
+      dumpChildren(matchCase.result());
+    }
+    return null;
+  }
 }

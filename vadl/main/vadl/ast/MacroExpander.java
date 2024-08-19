@@ -514,6 +514,16 @@ class MacroExpander
     return (Statement) resolveMacroMatch(macroMatchStatement.macroMatch);
   }
 
+  @Override
+  public Statement visit(MatchStatement matchStatement) {
+    var candidate = matchStatement.candidate.accept(this);
+    var defaultResult = matchStatement.defaultResult.accept(this);
+    var cases = new ArrayList<>(matchStatement.cases);
+    cases.replaceAll(matchCase -> new MatchStatement.Case(expandExprs(matchCase.patterns()),
+        matchCase.result().accept(this)));
+    return new MatchStatement(candidate, cases, defaultResult, matchStatement.loc);
+  }
+
   private void assertValidMacro(Macro macro, SourceLocation sourceLocation)
       throws MacroExpansionException {
     if (macro.returnType() == BasicSyntaxType.INVALID) {

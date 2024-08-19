@@ -339,6 +339,15 @@ class SymbolTable {
         collectSymbols(symbols, raise.statement);
       } else if (stmt instanceof CallStatement call) {
         collectSymbols(symbols, call.expr);
+      } else if (stmt instanceof MatchStatement match) {
+        collectSymbols(symbols, match.candidate);
+        collectSymbols(symbols, match.defaultResult);
+        for (MatchStatement.Case matchCase : match.cases) {
+          collectSymbols(symbols, matchCase.result());
+          for (Expr pattern : matchCase.patterns()) {
+            collectSymbols(symbols, pattern);
+          }
+        }
       }
     }
 
@@ -493,6 +502,15 @@ class SymbolTable {
         verifyUsages(raise.statement);
       } else if (stmt instanceof CallStatement call) {
         verifyUsages(call.expr);
+      } else if (stmt instanceof MatchStatement match) {
+        verifyUsages(match.candidate);
+        verifyUsages(match.defaultResult);
+        for (MatchStatement.Case matchCase : match.cases) {
+          verifyUsages(matchCase.result());
+          for (Expr pattern : matchCase.patterns()) {
+            verifyUsages(pattern);
+          }
+        }
       }
     }
 

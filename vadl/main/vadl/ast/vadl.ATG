@@ -485,10 +485,11 @@ PRODUCTIONS
   | ifStatement<out statement>
   | blockStatement<out statement>
   | raiseStatement<out statement>
-  | IF (la.kind == _identifierToken || isMacroReplacementOfType(this, BasicSyntaxType.CALL_EX))
+  | IF (isIdentifierToken(la) || isMacroReplacementOfType(this, BasicSyntaxType.CALL_EX))
     assignmentOrCallStmt<out statement>
-  | // IF (isMacroReplacementOfType(this, BasicSyntaxType.STATS))
+  | IF (isMacroReplacementOfType(this, BasicSyntaxType.STATS))
     macroReplacement<out Node n>     (. statement = (Statement) n; .)
+  | matchStatement<out statement>
   .
 
   blockStatement<out BlockStatement block>     (. var start = loc(); .)
@@ -532,6 +533,31 @@ PRODUCTIONS
   raiseStatement<out Statement raise>
   = RAISE                              (. var start = loc(); .)
     statement<out Statement statement> (. raise = new RaiseStatement(statement, start.join(loc())); .)
+  .
+
+  matchStatement<out Statement match>
+  = MATCH                                     (. var start = loc(); .)
+    expression<out Expr candidate, BIN_OPS>
+    WITH
+    SYM_BRACE_OPEN                            (. var cases = new ArrayList<MatchStatement.Case>();  .)
+    {                                         (. var patterns = new ArrayList<Expr>(); .)
+      ( expression<out Expr pattern, BIN_OPS> (. patterns.add(pattern); .)
+      | SYM_BRACE_OPEN
+        expression<out Expr pattern, BIN_OPS> (. patterns.add(pattern); .)
+        {
+          SYM_COMMA
+          expression<out pattern, BIN_OPS>    (. patterns.add(pattern); .)
+        }
+        SYM_BRACE_CLOSE
+      )
+      SYM_BIGARROW
+      statement<out Statement result>         (. cases.add(new MatchStatement.Case(patterns, result)); .)
+      SYM_COMMA
+    }
+    SYM_UNDERSCORE
+    SYM_BIGARROW
+    statement<out Statement defaultResult>
+    SYM_BRACE_CLOSE                           (. match = new MatchStatement(candidate, cases, defaultResult, start.join(loc())); .)
   .
 
   // -- EXPRESSIONS --------------------------------------------------------------------------------------------------
