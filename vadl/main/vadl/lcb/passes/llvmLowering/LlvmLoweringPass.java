@@ -23,7 +23,7 @@ import vadl.viam.Instruction;
 import vadl.viam.Register;
 import vadl.viam.Specification;
 import vadl.viam.graph.Graph;
-import vadl.viam.passes.FunctionInlinerPass;
+import vadl.viam.passes.functionInliner.FunctionInlinerPass;
 
 /**
  * This is a wrapper class which contains utility functions for the lowering.

@@ -2,24 +2,15 @@ package vadl.test.lcb.template;
 
 import java.io.IOException;
 import java.io.StringWriter;
-import org.hamcrest.core.Is;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
-import vadl.gcb.passes.encoding_generation.GenerateFieldAccessEncodingFunctionPass;
-import vadl.gcb.passes.field_node_replacement.FieldNodeReplacementPassForDecoding;
-import vadl.gcb.passes.type_normalization.CppTypeNormalizationForDecodingsPass;
-import vadl.gcb.passes.type_normalization.CppTypeNormalizationForEncodingsPass;
-import vadl.gcb.passes.type_normalization.CppTypeNormalizationForPredicatesPass;
 import vadl.gcb.valuetypes.ProcessorName;
 import vadl.lcb.passes.isaMatching.IsaMatchingPass;
 import vadl.lcb.passes.llvmLowering.LlvmLoweringPass;
-import vadl.lcb.template.lib.Target.Utils.EmitImmediateFilePass;
-import vadl.pass.PassKey;
 import vadl.pass.PassManager;
 import vadl.pass.exception.DuplicatedPassKeyException;
-import vadl.test.AbstractTest;
 import vadl.test.lcb.AbstractLcbTest;
-import vadl.viam.passes.FunctionInlinerPass;
+import vadl.viam.passes.functionInliner.FunctionInlinerPass;
 import vadl.viam.passes.typeCastElimination.TypeCastEliminationPass;
 
 public class EmitInstrInfoTableGenFilePassTest extends AbstractLcbTest {

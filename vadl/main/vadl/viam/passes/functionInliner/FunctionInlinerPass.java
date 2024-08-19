@@ -1,4 +1,4 @@
-package vadl.viam.passes;
+package vadl.viam.passes.functionInliner;
 
 import com.google.common.collect.Streams;
 import java.io.IOException;
@@ -39,7 +39,7 @@ public class FunctionInlinerPass extends Pass {
   @Override
   public Object execute(Map<PassKey, Object> passResults, Specification viam)
       throws IOException {
-    IdentityHashMap<Instruction, Graph> original = new IdentityHashMap<>();
+    IdentityHashMap<Instruction, UninlinedGraph> original = new IdentityHashMap<>();
 
     viam.isas()
         .flatMap(isa -> isa.instructions().stream())
@@ -87,7 +87,7 @@ public class FunctionInlinerPass extends Pass {
             fieldAccessRefNode.replaceAndDelete(returnNode.value());
           });
 
-          original.put(instruction, copy);
+          original.put(instruction, new UninlinedGraph(copy));
         });
 
     return original;

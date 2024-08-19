@@ -14,7 +14,7 @@ import org.testcontainers.images.builder.ImageFromDockerfile;
 import vadl.test.DockerExecutionTest;
 import vadl.viam.Instruction;
 import vadl.viam.Specification;
-import vadl.viam.passes.FunctionInlinerPass;
+import vadl.viam.passes.functionInliner.FunctionInlinerPass;
 import vadl.viam.passes.algebraic_simplication.AlgebraicSimplificationPass;
 import vadl.viam.passes.translation_validation.ExplicitBitSizesInTypingPass;
 import vadl.viam.passes.translation_validation.ExtendMultiplicationPass;

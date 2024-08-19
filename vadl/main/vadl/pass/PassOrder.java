@@ -7,6 +7,7 @@ import vadl.gcb.valuetypes.ProcessorName;
 import vadl.lcb.config.LcbConfiguration;
 import vadl.lcb.template.lib.Target.EmitMCInstLowerCppFilePass;
 import vadl.lcb.template.lib.Target.EmitMCInstLowerHeaderFilePass;
+import vadl.viam.passes.functionInliner.FunctionInlinerPass;
 
 /**
  * This class defines the order in which the {@link PassManager} should run them.
@@ -20,7 +21,7 @@ public final class PassOrder {
     List<Pass> passes = new ArrayList<>();
 
     passes.add(new vadl.viam.passes.typeCastElimination.TypeCastEliminationPass());
-    passes.add(new vadl.viam.passes.FunctionInlinerPass());
+    passes.add(new FunctionInlinerPass());
     passes.add(new vadl.gcb.passes.encoding_generation.GenerateFieldAccessEncodingFunctionPass());
     passes.add(new vadl.gcb.passes.field_node_replacement.FieldNodeReplacementPassForDecoding());
     passes.add(new vadl.gcb.passes.type_normalization.CppTypeNormalizationForEncodingsPass());

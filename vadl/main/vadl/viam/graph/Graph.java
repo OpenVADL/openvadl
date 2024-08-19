@@ -44,6 +44,11 @@ public class Graph {
     this.nodes = new ArrayList<>(INITIAL_GRAPH_SIZE);
   }
 
+  protected Graph(String name, ArrayList<Node> nodes) {
+    this.name = name;
+    this.nodes = nodes;
+  }
+
   /**
    * Get all nodes in graph.
    *
