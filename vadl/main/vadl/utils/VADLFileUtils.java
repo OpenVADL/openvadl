@@ -226,6 +226,15 @@ public class VADLFileUtils {
     }
     FileUtils.deleteDirectory(dir);
   }
+
+  /**
+   * Creates a directory and schedules it for deletion.
+   */
+  public static Path createTempDirectory(String name) throws IOException {
+    var directory = Files.createTempDirectory(name);
+    deleteDirectoryOnExit(new File(String.valueOf(directory)));
+    return directory;
+  }
 }
 
 

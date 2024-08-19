@@ -1,4 +1,4 @@
-package vadl.lcb.lib.Target.MCTargetDesc;
+package vadl.lcb.template.lib.Target.MCTargetDesc;
 
 import java.io.IOException;
 import java.util.Map;
@@ -24,12 +24,12 @@ public class EmitAsmStreamerHeaderFilePass extends AbstractTemplateRenderingPass
 
   @Override
   protected String getTemplatePath() {
-    return "lcb/llvm/Target/MCTargetDesc/AsmStreamer.h";
+    return "lcb/llvm/lib/Target/MCTargetDesc/AsmStreamer.h";
   }
 
   @Override
   protected String getOutputPath() {
-    return "llvm/Target/" + processorName.value() + "/MCTargetDesc/" + processorName.value()
+    return "llvm/lib/Target/" + processorName.value() + "/MCTargetDesc/" + processorName.value()
         + "AsmStreamer.h";
   }
 

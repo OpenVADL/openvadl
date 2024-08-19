@@ -1,4 +1,4 @@
-package vadl.lcb.lib.Target;
+package vadl.lcb.template.lib.Target;
 
 import java.io.IOException;
 import java.util.Map;
@@ -24,12 +24,13 @@ public class EmitTargetObjectFileCppFilePass extends AbstractTemplateRenderingPa
 
   @Override
   protected String getTemplatePath() {
-    return "lcb/llvm/Target/TargetObjectFile.cpp";
+    return "lcb/llvm/lib/Target/ObjectFile.cpp";
   }
 
   @Override
   protected String getOutputPath() {
-    return "llvm/Target/" + processorName.value() + "/" + processorName.value() + "/ObjectFile.cpp";
+    return "llvm/lib/Target/" + processorName.value() + "/" + processorName.value()
+        + "/ObjectFile.cpp";
   }
 
   @Override

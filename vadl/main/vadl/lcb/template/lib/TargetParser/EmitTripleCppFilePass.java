@@ -1,4 +1,4 @@
-package vadl.lcb.lib.TargetParser;
+package vadl.lcb.template.lib.TargetParser;
 
 import java.io.IOException;
 import java.util.Map;
@@ -24,7 +24,7 @@ public class EmitTripleCppFilePass extends AbstractTemplateRenderingPass {
 
   @Override
   protected String getTemplatePath() {
-    return "lcb/llvm/lib/Target/TargetParser/Triple.cpp";
+    return "lcb/llvm/lib/TargetParser/Triple.cpp";
   }
 
   @Override

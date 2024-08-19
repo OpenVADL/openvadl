@@ -1,4 +1,4 @@
-package vadl.lcb.lib.Misc;
+package vadl.lcb.template.lib.Misc;
 
 import java.io.IOException;
 import java.util.Map;

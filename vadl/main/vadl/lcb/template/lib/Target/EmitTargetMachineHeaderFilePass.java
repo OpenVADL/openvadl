@@ -1,4 +1,4 @@
-package vadl.lcb.lib.Target;
+package vadl.lcb.template.lib.Target;
 
 import java.io.IOException;
 import java.util.Map;
@@ -24,12 +24,12 @@ public class EmitTargetMachineHeaderFilePass extends AbstractTemplateRenderingPa
 
   @Override
   protected String getTemplatePath() {
-    return "lcb/llvm/Target/TargetMachine.h";
+    return "lcb/llvm/lib/Target/TargetMachine.h";
   }
 
   @Override
   protected String getOutputPath() {
-    return "llvm/Target/" + processorName.value() + "/" + processorName.value() + ".h";
+    return "llvm/lib/Target/" + processorName.value() + "/" + processorName.value() + ".h";
   }
 
   @Override

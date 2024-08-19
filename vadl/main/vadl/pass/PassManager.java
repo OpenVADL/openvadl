@@ -31,6 +31,19 @@ public class PassManager {
   }
 
   /**
+   * Add a new passes to the pipeline.
+   * The results are available with {@code pass}'s class as {@link PassKey}.
+   *
+   * @throws DuplicatedPassKeyException when pass with an already existing {@link PassName}
+   *                                    was added.
+   */
+  public void add(List<Pass> passes) throws DuplicatedPassKeyException {
+    for (var pass : passes) {
+      add(pass);
+    }
+  }
+
+  /**
    * Add a new pass to the pipeline.
    * The results are available with {@code pass}'s class as {@link PassKey}.
    *

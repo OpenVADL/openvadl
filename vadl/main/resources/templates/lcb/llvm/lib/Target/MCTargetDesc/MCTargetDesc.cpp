@@ -105,7 +105,7 @@ extern "C" void LLVMInitialize[(${namespace})]TargetMC()
     TargetRegistry::RegisterMCRegInfo(getThe[(${namespace})]Target(), create[(${namespace})]MCRegisterInfo);
 
     // Register the Target Backend for ELF Support
-    TargetRegistry::RegisterMCAsmBackend(getThe[(${namespace})Target(), create[(${namespace})]AsmBackend);
+    TargetRegistry::RegisterMCAsmBackend(getThe[(${namespace})]Target(), create[(${namespace})]AsmBackend);
 
     // Register the Target MCCode emitter
     TargetRegistry::RegisterMCCodeEmitter(getThe[(${namespace})]Target(), create[(${namespace})]MCCodeEmitter);

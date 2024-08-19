@@ -1,9 +1,6 @@
 package vadl.test.lcb.passes;
 
-import static org.junit.Assert.assertNotNull;
-import static org.junit.Assert.assertTrue;
 import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertFalse;
 
 import java.io.IOException;
 import java.util.HashMap;
@@ -13,18 +10,19 @@ import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.Arguments;
 import org.junit.jupiter.params.provider.MethodSource;
+import vadl.gcb.valuetypes.ProcessorName;
+import vadl.lcb.config.LcbConfiguration;
 import vadl.lcb.passes.isaMatching.InstructionLabel;
 import vadl.lcb.passes.isaMatching.IsaMatchingPass;
 import vadl.pass.PassKey;
-import vadl.test.AbstractTest;
+import vadl.pass.PassManager;
+import vadl.pass.PassOrder;
+import vadl.pass.exception.DuplicatedPassKeyException;
+import vadl.test.lcb.AbstractLcbTest;
 import vadl.viam.Definition;
 import vadl.viam.Instruction;
-import vadl.viam.passes.FunctionInlinerPass;
-import vadl.viam.passes.typeCastElimination.TypeCastEliminationPass;
 
-public class IsaMatchingPassTest extends AbstractTest {
-
-  IsaMatchingPass pass = new IsaMatchingPass();
+public class IsaMatchingPassTest extends AbstractLcbTest {
 
   private static Stream<Arguments> getExpectedMatchings() {
     return Stream.of(
@@ -55,18 +53,15 @@ public class IsaMatchingPassTest extends AbstractTest {
   @ParameterizedTest
   @MethodSource("getExpectedMatchings")
   void shouldFindMatchings(List<String> expectedInstructionName, InstructionLabel label)
-      throws IOException {
+      throws IOException, DuplicatedPassKeyException {
     // Given
-    var spec = runAndGetViamSpecification("examples/rv3264im.vadl");
-    var passResults = new HashMap<PassKey, Object>();
-
-    new TypeCastEliminationPass().execute(passResults, spec);
-    passResults.put(new PassKey(FunctionInlinerPass.class.toString()),
-        new FunctionInlinerPass().execute(passResults, spec));
+    var setup = setupPassManagerAndRunSpec("examples/rv3264im.vadl");
+    var passManager = setup.left();
 
     // When
     HashMap<InstructionLabel, List<Instruction>> matchings =
-        (HashMap<InstructionLabel, List<Instruction>>) pass.execute(passResults, spec);
+        (HashMap<InstructionLabel, List<Instruction>>) passManager.getPassResults()
+            .get(new PassKey(IsaMatchingPass.class.toString()));
 
     // Then
     Assertions.assertNotNull(matchings);

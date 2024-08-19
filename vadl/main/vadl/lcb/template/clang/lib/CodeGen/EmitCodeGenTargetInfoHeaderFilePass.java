@@ -1,4 +1,4 @@
-package vadl.lcb.clang.lib.CodeGen;
+package vadl.lcb.template.clang.lib.CodeGen;
 
 import java.io.IOException;
 import java.util.Map;

@@ -1,4 +1,4 @@
-package vadl.lcb.lib.Target;
+package vadl.lcb.template.lib.Target;
 
 import java.io.IOException;
 import java.util.Map;
@@ -24,12 +24,13 @@ public class EmitAsmPrinterHeaderFilePass extends AbstractTemplateRenderingPass 
 
   @Override
   protected String getTemplatePath() {
-    return "lcb/llvm/Target/AsmPrinter.h";
+    return "lcb/llvm/lib/Target/AsmPrinter.h";
   }
 
   @Override
   protected String getOutputPath() {
-    return "llvm/Target/" + processorName.value() + "/" + processorName.value() + "AsmPrinter.h";
+    return "llvm/lib/Target/" + processorName.value() + "/" + processorName.value()
+        + "AsmPrinter.h";
   }
 
   @Override

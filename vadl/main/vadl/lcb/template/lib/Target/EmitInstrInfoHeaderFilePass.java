@@ -1,4 +1,4 @@
-package vadl.lcb.lib.Target;
+package vadl.lcb.template.lib.Target;
 
 import java.io.IOException;
 import java.util.Map;
@@ -24,12 +24,12 @@ public class EmitInstrInfoHeaderFilePass extends AbstractTemplateRenderingPass {
 
   @Override
   protected String getTemplatePath() {
-    return "lcb/llvm/Target/InstrInfo.h";
+    return "lcb/llvm/lib/Target/InstrInfo.h";
   }
 
   @Override
   protected String getOutputPath() {
-    return "llvm/Target/" + processorName.value() + "/" + processorName.value() + "InstrInfo.h";
+    return "llvm/lib/Target/" + processorName.value() + "/" + processorName.value() + "InstrInfo.h";
   }
 
   @Override

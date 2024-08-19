@@ -3,26 +3,29 @@ package vadl.test.lcb.passes;
 import java.io.IOException;
 import java.util.Collections;
 import java.util.HashMap;
+import java.util.IdentityHashMap;
 import java.util.List;
-import java.util.Map;
 import java.util.Optional;
 import java.util.stream.Stream;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.DynamicTest;
 import org.junit.jupiter.api.TestFactory;
-import vadl.lcb.passes.isaMatching.IsaMatchingPass;
+import vadl.gcb.valuetypes.ProcessorName;
+import vadl.lcb.config.LcbConfiguration;
 import vadl.lcb.passes.llvmLowering.LlvmLoweringPass;
 import vadl.lcb.passes.llvmLowering.model.LlvmCondCode;
 import vadl.lcb.tablegen.lowering.TableGenPatternVisitor;
 import vadl.lcb.tablegen.model.TableGenInstructionOperand;
 import vadl.lcb.tablegen.model.TableGenPattern;
 import vadl.pass.PassKey;
+import vadl.pass.PassManager;
+import vadl.pass.PassOrder;
+import vadl.pass.exception.DuplicatedPassKeyException;
 import vadl.test.AbstractTest;
+import vadl.test.lcb.AbstractLcbTest;
 import vadl.viam.Instruction;
-import vadl.viam.passes.FunctionInlinerPass;
-import vadl.viam.passes.typeCastElimination.TypeCastEliminationPass;
 
-public class LlvmLoweringPassTest extends AbstractTest {
+public class LlvmLoweringPassTest extends AbstractLcbTest {
 
   record TestOutput(List<TableGenInstructionOperand> inputs,
                     List<TableGenInstructionOperand> outputs,
@@ -151,22 +154,18 @@ public class LlvmLoweringPassTest extends AbstractTest {
   }
 
   @TestFactory
-  Stream<DynamicTest> testLowering() throws IOException {
+  Stream<DynamicTest> testLowering() throws IOException, DuplicatedPassKeyException {
     // Given
-    var spec = runAndGetViamSpecification("examples/rv3264im.vadl");
-    var passResults = new HashMap<PassKey, Object>();
-
-    new TypeCastEliminationPass().execute(passResults, spec);
-    passResults.put(new PassKey(FunctionInlinerPass.class.toString()),
-        new FunctionInlinerPass().execute(passResults, spec));
-    passResults.put(new PassKey(IsaMatchingPass.class.toString()),
-        new IsaMatchingPass().execute(passResults, spec));
+    var setup = setupPassManagerAndRunSpec("examples/rv3264im.vadl");
+    var passManager = setup.left();
+    var spec = setup.right();
 
     // When
-    var
+    IdentityHashMap<Instruction, LlvmLoweringPass.LlvmLoweringIntermediateResult>
         llvmResults =
-        (Map<Instruction, LlvmLoweringPass.LlvmLoweringIntermediateResult>) new LlvmLoweringPass()
-            .execute(passResults, spec);
+        (IdentityHashMap<Instruction, LlvmLoweringPass.LlvmLoweringIntermediateResult>)
+            passManager.getPassResults()
+                .get(new PassKey(LlvmLoweringPass.class.toString()));
 
     // Then
     return spec.isas().flatMap(x -> x.instructions().stream())

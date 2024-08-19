@@ -1,4 +1,4 @@
-package vadl.lcb.lib.Target.Disassembler;
+package vadl.lcb.template.lib.Target.Disassembler;
 
 import java.io.IOException;
 import java.util.Map;

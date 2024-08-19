@@ -1,4 +1,4 @@
-package vadl.lcb.lib.Target;
+package vadl.lcb.template.lib.Target;
 
 import java.io.IOException;
 import java.util.Map;
@@ -24,12 +24,13 @@ public class EmitDAGToDAGIselHeaderFilePass extends AbstractTemplateRenderingPas
 
   @Override
   protected String getTemplatePath() {
-    return "lcb/llvm/Target/DAGToDAGISel.h";
+    return "lcb/llvm/lib/Target/DAGToDAGISel.h";
   }
 
   @Override
   protected String getOutputPath() {
-    return "llvm/Target/" + processorName.value() + "/" + processorName.value() + "DAGToDAGISel.h";
+    return "llvm/lib/Target/" + processorName.value() + "/" + processorName.value()
+        + "DAGToDAGISel.h";
   }
 
   @Override

@@ -13,9 +13,7 @@ using namespace llvm;
 /* == Register Classes == */
 [#th:block th:each="registerClass : ${registerClasses}" ]
 static const unsigned [(${registerClass.simpleName})][] = {
-    [#th:block th:each="register, iterStat: ${registerClass.registers}" ]
-        [(${namespace})]::[(${register.simpleName})][# th:if="${!iterStat.last}" ],[/]
-    [/th:block]
+      //TODO define registers
 };
 [/th:block]
 
@@ -39,7 +37,8 @@ static DecodeStatus Decode[(${registerClass.simpleName})]RegisterClass
     )
 {
     // check if register number is in range
-    if( RegNo >= [(${registerClass.registers.size})] )
+    //TODO Update number
+    if( RegNo >= 0 )
         return MCDisassembler::Fail;
 
     // access custom generated decoder table in register info

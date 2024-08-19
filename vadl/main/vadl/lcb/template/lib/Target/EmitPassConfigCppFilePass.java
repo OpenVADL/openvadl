@@ -1,4 +1,4 @@
-package vadl.lcb.lib.Target;
+package vadl.lcb.template.lib.Target;
 
 import java.io.IOException;
 import java.util.Map;
@@ -24,12 +24,13 @@ public class EmitPassConfigCppFilePass extends AbstractTemplateRenderingPass {
 
   @Override
   protected String getTemplatePath() {
-    return "lcb/llvm/Target/PassConfig.cpp";
+    return "lcb/llvm/lib/Target/PassConfig.cpp";
   }
 
   @Override
   protected String getOutputPath() {
-    return "llvm/Target/" + processorName.value() + "/" + processorName.value() + "PassConfig.cpp";
+    return "llvm/lib/Target/" + processorName.value() + "/" + processorName.value()
+        + "PassConfig.cpp";
   }
 
   @Override

@@ -1,4 +1,4 @@
-package vadl.lcb.lib.Target.AsmParser;
+package vadl.lcb.template.lib.Target.AsmParser;
 
 import java.io.IOException;
 import java.util.Map;
@@ -24,12 +24,12 @@ public class EmitAsmParserCMakeFilePass extends AbstractTemplateRenderingPass {
 
   @Override
   protected String getTemplatePath() {
-    return "lcb/llvm/Target/AsmParser/CMakeLists.txt";
+    return "lcb/llvm/lib/Target/AsmParser/CMakeLists.txt";
   }
 
   @Override
   protected String getOutputPath() {
-    return "llvm/Target/" + processorName.value() + "/AsmParser/CMakeLists.txt";
+    return "llvm/lib/Target/" + processorName.value() + "/AsmParser/CMakeLists.txt";
   }
 
   @Override

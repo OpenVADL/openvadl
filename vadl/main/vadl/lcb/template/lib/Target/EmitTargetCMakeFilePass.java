@@ -1,4 +1,4 @@
-package vadl.lcb.lib.Target;
+package vadl.lcb.template.lib.Target;
 
 import java.io.IOException;
 import java.util.Map;
@@ -24,12 +24,12 @@ public class EmitTargetCMakeFilePass extends AbstractTemplateRenderingPass {
 
   @Override
   protected String getTemplatePath() {
-    return "lcb/llvm/Target/CMakeLists.txt";
+    return "lcb/llvm/lib/Target/CMakeLists.txt";
   }
 
   @Override
   protected String getOutputPath() {
-    return "llvm/Target/" + processorName.value() + "/CMakeLists.txt";
+    return "llvm/lib/Target/" + processorName.value() + "/CMakeLists.txt";
   }
 
   @Override
