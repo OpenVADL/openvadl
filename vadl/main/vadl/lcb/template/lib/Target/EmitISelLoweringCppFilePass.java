@@ -24,12 +24,12 @@ public class EmitISelLoweringCppFilePass extends AbstractTemplateRenderingPass {
 
   @Override
   protected String getTemplatePath() {
-    return "lcb/llvm/Target/ISelLowering.cpp";
+    return "lcb/llvm/lib/Target/ISelLowering.cpp";
   }
 
   @Override
   protected String getOutputPath() {
-    return "llvm/Target/" + processorName.value() + "/" + processorName.value()
+    return "llvm/lib/Target/" + processorName.value() + "/" + processorName.value()
         + "ISelLowering.cpp";
   }
 

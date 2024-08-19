@@ -24,12 +24,12 @@ public class EmitExpandPseudoCppFilePass extends AbstractTemplateRenderingPass {
 
   @Override
   protected String getTemplatePath() {
-    return "lcb/llvm/Target/ExpandPseudo.cpp";
+    return "lcb/llvm/lib/Target/ExpandPseudo.cpp";
   }
 
   @Override
   protected String getOutputPath() {
-    return "llvm/Target/" + processorName.value() + "/" + processorName.value()
+    return "llvm/lib/Target/" + processorName.value() + "/" + processorName.value()
         + "ExpandPseudo.cpp";
   }
 

@@ -38,7 +38,7 @@ public class EmitInstrInfoTableGenFilePassTest extends AbstractLcbTest {
 
     // When
     var template =
-        new vadl.lcb.lib.Target.EmitInstrInfoTableGenFilePass(createLcbConfiguration(),
+        new vadl.lcb.template.lib.Target.EmitInstrInfoTableGenFilePass(createLcbConfiguration(),
             new ProcessorName("processorNameValue"));
     var writer = new StringWriter();
 

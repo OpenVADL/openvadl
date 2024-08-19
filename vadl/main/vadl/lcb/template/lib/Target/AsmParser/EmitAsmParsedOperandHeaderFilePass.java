@@ -24,12 +24,12 @@ public class EmitAsmParsedOperandHeaderFilePass extends AbstractTemplateRenderin
 
   @Override
   protected String getTemplatePath() {
-    return "lcb/llvm/Target/AsmParser/AsmParsedOperand.h";
+    return "lcb/llvm/lib/Target/AsmParser/AsmParsedOperand.h";
   }
 
   @Override
   protected String getOutputPath() {
-    return "llvm/Target/" + processorName.value() + "/AsmParser/AsmParsedOperand.h";
+    return "llvm/lib/Target/" + processorName.value() + "/AsmParser/AsmParsedOperand.h";
   }
 
   @Override

@@ -24,12 +24,12 @@ public class EmitCallingConvTableGenFilePass extends AbstractTemplateRenderingPa
 
   @Override
   protected String getTemplatePath() {
-    return "lcb/llvm/Target/CallingConv.td";
+    return "lcb/llvm/lib/Target/CallingConv.td";
   }
 
   @Override
   protected String getOutputPath() {
-    return "llvm/Target/" + processorName.value() + "/" + processorName.value() + "CallingConv.td";
+    return "llvm/lib/Target/" + processorName.value() + "/" + processorName.value() + "CallingConv.td";
   }
 
   @Override

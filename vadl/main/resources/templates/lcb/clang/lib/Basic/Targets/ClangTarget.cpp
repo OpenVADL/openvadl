@@ -22,7 +22,7 @@ ArrayRef<TargetInfo::GCCRegAlias> [(${namespace})]TargetInfo::getGCCRegAliases()
     {
     [# th:each="register, iterStat : ${registers}" ]
         {
-            {[# th:each="alias, iterAliasStat : ${register.aliases}" ] [(${alias})][# th:if="${!iterAliasStat.last}" ],[/] [/]},
+            {[# th:each="alias, iterAliasStat : ${registers}" ] [(${alias})][# th:if="${!iterAliasStat.last}" ],[/] [/]},
             [(${register.name})]
         }[# th:if="${!iterStat.last}" ],[/]
     [/]

@@ -124,6 +124,4 @@ public class LlvmLoweringPass extends Pass {
 
     return inverse;
   }
-
-
 }

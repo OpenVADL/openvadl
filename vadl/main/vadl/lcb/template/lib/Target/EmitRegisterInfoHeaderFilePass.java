@@ -24,12 +24,12 @@ public class EmitRegisterInfoHeaderFilePass extends AbstractTemplateRenderingPas
 
   @Override
   protected String getTemplatePath() {
-    return "lcb/llvm/Target/RegisterInfo.h";
+    return "lcb/llvm/lib/Target/RegisterInfo.h";
   }
 
   @Override
   protected String getOutputPath() {
-    return "llvm/Target/" + processorName.value() + "/" + processorName.value() + "RegisterInfo.h";
+    return "llvm/lib/Target/" + processorName.value() + "/" + processorName.value() + "RegisterInfo.h";
   }
 
   @Override

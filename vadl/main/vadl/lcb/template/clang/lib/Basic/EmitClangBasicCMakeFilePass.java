@@ -1,4 +1,4 @@
-package vadl.lcb.clang.lib.Basic;
+package vadl.lcb.template.clang.lib.Basic;
 
 import java.io.IOException;
 import java.util.Map;
@@ -25,7 +25,7 @@ public class EmitClangBasicCMakeFilePass extends AbstractTemplateRenderingPass {
 
   @Override
   protected String getTemplatePath() {
-    return "clang/lib/Basic/CMakeLists.txt";
+    return "lcb/clang/lib/Basic/CMakeLists.txt";
   }
 
   @Override

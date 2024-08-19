@@ -24,12 +24,12 @@ public class EmitISelLoweringHeaderFilePass extends AbstractTemplateRenderingPas
 
   @Override
   protected String getTemplatePath() {
-    return "lcb/llvm/Target/ISelLowering.h";
+    return "lcb/llvm/lib/Target/ISelLowering.h";
   }
 
   @Override
   protected String getOutputPath() {
-    return "llvm/Target/" + processorName.value() + "/" + processorName.value() + "ISelLowering.h";
+    return "llvm/lib/Target/" + processorName.value() + "/" + processorName.value() + "ISelLowering.h";
   }
 
   @Override

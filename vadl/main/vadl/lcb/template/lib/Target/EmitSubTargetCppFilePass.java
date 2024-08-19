@@ -24,12 +24,12 @@ public class EmitSubTargetCppFilePass extends AbstractTemplateRenderingPass {
 
   @Override
   protected String getTemplatePath() {
-    return "lcb/llvm/Target/SubTarget.cpp";
+    return "lcb/llvm/lib/Target/SubTarget.cpp";
   }
 
   @Override
   protected String getOutputPath() {
-    return "llvm/Target/" + processorName.value() + "/" + processorName.value() + "SubTarget.cpp";
+    return "llvm/lib/Target/" + processorName.value() + "/" + processorName.value() + "SubTarget.cpp";
   }
 
   @Override

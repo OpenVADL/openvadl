@@ -24,12 +24,12 @@ public class EmitFrameLoweringHeaderFilePass extends AbstractTemplateRenderingPa
 
   @Override
   protected String getTemplatePath() {
-    return "lcb/llvm/Target/FrameLowering.h";
+    return "lcb/llvm/lib/Target/FrameLowering.h";
   }
 
   @Override
   protected String getOutputPath() {
-    return "llvm/Target/" + processorName.value() + "/" + processorName.value() + "FrameLowering.h";
+    return "llvm/lib/Target/" + processorName.value() + "/" + processorName.value() + "FrameLowering.h";
   }
 
   @Override

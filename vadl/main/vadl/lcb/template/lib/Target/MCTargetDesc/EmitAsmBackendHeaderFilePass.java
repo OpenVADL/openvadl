@@ -24,12 +24,12 @@ public class EmitAsmBackendHeaderFilePass extends AbstractTemplateRenderingPass 
 
   @Override
   protected String getTemplatePath() {
-    return "lcb/llvm/Target/MCTargetDesc/AsmBackend.h";
+    return "lcb/llvm/lib/Target/MCTargetDesc/AsmBackend.h";
   }
 
   @Override
   protected String getOutputPath() {
-    return "llvm/Target/" + processorName.value() + "/MCTargetDesc/" + processorName.value()
+    return "llvm/lib/Target/" + processorName.value() + "/MCTargetDesc/" + processorName.value()
         + "AsmBackend.h";
   }
 

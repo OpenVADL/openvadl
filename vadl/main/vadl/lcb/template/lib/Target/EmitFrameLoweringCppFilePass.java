@@ -24,12 +24,12 @@ public class EmitFrameLoweringCppFilePass extends AbstractTemplateRenderingPass 
 
   @Override
   protected String getTemplatePath() {
-    return "lcb/llvm/Target/FrameLowering.cpp";
+    return "lcb/llvm/lib/Target/FrameLowering.cpp";
   }
 
   @Override
   protected String getOutputPath() {
-    return "llvm/Target/" + processorName.value() + "/" + processorName.value()
+    return "llvm/lib/Target/" + processorName.value() + "/" + processorName.value()
         + "FrameLowering.cpp";
   }
 

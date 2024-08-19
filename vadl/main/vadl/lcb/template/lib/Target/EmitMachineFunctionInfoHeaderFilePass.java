@@ -24,12 +24,12 @@ public class EmitMachineFunctionInfoHeaderFilePass extends AbstractTemplateRende
 
   @Override
   protected String getTemplatePath() {
-    return "lcb/llvm/Target/MachineFunctionInfo.h";
+    return "lcb/llvm/lib/Target/MachineFunction.h";
   }
 
   @Override
   protected String getOutputPath() {
-    return "llvm/Target/" + processorName.value() + "/" + processorName.value()
+    return "llvm/lib/Target/" + processorName.value() + "/" + processorName.value()
         + "MachineFunction.h";
   }
 

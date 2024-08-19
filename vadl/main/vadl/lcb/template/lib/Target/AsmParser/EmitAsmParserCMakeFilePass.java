@@ -24,12 +24,12 @@ public class EmitAsmParserCMakeFilePass extends AbstractTemplateRenderingPass {
 
   @Override
   protected String getTemplatePath() {
-    return "lcb/llvm/Target/AsmParser/CMakeLists.txt";
+    return "lcb/llvm/lib/Target/AsmParser/CMakeLists.txt";
   }
 
   @Override
   protected String getOutputPath() {
-    return "llvm/Target/" + processorName.value() + "/AsmParser/CMakeLists.txt";
+    return "llvm/lib/Target/" + processorName.value() + "/AsmParser/CMakeLists.txt";
   }
 
   @Override

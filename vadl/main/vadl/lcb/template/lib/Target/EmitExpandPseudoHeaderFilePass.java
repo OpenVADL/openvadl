@@ -24,12 +24,12 @@ public class EmitExpandPseudoHeaderFilePass extends AbstractTemplateRenderingPas
 
   @Override
   protected String getTemplatePath() {
-    return "lcb/llvm/Target/ExpandPseudo.h";
+    return "lcb/llvm/lib/Target/ExpandPseudo.h";
   }
 
   @Override
   protected String getOutputPath() {
-    return "llvm/Target/" + processorName.value() + "/" + processorName.value() + "ExpandPseudo.h";
+    return "llvm/lib/Target/" + processorName.value() + "/" + processorName.value() + "ExpandPseudo.h";
   }
 
   @Override

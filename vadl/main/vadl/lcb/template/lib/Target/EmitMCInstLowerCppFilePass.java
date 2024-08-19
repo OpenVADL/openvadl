@@ -1,4 +1,4 @@
-package vadl.lcb.template.lib.Target.MCTargetDesc;
+package vadl.lcb.template.lib.Target;
 
 import java.io.IOException;
 import java.util.Map;
@@ -10,27 +10,27 @@ import vadl.template.AbstractTemplateRenderingPass;
 import vadl.viam.Specification;
 
 /**
- * This file contains the definitions for lowering logic to the MC layer.
+ * This file contains the lowering logic to the MC layer.
  */
-public class EmitMCInstLowerHeaderFilePass extends AbstractTemplateRenderingPass {
+public class EmitMCInstLowerCppFilePass extends AbstractTemplateRenderingPass {
 
   private final ProcessorName processorName;
 
-  public EmitMCInstLowerHeaderFilePass(LcbConfiguration lcbConfiguration,
-                                       ProcessorName processorName) throws IOException {
+  public EmitMCInstLowerCppFilePass(LcbConfiguration lcbConfiguration, ProcessorName processorName)
+      throws IOException {
     super(lcbConfiguration.outputPath());
     this.processorName = processorName;
   }
 
   @Override
   protected String getTemplatePath() {
-    return "lcb/llvm/lib/Target/MCTargetDesc/TargetMCInstLower.h";
+    return "lcb/llvm/lib/Target/MCInstLower.cpp";
   }
 
   @Override
   protected String getOutputPath() {
-    return "lcb/llvm/lib/Target/" + processorName.value() + "/MCTargetDesc/"
-        + processorName.value() + "MCInstLower.h";
+    return "lcb/llvm/lib/Target/" + processorName.value() + "/"
+        + processorName.value() + "MCInstLower.cpp";
   }
 
   @Override

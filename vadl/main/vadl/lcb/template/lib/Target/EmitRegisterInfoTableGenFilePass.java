@@ -24,12 +24,12 @@ public class EmitRegisterInfoTableGenFilePass extends AbstractTemplateRenderingP
 
   @Override
   protected String getTemplatePath() {
-    return "lcb/llvm/Target/RegisterInfo.td";
+    return "lcb/llvm/lib/Target/RegisterInfo.td";
   }
 
   @Override
   protected String getOutputPath() {
-    return "llvm/Target/" + processorName.value() + "/" + processorName.value() + "RegisterInfo.td";
+    return "llvm/lib/Target/" + processorName.value() + "/" + processorName.value() + "RegisterInfo.td";
   }
 
   @Override

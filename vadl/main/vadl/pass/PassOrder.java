@@ -5,6 +5,8 @@ import java.util.ArrayList;
 import java.util.List;
 import vadl.gcb.valuetypes.ProcessorName;
 import vadl.lcb.config.LcbConfiguration;
+import vadl.lcb.template.lib.Target.EmitMCInstLowerCppFilePass;
+import vadl.lcb.template.lib.Target.EmitMCInstLowerHeaderFilePass;
 
 /**
  * This class defines the order in which the {@link PassManager} should run them.
@@ -14,8 +16,15 @@ public final class PassOrder {
       throws IOException {
     List<Pass> passes = new ArrayList<>();
 
+    passes.add(new vadl.viam.passes.typeCastElimination.TypeCastEliminationPass());
+    passes.add(new vadl.viam.passes.FunctionInlinerPass());
     passes.add(new vadl.gcb.passes.encoding_generation.GenerateFieldAccessEncodingFunctionPass());
     passes.add(new vadl.gcb.passes.field_node_replacement.FieldNodeReplacementPassForDecoding());
+    passes.add(new vadl.gcb.passes.type_normalization.CppTypeNormalizationForEncodingsPass());
+    passes.add(new vadl.gcb.passes.type_normalization.CppTypeNormalizationForDecodingsPass());
+    passes.add(new vadl.gcb.passes.type_normalization.CppTypeNormalizationForPredicatesPass());
+    passes.add(new vadl.lcb.passes.isaMatching.IsaMatchingPass());
+    passes.add(new vadl.lcb.passes.llvmLowering.LlvmLoweringPass());
     passes.add(new vadl.lcb.clang.lib.Driver.ToolChains.EmitClangToolChainFilePass(configuration,
         processorName));
     passes.add(new vadl.lcb.clang.lib.Basic.Targets.EmitClangTargetHeaderFilePass(configuration,
@@ -25,13 +34,16 @@ public final class PassOrder {
     passes.add(new vadl.lcb.clang.lib.Basic.Targets.EmitClangTargetCppFilePass(configuration,
         processorName));
     passes.add(
-        new vadl.lcb.clang.lib.Basic.EmitClangBasicCMakeFilePass(configuration, processorName));
-    passes.add(new vadl.lcb.clang.lib.CodeGen.EmitCodeGenModuleCMakeFilePass(configuration,
+        new vadl.lcb.template.clang.lib.Basic.EmitClangBasicCMakeFilePass(configuration,
+            processorName));
+    passes.add(new vadl.lcb.template.clang.lib.CodeGen.EmitCodeGenModuleCMakeFilePass(configuration,
         processorName));
-    passes.add(new vadl.lcb.clang.lib.CodeGen.Targets.EmitClangCodeGenTargetFilePass(configuration,
+    passes.add(new vadl.lcb.template.clang.lib.CodeGen.Targets.EmitClangCodeGenTargetFilePass(
+        configuration,
         processorName));
-    passes.add(new vadl.lcb.clang.lib.CodeGen.EmitCodeGenTargetInfoHeaderFilePass(configuration,
-        processorName));
+    passes.add(
+        new vadl.lcb.template.clang.lib.CodeGen.EmitCodeGenTargetInfoHeaderFilePass(configuration,
+            processorName));
     passes.add(
         new vadl.lcb.clang.lib.CodeGen.EmitCodeGenModuleFilePass(configuration, processorName));
     passes.add(new vadl.lcb.template.lld.ELF.EmitLldDriverFilePass(configuration, processorName));
@@ -171,7 +183,7 @@ public final class PassOrder {
     passes.add(new vadl.lcb.template.lib.Target.MCTargetDesc.EmitMCExprHeaderFilePass(configuration,
         processorName));
     passes.add(
-        new vadl.lcb.template.lib.Target.MCTargetDesc.EmitMCInstLowerCppFilePass(configuration,
+        new EmitMCInstLowerCppFilePass(configuration,
             processorName));
     passes.add(
         new vadl.lcb.template.lib.Target.MCTargetDesc.EmitMCExprCppFilePass(configuration,
@@ -209,7 +221,7 @@ public final class PassOrder {
         new vadl.lcb.template.lib.Target.MCTargetDesc.EmitMCAsmInfoHeaderFilePass(configuration,
             processorName));
     passes.add(
-        new vadl.lcb.template.lib.Target.MCTargetDesc.EmitMCInstLowerHeaderFilePass(configuration,
+        new EmitMCInstLowerHeaderFilePass(configuration,
             processorName));
     passes.add(new vadl.lcb.template.lib.Target.MCTargetDesc.EmitELFObjectWriterHeaderFilePass(
         configuration,

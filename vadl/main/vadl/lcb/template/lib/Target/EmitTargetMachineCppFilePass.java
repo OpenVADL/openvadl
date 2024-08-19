@@ -24,12 +24,12 @@ public class EmitTargetMachineCppFilePass extends AbstractTemplateRenderingPass 
 
   @Override
   protected String getTemplatePath() {
-    return "lcb/llvm/Target/TargetMachine.cpp";
+    return "lcb/llvm/lib/Target/TargetMachine.cpp";
   }
 
   @Override
   protected String getOutputPath() {
-    return "llvm/Target/" + processorName.value() + "/" + processorName.value() + ".cpp";
+    return "llvm/lib/Target/" + processorName.value() + "/" + processorName.value() + ".cpp";
   }
 
   @Override

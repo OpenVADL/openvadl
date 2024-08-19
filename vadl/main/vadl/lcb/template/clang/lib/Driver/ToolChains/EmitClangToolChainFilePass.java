@@ -26,7 +26,7 @@ public class EmitClangToolChainFilePass extends AbstractTemplateRenderingPass {
 
   @Override
   protected String getTemplatePath() {
-    return "lcb/clang/lib/CodeGen/Driver/ToolChains/Clang.cpp";
+    return "lcb/clang/lib/CodeGen/Driver/Toolchains/Clang.cpp";
   }
 
   @Override

@@ -24,12 +24,12 @@ public class EmitTargetHeaderFilePass extends AbstractTemplateRenderingPass {
 
   @Override
   protected String getTemplatePath() {
-    return "lcb/llvm/Target/Target.h";
+    return "lcb/llvm/lib/Target/Target.h";
   }
 
   @Override
   protected String getOutputPath() {
-    return "llvm/Target/" + processorName.value() + "/" + processorName.value() + ".h";
+    return "llvm/lib/Target/" + processorName.value() + "/" + processorName.value() + ".h";
   }
 
   @Override

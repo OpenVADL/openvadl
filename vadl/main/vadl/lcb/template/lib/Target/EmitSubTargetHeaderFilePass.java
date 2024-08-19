@@ -24,12 +24,12 @@ public class EmitSubTargetHeaderFilePass extends AbstractTemplateRenderingPass {
 
   @Override
   protected String getTemplatePath() {
-    return "lcb/llvm/Target/SubTarget.h";
+    return "lcb/llvm/lib/Target/SubTarget.h";
   }
 
   @Override
   protected String getOutputPath() {
-    return "llvm/Target/" + processorName.value() + "/" + processorName.value() + "SubTarget.h";
+    return "llvm/lib/Target/" + processorName.value() + "/" + processorName.value() + "SubTarget.h";
   }
 
   @Override
