@@ -343,9 +343,11 @@ class MacroExpander
   @Override
   public Definition visit(EncodingDefinition definition) {
     var instrId = resolvePlaceholderOrIdentifier(definition.instrIdentifier);
-    var fieldEncodings = new ArrayList<>(resolveEncs(definition.fieldEncodings).encodings);
-    fieldEncodings.replaceAll(enc ->
-        new EncodingDefinition.FieldEncoding(enc.field(), enc.value().accept(this)));
+    var fieldEncodings =
+        new ArrayList<FieldEncodingOrPlaceholder>(definition.fieldEncodings.encodings.size());
+    for (var enc : definition.fieldEncodings.encodings) {
+      fieldEncodings.addAll(resolveEncs(enc));
+    }
 
     return new EncodingDefinition(instrId, new EncodingDefinition.FieldEncodings(fieldEncodings),
         definition.loc).withAnnotations(definition.annotations);
@@ -551,12 +553,18 @@ class MacroExpander
         : (TypeLiteral) type;
   }
 
-  private EncodingDefinition.FieldEncodings resolveEncs(FieldEncodingsOrPlaceholder encodings) {
-    if (encodings instanceof PlaceholderExpr p) {
+  private List<FieldEncodingOrPlaceholder> resolveEncs(FieldEncodingOrPlaceholder encodings) {
+    if (encodings instanceof EncodingDefinition.FieldEncoding fieldEncoding) {
+      return List.of(new EncodingDefinition.FieldEncoding(fieldEncoding.field(),
+          fieldEncoding.value().accept(this)));
+    } else if (encodings instanceof PlaceholderExpr p) {
       var arg = (EncodingDefinition.FieldEncodings) resolveArg(p.segments);
-      return Objects.requireNonNull(arg);
+      return arg.encodings;
+    } else if (encodings instanceof MacroMatchExpr macroMatchExpr) {
+      var match = (EncodingDefinition.FieldEncodings) resolveMacroMatch(macroMatchExpr.macroMatch);
+      return match.encodings;
     }
-    return (EncodingDefinition.FieldEncodings) encodings;
+    return List.of(encodings);
   }
 
   private Node resolveMacroMatch(MacroMatch macroMatch) {

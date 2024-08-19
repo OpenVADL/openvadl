@@ -115,13 +115,19 @@ class SymbolTable {
     defineSymbol(new RecordSymbol(name.name, recordType), name.location());
   }
 
-  SyntaxType findRecord(Identifier recordName) {
+  SyntaxType findType(Identifier recordName) {
     var symbol = resolveSymbol(recordName.name);
     if (symbol instanceof RecordSymbol recordSymbol) {
       return recordSymbol.recordType();
+    } else if (symbol instanceof ModelTypeSymbol modelTypeSymbol) {
+      return modelTypeSymbol.projectionType();
     }
     reportError("Unresolved record " + recordName.name, recordName.location());
     return BasicSyntaxType.INVALID;
+  }
+
+  void addModelType(Identifier name, ProjectionType type) {
+    defineSymbol(new ModelTypeSymbol(name.name, type), name.location());
   }
 
   void copyFrom(SymbolTable other) {
@@ -140,7 +146,7 @@ class SymbolTable {
 
   enum SymbolType {
     CONSTANT, COUNTER, FORMAT, INSTRUCTION, INSTRUCTION_SET, MEMORY, REGISTER, REGISTER_FILE,
-    FORMAT_FIELD, MACRO, ALIAS, FUNCTION, ENUM_FIELD, EXCEPTION, RECORD
+    FORMAT_FIELD, MACRO, ALIAS, FUNCTION, ENUM_FIELD, EXCEPTION, RECORD, MODEL_TYPE
   }
 
   interface Symbol {
@@ -193,6 +199,13 @@ class SymbolTable {
     @Override
     public SymbolType type() {
       return SymbolType.RECORD;
+    }
+  }
+
+  record ModelTypeSymbol(String name, ProjectionType projectionType) implements Symbol {
+    @Override
+    public SymbolType type() {
+      return SymbolType.MODEL_TYPE;
     }
   }
 
@@ -269,8 +282,9 @@ class SymbolTable {
         collectSymbols(assembly.symbolTable, assembly.expr);
       } else if (definition instanceof EncodingDefinition encoding) {
         encoding.symbolTable = symbols.createChild();
-        for (EncodingDefinition.FieldEncoding fieldEncoding : encoding.fieldEncodings().encodings) {
-          collectSymbols(encoding.symbolTable, fieldEncoding.value());
+        for (var fieldEncoding : encoding.fieldEncodings().encodings) {
+          collectSymbols(encoding.symbolTable,
+              ((EncodingDefinition.FieldEncoding) fieldEncoding).value());
         }
       } else if (definition instanceof AliasDefinition alias) {
         var type = switch (alias.kind) {
@@ -433,7 +447,8 @@ class SymbolTable {
         var format = encoding.symbolTable().requireInstructionFormat(encoding.instrId());
         if (format != null) {
           var encodings = encoding.fieldEncodings().encodings;
-          for (EncodingDefinition.FieldEncoding fieldEncoding : encodings) {
+          for (var enc : encodings) {
+            var fieldEncoding = (EncodingDefinition.FieldEncoding) enc;
             var field = fieldEncoding.field();
             if (findField(format.definition, field.name) == null) {
               encoding.symbolTable()

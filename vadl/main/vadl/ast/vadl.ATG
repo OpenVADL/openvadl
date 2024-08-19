@@ -98,6 +98,7 @@ TOKENS
   RAISE = "raise".
   EXCEPTION = "exception".
   RECORD = "record".
+  MODEL_TYPE = "model-type".
 
   SYM_IN = "in".
   SYM_AS = "as".
@@ -154,6 +155,7 @@ PRODUCTIONS
     topLevelDefinitions<out Definition d>   (. ast.definitions.add(d); .)
     | macroDef
     | recordDefinition
+    | modelTypeDef
   }.
 
   // -- DEFINITIONS --------------------------------------------------------------------------------------------------
@@ -187,6 +189,7 @@ PRODUCTIONS
     isaDefinition<out Definition def>                                 (. def.annotations.annotations().addAll(annotations); definitions.add(def); .)
   | macroDef
   | recordDefinition
+  | modelTypeDef
   | // IF (isMacroReplacementOfType(this, BasicSyntaxType.ISA_DEFS))
     macroReplacement<out Node n>                                      (. if (n instanceof DefinitionList defs) definitions.addAll(defs.items);
                                                                          else definitions.add((Definition) n); .)
@@ -291,37 +294,31 @@ PRODUCTIONS
 
   identifierOrPlaceholder<out IdentifierOrPlaceholder id> (. id = null; .)
   = identifier<out id>
-  | // IF (isMacroReplacementOfType(this, BasicSyntaxType.ID))
-    macroReplacement<out Node node>                       (. id = (IdentifierOrPlaceholder) node; .)
+  | maximumMacroExpr<out Node node>                       (. id = (IdentifierOrPlaceholder) node; .)
   .
 
-  encodingDefinition<out EncodingDefinition def> (. var startLocation = loc(); .)
-  = ENCODING                                     (. FieldEncodingsOrPlaceholder encodings = null; .)
+  encodingDefinition<out EncodingDefinition def>
+  = ENCODING         (. var startLocation = loc(); .)
     identifierOrPlaceholder<out IdentifierOrPlaceholder instrId>
     SYM_EQ SYM_BRACE_OPEN
-    (
-      encodingDefinitionList<out encodings>
-    | // IF (isMacroReplacementOfType(this, BasicSyntaxType.ENCS))
-      macroReplacement<out Node n>               (. encodings = (FieldEncodingsOrPlaceholder) n; .)
-    )
-    SYM_BRACE_CLOSE                              (. def = new EncodingDefinition(instrId, encodings, startLocation.join(loc())); .)
+    encodingDefinitionList<out EncodingDefinition.FieldEncodings encodings>
+    SYM_BRACE_CLOSE  (. def = new EncodingDefinition(instrId, encodings, startLocation.join(loc())); .)
   .
 
-  encodingDefinitionList<out EncodingDefinition.FieldEncodings encs> (. var entries = new ArrayList<EncodingDefinition.FieldEncoding>(); .)
-  = encodingEntry<out FieldEncoding e1>                              (. entries.add(e1); .)
+  encodingDefinitionList<out EncodingDefinition.FieldEncodings encs> (. var entries = new ArrayList<FieldEncodingOrPlaceholder>(); .)
+  = encodingEntry<out FieldEncodingOrPlaceholder enc>                (. entries.add(enc); .)
     {
       SYM_COMMA
-      encodingEntry<out FieldEncoding e2>                            (. entries.add(e2); .)
+      encodingEntry<out enc>                                         (. entries.add(enc); .)
     }                                                                (. encs = new EncodingDefinition.FieldEncodings(entries); .)
   .
 
-  encodingEntry<out FieldEncoding enc> (. Expr expr = null; .)
-  = identifier<out Identifier id>
-    SYM_EQ (
-      valLiteral<out expr>
-    | // IF (isMacroReplacementOfType(this, BasicSyntaxType.VAL))
-      macroReplacement<out Node node>  (. expr = (Expr) node; .)
-    )                                  (. enc = new FieldEncoding(id, expr); .)
+  encodingEntry<out FieldEncodingOrPlaceholder enc> (. enc = null; .)
+  = IF (isMacroReplacementOfType(this, BasicSyntaxType.ENCS))
+    maximumMacroExpr<out Node node>                 (. enc = (FieldEncodingOrPlaceholder) node; .)
+  | identifier<out Identifier id>
+    SYM_EQ
+    expression<out Expr expr, BIN_OPS>              (. enc = new FieldEncoding(id, expr); .)
   .
 
   assemblyDefinition<out AssemblyDefinition def>                        (. List<IdentifierOrPlaceholder> ids = new ArrayList<>(); var start = loc(); .)
@@ -474,6 +471,13 @@ PRODUCTIONS
     SYM_PAREN_CLOSE                 (. symbolTable.addRecord(recordName, new RecordType(recordName.name, entries)); .)
   .
 
+  modelTypeDef
+  = MODEL_TYPE
+    identifier<out Identifier name>
+    SYM_EQ
+    projectionType<out ProjectionType type> (. symbolTable.addModelType(name, type); .)
+  .
+
   // -- STATEMENTS ---------------------------------------------------------------------------------------------------
 
   statement<out Statement statement> (. statement = null; .)
@@ -498,10 +502,7 @@ PRODUCTIONS
   .
 
   assignmentOrCallStmt<out Statement statement> (. statement = null; Expr target = null; .)
-  = ( callOrBinaryExpression<out target, false>
-    | // IF (isMacroReplacementOfType(this, BasicSyntaxType.CALL_EX))
-      macroReplacement<out Node node>  (. target = (Expr) node; .)
-    )
+  = callOrBinaryExpression<out target, false>
     [
       SYM_ASSIGN
       expression<out Expr expr, BIN_OPS>        (. statement = new AssignmentStatement(target, expr); .)
@@ -545,11 +546,7 @@ PRODUCTIONS
       | maximumMacroExpr<out Node node>
         term<out Expr right>                                (. expr = new BinaryExpr(expr, (OperatorOrPlaceholder) node, right); .)
       | SYM_AS
-        (
-          symbolOrBinaryExpression<out Expr symOrBin, true> (. expr = reorderCastExpr(expr, symOrBin); .)
-        | // IF (isMacroReplacementOfType(this, BasicSyntaxType.ISA_DEFS))
-          macroReplacement<out Node node>                   (. expr = reorderCastExpr(expr, (Expr) node); .)
-        )
+        symbolOrBinaryExpression<out Expr symOrBin, true> (. expr = reorderCastExpr(expr, symOrBin); .)
       )
     }                                                       (. expr = reorderBinary(this, expr); .)
   .
@@ -557,26 +554,28 @@ PRODUCTIONS
   /// Call expressions of form "a::b<3>().c()".
   /// Due to the "<"-ambiguity with the less-than operator, this rule can also return a BinaryExpr.
   /// Use the "allowLtOp" parameter to disallow this behavior, e.g. in type literals.
-  callOrBinaryExpression<out Expr expr, boolean allowLtOp>
-  = symbolOrBinaryExpression<out expr, allowLtOp> (. List<List<Expr>> argsIndices = new ArrayList<>(); .)
+  callOrBinaryExpression<out Expr expr, boolean allowLtOp> (. expr = null; .)
+  = IF (isIdentifierToken(la) || isMacroReplacementOfType(this, BasicSyntaxType.SYM_EX))
+    symbolOrBinaryExpression<out expr, allowLtOp>          (. List<List<Expr>> argsIndices = new ArrayList<>(); .)
     {
       // Check if we received a symbol expression -> collect arguments
       // Otherwise, just return the collected binary expression
       // TODO Also collect pseudo-instruction arguments in {...}
       IF (la.kind == _SYM_PAREN_OPEN && expr instanceof IsSymExpr)
-      arguments<.out List<Expr> args.>           (. argsIndices.add(args); .)
-    }                                            (. List<CallExpr.SubCall> subCalls = new ArrayList<>(); .)
+      arguments<.out List<Expr> args.>                     (. argsIndices.add(args); .)
+    }                                                      (. List<CallExpr.SubCall> subCalls = new ArrayList<>(); .)
     {
       IF (la.kind == _SYM_DOT && (expr instanceof IsSymExpr))
-      SYM_DOT                                    (. var subCallArgsIndices = new ArrayList<List<Expr>>(); .)
+      SYM_DOT                                              (. var subCallArgsIndices = new ArrayList<List<Expr>>(); .)
       identifier<out Identifier id>
       {
         IF (la.kind == _SYM_PAREN_OPEN)
-        arguments<.out List<Expr> args.>         (. subCallArgsIndices.add(args); .)
-      }                                          (. subCalls.add(new CallExpr.SubCall(id, subCallArgsIndices)); .)
-    }                                            (. if (expr instanceof IsSymExpr symExpr && (!argsIndices.isEmpty() || !subCalls.isEmpty()))
-                                                      expr = new CallExpr(symExpr, argsIndices, subCalls, expr.location().join(loc()));
-                                                 .)
+        arguments<.out List<Expr> args.>                   (. subCallArgsIndices.add(args); .)
+      }                                                    (. subCalls.add(new CallExpr.SubCall(id, subCallArgsIndices)); .)
+    }                                                      (. if (expr instanceof IsSymExpr symExpr && (!argsIndices.isEmpty() || !subCalls.isEmpty()))
+                                                                expr = new CallExpr(symExpr, argsIndices, subCalls, expr.location().join(loc()));
+                                                           .)
+  | maximumMacroExpr<out Node node>                        (. expr = (Expr) node; .)
   .
 
   /// Represents one set of invocation arguments.
@@ -596,17 +595,19 @@ PRODUCTIONS
   /// Symbol expressions of form "a::b<3>".
   /// Due to the "<"-ambiguity with the less-than operator, this rule can also return a BinaryExpr.
   /// Use the "allowLtOp" parameter to disallow this behavior, e.g. in type literals.
-  symbolOrBinaryExpression<out Expr expr, boolean allowLtOp>
-  = identifierPath<out IsId path> (. expr = null; .)
+  symbolOrBinaryExpression<out Expr expr, boolean allowLtOp> (. expr = null; .)
+  = IF (isIdentifierToken(la) || isMacroReplacementOfType(this, BasicSyntaxType.ID))
+    identifierPath<out IsId path>
     [
       IF (la.kind == _SYM_LT)
-      SYM_LT                                (. var lessLoc = loc(); .)
+      SYM_LT                                                 (. var lessLoc = loc(); .)
       term<out Expr term>
       [
         IF (!allowLtOp || la.kind == _SYM_GT)
-        SYM_GT                              (. expr = new SymbolExpr(path, term, path.location().join(loc())); .)
-      ]                                     (. if (expr == null) expr = new BinaryExpr((Expr) path, new OperatorExpr(Operator.Less(), lessLoc), term); .)
-    ]                                       (. if (expr == null) expr = (Expr) path; .)
+        SYM_GT                                               (. expr = new SymbolExpr(path, term, path.location().join(loc())); .)
+      ]                                                      (. if (expr == null) expr = new BinaryExpr((Expr) path, new OperatorExpr(Operator.Less(), lessLoc), term); .)
+    ]                                                        (. if (expr == null) expr = (Expr) path; .)
+  | maximumMacroExpr<out Node node>                          (. expr = (Expr) node; .)
   .
 
   binaryOperator<out Operator op>    (.op = null;.)
@@ -655,7 +656,8 @@ PRODUCTIONS
   = literal<out expr>
   | IF (la.kind == _MATCH && scanner.Peek().kind != _SYM_COLON) // Disambiguate from macro match
     matchExpression<out expr>
-  | callOrBinaryExpression<out expr, true>
+  | IF (isIdentifierToken(la) || isMacroReplacementOfType(this, BasicSyntaxType.CALL_EX))
+    callOrBinaryExpression<out expr, true>
   | groupedExpression<out expr>
   | unary<out expr>
   | ifExpression<out expr, BIN_OPS>
@@ -699,7 +701,7 @@ PRODUCTIONS
   .
 
   identifierPath<out IsId path>                                 (. List<IdentifierOrPlaceholder> segments = new ArrayList<>(); .)
-  = identifier<out Identifier id>                               (. segments.add(id); .)
+  = identifierOrPlaceholder<out IdentifierOrPlaceholder id>     (. segments.add(id); .)
     {
       SYM_NAMESPACE
       identifierOrPlaceholder<out IdentifierOrPlaceholder next> (. segments.add(next); .)
@@ -763,10 +765,10 @@ PRODUCTIONS
   // -- PRIMITIVES ---------------------------------------------------------------------------------------------------
 
   typeLiteralOrPlaceholder<out TypeLiteralOrPlaceholder type> (. type = null; .)
-  = typeLiteral<out type>
-  | // IF (isMacroReplacementOfType(this, BasicSyntaxType.ID))
+  = IF (isMacroReplacementOfType(this, BasicSyntaxType.ID))
     macroReplacement<out Node n>                              (. if (n instanceof PlaceholderExpr p) type = p;
                                                                  else type = new TypeLiteral((IsId) n, List.of(), n.location()); .)
+  | typeLiteral<out type>
   .
 
   typeLiteral<out TypeLiteral type>
@@ -786,6 +788,7 @@ PRODUCTIONS
   = (identifierToken | allowedIdentifierKeywords) (. identifier = new Identifier(t.val, loc()); .)
   .
 
+  /// Must be kept in sync with the ParserUtils.isIdentifierToken function.
   allowedIdentifierKeywords
   = T_BOOL
   | REGISTER
@@ -933,20 +936,20 @@ PRODUCTIONS
 
   syntaxType<out SyntaxType type> (. type = null; .)
   = IF (la.kind == _identifierToken)
-    identifier<out Identifier id> (. type = symbolTable.findRecord(id); .)
+    identifier<out Identifier id> (. type = symbolTable.findType(id); .)
   | projectionType<out type>
   | basicSyntaxType<out type>
   .
 
-  projectionType<out SyntaxType type>     (. var arguments = new ArrayList<SyntaxType>(); .)
+  projectionType<out ProjectionType type>     (. var arguments = new ArrayList<SyntaxType>(); .)
   = SYM_PAREN_OPEN
     [
-      syntaxType<out SyntaxType argType>  (. arguments.add(argType); .)
-      { SYM_COMMA syntaxType<out argType> (. arguments.add(argType); .) }
+      syntaxType<out SyntaxType argType>      (. arguments.add(argType); .)
+      { SYM_COMMA syntaxType<out argType>     (. arguments.add(argType); .) }
     ]
     SYM_PAREN_CLOSE
     SYM_ARROW
-    syntaxType<out SyntaxType resultType> (. type = new ProjectionType(arguments, resultType); .)
+    syntaxType<out SyntaxType resultType>     (. type = new ProjectionType(arguments, resultType); .)
   .
 
   basicSyntaxType<out BasicSyntaxType type> (. type = null; .)

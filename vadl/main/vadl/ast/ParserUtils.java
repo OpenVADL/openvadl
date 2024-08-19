@@ -214,6 +214,20 @@ class ParserUtils {
   }
 
   /**
+   * Checks whether the token is an identifier token.
+   * Since some keywords are allowed as identifiers, this is not as simple as checking the type.
+   * Must be kept in sync with the "allowedIdentifierKeywords" rule.
+   * @param token The token to inspect
+   * @return Whether the token is suitable for "identifier" substitution
+   */
+  static boolean isIdentifierToken(Token token) {
+    return token.kind == Parser._identifierToken
+        || token.kind == Parser._T_BOOL
+        || token.kind == Parser._REGISTER
+        || token.kind == Parser._EXCEPTION;
+  }
+
+  /**
    * Pre-parses the next few tokens to determine the type of the following placeholder / macro.
    * Before: parser must be in a state where the lookahead token is the "$" symbol.
    * After: parser is in the same state as before.

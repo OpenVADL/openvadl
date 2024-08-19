@@ -15,3 +15,11 @@ model CreateBinOp(params: BinOpParams, factory: (BinOpParams) -> Ex) : Ex = {
 }
 
 constant d = $CreateBinOp((a ; / ; b) ; BinOpEx)
+
+model-type BinOpModel = (BinOpParams) -> Ex
+
+model HigherOrderBinOp(params: BinOpParams, binOpModel: BinOpModel) : Ex = {
+  $binOpModel($params)
+}
+
+constant e = $HigherOrderBinOp((a ; * ; b ) ; BinOpEx)

@@ -232,9 +232,10 @@ class Ungrouper
   @Override
   public Definition visit(EncodingDefinition definition) {
     ungroupAnnotations(definition);
-    definition.fieldEncodings().encodings.replaceAll(
-        encoding -> new EncodingDefinition.FieldEncoding(encoding.field(),
-            encoding.value().accept(this)));
+    definition.fieldEncodings().encodings.replaceAll(encoding -> {
+      var enc = (EncodingDefinition.FieldEncoding) encoding;
+      return new EncodingDefinition.FieldEncoding(enc.field(), enc.value().accept(this));
+    });
     return definition;
   }
 

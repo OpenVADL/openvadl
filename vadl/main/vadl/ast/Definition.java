@@ -893,18 +893,20 @@ class InstructionDefinition extends Definition {
   }
 }
 
-sealed interface FieldEncodingsOrPlaceholder
-    permits EncodingDefinition.FieldEncodings, PlaceholderExpr, MacroInstanceExpr, MacroMatchExpr {
+sealed interface FieldEncodingOrPlaceholder
+    permits EncodingDefinition.FieldEncoding, PlaceholderExpr, MacroInstanceExpr, MacroMatchExpr {
+  SourceLocation location();
 
+  void prettyPrint(int indent, StringBuilder builder);
 }
 
 class EncodingDefinition extends Definition {
   IdentifierOrPlaceholder instrIdentifier;
-  FieldEncodingsOrPlaceholder fieldEncodings;
+  FieldEncodings fieldEncodings;
   SourceLocation loc;
 
-  EncodingDefinition(IdentifierOrPlaceholder instrIdentifier,
-                     FieldEncodingsOrPlaceholder fieldEncodings, SourceLocation location) {
+  EncodingDefinition(IdentifierOrPlaceholder instrIdentifier, FieldEncodings fieldEncodings,
+                     SourceLocation location) {
     this.instrIdentifier = instrIdentifier;
     this.fieldEncodings = fieldEncodings;
     this.loc = location;
@@ -915,7 +917,7 @@ class EncodingDefinition extends Definition {
   }
 
   FieldEncodings fieldEncodings() {
-    return (FieldEncodings) fieldEncodings;
+    return fieldEncodings;
   }
 
   @Override
@@ -971,17 +973,17 @@ class EncodingDefinition extends Definition {
     return result;
   }
 
-  static final class FieldEncodings extends Node implements FieldEncodingsOrPlaceholder {
-    List<FieldEncoding> encodings;
+  static final class FieldEncodings extends Node {
+    List<FieldEncodingOrPlaceholder> encodings;
 
-    FieldEncodings(List<FieldEncoding> encodings) {
+    FieldEncodings(List<FieldEncodingOrPlaceholder> encodings) {
       this.encodings = encodings;
     }
 
     @Override
     SourceLocation location() {
-      return encodings.get(0).field().location()
-          .join(encodings.get(encodings.size() - 1).value().location());
+      return encodings.get(0).location()
+          .join(encodings.get(encodings.size() - 1).location());
     }
 
     @Override
@@ -992,13 +994,11 @@ class EncodingDefinition extends Definition {
     @Override
     void prettyPrint(int indent, StringBuilder builder) {
       boolean first = true;
-      for (FieldEncoding entry : encodings) {
+      for (var entry : encodings) {
         if (!first) {
           builder.append(prettyIndentString(indent)).append(", ");
         }
-        entry.field.prettyPrint(0, builder);
-        builder.append(" = ");
-        entry.value.prettyPrint(0, builder);
+        entry.prettyPrint(0, builder);
         builder.append("\n");
         first = false;
       }
@@ -1022,7 +1022,18 @@ class EncodingDefinition extends Definition {
     }
   }
 
-  record FieldEncoding(Identifier field, Expr value) {
+  record FieldEncoding(Identifier field, Expr value) implements FieldEncodingOrPlaceholder {
+    @Override
+    public SourceLocation location() {
+      return field.location().join(value.location());
+    }
+
+    @Override
+    public void prettyPrint(int indent, StringBuilder builder) {
+      field.prettyPrint(0, builder);
+      builder.append(" = ");
+      value.prettyPrint(0, builder);
+    }
   }
 }
 

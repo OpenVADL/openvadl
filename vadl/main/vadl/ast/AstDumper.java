@@ -238,6 +238,7 @@ public class AstDumper
     dumpNode(definition);
     dumpChildren(definition.instrId());
     dumpChildren(definition.fieldEncodings().encodings.stream()
+        .map(EncodingDefinition.FieldEncoding.class::cast)
         .flatMap(entry -> Stream.of(entry.field(), (Node) entry.value()))
         .toList()
     );

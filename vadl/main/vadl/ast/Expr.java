@@ -731,7 +731,7 @@ class StringLiteral extends Expr {
   }
 }
 
-sealed interface IdentifierOrPlaceholder
+sealed interface IdentifierOrPlaceholder extends IsId
     permits Identifier, PlaceholderExpr, MacroInstanceExpr, MacroMatchExpr {
   void prettyPrint(int indent, StringBuilder builder);
 }
@@ -741,7 +741,7 @@ sealed interface IdentifierOrPlaceholder
  * This node should never leave the parser.
  */
 final class PlaceholderExpr extends Expr implements IdentifierOrPlaceholder,
-    OperatorOrPlaceholder, TypeLiteralOrPlaceholder, FieldEncodingsOrPlaceholder, IsId {
+    OperatorOrPlaceholder, TypeLiteralOrPlaceholder, FieldEncodingOrPlaceholder, IsId {
   List<String> segments;
   SyntaxType type;
   SourceLocation loc;
@@ -804,7 +804,7 @@ final class PlaceholderExpr extends Expr implements IdentifierOrPlaceholder,
  * This node should never leave the parser.
  */
 final class MacroInstanceExpr extends Expr implements IdentifierOrPlaceholder,
-    OperatorOrPlaceholder, TypeLiteralOrPlaceholder, FieldEncodingsOrPlaceholder, IsId {
+    OperatorOrPlaceholder, TypeLiteralOrPlaceholder, FieldEncodingOrPlaceholder, IsId {
   MacroOrPlaceholder macro;
   List<Node> arguments;
   SourceLocation loc;
@@ -885,7 +885,7 @@ final class MacroInstanceExpr extends Expr implements IdentifierOrPlaceholder,
  * This node should never leave the parser.
  */
 final class MacroMatchExpr extends Expr implements IdentifierOrPlaceholder,
-    OperatorOrPlaceholder, TypeLiteralOrPlaceholder, FieldEncodingsOrPlaceholder, IsId {
+    OperatorOrPlaceholder, TypeLiteralOrPlaceholder, FieldEncodingOrPlaceholder, IsId {
   MacroMatch macroMatch;
 
   MacroMatchExpr(MacroMatch macroMatch) {
@@ -1183,7 +1183,8 @@ sealed interface IsSymExpr extends IsCallExpr permits SymbolExpr, IsId {
 }
 
 sealed interface IsId extends IsSymExpr
-    permits IdentifierPath, Identifier, PlaceholderExpr, MacroInstanceExpr, MacroMatchExpr {
+    permits IdentifierPath, Identifier, PlaceholderExpr, MacroInstanceExpr, MacroMatchExpr,
+    IdentifierOrPlaceholder {
   @Override
   default IsId path() {
     return this;
