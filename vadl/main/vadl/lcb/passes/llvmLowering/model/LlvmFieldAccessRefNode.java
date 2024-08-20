@@ -3,7 +3,6 @@ package vadl.lcb.passes.llvmLowering.model;
 import vadl.lcb.codegen.model.llvm.ValueType;
 import vadl.lcb.passes.llvmLowering.visitors.TableGenMachineInstructionLcbVisitor;
 import vadl.lcb.passes.llvmLowering.visitors.TableGenNodeVisitor;
-import vadl.lcb.tablegen.lowering.TableGenPatternVisitor;
 import vadl.lcb.tablegen.model.TableGenImmediateOperand;
 import vadl.types.Type;
 import vadl.viam.Format;

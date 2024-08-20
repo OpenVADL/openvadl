@@ -6,6 +6,7 @@ import com.google.errorprone.annotations.FormatMethod;
 import com.google.errorprone.annotations.FormatString;
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
@@ -18,6 +19,7 @@ import vadl.viam.graph.control.EndNode;
 import vadl.viam.graph.control.InstrCallNode;
 import vadl.viam.graph.control.ReturnNode;
 import vadl.viam.graph.control.StartNode;
+import vadl.viam.graph.dependency.DependencyNode;
 import vadl.viam.graph.dependency.FuncParamNode;
 import vadl.viam.graph.dependency.ParamNode;
 import vadl.viam.graph.dependency.SideEffectNode;
@@ -433,5 +435,17 @@ public class Graph {
         .map(node -> node.id)
         .forEach(Node.Id::deactivate);
   }
-}
 
+  /**
+   * Gets the root {@link Node} from the graph which are dataflow nodes.
+   * This is useful when we know that the graph has no control nodes, and we would like to apply
+   * a recursive visitor.
+   *
+   * @return dataflow nodes which have no parents.
+   */
+  public List<DependencyNode> getDataflowRoots() {
+    return getNodes(DependencyNode.class)
+        .filter(x -> x.usageCount() == 0)
+        .toList();
+  }
+}

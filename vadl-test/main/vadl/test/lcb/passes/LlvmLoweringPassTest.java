@@ -183,22 +183,20 @@ public class LlvmLoweringPassTest extends AbstractLcbTest {
               res.outputs());
           var selectorPatterns = res.patterns().stream()
               .map(TableGenPattern::selector)
-              .map(pattern -> pattern.getNodes().filter(x -> x.usageCount() == 0).findFirst())
-              .filter(Optional::isPresent)
+              .flatMap(x -> x.getDataflowRoots().stream())
               .map(rootNode -> {
                 var visitor = new TableGenPatternVisitor();
-                visitor.visit(rootNode.get());
+                visitor.visit(rootNode);
                 return visitor.getResult();
               }).toList();
           Assertions.assertEquals(expectedResults.get(t.identifier.simpleName()).selectorPatterns,
               selectorPatterns);
           var machinePatterns = res.patterns().stream()
               .map(TableGenPattern::machine)
-              .map(pattern -> pattern.getNodes().filter(x -> x.usageCount() == 0).findFirst())
-              .filter(Optional::isPresent)
+              .flatMap(x -> x.getDataflowRoots().stream())
               .map(rootNode -> {
                 var visitor = new TableGenMachineInstructionVisitor();
-                visitor.visit(rootNode.get());
+                visitor.visit(rootNode);
                 return visitor.getResult();
               }).toList();
           Assertions.assertEquals(expectedResults.get(t.identifier.simpleName()).machinePatterns,
