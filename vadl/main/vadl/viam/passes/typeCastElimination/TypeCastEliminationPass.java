@@ -7,8 +7,8 @@ import vadl.pass.Pass;
 import vadl.pass.PassName;
 import vadl.pass.PassResults;
 import vadl.utils.ViamUtils;
+import vadl.viam.DefProp;
 import vadl.viam.Specification;
-import vadl.viam.WithBehavior;
 
 /**
  * Runs the type cast elimination on ALL behaviors in the given VIAM specification.
@@ -30,9 +30,9 @@ public class TypeCastEliminationPass extends Pass {
   public Object execute(PassResults passResults, Specification viam)
       throws IOException {
 
-    ViamUtils.findDefinitionByFilter(viam, WithBehavior.class::isInstance)
+    ViamUtils.findDefinitionByFilter(viam, DefProp.WithBehavior.class::isInstance)
         .stream()
-        .map(WithBehavior.class::cast)
+        .map(DefProp.WithBehavior.class::cast)
         .flatMap(definition -> definition.behaviors().stream())
         .forEach(TypeCastEliminator::runOnGraph);
 

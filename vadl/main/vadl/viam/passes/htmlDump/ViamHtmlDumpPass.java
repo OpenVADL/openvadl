@@ -1,9 +1,13 @@
 package vadl.viam.passes.htmlDump;
 
+import com.google.common.collect.ImmutableList;
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
+import java.util.Stack;
 import javax.annotation.Nullable;
 import vadl.pass.PassKey;
 import vadl.template.AbstractTemplateRenderingPass;
@@ -22,11 +26,24 @@ import vadl.viam.Register;
 import vadl.viam.RegisterFile;
 import vadl.viam.Relocation;
 import vadl.viam.Specification;
+import vadl.viam.ViamError;
+import vadl.viam.passes.htmlDump.suppliers.DefaultSupplierCollection;
 
 public class ViamHtmlDumpPass extends AbstractTemplateRenderingPass {
 
-  public ViamHtmlDumpPass() throws IOException {
-    super("artifacts");
+  public record Config(
+      String outDir
+  ) {
+  }
+
+  public final static List<InfoSupplier> infoSuppliers = List.of(
+      DefaultSupplierCollection.DEF_CLASS_SUPPLIER,
+      DefaultSupplierCollection.TYPE_SUPPLIER,
+      DefaultSupplierCollection.BEHAVIOR_SUPPLIER
+  );
+
+  public ViamHtmlDumpPass(Config config) throws IOException {
+    super(config.outDir);
   }
 
   @Override
@@ -42,121 +59,148 @@ public class ViamHtmlDumpPass extends AbstractTemplateRenderingPass {
   @Override
   protected Map<String, Object> createVariables(Map<PassKey, Object> passResults,
                                                 Specification specification) {
-    return Map.of();
+    var definitionBuilders = ViamHtmlCreator.run(specification, passResults);
+    return Map.of(
+        "definitions", definitionBuilders
+    );
   }
 }
 
 
-class ViamHtmlCreator implements DefinitionVisitor {
+class ViamHtmlCreator extends DefinitionVisitor.Empty {
 
-  private record SemiResult(
-      @Nullable String body,
-      @Nullable String parent,
-      @Nullable String type,
-      @Nullable List<SemiResult> subDefinitions,
-      Definition origin
-  ) {
+  private final Map<PassKey, Object> passResults;
+  private final Map<Definition, HtmlDefinitionBuilder> htmlBuilders =
+      new LinkedHashMap<>();
+
+  private ViamHtmlCreator(Map<PassKey, Object> passResults) {
+    this.passResults = passResults;
+
   }
 
-  private List<SemiResult> semiResults = new ArrayList<>();
-
-  private ViamHtmlCreator() {
-  }
-
-  public static String run(Specification specification) {
-    var creator = new ViamHtmlCreator();
+  public static List<HtmlDefinitionBuilder> run(Specification specification,
+                                                Map<PassKey, Object> passResults) {
+    var creator = new ViamHtmlCreator(passResults);
     // start running through all definitions
     creator.callBackVisitor.visit(specification);
 
-    return "";
+    return new ArrayList<>(creator.htmlBuilders.values());
+  }
+
+  private HtmlDefinitionBuilder builderOf(Definition result) {
+    ViamError.ensure(htmlBuilders.containsKey(result), "Could not find HTML builder for %s",
+        result);
+    return htmlBuilders.get(result);
+  }
+
+  private Stack<Definition> parents = new Stack<>();
+
+  private void beforeEach(Definition definition) {
+    var builder = new HtmlDefinitionBuilder(definition);
+    for (var supplier : ViamHtmlDumpPass.infoSuppliers) {
+      var info = supplier.produce(definition, passResults);
+      if (info != null) {
+        builder.addInfo(info);
+      }
+    }
+    htmlBuilders.put(definition, builder);
+
+    // set parent
+    if (!parents.isEmpty()) {
+      builder.parent(parents.peek());
+    }
+    parents.push(definition);
+  }
+
+  private void afterEach(Definition definition) {
+    parents.pop();
   }
 
   @Override
   public void visit(Specification specification) {
     // do nothing, specificaiton is handled sparately
+    htmlBuilders.remove(specification);
   }
 
-  @Override
-  public void visit(InstructionSetArchitecture instructionSetArchitecture) {
-
-  }
-
-  @Override
-  public void visit(Instruction instruction) {
-
-  }
-
-  @Override
-  public void visit(Assembly assembly) {
-
-  }
-
-  @Override
-  public void visit(Encoding encoding) {
-
-  }
-
-  @Override
-  public void visit(Encoding.Field encodingField) {
-
-  }
-
-  @Override
-  public void visit(Format format) {
-
-  }
-
-  @Override
-  public void visit(Format.Field formatField) {
-
-  }
-
-  @Override
-  public void visit(Format.FieldAccess formatFieldAccess) {
-
-  }
-
-  @Override
-  public void visit(Function function) {
-
-  }
-
-  @Override
-  public void visit(Parameter parameter) {
-
-  }
-
-  @Override
-  public void visit(PseudoInstruction pseudoInstruction) {
-
-  }
-
-  @Override
-  public void visit(Register register) {
-
-  }
-
-  @Override
-  public void visit(RegisterFile registerFile) {
-
-  }
-
-  @Override
-  public void visit(Memory memory) {
-
-  }
-
-  @Override
-  public void visit(Relocation relocation) {
-
-  }
+  // hidden traversal
 
   private final ViamHtmlCreator thisRef = this;
 
   private final DefinitionVisitor.Recursive callBackVisitor = new DefinitionVisitor.Recursive() {
     @Override
     public void beforeTraversal(Definition definition) {
+      beforeEach(definition);
       definition.accept(thisRef);
     }
+
+    @Override
+    public void afterTraversal(Definition definition) {
+      afterEach(definition);
+    }
   };
+}
+
+
+class HtmlDefinitionBuilder {
+  @Nullable
+  private Definition parent;
+  private List<HtmlDefinitionBuilder> subDefinitions = new ArrayList<>();
+  private List<Info> infos = new ArrayList<>();
+
+  private Definition origin;
+
+  HtmlDefinitionBuilder(Definition origin) {
+    this.origin = origin;
+  }
+
+  public Definition origin() {
+    return origin;
+  }
+
+
+  HtmlDefinitionBuilder parent(Definition val) {
+    this.parent = val;
+    return this;
+  }
+
+  public Info.Tag parent() {
+    Objects.requireNonNull(parent);
+    return Info.Tag.of("Parent", parent.identifier.name(), "#" + cssIdFor(parent));
+  }
+
+  HtmlDefinitionBuilder addInfo(Info val) {
+    this.infos.add(val);
+    return this;
+  }
+
+  public List<Info.Tag> tagInfos() {
+    return infos.stream()
+        .filter(Info.Tag.class::isInstance)
+        .map(Info.Tag.class::cast)
+        .toList();
+  }
+
+  public List<Info.Expandable> expandableInfos() {
+    return infos.stream()
+        .filter(Info.Expandable.class::isInstance)
+        .map(Info.Expandable.class::cast)
+        .toList();
+  }
+
+  HtmlDefinitionBuilder addSubDef(HtmlDefinitionBuilder val) {
+    this.subDefinitions.add(val);
+    return this;
+  }
+
+  public List<HtmlDefinitionBuilder> subDefinitions() {
+    return subDefinitions;
+  }
+
+  public String cssId() {
+    return cssIdFor(origin);
+  }
+
+  public static String cssIdFor(Definition def) {
+    return def.identifier.name() + "-" + def.getClass().getSimpleName();
+  }
 }

@@ -216,4 +216,87 @@ public interface DefinitionVisitor {
     }
   }
 
+  abstract class Empty implements DefinitionVisitor {
+
+    @Override
+    public void visit(Specification specification) {
+
+    }
+
+    @Override
+    public void visit(InstructionSetArchitecture instructionSetArchitecture) {
+
+    }
+
+    @Override
+    public void visit(Instruction instruction) {
+
+    }
+
+    @Override
+    public void visit(Assembly assembly) {
+
+    }
+
+    @Override
+    public void visit(Encoding encoding) {
+
+    }
+
+    @Override
+    public void visit(Encoding.Field encodingField) {
+
+    }
+
+    @Override
+    public void visit(Format format) {
+
+    }
+
+    @Override
+    public void visit(Format.Field formatField) {
+
+    }
+
+    @Override
+    public void visit(Format.FieldAccess formatFieldAccess) {
+
+    }
+
+    @Override
+    public void visit(Function function) {
+
+    }
+
+    @Override
+    public void visit(Parameter parameter) {
+
+    }
+
+    @Override
+    public void visit(PseudoInstruction pseudoInstruction) {
+
+    }
+
+    @Override
+    public void visit(Register register) {
+
+    }
+
+    @Override
+    public void visit(RegisterFile registerFile) {
+
+    }
+
+    @Override
+    public void visit(Memory memory) {
+
+    }
+
+    @Override
+    public void visit(Relocation relocation) {
+
+    }
+  }
+
 }
