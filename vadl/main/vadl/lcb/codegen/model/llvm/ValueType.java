@@ -13,9 +13,9 @@ public enum ValueType {
 
   I64("i64", "Int64"),
 
-  U32("U32","Uint32"),
+  U32("U32", "Uint32"),
 
-  U64("u64","Uint64");
+  U64("u64", "Uint64");
 
   private final String llvmType;
   private final String fancyName;

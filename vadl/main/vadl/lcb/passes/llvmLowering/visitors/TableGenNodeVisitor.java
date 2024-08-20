@@ -6,6 +6,9 @@ import vadl.lcb.passes.llvmLowering.model.LlvmFieldAccessRefNode;
 import vadl.lcb.passes.llvmLowering.model.LlvmTypeCastSD;
 import vadl.lcb.visitors.LcbGraphNodeVisitor;
 
+/**
+ * Visitor for TableGen patterns.
+ */
 public interface TableGenNodeVisitor extends LcbGraphNodeVisitor {
   /**
    * Visit {@link LlvmBrCcSD}.

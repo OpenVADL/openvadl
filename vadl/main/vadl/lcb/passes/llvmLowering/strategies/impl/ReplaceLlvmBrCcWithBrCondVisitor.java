@@ -50,7 +50,7 @@ public class ReplaceLlvmBrCcWithBrCondVisitor extends ReplaceWithLlvmSDNodesVisi
 
   @Override
   public void visit(LlvmBrCcSD node) {
-       /*
+    /*
     def : Pat<(brcc SETEQ, X:$rs1, X:$rs2, bb:$imm),
           (BEQ X:$rs1, X:$rs2, RV32I_Btype_ImmediateB_immediateAsLabel:$imm)>;
 
@@ -62,7 +62,6 @@ public class ReplaceLlvmBrCcWithBrCondVisitor extends ReplaceWithLlvmSDNodesVisi
 
     // For `brcc` we have Setcc code, so need to see if we have a suitable
     // instruction for that.
-
     var builtin = LlvmCondCode.from(node.condition());
     var builtinCall =
         new BuiltInCall(builtin, new NodeList<>(node.first(), node.second()), node.first().type());

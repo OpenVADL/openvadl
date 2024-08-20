@@ -22,6 +22,9 @@ public class LlvmBrCondSD extends ExpressionNode implements LlvmNodeLowerable {
   @Input
   private ExpressionNode immOffset;
 
+  /**
+   * Constructor for {@link LlvmBrCondSD}.
+   */
   public LlvmBrCondSD(ExpressionNode condition,
                       ExpressionNode immOffset) {
     super(Type.dummy());

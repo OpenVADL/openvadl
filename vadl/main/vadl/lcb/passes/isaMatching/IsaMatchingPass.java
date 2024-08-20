@@ -171,7 +171,7 @@ public class IsaMatchingPass extends Pass {
         extend(matched, InstructionLabel.LOAD_MEM, instruction);
       } else if (isa.pc() != null && findJalr(behavior, isa.pc())) {
         extend(matched, InstructionLabel.JALR, instruction);
-      } else if(isa.pc() != null && findJal(behavior, isa.pc())) {
+      } else if (isa.pc() != null && findJal(behavior, isa.pc())) {
         extend(matched, InstructionLabel.JAL, instruction);
       }
     }));
