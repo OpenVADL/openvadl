@@ -1612,8 +1612,14 @@ class IfExpr extends Expr {
     builder.append("if ");
     condition.prettyPrint(indent, builder);
     builder.append(" then\n");
+    if (!isBlockLayout(thenExpr)) {
+      builder.append(prettyIndentString(indent + 1));
+    }
     thenExpr.prettyPrint(indent + 1, builder);
     builder.append("\n").append(prettyIndentString(indent)).append("else\n");
+    if (!isBlockLayout(elseExpr)) {
+      builder.append(prettyIndentString(indent + 1));
+    }
     elseExpr.prettyPrint(indent + 1, builder);
   }
 
@@ -1689,6 +1695,9 @@ class LetExpr extends Expr {
     builder.append(" = ");
     valueExpr.prettyPrint(indent + 1, builder);
     builder.append(" in\n");
+    if (!isBlockLayout(body)) {
+      builder.append(prettyIndentString(indent + 1));
+    }
     body.prettyPrint(indent + 1, builder);
   }
 

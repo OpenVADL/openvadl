@@ -1,48 +1,27 @@
 instruction set architecture RV3264I = {
   constant Arch32 = 32
-
   constant Arch64 = 64
-
   constant MLen = Arch64
-
   constant SftLen = ((MLen / 32) + 4)
-
   constant WLen = 32
 
   using Byte = Bits<8>
-
   using Half = Bits<16>
-
   using Word = Bits<32>
-
   using Dble = Bits<64>
-
   using Inst = Bits<32>
-
   using SIntW = SInt<32>
-
   using UIntW = UInt<32>
-
   using Regs = Bits<MLen>
-
   using SIntR = SInt<MLen>
-
   using UIntR = UInt<MLen>
-
   using Address = Regs
-
   using Bits3 = Bits<3>
-
   using Bits5 = Bits<5>
-
   using Bits6 = Bits<6>
-
   using Bits7 = Bits<7>
-
   using Index = Bits<5>
-
   using UInt5 = UInt<5>
-
   using UShft = UInt<SftLen>
 
   [(X(0) = 0) ]
@@ -61,7 +40,6 @@ instruction set architecture RV3264I = {
   , opcode : Bits7
   , shamt = rs2 as UInt
   }
-
   format Itype: Inst =
   { imm : Bits<12>
   , rs1 : Index
@@ -70,14 +48,12 @@ instruction set architecture RV3264I = {
   , opcode : Bits7
   , immS = imm as SIntR
   }
-
   format Utype: Inst =
   { imm : Bits<20>
   , rd : Index
   , opcode : Bits7
   , immU = (imm as UIntR << 12)
   }
-
   format Stype: Inst =
   { imm	 [31..25, 11..7]
   , rs2	 [24..20]
@@ -86,7 +62,6 @@ instruction set architecture RV3264I = {
   , opcode	 [6..0]
   , immS = imm as SIntR
   }
-
   format Btype: Inst =
   { imm	 [31, 7, 30..25, 11..8]
   , rs2	 [24..20]
@@ -95,7 +70,6 @@ instruction set architecture RV3264I = {
   , opcode	 [6..0]
   , immS = (imm as SIntR << 1)
   }
-
   format Jtype: Inst =
   { imm	 [31, 19..12, 20, 30..21]
   , rd	 [11..7]
@@ -666,16 +640,11 @@ instruction set architecture RV3264I = {
   }
 
   assembly SRAI = (mnemonic, " ", register(rd), ",", register(rs1), ",", decimal(sft))
-
 }
-
 instruction set architecture RV3264IM extending RV3264I = {
   constant MLen2 = (MLen * 2)
-
   constant MLen2_1 = (MLen2 - 1)
-
   constant TopBitSet = (1 as Regs << (MLen - 1)) as Regs
-
   constant AllOnes = -1 as SIntR as Regs
 
   function isOverflow(dividend : Regs, divisor : Regs) -> Bool = ((dividend = TopBitSet) & (dividend = AllOnes))
@@ -730,10 +699,11 @@ instruction set architecture RV3264IM extending RV3264I = {
 
   instruction DIV : Rtype =   let dividend = X(rs1) as SIntR in
     let divisor = X(rs2) as SIntR in
-      X(rd) :=         if (divisor = 0 as SIntR) then
-AllOnes
+      X(rd) :=
+        if (divisor = 0 as SIntR) then
+          AllOnes
         else
-VADL::div(dividend, divisor) as SIntR
+          VADL::div(dividend, divisor) as SIntR
 
 
   encoding DIV =
@@ -746,10 +716,11 @@ VADL::div(dividend, divisor) as SIntR
 
   instruction DIVU : Rtype =   let dividend = X(rs1) as UIntR in
     let divisor = X(rs2) as UIntR in
-      X(rd) :=         if (divisor = 0 as UIntR) then
-AllOnes
+      X(rd) :=
+        if (divisor = 0 as UIntR) then
+          AllOnes
         else
-VADL::div(dividend, divisor) as SIntR
+          VADL::div(dividend, divisor) as SIntR
 
 
   encoding DIVU =
@@ -762,10 +733,11 @@ VADL::div(dividend, divisor) as SIntR
 
   instruction REM : Rtype =   let dividend = X(rs1) as SIntR in
     let divisor = X(rs2) as SIntR in
-      X(rd) :=         if (divisor = 0 as SIntR) then
-dividend
+      X(rd) :=
+        if (divisor = 0 as SIntR) then
+          dividend
         else
-VADL::mod(dividend, divisor) as SIntR
+          VADL::mod(dividend, divisor) as SIntR
 
 
   encoding REM =
@@ -778,10 +750,11 @@ VADL::mod(dividend, divisor) as SIntR
 
   instruction REMU : Rtype =   let dividend = X(rs1) as UIntR in
     let divisor = X(rs2) as UIntR in
-      X(rd) :=         if (divisor = 0 as UIntR) then
-dividend
+      X(rd) :=
+        if (divisor = 0 as UIntR) then
+          dividend
         else
-VADL::mod(dividend, divisor) as SIntR
+          VADL::mod(dividend, divisor) as SIntR
 
 
   encoding REMU =
@@ -805,10 +778,11 @@ VADL::mod(dividend, divisor) as SIntR
 
   instruction DIVW : Rtype =   let dividend = X(rs1) as SIntW in
     let divisor = X(rs2) as SIntW in
-      X(rd) :=         if (divisor = 0 as SIntW) then
-AllOnes
+      X(rd) :=
+        if (divisor = 0 as SIntW) then
+          AllOnes
         else
-VADL::div(dividend, divisor) as SIntR
+          VADL::div(dividend, divisor) as SIntR
 
 
   encoding DIVW =
@@ -821,10 +795,11 @@ VADL::div(dividend, divisor) as SIntR
 
   instruction DIVUW : Rtype =   let dividend = X(rs1) as UIntW in
     let divisor = X(rs2) as UIntW in
-      X(rd) :=         if (divisor = 0 as UIntW) then
-AllOnes
+      X(rd) :=
+        if (divisor = 0 as UIntW) then
+          AllOnes
         else
-VADL::div(dividend, divisor) as SIntR
+          VADL::div(dividend, divisor) as SIntR
 
 
   encoding DIVUW =
@@ -837,10 +812,11 @@ VADL::div(dividend, divisor) as SIntR
 
   instruction REMW : Rtype =   let dividend = X(rs1) as SIntW in
     let divisor = X(rs2) as SIntW in
-      X(rd) :=         if (divisor = 0 as SIntW) then
-dividend
+      X(rd) :=
+        if (divisor = 0 as SIntW) then
+          dividend
         else
-VADL::mod(dividend, divisor) as SIntR
+          VADL::mod(dividend, divisor) as SIntR
 
 
   encoding REMW =
@@ -853,10 +829,11 @@ VADL::mod(dividend, divisor) as SIntR
 
   instruction REMUW : Rtype =   let dividend = X(rs1) as UIntW in
     let divisor = X(rs2) as UIntW in
-      X(rd) :=         if (divisor = 0 as UIntW) then
-dividend
+      X(rd) :=
+        if (divisor = 0 as UIntW) then
+          dividend
         else
-VADL::mod(dividend, divisor) as SIntR
+          VADL::mod(dividend, divisor) as SIntR
 
 
   encoding REMUW =
@@ -866,6 +843,4 @@ VADL::mod(dividend, divisor) as SIntR
   }
 
   assembly REMUW = (mnemonic, " ", register(rd), ",", register(rs1), ",", register(rs2))
-
 }
-

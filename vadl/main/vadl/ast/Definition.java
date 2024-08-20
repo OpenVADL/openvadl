@@ -106,7 +106,7 @@ class ConstantDefinition extends Definition {
     }
     builder.append(" = ");
     value.prettyPrint(indent, builder);
-    builder.append("\n\n");
+    builder.append("\n");
   }
 
   @Override
@@ -477,7 +477,7 @@ class FormatDefinition extends Definition {
     }
 
     builder.append(prettyIndentString(indent));
-    builder.append("}\n\n");
+    builder.append("}\n");
   }
 
   @Override
@@ -552,10 +552,15 @@ class InstructionSetDefinition extends Definition {
       builder.append(" extending ").append(extending.name);
     }
     builder.append(" = {\n");
+    Definition previousDefinition = null;
     for (Definition definition : definitions) {
+      if (previousDefinition != null && !definition.getClass().equals(previousDefinition.getClass())) {
+        builder.append("\n");
+      }
       definition.prettyPrint(indent + 1, builder);
+      previousDefinition = definition;
     }
-    builder.append("}\n\n");
+    builder.append("}\n");
   }
 
   @Override
@@ -635,7 +640,7 @@ class CounterDefinition extends Definition {
     identifier.prettyPrint(indent, builder);
     builder.append(": ");
     type.prettyPrint(indent, builder);
-    builder.append("\n\n");
+    builder.append("\n");
   }
 
   @Override
@@ -712,7 +717,7 @@ class MemoryDefinition extends Definition {
     addressType.prettyPrint(indent, builder);
     builder.append(" -> ");
     dataType.prettyPrint(indent, builder);
-    builder.append("\n\n");
+    builder.append("\n");
   }
 
   @Override
@@ -785,7 +790,7 @@ class RegisterDefinition extends Definition {
     identifier.prettyPrint(indent, builder);
     builder.append(": ");
     type.prettyPrint(indent, builder);
-    builder.append("\n\n");
+    builder.append("\n");
   }
 
   @Override
@@ -860,7 +865,7 @@ class RegisterFileDefinition extends Definition {
     indexType.prettyPrint(indent, builder);
     builder.append(" -> ");
     registerType.prettyPrint(indent, builder);
-    builder.append("\n\n");
+    builder.append("\n");
   }
 
   @Override
@@ -941,7 +946,7 @@ class InstructionDefinition extends Definition {
     typeIdentifier.prettyPrint(indent, builder);
     builder.append(" = ");
     behavior.prettyPrint(indent, builder);
-    builder.append("\n\n");
+    builder.append("\n");
   }
 
   @Override
@@ -1037,7 +1042,7 @@ class PseudoInstructionDefinition extends Definition {
     }
     builder.append(" = ");
     behavior.prettyPrint(indent, builder);
-    builder.append("\n\n");
+    builder.append("\n");
   }
 
   @Override
@@ -1129,7 +1134,7 @@ class EncodingDefinition extends Definition {
     builder.append("encoding %s =\n".formatted(instrId().name));
     builder.append(prettyIndentString(indent)).append("{ ");
     fieldEncodings().prettyPrint(indent, builder);
-    builder.append(prettyIndentString(indent)).append("}\n\n");
+    builder.append(prettyIndentString(indent)).append("}\n");
   }
 
   @Override
@@ -1260,7 +1265,7 @@ class AssemblyDefinition extends Definition {
         .collect(Collectors.joining(", ")));
     builder.append(" = ");
     expr.prettyPrint(indent, builder);
-    builder.append("\n\n");
+    builder.append("\n");
   }
 
   @Override
@@ -1330,7 +1335,7 @@ class UsingDefinition extends Definition {
     id.prettyPrint(indent, builder);
     builder.append(" = ");
     type.prettyPrint(indent, builder);
-    builder.append("\n\n");
+    builder.append("\n");
   }
 
   @Override
@@ -1418,9 +1423,13 @@ class FunctionDefinition extends Definition {
     }
     builder.append(" -> ");
     retType.prettyPrint(0, builder);
-    builder.append(" = ");
+    if (!isBlockLayout(expr)) {
+      builder.append(" = ");
+    } else {
+      builder.append(" =\n");
+    }
     expr.prettyPrint(indent + 1, builder);
-    builder.append("\n\n");
+    builder.append("\n");
   }
 
   @Override
@@ -1520,7 +1529,7 @@ class AliasDefinition extends Definition {
     }
     builder.append(" = ");
     value.prettyPrint(0, builder);
-    builder.append("\n\n");
+    builder.append("\n");
   }
 
   @Override
@@ -1621,7 +1630,7 @@ final class EnumerationDefinition extends Definition {
         builder.append(" => ");
         entry.behavior.prettyPrint(0, builder);
       }
-      builder.append("\n\n");
+      builder.append("\n");
     }
     builder.append(prettyIndentString(indent + 1)).append("}\n");
   }
@@ -1696,7 +1705,7 @@ final class ExceptionDefinition extends Definition {
     id.prettyPrint(0, builder);
     builder.append(" = ");
     statement.prettyPrint(indent + 1, builder);
-    builder.append("\n\n");
+    builder.append("\n");
   }
 
   @Override
@@ -1764,7 +1773,7 @@ final class PlaceholderDefinition extends Definition {
   void prettyPrint(int indent, StringBuilder builder) {
     builder.append("$");
     builder.append(String.join(".", segments));
-    builder.append("\n\n");
+    builder.append("\n");
   }
 }
 
@@ -1817,7 +1826,7 @@ final class MacroInstanceDefinition extends Definition {
       isFirst = false;
       arg.prettyPrint(0, builder);
     }
-    builder.append(")\n\n");
+    builder.append(")\n");
   }
 
   @Override

@@ -42,6 +42,4 @@ instruction set architecture IsaDefsTest = {
   }
 
   assembly SQU = (mnemonic, " ", register(rd), ",", register(rs1), ",", register(rs1))
-
 }
-

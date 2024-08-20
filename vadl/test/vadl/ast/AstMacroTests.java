@@ -66,7 +66,9 @@ public class AstMacroTests {
       writeAst(actualAstPath(vadlPath), actualExpandedAst);
     }
 
-    Assertions.assertEquals(expectedAst, actualExpandedAst);
+    if (!expectedAst.equals(actualExpandedAst)) {
+      Assertions.fail("Mismatched expanded ASTs - see " + actualAstPath(vadlPath).getFileName());
+    }
   }
 
   private Map<String, String> parseMacroReplacements(Path vadlPath) throws IOException {

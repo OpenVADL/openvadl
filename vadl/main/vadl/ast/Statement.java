@@ -261,7 +261,11 @@ final class AssignmentStatement extends Statement {
   public void prettyPrint(int indent, StringBuilder builder) {
     builder.append(prettyIndentString(indent));
     target.prettyPrint(0, builder);
-    builder.append(" := ");
+    if (isBlockLayout(valueExpression)) {
+      builder.append(" :=\n");
+    } else {
+      builder.append(" := ");
+    }
     valueExpression.prettyPrint(indent + 1, builder);
     builder.append("\n");
   }
