@@ -1,6 +1,7 @@
 package vadl.viam.passes.functionInliner;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import vadl.viam.graph.Graph;
 import vadl.viam.graph.Node;
@@ -16,5 +17,10 @@ public class UninlinedGraph extends Graph {
 
   public UninlinedGraph(Graph graph) {
     this(graph.name, graph.getNodes().toList());
+  }
+
+  @Override
+  protected Graph createEmptyInstance(String name) {
+    return new UninlinedGraph(name, Collections.emptyList());
   }
 }

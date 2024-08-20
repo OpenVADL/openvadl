@@ -12,6 +12,7 @@ import org.junit.jupiter.api.DynamicTest;
 import org.junit.jupiter.api.TestFactory;
 import vadl.lcb.passes.llvmLowering.LlvmLoweringPass;
 import vadl.lcb.passes.llvmLowering.model.LlvmCondCode;
+import vadl.lcb.tablegen.lowering.TableGenMachineInstructionVisitor;
 import vadl.lcb.tablegen.lowering.TableGenPatternVisitor;
 import vadl.lcb.tablegen.model.TableGenInstructionOperand;
 import vadl.lcb.tablegen.model.TableGenPattern;
@@ -61,10 +62,18 @@ public class LlvmLoweringPassTest extends AbstractLcbTest {
             new TableGenInstructionOperand("RV3264I_Btype_immS_decodeAsInt64", "immS")),
         List.of(),
         List.of(
-            String.format("(%s (%s X:$rs1, X:$rs2), RV3264I_Btype_immS_decodeAsInt64:$immS)",
-                "brcc", condCode)),
+            String.format("(brcc (%s X:$rs1, X:$rs2), RV3264I_Btype_immS_decodeAsInt64:$immS)",
+                condCode),
+            String.format(
+                "(brcond (i32 (setcc X:$rs1, X:$rs2, %s)), RV3264I_Btype_immS_decodeAsInt64:$immS)",
+                condCode)),
+        // We have the same pattern twice because we have to selectors which emit the same
+        // machine instruction.
         List.of(String.format("(%s X:$rs1, X:$rs2, RV3264I_Btype_immS_decodeAsInt64:$immS)",
-            machineInstruction))
+                machineInstruction),
+            String.format("(%s X:$rs1, X:$rs2, RV3264I_Btype_immS_decodeAsInt64:$immS)",
+                machineInstruction)
+        )
     );
   }
 
@@ -188,7 +197,7 @@ public class LlvmLoweringPassTest extends AbstractLcbTest {
               .map(pattern -> pattern.getNodes().filter(x -> x.usageCount() == 0).findFirst())
               .filter(Optional::isPresent)
               .map(rootNode -> {
-                var visitor = new TableGenPatternVisitor();
+                var visitor = new TableGenMachineInstructionVisitor();
                 visitor.visit(rootNode.get());
                 return visitor.getResult();
               }).toList();

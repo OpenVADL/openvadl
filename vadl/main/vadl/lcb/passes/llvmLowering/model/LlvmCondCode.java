@@ -49,4 +49,35 @@ public enum LlvmCondCode {
       throw new ViamError("not supported cond code");
     }
   }
+
+  /**
+   * Convert a {@link LlvmCondCode} into a {@link BuiltIn}.
+   *
+   * @return the converted CondCode or {@code null}.
+   */
+  public static BuiltIn from(LlvmCondCode condCode) {
+    if (condCode == LlvmCondCode.SETEQ) {
+      return BuiltInTable.EQU;
+    } else if (condCode == LlvmCondCode.SETNE) {
+      return BuiltInTable.NEQ;
+    } else if (condCode == LlvmCondCode.SETGT) {
+      return BuiltInTable.SGTH;
+    } else if (condCode == LlvmCondCode.SETUGT) {
+      return BuiltInTable.UGTH;
+    } else if (condCode == LlvmCondCode.SETLT) {
+      return BuiltInTable.SLTH;
+    } else if (condCode == LlvmCondCode.SETULT) {
+      return BuiltInTable.ULTH;
+    } else if (condCode == LlvmCondCode.SETLE) {
+      return BuiltInTable.SLEQ;
+    } else if (condCode == LlvmCondCode.SETULE) {
+      return BuiltInTable.ULEQ;
+    } else if (condCode == LlvmCondCode.SETGE) {
+      return BuiltInTable.SGEQ;
+    } else if (condCode == LlvmCondCode.SETUGE) {
+      return BuiltInTable.UGEQ;
+    } else {
+      throw new ViamError("not supported cond code");
+    }
+  }
 }

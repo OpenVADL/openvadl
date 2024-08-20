@@ -24,6 +24,7 @@ import vadl.viam.Register;
 import vadl.viam.Specification;
 import vadl.viam.graph.Graph;
 import vadl.viam.passes.functionInliner.FunctionInlinerPass;
+import vadl.viam.passes.functionInliner.UninlinedGraph;
 
 /**
  * This is a wrapper class which contains utility functions for the lowering.
@@ -88,7 +89,8 @@ public class LlvmLoweringPass extends Pass {
             return;
           }
 
-          var uninlinedBehavior = uninlined.getOrDefault(instruction, instruction.behavior());
+          var uninlinedBehavior = (UninlinedGraph) uninlined.get(instruction);
+          ensureNonNull(uninlinedBehavior, "uninlinedBehavior graph must exist");
           for (var strategy : strategies) {
             if (!strategy.isApplicable(instructionLabel)) {
               continue;

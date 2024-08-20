@@ -43,6 +43,7 @@ import vadl.viam.graph.dependency.ReadRegNode;
 import vadl.viam.graph.dependency.WriteRegFileNode;
 import vadl.viam.graph.dependency.WriteRegNode;
 import vadl.viam.graph.dependency.WriteResourceNode;
+import vadl.viam.passes.functionInliner.UninlinedGraph;
 
 /**
  * Defines how a {@link Instruction} will be lowered to {@link TableGenInstruction}.
@@ -80,9 +81,9 @@ public abstract class LlvmLoweringStrategy {
       HashMap<InstructionLabel, List<Instruction>> supportedInstructions,
       Instruction instruction,
       InstructionLabel instructionLabel,
-      Graph uninlinedBehavior) {
+      UninlinedGraph uninlinedBehavior) {
     var visitor = getVisitorForPatternSelectorLowering();
-    var copy = uninlinedBehavior.copy();
+    var copy = (UninlinedGraph) uninlinedBehavior.copy();
     var nodes = copy.getNodes().toList();
     var instructionIdentifier = instruction.identifier;
 
@@ -164,7 +165,7 @@ public abstract class LlvmLoweringStrategy {
   protected abstract List<TableGenPattern> generatePatternVariations(
       HashMap<InstructionLabel, List<Instruction>> supportedInstructions,
       InstructionLabel instructionLabel,
-      Graph copy,
+      UninlinedGraph behavior,
       List<TableGenInstructionOperand> inputOperands,
       List<TableGenInstructionOperand> outputOperands,
       List<TableGenPattern> patterns);

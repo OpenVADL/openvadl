@@ -341,6 +341,10 @@ public class Graph {
     this.sourceLocation = sourceLocation;
   }
 
+  protected Graph createEmptyInstance(String name) {
+    return new Graph(name);
+  }
+
   /**
    * Copies the graph and returns it.
    */
@@ -354,7 +358,7 @@ public class Graph {
     // Key is the old object
     // Value the copied object
     Map<Node, Node> cache = new HashMap<>();
-    var graph = new Graph(name);
+    var graph = createEmptyInstance(name);
 
     this.nodes.stream().filter(Objects::nonNull).forEach(oldNode -> {
       var newNode = graph.unsafeAdd(oldNode.shallowCopy());
