@@ -23,7 +23,8 @@ import vadl.viam.Instruction;
 import vadl.viam.Register;
 import vadl.viam.Specification;
 import vadl.viam.graph.Graph;
-import vadl.viam.passes.FunctionInlinerPass;
+import vadl.viam.passes.functionInliner.FunctionInlinerPass;
+import vadl.viam.passes.functionInliner.UninlinedGraph;
 
 /**
  * This is a wrapper class which contains utility functions for the lowering.
@@ -69,13 +70,13 @@ public class LlvmLoweringPass extends Pass {
       throws IOException {
     IdentityHashMap<Instruction, Graph> uninlined =
         (IdentityHashMap<Instruction, Graph>) passResults.get(
-            new PassKey(FunctionInlinerPass.class.toString()));
+            new PassKey(FunctionInlinerPass.class.getName()));
     ensureNonNull(uninlined, "Inlined Function data must exist");
     IdentityHashMap<Instruction, LlvmLoweringIntermediateResult>
         llvmPatterns = new IdentityHashMap<>();
     var supportedInstructions =
         (HashMap<InstructionLabel, List<Instruction>>) passResults.get(
-            new PassKey(IsaMatchingPass.class.toString()));
+            new PassKey(IsaMatchingPass.class.getName()));
     ensure(supportedInstructions != null, "Cannot find pass results from IsaMatchPass");
 
     var instructionLookup = flipIsaMatching(supportedInstructions);
@@ -88,7 +89,8 @@ public class LlvmLoweringPass extends Pass {
             return;
           }
 
-          var uninlinedBehavior = uninlined.getOrDefault(instruction, instruction.behavior());
+          var uninlinedBehavior = (UninlinedGraph) uninlined.get(instruction);
+          ensureNonNull(uninlinedBehavior, "uninlinedBehavior graph must exist");
           for (var strategy : strategies) {
             if (!strategy.isApplicable(instructionLabel)) {
               continue;

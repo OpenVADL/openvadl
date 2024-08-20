@@ -3,11 +3,11 @@ package vadl.lcb.tablegen.lowering;
 import java.io.StringWriter;
 import vadl.lcb.passes.llvmLowering.LlvmNodeLowerable;
 import vadl.lcb.passes.llvmLowering.model.LlvmBrCcSD;
+import vadl.lcb.passes.llvmLowering.model.LlvmBrCondSD;
 import vadl.lcb.passes.llvmLowering.model.LlvmFieldAccessRefNode;
-import vadl.lcb.passes.llvmLowering.model.MachineInstructionNode;
+import vadl.lcb.passes.llvmLowering.model.LlvmTypeCastSD;
 import vadl.lcb.passes.llvmLowering.strategies.LlvmLoweringStrategy;
-import vadl.lcb.passes.llvmLowering.visitors.MachineInstructionLcbVisitor;
-import vadl.lcb.visitors.LcbGraphNodeVisitor;
+import vadl.lcb.passes.llvmLowering.visitors.TableGenNodeVisitor;
 import vadl.viam.Constant;
 import vadl.viam.graph.Node;
 import vadl.viam.graph.NodeList;
@@ -43,8 +43,9 @@ import vadl.viam.graph.dependency.ZeroExtendNode;
  * The goal is to generate S-expressions with the same the
  * variable naming.
  */
-public class TableGenPatternVisitor implements LcbGraphNodeVisitor, MachineInstructionLcbVisitor {
-  private final StringWriter writer = new StringWriter();
+public class TableGenPatternVisitor
+    implements TableGenNodeVisitor {
+  protected final StringWriter writer = new StringWriter();
 
   public String getResult() {
     return writer.toString();
@@ -149,6 +150,23 @@ public class TableGenPatternVisitor implements LcbGraphNodeVisitor, MachineInstr
   }
 
   @Override
+  public void visit(LlvmBrCondSD node) {
+    writer.write("(");
+    writer.write(node.lower() + " ");
+    visit(node.condition());
+    writer.write(", ");
+    visit(node.immOffset());
+    writer.write(")");
+  }
+
+  @Override
+  public void visit(LlvmTypeCastSD node) {
+    writer.write("(" + node.lower() + " ");
+    visit(node.value());
+    writer.write(")");
+  }
+
+  @Override
   public void visit(FieldAccessRefNode fieldAccessRefNode) {
 
   }
@@ -199,16 +217,6 @@ public class TableGenPatternVisitor implements LcbGraphNodeVisitor, MachineInstr
   }
 
   @Override
-  public void visit(MachineInstructionNode node) {
-    writer.write("(");
-    writer.write(node.instruction().identifier.simpleName() + " ");
-
-    joinArgumentsWithComma(node.arguments());
-
-    writer.write(")");
-  }
-
-  @Override
   public void visit(LlvmBrCcSD node) {
     writer.write("(");
     writer.write(node.lower() + " (" + node.condition() + " ");
@@ -230,7 +238,7 @@ public class TableGenPatternVisitor implements LcbGraphNodeVisitor, MachineInstr
     sideEffectNode.accept(this);
   }
 
-  private void joinArgumentsWithComma(NodeList<ExpressionNode> args) {
+  protected void joinArgumentsWithComma(NodeList<ExpressionNode> args) {
     for (int i = 0; i < args.size(); i++) {
       visit(args.get(i));
 

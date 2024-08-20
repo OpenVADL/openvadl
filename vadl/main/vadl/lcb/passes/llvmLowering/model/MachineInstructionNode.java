@@ -2,8 +2,7 @@ package vadl.lcb.passes.llvmLowering.model;
 
 import java.util.List;
 import vadl.javaannotations.viam.DataValue;
-import vadl.lcb.passes.llvmLowering.visitors.MachineInstructionLcbVisitor;
-import vadl.lcb.visitors.LcbGraphNodeVisitor;
+import vadl.lcb.passes.llvmLowering.visitors.TableGenMachineInstructionLcbVisitor;
 import vadl.types.Type;
 import vadl.viam.Instruction;
 import vadl.viam.graph.Graph;
@@ -39,7 +38,7 @@ public class MachineInstructionNode extends AbstractFunctionCallNode {
 
   @Override
   public void accept(GraphNodeVisitor visitor) {
-    ((MachineInstructionLcbVisitor) visitor).visit(this);
+    ((TableGenMachineInstructionLcbVisitor) visitor).visit(this);
   }
 
   @Override

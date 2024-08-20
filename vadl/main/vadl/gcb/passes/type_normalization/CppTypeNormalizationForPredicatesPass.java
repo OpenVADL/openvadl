@@ -17,7 +17,7 @@ import vadl.viam.Specification;
 public class CppTypeNormalizationForPredicatesPass extends CppTypeNormalizationPass {
   @Override
   public PassName getName() {
-    return new PassName(CppTypeNormalizationForPredicatesPass.class.toString());
+    return new PassName(CppTypeNormalizationForPredicatesPass.class.getName());
   }
 
   @Override

@@ -10,18 +10,14 @@ import java.util.stream.Stream;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.DynamicTest;
 import org.junit.jupiter.api.TestFactory;
-import vadl.gcb.valuetypes.ProcessorName;
-import vadl.lcb.config.LcbConfiguration;
 import vadl.lcb.passes.llvmLowering.LlvmLoweringPass;
 import vadl.lcb.passes.llvmLowering.model.LlvmCondCode;
+import vadl.lcb.tablegen.lowering.TableGenMachineInstructionVisitor;
 import vadl.lcb.tablegen.lowering.TableGenPatternVisitor;
 import vadl.lcb.tablegen.model.TableGenInstructionOperand;
 import vadl.lcb.tablegen.model.TableGenPattern;
 import vadl.pass.PassKey;
-import vadl.pass.PassManager;
-import vadl.pass.PassOrder;
 import vadl.pass.exception.DuplicatedPassKeyException;
-import vadl.test.AbstractTest;
 import vadl.test.lcb.AbstractLcbTest;
 import vadl.viam.Instruction;
 
@@ -66,10 +62,18 @@ public class LlvmLoweringPassTest extends AbstractLcbTest {
             new TableGenInstructionOperand("RV3264I_Btype_immS_decodeAsInt64", "immS")),
         List.of(),
         List.of(
-            String.format("(%s (%s X:$rs1, X:$rs2), RV3264I_Btype_immS_decodeAsInt64:$immS)",
-                "brcc", condCode)),
+            String.format("(brcc (%s X:$rs1, X:$rs2), RV3264I_Btype_immS_decodeAsInt64:$immS)",
+                condCode),
+            String.format(
+                "(brcond (i32 (setcc X:$rs1, X:$rs2, %s)), RV3264I_Btype_immS_decodeAsInt64:$immS)",
+                condCode)),
+        // We have the same pattern twice because we have to selectors which emit the same
+        // machine instruction.
         List.of(String.format("(%s X:$rs1, X:$rs2, RV3264I_Btype_immS_decodeAsInt64:$immS)",
-            machineInstruction))
+                machineInstruction),
+            String.format("(%s X:$rs1, X:$rs2, RV3264I_Btype_immS_decodeAsInt64:$immS)",
+                machineInstruction)
+        )
     );
   }
 
@@ -165,7 +169,7 @@ public class LlvmLoweringPassTest extends AbstractLcbTest {
         llvmResults =
         (IdentityHashMap<Instruction, LlvmLoweringPass.LlvmLoweringIntermediateResult>)
             passManager.getPassResults()
-                .get(new PassKey(LlvmLoweringPass.class.toString()));
+                .get(new PassKey(LlvmLoweringPass.class.getName()));
 
     // Then
     return spec.isas().flatMap(x -> x.instructions().stream())
@@ -179,22 +183,20 @@ public class LlvmLoweringPassTest extends AbstractLcbTest {
               res.outputs());
           var selectorPatterns = res.patterns().stream()
               .map(TableGenPattern::selector)
-              .map(pattern -> pattern.getNodes().filter(x -> x.usageCount() == 0).findFirst())
-              .filter(Optional::isPresent)
+              .flatMap(x -> x.getDataflowRoots().stream())
               .map(rootNode -> {
                 var visitor = new TableGenPatternVisitor();
-                visitor.visit(rootNode.get());
+                visitor.visit(rootNode);
                 return visitor.getResult();
               }).toList();
           Assertions.assertEquals(expectedResults.get(t.identifier.simpleName()).selectorPatterns,
               selectorPatterns);
           var machinePatterns = res.patterns().stream()
               .map(TableGenPattern::machine)
-              .map(pattern -> pattern.getNodes().filter(x -> x.usageCount() == 0).findFirst())
-              .filter(Optional::isPresent)
+              .flatMap(x -> x.getDataflowRoots().stream())
               .map(rootNode -> {
-                var visitor = new TableGenPatternVisitor();
-                visitor.visit(rootNode.get());
+                var visitor = new TableGenMachineInstructionVisitor();
+                visitor.visit(rootNode);
                 return visitor.getResult();
               }).toList();
           Assertions.assertEquals(expectedResults.get(t.identifier.simpleName()).machinePatterns,

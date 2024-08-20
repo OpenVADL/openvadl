@@ -7,7 +7,6 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
 import java.util.stream.Stream;
-import vadl.lcb.passes.llvmLowering.LlvmLoweringPass;
 import vadl.viam.Instruction;
 import vadl.viam.Register;
 
@@ -17,7 +16,7 @@ import vadl.viam.Register;
 public class TableGenInstruction extends TableGenRecord {
   private final String name;
   private final String namespace;
-  private final List<TableGenPattern> pattern;
+  private final List<TableGenPattern> anonymousPatterns;
   private final List<TableGenInstructionOperand> inOperands;
   private final List<TableGenInstructionOperand> outOperands;
   private final List<Register> uses;
@@ -52,7 +51,7 @@ public class TableGenInstruction extends TableGenRecord {
                              List<TableGenInstructionOperand> outOperands,
                              List<Register> uses,
                              List<Register> defs,
-                             List<TableGenPattern> pattern) {
+                             List<TableGenPattern> anonymousPatterns) {
     this.name = name;
     this.namespace = namespace;
     this.formatSize = instruction.encoding().format().type().bitWidth();
@@ -65,15 +64,15 @@ public class TableGenInstruction extends TableGenRecord {
     this.outOperands = outOperands;
     this.uses = uses;
     this.defs = defs;
-    this.pattern = pattern;
+    this.anonymousPatterns = anonymousPatterns;
   }
 
   public String getNamespace() {
     return namespace;
   }
 
-  public List<TableGenPattern> getPattern() {
-    return pattern;
+  public List<TableGenPattern> getAnonymousPatterns() {
+    return anonymousPatterns;
   }
 
   public List<Register> getUses() {

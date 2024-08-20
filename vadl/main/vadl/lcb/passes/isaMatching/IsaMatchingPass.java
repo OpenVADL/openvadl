@@ -1,7 +1,6 @@
 package vadl.lcb.passes.isaMatching;
 
 import static vadl.types.BuiltInTable.ADD;
-import static vadl.types.BuiltInTable.ADDC;
 import static vadl.types.BuiltInTable.ADDS;
 import static vadl.types.BuiltInTable.AND;
 import static vadl.types.BuiltInTable.ANDS;
@@ -54,7 +53,6 @@ import vadl.viam.Instruction;
 import vadl.viam.InstructionSetArchitecture;
 import vadl.viam.Register;
 import vadl.viam.Specification;
-import vadl.viam.graph.Graph;
 import vadl.viam.graph.control.IfNode;
 import vadl.viam.graph.dependency.BuiltInCall;
 import vadl.viam.graph.dependency.ReadMemNode;
@@ -64,12 +62,15 @@ import vadl.viam.graph.dependency.WriteRegNode;
 import vadl.viam.graph.dependency.WriteResourceNode;
 import vadl.viam.matching.TreeMatcher;
 import vadl.viam.matching.impl.AnyChildMatcher;
+import vadl.viam.matching.impl.AnyNodeMatcher;
 import vadl.viam.matching.impl.AnyReadMemMatcher;
 import vadl.viam.matching.impl.AnyReadRegFileMatcher;
 import vadl.viam.matching.impl.BuiltInMatcher;
 import vadl.viam.matching.impl.FieldAccessRefMatcher;
+import vadl.viam.matching.impl.IsReadRegMatcher;
 import vadl.viam.matching.impl.WriteResourceMatcher;
-import vadl.viam.passes.FunctionInlinerPass;
+import vadl.viam.passes.functionInliner.FunctionInlinerPass;
+import vadl.viam.passes.functionInliner.UninlinedGraph;
 
 /**
  * A {@link InstructionSetArchitecture} contains a {@link List} of {@link Instruction}.
@@ -95,15 +96,16 @@ public class IsaMatchingPass extends Pass {
       throws IOException {
     // The instruction matching happens on the uninlined graph
     // because the field accesses are uninlined.
-    IdentityHashMap<Instruction, Graph> uninlined =
-        (IdentityHashMap<Instruction, Graph>) passResults.get(
-            new PassKey(FunctionInlinerPass.class.toString()));
+    IdentityHashMap<Instruction, UninlinedGraph> uninlined =
+        (IdentityHashMap<Instruction, UninlinedGraph>) passResults.get(
+            new PassKey(FunctionInlinerPass.class.getName()));
     ensureNonNull(uninlined, "Inlining data must exist");
     HashMap<InstructionLabel, List<Instruction>> matched = new HashMap<>();
 
     viam.isas().forEach(isa -> isa.instructions().forEach(instruction -> {
       // Get uninlined or the normal behavior if nothing was uninlined.
-      var behavior = uninlined.getOrDefault(instruction, instruction.behavior());
+      var behavior = uninlined.get(instruction);
+      ensureNonNull(behavior, "IsaMatching must happen on the uninlined graph");
 
       // Some are typed and some aren't.
       // The reason is that most of the time we do not care because
@@ -169,13 +171,15 @@ public class IsaMatchingPass extends Pass {
         extend(matched, InstructionLabel.LOAD_MEM, instruction);
       } else if (isa.pc() != null && findJalr(behavior, isa.pc())) {
         extend(matched, InstructionLabel.JALR, instruction);
+      } else if (isa.pc() != null && findJal(behavior, isa.pc())) {
+        extend(matched, InstructionLabel.JAL, instruction);
       }
     }));
 
     return matched;
   }
 
-  private boolean findLoadMem(Graph graph) {
+  private boolean findLoadMem(UninlinedGraph graph) {
     var writesRegFile = graph.getNodes(WriteRegFileNode.class).toList().size();
     var writesReg = graph.getNodes(WriteRegNode.class).toList().size();
 
@@ -190,7 +194,7 @@ public class IsaMatchingPass extends Pass {
     return !matched.isEmpty();
   }
 
-  private boolean findWriteMem(Graph graph) {
+  private boolean findWriteMem(UninlinedGraph graph) {
     if (graph.getNodes(WriteMemNode.class).toList().size() != 1) {
       return false;
     }
@@ -217,11 +221,11 @@ public class IsaMatchingPass extends Pass {
     });
   }
 
-  private boolean findRR_OR_findRI(Graph behavior, BuiltInTable.BuiltIn builtin) {
+  private boolean findRR_OR_findRI(UninlinedGraph behavior, BuiltInTable.BuiltIn builtin) {
     return findRR(behavior, List.of(builtin)) || findRI(behavior, List.of(builtin));
   }
 
-  private boolean findRR_OR_findRI(Graph behavior, List<BuiltInTable.BuiltIn> builtins) {
+  private boolean findRR_OR_findRI(UninlinedGraph behavior, List<BuiltInTable.BuiltIn> builtins) {
     return findRR(behavior, builtins) || findRI(behavior, builtins);
   }
 
@@ -230,7 +234,7 @@ public class IsaMatchingPass extends Pass {
    * {@link BuiltInTable.BuiltIn}.
    * Also, it must only write one register result.
    */
-  private boolean findRR(Graph behavior, List<BuiltInTable.BuiltIn> builtins) {
+  private boolean findRR(UninlinedGraph behavior, List<BuiltInTable.BuiltIn> builtins) {
     var matched = TreeMatcher.matches(behavior.getNodes(BuiltInCall.class).map(x -> x),
         new BuiltInMatcher(builtins, List.of(
             new AnyChildMatcher(new AnyReadRegFileMatcher()),
@@ -245,7 +249,7 @@ public class IsaMatchingPass extends Pass {
    * {@link BuiltInTable.BuiltIn}.
    * Also, it must only write one register result.
    */
-  private boolean findRI(Graph behavior, List<BuiltInTable.BuiltIn> builtins) {
+  private boolean findRI(UninlinedGraph behavior, List<BuiltInTable.BuiltIn> builtins) {
     var matched = TreeMatcher.matches(behavior.getNodes(BuiltInCall.class).map(x -> x),
         new BuiltInMatcher(builtins, List.of(
             new AnyChildMatcher(new AnyReadRegFileMatcher()),
@@ -255,7 +259,7 @@ public class IsaMatchingPass extends Pass {
     return !matched.isEmpty() && writesExactlyOneRegisterClass(behavior);
   }
 
-  private boolean writesExactlyOneRegisterClass(Graph graph) {
+  private boolean writesExactlyOneRegisterClass(UninlinedGraph graph) {
     var writesRegFiles = graph.getNodes(WriteRegFileNode.class).toList();
     var writesReg = graph.getNodes(WriteRegNode.class).toList();
     var writesMem = graph.getNodes(WriteMemNode.class).toList();
@@ -271,7 +275,7 @@ public class IsaMatchingPass extends Pass {
     return true;
   }
 
-  private boolean writesExactlyOneRegisterClassWithType(Graph graph, Type resultType) {
+  private boolean writesExactlyOneRegisterClassWithType(UninlinedGraph graph, Type resultType) {
     var writesRegFiles = graph.getNodes(WriteRegFileNode.class).toList();
     var writesReg = graph.getNodes(WriteRegNode.class).toList();
     var writesMem = graph.getNodes(WriteMemNode.class).toList();
@@ -287,15 +291,15 @@ public class IsaMatchingPass extends Pass {
     return writesRegFiles.get(0).registerFile().resultType() == resultType;
   }
 
-  private boolean findAdd32Bit(Graph behavior) {
+  private boolean findAdd32Bit(UninlinedGraph behavior) {
     return findAdd(behavior, 32);
   }
 
-  private boolean findAdd64Bit(Graph behavior) {
+  private boolean findAdd64Bit(UninlinedGraph behavior) {
     return findAdd(behavior, 64);
   }
 
-  private boolean findAdd(Graph behavior, int bitWidth) {
+  private boolean findAdd(UninlinedGraph behavior, int bitWidth) {
     var matched = TreeMatcher.matches(behavior.getNodes(BuiltInCall.class).map(x -> x),
             new BuiltInMatcher(ADD, List.of(
                 new AnyChildMatcher(new AnyReadRegFileMatcher()),
@@ -310,15 +314,15 @@ public class IsaMatchingPass extends Pass {
         && writesExactlyOneRegisterClassWithType(behavior, Type.bits(bitWidth));
   }
 
-  private boolean findAddWithImmediate32Bit(Graph behavior) {
+  private boolean findAddWithImmediate32Bit(UninlinedGraph behavior) {
     return findAddWithImmediate(behavior, 32);
   }
 
-  private boolean findAddWithImmediate64Bit(Graph behavior) {
+  private boolean findAddWithImmediate64Bit(UninlinedGraph behavior) {
     return findAddWithImmediate(behavior, 64);
   }
 
-  private boolean findAddWithImmediate(Graph behavior, int bitWidth) {
+  private boolean findAddWithImmediate(UninlinedGraph behavior, int bitWidth) {
     var matched = TreeMatcher.matches(behavior.getNodes(BuiltInCall.class).map(x -> x),
             new BuiltInMatcher(List.of(ADD, ADDS),
                 List.of(new AnyChildMatcher(new AnyReadRegFileMatcher()),
@@ -332,13 +336,13 @@ public class IsaMatchingPass extends Pass {
         && writesExactlyOneRegisterClassWithType(behavior, Type.bits(bitWidth));
   }
 
-  private boolean findBranchWithConditional(Graph behavior,
+  private boolean findBranchWithConditional(UninlinedGraph behavior,
                                             Register.Counter pc,
                                             BuiltInTable.BuiltIn builtin) {
     return findBranchWithConditional(behavior, pc, Set.of(builtin));
   }
 
-  private boolean findBranchWithConditional(Graph behavior,
+  private boolean findBranchWithConditional(UninlinedGraph behavior,
                                             Register.Counter pc,
                                             Set<BuiltInTable.BuiltIn> builtins) {
     var hasCondition =
@@ -353,17 +357,38 @@ public class IsaMatchingPass extends Pass {
   }
 
   /**
-   * Match Jump and Link Register when {@link Instruction} writes PC and writes
-   * a register file.
+   * Match Jump and Link Register when {@link Instruction} writes PC, writes
+   * a register file and has an operation (ADD, SUB) where one input is a registerfile.
    */
-  private boolean findJalr(Graph behavior, Register.Counter pcRegister) {
+  private boolean findJalr(UninlinedGraph behavior, Register.Counter pcRegister) {
     var writesPc =
         behavior.getNodes(WriteRegNode.class).filter(x -> x.register().equals(pcRegister))
             .toList();
     var writesRegFile = behavior.getNodes(WriteRegFileNode.class).toList();
+    var inputRegister = TreeMatcher.matches(behavior.getNodes(BuiltInCall.class).map(x -> x),
+        new BuiltInMatcher(List.of(BuiltInTable.ADD, BuiltInTable.ADDS, SUB), List.of(
+            new AnyChildMatcher(new AnyReadRegFileMatcher()),
+            new AnyNodeMatcher()
+        )));
 
-    // Idea: if this check is not sufficient in the future
-    // then check whether the regfile node also reads from PC.
-    return writesPc.size() == 1 && writesRegFile.size() == 1;
+    return writesPc.size() == 1 && writesRegFile.size() == 1 && !inputRegister.isEmpty();
+  }
+
+  /**
+   * Match Jump and Link when {@link Instruction} writes PC, writes
+   * a register file and has an operation (ADD, SUB) where one input is a PC.
+   */
+  private boolean findJal(UninlinedGraph behavior, Register.Counter pcRegister) {
+    var writesPc =
+        behavior.getNodes(WriteRegNode.class).filter(x -> x.register().equals(pcRegister))
+            .toList();
+    var writesRegFile = behavior.getNodes(WriteRegFileNode.class).toList();
+    var inputRegister = TreeMatcher.matches(behavior.getNodes(BuiltInCall.class).map(x -> x),
+        new BuiltInMatcher(List.of(BuiltInTable.ADD, BuiltInTable.ADDS, SUB), List.of(
+            new AnyChildMatcher(new IsReadRegMatcher(pcRegister)),
+            new AnyNodeMatcher()
+        )));
+
+    return writesPc.size() == 1 && writesRegFile.size() == 1 && !inputRegister.isEmpty();
   }
 }

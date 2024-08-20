@@ -7,11 +7,12 @@ import static vadl.lcb.passes.isaMatching.InstructionLabel.BLEQ;
 import static vadl.lcb.passes.isaMatching.InstructionLabel.BLTH;
 import static vadl.lcb.passes.isaMatching.InstructionLabel.BNEQ;
 
-import java.util.Collections;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Optional;
 import java.util.Set;
+import java.util.stream.Stream;
 import vadl.lcb.passes.isaMatching.InstructionLabel;
 import vadl.lcb.passes.llvmLowering.LlvmLoweringPass;
 import vadl.lcb.passes.llvmLowering.strategies.LlvmLoweringStrategy;
@@ -20,8 +21,8 @@ import vadl.lcb.tablegen.model.TableGenInstructionOperand;
 import vadl.lcb.tablegen.model.TableGenPattern;
 import vadl.lcb.visitors.LcbGraphNodeVisitor;
 import vadl.viam.Instruction;
-import vadl.viam.graph.Graph;
 import vadl.viam.graph.dependency.WriteResourceNode;
+import vadl.viam.passes.functionInliner.UninlinedGraph;
 
 /**
  * Lowering conditional branch instructions into TableGen patterns.
@@ -45,31 +46,39 @@ public class LlvmLoweringConditionalBranchesStrategyImpl extends LlvmLoweringStr
       HashMap<InstructionLabel, List<Instruction>> supportedInstructions,
       Instruction instruction,
       InstructionLabel instructionLabel,
-      Graph uninlinedBehavior) {
+      UninlinedGraph uninlinedBehavior) {
 
     var visitor = getVisitorForPatternSelectorLowering();
-    var copy = uninlinedBehavior.copy();
+    var copy = (UninlinedGraph) uninlinedBehavior.copy();
 
     for (var node : copy.getNodes().toList()) {
       visitor.visit(node);
     }
 
     copy.deinitializeNodes();
-    return Optional.of(createIntermediateResult(instruction, copy));
+    return Optional.of(
+        createIntermediateResult(supportedInstructions, instruction, instructionLabel, copy));
   }
 
   private LlvmLoweringPass.LlvmLoweringIntermediateResult createIntermediateResult(
-      Instruction instruction, Graph visitedGraph) {
+      HashMap<InstructionLabel, List<Instruction>> supportedInstructions,
+      Instruction instruction,
+      InstructionLabel instructionLabel,
+      UninlinedGraph visitedGraph) {
     var inputOperands = getTableGenInputOperands(visitedGraph);
     var outputOperands = getTableGenOutputOperands(visitedGraph);
 
     var writes = visitedGraph.getNodes(WriteResourceNode.class).toList();
+    var patterns = generatePatterns(instruction, inputOperands, writes);
+    var alternatives =
+        generatePatternVariations(supportedInstructions, instructionLabel, visitedGraph,
+            inputOperands, outputOperands, patterns);
 
     return new LlvmLoweringPass.LlvmLoweringIntermediateResult(
         visitedGraph,
         inputOperands,
         outputOperands,
-        generatePatterns(instruction, inputOperands, writes),
+        Stream.concat(patterns.stream(), alternatives.stream()).toList(),
         getRegisterUses(visitedGraph),
         getRegisterDefs(visitedGraph)
     );
@@ -78,11 +87,51 @@ public class LlvmLoweringConditionalBranchesStrategyImpl extends LlvmLoweringStr
   @Override
   protected List<TableGenPattern> generatePatternVariations(
       HashMap<InstructionLabel, List<Instruction>> supportedInstructions,
-      InstructionLabel instructionLabel, Graph copy, List<TableGenInstructionOperand> inputOperands,
+      InstructionLabel instructionLabel,
+      UninlinedGraph behavior,
+      List<TableGenInstructionOperand> inputOperands,
       List<TableGenInstructionOperand> outputOperands,
       List<TableGenPattern> patterns) {
+    ArrayList<TableGenPattern> alternatives = new ArrayList<>();
 
+    // Generate brcond patterns from brcc
+    /*
+    def : Pat<(brcc SETEQ, X:$rs1, X:$rs2, bb:$imm),
+          (BEQ X:$rs1, X:$rs2, RV32I_Btype_ImmediateB_immediateAsLabel:$imm)>;
 
-    return Collections.emptyList();
+    to
+
+    def : Pat<(brcond (i32 (seteq X:$rs1, X:$rs2)), bb:$imm12),
+        (BEQ X:$rs1, X:$rs2, RV32I_Btype_ImmediateB_immediateAsLabel:$imm)>;
+     */
+
+    for (var pattern : patterns) {
+      var selector = pattern.selector().copy();
+      var machine = pattern.machine().copy();
+
+      var nodes = selector.getNodes().toList();
+
+      // The visitor iteration replaces the default nodes.
+      for (var node : nodes) {
+        var visitor = getVisitorForPatternSelectorLowering();
+        visitor.visit(node);
+      }
+
+      // Here is the actual difference to `generatePatterns`
+      // Replace BrCc with BrCond
+      var hasChanged = false;
+      for (var node : nodes) {
+        var visitor = new ReplaceLlvmBrCcWithBrCondVisitor();
+        node.accept(visitor);
+        hasChanged |= visitor.isChanged();
+      }
+
+      // If nothing had changed, then it makes no sense to add it.
+      if (hasChanged) {
+        alternatives.add(new TableGenPattern(selector, machine));
+      }
+    }
+
+    return alternatives;
   }
 }

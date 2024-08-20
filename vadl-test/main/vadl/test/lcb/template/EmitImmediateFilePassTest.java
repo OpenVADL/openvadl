@@ -28,11 +28,11 @@ public class EmitImmediateFilePassTest extends AbstractLcbTest {
     passManager.add(new PassKey("ty"), new TypeCastEliminationPass());
     passManager.add(new PassKey("encoding"), new GenerateFieldAccessEncodingFunctionPass());
     passManager.add(new PassKey("fieldDecoding"), new FieldNodeReplacementPassForDecoding());
-    passManager.add(new PassKey(CppTypeNormalizationForPredicatesPass.class.toString()),
+    passManager.add(new PassKey(CppTypeNormalizationForPredicatesPass.class.getName()),
         new CppTypeNormalizationForPredicatesPass());
-    passManager.add(new PassKey(CppTypeNormalizationForDecodingsPass.class.toString()),
+    passManager.add(new PassKey(CppTypeNormalizationForDecodingsPass.class.getName()),
         new CppTypeNormalizationForDecodingsPass());
-    passManager.add(new PassKey(CppTypeNormalizationForEncodingsPass.class.toString()),
+    passManager.add(new PassKey(CppTypeNormalizationForEncodingsPass.class.getName()),
         new CppTypeNormalizationForEncodingsPass());
 
     passManager.run(spec);
