@@ -12,6 +12,7 @@ import vadl.gcb.valuetypes.ProcessorName;
 import vadl.lcb.config.LcbConfiguration;
 import vadl.lcb.passes.isaMatching.IsaMatchingPass;
 import vadl.lcb.passes.llvmLowering.LlvmLoweringPass;
+import vadl.lcb.passes.dummyAbi.DummyAbiPass;
 import vadl.lcb.template.lib.Target.EmitMCInstLowerCppFilePass;
 import vadl.lcb.template.lib.Target.EmitMCInstLowerHeaderFilePass;
 import vadl.viam.passes.algebraic_simplication.AlgebraicSimplificationPass;
@@ -38,6 +39,14 @@ public final class PassOrder {
     passes.add(new CppTypeNormalizationForPredicatesPass());
     passes.add(new IsaMatchingPass());
     passes.add(new LlvmLoweringPass());
+    passes.add(new vadl.gcb.passes.encoding_generation.GenerateFieldAccessEncodingFunctionPass());
+    passes.add(new vadl.gcb.passes.field_node_replacement.FieldNodeReplacementPassForDecoding());
+    passes.add(new vadl.gcb.passes.type_normalization.CppTypeNormalizationForEncodingsPass());
+    passes.add(new vadl.gcb.passes.type_normalization.CppTypeNormalizationForDecodingsPass());
+    passes.add(new vadl.gcb.passes.type_normalization.CppTypeNormalizationForPredicatesPass());
+    passes.add(new DummyAbiPass());
+    passes.add(new vadl.lcb.passes.isaMatching.IsaMatchingPass());
+    passes.add(new vadl.lcb.passes.llvmLowering.LlvmLoweringPass());
     passes.add(new vadl.lcb.clang.lib.Driver.ToolChains.EmitClangToolChainFilePass(configuration,
         processorName));
     passes.add(new vadl.lcb.clang.lib.Basic.Targets.EmitClangTargetHeaderFilePass(configuration,

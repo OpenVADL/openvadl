@@ -1,5 +1,6 @@
 package vadl.viam.passes.verification;
 
+import vadl.lcb.passes.dummyAbi.DummyAbi;
 import vadl.viam.Definition;
 import vadl.viam.DefinitionVisitor;
 import vadl.viam.graph.Node;
@@ -26,6 +27,11 @@ public class ViamVerifier extends DefinitionVisitor.Recursive {
   public void afterTraversal(Definition definition) {
     super.afterTraversal(definition);
     definition.verify();
+  }
+
+  @Override
+  public void visit(DummyAbi dummyAbi) {
+
   }
 
 

@@ -4,6 +4,7 @@ import java.util.HashSet;
 import java.util.Set;
 import java.util.function.Function;
 import javax.annotation.Nullable;
+import vadl.lcb.passes.dummyAbi.DummyAbi;
 import vadl.viam.Definition;
 import vadl.viam.DefinitionVisitor;
 
@@ -51,6 +52,11 @@ public class ViamUtils {
   public static Set<Definition> findDefinitionByFilter(Definition root,
                                                        Function<Definition, Boolean> filter) {
     return new DefinitionVisitor.Recursive() {
+      @Override
+      public void visit(DummyAbi dummyAbi) {
+
+      }
+
       private Set<Definition> allDefs = new HashSet<>();
 
       public Set<Definition> findAllIn(Definition definition) {

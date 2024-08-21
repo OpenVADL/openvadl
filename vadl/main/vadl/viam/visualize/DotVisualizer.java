@@ -4,6 +4,7 @@ import java.util.ArrayDeque;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Set;
+import vadl.lcb.passes.dummyAbi.DummyAbi;
 import vadl.viam.Assembly;
 import vadl.viam.Definition;
 import vadl.viam.DefinitionVisitor;
@@ -176,5 +177,10 @@ class DotVisitor extends DefinitionVisitor.Recursive {
   public void visit(PseudoInstruction pseudoInstruction) {
     super.visit(pseudoInstruction);
     context.add(pseudoInstruction, pseudoInstruction.behavior());
+  }
+
+  @Override
+  public void visit(DummyAbi dummyAbi) {
+
   }
 }
