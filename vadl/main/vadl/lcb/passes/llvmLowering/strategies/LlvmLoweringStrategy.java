@@ -87,9 +87,9 @@ public abstract class LlvmLoweringStrategy {
   protected LlvmLoweringPass.Flags getFlags(UninlinedGraph uninlinedGraph) {
     var isTerminator = uninlinedGraph.getNodes(WriteRegNode.class)
         .anyMatch(node -> node.register() instanceof Register.Counter);
-    var isBranch = isTerminator &&
-        uninlinedGraph.getNodes(Set.of(IfNode.class, LlvmBrCcSD.class, LlvmBrCondSD.class))
-            .findFirst().isPresent();
+    var isBranch = isTerminator
+        && uninlinedGraph.getNodes(Set.of(IfNode.class, LlvmBrCcSD.class, LlvmBrCondSD.class))
+        .findFirst().isPresent();
     var isCall = false; //TODO
     var isReturn = false;
     var isPseudo = false; // This strategy always handles Instructions.
