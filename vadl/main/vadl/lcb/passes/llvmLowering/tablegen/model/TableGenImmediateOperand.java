@@ -62,10 +62,11 @@ public class TableGenImmediateOperand {
       return false;
     }
     TableGenImmediateOperand that = (TableGenImmediateOperand) o;
-    return Objects.equals(name, that.name) &&
-        Objects.equals(encoderMethod, that.encoderMethod) &&
-        Objects.equals(decoderMethod, that.decoderMethod) &&
-        Objects.equals(predicateMethod, that.predicateMethod) && type == that.type;
+    return Objects.equals(name, that.name)
+        && Objects.equals(encoderMethod, that.encoderMethod)
+        && Objects.equals(decoderMethod, that.decoderMethod)
+        && Objects.equals(predicateMethod, that.predicateMethod)
+        && type == that.type;
   }
 
   @Override
