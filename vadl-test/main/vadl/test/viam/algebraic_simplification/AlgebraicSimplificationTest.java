@@ -76,8 +76,7 @@ public class AlgebraicSimplificationTest extends DockerExecutionTest {
     var code = translationValidation.lower(specification, before, after);
     logger.info(code.value());
     try {
-      runContainerWithContent(DOCKER_IMAGE, code.value(), MOUNT_PATH, "algebraic",
-          "simplification");
+      runContainerWithContent(DOCKER_IMAGE, code.value(), MOUNT_PATH);
     } catch (IOException e) {
       throw new RuntimeException(e);
     }
