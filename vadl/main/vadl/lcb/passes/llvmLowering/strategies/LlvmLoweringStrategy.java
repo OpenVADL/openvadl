@@ -250,7 +250,7 @@ public abstract class LlvmLoweringStrategy {
   private static TableGenInstructionOperand generateInstructionOperand(
       LlvmFieldAccessRefNode node) {
     return new TableGenInstructionImmediateOperand(
-        node.immediateOperand().getFullName(),
+        node.immediateOperand().fullname(),
         node.fieldAccess().identifier.simpleName(),
         node.immediateOperand());
   }

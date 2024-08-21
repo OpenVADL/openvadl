@@ -73,6 +73,7 @@ public class EmitInstrInfoTableGenFilePass extends AbstractTemplateRenderingPass
         .flatMap(tableGenRecord -> tableGenRecord.getInOperands().stream())
         .filter(operand -> operand instanceof TableGenInstructionImmediateOperand)
         .map(operand -> ((TableGenInstructionImmediateOperand) operand).immediateOperand())
+        .distinct()
         .map(TableGenImmediateOperandRenderer::lower)
         .toList();
 

@@ -22,14 +22,15 @@ public final class TableGenImmediateOperandRenderer {
                     
             def %s
                 : %s<%s>
-                , ImmLeaf<%s, [{ return true; }]>;
-            """, operand.getRawName(),
-        operand.getEncoderMethod(),
-        operand.getDecoderMethod(),
-        operand.getFullName(),
-        operand.getRawName(),
-        operand.getType().getLlvmType(),
-        operand.getType().getLlvmType()
+                , ImmLeaf<%s, [{ return %s(Imm); }]>;
+            """, operand.rawName(),
+        operand.encoderMethod(),
+        operand.decoderMethod(),
+        operand.fullname(),
+        operand.rawName(),
+        operand.type().getLlvmType(),
+        operand.type().getLlvmType(),
+        operand.predicateMethod()
     );
   }
 }
