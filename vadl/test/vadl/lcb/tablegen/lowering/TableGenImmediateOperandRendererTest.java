@@ -30,7 +30,7 @@ class TableGenImmediateOperandRendererTest {
         
         def nameValueAsInt32
               : nameValue<i32>
-              , ImmLeaf<i32, [{ return true; }]>;
+              , ImmLeaf<i32, [{ return nameValue_predicate(Imm); }]>;
         """);
   }
 }
