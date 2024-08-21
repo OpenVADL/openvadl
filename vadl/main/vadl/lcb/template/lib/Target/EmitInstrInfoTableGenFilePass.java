@@ -58,7 +58,7 @@ public class EmitInstrInfoTableGenFilePass extends AbstractTemplateRenderingPass
               instruction.identifier.simpleName(),
               "dummyNamespaceValue",
               instruction,
-              new TableGenInstruction.Flags(false, false, false, false, false, false, false, false),
+              result.flags(),
               result.inputs(),
               result.outputs(),
               result.uses(),

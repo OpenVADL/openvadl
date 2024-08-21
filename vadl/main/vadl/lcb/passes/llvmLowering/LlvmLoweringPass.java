@@ -14,6 +14,7 @@ import vadl.lcb.passes.llvmLowering.strategies.impl.LlvmLoweringConditionalBranc
 import vadl.lcb.passes.llvmLowering.strategies.impl.LlvmLoweringConditionalsStrategyImpl;
 import vadl.lcb.passes.llvmLowering.strategies.impl.LlvmLoweringIndirectJumpStrategyImpl;
 import vadl.lcb.passes.llvmLowering.strategies.visitors.impl.ReplaceWithLlvmSDNodesVisitor;
+import vadl.lcb.passes.llvmLowering.tablegen.model.TableGenInstruction;
 import vadl.lcb.passes.llvmLowering.tablegen.model.TableGenInstructionOperand;
 import vadl.lcb.passes.llvmLowering.tablegen.model.TableGenPattern;
 import vadl.pass.Pass;
@@ -39,11 +40,29 @@ public class LlvmLoweringPass extends Pass {
   );
 
   /**
+   * A {@link TableGenInstruction} has many boolean flags which are required for the
+   * code generation.
+   */
+  public record Flags(boolean isTerminator,
+                      boolean isBranch,
+                      boolean isCall,
+                      boolean isReturn,
+                      boolean isPseudo,
+                      boolean isCodeGenOnly,
+                      boolean mayLoad,
+                      boolean mayStore) {
+    public static Flags empty() {
+      return new Flags(false, false, false, false, false, false, false, false);
+    }
+  }
+
+  /**
    * Contains information for the lowering of instructions.
    *
    * @param behavior has replaced nodes from {@link ReplaceWithLlvmSDNodesVisitor}.
    * @param inputs   are the input operands for the tablegen instruction.
    * @param outputs  are the output operands for the tablegen instruction.
+   * @param flags    are indicators of special properties of the machine instruction.
    * @param patterns are a list of {@link Graph} which contain the pattern selectors for the
    *                 tablegen instruction.
    * @param uses     a list of {@link Register} which are read.
@@ -53,6 +72,7 @@ public class LlvmLoweringPass extends Pass {
   public record LlvmLoweringIntermediateResult(Graph behavior,
                                                List<TableGenInstructionOperand> inputs,
                                                List<TableGenInstructionOperand> outputs,
+                                               Flags flags,
                                                List<TableGenPattern> patterns,
                                                List<Register> uses,
                                                List<Register> defs) {
@@ -115,7 +135,7 @@ public class LlvmLoweringPass extends Pass {
    * {@link Instruction} in this pass. That's why we have the flip the hashmap.
    */
   private IdentityHashMap<Instruction, InstructionLabel> flipIsaMatching(
-      HashMap<InstructionLabel, List<Instruction>> isaMatched) {
+      Map<InstructionLabel, List<Instruction>> isaMatched) {
     IdentityHashMap<Instruction, InstructionLabel> inverse = new IdentityHashMap<>();
 
     for (var entry : isaMatched.entrySet()) {

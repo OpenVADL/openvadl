@@ -3,9 +3,11 @@ package vadl.lcb.passes.llvmLowering.strategies.impl;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
 import vadl.lcb.passes.isaMatching.InstructionLabel;
+import vadl.lcb.passes.llvmLowering.LlvmLoweringPass;
 import vadl.lcb.passes.llvmLowering.LlvmLoweringPass.LlvmLoweringIntermediateResult;
 import vadl.lcb.passes.llvmLowering.strategies.LlvmLoweringStrategy;
 import vadl.lcb.passes.llvmLowering.tablegen.model.TableGenInstructionOperand;
@@ -25,7 +27,7 @@ public class LlvmLoweringIndirectJumpStrategyImpl extends LlvmLoweringStrategy {
 
   @Override
   public Optional<LlvmLoweringIntermediateResult> lower(
-      HashMap<InstructionLabel, List<Instruction>> supportedInstructions,
+      Map<InstructionLabel, List<Instruction>> supportedInstructions,
       Instruction instruction,
       InstructionLabel instructionLabel,
       UninlinedGraph uninlinedBehavior) {
@@ -40,6 +42,7 @@ public class LlvmLoweringIndirectJumpStrategyImpl extends LlvmLoweringStrategy {
         copy,
         getTableGenInputOperands(copy),
         Collections.emptyList(), // expecting no outputs
+        LlvmLoweringPass.Flags.empty(),
         Collections.emptyList(), // TODO: currently do not generate indirect call
         getRegisterUses(copy),
         getRegisterDefs(copy)
@@ -48,7 +51,7 @@ public class LlvmLoweringIndirectJumpStrategyImpl extends LlvmLoweringStrategy {
 
   @Override
   protected List<TableGenPattern> generatePatternVariations(
-      HashMap<InstructionLabel, List<Instruction>> supportedInstructions,
+      Map<InstructionLabel, List<Instruction>> supportedInstructions,
       InstructionLabel instructionLabel,
       UninlinedGraph behavior,
       List<TableGenInstructionOperand> inputOperands,

@@ -7,6 +7,7 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
 import java.util.stream.Stream;
+import vadl.lcb.passes.llvmLowering.LlvmLoweringPass;
 import vadl.viam.Instruction;
 import vadl.viam.Register;
 
@@ -24,14 +25,14 @@ public class TableGenInstruction {
   private final int formatSize;
   private final int size;
   private final int codeSize;
-  private final Flags flags;
+  private final LlvmLoweringPass.Flags flags;
   private final List<BitBlock> bitBlocks;
   private final List<FieldEncoding> fieldEncodings;
 
   public TableGenInstruction(String name,
                              String namespace,
                              Instruction instruction,
-                             Flags flags,
+                             LlvmLoweringPass.Flags flags,
                              List<TableGenInstructionOperand> inOperands,
                              List<TableGenInstructionOperand> outOperands,
                              List<Register> uses,
@@ -46,7 +47,7 @@ public class TableGenInstruction {
   public TableGenInstruction(String name,
                              String namespace,
                              Instruction instruction,
-                             Flags flags,
+                             LlvmLoweringPass.Flags flags,
                              List<TableGenInstructionOperand> inOperands,
                              List<TableGenInstructionOperand> outOperands,
                              List<Register> uses,
@@ -91,7 +92,7 @@ public class TableGenInstruction {
     return codeSize;
   }
 
-  public Flags getFlags() {
+  public LlvmLoweringPass.Flags getFlags() {
     return flags;
   }
 
@@ -119,20 +120,7 @@ public class TableGenInstruction {
     return formatSize;
   }
 
-  /**
-   * A {@link TableGenInstruction} has many boolean flags which are required for the
-   * code generation.
-   */
-  public record Flags(boolean isTerminator,
-                      boolean isBranch,
-                      boolean isCall,
-                      boolean isReturn,
-                      boolean isPseudo,
-                      boolean isCodeGenOnly,
-                      boolean mayLoad,
-                      boolean mayStore) {
 
-  }
 
   /**
    * A machine instruction has certain encoding parts which are fixed like the opcode.

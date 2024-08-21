@@ -8,8 +8,8 @@ import static vadl.lcb.passes.isaMatching.InstructionLabel.BLTH;
 import static vadl.lcb.passes.isaMatching.InstructionLabel.BNEQ;
 
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Stream;
@@ -44,7 +44,7 @@ public class LlvmLoweringConditionalBranchesStrategyImpl extends LlvmLoweringStr
 
   @Override
   public Optional<LlvmLoweringPass.LlvmLoweringIntermediateResult> lower(
-      HashMap<InstructionLabel, List<Instruction>> supportedInstructions,
+      Map<InstructionLabel, List<Instruction>> supportedInstructions,
       Instruction instruction,
       InstructionLabel instructionLabel,
       UninlinedGraph uninlinedBehavior) {
@@ -62,12 +62,13 @@ public class LlvmLoweringConditionalBranchesStrategyImpl extends LlvmLoweringStr
   }
 
   private LlvmLoweringPass.LlvmLoweringIntermediateResult createIntermediateResult(
-      HashMap<InstructionLabel, List<Instruction>> supportedInstructions,
+      Map<InstructionLabel, List<Instruction>> supportedInstructions,
       Instruction instruction,
       InstructionLabel instructionLabel,
       UninlinedGraph visitedGraph) {
     var inputOperands = getTableGenInputOperands(visitedGraph);
     var outputOperands = getTableGenOutputOperands(visitedGraph);
+    var flags = getFlags(visitedGraph);
 
     var writes = visitedGraph.getNodes(WriteResourceNode.class).toList();
     var patterns = generatePatterns(instruction, inputOperands, writes);
@@ -79,6 +80,7 @@ public class LlvmLoweringConditionalBranchesStrategyImpl extends LlvmLoweringStr
         visitedGraph,
         inputOperands,
         outputOperands,
+        flags,
         Stream.concat(patterns.stream(), alternatives.stream()).toList(),
         getRegisterUses(visitedGraph),
         getRegisterDefs(visitedGraph)
@@ -87,7 +89,7 @@ public class LlvmLoweringConditionalBranchesStrategyImpl extends LlvmLoweringStr
 
   @Override
   protected List<TableGenPattern> generatePatternVariations(
-      HashMap<InstructionLabel, List<Instruction>> supportedInstructions,
+      Map<InstructionLabel, List<Instruction>> supportedInstructions,
       InstructionLabel instructionLabel,
       UninlinedGraph behavior,
       List<TableGenInstructionOperand> inputOperands,
