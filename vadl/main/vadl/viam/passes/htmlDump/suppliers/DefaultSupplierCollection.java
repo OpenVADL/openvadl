@@ -1,18 +1,5 @@
 package vadl.viam.passes.htmlDump.suppliers;
 
-import static guru.nidi.graphviz.model.Factory.mutGraph;
-import static guru.nidi.graphviz.model.Factory.mutNode;
-
-import guru.nidi.graphviz.attribute.Color;
-import guru.nidi.graphviz.attribute.Style;
-import guru.nidi.graphviz.engine.Format;
-import guru.nidi.graphviz.engine.Graphviz;
-import guru.nidi.graphviz.model.MutableGraph;
-import guru.nidi.graphviz.parse.Parser;
-import java.io.File;
-import java.net.URLEncoder;
-import java.nio.charset.StandardCharsets;
-import org.intellij.lang.annotations.Language;
 import vadl.viam.DefProp;
 import vadl.viam.passes.htmlDump.Info;
 import vadl.viam.passes.htmlDump.InfoSupplier;

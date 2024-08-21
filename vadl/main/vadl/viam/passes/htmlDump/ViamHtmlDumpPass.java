@@ -8,6 +8,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Stack;
+import java.util.stream.Collectors;
 import javax.annotation.Nullable;
 import vadl.pass.PassKey;
 import vadl.template.AbstractTemplateRenderingPass;
@@ -61,8 +62,13 @@ public class ViamHtmlDumpPass extends AbstractTemplateRenderingPass {
   protected Map<String, Object> createVariables(Map<PassKey, Object> passResults,
                                                 Specification specification) {
     var definitionBuilders = ViamHtmlCreator.run(specification, passResults);
+    var tocMapList = definitionBuilders.stream()
+        .collect(Collectors.groupingBy(d -> d.origin().getClass()))
+        .entrySet().stream().toList();
+
     return Map.of(
-        "definitions", definitionBuilders
+        "definitions", definitionBuilders,
+        "toc", tocMapList
     );
   }
 }

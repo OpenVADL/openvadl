@@ -51,13 +51,16 @@
 <div class="w-min pr-4 p-4 bg-gray-200 h-screen overflow-auto">
     <h1 class="text-xl font-bold mb-4">Table of Contents</h1>
     <div class="overflow-auto">
+        <th:block th:each="entry: ${toc}" th:with="defs = ${entry.value}" >
+        <h4 class="font-bold">[[${entry.key.simpleName}]]s</h4>
         <ul class="w-full">
-            <li th:each="def: ${definitions}" class="text-blue-500 hover:text-blue-700">
+            <li th:each="def: ${defs}" class="text-blue-500 hover:text-blue-700">
                 <a th:href="'#' + ${def.cssId}">
                     [[${def.origin.identifier.name}]]
                 </a>
             </li>
         </ul>
+        </th:block>
     </div>
 </div>
 
