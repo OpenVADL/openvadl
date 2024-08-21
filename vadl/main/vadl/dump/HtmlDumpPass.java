@@ -28,7 +28,7 @@ public class HtmlDumpPass extends AbstractTemplateRenderingPass {
 
   @Override
   protected String getTemplatePath() {
-    return "viamDump/index.html";
+    return "htmlDump/index.html";
   }
 
   @Override
