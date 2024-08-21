@@ -3,10 +3,18 @@ package vadl.pass;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
+import vadl.gcb.passes.encoding_generation.GenerateFieldAccessEncodingFunctionPass;
+import vadl.gcb.passes.field_node_replacement.FieldNodeReplacementPassForDecoding;
+import vadl.gcb.passes.type_normalization.CppTypeNormalizationForDecodingsPass;
+import vadl.gcb.passes.type_normalization.CppTypeNormalizationForEncodingsPass;
+import vadl.gcb.passes.type_normalization.CppTypeNormalizationForPredicatesPass;
 import vadl.gcb.valuetypes.ProcessorName;
 import vadl.lcb.config.LcbConfiguration;
+import vadl.lcb.passes.isaMatching.IsaMatchingPass;
+import vadl.lcb.passes.llvmLowering.LlvmLoweringPass;
 import vadl.lcb.template.lib.Target.EmitMCInstLowerCppFilePass;
 import vadl.lcb.template.lib.Target.EmitMCInstLowerHeaderFilePass;
+import vadl.viam.passes.algebraic_simplication.AlgebraicSimplificationPass;
 import vadl.viam.passes.functionInliner.FunctionInlinerPass;
 
 /**
@@ -22,13 +30,14 @@ public final class PassOrder {
 
     passes.add(new vadl.viam.passes.typeCastElimination.TypeCastEliminationPass());
     passes.add(new FunctionInlinerPass());
-    passes.add(new vadl.gcb.passes.encoding_generation.GenerateFieldAccessEncodingFunctionPass());
-    passes.add(new vadl.gcb.passes.field_node_replacement.FieldNodeReplacementPassForDecoding());
-    passes.add(new vadl.gcb.passes.type_normalization.CppTypeNormalizationForEncodingsPass());
-    passes.add(new vadl.gcb.passes.type_normalization.CppTypeNormalizationForDecodingsPass());
-    passes.add(new vadl.gcb.passes.type_normalization.CppTypeNormalizationForPredicatesPass());
-    passes.add(new vadl.lcb.passes.isaMatching.IsaMatchingPass());
-    passes.add(new vadl.lcb.passes.llvmLowering.LlvmLoweringPass());
+    passes.add(new AlgebraicSimplificationPass());
+    passes.add(new GenerateFieldAccessEncodingFunctionPass());
+    passes.add(new FieldNodeReplacementPassForDecoding());
+    passes.add(new CppTypeNormalizationForEncodingsPass());
+    passes.add(new CppTypeNormalizationForDecodingsPass());
+    passes.add(new CppTypeNormalizationForPredicatesPass());
+    passes.add(new IsaMatchingPass());
+    passes.add(new LlvmLoweringPass());
     passes.add(new vadl.lcb.clang.lib.Driver.ToolChains.EmitClangToolChainFilePass(configuration,
         processorName));
     passes.add(new vadl.lcb.clang.lib.Basic.Targets.EmitClangTargetHeaderFilePass(configuration,
