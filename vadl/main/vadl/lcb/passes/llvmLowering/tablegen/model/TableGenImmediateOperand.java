@@ -1,14 +1,13 @@
-package vadl.lcb.tablegen.model;
+package vadl.lcb.passes.llvmLowering.tablegen.model;
 
 import vadl.lcb.codegen.DecodingCodeGenerator;
-import vadl.lcb.codegen.EncoderDecoderCodeGenerator;
 import vadl.lcb.codegen.EncodingCodeGenerator;
 import vadl.lcb.codegen.model.llvm.ValueType;
 
 /**
  * Represents an immediate in TableGen.
  */
-public class TableGenImmediateOperand extends TableGenClass {
+public class TableGenImmediateOperand {
   private final String name;
   private final String encoderMethod;
   private final String decoderMethod;

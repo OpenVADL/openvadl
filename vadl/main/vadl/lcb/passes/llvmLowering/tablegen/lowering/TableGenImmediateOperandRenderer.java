@@ -1,7 +1,7 @@
-package vadl.lcb.tablegen.lowering;
+package vadl.lcb.passes.llvmLowering.tablegen.lowering;
 
 
-import vadl.lcb.tablegen.model.TableGenImmediateOperand;
+import vadl.lcb.passes.llvmLowering.tablegen.model.TableGenImmediateOperand;
 
 /**
  * Utility class for mapping into tablegen.

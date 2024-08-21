@@ -3,8 +3,8 @@ package vadl.lcb.passes.llvmLowering.model;
 import java.util.List;
 import vadl.javaannotations.viam.Input;
 import vadl.lcb.passes.llvmLowering.LlvmNodeLowerable;
-import vadl.lcb.passes.llvmLowering.visitors.TableGenMachineInstructionLcbVisitor;
-import vadl.lcb.passes.llvmLowering.visitors.TableGenNodeVisitor;
+import vadl.lcb.passes.llvmLowering.strategies.visitors.TableGenMachineInstructionVisitor;
+import vadl.lcb.passes.llvmLowering.strategies.visitors.TableGenNodeVisitor;
 import vadl.types.Type;
 import vadl.viam.graph.GraphNodeVisitor;
 import vadl.viam.graph.GraphVisitor;
@@ -72,7 +72,7 @@ public class LlvmBrCondSD extends ExpressionNode implements LlvmNodeLowerable {
 
   @Override
   public <T extends GraphNodeVisitor> void accept(T visitor) {
-    if (visitor instanceof TableGenMachineInstructionLcbVisitor v) {
+    if (visitor instanceof TableGenMachineInstructionVisitor v) {
       v.visit(this);
     } else if (visitor instanceof TableGenNodeVisitor v) {
       v.visit(this);

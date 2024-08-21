@@ -1,12 +1,12 @@
-package vadl.lcb.tablegen.lowering;
+package vadl.lcb.passes.llvmLowering.tablegen.lowering;
 
 import java.util.BitSet;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 import org.jetbrains.annotations.Nullable;
-import vadl.lcb.tablegen.model.TableGenInstruction;
-import vadl.lcb.tablegen.model.TableGenInstructionOperand;
-import vadl.lcb.tablegen.model.TableGenPattern;
+import vadl.lcb.passes.llvmLowering.tablegen.model.TableGenInstruction;
+import vadl.lcb.passes.llvmLowering.tablegen.model.TableGenInstructionOperand;
+import vadl.lcb.passes.llvmLowering.tablegen.model.TableGenPattern;
 import vadl.viam.Definition;
 
 /**
@@ -91,8 +91,8 @@ public final class TableGenInstructionRenderer {
   }
 
   private static String lower(TableGenPattern tableGenPattern) {
-    var visitor = new TableGenPatternVisitor();
-    var machineVisitor = new TableGenMachineInstructionVisitor();
+    var visitor = new TableGenPatternPrinterVisitor();
+    var machineVisitor = new TableGenMachineInstructionPrinterVisitor();
 
     for (var root : tableGenPattern.selector().getDataflowRoots()) {
       visitor.visit(root);

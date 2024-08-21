@@ -1,4 +1,4 @@
-package vadl.lcb.tablegen.lowering;
+package vadl.lcb.passes.llvmLowering.tablegen.lowering;
 
 import java.io.StringWriter;
 import vadl.lcb.passes.llvmLowering.LlvmNodeLowerable;
@@ -7,7 +7,7 @@ import vadl.lcb.passes.llvmLowering.model.LlvmBrCondSD;
 import vadl.lcb.passes.llvmLowering.model.LlvmFieldAccessRefNode;
 import vadl.lcb.passes.llvmLowering.model.LlvmTypeCastSD;
 import vadl.lcb.passes.llvmLowering.strategies.LlvmLoweringStrategy;
-import vadl.lcb.passes.llvmLowering.visitors.TableGenNodeVisitor;
+import vadl.lcb.passes.llvmLowering.strategies.visitors.TableGenNodeVisitor;
 import vadl.viam.Constant;
 import vadl.viam.graph.Node;
 import vadl.viam.graph.NodeList;
@@ -43,7 +43,7 @@ import vadl.viam.graph.dependency.ZeroExtendNode;
  * The goal is to generate S-expressions with the same the
  * variable naming.
  */
-public class TableGenPatternVisitor
+public class TableGenPatternPrinterVisitor
     implements TableGenNodeVisitor {
   protected final StringWriter writer = new StringWriter();
 

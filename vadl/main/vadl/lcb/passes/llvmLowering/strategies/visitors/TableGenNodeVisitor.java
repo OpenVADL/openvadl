@@ -1,4 +1,4 @@
-package vadl.lcb.passes.llvmLowering.visitors;
+package vadl.lcb.passes.llvmLowering.strategies.visitors;
 
 import vadl.lcb.passes.llvmLowering.model.LlvmBrCcSD;
 import vadl.lcb.passes.llvmLowering.model.LlvmBrCondSD;

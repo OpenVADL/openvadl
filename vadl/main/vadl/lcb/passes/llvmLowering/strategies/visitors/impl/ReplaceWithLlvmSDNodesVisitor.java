@@ -1,4 +1,4 @@
-package vadl.lcb.passes.llvmLowering.visitors;
+package vadl.lcb.passes.llvmLowering.strategies.visitors.impl;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -20,6 +20,7 @@ import vadl.lcb.passes.llvmLowering.model.LlvmUDivSD;
 import vadl.lcb.passes.llvmLowering.model.LlvmUMulSD;
 import vadl.lcb.passes.llvmLowering.model.LlvmURemSD;
 import vadl.lcb.passes.llvmLowering.model.LlvmXorSD;
+import vadl.lcb.passes.llvmLowering.strategies.visitors.TableGenPatternLowerable;
 import vadl.lcb.visitors.LcbGraphNodeVisitor;
 import vadl.types.BuiltInTable;
 import vadl.viam.graph.Node;

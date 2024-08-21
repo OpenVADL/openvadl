@@ -1,4 +1,4 @@
-package vadl.lcb.passes.llvmLowering.visitors;
+package vadl.lcb.passes.llvmLowering.strategies.visitors.impl;
 
 import java.util.Objects;
 import java.util.Set;
