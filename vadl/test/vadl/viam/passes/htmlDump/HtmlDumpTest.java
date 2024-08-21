@@ -7,6 +7,7 @@ import static vadl.viam.helper.TestGraphUtils.intU;
 import java.io.IOException;
 import java.util.HashMap;
 import org.junit.jupiter.api.Test;
+import vadl.dump.HtmlDumpPass;
 import vadl.types.BuiltInTable;
 import vadl.types.Type;
 import vadl.viam.Function;
@@ -37,7 +38,7 @@ public class HtmlDumpTest {
     spec.add(func);
 
 
-    new ViamHtmlDumpPass(new ViamHtmlDumpPass.Config("build/testdump"))
+    new HtmlDumpPass("build/testdump")
         .execute(new HashMap<>(), spec);
 
   }

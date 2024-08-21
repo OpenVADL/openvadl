@@ -66,13 +66,11 @@
 
 <!--    FRAGMENTS     -->
 
-<!--/*@thymesVar id="tag" type="vadl.viam.passes.htmlDump.Info.Tag"*/-->
+<!--/*@thymesVar id="tag" type="vadl.dump.Info.Tag"*/-->
 
-<div th:fragment="tags(infos, defBuilder)"
+<div th:fragment="tags(infos, entity)"
      th:if="${infos != null}"
-     class="p-6 flex space-x-4 "
->
-    <div th:replace="~{this :: singleTag(${defBuilder.parent})}"></div>
+     class="p-6 flex space-x-4 ">
     <div th:each="info: ${infos}">
         <div th:replace="~{this :: singleTag(${info})}"></div>
     </div>
@@ -86,8 +84,8 @@
 </div>
 
 
-<div th:fragment="expandables(infos, defBuilder)" th:if="${infos != null and !infos.isEmpty}"
-     th:id="'accordion-collapse-' + ${defBuilder.cssId}"
+<div th:fragment="expandables(infos, entity)" th:if="${infos != null and !infos.isEmpty}"
+     th:id="'accordion-collapse-' + ${entity.cssId}"
      data-accordion="collapse">
     <div th:each="info : ${infos}" th:with="elId = ${info.id}">
         <h2 th:id="'accordion-collapse-heading-' + ${elId}">
@@ -126,8 +124,8 @@
 
 </div>
 
-<div th:fragment="modals(infos, defBuilder)" th:if="${infos != null and !infos.isEmpty}"
-     th:id="'modals-' + ${defBuilder.cssId}"
+<div th:fragment="modals(infos, entity)" th:if="${infos != null and !infos.isEmpty}"
+     th:id="'modals-' + ${entity.cssId}"
      data-accordion="collapse">
     <th:block th:each="info : ${infos}" th:with="elId = ${info.id}">
         <button th:id="'show-modal-' + ${elId}"

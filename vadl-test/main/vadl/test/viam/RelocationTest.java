@@ -7,11 +7,11 @@ import java.io.IOException;
 import java.util.HashMap;
 import java.util.Map;
 import org.junit.jupiter.api.Test;
+import vadl.dump.HtmlDumpPass;
 import vadl.test.AbstractTest;
 import vadl.viam.Function;
 import vadl.viam.InstructionSetArchitecture;
 import vadl.viam.Relocation;
-import vadl.viam.passes.htmlDump.ViamHtmlDumpPass;
 import vadl.viam.passes.verification.ViamVerifier;
 
 public class RelocationTest extends AbstractTest {
@@ -21,7 +21,7 @@ public class RelocationTest extends AbstractTest {
     var spec = runAndGetViamSpecification("creation/relocation/valid_relocations.vadl");
     ViamVerifier.verifyAllIn(spec);
 
-    new ViamHtmlDumpPass(new ViamHtmlDumpPass.Config("build")).execute(Map.of(), spec);
+    new HtmlDumpPass("build").execute(Map.of(), spec);
 
     var test = findDefinitionByNameIn("Test", spec, InstructionSetArchitecture.class);
     var r1 = findDefinitionByNameIn("Test::R1", spec, Relocation.class);

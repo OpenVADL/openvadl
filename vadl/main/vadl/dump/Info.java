@@ -1,4 +1,4 @@
-package vadl.viam.passes.htmlDump;
+package vadl.dump;
 
 import java.util.concurrent.atomic.AtomicInteger;
 import javax.annotation.Nullable;
@@ -25,7 +25,7 @@ public abstract sealed class Info permits Info.Expandable, Info.Modal, Info.Tag 
     @Nullable
     public final String link;
 
-    private Tag(String name, String value, @Nullable String link) {
+    public Tag(String name, String value, @Nullable String link) {
       this.name = name;
       this.value = value;
       this.link = link;
