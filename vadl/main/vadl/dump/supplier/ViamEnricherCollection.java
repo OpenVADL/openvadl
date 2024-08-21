@@ -17,7 +17,7 @@ public class ViamEnricherCollection {
   public static InfoEnricher DEF_CLASS_SUPPLIER =
       (entity, passResult) -> {
         if (entity instanceof ViamEntitySupplier.DefinitionEntity defEntity) {
-          var info = Info.Tag.of("DefType", entity.getClass().getSimpleName());
+          var info = Info.Tag.of("DefType", defEntity.origin.getClass().getSimpleName());
           defEntity.addInfo(info);
         }
       };

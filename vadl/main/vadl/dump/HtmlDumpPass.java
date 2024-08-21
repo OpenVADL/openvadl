@@ -3,6 +3,7 @@ package vadl.dump;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Comparator;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
@@ -53,7 +54,9 @@ public class HtmlDumpPass extends AbstractTemplateRenderingPass {
 
     var tocMapList = entities.stream()
         .collect(Collectors.groupingBy(DumpEntity::tocKey))
-        .entrySet().stream().toList();
+        .entrySet().stream()
+        .sorted(Comparator.comparingInt(a -> a.getKey().rank()))
+        .toList();
 
     return Map.of(
         "entries", entities,

@@ -6,10 +6,20 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Stack;
+import java.util.function.Function;
+import javax.annotation.Nullable;
 import vadl.dump.DumpEntity;
 import vadl.dump.DumpEntitySupplier;
 import vadl.viam.Definition;
 import vadl.viam.DefinitionVisitor;
+import vadl.viam.Encoding;
+import vadl.viam.Format;
+import vadl.viam.Instruction;
+import vadl.viam.InstructionSetArchitecture;
+import vadl.viam.Memory;
+import vadl.viam.Register;
+import vadl.viam.RegisterFile;
+import vadl.viam.Resource;
 import vadl.viam.Specification;
 import vadl.dump.Info;
 
@@ -33,7 +43,9 @@ public class ViamEntitySupplier extends DefinitionVisitor.Empty
 
     // set parent
     if (!parents.isEmpty()) {
-      entity.addInfo(new Info.Tag("Parent", parents.peek().name(), "#" + cssIdFor(definition)));
+      entity.parent = parents.peek();
+      entity.addInfo(
+          new Info.Tag("Parent", parents.peek().identifier.name(), "#" + cssIdFor(definition)));
     }
     parents.push(definition);
   }
@@ -67,6 +79,8 @@ public class ViamEntitySupplier extends DefinitionVisitor.Empty
 
   public static class DefinitionEntity extends DumpEntity {
 
+    @Nullable
+    Definition parent;
     Definition origin;
 
     DefinitionEntity(Definition origin) {
@@ -77,24 +91,57 @@ public class ViamEntitySupplier extends DefinitionVisitor.Empty
       return origin;
     }
 
+
     @Override
     public String cssId() {
       return cssIdFor(origin);
     }
 
     @Override
-    public String tocKey() {
-      return origin.getClass().getSimpleName() + "s";
+    public TocKey tocKey() {
+      return new TocKey(origin.getClass().getSimpleName() + "s", rank());
     }
 
     @Override
     public String name() {
-      return origin.name();
+      return origin.identifier.name();
     }
 
     public static String cssIdFor(Definition def) {
       return def.identifier.name() + "-" + def.getClass().getSimpleName();
     }
-  }
 
+    private int rank() {
+      int rank = 0;
+      for (var defCond : defRank) {
+        if (defCond.apply(this)) {
+          return rank;
+        }
+        rank++;
+      }
+      return rank;
+    }
+
+    private static List<Function<DefinitionEntity, Boolean>> defRank = List.of(
+        is(InstructionSetArchitecture.class),
+        is(Resource.class),
+        is(Format.class),
+        is(Instruction.class),
+        isAndISALevel(vadl.viam.Function.class),
+        is(Encoding.class),
+        is(Format.FieldAccess.class)
+    );
+
+    private static Function<DefinitionEntity, Boolean> is(Class<? extends Definition> defClass) {
+      return def -> defClass.isInstance(def.origin);
+    }
+
+    private static Function<DefinitionEntity, Boolean> isAndISALevel(
+        Class<? extends Definition> defClass) {
+      return (def) -> defClass.isInstance(def.origin)
+          &&
+          (def.parent instanceof Specification || def.parent instanceof InstructionSetArchitecture);
+    }
+
+  }
 }

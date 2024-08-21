@@ -13,22 +13,6 @@
 <!-- Left side - List of definitions -->
 <div class="w-full p-4 overflow-auto h-screen">
     <h1 id="specification" class="text-xl font-bold mb-4">Specification (rv3264im.vadl)</h1>
-    <!--    <div id="defs">-->
-
-    <!--        <div class="definition">-->
-    <!--            <h3 id="RV3264I::IType-Format" class="text-lg font-semibold">IType (Format)</h3>-->
-    <!--            <p>Parent: <a href="#specification" class="defref">Specification</a></p>-->
-
-    <!--            <div class="definition">-->
-    <!--                <h4 id="definition1" class="text-md font-semibold">Definition 1</h4>-->
-    <!--                <p>Definition 1 description</p>-->
-    <!--            </div>-->
-
-
-    <!--        </div>-->
-
-
-    <!--    </div>-->
 
     <div th:fragment="entry(entry)" th:if="${entry != null}" th:id="${entry.cssId}"
          class="definition border border-gray-200 px-6 pt-6">
@@ -52,7 +36,7 @@
     <h1 class="text-xl font-bold mb-4">Table of Contents</h1>
     <div class="overflow-auto">
         <th:block th:each="entry: ${toc}" th:with="defs = ${entry.value}" >
-        <h4 class="font-bold">[[${entry.key}]]s</h4>
+        <h4 class="font-bold">[[${entry.key.name}]]</h4>
         <ul class="w-full">
             <li th:each="def: ${defs}" class="text-blue-500 hover:text-blue-700">
                 <a th:href="'#' + ${def.cssId}">

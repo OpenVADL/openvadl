@@ -2,6 +2,7 @@ package vadl.dump;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
 
 abstract public class DumpEntity {
 
@@ -10,7 +11,7 @@ abstract public class DumpEntity {
 
   public abstract String cssId();
 
-  public abstract String tocKey();
+  public abstract TocKey tocKey();
 
   public abstract String name();
 
@@ -47,6 +48,45 @@ abstract public class DumpEntity {
 
   public List<DumpEntity> subEntities() {
     return subEntities;
+  }
+
+
+  public class TocKey {
+    private String name;
+    private int rank;
+
+    public TocKey(String name, int rank) {
+      this.name = name;
+      this.rank = rank;
+    }
+
+    public String name() {
+      return name;
+    }
+
+    public int rank() {
+      return rank;
+    }
+
+    @Override
+    public boolean equals(Object o) {
+      if (this == o) {
+        return true;
+      }
+      if (o == null || getClass() != o.getClass()) {
+        return false;
+      }
+
+      TocKey tocKey = (TocKey) o;
+      return rank == tocKey.rank && Objects.equals(name, tocKey.name);
+    }
+
+    @Override
+    public int hashCode() {
+      int result = Objects.hashCode(name);
+      result = 31 * result + rank;
+      return result;
+    }
   }
 
 
