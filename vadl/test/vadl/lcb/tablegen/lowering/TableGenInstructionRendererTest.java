@@ -5,6 +5,7 @@ import static org.assertj.core.api.AssertionsForClassTypes.assertThat;
 import java.util.Collections;
 import org.junit.jupiter.api.Test;
 import vadl.AbstractTest;
+import vadl.lcb.passes.llvmLowering.LlvmLoweringPass;
 import vadl.lcb.passes.llvmLowering.tablegen.lowering.TableGenInstructionRenderer;
 import vadl.lcb.passes.llvmLowering.tablegen.model.TableGenInstruction;
 import vadl.types.BitsType;
@@ -36,7 +37,7 @@ class TableGenInstructionRendererTest extends AbstractTest {
     var viamInstruction = new Instruction(createIdentifier("ADD"), new Graph("graphValue"),
         createAssembly("assembly"), new Encoding(
         createIdentifier("encoding"), format, fields));
-    var flags = new TableGenInstruction.Flags(
+    var flags = new LlvmLoweringPass.Flags(
         false,
         false,
         false,

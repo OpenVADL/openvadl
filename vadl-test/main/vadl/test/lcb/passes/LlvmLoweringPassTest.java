@@ -25,20 +25,23 @@ public class LlvmLoweringPassTest extends AbstractLcbTest {
   record TestOutput(List<TableGenInstructionOperand> inputs,
                     List<TableGenInstructionOperand> outputs,
                     List<String> selectorPatterns,
-                    List<String> machinePatterns) {
+                    List<String> machinePatterns,
+                    LlvmLoweringPass.Flags flags) {
   }
 
   private static final HashMap<String, TestOutput>
       expectedResults =
       new HashMap<>();
 
-  private static TestOutput createTestOutputRR(String dagNode, String machineInstruction) {
+  private static TestOutput createTestOutputRR(String dagNode,
+                                               String machineInstruction) {
     return new TestOutput(
         List.of(new TableGenInstructionOperand("X", "rs1"),
             new TableGenInstructionOperand("X", "rs2")),
         List.of(new TableGenInstructionOperand("X", "rd")),
         List.of(String.format("(%s X:$rs1, X:$rs2)", dagNode)),
-        List.of(String.format("(%s X:$rs1, X:$rs2)", machineInstruction))
+        List.of(String.format("(%s X:$rs1, X:$rs2)", machineInstruction)),
+        createEmptyFlags()
     );
   }
 
@@ -49,7 +52,8 @@ public class LlvmLoweringPassTest extends AbstractLcbTest {
             new TableGenInstructionOperand("X", "rs2")),
         List.of(new TableGenInstructionOperand("X", "rd")),
         List.of(String.format("(%s X:$rs1, X:$rs2, %s)", "setcc", condCode)),
-        List.of(String.format("(%s X:$rs1, X:$rs2)", machineInstruction))
+        List.of(String.format("(%s X:$rs1, X:$rs2)", machineInstruction)),
+        createEmptyFlags()
     );
   }
 
@@ -72,7 +76,8 @@ public class LlvmLoweringPassTest extends AbstractLcbTest {
                 machineInstruction),
             String.format("(%s X:$rs1, X:$rs2, RV3264I_Btype_immS_decodeAsInt64:$immS)",
                 machineInstruction)
-        )
+        ),
+        createBranchFlags()
     );
   }
 
@@ -86,7 +91,8 @@ public class LlvmLoweringPassTest extends AbstractLcbTest {
         List.of(new TableGenInstructionOperand("X", "rd")),
         List.of(String.format("(%s X:$rs1, %s:$%s)", dagNode, immediateOperand, immediateName)),
         List.of(String.format("(%s X:$rs1, %s:$%s)", machineInstruction, immediateOperand,
-            immediateName)));
+            immediateName)),
+        createEmptyFlags());
   }
 
   private static TestOutput createTestOutputRIWithConditional(String immediateOperand,
@@ -100,8 +106,17 @@ public class LlvmLoweringPassTest extends AbstractLcbTest {
         List.of(String.format("(%s X:$rs1, %s:$%s, %s)", "setcc", immediateOperand, immediateName,
             condCode)),
         List.of(String.format("(%s X:$rs1, %s:$%s)", machineInstruction, immediateOperand,
-            immediateName))
+            immediateName)),
+        createEmptyFlags()
     );
+  }
+
+  private static LlvmLoweringPass.Flags createEmptyFlags() {
+    return LlvmLoweringPass.Flags.empty();
+  }
+
+  private static LlvmLoweringPass.Flags createBranchFlags() {
+    return new LlvmLoweringPass.Flags(true, true, false, false, false, false, false, false);
   }
 
   static {
@@ -152,7 +167,8 @@ public class LlvmLoweringPassTest extends AbstractLcbTest {
             new TableGenInstructionOperand("RV3264I_Itype_immS_decodeAsInt64", "immS")),
         Collections.emptyList(),
         Collections.emptyList(),
-        Collections.emptyList()
+        Collections.emptyList(),
+        createEmptyFlags()
     ));
   }
 
@@ -174,12 +190,17 @@ public class LlvmLoweringPassTest extends AbstractLcbTest {
     return spec.isas().flatMap(x -> x.instructions().stream())
         .filter(x -> expectedResults.containsKey(x.identifier.simpleName()))
         .map(t -> DynamicTest.dynamicTest(t.identifier.simpleName(), () -> {
+          var expectedTestOutput = expectedResults.get(t.identifier.simpleName());
           var res = llvmResults.get(t);
           Assertions.assertNotNull(res);
-          Assertions.assertEquals(expectedResults.get(t.identifier.simpleName()).inputs(),
+          // Inputs
+          Assertions.assertEquals(expectedTestOutput.inputs(),
               res.inputs());
-          Assertions.assertEquals(expectedResults.get(t.identifier.simpleName()).outputs(),
+          // Outputs
+          Assertions.assertEquals(expectedTestOutput.outputs(),
               res.outputs());
+
+          // Selector Patterns
           var selectorPatterns = res.patterns().stream()
               .map(TableGenPattern::selector)
               .flatMap(x -> x.getDataflowRoots().stream())
@@ -188,8 +209,10 @@ public class LlvmLoweringPassTest extends AbstractLcbTest {
                 visitor.visit(rootNode);
                 return visitor.getResult();
               }).toList();
-          Assertions.assertEquals(expectedResults.get(t.identifier.simpleName()).selectorPatterns,
+          Assertions.assertEquals(expectedTestOutput.selectorPatterns,
               selectorPatterns);
+
+          // Machine Patterns
           var machinePatterns = res.patterns().stream()
               .map(TableGenPattern::machine)
               .flatMap(x -> x.getDataflowRoots().stream())
@@ -198,8 +221,11 @@ public class LlvmLoweringPassTest extends AbstractLcbTest {
                 visitor.visit(rootNode);
                 return visitor.getResult();
               }).toList();
-          Assertions.assertEquals(expectedResults.get(t.identifier.simpleName()).machinePatterns,
+          Assertions.assertEquals(expectedTestOutput.machinePatterns,
               machinePatterns);
+
+          // Flags
+          Assertions.assertEquals(expectedTestOutput.flags(), res.flags());
         }));
   }
 

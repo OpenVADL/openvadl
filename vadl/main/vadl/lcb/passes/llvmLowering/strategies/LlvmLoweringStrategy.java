@@ -1,8 +1,8 @@
 package vadl.lcb.passes.llvmLowering.strategies;
 
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Stream;
@@ -11,6 +11,8 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import vadl.lcb.passes.isaMatching.InstructionLabel;
 import vadl.lcb.passes.llvmLowering.LlvmLoweringPass;
+import vadl.lcb.passes.llvmLowering.model.LlvmBrCcSD;
+import vadl.lcb.passes.llvmLowering.model.LlvmBrCondSD;
 import vadl.lcb.passes.llvmLowering.model.LlvmFieldAccessRefNode;
 import vadl.lcb.passes.llvmLowering.model.MachineInstructionNode;
 import vadl.lcb.passes.llvmLowering.strategies.visitors.TableGenPatternLowerable;
@@ -31,6 +33,7 @@ import vadl.viam.graph.NodeList;
 import vadl.viam.graph.control.AbstractBeginNode;
 import vadl.viam.graph.control.ControlNode;
 import vadl.viam.graph.control.EndNode;
+import vadl.viam.graph.control.IfNode;
 import vadl.viam.graph.dependency.ConstantNode;
 import vadl.viam.graph.dependency.DependencyNode;
 import vadl.viam.graph.dependency.ExpressionNode;
@@ -38,8 +41,10 @@ import vadl.viam.graph.dependency.FieldAccessRefNode;
 import vadl.viam.graph.dependency.FieldRefNode;
 import vadl.viam.graph.dependency.FuncCallNode;
 import vadl.viam.graph.dependency.FuncParamNode;
+import vadl.viam.graph.dependency.ReadMemNode;
 import vadl.viam.graph.dependency.ReadRegFileNode;
 import vadl.viam.graph.dependency.ReadRegNode;
+import vadl.viam.graph.dependency.WriteMemNode;
 import vadl.viam.graph.dependency.WriteRegFileNode;
 import vadl.viam.graph.dependency.WriteRegNode;
 import vadl.viam.graph.dependency.WriteResourceNode;
@@ -74,11 +79,42 @@ public abstract class LlvmLoweringStrategy {
   }
 
   /**
+   * Flags indicate special properties of a machine instruction. This method checks the
+   * machine instruction's behavior for those and returns them.
+   *
+   * @return the flags of an {@link UninlinedGraph}.
+   */
+  protected LlvmLoweringPass.Flags getFlags(UninlinedGraph uninlinedGraph) {
+    var isTerminator = uninlinedGraph.getNodes(WriteRegNode.class)
+        .anyMatch(node -> node.register() instanceof Register.Counter);
+    var isBranch = isTerminator
+        && uninlinedGraph.getNodes(Set.of(IfNode.class, LlvmBrCcSD.class, LlvmBrCondSD.class))
+        .findFirst().isPresent();
+    var isCall = false; //TODO
+    var isReturn = false;
+    var isPseudo = false; // This strategy always handles Instructions.
+    var isCodeGenOnly = false;
+    var mayLoad = uninlinedGraph.getNodes(ReadMemNode.class).findFirst().isPresent();
+    var mayStore = uninlinedGraph.getNodes(WriteMemNode.class).findFirst().isPresent();
+
+    return new LlvmLoweringPass.Flags(
+        isTerminator,
+        isBranch,
+        isCall,
+        isReturn,
+        isPseudo,
+        isCodeGenOnly,
+        mayLoad,
+        mayStore
+    );
+  }
+
+  /**
    * Generate a lowering result for the given {@link Graph}.
    * If it is not lowerable then return {@link Optional#empty()}.
    */
   public Optional<LlvmLoweringPass.LlvmLoweringIntermediateResult> lower(
-      HashMap<InstructionLabel, List<Instruction>> supportedInstructions,
+      Map<InstructionLabel, List<Instruction>> supportedInstructions,
       Instruction instruction,
       InstructionLabel instructionLabel,
       UninlinedGraph uninlinedBehavior) {
@@ -98,7 +134,7 @@ public abstract class LlvmLoweringStrategy {
       visitor.visit(node);
 
       if (!((TableGenPatternLowerable) visitor).isPatternLowerable()) {
-        logger.atWarn().log("Instruction '{}' is not lowerable and wil be skipped",
+        logger.atWarn().log("Instruction '{}' is not lowerable and will be skipped",
             instructionIdentifier.toString());
         break;
       }
@@ -108,6 +144,7 @@ public abstract class LlvmLoweringStrategy {
     var outputOperands = getTableGenOutputOperands(copy);
     var registerUses = getRegisterUses(copy);
     var registerDefs = getRegisterDefs(copy);
+    var flags = getFlags(copy);
 
     copy.deinitializeNodes();
 
@@ -123,7 +160,9 @@ public abstract class LlvmLoweringStrategy {
               outputOperands,
               patterns);
       return Optional.of(new LlvmLoweringPass.LlvmLoweringIntermediateResult(copy,
-          inputOperands, outputOperands,
+          inputOperands,
+          outputOperands,
+          flags,
           Stream.concat(patterns.stream(), alternativePatterns.stream()).toList(),
           registerUses,
           registerDefs
@@ -163,7 +202,7 @@ public abstract class LlvmLoweringStrategy {
    * then this method should generate a pattern for the less-than.
    */
   protected abstract List<TableGenPattern> generatePatternVariations(
-      HashMap<InstructionLabel, List<Instruction>> supportedInstructions,
+      Map<InstructionLabel, List<Instruction>> supportedInstructions,
       InstructionLabel instructionLabel,
       UninlinedGraph behavior,
       List<TableGenInstructionOperand> inputOperands,

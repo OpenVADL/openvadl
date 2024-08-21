@@ -5,13 +5,8 @@ import java.io.StringWriter;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 import vadl.gcb.valuetypes.ProcessorName;
-import vadl.lcb.passes.isaMatching.IsaMatchingPass;
-import vadl.lcb.passes.llvmLowering.LlvmLoweringPass;
-import vadl.pass.PassManager;
 import vadl.pass.exception.DuplicatedPassKeyException;
 import vadl.test.lcb.AbstractLcbTest;
-import vadl.viam.passes.functionInliner.FunctionInlinerPass;
-import vadl.viam.passes.typeCastElimination.TypeCastEliminationPass;
 
 public class EmitInstrInfoTableGenFilePassTest extends AbstractLcbTest {
   @Test
@@ -307,8 +302,8 @@ public class EmitInstrInfoTableGenFilePassTest extends AbstractLcbTest {
         let Inst{14-12} = funct3{2-0};
         let Inst{6-0} = opcode{6-0};
 
-        let isTerminator  = 0;
-        let isBranch      = 0;
+        let isTerminator  = 1;
+        let isBranch      = 1;
         let isCall        = 0;
         let isReturn      = 0;
         let isPseudo      = 0;
@@ -366,8 +361,8 @@ public class EmitInstrInfoTableGenFilePassTest extends AbstractLcbTest {
         let Inst{14-12} = funct3{2-0};
         let Inst{6-0} = opcode{6-0};
 
-        let isTerminator  = 0;
-        let isBranch      = 0;
+        let isTerminator  = 1;
+        let isBranch      = 1;
         let isCall        = 0;
         let isReturn      = 0;
         let isPseudo      = 0;
@@ -425,8 +420,8 @@ public class EmitInstrInfoTableGenFilePassTest extends AbstractLcbTest {
         let Inst{14-12} = funct3{2-0};
         let Inst{6-0} = opcode{6-0};
 
-        let isTerminator  = 0;
-        let isBranch      = 0;
+        let isTerminator  = 1;
+        let isBranch      = 1;
         let isCall        = 0;
         let isReturn      = 0;
         let isPseudo      = 0;
@@ -484,8 +479,8 @@ public class EmitInstrInfoTableGenFilePassTest extends AbstractLcbTest {
         let Inst{14-12} = funct3{2-0};
         let Inst{6-0} = opcode{6-0};
 
-        let isTerminator  = 0;
-        let isBranch      = 0;
+        let isTerminator  = 1;
+        let isBranch      = 1;
         let isCall        = 0;
         let isReturn      = 0;
         let isPseudo      = 0;
@@ -543,8 +538,8 @@ public class EmitInstrInfoTableGenFilePassTest extends AbstractLcbTest {
         let Inst{14-12} = funct3{2-0};
         let Inst{6-0} = opcode{6-0};
 
-        let isTerminator  = 0;
-        let isBranch      = 0;
+        let isTerminator  = 1;
+        let isBranch      = 1;
         let isCall        = 0;
         let isReturn      = 0;
         let isPseudo      = 0;
@@ -602,8 +597,8 @@ public class EmitInstrInfoTableGenFilePassTest extends AbstractLcbTest {
         let Inst{14-12} = funct3{2-0};
         let Inst{6-0} = opcode{6-0};
 
-        let isTerminator  = 0;
-        let isBranch      = 0;
+        let isTerminator  = 1;
+        let isBranch      = 1;
         let isCall        = 0;
         let isReturn      = 0;
         let isPseudo      = 0;
