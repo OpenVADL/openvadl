@@ -30,7 +30,7 @@ import vadl.viam.Specification;
 import vadl.viam.ViamError;
 import vadl.viam.passes.htmlDump.suppliers.DefaultSupplierCollection;
 
-public class ViamHtmlDumpPass extends AbstractTemplateRenderingPass {
+public class ViamHtmlDumpPass extends HtmlDumpPass {
 
   public record Config(
       String outDir
@@ -40,7 +40,6 @@ public class ViamHtmlDumpPass extends AbstractTemplateRenderingPass {
   public final static List<InfoSupplier> infoSuppliers = List.of(
       DefaultSupplierCollection.DEF_CLASS_SUPPLIER,
       DefaultSupplierCollection.TYPE_SUPPLIER,
-      DefaultSupplierCollection.BEHAVIOR_SUPPLIER,
       DefaultSupplierCollection.BEHAVIOR_SUPPLIER_MODAL
   );
 
@@ -49,27 +48,8 @@ public class ViamHtmlDumpPass extends AbstractTemplateRenderingPass {
   }
 
   @Override
-  protected String getTemplatePath() {
-    return "viamDump/index.html";
-  }
-
-  @Override
-  protected String getOutputPath() {
-    return "index.html";
-  }
-
-  @Override
-  protected Map<String, Object> createVariables(Map<PassKey, Object> passResults,
-                                                Specification specification) {
-    var definitionBuilders = ViamHtmlCreator.run(specification, passResults);
-    var tocMapList = definitionBuilders.stream()
-        .collect(Collectors.groupingBy(d -> d.origin().getClass()))
-        .entrySet().stream().toList();
-
-    return Map.of(
-        "definitions", definitionBuilders,
-        "toc", tocMapList
-    );
+  public List<InfoSupplier> getInfoSuppliers() {
+    return infoSuppliers;
   }
 }
 

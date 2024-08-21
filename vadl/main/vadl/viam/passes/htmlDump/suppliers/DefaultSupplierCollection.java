@@ -15,46 +15,7 @@ public class DefaultSupplierCollection {
 
   public static InfoSupplier DEF_CLASS_SUPPLIER =
       (def, passResult) -> Info.Tag.of("DefType", def.getClass().getSimpleName());
-
-
-  public static InfoSupplier BEHAVIOR_SUPPLIER = (def, passResult) -> {
-    if (def instanceof DefProp.WithBehavior withBehavior) {
-      var behavior = withBehavior.behaviors().get(0);
-      try {
-        var dotGraph = behavior.dotGraph();
-
-        var info = new Info.Expandable("Behavior", "");
-        var id = info.id();
-
-        info.body = """
-            <div id="graph-%s" style="height: 500px"></div>
-            <script id="dot-graph-%s" type="application/dot">
-            %s
-            </script>
-            """.formatted(id, id, dotGraph);
-        info.jsOnFirstOpen = """
-            var dotString =
-                document.getElementById(
-                    "dot-graph-%s",
-                ).textContent;
-            d3.select("#graph-%s")
-                .graphviz()
-                .width("100%%")
-                .height("100%%")
-                .renderDot(
-                    dotString,
-                );
-            """.formatted(id, id);
-        return info;
-      } catch (Exception e) {
-        return new Info.Expandable("Behavior", """
-            <div>%s<div>
-            """.formatted(e.getMessage()));
-      }
-    } else {
-      return null;
-    }
-  };
+  
 
   public static InfoSupplier BEHAVIOR_SUPPLIER_MODAL = (def, passResult) -> {
     if (def instanceof DefProp.WithBehavior withBehavior) {

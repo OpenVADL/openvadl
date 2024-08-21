@@ -30,18 +30,18 @@
 
     <!--    </div>-->
 
-    <div th:fragment="definition(def)" th:if="${def != null}" th:id="${def.cssId}"
+    <div th:fragment="entry(entry)" th:if="${entry != null}" th:id="${entry.cssId}"
          class="definition border border-gray-200 px-6 pt-6">
         <!--/*@thymesVar id="def" type="vadl.viam.passes.htmlDump.HtmlDefinitionBuilder"*/-->
-        <h3 th:text="${def.origin.identifier}" class="text-lg font-semibold">Name</h3>
-        <div th:replace="~{this :: tags(${def.tagInfos}, ${def})}"></div>
-        <div th:replace="~{this :: expandables(${def.expandableInfos}, ${def})}"></div>
-        <div th:replace="~{this :: modals(${def.modalInfos}, ${def})}"></div>
+        <h3 th:text="${entry.origin.identifier}" class="text-lg font-semibold">Name</h3>
+        <div th:replace="~{this :: tags(${entry.tagInfos}, ${entry})}"></div>
+        <div th:replace="~{this :: expandables(${entry.expandableInfos}, ${entry})}"></div>
+        <div th:replace="~{this :: modals(${entry.modalInfos}, ${entry})}"></div>
     </div>
 
     <!--/*@thymesVar id="definitions" type="List<vadl.viam.passes.htmlDump.HtmlDefinitionBuilder>"*/-->
-    <div th:each="def: ${definitions}">
-        <div th:replace="~{this :: definition(def=${def})}"></div>
+    <div th:each="entry: ${entries}">
+        <div th:replace="~{this :: entry(${entry})}"></div>
     </div>
 
 
