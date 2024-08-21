@@ -16,9 +16,6 @@ dependencies {
     implementation("ch.qos.logback:logback-classic:1.5.6")
     implementation("commons-io:commons-io:2.16.1")
 
-    implementation("guru.nidi:graphviz-java-all-j2v8:0.18.1")
-    implementation("org.graalvm.js:js:20.0.0")
-
     testImplementation("org.awaitility:awaitility:4.2.1")
     testImplementation("org.testcontainers:testcontainers:1.20.0")
     testImplementation("org.testcontainers:junit-jupiter:1.20.0")

@@ -31,11 +31,12 @@
     <!--    </div>-->
 
     <div th:fragment="definition(def)" th:if="${def != null}" th:id="${def.cssId}"
-         class="definition border border-b-0 border-gray-200 px-6 pt-6">
+         class="definition border border-gray-200 px-6 pt-6">
         <!--/*@thymesVar id="def" type="vadl.viam.passes.htmlDump.HtmlDefinitionBuilder"*/-->
         <h3 th:text="${def.origin.identifier}" class="text-lg font-semibold">Name</h3>
         <div th:replace="~{this :: tags(${def.tagInfos}, ${def})}"></div>
         <div th:replace="~{this :: expandables(${def.expandableInfos}, ${def})}"></div>
+        <div th:replace="~{this :: modals(${def.modalInfos}, ${def})}"></div>
     </div>
 
     <!--/*@thymesVar id="definitions" type="List<vadl.viam.passes.htmlDump.HtmlDefinitionBuilder>"*/-->
@@ -102,13 +103,80 @@
         <div th:id="'accordion-collapse-body-'+ ${elId}" class="hidden"
              th:aria-labelledby="'accordion-collapse-heading-' + ${elId}">
             <div class="p-5 border border-b-0 border-gray-200 dark:border-gray-700">
-                <div th:utext="${info.body}"></div>
+                <th:block th:utext="${info.body}"></th:block>
+                <script th:if="${info.jsOnFirstOpen != null}" th:inline="javascript">
+                    var button =
+                        document.querySelector(
+                            "#accordion-collapse-heading-[[${elId}]] > button",
+                        );
+                    button.addEventListener(
+                        "click",
+                        function () {
+                            [(${info.jsOnFirstOpen})]
+                        },
+                        {once: true},
+                    );
+                </script>
             </div>
         </div>
     </div>
 
 </div>
 
+<div th:fragment="modals(infos, defBuilder)" th:if="${infos != null and !infos.isEmpty}"
+     th:id="'modals-' + ${defBuilder.cssId}"
+     data-accordion="collapse">
+    <th:block th:each="info : ${infos}" th:with="elId = ${info.id}">
+        <button th:id="'show-modal-' + ${elId}"
+                th:data-modal-target="'modal-' + ${elId}"
+                th:data-modal-toggle="'modal-' + ${elId}"
+                class="flex items-center justify-between w-full p-5 font-medium rtl:text-right text-gray-500 border border-b-0 border-gray-200 focus:ring-4 focus:ring-gray-200 dark:focus:ring-gray-800 dark:border-gray-700 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800 gap-3"
+        >
+            [[${info.title}]]
+        </button>
+        <div th:id="'modal-' + ${elId}" tabindex="-1" aria-hidden="true" class="hidden overflow-y-auto overflow-x-hidden fixed top-0 right-0 left-0 z-50 justify-center items-center w-full md:inset-0 h-[calc(100%-1rem)] h-screen">
+            <div class="relative p-4 w-full h-full">
+                <!-- Modal content -->
+                <div class="relative bg-white rounded-lg shadow dark:bg-gray-700 h-full flex flex-col">
+                    <!-- Modal header -->
+                    <div class="flex items-center justify-between p-4 md:p-5 border-b rounded-t dark:border-gray-600">
+                        <h3 class="text-xl font-semibold text-gray-900 dark:text-white">
+                            [[${info.modalTitle}]]
+                        </h3>
+                        <button type="button"
+                                class="text-gray-400 bg-transparent hover:bg-gray-200 hover:text-gray-900 rounded-lg text-sm w-8 h-8 ms-auto inline-flex justify-center items-center dark:hover:bg-gray-600 dark:hover:text-white"
+                                th:data-modal-hide="'modal-' + ${elId}">
+                            <svg class="w-3 h-3" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 14 14">
+                                <path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="m1 1 6 6m0 0 6 6M7 7l6-6M7 7l-6 6"/>
+                            </svg>
+                            <span class="sr-only">Close modal</span>
+                        </button>
+                    </div>
+                    <!-- Modal body -->
+                    <div class="flex-grow" >
+                        <th:block th:utext="${info.body}"></th:block>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <script th:if="${info.jsOnFirstOpen != null}" th:inline="javascript">
+            var button =
+                document.querySelector(
+                    "#show-modal-[[${elId}]]",
+                );
+            button.addEventListener(
+                "click",
+                function () {
+                    [(${info.jsOnFirstOpen})]
+                },
+                {once: true},
+            );
+        </script>
+    </th:block>
+</div>
+
 </body>
 <script src="https://cdn.jsdelivr.net/npm/flowbite@2.5.1/dist/flowbite.min.js"></script>
+<script src="https://d3js.org/d3.v7.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/d3-graphviz/5.6.0/d3-graphviz.min.js"></script>
 </html>

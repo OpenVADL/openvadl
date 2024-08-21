@@ -39,7 +39,8 @@ public class ViamHtmlDumpPass extends AbstractTemplateRenderingPass {
   public final static List<InfoSupplier> infoSuppliers = List.of(
       DefaultSupplierCollection.DEF_CLASS_SUPPLIER,
       DefaultSupplierCollection.TYPE_SUPPLIER,
-      DefaultSupplierCollection.BEHAVIOR_SUPPLIER
+      DefaultSupplierCollection.BEHAVIOR_SUPPLIER,
+      DefaultSupplierCollection.BEHAVIOR_SUPPLIER_MODAL
   );
 
   public ViamHtmlDumpPass(Config config) throws IOException {
@@ -184,6 +185,13 @@ class HtmlDefinitionBuilder {
     return infos.stream()
         .filter(Info.Expandable.class::isInstance)
         .map(Info.Expandable.class::cast)
+        .toList();
+  }
+
+  public List<Info.Modal> modalInfos() {
+    return infos.stream()
+        .filter(Info.Modal.class::isInstance)
+        .map(Info.Modal.class::cast)
         .toList();
   }
 
