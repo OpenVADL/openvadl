@@ -4,7 +4,8 @@ import static org.assertj.core.api.AssertionsForClassTypes.assertThat;
 
 import org.junit.jupiter.api.Test;
 import vadl.lcb.codegen.model.llvm.ValueType;
-import vadl.lcb.tablegen.model.TableGenImmediateOperand;
+import vadl.lcb.passes.llvmLowering.tablegen.lowering.TableGenImmediateOperandRenderer;
+import vadl.lcb.passes.llvmLowering.tablegen.model.TableGenImmediateOperand;
 
 class TableGenImmediateOperandRendererTest {
 
@@ -29,7 +30,7 @@ class TableGenImmediateOperandRendererTest {
         
         def nameValueAsInt32
               : nameValue<i32>
-              , ImmLeaf<i32, [{ return true; }]>;
+              , ImmLeaf<i32, [{ return nameValue_predicate(Imm); }]>;
         """);
   }
 }

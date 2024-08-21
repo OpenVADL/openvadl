@@ -5,17 +5,16 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.IdentityHashMap;
 import java.util.List;
-import java.util.Optional;
 import java.util.stream.Stream;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.DynamicTest;
 import org.junit.jupiter.api.TestFactory;
 import vadl.lcb.passes.llvmLowering.LlvmLoweringPass;
 import vadl.lcb.passes.llvmLowering.model.LlvmCondCode;
-import vadl.lcb.tablegen.lowering.TableGenMachineInstructionVisitor;
-import vadl.lcb.tablegen.lowering.TableGenPatternVisitor;
-import vadl.lcb.tablegen.model.TableGenInstructionOperand;
-import vadl.lcb.tablegen.model.TableGenPattern;
+import vadl.lcb.passes.llvmLowering.tablegen.lowering.TableGenMachineInstructionPrinterVisitor;
+import vadl.lcb.passes.llvmLowering.tablegen.lowering.TableGenPatternPrinterVisitor;
+import vadl.lcb.passes.llvmLowering.tablegen.model.TableGenInstructionOperand;
+import vadl.lcb.passes.llvmLowering.tablegen.model.TableGenPattern;
 import vadl.pass.PassKey;
 import vadl.pass.exception.DuplicatedPassKeyException;
 import vadl.test.lcb.AbstractLcbTest;
@@ -185,7 +184,7 @@ public class LlvmLoweringPassTest extends AbstractLcbTest {
               .map(TableGenPattern::selector)
               .flatMap(x -> x.getDataflowRoots().stream())
               .map(rootNode -> {
-                var visitor = new TableGenPatternVisitor();
+                var visitor = new TableGenPatternPrinterVisitor();
                 visitor.visit(rootNode);
                 return visitor.getResult();
               }).toList();
@@ -195,7 +194,7 @@ public class LlvmLoweringPassTest extends AbstractLcbTest {
               .map(TableGenPattern::machine)
               .flatMap(x -> x.getDataflowRoots().stream())
               .map(rootNode -> {
-                var visitor = new TableGenMachineInstructionVisitor();
+                var visitor = new TableGenMachineInstructionPrinterVisitor();
                 visitor.visit(rootNode);
                 return visitor.getResult();
               }).toList();

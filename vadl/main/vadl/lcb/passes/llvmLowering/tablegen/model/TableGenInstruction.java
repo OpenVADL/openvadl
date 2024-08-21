@@ -1,4 +1,4 @@
-package vadl.lcb.tablegen.model;
+package vadl.lcb.passes.llvmLowering.tablegen.model;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -13,7 +13,7 @@ import vadl.viam.Register;
 /**
  * Models an {@link Instruction} for TableGen.
  */
-public class TableGenInstruction extends TableGenRecord {
+public class TableGenInstruction {
   private final String name;
   private final String namespace;
   private final List<TableGenPattern> anonymousPatterns;

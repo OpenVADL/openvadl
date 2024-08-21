@@ -13,12 +13,12 @@ import vadl.lcb.passes.isaMatching.InstructionLabel;
 import vadl.lcb.passes.llvmLowering.LlvmLoweringPass;
 import vadl.lcb.passes.llvmLowering.model.LlvmFieldAccessRefNode;
 import vadl.lcb.passes.llvmLowering.model.MachineInstructionNode;
-import vadl.lcb.passes.llvmLowering.visitors.ReplaceWithLlvmSDNodesVisitor;
-import vadl.lcb.passes.llvmLowering.visitors.TableGenPatternLowerable;
-import vadl.lcb.tablegen.model.TableGenInstruction;
-import vadl.lcb.tablegen.model.TableGenInstructionImmediateOperand;
-import vadl.lcb.tablegen.model.TableGenInstructionOperand;
-import vadl.lcb.tablegen.model.TableGenPattern;
+import vadl.lcb.passes.llvmLowering.strategies.visitors.TableGenPatternLowerable;
+import vadl.lcb.passes.llvmLowering.strategies.visitors.impl.ReplaceWithLlvmSDNodesVisitor;
+import vadl.lcb.passes.llvmLowering.tablegen.model.TableGenInstruction;
+import vadl.lcb.passes.llvmLowering.tablegen.model.TableGenInstructionImmediateOperand;
+import vadl.lcb.passes.llvmLowering.tablegen.model.TableGenInstructionOperand;
+import vadl.lcb.passes.llvmLowering.tablegen.model.TableGenPattern;
 import vadl.lcb.visitors.LcbGraphNodeVisitor;
 import vadl.viam.Constant;
 import vadl.viam.Instruction;
@@ -250,7 +250,7 @@ public abstract class LlvmLoweringStrategy {
   private static TableGenInstructionOperand generateInstructionOperand(
       LlvmFieldAccessRefNode node) {
     return new TableGenInstructionImmediateOperand(
-        node.immediateOperand().getFullName(),
+        node.immediateOperand().fullname(),
         node.fieldAccess().identifier.simpleName(),
         node.immediateOperand());
   }

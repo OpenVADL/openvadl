@@ -6,8 +6,8 @@ import java.util.List;
 import java.util.Set;
 import vadl.lcb.passes.isaMatching.InstructionLabel;
 import vadl.lcb.passes.llvmLowering.strategies.LlvmLoweringStrategy;
-import vadl.lcb.tablegen.model.TableGenInstructionOperand;
-import vadl.lcb.tablegen.model.TableGenPattern;
+import vadl.lcb.passes.llvmLowering.tablegen.model.TableGenInstructionOperand;
+import vadl.lcb.passes.llvmLowering.tablegen.model.TableGenPattern;
 import vadl.viam.Instruction;
 import vadl.viam.passes.functionInliner.UninlinedGraph;
 

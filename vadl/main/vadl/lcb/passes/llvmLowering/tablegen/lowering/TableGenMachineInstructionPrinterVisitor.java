@@ -1,13 +1,13 @@
-package vadl.lcb.tablegen.lowering;
+package vadl.lcb.passes.llvmLowering.tablegen.lowering;
 
 import vadl.lcb.passes.llvmLowering.model.MachineInstructionNode;
-import vadl.lcb.passes.llvmLowering.visitors.TableGenMachineInstructionLcbVisitor;
+import vadl.lcb.passes.llvmLowering.strategies.visitors.TableGenMachineInstructionVisitor;
 
 /**
  * Visitor for machine instructions.
  */
-public class TableGenMachineInstructionVisitor extends TableGenPatternVisitor
-    implements TableGenMachineInstructionLcbVisitor {
+public class TableGenMachineInstructionPrinterVisitor extends TableGenPatternPrinterVisitor
+    implements TableGenMachineInstructionVisitor {
   @Override
   public void visit(MachineInstructionNode node) {
     writer.write("(");

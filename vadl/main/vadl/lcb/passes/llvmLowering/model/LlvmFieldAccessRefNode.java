@@ -1,9 +1,9 @@
 package vadl.lcb.passes.llvmLowering.model;
 
 import vadl.lcb.codegen.model.llvm.ValueType;
-import vadl.lcb.passes.llvmLowering.visitors.TableGenMachineInstructionLcbVisitor;
-import vadl.lcb.passes.llvmLowering.visitors.TableGenNodeVisitor;
-import vadl.lcb.tablegen.model.TableGenImmediateOperand;
+import vadl.lcb.passes.llvmLowering.strategies.visitors.TableGenMachineInstructionVisitor;
+import vadl.lcb.passes.llvmLowering.strategies.visitors.TableGenNodeVisitor;
+import vadl.lcb.passes.llvmLowering.tablegen.model.TableGenImmediateOperand;
 import vadl.types.Type;
 import vadl.viam.Format;
 import vadl.viam.graph.GraphNodeVisitor;
@@ -37,7 +37,7 @@ public class LlvmFieldAccessRefNode extends FieldAccessRefNode {
 
   @Override
   public void accept(GraphNodeVisitor visitor) {
-    if (visitor instanceof TableGenMachineInstructionLcbVisitor v) {
+    if (visitor instanceof TableGenMachineInstructionVisitor v) {
       v.visit(this);
     } else if (visitor instanceof TableGenNodeVisitor v) {
       v.visit(this);

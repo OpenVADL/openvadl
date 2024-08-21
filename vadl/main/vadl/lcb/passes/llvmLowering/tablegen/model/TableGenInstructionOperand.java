@@ -1,4 +1,4 @@
-package vadl.lcb.tablegen.model;
+package vadl.lcb.passes.llvmLowering.tablegen.model;
 
 import java.util.Objects;
 
