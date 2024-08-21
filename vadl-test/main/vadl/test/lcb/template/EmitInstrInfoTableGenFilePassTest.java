@@ -5,13 +5,8 @@ import java.io.StringWriter;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 import vadl.gcb.valuetypes.ProcessorName;
-import vadl.lcb.passes.isaMatching.IsaMatchingPass;
-import vadl.lcb.passes.llvmLowering.LlvmLoweringPass;
-import vadl.pass.PassManager;
 import vadl.pass.exception.DuplicatedPassKeyException;
 import vadl.test.lcb.AbstractLcbTest;
-import vadl.viam.passes.functionInliner.FunctionInlinerPass;
-import vadl.viam.passes.typeCastElimination.TypeCastEliminationPass;
 
 public class EmitInstrInfoTableGenFilePassTest extends AbstractLcbTest {
   @Test
