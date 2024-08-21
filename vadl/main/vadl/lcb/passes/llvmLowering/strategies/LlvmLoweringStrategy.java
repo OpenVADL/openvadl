@@ -90,6 +90,7 @@ public abstract class LlvmLoweringStrategy {
     var isBranch = isTerminator
         && uninlinedGraph.getNodes(Set.of(IfNode.class, LlvmBrCcSD.class, LlvmBrCondSD.class))
         .findFirst().isPresent();
+
     var isCall = false; //TODO
     var isReturn = false;
     var isPseudo = false; // This strategy always handles Instructions.
