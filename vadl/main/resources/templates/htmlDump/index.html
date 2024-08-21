@@ -33,7 +33,7 @@
     <div th:fragment="entry(entry)" th:if="${entry != null}" th:id="${entry.cssId}"
          class="definition border border-gray-200 px-6 pt-6">
         <!--/*@thymesVar id="def" type="vadl.viam.passes.htmlDump.HtmlDefinitionBuilder"*/-->
-        <h3 th:text="${entry.origin.identifier}" class="text-lg font-semibold">Name</h3>
+        <h3 th:text="${entry.name}" class="text-lg font-semibold">Name</h3>
         <div th:replace="~{this :: tags(${entry.tagInfos}, ${entry})}"></div>
         <div th:replace="~{this :: expandables(${entry.expandableInfos}, ${entry})}"></div>
         <div th:replace="~{this :: modals(${entry.modalInfos}, ${entry})}"></div>
@@ -52,11 +52,11 @@
     <h1 class="text-xl font-bold mb-4">Table of Contents</h1>
     <div class="overflow-auto">
         <th:block th:each="entry: ${toc}" th:with="defs = ${entry.value}" >
-        <h4 class="font-bold">[[${entry.key.simpleName}]]s</h4>
+        <h4 class="font-bold">[[${entry.key}]]s</h4>
         <ul class="w-full">
             <li th:each="def: ${defs}" class="text-blue-500 hover:text-blue-700">
                 <a th:href="'#' + ${def.cssId}">
-                    [[${def.origin.identifier.name}]]
+                    [[${def.name}]]
                 </a>
             </li>
         </ul>

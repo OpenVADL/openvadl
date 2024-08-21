@@ -82,6 +82,16 @@ public class ViamEntitySupplier extends DefinitionVisitor.Empty
       return cssIdFor(origin);
     }
 
+    @Override
+    public String tocKey() {
+      return origin.getClass().getSimpleName() + "s";
+    }
+
+    @Override
+    public String name() {
+      return origin.name();
+    }
+
     public static String cssIdFor(Definition def) {
       return def.identifier.name() + "-" + def.getClass().getSimpleName();
     }

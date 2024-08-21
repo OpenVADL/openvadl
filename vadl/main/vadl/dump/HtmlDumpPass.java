@@ -5,6 +5,7 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 import java.util.Map;
+import java.util.stream.Collectors;
 import vadl.dump.supplier.ViamEntitySupplier;
 import vadl.pass.PassKey;
 import vadl.template.AbstractTemplateRenderingPass;
@@ -50,9 +51,13 @@ public class HtmlDumpPass extends AbstractTemplateRenderingPass {
       }
     }
 
+    var tocMapList = entities.stream()
+        .collect(Collectors.groupingBy(DumpEntity::tocKey))
+        .entrySet().stream().toList();
+
     return Map.of(
-        "entries", entities
-//        "toc", tocMapList
+        "entries", entities,
+        "toc", tocMapList
     );
   }
 }

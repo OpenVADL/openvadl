@@ -10,6 +10,10 @@ abstract public class DumpEntity {
 
   public abstract String cssId();
 
+  public abstract String tocKey();
+
+  public abstract String name();
+
   public DumpEntity addInfo(Info info) {
     infos.add(info);
     return this;
