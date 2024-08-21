@@ -11,6 +11,8 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import vadl.lcb.passes.isaMatching.InstructionLabel;
 import vadl.lcb.passes.llvmLowering.LlvmLoweringPass;
+import vadl.lcb.passes.llvmLowering.LlvmMayLoadMemory;
+import vadl.lcb.passes.llvmLowering.LlvmSideEffectPatternIncluded;
 import vadl.lcb.passes.llvmLowering.model.LlvmBrCcSD;
 import vadl.lcb.passes.llvmLowering.model.LlvmBrCondSD;
 import vadl.lcb.passes.llvmLowering.model.LlvmFieldAccessRefNode;
@@ -99,7 +101,7 @@ public abstract class LlvmLoweringStrategy {
     var isCodeGenOnly = false;
     var mayLoad = uninlinedGraph.getNodes(ReadMemNode.class).findFirst().isPresent();
     var mayStore =
-        uninlinedGraph.getNodes(Set.of(WriteMemNode.class, LlvmTruncStore.class)).findFirst()
+        uninlinedGraph.getNodes(Set.of(WriteMemNode.class, LlvmMayLoadMemory.class)).findFirst()
             .isPresent();
 
     return new LlvmLoweringPass.Flags(
@@ -341,33 +343,14 @@ public abstract class LlvmLoweringStrategy {
 
   /**
    * Constructs from the given dataflow node a new graph which is the pattern selector.
-   * Note that LLVM does not require the actual side effect.
    */
   @NotNull
   private static Graph getPatternSelector(WriteResourceNode sideEffectNode) {
-    // Late binding does not work because everything is casted to WriteResourceNode.
-    if (sideEffectNode instanceof LlvmTruncStore truncStore) {
-      return getPatternSelector(truncStore);
-    } else {
-      var graph = new Graph(sideEffectNode.id().toString() + ".selector.lowering");
-      var root = sideEffectNode.value();
-      root.clearUsages();
-      graph.addWithInputs(root);
-      return graph;
-    }
-  }
-
-  /**
-   * This is an exception to the {@link #getPatternSelector(WriteResourceNode)} method. Usually,
-   * we do not care about the side effect because it is already captured by the machine instruction.
-   * However, the {@link LlvmTruncStore} is a fused LLVM selection dag node which is a
-   * {@link WriteMemNode} and {@link TruncateNode}. We need to explicitly add the side effect here.
-   */
-  @NotNull
-  private static Graph getPatternSelector(LlvmTruncStore sideEffectNode) {
     var graph = new Graph(sideEffectNode.id().toString() + ".selector.lowering");
-    sideEffectNode.clearUsages();
-    graph.addWithInputs(sideEffectNode);
+    Node root = sideEffectNode instanceof LlvmSideEffectPatternIncluded ? sideEffectNode :
+        sideEffectNode.value();
+    root.clearUsages();
+    graph.addWithInputs(root);
     return graph;
   }
 

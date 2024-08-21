@@ -20,10 +20,9 @@ import vadl.viam.graph.dependency.WriteMemNode;
 import vadl.viam.graph.dependency.WriteResourceNode;
 
 /**
- * This is a special LLVM node which is a combination of
- * {@link WriteMemNode} and {@link vadl.viam.graph.dependency.TruncateNode}.
+ * LLVM node for a memory store.
  */
-public class LlvmTruncStore extends WriteResourceNode implements LlvmNodeLowerable,
+public class LlvmStore extends WriteResourceNode implements LlvmNodeLowerable,
     LlvmSideEffectPatternIncluded, LlvmMayLoadMemory {
 
   @DataValue
@@ -32,30 +31,26 @@ public class LlvmTruncStore extends WriteResourceNode implements LlvmNodeLowerab
   @DataValue
   protected int words;
 
-  @DataValue
-  protected Type truncatedType;
-
-  public LlvmTruncStore(@Nullable ExpressionNode address,
-                        TruncateNode value,
-                        Memory memory,
-                        int words) {
+  public LlvmStore(@Nullable ExpressionNode address,
+                   ExpressionNode value,
+                   Memory memory,
+                   int words) {
     super(address, value);
     this.memory = memory;
     this.words = words;
-    this.truncatedType = value.type();
   }
 
   @Override
   public Node copy() {
-    return new LlvmTruncStore((ExpressionNode) Objects.requireNonNull(address).copy(),
-        (TruncateNode) value.copy(),
+    return new LlvmStore((ExpressionNode) Objects.requireNonNull(address).copy(),
+        (ExpressionNode) value.copy(),
         memory,
         words);
   }
 
   @Override
   public Node shallowCopy() {
-    return new LlvmTruncStore(address, (TruncateNode) value, memory, words);
+    return new LlvmStore(address, value, memory, words);
   }
 
   @Override
@@ -79,13 +74,10 @@ public class LlvmTruncStore extends WriteResourceNode implements LlvmNodeLowerab
     super.collectData(collection);
     collection.add(memory);
     collection.add(words);
-    collection.add(truncatedType);
   }
 
   @Override
   public String lower() {
-    ensure(memory.wordSize() == 8, "Memory word size must be 8 because "
-        + "LLVM requires it");
-    return "truncstorei" + words * memory.wordSize();
+    return "store";
   }
 }

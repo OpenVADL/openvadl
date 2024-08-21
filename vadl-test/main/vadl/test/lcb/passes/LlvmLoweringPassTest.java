@@ -192,7 +192,9 @@ public class LlvmLoweringPassTest extends AbstractLcbTest {
     MEMORY STORE
      */
     expectedResults.put("SB", createTestOutputStoreMemory("truncstorei8", "SB"));
+    expectedResults.put("SH", createTestOutputStoreMemory("truncstorei16", "SH"));
     expectedResults.put("SW", createTestOutputStoreMemory("truncstorei32", "SW"));
+    expectedResults.put("SD", createTestOutputStoreMemory("store", "SD"));
   }
 
   @TestFactory

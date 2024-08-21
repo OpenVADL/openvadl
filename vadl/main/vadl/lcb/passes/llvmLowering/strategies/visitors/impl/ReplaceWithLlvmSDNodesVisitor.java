@@ -15,6 +15,7 @@ import vadl.lcb.passes.llvmLowering.model.LlvmSetccSD;
 import vadl.lcb.passes.llvmLowering.model.LlvmShlSD;
 import vadl.lcb.passes.llvmLowering.model.LlvmShrSD;
 import vadl.lcb.passes.llvmLowering.model.LlvmSraSD;
+import vadl.lcb.passes.llvmLowering.model.LlvmStore;
 import vadl.lcb.passes.llvmLowering.model.LlvmSubSD;
 import vadl.lcb.passes.llvmLowering.model.LlvmTruncStore;
 import vadl.lcb.passes.llvmLowering.model.LlvmUDivSD;
@@ -143,6 +144,13 @@ public class ReplaceWithLlvmSDNodesVisitor
     if (writeMemNode.value() instanceof TruncateNode truncateNode) {
       var node = new LlvmTruncStore(writeMemNode.address(),
           truncateNode,
+          writeMemNode.memory(),
+          writeMemNode.words());
+
+      writeMemNode.replaceAndDelete(node);
+    } else {
+      var node = new LlvmStore(writeMemNode.address(),
+          writeMemNode.value(),
           writeMemNode.memory(),
           writeMemNode.words());
 

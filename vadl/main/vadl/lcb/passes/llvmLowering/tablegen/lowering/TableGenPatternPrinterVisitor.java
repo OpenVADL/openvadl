@@ -6,6 +6,7 @@ import vadl.lcb.passes.llvmLowering.LlvmNodeLowerable;
 import vadl.lcb.passes.llvmLowering.model.LlvmBrCcSD;
 import vadl.lcb.passes.llvmLowering.model.LlvmBrCondSD;
 import vadl.lcb.passes.llvmLowering.model.LlvmFieldAccessRefNode;
+import vadl.lcb.passes.llvmLowering.model.LlvmStore;
 import vadl.lcb.passes.llvmLowering.model.LlvmTruncStore;
 import vadl.lcb.passes.llvmLowering.model.LlvmTypeCastSD;
 import vadl.lcb.passes.llvmLowering.strategies.LlvmLoweringStrategy;
@@ -170,6 +171,15 @@ public class TableGenPatternPrinterVisitor
 
   @Override
   public void visit(LlvmTruncStore node) {
+    writer.write("(" + node.lower() + " ");
+    visit(node.value());
+    writer.write(", ");
+    visit(Objects.requireNonNull(node.address()));
+    writer.write(")");
+  }
+
+  @Override
+  public void visit(LlvmStore node) {
     writer.write("(" + node.lower() + " ");
     visit(node.value());
     writer.write(", ");

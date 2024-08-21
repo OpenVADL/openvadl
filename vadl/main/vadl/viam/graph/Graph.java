@@ -78,7 +78,7 @@ public class Graph {
    */
   public final Stream<Node> getNodes(Set<Class> clazz) {
     return getNodes().filter(Objects::nonNull)
-        .filter(x -> clazz.stream().anyMatch(y -> x.getClass() == y));
+        .filter(x -> clazz.stream().anyMatch(y -> y.isInstance(x)));
   }
 
   /**
