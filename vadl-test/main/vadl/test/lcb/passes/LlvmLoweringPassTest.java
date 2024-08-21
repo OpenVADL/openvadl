@@ -110,12 +110,31 @@ public class LlvmLoweringPassTest extends AbstractLcbTest {
     );
   }
 
+  private static TestOutput createTestOutputStoreMemory(String dagNode,
+                                                        String machineInstruction) {
+    return new TestOutput(
+        List.of(new TableGenInstructionOperand("X", "rs1"),
+            new TableGenInstructionOperand("X", "rs2"),
+            new TableGenInstructionOperand("RV3264I_Stype_immS_decodeAsInt64", "immS")),
+        List.of(),
+        List.of(String.format("(%s X:$rs2, (add X:$rs1, RV3264I_Stype_immS_decodeAsInt64:$immS))",
+            dagNode)),
+        List.of(String.format("(%s X:$rs1, X:$rs2, RV3264I_Stype_immS_decodeAsInt64:$immS)",
+            machineInstruction)),
+        createStoreMemoryFlags()
+    );
+  }
+
   private static LlvmLoweringPass.Flags createEmptyFlags() {
     return LlvmLoweringPass.Flags.empty();
   }
 
   private static LlvmLoweringPass.Flags createBranchFlags() {
     return new LlvmLoweringPass.Flags(true, true, false, false, false, false, false, false);
+  }
+
+  private static LlvmLoweringPass.Flags createStoreMemoryFlags() {
+    return new LlvmLoweringPass.Flags(false, false, false, false, false, false, false, true);
   }
 
   static {
@@ -169,6 +188,11 @@ public class LlvmLoweringPassTest extends AbstractLcbTest {
         Collections.emptyList(),
         createEmptyFlags()
     ));
+    /*
+    MEMORY STORE
+     */
+    expectedResults.put("SB", createTestOutputStoreMemory("truncstorei8", "SB"));
+    expectedResults.put("SW", createTestOutputStoreMemory("truncstorei32", "SW"));
   }
 
   @TestFactory

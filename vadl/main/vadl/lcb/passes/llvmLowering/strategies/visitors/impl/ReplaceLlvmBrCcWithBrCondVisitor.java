@@ -4,6 +4,7 @@ import vadl.lcb.passes.llvmLowering.model.LlvmBrCcSD;
 import vadl.lcb.passes.llvmLowering.model.LlvmBrCondSD;
 import vadl.lcb.passes.llvmLowering.model.LlvmCondCode;
 import vadl.lcb.passes.llvmLowering.model.LlvmFieldAccessRefNode;
+import vadl.lcb.passes.llvmLowering.model.LlvmTruncStore;
 import vadl.lcb.passes.llvmLowering.model.LlvmTypeCastSD;
 import vadl.lcb.passes.llvmLowering.strategies.impl.LlvmLoweringConditionalBranchesStrategyImpl;
 import vadl.lcb.passes.llvmLowering.strategies.visitors.TableGenNodeVisitor;
@@ -83,6 +84,11 @@ public class ReplaceLlvmBrCcWithBrCondVisitor extends ReplaceWithLlvmSDNodesVisi
   @Override
   public void visit(LlvmTypeCastSD node) {
     visit(node.value());
+  }
+
+  @Override
+  public void visit(LlvmTruncStore node) {
+
   }
 
   @Override

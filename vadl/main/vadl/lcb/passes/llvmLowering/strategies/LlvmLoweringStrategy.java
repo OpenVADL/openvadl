@@ -14,6 +14,7 @@ import vadl.lcb.passes.llvmLowering.LlvmLoweringPass;
 import vadl.lcb.passes.llvmLowering.model.LlvmBrCcSD;
 import vadl.lcb.passes.llvmLowering.model.LlvmBrCondSD;
 import vadl.lcb.passes.llvmLowering.model.LlvmFieldAccessRefNode;
+import vadl.lcb.passes.llvmLowering.model.LlvmTruncStore;
 import vadl.lcb.passes.llvmLowering.model.MachineInstructionNode;
 import vadl.lcb.passes.llvmLowering.strategies.visitors.TableGenPatternLowerable;
 import vadl.lcb.passes.llvmLowering.strategies.visitors.impl.ReplaceWithLlvmSDNodesVisitor;
@@ -44,6 +45,7 @@ import vadl.viam.graph.dependency.FuncParamNode;
 import vadl.viam.graph.dependency.ReadMemNode;
 import vadl.viam.graph.dependency.ReadRegFileNode;
 import vadl.viam.graph.dependency.ReadRegNode;
+import vadl.viam.graph.dependency.TruncateNode;
 import vadl.viam.graph.dependency.WriteMemNode;
 import vadl.viam.graph.dependency.WriteRegFileNode;
 import vadl.viam.graph.dependency.WriteRegNode;
@@ -96,7 +98,9 @@ public abstract class LlvmLoweringStrategy {
     var isPseudo = false; // This strategy always handles Instructions.
     var isCodeGenOnly = false;
     var mayLoad = uninlinedGraph.getNodes(ReadMemNode.class).findFirst().isPresent();
-    var mayStore = uninlinedGraph.getNodes(WriteMemNode.class).findFirst().isPresent();
+    var mayStore =
+        uninlinedGraph.getNodes(Set.of(WriteMemNode.class, LlvmTruncStore.class)).findFirst()
+            .isPresent();
 
     return new LlvmLoweringPass.Flags(
         isTerminator,
@@ -335,12 +339,35 @@ public abstract class LlvmLoweringStrategy {
     return patterns;
   }
 
+  /**
+   * Constructs from the given dataflow node a new graph which is the pattern selector.
+   * Note that LLVM does not require the actual side effect.
+   */
   @NotNull
   private static Graph getPatternSelector(WriteResourceNode sideEffectNode) {
+    // Late binding does not work because everything is casted to WriteResourceNode.
+    if (sideEffectNode instanceof LlvmTruncStore truncStore) {
+      return getPatternSelector(truncStore);
+    } else {
+      var graph = new Graph(sideEffectNode.id().toString() + ".selector.lowering");
+      var root = sideEffectNode.value();
+      root.clearUsages();
+      graph.addWithInputs(root);
+      return graph;
+    }
+  }
+
+  /**
+   * This is an exception to the {@link #getPatternSelector(WriteResourceNode)} method. Usually,
+   * we do not care about the side effect because it is already captured by the machine instruction.
+   * However, the {@link LlvmTruncStore} is a fused LLVM selection dag node which is a
+   * {@link WriteMemNode} and {@link TruncateNode}. We need to explicitly add the side effect here.
+   */
+  @NotNull
+  private static Graph getPatternSelector(LlvmTruncStore sideEffectNode) {
     var graph = new Graph(sideEffectNode.id().toString() + ".selector.lowering");
-    var root = sideEffectNode.value();
-    root.clearUsages();
-    graph.addWithInputs(root);
+    sideEffectNode.clearUsages();
+    graph.addWithInputs(sideEffectNode);
     return graph;
   }
 

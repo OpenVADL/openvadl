@@ -16,6 +16,7 @@ import vadl.lcb.passes.llvmLowering.model.LlvmShlSD;
 import vadl.lcb.passes.llvmLowering.model.LlvmShrSD;
 import vadl.lcb.passes.llvmLowering.model.LlvmSraSD;
 import vadl.lcb.passes.llvmLowering.model.LlvmSubSD;
+import vadl.lcb.passes.llvmLowering.model.LlvmTruncStore;
 import vadl.lcb.passes.llvmLowering.model.LlvmUDivSD;
 import vadl.lcb.passes.llvmLowering.model.LlvmUMulSD;
 import vadl.lcb.passes.llvmLowering.model.LlvmURemSD;
@@ -137,6 +138,16 @@ public class ReplaceWithLlvmSDNodesVisitor
 
   @Override
   public void visit(WriteMemNode writeMemNode) {
+    // LLVM has a special selection dag node when the memory
+    // is written and the value truncated.
+    if (writeMemNode.value() instanceof TruncateNode truncateNode) {
+      var node = new LlvmTruncStore(writeMemNode.address(),
+          truncateNode,
+          writeMemNode.memory(),
+          writeMemNode.words());
+
+      writeMemNode.replaceAndDelete(node);
+    }
   }
 
   @Override

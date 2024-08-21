@@ -1,10 +1,12 @@
 package vadl.lcb.passes.llvmLowering.tablegen.lowering;
 
 import java.io.StringWriter;
+import java.util.Objects;
 import vadl.lcb.passes.llvmLowering.LlvmNodeLowerable;
 import vadl.lcb.passes.llvmLowering.model.LlvmBrCcSD;
 import vadl.lcb.passes.llvmLowering.model.LlvmBrCondSD;
 import vadl.lcb.passes.llvmLowering.model.LlvmFieldAccessRefNode;
+import vadl.lcb.passes.llvmLowering.model.LlvmTruncStore;
 import vadl.lcb.passes.llvmLowering.model.LlvmTypeCastSD;
 import vadl.lcb.passes.llvmLowering.strategies.LlvmLoweringStrategy;
 import vadl.lcb.passes.llvmLowering.strategies.visitors.TableGenNodeVisitor;
@@ -163,6 +165,15 @@ public class TableGenPatternPrinterVisitor
   public void visit(LlvmTypeCastSD node) {
     writer.write("(" + node.lower() + " ");
     visit(node.value());
+    writer.write(")");
+  }
+
+  @Override
+  public void visit(LlvmTruncStore node) {
+    writer.write("(" + node.lower() + " ");
+    visit(node.value());
+    writer.write(", ");
+    visit(Objects.requireNonNull(node.address()));
     writer.write(")");
   }
 
