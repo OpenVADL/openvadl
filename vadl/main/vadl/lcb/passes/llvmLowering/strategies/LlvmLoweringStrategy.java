@@ -11,6 +11,8 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import vadl.lcb.passes.isaMatching.InstructionLabel;
 import vadl.lcb.passes.llvmLowering.LlvmLoweringPass;
+import vadl.lcb.passes.llvmLowering.model.LlvmBrCcSD;
+import vadl.lcb.passes.llvmLowering.model.LlvmBrCondSD;
 import vadl.lcb.passes.llvmLowering.model.LlvmFieldAccessRefNode;
 import vadl.lcb.passes.llvmLowering.model.MachineInstructionNode;
 import vadl.lcb.passes.llvmLowering.strategies.visitors.TableGenPatternLowerable;
@@ -83,9 +85,11 @@ public abstract class LlvmLoweringStrategy {
    * @return the flags of an {@link UninlinedGraph}.
    */
   protected LlvmLoweringPass.Flags getFlags(UninlinedGraph uninlinedGraph) {
-    var isTerminator = uninlinedGraph.getNodes(ReadRegNode.class)
+    var isTerminator = uninlinedGraph.getNodes(WriteRegNode.class)
         .anyMatch(node -> node.register() instanceof Register.Counter);
-    var isBranch = isTerminator && uninlinedGraph.getNodes(IfNode.class).findFirst().isPresent();
+    var isBranch = isTerminator &&
+        uninlinedGraph.getNodes(Set.of(IfNode.class, LlvmBrCcSD.class, LlvmBrCondSD.class))
+            .findFirst().isPresent();
     var isCall = false; //TODO
     var isReturn = false;
     var isPseudo = false; // This strategy always handles Instructions.
