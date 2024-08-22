@@ -10,8 +10,12 @@ import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
+import java.util.function.Function;
+import java.util.function.Predicate;
+import java.util.function.Supplier;
 import java.util.stream.Stream;
 import javax.annotation.Nullable;
+import vadl.utils.Pair;
 import vadl.utils.SourceLocation;
 import vadl.viam.graph.control.AbstractEndNode;
 import vadl.viam.graph.control.ControlNode;
@@ -447,5 +451,50 @@ public class Graph {
     return getNodes(DependencyNode.class)
         .filter(x -> x.usageCount() == 0)
         .toList();
+  }
+
+  /**
+   * Replaces node when the given predicate matches and constructs a new instance.
+   */
+  public void replaceNode(Predicate<Node> selector,
+                          Function<Node, Node> supplier) {
+    var affected = this.getNodes()
+        .filter(selector)
+        .toList();
+
+    for (var oldNode : affected) {
+      if (!oldNode.isDeleted()) {
+        var newNode = supplier.apply(oldNode);
+        oldNode.replaceAndDelete(newNode);
+      }
+    }
+  }
+
+  /**
+   * Replaces node when the given predicate matches and constructs a new instance.
+   * If the old input has no usages anymore then it is deleted.
+   */
+  public void replaceInput(Predicate<Node> selector,
+                           Function<Node, Pair<Node, Node>> supplier) {
+    var affected = this.getNodes()
+        .filter(selector)
+        .toList();
+
+    for (var oldNode : affected) {
+      if (!oldNode.isDeleted()) {
+        var pair = supplier.apply(oldNode);
+        var oldInput = pair.left();
+        var newNode = pair.right();
+
+        if (oldInput == newNode) {
+          continue;
+        }
+        if (newNode.isUninitialized()) {
+          oldNode.replaceInput(oldInput, addWithInputs(newNode));
+        } else {
+          oldNode.replaceInput(oldInput, newNode);
+        }
+      }
+    }
   }
 }

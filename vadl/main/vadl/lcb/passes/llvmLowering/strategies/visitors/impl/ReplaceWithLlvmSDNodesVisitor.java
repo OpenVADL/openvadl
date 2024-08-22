@@ -1,5 +1,6 @@
 package vadl.lcb.passes.llvmLowering.strategies.visitors.impl;
 
+import java.util.Objects;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import vadl.lcb.passes.llvmLowering.LlvmNodeLowerable;
@@ -142,14 +143,10 @@ public class ReplaceWithLlvmSDNodesVisitor
     // LLVM has a special selection dag node when the memory
     // is written and the value truncated.
     if (writeMemNode.value() instanceof TruncateNode truncateNode) {
-      var node = new LlvmTruncStore(writeMemNode.address(),
-          truncateNode,
-          writeMemNode.memory(),
-          writeMemNode.words());
-
+      var node = new LlvmTruncStore(writeMemNode, truncateNode);
       writeMemNode.replaceAndDelete(node);
     } else {
-      var node = new LlvmStore(writeMemNode.address(),
+      var node = new LlvmStore(Objects.requireNonNull(writeMemNode.address()),
           writeMemNode.value(),
           writeMemNode.memory(),
           writeMemNode.words());

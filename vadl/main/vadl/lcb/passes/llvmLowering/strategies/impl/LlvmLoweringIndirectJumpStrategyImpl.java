@@ -50,6 +50,7 @@ public class LlvmLoweringIndirectJumpStrategyImpl extends LlvmLoweringStrategy {
 
   @Override
   protected List<TableGenPattern> generatePatternVariations(
+      Instruction instruction,
       Map<InstructionLabel, List<Instruction>> supportedInstructions,
       InstructionLabel instructionLabel,
       UninlinedGraph behavior,

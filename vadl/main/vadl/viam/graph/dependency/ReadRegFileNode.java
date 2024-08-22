@@ -18,7 +18,7 @@ public class ReadRegFileNode extends ReadResourceNode {
   @DataValue
   protected RegisterFile registerFile;
 
-  public ReadRegFileNode(RegisterFile registerFile, @Nullable ExpressionNode address,
+  public ReadRegFileNode(RegisterFile registerFile, ExpressionNode address,
                          DataType type) {
     super(address, type);
     this.registerFile = registerFile;

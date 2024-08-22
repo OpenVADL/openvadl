@@ -9,6 +9,7 @@ import vadl.lcb.passes.llvmLowering.LlvmNodeLowerable;
 import vadl.lcb.passes.llvmLowering.LlvmSideEffectPatternIncluded;
 import vadl.lcb.passes.llvmLowering.strategies.visitors.TableGenMachineInstructionVisitor;
 import vadl.lcb.passes.llvmLowering.strategies.visitors.TableGenNodeVisitor;
+import vadl.lcb.passes.llvmLowering.strategies.visitors.impl.ReplaceWithLlvmSDNodesVisitor;
 import vadl.types.Type;
 import vadl.viam.Memory;
 import vadl.viam.Resource;
@@ -35,27 +36,39 @@ public class LlvmTruncStore extends WriteResourceNode implements LlvmNodeLowerab
   @DataValue
   protected Type truncatedType;
 
-  public LlvmTruncStore(@Nullable ExpressionNode address,
-                        TruncateNode value,
-                        Memory memory,
-                        int words) {
+  /**
+   * Constructor which should be only used by {@link ReplaceWithLlvmSDNodesVisitor}.
+   */
+  public LlvmTruncStore(WriteMemNode writeMemNode,
+                        TruncateNode value) {
+    this(writeMemNode.memory(),
+        writeMemNode.words(),
+        value.type(),
+        writeMemNode.address(),
+        value);
+  }
+
+  private LlvmTruncStore(Memory memory,
+                         int words,
+                         Type truncatedType,
+                         @Nullable ExpressionNode address,
+                         ExpressionNode value) {
     super(address, value);
     this.memory = memory;
     this.words = words;
-    this.truncatedType = value.type();
+    this.truncatedType = truncatedType;
   }
 
   @Override
   public Node copy() {
-    return new LlvmTruncStore((ExpressionNode) Objects.requireNonNull(address).copy(),
-        (TruncateNode) value.copy(),
-        memory,
-        words);
+    return new LlvmTruncStore(memory, words, truncatedType,
+        (ExpressionNode) Objects.requireNonNull(address).copy(),
+        (ExpressionNode) value.copy());
   }
 
   @Override
   public Node shallowCopy() {
-    return new LlvmTruncStore(address, (TruncateNode) value, memory, words);
+    return new LlvmTruncStore(memory, words, truncatedType, address, value);
   }
 
   @Override

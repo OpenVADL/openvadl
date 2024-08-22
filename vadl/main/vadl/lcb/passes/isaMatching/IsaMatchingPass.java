@@ -68,7 +68,7 @@ import vadl.viam.matching.impl.AnyReadRegFileMatcher;
 import vadl.viam.matching.impl.BuiltInMatcher;
 import vadl.viam.matching.impl.FieldAccessRefMatcher;
 import vadl.viam.matching.impl.IsReadRegMatcher;
-import vadl.viam.matching.impl.WriteResourceMatcher;
+import vadl.viam.matching.impl.WriteResourceMatcherForValue;
 import vadl.viam.passes.functionInliner.FunctionInlinerPass;
 import vadl.viam.passes.functionInliner.UninlinedGraph;
 
@@ -188,7 +188,7 @@ public class IsaMatchingPass extends Pass {
 
     var matched = TreeMatcher.matches(
         graph.getNodes(WriteResourceNode.class).map(x -> x),
-        new WriteResourceMatcher(new AnyChildMatcher(new AnyReadMemMatcher())));
+        new WriteResourceMatcherForValue(new AnyChildMatcher(new AnyReadMemMatcher())));
 
     return !matched.isEmpty();
   }
@@ -199,7 +199,7 @@ public class IsaMatchingPass extends Pass {
     }
 
     var matched = TreeMatcher.matches(graph.getNodes(WriteResourceNode.class).map(x -> x),
-        new WriteResourceMatcher(new AnyChildMatcher(new AnyReadRegFileMatcher())));
+        new WriteResourceMatcherForValue(new AnyChildMatcher(new AnyReadRegFileMatcher())));
 
     return !matched.isEmpty();
   }

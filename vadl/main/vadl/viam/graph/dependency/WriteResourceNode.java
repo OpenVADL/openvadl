@@ -27,6 +27,10 @@ public abstract class WriteResourceNode extends SideEffectNode {
     this.value = value;
   }
 
+  public void setAddress(ExpressionNode address) {
+    this.address = address;
+  }
+
   public boolean hasAddress() {
     return address != null;
   }

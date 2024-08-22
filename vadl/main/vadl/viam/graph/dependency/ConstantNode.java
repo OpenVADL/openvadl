@@ -13,7 +13,7 @@ import vadl.viam.graph.Node;
 public class ConstantNode extends ExpressionNode {
 
   @DataValue
-  private Constant constant;
+  protected Constant constant;
 
   public ConstantNode(Constant constant) {
     super(constant.type());

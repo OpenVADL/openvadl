@@ -19,21 +19,27 @@ public class MachineInstructionNode extends AbstractFunctionCallNode {
   @DataValue
   protected final Instruction instruction;
 
-  public MachineInstructionNode(NodeList<ExpressionNode> args, Instruction instruction) {
-    super(args, Type.dummy());
+  @DataValue
+  private List<MachineInstructionParameterLink> links;
+
+  public MachineInstructionNode(List<MachineInstructionParameterLink> links,
+                                Instruction instruction) {
+    super(new NodeList<>(links.stream().map(MachineInstructionParameterLink::machine).toList()),
+        Type.dummy());
     this.instruction = instruction;
+    this.links = links;
   }
 
   @Override
   public Node copy() {
     return new MachineInstructionNode(
-        new NodeList<>(this.args.stream().map(x -> (ExpressionNode) x.copy()).toList()),
+        links,
         instruction);
   }
 
   @Override
   public Node shallowCopy() {
-    return new MachineInstructionNode(args, instruction);
+    return new MachineInstructionNode(links, instruction);
   }
 
   @Override
@@ -45,6 +51,7 @@ public class MachineInstructionNode extends AbstractFunctionCallNode {
   protected void collectData(List<Object> collection) {
     super.collectData(collection);
     collection.add(instruction);
+    collection.add(links);
   }
 
   public Instruction instruction() {

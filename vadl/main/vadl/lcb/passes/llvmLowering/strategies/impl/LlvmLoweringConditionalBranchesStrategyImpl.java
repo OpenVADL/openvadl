@@ -73,7 +73,8 @@ public class LlvmLoweringConditionalBranchesStrategyImpl extends LlvmLoweringStr
     var writes = visitedGraph.getNodes(WriteResourceNode.class).toList();
     var patterns = generatePatterns(instruction, inputOperands, writes);
     var alternatives =
-        generatePatternVariations(supportedInstructions, instructionLabel, visitedGraph,
+        generatePatternVariations(instruction, supportedInstructions, instructionLabel,
+            visitedGraph,
             inputOperands, outputOperands, patterns);
 
     return new LlvmLoweringPass.LlvmLoweringIntermediateResult(
@@ -89,6 +90,7 @@ public class LlvmLoweringConditionalBranchesStrategyImpl extends LlvmLoweringStr
 
   @Override
   protected List<TableGenPattern> generatePatternVariations(
+      Instruction instruction,
       Map<InstructionLabel, List<Instruction>> supportedInstructions,
       InstructionLabel instructionLabel,
       UninlinedGraph behavior,
