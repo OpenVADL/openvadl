@@ -16,6 +16,8 @@ import vadl.lcb.passes.llvmLowering.tablegen.lowering.TableGenPatternPrinterVisi
 import vadl.lcb.passes.llvmLowering.tablegen.model.TableGenInstructionOperand;
 import vadl.lcb.passes.llvmLowering.tablegen.model.TableGenPattern;
 import vadl.pass.PassKey;
+import vadl.pass.PassResults;
+import vadl.pass.PassResults;
 import vadl.pass.exception.DuplicatedPassKeyException;
 import vadl.test.lcb.AbstractLcbTest;
 import vadl.viam.Instruction;

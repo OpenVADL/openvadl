@@ -6,13 +6,11 @@ import static vadl.types.BuiltInTable.UMULL;
 
 import java.io.IOException;
 import java.util.ArrayList;
-import java.util.Map;
 import java.util.Objects;
 import org.jetbrains.annotations.Nullable;
 import vadl.pass.Pass;
-import vadl.pass.PassKey;
 import vadl.pass.PassName;
-import vadl.types.BitsType;
+import vadl.pass.PassResults;
 import vadl.types.BuiltInTable;
 import vadl.types.DataType;
 import vadl.types.Type;
@@ -24,9 +22,7 @@ import vadl.viam.graph.Node;
 import vadl.viam.graph.dependency.BuiltInCall;
 import vadl.viam.graph.dependency.ExpressionNode;
 import vadl.viam.graph.dependency.SignExtendNode;
-import vadl.viam.graph.dependency.TypeCastNode;
 import vadl.viam.graph.dependency.ZeroExtendNode;
-import vadl.viam.passes.verification.ViamVerifier;
 
 /**
  * Z3 has not the semantic for multiplication.
@@ -40,7 +36,7 @@ public class ExtendMultiplicationPass extends Pass {
 
   @Nullable
   @Override
-  public Object execute(Map<PassKey, Object> passResults, Specification viam)
+  public Object execute(PassResults passResults, Specification viam)
       throws IOException {
     ArrayList<Triple<BuiltInCall, ExpressionNode, Node>> worklist = new ArrayList<>();
     viam.isas()

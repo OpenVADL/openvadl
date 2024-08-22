@@ -7,6 +7,8 @@ import vadl.gcb.valuetypes.ProcessorName;
 import vadl.lcb.config.LcbConfiguration;
 import vadl.lcb.template.CommonVarNames;
 import vadl.pass.PassKey;
+import vadl.pass.PassResults;
+import vadl.pass.PassResults;
 import vadl.template.AbstractTemplateRenderingPass;
 import vadl.viam.RegisterFile;
 import vadl.viam.Specification;
@@ -54,7 +56,7 @@ public class EmitDisassemblerCppFilePass extends AbstractTemplateRenderingPass {
   }
 
   @Override
-  protected Map<String, Object> createVariables(final Map<PassKey, Object> passResults,
+  protected Map<String, Object> createVariables(final PassResults passResults,
                                                 Specification specification) {
     return Map.of(CommonVarNames.NAMESPACE, specification.name(),
         "immediates",

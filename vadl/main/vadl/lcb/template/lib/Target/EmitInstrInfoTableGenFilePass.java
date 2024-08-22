@@ -12,6 +12,7 @@ import vadl.lcb.passes.llvmLowering.tablegen.model.TableGenInstruction;
 import vadl.lcb.passes.llvmLowering.tablegen.model.TableGenInstructionImmediateOperand;
 import vadl.lcb.template.CommonVarNames;
 import vadl.pass.PassKey;
+import vadl.pass.PassResults;
 import vadl.template.AbstractTemplateRenderingPass;
 import vadl.viam.Instruction;
 import vadl.viam.Specification;
@@ -41,7 +42,7 @@ public class EmitInstrInfoTableGenFilePass extends AbstractTemplateRenderingPass
   }
 
   @Override
-  protected Map<String, Object> createVariables(final Map<PassKey, Object> passResults,
+  protected Map<String, Object> createVariables(final PassResults passResults,
                                                 Specification specification) {
     Map<Instruction, LlvmLoweringPass.LlvmLoweringIntermediateResult> instructions =
         (Map<Instruction, LlvmLoweringPass.LlvmLoweringIntermediateResult>) ensureNonNull(

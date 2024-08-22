@@ -2,12 +2,11 @@ package vadl.viam.passes.translation_validation;
 
 import java.io.IOException;
 import java.util.List;
-import java.util.Map;
 import java.util.stream.Collectors;
 import org.jetbrains.annotations.Nullable;
 import vadl.pass.Pass;
-import vadl.pass.PassKey;
 import vadl.pass.PassName;
+import vadl.pass.PassResults;
 import vadl.types.BitsType;
 import vadl.viam.Instruction;
 import vadl.viam.Specification;
@@ -28,7 +27,7 @@ public class ExplicitBitSizesInTypingPass extends Pass {
 
   @Nullable
   @Override
-  public Object execute(Map<PassKey, Object> passResults, Specification viam)
+  public Object execute(PassResults passResults, Specification viam)
       throws IOException {
     viam.isas()
         .flatMap(isa -> isa.instructions().stream())

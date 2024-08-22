@@ -3,9 +3,7 @@ package vadl.pass;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collections;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 import java.util.stream.Collectors;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -22,7 +20,7 @@ public class PassManager {
   /**
    * Stores the results of the passes.
    */
-  private final HashMap<PassKey, Object> passResults = new HashMap<>();
+  private final PassResults passResults = new PassResults();
   private final List<PassStep> pipeline = new ArrayList<>();
 
   private boolean hasDuplicatedPassKey(PassKey needle) {
@@ -77,22 +75,17 @@ public class PassManager {
       logger.atDebug().log("Running pass with key: {}", step.key());
       // Wrapping the passResults into an unmodifiable map so a pass cannot modify
       // the results.
-      var passResult = step.pass().execute(Collections.unmodifiableMap(passResults), viam);
+      var passResult = step.pass().execute(passResults, viam);
 
       if (passResult != null) {
         logger.atDebug().log("Storing result of pass with key: {}", step.key());
-        var previousResult = passResults.put(step.key(), passResult);
-
-        // The pipeline's steps should be deterministic.
-        // If we overwrite an already existing result then it is very likely
-        // that it is a bug because we schedule the same pass with the same key multiple times.
-        assert previousResult == null;
+        passResults.add(step.key(), passResult);
       }
       logger.atDebug().log("Pass completed with key: {}", step.key());
     }
   }
 
-  public Map<PassKey, Object> getPassResults() {
+  public PassResults getPassResults() {
     return this.passResults;
   }
 }

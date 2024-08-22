@@ -2,6 +2,7 @@ package vadl.pass.exception;
 
 import vadl.pass.Pass;
 import vadl.pass.PassKey;
+import vadl.pass.PassResults;
 
 /**
  * Indicates that a {@link Pass} with the {@link PassKey} was added multiple times.

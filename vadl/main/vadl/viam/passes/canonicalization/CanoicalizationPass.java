@@ -1,11 +1,10 @@
 package vadl.viam.passes.canonicalization;
 
 import java.util.Arrays;
-import java.util.Map;
 import org.jetbrains.annotations.Nullable;
 import vadl.pass.Pass;
-import vadl.pass.PassKey;
 import vadl.pass.PassName;
+import vadl.pass.PassResults;
 import vadl.viam.Specification;
 import vadl.viam.graph.dependency.BuiltInCall;
 
@@ -22,7 +21,7 @@ public class CanoicalizationPass extends Pass {
 
   @Nullable
   @Override
-  public Object execute(Map<PassKey, Object> passResults, Specification viam) {
+  public Object execute(PassResults passResults, Specification viam) {
     viam.isas()
         .flatMap(isa -> isa.instructions().stream())
         .forEach(instruction -> Canonicalizer.canonicalize(instruction.behavior()));

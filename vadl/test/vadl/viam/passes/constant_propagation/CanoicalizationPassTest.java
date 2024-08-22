@@ -13,6 +13,7 @@ import java.math.BigInteger;
 import java.util.Collections;
 import java.util.List;
 import org.junit.jupiter.api.Test;
+import vadl.pass.PassResults;
 import vadl.types.BitsType;
 import vadl.types.BuiltInTable;
 import vadl.types.DataType;
@@ -82,7 +83,7 @@ class CanoicalizationPassTest {
 
     // When
     var pass = new CanoicalizationPass();
-    pass.execute(Collections.emptyMap(), viam);
+    pass.execute(new PassResults(), viam);
 
     assertThat(behavior.getNodes().count(), equalTo(1L));
     assertThat(behavior.getNodes().findFirst().get().getClass(), equalTo(ConstantNode.class));

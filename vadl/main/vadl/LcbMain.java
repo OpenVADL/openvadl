@@ -5,6 +5,8 @@ import vadl.gcb.valuetypes.ProcessorName;
 import vadl.lcb.config.LcbConfiguration;
 import vadl.lcb.template.EmitLcbMakeFilePass;
 import vadl.pass.PassKey;
+import vadl.pass.PassResults;
+import vadl.pass.PassResults;
 import vadl.pass.PassManager;
 import vadl.pass.exception.DuplicatedPassKeyException;
 import vadl.utils.SourceLocation;

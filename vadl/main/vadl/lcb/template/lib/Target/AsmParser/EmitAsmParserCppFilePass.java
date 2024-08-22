@@ -8,6 +8,8 @@ import vadl.gcb.valuetypes.ProcessorName;
 import vadl.lcb.config.LcbConfiguration;
 import vadl.lcb.template.CommonVarNames;
 import vadl.pass.PassKey;
+import vadl.pass.PassResults;
+import vadl.pass.PassResults;
 import vadl.template.AbstractTemplateRenderingPass;
 import vadl.viam.Instruction;
 import vadl.viam.InstructionSetArchitecture;
@@ -56,7 +58,7 @@ public class EmitAsmParserCppFilePass extends AbstractTemplateRenderingPass {
 
 
   @Override
-  protected Map<String, Object> createVariables(final Map<PassKey, Object> passResults,
+  protected Map<String, Object> createVariables(final PassResults passResults,
                                                 Specification specification) {
     //TODO: kper; add alias directives
     return Map.of(CommonVarNames.NAMESPACE, specification.name(),
