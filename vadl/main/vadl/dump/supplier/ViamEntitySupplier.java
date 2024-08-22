@@ -53,10 +53,7 @@ public class ViamEntitySupplier extends DefinitionVisitor.Empty
 
     // set parent
     if (!parents.isEmpty()) {
-      var parent = parents.peek();
-      entity.parent = parent;
-      entity.addInfo(
-          new Info.Tag("Parent", parent.name(), "#" + parent.cssId()));
+      entity.parent = parents.peek();
     }
     parents.push(entity);
   }
@@ -98,6 +95,17 @@ public class ViamEntitySupplier extends DefinitionVisitor.Empty
   }
 
   @Override
+  public void visit(Format.Field formatField) {
+    replaceAsSubEntityOfParent(formatField);
+  }
+
+  @Override
+  public void visit(Encoding.Field encodingField) {
+    replaceAsSubEntityOfParent(encodingField);
+  }
+
+
+  @Override
   public void visit(Format.FieldAccess fieldAccess) {
     var entity = entityOf(fieldAccess);
     for (var se : entity.subEntities()) {
@@ -110,6 +118,8 @@ public class ViamEntitySupplier extends DefinitionVisitor.Empty
         se.name = "Predicate Function";
       }
     }
+
+    replaceAsSubEntityOfParent(fieldAccess);
   }
 
   // hidden traversal
@@ -132,7 +142,7 @@ public class ViamEntitySupplier extends DefinitionVisitor.Empty
   public static class DefinitionEntity extends DumpEntity {
 
     @Nullable
-    DefinitionEntity parent;
+    private DefinitionEntity parent;
     Definition origin;
 
     DefinitionEntity(Definition origin) {
@@ -157,6 +167,11 @@ public class ViamEntitySupplier extends DefinitionVisitor.Empty
     @Override
     public String name() {
       return origin.identifier.name();
+    }
+    
+    public DefinitionEntity parent() {
+      Objects.requireNonNull(parent);
+      return parent;
     }
 
     public static String cssIdFor(Definition def) {

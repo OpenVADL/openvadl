@@ -2,6 +2,7 @@ package vadl.dump;
 
 import java.util.List;
 import java.util.Map;
+import java.util.function.BiFunction;
 import vadl.pass.PassKey;
 import vadl.viam.Specification;
 

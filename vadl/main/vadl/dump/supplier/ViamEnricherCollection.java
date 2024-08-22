@@ -1,7 +1,12 @@
 package vadl.dump.supplier;
 
+import static vadl.dump.InfoEnricher.forType;
+
 import java.util.List;
+import java.util.Map;
+import vadl.dump.DumpEntity;
 import vadl.dump.InfoEnricher;
+import vadl.pass.PassKey;
 import vadl.viam.DefProp;
 import vadl.dump.Info;
 
@@ -15,12 +20,17 @@ public class ViamEnricherCollection {
   };
 
   public static InfoEnricher DEF_CLASS_SUPPLIER =
-      (entity, passResult) -> {
-        if (entity instanceof ViamEntitySupplier.DefinitionEntity defEntity) {
-          var info = Info.Tag.of("DefType", defEntity.origin.getClass().getSimpleName());
-          defEntity.addInfo(info);
-        }
-      };
+      forType(ViamEntitySupplier.DefinitionEntity.class, (defEntity, passResult) -> {
+        var info = Info.Tag.of("DefType", defEntity.origin.getClass().getSimpleName());
+        defEntity.addInfo(info);
+      });
+
+  public static InfoEnricher PARENT_SUPPLIER =
+      forType(ViamEntitySupplier.DefinitionEntity.class, (defEntity, passResult) -> {
+        var info =
+            Info.Tag.of("Parent", defEntity.parent().name(), "#" + defEntity.parent().cssId());
+        defEntity.addInfo(info);
+      });
 
 
   public static InfoEnricher BEHAVIOR_SUPPLIER_MODAL = (entity, passResult) -> {
@@ -66,8 +76,9 @@ public class ViamEnricherCollection {
   };
 
   public static List<InfoEnricher> all = List.of(
-      TYPE_SUPPLIER,
       DEF_CLASS_SUPPLIER,
+      TYPE_SUPPLIER,
+      PARENT_SUPPLIER,
       BEHAVIOR_SUPPLIER_MODAL
   );
 
