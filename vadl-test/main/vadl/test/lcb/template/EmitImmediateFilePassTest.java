@@ -12,11 +12,8 @@ import vadl.gcb.passes.type_normalization.CppTypeNormalizationForPredicatesPass;
 import vadl.gcb.valuetypes.ProcessorName;
 import vadl.lcb.template.lib.Target.Utils.EmitImmediateFilePass;
 import vadl.pass.PassKey;
-import vadl.pass.PassResults;
-import vadl.pass.PassResults;
 import vadl.pass.PassManager;
 import vadl.pass.exception.DuplicatedPassKeyException;
-import vadl.test.AbstractTest;
 import vadl.test.lcb.AbstractLcbTest;
 import vadl.viam.passes.typeCastElimination.TypeCastEliminationPass;
 
