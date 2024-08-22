@@ -39,7 +39,7 @@ public class HtmlDumpTest {
     spec.add(func);
 
 
-    new HtmlDumpPass("build/testdump")
+    new HtmlDumpPass(new HtmlDumpPass.Config("demoPhase", "build/testdump"))
         .execute(new HashMap<>(), spec);
 
   }

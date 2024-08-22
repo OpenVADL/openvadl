@@ -12,7 +12,7 @@ public class ViamDumpPassTest extends AbstractTest {
   void RV3264Im() throws IOException {
     var spec = runAndGetViamSpecification("examples/rv3264im.vadl");
 
-    var pass = new HtmlDumpPass("build/dump");
+    var pass = new HtmlDumpPass(new HtmlDumpPass.Config("AstToViam", "build"));
     pass.execute(Map.of(), spec);
 
   }

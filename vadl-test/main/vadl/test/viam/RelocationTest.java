@@ -21,8 +21,6 @@ public class RelocationTest extends AbstractTest {
     var spec = runAndGetViamSpecification("creation/relocation/valid_relocations.vadl");
     ViamVerifier.verifyAllIn(spec);
 
-    new HtmlDumpPass("build").execute(Map.of(), spec);
-
     var test = findDefinitionByNameIn("Test", spec, InstructionSetArchitecture.class);
     var r1 = findDefinitionByNameIn("Test::R1", spec, Relocation.class);
     var f1 = findDefinitionByNameIn("Test::F1", spec, Function.class);

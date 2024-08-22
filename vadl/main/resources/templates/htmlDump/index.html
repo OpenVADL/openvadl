@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Specification Glossary</title>
+    <title>[[${title}]]</title>
     <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.0.0/dist/tailwind.min.css" rel="stylesheet">
     <link href="https://cdn.jsdelivr.net/npm/flowbite@2.5.1/dist/flowbite.min.css" rel="stylesheet"/>
     <link href="css/reset.css" rel="stylesheet">
@@ -12,7 +12,11 @@
 <body class="flex flex-nowrap font-sans">
 <!-- Left side - List of definitions -->
 <div class="w-full p-4 overflow-auto h-screen">
-    <h1 id="specification" class="text-xl font-bold mb-4">Specification (rv3264im.vadl)</h1>
+    <h1 id="specification" class="text-xl font-bold mb-4">[[${title}]]</h1>
+
+    <ul>
+        <li th:each="pass: ${passes}">[[${pass}]]</li>
+    </ul>
 
 
     <div th:fragment="entry(entry)" th:if="${entry != null}" th:id="${entry.cssId}"

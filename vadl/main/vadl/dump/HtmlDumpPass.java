@@ -23,9 +23,17 @@ public class HtmlDumpPass extends AbstractTemplateRenderingPass {
   static SupplierCollection<InfoEnricher> infoEnricher = new SupplierCollection<InfoEnricher>()
       .addAll(ViamEnricherCollection.all);
 
+  public record Config(
+      String phase,
+      String outputPath
+  ) {
+  }
 
-  public HtmlDumpPass(String outputPathPrefix) throws IOException {
-    super(outputPathPrefix);
+  private final Config config;
+
+  public HtmlDumpPass(Config config) throws IOException {
+    super(config.outputPath);
+    this.config = config;
   }
 
   @Override
@@ -35,7 +43,7 @@ public class HtmlDumpPass extends AbstractTemplateRenderingPass {
 
   @Override
   protected String getOutputPath() {
-    return "index.html";
+    return config.phase.replace(" ", "_") + ".html";
   }
 
   @Override
@@ -57,9 +65,16 @@ public class HtmlDumpPass extends AbstractTemplateRenderingPass {
         .sorted(Comparator.comparingInt(a -> a.getKey().rank()))
         .toList();
 
+    var passList = passResults.keySet().stream()
+        .map(PassKey::value)
+        .toList();
+
     return Map.of(
         "entries", entities,
-        "toc", tocMapList
+        "toc", tocMapList,
+        "title",
+        "Specification (%s) - at %s".formatted(specification.identifier.name(), config.phase),
+        "passes", passList
     );
   }
 
