@@ -18,7 +18,6 @@ import vadl.lcb.passes.llvmLowering.model.LlvmBrCondSD;
 import vadl.lcb.passes.llvmLowering.model.LlvmFieldAccessRefNode;
 import vadl.lcb.passes.llvmLowering.model.LlvmFrameIndexSD;
 import vadl.lcb.passes.llvmLowering.model.MachineInstructionNode;
-import vadl.lcb.passes.llvmLowering.model.MachineInstructionParameterLink;
 import vadl.lcb.passes.llvmLowering.strategies.visitors.impl.ReplaceWithLlvmSDNodesVisitor;
 import vadl.lcb.passes.llvmLowering.strategies.visitors.TableGenPatternLowerable;
 import vadl.lcb.passes.llvmLowering.tablegen.model.TableGenInstruction;
@@ -369,10 +368,9 @@ public abstract class LlvmLoweringStrategy {
     var graph = new Graph(instruction.name() + ".machine.lowering");
     var params =
         inputOperands.stream()
-            .map(operand -> new MachineInstructionParameterLink(operand,
-                new ConstantNode(new Constant.Str(operand.render()))))
+            .map(operand -> (ExpressionNode) new ConstantNode(new Constant.Str(operand.render())))
             .toList();
-    var node = new MachineInstructionNode(params, instruction);
+    var node = new MachineInstructionNode(new NodeList<>(params), instruction);
     graph.addWithInputs(node);
     return graph;
   }

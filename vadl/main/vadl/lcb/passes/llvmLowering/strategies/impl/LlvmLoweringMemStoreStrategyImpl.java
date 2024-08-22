@@ -65,6 +65,9 @@ public class LlvmLoweringMemStoreStrategyImpl extends LlvmLoweringStrategy {
 
    def : Pat<(i32 (load (add AddrFI:$rs1, RV32Zicsr_Itype_ImmediateI_immediateAsInt32:$imm))),
           (LW AddrFI:$rs1, RV32Zicsr_Itype_ImmediateI_immediateAsInt32:$imm)>;
+
+
+   AddrFI is a special pattern which is also a register class but only one register (frame pointer).
      */
 
     var copy = behavior.copy();
