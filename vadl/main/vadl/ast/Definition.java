@@ -62,6 +62,8 @@ interface DefinitionVisitor<R> {
   R visit(MacroInstanceDefinition definition);
 
   R visit(MacroMatchDefinition definition);
+
+  R visit(DefinitionList definition);
 }
 
 class ConstantDefinition extends Definition {
@@ -1956,6 +1958,6 @@ class DefinitionList extends Definition {
 
   @Override
   <R> R accept(DefinitionVisitor<R> visitor) {
-    throw new IllegalStateException("A DefinitionList should not exist in the finished AST");
+    return visitor.visit(this);
   }
 }

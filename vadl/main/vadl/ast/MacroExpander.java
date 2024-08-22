@@ -75,14 +75,8 @@ class MacroExpander
   public Node expandNode(Node node) {
     if (node instanceof Expr expr) {
       return expandExpr(expr);
-    } else if (node instanceof DefinitionList definitionList) {
-      var definitions = expandDefinitions(definitionList.items);
-      return new DefinitionList(definitions, definitionList.location());
     } else if (node instanceof Definition definition) {
       return expandDefinition(definition);
-    } else if (node instanceof StatementList statementList) {
-      var statements = expandStatements(statementList.items);
-      return new StatementList(statements, statementList.location());
     } else if (node instanceof Statement statement) {
       return expandStatement(statement);
     } else if (node instanceof Tuple tuple) {
@@ -159,7 +153,7 @@ class MacroExpander
   @Override
   public Expr visit(PlaceholderExpr expr) {
     Node arg = resolveArg(expr.segments);
-    return ((Expr) arg).accept(this);
+    return ((Expr) arg);
   }
 
   @Override
@@ -460,12 +454,7 @@ class MacroExpander
           collectMacroParameters(macro, definition.arguments, definition.location());
       var body = (Definition) macro.body();
       var subpass = new MacroExpander(arguments, macroOverrides);
-      if (body instanceof DefinitionList definitionList) {
-        var definitions = subpass.expandDefinitions(definitionList.items);
-        return new DefinitionList(definitions, definitionList.location);
-      } else {
-        return subpass.expandDefinition(body);
-      }
+      return body.accept(subpass);
     } catch (MacroExpansionException e) {
       reportError(e.message, e.sourceLocation);
       return definition;
@@ -475,6 +464,12 @@ class MacroExpander
   @Override
   public Definition visit(MacroMatchDefinition definition) {
     return (Definition) resolveMacroMatch(definition.macroMatch);
+  }
+
+  @Override
+  public Definition visit(DefinitionList definition) {
+    var items = expandDefinitions(definition.items);
+    return new DefinitionList(items, definition.location);
   }
 
   @Override
@@ -517,7 +512,7 @@ class MacroExpander
   @Override
   public Statement visit(PlaceholderStatement statement) {
     var arg = resolveArg(statement.segments);
-    return ((Statement) arg).accept(this);
+    return (Statement) arg;
   }
 
   @Override
@@ -528,12 +523,7 @@ class MacroExpander
       var arguments = collectMacroParameters(macro, stmt.arguments, stmt.location());
       var body = (Statement) macro.body();
       var subpass = new MacroExpander(arguments, macroOverrides);
-      if (body instanceof StatementList statementList) {
-        var statements = subpass.expandStatements(statementList.items);
-        return new StatementList(statements, statementList.location);
-      } else {
-        return subpass.expandStatement(body);
-      }
+      return body.accept(subpass);
     } catch (MacroExpansionException e) {
       reportError(e.message, e.sourceLocation);
       return stmt;
@@ -553,6 +543,12 @@ class MacroExpander
     cases.replaceAll(matchCase -> new MatchStatement.Case(expandExprs(matchCase.patterns()),
         matchCase.result().accept(this)));
     return new MatchStatement(candidate, cases, defaultResult, matchStatement.loc);
+  }
+
+  @Override
+  public Statement visit(StatementList statementList) {
+    var items = expandStatements(statementList.items);
+    return new StatementList(items, statementList.location());
   }
 
   private void assertValidMacro(Macro macro, SourceLocation sourceLocation)
@@ -661,7 +657,7 @@ class MacroExpander
         }
       }
     }
-    return arg;
+    return expandNode(arg);
   }
 
   private Macro resolveMacro(MacroOrPlaceholder macroOrPlaceholder) {

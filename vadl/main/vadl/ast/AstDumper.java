@@ -346,6 +346,13 @@ public class AstDumper
   }
 
   @Override
+  public Void visit(DefinitionList definition) {
+    dumpNode(definition);
+    dumpChildren(definition.items);
+    return null;
+  }
+
+  @Override
   public Void visit(CallExpr expr) {
     dumpNode(expr);
     dumpChildren((Expr) expr.target);
@@ -507,6 +514,13 @@ public class AstDumper
       dumpChildren(matchCase.patterns());
       dumpChildren(matchCase.result());
     }
+    return null;
+  }
+
+  @Override
+  public Void visit(StatementList statementList) {
+    dumpNode(statementList);
+    dumpChildren(statementList.items);
     return null;
   }
 }

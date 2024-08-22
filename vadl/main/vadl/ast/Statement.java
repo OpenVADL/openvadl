@@ -32,6 +32,8 @@ abstract sealed class Statement extends Node
       return visitor.visit(m);
     } else if (this instanceof MatchStatement m) {
       return visitor.visit(m);
+    } else if (this instanceof StatementList s) {
+      return visitor.visit(s);
     } else {
       throw new IllegalStateException("Unhandled statement type " + getClass().getSimpleName());
     }
@@ -63,6 +65,8 @@ interface StatementVisitor<T> {
   T visit(MacroMatchStatement macroMatchStatement);
 
   T visit(MatchStatement matchStatement);
+
+  T visit(StatementList statementList);
 }
 
 final class BlockStatement extends Statement {

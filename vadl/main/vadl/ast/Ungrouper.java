@@ -321,6 +321,14 @@ class Ungrouper
   }
 
   @Override
+  public Definition visit(DefinitionList definition) {
+    for (Definition item : definition.items) {
+      item.accept(this);
+    }
+    return definition;
+  }
+
+  @Override
   public Statement visit(BlockStatement blockStatement) {
     blockStatement.statements.replaceAll(statement -> statement.accept(this));
     return blockStatement;
@@ -384,6 +392,12 @@ class Ungrouper
       return new MatchStatement.Case(matchCase.patterns(), matchCase.result().accept(this));
     });
     return matchStatement;
+  }
+
+  @Override
+  public Statement visit(StatementList statementList) {
+    statementList.items.replaceAll(stmt -> stmt.accept(this));
+    return statementList;
   }
 
   private void ungroupAnnotations(Definition definition) {
