@@ -123,7 +123,7 @@ public class VadlParser {
     Event prev = null;
     for (var event : events) {
       if (prev != null) {
-        System.out.print("Δ " + (event.timestamp - prev.timestamp) / 1000_000 + "ms ");
+        System.out.print("Δ " + (event.timestamp - prev.timestamp) / 1000_000 + " ms ");
       } else {
         System.out.print("Start ");
       }

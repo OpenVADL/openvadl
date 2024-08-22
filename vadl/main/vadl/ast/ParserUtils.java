@@ -230,76 +230,66 @@ class ParserUtils {
    * Before: parser must be in a state where the lookahead token is the "$" symbol.
    * After: parser is in the same state as before.
    */
-  static boolean isMacroReplacementOfType(Parser parser, SyntaxType syntaxType) {
-    if (parser.la.kind != Parser._SYM_DOLLAR && parser.la.kind != Parser._EXTEND_ID
-        && parser.la.kind != Parser._ID_TO_STR && !isMacroMatch(parser)) {
-      return false;
-    }
+  static boolean isMacroReplacementOfType(Parser parser, BasicSyntaxType syntaxType) {
     if (parser.la.kind == Parser._EXTEND_ID) {
       return BasicSyntaxType.ID.isSubTypeOf(syntaxType);
     }
     if (parser.la.kind == Parser._ID_TO_STR) {
       return BasicSyntaxType.STR.isSubTypeOf(syntaxType);
     }
-
-    var parserSnapshot = ParserSnapshot.create(parser);
-    var scannerSnapshot = ScannerSnapshot.create(parser.scanner);
-    var maxExpr = parser.macroReplacement();
-    parserSnapshot.reset(parser);
-    scannerSnapshot.reset(parser.scanner);
-
-    return maxExpr.syntaxType().isSubTypeOf(syntaxType);
-  }
-
-  private static boolean isMacroMatch(Parser parser) {
+    SyntaxType macroMatchType = macroMatchType(parser);
+    if (macroMatchType != null) {
+      return macroMatchType.isSubTypeOf(syntaxType);
+    }
+    if (parser.la.kind != Parser._SYM_DOLLAR) {
+      return false;
+    }
     parser.scanner.ResetPeek();
-    boolean result = parser.la.kind == Parser._MATCH
-        && parser.scanner.Peek().kind == Parser._SYM_COLON;
-    parser.scanner.ResetPeek();
-    return result;
-  }
-
-  record ParserSnapshot(Token t, Token la) {
-    static ParserSnapshot create(Parser parser) {
-      return new ParserSnapshot(parser.t, parser.la);
-    }
-
-    void reset(Parser parser) {
-      parser.t = t;
-      parser.la = la;
-    }
-  }
-
-  record ScannerSnapshot(Token t, @Nullable Token next, int ch, int col, int line, int charPos,
-                         int bufferPos) {
-    static ScannerSnapshot create(Scanner scanner) {
-      return new ScannerSnapshot(scanner.t, copyOf(scanner.tokens.next), scanner.ch, scanner.col,
-          scanner.line, scanner.charPos, scanner.buffer.getPos());
-    }
-
-    @SuppressWarnings("NullAway")
-    void reset(Scanner scanner) {
-      scanner.t = t;
-      scanner.tokens.next = next;
-      scanner.ch = ch;
-      scanner.col = col;
-      scanner.line = line;
-      scanner.charPos = charPos;
-      scanner.buffer.setPos(bufferPos);
-    }
-
-    private static @Nullable Token copyOf(@Nullable Token token) {
-      if (token == null) {
-        return null;
+    var token = parser.scanner.Peek();
+    var nextToken = parser.scanner.Peek();
+    var foundMacro = parser.symbolTable.getMacro(token.val);
+    if (foundMacro != null) {
+      parser.scanner.ResetPeek();
+      if (nextToken.kind == Parser._SYM_PAREN_OPEN) {
+        return foundMacro.returnType().isSubTypeOf(syntaxType);
+      } else {
+        return false;
       }
-      var copy = new Token();
-      copy.kind = token.kind;
-      copy.pos = token.pos;
-      copy.charPos = token.charPos;
-      copy.col = token.col;
-      copy.line = token.line;
-      copy.val = token.val;
-      return copy;
     }
+    SyntaxType paramType = paramSyntaxType(parser, token.val);
+    while (true) {
+      if (paramType instanceof BasicSyntaxType basicSyntaxType) {
+        parser.scanner.ResetPeek();
+        return basicSyntaxType.isSubTypeOf(syntaxType);
+      } else if (paramType instanceof RecordType recordType && nextToken.kind == Parser._SYM_DOT) {
+        token = parser.scanner.Peek();
+        nextToken = parser.scanner.Peek();
+        paramType = recordType.findEntry(token.val);
+      } else if (paramType instanceof ProjectionType projectionType
+          && nextToken.kind == Parser._SYM_PAREN_OPEN) {
+        parser.scanner.ResetPeek();
+        return projectionType.resultType.isSubTypeOf(syntaxType);
+      } else {
+        parser.scanner.ResetPeek();
+        return false;
+      }
+    }
+  }
+
+  private static @Nullable SyntaxType macroMatchType(Parser parser) {
+    parser.scanner.ResetPeek();
+    boolean isMacroMatch = parser.la.kind == Parser._MATCH
+        && parser.scanner.Peek().kind == Parser._SYM_COLON;
+    if (isMacroMatch) {
+      String type = parser.scanner.Peek().val;
+      for (var basicType : BasicSyntaxType.values()) {
+        if (basicType.name().equals(type)) {
+          parser.scanner.ResetPeek();
+          return basicType;
+        }
+      }
+    }
+    parser.scanner.ResetPeek();
+    return null;
   }
 }

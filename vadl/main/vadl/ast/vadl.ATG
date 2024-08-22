@@ -935,8 +935,7 @@ PRODUCTIONS
     SYM_PAREN_CLOSE                      (. node = createMacroMatch(type, choices, defaultChoice, start.join(loc())); .)
   .
 
-  /// Parses the maximum macro expression (either instance or placeholder) from the parser.
-  /// Needs to be side-effect free, so the parser can be reset afterwards.
+  /// Parses the longest macro expression (either instance or placeholder) from the parser.
   maximumMacroExpr<out Node node>                 (. node = null; .)
   = SYM_DOLLAR                                    (. var segments = new ArrayList<String>(); .)
     identifier<out Identifier id>                 (. var macro = symbolTable.getMacro(id.name);
