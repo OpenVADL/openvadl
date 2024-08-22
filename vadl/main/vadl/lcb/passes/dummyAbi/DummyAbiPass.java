@@ -10,6 +10,9 @@ import vadl.utils.SourceLocation;
 import vadl.viam.Identifier;
 import vadl.viam.Specification;
 
+/**
+ * Inserts a {@link DummyAbi} to the {@link Specification}.
+ */
 public class DummyAbiPass extends Pass {
 
   @Override

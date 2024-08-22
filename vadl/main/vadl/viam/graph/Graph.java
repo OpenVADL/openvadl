@@ -471,7 +471,7 @@ public class Graph {
   }
 
   /**
-   * Replaces node when the given predicate matches and constructs a new instance.
+   * Replaces input when the given predicate matches and constructs a new instance.
    * If the old input has no usages anymore then it is deleted.
    */
   public void replaceInput(Predicate<Node> selector,

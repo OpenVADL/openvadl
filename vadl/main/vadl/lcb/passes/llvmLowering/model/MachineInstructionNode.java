@@ -20,6 +20,9 @@ public class MachineInstructionNode extends AbstractFunctionCallNode {
   @DataValue
   protected final Instruction instruction;
 
+  /**
+   * Constructor.
+   */
   public MachineInstructionNode(NodeList<ExpressionNode> args, Instruction instruction) {
     super(args,
         Type.dummy());

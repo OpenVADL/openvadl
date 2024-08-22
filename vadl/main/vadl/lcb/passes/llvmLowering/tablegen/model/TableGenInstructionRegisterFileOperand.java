@@ -10,6 +10,9 @@ public class TableGenInstructionRegisterFileOperand extends TableGenInstructionO
   private final RegisterFile registerFile;
   private final Format.Field formatField;
 
+  /**
+   * Constructor.
+   */
   public TableGenInstructionRegisterFileOperand(String type, String name,
                                                 RegisterFile registerFile,
                                                 Format.Field formatField) {

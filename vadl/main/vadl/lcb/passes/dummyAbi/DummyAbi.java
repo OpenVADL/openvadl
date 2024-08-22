@@ -5,6 +5,9 @@ import vadl.viam.DefinitionVisitor;
 import vadl.viam.Identifier;
 import vadl.viam.RegisterFile;
 
+/**
+ * Proof of concept ABI for RISC-V until we have a solution.
+ */
 public class DummyAbi extends Definition {
 
   enum Alignment {
@@ -28,6 +31,9 @@ public class DummyAbi extends Definition {
   private final RegisterRef stackPointer;
   private final RegisterRef framePointer;
 
+  /**
+   * Constructor.
+   */
   public DummyAbi(Identifier identifier,
                   RegisterRef returnAddress,
                   RegisterRef stackPointer,
