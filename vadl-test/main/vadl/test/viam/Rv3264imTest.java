@@ -8,6 +8,7 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.Objects;
 import org.junit.jupiter.api.Test;
+import vadl.pass.PassResults;
 import vadl.test.AbstractTest;
 import vadl.viam.InstructionSetArchitecture;
 import vadl.viam.Register;
@@ -20,7 +21,7 @@ public class Rv3264imTest extends AbstractTest {
   @Test
   void testRv32im() throws IOException {
     var spec = runAndGetViamSpecification("examples/rv3264im.vadl");
-    new TypeCastEliminationPass().execute(Map.of(), spec);
+    new TypeCastEliminationPass().execute(PassResults.empty(), spec);
     try {
       ViamVerifier.verifyAllIn(spec);
     } catch (ViamGraphError e) {

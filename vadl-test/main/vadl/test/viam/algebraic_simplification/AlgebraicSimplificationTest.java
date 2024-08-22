@@ -11,6 +11,7 @@ import org.junit.jupiter.api.TestFactory;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.testcontainers.images.builder.ImageFromDockerfile;
+import vadl.pass.PassResults;
 import vadl.test.DockerExecutionTest;
 import vadl.viam.Instruction;
 import vadl.viam.Specification;
@@ -39,18 +40,18 @@ public class AlgebraicSimplificationTest extends DockerExecutionTest {
     var initialSpec = runAndGetViamSpecification("examples/rv3264im.vadl");
     var spec = runAndGetViamSpecification("examples/rv3264im.vadl");
 
-    new FunctionInlinerPass().execute(Collections.emptyMap(), initialSpec);
-    new FunctionInlinerPass().execute(Collections.emptyMap(), spec);
+    new FunctionInlinerPass().execute(PassResults.empty(), initialSpec);
+    new FunctionInlinerPass().execute(PassResults.empty(), spec);
 
-    new TypeCastEliminationPass().execute(Collections.emptyMap(), initialSpec);
-    new TypeCastEliminationPass().execute(Collections.emptyMap(), spec);
+    new TypeCastEliminationPass().execute(PassResults.empty(), initialSpec);
+    new TypeCastEliminationPass().execute(PassResults.empty(), spec);
 
-    new ExtendMultiplicationPass().execute(Collections.emptyMap(), initialSpec);
-    new ExtendMultiplicationPass().execute(Collections.emptyMap(), spec);
+    new ExtendMultiplicationPass().execute(PassResults.empty(), initialSpec);
+    new ExtendMultiplicationPass().execute(PassResults.empty(), spec);
 
     // Add explicit bit sizes
-    new ExplicitBitSizesInTypingPass().execute(Collections.emptyMap(), initialSpec);
-    new ExplicitBitSizesInTypingPass().execute(Collections.emptyMap(), spec);
+    new ExplicitBitSizesInTypingPass().execute(PassResults.empty(), initialSpec);
+    new ExplicitBitSizesInTypingPass().execute(PassResults.empty(), spec);
 
     var allBeforeInstructions = initialSpec.isas().flatMap(x -> x.instructions().stream()).toList();
     var allAfterInstructions = spec.isas().flatMap(x -> x.instructions().stream()).collect(
@@ -58,7 +59,7 @@ public class AlgebraicSimplificationTest extends DockerExecutionTest {
 
     // When
     var pass = new AlgebraicSimplificationPass();
-    pass.execute(Collections.emptyMap(), spec);
+    pass.execute(PassResults.empty(), spec);
 
     ArrayList<DynamicTest> tests = new ArrayList<>();
     for (Instruction left : allBeforeInstructions) {

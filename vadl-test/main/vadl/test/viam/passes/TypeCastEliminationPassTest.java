@@ -14,6 +14,7 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.Arguments;
 import org.junit.jupiter.params.provider.MethodSource;
+import vadl.pass.PassResults;
 import vadl.test.AbstractTest;
 import vadl.test.TestFrontend;
 import vadl.types.BuiltInTable;
@@ -44,7 +45,7 @@ public class TypeCastEliminationPassTest extends AbstractTest {
         runViamSpecificationWithNewFrontend(
             "passes/typeCastElimination/valid_type_cast_elimination.vadl");
     // execute type cast elimination
-    new TypeCastEliminationPass().execute(Map.of(), validFrontend.getViam());
+    new TypeCastEliminationPass().execute(PassResults.empty(), validFrontend.getViam());
     ViamVerifier.verifyAllIn(validFrontend.getViam());
   }
 
