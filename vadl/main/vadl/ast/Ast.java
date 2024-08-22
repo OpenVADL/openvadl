@@ -71,8 +71,8 @@ abstract class Node {
   }
 
   static boolean isBlockLayout(Node n) {
-    return n instanceof LetExpr || n instanceof IfExpr || n instanceof Statement ||
-        n instanceof Definition;
+    return n instanceof LetExpr || n instanceof IfExpr || n instanceof Statement
+        || n instanceof Definition;
   }
 
   abstract SourceLocation location();

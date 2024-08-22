@@ -366,10 +366,11 @@ class FormatDefinition extends Definition {
     @Override
     public void prettyPrint(int indent, StringBuilder builder) {
       builder.append(prettyIndentString(indent));
-      builder.append(switch (kind) {
-        case PREDICATE -> ": predicate\n";
-        case ENCODE -> ": encode\n";
-      });
+      builder.append(
+          switch (kind) {
+            case PREDICATE -> ": predicate\n";
+            case ENCODE -> ": encode\n";
+          });
       var isFirst = true;
       for (var entry : entries) {
         if (isFirst) {
@@ -403,8 +404,8 @@ class FormatDefinition extends Definition {
         return false;
       }
       var that = (AuxiliaryField) obj;
-      return Objects.equals(this.kind, that.kind) &&
-          Objects.equals(this.entries, that.entries);
+      return Objects.equals(this.kind, that.kind)
+          && Objects.equals(this.entries, that.entries);
     }
 
     @Override
@@ -556,7 +557,8 @@ class InstructionSetDefinition extends Definition {
     builder.append(" = {\n");
     Definition previousDefinition = null;
     for (Definition definition : definitions) {
-      if (previousDefinition != null && !definition.getClass().equals(previousDefinition.getClass())) {
+      if (previousDefinition != null
+          && !definition.getClass().equals(previousDefinition.getClass())) {
         builder.append("\n");
       }
       definition.prettyPrint(indent + 1, builder);
