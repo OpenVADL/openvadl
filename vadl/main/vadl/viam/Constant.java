@@ -1,7 +1,6 @@
 package vadl.viam;
 
 import static vadl.utils.BigIntUtils.mask;
-import static vadl.utils.BigIntUtils.setBitsInRange;
 import static vadl.utils.BigIntUtils.twosComplement;
 
 import com.google.errorprone.annotations.FormatMethod;

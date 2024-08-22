@@ -7,7 +7,6 @@ import vadl.cppCodeGen.passes.typeNormalization.CppTypeNormalizationPass;
 import vadl.pass.PassName;
 import vadl.viam.Format;
 import vadl.viam.Function;
-import vadl.viam.Instruction;
 import vadl.viam.Specification;
 
 /**

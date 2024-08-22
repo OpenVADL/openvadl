@@ -7,8 +7,6 @@ import java.util.stream.Stream;
 import vadl.gcb.valuetypes.ProcessorName;
 import vadl.lcb.config.LcbConfiguration;
 import vadl.lcb.template.CommonVarNames;
-import vadl.pass.PassKey;
-import vadl.pass.PassResults;
 import vadl.pass.PassResults;
 import vadl.template.AbstractTemplateRenderingPass;
 import vadl.viam.Instruction;

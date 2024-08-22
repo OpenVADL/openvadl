@@ -46,4 +46,8 @@ public final class PassResults {
   }
 
 
+  public static PassResults empty() {
+    return new PassResults();
+  }
+
 }

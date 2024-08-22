@@ -1,7 +1,5 @@
 package vadl.gcb.passes.encoding_generation.strategies.impl;
 
-import java.util.Collections;
-import java.util.List;
 import org.jetbrains.annotations.Nullable;
 import vadl.gcb.passes.encoding_generation.strategies.EncodingGenerationStrategy;
 import vadl.types.BitsType;
@@ -12,21 +10,14 @@ import vadl.viam.Format;
 import vadl.viam.ViamError;
 import vadl.viam.graph.GraphVisitor;
 import vadl.viam.graph.Node;
-import vadl.viam.graph.NodeList;
 import vadl.viam.graph.control.ReturnNode;
 import vadl.viam.graph.dependency.BuiltInCall;
-import vadl.viam.graph.dependency.ExpressionNode;
 import vadl.viam.graph.dependency.FieldRefNode;
 import vadl.viam.graph.dependency.FuncParamNode;
 import vadl.viam.graph.dependency.SignExtendNode;
 import vadl.viam.graph.dependency.SliceNode;
 import vadl.viam.graph.dependency.TruncateNode;
-import vadl.viam.graph.dependency.TypeCastNode;
 import vadl.viam.graph.dependency.ZeroExtendNode;
-import vadl.viam.matching.TreeMatcher;
-import vadl.viam.matching.impl.AnyNodeMatcher;
-import vadl.viam.matching.impl.BuiltInMatcher;
-import vadl.viam.matching.impl.FieldRefNodeMatcher;
 
 /**
  * This strategy will create an encoding when the access function only contains add or sub.

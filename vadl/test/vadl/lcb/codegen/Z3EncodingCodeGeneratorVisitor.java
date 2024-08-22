@@ -1,6 +1,5 @@
 package vadl.lcb.codegen;
 
-import java.io.StringWriter;
 import vadl.viam.graph.dependency.FieldRefNode;
 import vadl.viam.graph.dependency.FuncParamNode;
 import vadl.viam.passes.translation_validation.Z3CodeGeneratorVisitor;
@@ -31,7 +30,6 @@ public class Z3EncodingCodeGeneratorVisitor extends Z3CodeGeneratorVisitor {
   public void visit(FuncParamNode funcParamNode) {
     writer.write(symbolName);
   }
-
 
 
   @Override

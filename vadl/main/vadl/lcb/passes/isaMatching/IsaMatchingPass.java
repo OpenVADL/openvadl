@@ -44,8 +44,6 @@ import java.util.Set;
 import org.jetbrains.annotations.Nullable;
 import vadl.pass.Pass;
 import vadl.pass.PassKey;
-import vadl.pass.PassResults;
-import vadl.pass.PassResults;
 import vadl.pass.PassName;
 import vadl.pass.PassResults;
 import vadl.types.BitsType;

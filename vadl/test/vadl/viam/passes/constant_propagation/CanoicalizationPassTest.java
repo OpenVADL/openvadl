@@ -1,7 +1,6 @@
 package vadl.viam.passes.constant_propagation;
 
 import static org.hamcrest.MatcherAssert.assertThat;
-import static org.hamcrest.Matchers.contains;
 import static org.hamcrest.Matchers.equalTo;
 import static org.hamcrest.Matchers.hasSize;
 import static org.hamcrest.Matchers.instanceOf;
@@ -32,7 +31,6 @@ import vadl.viam.graph.Graph;
 import vadl.viam.graph.NodeList;
 import vadl.viam.graph.dependency.BuiltInCall;
 import vadl.viam.graph.dependency.ConstantNode;
-import vadl.viam.graph.dependency.TypeCastNode;
 import vadl.viam.passes.canonicalization.CanoicalizationPass;
 import vadl.viam.passes.canonicalization.Canonicalizer;
 

@@ -1,7 +1,6 @@
 package vadl.lcb.codegen;
 
 import static org.assertj.core.api.AssertionsForClassTypes.assertThat;
-import static org.junit.jupiter.api.Assertions.assertEquals;
 
 import org.junit.jupiter.api.Test;
 import vadl.AbstractTest;
@@ -11,7 +10,6 @@ import vadl.viam.Parameter;
 import vadl.viam.graph.Graph;
 import vadl.viam.graph.control.ReturnNode;
 import vadl.viam.graph.dependency.FuncParamNode;
-import vadl.viam.graph.dependency.TypeCastNode;
 
 class EncodingCodeGeneratorTest extends AbstractTest {
   @Test

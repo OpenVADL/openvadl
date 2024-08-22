@@ -14,7 +14,6 @@ import javax.annotation.Nullable;
 import org.jetbrains.annotations.Contract;
 import vadl.utils.SourceLocation;
 import vadl.viam.graph.dependency.DependencyNode;
-import vadl.viam.graph.dependency.SelectNode;
 
 /**
  * The base node class of the VIAM {@link Graph}.

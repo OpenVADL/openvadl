@@ -2,7 +2,6 @@ package vadl.viam.matching.impl;
 
 import vadl.viam.graph.Node;
 import vadl.viam.graph.dependency.FieldAccessRefNode;
-import vadl.viam.graph.dependency.FieldRefNode;
 import vadl.viam.matching.Matcher;
 
 /**

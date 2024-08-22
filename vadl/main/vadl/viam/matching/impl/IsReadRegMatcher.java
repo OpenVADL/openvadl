@@ -2,7 +2,6 @@ package vadl.viam.matching.impl;
 
 import vadl.viam.Register;
 import vadl.viam.graph.Node;
-import vadl.viam.graph.dependency.ReadRegFileNode;
 import vadl.viam.graph.dependency.ReadRegNode;
 import vadl.viam.matching.Matcher;
 

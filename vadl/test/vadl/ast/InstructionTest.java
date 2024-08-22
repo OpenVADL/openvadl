@@ -2,7 +2,6 @@ package vadl.ast;
 
 import static vadl.ast.AstTestUtils.verifyPrettifiedAst;
 
-import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 
 public class InstructionTest {
