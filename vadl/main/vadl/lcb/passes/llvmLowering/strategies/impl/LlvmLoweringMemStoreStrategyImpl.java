@@ -14,7 +14,6 @@ import vadl.lcb.passes.llvmLowering.tablegen.model.TableGenInstructionRegisterFi
 import vadl.lcb.passes.llvmLowering.tablegen.model.TableGenPattern;
 import vadl.types.BuiltInTable;
 import vadl.viam.Instruction;
-import vadl.viam.RegisterFile;
 import vadl.viam.graph.dependency.BuiltInCall;
 import vadl.viam.graph.dependency.FieldRefNode;
 import vadl.viam.graph.dependency.ReadRegFileNode;
@@ -24,7 +23,6 @@ import vadl.viam.matching.impl.AnyReadRegFileMatcher;
 import vadl.viam.matching.impl.BuiltInMatcher;
 import vadl.viam.matching.impl.FieldAccessRefMatcher;
 import vadl.viam.matching.impl.WriteResourceMatcherForAddr;
-import vadl.viam.matching.impl.WriteResourceMatcherForValue;
 import vadl.viam.passes.functionInliner.UninlinedGraph;
 
 /**
@@ -67,7 +65,8 @@ public class LlvmLoweringMemStoreStrategyImpl extends LlvmLoweringStrategy {
           (LW AddrFI:$rs1, RV32Zicsr_Itype_ImmediateI_immediateAsInt32:$imm)>;
 
 
-   AddrFI is a special pattern which is also a register class but only one register (frame pointer).
+   AddrFI is a special pattern which is also a register class but only one register (frame pointer)
+   is allowed.
      */
 
     var copy = behavior.copy();
