@@ -1,7 +1,5 @@
 package vadl.types;
 
-import java.util.stream.Stream;
-
 /**
  * A class that represents the VADL status type.
  *

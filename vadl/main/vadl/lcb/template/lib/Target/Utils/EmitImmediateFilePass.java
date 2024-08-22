@@ -11,12 +11,12 @@ import vadl.gcb.passes.type_normalization.CppTypeNormalizationForEncodingsPass;
 import vadl.gcb.passes.type_normalization.CppTypeNormalizationForPredicatesPass;
 import vadl.gcb.valuetypes.ProcessorName;
 import vadl.lcb.codegen.DecodingCodeGenerator;
-import vadl.lcb.codegen.EncoderDecoderCodeGenerator;
 import vadl.lcb.codegen.EncodingCodeGenerator;
 import vadl.lcb.codegen.PredicateCodeGenerator;
 import vadl.lcb.config.LcbConfiguration;
 import vadl.lcb.template.CommonVarNames;
 import vadl.pass.PassKey;
+import vadl.pass.PassResults;
 import vadl.template.AbstractTemplateRenderingPass;
 import vadl.viam.Definition;
 import vadl.viam.Format;
@@ -48,7 +48,7 @@ public class EmitImmediateFilePass extends AbstractTemplateRenderingPass {
   }
 
   @Override
-  protected Map<String, Object> createVariables(final Map<PassKey, Object> passResults,
+  protected Map<String, Object> createVariables(final PassResults passResults,
                                                 Specification specification) {
     var decodeVadlFunctions =
         (IdentityHashMap<Function, Function>) ensureNonNull(

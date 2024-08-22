@@ -20,6 +20,7 @@ import vadl.lcb.passes.llvmLowering.tablegen.model.TableGenPattern;
 import vadl.pass.Pass;
 import vadl.pass.PassKey;
 import vadl.pass.PassName;
+import vadl.pass.PassResults;
 import vadl.viam.Instruction;
 import vadl.viam.Register;
 import vadl.viam.Specification;
@@ -86,7 +87,7 @@ public class LlvmLoweringPass extends Pass {
 
   @Nullable
   @Override
-  public Object execute(Map<PassKey, Object> passResults, Specification viam)
+  public Object execute(PassResults passResults, Specification viam)
       throws IOException {
     IdentityHashMap<Instruction, Graph> uninlined =
         (IdentityHashMap<Instruction, Graph>) passResults.get(

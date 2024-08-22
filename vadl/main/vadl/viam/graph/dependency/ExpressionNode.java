@@ -1,7 +1,6 @@
 package vadl.viam.graph.dependency;
 
 import vadl.types.Type;
-import vadl.viam.graph.GraphNodeVisitor;
 
 /**
  * Expression nodes produce some value and therefore also

@@ -1,6 +1,5 @@
 package vadl.lcb.codegen.docker;
 
-import java.math.BigInteger;
 import java.util.stream.Stream;
 import org.junit.jupiter.params.provider.Arguments;
 import vadl.AbstractTest;
@@ -19,7 +18,6 @@ import vadl.viam.graph.dependency.BuiltInCall;
 import vadl.viam.graph.dependency.ConstantNode;
 import vadl.viam.graph.dependency.FieldRefNode;
 import vadl.viam.graph.dependency.SignExtendNode;
-import vadl.viam.graph.dependency.TypeCastNode;
 import vadl.viam.graph.dependency.ZeroExtendNode;
 
 public class EncodingCodeGeneratorTestInputs extends AbstractTest {

@@ -1,12 +1,8 @@
 package vadl.viam.matching.impl;
 
-import com.google.common.collect.Streams;
-import java.util.List;
 import java.util.Optional;
-import vadl.types.BuiltInTable;
 import vadl.types.Type;
 import vadl.viam.graph.Node;
-import vadl.viam.graph.dependency.BuiltInCall;
 import vadl.viam.graph.dependency.TypeCastNode;
 import vadl.viam.matching.Matcher;
 

@@ -1,10 +1,7 @@
 package vadl.viam.passes.canonicalization;
 
-import java.util.HashMap;
-import org.jetbrains.annotations.Nullable;
 import vadl.viam.graph.Canonicalizable;
 import vadl.viam.graph.Graph;
-import vadl.viam.graph.GraphVisitor;
 import vadl.viam.graph.Node;
 import vadl.viam.passes.GraphProcessor;
 

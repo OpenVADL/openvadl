@@ -9,6 +9,8 @@ import vadl.gcb.valuetypes.ProcessorName;
 import vadl.lcb.config.LcbConfiguration;
 import vadl.lcb.passes.isaMatching.InstructionLabel;
 import vadl.pass.PassKey;
+import vadl.pass.PassResults;
+import vadl.pass.PassResults;
 import vadl.template.AbstractTemplateRenderingPass;
 import vadl.viam.Instruction;
 import vadl.viam.Specification;
@@ -41,7 +43,7 @@ public class DebuggingLlvmLoweringPass extends AbstractTemplateRenderingPass {
   }
 
   @Override
-  protected Map<String, Object> createVariables(final Map<PassKey, Object> passResults,
+  protected Map<String, Object> createVariables(final PassResults passResults,
                                                 Specification specification) {
     var variables = new HashMap<String, Object>();
     variables.put(CommonVarNames.NAMESPACE, specification.name());

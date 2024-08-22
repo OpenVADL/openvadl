@@ -2,7 +2,6 @@ package vadl.types;
 
 import java.util.Collection;
 import java.util.List;
-import vadl.viam.Parameter;
 
 /**
  * An arbitrary sized sequence of Bits to represent anything.
@@ -80,7 +79,6 @@ public class BitsType extends DataType {
     //noinspection Variable,unchecked
     return (T) upperBound;
   }
-
 
 
   @Override

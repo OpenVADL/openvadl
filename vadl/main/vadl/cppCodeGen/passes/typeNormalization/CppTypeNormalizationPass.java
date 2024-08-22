@@ -5,13 +5,12 @@ import java.util.Arrays;
 import java.util.HashSet;
 import java.util.IdentityHashMap;
 import java.util.List;
-import java.util.Map;
 import java.util.stream.Stream;
 import org.jetbrains.annotations.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import vadl.pass.Pass;
-import vadl.pass.PassKey;
+import vadl.pass.PassResults;
 import vadl.types.BitsType;
 import vadl.types.DataType;
 import vadl.types.Type;
@@ -45,7 +44,7 @@ public abstract class CppTypeNormalizationPass extends Pass {
 
   @Nullable
   @Override
-  public Object execute(Map<PassKey, Object> passResults, Specification viam)
+  public Object execute(PassResults passResults, Specification viam)
       throws IOException {
     IdentityHashMap<Function, Function> results = new IdentityHashMap<>();
 

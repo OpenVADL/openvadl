@@ -3,11 +3,10 @@ package vadl.cppCodeGen.passes.fieldNodeReplacement;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Map;
 import java.util.stream.Stream;
 import org.jetbrains.annotations.Nullable;
 import vadl.pass.Pass;
-import vadl.pass.PassKey;
+import vadl.pass.PassResults;
 import vadl.viam.Function;
 import vadl.viam.Parameter;
 import vadl.viam.Specification;
@@ -27,7 +26,7 @@ public abstract class FieldNodeReplacementPass extends Pass {
 
   @Nullable
   @Override
-  public Object execute(Map<PassKey, Object> passResults, Specification viam)
+  public Object execute(PassResults passResults, Specification viam)
       throws IOException {
 
     getApplicable(viam).forEach(FieldNodeReplacementPass::replaceFieldRefNodes);

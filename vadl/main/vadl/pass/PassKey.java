@@ -7,4 +7,8 @@ package vadl.pass;
  * {@link Pass} with the same {@link PassName} multiple times.
  */
 public record PassKey(String value) {
+
+  public static PassKey of(String value) {
+    return new PassKey(value);
+  }
 }

@@ -2,7 +2,6 @@ package vadl.gcb.passes.encoding_generation;
 
 import java.util.Arrays;
 import java.util.List;
-import java.util.Map;
 import org.jetbrains.annotations.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -10,13 +9,11 @@ import vadl.gcb.passes.encoding_generation.strategies.EncodingGenerationStrategy
 import vadl.gcb.passes.encoding_generation.strategies.impl.ArithmeticImmediateStrategy;
 import vadl.gcb.passes.encoding_generation.strategies.impl.ShiftedImmediateStrategy;
 import vadl.gcb.passes.encoding_generation.strategies.impl.TrivialImmediateStrategy;
-import vadl.lcb.passes.llvmLowering.LlvmLoweringPass;
 import vadl.pass.Pass;
-import vadl.pass.PassKey;
 import vadl.pass.PassName;
+import vadl.pass.PassResults;
 import vadl.viam.Encoding;
 import vadl.viam.Format.FieldAccess;
-import vadl.viam.Instruction;
 import vadl.viam.Specification;
 import vadl.viam.ViamError;
 import vadl.viam.graph.Graph;
@@ -42,7 +39,7 @@ public class GenerateFieldAccessEncodingFunctionPass extends Pass {
 
   @Nullable
   @Override
-  public Object execute(Map<PassKey, Object> passResults, Specification viam) {
+  public Object execute(PassResults passResults, Specification viam) {
     viam.isas()
         .flatMap(x -> x.formats().stream())
         .flatMap(x -> Arrays.stream(x.fieldAccesses()))

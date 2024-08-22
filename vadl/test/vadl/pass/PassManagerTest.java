@@ -6,7 +6,6 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
 import java.io.IOException;
 import java.net.URI;
 import java.net.URISyntaxException;
-import java.util.Map;
 import org.junit.jupiter.api.Test;
 import vadl.pass.exception.DuplicatedPassKeyException;
 import vadl.utils.SourceLocation;
@@ -22,7 +21,7 @@ class PassManagerTest {
     }
 
     @Override
-    public Object execute(final Map<PassKey, Object> passResults, Specification viam) {
+    public Object execute(final PassResults passResults, Specification viam) {
       return 1337;
     }
   }

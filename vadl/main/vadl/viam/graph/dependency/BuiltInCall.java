@@ -1,11 +1,6 @@
 package vadl.viam.graph.dependency;
 
-import com.google.common.collect.Streams;
-import java.math.BigInteger;
 import java.util.List;
-import java.util.Optional;
-import java.util.function.BiFunction;
-import org.jetbrains.annotations.NotNull;
 import vadl.javaannotations.viam.DataValue;
 import vadl.types.BuiltInTable;
 import vadl.types.BuiltInTable.BuiltIn;

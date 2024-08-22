@@ -14,8 +14,8 @@ import org.thymeleaf.templatemode.TemplateMode;
 import org.thymeleaf.templateresolver.ClassLoaderTemplateResolver;
 import org.thymeleaf.templateresolver.ITemplateResolver;
 import vadl.pass.Pass;
-import vadl.pass.PassKey;
 import vadl.pass.PassName;
+import vadl.pass.PassResults;
 import vadl.viam.Specification;
 
 /**
@@ -60,8 +60,8 @@ public abstract class AbstractTemplateRenderingPass extends Pass {
    * The map with the variables for the template. This method has access to the {@code passResults}
    * from the passes which have run before.
    */
-  protected abstract Map<String, Object> createVariables(final Map<PassKey, Object> passResults,
-                                                Specification specification);
+  protected abstract Map<String, Object> createVariables(final PassResults passResults,
+                                                         Specification specification);
 
   public AbstractTemplateRenderingPass(String outputPathPrefix) throws IOException {
     this.outputPathPrefix = outputPathPrefix;
@@ -88,7 +88,7 @@ public abstract class AbstractTemplateRenderingPass extends Pass {
 
   @Nullable
   @Override
-  public Object execute(final Map<PassKey, Object> passResults, Specification viam)
+  public Object execute(final PassResults passResults, Specification viam)
       throws IOException {
     renderTemplate(passResults, viam, createFileWriter());
 
@@ -100,12 +100,12 @@ public abstract class AbstractTemplateRenderingPass extends Pass {
    * Renders the template into a {@link StringWriter}. Additionally, this will not create a
    * folder in the output path.
    */
-  public void renderToString(final Map<PassKey, Object> passResults, Specification viam,
+  public void renderToString(final PassResults passResults, Specification viam,
                              StringWriter writer) {
     renderTemplate(passResults, viam, writer);
   }
 
-  private void renderTemplate(final Map<PassKey, Object> passResults, Specification viam,
+  private void renderTemplate(final PassResults passResults, Specification viam,
                               Writer writer) {
     var ctx = new Context();
 

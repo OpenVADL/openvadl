@@ -40,12 +40,12 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.IdentityHashMap;
 import java.util.List;
-import java.util.Map;
 import java.util.Set;
 import org.jetbrains.annotations.Nullable;
 import vadl.pass.Pass;
 import vadl.pass.PassKey;
 import vadl.pass.PassName;
+import vadl.pass.PassResults;
 import vadl.types.BitsType;
 import vadl.types.BuiltInTable;
 import vadl.types.Type;
@@ -92,14 +92,13 @@ public class IsaMatchingPass extends Pass {
 
   @Nullable
   @Override
-  public Object execute(Map<PassKey, Object> passResults, Specification viam)
+  public Object execute(PassResults passResults, Specification viam)
       throws IOException {
     // The instruction matching happens on the uninlined graph
     // because the field accesses are uninlined.
     IdentityHashMap<Instruction, UninlinedGraph> uninlined =
         (IdentityHashMap<Instruction, UninlinedGraph>) passResults.get(
             new PassKey(FunctionInlinerPass.class.getName()));
-    ensureNonNull(uninlined, "Inlining data must exist");
     HashMap<InstructionLabel, List<Instruction>> matched = new HashMap<>();
 
     viam.isas().forEach(isa -> isa.instructions().forEach(instruction -> {

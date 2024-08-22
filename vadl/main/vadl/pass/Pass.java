@@ -3,7 +3,6 @@ package vadl.pass;
 import com.google.errorprone.annotations.FormatMethod;
 import com.google.errorprone.annotations.FormatString;
 import java.io.IOException;
-import java.util.Map;
 import javax.annotation.Nullable;
 import org.jetbrains.annotations.Contract;
 import vadl.pass.exception.PassError;
@@ -29,7 +28,7 @@ public abstract class Pass {
    *     the next pass by the {@link PassManager}.
    */
   @Nullable
-  public abstract Object execute(final Map<PassKey, Object> passResults, Specification viam)
+  public abstract Object execute(final PassResults passResults, Specification viam)
       throws IOException;
 
   /// RUNTIME CHECK HELPERS
@@ -48,7 +47,7 @@ public abstract class Pass {
   @FormatMethod
   @Contract("false, _, _-> fail")
   protected final void ensure(boolean condition, @FormatString String format,
-                           @Nullable Object... args) {
+                              @Nullable Object... args) {
     if (!condition) {
       throw new PassError(format, args)
           .shrinkStacktrace(1);

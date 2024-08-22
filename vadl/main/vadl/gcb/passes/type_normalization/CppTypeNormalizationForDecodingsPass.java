@@ -4,14 +4,10 @@ import java.util.Arrays;
 import java.util.Objects;
 import java.util.stream.Stream;
 import vadl.cppCodeGen.passes.typeNormalization.CppTypeNormalizationPass;
-import vadl.lcb.codegen.DecodingCodeGenerator;
 import vadl.pass.PassName;
 import vadl.viam.Format;
 import vadl.viam.Function;
-import vadl.viam.Instruction;
 import vadl.viam.Specification;
-import vadl.viam.graph.dependency.FieldRefNode;
-import vadl.viam.graph.dependency.FuncParamNode;
 
 /**
  * When transforming a graph into a CPP code, we have to take care of unsupported types.

@@ -10,7 +10,6 @@ import vadl.viam.Parameter;
 import vadl.viam.graph.Graph;
 import vadl.viam.graph.control.ReturnNode;
 import vadl.viam.graph.dependency.FuncParamNode;
-import vadl.viam.graph.dependency.TypeCastNode;
 
 class DecodingCodeGeneratorTest extends AbstractTest {
   @Test

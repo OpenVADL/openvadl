@@ -3,11 +3,10 @@ package vadl.viam.passes.algebraic_simplication;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
-import java.util.Map;
 import org.jetbrains.annotations.Nullable;
 import vadl.pass.Pass;
-import vadl.pass.PassKey;
 import vadl.pass.PassName;
+import vadl.pass.PassResults;
 import vadl.viam.Specification;
 import vadl.viam.graph.dependency.BuiltInCall;
 import vadl.viam.passes.algebraic_simplication.rules.AlgebraicSimplificationRule;
@@ -51,7 +50,7 @@ public class AlgebraicSimplificationPass extends Pass {
 
   @Nullable
   @Override
-  public Object execute(Map<PassKey, Object> passResults, Specification viam) {
+  public Object execute(PassResults passResults, Specification viam) {
     viam.isas()
         .flatMap(isa -> isa.instructions().stream())
         .forEach(instruction -> new AlgebraicSimplifier(rules).run(instruction.behavior()));

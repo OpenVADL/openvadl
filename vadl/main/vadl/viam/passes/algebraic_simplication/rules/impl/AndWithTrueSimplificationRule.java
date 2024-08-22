@@ -4,7 +4,6 @@ import java.util.List;
 import java.util.Optional;
 import java.util.stream.Stream;
 import vadl.types.BuiltInTable;
-import vadl.types.DataType;
 import vadl.viam.Constant;
 import vadl.viam.graph.Node;
 import vadl.viam.graph.dependency.ExpressionNode;

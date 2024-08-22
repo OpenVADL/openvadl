@@ -1,6 +1,5 @@
 package vadl.viam.passes.typeCastElimination;
 
-import java.util.HashMap;
 import org.jetbrains.annotations.Nullable;
 import vadl.types.BitsType;
 import vadl.types.DataType;
@@ -8,7 +7,6 @@ import vadl.types.SIntType;
 import vadl.types.Type;
 import vadl.types.UIntType;
 import vadl.viam.graph.Graph;
-import vadl.viam.graph.GraphVisitor;
 import vadl.viam.graph.Node;
 import vadl.viam.graph.ViamGraphError;
 import vadl.viam.graph.dependency.ExpressionNode;

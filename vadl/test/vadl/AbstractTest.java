@@ -11,7 +11,6 @@ import vadl.viam.Function;
 import vadl.viam.Identifier;
 import vadl.viam.Instruction;
 import vadl.viam.Parameter;
-import vadl.viam.RegisterFile;
 import vadl.viam.Specification;
 import vadl.viam.graph.Graph;
 

@@ -5,7 +5,6 @@ import vadl.javaannotations.viam.DataValue;
 import vadl.types.DataType;
 import vadl.types.Type;
 import vadl.viam.Constant;
-import vadl.viam.ViamError;
 import vadl.viam.graph.Canonicalizable;
 import vadl.viam.graph.GraphNodeVisitor;
 import vadl.viam.graph.Node;
