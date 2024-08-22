@@ -15,12 +15,16 @@
     <h1 id="specification" class="text-xl font-bold mb-4">Specification (rv3264im.vadl)</h1>
 
     <div th:fragment="entry(entry)" th:if="${entry != null}" th:id="${entry.cssId}"
-         class="definition border border-gray-200 px-6 pt-6">
+         class="definition border border-y-gray-200 border-l-gray-400 px-6 pt-6">
         <!--/*@thymesVar id="def" type="vadl.viam.passes.htmlDump.HtmlDefinitionBuilder"*/-->
         <h3 th:text="${entry.name}" class="text-lg font-semibold">Name</h3>
         <div th:replace="~{this :: tags(${entry.tagInfos}, ${entry})}"></div>
         <div th:replace="~{this :: expandables(${entry.expandableInfos}, ${entry})}"></div>
         <div th:replace="~{this :: modals(${entry.modalInfos}, ${entry})}"></div>
+        <th:block th:each="e: ${entry.subEntities}" >
+            <h4 th:if="${e.name != null}" class="font-bold">[[${e.name}]]: </h4>
+            <div th:replace="~{this :: entry(${e.subEntity})}"></div>
+        </th:block>
     </div>
 
     <!--/*@thymesVar id="definitions" type="List<vadl.viam.passes.htmlDump.HtmlDefinitionBuilder>"*/-->

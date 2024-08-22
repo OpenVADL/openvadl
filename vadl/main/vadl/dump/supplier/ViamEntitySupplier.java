@@ -5,11 +5,14 @@ import static vadl.dump.supplier.ViamEntitySupplier.DefinitionEntity.cssIdFor;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Stack;
 import java.util.function.Function;
 import javax.annotation.Nullable;
 import vadl.dump.DumpEntity;
 import vadl.dump.DumpEntitySupplier;
+import vadl.error.VadlError;
+import vadl.viam.Assembly;
 import vadl.viam.Definition;
 import vadl.viam.DefinitionVisitor;
 import vadl.viam.Encoding;
@@ -17,8 +20,10 @@ import vadl.viam.Format;
 import vadl.viam.Instruction;
 import vadl.viam.InstructionSetArchitecture;
 import vadl.viam.Memory;
+import vadl.viam.Parameter;
 import vadl.viam.Register;
 import vadl.viam.RegisterFile;
+import vadl.viam.Relocation;
 import vadl.viam.Resource;
 import vadl.viam.Specification;
 import vadl.dump.Info;
@@ -35,7 +40,12 @@ public class ViamEntitySupplier extends DefinitionVisitor.Empty
     return entities.values().stream().toList();
   }
 
-  private final Stack<Definition> parents = new Stack<>();
+  private DefinitionEntity entityOf(Definition definition) {
+    var entity = entities.get(definition);
+    return Objects.requireNonNull(entity);
+  }
+
+  private final Stack<DefinitionEntity> parents = new Stack<>();
 
   private void beforeEach(Definition definition) {
     var entity = new DefinitionEntity(definition);
@@ -43,11 +53,12 @@ public class ViamEntitySupplier extends DefinitionVisitor.Empty
 
     // set parent
     if (!parents.isEmpty()) {
-      entity.parent = parents.peek();
+      var parent = parents.peek();
+      entity.parent = parent;
       entity.addInfo(
-          new Info.Tag("Parent", parents.peek().identifier.name(), "#" + cssIdFor(definition)));
+          new Info.Tag("Parent", parent.name(), "#" + parent.cssId()));
     }
-    parents.push(definition);
+    parents.push(entity);
   }
 
   @Override
@@ -60,6 +71,47 @@ public class ViamEntitySupplier extends DefinitionVisitor.Empty
     parents.pop();
   }
 
+  private void replaceAsSubEntityOfParent(Definition definition) {
+    var entity = entityOf(definition);
+    Objects.requireNonNull(entity.parent);
+    entity.parent.addSubEntity(null, entity);
+    entities.remove(definition);
+  }
+
+  @Override
+  public void visit(vadl.viam.Function function) {
+    var entity = entityOf(function);
+    Objects.requireNonNull(entity.parent);
+    if (entity.parent.origin instanceof Specification
+        || entity.parent.origin instanceof InstructionSetArchitecture) {
+      // if normal function definitions, do nothing
+      return;
+    } else {
+      // remove this from entities and add as subentity
+      replaceAsSubEntityOfParent(function);
+    }
+  }
+
+  @Override
+  public void visit(Parameter relocation) {
+    replaceAsSubEntityOfParent(relocation);
+  }
+
+  @Override
+  public void visit(Format.FieldAccess fieldAccess) {
+    var entity = entityOf(fieldAccess);
+    for (var se : entity.subEntities()) {
+      var de = (DefinitionEntity) se.subEntity;
+      if (de.origin == fieldAccess.encoding()) {
+        se.name = "Encoding Function";
+      } else if (de.origin == fieldAccess.accessFunction()) {
+        se.name = "Access Function";
+      } else if (de.origin == fieldAccess.predicate()) {
+        se.name = "Predicate Function";
+      }
+    }
+  }
+
   // hidden traversal
 
   private final ViamEntitySupplier thisRef = this;
@@ -68,11 +120,11 @@ public class ViamEntitySupplier extends DefinitionVisitor.Empty
     @Override
     public void beforeTraversal(Definition definition) {
       beforeEach(definition);
-      definition.accept(thisRef);
     }
 
     @Override
     public void afterTraversal(Definition definition) {
+      definition.accept(thisRef);
       afterEach(definition);
     }
   };
@@ -80,7 +132,7 @@ public class ViamEntitySupplier extends DefinitionVisitor.Empty
   public static class DefinitionEntity extends DumpEntity {
 
     @Nullable
-    Definition parent;
+    DefinitionEntity parent;
     Definition origin;
 
     DefinitionEntity(Definition origin) {
@@ -138,9 +190,14 @@ public class ViamEntitySupplier extends DefinitionVisitor.Empty
 
     private static Function<DefinitionEntity, Boolean> isAndISALevel(
         Class<? extends Definition> defClass) {
-      return (def) -> defClass.isInstance(def.origin)
-          &&
-          (def.parent instanceof Specification || def.parent instanceof InstructionSetArchitecture);
+      return (def) -> {
+        if (!defClass.isInstance(def.origin)) {
+          return false;
+        }
+        Objects.requireNonNull(def.parent);
+        return def.parent.origin instanceof Specification ||
+            def.parent.origin instanceof InstructionSetArchitecture;
+      };
     }
 
   }

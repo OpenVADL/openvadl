@@ -10,6 +10,7 @@ import org.junit.jupiter.api.Test;
 import vadl.dump.HtmlDumpPass;
 import vadl.types.BuiltInTable;
 import vadl.types.Type;
+import vadl.viam.Assembly;
 import vadl.viam.Function;
 import vadl.viam.Identifier;
 import vadl.viam.Parameter;

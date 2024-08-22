@@ -46,10 +46,9 @@ public class HtmlDumpPass extends AbstractTemplateRenderingPass {
         .flatMap(e -> e.getEntities(specification, passResults).stream())
         .toList();
 
-    for (var iSup : infoEnricher.suppliers()) {
-      for (var entity : entities) {
-        iSup.enrich((DumpEntity) entity, passResults);
-      }
+
+    for (var entity : entities) {
+      applyOnThisAndSubEntities(entity, infoEnricher, passResults);
     }
 
     var tocMapList = entities.stream()
@@ -63,6 +62,18 @@ public class HtmlDumpPass extends AbstractTemplateRenderingPass {
         "toc", tocMapList
     );
   }
+
+  private static void applyOnThisAndSubEntities(DumpEntity entity,
+                                                SupplierCollection<InfoEnricher> infoEnrichers,
+                                                Map<PassKey, Object> passResults) {
+    for (var subEntity : entity.subEntities()) {
+      applyOnThisAndSubEntities(subEntity.subEntity, infoEnrichers, passResults);
+    }
+    for (var iSup : infoEnrichers.suppliers()) {
+      iSup.enrich(entity, passResults);
+    }
+  }
+
 }
 
 class SupplierCollection<T> {

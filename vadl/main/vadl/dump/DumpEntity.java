@@ -3,10 +3,12 @@ package vadl.dump;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
+import javax.annotation.Nullable;
+import vadl.utils.Pair;
 
 abstract public class DumpEntity {
 
-  private List<DumpEntity> subEntities = new ArrayList<>();
+  private List<Sub> subEntities = new ArrayList<>();
   private List<Info> infos = new ArrayList<Info>();
 
   public abstract String cssId();
@@ -20,8 +22,8 @@ abstract public class DumpEntity {
     return this;
   }
 
-  public DumpEntity addSubEntity(DumpEntity subEntity) {
-    subEntities.add(subEntity);
+  public DumpEntity addSubEntity(@Nullable String name, DumpEntity subEntity) {
+    subEntities.add(new Sub(name, subEntity));
     return this;
   }
 
@@ -46,7 +48,7 @@ abstract public class DumpEntity {
         .toList();
   }
 
-  public List<DumpEntity> subEntities() {
+  public List<Sub> subEntities() {
     return subEntities;
   }
 
@@ -89,5 +91,16 @@ abstract public class DumpEntity {
     }
   }
 
+
+  public static class Sub {
+    @Nullable
+    public String name;
+    public DumpEntity subEntity;
+
+    public Sub(@Nullable String name, DumpEntity subEntity) {
+      this.name = name;
+      this.subEntity = subEntity;
+    }
+  }
 
 }
