@@ -18,9 +18,28 @@
     </style>
 </head>
 <body class="flex flex-nowrap font-sans">
+
+<!-- Right side - Table of Contents -->
+<div class="overflow-y-auto h-screen p-6 flex-none">
+    <nav class="pt-16 px-1 pl-3 lg:pl-0 lg:pt-2 font-normal text-base lg:text-sm pb-10 lg:pb-20 sticky?lg:h-(screen-18)"
+    >
+        <th:block th:each="entry: ${toc}" th:with="defs = ${entry.value}" >
+            <h4 class="my-1 text-sm font-semibold tracking-wide text-gray-900 lg:text-xs dark:text-white">[[${entry.key.name}]]</h4>
+            <ul class="py-1 list-unstyled fw-normal small">
+                <li th:each="def: ${defs}">
+                    <a th:href="'#' + ${def.cssId}"
+                       class="py-2 transition-colors duration-200 relative flex items-center flex-wrap font-medium hover:text-gray-900 text-gray-500 dark:text-gray-400 dark:hover:text-white">
+                        [[${def.name}]]
+                    </a>
+                </li>
+            </ul>
+        </th:block>
+    </nav>
+</div>
+
 <!-- Left side - List of definitions -->
 <div class="w-full p-4 overflow-auto h-screen">
-    <h1 id="specification" class="text-xl font-bold mb-4">[[${title}]]</h1>
+    <h1 id="specification" class="text-xl font-bold mb-4 tracking-wide">[[${title}]]</h1>
 
     <!--  Accordion with executed passes  -->
     <div id="passes" data-accordion="collapse" class="mb-6">
@@ -40,14 +59,15 @@
                  th:each="singlePass,iter : ${passes}"
                  class="flex items-center my-4 px-4 py-2 bg-white border border-gray-200 rounded-lg shadow gap-4"
             >
-                <h4 class="font-bold text-lg">[[${iter.index + 1}]]</h4>
+
+                <h4 class="text-md font-semibold tracking-wide text-gray-900">[[${iter.index + 1}]]</h4>
                 <div>
-                    <h4 class="font-bold text-lg">[[${singlePass.pass.name.value}]]</h4>
+                    <h4 class="text-md font-semibold tracking-wide text-gray-900">[[${singlePass.pass.name.value}]]</h4>
                     <div class="inline-grid items-center gap-2" style="grid-template-columns: auto auto;">
                         <span class="text-gray-500 font-medium text-sm">Key</span>
-                        <span class="badge text-blue-800">[[${singlePass.passKey.value}]]</span>
+                        <span class="badge text-blue-800 text-sm">[[${singlePass.passKey.value}]]</span>
                         <span class="text-gray-500 font-medium text-sm">Class</span>
-                        <span class="badge text-blue-800">[[${singlePass.pass.class.name}]]</span>
+                        <span class="badge text-blue-800 text-sm">[[${singlePass.pass.class.name}]]</span>
                     </div>
                 </div>
             </div>
@@ -61,7 +81,19 @@
        class="block my-4 px-6 pt-4 pb-2 bg-white border border-gray-200 rounded-lg shadow"
     >
         <!--/*@thymesVar id="def" type="vadl.viam.passes.htmlDump.HtmlDefinitionBuilder"*/-->
-        <h3 th:text="${entry.name}" class="text-lg font-semibold tracking-tight">Name</h3>
+        <div class="flex gap-4 items-center">
+            <h3 class="text-md font-semibold text-gray-900 tracking-wide">
+                <a class="group relative border-none lg:-ml-2 lg:pl-2 flex" th:href="'#' + ${entry.cssId}">
+                    [[${entry.name}]]
+                    <span class="hidden items-center ml-4 border-0 opacity-0 group-hover:opacity-80 group-focus:opacity-80 lg:flex">​
+                        <span class="flex h-6 w-6 items-center justify-center rounded-md text-slate-400 shadow-sm ring-1 ring-slate-900/5 hover:text-slate-700 hover:shadow hover:ring-slate-900/10">
+                            <svg width="12" height="12" fill="none" aria-hidden="true"><path d="M3.75 1v10M8.25 1v10M1 3.75h10M1 8.25h10" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"></path>
+                            </svg>
+                        </span>
+                    </span>
+                </a>
+            </h3>
+        </div>
         <div th:replace="~{this :: tags(${entry.tagInfos}, ${entry})}"></div>
         <div th:replace="~{this :: modals(${entry.modalInfos}, ${entry})}"></div>
         <div th:replace="~{this :: expandables(${entry.expandableInfos}, ${entry})}"></div>
@@ -77,23 +109,6 @@
     </div>
 
 
-</div>
-
-<!-- Right side - Table of Contents -->
-<div class="w-min pr-4 p-4 bg-gray-200 h-screen overflow-auto">
-    <h1 class="text-xl font-bold mb-4">Table of Contents</h1>
-    <div class="overflow-auto">
-        <th:block th:each="entry: ${toc}" th:with="defs = ${entry.value}" >
-        <h4 class="font-bold">[[${entry.key.name}]]</h4>
-        <ul class="w-full">
-            <li th:each="def: ${defs}" class="text-blue-500 hover:text-blue-700">
-                <a th:href="'#' + ${def.cssId}">
-                    [[${def.name}]]
-                </a>
-            </li>
-        </ul>
-        </th:block>
-    </div>
 </div>
 
 <!--    FRAGMENTS     -->
