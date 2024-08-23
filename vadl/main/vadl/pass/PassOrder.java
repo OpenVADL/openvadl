@@ -41,7 +41,6 @@ public final class PassOrder {
     passes.add(new IsaMatchingPass());
     passes.add(new LlvmLoweringPass());
     passes.add(new vadl.gcb.passes.encoding_generation.GenerateFieldAccessEncodingFunctionPass());
-    passes.add(new vadl.gcb.passes.field_node_replacement.FieldNodeReplacementPassForDecoding());
     passes.add(new vadl.gcb.passes.type_normalization.CppTypeNormalizationForEncodingsPass());
     passes.add(new vadl.gcb.passes.type_normalization.CppTypeNormalizationForDecodingsPass());
     passes.add(new vadl.gcb.passes.type_normalization.CppTypeNormalizationForPredicatesPass());
