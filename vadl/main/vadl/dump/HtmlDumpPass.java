@@ -7,6 +7,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.function.Consumer;
 import java.util.stream.Collectors;
+import vadl.configuration.GeneralConfiguration;
 import vadl.dump.entitySuppliers.ViamEntitySupplier;
 import vadl.dump.infoEnrichers.ViamEnricherCollection;
 import vadl.pass.PassResults;
@@ -61,21 +62,29 @@ public class HtmlDumpPass extends AbstractTemplateRenderingPass {
    * The config of the HtmlDumpPass.
    * It requires the name of the phase the dump happens in and the output path
    * where the dump should be written to.
+   *
+   * <p>It holds a dump description that explains what happened since the last dump.</p>
    */
-  public static class Config {
-    String phase;
-    String outputPath;
+  public static class Config extends GeneralConfiguration {
+    private final String phase;
+    private final String description;
 
-    public Config(String phase, String outputPath) {
+    public Config(GeneralConfiguration generalConfiguration, String phase, String description) {
+      super(generalConfiguration.outputPath(), true);
       this.phase = phase;
-      this.outputPath = outputPath;
+      this.description = description;
+    }
+
+    public static Config from(GeneralConfiguration generalConfiguration, String phase,
+                              String description) {
+      return new Config(generalConfiguration, phase, description);
     }
   }
 
   private final Config config;
 
   public HtmlDumpPass(Config config) throws IOException {
-    super(config.outputPath);
+    super(config, "dump");
     this.config = config;
   }
 
@@ -118,13 +127,14 @@ public class HtmlDumpPass extends AbstractTemplateRenderingPass {
         .toList();
 
     var passList = passResults.executedPasses();
-
+    
     return Map.of(
-        "entries", entities,
-        "toc", tocMapList,
         "title",
         "Specification (%s) - at %s".formatted(specification.identifier.name(), config.phase),
-        "passes", passList
+        "description", config.description,
+        "passes", passList,
+        "entries", entities,
+        "toc", tocMapList
     );
   }
 

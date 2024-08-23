@@ -7,6 +7,7 @@ import vadl.configuration.GcbConfiguration;
 import vadl.configuration.GeneralConfiguration;
 import vadl.configuration.LcbConfiguration;
 import vadl.cppCodeGen.passes.fieldNodeReplacement.FieldNodeReplacementPassForDecoding;
+import vadl.dump.HtmlDumpPass;
 import vadl.gcb.passes.encoding_generation.GenerateFieldAccessEncodingFunctionPass;
 import vadl.gcb.passes.type_normalization.CppTypeNormalizationForDecodingsPass;
 import vadl.gcb.passes.type_normalization.CppTypeNormalizationForEncodingsPass;
@@ -28,7 +29,7 @@ public final class PassOrder {
   /**
    * Return the viam passes.
    */
-  public static List<Pass> viam(GeneralConfiguration configuration) {
+  public static List<Pass> viam(GeneralConfiguration configuration) throws IOException {
     List<Pass> passes = new ArrayList<>();
 
     passes.add(new DummyAbiPass(configuration));
@@ -36,13 +37,22 @@ public final class PassOrder {
     passes.add(new FunctionInlinerPass(configuration));
     passes.add(new AlgebraicSimplificationPass(configuration));
 
+    if (configuration.doDump()) {
+      var config = HtmlDumpPass.Config.from(
+          configuration,
+          "viamOptimizations",
+          "All common VIAM optimization that are required by most generators are executed."
+      );
+      passes.add(new HtmlDumpPass(config));
+    }
+
     return passes;
   }
 
   /**
    * Return the gcb and cppcodegen passes.
    */
-  public static List<Pass> gcbAndCppCodeGen(GcbConfiguration gcbConfiguration) {
+  public static List<Pass> gcbAndCppCodeGen(GcbConfiguration gcbConfiguration) throws IOException {
     List<Pass> passes = new ArrayList<>(viam(gcbConfiguration));
 
     passes.add(new GenerateFieldAccessEncodingFunctionPass(gcbConfiguration));
@@ -50,6 +60,17 @@ public final class PassOrder {
     passes.add(new CppTypeNormalizationForEncodingsPass(gcbConfiguration));
     passes.add(new CppTypeNormalizationForDecodingsPass(gcbConfiguration));
     passes.add(new CppTypeNormalizationForPredicatesPass(gcbConfiguration));
+
+    if (gcbConfiguration.doDump()) {
+      var config = HtmlDumpPass.Config.from(gcbConfiguration,
+          "gcbProcessing",
+          // TODO: @kper more meaningful description on what actual happened since the last
+          //   HTML dump.
+          "Now the gcb produced all necessary encoding function for field accesses "
+              + "and normalized VIAM types to Cpp types."
+      );
+      passes.add(new HtmlDumpPass(config));
+    }
 
     return passes;
   }
@@ -62,6 +83,19 @@ public final class PassOrder {
     List<Pass> passes = new ArrayList<>(gcbAndCppCodeGen(configuration));
     passes.add(new IsaMatchingPass(configuration));
     passes.add(new LlvmLoweringPass(configuration));
+
+    if (configuration.doDump()) {
+      var config = HtmlDumpPass.Config.from(
+          configuration,
+          "lcbLlvmLowering",
+          // TODO: @kper more meaningful description on what actual happened since the last
+          //   HTML dump.
+          "The LCB did ISA matching to and lowered common VIAM nodes to LLVM specific"
+              + "nodes."
+      );
+      passes.add(new HtmlDumpPass(config));
+    }
+
     passes.add(new vadl.lcb.clang.lib.Driver.ToolChains.EmitClangToolChainFilePass(configuration));
     passes.add(new vadl.lcb.clang.lib.Basic.Targets.EmitClangTargetHeaderFilePass(configuration));
     passes.add(new vadl.lcb.clang.lib.Basic.Targets.EmitClangTargetsFilePass(configuration));

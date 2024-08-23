@@ -7,6 +7,8 @@ import static vadl.viam.helper.TestGraphUtils.intU;
 import java.io.IOException;
 import java.util.HashMap;
 import org.junit.jupiter.api.Test;
+import vadl.AbstractTest;
+import vadl.configuration.GeneralConfiguration;
 import vadl.dump.HtmlDumpPass;
 import vadl.pass.PassResults;
 import vadl.types.BuiltInTable;
@@ -20,10 +22,11 @@ import vadl.viam.graph.Graph;
 import vadl.viam.graph.control.ReturnNode;
 import vadl.viam.graph.control.StartNode;
 
-public class HtmlDumpTest {
+public class HtmlDumpTest extends AbstractTest {
 
   @Test
   void dumpTest() throws IOException {
+    var config = createConfiguration();
 
     var spec = new Specification(Identifier.noLocation("Hello world"));
     var graph = new Graph("Hello Graph");
@@ -39,8 +42,10 @@ public class HtmlDumpTest {
 
     spec.add(func);
 
-
-    new HtmlDumpPass(new HtmlDumpPass.Config("demoPhase", "build/testdump"))
+    new HtmlDumpPass(HtmlDumpPass.Config.from(
+        new GeneralConfiguration("build", true), "demoDump",
+        "Now the gcb produced all necessary encoding function for field accesses "
+            + "and normalized VIAM types to Cpp types."))
         .execute(PassResults.empty(), spec);
 
   }

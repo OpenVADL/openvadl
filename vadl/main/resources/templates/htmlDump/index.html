@@ -38,8 +38,13 @@
 </div>
 
 <!-- Right side - List of definitions -->
-<div class="w-full p-4 overflow-auto h-screen">
+<div class="w-full max-w-screen-xl p-4 overflow-auto h-screen">
     <h1 id="specification" class="text-xl font-bold mb-4 tracking-wide">[[${title}]]</h1>
+    <div class="mb-6 p-6 border border-gray-300 shadow rounded-md"
+         style="max-width: 700px"
+    >
+        <p class="">[[${description}]]</p>
+    </div>
 
     <!--  Accordion with executed passes  -->
     <div id="passes" data-accordion="collapse" class="mb-6">
