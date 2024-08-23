@@ -6,6 +6,7 @@ import java.util.List;
 import vadl.dump.Info;
 import vadl.dump.InfoEnricher;
 import vadl.viam.DefProp;
+import vadl.viam.ViamError;
 
 /**
  * A static collection of {@link InfoEnricher} that provide information about
@@ -124,6 +125,24 @@ public class ViamEnricherCollection {
     }
   };
 
+  public static InfoEnricher VERIFY_SUPPLIER_EXPANDABLE =
+      forType(ViamEntitySupplier.DefinitionEntity.class, (entity, passResult) -> {
+        try {
+          entity.origin.verify();
+        } catch (ViamError e) {
+          var info = new Info.Expandable(
+              """
+                  <span class="text-red-500">Validation Exception</span>
+                  """,
+              """
+                  <pre><code id="code-block" class="text-sm text-gray-500 whitespace-pre">%s
+                  </code></pre>
+                  """.formatted(e.getMessage())
+          );
+          entity.addInfo(info);
+        }
+      });
+
   /**
    * A list of all info enrichers for the default VIAM specification.
    */
@@ -131,7 +150,8 @@ public class ViamEnricherCollection {
       DEF_CLASS_SUPPLIER_TAG,
       TYPE_SUPPLIER_TAG,
       PARENT_SUPPLIER_TAG,
-      BEHAVIOR_SUPPLIER_MODAL
+      BEHAVIOR_SUPPLIER_MODAL,
+      VERIFY_SUPPLIER_EXPANDABLE
   );
 
 }

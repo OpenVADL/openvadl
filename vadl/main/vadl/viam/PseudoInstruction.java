@@ -63,6 +63,7 @@ public class PseudoInstruction extends Definition implements DefProp.WithBehavio
             node.ensure(Stream.of(parameters).anyMatch(e -> e.equals(node.parameter())),
                 "The given parameter is not a known pseudo instruction parameter")
         );
+    behavior.verify();
   }
 
   @Override

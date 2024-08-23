@@ -28,7 +28,10 @@ import vadl.viam.Specification;
  * Take a look at {@link ViamEnricherCollection} to see an example on how to implement
  * new info enrichers.</p>
  *
- * <p>Also note that infos are rendered in the same order as the info enrichers are registered.</p>
+ * <p>Note that infos are rendered in the same order as the info enrichers are registered.</p>
+ *
+ * <p>Also note that we use tailwind css, so all tailwind css classes are available
+ * to produced HTML bodies.</p>
  *
  * @see DumpEntitySupplier
  * @see InfoEnricher

@@ -102,6 +102,10 @@ public abstract sealed class Info permits Info.Expandable, Info.Modal, Info.Tag 
       this.body = body;
       this.jsOnFirstOpen = jsOnFirstOpen;
     }
+
+    public Expandable(String title, String body) {
+      this(title, body, null);
+    }
   }
 
   /**
