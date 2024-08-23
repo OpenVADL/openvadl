@@ -194,6 +194,7 @@ public class Format extends Definition implements DefProp.WithType {
       var paramIdent = ident.append("format");
       var formatParam = new Parameter(paramIdent, parentFormat.type());
       var function = new Function(ident, new Parameter[] {formatParam}, this.type);
+      formatParam.setParent(function);
 
       var behavior = function.behavior();
       var funcParamNode = behavior.add(new FuncParamNode(formatParam));
