@@ -21,7 +21,7 @@ import vadl.viam.graph.dependency.ExpressionNode;
  * {@link Instruction#behavior()} by inserting explicit types.
  */
 public class ExplicitBitSizesInTypingPass extends Pass {
-  protected ExplicitBitSizesInTypingPass(GeneralConfiguration configuration) {
+  public ExplicitBitSizesInTypingPass(GeneralConfiguration configuration) {
     super(configuration);
   }
 

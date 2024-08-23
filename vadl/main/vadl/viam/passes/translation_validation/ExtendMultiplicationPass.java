@@ -30,7 +30,7 @@ import vadl.viam.graph.dependency.ZeroExtendNode;
  * This passes replaces the built-ins with the extended implementation.
  */
 public class ExtendMultiplicationPass extends Pass {
-  protected ExtendMultiplicationPass(GeneralConfiguration configuration) {
+  public ExtendMultiplicationPass(GeneralConfiguration configuration) {
     super(configuration);
   }
 

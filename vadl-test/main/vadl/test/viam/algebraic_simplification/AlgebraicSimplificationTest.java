@@ -37,28 +37,29 @@ public class AlgebraicSimplificationTest extends DockerExecutionTest {
 
   @TestFactory
   Collection<DynamicTest> instructions() throws IOException {
+    var configuration = getConfiguration(false);
     var initialSpec = runAndGetViamSpecification("examples/rv3264im.vadl");
     var spec = runAndGetViamSpecification("examples/rv3264im.vadl");
 
-    new FunctionInlinerPass().execute(PassResults.empty(), initialSpec);
-    new FunctionInlinerPass().execute(PassResults.empty(), spec);
+    new FunctionInlinerPass(configuration).execute(PassResults.empty(), initialSpec);
+    new FunctionInlinerPass(configuration).execute(PassResults.empty(), spec);
 
-    new TypeCastEliminationPass().execute(PassResults.empty(), initialSpec);
-    new TypeCastEliminationPass().execute(PassResults.empty(), spec);
+    new TypeCastEliminationPass(configuration).execute(PassResults.empty(), initialSpec);
+    new TypeCastEliminationPass(configuration).execute(PassResults.empty(), spec);
 
-    new ExtendMultiplicationPass().execute(PassResults.empty(), initialSpec);
-    new ExtendMultiplicationPass().execute(PassResults.empty(), spec);
+    new ExtendMultiplicationPass(configuration).execute(PassResults.empty(), initialSpec);
+    new ExtendMultiplicationPass(configuration).execute(PassResults.empty(), spec);
 
     // Add explicit bit sizes
-    new ExplicitBitSizesInTypingPass().execute(PassResults.empty(), initialSpec);
-    new ExplicitBitSizesInTypingPass().execute(PassResults.empty(), spec);
+    new ExplicitBitSizesInTypingPass(configuration).execute(PassResults.empty(), initialSpec);
+    new ExplicitBitSizesInTypingPass(configuration).execute(PassResults.empty(), spec);
 
     var allBeforeInstructions = initialSpec.isas().flatMap(x -> x.instructions().stream()).toList();
     var allAfterInstructions = spec.isas().flatMap(x -> x.instructions().stream()).collect(
         Collectors.toMap(Instruction::name, Function.identity()));
 
     // When
-    var pass = new AlgebraicSimplificationPass();
+    var pass = new AlgebraicSimplificationPass(configuration);
     pass.execute(PassResults.empty(), spec);
 
     ArrayList<DynamicTest> tests = new ArrayList<>();

@@ -325,8 +325,12 @@ public class AbstractTest {
     return Pair.of(passManager, spec);
   }
 
+  public static Path createDirectory() throws IOException {
+    return VADLFileUtils.createTempDirectory("vadl-test");
+  }
+
   public GeneralConfiguration getConfiguration(boolean doDump) throws IOException {
-    var directory = VADLFileUtils.createTempDirectory("vadl-test");
+    var directory = createDirectory();
     return new GeneralConfiguration(directory.toAbsolutePath().toString(), doDump);
   }
 }

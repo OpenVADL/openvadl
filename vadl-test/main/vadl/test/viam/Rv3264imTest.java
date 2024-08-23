@@ -21,7 +21,7 @@ public class Rv3264imTest extends AbstractTest {
   @Test
   void testRv32im() throws IOException {
     var spec = runAndGetViamSpecification("examples/rv3264im.vadl");
-    new TypeCastEliminationPass().execute(PassResults.empty(), spec);
+    new TypeCastEliminationPass(getConfiguration(false)).execute(PassResults.empty(), spec);
     try {
       ViamVerifier.verifyAllIn(spec);
     } catch (ViamGraphError e) {
