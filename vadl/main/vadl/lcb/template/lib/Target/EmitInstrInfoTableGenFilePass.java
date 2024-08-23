@@ -3,7 +3,6 @@ package vadl.lcb.template.lib.Target;
 import java.io.IOException;
 import java.util.Comparator;
 import java.util.Map;
-import vadl.gcb.valuetypes.ProcessorName;
 import vadl.configuration.LcbConfiguration;
 import vadl.lcb.passes.llvmLowering.LlvmLoweringPass;
 import vadl.lcb.passes.llvmLowering.tablegen.lowering.TableGenImmediateOperandRenderer;
@@ -14,7 +13,6 @@ import vadl.lcb.template.CommonVarNames;
 import vadl.lcb.template.LcbTemplateRenderingPass;
 import vadl.pass.PassKey;
 import vadl.pass.PassResults;
-import vadl.template.AbstractTemplateRenderingPass;
 import vadl.viam.Instruction;
 import vadl.viam.Specification;
 

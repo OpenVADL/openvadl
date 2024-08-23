@@ -5,12 +5,12 @@ import java.util.ArrayList;
 import java.util.List;
 import vadl.configuration.GcbConfiguration;
 import vadl.configuration.GeneralConfiguration;
+import vadl.configuration.LcbConfiguration;
 import vadl.cppCodeGen.passes.fieldNodeReplacement.FieldNodeReplacementPassForDecoding;
 import vadl.gcb.passes.encoding_generation.GenerateFieldAccessEncodingFunctionPass;
 import vadl.gcb.passes.type_normalization.CppTypeNormalizationForDecodingsPass;
 import vadl.gcb.passes.type_normalization.CppTypeNormalizationForEncodingsPass;
 import vadl.gcb.passes.type_normalization.CppTypeNormalizationForPredicatesPass;
-import vadl.configuration.LcbConfiguration;
 import vadl.lcb.passes.isaMatching.IsaMatchingPass;
 import vadl.lcb.passes.llvmLowering.LlvmLoweringPass;
 import vadl.lcb.template.lib.Target.EmitMCInstLowerCppFilePass;
@@ -25,6 +25,9 @@ import vadl.viam.passes.typeCastElimination.TypeCastEliminationPass;
  */
 public final class PassOrder {
 
+  /**
+   * Return the viam passes.
+   */
   public static List<Pass> viam(GeneralConfiguration configuration) {
     List<Pass> passes = new ArrayList<>();
 
@@ -35,6 +38,9 @@ public final class PassOrder {
     return passes;
   }
 
+  /**
+   * Return the gcb and cppcodegen passes.
+   */
   public static List<Pass> gcbAndCppCodeGen(GcbConfiguration gcbConfiguration) {
     List<Pass> passes = new ArrayList<>(viam(gcbConfiguration));
 

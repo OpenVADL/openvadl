@@ -77,14 +77,6 @@ public class PassManager {
   }
 
   /**
-   * Run all the passes in the order which they have been added until the {@link Pass}
-   * with the given {@code passKey} (inclusive).
-   */
-  public void runUntilInclusive(Specification spec, PassKey passKey) throws IOException {
-    run(spec, passKey::equals);
-  }
-
-  /**
    * Run all the passes in the order which they have been added when the
    * {@link java.util.function.Predicate} matches.
    */
@@ -113,6 +105,14 @@ public class PassManager {
       }
       logger.atDebug().log("Pass completed with key: {}", step.key());
     }
+  }
+
+  /**
+   * Run all the passes in the order which they have been added until the {@link Pass}
+   * with the given {@code passKey} (inclusive).
+   */
+  public void runUntilInclusive(Specification spec, PassKey passKey) throws IOException {
+    run(spec, passKey::equals);
   }
 
   public PassResults getPassResults() {

@@ -3,12 +3,10 @@ package vadl.lcb.include.llvm.BinaryFormat.ELFRelocs;
 import java.io.IOException;
 import java.util.List;
 import java.util.Map;
-import vadl.gcb.valuetypes.ProcessorName;
 import vadl.configuration.LcbConfiguration;
 import vadl.lcb.template.CommonVarNames;
 import vadl.lcb.template.LcbTemplateRenderingPass;
 import vadl.pass.PassResults;
-import vadl.template.AbstractTemplateRenderingPass;
 import vadl.viam.Specification;
 
 /**
@@ -27,8 +25,8 @@ public class EmitTargetElfRelocsDefFilePass extends LcbTemplateRenderingPass {
 
   @Override
   protected String getOutputPath() {
-    return "llvm/include/llvm/BinaryFormat/ELFRelocs/" +
-        lcbConfiguration().processorName().value() + ".def";
+    return "llvm/include/llvm/BinaryFormat/ELFRelocs/"
+        + lcbConfiguration().processorName().value() + ".def";
   }
 
   record Relocation(String identifier) {

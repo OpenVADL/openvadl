@@ -2,10 +2,8 @@ package vadl.lcb.template;
 
 import java.io.IOException;
 import java.util.Map;
-import vadl.gcb.valuetypes.ProcessorName;
 import vadl.configuration.LcbConfiguration;
 import vadl.pass.PassResults;
-import vadl.template.AbstractTemplateRenderingPass;
 import vadl.viam.Specification;
 
 /**

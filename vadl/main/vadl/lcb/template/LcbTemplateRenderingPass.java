@@ -5,6 +5,9 @@ import vadl.configuration.GeneralConfiguration;
 import vadl.configuration.LcbConfiguration;
 import vadl.template.AbstractTemplateRenderingPass;
 
+/**
+ * Abstracts the subdir under the output.
+ */
 public abstract class LcbTemplateRenderingPass extends AbstractTemplateRenderingPass {
   public LcbTemplateRenderingPass(GeneralConfiguration configuration) throws IOException {
     super(configuration, "lcb");

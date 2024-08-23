@@ -2,12 +2,10 @@ package vadl.lcb.template.lib.Target.MCTargetDesc;
 
 import java.io.IOException;
 import java.util.Map;
-import vadl.gcb.valuetypes.ProcessorName;
 import vadl.configuration.LcbConfiguration;
 import vadl.lcb.template.CommonVarNames;
 import vadl.lcb.template.LcbTemplateRenderingPass;
 import vadl.pass.PassResults;
-import vadl.template.AbstractTemplateRenderingPass;
 import vadl.viam.Specification;
 
 /**
@@ -26,7 +24,8 @@ public class EmitMCTargetDescCMakeFilePass extends LcbTemplateRenderingPass {
 
   @Override
   protected String getOutputPath() {
-    return "lcb/llvm/lib/Target/" + lcbConfiguration().processorName().value() + "/MCTargetDesc/CMakeLists.txt";
+    return "lcb/llvm/lib/Target/" + lcbConfiguration().processorName().value()
+        + "/MCTargetDesc/CMakeLists.txt";
   }
 
   @Override

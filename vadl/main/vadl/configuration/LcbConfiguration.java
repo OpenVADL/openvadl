@@ -13,7 +13,8 @@ public class LcbConfiguration extends GcbConfiguration {
     this.processorName = processorName;
   }
 
-  public static LcbConfiguration from(GcbConfiguration gcbConfiguration, ProcessorName processorName) {
+  public static LcbConfiguration from(GcbConfiguration gcbConfiguration,
+                                      ProcessorName processorName) {
     return new LcbConfiguration(gcbConfiguration, processorName);
   }
 

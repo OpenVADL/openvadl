@@ -3,12 +3,10 @@ package vadl.lcb.template.lld.ELF.Arch;
 import java.io.IOException;
 import java.util.List;
 import java.util.Map;
-import vadl.gcb.valuetypes.ProcessorName;
 import vadl.configuration.LcbConfiguration;
 import vadl.lcb.template.CommonVarNames;
 import vadl.lcb.template.LcbTemplateRenderingPass;
 import vadl.pass.PassResults;
-import vadl.template.AbstractTemplateRenderingPass;
 import vadl.viam.Specification;
 
 /**
