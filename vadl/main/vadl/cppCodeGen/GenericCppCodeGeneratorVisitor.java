@@ -38,7 +38,7 @@ public abstract class GenericCppCodeGeneratorVisitor implements GraphNodeVisitor
   }
 
   protected String generateBitmask(int size) {
-    return String.format("((1U << %d) - 1)", size);
+    return String.format("((1UL << %d) - 1)", size);
   }
 
   @Override

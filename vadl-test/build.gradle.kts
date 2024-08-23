@@ -19,6 +19,7 @@ dependencies {
     implementation("org.junit.jupiter:junit-jupiter")
     implementation("org.hamcrest:hamcrest:2.2")
     implementation("org.yaml:snakeyaml:2.2")
+    implementation("net.jqwik:jqwik:1.9.0")
 
     implementation("org.awaitility:awaitility:4.2.1")
     implementation("org.testcontainers:testcontainers:1.20.0")

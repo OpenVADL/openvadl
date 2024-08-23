@@ -4,8 +4,8 @@ import java.io.IOException;
 import java.io.StringWriter;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
+import vadl.cppCodeGen.passes.fieldNodeReplacement.FieldNodeReplacementPassForDecoding;
 import vadl.gcb.passes.encoding_generation.GenerateFieldAccessEncodingFunctionPass;
-import vadl.gcb.passes.field_node_replacement.FieldNodeReplacementPassForDecoding;
 import vadl.gcb.passes.type_normalization.CppTypeNormalizationForDecodingsPass;
 import vadl.gcb.passes.type_normalization.CppTypeNormalizationForEncodingsPass;
 import vadl.gcb.passes.type_normalization.CppTypeNormalizationForPredicatesPass;
@@ -87,25 +87,25 @@ public class EmitImmediateFilePassTest extends AbstractLcbTest {
 
 
         uint8_t RV3264I_Ftype_shamt_encoding_encode(uint8_t shamt) {
-        return (((shamt) & ((1U << 6) - 1)) >> 0);
+        return (((shamt) & ((1UL << 6) - 1)) >> 0);
         }
         uint16_t RV3264I_Btype_immS_encoding_encode(int64_t immS) {
-        return (((immS) & ((1U << 13) - 1) & ~((1 << 1) - 1)) >> 1);
+        return (((immS) & ((1UL << 13) - 1) & ~((1 << 1) - 1)) >> 1);
         }
         uint16_t RV3264I_Stype_immS_encoding_encode(int64_t immS) {
-        return (((immS) & ((1U << 12) - 1)) >> 0);
+        return (((immS) & ((1UL << 12) - 1)) >> 0);
         }
         uint8_t RV3264I_Rtype_shamt_encoding_encode(uint8_t shamt) {
-        return (((shamt) & ((1U << 5) - 1)) >> 0);
+        return (((shamt) & ((1UL << 5) - 1)) >> 0);
         }
         uint16_t RV3264I_Itype_immS_encoding_encode(int64_t immS) {
-        return (((immS) & ((1U << 12) - 1)) >> 0);
+        return (((immS) & ((1UL << 12) - 1)) >> 0);
         }
         uint32_t RV3264I_Utype_immU_encoding_encode(uint64_t immU) {
-        return (((immU) & ((1U << 32) - 1) & ~((1 << 12) - 1)) >> 12);
+        return (((immU) & ((1UL << 32) - 1) & ~((1 << 12) - 1)) >> 12);
         }
         uint32_t RV3264I_Jtype_immS_encoding_encode(int64_t immS) {
-        return (((immS) & ((1U << 21) - 1) & ~((1 << 1) - 1)) >> 1);
+        return (((immS) & ((1UL << 21) - 1) & ~((1 << 1) - 1)) >> 1);
         }
 
 

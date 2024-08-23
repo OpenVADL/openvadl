@@ -13,7 +13,6 @@ import org.junit.jupiter.params.provider.MethodSource;
 import vadl.lcb.passes.isaMatching.InstructionLabel;
 import vadl.lcb.passes.isaMatching.IsaMatchingPass;
 import vadl.pass.PassKey;
-import vadl.pass.PassResults;
 import vadl.pass.exception.DuplicatedPassKeyException;
 import vadl.test.lcb.AbstractLcbTest;
 import vadl.viam.Definition;
