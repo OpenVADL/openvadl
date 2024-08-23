@@ -7,28 +7,18 @@ import java.util.Collection;
 import java.util.IdentityHashMap;
 import org.junit.jupiter.api.DynamicTest;
 import org.junit.jupiter.api.TestFactory;
-import org.junit.jupiter.params.ParameterizedTest;
-import org.junit.jupiter.params.provider.MethodSource;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.testcontainers.images.builder.ImageFromDockerfile;
 import vadl.cppCodeGen.CppTypeMap;
-import vadl.cppCodeGen.passes.fieldNodeReplacement.FieldNodeReplacementPass;
-import vadl.cppCodeGen.passes.typeNormalization.CppTypeNormalizationPass;
-import vadl.gcb.passes.encoding_generation.strategies.EncodingGenerationStrategy;
 import vadl.gcb.passes.type_normalization.CppTypeNormalizationForDecodingsPass;
 import vadl.gcb.passes.type_normalization.CppTypeNormalizationForEncodingsPass;
 import vadl.lcb.codegen.DecodingCodeGenerator;
 import vadl.lcb.codegen.EncodingCodeGenerator;
 import vadl.pass.PassKey;
 import vadl.pass.exception.DuplicatedPassKeyException;
-import vadl.test.AbstractTest;
 import vadl.utils.Triple;
-import vadl.viam.Format;
 import vadl.viam.Function;
-import vadl.viam.Instruction;
-import vadl.viam.Specification;
-import vadl.viam.passes.translation_validation.TranslationValidation;
 
 public class EncodingCodeGeneratorCppVerificationTest extends AbstractCppCodeGenTest {
   private static final String MOUNT_PATH = "/app/main.cpp";
@@ -70,14 +60,15 @@ public class EncodingCodeGeneratorCppVerificationTest extends AbstractCppCodeGen
     ArrayList<DynamicTest> tests = new ArrayList<>();
     for (var entry : entries) {
       tests.add(DynamicTest.dynamicTest(entry.left(), () -> {
-        testFieldAccess(entry.middle(), entry.right());
+        testFieldAccess(entry.left(), entry.middle(), entry.right());
       }));
     }
 
     return tests;
   }
 
-  void testFieldAccess(Function acccessFunction,
+  void testFieldAccess(String testName,
+                       Function acccessFunction,
                        Function encodingFunction) {
     var decodeCodeGenerator = new DecodingCodeGenerator();
     var encodeCodeGenerator = new EncodingCodeGenerator();
@@ -110,11 +101,11 @@ public class EncodingCodeGeneratorCppVerificationTest extends AbstractCppCodeGen
         decodeFunction,
         encodeFunction,
         expectedReturnType,
-        100L,
+        31L,
         EncodingCodeGenerator.generateFunctionName(encodingFunction.identifier.lower()),
         DecodingCodeGenerator.generateFunctionName(acccessFunction.identifier.lower()));
 
-    logger.info(cppCode);
+    logger.info(testName + "\n" + cppCode);
 
     try {
       runContainerWithContent(DOCKER_IMAGE, cppCode, MOUNT_PATH);
