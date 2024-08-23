@@ -29,6 +29,7 @@ public final class PassOrder {
       throws IOException {
     List<Pass> passes = new ArrayList<>();
 
+    passes.add(new DummyAbiPass());
     passes.add(new vadl.viam.passes.typeCastElimination.TypeCastEliminationPass());
     passes.add(new FunctionInlinerPass());
     passes.add(new AlgebraicSimplificationPass());
