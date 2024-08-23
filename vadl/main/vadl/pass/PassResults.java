@@ -5,7 +5,6 @@ import java.util.List;
 import java.util.Optional;
 import javax.annotation.Nullable;
 import vadl.pass.exception.PassError;
-import vadl.utils.Pair;
 
 /**
  * Holds and maintains the pass results of all executed passes.
@@ -58,7 +57,7 @@ public final class PassResults {
    * @return an empty option if no pass instance of the passClass was executed. Otherwise,
    *     the pass result wrapped in the optional.
    */
-  public <T> Optional<SingleResult> getOfLastExecution(Class<T> passClass) {
+  public <T> Optional<SingleResult> lastExecutionOf(Class<T> passClass) {
     var result =
         store.values().stream()
             .reduce((a, b) -> passClass.isInstance(b.pass()) ? b : a);
