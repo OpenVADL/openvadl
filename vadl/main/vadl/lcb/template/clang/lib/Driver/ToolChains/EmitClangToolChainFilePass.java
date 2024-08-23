@@ -5,6 +5,7 @@ import java.util.Map;
 import vadl.gcb.valuetypes.ProcessorName;
 import vadl.configuration.LcbConfiguration;
 import vadl.lcb.template.CommonVarNames;
+import vadl.lcb.template.LcbTemplateRenderingPass;
 import vadl.pass.PassResults;
 import vadl.template.AbstractTemplateRenderingPass;
 import vadl.viam.Specification;
@@ -14,14 +15,10 @@ import vadl.viam.Specification;
  * See <a href="https://discourse.llvm.org/t/where-is-the-default-for-char-defined/79202/5">this</a> for more
  * information.
  */
-public class EmitClangToolChainFilePass extends AbstractTemplateRenderingPass {
-
-  private final ProcessorName processorName;
-
-  public EmitClangToolChainFilePass(LcbConfiguration lcbConfiguration, ProcessorName processorName)
+public class EmitClangToolChainFilePass extends LcbTemplateRenderingPass {
+  public EmitClangToolChainFilePass(LcbConfiguration lcbConfiguration)
       throws IOException {
-    super(lcbConfiguration, "lcb");
-    this.processorName = processorName;
+    super(lcbConfiguration);
   }
 
   @Override

@@ -15,12 +15,8 @@ import vadl.viam.Specification;
  */
 public class EmitMCInstExpanderCppFilePass extends LcbTemplateRenderingPass {
 
-  private final ProcessorName processorName;
-
-  public EmitMCInstExpanderCppFilePass(LcbConfiguration lcbConfiguration,
-                                       ProcessorName processorName) throws IOException {
+  public EmitMCInstExpanderCppFilePass(LcbConfiguration lcbConfiguration) throws IOException {
     super(lcbConfiguration);
-    this.processorName = processorName;
   }
 
   @Override
@@ -30,8 +26,9 @@ public class EmitMCInstExpanderCppFilePass extends LcbTemplateRenderingPass {
 
   @Override
   protected String getOutputPath() {
-    return "lcb/llvm/lib/Target/" + processorName.value() + "/MCTargetDesc/"
-        + processorName.value() + "MCInstExpander.cpp";
+    var processorName = lcbConfiguration().processorName().value();
+    return "lcb/llvm/lib/Target/" + processorName + "/MCTargetDesc/"
+        + processorName + "MCInstExpander.cpp";
   }
 
   @Override

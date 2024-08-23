@@ -15,12 +15,8 @@ import vadl.viam.Specification;
  */
 public class EmitImmediateUtilsHeaderFilePass extends LcbTemplateRenderingPass {
 
-  private final ProcessorName processorName;
-
-  public EmitImmediateUtilsHeaderFilePass(LcbConfiguration lcbConfiguration,
-                                          ProcessorName processorName) throws IOException {
+  public EmitImmediateUtilsHeaderFilePass(LcbConfiguration lcbConfiguration) throws IOException {
     super(lcbConfiguration);
-    this.processorName = processorName;
   }
 
   @Override

@@ -14,13 +14,8 @@ import vadl.viam.Specification;
  * This file contains the definitions for the driver logic for MCTarget.
  */
 public class EmitMCTargetDescHeaderFilePass extends LcbTemplateRenderingPass {
-
-  private final ProcessorName processorName;
-
-  public EmitMCTargetDescHeaderFilePass(LcbConfiguration lcbConfiguration,
-                                        ProcessorName processorName) throws IOException {
+  public EmitMCTargetDescHeaderFilePass(LcbConfiguration lcbConfiguration) throws IOException {
     super(lcbConfiguration);
-    this.processorName = processorName;
   }
 
   @Override
@@ -30,8 +25,9 @@ public class EmitMCTargetDescHeaderFilePass extends LcbTemplateRenderingPass {
 
   @Override
   protected String getOutputPath() {
-    return "lcb/llvm/lib/Target/" + processorName.value() + "/MCTargetDesc/"
-        + processorName.value() + "MCTargetDesc.h";
+    var processorName = lcbConfiguration().processorName().value();
+    return "lcb/llvm/lib/Target/" + processorName + "/MCTargetDesc/"
+        + processorName + "MCTargetDesc.h";
   }
 
   @Override

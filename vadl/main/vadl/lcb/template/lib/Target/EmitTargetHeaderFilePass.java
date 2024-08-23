@@ -15,12 +15,9 @@ import vadl.viam.Specification;
  */
 public class EmitTargetHeaderFilePass extends LcbTemplateRenderingPass {
 
-  private final ProcessorName processorName;
-
-  public EmitTargetHeaderFilePass(LcbConfiguration lcbConfiguration, ProcessorName processorName)
+  public EmitTargetHeaderFilePass(LcbConfiguration lcbConfiguration)
       throws IOException {
     super(lcbConfiguration);
-    this.processorName = processorName;
   }
 
   @Override
@@ -30,7 +27,8 @@ public class EmitTargetHeaderFilePass extends LcbTemplateRenderingPass {
 
   @Override
   protected String getOutputPath() {
-    return "llvm/lib/Target/" + processorName.value() + "/" + processorName.value() + ".h";
+    var processorName = lcbConfiguration().processorName().value();
+    return "llvm/lib/Target/" + processorName + "/" + processorName + ".h";
   }
 
   @Override

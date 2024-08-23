@@ -8,6 +8,7 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Objects;
 import org.jetbrains.annotations.Nullable;
+import vadl.configuration.GeneralConfiguration;
 import vadl.pass.Pass;
 import vadl.pass.PassName;
 import vadl.pass.PassResults;
@@ -29,6 +30,10 @@ import vadl.viam.graph.dependency.ZeroExtendNode;
  * This passes replaces the built-ins with the extended implementation.
  */
 public class ExtendMultiplicationPass extends Pass {
+  protected ExtendMultiplicationPass(GeneralConfiguration configuration) {
+    super(configuration);
+  }
+
   @Override
   public PassName getName() {
     return new PassName("ExtendMultiplicationPass");

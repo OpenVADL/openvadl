@@ -15,15 +15,11 @@ import vadl.viam.Specification;
  */
 public class EmitClangTargetHeaderFilePass extends LcbTemplateRenderingPass {
 
-  private final ProcessorName processorName;
-
   record DataLayout(boolean isBigEndian, int pointerSize, int pointerAlignment) {
   }
 
-  public EmitClangTargetHeaderFilePass(LcbConfiguration lcbConfiguration,
-                                       ProcessorName processorName) throws IOException {
+  public EmitClangTargetHeaderFilePass(LcbConfiguration lcbConfiguration) throws IOException {
     super(lcbConfiguration);
-    this.processorName = processorName;
   }
 
   @Override
@@ -33,7 +29,7 @@ public class EmitClangTargetHeaderFilePass extends LcbTemplateRenderingPass {
 
   @Override
   protected String getOutputPath() {
-    return "clang/lib/Basic/Targets/" + processorName.value() + ".h";
+    return "clang/lib/Basic/Targets/" + lcbConfiguration().processorName().value() + ".h";
   }
 
   private String createDataLayout(DataLayout dataLayout) {

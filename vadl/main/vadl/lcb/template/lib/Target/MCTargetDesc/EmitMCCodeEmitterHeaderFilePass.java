@@ -15,12 +15,8 @@ import vadl.viam.Specification;
  */
 public class EmitMCCodeEmitterHeaderFilePass extends LcbTemplateRenderingPass {
 
-  private final ProcessorName processorName;
-
-  public EmitMCCodeEmitterHeaderFilePass(LcbConfiguration lcbConfiguration,
-                                         ProcessorName processorName) throws IOException {
+  public EmitMCCodeEmitterHeaderFilePass(LcbConfiguration lcbConfiguration) throws IOException {
     super(lcbConfiguration);
-    this.processorName = processorName;
   }
 
   @Override
@@ -30,8 +26,9 @@ public class EmitMCCodeEmitterHeaderFilePass extends LcbTemplateRenderingPass {
 
   @Override
   protected String getOutputPath() {
-    return "lcb/llvm/lib/Target/" + processorName.value() + "/MCTargetDesc/"
-        + processorName.value() + "MCCodeEmitter.h";
+    var processorName = lcbConfiguration().processorName().value();
+    return "lcb/llvm/lib/Target/" + processorName + "/MCTargetDesc/"
+        + processorName + "MCCodeEmitter.h";
   }
 
   @Override

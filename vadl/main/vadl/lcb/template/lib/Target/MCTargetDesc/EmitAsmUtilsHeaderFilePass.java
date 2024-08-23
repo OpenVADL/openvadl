@@ -15,12 +15,9 @@ import vadl.viam.Specification;
  */
 public class EmitAsmUtilsHeaderFilePass extends LcbTemplateRenderingPass {
 
-  private final ProcessorName processorName;
-
-  public EmitAsmUtilsHeaderFilePass(LcbConfiguration lcbConfiguration, ProcessorName processorName)
+  public EmitAsmUtilsHeaderFilePass(LcbConfiguration lcbConfiguration)
       throws IOException {
     super(lcbConfiguration);
-    this.processorName = processorName;
   }
 
   @Override
@@ -30,7 +27,7 @@ public class EmitAsmUtilsHeaderFilePass extends LcbTemplateRenderingPass {
 
   @Override
   protected String getOutputPath() {
-    return "llvm/lib/Target/" + processorName.value() + "/MCTargetDesc/AsmUtils.h";
+    return "llvm/lib/Target/" + lcbConfiguration().processorName().value() + "/MCTargetDesc/AsmUtils.h";
   }
 
   @Override

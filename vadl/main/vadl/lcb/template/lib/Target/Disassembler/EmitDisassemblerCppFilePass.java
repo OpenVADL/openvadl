@@ -17,12 +17,9 @@ import vadl.viam.Specification;
  */
 public class EmitDisassemblerCppFilePass extends LcbTemplateRenderingPass {
 
-  private final ProcessorName processorName;
-
-  public EmitDisassemblerCppFilePass(LcbConfiguration lcbConfiguration, ProcessorName processorName)
+  public EmitDisassemblerCppFilePass(LcbConfiguration lcbConfiguration)
       throws IOException {
     super(lcbConfiguration);
-    this.processorName = processorName;
   }
 
   @Override
@@ -32,7 +29,8 @@ public class EmitDisassemblerCppFilePass extends LcbTemplateRenderingPass {
 
   @Override
   protected String getOutputPath() {
-    return "llvm/lib/Target/" + processorName.value() + "/Disassembler/" + processorName.value()
+    return "llvm/lib/Target/" + lcbConfiguration().processorName().value() + "/Disassembler/"
+        + lcbConfiguration().processorName().value()
         + "Disassembler.cpp";
   }
 

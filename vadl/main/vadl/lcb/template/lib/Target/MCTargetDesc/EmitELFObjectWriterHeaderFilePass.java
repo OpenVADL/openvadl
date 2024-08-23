@@ -15,12 +15,8 @@ import vadl.viam.Specification;
  */
 public class EmitELFObjectWriterHeaderFilePass extends LcbTemplateRenderingPass {
 
-  private final ProcessorName processorName;
-
-  public EmitELFObjectWriterHeaderFilePass(LcbConfiguration lcbConfiguration,
-                                           ProcessorName processorName) throws IOException {
+  public EmitELFObjectWriterHeaderFilePass(LcbConfiguration lcbConfiguration) throws IOException {
     super(lcbConfiguration);
-    this.processorName = processorName;
   }
 
   @Override
@@ -30,8 +26,9 @@ public class EmitELFObjectWriterHeaderFilePass extends LcbTemplateRenderingPass 
 
   @Override
   protected String getOutputPath() {
-    return "lcb/llvm/lib/Target/" + processorName.value() + "/MCTargetDesc/"
-        + processorName.value() + "ELFObjectWriter.h";
+    var processorName = lcbConfiguration().processorName().value();
+    return "lcb/llvm/lib/Target/" + processorName + "/MCTargetDesc/"
+        + processorName + "ELFObjectWriter.h";
   }
 
   @Override

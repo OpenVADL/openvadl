@@ -14,13 +14,8 @@ import vadl.viam.Specification;
  * This file contains the calling conventions for the defined backend.
  */
 public class EmitCallingConvTableGenFilePass extends LcbTemplateRenderingPass {
-
-  private final ProcessorName processorName;
-
-  public EmitCallingConvTableGenFilePass(LcbConfiguration lcbConfiguration,
-                                         ProcessorName processorName) throws IOException {
+  public EmitCallingConvTableGenFilePass(LcbConfiguration lcbConfiguration) throws IOException {
     super(lcbConfiguration);
-    this.processorName = processorName;
   }
 
   @Override
@@ -30,7 +25,8 @@ public class EmitCallingConvTableGenFilePass extends LcbTemplateRenderingPass {
 
   @Override
   protected String getOutputPath() {
-    return "llvm/lib/Target/" + processorName.value() + "/" + processorName.value()
+    var processorName = lcbConfiguration().processorName().value();
+    return "llvm/lib/Target/" + processorName + "/" + processorName
         + "CallingConv.td";
   }
 

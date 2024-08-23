@@ -15,12 +15,8 @@ import vadl.viam.Specification;
  */
 public class EmitLldManualEncodingHeaderFilePass extends LcbTemplateRenderingPass {
 
-  private final ProcessorName processorName;
-
-  public EmitLldManualEncodingHeaderFilePass(LcbConfiguration lcbConfiguration,
-                                             ProcessorName processorName) throws IOException {
+  public EmitLldManualEncodingHeaderFilePass(LcbConfiguration lcbConfiguration) throws IOException {
     super(lcbConfiguration);
-    this.processorName = processorName;
   }
 
   @Override
@@ -30,7 +26,7 @@ public class EmitLldManualEncodingHeaderFilePass extends LcbTemplateRenderingPas
 
   @Override
   protected String getOutputPath() {
-    return "lld/ELF/Arch/" + processorName.value() + "ManualEncoding.cpp";
+    return "lld/ELF/Arch/" + lcbConfiguration().processorName().value() + "ManualEncoding.cpp";
   }
 
   @Override

@@ -10,7 +10,6 @@ import vadl.gcb.passes.encoding_generation.GenerateFieldAccessEncodingFunctionPa
 import vadl.gcb.passes.type_normalization.CppTypeNormalizationForDecodingsPass;
 import vadl.gcb.passes.type_normalization.CppTypeNormalizationForEncodingsPass;
 import vadl.gcb.passes.type_normalization.CppTypeNormalizationForPredicatesPass;
-import vadl.gcb.valuetypes.ProcessorName;
 import vadl.configuration.LcbConfiguration;
 import vadl.lcb.passes.isaMatching.IsaMatchingPass;
 import vadl.lcb.passes.llvmLowering.LlvmLoweringPass;
@@ -51,249 +50,148 @@ public final class PassOrder {
   /**
    * This is the pass order which must be executed to get a LLVM compiler.
    */
-  public static List<Pass> lcb(LcbConfiguration configuration, ProcessorName processorName)
+  public static List<Pass> lcb(LcbConfiguration configuration)
       throws IOException {
     List<Pass> passes = new ArrayList<>(gcbAndCppCodeGen(configuration));
     passes.add(new IsaMatchingPass(configuration));
     passes.add(new LlvmLoweringPass(configuration));
-    passes.add(new vadl.lcb.clang.lib.Driver.ToolChains.EmitClangToolChainFilePass(configuration,
-        processorName));
-    passes.add(new vadl.lcb.clang.lib.Basic.Targets.EmitClangTargetHeaderFilePass(configuration,
-        processorName));
-    passes.add(new vadl.lcb.clang.lib.Basic.Targets.EmitClangTargetsFilePass(configuration,
-        processorName));
-    passes.add(new vadl.lcb.clang.lib.Basic.Targets.EmitClangTargetCppFilePass(configuration,
-        processorName));
+    passes.add(new vadl.lcb.clang.lib.Driver.ToolChains.EmitClangToolChainFilePass(configuration));
+    passes.add(new vadl.lcb.clang.lib.Basic.Targets.EmitClangTargetHeaderFilePass(configuration));
+    passes.add(new vadl.lcb.clang.lib.Basic.Targets.EmitClangTargetsFilePass(configuration));
+    passes.add(new vadl.lcb.clang.lib.Basic.Targets.EmitClangTargetCppFilePass(configuration));
+    passes.add(new vadl.lcb.template.clang.lib.Basic.EmitClangBasicCMakeFilePass(configuration));
     passes.add(
-        new vadl.lcb.template.clang.lib.Basic.EmitClangBasicCMakeFilePass(configuration,
-            processorName));
-    passes.add(new vadl.lcb.template.clang.lib.CodeGen.EmitCodeGenModuleCMakeFilePass(configuration,
-        processorName));
+        new vadl.lcb.template.clang.lib.CodeGen.EmitCodeGenModuleCMakeFilePass(configuration));
     passes.add(new vadl.lcb.template.clang.lib.CodeGen.Targets.EmitClangCodeGenTargetFilePass(
-        configuration,
-        processorName));
+        configuration));
     passes.add(
-        new vadl.lcb.template.clang.lib.CodeGen.EmitCodeGenTargetInfoHeaderFilePass(configuration,
-            processorName));
+        new vadl.lcb.template.clang.lib.CodeGen.EmitCodeGenTargetInfoHeaderFilePass(configuration));
+    passes.add(new vadl.lcb.clang.lib.CodeGen.EmitCodeGenModuleFilePass(configuration));
+    passes.add(new vadl.lcb.template.lld.ELF.EmitLldDriverFilePass(configuration));
+    passes.add(new vadl.lcb.template.lld.ELF.EmitLldELFCMakeFilePass(configuration));
+    passes.add(new vadl.lcb.template.lld.ELF.EmitLldTargetHeaderFilePass(configuration));
     passes.add(
-        new vadl.lcb.clang.lib.CodeGen.EmitCodeGenModuleFilePass(configuration, processorName));
-    passes.add(new vadl.lcb.template.lld.ELF.EmitLldDriverFilePass(configuration, processorName));
-    passes.add(new vadl.lcb.template.lld.ELF.EmitLldELFCMakeFilePass(configuration, processorName));
+        new vadl.lcb.template.lld.ELF.Arch.EmitLldTargetRelocationsHeaderFilePass(configuration));
     passes.add(
-        new vadl.lcb.template.lld.ELF.EmitLldTargetHeaderFilePass(configuration, processorName));
-    passes.add(
-        new vadl.lcb.template.lld.ELF.Arch.EmitLldTargetRelocationsHeaderFilePass(configuration,
-            processorName));
-    passes.add(new vadl.lcb.template.lld.ELF.Arch.EmitLldManualEncodingHeaderFilePass(configuration,
-        processorName));
-    passes.add(
-        new vadl.lcb.template.lld.ELF.Arch.EmitImmediateUtilsHeaderFilePass(configuration,
-            processorName));
-    passes.add(
-        new vadl.lcb.template.lld.ELF.Arch.EmitLldArchFilePass(configuration, processorName));
-    passes.add(
-        new vadl.lcb.template.lld.ELF.EmitLldTargetCppFilePass(configuration, processorName));
-    passes.add(new vadl.lcb.template.EmitLcbMakeFilePass(configuration, processorName));
+        new vadl.lcb.template.lld.ELF.Arch.EmitLldManualEncodingHeaderFilePass(configuration));
+    passes.add(new vadl.lcb.template.lld.ELF.Arch.EmitImmediateUtilsHeaderFilePass(configuration));
+    passes.add(new vadl.lcb.template.lld.ELF.Arch.EmitLldArchFilePass(configuration));
+    passes.add(new vadl.lcb.template.lld.ELF.EmitLldTargetCppFilePass(configuration));
+    passes.add(new vadl.lcb.template.EmitLcbMakeFilePass(configuration));
     passes.add(new vadl.lcb.include.llvm.BinaryFormat.ELFRelocs.EmitTargetElfRelocsDefFilePass(
-        configuration, processorName));
+        configuration));
+    passes.add(new vadl.lcb.include.llvm.BinaryFormat.EmitElfHeaderFilePass(configuration));
+    passes.add(new vadl.lcb.include.llvm.Object.EmitELFObjectHeaderFilePass(configuration));
+    passes.add(new vadl.lcb.template.lib.Misc.EmitBenchmarkRegisterHeaderFilePass(configuration));
+    passes.add(new vadl.lcb.template.lib.Target.EmitFrameLoweringCppFilePass(configuration));
     passes.add(
-        new vadl.lcb.include.llvm.BinaryFormat.EmitElfHeaderFilePass(configuration, processorName));
+        new vadl.lcb.template.lib.Target.EmitMachineFunctionInfoHeaderFilePass(configuration));
+    passes.add(new vadl.lcb.template.lib.Target.EmitTargetObjectFileCppFilePass(configuration));
+    passes.add(new vadl.lcb.template.lib.Target.EmitInstrInfoHeaderFilePass(configuration));
+    passes.add(new vadl.lcb.template.lib.Target.EmitExpandPseudoHeaderFilePass(configuration));
+    passes.add(new vadl.lcb.template.lib.Target.EmitDAGToDAGIselHeaderFilePass(configuration));
     passes.add(
-        new vadl.lcb.include.llvm.Object.EmitELFObjectHeaderFilePass(configuration, processorName));
-    passes.add(
-        new vadl.lcb.template.lib.Misc.EmitBenchmarkRegisterHeaderFilePass(configuration,
-            processorName));
-    passes.add(new vadl.lcb.template.lib.Target.EmitFrameLoweringCppFilePass(configuration,
-        processorName));
-    passes.add(new vadl.lcb.template.lib.Target.EmitMachineFunctionInfoHeaderFilePass(configuration,
-        processorName));
-    passes.add(
-        new vadl.lcb.template.lib.Target.EmitTargetObjectFileCppFilePass(configuration,
-            processorName));
-    passes.add(
-        new vadl.lcb.template.lib.Target.EmitInstrInfoHeaderFilePass(configuration, processorName));
-    passes.add(
-        new vadl.lcb.template.lib.Target.EmitExpandPseudoHeaderFilePass(configuration,
-            processorName));
-    passes.add(
-        new vadl.lcb.template.lib.Target.EmitDAGToDAGIselHeaderFilePass(configuration,
-            processorName));
-    passes.add(
-        new vadl.lcb.template.lib.Target.AsmParser.EmitAsmParsedOperandCppFilePass(configuration,
-            processorName));
-    passes.add(
-        new vadl.lcb.template.lib.Target.AsmParser.EmitAsmParsedOperandHeaderFilePass(configuration,
-            processorName));
+        new vadl.lcb.template.lib.Target.AsmParser.EmitAsmParsedOperandCppFilePass(configuration));
+    passes.add(new vadl.lcb.template.lib.Target.AsmParser.EmitAsmParsedOperandHeaderFilePass(
+        configuration));
     passes.add(
         new vadl.lcb.template.lib.Target.AsmParser.EmitAsmRecursiveDescentParserHeaderFilePass(
-            configuration,
-            processorName));
-    passes.add(new vadl.lcb.template.lib.Target.AsmParser.EmitAsmParserCppFilePass(configuration,
-        processorName));
+            configuration));
+    passes.add(new vadl.lcb.template.lib.Target.AsmParser.EmitAsmParserCppFilePass(configuration));
     passes.add(
-        new vadl.lcb.template.lib.Target.AsmParser.EmitAsmParserCMakeFilePass(configuration,
-            processorName));
+        new vadl.lcb.template.lib.Target.AsmParser.EmitAsmParserCMakeFilePass(configuration));
+    passes.add(new vadl.lcb.template.lib.Target.AsmParser.EmitAsmRecursiveDescentParserCppFilePass(
+        configuration));
     passes.add(
-        new vadl.lcb.template.lib.Target.AsmParser.EmitAsmRecursiveDescentParserCppFilePass(
-            configuration,
-            processorName));
+        new vadl.lcb.template.lib.Target.EmitDAGToDAGISelCppFilePass(configuration));
+    passes.add(new vadl.lcb.template.lib.Target.EmitAsmPrinterHeaderFilePass(configuration));
+    passes.add(new vadl.lcb.template.lib.Target.EmitCallingConvTableGenFilePass(configuration));
+    passes.add(new vadl.lcb.template.lib.Target.EmitRegisterInfoHeaderFilePass(configuration));
+    passes.add(new vadl.lcb.template.lib.Target.Utils.EmitBaseInfoFilePass(configuration));
+    passes.add(new vadl.lcb.template.lib.Target.Utils.EmitImmediateFilePass(configuration));
+    passes.add(new vadl.lcb.template.lib.Target.EmitTargetTableGenFilePass(configuration));
+    passes.add(new vadl.lcb.template.lib.Target.EmitTargetHeaderFilePass(configuration));
+    passes.add(new vadl.lcb.template.lib.Target.EmitAsmPrinterCppFilePass(configuration));
+    passes.add(new vadl.lcb.template.lib.Target.EmitSubTargetHeaderFilePass(configuration));
+    passes.add(new vadl.lcb.template.lib.Target.EmitFrameLoweringHeaderFilePass(configuration));
+    passes.add(new vadl.lcb.template.lib.Target.EmitPassConfigHeaderFilePass(configuration));
     passes.add(
-        new vadl.lcb.template.lib.Target.EmitDAGToDAGISelCppFilePass(configuration, processorName));
-    passes.add(new vadl.lcb.template.lib.Target.EmitAsmPrinterHeaderFilePass(configuration,
-        processorName));
+        new vadl.lcb.template.lib.Target.Disassembler.EmitDisassemblerCppFilePass(configuration));
+    passes.add(new vadl.lcb.template.lib.Target.Disassembler.EmitDisassemblerHeaderFilePass(
+        configuration));
     passes.add(
-        new vadl.lcb.template.lib.Target.EmitCallingConvTableGenFilePass(configuration,
-            processorName));
+        new vadl.lcb.template.lib.Target.Disassembler.EmitDisassemblerCMakeFilePass(configuration));
+    passes.add(new vadl.lcb.template.lib.Target.EmitISelLoweringCppFilePass(configuration));
     passes.add(
-        new vadl.lcb.template.lib.Target.EmitRegisterInfoHeaderFilePass(configuration,
-            processorName));
+        new vadl.lcb.template.lib.Target.TargetInfo.EmitTargetInfoHeaderFilePass(configuration));
     passes.add(
-        new vadl.lcb.template.lib.Target.Utils.EmitBaseInfoFilePass(configuration, processorName));
+        new vadl.lcb.template.lib.Target.TargetInfo.EmitTargetInfoCMakeFilePass(configuration));
+    passes.add(new vadl.lcb.template.lib.Target.TargetInfo.EmitTargetInfoCppFile(configuration));
+    passes.add(new vadl.lcb.template.lib.Target.EmitPassConfigCppFilePass(configuration));
+    passes.add(new vadl.lcb.template.lib.Target.EmitSubTargetCppFilePass(configuration));
+    passes.add(new vadl.lcb.template.lib.Target.EmitTargetCMakeFilePass(configuration));
+    passes.add(new vadl.lcb.template.lib.Target.MCTargetDesc.EmitMCCodeEmitterHeaderFilePass(
+        configuration));
     passes.add(
-        new vadl.lcb.template.lib.Target.Utils.EmitImmediateFilePass(configuration, processorName));
+        new vadl.lcb.template.lib.Target.MCTargetDesc.EmitMCCodeEmitterCppFilePass(configuration));
     passes.add(
-        new vadl.lcb.template.lib.Target.EmitTargetTableGenFilePass(configuration, processorName));
+        new vadl.lcb.template.lib.Target.MCTargetDesc.EmitAsmStreamerCppFilePass(configuration));
     passes.add(
-        new vadl.lcb.template.lib.Target.EmitTargetHeaderFilePass(configuration, processorName));
+        new vadl.lcb.template.lib.Target.MCTargetDesc.EmitELFStreamerCppFilePass(configuration));
     passes.add(
-        new vadl.lcb.template.lib.Target.EmitAsmPrinterCppFilePass(configuration, processorName));
+        new vadl.lcb.template.lib.Target.MCTargetDesc.EmitMCInstExpanderCppFilePass(configuration));
     passes.add(
-        new vadl.lcb.template.lib.Target.EmitSubTargetHeaderFilePass(configuration, processorName));
+        new vadl.lcb.template.lib.Target.MCTargetDesc.EmitAsmBackendHeaderFilePass(configuration));
+    passes.add(new vadl.lcb.template.lib.Target.MCTargetDesc.EmitELFObjectWriterCppFilePass(
+        configuration));
     passes.add(
-        new vadl.lcb.template.lib.Target.EmitFrameLoweringHeaderFilePass(configuration,
-            processorName));
-    passes.add(new vadl.lcb.template.lib.Target.EmitPassConfigHeaderFilePass(configuration,
-        processorName));
+        new vadl.lcb.template.lib.Target.MCTargetDesc.EmitMCExprHeaderFilePass(configuration));
+    passes.add(new EmitMCInstLowerCppFilePass(configuration));
+    passes.add(new vadl.lcb.template.lib.Target.MCTargetDesc.EmitMCExprCppFilePass(configuration));
+    passes.add(new vadl.lcb.template.lib.Target.MCTargetDesc.EmitMCTargetDescHeaderFilePass(
+        configuration));
     passes.add(
-        new vadl.lcb.template.lib.Target.Disassembler.EmitDisassemblerCppFilePass(configuration,
-            processorName));
+        new vadl.lcb.template.lib.Target.MCTargetDesc.EmitMCTargetDescCMakeFilePass(configuration));
     passes.add(
-        new vadl.lcb.template.lib.Target.Disassembler.EmitDisassemblerHeaderFilePass(configuration,
-            processorName));
+        new vadl.lcb.template.lib.Target.MCTargetDesc.EmitAsmUtilsCppFilePass(configuration));
     passes.add(
-        new vadl.lcb.template.lib.Target.Disassembler.EmitDisassemblerCMakeFilePass(configuration,
-            processorName));
+        new vadl.lcb.template.lib.Target.MCTargetDesc.EmitMCTargetDescCppFilePass(configuration));
+    passes.add(new vadl.lcb.template.lib.Target.MCTargetDesc.EmitInstrPrinterHeaderFilePass(
+        configuration));
     passes.add(
-        new vadl.lcb.template.lib.Target.EmitISelLoweringCppFilePass(configuration, processorName));
+        new vadl.lcb.template.lib.Target.MCTargetDesc.EmitAsmBackendCppFilePass(configuration));
     passes.add(
-        new vadl.lcb.template.lib.Target.TargetInfo.EmitTargetInfoHeaderFilePass(configuration,
-            processorName));
+        new vadl.lcb.template.lib.Target.MCTargetDesc.EmitMCAsmInfoCppFilePass(configuration));
     passes.add(
-        new vadl.lcb.template.lib.Target.TargetInfo.EmitTargetInfoCMakeFilePass(configuration,
-            processorName));
+        new vadl.lcb.template.lib.Target.MCTargetDesc.EmitELFStreamerHeaderFilePass(configuration));
     passes.add(
-        new vadl.lcb.template.lib.Target.TargetInfo.EmitTargetInfoCppFile(configuration,
-            processorName));
-    passes.add(
-        new vadl.lcb.template.lib.Target.EmitPassConfigCppFilePass(configuration, processorName));
-    passes.add(
-        new vadl.lcb.template.lib.Target.EmitSubTargetCppFilePass(configuration, processorName));
-    passes.add(
-        new vadl.lcb.template.lib.Target.EmitTargetCMakeFilePass(configuration, processorName));
-    passes.add(
-        new vadl.lcb.template.lib.Target.MCTargetDesc.EmitMCCodeEmitterHeaderFilePass(configuration,
-            processorName));
-    passes.add(
-        new vadl.lcb.template.lib.Target.MCTargetDesc.EmitMCCodeEmitterCppFilePass(configuration,
-            processorName));
-    passes.add(
-        new vadl.lcb.template.lib.Target.MCTargetDesc.EmitAsmStreamerCppFilePass(configuration,
-            processorName));
-    passes.add(
-        new vadl.lcb.template.lib.Target.MCTargetDesc.EmitELFStreamerCppFilePass(configuration,
-            processorName));
-    passes.add(
-        new vadl.lcb.template.lib.Target.MCTargetDesc.EmitMCInstExpanderCppFilePass(configuration,
-            processorName));
-    passes.add(
-        new vadl.lcb.template.lib.Target.MCTargetDesc.EmitAsmBackendHeaderFilePass(configuration,
-            processorName));
-    passes.add(
-        new vadl.lcb.template.lib.Target.MCTargetDesc.EmitELFObjectWriterCppFilePass(configuration,
-            processorName));
-    passes.add(new vadl.lcb.template.lib.Target.MCTargetDesc.EmitMCExprHeaderFilePass(configuration,
-        processorName));
-    passes.add(
-        new EmitMCInstLowerCppFilePass(configuration,
-            processorName));
-    passes.add(
-        new vadl.lcb.template.lib.Target.MCTargetDesc.EmitMCExprCppFilePass(configuration,
-            processorName));
-    passes.add(
-        new vadl.lcb.template.lib.Target.MCTargetDesc.EmitMCTargetDescHeaderFilePass(configuration,
-            processorName));
-    passes.add(
-        new vadl.lcb.template.lib.Target.MCTargetDesc.EmitMCTargetDescCMakeFilePass(configuration,
-            processorName));
-    passes.add(
-        new vadl.lcb.template.lib.Target.MCTargetDesc.EmitAsmUtilsCppFilePass(configuration,
-            processorName));
-    passes.add(
-        new vadl.lcb.template.lib.Target.MCTargetDesc.EmitMCTargetDescCppFilePass(configuration,
-            processorName));
-    passes.add(
-        new vadl.lcb.template.lib.Target.MCTargetDesc.EmitInstrPrinterHeaderFilePass(configuration,
-            processorName));
-    passes.add(
-        new vadl.lcb.template.lib.Target.MCTargetDesc.EmitAsmBackendCppFilePass(configuration,
-            processorName));
-    passes.add(new vadl.lcb.template.lib.Target.MCTargetDesc.EmitMCAsmInfoCppFilePass(configuration,
-        processorName));
-    passes.add(
-        new vadl.lcb.template.lib.Target.MCTargetDesc.EmitELFStreamerHeaderFilePass(configuration,
-            processorName));
-    passes.add(
-        new vadl.lcb.template.lib.Target.MCTargetDesc.EmitAsmStreamerHeaderFilePass(configuration,
-            processorName));
+        new vadl.lcb.template.lib.Target.MCTargetDesc.EmitAsmStreamerHeaderFilePass(configuration));
     passes.add(new vadl.lcb.template.lib.Target.MCTargetDesc.EmitTargetStreamerHeaderFilePass(
-        configuration,
-        processorName));
+        configuration));
     passes.add(
-        new vadl.lcb.template.lib.Target.MCTargetDesc.EmitMCAsmInfoHeaderFilePass(configuration,
-            processorName));
-    passes.add(
-        new EmitMCInstLowerHeaderFilePass(configuration,
-            processorName));
+        new vadl.lcb.template.lib.Target.MCTargetDesc.EmitMCAsmInfoHeaderFilePass(configuration));
+    passes.add(new EmitMCInstLowerHeaderFilePass(configuration));
     passes.add(new vadl.lcb.template.lib.Target.MCTargetDesc.EmitELFObjectWriterHeaderFilePass(
-        configuration,
-        processorName));
+        configuration));
     passes.add(
-        new vadl.lcb.template.lib.Target.MCTargetDesc.EmitFixupKindsHeaderFilePass(configuration,
-            processorName));
+        new vadl.lcb.template.lib.Target.MCTargetDesc.EmitFixupKindsHeaderFilePass(configuration));
     passes.add(
-        new vadl.lcb.template.lib.Target.MCTargetDesc.EmitInstrPrinterCppFilePass(configuration,
-            processorName));
+        new vadl.lcb.template.lib.Target.MCTargetDesc.EmitInstrPrinterCppFilePass(configuration));
     passes.add(
-        new vadl.lcb.template.lib.Target.MCTargetDesc.EmitAsmUtilsHeaderFilePass(configuration,
-            processorName));
+        new vadl.lcb.template.lib.Target.MCTargetDesc.EmitAsmUtilsHeaderFilePass(configuration));
     passes.add(new vadl.lcb.template.lib.Target.MCTargetDesc.EmitMCInstExpanderHeaderFilePass(
-        configuration,
-        processorName));
-    passes.add(
-        new vadl.lcb.template.lib.Target.EmitRegisterInfoTableGenFilePass(configuration,
-            processorName));
-    passes.add(
-        new vadl.lcb.template.lib.Target.EmitInstrInfoCppFilePass(configuration, processorName));
-    passes.add(new vadl.lcb.template.lib.Target.EmitInstrInfoTableGenFilePass(configuration,
-        processorName));
-    passes.add(
-        new vadl.lcb.template.lib.Target.EmitRegisterInfoCppFilePass(configuration, processorName));
-    passes.add(new vadl.lcb.template.lib.Target.EmitTargetMachineCppFilePass(configuration,
-        processorName));
-    passes.add(
-        new vadl.lcb.template.lib.Target.EmitTargetMachineHeaderFilePass(configuration,
-            processorName));
-    passes.add(
-        new vadl.lcb.template.lib.Target.EmitExpandPseudoCppFilePass(configuration, processorName));
-    passes.add(
-        new vadl.lcb.template.lib.Target.EmitTargetObjectFileHeaderFilePass(configuration,
-            processorName));
-    passes.add(
-        new vadl.lcb.template.lib.Target.EmitISelLoweringHeaderFilePass(configuration,
-            processorName));
-    passes.add(
-        new vadl.lcb.template.lib.TargetParser.EmitTripleCppFilePass(configuration, processorName));
-    passes.add(new vadl.lcb.template.lib.Object.EmitElfCppFilePass(configuration, processorName));
+        configuration));
+    passes.add(new vadl.lcb.template.lib.Target.EmitRegisterInfoTableGenFilePass(configuration));
+    passes.add(new vadl.lcb.template.lib.Target.EmitInstrInfoCppFilePass(configuration));
+    passes.add(new vadl.lcb.template.lib.Target.EmitInstrInfoTableGenFilePass(configuration));
+    passes.add(new vadl.lcb.template.lib.Target.EmitRegisterInfoCppFilePass(configuration));
+    passes.add(new vadl.lcb.template.lib.Target.EmitTargetMachineCppFilePass(configuration));
+    passes.add(new vadl.lcb.template.lib.Target.EmitTargetMachineHeaderFilePass(configuration));
+    passes.add(new vadl.lcb.template.lib.Target.EmitExpandPseudoCppFilePass(configuration));
+    passes.add(new vadl.lcb.template.lib.Target.EmitTargetObjectFileHeaderFilePass(configuration));
+    passes.add(new vadl.lcb.template.lib.Target.EmitISelLoweringHeaderFilePass(configuration));
+    passes.add(new vadl.lcb.template.lib.TargetParser.EmitTripleCppFilePass(configuration));
+    passes.add(new vadl.lcb.template.lib.Object.EmitElfCppFilePass(configuration));
 
     return passes;
   }

@@ -13,12 +13,9 @@ import vadl.viam.Specification;
  */
 public class EmitLcbMakeFilePass extends LcbTemplateRenderingPass {
 
-  private final ProcessorName processorName;
-
-  public EmitLcbMakeFilePass(LcbConfiguration lcbConfiguration, ProcessorName processorName)
+  public EmitLcbMakeFilePass(LcbConfiguration lcbConfiguration)
       throws IOException {
     super(lcbConfiguration);
-    this.processorName = processorName;
   }
 
   @Override

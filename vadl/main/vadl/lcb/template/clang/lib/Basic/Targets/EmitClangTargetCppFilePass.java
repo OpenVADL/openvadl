@@ -17,12 +17,9 @@ import vadl.viam.Specification;
  */
 public class EmitClangTargetCppFilePass extends LcbTemplateRenderingPass {
 
-  private final ProcessorName processorName;
-
-  public EmitClangTargetCppFilePass(LcbConfiguration lcbConfiguration, ProcessorName processorName)
+  public EmitClangTargetCppFilePass(LcbConfiguration lcbConfiguration)
       throws IOException {
     super(lcbConfiguration);
-    this.processorName = processorName;
   }
 
   @Override
@@ -32,7 +29,7 @@ public class EmitClangTargetCppFilePass extends LcbTemplateRenderingPass {
 
   @Override
   protected String getOutputPath() {
-    return "clang/lib/Basic/Targets/" + processorName.value() + ".cpp";
+    return "clang/lib/Basic/Targets/" +  lcbConfiguration().processorName().value() + ".cpp";
   }
 
   @Override

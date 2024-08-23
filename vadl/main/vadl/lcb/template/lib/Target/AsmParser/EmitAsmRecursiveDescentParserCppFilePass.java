@@ -15,12 +15,9 @@ import vadl.viam.Specification;
  */
 public class EmitAsmRecursiveDescentParserCppFilePass extends LcbTemplateRenderingPass {
 
-  private final ProcessorName processorName;
-
-  public EmitAsmRecursiveDescentParserCppFilePass(LcbConfiguration lcbConfiguration,
-                                                  ProcessorName processorName) throws IOException {
+  public EmitAsmRecursiveDescentParserCppFilePass(LcbConfiguration lcbConfiguration)
+      throws IOException {
     super(lcbConfiguration);
-    this.processorName = processorName;
   }
 
   @Override
@@ -30,7 +27,8 @@ public class EmitAsmRecursiveDescentParserCppFilePass extends LcbTemplateRenderi
 
   @Override
   protected String getOutputPath() {
-    return "llvm/lib/Target/" + processorName.value() + "/AsmParser/AsmRecursiveDescentParser.cpp";
+    return "llvm/lib/Target/" + lcbConfiguration().processorName().value() +
+        "/AsmParser/AsmRecursiveDescentParser.cpp";
   }
 
   @Override

@@ -15,12 +15,9 @@ import vadl.viam.Specification;
  */
 public class EmitDAGToDAGISelCppFilePass extends LcbTemplateRenderingPass {
 
-  private final ProcessorName processorName;
-
-  public EmitDAGToDAGISelCppFilePass(LcbConfiguration lcbConfiguration, ProcessorName processorName)
+  public EmitDAGToDAGISelCppFilePass(LcbConfiguration lcbConfiguration)
       throws IOException {
     super(lcbConfiguration);
-    this.processorName = processorName;
   }
 
   @Override
@@ -30,7 +27,8 @@ public class EmitDAGToDAGISelCppFilePass extends LcbTemplateRenderingPass {
 
   @Override
   protected String getOutputPath() {
-    return "llvm/lib/Target/" + processorName.value() + "/" + processorName.value()
+    var processorName = lcbConfiguration().processorName().value();
+    return "llvm/lib/Target/" + processorName + "/" + processorName
         + "DAGToDAGISel.cpp";
   }
 

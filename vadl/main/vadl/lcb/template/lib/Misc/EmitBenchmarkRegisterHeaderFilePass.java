@@ -15,12 +15,8 @@ import vadl.viam.Specification;
  */
 public class EmitBenchmarkRegisterHeaderFilePass extends LcbTemplateRenderingPass {
 
-  private final ProcessorName processorName;
-
-  public EmitBenchmarkRegisterHeaderFilePass(LcbConfiguration lcbConfiguration,
-                                             ProcessorName processorName) throws IOException {
+  public EmitBenchmarkRegisterHeaderFilePass(LcbConfiguration lcbConfiguration) throws IOException {
     super(lcbConfiguration);
-    this.processorName = processorName;
   }
 
   @Override

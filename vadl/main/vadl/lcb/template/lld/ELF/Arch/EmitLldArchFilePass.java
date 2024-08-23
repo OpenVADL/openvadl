@@ -16,13 +16,9 @@ import vadl.viam.Specification;
  */
 public class EmitLldArchFilePass extends LcbTemplateRenderingPass {
 
-  private final ProcessorName processorName;
-
-  public EmitLldArchFilePass(LcbConfiguration lcbConfiguration,
-                             ProcessorName processorName)
+  public EmitLldArchFilePass(LcbConfiguration lcbConfiguration)
       throws IOException {
     super(lcbConfiguration);
-    this.processorName = processorName;
   }
 
   @Override
@@ -32,7 +28,7 @@ public class EmitLldArchFilePass extends LcbTemplateRenderingPass {
 
   @Override
   protected String getOutputPath() {
-    return "lld/ELF/Arch/" + processorName.value() + ".cpp";
+    return "lld/ELF/Arch/" + lcbConfiguration().processorName().value() + ".cpp";
   }
 
   record ElfInfo(boolean isBigEndian, int maxInstructionWordSize) {

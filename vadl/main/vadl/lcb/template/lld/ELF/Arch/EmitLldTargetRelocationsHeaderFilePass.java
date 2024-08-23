@@ -15,12 +15,9 @@ import vadl.viam.Specification;
  */
 public class EmitLldTargetRelocationsHeaderFilePass extends LcbTemplateRenderingPass {
 
-  private final ProcessorName processorName;
-
-  public EmitLldTargetRelocationsHeaderFilePass(LcbConfiguration lcbConfiguration,
-                                                ProcessorName processorName) throws IOException {
+  public EmitLldTargetRelocationsHeaderFilePass(LcbConfiguration lcbConfiguration)
+      throws IOException {
     super(lcbConfiguration);
-    this.processorName = processorName;
   }
 
   @Override
@@ -30,7 +27,7 @@ public class EmitLldTargetRelocationsHeaderFilePass extends LcbTemplateRendering
 
   @Override
   protected String getOutputPath() {
-    return "lld/ELF/Arch/" + processorName.value() + "Relocations.hpp";
+    return "lld/ELF/Arch/" + lcbConfiguration().processorName().value() + "Relocations.hpp";
   }
 
   @Override

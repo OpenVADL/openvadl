@@ -29,12 +29,9 @@ import vadl.viam.Specification;
  */
 public class EmitImmediateFilePass extends LcbTemplateRenderingPass {
 
-  private final ProcessorName processorName;
-
-  public EmitImmediateFilePass(LcbConfiguration lcbConfiguration, ProcessorName processorName)
+  public EmitImmediateFilePass(LcbConfiguration lcbConfiguration)
       throws IOException {
     super(lcbConfiguration);
-    this.processorName = processorName;
   }
 
   @Override
@@ -44,8 +41,9 @@ public class EmitImmediateFilePass extends LcbTemplateRenderingPass {
 
   @Override
   protected String getOutputPath() {
-    return "lcb/llvm/lib/Target/" + processorName.value() + "/Utils/"
-        + processorName.value() + "ImmediateUtils.h";
+    var processorName = lcbConfiguration().processorName().value();
+    return "lcb/llvm/lib/Target/" + processorName + "/Utils/"
+        + processorName + "ImmediateUtils.h";
   }
 
   @Override

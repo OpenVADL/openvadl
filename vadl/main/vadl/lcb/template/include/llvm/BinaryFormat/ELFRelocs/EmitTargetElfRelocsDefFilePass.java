@@ -16,12 +16,8 @@ import vadl.viam.Specification;
  */
 public class EmitTargetElfRelocsDefFilePass extends LcbTemplateRenderingPass {
 
-  private final ProcessorName processorName;
-
-  public EmitTargetElfRelocsDefFilePass(LcbConfiguration lcbConfiguration,
-                                        ProcessorName processorName) throws IOException {
+  public EmitTargetElfRelocsDefFilePass(LcbConfiguration lcbConfiguration) throws IOException {
     super(lcbConfiguration);
-    this.processorName = processorName;
   }
 
   @Override
@@ -31,7 +27,8 @@ public class EmitTargetElfRelocsDefFilePass extends LcbTemplateRenderingPass {
 
   @Override
   protected String getOutputPath() {
-    return "llvm/include/llvm/BinaryFormat/ELFRelocs/" + processorName.value() + ".def";
+    return "llvm/include/llvm/BinaryFormat/ELFRelocs/" +
+        lcbConfiguration().processorName().value() + ".def";
   }
 
   record Relocation(String identifier) {

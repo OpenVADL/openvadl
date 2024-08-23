@@ -15,12 +15,8 @@ import vadl.viam.Specification;
  */
 public class EmitAsmParsedOperandCppFilePass extends LcbTemplateRenderingPass {
 
-  private final ProcessorName processorName;
-
-  public EmitAsmParsedOperandCppFilePass(LcbConfiguration lcbConfiguration,
-                                         ProcessorName processorName) throws IOException {
+  public EmitAsmParsedOperandCppFilePass(LcbConfiguration lcbConfiguration) throws IOException {
     super(lcbConfiguration);
-    this.processorName = processorName;
   }
 
   @Override
@@ -30,7 +26,8 @@ public class EmitAsmParsedOperandCppFilePass extends LcbTemplateRenderingPass {
 
   @Override
   protected String getOutputPath() {
-    return "llvm/lib/Target/" + processorName.value() + "/AsmParser/AsmParsedOperand.cpp";
+    return "llvm/lib/Target/" + lcbConfiguration().processorName().value() +
+        "/AsmParser/AsmParsedOperand.cpp";
   }
 
   @Override

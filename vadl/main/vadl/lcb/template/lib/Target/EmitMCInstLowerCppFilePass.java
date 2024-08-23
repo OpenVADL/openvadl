@@ -15,12 +15,9 @@ import vadl.viam.Specification;
  */
 public class EmitMCInstLowerCppFilePass extends LcbTemplateRenderingPass {
 
-  private final ProcessorName processorName;
-
-  public EmitMCInstLowerCppFilePass(LcbConfiguration lcbConfiguration, ProcessorName processorName)
+  public EmitMCInstLowerCppFilePass(LcbConfiguration lcbConfiguration)
       throws IOException {
     super(lcbConfiguration);
-    this.processorName = processorName;
   }
 
   @Override
@@ -30,8 +27,9 @@ public class EmitMCInstLowerCppFilePass extends LcbTemplateRenderingPass {
 
   @Override
   protected String getOutputPath() {
-    return "lcb/llvm/lib/Target/" + processorName.value() + "/"
-        + processorName.value() + "MCInstLower.cpp";
+    var processorName = lcbConfiguration().processorName().value();
+    return "lcb/llvm/lib/Target/" + processorName + "/"
+        + processorName + "MCInstLower.cpp";
   }
 
   @Override

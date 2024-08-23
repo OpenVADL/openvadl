@@ -16,12 +16,8 @@ import vadl.viam.Specification;
  */
 public class EmitFixupKindsHeaderFilePass extends LcbTemplateRenderingPass {
 
-  private final ProcessorName processorName;
-
-  public EmitFixupKindsHeaderFilePass(LcbConfiguration lcbConfiguration,
-                                      ProcessorName processorName) throws IOException {
+  public EmitFixupKindsHeaderFilePass(LcbConfiguration lcbConfiguration) throws IOException {
     super(lcbConfiguration);
-    this.processorName = processorName;
   }
 
   @Override
@@ -31,8 +27,9 @@ public class EmitFixupKindsHeaderFilePass extends LcbTemplateRenderingPass {
 
   @Override
   protected String getOutputPath() {
-    return "llvm/lib/Target/" + processorName.value() + "/MCTargetDesc/"
-        + processorName.value() + "FixupKinds.h";
+    var processorName = lcbConfiguration().processorName().value();
+    return "llvm/lib/Target/" + processorName + "/MCTargetDesc/"
+        + processorName + "FixupKinds.h";
   }
 
   record Relocation(String mcFixupKindIdentifier) {

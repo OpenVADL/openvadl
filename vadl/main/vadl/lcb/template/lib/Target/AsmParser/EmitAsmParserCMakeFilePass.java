@@ -14,13 +14,9 @@ import vadl.viam.Specification;
  * This file contains the CMakeFile for the AsmParser.
  */
 public class EmitAsmParserCMakeFilePass extends LcbTemplateRenderingPass {
-
-  private final ProcessorName processorName;
-
-  public EmitAsmParserCMakeFilePass(LcbConfiguration lcbConfiguration, ProcessorName processorName)
+  public EmitAsmParserCMakeFilePass(LcbConfiguration lcbConfiguration)
       throws IOException {
     super(lcbConfiguration);
-    this.processorName = processorName;
   }
 
   @Override
@@ -30,7 +26,7 @@ public class EmitAsmParserCMakeFilePass extends LcbTemplateRenderingPass {
 
   @Override
   protected String getOutputPath() {
-    return "llvm/lib/Target/" + processorName.value() + "/AsmParser/CMakeLists.txt";
+    return "llvm/lib/Target/" + lcbConfiguration().processorName().value() + "/AsmParser/CMakeLists.txt";
   }
 
   @Override

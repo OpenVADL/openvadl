@@ -15,12 +15,9 @@ import vadl.viam.Specification;
  */
 public class EmitTargetInfoCMakeFilePass extends LcbTemplateRenderingPass {
 
-  private final ProcessorName processorName;
-
-  public EmitTargetInfoCMakeFilePass(LcbConfiguration lcbConfiguration, ProcessorName processorName)
+  public EmitTargetInfoCMakeFilePass(LcbConfiguration lcbConfiguration)
       throws IOException {
     super(lcbConfiguration);
-    this.processorName = processorName;
   }
 
   @Override
@@ -30,7 +27,7 @@ public class EmitTargetInfoCMakeFilePass extends LcbTemplateRenderingPass {
 
   @Override
   protected String getOutputPath() {
-    return "lcb/llvm/lib/Target/" + processorName.value() + "/TargetInfo/CMakeLists.txt";
+    return "lcb/llvm/lib/Target/" + lcbConfiguration().processorName().value() + "/TargetInfo/CMakeLists.txt";
   }
 
   @Override

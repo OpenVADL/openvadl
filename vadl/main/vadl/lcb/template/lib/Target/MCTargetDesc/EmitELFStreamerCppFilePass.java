@@ -15,12 +15,9 @@ import vadl.viam.Specification;
  */
 public class EmitELFStreamerCppFilePass extends LcbTemplateRenderingPass {
 
-  private final ProcessorName processorName;
-
-  public EmitELFStreamerCppFilePass(LcbConfiguration lcbConfiguration, ProcessorName processorName)
+  public EmitELFStreamerCppFilePass(LcbConfiguration lcbConfiguration)
       throws IOException {
     super(lcbConfiguration);
-    this.processorName = processorName;
   }
 
   @Override
@@ -30,8 +27,9 @@ public class EmitELFStreamerCppFilePass extends LcbTemplateRenderingPass {
 
   @Override
   protected String getOutputPath() {
-    return "lcb/llvm/lib/Target/" + processorName.value() + "/MCTargetDesc/"
-        + processorName.value() + "ELFStreamer.cpp";
+    var processorName = lcbConfiguration().processorName().value();
+    return "lcb/llvm/lib/Target/" + processorName + "/MCTargetDesc/"
+        + processorName + "ELFStreamer.cpp";
   }
 
   @Override
