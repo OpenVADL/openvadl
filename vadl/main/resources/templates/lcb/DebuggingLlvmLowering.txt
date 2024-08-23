@@ -1,7 +1,0 @@
-Namespace: [(${namespace})]
-Processor Name: [(${processorName})]
-
-ISA Matching:
-[# th:each="instruction : ${isa}" ]
-[(${instruction.label})]: [(${instruction.matchedInstruction})]
-[/]

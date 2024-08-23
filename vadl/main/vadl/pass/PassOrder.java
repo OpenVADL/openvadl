@@ -4,7 +4,7 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 import vadl.gcb.passes.encoding_generation.GenerateFieldAccessEncodingFunctionPass;
-import vadl.gcb.passes.field_node_replacement.FieldNodeReplacementPassForDecoding;
+import vadl.cppCodeGen.passes.fieldNodeReplacement.FieldNodeReplacementPassForDecoding;
 import vadl.gcb.passes.type_normalization.CppTypeNormalizationForDecodingsPass;
 import vadl.gcb.passes.type_normalization.CppTypeNormalizationForEncodingsPass;
 import vadl.gcb.passes.type_normalization.CppTypeNormalizationForPredicatesPass;
@@ -276,7 +276,6 @@ public final class PassOrder {
     passes.add(
         new vadl.lcb.template.lib.TargetParser.EmitTripleCppFilePass(configuration, processorName));
     passes.add(new vadl.lcb.template.lib.Object.EmitElfCppFilePass(configuration, processorName));
-    passes.add(new vadl.lcb.template.DebuggingLlvmLoweringPass(configuration, processorName));
 
     return passes;
   }
