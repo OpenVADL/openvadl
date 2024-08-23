@@ -19,7 +19,7 @@ public abstract class AbstractLcbTest extends AbstractCppCodeGenTest {
         new ProcessorName("processorNameValue"));
   }
 
-  public Pair<PassManager, Specification> runLcb(LcbConfiguration configuration,
+  public TestSetup runLcb(LcbConfiguration configuration,
                                                  String specPath,
                                                  PassKey until)
       throws IOException, DuplicatedPassKeyException {

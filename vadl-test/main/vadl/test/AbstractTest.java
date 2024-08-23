@@ -299,8 +299,8 @@ public class AbstractTest {
   }
 
 
-  public Pair<PassManager, Specification> setupPassManagerAndRunSpec(String specPath,
-                                                                     List<Pass> passes)
+  public TestSetup setupPassManagerAndRunSpec(String specPath,
+                                              List<Pass> passes)
       throws IOException, DuplicatedPassKeyException {
     var spec = runAndGetViamSpecification(specPath);
 
@@ -308,13 +308,13 @@ public class AbstractTest {
     passManager.add(passes);
     passManager.run(spec);
 
-    return Pair.of(passManager, spec);
+    return new TestSetup(passManager, spec);
   }
 
 
-  public Pair<PassManager, Specification> setupPassManagerAndRunSpecUntil(String specPath,
-                                                                          List<Pass> passes,
-                                                                          PassKey until)
+  public TestSetup setupPassManagerAndRunSpecUntil(String specPath,
+                                                   List<Pass> passes,
+                                                   PassKey until)
       throws IOException, DuplicatedPassKeyException {
     var spec = runAndGetViamSpecification(specPath);
 
@@ -322,7 +322,7 @@ public class AbstractTest {
     passManager.add(passes);
     passManager.runUntilInclusive(spec, until);
 
-    return Pair.of(passManager, spec);
+    return new TestSetup(passManager, spec);
   }
 
   public static Path createDirectory() throws IOException {
@@ -332,5 +332,9 @@ public class AbstractTest {
   public GeneralConfiguration getConfiguration(boolean doDump) throws IOException {
     var directory = createDirectory();
     return new GeneralConfiguration(directory.toAbsolutePath().toString(), doDump);
+  }
+
+  public record TestSetup(PassManager passManager, Specification specification) {
+
   }
 }

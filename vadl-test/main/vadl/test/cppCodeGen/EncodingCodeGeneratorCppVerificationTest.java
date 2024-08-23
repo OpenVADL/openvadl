@@ -42,8 +42,8 @@ public class EncodingCodeGeneratorCppVerificationTest extends AbstractCppCodeGen
   Collection<DynamicTest> instructions() throws IOException, DuplicatedPassKeyException {
     var setup = setupPassManagerAndRunSpec("examples/rv3264im.vadl",
         PassOrder.gcbAndCppCodeGen(getConfiguration(false)));
-    var passManager = setup.left();
-    var spec = setup.right();
+    var passManager = setup.passManager();
+    var spec = setup.specification();
 
     var normalizedDecodings =
         (IdentityHashMap<Function, Function>) passManager.getPassResults().get(new PassKey(

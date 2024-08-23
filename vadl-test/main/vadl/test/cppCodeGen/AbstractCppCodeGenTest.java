@@ -17,8 +17,8 @@ public class AbstractCppCodeGenTest extends DockerExecutionTest {
     return new GcbConfiguration(super.getConfiguration(doDump));
   }
 
-  public Pair<PassManager, Specification> runGcbAndCppCodeGen(GcbConfiguration configuration,
-                                                              String specPath, PassKey until)
+  public TestSetup runGcbAndCppCodeGen(GcbConfiguration configuration,
+                                       String specPath, PassKey until)
       throws IOException, DuplicatedPassKeyException {
     return setupPassManagerAndRunSpecUntil(specPath,
         PassOrder.gcbAndCppCodeGen(configuration), until);

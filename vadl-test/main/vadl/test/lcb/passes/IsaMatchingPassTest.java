@@ -55,7 +55,7 @@ public class IsaMatchingPassTest extends AbstractLcbTest {
     // Given
     var setup = runLcb(getConfiguration(false), "examples/rv3264im.vadl",
         new PassKey(IsaMatchingPass.class.getName()));
-    var passManager = setup.left();
+    var passManager = setup.passManager();
 
     // When
     HashMap<InstructionLabel, List<Instruction>> matchings =

@@ -207,8 +207,8 @@ public class LlvmLoweringPassTest extends AbstractLcbTest {
     // Given
     var setup = runLcb(getConfiguration(false), "examples/rv3264im.vadl",
         new PassKey(LlvmLoweringPass.class.getName()));
-    var passManager = setup.left();
-    var spec = setup.right();
+    var passManager = setup.passManager();
+    var spec = setup.specification();
 
     // When
     IdentityHashMap<Instruction, LlvmLoweringPass.LlvmLoweringIntermediateResult>

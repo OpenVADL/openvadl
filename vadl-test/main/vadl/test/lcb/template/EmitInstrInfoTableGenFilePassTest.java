@@ -14,10 +14,10 @@ public class EmitInstrInfoTableGenFilePassTest extends AbstractLcbTest {
   @Test
   void testLowering() throws IOException, DuplicatedPassKeyException {
     // Given
-    var pair = runLcb(getConfiguration(false), "examples/rv3264im.vadl",
+    var testSetup = runLcb(getConfiguration(false), "examples/rv3264im.vadl",
         new PassKey(EmitInstrInfoTableGenFilePass.class.getName()));
-    var passManager = pair.left();
-    var spec = pair.right();
+    var passManager = testSetup.passManager();
+    var spec = testSetup.specification();
 
     // When
     //var template = readOutputFile()
