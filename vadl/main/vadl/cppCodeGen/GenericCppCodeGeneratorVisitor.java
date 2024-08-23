@@ -102,8 +102,8 @@ public abstract class GenericCppCodeGeneratorVisitor implements GraphNodeVisitor
       int msbOffset = 2;
       if (part.lsb() > 0) {
         writer.write(
-            " & " + generateBitmask(part.msb() + msbOffset) + " & ~((1 << " + part.lsb() +
-                ") - 1))");
+            " & " + generateBitmask(part.msb() + msbOffset) + " & ~((1 << " + part.lsb()
+                + ") - 1))");
       } else {
         /*
         Example
