@@ -5,6 +5,8 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.IdentityHashMap;
+import net.jqwik.api.Arbitraries;
+import net.jqwik.api.Arbitrary;
 import org.junit.jupiter.api.DynamicTest;
 import org.junit.jupiter.api.TestFactory;
 import org.slf4j.Logger;
@@ -17,7 +19,8 @@ import vadl.lcb.codegen.DecodingCodeGenerator;
 import vadl.lcb.codegen.EncodingCodeGenerator;
 import vadl.pass.PassKey;
 import vadl.pass.exception.DuplicatedPassKeyException;
-import vadl.utils.Triple;
+import vadl.types.BitsType;
+import vadl.utils.Quadruple;
 import vadl.viam.Function;
 
 public class EncodingCodeGeneratorCppVerificationTest extends AbstractCppCodeGenTest {
@@ -53,21 +56,34 @@ public class EncodingCodeGeneratorCppVerificationTest extends AbstractCppCodeGen
             fieldAccess -> {
               var accessFunction = normalizedDecodings.get(fieldAccess.accessFunction());
               var encodeFunction = normalizedEncodings.get(fieldAccess.encoding());
-              return new Triple<>(fieldAccess.identifier.name(), accessFunction, encodeFunction);
+              var inputType =
+                  Arrays.stream(fieldAccess.accessFunction().parameters()).findFirst().get().type();
+              return new Quadruple<>(fieldAccess.identifier.name(), (BitsType) inputType,
+                  accessFunction,
+                  encodeFunction);
             })
         .toList();
 
     ArrayList<DynamicTest> tests = new ArrayList<>();
     for (var entry : entries) {
-      tests.add(DynamicTest.dynamicTest(entry.left(), () -> {
-        testFieldAccess(entry.left(), entry.middle(), entry.right());
-      }));
+      var arbitrary = uint(entry.second().bitWidth());
+      arbitrary.sampleStream().limit(15).forEach(sample -> {
+        var displayName = entry.first() + " sample=" + sample;
+        tests.add(DynamicTest.dynamicTest(displayName,
+            () -> testFieldAccess(entry.first(), sample, entry.third(), entry.fourth())));
+      });
     }
 
     return tests;
   }
 
+
+  Arbitrary<Integer> uint(int bitWidth) {
+    return Arbitraries.integers().greaterOrEqual(0).lessOrEqual((int) Math.pow(2, bitWidth));
+  }
+
   void testFieldAccess(String testName,
+                       int sample,
                        Function acccessFunction,
                        Function encodingFunction) {
     var decodeCodeGenerator = new DecodingCodeGenerator();
@@ -101,7 +117,7 @@ public class EncodingCodeGeneratorCppVerificationTest extends AbstractCppCodeGen
         decodeFunction,
         encodeFunction,
         expectedReturnType,
-        31L,
+        sample,
         EncodingCodeGenerator.generateFunctionName(encodingFunction.identifier.lower()),
         DecodingCodeGenerator.generateFunctionName(acccessFunction.identifier.lower()));
 
