@@ -2,7 +2,7 @@ package vadl;
 
 import java.io.IOException;
 import vadl.gcb.valuetypes.ProcessorName;
-import vadl.lcb.config.LcbConfiguration;
+import vadl.configuration.LcbConfiguration;
 import vadl.lcb.template.EmitLcbMakeFilePass;
 import vadl.pass.PassKey;
 import vadl.pass.PassManager;

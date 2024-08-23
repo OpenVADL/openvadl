@@ -5,6 +5,7 @@ import com.google.errorprone.annotations.FormatString;
 import java.io.IOException;
 import javax.annotation.Nullable;
 import org.jetbrains.annotations.Contract;
+import vadl.configuration.GeneralConfiguration;
 import vadl.pass.exception.PassError;
 import vadl.viam.Specification;
 import vadl.viam.graph.ViamGraphError;
@@ -13,6 +14,12 @@ import vadl.viam.graph.ViamGraphError;
  * A pass is a unit of execution. It analysis or transforms a VADL specification.
  */
 public abstract class Pass {
+  private GeneralConfiguration configuration;
+
+  protected Pass(GeneralConfiguration configuration) {
+    this.configuration = configuration;
+  }
+
   /**
    * Get the name of the pass.
    */

@@ -3,9 +3,11 @@ package vadl.pass;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.function.Predicate;
 import java.util.stream.Collectors;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import vadl.configuration.GeneralConfiguration;
 import vadl.pass.exception.DuplicatedPassKeyException;
 import vadl.viam.Specification;
 
@@ -67,10 +69,38 @@ public class PassManager {
   }
 
   /**
-   * Run the passes which have been added in order.
+   * Run all the passes in the order which they have been added.
    */
   public void run(Specification viam) throws IOException {
+    // Accept every pass to run the whole pipeline.
+    run(viam, passKey -> false);
+  }
+
+  /**
+   * Run all the passes in the order which they have been added until the {@link Pass}
+   * with the given {@code passKey} (inclusive).
+   */
+  public void runUntilInclusive(Specification spec, PassKey passKey) throws IOException {
+    run(spec, passKey::equals);
+  }
+
+  /**
+   * Run all the passes in the order which they have been added when the
+   * {@link java.util.function.Predicate} matches.
+   */
+  private void run(Specification viam, Predicate<PassKey> predicate) throws IOException {
+    var affectedSteps = new ArrayList<PassStep>();
+
+    // Go over pipeline and check whether the predicate matches.
+    // If it does then stop adding passes to `affectedSteps`.
     for (var step : pipeline) {
+      affectedSteps.add(step);
+      if (predicate.test(step.key())) {
+        break;
+      }
+    }
+
+    for (var step : affectedSteps) {
       logger.atDebug().log("Running pass with key: {}", step.key());
       // Wrapping the passResults into an unmodifiable map so a pass cannot modify
       // the results.

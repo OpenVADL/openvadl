@@ -5,6 +5,8 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Stream;
 import org.jetbrains.annotations.Nullable;
+import vadl.configuration.GcbConfiguration;
+import vadl.configuration.GeneralConfiguration;
 import vadl.pass.Pass;
 import vadl.pass.PassResults;
 import vadl.viam.Function;
@@ -18,6 +20,10 @@ import vadl.viam.graph.dependency.FuncParamNode;
  * will be replaced to {@link FuncParamNode}.
  */
 public abstract class FieldNodeReplacementPass extends Pass {
+
+  protected FieldNodeReplacementPass(GcbConfiguration configuration) {
+    super(configuration);
+  }
 
   /**
    * Get a list of functions on which the pass should be applied on.

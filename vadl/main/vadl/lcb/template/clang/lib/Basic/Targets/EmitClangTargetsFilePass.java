@@ -3,7 +3,7 @@ package vadl.lcb.clang.lib.Basic.Targets;
 import java.io.IOException;
 import java.util.Map;
 import vadl.gcb.valuetypes.ProcessorName;
-import vadl.lcb.config.LcbConfiguration;
+import vadl.configuration.LcbConfiguration;
 import vadl.lcb.template.CommonVarNames;
 import vadl.pass.PassResults;
 import vadl.template.AbstractTemplateRenderingPass;

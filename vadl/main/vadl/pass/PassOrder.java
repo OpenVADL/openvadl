@@ -3,13 +3,15 @@ package vadl.pass;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
+import vadl.configuration.GcbConfiguration;
+import vadl.configuration.GeneralConfiguration;
 import vadl.cppCodeGen.passes.fieldNodeReplacement.FieldNodeReplacementPassForDecoding;
 import vadl.gcb.passes.encoding_generation.GenerateFieldAccessEncodingFunctionPass;
 import vadl.gcb.passes.type_normalization.CppTypeNormalizationForDecodingsPass;
 import vadl.gcb.passes.type_normalization.CppTypeNormalizationForEncodingsPass;
 import vadl.gcb.passes.type_normalization.CppTypeNormalizationForPredicatesPass;
 import vadl.gcb.valuetypes.ProcessorName;
-import vadl.lcb.config.LcbConfiguration;
+import vadl.configuration.LcbConfiguration;
 import vadl.lcb.passes.isaMatching.IsaMatchingPass;
 import vadl.lcb.passes.llvmLowering.LlvmLoweringPass;
 import vadl.lcb.template.lib.Target.EmitMCInstLowerCppFilePass;
@@ -17,27 +19,42 @@ import vadl.lcb.template.lib.Target.EmitMCInstLowerHeaderFilePass;
 import vadl.viam.passes.algebraic_simplication.AlgebraicSimplificationPass;
 import vadl.viam.passes.dummyAbi.DummyAbiPass;
 import vadl.viam.passes.functionInliner.FunctionInlinerPass;
+import vadl.viam.passes.typeCastElimination.TypeCastEliminationPass;
 
 /**
  * This class defines the order in which the {@link PassManager} should run them.
  */
 public final class PassOrder {
+
+  public static List<Pass> viam(GeneralConfiguration configuration) {
+    List<Pass> passes = new ArrayList<>();
+
+    passes.add(new TypeCastEliminationPass(configuration));
+    passes.add(new FunctionInlinerPass(configuration));
+    passes.add(new AlgebraicSimplificationPass(configuration));
+
+    return passes;
+  }
+
+  public static List<Pass> gcbAndCppCodeGen(GcbConfiguration gcbConfiguration) {
+    List<Pass> passes = new ArrayList<>(viam(gcbConfiguration));
+
+    passes.add(new GenerateFieldAccessEncodingFunctionPass(gcbConfiguration));
+    passes.add(new FieldNodeReplacementPassForDecoding(gcbConfiguration));
+    passes.add(new CppTypeNormalizationForEncodingsPass(gcbConfiguration));
+    passes.add(new CppTypeNormalizationForDecodingsPass(gcbConfiguration));
+    passes.add(new CppTypeNormalizationForPredicatesPass(gcbConfiguration));
+
+    return passes;
+  }
+
   /**
    * This is the pass order which must be executed to get a LLVM compiler.
    */
-  public static List<Pass> viamLcb(LcbConfiguration configuration, ProcessorName processorName)
+  public static List<Pass> lcb(LcbConfiguration configuration, ProcessorName processorName)
       throws IOException {
-    List<Pass> passes = new ArrayList<>();
-
-    passes.add(new DummyAbiPass());
-    passes.add(new vadl.viam.passes.typeCastElimination.TypeCastEliminationPass());
-    passes.add(new FunctionInlinerPass());
-    passes.add(new AlgebraicSimplificationPass());
-    passes.add(new GenerateFieldAccessEncodingFunctionPass());
-    passes.add(new FieldNodeReplacementPassForDecoding());
-    passes.add(new CppTypeNormalizationForEncodingsPass());
-    passes.add(new CppTypeNormalizationForDecodingsPass());
-    passes.add(new CppTypeNormalizationForPredicatesPass());
+    List<Pass> passes = new ArrayList<>(gcbAndCppCodeGen(configuration));
+    
     passes.add(new IsaMatchingPass());
     passes.add(new LlvmLoweringPass());
     passes.add(new vadl.gcb.passes.encoding_generation.GenerateFieldAccessEncodingFunctionPass());

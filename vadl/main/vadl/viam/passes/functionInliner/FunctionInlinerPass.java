@@ -5,6 +5,7 @@ import java.io.IOException;
 import java.util.Arrays;
 import java.util.IdentityHashMap;
 import org.jetbrains.annotations.Nullable;
+import vadl.configuration.GeneralConfiguration;
 import vadl.pass.Pass;
 import vadl.pass.PassName;
 import vadl.pass.PassResults;
@@ -24,6 +25,10 @@ import vadl.viam.graph.dependency.FuncParamNode;
  * saves the original uninlined instruction's behavior as pass result.
  */
 public class FunctionInlinerPass extends Pass {
+  public FunctionInlinerPass(GeneralConfiguration configuration) {
+    super(configuration);
+  }
+
   @Override
   public PassName getName() {
     return new PassName("FunctionInlinerPass");
