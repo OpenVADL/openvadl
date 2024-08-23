@@ -2,6 +2,7 @@ package vadl.viam.passes.dummyAbi;
 
 import java.io.IOException;
 import org.jetbrains.annotations.Nullable;
+import vadl.configuration.GeneralConfiguration;
 import vadl.pass.Pass;
 import vadl.pass.PassName;
 import vadl.pass.PassResults;
@@ -13,6 +14,10 @@ import vadl.viam.Specification;
  * Inserts a {@link DummyAbi} to the {@link Specification}.
  */
 public class DummyAbiPass extends Pass {
+
+  protected DummyAbiPass(GeneralConfiguration configuration) {
+    super(configuration);
+  }
 
   @Override
   public PassName getName() {
