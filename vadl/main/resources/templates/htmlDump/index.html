@@ -19,7 +19,7 @@
 </head>
 <body class="flex flex-nowrap font-sans">
 
-<!-- Right side - Table of Contents -->
+<!-- Left side - Table of Contents -->
 <div class="overflow-y-auto h-screen p-6 flex-none">
     <nav class="pt-16 px-1 pl-3 lg:pl-0 lg:pt-2 font-normal text-base lg:text-sm pb-10 lg:pb-20 sticky?lg:h-(screen-18)"
     >
@@ -37,7 +37,7 @@
     </nav>
 </div>
 
-<!-- Left side - List of definitions -->
+<!-- Right side - List of definitions -->
 <div class="w-full p-4 overflow-auto h-screen">
     <h1 id="specification" class="text-xl font-bold mb-4 tracking-wide">[[${title}]]</h1>
 
@@ -77,6 +77,7 @@
     <!-- Separator between passes and start of specifications   -->
     <div class="w-full my-10 border border-gray-200"></div>
 
+    <!-- entry/entity fragement to render a single entity -->
     <div th:fragment="entry(entry)" th:if="${entry != null}" th:id="${entry.cssId}"
        class="block my-4 px-6 pt-4 pb-2 bg-white border border-gray-200 rounded-lg shadow"
     >
@@ -115,6 +116,7 @@
 
 <!--/*@thymesVar id="tag" type="vadl.dump.Info.Tag"*/-->
 
+<!-- Render tag infos -->
 <div th:fragment="tags(infos, entity)"
      th:if="${infos != null}"
      class="flex items-center flex-wrap gap-x-4 gap-y-2 py-1">
@@ -133,7 +135,7 @@
         Name</span>
 </div>
 
-
+<!-- Render expandable infos -->
 <div th:fragment="expandables(infos, entity)" th:if="${infos != null and !infos.isEmpty}"
      th:id="'accordion-collapse-' + ${entity.cssId}"
      data-accordion="collapse">
@@ -174,6 +176,7 @@
 
 </div>
 
+<!-- Render modal infos -->
 <div th:fragment="modals(infos, entity)" th:if="${infos != null and !infos.isEmpty}"
      th:id="'modals-' + ${entity.cssId}"
      data-accordion="collapse"

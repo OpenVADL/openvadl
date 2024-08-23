@@ -100,6 +100,10 @@ public final class PassResults {
     return new PassResults();
   }
 
+  /**
+   * Holds all components of a finished pass execution, namely the unique {@link PassKey},
+   * the actual {@link Pass} instance and the result object from the pass execution.
+   */
   public record SingleResult(
       PassKey passKey,
       Pass pass,

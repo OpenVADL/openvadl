@@ -6,7 +6,21 @@ import java.util.Objects;
 import javax.annotation.Nullable;
 import vadl.utils.Pair;
 
-abstract public class DumpEntity {
+/**
+ * The dump entity is an element that is rendered in the HTML dump.
+ * Every rectangle in the HTML dump represents one DumpEntity. They are produced by
+ * {@link DumpEntitySupplier}, while the most common entity is the
+ * {@link vadl.dump.supplier.ViamEntitySupplier.DefinitionEntity} provided by the
+ * {@link vadl.dump.supplier.ViamEntitySupplier}, which represents a defninition in the VIAM.
+ *
+ * <p>Each DumpEntity has a cssId which is a id that is used in the HTML for reference.
+ * Additionally each dump entity has a set of {@link Info} and sub-entities.
+ * Those sub entities are rendered as boxes within boxes.
+ * The name of a DumpEntity is used as title of the box.
+ * The {@link TocKey} defines the group/name of the TOC (such as 'Functions') and the
+ * rank.</p>
+ */
+public abstract class DumpEntity {
 
   private List<Sub> subEntities = new ArrayList<>();
   private List<Info> infos = new ArrayList<Info>();
@@ -27,6 +41,9 @@ abstract public class DumpEntity {
     return this;
   }
 
+  /**
+   * Get all tag infos for this entity.
+   */
   public List<Info.Tag> tagInfos() {
     return infos.stream()
         .filter(Info.Tag.class::isInstance)
@@ -34,6 +51,9 @@ abstract public class DumpEntity {
         .toList();
   }
 
+  /**
+   * Get all expandable infos for this entity.
+   */
   public List<Info.Expandable> expandableInfos() {
     return infos.stream()
         .filter(Info.Expandable.class::isInstance)
@@ -41,6 +61,9 @@ abstract public class DumpEntity {
         .toList();
   }
 
+  /**
+   * Get all modal infos for this entity.
+   */
   public List<Info.Modal> modalInfos() {
     return infos.stream()
         .filter(Info.Modal.class::isInstance)
@@ -53,6 +76,13 @@ abstract public class DumpEntity {
   }
 
 
+  /**
+   * The TocKey groups top-level entities, so they are bundled in the TOC under one
+   * group name.
+   * Additionally, TocKey has a rank that defines in what position of the TOC the entity
+   * group belongs to.
+   * The smaller the rank the higher it is visible in the TOC.
+   */
   public class TocKey {
     private String name;
     private int rank;
@@ -92,6 +122,10 @@ abstract public class DumpEntity {
   }
 
 
+  /**
+   * The sub entity of a dump entity. It holds the actual entity and a name that
+   * is rendered above the nested entity box.
+   */
   public static class Sub {
     @Nullable
     public String name;

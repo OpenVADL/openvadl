@@ -6,28 +6,68 @@ import java.util.Collection;
 import java.util.Comparator;
 import java.util.List;
 import java.util.Map;
+import java.util.function.Consumer;
 import java.util.stream.Collectors;
+import vadl.dump.supplier.ViamEnricherCollection;
 import vadl.dump.supplier.ViamEntitySupplier;
-import vadl.pass.PassKey;
 import vadl.pass.PassResults;
 import vadl.template.AbstractTemplateRenderingPass;
 import vadl.viam.Specification;
-import vadl.dump.supplier.ViamEnricherCollection;
 
 
+/**
+ * The HTML dump pass emits a debug dump of the VIAM specification in HTML form.
+ * The main information source comes from registered {@link DumpEntitySupplier}s that
+ * produce {@link DumpEntity}s that get rendered as boxes.
+ * The registered {@link InfoEnricher}s enrich the entities by {@link Info} objects.
+ * Those info objects are rendered in the entity box depending on their concrete type (e.g.
+ * {@link Info.Tag}.
+ *
+ * <p>To add your own entity supplier, add yours to the {@code entitySuppliers} field.
+ * To add a new info enricher, add it to the {@code infoEnrichers} field.
+ * Take a look at {@link ViamEnricherCollection} to see an example on how to implement
+ * new info enrichers.</p>
+ *
+ * <p>Also note that infos are rendered in the same order as the info enrichers are registered.</p>
+ *
+ * @see DumpEntitySupplier
+ * @see InfoEnricher
+ * @see Info
+ * @see ViamEntitySupplier
+ * @see ViamEnricherCollection
+ */
 public class HtmlDumpPass extends AbstractTemplateRenderingPass {
 
-  static SupplierCollection<DumpEntitySupplier<?>> entitySuppliers =
-      new SupplierCollection<DumpEntitySupplier<?>>()
-          .add(new ViamEntitySupplier());
+  /**
+   * A function that collects all available entity suppliers.
+   * Add your supplier to activate it.
+   */
+  static Consumer<List<DumpEntitySupplier<?>>> entitySuppliers = suppliers -> {
+    suppliers.add(new ViamEntitySupplier());
+  };
 
-  static SupplierCollection<InfoEnricher> infoEnricher = new SupplierCollection<InfoEnricher>()
-      .addAll(ViamEnricherCollection.all);
+  /**
+   * A function to collect all information enrichers.
+   * Add your enricher to activate it.
+   */
+  static Consumer<List<InfoEnricher>> infoEnrichers = enrichers -> {
+    enrichers.addAll(ViamEnricherCollection.all);
+  };
 
-  public record Config(
-      String phase,
-      String outputPath
-  ) {
+
+  /**
+   * The config of the HtmlDumpPass.
+   * It requires the name of the phase the dump happens in and the output path
+   * where the dump should be written to.
+   */
+  public static class Config {
+    String phase;
+    String outputPath;
+
+    public Config(String phase, String outputPath) {
+      this.phase = phase;
+      this.outputPath = outputPath;
+    }
   }
 
   private final Config config;
@@ -50,14 +90,23 @@ public class HtmlDumpPass extends AbstractTemplateRenderingPass {
   @Override
   protected Map<String, Object> createVariables(PassResults passResults,
                                                 Specification specification) {
-    var suppliers = entitySuppliers.suppliers();
+    // collect suppliers
+    var suppliers = new ArrayList<DumpEntitySupplier<?>>();
+    entitySuppliers.accept(suppliers);
+
+    // get all top-level entities from all suppliers
     var entities = suppliers.stream()
         .flatMap(e -> e.getEntities(specification, passResults).stream())
         .toList();
 
 
+    // collect all info enrichers
+    var enrichers = new ArrayList<InfoEnricher>();
+    infoEnrichers.accept(enrichers);
+
+    // apply all enrichers to all entities (also sub entities)
     for (var entity : entities) {
-      applyOnThisAndSubEntities(entity, infoEnricher, passResults);
+      applyOnThisAndSubEntities(entity, enrichers, passResults);
     }
 
     var tocMapList = entities.stream()
@@ -65,7 +114,7 @@ public class HtmlDumpPass extends AbstractTemplateRenderingPass {
         .entrySet().stream()
         .sorted(Comparator.comparingInt(a -> a.getKey().rank()))
         .toList();
-    
+
     var passList = passResults.executedPasses();
 
     return Map.of(
@@ -77,40 +126,19 @@ public class HtmlDumpPass extends AbstractTemplateRenderingPass {
     );
   }
 
+  /**
+   * Applies the given info enrichers to the given entity and all sub entities
+   * of the entity recursively.
+   */
   private static void applyOnThisAndSubEntities(DumpEntity entity,
-                                                SupplierCollection<InfoEnricher> infoEnrichers,
+                                                List<InfoEnricher> infoEnrichers,
                                                 PassResults passResults) {
     for (var subEntity : entity.subEntities()) {
       applyOnThisAndSubEntities(subEntity.subEntity, infoEnrichers, passResults);
     }
-    for (var iSup : infoEnrichers.suppliers()) {
-      iSup.enrich(entity, passResults);
+    for (var infoEnricher : infoEnrichers) {
+      infoEnricher.enrich(entity, passResults);
     }
   }
 
-}
-
-class SupplierCollection<T> {
-  private final List<T> suppliers = new ArrayList<>();
-
-  SupplierCollection() {
-  }
-
-  static <T> SupplierCollection<T> init() {
-    return new SupplierCollection<T>();
-  }
-
-  SupplierCollection<T> addAll(Collection<T> suppliers) {
-    this.suppliers.addAll(suppliers);
-    return this;
-  }
-
-  SupplierCollection<T> add(T supplier) {
-    suppliers.add(supplier);
-    return this;
-  }
-
-  public List<T> suppliers() {
-    return this.suppliers;
-  }
 }
