@@ -5,6 +5,7 @@ import java.util.Map;
 import vadl.gcb.valuetypes.ProcessorName;
 import vadl.configuration.LcbConfiguration;
 import vadl.lcb.template.CommonVarNames;
+import vadl.lcb.template.LcbTemplateRenderingPass;
 import vadl.pass.PassResults;
 import vadl.template.AbstractTemplateRenderingPass;
 import vadl.viam.Specification;
@@ -12,13 +13,13 @@ import vadl.viam.Specification;
 /**
  * This file contains the definitions for the driver logic for MCTarget.
  */
-public class EmitMCTargetDescHeaderFilePass extends AbstractTemplateRenderingPass {
+public class EmitMCTargetDescHeaderFilePass extends LcbTemplateRenderingPass {
 
   private final ProcessorName processorName;
 
   public EmitMCTargetDescHeaderFilePass(LcbConfiguration lcbConfiguration,
                                         ProcessorName processorName) throws IOException {
-    super(lcbConfiguration.outputPath());
+    super(lcbConfiguration);
     this.processorName = processorName;
   }
 

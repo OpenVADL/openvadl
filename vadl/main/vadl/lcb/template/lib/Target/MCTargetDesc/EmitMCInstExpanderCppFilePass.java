@@ -5,6 +5,7 @@ import java.util.Map;
 import vadl.gcb.valuetypes.ProcessorName;
 import vadl.configuration.LcbConfiguration;
 import vadl.lcb.template.CommonVarNames;
+import vadl.lcb.template.LcbTemplateRenderingPass;
 import vadl.pass.PassResults;
 import vadl.template.AbstractTemplateRenderingPass;
 import vadl.viam.Specification;
@@ -12,13 +13,13 @@ import vadl.viam.Specification;
 /**
  * This file includes the implementations for expanding instructions in the MC layer.
  */
-public class EmitMCInstExpanderCppFilePass extends AbstractTemplateRenderingPass {
+public class EmitMCInstExpanderCppFilePass extends LcbTemplateRenderingPass {
 
   private final ProcessorName processorName;
 
   public EmitMCInstExpanderCppFilePass(LcbConfiguration lcbConfiguration,
                                        ProcessorName processorName) throws IOException {
-    super(lcbConfiguration.outputPath());
+    super(lcbConfiguration);
     this.processorName = processorName;
   }
 

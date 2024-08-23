@@ -77,4 +77,8 @@ public abstract class Pass {
     ensure(obj != null, msg);
     return obj;
   }
+
+  public GeneralConfiguration configuration() {
+    return configuration;
+  }
 }

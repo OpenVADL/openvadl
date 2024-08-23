@@ -42,6 +42,8 @@ import java.util.IdentityHashMap;
 import java.util.List;
 import java.util.Set;
 import org.jetbrains.annotations.Nullable;
+import vadl.configuration.GeneralConfiguration;
+import vadl.configuration.LcbConfiguration;
 import vadl.pass.Pass;
 import vadl.pass.PassKey;
 import vadl.pass.PassName;
@@ -85,6 +87,10 @@ import vadl.viam.passes.functionInliner.UninlinedGraph;
  * easier to search for these instructions.
  */
 public class IsaMatchingPass extends Pass {
+  public IsaMatchingPass(LcbConfiguration configuration) {
+    super(configuration);
+  }
+
   @Override
   public PassName getName() {
     return new PassName("IsaMatchingPass");

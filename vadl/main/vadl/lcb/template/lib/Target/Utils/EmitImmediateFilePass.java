@@ -15,6 +15,7 @@ import vadl.lcb.codegen.EncodingCodeGenerator;
 import vadl.lcb.codegen.PredicateCodeGenerator;
 import vadl.configuration.LcbConfiguration;
 import vadl.lcb.template.CommonVarNames;
+import vadl.lcb.template.LcbTemplateRenderingPass;
 import vadl.pass.PassKey;
 import vadl.pass.PassResults;
 import vadl.template.AbstractTemplateRenderingPass;
@@ -26,13 +27,13 @@ import vadl.viam.Specification;
 /**
  * This file contains all the immediates for TableGen.
  */
-public class EmitImmediateFilePass extends AbstractTemplateRenderingPass {
+public class EmitImmediateFilePass extends LcbTemplateRenderingPass {
 
   private final ProcessorName processorName;
 
   public EmitImmediateFilePass(LcbConfiguration lcbConfiguration, ProcessorName processorName)
       throws IOException {
-    super(lcbConfiguration.outputPath());
+    super(lcbConfiguration);
     this.processorName = processorName;
   }
 

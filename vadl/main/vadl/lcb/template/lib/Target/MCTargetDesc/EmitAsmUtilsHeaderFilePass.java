@@ -5,6 +5,7 @@ import java.util.Map;
 import vadl.gcb.valuetypes.ProcessorName;
 import vadl.configuration.LcbConfiguration;
 import vadl.lcb.template.CommonVarNames;
+import vadl.lcb.template.LcbTemplateRenderingPass;
 import vadl.pass.PassResults;
 import vadl.template.AbstractTemplateRenderingPass;
 import vadl.viam.Specification;
@@ -12,13 +13,13 @@ import vadl.viam.Specification;
 /**
  * This file includes the definitions for util functions for asm.
  */
-public class EmitAsmUtilsHeaderFilePass extends AbstractTemplateRenderingPass {
+public class EmitAsmUtilsHeaderFilePass extends LcbTemplateRenderingPass {
 
   private final ProcessorName processorName;
 
   public EmitAsmUtilsHeaderFilePass(LcbConfiguration lcbConfiguration, ProcessorName processorName)
       throws IOException {
-    super(lcbConfiguration.outputPath());
+    super(lcbConfiguration);
     this.processorName = processorName;
   }
 

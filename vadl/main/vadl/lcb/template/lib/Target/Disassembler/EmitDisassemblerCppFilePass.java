@@ -6,6 +6,7 @@ import java.util.Map;
 import vadl.gcb.valuetypes.ProcessorName;
 import vadl.configuration.LcbConfiguration;
 import vadl.lcb.template.CommonVarNames;
+import vadl.lcb.template.LcbTemplateRenderingPass;
 import vadl.pass.PassResults;
 import vadl.template.AbstractTemplateRenderingPass;
 import vadl.viam.RegisterFile;
@@ -14,13 +15,13 @@ import vadl.viam.Specification;
 /**
  * This file contains the target specific implementation for the disassembler.
  */
-public class EmitDisassemblerCppFilePass extends AbstractTemplateRenderingPass {
+public class EmitDisassemblerCppFilePass extends LcbTemplateRenderingPass {
 
   private final ProcessorName processorName;
 
   public EmitDisassemblerCppFilePass(LcbConfiguration lcbConfiguration, ProcessorName processorName)
       throws IOException {
-    super(lcbConfiguration.outputPath());
+    super(lcbConfiguration);
     this.processorName = processorName;
   }
 

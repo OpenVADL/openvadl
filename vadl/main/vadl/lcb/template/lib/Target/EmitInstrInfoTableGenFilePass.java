@@ -11,6 +11,7 @@ import vadl.lcb.passes.llvmLowering.tablegen.lowering.TableGenInstructionRendere
 import vadl.lcb.passes.llvmLowering.tablegen.model.TableGenInstruction;
 import vadl.lcb.passes.llvmLowering.tablegen.model.TableGenInstructionImmediateOperand;
 import vadl.lcb.template.CommonVarNames;
+import vadl.lcb.template.LcbTemplateRenderingPass;
 import vadl.pass.PassKey;
 import vadl.pass.PassResults;
 import vadl.template.AbstractTemplateRenderingPass;
@@ -20,13 +21,13 @@ import vadl.viam.Specification;
 /**
  * This file contains the mapping for ISelNodes to MI.
  */
-public class EmitInstrInfoTableGenFilePass extends AbstractTemplateRenderingPass {
+public class EmitInstrInfoTableGenFilePass extends LcbTemplateRenderingPass {
 
   private final ProcessorName processorName;
 
   public EmitInstrInfoTableGenFilePass(LcbConfiguration lcbConfiguration,
                                        ProcessorName processorName) throws IOException {
-    super(lcbConfiguration.outputPath());
+    super(lcbConfiguration);
     this.processorName = processorName;
   }
 

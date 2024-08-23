@@ -5,6 +5,7 @@ import java.util.Map;
 import vadl.gcb.valuetypes.ProcessorName;
 import vadl.configuration.LcbConfiguration;
 import vadl.lcb.template.CommonVarNames;
+import vadl.lcb.template.LcbTemplateRenderingPass;
 import vadl.pass.PassResults;
 import vadl.template.AbstractTemplateRenderingPass;
 import vadl.viam.Specification;
@@ -12,13 +13,13 @@ import vadl.viam.Specification;
 /**
  * TODO define what this does.
  */
-public class EmitLldManualEncodingHeaderFilePass extends AbstractTemplateRenderingPass {
+public class EmitLldManualEncodingHeaderFilePass extends LcbTemplateRenderingPass {
 
   private final ProcessorName processorName;
 
   public EmitLldManualEncodingHeaderFilePass(LcbConfiguration lcbConfiguration,
                                              ProcessorName processorName) throws IOException {
-    super(lcbConfiguration.outputPath());
+    super(lcbConfiguration);
     this.processorName = processorName;
   }
 

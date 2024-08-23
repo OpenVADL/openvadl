@@ -5,6 +5,7 @@ import java.util.Map;
 import vadl.gcb.valuetypes.ProcessorName;
 import vadl.configuration.LcbConfiguration;
 import vadl.lcb.template.CommonVarNames;
+import vadl.lcb.template.LcbTemplateRenderingPass;
 import vadl.pass.PassResults;
 import vadl.template.AbstractTemplateRenderingPass;
 import vadl.viam.Specification;
@@ -12,13 +13,13 @@ import vadl.viam.Specification;
 /**
  * This file contains the implementation for general assembly info.
  */
-public class EmitMCAsmInfoCppFilePass extends AbstractTemplateRenderingPass {
+public class EmitMCAsmInfoCppFilePass extends LcbTemplateRenderingPass {
 
   private final ProcessorName processorName;
 
   public EmitMCAsmInfoCppFilePass(LcbConfiguration lcbConfiguration, ProcessorName processorName)
       throws IOException {
-    super(lcbConfiguration.outputPath());
+    super(lcbConfiguration);
     this.processorName = processorName;
   }
 

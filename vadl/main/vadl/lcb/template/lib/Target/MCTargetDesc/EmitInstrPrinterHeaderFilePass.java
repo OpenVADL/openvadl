@@ -6,6 +6,7 @@ import java.util.Map;
 import vadl.gcb.valuetypes.ProcessorName;
 import vadl.configuration.LcbConfiguration;
 import vadl.lcb.template.CommonVarNames;
+import vadl.lcb.template.LcbTemplateRenderingPass;
 import vadl.pass.PassResults;
 import vadl.template.AbstractTemplateRenderingPass;
 import vadl.viam.Specification;
@@ -13,13 +14,13 @@ import vadl.viam.Specification;
 /**
  * This file contains the definitions for emitting asm instructions.
  */
-public class EmitInstrPrinterHeaderFilePass extends AbstractTemplateRenderingPass {
+public class EmitInstrPrinterHeaderFilePass extends LcbTemplateRenderingPass {
 
   private final ProcessorName processorName;
 
   public EmitInstrPrinterHeaderFilePass(LcbConfiguration lcbConfiguration,
                                         ProcessorName processorName) throws IOException {
-    super(lcbConfiguration.outputPath());
+    super(lcbConfiguration);
     this.processorName = processorName;
   }
 

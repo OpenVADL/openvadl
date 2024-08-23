@@ -11,13 +11,13 @@ import vadl.viam.Specification;
 /**
  * Makefile for the lcb.
  */
-public class EmitLcbMakeFilePass extends AbstractTemplateRenderingPass {
+public class EmitLcbMakeFilePass extends LcbTemplateRenderingPass {
 
   private final ProcessorName processorName;
 
   public EmitLcbMakeFilePass(LcbConfiguration lcbConfiguration, ProcessorName processorName)
       throws IOException {
-    super(lcbConfiguration.outputPath());
+    super(lcbConfiguration);
     this.processorName = processorName;
   }
 

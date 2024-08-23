@@ -20,7 +20,7 @@ public class EmitClangToolChainFilePass extends AbstractTemplateRenderingPass {
 
   public EmitClangToolChainFilePass(LcbConfiguration lcbConfiguration, ProcessorName processorName)
       throws IOException {
-    super(lcbConfiguration.outputPath());
+    super(lcbConfiguration, "lcb");
     this.processorName = processorName;
   }
 

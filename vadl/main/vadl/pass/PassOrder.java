@@ -54,16 +54,8 @@ public final class PassOrder {
   public static List<Pass> lcb(LcbConfiguration configuration, ProcessorName processorName)
       throws IOException {
     List<Pass> passes = new ArrayList<>(gcbAndCppCodeGen(configuration));
-    
-    passes.add(new IsaMatchingPass());
-    passes.add(new LlvmLoweringPass());
-    passes.add(new vadl.gcb.passes.encoding_generation.GenerateFieldAccessEncodingFunctionPass());
-    passes.add(new vadl.gcb.passes.type_normalization.CppTypeNormalizationForEncodingsPass());
-    passes.add(new vadl.gcb.passes.type_normalization.CppTypeNormalizationForDecodingsPass());
-    passes.add(new vadl.gcb.passes.type_normalization.CppTypeNormalizationForPredicatesPass());
-    passes.add(new DummyAbiPass());
-    passes.add(new vadl.lcb.passes.isaMatching.IsaMatchingPass());
-    passes.add(new vadl.lcb.passes.llvmLowering.LlvmLoweringPass());
+    passes.add(new IsaMatchingPass(configuration));
+    passes.add(new LlvmLoweringPass(configuration));
     passes.add(new vadl.lcb.clang.lib.Driver.ToolChains.EmitClangToolChainFilePass(configuration,
         processorName));
     passes.add(new vadl.lcb.clang.lib.Basic.Targets.EmitClangTargetHeaderFilePass(configuration,
