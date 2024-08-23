@@ -41,7 +41,8 @@ public class AstMacroTests {
   Stream<DynamicTest> astMacroTests() throws URISyntaxException, IOException {
     return loadVadlFiles("macros").stream()
         .filter(path -> path.getFileName().toString().endsWith(".vadl")
-            && !path.getFileName().toString().endsWith(".expanded.vadl"))
+            && !path.getFileName().toString().endsWith(".expanded.vadl")
+            && Files.isRegularFile(path))
         .map(path -> DynamicTest.dynamicTest("Parse " + path.getFileName(),
             () -> assertAstEquality(path)));
   }

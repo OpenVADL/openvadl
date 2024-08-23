@@ -535,11 +535,11 @@ PRODUCTIONS
   | ifStatement<out statement>
   | blockStatement<out statement>
   | raiseStatement<out statement>
-  | IF (isIdentifierToken(la) || isMacroReplacementOfType(this, BasicSyntaxType.CALL_EX))
-    assignmentOrCallStmt<out statement>
-  | IF (isMacroReplacementOfType(this, BasicSyntaxType.STATS))
+  | IF (la.kind == _MATCH && scanner.Peek().kind != _SYM_COLON)
+    matchStatement<out statement>
+  | IF (isMacroReplacementOfType(this, BasicSyntaxType.STAT))
     macroReplacement<out Node n>     (. statement = (Statement) n; .)
-  | matchStatement<out statement>
+  | assignmentOrCallStmt<out statement>
   .
 
   blockStatement<out BlockStatement block>     (. var start = loc(); .)
@@ -549,7 +549,11 @@ PRODUCTIONS
   .
 
   statementList<.out List<Statement> stmts.> (. stmts = new ArrayList<>(); .)
-  = { statement<out Statement statement>     (. stmts.add(statement); .) }
+  = {
+      IF (isMacroReplacementOfType(this, BasicSyntaxType.STATS))
+      macroReplacement<out Node n>           (. stmts.add((Statement) n); .)
+    | statement<out Statement statement>     (. stmts.add(statement); .)
+    }
   .
 
   assignmentOrCallStmt<out Statement statement> (. statement = null; .)
@@ -985,7 +989,7 @@ PRODUCTIONS
     SYM_BRACE_CLOSE                         (.
                                               macroContext.removeFirst();
                                               insideMacro = false;
-                                              var bodyType = narrowNode(body).syntaxType();
+                                              var bodyType = body.syntaxType();
                                               if (!bodyType.isSubTypeOf(returnType)) {
                                                 errors.SemErr(t.line, t.col, "The macro signature promises to return `%s` but it's body is of type `%s`.".formatted(returnType, bodyType));
                                                 symbolTable.addMacro(new Macro(id, params, body, BasicSyntaxType.INVALID), startLoc.join(loc()));
@@ -997,7 +1001,7 @@ PRODUCTIONS
 
   macroBody<out Node body, SyntaxType type>                 (. body = null; var start = lookaheadLoc(); .)
   = IF (type == BasicSyntaxType.STATS)
-    statementList<.out List<Statement> stmts.>              (. body = narrowNode(new StatementList(stmts, start.join(loc()))); .)
+    statementList<.out List<Statement> stmts.>              (. body = new StatementList(stmts, start.join(loc())); .)
   | IF (type == BasicSyntaxType.STAT)
     statement<out body>
   | IF (type == BasicSyntaxType.ENCS)

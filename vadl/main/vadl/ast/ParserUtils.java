@@ -203,13 +203,6 @@ class ParserUtils {
     return ((MacroPlaceholder) macroOrPlaceholder).syntaxType().arguments.iterator();
   }
 
-  static Node narrowNode(Node node) {
-    if (node instanceof StatementList statementList) {
-      return statementList.items.get(0);
-    }
-    return node;
-  }
-
   /**
    * Checks whether the token is an identifier token.
    * Since some keywords are allowed as identifiers, this is not as simple as checking the type.
