@@ -4,6 +4,7 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
+import java.util.IdentityHashMap;
 import org.junit.jupiter.api.DynamicTest;
 import org.junit.jupiter.api.TestFactory;
 import org.junit.jupiter.params.ParameterizedTest;
@@ -15,8 +16,11 @@ import vadl.cppCodeGen.CppTypeMap;
 import vadl.cppCodeGen.passes.fieldNodeReplacement.FieldNodeReplacementPass;
 import vadl.cppCodeGen.passes.typeNormalization.CppTypeNormalizationPass;
 import vadl.gcb.passes.encoding_generation.strategies.EncodingGenerationStrategy;
+import vadl.gcb.passes.type_normalization.CppTypeNormalizationForDecodingsPass;
+import vadl.gcb.passes.type_normalization.CppTypeNormalizationForEncodingsPass;
 import vadl.lcb.codegen.DecodingCodeGenerator;
 import vadl.lcb.codegen.EncodingCodeGenerator;
+import vadl.pass.PassKey;
 import vadl.pass.exception.DuplicatedPassKeyException;
 import vadl.test.AbstractTest;
 import vadl.utils.Triple;
@@ -43,13 +47,24 @@ public class EncodingCodeGeneratorCppVerificationTest extends AbstractCppCodeGen
   @TestFactory
   Collection<DynamicTest> instructions() throws IOException, DuplicatedPassKeyException {
     var setup = setupPassManagerAndRunSpec("examples/rv3264im.vadl");
+    var passManager = setup.left();
     var spec = setup.right();
+
+    var normalizedDecodings =
+        (IdentityHashMap<Function, Function>) passManager.getPassResults().get(new PassKey(
+            CppTypeNormalizationForDecodingsPass.class.getName()));
+    var normalizedEncodings =
+        (IdentityHashMap<Function, Function>) passManager.getPassResults().get(new PassKey(
+            CppTypeNormalizationForEncodingsPass.class.getName()));
 
     var entries = spec.isas().flatMap(isa -> isa.formats().stream())
         .flatMap(format -> Arrays.stream(format.fieldAccesses()))
         .map(
-            fieldAccess -> new Triple<>(fieldAccess.identifier.name(), fieldAccess.accessFunction(),
-                fieldAccess.encoding()))
+            fieldAccess -> {
+              var accessFunction = normalizedDecodings.get(fieldAccess.accessFunction());
+              var encodeFunction = normalizedEncodings.get(fieldAccess.encoding());
+              return new Triple<>(fieldAccess.identifier.name(), accessFunction, encodeFunction);
+            })
         .toList();
 
     ArrayList<DynamicTest> tests = new ArrayList<>();
