@@ -12,6 +12,7 @@ import java.math.BigInteger;
 import java.util.Collections;
 import java.util.List;
 import org.junit.jupiter.api.Test;
+import vadl.AbstractTest;
 import vadl.pass.PassResults;
 import vadl.types.BitsType;
 import vadl.types.BuiltInTable;
@@ -34,7 +35,7 @@ import vadl.viam.graph.dependency.ConstantNode;
 import vadl.viam.passes.canonicalization.CanoicalizationPass;
 import vadl.viam.passes.canonicalization.Canonicalizer;
 
-class CanoicalizationPassTest {
+class CanoicalizationPassTest extends AbstractTest {
   @Test
   void shouldReplaceAdditionWithConstant() {
     // Given
@@ -80,7 +81,7 @@ class CanoicalizationPassTest {
     viam.add(isa);
 
     // When
-    var pass = new CanoicalizationPass();
+    var pass = new CanoicalizationPass(createConfiguration());
     pass.execute(new PassResults(), viam);
 
     assertThat(behavior.getNodes().count(), equalTo(1L));

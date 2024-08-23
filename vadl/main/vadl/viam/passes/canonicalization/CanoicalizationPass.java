@@ -15,7 +15,7 @@ import vadl.viam.graph.dependency.BuiltInCall;
  * It will only consider machine instructions.
  */
 public class CanoicalizationPass extends Pass {
-  protected CanoicalizationPass(GeneralConfiguration configuration) {
+  public CanoicalizationPass(GeneralConfiguration configuration) {
     super(configuration);
   }
 

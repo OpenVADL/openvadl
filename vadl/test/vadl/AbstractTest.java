@@ -1,5 +1,6 @@
 package vadl;
 
+import vadl.configuration.GeneralConfiguration;
 import vadl.types.BitsType;
 import vadl.types.DataType;
 import vadl.utils.SourceLocation;
@@ -15,6 +16,10 @@ import vadl.viam.Specification;
 import vadl.viam.graph.Graph;
 
 public abstract class AbstractTest {
+  protected static GeneralConfiguration createConfiguration() {
+    return new GeneralConfiguration("output", false);
+  }
+
   protected static Identifier createIdentifier(String name) {
     return new Identifier(name, SourceLocation.INVALID_SOURCE_LOCATION);
   }
