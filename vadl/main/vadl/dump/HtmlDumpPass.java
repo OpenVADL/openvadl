@@ -2,14 +2,13 @@ package vadl.dump;
 
 import java.io.IOException;
 import java.util.ArrayList;
-import java.util.Collection;
 import java.util.Comparator;
 import java.util.List;
 import java.util.Map;
 import java.util.function.Consumer;
 import java.util.stream.Collectors;
-import vadl.dump.supplier.ViamEnricherCollection;
-import vadl.dump.supplier.ViamEntitySupplier;
+import vadl.dump.infoEnrichers.ViamEnricherCollection;
+import vadl.dump.entitySuppliers.ViamEntitySupplier;
 import vadl.pass.PassResults;
 import vadl.template.AbstractTemplateRenderingPass;
 import vadl.viam.Specification;

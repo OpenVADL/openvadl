@@ -1,10 +1,11 @@
-package vadl.dump.supplier;
+package vadl.dump.infoEnrichers;
 
 import static vadl.dump.InfoEnricher.forType;
 
 import java.util.List;
 import vadl.dump.Info;
 import vadl.dump.InfoEnricher;
+import vadl.dump.entities.DefinitionEntity;
 import vadl.viam.DefProp;
 import vadl.viam.ViamError;
 
@@ -21,11 +22,11 @@ public class ViamEnricherCollection {
    * A {@link InfoEnricher} that adds a {@link vadl.dump.Info.Tag} containing the type of
    * the definition.
    * This is only done if the given entity is a
-   * {@link vadl.dump.supplier.ViamEntitySupplier.DefinitionEntity} and if the origin definition
+   * {@link DefinitionEntity} and if the origin definition
    * has the prop {@link DefProp.WithType}.
    */
   public static InfoEnricher TYPE_SUPPLIER_TAG = (entity, passResult) -> {
-    if (entity instanceof ViamEntitySupplier.DefinitionEntity defEntity
+    if (entity instanceof DefinitionEntity defEntity
         && defEntity.origin() instanceof DefProp.WithType typed) {
       entity.addInfo(Info.Tag.of("Type", typed.type().toString()));
     }
@@ -36,30 +37,30 @@ public class ViamEnricherCollection {
    * which attaches a {@link Info.Tag} to a given {@link vadl.dump.DumpEntity} based on
    * the information provided by the entity and the result from already executed passes.
    *
-   * <p>It is used to enrich {@link ViamEntitySupplier.DefinitionEntity} objects of type
+   * <p>It is used to enrich {@link DefinitionEntity} objects of type
    * with a tag named "DefType", that represents the simple name of the class of
    * the entity's origin (definition).
    *
    * @see InfoEnricher
-   * @see ViamEntitySupplier.DefinitionEntity
+   * @see DefinitionEntity
    */
   public static InfoEnricher DEF_CLASS_SUPPLIER_TAG =
-      forType(ViamEntitySupplier.DefinitionEntity.class, (defEntity, passResult) -> {
-        var info = Info.Tag.of("DefType", defEntity.origin.getClass().getSimpleName());
+      forType(DefinitionEntity.class, (defEntity, passResult) -> {
+        var info = Info.Tag.of("DefType", defEntity.origin().getClass().getSimpleName());
         defEntity.addInfo(info);
       });
 
   /**
    * The PARENT_SUPPLIER_TAG variable is an implementation of the {@link InfoEnricher} interface.
    * It attaches an {@link Info.Tag} object with the "Parent" tag to a given
-   * {@link vadl.dump.supplier.ViamEntitySupplier.DefinitionEntity} based on the information
+   * {@link DefinitionEntity} based on the information
    * provided by the entity.
    *
    * @see InfoEnricher
-   * @see ViamEntitySupplier.DefinitionEntity
+   * @see DefinitionEntity
    */
   public static InfoEnricher PARENT_SUPPLIER_TAG =
-      forType(ViamEntitySupplier.DefinitionEntity.class, (defEntity, passResult) -> {
+      forType(DefinitionEntity.class, (defEntity, passResult) -> {
         var info =
             Info.Tag.of("Parent", defEntity.parent().name(), "#" + defEntity.parent().cssId());
         defEntity.addInfo(info);
@@ -71,7 +72,7 @@ public class ViamEnricherCollection {
    * It enriches the given {@link vadl.dump.DumpEntity} with information about the
    * behavior of a {@link vadl.viam.Definition} that has a behavior defined.
    *
-   * <p>If the entity is an instance of {@link ViamEntitySupplier.DefinitionEntity} and it
+   * <p>If the entity is an instance of {@link DefinitionEntity} and it
    * has a behavior defined, BEHAVIOR_SUPPLIER_MODAL retrieves the behavior information,
    * creates an {@link Info.Modal} object, and adds it to the entity.
    *
@@ -83,7 +84,7 @@ public class ViamEnricherCollection {
    * @see Info
    */
   public static InfoEnricher BEHAVIOR_SUPPLIER_MODAL = (entity, passResult) -> {
-    if (entity instanceof ViamEntitySupplier.DefinitionEntity defEntity
+    if (entity instanceof DefinitionEntity defEntity
         && defEntity.origin() instanceof DefProp.WithBehavior withBehavior) {
       var def = defEntity.origin();
       var behavior = withBehavior.behaviors().get(0);
@@ -132,10 +133,10 @@ public class ViamEnricherCollection {
    * This helps debugging and finding bugs in the VIAM.
    */
   public static InfoEnricher VERIFY_SUPPLIER_EXPANDABLE =
-      forType(ViamEntitySupplier.DefinitionEntity.class, (entity, passResult) -> {
+      forType(DefinitionEntity.class, (entity, passResult) -> {
         try {
           // run verification
-          entity.origin.verify();
+          entity.origin().verify();
         } catch (ViamError e) {
           // catch and add error information
           var info = new Info.Expandable(

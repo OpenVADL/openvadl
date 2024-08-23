@@ -2,6 +2,7 @@ package vadl.dump;
 
 import java.util.concurrent.atomic.AtomicInteger;
 import javax.annotation.Nullable;
+import vadl.dump.infoEnrichers.ViamEnricherCollection;
 
 /**
  * Represents some information that is attached to some {@link DumpEntity}.
@@ -14,7 +15,7 @@ import javax.annotation.Nullable;
  *
  * @see HtmlDumpPass
  * @see InfoEnricher
- * @see vadl.dump.supplier.ViamEnricherCollection
+ * @see ViamEnricherCollection
  */
 public abstract sealed class Info permits Info.Expandable, Info.Modal, Info.Tag {
 
@@ -42,7 +43,7 @@ public abstract sealed class Info permits Info.Expandable, Info.Modal, Info.Tag 
    *
    * @see HtmlDumpPass
    * @see InfoEnricher
-   * @see vadl.dump.supplier.ViamEnricherCollection
+   * @see ViamEnricherCollection
    */
   public static final class Tag extends Info {
 
@@ -115,7 +116,7 @@ public abstract sealed class Info permits Info.Expandable, Info.Modal, Info.Tag 
    * executed when the modal is first opened.
    *
    * <p>An example for such a model can be found at
-   * {@link vadl.dump.supplier.ViamEnricherCollection#BEHAVIOR_SUPPLIER_MODAL}</p>
+   * {@link ViamEnricherCollection#BEHAVIOR_SUPPLIER_MODAL}</p>
    *
    * @see Info
    * @see HtmlDumpPass

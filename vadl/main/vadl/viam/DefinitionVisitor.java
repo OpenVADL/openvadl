@@ -226,7 +226,7 @@ public interface DefinitionVisitor {
    * An empty visitor that allows to implement only a required subset of definition
    * visit methods.
    *
-   * <p>An example usecase is {@link vadl.dump.supplier.ViamEntitySupplier}</p>
+   * <p>An example usecase is {@link vadl.dump.entitySuppliers.ViamEntitySupplier}</p>
    */
   class Empty implements DefinitionVisitor {
 

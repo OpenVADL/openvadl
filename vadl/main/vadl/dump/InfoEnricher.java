@@ -1,6 +1,7 @@
 package vadl.dump;
 
 import java.util.function.BiConsumer;
+import vadl.dump.infoEnrichers.ViamEnricherCollection;
 import vadl.pass.PassResults;
 
 /**
@@ -9,7 +10,7 @@ import vadl.pass.PassResults;
  * New InforEnrichers must be registered in the {@link HtmlDumpPass}.
  *
  * <p>Implementations of the InfoEnricher can be found at
- * {@link vadl.dump.supplier.ViamEnricherCollection}</p>
+ * {@link ViamEnricherCollection}</p>
  *
  * @see HtmlDumpPass
  */

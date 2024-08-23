@@ -4,14 +4,14 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
 import javax.annotation.Nullable;
-import vadl.utils.Pair;
+import vadl.dump.entities.DefinitionEntity;
 
 /**
  * The dump entity is an element that is rendered in the HTML dump.
  * Every rectangle in the HTML dump represents one DumpEntity. They are produced by
  * {@link DumpEntitySupplier}, while the most common entity is the
- * {@link vadl.dump.supplier.ViamEntitySupplier.DefinitionEntity} provided by the
- * {@link vadl.dump.supplier.ViamEntitySupplier}, which represents a defninition in the VIAM.
+ * {@link DefinitionEntity} provided by the
+ * {@link vadl.dump.entitySuppliers.ViamEntitySupplier}, which represents a defninition in the VIAM.
  *
  * <p>Each DumpEntity has a cssId which is a id that is used in the HTML for reference.
  * Additionally each dump entity has a set of {@link Info} and sub-entities.
