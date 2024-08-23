@@ -4,7 +4,6 @@ import java.util.ArrayDeque;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Set;
-import vadl.viam.passes.dummyAbi.DummyAbi;
 import vadl.viam.Assembly;
 import vadl.viam.Definition;
 import vadl.viam.DefinitionVisitor;
@@ -18,6 +17,7 @@ import vadl.viam.PseudoInstruction;
 import vadl.viam.Specification;
 import vadl.viam.ViamError;
 import vadl.viam.graph.Graph;
+import vadl.viam.passes.dummyAbi.DummyAbi;
 
 /**
  * DotVisualizer is a class that implements the ViamVisualizer interface to generate a visualization

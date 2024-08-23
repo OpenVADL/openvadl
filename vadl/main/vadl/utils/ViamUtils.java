@@ -4,9 +4,9 @@ import java.util.HashSet;
 import java.util.Set;
 import java.util.function.Function;
 import javax.annotation.Nullable;
-import vadl.viam.passes.dummyAbi.DummyAbi;
 import vadl.viam.Definition;
 import vadl.viam.DefinitionVisitor;
+import vadl.viam.passes.dummyAbi.DummyAbi;
 
 /**
  * A set of utility methods that helps when working with the VIAM.
