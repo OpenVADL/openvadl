@@ -99,10 +99,10 @@ public class PassManager {
       var pass = step.pass();
       var passResult = pass.execute(passResults, viam);
 
-      if (passResult != null) {
-        logger.atDebug().log("Storing result of pass with key: {}", step.key());
-        passResults.add(step.key(), pass, passResult);
-      }
+      // we always store the pass result, even if the result is `null`
+      logger.atDebug().log("Storing result of pass with key: {}", step.key());
+      passResults.add(step.key(), pass, passResult);
+
       logger.atDebug().log("Pass completed with key: {}", step.key());
     }
   }

@@ -65,11 +65,8 @@ public class HtmlDumpPass extends AbstractTemplateRenderingPass {
         .entrySet().stream()
         .sorted(Comparator.comparingInt(a -> a.getKey().rank()))
         .toList();
-
-    var passList = passResults.executedPasses().stream()
-        .map(r -> r.passKey().value() + " (" + r.pass().getName() + ":" +
-            r.pass().getClass().getSimpleName() + ")")
-        .toList();
+    
+    var passList = passResults.executedPasses();
 
     return Map.of(
         "entries", entities,

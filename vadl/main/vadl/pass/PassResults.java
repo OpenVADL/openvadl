@@ -3,6 +3,7 @@ package vadl.pass;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Optional;
+import javax.annotation.Nullable;
 import vadl.pass.exception.PassError;
 import vadl.utils.Pair;
 
@@ -19,7 +20,7 @@ public final class PassResults {
   /**
    * Get the result of an executed pass instance with the given pass key.
    */
-  public Object get(PassKey key) {
+  public @Nullable Object get(PassKey key) {
     if (!store.containsKey(key)) {
       throw new PassError(
           ("Tried to retrieve result of executed pass %s, but result ".formatted(key)
@@ -36,6 +37,10 @@ public final class PassResults {
    */
   public <T> T get(PassKey key, Class<T> type) {
     var result = get(key);
+    if (result == null) {
+      throw new PassError("Tried to retrieve result of executed pass %s, but result was null.",
+          key);
+    }
     if (!type.isInstance(result)) {
       throw new PassError(
           "Result of executed pass %s, with expected type %s was tried ".formatted(key, type)
@@ -53,7 +58,7 @@ public final class PassResults {
    * @return an empty option if no pass instance of the passClass was executed. Otherwise,
    *     the pass result wrapped in the optional.
    */
-  public <T> Optional<?> getOfLastExecution(Class<T> passClass) {
+  public <T> Optional<SingleResult> getOfLastExecution(Class<T> passClass) {
     var result =
         store.values().stream()
             .reduce((a, b) -> passClass.isInstance(b.pass()) ? b : a);
@@ -62,7 +67,7 @@ public final class PassResults {
     }
     var resultPair = result.get();
     if (passClass.isInstance(resultPair.pass())) {
-      return Optional.of(resultPair.result());
+      return Optional.of(resultPair);
     }
     return Optional.empty();
   }
@@ -79,7 +84,7 @@ public final class PassResults {
   }
 
   // this is only visible on package level to ensure that passes can't manipulate pass results
-  void add(PassKey key, Pass pass, Object result) {
+  void add(PassKey key, Pass pass, @Nullable Object result) {
     if (store.containsKey(key)) {
       // The pipeline's steps should be deterministic.
       // If we overwrite an already existing result then it is very likely
@@ -99,7 +104,7 @@ public final class PassResults {
   public record SingleResult(
       PassKey passKey,
       Pass pass,
-      Object result
+      @Nullable Object result
   ) {
   }
 

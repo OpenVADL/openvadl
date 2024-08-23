@@ -40,6 +40,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.IdentityHashMap;
 import java.util.List;
+import java.util.Objects;
 import java.util.Set;
 import org.jetbrains.annotations.Nullable;
 import vadl.configuration.GeneralConfiguration;
@@ -105,6 +106,7 @@ public class IsaMatchingPass extends Pass {
     IdentityHashMap<Instruction, UninlinedGraph> uninlined =
         (IdentityHashMap<Instruction, UninlinedGraph>) passResults.get(
             new PassKey(FunctionInlinerPass.class.getName()));
+    Objects.requireNonNull(uninlined);
     HashMap<InstructionLabel, List<Instruction>> matched = new HashMap<>();
 
     viam.isas().forEach(isa -> isa.instructions().forEach(instruction -> {
