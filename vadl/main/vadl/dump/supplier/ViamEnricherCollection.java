@@ -125,11 +125,19 @@ public class ViamEnricherCollection {
     }
   };
 
+
+  /**
+   * A {@link InfoEnricher} that adds an expandable to definition entities if
+   * the verification failed.
+   * This helps debugging and finding bugs in the VIAM.
+   */
   public static InfoEnricher VERIFY_SUPPLIER_EXPANDABLE =
       forType(ViamEntitySupplier.DefinitionEntity.class, (entity, passResult) -> {
         try {
+          // run verification
           entity.origin.verify();
         } catch (ViamError e) {
+          // catch and add error information
           var info = new Info.Expandable(
               """
                   <span class="text-red-500">Validation Exception</span>

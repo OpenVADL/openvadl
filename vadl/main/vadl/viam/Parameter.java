@@ -24,6 +24,9 @@ public class Parameter extends Definition implements DefProp.WithType {
     this.type = type;
   }
 
+  /**
+   * Constructs a parameter.
+   */
   @SuppressWarnings("NullableProblems")
   public Parameter(Identifier identifier, Type type, Definition parent) {
     super(identifier);
@@ -35,8 +38,8 @@ public class Parameter extends Definition implements DefProp.WithType {
   public void verify() {
     super.verify();
     ensure(parent != null,
-        "Parent definition is null, but should always be set after creation. " +
-            "Someone created a Parameter without setting the parent.");
+        "Parent definition is null, but should always be set after creation. "
+            + "Someone created a Parameter without setting the parent.");
   }
 
   public Type type() {
