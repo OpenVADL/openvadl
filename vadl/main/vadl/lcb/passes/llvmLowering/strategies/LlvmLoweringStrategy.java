@@ -12,6 +12,7 @@ import org.slf4j.LoggerFactory;
 import vadl.lcb.passes.isaMatching.InstructionLabel;
 import vadl.lcb.passes.llvmLowering.LlvmLoweringPass;
 import vadl.lcb.passes.llvmLowering.LlvmMayLoadMemory;
+import vadl.lcb.passes.llvmLowering.LlvmMayStoreMemory;
 import vadl.lcb.passes.llvmLowering.LlvmSideEffectPatternIncluded;
 import vadl.lcb.passes.llvmLowering.model.LlvmBrCcSD;
 import vadl.lcb.passes.llvmLowering.model.LlvmBrCondSD;
@@ -99,9 +100,9 @@ public abstract class LlvmLoweringStrategy {
     var isReturn = false;
     var isPseudo = false; // This strategy always handles Instructions.
     var isCodeGenOnly = false;
-    var mayLoad = uninlinedGraph.getNodes(ReadMemNode.class).findFirst().isPresent();
+    var mayLoad = uninlinedGraph.getNodes(LlvmMayLoadMemory.class).findFirst().isPresent();
     var mayStore =
-        uninlinedGraph.getNodes(Set.of(WriteMemNode.class, LlvmMayLoadMemory.class)).findFirst()
+        uninlinedGraph.getNodes(Set.of(WriteMemNode.class, LlvmMayStoreMemory.class)).findFirst()
             .isPresent();
 
     return new LlvmLoweringPass.Flags(
@@ -127,7 +128,7 @@ public abstract class LlvmLoweringStrategy {
       UninlinedGraph uninlinedBehavior) {
     var visitor = getVisitorForPatternSelectorLowering();
     var copy = (UninlinedGraph) uninlinedBehavior.copy();
-    var nodes = copy.getNodes().toList();
+    //var nodes =  //copy.getNodes().toList();
     var instructionIdentifier = instruction.identifier;
 
     if (!checkIfNoControlFlow(copy) && !checkIfNotAllowedDataflowNodes(copy)) {
@@ -137,13 +138,13 @@ public abstract class LlvmLoweringStrategy {
     }
 
     // Continue with lowering of nodes
-    for (var node : nodes) {
-      visitor.visit(node);
+    for (var endNode : copy.getNodes(EndNode.class).toList()) {
+      visitor.visit(endNode);
 
       if (!((TableGenPatternLowerable) visitor).isPatternLowerable()) {
         logger.atWarn().log("Instruction '{}' is not lowerable and will be skipped",
             instructionIdentifier.toString());
-        break;
+        return Optional.empty();
       }
     }
 
@@ -282,9 +283,19 @@ public abstract class LlvmLoweringStrategy {
       return generateInstructionOperand(node);
     } else if (operand instanceof LlvmFieldAccessRefNode node) {
       return generateInstructionOperand(node);
-    } else {
+    } else if (operand instanceof FieldRefNode node) {
+      return generateInstructionOperand(node);
+    }
+    else {
       throw new ViamError("Input operand not supported yet: " + operand);
     }
+  }
+
+  /**
+   * Returns a {@link TableGenInstructionOperand} given a {@link Node}.
+   */
+  private static TableGenInstructionOperand generateInstructionOperand(FieldRefNode node) {
+    return new TableGenInstructionOperand(node.formatField().identifier.simpleName(), node.nodeName());
   }
 
   /**

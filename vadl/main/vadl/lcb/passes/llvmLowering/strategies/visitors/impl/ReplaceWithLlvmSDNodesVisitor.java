@@ -6,10 +6,14 @@ import org.slf4j.LoggerFactory;
 import vadl.lcb.passes.llvmLowering.LlvmNodeLowerable;
 import vadl.lcb.passes.llvmLowering.model.LlvmAddSD;
 import vadl.lcb.passes.llvmLowering.model.LlvmAndSD;
+import vadl.lcb.passes.llvmLowering.model.LlvmBrCcSD;
+import vadl.lcb.passes.llvmLowering.model.LlvmBrCondSD;
 import vadl.lcb.passes.llvmLowering.model.LlvmFieldAccessRefNode;
+import vadl.lcb.passes.llvmLowering.model.LlvmLoad;
 import vadl.lcb.passes.llvmLowering.model.LlvmMulSD;
 import vadl.lcb.passes.llvmLowering.model.LlvmOrSD;
 import vadl.lcb.passes.llvmLowering.model.LlvmSDivSD;
+import vadl.lcb.passes.llvmLowering.model.LlvmSExtLoad;
 import vadl.lcb.passes.llvmLowering.model.LlvmSMulSD;
 import vadl.lcb.passes.llvmLowering.model.LlvmSRemSD;
 import vadl.lcb.passes.llvmLowering.model.LlvmSetccSD;
@@ -19,10 +23,13 @@ import vadl.lcb.passes.llvmLowering.model.LlvmSraSD;
 import vadl.lcb.passes.llvmLowering.model.LlvmStore;
 import vadl.lcb.passes.llvmLowering.model.LlvmSubSD;
 import vadl.lcb.passes.llvmLowering.model.LlvmTruncStore;
+import vadl.lcb.passes.llvmLowering.model.LlvmTypeCastSD;
 import vadl.lcb.passes.llvmLowering.model.LlvmUDivSD;
 import vadl.lcb.passes.llvmLowering.model.LlvmUMulSD;
 import vadl.lcb.passes.llvmLowering.model.LlvmURemSD;
 import vadl.lcb.passes.llvmLowering.model.LlvmXorSD;
+import vadl.lcb.passes.llvmLowering.model.LlvmZExtLoad;
+import vadl.lcb.passes.llvmLowering.strategies.visitors.TableGenNodeVisitor;
 import vadl.lcb.passes.llvmLowering.strategies.visitors.TableGenPatternLowerable;
 import vadl.lcb.visitors.LcbGraphNodeVisitor;
 import vadl.types.BuiltInTable;
@@ -59,7 +66,7 @@ import vadl.viam.graph.dependency.ZeroExtendNode;
  * information for the lowering.
  */
 public class ReplaceWithLlvmSDNodesVisitor
-    implements LcbGraphNodeVisitor, TableGenPatternLowerable {
+    implements TableGenNodeVisitor, TableGenPatternLowerable {
 
   private static final Logger logger = LoggerFactory.getLogger(ReplaceWithLlvmSDNodesVisitor.class);
   private boolean patternLowerable = true;
@@ -136,6 +143,10 @@ public class ReplaceWithLlvmSDNodesVisitor
 
   @Override
   public void visit(WriteRegFileNode writeRegFileNode) {
+    if (writeRegFileNode.hasAddress()) {
+      visit(Objects.requireNonNull(writeRegFileNode.address()));
+    }
+    visit(writeRegFileNode.value());
   }
 
   @Override
@@ -153,10 +164,15 @@ public class ReplaceWithLlvmSDNodesVisitor
 
       writeMemNode.replaceAndDelete(node);
     }
+    if (writeMemNode.hasAddress()) {
+      visit(Objects.requireNonNull(writeMemNode.address()));
+    }
+    visit(writeMemNode.value());
   }
 
   @Override
   public void visit(SliceNode sliceNode) {
+    visit(sliceNode.value());
   }
 
   @Override
@@ -167,19 +183,27 @@ public class ReplaceWithLlvmSDNodesVisitor
 
   @Override
   public void visit(ReadRegNode readRegNode) {
+    if (readRegNode.hasAddress()) {
+      visit(readRegNode.address());
+    }
   }
 
   @Override
   public void visit(ReadRegFileNode readRegFileNode) {
+    visit(readRegFileNode.address());
   }
 
   @Override
   public void visit(ReadMemNode readMemNode) {
+    var cast = new LlvmTypeCastSD(new LlvmLoad(readMemNode), readMemNode.type());
+    readMemNode.replaceAndDelete(cast);
+    visit(readMemNode.address());
   }
 
   @Override
   public void visit(LetNode letNode) {
     letNode.replaceAndDelete(letNode.expression());
+    visit(letNode.expression());
   }
 
   @Override
@@ -198,16 +222,13 @@ public class ReplaceWithLlvmSDNodesVisitor
 
   @Override
   public void visit(FieldAccessRefNode fieldAccessRefNode) {
-    if (!(fieldAccessRefNode instanceof LlvmFieldAccessRefNode)) {
-      fieldAccessRefNode.replaceAndDelete(
-          new LlvmFieldAccessRefNode(fieldAccessRefNode.fieldAccess(),
-              fieldAccessRefNode.type()));
-    }
+    fieldAccessRefNode.replaceAndDelete(
+        new LlvmFieldAccessRefNode(fieldAccessRefNode.fieldAccess(),
+            fieldAccessRefNode.type()));
   }
 
   @Override
   public void visit(AbstractBeginNode abstractBeginNode) {
-    // it is ok
   }
 
   @Override
@@ -223,12 +244,16 @@ public class ReplaceWithLlvmSDNodesVisitor
 
   @Override
   public void visit(EndNode endNode) {
-    // it is ok
+    for (var arg : endNode.sideEffects) {
+      visit(arg);
+    }
   }
 
   @Override
   public void visit(InstrCallNode instrCallNode) {
-    //throw new RuntimeException("not implemented");
+    for (var arg : instrCallNode.arguments()) {
+      visit(arg);
+    }
   }
 
   @Override
@@ -239,20 +264,32 @@ public class ReplaceWithLlvmSDNodesVisitor
 
   @Override
   public void visit(ZeroExtendNode node) {
-    // Remove all nodes
-    for (var usage : node.usages().toList()) {
-      usage.replaceInput(node, node.value());
+    if (node.value() instanceof ReadMemNode readMemNode) {
+      // Merge SignExtend and ReadMem to LlvmZExtLoad
+      node.replaceAndDelete(new LlvmTypeCastSD(new LlvmZExtLoad(readMemNode), readMemNode.type()));
+      visit(readMemNode.address());
+    } else {
+      // Remove all nodes
+      for (var usage : node.usages().toList()) {
+        usage.replaceInput(node, node.value());
+      }
+      visit(node.value());
     }
-    visit(node.value());
   }
 
   @Override
   public void visit(SignExtendNode node) {
-    // Remove all nodes
-    for (var usage : node.usages().toList()) {
-      usage.replaceInput(node, node.value());
+    if (node.value() instanceof ReadMemNode readMemNode) {
+      // Merge SignExtend and ReadMem to LlvmSExtLoad
+      node.replaceAndDelete(new LlvmTypeCastSD(new LlvmSExtLoad(readMemNode), readMemNode.type()));
+      visit(readMemNode.address());
+    } else {
+      // Remove all nodes
+      for (var usage : node.usages().toList()) {
+        usage.replaceInput(node, node.value());
+      }
+      visit(node.value());
     }
-    visit(node.value());
   }
 
   @Override
@@ -272,5 +309,63 @@ public class ReplaceWithLlvmSDNodesVisitor
   @Override
   public void visit(SideEffectNode sideEffectNode) {
     sideEffectNode.accept(this);
+  }
+
+  @Override
+  public void visit(LlvmBrCcSD node) {
+    visit(node.first());
+    visit(node.second());
+    visit(node.immOffset());
+  }
+
+  @Override
+  public void visit(LlvmFieldAccessRefNode llvmFieldAccessRefNode) {
+
+  }
+
+  @Override
+  public void visit(LlvmBrCondSD node) {
+    visit(node.condition());
+    visit(node.immOffset());
+  }
+
+  @Override
+  public void visit(LlvmTypeCastSD node) {
+    visit(node.value());
+  }
+
+  @Override
+  public void visit(LlvmTruncStore node) {
+    if (node.hasAddress()) {
+      visit(Objects.requireNonNull(node.address()));
+    }
+    if (node.value() != null) {
+      visit(node.value());
+    }
+  }
+
+  @Override
+  public void visit(LlvmStore node) {
+    if (node.hasAddress()) {
+      visit(Objects.requireNonNull(node.address()));
+    }
+    if (node.value() != null) {
+      visit(node.value());
+    }
+  }
+
+  @Override
+  public void visit(LlvmLoad node) {
+    visit(node.address());
+  }
+
+  @Override
+  public void visit(LlvmSExtLoad node) {
+    visit(node.address());
+  }
+
+  @Override
+  public void visit(LlvmZExtLoad node) {
+    visit(node.address());
   }
 }
