@@ -28,7 +28,13 @@ import org.apache.velocity.app.Velocity;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.params.provider.Arguments;
-import vadl.lcb.config.LcbConfiguration;
+import vadl.configuration.GcbConfiguration;
+import vadl.configuration.GeneralConfiguration;
+import vadl.pass.Pass;
+import vadl.pass.PassKey;
+import vadl.pass.PassManager;
+import vadl.pass.exception.DuplicatedPassKeyException;
+import vadl.utils.Pair;
 import vadl.utils.VADLFileUtils;
 import vadl.viam.Specification;
 import vadl.viam.passes.verification.ViamVerifier;
@@ -290,5 +296,37 @@ public class AbstractTest {
       throw new RuntimeException(e);
     }
     return result.toString();
+  }
+
+
+  public Pair<PassManager, Specification> setupPassManagerAndRunSpec(String specPath,
+                                                                     List<Pass> passes)
+      throws IOException, DuplicatedPassKeyException {
+    var spec = runAndGetViamSpecification(specPath);
+
+    var passManager = new PassManager();
+    passManager.add(passes);
+    passManager.run(spec);
+
+    return Pair.of(passManager, spec);
+  }
+
+
+  public Pair<PassManager, Specification> setupPassManagerAndRunSpecUntil(String specPath,
+                                                                          List<Pass> passes,
+                                                                          PassKey until)
+      throws IOException, DuplicatedPassKeyException {
+    var spec = runAndGetViamSpecification(specPath);
+
+    var passManager = new PassManager();
+    passManager.add(passes);
+    passManager.runUntilInclusive(spec, until);
+
+    return Pair.of(passManager, spec);
+  }
+
+  public GeneralConfiguration getConfiguration(boolean doDump) throws IOException {
+    var directory = VADLFileUtils.createTempDirectory("vadl-test");
+    return new GeneralConfiguration(directory.toAbsolutePath().toString(), doDump);
   }
 }

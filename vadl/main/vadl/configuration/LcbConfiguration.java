@@ -8,7 +8,7 @@ import vadl.gcb.valuetypes.ProcessorName;
 public class LcbConfiguration extends GcbConfiguration {
   private final ProcessorName processorName;
 
-  public LcbConfiguration(GcbConfiguration gcbConfiguration, ProcessorName processorName) {
+  public LcbConfiguration(GeneralConfiguration gcbConfiguration, ProcessorName processorName) {
     super(gcbConfiguration);
     this.processorName = processorName;
   }

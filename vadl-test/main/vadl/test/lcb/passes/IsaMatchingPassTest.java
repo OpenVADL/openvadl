@@ -12,6 +12,7 @@ import org.junit.jupiter.params.provider.Arguments;
 import org.junit.jupiter.params.provider.MethodSource;
 import vadl.lcb.passes.isaMatching.InstructionLabel;
 import vadl.lcb.passes.isaMatching.IsaMatchingPass;
+import vadl.pass.Pass;
 import vadl.pass.PassKey;
 import vadl.pass.exception.DuplicatedPassKeyException;
 import vadl.test.lcb.AbstractLcbTest;
@@ -52,7 +53,8 @@ public class IsaMatchingPassTest extends AbstractLcbTest {
   void shouldFindMatchings(List<String> expectedInstructionName, InstructionLabel label)
       throws IOException, DuplicatedPassKeyException {
     // Given
-    var setup = setupPassManagerAndRunSpec("examples/rv3264im.vadl");
+    var setup = runLcb(getConfiguration(false), "examples/rv3264im.vadl",
+        new PassKey(IsaMatchingPass.class.getName()));
     var passManager = setup.left();
 
     // When

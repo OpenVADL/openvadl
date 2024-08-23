@@ -17,7 +17,7 @@ import vadl.viam.Specification;
  * @see ViamVerifier
  */
 public class ViamVerificationPass extends Pass {
-  protected ViamVerificationPass(GeneralConfiguration configuration) {
+  public ViamVerificationPass(GeneralConfiguration configuration) {
     super(configuration);
   }
 

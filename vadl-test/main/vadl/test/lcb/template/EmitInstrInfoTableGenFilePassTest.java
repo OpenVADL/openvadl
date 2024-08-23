@@ -5,6 +5,8 @@ import java.io.StringWriter;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 import vadl.gcb.valuetypes.ProcessorName;
+import vadl.lcb.template.lib.Target.EmitInstrInfoTableGenFilePass;
+import vadl.pass.PassKey;
 import vadl.pass.exception.DuplicatedPassKeyException;
 import vadl.test.lcb.AbstractLcbTest;
 
@@ -12,13 +14,15 @@ public class EmitInstrInfoTableGenFilePassTest extends AbstractLcbTest {
   @Test
   void testLowering() throws IOException, DuplicatedPassKeyException {
     // Given
-    var pair = setupPassManagerAndRunSpec("examples/rv3264im.vadl");
+    var pair = runLcb(getConfiguration(false), "examples/rv3264im.vadl",
+        new PassKey(EmitInstrInfoTableGenFilePass.class.getName()));
     var passManager = pair.left();
     var spec = pair.right();
 
     // When
+    //var template = readOutputFile()
     var template =
-        new vadl.lcb.template.lib.Target.EmitInstrInfoTableGenFilePass(createLcbConfiguration(),
+        new vadl.lcb.template.lib.Target.EmitInstrInfoTableGenFilePass(getConfiguration(false),
             new ProcessorName("processorNameValue"));
     var writer = new StringWriter();
 
