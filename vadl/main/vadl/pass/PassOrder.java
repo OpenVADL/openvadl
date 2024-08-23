@@ -10,7 +10,7 @@ import vadl.gcb.passes.type_normalization.CppTypeNormalizationForEncodingsPass;
 import vadl.gcb.passes.type_normalization.CppTypeNormalizationForPredicatesPass;
 import vadl.gcb.valuetypes.ProcessorName;
 import vadl.lcb.config.LcbConfiguration;
-import vadl.lcb.passes.dummyAbi.DummyAbiPass;
+import vadl.viam.passes.dummyAbi.DummyAbiPass;
 import vadl.lcb.passes.isaMatching.IsaMatchingPass;
 import vadl.lcb.passes.llvmLowering.LlvmLoweringPass;
 import vadl.lcb.template.lib.Target.EmitMCInstLowerCppFilePass;

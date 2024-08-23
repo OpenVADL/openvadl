@@ -1,4 +1,4 @@
-package vadl.lcb.passes.dummyAbi;
+package vadl.viam.passes.dummyAbi;
 
 import vadl.viam.Definition;
 import vadl.viam.DefinitionVisitor;

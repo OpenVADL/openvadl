@@ -1,10 +1,8 @@
-package vadl.lcb.passes.dummyAbi;
+package vadl.viam.passes.dummyAbi;
 
 import java.io.IOException;
-import java.util.Map;
 import org.jetbrains.annotations.Nullable;
 import vadl.pass.Pass;
-import vadl.pass.PassKey;
 import vadl.pass.PassName;
 import vadl.pass.PassResults;
 import vadl.utils.SourceLocation;

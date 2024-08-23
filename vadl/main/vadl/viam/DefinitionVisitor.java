@@ -1,6 +1,6 @@
 package vadl.viam;
 
-import vadl.lcb.passes.dummyAbi.DummyAbi;
+import vadl.viam.passes.dummyAbi.DummyAbi;
 
 /**
  * DefinitionVisitor is an interface that defines the visit methods for all types of

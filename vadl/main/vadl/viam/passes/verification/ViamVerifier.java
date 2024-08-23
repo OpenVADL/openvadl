@@ -1,6 +1,6 @@
 package vadl.viam.passes.verification;
 
-import vadl.lcb.passes.dummyAbi.DummyAbi;
+import vadl.viam.passes.dummyAbi.DummyAbi;
 import vadl.viam.Definition;
 import vadl.viam.DefinitionVisitor;
 import vadl.viam.graph.Node;

@@ -4,7 +4,7 @@ import java.util.HashSet;
 import java.util.Set;
 import java.util.function.Function;
 import javax.annotation.Nullable;
-import vadl.lcb.passes.dummyAbi.DummyAbi;
+import vadl.viam.passes.dummyAbi.DummyAbi;
 import vadl.viam.Definition;
 import vadl.viam.DefinitionVisitor;
 
