@@ -1,8 +1,8 @@
 package vadl.test.lcb;
 
 import java.io.IOException;
-import vadl.gcb.valuetypes.ProcessorName;
 import vadl.configuration.LcbConfiguration;
+import vadl.gcb.valuetypes.ProcessorName;
 import vadl.pass.PassKey;
 import vadl.pass.PassManager;
 import vadl.pass.PassOrder;
