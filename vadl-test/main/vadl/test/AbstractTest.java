@@ -28,7 +28,13 @@ import org.apache.velocity.app.Velocity;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.params.provider.Arguments;
-import vadl.lcb.config.LcbConfiguration;
+import vadl.configuration.GcbConfiguration;
+import vadl.configuration.GeneralConfiguration;
+import vadl.pass.Pass;
+import vadl.pass.PassKey;
+import vadl.pass.PassManager;
+import vadl.pass.exception.DuplicatedPassKeyException;
+import vadl.utils.Pair;
 import vadl.utils.VADLFileUtils;
 import vadl.viam.Specification;
 import vadl.viam.passes.verification.ViamVerifier;
@@ -290,5 +296,45 @@ public class AbstractTest {
       throw new RuntimeException(e);
     }
     return result.toString();
+  }
+
+
+  public TestSetup setupPassManagerAndRunSpec(String specPath,
+                                              List<Pass> passes)
+      throws IOException, DuplicatedPassKeyException {
+    var spec = runAndGetViamSpecification(specPath);
+
+    var passManager = new PassManager();
+    passManager.add(passes);
+    passManager.run(spec);
+
+    return new TestSetup(passManager, spec);
+  }
+
+
+  public TestSetup setupPassManagerAndRunSpecUntil(String specPath,
+                                                   List<Pass> passes,
+                                                   PassKey until)
+      throws IOException, DuplicatedPassKeyException {
+    var spec = runAndGetViamSpecification(specPath);
+
+    var passManager = new PassManager();
+    passManager.add(passes);
+    passManager.runUntilInclusive(spec, until);
+
+    return new TestSetup(passManager, spec);
+  }
+
+  public static Path createDirectory() throws IOException {
+    return VADLFileUtils.createTempDirectory("vadl-test");
+  }
+
+  public GeneralConfiguration getConfiguration(boolean doDump) throws IOException {
+    var directory = createDirectory();
+    return new GeneralConfiguration(directory.toAbsolutePath().toString(), doDump);
+  }
+
+  public record TestSetup(PassManager passManager, Specification specification) {
+
   }
 }

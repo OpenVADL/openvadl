@@ -3,24 +3,19 @@ package vadl.lcb.template.lib.Target.MCTargetDesc;
 import java.io.IOException;
 import java.util.List;
 import java.util.Map;
-import vadl.gcb.valuetypes.ProcessorName;
-import vadl.lcb.config.LcbConfiguration;
+import vadl.configuration.LcbConfiguration;
 import vadl.lcb.template.CommonVarNames;
+import vadl.lcb.template.LcbTemplateRenderingPass;
 import vadl.pass.PassResults;
-import vadl.template.AbstractTemplateRenderingPass;
 import vadl.viam.Specification;
 
 /**
  * This file contains the definitions for emitting asm instructions.
  */
-public class EmitInstrPrinterHeaderFilePass extends AbstractTemplateRenderingPass {
+public class EmitInstrPrinterHeaderFilePass extends LcbTemplateRenderingPass {
 
-  private final ProcessorName processorName;
-
-  public EmitInstrPrinterHeaderFilePass(LcbConfiguration lcbConfiguration,
-                                        ProcessorName processorName) throws IOException {
-    super(lcbConfiguration.outputPath());
-    this.processorName = processorName;
+  public EmitInstrPrinterHeaderFilePass(LcbConfiguration lcbConfiguration) throws IOException {
+    super(lcbConfiguration);
   }
 
   @Override
@@ -30,8 +25,9 @@ public class EmitInstrPrinterHeaderFilePass extends AbstractTemplateRenderingPas
 
   @Override
   protected String getOutputPath() {
-    return "lcb/llvm/lib/Target/" + processorName.value() + "/MCTargetDesc/"
-        + processorName.value() + "InstrPrinter.h";
+    var processorName = lcbConfiguration().processorName().value();
+    return "lcb/llvm/lib/Target/" + processorName + "/MCTargetDesc/"
+        + processorName + "InstrPrinter.h";
   }
 
   record Register(String name) {

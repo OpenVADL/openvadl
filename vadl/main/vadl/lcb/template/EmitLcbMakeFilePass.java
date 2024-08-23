@@ -2,26 +2,18 @@ package vadl.lcb.template;
 
 import java.io.IOException;
 import java.util.Map;
-import vadl.gcb.valuetypes.ProcessorName;
-import vadl.lcb.config.LcbConfiguration;
-import vadl.pass.PassKey;
+import vadl.configuration.LcbConfiguration;
 import vadl.pass.PassResults;
-import vadl.pass.PassResults;
-import vadl.pass.PassResults;
-import vadl.template.AbstractTemplateRenderingPass;
 import vadl.viam.Specification;
 
 /**
  * Makefile for the lcb.
  */
-public class EmitLcbMakeFilePass extends AbstractTemplateRenderingPass {
+public class EmitLcbMakeFilePass extends LcbTemplateRenderingPass {
 
-  private final ProcessorName processorName;
-
-  public EmitLcbMakeFilePass(LcbConfiguration lcbConfiguration, ProcessorName processorName)
+  public EmitLcbMakeFilePass(LcbConfiguration lcbConfiguration)
       throws IOException {
-    super(lcbConfiguration.outputPath());
-    this.processorName = processorName;
+    super(lcbConfiguration);
   }
 
   @Override

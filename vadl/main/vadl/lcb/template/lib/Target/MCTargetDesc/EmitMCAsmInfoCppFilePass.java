@@ -2,24 +2,20 @@ package vadl.lcb.template.lib.Target.MCTargetDesc;
 
 import java.io.IOException;
 import java.util.Map;
-import vadl.gcb.valuetypes.ProcessorName;
-import vadl.lcb.config.LcbConfiguration;
+import vadl.configuration.LcbConfiguration;
 import vadl.lcb.template.CommonVarNames;
+import vadl.lcb.template.LcbTemplateRenderingPass;
 import vadl.pass.PassResults;
-import vadl.template.AbstractTemplateRenderingPass;
 import vadl.viam.Specification;
 
 /**
  * This file contains the implementation for general assembly info.
  */
-public class EmitMCAsmInfoCppFilePass extends AbstractTemplateRenderingPass {
+public class EmitMCAsmInfoCppFilePass extends LcbTemplateRenderingPass {
 
-  private final ProcessorName processorName;
-
-  public EmitMCAsmInfoCppFilePass(LcbConfiguration lcbConfiguration, ProcessorName processorName)
+  public EmitMCAsmInfoCppFilePass(LcbConfiguration lcbConfiguration)
       throws IOException {
-    super(lcbConfiguration.outputPath());
-    this.processorName = processorName;
+    super(lcbConfiguration);
   }
 
   @Override
@@ -29,8 +25,9 @@ public class EmitMCAsmInfoCppFilePass extends AbstractTemplateRenderingPass {
 
   @Override
   protected String getOutputPath() {
-    return "lcb/llvm/lib/Target/" + processorName.value() + "/MCTargetDesc/"
-        + processorName.value() + "MCAsmInfo.cpp";
+    var processorName = lcbConfiguration().processorName().value();
+    return "lcb/llvm/lib/Target/" + processorName + "/MCTargetDesc/"
+        + processorName + "MCAsmInfo.cpp";
   }
 
   record AssemblyDescription(String commentString, int alignmentInBytes) {

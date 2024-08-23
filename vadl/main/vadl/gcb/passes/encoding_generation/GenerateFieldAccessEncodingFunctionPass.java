@@ -5,6 +5,7 @@ import java.util.List;
 import org.jetbrains.annotations.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import vadl.configuration.GcbConfiguration;
 import vadl.gcb.passes.encoding_generation.strategies.EncodingGenerationStrategy;
 import vadl.gcb.passes.encoding_generation.strategies.impl.ArithmeticImmediateStrategy;
 import vadl.gcb.passes.encoding_generation.strategies.impl.ShiftedImmediateStrategy;
@@ -31,6 +32,10 @@ public class GenerateFieldAccessEncodingFunctionPass extends Pass {
       new TrivialImmediateStrategy(),
       new ShiftedImmediateStrategy(),
       new ArithmeticImmediateStrategy());
+
+  public GenerateFieldAccessEncodingFunctionPass(GcbConfiguration gcbConfiguration) {
+    super(gcbConfiguration);
+  }
 
   @Override
   public PassName getName() {

@@ -6,18 +6,17 @@ import java.util.Comparator;
 import java.util.IdentityHashMap;
 import java.util.List;
 import java.util.Map;
+import vadl.configuration.LcbConfiguration;
 import vadl.gcb.passes.type_normalization.CppTypeNormalizationForDecodingsPass;
 import vadl.gcb.passes.type_normalization.CppTypeNormalizationForEncodingsPass;
 import vadl.gcb.passes.type_normalization.CppTypeNormalizationForPredicatesPass;
-import vadl.gcb.valuetypes.ProcessorName;
 import vadl.lcb.codegen.DecodingCodeGenerator;
 import vadl.lcb.codegen.EncodingCodeGenerator;
 import vadl.lcb.codegen.PredicateCodeGenerator;
-import vadl.lcb.config.LcbConfiguration;
 import vadl.lcb.template.CommonVarNames;
+import vadl.lcb.template.LcbTemplateRenderingPass;
 import vadl.pass.PassKey;
 import vadl.pass.PassResults;
-import vadl.template.AbstractTemplateRenderingPass;
 import vadl.viam.Definition;
 import vadl.viam.Format;
 import vadl.viam.Function;
@@ -26,14 +25,11 @@ import vadl.viam.Specification;
 /**
  * This file contains all the immediates for TableGen.
  */
-public class EmitImmediateFilePass extends AbstractTemplateRenderingPass {
+public class EmitImmediateFilePass extends LcbTemplateRenderingPass {
 
-  private final ProcessorName processorName;
-
-  public EmitImmediateFilePass(LcbConfiguration lcbConfiguration, ProcessorName processorName)
+  public EmitImmediateFilePass(LcbConfiguration lcbConfiguration)
       throws IOException {
-    super(lcbConfiguration.outputPath());
-    this.processorName = processorName;
+    super(lcbConfiguration);
   }
 
   @Override
@@ -43,8 +39,9 @@ public class EmitImmediateFilePass extends AbstractTemplateRenderingPass {
 
   @Override
   protected String getOutputPath() {
-    return "lcb/llvm/lib/Target/" + processorName.value() + "/Utils/"
-        + processorName.value() + "ImmediateUtils.h";
+    var processorName = lcbConfiguration().processorName().value();
+    return "lcb/llvm/lib/Target/" + processorName + "/Utils/"
+        + processorName + "ImmediateUtils.h";
   }
 
   @Override

@@ -2,6 +2,7 @@ package vadl.viam.passes.verification;
 
 import java.io.IOException;
 import org.jetbrains.annotations.Nullable;
+import vadl.configuration.GeneralConfiguration;
 import vadl.pass.Pass;
 import vadl.pass.PassName;
 import vadl.pass.PassResults;
@@ -16,6 +17,10 @@ import vadl.viam.Specification;
  * @see ViamVerifier
  */
 public class ViamVerificationPass extends Pass {
+  public ViamVerificationPass(GeneralConfiguration configuration) {
+    super(configuration);
+  }
+
   @Override
   public PassName getName() {
     return new PassName("ViamVerificationPass");

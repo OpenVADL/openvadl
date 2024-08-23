@@ -2,24 +2,19 @@ package vadl.lcb.template.lib.Target;
 
 import java.io.IOException;
 import java.util.Map;
-import vadl.gcb.valuetypes.ProcessorName;
-import vadl.lcb.config.LcbConfiguration;
+import vadl.configuration.LcbConfiguration;
 import vadl.lcb.template.CommonVarNames;
+import vadl.lcb.template.LcbTemplateRenderingPass;
 import vadl.pass.PassResults;
-import vadl.template.AbstractTemplateRenderingPass;
 import vadl.viam.Specification;
 
 /**
  * This file contains the definition for the setup of the ELF object file.
  */
-public class EmitTargetObjectFileHeaderFilePass extends AbstractTemplateRenderingPass {
+public class EmitTargetObjectFileHeaderFilePass extends LcbTemplateRenderingPass {
 
-  private final ProcessorName processorName;
-
-  public EmitTargetObjectFileHeaderFilePass(LcbConfiguration lcbConfiguration,
-                                            ProcessorName processorName) throws IOException {
-    super(lcbConfiguration.outputPath());
-    this.processorName = processorName;
+  public EmitTargetObjectFileHeaderFilePass(LcbConfiguration lcbConfiguration) throws IOException {
+    super(lcbConfiguration);
   }
 
   @Override
@@ -29,7 +24,8 @@ public class EmitTargetObjectFileHeaderFilePass extends AbstractTemplateRenderin
 
   @Override
   protected String getOutputPath() {
-    return "llvm/lib/Target/" + processorName.value() + "/" + processorName.value()
+    var processorName = lcbConfiguration().processorName().value();
+    return "llvm/lib/Target/" + processorName + "/" + processorName
         + "/ObjectFile.h";
   }
 

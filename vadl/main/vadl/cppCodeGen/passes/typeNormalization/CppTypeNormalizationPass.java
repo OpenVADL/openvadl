@@ -9,6 +9,7 @@ import java.util.stream.Stream;
 import org.jetbrains.annotations.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import vadl.configuration.GcbConfiguration;
 import vadl.pass.Pass;
 import vadl.pass.PassResults;
 import vadl.types.BitsType;
@@ -36,6 +37,10 @@ import vadl.viam.graph.dependency.ZeroExtendNode;
  */
 public abstract class CppTypeNormalizationPass extends Pass {
   private static final Logger logger = LoggerFactory.getLogger(CppTypeNormalizationPass.class);
+
+  public CppTypeNormalizationPass(GcbConfiguration gcbConfiguration) {
+    super(gcbConfiguration);
+  }
 
   /**
    * Get a list of functions on which the pass should be applied on.

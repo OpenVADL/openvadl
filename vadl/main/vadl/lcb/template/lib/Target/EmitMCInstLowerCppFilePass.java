@@ -2,24 +2,20 @@ package vadl.lcb.template.lib.Target;
 
 import java.io.IOException;
 import java.util.Map;
-import vadl.gcb.valuetypes.ProcessorName;
-import vadl.lcb.config.LcbConfiguration;
+import vadl.configuration.LcbConfiguration;
 import vadl.lcb.template.CommonVarNames;
+import vadl.lcb.template.LcbTemplateRenderingPass;
 import vadl.pass.PassResults;
-import vadl.template.AbstractTemplateRenderingPass;
 import vadl.viam.Specification;
 
 /**
  * This file contains the lowering logic to the MC layer.
  */
-public class EmitMCInstLowerCppFilePass extends AbstractTemplateRenderingPass {
+public class EmitMCInstLowerCppFilePass extends LcbTemplateRenderingPass {
 
-  private final ProcessorName processorName;
-
-  public EmitMCInstLowerCppFilePass(LcbConfiguration lcbConfiguration, ProcessorName processorName)
+  public EmitMCInstLowerCppFilePass(LcbConfiguration lcbConfiguration)
       throws IOException {
-    super(lcbConfiguration.outputPath());
-    this.processorName = processorName;
+    super(lcbConfiguration);
   }
 
   @Override
@@ -29,8 +25,9 @@ public class EmitMCInstLowerCppFilePass extends AbstractTemplateRenderingPass {
 
   @Override
   protected String getOutputPath() {
-    return "lcb/llvm/lib/Target/" + processorName.value() + "/"
-        + processorName.value() + "MCInstLower.cpp";
+    var processorName = lcbConfiguration().processorName().value();
+    return "lcb/llvm/lib/Target/" + processorName + "/"
+        + processorName + "MCInstLower.cpp";
   }
 
   @Override

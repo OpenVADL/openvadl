@@ -2,24 +2,20 @@ package vadl.lcb.template.lib.Target.AsmParser;
 
 import java.io.IOException;
 import java.util.Map;
-import vadl.gcb.valuetypes.ProcessorName;
-import vadl.lcb.config.LcbConfiguration;
+import vadl.configuration.LcbConfiguration;
 import vadl.lcb.template.CommonVarNames;
+import vadl.lcb.template.LcbTemplateRenderingPass;
 import vadl.pass.PassResults;
-import vadl.template.AbstractTemplateRenderingPass;
 import vadl.viam.Specification;
 
 /**
  * This file includes the definitions for the asm parser.
  */
-public class EmitAsmRecursiveDescentParserCppFilePass extends AbstractTemplateRenderingPass {
+public class EmitAsmRecursiveDescentParserCppFilePass extends LcbTemplateRenderingPass {
 
-  private final ProcessorName processorName;
-
-  public EmitAsmRecursiveDescentParserCppFilePass(LcbConfiguration lcbConfiguration,
-                                                  ProcessorName processorName) throws IOException {
-    super(lcbConfiguration.outputPath());
-    this.processorName = processorName;
+  public EmitAsmRecursiveDescentParserCppFilePass(LcbConfiguration lcbConfiguration)
+      throws IOException {
+    super(lcbConfiguration);
   }
 
   @Override
@@ -29,7 +25,8 @@ public class EmitAsmRecursiveDescentParserCppFilePass extends AbstractTemplateRe
 
   @Override
   protected String getOutputPath() {
-    return "llvm/lib/Target/" + processorName.value() + "/AsmParser/AsmRecursiveDescentParser.cpp";
+    return "llvm/lib/Target/" + lcbConfiguration().processorName().value()
+        + "/AsmParser/AsmRecursiveDescentParser.cpp";
   }
 
   @Override

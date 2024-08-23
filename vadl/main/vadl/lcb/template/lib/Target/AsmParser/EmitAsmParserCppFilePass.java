@@ -4,11 +4,10 @@ import java.io.IOException;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Stream;
-import vadl.gcb.valuetypes.ProcessorName;
-import vadl.lcb.config.LcbConfiguration;
+import vadl.configuration.LcbConfiguration;
 import vadl.lcb.template.CommonVarNames;
+import vadl.lcb.template.LcbTemplateRenderingPass;
 import vadl.pass.PassResults;
-import vadl.template.AbstractTemplateRenderingPass;
 import vadl.viam.Instruction;
 import vadl.viam.InstructionSetArchitecture;
 import vadl.viam.PseudoInstruction;
@@ -17,14 +16,10 @@ import vadl.viam.Specification;
 /**
  * This file contains the implementation for parsing assembly files.
  */
-public class EmitAsmParserCppFilePass extends AbstractTemplateRenderingPass {
+public class EmitAsmParserCppFilePass extends LcbTemplateRenderingPass {
 
-  private final ProcessorName processorName;
-
-  public EmitAsmParserCppFilePass(LcbConfiguration lcbConfiguration,
-                                  ProcessorName processorName) throws IOException {
-    super(lcbConfiguration.outputPath());
-    this.processorName = processorName;
+  public EmitAsmParserCppFilePass(LcbConfiguration lcbConfiguration) throws IOException {
+    super(lcbConfiguration);
   }
 
   @Override
@@ -34,7 +29,8 @@ public class EmitAsmParserCppFilePass extends AbstractTemplateRenderingPass {
 
   @Override
   protected String getOutputPath() {
-    return "llvm/lib/Target/" + processorName.value() + "/AsmParser/" + processorName.value()
+    var processorName = lcbConfiguration().processorName().value();
+    return "llvm/lib/Target/" + processorName + "/AsmParser/" + processorName
         + "AsmParser.cpp";
   }
 

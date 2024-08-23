@@ -3,24 +3,19 @@ package vadl.lcb.include.llvm.BinaryFormat.ELFRelocs;
 import java.io.IOException;
 import java.util.List;
 import java.util.Map;
-import vadl.gcb.valuetypes.ProcessorName;
-import vadl.lcb.config.LcbConfiguration;
+import vadl.configuration.LcbConfiguration;
 import vadl.lcb.template.CommonVarNames;
+import vadl.lcb.template.LcbTemplateRenderingPass;
 import vadl.pass.PassResults;
-import vadl.template.AbstractTemplateRenderingPass;
 import vadl.viam.Specification;
 
 /**
  * This file creates the ELF relocation definitions.
  */
-public class EmitTargetElfRelocsDefFilePass extends AbstractTemplateRenderingPass {
+public class EmitTargetElfRelocsDefFilePass extends LcbTemplateRenderingPass {
 
-  private final ProcessorName processorName;
-
-  public EmitTargetElfRelocsDefFilePass(LcbConfiguration lcbConfiguration,
-                                        ProcessorName processorName) throws IOException {
-    super(lcbConfiguration.outputPath());
-    this.processorName = processorName;
+  public EmitTargetElfRelocsDefFilePass(LcbConfiguration lcbConfiguration) throws IOException {
+    super(lcbConfiguration);
   }
 
   @Override
@@ -30,7 +25,8 @@ public class EmitTargetElfRelocsDefFilePass extends AbstractTemplateRenderingPas
 
   @Override
   protected String getOutputPath() {
-    return "llvm/include/llvm/BinaryFormat/ELFRelocs/" + processorName.value() + ".def";
+    return "llvm/include/llvm/BinaryFormat/ELFRelocs/"
+        + lcbConfiguration().processorName().value() + ".def";
   }
 
   record Relocation(String identifier) {

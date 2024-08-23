@@ -2,24 +2,19 @@ package vadl.lcb.template.lld.ELF.Arch;
 
 import java.io.IOException;
 import java.util.Map;
-import vadl.gcb.valuetypes.ProcessorName;
-import vadl.lcb.config.LcbConfiguration;
+import vadl.configuration.LcbConfiguration;
 import vadl.lcb.template.CommonVarNames;
+import vadl.lcb.template.LcbTemplateRenderingPass;
 import vadl.pass.PassResults;
-import vadl.template.AbstractTemplateRenderingPass;
 import vadl.viam.Specification;
 
 /**
  * TODO define what this does.
  */
-public class EmitLldManualEncodingHeaderFilePass extends AbstractTemplateRenderingPass {
+public class EmitLldManualEncodingHeaderFilePass extends LcbTemplateRenderingPass {
 
-  private final ProcessorName processorName;
-
-  public EmitLldManualEncodingHeaderFilePass(LcbConfiguration lcbConfiguration,
-                                             ProcessorName processorName) throws IOException {
-    super(lcbConfiguration.outputPath());
-    this.processorName = processorName;
+  public EmitLldManualEncodingHeaderFilePass(LcbConfiguration lcbConfiguration) throws IOException {
+    super(lcbConfiguration);
   }
 
   @Override
@@ -29,7 +24,7 @@ public class EmitLldManualEncodingHeaderFilePass extends AbstractTemplateRenderi
 
   @Override
   protected String getOutputPath() {
-    return "lld/ELF/Arch/" + processorName.value() + "ManualEncoding.cpp";
+    return "lld/ELF/Arch/" + lcbConfiguration().processorName().value() + "ManualEncoding.cpp";
   }
 
   @Override

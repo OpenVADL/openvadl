@@ -4,6 +4,7 @@ import java.io.IOException;
 import java.util.List;
 import java.util.stream.Collectors;
 import org.jetbrains.annotations.Nullable;
+import vadl.configuration.GeneralConfiguration;
 import vadl.pass.Pass;
 import vadl.pass.PassName;
 import vadl.pass.PassResults;
@@ -20,6 +21,10 @@ import vadl.viam.graph.dependency.ExpressionNode;
  * {@link Instruction#behavior()} by inserting explicit types.
  */
 public class ExplicitBitSizesInTypingPass extends Pass {
+  public ExplicitBitSizesInTypingPass(GeneralConfiguration configuration) {
+    super(configuration);
+  }
+
   @Override
   public PassName getName() {
     return new PassName("ExplicitTypingPass");

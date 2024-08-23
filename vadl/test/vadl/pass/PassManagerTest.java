@@ -7,13 +7,19 @@ import java.io.IOException;
 import java.net.URI;
 import java.net.URISyntaxException;
 import org.junit.jupiter.api.Test;
+import vadl.AbstractTest;
+import vadl.configuration.GeneralConfiguration;
 import vadl.pass.exception.DuplicatedPassKeyException;
 import vadl.utils.SourceLocation;
 import vadl.viam.Identifier;
 import vadl.viam.Specification;
 
-class PassManagerTest {
+class PassManagerTest extends AbstractTest {
   static class PassTest extends Pass {
+
+    protected PassTest(GeneralConfiguration configuration) {
+      super(configuration);
+    }
 
     @Override
     public PassName getName() {
@@ -30,7 +36,7 @@ class PassManagerTest {
   void shouldThrowException_whenDuplicatedKey() throws DuplicatedPassKeyException {
     // Given
     var manager = new PassManager();
-    var pass = new PassTest();
+    var pass = new PassTest(createConfiguration());
     manager.add(new PassKey("passKeyValue"), pass);
 
     // When adding already existing pass
@@ -50,7 +56,7 @@ class PassManagerTest {
         new Specification(new Identifier("nameValue",
             new SourceLocation(new URI("/"), 1)));
     var manager = new PassManager();
-    var pass = new PassTest();
+    var pass = new PassTest(createConfiguration());
     manager.add(new PassKey("passKeyValue"), pass);
 
     // When

@@ -2,24 +2,20 @@ package vadl.lcb.template.lld.ELF;
 
 import java.io.IOException;
 import java.util.Map;
-import vadl.gcb.valuetypes.ProcessorName;
-import vadl.lcb.config.LcbConfiguration;
+import vadl.configuration.LcbConfiguration;
 import vadl.lcb.template.CommonVarNames;
+import vadl.lcb.template.LcbTemplateRenderingPass;
 import vadl.pass.PassResults;
-import vadl.template.AbstractTemplateRenderingPass;
 import vadl.viam.Specification;
 
 /**
  * CMakefile for lld.
  */
-public class EmitLldELFCMakeFilePass extends AbstractTemplateRenderingPass {
+public class EmitLldELFCMakeFilePass extends LcbTemplateRenderingPass {
 
-  private final ProcessorName processorName;
-
-  public EmitLldELFCMakeFilePass(LcbConfiguration lcbConfiguration, ProcessorName processorName)
+  public EmitLldELFCMakeFilePass(LcbConfiguration lcbConfiguration)
       throws IOException {
-    super(lcbConfiguration.outputPath());
-    this.processorName = processorName;
+    super(lcbConfiguration);
   }
 
   @Override

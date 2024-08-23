@@ -3,6 +3,7 @@ package vadl.cppCodeGen.passes.fieldNodeReplacement;
 import java.util.Arrays;
 import java.util.Objects;
 import java.util.stream.Stream;
+import vadl.configuration.GcbConfiguration;
 import vadl.pass.PassName;
 import vadl.viam.Format;
 import vadl.viam.Function;
@@ -15,6 +16,10 @@ import vadl.viam.graph.dependency.FuncParamNode;
  * {@link Format.FieldAccess#accessFunction()}.
  */
 public class FieldNodeReplacementPassForDecoding extends FieldNodeReplacementPass {
+
+  public FieldNodeReplacementPassForDecoding(GcbConfiguration gcbConfiguration) {
+    super(gcbConfiguration);
+  }
 
   @Override
   public PassName getName() {

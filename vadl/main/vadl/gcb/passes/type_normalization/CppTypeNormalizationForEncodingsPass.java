@@ -3,6 +3,7 @@ package vadl.gcb.passes.type_normalization;
 import java.util.Arrays;
 import java.util.Objects;
 import java.util.stream.Stream;
+import vadl.configuration.GcbConfiguration;
 import vadl.cppCodeGen.passes.typeNormalization.CppTypeNormalizationPass;
 import vadl.pass.PassName;
 import vadl.viam.Format;
@@ -15,6 +16,10 @@ import vadl.viam.Specification;
  * This pass inserts a bit mask to ensure that the code generation works for encodings.
  */
 public class CppTypeNormalizationForEncodingsPass extends CppTypeNormalizationPass {
+
+  public CppTypeNormalizationForEncodingsPass(GcbConfiguration gcbConfiguration) {
+    super(gcbConfiguration);
+  }
 
   @Override
   public PassName getName() {

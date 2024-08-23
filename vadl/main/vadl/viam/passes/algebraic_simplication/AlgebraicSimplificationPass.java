@@ -4,6 +4,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import org.jetbrains.annotations.Nullable;
+import vadl.configuration.GeneralConfiguration;
 import vadl.pass.Pass;
 import vadl.pass.PassName;
 import vadl.pass.PassResults;
@@ -41,6 +42,10 @@ public class AlgebraicSimplificationPass extends Pass {
     rules.add(new AndWithTrueSimplificationRule());
     rules.add(new OrWithTrueSimplificationRule());
     rules.add(new OrWithFalseSimplificationRule());
+  }
+
+  public AlgebraicSimplificationPass(GeneralConfiguration configuration) {
+    super(configuration);
   }
 
   @Override

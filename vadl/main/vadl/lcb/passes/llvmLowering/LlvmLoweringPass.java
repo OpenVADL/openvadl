@@ -6,6 +6,7 @@ import java.util.IdentityHashMap;
 import java.util.List;
 import java.util.Map;
 import org.jetbrains.annotations.Nullable;
+import vadl.configuration.LcbConfiguration;
 import vadl.lcb.passes.isaMatching.InstructionLabel;
 import vadl.lcb.passes.isaMatching.IsaMatchingPass;
 import vadl.lcb.passes.llvmLowering.strategies.LlvmLoweringStrategy;
@@ -41,6 +42,10 @@ public class LlvmLoweringPass extends Pass {
       new LlvmLoweringIndirectJumpStrategyImpl(),
       new LlvmLoweringMemStoreStrategyImpl()
   );
+
+  public LlvmLoweringPass(LcbConfiguration configuration) {
+    super(configuration);
+  }
 
   /**
    * A {@link TableGenInstruction} has many boolean flags which are required for the

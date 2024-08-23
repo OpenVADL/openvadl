@@ -2,6 +2,7 @@ package vadl.viam.passes.canonicalization;
 
 import java.util.Arrays;
 import org.jetbrains.annotations.Nullable;
+import vadl.configuration.GeneralConfiguration;
 import vadl.pass.Pass;
 import vadl.pass.PassName;
 import vadl.pass.PassResults;
@@ -14,6 +15,10 @@ import vadl.viam.graph.dependency.BuiltInCall;
  * It will only consider machine instructions.
  */
 public class CanoicalizationPass extends Pass {
+  public CanoicalizationPass(GeneralConfiguration configuration) {
+    super(configuration);
+  }
+
   @Override
   public PassName getName() {
     return new PassName("canonicalization");

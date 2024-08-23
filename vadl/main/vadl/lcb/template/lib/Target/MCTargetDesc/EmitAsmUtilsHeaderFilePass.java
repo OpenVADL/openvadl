@@ -2,24 +2,20 @@ package vadl.lcb.template.lib.Target.MCTargetDesc;
 
 import java.io.IOException;
 import java.util.Map;
-import vadl.gcb.valuetypes.ProcessorName;
-import vadl.lcb.config.LcbConfiguration;
+import vadl.configuration.LcbConfiguration;
 import vadl.lcb.template.CommonVarNames;
+import vadl.lcb.template.LcbTemplateRenderingPass;
 import vadl.pass.PassResults;
-import vadl.template.AbstractTemplateRenderingPass;
 import vadl.viam.Specification;
 
 /**
  * This file includes the definitions for util functions for asm.
  */
-public class EmitAsmUtilsHeaderFilePass extends AbstractTemplateRenderingPass {
+public class EmitAsmUtilsHeaderFilePass extends LcbTemplateRenderingPass {
 
-  private final ProcessorName processorName;
-
-  public EmitAsmUtilsHeaderFilePass(LcbConfiguration lcbConfiguration, ProcessorName processorName)
+  public EmitAsmUtilsHeaderFilePass(LcbConfiguration lcbConfiguration)
       throws IOException {
-    super(lcbConfiguration.outputPath());
-    this.processorName = processorName;
+    super(lcbConfiguration);
   }
 
   @Override
@@ -29,7 +25,8 @@ public class EmitAsmUtilsHeaderFilePass extends AbstractTemplateRenderingPass {
 
   @Override
   protected String getOutputPath() {
-    return "llvm/lib/Target/" + processorName.value() + "/MCTargetDesc/AsmUtils.h";
+    return "llvm/lib/Target/" + lcbConfiguration().processorName().value()
+        + "/MCTargetDesc/AsmUtils.h";
   }
 
   @Override

@@ -2,24 +2,20 @@ package vadl.lcb.template.lib.Target;
 
 import java.io.IOException;
 import java.util.Map;
-import vadl.gcb.valuetypes.ProcessorName;
-import vadl.lcb.config.LcbConfiguration;
+import vadl.configuration.LcbConfiguration;
 import vadl.lcb.template.CommonVarNames;
+import vadl.lcb.template.LcbTemplateRenderingPass;
 import vadl.pass.PassResults;
-import vadl.template.AbstractTemplateRenderingPass;
 import vadl.viam.Specification;
 
 /**
  * CMakeFile for the compiler backend.
  */
-public class EmitTargetCMakeFilePass extends AbstractTemplateRenderingPass {
+public class EmitTargetCMakeFilePass extends LcbTemplateRenderingPass {
 
-  private final ProcessorName processorName;
-
-  public EmitTargetCMakeFilePass(LcbConfiguration lcbConfiguration, ProcessorName processorName)
+  public EmitTargetCMakeFilePass(LcbConfiguration lcbConfiguration)
       throws IOException {
-    super(lcbConfiguration.outputPath());
-    this.processorName = processorName;
+    super(lcbConfiguration);
   }
 
   @Override
@@ -29,7 +25,7 @@ public class EmitTargetCMakeFilePass extends AbstractTemplateRenderingPass {
 
   @Override
   protected String getOutputPath() {
-    return "llvm/lib/Target/" + processorName.value() + "/CMakeLists.txt";
+    return "llvm/lib/Target/" + lcbConfiguration().processorName().value() + "/CMakeLists.txt";
   }
 
   @Override

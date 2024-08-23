@@ -3,25 +3,20 @@ package vadl.lcb.template.lld.ELF.Arch;
 import java.io.IOException;
 import java.util.List;
 import java.util.Map;
-import vadl.gcb.valuetypes.ProcessorName;
-import vadl.lcb.config.LcbConfiguration;
+import vadl.configuration.LcbConfiguration;
 import vadl.lcb.template.CommonVarNames;
+import vadl.lcb.template.LcbTemplateRenderingPass;
 import vadl.pass.PassResults;
-import vadl.template.AbstractTemplateRenderingPass;
 import vadl.viam.Specification;
 
 /**
  * This files defines the relocations for the linker.
  */
-public class EmitLldArchFilePass extends AbstractTemplateRenderingPass {
+public class EmitLldArchFilePass extends LcbTemplateRenderingPass {
 
-  private final ProcessorName processorName;
-
-  public EmitLldArchFilePass(LcbConfiguration lcbConfiguration,
-                             ProcessorName processorName)
+  public EmitLldArchFilePass(LcbConfiguration lcbConfiguration)
       throws IOException {
-    super(lcbConfiguration.outputPath());
-    this.processorName = processorName;
+    super(lcbConfiguration);
   }
 
   @Override
@@ -31,7 +26,7 @@ public class EmitLldArchFilePass extends AbstractTemplateRenderingPass {
 
   @Override
   protected String getOutputPath() {
-    return "lld/ELF/Arch/" + processorName.value() + ".cpp";
+    return "lld/ELF/Arch/" + lcbConfiguration().processorName().value() + ".cpp";
   }
 
   record ElfInfo(boolean isBigEndian, int maxInstructionWordSize) {

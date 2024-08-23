@@ -2,24 +2,19 @@ package vadl.lcb.template.lib.Target.MCTargetDesc;
 
 import java.io.IOException;
 import java.util.Map;
-import vadl.gcb.valuetypes.ProcessorName;
-import vadl.lcb.config.LcbConfiguration;
+import vadl.configuration.LcbConfiguration;
 import vadl.lcb.template.CommonVarNames;
+import vadl.lcb.template.LcbTemplateRenderingPass;
 import vadl.pass.PassResults;
-import vadl.template.AbstractTemplateRenderingPass;
 import vadl.viam.Specification;
 
 /**
  * This file contains the CMakefile for the MCTarget.
  */
-public class EmitMCTargetDescCMakeFilePass extends AbstractTemplateRenderingPass {
+public class EmitMCTargetDescCMakeFilePass extends LcbTemplateRenderingPass {
 
-  private final ProcessorName processorName;
-
-  public EmitMCTargetDescCMakeFilePass(LcbConfiguration lcbConfiguration,
-                                       ProcessorName processorName) throws IOException {
-    super(lcbConfiguration.outputPath());
-    this.processorName = processorName;
+  public EmitMCTargetDescCMakeFilePass(LcbConfiguration lcbConfiguration) throws IOException {
+    super(lcbConfiguration);
   }
 
   @Override
@@ -29,7 +24,8 @@ public class EmitMCTargetDescCMakeFilePass extends AbstractTemplateRenderingPass
 
   @Override
   protected String getOutputPath() {
-    return "lcb/llvm/lib/Target/" + processorName.value() + "/MCTargetDesc/CMakeLists.txt";
+    return "lcb/llvm/lib/Target/" + lcbConfiguration().processorName().value()
+        + "/MCTargetDesc/CMakeLists.txt";
   }
 
   @Override

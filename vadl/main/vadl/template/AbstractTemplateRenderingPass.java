@@ -13,6 +13,7 @@ import org.thymeleaf.context.Context;
 import org.thymeleaf.templatemode.TemplateMode;
 import org.thymeleaf.templateresolver.ClassLoaderTemplateResolver;
 import org.thymeleaf.templateresolver.ITemplateResolver;
+import vadl.configuration.GeneralConfiguration;
 import vadl.pass.Pass;
 import vadl.pass.PassName;
 import vadl.pass.PassResults;
@@ -44,7 +45,7 @@ public abstract class AbstractTemplateRenderingPass extends Pass {
   /**
    * Path prefix where the template gets stored to.
    */
-  private final String outputPathPrefix;
+  private final String subDir;
 
   /**
    * Get the path for the template which should be rendered.
@@ -63,8 +64,10 @@ public abstract class AbstractTemplateRenderingPass extends Pass {
   protected abstract Map<String, Object> createVariables(final PassResults passResults,
                                                          Specification specification);
 
-  public AbstractTemplateRenderingPass(String outputPathPrefix) throws IOException {
-    this.outputPathPrefix = outputPathPrefix;
+  public AbstractTemplateRenderingPass(GeneralConfiguration configuration, String subDir)
+      throws IOException {
+    super(configuration);
+    this.subDir = subDir;
   }
 
   @Override
@@ -73,7 +76,7 @@ public abstract class AbstractTemplateRenderingPass extends Pass {
   }
 
   private FileWriter createFileWriter() throws IOException {
-    var file = new File(outputPathPrefix + "/" + getOutputPath());
+    var file = new File(configuration().outputPath() + "/" + subDir + "/" + getOutputPath());
 
     if (!file.getParentFile().exists()) {
       ensure(file.getParentFile().mkdirs(), "Cannot create parent directories");

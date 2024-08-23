@@ -2,27 +2,22 @@ package vadl.lcb.clang.lib.Basic.Targets;
 
 import java.io.IOException;
 import java.util.Map;
-import vadl.gcb.valuetypes.ProcessorName;
-import vadl.lcb.config.LcbConfiguration;
+import vadl.configuration.LcbConfiguration;
 import vadl.lcb.template.CommonVarNames;
+import vadl.lcb.template.LcbTemplateRenderingPass;
 import vadl.pass.PassResults;
-import vadl.template.AbstractTemplateRenderingPass;
 import vadl.viam.Specification;
 
 /**
  * This file contains the datatype configuration for the llvm's types.
  */
-public class EmitClangTargetHeaderFilePass extends AbstractTemplateRenderingPass {
-
-  private final ProcessorName processorName;
+public class EmitClangTargetHeaderFilePass extends LcbTemplateRenderingPass {
 
   record DataLayout(boolean isBigEndian, int pointerSize, int pointerAlignment) {
   }
 
-  public EmitClangTargetHeaderFilePass(LcbConfiguration lcbConfiguration,
-                                       ProcessorName processorName) throws IOException {
-    super(lcbConfiguration.outputPath());
-    this.processorName = processorName;
+  public EmitClangTargetHeaderFilePass(LcbConfiguration lcbConfiguration) throws IOException {
+    super(lcbConfiguration);
   }
 
   @Override
@@ -32,7 +27,7 @@ public class EmitClangTargetHeaderFilePass extends AbstractTemplateRenderingPass
 
   @Override
   protected String getOutputPath() {
-    return "clang/lib/Basic/Targets/" + processorName.value() + ".h";
+    return "clang/lib/Basic/Targets/" + lcbConfiguration().processorName().value() + ".h";
   }
 
   private String createDataLayout(DataLayout dataLayout) {

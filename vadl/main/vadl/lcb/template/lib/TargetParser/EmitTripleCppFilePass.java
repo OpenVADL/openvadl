@@ -2,24 +2,20 @@ package vadl.lcb.template.lib.TargetParser;
 
 import java.io.IOException;
 import java.util.Map;
-import vadl.gcb.valuetypes.ProcessorName;
-import vadl.lcb.config.LcbConfiguration;
+import vadl.configuration.LcbConfiguration;
 import vadl.lcb.template.CommonVarNames;
+import vadl.lcb.template.LcbTemplateRenderingPass;
 import vadl.pass.PassResults;
-import vadl.template.AbstractTemplateRenderingPass;
 import vadl.viam.Specification;
 
 /**
  * This file contains code which handles the triple.
  */
-public class EmitTripleCppFilePass extends AbstractTemplateRenderingPass {
+public class EmitTripleCppFilePass extends LcbTemplateRenderingPass {
 
-  private final ProcessorName processorName;
-
-  public EmitTripleCppFilePass(LcbConfiguration lcbConfiguration, ProcessorName processorName)
+  public EmitTripleCppFilePass(LcbConfiguration lcbConfiguration)
       throws IOException {
-    super(lcbConfiguration.outputPath());
-    this.processorName = processorName;
+    super(lcbConfiguration);
   }
 
   @Override
@@ -29,7 +25,8 @@ public class EmitTripleCppFilePass extends AbstractTemplateRenderingPass {
 
   @Override
   protected String getOutputPath() {
-    return "llvm/lib/Target/" + processorName.value() + "/TargetParser/Triple.cpp";
+    return "llvm/lib/Target/" + lcbConfiguration().processorName().value()
+        + "/TargetParser/Triple.cpp";
   }
 
   @Override

@@ -2,6 +2,7 @@ package vadl.viam.passes.typeCastElimination;
 
 import java.io.IOException;
 import org.jetbrains.annotations.Nullable;
+import vadl.configuration.GeneralConfiguration;
 import vadl.pass.Pass;
 import vadl.pass.PassName;
 import vadl.pass.PassResults;
@@ -15,6 +16,10 @@ import vadl.viam.WithBehavior;
  * @see TypeCastEliminator
  */
 public class TypeCastEliminationPass extends Pass {
+  public TypeCastEliminationPass(GeneralConfiguration configuration) {
+    super(configuration);
+  }
+
   @Override
   public PassName getName() {
     return new PassName("typeCastElimination");

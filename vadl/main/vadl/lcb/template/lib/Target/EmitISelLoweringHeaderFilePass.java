@@ -2,24 +2,19 @@ package vadl.lcb.template.lib.Target;
 
 import java.io.IOException;
 import java.util.Map;
-import vadl.gcb.valuetypes.ProcessorName;
-import vadl.lcb.config.LcbConfiguration;
+import vadl.configuration.LcbConfiguration;
 import vadl.lcb.template.CommonVarNames;
+import vadl.lcb.template.LcbTemplateRenderingPass;
 import vadl.pass.PassResults;
-import vadl.template.AbstractTemplateRenderingPass;
 import vadl.viam.Specification;
 
 /**
  * This file contains definition for the legalization, promotions and legalization of nodes.
  */
-public class EmitISelLoweringHeaderFilePass extends AbstractTemplateRenderingPass {
+public class EmitISelLoweringHeaderFilePass extends LcbTemplateRenderingPass {
 
-  private final ProcessorName processorName;
-
-  public EmitISelLoweringHeaderFilePass(LcbConfiguration lcbConfiguration,
-                                        ProcessorName processorName) throws IOException {
-    super(lcbConfiguration.outputPath());
-    this.processorName = processorName;
+  public EmitISelLoweringHeaderFilePass(LcbConfiguration lcbConfiguration) throws IOException {
+    super(lcbConfiguration);
   }
 
   @Override
@@ -29,7 +24,8 @@ public class EmitISelLoweringHeaderFilePass extends AbstractTemplateRenderingPas
 
   @Override
   protected String getOutputPath() {
-    return "llvm/lib/Target/" + processorName.value() + "/" + processorName.value()
+    var processorName = lcbConfiguration().processorName().value();
+    return "llvm/lib/Target/" + processorName + "/" + processorName
         + "ISelLowering.h";
   }
 

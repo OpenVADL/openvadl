@@ -3,25 +3,21 @@ package vadl.lcb.template.lib.Target.Disassembler;
 import java.io.IOException;
 import java.util.List;
 import java.util.Map;
-import vadl.gcb.valuetypes.ProcessorName;
-import vadl.lcb.config.LcbConfiguration;
+import vadl.configuration.LcbConfiguration;
 import vadl.lcb.template.CommonVarNames;
+import vadl.lcb.template.LcbTemplateRenderingPass;
 import vadl.pass.PassResults;
-import vadl.template.AbstractTemplateRenderingPass;
 import vadl.viam.RegisterFile;
 import vadl.viam.Specification;
 
 /**
  * This file contains the target specific implementation for the disassembler.
  */
-public class EmitDisassemblerCppFilePass extends AbstractTemplateRenderingPass {
+public class EmitDisassemblerCppFilePass extends LcbTemplateRenderingPass {
 
-  private final ProcessorName processorName;
-
-  public EmitDisassemblerCppFilePass(LcbConfiguration lcbConfiguration, ProcessorName processorName)
+  public EmitDisassemblerCppFilePass(LcbConfiguration lcbConfiguration)
       throws IOException {
-    super(lcbConfiguration.outputPath());
-    this.processorName = processorName;
+    super(lcbConfiguration);
   }
 
   @Override
@@ -31,7 +27,8 @@ public class EmitDisassemblerCppFilePass extends AbstractTemplateRenderingPass {
 
   @Override
   protected String getOutputPath() {
-    return "llvm/lib/Target/" + processorName.value() + "/Disassembler/" + processorName.value()
+    return "llvm/lib/Target/" + lcbConfiguration().processorName().value() + "/Disassembler/"
+        + lcbConfiguration().processorName().value()
         + "Disassembler.cpp";
   }
 

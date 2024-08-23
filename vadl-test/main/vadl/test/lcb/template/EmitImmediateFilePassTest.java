@@ -21,25 +21,14 @@ public class EmitImmediateFilePassTest extends AbstractLcbTest {
   @Test
   void testLowering() throws IOException, DuplicatedPassKeyException {
     // Given
-    var passManager = new PassManager();
-    var spec = runAndGetViamSpecification("examples/rv3264im.vadl");
-
-    passManager.add(new PassKey("ty"), new TypeCastEliminationPass());
-    passManager.add(new PassKey("encoding"), new GenerateFieldAccessEncodingFunctionPass());
-    passManager.add(new PassKey("fieldDecoding"), new FieldNodeReplacementPassForDecoding());
-    passManager.add(new PassKey(CppTypeNormalizationForPredicatesPass.class.getName()),
-        new CppTypeNormalizationForPredicatesPass());
-    passManager.add(new PassKey(CppTypeNormalizationForDecodingsPass.class.getName()),
-        new CppTypeNormalizationForDecodingsPass());
-    passManager.add(new PassKey(CppTypeNormalizationForEncodingsPass.class.getName()),
-        new CppTypeNormalizationForEncodingsPass());
-
-    passManager.run(spec);
+    var testSetup = runLcb(getConfiguration(false), "examples/rv3264im.vadl",
+        new PassKey(EmitImmediateFilePass.class.getName()));
+    var passManager = testSetup.passManager();
+    var spec = testSetup.specification();
 
     // When
     var template =
-        new EmitImmediateFilePass(createLcbConfiguration(),
-            new ProcessorName("processorNameValue"));
+        new EmitImmediateFilePass(getConfiguration(false));
     var writer = new StringWriter();
 
     // When
