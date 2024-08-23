@@ -6,6 +6,7 @@ import java.util.function.Function;
 import javax.annotation.Nullable;
 import vadl.viam.Definition;
 import vadl.viam.DefinitionVisitor;
+import vadl.viam.passes.dummyAbi.DummyAbi;
 
 /**
  * A set of utility methods that helps when working with the VIAM.
@@ -51,6 +52,11 @@ public class ViamUtils {
   public static Set<Definition> findDefinitionByFilter(Definition root,
                                                        Function<Definition, Boolean> filter) {
     return new DefinitionVisitor.Recursive() {
+      @Override
+      public void visit(DummyAbi dummyAbi) {
+
+      }
+
       private Set<Definition> allDefs = new HashSet<>();
 
       public Set<Definition> findAllIn(Definition definition) {

@@ -7,6 +7,7 @@ import vadl.lcb.passes.llvmLowering.tablegen.model.TableGenImmediateOperand;
 import vadl.types.Type;
 import vadl.viam.Format;
 import vadl.viam.graph.GraphNodeVisitor;
+import vadl.viam.graph.Node;
 import vadl.viam.graph.dependency.FieldAccessRefNode;
 
 /**
@@ -28,6 +29,16 @@ public class LlvmFieldAccessRefNode extends FieldAccessRefNode {
     this.immediateOperand =
         new TableGenImmediateOperand(fieldAccess.accessFunction().identifier.lower(),
             ValueType.from(type));
+  }
+
+  @Override
+  public Node copy() {
+    return new LlvmFieldAccessRefNode(fieldAccess, type());
+  }
+
+  @Override
+  public Node shallowCopy() {
+    return new LlvmFieldAccessRefNode(fieldAccess, type());
   }
 
   public TableGenImmediateOperand immediateOperand() {

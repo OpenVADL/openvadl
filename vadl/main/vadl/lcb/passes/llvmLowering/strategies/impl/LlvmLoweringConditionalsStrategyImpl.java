@@ -25,6 +25,7 @@ public class LlvmLoweringConditionalsStrategyImpl extends LlvmLoweringStrategy {
 
   @Override
   protected List<TableGenPattern> generatePatternVariations(
+      Instruction instruction,
       Map<InstructionLabel, List<Instruction>> supportedInstructions,
       InstructionLabel instructionLabel,
       UninlinedGraph behavior,

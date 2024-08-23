@@ -449,6 +449,7 @@ public abstract class Node {
    * input edges of the nodes.
    * If the replacement is successful, the usage of the old input is
    * transferred to the new input.
+   * If the old input has no usages then delete it.
    *
    * @param oldInput the node to be replaced
    * @param newInput the node to replace the old input with

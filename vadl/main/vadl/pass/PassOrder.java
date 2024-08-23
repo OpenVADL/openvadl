@@ -15,6 +15,7 @@ import vadl.lcb.passes.llvmLowering.LlvmLoweringPass;
 import vadl.lcb.template.lib.Target.EmitMCInstLowerCppFilePass;
 import vadl.lcb.template.lib.Target.EmitMCInstLowerHeaderFilePass;
 import vadl.viam.passes.algebraic_simplication.AlgebraicSimplificationPass;
+import vadl.viam.passes.dummyAbi.DummyAbiPass;
 import vadl.viam.passes.functionInliner.FunctionInlinerPass;
 
 /**
@@ -28,6 +29,7 @@ public final class PassOrder {
       throws IOException {
     List<Pass> passes = new ArrayList<>();
 
+    passes.add(new DummyAbiPass());
     passes.add(new vadl.viam.passes.typeCastElimination.TypeCastEliminationPass());
     passes.add(new FunctionInlinerPass());
     passes.add(new AlgebraicSimplificationPass());
@@ -38,6 +40,13 @@ public final class PassOrder {
     passes.add(new CppTypeNormalizationForPredicatesPass());
     passes.add(new IsaMatchingPass());
     passes.add(new LlvmLoweringPass());
+    passes.add(new vadl.gcb.passes.encoding_generation.GenerateFieldAccessEncodingFunctionPass());
+    passes.add(new vadl.gcb.passes.type_normalization.CppTypeNormalizationForEncodingsPass());
+    passes.add(new vadl.gcb.passes.type_normalization.CppTypeNormalizationForDecodingsPass());
+    passes.add(new vadl.gcb.passes.type_normalization.CppTypeNormalizationForPredicatesPass());
+    passes.add(new DummyAbiPass());
+    passes.add(new vadl.lcb.passes.isaMatching.IsaMatchingPass());
+    passes.add(new vadl.lcb.passes.llvmLowering.LlvmLoweringPass());
     passes.add(new vadl.lcb.clang.lib.Driver.ToolChains.EmitClangToolChainFilePass(configuration,
         processorName));
     passes.add(new vadl.lcb.clang.lib.Basic.Targets.EmitClangTargetHeaderFilePass(configuration,

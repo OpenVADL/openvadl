@@ -4,6 +4,7 @@ import vadl.viam.Definition;
 import vadl.viam.DefinitionVisitor;
 import vadl.viam.graph.Node;
 import vadl.viam.passes.GraphProcessor;
+import vadl.viam.passes.dummyAbi.DummyAbi;
 
 /**
  * Calls the verification method on all definitions in the given one and all its
@@ -26,6 +27,11 @@ public class ViamVerifier extends DefinitionVisitor.Recursive {
   public void afterTraversal(Definition definition) {
     super.afterTraversal(definition);
     definition.verify();
+  }
+
+  @Override
+  public void visit(DummyAbi dummyAbi) {
+
   }
 
 

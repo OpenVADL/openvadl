@@ -5,14 +5,14 @@ import vadl.viam.graph.dependency.WriteResourceNode;
 import vadl.viam.matching.Matcher;
 
 /**
- * Checks if the node has for the given {@link WriteResourceNode} a value which matches
+ * Checks if the node has for the given {@link WriteResourceNode} an address which matches
  * child matcher.
  */
-public class WriteResourceMatcher implements Matcher {
+public class WriteResourceMatcherForAddr implements Matcher {
 
   private final Matcher matcher;
 
-  public WriteResourceMatcher(Matcher matcher) {
+  public WriteResourceMatcherForAddr(Matcher matcher) {
     this.matcher = matcher;
   }
 
@@ -20,6 +20,7 @@ public class WriteResourceMatcher implements Matcher {
   @Override
   public boolean matches(Node node) {
     return (node instanceof WriteResourceNode write
-        && matcher.matches(write.value()));
+        && write.address() != null
+        && matcher.matches(write.address()));
   }
 }

@@ -1,5 +1,7 @@
 package vadl.viam;
 
+import vadl.viam.passes.dummyAbi.DummyAbi;
+
 /**
  * DefinitionVisitor is an interface that defines the visit methods for all types of
  * definitions in a VADL specification.
@@ -37,6 +39,8 @@ public interface DefinitionVisitor {
   void visit(Memory memory);
 
   void visit(Relocation relocation);
+
+  void visit(DummyAbi dummyAbi);
 
   /**
    * DefinitionVisitor.Recursive is an abstract class that implements the DefinitionVisitor

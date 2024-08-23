@@ -11,15 +11,20 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import vadl.lcb.passes.isaMatching.InstructionLabel;
 import vadl.lcb.passes.llvmLowering.LlvmLoweringPass;
+import vadl.lcb.passes.llvmLowering.LlvmMayLoadMemory;
+import vadl.lcb.passes.llvmLowering.LlvmSideEffectPatternIncluded;
 import vadl.lcb.passes.llvmLowering.model.LlvmBrCcSD;
 import vadl.lcb.passes.llvmLowering.model.LlvmBrCondSD;
 import vadl.lcb.passes.llvmLowering.model.LlvmFieldAccessRefNode;
+import vadl.lcb.passes.llvmLowering.model.LlvmFrameIndexSD;
 import vadl.lcb.passes.llvmLowering.model.MachineInstructionNode;
 import vadl.lcb.passes.llvmLowering.strategies.visitors.TableGenPatternLowerable;
 import vadl.lcb.passes.llvmLowering.strategies.visitors.impl.ReplaceWithLlvmSDNodesVisitor;
 import vadl.lcb.passes.llvmLowering.tablegen.model.TableGenInstruction;
+import vadl.lcb.passes.llvmLowering.tablegen.model.TableGenInstructionFrameRegisterOperand;
 import vadl.lcb.passes.llvmLowering.tablegen.model.TableGenInstructionImmediateOperand;
 import vadl.lcb.passes.llvmLowering.tablegen.model.TableGenInstructionOperand;
+import vadl.lcb.passes.llvmLowering.tablegen.model.TableGenInstructionRegisterFileOperand;
 import vadl.lcb.passes.llvmLowering.tablegen.model.TableGenPattern;
 import vadl.lcb.visitors.LcbGraphNodeVisitor;
 import vadl.viam.Constant;
@@ -39,7 +44,6 @@ import vadl.viam.graph.dependency.DependencyNode;
 import vadl.viam.graph.dependency.ExpressionNode;
 import vadl.viam.graph.dependency.FieldAccessRefNode;
 import vadl.viam.graph.dependency.FieldRefNode;
-import vadl.viam.graph.dependency.FuncCallNode;
 import vadl.viam.graph.dependency.FuncParamNode;
 import vadl.viam.graph.dependency.ReadMemNode;
 import vadl.viam.graph.dependency.ReadRegFileNode;
@@ -90,12 +94,15 @@ public abstract class LlvmLoweringStrategy {
     var isBranch = isTerminator
         && uninlinedGraph.getNodes(Set.of(IfNode.class, LlvmBrCcSD.class, LlvmBrCondSD.class))
         .findFirst().isPresent();
+
     var isCall = false; //TODO
     var isReturn = false;
     var isPseudo = false; // This strategy always handles Instructions.
     var isCodeGenOnly = false;
     var mayLoad = uninlinedGraph.getNodes(ReadMemNode.class).findFirst().isPresent();
-    var mayStore = uninlinedGraph.getNodes(WriteMemNode.class).findFirst().isPresent();
+    var mayStore =
+        uninlinedGraph.getNodes(Set.of(WriteMemNode.class, LlvmMayLoadMemory.class)).findFirst()
+            .isPresent();
 
     return new LlvmLoweringPass.Flags(
         isTerminator,
@@ -153,7 +160,9 @@ public abstract class LlvmLoweringStrategy {
           inputOperands,
           copy.getNodes(WriteResourceNode.class).toList());
       var alternativePatterns =
-          generatePatternVariations(supportedInstructions,
+          generatePatternVariations(
+              instruction,
+              supportedInstructions,
               instructionLabel,
               copy,
               inputOperands,
@@ -202,6 +211,7 @@ public abstract class LlvmLoweringStrategy {
    * then this method should generate a pattern for the less-than.
    */
   protected abstract List<TableGenPattern> generatePatternVariations(
+      Instruction instruction,
       Map<InstructionLabel, List<Instruction>> supportedInstructions,
       InstructionLabel instructionLabel,
       UninlinedGraph behavior,
@@ -243,8 +253,11 @@ public abstract class LlvmLoweringStrategy {
             throw new ViamError("address must not be null");
           }
 
-          return new TableGenInstructionOperand(operand.registerFile().name(),
-              address.formatField().identifier.simpleName());
+          return (TableGenInstructionOperand) new TableGenInstructionRegisterFileOperand(
+              operand.registerFile().name(),
+              address.formatField().identifier.simpleName(),
+              operand.registerFile(),
+              address.formatField());
         })
         .toList();
   }
@@ -263,11 +276,11 @@ public abstract class LlvmLoweringStrategy {
    * Generate {@link TableGenInstructionOperand} which looks like "X:$lhs" for TableGen.
    */
   public static TableGenInstructionOperand generateTableGenInputOutput(Node operand) {
-    if (operand instanceof ReadRegFileNode node) {
+    if (operand instanceof LlvmFrameIndexSD node) {
+      return generateInstructionOperand(node);
+    } else if (operand instanceof ReadRegFileNode node) {
       return generateInstructionOperand(node);
     } else if (operand instanceof LlvmFieldAccessRefNode node) {
-      return generateInstructionOperand(node);
-    } else if (operand instanceof FuncCallNode node) {
       return generateInstructionOperand(node);
     } else {
       throw new ViamError("Input operand not supported yet: " + operand);
@@ -277,10 +290,22 @@ public abstract class LlvmLoweringStrategy {
   /**
    * Returns a {@link TableGenInstructionOperand} given a {@link Node}.
    */
+  private static TableGenInstructionOperand generateInstructionOperand(LlvmFrameIndexSD node) {
+    var address = (FieldRefNode) node.address();
+    return new TableGenInstructionFrameRegisterOperand(
+        address.formatField().identifier.simpleName());
+  }
+
+  /**
+   * Returns a {@link TableGenInstructionOperand} given a {@link Node}.
+   */
   private static TableGenInstructionOperand generateInstructionOperand(ReadRegFileNode node) {
     var address = (FieldRefNode) node.address();
-    return new TableGenInstructionOperand(node.registerFile().name(),
-        address.formatField().identifier.simpleName());
+    return new TableGenInstructionRegisterFileOperand(node.registerFile().name(),
+        address.formatField().identifier.simpleName(),
+        node.registerFile(),
+        address.formatField()
+    );
   }
 
   /**
@@ -295,19 +320,11 @@ public abstract class LlvmLoweringStrategy {
   }
 
   /**
-   * Returns an {@link TableGenInstructionOperand} given a {@link Node}.
-   */
-  private static TableGenInstructionOperand generateInstructionOperand(FuncCallNode node) {
-    return new TableGenInstructionOperand(node.function().identifier.lower(),
-        node.function().identifier.simpleName());
-  }
-
-  /**
    * Most instruction's behaviors have inputs. Those are the results which the instruction requires.
    */
   private static List<Node> getInputOperands(Graph graph) {
-    return Stream.concat(Stream.concat(graph.getNodes(ReadRegFileNode.class),
-            graph.getNodes(FieldAccessRefNode.class)), graph.getNodes(FuncCallNode.class))
+    return Stream.concat(graph.getNodes(ReadRegFileNode.class),
+            graph.getNodes(FieldAccessRefNode.class))
         .map(x -> (Node) x).toList();
   }
 
@@ -334,10 +351,14 @@ public abstract class LlvmLoweringStrategy {
     return patterns;
   }
 
+  /**
+   * Constructs from the given dataflow node a new graph which is the pattern selector.
+   */
   @NotNull
   private static Graph getPatternSelector(WriteResourceNode sideEffectNode) {
     var graph = new Graph(sideEffectNode.id().toString() + ".selector.lowering");
-    var root = sideEffectNode.value();
+    Node root = sideEffectNode instanceof LlvmSideEffectPatternIncluded ? sideEffectNode :
+        sideEffectNode.value();
     root.clearUsages();
     graph.addWithInputs(root);
     return graph;
@@ -347,11 +368,11 @@ public abstract class LlvmLoweringStrategy {
   private static Graph getMachinePattern(Instruction instruction,
                                          List<TableGenInstructionOperand> inputOperands) {
     var graph = new Graph(instruction.name() + ".machine.lowering");
-    var params = new NodeList<>(
+    var params =
         inputOperands.stream()
             .map(operand -> (ExpressionNode) new ConstantNode(new Constant.Str(operand.render())))
-            .toList());
-    var node = new MachineInstructionNode(params, instruction);
+            .toList();
+    var node = new MachineInstructionNode(new NodeList<>(params), instruction);
     graph.addWithInputs(node);
     return graph;
   }
