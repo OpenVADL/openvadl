@@ -15,7 +15,7 @@ import vadl.viam.Specification;
  */
 public class DummyAbiPass extends Pass {
 
-  protected DummyAbiPass(GeneralConfiguration configuration) {
+  public DummyAbiPass(GeneralConfiguration configuration) {
     super(configuration);
   }
 

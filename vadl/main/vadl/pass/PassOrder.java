@@ -31,6 +31,7 @@ public final class PassOrder {
   public static List<Pass> viam(GeneralConfiguration configuration) {
     List<Pass> passes = new ArrayList<>();
 
+    passes.add(new DummyAbiPass(configuration));
     passes.add(new TypeCastEliminationPass(configuration));
     passes.add(new FunctionInlinerPass(configuration));
     passes.add(new AlgebraicSimplificationPass(configuration));
