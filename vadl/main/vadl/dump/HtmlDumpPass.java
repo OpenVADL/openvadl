@@ -69,6 +69,13 @@ public class HtmlDumpPass extends AbstractTemplateRenderingPass {
     private final String phase;
     private final String description;
 
+    /**
+     * Construct a configuration.
+     *
+     * @param generalConfiguration the base configuration
+     * @param phase                the phase name used for the emitted file name
+     * @param description          the description what happened since the last dump
+     */
     public Config(GeneralConfiguration generalConfiguration, String phase, String description) {
       super(generalConfiguration.outputPath(), true);
       this.phase = phase;
@@ -127,7 +134,7 @@ public class HtmlDumpPass extends AbstractTemplateRenderingPass {
         .toList();
 
     var passList = passResults.executedPasses();
-    
+
     return Map.of(
         "title",
         "Specification (%s) - at %s".formatted(specification.identifier.name(), config.phase),
