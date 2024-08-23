@@ -5,14 +5,15 @@ import java.util.Map;
 import java.util.function.BiConsumer;
 import java.util.function.BiFunction;
 import vadl.pass.PassKey;
+import vadl.pass.PassResults;
 import vadl.viam.Specification;
 
 public interface InfoEnricher {
 
-  void enrich(DumpEntity entity, Map<PassKey, Object> passResults);
+  void enrich(DumpEntity entity, PassResults passResults);
 
   static <T extends DumpEntity> InfoEnricher forType(Class<T> type,
-                                                     BiConsumer<T, Map<PassKey, Object>> enricher) {
+                                                     BiConsumer<T, PassResults> enricher) {
     return (e, pr) -> {
       if (type.isInstance(e)) {
         //noinspection unchecked

@@ -8,6 +8,7 @@ import java.io.IOException;
 import java.util.HashMap;
 import org.junit.jupiter.api.Test;
 import vadl.dump.HtmlDumpPass;
+import vadl.pass.PassResults;
 import vadl.types.BuiltInTable;
 import vadl.types.Type;
 import vadl.viam.Assembly;
@@ -40,7 +41,7 @@ public class HtmlDumpTest {
 
 
     new HtmlDumpPass(new HtmlDumpPass.Config("demoPhase", "build/testdump"))
-        .execute(new HashMap<>(), spec);
+        .execute(PassResults.empty(), spec);
 
   }
 

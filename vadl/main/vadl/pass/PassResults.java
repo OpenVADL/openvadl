@@ -13,7 +13,7 @@ import vadl.utils.Pair;
  */
 public final class PassResults {
 
-  private LinkedHashMap<PassKey, Pair<Pass, Object>> store = new LinkedHashMap<>();
+  private LinkedHashMap<PassKey, SingleResult> store = new LinkedHashMap<>();
 
 
   /**
@@ -27,7 +27,7 @@ public final class PassResults {
               + "in the pass execution order.")
       );
     }
-    return store.get(key).right();
+    return store.get(key).result();
   }
 
   /**
@@ -56,13 +56,13 @@ public final class PassResults {
   public <T> Optional<?> getOfLastExecution(Class<T> passClass) {
     var result =
         store.values().stream()
-            .reduce((a, b) -> passClass.isInstance(b.left()) ? b : a);
+            .reduce((a, b) -> passClass.isInstance(b.pass()) ? b : a);
     if (result.isEmpty()) {
       return Optional.empty();
     }
     var resultPair = result.get();
-    if (passClass.isInstance(resultPair.left())) {
-      return Optional.of(resultPair.right());
+    if (passClass.isInstance(resultPair.pass())) {
+      return Optional.of(resultPair.result());
     }
     return Optional.empty();
   }
@@ -70,8 +70,8 @@ public final class PassResults {
   /**
    * Returns a list of all executed passes in the executed order.
    */
-  public List<Pass> executedPasses() {
-    return store.values().stream().map(Pair::left).toList();
+  public List<SingleResult> executedPasses() {
+    return store.values().stream().toList();
   }
 
   public int size() {
@@ -79,7 +79,7 @@ public final class PassResults {
   }
 
   // this is only visible on package level to ensure that passes can't manipulate pass results
-  void add(PassKey key, Pass pass, Object value) {
+  void add(PassKey key, Pass pass, Object result) {
     if (store.containsKey(key)) {
       // The pipeline's steps should be deterministic.
       // If we overwrite an already existing result then it is very likely
@@ -88,12 +88,19 @@ public final class PassResults {
           "Tried to store result of executed pass %s, but result for this key already exist",
           key);
     }
-    store.put(key, Pair.of(pass, value));
+    store.put(key, new SingleResult(key, pass, result));
   }
 
 
   public static PassResults empty() {
     return new PassResults();
+  }
+
+  public record SingleResult(
+      PassKey passKey,
+      Pass pass,
+      Object result
+  ) {
   }
 
 }

@@ -4,6 +4,7 @@ import java.io.IOException;
 import java.util.Map;
 import org.junit.jupiter.api.Test;
 import vadl.dump.HtmlDumpPass;
+import vadl.pass.PassResults;
 import vadl.test.AbstractTest;
 
 public class ViamDumpPassTest extends AbstractTest {
@@ -13,7 +14,7 @@ public class ViamDumpPassTest extends AbstractTest {
     var spec = runAndGetViamSpecification("examples/rv3264im.vadl");
 
     var pass = new HtmlDumpPass(new HtmlDumpPass.Config("AstToViam", "build"));
-    pass.execute(Map.of(), spec);
+    pass.execute(PassResults.empty(), spec);
 
   }
 

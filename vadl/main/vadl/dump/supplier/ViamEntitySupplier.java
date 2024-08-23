@@ -12,6 +12,7 @@ import javax.annotation.Nullable;
 import vadl.dump.DumpEntity;
 import vadl.dump.DumpEntitySupplier;
 import vadl.error.VadlError;
+import vadl.pass.PassResults;
 import vadl.viam.Assembly;
 import vadl.viam.Definition;
 import vadl.viam.DefinitionVisitor;
@@ -35,7 +36,7 @@ public class ViamEntitySupplier extends DefinitionVisitor.Empty
 
   @Override
   public List<DefinitionEntity> getEntities(Specification spec,
-                                            Map<vadl.pass.PassKey, Object> passResults) {
+                                            PassResults passResults) {
     callBackVisitor.visit(spec);
     return entities.values().stream().toList();
   }
@@ -168,7 +169,7 @@ public class ViamEntitySupplier extends DefinitionVisitor.Empty
     public String name() {
       return origin.identifier.name();
     }
-    
+
     public DefinitionEntity parent() {
       Objects.requireNonNull(parent);
       return parent;

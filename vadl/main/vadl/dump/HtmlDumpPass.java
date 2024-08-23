@@ -9,6 +9,7 @@ import java.util.Map;
 import java.util.stream.Collectors;
 import vadl.dump.supplier.ViamEntitySupplier;
 import vadl.pass.PassKey;
+import vadl.pass.PassResults;
 import vadl.template.AbstractTemplateRenderingPass;
 import vadl.viam.Specification;
 import vadl.dump.supplier.ViamEnricherCollection;
@@ -47,7 +48,7 @@ public class HtmlDumpPass extends AbstractTemplateRenderingPass {
   }
 
   @Override
-  protected Map<String, Object> createVariables(Map<PassKey, Object> passResults,
+  protected Map<String, Object> createVariables(PassResults passResults,
                                                 Specification specification) {
     var suppliers = entitySuppliers.suppliers();
     var entities = suppliers.stream()
@@ -65,8 +66,9 @@ public class HtmlDumpPass extends AbstractTemplateRenderingPass {
         .sorted(Comparator.comparingInt(a -> a.getKey().rank()))
         .toList();
 
-    var passList = passResults.keySet().stream()
-        .map(PassKey::value)
+    var passList = passResults.executedPasses().stream()
+        .map(r -> r.passKey().value() + " (" + r.pass().getName() + ":" +
+            r.pass().getClass().getSimpleName() + ")")
         .toList();
 
     return Map.of(
@@ -80,7 +82,7 @@ public class HtmlDumpPass extends AbstractTemplateRenderingPass {
 
   private static void applyOnThisAndSubEntities(DumpEntity entity,
                                                 SupplierCollection<InfoEnricher> infoEnrichers,
-                                                Map<PassKey, Object> passResults) {
+                                                PassResults passResults) {
     for (var subEntity : entity.subEntities()) {
       applyOnThisAndSubEntities(subEntity.subEntity, infoEnrichers, passResults);
     }
