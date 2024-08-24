@@ -16,12 +16,18 @@ import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Consumer;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
+
+import org.apache.commons.lang3.RandomStringUtils;
 import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DynamicTest;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.testcontainers.images.builder.ImageFromDockerfile;
 import org.testcontainers.shaded.com.google.common.collect.Streams;
 import org.testcontainers.shaded.org.apache.commons.io.FileUtils;
@@ -38,9 +44,11 @@ import vadl.viam.Specification;
  */
 public abstract class QemuExecutionTest extends DockerExecutionTest {
 
+  private static final Logger logger = LoggerFactory.getLogger(QemuExecutionTest.class);
+
   // a cache that contains for the docker image with a newly created qemu build
   // for a Specification stored as its Identifier
-  private static Map<Identifier, ImageFromDockerfile> specQemuBuildImageCache = new HashMap<>();
+  private static final Map<Identifier, ImageFromDockerfile> specQemuBuildImageCache = new HashMap<>();
 
   protected static synchronized ImageFromDockerfile getQemuTestImage(Path qemuSourceDir,
                                                                      Specification spec) {
@@ -59,16 +67,38 @@ public abstract class QemuExecutionTest extends DockerExecutionTest {
   @LazyInit
   public Path testDirectory;
 
+
+  // The root directory for all qemu tests in the build directory.
+  // We use the build directory as normal temporary directories are not mountable under linux
+  // by default.
+  private static Path buildTmpTestDirRoot = Path
+          .of("build/tmp/open-vadl-qemu-test")
+          .toAbsolutePath();
+  private static AtomicInteger testDirId = new AtomicInteger(0);
+
+  @BeforeAll
+  public static void clearBuildTmpTestDir() throws IOException {
+    var tmpDirFile = buildTmpTestDirRoot.toFile();
+    if (tmpDirFile.exists()) {
+        logger.debug("Removing old qemu test directory: {}", tmpDirFile);
+      FileUtils.deleteDirectory(buildTmpTestDirRoot.toFile());
+    }
+    logger.debug("Create qemu root test directory: {}", tmpDirFile );
+    if (!tmpDirFile.mkdirs()) {
+      throw new IllegalStateException("Failed to create directory temporary qemu test dir" + tmpDirFile);
+    }
+  }
+
   @BeforeEach
   @Override
   public void beforeEach() {
     super.beforeEach();
-    try {
-      testDirectory =
-          VADLFileUtils.createTempDirectory(
-              "QEMU-Exec-Test-" + this.getClass().getSimpleName() + "-");
-    } catch (IOException e) {
-      throw new RuntimeException(e);
+    var testSpecificDirName = this.getClass().getSimpleName() + "-" + testDirId.incrementAndGet();
+    testDirectory = buildTmpTestDirRoot.resolve(testSpecificDirName);
+
+    logger.debug("Create test specific test directory: {}", testDirectory);
+    if (!testDirectory.toFile().mkdirs()) {
+      throw new IllegalStateException("Failed to create test directory " + testDirectory);
     }
   }
 
