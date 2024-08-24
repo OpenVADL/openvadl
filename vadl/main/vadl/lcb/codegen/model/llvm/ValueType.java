@@ -55,13 +55,13 @@ public enum ValueType {
       }
     } else if (type instanceof BitsType bitsType) {
       if (bitsType.bitWidth() == 8) {
-        return ValueType.U8;
+        return ValueType.I8;
       } else if (bitsType.bitWidth() == 16) {
-        return ValueType.U16;
+        return ValueType.I16;
       } else if (bitsType.bitWidth() == 32) {
-        return ValueType.U32;
+        return ValueType.I32;
       } else if (bitsType.bitWidth() == 64) {
-        return ValueType.U64;
+        return ValueType.I64;
       }
     }
 
