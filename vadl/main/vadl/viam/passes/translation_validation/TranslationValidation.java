@@ -4,6 +4,7 @@ import com.google.common.collect.Streams;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
+import java.util.Optional;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 import java.util.stream.Stream;
@@ -109,8 +110,12 @@ public class TranslationValidation {
    * Also, **note** that {@code before} and {@code after} do not have to share the same nodes.
    * Therefore, it is ok that they have been copied. However, the side effect nodes in the graph
    * **MUST** have the same {@link Node#id}. Otherwise, they cannot be matched.
+   *
+   * @return {@link Z3Code} when the behavior of {@code before} and {@code after} has changed.
+   *     If it is the same then return {@link Optional#empty()}.
    */
-  public Z3Code lower(Specification specification, Instruction before, Instruction after) {
+  public Optional<Z3Code> lower(Specification specification, Instruction before,
+                                Instruction after) {
     // First, find the memory definitions and declare them
     var memoryDefinitions = getMemoryDefinitions(before);
 
@@ -120,13 +125,18 @@ public class TranslationValidation {
     // Then, generate the side effect translation
     var matchings = computeTranslationAndReturnMatchings(before, after);
 
+    if (matchings.stream().allMatch(x -> x.before.value().equals(x.after.value()))) {
+      // All side effects have the same semantic and can be skipped.
+      return Optional.empty();
+    }
+
     // Generate all the predicates
     var predicates = getPredicates(matchings);
 
     // Finally, match the predicate from the old and the new instruction.
     var formula = generateFormula(matchings);
 
-    return new Z3Code(String.format(
+    return Optional.of(new Z3Code(String.format(
         """
             from z3 import *
                         
@@ -152,7 +162,7 @@ public class TranslationValidation {
         vars,
         predicates,
         formula
-    ));
+    )));
   }
 
   @NotNull

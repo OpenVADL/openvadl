@@ -76,11 +76,15 @@ public class AlgebraicSimplificationTest extends DockerExecutionTest {
   void testInstruction(Specification specification, Instruction before, Instruction after) {
     var translationValidation = new TranslationValidation();
     var code = translationValidation.lower(specification, before, after);
-    logger.info(code.value());
-    try {
-      runContainerWithContent(DOCKER_IMAGE, code.value(), MOUNT_PATH);
-    } catch (IOException e) {
-      throw new RuntimeException(e);
+    if (code.isPresent()) {
+      logger.info(code.get().value());
+      try {
+        runContainerWithContent(DOCKER_IMAGE, code.get().value(), MOUNT_PATH);
+      } catch (IOException e) {
+        throw new RuntimeException(e);
+      }
+    } else {
+      logger.warn("Skipping because all side effects have the same behavior.");
     }
   }
 }
