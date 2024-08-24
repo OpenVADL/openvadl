@@ -284,8 +284,7 @@ public abstract class LlvmLoweringStrategy {
       return generateInstructionOperand(node);
     } else if (operand instanceof FieldRefNode node) {
       return generateInstructionOperand(node);
-    }
-    else {
+    } else {
       throw new ViamError("Input operand not supported yet: " + operand);
     }
   }
@@ -294,7 +293,8 @@ public abstract class LlvmLoweringStrategy {
    * Returns a {@link TableGenInstructionOperand} given a {@link Node}.
    */
   private static TableGenInstructionOperand generateInstructionOperand(FieldRefNode node) {
-    return new TableGenInstructionOperand(node.formatField().identifier.simpleName(), node.nodeName());
+    return new TableGenInstructionOperand(node.formatField().identifier.simpleName(),
+        node.nodeName());
   }
 
   /**

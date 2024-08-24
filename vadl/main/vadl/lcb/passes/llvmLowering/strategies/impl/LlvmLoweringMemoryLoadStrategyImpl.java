@@ -22,11 +22,14 @@ public class LlvmLoweringMemoryLoadStrategyImpl extends LlvmLoweringStrategy {
 
   @Override
   protected List<TableGenPattern> generatePatternVariations(Instruction instruction,
-                                                            Map<InstructionLabel, List<Instruction>> supportedInstructions,
+                                                            Map<InstructionLabel, List<Instruction>>
+                                                                supportedInstructions,
                                                             InstructionLabel instructionLabel,
                                                             UninlinedGraph behavior,
-                                                            List<TableGenInstructionOperand> inputOperands,
-                                                            List<TableGenInstructionOperand> outputOperands,
+                                                            List<TableGenInstructionOperand>
+                                                                inputOperands,
+                                                            List<TableGenInstructionOperand>
+                                                                outputOperands,
                                                             List<TableGenPattern> patterns) {
     return Collections.emptyList();
   }
