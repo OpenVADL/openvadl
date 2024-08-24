@@ -3,11 +3,8 @@ package vadl.test.iss;
 import com.google.errorprone.annotations.concurrent.LazyInit;
 import java.io.File;
 import java.io.FileInputStream;
-import java.io.FileOutputStream;
-import java.io.FileReader;
 import java.io.FileWriter;
 import java.io.IOException;
-import java.io.StringWriter;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
@@ -17,11 +14,8 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.atomic.AtomicInteger;
-import java.util.function.Consumer;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
-
-import org.apache.commons.lang3.RandomStringUtils;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.BeforeEach;
@@ -34,7 +28,6 @@ import org.testcontainers.shaded.org.apache.commons.io.FileUtils;
 import org.yaml.snakeyaml.Yaml;
 import vadl.test.DockerExecutionTest;
 import vadl.utils.Pair;
-import vadl.utils.VADLFileUtils;
 import vadl.viam.Identifier;
 import vadl.viam.Specification;
 
@@ -83,7 +76,7 @@ public abstract class QemuExecutionTest extends DockerExecutionTest {
         logger.debug("Removing old qemu test directory: {}", tmpDirFile);
       FileUtils.deleteDirectory(buildTmpTestDirRoot.toFile());
     }
-    logger.debug("Create qemu root test directory: {}", tmpDirFile );
+    logger.debug("Create qemu root test directory: {}", tmpDirFile);
     if (!tmpDirFile.mkdirs()) {
       throw new IllegalStateException("Failed to create directory temporary qemu test dir" + tmpDirFile);
     }
