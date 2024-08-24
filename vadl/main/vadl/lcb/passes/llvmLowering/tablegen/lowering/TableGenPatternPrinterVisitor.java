@@ -7,9 +7,12 @@ import vadl.lcb.passes.llvmLowering.model.LlvmBrCcSD;
 import vadl.lcb.passes.llvmLowering.model.LlvmBrCondSD;
 import vadl.lcb.passes.llvmLowering.model.LlvmFieldAccessRefNode;
 import vadl.lcb.passes.llvmLowering.model.LlvmFrameIndexSD;
+import vadl.lcb.passes.llvmLowering.model.LlvmLoad;
+import vadl.lcb.passes.llvmLowering.model.LlvmSExtLoad;
 import vadl.lcb.passes.llvmLowering.model.LlvmStore;
 import vadl.lcb.passes.llvmLowering.model.LlvmTruncStore;
 import vadl.lcb.passes.llvmLowering.model.LlvmTypeCastSD;
+import vadl.lcb.passes.llvmLowering.model.LlvmZExtLoad;
 import vadl.lcb.passes.llvmLowering.strategies.LlvmLoweringStrategy;
 import vadl.lcb.passes.llvmLowering.strategies.visitors.TableGenNodeVisitor;
 import vadl.viam.Constant;
@@ -184,6 +187,27 @@ public class TableGenPatternPrinterVisitor
     writer.write("(" + node.lower() + " ");
     visit(node.value());
     writer.write(", ");
+    visit(Objects.requireNonNull(node.address()));
+    writer.write(")");
+  }
+
+  @Override
+  public void visit(LlvmLoad node) {
+    writer.write("(" + node.lower() + " ");
+    visit(Objects.requireNonNull(node.address()));
+    writer.write(")");
+  }
+
+  @Override
+  public void visit(LlvmSExtLoad node) {
+    writer.write("(" + node.lower() + " ");
+    visit(Objects.requireNonNull(node.address()));
+    writer.write(")");
+  }
+
+  @Override
+  public void visit(LlvmZExtLoad node) {
+    writer.write("(" + node.lower() + " ");
     visit(Objects.requireNonNull(node.address()));
     writer.write(")");
   }

@@ -5,6 +5,7 @@ import java.util.Objects;
 import org.jetbrains.annotations.Nullable;
 import vadl.javaannotations.viam.DataValue;
 import vadl.lcb.passes.llvmLowering.LlvmMayLoadMemory;
+import vadl.lcb.passes.llvmLowering.LlvmMayStoreMemory;
 import vadl.lcb.passes.llvmLowering.LlvmNodeLowerable;
 import vadl.lcb.passes.llvmLowering.LlvmSideEffectPatternIncluded;
 import vadl.lcb.passes.llvmLowering.strategies.visitors.TableGenMachineInstructionVisitor;
@@ -25,7 +26,7 @@ import vadl.viam.graph.dependency.WriteResourceNode;
  * {@link WriteMemNode} and {@link vadl.viam.graph.dependency.TruncateNode}.
  */
 public class LlvmTruncStore extends WriteResourceNode implements LlvmNodeLowerable,
-    LlvmSideEffectPatternIncluded, LlvmMayLoadMemory {
+    LlvmSideEffectPatternIncluded, LlvmMayStoreMemory {
 
   @DataValue
   protected Memory memory;
@@ -45,7 +46,7 @@ public class LlvmTruncStore extends WriteResourceNode implements LlvmNodeLowerab
         writeMemNode.words(),
         value.type(),
         writeMemNode.address(),
-        value);
+        value.value());
   }
 
   private LlvmTruncStore(Memory memory,

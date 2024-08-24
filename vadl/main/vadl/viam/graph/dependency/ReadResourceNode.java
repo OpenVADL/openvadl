@@ -18,7 +18,7 @@ public abstract class ReadResourceNode extends ExpressionNode {
 
   @Input
   @Nullable
-  private ExpressionNode address;
+  protected ExpressionNode address;
 
   public ReadResourceNode(@Nullable ExpressionNode address, DataType type) {
     super(type);

@@ -125,6 +125,22 @@ public class LlvmLoweringPassTest extends AbstractLcbTest {
     );
   }
 
+  private static TestOutput createTestOutputLoadMemory(
+      String typeNode,
+      String dagNode,
+      String machineInstruction) {
+    return new TestOutput(
+        List.of(new TableGenInstructionOperand("X", "rs1"),
+            new TableGenInstructionOperand("RV3264I_Itype_immS_decodeAsInt64", "immS")),
+        List.of(new TableGenInstructionOperand("X", "rd")),
+        List.of(String.format("(%s (%s (add X:$rs1, RV3264I_Itype_immS_decodeAsInt64:$immS)))",
+            typeNode, dagNode)),
+        List.of(String.format("(%s X:$rs1, RV3264I_Itype_immS_decodeAsInt64:$immS)",
+            machineInstruction)),
+        createLoadMemoryFlags()
+    );
+  }
+
   private static LlvmLoweringPass.Flags createEmptyFlags() {
     return LlvmLoweringPass.Flags.empty();
   }
@@ -135,6 +151,10 @@ public class LlvmLoweringPassTest extends AbstractLcbTest {
 
   private static LlvmLoweringPass.Flags createStoreMemoryFlags() {
     return new LlvmLoweringPass.Flags(false, false, false, false, false, false, false, true);
+  }
+
+  private static LlvmLoweringPass.Flags createLoadMemoryFlags() {
+    return new LlvmLoweringPass.Flags(false, false, false, false, false, false, true, false);
   }
 
   static {
@@ -195,6 +215,17 @@ public class LlvmLoweringPassTest extends AbstractLcbTest {
     expectedResults.put("SH", createTestOutputStoreMemory("truncstorei16", "SH"));
     expectedResults.put("SW", createTestOutputStoreMemory("truncstorei32", "SW"));
     expectedResults.put("SD", createTestOutputStoreMemory("store", "SD"));
+    /*
+    MEMORY LOAD
+     */
+    expectedResults.put("LB", createTestOutputLoadMemory("i64", "sextloadi8", "LB"));
+    expectedResults.put("LH", createTestOutputLoadMemory("i64", "sextloadi16", "LH"));
+    expectedResults.put("LW", createTestOutputLoadMemory("i64", "sextloadi32", "LW"));
+    expectedResults.put("LD", createTestOutputLoadMemory("i64", "load", "LD"));
+    expectedResults.put("LBU", createTestOutputLoadMemory("u64", "zextloadi8", "LBU"));
+    expectedResults.put("LHU", createTestOutputLoadMemory("u64", "zextloadi16", "LHU"));
+    expectedResults.put("LWU", createTestOutputLoadMemory("u64", "zextloadi32", "LWU"));
+    expectedResults.put("LDU", createTestOutputLoadMemory("u64", "zextloadi64", "LDU"));
   }
 
   @TestFactory

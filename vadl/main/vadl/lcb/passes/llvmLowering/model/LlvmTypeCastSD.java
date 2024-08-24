@@ -2,7 +2,9 @@ package vadl.lcb.passes.llvmLowering.model;
 
 import vadl.lcb.codegen.model.llvm.ValueType;
 import vadl.lcb.passes.llvmLowering.LlvmNodeLowerable;
+import vadl.lcb.passes.llvmLowering.strategies.visitors.TableGenMachineInstructionVisitor;
 import vadl.lcb.passes.llvmLowering.strategies.visitors.TableGenNodeVisitor;
+import vadl.lcb.visitors.LcbGraphNodeVisitor;
 import vadl.types.Type;
 import vadl.viam.graph.GraphNodeVisitor;
 import vadl.viam.graph.Node;
@@ -32,7 +34,13 @@ public class LlvmTypeCastSD extends UnaryNode implements LlvmNodeLowerable {
 
   @Override
   public <T extends GraphNodeVisitor> void accept(T visitor) {
-    ((TableGenNodeVisitor) visitor).visit(this);
+    if (visitor instanceof TableGenMachineInstructionVisitor v) {
+      v.visit(this);
+    } else if (visitor instanceof TableGenNodeVisitor v) {
+      v.visit(this);
+    } else {
+      visitor.visit(this);
+    }
   }
 
   @Override
