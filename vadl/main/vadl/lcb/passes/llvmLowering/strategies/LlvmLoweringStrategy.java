@@ -128,7 +128,6 @@ public abstract class LlvmLoweringStrategy {
       UninlinedGraph uninlinedBehavior) {
     var visitor = getVisitorForPatternSelectorLowering();
     var copy = (UninlinedGraph) uninlinedBehavior.copy();
-    //var nodes =  //copy.getNodes().toList();
     var instructionIdentifier = instruction.identifier;
 
     if (!checkIfNoControlFlow(copy) && !checkIfNotAllowedDataflowNodes(copy)) {

@@ -56,6 +56,6 @@ public class LlvmZExtLoad extends ReadMemNode implements LlvmNodeLowerable,
   public String lower() {
     ensure(memory.wordSize() == 8, "Memory word size must be 8 because "
         + "LLVM requires it");
-    return "zextload" + words * memory.wordSize();
+    return "zextloadi" + words * memory.wordSize();
   }
 }

@@ -31,7 +31,6 @@ import vadl.lcb.passes.llvmLowering.model.LlvmXorSD;
 import vadl.lcb.passes.llvmLowering.model.LlvmZExtLoad;
 import vadl.lcb.passes.llvmLowering.strategies.visitors.TableGenNodeVisitor;
 import vadl.lcb.passes.llvmLowering.strategies.visitors.TableGenPatternLowerable;
-import vadl.lcb.visitors.LcbGraphNodeVisitor;
 import vadl.types.BuiltInTable;
 import vadl.viam.graph.Node;
 import vadl.viam.graph.control.AbstractBeginNode;
@@ -266,7 +265,7 @@ public class ReplaceWithLlvmSDNodesVisitor
   public void visit(ZeroExtendNode node) {
     if (node.value() instanceof ReadMemNode readMemNode) {
       // Merge SignExtend and ReadMem to LlvmZExtLoad
-      node.replaceAndDelete(new LlvmTypeCastSD(new LlvmZExtLoad(readMemNode), readMemNode.type()));
+      node.replaceAndDelete(new LlvmTypeCastSD(new LlvmZExtLoad(readMemNode), node.type()));
       visit(readMemNode.address());
     } else {
       // Remove all nodes
@@ -281,7 +280,7 @@ public class ReplaceWithLlvmSDNodesVisitor
   public void visit(SignExtendNode node) {
     if (node.value() instanceof ReadMemNode readMemNode) {
       // Merge SignExtend and ReadMem to LlvmSExtLoad
-      node.replaceAndDelete(new LlvmTypeCastSD(new LlvmSExtLoad(readMemNode), readMemNode.type()));
+      node.replaceAndDelete(new LlvmTypeCastSD(new LlvmSExtLoad(readMemNode), node.type()));
       visit(readMemNode.address());
     } else {
       // Remove all nodes
