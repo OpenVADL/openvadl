@@ -46,7 +46,7 @@ public abstract class DockerExecutionTest extends AbstractTest {
                                             Path hostPath,
                                             String containerPath) {
     runContainer(image, container ->
-        withHostFsBind(container, hostPath, "/work")
+        withHostFsBind(container, hostPath, containerPath)
     );
   }
 
