@@ -5,9 +5,7 @@ import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileWriter;
 import java.io.IOException;
-import java.nio.file.Files;
 import java.nio.file.Path;
-import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.LinkedHashMap;
@@ -25,9 +23,9 @@ import org.slf4j.LoggerFactory;
 import org.testcontainers.images.builder.ImageFromDockerfile;
 import org.testcontainers.shaded.com.google.common.collect.Streams;
 import org.testcontainers.shaded.org.apache.commons.io.FileUtils;
+import org.testcontainers.utility.MountableFile;
 import org.yaml.snakeyaml.Yaml;
 import vadl.test.DockerExecutionTest;
-import vadl.utils.Pair;
 import vadl.viam.Identifier;
 import vadl.viam.Specification;
 
@@ -108,31 +106,25 @@ public abstract class QemuExecutionTest extends DockerExecutionTest {
     // resolve file that contains all test specifications.
     // it is a yaml file that gets mapped to `/work/test-suite.yaml` of the container.
     var testSuiteYaml = testDirectory.resolve("test-suite.yaml").toFile();
+    var resultsYamlPath = testDirectory.resolve("results.yaml").toAbsolutePath();
     // write the test cases to this yaml file
     writeTestSuiteConfigYaml(testCases, testSuiteYaml);
-    // run the container with a binding of the temporary test directory to "/work"
-    runContainerWithHostFsBind(image, testDirectory, "/work");
+    // run the container and copy the test cases into the container
+    // and after execution, copy the results from the container
+    runContainer(image, container -> container
+            .withCopyToContainer(MountableFile.forHostPath(testSuiteYaml.getPath()), "/work/test-suite.yaml"),
+        container -> container
+            .copyFileFromContainer("/work/results.yaml",  resultsYamlPath.toString())
+    );
 
-    // the container will places the test results under /work/results
-    var resultDir = testDirectory.resolve("results");
-    // the result of each spec is in a separate yaml file under /work/results
-    // so we want to get all those files
-    var yamlResults = resultDir.toFile()
-        .listFiles((dir, name) -> name.endsWith(".yaml"));
 
-    var testResults = new ArrayList<TestResult>();
-    // all files that could not be parsed (should not happen)
-    var failedToParse = new HashMap<String, Pair<File, Exception>>();
+    List<TestResult> testResults = List.of();
 
-    assert yamlResults != null;
-    // parse all the results in classes
-    for (var file : yamlResults) {
-      try {
-        var result = yamlToTestResult(file);
-        testResults.add(result);
-      } catch (Exception e) {
-        failedToParse.put(file.getName(), Pair.of(file, e));
-      }
+    try {
+      // parse the results yaml file into a list of TestResults
+      testResults = yamlToTestResults(resultsYamlPath.toFile());
+    } catch (Exception e) {
+      Assertions.fail("Failed to load test results.", e);
     }
 
     // just for fast access later
@@ -160,21 +152,9 @@ public abstract class QemuExecutionTest extends DockerExecutionTest {
             }
         ));
 
-    // produce tests for the results that could not be parsed
-    var failedToParseDynamicTests = failedToParse.entrySet().stream()
-        .map(e -> DynamicTest.dynamicTest("Parse " + e.getKey(),
-            () -> {
-              System.out.println("Content of " + e.getKey() + ": \n");
-              try (var lineStream = Files.lines(e.getValue().left().toPath())) {
-                lineStream.forEach(System.out::println);
-              }
-              Assertions.fail("Failed to parse " + e.getKey(), e.getValue().right());
-            }));
-
     // produces dynamic tests for all cases where no result was found
     var notFoundResultDynamicTests = testCases.stream()
         .filter(c -> !specIds.contains(c.id()))
-        .filter(c -> !failedToParse.containsKey("result-" + c.id() + ".yaml"))
         .map(c -> DynamicTest.dynamicTest("Find result of " + c.id(),
             () -> Assertions.fail("No result found for test " + c.id())
         ));
@@ -182,7 +162,6 @@ public abstract class QemuExecutionTest extends DockerExecutionTest {
     // return stream of all dynamic test cases
     return Streams.concat(
         normalTestResultDynamicTests,
-        failedToParseDynamicTests,
         notFoundResultDynamicTests
     );
   }
@@ -219,29 +198,37 @@ public abstract class QemuExecutionTest extends DockerExecutionTest {
    * @return The converted TestResult object.
    * @throws IOException if an I/O error occurs.
    */
-  protected static TestResult yamlToTestResult(File yamlFile) throws IOException {
+  protected static List<TestResult> yamlToTestResults(File yamlFile) throws IOException {
     try (var reader = new FileInputStream(yamlFile)) {
       Yaml yaml = new Yaml();
-      Map<String, Object> data = yaml.load(reader);
-      Map<String, Object> result = (Map<String, Object>) data.get("result");
+      // load all results
+      List<Object> results = yaml.load(reader);
 
-      String id = data.get("id").toString();
-      // Assuming the YAML structure matches the fields in TestResult
-      TestResult.Status status = TestResult.Status.valueOf((String) result.get("status"));
-      List<TestResult.Stage> completedStages =
-          ((List<String>) result.get("completedStages")).stream()
-              .map(e -> TestResult.Stage.valueOf(e))
-              .toList();
-      List<String> errors = (List<String>) result.get("errors");
-      String duration = (String) result.get("duration");
-      List<TestResult.RegTestResult> regTests =
-          ((Map<String, Object>) result.get("regTests")).entrySet()
-              .stream().map(e -> {
-                var val = (Map<String, String>) e.getValue();
-                return new TestResult.RegTestResult(e.getKey(), val.get("expected"), val.get("actual"));
-              }).toList();
+      return results.stream()
+          // map yaml to test result
+          .map(r -> {
+            Map<String, Object> data = (Map<String, Object>) r;
+            Map<String, Object> result = (Map<String, Object>) data.get("result");
 
-      return new TestResult(id, status, completedStages, regTests, errors, duration);
+            String id = data.get("id").toString();
+            // Assuming the YAML structure matches the fields in TestResult
+            TestResult.Status status = TestResult.Status.valueOf((String) result.get("status"));
+            List<TestResult.Stage> completedStages =
+                ((List<String>) result.get("completedStages")).stream()
+                    .map(e -> TestResult.Stage.valueOf(e))
+                    .toList();
+            List<String> errors = (List<String>) result.get("errors");
+            String duration = (String) result.get("duration");
+            List<TestResult.RegTestResult> regTests =
+                ((Map<String, Object>) result.get("regTests")).entrySet()
+                    .stream().map(e -> {
+                      var val = (Map<String, String>) e.getValue();
+                      return new TestResult.RegTestResult(e.getKey(), val.get("expected"), val.get("actual"));
+                    }).toList();
+
+            return new TestResult(id, status, completedStages, regTests, errors, duration);
+          })
+          .toList();
     }
   }
 
