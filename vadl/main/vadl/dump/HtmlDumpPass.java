@@ -5,8 +5,11 @@ import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Consumer;
 import java.util.stream.Collectors;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import vadl.configuration.GeneralConfiguration;
 import vadl.dump.entitySuppliers.ViamEntitySupplier;
 import vadl.dump.infoEnrichers.ViamEnricherCollection;
@@ -40,6 +43,8 @@ import vadl.viam.Specification;
  * @see ViamEnricherCollection
  */
 public class HtmlDumpPass extends AbstractTemplateRenderingPass {
+
+  private static final Logger log = LoggerFactory.getLogger(HtmlDumpPass.class);
 
   /**
    * A function that collects all available entity suppliers.
@@ -90,6 +95,8 @@ public class HtmlDumpPass extends AbstractTemplateRenderingPass {
 
   private final Config config;
 
+  private static final AtomicInteger dumpCounter = new AtomicInteger();
+
   public HtmlDumpPass(Config config) throws IOException {
     super(config, "dump");
     this.config = config;
@@ -102,12 +109,13 @@ public class HtmlDumpPass extends AbstractTemplateRenderingPass {
 
   @Override
   protected String getOutputPath() {
-    return config.phase.replace(" ", "_") + ".html";
+    return dumpCounter.incrementAndGet() + config.phase.replace(" ", "_") + ".html";
   }
 
   @Override
   protected Map<String, Object> createVariables(PassResults passResults,
                                                 Specification specification) {
+    log.debug("Create HTML dump for phase {}", config.phase);
     // collect suppliers
     var suppliers = new ArrayList<DumpEntitySupplier<?>>();
     entitySuppliers.accept(suppliers);

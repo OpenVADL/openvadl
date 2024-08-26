@@ -50,25 +50,34 @@ public final class PassResults {
   }
 
   /**
+   * Retrieves the pass instance as {@link SingleResult} object of the last execution of the
+   * given passClass.
+   * This allows searching for the result of a pass type instead of one with a specific key.
+   *
+   * @param passClass the class of the Pass to retrieve the result for
+   * @return the result of the found pass
+   */
+  public <T extends Pass> SingleResult lastExecutionOf(Class<T> passClass) {
+    var result =
+        store.values().stream()
+            .reduce((a, b) -> passClass.isInstance(b.pass()) ? b : a);
+    if (result.isEmpty() || !passClass.isInstance(result.get().pass)) {
+      throw new PassError(
+          "Tried to retrieve result of the last instance of pass class %s, ".formatted(passClass)
+          + "but no such pass instance was found.");
+    }
+    return result.get();
+  }
+
+  /**
    * Retrieves the pass result of the last execution of the given passClass.
    * This allows searching for the result of a pass type instead of one with a specific key.
    *
    * @param passClass the class of the Pass to retrieve the result for
-   * @return an empty option if no pass instance of the passClass was executed. Otherwise,
-   *     the pass result wrapped in the optional.
+   * @return the result of the found pass
    */
-  public <T> Optional<SingleResult> lastExecutionOf(Class<T> passClass) {
-    var result =
-        store.values().stream()
-            .reduce((a, b) -> passClass.isInstance(b.pass()) ? b : a);
-    if (result.isEmpty()) {
-      return Optional.empty();
-    }
-    var resultPair = result.get();
-    if (passClass.isInstance(resultPair.pass())) {
-      return Optional.of(resultPair);
-    }
-    return Optional.empty();
+  public <T extends Pass> @Nullable Object lastResultOf(Class<T> passClass) {
+    return lastExecutionOf(passClass).result();
   }
 
   /**

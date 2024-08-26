@@ -8,6 +8,8 @@ import java.io.Writer;
 import java.nio.charset.Charset;
 import java.util.Map;
 import javax.annotation.Nullable;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.thymeleaf.TemplateEngine;
 import org.thymeleaf.context.Context;
 import org.thymeleaf.templatemode.TemplateMode;
@@ -25,6 +27,7 @@ import vadl.viam.Specification;
  */
 public abstract class AbstractTemplateRenderingPass extends Pass {
   private static final TemplateEngine templateEngine = templateEngine();
+  private static final Logger log = LoggerFactory.getLogger(AbstractTemplateRenderingPass.class);
 
   private static TemplateEngine templateEngine() {
     TemplateEngine templateEngine = new TemplateEngine();
@@ -75,8 +78,7 @@ public abstract class AbstractTemplateRenderingPass extends Pass {
     return new PassName("EmitFile");
   }
 
-  private FileWriter createFileWriter() throws IOException {
-    var file = new File(configuration().outputPath() + "/" + subDir + "/" + getOutputPath());
+  private FileWriter createFileWriter(File file) throws IOException {
 
     if (!file.getParentFile().exists()) {
       ensure(file.getParentFile().mkdirs(), "Cannot create parent directories");
@@ -93,7 +95,9 @@ public abstract class AbstractTemplateRenderingPass extends Pass {
   @Override
   public Object execute(final PassResults passResults, Specification viam)
       throws IOException {
-    renderTemplate(passResults, viam, createFileWriter());
+    var file = new File(configuration().outputPath() + "/" + subDir + "/" + getOutputPath());
+    renderTemplate(passResults, viam, createFileWriter(file));
+    log.info("Emitted file to {}", file.getAbsolutePath());
 
     // This pass emits files and does not need to store data.
     return null;

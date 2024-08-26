@@ -33,6 +33,7 @@ import vadl.configuration.GeneralConfiguration;
 import vadl.pass.Pass;
 import vadl.pass.PassKey;
 import vadl.pass.PassManager;
+import vadl.pass.PassOrder;
 import vadl.pass.exception.DuplicatedPassKeyException;
 import vadl.utils.Pair;
 import vadl.utils.VADLFileUtils;
@@ -300,7 +301,7 @@ public class AbstractTest {
 
 
   public TestSetup setupPassManagerAndRunSpec(String specPath,
-                                              List<Pass> passes)
+                                              PassOrder passes)
       throws IOException, DuplicatedPassKeyException {
     var spec = runAndGetViamSpecification(specPath);
 
@@ -313,7 +314,7 @@ public class AbstractTest {
 
 
   public TestSetup setupPassManagerAndRunSpecUntil(String specPath,
-                                                   List<Pass> passes,
+                                                   PassOrder passes,
                                                    PassKey until)
       throws IOException, DuplicatedPassKeyException {
     var spec = runAndGetViamSpecification(specPath);

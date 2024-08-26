@@ -49,15 +49,15 @@ public class EmitImmediateFilePass extends LcbTemplateRenderingPass {
                                                 Specification specification) {
     var decodeVadlFunctions =
         (IdentityHashMap<Function, Function>) ensureNonNull(
-            passResults.get(new PassKey(CppTypeNormalizationForDecodingsPass.class.getName())),
+            passResults.lastResultOf(CppTypeNormalizationForDecodingsPass.class),
             "decodings must exist");
     var encodeVadlFunctions =
         (IdentityHashMap<Function, Function>) ensureNonNull(
-            passResults.get(new PassKey(CppTypeNormalizationForEncodingsPass.class.getName())),
+            passResults.lastResultOf(CppTypeNormalizationForEncodingsPass.class),
             "encodings must exist");
     var predicateVadlFunctions =
         (IdentityHashMap<Function, Function>) ensureNonNull(
-            passResults.get(new PassKey(CppTypeNormalizationForPredicatesPass.class.getName())),
+            passResults.lastResultOf(CppTypeNormalizationForPredicatesPass.class),
             "predicates must exist");
 
     var decodeFunctions = generateDecodeFunctions(specification, decodeVadlFunctions);
