@@ -4,7 +4,6 @@ import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.containsInAnyOrder;
 import static org.hamcrest.Matchers.containsString;
 import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.fail;
 import static org.junit.jupiter.params.provider.Arguments.arguments;
 
@@ -28,14 +27,12 @@ import org.apache.velocity.app.Velocity;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.params.provider.Arguments;
-import vadl.configuration.GcbConfiguration;
 import vadl.configuration.GeneralConfiguration;
-import vadl.pass.Pass;
 import vadl.pass.PassKey;
 import vadl.pass.PassManager;
 import vadl.pass.PassOrder;
+import vadl.pass.StringOutputFactory;
 import vadl.pass.exception.DuplicatedPassKeyException;
-import vadl.utils.Pair;
 import vadl.utils.VADLFileUtils;
 import vadl.viam.Specification;
 import vadl.viam.passes.verification.ViamVerifier;
@@ -333,6 +330,10 @@ public class AbstractTest {
   public GeneralConfiguration getConfiguration(boolean doDump) throws IOException {
     var directory = createDirectory();
     return new GeneralConfiguration(directory.toAbsolutePath().toString(), doDump);
+  }
+
+  public GeneralConfiguration getConfigurationWithStringWriter(boolean doDump) {
+    return new GeneralConfiguration("output", doDump, new StringOutputFactory());
   }
 
   public record TestSetup(PassManager passManager, Specification specification) {

@@ -38,13 +38,3 @@ def [(${namespace})] : Target
     let AssemblyWriters = [[(${namespace})]InstPrinter];
     let AssemblyParsers  = [[(${namespace})]AsmParser];
 }
-
-//===--------------------------------------------------------------------------===//
-// TODOs
-//===--------------------------------------------------------------------------===//
-//
-// * finish instruction operands
-// * finish instruction pattern
-// * finish calling conventions
-// * ...
-//

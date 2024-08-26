@@ -7,6 +7,7 @@ import org.junit.jupiter.api.Test;
 import vadl.gcb.valuetypes.ProcessorName;
 import vadl.lcb.template.lib.Target.EmitInstrInfoTableGenFilePass;
 import vadl.pass.PassKey;
+import vadl.pass.StringOutputFactory;
 import vadl.pass.exception.DuplicatedPassKeyException;
 import vadl.test.lcb.AbstractLcbTest;
 
@@ -14,18 +15,14 @@ public class EmitInstrInfoTableGenFilePassTest extends AbstractLcbTest {
   @Test
   void testLowering() throws IOException, DuplicatedPassKeyException {
     // Given
-    var testSetup = runLcb(getConfiguration(false), "examples/rv3264im.vadl",
+    var configuration = getConfigurationWithStringWriter(false);
+    var testSetup = runLcb(configuration, "examples/rv3264im.vadl",
         new PassKey(EmitInstrInfoTableGenFilePass.class.getName()));
-    var passManager = testSetup.passManager();
-    var spec = testSetup.specification();
 
     // When
-    var template =
-        new vadl.lcb.template.lib.Target.EmitInstrInfoTableGenFilePass(getConfiguration(false));
-    var writer = new StringWriter();
+    var writer = ((StringOutputFactory) configuration.outputFactory()).getLastStringWriter();
 
-    // When
-    template.renderToString(passManager.getPassResults(), spec, writer);
+    // Then
     var trimmed = writer.toString().trim();
     var output = trimmed.lines();
 
@@ -36,6 +33,9 @@ public class EmitInstrInfoTableGenFilePassTest extends AbstractLcbTest {
          * if the specific register is a frame pointer.
          */
         def AddrFI : ComplexPattern<iPtr, 1, "SelectAddrFI", [frameindex], []>;
+               
+        def SDT_CallSeqStart : SDCallSeqStart<[SDTCisVT<0, i32>, SDTCisVT<1, i32>]>;
+        def SDT_CallSeqEnd   : SDCallSeqEnd<[SDTCisVT<0, i32>, SDTCisVT<1, i32>]>;
                
                
                

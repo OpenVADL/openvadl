@@ -1,11 +1,8 @@
 package vadl.template;
 
-import java.io.File;
-import java.io.FileWriter;
 import java.io.IOException;
 import java.io.StringWriter;
 import java.io.Writer;
-import java.nio.charset.Charset;
 import java.util.Map;
 import javax.annotation.Nullable;
 import org.slf4j.Logger;
@@ -67,8 +64,7 @@ public abstract class AbstractTemplateRenderingPass extends Pass {
   protected abstract Map<String, Object> createVariables(final PassResults passResults,
                                                          Specification specification);
 
-  public AbstractTemplateRenderingPass(GeneralConfiguration configuration, String subDir)
-      throws IOException {
+  public AbstractTemplateRenderingPass(GeneralConfiguration configuration, String subDir) {
     super(configuration);
     this.subDir = subDir;
   }
@@ -78,26 +74,12 @@ public abstract class AbstractTemplateRenderingPass extends Pass {
     return new PassName("EmitFile");
   }
 
-  private FileWriter createFileWriter(File file) throws IOException {
-
-    if (!file.getParentFile().exists()) {
-      ensure(file.getParentFile().mkdirs(), "Cannot create parent directories");
-    }
-
-    if (!file.exists()) {
-      ensure(file.createNewFile(), "Cannot create new file");
-    }
-
-    return new FileWriter(file, Charset.defaultCharset());
-  }
-
   @Nullable
   @Override
   public Object execute(final PassResults passResults, Specification viam)
       throws IOException {
-    var file = new File(configuration().outputPath() + "/" + subDir + "/" + getOutputPath());
-    renderTemplate(passResults, viam, createFileWriter(file));
-    log.info("Emitted file to {}", file.getAbsolutePath());
+    renderTemplate(passResults, viam,
+        configuration().outputFactory().createWriter(configuration(), subDir, getOutputPath()));
 
     // This pass emits files and does not need to store data.
     return null;

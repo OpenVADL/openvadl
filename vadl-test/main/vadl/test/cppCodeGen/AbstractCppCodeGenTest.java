@@ -17,6 +17,11 @@ public class AbstractCppCodeGenTest extends DockerExecutionTest {
     return new GcbConfiguration(super.getConfiguration(doDump));
   }
 
+  @Override
+  public GcbConfiguration getConfigurationWithStringWriter(boolean doDump) {
+    return new GcbConfiguration(super.getConfigurationWithStringWriter(doDump));
+  }
+
   public TestSetup runGcbAndCppCodeGen(GcbConfiguration configuration,
                                        String specPath, PassKey until)
       throws IOException, DuplicatedPassKeyException {
