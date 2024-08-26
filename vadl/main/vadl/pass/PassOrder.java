@@ -2,7 +2,11 @@ package vadl.pass;
 
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
+import javax.annotation.Nullable;
 import vadl.configuration.GcbConfiguration;
 import vadl.configuration.GeneralConfiguration;
 import vadl.configuration.LcbConfiguration;
@@ -20,22 +24,74 @@ import vadl.viam.passes.algebraic_simplication.AlgebraicSimplificationPass;
 import vadl.viam.passes.dummyAbi.DummyAbiPass;
 import vadl.viam.passes.functionInliner.FunctionInlinerPass;
 import vadl.viam.passes.typeCastElimination.TypeCastEliminationPass;
+import vadl.viam.passes.verification.ViamVerificationPass;
 
 /**
  * This class defines the order in which the {@link PassManager} should run them.
  */
 public final class PassOrder {
 
+  // a counter-map that keeps track of how many passes of each pass class exists.
+  // this is used to generate a unique pass key if it is not given by the user.
+  private final static Map<Class<? extends Pass>, Integer> passCounter
+      = new ConcurrentHashMap<>();
+
+  // the actual list of pass steps
+  private final ArrayList<PassStep> order = new ArrayList<>();
+
+  /**
+   * Add a pass to the pass order. If the passKey is null, it will generate a unique one.
+   *
+   * @return this
+   */
+  public PassOrder add(@Nullable PassKey passKey, Pass pass) {
+    var currentId = passCounter.merge(pass.getClass(), 1, Integer::sum);
+    if (passKey == null) {
+      passKey = new PassKey(pass.getClass().getName() + "-" + currentId);
+    }
+    order.add(new PassStep(passKey, pass));
+    return this;
+  }
+
+  /**
+   * Add a pass to the pass order.
+   *
+   * @return this
+   */
+  public PassOrder add(String key, Pass pass) {
+    add(new PassKey(key), pass);
+    return this;
+  }
+
+  /**
+   * Add a pass to the pass order. The key will be generated.
+   *
+   * @return this
+   */
+  public PassOrder add(Pass pass) {
+    add((PassKey) null, pass);
+    return this;
+  }
+
+  /**
+   * Get the list of pass steps in this pass order.
+   */
+  public List<PassStep> passSteps() {
+    return order;
+  }
+
+
   /**
    * Return the viam passes.
    */
-  public static List<Pass> viam(GeneralConfiguration configuration) throws IOException {
-    List<Pass> passes = new ArrayList<>();
+  public static PassOrder viam(GeneralConfiguration configuration) throws IOException {
+    var order = new PassOrder();
 
-    passes.add(new DummyAbiPass(configuration));
-    passes.add(new TypeCastEliminationPass(configuration));
-    passes.add(new FunctionInlinerPass(configuration));
-    passes.add(new AlgebraicSimplificationPass(configuration));
+    order.add(new DummyAbiPass(configuration));
+    order.add(new ViamVerificationPass(configuration));
+    order.add(new TypeCastEliminationPass(configuration));
+    order.add(new FunctionInlinerPass(configuration));
+    order.add(new AlgebraicSimplificationPass(configuration));
 
     if (configuration.doDump()) {
       var config = HtmlDumpPass.Config.from(
@@ -43,23 +99,23 @@ public final class PassOrder {
           "viamOptimizations",
           "All common VIAM optimization that are required by most generators are executed."
       );
-      passes.add(new HtmlDumpPass(config));
+      order.add(new HtmlDumpPass(config));
     }
 
-    return passes;
+    return order;
   }
 
   /**
    * Return the gcb and cppcodegen passes.
    */
-  public static List<Pass> gcbAndCppCodeGen(GcbConfiguration gcbConfiguration) throws IOException {
-    List<Pass> passes = new ArrayList<>(viam(gcbConfiguration));
+  public static PassOrder gcbAndCppCodeGen(GcbConfiguration gcbConfiguration) throws IOException {
+    var order = viam(gcbConfiguration);
 
-    passes.add(new GenerateFieldAccessEncodingFunctionPass(gcbConfiguration));
-    passes.add(new FieldNodeReplacementPassForDecoding(gcbConfiguration));
-    passes.add(new CppTypeNormalizationForEncodingsPass(gcbConfiguration));
-    passes.add(new CppTypeNormalizationForDecodingsPass(gcbConfiguration));
-    passes.add(new CppTypeNormalizationForPredicatesPass(gcbConfiguration));
+    order.add(new GenerateFieldAccessEncodingFunctionPass(gcbConfiguration));
+    order.add(new FieldNodeReplacementPassForDecoding(gcbConfiguration));
+    order.add(new CppTypeNormalizationForEncodingsPass(gcbConfiguration));
+    order.add(new CppTypeNormalizationForDecodingsPass(gcbConfiguration));
+    order.add(new CppTypeNormalizationForPredicatesPass(gcbConfiguration));
 
     if (gcbConfiguration.doDump()) {
       var config = HtmlDumpPass.Config.from(gcbConfiguration,
@@ -69,20 +125,20 @@ public final class PassOrder {
           "Now the gcb produced all necessary encoding function for field accesses "
               + "and normalized VIAM types to Cpp types."
       );
-      passes.add(new HtmlDumpPass(config));
+      order.add(new HtmlDumpPass(config));
     }
 
-    return passes;
+    return order;
   }
 
   /**
    * This is the pass order which must be executed to get a LLVM compiler.
    */
-  public static List<Pass> lcb(LcbConfiguration configuration)
+  public static PassOrder lcb(LcbConfiguration configuration)
       throws IOException {
-    List<Pass> passes = new ArrayList<>(gcbAndCppCodeGen(configuration));
-    passes.add(new IsaMatchingPass(configuration));
-    passes.add(new LlvmLoweringPass(configuration));
+    var order = gcbAndCppCodeGen(configuration);
+    order.add(new IsaMatchingPass(configuration));
+    order.add(new LlvmLoweringPass(configuration));
 
     if (configuration.doDump()) {
       var config = HtmlDumpPass.Config.from(
@@ -93,147 +149,147 @@ public final class PassOrder {
           "The LCB did ISA matching to and lowered common VIAM nodes to LLVM specific"
               + "nodes."
       );
-      passes.add(new HtmlDumpPass(config));
+      order.add(new HtmlDumpPass(config));
     }
 
-    passes.add(new vadl.lcb.clang.lib.Driver.ToolChains.EmitClangToolChainFilePass(configuration));
-    passes.add(new vadl.lcb.clang.lib.Basic.Targets.EmitClangTargetHeaderFilePass(configuration));
-    passes.add(new vadl.lcb.clang.lib.Basic.Targets.EmitClangTargetsFilePass(configuration));
-    passes.add(new vadl.lcb.clang.lib.Basic.Targets.EmitClangTargetCppFilePass(configuration));
-    passes.add(new vadl.lcb.template.clang.lib.Basic.EmitClangBasicCMakeFilePass(configuration));
-    passes.add(
+    order.add(new vadl.lcb.clang.lib.Driver.ToolChains.EmitClangToolChainFilePass(configuration));
+    order.add(new vadl.lcb.clang.lib.Basic.Targets.EmitClangTargetHeaderFilePass(configuration));
+    order.add(new vadl.lcb.clang.lib.Basic.Targets.EmitClangTargetsFilePass(configuration));
+    order.add(new vadl.lcb.clang.lib.Basic.Targets.EmitClangTargetCppFilePass(configuration));
+    order.add(new vadl.lcb.template.clang.lib.Basic.EmitClangBasicCMakeFilePass(configuration));
+    order.add(
         new vadl.lcb.template.clang.lib.CodeGen.EmitCodeGenModuleCMakeFilePass(configuration));
-    passes.add(new vadl.lcb.template.clang.lib.CodeGen.Targets.EmitClangCodeGenTargetFilePass(
+    order.add(new vadl.lcb.template.clang.lib.CodeGen.Targets.EmitClangCodeGenTargetFilePass(
         configuration));
-    passes.add(
+    order.add(
         new vadl.lcb.template.clang.lib.CodeGen.EmitCodeGenTargetInfoHeaderFilePass(configuration));
-    passes.add(new vadl.lcb.clang.lib.CodeGen.EmitCodeGenModuleFilePass(configuration));
-    passes.add(new vadl.lcb.template.lld.ELF.EmitLldDriverFilePass(configuration));
-    passes.add(new vadl.lcb.template.lld.ELF.EmitLldELFCMakeFilePass(configuration));
-    passes.add(new vadl.lcb.template.lld.ELF.EmitLldTargetHeaderFilePass(configuration));
-    passes.add(
+    order.add(new vadl.lcb.clang.lib.CodeGen.EmitCodeGenModuleFilePass(configuration));
+    order.add(new vadl.lcb.template.lld.ELF.EmitLldDriverFilePass(configuration));
+    order.add(new vadl.lcb.template.lld.ELF.EmitLldELFCMakeFilePass(configuration));
+    order.add(new vadl.lcb.template.lld.ELF.EmitLldTargetHeaderFilePass(configuration));
+    order.add(
         new vadl.lcb.template.lld.ELF.Arch.EmitLldTargetRelocationsHeaderFilePass(configuration));
-    passes.add(
+    order.add(
         new vadl.lcb.template.lld.ELF.Arch.EmitLldManualEncodingHeaderFilePass(configuration));
-    passes.add(new vadl.lcb.template.lld.ELF.Arch.EmitImmediateUtilsHeaderFilePass(configuration));
-    passes.add(new vadl.lcb.template.lld.ELF.Arch.EmitLldArchFilePass(configuration));
-    passes.add(new vadl.lcb.template.lld.ELF.EmitLldTargetCppFilePass(configuration));
-    passes.add(new vadl.lcb.template.EmitLcbMakeFilePass(configuration));
-    passes.add(new vadl.lcb.include.llvm.BinaryFormat.ELFRelocs.EmitTargetElfRelocsDefFilePass(
+    order.add(new vadl.lcb.template.lld.ELF.Arch.EmitImmediateUtilsHeaderFilePass(configuration));
+    order.add(new vadl.lcb.template.lld.ELF.Arch.EmitLldArchFilePass(configuration));
+    order.add(new vadl.lcb.template.lld.ELF.EmitLldTargetCppFilePass(configuration));
+    order.add(new vadl.lcb.template.EmitLcbMakeFilePass(configuration));
+    order.add(new vadl.lcb.include.llvm.BinaryFormat.ELFRelocs.EmitTargetElfRelocsDefFilePass(
         configuration));
-    passes.add(new vadl.lcb.include.llvm.BinaryFormat.EmitElfHeaderFilePass(configuration));
-    passes.add(new vadl.lcb.include.llvm.Object.EmitELFObjectHeaderFilePass(configuration));
-    passes.add(new vadl.lcb.template.lib.Misc.EmitBenchmarkRegisterHeaderFilePass(configuration));
-    passes.add(new vadl.lcb.template.lib.Target.EmitFrameLoweringCppFilePass(configuration));
-    passes.add(
+    order.add(new vadl.lcb.include.llvm.BinaryFormat.EmitElfHeaderFilePass(configuration));
+    order.add(new vadl.lcb.include.llvm.Object.EmitELFObjectHeaderFilePass(configuration));
+    order.add(new vadl.lcb.template.lib.Misc.EmitBenchmarkRegisterHeaderFilePass(configuration));
+    order.add(new vadl.lcb.template.lib.Target.EmitFrameLoweringCppFilePass(configuration));
+    order.add(
         new vadl.lcb.template.lib.Target.EmitMachineFunctionInfoHeaderFilePass(configuration));
-    passes.add(new vadl.lcb.template.lib.Target.EmitTargetObjectFileCppFilePass(configuration));
-    passes.add(new vadl.lcb.template.lib.Target.EmitInstrInfoHeaderFilePass(configuration));
-    passes.add(new vadl.lcb.template.lib.Target.EmitExpandPseudoHeaderFilePass(configuration));
-    passes.add(new vadl.lcb.template.lib.Target.EmitDAGToDAGIselHeaderFilePass(configuration));
-    passes.add(
+    order.add(new vadl.lcb.template.lib.Target.EmitTargetObjectFileCppFilePass(configuration));
+    order.add(new vadl.lcb.template.lib.Target.EmitInstrInfoHeaderFilePass(configuration));
+    order.add(new vadl.lcb.template.lib.Target.EmitExpandPseudoHeaderFilePass(configuration));
+    order.add(new vadl.lcb.template.lib.Target.EmitDAGToDAGIselHeaderFilePass(configuration));
+    order.add(
         new vadl.lcb.template.lib.Target.AsmParser.EmitAsmParsedOperandCppFilePass(configuration));
-    passes.add(new vadl.lcb.template.lib.Target.AsmParser.EmitAsmParsedOperandHeaderFilePass(
+    order.add(new vadl.lcb.template.lib.Target.AsmParser.EmitAsmParsedOperandHeaderFilePass(
         configuration));
-    passes.add(
+    order.add(
         new vadl.lcb.template.lib.Target.AsmParser.EmitAsmRecursiveDescentParserHeaderFilePass(
             configuration));
-    passes.add(new vadl.lcb.template.lib.Target.AsmParser.EmitAsmParserCppFilePass(configuration));
-    passes.add(
+    order.add(new vadl.lcb.template.lib.Target.AsmParser.EmitAsmParserCppFilePass(configuration));
+    order.add(
         new vadl.lcb.template.lib.Target.AsmParser.EmitAsmParserCMakeFilePass(configuration));
-    passes.add(new vadl.lcb.template.lib.Target.AsmParser.EmitAsmRecursiveDescentParserCppFilePass(
+    order.add(new vadl.lcb.template.lib.Target.AsmParser.EmitAsmRecursiveDescentParserCppFilePass(
         configuration));
-    passes.add(
+    order.add(
         new vadl.lcb.template.lib.Target.EmitDAGToDAGISelCppFilePass(configuration));
-    passes.add(new vadl.lcb.template.lib.Target.EmitAsmPrinterHeaderFilePass(configuration));
-    passes.add(new vadl.lcb.template.lib.Target.EmitCallingConvTableGenFilePass(configuration));
-    passes.add(new vadl.lcb.template.lib.Target.EmitRegisterInfoHeaderFilePass(configuration));
-    passes.add(new vadl.lcb.template.lib.Target.Utils.EmitBaseInfoFilePass(configuration));
-    passes.add(new vadl.lcb.template.lib.Target.Utils.EmitImmediateFilePass(configuration));
-    passes.add(new vadl.lcb.template.lib.Target.EmitTargetTableGenFilePass(configuration));
-    passes.add(new vadl.lcb.template.lib.Target.EmitTargetHeaderFilePass(configuration));
-    passes.add(new vadl.lcb.template.lib.Target.EmitAsmPrinterCppFilePass(configuration));
-    passes.add(new vadl.lcb.template.lib.Target.EmitSubTargetHeaderFilePass(configuration));
-    passes.add(new vadl.lcb.template.lib.Target.EmitFrameLoweringHeaderFilePass(configuration));
-    passes.add(new vadl.lcb.template.lib.Target.EmitPassConfigHeaderFilePass(configuration));
-    passes.add(
+    order.add(new vadl.lcb.template.lib.Target.EmitAsmPrinterHeaderFilePass(configuration));
+    order.add(new vadl.lcb.template.lib.Target.EmitCallingConvTableGenFilePass(configuration));
+    order.add(new vadl.lcb.template.lib.Target.EmitRegisterInfoHeaderFilePass(configuration));
+    order.add(new vadl.lcb.template.lib.Target.Utils.EmitBaseInfoFilePass(configuration));
+    order.add(new vadl.lcb.template.lib.Target.Utils.EmitImmediateFilePass(configuration));
+    order.add(new vadl.lcb.template.lib.Target.EmitTargetTableGenFilePass(configuration));
+    order.add(new vadl.lcb.template.lib.Target.EmitTargetHeaderFilePass(configuration));
+    order.add(new vadl.lcb.template.lib.Target.EmitAsmPrinterCppFilePass(configuration));
+    order.add(new vadl.lcb.template.lib.Target.EmitSubTargetHeaderFilePass(configuration));
+    order.add(new vadl.lcb.template.lib.Target.EmitFrameLoweringHeaderFilePass(configuration));
+    order.add(new vadl.lcb.template.lib.Target.EmitPassConfigHeaderFilePass(configuration));
+    order.add(
         new vadl.lcb.template.lib.Target.Disassembler.EmitDisassemblerCppFilePass(configuration));
-    passes.add(new vadl.lcb.template.lib.Target.Disassembler.EmitDisassemblerHeaderFilePass(
+    order.add(new vadl.lcb.template.lib.Target.Disassembler.EmitDisassemblerHeaderFilePass(
         configuration));
-    passes.add(
+    order.add(
         new vadl.lcb.template.lib.Target.Disassembler.EmitDisassemblerCMakeFilePass(configuration));
-    passes.add(new vadl.lcb.template.lib.Target.EmitISelLoweringCppFilePass(configuration));
-    passes.add(
+    order.add(new vadl.lcb.template.lib.Target.EmitISelLoweringCppFilePass(configuration));
+    order.add(
         new vadl.lcb.template.lib.Target.TargetInfo.EmitTargetInfoHeaderFilePass(configuration));
-    passes.add(
+    order.add(
         new vadl.lcb.template.lib.Target.TargetInfo.EmitTargetInfoCMakeFilePass(configuration));
-    passes.add(new vadl.lcb.template.lib.Target.TargetInfo.EmitTargetInfoCppFile(configuration));
-    passes.add(new vadl.lcb.template.lib.Target.EmitPassConfigCppFilePass(configuration));
-    passes.add(new vadl.lcb.template.lib.Target.EmitSubTargetCppFilePass(configuration));
-    passes.add(new vadl.lcb.template.lib.Target.EmitTargetCMakeFilePass(configuration));
-    passes.add(new vadl.lcb.template.lib.Target.MCTargetDesc.EmitMCCodeEmitterHeaderFilePass(
+    order.add(new vadl.lcb.template.lib.Target.TargetInfo.EmitTargetInfoCppFile(configuration));
+    order.add(new vadl.lcb.template.lib.Target.EmitPassConfigCppFilePass(configuration));
+    order.add(new vadl.lcb.template.lib.Target.EmitSubTargetCppFilePass(configuration));
+    order.add(new vadl.lcb.template.lib.Target.EmitTargetCMakeFilePass(configuration));
+    order.add(new vadl.lcb.template.lib.Target.MCTargetDesc.EmitMCCodeEmitterHeaderFilePass(
         configuration));
-    passes.add(
+    order.add(
         new vadl.lcb.template.lib.Target.MCTargetDesc.EmitMCCodeEmitterCppFilePass(configuration));
-    passes.add(
+    order.add(
         new vadl.lcb.template.lib.Target.MCTargetDesc.EmitAsmStreamerCppFilePass(configuration));
-    passes.add(
+    order.add(
         new vadl.lcb.template.lib.Target.MCTargetDesc.EmitELFStreamerCppFilePass(configuration));
-    passes.add(
+    order.add(
         new vadl.lcb.template.lib.Target.MCTargetDesc.EmitMCInstExpanderCppFilePass(configuration));
-    passes.add(
+    order.add(
         new vadl.lcb.template.lib.Target.MCTargetDesc.EmitAsmBackendHeaderFilePass(configuration));
-    passes.add(new vadl.lcb.template.lib.Target.MCTargetDesc.EmitELFObjectWriterCppFilePass(
+    order.add(new vadl.lcb.template.lib.Target.MCTargetDesc.EmitELFObjectWriterCppFilePass(
         configuration));
-    passes.add(
+    order.add(
         new vadl.lcb.template.lib.Target.MCTargetDesc.EmitMCExprHeaderFilePass(configuration));
-    passes.add(new EmitMCInstLowerCppFilePass(configuration));
-    passes.add(new vadl.lcb.template.lib.Target.MCTargetDesc.EmitMCExprCppFilePass(configuration));
-    passes.add(new vadl.lcb.template.lib.Target.MCTargetDesc.EmitMCTargetDescHeaderFilePass(
+    order.add(new EmitMCInstLowerCppFilePass(configuration));
+    order.add(new vadl.lcb.template.lib.Target.MCTargetDesc.EmitMCExprCppFilePass(configuration));
+    order.add(new vadl.lcb.template.lib.Target.MCTargetDesc.EmitMCTargetDescHeaderFilePass(
         configuration));
-    passes.add(
+    order.add(
         new vadl.lcb.template.lib.Target.MCTargetDesc.EmitMCTargetDescCMakeFilePass(configuration));
-    passes.add(
+    order.add(
         new vadl.lcb.template.lib.Target.MCTargetDesc.EmitAsmUtilsCppFilePass(configuration));
-    passes.add(
+    order.add(
         new vadl.lcb.template.lib.Target.MCTargetDesc.EmitMCTargetDescCppFilePass(configuration));
-    passes.add(new vadl.lcb.template.lib.Target.MCTargetDesc.EmitInstrPrinterHeaderFilePass(
+    order.add(new vadl.lcb.template.lib.Target.MCTargetDesc.EmitInstrPrinterHeaderFilePass(
         configuration));
-    passes.add(
+    order.add(
         new vadl.lcb.template.lib.Target.MCTargetDesc.EmitAsmBackendCppFilePass(configuration));
-    passes.add(
+    order.add(
         new vadl.lcb.template.lib.Target.MCTargetDesc.EmitMCAsmInfoCppFilePass(configuration));
-    passes.add(
+    order.add(
         new vadl.lcb.template.lib.Target.MCTargetDesc.EmitELFStreamerHeaderFilePass(configuration));
-    passes.add(
+    order.add(
         new vadl.lcb.template.lib.Target.MCTargetDesc.EmitAsmStreamerHeaderFilePass(configuration));
-    passes.add(new vadl.lcb.template.lib.Target.MCTargetDesc.EmitTargetStreamerHeaderFilePass(
+    order.add(new vadl.lcb.template.lib.Target.MCTargetDesc.EmitTargetStreamerHeaderFilePass(
         configuration));
-    passes.add(
+    order.add(
         new vadl.lcb.template.lib.Target.MCTargetDesc.EmitMCAsmInfoHeaderFilePass(configuration));
-    passes.add(new EmitMCInstLowerHeaderFilePass(configuration));
-    passes.add(new vadl.lcb.template.lib.Target.MCTargetDesc.EmitELFObjectWriterHeaderFilePass(
+    order.add(new EmitMCInstLowerHeaderFilePass(configuration));
+    order.add(new vadl.lcb.template.lib.Target.MCTargetDesc.EmitELFObjectWriterHeaderFilePass(
         configuration));
-    passes.add(
+    order.add(
         new vadl.lcb.template.lib.Target.MCTargetDesc.EmitFixupKindsHeaderFilePass(configuration));
-    passes.add(
+    order.add(
         new vadl.lcb.template.lib.Target.MCTargetDesc.EmitInstrPrinterCppFilePass(configuration));
-    passes.add(
+    order.add(
         new vadl.lcb.template.lib.Target.MCTargetDesc.EmitAsmUtilsHeaderFilePass(configuration));
-    passes.add(new vadl.lcb.template.lib.Target.MCTargetDesc.EmitMCInstExpanderHeaderFilePass(
+    order.add(new vadl.lcb.template.lib.Target.MCTargetDesc.EmitMCInstExpanderHeaderFilePass(
         configuration));
-    passes.add(new vadl.lcb.template.lib.Target.EmitRegisterInfoTableGenFilePass(configuration));
-    passes.add(new vadl.lcb.template.lib.Target.EmitInstrInfoCppFilePass(configuration));
-    passes.add(new vadl.lcb.template.lib.Target.EmitInstrInfoTableGenFilePass(configuration));
-    passes.add(new vadl.lcb.template.lib.Target.EmitRegisterInfoCppFilePass(configuration));
-    passes.add(new vadl.lcb.template.lib.Target.EmitTargetMachineCppFilePass(configuration));
-    passes.add(new vadl.lcb.template.lib.Target.EmitTargetMachineHeaderFilePass(configuration));
-    passes.add(new vadl.lcb.template.lib.Target.EmitExpandPseudoCppFilePass(configuration));
-    passes.add(new vadl.lcb.template.lib.Target.EmitTargetObjectFileHeaderFilePass(configuration));
-    passes.add(new vadl.lcb.template.lib.Target.EmitISelLoweringHeaderFilePass(configuration));
-    passes.add(new vadl.lcb.template.lib.TargetParser.EmitTripleCppFilePass(configuration));
-    passes.add(new vadl.lcb.template.lib.Object.EmitElfCppFilePass(configuration));
+    order.add(new vadl.lcb.template.lib.Target.EmitRegisterInfoTableGenFilePass(configuration));
+    order.add(new vadl.lcb.template.lib.Target.EmitInstrInfoCppFilePass(configuration));
+    order.add(new vadl.lcb.template.lib.Target.EmitInstrInfoTableGenFilePass(configuration));
+    order.add(new vadl.lcb.template.lib.Target.EmitRegisterInfoCppFilePass(configuration));
+    order.add(new vadl.lcb.template.lib.Target.EmitTargetMachineCppFilePass(configuration));
+    order.add(new vadl.lcb.template.lib.Target.EmitTargetMachineHeaderFilePass(configuration));
+    order.add(new vadl.lcb.template.lib.Target.EmitExpandPseudoCppFilePass(configuration));
+    order.add(new vadl.lcb.template.lib.Target.EmitTargetObjectFileHeaderFilePass(configuration));
+    order.add(new vadl.lcb.template.lib.Target.EmitISelLoweringHeaderFilePass(configuration));
+    order.add(new vadl.lcb.template.lib.TargetParser.EmitTripleCppFilePass(configuration));
+    order.add(new vadl.lcb.template.lib.Object.EmitElfCppFilePass(configuration));
 
-    return passes;
+    return order;
   }
 }

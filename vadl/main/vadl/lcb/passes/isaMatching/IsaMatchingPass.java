@@ -104,8 +104,7 @@ public class IsaMatchingPass extends Pass {
     // The instruction matching happens on the uninlined graph
     // because the field accesses are uninlined.
     IdentityHashMap<Instruction, UninlinedGraph> uninlined =
-        (IdentityHashMap<Instruction, UninlinedGraph>) passResults.get(
-            new PassKey(FunctionInlinerPass.class.getName()));
+        (IdentityHashMap<Instruction, UninlinedGraph>) passResults.lastResultOf(FunctionInlinerPass.class);
     Objects.requireNonNull(uninlined);
     HashMap<InstructionLabel, List<Instruction>> matched = new HashMap<>();
 

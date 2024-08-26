@@ -43,6 +43,18 @@ public class PassManager {
   }
 
   /**
+   * Add all passes/steps in the {@link PassOrder} to the pipeline.
+   *
+   * @throws DuplicatedPassKeyException when pass with an already existing {@link PassName}
+   *                                    was added.
+   */
+  public void add(PassOrder passOrder) throws DuplicatedPassKeyException {
+    for (var step : passOrder.passSteps()) {
+      add(step);
+    }
+  }
+
+  /**
    * Add a new pass to the pipeline.
    * The results are available with {@code pass}'s class as {@link PassKey}.
    *
@@ -60,12 +72,22 @@ public class PassManager {
    *                                    was added.
    */
   public void add(PassKey key, Pass pass) throws DuplicatedPassKeyException {
-    logger.atDebug().log("Adding pass with key: {}", key.value());
-    if (hasDuplicatedPassKey(key)) {
-      throw new DuplicatedPassKeyException(key);
+    add(new PassStep(key, pass));
+  }
+
+  /**
+   * Add a new pass to the pipeline.
+   *
+   * @throws DuplicatedPassKeyException when pass with an already existing {@link PassName}
+   *                                    was added.
+   */
+  public void add(PassStep passStep) throws DuplicatedPassKeyException {
+    logger.atDebug().log("Adding pass with key: {}", passStep.key().value());
+    if (hasDuplicatedPassKey(passStep.key())) {
+      throw new DuplicatedPassKeyException(passStep.key());
     }
 
-    this.pipeline.add(new PassStep(key, pass));
+    this.pipeline.add(passStep);
   }
 
   /**
