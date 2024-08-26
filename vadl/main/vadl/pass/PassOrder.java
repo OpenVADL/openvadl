@@ -23,6 +23,7 @@ import vadl.lcb.template.lib.Target.EmitMCInstLowerHeaderFilePass;
 import vadl.viam.passes.algebraic_simplication.AlgebraicSimplificationPass;
 import vadl.viam.passes.dummyAbi.DummyAbiPass;
 import vadl.viam.passes.functionInliner.FunctionInlinerPass;
+import vadl.viam.passes.sideeffect_condition.SideEffectConditionResolvingPass;
 import vadl.viam.passes.typeCastElimination.TypeCastEliminationPass;
 import vadl.viam.passes.verification.ViamVerificationPass;
 
@@ -90,7 +91,8 @@ public final class PassOrder {
     order.add(new DummyAbiPass(configuration));
     order.add(new ViamVerificationPass(configuration));
     order.add(new TypeCastEliminationPass(configuration));
-    order.add(new FunctionInlinerPass(configuration));
+    order.add(new FunctionInlinerPass(configuration))
+        .add(new SideEffectConditionResolvingPass(configuration));
     order.add(new AlgebraicSimplificationPass(configuration));
 
     if (configuration.doDump()) {
