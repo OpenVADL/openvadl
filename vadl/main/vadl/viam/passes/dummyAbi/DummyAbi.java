@@ -40,6 +40,7 @@ public class DummyAbi extends Definition {
 
   private final RegisterRef returnAddress;
   private final RegisterRef stackPointer;
+  private final RegisterRef globalPointer;
   private final RegisterRef framePointer;
 
 
@@ -56,6 +57,7 @@ public class DummyAbi extends Definition {
                   RegisterRef returnAddress,
                   RegisterRef stackPointer,
                   RegisterRef framePointer,
+                  RegisterRef globalPointer,
                   Map<Pair<RegisterFile, Integer>, RegisterAlias> aliases,
                   List<RegisterRef> callerSaved,
                   List<RegisterRef> calleeSaved,
@@ -66,6 +68,7 @@ public class DummyAbi extends Definition {
     this.returnAddress = returnAddress;
     this.stackPointer = stackPointer;
     this.framePointer = framePointer;
+    this.globalPointer = globalPointer;
     this.aliases = aliases;
     this.callerSaved = callerSaved;
     this.calleeSaved = calleeSaved;
@@ -89,6 +92,10 @@ public class DummyAbi extends Definition {
 
   public RegisterRef framePointer() {
     return framePointer;
+  }
+
+  public RegisterRef globalPointer() {
+    return globalPointer;
   }
 
   public Map<Pair<RegisterFile, Integer>, RegisterAlias> aliases() {

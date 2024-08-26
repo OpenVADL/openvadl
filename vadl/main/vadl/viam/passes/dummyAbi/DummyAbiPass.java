@@ -43,6 +43,7 @@ public class DummyAbiPass extends Pass {
         new DummyAbi.RegisterRef(registerFile, 1, DummyAbi.Alignment.WORD),
         new DummyAbi.RegisterRef(registerFile, 2, DummyAbi.Alignment.HALF_WORD),
         new DummyAbi.RegisterRef(registerFile, 8, DummyAbi.Alignment.WORD),
+        new DummyAbi.RegisterRef(registerFile, 3, DummyAbi.Alignment.WORD),
         aliases,
         callerSaved,
         calleeSaved,
