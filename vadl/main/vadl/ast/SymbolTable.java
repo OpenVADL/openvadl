@@ -443,6 +443,7 @@ class SymbolTable {
    * The AST is not modified in this pass, only errors are gathered.
    * Before & After: Ast is fully Macro-expanded and all relevant nodes have "symbolTable" set.
    */
+  // TODO verify -> resolve, definition references
   static class VerificationPass {
     static List<VadlError> verifyUsages(Ast ast) {
       for (Definition definition : ast.definitions) {

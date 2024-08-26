@@ -340,6 +340,7 @@ PRODUCTIONS
       SYM_PAREN_CLOSE
     ]
     SYM_EQ
+    // TODO introduce dedicated PseudoInstructionCall (naming TBD)
     statement<out Statement behavior>                       (. def = new PseudoInstructionDefinition(id, kind, params, behavior, start.join(loc())); .)
   .
 
@@ -623,7 +624,7 @@ PRODUCTIONS
   expression<out Expr expr, boolean[] allowedOps>
   = term<out expr>
     {
-      IF (allowedOps[la.kind] || la.kind == _SYM_AS || (la.kind == _SYM_DOLLAR && isMacroReplacementOfType(this, BasicSyntaxType.BIN_OP)))
+      IF (allowedOps[la.kind] || la.kind == _SYM_AS || isMacroReplacementOfType(this, BasicSyntaxType.BIN_OP))
       (
         binaryOperator<out Operator op>                   (. var operator = new OperatorExpr(op, loc()); .)
         term<out Expr right>                              (. expr = new BinaryExpr(expr, operator, right); .)
@@ -642,6 +643,7 @@ PRODUCTIONS
   = IF (isIdentifierToken(la) || isMacroReplacementOfType(this, BasicSyntaxType.SYM_EX))
     symbolOrBinaryExpression<out expr, allowLtOp>          (. List<List<Expr>> argsIndices = new ArrayList<>(); List<CallExpr.NamedArgument> namedArguments = new ArrayList<>(); .)
     [
+      // TODO extract to dedicated pseudo instruction rule
       IF (la.kind == _SYM_BRACE_OPEN && expr instanceof IsSymExpr)
       SYM_BRACE_OPEN
       identifier<out Identifier argName>
@@ -983,24 +985,25 @@ PRODUCTIONS
       }
     ]
     SYM_PAREN_CLOSE                         (. macroContext.addFirst(params); .)
-    SYM_COLON basicSyntaxType<out SyntaxType returnType> SYM_EQ
+    SYM_COLON
+    basicSyntaxType<out SyntaxType returnType>
+    SYM_EQ
     SYM_BRACE_OPEN                          (. insideMacro = true; .)
     macroBody<out Node body, returnType>
     SYM_BRACE_CLOSE                         (.
                                               macroContext.removeFirst();
                                               insideMacro = false;
-                                              var bodyType = body.syntaxType();
-                                              if (!bodyType.isSubTypeOf(returnType)) {
-                                                errors.SemErr(t.line, t.col, "The macro signature promises to return `%s` but it's body is of type `%s`.".formatted(returnType, bodyType));
-                                                symbolTable.addMacro(new Macro(id, params, body, BasicSyntaxType.INVALID), startLoc.join(loc()));
-                                              } else {
+                                              if (assertSyntaxType(this, body, returnType, "Macro body does not match signature")) {
                                                 symbolTable.addMacro(new Macro(id, params, body, returnType), startLoc.join(loc()));
+                                              } else {
+                                                symbolTable.addMacro(new Macro(id, params, body, BasicSyntaxType.INVALID), startLoc.join(loc()));
                                               }
                                             .)
   .
 
   macroBody<out Node body, SyntaxType type>                 (. body = null; var start = lookaheadLoc(); .)
-  = IF (type == BasicSyntaxType.STATS)
+  = (
+    IF (type == BasicSyntaxType.STATS)
     statementList<.out List<Statement> stmts.>              (. body = new StatementList(stmts, start.join(loc())); .)
   | IF (type == BasicSyntaxType.STAT)
     statement<out body>
@@ -1011,37 +1014,57 @@ PRODUCTIONS
   | IF (type == BasicSyntaxType.EX)
     expression<out body, BIN_OPS>
   | IF (type == BasicSyntaxType.LIT)
-    literal<out body>
-  | // IF (type == BasicSyntaxType.STR)
-    stringLiteral<out body>
+    ( literal<out body>
+    | macroReplacement<out body>
+    )
+  | IF (type == BasicSyntaxType.STR)
+    ( stringLiteral<out body>
+    | macroReplacement<out body>
+    )
   | IF (type == BasicSyntaxType.VAL)
-    valLiteral<out body>
-  | // IF (type == BasicSyntaxType.BOOL)
-    boolLiteral<out body>
-  | // IF (type == BasicSyntaxType.INT)
-    intLiteral<out body>
-  | // IF (type == BasicSyntaxType.BIN)
-    binLiteral<out body>
+    ( valLiteral<out body>
+    | macroReplacement<out body>
+    )
+  | IF (type == BasicSyntaxType.BOOL)
+    ( boolLiteral<out body>
+    | macroReplacement<out body>
+    )
+  | IF (type == BasicSyntaxType.INT)
+    ( intLiteral<out body>
+    | macroReplacement<out body>
+    )
+  | IF (type == BasicSyntaxType.BIN)
+    ( binLiteral<out body>
+    | macroReplacement<out body>
+    )
   | IF (type == BasicSyntaxType.CALL_EX)
     callOrBinaryExpression<out body, false>
   | IF (type == BasicSyntaxType.SYM_EX)
     symbolOrBinaryExpression<out body, false>
   | IF (type == BasicSyntaxType.ID)
     identifierOrPlaceholder<out IdentifierOrPlaceholder id> (. body = (Node) id; .)
-  | // IF (type == BasicSyntaxType.BIN_OP)
-    binaryOperator<out Operator op>                         (. body = new OperatorExpr(op, loc()); .)
-  | // IF (type instanceof RecordType record)
-    SYM_PAREN_OPEN                                          (. var recordType = (RecordType) type;
+  | IF (type == BasicSyntaxType.BIN_OP)
+    ( binaryOperator<out Operator op>                       (. body = new OperatorExpr(op, loc()); .)
+    | macroReplacement<out body>
+    )
+  | IF (type instanceof RecordType record)
+    ( SYM_PAREN_OPEN                                        (. var recordType = (RecordType) type;
                                                                var entries = new ArrayList<Node>();
                                                                var nextEntry = recordType.entries.iterator(); .)
-    macroBody<out Node entry, nextEntry.next().type()>      (. entries.add(entry); .)
-    {
-      SYM_SEMICOLON
-      macroBody<out entry, nextEntry.next().type()>         (. entries.add(entry); .)
-    }
-    SYM_PAREN_CLOSE                                         (. body = new Tuple(recordType, entries, start.join(loc())); .)
-  | identifier<out Identifier id>                           (. body = new MacroReference(symbolTable.getMacro(id.name), (ProjectionType) type, id.location()); .)
-  | macroReplacement<out body>
+      macroBody<out Node entry, nextEntry.next().type()>    (. entries.add(entry); .)
+      {
+        SYM_SEMICOLON
+        macroBody<out entry, nextEntry.next().type()>       (. entries.add(entry); .)
+      }
+      SYM_PAREN_CLOSE                                       (. body = new RecordInstance(recordType, entries, start.join(loc())); .)
+    | macroReplacement<out body>
+    )
+  | IF (type instanceof ProjectionType projection)
+    ( identifier<out Identifier id>                         (. body = new MacroReference(symbolTable.getMacro(id.name), (ProjectionType) type, id.location()); .)
+    | macroReplacement<out body>
+    )
+  | internalError<"Unhandled syntax type " + type>
+  )                                                         (. assertSyntaxType(this, body, type, "Mismatched node type"); .)
   .
 
   syntaxType<out SyntaxType type> (. type = null; .)
@@ -1079,6 +1102,10 @@ PRODUCTIONS
   | T_ID                                    (. type = BasicSyntaxType.ID; .)
   | T_BIN_OP                                (. type = BasicSyntaxType.BIN_OP; .)
   | T_UN_OP                                 (. type = BasicSyntaxType.UN_OP; .)
+  .
+
+  internalError<String message>
+  = ANY                                     (. throw new IllegalStateException("Internal error in grammar: " + message); .)
   .
 
 END vadl.

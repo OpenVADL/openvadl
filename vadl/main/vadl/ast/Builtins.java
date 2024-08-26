@@ -1,6 +1,7 @@
 package vadl.ast;
 
 class Builtins {
+  // TODO Replace with BuiltInTable
   static final String[] BUILTIN_FUNCTIONS = new String[] {
       "decimal",
       "hex",

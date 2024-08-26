@@ -285,4 +285,14 @@ class ParserUtils {
     parser.scanner.ResetPeek();
     return null;
   }
+
+  static boolean assertSyntaxType(Parser parser, @Nullable Node node, SyntaxType requiredType,
+                                  String message) {
+    if (node != null && !node.syntaxType().isSubTypeOf(requiredType)) {
+      parser.errors.SemErr(parser.t.line, parser.t.col,
+          message + ": Required %s, node is %s".formatted(requiredType, node.syntaxType()));
+      return false;
+    }
+    return true;
+  }
 }

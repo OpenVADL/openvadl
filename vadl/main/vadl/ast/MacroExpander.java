@@ -133,10 +133,10 @@ class MacroExpander
       return expandDefinition(definition);
     } else if (node instanceof Statement statement) {
       return expandStatement(statement);
-    } else if (node instanceof Tuple tuple) {
-      var entries = new ArrayList<>(tuple.entries);
+    } else if (node instanceof RecordInstance recordInstance) {
+      var entries = new ArrayList<>(recordInstance.entries);
       entries.replaceAll(this::expandNode);
-      return new Tuple(tuple.type, entries, tuple.sourceLocation);
+      return new RecordInstance(recordInstance.type, entries, recordInstance.sourceLocation);
     } else if (node instanceof EncodingDefinition.FieldEncodings encs) {
       return resolveEncs(encs);
     } else {
@@ -680,7 +680,7 @@ class MacroExpander
     }
     for (int i = 1; i < segments.size(); i++) {
       var nextName = segments.get(i);
-      var tuple = (Tuple) arg;
+      var tuple = (RecordInstance) arg;
       for (int j = 0; j < tuple.type.entries.size(); j++) {
         if (tuple.type.entries.get(j).name().equals(nextName)) {
           arg = tuple.entries.get(j);

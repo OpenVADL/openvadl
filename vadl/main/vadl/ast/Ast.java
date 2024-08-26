@@ -82,12 +82,12 @@ abstract class Node {
   abstract void prettyPrint(int indent, StringBuilder builder);
 }
 
-class Tuple extends Node {
+class RecordInstance extends Node {
   RecordType type;
   List<Node> entries;
   SourceLocation sourceLocation;
 
-  Tuple(RecordType type, List<Node> entries, SourceLocation sourceLocation) {
+  RecordInstance(RecordType type, List<Node> entries, SourceLocation sourceLocation) {
     this.type = type;
     this.entries = entries;
     this.sourceLocation = sourceLocation;
