@@ -50,7 +50,8 @@ public abstract class FieldNodeReplacementPass extends Pass {
     var fieldRefs = function.behavior().getNodes(FieldRefNode.class).toList();
 
     for (var fieldRef : fieldRefs) {
-      var param = new Parameter(fieldRef.formatField().identifier.append("param"), fieldRef.type());
+      var param = new Parameter(fieldRef.formatField().identifier.append("param"), fieldRef.type(),
+          function);
       fieldRef.replaceAndDelete(new FuncParamNode(param));
       params.add(param);
     }

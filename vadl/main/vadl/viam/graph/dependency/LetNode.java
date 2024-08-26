@@ -84,5 +84,10 @@ public class LetNode extends ExpressionNode {
       String name,
       SourceLocation location
   ) {
+
+    @Override
+    public String toString() {
+      return name;
+    }
   }
 }

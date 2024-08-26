@@ -6,7 +6,7 @@ import vadl.types.Type;
 /**
  * Represents a parameter in a VADL specification.
  */
-public class Parameter extends Definition {
+public class Parameter extends Definition implements DefProp.WithType {
 
   private final Type type;
 
@@ -14,15 +14,32 @@ public class Parameter extends Definition {
   @Nullable
   private Definition parent;
 
+  /**
+   * Constructs the parameter without parent.
+   * You must to add the
+   * parent definition directly after construction.
+   */
   public Parameter(Identifier identifier, Type type) {
     super(identifier);
     this.type = type;
   }
 
+  /**
+   * Constructs a parameter.
+   */
+  @SuppressWarnings("NullableProblems")
+  public Parameter(Identifier identifier, Type type, Definition parent) {
+    super(identifier);
+    this.type = type;
+    this.parent = parent;
+  }
+
   @Override
   public void verify() {
     super.verify();
-    ensure(parent != null, "Parent definition is null, but should always be set after creation");
+    ensure(parent != null,
+        "Parent definition is null, but should always be set after creation. "
+            + "Someone created a Parameter without setting the parent.");
   }
 
   public Type type() {

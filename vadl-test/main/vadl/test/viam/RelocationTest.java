@@ -3,7 +3,11 @@ package vadl.test.viam;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static vadl.test.TestUtils.findDefinitionByNameIn;
 
+import java.io.IOException;
+import java.util.HashMap;
+import java.util.Map;
 import org.junit.jupiter.api.Test;
+import vadl.dump.HtmlDumpPass;
 import vadl.test.AbstractTest;
 import vadl.viam.Function;
 import vadl.viam.InstructionSetArchitecture;
@@ -13,7 +17,7 @@ import vadl.viam.passes.verification.ViamVerifier;
 public class RelocationTest extends AbstractTest {
 
   @Test
-  void testRelocation() {
+  void testRelocation() throws IOException {
     var spec = runAndGetViamSpecification("creation/relocation/valid_relocations.vadl");
     ViamVerifier.verifyAllIn(spec);
 

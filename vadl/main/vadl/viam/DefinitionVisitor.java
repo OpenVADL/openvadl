@@ -48,7 +48,7 @@ public interface DefinitionVisitor {
    * It provides default implementations for the visit methods for all types of definitions in a
    * VADL specification, allowing for recursive traversal of the definition hierarchy.
    */
-  abstract class Recursive implements DefinitionVisitor {
+  class Recursive implements DefinitionVisitor {
 
     public void beforeTraversal(Definition definition) {
     }
@@ -213,6 +213,106 @@ public interface DefinitionVisitor {
         param.accept(this);
       }
       afterTraversal(relocation);
+    }
+
+    @Override
+    public void visit(DummyAbi dummyAbi) {
+      beforeTraversal(dummyAbi);
+      afterTraversal(dummyAbi);
+    }
+  }
+
+  /**
+   * An empty visitor that allows to implement only a required subset of definition
+   * visit methods.
+   *
+   * <p>An example usecase is {@link vadl.dump.entitySuppliers.ViamEntitySupplier}</p>
+   */
+  class Empty implements DefinitionVisitor {
+
+    @Override
+    public void visit(Specification specification) {
+
+    }
+
+    @Override
+    public void visit(InstructionSetArchitecture instructionSetArchitecture) {
+
+    }
+
+    @Override
+    public void visit(Instruction instruction) {
+
+    }
+
+    @Override
+    public void visit(Assembly assembly) {
+
+    }
+
+    @Override
+    public void visit(Encoding encoding) {
+
+    }
+
+    @Override
+    public void visit(Encoding.Field encodingField) {
+
+    }
+
+    @Override
+    public void visit(Format format) {
+
+    }
+
+    @Override
+    public void visit(Format.Field formatField) {
+
+    }
+
+    @Override
+    public void visit(Format.FieldAccess formatFieldAccess) {
+
+    }
+
+    @Override
+    public void visit(Function function) {
+
+    }
+
+    @Override
+    public void visit(Parameter parameter) {
+
+    }
+
+    @Override
+    public void visit(PseudoInstruction pseudoInstruction) {
+
+    }
+
+    @Override
+    public void visit(Register register) {
+
+    }
+
+    @Override
+    public void visit(RegisterFile registerFile) {
+
+    }
+
+    @Override
+    public void visit(Memory memory) {
+
+    }
+
+    @Override
+    public void visit(Relocation relocation) {
+
+    }
+
+    @Override
+    public void visit(DummyAbi dummyAbi) {
+
     }
   }
 

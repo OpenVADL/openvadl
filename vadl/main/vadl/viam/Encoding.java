@@ -13,7 +13,7 @@ import vadl.types.Type;
  * Each field has a reference to the original format field definition and
  * a constant that defines the encoding.</p>
  */
-public class Encoding extends Definition {
+public class Encoding extends Definition implements DefProp.WithType {
 
   private final Format format;
 

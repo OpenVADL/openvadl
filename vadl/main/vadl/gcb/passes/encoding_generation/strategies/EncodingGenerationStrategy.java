@@ -33,6 +33,7 @@ public interface EncodingGenerationStrategy {
     var param = new Parameter(identParam, fieldAccess.accessFunction().returnType());
     var function =
         new Function(ident, new Parameter[] {param}, fieldAccess.fieldRef().type());
+    param.setParent(function);
 
     fieldAccess.setEncoding(function);
     return param;

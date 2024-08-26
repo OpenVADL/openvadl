@@ -14,7 +14,7 @@ import vadl.viam.graph.control.ReturnNode;
  * A Function is a type of Definition that has a behavior (body), return type, and arguments.
  * </p>
  */
-public class Function extends Definition implements WithBehavior {
+public class Function extends Definition implements DefProp.WithBehavior, DefProp.WithType {
   private Graph behavior;
   private Type returnType;
   private Parameter[] parameters;
@@ -106,5 +106,10 @@ public class Function extends Definition implements WithBehavior {
   @Override
   public List<Graph> behaviors() {
     return List.of(behavior);
+  }
+
+  @Override
+  public Type type() {
+    return signature();
   }
 }

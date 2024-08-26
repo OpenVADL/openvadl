@@ -18,7 +18,7 @@ import vadl.viam.graph.dependency.SliceNode;
  *
  * <p>Each field has a bit-slice and type.</p>
  */
-public class Format extends Definition {
+public class Format extends Definition implements DefProp.WithType {
 
   private final BitsType type;
   private Field[] fields;
@@ -87,7 +87,7 @@ public class Format extends Definition {
    *
    * <p>It generates a function to extract the field from a passed value of the format type.</p>
    */
-  public static class Field extends Definition {
+  public static class Field extends Definition implements DefProp.WithType {
 
     private final DataType type;
     private final Constant.BitSlice bitSlice;
@@ -194,6 +194,7 @@ public class Format extends Definition {
       var paramIdent = ident.append("format");
       var formatParam = new Parameter(paramIdent, parentFormat.type());
       var function = new Function(ident, new Parameter[] {formatParam}, this.type);
+      formatParam.setParent(function);
 
       var behavior = function.behavior();
       var funcParamNode = behavior.add(new FuncParamNode(formatParam));
@@ -220,7 +221,7 @@ public class Format extends Definition {
    * format field/fieldRef from the immediate content) and a predicate function (to
    * test if an immediate is valid).
    */
-  public static class FieldAccess extends Definition {
+  public static class FieldAccess extends Definition implements DefProp.WithType {
 
     private final Function accessFunction;
     @Nullable

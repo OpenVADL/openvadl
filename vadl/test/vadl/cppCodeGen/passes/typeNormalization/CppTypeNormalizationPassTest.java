@@ -62,9 +62,9 @@ class CppTypeNormalizationPassTest extends AbstractTest {
   @MethodSource("generateTypesWhichRequireUpcast")
   void makeTypesCppConform_shouldUpcastParameters(Type before, Type after) {
     // Given
-    var function = createFunction("functionValueName", new Parameter(
-        createIdentifier("parameterValue"), before
-    ), DataType.bool());
+    var param = new Parameter(createIdentifier("parameterValue"), before);
+    var function = createFunction("functionValueName", param, DataType.bool());
+    param.setParent(function);
 
     // When
     var updatedFunction = CppTypeNormalizationPass.makeTypesCppConform(function);
