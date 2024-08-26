@@ -93,11 +93,6 @@ class Ungrouper
   @Override
   public Expr visit(CallExpr expr) {
     expr.target = (IsSymExpr) ((Expr) expr.target).accept(this);
-    expr.namedArguments.replaceAll(namedArgument ->
-        new CallExpr.NamedArgument(namedArgument.name(), namedArgument.value().accept(this)));
-    for (CallExpr.NamedArgument namedArgument : expr.namedArguments) {
-      namedArgument.value().accept(this);
-    }
     var argsIndices = expr.argsIndices;
     expr.argsIndices = new ArrayList<>(argsIndices.size());
     for (var entry : argsIndices) {
@@ -250,7 +245,7 @@ class Ungrouper
 
   @Override
   public Definition visit(PseudoInstructionDefinition definition) {
-    definition.behavior = definition.behavior.accept(this);
+    definition.statements.replaceAll(this::visit);
     return definition;
   }
 
@@ -398,6 +393,14 @@ class Ungrouper
   public Statement visit(StatementList statementList) {
     statementList.items.replaceAll(stmt -> stmt.accept(this));
     return statementList;
+  }
+
+  @Override
+  public InstructionCallStatement visit(InstructionCallStatement instructionCallStatement) {
+    instructionCallStatement.namedArguments.replaceAll(namedArgument ->
+        new InstructionCallStatement.NamedArgument(namedArgument.name(),
+            namedArgument.value().accept(this)));
+    return instructionCallStatement;
   }
 
   private void ungroupAnnotations(Definition definition) {

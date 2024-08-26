@@ -1459,10 +1459,6 @@ final class SymbolExpr extends Expr implements IsSymExpr {
 final class CallExpr extends Expr implements IsCallExpr {
   IsSymExpr target;
   /**
-   * When calling pseudo instructions, their parameters are passed in a name=value fashion.
-   */
-  List<NamedArgument> namedArguments;
-  /**
    * A list of function arguments or register/memory indices,
    * where multidimensional index access is represented as multiple list entries.
    */
@@ -1474,10 +1470,9 @@ final class CallExpr extends Expr implements IsCallExpr {
   List<SubCall> subCalls;
   SourceLocation location;
 
-  public CallExpr(IsSymExpr target, List<NamedArgument> namedArguments,
-                  List<List<Expr>> argsIndices, List<SubCall> subCalls, SourceLocation location) {
+  public CallExpr(IsSymExpr target, List<List<Expr>> argsIndices, List<SubCall> subCalls,
+                  SourceLocation location) {
     this.target = target;
-    this.namedArguments = namedArguments;
     this.argsIndices = argsIndices;
     this.subCalls = subCalls;
     this.location = location;
@@ -1506,20 +1501,6 @@ final class CallExpr extends Expr implements IsCallExpr {
   @Override
   public void prettyPrint(int indent, StringBuilder builder) {
     target.prettyPrint(indent, builder);
-    if (!namedArguments.isEmpty()) {
-      builder.append("{");
-      var isFirst = true;
-      for (var arg : namedArguments) {
-        if (!isFirst) {
-          builder.append(", ");
-        }
-        isFirst = false;
-        arg.name.prettyPrint(0, builder);
-        builder.append(" = ");
-        arg.value.prettyPrint(0, builder);
-      }
-      builder.append("}");
-    }
     printArgsIndices(argsIndices, builder);
     for (var subCall : subCalls) {
       builder.append(".");
@@ -1574,9 +1555,6 @@ final class CallExpr extends Expr implements IsCallExpr {
     result = 31 * result + Objects.hashCode(argsIndices);
     result = 31 * result + Objects.hashCode(subCalls);
     return result;
-  }
-
-  record NamedArgument(Identifier name, Expr value) {
   }
 
   record SubCall(Identifier id, List<List<Expr>> argsIndices) {

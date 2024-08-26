@@ -7,9 +7,9 @@ import javax.annotation.Nullable;
 import vadl.utils.SourceLocation;
 
 abstract sealed class Statement extends Node
-    permits AssignmentStatement, BlockStatement, CallStatement, IfStatement, LetStatement,
-    MacroInstanceStatement, MacroMatchStatement, MatchStatement, PlaceholderStatement,
-    RaiseStatement, StatementList {
+    permits AssignmentStatement, BlockStatement, CallStatement, IfStatement,
+    InstructionCallStatement, LetStatement, MacroInstanceStatement, MacroMatchStatement,
+    MatchStatement, PlaceholderStatement, RaiseStatement, StatementList {
   <T> T accept(StatementVisitor<T> visitor) {
     // TODO Use exhaustive switch with patterns in future Java versions
     if (this instanceof BlockStatement b) {
@@ -24,6 +24,8 @@ abstract sealed class Statement extends Node
       return visitor.visit(r);
     } else if (this instanceof CallStatement c) {
       return visitor.visit(c);
+    } else if (this instanceof InstructionCallStatement ic) {
+      return visitor.visit(ic);
     } else if (this instanceof PlaceholderStatement p) {
       return visitor.visit(p);
     } else if (this instanceof MacroInstanceStatement m) {
@@ -67,6 +69,8 @@ interface StatementVisitor<T> {
   T visit(MatchStatement matchStatement);
 
   T visit(StatementList statementList);
+
+  T visit(InstructionCallStatement instructionCallStatement);
 }
 
 final class BlockStatement extends Statement {
@@ -609,5 +613,67 @@ final class MatchStatement extends Statement {
   }
 
   record Case(List<Expr> patterns, Statement result) {
+  }
+}
+
+final class InstructionCallStatement extends Statement {
+
+  IdentifierOrPlaceholder id;
+  List<NamedArgument> namedArguments;
+  SourceLocation loc;
+
+  InstructionCallStatement(IdentifierOrPlaceholder id, List<NamedArgument> namedArguments,
+                           SourceLocation loc) {
+    this.id = id;
+    this.namedArguments = namedArguments;
+    this.loc = loc;
+  }
+
+  Identifier id() {
+    return (Identifier) id;
+  }
+
+  @Override
+  SourceLocation location() {
+    return loc;
+  }
+
+  @Override
+  void prettyPrint(int indent, StringBuilder builder) {
+    builder.append(prettyIndentString(indent));
+    id.prettyPrint(0, builder);
+    builder.append("{");
+    var isFirst = true;
+    for (NamedArgument namedArgument : namedArguments) {
+      if (!isFirst) {
+        builder.append(", ");
+      }
+      isFirst = false;
+      namedArgument.name.prettyPrint(0, builder);
+      builder.append(" = ");
+      namedArgument.value.prettyPrint(0, builder);
+    }
+    builder.append("}\n");
+  }
+
+  @Override
+  public boolean equals(Object o) {
+    if (this == o) {
+      return true;
+    }
+    if (o == null || getClass() != o.getClass()) {
+      return false;
+    }
+    InstructionCallStatement that = (InstructionCallStatement) o;
+    return Objects.equals(id, that.id)
+        && Objects.equals(namedArguments, that.namedArguments);
+  }
+
+  @Override
+  public int hashCode() {
+    return Objects.hash(id, namedArguments, loc);
+  }
+
+  record NamedArgument(Identifier name, Expr value) {
   }
 }

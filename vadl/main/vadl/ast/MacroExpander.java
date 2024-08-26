@@ -238,9 +238,6 @@ class MacroExpander
 
   @Override
   public Expr visit(CallExpr expr) {
-    var namedArguments = new ArrayList<>(expr.namedArguments);
-    namedArguments.replaceAll(namedArgument ->
-        new CallExpr.NamedArgument(namedArgument.name(), expandExpr(namedArgument.value())));
     var argsIndices = new ArrayList<>(expr.argsIndices);
     argsIndices.replaceAll(this::expandExprs);
     var subCalls = new ArrayList<>(expr.subCalls);
@@ -250,7 +247,7 @@ class MacroExpander
       return new CallExpr.SubCall(subCall.id(), subCallArgsIndices);
     });
     var target = (IsSymExpr) expandExpr((Expr) expr.target);
-    return new CallExpr(target, namedArguments, argsIndices, subCalls, expr.location);
+    return new CallExpr(target, argsIndices, subCalls, expr.location);
   }
 
   @Override
@@ -408,10 +405,11 @@ class MacroExpander
   @Override
   public Definition visit(PseudoInstructionDefinition definition) {
     var identifier = resolvePlaceholderOrIdentifier(definition.identifier);
-    var behavior = definition.behavior.accept(this);
+    var statements = new ArrayList<>(definition.statements);
+    statements.replaceAll(this::visit);
 
-    return new PseudoInstructionDefinition(identifier, definition.kind, definition.params, behavior,
-        definition.loc).withAnnotations(expandAnnotations(definition.annotations));
+    return new PseudoInstructionDefinition(identifier, definition.kind, definition.params,
+        statements, definition.loc).withAnnotations(expandAnnotations(definition.annotations));
   }
 
   @Override
@@ -580,6 +578,16 @@ class MacroExpander
   public Statement visit(StatementList statementList) {
     var items = expandStatements(statementList.items);
     return new StatementList(items, statementList.location());
+  }
+
+  @Override
+  public InstructionCallStatement visit(InstructionCallStatement instructionCallStatement) {
+    var id = resolvePlaceholderOrIdentifier(instructionCallStatement.id);
+    var namedArguments = new ArrayList<>(instructionCallStatement.namedArguments);
+    namedArguments.replaceAll(namedArgument ->
+        new InstructionCallStatement.NamedArgument(namedArgument.name(),
+            expandExpr(namedArgument.value())));
+    return new InstructionCallStatement(id, namedArguments, instructionCallStatement.loc);
   }
 
   private void assertValidMacro(Macro macro, SourceLocation sourceLocation)

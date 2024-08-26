@@ -298,7 +298,9 @@ class SymbolTable {
           pseudo.symbolTable.defineSymbol(
               new ValuedSymbol(param.id().name, null, SymbolType.PARAMETER), param.id().location());
         }
-        collectSymbols(pseudo.symbolTable, pseudo.behavior);
+        for (InstructionCallStatement statement : pseudo.statements) {
+          collectSymbols(pseudo.symbolTable, statement);
+        }
       } else if (definition instanceof AssemblyDefinition assembly) {
         assembly.symbolTable = symbols.createChild();
         collectSymbols(assembly.symbolTable, assembly.expr);
@@ -373,6 +375,10 @@ class SymbolTable {
             collectSymbols(symbols, pattern);
           }
         }
+      } else if (stmt instanceof InstructionCallStatement instructionCall) {
+        for (var namedArgument : instructionCall.namedArguments) {
+          collectSymbols(symbols, namedArgument.value());
+        }
       }
     }
 
@@ -402,9 +408,6 @@ class SymbolTable {
         collectSymbols(symbols, cast.value);
       } else if (expr instanceof CallExpr call) {
         collectSymbols(symbols, (Expr) call.target);
-        for (CallExpr.NamedArgument namedArgument : call.namedArguments) {
-          collectSymbols(symbols, namedArgument.value());
-        }
         for (List<Expr> argsIndex : call.argsIndices) {
           for (Expr index : argsIndex) {
             collectSymbols(symbols, index);
@@ -474,7 +477,9 @@ class SymbolTable {
         }
         verifyUsages(instr.behavior);
       } else if (definition instanceof PseudoInstructionDefinition pseudo) {
-        verifyUsages(pseudo.behavior);
+        for (InstructionCallStatement statement : pseudo.statements) {
+          verifyUsages(statement);
+        }
       } else if (definition instanceof AssemblyDefinition assembly) {
         for (IdentifierOrPlaceholder identifier : assembly.identifiers) {
           var pseudoInstr = assembly.symbolTable().findPseudoInstruction((Identifier) identifier);
@@ -547,6 +552,25 @@ class SymbolTable {
             verifyUsages(pattern);
           }
         }
+      } else if (stmt instanceof InstructionCallStatement instructionCall) {
+        var format = instructionCall.symbolTable().requireInstructionFormat(instructionCall.id());
+        if (format != null) {
+          for (var namedArgument : instructionCall.namedArguments) {
+            FormatDefinition.FormatField foundField = null;
+            for (var field : format.definition().fields) {
+              if (field.identifier().name.equals(namedArgument.name().name)) {
+                foundField = field;
+                break;
+              }
+            }
+            if (foundField == null) {
+              instructionCall.symbolTable()
+                  .reportError("Unknown format field " + namedArgument.name().name,
+                      namedArgument.name().location());
+            }
+            verifyUsages(namedArgument.value());
+          }
+        }
       }
     }
 
@@ -570,28 +594,6 @@ class SymbolTable {
       } else if (expr instanceof CastExpr cast) {
         verifyUsages(cast.value);
       } else if (expr instanceof CallExpr call) {
-        if (!call.namedArguments.isEmpty()) {
-          var format = call.symbolTable()
-              .requireInstructionFormat((Identifier) call.target.path());
-          if (format != null) {
-            for (var namedArgument : call.namedArguments) {
-              FormatDefinition.FormatField foundField = null;
-              for (var field : format.definition().fields) {
-                if (field.identifier().name.equals(namedArgument.name().name)) {
-                  foundField = field;
-                  break;
-                }
-              }
-              if (foundField == null) {
-                call.symbolTable()
-                    .reportError("Unknown format field " + namedArgument.name().name,
-                        namedArgument.name().location());
-              }
-              verifyUsages(namedArgument.value());
-            }
-          }
-          return;
-        }
         verifyUsages((Expr) call.target);
         for (List<Expr> argsIndex : call.argsIndices) {
           for (Expr index : argsIndex) {

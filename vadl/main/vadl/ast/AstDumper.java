@@ -245,7 +245,7 @@ public class AstDumper
     dumpChildren(definition.id());
     dumpChildren(definition.params.stream()
         .flatMap(param -> Stream.of(param.id(), param.type())).toList());
-    dumpChildren(definition.behavior);
+    dumpChildren(definition.statements);
     return null;
   }
 
@@ -521,6 +521,15 @@ public class AstDumper
   public Void visit(StatementList statementList) {
     dumpNode(statementList);
     dumpChildren(statementList.items);
+    return null;
+  }
+
+  @Override
+  public Void visit(InstructionCallStatement instructionCallStatement) {
+    dumpNode(instructionCallStatement);
+    dumpChildren(instructionCallStatement.id());
+    dumpChildren(instructionCallStatement.namedArguments.stream()
+        .flatMap(namedArgument -> Stream.of(namedArgument.name(), namedArgument.value())).toList());
     return null;
   }
 }

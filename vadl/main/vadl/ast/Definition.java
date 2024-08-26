@@ -991,18 +991,18 @@ class InstructionDefinition extends Definition {
 
 class PseudoInstructionDefinition extends Definition {
   IdentifierOrPlaceholder identifier;
-  Kind kind;
+  PseudoInstrKind kind;
   List<Param> params;
-  Statement behavior;
+  List<InstructionCallStatement> statements;
   SourceLocation loc;
 
-  PseudoInstructionDefinition(IdentifierOrPlaceholder identifier,
-                              Kind kind, List<Param> params,
-                              Statement behavior, SourceLocation loc) {
+  PseudoInstructionDefinition(IdentifierOrPlaceholder identifier, PseudoInstrKind kind,
+                              List<Param> params, List<InstructionCallStatement> statements,
+                              SourceLocation loc) {
     this.identifier = identifier;
     this.kind = kind;
     this.params = params;
-    this.behavior = behavior;
+    this.statements = statements;
     this.loc = loc;
   }
 
@@ -1044,9 +1044,11 @@ class PseudoInstructionDefinition extends Definition {
       }
       builder.append(")");
     }
-    builder.append(" = ");
-    behavior.prettyPrint(indent, builder);
-    builder.append("\n");
+    builder.append(" = {\n");
+    for (InstructionCallStatement statement : statements) {
+      statement.prettyPrint(indent + 1, builder);
+    }
+    builder.append(prettyIndentString(indent)).append("}\n");
   }
 
   @Override
@@ -1073,7 +1075,7 @@ class PseudoInstructionDefinition extends Definition {
         && Objects.equals(identifier, that.identifier)
         && Objects.equals(kind, that.kind)
         && Objects.equals(params, that.params)
-        && Objects.equals(behavior, that.behavior);
+        && Objects.equals(statements, that.statements);
   }
 
   @Override
@@ -1082,11 +1084,11 @@ class PseudoInstructionDefinition extends Definition {
     result = 31 * result + Objects.hashCode(identifier);
     result = 31 * result + Objects.hashCode(kind);
     result = 31 * result + Objects.hashCode(params);
-    result = 31 * result + Objects.hashCode(behavior);
+    result = 31 * result + Objects.hashCode(statements);
     return result;
   }
 
-  enum Kind {
+  enum PseudoInstrKind {
     PSEUDO, COMPILER
   }
 
@@ -1479,7 +1481,7 @@ class FunctionDefinition extends Definition {
 
 class AliasDefinition extends Definition {
   IdentifierOrPlaceholder id;
-  Kind kind;
+  AliasKind kind;
   @Nullable
   TypeLiteral aliasType;
   @Nullable
@@ -1487,7 +1489,7 @@ class AliasDefinition extends Definition {
   Expr value;
   SourceLocation loc;
 
-  AliasDefinition(IdentifierOrPlaceholder id, Kind kind,
+  AliasDefinition(IdentifierOrPlaceholder id, AliasKind kind,
                   @Nullable TypeLiteral aliasType, @Nullable TypeLiteral targetType, Expr value,
                   SourceLocation location) {
     this.id = id;
@@ -1575,7 +1577,7 @@ class AliasDefinition extends Definition {
     return result;
   }
 
-  enum Kind {
+  enum AliasKind {
     REGISTER, REGISTER_FILE, PROGRAM_COUNTER
   }
 }
