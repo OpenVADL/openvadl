@@ -109,7 +109,7 @@ public class HtmlDumpPass extends AbstractTemplateRenderingPass {
 
   @Override
   protected String getOutputPath() {
-    return dumpCounter.incrementAndGet() + config.phase.replace(" ", "_") + ".html";
+    return dumpCounter.incrementAndGet() + "_" + config.phase.replace(" ", "_") + ".html";
   }
 
   @Override

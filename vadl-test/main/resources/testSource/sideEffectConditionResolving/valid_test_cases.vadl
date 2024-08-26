@@ -1,0 +1,20 @@
+
+instruction set architecture Tests = {
+  using Index = Bits<5>
+  using Address  = Bits<32>
+
+  register X: Address
+
+
+  instruction TRIVIAL: TMP = {
+    X := 5
+  }
+
+
+  encoding TRIVIAL = { ONE = 2 }
+  assembly TRIVIAL = "just a dummy"
+
+  format TMP: Address =
+  { ONE: Address
+  }
+}

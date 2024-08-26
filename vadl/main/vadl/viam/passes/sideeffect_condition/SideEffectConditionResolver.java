@@ -21,7 +21,7 @@ import vadl.viam.graph.dependency.ConstantNode;
 import vadl.viam.graph.dependency.ExpressionNode;
 
 public class SideEffectConditionResolver {
-  
+
   public static void run(Graph behavior) {
     new SideEffectConditionResolver()
         .resolve(behavior);
@@ -77,6 +77,8 @@ public class SideEffectConditionResolver {
 
         ifNode.ensure(trueMergeNode == falseMergeNode,
             "Branches of node don't result in the same merge node");
+        ifNode.ensure(trueMergeNode != null,
+            "Couldn't find merge node for true branch");
         current = trueMergeNode;
       } else if (current instanceof DirectionalNode directionalNode) {
         current = directionalNode.next();

@@ -28,7 +28,11 @@ public class DummyAbiPass extends Pass {
   @Override
   public Object execute(PassResults passResults, Specification viam)
       throws IOException {
-    var registerFile = viam.registerFiles().findFirst().get();
+    var regFileOpt = viam.registerFiles().findFirst();
+    if (regFileOpt.isEmpty()) {
+      return null;
+    }
+    var registerFile = regFileOpt.get();
     viam.add(new DummyAbi(new Identifier("dummyAbi", SourceLocation.INVALID_SOURCE_LOCATION),
         new DummyAbi.RegisterRef(registerFile, 1, DummyAbi.Alignment.WORD),
         new DummyAbi.RegisterRef(registerFile, 2, DummyAbi.Alignment.HALF_WORD),

@@ -33,9 +33,9 @@ public abstract class SideEffectNode extends DependencyNode {
   }
 
   public void setCondition(ExpressionNode condition) {
-    ensure(condition.isActiveIn(this.graph()), "New condition must be active in same graph.");
     ensure(condition.type().isTrivialCastTo(Type.bool()), "Condition must be a boolean but was %s",
         condition);
+    updateUsage(this.condition, condition);
     this.condition = condition;
   }
 

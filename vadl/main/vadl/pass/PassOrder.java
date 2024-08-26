@@ -88,11 +88,18 @@ public final class PassOrder {
   public static PassOrder viam(GeneralConfiguration configuration) throws IOException {
     var order = new PassOrder();
 
+    var testConf = HtmlDumpPass.Config.from(
+        configuration,
+        "testAfterFunctionInliner",
+        ""
+    );
     order.add(new DummyAbiPass(configuration));
     order.add(new ViamVerificationPass(configuration));
+
     order.add(new TypeCastEliminationPass(configuration));
-    order.add(new FunctionInlinerPass(configuration))
-        .add(new SideEffectConditionResolvingPass(configuration));
+    order.add(new FunctionInlinerPass(configuration));
+    order.add(new HtmlDumpPass(testConf));
+    order.add(new SideEffectConditionResolvingPass(configuration));
     order.add(new AlgebraicSimplificationPass(configuration));
 
     if (configuration.doDump()) {

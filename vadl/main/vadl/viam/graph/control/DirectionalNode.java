@@ -17,6 +17,12 @@ public abstract class DirectionalNode extends ControlNode {
   // even though it is nullable, the next node is not optional!
   protected @Nullable ControlNode next;
 
+  @Override
+  public void verifyState() {
+    super.verifyState();
+    ensure(next != null, "next node must always be set directly after construction of this");
+  }
+
   /**
    * Sets the successor property of this node.
    *
@@ -32,7 +38,8 @@ public abstract class DirectionalNode extends ControlNode {
     this.updateSuccessors();
   }
 
-  public @Nullable Node next() {
+  public Node next() {
+    ensure(next != null, "next node is null but must be set!");
     return next;
   }
 
