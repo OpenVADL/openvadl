@@ -3,6 +3,7 @@ package vadl.viam.passes.dummyAbi;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import vadl.utils.Pair;
 import vadl.viam.Definition;
 import vadl.viam.DefinitionVisitor;
 import vadl.viam.Identifier;
@@ -26,16 +27,15 @@ public class DummyAbi extends Definition {
   }
 
   public record RegisterRef(RegisterFile registerFile,
-                     int addr,
-                     Alignment alignment) {
+                            int addr,
+                            Alignment alignment) {
     public String render() {
       return registerFile.identifier.simpleName() + addr;
     }
   }
 
-  record RegisterAlias(String value) {
+  public record RegisterAlias(String value) {
   }
-
 
 
   private final RegisterRef returnAddress;
@@ -43,7 +43,7 @@ public class DummyAbi extends Definition {
   private final RegisterRef framePointer;
 
 
-  private final Map<RegisterRef, RegisterAlias> aliases;
+  private final Map<Pair<RegisterFile, Integer>, RegisterAlias> aliases;
   private final List<RegisterRef> callerSaved;
   private final List<RegisterRef> calleeSaved;
   private final List<RegisterRef> argumentRegisters;
@@ -56,7 +56,7 @@ public class DummyAbi extends Definition {
                   RegisterRef returnAddress,
                   RegisterRef stackPointer,
                   RegisterRef framePointer,
-                  Map<RegisterRef, RegisterAlias> aliases,
+                  Map<Pair<RegisterFile, Integer>, RegisterAlias> aliases,
                   List<RegisterRef> callerSaved,
                   List<RegisterRef> calleeSaved,
                   List<RegisterRef> argumentRegisters,
@@ -91,7 +91,7 @@ public class DummyAbi extends Definition {
     return framePointer;
   }
 
-  public Map<RegisterRef, RegisterAlias> aliases() {
+  public Map<Pair<RegisterFile, Integer>, RegisterAlias> aliases() {
     return aliases;
   }
 

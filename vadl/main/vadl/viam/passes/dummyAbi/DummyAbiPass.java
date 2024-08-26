@@ -8,6 +8,7 @@ import vadl.configuration.GeneralConfiguration;
 import vadl.pass.Pass;
 import vadl.pass.PassName;
 import vadl.pass.PassResults;
+import vadl.utils.Pair;
 import vadl.utils.SourceLocation;
 import vadl.viam.Identifier;
 import vadl.viam.RegisterFile;
@@ -71,20 +72,15 @@ public class DummyAbiPass extends Pass {
     );
   }
 
-  private Map<DummyAbi.RegisterRef, DummyAbi.RegisterAlias> getAliases(RegisterFile registerFile) {
+  private Map<Pair<RegisterFile, Integer>, DummyAbi.RegisterAlias> getAliases(
+      RegisterFile registerFile) {
     return Map.of(
-        new DummyAbi.RegisterRef(registerFile, 0, DummyAbi.Alignment.NO_ALIGNMENT),
-        new DummyAbi.RegisterAlias("zero"),
-        new DummyAbi.RegisterRef(registerFile, 1, DummyAbi.Alignment.NO_ALIGNMENT),
-        new DummyAbi.RegisterAlias("ra"),
-        new DummyAbi.RegisterRef(registerFile, 2, DummyAbi.Alignment.NO_ALIGNMENT),
-        new DummyAbi.RegisterAlias("sp"),
-        new DummyAbi.RegisterRef(registerFile, 3, DummyAbi.Alignment.NO_ALIGNMENT),
-        new DummyAbi.RegisterAlias("gp"),
-        new DummyAbi.RegisterRef(registerFile, 4, DummyAbi.Alignment.NO_ALIGNMENT),
-        new DummyAbi.RegisterAlias("tp"),
-        new DummyAbi.RegisterRef(registerFile, 8, DummyAbi.Alignment.NO_ALIGNMENT),
-        new DummyAbi.RegisterAlias("fp")
+        Pair.of(registerFile, 0), new DummyAbi.RegisterAlias("zero"),
+        Pair.of(registerFile, 1), new DummyAbi.RegisterAlias("ra"),
+        Pair.of(registerFile, 2), new DummyAbi.RegisterAlias("sp"),
+        Pair.of(registerFile, 3), new DummyAbi.RegisterAlias("gp"),
+        Pair.of(registerFile, 4), new DummyAbi.RegisterAlias("tp"),
+        Pair.of(registerFile, 8), new DummyAbi.RegisterAlias("fp")
     );
   }
 
