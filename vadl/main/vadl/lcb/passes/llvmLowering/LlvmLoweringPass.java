@@ -104,7 +104,8 @@ public class LlvmLoweringPass extends Pass {
     IdentityHashMap<Instruction, LlvmLoweringIntermediateResult>
         llvmPatterns = new IdentityHashMap<>();
     var supportedInstructions =
-        (HashMap<InstructionLabel, List<Instruction>>) passResults.lastResultOf(IsaMatchingPass.class);
+        (HashMap<InstructionLabel, List<Instruction>>) passResults
+            .lastResultOf(IsaMatchingPass.class);
     ensure(supportedInstructions != null, "Cannot find pass results from IsaMatchPass");
 
     var instructionLookup = flipIsaMatching(supportedInstructions);

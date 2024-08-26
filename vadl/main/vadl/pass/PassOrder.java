@@ -33,7 +33,7 @@ public final class PassOrder {
 
   // a counter-map that keeps track of how many passes of each pass class exists.
   // this is used to generate a unique pass key if it is not given by the user.
-  private final static Map<Class<? extends Pass>, Integer> passCounter
+  private static final Map<Class<? extends Pass>, Integer> passCounter
       = new ConcurrentHashMap<>();
 
   // the actual list of pass steps
