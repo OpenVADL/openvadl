@@ -9,6 +9,8 @@ import net.jqwik.api.Arbitraries;
 import net.jqwik.api.Arbitrary;
 import org.junit.jupiter.api.DynamicTest;
 import org.junit.jupiter.api.TestFactory;
+import org.junit.jupiter.api.parallel.Execution;
+import org.junit.jupiter.api.parallel.ExecutionMode;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.testcontainers.images.builder.ImageFromDockerfile;
@@ -39,6 +41,7 @@ public class EncodingCodeGeneratorCppVerificationTest extends AbstractCppCodeGen
 
 
   @TestFactory
+  @Execution(ExecutionMode.CONCURRENT)
   Collection<DynamicTest> instructions() throws IOException, DuplicatedPassKeyException {
     var setup = setupPassManagerAndRunSpec("examples/rv3264im.vadl",
         PassOrder.gcbAndCppCodeGen(getConfiguration(false)));
