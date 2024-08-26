@@ -49,11 +49,11 @@ public class EncodingCodeGeneratorCppVerificationTest extends AbstractCppCodeGen
     var spec = setup.specification();
 
     var normalizedDecodings =
-        (IdentityHashMap<Function, Function>) passManager.getPassResults().get(new PassKey(
-            CppTypeNormalizationForDecodingsPass.class.getName()));
+        (IdentityHashMap<Function, Function>) passManager.getPassResults()
+            .lastResultOf(CppTypeNormalizationForDecodingsPass.class);
     var normalizedEncodings =
-        (IdentityHashMap<Function, Function>) passManager.getPassResults().get(new PassKey(
-            CppTypeNormalizationForEncodingsPass.class.getName()));
+        (IdentityHashMap<Function, Function>) passManager.getPassResults()
+            .lastResultOf(CppTypeNormalizationForEncodingsPass.class);
 
     var entries = spec.isas().flatMap(isa -> isa.formats().stream())
         .flatMap(format -> Arrays.stream(format.fieldAccesses()))

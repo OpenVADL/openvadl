@@ -42,7 +42,7 @@ public class EmitInstrInfoTableGenFilePass extends LcbTemplateRenderingPass {
                                                 Specification specification) {
     Map<Instruction, LlvmLoweringPass.LlvmLoweringIntermediateResult> instructions =
         (Map<Instruction, LlvmLoweringPass.LlvmLoweringIntermediateResult>) ensureNonNull(
-            passResults.get(new PassKey(LlvmLoweringPass.class.getName())),
+            passResults.lastResultOf(LlvmLoweringPass.class),
             "llvmLowering must exist");
 
     var tableGenRecords = instructions.entrySet().stream()
