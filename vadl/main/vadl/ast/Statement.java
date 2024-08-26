@@ -471,7 +471,7 @@ final class MacroInstanceStatement extends Statement {
     if (macro instanceof Macro m) {
       builder.append(m.name().name);
     } else if (macro instanceof MacroPlaceholder mp) {
-      builder.append(String.join(",", mp.segments()));
+      builder.append(String.join(".", mp.segments()));
     }
     builder.append("(");
     var isFirst = true;

@@ -47,19 +47,6 @@ class ParserUtils {
   }
 
   /**
-   * If the given expression is a binary expression and the parser is not currently parsing a model,
-   * it will reorder the expression's operand according to {@link BinaryExpr#reorder(BinaryExpr)}.
-   */
-  static Expr reorderBinary(Parser parser, Expr expr) {
-    // Only if not inside model parsing.
-    // Cause there we don't know yet what the order is.
-    if (!parser.insideMacro && expr instanceof BinaryExpr binaryExpr) {
-      return BinaryExpr.reorder(binaryExpr);
-    }
-    return expr;
-  }
-
-  /**
    * Reorders the tail end of a left-sided binary expression tree "expr" to apply a cast.
    * If the given "symOrBin" is a symbol expression, it will be converted to the type to cast to.
    * If the given "symOrBin" is a binary expression, it has to have a SymbolExpr in its left side,

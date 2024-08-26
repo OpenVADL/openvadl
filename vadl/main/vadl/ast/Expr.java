@@ -121,6 +121,7 @@ final class Identifier extends Expr implements IsId, IdentifierOrPlaceholder {
 
 sealed interface OperatorOrPlaceholder
     permits OperatorExpr, PlaceholderNode, MacroInstanceExpr, MacroMatchExpr {
+  void prettyPrint(int indent, StringBuilder builder);
 }
 
 /**
@@ -292,7 +293,7 @@ final class OperatorExpr extends Expr implements OperatorOrPlaceholder {
   }
 
   @Override
-  void prettyPrint(int indent, StringBuilder builder) {
+  public void prettyPrint(int indent, StringBuilder builder) {
     builder.append(operator.symbol);
   }
 
@@ -400,10 +401,11 @@ class BinaryExpr extends Expr {
 
   @Override
   void prettyPrint(int indent, StringBuilder builder) {
-    // FIXME: Remove the parenthesis in the future and determine if they are needed
     builder.append("(");
     left.prettyPrint(indent, builder);
-    builder.append(" %s ".formatted(operator().symbol));
+    builder.append(" ");
+    operator.prettyPrint(0, builder);
+    builder.append(" ");
     right.prettyPrint(indent, builder);
     builder.append(")");
   }
@@ -458,7 +460,7 @@ class UnaryExpr extends Expr {
 
   @Override
   SyntaxType syntaxType() {
-    return BasicSyntaxType.UN_OP;
+    return BasicSyntaxType.EX;
   }
 
   @Override
@@ -847,7 +849,7 @@ final class MacroInstanceExpr extends Expr implements IdentifierOrPlaceholder,
     if (macro instanceof Macro m) {
       builder.append(m.name().name);
     } else if (macro instanceof MacroPlaceholder mp) {
-      builder.append(String.join(",", mp.segments()));
+      builder.append(String.join(".", mp.segments()));
     }
     builder.append("(");
     var isFirst = true;
@@ -1183,6 +1185,7 @@ class RangeExpr extends Expr {
 
 sealed interface TypeLiteralOrPlaceholder
     permits ExtendIdExpr, MacroInstanceExpr, MacroMatchExpr, PlaceholderExpr, TypeLiteral {
+  void prettyPrint(int indent, StringBuilder builder);
 }
 
 /**
@@ -1225,7 +1228,7 @@ final class TypeLiteral extends Expr implements TypeLiteralOrPlaceholder {
   }
 
   @Override
-  void prettyPrint(int indent, StringBuilder builder) {
+  public void prettyPrint(int indent, StringBuilder builder) {
     builder.append(baseType.pathToString());
     for (var sizes : sizeIndices) {
       builder.append("<");

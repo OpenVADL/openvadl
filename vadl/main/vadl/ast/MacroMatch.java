@@ -7,7 +7,7 @@ record MacroMatch(SyntaxType resultType, List<Choice> choices, Node defaultChoic
                   SourceLocation sourceLocation) {
 
   void prettyPrint(int indent, StringBuilder sb) {
-    sb.append("  ".repeat(indent)).append("match : ").append(resultType).append("(");
+    sb.append("  ".repeat(indent)).append("match : ").append(resultType.print()).append("(");
     for (Choice choice : choices) {
       sb.append("\n").append("  ".repeat(indent + 1));
       choice.candidate.prettyPrint(indent + 1, sb);

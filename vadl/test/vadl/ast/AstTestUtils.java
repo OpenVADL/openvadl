@@ -11,6 +11,7 @@ import org.junit.jupiter.api.Assertions;
 
 public class AstTestUtils {
 
+  private static final ModelRemover MODEL_REMOVER = new ModelRemover();
   private static final Ungrouper UNGROUPER = new Ungrouper();
 
   static void verifyPrettifiedAst(Ast ast) {
@@ -21,6 +22,8 @@ public class AstTestUtils {
   }
 
   static void assertAstEquality(Ast actual, Ast expected) {
+    MODEL_REMOVER.removeModels(actual);
+    MODEL_REMOVER.removeModels(expected);
     UNGROUPER.ungroup(actual);
     UNGROUPER.ungroup(expected);
     if (!actual.equals(expected)) {

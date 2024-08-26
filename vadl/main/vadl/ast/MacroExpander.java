@@ -502,6 +502,18 @@ class MacroExpander
   }
 
   @Override
+  public Definition visit(ModelDefinition definition) {
+    var id = resolvePlaceholderOrIdentifier(definition.id);
+    return new ModelDefinition(id, definition.params, definition.body,
+        definition.returnType, definition.loc);
+  }
+
+  @Override
+  public Definition visit(RecordTypeDefinition definition) {
+    return new RecordTypeDefinition(definition.recordType, definition.loc);
+  }
+
+  @Override
   public BlockStatement visit(BlockStatement blockStatement) {
     return new BlockStatement(expandStatements(blockStatement.statements), blockStatement.location);
   }

@@ -324,6 +324,16 @@ class Ungrouper
   }
 
   @Override
+  public Definition visit(ModelDefinition definition) {
+    return definition;
+  }
+
+  @Override
+  public Definition visit(RecordTypeDefinition definition) {
+    return definition;
+  }
+
+  @Override
   public Statement visit(BlockStatement blockStatement) {
     blockStatement.statements.replaceAll(statement -> statement.accept(this));
     return blockStatement;

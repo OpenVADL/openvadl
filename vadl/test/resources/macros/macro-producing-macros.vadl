@@ -1,0 +1,19 @@
+// SPDX-FileCopyrightText : © 2024 TU Wien <vadl@tuwien.ac.at>
+// SPDX-License-Identifier: Apache-2.0
+
+instruction set architecture MacroProducingMacros = {
+
+  model LUTProducer(name: Id): IsaDefs = {
+    model $name(candidate: Ex, cond1: Ex, res1: Ex, cond2: Ex, res2: Ex, defaultRes: Ex): Ex = {
+      match $candidate with
+      { $cond1 => $res1
+      , $cond2 => $res2
+      , _ => $defaultRes
+      }
+    }
+  }
+
+  $LUTProducer(SimpleLut)
+  constant a = $SimpleLut(5+2 ; 7 ; 1 ; 8 ; 0 ; -1)
+}
+

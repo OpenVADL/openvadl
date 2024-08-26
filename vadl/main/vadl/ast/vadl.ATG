@@ -17,7 +17,6 @@ import static vadl.ast.ParserUtils.*;
 
 COMPILER vadl
   java.net.URI sourceFile = SourceLocation.INVALID_SOURCE_LOCATION.uri();
-  boolean insideMacro = false;
   Deque<List<MacroParam>> macroContext = new ArrayDeque<>();
   Ast ast = new Ast();
   SymbolTable symbolTable = new SymbolTable();
@@ -158,9 +157,8 @@ IGNORE '\t' + '\r' + '\n'
 PRODUCTIONS
   vadl =
   {
-    topLevelDefinitions<out Definition d>   (. ast.definitions.add(d); .)
-    | macroDef
-    | recordDefinition
+    topLevelDefinitions<out Definition def> (. ast.definitions.add(def); .)
+    | macroDef<out ModelDefinition def>     (. symbolTable.addMacro(def.toMacro(), def.location()); .)
     | modelTypeDef
   }.
 
@@ -175,6 +173,7 @@ PRODUCTIONS
   | formatDefinition<out def>
   | usingDefinition<out def>
   | functionDefinition<out def>
+  | recordDefinition<out def>
   .
 
   instructionsetDefinition<out InstructionSetDefinition isaDef>
@@ -185,20 +184,33 @@ PRODUCTIONS
       identifier<out extending>
     ]
     SYM_EQ SYM_BRACE_OPEN
-    isaDefinitionList<.out List<Definition> definitions.>
+    isaDefinitionList<.out List<Definition> definitions, true.>
     SYM_BRACE_CLOSE                                             (. isaDef = new InstructionSetDefinition(identifier, extending, definitions, startLocation.join(loc())); .)
   .
 
-  isaDefinitionList<. out List<Definition> definitions .>             (. definitions = new ArrayList<>(); .)
+  isaDefinitionList<. out List<Definition> definitions, boolean expand .> (. definitions = new ArrayList<>(); .)
   = {
     annotations<.out List<Annotation> annotations.>
-    isaDefinition<out Definition def>                                 (. def.annotations.annotations().addAll(annotations); definitions.add(def); .)
-  | macroDef
-  | recordDefinition
+    isaDefinition<out Definition def>                                     (. def.annotations.annotations().addAll(annotations); definitions.add(def); .)
+  | macroDef<out ModelDefinition def>                                     (. definitions.add(def); symbolTable.addMacro(def.toMacro(), def.location()); .)
   | modelTypeDef
   | // IF (isMacroReplacementOfType(this, BasicSyntaxType.ISA_DEFS))
-    macroReplacement<out Node n>                                      (. if (n instanceof DefinitionList defs) definitions.addAll(defs.items);
-                                                                         else definitions.add((Definition) n); .)
+    macroReplacement<out Node n>                                          (. if (expand) {
+                                                                               var expanded = new MacroExpander(Map.of(), macroOverrides).expandDefinition((Definition) n);
+                                                                               if (expanded instanceof DefinitionList list) {
+                                                                                 for (var def : list.items) {
+                                                                                   if (def instanceof ModelDefinition modelDef) {
+                                                                                     symbolTable.addMacro(modelDef.toMacro(), modelDef.location());
+                                                                                   }
+                                                                                   definitions.add(def);
+                                                                                 }
+                                                                               } else {
+                                                                                 definitions.add(expanded);
+                                                                               }
+                                                                             } else {
+                                                                               definitions.add((Definition) n);
+                                                                             }
+                                                                          .)
   }
   .
 
@@ -509,8 +521,8 @@ PRODUCTIONS
     statement<out Statement statement> (. def = new ExceptionDefinition(id, statement, start.join(loc())); .)
   .
 
-  recordDefinition
-  = RECORD
+  recordDefinition<out Definition def>
+  = RECORD                          (. var start = loc(); .)
     identifier<out Identifier recordName>
     SYM_PAREN_OPEN
     identifier<out Identifier paramName>
@@ -521,8 +533,9 @@ PRODUCTIONS
       identifier<out paramName>
       SYM_COLON
       syntaxType<out type>          (. entries.add(new RecordType.Entry(paramName.name, type)); .)
-    }
-    SYM_PAREN_CLOSE                 (. symbolTable.addRecord(recordName, new RecordType(recordName.name, entries)); .)
+    }                               (. var recordType = new RecordType(recordName.name, entries); .)
+    SYM_PAREN_CLOSE                 (. symbolTable.addRecord(recordName, recordType);
+                                       def = new RecordTypeDefinition(recordType, start.join(loc())); .)
   .
 
   modelTypeDef
@@ -972,9 +985,9 @@ PRODUCTIONS
     ]                                             (. node = Objects.requireNonNullElse(node, createPlaceholder(paramType, segments, loc())); .)
   .
 
-  macroDef
+  macroDef<out ModelDefinition def>
   = MODEL                                   (. var startLoc = loc(); .)
-    identifier<out Identifier id>
+    identifierOrPlaceholder<out IdentifierOrPlaceholder id>
     SYM_PAREN_OPEN                          (. var params = new ArrayList<MacroParam>(); .)
     [
       identifier<out Identifier paramId1>
@@ -991,16 +1004,12 @@ PRODUCTIONS
     SYM_COLON
     basicSyntaxType<out SyntaxType returnType>
     SYM_EQ
-    SYM_BRACE_OPEN                          (. insideMacro = true; .)
+    SYM_BRACE_OPEN
     macroBody<out Node body, returnType>
-    SYM_BRACE_CLOSE                         (.
-                                              macroContext.removeFirst();
-                                              insideMacro = false;
-                                              if (assertSyntaxType(this, body, returnType, "Macro body does not match signature")) {
-                                                symbolTable.addMacro(new Macro(id, params, body, returnType), startLoc.join(loc()));
-                                              } else {
-                                                symbolTable.addMacro(new Macro(id, params, body, BasicSyntaxType.INVALID), startLoc.join(loc()));
-                                              }
+    SYM_BRACE_CLOSE                         (. macroContext.removeFirst();
+                                               SyntaxType macroType = assertSyntaxType(this, body, returnType, "Macro body does not match signature")
+                                                 ? returnType : BasicSyntaxType.INVALID;
+                                               def = new ModelDefinition(id, params, body, macroType, startLoc.join(loc()));
                                             .)
   .
 
@@ -1013,7 +1022,7 @@ PRODUCTIONS
   | IF (type == BasicSyntaxType.ENCS)
     encodingDefinitionList<out body>
   | IF (type == BasicSyntaxType.ISA_DEFS)
-    isaDefinitionList<.out List<Definition> defs.>          (. body = new DefinitionList(defs, start.join(loc())); .)
+    isaDefinitionList<.out List<Definition> defs, false.>   (. body = new DefinitionList(defs, start.join(loc())); .)
   | IF (type == BasicSyntaxType.EX)
     expression<out body, BIN_OPS>
   | IF (type == BasicSyntaxType.LIT)
@@ -1063,7 +1072,7 @@ PRODUCTIONS
     | macroReplacement<out body>
     )
   | IF (type instanceof ProjectionType projection)
-    ( identifier<out Identifier id>                         (. body = new MacroReference(symbolTable.getMacro(id.name), (ProjectionType) type, id.location()); .)
+    ( identifier<out Identifier id>                         (. body = new MacroReference(symbolTable.getMacro(id.name), projection, id.location()); .)
     | macroReplacement<out body>
     )
   | internalError<"Unhandled syntax type " + type>

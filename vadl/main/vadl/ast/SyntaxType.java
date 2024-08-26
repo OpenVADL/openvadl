@@ -5,6 +5,8 @@ import java.util.stream.Collectors;
 
 interface SyntaxType {
   boolean isSubTypeOf(SyntaxType other);
+
+  String print();
 }
 
 // We're using the ordinal() to construct a two-dimensional alternative to the EnumSet builtin.
@@ -43,6 +45,11 @@ enum BasicSyntaxType implements SyntaxType {
   @Override
   public boolean isSubTypeOf(SyntaxType other) {
     return other instanceof BasicSyntaxType bst && IS_SUBTYPE[this.ordinal()][bst.ordinal()];
+  }
+
+  @Override
+  public String print() {
+    return name;
   }
 
   static {
@@ -140,6 +147,11 @@ class RecordType implements SyntaxType {
     return true;
   }
 
+  @Override
+  public String print() {
+    return name;
+  }
+
   SyntaxType findEntry(String name) {
     for (Entry entry : entries) {
       if (entry.name().equals(name)) {
@@ -192,5 +204,11 @@ class ProjectionType implements SyntaxType {
       }
     }
     return true;
+  }
+
+  @Override
+  public String print() {
+    return arguments.stream().map(SyntaxType::print).collect(Collectors.joining(",", "(", ")"))
+        + " -> " + resultType.print();
   }
 }

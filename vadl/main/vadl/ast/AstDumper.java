@@ -353,6 +353,18 @@ public class AstDumper
   }
 
   @Override
+  public Void visit(ModelDefinition definition) {
+    dumpNode(definition);
+    return null;
+  }
+
+  @Override
+  public Void visit(RecordTypeDefinition definition) {
+    dumpNode(definition);
+    return null;
+  }
+
+  @Override
   public Void visit(CallExpr expr) {
     dumpNode(expr);
     dumpChildren((Expr) expr.target);
