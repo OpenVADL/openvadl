@@ -2,6 +2,7 @@ package vadl.test;
 
 import static org.awaitility.Awaitility.await;
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.fail;
 
 import com.github.dockerjava.api.model.Bind;
 import java.io.IOException;
@@ -9,6 +10,7 @@ import java.nio.file.Path;
 import java.time.Duration;
 import java.util.Objects;
 import java.util.function.Consumer;
+import javax.annotation.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.testcontainers.containers.GenericContainer;
@@ -39,14 +41,17 @@ public abstract class DockerExecutionTest extends AbstractTest {
                                          String content,
                                          String mountPath) throws IOException {
     runContainer(image, (container) -> container
-        .withCopyToContainer(Transferable.of(content), mountPath));
+        .withCopyToContainer(Transferable.of(content), mountPath),
+        null
+    );
   }
 
   protected void runContainerWithHostFsBind(ImageFromDockerfile image,
                                             Path hostPath,
                                             String containerPath) {
     runContainer(image, container ->
-        withHostFsBind(container, hostPath, containerPath)
+        withHostFsBind(container, hostPath, containerPath),
+        null
     );
   }
 
@@ -66,7 +71,8 @@ public abstract class DockerExecutionTest extends AbstractTest {
    */
   protected void runContainer(ImageFromDockerfile image, String path, String mountPath) {
     runContainer(image, (container) -> container.withCopyToContainer(
-        MountableFile.forHostPath(path), mountPath)
+        MountableFile.forHostPath(path), mountPath),
+        null
     );
   }
 
@@ -78,9 +84,12 @@ public abstract class DockerExecutionTest extends AbstractTest {
    *
    * @param image             is the docker image for the {@link GenericContainer}.
    * @param containerModifier a consumer that allows modification of the container configuration
+   * @param postExecution a consumer that is called when the container successfully terminated
    */
   protected void runContainer(ImageFromDockerfile image,
-                              Consumer<GenericContainer<?>> containerModifier) {
+                              Consumer<GenericContainer<?>> containerModifier,
+                              @Nullable Consumer<GenericContainer<?>> postExecution
+                              ) {
     try (GenericContainer<?> container = new GenericContainer<>(image)
         .withLogConsumer(new Slf4jLogConsumer(logger))) {
       containerModifier.accept(container);
@@ -96,11 +105,15 @@ public abstract class DockerExecutionTest extends AbstractTest {
           });
 
       var result = container.getDockerClient().inspectContainerCmd(container.getContainerId());
+
       var state = result.exec().getState();
       assertEquals(0, state.getExitCodeLong().intValue());
+
+      if (postExecution != null) {
+        postExecution.accept(container);
+      }
     }
   }
-
 
   protected static <T extends GenericContainer<?>> T withHostFsBind(T container, Path hostPath,
                                                                     String containerPath) {

@@ -105,6 +105,18 @@ class TestCase:
         with open(filename, 'w') as f:
             yaml.dump(data, f)
 
+    def get_test_result_map(self):
+        return {
+            'id': self.spec.id,
+            'result': {
+                'status': self.test_result.status,
+                'completedStages': self.test_result.completed_stages,
+                'regTests': self.test_result.reg_tests,
+                'errors': self.test_result.errors,
+                'duration': self.test_result.duration
+            }
+        }
+
     async def _set_results(self):
         self.test_result.completed_stages.append('RUN')
 

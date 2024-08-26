@@ -25,6 +25,8 @@ async def main():
     # Create a semaphore to limit concurrent test cases
     semaphore = asyncio.Semaphore(10)
 
+    test_results = []
+
     # define how tests should be executed
     async def run_test(test_case):
         async with semaphore:
@@ -41,13 +43,20 @@ async def main():
                 test_end_time = time.time()
                 test_case.test_result.duration = f"{(test_end_time - test_start_time) * 1000:.2f}ms"
                 print(f"Finish test case {test_case.spec.id} in {test_case.test_result.duration}")
-                await test_case.emit_result(dir="results", prefix="result-")
+                # await test_case.emit_result(dir="results", prefix="result-")
+                result = test_case.get_test_result_map()
+                test_results.append(result)
+
 
     # Create tasks with semaphore-controlled concurrency
     tasks = [asyncio.create_task(run_test(test_case)) for test_case in test_cases]
 
     # Wait for all tasks to complete
     await asyncio.gather(*tasks)
+
+    result_file = f"results.yaml"
+    with open(result_file, 'w') as f:
+        yaml.dump(test_results, f)
 
     end_time = time.time()
     print(f"Total time: {end_time - start_time:.3f}s")
