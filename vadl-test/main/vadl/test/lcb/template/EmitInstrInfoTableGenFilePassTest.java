@@ -344,7 +344,7 @@ public class EmitInstrInfoTableGenFilePassTest extends AbstractLcbTest {
         def : Pat<(brcc (SETEQ X:$rs1, X:$rs2), RV3264I_Btype_immS_decodeAsInt64:$immS)
                 (BEQ X:$rs1, X:$rs2, RV3264I_Btype_immS_decodeAsInt64:$immS)>;
                
-        def : Pat<(brcond (i32 (setcc X:$rs1, X:$rs2, SETEQ)), RV3264I_Btype_immS_decodeAsInt64:$immS)
+        def : Pat<(brcond (i32 (seteq X:$rs1, X:$rs2)), RV3264I_Btype_immS_decodeAsInt64:$immS)
                 (BEQ X:$rs1, X:$rs2, RV3264I_Btype_immS_decodeAsInt64:$immS)>;
                
                
@@ -403,7 +403,7 @@ public class EmitInstrInfoTableGenFilePassTest extends AbstractLcbTest {
         def : Pat<(brcc (SETGE X:$rs1, X:$rs2), RV3264I_Btype_immS_decodeAsInt64:$immS)
                 (BGE X:$rs1, X:$rs2, RV3264I_Btype_immS_decodeAsInt64:$immS)>;
                
-        def : Pat<(brcond (i32 (setcc X:$rs1, X:$rs2, SETGE)), RV3264I_Btype_immS_decodeAsInt64:$immS)
+        def : Pat<(brcond (i32 (setge X:$rs1, X:$rs2)), RV3264I_Btype_immS_decodeAsInt64:$immS)
                 (BGE X:$rs1, X:$rs2, RV3264I_Btype_immS_decodeAsInt64:$immS)>;
                
                
@@ -462,7 +462,7 @@ public class EmitInstrInfoTableGenFilePassTest extends AbstractLcbTest {
         def : Pat<(brcc (SETUGE X:$rs1, X:$rs2), RV3264I_Btype_immS_decodeAsInt64:$immS)
                 (BGEU X:$rs1, X:$rs2, RV3264I_Btype_immS_decodeAsInt64:$immS)>;
                
-        def : Pat<(brcond (i32 (setcc X:$rs1, X:$rs2, SETUGE)), RV3264I_Btype_immS_decodeAsInt64:$immS)
+        def : Pat<(brcond (i32 (setuge X:$rs1, X:$rs2)), RV3264I_Btype_immS_decodeAsInt64:$immS)
                 (BGEU X:$rs1, X:$rs2, RV3264I_Btype_immS_decodeAsInt64:$immS)>;
                
                
@@ -521,7 +521,7 @@ public class EmitInstrInfoTableGenFilePassTest extends AbstractLcbTest {
         def : Pat<(brcc (SETLT X:$rs1, X:$rs2), RV3264I_Btype_immS_decodeAsInt64:$immS)
                 (BLT X:$rs1, X:$rs2, RV3264I_Btype_immS_decodeAsInt64:$immS)>;
                
-        def : Pat<(brcond (i32 (setcc X:$rs1, X:$rs2, SETLT)), RV3264I_Btype_immS_decodeAsInt64:$immS)
+        def : Pat<(brcond (i32 (setlt X:$rs1, X:$rs2)), RV3264I_Btype_immS_decodeAsInt64:$immS)
                 (BLT X:$rs1, X:$rs2, RV3264I_Btype_immS_decodeAsInt64:$immS)>;
                
                
@@ -580,7 +580,7 @@ public class EmitInstrInfoTableGenFilePassTest extends AbstractLcbTest {
         def : Pat<(brcc (SETULT X:$rs1, X:$rs2), RV3264I_Btype_immS_decodeAsInt64:$immS)
                 (BLTU X:$rs1, X:$rs2, RV3264I_Btype_immS_decodeAsInt64:$immS)>;
                
-        def : Pat<(brcond (i32 (setcc X:$rs1, X:$rs2, SETULT)), RV3264I_Btype_immS_decodeAsInt64:$immS)
+        def : Pat<(brcond (i32 (setult X:$rs1, X:$rs2)), RV3264I_Btype_immS_decodeAsInt64:$immS)
                 (BLTU X:$rs1, X:$rs2, RV3264I_Btype_immS_decodeAsInt64:$immS)>;
                
                
@@ -639,7 +639,7 @@ public class EmitInstrInfoTableGenFilePassTest extends AbstractLcbTest {
         def : Pat<(brcc (SETNE X:$rs1, X:$rs2), RV3264I_Btype_immS_decodeAsInt64:$immS)
                 (BNE X:$rs1, X:$rs2, RV3264I_Btype_immS_decodeAsInt64:$immS)>;
                
-        def : Pat<(brcond (i32 (setcc X:$rs1, X:$rs2, SETNE)), RV3264I_Btype_immS_decodeAsInt64:$immS)
+        def : Pat<(brcond (i32 (setne X:$rs1, X:$rs2)), RV3264I_Btype_immS_decodeAsInt64:$immS)
                 (BNE X:$rs1, X:$rs2, RV3264I_Btype_immS_decodeAsInt64:$immS)>;
                
                
@@ -1987,7 +1987,7 @@ public class EmitInstrInfoTableGenFilePassTest extends AbstractLcbTest {
         }
                
         def : Pat<(xor X:$rs1, X:$rs2)
-                (XOR X:$rs1, X:$rs2)>;
+                (XOR X:$rs1, X:$rs2)>; 
                 """.trim().lines(), output);
   }
 }
