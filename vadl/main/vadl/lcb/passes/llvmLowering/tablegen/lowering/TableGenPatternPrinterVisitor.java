@@ -9,6 +9,7 @@ import vadl.lcb.passes.llvmLowering.model.LlvmFieldAccessRefNode;
 import vadl.lcb.passes.llvmLowering.model.LlvmFrameIndexSD;
 import vadl.lcb.passes.llvmLowering.model.LlvmLoad;
 import vadl.lcb.passes.llvmLowering.model.LlvmSExtLoad;
+import vadl.lcb.passes.llvmLowering.model.LlvmSetccSD;
 import vadl.lcb.passes.llvmLowering.model.LlvmStore;
 import vadl.lcb.passes.llvmLowering.model.LlvmTruncStore;
 import vadl.lcb.passes.llvmLowering.model.LlvmTypeCastSD;
@@ -209,6 +210,16 @@ public class TableGenPatternPrinterVisitor
   public void visit(LlvmZExtLoad node) {
     writer.write("(" + node.lower() + " ");
     visit(Objects.requireNonNull(node.address()));
+    writer.write(")");
+  }
+
+  @Override
+  public void visit(LlvmSetccSD node) {
+    writer.write("(");
+    writer.write(node.lower() + " ");
+
+    joinArgumentsWithComma(node.arguments());
+
     writer.write(")");
   }
 

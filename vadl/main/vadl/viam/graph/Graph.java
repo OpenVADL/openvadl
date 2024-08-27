@@ -6,6 +6,7 @@ import com.google.errorprone.annotations.FormatMethod;
 import com.google.errorprone.annotations.FormatString;
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.IdentityHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
@@ -363,7 +364,7 @@ public class Graph {
 
     // Key is the old object
     // Value the copied object
-    Map<Node, Node> cache = new HashMap<>();
+    IdentityHashMap<Node, Node> cache = new IdentityHashMap<>();
     var graph = createEmptyInstance(name);
 
     this.nodes.stream().filter(Objects::nonNull).forEach(oldNode -> {
@@ -383,7 +384,7 @@ public class Graph {
       });
 
       // Update the inputs
-      newNode.inputs().forEach(oldInput -> {
+      newNode.inputs().filter(Objects::nonNull).forEach(oldInput -> {
         var newInput = cache.get(oldInput);
         newNode.replaceInput(oldInput, Objects.requireNonNull(newInput));
       });

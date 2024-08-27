@@ -88,11 +88,71 @@ public class LcbEnricherCollection {
         }
       });
 
+  public static InfoEnricher LLVM_LOWERING_TABLEGEN_PATTERNS =
+      forType(DefinitionEntity.class, (definitionEntity, passResults) -> {
+        // This supplier also runs for the VIAM dump.
+        // But, the pass wasn't scheduled yet.
+        if (!passResults.hasRunPassOnce(LlvmLoweringPass.class)) {
+          return;
+        }
+
+        var results =
+            (IdentityHashMap<Instruction, LlvmLoweringPass.LlvmLoweringIntermediateResult>)
+                passResults.lastResultOf(LlvmLoweringPass.class);
+
+        if (results != null && definitionEntity.origin() instanceof Instruction instruction) {
+          var result = (LlvmLoweringPass.LlvmLoweringIntermediateResult) results.get(instruction);
+
+          if (result != null) {
+            for (var pattern : result.patterns()) {
+              var mergedGraph = pattern.selector().copy();
+              mergedGraph.deinitializeNodes();
+              // TODO add function which merges two graphs
+              var machineCopy = pattern.machine().copy();
+              machineCopy.deinitializeNodes();
+              for (var node : machineCopy.getNodes().toList()) {
+                mergedGraph.addWithInputs(node);
+              }
+              var dotGraph = mergedGraph.dotGraph();
+              var info = new Info.Modal("TableGen Pattern", "");
+              var id = info.id();
+
+              // fill info with modal title
+              info.modalTitle = " TableGen pattern";
+              info.body = """
+                  <div id="graph-%s" class="h-full"></div>
+                  <script id="dot-graph-%s" type="application/dot">
+                  %s
+                  </script>
+                  """.formatted(id, id, dotGraph);
+              // add javascript that is executed when the modal is opened the first time.
+              // it renders the dot graph and embeds it in the graph container.
+              info.jsOnFirstOpen = """
+                  var dotString =
+                      document.getElementById(
+                          "dot-graph-%s",
+                      ).textContent;
+                  d3.select("#graph-%s")
+                      .graphviz()
+                      .width("100%%")
+                      .height("100%%")
+                      .renderDot(
+                          dotString,
+                      );
+                  """.formatted(id, id);
+              // finally add the info to the entity
+              definitionEntity.addInfo(info);
+            }
+          }
+        }
+      });
+
   /**
    * A list of all info enrichers for the default lcb.
    */
   public static List<InfoEnricher> all = List.of(
       ISA_MATCHING_SUPPLIER_TAG,
-      LLVM_LOWERING_OPERANDS
+      LLVM_LOWERING_OPERANDS,
+      LLVM_LOWERING_TABLEGEN_PATTERNS
   );
 }
