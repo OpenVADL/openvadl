@@ -6,13 +6,13 @@ import com.google.errorprone.annotations.FormatMethod;
 import com.google.errorprone.annotations.FormatString;
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
 import java.util.function.Function;
 import java.util.function.Predicate;
-import java.util.function.Supplier;
 import java.util.stream.Stream;
 import javax.annotation.Nullable;
 import vadl.utils.Pair;
@@ -113,22 +113,9 @@ public class Graph {
    */
   public <T extends Node> T add(T node) {
     if (node instanceof UniqueNode) {
-      return addUniqueInternal(node, true);
+      return addUniqueInternal(node);
     } else {
-      return addSimpleInternal(node, true);
-    }
-  }
-
-  /**
-   * This method works like {@link Graph#add(Node)}. However,
-   * it will not check whether the inputs were also added because
-   * by cloning the graph, we know that we have an inconsistent state.
-   */
-  private <T extends Node> T unsafeAdd(T node) {
-    if (node instanceof UniqueNode) {
-      return addUniqueInternal(node, false);
-    } else {
-      return addSimpleInternal(node, false);
+      return addSimpleInternal(node);
     }
   }
 
@@ -289,27 +276,23 @@ public class Graph {
   }
 
   // helper method to add node to graph
-  private <T extends Node> T addSimpleInternal(T node, boolean assertInputsAdded) {
+  private <T extends Node> T addSimpleInternal(T node) {
     node.ensure(node.isUninitialized(), "node is not uninitialized");
     // ensure that all input dependencies are already added
     // to the graph
-    if (assertInputsAdded) {
-      // This check is optional because when cloning the graph,
-      // the graph will be inconsistent.
-      ensureInputsAdded(node);
-    }
+    ensureInputsAdded(node);
 
     node.initialize(this);
     return node;
   }
 
-  private <T extends Node> T addUniqueInternal(T node, boolean assertInputsAdded) {
+  private <T extends Node> T addUniqueInternal(T node) {
     node.ensure(node.isUninitialized(), "node is not uninitialized");
     var result = findDuplicate(node);
     if (result != null) {
       return result;
     }
-    return addSimpleInternal(node, assertInputsAdded);
+    return addSimpleInternal(node);
   }
 
 
@@ -355,44 +338,73 @@ public class Graph {
    * Copies the graph and returns it.
    */
   public Graph copy() {
-    // Why do we need the cache?
-    // It is possible that an object is unique. For example, every
-    // Addition BuiltIn Node with two values might exist only once in the graph.
-    // But it can still be used by multiple nodes. Without the cache, we would
-    // create a new BuiltIn Node for every occurrence.
+    return copy(name);
+  }
+
+  /**
+   * Copies the graph and returns it.
+   *
+   * @param name the name of the copied graph
+   */
+  public Graph copy(String name) {
+    // The process of coping a graph:
+    // 1. Make a shallow copy of each node in the graph.
+    //    This will return an uninitialized new node that is linked (input/successor) to
+    //    the existing node in the original graph.
+    //    We store them in the cache, with the original node as the key and the new node as value.
+    // 2. For every uninitialized new node, we replace the original links (inputs/successors)
+    //    to the original nodes, by the corresponding new nodes we copied before.
+    //    The cache is the lookup store to get for each link the corresponding new node.
+    // 3. Add all new nodes to a new empty graph instance.
 
     // Key is the old object
     // Value the copied object
-    Map<Node, Node> cache = new HashMap<>();
-    var graph = createEmptyInstance(name);
+    Map<Node, Node> cache = new LinkedHashMap<>();
 
+    // make shallow copy of all nodes. we will replace the links in the next step
     this.nodes.stream().filter(Objects::nonNull).forEach(oldNode -> {
-      var newNode = graph.unsafeAdd(oldNode.shallowCopy());
+      var newNode = oldNode.shallowCopy();
       cache.put(oldNode, newNode);
     });
 
-    // Now, we have added all the nodes from the old to new graph.
-    // However, they are not linked yet because they are shallow copies.
-    graph.nodes.stream().filter(Objects::nonNull).forEach(newNode -> {
-      // Update the usages
-      newNode.usages().forEach(oldUsage -> {
-        var newUsage = cache.get(oldUsage);
-        if (newUsage != null) {
-          newNode.updateUsage(oldUsage, Objects.requireNonNull(newUsage));
-        }
-      });
-
-      // Update the inputs
+    // Now, we have a shallow copy of all original nodes.
+    // However, the new nodes are still linked to the original nodes.
+    // In this step we replace all inputs and successors by the corresponding new nodes.
+    cache.values().forEach(newNode -> {
+      // replace shallow copied input by new uninitialized one
       newNode.inputs().forEach(oldInput -> {
         var newInput = cache.get(oldInput);
-        newNode.replaceInput(oldInput, Objects.requireNonNull(newInput));
+        // replace inputs
+        newNode.applyOnInputsUnsafe((self, input) -> {
+          if (input == oldInput) {
+            return newInput;
+          }
+          return input;
+        });
       });
 
-      // Update the predecessor (if it exists)
-      var oldPred = newNode.predecessor();
-      if (oldPred != null) {
-        var newPred = cache.get(oldPred);
-        newNode.setPredecessor(newPred);
+      // replace shallow copied successor by new uninitialized one
+      newNode.successors().forEach(oldSuccessor -> {
+        var newSuccessor = cache.get(oldSuccessor);
+        // replace successor
+        newNode.applyOnSuccessorsUnsafe((self, succ) -> {
+          if (succ == oldSuccessor) {
+            return newSuccessor;
+          }
+          return succ;
+        });
+      });
+    });
+
+    // create new empty graph instance
+    var graph = createEmptyInstance(name);
+
+    // add all nodes to the graph
+    cache.values().forEach(newNode -> {
+      if (newNode.isUninitialized()) {
+        // only if not yet initialized
+        // might be initialized because of recursive input addition
+        graph.addWithInputs(newNode);
       }
     });
 
@@ -451,50 +463,5 @@ public class Graph {
     return getNodes(DependencyNode.class)
         .filter(x -> x.usageCount() == 0)
         .toList();
-  }
-
-  /**
-   * Replaces node when the given predicate matches and constructs a new instance.
-   */
-  public void replaceNode(Predicate<Node> selector,
-                          Function<Node, Node> supplier) {
-    var affected = this.getNodes()
-        .filter(selector)
-        .toList();
-
-    for (var oldNode : affected) {
-      if (!oldNode.isDeleted()) {
-        var newNode = supplier.apply(oldNode);
-        oldNode.replaceAndDelete(newNode);
-      }
-    }
-  }
-
-  /**
-   * Replaces input when the given predicate matches and constructs a new instance.
-   * If the old input has no usages anymore then it is deleted.
-   */
-  public void replaceInput(Predicate<Node> selector,
-                           Function<Node, Pair<Node, Node>> supplier) {
-    var affected = this.getNodes()
-        .filter(selector)
-        .toList();
-
-    for (var oldNode : affected) {
-      if (!oldNode.isDeleted()) {
-        var pair = supplier.apply(oldNode);
-        var oldInput = pair.left();
-        var newNode = pair.right();
-
-        if (oldInput == newNode) {
-          continue;
-        }
-        if (newNode.isUninitialized()) {
-          oldNode.replaceInput(oldInput, addWithInputs(newNode));
-        } else {
-          oldNode.replaceInput(oldInput, newNode);
-        }
-      }
-    }
   }
 }
