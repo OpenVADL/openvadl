@@ -32,7 +32,13 @@ public class DummyAbiPass extends Pass {
   @Override
   public Object execute(PassResults passResults, Specification viam)
       throws IOException {
-    var registerFile = viam.registerFiles().findFirst().get();
+    var regOpt = viam.registerFiles().findFirst();
+    if (regOpt.isEmpty()) {
+      // skip if no register file available
+      return null;
+    }
+
+    var registerFile = regOpt.get();
     var callerSaved = getCallerSaved(registerFile);
     var calleeSaved = getCalleeSaved(registerFile);
     var aliases = getAliases(registerFile);
