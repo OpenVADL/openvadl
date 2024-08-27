@@ -242,7 +242,9 @@ public class ReplaceWithLlvmSDNodesVisitor
 
   @Override
   public void visit(InstrEndNode instrEndNode) {
-    throw new RuntimeException("not implemented");
+    for (var arg : instrEndNode.sideEffects()) {
+      visit(arg);
+    }
   }
 
   @Override
