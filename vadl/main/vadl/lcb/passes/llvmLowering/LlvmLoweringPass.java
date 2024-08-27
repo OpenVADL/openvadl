@@ -143,7 +143,7 @@ public class LlvmLoweringPass extends Pass {
    * However, we would like to check whether {@link LlvmLoweringStrategy} supports this
    * {@link Instruction} in this pass. That's why we have the flip the hashmap.
    */
-  private IdentityHashMap<Instruction, InstructionLabel> flipIsaMatching(
+  public static IdentityHashMap<Instruction, InstructionLabel> flipIsaMatching(
       Map<InstructionLabel, List<Instruction>> isaMatched) {
     IdentityHashMap<Instruction, InstructionLabel> inverse = new IdentityHashMap<>();
 

@@ -12,6 +12,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import vadl.configuration.GeneralConfiguration;
 import vadl.dump.entitySuppliers.ViamEntitySupplier;
+import vadl.dump.infoEnrichers.LcbEnricherCollection;
 import vadl.dump.infoEnrichers.ViamEnricherCollection;
 import vadl.pass.PassResults;
 import vadl.template.AbstractTemplateRenderingPass;
@@ -60,6 +61,7 @@ public class HtmlDumpPass extends AbstractTemplateRenderingPass {
    */
   static Consumer<List<InfoEnricher>> infoEnrichers = enrichers -> {
     enrichers.addAll(ViamEnricherCollection.all);
+    enrichers.addAll(LcbEnricherCollection.all);
   };
 
 

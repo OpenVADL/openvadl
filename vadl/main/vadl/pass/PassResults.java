@@ -64,7 +64,7 @@ public final class PassResults {
     if (result.isEmpty() || !passClass.isInstance(result.get().pass)) {
       throw new PassError(
           "Tried to retrieve result of the last instance of pass class %s, ".formatted(passClass)
-          + "but no such pass instance was found.");
+              + "but no such pass instance was found.");
     }
     return result.get();
   }
@@ -85,6 +85,13 @@ public final class PassResults {
    */
   public List<SingleResult> executedPasses() {
     return store.values().stream().toList();
+  }
+
+  /**
+   * Checks whether a pass is at least run once.
+   */
+  public boolean hasRunPassOnce(Class<?> pass) {
+    return store.values().stream().anyMatch(x -> pass.isInstance(x.pass));
   }
 
   public int size() {
