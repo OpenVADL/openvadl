@@ -26,6 +26,13 @@ public class DummyAbi extends Definition {
     }
   }
 
+  /**
+   * Constructor.
+   *
+   * @param registerFile is the "parent" of the register.
+   * @param addr         represents the index in a register file. X11 would have {@code addr = 11}.
+   * @param alignment    for the spilling of the register.
+   */
   public record RegisterRef(RegisterFile registerFile,
                             int addr,
                             Alignment alignment) {
@@ -34,6 +41,9 @@ public class DummyAbi extends Definition {
     }
   }
 
+  /**
+   * Value type for alias.
+   */
   public record RegisterAlias(String value) {
   }
 

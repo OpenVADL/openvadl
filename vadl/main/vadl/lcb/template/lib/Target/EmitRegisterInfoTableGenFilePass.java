@@ -56,8 +56,8 @@ public class EmitRegisterInfoTableGenFilePass extends LcbTemplateRenderingPass {
   record LlvmRegisterClass(String namespace,
                            String name,
                            String regType,
-                           // Alignment - Specify the alignment required of the registers when they are
-                           // stored or loaded to memory.
+                           // Alignment - Specify the alignment required of the registers when
+                           // they are stored or loaded to memory.
                            int alignment,
                            // The order of the regList matters
                            // and indicates how the register allocator

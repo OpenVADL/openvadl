@@ -41,7 +41,8 @@ public class EmitCallingConvTableGenFilePass extends LcbTemplateRenderingPass {
   @Override
   protected Map<String, Object> createVariables(final PassResults passResults,
                                                 Specification specification) {
-    var abi = (DummyAbi) specification.definitions().filter(x -> x instanceof DummyAbi).findFirst().get();
+    var abi =
+        (DummyAbi) specification.definitions().filter(x -> x instanceof DummyAbi).findFirst().get();
     return Map.of(CommonVarNames.NAMESPACE, specification.name(),
         "calleeRegisters", abi.calleeSaved(),
         "functionRegisterType", getFuncArgsAssignToReg(abi).type,

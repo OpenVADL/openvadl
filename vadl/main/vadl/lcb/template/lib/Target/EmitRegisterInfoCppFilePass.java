@@ -46,14 +46,8 @@ public class EmitRegisterInfoCppFilePass extends LcbTemplateRenderingPass {
     return "llvm/lib/Target/" + processorName + "/" + processorName + "RegisterInfo.cpp";
   }
 
-  record FrameIndexElimination(InstructionLabel instructionLabel,
-                               Instruction instruction,
-                               FieldAccessRefNode immediate,
-      /*
-       * Uses the predicate to check whether the offset
-       * fits into register when eliminating frame index.
-       */
-                               String predicateMethodName) {
+  record FrameIndexElimination(InstructionLabel instructionLabel, Instruction instruction,
+                               FieldAccessRefNode immediate, String predicateMethodName) {
 
   }
 
@@ -70,18 +64,15 @@ public class EmitRegisterInfoCppFilePass extends LcbTemplateRenderingPass {
                                                 Specification specification) {
     var abi =
         (DummyAbi) specification.definitions().filter(x -> x instanceof DummyAbi).findFirst().get();
-    var instructionLabels =
-        (HashMap<InstructionLabel, List<Instruction>>) passResults.lastResultOf(
-            IsaMatchingPass.class);
+    var instructionLabels = (HashMap<InstructionLabel, List<Instruction>>) passResults.lastResultOf(
+        IsaMatchingPass.class);
     var uninlined = (IdentityHashMap<Instruction, UninlinedGraph>) passResults.lastResultOf(
         FunctionInlinerPass.class);
-    return Map.of(CommonVarNames.NAMESPACE, specification.name(),
-        "framePointer", abi.framePointer(),
-        "stackPointer", abi.stackPointer(),
-        "globalPointer", abi.globalPointer(),
-        "frameIndexEliminations",
-        getEliminateFrameIndexEntries(instructionLabels, uninlined).stream().sorted(
-            Comparator.comparing(o -> o.instruction.identifier.name())).toList(),
+    return Map.of(CommonVarNames.NAMESPACE, specification.name(), "framePointer",
+        abi.framePointer(), "stackPointer", abi.stackPointer(), "globalPointer",
+        abi.globalPointer(), "frameIndexEliminations",
+        getEliminateFrameIndexEntries(instructionLabels, uninlined).stream()
+            .sorted(Comparator.comparing(o -> o.instruction.identifier.name())).toList(),
         "registerClasses",
         specification.registerFiles().map(EmitRegisterInfoCppFilePass::getRegisterClass).toList());
   }
@@ -90,13 +81,10 @@ public class EmitRegisterInfoCppFilePass extends LcbTemplateRenderingPass {
   private static RegisterClass getRegisterClass(RegisterFile registerFile) {
     return new RegisterClass(registerFile,
         IntStream.range(0, (int) Math.pow(2, (long) registerFile.addressType().bitWidth()))
-            .mapToObj(i -> new Register(i, registerFile.identifier.simpleName() + i))
-            .toList()
-    );
+            .mapToObj(i -> new Register(i, registerFile.identifier.simpleName() + i)).toList());
   }
 
-  private List<FrameIndexElimination>
-  getEliminateFrameIndexEntries(
+  private List<FrameIndexElimination> getEliminateFrameIndexEntries(
       @Nullable HashMap<InstructionLabel, List<Instruction>> instructionLabels,
       @Nullable IdentityHashMap<Instruction, UninlinedGraph> uninlined) {
     ensureNonNull(instructionLabels, "labels must exist");
@@ -112,12 +100,9 @@ public class EmitRegisterInfoCppFilePass extends LcbTemplateRenderingPass {
         ensureNonNull(behavior, "uninlined behavior is required");
         var immediate = behavior.getNodes(FieldAccessRefNode.class).findAny();
         ensure(immediate.isPresent(), "An immediate is required for frame index elimination");
-        var entry = new FrameIndexElimination(label,
-            instruction,
-            immediate.get(),
+        var entry = new FrameIndexElimination(label, instruction, immediate.get(),
             PredicateCodeGenerator.generateFunctionName(
-                immediate.get().fieldAccess().predicate().name())
-        );
+                immediate.get().fieldAccess().predicate().name()));
         entries.add(entry);
       }
     }

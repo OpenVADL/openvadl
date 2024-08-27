@@ -19,6 +19,9 @@ public class GeneralConfiguration {
     this(outputPath, doDump, new FileOutputFactory());
   }
 
+  /**
+   * Constructor.
+   */
   public GeneralConfiguration(String outputPath, boolean doDump,
                               AbstractOutputFactory outputFactory) {
     this.outputPath = outputPath;
