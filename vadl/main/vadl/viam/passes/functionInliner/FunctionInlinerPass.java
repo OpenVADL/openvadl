@@ -1,5 +1,7 @@
 package vadl.viam.passes.functionInliner;
 
+import static vadl.utils.GraphUtils.getSingleNode;
+
 import com.google.common.collect.Streams;
 import java.io.IOException;
 import java.util.Arrays;
@@ -53,41 +55,33 @@ public class FunctionInlinerPass extends Pass {
               .toList();
 
           functionCalls.forEach(functionCall -> {
-            var inlinedBehavior = functionCall.function().behavior().copy();
-            // We deinitialize the nodes so we can add them when we inline. Otherwise,
-            // get an exception because it is already initialized.
-            inlinedBehavior.deinitializeNodes();
-            var returnNodes = inlinedBehavior.getNodes(ReturnNode.class).toList();
-            ensure(returnNodes.size() == 1, "Inlined function must only have one return node");
-            var returnNode = returnNodes.get(0);
+            // copy function behavior
+            var behaviorCopy = functionCall.function().behavior().copy();
+            // get return node of function behavior
+            var returnNode = getSingleNode(behaviorCopy, ReturnNode.class);
 
-            // Replace every occurrence of `FuncParamNode` by the
+            // Replace every occurrence of `FuncParamNode` by a copy of the
             // given argument from the `FunctionCallNode`.
             Streams.zip(functionCall.arguments().stream(),
                     Arrays.stream(functionCall.function().parameters()),
                     Pair::new)
-                .forEach(pair -> inlinedBehavior.getNodes(FuncParamNode.class)
-                    .filter(n -> n.parameter() == pair.parameter())
-                    .forEach(usedParam -> usedParam.replaceAndDelete(pair.arg)));
+                .forEach(pair -> {
+                  behaviorCopy.getNodes(FuncParamNode.class)
+                      .filter(n -> n.parameter() == pair.parameter())
+                      .forEach(usedParam -> usedParam.replaceAndDelete(pair.arg.copy()));
+                });
 
-            // Actual inlining
-            functionCall.replaceAndDelete(returnNode.value());
+            // replace the function call by a copy of the return value of the function
+            functionCall.replaceAndDelete(returnNode.value().copy());
           });
 
           var fieldAccesses = instruction.behavior().getNodes(FieldAccessRefNode.class)
               .toList();
 
           fieldAccesses.forEach(fieldAccessRefNode -> {
-            var inlinedBehavior =
-                fieldAccessRefNode.fieldAccess().accessFunction().behavior().copy();
-            // We deinitialize the nodes so we can add them when we inline. Otherwise,
-            // get an exception because it is already initialized.
-            inlinedBehavior.deinitializeNodes();
-            var returnNodes = inlinedBehavior.getNodes(ReturnNode.class).toList();
-            ensure(returnNodes.size() == 1, "Inlined function must only have one return node");
-            var returnNode = returnNodes.get(0);
-
-            fieldAccessRefNode.replaceAndDelete(returnNode.value());
+            var behavior = fieldAccessRefNode.fieldAccess().accessFunction().behavior();
+            var returnNode = getSingleNode(behavior, ReturnNode.class);
+            fieldAccessRefNode.replaceAndDelete(returnNode.value().copy());
           });
 
           original.put(instruction, new UninlinedGraph(copy));
