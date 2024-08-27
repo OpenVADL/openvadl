@@ -106,7 +106,6 @@ public class LcbEnricherCollection {
           if (result != null) {
             for (var pattern : result.patterns()) {
               var mergedGraph = pattern.selector().copy();
-              mergedGraph.deinitializeNodes();
               // TODO add function which merges two graphs
               var machineCopy = pattern.machine().copy();
               machineCopy.deinitializeNodes();
