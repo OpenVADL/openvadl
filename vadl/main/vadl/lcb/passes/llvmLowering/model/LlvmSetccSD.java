@@ -1,6 +1,8 @@
 package vadl.lcb.passes.llvmLowering.model;
 
+import java.util.List;
 import java.util.Set;
+import vadl.javaannotations.viam.DataValue;
 import vadl.lcb.passes.llvmLowering.LlvmNodeLowerable;
 import vadl.lcb.passes.llvmLowering.strategies.visitors.TableGenMachineInstructionVisitor;
 import vadl.lcb.passes.llvmLowering.strategies.visitors.TableGenNodeVisitor;
@@ -11,6 +13,7 @@ import vadl.viam.ViamError;
 import vadl.viam.graph.GraphNodeVisitor;
 import vadl.viam.graph.Node;
 import vadl.viam.graph.NodeList;
+import vadl.viam.graph.dependency.AbstractFunctionCallNode;
 import vadl.viam.graph.dependency.BuiltInCall;
 import vadl.viam.graph.dependency.ConstantNode;
 import vadl.viam.graph.dependency.ExpressionNode;
@@ -18,7 +21,9 @@ import vadl.viam.graph.dependency.ExpressionNode;
 /**
  * LLVM Node for logical comparison.
  */
-public class LlvmSetccSD extends BuiltInCall implements LlvmNodeLowerable {
+public class LlvmSetccSD extends AbstractFunctionCallNode implements LlvmNodeLowerable {
+  @DataValue
+  protected BuiltInTable.BuiltIn builtIn;
 
   public static Set<BuiltInTable.BuiltIn> supported = Set.of(
       BuiltInTable.EQU,
@@ -41,19 +46,14 @@ public class LlvmSetccSD extends BuiltInCall implements LlvmNodeLowerable {
   public LlvmSetccSD(BuiltInTable.BuiltIn built,
                      NodeList<ExpressionNode> args,
                      Type type) {
-    super(built, args, type);
-
+    super(args, type);
+    this.builtIn = built;
     var condCode = LlvmCondCode.from(built);
     if (condCode != null) {
       llvmCondCode = condCode;
     } else {
       throw new ViamError("not supported cond code");
     }
-
-    //def : Pat< ( setcc X:$rs1, 0, SETEQ ),
-    //           ( SLTIU X:$rs1, 1 ) >;
-    // By adding it as argument, we get the printing of "SETEQ" for free.
-    args.add(new ConstantNode(new Constant.Str(llvmCondCode.name())));
   }
 
   @Override
@@ -65,6 +65,12 @@ public class LlvmSetccSD extends BuiltInCall implements LlvmNodeLowerable {
     return llvmCondCode;
   }
 
+  /**
+   * Gets the {@link BuiltInTable.BuiltIn}.
+   */
+  public BuiltInTable.BuiltIn builtIn() {
+    return this.builtIn;
+  }
 
   @Override
   public void accept(GraphNodeVisitor visitor) {
@@ -87,5 +93,11 @@ public class LlvmSetccSD extends BuiltInCall implements LlvmNodeLowerable {
   @Override
   public Node shallowCopy() {
     return new LlvmSetccSD(builtIn, args, type());
+  }
+
+  @Override
+  protected void collectData(List<Object> collection) {
+    super.collectData(collection);
+    collection.add(builtIn);
   }
 }

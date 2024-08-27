@@ -1,5 +1,7 @@
 package vadl.lcb.passes.llvmLowering.strategies.visitors.impl;
 
+import static vadl.viam.ViamError.ensure;
+
 import java.util.Objects;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -32,6 +34,7 @@ import vadl.lcb.passes.llvmLowering.model.LlvmZExtLoad;
 import vadl.lcb.passes.llvmLowering.strategies.visitors.TableGenNodeVisitor;
 import vadl.lcb.passes.llvmLowering.strategies.visitors.TableGenPatternLowerable;
 import vadl.types.BuiltInTable;
+import vadl.viam.Constant;
 import vadl.viam.graph.Node;
 import vadl.viam.graph.control.AbstractBeginNode;
 import vadl.viam.graph.control.EndNode;
@@ -126,7 +129,14 @@ public class ReplaceWithLlvmSDNodesVisitor
     } else if (node.builtIn() == BuiltInTable.ASR || node.builtIn() == BuiltInTable.ASRS) {
       node.replaceAndDelete(new LlvmSraSD(node.arguments(), node.type()));
     } else if (LlvmSetccSD.supported.contains(node.builtIn())) {
-      node.replaceAndDelete(new LlvmSetccSD(node.builtIn(), node.arguments(), node.type()));
+      var replaced = (LlvmSetccSD) node.replaceAndDelete(
+          new LlvmSetccSD(node.builtIn(), node.arguments(), node.type()));
+      //def : Pat< ( setcc X:$rs1, 0, SETEQ ),
+      //           ( SLTIU X:$rs1, 1 ) >;
+      // By adding it as argument, we get the printing of "SETEQ" for free.
+      var newArg = (new ConstantNode(new Constant.Str(replaced.llvmCondCode().name())));
+      ensure(replaced.graph() != null, "graph must exist");
+      replaced.arguments().add(replaced.graph().addWithInputs(newArg));
     } else {
       throw new RuntimeException("not implemented: " + node.builtIn());
     }
@@ -366,5 +376,12 @@ public class ReplaceWithLlvmSDNodesVisitor
   @Override
   public void visit(LlvmZExtLoad node) {
     visit(node.address());
+  }
+
+  @Override
+  public void visit(LlvmSetccSD node) {
+    for (var arg : node.arguments()) {
+      visit(arg);
+    }
   }
 }

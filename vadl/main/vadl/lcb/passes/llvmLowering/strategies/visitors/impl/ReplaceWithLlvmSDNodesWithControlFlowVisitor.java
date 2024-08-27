@@ -5,12 +5,14 @@ import java.util.Set;
 import vadl.lcb.passes.llvmLowering.model.LlvmBrCcSD;
 import vadl.lcb.passes.llvmLowering.model.LlvmCondCode;
 import vadl.lcb.passes.llvmLowering.model.LlvmFieldAccessRefNode;
+import vadl.lcb.passes.llvmLowering.model.LlvmSetccSD;
 import vadl.types.BuiltInTable;
 import vadl.viam.Register;
 import vadl.viam.ViamError;
 import vadl.viam.graph.Graph;
 import vadl.viam.graph.Node;
 import vadl.viam.graph.control.IfNode;
+import vadl.viam.graph.dependency.AbstractFunctionCallNode;
 import vadl.viam.graph.dependency.BuiltInCall;
 import vadl.viam.graph.dependency.ExpressionNode;
 import vadl.viam.graph.dependency.SideEffectNode;
@@ -33,11 +35,11 @@ public class ReplaceWithLlvmSDNodesWithControlFlowVisitor
     visit(writeRegNode.value());
 
     if (writeRegNode.register() instanceof Register.Counter) {
-      if (writeRegNode.value() instanceof BuiltInCall builtInCall && Set.of(
+      if (writeRegNode.value() instanceof BuiltInCall builtin && Set.of(
           BuiltInTable.ADD,
           BuiltInTable.ADDS,
           BuiltInTable.SUB
-      ).contains(builtInCall.builtIn())) {
+      ).contains(builtin.builtIn())) {
         // We need to four parameters.
         // 1. the conditional code (SETEQ, ...)
         // 2. the first operand of the comparison
@@ -54,7 +56,7 @@ public class ReplaceWithLlvmSDNodesWithControlFlowVisitor
         var first = conditional.arguments().get(0);
         var second = conditional.arguments().get(1);
         var immOffset =
-            builtInCall.arguments().stream().filter(x -> x instanceof LlvmFieldAccessRefNode)
+            builtin.arguments().stream().filter(x -> x instanceof LlvmFieldAccessRefNode)
                 .findFirst();
 
         if (immOffset.isEmpty()) {
@@ -92,8 +94,8 @@ public class ReplaceWithLlvmSDNodesWithControlFlowVisitor
     node.accept(this);
   }
 
-  private BuiltInCall getConditional(Graph behavior) {
-    var builtIn = behavior.getNodes(BuiltInCall.class)
+  private LlvmSetccSD getConditional(Graph behavior) {
+    var builtIn = behavior.getNodes(LlvmSetccSD.class)
         .filter(
             x -> Set.of(BuiltInTable.EQU, BuiltInTable.NEQ, BuiltInTable.SLTH, BuiltInTable.ULTH,
                     BuiltInTable.SGEQ, BuiltInTable.UGEQ, BuiltInTable.SLEQ, BuiltInTable.ULEQ)

@@ -16,12 +16,12 @@ public interface GraphVisualizer<R, G extends Graph> {
    * @param graph the graph to load into the GraphVisualizer
    * @return the GraphVisualizer instance
    */
-  public GraphVisualizer<R, G> load(G graph);
+  GraphVisualizer<R, G> load(G graph);
 
   /**
    * Generates a visualization of the graph.
    *
    * @return the visualization result
    */
-  public R visualize();
+  R visualize();
 }
