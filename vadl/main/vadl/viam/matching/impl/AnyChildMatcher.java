@@ -173,12 +173,12 @@ public class AnyChildMatcher implements Matcher {
 
     @Override
     public void visit(IfNode node) {
-      matched |= matcher.matches(node.condition);
-      matched |= matcher.matches(node.falseBranch);
-      matched |= matcher.matches(node.trueBranch);
-      visit(node.condition);
-      visit(node.falseBranch);
-      visit(node.trueBranch);
+      matched |= matcher.matches(node.condition());
+      matched |= matcher.matches(node.falseBranch());
+      matched |= matcher.matches(node.trueBranch());
+      visit(node.condition());
+      visit(node.falseBranch());
+      visit(node.trueBranch());
     }
 
     @Override

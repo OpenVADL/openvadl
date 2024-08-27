@@ -18,13 +18,13 @@ public class InstrEndNode extends AbstractEndNode {
   @Override
   public Node copy() {
     return new InstrEndNode(
-        new NodeList<>(sideEffects.stream().map(x -> (SideEffectNode) x.copy()).toList()));
+        new NodeList<>(sideEffects().stream().map(x -> (SideEffectNode) x.copy()).toList()));
   }
-  
+
 
   @Override
   public Node shallowCopy() {
-    return new InstrEndNode(sideEffects);
+    return new InstrEndNode(sideEffects());
   }
 
   @Override

@@ -17,12 +17,12 @@ public class EndNode extends AbstractEndNode {
   @Override
   public Node copy() {
     return new EndNode(
-        new NodeList<>(sideEffects.stream().map(x -> (SideEffectNode) x.copy()).toList()));
+        new NodeList<>(sideEffects().stream().map(x -> (SideEffectNode) x.copy()).toList()));
   }
 
   @Override
   public Node shallowCopy() {
-    return new EndNode(sideEffects);
+    return new EndNode(sideEffects());
   }
 
   @Override

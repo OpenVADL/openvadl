@@ -38,6 +38,7 @@ import vadl.pass.exception.DuplicatedPassKeyException;
 import vadl.utils.Pair;
 import vadl.utils.VADLFileUtils;
 import vadl.viam.Specification;
+import vadl.viam.passes.verification.ViamVerificationPass;
 import vadl.viam.passes.verification.ViamVerifier;
 
 /**

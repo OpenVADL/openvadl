@@ -243,7 +243,7 @@ public class ReplaceWithLlvmSDNodesVisitor
 
   @Override
   public void visit(EndNode endNode) {
-    for (var arg : endNode.sideEffects) {
+    for (var arg : endNode.sideEffects()) {
       visit(arg);
     }
   }

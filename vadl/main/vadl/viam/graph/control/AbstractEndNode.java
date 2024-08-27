@@ -17,10 +17,14 @@ import vadl.viam.graph.dependency.SideEffectNode;
  */
 public abstract class AbstractEndNode extends ControlNode {
   @Input
-  public NodeList<SideEffectNode> sideEffects;
+  private NodeList<SideEffectNode> sideEffects;
 
   public AbstractEndNode(NodeList<SideEffectNode> sideEffects) {
     this.sideEffects = sideEffects;
+  }
+
+  public NodeList<SideEffectNode> sideEffects() {
+    return sideEffects;
   }
 
   @Override

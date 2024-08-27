@@ -374,6 +374,11 @@ public abstract class Node {
     replacement.setSourceLocationIfNotSet(this.sourceLocation);
     if (replacement.isUninitialized() && graph != null) {
       replacement = graph.addWithInputs(replacement);
+      if (replacement == this) {
+        // as the graph might return the same node
+        // again, we have to check if the new node is the same as this node.
+        return this;
+      }
     }
     checkReplaceWith(replacement);
     replaceAtAllUsages(replacement);
