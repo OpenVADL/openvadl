@@ -13,6 +13,7 @@ import org.slf4j.LoggerFactory;
 import vadl.configuration.GeneralConfiguration;
 import vadl.dump.entitySuppliers.ViamEntitySupplier;
 import vadl.dump.infoEnrichers.ViamEnricherCollection;
+import vadl.pass.PassName;
 import vadl.pass.PassResults;
 import vadl.template.AbstractTemplateRenderingPass;
 import vadl.viam.Specification;
@@ -100,6 +101,11 @@ public class HtmlDumpPass extends AbstractTemplateRenderingPass {
   public HtmlDumpPass(Config config) throws IOException {
     super(config, "dump");
     this.config = config;
+  }
+
+  @Override
+  public PassName getName() {
+    return new PassName("HTML Dump at phase " + config.phase);
   }
 
   @Override

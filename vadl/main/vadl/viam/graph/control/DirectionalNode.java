@@ -23,7 +23,7 @@ public abstract class DirectionalNode extends ControlNode {
   /**
    * The variant if it is possible to directly set the next node construction.
    */
-  DirectionalNode(ControlNode next) {
+  DirectionalNode(@Nonnull ControlNode next) {
     this.next = next;
   }
 
