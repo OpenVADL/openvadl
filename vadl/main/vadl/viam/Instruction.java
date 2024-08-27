@@ -58,6 +58,8 @@ public class Instruction extends Definition implements DefProp.WithBehavior {
   public void verify() {
     super.verify();
 
+    ensure(behavior.isInstruction(), "Behavior is not a valid instruction behavior");
+
     behavior.verify();
   }
 

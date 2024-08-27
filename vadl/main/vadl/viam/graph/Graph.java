@@ -25,6 +25,7 @@ import vadl.viam.graph.control.EndNode;
 import vadl.viam.graph.control.InstrCallNode;
 import vadl.viam.graph.control.ReturnNode;
 import vadl.viam.graph.control.StartNode;
+import vadl.viam.graph.dependency.ConstantNode;
 import vadl.viam.graph.dependency.DependencyNode;
 import vadl.viam.graph.dependency.FuncParamNode;
 import vadl.viam.graph.dependency.ParamNode;
@@ -221,6 +222,17 @@ public class Graph {
         )
         .findFirst()
         .orElse(null);
+  }
+
+  /**
+   * Returns if the graph represents an instruction.
+   *
+   * <p>A instruction must end with an {@link vadl.viam.graph.control.InstrEndNode}
+   * and must not have any {@link FuncParamNode}s</p>
+   */
+  public boolean isInstruction() {
+    return getNodes(FuncParamNode.class).findAny().isEmpty()
+        && getNodes(InstrCallNode.class).count() == 1;
   }
 
   /**
