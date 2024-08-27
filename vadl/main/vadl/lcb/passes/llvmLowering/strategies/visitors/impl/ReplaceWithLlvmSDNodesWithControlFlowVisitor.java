@@ -12,7 +12,6 @@ import vadl.viam.ViamError;
 import vadl.viam.graph.Graph;
 import vadl.viam.graph.Node;
 import vadl.viam.graph.control.IfNode;
-import vadl.viam.graph.dependency.AbstractFunctionCallNode;
 import vadl.viam.graph.dependency.BuiltInCall;
 import vadl.viam.graph.dependency.ExpressionNode;
 import vadl.viam.graph.dependency.SideEffectNode;

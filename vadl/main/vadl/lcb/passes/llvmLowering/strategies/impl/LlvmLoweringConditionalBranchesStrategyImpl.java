@@ -15,13 +15,19 @@ import java.util.Set;
 import java.util.stream.Stream;
 import vadl.lcb.passes.isaMatching.InstructionLabel;
 import vadl.lcb.passes.llvmLowering.LlvmLoweringPass;
+import vadl.lcb.passes.llvmLowering.model.LlvmBrCcSD;
+import vadl.lcb.passes.llvmLowering.model.LlvmBrCondSD;
+import vadl.lcb.passes.llvmLowering.model.LlvmCondCode;
+import vadl.lcb.passes.llvmLowering.model.LlvmSetCondSD;
+import vadl.lcb.passes.llvmLowering.model.LlvmTypeCastSD;
 import vadl.lcb.passes.llvmLowering.strategies.LlvmLoweringStrategy;
-import vadl.lcb.passes.llvmLowering.strategies.visitors.impl.ReplaceLlvmBrCcWithBrCondVisitor;
 import vadl.lcb.passes.llvmLowering.strategies.visitors.impl.ReplaceWithLlvmSDNodesWithControlFlowVisitor;
 import vadl.lcb.passes.llvmLowering.tablegen.model.TableGenInstructionOperand;
 import vadl.lcb.passes.llvmLowering.tablegen.model.TableGenPattern;
 import vadl.lcb.visitors.LcbGraphNodeVisitor;
+import vadl.types.Type;
 import vadl.viam.Instruction;
+import vadl.viam.graph.NodeList;
 import vadl.viam.graph.dependency.WriteResourceNode;
 import vadl.viam.passes.functionInliner.UninlinedGraph;
 
@@ -114,21 +120,21 @@ public class LlvmLoweringConditionalBranchesStrategyImpl extends LlvmLoweringStr
       var selector = pattern.selector().copy();
       var machine = pattern.machine().copy();
 
-      var nodes = selector.getNodes().toList();
-
-      // The visitor iteration replaces the default nodes.
-      for (var node : nodes) {
-        var visitor = getVisitorForPatternSelectorLowering();
-        visitor.visit(node);
-      }
-
-      // Here is the actual difference to `generatePatterns`
       // Replace BrCc with BrCond
       var hasChanged = false;
-      for (var node : nodes) {
-        var visitor = new ReplaceLlvmBrCcWithBrCondVisitor();
-        node.accept(visitor);
-        hasChanged |= visitor.isChanged();
+      for (var node : selector.getNodes(LlvmBrCcSD.class).toList()) {
+        // For `brcc` we have Setcc code, so need to see if we have a suitable
+        // instruction for that.
+        var builtin = LlvmCondCode.from(node.condition());
+        var builtinCall =
+            new LlvmSetCondSD(builtin, new NodeList<>(node.first(), node.second()),
+                node.first().type());
+
+        // We also extend the result of the condition to i32.
+        var typeCast = new LlvmTypeCastSD(builtinCall, Type.signedInt(32));
+        var brCond = new LlvmBrCondSD(typeCast, node.immOffset());
+        node.replaceAndDelete(brCond);
+        hasChanged = true;
       }
 
       // If nothing had changed, then it makes no sense to add it.
@@ -139,4 +145,6 @@ public class LlvmLoweringConditionalBranchesStrategyImpl extends LlvmLoweringStr
 
     return alternatives;
   }
+
+
 }
