@@ -51,11 +51,11 @@ public class MergeNode extends AbstractBeginNode {
   public Node copy() {
     return new MergeNode(
         new NodeList<>(this.branchEnds.stream().map(x -> (EndNode) x.copy()).toList()),
-        (ControlNode) Objects.requireNonNull(next).copy());
+        (ControlNode) next().copy());
   }
 
   @Override
   public Node shallowCopy() {
-    return new MergeNode(branchEnds, Objects.requireNonNull(next));
+    return new MergeNode(branchEnds, (ControlNode) next());
   }
 }

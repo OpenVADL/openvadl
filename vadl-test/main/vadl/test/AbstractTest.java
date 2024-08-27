@@ -44,7 +44,7 @@ import vadl.viam.passes.verification.ViamVerifier;
  * The super type of all integration tests.
  * It sets up the vadl test frontend to run a vadl specification.
  */
-public class AbstractTest {
+public abstract class AbstractTest {
 
   /**
    * The test source directory in the resources.
