@@ -149,6 +149,7 @@ public class Graph {
    * @return the node added to the graph or its duplicate
    */
   public <T extends Node> T addWithInputs(T node) {
+    node.ensure(node.isUninitialized(), "Node to be added must not be initialized");
     node.applyOnInputsUnsafe((n, target) -> {
       if (target == null || target.isActive()) {
         return target;
@@ -157,11 +158,8 @@ public class Graph {
       target.setSourceLocationIfNotSet(node.sourceLocation());
       target.ensure(!target.isDeleted(), "cannot add deleted input node");
       var newT = addWithInputs(target);
-      if (newT != target) {
-        // TODO: Check if we can use visit inputs for this lambda
-        // as we are calling replaceInput on the node anyway
-        node.replaceInput(target, newT);
-      }
+      // just return the new target AND the node, as the original one is not initialized and thus
+      // there must not be any usage transfer
       return newT;
     });
     return add(node);
