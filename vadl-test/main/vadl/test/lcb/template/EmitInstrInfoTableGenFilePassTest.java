@@ -1,13 +1,10 @@
 package vadl.test.lcb.template;
 
 import java.io.IOException;
-import java.io.StringWriter;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
-import vadl.gcb.valuetypes.ProcessorName;
 import vadl.lcb.template.lib.Target.EmitInstrInfoTableGenFilePass;
 import vadl.pass.PassKey;
-import vadl.pass.StringOutputFactory;
 import vadl.pass.exception.DuplicatedPassKeyException;
 import vadl.test.lcb.AbstractLcbTest;
 
@@ -15,15 +12,17 @@ public class EmitInstrInfoTableGenFilePassTest extends AbstractLcbTest {
   @Test
   void testLowering() throws IOException, DuplicatedPassKeyException {
     // Given
-    var configuration = getConfigurationWithStringWriter(false);
+    var configuration = getConfiguration(false);
     var testSetup = runLcb(configuration, "examples/rv3264im.vadl",
         new PassKey(EmitInstrInfoTableGenFilePass.class.getName()));
 
     // When
-    var writer = ((StringOutputFactory) configuration.outputFactory()).getLastStringWriter();
+    var passResult =
+        (String) testSetup.passManager().getPassResults()
+            .lastResultOf(EmitInstrInfoTableGenFilePass.class);
 
     // Then
-    var trimmed = writer.toString().trim();
+    var trimmed = passResult.trim();
     var output = trimmed.lines();
 
     Assertions.assertLinesMatch("""
@@ -1988,7 +1987,7 @@ public class EmitInstrInfoTableGenFilePassTest extends AbstractLcbTest {
         }
                
         def : Pat<(xor X:$rs1, X:$rs2)
-                (XOR X:$rs1, X:$rs2)>; 
+                (XOR X:$rs1, X:$rs2)>;
                 """.trim().lines(), output);
   }
 }

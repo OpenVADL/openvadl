@@ -16,12 +16,6 @@ public abstract class AbstractLcbTest extends AbstractCppCodeGenTest {
         new ProcessorName("processorNameValue"));
   }
 
-  @Override
-  public LcbConfiguration getConfigurationWithStringWriter(boolean doDump) {
-    return new LcbConfiguration(super.getConfigurationWithStringWriter(doDump),
-        new ProcessorName("processorNameValue"));
-  }
-
   public TestSetup runLcb(LcbConfiguration configuration,
                           String specPath,
                           PassKey until)

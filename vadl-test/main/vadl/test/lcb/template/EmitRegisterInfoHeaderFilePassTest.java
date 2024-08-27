@@ -1,13 +1,11 @@
 package vadl.test.lcb.template;
 
 import java.io.IOException;
-import java.io.StringWriter;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 import vadl.lcb.template.lib.Target.EmitInstrInfoTableGenFilePass;
 import vadl.lcb.template.lib.Target.EmitRegisterInfoHeaderFilePass;
 import vadl.pass.PassKey;
-import vadl.pass.StringOutputFactory;
 import vadl.pass.exception.DuplicatedPassKeyException;
 import vadl.test.lcb.AbstractLcbTest;
 
@@ -15,15 +13,17 @@ public class EmitRegisterInfoHeaderFilePassTest extends AbstractLcbTest {
   @Test
   void testLowering() throws IOException, DuplicatedPassKeyException {
     // Given
-    var configuration = getConfigurationWithStringWriter(false);
+    var configuration = getConfiguration(false);
     var testSetup = runLcb(configuration, "examples/rv3264im.vadl",
         new PassKey(EmitRegisterInfoHeaderFilePass.class.getName()));
 
     // When
-    var writer = ((StringOutputFactory) configuration.outputFactory()).getLastStringWriter();
+    var passResult =
+        (String) testSetup.passManager().getPassResults()
+            .lastResultOf(EmitRegisterInfoHeaderFilePass.class);
 
     // Then
-    var trimmed = writer.toString().trim();
+    var trimmed = passResult.trim();
     var output = trimmed.lines();
 
     Assertions.assertLinesMatch("""

@@ -24,7 +24,6 @@ import vadl.viam.Specification;
  */
 public abstract class AbstractTemplateRenderingPass extends Pass {
   private static final TemplateEngine templateEngine = templateEngine();
-  private static final Logger log = LoggerFactory.getLogger(AbstractTemplateRenderingPass.class);
 
   private static TemplateEngine templateEngine() {
     TemplateEngine templateEngine = new TemplateEngine();
@@ -78,29 +77,32 @@ public abstract class AbstractTemplateRenderingPass extends Pass {
   @Override
   public Object execute(final PassResults passResults, Specification viam)
       throws IOException {
-    renderTemplate(passResults, viam,
-        configuration().outputFactory().createWriter(configuration(), subDir, getOutputPath()));
 
-    // This pass emits files and does not need to store data.
-    return null;
+    return renderTemplate(passResults, viam,
+        configuration().outputFactory().createWriter(configuration(), subDir, getOutputPath()));
   }
 
   /**
    * Renders the template into a {@link StringWriter}. Additionally, this will not create a
    * folder in the output path.
    */
-  public void renderToString(final PassResults passResults, Specification viam,
-                             StringWriter writer) {
-    renderTemplate(passResults, viam, writer);
+  public String renderToString(final PassResults passResults, Specification viam,
+                               StringWriter writer) throws IOException {
+    return renderTemplate(passResults, viam, writer);
   }
 
-  private void renderTemplate(final PassResults passResults, Specification viam,
-                              Writer writer) {
+  private String renderTemplate(final PassResults passResults, Specification viam,
+                                Writer writer) throws IOException {
+    var passResultWriter = new StringWriter();
     var ctx = new Context();
 
     // Map the variables into thymeleaf's context
     createVariables(passResults, viam).forEach(ctx::setVariable);
 
-    templateEngine.process(getTemplatePath(), ctx, writer);
+    templateEngine.process(getTemplatePath(), ctx, passResultWriter);
+    var output = passResultWriter.toString();
+    writer.write(output);
+
+    return output;
   }
 }

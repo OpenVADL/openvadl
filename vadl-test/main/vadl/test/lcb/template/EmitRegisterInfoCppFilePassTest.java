@@ -4,9 +4,7 @@ import java.io.IOException;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 import vadl.lcb.template.lib.Target.EmitRegisterInfoCppFilePass;
-import vadl.lcb.template.lib.Target.EmitRegisterInfoHeaderFilePass;
 import vadl.pass.PassKey;
-import vadl.pass.StringOutputFactory;
 import vadl.pass.exception.DuplicatedPassKeyException;
 import vadl.test.lcb.AbstractLcbTest;
 
@@ -14,15 +12,17 @@ public class EmitRegisterInfoCppFilePassTest extends AbstractLcbTest {
   @Test
   void testLowering() throws IOException, DuplicatedPassKeyException {
     // Given
-    var configuration = getConfigurationWithStringWriter(false);
+    var configuration = getConfiguration(false);
     var testSetup = runLcb(configuration, "examples/rv3264im.vadl",
         new PassKey(EmitRegisterInfoCppFilePass.class.getName()));
 
     // When
-    var writer = ((StringOutputFactory) configuration.outputFactory()).getLastStringWriter();
+    var passResult =
+        (String) testSetup.passManager().getPassResults()
+            .lastResultOf(EmitRegisterInfoCppFilePass.class);
 
     // Then
-    var trimmed = writer.toString().trim();
+    var trimmed = passResult.trim();
     var output = trimmed.lines();
 
     Assertions.assertLinesMatch("""

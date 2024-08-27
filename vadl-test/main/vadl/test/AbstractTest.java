@@ -31,7 +31,6 @@ import vadl.configuration.GeneralConfiguration;
 import vadl.pass.PassKey;
 import vadl.pass.PassManager;
 import vadl.pass.PassOrder;
-import vadl.pass.StringOutputFactory;
 import vadl.pass.exception.DuplicatedPassKeyException;
 import vadl.utils.VADLFileUtils;
 import vadl.viam.Specification;
@@ -332,11 +331,8 @@ public class AbstractTest {
     return new GeneralConfiguration(directory.toAbsolutePath().toString(), doDump);
   }
 
-  public GeneralConfiguration getConfigurationWithStringWriter(boolean doDump) {
-    return new GeneralConfiguration("output", doDump, new StringOutputFactory());
-  }
-
-  public record TestSetup(PassManager passManager, Specification specification) {
+  public record TestSetup(PassManager passManager,
+                          Specification specification) {
 
   }
 }
