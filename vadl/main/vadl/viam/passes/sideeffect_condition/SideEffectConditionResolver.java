@@ -45,9 +45,15 @@ public class SideEffectConditionResolver {
         var graph = endNode.graph();
         endNode.ensure(graph != null,
             "Node is not active, but control flow must be stable for SideEffectConditionResolver");
-        for (var sideEffect : endNode.sideEffects) {
+        for (var sideEffect : endNode.sideEffects()) {
           var cond = branchCondition.isActive() ? branchCondition :
               graph.addWithInputs(branchCondition);
+          var existingCondition = sideEffect.nullableCondition();
+          if (existingCondition != null) {
+            cond = graph.addWithInputs(
+                BuiltInCall.of(BuiltInTable.OR, existingCondition, cond)
+            );
+          }
           sideEffect.setCondition(cond);
         }
 
@@ -65,15 +71,15 @@ public class SideEffectConditionResolver {
 
         // the condition for the true branch is the given branch condition and the
         // if condition
-        var trueCondition = BuiltInCall.of(BuiltInTable.AND, branchCondition, ifNode.condition);
-        var trueMergeNode = resolveBranch(beginNode, trueCondition);
+        var trueCondition = BuiltInCall.of(BuiltInTable.AND, branchCondition, ifNode.condition());
+        var trueMergeNode = resolveBranch(ifNode.trueBranch(), trueCondition);
         // the condition for the false branch is the given branch condition and the
         // negation of the if condition
         var falseCondition = BuiltInCall.of(BuiltInTable.AND,
             branchCondition,
-            BuiltInCall.of(BuiltInTable.NEG, ifNode.condition)
+            BuiltInCall.of(BuiltInTable.NOT, ifNode.condition())
         );
-        var falseMergeNode = resolveBranch(beginNode, falseCondition);
+        var falseMergeNode = resolveBranch(ifNode.falseBranch(), falseCondition);
 
         ifNode.ensure(trueMergeNode == falseMergeNode,
             "Branches of node don't result in the same merge node");

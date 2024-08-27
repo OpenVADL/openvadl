@@ -32,10 +32,14 @@ public abstract class SideEffectNode extends DependencyNode {
     return condition;
   }
 
+  public @Nullable ExpressionNode nullableCondition() {
+    return condition;
+  }
+
   public void setCondition(ExpressionNode condition) {
     ensure(condition.type().isTrivialCastTo(Type.bool()), "Condition must be a boolean but was %s",
         condition);
-    updateUsage(this.condition, condition);
+    updateUsageOf(this.condition, condition);
     this.condition = condition;
   }
 
