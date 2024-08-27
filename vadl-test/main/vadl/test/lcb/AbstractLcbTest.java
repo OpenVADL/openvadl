@@ -4,12 +4,9 @@ import java.io.IOException;
 import vadl.configuration.LcbConfiguration;
 import vadl.gcb.valuetypes.ProcessorName;
 import vadl.pass.PassKey;
-import vadl.pass.PassManager;
 import vadl.pass.PassOrder;
 import vadl.pass.exception.DuplicatedPassKeyException;
 import vadl.test.cppCodeGen.AbstractCppCodeGenTest;
-import vadl.utils.Pair;
-import vadl.viam.Specification;
 
 public abstract class AbstractLcbTest extends AbstractCppCodeGenTest {
 
@@ -20,8 +17,8 @@ public abstract class AbstractLcbTest extends AbstractCppCodeGenTest {
   }
 
   public TestSetup runLcb(LcbConfiguration configuration,
-                                                 String specPath,
-                                                 PassKey until)
+                          String specPath,
+                          PassKey until)
       throws IOException, DuplicatedPassKeyException {
     return setupPassManagerAndRunSpecUntil(specPath,
         PassOrder.lcb(configuration), until);

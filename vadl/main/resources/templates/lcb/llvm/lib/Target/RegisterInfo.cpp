@@ -45,50 +45,88 @@ BitVector [(${namespace})]RegisterInfo::getReservedRegs(const MachineFunction &M
 {
     BitVector Reserved(getNumRegs());
 
-    markSuperRegs(Reserved, «emitWithNamespace(stackPointer)»); // stack pointer
-    «IF hasGlobalPointer»
-        markSuperRegs(Reserved, «emitWithNamespace(globalPointer)»); // global pointer
-    «ENDIF»
-            «IF hasFramePointer»
-        markSuperRegs(Reserved, «emitWithNamespace(framePointer)»); // frame pointer
-    «ENDIF»
+    markSuperRegs(Reserved, [(${namespace})]::[(${framePointer.render()})]); // frame pointer
+    markSuperRegs(Reserved, [(${namespace})]::[(${stackPointer.render()})]); // stack pointer
+    markSuperRegs(Reserved, [(${namespace})]::[(${globalPointer.render()})]); // global pointer
 
-            «IF constantRegisters.size != 0 »
-        // constant registers ( e.g. zero register )
-                «FOR register : constantRegisters » markSuperRegs(Reserved,  «emitWithNamespace(register)»);
-    «ENDFOR»
-            «ENDIF»
-
-        assert(checkAllSuperRegsMarked(Reserved));
+    // TODO: Add constant registers
+    assert(checkAllSuperRegsMarked(Reserved));
 
     return Reserved;
 }
 
-«FOR definition : frameIndexEliminations»
-            «emitEliminateFrameIndexMethod(definition)»
+[# th:each="fe : ${frameIndexEliminations}" ]
+bool eliminateFrameIndex[(${fe.instruction.identifier.simpleName()})]
+    ( MachineBasicBlock::iterator II
+    , int SPAdj
+    , unsigned FIOperandNum
+    , unsigned FrameReg
+    , StackOffset FrameIndexOffset
+    , RegScavenger *RS
+    )
+{
+    // sanity check for generated code
+    assert( FIOperandNum == 1 && "Frame Index operand position does not match expected position!" );
 
-        «ENDFOR»
+    MachineInstr &MI = *II;
+    MachineOperand &FIOp = MI.getOperand(1);
+    MachineOperand &ImmOp = MI.getOperand(2);
 
-                  /**
-                   * This method calls its own replacement class for each allowed instruction.
-                   * Inside the special instruction the following steps or tries to remove the FI are done.
-                   *
-                   *     1. try to inline the frame index calculation into the current instruction.
-                   *     2. check if we can move the immediate materialization and frame index addition
-                   *        into a separate instruction with scratch register. The scratch register must be
-                   *        useable with our current instruction.
-                   *
-                   * TODO: @chochrainer:
-                   *
-                   *     3. replace the current instruction with
-                   *        3.1 a more specific instruction that can load the offset
-                   *        3.2 a very general instruction that uses a scratch register for computing the
-                   *            desired frame index.
-                   *
-                   * If an instruction is not supported, an llvm_fatal_error is emitted as it should be impossible
-                   * for a frame index to be an operand.
-                   */
-                  bool [(${namespace})]RegisterInfo::eliminateFrameIndex(MachineBasicBlock::iterator II, int SPAdj, unsigned FIOperandNum, RegScavenger *RS) const
+    int Offset = FrameIndexOffset.getFixed() + ImmOp.getImm();
+
+    //
+    // try to inline the offset into the instruction
+    //
+
+    if([(${fe.predicateMethodName})](Offset))
+    {
+        // immediate can be encoded and instruction can be inlined.
+        FIOp.ChangeToRegister( FrameReg, false /* isDef */ );
+        ImmOp.setImm( Offset );
+        return false; // success
+    }
+
+
+    DebugLoc DL = MI.getDebugLoc();
+    MachineBasicBlock &MBB = *MI.getParent();
+    MachineFunction *MF = MBB.getParent();
+    MachineRegisterInfo &MRI = MF->getRegInfo();
+    const CPUInstrInfo *TII = MF->getSubtarget<CPUSubtarget>().getInstrInfo();
+
+    //
+    // try to generate a scratch register and adjust frame register with given offset
+    //
+
+    Register ScratchReg = MRI.createVirtualRegister(&CPU::XRegClass);
+    if(TII->adjustReg(MBB, II, DL, ScratchReg, FrameReg, Offset) == false) // MachineInstr::MIFlag Flag
+    {
+        // the scratch register can properly be manipulated and used as address register.
+        FIOp.ChangeToRegister( ScratchReg, false /*isDef*/, false /*isImpl*/, true /*isKill*/ );
+        ImmOp.setImm( 0 );
+        return false; // success
+    }
+
+    return true; // failure
+}
+[/]
+
+/**
+ * This method calls its own replacement class for each allowed instruction.
+ * Inside the special instruction the following steps or tries to remove the FI are done.
+ *
+ *     1. try to inline the frame index calculation into the current instruction.
+ *     2. check if we can move the immediate materialization and frame index addition
+ *        into a separate instruction with scratch register. The scratch register must be
+ *        useable with our current instruction.
+ *     3. replace the current instruction with
+ *        3.1 a more specific instruction that can load the offset
+ *        3.2 a very general instruction that uses a scratch register for computing the
+ *            desired frame index.
+ *
+ * If an instruction is not supported, an llvm_fatal_error is emitted as it should be impossible
+ * for a frame index to be an operand.
+ */
+bool [(${namespace})]RegisterInfo::eliminateFrameIndex(MachineBasicBlock::iterator II, int SPAdj, unsigned FIOperandNum, RegScavenger *RS) const
 {
     MachineInstr &MI = *II;
     const MachineFunction &MF = *MI.getParent()->getParent();
@@ -104,12 +142,14 @@ BitVector [(${namespace})]RegisterInfo::getReservedRegs(const MachineFunction &M
     bool error = true;
     switch (MI.getOpcode())
     {
-    «FOR definition : frameIndexEliminations» case [(${namespace})]::«definition.instruction.simpleName»:
-    {
-        error = eliminateFrameIndex«definition.instruction.simpleName»(II, SPAdj, FIOperandNum, FrameReg, FrameIndexOffset, RS);
-        break;
-    }
-        «ENDFOR» default:
+        [# th:each="fe : ${frameIndexEliminations}" ]
+        case [(${namespace})]::[(${fe.instruction.identifier.simpleName()})]:
+        {
+          error = eliminateFrameIndex[(${fe.instruction.identifier.simpleName()})](II, SPAdj, FIOperandNum, FrameReg, FrameIndexOffset, RS);
+          break;
+        }
+        [/]
+        default:
         {
             /* This should be unreachable! */
             std::string errMsg;
@@ -135,54 +175,36 @@ BitVector [(${namespace})]RegisterInfo::getReservedRegs(const MachineFunction &M
 
 Register [(${namespace})]RegisterInfo::getFrameRegister(const MachineFunction &MF) const
 {
-    «IF hasFramePointer» const TargetFrameLowering *TFI = getFrameLowering(MF);
-    return TFI->hasFP(MF) ? «emitWithNamespace(framePointer)» /* FP */ : «emitWithNamespace(stackPointer)» /* SP */;
-    «ELSE» return «emitWithNamespace(stackPointer)»; // stack pointer
-    «ENDIF»
+    const TargetFrameLowering *TFI = getFrameLowering(MF);
+    return TFI->hasFP(MF) ? [(${framePointer.render()})] /* FP */ : [(${stackPointer.render()})] /* SP */;
 }
 
 const uint32_t * [(${namespace})]RegisterInfo::getCallPreservedMask(const MachineFunction & /*MF*/
-                                                                   ,
-                                                                   CallingConv::ID /*CC*/
+                                                                   , CallingConv::ID /*CC*/
 ) const
 {
     // defined in calling convention tablegen
     return CSR_[(${namespace})]_RegMask;
 }
 
-«FOR registerClass : registerClasses»
-                     /*static*/ unsigned [(${namespace})]RegisterInfo::«registerClass.simpleName»(unsigned index)
+[# th:each="registerClass : ${registerClasses}" ]
+/*static*/ unsigned [(${namespace})]RegisterInfo::[(${registerClass.registerFile.identifier.simpleName()})](unsigned index)
 {
-    switch (index)
+  switch (index)
+  {
+  [# th:each="register : ${registerClass.registers}" ]
+    case [(${register.index})]:
+        return [(${namespace})]::[(${register.name})];
+  [/]
+    default:
     {
-    «FOR entry : registerClass.asMap» case «entry.getKey»:
-        return [(${namespace})]::«entry.getValue.simpleName»;
-        «ENDFOR» default:
-        {
-            std::string errMsg;
-            std::stringstream errMsgStream;
-            errMsgStream << "Unable to find index " << "'" << index << "'";
-            errMsgStream << " with name '«registerClass.simpleName»' !\n";
-            errMsg = errMsgStream.str();
-            report_fatal_error(errMsg.c_str());
-        }
-    }
-}
-«ENDFOR»
-
-    /*static*/ unsigned [(${namespace})]RegisterInfo::registerOpcodeLookup(std::string className, unsigned index)
-{
-    «FOR registerClass : registerClasses» if (std::string("«registerClass.simpleName»").compare(className) == 0)
-    {
-        return [(${namespace})]RegisterInfo::«registerClass.simpleName»(index);
-    }
-    «ENDFOR»
-
-        // class name was not matched
-
         std::string errMsg;
-    std::stringstream errMsgStream;
-    errMsgStream << "Unable to find register class with name " << "'" << className << "' !\n";
-    errMsg = errMsgStream.str();
-    report_fatal_error(errMsg.c_str());
+        std::stringstream errMsgStream;
+        errMsgStream << "Unable to find index " << "'" << index << "'";
+        errMsgStream << " with name '«registerClass.simpleName»' !\n";
+        errMsg = errMsgStream.str();
+        report_fatal_error(errMsg.c_str());
+    }
+  }
 }
+[/]

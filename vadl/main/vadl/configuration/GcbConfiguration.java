@@ -5,7 +5,8 @@ package vadl.configuration;
  */
 public class GcbConfiguration extends GeneralConfiguration {
   public GcbConfiguration(GeneralConfiguration generalConfiguration) {
-    super(generalConfiguration.outputPath(), generalConfiguration.doDump());
+    super(generalConfiguration.outputPath(), generalConfiguration.doDump(),
+        generalConfiguration.outputFactory());
   }
 
   public static GcbConfiguration from(GeneralConfiguration generalConfiguration) {
