@@ -83,6 +83,11 @@ public final class PassOrder {
     return order;
   }
 
+  /**
+   * Truncates the PassOrder to only include passes until (including) the first
+   * instance of the given pass class.
+   * This is helpful for tests to avoid executing more passes than necessary.
+   */
   public PassOrder untilFirst(Class<? extends Pass> passClass) {
     var instance = order.stream().filter(s -> passClass.isInstance(s.pass()))
         .findFirst()

@@ -28,6 +28,9 @@ public class BuiltInCall extends AbstractFunctionCallNode implements Canonicaliz
     this.builtIn = builtIn;
   }
 
+  /**
+   * Utility constructor for a built-in call.
+   */
   public static BuiltInCall of(BuiltIn builtIn, ExpressionNode... args) {
     var argList = new NodeList<>(args);
     var type = builtIn.returns(

@@ -443,27 +443,6 @@ public abstract class Node {
    * @param oldInput the node to be replaced
    * @param newInput the node to replace the old input with
    */
-//  public void replaceInput(Node oldInput, Node newInput) {
-//    AtomicBoolean replaced = new AtomicBoolean(false);
-//    applyOnInputsUnsafe((self, input) -> {
-//      if (input == oldInput) {
-//        replaced.set(true);
-//        return newInput;
-//      } else {
-//        return input;
-//      }
-//    });
-//
-//    if (replaced.get()) {
-//      if (isUninitialized()) {
-//        // if this node is not yet initialized, we will add it as usage
-//        // to the new node. This is done as asoon as this node gets added to the graph
-//        oldInput.removeUsage(this);
-//      } else {
-//        updateUsageOf(oldInput, newInput);
-//      }
-//    }
-//  }
   public void replaceInput(Node oldInput, Node newInput) {
     applyOnInputs((self, input) -> {
       if (input == oldInput) {
@@ -475,7 +454,10 @@ public abstract class Node {
   }
 
 
-  public void replaceSuccessor(@Nullable Node oldSuccessor, @Nullable Node newSuccessor) {
+  /**
+   * Replaces the given old successor of this node, by the new one.
+   */
+  public void replaceSuccessor(Node oldSuccessor, @Nullable Node newSuccessor) {
     applyOnSuccessors((self, successor) -> {
       if (successor == oldSuccessor) {
         return newSuccessor;

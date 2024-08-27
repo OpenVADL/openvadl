@@ -48,7 +48,7 @@ public abstract class DirectionalNode extends ControlNode {
     this.next = next;
   }
 
-  public Node next() {
+  public ControlNode next() {
     ensure(next != null, "next node is null but must be set!");
     return next;
   }

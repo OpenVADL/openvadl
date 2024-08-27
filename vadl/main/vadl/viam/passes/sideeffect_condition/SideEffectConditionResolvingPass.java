@@ -6,11 +6,18 @@ import vadl.configuration.GeneralConfiguration;
 import vadl.pass.Pass;
 import vadl.pass.PassName;
 import vadl.pass.PassResults;
-import vadl.utils.GraphUtils;
 import vadl.utils.ViamUtils;
 import vadl.viam.Instruction;
 import vadl.viam.Specification;
 
+/**
+ * A pass that finds all instructions in the specification and adds conditions
+ * to the {@link vadl.viam.graph.dependency.SideEffectNode}.
+ * Those conditions define under what condition the corresponding side effect
+ * is executed/takes affect.
+ *
+ * @see SideEffectConditionResolver
+ */
 public class SideEffectConditionResolvingPass extends Pass {
 
   public SideEffectConditionResolvingPass(GeneralConfiguration configuration) {

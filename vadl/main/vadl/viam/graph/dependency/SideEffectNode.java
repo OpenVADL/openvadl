@@ -10,12 +10,17 @@ import vadl.viam.graph.Node;
 /**
  * Represents a node with side effect. Such nodes are dependencies
  * of {@link vadl.viam.graph.control.AbstractEndNode}.
+ *
+ * <p>A side effect has a {@code condition} under which it takes affect/is executed.
+ * This condition is resolved during the
+ * {@link vadl.viam.passes.sideeffect_condition.SideEffectConditionResolvingPass} and
+ * therefore is not available until the pass was executed.</p>
  */
 public abstract class SideEffectNode extends DependencyNode {
 
   @Input
   @Nullable
-  ExpressionNode condition;
+  private ExpressionNode condition;
 
   @Override
   public void verifyState() {
@@ -36,6 +41,10 @@ public abstract class SideEffectNode extends DependencyNode {
     return condition;
   }
 
+  /**
+   * Sets the condition of the side effect.
+   * The condition defines under what condition the side effect takes place.
+   */
   public void setCondition(ExpressionNode condition) {
     ensure(condition.type().isTrivialCastTo(Type.bool()), "Condition must be a boolean but was %s",
         condition);
