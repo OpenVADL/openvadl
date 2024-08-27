@@ -10,6 +10,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.stream.IntStream;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 import vadl.configuration.LcbConfiguration;
 import vadl.lcb.codegen.PredicateCodeGenerator;
 import vadl.lcb.passes.isaMatching.InstructionLabel;
@@ -70,10 +71,10 @@ public class EmitRegisterInfoCppFilePass extends LcbTemplateRenderingPass {
     var abi =
         (DummyAbi) specification.definitions().filter(x -> x instanceof DummyAbi).findFirst().get();
     var instructionLabels =
-        (HashMap<InstructionLabel, List<Instruction>>) passResults.getOfLastExecution(
-            IsaMatchingPass.class).get();
-    var uninlined = (IdentityHashMap<Instruction, UninlinedGraph>) passResults.getOfLastExecution(
-        FunctionInlinerPass.class).get();
+        (HashMap<InstructionLabel, List<Instruction>>) passResults.lastResultOf(
+            IsaMatchingPass.class);
+    var uninlined = (IdentityHashMap<Instruction, UninlinedGraph>) passResults.lastResultOf(
+        FunctionInlinerPass.class);
     return Map.of(CommonVarNames.NAMESPACE, specification.name(),
         "framePointer", abi.framePointer(),
         "stackPointer", abi.stackPointer(),
@@ -95,8 +96,12 @@ public class EmitRegisterInfoCppFilePass extends LcbTemplateRenderingPass {
   }
 
   private List<FrameIndexElimination>
-  getEliminateFrameIndexEntries(HashMap<InstructionLabel, List<Instruction>> instructionLabels,
-                                IdentityHashMap<Instruction, UninlinedGraph> uninlined) {
+  getEliminateFrameIndexEntries(
+      @Nullable HashMap<InstructionLabel, List<Instruction>> instructionLabels,
+      @Nullable IdentityHashMap<Instruction, UninlinedGraph> uninlined) {
+    ensureNonNull(instructionLabels, "labels must exist");
+    ensureNonNull(uninlined, "uninlined must exist");
+
     var entries = new ArrayList<FrameIndexElimination>();
     var affected =
         List.of(InstructionLabel.ADDI_32, InstructionLabel.STORE_MEM, InstructionLabel.LOAD_MEM);
