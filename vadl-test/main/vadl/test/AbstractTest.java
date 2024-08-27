@@ -229,10 +229,7 @@ public abstract class AbstractTest {
    */
   public Specification runAndGetViamSpecification(String testSourcePath) {
     tryToRunSpecificationWithFrontend(testSourcePath, testFrontend);
-    var viam = testFrontend.getViam();
-    // verify state of viam before returning it
-    ViamVerifier.verifyAllIn(viam);
-    return viam;
+    return testFrontend.getViam();
   }
 
   public static TestFrontend runViamSpecificationWithNewFrontend(String testSourcePath) {

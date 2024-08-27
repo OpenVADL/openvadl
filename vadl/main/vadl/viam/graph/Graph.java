@@ -23,6 +23,7 @@ import vadl.viam.graph.control.AbstractEndNode;
 import vadl.viam.graph.control.ControlNode;
 import vadl.viam.graph.control.EndNode;
 import vadl.viam.graph.control.InstrCallNode;
+import vadl.viam.graph.control.InstrEndNode;
 import vadl.viam.graph.control.ReturnNode;
 import vadl.viam.graph.control.StartNode;
 import vadl.viam.graph.dependency.ConstantNode;
@@ -232,7 +233,7 @@ public class Graph {
    */
   public boolean isInstruction() {
     return getNodes(FuncParamNode.class).findAny().isEmpty()
-        && getNodes(InstrCallNode.class).count() == 1;
+        && getNodes(InstrEndNode.class).count() == 1;
   }
 
   /**
