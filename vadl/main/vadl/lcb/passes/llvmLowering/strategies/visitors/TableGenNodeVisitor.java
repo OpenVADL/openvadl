@@ -6,6 +6,7 @@ import vadl.lcb.passes.llvmLowering.model.LlvmFieldAccessRefNode;
 import vadl.lcb.passes.llvmLowering.model.LlvmFrameIndexSD;
 import vadl.lcb.passes.llvmLowering.model.LlvmLoad;
 import vadl.lcb.passes.llvmLowering.model.LlvmSExtLoad;
+import vadl.lcb.passes.llvmLowering.model.LlvmSetccSD;
 import vadl.lcb.passes.llvmLowering.model.LlvmStore;
 import vadl.lcb.passes.llvmLowering.model.LlvmTruncStore;
 import vadl.lcb.passes.llvmLowering.model.LlvmTypeCastSD;
@@ -57,7 +58,12 @@ public interface TableGenNodeVisitor extends LcbGraphNodeVisitor {
   void visit(LlvmSExtLoad node);
 
   /**
-   * Visit {@link LlvmZExtLoad node}.
+   * Visit {@link LlvmZExtLoad}.
    */
   void visit(LlvmZExtLoad node);
+
+  /**
+   * Visit {@link LlvmSetccSD}.
+   */
+  void visit(LlvmSetccSD node);
 }

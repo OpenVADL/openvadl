@@ -46,9 +46,11 @@ namespace llvm
                                  unsigned FIOperandNum,
                                  RegScavenger *RS = nullptr) const override;
 
-        «FOR registerClass : registerClasses» static unsigned «registerClass.simpleName»(unsigned index);
-        «ENDFOR» static unsigned registerOpcodeLookup(std::string className, unsigned index);
+        [# th:each="rg : ${registerClasses}" ]
+        static unsigned [(${rg.identifier.simpleName()})](unsigned index);
+        [/]
 
+        static unsigned registerOpcodeLookup(std::string className, unsigned index);
         Register getFrameRegister(const MachineFunction &MF) const override;
     };
 } // end namespace llvm

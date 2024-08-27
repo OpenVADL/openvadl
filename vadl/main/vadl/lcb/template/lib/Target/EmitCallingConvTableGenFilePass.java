@@ -1,12 +1,18 @@
 package vadl.lcb.template.lib.Target;
 
 import java.io.IOException;
+import java.util.List;
 import java.util.Map;
+import java.util.stream.Collectors;
+import org.jetbrains.annotations.NotNull;
 import vadl.configuration.LcbConfiguration;
+import vadl.lcb.codegen.model.llvm.ValueType;
 import vadl.lcb.template.CommonVarNames;
 import vadl.lcb.template.LcbTemplateRenderingPass;
 import vadl.pass.PassResults;
 import vadl.viam.Specification;
+import vadl.viam.passes.dummyAbi.DummyAbi;
+import vadl.viam.passes.dummyAbi.DummyAbiPass;
 
 /**
  * This file contains the calling conventions for the defined backend.
@@ -28,9 +34,41 @@ public class EmitCallingConvTableGenFilePass extends LcbTemplateRenderingPass {
         + "CallingConv.td";
   }
 
+  record AssignToReg(String type, String registerRefs) {
+
+  }
+
   @Override
   protected Map<String, Object> createVariables(final PassResults passResults,
                                                 Specification specification) {
-    return Map.of(CommonVarNames.NAMESPACE, specification.name());
+    var abi =
+        (DummyAbi) specification.definitions().filter(x -> x instanceof DummyAbi).findFirst().get();
+    return Map.of(CommonVarNames.NAMESPACE, specification.name(),
+        "calleeRegisters", abi.calleeSaved(),
+        "functionRegisterType", getFuncArgsAssignToReg(abi).type,
+        "functionRegisters", getFuncArgsAssignToReg(abi),
+        "returnRegisters", getReturnAssignToReg(abi));
+  }
+
+  @NotNull
+  private AssignToReg getReturnAssignToReg(DummyAbi abi) {
+    ensure(abi.returnRegisters().stream().map(x -> x.registerFile().relationType()).collect(
+            Collectors.toSet()).size() == 1,
+        "All return registers must have the same type and at least one must exist");
+    return new AssignToReg(
+        ValueType.from(abi.returnRegisters().get(0).registerFile().resultType()).getLlvmType(),
+        abi.returnRegisters().stream().map(DummyAbi.RegisterRef::render)
+            .collect(Collectors.joining(",")));
+  }
+
+  @NotNull
+  private AssignToReg getFuncArgsAssignToReg(DummyAbi abi) {
+    ensure(abi.argumentRegisters().stream().map(x -> x.registerFile().relationType()).collect(
+            Collectors.toSet()).size() == 1,
+        "All function argument registers must have the same type and at least one must exist");
+    return new AssignToReg(
+        ValueType.from(abi.argumentRegisters().get(0).registerFile().resultType()).getLlvmType(),
+        abi.argumentRegisters().stream().map(DummyAbi.RegisterRef::render)
+            .collect(Collectors.joining(",")));
   }
 }
