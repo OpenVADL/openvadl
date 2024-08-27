@@ -10,7 +10,7 @@ import vadl.viam.DefProp;
 import vadl.viam.ViamError;
 
 /**
- * A static collection of {@link InfoEnricher} that provide information about
+ * A static collection of {@link InfoEnricher} that provides information about
  * VIAM definitions.
  * E.g. the definition type ({@link #DEF_CLASS_SUPPLIER_TAG} and the behavior graph
  * ({@link #BEHAVIOR_SUPPLIER_MODAL}).
