@@ -14,8 +14,8 @@ import vadl.viam.graph.dependency.BuiltInCall;
  * then it replaces it with the result. It will repeat the process until nothing changes.
  * It will only consider machine instructions.
  */
-public class CanoicalizationPass extends Pass {
-  public CanoicalizationPass(GeneralConfiguration configuration) {
+public class CanonicalizationPass extends Pass {
+  public CanonicalizationPass(GeneralConfiguration configuration) {
     super(configuration);
   }
 
