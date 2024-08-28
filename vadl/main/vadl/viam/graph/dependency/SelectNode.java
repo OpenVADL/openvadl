@@ -43,6 +43,13 @@ public class SelectNode extends ExpressionNode {
     collection.add(falseCase);
   }
 
+  @Override
+  public void collectInputsWithChildren(List<Node> collection) {
+    super.collectInputs(collection);
+    condition.collectInputsWithChildren(collection);
+    trueCase.collectInputsWithChildren(collection);
+    falseCase.collectInputsWithChildren(collection);
+  }
 
   @Override
   protected void applyOnInputsUnsafe(GraphVisitor.Applier<Node> visitor) {

@@ -67,6 +67,12 @@ public abstract class UnaryNode extends ExpressionNode {
   }
 
   @Override
+  public void collectInputsWithChildren(List<Node> collection) {
+    super.collectInputs(collection);
+    value.collectInputsWithChildren(collection);
+  }
+
+  @Override
   protected void applyOnInputsUnsafe(GraphVisitor.Applier<Node> visitor) {
     super.applyOnInputsUnsafe(visitor);
     value = visitor.apply(this, value, ExpressionNode.class);

@@ -1,5 +1,7 @@
 package vadl.lcb.passes.llvmLowering.model;
 
+import java.util.List;
+import vadl.javaannotations.viam.DataValue;
 import vadl.lcb.codegen.model.llvm.ValueType;
 import vadl.lcb.passes.llvmLowering.LlvmNodeLowerable;
 import vadl.lcb.passes.llvmLowering.strategies.visitors.TableGenMachineInstructionVisitor;
@@ -15,6 +17,7 @@ import vadl.viam.graph.dependency.UnaryNode;
  * LLVM's node for type casts.
  */
 public class LlvmTypeCastSD extends UnaryNode implements LlvmNodeLowerable {
+  @DataValue
   private ValueType valueType;
 
   public LlvmTypeCastSD(ExpressionNode value, Type type) {
@@ -46,5 +49,12 @@ public class LlvmTypeCastSD extends UnaryNode implements LlvmNodeLowerable {
   @Override
   public String lower() {
     return valueType.getLlvmType();
+  }
+
+
+  @Override
+  protected void collectData(List<Object> collection) {
+    super.collectData(collection);
+    collection.add(valueType);
   }
 }

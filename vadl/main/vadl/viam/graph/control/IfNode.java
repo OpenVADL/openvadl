@@ -86,6 +86,14 @@ public class IfNode extends ControlSplitNode {
   }
 
   @Override
+  public void collectInputsWithChildren(List<Node> collection) {
+    super.collectInputs(collection);
+    condition.collectInputsWithChildren(collection);
+    trueBranch.collectInputsWithChildren(collection);
+    falseBranch.collectInputsWithChildren(collection);
+  }
+
+  @Override
   protected void applyOnInputsUnsafe(GraphVisitor.Applier<Node> visitor) {
     super.applyOnInputsUnsafe(visitor);
     condition = visitor.apply(this, condition, ExpressionNode.class);

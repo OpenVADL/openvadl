@@ -124,6 +124,22 @@ public abstract class Node {
   protected void collectInputs(List<Node> collection) { /* nothing to add */
   }
 
+
+  /**
+   * Collects all successors in the provided list and it's children's successors.
+   *
+   * <p><b>IMPORTANT</b>:
+   * <li>This must be overridden by every node that has inputs
+   * (annotated with {@link vadl.javaannotations.viam.Input}).</li>
+   * <li>The subclass must call {@code super.collectInputs(collection)} before
+   * adding its own inputs!</li>
+   * <li>Optional successors must only be added if they are non-null</li>
+   *
+   * @param collection to add the successors to.
+   */
+  public void collectInputsWithChildren(List<Node> collection) { /* nothing to add */
+  }
+
   protected final List<Node> inputList() {
     var collection = new ArrayList<Node>();
     collectInputs(collection);

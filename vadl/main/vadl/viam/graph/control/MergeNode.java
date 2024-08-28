@@ -31,6 +31,14 @@ public class MergeNode extends AbstractBeginNode {
   }
 
   @Override
+  public void collectInputsWithChildren(List<Node> collection) {
+    super.collectInputs(collection);
+    for (var arg : branchEnds) {
+      arg.collectInputsWithChildren(collection);
+    }
+  }
+
+  @Override
   protected void applyOnInputsUnsafe(GraphVisitor.Applier<Node> visitor) {
     super.applyOnInputsUnsafe(visitor);
     branchEnds = branchEnds.stream()

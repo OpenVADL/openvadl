@@ -95,6 +95,14 @@ public class LlvmBrCcSD extends ExpressionNode implements LlvmNodeLowerable {
   }
 
   @Override
+  public void collectInputsWithChildren(List<Node> collection) {
+    super.collectInputs(collection);
+    first.collectInputsWithChildren(collection);
+    second.collectInputsWithChildren(collection);
+    immOffset.collectInputsWithChildren(collection);
+  }
+
+  @Override
   protected void collectData(List<Object> collection) {
     super.collectData(collection);
     collection.add(condition);

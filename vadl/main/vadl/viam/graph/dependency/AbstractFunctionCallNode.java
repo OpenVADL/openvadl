@@ -43,6 +43,15 @@ public abstract class AbstractFunctionCallNode extends ExpressionNode {
   }
 
   @Override
+  public void collectInputsWithChildren(List<Node> collection) {
+    super.collectInputs(collection);
+    collection.addAll(args);
+    for (var arg : args) {
+      arg.collectInputsWithChildren(collection);
+    }
+  }
+
+  @Override
   protected void applyOnInputsUnsafe(GraphVisitor.Applier<Node> visitor) {
     super.applyOnInputsUnsafe(visitor);
     args = args.stream()
