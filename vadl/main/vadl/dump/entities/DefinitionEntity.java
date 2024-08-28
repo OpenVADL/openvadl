@@ -64,6 +64,11 @@ public class DefinitionEntity extends DumpEntity {
     return parent;
   }
 
+  /**
+   * Returns the level of this definition in relation to its parents.
+   * If the definition has no parent (the specification), it will return 0.
+   * E.g. a ISA definition has level 1.
+   */
   public int parentLevel() {
     if (parent == null) {
       return 0;

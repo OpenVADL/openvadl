@@ -35,8 +35,9 @@ public class LcbEnricherCollection {
           return;
         }
 
-        var labels = (HashMap<InstructionLabel, List<Instruction>>) passResults.lastResultOf(
-            IsaMatchingPass.class);
+        var labels =
+            (HashMap<InstructionLabel, List<Instruction>>) passResults.lastNullableResultOf(
+                IsaMatchingPass.class);
         if (labels != null && definitionEntity.origin() instanceof Instruction instruction) {
           var flipped = LlvmLoweringPass.flipIsaMatching(labels);
           var label =
@@ -115,7 +116,7 @@ public class LcbEnricherCollection {
                   "TableGen Pattern",
                   dotGraph
               );
-              
+
               definitionEntity.addInfo(info);
             }
           }

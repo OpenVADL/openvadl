@@ -8,7 +8,11 @@ import vadl.dump.InfoEnricher;
 import vadl.dump.InfoUtils;
 import vadl.dump.entities.DefinitionEntity;
 import vadl.viam.DefProp;
+import vadl.viam.Encoding;
+import vadl.viam.Format;
+import vadl.viam.Function;
 import vadl.viam.Instruction;
+import vadl.viam.Parameter;
 import vadl.viam.ViamError;
 
 /**
@@ -130,6 +134,20 @@ public class ViamEnricherCollection {
    */
   public static InfoEnricher SOURCE_CODE_SUPPLIER_EXPANDABLE =
       forType(DefinitionEntity.class, (entity, passResult) -> {
+        var noSourceCode = List.of(
+            Format.Field.class,
+            Encoding.Field.class,
+            Parameter.class
+        );
+        if (noSourceCode.contains(entity.origin().getClass())) {
+          // dont add source code
+          return;
+        }
+
+        if (entity.origin() instanceof Function && entity.parentLevel() > 2) {
+          return;
+        }
+
         var sourceLocation = entity.origin().sourceLocation();
         if (entity.origin() instanceof Instruction) {
           sourceLocation = ((Instruction) entity.origin()).behavior().sourceLocation();
