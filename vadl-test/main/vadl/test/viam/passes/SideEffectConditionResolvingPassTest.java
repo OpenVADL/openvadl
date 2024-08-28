@@ -19,7 +19,7 @@ import vadl.test.TestUtils;
 import vadl.types.BuiltInTable;
 import vadl.viam.Constant;
 import vadl.viam.Instruction;
-import vadl.viam.graph.control.EndNode;
+import vadl.viam.graph.control.BranchEndNode;
 import vadl.viam.graph.control.IfNode;
 import vadl.viam.graph.control.InstrEndNode;
 import vadl.viam.graph.control.StartNode;
@@ -45,7 +45,7 @@ public class SideEffectConditionResolvingPassTest extends AbstractTest {
     var behavior = instr.behavior();
     var ifNode = getSingleNode(behavior, IfNode.class);
     var instrEnd = getSingleNode(behavior, InstrEndNode.class);
-    var branchEnd = behavior.getNodes(EndNode.class)
+    var branchEnd = behavior.getNodes(BranchEndNode.class)
         .filter(e -> !e.sideEffects().isEmpty()).findFirst().get();
 
     var trivialMatcher = new ConstantValueMatcher(Constant.Value.of(true));
@@ -66,7 +66,7 @@ public class SideEffectConditionResolvingPassTest extends AbstractTest {
     var behavior = instr.behavior();
     var ifNode = getSingleNode(behavior, IfNode.class);
     var instrEnd = getSingleNode(behavior, InstrEndNode.class);
-    var branchEnd = behavior.getNodes(EndNode.class)
+    var branchEnd = behavior.getNodes(BranchEndNode.class)
         .filter(e -> !e.sideEffects().isEmpty()).findFirst().get();
 
     var trivialMatcher = new ConstantValueMatcher(Constant.Value.of(true));
@@ -91,7 +91,7 @@ public class SideEffectConditionResolvingPassTest extends AbstractTest {
   private void testSingleIfElse(Instruction instr) {
     var behavior = instr.behavior();
     var ifNode = getSingleNode(behavior, IfNode.class);
-    var branchEnd = behavior.getNodes(EndNode.class)
+    var branchEnd = behavior.getNodes(BranchEndNode.class)
         .filter(e -> !e.sideEffects().isEmpty()).findFirst().get();
 
     var trivialMatcher = new ConstantValueMatcher(Constant.Value.of(true));

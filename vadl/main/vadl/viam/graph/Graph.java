@@ -5,28 +5,21 @@ import static java.util.Objects.requireNonNull;
 import com.google.errorprone.annotations.FormatMethod;
 import com.google.errorprone.annotations.FormatString;
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
-import java.util.function.Function;
-import java.util.function.Predicate;
 import java.util.stream.Stream;
 import javax.annotation.Nullable;
-import vadl.pass.PassResults;
-import vadl.utils.Pair;
 import vadl.utils.SourceLocation;
-import vadl.viam.Specification;
 import vadl.viam.graph.control.AbstractEndNode;
 import vadl.viam.graph.control.ControlNode;
-import vadl.viam.graph.control.EndNode;
+import vadl.viam.graph.control.BranchEndNode;
 import vadl.viam.graph.control.InstrCallNode;
 import vadl.viam.graph.control.InstrEndNode;
 import vadl.viam.graph.control.ReturnNode;
 import vadl.viam.graph.control.StartNode;
-import vadl.viam.graph.dependency.ConstantNode;
 import vadl.viam.graph.dependency.DependencyNode;
 import vadl.viam.graph.dependency.FuncParamNode;
 import vadl.viam.graph.dependency.ParamNode;
@@ -254,12 +247,12 @@ public class Graph {
    * Returns if the graph represents a pseudo instruction body.
    *
    * <p>A pseudo instruction has a simple control flow consisting of a {@link StartNode},
-   * arbitrary many {@link InstrCallNode} and a {@link EndNode}. It must only reference
+   * arbitrary many {@link InstrCallNode} and a {@link BranchEndNode}. It must only reference
    * {@link FuncParamNode} but no other param nodes.</p>
    */
   public boolean isPseudoInstruction() {
     return getNodes(ControlNode.class).allMatch(
-        e -> e instanceof InstrCallNode || e instanceof StartNode || e instanceof EndNode
+        e -> e instanceof InstrCallNode || e instanceof StartNode || e instanceof BranchEndNode
     ) && getNodes(ParamNode.class).allMatch(e -> e instanceof FuncParamNode);
   }
 

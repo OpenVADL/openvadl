@@ -37,7 +37,7 @@ import vadl.types.BuiltInTable;
 import vadl.viam.Constant;
 import vadl.viam.graph.Node;
 import vadl.viam.graph.control.AbstractBeginNode;
-import vadl.viam.graph.control.EndNode;
+import vadl.viam.graph.control.BranchEndNode;
 import vadl.viam.graph.control.IfNode;
 import vadl.viam.graph.control.InstrCallNode;
 import vadl.viam.graph.control.InstrEndNode;
@@ -254,8 +254,8 @@ public class ReplaceWithLlvmSDNodesVisitor
   }
 
   @Override
-  public void visit(EndNode endNode) {
-    for (var arg : endNode.sideEffects()) {
+  public void visit(BranchEndNode branchEndNode) {
+    for (var arg : branchEndNode.sideEffects()) {
       visit(arg);
     }
   }

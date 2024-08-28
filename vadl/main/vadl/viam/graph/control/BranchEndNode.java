@@ -8,21 +8,21 @@ import vadl.viam.graph.dependency.SideEffectNode;
 /**
  * Represents the end of a control subflow (e.g. if branch).
  */
-public class EndNode extends AbstractEndNode {
-  public EndNode(
+public class BranchEndNode extends AbstractEndNode {
+  public BranchEndNode(
       NodeList<SideEffectNode> sideEffects) {
     super(sideEffects);
   }
 
   @Override
   public Node copy() {
-    return new EndNode(
+    return new BranchEndNode(
         new NodeList<>(sideEffects().stream().map(x -> (SideEffectNode) x.copy()).toList()));
   }
 
   @Override
   public Node shallowCopy() {
-    return new EndNode(sideEffects());
+    return new BranchEndNode(sideEffects());
   }
 
   @Override

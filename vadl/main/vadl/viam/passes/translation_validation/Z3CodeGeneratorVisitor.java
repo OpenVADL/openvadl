@@ -11,7 +11,7 @@ import vadl.viam.ViamError;
 import vadl.viam.graph.GraphNodeVisitor;
 import vadl.viam.graph.Node;
 import vadl.viam.graph.control.AbstractBeginNode;
-import vadl.viam.graph.control.EndNode;
+import vadl.viam.graph.control.BranchEndNode;
 import vadl.viam.graph.control.IfNode;
 import vadl.viam.graph.control.InstrCallNode;
 import vadl.viam.graph.control.InstrEndNode;
@@ -210,7 +210,7 @@ public class Z3CodeGeneratorVisitor implements GraphNodeVisitor {
   }
 
   @Override
-  public void visit(EndNode endNode) {
+  public void visit(BranchEndNode branchEndNode) {
   }
 
   @Override
