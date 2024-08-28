@@ -44,6 +44,11 @@ public abstract class AbstractTemplateRenderingPass extends Pass {
     return templateResolver;
   }
 
+  /**
+   * The result of a rendering pass.
+   *
+   * @param emittedFile the path to the file that was rendered/emitted
+   */
   public record Result(
       Path emittedFile
   ) {
