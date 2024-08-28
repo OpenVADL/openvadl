@@ -3,6 +3,7 @@ package vadl.dump.entities;
 import java.util.List;
 import java.util.Objects;
 import java.util.function.Function;
+import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
 import vadl.dump.DumpEntity;
 import vadl.dump.entitySuppliers.ViamEntitySupplier;
@@ -54,14 +55,20 @@ public class DefinitionEntity extends DumpEntity {
     return origin.identifier.name();
   }
 
-  @SuppressWarnings("NullableProblems")
-  public void setParent(DefinitionEntity parent) {
+  public void setParent(@Nonnull DefinitionEntity parent) {
     this.parent = parent;
   }
 
   public DefinitionEntity parent() {
     Objects.requireNonNull(parent);
     return parent;
+  }
+
+  public int parentLevel() {
+    if (parent == null) {
+      return 0;
+    }
+    return parent.parentLevel() + 1;
   }
 
   public static String cssIdFor(Definition def) {
