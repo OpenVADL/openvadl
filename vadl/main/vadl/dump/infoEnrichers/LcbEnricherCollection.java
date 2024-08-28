@@ -9,6 +9,7 @@ import java.util.Optional;
 import java.util.stream.Collectors;
 import vadl.dump.Info;
 import vadl.dump.InfoEnricher;
+import vadl.dump.InfoUtils;
 import vadl.dump.entities.DefinitionEntity;
 import vadl.lcb.passes.isaMatching.InstructionLabel;
 import vadl.lcb.passes.isaMatching.IsaMatchingPass;
@@ -71,18 +72,13 @@ public class LcbEnricherCollection {
             var renderedOutputOperands =
                 result.outputs().stream().map(TableGenInstructionOperand::render).collect(
                     Collectors.joining(", "));
-            var template = """
-                <pre><code id="code-block" class="text-sm whitespace-pre">
-                %s
-                </code></pre>
-                """;
-            definitionEntity.addInfo(new Info.Expandable(
+            definitionEntity.addInfo(InfoUtils.createCodeBlockExpandable(
                 "TableGen Input Operands",
-                template.formatted(renderedInputOperands)
+                renderedInputOperands
             ));
-            definitionEntity.addInfo(new Info.Expandable(
+            definitionEntity.addInfo(InfoUtils.createCodeBlockExpandable(
                 "TableGen Output Operands",
-                template.formatted(renderedOutputOperands)
+                renderedOutputOperands
             ));
           }
         }
@@ -112,34 +108,14 @@ public class LcbEnricherCollection {
               for (var node : machineCopy.getNodes().toList()) {
                 mergedGraph.addWithInputs(node);
               }
-              var dotGraph = mergedGraph.dotGraph();
-              var info = new Info.Modal("TableGen Pattern", "");
-              var id = info.id();
 
-              // fill info with modal title
-              info.modalTitle = " TableGen pattern";
-              info.body = """
-                  <div id="graph-%s" class="h-full"></div>
-                  <script id="dot-graph-%s" type="application/dot">
-                  %s
-                  </script>
-                  """.formatted(id, id, dotGraph);
-              // add javascript that is executed when the modal is opened the first time.
-              // it renders the dot graph and embeds it in the graph container.
-              info.jsOnFirstOpen = """
-                  var dotString =
-                      document.getElementById(
-                          "dot-graph-%s",
-                      ).textContent;
-                  d3.select("#graph-%s")
-                      .graphviz()
-                      .width("100%%")
-                      .height("100%%")
-                      .renderDot(
-                          dotString,
-                      );
-                  """.formatted(id, id);
-              // finally add the info to the entity
+              var dotGraph = mergedGraph.dotGraph();
+              var info = InfoUtils.createGraphModal(
+                  "TableGen Pattern",
+                  "TableGen Pattern",
+                  dotGraph
+              );
+              
               definitionEntity.addInfo(info);
             }
           }

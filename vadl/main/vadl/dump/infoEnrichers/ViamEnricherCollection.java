@@ -3,6 +3,7 @@ package vadl.dump.infoEnrichers;
 import static vadl.dump.InfoEnricher.forType;
 
 import java.util.List;
+import vadl.dump.InfoUtils;
 import vadl.dump.Info;
 import vadl.dump.InfoEnricher;
 import vadl.dump.entities.DefinitionEntity;
@@ -92,37 +93,11 @@ public class ViamEnricherCollection {
 
       // fetch behavior
       var dotGraph = behavior.dotGraph();
-
-      // create new empty modal info and get its id
-      var info = new Info.Modal("Behavior", "");
-      var id = info.id();
-
-      // fill info with modal title
-      info.modalTitle = def.name() + " Behavior";
-      // add the body with the empty graph container
-      // and a script tag that contains the dot graph
-      info.body = """
-          <div id="graph-%s" class="h-full"></div>
-          <script id="dot-graph-%s" type="application/dot">
-          %s
-          </script>
-          """.formatted(id, id, dotGraph);
-      // add javascript that is executed when the modal is opened the first time.
-      // it renders the dot graph and embeds it in the graph container.
-      info.jsOnFirstOpen = """
-          var dotString =
-              document.getElementById(
-                  "dot-graph-%s",
-              ).textContent;
-          d3.select("#graph-%s")
-              .graphviz()
-              .width("100%%")
-              .height("100%%")
-              .renderDot(
-                  dotString,
-              );
-          """.formatted(id, id);
-      // finally add the info to the entity
+      var info = InfoUtils.createGraphModal(
+          "Behavior",
+          def.name() + " Behavior",
+          dotGraph
+      );
       defEntity.addInfo(info);
     }
   };
@@ -140,14 +115,9 @@ public class ViamEnricherCollection {
           entity.origin().verify();
         } catch (ViamError e) {
           // catch and add error information
-          var info = new Info.Expandable(
-              """
-                  <span class="text-red-500">Validation Exception</span>
-                  """,
-              """
-                  <pre><code id="code-block" class="text-sm text-gray-500 whitespace-pre">%s
-                  </code></pre>
-                  """.formatted(e.getMessage())
+          var info = InfoUtils.createCodeBlockExpandable(
+              "<span class=\"text-red-500\">Validation Exception</span>",
+              e.getMessage()
           );
           entity.addInfo(info);
         }
@@ -168,15 +138,9 @@ public class ViamEnricherCollection {
           return;
         }
         var source = sourceLocation.toSourceString();
-        // catch and add error information
-        var info = new Info.Expandable(
-            """
-                Source Code
-                """,
-            """
-                <pre><code id="code-block" class="text-sm text-gray-500 whitespace-pre">%s
-                </code></pre>
-                """.formatted(source)
+        var info = InfoUtils.createCodeBlockExpandable(
+            "Source Code",
+            source
         );
         entity.addInfo(info);
       });
