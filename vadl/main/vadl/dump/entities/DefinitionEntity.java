@@ -3,6 +3,7 @@ package vadl.dump.entities;
 import java.util.List;
 import java.util.Objects;
 import java.util.function.Function;
+import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
 import vadl.dump.DumpEntity;
 import vadl.dump.entitySuppliers.ViamEntitySupplier;
@@ -54,14 +55,25 @@ public class DefinitionEntity extends DumpEntity {
     return origin.identifier.name();
   }
 
-  @SuppressWarnings("NullableProblems")
-  public void setParent(DefinitionEntity parent) {
+  public void setParent(@Nonnull DefinitionEntity parent) {
     this.parent = parent;
   }
 
   public DefinitionEntity parent() {
     Objects.requireNonNull(parent);
     return parent;
+  }
+
+  /**
+   * Returns the level of this definition in relation to its parents.
+   * If the definition has no parent (the specification), it will return 0.
+   * E.g. a ISA definition has level 1.
+   */
+  public int parentLevel() {
+    if (parent == null) {
+      return 0;
+    }
+    return parent.parentLevel() + 1;
   }
 
   public static String cssIdFor(Definition def) {

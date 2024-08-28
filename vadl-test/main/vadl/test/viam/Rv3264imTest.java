@@ -8,7 +8,10 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.Objects;
 import org.junit.jupiter.api.Test;
+import vadl.configuration.GeneralConfiguration;
+import vadl.pass.PassOrder;
 import vadl.pass.PassResults;
+import vadl.pass.exception.DuplicatedPassKeyException;
 import vadl.test.AbstractTest;
 import vadl.viam.InstructionSetArchitecture;
 import vadl.viam.Register;
@@ -19,15 +22,14 @@ import vadl.viam.passes.verification.ViamVerifier;
 public class Rv3264imTest extends AbstractTest {
 
   @Test
-  void testRv32im() throws IOException {
-    var spec = runAndGetViamSpecification("examples/rv3264im.vadl");
-    new TypeCastEliminationPass(getConfiguration(false)).execute(PassResults.empty(), spec);
-    try {
-      ViamVerifier.verifyAllIn(spec);
-    } catch (ViamGraphError e) {
-      System.out.println(Objects.requireNonNull(e.graph()).dotGraph());
-      throw e;
-    }
+  void testRv32im() throws IOException, DuplicatedPassKeyException {
+    // runs the general viam optimizations on the rv3264im impl
+    var config = new GeneralConfiguration("build/test-out/rv3264im/", true);
+    var setup = setupPassManagerAndRunSpec(
+        "examples/rv3264im.vadl",
+        PassOrder.viam(config)
+    );
+    var spec = setup.specification();
 
     var rv3264i = findDefinitionByNameIn("RV3264I", spec, InstructionSetArchitecture.class);
 
