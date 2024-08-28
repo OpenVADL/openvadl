@@ -31,2143 +31,548 @@ public class EmitRegisterInfoTableGenFilePassTest extends AbstractLcbTest {
     var output = trimmed.lines();
 
     Assertions.assertLinesMatch("""
-                /*
-                 * Node representing the frame index.
-                 * The method CPUDAGToDAGISel::SelectAddrFI is used to determine
-                 * if the specific register is a frame pointer.
-                 */
-                def AddrFI : ComplexPattern<iPtr, 1, "SelectAddrFI", [frameindex], []>;
+        def X0 : Register<"X0">
+        {
+            let Namespace = "processorNameValue";
+            let AsmName = "zero";
+            let AltNames = [ "zero", "X0" ];
+            let Aliases = [  ];
+            let SubRegs = [  ];
+            let SubRegIndices = [  ];
+            let RegAltNameIndices = [];
+            let DwarfNumbers = [ 0 ];
+            list<int> CostPerUse = [0];
+            let CoveredBySubRegs = "";
+            let HWEncoding{4-0} = 0;
+            let isArtificial = 0;
+        }
+                
+                
+        def X1 : Register<"X1">
+        {
+            let Namespace = "processorNameValue";
+            let AsmName = "ra";
+            let AltNames = [ "ra", "X1" ];
+            let Aliases = [  ];
+            let SubRegs = [  ];
+            let SubRegIndices = [  ];
+            let RegAltNameIndices = [];
+            let DwarfNumbers = [ 1 ];
+            list<int> CostPerUse = [0];
+            let CoveredBySubRegs = "";
+            let HWEncoding{4-0} = 1;
+            let isArtificial = 0;
+        }
+                
+                
+        def X2 : Register<"X2">
+        {
+            let Namespace = "processorNameValue";
+            let AsmName = "sp";
+            let AltNames = [ "sp", "X2" ];
+            let Aliases = [  ];
+            let SubRegs = [  ];
+            let SubRegIndices = [  ];
+            let RegAltNameIndices = [];
+            let DwarfNumbers = [ 2 ];
+            list<int> CostPerUse = [0];
+            let CoveredBySubRegs = "";
+            let HWEncoding{4-0} = 2;
+            let isArtificial = 0;
+        }
+                
+                
+        def X3 : Register<"X3">
+        {
+            let Namespace = "processorNameValue";
+            let AsmName = "gp";
+            let AltNames = [ "gp", "X3" ];
+            let Aliases = [  ];
+            let SubRegs = [  ];
+            let SubRegIndices = [  ];
+            let RegAltNameIndices = [];
+            let DwarfNumbers = [ 3 ];
+            list<int> CostPerUse = [0];
+            let CoveredBySubRegs = "";
+            let HWEncoding{4-0} = 3;
+            let isArtificial = 0;
+        }
+                
+                
+        def X4 : Register<"X4">
+        {
+            let Namespace = "processorNameValue";
+            let AsmName = "tp";
+            let AltNames = [ "tp", "X4" ];
+            let Aliases = [  ];
+            let SubRegs = [  ];
+            let SubRegIndices = [  ];
+            let RegAltNameIndices = [];
+            let DwarfNumbers = [ 4 ];
+            list<int> CostPerUse = [0];
+            let CoveredBySubRegs = "";
+            let HWEncoding{4-0} = 4;
+            let isArtificial = 0;
+        }
+                
+                
+        def X5 : Register<"X5">
+        {
+            let Namespace = "processorNameValue";
+            let AsmName = "X";
+            let AltNames = [ "X5" ];
+            let Aliases = [  ];
+            let SubRegs = [  ];
+            let SubRegIndices = [  ];
+            let RegAltNameIndices = [];
+            let DwarfNumbers = [ 5 ];
+            list<int> CostPerUse = [0];
+            let CoveredBySubRegs = "";
+            let HWEncoding{4-0} = 5;
+            let isArtificial = 0;
+        }
+                
                 
-                def SDT_CallSeqStart : SDCallSeqStart<[SDTCisVT<0, i32>, SDTCisVT<1, i32>]>;
-                def SDT_CallSeqEnd   : SDCallSeqEnd<[SDTCisVT<0, i32>, SDTCisVT<1, i32>]>;
-                
-                
-                
-                class RV3264I_Itype_immS_decode<ValueType ty> : Operand<ty>
-                {
-                  let EncoderMethod = "RV3264I_Itype_immS_decode_encode";
-                  let DecoderMethod = "RV3264I_Itype_immS_decode_decode";
-                }
-                
-                def RV3264I_Itype_immS_decodeAsInt64
-                    : RV3264I_Itype_immS_decode<i64>
-                    , ImmLeaf<i64, [{ return RV3264I_Itype_immS_decode_predicate(Imm); }]>;
-                
-                
-                class RV3264I_Btype_immS_decode<ValueType ty> : Operand<ty>
-                {
-                  let EncoderMethod = "RV3264I_Btype_immS_decode_encode";
-                  let DecoderMethod = "RV3264I_Btype_immS_decode_decode";
-                }
-                
-                def RV3264I_Btype_immS_decodeAsInt64
-                    : RV3264I_Btype_immS_decode<i64>
-                    , ImmLeaf<i64, [{ return RV3264I_Btype_immS_decode_predicate(Imm); }]>;
-                
-                
-                class RV3264I_Stype_immS_decode<ValueType ty> : Operand<ty>
-                {
-                  let EncoderMethod = "RV3264I_Stype_immS_decode_encode";
-                  let DecoderMethod = "RV3264I_Stype_immS_decode_decode";
-                }
-                
-                def RV3264I_Stype_immS_decodeAsInt64
-                    : RV3264I_Stype_immS_decode<i64>
-                    , ImmLeaf<i64, [{ return RV3264I_Stype_immS_decode_predicate(Imm); }]>;
-                
-                
-                
-                
-                
-                def ADD : Instruction
-                {
-        <<<<<<< HEAD
-                let Namespace = "dummyNamespaceValue";
-                
-        =======
-                let Namespace = "processorNameValue";
-                       
-        >>>>>>> af7d2d1 (lcb: Updated tests)
-                let Size = 4;
-                let CodeSize = 4;
-                
-                let OutOperandList = ( outs X:$rd );
-                let InOperandList = ( ins X:$rs1, X:$rs2 );
-                
-                field bits<32> Inst;
-                
-                // SoftFail is a field the disassembler can use to provide a way for
-                // instructions to not match without killing the whole decode process. It is
-                // mainly used for ARM, but Tablegen expects this field to exist or it fails
-                // to build the decode table.
-                field bits<32> SoftFail = 0;
-                
-                bits<7> opcode = 0b110011;
-                bits<3> funct3 = 0b;
-                bits<7> funct7 = 0b;
-                bits<5> rs2;
-                bits<5> rs1;
-                bits<5> rd;
-                
-                let Inst{31-25} = funct7{6-0};
-                let Inst{24-20} = rs2{4-0};
-                let Inst{19-15} = rs1{4-0};
-                let Inst{14-12} = funct3{2-0};
-                let Inst{11-7} = rd{4-0};
-                let Inst{6-0} = opcode{6-0};
-                
-                let isTerminator  = 0;
-                let isBranch      = 0;
-                let isCall        = 0;
-                let isReturn      = 0;
-                let isPseudo      = 0;
-                let isCodeGenOnly = 0;
-                let mayLoad       = 0;
-                let mayStore      = 0;
-                
-                let Constraints = "";
-                let AddedComplexity = 0;
-                
-                let Pattern = [];
-                
-                let Uses = [  ];
-                let Defs = [  ];
-                }
-                
-                def : Pat<(add X:$rs1, X:$rs2)
-                        (ADD X:$rs1, X:$rs2)>;
-                
-                
-                
-                def ADDI : Instruction
-                {
-        <<<<<<< HEAD
-                let Namespace = "dummyNamespaceValue";
-                
-        =======
-                let Namespace = "processorNameValue";
-                       
-        >>>>>>> af7d2d1 (lcb: Updated tests)
-                let Size = 4;
-                let CodeSize = 4;
-                
-                let OutOperandList = ( outs X:$rd );
-                let InOperandList = ( ins X:$rs1, RV3264I_Itype_immS_decodeAsInt64:$immS );
-                
-                field bits<32> Inst;
-                
-                // SoftFail is a field the disassembler can use to provide a way for
-                // instructions to not match without killing the whole decode process. It is
-                // mainly used for ARM, but Tablegen expects this field to exist or it fails
-                // to build the decode table.
-                field bits<32> SoftFail = 0;
-                
-                bits<7> opcode = 0b11001;
-                bits<3> funct3 = 0b;
-                bits<12> imm;
-                bits<5> rs1;
-                bits<5> rd;
-                
-                let Inst{31-20} = imm{11-0};
-                let Inst{19-15} = rs1{4-0};
-                let Inst{14-12} = funct3{2-0};
-                let Inst{11-7} = rd{4-0};
-                let Inst{6-0} = opcode{6-0};
-                
-                let isTerminator  = 0;
-                let isBranch      = 0;
-                let isCall        = 0;
-                let isReturn      = 0;
-                let isPseudo      = 0;
-                let isCodeGenOnly = 0;
-                let mayLoad       = 0;
-                let mayStore      = 0;
-                
-                let Constraints = "";
-                let AddedComplexity = 0;
-                
-                let Pattern = [];
-                
-                let Uses = [  ];
-                let Defs = [  ];
-                }
-                
-                def : Pat<(add X:$rs1, RV3264I_Itype_immS_decodeAsInt64:$immS)
-                        (ADDI X:$rs1, RV3264I_Itype_immS_decodeAsInt64:$immS)>;
-                
-                
-                
-                def AND : Instruction
-                {
-        <<<<<<< HEAD
-                let Namespace = "dummyNamespaceValue";
-                
-        =======
-                let Namespace = "processorNameValue";
-                       
-        >>>>>>> af7d2d1 (lcb: Updated tests)
-                let Size = 4;
-                let CodeSize = 4;
-                
-                let OutOperandList = ( outs X:$rd );
-                let InOperandList = ( ins X:$rs1, X:$rs2 );
-                
-                field bits<32> Inst;
-                
-                // SoftFail is a field the disassembler can use to provide a way for
-                // instructions to not match without killing the whole decode process. It is
-                // mainly used for ARM, but Tablegen expects this field to exist or it fails
-                // to build the decode table.
-                field bits<32> SoftFail = 0;
-                
-                bits<7> opcode = 0b110011;
-                bits<3> funct3 = 0b111;
-                bits<7> funct7 = 0b;
-                bits<5> rs2;
-                bits<5> rs1;
-                bits<5> rd;
-                
-                let Inst{31-25} = funct7{6-0};
-                let Inst{24-20} = rs2{4-0};
-                let Inst{19-15} = rs1{4-0};
-                let Inst{14-12} = funct3{2-0};
-                let Inst{11-7} = rd{4-0};
-                let Inst{6-0} = opcode{6-0};
-                
-                let isTerminator  = 0;
-                let isBranch      = 0;
-                let isCall        = 0;
-                let isReturn      = 0;
-                let isPseudo      = 0;
-                let isCodeGenOnly = 0;
-                let mayLoad       = 0;
-                let mayStore      = 0;
-                
-                let Constraints = "";
-                let AddedComplexity = 0;
-                
-                let Pattern = [];
-                
-                let Uses = [  ];
-                let Defs = [  ];
-                }
-                
-                def : Pat<(and X:$rs1, X:$rs2)
-                        (AND X:$rs1, X:$rs2)>;
-                
-                
-                
-                def ANDI : Instruction
-                {
-        <<<<<<< HEAD
-                let Namespace = "dummyNamespaceValue";
-                
-        =======
-                let Namespace = "processorNameValue";
-                       
-        >>>>>>> af7d2d1 (lcb: Updated tests)
-                let Size = 4;
-                let CodeSize = 4;
-                
-                let OutOperandList = ( outs X:$rd );
-                let InOperandList = ( ins X:$rs1, RV3264I_Itype_immS_decodeAsInt64:$immS );
-                
-                field bits<32> Inst;
-                
-                // SoftFail is a field the disassembler can use to provide a way for
-                // instructions to not match without killing the whole decode process. It is
-                // mainly used for ARM, but Tablegen expects this field to exist or it fails
-                // to build the decode table.
-                field bits<32> SoftFail = 0;
-                
-                bits<7> opcode = 0b11001;
-                bits<3> funct3 = 0b111;
-                bits<12> imm;
-                bits<5> rs1;
-                bits<5> rd;
-                
-                let Inst{31-20} = imm{11-0};
-                let Inst{19-15} = rs1{4-0};
-                let Inst{14-12} = funct3{2-0};
-                let Inst{11-7} = rd{4-0};
-                let Inst{6-0} = opcode{6-0};
-                
-                let isTerminator  = 0;
-                let isBranch      = 0;
-                let isCall        = 0;
-                let isReturn      = 0;
-                let isPseudo      = 0;
-                let isCodeGenOnly = 0;
-                let mayLoad       = 0;
-                let mayStore      = 0;
-                
-                let Constraints = "";
-                let AddedComplexity = 0;
-                
-                let Pattern = [];
-                
-                let Uses = [  ];
-                let Defs = [  ];
-                }
-                
-                def : Pat<(and X:$rs1, RV3264I_Itype_immS_decodeAsInt64:$immS)
-                        (ANDI X:$rs1, RV3264I_Itype_immS_decodeAsInt64:$immS)>;
-                
-                
-                
-                def BEQ : Instruction
-                {
-        <<<<<<< HEAD
-                let Namespace = "dummyNamespaceValue";
-                
-        =======
-                let Namespace = "processorNameValue";
-                       
-        >>>>>>> af7d2d1 (lcb: Updated tests)
-                let Size = 4;
-                let CodeSize = 4;
-                
-                let OutOperandList = ( outs  );
-                let InOperandList = ( ins X:$rs1, X:$rs2, RV3264I_Btype_immS_decodeAsInt64:$immS );
-                
-                field bits<32> Inst;
-                
-                // SoftFail is a field the disassembler can use to provide a way for
-                // instructions to not match without killing the whole decode process. It is
-                // mainly used for ARM, but Tablegen expects this field to exist or it fails
-                // to build the decode table.
-                field bits<32> SoftFail = 0;
-                
-                bits<7> opcode = 0b1100011;
-                bits<3> funct3 = 0b;
-                bits<12> imm;
-                bits<5> rs2;
-                bits<5> rs1;
-                
-                let Inst{31-31} = imm{0-0};
-                let Inst{7-7} = imm{2-2};
-                let Inst{30-25} = imm{9-4};
-                let Inst{11-8} = imm{14-11};
-                let Inst{24-20} = rs2{4-0};
-                let Inst{19-15} = rs1{4-0};
-                let Inst{14-12} = funct3{2-0};
-                let Inst{6-0} = opcode{6-0};
-                
-                let isTerminator  = 1;
-                let isBranch      = 1;
-                let isCall        = 0;
-                let isReturn      = 0;
-                let isPseudo      = 0;
-                let isCodeGenOnly = 0;
-                let mayLoad       = 0;
-                let mayStore      = 0;
-                
-                let Constraints = "";
-                let AddedComplexity = 0;
-                
-                let Pattern = [];
-                
-                let Uses = [  ];
-                let Defs = [ PC ];
-                }
-                
-                def : Pat<(brcc (SETEQ X:$rs1, X:$rs2), RV3264I_Btype_immS_decodeAsInt64:$immS)
-                        (BEQ X:$rs1, X:$rs2, RV3264I_Btype_immS_decodeAsInt64:$immS)>;
-                
-                def : Pat<(brcond (i32 (seteq X:$rs1, X:$rs2)), RV3264I_Btype_immS_decodeAsInt64:$immS)
-                        (BEQ X:$rs1, X:$rs2, RV3264I_Btype_immS_decodeAsInt64:$immS)>;
-                
-                
-                
-                def BGE : Instruction
-                {
-        <<<<<<< HEAD
-                let Namespace = "dummyNamespaceValue";
-                
-        =======
-                let Namespace = "processorNameValue";
-                       
-        >>>>>>> af7d2d1 (lcb: Updated tests)
-                let Size = 4;
-                let CodeSize = 4;
-                
-                let OutOperandList = ( outs  );
-                let InOperandList = ( ins X:$rs1, X:$rs2, RV3264I_Btype_immS_decodeAsInt64:$immS );
-                
-                field bits<32> Inst;
-                
-                // SoftFail is a field the disassembler can use to provide a way for
-                // instructions to not match without killing the whole decode process. It is
-                // mainly used for ARM, but Tablegen expects this field to exist or it fails
-                // to build the decode table.
-                field bits<32> SoftFail = 0;
-                
-                bits<7> opcode = 0b1100011;
-                bits<3> funct3 = 0b101;
-                bits<12> imm;
-                bits<5> rs2;
-                bits<5> rs1;
-                
-                let Inst{31-31} = imm{0-0};
-                let Inst{7-7} = imm{2-2};
-                let Inst{30-25} = imm{9-4};
-                let Inst{11-8} = imm{14-11};
-                let Inst{24-20} = rs2{4-0};
-                let Inst{19-15} = rs1{4-0};
-                let Inst{14-12} = funct3{2-0};
-                let Inst{6-0} = opcode{6-0};
-                
-                let isTerminator  = 1;
-                let isBranch      = 1;
-                let isCall        = 0;
-                let isReturn      = 0;
-                let isPseudo      = 0;
-                let isCodeGenOnly = 0;
-                let mayLoad       = 0;
-                let mayStore      = 0;
-                
-                let Constraints = "";
-                let AddedComplexity = 0;
-                
-                let Pattern = [];
-                
-                let Uses = [  ];
-                let Defs = [ PC ];
-                }
-                
-                def : Pat<(brcc (SETGE X:$rs1, X:$rs2), RV3264I_Btype_immS_decodeAsInt64:$immS)
-                        (BGE X:$rs1, X:$rs2, RV3264I_Btype_immS_decodeAsInt64:$immS)>;
-                
-                def : Pat<(brcond (i32 (setge X:$rs1, X:$rs2)), RV3264I_Btype_immS_decodeAsInt64:$immS)
-                        (BGE X:$rs1, X:$rs2, RV3264I_Btype_immS_decodeAsInt64:$immS)>;
-                
-                
-                
-                def BGEU : Instruction
-                {
-        <<<<<<< HEAD
-                let Namespace = "dummyNamespaceValue";
-                
-        =======
-                let Namespace = "processorNameValue";
-                       
-        >>>>>>> af7d2d1 (lcb: Updated tests)
-                let Size = 4;
-                let CodeSize = 4;
-                
-                let OutOperandList = ( outs  );
-                let InOperandList = ( ins X:$rs1, X:$rs2, RV3264I_Btype_immS_decodeAsInt64:$immS );
-                
-                field bits<32> Inst;
-                
-                // SoftFail is a field the disassembler can use to provide a way for
-                // instructions to not match without killing the whole decode process. It is
-                // mainly used for ARM, but Tablegen expects this field to exist or it fails
-                // to build the decode table.
-                field bits<32> SoftFail = 0;
-                
-                bits<7> opcode = 0b1100011;
-                bits<3> funct3 = 0b111;
-                bits<12> imm;
-                bits<5> rs2;
-                bits<5> rs1;
-                
-                let Inst{31-31} = imm{0-0};
-                let Inst{7-7} = imm{2-2};
-                let Inst{30-25} = imm{9-4};
-                let Inst{11-8} = imm{14-11};
-                let Inst{24-20} = rs2{4-0};
-                let Inst{19-15} = rs1{4-0};
-                let Inst{14-12} = funct3{2-0};
-                let Inst{6-0} = opcode{6-0};
-                
-                let isTerminator  = 1;
-                let isBranch      = 1;
-                let isCall        = 0;
-                let isReturn      = 0;
-                let isPseudo      = 0;
-                let isCodeGenOnly = 0;
-                let mayLoad       = 0;
-                let mayStore      = 0;
-                
-                let Constraints = "";
-                let AddedComplexity = 0;
-                
-                let Pattern = [];
-                
-                let Uses = [  ];
-                let Defs = [ PC ];
-                }
-                
-                def : Pat<(brcc (SETUGE X:$rs1, X:$rs2), RV3264I_Btype_immS_decodeAsInt64:$immS)
-                        (BGEU X:$rs1, X:$rs2, RV3264I_Btype_immS_decodeAsInt64:$immS)>;
-                
-                def : Pat<(brcond (i32 (setuge X:$rs1, X:$rs2)), RV3264I_Btype_immS_decodeAsInt64:$immS)
-                        (BGEU X:$rs1, X:$rs2, RV3264I_Btype_immS_decodeAsInt64:$immS)>;
-                
-                
-                
-                def BLT : Instruction
-                {
-        <<<<<<< HEAD
-                let Namespace = "dummyNamespaceValue";
-                
-        =======
-                let Namespace = "processorNameValue";
-                       
-        >>>>>>> af7d2d1 (lcb: Updated tests)
-                let Size = 4;
-                let CodeSize = 4;
-                
-                let OutOperandList = ( outs  );
-                let InOperandList = ( ins X:$rs1, X:$rs2, RV3264I_Btype_immS_decodeAsInt64:$immS );
-                
-                field bits<32> Inst;
-                
-                // SoftFail is a field the disassembler can use to provide a way for
-                // instructions to not match without killing the whole decode process. It is
-                // mainly used for ARM, but Tablegen expects this field to exist or it fails
-                // to build the decode table.
-                field bits<32> SoftFail = 0;
-                
-                bits<7> opcode = 0b1100011;
-                bits<3> funct3 = 0b001;
-                bits<12> imm;
-                bits<5> rs2;
-                bits<5> rs1;
-                
-                let Inst{31-31} = imm{0-0};
-                let Inst{7-7} = imm{2-2};
-                let Inst{30-25} = imm{9-4};
-                let Inst{11-8} = imm{14-11};
-                let Inst{24-20} = rs2{4-0};
-                let Inst{19-15} = rs1{4-0};
-                let Inst{14-12} = funct3{2-0};
-                let Inst{6-0} = opcode{6-0};
-                
-                let isTerminator  = 1;
-                let isBranch      = 1;
-                let isCall        = 0;
-                let isReturn      = 0;
-                let isPseudo      = 0;
-                let isCodeGenOnly = 0;
-                let mayLoad       = 0;
-                let mayStore      = 0;
-                
-                let Constraints = "";
-                let AddedComplexity = 0;
-                
-                let Pattern = [];
-                
-                let Uses = [  ];
-                let Defs = [ PC ];
-                }
-                
-                def : Pat<(brcc (SETLT X:$rs1, X:$rs2), RV3264I_Btype_immS_decodeAsInt64:$immS)
-                        (BLT X:$rs1, X:$rs2, RV3264I_Btype_immS_decodeAsInt64:$immS)>;
-                
-                def : Pat<(brcond (i32 (setlt X:$rs1, X:$rs2)), RV3264I_Btype_immS_decodeAsInt64:$immS)
-                        (BLT X:$rs1, X:$rs2, RV3264I_Btype_immS_decodeAsInt64:$immS)>;
-                
-                
-                
-                def BLTU : Instruction
-                {
-        <<<<<<< HEAD
-                let Namespace = "dummyNamespaceValue";
-                
-        =======
-                let Namespace = "processorNameValue";
-                       
-        >>>>>>> af7d2d1 (lcb: Updated tests)
-                let Size = 4;
-                let CodeSize = 4;
-                
-                let OutOperandList = ( outs  );
-                let InOperandList = ( ins X:$rs1, X:$rs2, RV3264I_Btype_immS_decodeAsInt64:$immS );
-                
-                field bits<32> Inst;
-                
-                // SoftFail is a field the disassembler can use to provide a way for
-                // instructions to not match without killing the whole decode process. It is
-                // mainly used for ARM, but Tablegen expects this field to exist or it fails
-                // to build the decode table.
-                field bits<32> SoftFail = 0;
-                
-                bits<7> opcode = 0b1100011;
-                bits<3> funct3 = 0b011;
-                bits<12> imm;
-                bits<5> rs2;
-                bits<5> rs1;
-                
-                let Inst{31-31} = imm{0-0};
-                let Inst{7-7} = imm{2-2};
-                let Inst{30-25} = imm{9-4};
-                let Inst{11-8} = imm{14-11};
-                let Inst{24-20} = rs2{4-0};
-                let Inst{19-15} = rs1{4-0};
-                let Inst{14-12} = funct3{2-0};
-                let Inst{6-0} = opcode{6-0};
-                
-                let isTerminator  = 1;
-                let isBranch      = 1;
-                let isCall        = 0;
-                let isReturn      = 0;
-                let isPseudo      = 0;
-                let isCodeGenOnly = 0;
-                let mayLoad       = 0;
-                let mayStore      = 0;
-                
-                let Constraints = "";
-                let AddedComplexity = 0;
-                
-                let Pattern = [];
-                
-                let Uses = [  ];
-                let Defs = [ PC ];
-                }
-                
-                def : Pat<(brcc (SETULT X:$rs1, X:$rs2), RV3264I_Btype_immS_decodeAsInt64:$immS)
-                        (BLTU X:$rs1, X:$rs2, RV3264I_Btype_immS_decodeAsInt64:$immS)>;
-                
-                def : Pat<(brcond (i32 (setult X:$rs1, X:$rs2)), RV3264I_Btype_immS_decodeAsInt64:$immS)
-                        (BLTU X:$rs1, X:$rs2, RV3264I_Btype_immS_decodeAsInt64:$immS)>;
-                
-                
-                
-                def BNE : Instruction
-                {
-        <<<<<<< HEAD
-                let Namespace = "dummyNamespaceValue";
-                
-        =======
-                let Namespace = "processorNameValue";
-                       
-        >>>>>>> af7d2d1 (lcb: Updated tests)
-                let Size = 4;
-                let CodeSize = 4;
-                
-                let OutOperandList = ( outs  );
-                let InOperandList = ( ins X:$rs1, X:$rs2, RV3264I_Btype_immS_decodeAsInt64:$immS );
-                
-                field bits<32> Inst;
-                
-                // SoftFail is a field the disassembler can use to provide a way for
-                // instructions to not match without killing the whole decode process. It is
-                // mainly used for ARM, but Tablegen expects this field to exist or it fails
-                // to build the decode table.
-                field bits<32> SoftFail = 0;
-                
-                bits<7> opcode = 0b1100011;
-                bits<3> funct3 = 0b1;
-                bits<12> imm;
-                bits<5> rs2;
-                bits<5> rs1;
-                
-                let Inst{31-31} = imm{0-0};
-                let Inst{7-7} = imm{2-2};
-                let Inst{30-25} = imm{9-4};
-                let Inst{11-8} = imm{14-11};
-                let Inst{24-20} = rs2{4-0};
-                let Inst{19-15} = rs1{4-0};
-                let Inst{14-12} = funct3{2-0};
-                let Inst{6-0} = opcode{6-0};
-                
-                let isTerminator  = 1;
-                let isBranch      = 1;
-                let isCall        = 0;
-                let isReturn      = 0;
-                let isPseudo      = 0;
-                let isCodeGenOnly = 0;
-                let mayLoad       = 0;
-                let mayStore      = 0;
-                
-                let Constraints = "";
-                let AddedComplexity = 0;
-                
-                let Pattern = [];
-                
-                let Uses = [  ];
-                let Defs = [ PC ];
-                }
-                
-                def : Pat<(brcc (SETNE X:$rs1, X:$rs2), RV3264I_Btype_immS_decodeAsInt64:$immS)
-                        (BNE X:$rs1, X:$rs2, RV3264I_Btype_immS_decodeAsInt64:$immS)>;
-                
-                def : Pat<(brcond (i32 (setne X:$rs1, X:$rs2)), RV3264I_Btype_immS_decodeAsInt64:$immS)
-                        (BNE X:$rs1, X:$rs2, RV3264I_Btype_immS_decodeAsInt64:$immS)>;
-                
-                
-                
-                def JALR : Instruction
-                {
-        <<<<<<< HEAD
-                let Namespace = "dummyNamespaceValue";
-                
-        =======
-                let Namespace = "processorNameValue";
-                       
-        >>>>>>> af7d2d1 (lcb: Updated tests)
-                let Size = 4;
-                let CodeSize = 4;
-                
-                let OutOperandList = ( outs  );
-                let InOperandList = ( ins X:$rs1, RV3264I_Itype_immS_decodeAsInt64:$immS );
-                
-                field bits<32> Inst;
-                
-                // SoftFail is a field the disassembler can use to provide a way for
-                // instructions to not match without killing the whole decode process. It is
-                // mainly used for ARM, but Tablegen expects this field to exist or it fails
-                // to build the decode table.
-                field bits<32> SoftFail = 0;
-                
-                bits<7> opcode = 0b1110011;
-                bits<3> funct3 = 0b;
-                bits<12> imm;
-                bits<5> rs1;
-                bits<5> rd;
-                
-                let Inst{31-20} = imm{11-0};
-                let Inst{19-15} = rs1{4-0};
-                let Inst{14-12} = funct3{2-0};
-                let Inst{11-7} = rd{4-0};
-                let Inst{6-0} = opcode{6-0};
-                
-                let isTerminator  = 0;
-                let isBranch      = 0;
-                let isCall        = 0;
-                let isReturn      = 0;
-                let isPseudo      = 0;
-                let isCodeGenOnly = 0;
-                let mayLoad       = 0;
-                let mayStore      = 0;
-                
-                let Constraints = "";
-                let AddedComplexity = 0;
-                
-                let Pattern = [];
-                
-                let Uses = [ PC ];
-                let Defs = [ PC ];
-                }
-                
-                
-                
-                
-                def LB : Instruction
-                {
-        <<<<<<< HEAD
-                let Namespace = "dummyNamespaceValue";
-                
-        =======
-                let Namespace = "processorNameValue";
-                       
-        >>>>>>> af7d2d1 (lcb: Updated tests)
-                let Size = 4;
-                let CodeSize = 4;
-                
-                let OutOperandList = ( outs X:$rd );
-                let InOperandList = ( ins X:$rs1, RV3264I_Itype_immS_decodeAsInt64:$immS );
-                
-                field bits<32> Inst;
-                
-                // SoftFail is a field the disassembler can use to provide a way for
-                // instructions to not match without killing the whole decode process. It is
-                // mainly used for ARM, but Tablegen expects this field to exist or it fails
-                // to build the decode table.
-                field bits<32> SoftFail = 0;
-                
-                bits<7> opcode = 0b11;
-                bits<3> funct3 = 0b;
-                bits<12> imm;
-                bits<5> rs1;
-                bits<5> rd;
-                
-                let Inst{31-20} = imm{11-0};
-                let Inst{19-15} = rs1{4-0};
-                let Inst{14-12} = funct3{2-0};
-                let Inst{11-7} = rd{4-0};
-                let Inst{6-0} = opcode{6-0};
-                
-                let isTerminator  = 0;
-                let isBranch      = 0;
-                let isCall        = 0;
-                let isReturn      = 0;
-                let isPseudo      = 0;
-                let isCodeGenOnly = 0;
-                let mayLoad       = 1;
-                let mayStore      = 0;
-                
-                let Constraints = "";
-                let AddedComplexity = 0;
-                
-                let Pattern = [];
-                
-                let Uses = [  ];
-                let Defs = [  ];
-                }
-                
-                def : Pat<(i64 (sextloadi8 (add X:$rs1, RV3264I_Itype_immS_decodeAsInt64:$immS)))
-                        (LB X:$rs1, RV3264I_Itype_immS_decodeAsInt64:$immS)>;
-                
-                
-                
-                def LBU : Instruction
-                {
-        <<<<<<< HEAD
-                let Namespace = "dummyNamespaceValue";
-                
-        =======
-                let Namespace = "processorNameValue";
-                       
-        >>>>>>> af7d2d1 (lcb: Updated tests)
-                let Size = 4;
-                let CodeSize = 4;
-                
-                let OutOperandList = ( outs X:$rd );
-                let InOperandList = ( ins X:$rs1, RV3264I_Itype_immS_decodeAsInt64:$immS );
-                
-                field bits<32> Inst;
-                
-                // SoftFail is a field the disassembler can use to provide a way for
-                // instructions to not match without killing the whole decode process. It is
-                // mainly used for ARM, but Tablegen expects this field to exist or it fails
-                // to build the decode table.
-                field bits<32> SoftFail = 0;
-                
-                bits<7> opcode = 0b11;
-                bits<3> funct3 = 0b001;
-                bits<12> imm;
-                bits<5> rs1;
-                bits<5> rd;
-                
-                let Inst{31-20} = imm{11-0};
-                let Inst{19-15} = rs1{4-0};
-                let Inst{14-12} = funct3{2-0};
-                let Inst{11-7} = rd{4-0};
-                let Inst{6-0} = opcode{6-0};
-                
-                let isTerminator  = 0;
-                let isBranch      = 0;
-                let isCall        = 0;
-                let isReturn      = 0;
-                let isPseudo      = 0;
-                let isCodeGenOnly = 0;
-                let mayLoad       = 1;
-                let mayStore      = 0;
-                
-                let Constraints = "";
-                let AddedComplexity = 0;
-                
-                let Pattern = [];
-                
-                let Uses = [  ];
-                let Defs = [  ];
-                }
-                
-                def : Pat<(u64 (zextloadi8 (add X:$rs1, RV3264I_Itype_immS_decodeAsInt64:$immS)))
-                        (LBU X:$rs1, RV3264I_Itype_immS_decodeAsInt64:$immS)>;
-                
-                
-                
-                def LD : Instruction
-                {
-        <<<<<<< HEAD
-                let Namespace = "dummyNamespaceValue";
-                
-        =======
-                let Namespace = "processorNameValue";
-                       
-        >>>>>>> af7d2d1 (lcb: Updated tests)
-                let Size = 4;
-                let CodeSize = 4;
-                
-                let OutOperandList = ( outs X:$rd );
-                let InOperandList = ( ins X:$rs1, RV3264I_Itype_immS_decodeAsInt64:$immS );
-                
-                field bits<32> Inst;
-                
-                // SoftFail is a field the disassembler can use to provide a way for
-                // instructions to not match without killing the whole decode process. It is
-                // mainly used for ARM, but Tablegen expects this field to exist or it fails
-                // to build the decode table.
-                field bits<32> SoftFail = 0;
-                
-                bits<7> opcode = 0b11;
-                bits<3> funct3 = 0b11;
-                bits<12> imm;
-                bits<5> rs1;
-                bits<5> rd;
-                
-                let Inst{31-20} = imm{11-0};
-                let Inst{19-15} = rs1{4-0};
-                let Inst{14-12} = funct3{2-0};
-                let Inst{11-7} = rd{4-0};
-                let Inst{6-0} = opcode{6-0};
-                
-                let isTerminator  = 0;
-                let isBranch      = 0;
-                let isCall        = 0;
-                let isReturn      = 0;
-                let isPseudo      = 0;
-                let isCodeGenOnly = 0;
-                let mayLoad       = 1;
-                let mayStore      = 0;
-                
-                let Constraints = "";
-                let AddedComplexity = 0;
-                
-                let Pattern = [];
-                
-                let Uses = [  ];
-                let Defs = [  ];
-                }
-                
-                def : Pat<(i64 (load (add X:$rs1, RV3264I_Itype_immS_decodeAsInt64:$immS)))
-                        (LD X:$rs1, RV3264I_Itype_immS_decodeAsInt64:$immS)>;
-                
-                
-                
-                def LH : Instruction
-                {
-        <<<<<<< HEAD
-                let Namespace = "dummyNamespaceValue";
-                
-        =======
-                let Namespace = "processorNameValue";
-                       
-        >>>>>>> af7d2d1 (lcb: Updated tests)
-                let Size = 4;
-                let CodeSize = 4;
-                
-                let OutOperandList = ( outs X:$rd );
-                let InOperandList = ( ins X:$rs1, RV3264I_Itype_immS_decodeAsInt64:$immS );
-                
-                field bits<32> Inst;
-                
-                // SoftFail is a field the disassembler can use to provide a way for
-                // instructions to not match without killing the whole decode process. It is
-                // mainly used for ARM, but Tablegen expects this field to exist or it fails
-                // to build the decode table.
-                field bits<32> SoftFail = 0;
-                
-                bits<7> opcode = 0b11;
-                bits<3> funct3 = 0b1;
-                bits<12> imm;
-                bits<5> rs1;
-                bits<5> rd;
-                
-                let Inst{31-20} = imm{11-0};
-                let Inst{19-15} = rs1{4-0};
-                let Inst{14-12} = funct3{2-0};
-                let Inst{11-7} = rd{4-0};
-                let Inst{6-0} = opcode{6-0};
-                
-                let isTerminator  = 0;
-                let isBranch      = 0;
-                let isCall        = 0;
-                let isReturn      = 0;
-                let isPseudo      = 0;
-                let isCodeGenOnly = 0;
-                let mayLoad       = 1;
-                let mayStore      = 0;
-                
-                let Constraints = "";
-                let AddedComplexity = 0;
-                
-                let Pattern = [];
-                
-                let Uses = [  ];
-                let Defs = [  ];
-                }
-                
-                def : Pat<(i64 (sextloadi16 (add X:$rs1, RV3264I_Itype_immS_decodeAsInt64:$immS)))
-                        (LH X:$rs1, RV3264I_Itype_immS_decodeAsInt64:$immS)>;
-                
-                
-                
-                def LHU : Instruction
-                {
-        <<<<<<< HEAD
-                let Namespace = "dummyNamespaceValue";
-                
-        =======
-                let Namespace = "processorNameValue";
-                       
-        >>>>>>> af7d2d1 (lcb: Updated tests)
-                let Size = 4;
-                let CodeSize = 4;
-                
-                let OutOperandList = ( outs X:$rd );
-                let InOperandList = ( ins X:$rs1, RV3264I_Itype_immS_decodeAsInt64:$immS );
-                
-                field bits<32> Inst;
-                
-                // SoftFail is a field the disassembler can use to provide a way for
-                // instructions to not match without killing the whole decode process. It is
-                // mainly used for ARM, but Tablegen expects this field to exist or it fails
-                // to build the decode table.
-                field bits<32> SoftFail = 0;
-                
-                bits<7> opcode = 0b11;
-                bits<3> funct3 = 0b101;
-                bits<12> imm;
-                bits<5> rs1;
-                bits<5> rd;
-                
-                let Inst{31-20} = imm{11-0};
-                let Inst{19-15} = rs1{4-0};
-                let Inst{14-12} = funct3{2-0};
-                let Inst{11-7} = rd{4-0};
-                let Inst{6-0} = opcode{6-0};
-                
-                let isTerminator  = 0;
-                let isBranch      = 0;
-                let isCall        = 0;
-                let isReturn      = 0;
-                let isPseudo      = 0;
-                let isCodeGenOnly = 0;
-                let mayLoad       = 1;
-                let mayStore      = 0;
-                
-                let Constraints = "";
-                let AddedComplexity = 0;
-                
-                let Pattern = [];
-                
-                let Uses = [  ];
-                let Defs = [  ];
-                }
-                
-                def : Pat<(u64 (zextloadi16 (add X:$rs1, RV3264I_Itype_immS_decodeAsInt64:$immS)))
-                        (LHU X:$rs1, RV3264I_Itype_immS_decodeAsInt64:$immS)>;
-                
-                
-                
-                def LW : Instruction
-                {
-        <<<<<<< HEAD
-                let Namespace = "dummyNamespaceValue";
-                
-        =======
-                let Namespace = "processorNameValue";
-                       
-        >>>>>>> af7d2d1 (lcb: Updated tests)
-                let Size = 4;
-                let CodeSize = 4;
-                
-                let OutOperandList = ( outs X:$rd );
-                let InOperandList = ( ins X:$rs1, RV3264I_Itype_immS_decodeAsInt64:$immS );
-                
-                field bits<32> Inst;
-                
-                // SoftFail is a field the disassembler can use to provide a way for
-                // instructions to not match without killing the whole decode process. It is
-                // mainly used for ARM, but Tablegen expects this field to exist or it fails
-                // to build the decode table.
-                field bits<32> SoftFail = 0;
-                
-                bits<7> opcode = 0b11;
-                bits<3> funct3 = 0b01;
-                bits<12> imm;
-                bits<5> rs1;
-                bits<5> rd;
-                
-                let Inst{31-20} = imm{11-0};
-                let Inst{19-15} = rs1{4-0};
-                let Inst{14-12} = funct3{2-0};
-                let Inst{11-7} = rd{4-0};
-                let Inst{6-0} = opcode{6-0};
-                
-                let isTerminator  = 0;
-                let isBranch      = 0;
-                let isCall        = 0;
-                let isReturn      = 0;
-                let isPseudo      = 0;
-                let isCodeGenOnly = 0;
-                let mayLoad       = 1;
-                let mayStore      = 0;
-                
-                let Constraints = "";
-                let AddedComplexity = 0;
-                
-                let Pattern = [];
-                
-                let Uses = [  ];
-                let Defs = [  ];
-                }
-                
-                def : Pat<(i64 (sextloadi32 (add X:$rs1, RV3264I_Itype_immS_decodeAsInt64:$immS)))
-                        (LW X:$rs1, RV3264I_Itype_immS_decodeAsInt64:$immS)>;
-                
-                
-                
-                def LWU : Instruction
-                {
-        <<<<<<< HEAD
-                let Namespace = "dummyNamespaceValue";
-                
-        =======
-                let Namespace = "processorNameValue";
-                       
-        >>>>>>> af7d2d1 (lcb: Updated tests)
-                let Size = 4;
-                let CodeSize = 4;
-                
-                let OutOperandList = ( outs X:$rd );
-                let InOperandList = ( ins X:$rs1, RV3264I_Itype_immS_decodeAsInt64:$immS );
-                
-                field bits<32> Inst;
-                
-                // SoftFail is a field the disassembler can use to provide a way for
-                // instructions to not match without killing the whole decode process. It is
-                // mainly used for ARM, but Tablegen expects this field to exist or it fails
-                // to build the decode table.
-                field bits<32> SoftFail = 0;
-                
-                bits<7> opcode = 0b11;
-                bits<3> funct3 = 0b011;
-                bits<12> imm;
-                bits<5> rs1;
-                bits<5> rd;
-                
-                let Inst{31-20} = imm{11-0};
-                let Inst{19-15} = rs1{4-0};
-                let Inst{14-12} = funct3{2-0};
-                let Inst{11-7} = rd{4-0};
-                let Inst{6-0} = opcode{6-0};
-                
-                let isTerminator  = 0;
-                let isBranch      = 0;
-                let isCall        = 0;
-                let isReturn      = 0;
-                let isPseudo      = 0;
-                let isCodeGenOnly = 0;
-                let mayLoad       = 1;
-                let mayStore      = 0;
-                
-                let Constraints = "";
-                let AddedComplexity = 0;
-                
-                let Pattern = [];
-                
-                let Uses = [  ];
-                let Defs = [  ];
-                }
-                
-                def : Pat<(u64 (zextloadi32 (add X:$rs1, RV3264I_Itype_immS_decodeAsInt64:$immS)))
-                        (LWU X:$rs1, RV3264I_Itype_immS_decodeAsInt64:$immS)>;
-                
-                
-                
-                def MUL : Instruction
-                {
-        <<<<<<< HEAD
-                let Namespace = "dummyNamespaceValue";
-                
-        =======
-                let Namespace = "processorNameValue";
-                       
-        >>>>>>> af7d2d1 (lcb: Updated tests)
-                let Size = 4;
-                let CodeSize = 4;
-                
-                let OutOperandList = ( outs X:$rd );
-                let InOperandList = ( ins X:$rs1, X:$rs2 );
-                
-                field bits<32> Inst;
-                
-                // SoftFail is a field the disassembler can use to provide a way for
-                // instructions to not match without killing the whole decode process. It is
-                // mainly used for ARM, but Tablegen expects this field to exist or it fails
-                // to build the decode table.
-                field bits<32> SoftFail = 0;
-                
-                bits<7> opcode = 0b110011;
-                bits<3> funct3 = 0b;
-                bits<7> funct7 = 0b1;
-                bits<5> rs2;
-                bits<5> rs1;
-                bits<5> rd;
-                
-                let Inst{31-25} = funct7{6-0};
-                let Inst{24-20} = rs2{4-0};
-                let Inst{19-15} = rs1{4-0};
-                let Inst{14-12} = funct3{2-0};
-                let Inst{11-7} = rd{4-0};
-                let Inst{6-0} = opcode{6-0};
-                
-                let isTerminator  = 0;
-                let isBranch      = 0;
-                let isCall        = 0;
-                let isReturn      = 0;
-                let isPseudo      = 0;
-                let isCodeGenOnly = 0;
-                let mayLoad       = 0;
-                let mayStore      = 0;
-                
-                let Constraints = "";
-                let AddedComplexity = 0;
-                
-                let Pattern = [];
-                
-                let Uses = [  ];
-                let Defs = [  ];
-                }
-                
-                def : Pat<(smul_lohi X:$rs1, X:$rs2)
-                        (MUL X:$rs1, X:$rs2)>;
-                
-                
-                
-                def MULH : Instruction
-                {
-        <<<<<<< HEAD
-                let Namespace = "dummyNamespaceValue";
-                
-        =======
-                let Namespace = "processorNameValue";
-                       
-        >>>>>>> af7d2d1 (lcb: Updated tests)
-                let Size = 4;
-                let CodeSize = 4;
-                
-                let OutOperandList = ( outs X:$rd );
-                let InOperandList = ( ins X:$rs1, X:$rs2 );
-                
-                field bits<32> Inst;
-                
-                // SoftFail is a field the disassembler can use to provide a way for
-                // instructions to not match without killing the whole decode process. It is
-                // mainly used for ARM, but Tablegen expects this field to exist or it fails
-                // to build the decode table.
-                field bits<32> SoftFail = 0;
-                
-                bits<7> opcode = 0b110011;
-                bits<3> funct3 = 0b1;
-                bits<7> funct7 = 0b1;
-                bits<5> rs2;
-                bits<5> rs1;
-                bits<5> rd;
-                
-                let Inst{31-25} = funct7{6-0};
-                let Inst{24-20} = rs2{4-0};
-                let Inst{19-15} = rs1{4-0};
-                let Inst{14-12} = funct3{2-0};
-                let Inst{11-7} = rd{4-0};
-                let Inst{6-0} = opcode{6-0};
-                
-                let isTerminator  = 0;
-                let isBranch      = 0;
-                let isCall        = 0;
-                let isReturn      = 0;
-                let isPseudo      = 0;
-                let isCodeGenOnly = 0;
-                let mayLoad       = 0;
-                let mayStore      = 0;
-                
-                let Constraints = "";
-                let AddedComplexity = 0;
-                
-                let Pattern = [];
-                
-                let Uses = [  ];
-                let Defs = [  ];
-                }
-                
-                def : Pat<
-                        (MULH X:$rs1, X:$rs2)>;
-                
-                
-                
-                def MULHSU : Instruction
-                {
-        <<<<<<< HEAD
-                let Namespace = "dummyNamespaceValue";
-                
-        =======
-                let Namespace = "processorNameValue";
-                       
-        >>>>>>> af7d2d1 (lcb: Updated tests)
-                let Size = 4;
-                let CodeSize = 4;
-                
-                let OutOperandList = ( outs X:$rd );
-                let InOperandList = ( ins X:$rs1, X:$rs2 );
-                
-                field bits<32> Inst;
-                
-                // SoftFail is a field the disassembler can use to provide a way for
-                // instructions to not match without killing the whole decode process. It is
-                // mainly used for ARM, but Tablegen expects this field to exist or it fails
-                // to build the decode table.
-                field bits<32> SoftFail = 0;
-                
-                bits<7> opcode = 0b110011;
-                bits<3> funct3 = 0b01;
-                bits<7> funct7 = 0b1;
-                bits<5> rs2;
-                bits<5> rs1;
-                bits<5> rd;
-                
-                let Inst{31-25} = funct7{6-0};
-                let Inst{24-20} = rs2{4-0};
-                let Inst{19-15} = rs1{4-0};
-                let Inst{14-12} = funct3{2-0};
-                let Inst{11-7} = rd{4-0};
-                let Inst{6-0} = opcode{6-0};
-                
-                let isTerminator  = 0;
-                let isBranch      = 0;
-                let isCall        = 0;
-                let isReturn      = 0;
-                let isPseudo      = 0;
-                let isCodeGenOnly = 0;
-                let mayLoad       = 0;
-                let mayStore      = 0;
-                
-                let Constraints = "";
-                let AddedComplexity = 0;
-                
-                let Pattern = [];
-                
-                let Uses = [  ];
-                let Defs = [  ];
-                }
-                
-                def : Pat<
-                        (MULHSU X:$rs1, X:$rs2)>;
-                
-                
-                
-                def MULW : Instruction
-                {
-        <<<<<<< HEAD
-                let Namespace = "dummyNamespaceValue";
-                
-        =======
-                let Namespace = "processorNameValue";
-                       
-        >>>>>>> af7d2d1 (lcb: Updated tests)
-                let Size = 4;
-                let CodeSize = 4;
-                
-                let OutOperandList = ( outs X:$rd );
-                let InOperandList = ( ins X:$rs1, X:$rs2 );
-                
-                field bits<32> Inst;
-                
-                // SoftFail is a field the disassembler can use to provide a way for
-                // instructions to not match without killing the whole decode process. It is
-                // mainly used for ARM, but Tablegen expects this field to exist or it fails
-                // to build the decode table.
-                field bits<32> SoftFail = 0;
-                
-                bits<7> opcode = 0b110111;
-                bits<3> funct3 = 0b;
-                bits<7> funct7 = 0b1;
-                bits<5> rs2;
-                bits<5> rs1;
-                bits<5> rd;
-                
-                let Inst{31-25} = funct7{6-0};
-                let Inst{24-20} = rs2{4-0};
-                let Inst{19-15} = rs1{4-0};
-                let Inst{14-12} = funct3{2-0};
-                let Inst{11-7} = rd{4-0};
-                let Inst{6-0} = opcode{6-0};
-                
-                let isTerminator  = 0;
-                let isBranch      = 0;
-                let isCall        = 0;
-                let isReturn      = 0;
-                let isPseudo      = 0;
-                let isCodeGenOnly = 0;
-                let mayLoad       = 0;
-                let mayStore      = 0;
-                
-                let Constraints = "";
-                let AddedComplexity = 0;
-                
-                let Pattern = [];
-                
-                let Uses = [  ];
-                let Defs = [  ];
-                }
-                
-                def : Pat<(smul_lohi X:$rs1, X:$rs2)
-                        (MULW X:$rs1, X:$rs2)>;
-                
-                
-                
-                def OR : Instruction
-                {
-        <<<<<<< HEAD
-                let Namespace = "dummyNamespaceValue";
-                
-        =======
-                let Namespace = "processorNameValue";
-                       
-        >>>>>>> af7d2d1 (lcb: Updated tests)
-                let Size = 4;
-                let CodeSize = 4;
-                
-                let OutOperandList = ( outs X:$rd );
-                let InOperandList = ( ins X:$rs1, X:$rs2 );
-                
-                field bits<32> Inst;
-                
-                // SoftFail is a field the disassembler can use to provide a way for
-                // instructions to not match without killing the whole decode process. It is
-                // mainly used for ARM, but Tablegen expects this field to exist or it fails
-                // to build the decode table.
-                field bits<32> SoftFail = 0;
-                
-                bits<7> opcode = 0b110011;
-                bits<3> funct3 = 0b011;
-                bits<7> funct7 = 0b;
-                bits<5> rs2;
-                bits<5> rs1;
-                bits<5> rd;
-                
-                let Inst{31-25} = funct7{6-0};
-                let Inst{24-20} = rs2{4-0};
-                let Inst{19-15} = rs1{4-0};
-                let Inst{14-12} = funct3{2-0};
-                let Inst{11-7} = rd{4-0};
-                let Inst{6-0} = opcode{6-0};
-                
-                let isTerminator  = 0;
-                let isBranch      = 0;
-                let isCall        = 0;
-                let isReturn      = 0;
-                let isPseudo      = 0;
-                let isCodeGenOnly = 0;
-                let mayLoad       = 0;
-                let mayStore      = 0;
-                
-                let Constraints = "";
-                let AddedComplexity = 0;
-                
-                let Pattern = [];
-                
-                let Uses = [  ];
-                let Defs = [  ];
-                }
-                
-                def : Pat<(or X:$rs1, X:$rs2)
-                        (OR X:$rs1, X:$rs2)>;
-                
-                
-                
-                def ORI : Instruction
-                {
-        <<<<<<< HEAD
-                let Namespace = "dummyNamespaceValue";
-                
-        =======
-                let Namespace = "processorNameValue";
-                       
-        >>>>>>> af7d2d1 (lcb: Updated tests)
-                let Size = 4;
-                let CodeSize = 4;
-                
-                let OutOperandList = ( outs X:$rd );
-                let InOperandList = ( ins X:$rs1, RV3264I_Itype_immS_decodeAsInt64:$immS );
-                
-                field bits<32> Inst;
-                
-                // SoftFail is a field the disassembler can use to provide a way for
-                // instructions to not match without killing the whole decode process. It is
-                // mainly used for ARM, but Tablegen expects this field to exist or it fails
-                // to build the decode table.
-                field bits<32> SoftFail = 0;
-                
-                bits<7> opcode = 0b11001;
-                bits<3> funct3 = 0b011;
-                bits<12> imm;
-                bits<5> rs1;
-                bits<5> rd;
-                
-                let Inst{31-20} = imm{11-0};
-                let Inst{19-15} = rs1{4-0};
-                let Inst{14-12} = funct3{2-0};
-                let Inst{11-7} = rd{4-0};
-                let Inst{6-0} = opcode{6-0};
-                
-                let isTerminator  = 0;
-                let isBranch      = 0;
-                let isCall        = 0;
-                let isReturn      = 0;
-                let isPseudo      = 0;
-                let isCodeGenOnly = 0;
-                let mayLoad       = 0;
-                let mayStore      = 0;
-                
-                let Constraints = "";
-                let AddedComplexity = 0;
-                
-                let Pattern = [];
-                
-                let Uses = [  ];
-                let Defs = [  ];
-                }
-                
-                def : Pat<(or X:$rs1, RV3264I_Itype_immS_decodeAsInt64:$immS)
-                        (ORI X:$rs1, RV3264I_Itype_immS_decodeAsInt64:$immS)>;
-                
-                
-                
-                def SB : Instruction
-                {
-        <<<<<<< HEAD
-                let Namespace = "dummyNamespaceValue";
-                
-        =======
-                let Namespace = "processorNameValue";
-                       
-        >>>>>>> af7d2d1 (lcb: Updated tests)
-                let Size = 4;
-                let CodeSize = 4;
-                
-                let OutOperandList = ( outs  );
-                let InOperandList = ( ins X:$rs1, X:$rs2, RV3264I_Stype_immS_decodeAsInt64:$immS );
-                
-                field bits<32> Inst;
-                
-                // SoftFail is a field the disassembler can use to provide a way for
-                // instructions to not match without killing the whole decode process. It is
-                // mainly used for ARM, but Tablegen expects this field to exist or it fails
-                // to build the decode table.
-                field bits<32> SoftFail = 0;
-                
-                bits<7> opcode = 0b110001;
-                bits<3> funct3 = 0b;
-                bits<12> imm;
-                bits<5> rs2;
-                bits<5> rs1;
-                
-                let Inst{31-25} = imm{6-0};
-                let Inst{11-7} = imm{12-8};
-                let Inst{24-20} = rs2{4-0};
-                let Inst{19-15} = rs1{4-0};
-                let Inst{14-12} = funct3{2-0};
-                let Inst{6-0} = opcode{6-0};
-                
-                let isTerminator  = 0;
-                let isBranch      = 0;
-                let isCall        = 0;
-                let isReturn      = 0;
-                let isPseudo      = 0;
-                let isCodeGenOnly = 0;
-                let mayLoad       = 0;
-                let mayStore      = 1;
-                
-                let Constraints = "";
-                let AddedComplexity = 0;
-                
-                let Pattern = [];
-                
-                let Uses = [  ];
-                let Defs = [  ];
-                }
-                
-                def : Pat<(truncstorei8 X:$rs2, (add X:$rs1, RV3264I_Stype_immS_decodeAsInt64:$immS))
-                        (SB X:$rs1, X:$rs2, RV3264I_Stype_immS_decodeAsInt64:$immS)>;
-                
-                
-                
-                def SD : Instruction
-                {
-        <<<<<<< HEAD
-                let Namespace = "dummyNamespaceValue";
-                
-        =======
-                let Namespace = "processorNameValue";
-                       
-        >>>>>>> af7d2d1 (lcb: Updated tests)
-                let Size = 4;
-                let CodeSize = 4;
-                
-                let OutOperandList = ( outs  );
-                let InOperandList = ( ins X:$rs1, X:$rs2, RV3264I_Stype_immS_decodeAsInt64:$immS );
-                
-                field bits<32> Inst;
-                
-                // SoftFail is a field the disassembler can use to provide a way for
-                // instructions to not match without killing the whole decode process. It is
-                // mainly used for ARM, but Tablegen expects this field to exist or it fails
-                // to build the decode table.
-                field bits<32> SoftFail = 0;
-                
-                bits<7> opcode = 0b110001;
-                bits<3> funct3 = 0b11;
-                bits<12> imm;
-                bits<5> rs2;
-                bits<5> rs1;
-                
-                let Inst{31-25} = imm{6-0};
-                let Inst{11-7} = imm{12-8};
-                let Inst{24-20} = rs2{4-0};
-                let Inst{19-15} = rs1{4-0};
-                let Inst{14-12} = funct3{2-0};
-                let Inst{6-0} = opcode{6-0};
-                
-                let isTerminator  = 0;
-                let isBranch      = 0;
-                let isCall        = 0;
-                let isReturn      = 0;
-                let isPseudo      = 0;
-                let isCodeGenOnly = 0;
-                let mayLoad       = 0;
-                let mayStore      = 1;
-                
-                let Constraints = "";
-                let AddedComplexity = 0;
-                
-                let Pattern = [];
-                
-                let Uses = [  ];
-                let Defs = [  ];
-                }
-                
-                def : Pat<(store X:$rs2, (add X:$rs1, RV3264I_Stype_immS_decodeAsInt64:$immS))
-                        (SD X:$rs1, X:$rs2, RV3264I_Stype_immS_decodeAsInt64:$immS)>;
-                
-                
-                
-                def SH : Instruction
-                {
-        <<<<<<< HEAD
-                let Namespace = "dummyNamespaceValue";
-                
-        =======
-                let Namespace = "processorNameValue";
-                       
-        >>>>>>> af7d2d1 (lcb: Updated tests)
-                let Size = 4;
-                let CodeSize = 4;
-                
-                let OutOperandList = ( outs  );
-                let InOperandList = ( ins X:$rs1, X:$rs2, RV3264I_Stype_immS_decodeAsInt64:$immS );
-                
-                field bits<32> Inst;
-                
-                // SoftFail is a field the disassembler can use to provide a way for
-                // instructions to not match without killing the whole decode process. It is
-                // mainly used for ARM, but Tablegen expects this field to exist or it fails
-                // to build the decode table.
-                field bits<32> SoftFail = 0;
-                
-                bits<7> opcode = 0b110001;
-                bits<3> funct3 = 0b1;
-                bits<12> imm;
-                bits<5> rs2;
-                bits<5> rs1;
-                
-                let Inst{31-25} = imm{6-0};
-                let Inst{11-7} = imm{12-8};
-                let Inst{24-20} = rs2{4-0};
-                let Inst{19-15} = rs1{4-0};
-                let Inst{14-12} = funct3{2-0};
-                let Inst{6-0} = opcode{6-0};
-                
-                let isTerminator  = 0;
-                let isBranch      = 0;
-                let isCall        = 0;
-                let isReturn      = 0;
-                let isPseudo      = 0;
-                let isCodeGenOnly = 0;
-                let mayLoad       = 0;
-                let mayStore      = 1;
-                
-                let Constraints = "";
-                let AddedComplexity = 0;
-                
-                let Pattern = [];
-                
-                let Uses = [  ];
-                let Defs = [  ];
-                }
-                
-                def : Pat<(truncstorei16 X:$rs2, (add X:$rs1, RV3264I_Stype_immS_decodeAsInt64:$immS))
-                        (SH X:$rs1, X:$rs2, RV3264I_Stype_immS_decodeAsInt64:$immS)>;
-                
-                
-                
-                def SLT : Instruction
-                {
-        <<<<<<< HEAD
-                let Namespace = "dummyNamespaceValue";
-                
-        =======
-                let Namespace = "processorNameValue";
-                       
-        >>>>>>> af7d2d1 (lcb: Updated tests)
-                let Size = 4;
-                let CodeSize = 4;
-                
-                let OutOperandList = ( outs X:$rd );
-                let InOperandList = ( ins X:$rs1, X:$rs2 );
-                
-                field bits<32> Inst;
-                
-                // SoftFail is a field the disassembler can use to provide a way for
-                // instructions to not match without killing the whole decode process. It is
-                // mainly used for ARM, but Tablegen expects this field to exist or it fails
-                // to build the decode table.
-                field bits<32> SoftFail = 0;
-                
-                bits<7> opcode = 0b110011;
-                bits<3> funct3 = 0b01;
-                bits<7> funct7 = 0b;
-                bits<5> rs2;
-                bits<5> rs1;
-                bits<5> rd;
-                
-                let Inst{31-25} = funct7{6-0};
-                let Inst{24-20} = rs2{4-0};
-                let Inst{19-15} = rs1{4-0};
-                let Inst{14-12} = funct3{2-0};
-                let Inst{11-7} = rd{4-0};
-                let Inst{6-0} = opcode{6-0};
-                
-                let isTerminator  = 0;
-                let isBranch      = 0;
-                let isCall        = 0;
-                let isReturn      = 0;
-                let isPseudo      = 0;
-                let isCodeGenOnly = 0;
-                let mayLoad       = 0;
-                let mayStore      = 0;
-                
-                let Constraints = "";
-                let AddedComplexity = 0;
-                
-                let Pattern = [];
-                
-                let Uses = [  ];
-                let Defs = [  ];
-                }
-                
-                def : Pat<(setcc X:$rs1, X:$rs2, SETLT)
-                        (SLT X:$rs1, X:$rs2)>;
-                
-                
-                
-                def SLTI : Instruction
-                {
-        <<<<<<< HEAD
-                let Namespace = "dummyNamespaceValue";
-                
-        =======
-                let Namespace = "processorNameValue";
-                       
-        >>>>>>> af7d2d1 (lcb: Updated tests)
-                let Size = 4;
-                let CodeSize = 4;
-                
-                let OutOperandList = ( outs X:$rd );
-                let InOperandList = ( ins X:$rs1, RV3264I_Itype_immS_decodeAsInt64:$immS );
-                
-                field bits<32> Inst;
-                
-                // SoftFail is a field the disassembler can use to provide a way for
-                // instructions to not match without killing the whole decode process. It is
-                // mainly used for ARM, but Tablegen expects this field to exist or it fails
-                // to build the decode table.
-                field bits<32> SoftFail = 0;
-                
-                bits<7> opcode = 0b11001;
-                bits<3> funct3 = 0b01;
-                bits<12> imm;
-                bits<5> rs1;
-                bits<5> rd;
-                
-                let Inst{31-20} = imm{11-0};
-                let Inst{19-15} = rs1{4-0};
-                let Inst{14-12} = funct3{2-0};
-                let Inst{11-7} = rd{4-0};
-                let Inst{6-0} = opcode{6-0};
-                
-                let isTerminator  = 0;
-                let isBranch      = 0;
-                let isCall        = 0;
-                let isReturn      = 0;
-                let isPseudo      = 0;
-                let isCodeGenOnly = 0;
-                let mayLoad       = 0;
-                let mayStore      = 0;
-                
-                let Constraints = "";
-                let AddedComplexity = 0;
-                
-                let Pattern = [];
-                
-                let Uses = [  ];
-                let Defs = [  ];
-                }
-                
-                def : Pat<(setcc X:$rs1, RV3264I_Itype_immS_decodeAsInt64:$immS, SETLT)
-                        (SLTI X:$rs1, RV3264I_Itype_immS_decodeAsInt64:$immS)>;
-                
-                
-                
-                def SLTIU : Instruction
-                {
-        <<<<<<< HEAD
-                let Namespace = "dummyNamespaceValue";
-                
-        =======
-                let Namespace = "processorNameValue";
-                       
-        >>>>>>> af7d2d1 (lcb: Updated tests)
-                let Size = 4;
-                let CodeSize = 4;
-                
-                let OutOperandList = ( outs X:$rd );
-                let InOperandList = ( ins X:$rs1, RV3264I_Itype_immS_decodeAsInt64:$immS );
-                
-                field bits<32> Inst;
-                
-                // SoftFail is a field the disassembler can use to provide a way for
-                // instructions to not match without killing the whole decode process. It is
-                // mainly used for ARM, but Tablegen expects this field to exist or it fails
-                // to build the decode table.
-                field bits<32> SoftFail = 0;
-                
-                bits<7> opcode = 0b11001;
-                bits<3> funct3 = 0b11;
-                bits<12> imm;
-                bits<5> rs1;
-                bits<5> rd;
-                
-                let Inst{31-20} = imm{11-0};
-                let Inst{19-15} = rs1{4-0};
-                let Inst{14-12} = funct3{2-0};
-                let Inst{11-7} = rd{4-0};
-                let Inst{6-0} = opcode{6-0};
-                
-                let isTerminator  = 0;
-                let isBranch      = 0;
-                let isCall        = 0;
-                let isReturn      = 0;
-                let isPseudo      = 0;
-                let isCodeGenOnly = 0;
-                let mayLoad       = 0;
-                let mayStore      = 0;
-                
-                let Constraints = "";
-                let AddedComplexity = 0;
-                
-                let Pattern = [];
-                
-                let Uses = [  ];
-                let Defs = [  ];
-                }
-                
-                def : Pat<(setcc X:$rs1, RV3264I_Itype_immS_decodeAsInt64:$immS, SETULT)
-                        (SLTIU X:$rs1, RV3264I_Itype_immS_decodeAsInt64:$immS)>;
-                
-                
-                
-                def SLTU : Instruction
-                {
-        <<<<<<< HEAD
-                let Namespace = "dummyNamespaceValue";
-                
-        =======
-                let Namespace = "processorNameValue";
-                       
-        >>>>>>> af7d2d1 (lcb: Updated tests)
-                let Size = 4;
-                let CodeSize = 4;
-                
-                let OutOperandList = ( outs X:$rd );
-                let InOperandList = ( ins X:$rs1, X:$rs2 );
-                
-                field bits<32> Inst;
-                
-                // SoftFail is a field the disassembler can use to provide a way for
-                // instructions to not match without killing the whole decode process. It is
-                // mainly used for ARM, but Tablegen expects this field to exist or it fails
-                // to build the decode table.
-                field bits<32> SoftFail = 0;
-                
-                bits<7> opcode = 0b110011;
-                bits<3> funct3 = 0b11;
-                bits<7> funct7 = 0b;
-                bits<5> rs2;
-                bits<5> rs1;
-                bits<5> rd;
-                
-                let Inst{31-25} = funct7{6-0};
-                let Inst{24-20} = rs2{4-0};
-                let Inst{19-15} = rs1{4-0};
-                let Inst{14-12} = funct3{2-0};
-                let Inst{11-7} = rd{4-0};
-                let Inst{6-0} = opcode{6-0};
-                
-                let isTerminator  = 0;
-                let isBranch      = 0;
-                let isCall        = 0;
-                let isReturn      = 0;
-                let isPseudo      = 0;
-                let isCodeGenOnly = 0;
-                let mayLoad       = 0;
-                let mayStore      = 0;
-                
-                let Constraints = "";
-                let AddedComplexity = 0;
-                
-                let Pattern = [];
-                
-                let Uses = [  ];
-                let Defs = [  ];
-                }
-                
-                def : Pat<(setcc X:$rs1, X:$rs2, SETULT)
-                        (SLTU X:$rs1, X:$rs2)>;
-                
-                
-                
-                def SUB : Instruction
-                {
-        <<<<<<< HEAD
-                let Namespace = "dummyNamespaceValue";
-                
-        =======
-                let Namespace = "processorNameValue";
-                       
-        >>>>>>> af7d2d1 (lcb: Updated tests)
-                let Size = 4;
-                let CodeSize = 4;
-                
-                let OutOperandList = ( outs X:$rd );
-                let InOperandList = ( ins X:$rs1, X:$rs2 );
-                
-                field bits<32> Inst;
-                
-                // SoftFail is a field the disassembler can use to provide a way for
-                // instructions to not match without killing the whole decode process. It is
-                // mainly used for ARM, but Tablegen expects this field to exist or it fails
-                // to build the decode table.
-                field bits<32> SoftFail = 0;
-                
-                bits<7> opcode = 0b110011;
-                bits<3> funct3 = 0b;
-                bits<7> funct7 = 0b000001;
-                bits<5> rs2;
-                bits<5> rs1;
-                bits<5> rd;
-                
-                let Inst{31-25} = funct7{6-0};
-                let Inst{24-20} = rs2{4-0};
-                let Inst{19-15} = rs1{4-0};
-                let Inst{14-12} = funct3{2-0};
-                let Inst{11-7} = rd{4-0};
-                let Inst{6-0} = opcode{6-0};
-                
-                let isTerminator  = 0;
-                let isBranch      = 0;
-                let isCall        = 0;
-                let isReturn      = 0;
-                let isPseudo      = 0;
-                let isCodeGenOnly = 0;
-                let mayLoad       = 0;
-                let mayStore      = 0;
-                
-                let Constraints = "";
-                let AddedComplexity = 0;
-                
-                let Pattern = [];
-                
-                let Uses = [  ];
-                let Defs = [  ];
-                }
-                
-                def : Pat<(sub X:$rs1, X:$rs2)
-                        (SUB X:$rs1, X:$rs2)>;
-                
-                
-                
-                def SUBW : Instruction
-                {
-        <<<<<<< HEAD
-                let Namespace = "dummyNamespaceValue";
-                
-        =======
-                let Namespace = "processorNameValue";
-                       
-        >>>>>>> af7d2d1 (lcb: Updated tests)
-                let Size = 4;
-                let CodeSize = 4;
-                
-                let OutOperandList = ( outs X:$rd );
-                let InOperandList = ( ins X:$rs1, X:$rs2 );
-                
-                field bits<32> Inst;
-                
-                // SoftFail is a field the disassembler can use to provide a way for
-                // instructions to not match without killing the whole decode process. It is
-                // mainly used for ARM, but Tablegen expects this field to exist or it fails
-                // to build the decode table.
-                field bits<32> SoftFail = 0;
-                
-                bits<7> opcode = 0b110111;
-                bits<3> funct3 = 0b;
-                bits<7> funct7 = 0b000001;
-                bits<5> rs2;
-                bits<5> rs1;
-                bits<5> rd;
-                
-                let Inst{31-25} = funct7{6-0};
-                let Inst{24-20} = rs2{4-0};
-                let Inst{19-15} = rs1{4-0};
-                let Inst{14-12} = funct3{2-0};
-                let Inst{11-7} = rd{4-0};
-                let Inst{6-0} = opcode{6-0};
-                
-                let isTerminator  = 0;
-                let isBranch      = 0;
-                let isCall        = 0;
-                let isReturn      = 0;
-                let isPseudo      = 0;
-                let isCodeGenOnly = 0;
-                let mayLoad       = 0;
-                let mayStore      = 0;
-                
-                let Constraints = "";
-                let AddedComplexity = 0;
-                
-                let Pattern = [];
-                
-                let Uses = [  ];
-                let Defs = [  ];
-                }
-                
-                def : Pat<(sub X:$rs1, X:$rs2)
-                        (SUBW X:$rs1, X:$rs2)>;
-                
-                
-                
-                def SW : Instruction
-                {
-        <<<<<<< HEAD
-                let Namespace = "dummyNamespaceValue";
-                
-        =======
-                let Namespace = "processorNameValue";
-                       
-        >>>>>>> af7d2d1 (lcb: Updated tests)
-                let Size = 4;
-                let CodeSize = 4;
-                
-                let OutOperandList = ( outs  );
-                let InOperandList = ( ins X:$rs1, X:$rs2, RV3264I_Stype_immS_decodeAsInt64:$immS );
-                
-                field bits<32> Inst;
-                
-                // SoftFail is a field the disassembler can use to provide a way for
-                // instructions to not match without killing the whole decode process. It is
-                // mainly used for ARM, but Tablegen expects this field to exist or it fails
-                // to build the decode table.
-                field bits<32> SoftFail = 0;
-                
-                bits<7> opcode = 0b110001;
-                bits<3> funct3 = 0b01;
-                bits<12> imm;
-                bits<5> rs2;
-                bits<5> rs1;
-                
-                let Inst{31-25} = imm{6-0};
-                let Inst{11-7} = imm{12-8};
-                let Inst{24-20} = rs2{4-0};
-                let Inst{19-15} = rs1{4-0};
-                let Inst{14-12} = funct3{2-0};
-                let Inst{6-0} = opcode{6-0};
-                
-                let isTerminator  = 0;
-                let isBranch      = 0;
-                let isCall        = 0;
-                let isReturn      = 0;
-                let isPseudo      = 0;
-                let isCodeGenOnly = 0;
-                let mayLoad       = 0;
-                let mayStore      = 1;
-                
-                let Constraints = "";
-                let AddedComplexity = 0;
-                
-                let Pattern = [];
-                
-                let Uses = [  ];
-                let Defs = [  ];
-                }
-                
-                def : Pat<(truncstorei32 X:$rs2, (add X:$rs1, RV3264I_Stype_immS_decodeAsInt64:$immS))
-                        (SW X:$rs1, X:$rs2, RV3264I_Stype_immS_decodeAsInt64:$immS)>;
-                
-                
-                
-                def XOR : Instruction
-                {
-        <<<<<<< HEAD
-                let Namespace = "dummyNamespaceValue";
-                
-        =======
-                let Namespace = "processorNameValue";
-                       
-        >>>>>>> af7d2d1 (lcb: Updated tests)
-                let Size = 4;
-                let CodeSize = 4;
-                
-                let OutOperandList = ( outs X:$rd );
-                let InOperandList = ( ins X:$rs1, X:$rs2 );
-                
-                field bits<32> Inst;
-                
-                // SoftFail is a field the disassembler can use to provide a way for
-                // instructions to not match without killing the whole decode process. It is
-                // mainly used for ARM, but Tablegen expects this field to exist or it fails
-                // to build the decode table.
-                field bits<32> SoftFail = 0;
-                
-                bits<7> opcode = 0b110011;
-                bits<3> funct3 = 0b001;
-                bits<7> funct7 = 0b;
-                bits<5> rs2;
-                bits<5> rs1;
-                bits<5> rd;
-                
-                let Inst{31-25} = funct7{6-0};
-                let Inst{24-20} = rs2{4-0};
-                let Inst{19-15} = rs1{4-0};
-                let Inst{14-12} = funct3{2-0};
-                let Inst{11-7} = rd{4-0};
-                let Inst{6-0} = opcode{6-0};
-                
-                let isTerminator  = 0;
-                let isBranch      = 0;
-                let isCall        = 0;
-                let isReturn      = 0;
-                let isPseudo      = 0;
-                let isCodeGenOnly = 0;
-                let mayLoad       = 0;
-                let mayStore      = 0;
-                
-                let Constraints = "";
-                let AddedComplexity = 0;
-                
-                let Pattern = [];
-                
-                let Uses = [  ];
-                let Defs = [  ];
-                }
-                
-                def : Pat<(xor X:$rs1, X:$rs2)
-                        (XOR X:$rs1, X:$rs2)>;
-                """.trim().lines(), output);
+        def X6 : Register<"X6">
+        {
+            let Namespace = "processorNameValue";
+            let AsmName = "X";
+            let AltNames = [ "X6" ];
+            let Aliases = [  ];
+            let SubRegs = [  ];
+            let SubRegIndices = [  ];
+            let RegAltNameIndices = [];
+            let DwarfNumbers = [ 6 ];
+            list<int> CostPerUse = [0];
+            let CoveredBySubRegs = "";
+            let HWEncoding{4-0} = 6;
+            let isArtificial = 0;
+        }
+                
+                
+        def X7 : Register<"X7">
+        {
+            let Namespace = "processorNameValue";
+            let AsmName = "X";
+            let AltNames = [ "X7" ];
+            let Aliases = [  ];
+            let SubRegs = [  ];
+            let SubRegIndices = [  ];
+            let RegAltNameIndices = [];
+            let DwarfNumbers = [ 7 ];
+            list<int> CostPerUse = [0];
+            let CoveredBySubRegs = "";
+            let HWEncoding{4-0} = 7;
+            let isArtificial = 0;
+        }
+                
+                
+        def X8 : Register<"X8">
+        {
+            let Namespace = "processorNameValue";
+            let AsmName = "fp";
+            let AltNames = [ "fp", "X8" ];
+            let Aliases = [  ];
+            let SubRegs = [  ];
+            let SubRegIndices = [  ];
+            let RegAltNameIndices = [];
+            let DwarfNumbers = [ 8 ];
+            list<int> CostPerUse = [0];
+            let CoveredBySubRegs = "";
+            let HWEncoding{4-0} = 8;
+            let isArtificial = 0;
+        }
+                
+                
+        def X9 : Register<"X9">
+        {
+            let Namespace = "processorNameValue";
+            let AsmName = "X";
+            let AltNames = [ "X9" ];
+            let Aliases = [  ];
+            let SubRegs = [  ];
+            let SubRegIndices = [  ];
+            let RegAltNameIndices = [];
+            let DwarfNumbers = [ 9 ];
+            list<int> CostPerUse = [0];
+            let CoveredBySubRegs = "";
+            let HWEncoding{4-0} = 9;
+            let isArtificial = 0;
+        }
+                
+                
+        def X10 : Register<"X10">
+        {
+            let Namespace = "processorNameValue";
+            let AsmName = "X";
+            let AltNames = [ "X10" ];
+            let Aliases = [  ];
+            let SubRegs = [  ];
+            let SubRegIndices = [  ];
+            let RegAltNameIndices = [];
+            let DwarfNumbers = [ 10 ];
+            list<int> CostPerUse = [0];
+            let CoveredBySubRegs = "";
+            let HWEncoding{4-0} = 10;
+            let isArtificial = 0;
+        }
+                
+                
+        def X11 : Register<"X11">
+        {
+            let Namespace = "processorNameValue";
+            let AsmName = "X";
+            let AltNames = [ "X11" ];
+            let Aliases = [  ];
+            let SubRegs = [  ];
+            let SubRegIndices = [  ];
+            let RegAltNameIndices = [];
+            let DwarfNumbers = [ 11 ];
+            list<int> CostPerUse = [0];
+            let CoveredBySubRegs = "";
+            let HWEncoding{4-0} = 11;
+            let isArtificial = 0;
+        }
+                
+                
+        def X12 : Register<"X12">
+        {
+            let Namespace = "processorNameValue";
+            let AsmName = "X";
+            let AltNames = [ "X12" ];
+            let Aliases = [  ];
+            let SubRegs = [  ];
+            let SubRegIndices = [  ];
+            let RegAltNameIndices = [];
+            let DwarfNumbers = [ 12 ];
+            list<int> CostPerUse = [0];
+            let CoveredBySubRegs = "";
+            let HWEncoding{4-0} = 12;
+            let isArtificial = 0;
+        }
+                
+                
+        def X13 : Register<"X13">
+        {
+            let Namespace = "processorNameValue";
+            let AsmName = "X";
+            let AltNames = [ "X13" ];
+            let Aliases = [  ];
+            let SubRegs = [  ];
+            let SubRegIndices = [  ];
+            let RegAltNameIndices = [];
+            let DwarfNumbers = [ 13 ];
+            list<int> CostPerUse = [0];
+            let CoveredBySubRegs = "";
+            let HWEncoding{4-0} = 13;
+            let isArtificial = 0;
+        }
+                
+                
+        def X14 : Register<"X14">
+        {
+            let Namespace = "processorNameValue";
+            let AsmName = "X";
+            let AltNames = [ "X14" ];
+            let Aliases = [  ];
+            let SubRegs = [  ];
+            let SubRegIndices = [  ];
+            let RegAltNameIndices = [];
+            let DwarfNumbers = [ 14 ];
+            list<int> CostPerUse = [0];
+            let CoveredBySubRegs = "";
+            let HWEncoding{4-0} = 14;
+            let isArtificial = 0;
+        }
+                
+                
+        def X15 : Register<"X15">
+        {
+            let Namespace = "processorNameValue";
+            let AsmName = "X";
+            let AltNames = [ "X15" ];
+            let Aliases = [  ];
+            let SubRegs = [  ];
+            let SubRegIndices = [  ];
+            let RegAltNameIndices = [];
+            let DwarfNumbers = [ 15 ];
+            list<int> CostPerUse = [0];
+            let CoveredBySubRegs = "";
+            let HWEncoding{4-0} = 15;
+            let isArtificial = 0;
+        }
+                
+                
+        def X16 : Register<"X16">
+        {
+            let Namespace = "processorNameValue";
+            let AsmName = "X";
+            let AltNames = [ "X16" ];
+            let Aliases = [  ];
+            let SubRegs = [  ];
+            let SubRegIndices = [  ];
+            let RegAltNameIndices = [];
+            let DwarfNumbers = [ 16 ];
+            list<int> CostPerUse = [0];
+            let CoveredBySubRegs = "";
+            let HWEncoding{4-0} = 16;
+            let isArtificial = 0;
+        }
+                
+                
+        def X17 : Register<"X17">
+        {
+            let Namespace = "processorNameValue";
+            let AsmName = "X";
+            let AltNames = [ "X17" ];
+            let Aliases = [  ];
+            let SubRegs = [  ];
+            let SubRegIndices = [  ];
+            let RegAltNameIndices = [];
+            let DwarfNumbers = [ 17 ];
+            list<int> CostPerUse = [0];
+            let CoveredBySubRegs = "";
+            let HWEncoding{4-0} = 17;
+            let isArtificial = 0;
+        }
+                
+                
+        def X18 : Register<"X18">
+        {
+            let Namespace = "processorNameValue";
+            let AsmName = "X";
+            let AltNames = [ "X18" ];
+            let Aliases = [  ];
+            let SubRegs = [  ];
+            let SubRegIndices = [  ];
+            let RegAltNameIndices = [];
+            let DwarfNumbers = [ 18 ];
+            list<int> CostPerUse = [0];
+            let CoveredBySubRegs = "";
+            let HWEncoding{4-0} = 18;
+            let isArtificial = 0;
+        }
+                
+                
+        def X19 : Register<"X19">
+        {
+            let Namespace = "processorNameValue";
+            let AsmName = "X";
+            let AltNames = [ "X19" ];
+            let Aliases = [  ];
+            let SubRegs = [  ];
+            let SubRegIndices = [  ];
+            let RegAltNameIndices = [];
+            let DwarfNumbers = [ 19 ];
+            list<int> CostPerUse = [0];
+            let CoveredBySubRegs = "";
+            let HWEncoding{4-0} = 19;
+            let isArtificial = 0;
+        }
+                
+                
+        def X20 : Register<"X20">
+        {
+            let Namespace = "processorNameValue";
+            let AsmName = "X";
+            let AltNames = [ "X20" ];
+            let Aliases = [  ];
+            let SubRegs = [  ];
+            let SubRegIndices = [  ];
+            let RegAltNameIndices = [];
+            let DwarfNumbers = [ 20 ];
+            list<int> CostPerUse = [0];
+            let CoveredBySubRegs = "";
+            let HWEncoding{4-0} = 20;
+            let isArtificial = 0;
+        }
+                
+                
+        def X21 : Register<"X21">
+        {
+            let Namespace = "processorNameValue";
+            let AsmName = "X";
+            let AltNames = [ "X21" ];
+            let Aliases = [  ];
+            let SubRegs = [  ];
+            let SubRegIndices = [  ];
+            let RegAltNameIndices = [];
+            let DwarfNumbers = [ 21 ];
+            list<int> CostPerUse = [0];
+            let CoveredBySubRegs = "";
+            let HWEncoding{4-0} = 21;
+            let isArtificial = 0;
+        }
+                
+                
+        def X22 : Register<"X22">
+        {
+            let Namespace = "processorNameValue";
+            let AsmName = "X";
+            let AltNames = [ "X22" ];
+            let Aliases = [  ];
+            let SubRegs = [  ];
+            let SubRegIndices = [  ];
+            let RegAltNameIndices = [];
+            let DwarfNumbers = [ 22 ];
+            list<int> CostPerUse = [0];
+            let CoveredBySubRegs = "";
+            let HWEncoding{4-0} = 22;
+            let isArtificial = 0;
+        }
+                
+                
+        def X23 : Register<"X23">
+        {
+            let Namespace = "processorNameValue";
+            let AsmName = "X";
+            let AltNames = [ "X23" ];
+            let Aliases = [  ];
+            let SubRegs = [  ];
+            let SubRegIndices = [  ];
+            let RegAltNameIndices = [];
+            let DwarfNumbers = [ 23 ];
+            list<int> CostPerUse = [0];
+            let CoveredBySubRegs = "";
+            let HWEncoding{4-0} = 23;
+            let isArtificial = 0;
+        }
+                
+                
+        def X24 : Register<"X24">
+        {
+            let Namespace = "processorNameValue";
+            let AsmName = "X";
+            let AltNames = [ "X24" ];
+            let Aliases = [  ];
+            let SubRegs = [  ];
+            let SubRegIndices = [  ];
+            let RegAltNameIndices = [];
+            let DwarfNumbers = [ 24 ];
+            list<int> CostPerUse = [0];
+            let CoveredBySubRegs = "";
+            let HWEncoding{4-0} = 24;
+            let isArtificial = 0;
+        }
+                
+                
+        def X25 : Register<"X25">
+        {
+            let Namespace = "processorNameValue";
+            let AsmName = "X";
+            let AltNames = [ "X25" ];
+            let Aliases = [  ];
+            let SubRegs = [  ];
+            let SubRegIndices = [  ];
+            let RegAltNameIndices = [];
+            let DwarfNumbers = [ 25 ];
+            list<int> CostPerUse = [0];
+            let CoveredBySubRegs = "";
+            let HWEncoding{4-0} = 25;
+            let isArtificial = 0;
+        }
+                
+                
+        def X26 : Register<"X26">
+        {
+            let Namespace = "processorNameValue";
+            let AsmName = "X";
+            let AltNames = [ "X26" ];
+            let Aliases = [  ];
+            let SubRegs = [  ];
+            let SubRegIndices = [  ];
+            let RegAltNameIndices = [];
+            let DwarfNumbers = [ 26 ];
+            list<int> CostPerUse = [0];
+            let CoveredBySubRegs = "";
+            let HWEncoding{4-0} = 26;
+            let isArtificial = 0;
+        }
+                
+                
+        def X27 : Register<"X27">
+        {
+            let Namespace = "processorNameValue";
+            let AsmName = "X";
+            let AltNames = [ "X27" ];
+            let Aliases = [  ];
+            let SubRegs = [  ];
+            let SubRegIndices = [  ];
+            let RegAltNameIndices = [];
+            let DwarfNumbers = [ 27 ];
+            list<int> CostPerUse = [0];
+            let CoveredBySubRegs = "";
+            let HWEncoding{4-0} = 27;
+            let isArtificial = 0;
+        }
+                
+                
+        def X28 : Register<"X28">
+        {
+            let Namespace = "processorNameValue";
+            let AsmName = "X";
+            let AltNames = [ "X28" ];
+            let Aliases = [  ];
+            let SubRegs = [  ];
+            let SubRegIndices = [  ];
+            let RegAltNameIndices = [];
+            let DwarfNumbers = [ 28 ];
+            list<int> CostPerUse = [0];
+            let CoveredBySubRegs = "";
+            let HWEncoding{4-0} = 28;
+            let isArtificial = 0;
+        }
+                
+                
+        def X29 : Register<"X29">
+        {
+            let Namespace = "processorNameValue";
+            let AsmName = "X";
+            let AltNames = [ "X29" ];
+            let Aliases = [  ];
+            let SubRegs = [  ];
+            let SubRegIndices = [  ];
+            let RegAltNameIndices = [];
+            let DwarfNumbers = [ 29 ];
+            list<int> CostPerUse = [0];
+            let CoveredBySubRegs = "";
+            let HWEncoding{4-0} = 29;
+            let isArtificial = 0;
+        }
+                
+                
+        def X30 : Register<"X30">
+        {
+            let Namespace = "processorNameValue";
+            let AsmName = "X";
+            let AltNames = [ "X30" ];
+            let Aliases = [  ];
+            let SubRegs = [  ];
+            let SubRegIndices = [  ];
+            let RegAltNameIndices = [];
+            let DwarfNumbers = [ 30 ];
+            list<int> CostPerUse = [0];
+            let CoveredBySubRegs = "";
+            let HWEncoding{4-0} = 30;
+            let isArtificial = 0;
+        }
+                
+                
+        def X31 : Register<"X31">
+        {
+            let Namespace = "processorNameValue";
+            let AsmName = "X";
+            let AltNames = [ "X31" ];
+            let Aliases = [  ];
+            let SubRegs = [  ];
+            let SubRegIndices = [  ];
+            let RegAltNameIndices = [];
+            let DwarfNumbers = [ 31 ];
+            list<int> CostPerUse = [0];
+            let CoveredBySubRegs = "";
+            let HWEncoding{4-0} = 31;
+            let isArtificial = 0;
+        }
+        """.trim().lines(), output);
   }
 }

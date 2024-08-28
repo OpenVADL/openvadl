@@ -14,14 +14,13 @@ import vadl.lcb.passes.llvmLowering.strategies.impl.LlvmLoweringArithmeticAndLog
 import vadl.lcb.passes.llvmLowering.strategies.impl.LlvmLoweringConditionalBranchesStrategyImpl;
 import vadl.lcb.passes.llvmLowering.strategies.impl.LlvmLoweringConditionalsStrategyImpl;
 import vadl.lcb.passes.llvmLowering.strategies.impl.LlvmLoweringIndirectJumpStrategyImpl;
-import vadl.lcb.passes.llvmLowering.strategies.impl.LlvmLoweringMemStoreStrategyImpl;
+import vadl.lcb.passes.llvmLowering.strategies.impl.LlvmLoweringMemoryStoreStrategyImpl;
 import vadl.lcb.passes.llvmLowering.strategies.impl.LlvmLoweringMemoryLoadStrategyImpl;
 import vadl.lcb.passes.llvmLowering.strategies.visitors.impl.ReplaceWithLlvmSDNodesVisitor;
 import vadl.lcb.passes.llvmLowering.tablegen.model.TableGenInstruction;
 import vadl.lcb.passes.llvmLowering.tablegen.model.TableGenInstructionOperand;
 import vadl.lcb.passes.llvmLowering.tablegen.model.TableGenPattern;
 import vadl.pass.Pass;
-import vadl.pass.PassKey;
 import vadl.pass.PassName;
 import vadl.pass.PassResults;
 import vadl.viam.Instruction;
@@ -41,7 +40,7 @@ public class LlvmLoweringPass extends Pass {
       new LlvmLoweringConditionalsStrategyImpl(),
       new LlvmLoweringConditionalBranchesStrategyImpl(),
       new LlvmLoweringIndirectJumpStrategyImpl(),
-      new LlvmLoweringMemStoreStrategyImpl(),
+      new LlvmLoweringMemoryStoreStrategyImpl(),
       new LlvmLoweringMemoryLoadStrategyImpl()
   );
 

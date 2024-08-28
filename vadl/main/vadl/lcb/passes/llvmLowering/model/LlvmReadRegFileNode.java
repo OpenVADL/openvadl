@@ -12,7 +12,8 @@ import vadl.viam.graph.dependency.ExpressionNode;
 import vadl.viam.graph.dependency.FieldRefNode;
 import vadl.viam.graph.dependency.ReadRegFileNode;
 
-public class LlvmReadRegFileNode extends ReadRegFileNode implements LlvmNodeLowerable {
+public class LlvmReadRegFileNode extends ReadRegFileNode implements LlvmNodeLowerable,
+    LlvmNodeReplaceable {
   private final ParameterIdentity parameterIdentity;
 
   public LlvmReadRegFileNode(RegisterFile registerFile,
@@ -23,6 +24,7 @@ public class LlvmReadRegFileNode extends ReadRegFileNode implements LlvmNodeLowe
     this.parameterIdentity = ParameterIdentity.from(this, (FieldRefNode) address);
   }
 
+  @Override
   public ParameterIdentity parameterIdentity() {
     return parameterIdentity;
   }

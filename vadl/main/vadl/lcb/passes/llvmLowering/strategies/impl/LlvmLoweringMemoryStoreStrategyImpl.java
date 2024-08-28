@@ -1,0 +1,107 @@
+package vadl.lcb.passes.llvmLowering.strategies.impl;
+
+import static vadl.viam.ViamError.ensure;
+
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
+import java.util.function.BiFunction;
+import java.util.function.Function;
+import vadl.lcb.passes.isaMatching.InstructionLabel;
+import vadl.lcb.passes.llvmLowering.model.LlvmFrameIndexSD;
+import vadl.lcb.passes.llvmLowering.model.LlvmReadRegFileNode;
+import vadl.lcb.passes.llvmLowering.model.LlvmStore;
+import vadl.lcb.passes.llvmLowering.model.LlvmTruncStore;
+import vadl.lcb.passes.llvmLowering.model.MachineInstructionParameterNode;
+import vadl.lcb.passes.llvmLowering.strategies.LlvmLoweringStrategy;
+import vadl.lcb.passes.llvmLowering.tablegen.model.ParameterIdentity;
+import vadl.lcb.passes.llvmLowering.tablegen.model.TableGenInstructionFrameRegisterOperand;
+import vadl.lcb.passes.llvmLowering.tablegen.model.TableGenInstructionOperand;
+import vadl.lcb.passes.llvmLowering.tablegen.model.TableGenPattern;
+import vadl.viam.Instruction;
+import vadl.viam.Memory;
+import vadl.viam.Register;
+import vadl.viam.graph.Node;
+import vadl.viam.graph.dependency.WriteResourceNode;
+import vadl.viam.passes.functionInliner.UninlinedGraph;
+
+/**
+ * Lowers instructions which can store into memory.
+ */
+public class LlvmLoweringMemoryStoreStrategyImpl extends LlvmLoweringStrategy {
+
+  @Override
+  protected Set<InstructionLabel> getSupportedInstructionLabels() {
+    return Set.of(InstructionLabel.STORE_MEM);
+  }
+
+  @Override
+  protected List<TableGenPattern> generatePatternVariations(
+      Instruction instruction,
+      Map<InstructionLabel, List<Instruction>> supportedInstructions,
+      InstructionLabel instructionLabel,
+      UninlinedGraph behavior,
+      List<TableGenInstructionOperand> inputOperands,
+      List<TableGenInstructionOperand> outputOperands,
+      List<TableGenPattern> patterns) {
+    return replaceRegisterWithFrameIndex(patterns);
+  }
+
+  /**
+   * Instructions in {@link InstructionLabel#STORE_MEM} write from a {@link Register} into
+   * {@link Memory}. However, LLVM has a special selection dag node for frame indexes.
+   * Function's variables are placed on the stack and will be accessed relative to a frame pointer.
+   * LLVM has for the lowering a frame index leaf node which requires additional patterns.
+   * The goal of this method is to replace a {@link Register} with {@link LlvmFrameIndexSD}
+   * which has a LLVM's {@code ComplexPattern} hardcoded.
+   */
+  private List<TableGenPattern> replaceRegisterWithFrameIndex(List<TableGenPattern> patterns) {
+    var alternativePatterns = new ArrayList<TableGenPattern>();
+
+    for (var pattern : patterns) {
+      var selector = pattern.selector().copy();
+      var machine = pattern.machine().copy();
+
+      // We are only interested in the `address` subtree of a memory store (or truncstore)
+      // because the value register should remain unchanged.
+      // Afterward, we get all the children of the `WriteResource` and only filter for
+      // `LlvmReadRegFileNode` because we wil only change registers.
+      var affectedNodes = selector.getNodes(Set.of(LlvmTruncStore.class, LlvmStore.class))
+          .map(x -> (WriteResourceNode) x)
+          .filter(WriteResourceNode::hasAddress)
+          .flatMap(x -> {
+            var inputs = new ArrayList<Node>();
+            var address = x.address();
+            ensure(address != null, "address must not be null");
+            address.collectInputsWithChildren(inputs);
+            return inputs.stream();
+          })
+          .filter(x -> x instanceof LlvmReadRegFileNode)
+          .map(x -> (LlvmReadRegFileNode) x)
+          .toList();
+
+      // Both functions specify how the graph should be changed.
+      // Selector: replace the original node by `LlvmFrameIndexSD`
+      Function<LlvmReadRegFileNode, Node> selectorTransformation = LlvmFrameIndexSD::new;
+      // Machine: replace by frame register operand but the `affectedParameterIdentity`
+      // should change the type. So `X:$rs1` should be `Addr:$rs1`.
+      BiFunction<MachineInstructionParameterNode, ParameterIdentity, TableGenInstructionOperand>
+          machineInstructionTransformation =
+          (machineInstructionParameterNode, affectedParameterIdentity) ->
+              new TableGenInstructionFrameRegisterOperand(
+                  affectedParameterIdentity.withType(LlvmFrameIndexSD.NAME),
+                  machineInstructionParameterNode.instructionOperand().origin()
+              );
+
+      replaceNodeByParameterIdentity(affectedNodes,
+          machine,
+          selectorTransformation,
+          machineInstructionTransformation);
+
+      alternativePatterns.add(new TableGenPattern(selector, machine));
+    }
+
+    return alternativePatterns;
+  }
+}
