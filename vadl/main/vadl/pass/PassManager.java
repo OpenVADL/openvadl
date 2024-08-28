@@ -115,6 +115,7 @@ public class PassManager {
     }
 
     for (var step : affectedSteps) {
+      var startTime = System.currentTimeMillis();
       logger.atDebug().log("Running pass with key: {}", step.key());
       // Wrapping the passResults into an unmodifiable map so a pass cannot modify
       // the results.
@@ -125,7 +126,8 @@ public class PassManager {
       logger.atDebug().log("Storing result of pass with key: {}", step.key());
       passResults.add(step.key(), pass, passResult);
 
-      logger.atDebug().log("Pass completed with key: {}", step.key());
+      logger.atDebug().log("Pass completed: {} -- {} ms", step.key(),
+          System.currentTimeMillis() - startTime);
     }
   }
 
