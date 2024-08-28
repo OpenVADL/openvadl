@@ -3,9 +3,9 @@ package vadl.dump.infoEnrichers;
 import static vadl.dump.InfoEnricher.forType;
 
 import java.util.List;
-import vadl.dump.InfoUtils;
 import vadl.dump.Info;
 import vadl.dump.InfoEnricher;
+import vadl.dump.InfoUtils;
 import vadl.dump.entities.DefinitionEntity;
 import vadl.viam.DefProp;
 import vadl.viam.Instruction;
