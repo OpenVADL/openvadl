@@ -32,10 +32,6 @@ public class Instruction extends Definition implements DefProp.WithBehavior {
     this.behavior = behavior;
     this.assembly = assembly;
     this.encoding = encoding;
-//    setSourceLocation(behavior.sourceLocation()
-//        .join(assembly.sourceLocation())
-//        .join(encoding.sourceLocation())
-//    );
   }
 
   public Graph behavior() {
