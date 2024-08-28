@@ -37,8 +37,8 @@ import vadl.viam.graph.Graph;
 import vadl.viam.graph.Node;
 import vadl.viam.graph.NodeList;
 import vadl.viam.graph.control.AbstractBeginNode;
+import vadl.viam.graph.control.AbstractEndNode;
 import vadl.viam.graph.control.ControlNode;
-import vadl.viam.graph.control.EndNode;
 import vadl.viam.graph.control.IfNode;
 import vadl.viam.graph.dependency.ConstantNode;
 import vadl.viam.graph.dependency.DependencyNode;
@@ -46,7 +46,6 @@ import vadl.viam.graph.dependency.ExpressionNode;
 import vadl.viam.graph.dependency.FieldAccessRefNode;
 import vadl.viam.graph.dependency.FieldRefNode;
 import vadl.viam.graph.dependency.FuncParamNode;
-import vadl.viam.graph.dependency.ReadMemNode;
 import vadl.viam.graph.dependency.ReadRegFileNode;
 import vadl.viam.graph.dependency.ReadRegNode;
 import vadl.viam.graph.dependency.WriteMemNode;
@@ -137,7 +136,7 @@ public abstract class LlvmLoweringStrategy {
     }
 
     // Continue with lowering of nodes
-    for (var endNode : copy.getNodes(EndNode.class).toList()) {
+    for (var endNode : copy.getNodes(AbstractEndNode.class).toList()) {
       visitor.visit(endNode);
 
       if (!((TableGenPatternLowerable) visitor).isPatternLowerable()) {
@@ -227,7 +226,8 @@ public abstract class LlvmLoweringStrategy {
    */
   private boolean checkIfNoControlFlow(Graph behavior) {
     return behavior.getNodes(ControlNode.class)
-        .allMatch(x -> x instanceof AbstractBeginNode || x instanceof EndNode); // exceptions
+        .allMatch(
+            x -> x instanceof AbstractBeginNode || x instanceof AbstractEndNode); // exceptions
   }
 
   /**

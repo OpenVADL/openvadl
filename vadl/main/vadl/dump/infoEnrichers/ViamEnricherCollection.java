@@ -7,6 +7,7 @@ import vadl.dump.Info;
 import vadl.dump.InfoEnricher;
 import vadl.dump.entities.DefinitionEntity;
 import vadl.viam.DefProp;
+import vadl.viam.Instruction;
 import vadl.viam.ViamError;
 
 /**
@@ -153,6 +154,34 @@ public class ViamEnricherCollection {
       });
 
   /**
+   * A {@link InfoEnricher} that adds an expandable to definition entities if
+   * the verification failed.
+   * This helps debugging and finding bugs in the VIAM.
+   */
+  public static InfoEnricher SOURCE_CODE_SUPPLIER_EXPANDABLE =
+      forType(DefinitionEntity.class, (entity, passResult) -> {
+        var sourceLocation = entity.origin().sourceLocation();
+        if (entity.origin() instanceof Instruction) {
+          sourceLocation = ((Instruction) entity.origin()).behavior().sourceLocation();
+        }
+        if (!sourceLocation.isValid()) {
+          return;
+        }
+        var source = sourceLocation.toSourceString();
+        // catch and add error information
+        var info = new Info.Expandable(
+            """
+                Source Code
+                """,
+            """
+                <pre><code id="code-block" class="text-sm text-gray-500 whitespace-pre">%s
+                </code></pre>
+                """.formatted(source)
+        );
+        entity.addInfo(info);
+      });
+
+  /**
    * A list of all info enrichers for the default VIAM specification.
    */
   public static List<InfoEnricher> all = List.of(
@@ -160,7 +189,8 @@ public class ViamEnricherCollection {
       TYPE_SUPPLIER_TAG,
       PARENT_SUPPLIER_TAG,
       BEHAVIOR_SUPPLIER_MODAL,
-      VERIFY_SUPPLIER_EXPANDABLE
+      VERIFY_SUPPLIER_EXPANDABLE,
+      SOURCE_CODE_SUPPLIER_EXPANDABLE
   );
 
 }

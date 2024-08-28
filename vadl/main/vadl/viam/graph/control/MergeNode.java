@@ -1,7 +1,6 @@
 package vadl.viam.graph.control;
 
 import java.util.List;
-import java.util.Objects;
 import java.util.stream.Collectors;
 import vadl.javaannotations.viam.Input;
 import vadl.viam.graph.GraphVisitor;
@@ -14,14 +13,14 @@ import vadl.viam.graph.NodeList;
 public class MergeNode extends AbstractBeginNode {
 
   @Input
-  NodeList<EndNode> branchEnds;
+  NodeList<BranchEndNode> branchEnds;
 
-  public MergeNode(NodeList<EndNode> branchEnds, ControlNode next) {
+  public MergeNode(NodeList<BranchEndNode> branchEnds, ControlNode next) {
     super(next);
     this.branchEnds = branchEnds;
   }
 
-  public MergeNode(NodeList<EndNode> branchEnds) {
+  public MergeNode(NodeList<BranchEndNode> branchEnds) {
     this.branchEnds = branchEnds;
   }
 
@@ -35,7 +34,7 @@ public class MergeNode extends AbstractBeginNode {
   protected void applyOnInputsUnsafe(GraphVisitor.Applier<Node> visitor) {
     super.applyOnInputsUnsafe(visitor);
     branchEnds = branchEnds.stream()
-        .map(e -> visitor.apply(this, e, EndNode.class))
+        .map(e -> visitor.apply(this, e, BranchEndNode.class))
         .collect(Collectors.toCollection(NodeList::new));
   }
 
@@ -50,12 +49,12 @@ public class MergeNode extends AbstractBeginNode {
   @Override
   public Node copy() {
     return new MergeNode(
-        new NodeList<>(this.branchEnds.stream().map(x -> (EndNode) x.copy()).toList()),
-        (ControlNode) Objects.requireNonNull(next).copy());
+        new NodeList<>(this.branchEnds.stream().map(x -> (BranchEndNode) x.copy()).toList()),
+        (ControlNode) next().copy());
   }
 
   @Override
   public Node shallowCopy() {
-    return new MergeNode(branchEnds, Objects.requireNonNull(next));
+    return new MergeNode(branchEnds, (ControlNode) next());
   }
 }

@@ -5,7 +5,7 @@ import java.util.Objects;
 import vadl.viam.Constant;
 import vadl.viam.graph.GraphNodeVisitor;
 import vadl.viam.graph.control.AbstractBeginNode;
-import vadl.viam.graph.control.EndNode;
+import vadl.viam.graph.control.BranchEndNode;
 import vadl.viam.graph.control.IfNode;
 import vadl.viam.graph.control.InstrCallNode;
 import vadl.viam.graph.control.InstrEndNode;
@@ -200,7 +200,7 @@ public abstract class GenericCppCodeGeneratorVisitor implements GraphNodeVisitor
   }
 
   @Override
-  public void visit(EndNode endNode) {
+  public void visit(BranchEndNode branchEndNode) {
     throw new RuntimeException("not implemented");
   }
 

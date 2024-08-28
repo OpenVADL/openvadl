@@ -3,7 +3,7 @@ package vadl.viam.matching.impl;
 import vadl.viam.graph.GraphNodeVisitor;
 import vadl.viam.graph.Node;
 import vadl.viam.graph.control.AbstractBeginNode;
-import vadl.viam.graph.control.EndNode;
+import vadl.viam.graph.control.BranchEndNode;
 import vadl.viam.graph.control.IfNode;
 import vadl.viam.graph.control.InstrCallNode;
 import vadl.viam.graph.control.InstrEndNode;
@@ -162,7 +162,7 @@ public class AnyChildMatcher implements Matcher {
     }
 
     @Override
-    public void visit(EndNode node) {
+    public void visit(BranchEndNode node) {
       matched |= matcher.matches(node);
     }
 
@@ -173,12 +173,12 @@ public class AnyChildMatcher implements Matcher {
 
     @Override
     public void visit(IfNode node) {
-      matched |= matcher.matches(node.condition);
-      matched |= matcher.matches(node.falseBranch);
-      matched |= matcher.matches(node.trueBranch);
-      visit(node.condition);
-      visit(node.falseBranch);
-      visit(node.trueBranch);
+      matched |= matcher.matches(node.condition());
+      matched |= matcher.matches(node.falseBranch());
+      matched |= matcher.matches(node.trueBranch());
+      visit(node.condition());
+      visit(node.falseBranch());
+      visit(node.trueBranch());
     }
 
     @Override

@@ -28,27 +28,40 @@ import vadl.viam.graph.dependency.ExpressionNode;
 public class IfNode extends ControlSplitNode {
 
   @Input
-  public ExpressionNode condition;
+  private ExpressionNode condition;
 
   @Successor
-  public Node trueBranch;
+  private BeginNode trueBranch;
 
   @Successor
-  public Node falseBranch;
+  private BeginNode falseBranch;
 
   /**
    * The constructor to instantiate a IfNode.
    */
-  public IfNode(ExpressionNode condition, Node trueBranch, Node falseBranch) {
+  public IfNode(ExpressionNode condition, BeginNode trueBranch, BeginNode falseBranch) {
     this.condition = condition;
     this.trueBranch = trueBranch;
     this.falseBranch = falseBranch;
   }
 
+  public ExpressionNode condition() {
+    return condition;
+  }
+
+  public BeginNode trueBranch() {
+    return trueBranch;
+  }
+
+  public BeginNode falseBranch() {
+    return falseBranch;
+  }
+
 
   @Override
   public Node copy() {
-    return new IfNode((ExpressionNode) condition.copy(), trueBranch.copy(), falseBranch.copy());
+    return new IfNode((ExpressionNode) condition.copy(), (BeginNode) trueBranch.copy(),
+        (BeginNode) falseBranch.copy());
   }
 
   @Override
@@ -88,15 +101,7 @@ public class IfNode extends ControlSplitNode {
   @Override
   protected void applyOnSuccessorsUnsafe(GraphVisitor.Applier<Node> visitor) {
     super.applyOnSuccessorsUnsafe(visitor);
-    trueBranch = visitor.apply(this, trueBranch);
-    falseBranch = visitor.apply(this, falseBranch);
-  }
-
-  public Node trueBranch() {
-    return trueBranch;
-  }
-
-  public Node falseBranch() {
-    return falseBranch;
+    trueBranch = visitor.apply(this, trueBranch, BeginNode.class);
+    falseBranch = visitor.apply(this, falseBranch, BeginNode.class);
   }
 }

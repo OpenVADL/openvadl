@@ -32,10 +32,10 @@ import vadl.viam.graph.Graph;
 import vadl.viam.graph.NodeList;
 import vadl.viam.graph.dependency.BuiltInCall;
 import vadl.viam.graph.dependency.ConstantNode;
-import vadl.viam.passes.canonicalization.CanoicalizationPass;
+import vadl.viam.passes.canonicalization.CanonicalizationPass;
 import vadl.viam.passes.canonicalization.Canonicalizer;
 
-class CanoicalizationPassTest extends AbstractTest {
+class CanonicalizationPassTest extends AbstractTest {
   @Test
   void shouldReplaceAdditionWithConstant() {
     // Given
@@ -81,7 +81,7 @@ class CanoicalizationPassTest extends AbstractTest {
     viam.add(isa);
 
     // When
-    var pass = new CanoicalizationPass(createConfiguration());
+    var pass = new CanonicalizationPass(createConfiguration());
     pass.execute(new PassResults(), viam);
 
     assertThat(behavior.getNodes().count(), equalTo(1L));

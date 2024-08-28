@@ -355,8 +355,8 @@ public class IsaMatchingPass extends Pass {
     var hasCondition =
         behavior.getNodes(IfNode.class)
             .anyMatch(
-                x -> x.condition instanceof BuiltInCall
-                    && builtins.contains(((BuiltInCall) x.condition).builtIn()));
+                x -> x.condition() instanceof BuiltInCall
+                    && builtins.contains(((BuiltInCall) x.condition()).builtIn()));
     var writesPc = behavior.getNodes(WriteRegNode.class)
         .anyMatch(x -> x.register() == pc);
 

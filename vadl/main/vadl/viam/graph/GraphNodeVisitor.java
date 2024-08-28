@@ -1,7 +1,7 @@
 package vadl.viam.graph;
 
 import vadl.viam.graph.control.AbstractBeginNode;
-import vadl.viam.graph.control.EndNode;
+import vadl.viam.graph.control.BranchEndNode;
 import vadl.viam.graph.control.IfNode;
 import vadl.viam.graph.control.InstrCallNode;
 import vadl.viam.graph.control.InstrEndNode;
@@ -129,9 +129,9 @@ public interface GraphNodeVisitor {
   void visit(ReturnNode returnNode);
 
   /**
-   * Visit {@link EndNode}.
+   * Visit {@link BranchEndNode}.
    */
-  void visit(EndNode endNode);
+  void visit(BranchEndNode branchEndNode);
 
   /**
    * Visit {@link InstrCallNode}.

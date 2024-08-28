@@ -2,7 +2,6 @@ package vadl.pass;
 
 import java.io.IOException;
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
@@ -12,6 +11,8 @@ import vadl.configuration.GeneralConfiguration;
 import vadl.configuration.LcbConfiguration;
 import vadl.cppCodeGen.passes.fieldNodeReplacement.FieldNodeReplacementPassForDecoding;
 import vadl.dump.HtmlDumpPass;
+import vadl.error.VadlError;
+import vadl.error.VadlException;
 import vadl.gcb.passes.encoding_generation.GenerateFieldAccessEncodingFunctionPass;
 import vadl.gcb.passes.type_normalization.CppTypeNormalizationForDecodingsPass;
 import vadl.gcb.passes.type_normalization.CppTypeNormalizationForEncodingsPass;
@@ -21,8 +22,10 @@ import vadl.lcb.passes.llvmLowering.LlvmLoweringPass;
 import vadl.lcb.template.lib.Target.EmitMCInstLowerCppFilePass;
 import vadl.lcb.template.lib.Target.EmitMCInstLowerHeaderFilePass;
 import vadl.viam.passes.algebraic_simplication.AlgebraicSimplificationPass;
+import vadl.viam.passes.canonicalization.CanonicalizationPass;
 import vadl.viam.passes.dummyAbi.DummyAbiPass;
 import vadl.viam.passes.functionInliner.FunctionInlinerPass;
+import vadl.viam.passes.sideeffect_condition.SideEffectConditionResolvingPass;
 import vadl.viam.passes.typeCastElimination.TypeCastEliminationPass;
 import vadl.viam.passes.verification.ViamVerificationPass;
 
@@ -37,7 +40,7 @@ public final class PassOrder {
       = new ConcurrentHashMap<>();
 
   // the actual list of pass steps
-  private final ArrayList<PassStep> order = new ArrayList<>();
+  private List<PassStep> order = new ArrayList<>();
 
   /**
    * Add a pass to the pass order. If the passKey is null, it will generate a unique one.
@@ -80,6 +83,20 @@ public final class PassOrder {
     return order;
   }
 
+  /**
+   * Truncates the PassOrder to only include passes until (including) the first
+   * instance of the given pass class.
+   * This is helpful for tests to avoid executing more passes than necessary.
+   */
+  public PassOrder untilFirst(Class<? extends Pass> passClass) {
+    var instance = order.stream().filter(s -> passClass.isInstance(s.pass()))
+        .findFirst()
+        .get();
+    var indexOf = order.indexOf(instance);
+    order.subList(indexOf + 1, order.size()).clear();
+    return this;
+  }
+
 
   /**
    * Return the viam passes.
@@ -87,11 +104,18 @@ public final class PassOrder {
   public static PassOrder viam(GeneralConfiguration configuration) throws IOException {
     var order = new PassOrder();
 
-    order.add(new DummyAbiPass(configuration));
     order.add(new ViamVerificationPass(configuration));
+    order.add(new DummyAbiPass(configuration));
+
     order.add(new TypeCastEliminationPass(configuration));
     order.add(new FunctionInlinerPass(configuration));
+    order.add(new SideEffectConditionResolvingPass(configuration));
+
+    order.add(new CanonicalizationPass(configuration));
     order.add(new AlgebraicSimplificationPass(configuration));
+
+    // verification after viam optimizations
+    order.add(new ViamVerificationPass(configuration));
 
     if (configuration.doDump()) {
       var config = HtmlDumpPass.Config.from(

@@ -270,17 +270,12 @@ public abstract class Node {
         // if nothing changes just return newInput
         return newInput;
       }
-      if (newInput != null) {
-        // transfer usage of this from the old input to the new input
-        // -> the old input will not have this node as usage anymore
-        // -> the new input will have this node as usage
-        updateUsage(oldInput, newInput);
-      } else {
-        if (oldInput != null) {
-          // the old input must not have this node as usage
-          oldInput.removeUsage(this);
-        }
-      }
+
+      // transfer usage of this from the old input to the new input
+      // -> the old input will not have this node as usage anymore
+      // -> the new input will have this node as usage
+      updateUsageOf(oldInput, newInput);
+
       return newInput;
     });
   }
@@ -295,21 +290,10 @@ public abstract class Node {
       // produce new successor
       var newSucc = visitor.applyNullable(self, oldSucc);
 
-      if (newSucc == oldSucc) {
-        // if the old one remains the same, return it
-        return newSucc;
-      }
+      // set the predecessor of oldSucc to null
+      // and the predecessor of newSucc to this
+      updatePredecessorOf(oldSucc, newSucc);
 
-      if (newSucc != null) {
-        // set the predecessor of oldSucc to null
-        // and the predecessor of newSucc to this
-        updatePredecessor(oldSucc, newSucc);
-      } else {
-        if (oldSucc != null) {
-          // remove this from being the predecessor
-          oldSucc.setPredecessor(null);
-        }
-      }
       return newSucc;
     });
   }
@@ -390,6 +374,11 @@ public abstract class Node {
     replacement.setSourceLocationIfNotSet(this.sourceLocation);
     if (replacement.isUninitialized() && graph != null) {
       replacement = graph.addWithInputs(replacement);
+      if (replacement == this) {
+        // as the graph might return the same node
+        // again, we have to check if the new node is the same as this node.
+        return this;
+      }
     }
     checkReplaceWith(replacement);
     replaceAtAllUsages(replacement);
@@ -429,7 +418,7 @@ public abstract class Node {
         }
         return succ;
       });
-      updatePredecessor(this, replacement);
+      updatePredecessorOf(this, replacement);
     }
   }
 
@@ -455,25 +444,26 @@ public abstract class Node {
    * @param newInput the node to replace the old input with
    */
   public void replaceInput(Node oldInput, Node newInput) {
-    AtomicBoolean replaced = new AtomicBoolean(false);
-    applyOnInputsUnsafe((self, input) -> {
+    applyOnInputs((self, input) -> {
       if (input == oldInput) {
-        replaced.set(true);
         return newInput;
       } else {
         return input;
       }
     });
+  }
 
-    if (replaced.get()) {
-      if (isUninitialized()) {
-        // if this node is not yet initialized, we will add it as usage
-        // to the new node. This is done as asoon as this node gets added to the graph
-        oldInput.removeUsage(this);
-      } else {
-        updateUsage(oldInput, newInput);
+
+  /**
+   * Replaces the given old successor of this node, by the new one.
+   */
+  public void replaceSuccessor(Node oldSuccessor, @Nullable Node newSuccessor) {
+    applyOnSuccessors((self, successor) -> {
+      if (successor == oldSuccessor) {
+        return newSuccessor;
       }
-    }
+      return successor;
+    });
   }
 
 
@@ -488,20 +478,16 @@ public abstract class Node {
    * @return if there was something found to remove
    */
   public final boolean removeUsage(Node usage) {
-    // remove() would only remove the first occurrence,
-    // but we want to delete all occurrences of the usage node
-    return usages.removeAll(Collections.singleton(usage));
+    // we remove only the first occurrence of the given usage
+    // even if the usages uses this node multiple times.
+    // This is because a general pass algorithm would iterate over all inputs,
+    // so removing all of them on the first occurrence would lead to an inconsistent state
+    // were this is an input of some node, but it is not contained in the usages list
+    return usages.remove(usage);
   }
 
   protected final void setPredecessor(@Nullable Node predecessor) {
     this.predecessor = predecessor;
-  }
-
-  /**
-   * Updates the successors of this node by setting itself as the predecessor for each successor.
-   */
-  protected final void updateSuccessors() {
-    successorList().forEach(e -> e.setPredecessor(this));
   }
 
   /**
@@ -519,17 +505,19 @@ public abstract class Node {
    * @param oldInput will <b>not</b> have {@code this} as a usage after operation completed
    * @param newInput will have {@code this} as a usage after operation completed
    */
-  protected final void updateUsage(@Nullable Node oldInput, Node newInput) {
+  protected final void updateUsageOf(@Nullable Node oldInput, @Nullable Node newInput) {
     ensure(isActive(), "node must be active on usage transfer");
-    ensure(this.id.isInit() || newInput.isActiveIn(graph),
+    ensure(newInput == null || newInput.isActiveIn(graph),
         "cannot transfer usage to inactive node %s", newInput);
-    if (oldInput == newInput) {
-      return;
+    if (oldInput != newInput) {
+      if (oldInput != null && !oldInput.isUninitialized()) {
+        boolean result = oldInput.removeUsage(this);
+        ensure(result, "Old input (%s) hadn't a usage of this", oldInput);
+      }
+      if (newInput != null) {
+        newInput.addUsage(this);
+      }
     }
-    if (oldInput != null) {
-      oldInput.removeUsage(this);
-    }
-    newInput.addUsage(this);
   }
 
   /**
@@ -548,18 +536,24 @@ public abstract class Node {
    *                     completed
    * @param newSuccessor will have {@code this} as the predecessor after operation completed
    */
-  private void updatePredecessor(@Nullable Node oldSuccessor, Node newSuccessor) {
-    ensure(isActive(), "node must be active on predecessor transfer");
-    ensure(newSuccessor.predecessor == null, "newSuccessor already has predecessor set");
-    if (oldSuccessor == newSuccessor) {
-      return;
+  protected void updatePredecessorOf(@Nullable Node oldSuccessor, @Nullable Node newSuccessor) {
+    ensure(isActive() && (newSuccessor == null || newSuccessor.isActiveIn(graph())),
+        "failed to set remove %s as predecessor from %s and adding it to %s", this, oldSuccessor,
+        newSuccessor);
+    if (oldSuccessor != newSuccessor) {
+      if (oldSuccessor != null) {
+        ensure(newSuccessor == null || oldSuccessor.predecessor == this,
+            "the old successor (%s) of this node has another predecessor: %s", oldSuccessor,
+            oldSuccessor.predecessor);
+        oldSuccessor.setPredecessor(null);
+      }
+      if (newSuccessor != null) {
+        ensure(newSuccessor.predecessor == null,
+            "the new successor (%s) already has a predecessor: %s", newSuccessor,
+            newSuccessor.predecessor);
+        newSuccessor.setPredecessor(this);
+      }
     }
-    if (oldSuccessor != null) {
-      ensure(oldSuccessor.predecessor == this,
-          "the oldSuccessor's predecessor should be this, but was %s", oldSuccessor.predecessor);
-      oldSuccessor.setPredecessor(null);
-    }
-    newSuccessor.setPredecessor(this);
   }
 
   /**
@@ -802,7 +796,11 @@ public abstract class Node {
     /**
      * When copying a {@link Node} it must be possible to reset the id so the node can added to
      * a different graph.
+     *
+     * @deprecated as it leaves the node in an inconsistent state within the graph.
+     *     Take a look at {@link Graph#deinitializeNodes()} for more information.
      */
+    @Deprecated
     public void deactivate() {
       state = IdState.INIT;
       numericId = -1;

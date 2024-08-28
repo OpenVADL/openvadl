@@ -3,11 +3,13 @@ package vadl.viam.passes.verification;
 import java.io.IOException;
 import org.jetbrains.annotations.Nullable;
 import vadl.configuration.GeneralConfiguration;
+import vadl.dump.HtmlDumpPass;
 import vadl.pass.Pass;
 import vadl.pass.PassName;
 import vadl.pass.PassResults;
 import vadl.viam.Definition;
 import vadl.viam.Specification;
+import vadl.viam.ViamError;
 
 /**
  * A pass that runs the {@link ViamVerifier} on the given VIAM specification.
@@ -30,7 +32,16 @@ public class ViamVerificationPass extends Pass {
   @Override
   public Object execute(PassResults passResults, Specification viam)
       throws IOException {
-    ViamVerifier.verifyAllIn(viam);
+    try {
+      ViamVerifier.verifyAllIn(viam);
+    } catch (ViamError e) {
+      new HtmlDumpPass(
+          HtmlDumpPass.Config.from(configuration(),
+              getName().value() + " Exception",
+              "This dump is due to an exception while running the viam verification pass.")
+      ).execute(passResults, viam);
+      throw e;
+    }
     return null;
   }
 }

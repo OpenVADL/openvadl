@@ -34,13 +34,14 @@ import vadl.pass.PassOrder;
 import vadl.pass.exception.DuplicatedPassKeyException;
 import vadl.utils.VADLFileUtils;
 import vadl.viam.Specification;
+import vadl.viam.passes.verification.ViamVerificationPass;
 import vadl.viam.passes.verification.ViamVerifier;
 
 /**
  * The super type of all integration tests.
  * It sets up the vadl test frontend to run a vadl specification.
  */
-public class AbstractTest {
+public abstract class AbstractTest {
 
   /**
    * The test source directory in the resources.
@@ -228,10 +229,7 @@ public class AbstractTest {
    */
   public Specification runAndGetViamSpecification(String testSourcePath) {
     tryToRunSpecificationWithFrontend(testSourcePath, testFrontend);
-    var viam = testFrontend.getViam();
-    // verify state of viam before returning it
-    ViamVerifier.verifyAllIn(viam);
-    return viam;
+    return testFrontend.getViam();
   }
 
   public static TestFrontend runViamSpecificationWithNewFrontend(String testSourcePath) {

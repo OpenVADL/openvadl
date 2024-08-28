@@ -8,24 +8,13 @@ import vadl.viam.graph.Node;
  * The AbstractBeginNode represents the start of a control flow.
  * This may be a subflow or the most outer control flow.
  */
-public class AbstractBeginNode extends DirectionalNode {
+public abstract class AbstractBeginNode extends DirectionalNode {
 
   public AbstractBeginNode(ControlNode next) {
-    setNext(next);
+    super(next);
   }
 
   public AbstractBeginNode() {
-  }
-
-  @Override
-  public Node copy() {
-    return new AbstractBeginNode((ControlNode) Objects.requireNonNull(next).copy());
-  }
-  
-
-  @Override
-  public Node shallowCopy() {
-    return new AbstractBeginNode(Objects.requireNonNull(next));
   }
 
   @Override

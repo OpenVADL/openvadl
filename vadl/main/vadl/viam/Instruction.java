@@ -32,10 +32,6 @@ public class Instruction extends Definition implements DefProp.WithBehavior {
     this.behavior = behavior;
     this.assembly = assembly;
     this.encoding = encoding;
-    setSourceLocation(behavior.sourceLocation()
-        .join(assembly.sourceLocation())
-        .join(encoding.sourceLocation())
-    );
   }
 
   public Graph behavior() {
@@ -57,6 +53,8 @@ public class Instruction extends Definition implements DefProp.WithBehavior {
   @Override
   public void verify() {
     super.verify();
+
+    ensure(behavior.isInstruction(), "Behavior is not a valid instruction behavior");
 
     behavior.verify();
   }
