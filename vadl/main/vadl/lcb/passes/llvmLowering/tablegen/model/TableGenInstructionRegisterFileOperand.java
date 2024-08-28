@@ -15,11 +15,10 @@ public class TableGenInstructionRegisterFileOperand extends TableGenInstructionO
   /**
    * Constructor.
    */
-  public TableGenInstructionRegisterFileOperand(String type,
-                                                String name,
+  public TableGenInstructionRegisterFileOperand(ParameterIdentity identity,
                                                 ReadRegFileNode node,
                                                 Format.Field formatField) {
-    super(node, type, name);
+    super(node, identity);
     this.registerFile = node.registerFile();
     this.formatField = formatField;
   }
@@ -27,11 +26,10 @@ public class TableGenInstructionRegisterFileOperand extends TableGenInstructionO
   /**
    * Constructor.
    */
-  public TableGenInstructionRegisterFileOperand(String type,
-                                                String name,
+  public TableGenInstructionRegisterFileOperand(ParameterIdentity identity,
                                                 WriteRegFileNode node,
                                                 Format.Field formatField) {
-    super(node, type, name);
+    super(node, identity);
     this.registerFile = node.registerFile();
     this.formatField = formatField;
   }

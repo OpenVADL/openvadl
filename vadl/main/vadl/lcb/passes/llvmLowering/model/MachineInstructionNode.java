@@ -1,7 +1,6 @@
 package vadl.lcb.passes.llvmLowering.model;
 
 import java.util.List;
-import vadl.ast.Expr;
 import vadl.javaannotations.viam.DataValue;
 import vadl.lcb.passes.llvmLowering.strategies.visitors.TableGenMachineInstructionVisitor;
 import vadl.types.Type;
@@ -23,11 +22,13 @@ public class MachineInstructionNode extends AbstractFunctionCallNode {
   /**
    * Constructor.
    */
-  public MachineInstructionNode(NodeList<ExpressionNode> args, Instruction instruction) {
+  public MachineInstructionNode(NodeList<ExpressionNode> args,
+                                Instruction instruction) {
     super(args,
         Type.dummy());
     this.instruction = instruction;
   }
+
 
   @Override
   public Node copy() {

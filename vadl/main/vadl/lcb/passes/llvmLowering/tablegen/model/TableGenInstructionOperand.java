@@ -11,47 +11,44 @@ public class TableGenInstructionOperand {
 
   protected final Node origin;
 
-  private final String type;
-  private final String name;
+  private ParameterIdentity identity;
 
-  public TableGenInstructionOperand(Node origin, String type, String name) {
-    this.type = type;
-    this.name = name;
+  public TableGenInstructionOperand(Node origin, ParameterIdentity identity) {
+    this.identity = identity;
     this.origin = origin;
   }
 
+  public TableGenInstructionOperand(Node origin, String type, String name) {
+    this(origin, new ParameterIdentity(type, name));
+  }
+
   public String render() {
-    return String.format("%s:$%s", type, name);
+    return identity.render();
   }
 
-
-  public String type() {
-    return type;
+  public ParameterIdentity identity() {
+    return identity;
   }
 
-  public String name() {
-    return name;
+  public void updateIdentity(ParameterIdentity identity) {
+    this.identity = identity;
+  }
+
+  public Node origin() {
+    return origin;
   }
 
   @Override
   public boolean equals(Object obj) {
     if (obj instanceof TableGenInstructionOperand x) {
-      return x.type.equals(this.type) && x.name.equals(this.name);
+      return x.identity.equals(this.identity);
     } else {
       return false;
     }
   }
 
   @Override
-  public String toString() {
-    return "TableGenInstructionOperand{"
-        + "type='" + type + '\''
-        + ", name='" + name + '\''
-        + '}';
-  }
-
-  @Override
   public int hashCode() {
-    return Objects.hash(type, name);
+    return Objects.hash(identity);
   }
 }

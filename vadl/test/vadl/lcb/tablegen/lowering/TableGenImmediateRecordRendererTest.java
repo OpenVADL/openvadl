@@ -5,15 +5,15 @@ import static org.assertj.core.api.AssertionsForClassTypes.assertThat;
 import org.junit.jupiter.api.Test;
 import vadl.lcb.codegen.model.llvm.ValueType;
 import vadl.lcb.passes.llvmLowering.tablegen.lowering.TableGenImmediateOperandRenderer;
-import vadl.lcb.passes.llvmLowering.tablegen.model.TableGenImmediateOperand;
+import vadl.lcb.passes.llvmLowering.tablegen.model.TableGenImmediateRecord;
 
-class TableGenImmediateOperandRendererTest {
+class TableGenImmediateRecordRendererTest {
 
   @Test
   void shouldRenderOperand() {
     // Given
     var operand =
-        new TableGenImmediateOperand("nameValue",
+        new TableGenImmediateRecord("nameValue",
             ValueType.I32);
 
     // When

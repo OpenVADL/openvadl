@@ -4,6 +4,7 @@ import java.util.BitSet;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 import org.jetbrains.annotations.Nullable;
+import vadl.lcb.passes.llvmLowering.model.MachineInstructionNode;
 import vadl.lcb.passes.llvmLowering.tablegen.model.TableGenInstruction;
 import vadl.lcb.passes.llvmLowering.tablegen.model.TableGenInstructionOperand;
 import vadl.lcb.passes.llvmLowering.tablegen.model.TableGenPattern;
@@ -99,7 +100,7 @@ public final class TableGenInstructionRenderer {
     }
 
     for (var root : tableGenPattern.machine().getDataflowRoots()) {
-      machineVisitor.visit(root);
+      machineVisitor.visit((MachineInstructionNode) root);
     }
 
     return String.format("""
@@ -109,7 +110,7 @@ public final class TableGenInstructionRenderer {
   }
 
   private static String lower(TableGenInstructionOperand operand) {
-    return String.format("%s:$%s", operand.type(), operand.name());
+    return operand.identity().render();
   }
 
   private static String lower(TableGenInstruction.BitBlock bitBlock) {

@@ -3,6 +3,7 @@ package vadl.lcb.passes.llvmLowering.model;
 import vadl.lcb.codegen.model.llvm.ValueType;
 import vadl.lcb.passes.llvmLowering.strategies.visitors.TableGenMachineInstructionVisitor;
 import vadl.lcb.passes.llvmLowering.strategies.visitors.TableGenNodeVisitor;
+import vadl.lcb.passes.llvmLowering.tablegen.model.ParameterIdentity;
 import vadl.lcb.passes.llvmLowering.tablegen.model.TableGenImmediateRecord;
 import vadl.types.Type;
 import vadl.viam.Format;
@@ -16,6 +17,7 @@ import vadl.viam.graph.dependency.FieldAccessRefNode;
  */
 public class LlvmFieldAccessRefNode extends FieldAccessRefNode {
   private final TableGenImmediateRecord immediateOperand;
+  private final ParameterIdentity parameterIdentity;
 
   /**
    * Creates an {@link LlvmFieldAccessRefNode} object that holds a reference to a format field
@@ -29,6 +31,7 @@ public class LlvmFieldAccessRefNode extends FieldAccessRefNode {
     this.immediateOperand =
         new TableGenImmediateRecord(fieldAccess.accessFunction().identifier.lower(),
             ValueType.from(type));
+    this.parameterIdentity = ParameterIdentity.from(this);
   }
 
   @Override

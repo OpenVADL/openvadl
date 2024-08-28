@@ -9,10 +9,9 @@ import vadl.lcb.passes.llvmLowering.model.LlvmFieldAccessRefNode;
 public class TableGenInstructionImmediateOperand extends TableGenInstructionOperand {
   private final TableGenImmediateRecord immediateOperand;
 
-  public TableGenInstructionImmediateOperand(String type,
-                                             String name,
+  public TableGenInstructionImmediateOperand(ParameterIdentity identity,
                                              LlvmFieldAccessRefNode node) {
-    super(node, type, name);
+    super(node, identity);
     this.immediateOperand = node.immediateOperand();
   }
 

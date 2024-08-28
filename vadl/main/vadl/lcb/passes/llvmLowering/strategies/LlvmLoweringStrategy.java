@@ -19,8 +19,10 @@ import vadl.lcb.passes.llvmLowering.model.LlvmBrCondSD;
 import vadl.lcb.passes.llvmLowering.model.LlvmFieldAccessRefNode;
 import vadl.lcb.passes.llvmLowering.model.LlvmFrameIndexSD;
 import vadl.lcb.passes.llvmLowering.model.MachineInstructionNode;
+import vadl.lcb.passes.llvmLowering.model.MachineInstructionParameterNode;
 import vadl.lcb.passes.llvmLowering.strategies.visitors.TableGenPatternLowerable;
 import vadl.lcb.passes.llvmLowering.strategies.visitors.impl.ReplaceWithLlvmSDNodesVisitor;
+import vadl.lcb.passes.llvmLowering.tablegen.model.ParameterIdentity;
 import vadl.lcb.passes.llvmLowering.tablegen.model.TableGenInstruction;
 import vadl.lcb.passes.llvmLowering.tablegen.model.TableGenInstructionFrameRegisterOperand;
 import vadl.lcb.passes.llvmLowering.tablegen.model.TableGenInstructionImmediateOperand;
@@ -254,9 +256,8 @@ public abstract class LlvmLoweringStrategy {
           }
 
           return (TableGenInstructionOperand) new TableGenInstructionRegisterFileOperand(
-              operand.registerFile().name(),
-              address.formatField().identifier.simpleName(),
-              operand.registerFile(),
+              ParameterIdentity.from(operand, address),
+              operand,
               address.formatField());
         })
         .toList();
@@ -293,8 +294,8 @@ public abstract class LlvmLoweringStrategy {
    * Returns a {@link TableGenInstructionOperand} given a {@link Node}.
    */
   private static TableGenInstructionOperand generateInstructionOperand(FieldRefNode node) {
-    return new TableGenInstructionOperand(node.formatField().identifier.simpleName(),
-        node.nodeName());
+    return new TableGenInstructionOperand(node,
+        ParameterIdentity.from(node));
   }
 
   /**
@@ -303,7 +304,7 @@ public abstract class LlvmLoweringStrategy {
   private static TableGenInstructionOperand generateInstructionOperand(LlvmFrameIndexSD node) {
     var address = (FieldRefNode) node.address();
     return new TableGenInstructionFrameRegisterOperand(
-        address.formatField().identifier.simpleName());
+        ParameterIdentity.from(node, address), node);
   }
 
   /**
@@ -311,9 +312,9 @@ public abstract class LlvmLoweringStrategy {
    */
   private static TableGenInstructionOperand generateInstructionOperand(ReadRegFileNode node) {
     var address = (FieldRefNode) node.address();
-    return new TableGenInstructionRegisterFileOperand(node.registerFile().name(),
-        address.formatField().identifier.simpleName(),
-        node.registerFile(),
+    return new TableGenInstructionRegisterFileOperand(
+        ParameterIdentity.from(node, address),
+        node,
         address.formatField()
     );
   }
@@ -324,9 +325,8 @@ public abstract class LlvmLoweringStrategy {
   private static TableGenInstructionOperand generateInstructionOperand(
       LlvmFieldAccessRefNode node) {
     return new TableGenInstructionImmediateOperand(
-        node.immediateOperand().fullname(),
-        node.fieldAccess().identifier.simpleName(),
-        node.immediateOperand());
+        ParameterIdentity.from(node),
+        node);
   }
 
   /**
@@ -380,7 +380,7 @@ public abstract class LlvmLoweringStrategy {
     var graph = new Graph(instruction.name() + ".machine.lowering");
     var params =
         inputOperands.stream()
-            .map(operand -> (ExpressionNode) new ConstantNode(new Constant.Str(operand.render())))
+            .map(MachineInstructionParameterNode::new)
             .toList();
     var node = new MachineInstructionNode(new NodeList<>(params), instruction);
     graph.addWithInputs(node);
