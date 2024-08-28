@@ -2,6 +2,8 @@ package vadl.lcb.passes.llvmLowering.tablegen.model;
 
 import vadl.viam.Format;
 import vadl.viam.RegisterFile;
+import vadl.viam.graph.dependency.ReadRegFileNode;
+import vadl.viam.graph.dependency.WriteRegFileNode;
 
 /**
  * Indicates that the operand is a {@link RegisterFile}.
@@ -13,11 +15,24 @@ public class TableGenInstructionRegisterFileOperand extends TableGenInstructionO
   /**
    * Constructor.
    */
-  public TableGenInstructionRegisterFileOperand(String type, String name,
-                                                RegisterFile registerFile,
+  public TableGenInstructionRegisterFileOperand(String type,
+                                                String name,
+                                                ReadRegFileNode node,
                                                 Format.Field formatField) {
-    super(type, name);
-    this.registerFile = registerFile;
+    super(node, type, name);
+    this.registerFile = node.registerFile();
+    this.formatField = formatField;
+  }
+
+  /**
+   * Constructor.
+   */
+  public TableGenInstructionRegisterFileOperand(String type,
+                                                String name,
+                                                WriteRegFileNode node,
+                                                Format.Field formatField) {
+    super(node, type, name);
+    this.registerFile = node.registerFile();
     this.formatField = formatField;
   }
 

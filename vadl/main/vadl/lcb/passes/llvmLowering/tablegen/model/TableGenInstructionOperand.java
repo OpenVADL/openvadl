@@ -1,18 +1,23 @@
 package vadl.lcb.passes.llvmLowering.tablegen.model;
 
 import java.util.Objects;
+import vadl.viam.graph.Node;
 
 /**
  * An {@link TableGenInstruction} has list of operands for inputs and outputs.
  * This class represent one element of the inputs or outputs.
  */
 public class TableGenInstructionOperand {
+
+  protected final Node origin;
+
   private final String type;
   private final String name;
 
-  public TableGenInstructionOperand(String type, String name) {
+  public TableGenInstructionOperand(Node origin, String type, String name) {
     this.type = type;
     this.name = name;
+    this.origin = origin;
   }
 
   public String render() {

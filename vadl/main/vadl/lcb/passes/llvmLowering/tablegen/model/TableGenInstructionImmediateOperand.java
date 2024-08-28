@@ -1,20 +1,22 @@
 package vadl.lcb.passes.llvmLowering.tablegen.model;
 
 import java.util.Objects;
+import vadl.lcb.passes.llvmLowering.model.LlvmFieldAccessRefNode;
 
 /**
  * Indicates that the operand is an immediate.
  */
 public class TableGenInstructionImmediateOperand extends TableGenInstructionOperand {
-  private final TableGenImmediateOperand immediateOperand;
+  private final TableGenImmediateRecord immediateOperand;
 
-  public TableGenInstructionImmediateOperand(String type, String name,
-                                             TableGenImmediateOperand immediateOperand) {
-    super(type, name);
-    this.immediateOperand = immediateOperand;
+  public TableGenInstructionImmediateOperand(String type,
+                                             String name,
+                                             LlvmFieldAccessRefNode node) {
+    super(node, type, name);
+    this.immediateOperand = node.immediateOperand();
   }
 
-  public TableGenImmediateOperand immediateOperand() {
+  public TableGenImmediateRecord immediateOperand() {
     return immediateOperand;
   }
 
