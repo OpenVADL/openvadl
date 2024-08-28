@@ -9,6 +9,10 @@ import javax.annotation.Nullable;
  */
 public class InstructionSetArchitecture extends Definition {
 
+  // this ISA is an extension of the dependency
+  @Nullable
+  private final InstructionSetArchitecture dependencyRef;
+
   private final List<Instruction> instructions;
   private final List<PseudoInstruction> pseudoInstructions;
 
@@ -33,6 +37,7 @@ public class InstructionSetArchitecture extends Definition {
    *
    * @param identifier    the identifier of the ISA
    * @param specification the parent specification of the ISA
+   * @param dependencyRef the ISA this ISA is extending (might be null)
    * @param registers     the registers in the ISA. This also includes sub-registers
    * @param registerFiles the register files in the ISA
    * @param pc            the program counter of the ISA
@@ -41,6 +46,8 @@ public class InstructionSetArchitecture extends Definition {
    */
   public InstructionSetArchitecture(Identifier identifier,
                                     Specification specification,
+                                    @Nullable
+                                    InstructionSetArchitecture dependencyRef,
                                     List<Format> formats,
                                     List<Function> functions,
                                     List<Relocation> relocations,
@@ -53,6 +60,7 @@ public class InstructionSetArchitecture extends Definition {
   ) {
     super(identifier);
     this.specification = specification;
+    this.dependencyRef = dependencyRef;
     this.formats = formats;
     this.functions = functions;
     this.relocations = relocations;
@@ -62,6 +70,11 @@ public class InstructionSetArchitecture extends Definition {
     this.registerFiles = registerFiles;
     this.pc = pc;
     this.memories = memories;
+  }
+
+  @Nullable
+  public InstructionSetArchitecture dependencyRef() {
+    return dependencyRef;
   }
 
   public List<Instruction> instructions() {
@@ -75,7 +88,7 @@ public class InstructionSetArchitecture extends Definition {
   public List<Relocation> relocations() {
     return relocations;
   }
-  
+
   public List<PseudoInstruction> pseudoInstructions() {
     return pseudoInstructions;
   }
