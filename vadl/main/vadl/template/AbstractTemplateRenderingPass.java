@@ -1,8 +1,11 @@
 package vadl.template;
 
+import java.io.File;
+import java.io.FileWriter;
 import java.io.IOException;
 import java.io.StringWriter;
 import java.io.Writer;
+import java.nio.file.Path;
 import java.util.Map;
 import javax.annotation.Nullable;
 import org.slf4j.Logger;
@@ -39,6 +42,11 @@ public abstract class AbstractTemplateRenderingPass extends Pass {
     templateResolver.setCheckExistence(true);
     templateResolver.setCacheable(false);
     return templateResolver;
+  }
+
+  public record Result(
+      Path emittedFile
+  ) {
   }
 
   /**
@@ -78,31 +86,36 @@ public abstract class AbstractTemplateRenderingPass extends Pass {
   public Object execute(final PassResults passResults, Specification viam)
       throws IOException {
 
-    return renderTemplate(passResults, viam,
-        configuration().outputFactory().createWriter(configuration(), subDir, getOutputPath()));
+    var writer =
+        configuration().outputFactory().createWriter(configuration(), subDir, getOutputPath());
+    renderTemplate(passResults, viam, writer);
+
+    // TODO: This is very sub optimal as it assumes some implementation of the createWriter
+    //   We have to refactor this! However, we definitely should not store the whole template
+    //   string for every pass in memory!
+    var path = Path.of(configuration().outputPath() + "/" + subDir + "/" + getOutputPath())
+        .toAbsolutePath();
+    return new Result(path);
   }
 
   /**
    * Renders the template into a {@link StringWriter}. Additionally, this will not create a
    * folder in the output path.
    */
-  public String renderToString(final PassResults passResults, Specification viam,
-                               StringWriter writer) throws IOException {
-    return renderTemplate(passResults, viam, writer);
-  }
-
-  private String renderTemplate(final PassResults passResults, Specification viam,
-                                Writer writer) throws IOException {
-    var passResultWriter = new StringWriter();
+  public String renderToString(final PassResults passResults, Specification viam) {
+    var stringWriter = new StringWriter();
     var ctx = new Context();
-
     // Map the variables into thymeleaf's context
     createVariables(passResults, viam).forEach(ctx::setVariable);
+    templateEngine.process(getTemplatePath(), ctx, stringWriter);
+    return stringWriter.toString();
+  }
 
-    templateEngine.process(getTemplatePath(), ctx, passResultWriter);
-    var output = passResultWriter.toString();
-    writer.write(output);
-
-    return output;
+  private void renderTemplate(final PassResults passResults, Specification viam,
+                              Writer writer) {
+    var ctx = new Context();
+    // Map the variables into thymeleaf's context
+    createVariables(passResults, viam).forEach(ctx::setVariable);
+    templateEngine.process(getTemplatePath(), ctx, writer);
   }
 }

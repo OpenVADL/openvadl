@@ -72,11 +72,30 @@ public final class PassResults {
   /**
    * Retrieves the pass result of the last execution of the given passClass.
    * This allows searching for the result of a pass type instead of one with a specific key.
+   * If the pass result is null, it will throw an error.
    *
    * @param passClass the class of the Pass to retrieve the result for
    * @return the result of the found pass
    */
-  public <T extends Pass> @Nullable Object lastResultOf(Class<T> passClass) {
+  public <T extends Pass> Object lastResultOf(Class<T> passClass) {
+    var result = lastNullableResultOf(passClass);
+    if (result == null) {
+      throw new PassError(
+          "Expected that result of last instance of pass %s is not null, but it was null".formatted(
+              passClass));
+    }
+    return result;
+  }
+
+  /**
+   * Retrieves the pass result of the last execution of the given passClass.
+   * This allows searching for the result of a pass type instead of one with a specific key.
+   * In contrast to {@link #lastResultOf(Class)} the result might be null.
+   *
+   * @param passClass the class of the Pass to retrieve the result for
+   * @return the result of the found pass
+   */
+  public <T extends Pass> @Nullable Object lastNullableResultOf(Class<T> passClass) {
     return lastExecutionOf(passClass).result();
   }
 
