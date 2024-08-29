@@ -11,7 +11,7 @@ import vadl.lcb.passes.llvmLowering.model.LlvmAndSD;
 import vadl.lcb.passes.llvmLowering.model.LlvmBrCcSD;
 import vadl.lcb.passes.llvmLowering.model.LlvmBrCondSD;
 import vadl.lcb.passes.llvmLowering.model.LlvmFieldAccessRefNode;
-import vadl.lcb.passes.llvmLowering.model.LlvmLoad;
+import vadl.lcb.passes.llvmLowering.model.LlvmLoadSD;
 import vadl.lcb.passes.llvmLowering.model.LlvmMulSD;
 import vadl.lcb.passes.llvmLowering.model.LlvmOrSD;
 import vadl.lcb.passes.llvmLowering.model.LlvmReadRegFileNode;
@@ -23,7 +23,7 @@ import vadl.lcb.passes.llvmLowering.model.LlvmSetccSD;
 import vadl.lcb.passes.llvmLowering.model.LlvmShlSD;
 import vadl.lcb.passes.llvmLowering.model.LlvmShrSD;
 import vadl.lcb.passes.llvmLowering.model.LlvmSraSD;
-import vadl.lcb.passes.llvmLowering.model.LlvmStore;
+import vadl.lcb.passes.llvmLowering.model.LlvmStoreSD;
 import vadl.lcb.passes.llvmLowering.model.LlvmSubSD;
 import vadl.lcb.passes.llvmLowering.model.LlvmTruncStore;
 import vadl.lcb.passes.llvmLowering.model.LlvmTypeCastSD;
@@ -167,7 +167,7 @@ public class ReplaceWithLlvmSDNodesVisitor
       var node = new LlvmTruncStore(writeMemNode, truncateNode);
       writeMemNode.replaceAndDelete(node);
     } else {
-      var node = new LlvmStore(Objects.requireNonNull(writeMemNode.address()),
+      var node = new LlvmStoreSD(Objects.requireNonNull(writeMemNode.address()),
           writeMemNode.value(),
           writeMemNode.memory(),
           writeMemNode.words());
@@ -212,7 +212,7 @@ public class ReplaceWithLlvmSDNodesVisitor
 
   @Override
   public void visit(ReadMemNode readMemNode) {
-    var cast = new LlvmTypeCastSD(new LlvmLoad(readMemNode), readMemNode.type());
+    var cast = new LlvmTypeCastSD(new LlvmLoadSD(readMemNode), readMemNode.type());
     readMemNode.replaceAndDelete(cast);
     visit(readMemNode.address());
   }
@@ -364,7 +364,7 @@ public class ReplaceWithLlvmSDNodesVisitor
   }
 
   @Override
-  public void visit(LlvmStore node) {
+  public void visit(LlvmStoreSD node) {
     if (node.hasAddress()) {
       visit(Objects.requireNonNull(node.address()));
     }
@@ -374,7 +374,7 @@ public class ReplaceWithLlvmSDNodesVisitor
   }
 
   @Override
-  public void visit(LlvmLoad node) {
+  public void visit(LlvmLoadSD node) {
     visit(node.address());
   }
 
