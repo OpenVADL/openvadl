@@ -123,11 +123,11 @@ public final class TableGenInstructionRenderer {
   }
 
   private static String lower(TableGenInstruction.FieldEncoding fieldEncoding) {
-    var inst = fieldEncoding.getTargetHigh() != fieldEncoding.getTargetLow() ?
-        fieldEncoding.getTargetHigh() + "-"
-            + fieldEncoding.getTargetLow() : fieldEncoding.getTargetHigh();
-    var source = fieldEncoding.getSourceHigh() != fieldEncoding.getSourceLow() ?
-        fieldEncoding.getSourceHigh() + "-" + fieldEncoding.getSourceLow() :
+    var inst = fieldEncoding.getTargetHigh() != fieldEncoding.getTargetLow()
+        ? fieldEncoding.getTargetHigh() + "-"
+        + fieldEncoding.getTargetLow() : fieldEncoding.getTargetHigh();
+    var source = fieldEncoding.getSourceHigh() != fieldEncoding.getSourceLow()
+        ? fieldEncoding.getSourceHigh() + "-" + fieldEncoding.getSourceLow() :
         fieldEncoding.getSourceHigh();
 
     return String.format("let Inst{%s} = %s{%s};", inst,
