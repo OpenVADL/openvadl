@@ -3,7 +3,6 @@ package vadl.test.viam.algebraic_simplification;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collection;
-import java.util.Collections;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 import org.junit.jupiter.api.DynamicTest;
@@ -57,8 +56,9 @@ public class AlgebraicSimplificationTest extends DockerExecutionTest {
     new ExplicitBitSizesInTypingPass(configuration).execute(PassResults.empty(), initialSpec);
     new ExplicitBitSizesInTypingPass(configuration).execute(PassResults.empty(), spec);
 
-    var allBeforeInstructions = initialSpec.isas().flatMap(x -> x.instructions().stream()).toList();
-    var allAfterInstructions = spec.isas().flatMap(x -> x.instructions().stream()).collect(
+    var allBeforeInstructions =
+        initialSpec.isas().flatMap(x -> x.ownInstructions().stream()).toList();
+    var allAfterInstructions = spec.isas().flatMap(x -> x.ownInstructions().stream()).collect(
         Collectors.toMap(Instruction::name, Function.identity()));
 
     // When

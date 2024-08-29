@@ -45,7 +45,7 @@ public class ExtendMultiplicationPass extends Pass {
       throws IOException {
     ArrayList<Triple<BuiltInCall, ExpressionNode, Node>> worklist = new ArrayList<>();
     viam.isas()
-        .flatMap(isa -> isa.instructions().stream())
+        .flatMap(isa -> isa.ownInstructions().stream())
         .flatMap(instruction -> instruction.behavior().getNodes(BuiltInCall.class))
         .forEach(builtinCall -> {
           if (builtinCall.builtIn() == SMULL

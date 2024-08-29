@@ -27,7 +27,7 @@ public class EmitClangTargetCppFilePass extends LcbTemplateRenderingPass {
 
   @Override
   protected String getOutputPath() {
-    return "clang/lib/Basic/Targets/" +  lcbConfiguration().processorName().value() + ".cpp";
+    return "clang/lib/Basic/Targets/" + lcbConfiguration().processorName().value() + ".cpp";
   }
 
   @Override
@@ -39,7 +39,7 @@ public class EmitClangTargetCppFilePass extends LcbTemplateRenderingPass {
 
   private List<Register> extractRegisters(Specification specification) {
     return specification.isas()
-        .flatMap(x -> x.registers().stream())
+        .flatMap(x -> x.ownRegisters().stream())
         .toList();
   }
 }

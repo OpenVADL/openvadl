@@ -147,7 +147,7 @@ public class RegisterTest extends AbstractTest {
         FF
     );
 
-    assertThat(testIsa.registers(), containsInAnyOrder(allRegs.toArray()));
+    assertThat(testIsa.ownRegisters(), containsInAnyOrder(allRegs.toArray()));
   }
 
   @Test

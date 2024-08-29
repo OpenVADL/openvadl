@@ -27,7 +27,7 @@ public class CppTypeNormalizationForPredicatesPass extends CppTypeNormalizationP
   @Override
   protected Stream<Function> getApplicable(Specification viam) {
     return viam.isas()
-        .flatMap(x -> x.formats().stream())
+        .flatMap(x -> x.ownFormats().stream())
         .flatMap(x -> Arrays.stream(x.fieldAccesses()))
         .filter(x -> x.encoding() != null)
         .map(Format.FieldAccess::predicate);

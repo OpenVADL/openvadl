@@ -70,28 +70,28 @@ public interface DefinitionVisitor {
       beforeTraversal(instructionSetArchitecture);
       // do not visit PC as it is included as register in registers()
       instructionSetArchitecture
-          .formats()
+          .ownFormats()
           .forEach(e -> e.accept(this));
       instructionSetArchitecture
-          .functions()
+          .ownFunctions()
           .forEach(e -> e.accept(this));
       instructionSetArchitecture
-          .relocations()
+          .ownRelocations()
           .forEach(e -> e.accept(this));
       instructionSetArchitecture
-          .registers()
+          .ownRegisters()
           .forEach(e -> e.accept(this));
       instructionSetArchitecture
-          .registerFiles()
+          .ownRegisterFiles()
           .forEach(e -> e.accept(this));
       instructionSetArchitecture
-          .memories()
+          .ownMemories()
           .forEach(e -> e.accept(this));
       instructionSetArchitecture
-          .instructions()
+          .ownInstructions()
           .forEach(e -> e.accept(this));
       instructionSetArchitecture
-          .pseudoInstructions()
+          .ownPseudoInstructions()
           .forEach(e -> e.accept(this));
       afterTraversal(instructionSetArchitecture);
     }

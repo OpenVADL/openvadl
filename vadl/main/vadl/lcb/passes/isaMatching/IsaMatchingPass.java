@@ -43,10 +43,8 @@ import java.util.List;
 import java.util.Objects;
 import java.util.Set;
 import org.jetbrains.annotations.Nullable;
-import vadl.configuration.GeneralConfiguration;
 import vadl.configuration.LcbConfiguration;
 import vadl.pass.Pass;
-import vadl.pass.PassKey;
 import vadl.pass.PassName;
 import vadl.pass.PassResults;
 import vadl.types.BitsType;
@@ -109,7 +107,7 @@ public class IsaMatchingPass extends Pass {
     Objects.requireNonNull(uninlined);
     HashMap<InstructionLabel, List<Instruction>> matched = new HashMap<>();
 
-    viam.isas().forEach(isa -> isa.instructions().forEach(instruction -> {
+    viam.isas().forEach(isa -> isa.ownInstructions().forEach(instruction -> {
       // Get uninlined or the normal behavior if nothing was uninlined.
       var behavior = uninlined.get(instruction);
       ensureNonNull(behavior, "IsaMatching must happen on the uninlined graph");

@@ -29,7 +29,7 @@ public class FieldNodeReplacementPassForDecoding extends FieldNodeReplacementPas
   @Override
   protected Stream<Function> getApplicable(Specification viam) {
     return viam.isas()
-        .flatMap(x -> x.formats().stream())
+        .flatMap(x -> x.ownFormats().stream())
         .flatMap(x -> Arrays.stream(x.fieldAccesses()))
         .map(Format.FieldAccess::accessFunction)
         .filter(Objects::nonNull);

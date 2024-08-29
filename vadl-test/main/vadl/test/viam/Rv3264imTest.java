@@ -26,7 +26,7 @@ public class Rv3264imTest extends AbstractTest {
     var rv32i = findDefinitionByNameIn("RV32I", spec, InstructionSetArchitecture.class);
     var rv3264i = findDefinitionByNameIn("RV3264I", spec, InstructionSetArchitecture.class);
 
-    assertEquals(0, rv32i.instructions().size());
+    assertEquals(0, rv32i.ownInstructions().size());
     assertEquals(2, spec.isas().count());
     assertEquals(rv3264i, rv32i.dependencyRef());
     assertEquals(Type.bits(32), Objects.requireNonNull(rv32i.pc()).type());
@@ -37,7 +37,7 @@ public class Rv3264imTest extends AbstractTest {
     var rv3264im = findDefinitionByNameIn("RV3264IM", spec, InstructionSetArchitecture.class);
     var rv3264i = findDefinitionByNameIn("RV3264I", spec, InstructionSetArchitecture.class);
 
-    assertEquals(0, rv32im.instructions().size());
+    assertEquals(0, rv32im.ownInstructions().size());
     assertEquals(3, spec.isas().count());
     assertEquals(rv3264i, rv3264im.dependencyRef());
     assertEquals(rv3264im, rv32im.dependencyRef());
@@ -48,7 +48,7 @@ public class Rv3264imTest extends AbstractTest {
     var rv64i = findDefinitionByNameIn("RV64I", spec, InstructionSetArchitecture.class);
     var rv3264i = findDefinitionByNameIn("RV3264I", spec, InstructionSetArchitecture.class);
 
-    assertEquals(0, rv64i.instructions().size());
+    assertEquals(0, rv64i.ownInstructions().size());
     assertEquals(2, spec.isas().count());
     assertEquals(rv3264i, rv64i.dependencyRef());
     assertEquals(Type.bits(64), Objects.requireNonNull(rv64i.pc()).type());
@@ -59,7 +59,7 @@ public class Rv3264imTest extends AbstractTest {
     var rv3264im = findDefinitionByNameIn("RV3264IM", spec, InstructionSetArchitecture.class);
     var rv3264i = findDefinitionByNameIn("RV3264I", spec, InstructionSetArchitecture.class);
 
-    assertEquals(0, rv64im.instructions().size());
+    assertEquals(0, rv64im.ownInstructions().size());
     assertEquals(3, spec.isas().count());
     assertEquals(rv3264i, rv3264im.dependencyRef());
     assertEquals(rv3264im, rv64im.dependencyRef());

@@ -57,11 +57,11 @@ public class AlgebraicSimplificationPass extends Pass {
   @Override
   public Object execute(PassResults passResults, Specification viam) {
     viam.isas()
-        .flatMap(isa -> isa.instructions().stream())
+        .flatMap(isa -> isa.ownInstructions().stream())
         .forEach(instruction -> new AlgebraicSimplifier(rules).run(instruction.behavior()));
 
     viam.isas()
-        .flatMap(isa -> isa.formats().stream())
+        .flatMap(isa -> isa.ownFormats().stream())
         .flatMap(x -> Arrays.stream(x.fieldAccesses()))
         .map(x -> x.accessFunction().behavior())
         .forEach(x -> new AlgebraicSimplifier(rules).run(x));

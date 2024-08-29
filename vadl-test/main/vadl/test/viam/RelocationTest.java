@@ -4,10 +4,7 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static vadl.test.TestUtils.findDefinitionByNameIn;
 
 import java.io.IOException;
-import java.util.HashMap;
-import java.util.Map;
 import org.junit.jupiter.api.Test;
-import vadl.dump.HtmlDumpPass;
 import vadl.test.AbstractTest;
 import vadl.viam.Function;
 import vadl.viam.InstructionSetArchitecture;
@@ -25,10 +22,10 @@ public class RelocationTest extends AbstractTest {
     var r1 = findDefinitionByNameIn("Test::R1", spec, Relocation.class);
     var f1 = findDefinitionByNameIn("Test::F1", spec, Function.class);
 
-    assertEquals(1, test.relocations().size());
-    assertEquals(r1, test.relocations().get(0));
-    assertEquals(1, test.functions().size());
-    assertEquals(f1, test.functions().get(0));
+    assertEquals(1, test.ownRelocations().size());
+    assertEquals(r1, test.ownRelocations().get(0));
+    assertEquals(1, test.ownFunctions().size());
+    assertEquals(f1, test.ownFunctions().get(0));
   }
 
 }

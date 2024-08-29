@@ -50,7 +50,7 @@ public class Specification extends Definition {
    */
   public Stream<Register> registers() {
     return isas()
-        .flatMap(x -> x.registers().stream())
+        .flatMap(x -> x.ownRegisters().stream())
         .map(Register.class::cast);
   }
 
@@ -59,7 +59,7 @@ public class Specification extends Definition {
    */
   public Stream<RegisterFile> registerFiles() {
     return isas()
-        .flatMap(x -> x.registerFiles().stream())
+        .flatMap(x -> x.ownRegisterFiles().stream())
         .map(RegisterFile.class::cast);
   }
 
@@ -73,7 +73,7 @@ public class Specification extends Definition {
     var innerFormats = definitions.stream()
         .filter(InstructionSetArchitecture.class::isInstance)
         .map(InstructionSetArchitecture.class::cast)
-        .flatMap(i -> i.formats().stream());
+        .flatMap(i -> i.ownFormats().stream());
     return Stream.concat(formats(), innerFormats);
   }
 
