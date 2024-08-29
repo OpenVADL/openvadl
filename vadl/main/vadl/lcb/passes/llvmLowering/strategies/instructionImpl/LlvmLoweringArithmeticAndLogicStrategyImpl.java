@@ -1,4 +1,4 @@
-package vadl.lcb.passes.llvmLowering.strategies.impl;
+package vadl.lcb.passes.llvmLowering.strategies.instructionImpl;
 
 import static vadl.lcb.passes.isaMatching.InstructionLabel.ADDI_32;
 import static vadl.lcb.passes.isaMatching.InstructionLabel.ADDI_64;

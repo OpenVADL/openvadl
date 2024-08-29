@@ -2,7 +2,7 @@ package vadl.lcb.passes.llvmLowering.strategies.visitors;
 
 import vadl.lcb.passes.isaMatching.IsaMatchingPass;
 import vadl.lcb.passes.llvmLowering.strategies.LlvmLoweringStrategy;
-import vadl.lcb.passes.llvmLowering.strategies.impl.LlvmLoweringConditionalBranchesStrategyImpl;
+import vadl.lcb.passes.llvmLowering.strategies.instructionImpl.LlvmLoweringConditionalBranchesStrategyImpl;
 import vadl.viam.Instruction;
 
 /**
