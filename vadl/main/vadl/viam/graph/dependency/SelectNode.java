@@ -43,7 +43,6 @@ public class SelectNode extends ExpressionNode {
     collection.add(falseCase);
   }
 
-
   @Override
   protected void applyOnInputsUnsafe(GraphVisitor.Applier<Node> visitor) {
     super.applyOnInputsUnsafe(visitor);

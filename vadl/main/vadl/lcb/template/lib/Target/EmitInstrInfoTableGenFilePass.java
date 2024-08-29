@@ -53,7 +53,7 @@ public class EmitInstrInfoTableGenFilePass extends LcbTemplateRenderingPass {
           var result = entry.getValue();
           return new TableGenInstruction(
               instruction.identifier.simpleName(),
-              "dummyNamespaceValue",
+              lcbConfiguration().processorName().value(),
               instruction,
               result.flags(),
               result.inputs(),

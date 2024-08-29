@@ -90,7 +90,6 @@ public abstract class WriteResourceNode extends SideEffectNode {
     collection.add(value);
   }
 
-
   @Override
   public void applyOnInputsUnsafe(GraphVisitor.Applier<Node> visitor) {
     super.applyOnInputsUnsafe(visitor);

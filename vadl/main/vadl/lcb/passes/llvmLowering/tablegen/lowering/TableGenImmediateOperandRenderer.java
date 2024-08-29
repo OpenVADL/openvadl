@@ -1,7 +1,7 @@
 package vadl.lcb.passes.llvmLowering.tablegen.lowering;
 
 
-import vadl.lcb.passes.llvmLowering.tablegen.model.TableGenImmediateOperand;
+import vadl.lcb.passes.llvmLowering.tablegen.model.TableGenImmediateRecord;
 
 /**
  * Utility class for mapping into tablegen.
@@ -11,7 +11,7 @@ public final class TableGenImmediateOperandRenderer {
   /**
    * Transforms the given {@code operand} into a string which can be used by LLVM's TableGen.
    */
-  public static String lower(TableGenImmediateOperand operand) {
+  public static String lower(TableGenImmediateRecord operand) {
     return String.format("""
                     
             class %s<ValueType ty> : Operand<ty>

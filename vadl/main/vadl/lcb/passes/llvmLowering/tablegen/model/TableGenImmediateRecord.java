@@ -7,9 +7,9 @@ import vadl.lcb.codegen.PredicateCodeGenerator;
 import vadl.lcb.codegen.model.llvm.ValueType;
 
 /**
- * Represents an immediate in TableGen.
+ * Represents an immediate record in TableGen.
  */
-public class TableGenImmediateOperand {
+public class TableGenImmediateRecord {
   private final String name;
   private final String encoderMethod;
   private final String decoderMethod;
@@ -19,8 +19,8 @@ public class TableGenImmediateOperand {
   /**
    * Constructor for an immediate operand.
    */
-  public TableGenImmediateOperand(String rawName,
-                                  ValueType type) {
+  public TableGenImmediateRecord(String rawName,
+                                 ValueType type) {
     this.name = rawName;
     this.encoderMethod = EncodingCodeGenerator.generateFunctionName(rawName);
     this.decoderMethod = DecodingCodeGenerator.generateFunctionName(rawName);
@@ -61,7 +61,7 @@ public class TableGenImmediateOperand {
     if (o == null || getClass() != o.getClass()) {
       return false;
     }
-    TableGenImmediateOperand that = (TableGenImmediateOperand) o;
+    TableGenImmediateRecord that = (TableGenImmediateRecord) o;
     return Objects.equals(name, that.name)
         && Objects.equals(encoderMethod, that.encoderMethod)
         && Objects.equals(decoderMethod, that.decoderMethod)

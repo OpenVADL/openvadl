@@ -14,6 +14,7 @@ import vadl.lcb.passes.llvmLowering.model.LlvmFieldAccessRefNode;
 import vadl.lcb.passes.llvmLowering.model.LlvmLoad;
 import vadl.lcb.passes.llvmLowering.model.LlvmMulSD;
 import vadl.lcb.passes.llvmLowering.model.LlvmOrSD;
+import vadl.lcb.passes.llvmLowering.model.LlvmReadRegFileNode;
 import vadl.lcb.passes.llvmLowering.model.LlvmSDivSD;
 import vadl.lcb.passes.llvmLowering.model.LlvmSExtLoad;
 import vadl.lcb.passes.llvmLowering.model.LlvmSMulSD;
@@ -200,6 +201,13 @@ public class ReplaceWithLlvmSDNodesVisitor
   @Override
   public void visit(ReadRegFileNode readRegFileNode) {
     visit(readRegFileNode.address());
+    if (readRegFileNode instanceof LlvmReadRegFileNode) {
+      return;
+    }
+
+    readRegFileNode.replaceAndDelete(
+        new LlvmReadRegFileNode(readRegFileNode.registerFile(), readRegFileNode.address(),
+            readRegFileNode.type()));
   }
 
   @Override

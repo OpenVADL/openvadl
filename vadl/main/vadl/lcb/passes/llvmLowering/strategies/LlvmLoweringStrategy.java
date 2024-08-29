@@ -1,10 +1,14 @@
 package vadl.lcb.passes.llvmLowering.strategies;
 
+import static vadl.viam.ViamError.ensure;
+
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
+import java.util.function.BiFunction;
+import java.util.function.Function;
 import java.util.stream.Stream;
 import org.jetbrains.annotations.NotNull;
 import org.slf4j.Logger;
@@ -18,9 +22,12 @@ import vadl.lcb.passes.llvmLowering.model.LlvmBrCcSD;
 import vadl.lcb.passes.llvmLowering.model.LlvmBrCondSD;
 import vadl.lcb.passes.llvmLowering.model.LlvmFieldAccessRefNode;
 import vadl.lcb.passes.llvmLowering.model.LlvmFrameIndexSD;
+import vadl.lcb.passes.llvmLowering.model.LlvmNodeReplaceable;
 import vadl.lcb.passes.llvmLowering.model.MachineInstructionNode;
+import vadl.lcb.passes.llvmLowering.model.MachineInstructionParameterNode;
 import vadl.lcb.passes.llvmLowering.strategies.visitors.TableGenPatternLowerable;
 import vadl.lcb.passes.llvmLowering.strategies.visitors.impl.ReplaceWithLlvmSDNodesVisitor;
+import vadl.lcb.passes.llvmLowering.tablegen.model.ParameterIdentity;
 import vadl.lcb.passes.llvmLowering.tablegen.model.TableGenInstruction;
 import vadl.lcb.passes.llvmLowering.tablegen.model.TableGenInstructionFrameRegisterOperand;
 import vadl.lcb.passes.llvmLowering.tablegen.model.TableGenInstructionImmediateOperand;
@@ -254,9 +261,8 @@ public abstract class LlvmLoweringStrategy {
           }
 
           return (TableGenInstructionOperand) new TableGenInstructionRegisterFileOperand(
-              operand.registerFile().name(),
-              address.formatField().identifier.simpleName(),
-              operand.registerFile(),
+              ParameterIdentity.from(operand, address),
+              operand,
               address.formatField());
         })
         .toList();
@@ -293,8 +299,8 @@ public abstract class LlvmLoweringStrategy {
    * Returns a {@link TableGenInstructionOperand} given a {@link Node}.
    */
   private static TableGenInstructionOperand generateInstructionOperand(FieldRefNode node) {
-    return new TableGenInstructionOperand(node.formatField().identifier.simpleName(),
-        node.nodeName());
+    return new TableGenInstructionOperand(node,
+        ParameterIdentity.from(node));
   }
 
   /**
@@ -303,7 +309,7 @@ public abstract class LlvmLoweringStrategy {
   private static TableGenInstructionOperand generateInstructionOperand(LlvmFrameIndexSD node) {
     var address = (FieldRefNode) node.address();
     return new TableGenInstructionFrameRegisterOperand(
-        address.formatField().identifier.simpleName());
+        ParameterIdentity.from(node, address), node);
   }
 
   /**
@@ -311,9 +317,9 @@ public abstract class LlvmLoweringStrategy {
    */
   private static TableGenInstructionOperand generateInstructionOperand(ReadRegFileNode node) {
     var address = (FieldRefNode) node.address();
-    return new TableGenInstructionRegisterFileOperand(node.registerFile().name(),
-        address.formatField().identifier.simpleName(),
-        node.registerFile(),
+    return new TableGenInstructionRegisterFileOperand(
+        ParameterIdentity.from(node, address),
+        node,
         address.formatField()
     );
   }
@@ -324,9 +330,8 @@ public abstract class LlvmLoweringStrategy {
   private static TableGenInstructionOperand generateInstructionOperand(
       LlvmFieldAccessRefNode node) {
     return new TableGenInstructionImmediateOperand(
-        node.immediateOperand().fullname(),
-        node.fieldAccess().identifier.simpleName(),
-        node.immediateOperand());
+        ParameterIdentity.from(node),
+        node);
   }
 
   /**
@@ -380,10 +385,39 @@ public abstract class LlvmLoweringStrategy {
     var graph = new Graph(instruction.name() + ".machine.lowering");
     var params =
         inputOperands.stream()
-            .map(operand -> (ExpressionNode) new ConstantNode(new Constant.Str(operand.render())))
+            .map(MachineInstructionParameterNode::new)
             .toList();
     var node = new MachineInstructionNode(new NodeList<>(params), instruction);
     graph.addWithInputs(node);
     return graph;
+  }
+
+  protected <T extends Node & LlvmNodeReplaceable> void replaceNodeByParameterIdentity(
+      List<T> selectorNodes,
+      Graph machine,
+      Function<T, Node> selectorNodeTransformation,
+      BiFunction<MachineInstructionParameterNode, ParameterIdentity, TableGenInstructionOperand>
+          machineNodeTransformation) {
+    for (var node : selectorNodes) {
+      // Something like `X:$rs1`
+      var selectorParameter = node.parameterIdentity();
+
+      // Updates the selector
+      var newNode = selectorNodeTransformation.apply(node);
+      node.replaceAndDelete(newNode);
+
+      // Find the corresponding nodes in the machine graph because we know
+      // the parameter identity `selectorParameter` in the selector graph.
+      machine.getNodes(MachineInstructionParameterNode.class)
+          .filter(candidate ->
+              candidate.instructionOperand().origin() instanceof LlvmNodeReplaceable cast
+                  && cast.parameterIdentity().equals(selectorParameter))
+          .forEach(occurrence -> {
+            var operand = machineNodeTransformation.apply(occurrence, selectorParameter);
+            ensure(operand != occurrence.instructionOperand(),
+                "The returned operand must be a new instance because it was modified");
+            occurrence.setInstructionOperand(operand);
+          });
+    }
   }
 }

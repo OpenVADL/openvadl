@@ -1,52 +1,54 @@
 package vadl.lcb.passes.llvmLowering.tablegen.model;
 
 import java.util.Objects;
+import vadl.viam.graph.Node;
 
 /**
  * An {@link TableGenInstruction} has list of operands for inputs and outputs.
  * This class represent one element of the inputs or outputs.
  */
 public class TableGenInstructionOperand {
-  private final String type;
-  private final String name;
 
-  public TableGenInstructionOperand(String type, String name) {
-    this.type = type;
-    this.name = name;
+  protected final Node origin;
+
+  private ParameterIdentity identity;
+
+  public TableGenInstructionOperand(Node origin, ParameterIdentity identity) {
+    this.identity = identity;
+    this.origin = origin;
+  }
+
+  public TableGenInstructionOperand(Node origin, String type, String name) {
+    this(origin, new ParameterIdentity(type, name));
   }
 
   public String render() {
-    return String.format("%s:$%s", type, name);
+    return identity.render();
   }
 
-
-  public String type() {
-    return type;
+  public ParameterIdentity identity() {
+    return identity;
   }
 
-  public String name() {
-    return name;
+  public void updateIdentity(ParameterIdentity identity) {
+    this.identity = identity;
+  }
+
+  public Node origin() {
+    return origin;
   }
 
   @Override
   public boolean equals(Object obj) {
     if (obj instanceof TableGenInstructionOperand x) {
-      return x.type.equals(this.type) && x.name.equals(this.name);
+      return x.identity.equals(this.identity);
     } else {
       return false;
     }
   }
 
   @Override
-  public String toString() {
-    return "TableGenInstructionOperand{"
-        + "type='" + type + '\''
-        + ", name='" + name + '\''
-        + '}';
-  }
-
-  @Override
   public int hashCode() {
-    return Objects.hash(type, name);
+    return Objects.hash(identity);
   }
 }

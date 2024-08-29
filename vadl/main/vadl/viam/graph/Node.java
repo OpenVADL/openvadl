@@ -124,6 +124,21 @@ public abstract class Node {
   protected void collectInputs(List<Node> collection) { /* nothing to add */
   }
 
+
+  /**
+   * Collects all successors in the provided list and it's children's successors.
+   *
+   * @param collection to add the successors to.
+   */
+  public final void collectInputsWithChildren(List<Node> collection) {
+    var sublist = new ArrayList<Node>();
+    this.collectInputs(sublist);
+    collection.addAll(sublist);
+
+    // Only iterate over the newly visited inputs and ignore the rest.
+    sublist.forEach(input -> input.collectInputsWithChildren(collection));
+  }
+
   protected final List<Node> inputList() {
     var collection = new ArrayList<Node>();
     collectInputs(collection);
