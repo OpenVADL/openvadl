@@ -15,7 +15,7 @@ public class SliceTest extends AbstractTest {
 
   @Test
   public void sliceTest() {
-    var spec = runAndGetViamSpecification("graph/valid_slice.vadl");
+    var spec = runAndGetViamSpecification("unit/slice/valid_slice.vadl");
 
     {
       var slice_test = findDefinitionByNameIn("Test::SLICE_TEST", spec, Instruction.class);

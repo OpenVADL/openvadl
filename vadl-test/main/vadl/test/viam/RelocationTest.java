@@ -18,7 +18,7 @@ public class RelocationTest extends AbstractTest {
 
   @Test
   void testRelocation() throws IOException {
-    var spec = runAndGetViamSpecification("creation/relocation/valid_relocations.vadl");
+    var spec = runAndGetViamSpecification("unit/relocation/valid_relocations.vadl");
     ViamVerifier.verifyAllIn(spec);
 
     var test = findDefinitionByNameIn("Test", spec, InstructionSetArchitecture.class);

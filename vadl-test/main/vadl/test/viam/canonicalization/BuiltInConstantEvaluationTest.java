@@ -46,7 +46,7 @@ public class BuiltInConstantEvaluationTest extends AbstractTest {
 
   static Stream<Arguments> constantEvalSources() {
     var frontend = runViamSpecificationWithNewFrontend(
-        "canonicalization/valid_builtin_constant_evaluation.vadl");
+        "passes/canonicalization/valid_builtin_constant_evaluation.vadl");
     spec = frontend.getViam();
 
     // Find all tests and corresponding solutions

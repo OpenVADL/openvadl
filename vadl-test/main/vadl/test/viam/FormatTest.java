@@ -23,7 +23,7 @@ import vadl.viam.graph.dependency.TypeCastNode;
 public class FormatTest extends AbstractTest {
 
   public static Stream<Arguments> invalidFormatTestSources() {
-    return getTestSourceArgsForParameterizedTest("format/invalid_",
+    return getTestSourceArgsForParameterizedTest("unit/format/invalid_",
         arguments("fieldAccess_encFunc", "No access function on field 'LO' found"),
         arguments("fieldAccess_encFunc2", "Field `LO` not found"),
         arguments("overlappingField", "Field overlapping of 'HI' and 'LO' at bit 3")
@@ -44,7 +44,7 @@ public class FormatTest extends AbstractTest {
 
   @Test
   public void simpleFormat() {
-    var spec = runAndGetViamSpecification("format/valid_simpleFormat.vadl");
+    var spec = runAndGetViamSpecification("unit/format/valid_simpleFormat.vadl");
 
     var formats = spec.formats().toList();
     assertEquals(2, formats.size());
@@ -107,7 +107,7 @@ public class FormatTest extends AbstractTest {
 
   @Test
   public void complexFormat() {
-    var spec = runAndGetViamSpecification("format/valid_complexFormat.vadl");
+    var spec = runAndGetViamSpecification("unit/format/valid_complexFormat.vadl");
 
     var formats = spec.formats().toList();
     assertEquals(5, formats.size());
@@ -163,7 +163,7 @@ public class FormatTest extends AbstractTest {
 
   @Test
   public void fieldAccess() {
-    var spec = runAndGetViamSpecification("format/valid_fieldAccess.vadl");
+    var spec = runAndGetViamSpecification("unit/format/valid_fieldAccess.vadl");
 
     var formats = spec.formats().toList();
     var simple_access = findFormatByName(formats, "SIMPLE_ACCESS");

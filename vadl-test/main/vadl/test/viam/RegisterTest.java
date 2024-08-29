@@ -36,7 +36,7 @@ import vadl.viam.graph.dependency.WriteRegNode;
 public class RegisterTest extends AbstractTest {
 
   private static Stream<Arguments> invalidRegisterTestSources() {
-    return getTestSourceArgsForParameterizedTest("register/invalid_",
+    return getTestSourceArgsForParameterizedTest("unit/register/invalid_",
         arguments("reg_invalidFormat",
             "Format field must only contain proper slices without any unused gaps.")
     );
@@ -50,7 +50,7 @@ public class RegisterTest extends AbstractTest {
 
   @Test
   public void testRegfile() {
-    var spec = runAndGetViamSpecification("register/valid_regfile.vadl");
+    var spec = runAndGetViamSpecification("unit/register/valid_regfile.vadl");
 
     {
       var x = (RegisterFile) findResourceByName("Test::X", spec);
@@ -72,7 +72,7 @@ public class RegisterTest extends AbstractTest {
 
   @Test
   public void testReg() {
-    var spec = runAndGetViamSpecification("register/valid_reg_definition.vadl");
+    var spec = runAndGetViamSpecification("unit/register/valid_reg_definition.vadl");
     var testIsa = findDefinitionByNameIn("Test", spec, InstructionSetArchitecture.class);
 
     var parAcc = Register.AccessKind.PARTIAL;
@@ -152,7 +152,7 @@ public class RegisterTest extends AbstractTest {
 
   @Test
   void testRegRead() {
-    var spec = runAndGetViamSpecification("register/valid_reg_read.vadl");
+    var spec = runAndGetViamSpecification("unit/register/valid_reg_read.vadl");
     var a = (Register) findResourceByName("Test::A", spec);
     var b = (Register) findResourceByName("Test::B", spec);
     var b_one = (Register) findResourceByName("Test::B_ONE", spec);
@@ -256,7 +256,7 @@ public class RegisterTest extends AbstractTest {
 
   @Test
   void testWriteReg() {
-    var spec = runAndGetViamSpecification("register/valid_reg_write.vadl");
+    var spec = runAndGetViamSpecification("unit/register/valid_reg_write.vadl");
     var b = (Register) findResourceByName("Test::B", spec);
     var b_one = (Register) findResourceByName("Test::B_ONE", spec);
     var d = (RegisterFile) findResourceByName("Test::D", spec);
