@@ -108,14 +108,6 @@ public class InstrCallNode extends DirectionalNode {
   }
 
   @Override
-  public void collectInputsWithChildren(List<Node> collection) {
-    super.collectInputs(collection);
-    for (var arg : arguments) {
-      arg.collectInputsWithChildren(collection);
-    }
-  }
-
-  @Override
   protected void applyOnInputsUnsafe(GraphVisitor.Applier<Node> visitor) {
     super.applyOnInputsUnsafe(visitor);
     arguments = arguments.stream().map(e ->

@@ -71,13 +71,6 @@ public class LlvmBrCondSD extends ExpressionNode implements LlvmNodeLowerable {
   }
 
   @Override
-  public void collectInputsWithChildren(List<Node> collection) {
-    super.collectInputs(collection);
-    condition.collectInputsWithChildren(collection);
-    immOffset.collectInputsWithChildren(collection);
-  }
-
-  @Override
   public <T extends GraphNodeVisitor> void accept(T visitor) {
     if (visitor instanceof TableGenMachineInstructionVisitor v) {
       v.visit(this);

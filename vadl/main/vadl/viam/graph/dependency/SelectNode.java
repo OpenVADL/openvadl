@@ -44,14 +44,6 @@ public class SelectNode extends ExpressionNode {
   }
 
   @Override
-  public void collectInputsWithChildren(List<Node> collection) {
-    super.collectInputs(collection);
-    condition.collectInputsWithChildren(collection);
-    trueCase.collectInputsWithChildren(collection);
-    falseCase.collectInputsWithChildren(collection);
-  }
-
-  @Override
   protected void applyOnInputsUnsafe(GraphVisitor.Applier<Node> visitor) {
     super.applyOnInputsUnsafe(visitor);
     condition = visitor.apply(this, condition, ExpressionNode.class);

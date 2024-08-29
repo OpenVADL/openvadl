@@ -56,12 +56,6 @@ public class LetNode extends ExpressionNode {
   }
 
   @Override
-  public void collectInputsWithChildren(List<Node> collection) {
-    super.collectInputs(collection);
-    expression.collectInputsWithChildren(collection);
-  }
-
-  @Override
   protected void applyOnInputsUnsafe(GraphVisitor.Applier<Node> visitor) {
     super.applyOnInputsUnsafe(visitor);
     expression = visitor.apply(this, expression, ExpressionNode.class);

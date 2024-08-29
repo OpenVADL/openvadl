@@ -50,12 +50,6 @@ public class ReturnNode extends AbstractEndNode {
   }
 
   @Override
-  public void collectInputsWithChildren(List<Node> collection) {
-    super.collectInputs(collection);
-    value.collectInputsWithChildren(collection);
-  }
-
-  @Override
   public Node copy() {
     return new ReturnNode((ExpressionNode) value.copy());
   }

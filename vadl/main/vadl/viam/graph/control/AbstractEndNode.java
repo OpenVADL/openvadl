@@ -34,14 +34,6 @@ public abstract class AbstractEndNode extends ControlNode {
   }
 
   @Override
-  public void collectInputsWithChildren(List<Node> collection) {
-    super.collectInputs(collection);
-    for (var arg : collection) {
-      arg.collectInputsWithChildren(collection);
-    }
-  }
-
-  @Override
   protected void applyOnInputsUnsafe(GraphVisitor.Applier<Node> visitor) {
     super.applyOnInputsUnsafe(visitor);
     sideEffects = sideEffects.stream()

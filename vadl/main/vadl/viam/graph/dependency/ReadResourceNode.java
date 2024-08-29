@@ -70,14 +70,6 @@ public abstract class ReadResourceNode extends ExpressionNode {
   }
 
   @Override
-  public void collectInputsWithChildren(List<Node> collection) {
-    super.collectInputs(collection);
-    if (this.address != null) {
-      address.collectInputsWithChildren(collection);
-    }
-  }
-
-  @Override
   public void applyOnInputsUnsafe(GraphVisitor.Applier<Node> visitor) {
     super.applyOnInputsUnsafe(visitor);
     address = visitor.applyNullable(this, address, ExpressionNode.class);
