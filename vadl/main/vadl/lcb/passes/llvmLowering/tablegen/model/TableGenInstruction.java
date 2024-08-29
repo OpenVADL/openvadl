@@ -121,7 +121,6 @@ public class TableGenInstruction {
   }
 
 
-
   /**
    * A machine instruction has certain encoding parts which are fixed like the opcode.
    * A {@link BitBlock} represents constant bits in an instruction.
@@ -189,11 +188,13 @@ public class TableGenInstruction {
       ArrayList<FieldEncoding> encodings = new ArrayList<>();
       for (var field : encoding.format().fields()) {
         var offset = 0;
-        for (var part : field.bitSlice().parts().toList()) {
+        var parts = new ArrayList<>(field.bitSlice().parts().toList());
+        Collections.reverse(parts);
+        for (var part : parts) {
           encodings.add(
               new FieldEncoding(part.msb(), part.lsb(), field.name(), offset + part.size() - 1,
                   offset));
-          offset += part.size() + 1;
+          offset += part.size();
         }
       }
       return encodings;
