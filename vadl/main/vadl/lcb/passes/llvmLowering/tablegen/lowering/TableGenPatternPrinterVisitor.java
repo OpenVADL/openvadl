@@ -6,10 +6,10 @@ import vadl.lcb.passes.llvmLowering.LlvmNodeLowerable;
 import vadl.lcb.passes.llvmLowering.model.LlvmBrCcSD;
 import vadl.lcb.passes.llvmLowering.model.LlvmBrCondSD;
 import vadl.lcb.passes.llvmLowering.model.LlvmFieldAccessRefNode;
-import vadl.lcb.passes.llvmLowering.model.LlvmLoad;
+import vadl.lcb.passes.llvmLowering.model.LlvmLoadSD;
 import vadl.lcb.passes.llvmLowering.model.LlvmSExtLoad;
 import vadl.lcb.passes.llvmLowering.model.LlvmSetccSD;
-import vadl.lcb.passes.llvmLowering.model.LlvmStore;
+import vadl.lcb.passes.llvmLowering.model.LlvmStoreSD;
 import vadl.lcb.passes.llvmLowering.model.LlvmTruncStore;
 import vadl.lcb.passes.llvmLowering.model.LlvmTypeCastSD;
 import vadl.lcb.passes.llvmLowering.model.LlvmZExtLoad;
@@ -183,7 +183,7 @@ public class TableGenPatternPrinterVisitor
   }
 
   @Override
-  public void visit(LlvmStore node) {
+  public void visit(LlvmStoreSD node) {
     writer.write("(" + node.lower() + " ");
     visit(node.value());
     writer.write(", ");
@@ -192,7 +192,7 @@ public class TableGenPatternPrinterVisitor
   }
 
   @Override
-  public void visit(LlvmLoad node) {
+  public void visit(LlvmLoadSD node) {
     writer.write("(" + node.lower() + " ");
     visit(Objects.requireNonNull(node.address()));
     writer.write(")");

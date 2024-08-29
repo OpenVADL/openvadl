@@ -145,9 +145,13 @@ public class LlvmLoweringPassTest extends AbstractLcbTest {
             new TableGenInstructionOperand(DUMMY_NODE, "RV3264I_Itype_immS_decodeAsInt64", "immS")),
         List.of(new TableGenInstructionOperand(DUMMY_NODE, "X", "rd")),
         List.of(String.format("(%s (%s (add X:$rs1, RV3264I_Itype_immS_decodeAsInt64:$immS)))",
-            typeNode, dagNode)),
+                typeNode, dagNode),
+            String.format("(%s (%s (add AddrFI:$rs1, RV3264I_Itype_immS_decodeAsInt64:$immS)))",
+                typeNode, dagNode)),
         List.of(String.format("(%s X:$rs1, RV3264I_Itype_immS_decodeAsInt64:$immS)",
-            machineInstruction)),
+            machineInstruction),
+            String.format("(%s AddrFI:$rs1, RV3264I_Itype_immS_decodeAsInt64:$immS)",
+                machineInstruction)),
         createLoadMemoryFlags()
     );
   }
