@@ -10,6 +10,7 @@ import vadl.configuration.LcbConfiguration;
 import vadl.lcb.passes.isaMatching.InstructionLabel;
 import vadl.lcb.passes.isaMatching.IsaMatchingPass;
 import vadl.lcb.passes.llvmLowering.strategies.LlvmInstructionLoweringStrategy;
+import vadl.lcb.passes.llvmLowering.strategies.instruction.LlvmInstructionLoweringAddImmediateStrategyImpl;
 import vadl.lcb.passes.llvmLowering.strategies.instruction.LlvmInstructionLoweringArithmeticAndLogicStrategyImpl;
 import vadl.lcb.passes.llvmLowering.strategies.instruction.LlvmInstructionLoweringConditionalBranchesStrategyImpl;
 import vadl.lcb.passes.llvmLowering.strategies.instruction.LlvmInstructionLoweringConditionalsStrategyImpl;
@@ -37,6 +38,7 @@ public class LlvmLoweringPass extends Pass {
 
   private final List<LlvmInstructionLoweringStrategy> strategies = List.of(
       new LlvmInstructionLoweringArithmeticAndLogicStrategyImpl(),
+      new LlvmInstructionLoweringAddImmediateStrategyImpl(),
       new LlvmInstructionLoweringConditionalsStrategyImpl(),
       new LlvmInstructionLoweringConditionalBranchesStrategyImpl(),
       new LlvmInstructionLoweringIndirectJumpStrategyImpl(),

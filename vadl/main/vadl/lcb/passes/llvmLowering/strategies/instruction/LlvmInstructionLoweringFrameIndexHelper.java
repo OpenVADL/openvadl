@@ -18,7 +18,7 @@ import vadl.viam.graph.Node;
  * Common superclass for {@link LlvmInstructionLoweringMemoryLoadStrategyImpl} and
  * {@link LlvmInstructionLoweringMemoryStoreStrategyImpl}.
  */
-public abstract class LlvmInstructionLoweringMemoryStrategy
+public abstract class LlvmInstructionLoweringFrameIndexHelper
     extends LlvmInstructionLoweringStrategy {
   /**
    * Replaces {@link LlvmReadRegFileNode} with {@link LlvmFrameIndexSD} in the selector

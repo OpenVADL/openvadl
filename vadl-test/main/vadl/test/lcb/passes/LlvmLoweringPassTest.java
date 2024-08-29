@@ -87,6 +87,26 @@ public class LlvmLoweringPassTest extends AbstractLcbTest {
     );
   }
 
+  private static TestOutput createTestOutputAddI() {
+    return new TestOutput(
+        List.of(new TableGenInstructionOperand(DUMMY_NODE, "X", "rs1"),
+            new TableGenInstructionOperand(DUMMY_NODE, "RV3264I_Itype_immS_decodeAsInt64", "immS")),
+        List.of(new TableGenInstructionOperand(DUMMY_NODE, "X", "rd")),
+        List.of(String.format("(add X:$rs1, %s:$%s)", "RV3264I_Itype_immS_decodeAsInt64",
+                "immS"),
+            String.format("(add AddrFI:$rs1, %s:$%s)", "RV3264I_Itype_immS_decodeAsInt64",
+                "immS")
+        ),
+        List.of(String.format("(%s X:$rs1, %s:$%s)", "ADDI",
+                "RV3264I_Itype_immS_decodeAsInt64",
+                "immS"),
+            String.format("(%s AddrFI:$rs1, %s:$%s)", "ADDI",
+                "RV3264I_Itype_immS_decodeAsInt64",
+                "immS")
+        ),
+        createEmptyFlags());
+  }
+
   private static TestOutput createTestOutputRI(String immediateOperand,
                                                String immediateName,
                                                String dagNode,
@@ -149,7 +169,7 @@ public class LlvmLoweringPassTest extends AbstractLcbTest {
             String.format("(%s (%s (add AddrFI:$rs1, RV3264I_Itype_immS_decodeAsInt64:$immS)))",
                 typeNode, dagNode)),
         List.of(String.format("(%s X:$rs1, RV3264I_Itype_immS_decodeAsInt64:$immS)",
-            machineInstruction),
+                machineInstruction),
             String.format("(%s AddrFI:$rs1, RV3264I_Itype_immS_decodeAsInt64:$immS)",
                 machineInstruction)),
         createLoadMemoryFlags()
@@ -183,7 +203,7 @@ public class LlvmLoweringPassTest extends AbstractLcbTest {
     expectedResults.put("AND", createTestOutputRR("and", "AND"));
     expectedResults.put("OR", createTestOutputRR("or", "OR"));
     expectedResults.put("ADDI",
-        createTestOutputRI("RV3264I_Itype_immS_decodeAsInt64", "immS", "add", "ADDI"));
+        createTestOutputAddI());
     expectedResults.put("ORI",
         createTestOutputRI("RV3264I_Itype_immS_decodeAsInt64", "immS", "or", "ORI"));
     expectedResults.put("ANDI",

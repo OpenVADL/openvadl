@@ -184,6 +184,9 @@ public class EmitInstrInfoTableGenFilePassTest extends AbstractLcbTest {
         def : Pat<(add X:$rs1, RV3264I_Itype_immS_decodeAsInt64:$immS)
                 (ADDI X:$rs1, RV3264I_Itype_immS_decodeAsInt64:$immS)>;
                 
+        def : Pat<(add AddrFI:$rs1, RV3264I_Itype_immS_decodeAsInt64:$immS)
+                (ADDI AddrFI:$rs1, RV3264I_Itype_immS_decodeAsInt64:$immS)>;
+                
                 
                 
         def AND : Instruction

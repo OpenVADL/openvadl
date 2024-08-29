@@ -25,7 +25,7 @@ import vadl.viam.passes.functionInliner.UninlinedGraph;
  * Lowers instructions which can load from memory.
  */
 public class LlvmInstructionLoweringMemoryLoadStrategyImpl
-    extends LlvmInstructionLoweringMemoryStrategy {
+    extends LlvmInstructionLoweringFrameIndexHelper {
   @Override
   protected Set<InstructionLabel> getSupportedInstructionLabels() {
     return Set.of(InstructionLabel.LOAD_MEM);

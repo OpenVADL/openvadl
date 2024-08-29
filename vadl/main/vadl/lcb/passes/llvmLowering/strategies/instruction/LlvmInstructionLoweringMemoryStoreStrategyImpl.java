@@ -24,7 +24,7 @@ import vadl.viam.passes.functionInliner.UninlinedGraph;
  * Lowers instructions which can store into memory.
  */
 public class LlvmInstructionLoweringMemoryStoreStrategyImpl
-    extends LlvmInstructionLoweringMemoryStrategy {
+    extends LlvmInstructionLoweringFrameIndexHelper {
 
   @Override
   protected Set<InstructionLabel> getSupportedInstructionLabels() {
