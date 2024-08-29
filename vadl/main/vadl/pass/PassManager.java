@@ -115,6 +115,7 @@ public class PassManager {
     }
 
     for (var step : affectedSteps) {
+      @SuppressWarnings("VariableDeclarationUsageDistance")
       var startTime = System.currentTimeMillis();
       logger.atDebug().log("Running pass with key: {}", step.key());
       // Wrapping the passResults into an unmodifiable map so a pass cannot modify
