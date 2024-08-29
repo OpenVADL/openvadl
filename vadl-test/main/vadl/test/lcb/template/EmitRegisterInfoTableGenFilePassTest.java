@@ -6,6 +6,7 @@ import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 import org.testcontainers.shaded.com.google.common.io.Files;
 import vadl.lcb.template.lib.Target.EmitInstrInfoTableGenFilePass;
+import vadl.lcb.template.lib.Target.EmitRegisterInfoCppFilePass;
 import vadl.lcb.template.lib.Target.EmitRegisterInfoTableGenFilePass;
 import vadl.pass.PassKey;
 import vadl.pass.exception.DuplicatedPassKeyException;
@@ -23,7 +24,7 @@ public class EmitRegisterInfoTableGenFilePassTest extends AbstractLcbTest {
     // When
     var passResult =
         (AbstractTemplateRenderingPass.Result) testSetup.passManager().getPassResults()
-            .lastResultOf(EmitInstrInfoTableGenFilePass.class);
+            .lastResultOf(EmitRegisterInfoTableGenFilePass.class);
 
     // Then
     var resultFile = passResult.emittedFile().toFile();

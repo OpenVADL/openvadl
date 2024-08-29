@@ -159,7 +159,7 @@ public class TableGenMachineInstructionPrinterVisitor implements TableGenMachine
 
   @Override
   public void visit(BranchEndNode branchEndNode) {
-    
+
   }
 
   @Override
