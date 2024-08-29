@@ -12,10 +12,16 @@ import vadl.viam.graph.dependency.ExpressionNode;
 import vadl.viam.graph.dependency.FieldRefNode;
 import vadl.viam.graph.dependency.ReadRegFileNode;
 
+/**
+ * LLVM node for the selection dag.
+ */
 public class LlvmReadRegFileNode extends ReadRegFileNode implements LlvmNodeLowerable,
     LlvmNodeReplaceable {
   private final ParameterIdentity parameterIdentity;
 
+  /**
+   * Constructor.
+   */
   public LlvmReadRegFileNode(RegisterFile registerFile,
                              ExpressionNode address,
                              DataType type) {

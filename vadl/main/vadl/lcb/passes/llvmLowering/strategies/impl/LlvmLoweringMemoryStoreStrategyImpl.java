@@ -87,12 +87,12 @@ public class LlvmLoweringMemoryStoreStrategyImpl extends LlvmLoweringStrategy {
       // Machine: replace by frame register operand but the `affectedParameterIdentity`
       // should change the type. So `X:$rs1` should be `Addr:$rs1`.
       BiFunction<MachineInstructionParameterNode, ParameterIdentity, TableGenInstructionOperand>
-          machineInstructionTransformation =
-          (machineInstructionParameterNode, affectedParameterIdentity) ->
-              new TableGenInstructionFrameRegisterOperand(
-                  affectedParameterIdentity.withType(LlvmFrameIndexSD.NAME),
-                  machineInstructionParameterNode.instructionOperand().origin()
-              );
+          machineInstructionTransformation = (machineInstructionParameterNode,
+                                              affectedParameterIdentity) ->
+          new TableGenInstructionFrameRegisterOperand(
+              affectedParameterIdentity.withType(LlvmFrameIndexSD.NAME),
+              machineInstructionParameterNode.instructionOperand().origin()
+          );
 
       replaceNodeByParameterIdentity(affectedNodes,
           machine,
