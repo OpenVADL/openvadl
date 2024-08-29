@@ -321,10 +321,10 @@ public class EmitInstrInfoTableGenFilePassTest extends AbstractLcbTest {
         bits<5> rs2;
         bits<5> rs1;
                 
-        let Inst{31-31} = imm{0-0};
-        let Inst{7-7} = imm{2-2};
+        let Inst{11-8} = imm{3-0};
         let Inst{30-25} = imm{9-4};
-        let Inst{11-8} = imm{14-11};
+        let Inst{7} = imm{10};
+        let Inst{31} = imm{11};
         let Inst{24-20} = rs2{4-0};
         let Inst{19-15} = rs1{4-0};
         let Inst{14-12} = funct3{2-0};
@@ -380,10 +380,10 @@ public class EmitInstrInfoTableGenFilePassTest extends AbstractLcbTest {
         bits<5> rs2;
         bits<5> rs1;
                 
-        let Inst{31-31} = imm{0-0};
-        let Inst{7-7} = imm{2-2};
+        let Inst{11-8} = imm{3-0};
         let Inst{30-25} = imm{9-4};
-        let Inst{11-8} = imm{14-11};
+        let Inst{7} = imm{10};
+        let Inst{31} = imm{11};
         let Inst{24-20} = rs2{4-0};
         let Inst{19-15} = rs1{4-0};
         let Inst{14-12} = funct3{2-0};
@@ -439,10 +439,10 @@ public class EmitInstrInfoTableGenFilePassTest extends AbstractLcbTest {
         bits<5> rs2;
         bits<5> rs1;
                 
-        let Inst{31-31} = imm{0-0};
-        let Inst{7-7} = imm{2-2};
+        let Inst{11-8} = imm{3-0};
         let Inst{30-25} = imm{9-4};
-        let Inst{11-8} = imm{14-11};
+        let Inst{7} = imm{10};
+        let Inst{31} = imm{11};
         let Inst{24-20} = rs2{4-0};
         let Inst{19-15} = rs1{4-0};
         let Inst{14-12} = funct3{2-0};
@@ -498,10 +498,10 @@ public class EmitInstrInfoTableGenFilePassTest extends AbstractLcbTest {
         bits<5> rs2;
         bits<5> rs1;
                 
-        let Inst{31-31} = imm{0-0};
-        let Inst{7-7} = imm{2-2};
+        let Inst{11-8} = imm{3-0};
         let Inst{30-25} = imm{9-4};
-        let Inst{11-8} = imm{14-11};
+        let Inst{7} = imm{10};
+        let Inst{31} = imm{11};
         let Inst{24-20} = rs2{4-0};
         let Inst{19-15} = rs1{4-0};
         let Inst{14-12} = funct3{2-0};
@@ -557,10 +557,10 @@ public class EmitInstrInfoTableGenFilePassTest extends AbstractLcbTest {
         bits<5> rs2;
         bits<5> rs1;
                 
-        let Inst{31-31} = imm{0-0};
-        let Inst{7-7} = imm{2-2};
+        let Inst{11-8} = imm{3-0};
         let Inst{30-25} = imm{9-4};
-        let Inst{11-8} = imm{14-11};
+        let Inst{7} = imm{10};
+        let Inst{31} = imm{11};
         let Inst{24-20} = rs2{4-0};
         let Inst{19-15} = rs1{4-0};
         let Inst{14-12} = funct3{2-0};
@@ -616,10 +616,10 @@ public class EmitInstrInfoTableGenFilePassTest extends AbstractLcbTest {
         bits<5> rs2;
         bits<5> rs1;
                 
-        let Inst{31-31} = imm{0-0};
-        let Inst{7-7} = imm{2-2};
+        let Inst{11-8} = imm{3-0};
         let Inst{30-25} = imm{9-4};
-        let Inst{11-8} = imm{14-11};
+        let Inst{7} = imm{10};
+        let Inst{31} = imm{11};
         let Inst{24-20} = rs2{4-0};
         let Inst{19-15} = rs1{4-0};
         let Inst{14-12} = funct3{2-0};
@@ -1446,8 +1446,8 @@ public class EmitInstrInfoTableGenFilePassTest extends AbstractLcbTest {
         bits<5> rs2;
         bits<5> rs1;
                 
-        let Inst{31-25} = imm{6-0};
-        let Inst{11-7} = imm{12-8};
+        let Inst{11-7} = imm{4-0};
+        let Inst{31-25} = imm{11-5};
         let Inst{24-20} = rs2{4-0};
         let Inst{19-15} = rs1{4-0};
         let Inst{14-12} = funct3{2-0};
@@ -1503,8 +1503,8 @@ public class EmitInstrInfoTableGenFilePassTest extends AbstractLcbTest {
         bits<5> rs2;
         bits<5> rs1;
                 
-        let Inst{31-25} = imm{6-0};
-        let Inst{11-7} = imm{12-8};
+        let Inst{11-7} = imm{4-0};
+        let Inst{31-25} = imm{11-5};
         let Inst{24-20} = rs2{4-0};
         let Inst{19-15} = rs1{4-0};
         let Inst{14-12} = funct3{2-0};
@@ -1560,8 +1560,8 @@ public class EmitInstrInfoTableGenFilePassTest extends AbstractLcbTest {
         bits<5> rs2;
         bits<5> rs1;
                 
-        let Inst{31-25} = imm{6-0};
-        let Inst{11-7} = imm{12-8};
+        let Inst{11-7} = imm{4-0};
+        let Inst{31-25} = imm{11-5};
         let Inst{24-20} = rs2{4-0};
         let Inst{19-15} = rs1{4-0};
         let Inst{14-12} = funct3{2-0};
@@ -1943,8 +1943,8 @@ public class EmitInstrInfoTableGenFilePassTest extends AbstractLcbTest {
         bits<5> rs2;
         bits<5> rs1;
                 
-        let Inst{31-25} = imm{6-0};
-        let Inst{11-7} = imm{12-8};
+        let Inst{11-7} = imm{4-0};
+        let Inst{31-25} = imm{11-5};
         let Inst{24-20} = rs2{4-0};
         let Inst{19-15} = rs1{4-0};
         let Inst{14-12} = funct3{2-0};
