@@ -1,4 +1,4 @@
-package vadl.lcb.passes.llvmLowering.strategies.impl;
+package vadl.lcb.passes.llvmLowering.strategies.instruction;
 
 import static vadl.viam.ViamError.ensure;
 
@@ -6,18 +6,12 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
-import java.util.function.BiFunction;
-import java.util.function.Function;
 import vadl.lcb.passes.isaMatching.InstructionLabel;
 import vadl.lcb.passes.llvmLowering.model.LlvmFrameIndexSD;
 import vadl.lcb.passes.llvmLowering.model.LlvmLoadSD;
 import vadl.lcb.passes.llvmLowering.model.LlvmReadRegFileNode;
 import vadl.lcb.passes.llvmLowering.model.LlvmSExtLoad;
 import vadl.lcb.passes.llvmLowering.model.LlvmZExtLoad;
-import vadl.lcb.passes.llvmLowering.model.MachineInstructionParameterNode;
-import vadl.lcb.passes.llvmLowering.strategies.LlvmLoweringStrategy;
-import vadl.lcb.passes.llvmLowering.tablegen.model.ParameterIdentity;
-import vadl.lcb.passes.llvmLowering.tablegen.model.TableGenInstructionFrameRegisterOperand;
 import vadl.lcb.passes.llvmLowering.tablegen.model.TableGenInstructionOperand;
 import vadl.lcb.passes.llvmLowering.tablegen.model.TableGenPattern;
 import vadl.viam.Instruction;
@@ -25,13 +19,13 @@ import vadl.viam.Memory;
 import vadl.viam.Register;
 import vadl.viam.graph.Node;
 import vadl.viam.graph.dependency.ReadMemNode;
-import vadl.viam.graph.dependency.WriteResourceNode;
 import vadl.viam.passes.functionInliner.UninlinedGraph;
 
 /**
  * Lowers instructions which can load from memory.
  */
-public class LlvmLoweringMemoryLoadStrategyImpl extends LlvmLoweringMemoryStrategy {
+public class LlvmInstructionLoweringMemoryLoadStrategyImpl
+    extends LlvmInstructionLoweringFrameIndexHelper {
   @Override
   protected Set<InstructionLabel> getSupportedInstructionLabels() {
     return Set.of(InstructionLabel.LOAD_MEM);

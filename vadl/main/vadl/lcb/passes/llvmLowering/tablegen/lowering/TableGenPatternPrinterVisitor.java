@@ -13,7 +13,7 @@ import vadl.lcb.passes.llvmLowering.model.LlvmStoreSD;
 import vadl.lcb.passes.llvmLowering.model.LlvmTruncStore;
 import vadl.lcb.passes.llvmLowering.model.LlvmTypeCastSD;
 import vadl.lcb.passes.llvmLowering.model.LlvmZExtLoad;
-import vadl.lcb.passes.llvmLowering.strategies.LlvmLoweringStrategy;
+import vadl.lcb.passes.llvmLowering.strategies.LlvmInstructionLoweringStrategy;
 import vadl.lcb.passes.llvmLowering.strategies.visitors.TableGenNodeVisitor;
 import vadl.viam.Constant;
 import vadl.viam.graph.Node;
@@ -120,7 +120,7 @@ public class TableGenPatternPrinterVisitor
 
   @Override
   public void visit(ReadRegFileNode readRegFileNode) {
-    var operand = LlvmLoweringStrategy.generateTableGenInputOutput(readRegFileNode);
+    var operand = LlvmInstructionLoweringStrategy.generateTableGenInputOutput(readRegFileNode);
     writer.write(operand.render());
   }
 
@@ -152,7 +152,7 @@ public class TableGenPatternPrinterVisitor
 
   @Override
   public void visit(LlvmFieldAccessRefNode fieldAccessRefNode) {
-    var operand = LlvmLoweringStrategy.generateTableGenInputOutput(fieldAccessRefNode);
+    var operand = LlvmInstructionLoweringStrategy.generateTableGenInputOutput(fieldAccessRefNode);
     writer.write(operand.render());
   }
 

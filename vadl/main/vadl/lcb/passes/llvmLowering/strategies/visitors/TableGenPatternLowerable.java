@@ -1,14 +1,14 @@
 package vadl.lcb.passes.llvmLowering.strategies.visitors;
 
 import vadl.lcb.passes.isaMatching.IsaMatchingPass;
-import vadl.lcb.passes.llvmLowering.strategies.LlvmLoweringStrategy;
-import vadl.lcb.passes.llvmLowering.strategies.impl.LlvmLoweringConditionalBranchesStrategyImpl;
+import vadl.lcb.passes.llvmLowering.strategies.LlvmInstructionLoweringStrategy;
+import vadl.lcb.passes.llvmLowering.strategies.instruction.LlvmInstructionLoweringConditionalBranchesStrategyImpl;
 import vadl.viam.Instruction;
 
 /**
- * Different {@link LlvmLoweringStrategy} can lower instructions differently.
+ * Different {@link LlvmInstructionLoweringStrategy} can lower instructions differently.
  * Usually, we will reject any control-flow like if-conditions.
- * However, {@link LlvmLoweringConditionalBranchesStrategyImpl} uses information from the
+ * However, {@link LlvmInstructionLoweringConditionalBranchesStrategyImpl} uses information from the
  * {@link IsaMatchingPass} so it is lowerable for these {@link Instruction}.
  */
 public interface TableGenPatternLowerable {

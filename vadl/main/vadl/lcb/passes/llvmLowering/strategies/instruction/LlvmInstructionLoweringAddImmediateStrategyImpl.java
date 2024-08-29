@@ -1,4 +1,4 @@
-package vadl.lcb.passes.llvmLowering.strategies.impl;
+package vadl.lcb.passes.llvmLowering.strategies.instruction;
 
 import static vadl.lcb.passes.isaMatching.InstructionLabel.ADDI_32;
 import static vadl.lcb.passes.isaMatching.InstructionLabel.ADDI_64;
@@ -16,25 +16,29 @@ import static vadl.lcb.passes.isaMatching.InstructionLabel.UDIV;
 import static vadl.lcb.passes.isaMatching.InstructionLabel.UMOD;
 import static vadl.lcb.passes.isaMatching.InstructionLabel.XOR;
 
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import vadl.lcb.passes.isaMatching.InstructionLabel;
-import vadl.lcb.passes.llvmLowering.strategies.LlvmLoweringStrategy;
+import vadl.lcb.passes.llvmLowering.model.LlvmFrameIndexSD;
+import vadl.lcb.passes.llvmLowering.model.LlvmReadRegFileNode;
+import vadl.lcb.passes.llvmLowering.strategies.LlvmInstructionLoweringStrategy;
 import vadl.lcb.passes.llvmLowering.tablegen.model.TableGenInstruction;
 import vadl.lcb.passes.llvmLowering.tablegen.model.TableGenInstructionOperand;
 import vadl.lcb.passes.llvmLowering.tablegen.model.TableGenPattern;
 import vadl.viam.Instruction;
+import vadl.viam.graph.Node;
 import vadl.viam.passes.functionInliner.UninlinedGraph;
 
 /**
- * Lowers arithmetic and logic instructions into {@link TableGenInstruction}.
+ * Lowers add with immediate into {@link TableGenInstruction} and additionally,
+ * creates alternative patterns with {@link LlvmFrameIndexSD}.
  */
-public class LlvmLoweringArithmeticAndLogicStrategyImpl extends LlvmLoweringStrategy {
-  private final Set<InstructionLabel> supported = Set.of(ADD_32,
-      ADD_64, ADDI_32, ADDI_64, AND, OR, SUB, MUL, SUBB, SUBC, SDIV, UDIV, SMOD, UMOD, XOR
-  );
+public class LlvmInstructionLoweringAddImmediateStrategyImpl
+    extends LlvmInstructionLoweringFrameIndexHelper {
+  private final Set<InstructionLabel> supported = Set.of(ADDI_32, ADDI_64);
 
   @Override
   protected Set<InstructionLabel> getSupportedInstructionLabels() {
@@ -50,6 +54,17 @@ public class LlvmLoweringArithmeticAndLogicStrategyImpl extends LlvmLoweringStra
       List<TableGenInstructionOperand> inputOperands,
       List<TableGenInstructionOperand> outputOperands,
       List<TableGenPattern> patterns) {
-    return Collections.emptyList();
+    var alternativePatterns = new ArrayList<TableGenPattern>();
+
+    for (var pattern : patterns) {
+      var selector = pattern.selector().copy();
+      var machine = pattern.machine().copy();
+
+      var affectedNodes = selector.getNodes(LlvmReadRegFileNode.class).toList();
+      alternativePatterns.add(
+          super.replaceRegisterWithFrameIndex(selector, machine, affectedNodes));
+    }
+
+    return alternativePatterns;
   }
 }
