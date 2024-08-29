@@ -1,4 +1,4 @@
-package vadl.lcb.passes.llvmLowering.strategies.instructionImpl;
+package vadl.lcb.passes.llvmLowering.strategies.instruction;
 
 import java.util.Collections;
 import java.util.List;

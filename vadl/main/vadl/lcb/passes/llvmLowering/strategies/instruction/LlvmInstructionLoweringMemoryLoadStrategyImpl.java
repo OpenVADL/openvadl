@@ -1,4 +1,4 @@
-package vadl.lcb.passes.llvmLowering.strategies.instructionImpl;
+package vadl.lcb.passes.llvmLowering.strategies.instruction;
 
 import static vadl.viam.ViamError.ensure;
 
