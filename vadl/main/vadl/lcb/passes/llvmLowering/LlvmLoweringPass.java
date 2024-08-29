@@ -9,13 +9,13 @@ import org.jetbrains.annotations.Nullable;
 import vadl.configuration.LcbConfiguration;
 import vadl.lcb.passes.isaMatching.InstructionLabel;
 import vadl.lcb.passes.isaMatching.IsaMatchingPass;
-import vadl.lcb.passes.llvmLowering.strategies.LlvmLoweringStrategy;
-import vadl.lcb.passes.llvmLowering.strategies.instructionImpl.LlvmLoweringArithmeticAndLogicStrategyImpl;
-import vadl.lcb.passes.llvmLowering.strategies.instructionImpl.LlvmLoweringConditionalBranchesStrategyImpl;
-import vadl.lcb.passes.llvmLowering.strategies.instructionImpl.LlvmLoweringConditionalsStrategyImpl;
-import vadl.lcb.passes.llvmLowering.strategies.instructionImpl.LlvmLoweringIndirectJumpStrategyImpl;
-import vadl.lcb.passes.llvmLowering.strategies.instructionImpl.LlvmLoweringMemoryLoadStrategyImpl;
-import vadl.lcb.passes.llvmLowering.strategies.instructionImpl.LlvmLoweringMemoryStoreStrategyImpl;
+import vadl.lcb.passes.llvmLowering.strategies.LlvmInstructionLoweringStrategy;
+import vadl.lcb.passes.llvmLowering.strategies.instructionImpl.LlvmInstructionLoweringArithmeticAndLogicStrategyImpl;
+import vadl.lcb.passes.llvmLowering.strategies.instructionImpl.LlvmInstructionLoweringConditionalBranchesStrategyImpl;
+import vadl.lcb.passes.llvmLowering.strategies.instructionImpl.LlvmInstructionLoweringConditionalsStrategyImpl;
+import vadl.lcb.passes.llvmLowering.strategies.instructionImpl.LlvmInstructionLoweringIndirectJumpStrategyImpl;
+import vadl.lcb.passes.llvmLowering.strategies.instructionImpl.LlvmInstructionLoweringMemoryLoadStrategyImpl;
+import vadl.lcb.passes.llvmLowering.strategies.instructionImpl.LlvmInstructionLoweringMemoryStoreStrategyImpl;
 import vadl.lcb.passes.llvmLowering.strategies.visitors.impl.ReplaceWithLlvmSDNodesVisitor;
 import vadl.lcb.passes.llvmLowering.tablegen.model.TableGenInstruction;
 import vadl.lcb.passes.llvmLowering.tablegen.model.TableGenInstructionOperand;
@@ -35,13 +35,13 @@ import vadl.viam.passes.functionInliner.UninlinedGraph;
  */
 public class LlvmLoweringPass extends Pass {
 
-  private final List<LlvmLoweringStrategy> strategies = List.of(
-      new LlvmLoweringArithmeticAndLogicStrategyImpl(),
-      new LlvmLoweringConditionalsStrategyImpl(),
-      new LlvmLoweringConditionalBranchesStrategyImpl(),
-      new LlvmLoweringIndirectJumpStrategyImpl(),
-      new LlvmLoweringMemoryStoreStrategyImpl(),
-      new LlvmLoweringMemoryLoadStrategyImpl()
+  private final List<LlvmInstructionLoweringStrategy> strategies = List.of(
+      new LlvmInstructionLoweringArithmeticAndLogicStrategyImpl(),
+      new LlvmInstructionLoweringConditionalsStrategyImpl(),
+      new LlvmInstructionLoweringConditionalBranchesStrategyImpl(),
+      new LlvmInstructionLoweringIndirectJumpStrategyImpl(),
+      new LlvmInstructionLoweringMemoryStoreStrategyImpl(),
+      new LlvmInstructionLoweringMemoryLoadStrategyImpl()
   );
 
   public LlvmLoweringPass(LcbConfiguration configuration) {
@@ -139,7 +139,7 @@ public class LlvmLoweringPass extends Pass {
   /**
    * The {@link IsaMatchingPass} computes a hashmap with the instruction label as a key and all
    * the matched instructions as value.
-   * However, we would like to check whether {@link LlvmLoweringStrategy} supports this
+   * However, we would like to check whether {@link LlvmInstructionLoweringStrategy} supports this
    * {@link Instruction} in this pass. That's why we have the flip the hashmap.
    */
   public static IdentityHashMap<Instruction, InstructionLabel> flipIsaMatching(

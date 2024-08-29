@@ -8,7 +8,7 @@ import java.util.Set;
 import vadl.lcb.passes.isaMatching.InstructionLabel;
 import vadl.lcb.passes.llvmLowering.LlvmLoweringPass;
 import vadl.lcb.passes.llvmLowering.LlvmLoweringPass.LlvmLoweringIntermediateResult;
-import vadl.lcb.passes.llvmLowering.strategies.LlvmLoweringStrategy;
+import vadl.lcb.passes.llvmLowering.strategies.LlvmInstructionLoweringStrategy;
 import vadl.lcb.passes.llvmLowering.tablegen.model.TableGenInstructionOperand;
 import vadl.lcb.passes.llvmLowering.tablegen.model.TableGenPattern;
 import vadl.viam.Instruction;
@@ -18,7 +18,8 @@ import vadl.viam.passes.functionInliner.UninlinedGraph;
  * Generates the {@link LlvmLoweringIntermediateResult} for {@link InstructionLabel#JALR}
  * instruction.
  */
-public class LlvmLoweringIndirectJumpStrategyImpl extends LlvmLoweringStrategy {
+public class LlvmInstructionLoweringIndirectJumpStrategyImpl
+    extends LlvmInstructionLoweringStrategy {
   @Override
   protected Set<InstructionLabel> getSupportedInstructionLabels() {
     return Set.of(InstructionLabel.JALR);

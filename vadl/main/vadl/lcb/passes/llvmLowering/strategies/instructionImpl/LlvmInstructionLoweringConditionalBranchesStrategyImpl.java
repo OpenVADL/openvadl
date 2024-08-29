@@ -20,7 +20,7 @@ import vadl.lcb.passes.llvmLowering.model.LlvmBrCondSD;
 import vadl.lcb.passes.llvmLowering.model.LlvmCondCode;
 import vadl.lcb.passes.llvmLowering.model.LlvmSetCondSD;
 import vadl.lcb.passes.llvmLowering.model.LlvmTypeCastSD;
-import vadl.lcb.passes.llvmLowering.strategies.LlvmLoweringStrategy;
+import vadl.lcb.passes.llvmLowering.strategies.LlvmInstructionLoweringStrategy;
 import vadl.lcb.passes.llvmLowering.strategies.visitors.impl.ReplaceWithLlvmSDNodesWithControlFlowVisitor;
 import vadl.lcb.passes.llvmLowering.tablegen.model.TableGenInstructionOperand;
 import vadl.lcb.passes.llvmLowering.tablegen.model.TableGenPattern;
@@ -34,7 +34,8 @@ import vadl.viam.passes.functionInliner.UninlinedGraph;
 /**
  * Lowering conditional branch instructions into TableGen patterns.
  */
-public class LlvmLoweringConditionalBranchesStrategyImpl extends LlvmLoweringStrategy {
+public class LlvmInstructionLoweringConditionalBranchesStrategyImpl
+    extends LlvmInstructionLoweringStrategy {
   @Override
   protected Set<InstructionLabel> getSupportedInstructionLabels() {
     return Set.of(BEQ, BGEQ, BNEQ, BLEQ, BLTH, BGTH);

@@ -21,7 +21,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import vadl.lcb.passes.isaMatching.InstructionLabel;
-import vadl.lcb.passes.llvmLowering.strategies.LlvmLoweringStrategy;
+import vadl.lcb.passes.llvmLowering.strategies.LlvmInstructionLoweringStrategy;
 import vadl.lcb.passes.llvmLowering.tablegen.model.TableGenInstruction;
 import vadl.lcb.passes.llvmLowering.tablegen.model.TableGenInstructionOperand;
 import vadl.lcb.passes.llvmLowering.tablegen.model.TableGenPattern;
@@ -31,7 +31,8 @@ import vadl.viam.passes.functionInliner.UninlinedGraph;
 /**
  * Lowers arithmetic and logic instructions into {@link TableGenInstruction}.
  */
-public class LlvmLoweringArithmeticAndLogicStrategyImpl extends LlvmLoweringStrategy {
+public class LlvmInstructionLoweringArithmeticAndLogicStrategyImpl
+    extends LlvmInstructionLoweringStrategy {
   private final Set<InstructionLabel> supported = Set.of(ADD_32,
       ADD_64, ADDI_32, ADDI_64, AND, OR, SUB, MUL, SUBB, SUBC, SDIV, UDIV, SMOD, UMOD, XOR
   );

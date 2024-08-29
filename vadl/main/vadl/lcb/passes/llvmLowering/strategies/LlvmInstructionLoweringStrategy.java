@@ -35,7 +35,6 @@ import vadl.lcb.passes.llvmLowering.tablegen.model.TableGenInstructionOperand;
 import vadl.lcb.passes.llvmLowering.tablegen.model.TableGenInstructionRegisterFileOperand;
 import vadl.lcb.passes.llvmLowering.tablegen.model.TableGenPattern;
 import vadl.lcb.visitors.LcbGraphNodeVisitor;
-import vadl.viam.Constant;
 import vadl.viam.Instruction;
 import vadl.viam.InstructionSetArchitecture;
 import vadl.viam.Register;
@@ -47,9 +46,7 @@ import vadl.viam.graph.control.AbstractBeginNode;
 import vadl.viam.graph.control.AbstractEndNode;
 import vadl.viam.graph.control.ControlNode;
 import vadl.viam.graph.control.IfNode;
-import vadl.viam.graph.dependency.ConstantNode;
 import vadl.viam.graph.dependency.DependencyNode;
-import vadl.viam.graph.dependency.ExpressionNode;
 import vadl.viam.graph.dependency.FieldAccessRefNode;
 import vadl.viam.graph.dependency.FieldRefNode;
 import vadl.viam.graph.dependency.FuncParamNode;
@@ -64,9 +61,9 @@ import vadl.viam.passes.functionInliner.UninlinedGraph;
 /**
  * Defines how a {@link Instruction} will be lowered to {@link TableGenInstruction}.
  */
-public abstract class LlvmLoweringStrategy {
+public abstract class LlvmInstructionLoweringStrategy {
   private static final Logger logger = LoggerFactory.getLogger(
-      LlvmLoweringStrategy.class);
+      LlvmInstructionLoweringStrategy.class);
 
   /**
    * Get the supported set of {@link InstructionLabel} which this strategy supports.
@@ -274,7 +271,7 @@ public abstract class LlvmLoweringStrategy {
   protected List<TableGenInstructionOperand> getTableGenInputOperands(Graph graph) {
     return getInputOperands(graph)
         .stream()
-        .map(LlvmLoweringStrategy::generateTableGenInputOutput)
+        .map(LlvmInstructionLoweringStrategy::generateTableGenInputOutput)
         .toList();
   }
 

@@ -6,7 +6,7 @@ import java.util.function.Function;
 import vadl.lcb.passes.llvmLowering.model.LlvmFrameIndexSD;
 import vadl.lcb.passes.llvmLowering.model.LlvmReadRegFileNode;
 import vadl.lcb.passes.llvmLowering.model.MachineInstructionParameterNode;
-import vadl.lcb.passes.llvmLowering.strategies.LlvmLoweringStrategy;
+import vadl.lcb.passes.llvmLowering.strategies.LlvmInstructionLoweringStrategy;
 import vadl.lcb.passes.llvmLowering.tablegen.model.ParameterIdentity;
 import vadl.lcb.passes.llvmLowering.tablegen.model.TableGenInstructionFrameRegisterOperand;
 import vadl.lcb.passes.llvmLowering.tablegen.model.TableGenInstructionOperand;
@@ -15,10 +15,11 @@ import vadl.viam.graph.Graph;
 import vadl.viam.graph.Node;
 
 /**
- * Common superclass for {@link LlvmLoweringMemoryLoadStrategyImpl} and
- * {@link LlvmLoweringMemoryStoreStrategyImpl}.
+ * Common superclass for {@link LlvmInstructionLoweringMemoryLoadStrategyImpl} and
+ * {@link LlvmInstructionLoweringMemoryStoreStrategyImpl}.
  */
-public abstract class LlvmLoweringMemoryStrategy extends LlvmLoweringStrategy {
+public abstract class LlvmInstructionLoweringMemoryStrategy
+    extends LlvmInstructionLoweringStrategy {
   /**
    * Replaces {@link LlvmReadRegFileNode} with {@link LlvmFrameIndexSD} in the selector
    * and changes the same operands in the machine pattern to

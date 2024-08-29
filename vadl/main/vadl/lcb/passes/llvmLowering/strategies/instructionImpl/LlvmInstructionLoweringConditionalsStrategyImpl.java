@@ -5,7 +5,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import vadl.lcb.passes.isaMatching.InstructionLabel;
-import vadl.lcb.passes.llvmLowering.strategies.LlvmLoweringStrategy;
+import vadl.lcb.passes.llvmLowering.strategies.LlvmInstructionLoweringStrategy;
 import vadl.lcb.passes.llvmLowering.tablegen.model.TableGenInstructionOperand;
 import vadl.lcb.passes.llvmLowering.tablegen.model.TableGenPattern;
 import vadl.viam.Instruction;
@@ -14,7 +14,8 @@ import vadl.viam.passes.functionInliner.UninlinedGraph;
 /**
  * Lowering of conditionals into TableGen.
  */
-public class LlvmLoweringConditionalsStrategyImpl extends LlvmLoweringStrategy {
+public class LlvmInstructionLoweringConditionalsStrategyImpl
+    extends LlvmInstructionLoweringStrategy {
 
   private final Set<InstructionLabel> supported = Set.of(InstructionLabel.LT);
 
