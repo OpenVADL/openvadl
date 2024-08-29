@@ -17,7 +17,7 @@ public class EmitRegisterInfoHeaderFilePassTest extends AbstractLcbTest {
   void testLowering() throws IOException, DuplicatedPassKeyException {
     // Given
     var configuration = getConfiguration(false);
-    var testSetup = runLcb(configuration, "examples/rv3264im.vadl",
+    var testSetup = runLcb(configuration, "sys/risc-v/rv64im.vadl",
         new PassKey(EmitRegisterInfoHeaderFilePass.class.getName()));
 
     // When
@@ -31,23 +31,23 @@ public class EmitRegisterInfoHeaderFilePassTest extends AbstractLcbTest {
     var output = trimmed.lines();
 
     Assertions.assertLinesMatch("""
-        #ifndef LLVM_LIB_TARGET_rv3264im_rv3264imREGISTERINFO_H
-        #define LLVM_LIB_TARGET_rv3264im_rv3264imREGISTERINFO_H
+        #ifndef LLVM_LIB_TARGET_rv64im_rv64imREGISTERINFO_H
+        #define LLVM_LIB_TARGET_rv64im_rv64imREGISTERINFO_H
         
         #include "llvm/CodeGen/TargetRegisterInfo.h"
         #include <string>
         
         #define GET_REGINFO_HEADER
-        #include "rv3264imGenRegisterInfo.inc"
+        #include "rv64imGenRegisterInfo.inc"
         
         namespace llvm
         {
-            struct rv3264imRegisterInfo : public rv3264imGenRegisterInfo
+            struct rv64imRegisterInfo : public rv64imGenRegisterInfo
             {
                 // virtual anchor method to decrease link time as the vtable
                 virtual void anchor();
         
-                rv3264imRegisterInfo();
+                rv64imRegisterInfo();
         
                 const uint32_t *getCallPreservedMask(const MachineFunction &MF, CallingConv::ID) const override;
         
@@ -88,7 +88,7 @@ public class EmitRegisterInfoHeaderFilePassTest extends AbstractLcbTest {
             };
         } // end namespace llvm
         
-        #endif // LLVM_LIB_TARGET_rv3264im_rv3264imREGISTERINFO_H
+        #endif // LLVM_LIB_TARGET_rv64im_rv64imREGISTERINFO_H
         """.trim().lines(), output);
   }
 }

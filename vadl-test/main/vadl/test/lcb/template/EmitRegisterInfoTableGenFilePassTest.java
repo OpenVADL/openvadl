@@ -18,7 +18,7 @@ public class EmitRegisterInfoTableGenFilePassTest extends AbstractLcbTest {
   void testLowering() throws IOException, DuplicatedPassKeyException {
     // Given
     var configuration = getConfiguration(false);
-    var testSetup = runLcb(configuration, "examples/rv3264im.vadl",
+    var testSetup = runLcb(configuration, "sys/risc-v/rv64im.vadl",
         new PassKey(EmitRegisterInfoTableGenFilePass.class.getName()));
 
     // When

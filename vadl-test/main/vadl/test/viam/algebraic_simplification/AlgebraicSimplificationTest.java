@@ -41,8 +41,8 @@ public class AlgebraicSimplificationTest extends DockerExecutionTest {
   @Execution(ExecutionMode.CONCURRENT)
   Collection<DynamicTest> instructions() throws IOException {
     var configuration = getConfiguration(false);
-    var initialSpec = runAndGetViamSpecification("examples/rv3264im.vadl");
-    var spec = runAndGetViamSpecification("examples/rv3264im.vadl");
+    var initialSpec = runAndGetViamSpecification("sys/risc-v/rv64im.vadl");
+    var spec = runAndGetViamSpecification("sys/risc-v/rv64im.vadl");
 
     new FunctionInlinerPass(configuration).execute(PassResults.empty(), initialSpec);
     new FunctionInlinerPass(configuration).execute(PassResults.empty(), spec);

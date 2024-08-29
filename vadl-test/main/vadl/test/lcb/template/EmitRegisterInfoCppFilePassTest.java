@@ -16,7 +16,7 @@ public class EmitRegisterInfoCppFilePassTest extends AbstractLcbTest {
   void testLowering() throws IOException, DuplicatedPassKeyException {
     // Given
     var configuration = getConfiguration(false);
-    var testSetup = runLcb(configuration, "examples/rv3264im.vadl",
+    var testSetup = runLcb(configuration, "sys/risc-v/rv64im.vadl",
         new PassKey(EmitRegisterInfoCppFilePass.class.getName()));
 
     // When
@@ -30,13 +30,13 @@ public class EmitRegisterInfoCppFilePassTest extends AbstractLcbTest {
     var output = trimmed.lines();
 
     Assertions.assertLinesMatch("""
-        #include "rv3264imRegisterInfo.h"
-        #include "rv3264imFrameLowering.h"
-        #include "rv3264imInstrInfo.h"
-        #include "rv3264imSubtarget.h"
-        #include "Utils/rv3264imBaseInfo.h"
+        #include "rv64imRegisterInfo.h"
+        #include "rv64imFrameLowering.h"
+        #include "rv64imInstrInfo.h"
+        #include "rv64imSubtarget.h"
+        #include "Utils/rv64imBaseInfo.h"
         #include "Utils/ImmediateUtils.h"
-        #include "MCTargetDesc/rv3264imMCTargetDesc.h"
+        #include "MCTargetDesc/rv64imMCTargetDesc.h"
         #include "llvm/ADT/BitVector.h"
         #include "llvm/ADT/STLExtras.h"
         #include "llvm/CodeGen/MachineFrameInfo.h"
@@ -52,34 +52,34 @@ public class EmitRegisterInfoCppFilePassTest extends AbstractLcbTest {
         #include <iostream>
         #include <sstream>
         
-        #define DEBUG_TYPE "rv3264imRegisterInfo"
+        #define DEBUG_TYPE "rv64imRegisterInfo"
         
         using namespace llvm;
         
         #define GET_REGINFO_TARGET_DESC
-        #include "rv3264imGenRegisterInfo.inc"
+        #include "rv64imGenRegisterInfo.inc"
         
-        void rv3264imRegisterInfo::anchor() {}
+        void rv64imRegisterInfo::anchor() {}
         
-        rv3264imRegisterInfo::rv3264imRegisterInfo()
-            : rv3264imGenRegisterInfo( «emitWithNamespace(returnAddress)» )
+        rv64imRegisterInfo::rv64imRegisterInfo()
+            : rv64imGenRegisterInfo( «emitWithNamespace(returnAddress)» )
         {
         }
         
-        const uint16_t * rv3264imRegisterInfo::getCalleeSavedRegs(const MachineFunction * /*MF*/
+        const uint16_t * rv64imRegisterInfo::getCalleeSavedRegs(const MachineFunction * /*MF*/
         ) const
         {
             // defined in calling convention tablegen
-            return CSR_rv3264im_SaveList;
+            return CSR_rv64im_SaveList;
         }
         
-        BitVector rv3264imRegisterInfo::getReservedRegs(const MachineFunction &MF) const
+        BitVector rv64imRegisterInfo::getReservedRegs(const MachineFunction &MF) const
         {
             BitVector Reserved(getNumRegs());
         
-            markSuperRegs(Reserved, rv3264im::X8); // frame pointer
-            markSuperRegs(Reserved, rv3264im::X2); // stack pointer
-            markSuperRegs(Reserved, rv3264im::X3); // global pointer
+            markSuperRegs(Reserved, rv64im::X8); // frame pointer
+            markSuperRegs(Reserved, rv64im::X2); // stack pointer
+            markSuperRegs(Reserved, rv64im::X3); // global pointer
         
             // TODO: Add constant registers
             assert(checkAllSuperRegsMarked(Reserved));
@@ -678,7 +678,7 @@ public class EmitRegisterInfoCppFilePassTest extends AbstractLcbTest {
          * If an instruction is not supported, an llvm_fatal_error is emitted as it should be impossible
          * for a frame index to be an operand.
          */
-        bool rv3264imRegisterInfo::eliminateFrameIndex(MachineBasicBlock::iterator II, int SPAdj, unsigned FIOperandNum, RegScavenger *RS) const
+        bool rv64imRegisterInfo::eliminateFrameIndex(MachineBasicBlock::iterator II, int SPAdj, unsigned FIOperandNum, RegScavenger *RS) const
         {
             MachineInstr &MI = *II;
             const MachineFunction &MF = *MI.getParent()->getParent();
@@ -695,57 +695,57 @@ public class EmitRegisterInfoCppFilePassTest extends AbstractLcbTest {
             switch (MI.getOpcode())
             {
                \s
-                case rv3264im::LB:
+                case rv64im::LB:
                 {
                   error = eliminateFrameIndexLB(II, SPAdj, FIOperandNum, FrameReg, FrameIndexOffset, RS);
                   break;
                 }
-                case rv3264im::LBU:
+                case rv64im::LBU:
                 {
                   error = eliminateFrameIndexLBU(II, SPAdj, FIOperandNum, FrameReg, FrameIndexOffset, RS);
                   break;
                 }
-                case rv3264im::LD:
+                case rv64im::LD:
                 {
                   error = eliminateFrameIndexLD(II, SPAdj, FIOperandNum, FrameReg, FrameIndexOffset, RS);
                   break;
                 }
-                case rv3264im::LH:
+                case rv64im::LH:
                 {
                   error = eliminateFrameIndexLH(II, SPAdj, FIOperandNum, FrameReg, FrameIndexOffset, RS);
                   break;
                 }
-                case rv3264im::LHU:
+                case rv64im::LHU:
                 {
                   error = eliminateFrameIndexLHU(II, SPAdj, FIOperandNum, FrameReg, FrameIndexOffset, RS);
                   break;
                 }
-                case rv3264im::LW:
+                case rv64im::LW:
                 {
                   error = eliminateFrameIndexLW(II, SPAdj, FIOperandNum, FrameReg, FrameIndexOffset, RS);
                   break;
                 }
-                case rv3264im::LWU:
+                case rv64im::LWU:
                 {
                   error = eliminateFrameIndexLWU(II, SPAdj, FIOperandNum, FrameReg, FrameIndexOffset, RS);
                   break;
                 }
-                case rv3264im::SB:
+                case rv64im::SB:
                 {
                   error = eliminateFrameIndexSB(II, SPAdj, FIOperandNum, FrameReg, FrameIndexOffset, RS);
                   break;
                 }
-                case rv3264im::SD:
+                case rv64im::SD:
                 {
                   error = eliminateFrameIndexSD(II, SPAdj, FIOperandNum, FrameReg, FrameIndexOffset, RS);
                   break;
                 }
-                case rv3264im::SH:
+                case rv64im::SH:
                 {
                   error = eliminateFrameIndexSH(II, SPAdj, FIOperandNum, FrameReg, FrameIndexOffset, RS);
                   break;
                 }
-                case rv3264im::SW:
+                case rv64im::SW:
                 {
                   error = eliminateFrameIndexSW(II, SPAdj, FIOperandNum, FrameReg, FrameIndexOffset, RS);
                   break;
@@ -775,90 +775,90 @@ public class EmitRegisterInfoCppFilePassTest extends AbstractLcbTest {
             return true;
         }
         
-        Register rv3264imRegisterInfo::getFrameRegister(const MachineFunction &MF) const
+        Register rv64imRegisterInfo::getFrameRegister(const MachineFunction &MF) const
         {
             const TargetFrameLowering *TFI = getFrameLowering(MF);
             return TFI->hasFP(MF) ? X8 /* FP */ : X2 /* SP */;
         }
         
-        const uint32_t * rv3264imRegisterInfo::getCallPreservedMask(const MachineFunction & /*MF*/
+        const uint32_t * rv64imRegisterInfo::getCallPreservedMask(const MachineFunction & /*MF*/
                                                                            , CallingConv::ID /*CC*/
         ) const
         {
             // defined in calling convention tablegen
-            return CSR_rv3264im_RegMask;
+            return CSR_rv64im_RegMask;
         }
         
         
-        /*static*/ unsigned rv3264imRegisterInfo::X(unsigned index)
+        /*static*/ unsigned rv64imRegisterInfo::X(unsigned index)
         {
           switch (index)
           {
          \s
             case 0:
-                return rv3264im::X0;
+                return rv64im::X0;
             case 1:
-                return rv3264im::X1;
+                return rv64im::X1;
             case 2:
-                return rv3264im::X2;
+                return rv64im::X2;
             case 3:
-                return rv3264im::X3;
+                return rv64im::X3;
             case 4:
-                return rv3264im::X4;
+                return rv64im::X4;
             case 5:
-                return rv3264im::X5;
+                return rv64im::X5;
             case 6:
-                return rv3264im::X6;
+                return rv64im::X6;
             case 7:
-                return rv3264im::X7;
+                return rv64im::X7;
             case 8:
-                return rv3264im::X8;
+                return rv64im::X8;
             case 9:
-                return rv3264im::X9;
+                return rv64im::X9;
             case 10:
-                return rv3264im::X10;
+                return rv64im::X10;
             case 11:
-                return rv3264im::X11;
+                return rv64im::X11;
             case 12:
-                return rv3264im::X12;
+                return rv64im::X12;
             case 13:
-                return rv3264im::X13;
+                return rv64im::X13;
             case 14:
-                return rv3264im::X14;
+                return rv64im::X14;
             case 15:
-                return rv3264im::X15;
+                return rv64im::X15;
             case 16:
-                return rv3264im::X16;
+                return rv64im::X16;
             case 17:
-                return rv3264im::X17;
+                return rv64im::X17;
             case 18:
-                return rv3264im::X18;
+                return rv64im::X18;
             case 19:
-                return rv3264im::X19;
+                return rv64im::X19;
             case 20:
-                return rv3264im::X20;
+                return rv64im::X20;
             case 21:
-                return rv3264im::X21;
+                return rv64im::X21;
             case 22:
-                return rv3264im::X22;
+                return rv64im::X22;
             case 23:
-                return rv3264im::X23;
+                return rv64im::X23;
             case 24:
-                return rv3264im::X24;
+                return rv64im::X24;
             case 25:
-                return rv3264im::X25;
+                return rv64im::X25;
             case 26:
-                return rv3264im::X26;
+                return rv64im::X26;
             case 27:
-                return rv3264im::X27;
+                return rv64im::X27;
             case 28:
-                return rv3264im::X28;
+                return rv64im::X28;
             case 29:
-                return rv3264im::X29;
+                return rv64im::X29;
             case 30:
-                return rv3264im::X30;
+                return rv64im::X30;
             case 31:
-                return rv3264im::X31;
+                return rv64im::X31;
          \s
             default:
             {

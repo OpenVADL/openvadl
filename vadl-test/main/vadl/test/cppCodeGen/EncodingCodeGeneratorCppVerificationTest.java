@@ -43,7 +43,7 @@ public class EncodingCodeGeneratorCppVerificationTest extends AbstractCppCodeGen
   @TestFactory
   @Execution(ExecutionMode.CONCURRENT)
   Collection<DynamicTest> instructions() throws IOException, DuplicatedPassKeyException {
-    var setup = setupPassManagerAndRunSpec("examples/rv3264im.vadl",
+    var setup = setupPassManagerAndRunSpec("sys/risc-v/rv64im.vadl",
         PassOrder.gcbAndCppCodeGen(getConfiguration(false)));
     var passManager = setup.passManager();
     var spec = setup.specification();
@@ -102,11 +102,11 @@ public class EncodingCodeGeneratorCppVerificationTest extends AbstractCppCodeGen
     String cppCode = String.format("""
             #include <cstdint>
             #include <iostream>
-                    
+            
             %s 
-                    
+            
             %s
-                    
+            
             int main() {
               %s expected = %d;
               auto actual = %s(%s(expected));

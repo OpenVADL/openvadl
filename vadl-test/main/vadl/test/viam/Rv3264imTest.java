@@ -81,7 +81,7 @@ public class Rv3264imTest extends AbstractTest {
     //    var config = new GeneralConfiguration("build/test-out/rv3264im/", true);
     var config = getConfiguration(false);
     var setup = setupPassManagerAndRunSpec(
-        "examples/riscv/" + rvFile,
+        "sys/risc-v/" + rvFile,
         PassOrder.viam(config)
     );
     return setup.specification();

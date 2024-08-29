@@ -266,7 +266,7 @@ public class LlvmLoweringPassTest extends AbstractLcbTest {
   @TestFactory
   Stream<DynamicTest> testLowering() throws IOException, DuplicatedPassKeyException {
     // Given
-    var setup = runLcb(getConfiguration(false), "examples/rv3264im.vadl",
+    var setup = runLcb(getConfiguration(false), "sys/risc-v/rv64im.vadl",
         new PassKey(LlvmLoweringPass.class.getName() + "-1"));
     var passManager = setup.passManager();
     var spec = setup.specification();
