@@ -1,8 +1,10 @@
 package vadl.ast;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Locale;
+import java.util.Map;
 import java.util.Objects;
 import java.util.stream.Collectors;
 import javax.annotation.Nullable;
@@ -1983,14 +1985,38 @@ class DefinitionList extends Definition {
  * This node should never leave the parser.
  */
 final class ModelDefinition extends Definition {
+  /**
+   * Either a concrete identifier for this model or, if it is a model-in-model, a placeholder ID.
+   */
   IdentifierOrPlaceholder id;
+
+  /**
+   * The list of formal parameters for the represented macro.
+   */
   List<MacroParam> params;
+
+  /**
+   * The actual macro body to be templated.
+   */
   Node body;
+
+  /**
+   * A macro return type - should only be a {@link BasicSyntaxType}.
+   */
   SyntaxType returnType;
+
+  /**
+   * In a model-in-model situation, the parent model's arguments can be referenced in the inner
+   * model. To preserve their value during macro expansion, the bound arguments field is used.
+   *
+   * @see MacroExpander#visit(ModelDefinition)
+   * @see MacroExpander#collectMacroParameters(Macro, List, SourceLocation)
+   */
+  Map<String, Node> boundArguments = new HashMap<>();
   SourceLocation loc;
 
   ModelDefinition(IdentifierOrPlaceholder id, List<MacroParam> params, Node body,
-                         SyntaxType returnType, SourceLocation loc) {
+                  SyntaxType returnType, SourceLocation loc) {
     this.id = id;
     this.params = params;
     this.body = body;
@@ -1998,12 +2024,9 @@ final class ModelDefinition extends Definition {
     this.loc = loc;
   }
 
-  Identifier id() {
-    return (Identifier) id;
-  }
-
   Macro toMacro() {
-    return new Macro(new Identifier(id.pathToString(), id.location()), params, body, returnType);
+    return new Macro(new Identifier(id.pathToString(), id.location()), params, body, returnType,
+        boundArguments);
   }
 
   @Override
@@ -2053,12 +2076,13 @@ final class ModelDefinition extends Definition {
     ModelDefinition that = (ModelDefinition) o;
     return Objects.equals(id, that.id) && Objects.equals(params, that.params)
         && Objects.equals(body, that.body)
-        && Objects.equals(returnType, that.returnType);
+        && Objects.equals(returnType, that.returnType)
+        && Objects.equals(boundArguments, that.boundArguments);
   }
 
   @Override
   public int hashCode() {
-    return Objects.hash(id, params, body, returnType);
+    return Objects.hash(id, params, body, returnType, boundArguments);
   }
 }
 

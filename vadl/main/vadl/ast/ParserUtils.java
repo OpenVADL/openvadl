@@ -282,4 +282,104 @@ class ParserUtils {
     }
     return true;
   }
+
+  /**
+   * Casts the node to the type Expr, or reports an error and returns a dummy node of that type.
+   * Useful in the parser, where throwing cast exceptions is not the best way of error reporting.
+   */
+  static Expr castExpr(Parser parser, Node node) {
+    if (node instanceof Expr expr) {
+      return expr;
+    } else {
+      parser.errors.SemErr(node.location().begin().line(), node.location().begin().column(),
+          "Expected node of type Expr, received " + node.syntaxType().print() + " - " + node);
+      return new Identifier("invalid", node.location());
+    }
+  }
+
+  /**
+   * Casts the node to the type Encs, or reports an error and returns a dummy node of that type.
+   * Useful in the parser, where throwing cast exceptions is not the best way of error reporting.
+   */
+  static FieldEncodingOrPlaceholder castEncs(Parser parser, Node node) {
+    if (node instanceof FieldEncodingOrPlaceholder fieldEncodingOrPlaceholder) {
+      return fieldEncodingOrPlaceholder;
+    } else {
+      parser.errors.SemErr(node.location().begin().line(), node.location().begin().column(),
+          "Expected node of type Encs, received " + node.syntaxType().print() + " - " + node);
+      return new EncodingDefinition.FieldEncoding(new Identifier("invalid", node.location()),
+          new StringLiteral("<<invalid>>", node.location()));
+    }
+  }
+
+  /**
+   * Casts the node to the type Id, or reports an error and returns a dummy node of that type.
+   * Useful in the parser, where throwing cast exceptions is not the best way of error reporting.
+   */
+  static IdentifierOrPlaceholder castId(Parser parser, Node node) {
+    if (node instanceof IdentifierOrPlaceholder identifierOrPlaceholder) {
+      return identifierOrPlaceholder;
+    } else {
+      parser.errors.SemErr(node.location().begin().line(), node.location().begin().column(),
+          "Expected node of type Id, received " + node.syntaxType().print() + " - " + node);
+      return new Identifier("invalid", node.location());
+    }
+  }
+
+  /**
+   * Casts the node to the type BinOp, or reports an error and returns a dummy node of that type.
+   * Useful in the parser, where throwing cast exceptions is not the best way of error reporting.
+   */
+  static OperatorOrPlaceholder castBinOp(Parser parser, Node node) {
+    if (node instanceof OperatorOrPlaceholder operatorOrPlaceholder) {
+      return operatorOrPlaceholder;
+    } else {
+      parser.errors.SemErr(node.location().begin().line(), node.location().begin().column(),
+          "Expected node of type BinOp, received " + node.syntaxType().print() + " - " + node);
+      return new OperatorExpr(Operator.Xor(), node.location());
+    }
+  }
+
+  /**
+   * Casts the node to the type IsaDefs, or reports an error and returns a dummy node of that type.
+   * Useful in the parser, where throwing cast exceptions is not the best way of error reporting.
+   */
+  static Definition castDef(Parser parser, Node node) {
+    if (node instanceof Definition definition) {
+      return definition;
+    } else {
+      parser.errors.SemErr(node.location().begin().line(), node.location().begin().column(),
+          "Expected node of type IsaDefs, received " + node.syntaxType().print() + " - " + node);
+      return new ConstantDefinition(new Identifier("invalid", node.location()), null,
+          new Identifier("invalid", node.location()), node.location());
+    }
+  }
+
+  /**
+   * Casts the node to the type Stat, or reports an error and returns a dummy node of that type.
+   * Useful in the parser, where throwing cast exceptions is not the best way of error reporting.
+   */
+  static Statement castStat(Parser parser, Node node) {
+    if (node instanceof Statement statement) {
+      return statement;
+    } else {
+      parser.errors.SemErr(node.location().begin().line(), node.location().begin().column(),
+          "Expected node of type Stat, received " + node.syntaxType().print() + " - " + node);
+      return new CallStatement(new Identifier("invalid", node.location()));
+    }
+  }
+
+  /**
+   * Casts the node to the type Stats, or reports an error and returns a dummy node of that type.
+   * Useful in the parser, where throwing cast exceptions is not the best way of error reporting.
+   */
+  static Statement castStats(Parser parser, Node node) {
+    if (node instanceof Statement statement) {
+      return statement;
+    } else {
+      parser.errors.SemErr(node.location().begin().line(), node.location().begin().column(),
+          "Expected node of type Stats, received " + node.syntaxType().print() + " - " + node);
+      return new CallStatement(new Identifier("invalid", node.location()));
+    }
+  }
 }

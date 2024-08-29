@@ -13,9 +13,9 @@ import vadl.utils.SourceLocation;
  * Also, since binary expression reordering can depend on operator placeholders, this class also
  * reorders any encountered binary expressions.<br>
  * Before: An AST optionally containing macro instances, placeholders etc.
- *         Any instances of BinaryExpr must be left-sided, as originally parsed.<br>
+ * Any instances of BinaryExpr must be left-sided, as originally parsed.<br>
  * After: An AST containing no special nodes (macro instance, placeholder, node lists).
- *        Any instances of BinaryExpr are ordered according to operator precedence.
+ * Any instances of BinaryExpr are ordered according to operator precedence.
  *
  * @see BinaryExpr#reorder(BinaryExpr)
  */
@@ -504,8 +504,10 @@ class MacroExpander
   @Override
   public Definition visit(ModelDefinition definition) {
     var id = resolvePlaceholderOrIdentifier(definition.id);
-    return new ModelDefinition(id, definition.params, definition.body,
+    var boundModel = new ModelDefinition(id, definition.params, definition.body,
         definition.returnType, definition.loc);
+    boundModel.boundArguments.putAll(args);
+    return boundModel;
   }
 
   @Override
@@ -611,8 +613,8 @@ class MacroExpander
     }
   }
 
-  private Map<String, Node> collectMacroParameters(Macro macro, List<Node> actualParams,
-                                                   SourceLocation instanceLoc)
+  Map<String, Node> collectMacroParameters(Macro macro, List<Node> actualParams,
+                                           SourceLocation instanceLoc)
       throws MacroExpansionException {
     var formalParams = macro.params();
     if (formalParams.size() != actualParams.size()) {
@@ -620,7 +622,7 @@ class MacroExpander
           "The macro `%s` expects %d arguments but %d were provided.".formatted(macro.name().name,
               formalParams.size(), actualParams.size()), instanceLoc);
     }
-    var arguments = new HashMap<>(args);
+    var arguments = new HashMap<>(macro.boundArguments());
     for (int i = 0; i < formalParams.size(); i++) {
       var formalParam = formalParams.get(i);
       var actualParam = expandNode(actualParams.get(i));

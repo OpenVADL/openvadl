@@ -196,7 +196,7 @@ PRODUCTIONS
   | modelTypeDef
   | // IF (isMacroReplacementOfType(this, BasicSyntaxType.ISA_DEFS))
     macroReplacement<out Node n>                                          (. if (expand) {
-                                                                               var expanded = new MacroExpander(Map.of(), macroOverrides).expandDefinition((Definition) n);
+                                                                               var expanded = new MacroExpander(Map.of(), macroOverrides).expandDefinition(castDef(this, n));
                                                                                if (expanded instanceof DefinitionList list) {
                                                                                  for (var def : list.items) {
                                                                                    if (def instanceof ModelDefinition modelDef) {
@@ -208,7 +208,7 @@ PRODUCTIONS
                                                                                  definitions.add(expanded);
                                                                                }
                                                                              } else {
-                                                                               definitions.add((Definition) n);
+                                                                               definitions.add(castDef(this, n));
                                                                              }
                                                                           .)
   }
@@ -361,7 +361,7 @@ PRODUCTIONS
 
   identifierOrPlaceholder<out IdentifierOrPlaceholder id> (. id = null; .)
   = identifier<out id>
-  | macroReplacement<out Node node>                       (. id = (IdentifierOrPlaceholder) node; .)
+  | macroReplacement<out Node node>                       (. id = castId(this, node); .)
   .
 
   encodingDefinition<out EncodingDefinition def>
@@ -381,7 +381,7 @@ PRODUCTIONS
   .
 
   encodingEntry<out FieldEncodingOrPlaceholder enc> (. enc = null; .)
-  = macroReplacement<out Node node>                 (. enc = (FieldEncodingOrPlaceholder) node; .)
+  = macroReplacement<out Node node>                 (. enc = castEncs(this, node); .)
   | identifier<out Identifier id>
     SYM_EQ
     expression<out Expr expr, BIN_OPS>              (. enc = new FieldEncoding(id, expr); .)
@@ -555,7 +555,7 @@ PRODUCTIONS
   | IF (la.kind == _MATCH && scanner.Peek().kind != _SYM_COLON)
     matchStatement<out statement>
   | IF (isMacroReplacementOfType(this, BasicSyntaxType.STAT))
-    macroReplacement<out Node n>     (. statement = (Statement) n; .)
+    macroReplacement<out Node n>     (. statement = castStat(this, n); .)
   | assignmentOrCallStmt<out statement>
   .
 
@@ -568,7 +568,7 @@ PRODUCTIONS
   statementList<.out List<Statement> stmts.> (. stmts = new ArrayList<>(); .)
   = {
       IF (isMacroReplacementOfType(this, BasicSyntaxType.STATS))
-      macroReplacement<out Node n>           (. stmts.add((Statement) n); .)
+      macroReplacement<out Node n>           (. stmts.add(castStats(this, n)); .)
     | statement<out Statement statement>     (. stmts.add(statement); .)
     }
   .
@@ -660,7 +660,7 @@ PRODUCTIONS
         binaryOperator<out Operator op>                   (. var operator = new OperatorExpr(op, loc()); .)
         term<out Expr right>                              (. expr = new BinaryExpr(expr, operator, right); .)
       | macroReplacement<out Node node>
-        term<out Expr right>                              (. expr = new BinaryExpr(expr, (OperatorOrPlaceholder) node, right); .)
+        term<out Expr right>                              (. expr = new BinaryExpr(expr, castBinOp(this, node), right); .)
       | SYM_AS
         symbolOrBinaryExpression<out Expr symOrBin, true> (. expr = reorderCastExpr(expr, symOrBin); .)
       )
@@ -690,7 +690,7 @@ PRODUCTIONS
     }                                                      (. if (expr instanceof IsSymExpr symExpr && (!argsIndices.isEmpty() || !subCalls.isEmpty()))
                                                                 expr = new CallExpr(symExpr, argsIndices, subCalls, expr.location().join(loc()));
                                                            .)
-  | macroReplacement<out Node node>                        (. expr = (Expr) node; .)
+  | macroReplacement<out Node node>                        (. expr = castExpr(this, node); .)
   .
 
   /// Represents one set of invocation arguments.
@@ -722,7 +722,7 @@ PRODUCTIONS
         SYM_GT                                               (. expr = new SymbolExpr(path, term, path.location().join(loc())); .)
       ]                                                      (. if (expr == null) expr = new BinaryExpr((Expr) path, new OperatorExpr(Operator.Less(), lessLoc), term); .)
     ]                                                        (. if (expr == null) expr = (Expr) path; .)
-  | macroReplacement<out Node node>                          (. expr = (Expr) node; .)
+  | macroReplacement<out Node node>                          (. expr = castExpr(this, node); .)
   .
 
   binaryOperator<out Operator op>    (.op = null;.)
@@ -778,7 +778,7 @@ PRODUCTIONS
   | ifExpression<out expr, BIN_OPS>
   | letExpression<out expr>
   | // IF (isMacroReplacementOfType(this, BasicSyntaxType.EX))
-    macroReplacement<out Node n> (. expr = (Expr) n; .)
+    macroReplacement<out Node n> (. expr = castExpr(this, n); .)
   .
 
   groupedExpression<out GroupedExpr expr> (. expr = new GroupedExpr(new ArrayList<>(), loc()); .)
@@ -882,7 +882,7 @@ PRODUCTIONS
   typeLiteralOrPlaceholder<out TypeLiteralOrPlaceholder type> (. type = null; .)
   = IF (isMacroReplacementOfType(this, BasicSyntaxType.ID))
     macroReplacement<out Node n>                              (. if (n instanceof PlaceholderExpr p) type = p;
-                                                                 else type = new TypeLiteral((IsId) n, List.of(), n.location()); .)
+                                                                 else type = new TypeLiteral(castId(this, n), List.of(), n.location()); .)
   | typeLiteral<out type>
   .
 

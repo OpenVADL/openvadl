@@ -15,6 +15,7 @@ public class AstTestUtils {
   private static final Ungrouper UNGROUPER = new Ungrouper();
 
   static void verifyPrettifiedAst(Ast ast) {
+    MODEL_REMOVER.removeModels(ast);
     var progPretty = ast.prettyPrint();
     var astPretty = Assertions.assertDoesNotThrow(() -> VadlParser.parse(progPretty),
         "Cannot parse prettified input \n" + progPretty);

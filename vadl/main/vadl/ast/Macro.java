@@ -1,8 +1,10 @@
 package vadl.ast;
 
 import java.util.List;
+import java.util.Map;
 
-record Macro(Identifier name, List<MacroParam> params, Node body, SyntaxType returnType)
+record Macro(Identifier name, List<MacroParam> params, Node body, SyntaxType returnType,
+             Map<String, Node> boundArguments)
     implements MacroOrPlaceholder {
 }
 
