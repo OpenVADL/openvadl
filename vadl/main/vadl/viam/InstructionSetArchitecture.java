@@ -11,7 +11,7 @@ public class InstructionSetArchitecture extends Definition {
 
   // this ISA is an extension of the dependency
   @Nullable
-  private final InstructionSetArchitecture dependencyRef;
+  private final InstructionSetArchitecture superIsaRef;
 
   private final List<Instruction> instructions;
   private final List<PseudoInstruction> pseudoInstructions;
@@ -37,7 +37,7 @@ public class InstructionSetArchitecture extends Definition {
    *
    * @param identifier    the identifier of the ISA
    * @param specification the parent specification of the ISA
-   * @param dependencyRef the ISA this ISA is extending (might be null)
+   * @param superIsaRef   the ISA this ISA is extending (might be null)
    * @param registers     the registers in the ISA. This also includes sub-registers
    * @param registerFiles the register files in the ISA
    * @param pc            the program counter of the ISA
@@ -47,7 +47,7 @@ public class InstructionSetArchitecture extends Definition {
   public InstructionSetArchitecture(Identifier identifier,
                                     Specification specification,
                                     @Nullable
-                                    InstructionSetArchitecture dependencyRef,
+                                    InstructionSetArchitecture superIsaRef,
                                     List<Format> formats,
                                     List<Function> functions,
                                     List<Relocation> relocations,
@@ -60,7 +60,7 @@ public class InstructionSetArchitecture extends Definition {
   ) {
     super(identifier);
     this.specification = specification;
-    this.dependencyRef = dependencyRef;
+    this.superIsaRef = superIsaRef;
     this.formats = formats;
     this.functions = functions;
     this.relocations = relocations;
@@ -74,7 +74,7 @@ public class InstructionSetArchitecture extends Definition {
 
   @Nullable
   public InstructionSetArchitecture dependencyRef() {
-    return dependencyRef;
+    return superIsaRef;
   }
 
   public List<Instruction> instructions() {
@@ -102,15 +102,25 @@ public class InstructionSetArchitecture extends Definition {
   }
 
 
+  /**
+   * Returns the program counter used by this ISA.
+   * If the definition was in the super ISA, it will use that one instead.
+   */
   @Nullable
   public Register.Counter pc() {
-    return pc;
+    if (pc != null) {
+      return pc;
+    }
+    if (superIsaRef != null) {
+      return superIsaRef.pc();
+    }
+    return null;
   }
 
   /**
-   * Get all group counters in this ISA.
+   * Get all group counters specified in this ISA.
    */
-  public List<Register.Counter> groupCounters() {
+  public List<Register.Counter> thisGroupCounters() {
     return registers().stream()
         .filter(Register.Counter.class::isInstance)
         .map(Register.Counter.class::cast)
