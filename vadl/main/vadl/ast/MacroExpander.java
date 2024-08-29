@@ -4,6 +4,8 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
+import javax.annotation.Nullable;
 import vadl.error.VadlError;
 import vadl.error.VadlException;
 import vadl.utils.SourceLocation;
@@ -139,6 +141,8 @@ class MacroExpander
       return new RecordInstance(recordInstance.type, entries, recordInstance.sourceLocation);
     } else if (node instanceof EncodingDefinition.FieldEncodings encs) {
       return resolveEncs(encs);
+    } else if (node instanceof PlaceholderNode placeholderNode) {
+      return Objects.requireNonNullElse(resolveArg(placeholderNode.segments), node);
     } else {
       return node;
     }
@@ -152,7 +156,7 @@ class MacroExpander
   @Override
   public Expr visit(BinaryExpr expr) {
     var operator = expr.operator instanceof PlaceholderNode p
-        ? resolveArg(p.segments) : expr.operator;
+        ? Objects.requireNonNullElse(resolveArg(p.segments), p) : expr.operator;
     return new BinaryExpr(expr.left.accept(this), (OperatorOrPlaceholder) operator,
         expr.right.accept(this));
   }
@@ -185,12 +189,23 @@ class MacroExpander
   @Override
   public Expr visit(PlaceholderExpr expr) {
     Node arg = resolveArg(expr.segments);
-    return ((Expr) arg);
+    return Objects.requireNonNullElse((Expr) arg, expr);
   }
 
   @Override
   public Expr visit(MacroInstanceExpr expr) {
     var macro = resolveMacro(expr.macro);
+    if (macro == null) {
+      // Macro reference passed down multiple layers - let parent layer expand
+      var arguments = new ArrayList<>(expr.arguments);
+      arguments.replaceAll(this::expandNode);
+      var placeholder = (MacroPlaceholder) expr.macro;
+      var resolved = resolveArg(placeholder.segments());
+      var newSegments =
+          resolved == null ? placeholder.segments() : ((PlaceholderNode) resolved).segments;
+      return new MacroInstanceExpr(new MacroPlaceholder(placeholder.syntaxType(), newSegments),
+          arguments, expr.loc);
+    }
 
     // Overrides can be passed via the CLI or the API
     if (macro.returnType().equals(BasicSyntaxType.ID)
@@ -203,9 +218,13 @@ class MacroExpander
       var body = (Expr) macro.body();
       var subpass = new MacroExpander(arguments, macroOverrides);
       var expanded = subpass.expandExpr(body);
-      var group = new GroupedExpr(new ArrayList<>(), expr.location());
-      group.expressions.add(expanded);
-      return group;
+      if (macro.returnType().equals(BasicSyntaxType.EX)) {
+        var group = new GroupedExpr(new ArrayList<>(), expr.location());
+        group.expressions.add(expandExpr(expanded));
+        return group;
+      } else {
+        return expanded;
+      }
     } catch (MacroExpansionException e) {
       reportError(e.message, e.sourceLocation);
       return expr;
@@ -288,7 +307,13 @@ class MacroExpander
 
   @Override
   public Expr visit(MacroMatchExpr expr) {
-    return (Expr) resolveMacroMatch(expr.macroMatch);
+    var macroMatch = expandMacroMatch(expr.macroMatch);
+    var resolved = resolveMacroMatch(macroMatch);
+    if (resolved != null) {
+      return (Expr) resolved;
+    } else {
+      return new MacroMatchExpr(macroMatch);
+    }
   }
 
   @Override
@@ -304,12 +329,15 @@ class MacroExpander
   @Override
   public Expr visit(ExtendIdExpr expr) {
     var name = new StringBuilder();
-    var expressions = expandExprs(expr.expr.expressions);
-    for (var inner : expressions) {
+    var expressions = (GroupedExpr) expr.expr.accept(this);
+    for (var inner : expressions.expressions) {
       if (inner instanceof Identifier id) {
         name.append(id.name);
       } else if (inner instanceof StringLiteral string) {
         name.append(string.value);
+      } else if (inner instanceof PlaceholderExpr || inner instanceof ExtendIdExpr) {
+        // Will be expanded as soon as the used placeholders are bound
+        return new ExtendIdExpr(expressions, expr.location());
       } else {
         reportError("Unsupported 'ExtendId' parameter " + inner, inner.location());
         name.append(inner);
@@ -320,8 +348,12 @@ class MacroExpander
 
   @Override
   public Expr visit(IdToStrExpr expr) {
-    var id = resolvePlaceholderOrIdentifier(expr.id);
-    return new StringLiteral(id, expr.location());
+    var idOrPlaceholder = resolvePlaceholderOrIdentifier(expr.id);
+    if (idOrPlaceholder instanceof Identifier id) {
+      return new StringLiteral(id, expr.location());
+    } else {
+      return expr;
+    }
   }
 
   @Override
@@ -471,13 +503,23 @@ class MacroExpander
   @Override
   public Definition visit(PlaceholderDefinition definition) {
     var arg = resolveArg(definition.segments);
-    return (Definition) arg;
+    return Objects.requireNonNullElse((Definition) arg, definition);
   }
 
   @Override
   public Definition visit(MacroInstanceDefinition definition) {
     try {
       var macro = resolveMacro(definition.macro);
+      if (macro == null) {
+        var arguments = new ArrayList<>(definition.arguments);
+        arguments.replaceAll(this::expandNode);
+        var placeholder = (MacroPlaceholder) definition.macro;
+        var resolved = resolveArg(placeholder.segments());
+        var newSegments =
+            resolved == null ? placeholder.segments() : ((PlaceholderNode) resolved).segments;
+        return new MacroInstanceDefinition(
+            new MacroPlaceholder(placeholder.syntaxType(), newSegments), arguments, definition.loc);
+      }
       assertValidMacro(macro, definition.location());
       var arguments =
           collectMacroParameters(macro, definition.arguments, definition.location());
@@ -492,7 +534,13 @@ class MacroExpander
 
   @Override
   public Definition visit(MacroMatchDefinition definition) {
-    return (Definition) resolveMacroMatch(definition.macroMatch);
+    var macroMatch = expandMacroMatch(definition.macroMatch);
+    var resolved = resolveMacroMatch(macroMatch);
+    if (resolved != null) {
+      return (Definition) resolved;
+    } else {
+      return new MacroMatchDefinition(macroMatch);
+    }
   }
 
   @Override
@@ -555,13 +603,23 @@ class MacroExpander
   @Override
   public Statement visit(PlaceholderStatement statement) {
     var arg = resolveArg(statement.segments);
-    return (Statement) arg;
+    return Objects.requireNonNullElse((Statement) arg, statement);
   }
 
   @Override
   public Statement visit(MacroInstanceStatement stmt) {
     try {
       var macro = resolveMacro(stmt.macro);
+      if (macro == null) {
+        var arguments = new ArrayList<>(stmt.arguments);
+        arguments.replaceAll(this::expandNode);
+        var placeholder = (MacroPlaceholder) stmt.macro;
+        var resolved = resolveArg(placeholder.segments());
+        var newSegments =
+            resolved == null ? placeholder.segments() : ((PlaceholderNode) resolved).segments;
+        return new MacroInstanceStatement(
+            new MacroPlaceholder(placeholder.syntaxType(), newSegments), arguments, stmt.loc);
+      }
       assertValidMacro(macro, stmt.location());
       var arguments = collectMacroParameters(macro, stmt.arguments, stmt.location());
       var body = (Statement) macro.body();
@@ -575,7 +633,13 @@ class MacroExpander
 
   @Override
   public Statement visit(MacroMatchStatement macroMatchStatement) {
-    return (Statement) resolveMacroMatch(macroMatchStatement.macroMatch);
+    var macroMatch = expandMacroMatch(macroMatchStatement.macroMatch);
+    var resolved = resolveMacroMatch(macroMatch);
+    if (resolved != null) {
+      return (Statement) resolved;
+    } else {
+      return new MacroMatchStatement(macroMatch);
+    }
   }
 
   @Override
@@ -626,9 +690,6 @@ class MacroExpander
     for (int i = 0; i < formalParams.size(); i++) {
       var formalParam = formalParams.get(i);
       var actualParam = expandNode(actualParams.get(i));
-      if (actualParam instanceof PlaceholderNode placeholderNode) {
-        actualParam = expandNode(resolveArg(placeholderNode.segments));
-      }
       if (actualParam.syntaxType().isSubTypeOf(formalParam.type())) {
         arguments.put(formalParam.name().name, actualParam);
       } else {
@@ -641,11 +702,12 @@ class MacroExpander
     return arguments;
   }
 
-  private Identifier resolvePlaceholderOrIdentifier(IdentifierOrPlaceholder idOrPlaceholder) {
+  private IdentifierOrPlaceholder resolvePlaceholderOrIdentifier(
+      IdentifierOrPlaceholder idOrPlaceholder) {
     if (idOrPlaceholder instanceof Identifier id) {
-      return (Identifier) expandExpr(id);
+      return (IdentifierOrPlaceholder) expandExpr(id);
     } else if (idOrPlaceholder instanceof Expr expr) {
-      return (Identifier) expandExpr(expr);
+      return (IdentifierOrPlaceholder) expandExpr(expr);
     }
     throw new IllegalStateException("Unknown resolved placeholder type " + idOrPlaceholder);
   }
@@ -654,7 +716,7 @@ class MacroExpander
     var typeLiteral = type instanceof PlaceholderExpr p
         ? new TypeLiteral(resolvePlaceholderOrIdentifier(p))
         : (TypeLiteral) type;
-    var baseType = (Identifier) expandExpr((Expr) typeLiteral.baseType);
+    var baseType = (IsId) expandExpr((Expr) typeLiteral.baseType);
     var sizeIndices = new ArrayList<>(typeLiteral.sizeIndices);
     sizeIndices.replaceAll(this::expandExprs);
     return new TypeLiteral(baseType, sizeIndices, typeLiteral.location());
@@ -675,17 +737,41 @@ class MacroExpander
           expandExpr(fieldEncoding.value())));
     } else if (encoding instanceof PlaceholderNode p) {
       var arg = (EncodingDefinition.FieldEncodings) resolveArg(p.segments);
-      return arg.encodings;
+      if (arg == null) {
+        return List.of(encoding);
+      } else {
+        return arg.encodings;
+      }
     } else if (encoding instanceof MacroMatchExpr macroMatchExpr) {
-      var match = (EncodingDefinition.FieldEncodings) resolveMacroMatch(macroMatchExpr.macroMatch);
-      return match.encodings;
+      var macroMatch = expandMacroMatch(macroMatchExpr.macroMatch);
+      var resolved = resolveMacroMatch(macroMatch);
+      if (resolved == null) {
+        return List.of(new MacroMatchExpr(macroMatch));
+      } else {
+        return ((EncodingDefinition.FieldEncodings) resolved).encodings;
+      }
     }
     return List.of(encoding);
   }
 
-  private Node resolveMacroMatch(MacroMatch macroMatch) {
+  private MacroMatch expandMacroMatch(MacroMatch macroMatch) {
+    var choices = new ArrayList<>(macroMatch.choices());
+    choices.replaceAll(choice -> new MacroMatch.Choice(
+        expandNode(choice.candidate()),
+        choice.comparison(),
+        expandNode(choice.match()),
+        expandNode(choice.result())
+    ));
+    var defChoice = expandNode(macroMatch.defaultChoice());
+    return new MacroMatch(macroMatch.resultType(), choices, defChoice, macroMatch.sourceLocation());
+  }
+
+  private @Nullable Node resolveMacroMatch(MacroMatch macroMatch) {
     for (var choice : macroMatch.choices()) {
       var candidate = expandNode(choice.candidate());
+      if (isReplacementNode(candidate)) {
+        return null;
+      }
       var equals = candidate.equals(choice.match());
       var shouldEqual = choice.comparison() == MacroMatch.Comparison.EQUAL;
       if (equals == shouldEqual) {
@@ -695,10 +781,13 @@ class MacroExpander
     return expandNode(macroMatch.defaultChoice());
   }
 
-  private Node resolveArg(List<String> segments) {
+  private @Nullable Node resolveArg(List<String> segments) {
     Node arg = args.get(segments.get(0));
     if (arg == null) {
-      throw new IllegalStateException("Could not resolve argument " + segments);
+      return null;
+    }
+    if (segments.size() > 1 && !(arg instanceof RecordInstance)) {
+      return null;
     }
     for (int i = 1; i < segments.size(); i++) {
       var nextName = segments.get(i);
@@ -710,18 +799,31 @@ class MacroExpander
         }
       }
     }
-    return expandNode(arg);
+    return arg;
   }
 
-  private Macro resolveMacro(MacroOrPlaceholder macroOrPlaceholder) {
+  private @Nullable Macro resolveMacro(MacroOrPlaceholder macroOrPlaceholder) {
     if (macroOrPlaceholder instanceof Macro macro) {
       return macro;
     }
-    return ((MacroReference) resolveArg(((MacroPlaceholder) macroOrPlaceholder).segments())).macro;
+    var arg = resolveArg(((MacroPlaceholder) macroOrPlaceholder).segments());
+    if (arg instanceof MacroReference macroReference) {
+      return macroReference.macro;
+    }
+    return null;
   }
 
   private void reportError(String error, SourceLocation location) {
     errors.add(new VadlError(error, location, null, null));
+  }
+
+  private boolean isReplacementNode(Node node) {
+    return node instanceof PlaceholderNode || node instanceof PlaceholderDefinition
+        || node instanceof PlaceholderExpr || node instanceof PlaceholderStatement
+        || node instanceof MacroMatchDefinition || node instanceof MacroMatchExpr
+        || node instanceof MacroMatchStatement || node instanceof MacroInstanceDefinition
+        || node instanceof MacroInstanceStatement || node instanceof MacroInstanceExpr;
+
   }
 
   static class MacroExpansionException extends Exception {

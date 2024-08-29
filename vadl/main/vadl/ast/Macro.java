@@ -11,6 +11,10 @@ record Macro(Identifier name, List<MacroParam> params, Node body, SyntaxType ret
 record MacroParam(Identifier name, SyntaxType type) {
 }
 
+interface MacroInstance {
+  MacroOrPlaceholder macroOrPlaceholder();
+}
+
 sealed interface MacroOrPlaceholder permits Macro, MacroPlaceholder {
   SyntaxType returnType();
 }

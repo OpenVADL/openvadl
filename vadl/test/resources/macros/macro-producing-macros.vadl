@@ -13,6 +13,10 @@ instruction set architecture MacroProducingMacros = {
     }
   }
 
-  $LUTProducer(SimpleLut ; 7 ; 8)
-  constant a = $SimpleLut(5+2 ; 1 ; 0 ; -1)
+  model LUTInvoker(): IsaDefs = {
+    $LUTProducer(SimpleLut ; 7 ; 8)
+    constant a = $SimpleLut(5+2 ; 1 ; 0 ; -1)
+  }
+
+  $LUTInvoker()
 }

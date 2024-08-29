@@ -19,10 +19,10 @@ COMPILER vadl
   java.net.URI sourceFile = SourceLocation.INVALID_SOURCE_LOCATION.uri();
   Deque<List<MacroParam>> macroContext = new ArrayDeque<>();
   Ast ast = new Ast();
-  SymbolTable symbolTable = new SymbolTable();
+  SymbolTable macroTable = new SymbolTable();
   Map<String, Identifier> macroOverrides = new HashMap<>();
 
-  { symbolTable.loadBuiltins(); }
+  { macroTable.loadBuiltins(); }
 
   SourceLocation loc() {
     return locationFromToken(this, t);
@@ -158,7 +158,7 @@ PRODUCTIONS
   vadl =
   {
     topLevelDefinitions<out Definition def> (. ast.definitions.add(def); .)
-    | macroDef<out ModelDefinition def>     (. symbolTable.addMacro(def.toMacro(), def.location()); .)
+    | macroDef<out ModelDefinition def>     (. macroTable.addMacro(def.toMacro(), def.location()); .)
     | modelTypeDef
   }.
 
@@ -176,41 +176,30 @@ PRODUCTIONS
   | recordDefinition<out def>
   .
 
-  instructionsetDefinition<out InstructionSetDefinition isaDef>
+  instructionsetDefinition<out InstructionSetDefinition isaDef> (. macroTable = macroTable.createChild(); .)
   = INSTRUCTION SET ARCHITECTURE                                (. var startLocation = loc(); .)
     identifier<out Identifier identifier>                       (. Identifier extending = null; .)
     [
       EXTENDING
-      identifier<out extending>
+      identifier<out extending>                                 (. readMacroSymbols(macroTable, Objects.requireNonNull(macroTable.findIsa(extending)).definitions); .)
     ]
     SYM_EQ SYM_BRACE_OPEN
-    isaDefinitionList<.out List<Definition> definitions, true.>
-    SYM_BRACE_CLOSE                                             (. isaDef = new InstructionSetDefinition(identifier, extending, definitions, startLocation.join(loc())); .)
+    isaDefinitionList<.out List<Definition> definitions.>       (. macroTable = Objects.requireNonNull(macroTable.parent); .)
+    SYM_BRACE_CLOSE                                             (. isaDef = new InstructionSetDefinition(identifier, extending, definitions, startLocation.join(loc()));
+                                                                   macroTable.defineSymbol(new SymbolTable.IsaSymbol(identifier.name, isaDef), identifier.location()); .)
   .
 
-  isaDefinitionList<. out List<Definition> definitions, boolean expand .> (. definitions = new ArrayList<>(); .)
+  isaDefinitionList<.out List<Definition> definitions.> (. definitions = new ArrayList<>(); .)
   = {
     annotations<.out List<Annotation> annotations.>
-    isaDefinition<out Definition def>                                     (. def.annotations.annotations().addAll(annotations); definitions.add(def); .)
-  | macroDef<out ModelDefinition def>                                     (. definitions.add(def); symbolTable.addMacro(def.toMacro(), def.location()); .)
+    isaDefinition<out Definition def>                   (. def.annotations.annotations().addAll(annotations); definitions.add(def); .)
+  | macroDef<out ModelDefinition def>                   (. definitions.add(def); macroTable.addMacro(def.toMacro(), def.location()); .)
   | modelTypeDef
   | // IF (isMacroReplacementOfType(this, BasicSyntaxType.ISA_DEFS))
-    macroReplacement<out Node n>                                          (. if (expand) {
-                                                                               var expanded = new MacroExpander(Map.of(), macroOverrides).expandDefinition(castDef(this, n));
-                                                                               if (expanded instanceof DefinitionList list) {
-                                                                                 for (var def : list.items) {
-                                                                                   if (def instanceof ModelDefinition modelDef) {
-                                                                                     symbolTable.addMacro(modelDef.toMacro(), modelDef.location());
-                                                                                   }
-                                                                                   definitions.add(def);
-                                                                                 }
-                                                                               } else {
-                                                                                 definitions.add(expanded);
-                                                                               }
-                                                                             } else {
-                                                                               definitions.add(castDef(this, n));
-                                                                             }
-                                                                          .)
+    macroReplacement<out Node n>                        (. if (n instanceof DefinitionList list) {
+                                                             readMacroSymbols(macroTable, list.items);
+                                                           }
+                                                           definitions.add(castDef(this, n)); .)
   }
   .
 
@@ -534,7 +523,7 @@ PRODUCTIONS
       SYM_COLON
       syntaxType<out type>          (. entries.add(new RecordType.Entry(paramName.name, type)); .)
     }                               (. var recordType = new RecordType(recordName.name, entries); .)
-    SYM_PAREN_CLOSE                 (. symbolTable.addRecord(recordName, recordType);
+    SYM_PAREN_CLOSE                 (. macroTable.addRecord(recordName, recordType);
                                        def = new RecordTypeDefinition(recordType, start.join(loc())); .)
   .
 
@@ -542,7 +531,7 @@ PRODUCTIONS
   = MODEL_TYPE
     identifier<out Identifier name>
     SYM_EQ
-    projectionType<out ProjectionType type> (. symbolTable.addModelType(name, type); .)
+    projectionType<out ProjectionType type> (. macroTable.addModelType(name, type); .)
   .
 
   // -- STATEMENTS ---------------------------------------------------------------------------------------------------
@@ -960,7 +949,7 @@ PRODUCTIONS
   /// Parses the longest macro expression (either instance or placeholder) from the parser.
   maximumMacroExpr<out Node node>                 (. node = null; .)
   = SYM_DOLLAR                                    (. var segments = new ArrayList<String>(); .)
-    identifier<out Identifier id>                 (. var macro = symbolTable.getMacro(id.name);
+    identifier<out Identifier id>                 (. var macro = macroTable.getMacro(id.name);
                                                      var paramType = paramSyntaxType(this, id.name);
                                                      segments.add(id.name); .)
     { IF (macro == null && la.kind == _SYM_DOT && paramType instanceof RecordType record)
@@ -981,7 +970,7 @@ PRODUCTIONS
           macroBody<out Node arg2, params.next()> (. args.add(arg2); .)
         }
         SYM_PAREN_CLOSE
-      )                                           (. node = createMacroInstance(macroOrPlaceholder, args, loc()); .)
+      )                                           (. node = expandMacro(this, createMacroInstance(macroOrPlaceholder, args, loc())); .)
     ]                                             (. node = Objects.requireNonNullElse(node, createPlaceholder(paramType, segments, loc())); .)
   .
 
@@ -1021,8 +1010,8 @@ PRODUCTIONS
     statement<out body>
   | IF (type == BasicSyntaxType.ENCS)
     encodingDefinitionList<out body>
-  | IF (type == BasicSyntaxType.ISA_DEFS)
-    isaDefinitionList<.out List<Definition> defs, false.>   (. body = new DefinitionList(defs, start.join(loc())); .)
+  | IF (type == BasicSyntaxType.ISA_DEFS)            (. macroTable = macroTable.createChild(); .)
+    isaDefinitionList<.out List<Definition> defs.>   (. body = new DefinitionList(defs, start.join(loc())); macroTable = macroTable.parent; .)
   | IF (type == BasicSyntaxType.EX)
     expression<out body, BIN_OPS>
   | IF (type == BasicSyntaxType.LIT)
@@ -1059,10 +1048,8 @@ PRODUCTIONS
     ( binaryOperator<out Operator op>                       (. body = new OperatorExpr(op, loc()); .)
     | macroReplacement<out body>
     )
-  | IF (type instanceof RecordType record)
-    ( SYM_PAREN_OPEN                                        (. var recordType = (RecordType) type;
-                                                               var entries = new ArrayList<Node>();
-                                                               var nextEntry = recordType.entries.iterator(); .)
+  | IF (type instanceof RecordType recordType)
+    ( SYM_PAREN_OPEN                                        (. var entries = new ArrayList<Node>(); var nextEntry = recordType.entries.iterator(); .)
       macroBody<out Node entry, nextEntry.next().type()>    (. entries.add(entry); .)
       {
         SYM_SEMICOLON
@@ -1072,7 +1059,7 @@ PRODUCTIONS
     | macroReplacement<out body>
     )
   | IF (type instanceof ProjectionType projection)
-    ( identifier<out Identifier id>                         (. body = new MacroReference(symbolTable.getMacro(id.name), projection, id.location()); .)
+    ( identifier<out Identifier id>                         (. body = new MacroReference(macroTable.getMacro(id.name), projection, id.location()); .)
     | macroReplacement<out body>
     )
   | internalError<"Unhandled syntax type " + type>
@@ -1081,7 +1068,7 @@ PRODUCTIONS
 
   syntaxType<out SyntaxType type> (. type = null; .)
   = IF (la.kind == _identifierToken)
-    identifier<out Identifier id> (. type = symbolTable.findType(id); .)
+    identifier<out Identifier id> (. type = macroTable.findType(id); .)
   | projectionType<out type>
   | basicSyntaxType<out type>
   .

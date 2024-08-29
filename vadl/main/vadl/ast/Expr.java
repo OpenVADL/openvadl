@@ -815,7 +815,7 @@ final class PlaceholderExpr extends Expr
  * An internal temporary placeholder of macro instantiations.
  * This node should never leave the parser.
  */
-final class MacroInstanceExpr extends Expr implements IdentifierOrPlaceholder,
+final class MacroInstanceExpr extends Expr implements MacroInstance, IdentifierOrPlaceholder,
     OperatorOrPlaceholder, TypeLiteralOrPlaceholder, FieldEncodingOrPlaceholder, IsId {
   MacroOrPlaceholder macro;
   List<Node> arguments;
@@ -889,6 +889,11 @@ final class MacroInstanceExpr extends Expr implements IdentifierOrPlaceholder,
     var sb = new StringBuilder();
     prettyPrint(0, sb);
     return sb.toString();
+  }
+
+  @Override
+  public MacroOrPlaceholder macroOrPlaceholder() {
+    return macro;
   }
 }
 

@@ -442,7 +442,7 @@ final class PlaceholderStatement extends Statement {
  * An internal temporary placeholder of macro instantiations.
  * This node should never leave the parser.
  */
-final class MacroInstanceStatement extends Statement {
+final class MacroInstanceStatement extends Statement implements MacroInstance {
   MacroOrPlaceholder macro;
   List<Node> arguments;
   SourceLocation loc;
@@ -483,6 +483,11 @@ final class MacroInstanceStatement extends Statement {
       arg.prettyPrint(0, builder);
     }
     builder.append(")");
+  }
+
+  @Override
+  public MacroOrPlaceholder macroOrPlaceholder() {
+    return macro;
   }
 }
 

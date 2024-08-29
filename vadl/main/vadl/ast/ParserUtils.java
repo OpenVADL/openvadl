@@ -2,6 +2,7 @@ package vadl.ast;
 
 import java.util.Iterator;
 import java.util.List;
+import java.util.Map;
 import javax.annotation.Nullable;
 import vadl.utils.SourceLocation;
 
@@ -227,7 +228,7 @@ class ParserUtils {
     parser.scanner.ResetPeek();
     var token = parser.scanner.Peek();
     var nextToken = parser.scanner.Peek();
-    var foundMacro = parser.symbolTable.getMacro(token.val);
+    var foundMacro = parser.macroTable.getMacro(token.val);
     if (foundMacro != null) {
       parser.scanner.ResetPeek();
       if (nextToken.kind == Parser._SYM_PAREN_OPEN) {
@@ -380,6 +381,25 @@ class ParserUtils {
       parser.errors.SemErr(node.location().begin().line(), node.location().begin().column(),
           "Expected node of type Stats, received " + node.syntaxType().print() + " - " + node);
       return new CallStatement(new Identifier("invalid", node.location()));
+    }
+  }
+
+  static Node expandMacro(Parser parser, Node node) {
+    if (node instanceof MacroInstance macroInstance
+        && macroInstance.macroOrPlaceholder() instanceof Macro) {
+      var macroExpander = new MacroExpander(Map.of(), parser.macroOverrides);
+      return macroExpander.expandNode(node);
+    }
+    return node;
+  }
+
+  static void readMacroSymbols(SymbolTable macroTable, List<Definition> definitions) {
+    for (Definition definition : definitions) {
+      if (definition instanceof DefinitionList list) {
+        readMacroSymbols(macroTable, list.items);
+      } else if (definition instanceof ModelDefinition modelDefinition) {
+        macroTable.addMacro(modelDefinition.toMacro(), modelDefinition.location());
+      }
     }
   }
 }

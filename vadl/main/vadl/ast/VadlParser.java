@@ -100,7 +100,7 @@ public class VadlParser {
       }
     }
     events.add(new Event(System.nanoTime(), "Errors parsed"));
-    errors.addAll(parser.symbolTable.errors);
+    errors.addAll(parser.macroTable.errors);
 
     if (!errors.isEmpty()) {
       throw new VadlException(errors.stream().distinct().toList());

@@ -1801,7 +1801,7 @@ final class PlaceholderDefinition extends Definition {
  * An internal temporary placeholder of macro instantiations.
  * This node should never leave the parser.
  */
-final class MacroInstanceDefinition extends Definition {
+final class MacroInstanceDefinition extends Definition implements MacroInstance {
   MacroOrPlaceholder macro;
   List<Node> arguments;
   SourceLocation loc;
@@ -1868,6 +1868,11 @@ final class MacroInstanceDefinition extends Definition {
     int result = macro.hashCode();
     result = 31 * result + arguments.hashCode();
     return result;
+  }
+
+  @Override
+  public MacroOrPlaceholder macroOrPlaceholder() {
+    return macro;
   }
 }
 
