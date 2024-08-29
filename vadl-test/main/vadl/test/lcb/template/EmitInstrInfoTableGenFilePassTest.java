@@ -2007,4 +2007,3 @@ public class EmitInstrInfoTableGenFilePassTest extends AbstractLcbTest {
                 """.trim().lines(), output);
   }
 }
-}

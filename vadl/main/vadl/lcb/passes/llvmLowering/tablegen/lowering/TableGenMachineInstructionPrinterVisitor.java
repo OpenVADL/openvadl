@@ -1,22 +1,12 @@
 package vadl.lcb.passes.llvmLowering.tablegen.lowering;
 
 import java.io.StringWriter;
-import vadl.lcb.passes.llvmLowering.model.LlvmBrCcSD;
-import vadl.lcb.passes.llvmLowering.model.LlvmBrCondSD;
-import vadl.lcb.passes.llvmLowering.model.LlvmFieldAccessRefNode;
-import vadl.lcb.passes.llvmLowering.model.LlvmLoad;
-import vadl.lcb.passes.llvmLowering.model.LlvmSExtLoad;
-import vadl.lcb.passes.llvmLowering.model.LlvmSetccSD;
-import vadl.lcb.passes.llvmLowering.model.LlvmStore;
-import vadl.lcb.passes.llvmLowering.model.LlvmTruncStore;
-import vadl.lcb.passes.llvmLowering.model.LlvmTypeCastSD;
-import vadl.lcb.passes.llvmLowering.model.LlvmZExtLoad;
 import vadl.lcb.passes.llvmLowering.model.MachineInstructionNode;
 import vadl.lcb.passes.llvmLowering.model.MachineInstructionParameterNode;
 import vadl.lcb.passes.llvmLowering.strategies.visitors.TableGenMachineInstructionVisitor;
 import vadl.viam.graph.NodeList;
 import vadl.viam.graph.control.AbstractBeginNode;
-import vadl.viam.graph.control.EndNode;
+import vadl.viam.graph.control.BranchEndNode;
 import vadl.viam.graph.control.IfNode;
 import vadl.viam.graph.control.InstrCallNode;
 import vadl.viam.graph.control.InstrEndNode;
@@ -168,8 +158,8 @@ public class TableGenMachineInstructionPrinterVisitor implements TableGenMachine
   }
 
   @Override
-  public void visit(EndNode endNode) {
-
+  public void visit(BranchEndNode branchEndNode) {
+    
   }
 
   @Override
