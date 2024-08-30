@@ -12,7 +12,7 @@ import java.util.stream.IntStream;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import vadl.configuration.LcbConfiguration;
-import vadl.lcb.codegen.PredicateCodeGenerator;
+import vadl.lcb.codegen.encoding.PredicateCodeGenerator;
 import vadl.lcb.passes.isaMatching.InstructionLabel;
 import vadl.lcb.passes.isaMatching.IsaMatchingPass;
 import vadl.lcb.template.CommonVarNames;

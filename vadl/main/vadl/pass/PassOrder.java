@@ -13,8 +13,7 @@ import vadl.configuration.GeneralConfiguration;
 import vadl.configuration.LcbConfiguration;
 import vadl.cppCodeGen.passes.fieldNodeReplacement.FieldNodeReplacementPassForDecoding;
 import vadl.dump.HtmlDumpPass;
-import vadl.error.VadlError;
-import vadl.error.VadlException;
+import vadl.gcb.passes.assemblyConstantIntern.AssemblyReplacementConstantPass;
 import vadl.gcb.passes.encoding_generation.GenerateFieldAccessEncodingFunctionPass;
 import vadl.gcb.passes.type_normalization.CppTypeNormalizationForDecodingsPass;
 import vadl.gcb.passes.type_normalization.CppTypeNormalizationForEncodingsPass;
@@ -199,12 +198,11 @@ public final class PassOrder {
     order.add(new CppTypeNormalizationForEncodingsPass(gcbConfiguration));
     order.add(new CppTypeNormalizationForDecodingsPass(gcbConfiguration));
     order.add(new CppTypeNormalizationForPredicatesPass(gcbConfiguration));
+    order.add(new AssemblyReplacementConstantPass(gcbConfiguration));
 
     if (gcbConfiguration.doDump()) {
       var config = HtmlDumpPass.Config.from(gcbConfiguration,
           "gcbProcessing",
-          // TODO: @kper more meaningful description on what actual happened since the last
-          //   HTML dump.
           "Now the gcb produced all necessary encoding function for field accesses "
               + "and normalized VIAM types to Cpp types."
       );
@@ -227,8 +225,6 @@ public final class PassOrder {
       var config = HtmlDumpPass.Config.from(
           configuration,
           "lcbLlvmLowering",
-          // TODO: @kper more meaningful description on what actual happened since the last
-          //   HTML dump.
           "The LCB did ISA matching to and lowered common VIAM nodes to LLVM specific"
               + "nodes."
       );

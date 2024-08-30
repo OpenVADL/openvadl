@@ -48,7 +48,13 @@ public:
 
 struct NoData{};
 
-«structVisitor.generateStructs( grammar )»
+[# th:each="format : ${formats}" ]
+struct [(${format.structName})] {
+[# th:each="field : ${format.fieldNames}" ]
+  ParsedValue<[(${namespace})]ParsedOperand> [(${field})];
+[/]
+};
+[/]
 
 class [(${namespace})]AsmRecursiveDescentParser {
     MCAsmLexer &Lexer;
@@ -56,21 +62,21 @@ class [(${namespace})]AsmRecursiveDescentParser {
     OperandVector &Operands;
 
 private:
-    «FOR rule : grammar.rules»
-        «visitor.resultType( rule )» «rule.name»();
-    «ENDFOR»
-    «visitor.resultType( AsmType.String )» Literal(std::string toParse);
-    «visitor.resultType( AsmType.Expression )» BuiltinExpression();
+    [# th:each="pr : ${parsingResult}" ]
+    RuleParsingResult<[(${pr.type})]> [(${pr.functionName})](); // [(${pr.comment})]
+    [/]
+    // «visitor.resultType( AsmType.String )» Literal(std::string toParse);
+    // «visitor.resultType( AsmType.Expression )» BuiltinExpression();
 
 public:
     [(${namespace})]AsmRecursiveDescentParser(MCAsmLexer &lexer, MCAsmParser &parser, OperandVector& operands)
         : Lexer(lexer), Parser(parser), Operands(operands) {
     }
 
-    «visitor.resultType( grammar.get( "Statement" ).get )» ParseStatement();
-    «visitor.resultType( grammar.get( "Register" ).get )» ParseRegister();
+    RuleParsingResult<NoData> ParseStatement();
+    RuleParsingResult<uint64> ParseRegister();
 };
 
 }
 
-#endif // LLVM_LIB_TARGET_«processorName»_ASMPARSER_H
+#endif // LLVM_LIB_TARGET_[(${namespace})]_ASMPARSER_H

@@ -4,6 +4,7 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 
 import org.junit.jupiter.api.Test;
 import vadl.AbstractTest;
+import vadl.lcb.codegen.encoding.DecodingCodeGenerator;
 import vadl.types.Type;
 import vadl.viam.Function;
 import vadl.viam.Parameter;

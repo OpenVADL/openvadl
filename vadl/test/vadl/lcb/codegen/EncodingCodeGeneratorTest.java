@@ -4,6 +4,7 @@ import static org.assertj.core.api.AssertionsForClassTypes.assertThat;
 
 import org.junit.jupiter.api.Test;
 import vadl.AbstractTest;
+import vadl.lcb.codegen.encoding.EncodingCodeGenerator;
 import vadl.types.Type;
 import vadl.viam.Function;
 import vadl.viam.Parameter;

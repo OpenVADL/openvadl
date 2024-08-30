@@ -385,14 +385,14 @@ public abstract class Node {
    *     This might be useful if the replacement is not yet added to the graph, as the
    *     new node might be a different object
    */
-  public Node replaceAndDelete(Node replacement) {
+  public <T extends Node> T replaceAndDelete(T replacement) {
     replacement.setSourceLocationIfNotSet(this.sourceLocation);
     if (replacement.isUninitialized() && graph != null) {
       replacement = graph.addWithInputs(replacement);
       if (replacement == this) {
         // as the graph might return the same node
         // again, we have to check if the new node is the same as this node.
-        return this;
+        return (T) this;
       }
     }
     checkReplaceWith(replacement);

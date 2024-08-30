@@ -1,9 +1,9 @@
 package vadl.lcb.passes.llvmLowering.tablegen.model;
 
 import java.util.Objects;
-import vadl.lcb.codegen.DecodingCodeGenerator;
-import vadl.lcb.codegen.EncodingCodeGenerator;
-import vadl.lcb.codegen.PredicateCodeGenerator;
+import vadl.lcb.codegen.encoding.DecodingCodeGenerator;
+import vadl.lcb.codegen.encoding.EncodingCodeGenerator;
+import vadl.lcb.codegen.encoding.PredicateCodeGenerator;
 import vadl.lcb.codegen.model.llvm.ValueType;
 
 /**
