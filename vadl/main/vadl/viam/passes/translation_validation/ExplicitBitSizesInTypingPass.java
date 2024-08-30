@@ -35,7 +35,7 @@ public class ExplicitBitSizesInTypingPass extends Pass {
   public Object execute(PassResults passResults, Specification viam)
       throws IOException {
     viam.isas()
-        .flatMap(isa -> isa.instructions().stream())
+        .flatMap(isa -> isa.ownInstructions().stream())
         .flatMap(instruction -> instruction.behavior().getNodes(BuiltInCall.class))
         .filter(node -> !node.arguments().isEmpty())
         .filter(

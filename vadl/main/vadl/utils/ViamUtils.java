@@ -52,10 +52,6 @@ public class ViamUtils {
   public static Set<Definition> findDefinitionByFilter(Definition root,
                                                        Function<Definition, Boolean> filter) {
     return new DefinitionVisitor.Recursive() {
-      @Override
-      public void visit(DummyAbi dummyAbi) {
-
-      }
 
       private Set<Definition> allDefs = new HashSet<>();
 

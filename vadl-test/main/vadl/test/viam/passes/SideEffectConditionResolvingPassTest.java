@@ -170,7 +170,7 @@ public class SideEffectConditionResolvingPassTest extends AbstractTest {
       throws IOException, DuplicatedPassKeyException {
     var config = new GeneralConfiguration("build/test-out", true);
     var setup = setupPassManagerAndRunSpec(
-        "sideEffectConditionResolving/valid_test_cases.vadl",
+        "passes/sideEffectConditionResolving/valid_test_cases.vadl",
         PassOrder.viam(config)
             .untilFirst(SideEffectConditionResolvingPass.class)
             .add(new ViamVerificationPass(config))

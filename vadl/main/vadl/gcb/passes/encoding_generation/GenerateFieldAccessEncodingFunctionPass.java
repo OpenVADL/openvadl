@@ -46,7 +46,7 @@ public class GenerateFieldAccessEncodingFunctionPass extends Pass {
   @Override
   public Object execute(PassResults passResults, Specification viam) {
     viam.isas()
-        .flatMap(x -> x.formats().stream())
+        .flatMap(x -> x.ownFormats().stream())
         .flatMap(x -> Arrays.stream(x.fieldAccesses()))
         .filter(x -> x.encoding() == null)
         .forEach(fieldAccess -> {

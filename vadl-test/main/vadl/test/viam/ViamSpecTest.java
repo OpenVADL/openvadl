@@ -14,7 +14,7 @@ public class ViamSpecTest extends AbstractTest {
 
   @Test
   void basicMultiScopeDefinition() {
-    var spec = runAndGetViamSpecification("spec/valid_multiscope_definition.vadl");
+    var spec = runAndGetViamSpecification("unit/scoping/valid_multiscope_definition.vadl");
 
     var base_isa = findDefinitionByNameIn("Base", spec, InstructionSetArchitecture.class);
     var baseA_reg = findDefinitionByNameIn("Base::A", base_isa, Register.class);

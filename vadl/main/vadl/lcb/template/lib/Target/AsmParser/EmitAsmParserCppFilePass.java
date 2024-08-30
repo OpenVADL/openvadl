@@ -40,13 +40,13 @@ public class EmitAsmParserCppFilePass extends LcbTemplateRenderingPass {
 
   private List<Instruction> mapInstructions(Stream<InstructionSetArchitecture> isas) {
     return isas
-        .flatMap(x -> x.instructions().stream())
+        .flatMap(x -> x.ownInstructions().stream())
         .toList();
   }
 
   private List<PseudoInstruction> mapPseudoInstructions(Stream<InstructionSetArchitecture> isas) {
     return isas
-        .flatMap(x -> x.pseudoInstructions().stream())
+        .flatMap(x -> x.ownPseudoInstructions().stream())
         .toList();
   }
 

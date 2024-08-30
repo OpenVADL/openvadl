@@ -46,7 +46,7 @@ public class EmitDisassemblerCppFilePass extends LcbTemplateRenderingPass {
 
   private List<RegisterFile> extractRegisterClasses(Specification specification) {
     return specification.isas()
-        .flatMap(x -> x.registerFiles().stream())
+        .flatMap(x -> x.ownRegisterFiles().stream())
         .toList();
   }
 

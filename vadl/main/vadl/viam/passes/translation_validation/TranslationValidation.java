@@ -139,13 +139,13 @@ public class TranslationValidation {
     return Optional.of(new Z3Code(String.format(
         """
             from z3 import *
-                        
+            
             %s
-                    
+            
             %s
-                    
+            
             %s
-                    
+            
             def prove(f):
               s = Solver()
               s.add(Not(f))
@@ -155,7 +155,7 @@ public class TranslationValidation {
               else:
                 print("failed to prove")
                 exit(1)
-                
+            
             prove(%s)
             """,
         memoryDefinitions,

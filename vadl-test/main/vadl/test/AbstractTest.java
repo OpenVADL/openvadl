@@ -32,10 +32,8 @@ import vadl.pass.PassKey;
 import vadl.pass.PassManager;
 import vadl.pass.PassOrder;
 import vadl.pass.exception.DuplicatedPassKeyException;
-import vadl.utils.VADLFileUtils;
+import vadl.utils.VadlFileUtils;
 import vadl.viam.Specification;
-import vadl.viam.passes.verification.ViamVerificationPass;
-import vadl.viam.passes.verification.ViamVerifier;
 
 /**
  * The super type of all integration tests.
@@ -69,7 +67,7 @@ public abstract class AbstractTest {
     if (testSourceRootPath == null) {
       // load all testsources in a temporary directory
       var testSourceDir = AbstractTest.class.getResource("/" + TEST_SOURCE_DIR);
-      testSourceRootPath = VADLFileUtils.copyDirToTempDir(
+      testSourceRootPath = VadlFileUtils.copyDirToTempDir(
           Objects.requireNonNull(testSourceDir).toURI(),
           "OpenVADL-testSource-",
           (pair) -> {
@@ -321,7 +319,7 @@ public abstract class AbstractTest {
   }
 
   public static Path createDirectory() throws IOException {
-    return VADLFileUtils.createTempDirectory("vadl-test");
+    return VadlFileUtils.createTempDirectory("vadl-test");
   }
 
   public GeneralConfiguration getConfiguration(boolean doDump) throws IOException {

@@ -28,7 +28,7 @@ import org.apache.commons.io.FileUtils;
  * <p>The name prefixes VADL to prevent confusion with Apache's
  * {@link org.apache.commons.io.FileUtils}.
  */
-public class VADLFileUtils {
+public class VadlFileUtils {
 
 
   /**

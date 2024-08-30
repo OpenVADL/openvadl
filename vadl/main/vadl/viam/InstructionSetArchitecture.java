@@ -1,5 +1,6 @@
 package vadl.viam;
 
+import com.google.common.collect.Streams;
 import java.util.List;
 import java.util.stream.Stream;
 import javax.annotation.Nullable;
@@ -8,6 +9,10 @@ import javax.annotation.Nullable;
  * An Instruction Set Architecture (ISA) definition of a VADL specification.
  */
 public class InstructionSetArchitecture extends Definition {
+
+  // this ISA is an extension of the dependency
+  @Nullable
+  private final InstructionSetArchitecture superIsaRef;
 
   private final List<Instruction> instructions;
   private final List<PseudoInstruction> pseudoInstructions;
@@ -33,6 +38,7 @@ public class InstructionSetArchitecture extends Definition {
    *
    * @param identifier    the identifier of the ISA
    * @param specification the parent specification of the ISA
+   * @param superIsaRef   the ISA this ISA is extending (might be null)
    * @param registers     the registers in the ISA. This also includes sub-registers
    * @param registerFiles the register files in the ISA
    * @param pc            the program counter of the ISA
@@ -41,6 +47,8 @@ public class InstructionSetArchitecture extends Definition {
    */
   public InstructionSetArchitecture(Identifier identifier,
                                     Specification specification,
+                                    @Nullable
+                                    InstructionSetArchitecture superIsaRef,
                                     List<Format> formats,
                                     List<Function> functions,
                                     List<Relocation> relocations,
@@ -53,6 +61,7 @@ public class InstructionSetArchitecture extends Definition {
   ) {
     super(identifier);
     this.specification = specification;
+    this.superIsaRef = superIsaRef;
     this.formats = formats;
     this.functions = functions;
     this.relocations = relocations;
@@ -64,41 +73,73 @@ public class InstructionSetArchitecture extends Definition {
     this.memories = memories;
   }
 
-  public List<Instruction> instructions() {
-    return instructions;
-  }
-
-  public List<Function> functions() {
-    return functions;
-  }
-
-  public List<Relocation> relocations() {
-    return relocations;
-  }
-  
-  public List<PseudoInstruction> pseudoInstructions() {
-    return pseudoInstructions;
-  }
-
-  public List<Register> registers() {
-    return registers;
-  }
-
-  public List<RegisterFile> registerFiles() {
-    return registerFiles;
-  }
-
-
   @Nullable
-  public Register.Counter pc() {
-    return pc;
+  public InstructionSetArchitecture dependencyRef() {
+    return superIsaRef;
   }
 
   /**
-   * Get all group counters in this ISA.
+   * Returns the {@link Instruction}s <b>owned</b> by this ISA.
+   * So it might not include definitions accessible through the super ISA.
    */
-  public List<Register.Counter> groupCounters() {
-    return registers().stream()
+  public List<Instruction> ownInstructions() {
+    return instructions;
+  }
+
+  /**
+   * Returns the {@link Function}s <b>owned</b> by this ISA.
+   * So it might not include definitions accessible through the super ISA.
+   */
+  public List<Function> ownFunctions() {
+    return functions;
+  }
+
+  /**
+   * Returns the {@link Relocation}s <b>owned</b> by this ISA.
+   * So it might not include definitions accessible through the super ISA.
+   */
+  public List<Relocation> ownRelocations() {
+    return relocations;
+  }
+
+  /**
+   * Returns the {@link PseudoInstruction}s <b>owned</b> by this ISA.
+   * So it might not include definitions accessible through the super ISA.
+   */
+  public List<PseudoInstruction> ownPseudoInstructions() {
+    return pseudoInstructions;
+  }
+
+  /**
+   * Returns the {@link Register}s <b>owned</b> by this ISA.
+   * So it might not include definitions accessible through the super ISA.
+   */
+  public List<Register> ownRegisters() {
+    return registers;
+  }
+
+  /**
+   * Returns the {@link RegisterFile}s <b>owned</b> by this ISA.
+   * So it might not include definitions accessible through the super ISA.
+   */
+  public List<RegisterFile> ownRegisterFiles() {
+    return registerFiles;
+  }
+
+  /**
+   * Returns the {@link Format}s <b>owned</b> by this ISA.
+   * So it might not include definitions accessible through the super ISA.
+   */
+  public List<Format> ownFormats() {
+    return formats;
+  }
+
+  /**
+   * Returns the {@link Register.Counter}s <b>owned</b> by this ISA.
+   * So it might not include definitions accessible through the super ISA.
+   */
+  public List<Register.Counter> ownGroupCounters() {
+    return ownRegisters().stream()
         .filter(Register.Counter.class::isInstance)
         .map(Register.Counter.class::cast)
         .filter(e -> e != pc)
@@ -106,23 +147,40 @@ public class InstructionSetArchitecture extends Definition {
   }
 
   /**
-   * Returns the formats defined in this ISA.
+   * Returns the {@link Memory}s <b>owned</b> by this ISA.
+   * So it might not include definitions accessible through the super ISA.
    */
-  public List<Format> formats() {
-    return formats;
+  public List<Memory> ownMemories() {
+    return memories;
   }
 
   /**
-   * Returns a stream of all formats available in this ISA. This includes all formats of the
-   * outer specification scope.
+   * Returns the program counter used by this ISA.
+   * If the definition was in the super ISA, it will use that one instead.
    */
-  public Stream<Format> availableFormats() {
-    return Stream.concat(formats.stream(), specification.formats());
+  @Nullable
+  public Register.Counter pc() {
+    if (pc != null) {
+      return pc;
+    }
+    if (superIsaRef != null) {
+      return superIsaRef.pc();
+    }
+    return null;
   }
 
-  public List<Memory> memories() {
-    return memories;
+  /**
+   * Returns a stream of {@link Instruction}s that are available in the scope of this ISA.
+   * This includes definitions in the super ISA as well as the instructions specified in
+   * this ISA.
+   */
+  public Stream<Instruction> scopedInstructions() {
+    return Streams.concat(
+        this.instructions.stream(),
+        superIsaRef != null ? superIsaRef.scopedInstructions() : Stream.of()
+    );
   }
+
 
   @Override
   public void accept(DefinitionVisitor visitor) {

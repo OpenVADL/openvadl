@@ -22,7 +22,7 @@ public class Rv64iTest extends QemuExecutionTest {
 
   @TestFactory
   Stream<DynamicTest> test() throws IOException {
-    var spec = runAndGetViamSpecification("examples/rv3264im.vadl");
+    var spec = runAndGetViamSpecification("sys/risc-v/rv64i.vadl");
     var image = getQemuTestImage(Path.of("./"), spec);
 
     var testCases = IntStream.range(0, 1).mapToObj(i ->

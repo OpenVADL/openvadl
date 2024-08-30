@@ -111,7 +111,7 @@ public class LlvmLoweringPass extends Pass {
 
     var instructionLookup = flipIsaMatching(supportedInstructions);
 
-    viam.isas().flatMap(isa -> isa.instructions().stream())
+    viam.isas().flatMap(isa -> isa.ownInstructions().stream())
         .forEach(instruction -> {
           var instructionLabel = instructionLookup.get(instruction);
 

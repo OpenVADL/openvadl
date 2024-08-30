@@ -16,7 +16,7 @@ public class MemoryTest extends AbstractTest {
 
   @Test
   void testMemory() {
-    var spec = runAndGetViamSpecification("memory/valid_memory.vadl");
+    var spec = runAndGetViamSpecification("unit/memory/valid_memory.vadl");
 
     var mem = findDefinitionByNameIn("Test::MEM", spec, Memory.class);
     var read_1 = findDefinitionByNameIn("Test::READ_1", spec, Instruction.class);

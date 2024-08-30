@@ -266,7 +266,7 @@ public class LlvmLoweringPassTest extends AbstractLcbTest {
   @TestFactory
   Stream<DynamicTest> testLowering() throws IOException, DuplicatedPassKeyException {
     // Given
-    var setup = runLcb(getConfiguration(false), "examples/rv3264im.vadl",
+    var setup = runLcb(getConfiguration(false), "sys/risc-v/rv64im.vadl",
         new PassKey(LlvmLoweringPass.class.getName() + "-1"));
     var passManager = setup.passManager();
     var spec = setup.specification();
@@ -279,7 +279,7 @@ public class LlvmLoweringPassTest extends AbstractLcbTest {
                 .lastResultOf(LlvmLoweringPass.class);
 
     // Then
-    return spec.isas().flatMap(x -> x.instructions().stream())
+    return spec.isas().flatMap(x -> x.ownInstructions().stream())
         .filter(x -> expectedResults.containsKey(x.identifier.simpleName()))
         .map(t -> DynamicTest.dynamicTest(t.identifier.simpleName(), () -> {
           var expectedTestOutput = expectedResults.get(t.identifier.simpleName());

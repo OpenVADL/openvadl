@@ -26,7 +26,7 @@ public class TestUtils {
     var r = spec.definitions()
         .filter(InstructionSetArchitecture.class::isInstance)
         .map(InstructionSetArchitecture.class::cast)
-        .flatMap(i -> Stream.concat(i.registers().stream(), i.registerFiles().stream()))
+        .flatMap(i -> Stream.concat(i.ownRegisters().stream(), i.ownRegisterFiles().stream()))
         .filter(i -> i.identifier.name().equals(name))
         .toList();
 

@@ -19,7 +19,6 @@ import vadl.gcb.passes.type_normalization.CppTypeNormalizationForDecodingsPass;
 import vadl.gcb.passes.type_normalization.CppTypeNormalizationForEncodingsPass;
 import vadl.lcb.codegen.DecodingCodeGenerator;
 import vadl.lcb.codegen.EncodingCodeGenerator;
-import vadl.pass.PassKey;
 import vadl.pass.PassOrder;
 import vadl.pass.exception.DuplicatedPassKeyException;
 import vadl.types.BitsType;
@@ -43,7 +42,7 @@ public class EncodingCodeGeneratorCppVerificationTest extends AbstractCppCodeGen
   @TestFactory
   @Execution(ExecutionMode.CONCURRENT)
   Collection<DynamicTest> instructions() throws IOException, DuplicatedPassKeyException {
-    var setup = setupPassManagerAndRunSpec("examples/rv3264im.vadl",
+    var setup = setupPassManagerAndRunSpec("sys/risc-v/rv64im.vadl",
         PassOrder.gcbAndCppCodeGen(getConfiguration(false)));
     var passManager = setup.passManager();
     var spec = setup.specification();
@@ -55,7 +54,7 @@ public class EncodingCodeGeneratorCppVerificationTest extends AbstractCppCodeGen
         (IdentityHashMap<Function, Function>) passManager.getPassResults()
             .lastResultOf(CppTypeNormalizationForEncodingsPass.class);
 
-    var entries = spec.isas().flatMap(isa -> isa.formats().stream())
+    var entries = spec.isas().flatMap(isa -> isa.ownFormats().stream())
         .flatMap(format -> Arrays.stream(format.fieldAccesses()))
         .map(
             fieldAccess -> {
@@ -102,11 +101,11 @@ public class EncodingCodeGeneratorCppVerificationTest extends AbstractCppCodeGen
     String cppCode = String.format("""
             #include <cstdint>
             #include <iostream>
-                    
+            
             %s 
-                    
+            
             %s
-                    
+            
             int main() {
               %s expected = %d;
               auto actual = %s(%s(expected));

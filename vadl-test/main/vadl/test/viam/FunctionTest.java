@@ -24,7 +24,7 @@ public class FunctionTest extends AbstractTest {
 
   @Test
   void testValidFunctions() {
-    var spec = runAndGetViamSpecification("function/valid_functions.vadl");
+    var spec = runAndGetViamSpecification("unit/function/valid_functions.vadl");
 
     var noArg = findDefinitionByNameIn("FunctionTest::noArg", spec, Function.class);
     var callFunc = findDefinitionByNameIn("FunctionTest::callFunc", spec, Function.class);
@@ -90,7 +90,7 @@ public class FunctionTest extends AbstractTest {
 
   @Test
   void callFunctionInInstruction() {
-    var spec = runAndGetViamSpecification("function/valid_functionUsage.vadl");
+    var spec = runAndGetViamSpecification("unit/function/valid_functionUsage.vadl");
 
     var noArg = findDefinitionByNameIn("FunctionCallTest::noArg", spec, Function.class);
     var addition = findDefinitionByNameIn("FunctionCallTest::addition", spec, Function.class);

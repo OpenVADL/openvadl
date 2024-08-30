@@ -21,7 +21,7 @@ public class EmitImmediateFilePassTest extends AbstractLcbTest {
   @Test
   void testLowering() throws IOException, DuplicatedPassKeyException {
     // Given
-    var testSetup = runLcb(getConfiguration(false), "examples/rv3264im.vadl",
+    var testSetup = runLcb(getConfiguration(false), "sys/risc-v/rv64im.vadl",
         new PassKey(EmitImmediateFilePass.class.getName()));
     var passManager = testSetup.passManager();
     var spec = testSetup.specification();
@@ -36,8 +36,8 @@ public class EmitImmediateFilePassTest extends AbstractLcbTest {
     var output = trimmed.lines();
 
     Assertions.assertLinesMatch("""
-        #ifndef LLVM_LIB_TARGET_rv3264im_UTILS_IMMEDIATEUTILS_H
-        #define LLVM_LIB_TARGET_rv3264im_UTILS_IMMEDIATEUTILS_H
+        #ifndef LLVM_LIB_TARGET_rv64im_UTILS_IMMEDIATEUTILS_H
+        #define LLVM_LIB_TARGET_rv64im_UTILS_IMMEDIATEUTILS_H
         
         #include "llvm/Support/ErrorHandling.h"
         #include <cstdint>
@@ -129,7 +129,7 @@ public class EmitImmediateFilePassTest extends AbstractLcbTest {
             public:
                 // Enum to control which immediate functions to use.
                 // Currently this is only used in the pseudo expansion pass.
-                enum rv3264imImmediateKind{IK_UNKNOWN_IMMEDIATE // used for side effect registers which are interpreted as immediate
+                enum rv64imImmediateKind{IK_UNKNOWN_IMMEDIATE // used for side effect registers which are interpreted as immediate
                              \s
                               , IK_RV3264I_Btype_immS_decode
                               , IK_RV3264I_Stype_immS_decode
@@ -141,7 +141,7 @@ public class EmitImmediateFilePassTest extends AbstractLcbTest {
                              \s
                             };
         
-                static uint64_t applyDecoding(const uint64_t value, rv3264imImmediateKind kind)
+                static uint64_t applyDecoding(const uint64_t value, rv64imImmediateKind kind)
                 {
                     switch (kind)
                     {
@@ -171,7 +171,7 @@ public class EmitImmediateFilePassTest extends AbstractLcbTest {
         
         } // end of anonymous namespace
         
-        #endif // LLVM_LIB_TARGET_rv3264im_UTILS_IMMEDIATEUTILS_H 
+        #endif // LLVM_LIB_TARGET_rv64im_UTILS_IMMEDIATEUTILS_H 
         """.trim().lines(), output);
   }
 }

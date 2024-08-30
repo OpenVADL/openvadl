@@ -47,7 +47,7 @@ public class FunctionInlinerPass extends Pass {
     IdentityHashMap<Instruction, UninlinedGraph> original = new IdentityHashMap<>();
 
     viam.isas()
-        .flatMap(isa -> isa.instructions().stream())
+        .flatMap(isa -> isa.ownInstructions().stream())
         .forEach(instruction -> {
           var copy = instruction.behavior().copy();
           var functionCalls = instruction.behavior().getNodes(FuncCallNode.class)

@@ -53,7 +53,7 @@ public class IsaMatchingPassTest extends AbstractLcbTest {
   void shouldFindMatchings(List<String> expectedInstructionName, InstructionLabel label)
       throws IOException, DuplicatedPassKeyException {
     // Given
-    var setup = runLcb(getConfiguration(false), "examples/rv3264im.vadl",
+    var setup = runLcb(getConfiguration(false), "sys/risc-v/rv64im.vadl",
         new PassKey(IsaMatchingPass.class.getName()));
     var passManager = setup.passManager();
 

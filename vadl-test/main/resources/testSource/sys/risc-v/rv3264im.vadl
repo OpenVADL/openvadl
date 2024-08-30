@@ -5,7 +5,7 @@
 
 instruction set architecture RV3264I = {
 
-  model ArchSize() : Id = {Arch64}        // invoke vadl -m "ArchSize=Arch64" for 64 bit arch
+  model ArchSize() : Id = {Arch32}        // invoke vadl -m "ArchSize=Arch64" for 64 bit arch
 
   // if $ArchSize() equals Arch64 expands to second arg else to first arg
   model Arch3264 (arch32 : IsaDefs, arch64 : IsaDefs) : IsaDefs = {

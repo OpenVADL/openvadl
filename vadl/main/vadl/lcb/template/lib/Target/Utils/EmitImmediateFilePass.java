@@ -15,7 +15,6 @@ import vadl.lcb.codegen.EncodingCodeGenerator;
 import vadl.lcb.codegen.PredicateCodeGenerator;
 import vadl.lcb.template.CommonVarNames;
 import vadl.lcb.template.LcbTemplateRenderingPass;
-import vadl.pass.PassKey;
 import vadl.pass.PassResults;
 import vadl.viam.Definition;
 import vadl.viam.Format;
@@ -77,7 +76,7 @@ public class EmitImmediateFilePass extends LcbTemplateRenderingPass {
   }
 
   private List<DecodeFunctionEntry> generateDecodeFunctionNames(Specification specification) {
-    return specification.isas().flatMap(isa -> isa.formats().stream())
+    return specification.isas().flatMap(isa -> isa.ownFormats().stream())
         .flatMap(format -> Arrays.stream(format.fieldAccesses()))
         .map(Format.FieldAccess::accessFunction)
         .sorted(Comparator.comparing(Definition::name))
@@ -91,7 +90,7 @@ public class EmitImmediateFilePass extends LcbTemplateRenderingPass {
   private List<String> generateDecodeFunctions(Specification specification,
                                                IdentityHashMap<Function, Function>
                                                    decodeVadlFunctions) {
-    return specification.isas().flatMap(isa -> isa.formats().stream())
+    return specification.isas().flatMap(isa -> isa.ownFormats().stream())
         .flatMap(format -> Arrays.stream(format.fieldAccesses()))
         .map(Format.FieldAccess::accessFunction)
         .sorted(Comparator.comparing(Definition::name))
@@ -108,7 +107,7 @@ public class EmitImmediateFilePass extends LcbTemplateRenderingPass {
   private List<String> generateEncodeFunctions(Specification specification,
                                                IdentityHashMap<Function, Function>
                                                    encodeVadlFunctions) {
-    return specification.isas().flatMap(isa -> isa.formats().stream())
+    return specification.isas().flatMap(isa -> isa.ownFormats().stream())
         .flatMap(format -> Arrays.stream(format.fieldAccesses()))
         .map(Format.FieldAccess::encoding)
         .sorted(Comparator.comparing(Definition::name))
@@ -125,7 +124,7 @@ public class EmitImmediateFilePass extends LcbTemplateRenderingPass {
   private List<String> generatePredicateFunctions(Specification specification,
                                                   IdentityHashMap<Function, Function>
                                                       predicateVadlFunctions) {
-    return specification.isas().flatMap(isa -> isa.formats().stream())
+    return specification.isas().flatMap(isa -> isa.ownFormats().stream())
         .flatMap(format -> Arrays.stream(format.fieldAccesses()))
         .map(Format.FieldAccess::predicate)
         .sorted(Comparator.comparing(Definition::name))
