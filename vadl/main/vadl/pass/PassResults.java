@@ -118,7 +118,7 @@ public final class PassResults {
   }
 
   // this is only visible on package level to ensure that passes can't manipulate pass results
-  void add(PassKey key, Pass pass, @Nullable Object result) {
+  void add(PassKey key, Pass pass, long durationMs, @Nullable Object result) {
     if (store.containsKey(key)) {
       // The pipeline's steps should be deterministic.
       // If we overwrite an already existing result then it is very likely
@@ -127,7 +127,7 @@ public final class PassResults {
           "Tried to store result of executed pass %s, but result for this key already exist",
           key);
     }
-    store.put(key, new SingleResult(key, pass, result));
+    store.put(key, new SingleResult(key, pass, durationMs, result));
   }
 
 
@@ -142,6 +142,7 @@ public final class PassResults {
   public record SingleResult(
       PassKey passKey,
       Pass pass,
+      long durationMs,
       @Nullable Object result
   ) {
   }
