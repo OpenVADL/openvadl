@@ -27,11 +27,9 @@ public abstract class GraphProcessor implements GraphVisitor<Object> {
    * @param filter The filter function used to determine which nodes to process
    */
   protected void processGraph(Graph graph, Function<Node, Boolean> filter) {
-    for (var n : graph.getNodes()
+    graph.getNodes()
         .filter(filter::apply)
-        .toList()) {
-      processNode(n);
-    }
+        .forEach(this::processNode);
   }
 
   /**
