@@ -1,18 +1,26 @@
 package vadl.lcb.template.lib.Target.AsmParser;
 
+import static vadl.lcb.codegen.assembly.ParserGenerator.mapParserRecord;
+
 import java.io.IOException;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Stream;
+import org.jetbrains.annotations.NotNull;
 import vadl.configuration.LcbConfiguration;
 import vadl.gcb.passes.assembly.AssemblyConstant;
+import vadl.gcb.passes.assembly.AssemblyRegisterNode;
 import vadl.lcb.codegen.assembly.ParserGenerator;
 import vadl.lcb.template.CommonVarNames;
 import vadl.lcb.template.LcbTemplateRenderingPass;
 import vadl.pass.PassResults;
+import vadl.types.BuiltInTable;
 import vadl.viam.Specification;
+import vadl.viam.ViamError;
+import vadl.viam.graph.dependency.BuiltInCall;
 
 /**
  * This file includes the definitions for the asm parser.
@@ -35,9 +43,6 @@ public class EmitAsmRecursiveDescentParserHeaderFilePass extends LcbTemplateRend
         + "/AsmParser/AsmRecursiveDescentParser.h";
   }
 
-  record ParserRecord(String structName, List<String> fieldNames) {
-  }
-
   record ParsingResultRecord(String type, String functionName, String comment) {
 
   }
@@ -46,20 +51,18 @@ public class EmitAsmRecursiveDescentParserHeaderFilePass extends LcbTemplateRend
   protected Map<String, Object> createVariables(final PassResults passResults,
                                                 Specification specification) {
     var composedStructs = specification.isas()
-        .flatMap(isa -> isa.ownFormats().stream())
-        .map(format -> {
-          var fields = Arrays.stream(format.fields()).toList();
-          var fieldNames = fields.stream()
-              .map(ParserGenerator::generateFieldName)
-              .toList();
-          return new ParserRecord(ParserGenerator.generateStructName(fields), fieldNames);
-        })
+        .flatMap(isa -> isa.ownInstructions().stream())
+        .flatMap(
+            instruction -> instruction.assembly().function().behavior().getNodes(BuiltInCall.class))
+        .filter(node -> node.builtIn() == BuiltInTable.CONCATENATE_STRINGS)
+        .map(ParserGenerator::mapParserRecord)
         .distinct();
 
     var singleFieldStructs = specification.isas()
         .flatMap(isa -> isa.ownFormats().stream())
         .flatMap(format -> Arrays.stream(format.fields()))
-        .map(field -> new ParserRecord(ParserGenerator.generateStructName(List.of(field)),
+        .map(field -> new ParserGenerator.ParserRecord(
+            ParserGenerator.generateStructName(List.of(field)),
             Stream.of(field).map(ParserGenerator::generateFieldName).toList()))
         .distinct();
 
@@ -80,4 +83,6 @@ public class EmitAsmRecursiveDescentParserHeaderFilePass extends LcbTemplateRend
         "formats", Stream.concat(composedStructs, singleFieldStructs).toList(),
         "parsingResults", Stream.concat(parsingResultsConstants, parsingResultsInstructions));
   }
+
+
 }

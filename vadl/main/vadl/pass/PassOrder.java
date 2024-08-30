@@ -14,7 +14,7 @@ import vadl.configuration.LcbConfiguration;
 import vadl.cppCodeGen.passes.fieldNodeReplacement.FieldNodeReplacementPassForDecoding;
 import vadl.dump.HtmlDumpPass;
 import vadl.gcb.passes.assembly.AssemblyConcatBuiltinMergingPass;
-import vadl.gcb.passes.assembly.AssemblyReplacementConstantPass;
+import vadl.gcb.passes.assembly.AssemblyReplacementNodePass;
 import vadl.gcb.passes.encoding_generation.GenerateFieldAccessEncodingFunctionPass;
 import vadl.gcb.passes.type_normalization.CppTypeNormalizationForDecodingsPass;
 import vadl.gcb.passes.type_normalization.CppTypeNormalizationForEncodingsPass;
@@ -199,7 +199,7 @@ public final class PassOrder {
     order.add(new CppTypeNormalizationForEncodingsPass(gcbConfiguration));
     order.add(new CppTypeNormalizationForDecodingsPass(gcbConfiguration));
     order.add(new CppTypeNormalizationForPredicatesPass(gcbConfiguration));
-    order.add(new AssemblyReplacementConstantPass(gcbConfiguration));
+    order.add(new AssemblyReplacementNodePass(gcbConfiguration));
     order.add(new AssemblyConcatBuiltinMergingPass(gcbConfiguration));
 
     if (gcbConfiguration.doDump()) {

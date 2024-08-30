@@ -15,6 +15,7 @@ dependencies {
     implementation("com.google.guava:guava:33.2.1-jre")
     implementation("ch.qos.logback:logback-classic:1.5.6")
     implementation("commons-io:commons-io:2.16.1")
+    implementation("org.apache.commons:commons-text:1.12.0")
 
     testImplementation("org.awaitility:awaitility:4.2.1")
     testImplementation("org.testcontainers:testcontainers:1.20.0")
