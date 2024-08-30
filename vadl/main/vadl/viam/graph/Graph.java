@@ -254,12 +254,12 @@ public class Graph {
    * Returns if the graph represents a pseudo instruction body.
    *
    * <p>A pseudo instruction has a simple control flow consisting of a {@link StartNode},
-   * arbitrary many {@link InstrCallNode} and a {@link BranchEndNode}. It must only reference
+   * arbitrary many {@link InstrCallNode} and a {@link InstrEndNode}. It must only reference
    * {@link FuncParamNode} but no other param nodes.</p>
    */
   public boolean isPseudoInstruction() {
     return getNodes(ControlNode.class).allMatch(
-        e -> e instanceof InstrCallNode || e instanceof StartNode || e instanceof BranchEndNode
+        e -> e instanceof InstrCallNode || e instanceof StartNode || e instanceof InstrEndNode
     ) && getNodes(ParamNode.class).allMatch(e -> e instanceof FuncParamNode);
   }
 

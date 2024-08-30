@@ -13,6 +13,8 @@ import vadl.viam.Encoding;
 import vadl.viam.Format;
 import vadl.viam.Instruction;
 import vadl.viam.InstructionSetArchitecture;
+import vadl.viam.PseudoInstruction;
+import vadl.viam.Relocation;
 import vadl.viam.Resource;
 import vadl.viam.Specification;
 
@@ -101,6 +103,8 @@ public class DefinitionEntity extends DumpEntity {
       is(Resource.class),
       is(Format.class),
       is(Instruction.class),
+      is(PseudoInstruction.class),
+      is(Relocation.class),
       isAndISALevel(vadl.viam.Function.class),
       is(Encoding.class),
       is(Format.FieldAccess.class)

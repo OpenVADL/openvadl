@@ -37,8 +37,6 @@ public class PseudoInstruction extends Definition implements DefProp.WithBehavio
     this.parameters = parameters;
     this.behavior = behavior;
     this.assembly = assembly;
-
-    verify();
   }
 
   public Parameter[] parameters() {
