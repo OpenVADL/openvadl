@@ -1,0 +1,36 @@
+vadl.ast.ImportDefinition@f65da021
+. Identifier name: "A"
+. Identifier name: "B"
+. StringLiteral literal: "./imports/entry.vadl" ("./imports/entry.vadl")
+. Module AST
+. : vadl.ast.ImportDefinition@885099fc
+. : ' IdentifierPath
+. : ' | Identifier name: "isa_a"
+. : ' | Identifier name: "A"
+. : ' Module AST
+. : ' | InstructionSetDefinition
+. : ' | . Identifier name: "A"
+. : ' | . ConstantDefinition
+. : ' | . : Identifier name: "a"
+. : ' | . : IntegerLiteral literal: 1 (1)
+. : vadl.ast.ImportDefinition@8bc94f3a
+. : ' IdentifierPath
+. : ' | Identifier name: "isa_b"
+. : ' | Identifier name: "B"
+. : ' Module AST
+. : ' | InstructionSetDefinition
+. : ' | . Identifier name: "B"
+. : ' | . ConstantDefinition
+. : ' | . : Identifier name: "b"
+. : ' | . : IntegerLiteral literal: 2 (2)
+. : InstructionSetDefinition
+. : ' Identifier name: "C"
+. : ' ConstantDefinition
+. : ' | Identifier name: "c"
+. : ' | IntegerLiteral literal: 3 (3)
+InstructionSetDefinition
+. Identifier name: "ISA_A"
+. Identifier name: "A"
+InstructionSetDefinition
+. Identifier name: "ISA_B"
+. Identifier name: "B"

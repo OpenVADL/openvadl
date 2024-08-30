@@ -564,6 +564,11 @@ class MacroExpander
   }
 
   @Override
+  public Definition visit(ImportDefinition importDefinition) {
+    return importDefinition;
+  }
+
+  @Override
   public BlockStatement visit(BlockStatement blockStatement) {
     return new BlockStatement(expandStatements(blockStatement.statements), blockStatement.location);
   }

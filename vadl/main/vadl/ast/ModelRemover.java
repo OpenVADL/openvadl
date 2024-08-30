@@ -124,6 +124,11 @@ class ModelRemover implements DefinitionVisitor<Definition> {
     return definition;
   }
 
+  @Override
+  public Definition visit(ImportDefinition importDefinition) {
+    return importDefinition;
+  }
+
   private boolean shouldRemove(Definition definition) {
     return definition instanceof ModelDefinition || definition instanceof RecordTypeDefinition;
   }

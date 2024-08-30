@@ -136,6 +136,33 @@ class SymbolTable {
     symbols.putAll(other.symbols);
   }
 
+  void importFrom(Ast moduleAst, List<IsId> importPaths, @Nullable StringLiteral filePath) {
+    for (IsId importPath : importPaths) {
+      if (filePath == null && importPath instanceof IdentifierPath identifierPath) {
+        var importedSymbolPath = new ArrayList<String>();
+        for (IdentifierOrPlaceholder segment : identifierPath.segments) {
+          importedSymbolPath.add(segment.pathToString());
+        }
+        var importedSymbol =
+            String.join("::", importedSymbolPath.subList(1, importedSymbolPath.size()));
+        var symbol = moduleAst.rootSymbolTable().resolveSymbol(importedSymbol);
+        if (symbol == null) {
+          reportError("Unresolved symbol " + importedSymbol, importPath.location());
+        } else {
+          defineSymbol(symbol, importPath.location());
+        }
+      } else if (filePath != null) {
+        var importedSymbol = importPath.pathToString();
+        var symbol = moduleAst.rootSymbolTable().resolveSymbol(importedSymbol);
+        if (symbol == null) {
+          reportError("Unresolved symbol " + importedSymbol, importPath.location());
+        } else {
+          defineSymbol(symbol, importPath.location());
+        }
+      }
+    }
+  }
+
   private void verifyAvailable(String name, SourceLocation loc) {
     if (symbols.containsKey(name)) {
       reportError("Duplicate definition: " + name, loc);
@@ -228,6 +255,8 @@ class SymbolTable {
    * in the linked "format" definition.
    * Before: Ast is fully Macro-expanded
    * After: Ast is fully Macro-expanded and all relevant nodes have "symbolTable" set.
+   *
+   * @see VerificationPass
    */
   static class SymbolCollector {
     static void collectSymbols(Ast ast) {
@@ -334,6 +363,8 @@ class SymbolTable {
         symbols.defineSymbol(new ValuedSymbol(exception.id().name, null, SymbolType.EXCEPTION),
             exception.loc);
         collectSymbols(symbols, exception.statement);
+      } else if (definition instanceof ImportDefinition importDef) {
+        symbols.importFrom(importDef.moduleAst, importDef.importPaths, importDef.filePath);
       }
     }
 

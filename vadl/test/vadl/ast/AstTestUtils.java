@@ -17,7 +17,7 @@ public class AstTestUtils {
   static void verifyPrettifiedAst(Ast ast) {
     MODEL_REMOVER.removeModels(ast);
     var progPretty = ast.prettyPrint();
-    var astPretty = Assertions.assertDoesNotThrow(() -> VadlParser.parse(progPretty),
+    var astPretty = Assertions.assertDoesNotThrow(() -> VadlParser.parse(progPretty, ast.fileUri),
         "Cannot parse prettified input \n" + progPretty);
     assertAstEquality(astPretty, ast);
   }

@@ -1,0 +1,6 @@
+import isa_a::A
+import isa_b::B
+
+instruction set architecture C = {
+  constant c = 3
+}

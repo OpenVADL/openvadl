@@ -334,6 +334,11 @@ class Ungrouper
   }
 
   @Override
+  public Definition visit(ImportDefinition importDefinition) {
+    return importDefinition;
+  }
+
+  @Override
   public Statement visit(BlockStatement blockStatement) {
     blockStatement.statements.replaceAll(statement -> statement.accept(this));
     return blockStatement;

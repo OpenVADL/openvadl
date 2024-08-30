@@ -70,6 +70,8 @@ interface DefinitionVisitor<R> {
   R visit(ModelDefinition definition);
 
   R visit(RecordTypeDefinition definition);
+
+  R visit(ImportDefinition importDefinition);
 }
 
 class ConstantDefinition extends Definition {
@@ -1924,6 +1926,89 @@ final class MacroMatchDefinition extends Definition {
   @Override
   public int hashCode() {
     return macroMatch.hashCode();
+  }
+}
+
+class ImportDefinition extends Definition {
+
+  Ast moduleAst;
+  List<IsId> importPaths;
+  @Nullable
+  StringLiteral filePath;
+  List<StringLiteral> args;
+  SourceLocation loc;
+
+  ImportDefinition(Ast moduleAst, List<IsId> importPaths, @Nullable StringLiteral filePath,
+                   List<StringLiteral> args, SourceLocation loc) {
+    this.moduleAst = moduleAst;
+    this.importPaths = importPaths;
+    this.filePath = filePath;
+    this.args = args;
+    this.loc = loc;
+  }
+
+  @Override
+  <R> R accept(DefinitionVisitor<R> visitor) {
+    return visitor.visit(this);
+  }
+
+  @Override
+  SourceLocation location() {
+    return loc;
+  }
+
+  @Override
+  SyntaxType syntaxType() {
+    return BasicSyntaxType.INVALID;
+  }
+
+  @Override
+  void prettyPrint(int indent, StringBuilder builder) {
+    builder.append("import ");
+    var isFirst = true;
+    for (IsId importPath : importPaths) {
+      if (!isFirst) {
+        builder.append(", ");
+      }
+      isFirst = false;
+      importPath.prettyPrint(0, builder);
+    }
+    if (filePath != null) {
+      builder.append(" from ");
+      filePath.prettyPrint(0, builder);
+    }
+    if (!args.isEmpty()) {
+      builder.append("(");
+      isFirst = true;
+      for (StringLiteral arg : args) {
+        if (!isFirst) {
+          builder.append(", ");
+        }
+        isFirst = false;
+        arg.prettyPrint(0, builder);
+      }
+      builder.append(")\n");
+    }
+  }
+
+  @Override
+  public boolean equals(Object o) {
+    if (this == o) {
+      return true;
+    }
+    if (o == null || getClass() != o.getClass()) {
+      return false;
+    }
+    ImportDefinition that = (ImportDefinition) o;
+    return Objects.equals(moduleAst, that.moduleAst)
+        && Objects.equals(importPaths, that.importPaths)
+        && Objects.equals(filePath, that.filePath)
+        && Objects.equals(args, that.args);
+  }
+
+  @Override
+  public int hashCode() {
+    return Objects.hash(moduleAst, importPaths, filePath, args);
   }
 }
 

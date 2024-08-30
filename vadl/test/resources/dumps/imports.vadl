@@ -1,0 +1,4 @@
+import A, B from "./imports/entry.vadl"
+
+instruction set architecture ISA_A extending A = {}
+instruction set architecture ISA_B extending B = {}

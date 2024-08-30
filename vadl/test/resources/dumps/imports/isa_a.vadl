@@ -1,0 +1,3 @@
+instruction set architecture A = {
+  constant a = 1
+}

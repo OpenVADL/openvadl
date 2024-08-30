@@ -1,5 +1,6 @@
 package vadl.ast;
 
+import java.net.URI;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
@@ -13,8 +14,14 @@ import vadl.utils.SourceLocation;
  */
 public class Ast {
   List<Definition> definitions = new ArrayList<>();
+  URI fileUri = SourceLocation.INVALID_SOURCE_LOCATION.uri();
+
   @Nullable
   SymbolTable rootSymbolTable;
+
+  SymbolTable rootSymbolTable() {
+    return Objects.requireNonNull(rootSymbolTable, "Symbol collector has not been applied");
+  }
 
   /**
    * Convert the tree back into sourcecode.

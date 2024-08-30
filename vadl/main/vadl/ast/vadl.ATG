@@ -6,6 +6,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
+import javax.annotation.Nullable;
 
 import vadl.ast.EncodingDefinition.FieldEncoding;
 import vadl.ast.FunctionDefinition.Parameter;
@@ -17,6 +18,7 @@ import static vadl.ast.ParserUtils.*;
 
 COMPILER vadl
   java.net.URI sourceFile = SourceLocation.INVALID_SOURCE_LOCATION.uri();
+  @Nullable java.net.URI resolutionUri;
   Deque<List<MacroParam>> macroContext = new ArrayDeque<>();
   Ast ast = new Ast();
   SymbolTable macroTable = new SymbolTable();
@@ -104,6 +106,8 @@ TOKENS
   KW_COMPILER = "compiler".
   PREDICATE = "predicate".
   ENCODE = "encode".
+  IMPORT = "import".
+  KW_FROM = "from".
 
   SYM_IN = "in".
   SYM_AS = "as".
@@ -166,6 +170,7 @@ PRODUCTIONS
   topLevelDefinitions<out Definition def> (. def = null; .)
   = instructionsetDefinition<out def>
   | commonDefinition<out def>
+  | importDefinition<out def>
   .
 
   commonDefinition<out Definition def>    (. def = null; .)
@@ -534,6 +539,32 @@ PRODUCTIONS
     projectionType<out ProjectionType type> (. macroTable.addModelType(name, type); .)
   .
 
+  importDefinition<out Definition def>     (. var importPaths = new ArrayList<IsId>(); StringLiteral filePath = null; .)
+  = IMPORT                                 (. var start = loc(); .)
+    (
+      identifierPath<out IsId importPath>  (. importPaths.add(importPath); .)
+      {
+        SYM_COMMA
+        identifierPath<out importPath>     (. importPaths.add(importPath); .)
+      }
+      ( IF (importPaths.size() > 1)
+        KW_FROM stringLiteral<out filePath>
+      | [ KW_FROM stringLiteral<out filePath> ]
+      )
+    | KW_FROM stringLiteral<out filePath>
+    )                                      (. var args = new ArrayList<StringLiteral>(); .)
+    [
+      WITH
+      SYM_PAREN_OPEN
+      stringLiteral<out StringLiteral arg> (. args.add(arg); .)
+      {
+        SYM_COMMA
+        stringLiteral<out arg>             (. args.add(arg); .)
+      }
+      SYM_PAREN_CLOSE
+    ]                                      (. def = importModules(this, importPaths, filePath, args, start.join(loc())); .)
+  .
+
   // -- STATEMENTS ---------------------------------------------------------------------------------------------------
 
   statement<out Statement statement> (. statement = null; .)
@@ -897,6 +928,7 @@ PRODUCTIONS
   = T_BOOL
   | REGISTER
   | EXCEPTION
+  | ENCODE
   // TODO Add all allowed keywords
   .
 

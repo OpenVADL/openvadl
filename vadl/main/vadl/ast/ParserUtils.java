@@ -1,8 +1,13 @@
 package vadl.ast;
 
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
+import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import javax.annotation.Nullable;
 import vadl.utils.SourceLocation;
 
@@ -203,7 +208,8 @@ class ParserUtils {
     return token.kind == Parser._identifierToken
         || token.kind == Parser._T_BOOL
         || token.kind == Parser._REGISTER
-        || token.kind == Parser._EXCEPTION;
+        || token.kind == Parser._EXCEPTION
+        || token.kind == Parser._ENCODE;
   }
 
   /**
@@ -401,5 +407,65 @@ class ParserUtils {
         macroTable.addMacro(modelDefinition.toMacro(), modelDefinition.location());
       }
     }
+  }
+
+  /**
+   * Loads the referenced module and makes any given symbols available in the current module.
+   * If a {@code filePath} is not specified, the first segment of the first import path is
+   * interpreted as the file path relative to this module file.
+   *
+   * @param parser      The instance of the parser parsing the current module
+   * @param importPaths The list of symbol paths to import.
+   *                    If filePath is null, MUST have at least one element
+   * @param filePath    An optional path to the referenced specification file
+   * @param args        A list of arguments to pass to the imported module for model substitution
+   * @return An import definition node
+   */
+  static Definition importModules(Parser parser, List<IsId> importPaths,
+                                  @Nullable StringLiteral filePath, List<StringLiteral> args,
+                                  SourceLocation loc) {
+    var modulePath = filePath == null
+        ? resolveUri(parser, importPaths.get(0)) : resolveUri(parser, filePath.value);
+    if (modulePath != null) {
+      var macroOverrides = new HashMap<String, String>();
+      for (StringLiteral arg : args) {
+        var keyValue = arg.value.split("=", 2);
+        macroOverrides.put(keyValue[0], keyValue[1]);
+      }
+      try {
+        var ast = VadlParser.parse(modulePath, macroOverrides);
+        parser.macroTable.importFrom(ast, importPaths, filePath);
+        return new ImportDefinition(ast, importPaths, filePath, args, loc);
+      } catch (Exception e) {
+        parser.errors.SemErr("Error during module evaluation - " + e);
+      }
+    }
+    return new ConstantDefinition(new Identifier("invalid", parser.loc()), null,
+        new Identifier("invalid", parser.loc()), parser.loc());
+  }
+
+  static @Nullable Path resolveUri(Parser parser, IsId importPath) {
+    if (importPath instanceof Identifier id) {
+      return resolveUri(parser, id.name + ".vadl");
+    } else if (importPath instanceof IdentifierPath identifierPath) {
+      return resolveUri(parser, ((Identifier) identifierPath.segments.get(0)).name + ".vadl");
+    } else {
+      parser.errors.SemErr("Could not resolve module path: " + importPath);
+      return null;
+    }
+  }
+
+  static @Nullable Path resolveUri(Parser parser, String name) {
+    var resolutionUri = Objects.requireNonNullElse(parser.resolutionUri, parser.sourceFile);
+    var relativeToSpec = Paths.get(resolutionUri.resolve(name));
+    if (Files.isRegularFile(relativeToSpec)) {
+      return relativeToSpec;
+    }
+    var relativeToWorkdir = Paths.get(name);
+    if (Files.isRegularFile(relativeToWorkdir)) {
+      return relativeToWorkdir;
+    }
+    parser.errors.SemErr("Could not resolve module path: " + name);
+    return null;
   }
 }

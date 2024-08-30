@@ -365,6 +365,23 @@ public class AstDumper
   }
 
   @Override
+  public Void visit(ImportDefinition importDefinition) {
+    dumpNode(importDefinition);
+    for (IsId importPath : importDefinition.importPaths) {
+      dumpChildren((Node) importPath);
+    }
+    if (importDefinition.filePath != null) {
+      dumpChildren(importDefinition.filePath);
+    }
+    dumpChildren(importDefinition.args);
+    indent++;
+    builder.append(indentString()).append("Module AST\n");
+    dumpChildren(importDefinition.moduleAst.definitions);
+    indent--;
+    return null;
+  }
+
+  @Override
   public Void visit(CallExpr expr) {
     dumpNode(expr);
     dumpChildren((Expr) expr.target);
