@@ -5,19 +5,24 @@ import static org.junit.jupiter.api.Assertions.assertInstanceOf;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static vadl.test.TestUtils.findDefinitionByNameIn;
 
+import java.io.IOException;
 import java.util.stream.Stream;
-import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.TestInstance;
-import org.junit.jupiter.params.ParameterizedTest;
-import org.junit.jupiter.params.provider.Arguments;
-import org.junit.jupiter.params.provider.MethodSource;
+import org.junit.jupiter.api.DynamicTest;
+import org.junit.jupiter.api.TestFactory;
+import vadl.configuration.GeneralConfiguration;
+import vadl.dump.HtmlDumpPass;
+import vadl.pass.PassOrder;
+import vadl.pass.exception.DuplicatedPassKeyException;
 import vadl.test.AbstractTest;
 import vadl.viam.Constant;
 import vadl.viam.Function;
 import vadl.viam.Specification;
 import vadl.viam.graph.control.ReturnNode;
 import vadl.viam.graph.dependency.ConstantNode;
+import vadl.viam.passes.canonicalization.CanonicalizationPass;
 import vadl.viam.passes.canonicalization.Canonicalizer;
+import vadl.viam.passes.typeCastElimination.TypeCastEliminationPass;
+import vadl.viam.passes.verification.ViamVerificationPass;
 
 /**
  * This class executes all tests in the `valid_builtin_constant_eval.vadl` test source.
@@ -32,24 +37,18 @@ public class BuiltInConstantEvaluationTest extends AbstractTest {
 
   private static Specification spec;
 
-  @ParameterizedTest
-  @MethodSource("constantEvalSources")
-  void constantEvalTests(Function actualFunc, Function expectedFunc) {
-    Canonicalizer.canonicalize(actualFunc.behavior());
-    var actual = findResult(actualFunc);
-    // expected function must be also canonicalized first
-    // as it may contain a type cast
-    Canonicalizer.canonicalize(expectedFunc.behavior());
-    var expected = findResult(expectedFunc);
-    assertEquals(expected, actual);
-  }
+  @TestFactory
+  Stream<DynamicTest> constantEvalTest() throws IOException, DuplicatedPassKeyException {
+    var config = getConfiguration(false);
+//    var config = new GeneralConfiguration("build/test-out/const-eval", true);
+    var setup = setupPassManagerAndRunSpec(
+        "passes/canonicalization/valid_builtin_constant_evaluation.vadl",
+        PassOrder.viam(config)
+            .untilFirst(CanonicalizationPass.class)
+            .add(new ViamVerificationPass(config))
+    );
 
-  static Stream<Arguments> constantEvalSources() {
-    var frontend = runViamSpecificationWithNewFrontend(
-        "passes/canonicalization/valid_builtin_constant_evaluation.vadl");
-    spec = frontend.getViam();
-
-    // Find all tests and corresponding solutions
+    var spec = setup.specification();
     return spec.definitions()
         .filter(Function.class::isInstance)
         .map(Function.class::cast)
@@ -57,8 +56,17 @@ public class BuiltInConstantEvaluationTest extends AbstractTest {
         .map(f -> {
           var testName = f.simpleName().substring("exercise_".length());
           var solution = findDefinitionByNameIn("solution_" + testName, spec, Function.class);
-          return Arguments.of(f, solution);
+          return DynamicTest.dynamicTest(testName, () -> {
+            checkTestCase(f, solution);
+          });
         });
+
+  }
+
+  void checkTestCase(Function actualFunc, Function expectedFunc) {
+    var actual = findResult(actualFunc);
+    var expected = findResult(expectedFunc);
+    assertEquals(actual, expected);
   }
 
 
@@ -69,6 +77,9 @@ public class BuiltInConstantEvaluationTest extends AbstractTest {
     assertInstanceOf(ConstantNode.class, returnNode.value());
     var constant = ((ConstantNode) returnNode.value()).constant();
     assertInstanceOf(Constant.Value.class, constant);
-    return (Constant.Value) constant;
+    // cast to the expected return type of function
+    System.out.println("Return type: " + func.returnType());
+    System.out.println("Constant: " + constant);
+    return ((Constant.Value) constant).trivialCastTo(func.returnType());
   }
 }
