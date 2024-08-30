@@ -208,7 +208,9 @@ public abstract class Constant {
      * @param newType the data type to cast the value to
      * @return a new Constant.Value object representing the casted value
      * @throws ViamError if the constant cannot be cast to the specified data type
+     * @deprecated as constant casting can be replaced by sign/zero extension and truncation
      */
+    @Deprecated
     public Constant.Value castTo(DataType newType) {
       if (type().bitWidth() >= newType.bitWidth()) {
         // the current type is larger (so we just truncate)
@@ -218,7 +220,7 @@ public abstract class Constant {
       } else {
         if (newType.isSigned()) {
           // we have to sign extend the value
-          var val = this;
+          var val = fromTwosComplement(value, Type.signedInt(type().bitWidth()));
           if (this.type().getClass() == BitsType.class) {
             // we want bits type to be signed extended
             // so we have to convert this value to a integer value first
@@ -241,7 +243,8 @@ public abstract class Constant {
      */
     public Constant.Tuple add(Constant.Value other, boolean withCarrySet) {
       ensure(type() instanceof BitsType, "Invalid type for addition");
-      ensure(type().equals(other.type()), "Types don't match, %s vs %s", type(), other.type());
+      ensure(type().isTrivialCastTo(other.type()), "Types don't match, %s vs %s", type(),
+          other.type());
 
       // a + b + c where c is the carry flag
       var c = withCarrySet ? BigInteger.ONE : BigInteger.ZERO;
@@ -298,7 +301,7 @@ public abstract class Constant {
      */
     public Constant.Tuple subtract(Constant.Value b, SubMode mode, boolean withCarryBorrowSet) {
       ensure(type() instanceof BitsType, "Invalid type for subtraction");
-      ensure(type().equals(b.type()), "Types don't match, %s vs %s", type(), b.type());
+      ensure(type().isTrivialCastTo(b.type()), "Types don't match, %s vs %s", type(), b.type());
 
       // calculation options:
       // X86_LIKE: a + not(b) + not(withCarryBorrow)
@@ -351,24 +354,29 @@ public abstract class Constant {
      *
      * @param other       the second operand
      * @param longVersion if the result should be double the size of the operands.
+     * @param signed      if the multiplication should be signed or unsigned.
+     *                    This is only in case of longVersion == true.
+     *                    Otherwise, the value is ignored
      * @return the result of the multiplication. If longVersion is true, then the result type
      *     will be double the size of the operands, otherwise it will be the same size
      */
-    public Constant.Value multiply(Constant.Value other, boolean longVersion) {
-      ensure(type() == other.type(), "Multiplication requires same type but other was %s",
+    public Constant.Value multiply(Constant.Value other, boolean longVersion, boolean signed) {
+      ensure(type().isTrivialCastTo(other.type()),
+          "Multiplication requires same type but other was %s",
           other.type());
 
       if (longVersion) {
-        // long version doubles the size of the result type
-        ensure(type() instanceof SIntType || type() instanceof UIntType,
-            "Long versioned multiplication must be on integer type");
+        var divType = signed
+            ? Type.signedInt(type().bitWidth())
+            : Type.unsignedInt(type().bitWidth());
+        var a = this.trivialCastTo(divType);
+        var b = other.trivialCastTo(divType);
 
-        var newValue = this.integer()
-            .multiply(other.integer()); // multiply with other value
+        var newValue = a.integer()
+            .multiply(b.integer()); // multiply with other value
 
-        var newType = type() instanceof SIntType
-            ? Type.signedInt(2 * type().bitWidth())
-            : Type.unsignedInt(2 * type().bitWidth());
+        var newType = Type.constructDataType(divType.getClass(), 2 * divType.bitWidth());
+        Objects.requireNonNull(newType);
 
         return fromInteger(newValue, newType);
       } else {
@@ -383,16 +391,31 @@ public abstract class Constant {
     /**
      * Divides this constant by the other one.
      */
-    public Constant.Value divide(Constant.Value other) {
-      ensure(type() == other.type(), "Division must be of same type, but other was %s",
+    public Constant.Value divide(Constant.Value other, boolean signed) {
+      ensure(type().isTrivialCastTo(other.type()),
+          "Division must be of same type, but other was %s",
           other.type());
 
-      ensure(type().getClass() == SIntType.class || type().getClass() == UIntType.class,
-          "Division must be either signed or unsigned integer typed");
+      var divType = signed
+          ? Type.signedInt(type().bitWidth())
+          : Type.unsignedInt(type().bitWidth());
+      Objects.requireNonNull(divType);
 
-      var newIntegerValue = integer()
-          .divide(other.integer());
-      return fromInteger(newIntegerValue, type());
+      var a = this.trivialCastTo(divType);
+      var b = other.trivialCastTo(divType);
+
+      var newIntegerValue = a.integer()
+          .divide(b.integer());
+      return fromInteger(newIntegerValue, divType);
+    }
+
+    public Constant.Value trivialCastTo(Type newType) {
+      ensure(type().isTrivialCastTo(newType), "Trivial type from %s to %s is not possible.",
+          type(), newType);
+      if (type() == newType) {
+        return this;
+      }
+      return fromTwosComplement(value, (DataType) newType);
     }
 
     /**
@@ -476,8 +499,6 @@ public abstract class Constant {
      * less or equal to this constant's width.
      */
     public Constant.Value truncate(DataType newType) {
-      ensure(type().getClass().equals(newType.getClass()),
-          "Can not truncate to other type of class: %s.", newType);
       ensure(type().bitWidth() >= newType.bitWidth(),
           "Truncated value's bitwidth must be less or equal to truncate type: %s", newType);
 
@@ -489,6 +510,24 @@ public abstract class Constant {
       var mask = mask(newType.bitWidth(), 0);
       var result = value.and(mask);
       return fromTwosComplement(result, newType);
+    }
+
+    public Constant.Value zeroExtend(DataType newType) {
+      ensure(type().bitWidth() <= newType.bitWidth(),
+          "Value's bit-width must be less or equal to result type: %s", newType);
+      // just create new constant with the new (bigger type)
+      return fromTwosComplement(value, newType);
+    }
+
+    public Constant.Value signExtend(DataType newType) {
+      ensure(type().bitWidth() <= newType.bitWidth(),
+          "Value's bit-width must be less or equal to result type: %s", newType);
+
+      // first we want a signed integer value, as we use the BigInteger implementation
+      // for the signExtension
+      var signedIntegerValue = fromTwosComplement(value, Type.signedInt(type().bitWidth()));
+      // now we use the big integer value (which is signed) to construct the new type
+      return fromInteger(signedIntegerValue.integer(), newType);
     }
 
     private BigInteger maxUnsignedValue() {

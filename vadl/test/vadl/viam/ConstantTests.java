@@ -443,7 +443,7 @@ public class ConstantTests {
   void constantMultiply_shouldYieldCorrectValue(Constant.Value a, Constant.Value b,
                                                 boolean longVersion,
                                                 Constant.Value expected) {
-    var actual = a.multiply(b, longVersion);
+    var actual = a.multiply(b, longVersion, a.type().isSigned());
     assertEquals(expected, actual);
   }
 
@@ -467,7 +467,7 @@ public class ConstantTests {
   @MethodSource("divideTestSource")
   void constantDivide_shouldYieldCorrectValue(Constant.Value a, Constant.Value b,
                                               Constant.Value expected) {
-    var actual = a.divide(b);
+    var actual = a.divide(b, a.type().isSigned());
     assertEquals(expected, actual);
   }
 
