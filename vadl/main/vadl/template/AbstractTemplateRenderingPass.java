@@ -1,15 +1,11 @@
 package vadl.template;
 
-import java.io.File;
-import java.io.FileWriter;
 import java.io.IOException;
 import java.io.StringWriter;
 import java.io.Writer;
 import java.nio.file.Path;
 import java.util.Map;
 import javax.annotation.Nullable;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.thymeleaf.TemplateEngine;
 import org.thymeleaf.context.Context;
 import org.thymeleaf.templatemode.TemplateMode;
@@ -51,6 +47,8 @@ public abstract class AbstractTemplateRenderingPass extends Pass {
     public final Path emittedFile;
 
     /**
+     * Constructs the result.
+     *
      * @param emittedFile the path to the file that was rendered/emitted
      */
     protected Result(Path emittedFile) {
@@ -103,13 +101,19 @@ public abstract class AbstractTemplateRenderingPass extends Pass {
         configuration().outputFactory().createWriter(configuration(), subDir, getOutputPath());
     renderTemplate(passResults, viam, writer);
 
-    return getResult();
+    return constructResult();
   }
 
-  public Result getResult() {
+  /**
+   * Allows subtypes of this pass to construct their own result.
+   */
+  public Result constructResult() {
     return new Result(getEmittedFile());
   }
 
+  /**
+   * Get the path of the emitted file.
+   */
   public Path getEmittedFile() {
     // TODO: This is very sub optimal as it assumes some implementation of the createWriter
     //   We have to refactor this! However, we definitely should not store the whole template

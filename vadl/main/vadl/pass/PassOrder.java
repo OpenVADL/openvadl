@@ -96,6 +96,13 @@ public final class PassOrder {
     return this;
   }
 
+  /**
+   * Injects a dump pass between each existing pass of this pass order.
+   * TemplateRenderingPasses and {@link ViamVerificationPass} are not affected by this
+   * method.
+   * It is most useful for debugging, as it allows to inspect the VIAM's state after every
+   * executed pass.
+   */
   public PassOrder dumpAfterEach() {
     var config = order.get(0).pass().configuration();
     // We use a ListIterator for safe modification while iterating

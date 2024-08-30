@@ -102,6 +102,10 @@ public class HtmlDumpPass extends AbstractTemplateRenderingPass {
     }
   }
 
+  /**
+   * The result of the HTML dump pass.
+   * Beside the emitted file path, it also holds the key of the previous pass.
+   */
   public static class Result extends AbstractTemplateRenderingPass.Result {
     public final @Nullable PassKey lastPass;
 
@@ -118,6 +122,9 @@ public class HtmlDumpPass extends AbstractTemplateRenderingPass {
 
   private static final AtomicInteger dumpCounter = new AtomicInteger();
 
+  /**
+   * Constructs the {@link HtmlDumpPass}.
+   */
   public HtmlDumpPass(Config config) {
     super(config, "dump");
     this.config = config;
@@ -140,7 +147,7 @@ public class HtmlDumpPass extends AbstractTemplateRenderingPass {
   }
 
   @Override
-  public Result getResult() {
+  public Result constructResult() {
     return new Result(getEmittedFile(), lastPass);
   }
 
