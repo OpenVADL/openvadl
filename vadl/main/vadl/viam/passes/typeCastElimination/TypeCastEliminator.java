@@ -34,8 +34,8 @@ import vadl.viam.passes.GraphProcessor;
  * <li>has a <b>smaller bit-width</b> than the source type,
  * the type cast is replaced by a {@link TruncateNode}. The result type of the new node
  * will have the same type as the target type.</li>
- * <li>is a signed integer ({@code SInt}) the node will be replaced by
- * a {@link SignExtendNode}.</li>
+ * <li>is a signed integer ({@code SInt}) and the source type is SInt or Bits the node will be
+ * replaced by a {@link SignExtendNode}.</li>
  * <li>is a unsigned integer, signed integer or bits ({@code SInt, Bits}),
  * the node will be replaced by a {@link ZeroExtendNode}.</li>
  * </ol>
@@ -119,7 +119,8 @@ public class TypeCastEliminator extends GraphProcessor {
       var truncateNode = new TruncateNode(source, castType);
       replacement = (TruncateNode) castNode.replaceAndDelete(truncateNode);
 
-    } else if (castType.getClass() == SIntType.class) {
+    } else if (castType.getClass() == SIntType.class
+        && (inputType.getClass() == BitsType.class || inputType.getClass() == SIntType.class)) {
       // match 3.
       // rule: cast type is a signed integer and input type is either sint or bits
       // -> create sign extend node
@@ -127,7 +128,9 @@ public class TypeCastEliminator extends GraphProcessor {
       replacement = (SignExtendNode) castNode.replaceAndDelete(signExtendNode);
 
     } else if (castType.getClass() == UIntType.class
-        || castType.getClass() == BitsType.class) {
+        || castType.getClass() == BitsType.class
+        || castType.getClass() == SIntType.class
+    ) {
       // match 4. rule: cast type is one of sint, uint, or bits
       var zeroExtendNode = new ZeroExtendNode(source, castType);
       replacement = (ZeroExtendNode) castNode.replaceAndDelete(zeroExtendNode);
