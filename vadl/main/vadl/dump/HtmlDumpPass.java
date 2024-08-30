@@ -1,19 +1,25 @@
 package vadl.dump;
 
 import java.io.IOException;
+import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.Comparator;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Consumer;
 import java.util.stream.Collectors;
+import javax.annotation.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import vadl.configuration.GeneralConfiguration;
 import vadl.dump.entitySuppliers.ViamEntitySupplier;
 import vadl.dump.infoEnrichers.LcbEnricherCollection;
 import vadl.dump.infoEnrichers.ViamEnricherCollection;
+import vadl.pass.Pass;
+import vadl.pass.PassKey;
 import vadl.pass.PassName;
 import vadl.pass.PassResults;
 import vadl.template.AbstractTemplateRenderingPass;
@@ -96,13 +102,26 @@ public class HtmlDumpPass extends AbstractTemplateRenderingPass {
     }
   }
 
+  public static class Result extends AbstractTemplateRenderingPass.Result {
+    public final @Nullable PassKey lastPass;
+
+    protected Result(Path emittedFile, @Nullable PassKey lastPass) {
+      super(emittedFile);
+      this.lastPass = lastPass;
+    }
+  }
+
   private final Config config;
+  private final int count;
+  @Nullable
+  private PassKey lastPass = null;
 
   private static final AtomicInteger dumpCounter = new AtomicInteger();
 
-  public HtmlDumpPass(Config config) throws IOException {
+  public HtmlDumpPass(Config config) {
     super(config, "dump");
     this.config = config;
+    this.count = dumpCounter.getAndIncrement();
   }
 
   @Override
@@ -117,12 +136,20 @@ public class HtmlDumpPass extends AbstractTemplateRenderingPass {
 
   @Override
   protected String getOutputPath() {
-    return dumpCounter.incrementAndGet() + "_" + config.phase.replace(" ", "_") + ".html";
+    return count + "_" + config.phase.replace(" ", "_") + ".html";
+  }
+
+  @Override
+  public Result getResult() {
+    return new Result(getEmittedFile(), lastPass);
   }
 
   @Override
   protected Map<String, Object> createVariables(PassResults passResults,
                                                 Specification specification) {
+    // find last pass for the result
+    lastPass = getLastPass(passResults);
+
     log.debug("Create HTML dump for phase {}", config.phase);
     // collect suppliers
     var suppliers = new ArrayList<DumpEntitySupplier<?>>();
@@ -149,13 +176,16 @@ public class HtmlDumpPass extends AbstractTemplateRenderingPass {
         .sorted(Comparator.comparingInt(a -> a.getKey().rank()))
         .toList();
 
-    var passList = passResults.executedPasses();
+    var passList = passResults.executedPasses().stream()
+        .filter(p -> !(p.pass() instanceof HtmlDumpPass))
+        .toList();
 
     return Map.of(
         "title",
         "Specification (%s) - at %s".formatted(specification.identifier.name(), config.phase),
         "description", config.description,
         "passes", passList,
+        "passDumps", findAllPassDumps(passResults),
         "entries", entities,
         "toc", tocMapList
     );
@@ -174,6 +204,26 @@ public class HtmlDumpPass extends AbstractTemplateRenderingPass {
     for (var infoEnricher : infoEnrichers) {
       infoEnricher.enrich(entity, passResults);
     }
+  }
+
+  private static @Nullable PassKey getLastPass(PassResults passResults) {
+    var passes = passResults.executedPasses();
+    if (passes.isEmpty()) {
+      return null;
+    }
+    return passes.get(passes.size() - 1)
+        .passKey();
+  }
+
+  /**
+   * Find all pass keys that were dumped directly after execution.
+   */
+  private static Map<PassKey, Path> findAllPassDumps(PassResults passResults) {
+    return passResults.executedPasses().stream()
+        .filter(p -> p.pass() instanceof HtmlDumpPass)
+        .map(p -> (Result) p.result())
+        .filter(Objects::nonNull)
+        .collect(Collectors.toMap((r) -> r.lastPass, (r) -> r.emittedFile));
   }
 
 }

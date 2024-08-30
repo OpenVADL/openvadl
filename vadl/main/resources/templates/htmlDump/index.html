@@ -60,21 +60,29 @@
         </h2>
         <div id="passes-body" aria-labelledby="passes-heading"
              class="hidden">
-            <div
-                 th:each="singlePass,iter : ${passes}"
-                 class="flex items-center my-4 px-4 py-2 bg-white border border-gray-200 rounded-lg shadow gap-4"
-            >
+            <th:block th:each="singlePass,iter : ${passes}">
+                <a th:if="${passDumps.get(singlePass.passKey) != null}" th:href="${passDumps.get(singlePass.passKey)}">
+                    <div th:replace="~{this :: pass(${singlePass}, ${iter.index + 1})}"></div>
+                </a>
+                <th:block th:if="${passDumps.get(singlePass.passKey) == null}">
+                    <div th:replace="~{this :: pass(${singlePass}, ${iter.index + 1})}"></div>
+                </th:block>
 
-                <h4 class="text-md font-semibold tracking-wide text-gray-900">[[${iter.index + 1}]]</h4>
-                <div>
-                    <h4 class="text-md font-semibold tracking-wide text-gray-900">[[${singlePass.pass.name.value}]]</h4>
-                    <div class="inline-grid items-center gap-2" style="grid-template-columns: auto auto;">
-                        <span class="text-gray-500 font-medium text-sm">Key</span>
-                        <span class="badge text-blue-800 text-sm">[[${singlePass.passKey.value}]]</span>
-                        <span class="text-gray-500 font-medium text-sm">Class</span>
-                        <span class="badge text-blue-800 text-sm">[[${singlePass.pass.class.name}]]</span>
-                    </div>
-                </div>
+            </th:block>
+        </div>
+    </div>
+
+    <div th:fragment="pass(singlePass, number)" th:if="${singlePass != null}"
+        class="flex items-center my-4 px-4 py-2 bg-white border border-gray-200 rounded-lg shadow gap-4">
+
+        <h4 class="text-md font-semibold tracking-wide text-gray-900">[[${number}]]</h4>
+        <div>
+            <h4 class="text-md font-semibold tracking-wide text-gray-900">[[${singlePass.pass.name.value}]]</h4>
+            <div class="inline-grid items-center gap-2" style="grid-template-columns: auto auto;">
+                <span class="text-gray-500 font-medium text-sm">Key</span>
+                <span class="badge text-blue-800 text-sm">[[${singlePass.passKey.value}]]</span>
+                <span class="text-gray-500 font-medium text-sm">Class</span>
+                <span class="badge text-blue-800 text-sm">[[${singlePass.pass.class.name}]]</span>
             </div>
         </div>
     </div>

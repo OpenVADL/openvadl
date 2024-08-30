@@ -46,12 +46,20 @@ public abstract class AbstractTemplateRenderingPass extends Pass {
 
   /**
    * The result of a rendering pass.
-   *
-   * @param emittedFile the path to the file that was rendered/emitted
    */
-  public record Result(
-      Path emittedFile
-  ) {
+  public static class Result {
+    public final Path emittedFile;
+
+    /**
+     * @param emittedFile the path to the file that was rendered/emitted
+     */
+    protected Result(Path emittedFile) {
+      this.emittedFile = emittedFile;
+    }
+
+    public Path emittedFile() {
+      return emittedFile;
+    }
   }
 
   /**
@@ -95,12 +103,19 @@ public abstract class AbstractTemplateRenderingPass extends Pass {
         configuration().outputFactory().createWriter(configuration(), subDir, getOutputPath());
     renderTemplate(passResults, viam, writer);
 
+    return getResult();
+  }
+
+  public Result getResult() {
+    return new Result(getEmittedFile());
+  }
+
+  public Path getEmittedFile() {
     // TODO: This is very sub optimal as it assumes some implementation of the createWriter
     //   We have to refactor this! However, we definitely should not store the whole template
     //   string for every pass in memory!
-    var path = Path.of(configuration().outputPath() + "/" + subDir + "/" + getOutputPath())
+    return Path.of(configuration().outputPath() + "/" + subDir + "/" + getOutputPath())
         .toAbsolutePath();
-    return new Result(path);
   }
 
   /**
