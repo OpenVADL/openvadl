@@ -1,13 +1,11 @@
 package vadl.lcb.codegen.assembly;
 
 import java.io.StringWriter;
-import java.util.Objects;
 import java.util.Stack;
-import java.util.concurrent.CopyOnWriteArrayList;
 import vadl.cppCodeGen.GenericCppCodeGeneratorVisitor;
 import vadl.cppCodeGen.SymbolTable;
-import vadl.gcb.passes.assemblyConstantIntern.AssemblyConstant;
-import vadl.gcb.passes.assemblyConstantIntern.visitors.AssemblyVisitor;
+import vadl.gcb.passes.assembly.AssemblyConstant;
+import vadl.gcb.passes.assembly.visitors.AssemblyVisitor;
 import vadl.types.BuiltInTable;
 import vadl.viam.Constant;
 import vadl.viam.graph.dependency.BuiltInCall;

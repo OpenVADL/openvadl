@@ -7,13 +7,11 @@ import java.util.List;
 import java.util.Map;
 import java.util.stream.Stream;
 import vadl.configuration.LcbConfiguration;
-import vadl.gcb.passes.assemblyConstantIntern.AssemblyConstant;
-import vadl.gcb.passes.assemblyConstantIntern.AssemblyReplacementConstantPass;
+import vadl.gcb.passes.assembly.AssemblyConstant;
 import vadl.lcb.codegen.assembly.ParserGenerator;
 import vadl.lcb.template.CommonVarNames;
 import vadl.lcb.template.LcbTemplateRenderingPass;
 import vadl.pass.PassResults;
-import vadl.viam.Constant;
 import vadl.viam.Specification;
 
 /**

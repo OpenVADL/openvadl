@@ -2,8 +2,7 @@ package vadl.lcb.codegen.assembly;
 
 import java.util.List;
 import java.util.stream.Collectors;
-import vadl.gcb.passes.assemblyConstantIntern.AssemblyConstant;
-import vadl.gcb.passes.assemblyConstantIntern.AssemblyReplacementConstantPass;
+import vadl.gcb.passes.assembly.AssemblyConstant;
 import vadl.viam.Format;
 import vadl.viam.Instruction;
 

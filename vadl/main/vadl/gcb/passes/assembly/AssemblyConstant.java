@@ -1,8 +1,7 @@
-package vadl.gcb.passes.assemblyConstantIntern;
+package vadl.gcb.passes.assembly;
 
 import java.util.regex.Pattern;
-import org.thymeleaf.util.NumberUtils;
-import vadl.gcb.passes.assemblyConstantIntern.visitors.AssemblyVisitor;
+import vadl.gcb.passes.assembly.visitors.AssemblyVisitor;
 import vadl.viam.Assembly;
 import vadl.viam.Constant;
 import vadl.viam.graph.GraphNodeVisitor;

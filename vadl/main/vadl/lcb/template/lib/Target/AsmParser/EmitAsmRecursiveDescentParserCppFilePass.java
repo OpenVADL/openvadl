@@ -4,7 +4,7 @@ import java.io.IOException;
 import java.util.Comparator;
 import java.util.Map;
 import vadl.configuration.LcbConfiguration;
-import vadl.gcb.passes.assemblyConstantIntern.AssemblyConstant;
+import vadl.gcb.passes.assembly.AssemblyConstant;
 import vadl.lcb.codegen.assembly.ParserGenerator;
 import vadl.lcb.template.CommonVarNames;
 import vadl.lcb.template.LcbTemplateRenderingPass;

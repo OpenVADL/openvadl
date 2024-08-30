@@ -482,7 +482,7 @@ public abstract class Node {
   }
 
 
-  protected void addUsage(Node usage) {
+  public void addUsage(Node usage) {
     usages.add(usage);
   }
 

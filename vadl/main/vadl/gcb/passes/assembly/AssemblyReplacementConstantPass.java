@@ -1,7 +1,6 @@
-package vadl.gcb.passes.assemblyConstantIntern;
+package vadl.gcb.passes.assembly;
 
 import java.io.IOException;
-import java.util.HashMap;
 import org.jetbrains.annotations.Nullable;
 import vadl.configuration.GeneralConfiguration;
 import vadl.cppCodeGen.SymbolTable;
