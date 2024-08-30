@@ -409,6 +409,10 @@ public abstract class Constant {
       return fromInteger(newIntegerValue, divType);
     }
 
+    /**
+     * Converts the constant to the given type, which must be a trivial cast.
+     * The value remains the same, but the constant type changes.
+     */
     public Constant.Value trivialCastTo(Type newType) {
       ensure(type().isTrivialCastTo(newType), "Trivial type from %s to %s is not possible.",
           type(), newType);
@@ -512,6 +516,9 @@ public abstract class Constant {
       return fromTwosComplement(result, newType);
     }
 
+    /**
+     * Zero extends the value to the given type.
+     */
     public Constant.Value zeroExtend(DataType newType) {
       ensure(type().bitWidth() <= newType.bitWidth(),
           "Value's bit-width must be less or equal to result type: %s", newType);
@@ -519,6 +526,9 @@ public abstract class Constant {
       return fromTwosComplement(value, newType);
     }
 
+    /**
+     * Sign extends the value to the given type.
+     */
     public Constant.Value signExtend(DataType newType) {
       ensure(type().bitWidth() <= newType.bitWidth(),
           "Value's bit-width must be less or equal to result type: %s", newType);
