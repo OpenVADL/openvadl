@@ -2,6 +2,7 @@ package vadl.viam.graph;
 
 import static java.util.Objects.requireNonNull;
 
+import com.google.common.collect.Streams;
 import com.google.errorprone.annotations.FormatMethod;
 import com.google.errorprone.annotations.FormatString;
 import java.util.ArrayList;
@@ -53,16 +54,21 @@ public class Graph {
   }
 
   /**
-   * Get all nodes in graph.
+   * A stream of nodes at the current state of the graph.
+   * This means only nodes that are currently in the graph are included in the stream.
+   * So it is fine to modify the graph while streaming nodes.
+   * If nodes are getting deleted during streaming and were not streamed yet, they
+   * are never getting streamed.
    *
-   * @return iterable over all nodes of graph.
+   * @see NodeIter.SnapshotIter
    */
   public final Stream<Node> getNodes() {
-    return nodes.stream().filter(Objects::nonNull);
+    return Streams.stream(new NodeIter.SnapshotIter(this));
   }
 
   /**
    * Gets all nodes of a specific type of this graph.
+   * It has the same properties as {@link #getNodes}
    *
    * @param clazz of node type
    * @return iterable of all nodes of type clazz
@@ -73,11 +79,12 @@ public class Graph {
 
   /**
    * Gets all nodes of a specific type of this graph.
+   * It has the same properties as {@link #getNodes}
    *
    * @param clazz of node type
    * @return iterable of all nodes with one of the given types.
    */
-  public final Stream<Node> getNodes(Set<Class> clazz) {
+  public final Stream<Node> getNodes(Set<Class<?>> clazz) {
     return getNodes().filter(Objects::nonNull)
         .filter(x -> clazz.stream().anyMatch(y -> y.isInstance(x)));
   }

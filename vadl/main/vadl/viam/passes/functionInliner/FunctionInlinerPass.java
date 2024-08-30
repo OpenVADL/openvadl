@@ -67,7 +67,6 @@ public class FunctionInlinerPass extends Pass {
                     Pair::new)
                 .forEach(pair -> {
                   behaviorCopy.getNodes(FuncParamNode.class)
-                      .toList().stream()
                       .filter(n -> n.parameter() == pair.parameter())
                       .forEach(usedParam -> usedParam.replaceAndDelete(pair.arg.copy()));
                 });
