@@ -103,8 +103,8 @@ public final class PassOrder {
    * It is most useful for debugging, as it allows to inspect the VIAM's state after every
    * executed pass.
    */
-  public PassOrder dumpAfterEach() {
-    var config = order.get(0).pass().configuration();
+  public PassOrder dumpAfterEach(String outPath) {
+    var config = new GeneralConfiguration(outPath, true);
     // We use a ListIterator for safe modification while iterating
     var iterator = order.listIterator();
 
@@ -118,7 +118,7 @@ public final class PassOrder {
       }
 
       HtmlDumpPass dumpPass = new HtmlDumpPass(HtmlDumpPass.Config.from(config,
-          currentPass.pass().getName().value() + " (" + currentPass.key().value() + ")",
+          currentPass.pass().getName().value(),
           "This is a dump right after the pass " + currentPass.key().value() + "."
       ));
 
@@ -131,6 +131,20 @@ public final class PassOrder {
         break; // Break after adding at the end to avoid infinite loop
       }
     }
+    return this;
+  }
+
+  /**
+   * Adds a dump pass that outputs the dump to the given path.
+   */
+  public PassOrder addDump(String outPath) {
+    var config = new GeneralConfiguration(outPath, true);
+    var last = order.getLast();
+    HtmlDumpPass dumpPass = new HtmlDumpPass(HtmlDumpPass.Config.from(config,
+        last.pass().getName().value(),
+        "This is a dump right after the pass " + last.key().value() + "."
+    ));
+    add(dumpPass);
     return this;
   }
 
