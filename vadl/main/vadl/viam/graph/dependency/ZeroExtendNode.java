@@ -1,6 +1,8 @@
 package vadl.viam.graph.dependency;
 
 import vadl.types.DataType;
+import vadl.viam.Constant;
+import vadl.viam.graph.Canonicalizable;
 import vadl.viam.graph.GraphNodeVisitor;
 import vadl.viam.graph.Node;
 
@@ -11,13 +13,12 @@ import vadl.viam.graph.Node;
  *
  * @see vadl.viam.passes.typeCastElimination.TypeCastEliminator
  */
-public class ZeroExtendNode extends UnaryNode {
+public class ZeroExtendNode extends UnaryNode implements Canonicalizable {
 
   public ZeroExtendNode(ExpressionNode value, DataType type) {
     super(value, type);
   }
-
-
+  
   @Override
   public void verifyState() {
     super.verifyState();
@@ -46,5 +47,15 @@ public class ZeroExtendNode extends UnaryNode {
   @Override
   public Node shallowCopy() {
     return new ZeroExtendNode(value, type());
+  }
+
+  @Override
+  public Node canonical() {
+    if (value instanceof ConstantNode constantNode
+        && constantNode.constant instanceof Constant.Value constant) {
+      // if the constant node we can zero extend the node
+      return new ConstantNode(constant.zeroExtend(this.type()));
+    }
+    return this;
   }
 }
