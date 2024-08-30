@@ -6,6 +6,8 @@ import vadl.configuration.GeneralConfiguration;
 import vadl.pass.Pass;
 import vadl.pass.PassName;
 import vadl.pass.PassResults;
+import vadl.utils.ViamUtils;
+import vadl.viam.DefProp;
 import vadl.viam.Specification;
 import vadl.viam.graph.dependency.BuiltInCall;
 
@@ -27,14 +29,10 @@ public class CanonicalizationPass extends Pass {
   @Nullable
   @Override
   public Object execute(PassResults passResults, Specification viam) {
-    viam.isas()
-        .flatMap(isa -> isa.ownInstructions().stream())
-        .forEach(instruction -> Canonicalizer.canonicalize(instruction.behavior()));
 
-    viam.isas()
-        .flatMap(isa -> isa.ownFormats().stream())
-        .flatMap(x -> Arrays.stream(x.fieldAccesses()))
-        .map(x -> x.accessFunction().behavior())
+    ViamUtils.findDefinitionByFilter(viam, definition -> definition instanceof DefProp.WithBehavior)
+        .stream()
+        .flatMap(d -> ((DefProp.WithBehavior) d).behaviors().stream())
         .forEach(Canonicalizer::canonicalize);
 
     return null;
