@@ -220,7 +220,7 @@ public abstract class Constant {
       } else {
         if (newType.isSigned()) {
           // we have to sign extend the value
-          var val = fromTwosComplement(value, Type.signedInt(type().bitWidth()));
+          var val = this;
           if (this.type().getClass() == BitsType.class) {
             // we want bits type to be signed extended
             // so we have to convert this value to a integer value first

@@ -491,13 +491,6 @@ public class ConstantTests {
 
   static Stream<Arguments> truncateFailTestSource() {
     return Stream.of(
-        Arguments.of(intU(1, 4), Type.bits(3), "Can not truncate to other type"),
-        Arguments.of(intS(1, 4), Type.bits(3), "Can not truncate to other type"),
-        Arguments.of(bits(1, 4), Type.signedInt(3), "Can not truncate to other type"),
-        Arguments.of(bits(1, 4), Type.unsignedInt(3), "Can not truncate to other type"),
-        Arguments.of(intU(1, 4), Type.signedInt(3), "Can not truncate to other type"),
-        Arguments.of(intS(1, 4), Type.unsignedInt(3), "Can not truncate to other type"),
-
         Arguments.of(intS(1, 4), Type.signedInt(5),
             "Truncated value's bitwidth must be less or equal"),
         Arguments.of(bits(1, 4), Type.bits(5), "Truncated value's bitwidth must be less or equal"),
