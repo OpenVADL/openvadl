@@ -47,7 +47,7 @@ public class EmitAsmRecursiveDescentParserHeaderFilePass extends LcbTemplateRend
   @Override
   protected Map<String, Object> createVariables(final PassResults passResults,
                                                 Specification specification) {
-    var structs = specification.isas()
+    var composedStructs = specification.isas()
         .flatMap(isa -> isa.ownFormats().stream())
         .map(format -> {
           var fields = Arrays.stream(format.fields()).toList();
@@ -56,8 +56,14 @@ public class EmitAsmRecursiveDescentParserHeaderFilePass extends LcbTemplateRend
               .toList();
           return new ParserRecord(ParserGenerator.generateStructName(fields), fieldNames);
         })
-        .distinct()
-        .toList();
+        .distinct();
+
+    var singleFieldStructs = specification.isas()
+        .flatMap(isa -> isa.ownFormats().stream())
+        .flatMap(format -> Arrays.stream(format.fields()))
+        .map(field -> new ParserRecord(ParserGenerator.generateStructName(List.of(field)),
+            Stream.of(field).map(ParserGenerator::generateFieldName).toList()))
+        .distinct();
 
     var parsingResultsInstructions =
         specification.isas().flatMap(isa -> isa.ownInstructions().stream())
@@ -73,7 +79,7 @@ public class EmitAsmRecursiveDescentParserHeaderFilePass extends LcbTemplateRend
                 assemblyConstant.constant().toString()));
 
     return Map.of(CommonVarNames.NAMESPACE, specification.name(),
-        "formats", structs,
+        "formats", Stream.concat(composedStructs, singleFieldStructs).toList(),
         "parsingResults", Stream.concat(parsingResultsConstants, parsingResultsInstructions));
   }
 }

@@ -48,6 +48,10 @@ public:
 
 struct NoData{};
 
+struct mnemonic {
+    ParsedValue<[(${namespace})]ParsedOperand> mnemonic;
+};
+
 [# th:each="format : ${formats}" ]
 struct [(${format.structName})] {
 [# th:each="field : ${format.fieldNames}" ]
@@ -63,7 +67,7 @@ class [(${namespace})]AsmRecursiveDescentParser {
 
 private:
     [# th:each="pr : ${parsingResult}" ]
-    RuleParsingResult<[(${pr.type})]> [(${pr.functionName})](); // [(${pr.comment})]
+    RuleParsingResult<[(${pr.type})]> <[(${namespace})]AsmRecursiveDescentParser::[(${pr.functionName})](); // [(${pr.comment})]
     [/]
     // «visitor.resultType( AsmType.String )» Literal(std::string toParse);
     // «visitor.resultType( AsmType.Expression )» BuiltinExpression();
@@ -73,6 +77,7 @@ public:
         : Lexer(lexer), Parser(parser), Operands(operands) {
     }
 
+    RuleParsingResult<StringRef> IDENTIFIER();
     RuleParsingResult<NoData> ParseStatement();
     RuleParsingResult<uint64> ParseRegister();
 };

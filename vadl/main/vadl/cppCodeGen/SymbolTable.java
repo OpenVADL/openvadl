@@ -18,6 +18,13 @@ public class SymbolTable {
   }
 
   /**
+   * Get a symbol without modifying the state.
+   */
+  public String getLastVariable() {
+    return getVariableBasedOnState(state);
+  }
+
+  /**
    * Generate a variable name. For example, "a", "ab", "xy" etc.
    */
   public String getNextVariable() {
