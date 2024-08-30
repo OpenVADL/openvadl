@@ -57,14 +57,16 @@ function ZeroExtend_Bits10_Bits20(a: Bits<10>) -> Bits<20> = a as UInt<20>
 function ZeroExtend_Bool_Bits20(a: Bool) -> Bits<20> = a as UInt<20>
 
 // TODO: @jzottele remove or uncomment when https://ea.complang.tuwien.ac.at/vadl/open-vadl/issues/93 is resolved
-// function ZeroExtend_UInt10_SInt20(a: UInt<10>) -> Snt<20> = a as SInt<20>
-// function ZeroExtend_Bool_SInt20(a: Bool) -> SInt<20> = a as SInt<20>
+function ZeroExtend_UInt10_SInt20(a: UInt<10>) -> SInt<20> = a as SInt<20>
+function ZeroExtend_Bool_SInt20(a: Bool) -> SInt<20> = a as SInt<20>
 
 //// SIGN EXTEND TESTS ////
 function SignExtend_SInt_SInt(a: SInt<10>) -> SInt<20> = a as SInt<20>
 function SignExtend_Bits_SInt(a: Bits<10>) -> SInt<20> = a as SInt<20>
-function SignExtend_UInt_SInt(a: UInt<10>) -> SInt<20> = a as SInt<20>
-function SignExtend_Bool_SInt(a: Bool) -> SInt<20> = a as SInt<20>
+
+// TODO: @jzottele remove or uncomment when https://ea.complang.tuwien.ac.at/vadl/open-vadl/issues/93 is resolved
+// function SignExtend_UInt_SInt(a: UInt<10>) -> SInt<20> = a as SInt<20>
+// function SignExtend_Bool_SInt(a: Bool) -> SInt<20> = a as SInt<20>
 
 // TODO: @jzottele remove or uncomment when https://ea.complang.tuwien.ac.at/vadl/open-vadl/issues/93 is resolved
 // If there would be no sign extend for UInts this would be a zero extend!
