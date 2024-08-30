@@ -2,6 +2,8 @@ package vadl.viam.graph.dependency;
 
 import vadl.types.DataType;
 import vadl.types.SIntType;
+import vadl.viam.Constant;
+import vadl.viam.graph.Canonicalizable;
 import vadl.viam.graph.GraphNodeVisitor;
 import vadl.viam.graph.Node;
 
@@ -12,7 +14,7 @@ import vadl.viam.graph.Node;
  *
  * @see vadl.viam.passes.typeCastElimination.TypeCastEliminator
  */
-public class SignExtendNode extends UnaryNode {
+public class SignExtendNode extends UnaryNode implements Canonicalizable {
 
   public SignExtendNode(ExpressionNode value, DataType type) {
     super(value, type);
@@ -49,4 +51,13 @@ public class SignExtendNode extends UnaryNode {
     return new SignExtendNode(value, type());
   }
 
+  @Override
+  public Node canonical() {
+    if (value instanceof ConstantNode constantNode
+        && constantNode.constant instanceof Constant.Value constant) {
+      // if the constant node we can zero extend the node
+      return new ConstantNode(constant.signExtend(this.type()));
+    }
+    return this;
+  }
 }

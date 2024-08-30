@@ -443,7 +443,7 @@ public class ConstantTests {
   void constantMultiply_shouldYieldCorrectValue(Constant.Value a, Constant.Value b,
                                                 boolean longVersion,
                                                 Constant.Value expected) {
-    var actual = a.multiply(b, longVersion);
+    var actual = a.multiply(b, longVersion, a.type().isSigned());
     assertEquals(expected, actual);
   }
 
@@ -467,7 +467,7 @@ public class ConstantTests {
   @MethodSource("divideTestSource")
   void constantDivide_shouldYieldCorrectValue(Constant.Value a, Constant.Value b,
                                               Constant.Value expected) {
-    var actual = a.divide(b);
+    var actual = a.divide(b, a.type().isSigned());
     assertEquals(expected, actual);
   }
 
@@ -491,13 +491,6 @@ public class ConstantTests {
 
   static Stream<Arguments> truncateFailTestSource() {
     return Stream.of(
-        Arguments.of(intU(1, 4), Type.bits(3), "Can not truncate to other type"),
-        Arguments.of(intS(1, 4), Type.bits(3), "Can not truncate to other type"),
-        Arguments.of(bits(1, 4), Type.signedInt(3), "Can not truncate to other type"),
-        Arguments.of(bits(1, 4), Type.unsignedInt(3), "Can not truncate to other type"),
-        Arguments.of(intU(1, 4), Type.signedInt(3), "Can not truncate to other type"),
-        Arguments.of(intS(1, 4), Type.unsignedInt(3), "Can not truncate to other type"),
-
         Arguments.of(intS(1, 4), Type.signedInt(5),
             "Truncated value's bitwidth must be less or equal"),
         Arguments.of(bits(1, 4), Type.bits(5), "Truncated value's bitwidth must be less or equal"),

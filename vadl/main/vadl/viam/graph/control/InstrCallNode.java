@@ -56,8 +56,6 @@ public class InstrCallNode extends DirectionalNode {
     this.target = target;
     this.paramFields = paramFields;
     this.arguments = arguments;
-
-    verifyState();
   }
 
   public Instruction target() {

@@ -313,8 +313,7 @@ public class BuiltInTable {
    */
   public static final BuiltIn MUL =
       func("MUL", "*", Type.relation(BitsType.class, BitsType.class, BitsType.class))
-          .compute((Constant.Value a, Constant.Value b) -> a.multiply(b, false)
-          )
+          .compute((Constant.Value a, Constant.Value b) -> a.multiply(b, false, false))
           .takesAllWithSameBitWidths()
           .returnsFirstBitWidth(BitsType.class)
           .build();
@@ -335,7 +334,7 @@ public class BuiltInTable {
    */
   public static final BuiltIn SMULL =
       func("SMULL", "*#", Type.relation(SIntType.class, SIntType.class, SIntType.class)).compute(
-              (Constant.Value a, Constant.Value b) -> a.multiply(b, true))
+              (Constant.Value a, Constant.Value b) -> a.multiply(b, true, true))
           .takesAllWithSameBitWidths()
           .returnsFromFirstAsDataType((a) -> Type.signedInt(2 * a.bitWidth()))
           .build();
@@ -346,7 +345,7 @@ public class BuiltInTable {
    */
   public static final BuiltIn UMULL =
       func("UMULL", "*#", Type.relation(UIntType.class, UIntType.class, UIntType.class)).compute(
-              (Constant.Value a, Constant.Value b) -> a.multiply(b, true))
+              (Constant.Value a, Constant.Value b) -> a.multiply(b, true, false))
           .takesAllWithSameBitWidths()
           .returnsFromFirstAsDataType((a) -> Type.unsignedInt(2 * a.bitWidth()))
           .build();
@@ -446,7 +445,7 @@ public class BuiltInTable {
    */
   public static final BuiltIn SDIV =
       func("SDIV", "/", Type.relation(SIntType.class, SIntType.class, SIntType.class))
-          .compute(Constant.Value::divide)
+          .compute((Constant.Value a, Constant.Value b) -> a.divide(b, true))
           .takesAllWithSameBitWidths()
           .returnsFirstBitWidth(SIntType.class)
           .build();
@@ -457,7 +456,7 @@ public class BuiltInTable {
    */
   public static final BuiltIn UDIV =
       func("UDIV", "/", Type.relation(UIntType.class, UIntType.class, UIntType.class))
-          .compute(Constant.Value::divide)
+          .compute((Constant.Value a, Constant.Value b) -> a.divide(b, false))
           .takesAllWithSameBitWidths()
           .returnsFirstBitWidth(UIntType.class)
           .build();
@@ -1321,7 +1320,7 @@ public class BuiltInTable {
           (args) -> computeFunction.apply((A) args.get(0), (B) args.get(1), (C) args.get(2));
       return this;
     }
-    
+
 
     public BuiltInBuilder takesData(Function<List<DataType>, Boolean> takesFunction) {
       this.takesFunction = (args) -> args.stream().allMatch(DataType.class::isInstance)
@@ -1420,7 +1419,12 @@ public class BuiltInTable {
                 .addContext("built-in", this)
                 .addContext("constants", List.of(args));
           }
-          return Optional.of(computeFunction.apply(args));
+          var result = computeFunction.apply(args);
+          if (result instanceof Constant.Value value) {
+            var returnType = returns(argTypes);
+            result = value.trivialCastTo(returnType);
+          }
+          return Optional.of(result);
         }
 
         @Override
