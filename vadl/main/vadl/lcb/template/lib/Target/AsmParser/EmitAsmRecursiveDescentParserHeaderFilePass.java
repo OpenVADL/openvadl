@@ -1,10 +1,7 @@
 package vadl.lcb.template.lib.Target.AsmParser;
 
-import static vadl.lcb.codegen.assembly.ParserGenerator.mapParserRecord;
-
 import java.io.IOException;
 import java.util.Arrays;
-import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
 import java.util.Map;
@@ -12,14 +9,12 @@ import java.util.stream.Stream;
 import org.jetbrains.annotations.NotNull;
 import vadl.configuration.LcbConfiguration;
 import vadl.gcb.passes.assembly.AssemblyConstant;
-import vadl.gcb.passes.assembly.AssemblyRegisterNode;
 import vadl.lcb.codegen.assembly.ParserGenerator;
 import vadl.lcb.template.CommonVarNames;
 import vadl.lcb.template.LcbTemplateRenderingPass;
 import vadl.pass.PassResults;
 import vadl.types.BuiltInTable;
 import vadl.viam.Specification;
-import vadl.viam.ViamError;
 import vadl.viam.graph.dependency.BuiltInCall;
 
 /**
@@ -50,27 +45,51 @@ public class EmitAsmRecursiveDescentParserHeaderFilePass extends LcbTemplateRend
   @Override
   protected Map<String, Object> createVariables(final PassResults passResults,
                                                 Specification specification) {
-    var composedStructs = specification.isas()
+    var composedStructs = composedStructs(specification);
+    var singleFieldStructs = singleFieldStructs(specification);
+    var instructions = instructions(specification);
+    var constants = constants(specification);
+    return Map.of(CommonVarNames.NAMESPACE, specification.name(),
+        "formats", Stream.concat(composedStructs, singleFieldStructs),
+        "parsingResults", Stream.concat(constants, instructions));
+  }
+
+  @NotNull
+  private static Stream<ParserGenerator.FieldStructEnumeration> composedStructs(
+      Specification specification) {
+    return specification.isas()
         .flatMap(isa -> isa.ownInstructions().stream())
         .flatMap(
             instruction -> instruction.assembly().function().behavior().getNodes(BuiltInCall.class))
         .filter(node -> node.builtIn() == BuiltInTable.CONCATENATE_STRINGS)
         .map(ParserGenerator::mapParserRecord)
         .distinct();
+  }
 
-    var singleFieldStructs = specification.isas()
+  @NotNull
+  private static Stream<ParserGenerator.FieldStructEnumeration> singleFieldStructs(
+      Specification specification) {
+    return specification.isas()
         .flatMap(isa -> isa.ownFormats().stream())
         .flatMap(format -> Arrays.stream(format.fields()))
-        .map(field -> new ParserGenerator.ParserRecord(
+        .map(field -> new ParserGenerator.FieldStructEnumeration(
             ParserGenerator.generateStructName(List.of(field)),
             Stream.of(field).map(ParserGenerator::generateFieldName).toList()))
         .distinct();
+  }
 
-    var parsingResultsInstructions =
-        specification.isas().flatMap(isa -> isa.ownInstructions().stream())
-            .map(instruction -> new ParsingResultRecord("NoData",
-                ParserGenerator.generateInstructionName(instruction), instruction.name()));
-    var parsingResultsConstants =
+  @NotNull
+  private static Stream<ParsingResultRecord> instructions(
+      Specification specification) {
+    return specification.isas().flatMap(isa -> isa.ownInstructions().stream())
+        .map(instruction -> new ParsingResultRecord("NoData",
+            ParserGenerator.generateInstructionName(instruction), instruction.name()));
+  }
+
+  @NotNull
+  private static Stream<ParsingResultRecord> constants(
+      Specification specification) {
+    return
         specification.isas().flatMap(isa -> isa.ownInstructions().stream())
             .flatMap(instruction -> instruction.assembly().function().behavior().getNodes(
                 AssemblyConstant.class))
@@ -78,11 +97,5 @@ public class EmitAsmRecursiveDescentParserHeaderFilePass extends LcbTemplateRend
             .map(assemblyConstant -> new ParsingResultRecord("StringRef",
                 ParserGenerator.generateConstantName(assemblyConstant),
                 assemblyConstant.constant().toString()));
-
-    return Map.of(CommonVarNames.NAMESPACE, specification.name(),
-        "formats", Stream.concat(composedStructs, singleFieldStructs).toList(),
-        "parsingResults", Stream.concat(parsingResultsConstants, parsingResultsInstructions));
   }
-
-
 }

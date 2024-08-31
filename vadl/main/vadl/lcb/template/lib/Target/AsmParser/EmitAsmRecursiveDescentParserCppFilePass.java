@@ -3,8 +3,9 @@ package vadl.lcb.template.lib.Target.AsmParser;
 import java.io.IOException;
 import java.io.StringWriter;
 import java.util.Comparator;
+import java.util.List;
 import java.util.Map;
-import java.util.stream.Collectors;
+import org.jetbrains.annotations.NotNull;
 import vadl.configuration.LcbConfiguration;
 import vadl.gcb.passes.assembly.AssemblyConstant;
 import vadl.lcb.codegen.assembly.AssemblyCodeGeneratorVisitor;
@@ -37,47 +38,60 @@ public class EmitAsmRecursiveDescentParserCppFilePass extends LcbTemplateRenderi
         + "/AsmParser/AsmRecursiveDescentParser.cpp";
   }
 
-  record ParsingResultLex(AssemblyConstant.TOKEN_KIND kind, String functionName) {
+  /**
+   * The parser has methods for lexes which are used.
+   */
+  record RuleParsingResultForLex(AssemblyConstant.TOKEN_KIND kind, String functionName) {
 
   }
 
-  record ParsingResultInstruction(String functionName, String body) {
+  /**
+   * Every instruction has a method in the parser which parses the assembly.
+   */
+  record RuleParsingResultWhenInstruction(String functionName, String body) {
 
   }
 
   @Override
   protected Map<String, Object> createVariables(final PassResults passResults,
                                                 Specification specification) {
-    var parsingResultsConstants =
-        specification.isas().flatMap(isa -> isa.instructions().stream())
-            .flatMap(instruction -> instruction.assembly().function().behavior().getNodes(
-                AssemblyConstant.class))
-            .sorted(Comparator.comparing(AssemblyConstant::kind)) // Sort by something
-            .map(assemblyConstant -> new ParsingResultLex(
-                assemblyConstant.kind(),
-                ParserGenerator.generateConstantName(assemblyConstant)))
-            .distinct()
-            .toList();
-
-    var parsingResultInstructions =
-        specification.isas().flatMap(isa -> isa.instructions().stream())
-            .map(instruction -> {
-              var writer = new StringWriter();
-              var visitor =
-                  new AssemblyCodeGeneratorVisitor(lcbConfiguration().processorName().value(),
-                      writer);
-              var returnNode =
-                  GraphUtils.getSingleNode(instruction.assembly().function().behavior(),
-                      ReturnNode.class);
-              visitor.visit(returnNode);
-
-              return new ParsingResultInstruction(
-                  ParserGenerator.generateInstructionName(instruction), writer.toString());
-            })
-            .toList();
-
+    var lexes = lexes(specification);
+    var instructions = instructions(specification);
     return Map.of(CommonVarNames.NAMESPACE, specification.name(),
-        "lexParsingResults", parsingResultsConstants,
-        "instructionResults", parsingResultInstructions);
+        "lexParsingResults", lexes,
+        "instructionResults", instructions);
+  }
+
+  @NotNull
+  private static List<RuleParsingResultForLex> lexes(Specification specification) {
+    return specification.isas().flatMap(isa -> isa.instructions().stream())
+        .flatMap(instruction -> instruction.assembly().function().behavior().getNodes(
+            AssemblyConstant.class))
+        .sorted(Comparator.comparing(AssemblyConstant::kind)) // Sort by something
+        .map(assemblyConstant -> new RuleParsingResultForLex(
+            assemblyConstant.kind(),
+            ParserGenerator.generateConstantName(assemblyConstant)))
+        .distinct()
+        .toList();
+  }
+
+  @NotNull
+  private List<RuleParsingResultWhenInstruction> instructions(Specification specification) {
+    return specification.isas()
+        .flatMap(isa -> isa.instructions().stream())
+        .map(instruction -> {
+          var writer = new StringWriter();
+          var visitor =
+              new AssemblyCodeGeneratorVisitor(lcbConfiguration().processorName().value(),
+                  writer);
+          var returnNode =
+              GraphUtils.getSingleNode(instruction.assembly().function().behavior(),
+                  ReturnNode.class);
+          visitor.visit(returnNode);
+
+          return new RuleParsingResultWhenInstruction(
+              ParserGenerator.generateInstructionName(instruction), writer.toString());
+        })
+        .toList();
   }
 }

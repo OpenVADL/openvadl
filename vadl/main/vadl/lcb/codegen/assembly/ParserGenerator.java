@@ -6,8 +6,8 @@ import java.util.List;
 import java.util.stream.Collectors;
 import vadl.gcb.passes.assembly.AssemblyConstant;
 import vadl.gcb.passes.assembly.AssemblyRegisterNode;
-import vadl.lcb.template.lib.Target.AsmParser.EmitAsmRecursiveDescentParserHeaderFilePass;
 import vadl.types.BuiltInTable;
+import vadl.types.BuiltInTable.BuiltIn;
 import vadl.viam.Format;
 import vadl.viam.Instruction;
 import vadl.viam.ViamError;
@@ -15,7 +15,6 @@ import vadl.viam.graph.dependency.BuiltInCall;
 import vadl.viam.graph.dependency.ExpressionNode;
 import vadl.viam.graph.dependency.FieldAccessRefNode;
 import vadl.viam.graph.dependency.FieldRefNode;
-import vadl.viam.matching.impl.FieldAccessRefMatcher;
 
 /**
  * A helper struct for generating parser code in LLVM.
@@ -54,10 +53,17 @@ public class ParserGenerator {
     return field.identifier.simpleName().trim();
   }
 
-  public record ParserRecord(String structName, List<String> fieldNames) {
+  /**
+   * The recursive descent parser has a {@code struct} for every assembly operand combination.
+   */
+  public record FieldStructEnumeration(String structName, List<String> fieldNames) {
   }
 
-  public static ParserRecord mapParserRecord(
+  /**
+   * Generate the assembly operand's names given a {@link BuiltInCall} and the {@link BuiltIn}
+   * is {@link BuiltInTable#CONCATENATE_STRINGS}.
+   */
+  public static FieldStructEnumeration mapParserRecord(
       BuiltInCall builtin) {
     ensure(builtin.builtIn() == BuiltInTable.CONCATENATE_STRINGS, "node must be concat");
     var names = builtin.arguments().stream()
@@ -65,9 +71,12 @@ public class ParserGenerator {
         .filter(x -> !x.isEmpty())
         .toList();
 
-    return new ParserRecord(String.join("", names), names);
+    return new FieldStructEnumeration(String.join("", names), names);
   }
 
+  /**
+   * Get the operand name based on the node.
+   */
   public static String mapToName(ExpressionNode x) {
     if (x instanceof BuiltInCall b && b.builtIn() == BuiltInTable.MNEMONIC) {
       return "mnemonic";
