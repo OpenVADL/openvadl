@@ -2,7 +2,9 @@ package vadl.pass;
 
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.LinkedList;
 import java.util.List;
+import java.util.ListIterator;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import javax.annotation.Nullable;
@@ -21,6 +23,7 @@ import vadl.lcb.passes.isaMatching.IsaMatchingPass;
 import vadl.lcb.passes.llvmLowering.LlvmLoweringPass;
 import vadl.lcb.template.lib.Target.EmitMCInstLowerCppFilePass;
 import vadl.lcb.template.lib.Target.EmitMCInstLowerHeaderFilePass;
+import vadl.template.AbstractTemplateRenderingPass;
 import vadl.viam.passes.algebraic_simplication.AlgebraicSimplificationPass;
 import vadl.viam.passes.canonicalization.CanonicalizationPass;
 import vadl.viam.passes.dummyAbi.DummyAbiPass;
@@ -40,7 +43,7 @@ public final class PassOrder {
       = new ConcurrentHashMap<>();
 
   // the actual list of pass steps
-  private List<PassStep> order = new ArrayList<>();
+  private LinkedList<PassStep> order = new LinkedList<>();
 
   /**
    * Add a pass to the pass order. If the passKey is null, it will generate a unique one.
@@ -48,11 +51,7 @@ public final class PassOrder {
    * @return this
    */
   public PassOrder add(@Nullable PassKey passKey, Pass pass) {
-    var currentId = passCounter.merge(pass.getClass(), 1, Integer::sum);
-    if (passKey == null) {
-      passKey = new PassKey(pass.getClass().getName() + "-" + currentId);
-    }
-    order.add(new PassStep(passKey, pass));
+    order.add(createPassStep(passKey, pass));
     return this;
   }
 
@@ -95,6 +94,66 @@ public final class PassOrder {
     var indexOf = order.indexOf(instance);
     order.subList(indexOf + 1, order.size()).clear();
     return this;
+  }
+
+  /**
+   * Injects a dump pass between each existing pass of this pass order.
+   * TemplateRenderingPasses and {@link ViamVerificationPass} are not affected by this
+   * method.
+   * It is most useful for debugging, as it allows to inspect the VIAM's state after every
+   * executed pass.
+   */
+  public PassOrder dumpAfterEach(String outPath) {
+    var config = new GeneralConfiguration(outPath, true);
+    // We use a ListIterator for safe modification while iterating
+    var iterator = order.listIterator();
+
+    while (iterator.hasNext()) {
+      var currentPass = iterator.next();
+      if (currentPass.pass() instanceof AbstractTemplateRenderingPass
+          || currentPass.pass() instanceof ViamVerificationPass
+      ) {
+        // do not dump renderings or verifications
+        continue;
+      }
+
+      HtmlDumpPass dumpPass = new HtmlDumpPass(HtmlDumpPass.Config.from(config,
+          currentPass.pass().getName().value(),
+          "This is a dump right after the pass " + currentPass.key().value() + "."
+      ));
+
+      // Check if there is a next element to decide where to add the dump pass
+      if (iterator.hasNext()) {
+        iterator.add(createPassStep(null, dumpPass));
+      } else {
+        // If at the end, also add the dump pass
+        iterator.add(createPassStep(null, dumpPass));
+        break; // Break after adding at the end to avoid infinite loop
+      }
+    }
+    return this;
+  }
+
+  /**
+   * Adds a dump pass that outputs the dump to the given path.
+   */
+  public PassOrder addDump(String outPath) {
+    var config = new GeneralConfiguration(outPath, true);
+    var last = order.getLast();
+    HtmlDumpPass dumpPass = new HtmlDumpPass(HtmlDumpPass.Config.from(config,
+        last.pass().getName().value(),
+        "This is a dump right after the pass " + last.key().value() + "."
+    ));
+    add(dumpPass);
+    return this;
+  }
+
+  private PassStep createPassStep(@Nullable PassKey passKey, Pass pass) {
+    var currentId = passCounter.merge(pass.getClass(), 1, Integer::sum);
+    if (passKey == null) {
+      passKey = new PassKey(pass.getClass().getName() + "-" + currentId);
+    }
+    return new PassStep(passKey, pass);
   }
 
 

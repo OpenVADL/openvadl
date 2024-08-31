@@ -125,10 +125,11 @@ public class PassManager {
 
       // we always store the pass result, even if the result is `null`
       logger.atDebug().log("Storing result of pass with key: {}", step.key());
-      passResults.add(step.key(), pass, passResult);
+      var duration = System.currentTimeMillis() - startTime;
+      passResults.add(step.key(), pass, duration, passResult);
 
       logger.atDebug().log("Pass completed: {} -- {} ms", step.key(),
-          System.currentTimeMillis() - startTime);
+          duration);
     }
   }
 

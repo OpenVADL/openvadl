@@ -174,7 +174,6 @@ public class SideEffectConditionResolvingPassTest extends AbstractTest {
         PassOrder.viam(config)
             .untilFirst(SideEffectConditionResolvingPass.class)
             .add(new ViamVerificationPass(config))
-            .add(new HtmlDumpPass(HtmlDumpPass.Config.from(config, "After Test", "")))
     );
 
     var spec = setup.specification();
