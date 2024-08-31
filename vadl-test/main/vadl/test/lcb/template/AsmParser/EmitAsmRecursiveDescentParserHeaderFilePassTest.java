@@ -16,8 +16,7 @@ public class EmitAsmRecursiveDescentParserHeaderFilePassTest extends AbstractLcb
   @Test
   void testLowering() throws IOException, DuplicatedPassKeyException {
     // Given
-    var configuration = getConfiguration(false);
-    var testSetup = runLcb(configuration, "examples/rv3264im.vadl",
+    var testSetup = runLcb(getConfiguration(false), "sys/risc-v/rv64im.vadl",
         new PassKey(EmitAsmRecursiveDescentParserHeaderFilePass.class.getName()));
 
     // When
@@ -31,11 +30,11 @@ public class EmitAsmRecursiveDescentParserHeaderFilePassTest extends AbstractLcb
     var output = trimmed.lines();
 
     Assertions.assertLinesMatch("""
-        #ifndef LLVM_LIB_TARGET_rv3264im_ASMPARSER_H
-        #define LLVM_LIB_TARGET_rv3264im_ASMPARSER_H
+        #ifndef LLVM_LIB_TARGET_rv64im_ASMPARSER_H
+        #define LLVM_LIB_TARGET_rv64im_ASMPARSER_H
                 
-        #include "rv3264imParsedOperand.h"
-        #include "MCTargetDesc/rv3264imMCExpr.h"
+        #include "rv64imParsedOperand.h"
+        #include "MCTargetDesc/rv64imMCExpr.h"
         #include "llvm/MC/MCParser/MCAsmLexer.h"
         #include "llvm/MC/MCParser/MCAsmParser.h"
         #include "llvm/MC/MCParser/MCTargetAsmParser.h"
@@ -82,121 +81,121 @@ public class EmitAsmRecursiveDescentParserHeaderFilePassTest extends AbstractLcb
         struct NoData{};
                 
         struct mnemonic {
-            ParsedValue<rv3264imParsedOperand> mnemonic;
+            ParsedValue<rv64imParsedOperand> mnemonic;
         };
                 
                 
         struct mnemonicrdimm {
                 
-          ParsedValue<rv3264imParsedOperand> mnemonic;
-          ParsedValue<rv3264imParsedOperand> rd;
-          ParsedValue<rv3264imParsedOperand> imm;
+          ParsedValue<rv64imParsedOperand> mnemonic;
+          ParsedValue<rv64imParsedOperand> rd;
+          ParsedValue<rv64imParsedOperand> imm;
                 
         };
         struct mnemonicrdimmrs1 {
                 
-          ParsedValue<rv3264imParsedOperand> mnemonic;
-          ParsedValue<rv3264imParsedOperand> rd;
-          ParsedValue<rv3264imParsedOperand> imm;
-          ParsedValue<rv3264imParsedOperand> rs1;
+          ParsedValue<rv64imParsedOperand> mnemonic;
+          ParsedValue<rv64imParsedOperand> rd;
+          ParsedValue<rv64imParsedOperand> imm;
+          ParsedValue<rv64imParsedOperand> rs1;
                 
         };
         struct mnemonicrdrs1imm {
                 
-          ParsedValue<rv3264imParsedOperand> mnemonic;
-          ParsedValue<rv3264imParsedOperand> rd;
-          ParsedValue<rv3264imParsedOperand> rs1;
-          ParsedValue<rv3264imParsedOperand> imm;
+          ParsedValue<rv64imParsedOperand> mnemonic;
+          ParsedValue<rv64imParsedOperand> rd;
+          ParsedValue<rv64imParsedOperand> rs1;
+          ParsedValue<rv64imParsedOperand> imm;
                 
         };
         struct mnemonicrdrs1rs2 {
                 
-          ParsedValue<rv3264imParsedOperand> mnemonic;
-          ParsedValue<rv3264imParsedOperand> rd;
-          ParsedValue<rv3264imParsedOperand> rs1;
-          ParsedValue<rv3264imParsedOperand> rs2;
+          ParsedValue<rv64imParsedOperand> mnemonic;
+          ParsedValue<rv64imParsedOperand> rd;
+          ParsedValue<rv64imParsedOperand> rs1;
+          ParsedValue<rv64imParsedOperand> rs2;
                 
         };
         struct mnemonicrdrs1sft {
                 
-          ParsedValue<rv3264imParsedOperand> mnemonic;
-          ParsedValue<rv3264imParsedOperand> rd;
-          ParsedValue<rv3264imParsedOperand> rs1;
-          ParsedValue<rv3264imParsedOperand> sft;
+          ParsedValue<rv64imParsedOperand> mnemonic;
+          ParsedValue<rv64imParsedOperand> rd;
+          ParsedValue<rv64imParsedOperand> rs1;
+          ParsedValue<rv64imParsedOperand> sft;
                 
         };
         struct mnemonicrdrs1shamt {
                 
-          ParsedValue<rv3264imParsedOperand> mnemonic;
-          ParsedValue<rv3264imParsedOperand> rd;
-          ParsedValue<rv3264imParsedOperand> rs1;
-          ParsedValue<rv3264imParsedOperand> shamt;
+          ParsedValue<rv64imParsedOperand> mnemonic;
+          ParsedValue<rv64imParsedOperand> rd;
+          ParsedValue<rv64imParsedOperand> rs1;
+          ParsedValue<rv64imParsedOperand> shamt;
                 
         };
         struct mnemonicrs1rs2imm {
                 
-          ParsedValue<rv3264imParsedOperand> mnemonic;
-          ParsedValue<rv3264imParsedOperand> rs1;
-          ParsedValue<rv3264imParsedOperand> rs2;
-          ParsedValue<rv3264imParsedOperand> imm;
+          ParsedValue<rv64imParsedOperand> mnemonic;
+          ParsedValue<rv64imParsedOperand> rs1;
+          ParsedValue<rv64imParsedOperand> rs2;
+          ParsedValue<rv64imParsedOperand> imm;
                 
         };
         struct mnemonicrs2immrs1 {
                 
-          ParsedValue<rv3264imParsedOperand> mnemonic;
-          ParsedValue<rv3264imParsedOperand> rs2;
-          ParsedValue<rv3264imParsedOperand> imm;
-          ParsedValue<rv3264imParsedOperand> rs1;
+          ParsedValue<rv64imParsedOperand> mnemonic;
+          ParsedValue<rv64imParsedOperand> rs2;
+          ParsedValue<rv64imParsedOperand> imm;
+          ParsedValue<rv64imParsedOperand> rs1;
                 
         };
         struct fun67 {
                 
-          ParsedValue<rv3264imParsedOperand> fun67;
+          ParsedValue<rv64imParsedOperand> fun67;
                 
         };
         struct funct3 {
                 
-          ParsedValue<rv3264imParsedOperand> funct3;
+          ParsedValue<rv64imParsedOperand> funct3;
                 
         };
         struct funct7 {
                 
-          ParsedValue<rv3264imParsedOperand> funct7;
+          ParsedValue<rv64imParsedOperand> funct7;
                 
         };
         struct imm {
                 
-          ParsedValue<rv3264imParsedOperand> imm;
+          ParsedValue<rv64imParsedOperand> imm;
                 
         };
         struct opcode {
                 
-          ParsedValue<rv3264imParsedOperand> opcode;
+          ParsedValue<rv64imParsedOperand> opcode;
                 
         };
         struct rd {
                 
-          ParsedValue<rv3264imParsedOperand> rd;
+          ParsedValue<rv64imParsedOperand> rd;
                 
         };
         struct rs1 {
                 
-          ParsedValue<rv3264imParsedOperand> rs1;
+          ParsedValue<rv64imParsedOperand> rs1;
                 
         };
         struct rs2 {
                 
-          ParsedValue<rv3264imParsedOperand> rs2;
+          ParsedValue<rv64imParsedOperand> rs2;
                 
         };
         struct sft {
                 
-          ParsedValue<rv3264imParsedOperand> sft;
+          ParsedValue<rv64imParsedOperand> sft;
                 
         };
                 
                 
-        class rv3264imAsmRecursiveDescentParser {
+        class rv64imAsmRecursiveDescentParser {
             MCAsmLexer &Lexer;
             MCAsmParser &Parser;
             OperandVector &Operands;
@@ -207,7 +206,7 @@ public class EmitAsmRecursiveDescentParserHeaderFilePassTest extends AbstractLcb
             // «visitor.resultType( AsmType.Expression )» BuiltinExpression();
                 
         public:
-            rv3264imAsmRecursiveDescentParser(MCAsmLexer &lexer, MCAsmParser &parser, OperandVector& operands)
+            rv64imAsmRecursiveDescentParser(MCAsmLexer &lexer, MCAsmParser &parser, OperandVector& operands)
                 : Lexer(lexer), Parser(parser), Operands(operands) {
             }
                 
@@ -218,7 +217,7 @@ public class EmitAsmRecursiveDescentParserHeaderFilePassTest extends AbstractLcb
                 
         }
                 
-        #endif // LLVM_LIB_TARGET_rv3264im_ASMPARSER_H
+        #endif // LLVM_LIB_TARGET_rv64im_ASMPARSER_H
                 """.trim().lines(), output);
   }
 }
