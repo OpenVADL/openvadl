@@ -74,7 +74,7 @@ RuleParsingResult<NoData> [(${namespace})]AsmRecursiveDescentParser::EOL() {
     }
 }
 
-RuleParsingResult<uint64_t /* UInt<64> */> <[(${namespace})]AsmRecursiveDescentParser::Register()
+RuleParsingResult<uint64_t /* UInt<64> */> [(${namespace})]AsmRecursiveDescentParser::Register()
 {
     RuleParsingResult<StringRef> temp_20 = IDENTIFIER();
     if(!temp_20.Success) {
@@ -89,7 +89,7 @@ RuleParsingResult<uint64_t /* UInt<64> */> <[(${namespace})]AsmRecursiveDescentP
     return RuleParsingResult<uint64_t /* UInt<64> */>(casted);
 }
 
-RuleParsingResult<StringRef> <[(${namespace})]AsmRecursiveDescentParser::Identifier()
+RuleParsingResult<StringRef> [(${namespace})]AsmRecursiveDescentParser::Identifier()
 {
     RuleParsingResult<StringRef> temp_22 = IDENTIFIER();
     if(!temp_22.Success) {
@@ -98,4 +98,11 @@ RuleParsingResult<StringRef> <[(${namespace})]AsmRecursiveDescentParser::Identif
     ParsedValue<StringRef> RuleReference_g2504 = temp_22.getParsed();
     return RuleParsingResult<StringRef>(RuleReference_g2504);
 }
+
+[# th:each="pr : ${instructionResults}" ]
+RuleParsingResult<NoData> [(${namespace})]AsmRecursiveDescentParser::[(${pr.functionName})]() {
+[(${pr.body})]
+}
+[/]
+
 }

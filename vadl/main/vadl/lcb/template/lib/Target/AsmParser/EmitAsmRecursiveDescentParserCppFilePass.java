@@ -41,7 +41,7 @@ public class EmitAsmRecursiveDescentParserCppFilePass extends LcbTemplateRenderi
 
   }
 
-  record ParsingResultInstruction(String body) {
+  record ParsingResultInstruction(String functionName, String body) {
 
   }
 
@@ -71,12 +71,13 @@ public class EmitAsmRecursiveDescentParserCppFilePass extends LcbTemplateRenderi
                       ReturnNode.class);
               visitor.visit(returnNode);
 
-              return writer.toString();
+              return new ParsingResultInstruction(
+                  ParserGenerator.generateInstructionName(instruction), writer.toString());
             })
-            .collect(Collectors.joining("\n"));
+            .toList();
 
     return Map.of(CommonVarNames.NAMESPACE, specification.name(),
         "lexParsingResults", parsingResultsConstants,
-            "instructionResults", parsingResultInstructions);
+        "instructionResults", parsingResultInstructions);
   }
 }

@@ -40,7 +40,7 @@ public class AssemblyCodeGeneratorVisitor extends GenericCppCodeGeneratorVisitor
   public AssemblyCodeGeneratorVisitor(String namespace, StringWriter writer) {
     super(writer);
     this.namespace = namespace;
-    symbolTable = new SymbolTable();
+    symbolTable = new SymbolTable("VAR_");
   }
 
   @Override
@@ -75,26 +75,25 @@ public class AssemblyCodeGeneratorVisitor extends GenericCppCodeGeneratorVisitor
       var mnem = symbolTable.getNextVariable();
       var binding = symbolTable.getNextVariable();
       var operandIdentifier = namespace + "ParsedOperand";
-      writer.write(String.format("""
-              ParsedValue<%s> %s(%s::CreateToken(%s.Value, %s.S, %s.E));
-              %s.Value.setTarget("mnemonic");
-              mnemonic %s = {%s};
-              ParsedValue<mnemonic> %s = ParsedValue<mnemonic>(%s);
-              """,
-          operandIdentifier,
-          symbol,
-          operandIdentifier,
-          oldSymbol,
-          oldSymbol,
-          oldSymbol,
-          symbol,
-          mnem,
-          symbol,
-          binding,
-          mnem));
+      writer.write(StringSubstitutor.replace("""
+          ParsedValue<${operandIdentifier}> ${symbol}(${operandIdentifier}::CreateToken(
+            ${oldSymbol}.Value, ${oldSymbol}.S, ${oldSymbol}.E));
+          ${symbol}.Value.setTarget("mnemonic");
+          mnemonic ${mnem} = {${symbol}};
+          ParsedValue<mnemonic> ${binding} = ParsedValue<mnemonic>(${mnem});
+          """, Map.of(
+          "operandIdentifier", operandIdentifier,
+          "symbol", symbol,
+          "oldSymbol", oldSymbol,
+          "mnem", mnem,
+          "binding", binding
+      )));
       operands.add(mnem);
-    } else if (node.builtIn() == BuiltInTable.REGISTER
-        || node.builtIn() == BuiltInTable.DECIMAL
+    } else if (node.builtIn() == BuiltInTable.REGISTER) {
+      for (var arg : node.arguments()) {
+        visit(arg);
+      }
+    } else if (node.builtIn() == BuiltInTable.DECIMAL
         || node.builtIn() == BuiltInTable.HEX) {
       for (var arg : node.arguments()) {
         visit(arg);
@@ -102,7 +101,7 @@ public class AssemblyCodeGeneratorVisitor extends GenericCppCodeGeneratorVisitor
     } else if (node.builtIn() == BuiltInTable.CONCATENATE_STRINGS) {
       var symbol = symbolTable.getNextVariable();
       var sequence = symbolTable.getNextVariable();
-      var structName = mapParserRecord(node);
+      var structName = mapParserRecord(node).structName();
 
       var ops = new ArrayList<String>();
       for (int i = 0; i < node.arguments().size(); i++) {
@@ -111,20 +110,20 @@ public class AssemblyCodeGeneratorVisitor extends GenericCppCodeGeneratorVisitor
       Collections.reverse(ops);
 
       var fields = Streams.zip(node.arguments().stream()
-                  .map(ParserGenerator::mapToName), ops.stream(),
-              (variable, field) -> variable + ".Value." + field)
-          .collect(Collectors.joining("\n"));
+                  .map(ParserGenerator::mapToName).filter(x -> !x.isEmpty()), ops.stream(),
+              (field, variable) -> variable + ".Value." + field)
+          .collect(Collectors.joining(",\n"));
 
       var pushBacks = node.arguments().stream()
-          .map(
-              field -> String.format("""
-                  Operands.push_back(std::make_unique<%sParsedOperand>
-                    (%s.Value.%s.Value));
-                  """, namespace, sequence, field))
+          .map(ParserGenerator::mapToName)
+          .filter(x -> !x.isEmpty())
+          .map(field -> String.format("""
+              Operands.push_back(std::make_unique<%sParsedOperand>(%s.Value.%s.Value));
+                    """, namespace, sequence, field))
           .collect(Collectors.joining("\n"));
 
       var result = StringSubstitutor.replace("""
-          ${structName} {$symbol} = {
+          ${structName} ${symbol} = {
             ${fields}
           };
           ParsedValue<${structName}> ${sequence} = ParsedValue<${structName}>(${symbol});
@@ -145,48 +144,29 @@ public class AssemblyCodeGeneratorVisitor extends GenericCppCodeGeneratorVisitor
   public void visit(AssemblyConstant node) {
     var symbol = symbolTable.getNextVariable();
     var unwrappedSymbol = symbolTable.getNextVariable();
-    writer.write(String.format("""
-            RuleParsingResult<StringRef> %s = Literal("%s");
-            if(!%s.Success) {
-                return RuleParsingResult<NoData>(%s.getError());
-            }
-            ParsedValue<StringRef> %s = %s.getParsed();
-            """, symbol,
-        ((Constant.Str) node.constant()).value(),
-        symbol,
-        symbol,
-        unwrappedSymbol,
-        symbol));
-
+    writer.write(StringSubstitutor.replace("""
+        RuleParsingResult<StringRef> ${symbol} = Literal("${lit}");
+        if(!${symbol}.Success) {
+          return RuleParsingResult<NoData>(${symbol}.getError());
+        }
+        ParsedValue<StringRef> ${unwrappedSymbol} = ${symbol}.getParsed();
+        """, Map.of(
+        "symbol", symbol,
+        "lit", ((Constant.Str) node.constant()).value(),
+        "unwrappedSymbol", unwrappedSymbol
+    )));
     operands.add(unwrappedSymbol);
   }
 
   @Override
   public void visit(FieldRefNode node) {
-    handleFormats(node.formatField().identifier);
-  }
-
-  @Override
-  public void visit(FieldAccessRefNode fieldAccessRefNode) {
-    handleFormats(fieldAccessRefNode.fieldAccess().identifier);
-  }
-
-  @Override
-  public void visit(ReturnNode returnNode) {
-    visit(returnNode.value());
-    writer.write("""
-        return ParsedValue<NoData>(NoData());
-        """);
-  }
-
-  private void handleFormats(Identifier formatFieldIdentifier) {
     var symbol = symbolTable.getNextVariable();
     var parsedSymbol = symbolTable.getNextVariable();
     var parsedOperand = symbolTable.getNextVariable();
     var register = symbolTable.getNextVariable();
     var binding = symbolTable.getNextVariable();
     var operandIdentifier = namespace + "ParsedOperand";
-    var field = formatFieldIdentifier.simpleName();
+    var field = node.formatField().identifier.simpleName();
 
     writer.write(StringSubstitutor.replace("""
         RuleParsingResult<uint64_t /* UInt<64> */> ${symbol} = Register();
@@ -209,5 +189,42 @@ public class AssemblyCodeGeneratorVisitor extends GenericCppCodeGeneratorVisitor
     )));
 
     operands.add(binding);
+  }
+
+  @Override
+  public void visit(FieldAccessRefNode fieldAccessRefNode) {
+    var operandIdentifier = namespace + "ParsedOperand";
+    var oldSymbol = symbolTable.getLastVariable();
+    var constExpr = symbolTable.getNextVariable();
+    var symbol = symbolTable.getNextVariable();
+    var parsed = symbolTable.getNextVariable();
+    var imm = symbolTable.getNextVariable();
+    var binding = symbolTable.getNextVariable();
+
+    writer.write(StringSubstitutor.replace("""
+        const MCExpr* ${constExpr} = MCConstantExpr::create(${oldSymbol}.Value, Parser.getContext());
+        ParsedValue<${operandIdentifier}> ${symbol}(${operandIdentifier}::CreateImm(
+          ${constExpr}, ${oldSymbol}.S, {oldSymbol}.E));
+        ${symbol}.Value.setTarget("${lit}");
+        ${lit} ${imm} = {${symbol}};
+        ParsedValue<${lit}> ${binding} = ParsedValue<${lit}>(${imm});
+        """, Map.of(
+        "operandIdentifier", operandIdentifier,
+        "constExpr", constExpr,
+        "symbol", symbol,
+        "oldSymbol", oldSymbol,
+        "parsed", parsed,
+        "imm", imm,
+        "binding", binding,
+        "lit", fieldAccessRefNode.fieldAccess().identifier.simpleName()
+    )));
+  }
+
+  @Override
+  public void visit(ReturnNode returnNode) {
+    visit(returnNode.value());
+    writer.write("""
+        return ParsedValue<NoData>(NoData());
+        """);
   }
 }
