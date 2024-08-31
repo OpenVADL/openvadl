@@ -39,6 +39,9 @@ public class AssemblyCodeGeneratorVisitor extends GenericCppCodeGeneratorVisitor
   private final Instruction instruction;
   private final Stack<String> operands = new Stack<>();
 
+  /**
+   * Constructor.
+   */
   public AssemblyCodeGeneratorVisitor(String namespace, Instruction instruction,
                                       StringWriter writer) {
     super(writer);
@@ -187,10 +190,13 @@ public class AssemblyCodeGeneratorVisitor extends GenericCppCodeGeneratorVisitor
             return RuleParsingResult<NoData>(${symbol}.getError());
         }
         ParsedValue<uint64_t /* UInt<64> */> ${parsedSymbol} = ${symbol}.getParsed();
-        ParsedValue<${operandIdentifier}> ${parsedOperand}(${operandIdentifier}::CreateReg(${parsedSymbol}.Value, ${operandIdentifier}::RegisterKind::rk_IntReg, ${parsedSymbol}.S, ${parsedSymbol}.E));
+        ParsedValue<${operandIdentifier}>
+          ${parsedOperand}(${operandIdentifier}::CreateReg(${parsedSymbol}.Value,
+            ${operandIdentifier}::RegisterKind::rk_IntReg, ${parsedSymbol}.S, ${parsedSymbol}.E));
         ${parsedOperand}.Value.setTarget("${field}");
         ${field} ${register} = ${parsedOperand};
-        ParsedValue<${operandIdentifier}> ${binding} = ParsedValue<${operandIdentifier}>(${register});
+        ParsedValue<${operandIdentifier}> ${binding} =
+          ParsedValue<${operandIdentifier}>(${register});
         """, Map.of(
         "symbol", symbol,
         "parsedSymbol", parsedSymbol,
@@ -215,7 +221,8 @@ public class AssemblyCodeGeneratorVisitor extends GenericCppCodeGeneratorVisitor
     var binding = symbolTable.getNextVariable();
 
     writer.write(StringSubstitutor.replace("""
-        const MCExpr* ${constExpr} = MCConstantExpr::create(${oldSymbol}.Value, Parser.getContext());
+        const MCExpr* ${constExpr} = MCConstantExpr::create(${oldSymbol}.Value,
+          Parser.getContext());
         ParsedValue<${operandIdentifier}> ${symbol}(${operandIdentifier}::CreateImm(
           ${constExpr}, ${oldSymbol}.S, {oldSymbol}.E));
         ${symbol}.Value.setTarget("${lit}");

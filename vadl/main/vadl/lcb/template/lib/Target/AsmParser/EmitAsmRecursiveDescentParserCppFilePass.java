@@ -41,7 +41,7 @@ public class EmitAsmRecursiveDescentParserCppFilePass extends LcbTemplateRenderi
   /**
    * The parser has methods for lexes which are used.
    */
-  record RuleParsingResultForLex(AssemblyConstant.TOKEN_KIND kind, String functionName) {
+  record RuleParsingResultForLex(AssemblyConstant.TokenKind kind, String functionName) {
 
   }
 
@@ -64,7 +64,7 @@ public class EmitAsmRecursiveDescentParserCppFilePass extends LcbTemplateRenderi
 
   @NotNull
   private static List<RuleParsingResultForLex> lexes(Specification specification) {
-    return specification.isas().flatMap(isa -> isa.instructions().stream())
+    return specification.isas().flatMap(isa -> isa.ownInstructions().stream())
         .flatMap(instruction -> instruction.assembly().function().behavior().getNodes(
             AssemblyConstant.class))
         .sorted(Comparator.comparing(AssemblyConstant::kind)) // Sort by something
@@ -78,7 +78,7 @@ public class EmitAsmRecursiveDescentParserCppFilePass extends LcbTemplateRenderi
   @NotNull
   private List<RuleParsingResultWhenInstruction> instructions(Specification specification) {
     return specification.isas()
-        .flatMap(isa -> isa.instructions().stream())
+        .flatMap(isa -> isa.ownInstructions().stream())
         .map(instruction -> {
           var writer = new StringWriter();
           var visitor =

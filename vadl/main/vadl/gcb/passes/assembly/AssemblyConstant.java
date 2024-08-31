@@ -2,19 +2,21 @@ package vadl.gcb.passes.assembly;
 
 import java.util.regex.Pattern;
 import vadl.gcb.passes.assembly.visitors.AssemblyVisitor;
-import vadl.viam.Assembly;
 import vadl.viam.Constant;
+import vadl.viam.Function;
 import vadl.viam.graph.GraphNodeVisitor;
 import vadl.viam.graph.Node;
 import vadl.viam.graph.dependency.ConstantNode;
 
 /**
- * A predefined node for the {@link Assembly#function()#graph()}.
+ * A predefined node for the assembly's {@link Function#behavior()}.
  */
 public class AssemblyConstant extends ConstantNode {
 
-
-  public enum TOKEN_KIND {
+  /**
+   * LLVM's set of predefined tokens.
+   */
+  public enum TokenKind {
     // Markers
     Eof, Error,
 
@@ -38,96 +40,99 @@ public class AssemblyConstant extends ConstantNode {
     Greater, GreaterEqual, GreaterGreater, At, MinusGreater,
   }
 
-  private final TOKEN_KIND kind;
+  private final TokenKind kind;
 
   public AssemblyConstant(Constant.Str constant) {
     super(constant);
     this.kind = getKind(constant);
   }
 
-  public static TOKEN_KIND getKind(Constant.Str constant) {
+  /**
+   * Get {@link TokenKind} based on constant.
+   */
+  public static TokenKind getKind(Constant.Str constant) {
     switch (constant.toString()) {
       case " ":
-        return TOKEN_KIND.Space;
+        return TokenKind.Space;
       case "+":
-        return TOKEN_KIND.Plus;
+        return TokenKind.Plus;
       case "-":
-        return TOKEN_KIND.Minus;
+        return TokenKind.Minus;
       case "*":
-        return TOKEN_KIND.Star;
+        return TokenKind.Star;
       case "/":
-        return TOKEN_KIND.Slash;
+        return TokenKind.Slash;
       case "\\":
-        return TOKEN_KIND.BackSlash;
+        return TokenKind.BackSlash;
       case "?":
-        return TOKEN_KIND.Question;
+        return TokenKind.Question;
       case "!":
-        return TOKEN_KIND.Exclaim;
+        return TokenKind.Exclaim;
       case ".":
-        return TOKEN_KIND.Dot;
+        return TokenKind.Dot;
       case "$":
-        return TOKEN_KIND.Dollar;
+        return TokenKind.Dollar;
       case ",":
-        return TOKEN_KIND.Comma;
+        return TokenKind.Comma;
       case "~":
-        return TOKEN_KIND.Tilde;
+        return TokenKind.Tilde;
       case ":":
-        return TOKEN_KIND.Colon;
+        return TokenKind.Colon;
       case "^":
-        return TOKEN_KIND.Caret;
+        return TokenKind.Caret;
       case "(":
-        return TOKEN_KIND.LParen;
+        return TokenKind.LParen;
       case ")":
-        return TOKEN_KIND.RParen;
+        return TokenKind.RParen;
       case "[":
-        return TOKEN_KIND.LBrac;
+        return TokenKind.LBrac;
       case "]":
-        return TOKEN_KIND.RBrac;
+        return TokenKind.RBrac;
       case "{":
-        return TOKEN_KIND.LCurly;
+        return TokenKind.LCurly;
       case "}":
-        return TOKEN_KIND.RCurly;
+        return TokenKind.RCurly;
       case "=":
-        return TOKEN_KIND.Equal;
+        return TokenKind.Equal;
       case "==":
-        return TOKEN_KIND.EqualEqual;
+        return TokenKind.EqualEqual;
       case "!=":
-        return TOKEN_KIND.ExclaimEqual;
+        return TokenKind.ExclaimEqual;
       case "%":
-        return TOKEN_KIND.Percent;
+        return TokenKind.Percent;
       case "#":
-        return TOKEN_KIND.Hash;
+        return TokenKind.Hash;
       case "|":
-        return TOKEN_KIND.Pipe;
+        return TokenKind.Pipe;
       case "||":
-        return TOKEN_KIND.PipePipe;
+        return TokenKind.PipePipe;
       case "&":
-        return TOKEN_KIND.Amp;
+        return TokenKind.Amp;
       case "&&":
-        return TOKEN_KIND.AmpAmp;
+        return TokenKind.AmpAmp;
       case "@":
-        return TOKEN_KIND.At;
+        return TokenKind.At;
       case "<":
-        return TOKEN_KIND.Less;
+        return TokenKind.Less;
       case "<=":
-        return TOKEN_KIND.LessEqual;
+        return TokenKind.LessEqual;
       case "<<":
-        return TOKEN_KIND.LessLess;
+        return TokenKind.LessLess;
       case "<>":
-        return TOKEN_KIND.LessGreater;
+        return TokenKind.LessGreater;
       case ">":
-        return TOKEN_KIND.Greater;
+        return TokenKind.Greater;
       case ">=":
-        return TOKEN_KIND.GreaterEqual;
+        return TokenKind.GreaterEqual;
       case "->":
-        return TOKEN_KIND.MinusGreater;
+        return TokenKind.MinusGreater;
       default:
         var pattern = Pattern.compile("-?\\d+(\\.\\d+)?");
         // Check if number
         if (pattern.matcher(constant.toString()).matches()) {
-          return TOKEN_KIND.Integer;
+          return TokenKind.Integer;
         }
-        return TOKEN_KIND.Identifier;
+        return TokenKind.Identifier;
     }
   }
 
@@ -146,7 +151,7 @@ public class AssemblyConstant extends ConstantNode {
     ((AssemblyVisitor) visitor).visit(this);
   }
 
-  public TOKEN_KIND kind() {
+  public TokenKind kind() {
     return kind;
   }
 }

@@ -10,6 +10,9 @@ import vadl.viam.graph.dependency.BuiltInCall;
 import vadl.viam.graph.dependency.ExpressionNode;
 import vadl.viam.graph.dependency.FieldRefNode;
 
+/**
+ * Register Node in assembly.
+ */
 public class AssemblyRegisterNode extends BuiltInCall {
 
 

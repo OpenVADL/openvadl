@@ -34,13 +34,13 @@ public class AssemblyConcatBuiltinMergingPass extends Pass {
     // It is a candidate when it is a builtin with concatenate string
     // and one argument is also a builtin with concatenate string.
     var candidates = viam.isas()
-        .flatMap(isa -> isa.instructions().stream())
+        .flatMap(isa -> isa.ownInstructions().stream())
         .flatMap(
             instruction -> instruction.assembly().function().behavior().getNodes(BuiltInCall.class))
         .filter(builtin -> builtin.builtIn() == BuiltInTable.CONCATENATE_STRINGS)
         .filter(built -> built.arguments().stream().anyMatch(
-            arg -> arg instanceof BuiltInCall argNode &&
-                argNode.builtIn() == BuiltInTable.CONCATENATE_STRINGS))
+            arg -> arg instanceof BuiltInCall argNode
+                && argNode.builtIn() == BuiltInTable.CONCATENATE_STRINGS))
         .toList();
 
     // Insert the child's arguments into parent's argument
