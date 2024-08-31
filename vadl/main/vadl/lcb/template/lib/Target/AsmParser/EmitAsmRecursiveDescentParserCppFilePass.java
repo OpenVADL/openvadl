@@ -83,6 +83,7 @@ public class EmitAsmRecursiveDescentParserCppFilePass extends LcbTemplateRenderi
           var writer = new StringWriter();
           var visitor =
               new AssemblyCodeGeneratorVisitor(lcbConfiguration().processorName().value(),
+                  instruction,
                   writer);
           var returnNode =
               GraphUtils.getSingleNode(instruction.assembly().function().behavior(),

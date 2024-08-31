@@ -17,6 +17,7 @@ import vadl.gcb.passes.assembly.visitors.AssemblyVisitor;
 import vadl.types.BuiltInTable;
 import vadl.viam.Constant;
 import vadl.viam.Identifier;
+import vadl.viam.Instruction;
 import vadl.viam.ViamError;
 import vadl.viam.graph.control.ReturnNode;
 import vadl.viam.graph.dependency.BuiltInCall;
@@ -35,11 +36,14 @@ public class AssemblyCodeGeneratorVisitor extends GenericCppCodeGeneratorVisitor
 
   private final String namespace;
   private final SymbolTable symbolTable;
+  private final Instruction instruction;
   private final Stack<String> operands = new Stack<>();
 
-  public AssemblyCodeGeneratorVisitor(String namespace, StringWriter writer) {
+  public AssemblyCodeGeneratorVisitor(String namespace, Instruction instruction,
+                                      StringWriter writer) {
     super(writer);
     this.namespace = namespace;
+    this.instruction = instruction;
     symbolTable = new SymbolTable("VAR_");
   }
 
@@ -70,12 +74,19 @@ public class AssemblyCodeGeneratorVisitor extends GenericCppCodeGeneratorVisitor
     }
 
     if (node.builtIn() == BuiltInTable.MNEMONIC) {
-      var oldSymbol = symbolTable.getLastVariable();
+      var oldSymbol = symbolTable.getNextVariable();
+      var oldSymbolStrLit = symbolTable.getNextVariable();
       var symbol = symbolTable.getNextVariable();
       var mnem = symbolTable.getNextVariable();
       var binding = symbolTable.getNextVariable();
       var operandIdentifier = namespace + "ParsedOperand";
+      var lit = instruction.identifier.simpleName();
       writer.write(StringSubstitutor.replace("""
+          RuleParsingResult<StringRef> ${oldSymbol} = Literal("${lit}");
+          if(!${oldSymbol}.Success) {
+              return RuleParsingResult<NoData>(${oldSymbol}.getError());
+          }
+          ParsedValue<StringRef> ${oldSymbolStrLit} = ${oldSymbol}.getParsed();
           ParsedValue<${operandIdentifier}> ${symbol}(${operandIdentifier}::CreateToken(
             ${oldSymbol}.Value, ${oldSymbol}.S, ${oldSymbol}.E));
           ${symbol}.Value.setTarget("mnemonic");
@@ -85,6 +96,8 @@ public class AssemblyCodeGeneratorVisitor extends GenericCppCodeGeneratorVisitor
           "operandIdentifier", operandIdentifier,
           "symbol", symbol,
           "oldSymbol", oldSymbol,
+          "lit", lit,
+          "oldSymbolStrLit", oldSymbolStrLit,
           "mnem", mnem,
           "binding", binding
       )));
