@@ -63,7 +63,8 @@ public class EmitAsmRecursiveDescentParserHeaderFilePass extends LcbTemplateRend
             instruction -> instruction.assembly().function().behavior().getNodes(BuiltInCall.class))
         .filter(node -> node.builtIn() == BuiltInTable.CONCATENATE_STRINGS)
         .map(ParserGenerator::mapParserRecord)
-        .distinct();
+        .distinct()
+        .sorted(Comparator.comparing(ParserGenerator.FieldStructEnumeration::structName));
   }
 
   @NotNull
@@ -75,7 +76,8 @@ public class EmitAsmRecursiveDescentParserHeaderFilePass extends LcbTemplateRend
         .map(field -> new ParserGenerator.FieldStructEnumeration(
             ParserGenerator.generateStructName(List.of(field)),
             Stream.of(field).map(ParserGenerator::generateFieldName).toList()))
-        .distinct();
+        .distinct()
+        .sorted(Comparator.comparing(ParserGenerator.FieldStructEnumeration::structName));
   }
 
   @NotNull
