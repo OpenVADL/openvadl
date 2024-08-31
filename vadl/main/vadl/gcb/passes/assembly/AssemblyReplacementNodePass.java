@@ -43,7 +43,7 @@ public class AssemblyReplacementNodePass extends Pass {
   }
 
   private static void replaceConstants(Specification viam) {
-    var affectedNodes = viam.isas().flatMap(isa -> isa.instructions().stream())
+    var affectedNodes = viam.isas().flatMap(isa -> isa.ownInstructions().stream())
         .flatMap(instruction -> instruction.assembly().function().behavior()
             .getNodes(ConstantNode.class))
         .filter(constantNode -> constantNode.constant() instanceof Constant.Str)
@@ -55,7 +55,7 @@ public class AssemblyReplacementNodePass extends Pass {
   }
 
   private static void replaceRegisters(Specification viam) {
-    var affectedNodes = viam.isas().flatMap(isa -> isa.instructions().stream())
+    var affectedNodes = viam.isas().flatMap(isa -> isa.ownInstructions().stream())
         .flatMap(instruction -> instruction.assembly().function().behavior()
             .getNodes(BuiltInCall.class))
         .filter(x -> x.builtIn() == BuiltInTable.REGISTER)
