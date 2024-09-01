@@ -44,8 +44,8 @@ public class AssemblyConcatBuiltinMergingPass extends Pass {
         // only find concat strings that are not used by other concat strings.
         // we will recursively resolve them, so we want only the root objects.
         .filter(builtIn -> builtIn.usages().noneMatch(
-            user -> user instanceof BuiltInCall userBuiltIn &&
-                userBuiltIn.builtIn() == BuiltInTable.CONCATENATE_STRINGS))
+            user -> user instanceof BuiltInCall userBuiltIn
+                && userBuiltIn.builtIn() == BuiltInTable.CONCATENATE_STRINGS))
         // we skip those that don't have a string concat built-in as an argument.
         .filter(built -> built.arguments().stream().anyMatch(
             arg -> arg instanceof BuiltInCall argNode
@@ -72,8 +72,8 @@ public class AssemblyConcatBuiltinMergingPass extends Pass {
 
     var hadStringConcatArg = false;
     for (var arg : builtInCall.arguments()) {
-      if (arg instanceof BuiltInCall argNode &&
-          argNode.builtIn() == BuiltInTable.CONCATENATE_STRINGS) {
+      if (arg instanceof BuiltInCall argNode
+          && argNode.builtIn() == BuiltInTable.CONCATENATE_STRINGS) {
         // if arg is also string concat, we merge them
         mergeStringConcatAndChildren(argNode);
         hadStringConcatArg = true;
@@ -89,8 +89,8 @@ public class AssemblyConcatBuiltinMergingPass extends Pass {
     for (var arg : builtInCall.arguments()) {
       // add all args to the mergedArgs
 
-      if (arg instanceof BuiltInCall argNode &&
-          argNode.builtIn() == BuiltInTable.CONCATENATE_STRINGS) {
+      if (arg instanceof BuiltInCall argNode
+          && argNode.builtIn() == BuiltInTable.CONCATENATE_STRINGS) {
         // if arg is a string concat, we add all its arguments
         mergedArgs.addAll(argNode.arguments());
       } else {
