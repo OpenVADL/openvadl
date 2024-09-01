@@ -1,4 +1,4 @@
-package vadl.lcb.codegen;
+package vadl.lcb.codegen.encoding;
 
 import static vadl.cppCodeGen.CppTypeMap.getCppTypeNameByVadlType;
 

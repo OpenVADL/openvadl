@@ -1,7 +1,6 @@
 package vadl.viam.graph.dependency;
 
 import java.util.List;
-import java.util.stream.Stream;
 import vadl.javaannotations.viam.DataValue;
 import vadl.types.BuiltInTable;
 import vadl.types.BuiltInTable.BuiltIn;
@@ -32,9 +31,16 @@ public class BuiltInCall extends AbstractFunctionCallNode implements Canonicaliz
    * Utility constructor for a built-in call.
    */
   public static BuiltInCall of(BuiltIn builtIn, ExpressionNode... args) {
+    return of(builtIn, List.of(args));
+  }
+
+  /**
+   * Utility constructor for a built-in call.
+   */
+  public static BuiltInCall of(BuiltIn builtIn, List<ExpressionNode> args) {
     var argList = new NodeList<>(args);
     var type = builtIn.returns(
-        Stream.of(args)
+        args.stream()
             .map(ExpressionNode::type).toList()
     );
     return new BuiltInCall(builtIn, argList, type);

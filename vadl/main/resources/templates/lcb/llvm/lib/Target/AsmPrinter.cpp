@@ -120,10 +120,6 @@ void [(${namespace})]AsmPrinter::emitStartOfAsmFile( Module& module )
         OutStreamer->emitRawComment( "", false );
         OutStreamer->emitRawComment( "   Vienna Architecture Description Language (VADL)", false );
         OutStreamer->emitRawComment( "", false );
-        OutStreamer->emitRawComment( "    Release: «Version.name»", false );
-        OutStreamer->emitRawComment( "   Revision: «Version.commit»", false );
-        OutStreamer->emitRawComment( " Branch/Tag: «Version.tag»", false );
-        OutStreamer->emitRawComment( "", false );
     }
 
     AsmPrinter::emitStartOfAsmFile( module );
