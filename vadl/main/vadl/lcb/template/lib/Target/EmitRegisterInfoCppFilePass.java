@@ -17,6 +17,7 @@ import vadl.lcb.passes.isaMatching.InstructionLabel;
 import vadl.lcb.passes.isaMatching.IsaMatchingPass;
 import vadl.lcb.template.CommonVarNames;
 import vadl.lcb.template.LcbTemplateRenderingPass;
+import vadl.lcb.templateUtils.RegisterUtils;
 import vadl.pass.PassResults;
 import vadl.viam.Instruction;
 import vadl.viam.RegisterFile;
@@ -46,16 +47,15 @@ public class EmitRegisterInfoCppFilePass extends LcbTemplateRenderingPass {
     return "llvm/lib/Target/" + processorName + "/" + processorName + "RegisterInfo.cpp";
   }
 
-  record FrameIndexElimination(InstructionLabel instructionLabel, Instruction instruction,
-                               FieldAccessRefNode immediate, String predicateMethodName) {
-
-  }
-
-  record Register(int index, String name) {
-
-  }
-
-  record RegisterClass(RegisterFile registerFile, List<Register> registers) {
+  /**
+   * The ADDI and memory manipulation instructions will handle the frame index.
+   * Therefore, LLVM requires methods to eliminate the index. An object of this
+   * record represents one method for each {@link Instruction} (ADDI, MEM_STORE, MEM_LOAD).
+   */
+  record FrameIndexElimination(InstructionLabel instructionLabel,
+                               Instruction instruction,
+                               FieldAccessRefNode immediate,
+                               String predicateMethodName) {
 
   }
 
@@ -74,14 +74,7 @@ public class EmitRegisterInfoCppFilePass extends LcbTemplateRenderingPass {
         getEliminateFrameIndexEntries(instructionLabels, uninlined).stream()
             .sorted(Comparator.comparing(o -> o.instruction.identifier.name())).toList(),
         "registerClasses",
-        specification.registerFiles().map(EmitRegisterInfoCppFilePass::getRegisterClass).toList());
-  }
-
-  @NotNull
-  private static RegisterClass getRegisterClass(RegisterFile registerFile) {
-    return new RegisterClass(registerFile,
-        IntStream.range(0, (int) Math.pow(2, (long) registerFile.addressType().bitWidth()))
-            .mapToObj(i -> new Register(i, registerFile.identifier.simpleName() + i)).toList());
+        specification.registerFiles().map(RegisterUtils::getRegisterClass).toList());
   }
 
   private List<FrameIndexElimination> getEliminateFrameIndexEntries(

@@ -12,24 +12,26 @@ using namespace llvm;
 
 /* == Register Classes == */
 [#th:block th:each="registerClass : ${registerClasses}" ]
-static const unsigned [(${registerClass.simpleName})][] = {
-      //TODO define registers
+static const unsigned [(${registerClass.registerFile.identifier.simpleName()})]DecoderTable[] = {
+  [#th:block th:each="register, iterStat : ${registerClass.registers}" ]
+    [(${namespace})]::[(${register.name})][#th:block th:if="${!iterStat.last}"],[/th:block]
+  [/th:block]
 };
 [/th:block]
 
 /* == Immediate Decoding == */
 [#th:block th:each="immediate : ${immediates}" ]
-DecodeStatus decode[(${immediate.loweredImmediate.identifier})](MCInst &Inst, uint64_t Imm, int64_t Address, const void *Decoder)
+DecodeStatus decode[(${immediate.simpleName})](MCInst &Inst, uint64_t Imm, int64_t Address, const void *Decoder)
 {
-    Imm = Imm & [(${2 ^ immediate.size})] as long - 1;
-    Imm = [(${immediate.loweredImmediate.identifier})]::[(${immediate.loweredImmediate.decoding.identifier})];
+    Imm = Imm & [(${immediate.mask})];
+    Imm = [(${immediate.decodeMethodName})];
     Inst.addOperand(MCOperand::createImm(Imm));
     return MCDisassembler::Success;
 }
 [/th:block]
 
 [#th:block th:each="registerClass : ${registerClasses}" ]
-static DecodeStatus Decode[(${registerClass.simpleName})]RegisterClass
+static DecodeStatus Decode[(${registerClass.registerFile.identifier.simpleName()})]RegisterClass
     ( MCInst &Inst
     , uint64_t RegNo
     , uint64_t Address
@@ -37,12 +39,11 @@ static DecodeStatus Decode[(${registerClass.simpleName})]RegisterClass
     )
 {
     // check if register number is in range
-    //TODO Update number
-    if( RegNo >= 0 )
+    if( RegNo >= [(${registerClass.registers.size()})])
         return MCDisassembler::Fail;
 
     // access custom generated decoder table in register info
-    Register reg = [(${registerClass.simpleName})]DecoderTableName[RegNo];
+    Register reg = [(${registerClass.registerFile.identifier.simpleName()})]DecoderTableName[RegNo];
 
     // check if decoded register is valid
     if( reg == [(${namespace})]::NoRegister )
@@ -85,7 +86,7 @@ static DecodeStatus Decode[(${registerClass.simpleName})]RegisterClass
         }
     [/th:block]
 
-    auto Result = decodeInstruction(DecoderTable${instructionSize, MI, Instr, Address, this, STI);
+    auto Result = decodeInstruction(DecoderTable[(${instructionSize})], MI, Instr, Address, this, STI);
     Size = [(${instructionSize / 8})];
     return Result;
 }
