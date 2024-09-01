@@ -97,15 +97,17 @@ MachineBasicBlock::iterator [(${namespace})]FrameLowering::eliminateCallFramePse
 
 bool [(${namespace})]FrameLowering::hasFP(const MachineFunction &MF) const
 {
-    «IF hasFramePointer» const TargetRegisterInfo *RegInfo = MF.getSubtarget().getRegisterInfo();
-
+    [#th:block th:if="${hasFramePointer}"]
+    const TargetRegisterInfo *RegInfo = MF.getSubtarget().getRegisterInfo();
     const MachineFrameInfo &MFI = MF.getFrameInfo();
-    return MF.getTarget().Options.DisableFramePointerElim(MF) ||
-           RegInfo->hasStackRealignment(MF) ||
-           MFI.hasVarSizedObjects() ||
-           MFI.isFrameAddressTaken();
-    «ELSE» return false;
-    «ENDIF»
+        return MF.getTarget().Options.DisableFramePointerElim(MF) ||
+               RegInfo->hasStackRealignment(MF) ||
+               MFI.hasVarSizedObjects() ||
+               MFI.isFrameAddressTaken();
+    [/th:block]
+    [#th:block th:if="${!hasFramePointer}"]
+    return false;
+    [/th:block]
 }
 
 void [(${namespace})]FrameLowering::emitPrologue(MachineFunction &MF, MachineBasicBlock &MBB) const
@@ -115,10 +117,12 @@ void [(${namespace})]FrameLowering::emitPrologue(MachineFunction &MF, MachineBas
     const [(${namespace})]InstrInfo *TII = STI.getInstrInfo();
     MachineBasicBlock::iterator MBBI = MBB.begin();
 
-    «IF hasFramePointer»
-        Register FPReg = «emit(framePointer)»;
-    «ENDIF»
-        Register SPReg = «emit(stackPointer)»;
+    [#th:block th:if="${hasFramePointer}"]
+        Register FPReg = [(${namespace})]::[(${framePointer})];
+    [/th:block]
+    [#th:block th:if="${!hasFramePointer}"]
+        Register SPReg = [(${namespace})]::[(${stackPointer})];
+    [/th:block]
 
     // Debug location must be unknown since the first debug location is used
     // to determine the end of the prologue.
@@ -141,17 +145,16 @@ void [(${namespace})]FrameLowering::emitPrologue(MachineFunction &MF, MachineBas
     // Advance to after the callee/caller saved register spills to adjust the frame pointer
     const std::vector<CalleeSavedInfo> &CSI = MFI.getCalleeSavedInfo();
     std::advance(MBBI, CSI.size());
-    «IF hasFramePointer»
-
-        // Generate new FP.
-        if (hasFP(MF))
+    [#th:block th:if="${hasFramePointer}"]
+    // Generate new FP.
+    if (hasFP(MF))
     {
         if (TII->adjustReg(MBB, MBBI, DL, FPReg, SPReg, StackSize - FI->getVarArgsSaveSize(), MachineInstr::FrameSetup))
         {
             llvm_unreachable("unable to adjust and generate frame pointer in 'emitPrologue'!");
         }
     }
-    «ENDIF»
+    [/th:block]
 }
 
 void [(${namespace})]FrameLowering::emitEpilogue(MachineFunction &MF, MachineBasicBlock &MBB) const
@@ -160,10 +163,12 @@ void [(${namespace})]FrameLowering::emitEpilogue(MachineFunction &MF, MachineBas
     MachineFrameInfo &MFI = MF.getFrameInfo();
     auto *FI = MF.getInfo<[(${namespace})]MachineFunctionInfo>();
 
-    «IF hasFramePointer»
-        Register FPReg = «emit(framePointer)»;
-    «ENDIF»
-        Register SPReg = «emit(stackPointer)»;
+    [#th:block th:if="${hasFramePointer}"]
+        Register FPReg = [(${namespace})]::[(${framePointer})];
+    [/th:block]
+    [#th:block th:if="${!hasFramePointer}"]
+        Register SPReg = [(${namespace})]::[(${stackPointer})];
+    [/th:block]
 
     // Get the insert location for the epilogue. If there were no terminators in
     // the block, get the last instruction.
@@ -202,9 +207,9 @@ void [(${namespace})]FrameLowering::emitEpilogue(MachineFunction &MF, MachineBas
         LastFrameDestroy = std::prev(MBBI, CSI.size());
     }
 
-    «IF hasFramePointer»
-        // Restore the stack pointer using the value of the frame pointer.
-        if (hasFP(MF) && MFI.hasVarSizedObjects())
+    [#th:block th:if="${hasFramePointer}"]
+    // Restore the stack pointer using the value of the frame pointer.
+    if (hasFP(MF) && MFI.hasVarSizedObjects())
     {
         assert(hasFP(MF) && "frame pointer should not have been eliminated");
         uint64_t FPOffset = StackSize - FI->getVarArgsSaveSize();
@@ -213,10 +218,10 @@ void [(${namespace})]FrameLowering::emitEpilogue(MachineFunction &MF, MachineBas
             llvm_unreachable("unable to adjust stack pointer with value in 'emitEpilogue'!");
         }
     }
+    [/th:block]
 
-    «ENDIF»
-        // Deallocate stack
-        if (TII->adjustReg(MBB, MBBI, DL, SPReg, SPReg, StackSize, MachineInstr::FrameDestroy))
+    // Deallocate stack
+    if (TII->adjustReg(MBB, MBBI, DL, SPReg, SPReg, StackSize, MachineInstr::FrameDestroy))
     {
         llvm_unreachable("unable to adjust stack pointer for stack deallocation in 'emitEpilogue'!");
     }
@@ -226,15 +231,14 @@ void [(${namespace})]FrameLowering::determineCalleeSaves(MachineFunction &MF, Bi
 {
     // Determine actual callee saved registers that need to be saved
     TargetFrameLowering::determineCalleeSaves(MF, SavedRegs, RS);
-    «IF hasFramePointer»
-
-        // If frame pointer is present save both return address and frame pointer
-        if (hasFP(MF))
+    [#th:block th:if="${hasFramePointer}"]
+    // If frame pointer is present save both return address and frame pointer
+    if (hasFP(MF))
     {
-        SavedRegs.set( «emit(returnAddress)» ); // return address
-        SavedRegs.set( «emit(framePointer)» );  // frame pointer
+        SavedRegs.set( [(${namespace})]::[(${returnAddress})] ); // return address
+        SavedRegs.set(  [(${namespace})]::[(${framePointer})] );  // frame pointer
     }
-    «ENDIF»
+    [/th:block]
 }
 
 bool [(${namespace})]FrameLowering::spillCalleeSavedRegisters(MachineBasicBlock &MBB, MachineBasicBlock::iterator MI, ArrayRef<CalleeSavedInfo> CSI, const TargetRegisterInfo *TRI) const
