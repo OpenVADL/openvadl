@@ -68,7 +68,7 @@ public abstract class GenericCppCodeGeneratorVisitor implements GraphNodeVisitor
 
         // The last argument should not emit an operand.
         if (i < node.arguments().size() - 1) {
-          writer.write(" " + node.builtIn().operator() + " ");
+          writer.write(" " + BuiltInTranslator.map(node.builtIn()) + " ");
         }
       }
     }
@@ -129,7 +129,11 @@ public abstract class GenericCppCodeGeneratorVisitor implements GraphNodeVisitor
 
   @Override
   public void visit(SelectNode selectNode) {
-    throw new RuntimeException("not implemented");
+    visit(selectNode.condition());
+    writer.write("? ");
+    visit(selectNode.trueCase());
+    writer.write(":");
+    visit(selectNode.falseCase());
   }
 
   @Override
@@ -149,7 +153,7 @@ public abstract class GenericCppCodeGeneratorVisitor implements GraphNodeVisitor
 
   @Override
   public void visit(LetNode letNode) {
-    throw new RuntimeException("not implemented");
+    visit(letNode.expression());
   }
 
   @Override

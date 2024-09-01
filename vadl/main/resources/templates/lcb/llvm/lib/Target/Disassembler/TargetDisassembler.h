@@ -25,7 +25,7 @@ namespace llvm
     public:
         [(${namespace})]Disassembler(const MCSubtargetInfo &STI, MCContext &Ctx, bool isBigEndian);
 
-        DecodeStatus getInstruction(MCInst & Instr, uint64_t & Size, ArrayRef<uint8_t> Bytes, uint64_t Address, raw_ostream & CStream) const override;
+        DecodeStatus getInstruction(MCInst &Instr, uint64_t &Size, ArrayRef<uint8_t> Bytes, uint64_t Address, raw_ostream &CStream) const override;
 
     protected:
         bool IsBigEndian;

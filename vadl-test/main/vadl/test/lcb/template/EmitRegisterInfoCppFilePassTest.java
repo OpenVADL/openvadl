@@ -51,43 +51,43 @@ public class EmitRegisterInfoCppFilePassTest extends AbstractLcbTest {
         #include "llvm/Support/Debug.h"
         #include <iostream>
         #include <sstream>
-        
+                
         #define DEBUG_TYPE "rv64imRegisterInfo"
-        
+                
         using namespace llvm;
-        
+                
         #define GET_REGINFO_TARGET_DESC
         #include "rv64imGenRegisterInfo.inc"
-        
+                
         void rv64imRegisterInfo::anchor() {}
-        
+                
         rv64imRegisterInfo::rv64imRegisterInfo()
             : rv64imGenRegisterInfo( «emitWithNamespace(returnAddress)» )
         {
         }
-        
+                
         const uint16_t * rv64imRegisterInfo::getCalleeSavedRegs(const MachineFunction * /*MF*/
         ) const
         {
             // defined in calling convention tablegen
             return CSR_rv64im_SaveList;
         }
-        
+                
         BitVector rv64imRegisterInfo::getReservedRegs(const MachineFunction &MF) const
         {
             BitVector Reserved(getNumRegs());
-        
+                
             markSuperRegs(Reserved, rv64im::X8); // frame pointer
             markSuperRegs(Reserved, rv64im::X2); // stack pointer
             markSuperRegs(Reserved, rv64im::X3); // global pointer
-        
+                
             // TODO: Add constant registers
             assert(checkAllSuperRegsMarked(Reserved));
-        
+                
             return Reserved;
         }
-        
-        
+                
+                
         bool eliminateFrameIndexLB
             ( MachineBasicBlock::iterator II
             , int SPAdj
@@ -99,17 +99,17 @@ public class EmitRegisterInfoCppFilePassTest extends AbstractLcbTest {
         {
             // sanity check for generated code
             assert( FIOperandNum == 1 && "Frame Index operand position does not match expected position!" );
-        
+                
             MachineInstr &MI = *II;
             MachineOperand &FIOp = MI.getOperand(1);
             MachineOperand &ImmOp = MI.getOperand(2);
-        
+                
             int Offset = FrameIndexOffset.getFixed() + ImmOp.getImm();
-        
+                
             //
             // try to inline the offset into the instruction
             //
-        
+                
             if(immS_predicate_predicate(Offset))
             {
                 // immediate can be encoded and instruction can be inlined.
@@ -117,18 +117,18 @@ public class EmitRegisterInfoCppFilePassTest extends AbstractLcbTest {
                 ImmOp.setImm( Offset );
                 return false; // success
             }
-        
-        
+                
+                
             DebugLoc DL = MI.getDebugLoc();
             MachineBasicBlock &MBB = *MI.getParent();
             MachineFunction *MF = MBB.getParent();
             MachineRegisterInfo &MRI = MF->getRegInfo();
             const CPUInstrInfo *TII = MF->getSubtarget<CPUSubtarget>().getInstrInfo();
-        
+                
             //
             // try to generate a scratch register and adjust frame register with given offset
             //
-        
+                
             Register ScratchReg = MRI.createVirtualRegister(&CPU::XRegClass);
             if(TII->adjustReg(MBB, II, DL, ScratchReg, FrameReg, Offset) == false) // MachineInstr::MIFlag Flag
             {
@@ -137,7 +137,7 @@ public class EmitRegisterInfoCppFilePassTest extends AbstractLcbTest {
                 ImmOp.setImm( 0 );
                 return false; // success
             }
-        
+                
             return true; // failure
         }
         bool eliminateFrameIndexLBU
@@ -151,17 +151,17 @@ public class EmitRegisterInfoCppFilePassTest extends AbstractLcbTest {
         {
             // sanity check for generated code
             assert( FIOperandNum == 1 && "Frame Index operand position does not match expected position!" );
-        
+                
             MachineInstr &MI = *II;
             MachineOperand &FIOp = MI.getOperand(1);
             MachineOperand &ImmOp = MI.getOperand(2);
-        
+                
             int Offset = FrameIndexOffset.getFixed() + ImmOp.getImm();
-        
+                
             //
             // try to inline the offset into the instruction
             //
-        
+                
             if(immS_predicate_predicate(Offset))
             {
                 // immediate can be encoded and instruction can be inlined.
@@ -169,18 +169,18 @@ public class EmitRegisterInfoCppFilePassTest extends AbstractLcbTest {
                 ImmOp.setImm( Offset );
                 return false; // success
             }
-        
-        
+                
+                
             DebugLoc DL = MI.getDebugLoc();
             MachineBasicBlock &MBB = *MI.getParent();
             MachineFunction *MF = MBB.getParent();
             MachineRegisterInfo &MRI = MF->getRegInfo();
             const CPUInstrInfo *TII = MF->getSubtarget<CPUSubtarget>().getInstrInfo();
-        
+                
             //
             // try to generate a scratch register and adjust frame register with given offset
             //
-        
+                
             Register ScratchReg = MRI.createVirtualRegister(&CPU::XRegClass);
             if(TII->adjustReg(MBB, II, DL, ScratchReg, FrameReg, Offset) == false) // MachineInstr::MIFlag Flag
             {
@@ -189,7 +189,7 @@ public class EmitRegisterInfoCppFilePassTest extends AbstractLcbTest {
                 ImmOp.setImm( 0 );
                 return false; // success
             }
-        
+                
             return true; // failure
         }
         bool eliminateFrameIndexLD
@@ -203,17 +203,17 @@ public class EmitRegisterInfoCppFilePassTest extends AbstractLcbTest {
         {
             // sanity check for generated code
             assert( FIOperandNum == 1 && "Frame Index operand position does not match expected position!" );
-        
+                
             MachineInstr &MI = *II;
             MachineOperand &FIOp = MI.getOperand(1);
             MachineOperand &ImmOp = MI.getOperand(2);
-        
+                
             int Offset = FrameIndexOffset.getFixed() + ImmOp.getImm();
-        
+                
             //
             // try to inline the offset into the instruction
             //
-        
+                
             if(immS_predicate_predicate(Offset))
             {
                 // immediate can be encoded and instruction can be inlined.
@@ -221,18 +221,18 @@ public class EmitRegisterInfoCppFilePassTest extends AbstractLcbTest {
                 ImmOp.setImm( Offset );
                 return false; // success
             }
-        
-        
+                
+                
             DebugLoc DL = MI.getDebugLoc();
             MachineBasicBlock &MBB = *MI.getParent();
             MachineFunction *MF = MBB.getParent();
             MachineRegisterInfo &MRI = MF->getRegInfo();
             const CPUInstrInfo *TII = MF->getSubtarget<CPUSubtarget>().getInstrInfo();
-        
+                
             //
             // try to generate a scratch register and adjust frame register with given offset
             //
-        
+                
             Register ScratchReg = MRI.createVirtualRegister(&CPU::XRegClass);
             if(TII->adjustReg(MBB, II, DL, ScratchReg, FrameReg, Offset) == false) // MachineInstr::MIFlag Flag
             {
@@ -241,7 +241,7 @@ public class EmitRegisterInfoCppFilePassTest extends AbstractLcbTest {
                 ImmOp.setImm( 0 );
                 return false; // success
             }
-        
+                
             return true; // failure
         }
         bool eliminateFrameIndexLH
@@ -255,17 +255,17 @@ public class EmitRegisterInfoCppFilePassTest extends AbstractLcbTest {
         {
             // sanity check for generated code
             assert( FIOperandNum == 1 && "Frame Index operand position does not match expected position!" );
-        
+                
             MachineInstr &MI = *II;
             MachineOperand &FIOp = MI.getOperand(1);
             MachineOperand &ImmOp = MI.getOperand(2);
-        
+                
             int Offset = FrameIndexOffset.getFixed() + ImmOp.getImm();
-        
+                
             //
             // try to inline the offset into the instruction
             //
-        
+                
             if(immS_predicate_predicate(Offset))
             {
                 // immediate can be encoded and instruction can be inlined.
@@ -273,18 +273,18 @@ public class EmitRegisterInfoCppFilePassTest extends AbstractLcbTest {
                 ImmOp.setImm( Offset );
                 return false; // success
             }
-        
-        
+                
+                
             DebugLoc DL = MI.getDebugLoc();
             MachineBasicBlock &MBB = *MI.getParent();
             MachineFunction *MF = MBB.getParent();
             MachineRegisterInfo &MRI = MF->getRegInfo();
             const CPUInstrInfo *TII = MF->getSubtarget<CPUSubtarget>().getInstrInfo();
-        
+                
             //
             // try to generate a scratch register and adjust frame register with given offset
             //
-        
+                
             Register ScratchReg = MRI.createVirtualRegister(&CPU::XRegClass);
             if(TII->adjustReg(MBB, II, DL, ScratchReg, FrameReg, Offset) == false) // MachineInstr::MIFlag Flag
             {
@@ -293,7 +293,7 @@ public class EmitRegisterInfoCppFilePassTest extends AbstractLcbTest {
                 ImmOp.setImm( 0 );
                 return false; // success
             }
-        
+                
             return true; // failure
         }
         bool eliminateFrameIndexLHU
@@ -307,17 +307,17 @@ public class EmitRegisterInfoCppFilePassTest extends AbstractLcbTest {
         {
             // sanity check for generated code
             assert( FIOperandNum == 1 && "Frame Index operand position does not match expected position!" );
-        
+                
             MachineInstr &MI = *II;
             MachineOperand &FIOp = MI.getOperand(1);
             MachineOperand &ImmOp = MI.getOperand(2);
-        
+                
             int Offset = FrameIndexOffset.getFixed() + ImmOp.getImm();
-        
+                
             //
             // try to inline the offset into the instruction
             //
-        
+                
             if(immS_predicate_predicate(Offset))
             {
                 // immediate can be encoded and instruction can be inlined.
@@ -325,18 +325,18 @@ public class EmitRegisterInfoCppFilePassTest extends AbstractLcbTest {
                 ImmOp.setImm( Offset );
                 return false; // success
             }
-        
-        
+                
+                
             DebugLoc DL = MI.getDebugLoc();
             MachineBasicBlock &MBB = *MI.getParent();
             MachineFunction *MF = MBB.getParent();
             MachineRegisterInfo &MRI = MF->getRegInfo();
             const CPUInstrInfo *TII = MF->getSubtarget<CPUSubtarget>().getInstrInfo();
-        
+                
             //
             // try to generate a scratch register and adjust frame register with given offset
             //
-        
+                
             Register ScratchReg = MRI.createVirtualRegister(&CPU::XRegClass);
             if(TII->adjustReg(MBB, II, DL, ScratchReg, FrameReg, Offset) == false) // MachineInstr::MIFlag Flag
             {
@@ -345,7 +345,7 @@ public class EmitRegisterInfoCppFilePassTest extends AbstractLcbTest {
                 ImmOp.setImm( 0 );
                 return false; // success
             }
-        
+                
             return true; // failure
         }
         bool eliminateFrameIndexLW
@@ -359,17 +359,17 @@ public class EmitRegisterInfoCppFilePassTest extends AbstractLcbTest {
         {
             // sanity check for generated code
             assert( FIOperandNum == 1 && "Frame Index operand position does not match expected position!" );
-        
+                
             MachineInstr &MI = *II;
             MachineOperand &FIOp = MI.getOperand(1);
             MachineOperand &ImmOp = MI.getOperand(2);
-        
+                
             int Offset = FrameIndexOffset.getFixed() + ImmOp.getImm();
-        
+                
             //
             // try to inline the offset into the instruction
             //
-        
+                
             if(immS_predicate_predicate(Offset))
             {
                 // immediate can be encoded and instruction can be inlined.
@@ -377,18 +377,18 @@ public class EmitRegisterInfoCppFilePassTest extends AbstractLcbTest {
                 ImmOp.setImm( Offset );
                 return false; // success
             }
-        
-        
+                
+                
             DebugLoc DL = MI.getDebugLoc();
             MachineBasicBlock &MBB = *MI.getParent();
             MachineFunction *MF = MBB.getParent();
             MachineRegisterInfo &MRI = MF->getRegInfo();
             const CPUInstrInfo *TII = MF->getSubtarget<CPUSubtarget>().getInstrInfo();
-        
+                
             //
             // try to generate a scratch register and adjust frame register with given offset
             //
-        
+                
             Register ScratchReg = MRI.createVirtualRegister(&CPU::XRegClass);
             if(TII->adjustReg(MBB, II, DL, ScratchReg, FrameReg, Offset) == false) // MachineInstr::MIFlag Flag
             {
@@ -397,7 +397,7 @@ public class EmitRegisterInfoCppFilePassTest extends AbstractLcbTest {
                 ImmOp.setImm( 0 );
                 return false; // success
             }
-        
+                
             return true; // failure
         }
         bool eliminateFrameIndexLWU
@@ -411,17 +411,17 @@ public class EmitRegisterInfoCppFilePassTest extends AbstractLcbTest {
         {
             // sanity check for generated code
             assert( FIOperandNum == 1 && "Frame Index operand position does not match expected position!" );
-        
+                
             MachineInstr &MI = *II;
             MachineOperand &FIOp = MI.getOperand(1);
             MachineOperand &ImmOp = MI.getOperand(2);
-        
+                
             int Offset = FrameIndexOffset.getFixed() + ImmOp.getImm();
-        
+                
             //
             // try to inline the offset into the instruction
             //
-        
+                
             if(immS_predicate_predicate(Offset))
             {
                 // immediate can be encoded and instruction can be inlined.
@@ -429,18 +429,18 @@ public class EmitRegisterInfoCppFilePassTest extends AbstractLcbTest {
                 ImmOp.setImm( Offset );
                 return false; // success
             }
-        
-        
+                
+                
             DebugLoc DL = MI.getDebugLoc();
             MachineBasicBlock &MBB = *MI.getParent();
             MachineFunction *MF = MBB.getParent();
             MachineRegisterInfo &MRI = MF->getRegInfo();
             const CPUInstrInfo *TII = MF->getSubtarget<CPUSubtarget>().getInstrInfo();
-        
+                
             //
             // try to generate a scratch register and adjust frame register with given offset
             //
-        
+                
             Register ScratchReg = MRI.createVirtualRegister(&CPU::XRegClass);
             if(TII->adjustReg(MBB, II, DL, ScratchReg, FrameReg, Offset) == false) // MachineInstr::MIFlag Flag
             {
@@ -449,7 +449,7 @@ public class EmitRegisterInfoCppFilePassTest extends AbstractLcbTest {
                 ImmOp.setImm( 0 );
                 return false; // success
             }
-        
+                
             return true; // failure
         }
         bool eliminateFrameIndexSB
@@ -463,36 +463,36 @@ public class EmitRegisterInfoCppFilePassTest extends AbstractLcbTest {
         {
             // sanity check for generated code
             assert( FIOperandNum == 1 && "Frame Index operand position does not match expected position!" );
-        
+                
             MachineInstr &MI = *II;
             MachineOperand &FIOp = MI.getOperand(1);
             MachineOperand &ImmOp = MI.getOperand(2);
-        
+                
             int Offset = FrameIndexOffset.getFixed() + ImmOp.getImm();
-        
+                
             //
             // try to inline the offset into the instruction
             //
-        
-            if(immS_predicate_predicate(Offset))
+                
+            if(immS_predicate0_predicate(Offset))
             {
                 // immediate can be encoded and instruction can be inlined.
                 FIOp.ChangeToRegister( FrameReg, false /* isDef */ );
                 ImmOp.setImm( Offset );
                 return false; // success
             }
-        
-        
+                
+                
             DebugLoc DL = MI.getDebugLoc();
             MachineBasicBlock &MBB = *MI.getParent();
             MachineFunction *MF = MBB.getParent();
             MachineRegisterInfo &MRI = MF->getRegInfo();
             const CPUInstrInfo *TII = MF->getSubtarget<CPUSubtarget>().getInstrInfo();
-        
+                
             //
             // try to generate a scratch register and adjust frame register with given offset
             //
-        
+                
             Register ScratchReg = MRI.createVirtualRegister(&CPU::XRegClass);
             if(TII->adjustReg(MBB, II, DL, ScratchReg, FrameReg, Offset) == false) // MachineInstr::MIFlag Flag
             {
@@ -501,7 +501,7 @@ public class EmitRegisterInfoCppFilePassTest extends AbstractLcbTest {
                 ImmOp.setImm( 0 );
                 return false; // success
             }
-        
+                
             return true; // failure
         }
         bool eliminateFrameIndexSD
@@ -515,36 +515,36 @@ public class EmitRegisterInfoCppFilePassTest extends AbstractLcbTest {
         {
             // sanity check for generated code
             assert( FIOperandNum == 1 && "Frame Index operand position does not match expected position!" );
-        
+                
             MachineInstr &MI = *II;
             MachineOperand &FIOp = MI.getOperand(1);
             MachineOperand &ImmOp = MI.getOperand(2);
-        
+                
             int Offset = FrameIndexOffset.getFixed() + ImmOp.getImm();
-        
+                
             //
             // try to inline the offset into the instruction
             //
-        
-            if(immS_predicate_predicate(Offset))
+                
+            if(immS_predicate0_predicate(Offset))
             {
                 // immediate can be encoded and instruction can be inlined.
                 FIOp.ChangeToRegister( FrameReg, false /* isDef */ );
                 ImmOp.setImm( Offset );
                 return false; // success
             }
-        
-        
+                
+                
             DebugLoc DL = MI.getDebugLoc();
             MachineBasicBlock &MBB = *MI.getParent();
             MachineFunction *MF = MBB.getParent();
             MachineRegisterInfo &MRI = MF->getRegInfo();
             const CPUInstrInfo *TII = MF->getSubtarget<CPUSubtarget>().getInstrInfo();
-        
+                
             //
             // try to generate a scratch register and adjust frame register with given offset
             //
-        
+                
             Register ScratchReg = MRI.createVirtualRegister(&CPU::XRegClass);
             if(TII->adjustReg(MBB, II, DL, ScratchReg, FrameReg, Offset) == false) // MachineInstr::MIFlag Flag
             {
@@ -553,7 +553,7 @@ public class EmitRegisterInfoCppFilePassTest extends AbstractLcbTest {
                 ImmOp.setImm( 0 );
                 return false; // success
             }
-        
+                
             return true; // failure
         }
         bool eliminateFrameIndexSH
@@ -567,36 +567,36 @@ public class EmitRegisterInfoCppFilePassTest extends AbstractLcbTest {
         {
             // sanity check for generated code
             assert( FIOperandNum == 1 && "Frame Index operand position does not match expected position!" );
-        
+                
             MachineInstr &MI = *II;
             MachineOperand &FIOp = MI.getOperand(1);
             MachineOperand &ImmOp = MI.getOperand(2);
-        
+                
             int Offset = FrameIndexOffset.getFixed() + ImmOp.getImm();
-        
+                
             //
             // try to inline the offset into the instruction
             //
-        
-            if(immS_predicate_predicate(Offset))
+                
+            if(immS_predicate0_predicate(Offset))
             {
                 // immediate can be encoded and instruction can be inlined.
                 FIOp.ChangeToRegister( FrameReg, false /* isDef */ );
                 ImmOp.setImm( Offset );
                 return false; // success
             }
-        
-        
+                
+                
             DebugLoc DL = MI.getDebugLoc();
             MachineBasicBlock &MBB = *MI.getParent();
             MachineFunction *MF = MBB.getParent();
             MachineRegisterInfo &MRI = MF->getRegInfo();
             const CPUInstrInfo *TII = MF->getSubtarget<CPUSubtarget>().getInstrInfo();
-        
+                
             //
             // try to generate a scratch register and adjust frame register with given offset
             //
-        
+                
             Register ScratchReg = MRI.createVirtualRegister(&CPU::XRegClass);
             if(TII->adjustReg(MBB, II, DL, ScratchReg, FrameReg, Offset) == false) // MachineInstr::MIFlag Flag
             {
@@ -605,7 +605,7 @@ public class EmitRegisterInfoCppFilePassTest extends AbstractLcbTest {
                 ImmOp.setImm( 0 );
                 return false; // success
             }
-        
+                
             return true; // failure
         }
         bool eliminateFrameIndexSW
@@ -619,36 +619,36 @@ public class EmitRegisterInfoCppFilePassTest extends AbstractLcbTest {
         {
             // sanity check for generated code
             assert( FIOperandNum == 1 && "Frame Index operand position does not match expected position!" );
-        
+                
             MachineInstr &MI = *II;
             MachineOperand &FIOp = MI.getOperand(1);
             MachineOperand &ImmOp = MI.getOperand(2);
-        
+                
             int Offset = FrameIndexOffset.getFixed() + ImmOp.getImm();
-        
+                
             //
             // try to inline the offset into the instruction
             //
-        
-            if(immS_predicate_predicate(Offset))
+                
+            if(immS_predicate0_predicate(Offset))
             {
                 // immediate can be encoded and instruction can be inlined.
                 FIOp.ChangeToRegister( FrameReg, false /* isDef */ );
                 ImmOp.setImm( Offset );
                 return false; // success
             }
-        
-        
+                
+                
             DebugLoc DL = MI.getDebugLoc();
             MachineBasicBlock &MBB = *MI.getParent();
             MachineFunction *MF = MBB.getParent();
             MachineRegisterInfo &MRI = MF->getRegInfo();
             const CPUInstrInfo *TII = MF->getSubtarget<CPUSubtarget>().getInstrInfo();
-        
+                
             //
             // try to generate a scratch register and adjust frame register with given offset
             //
-        
+                
             Register ScratchReg = MRI.createVirtualRegister(&CPU::XRegClass);
             if(TII->adjustReg(MBB, II, DL, ScratchReg, FrameReg, Offset) == false) // MachineInstr::MIFlag Flag
             {
@@ -657,11 +657,11 @@ public class EmitRegisterInfoCppFilePassTest extends AbstractLcbTest {
                 ImmOp.setImm( 0 );
                 return false; // success
             }
-        
+                
             return true; // failure
         }
-        
-        
+                
+                
         /**
          * This method calls its own replacement class for each allowed instruction.
          * Inside the special instruction the following steps or tries to remove the FI are done.
@@ -682,15 +682,15 @@ public class EmitRegisterInfoCppFilePassTest extends AbstractLcbTest {
         {
             MachineInstr &MI = *II;
             const MachineFunction &MF = *MI.getParent()->getParent();
-        
+                
             const TargetInstrInfo *TII = MF.getSubtarget().getInstrInfo();
             const std::string mnemonic = TII->getName(MI.getOpcode()).str(); // for debug purposes
-        
+                
             MachineOperand &FIOp = MI.getOperand(FIOperandNum);
             unsigned FI = FIOp.getIndex();
             Register FrameReg;
             StackOffset FrameIndexOffset = getFrameLowering(MF)->getFrameIndexReference(MF, FI, FrameReg);
-        
+                
             bool error = true;
             switch (MI.getOpcode())
             {
@@ -761,7 +761,7 @@ public class EmitRegisterInfoCppFilePassTest extends AbstractLcbTest {
                     llvm_unreachable(errMsg.c_str());
                 }
             }
-        
+                
             if (error) // something went wrong
             {
                 std::string errMsg;
@@ -771,16 +771,16 @@ public class EmitRegisterInfoCppFilePassTest extends AbstractLcbTest {
                 errMsg = errMsgStream.str();
                 report_fatal_error(errMsg.c_str()); // if we cannot eliminate the frame index abort!
             }
-        
+                
             return true;
         }
-        
+                
         Register rv64imRegisterInfo::getFrameRegister(const MachineFunction &MF) const
         {
             const TargetFrameLowering *TFI = getFrameLowering(MF);
             return TFI->hasFP(MF) ? X8 /* FP */ : X2 /* SP */;
         }
-        
+                
         const uint32_t * rv64imRegisterInfo::getCallPreservedMask(const MachineFunction & /*MF*/
                                                                            , CallingConv::ID /*CC*/
         ) const
@@ -788,8 +788,8 @@ public class EmitRegisterInfoCppFilePassTest extends AbstractLcbTest {
             // defined in calling convention tablegen
             return CSR_rv64im_RegMask;
         }
-        
-        
+                
+                
         /*static*/ unsigned rv64imRegisterInfo::X(unsigned index)
         {
           switch (index)

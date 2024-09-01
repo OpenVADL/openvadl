@@ -38,18 +38,18 @@ public class EmitImmediateFilePassTest extends AbstractLcbTest {
     Assertions.assertLinesMatch("""
         #ifndef LLVM_LIB_TARGET_rv64im_UTILS_IMMEDIATEUTILS_H
         #define LLVM_LIB_TARGET_rv64im_UTILS_IMMEDIATEUTILS_H
-        
+                
         #include "llvm/Support/ErrorHandling.h"
         #include <cstdint>
         #include <unordered_map>
         #include <vector>
         #include <stdio.h>
-        
+                
         // "__extension__" suppresses warning
         __extension__ typedef          __int128 int128_t;
         __extension__ typedef unsigned __int128 uint128_t;
-        
-        
+                
+                
         int64_t RV3264I_Btype_immS_decode_decode(uint16_t param) {
         return (((int64_t) param)) << (1);
         }
@@ -71,9 +71,9 @@ public class EmitImmediateFilePassTest extends AbstractLcbTest {
         uint8_t RV3264I_Rtype_shamt_decode_decode(uint8_t param) {
         return param;
         }
-        
-        
-        
+                
+                
+                
         uint8_t RV3264I_Ftype_shamt_encoding_encode(uint8_t shamt) {
         return (((shamt) & ((1UL << 7) - 1)) >> 0);
         }
@@ -95,14 +95,11 @@ public class EmitImmediateFilePassTest extends AbstractLcbTest {
         uint32_t RV3264I_Jtype_immS_encoding_encode(int64_t immS) {
         return (((immS) & ((1UL << 22) - 1) & ~((1 << 1) - 1)) >> 1);
         }
-        
-        
-        
-        
+                
+                
+                
+                
         bool RV3264I_Btype_immS_predicate_predicate(int64_t immS_decode) {
-        return 1;
-        }
-        bool RV3264I_Stype_immS_predicate_predicate(int64_t immS_decode) {
         return 1;
         }
         bool RV3264I_Itype_immS_predicate_predicate(int64_t immS_decode) {
@@ -110,6 +107,9 @@ public class EmitImmediateFilePassTest extends AbstractLcbTest {
         }
         bool RV3264I_Jtype_immS_predicate_predicate(int64_t immS_decode) {
         return 1;
+        }
+        bool RV3264I_Stype_immS_predicate0_predicate(int64_t immS) {
+        return ((((immS) & ((1UL << 33) - 1) & ~((1 << 11) - 1)) >> 11)) == (0)? 1:((((immS) & ((1UL << 33) - 1) & ~((1 << 11) - 1)) >> 11)) == (2097151)? 1:0;
         }
         bool RV3264I_Utype_immU_predicate_predicate(uint64_t immU_decode) {
         return 1;
@@ -120,8 +120,8 @@ public class EmitImmediateFilePassTest extends AbstractLcbTest {
         bool RV3264I_Rtype_shamt_predicate_predicate(uint8_t shamt_decode) {
         return 1;
         }
-        
-        
+                
+                
         namespace
         {
             class ImmediateUtils
@@ -140,7 +140,7 @@ public class EmitImmediateFilePassTest extends AbstractLcbTest {
                               , IK_RV3264I_Rtype_shamt_decode
                              \s
                             };
-        
+                
                 static uint64_t applyDecoding(const uint64_t value, rv64imImmediateKind kind)
                 {
                     switch (kind)
@@ -168,10 +168,10 @@ public class EmitImmediateFilePassTest extends AbstractLcbTest {
                     }
                 }
             };
-        
+                
         } // end of anonymous namespace
-        
-        #endif // LLVM_LIB_TARGET_rv64im_UTILS_IMMEDIATEUTILS_H 
+                
+        #endif // LLVM_LIB_TARGET_rv64im_UTILS_IMMEDIATEUTILS_H
         """.trim().lines(), output);
   }
 }

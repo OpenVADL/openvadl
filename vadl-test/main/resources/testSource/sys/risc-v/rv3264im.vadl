@@ -88,6 +88,14 @@ instruction set architecture RV3264I = {
     , funct3 [14..12]                     // 3 bit function code
     , opcode [6..0]                       // 7 bit operation code
     , immS   = imm as SIntR               // sign extended immediate value
+    : predicate
+      { immS =>
+            match immS(31..11) with
+            { 0b0000'0000'0000'0000'0000'0 => true
+            , 0b1111'1111'1111'1111'1111'1 => true
+            , _                            => false
+            }
+      }
     }
 
   format Btype : Inst =                   // Btype branch instruction format
