@@ -6,7 +6,9 @@ import vadl.configuration.LcbConfiguration;
 import vadl.lcb.template.CommonVarNames;
 import vadl.lcb.template.LcbTemplateRenderingPass;
 import vadl.pass.PassResults;
+import vadl.viam.RegisterFile;
 import vadl.viam.Specification;
+import vadl.viam.passes.dummyAbi.DummyAbi;
 
 /**
  * This file contains the logic for lowering stack frames.
@@ -29,9 +31,23 @@ public class EmitFrameLoweringCppFilePass extends LcbTemplateRenderingPass {
         + "FrameLowering.cpp";
   }
 
+  private String renderRegister(RegisterFile registerFile, int addr) {
+    return registerFile.identifier.simpleName() + addr;
+  }
+
   @Override
   protected Map<String, Object> createVariables(final PassResults passResults,
                                                 Specification specification) {
-    return Map.of(CommonVarNames.NAMESPACE, specification.name());
+    var abi =
+        (DummyAbi) specification.definitions().filter(x -> x instanceof DummyAbi).findFirst().get();
+    var framePointer = renderRegister(abi.framePointer().registerFile(), abi.framePointer().addr());
+    var stackPointer = renderRegister(abi.stackPointer().registerFile(), abi.stackPointer().addr());
+    var returnAddress =
+        renderRegister(abi.returnAddress().registerFile(), abi.returnAddress().addr());
+    return Map.of(CommonVarNames.NAMESPACE, specification.name(),
+        "hasFramePointer", abi.hasFramePointer(),
+        "framePointer", framePointer,
+        "stackPointer", stackPointer,
+    "returnAddress", returnAddress);
   }
 }

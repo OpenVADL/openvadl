@@ -127,4 +127,8 @@ public class DummyAbi extends Definition {
   public List<RegisterRef> returnRegisters() {
     return returnRegisters;
   }
+
+  public boolean hasFramePointer() {
+    return true;
+  }
 }

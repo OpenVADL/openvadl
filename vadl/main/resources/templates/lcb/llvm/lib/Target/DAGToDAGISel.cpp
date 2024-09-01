@@ -26,7 +26,6 @@ void [(${namespace})]DAGToDAGISel::anchor() {}
 
 bool [(${namespace})]DAGToDAGISel::SelectInlineAsmMemoryOperand(const SDValue &Op, unsigned ConstraintCode, std::vector<SDValue> &OutOps)
 {
-    // TODO: @chochrainer implement
     return false;
 }
 
@@ -34,17 +33,14 @@ bool [(${namespace})]DAGToDAGISel::SelectInlineAsmMemoryOperand(const SDValue &O
 // This method is used for instruction selection to test if an address is a frame index
 bool [(${namespace})]DAGToDAGISel::SelectAddrFI(SDValue Addr, SDValue &Base)
 {
-    // TODO: @chochrainer implement more cases
-
     if (auto FIN = dyn_cast<FrameIndexSDNode>(Addr))
     {
-        Base = CurDAG->getTargetFrameIndex(FIN->getIndex(), «emitSimpleType(stackPointer)»); // this takes the stack pointer type
+        Base = CurDAG->getTargetFrameIndex(FIN->getIndex(), MVT::SimpleValueType[(${stackPointerValueType})]);
         return true;
     }
     return false;
 }
 
-// TODO: @chochrainer improve and generalize
 void [(${namespace})]DAGToDAGISel::Select(SDNode *Node)
 {
     LLVM_DEBUG(dbgs() << "Selecting: "; Node->dump(CurDAG); dbgs() << "\n");
@@ -76,11 +72,6 @@ bool [(${namespace})]DAGToDAGISel::trySelect(SDNode *Node)
     // should be handled here.
     unsigned Opcode = Node->getOpcode();
     SDLoc DL(Node);
-
-    // switch ( Opcode )
-    // {
-    //     case ISD::FrameIndex: ...
-    // }
 
     return false;
 }
