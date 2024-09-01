@@ -49,3 +49,4 @@ bin/
 
 ### OTHER ###
 .swp
+.jqwik-database
