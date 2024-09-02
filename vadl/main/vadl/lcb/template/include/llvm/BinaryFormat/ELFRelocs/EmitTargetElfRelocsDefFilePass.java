@@ -4,6 +4,8 @@ import java.io.IOException;
 import java.util.List;
 import java.util.Map;
 import vadl.configuration.LcbConfiguration;
+import vadl.lcb.passes.relocation.GenerateElfRelocationPass;
+import vadl.lcb.passes.relocation.model.ElfRelocation;
 import vadl.lcb.template.CommonVarNames;
 import vadl.lcb.template.LcbTemplateRenderingPass;
 import vadl.pass.PassResults;
@@ -29,14 +31,13 @@ public class EmitTargetElfRelocsDefFilePass extends LcbTemplateRenderingPass {
         + lcbConfiguration().processorName().value() + ".def";
   }
 
-  record Relocation(String identifier) {
-
-  }
-
   @Override
   protected Map<String, Object> createVariables(final PassResults passResults,
                                                 Specification specification) {
+    var relocations =
+        (List<ElfRelocation>) passResults.lastResultOf(GenerateElfRelocationPass.class);
+
     return Map.of(CommonVarNames.NAMESPACE, specification.name(),
-        CommonVarNames.RELOCATIONS, List.of(new Relocation("relocationIdentifierValue")));
+        CommonVarNames.RELOCATIONS, relocations);
   }
 }

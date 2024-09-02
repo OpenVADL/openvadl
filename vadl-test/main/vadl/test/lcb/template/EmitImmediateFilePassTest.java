@@ -1,21 +1,12 @@
 package vadl.test.lcb.template;
 
 import java.io.IOException;
-import java.io.StringWriter;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
-import vadl.cppCodeGen.passes.fieldNodeReplacement.FieldNodeReplacementPassForDecoding;
-import vadl.gcb.passes.encoding_generation.GenerateFieldAccessEncodingFunctionPass;
-import vadl.gcb.passes.type_normalization.CppTypeNormalizationForDecodingsPass;
-import vadl.gcb.passes.type_normalization.CppTypeNormalizationForEncodingsPass;
-import vadl.gcb.passes.type_normalization.CppTypeNormalizationForPredicatesPass;
-import vadl.gcb.valuetypes.ProcessorName;
 import vadl.lcb.template.lib.Target.Utils.EmitImmediateFilePass;
 import vadl.pass.PassKey;
-import vadl.pass.PassManager;
 import vadl.pass.exception.DuplicatedPassKeyException;
 import vadl.test.lcb.AbstractLcbTest;
-import vadl.viam.passes.typeCastElimination.TypeCastEliminationPass;
 
 public class EmitImmediateFilePassTest extends AbstractLcbTest {
   @Test

@@ -12,7 +12,7 @@ public class ElfRelocation {
     this.relocation = relocation;
   }
 
-  public ElfRelocationName getName() {
+  public ElfRelocationName name() {
     return new ElfRelocationName("R_" + processorName.value() + "_" + relocation.name().value());
   }
 }
