@@ -2,6 +2,7 @@ package vadl.viam;
 
 import vadl.types.Type;
 import vadl.viam.graph.Graph;
+import vadl.viam.graph.dependency.ReadRegNode;
 
 /**
  * Represents a relocation definition in a VIAM specification.
@@ -33,5 +34,23 @@ public class Relocation extends Function {
   @Override
   public void accept(DefinitionVisitor visitor) {
     visitor.visit(this);
+  }
+
+  /**
+   * A {@link Relocation} is relative when it references the {@link Register.Counter} which is
+   * declared in {@link InstructionSetArchitecture#pc()}.
+   */
+  public boolean isRelative(Register.Counter pc) {
+    return this.behavior().getNodes(ReadRegNode.class)
+        .anyMatch(x -> x.register().equals(pc));
+  }
+
+  /**
+   * A {@link Relocation} is absolute when it does not reference the {@link Register.Counter} which
+   * is declared in {@link InstructionSetArchitecture#pc()}.
+   */
+  public boolean isAbsolute(Register.Counter pc) {
+    return this.behavior().getNodes(ReadRegNode.class)
+        .noneMatch(x -> x.register().equals(pc));
   }
 }
