@@ -152,8 +152,7 @@ class MacroReference extends Node {
   }
 }
 
-final class PlaceholderNode extends Node implements OperatorOrPlaceholder,
-    FieldEncodingOrPlaceholder {
+final class PlaceholderNode extends Node implements IsBinOp, IsUnOp, FieldEncodingOrPlaceholder {
 
   List<String> segments;
   SyntaxType syntaxType;

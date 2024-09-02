@@ -157,7 +157,7 @@ class MacroExpander
   public Expr visit(BinaryExpr expr) {
     var operator = expr.operator instanceof PlaceholderNode p
         ? Objects.requireNonNullElse(resolveArg(p.segments), p) : expr.operator;
-    return new BinaryExpr(expr.left.accept(this), (OperatorOrPlaceholder) operator,
+    return new BinaryExpr(expr.left.accept(this), (IsBinOp) operator,
         expr.right.accept(this));
   }
 
@@ -252,7 +252,9 @@ class MacroExpander
 
   @Override
   public Expr visit(UnaryExpr expr) {
-    return new UnaryExpr(expr.operator, expandExpr(expr.operand));
+    var operator = expr.operator instanceof PlaceholderNode p
+        ? Objects.requireNonNullElse(resolveArg(p.segments), p) : expr.operator;
+    return new UnaryExpr((IsUnOp) operator, expandExpr(expr.operand));
   }
 
   @Override
@@ -301,7 +303,12 @@ class MacroExpander
   }
 
   @Override
-  public Expr visit(OperatorExpr expr) {
+  public Expr visit(BinOpExpr expr) {
+    return expr;
+  }
+
+  @Override
+  public Expr visit(UnOpExpr expr) {
     return expr;
   }
 

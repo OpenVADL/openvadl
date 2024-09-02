@@ -677,7 +677,7 @@ PRODUCTIONS
     {
       IF (allowedOps[la.kind] || la.kind == _SYM_AS || isMacroReplacementOfType(this, BasicSyntaxType.BIN_OP))
       (
-        binaryOperator<out Operator op>                   (. var operator = new OperatorExpr(op, loc()); .)
+        binaryOperator<out Operator op>                   (. var operator = new BinOpExpr(op, loc()); .)
         term<out Expr right>                              (. expr = new BinaryExpr(expr, operator, right); .)
       | macroReplacement<out Node node>
         term<out Expr right>                              (. expr = new BinaryExpr(expr, castBinOp(this, node), right); .)
@@ -740,7 +740,7 @@ PRODUCTIONS
       [
         IF (!allowLtOp || la.kind == _SYM_GT)
         SYM_GT                                               (. expr = new SymbolExpr(path, term, path.location().join(loc())); .)
-      ]                                                      (. if (expr == null) expr = new BinaryExpr((Expr) path, new OperatorExpr(Operator.Less(), lessLoc), term); .)
+      ]                                                      (. if (expr == null) expr = new BinaryExpr((Expr) path, new BinOpExpr(Operator.Less(), lessLoc), term); .)
     ]                                                        (. if (expr == null) expr = (Expr) path; .)
   | macroReplacement<out Node node>                          (. expr = castExpr(this, node); .)
   .
@@ -772,7 +772,7 @@ PRODUCTIONS
   .
 
   unary<out Expr expr>
-  = unaryOperator<out UnaryOperator op>
+  = unaryOperator<out IsUnOp op>
     term<out Expr operand> (. if (operand instanceof BinaryExpr binExpr) {
                                 expr = new BinaryExpr(new UnaryExpr(op, binExpr.left), binExpr.operator, binExpr.right);
                               } else {
@@ -781,10 +781,11 @@ PRODUCTIONS
                            .)
   .
 
-  unaryOperator<out UnaryOperator op> (. op = null; .)
-  = SYM_MINUS (. op = UnaryOperator.NEGATIVE; .)
-  | SYM_EXCL  (. op = UnaryOperator.LOG_NOT; .)
-  | SYM_TILDE (. op = UnaryOperator.COMPLEMENT; .)
+  unaryOperator<out IsUnOp op>   (. op = null; .)
+  = SYM_MINUS                    (. op = new UnOpExpr(UnaryOperator.NEGATIVE, loc()); .)
+  | SYM_EXCL                     (. op = new UnOpExpr(UnaryOperator.LOG_NOT, loc()); .)
+  | SYM_TILDE                    (. op = new UnOpExpr(UnaryOperator.COMPLEMENT, loc()); .)
+  | macroReplacement<out Node n> (. op = (IsUnOp) n; .)
   .
 
   term<out Expr expr>            (. expr = null; .)
@@ -794,7 +795,8 @@ PRODUCTIONS
   | IF (isIdentifierToken(la) || isMacroReplacementOfType(this, BasicSyntaxType.CALL_EX))
     callOrBinaryExpression<out expr, true>
   | groupedExpression<out expr>
-  | unary<out expr>
+  | IF(isUnaryOperator(la) || isMacroReplacementOfType(this, BasicSyntaxType.UN_OP))
+    unary<out expr>
   | ifExpression<out expr, BIN_OPS>
   | letExpression<out expr>
   | // IF (isMacroReplacementOfType(this, BasicSyntaxType.EX))
@@ -1077,9 +1079,11 @@ PRODUCTIONS
   | IF (type == BasicSyntaxType.ID)
     identifierOrPlaceholder<out IdentifierOrPlaceholder id> (. body = (Node) id; .)
   | IF (type == BasicSyntaxType.BIN_OP)
-    ( binaryOperator<out Operator op>                       (. body = new OperatorExpr(op, loc()); .)
+    ( binaryOperator<out Operator op>                       (. body = new BinOpExpr(op, loc()); .)
     | macroReplacement<out body>
     )
+  | IF (type == BasicSyntaxType.UN_OP)
+    unaryOperator<out IsUnOp op>                            (. body = (Node) op; .)
   | IF (type instanceof RecordType recordType)
     ( SYM_PAREN_OPEN                                        (. var entries = new ArrayList<Node>(); var nextEntry = recordType.entries.iterator(); .)
       macroBody<out Node entry, nextEntry.next().type()>    (. entries.add(entry); .)

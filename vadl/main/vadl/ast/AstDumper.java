@@ -435,7 +435,13 @@ public class AstDumper
   }
 
   @Override
-  public Void visit(OperatorExpr expr) {
+  public Void visit(BinOpExpr expr) {
+    dumpNode(expr);
+    return null;
+  }
+
+  @Override
+  public Void visit(UnOpExpr expr) {
     dumpNode(expr);
     return null;
   }

@@ -114,9 +114,10 @@ class ConstantDefinition extends Definition {
       builder.append(": ");
       type.prettyPrint(indent, builder);
     }
-    builder.append(" = ");
     if (isBlockLayout(value)) {
-      builder.append("\n");
+      builder.append(" =\n");
+    } else {
+      builder.append(" = ");
     }
     value.prettyPrint(indent + 1, builder);
     builder.append("\n");

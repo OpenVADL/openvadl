@@ -337,13 +337,13 @@ class ParserUtils {
    * Casts the node to the type BinOp, or reports an error and returns a dummy node of that type.
    * Useful in the parser, where throwing cast exceptions is not the best way of error reporting.
    */
-  static OperatorOrPlaceholder castBinOp(Parser parser, Node node) {
-    if (node instanceof OperatorOrPlaceholder operatorOrPlaceholder) {
-      return operatorOrPlaceholder;
+  static IsBinOp castBinOp(Parser parser, Node node) {
+    if (node instanceof IsBinOp isBinOp) {
+      return isBinOp;
     } else {
       parser.errors.SemErr(node.location().begin().line(), node.location().begin().column(),
           "Expected node of type BinOp, received " + node.syntaxType().print() + " - " + node);
-      return new OperatorExpr(Operator.Xor(), node.location());
+      return new BinOpExpr(Operator.Xor(), node.location());
     }
   }
 
@@ -467,5 +467,18 @@ class ParserUtils {
     }
     parser.errors.SemErr("Could not resolve module path: " + name);
     return null;
+  }
+
+  /**
+   * Checks whether the given token is a valid (concrete) unary operator token.
+   * Needs to be kept in sync with the {@code unaryOperator} rule.
+   *
+   * @param token The token to check
+   * @return Whether token is a unary operator token
+   */
+  static boolean isUnaryOperator(Token token) {
+    return token.kind == Parser._SYM_MINUS
+        || token.kind == Parser._SYM_EXCL
+        || token.kind == Parser._SYM_TILDE;
   }
 }
