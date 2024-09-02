@@ -36,12 +36,19 @@ public class EmitTargetElfRelocsDefFilePassTest extends AbstractLcbTest {
         #ifndef ELF_RELOC
         #error "ELF_RELOC must be defined"
         #endif
-               
-               
-        ELF_RELOC(R_processorNameValue_REL_RV3264I_Utype, 0)
-        ELF_RELOC(R_processorNameValue_REL_RV3264I_Btype, 1)
-        ELF_RELOC(R_processorNameValue_REL_RV3264I_Jtype, 2)
-        ELF_RELOC(R_processorNameValue_REL_RV3264I_Itype, 3)
+                
+                
+        ELF_RELOC(R_processorNameValue_ABS_RV3264I_Btype, 0)
+        ELF_RELOC(R_processorNameValue_ABS_RV3264I_Ftype, 1)
+        ELF_RELOC(R_processorNameValue_ABS_RV3264I_Itype, 2)
+        ELF_RELOC(R_processorNameValue_ABS_RV3264I_Jtype, 3)
+        ELF_RELOC(R_processorNameValue_ABS_RV3264I_Rtype, 4)
+        ELF_RELOC(R_processorNameValue_ABS_RV3264I_Stype, 5)
+        ELF_RELOC(R_processorNameValue_ABS_RV3264I_Utype, 6)
+        ELF_RELOC(R_processorNameValue_REL_RV3264I_Btype, 7)
+        ELF_RELOC(R_processorNameValue_REL_RV3264I_Itype, 8)
+        ELF_RELOC(R_processorNameValue_REL_RV3264I_Jtype, 9)
+        ELF_RELOC(R_processorNameValue_REL_RV3264I_Utype, 10)
         """.trim().lines(), output);
   }
 }

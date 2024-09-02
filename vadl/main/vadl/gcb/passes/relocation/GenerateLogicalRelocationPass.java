@@ -2,6 +2,7 @@ package vadl.gcb.passes.relocation;
 
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.List;
 import java.util.stream.Stream;
 import org.jetbrains.annotations.Nullable;
@@ -47,7 +48,9 @@ public class GenerateLogicalRelocationPass extends Pass {
     var y = generateAbsoluteRelocationsForEveryFormat(viam);
     var z = generateRelativeRelocations(viam);
 
-    return Stream.concat(Stream.concat(x, y), z).toList();
+    return Stream.concat(Stream.concat(x, y), z)
+        .sorted(Comparator.comparing(o -> o.name().value()))
+        .toList();
   }
 
   private Stream<LogicalRelocation> generateRelocationsBasedOnSpecifiedRelocation(
@@ -72,9 +75,9 @@ public class GenerateLogicalRelocationPass extends Pass {
   }
 
   private Stream<LogicalRelocation> generateAbsoluteRelocationsForEveryFormat(Specification viam) {
-    return viam.formats()
-        .map(format -> new LogicalRelocation(LogicalRelocation.Kind.ABSOLUTE, format))
-        .distinct();
+    return viam.isas()
+        .flatMap(isa -> isa.ownFormats().stream())
+        .map(format -> new LogicalRelocation(LogicalRelocation.Kind.ABSOLUTE, format));
   }
 
   /**
