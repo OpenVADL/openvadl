@@ -1,12 +1,10 @@
 package vadl.gcb.passes.relocation.model;
 
 import java.util.Arrays;
-import java.util.List;
 import java.util.Objects;
 import java.util.stream.Stream;
 import vadl.viam.Constant;
 import vadl.viam.Format;
-import vadl.viam.InstructionSetArchitecture;
 import vadl.viam.Register;
 import vadl.viam.Relocation;
 
@@ -38,6 +36,14 @@ public class LogicalRelocation {
 
   public Kind kind() {
     return kind;
+  }
+
+  public Format format() {
+    return format;
+  }
+
+  public RelocationName name() {
+    return new RelocationName(format.identifier.lower());
   }
 
   /**

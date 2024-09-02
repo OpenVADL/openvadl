@@ -22,6 +22,7 @@ import vadl.gcb.passes.type_normalization.CppTypeNormalizationForEncodingsPass;
 import vadl.gcb.passes.type_normalization.CppTypeNormalizationForPredicatesPass;
 import vadl.lcb.passes.isaMatching.IsaMatchingPass;
 import vadl.lcb.passes.llvmLowering.LlvmLoweringPass;
+import vadl.lcb.passes.relocation.GenerateElfRelocationPass;
 import vadl.lcb.template.lib.Target.EmitMCInstLowerCppFilePass;
 import vadl.lcb.template.lib.Target.EmitMCInstLowerHeaderFilePass;
 import vadl.template.AbstractTemplateRenderingPass;
@@ -231,6 +232,7 @@ public final class PassOrder {
     var order = gcbAndCppCodeGen(configuration);
     order.add(new IsaMatchingPass(configuration));
     order.add(new LlvmLoweringPass(configuration));
+    order.add(new GenerateElfRelocationPass(configuration));
 
     if (configuration.doDump()) {
       var config = HtmlDumpPass.Config.from(

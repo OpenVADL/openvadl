@@ -6,7 +6,6 @@ import java.util.List;
 import java.util.stream.Stream;
 import org.jetbrains.annotations.Nullable;
 import vadl.configuration.GeneralConfiguration;
-import vadl.gcb.passes.relocation.model.ElfRelocation;
 import vadl.gcb.passes.relocation.model.LogicalRelocation;
 import vadl.pass.Pass;
 import vadl.pass.PassName;
@@ -22,7 +21,6 @@ import vadl.viam.graph.dependency.ReadRegNode;
 
 /**
  * Generate {@link LogicalRelocation} from the specification.
- * From a {@link LogicalRelocation} will be {@link ElfRelocation} generated.
  * First, every instruction that uses a {@link Relocation} must emit a {@link LogicalRelocation}.
  * Second, every format must emit a relative {@link LogicalRelocation} when
  * the one of its {@link Instruction#behavior()} reads from the
