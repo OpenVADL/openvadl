@@ -1,5 +1,6 @@
 package vadl.viam;
 
+import org.jetbrains.annotations.Nullable;
 import vadl.types.Type;
 import vadl.viam.graph.Graph;
 import vadl.viam.graph.dependency.ReadRegNode;
@@ -40,7 +41,7 @@ public class Relocation extends Function {
    * A {@link Relocation} is relative when it references the {@link Register.Counter} which is
    * declared in {@link InstructionSetArchitecture#pc()}.
    */
-  public boolean isRelative(Register.Counter pc) {
+  public boolean isRelative(@Nullable Register.Counter pc) {
     return this.behavior().getNodes(ReadRegNode.class)
         .anyMatch(x -> x.register().equals(pc));
   }
@@ -49,7 +50,7 @@ public class Relocation extends Function {
    * A {@link Relocation} is absolute when it does not reference the {@link Register.Counter} which
    * is declared in {@link InstructionSetArchitecture#pc()}.
    */
-  public boolean isAbsolute(Register.Counter pc) {
+  public boolean isAbsolute(@Nullable Register.Counter pc) {
     return this.behavior().getNodes(ReadRegNode.class)
         .noneMatch(x -> x.register().equals(pc));
   }

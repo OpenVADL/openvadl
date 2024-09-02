@@ -3,6 +3,7 @@ package vadl.gcb.passes.relocation.model;
 import java.util.Arrays;
 import java.util.Objects;
 import java.util.stream.Stream;
+import org.jetbrains.annotations.Nullable;
 import vadl.viam.Constant;
 import vadl.viam.Format;
 import vadl.viam.Register;
@@ -24,7 +25,7 @@ public class LogicalRelocation {
 
   private final Format format;
 
-  public LogicalRelocation(Register.Counter pc, Relocation relocation, Format format) {
+  public LogicalRelocation(@Nullable Register.Counter pc, Relocation relocation, Format format) {
     this.kind = relocation.isAbsolute(pc) ? Kind.ABSOLUTE : Kind.RELATIVE;
     this.format = format;
   }
