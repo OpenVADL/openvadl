@@ -1803,7 +1803,7 @@ class MatchExpr extends Expr {
 
   @Override
   void prettyPrint(int indent, StringBuilder builder) {
-    builder.append("match ");
+    builder.append(prettyIndentString(indent)).append("match ");
     candidate.prettyPrint(0, builder);
     builder.append(" with\n");
     builder.append(prettyIndentString(indent + 1)).append("{ ");

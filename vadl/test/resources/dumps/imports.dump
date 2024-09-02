@@ -1,9 +1,10 @@
-vadl.ast.ImportDefinition@f65da021
+ImportDefinition
 . Identifier name: "A"
 . Identifier name: "B"
+. Identifier name: "TopLevelModel"
 . StringLiteral literal: "./imports/entry.vadl" ("./imports/entry.vadl")
 . Module AST
-. : vadl.ast.ImportDefinition@885099fc
+. : ImportDefinition
 . : ' IdentifierPath
 . : ' | Identifier name: "isa_a"
 . : ' | Identifier name: "A"
@@ -13,7 +14,17 @@ vadl.ast.ImportDefinition@f65da021
 . : ' | . ConstantDefinition
 . : ' | . : Identifier name: "a"
 . : ' | . : IntegerLiteral literal: 1 (1)
-. : vadl.ast.ImportDefinition@8bc94f3a
+. : ImportDefinition
+. : ' IdentifierPath
+. : ' | Identifier name: "isa_a"
+. : ' | Identifier name: "TopLevelModel"
+. : ' Module AST
+. : ' | InstructionSetDefinition
+. : ' | . Identifier name: "A"
+. : ' | . ConstantDefinition
+. : ' | . : Identifier name: "a"
+. : ' | . : IntegerLiteral literal: 1 (1)
+. : ImportDefinition
 . : ' IdentifierPath
 . : ' | Identifier name: "isa_b"
 . : ' | Identifier name: "B"
@@ -28,9 +39,18 @@ vadl.ast.ImportDefinition@f65da021
 . : ' ConstantDefinition
 . : ' | Identifier name: "c"
 . : ' | IntegerLiteral literal: 3 (3)
+ConstantDefinition
+. Identifier name: "topLevelConstant"
+. BinaryExpr operator: +
+. : IntegerLiteral literal: 456 (456)
+. : OperatorExpr +
+. : IntegerLiteral literal: 789 (789)
 InstructionSetDefinition
 . Identifier name: "ISA_A"
 . Identifier name: "A"
 InstructionSetDefinition
 . Identifier name: "ISA_B"
 . Identifier name: "B"
+. ConstantDefinition
+. : Identifier name: "modelInIsa"
+. : IntegerLiteral literal: 123 (123)

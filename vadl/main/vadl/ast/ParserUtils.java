@@ -299,7 +299,7 @@ class ParserUtils {
       return expr;
     } else {
       parser.errors.SemErr(node.location().begin().line(), node.location().begin().column(),
-          "Expected node of type Expr, received " + node.syntaxType().print() + " - " + node);
+          "Expected node of type Ex, received " + node.syntaxType().print() + " - " + node);
       return new Identifier("invalid", node.location());
     }
   }

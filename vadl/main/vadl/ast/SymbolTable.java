@@ -365,6 +365,8 @@ class SymbolTable {
         collectSymbols(symbols, exception.statement);
       } else if (definition instanceof ImportDefinition importDef) {
         symbols.importFrom(importDef.moduleAst, importDef.importPaths, importDef.filePath);
+      } else if (definition instanceof ModelDefinition model) {
+        symbols.addMacro(model.toMacro(), model.location());
       }
     }
 

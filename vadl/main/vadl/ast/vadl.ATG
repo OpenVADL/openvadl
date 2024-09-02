@@ -162,7 +162,7 @@ PRODUCTIONS
   vadl =
   {
     topLevelDefinitions<out Definition def> (. ast.definitions.add(def); .)
-    | macroDef<out ModelDefinition def>     (. macroTable.addMacro(def.toMacro(), def.location()); .)
+    | macroDef<out ModelDefinition def>     (. ast.definitions.add(def); macroTable.addMacro(def.toMacro(), def.location()); .)
     | modelTypeDef
   }.
 

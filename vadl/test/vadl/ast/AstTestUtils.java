@@ -28,10 +28,7 @@ public class AstTestUtils {
     UNGROUPER.ungroup(actual);
     UNGROUPER.ungroup(expected);
     if (!actual.equals(expected)) {
-      var prettyActual = actual.prettyPrint();
-      var prettyExpected = expected.prettyPrint();
-      Assertions.assertEquals(actual, expected,
-          "Expected: " + prettyExpected + "Actual: " + prettyActual);
+      Assertions.assertEquals(actual, expected, AstDiffPrinter.printDiff(actual, expected));
     }
   }
 

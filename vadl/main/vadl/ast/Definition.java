@@ -115,7 +115,10 @@ class ConstantDefinition extends Definition {
       type.prettyPrint(indent, builder);
     }
     builder.append(" = ");
-    value.prettyPrint(indent, builder);
+    if (isBlockLayout(value)) {
+      builder.append("\n");
+    }
+    value.prettyPrint(indent + 1, builder);
     builder.append("\n");
   }
 
@@ -1978,7 +1981,7 @@ class ImportDefinition extends Definition {
       filePath.prettyPrint(0, builder);
     }
     if (!args.isEmpty()) {
-      builder.append("(");
+      builder.append(" with (");
       isFirst = true;
       for (StringLiteral arg : args) {
         if (!isFirst) {
@@ -1987,8 +1990,9 @@ class ImportDefinition extends Definition {
         isFirst = false;
         arg.prettyPrint(0, builder);
       }
-      builder.append(")\n");
+      builder.append(")");
     }
+    builder.append("\n");
   }
 
   @Override
@@ -2009,6 +2013,11 @@ class ImportDefinition extends Definition {
   @Override
   public int hashCode() {
     return Objects.hash(moduleAst, importPaths, filePath, args);
+  }
+
+  @Override
+  public String toString() {
+    return this.getClass().getSimpleName();
   }
 }
 

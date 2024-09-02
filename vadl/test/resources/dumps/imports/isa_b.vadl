@@ -1,3 +1,7 @@
 instruction set architecture B = {
   constant b = 2
+
+  model ModelInIsa(): IsaDefs = {
+    constant modelInIsa = 123
+  }
 }

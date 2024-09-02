@@ -126,6 +126,7 @@ class ModelRemover implements DefinitionVisitor<Definition> {
 
   @Override
   public Definition visit(ImportDefinition importDefinition) {
+    removeModels(importDefinition.moduleAst);
     return importDefinition;
   }
 
