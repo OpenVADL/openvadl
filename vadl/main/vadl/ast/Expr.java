@@ -14,11 +14,17 @@ public abstract class Expr extends Node {
 }
 
 interface ExprVisitor<R> {
+  R visit(Identifier expr);
+
   R visit(BinaryExpr expr);
 
-  R visit(GroupExpr expr);
+  R visit(GroupedExpr expr);
 
   R visit(IntegerLiteral expr);
+
+  R visit(BinaryLiteral expr);
+
+  R visit(BoolLiteral expr);
 
   R visit(StringLiteral expr);
 
@@ -43,6 +49,72 @@ interface ExprVisitor<R> {
   R visit(CastExpr expr);
 
   R visit(SymbolExpr expr);
+
+  R visit(OperatorExpr expr);
+
+  R visit(MacroMatchExpr expr);
+}
+
+final class Identifier extends Expr implements IsId, IdentifierOrPlaceholder {
+  String name;
+  SourceLocation loc;
+
+  public Identifier(String name, SourceLocation location) {
+    this.loc = location;
+    this.name = name;
+  }
+
+  @Override
+  public SourceLocation location() {
+    return loc;
+  }
+
+  @Override
+  SyntaxType syntaxType() {
+    return BasicSyntaxType.Id();
+  }
+
+  @Override
+  public void prettyPrint(int indent, StringBuilder builder) {
+    builder.append(name);
+  }
+
+  @Override
+  public String pathToString() {
+    return name;
+  }
+
+  @Override
+  public String toString() {
+    return "%s name: \"%s\"".formatted(this.getClass().getSimpleName(), this.name);
+  }
+
+  @Override
+  public boolean equals(Object o) {
+    if (this == o) {
+      return true;
+    }
+    if (o == null || getClass() != o.getClass()) {
+      return false;
+    }
+
+    Identifier that = (Identifier) o;
+    return name.equals(that.name);
+  }
+
+  @Override
+  public int hashCode() {
+    return name.hashCode();
+  }
+
+  @Override
+  <R> R accept(ExprVisitor<R> visitor) {
+    return visitor.visit(this);
+  }
+}
+
+sealed interface OperatorOrPlaceholder
+    permits OperatorExpr, PlaceholderExpr, MacroInstanceExpr, MacroMatchExpr {
 }
 
 /**
@@ -193,17 +265,70 @@ enum UnaryOperator {
   }
 }
 
+final class OperatorExpr extends Expr implements OperatorOrPlaceholder {
+
+  Operator operator;
+  SourceLocation location;
+
+  OperatorExpr(Operator operator, SourceLocation location) {
+    this.operator = operator;
+    this.location = location;
+  }
+
+  @Override
+  SourceLocation location() {
+    return location;
+  }
+
+  @Override
+  SyntaxType syntaxType() {
+    return BasicSyntaxType.BinOp();
+  }
+
+  @Override
+  void prettyPrint(int indent, StringBuilder builder) {
+    builder.append(operator.symbol);
+  }
+
+  @Override
+  public String toString() {
+    return getClass().getSimpleName() + " " + operator.symbol;
+  }
+
+  @Override
+  public boolean equals(Object o) {
+    if (this == o) {
+      return true;
+    }
+    if (o == null || getClass() != o.getClass()) {
+      return false;
+    }
+    OperatorExpr that = (OperatorExpr) o;
+    return Objects.equals(operator, that.operator);
+  }
+
+  @Override
+  public int hashCode() {
+    return operator.hashCode();
+  }
+
+  @Override
+  <R> R accept(ExprVisitor<R> visitor) {
+    return visitor.visit(this);
+  }
+}
+
 /**
  * Any kind of binary expression (often written with the infix notation in vadl).
  */
 class BinaryExpr extends Expr {
   Expr left;
-  Operator operator;
+  OperatorOrPlaceholder operator;
   Expr right;
 
-  BinaryExpr(Expr left, Operator operation, Expr right) {
+  BinaryExpr(Expr left, OperatorOrPlaceholder operator, Expr right) {
     this.left = left;
-    this.operator = operation;
+    this.operator = operator;
     this.right = right;
   }
 
@@ -239,7 +364,7 @@ class BinaryExpr extends Expr {
 
   static BinaryExpr transformRecRightToLeft(@Nullable BinaryExpr parpar, BinaryExpr par) {
     while (par.left instanceof BinaryExpr curr) {
-      if (par.operator.precedence > curr.operator.precedence) {
+      if (par.operator().precedence > curr.operator().precedence) {
         par.left = curr.right;
         curr.right = par;
         if ((par = parpar) != null) {
@@ -253,6 +378,10 @@ class BinaryExpr extends Expr {
     return par;
   }
 
+  Operator operator() {
+    return ((OperatorExpr) operator).operator;
+  }
+
   @Override
   SourceLocation location() {
     return left.location().join(right.location());
@@ -260,7 +389,7 @@ class BinaryExpr extends Expr {
 
   @Override
   SyntaxType syntaxType() {
-    return BasicSyntaxType.Bin();
+    return BasicSyntaxType.Ex();
   }
 
   @Override
@@ -268,7 +397,7 @@ class BinaryExpr extends Expr {
     // FIXME: Remove the parenthesis in the future and determine if they are needed
     builder.append("(");
     left.prettyPrint(indent, builder);
-    builder.append(" %s ".formatted(operator.symbol));
+    builder.append(" %s ".formatted(operator().symbol));
     right.prettyPrint(indent, builder);
     builder.append(")");
   }
@@ -281,7 +410,7 @@ class BinaryExpr extends Expr {
   @Override
   public String toString() {
     return "%s operator: %s".formatted(this.getClass().getSimpleName(),
-        operator.symbol);
+        operator().symbol);
   }
 
   @Override
@@ -369,14 +498,7 @@ class IntegerLiteral extends Expr {
   SourceLocation loc;
 
   private static long parse(String token) {
-    token = token.replace("'", "");
-    if (token.startsWith("0x")) {
-      return Long.parseLong(token.substring(2), 16);
-    } else if (token.startsWith("0b")) {
-      return Long.parseLong(token.substring(2), 2);
-    } else {
-      return Long.parseLong(token);
-    }
+    return Long.parseLong(token.replace("'", ""));
   }
 
   public IntegerLiteral(String token, SourceLocation loc) {
@@ -396,7 +518,7 @@ class IntegerLiteral extends Expr {
   }
 
   @Override
-  void prettyPrint(int indent, StringBuilder builder) {
+  public void prettyPrint(int indent, StringBuilder builder) {
     builder.append(token);
   }
 
@@ -428,6 +550,127 @@ class IntegerLiteral extends Expr {
     int result = Long.hashCode(number);
     result = 31 * result + Objects.hashCode(token);
     return result;
+  }
+}
+
+class BinaryLiteral extends Expr {
+  String token;
+  long number;
+  SourceLocation loc;
+
+  private static long parse(String token) {
+    token = token.replace("'", "");
+    if (token.startsWith("0x")) {
+      return Long.parseLong(token.substring(2), 16);
+    } else if (token.startsWith("0b")) {
+      return Long.parseLong(token.substring(2), 2);
+    } else {
+      throw new IllegalArgumentException("No conversion implemented for binary literal " + token);
+    }
+  }
+
+  public BinaryLiteral(String token, SourceLocation loc) {
+    this.token = token;
+    this.number = parse(token);
+    this.loc = loc;
+  }
+
+  @Override
+  SourceLocation location() {
+    return loc;
+  }
+
+  @Override
+  SyntaxType syntaxType() {
+    return BasicSyntaxType.Bin();
+  }
+
+  @Override
+  public void prettyPrint(int indent, StringBuilder builder) {
+    builder.append(token);
+  }
+
+  @Override
+  <R> R accept(ExprVisitor<R> visitor) {
+    return visitor.visit(this);
+  }
+
+  @Override
+  public String toString() {
+    return "%s literal: %s (%d)".formatted(this.getClass().getSimpleName(), token, number);
+  }
+
+  @Override
+  public boolean equals(Object o) {
+    if (this == o) {
+      return true;
+    }
+    if (o == null || getClass() != o.getClass()) {
+      return false;
+    }
+
+    BinaryLiteral that = (BinaryLiteral) o;
+    return number == that.number && token.equals(that.token);
+  }
+
+  @Override
+  public int hashCode() {
+    int result = Long.hashCode(number);
+    result = 31 * result + Objects.hashCode(token);
+    return result;
+  }
+}
+
+class BoolLiteral extends Expr {
+  boolean value;
+  SourceLocation loc;
+
+  BoolLiteral(boolean value, SourceLocation loc) {
+    this.value = value;
+    this.loc = loc;
+  }
+
+  @Override
+  SourceLocation location() {
+    return loc;
+  }
+
+  @Override
+  SyntaxType syntaxType() {
+    return BasicSyntaxType.Bool();
+  }
+
+  @Override
+  public void prettyPrint(int indent, StringBuilder builder) {
+    builder.append(value);
+  }
+
+  @Override
+  <R> R accept(ExprVisitor<R> visitor) {
+    return visitor.visit(this);
+  }
+
+  @Override
+  public String toString() {
+    return "%s literal: %s".formatted(this.getClass().getSimpleName(), value);
+  }
+
+  @Override
+  public boolean equals(Object o) {
+    if (this == o) {
+      return true;
+    }
+    if (o == null || getClass() != o.getClass()) {
+      return false;
+    }
+
+    BoolLiteral that = (BoolLiteral) o;
+    return value == that.value;
+  }
+
+  @Override
+  public int hashCode() {
+    return Boolean.hashCode(value);
   }
 }
 
@@ -486,16 +729,24 @@ class StringLiteral extends Expr {
   }
 }
 
+sealed interface IdentifierOrPlaceholder
+    permits Identifier, PlaceholderExpr, MacroInstanceExpr, MacroMatchExpr {
+  void prettyPrint(int indent, StringBuilder builder);
+}
+
 /**
  * An internal temporary placeholder node inside model definitions.
  * This node should never leave the parser.
  */
-class PlaceholderExpr extends Expr {
-  IdentifierPath identifierPath;
+final class PlaceholderExpr extends Expr implements IdentifierOrPlaceholder,
+    OperatorOrPlaceholder, TypeLiteralOrPlaceholder, FieldEncodingsOrPlaceholder, IsId {
+  IsCallExpr placeholder;
+  SyntaxType type;
   SourceLocation loc;
 
-  public PlaceholderExpr(IdentifierPath identifierPath, SourceLocation loc) {
-    this.identifierPath = identifierPath;
+  public PlaceholderExpr(IsCallExpr placeholder, SyntaxType type, SourceLocation loc) {
+    this.placeholder = placeholder;
+    this.type = type;
     this.loc = loc;
   }
 
@@ -505,19 +756,19 @@ class PlaceholderExpr extends Expr {
   }
 
   @Override
-  SourceLocation location() {
+  public SourceLocation location() {
     return loc;
   }
 
   @Override
   SyntaxType syntaxType() {
-    return BasicSyntaxType.Invalid();
+    return type;
   }
 
   @Override
-  void prettyPrint(int indent, StringBuilder builder) {
+  public void prettyPrint(int indent, StringBuilder builder) {
     builder.append("$");
-    identifierPath.prettyPrint(indent, builder);
+    placeholder.prettyPrint(indent, builder);
   }
 
   @Override
@@ -530,12 +781,17 @@ class PlaceholderExpr extends Expr {
     }
 
     PlaceholderExpr that = (PlaceholderExpr) o;
-    return identifierPath.equals(that.identifierPath);
+    return placeholder.equals(that.placeholder);
   }
 
   @Override
   public int hashCode() {
-    return identifierPath.hashCode();
+    return placeholder.hashCode();
+  }
+
+  @Override
+  public String pathToString() {
+    return "$" + placeholder.path().pathToString();
   }
 }
 
@@ -543,13 +799,14 @@ class PlaceholderExpr extends Expr {
  * An internal temporary placeholder of macro instantiations.
  * This node should never leave the parser.
  */
-class MacroInstanceExpr extends Expr {
-  Identifier identifier;
+final class MacroInstanceExpr extends Expr implements IdentifierOrPlaceholder,
+    OperatorOrPlaceholder, TypeLiteralOrPlaceholder, FieldEncodingsOrPlaceholder, IsId {
+  Macro macro;
   List<Node> arguments;
   SourceLocation loc;
 
-  public MacroInstanceExpr(Identifier identifier, List<Node> arguments, SourceLocation loc) {
-    this.identifier = identifier;
+  public MacroInstanceExpr(Macro macro, List<Node> arguments, SourceLocation loc) {
+    this.macro = macro;
     this.arguments = arguments;
     this.loc = loc;
   }
@@ -560,7 +817,7 @@ class MacroInstanceExpr extends Expr {
   }
 
   @Override
-  SourceLocation location() {
+  public SourceLocation location() {
     return loc;
   }
 
@@ -570,9 +827,20 @@ class MacroInstanceExpr extends Expr {
   }
 
   @Override
-  void prettyPrint(int indent, StringBuilder builder) {
+  public void prettyPrint(int indent, StringBuilder builder) {
+    builder.append(prettyIndentString(indent));
     builder.append("$");
-    builder.append(identifier);
+    builder.append(macro.name().name);
+    builder.append("(");
+    var isFirst = true;
+    for (var arg : arguments) {
+      if (!isFirst) {
+        builder.append(" ; ");
+      }
+      isFirst = false;
+      arg.prettyPrint(0, builder);
+    }
+    builder.append(")");
   }
 
   @Override
@@ -585,51 +853,55 @@ class MacroInstanceExpr extends Expr {
     }
 
     MacroInstanceExpr that = (MacroInstanceExpr) o;
-    return identifier.equals(that.identifier)
+    return macro.equals(that.macro)
         && arguments.equals(that.arguments);
   }
 
   @Override
   public int hashCode() {
-    int result = identifier.hashCode();
+    int result = macro.hashCode();
     result = 31 * result + arguments.hashCode();
     return result;
+  }
+
+  @Override
+  public String pathToString() {
+    var sb = new StringBuilder();
+    prettyPrint(0, sb);
+    return sb.toString();
   }
 }
 
 /**
- * A group expression.
+ * An internal temporary placeholder of a macro-level "match" construct.
+ * This node should never leave the parser.
  */
-class GroupExpr extends Expr {
-  Expr inner;
+final class MacroMatchExpr extends Expr implements IdentifierOrPlaceholder,
+    OperatorOrPlaceholder, TypeLiteralOrPlaceholder, FieldEncodingsOrPlaceholder, IsId {
+  MacroMatch macroMatch;
 
-  public GroupExpr(Expr expression) {
-    this.inner = expression;
+  MacroMatchExpr(MacroMatch macroMatch) {
+    this.macroMatch = macroMatch;
   }
 
   @Override
   <R> R accept(ExprVisitor<R> visitor) {
-    // This node should never leave the parser and therefore never meet a visitor.
     return visitor.visit(this);
   }
 
   @Override
-  SourceLocation location() {
-    return inner.location();
+  public SourceLocation location() {
+    return macroMatch.sourceLocation();
   }
 
   @Override
   SyntaxType syntaxType() {
-    return inner.syntaxType();
+    return macroMatch.resultType();
   }
 
   @Override
-  void prettyPrint(int indent, StringBuilder builder) {
-    // This node should never leave the parser and therefore never meet a visitor.
-    builder.append("(");
-    inner.prettyPrint(indent, builder);
-    builder.append(")");
-
+  public void prettyPrint(int indent, StringBuilder builder) {
+    macroMatch.prettyPrint(indent, builder);
   }
 
   @Override
@@ -641,13 +913,81 @@ class GroupExpr extends Expr {
       return false;
     }
 
-    GroupExpr that = (GroupExpr) o;
-    return inner.equals(that.inner);
+    MacroMatchExpr that = (MacroMatchExpr) o;
+    return macroMatch.equals(that.macroMatch);
   }
 
   @Override
   public int hashCode() {
-    return inner.hashCode();
+    return macroMatch.hashCode();
+  }
+
+  @Override
+  public String pathToString() {
+    return "/* Match - can't be rendered! */";
+  }
+}
+
+/**
+ * A grouped expression.
+ * Grouped expressions can either be single expressions wrapped in parantheses like {@code (1 + 2)},
+ * or multiple expressions separated by a comma like {@code (a, 1 + 2, c())}.
+ */
+class GroupedExpr extends Expr {
+  List<Expr> expressions;
+  SourceLocation loc;
+
+  public GroupedExpr(List<Expr> expressions, SourceLocation loc) {
+    this.expressions = expressions;
+    this.loc = loc;
+  }
+
+  @Override
+  <R> R accept(ExprVisitor<R> visitor) {
+    // This node should never leave the parser and therefore never meet a visitor.
+    return visitor.visit(this);
+  }
+
+  @Override
+  SourceLocation location() {
+    return loc;
+  }
+
+  @Override
+  SyntaxType syntaxType() {
+    return BasicSyntaxType.Ex();
+  }
+
+  @Override
+  void prettyPrint(int indent, StringBuilder builder) {
+    builder.append("(");
+    var isFirst = true;
+    for (var expr : expressions) {
+      if (!isFirst) {
+        builder.append(", ");
+      }
+      isFirst = false;
+      expr.prettyPrint(0, builder);
+    }
+    builder.append(")");
+  }
+
+  @Override
+  public boolean equals(Object o) {
+    if (this == o) {
+      return true;
+    }
+    if (o == null || getClass() != o.getClass()) {
+      return false;
+    }
+
+    GroupedExpr that = (GroupedExpr) o;
+    return expressions.equals(that.expressions);
+  }
+
+  @Override
+  public int hashCode() {
+    return expressions.hashCode();
   }
 }
 
@@ -708,13 +1048,17 @@ class RangeExpr extends Expr {
   }
 }
 
+sealed interface TypeLiteralOrPlaceholder
+    permits TypeLiteral, PlaceholderExpr, MacroInstanceExpr, MacroMatchExpr {
+}
+
 /**
  * TypeLiterals are needed as the types are not known during parsing.
  * For example {@code Bits<counter>} depends on the constant {@code counter} used here and so some
  * constant evaluation has to be performed for the concrete type to be known here.
  */
-class TypeLiteral extends Expr {
-  IdentifierPath baseType;
+final class TypeLiteral extends Expr implements TypeLiteralOrPlaceholder {
+  IsId baseType;
 
   /**
    * The sizes of the type literal. An expression of {@code <1,2><3,4>} is equivalent to
@@ -724,16 +1068,17 @@ class TypeLiteral extends Expr {
 
   SourceLocation loc;
 
-  public TypeLiteral(IdentifierPath baseType, List<List<Expr>> sizeIndices, SourceLocation loc) {
+  public TypeLiteral(IsId baseType, List<List<Expr>> sizeIndices, SourceLocation loc) {
     this.baseType = baseType;
     this.sizeIndices = sizeIndices;
     this.loc = loc;
   }
 
-  public TypeLiteral(SymbolExpr symbolExpr) {
-    this.baseType = symbolExpr.path;
-    this.sizeIndices = symbolExpr.size == null ? List.of() : List.of(List.of(symbolExpr.size));
-    this.loc = symbolExpr.location();
+  public TypeLiteral(IsSymExpr symExpr) {
+    this.baseType = symExpr.path();
+    var size = symExpr.size();
+    this.sizeIndices = size == null ? List.of() : List.of(List.of(size));
+    this.loc = symExpr.location();
   }
 
   @Override
@@ -795,24 +1140,73 @@ class TypeLiteral extends Expr {
   }
 }
 
-class IdentifierPath extends Expr {
+sealed interface IsCallExpr permits CallExpr, IsSymExpr {
+  IsId path();
+
+  @Nullable
+  Expr size();
+
+  List<List<Expr>> argsIndices();
+
+  List<CallExpr.SubCall> subCalls();
+
+  SourceLocation location();
+
+  void prettyPrint(int indent, StringBuilder builder);
+}
+
+sealed interface IsSymExpr extends IsCallExpr permits SymbolExpr, IsId {
+  @Override
+  IsId path();
+
+  @Override
+  @Nullable
+  Expr size();
+
+  @Override
+  default List<List<Expr>> argsIndices() {
+    return List.of();
+  }
+
+  @Override
+  default List<CallExpr.SubCall> subCalls() {
+    return List.of();
+  }
+}
+
+sealed interface IsId extends IsSymExpr
+    permits IdentifierPath, Identifier, PlaceholderExpr, MacroInstanceExpr, MacroMatchExpr {
+  @Override
+  default IsId path() {
+    return this;
+  }
+
+  @Override
+  default @Nullable Expr size() {
+    return null;
+  }
+
+  String pathToString();
+}
+
+final class IdentifierPath extends Expr implements IsId {
   /**
    * List of segments in this path; the first N-1 segments are (nested) namespaces,
    * the last segment is an identifier in the (nested) namespace.
    * Size has to be at least 1
    */
-  List<Identifier> segments;
+  List<IdentifierOrPlaceholder> segments;
 
-  public IdentifierPath(List<Identifier> segments) {
+  public IdentifierPath(List<IdentifierOrPlaceholder> segments) {
     Preconditions.checkArgument(!segments.isEmpty(),
         "IdentifierPath needs at least one Identifier");
     this.segments = segments;
   }
 
   @Override
-  SourceLocation location() {
-    var first = segments.get(0);
-    var last = segments.get(segments.size() - 1);
+  public SourceLocation location() {
+    var first = (Node) segments.get(0);
+    var last = (Node) segments.get(segments.size() - 1);
     return first.location().join(last.location());
   }
 
@@ -821,21 +1215,22 @@ class IdentifierPath extends Expr {
     return BasicSyntaxType.Id();
   }
 
-  String pathToString() {
+  @Override
+  public String pathToString() {
     StringBuilder sb = new StringBuilder();
     prettyPrint(0, sb);
     return sb.toString();
   }
 
   @Override
-  void prettyPrint(int indent, StringBuilder builder) {
+  public void prettyPrint(int indent, StringBuilder builder) {
     var isFirst = true;
-    for (Identifier segment : segments) {
+    for (var segment : segments) {
       if (!isFirst) {
         builder.append("::");
       }
       isFirst = false;
-      segment.prettyPrint(indent, builder);
+      ((Node) segment).prettyPrint(indent, builder);
     }
   }
 
@@ -868,8 +1263,81 @@ class IdentifierPath extends Expr {
   }
 }
 
-class CallExpr extends Expr {
-  SymbolExpr target;
+/**
+ * A representation of terms of form {@code "MEM<9>"}.
+ */
+final class SymbolExpr extends Expr implements IsSymExpr {
+  IsId path;
+  Expr size;
+  SourceLocation location;
+
+  SymbolExpr(IsId path, Expr size, SourceLocation location) {
+    this.path = path;
+    this.size = size;
+    this.location = location;
+  }
+
+  @Override
+  public IsId path() {
+    return path;
+  }
+
+  @Override
+  public Expr size() {
+    return size;
+  }
+
+  @Override
+  public SourceLocation location() {
+    return location;
+  }
+
+  @Override
+  SyntaxType syntaxType() {
+    return BasicSyntaxType.SymEx();
+  }
+
+  @Override
+  public void prettyPrint(int indent, StringBuilder builder) {
+    path.prettyPrint(indent, builder);
+    builder.append("< ");
+    size.prettyPrint(indent, builder);
+    builder.append(" >");
+  }
+
+  @Override
+  <R> R accept(ExprVisitor<R> visitor) {
+    return visitor.visit(this);
+  }
+
+  @Override
+  public String toString() {
+    return this.getClass().getSimpleName();
+  }
+
+  @Override
+  public boolean equals(Object o) {
+    if (this == o) {
+      return true;
+    }
+    if (o == null || getClass() != o.getClass()) {
+      return false;
+    }
+
+    SymbolExpr that = (SymbolExpr) o;
+    return path.equals(that.path) && Objects.equals(size, that.size);
+  }
+
+  @Override
+  public int hashCode() {
+    int result = path.hashCode();
+    result = 31 * result + Objects.hashCode(size);
+    return result;
+  }
+}
+
+final class CallExpr extends Expr implements IsCallExpr {
+  IsSymExpr target;
   /**
    * A list of function arguments or register/memory indices,
    * where multidimensional index access is represented as multiple list entries.
@@ -882,7 +1350,7 @@ class CallExpr extends Expr {
   List<SubCall> subCalls;
   SourceLocation location;
 
-  public CallExpr(SymbolExpr target, List<List<Expr>> argsIndices,
+  public CallExpr(IsSymExpr target, List<List<Expr>> argsIndices,
                   List<SubCall> subCalls, SourceLocation location) {
     this.target = target;
     this.argsIndices = argsIndices;
@@ -891,7 +1359,27 @@ class CallExpr extends Expr {
   }
 
   @Override
-  SourceLocation location() {
+  public IsId path() {
+    return target.path();
+  }
+
+  @Override
+  public @Nullable Expr size() {
+    return target.size();
+  }
+
+  @Override
+  public List<List<Expr>> argsIndices() {
+    return argsIndices;
+  }
+
+  @Override
+  public List<SubCall> subCalls() {
+    return subCalls;
+  }
+
+  @Override
+  public SourceLocation location() {
     return location;
   }
 
@@ -901,7 +1389,7 @@ class CallExpr extends Expr {
   }
 
   @Override
-  void prettyPrint(int indent, StringBuilder builder) {
+  public void prettyPrint(int indent, StringBuilder builder) {
     target.prettyPrint(indent, builder);
     printArgsIndices(argsIndices, builder);
     for (var subCall : subCalls) {
@@ -959,7 +1447,8 @@ class CallExpr extends Expr {
     return result;
   }
 
-  record SubCall(Identifier id, List<List<Expr>> argsIndices) {}
+  record SubCall(Identifier id, List<List<Expr>> argsIndices) {
+  }
 }
 
 class IfExpr extends Expr {
@@ -1031,13 +1520,13 @@ class IfExpr extends Expr {
 }
 
 class LetExpr extends Expr {
-  Identifier identifier;
+  List<Identifier> identifiers;
   Expr valueExpr;
   Expr body;
   SourceLocation location;
 
-  LetExpr(Identifier identifier, Expr valueExpr, Expr body, SourceLocation location) {
-    this.identifier = identifier;
+  LetExpr(List<Identifier> identifiers, Expr valueExpr, Expr body, SourceLocation location) {
+    this.identifiers = identifiers;
     this.valueExpr = valueExpr;
     this.body = body;
     this.location = location;
@@ -1057,7 +1546,14 @@ class LetExpr extends Expr {
   void prettyPrint(int indent, StringBuilder builder) {
     builder.append(prettyIndentString(indent));
     builder.append("let ");
-    identifier.prettyPrint(indent, builder);
+    var isFirst = true;
+    for (var identifier : identifiers) {
+      if (!isFirst) {
+        builder.append(", ");
+      }
+      isFirst = false;
+      identifier.prettyPrint(indent, builder);
+    }
     builder.append(" = ");
     valueExpr.prettyPrint(indent + 1, builder);
     builder.append(" in\n");
@@ -1084,14 +1580,14 @@ class LetExpr extends Expr {
     }
 
     LetExpr that = (LetExpr) o;
-    return identifier.equals(that.identifier)
+    return identifiers.equals(that.identifiers)
         && valueExpr.equals(that.valueExpr)
         && body.equals(that.body);
   }
 
   @Override
   public int hashCode() {
-    int result = identifier.hashCode();
+    int result = identifiers.hashCode();
     result = 31 * result + Objects.hashCode(valueExpr);
     result = 31 * result + Objects.hashCode(body);
     return result;
@@ -1100,16 +1596,16 @@ class LetExpr extends Expr {
 
 class CastExpr extends Expr {
   Expr value;
-  TypeLiteral type;
+  TypeLiteralOrPlaceholder type;
 
-  public CastExpr(Expr value, TypeLiteral type) {
+  public CastExpr(Expr value, TypeLiteralOrPlaceholder type) {
     this.value = value;
     this.type = type;
   }
 
   @Override
   SourceLocation location() {
-    return value.location().join(type.location());
+    return value.location().join(((Expr) type).location());
   }
 
   @Override
@@ -1121,7 +1617,7 @@ class CastExpr extends Expr {
   void prettyPrint(int indent, StringBuilder builder) {
     value.prettyPrint(indent, builder);
     builder.append(" as ");
-    type.prettyPrint(indent, builder);
+    ((Expr) type).prettyPrint(indent, builder);
   }
 
   @Override
@@ -1151,72 +1647,6 @@ class CastExpr extends Expr {
   public int hashCode() {
     int result = value.hashCode();
     result = 31 * result + Objects.hashCode(type);
-    return result;
-  }
-}
-
-/**
- * A representation of terms of form {@code "MEM<9>"}.
- */
-class SymbolExpr extends Expr {
-  IdentifierPath path;
-  @Nullable
-  Expr size;
-  SourceLocation location;
-
-  SymbolExpr(IdentifierPath path, @Nullable Expr size, SourceLocation location) {
-    this.path = path;
-    this.size = size;
-    this.location = location;
-  }
-
-  @Override
-  SourceLocation location() {
-    return location;
-  }
-
-  @Override
-  SyntaxType syntaxType() {
-    return BasicSyntaxType.SymEx();
-  }
-
-  @Override
-  void prettyPrint(int indent, StringBuilder builder) {
-    path.prettyPrint(indent, builder);
-    if (size != null) {
-      builder.append("< ");
-      size.prettyPrint(indent, builder);
-      builder.append(" >");
-    }
-  }
-
-  @Override
-  <R> R accept(ExprVisitor<R> visitor) {
-    return visitor.visit(this);
-  }
-
-  @Override
-  public String toString() {
-    return this.getClass().getSimpleName();
-  }
-
-  @Override
-  public boolean equals(Object o) {
-    if (this == o) {
-      return true;
-    }
-    if (o == null || getClass() != o.getClass()) {
-      return false;
-    }
-
-    SymbolExpr that = (SymbolExpr) o;
-    return path.equals(that.path) && Objects.equals(size, that.size);
-  }
-
-  @Override
-  public int hashCode() {
-    int result = path.hashCode();
-    result = 31 * result + Objects.hashCode(size);
     return result;
   }
 }

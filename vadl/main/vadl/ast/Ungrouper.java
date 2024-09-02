@@ -3,34 +3,52 @@ package vadl.ast;
 import java.util.ArrayList;
 
 /**
- * Ungrouper, removes all group expressions recursively.
- * Groups are needed in the AST during parsing until all binary expressions are reordered but then
- * can be removed.
+ * Removes all group expressions recursively.
+ * Groups are needed in the AST during parsing until all binary expressions are reordered, but can
+ * then be removed. This is especially useful for testing, where two AST trees are often tested
+ * for semantic equality and thus ungrouped before comparison.
  */
-class Ungrouper implements ExprVisitor<Expr> {
+class Ungrouper
+    implements ExprVisitor<Expr>, DefinitionVisitor<Definition>, StatementVisitor<Statement> {
 
-  public Expr ungroup(Expr expr) {
-    return expr.accept(this);
+  public void ungroup(Ast ast) {
+    ast.definitions.replaceAll(definition -> definition.accept(this));
+  }
+
+  @Override
+  public Expr visit(Identifier expr) {
+    return expr;
   }
 
   @Override
   public Expr visit(BinaryExpr expr) {
     expr.left = expr.left.accept(this);
-    if (expr.right != null) {
-      // Should never happen in a syntactically correct program.
-      // In an expression like "3 > =", the parser will throw an error only after "ungroup"  is run
-      expr.right = expr.right.accept(this);
-    }
+    expr.right = expr.right.accept(this);
     return expr;
   }
 
   @Override
-  public Expr visit(GroupExpr expr) {
-    return expr.inner.accept(this);
+  public Expr visit(GroupedExpr expr) {
+    if (expr.expressions.size() == 1) {
+      return expr.expressions.get(0).accept(this);
+    }
+    var expressions = new ArrayList<>(expr.expressions);
+    expressions.replaceAll(e -> e.accept(this));
+    return new GroupedExpr(expressions, expr.loc);
   }
 
   @Override
   public Expr visit(IntegerLiteral expr) {
+    return expr;
+  }
+
+  @Override
+  public Expr visit(BinaryLiteral expr) {
+    return expr;
+  }
+
+  @Override
+  public Expr visit(BoolLiteral expr) {
     return expr;
   }
 
@@ -74,7 +92,7 @@ class Ungrouper implements ExprVisitor<Expr> {
 
   @Override
   public Expr visit(CallExpr expr) {
-    expr.target = (SymbolExpr) expr.target.accept(this);
+    expr.target = (IsSymExpr) ((Expr) expr.target).accept(this);
     var argsIndices = expr.argsIndices;
     expr.argsIndices = new ArrayList<>(argsIndices.size());
     for (var entry : argsIndices) {
@@ -113,7 +131,7 @@ class Ungrouper implements ExprVisitor<Expr> {
   @Override
   public Expr visit(LetExpr expr) {
     return new LetExpr(
-        expr.identifier,
+        expr.identifiers,
         expr.valueExpr.accept(this),
         expr.body.accept(this),
         expr.location
@@ -128,7 +146,169 @@ class Ungrouper implements ExprVisitor<Expr> {
 
   @Override
   public Expr visit(SymbolExpr expr) {
-    expr.size = expr.size == null ? null : expr.size.accept(this);
+    expr.size = expr.size.accept(this);
     return expr;
+  }
+
+  @Override
+  public Expr visit(OperatorExpr expr) {
+    return expr;
+  }
+
+  @Override
+  public Expr visit(MacroMatchExpr expr) {
+    return expr;
+  }
+
+  @Override
+  public Definition visit(ConstantDefinition definition) {
+    ungroupAnnotations(definition);
+    definition.value = definition.value.accept(this);
+    return definition;
+  }
+
+  @Override
+  public Definition visit(FormatDefinition definition) {
+    ungroupAnnotations(definition);
+    for (FormatDefinition.FormatField field : definition.fields) {
+      if (field instanceof FormatDefinition.RangeFormatField f) {
+        f.ranges.replaceAll(range -> range.accept(this));
+      } else if (field instanceof FormatDefinition.DerivedFormatField f) {
+        f.expr = f.expr.accept(this);
+      }
+    }
+    return definition;
+  }
+
+  @Override
+  public Definition visit(InstructionSetDefinition definition) {
+    ungroupAnnotations(definition);
+    definition.definitions.replaceAll(d -> d.accept(this));
+    return definition;
+  }
+
+  @Override
+  public Definition visit(CounterDefinition definition) {
+    ungroupAnnotations(definition);
+    return definition;
+  }
+
+  @Override
+  public Definition visit(MemoryDefinition definition) {
+    ungroupAnnotations(definition);
+    return definition;
+  }
+
+  @Override
+  public Definition visit(RegisterDefinition definition) {
+    ungroupAnnotations(definition);
+    return definition;
+  }
+
+  @Override
+  public Definition visit(RegisterFileDefinition definition) {
+    ungroupAnnotations(definition);
+    return definition;
+  }
+
+  @Override
+  public Definition visit(InstructionDefinition definition) {
+    ungroupAnnotations(definition);
+    definition.behavior = definition.behavior.accept(this);
+    return definition;
+  }
+
+  @Override
+  public Definition visit(EncodingDefinition definition) {
+    ungroupAnnotations(definition);
+    definition.fieldEncodings().encodings.replaceAll(
+        encoding -> new EncodingDefinition.FieldEncoding(encoding.field(),
+            encoding.value().accept(this)));
+    return definition;
+  }
+
+  @Override
+  public Definition visit(AssemblyDefinition definition) {
+    ungroupAnnotations(definition);
+    return definition;
+  }
+
+  @Override
+  public Definition visit(UsingDefinition definition) {
+    ungroupAnnotations(definition);
+    return definition;
+  }
+
+  @Override
+  public Definition visit(FunctionDefinition definition) {
+    ungroupAnnotations(definition);
+    definition.expr = definition.expr.accept(this);
+    return definition;
+  }
+
+  @Override
+  public Definition visit(PlaceholderDefinition definition) {
+    ungroupAnnotations(definition);
+    return definition;
+  }
+
+  @Override
+  public Definition visit(MacroInstanceDefinition definition) {
+    ungroupAnnotations(definition);
+    return definition;
+  }
+
+  @Override
+  public Definition visit(MacroMatchDefinition definition) {
+    return definition;
+  }
+
+  @Override
+  public Statement visit(BlockStatement blockStatement) {
+    blockStatement.statements.replaceAll(statement -> statement.accept(this));
+    return blockStatement;
+  }
+
+  @Override
+  public Statement visit(LetStatement letStatement) {
+    letStatement.valueExpression = letStatement.valueExpression.accept(this);
+    letStatement.body = letStatement.body.accept(this);
+    return letStatement;
+  }
+
+  @Override
+  public Statement visit(IfStatement ifStatement) {
+    ifStatement.condition = ifStatement.condition.accept(this);
+    ifStatement.thenStmt = ifStatement.thenStmt.accept(this);
+    ifStatement.elseStmt = ifStatement.elseStmt == null ? null : ifStatement.elseStmt.accept(this);
+    return ifStatement;
+  }
+
+  @Override
+  public Statement visit(AssignmentStatement assignmentStatement) {
+    assignmentStatement.target = assignmentStatement.target.accept(this);
+    assignmentStatement.valueExpression = assignmentStatement.valueExpression.accept(this);
+    return assignmentStatement;
+  }
+
+  @Override
+  public Statement visit(PlaceholderStatement placeholderStatement) {
+    return placeholderStatement;
+  }
+
+  @Override
+  public Statement visit(MacroInstanceStatement macroInstanceStatement) {
+    return macroInstanceStatement;
+  }
+
+  @Override
+  public Statement visit(MacroMatchStatement macroMatchStatement) {
+    return macroMatchStatement;
+  }
+
+  private void ungroupAnnotations(Definition definition) {
+    definition.annotations.annotations().replaceAll(
+        annotation -> new Annotation(annotation.expr().accept(this), annotation.type(),
+            annotation.property()));
   }
 }

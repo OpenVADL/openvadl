@@ -3,6 +3,7 @@ package vadl.ast;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
+import javax.annotation.Nullable;
 import vadl.utils.SourceLocation;
 
 /**
@@ -10,6 +11,7 @@ import vadl.utils.SourceLocation;
  */
 public class Ast {
   List<Definition> definitions = new ArrayList<>();
+  @Nullable SymbolTable rootSymbolTable;
 
   /**
    * Convert the tree back into sourcecode.
@@ -48,6 +50,17 @@ public class Ast {
 }
 
 abstract class Node {
+  @Nullable
+  SymbolTable symbolTable;
+
+  SymbolTable symbolTable() {
+    if (symbolTable == null) {
+      throw new IllegalStateException(
+          "Node " + this + " should have received a symbol table in a previous pass");
+    }
+    return symbolTable;
+  }
+
   static String prettyIndentString(int indent) {
     var indentBy = 2;
     return " ".repeat(indentBy * indent);
@@ -58,52 +71,4 @@ abstract class Node {
   abstract SyntaxType syntaxType();
 
   abstract void prettyPrint(int indent, StringBuilder builder);
-}
-
-class Identifier extends Node {
-  String name;
-  SourceLocation loc;
-
-  public Identifier(String name, SourceLocation location) {
-    this.loc = location;
-    this.name = name;
-  }
-
-  @Override
-  SourceLocation location() {
-    return loc;
-  }
-
-  @Override
-  SyntaxType syntaxType() {
-    return BasicSyntaxType.Id();
-  }
-
-  @Override
-  void prettyPrint(int indent, StringBuilder builder) {
-    builder.append(name);
-  }
-
-  @Override
-  public String toString() {
-    return "%s name: \"%s\"".formatted(this.getClass().getSimpleName(), this.name);
-  }
-
-  @Override
-  public boolean equals(Object o) {
-    if (this == o) {
-      return true;
-    }
-    if (o == null || getClass() != o.getClass()) {
-      return false;
-    }
-
-    Identifier that = (Identifier) o;
-    return name.equals(that.name);
-  }
-
-  @Override
-  public int hashCode() {
-    return name.hashCode();
-  }
 }

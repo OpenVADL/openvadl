@@ -1,0 +1,29 @@
+// SPDX-FileCopyrightText : © 2024 TU Wien <vadl@tuwien.ac.at>
+// SPDX-License-Identifier: Apache-2.0
+
+instruction set architecture IsaDefsTest = {
+
+  register file X : Bits<5> -> Bits<32>
+
+  format Rtype : Bits<32> =
+    { rd: Bits<5>
+    , rs1: Bits<5>
+    , rs2: Bits<5>
+    , opcode: Bits<7>
+    }
+
+  model RTypeInstr(instrName: Id, instrFormat: Id, opcode: Bin, op: BinOp, type: Id, destReg: Id, srcReg1: Id, srcReg2: Id): IsaDefs = {
+    instruction $instrName: $instrFormat = {
+      X($destReg) := (X($srcReg1) $op X($srcReg2)) as $type
+    }
+    encoding $instrName = { opcode = $opcode }
+    assembly $instrName = (mnemonic, " ", register($destReg), ",", register($srcReg1), ",", register($srcReg2))
+  }
+
+  using SIntR = SInt<32>
+
+  $RTypeInstr(ADD ; Rtype ; 0b011'0011 ; + ; SIntR ; rd ; rs1 ; rs2)
+  $RTypeInstr(SUB ; Rtype ; 0b100'1100 ; - ; SIntR ; rd ; rs1 ; rs2)
+  $RTypeInstr(SQU ; Rtype ; 0b101'0101 ; * ; SIntR ; rd ; rs1 ; rs1)
+}
+

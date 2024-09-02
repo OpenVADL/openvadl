@@ -51,10 +51,7 @@ public class AstDumper
         expr.accept(this);
       } else if (child instanceof Statement statement) {
         statement.accept(this);
-      } else if (child instanceof Identifier) {
-        dumpNode(child);
       } else {
-        System.out.println(child);
         throw new RuntimeException("NOT IMPLEMENTED");
       }
     }
@@ -68,7 +65,7 @@ public class AstDumper
   @Override
   public Void visit(ConstantDefinition definition) {
     dumpNode(definition);
-    dumpChildren(definition.identifier);
+    dumpChildren(definition.identifier());
     if (definition.type != null) {
       dumpChildren(definition.type);
     }
@@ -79,16 +76,19 @@ public class AstDumper
   @Override
   public Void visit(FormatDefinition definition) {
     dumpNode(definition);
+    dumpChildren(definition.identifier(), definition.type);
     this.indent++;
     for (var field : definition.fields) {
       if (field instanceof FormatDefinition.RangeFormatField f) {
         dumpNode(f);
-        dumpChildren(f.identifier());
+        dumpChildren(f.identifier);
         dumpChildren(f.ranges);
       } else if (field instanceof FormatDefinition.TypedFormatField f) {
         dumpNode(f);
-        dumpChildren(f.identifier());
-        dumpChildren(f.type);
+        dumpChildren(f.identifier, f.type());
+      } else if (field instanceof FormatDefinition.DerivedFormatField f) {
+        dumpNode(f);
+        dumpChildren(f.identifier, f.expr);
       }
     }
     this.indent--;
@@ -99,54 +99,75 @@ public class AstDumper
   public Void visit(InstructionSetDefinition definition) {
     dumpNode(definition);
     dumpChildren(definition.identifier);
-    dumpChildren(definition.definitions.toArray(new Node[0]));
+    if (definition.extending != null) {
+      dumpChildren(definition.extending);
+    }
+    dumpChildren(definition.definitions);
     return null;
   }
 
   @Override
   public Void visit(CounterDefinition definition) {
     dumpNode(definition);
-    dumpChildren(definition.identifier, definition.type);
+    dumpChildren(definition.identifier(), definition.type);
     return null;
   }
 
   @Override
   public Void visit(MemoryDefinition definition) {
     dumpNode(definition);
-    dumpChildren(definition.identifier, definition.addressType, definition.dataType);
+    dumpChildren(definition.identifier(), definition.addressType, definition.dataType);
     return null;
   }
 
   @Override
   public Void visit(RegisterDefinition definition) {
     dumpNode(definition);
-    dumpChildren(definition.identifier, definition.type);
+    dumpChildren(definition.identifier(), definition.type);
     return null;
   }
 
   @Override
   public Void visit(RegisterFileDefinition definition) {
     dumpNode(definition);
-    dumpChildren(definition.identifier, definition.indexType, definition.registerType);
+    dumpChildren(definition.identifier(), definition.indexType, definition.registerType);
+    return null;
+  }
+
+  @Override
+  public Void visit(Identifier expr) {
+    dumpNode(expr);
     return null;
   }
 
   @Override
   public Void visit(BinaryExpr expr) {
     dumpNode(expr);
-    dumpChildren(expr.left, expr.right);
+    dumpChildren(expr.left, (Node) expr.operator, expr.right);
     return null;
   }
 
   @Override
-  public Void visit(GroupExpr expr) {
+  public Void visit(GroupedExpr expr) {
     dumpNode(expr);
-    dumpChildren(expr.inner);
+    dumpChildren(expr.expressions);
     return null;
   }
 
   @Override
   public Void visit(IntegerLiteral expr) {
+    dumpNode(expr);
+    return null;
+  }
+
+  @Override
+  public Void visit(BinaryLiteral expr) {
+    dumpNode(expr);
+    return null;
+  }
+
+  @Override
+  public Void visit(BoolLiteral expr) {
     dumpNode(expr);
     return null;
   }
@@ -179,7 +200,7 @@ public class AstDumper
   @Override
   public Void visit(TypeLiteral expr) {
     dumpNode(expr);
-    dumpChildren(expr.baseType);
+    dumpChildren((Expr) expr.baseType);
     indent++;
     for (List<Expr> sizes : expr.sizeIndices) {
       builder.append(indentString()).append("Sizes\n");
@@ -192,7 +213,7 @@ public class AstDumper
   @Override
   public Void visit(IdentifierPath expr) {
     dumpNode(expr);
-    dumpChildren(expr.segments);
+    dumpChildren(expr.segments.stream().map(Node.class::cast).toList());
     return null;
   }
 
@@ -206,16 +227,16 @@ public class AstDumper
   @Override
   public Void visit(InstructionDefinition definition) {
     dumpNode(definition);
-    dumpChildren(definition.identifier, definition.typeIdentifier, definition.behavior);
+    dumpChildren(definition.id(), definition.type(), definition.behavior);
     return null;
   }
 
   @Override
   public Void visit(EncodingDefinition definition) {
     dumpNode(definition);
-    dumpChildren(definition.instrIdentifier);
-    dumpChildren(definition.fieldEncodings.stream()
-        .flatMap(entry -> Stream.of(entry.field(), entry.value()))
+    dumpChildren(definition.instrId());
+    dumpChildren(definition.fieldEncodings().encodings.stream()
+        .flatMap(entry -> Stream.of(entry.field(), (Node) entry.value()))
         .toList()
     );
     return null;
@@ -224,14 +245,50 @@ public class AstDumper
   @Override
   public Void visit(AssemblyDefinition definition) {
     dumpNode(definition);
-    dumpChildren(definition.segments);
+    dumpChildren(definition.expr);
+    return null;
+  }
+
+  @Override
+  public Void visit(UsingDefinition definition) {
+    dumpNode(definition);
+    dumpChildren(definition.identifier(), definition.type);
+    return null;
+  }
+
+  @Override
+  public Void visit(FunctionDefinition definition) {
+    dumpNode(definition);
+    dumpChildren(definition.name());
+    for (var param : definition.params) {
+      dumpChildren(param.name(), param.type());
+    }
+    dumpChildren(definition.retType, definition.expr);
+    return null;
+  }
+
+  @Override
+  public Void visit(PlaceholderDefinition definition) {
+    dumpNode(definition);
+    return null;
+  }
+
+  @Override
+  public Void visit(MacroInstanceDefinition definition) {
+    dumpNode(definition);
+    return null;
+  }
+
+  @Override
+  public Void visit(MacroMatchDefinition definition) {
+    dumpNode(definition);
     return null;
   }
 
   @Override
   public Void visit(CallExpr expr) {
     dumpNode(expr);
-    dumpChildren(expr.target);
+    dumpChildren((Expr) expr.target);
     indent++;
     for (List<Expr> args : expr.argsIndices) {
       builder.append(indentString()).append("ArgsIndices\n");
@@ -259,24 +316,37 @@ public class AstDumper
   @Override
   public Void visit(LetExpr expr) {
     dumpNode(expr);
-    dumpChildren(expr.identifier, expr.valueExpr, expr.body);
+    dumpChildren(expr.identifiers);
+    dumpChildren(expr.valueExpr, expr.body);
     return null;
   }
 
   @Override
   public Void visit(CastExpr expr) {
     dumpNode(expr);
-    dumpChildren(expr.value, expr.type);
+    dumpChildren(expr.value, (Expr) expr.type);
     return null;
   }
 
   @Override
   public Void visit(SymbolExpr expr) {
     dumpNode(expr);
-    dumpChildren(expr.path);
+    dumpChildren((Expr) expr.path);
     if (expr.size != null) {
       dumpChildren(expr.size);
     }
+    return null;
+  }
+
+  @Override
+  public Void visit(OperatorExpr expr) {
+    dumpNode(expr);
+    return null;
+  }
+
+  @Override
+  public Void visit(MacroMatchExpr expr) {
+    dumpNode(expr);
     return null;
   }
 
@@ -311,6 +381,24 @@ public class AstDumper
     assignmentStatement.target.accept(this);
     assignmentStatement.valueExpression.accept(this);
     indent--;
+    return null;
+  }
+
+  @Override
+  public Void visit(PlaceholderStatement placeholderStatement) {
+    dumpNode(placeholderStatement);
+    return null;
+  }
+
+  @Override
+  public Void visit(MacroInstanceStatement macroInstanceStatement) {
+    dumpNode(macroInstanceStatement);
+    return null;
+  }
+
+  @Override
+  public Void visit(MacroMatchStatement macroMatchStatement) {
+    dumpNode(macroMatchStatement);
     return null;
   }
 }

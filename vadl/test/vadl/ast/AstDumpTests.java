@@ -1,12 +1,13 @@
 package vadl.ast;
 
+import static vadl.ast.AstTestUtils.loadVadlFiles;
 import static vadl.ast.AstTestUtils.verifyPrettifiedAst;
 
 import java.io.IOException;
 import java.net.URISyntaxException;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.util.Objects;
+import java.util.Map;
 import java.util.stream.Stream;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.DynamicTest;
@@ -24,38 +25,46 @@ public class AstDumpTests {
    */
   @TestFactory
   Stream<DynamicTest> astDumpTests() throws URISyntaxException, IOException {
-    var directory = Objects.requireNonNull(getClass().getClassLoader().getResource("dumps"));
-    var sourceDir = Path.of(directory.toURI()).toAbsolutePath().toString()
-        .replace("/build/resources/test", "/test/resources");
-    return Files.list(Path.of(sourceDir))
-        .filter(path -> path.getFileName().toString().endsWith(".vadl"))
-        .map(path -> DynamicTest.dynamicTest("Parse " + path.getFileName(),
-            () -> assertDumpEquality(path)));
+      return loadVadlFiles("dumps").stream()
+          .filter(path -> path.getFileName().toString().endsWith(".vadl"))
+          .map(path -> DynamicTest.dynamicTest("Parse " + path.getFileName(),
+              () -> assertDumpEquality(path)));
   }
 
   private void assertDumpEquality(Path vadlPath) throws IOException {
-    var ast = VadlParser.parse(vadlPath.toAbsolutePath());
+    var ast = VadlParser.parse(vadlPath.toAbsolutePath(), Map.of());
     verifyPrettifiedAst(ast);
 
     var actualDump = new AstDumper().dump(ast);
-    var expectedDumpPath = vadlPath.resolveSibling(vadlPath.getFileName().toString()
-        .replace(".vadl", ".dump"));
+    var expectedDumpPath = dumpPath(vadlPath);
     if (!Files.isRegularFile(expectedDumpPath)) {
-      writeDump(vadlPath, actualDump);
+      writeDump(actualDumpPath(vadlPath), actualDump);
       Assertions.fail("File " + expectedDumpPath + " does not exist");
     }
     var expectedDump = Files.readString(expectedDumpPath).replaceAll("\r\n", "\n");
     
-    if (!actualDump.equals(expectedDump)) {
-      writeDump(vadlPath, actualDump);
+    if (actualDump.equals(expectedDump)) {
+      // Clean up any ".actual" files we might have left behind the last time this test failed
+      Files.deleteIfExists(actualDumpPath(vadlPath));
+    } else {
+      writeDump(actualDumpPath(vadlPath), actualDump);
     }
 
     Assertions.assertEquals(expectedDump, actualDump,
         "Expected dump:\n" + expectedDump + "\nActual dump:\n" + actualDump);
   }
 
-  private void writeDump(Path vadlPath, String dump) throws IOException {
-    var target = vadlPath.getFileName().toString().replace(".vadl", ".dump.actual");
-    Files.writeString(vadlPath.resolveSibling(target), dump);
+  private void writeDump(Path dumpPath, String dump) throws IOException {
+    Files.writeString(dumpPath, dump);
+  }
+
+  private Path dumpPath(Path vadlPath) {
+    var path = vadlPath.getFileName().toString().replace(".vadl", ".dump");
+    return vadlPath.resolveSibling(path);
+  }
+
+  private Path actualDumpPath(Path vadlPath) {
+    var path = vadlPath.getFileName().toString().replace(".vadl", ".dump.actual");
+    return vadlPath.resolveSibling(path);
   }
 }

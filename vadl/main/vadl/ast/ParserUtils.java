@@ -1,14 +1,10 @@
 package vadl.ast;
 
-import java.util.HashMap;
 import java.util.List;
-import java.util.Objects;
-import javax.annotation.Nullable;
 import vadl.utils.SourceLocation;
 
 class ParserUtils {
 
-  private static final Ungrouper UNGROUPER = new Ungrouper();
   static boolean[] NO_OPS;
   static boolean[] BIN_OPS;
   static boolean[] BIN_OPS_EXCEPT_GT;
@@ -69,173 +65,170 @@ class ParserUtils {
    * If the given "expr" is not a binary expression, the cast operand will be the whole "expr".
    * If the given "expr" is a binary expression, only its right leaf will be the cast operand.
    *
-   * @param expr A left-sided binary expression tree or a non-binary expression.
+   * @param expr     A left-sided binary expression tree or a non-binary expression.
    * @param symOrBin Either a SymbolExpr of the cast target type, or a BinaryExpr with the
    *                 SymbolExpr as the left operand.
    * @return A left-sided binary expression tree with a CastExpr as its leaf — or a simple CastExpr.
    */
   static Expr reorderCastExpr(Expr expr, Expr symOrBin) {
+    Expr castee = expr instanceof BinaryExpr binExpr ? binExpr.right : expr;
     if (symOrBin instanceof BinaryExpr binSym) {
+      var castExpr = new CastExpr(castee, typeLiteral(binSym.left));
       if (expr instanceof BinaryExpr binExpr) {
-        binExpr.right = new CastExpr(binExpr.right, new TypeLiteral((SymbolExpr) binSym.left));
+        binExpr.right = castExpr;
         binSym.left = binExpr;
       } else {
-        binSym.left = new CastExpr(expr, new TypeLiteral((SymbolExpr) binSym.left));
+        binSym.left = castExpr;
       }
       return binSym;
-    } else if (expr instanceof BinaryExpr binExpr) {
-      binExpr.right = new CastExpr(binExpr.right, new TypeLiteral((SymbolExpr) symOrBin));
-      return binExpr;
     } else {
-      return new CastExpr(expr, new TypeLiteral((SymbolExpr) symOrBin));
+      var castExpr = new CastExpr(castee, typeLiteral(symOrBin));
+      if (expr instanceof BinaryExpr binExpr) {
+        binExpr.right = castExpr;
+        return binExpr;
+      } else {
+        return castExpr;
+      }
     }
   }
 
-  /**
-   * Will ungroup expressions if the parser is not currently parsing a model.
-   *
-   * @see Ungrouper#ungroup(Expr)
-   */
-  static Expr ungroup(Parser parser, Expr expr) {
-    // Expr should never be null, but it can happen if a parser error occurs.
-    if (parser.insideMacro || expr == null) {
-      return expr;
+  private static TypeLiteralOrPlaceholder typeLiteral(Expr expr) {
+    if (expr instanceof PlaceholderExpr placeholderExpr) {
+      return placeholderExpr;
+    } else if (expr instanceof IsSymExpr symExpr) {
+      return new TypeLiteral(symExpr);
+    } else {
+      throw new IllegalArgumentException("Unknown type literal node " + expr);
     }
-    return UNGROUPER.ungroup(expr);
   }
 
   /**
    * Converts the parser's current token position to a vadl location.
    */
-  static SourceLocation locationFromToken(Parser parser) {
+  static SourceLocation locationFromToken(Parser parser, Token token) {
     return new SourceLocation(
         parser.sourceFile,
-        new SourceLocation.Position(parser.t.line, parser.t.col),
-        new SourceLocation.Position(parser.t.line, parser.t.col + parser.t.val.length()));
+        new SourceLocation.Position(token.line, token.col),
+        new SourceLocation.Position(token.line, token.col + token.val.length()));
   }
 
-  /**
-   * Expands a macro.
-   */
-  static @Nullable Node expandMacro(Parser parser, Identifier identifier, List<Node> args,
-                                    SyntaxType requiredReturnType) {
-    var unexpanded = new MacroInstanceExpr(identifier, args, identifier.location());
-    if (parser.insideMacro) {
-      return unexpanded;
+  static boolean isExprType(SyntaxType type) {
+    return type.isSubTypeOf(BasicSyntaxType.Ex());
+  }
+
+  static boolean isDefType(SyntaxType type) {
+    return type.isSubTypeOf(BasicSyntaxType.IsaDefs());
+  }
+
+  static boolean isStmtType(SyntaxType type) {
+    return type.isSubTypeOf(BasicSyntaxType.Stats());
+  }
+
+  static Node createMacroInstance(Macro macro, List<Node> args, SourceLocation sourceLocation) {
+    if (isDefType(macro.returnType())) {
+      return new MacroInstanceDefinition(macro, args, sourceLocation);
+    } else if (isStmtType(macro.returnType())) {
+      return new MacroInstanceStatement(macro, args, sourceLocation);
+    } else {
+      return new MacroInstanceExpr(macro, args, sourceLocation);
     }
+  }
 
-    var macro = parser.symbolTable.getMacro(identifier.name);
-    if (macro == null) {
-      parser.errors.SemErr(parser.t.line, parser.t.col,
-          "No macro named `%s` exists.".formatted(identifier.name));
-      return unexpanded;
+  static Node createPlaceholder(Parser parser, IsId path, SourceLocation sourceLocation) {
+    var type = paramSyntaxType(parser, path.pathToString());
+    if (isDefType(type)) {
+      return new PlaceholderDefinition(path, type, sourceLocation);
+    } else if (isStmtType(type)) {
+      return new PlaceholderStatement(path, type, sourceLocation);
+    } else {
+      return new PlaceholderExpr(path, type, sourceLocation);
     }
+  }
 
-    // The macro itself was invalid but an error for it was already issued,
-    // so we silently abort the expansion here.
-    if (macro.returnType() == BasicSyntaxType.Invalid()) {
-      return unexpanded;
-    }
-
-    boolean hasError = false;
-
-    // Verify the arguments
-    if (macro.params().size() != args.size()) {
-      parser.errors.SemErr(parser.t.line, parser.t.col,
-          "The macro `%s` expects %d arguments but %d were provided.".formatted(identifier.name,
-              macro.params().size(), args.size()));
-      hasError = true;
-    }
-
-    var argMap = new HashMap<String, Node>();
-    if (!hasError) {
-      for (int i = 0; i < args.size(); i++) {
-        var arg = args.get(i);
-        var param = macro.params().get(i);
-        var argType = arg.syntaxType();
-
-        if (!argType.isSubTypeOf(param.type())) {
-          parser.errors.SemErr(parser.t.line, parser.t.col,
-              ("The macro's `%s` parameter `%s` expects a `%s` but the argument provided is of type"
-                  + " `%s`.").formatted(identifier.name, param.name().name, param.type(), argType));
-          hasError = true;
+  private static SyntaxType paramSyntaxType(Parser parser, String name) {
+    for (List<MacroParam> params : parser.macroContext) {
+      for (MacroParam param : params) {
+        if (param.name().name.equals(name)) {
+          return param.type();
         }
-        argMap.put(param.name().name, arg);
       }
     }
+    return BasicSyntaxType.Invalid();
+  }
 
-    // Verify the return type
-    if (!macro.returnType().isSubTypeOf(requiredReturnType)) {
-      parser.errors.SemErr(parser.t.line, parser.t.col,
-          "The macro `%s` returns `%s` but here a macro returning `%s` is expected.".formatted(
-              identifier.name, macro.returnType(), requiredReturnType));
-      hasError = true;
-    }
-
-    if (hasError) {
-      return unexpanded;
-    }
-
-    // FIXME: There should be a real instantiator here
-    var body = macro.body();
-    if (body instanceof Expr expr) {
-      var expander = new MacroExpander(argMap, parser.symbolTable);
-      body = expander.expandExpr(expr);
-      body = new GroupExpr((Expr) body);
-    } else if (body instanceof Definition def) {
-      var expander = new MacroExpander(argMap, parser.symbolTable);
-      body = expander.expandDefinition(def);
-    } else if (body instanceof Identifier id) {
-      body = id;
+  static Node createMacroMatch(SyntaxType resultType, List<MacroMatch.Choice> choices,
+                               Node defaultChoice, SourceLocation sourceLocation) {
+    var macroMatch = new MacroMatch(resultType, choices, defaultChoice, sourceLocation);
+    if (isDefType(resultType)) {
+      return new MacroMatchDefinition(macroMatch);
+    } else if (isStmtType(resultType)) {
+      return new MacroMatchStatement(macroMatch);
     } else {
-      throw new RuntimeException("Expanding %s not yet implemented".formatted(body.getClass()));
+      return new MacroMatchExpr(macroMatch);
     }
-    return body;
   }
 
   static Node narrowNode(Node node) {
-    if (node instanceof Expr expr) {
-      return narrowExpr(expr);
+    if (node instanceof StatementList statementList) {
+      return statementList.items.get(0);
     }
     return node;
   }
 
-  static Expr narrowExpr(Expr expr) {
-    if (expr instanceof CallExpr callExpr
-        && callExpr.argsIndices.isEmpty() && callExpr.subCalls.isEmpty()) {
-      expr = callExpr.target;
+  /**
+   * Pre-parses the next few tokens to determine the type of the following placeholder / macro.
+   * Before: parser must be in a state where the lookahead token is the "$" symbol.
+   * After: parser is in the same state as before.
+   */
+  static boolean isMacroReplacementOfType(Parser parser, SyntaxType syntaxType) {
+    if (parser.la.kind != Parser._SYM_DOLLAR) {
+      return false;
     }
-    if (expr instanceof SymbolExpr symExpr && symExpr.size == null) {
-      expr = symExpr.path;
+    var parserSnapshot = ParserSnapshot.create(parser);
+    var scannerSnapshot = ScannerSnapshot.create(parser.scanner);
+    var maxExpr = parser.maximumMacroExpr();
+    parserSnapshot.reset(parser);
+    scannerSnapshot.reset(parser.scanner);
+
+    if (maxExpr instanceof MacroInstanceExpr macroInstanceExpr) {
+      var macro = parser.symbolTable.getMacro(macroInstanceExpr.macro.name().name);
+      return macro != null && macro.returnType().isSubTypeOf(syntaxType);
     }
-    return expr;
+    if (maxExpr instanceof PlaceholderExpr placeholderExpr) {
+      for (List<MacroParam> params : parser.macroContext) {
+        for (MacroParam param : params) {
+          if (param.name().name.equals(placeholderExpr.placeholder.path().pathToString())) {
+            return param.type().isSubTypeOf(syntaxType);
+          }
+        }
+      }
+    }
+    return maxExpr.syntaxType().isSubTypeOf(syntaxType);
   }
 
-  static void pushScope(Parser parser) {
-    parser.symbolTable = parser.symbolTable.createChild();
-  }
+  record ParserSnapshot(Token t, Token la) {
+    static ParserSnapshot create(Parser parser) {
+      return new ParserSnapshot(parser.t, parser.la);
+    }
 
-  static void pushFormatScope(Parser parser, Node formatId) {
-    if (formatId instanceof Identifier id) {
-      parser.symbolTable = parser.symbolTable.createFormatScope(id);
-    } else {
-      pushScope(parser);
+    void reset(Parser parser) {
+      parser.t = t;
+      parser.la = la;
     }
   }
 
-  static void pushInstructionScope(Parser parser, Node instrId) {
-    if (instrId instanceof Identifier id) {
-      parser.symbolTable = parser.symbolTable.createInstructionScope(id);
-    } else {
-      pushScope(parser);
+  record ScannerSnapshot(Token t, int ch, int col, int line, int charPos, int bufferPos) {
+    static ScannerSnapshot create(Scanner scanner) {
+      return new ScannerSnapshot(scanner.t, scanner.ch, scanner.col, scanner.line, scanner.charPos,
+          scanner.buffer.getPos());
     }
-  }
 
-  static void popScope(Parser parser) {
-    parser.symbolTable = Objects.requireNonNull(parser.symbolTable.parent);
-  }
-
-  static void semError(Parser parser, SourceLocation location, String message) {
-    parser.errors.SemErr(location.begin().line(), location.begin().column(), message);
+    void reset(Scanner scanner) {
+      scanner.t = t;
+      scanner.ch = ch;
+      scanner.col = col;
+      scanner.line = line;
+      scanner.buffer.setPos(bufferPos);
+    }
   }
 }

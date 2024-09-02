@@ -27,10 +27,10 @@ instruction set architecture RV3264I = {
     , funct3 : Bits3                      // [14..12] 3 bit function code
     , rd     : Index                      // [11..7]  destination register index
     , opcode : Bits7                      // [6..0]   7 bit operation code
-    , shamt  = rs2 as UInt                // 5 bit unsigned shift ammount
+    , shamt  = rs2 as UInt                // 5 bit unsigned shift amount
     }
 
-  instruction ADD : Rtype =                        // 3 register operand instructions
+  instruction ADD : Rtype =               // 3 register operand instructions
       X(rd) := ((X(rs1) as Bits) + (X(rs2) as Bits)) as Regs
 
   instruction ADD2 : Rtype = {

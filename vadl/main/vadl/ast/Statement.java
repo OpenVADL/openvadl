@@ -7,7 +7,8 @@ import javax.annotation.Nullable;
 import vadl.utils.SourceLocation;
 
 abstract sealed class Statement extends Node
-    permits BlockStatement, LetStatement, IfStatement, AssignmentStatement {
+    permits BlockStatement, LetStatement, IfStatement, AssignmentStatement, StatementList,
+    PlaceholderStatement, MacroInstanceStatement, MacroMatchStatement {
   <T> T accept(StatementVisitor<T> visitor) {
     // TODO Use exhaustive switch with patterns in future Java versions
     if (this instanceof BlockStatement b) {
@@ -18,6 +19,12 @@ abstract sealed class Statement extends Node
       return visitor.visit(i);
     } else if (this instanceof AssignmentStatement a) {
       return visitor.visit(a);
+    } else if (this instanceof PlaceholderStatement p) {
+      return visitor.visit(p);
+    } else if (this instanceof MacroInstanceStatement m) {
+      return visitor.visit(m);
+    } else if (this instanceof MacroMatchStatement m) {
+      return visitor.visit(m);
     } else {
       throw new IllegalStateException("Unhandled statement type " + getClass().getSimpleName());
     }
@@ -37,6 +44,12 @@ interface StatementVisitor<T> {
   T visit(IfStatement ifStatement);
 
   T visit(AssignmentStatement assignmentStatement);
+
+  T visit(PlaceholderStatement placeholderStatement);
+
+  T visit(MacroInstanceStatement macroInstanceStatement);
+
+  T visit(MacroMatchStatement macroMatchStatement);
 }
 
 final class BlockStatement extends Statement {
@@ -95,14 +108,14 @@ final class BlockStatement extends Statement {
 }
 
 final class LetStatement extends Statement {
-  Identifier identifier;
+  List<Identifier> identifiers;
   Expr valueExpression;
   Statement body;
   SourceLocation location;
 
-  LetStatement(Identifier identifier, Expr valueExpression, Statement body,
+  LetStatement(List<Identifier> identifiers, Expr valueExpression, Statement body,
                SourceLocation location) {
-    this.identifier = identifier;
+    this.identifiers = identifiers;
     this.valueExpression = valueExpression;
     this.body = body;
     this.location = location;
@@ -117,7 +130,14 @@ final class LetStatement extends Statement {
   public void prettyPrint(int indent, StringBuilder builder) {
     builder.append(prettyIndentString(indent));
     builder.append("let ");
-    builder.append(identifier.name);
+    var isFirst = true;
+    for (var identifier : identifiers) {
+      if (!isFirst) {
+        builder.append(", ");
+      }
+      isFirst = false;
+      identifier.prettyPrint(indent, builder);
+    }
     builder.append(" = ");
     valueExpression.prettyPrint(indent + 1, builder);
     builder.append(" in\n");
@@ -133,19 +153,19 @@ final class LetStatement extends Statement {
       return false;
     }
     var that = (LetStatement) obj;
-    return Objects.equals(this.identifier, that.identifier)
+    return Objects.equals(this.identifiers, that.identifiers)
         && Objects.equals(this.valueExpression, that.valueExpression)
         && Objects.equals(this.body, that.body);
   }
 
   @Override
   public int hashCode() {
-    return Objects.hash(identifier, valueExpression, body);
+    return Objects.hash(identifiers, valueExpression, body);
   }
 
   @Override
   public String toString() {
-    return getClass().getSimpleName() + " name=" + identifier.name;
+    return getClass().getSimpleName();
   }
 }
 
@@ -254,5 +274,153 @@ final class AssignmentStatement extends Statement {
   @Override
   public String toString() {
     return getClass().getSimpleName();
+  }
+}
+
+final class StatementList extends Statement {
+
+  List<Statement> items;
+  SourceLocation location;
+
+  StatementList(List<Statement> items, SourceLocation location) {
+    this.items = items;
+    this.location = location;
+  }
+
+  @Override
+  SourceLocation location() {
+    return location;
+  }
+
+  @Override
+  SyntaxType syntaxType() {
+    return BasicSyntaxType.Stats();
+  }
+
+  @Override
+  void prettyPrint(int indent, StringBuilder builder) {
+    items.forEach(item -> item.prettyPrint(indent, builder));
+  }
+}
+
+final class PlaceholderStatement extends Statement {
+
+  IsCallExpr placeholder;
+  SyntaxType type;
+  SourceLocation loc;
+
+  PlaceholderStatement(IsCallExpr placeholder, SyntaxType type, SourceLocation loc) {
+    this.placeholder = placeholder;
+    this.type = type;
+    this.loc = loc;
+  }
+
+  @Override
+  <R> R accept(StatementVisitor<R> visitor) {
+    return visitor.visit(this);
+  }
+
+  @Override
+  SourceLocation location() {
+    return loc;
+  }
+
+  @Override
+  SyntaxType syntaxType() {
+    return type;
+  }
+
+  @Override
+  void prettyPrint(int indent, StringBuilder builder) {
+    builder.append("$");
+    placeholder.prettyPrint(indent, builder);
+  }
+}
+
+/**
+ * An internal temporary placeholder of macro instantiations.
+ * This node should never leave the parser.
+ */
+final class MacroInstanceStatement extends Statement {
+  Macro macro;
+  List<Node> arguments;
+  SourceLocation loc;
+
+  public MacroInstanceStatement(Macro macro, List<Node> arguments, SourceLocation loc) {
+    this.macro = macro;
+    this.arguments = arguments;
+    this.loc = loc;
+  }
+
+  @Override
+  SourceLocation location() {
+    return loc;
+  }
+
+  @Override
+  SyntaxType syntaxType() {
+    return BasicSyntaxType.Invalid();
+  }
+
+  @Override
+  void prettyPrint(int indent, StringBuilder builder) {
+    builder.append(prettyIndentString(indent));
+    builder.append("$");
+    builder.append(macro.name().name);
+    builder.append("(");
+    var isFirst = true;
+    for (var arg : arguments) {
+      if (!isFirst) {
+        builder.append(" ; ");
+      }
+      isFirst = false;
+      arg.prettyPrint(0, builder);
+    }
+    builder.append(")");
+  }
+}
+
+/**
+ * An internal temporary placeholder of a macro-level "match" construct.
+ * This node should never leave the parser.
+ */
+final class MacroMatchStatement extends Statement {
+  MacroMatch macroMatch;
+
+  MacroMatchStatement(MacroMatch macroMatch) {
+    this.macroMatch = macroMatch;
+  }
+
+  @Override
+  public SourceLocation location() {
+    return macroMatch.sourceLocation();
+  }
+
+  @Override
+  SyntaxType syntaxType() {
+    return macroMatch.resultType();
+  }
+
+  @Override
+  public void prettyPrint(int indent, StringBuilder builder) {
+    macroMatch.prettyPrint(indent, builder);
+  }
+
+  @Override
+  public boolean equals(Object o) {
+    if (this == o) {
+      return true;
+    }
+    if (o == null || getClass() != o.getClass()) {
+      return false;
+    }
+
+    MacroMatchStatement that = (MacroMatchStatement) o;
+    return macroMatch.equals(that.macroMatch);
+  }
+
+  @Override
+  public int hashCode() {
+    return macroMatch.hashCode();
   }
 }

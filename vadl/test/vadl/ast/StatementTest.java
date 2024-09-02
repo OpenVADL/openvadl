@@ -28,6 +28,26 @@ public class StatementTest {
   }
 
   @Test
+  void parseLetStatementWithMultipleVariables() {
+    var prog = """
+        instruction set architecture ISA = {
+          program counter PC : Bits<32>
+          format Btype : Bits<32> = {
+            bits [31..0]
+          }
+          instruction BEQ : Btype = {
+            // Contrived example, would use VADL::adds in the real world
+            let next, status = PC + 4 in
+              if status = 0 then
+                PC := next
+          }
+        }
+        """;
+    var ast = Assertions.assertDoesNotThrow(() -> VadlParser.parse(prog), "Cannot parse input");
+    verifyPrettifiedAst(ast);
+  }
+
+  @Test
   void parseIfStatement() {
     var prog = """
         instruction set architecture ISA = {
@@ -89,7 +109,7 @@ public class StatementTest {
     var definitions = List.of(
         new FormatDefinition(
             new Identifier("F", loc),
-            new TypeLiteral(new IdentifierPath(List.of(new Identifier("Bits", loc))),
+            new TypeLiteral(new Identifier("Bits", loc),
                 List.of(List.of(new IntegerLiteral("32", loc))), loc),
             List.of(new FormatDefinition.RangeFormatField(
                 new Identifier("bits", loc),
@@ -102,10 +122,14 @@ public class StatementTest {
             new Identifier("F", loc),
             new BlockStatement(loc).add(
                 new IfStatement(
-                    new BinaryExpr(new IntegerLiteral("3", loc), Operator.Greater(),
+                    new BinaryExpr(
+                        new IntegerLiteral("3", loc),
+                        new OperatorExpr(Operator.Greater(), loc),
                         new IntegerLiteral("4", loc)),
                     new IfStatement(
-                        new BinaryExpr(new IntegerLiteral("9", loc), Operator.Less(),
+                        new BinaryExpr(
+                            new IntegerLiteral("9", loc),
+                            new OperatorExpr(Operator.Less(), loc),
                             new IntegerLiteral("2", loc)),
                         new BlockStatement(loc),
                         new BlockStatement(loc),
@@ -119,6 +143,7 @@ public class StatementTest {
     );
     expectedAst.definitions.add(new InstructionSetDefinition(
         new Identifier("ISA", loc),
+        null,
         definitions,
         loc
     ));
