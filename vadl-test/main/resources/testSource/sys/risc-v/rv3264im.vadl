@@ -34,6 +34,7 @@ instruction set architecture RV3264I = {
   using Bits5    = Bits< 5>               // 5 bit type
   using Bits6    = Bits< 6>               // 6 bit type
   using Bits7    = Bits< 7>               // 7 bit type
+  using Bits12   = Bits<12>              // 12 bit type
   using Index    = Bits< 5>               // 5 bit register index type for 32 registers
   using UInt5    = UInt< 5>               // 5 bit unsigned shift ammount
   using UShft    = UInt<SftLen>           // 5 or 6 bit unsigned shift ammount
@@ -88,14 +89,6 @@ instruction set architecture RV3264I = {
     , funct3 [14..12]                     // 3 bit function code
     , opcode [6..0]                       // 7 bit operation code
     , immS   = imm as SIntR               // sign extended immediate value
-    : predicate
-      { immS =>
-            match immS(31..11) with
-            { 0b0000'0000'0000'0000'0000'0 => true
-            , 0b1111'1111'1111'1111'1111'1 => true
-            , _                            => false
-            }
-      }
     }
 
   format Btype : Inst =                   // Btype branch instruction format
@@ -277,6 +270,124 @@ $Arch3264 ( // ((((((((((((((((((((((((((((((((((((((((
   $IShftInstr (SRLI ; >> ; 0b101 ; 0b000'0000 ; UInt)  // shift right logical immediate
   $IShftInstr (SRAI ; >> ; 0b101 ; 0b010'0000 ; SInt)  // shift right arithmetic immediate
 
+  relocation hi20( symbol : Bits<32> ) -> UInt<20> = ( ( symbol + 0x800 ) >> 12 ) as UInt<20>
+  relocation lo12( symbol : Bits<32> ) -> SInt<12> = symbol as SInt<12>
+
+  pseudo instruction CALL( symbol : Bits<32> ) =
+  {
+      LUI{ rd = 1 as Bits5, imm = hi20( symbol ) }
+      JALR{ rd = 1 as Bits5, rs1 = 1 as Bits5, imm = lo12( symbol ) }
+  }
+  assembly CALL = (mnemonic, " ", hex( symbol ))
+
+  pseudo instruction TAIL( symbol : Bits<32> ) =
+  {
+      AUIPC{ rd = 6 as Bits5, imm = hi20( symbol ) }
+      JALR{ rd = 0 as Bits5, rs1 = 6 as Bits5, imm = lo12( symbol ) as Bits12 }
+  }
+  assembly TAIL = (mnemonic, " ", hex( symbol ))
+
+  pseudo instruction RET =
+  {
+      JALR{ rs1 = 1 as Bits5, rd = 0 as Bits5, imm = 0 as Bits12 }
+  }
+  assembly RET = mnemonic
+
+  pseudo instruction J( offset : Bits<20> ) =
+  {
+      JAL{ rd = 0 as Bits5, imm = offset }
+  }
+  assembly J = (mnemonic, " ", decimal( offset ))
+
+  pseudo instruction NOP =
+  {
+      ADDI{ rd = 0 as Bits5, rs1 = 0 as Bits5, imm = 0 as Bits12 }
+  }
+  assembly NOP = mnemonic
+
+  pseudo instruction MOV( rd : Index, rs1 : Index ) =
+  {
+      ADDI{ rd = rd, rs1 = rs1, imm = 0 as Bits12 }
+  }
+  assembly MOV = (mnemonic, " ", register( rd ), ",", register( rs1 ))
+
+  pseudo instruction NOT( rd : Index, rs1 : Index ) =
+  {
+      XORI{ rd = rd, rs1 = rs1, imm = 0xFFF /* -1 */ }
+  }
+
+  assembly NOT = (mnemonic, " ", register( rd ), ",", register( rs1 ))
+
+  pseudo instruction NEG( rd : Index, rs1 : Index ) =
+  {
+      SUB{ rd = rd, rs1 = 0 as Bits5, rs2 = rs1 }
+  }
+
+  assembly NEG = (mnemonic, " ", register( rd ), ",", register( rs1 ))
+
+  pseudo instruction SNEZ( rd : Index, rs1 : Index ) =
+  {
+      SLTU{ rd = rd, rs1 = 0 as Bits5, rs2 = rs1 }
+  }
+
+  assembly SNEZ = (mnemonic, " ", register( rd ), ",", register( rs1 ))
+
+  pseudo instruction SLTZ( rd : Index, rs1 : Index ) =
+  {
+      SLT{ rd = rd, rs1 = rs1, rs2 = 0 as Bits5 }
+  }
+
+  assembly SLTZ = (mnemonic, " ", register( rd ), ",", register( rs1 ))
+
+  pseudo instruction SGTZ( rd : Index, rs1 : Index ) =
+  {
+      SLT{ rd = rd, rs1 = 0 as Bits5, rs2 = rs1 }
+  }
+
+  assembly SGTZ = (mnemonic, " ", register( rd ), ",", register( rs1 ))
+
+  pseudo instruction BEQZ( rs : Index, offset : Bits<12> ) =
+  {
+      BEQ{ rs1 = rs, rs2 = 0 as Bits5, imm = offset }
+  }
+
+  assembly BEQZ = (mnemonic, " ", register( rs ), ",", decimal( offset ))
+
+  pseudo instruction BNEZ( rs : Index, offset : Bits<12> ) =
+  {
+      BNE{ rs1 = rs, rs2 = 0 as Bits5, imm = offset }
+  }
+
+  assembly BNEZ = (mnemonic, " ", register( rs ), ",", decimal( offset ))
+
+  pseudo instruction BLEZ( rs : Index, offset : Bits<12> ) =
+  {
+      BGE{ rs1 = 0 as Bits5, rs2 = rs, imm = offset }
+  }
+
+  assembly BLEZ = (mnemonic, " ", register( rs ), ",", decimal( offset ))
+
+  pseudo instruction BGEZ( rs : Index, offset : Bits<12> ) =
+  {
+      BGE{ rs1 = rs, rs2 = 0 as Bits5, imm = offset }
+  }
+
+  assembly BGEZ = (mnemonic, " ", register( rs ), ",", decimal( offset ))
+
+  pseudo instruction BLTZ( rs : Index, offset : Bits<12> ) =
+  {
+      BLT{ rs1 = rs, rs2 = 0 as Bits5, imm = offset }
+  }
+
+  assembly BLTZ = (mnemonic, " ", register( rs ), ",", decimal( offset ))
+
+  pseudo instruction BGTZ( rs : Index, offset : Bits<12> ) =
+  {
+      BLT{ rs1 = 0 as Bits5, rs2 = rs, imm = offset }
+  }
+
+  assembly BGTZ = (mnemonic, " ", register( rs ), ",", decimal( offset ))
+
   }
 
 
@@ -352,4 +463,4 @@ $Arch3264 ( // ((((((((((((((((((((((((((((((((((((((((
 
 //   application binary interface ABI for RV3264IM = {}
 
-  // micro processor CPU implements RV3264IM with ABI = {}
+// micro processor CPU implements RV3264IM with ABI = {}
