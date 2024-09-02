@@ -11,12 +11,16 @@ import vadl.configuration.GeneralConfiguration;
 import vadl.pass.Pass;
 import vadl.pass.PassName;
 import vadl.pass.PassResults;
+import vadl.utils.GraphUtils;
 import vadl.viam.Instruction;
 import vadl.viam.Parameter;
 import vadl.viam.Specification;
+import vadl.viam.graph.control.InstrCallNode;
+import vadl.viam.graph.control.InstrEndNode;
 import vadl.viam.graph.control.ReturnNode;
 import vadl.viam.graph.dependency.ExpressionNode;
 import vadl.viam.graph.dependency.FieldAccessRefNode;
+import vadl.viam.graph.dependency.FieldRefNode;
 import vadl.viam.graph.dependency.FuncCallNode;
 import vadl.viam.graph.dependency.FuncParamNode;
 
@@ -36,7 +40,7 @@ public class FunctionInlinerPass extends Pass {
     return new PassName("FunctionInlinerPass");
   }
 
-  record Pair(ExpressionNode arg, Parameter parameter) {
+  record Pair<T, X>(T arg, X parameter) {
 
   }
 
@@ -45,6 +49,15 @@ public class FunctionInlinerPass extends Pass {
   public Object execute(PassResults passResults, Specification viam)
       throws IOException {
     IdentityHashMap<Instruction, UninlinedGraph> original = new IdentityHashMap<>();
+
+    instructions(viam, original);
+    pseudoInstructions(viam);
+
+    return original;
+  }
+
+  private void instructions(Specification viam,
+                            IdentityHashMap<Instruction, UninlinedGraph> original) {
 
     viam.isas()
         .flatMap(isa -> isa.ownInstructions().stream())
@@ -86,7 +99,37 @@ public class FunctionInlinerPass extends Pass {
 
           original.put(instruction, new UninlinedGraph(copy, instruction));
         });
+  }
 
-    return original;
+  private void pseudoInstructions(Specification viam) {
+    viam.isas()
+        .flatMap(isa -> isa.ownPseudoInstructions().stream())
+        .forEach(pseudoInstruction -> {
+          var copy = pseudoInstruction.behavior().copy();
+          var topLevelInstrEnd = getSingleNode(copy, InstrEndNode.class);
+          var functionCalls = pseudoInstruction.behavior().getNodes(InstrCallNode.class).toList();
+
+          functionCalls.forEach(functionCall -> {
+            var nestedInstruction = functionCall.target().behavior().copy();
+            var instrEndNode = getSingleNode(nestedInstruction, InstrEndNode.class);
+
+            instrEndNode.sideEffects().forEach(sideEffectNode -> {
+              // Replace every occurrence of param field by a copy of the
+              // given argument from the `FunctionCallNode`.
+              Streams.zip(
+                      functionCall.arguments().stream(),
+                      functionCall.getParamFields().stream(),
+                      Pair::new)
+                  .forEach(pair ->
+                      nestedInstruction.getNodes(FieldRefNode.class)
+                          .filter(n -> n.formatField().equals(pair.parameter))
+                          .forEach(usedParam -> usedParam.replaceAndDelete(pair.arg.copy())));
+
+              // replace the function call by a copy of the return value of the function
+              topLevelInstrEnd.sideEffects().add(sideEffectNode);
+              sideEffectNode.addUsage(topLevelInstrEnd);
+            });
+          });
+        });
   }
 }
