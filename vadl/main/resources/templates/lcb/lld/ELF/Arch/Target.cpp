@@ -47,8 +47,8 @@ namespace lld
             case R_[(${namespace})]_32:
             case R_[(${namespace})]_64:
             [#th:block th:each="relocation: ${relocations}" ]
-            case [(${relocation.identifier})]:
-                return [#th:block th:text="${relocation.kind.toString() == 'ABSOLUTE'} ? 'R_ABS' : 'R_PC'" /];
+            case [(${relocation.name()})]:
+                return [#th:block th:text="${relocation.kind() == 'ABSOLUTE'} ? 'R_ABS' : 'R_PC'" /];
             [/th:block]
             default:
                 error(getErrorLocation(loc) + "unknown relocation (" + Twine(type) +

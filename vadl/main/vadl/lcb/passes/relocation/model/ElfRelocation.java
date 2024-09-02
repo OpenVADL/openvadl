@@ -12,6 +12,10 @@ public class ElfRelocation {
     this.relocation = relocation;
   }
 
+  public LogicalRelocation.Kind kind() {
+    return relocation.kind();
+  }
+
   public ElfRelocationName name() {
     return new ElfRelocationName("R_" + processorName.value() + "_" + relocation.name().value());
   }

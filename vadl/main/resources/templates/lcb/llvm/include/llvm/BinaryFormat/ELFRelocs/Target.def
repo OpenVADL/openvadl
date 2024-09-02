@@ -2,6 +2,9 @@
 #error "ELF_RELOC must be defined"
 #endif
 
+ELF_RELOC(R_[(${namespace})]_NONE, 0)
+ELF_RELOC(R_[(${namespace})]_32, 1)
+ELF_RELOC(R_[(${namespace})]_64, 2)
 [#th:block th:each="relocation, iterStat: ${relocations}" ]
-ELF_RELOC([(${relocation.name.value()})], [(${iterStat.index})])
+ELF_RELOC([(${relocation.name.value()})], [(${iterStat.index + 3})])
 [/th:block]
