@@ -43,7 +43,11 @@ public class LogicalRelocation {
   }
 
   public RelocationName name() {
-    return new RelocationName(format.identifier.lower());
+    if (kind == Kind.ABSOLUTE) {
+      return new RelocationName("ABS_" + format.identifier.lower());
+    } else {
+      return new RelocationName("REL_" + format.identifier.lower());
+    }
   }
 
   /**
