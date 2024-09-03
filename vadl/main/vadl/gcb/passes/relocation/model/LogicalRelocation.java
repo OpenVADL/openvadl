@@ -7,7 +7,6 @@ import org.jetbrains.annotations.Nullable;
 import vadl.utils.SourceLocation;
 import vadl.viam.Constant;
 import vadl.viam.Format;
-import vadl.viam.Function;
 import vadl.viam.Identifier;
 import vadl.viam.Parameter;
 import vadl.viam.Register;
@@ -31,18 +30,23 @@ public class LogicalRelocation {
 
   private final Format format;
   private final Relocation relocation;
+  private final Format.Field immediate;
 
-  public LogicalRelocation(@Nullable Register.Counter pc, Relocation relocation, Format format) {
+  public LogicalRelocation(@Nullable Register.Counter pc,
+                           Relocation relocation,
+                           Format.Field field,
+                           Format format) {
     this.kind = relocation.isAbsolute(pc) ? Kind.ABSOLUTE : Kind.RELATIVE;
     this.format = format;
     this.relocation = relocation;
+    this.immediate = field;
   }
 
   /**
    * Generate a {@link LogicalRelocation} where the relocation returns the same
    * value as input.
    */
-  public LogicalRelocation(Kind kind, Format format) {
+  public LogicalRelocation(Kind kind, Format.Field immediate, Format format) {
     this.kind = kind;
     this.format = format;
     var parameter = new Parameter(new Identifier("input", SourceLocation.INVALID_SOURCE_LOCATION),
@@ -50,7 +54,7 @@ public class LogicalRelocation {
     this.relocation = new Relocation(format.identifier.append(".generated"),
         new Parameter[] {parameter},
         format.type());
-
+    this.immediate = immediate;
     // Add a single return
     this.relocation.behavior().addWithInputs(new ReturnNode(new FuncParamNode(parameter)));
   }
@@ -68,10 +72,11 @@ public class LogicalRelocation {
   }
 
   public RelocationName name() {
+    var suffix = format.identifier.lower() + "_" + immediate.identifier.lower();
     if (kind == Kind.ABSOLUTE) {
-      return new RelocationName("ABS_" + format.identifier.lower());
+      return new RelocationName("ABS_" + suffix);
     } else {
-      return new RelocationName("REL_" + format.identifier.lower());
+      return new RelocationName("REL_" + suffix);
     }
   }
 

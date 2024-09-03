@@ -17,7 +17,6 @@ import vadl.viam.Register;
 import vadl.viam.Register.Counter;
 import vadl.viam.Relocation;
 import vadl.viam.Specification;
-import vadl.viam.graph.control.InstrCallNode;
 import vadl.viam.graph.dependency.FuncCallNode;
 import vadl.viam.graph.dependency.ReadRegNode;
 
@@ -43,12 +42,16 @@ public class GenerateLogicalRelocationPass extends Pass {
   @Override
   public List<LogicalRelocation> execute(PassResults passResults, Specification viam)
       throws IOException {
+    var immediates =
+        (DetectImmediatePass.ImmediateDetectionContainer) passResults.lastResultOf(
+            DetectImmediatePass.class);
+
     // Generate relocations based on the specified relocations.
     // The user can specify relocations in the vadl specification.
-    var u = generateRelocationsBasedOnSpecifiedRelocation(viam);
+    var u = generateRelocationsBasedOnSpecifiedRelocation(viam, immediates);
     var v = generateRelocationsBasedOnSpecifiedRelocationPseudoInstructions(viam);
-    var x = generateAbsoluteRelocationsForEveryFormat(viam);
-    var y = generateRelativeRelocations(viam);
+    var x = generateAbsoluteRelocationsForEveryFormat(viam, immediates);
+    var y = generateRelativeRelocations(viam, immediates);
 
     return Stream.concat(Stream.concat(Stream.concat(u, v), x), y)
         .sorted(Comparator.comparing(o -> o.name().value()))
@@ -56,7 +59,7 @@ public class GenerateLogicalRelocationPass extends Pass {
   }
 
   private Stream<LogicalRelocation> generateRelocationsBasedOnSpecifiedRelocation(
-      Specification viam) {
+      Specification viam, DetectImmediatePass.ImmediateDetectionContainer immediates) {
     var logicalRelocations = new ArrayList<LogicalRelocation>();
     for (var isa : viam.isas().toList()) {
       var pc = isa.pc();
@@ -66,7 +69,16 @@ public class GenerateLogicalRelocationPass extends Pass {
             .filter(Relocation.class::isInstance)
             .map(Relocation.class::cast)
             .forEach(relocation -> {
-              logicalRelocations.add(new LogicalRelocation(pc, relocation, instruction.format()));
+              for (var entry : immediates.get(instruction.format()).entrySet()) {
+                if (entry.getValue() == DetectImmediatePass.FieldUsage.IMMEDIATE) {
+                  var field = entry.getKey();
+                  logicalRelocations.add(
+                      new LogicalRelocation(pc,
+                          relocation,
+                          field,
+                          instruction.format()));
+                }
+              }
             });
       }
     }
@@ -114,16 +126,29 @@ public class GenerateLogicalRelocationPass extends Pass {
     return logicalRelocations.stream().distinct();
   }
 
-  private Stream<LogicalRelocation> generateAbsoluteRelocationsForEveryFormat(Specification viam) {
+  private Stream<LogicalRelocation> generateAbsoluteRelocationsForEveryFormat(Specification viam,
+                                                                              DetectImmediatePass.ImmediateDetectionContainer immediates) {
     return viam.isas()
         .flatMap(isa -> isa.ownFormats().stream())
-        .map(format -> new LogicalRelocation(LogicalRelocation.Kind.ABSOLUTE, format));
+        .flatMap(format -> {
+          var relocations = new ArrayList<LogicalRelocation>();
+          for (var entry : immediates.get(format).entrySet()) {
+            if (entry.getValue() == DetectImmediatePass.FieldUsage.IMMEDIATE) {
+              var field = entry.getKey();
+
+              relocations.add(
+                  new LogicalRelocation(LogicalRelocation.Kind.ABSOLUTE, field, format));
+            }
+          }
+          return relocations.stream();
+        });
   }
 
   /**
    * Generates relative relocations for formats when the instruction touches a {@link Counter}.
    */
-  private Stream<LogicalRelocation> generateRelativeRelocations(Specification viam) {
+  private Stream<LogicalRelocation> generateRelativeRelocations(Specification viam,
+                                                                DetectImmediatePass.ImmediateDetectionContainer immediates) {
     return viam.isas()
         .flatMap(isa -> isa.ownInstructions().stream())
         .filter(instruction -> instruction.behavior().getNodes(ReadRegNode.class)
@@ -131,7 +156,18 @@ public class GenerateLogicalRelocationPass extends Pass {
             .anyMatch(Register.Counter.class::isInstance))
         .map(Instruction::format)
         .distinct()
-        .map(format -> new LogicalRelocation(LogicalRelocation.Kind.RELATIVE, format))
+        .flatMap(format -> {
+          var relocations = new ArrayList<LogicalRelocation>();
+          for (var entry : immediates.get(format).entrySet()) {
+            if (entry.getValue() == DetectImmediatePass.FieldUsage.IMMEDIATE) {
+              var field = entry.getKey();
+
+              relocations.add(
+                  new LogicalRelocation(LogicalRelocation.Kind.RELATIVE, field, format));
+            }
+          }
+          return relocations.stream();
+        })
         .distinct();
   }
 }
