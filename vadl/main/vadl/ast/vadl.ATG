@@ -52,105 +52,105 @@ TOKENS
   ( '"' { "\\" (letter | '"' | "'" | "\\") | validDQStringCharacters } '"') |
   ( "'" { "\\" (letter | '"' | "'" | "\\") | validSQStringCharacters } "'").
 
-  T_STATS = "Stats".
-  T_STAT = "Stat".
-  T_ENCS = "Encs".
+  T_BIN      = "Bin".
+  T_BIN_OP   = "BinOp".
+  T_BOOL     = "Bool".
+  T_CALL_EX  = "CallEx".
+  T_ENCS     = "Encs".
+  T_EX       = "Ex".
+  T_ID       = "Id".
+  T_INT      = "Int".
   T_ISA_DEFS = "IsaDefs".
-  T_EX = "Ex".
-  T_LIT = "Lit".
-  T_STR = "Str".
-  T_VAL = "Val".
-  T_BOOL = "Bool".
-  T_INT = "Int".
-  T_BIN = "Bin".
-  T_CALL_EX = "CallEx".
-  T_SYM_EX = "SymEx".
-  T_ID = "Id".
-  T_BIN_OP = "BinOp".
-  T_UN_OP = "UnOp".
+  T_LIT      = "Lit".
+  T_STAT     = "Stat".
+  T_STATS    = "Stats".
+  T_STR      = "Str".
+  T_SYM_EX   = "SymEx".
+  T_UN_OP    = "UnOp".
+  T_VAL      = "Val".
 
-  INSTRUCTION = "instruction".
-  SET = "set".
+  ALIAS        = "alias".
   ARCHITECTURE = "architecture".
-  CONSTANT = "constant".
-  FORMAT = "format".
-  PROGRAM = "program".
-  GROUP = "group".
-  COUNTER = "counter".
-  ENCODING = "encoding".
-  ASSEMBLY = "assembly".
-  MEMORY = "memory".
-  REGISTER = "register".
-  MODEL = "model".
-  FILE = "file".
-  ALIAS = "alias".
-  LET = "let".
-  KW_IF = "if".
-  THEN = "then".
-  ELSE = "else".
-  USING = "using".
-  FUNCTION = "function".
-  TRUE = "true".
-  FALSE = "false".
-  EXTENDING = "extending".
-  MATCH = "match".
-  ENUMERATION = "enumeration".
-  WITH = "with".
-  RAISE = "raise".
-  EXCEPTION = "exception".
-  RECORD = "record".
-  MODEL_TYPE = "model-type".
-  EXTEND_ID = "ExtendId".
-  ID_TO_STR = "IdToStr".
-  PSEUDO = "pseudo".
-  KW_COMPILER = "compiler".
-  PREDICATE = "predicate".
-  ENCODE = "encode".
-  IMPORT = "import".
-  KW_FROM = "from".
+  ASSEMBLY     = "assembly".
+  COMPILER_KW  = "compiler".
+  CONSTANT     = "constant".
+  COUNTER      = "counter".
+  ELSE         = "else".
+  ENCODE       = "encode".
+  ENCODING     = "encoding".
+  ENUMERATION  = "enumeration".
+  EXCEPTION    = "exception".
+  EXTEND_ID    = "ExtendId".
+  EXTENDING    = "extending".
+  FALSE        = "false".
+  FILE         = "file".
+  FORMAT       = "format".
+  FROM_KW      = "from".
+  FUNCTION     = "function".
+  GROUP        = "group".
+  ID_TO_STR    = "IdToStr".
+  IF_KW        = "if".
+  IMPORT       = "import".
+  INSTRUCTION  = "instruction".
+  LET          = "let".
+  MATCH        = "match".
+  MEMORY       = "memory".
+  MODEL        = "model".
+  MODEL_TYPE   = "model-type".
+  PREDICATE    = "predicate".
+  PROGRAM      = "program".
+  PSEUDO       = "pseudo".
+  RAISE        = "raise".
+  RECORD       = "record".
+  REGISTER     = "register".
+  SET          = "set".
+  THEN         = "then".
+  TRUE         = "true".
+  USING        = "using".
+  WITH         = "with".
 
-  SYM_IN = "in".
-  SYM_AS = "as".
-  SYM_EQ = "=".
-  SYM_GT = ">".
-  SYM_LT = "<".
-  SYM_NIN = "!in".
-  SYM_NEQ = "!=".
-  SYM_GTE = ">=".
-  SYM_LTE = "<=".
-  SYM_MUL = "*".
-  SYM_DIV = "/".
-  SYM_MOD = "%".
-  SYM_DOT = ".".
-  SYM_SHR = ">>".
-  SYM_SHL = "<<".
-  SYM_ROTR = "<>>".
-  SYM_ROTL = "<<>".
-  SYM_EXCL = "!".
-  SYM_PLUS = "+".
-  SYM_MINUS = "-".
-  SYM_TILDE = "~".
-  SYM_COLON = ":".
-  SYM_COMMA = ",".
-  SYM_CARET = "^".
-  SYM_BINOR = "|".
-  SYM_LOGOR = "||".
-  SYM_ARROW = "->".
-  SYM_RANGE = "..".
-  SYM_BINAND = "&".
-  SYM_LOGAND = "&&".
-  SYM_ASSIGN = ":=".
-  SYM_DOLLAR = "$".
-  SYM_BIGARROW = "=>".
-  SYM_SEMICOLON = ";".
-  SYM_NAMESPACE = "::".
-  SYM_UNDERSCORE = "_".
-  SYM_PAREN_OPEN = "(".
-  SYM_BRACK_OPEN = "[".
-  SYM_BRACE_OPEN = "{".
-  SYM_PAREN_CLOSE = ")".
-  SYM_BRACK_CLOSE = "]".
+  SYM_ARROW       = "->".
+  SYM_AS          = "as".
+  SYM_ASSIGN      = ":=".
+  SYM_BIGARROW    = "=>".
+  SYM_BINAND      = "&".
+  SYM_BINOR       = "|".
   SYM_BRACE_CLOSE = "}".
+  SYM_BRACE_OPEN  = "{".
+  SYM_BRACK_CLOSE = "]".
+  SYM_BRACK_OPEN  = "[".
+  SYM_CARET       = "^".
+  SYM_COLON       = ":".
+  SYM_COMMA       = ",".
+  SYM_DIV         = "/".
+  SYM_DOLLAR      = "$".
+  SYM_DOT         = ".".
+  SYM_EQ          = "=".
+  SYM_EXCL        = "!".
+  SYM_GT          = ">".
+  SYM_GTE         = ">=".
+  SYM_IN          = "in".
+  SYM_LOGAND      = "&&".
+  SYM_LOGOR       = "||".
+  SYM_LT          = "<".
+  SYM_LTE         = "<=".
+  SYM_MINUS       = "-".
+  SYM_MOD         = "%".
+  SYM_MUL         = "*".
+  SYM_NAMESPACE   = "::".
+  SYM_NEQ         = "!=".
+  SYM_NIN         = "!in".
+  SYM_PAREN_CLOSE = ")".
+  SYM_PAREN_OPEN  = "(".
+  SYM_PLUS        = "+".
+  SYM_RANGE       = "..".
+  SYM_ROTL        = "<<>".
+  SYM_ROTR        = "<>>".
+  SYM_SEMICOLON   = ";".
+  SYM_SHL         = "<<".
+  SYM_SHR         = ">>".
+  SYM_TILDE       = "~".
+  SYM_UNDERSCORE  = "_".
 
 COMMENTS FROM "//" TO '\n'
 COMMENTS FROM "/*" TO "*/" NESTED
@@ -328,7 +328,7 @@ PRODUCTIONS
 
   pseudoInstructionDefinition<out Definition def>            (. PseudoInstructionDefinition.PseudoInstrKind kind = null; .)
   = ( PSEUDO                                                 (. kind = PseudoInstructionDefinition.PseudoInstrKind.PSEUDO; .)
-    | KW_COMPILER                                            (. kind = PseudoInstructionDefinition.PseudoInstrKind.COMPILER; .)
+    | COMPILER_KW                                            (. kind = PseudoInstructionDefinition.PseudoInstrKind.COMPILER; .)
     )                                                        (. var start = loc(); .)
     INSTRUCTION
     identifierOrPlaceholder<out IdentifierOrPlaceholder id>  (. var params = new ArrayList<PseudoInstructionDefinition.Param>(); .)
@@ -548,10 +548,10 @@ PRODUCTIONS
         identifierPath<out importPath>     (. importPaths.add(importPath); .)
       }
       ( IF (importPaths.size() > 1)
-        KW_FROM stringLiteral<out filePath>
-      | [ KW_FROM stringLiteral<out filePath> ]
+        FROM_KW stringLiteral<out filePath>
+      | [ FROM_KW stringLiteral<out filePath> ]
       )
-    | KW_FROM stringLiteral<out filePath>
+    | FROM_KW stringLiteral<out filePath>
     )                                      (. var args = new ArrayList<StringLiteral>(); .)
     [
       WITH
@@ -624,7 +624,7 @@ PRODUCTIONS
       identifier<out Identifier nextId> (. identifiers.add(nextId); .)
     }
     SYM_EQ                              (. Expr valueExpr = null; .)
-    ( IF (la.kind == _KW_IF)
+    ( IF (la.kind == _IF_KW)
       ifExpression<out valueExpr, BIN_OPS_EXCEPT_IN>
     | expression<out valueExpr, BIN_OPS_EXCEPT_IN>
     )
@@ -633,7 +633,7 @@ PRODUCTIONS
   .
 
   ifStatement<out Statement ifStatement> (. Statement elseStmt = null; var start = loc(); .)
-  = KW_IF expression<out Expr condition, BIN_OPS>
+  = IF_KW expression<out Expr condition, BIN_OPS>
     THEN statement<out Statement thenStmt>
     [ IF (la.kind == _ELSE)
       ELSE statement<out elseStmt>
@@ -859,7 +859,7 @@ PRODUCTIONS
       identifier<out Identifier nextId> (. identifiers.add(nextId); .)
     }
     SYM_EQ                              (. Expr valueExpr = null; .)
-    ( IF (la.kind == _KW_IF)
+    ( IF (la.kind == _IF_KW)
       ifExpression<out valueExpr, BIN_OPS_EXCEPT_IN>
     | expression<out valueExpr, BIN_OPS_EXCEPT_IN>
     )
@@ -868,7 +868,7 @@ PRODUCTIONS
   .
 
   ifExpression<out Expr expr, boolean[] allowedElseOps>
-  = KW_IF                                              (. var startLoc = loc(); .)
+  = IF_KW                                              (. var startLoc = loc(); .)
     expression<out Expr condition, BIN_OPS>
     THEN expression<out Expr thenExpr, BIN_OPS>
     ELSE expression<out Expr elseExpr, allowedElseOps> (. expr = new IfExpr(condition, thenExpr, elseExpr, startLoc.join(loc())); .)
