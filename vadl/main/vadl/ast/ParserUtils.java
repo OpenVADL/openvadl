@@ -1,6 +1,8 @@
 package vadl.ast;
 
+import java.util.Iterator;
 import java.util.List;
+import javax.annotation.Nullable;
 import vadl.utils.SourceLocation;
 
 class ParserUtils {
@@ -42,19 +44,6 @@ class ParserUtils {
 
     BIN_OPS_EXCEPT_IN = BIN_OPS.clone();
     BIN_OPS_EXCEPT_IN[Parser._SYM_IN] = false;
-  }
-
-  /**
-   * If the given expression is a binary expression and the parser is not currently parsing a model,
-   * it will reorder the expression's operand according to {@link BinaryExpr#reorder(BinaryExpr)}.
-   */
-  static Expr reorderBinary(Parser parser, Expr expr) {
-    // Only if not inside model parsing.
-    // Cause there we don't know yet what the order is.
-    if (!parser.insideMacro && expr instanceof BinaryExpr binaryExpr) {
-      return BinaryExpr.reorder(binaryExpr);
-    }
-    return expr;
   }
 
   /**
@@ -113,39 +102,49 @@ class ParserUtils {
   }
 
   static boolean isExprType(SyntaxType type) {
-    return type.isSubTypeOf(BasicSyntaxType.Ex());
+    return type.isSubTypeOf(BasicSyntaxType.EX);
   }
 
   static boolean isDefType(SyntaxType type) {
-    return type.isSubTypeOf(BasicSyntaxType.IsaDefs());
+    return type.isSubTypeOf(BasicSyntaxType.ISA_DEFS);
   }
 
   static boolean isStmtType(SyntaxType type) {
-    return type.isSubTypeOf(BasicSyntaxType.Stats());
+    return type.isSubTypeOf(BasicSyntaxType.STATS);
   }
 
-  static Node createMacroInstance(Macro macro, List<Node> args, SourceLocation sourceLocation) {
-    if (isDefType(macro.returnType())) {
-      return new MacroInstanceDefinition(macro, args, sourceLocation);
-    } else if (isStmtType(macro.returnType())) {
-      return new MacroInstanceStatement(macro, args, sourceLocation);
+  static MacroOrPlaceholder macroOrPlaceholder(@Nullable Macro macro, SyntaxType syntaxType,
+                                               List<String> segments) {
+    if (macro != null) {
+      return macro;
+    }
+    return new MacroPlaceholder((ProjectionType) syntaxType, segments);
+  }
+
+  static Node createMacroInstance(MacroOrPlaceholder macroOrPlaceholder, List<Node> args,
+                                  SourceLocation sourceLocation) {
+    if (isDefType(macroOrPlaceholder.returnType())) {
+      return new MacroInstanceDefinition(macroOrPlaceholder, args, sourceLocation);
+    } else if (isStmtType(macroOrPlaceholder.returnType())) {
+      return new MacroInstanceStatement(macroOrPlaceholder, args, sourceLocation);
     } else {
-      return new MacroInstanceExpr(macro, args, sourceLocation);
+      return new MacroInstanceExpr(macroOrPlaceholder, args, sourceLocation);
     }
   }
 
-  static Node createPlaceholder(Parser parser, IsId path, SourceLocation sourceLocation) {
-    var type = paramSyntaxType(parser, path.pathToString());
+  static Node createPlaceholder(SyntaxType type, List<String> path, SourceLocation sourceLocation) {
     if (isDefType(type)) {
       return new PlaceholderDefinition(path, type, sourceLocation);
     } else if (isStmtType(type)) {
       return new PlaceholderStatement(path, type, sourceLocation);
-    } else {
+    } else if (isExprType(type)) {
       return new PlaceholderExpr(path, type, sourceLocation);
+    } else {
+      return new PlaceholderNode(path, type, sourceLocation);
     }
   }
 
-  private static SyntaxType paramSyntaxType(Parser parser, String name) {
+  static SyntaxType paramSyntaxType(Parser parser, String name) {
     for (List<MacroParam> params : parser.macroContext) {
       for (MacroParam param : params) {
         if (param.name().name.equals(name)) {
@@ -153,7 +152,7 @@ class ParserUtils {
         }
       }
     }
-    return BasicSyntaxType.Invalid();
+    return BasicSyntaxType.INVALID;
   }
 
   static Node createMacroMatch(SyntaxType resultType, List<MacroMatch.Choice> choices,
@@ -168,11 +167,42 @@ class ParserUtils {
     }
   }
 
-  static Node narrowNode(Node node) {
-    if (node instanceof StatementList statementList) {
-      return statementList.items.get(0);
+  /**
+   * Returns either the given macro's parameter types or, if null, the given syntax type's
+   * {@link ProjectionType#arguments}.
+   */
+  static Iterator<SyntaxType> instanceParamTypes(MacroOrPlaceholder macroOrPlaceholder) {
+    if (macroOrPlaceholder instanceof Macro macro) {
+      return new Iterator<>() {
+        final Iterator<MacroParam> params = macro.params().iterator();
+
+        @Override
+        public boolean hasNext() {
+          return params.hasNext();
+        }
+
+        @Override
+        public SyntaxType next() {
+          return params.next().type();
+        }
+      };
     }
-    return node;
+    return ((MacroPlaceholder) macroOrPlaceholder).syntaxType().arguments.iterator();
+  }
+
+  /**
+   * Checks whether the token is an identifier token.
+   * Since some keywords are allowed as identifiers, this is not as simple as checking the type.
+   * Must be kept in sync with the "allowedIdentifierKeywords" rule.
+   *
+   * @param token The token to inspect
+   * @return Whether the token is suitable for "identifier" substitution
+   */
+  static boolean isIdentifierToken(Token token) {
+    return token.kind == Parser._identifierToken
+        || token.kind == Parser._T_BOOL
+        || token.kind == Parser._REGISTER
+        || token.kind == Parser._EXCEPTION;
   }
 
   /**
@@ -180,55 +210,76 @@ class ParserUtils {
    * Before: parser must be in a state where the lookahead token is the "$" symbol.
    * After: parser is in the same state as before.
    */
-  static boolean isMacroReplacementOfType(Parser parser, SyntaxType syntaxType) {
+  static boolean isMacroReplacementOfType(Parser parser, BasicSyntaxType syntaxType) {
+    if (parser.la.kind == Parser._EXTEND_ID) {
+      return BasicSyntaxType.ID.isSubTypeOf(syntaxType);
+    }
+    if (parser.la.kind == Parser._ID_TO_STR) {
+      return BasicSyntaxType.STR.isSubTypeOf(syntaxType);
+    }
+    SyntaxType macroMatchType = macroMatchType(parser);
+    if (macroMatchType != null) {
+      return macroMatchType.isSubTypeOf(syntaxType);
+    }
     if (parser.la.kind != Parser._SYM_DOLLAR) {
       return false;
     }
-    var parserSnapshot = ParserSnapshot.create(parser);
-    var scannerSnapshot = ScannerSnapshot.create(parser.scanner);
-    var maxExpr = parser.maximumMacroExpr();
-    parserSnapshot.reset(parser);
-    scannerSnapshot.reset(parser.scanner);
-
-    if (maxExpr instanceof MacroInstanceExpr macroInstanceExpr) {
-      var macro = parser.symbolTable.getMacro(macroInstanceExpr.macro.name().name);
-      return macro != null && macro.returnType().isSubTypeOf(syntaxType);
+    parser.scanner.ResetPeek();
+    var token = parser.scanner.Peek();
+    var nextToken = parser.scanner.Peek();
+    var foundMacro = parser.symbolTable.getMacro(token.val);
+    if (foundMacro != null) {
+      parser.scanner.ResetPeek();
+      if (nextToken.kind == Parser._SYM_PAREN_OPEN) {
+        return foundMacro.returnType().isSubTypeOf(syntaxType);
+      } else {
+        return false;
+      }
     }
-    if (maxExpr instanceof PlaceholderExpr placeholderExpr) {
-      for (List<MacroParam> params : parser.macroContext) {
-        for (MacroParam param : params) {
-          if (param.name().name.equals(placeholderExpr.placeholder.path().pathToString())) {
-            return param.type().isSubTypeOf(syntaxType);
-          }
+    SyntaxType paramType = paramSyntaxType(parser, token.val);
+    while (true) {
+      if (paramType instanceof BasicSyntaxType basicSyntaxType) {
+        parser.scanner.ResetPeek();
+        return basicSyntaxType.isSubTypeOf(syntaxType);
+      } else if (paramType instanceof RecordType recordType && nextToken.kind == Parser._SYM_DOT) {
+        token = parser.scanner.Peek();
+        nextToken = parser.scanner.Peek();
+        paramType = recordType.findEntry(token.val);
+      } else if (paramType instanceof ProjectionType projectionType
+          && nextToken.kind == Parser._SYM_PAREN_OPEN) {
+        parser.scanner.ResetPeek();
+        return projectionType.resultType.isSubTypeOf(syntaxType);
+      } else {
+        parser.scanner.ResetPeek();
+        return false;
+      }
+    }
+  }
+
+  private static @Nullable SyntaxType macroMatchType(Parser parser) {
+    parser.scanner.ResetPeek();
+    boolean isMacroMatch = parser.la.kind == Parser._MATCH
+        && parser.scanner.Peek().kind == Parser._SYM_COLON;
+    if (isMacroMatch) {
+      String type = parser.scanner.Peek().val;
+      for (var basicType : BasicSyntaxType.values()) {
+        if (basicType.name().equals(type)) {
+          parser.scanner.ResetPeek();
+          return basicType;
         }
       }
     }
-    return maxExpr.syntaxType().isSubTypeOf(syntaxType);
+    parser.scanner.ResetPeek();
+    return null;
   }
 
-  record ParserSnapshot(Token t, Token la) {
-    static ParserSnapshot create(Parser parser) {
-      return new ParserSnapshot(parser.t, parser.la);
+  static boolean assertSyntaxType(Parser parser, @Nullable Node node, SyntaxType requiredType,
+                                  String message) {
+    if (node != null && !node.syntaxType().isSubTypeOf(requiredType)) {
+      parser.errors.SemErr(parser.t.line, parser.t.col,
+          message + ": Required %s, node is %s".formatted(requiredType, node.syntaxType()));
+      return false;
     }
-
-    void reset(Parser parser) {
-      parser.t = t;
-      parser.la = la;
-    }
-  }
-
-  record ScannerSnapshot(Token t, int ch, int col, int line, int charPos, int bufferPos) {
-    static ScannerSnapshot create(Scanner scanner) {
-      return new ScannerSnapshot(scanner.t, scanner.ch, scanner.col, scanner.line, scanner.charPos,
-          scanner.buffer.getPos());
-    }
-
-    void reset(Scanner scanner) {
-      scanner.t = t;
-      scanner.ch = ch;
-      scanner.col = col;
-      scanner.line = line;
-      scanner.buffer.setPos(bufferPos);
-    }
+    return true;
   }
 }

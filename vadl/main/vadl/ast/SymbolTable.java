@@ -17,18 +17,12 @@ class SymbolTable {
   List<VadlError> errors = new ArrayList<>();
 
   void loadBuiltins() {
-    defineSymbol(new ValuedSymbol("register", null, SymbolType.FUNCTION),
-        SourceLocation.INVALID_SOURCE_LOCATION);
-    defineSymbol(new ValuedSymbol("decimal", null, SymbolType.FUNCTION),
-        SourceLocation.INVALID_SOURCE_LOCATION);
-    defineSymbol(new ValuedSymbol("hex", null, SymbolType.FUNCTION),
-        SourceLocation.INVALID_SOURCE_LOCATION);
     defineSymbol(new ValuedSymbol("mnemonic", null, SymbolType.CONSTANT),
         SourceLocation.INVALID_SOURCE_LOCATION);
-    defineSymbol(new ValuedSymbol("VADL::div", null, SymbolType.CONSTANT),
-        SourceLocation.INVALID_SOURCE_LOCATION);
-    defineSymbol(new ValuedSymbol("VADL::mod", null, SymbolType.CONSTANT),
-        SourceLocation.INVALID_SOURCE_LOCATION);
+    for (String builtinFunction : Builtins.BUILTIN_FUNCTIONS) {
+      defineSymbol(new ValuedSymbol(builtinFunction, null, SymbolType.FUNCTION),
+          SourceLocation.INVALID_SOURCE_LOCATION);
+    }
   }
 
   void defineConstant(String name, SourceLocation loc) {
@@ -88,6 +82,16 @@ class SymbolTable {
   }
 
   @Nullable
+  PseudoInstructionDefinition findPseudoInstruction(Identifier pseudoInstrId) {
+    var symbol = resolveSymbol(pseudoInstrId.name);
+    if (symbol instanceof PseudoInstructionSymbol pseudoInstructionSymbol) {
+      return pseudoInstructionSymbol.definition;
+    } else {
+      return null;
+    }
+  }
+
+  @Nullable
   FormatSymbol requireInstructionFormat(Identifier instrId) {
     var symbol = resolveSymbol(instrId.name);
     if (symbol instanceof InstructionSymbol instructionSymbol
@@ -109,6 +113,25 @@ class SymbolTable {
     return null;
   }
 
+  void addRecord(Identifier name, RecordType recordType) {
+    defineSymbol(new RecordSymbol(name.name, recordType), name.location());
+  }
+
+  SyntaxType findType(Identifier recordName) {
+    var symbol = resolveSymbol(recordName.name);
+    if (symbol instanceof RecordSymbol recordSymbol) {
+      return recordSymbol.recordType();
+    } else if (symbol instanceof ModelTypeSymbol modelTypeSymbol) {
+      return modelTypeSymbol.projectionType();
+    }
+    reportError("Unresolved record " + recordName.name, recordName.location());
+    return BasicSyntaxType.INVALID;
+  }
+
+  void addModelType(Identifier name, ProjectionType type) {
+    defineSymbol(new ModelTypeSymbol(name.name, type), name.location());
+  }
+
   void copyFrom(SymbolTable other) {
     symbols.putAll(other.symbols);
   }
@@ -124,8 +147,9 @@ class SymbolTable {
   }
 
   enum SymbolType {
-    CONSTANT, COUNTER, FORMAT, INSTRUCTION, INSTRUCTION_SET, MEMORY, REGISTER, REGISTER_FILE,
-    FORMAT_FIELD, MACRO, ALIAS, FUNCTION
+    CONSTANT, COUNTER, FORMAT, INSTRUCTION, PSEUDO_INSTRUCTION, INSTRUCTION_SET, MEMORY, REGISTER,
+    REGISTER_FILE, FORMAT_FIELD, MACRO, ALIAS, FUNCTION, ENUM_FIELD, EXCEPTION, RECORD, MODEL_TYPE,
+    PARAMETER
   }
 
   interface Symbol {
@@ -171,6 +195,28 @@ class SymbolTable {
     @Override
     public SymbolType type() {
       return SymbolType.INSTRUCTION;
+    }
+  }
+
+  record PseudoInstructionSymbol(String name, PseudoInstructionDefinition definition)
+      implements Symbol {
+    @Override
+    public SymbolType type() {
+      return SymbolType.PSEUDO_INSTRUCTION;
+    }
+  }
+
+  record RecordSymbol(String name, RecordType recordType) implements Symbol {
+    @Override
+    public SymbolType type() {
+      return SymbolType.RECORD;
+    }
+  }
+
+  record ModelTypeSymbol(String name, ProjectionType projectionType) implements Symbol {
+    @Override
+    public SymbolType type() {
+      return SymbolType.MODEL_TYPE;
     }
   }
 
@@ -228,7 +274,9 @@ class SymbolTable {
             function.loc);
         function.symbolTable = symbols.createChild();
         for (FunctionDefinition.Parameter param : function.params) {
-          function.symbolTable.defineConstant(param.name().name, param.name().location());
+          function.symbolTable.defineSymbol(
+              new ValuedSymbol(param.name().name, null, SymbolType.PARAMETER),
+              param.name().location());
         }
         collectSymbols(function.symbolTable, function.expr);
       } else if (definition instanceof FormatDefinition format) {
@@ -242,30 +290,69 @@ class SymbolTable {
         symbols.defineSymbol(new InstructionSymbol(instr.id().name, instr), instr.location());
         instr.symbolTable = symbols.createChild();
         collectSymbols(instr.symbolTable, instr.behavior);
+      } else if (definition instanceof PseudoInstructionDefinition pseudo) {
+        symbols.defineSymbol(new PseudoInstructionSymbol(pseudo.id().name, pseudo),
+            pseudo.location());
+        pseudo.symbolTable = symbols.createChild();
+        for (var param : pseudo.params) {
+          pseudo.symbolTable.defineSymbol(
+              new ValuedSymbol(param.id().name, null, SymbolType.PARAMETER), param.id().location());
+        }
+        for (InstructionCallStatement statement : pseudo.statements) {
+          collectSymbols(pseudo.symbolTable, statement);
+        }
       } else if (definition instanceof AssemblyDefinition assembly) {
         assembly.symbolTable = symbols.createChild();
         collectSymbols(assembly.symbolTable, assembly.expr);
       } else if (definition instanceof EncodingDefinition encoding) {
         encoding.symbolTable = symbols.createChild();
-        for (EncodingDefinition.FieldEncoding fieldEncoding : encoding.fieldEncodings().encodings) {
-          collectSymbols(encoding.symbolTable, fieldEncoding.value());
+        for (var fieldEncoding : encoding.fieldEncodings().encodings) {
+          collectSymbols(encoding.symbolTable,
+              ((EncodingDefinition.FieldEncoding) fieldEncoding).value());
         }
+      } else if (definition instanceof AliasDefinition alias) {
+        var type = switch (alias.kind) {
+          case REGISTER -> SymbolType.REGISTER;
+          case REGISTER_FILE -> SymbolType.REGISTER_FILE;
+          case PROGRAM_COUNTER -> SymbolType.COUNTER;
+        };
+        symbols.defineSymbol(new ValuedSymbol(alias.id().name, null, type), alias.loc);
+        collectSymbols(symbols, alias.value);
+      } else if (definition instanceof EnumerationDefinition enumeration) {
+        for (EnumerationDefinition.Entry entry : enumeration.entries) {
+          String path = enumeration.id().name + "::" + entry.name().name;
+          symbols.defineSymbol(new ValuedSymbol(path, null, SymbolType.ENUM_FIELD),
+              entry.name().location());
+          if (entry.value() != null) {
+            collectSymbols(symbols, entry.value());
+          }
+          if (entry.behavior() != null) {
+            collectSymbols(symbols, entry.behavior());
+          }
+        }
+      } else if (definition instanceof ExceptionDefinition exception) {
+        symbols.defineSymbol(new ValuedSymbol(exception.id().name, null, SymbolType.EXCEPTION),
+            exception.loc);
+        collectSymbols(symbols, exception.statement);
       }
     }
 
     static void collectSymbols(SymbolTable symbols, Statement stmt) {
+      if (stmt.symbolTable != null) {
+        throw new IllegalStateException("Tried to populate already set symbol table " + stmt);
+      }
       stmt.symbolTable = symbols;
       if (stmt instanceof BlockStatement block) {
         for (Statement inner : block.statements) {
           collectSymbols(symbols, inner);
         }
       } else if (stmt instanceof LetStatement let) {
-        let.symbolTable = symbols.createChild();
-        for (var identifier : let.identifiers) {
-          let.symbolTable.defineConstant(identifier.name, identifier.location());
-        }
         collectSymbols(symbols, let.valueExpression);
-        collectSymbols(let.symbolTable, let.body);
+        var child = symbols.createChild();
+        for (var identifier : let.identifiers) {
+          child.defineConstant(identifier.name, identifier.location());
+        }
+        collectSymbols(child, let.body);
       } else if (stmt instanceof IfStatement ifStmt) {
         collectSymbols(symbols, ifStmt.condition);
         collectSymbols(symbols, ifStmt.thenStmt);
@@ -275,6 +362,23 @@ class SymbolTable {
       } else if (stmt instanceof AssignmentStatement assignment) {
         collectSymbols(symbols, assignment.target);
         collectSymbols(symbols, assignment.valueExpression);
+      } else if (stmt instanceof RaiseStatement raise) {
+        collectSymbols(symbols, raise.statement);
+      } else if (stmt instanceof CallStatement call) {
+        collectSymbols(symbols, call.expr);
+      } else if (stmt instanceof MatchStatement match) {
+        collectSymbols(symbols, match.candidate);
+        collectSymbols(symbols, match.defaultResult);
+        for (MatchStatement.Case matchCase : match.cases) {
+          collectSymbols(symbols, matchCase.result());
+          for (Expr pattern : matchCase.patterns()) {
+            collectSymbols(symbols, pattern);
+          }
+        }
+      } else if (stmt instanceof InstructionCallStatement instructionCall) {
+        for (var namedArgument : instructionCall.namedArguments) {
+          collectSymbols(symbols, namedArgument.value());
+        }
       }
     }
 
@@ -323,6 +427,15 @@ class SymbolTable {
         for (IdentifierOrPlaceholder segment : path.segments) {
           collectSymbols(symbols, (Expr) segment);
         }
+      } else if (expr instanceof MatchExpr match) {
+        collectSymbols(symbols, match.candidate);
+        collectSymbols(symbols, match.defaultResult);
+        for (MatchExpr.Case matchCase : match.cases) {
+          collectSymbols(symbols, matchCase.result());
+          for (Expr pattern : matchCase.patterns()) {
+            collectSymbols(symbols, pattern);
+          }
+        }
       }
     }
   }
@@ -333,6 +446,7 @@ class SymbolTable {
    * The AST is not modified in this pass, only errors are gathered.
    * Before & After: Ast is fully Macro-expanded and all relevant nodes have "symbolTable" set.
    */
+  // TODO verify -> resolve, definition references
   static class VerificationPass {
     static List<VadlError> verifyUsages(Ast ast) {
       for (Definition definition : ast.definitions) {
@@ -362,11 +476,20 @@ class SymbolTable {
           instr.symbolTable().copyFrom(format.definition().symbolTable());
         }
         verifyUsages(instr.behavior);
+      } else if (definition instanceof PseudoInstructionDefinition pseudo) {
+        for (InstructionCallStatement statement : pseudo.statements) {
+          verifyUsages(statement);
+        }
       } else if (definition instanceof AssemblyDefinition assembly) {
         for (IdentifierOrPlaceholder identifier : assembly.identifiers) {
-          var format = assembly.symbolTable().requireInstructionFormat((Identifier) identifier);
-          if (format != null) {
-            assembly.symbolTable().copyFrom(format.definition().symbolTable());
+          var pseudoInstr = assembly.symbolTable().findPseudoInstruction((Identifier) identifier);
+          if (pseudoInstr != null) {
+            assembly.symbolTable().copyFrom(pseudoInstr.symbolTable());
+          } else {
+            var format = assembly.symbolTable().requireInstructionFormat((Identifier) identifier);
+            if (format != null) {
+              assembly.symbolTable().copyFrom(format.definition().symbolTable());
+            }
           }
         }
         verifyUsages(assembly.expr);
@@ -374,7 +497,8 @@ class SymbolTable {
         var format = encoding.symbolTable().requireInstructionFormat(encoding.instrId());
         if (format != null) {
           var encodings = encoding.fieldEncodings().encodings;
-          for (EncodingDefinition.FieldEncoding fieldEncoding : encodings) {
+          for (var enc : encodings) {
+            var fieldEncoding = (EncodingDefinition.FieldEncoding) enc;
             var field = fieldEncoding.field();
             if (findField(format.definition, field.name) == null) {
               encoding.symbolTable()
@@ -382,6 +506,19 @@ class SymbolTable {
             }
           }
         }
+      } else if (definition instanceof AliasDefinition alias) {
+        verifyUsages(alias.value);
+      } else if (definition instanceof EnumerationDefinition enumeration) {
+        for (EnumerationDefinition.Entry entry : enumeration.entries) {
+          if (entry.value() != null) {
+            verifyUsages(entry.value());
+          }
+          if (entry.behavior() != null) {
+            verifyUsages(entry.behavior());
+          }
+        }
+      } else if (definition instanceof ExceptionDefinition exception) {
+        verifyUsages(exception.statement);
       }
     }
 
@@ -402,6 +539,38 @@ class SymbolTable {
       } else if (stmt instanceof AssignmentStatement assignment) {
         verifyUsages(assignment.target);
         verifyUsages(assignment.valueExpression);
+      } else if (stmt instanceof RaiseStatement raise) {
+        verifyUsages(raise.statement);
+      } else if (stmt instanceof CallStatement call) {
+        verifyUsages(call.expr);
+      } else if (stmt instanceof MatchStatement match) {
+        verifyUsages(match.candidate);
+        verifyUsages(match.defaultResult);
+        for (MatchStatement.Case matchCase : match.cases) {
+          verifyUsages(matchCase.result());
+          for (Expr pattern : matchCase.patterns()) {
+            verifyUsages(pattern);
+          }
+        }
+      } else if (stmt instanceof InstructionCallStatement instructionCall) {
+        var format = instructionCall.symbolTable().requireInstructionFormat(instructionCall.id());
+        if (format != null) {
+          for (var namedArgument : instructionCall.namedArguments) {
+            FormatDefinition.FormatField foundField = null;
+            for (var field : format.definition().fields) {
+              if (field.identifier().name.equals(namedArgument.name().name)) {
+                foundField = field;
+                break;
+              }
+            }
+            if (foundField == null) {
+              instructionCall.symbolTable()
+                  .reportError("Unknown format field " + namedArgument.name().name,
+                      namedArgument.name().location());
+            }
+            verifyUsages(namedArgument.value());
+          }
+        }
       }
     }
 
@@ -445,6 +614,15 @@ class SymbolTable {
         var symbol = expr.symbolTable().resolveSymbol(id.pathToString());
         if (symbol == null) {
           expr.symbolTable().reportError("Symbol not found: " + id.pathToString(), id.location());
+        }
+      } else if (expr instanceof MatchExpr match) {
+        verifyUsages(match.candidate);
+        verifyUsages(match.defaultResult);
+        for (MatchExpr.Case matchCase : match.cases) {
+          verifyUsages(matchCase.result());
+          for (Expr pattern : matchCase.patterns()) {
+            verifyUsages(pattern);
+          }
         }
       }
     }

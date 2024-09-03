@@ -41,6 +41,8 @@ interface DefinitionVisitor<R> {
 
   R visit(InstructionDefinition definition);
 
+  R visit(PseudoInstructionDefinition definition);
+
   R visit(EncodingDefinition definition);
 
   R visit(AssemblyDefinition definition);
@@ -49,11 +51,23 @@ interface DefinitionVisitor<R> {
 
   R visit(FunctionDefinition definition);
 
+  R visit(AliasDefinition definition);
+
+  R visit(EnumerationDefinition definition);
+
+  R visit(ExceptionDefinition definition);
+
   R visit(PlaceholderDefinition definition);
 
   R visit(MacroInstanceDefinition definition);
 
   R visit(MacroMatchDefinition definition);
+
+  R visit(DefinitionList definition);
+
+  R visit(ModelDefinition definition);
+
+  R visit(RecordTypeDefinition definition);
 }
 
 class ConstantDefinition extends Definition {
@@ -84,7 +98,7 @@ class ConstantDefinition extends Definition {
 
   @Override
   SyntaxType syntaxType() {
-    return BasicSyntaxType.IsaDefs();
+    return BasicSyntaxType.ISA_DEFS;
   }
 
   @Override
@@ -141,6 +155,7 @@ class FormatDefinition extends Definition {
   IdentifierOrPlaceholder identifier;
   TypeLiteral type;
   List<FormatField> fields;
+  List<AuxiliaryField> auxiliaryFields;
   SourceLocation loc;
 
   interface FormatField {
@@ -170,7 +185,7 @@ class FormatDefinition extends Definition {
 
     @Override
     SyntaxType syntaxType() {
-      return BasicSyntaxType.Invalid();
+      return BasicSyntaxType.INVALID;
     }
 
     @Override
@@ -237,14 +252,14 @@ class FormatDefinition extends Definition {
 
     @Override
     SyntaxType syntaxType() {
-      return BasicSyntaxType.Invalid();
+      return BasicSyntaxType.INVALID;
     }
 
     @Override
     public void prettyPrint(int indent, StringBuilder builder) {
       identifier.prettyPrint(indent, builder);
       builder.append(" : ");
-      type().prettyPrint(indent, builder);
+      type.prettyPrint(indent, builder);
     }
 
     @Override
@@ -296,7 +311,7 @@ class FormatDefinition extends Definition {
 
     @Override
     SyntaxType syntaxType() {
-      return BasicSyntaxType.Invalid();
+      return BasicSyntaxType.INVALID;
     }
 
     @Override
@@ -333,11 +348,90 @@ class FormatDefinition extends Definition {
     }
   }
 
+  static class AuxiliaryField extends Node {
+    private final AuxiliaryFieldKind kind;
+    private final List<AuxiliaryFieldEntry> entries;
+
+    AuxiliaryField(AuxiliaryFieldKind kind, List<AuxiliaryFieldEntry> entries) {
+      this.kind = kind;
+      this.entries = entries;
+    }
+
+    @Override
+    SourceLocation location() {
+      return entries.get(0).id.location().join(entries.get(entries.size() - 1).expr.location());
+    }
+
+    @Override
+    SyntaxType syntaxType() {
+      return BasicSyntaxType.INVALID;
+    }
+
+    @Override
+    public void prettyPrint(int indent, StringBuilder builder) {
+      builder.append(prettyIndentString(indent));
+      builder.append(
+          switch (kind) {
+            case PREDICATE -> ": predicate\n";
+            case ENCODE -> ": encode\n";
+          });
+      var isFirst = true;
+      for (var entry : entries) {
+        if (isFirst) {
+          builder.append(prettyIndentString(indent + 1)).append("{ ");
+          isFirst = false;
+        } else {
+          builder.append(prettyIndentString(indent + 1)).append(", ");
+        }
+        entry.id.prettyPrint(0, builder);
+        builder.append(" => ");
+        entry.expr.prettyPrint(0, builder);
+        builder.append("\n");
+      }
+      builder.append(prettyIndentString(indent + 1)).append("}\n");
+    }
+
+    public AuxiliaryFieldKind kind() {
+      return kind;
+    }
+
+    public List<AuxiliaryFieldEntry> entries() {
+      return entries;
+    }
+
+    @Override
+    public boolean equals(Object obj) {
+      if (obj == this) {
+        return true;
+      }
+      if (obj == null || obj.getClass() != this.getClass()) {
+        return false;
+      }
+      var that = (AuxiliaryField) obj;
+      return Objects.equals(this.kind, that.kind)
+          && Objects.equals(this.entries, that.entries);
+    }
+
+    @Override
+    public int hashCode() {
+      return Objects.hash(kind, entries);
+    }
+  }
+
+  record AuxiliaryFieldEntry(Identifier id, Expr expr) {
+  }
+
+  enum AuxiliaryFieldKind {
+    PREDICATE, ENCODE
+  }
+
   public FormatDefinition(IdentifierOrPlaceholder identifier, TypeLiteral type,
-                          List<FormatField> fields, SourceLocation location) {
+                          List<FormatField> fields, List<AuxiliaryField> auxiliaryFields,
+                          SourceLocation location) {
     this.identifier = identifier;
     this.type = type;
     this.fields = fields;
+    this.auxiliaryFields = auxiliaryFields;
     this.loc = location;
   }
 
@@ -352,7 +446,7 @@ class FormatDefinition extends Definition {
 
   @Override
   SyntaxType syntaxType() {
-    return BasicSyntaxType.IsaDefs();
+    return BasicSyntaxType.ISA_DEFS;
   }
 
   @Override
@@ -385,6 +479,10 @@ class FormatDefinition extends Definition {
 
     }
 
+    for (var auxiliaryField : auxiliaryFields) {
+      auxiliaryField.prettyPrint(indent, builder);
+    }
+
     builder.append(prettyIndentString(indent));
     builder.append("}\n");
   }
@@ -412,7 +510,8 @@ class FormatDefinition extends Definition {
     return annotations.equals(that.annotations)
         && identifier.equals(that.identifier)
         && type.equals(that.type)
-        && fields.equals(that.fields);
+        && fields.equals(that.fields)
+        && auxiliaryFields.equals(that.auxiliaryFields);
   }
 
   @Override
@@ -421,6 +520,7 @@ class FormatDefinition extends Definition {
     result = 31 * result + identifier.hashCode();
     result = 31 * result + type.hashCode();
     result = 31 * result + fields.hashCode();
+    result = 31 * result + auxiliaryFields.hashCode();
     return result;
   }
 }
@@ -447,7 +547,7 @@ class InstructionSetDefinition extends Definition {
 
   @Override
   SyntaxType syntaxType() {
-    return BasicSyntaxType.Invalid();
+    return BasicSyntaxType.INVALID;
   }
 
   @Override
@@ -459,10 +559,16 @@ class InstructionSetDefinition extends Definition {
       builder.append(" extending ").append(extending.name);
     }
     builder.append(" = {\n");
+    Definition previousDefinition = null;
     for (Definition definition : definitions) {
+      if (previousDefinition != null
+          && !definition.getClass().equals(previousDefinition.getClass())) {
+        builder.append("\n");
+      }
       definition.prettyPrint(indent + 1, builder);
+      previousDefinition = definition;
     }
-    builder.append("}\n\n");
+    builder.append("}\n");
   }
 
   @Override
@@ -531,7 +637,7 @@ class CounterDefinition extends Definition {
 
   @Override
   SyntaxType syntaxType() {
-    return BasicSyntaxType.IsaDefs();
+    return BasicSyntaxType.ISA_DEFS;
   }
 
   @Override
@@ -606,7 +712,7 @@ class MemoryDefinition extends Definition {
 
   @Override
   SyntaxType syntaxType() {
-    return BasicSyntaxType.IsaDefs();
+    return BasicSyntaxType.ISA_DEFS;
   }
 
   @Override
@@ -681,7 +787,7 @@ class RegisterDefinition extends Definition {
 
   @Override
   SyntaxType syntaxType() {
-    return BasicSyntaxType.IsaDefs();
+    return BasicSyntaxType.ISA_DEFS;
   }
 
   @Override
@@ -754,7 +860,7 @@ class RegisterFileDefinition extends Definition {
 
   @Override
   SyntaxType syntaxType() {
-    return BasicSyntaxType.IsaDefs();
+    return BasicSyntaxType.ISA_DEFS;
   }
 
   @Override
@@ -835,7 +941,7 @@ class InstructionDefinition extends Definition {
 
   @Override
   SyntaxType syntaxType() {
-    return BasicSyntaxType.IsaDefs();
+    return BasicSyntaxType.ISA_DEFS;
   }
 
   @Override
@@ -887,18 +993,127 @@ class InstructionDefinition extends Definition {
   }
 }
 
-sealed interface FieldEncodingsOrPlaceholder
-    permits EncodingDefinition.FieldEncodings, PlaceholderExpr, MacroInstanceExpr, MacroMatchExpr {
+class PseudoInstructionDefinition extends Definition {
+  IdentifierOrPlaceholder identifier;
+  PseudoInstrKind kind;
+  List<Param> params;
+  List<InstructionCallStatement> statements;
+  SourceLocation loc;
 
+  PseudoInstructionDefinition(IdentifierOrPlaceholder identifier, PseudoInstrKind kind,
+                              List<Param> params, List<InstructionCallStatement> statements,
+                              SourceLocation loc) {
+    this.identifier = identifier;
+    this.kind = kind;
+    this.params = params;
+    this.statements = statements;
+    this.loc = loc;
+  }
+
+  Identifier id() {
+    return (Identifier) identifier;
+  }
+
+  @Override
+  SourceLocation location() {
+    return loc;
+  }
+
+  @Override
+  SyntaxType syntaxType() {
+    return BasicSyntaxType.ISA_DEFS;
+  }
+
+  @Override
+  void prettyPrint(int indent, StringBuilder builder) {
+    annotations.prettyPrint(indent, builder);
+    builder.append(prettyIndentString(indent));
+    var kindStr = switch (kind) {
+      case PSEUDO -> "pseudo";
+      case COMPILER -> "compiler";
+    };
+    builder.append(kindStr).append(" instruction ");
+    identifier.prettyPrint(indent, builder);
+    if (!params.isEmpty()) {
+      builder.append("(");
+      var isFirst = true;
+      for (var param : params) {
+        if (!isFirst) {
+          builder.append(", ");
+        }
+        isFirst = false;
+        param.id.prettyPrint(0, builder);
+        builder.append(" : ");
+        param.type.prettyPrint(0, builder);
+      }
+      builder.append(")");
+    }
+    builder.append(" = {\n");
+    for (InstructionCallStatement statement : statements) {
+      statement.prettyPrint(indent + 1, builder);
+    }
+    builder.append(prettyIndentString(indent)).append("}\n");
+  }
+
+  @Override
+  <R> R accept(DefinitionVisitor<R> visitor) {
+    return visitor.visit(this);
+  }
+
+  @Override
+  public String toString() {
+    return this.getClass().getSimpleName();
+  }
+
+  @Override
+  public boolean equals(Object o) {
+    if (this == o) {
+      return true;
+    }
+    if (o == null || getClass() != o.getClass()) {
+      return false;
+    }
+
+    var that = (PseudoInstructionDefinition) o;
+    return Objects.equals(annotations, that.annotations)
+        && Objects.equals(identifier, that.identifier)
+        && Objects.equals(kind, that.kind)
+        && Objects.equals(params, that.params)
+        && Objects.equals(statements, that.statements);
+  }
+
+  @Override
+  public int hashCode() {
+    int result = Objects.hashCode(annotations);
+    result = 31 * result + Objects.hashCode(identifier);
+    result = 31 * result + Objects.hashCode(kind);
+    result = 31 * result + Objects.hashCode(params);
+    result = 31 * result + Objects.hashCode(statements);
+    return result;
+  }
+
+  enum PseudoInstrKind {
+    PSEUDO, COMPILER
+  }
+
+  record Param(Identifier id, TypeLiteral type) {
+  }
+}
+
+sealed interface FieldEncodingOrPlaceholder
+    permits EncodingDefinition.FieldEncoding, PlaceholderNode, MacroInstanceExpr, MacroMatchExpr {
+  SourceLocation location();
+
+  void prettyPrint(int indent, StringBuilder builder);
 }
 
 class EncodingDefinition extends Definition {
   IdentifierOrPlaceholder instrIdentifier;
-  FieldEncodingsOrPlaceholder fieldEncodings;
+  FieldEncodings fieldEncodings;
   SourceLocation loc;
 
-  EncodingDefinition(IdentifierOrPlaceholder instrIdentifier,
-                     FieldEncodingsOrPlaceholder fieldEncodings, SourceLocation location) {
+  EncodingDefinition(IdentifierOrPlaceholder instrIdentifier, FieldEncodings fieldEncodings,
+                     SourceLocation location) {
     this.instrIdentifier = instrIdentifier;
     this.fieldEncodings = fieldEncodings;
     this.loc = location;
@@ -909,7 +1124,7 @@ class EncodingDefinition extends Definition {
   }
 
   FieldEncodings fieldEncodings() {
-    return (FieldEncodings) fieldEncodings;
+    return fieldEncodings;
   }
 
   @Override
@@ -919,14 +1134,16 @@ class EncodingDefinition extends Definition {
 
   @Override
   SyntaxType syntaxType() {
-    return BasicSyntaxType.IsaDefs();
+    return BasicSyntaxType.ISA_DEFS;
   }
 
   @Override
   void prettyPrint(int indent, StringBuilder builder) {
     annotations.prettyPrint(indent, builder);
     builder.append(prettyIndentString(indent));
-    builder.append("encoding %s =\n".formatted(instrId().name));
+    builder.append("encoding ");
+    instrIdentifier.prettyPrint(0, builder);
+    builder.append(" =\n");
     builder.append(prettyIndentString(indent)).append("{ ");
     fieldEncodings().prettyPrint(indent, builder);
     builder.append(prettyIndentString(indent)).append("}\n");
@@ -965,34 +1182,32 @@ class EncodingDefinition extends Definition {
     return result;
   }
 
-  static final class FieldEncodings extends Node implements FieldEncodingsOrPlaceholder {
-    List<FieldEncoding> encodings;
+  static final class FieldEncodings extends Node {
+    List<FieldEncodingOrPlaceholder> encodings;
 
-    FieldEncodings(List<FieldEncoding> encodings) {
+    FieldEncodings(List<FieldEncodingOrPlaceholder> encodings) {
       this.encodings = encodings;
     }
 
     @Override
     SourceLocation location() {
-      return encodings.get(0).field().location()
-          .join(encodings.get(encodings.size() - 1).value().location());
+      return encodings.get(0).location()
+          .join(encodings.get(encodings.size() - 1).location());
     }
 
     @Override
     SyntaxType syntaxType() {
-      return BasicSyntaxType.Encs();
+      return BasicSyntaxType.ENCS;
     }
 
     @Override
     void prettyPrint(int indent, StringBuilder builder) {
       boolean first = true;
-      for (FieldEncoding entry : encodings) {
+      for (var entry : encodings) {
         if (!first) {
           builder.append(prettyIndentString(indent)).append(", ");
         }
-        entry.field.prettyPrint(0, builder);
-        builder.append(" = ");
-        entry.value.prettyPrint(0, builder);
+        entry.prettyPrint(0, builder);
         builder.append("\n");
         first = false;
       }
@@ -1016,7 +1231,18 @@ class EncodingDefinition extends Definition {
     }
   }
 
-  record FieldEncoding(Identifier field, Expr value) {
+  record FieldEncoding(Identifier field, Expr value) implements FieldEncodingOrPlaceholder {
+    @Override
+    public SourceLocation location() {
+      return field.location().join(value.location());
+    }
+
+    @Override
+    public void prettyPrint(int indent, StringBuilder builder) {
+      field.prettyPrint(0, builder);
+      builder.append(" = ");
+      value.prettyPrint(0, builder);
+    }
   }
 }
 
@@ -1039,7 +1265,7 @@ class AssemblyDefinition extends Definition {
 
   @Override
   SyntaxType syntaxType() {
-    return BasicSyntaxType.IsaDefs();
+    return BasicSyntaxType.ISA_DEFS;
   }
 
   @Override
@@ -1047,8 +1273,14 @@ class AssemblyDefinition extends Definition {
     annotations.prettyPrint(indent, builder);
     builder.append(prettyIndentString(indent));
     builder.append("assembly ");
-    builder.append(identifiers.stream().map(id -> ((Identifier) id).name)
-        .collect(Collectors.joining(", ")));
+    var isFirst = true;
+    for (IdentifierOrPlaceholder identifier : identifiers) {
+      if (!isFirst) {
+        builder.append(", ");
+      }
+      isFirst = false;
+      identifier.prettyPrint(0, builder);
+    }
     builder.append(" = ");
     expr.prettyPrint(indent, builder);
     builder.append("\n");
@@ -1111,7 +1343,7 @@ class UsingDefinition extends Definition {
 
   @Override
   SyntaxType syntaxType() {
-    return BasicSyntaxType.IsaDefs();
+    return BasicSyntaxType.ISA_DEFS;
   }
 
   @Override
@@ -1185,7 +1417,7 @@ class FunctionDefinition extends Definition {
 
   @Override
   SyntaxType syntaxType() {
-    return BasicSyntaxType.IsaDefs();
+    return BasicSyntaxType.ISA_DEFS;
   }
 
   @Override
@@ -1209,7 +1441,11 @@ class FunctionDefinition extends Definition {
     }
     builder.append(" -> ");
     retType.prettyPrint(0, builder);
-    builder.append(" = ");
+    if (!isBlockLayout(expr)) {
+      builder.append(" = ");
+    } else {
+      builder.append(" =\n");
+    }
     expr.prettyPrint(indent + 1, builder);
     builder.append("\n");
   }
@@ -1255,14 +1491,283 @@ class FunctionDefinition extends Definition {
   }
 }
 
+class AliasDefinition extends Definition {
+  IdentifierOrPlaceholder id;
+  AliasKind kind;
+  @Nullable
+  TypeLiteral aliasType;
+  @Nullable
+  TypeLiteral targetType;
+  Expr value;
+  SourceLocation loc;
+
+  AliasDefinition(IdentifierOrPlaceholder id, AliasKind kind,
+                  @Nullable TypeLiteral aliasType, @Nullable TypeLiteral targetType, Expr value,
+                  SourceLocation location) {
+    this.id = id;
+    this.kind = kind;
+    this.aliasType = aliasType;
+    this.targetType = targetType;
+    this.value = value;
+    this.loc = location;
+  }
+
+  Identifier id() {
+    return (Identifier) id;
+  }
+
+  @Override
+  SourceLocation location() {
+    return loc;
+  }
+
+  @Override
+  SyntaxType syntaxType() {
+    return BasicSyntaxType.ISA_DEFS;
+  }
+
+  @Override
+  void prettyPrint(int indent, StringBuilder builder) {
+    builder.append(prettyIndentString(indent)).append("alias ");
+    switch (kind) {
+      case REGISTER -> builder.append("register ");
+      case REGISTER_FILE -> builder.append("register file ");
+      case PROGRAM_COUNTER -> builder.append("program counter ");
+      default -> {
+      }
+    }
+    id.prettyPrint(0, builder);
+    if (aliasType != null) {
+      builder.append(" : ");
+      aliasType.prettyPrint(0, builder);
+      if (targetType != null) {
+        builder.append(" -> ");
+        targetType.prettyPrint(0, builder);
+      }
+    }
+    builder.append(" = ");
+    value.prettyPrint(0, builder);
+    builder.append("\n");
+  }
+
+  @Override
+  <R> R accept(DefinitionVisitor<R> visitor) {
+    return visitor.visit(this);
+  }
+
+  @Override
+  public String toString() {
+    return this.getClass().getSimpleName();
+  }
+
+  @Override
+  public boolean equals(Object o) {
+    if (this == o) {
+      return true;
+    }
+    if (o == null || getClass() != o.getClass()) {
+      return false;
+    }
+
+    var that = (AliasDefinition) o;
+    return Objects.equals(annotations, that.annotations)
+        && Objects.equals(id, that.id)
+        && Objects.equals(kind, that.kind)
+        && Objects.equals(aliasType, that.aliasType)
+        && Objects.equals(targetType, that.targetType)
+        && Objects.equals(value, that.value);
+  }
+
+  @Override
+  public int hashCode() {
+    int result = Objects.hashCode(annotations);
+    result = 31 * result + Objects.hashCode(id);
+    result = 31 * result + Objects.hashCode(kind);
+    result = 31 * result + Objects.hashCode(aliasType);
+    result = 31 * result + Objects.hashCode(targetType);
+    result = 31 * result + Objects.hashCode(value);
+    return result;
+  }
+
+  enum AliasKind {
+    REGISTER, REGISTER_FILE, PROGRAM_COUNTER
+  }
+}
+
+final class EnumerationDefinition extends Definition {
+  IdentifierOrPlaceholder id;
+  @Nullable
+  TypeLiteral enumType;
+  List<Entry> entries;
+  SourceLocation loc;
+
+  EnumerationDefinition(IdentifierOrPlaceholder id, @Nullable TypeLiteral enumType,
+                        List<Entry> entries, SourceLocation location) {
+    this.id = id;
+    this.enumType = enumType;
+    this.entries = entries;
+    this.loc = location;
+  }
+
+  Identifier id() {
+    return (Identifier) id;
+  }
+
+  @Override
+  SourceLocation location() {
+    return loc;
+  }
+
+  @Override
+  SyntaxType syntaxType() {
+    return BasicSyntaxType.ISA_DEFS;
+  }
+
+  @Override
+  void prettyPrint(int indent, StringBuilder builder) {
+    builder.append(prettyIndentString(indent)).append("enumeration ");
+    id.prettyPrint(0, builder);
+    if (enumType != null) {
+      builder.append(" : ");
+      enumType.prettyPrint(0, builder);
+    }
+    builder.append(" =\n");
+    builder.append(prettyIndentString(indent + 1)).append("{ ");
+    var isFirst = true;
+    for (var entry : entries) {
+      if (!isFirst) {
+        builder.append(prettyIndentString(indent + 1)).append(", ");
+      }
+      isFirst = false;
+      entry.name.prettyPrint(0, builder);
+      if (entry.value != null) {
+        builder.append(" = ");
+        entry.value.prettyPrint(0, builder);
+      }
+      if (entry.behavior != null) {
+        builder.append(" => ");
+        entry.behavior.prettyPrint(0, builder);
+      }
+      builder.append("\n");
+    }
+    builder.append(prettyIndentString(indent + 1)).append("}\n");
+  }
+
+  @Override
+  <R> R accept(DefinitionVisitor<R> visitor) {
+    return visitor.visit(this);
+  }
+
+  @Override
+  public String toString() {
+    return this.getClass().getSimpleName();
+  }
+
+  @Override
+  public boolean equals(Object o) {
+    if (this == o) {
+      return true;
+    }
+    if (o == null || getClass() != o.getClass()) {
+      return false;
+    }
+
+    var that = (EnumerationDefinition) o;
+    return Objects.equals(annotations, that.annotations)
+        && Objects.equals(id, that.id)
+        && Objects.equals(enumType, that.enumType)
+        && Objects.equals(entries, that.entries);
+  }
+
+  @Override
+  public int hashCode() {
+    int result = Objects.hashCode(annotations);
+    result = 31 * result + Objects.hashCode(id);
+    result = 31 * result + Objects.hashCode(enumType);
+    result = 31 * result + Objects.hashCode(entries);
+    return result;
+  }
+
+  record Entry(Identifier name, @Nullable Expr value, @Nullable Expr behavior) {
+  }
+}
+
+final class ExceptionDefinition extends Definition {
+  IdentifierOrPlaceholder id;
+  Statement statement;
+  SourceLocation loc;
+
+  ExceptionDefinition(IdentifierOrPlaceholder id, Statement statement, SourceLocation location) {
+    this.id = id;
+    this.statement = statement;
+    this.loc = location;
+  }
+
+  Identifier id() {
+    return (Identifier) id;
+  }
+
+  @Override
+  SourceLocation location() {
+    return loc;
+  }
+
+  @Override
+  SyntaxType syntaxType() {
+    return BasicSyntaxType.ISA_DEFS;
+  }
+
+  @Override
+  void prettyPrint(int indent, StringBuilder builder) {
+    builder.append(prettyIndentString(indent)).append("exception ");
+    id.prettyPrint(0, builder);
+    builder.append(" = ");
+    statement.prettyPrint(indent + 1, builder);
+    builder.append("\n");
+  }
+
+  @Override
+  <R> R accept(DefinitionVisitor<R> visitor) {
+    return visitor.visit(this);
+  }
+
+  @Override
+  public String toString() {
+    return this.getClass().getSimpleName();
+  }
+
+  @Override
+  public boolean equals(Object o) {
+    if (this == o) {
+      return true;
+    }
+    if (o == null || getClass() != o.getClass()) {
+      return false;
+    }
+
+    var that = (ExceptionDefinition) o;
+    return Objects.equals(annotations, that.annotations)
+        && Objects.equals(id, that.id)
+        && Objects.equals(statement, that.statement);
+  }
+
+  @Override
+  public int hashCode() {
+    int result = Objects.hashCode(annotations);
+    result = 31 * result + Objects.hashCode(id);
+    result = 31 * result + Objects.hashCode(statement);
+    return result;
+  }
+}
+
 final class PlaceholderDefinition extends Definition {
 
-  IsCallExpr placeholder;
+  List<String> segments;
   SyntaxType type;
   SourceLocation loc;
 
-  PlaceholderDefinition(IsCallExpr placeholder, SyntaxType type, SourceLocation loc) {
-    this.placeholder = placeholder;
+  PlaceholderDefinition(List<String> segments, SyntaxType type, SourceLocation loc) {
+    this.segments = segments;
     this.type = type;
     this.loc = loc;
   }
@@ -1285,7 +1790,8 @@ final class PlaceholderDefinition extends Definition {
   @Override
   void prettyPrint(int indent, StringBuilder builder) {
     builder.append("$");
-    placeholder.prettyPrint(indent, builder);
+    builder.append(String.join(".", segments));
+    builder.append("\n");
   }
 }
 
@@ -1294,11 +1800,12 @@ final class PlaceholderDefinition extends Definition {
  * This node should never leave the parser.
  */
 final class MacroInstanceDefinition extends Definition {
-  Macro macro;
+  MacroOrPlaceholder macro;
   List<Node> arguments;
   SourceLocation loc;
 
-  public MacroInstanceDefinition(Macro macro, List<Node> arguments, SourceLocation loc) {
+  public MacroInstanceDefinition(MacroOrPlaceholder macro, List<Node> arguments,
+                                 SourceLocation loc) {
     this.macro = macro;
     this.arguments = arguments;
     this.loc = loc;
@@ -1316,14 +1823,18 @@ final class MacroInstanceDefinition extends Definition {
 
   @Override
   SyntaxType syntaxType() {
-    return BasicSyntaxType.Invalid();
+    return macro.returnType();
   }
 
   @Override
   void prettyPrint(int indent, StringBuilder builder) {
     builder.append(prettyIndentString(indent));
     builder.append("$");
-    builder.append(macro.name().name);
+    if (macro instanceof Macro m) {
+      builder.append(m.name().name);
+    } else if (macro instanceof MacroPlaceholder mp) {
+      builder.append(String.join(".", mp.segments()));
+    }
     builder.append("(");
     var isFirst = true;
     for (var arg : arguments) {
@@ -1333,7 +1844,7 @@ final class MacroInstanceDefinition extends Definition {
       isFirst = false;
       arg.prettyPrint(0, builder);
     }
-    builder.append(")");
+    builder.append(")\n");
   }
 
   @Override
@@ -1387,6 +1898,7 @@ final class MacroMatchDefinition extends Definition {
   @Override
   public void prettyPrint(int indent, StringBuilder builder) {
     macroMatch.prettyPrint(indent, builder);
+    builder.append("\n");
   }
 
   @Override
@@ -1431,7 +1943,7 @@ record Annotation(Expr expr, @Nullable TypeLiteral type, @Nullable Identifier pr
       builder.append(' ');
       property.prettyPrint(indent, builder);
     }
-    builder.append(" ]");
+    builder.append(" ]\n");
   }
 }
 
@@ -1452,7 +1964,7 @@ class DefinitionList extends Definition {
 
   @Override
   SyntaxType syntaxType() {
-    return BasicSyntaxType.IsaDefs();
+    return BasicSyntaxType.ISA_DEFS;
   }
 
   @Override
@@ -1462,6 +1974,147 @@ class DefinitionList extends Definition {
 
   @Override
   <R> R accept(DefinitionVisitor<R> visitor) {
-    throw new IllegalStateException("A DefinitionList should not exist in the finished AST");
+    return visitor.visit(this);
+  }
+}
+
+/**
+ * An internal temporary definition of a model.
+ * This node should never leave the parser.
+ */
+final class ModelDefinition extends Definition {
+  IdentifierOrPlaceholder id;
+  List<MacroParam> params;
+  Node body;
+  SyntaxType returnType;
+  SourceLocation loc;
+
+  ModelDefinition(IdentifierOrPlaceholder id, List<MacroParam> params, Node body,
+                         SyntaxType returnType, SourceLocation loc) {
+    this.id = id;
+    this.params = params;
+    this.body = body;
+    this.returnType = returnType;
+    this.loc = loc;
+  }
+
+  Identifier id() {
+    return (Identifier) id;
+  }
+
+  Macro toMacro() {
+    return new Macro(new Identifier(id.pathToString(), id.location()), params, body, returnType);
+  }
+
+  @Override
+  <R> R accept(DefinitionVisitor<R> visitor) {
+    return visitor.visit(this);
+  }
+
+  @Override
+  SourceLocation location() {
+    return loc;
+  }
+
+  @Override
+  SyntaxType syntaxType() {
+    return BasicSyntaxType.ISA_DEFS;
+  }
+
+  @Override
+  void prettyPrint(int indent, StringBuilder builder) {
+    builder.append(prettyIndentString(indent)).append("model ");
+    id.prettyPrint(0, builder);
+    builder.append("(");
+    var isFirst = true;
+    for (var param : params) {
+      if (!isFirst) {
+        builder.append(", ");
+      }
+      isFirst = false;
+      param.name().prettyPrint(0, builder);
+      builder.append(" : ").append(param.type().print());
+    }
+    builder.append(") : ");
+    builder.append(returnType.print());
+    builder.append(" = {\n");
+    body.prettyPrint(indent + 1, builder);
+    builder.append(prettyIndentString(indent)).append("}\n");
+  }
+
+  @Override
+  public boolean equals(Object o) {
+    if (this == o) {
+      return true;
+    }
+    if (o == null || getClass() != o.getClass()) {
+      return false;
+    }
+    ModelDefinition that = (ModelDefinition) o;
+    return Objects.equals(id, that.id) && Objects.equals(params, that.params)
+        && Objects.equals(body, that.body)
+        && Objects.equals(returnType, that.returnType);
+  }
+
+  @Override
+  public int hashCode() {
+    return Objects.hash(id, params, body, returnType);
+  }
+}
+
+/**
+ * An internal temporary placeholder of record type.
+ * This node should never leave the parser.
+ */
+final class RecordTypeDefinition extends Definition {
+  RecordType recordType;
+  SourceLocation loc;
+
+  RecordTypeDefinition(RecordType recordType, SourceLocation loc) {
+    this.recordType = recordType;
+    this.loc = loc;
+  }
+
+  @Override
+  <R> R accept(DefinitionVisitor<R> visitor) {
+    return visitor.visit(this);
+  }
+
+  @Override
+  SourceLocation location() {
+    return loc;
+  }
+
+  @Override
+  SyntaxType syntaxType() {
+    return BasicSyntaxType.ISA_DEFS;
+  }
+
+  @Override
+  void prettyPrint(int indent, StringBuilder builder) {
+    builder.append(prettyIndentString(indent));
+    builder.append("record ");
+    builder.append(recordType.print());
+    builder.append(recordType.entries.stream()
+        .map(entry -> entry.name() + " : " + entry.type().print())
+        .collect(Collectors.joining(",", "(", ")")));
+    builder.append("\n");
+  }
+
+  @Override
+  public boolean equals(Object o) {
+    if (this == o) {
+      return true;
+    }
+    if (o == null || getClass() != o.getClass()) {
+      return false;
+    }
+    RecordTypeDefinition that = (RecordTypeDefinition) o;
+    return Objects.equals(recordType, that.recordType);
+  }
+
+  @Override
+  public int hashCode() {
+    return Objects.hash(recordType);
   }
 }

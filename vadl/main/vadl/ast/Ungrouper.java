@@ -161,6 +161,27 @@ class Ungrouper
   }
 
   @Override
+  public Expr visit(MatchExpr expr) {
+    expr.candidate = expr.candidate.accept(this);
+    expr.defaultResult = expr.defaultResult.accept(this);
+    expr.cases.replaceAll(matchCase -> {
+      matchCase.patterns().replaceAll(pattern -> pattern.accept(this));
+      return new MatchExpr.Case(matchCase.patterns(), matchCase.result().accept(this));
+    });
+    return expr;
+  }
+
+  @Override
+  public Expr visit(ExtendIdExpr expr) {
+    return expr;
+  }
+
+  @Override
+  public Expr visit(IdToStrExpr expr) {
+    return expr;
+  }
+
+  @Override
   public Definition visit(ConstantDefinition definition) {
     ungroupAnnotations(definition);
     definition.value = definition.value.accept(this);
@@ -176,6 +197,10 @@ class Ungrouper
       } else if (field instanceof FormatDefinition.DerivedFormatField f) {
         f.expr = f.expr.accept(this);
       }
+    }
+    for (FormatDefinition.AuxiliaryField auxiliaryField : definition.auxiliaryFields) {
+      auxiliaryField.entries().replaceAll(entry ->
+          new FormatDefinition.AuxiliaryFieldEntry(entry.id(), entry.expr().accept(this)));
     }
     return definition;
   }
@@ -219,11 +244,18 @@ class Ungrouper
   }
 
   @Override
+  public Definition visit(PseudoInstructionDefinition definition) {
+    definition.statements.replaceAll(this::visit);
+    return definition;
+  }
+
+  @Override
   public Definition visit(EncodingDefinition definition) {
     ungroupAnnotations(definition);
-    definition.fieldEncodings().encodings.replaceAll(
-        encoding -> new EncodingDefinition.FieldEncoding(encoding.field(),
-            encoding.value().accept(this)));
+    definition.fieldEncodings().encodings.replaceAll(encoding -> {
+      var enc = (EncodingDefinition.FieldEncoding) encoding;
+      return new EncodingDefinition.FieldEncoding(enc.field(), enc.value().accept(this));
+    });
     return definition;
   }
 
@@ -247,6 +279,26 @@ class Ungrouper
   }
 
   @Override
+  public Definition visit(AliasDefinition definition) {
+    definition.value = definition.value.accept(this);
+    return definition;
+  }
+
+  @Override
+  public Definition visit(EnumerationDefinition definition) {
+    definition.entries.replaceAll(entry -> new EnumerationDefinition.Entry(entry.name(),
+        entry.value() == null ? null : entry.value().accept(this),
+        entry.behavior() == null ? null : entry.behavior().accept(this)));
+    return definition;
+  }
+
+  @Override
+  public Definition visit(ExceptionDefinition definition) {
+    definition.statement = definition.statement.accept(this);
+    return definition;
+  }
+
+  @Override
   public Definition visit(PlaceholderDefinition definition) {
     ungroupAnnotations(definition);
     return definition;
@@ -260,6 +312,24 @@ class Ungrouper
 
   @Override
   public Definition visit(MacroMatchDefinition definition) {
+    return definition;
+  }
+
+  @Override
+  public Definition visit(DefinitionList definition) {
+    for (Definition item : definition.items) {
+      item.accept(this);
+    }
+    return definition;
+  }
+
+  @Override
+  public Definition visit(ModelDefinition definition) {
+    return definition;
+  }
+
+  @Override
+  public Definition visit(RecordTypeDefinition definition) {
     return definition;
   }
 
@@ -292,6 +362,18 @@ class Ungrouper
   }
 
   @Override
+  public Statement visit(RaiseStatement raiseStatement) {
+    raiseStatement.statement = raiseStatement.statement.accept(this);
+    return raiseStatement;
+  }
+
+  @Override
+  public Statement visit(CallStatement callStatement) {
+    callStatement.expr = callStatement.expr.accept(this);
+    return callStatement;
+  }
+
+  @Override
   public Statement visit(PlaceholderStatement placeholderStatement) {
     return placeholderStatement;
   }
@@ -304,6 +386,31 @@ class Ungrouper
   @Override
   public Statement visit(MacroMatchStatement macroMatchStatement) {
     return macroMatchStatement;
+  }
+
+  @Override
+  public Statement visit(MatchStatement matchStatement) {
+    matchStatement.candidate = matchStatement.candidate.accept(this);
+    matchStatement.defaultResult = matchStatement.defaultResult.accept(this);
+    matchStatement.cases.replaceAll(matchCase -> {
+      matchCase.patterns().replaceAll(pattern -> pattern.accept(this));
+      return new MatchStatement.Case(matchCase.patterns(), matchCase.result().accept(this));
+    });
+    return matchStatement;
+  }
+
+  @Override
+  public Statement visit(StatementList statementList) {
+    statementList.items.replaceAll(stmt -> stmt.accept(this));
+    return statementList;
+  }
+
+  @Override
+  public InstructionCallStatement visit(InstructionCallStatement instructionCallStatement) {
+    instructionCallStatement.namedArguments.replaceAll(namedArgument ->
+        new InstructionCallStatement.NamedArgument(namedArgument.name(),
+            namedArgument.value().accept(this)));
+    return instructionCallStatement;
   }
 
   private void ungroupAnnotations(Definition definition) {

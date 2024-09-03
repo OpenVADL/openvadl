@@ -51,6 +51,8 @@ public class AstDumper
         expr.accept(this);
       } else if (child instanceof Statement statement) {
         statement.accept(this);
+      } else if (child == null) {
+        builder.append(indentString()).append("null");
       } else {
         throw new RuntimeException("NOT IMPLEMENTED");
       }
@@ -59,7 +61,7 @@ public class AstDumper
   }
 
   private void dumpChildren(Node... children) {
-    dumpChildren(Arrays.stream(children).toList());
+    dumpChildren(Arrays.asList(children));
   }
 
   @Override
@@ -89,6 +91,12 @@ public class AstDumper
       } else if (field instanceof FormatDefinition.DerivedFormatField f) {
         dumpNode(f);
         dumpChildren(f.identifier, f.expr);
+      }
+    }
+    for (var auxField : definition.auxiliaryFields) {
+      for (FormatDefinition.AuxiliaryFieldEntry entry : auxField.entries()) {
+        dumpChildren(entry.id());
+        dumpChildren(entry.expr());
       }
     }
     this.indent--;
@@ -232,10 +240,21 @@ public class AstDumper
   }
 
   @Override
+  public Void visit(PseudoInstructionDefinition definition) {
+    dumpNode(definition);
+    dumpChildren(definition.id());
+    dumpChildren(definition.params.stream()
+        .flatMap(param -> Stream.of(param.id(), param.type())).toList());
+    dumpChildren(definition.statements);
+    return null;
+  }
+
+  @Override
   public Void visit(EncodingDefinition definition) {
     dumpNode(definition);
     dumpChildren(definition.instrId());
     dumpChildren(definition.fieldEncodings().encodings.stream()
+        .map(EncodingDefinition.FieldEncoding.class::cast)
         .flatMap(entry -> Stream.of(entry.field(), (Node) entry.value()))
         .toList()
     );
@@ -268,6 +287,47 @@ public class AstDumper
   }
 
   @Override
+  public Void visit(AliasDefinition definition) {
+    dumpNode(definition);
+    dumpChildren(definition.id());
+    if (definition.aliasType != null) {
+      dumpChildren(definition.aliasType);
+    }
+    if (definition.targetType != null) {
+      dumpChildren(definition.targetType);
+    }
+    dumpChildren(definition.value);
+    return null;
+  }
+
+  @Override
+  public Void visit(EnumerationDefinition definition) {
+    dumpNode(definition);
+    dumpChildren(definition.id());
+    if (definition.enumType != null) {
+      dumpChildren(definition.enumType);
+    }
+    for (var entry : definition.entries) {
+      dumpChildren(entry.name());
+      if (entry.value() != null) {
+        dumpChildren(entry.value());
+      }
+      if (entry.behavior() != null) {
+        dumpChildren(entry.behavior());
+      }
+    }
+    return null;
+  }
+
+  @Override
+  public Void visit(ExceptionDefinition definition) {
+    dumpNode(definition);
+    dumpChildren(definition.id());
+    dumpChildren(definition.statement);
+    return null;
+  }
+
+  @Override
   public Void visit(PlaceholderDefinition definition) {
     dumpNode(definition);
     return null;
@@ -281,6 +341,25 @@ public class AstDumper
 
   @Override
   public Void visit(MacroMatchDefinition definition) {
+    dumpNode(definition);
+    return null;
+  }
+
+  @Override
+  public Void visit(DefinitionList definition) {
+    dumpNode(definition);
+    dumpChildren(definition.items);
+    return null;
+  }
+
+  @Override
+  public Void visit(ModelDefinition definition) {
+    dumpNode(definition);
+    return null;
+  }
+
+  @Override
+  public Void visit(RecordTypeDefinition definition) {
     dumpNode(definition);
     return null;
   }
@@ -351,6 +430,29 @@ public class AstDumper
   }
 
   @Override
+  public Void visit(MatchExpr expr) {
+    dumpNode(expr);
+    dumpChildren(expr.candidate, expr.defaultResult);
+    for (var matchCase : expr.cases) {
+      dumpChildren(matchCase.patterns());
+      dumpChildren(matchCase.result());
+    }
+    return null;
+  }
+
+  @Override
+  public Void visit(ExtendIdExpr expr) {
+    dumpNode(expr);
+    return null;
+  }
+
+  @Override
+  public Void visit(IdToStrExpr expr) {
+    dumpNode(expr);
+    return null;
+  }
+
+  @Override
   public Void visit(BlockStatement blockStatement) {
     dumpNode(blockStatement);
     dumpChildren(blockStatement.statements);
@@ -385,6 +487,20 @@ public class AstDumper
   }
 
   @Override
+  public Void visit(RaiseStatement raiseStatement) {
+    dumpNode(raiseStatement);
+    dumpChildren(raiseStatement.statement);
+    return null;
+  }
+
+  @Override
+  public Void visit(CallStatement callStatement) {
+    dumpNode(callStatement);
+    dumpChildren(callStatement.expr);
+    return null;
+  }
+
+  @Override
   public Void visit(PlaceholderStatement placeholderStatement) {
     dumpNode(placeholderStatement);
     return null;
@@ -399,6 +515,33 @@ public class AstDumper
   @Override
   public Void visit(MacroMatchStatement macroMatchStatement) {
     dumpNode(macroMatchStatement);
+    return null;
+  }
+
+  @Override
+  public Void visit(MatchStatement matchStatement) {
+    dumpNode(matchStatement);
+    dumpChildren(matchStatement.candidate, matchStatement.defaultResult);
+    for (var matchCase : matchStatement.cases) {
+      dumpChildren(matchCase.patterns());
+      dumpChildren(matchCase.result());
+    }
+    return null;
+  }
+
+  @Override
+  public Void visit(StatementList statementList) {
+    dumpNode(statementList);
+    dumpChildren(statementList.items);
+    return null;
+  }
+
+  @Override
+  public Void visit(InstructionCallStatement instructionCallStatement) {
+    dumpNode(instructionCallStatement);
+    dumpChildren(instructionCallStatement.id());
+    dumpChildren(instructionCallStatement.namedArguments.stream()
+        .flatMap(namedArgument -> Stream.of(namedArgument.name(), namedArgument.value())).toList());
     return null;
   }
 }

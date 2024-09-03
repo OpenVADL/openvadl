@@ -4,6 +4,8 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
 import javax.annotation.Nullable;
+import vadl.error.VadlError;
+import vadl.error.VadlException;
 import vadl.utils.SourceLocation;
 
 /**
@@ -11,7 +13,8 @@ import vadl.utils.SourceLocation;
  */
 public class Ast {
   List<Definition> definitions = new ArrayList<>();
-  @Nullable SymbolTable rootSymbolTable;
+  @Nullable
+  SymbolTable rootSymbolTable;
 
   /**
    * Convert the tree back into sourcecode.
@@ -55,8 +58,9 @@ abstract class Node {
 
   SymbolTable symbolTable() {
     if (symbolTable == null) {
-      throw new IllegalStateException(
-          "Node " + this + " should have received a symbol table in a previous pass");
+      throw new VadlException(List.of(
+          new VadlError("Node " + this + " should have received a symbol table in a previous pass",
+              location(), null, null)));
     }
     return symbolTable;
   }
@@ -66,9 +70,107 @@ abstract class Node {
     return " ".repeat(indentBy * indent);
   }
 
+  static boolean isBlockLayout(Node n) {
+    return n instanceof LetExpr || n instanceof IfExpr || n instanceof Statement
+        || n instanceof Definition;
+  }
+
   abstract SourceLocation location();
 
   abstract SyntaxType syntaxType();
 
   abstract void prettyPrint(int indent, StringBuilder builder);
+}
+
+class RecordInstance extends Node {
+  RecordType type;
+  List<Node> entries;
+  SourceLocation sourceLocation;
+
+  RecordInstance(RecordType type, List<Node> entries, SourceLocation sourceLocation) {
+    this.type = type;
+    this.entries = entries;
+    this.sourceLocation = sourceLocation;
+  }
+
+  @Override
+  SourceLocation location() {
+    return sourceLocation;
+  }
+
+  @Override
+  SyntaxType syntaxType() {
+    return type;
+  }
+
+  @Override
+  void prettyPrint(int indent, StringBuilder builder) {
+    builder.append("(");
+    var isFirst = true;
+    for (Node entry : entries) {
+      if (!isFirst) {
+        builder.append(" ; ");
+      }
+      isFirst = false;
+      entry.prettyPrint(0, builder);
+    }
+    builder.append(")");
+  }
+}
+
+class MacroReference extends Node {
+  Macro macro;
+  ProjectionType type;
+  SourceLocation sourceLocation;
+
+  MacroReference(Macro macro, ProjectionType type, SourceLocation sourceLocation) {
+    this.macro = macro;
+    this.type = type;
+    this.sourceLocation = sourceLocation;
+  }
+
+  @Override
+  SourceLocation location() {
+    return sourceLocation;
+  }
+
+  @Override
+  SyntaxType syntaxType() {
+    return type;
+  }
+
+  @Override
+  void prettyPrint(int indent, StringBuilder builder) {
+    macro.name().prettyPrint(indent, builder);
+  }
+}
+
+final class PlaceholderNode extends Node implements OperatorOrPlaceholder,
+    FieldEncodingOrPlaceholder {
+
+  List<String> segments;
+  SyntaxType syntaxType;
+  SourceLocation sourceLocation;
+
+  PlaceholderNode(List<String> segments, SyntaxType syntaxType, SourceLocation sourceLocation) {
+    this.segments = segments;
+    this.syntaxType = syntaxType;
+    this.sourceLocation = sourceLocation;
+  }
+
+  @Override
+  public SourceLocation location() {
+    return sourceLocation;
+  }
+
+  @Override
+  SyntaxType syntaxType() {
+    return syntaxType;
+  }
+
+  @Override
+  public void prettyPrint(int indent, StringBuilder builder) {
+    builder.append("$");
+    builder.append(String.join(".", segments));
+  }
 }

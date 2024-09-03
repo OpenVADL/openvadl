@@ -1,151 +1,214 @@
 package vadl.ast;
 
-import java.util.Map;
+import java.util.List;
+import java.util.stream.Collectors;
 
-abstract class SyntaxType {
-  abstract boolean isSubTypeOf(SyntaxType other);
+interface SyntaxType {
+  boolean isSubTypeOf(SyntaxType other);
+
+  String print();
 }
 
-@SuppressWarnings("checkstyle:methodname")
-class BasicSyntaxType extends SyntaxType {
+// We're using the ordinal() to construct a two-dimensional alternative to the EnumSet builtin.
+@SuppressWarnings("EnumOrdinal")
+enum BasicSyntaxType implements SyntaxType {
+  STATS("Stats"),
+  STAT("Stat"),
+  ENCS("Encs"),
+  ISA_DEFS("IsaDefs"),
+  EX("Ex"),
+  LIT("Lit"),
+  STR("Str"),
+  VAL("Val"),
+  BOOL("Bool"),
+  INT("Int"),
+  BIN("Bin"),
+  CALL_EX("CallEx"),
+  SYM_EX("SymEx"),
+  ID("Id"),
+  BIN_OP("BinOp"),
+  UN_OP("UnOp"),
+  INVALID("InvalidType");
+
+  static final boolean[][] IS_SUBTYPE;
+
   private final String name;
 
-  private BasicSyntaxType(String name) {
+  BasicSyntaxType(String name) {
     this.name = name;
   }
 
-  private static final BasicSyntaxType statsType = new BasicSyntaxType("Stats");
-  private static final BasicSyntaxType statType = new BasicSyntaxType("Stat");
-  private static final BasicSyntaxType encsType = new BasicSyntaxType("Encs");
-  private static final BasicSyntaxType isaDefsType = new BasicSyntaxType("IsaDefs");
-  private static final BasicSyntaxType exType = new BasicSyntaxType("Ex");
-  private static final BasicSyntaxType litType = new BasicSyntaxType("Lit");
-  private static final BasicSyntaxType strType = new BasicSyntaxType("Str");
-  private static final BasicSyntaxType valType = new BasicSyntaxType("Val");
-  private static final BasicSyntaxType boolType = new BasicSyntaxType("Bool");
-  private static final BasicSyntaxType intType = new BasicSyntaxType("Int");
-  private static final BasicSyntaxType binType = new BasicSyntaxType("Bin");
-  private static final BasicSyntaxType callExType = new BasicSyntaxType("CallEx");
-  private static final BasicSyntaxType symExType = new BasicSyntaxType("SymEx");
-  private static final BasicSyntaxType idType = new BasicSyntaxType("Id");
-  private static final BasicSyntaxType binOpType = new BasicSyntaxType("BinOp");
-  private static final BasicSyntaxType unOpType = new BasicSyntaxType("UnOp");
-  private static final BasicSyntaxType invalidType = new BasicSyntaxType("InvalidType");
-
-  static BasicSyntaxType Stats() {
-    return statsType;
+  String getName() {
+    return name;
   }
-
-  static BasicSyntaxType Stat() {
-    return statType;
-  }
-
-  static BasicSyntaxType Encs() {
-    return encsType;
-  }
-
-  static BasicSyntaxType IsaDefs() {
-    return isaDefsType;
-  }
-
-  static BasicSyntaxType Ex() {
-    return exType;
-  }
-
-  static BasicSyntaxType Lit() {
-    return litType;
-  }
-
-  static BasicSyntaxType Str() {
-    return strType;
-  }
-
-  static BasicSyntaxType Val() {
-    return valType;
-  }
-
-  static BasicSyntaxType Bool() {
-    return boolType;
-  }
-
-  static BasicSyntaxType Int() {
-    return intType;
-  }
-
-  static BasicSyntaxType Bin() {
-    return binType;
-  }
-
-  static BasicSyntaxType CallEx() {
-    return callExType;
-  }
-
-  static BasicSyntaxType SymEx() {
-    return symExType;
-  }
-
-  static BasicSyntaxType Id() {
-    return idType;
-  }
-
-  static BasicSyntaxType BinOp() {
-    return binOpType;
-  }
-
-  static BasicSyntaxType UnOp() {
-    return unOpType;
-  }
-
-  static BasicSyntaxType Invalid() {
-    return invalidType;
-  }
-
-  private static final Map<BasicSyntaxType, BasicSyntaxType[]> superTypes = Map.ofEntries(
-      Map.entry(statsType, new BasicSyntaxType[] {}),
-      Map.entry(statType, new BasicSyntaxType[] {statsType}),
-      Map.entry(encsType, new BasicSyntaxType[] {}),
-      Map.entry(isaDefsType, new BasicSyntaxType[] {}),
-      Map.entry(exType, new BasicSyntaxType[] {}),
-      Map.entry(litType, new BasicSyntaxType[] {exType}),
-      Map.entry(strType, new BasicSyntaxType[] {exType, litType}),
-      Map.entry(valType, new BasicSyntaxType[] {exType, litType}),
-      Map.entry(boolType, new BasicSyntaxType[] {exType, litType, valType}),
-      Map.entry(intType, new BasicSyntaxType[] {exType, litType, valType}),
-      Map.entry(binType, new BasicSyntaxType[] {exType, litType, valType}),
-      Map.entry(callExType, new BasicSyntaxType[] {exType}),
-      Map.entry(symExType, new BasicSyntaxType[] {exType, callExType}),
-      Map.entry(idType, new BasicSyntaxType[] {exType, callExType, symExType}),
-      Map.entry(binOpType, new BasicSyntaxType[] {}),
-      Map.entry(unOpType, new BasicSyntaxType[] {}),
-      Map.entry(invalidType, new BasicSyntaxType[] {})
-  );
 
   @Override
-  boolean isSubTypeOf(SyntaxType other) {
-    // Each BasicSyntaxType is only once instantiated, so compare references.
-    if (this == other) {
-      return true;
-    }
+  public boolean isSubTypeOf(SyntaxType other) {
+    return other instanceof BasicSyntaxType bst && IS_SUBTYPE[this.ordinal()][bst.ordinal()];
+  }
 
-    if (!(other instanceof BasicSyntaxType otherCore)) {
-      return false;
-    }
+  @Override
+  public String print() {
+    return name;
+  }
 
-    var parents = superTypes.get(this);
-    if (parents == null) {
-      throw new RuntimeException("Internal error: could not find supertype " + this.name);
-    }
+  static {
+    IS_SUBTYPE = new boolean[BasicSyntaxType.values().length][BasicSyntaxType.values().length];
 
-    for (BasicSyntaxType superType : parents) {
-      if (superType == otherCore) {
-        return true;
-      }
-    }
-    return false;
+    IS_SUBTYPE[STATS.ordinal()][STATS.ordinal()] = true;
+
+    IS_SUBTYPE[STAT.ordinal()][STAT.ordinal()] = true;
+    IS_SUBTYPE[STAT.ordinal()][STATS.ordinal()] = true;
+
+    IS_SUBTYPE[ENCS.ordinal()][ENCS.ordinal()] = true;
+
+    IS_SUBTYPE[ISA_DEFS.ordinal()][ISA_DEFS.ordinal()] = true;
+
+    IS_SUBTYPE[EX.ordinal()][EX.ordinal()] = true;
+
+    IS_SUBTYPE[LIT.ordinal()][LIT.ordinal()] = true;
+    IS_SUBTYPE[LIT.ordinal()][EX.ordinal()] = true;
+
+    IS_SUBTYPE[STR.ordinal()][STR.ordinal()] = true;
+    IS_SUBTYPE[STR.ordinal()][LIT.ordinal()] = true;
+    IS_SUBTYPE[STR.ordinal()][EX.ordinal()] = true;
+
+    IS_SUBTYPE[VAL.ordinal()][VAL.ordinal()] = true;
+    IS_SUBTYPE[VAL.ordinal()][LIT.ordinal()] = true;
+    IS_SUBTYPE[VAL.ordinal()][EX.ordinal()] = true;
+
+    IS_SUBTYPE[BOOL.ordinal()][BOOL.ordinal()] = true;
+    IS_SUBTYPE[BOOL.ordinal()][VAL.ordinal()] = true;
+    IS_SUBTYPE[BOOL.ordinal()][LIT.ordinal()] = true;
+    IS_SUBTYPE[BOOL.ordinal()][EX.ordinal()] = true;
+
+    IS_SUBTYPE[INT.ordinal()][INT.ordinal()] = true;
+    IS_SUBTYPE[INT.ordinal()][VAL.ordinal()] = true;
+    IS_SUBTYPE[INT.ordinal()][LIT.ordinal()] = true;
+    IS_SUBTYPE[INT.ordinal()][EX.ordinal()] = true;
+
+    IS_SUBTYPE[BIN.ordinal()][BIN.ordinal()] = true;
+    IS_SUBTYPE[BIN.ordinal()][VAL.ordinal()] = true;
+    IS_SUBTYPE[BIN.ordinal()][LIT.ordinal()] = true;
+    IS_SUBTYPE[BIN.ordinal()][EX.ordinal()] = true;
+
+    IS_SUBTYPE[CALL_EX.ordinal()][CALL_EX.ordinal()] = true;
+    IS_SUBTYPE[CALL_EX.ordinal()][EX.ordinal()] = true;
+
+    IS_SUBTYPE[SYM_EX.ordinal()][SYM_EX.ordinal()] = true;
+    IS_SUBTYPE[SYM_EX.ordinal()][CALL_EX.ordinal()] = true;
+    IS_SUBTYPE[SYM_EX.ordinal()][EX.ordinal()] = true;
+
+    IS_SUBTYPE[ID.ordinal()][ID.ordinal()] = true;
+    IS_SUBTYPE[ID.ordinal()][CALL_EX.ordinal()] = true;
+    IS_SUBTYPE[ID.ordinal()][SYM_EX.ordinal()] = true;
+    IS_SUBTYPE[ID.ordinal()][EX.ordinal()] = true;
+
+    IS_SUBTYPE[BIN_OP.ordinal()][BIN_OP.ordinal()] = true;
+
+    IS_SUBTYPE[UN_OP.ordinal()][UN_OP.ordinal()] = true;
+  }
+}
+
+/**
+ * A record type is a composite type of other syntax types.
+ * A record type is considered a subtype of another record type, iif all composite entries of the
+ * type are a subtype of the other record's corresponding entry.
+ */
+class RecordType implements SyntaxType {
+
+  String name;
+  List<Entry> entries;
+
+  RecordType(String name, List<Entry> entries) {
+    this.name = name;
+    this.entries = entries;
   }
 
   @Override
   public String toString() {
+    return name + " " + entries.stream().map(entry -> entry.type.toString())
+        .collect(Collectors.joining(",", "(", ")"));
+  }
+
+  @Override
+  public boolean isSubTypeOf(SyntaxType other) {
+    if (!(other instanceof RecordType otherRecord)) {
+      return false;
+    }
+    if (otherRecord.entries.size() != entries.size()) {
+      return false;
+    }
+    for (int i = 0; i < entries.size(); i++) {
+      if (!entries.get(i).type().isSubTypeOf(otherRecord.entries.get(i).type())) {
+        return false;
+      }
+    }
+    return true;
+  }
+
+  @Override
+  public String print() {
     return name;
+  }
+
+  SyntaxType findEntry(String name) {
+    for (Entry entry : entries) {
+      if (entry.name().equals(name)) {
+        return entry.type();
+      }
+    }
+    return BasicSyntaxType.INVALID;
+  }
+
+  record Entry(String name, SyntaxType type) {
+  }
+}
+
+
+/**
+ * A projection type describes an operation that converts multiple arguments to a new value.
+ * A projection type is considered a subtype of another projection type, iif the result type of
+ * the projection type is a subtype of the other projection type AND all argument types of the
+ * projection types are a subtype of the other projection type's respective argument.
+ */
+class ProjectionType implements SyntaxType {
+  List<SyntaxType> arguments;
+  SyntaxType resultType;
+
+  ProjectionType(List<SyntaxType> arguments, SyntaxType resultType) {
+    this.arguments = arguments;
+    this.resultType = resultType;
+  }
+
+  @Override
+  public String toString() {
+    return arguments.stream().map(Object::toString).collect(Collectors.joining(", ", "(", ")"))
+        + " -> " + resultType;
+  }
+
+  @Override
+  public boolean isSubTypeOf(SyntaxType other) {
+    if (!(other instanceof ProjectionType otherProjection)) {
+      return false;
+    }
+    if (!resultType.isSubTypeOf(otherProjection.resultType)) {
+      return false;
+    }
+    if (arguments.size() != otherProjection.arguments.size()) {
+      return false;
+    }
+    for (int i = 0; i < arguments.size(); i++) {
+      if (!arguments.get(i).isSubTypeOf(otherProjection.arguments.get(i))) {
+        return false;
+      }
+    }
+    return true;
+  }
+
+  @Override
+  public String print() {
+    return arguments.stream().map(SyntaxType::print).collect(Collectors.joining(",", "(", ")"))
+        + " -> " + resultType.print();
   }
 }

@@ -1,0 +1,25 @@
+constant a = 5
+constant b = 3
+
+record BinOpParams (left: Id, op: BinOp, right: Id)
+
+model BinOpEx(params: BinOpParams) : Ex = {
+  $params.left $params.op $params.right
+}
+
+constant c = $BinOpEx((a ; + ; b))
+
+
+model CreateBinOp(params: BinOpParams, factory: (BinOpParams) -> Ex) : Ex = {
+  $factory($params)
+}
+
+constant d = $CreateBinOp((a ; / ; b) ; BinOpEx)
+
+model-type BinOpModel = (BinOpParams) -> Ex
+
+model HigherOrderBinOp(params: BinOpParams, binOpModel: BinOpModel) : Ex = {
+  $binOpModel($params)
+}
+
+constant e = $HigherOrderBinOp((a ; * ; b ) ; BinOpEx)

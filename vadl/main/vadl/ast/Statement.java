@@ -7,8 +7,9 @@ import javax.annotation.Nullable;
 import vadl.utils.SourceLocation;
 
 abstract sealed class Statement extends Node
-    permits BlockStatement, LetStatement, IfStatement, AssignmentStatement, StatementList,
-    PlaceholderStatement, MacroInstanceStatement, MacroMatchStatement {
+    permits AssignmentStatement, BlockStatement, CallStatement, IfStatement,
+    InstructionCallStatement, LetStatement, MacroInstanceStatement, MacroMatchStatement,
+    MatchStatement, PlaceholderStatement, RaiseStatement, StatementList {
   <T> T accept(StatementVisitor<T> visitor) {
     // TODO Use exhaustive switch with patterns in future Java versions
     if (this instanceof BlockStatement b) {
@@ -19,12 +20,22 @@ abstract sealed class Statement extends Node
       return visitor.visit(i);
     } else if (this instanceof AssignmentStatement a) {
       return visitor.visit(a);
+    } else if (this instanceof RaiseStatement r) {
+      return visitor.visit(r);
+    } else if (this instanceof CallStatement c) {
+      return visitor.visit(c);
+    } else if (this instanceof InstructionCallStatement ic) {
+      return visitor.visit(ic);
     } else if (this instanceof PlaceholderStatement p) {
       return visitor.visit(p);
     } else if (this instanceof MacroInstanceStatement m) {
       return visitor.visit(m);
     } else if (this instanceof MacroMatchStatement m) {
       return visitor.visit(m);
+    } else if (this instanceof MatchStatement m) {
+      return visitor.visit(m);
+    } else if (this instanceof StatementList s) {
+      return visitor.visit(s);
     } else {
       throw new IllegalStateException("Unhandled statement type " + getClass().getSimpleName());
     }
@@ -32,7 +43,7 @@ abstract sealed class Statement extends Node
 
   @Override
   SyntaxType syntaxType() {
-    return BasicSyntaxType.Stat();
+    return BasicSyntaxType.STAT;
   }
 }
 
@@ -45,11 +56,21 @@ interface StatementVisitor<T> {
 
   T visit(AssignmentStatement assignmentStatement);
 
+  T visit(RaiseStatement raiseStatement);
+
+  T visit(CallStatement callStatement);
+
   T visit(PlaceholderStatement placeholderStatement);
 
   T visit(MacroInstanceStatement macroInstanceStatement);
 
   T visit(MacroMatchStatement macroMatchStatement);
+
+  T visit(MatchStatement matchStatement);
+
+  T visit(StatementList statementList);
+
+  T visit(InstructionCallStatement instructionCallStatement);
 }
 
 final class BlockStatement extends Statement {
@@ -81,7 +102,7 @@ final class BlockStatement extends Statement {
     builder.append("{\n");
     statements.forEach(statement -> statement.prettyPrint(indent + 1, builder));
     builder.append(prettyIndentString(indent));
-    builder.append("}");
+    builder.append("}\n");
   }
 
   @Override
@@ -248,7 +269,11 @@ final class AssignmentStatement extends Statement {
   public void prettyPrint(int indent, StringBuilder builder) {
     builder.append(prettyIndentString(indent));
     target.prettyPrint(0, builder);
-    builder.append(" := ");
+    if (isBlockLayout(valueExpression)) {
+      builder.append(" :=\n");
+    } else {
+      builder.append(" := ");
+    }
     valueExpression.prettyPrint(indent + 1, builder);
     builder.append("\n");
   }
@@ -294,7 +319,7 @@ final class StatementList extends Statement {
 
   @Override
   SyntaxType syntaxType() {
-    return BasicSyntaxType.Stats();
+    return BasicSyntaxType.STATS;
   }
 
   @Override
@@ -303,14 +328,90 @@ final class StatementList extends Statement {
   }
 }
 
+final class RaiseStatement extends Statement {
+
+  Statement statement;
+  SourceLocation location;
+
+  RaiseStatement(Statement statement, SourceLocation location) {
+    this.statement = statement;
+    this.location = location;
+  }
+
+  @Override
+  SourceLocation location() {
+    return location;
+  }
+
+  @Override
+  void prettyPrint(int indent, StringBuilder builder) {
+    builder.append("raise ");
+    statement.prettyPrint(indent + 1, builder);
+  }
+
+  @Override
+  public boolean equals(Object o) {
+    if (this == o) {
+      return true;
+    }
+    if (o == null || getClass() != o.getClass()) {
+      return false;
+    }
+    RaiseStatement that = (RaiseStatement) o;
+    return Objects.equals(statement, that.statement);
+  }
+
+  @Override
+  public int hashCode() {
+    return Objects.hash(statement, location);
+  }
+}
+
+final class CallStatement extends Statement {
+
+  Expr expr;
+
+  CallStatement(Expr expr) {
+    this.expr = expr;
+  }
+
+  @Override
+  SourceLocation location() {
+    return expr.location();
+  }
+
+  @Override
+  void prettyPrint(int indent, StringBuilder builder) {
+    builder.append(prettyIndentString(indent));
+    expr.prettyPrint(indent, builder);
+  }
+
+  @Override
+  public boolean equals(Object o) {
+    if (this == o) {
+      return true;
+    }
+    if (o == null || getClass() != o.getClass()) {
+      return false;
+    }
+    CallStatement that = (CallStatement) o;
+    return Objects.equals(expr, that.expr);
+  }
+
+  @Override
+  public int hashCode() {
+    return Objects.hashCode(expr);
+  }
+}
+
 final class PlaceholderStatement extends Statement {
 
-  IsCallExpr placeholder;
+  List<String> segments;
   SyntaxType type;
   SourceLocation loc;
 
-  PlaceholderStatement(IsCallExpr placeholder, SyntaxType type, SourceLocation loc) {
-    this.placeholder = placeholder;
+  PlaceholderStatement(List<String> segments, SyntaxType type, SourceLocation loc) {
+    this.segments = segments;
     this.type = type;
     this.loc = loc;
   }
@@ -333,7 +434,7 @@ final class PlaceholderStatement extends Statement {
   @Override
   void prettyPrint(int indent, StringBuilder builder) {
     builder.append("$");
-    placeholder.prettyPrint(indent, builder);
+    builder.append(String.join(".", segments));
   }
 }
 
@@ -342,11 +443,12 @@ final class PlaceholderStatement extends Statement {
  * This node should never leave the parser.
  */
 final class MacroInstanceStatement extends Statement {
-  Macro macro;
+  MacroOrPlaceholder macro;
   List<Node> arguments;
   SourceLocation loc;
 
-  public MacroInstanceStatement(Macro macro, List<Node> arguments, SourceLocation loc) {
+  public MacroInstanceStatement(MacroOrPlaceholder macro, List<Node> arguments,
+                                SourceLocation loc) {
     this.macro = macro;
     this.arguments = arguments;
     this.loc = loc;
@@ -359,14 +461,18 @@ final class MacroInstanceStatement extends Statement {
 
   @Override
   SyntaxType syntaxType() {
-    return BasicSyntaxType.Invalid();
+    return macro.returnType();
   }
 
   @Override
   void prettyPrint(int indent, StringBuilder builder) {
     builder.append(prettyIndentString(indent));
     builder.append("$");
-    builder.append(macro.name().name);
+    if (macro instanceof Macro m) {
+      builder.append(m.name().name);
+    } else if (macro instanceof MacroPlaceholder mp) {
+      builder.append(String.join(".", mp.segments()));
+    }
     builder.append("(");
     var isFirst = true;
     for (var arg : arguments) {
@@ -422,5 +528,152 @@ final class MacroMatchStatement extends Statement {
   @Override
   public int hashCode() {
     return macroMatch.hashCode();
+  }
+}
+
+final class MatchStatement extends Statement {
+  Expr candidate;
+  List<Case> cases;
+  Statement defaultResult;
+  SourceLocation loc;
+
+  MatchStatement(Expr candidate, List<Case> cases, Statement defaultResult, SourceLocation loc) {
+    this.candidate = candidate;
+    this.cases = cases;
+    this.defaultResult = defaultResult;
+    this.loc = loc;
+  }
+
+  @Override
+  SourceLocation location() {
+    return loc;
+  }
+
+  @Override
+  SyntaxType syntaxType() {
+    return BasicSyntaxType.EX;
+  }
+
+  @Override
+  void prettyPrint(int indent, StringBuilder builder) {
+    builder.append("match ");
+    candidate.prettyPrint(0, builder);
+    builder.append(" with\n");
+    builder.append(prettyIndentString(indent + 1)).append("{ ");
+    var isFirst = true;
+    for (var matchCase : cases) {
+      if (!isFirst) {
+        builder.append(prettyIndentString(indent + 1)).append(", ");
+      }
+      isFirst = false;
+      if (matchCase.patterns.size() == 1) {
+        matchCase.patterns.get(0).prettyPrint(0, builder);
+      } else {
+        builder.append("{");
+        var isFirstPattern = true;
+        for (var pattern : matchCase.patterns) {
+          if (!isFirstPattern) {
+            builder.append(", ");
+          }
+          isFirstPattern = false;
+          pattern.prettyPrint(0, builder);
+        }
+        builder.append("}");
+      }
+      builder.append(" => ");
+      matchCase.result.prettyPrint(0, builder);
+      builder.append("\n");
+    }
+    builder.append(prettyIndentString(indent + 1)).append(", _ => ");
+    defaultResult.prettyPrint(0, builder);
+    builder.append("\n").append(prettyIndentString(indent + 1)).append("}\n");
+  }
+
+  @Override
+  public boolean equals(Object o) {
+    if (this == o) {
+      return true;
+    }
+    if (o == null || getClass() != o.getClass()) {
+      return false;
+    }
+
+    MatchStatement that = (MatchStatement) o;
+    return Objects.equals(candidate, that.candidate)
+        && Objects.equals(cases, that.cases)
+        && Objects.equals(defaultResult, that.defaultResult);
+  }
+
+  @Override
+  public int hashCode() {
+    int result = cases.hashCode();
+    result = 31 * result + cases.hashCode();
+    result = 31 * result + defaultResult.hashCode();
+    return result;
+  }
+
+  record Case(List<Expr> patterns, Statement result) {
+  }
+}
+
+final class InstructionCallStatement extends Statement {
+
+  IdentifierOrPlaceholder id;
+  List<NamedArgument> namedArguments;
+  SourceLocation loc;
+
+  InstructionCallStatement(IdentifierOrPlaceholder id, List<NamedArgument> namedArguments,
+                           SourceLocation loc) {
+    this.id = id;
+    this.namedArguments = namedArguments;
+    this.loc = loc;
+  }
+
+  Identifier id() {
+    return (Identifier) id;
+  }
+
+  @Override
+  SourceLocation location() {
+    return loc;
+  }
+
+  @Override
+  void prettyPrint(int indent, StringBuilder builder) {
+    builder.append(prettyIndentString(indent));
+    id.prettyPrint(0, builder);
+    builder.append("{");
+    var isFirst = true;
+    for (NamedArgument namedArgument : namedArguments) {
+      if (!isFirst) {
+        builder.append(", ");
+      }
+      isFirst = false;
+      namedArgument.name.prettyPrint(0, builder);
+      builder.append(" = ");
+      namedArgument.value.prettyPrint(0, builder);
+    }
+    builder.append("}\n");
+  }
+
+  @Override
+  public boolean equals(Object o) {
+    if (this == o) {
+      return true;
+    }
+    if (o == null || getClass() != o.getClass()) {
+      return false;
+    }
+    InstructionCallStatement that = (InstructionCallStatement) o;
+    return Objects.equals(id, that.id)
+        && Objects.equals(namedArguments, that.namedArguments);
+  }
+
+  @Override
+  public int hashCode() {
+    return Objects.hash(id, namedArguments, loc);
+  }
+
+  record NamedArgument(Identifier name, Expr value) {
   }
 }

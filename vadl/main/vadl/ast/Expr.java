@@ -53,6 +53,12 @@ interface ExprVisitor<R> {
   R visit(OperatorExpr expr);
 
   R visit(MacroMatchExpr expr);
+
+  R visit(MatchExpr expr);
+
+  R visit(ExtendIdExpr expr);
+
+  R visit(IdToStrExpr expr);
 }
 
 final class Identifier extends Expr implements IsId, IdentifierOrPlaceholder {
@@ -71,7 +77,7 @@ final class Identifier extends Expr implements IsId, IdentifierOrPlaceholder {
 
   @Override
   SyntaxType syntaxType() {
-    return BasicSyntaxType.Id();
+    return BasicSyntaxType.ID;
   }
 
   @Override
@@ -114,7 +120,8 @@ final class Identifier extends Expr implements IsId, IdentifierOrPlaceholder {
 }
 
 sealed interface OperatorOrPlaceholder
-    permits OperatorExpr, PlaceholderExpr, MacroInstanceExpr, MacroMatchExpr {
+    permits OperatorExpr, PlaceholderNode, MacroInstanceExpr, MacroMatchExpr {
+  void prettyPrint(int indent, StringBuilder builder);
 }
 
 /**
@@ -282,11 +289,11 @@ final class OperatorExpr extends Expr implements OperatorOrPlaceholder {
 
   @Override
   SyntaxType syntaxType() {
-    return BasicSyntaxType.BinOp();
+    return BasicSyntaxType.BIN_OP;
   }
 
   @Override
-  void prettyPrint(int indent, StringBuilder builder) {
+  public void prettyPrint(int indent, StringBuilder builder) {
     builder.append(operator.symbol);
   }
 
@@ -389,15 +396,16 @@ class BinaryExpr extends Expr {
 
   @Override
   SyntaxType syntaxType() {
-    return BasicSyntaxType.Ex();
+    return BasicSyntaxType.EX;
   }
 
   @Override
   void prettyPrint(int indent, StringBuilder builder) {
-    // FIXME: Remove the parenthesis in the future and determine if they are needed
     builder.append("(");
     left.prettyPrint(indent, builder);
-    builder.append(" %s ".formatted(operator().symbol));
+    builder.append(" ");
+    operator.prettyPrint(0, builder);
+    builder.append(" ");
     right.prettyPrint(indent, builder);
     builder.append(")");
   }
@@ -452,7 +460,7 @@ class UnaryExpr extends Expr {
 
   @Override
   SyntaxType syntaxType() {
-    return BasicSyntaxType.UnOp();
+    return BasicSyntaxType.EX;
   }
 
   @Override
@@ -514,7 +522,7 @@ class IntegerLiteral extends Expr {
 
   @Override
   SyntaxType syntaxType() {
-    return BasicSyntaxType.Int();
+    return BasicSyntaxType.INT;
   }
 
   @Override
@@ -582,7 +590,7 @@ class BinaryLiteral extends Expr {
 
   @Override
   SyntaxType syntaxType() {
-    return BasicSyntaxType.Bin();
+    return BasicSyntaxType.BIN;
   }
 
   @Override
@@ -637,7 +645,7 @@ class BoolLiteral extends Expr {
 
   @Override
   SyntaxType syntaxType() {
-    return BasicSyntaxType.Bool();
+    return BasicSyntaxType.BOOL;
   }
 
   @Override
@@ -685,6 +693,13 @@ class StringLiteral extends Expr {
     this.loc = loc;
   }
 
+  public StringLiteral(Identifier fromId, SourceLocation loc) {
+    this.token = fromId.toString();
+    this.value = fromId.name;
+    this.loc = loc;
+  }
+
+
   @Override
   SourceLocation location() {
     return loc;
@@ -692,7 +707,7 @@ class StringLiteral extends Expr {
 
   @Override
   SyntaxType syntaxType() {
-    return BasicSyntaxType.Str();
+    return BasicSyntaxType.STR;
   }
 
   @Override
@@ -729,23 +744,22 @@ class StringLiteral extends Expr {
   }
 }
 
-sealed interface IdentifierOrPlaceholder
-    permits Identifier, PlaceholderExpr, MacroInstanceExpr, MacroMatchExpr {
-  void prettyPrint(int indent, StringBuilder builder);
+sealed interface IdentifierOrPlaceholder extends IsId
+    permits Identifier, MacroInstanceExpr, MacroMatchExpr, PlaceholderExpr, ExtendIdExpr {
 }
 
 /**
  * An internal temporary placeholder node inside model definitions.
  * This node should never leave the parser.
  */
-final class PlaceholderExpr extends Expr implements IdentifierOrPlaceholder,
-    OperatorOrPlaceholder, TypeLiteralOrPlaceholder, FieldEncodingsOrPlaceholder, IsId {
-  IsCallExpr placeholder;
+final class PlaceholderExpr extends Expr
+    implements IdentifierOrPlaceholder, TypeLiteralOrPlaceholder, IsId {
+  List<String> segments;
   SyntaxType type;
   SourceLocation loc;
 
-  public PlaceholderExpr(IsCallExpr placeholder, SyntaxType type, SourceLocation loc) {
-    this.placeholder = placeholder;
+  public PlaceholderExpr(List<String> segments, SyntaxType type, SourceLocation loc) {
+    this.segments = segments;
     this.type = type;
     this.loc = loc;
   }
@@ -768,7 +782,7 @@ final class PlaceholderExpr extends Expr implements IdentifierOrPlaceholder,
   @Override
   public void prettyPrint(int indent, StringBuilder builder) {
     builder.append("$");
-    placeholder.prettyPrint(indent, builder);
+    builder.append(String.join(".", segments));
   }
 
   @Override
@@ -781,17 +795,19 @@ final class PlaceholderExpr extends Expr implements IdentifierOrPlaceholder,
     }
 
     PlaceholderExpr that = (PlaceholderExpr) o;
-    return placeholder.equals(that.placeholder);
+    return segments.equals(that.segments);
   }
 
   @Override
   public int hashCode() {
-    return placeholder.hashCode();
+    return segments.hashCode();
   }
 
   @Override
   public String pathToString() {
-    return "$" + placeholder.path().pathToString();
+    var sb = new StringBuilder();
+    prettyPrint(0, sb);
+    return sb.toString();
   }
 }
 
@@ -800,12 +816,12 @@ final class PlaceholderExpr extends Expr implements IdentifierOrPlaceholder,
  * This node should never leave the parser.
  */
 final class MacroInstanceExpr extends Expr implements IdentifierOrPlaceholder,
-    OperatorOrPlaceholder, TypeLiteralOrPlaceholder, FieldEncodingsOrPlaceholder, IsId {
-  Macro macro;
+    OperatorOrPlaceholder, TypeLiteralOrPlaceholder, FieldEncodingOrPlaceholder, IsId {
+  MacroOrPlaceholder macro;
   List<Node> arguments;
   SourceLocation loc;
 
-  public MacroInstanceExpr(Macro macro, List<Node> arguments, SourceLocation loc) {
+  public MacroInstanceExpr(MacroOrPlaceholder macro, List<Node> arguments, SourceLocation loc) {
     this.macro = macro;
     this.arguments = arguments;
     this.loc = loc;
@@ -823,14 +839,18 @@ final class MacroInstanceExpr extends Expr implements IdentifierOrPlaceholder,
 
   @Override
   SyntaxType syntaxType() {
-    return BasicSyntaxType.Invalid();
+    return macro.returnType();
   }
 
   @Override
   public void prettyPrint(int indent, StringBuilder builder) {
     builder.append(prettyIndentString(indent));
     builder.append("$");
-    builder.append(macro.name().name);
+    if (macro instanceof Macro m) {
+      builder.append(m.name().name);
+    } else if (macro instanceof MacroPlaceholder mp) {
+      builder.append(String.join(".", mp.segments()));
+    }
     builder.append("(");
     var isFirst = true;
     for (var arg : arguments) {
@@ -877,7 +897,7 @@ final class MacroInstanceExpr extends Expr implements IdentifierOrPlaceholder,
  * This node should never leave the parser.
  */
 final class MacroMatchExpr extends Expr implements IdentifierOrPlaceholder,
-    OperatorOrPlaceholder, TypeLiteralOrPlaceholder, FieldEncodingsOrPlaceholder, IsId {
+    OperatorOrPlaceholder, TypeLiteralOrPlaceholder, FieldEncodingOrPlaceholder, IsId {
   MacroMatch macroMatch;
 
   MacroMatchExpr(MacroMatch macroMatch) {
@@ -929,6 +949,121 @@ final class MacroMatchExpr extends Expr implements IdentifierOrPlaceholder,
 }
 
 /**
+ * An internal temporary node representing the ExtendId built-in.
+ * This node should never leave the parser.
+ */
+final class ExtendIdExpr extends Expr
+    implements IdentifierOrPlaceholder, TypeLiteralOrPlaceholder, IsId {
+  GroupedExpr expr;
+  SourceLocation loc;
+
+  ExtendIdExpr(GroupedExpr expr, SourceLocation loc) {
+    this.expr = expr;
+    this.loc = loc;
+  }
+
+  @Override
+  <R> R accept(ExprVisitor<R> visitor) {
+    return visitor.visit(this);
+  }
+
+  @Override
+  public SourceLocation location() {
+    return loc;
+  }
+
+  @Override
+  SyntaxType syntaxType() {
+    return BasicSyntaxType.ID;
+  }
+
+  @Override
+  public void prettyPrint(int indent, StringBuilder builder) {
+    builder.append("ExtendId ");
+    expr.prettyPrint(0, builder);
+  }
+
+  @Override
+  public boolean equals(Object o) {
+    if (this == o) {
+      return true;
+    }
+    if (o == null || getClass() != o.getClass()) {
+      return false;
+    }
+
+    ExtendIdExpr that = (ExtendIdExpr) o;
+    return expr.equals(that.expr);
+  }
+
+  @Override
+  public int hashCode() {
+    return expr.hashCode();
+  }
+
+  @Override
+  public String pathToString() {
+    var sb = new StringBuilder();
+    prettyPrint(0, sb);
+    return sb.toString();
+  }
+}
+
+/**
+ * An internal temporary node representing the IdToStr built-in.
+ * This node should never leave the parser.
+ */
+final class IdToStrExpr extends Expr {
+  IdentifierOrPlaceholder id;
+  SourceLocation loc;
+
+  IdToStrExpr(IdentifierOrPlaceholder id, SourceLocation loc) {
+    this.id = id;
+    this.loc = loc;
+  }
+
+  @Override
+  <R> R accept(ExprVisitor<R> visitor) {
+    return visitor.visit(this);
+  }
+
+  @Override
+  public SourceLocation location() {
+    return loc;
+  }
+
+  @Override
+  SyntaxType syntaxType() {
+    return BasicSyntaxType.STR;
+  }
+
+  @Override
+  public void prettyPrint(int indent, StringBuilder builder) {
+    builder.append("IdToStr (");
+    id.prettyPrint(0, builder);
+    builder.append(")");
+  }
+
+  @Override
+  public boolean equals(Object o) {
+    if (this == o) {
+      return true;
+    }
+    if (o == null || getClass() != o.getClass()) {
+      return false;
+    }
+
+    IdToStrExpr that = (IdToStrExpr) o;
+    return id.equals(that.id);
+  }
+
+  @Override
+  public int hashCode() {
+    return id.hashCode();
+  }
+}
+
+/**
  * A grouped expression.
  * Grouped expressions can either be single expressions wrapped in parantheses like {@code (1 + 2)},
  * or multiple expressions separated by a comma like {@code (a, 1 + 2, c())}.
@@ -955,7 +1090,7 @@ class GroupedExpr extends Expr {
 
   @Override
   SyntaxType syntaxType() {
-    return BasicSyntaxType.Ex();
+    return BasicSyntaxType.EX;
   }
 
   @Override
@@ -1007,7 +1142,7 @@ class RangeExpr extends Expr {
 
   @Override
   SyntaxType syntaxType() {
-    return BasicSyntaxType.Invalid();
+    return BasicSyntaxType.INVALID;
   }
 
   @Override
@@ -1049,7 +1184,8 @@ class RangeExpr extends Expr {
 }
 
 sealed interface TypeLiteralOrPlaceholder
-    permits TypeLiteral, PlaceholderExpr, MacroInstanceExpr, MacroMatchExpr {
+    permits ExtendIdExpr, MacroInstanceExpr, MacroMatchExpr, PlaceholderExpr, TypeLiteral {
+  void prettyPrint(int indent, StringBuilder builder);
 }
 
 /**
@@ -1088,11 +1224,11 @@ final class TypeLiteral extends Expr implements TypeLiteralOrPlaceholder {
 
   @Override
   SyntaxType syntaxType() {
-    return BasicSyntaxType.Invalid();
+    return BasicSyntaxType.INVALID;
   }
 
   @Override
-  void prettyPrint(int indent, StringBuilder builder) {
+  public void prettyPrint(int indent, StringBuilder builder) {
     builder.append(baseType.pathToString());
     for (var sizes : sizeIndices) {
       builder.append("<");
@@ -1146,10 +1282,6 @@ sealed interface IsCallExpr permits CallExpr, IsSymExpr {
   @Nullable
   Expr size();
 
-  List<List<Expr>> argsIndices();
-
-  List<CallExpr.SubCall> subCalls();
-
   SourceLocation location();
 
   void prettyPrint(int indent, StringBuilder builder);
@@ -1162,20 +1294,11 @@ sealed interface IsSymExpr extends IsCallExpr permits SymbolExpr, IsId {
   @Override
   @Nullable
   Expr size();
-
-  @Override
-  default List<List<Expr>> argsIndices() {
-    return List.of();
-  }
-
-  @Override
-  default List<CallExpr.SubCall> subCalls() {
-    return List.of();
-  }
 }
 
 sealed interface IsId extends IsSymExpr
-    permits IdentifierPath, Identifier, PlaceholderExpr, MacroInstanceExpr, MacroMatchExpr {
+    permits ExtendIdExpr, Identifier, IdentifierOrPlaceholder, IdentifierPath, MacroInstanceExpr,
+    MacroMatchExpr, PlaceholderExpr {
   @Override
   default IsId path() {
     return this;
@@ -1212,7 +1335,7 @@ final class IdentifierPath extends Expr implements IsId {
 
   @Override
   SyntaxType syntaxType() {
-    return BasicSyntaxType.Id();
+    return BasicSyntaxType.ID;
   }
 
   @Override
@@ -1294,7 +1417,7 @@ final class SymbolExpr extends Expr implements IsSymExpr {
 
   @Override
   SyntaxType syntaxType() {
-    return BasicSyntaxType.SymEx();
+    return BasicSyntaxType.SYM_EX;
   }
 
   @Override
@@ -1350,8 +1473,8 @@ final class CallExpr extends Expr implements IsCallExpr {
   List<SubCall> subCalls;
   SourceLocation location;
 
-  public CallExpr(IsSymExpr target, List<List<Expr>> argsIndices,
-                  List<SubCall> subCalls, SourceLocation location) {
+  public CallExpr(IsSymExpr target, List<List<Expr>> argsIndices, List<SubCall> subCalls,
+                  SourceLocation location) {
     this.target = target;
     this.argsIndices = argsIndices;
     this.subCalls = subCalls;
@@ -1369,23 +1492,13 @@ final class CallExpr extends Expr implements IsCallExpr {
   }
 
   @Override
-  public List<List<Expr>> argsIndices() {
-    return argsIndices;
-  }
-
-  @Override
-  public List<SubCall> subCalls() {
-    return subCalls;
-  }
-
-  @Override
   public SourceLocation location() {
     return location;
   }
 
   @Override
   SyntaxType syntaxType() {
-    return BasicSyntaxType.CallEx();
+    return BasicSyntaxType.CALL_EX;
   }
 
   @Override
@@ -1471,7 +1584,7 @@ class IfExpr extends Expr {
 
   @Override
   SyntaxType syntaxType() {
-    return BasicSyntaxType.Ex();
+    return BasicSyntaxType.EX;
   }
 
   @Override
@@ -1480,8 +1593,14 @@ class IfExpr extends Expr {
     builder.append("if ");
     condition.prettyPrint(indent, builder);
     builder.append(" then\n");
+    if (!isBlockLayout(thenExpr)) {
+      builder.append(prettyIndentString(indent + 1));
+    }
     thenExpr.prettyPrint(indent + 1, builder);
     builder.append("\n").append(prettyIndentString(indent)).append("else\n");
+    if (!isBlockLayout(elseExpr)) {
+      builder.append(prettyIndentString(indent + 1));
+    }
     elseExpr.prettyPrint(indent + 1, builder);
   }
 
@@ -1539,7 +1658,7 @@ class LetExpr extends Expr {
 
   @Override
   SyntaxType syntaxType() {
-    return BasicSyntaxType.Ex();
+    return BasicSyntaxType.EX;
   }
 
   @Override
@@ -1557,6 +1676,9 @@ class LetExpr extends Expr {
     builder.append(" = ");
     valueExpr.prettyPrint(indent + 1, builder);
     builder.append(" in\n");
+    if (!isBlockLayout(body)) {
+      builder.append(prettyIndentString(indent + 1));
+    }
     body.prettyPrint(indent + 1, builder);
   }
 
@@ -1610,7 +1732,7 @@ class CastExpr extends Expr {
 
   @Override
   SyntaxType syntaxType() {
-    return BasicSyntaxType.Ex();
+    return BasicSyntaxType.EX;
   }
 
   @Override
@@ -1648,5 +1770,100 @@ class CastExpr extends Expr {
     int result = value.hashCode();
     result = 31 * result + Objects.hashCode(type);
     return result;
+  }
+}
+
+class MatchExpr extends Expr {
+  Expr candidate;
+  List<Case> cases;
+  Expr defaultResult;
+  SourceLocation loc;
+
+  MatchExpr(Expr candidate, List<Case> cases, Expr defaultResult, SourceLocation loc) {
+    this.candidate = candidate;
+    this.cases = cases;
+    this.defaultResult = defaultResult;
+    this.loc = loc;
+  }
+
+  @Override
+  SourceLocation location() {
+    return loc;
+  }
+
+  @Override
+  SyntaxType syntaxType() {
+    return BasicSyntaxType.EX;
+  }
+
+  @Override
+  void prettyPrint(int indent, StringBuilder builder) {
+    builder.append("match ");
+    candidate.prettyPrint(0, builder);
+    builder.append(" with\n");
+    builder.append(prettyIndentString(indent + 1)).append("{ ");
+    var isFirst = true;
+    for (var matchCase : cases) {
+      if (!isFirst) {
+        builder.append(prettyIndentString(indent + 1)).append(", ");
+      }
+      isFirst = false;
+      if (matchCase.patterns.size() == 1) {
+        matchCase.patterns.get(0).prettyPrint(0, builder);
+      } else {
+        builder.append("{");
+        var isFirstPattern = true;
+        for (var pattern : matchCase.patterns) {
+          if (!isFirstPattern) {
+            builder.append(", ");
+          }
+          isFirstPattern = false;
+          pattern.prettyPrint(0, builder);
+        }
+        builder.append("}");
+      }
+      builder.append(" => ");
+      matchCase.result.prettyPrint(0, builder);
+      builder.append("\n");
+    }
+    builder.append(prettyIndentString(indent + 1)).append(", _ => ");
+    defaultResult.prettyPrint(0, builder);
+    builder.append("\n").append(prettyIndentString(indent + 1)).append("}\n");
+  }
+
+  @Override
+  <R> R accept(ExprVisitor<R> visitor) {
+    return visitor.visit(this);
+  }
+
+  @Override
+  public String toString() {
+    return this.getClass().getSimpleName();
+  }
+
+  @Override
+  public boolean equals(Object o) {
+    if (this == o) {
+      return true;
+    }
+    if (o == null || getClass() != o.getClass()) {
+      return false;
+    }
+
+    MatchExpr that = (MatchExpr) o;
+    return Objects.equals(candidate, that.candidate)
+        && Objects.equals(cases, that.cases)
+        && Objects.equals(defaultResult, that.defaultResult);
+  }
+
+  @Override
+  public int hashCode() {
+    int result = cases.hashCode();
+    result = 31 * result + cases.hashCode();
+    result = 31 * result + defaultResult.hashCode();
+    return result;
+  }
+
+  record Case(List<Expr> patterns, Expr result) {
   }
 }

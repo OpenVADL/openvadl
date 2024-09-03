@@ -4,15 +4,20 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Objects;
 import vadl.error.VadlError;
 import vadl.error.VadlException;
 import vadl.utils.SourceLocation;
 
 /**
  * Expands any usage of macro instances in the AST (including overrides passed via CLI).
+ * Also, since binary expression reordering can depend on operator placeholders, this class also
+ * reorders any encountered binary expressions.<br>
  * Before: An AST optionally containing macro instances, placeholders etc.
+ *         Any instances of BinaryExpr must be left-sided, as originally parsed.<br>
  * After: An AST containing no special nodes (macro instance, placeholder, node lists).
+ *        Any instances of BinaryExpr are ordered according to operator precedence.
+ *
+ * @see BinaryExpr#reorder(BinaryExpr)
  */
 class MacroExpander
     implements ExprVisitor<Expr>, DefinitionVisitor<Definition>, StatementVisitor<Statement> {
@@ -30,14 +35,41 @@ class MacroExpander
     ast.definitions = instance.expandDefinitions(ast.definitions);
   }
 
+  /**
+   * Expands the given expr and, if applicable, performs binary expression reordering on it.
+   * Since binary expression reordering is absolutely necessary to preserve the original semantics,
+   * prefer this method to calling {@code expr.accept(this);} directly.
+   * However, to  prevent O(n²) performance, this should never be called during the macro expansion
+   * of a binary expression itself.
+   *
+   * @param expr The expression to perform macro expansion on
+   * @return An expanded and optionally reorder expression
+   * @see BinaryExpr#reorder(BinaryExpr)
+   */
   public Expr expandExpr(Expr expr) {
     var result = expr.accept(this);
     if (!errors.isEmpty()) {
       throw new VadlException(errors);
     }
+    if (result instanceof BinaryExpr binaryExpr) {
+      return BinaryExpr.reorder(binaryExpr);
+    }
     return result;
   }
 
+  public List<Expr> expandExprs(List<Expr> expressions) {
+    var copy = new ArrayList<>(expressions);
+    copy.replaceAll(this::expandExpr);
+    return copy;
+  }
+
+  /**
+   * Expands all definitions in the given list.
+   * If a definition expands to a {@link DefinitionList}, its items are flattened into the result.
+   *
+   * @param definitions The list of definitions to expand
+   * @return A list of expanded and flattened definitions
+   */
   public List<Definition> expandDefinitions(List<Definition> definitions) {
     var defs = new ArrayList<Definition>(definitions.size());
     for (var def : definitions) {
@@ -67,24 +99,13 @@ class MacroExpander
     return result;
   }
 
-  public Node expandNode(Node node) {
-    if (node instanceof Expr expr) {
-      return expandExpr(expr);
-    } else if (node instanceof DefinitionList definitionList) {
-      var definitions = expandDefinitions(definitionList.items);
-      return new DefinitionList(definitions, definitionList.location());
-    } else if (node instanceof Definition definition) {
-      return expandDefinition(definition);
-    } else if (node instanceof StatementList statementList) {
-      var statements = expandStatements(statementList.items);
-      return new StatementList(statements, statementList.location());
-    } else if (node instanceof Statement statement) {
-      return expandStatement(statement);
-    } else {
-      return node;
-    }
-  }
-
+  /**
+   * Expands all statements in the given list.
+   * If a definition expands to a {@link StatementList}, its items are flattened into the result.
+   *
+   * @param statements The list of statements to expand
+   * @return A list of expanded and flattened statements
+   */
   public List<Statement> expandStatements(List<Statement> statements) {
     var stmts = new ArrayList<Statement>(statements.size());
     for (var statement : statements) {
@@ -98,6 +119,31 @@ class MacroExpander
     return stmts;
   }
 
+  Annotations expandAnnotations(Annotations annotations) {
+    var list = new ArrayList<>(annotations.annotations());
+    list.replaceAll(annotation -> new Annotation(
+        expandExpr(annotation.expr()), annotation.type(), annotation.property()));
+    return new Annotations(list);
+  }
+
+  public Node expandNode(Node node) {
+    if (node instanceof Expr expr) {
+      return expandExpr(expr);
+    } else if (node instanceof Definition definition) {
+      return expandDefinition(definition);
+    } else if (node instanceof Statement statement) {
+      return expandStatement(statement);
+    } else if (node instanceof RecordInstance recordInstance) {
+      var entries = new ArrayList<>(recordInstance.entries);
+      entries.replaceAll(this::expandNode);
+      return new RecordInstance(recordInstance.type, entries, recordInstance.sourceLocation);
+    } else if (node instanceof EncodingDefinition.FieldEncodings encs) {
+      return resolveEncs(encs);
+    } else {
+      return node;
+    }
+  }
+
   @Override
   public Expr visit(Identifier expr) {
     return new Identifier(expr.name, expr.location());
@@ -105,18 +151,15 @@ class MacroExpander
 
   @Override
   public Expr visit(BinaryExpr expr) {
-    // FIXME: Only if parent is not a binary operator cause otherwise it is O(n^2)
-    var operator = expr.operator instanceof PlaceholderExpr p ? p.accept(this) : expr.operator;
-    var result = new BinaryExpr(expr.left.accept(this), (OperatorOrPlaceholder) operator,
+    var operator = expr.operator instanceof PlaceholderNode p
+        ? resolveArg(p.segments) : expr.operator;
+    return new BinaryExpr(expr.left.accept(this), (OperatorOrPlaceholder) operator,
         expr.right.accept(this));
-    return BinaryExpr.reorder(result);
   }
 
   @Override
   public Expr visit(GroupedExpr expr) {
-    var expressions = new ArrayList<>(expr.expressions);
-    expressions.replaceAll(expression -> expression.accept(this));
-    return new GroupedExpr(expressions, expr.loc);
+    return new GroupedExpr(expandExprs(expr.expressions), expr.loc);
   }
 
   @Override
@@ -141,32 +184,23 @@ class MacroExpander
 
   @Override
   public Expr visit(PlaceholderExpr expr) {
-    var arg = args.get(expr.placeholder.path().pathToString());
-    if (arg == null) {
-      throw new IllegalStateException(
-          "Argument not found: " + expr.placeholder.path().pathToString());
-    } else if (arg instanceof Identifier id) {
-      return id.accept(this);
-    } else if (arg instanceof IntegerLiteral lit) {
-      return lit;
-    } else if (arg instanceof OperatorExpr op) {
-      return op;
-    }
-
-    return ((Expr) arg).accept(this);
+    Node arg = resolveArg(expr.segments);
+    return ((Expr) arg);
   }
 
   @Override
   public Expr visit(MacroInstanceExpr expr) {
+    var macro = resolveMacro(expr.macro);
+
     // Overrides can be passed via the CLI or the API
-    if (expr.macro.returnType().equals(BasicSyntaxType.Id())
-        && macroOverrides.containsKey(expr.macro.name().name)) {
-      return macroOverrides.get(expr.macro.name().name);
+    if (macro.returnType().equals(BasicSyntaxType.ID)
+        && macroOverrides.containsKey(macro.name().name)) {
+      return macroOverrides.get(macro.name().name);
     }
     try {
-      assertValidMacro(expr.macro, expr.location());
-      var arguments = collectMacroParameters(expr.macro, expr.arguments, expr.location());
-      var body = (Expr) expr.macro.body();
+      assertValidMacro(macro, expr.location());
+      var arguments = collectMacroParameters(macro, expr.arguments, expr.location());
+      var body = (Expr) macro.body();
       var subpass = new MacroExpander(arguments, macroOverrides);
       var expanded = subpass.expandExpr(body);
       var group = new GroupedExpr(new ArrayList<>(), expr.location());
@@ -180,17 +214,13 @@ class MacroExpander
 
   @Override
   public Expr visit(RangeExpr expr) {
-    return new RangeExpr(expr.from.accept(this), expr.to.accept(this));
+    return new RangeExpr(expandExpr(expr.from), expandExpr(expr.to));
   }
 
   @Override
   public Expr visit(TypeLiteral expr) {
     List<List<Expr>> sizeIndices = new ArrayList<>(expr.sizeIndices);
-    sizeIndices.replaceAll(sizes -> {
-      var copy = new ArrayList<>(sizes);
-      copy.replaceAll(size -> size.accept(this));
-      return copy;
-    });
+    sizeIndices.replaceAll(this::expandExprs);
     return new TypeLiteral(expr.baseType, sizeIndices, expr.loc);
   }
 
@@ -203,59 +233,52 @@ class MacroExpander
 
   @Override
   public Expr visit(UnaryExpr expr) {
-    return new UnaryExpr(expr.operator, expr.operand.accept(this));
+    return new UnaryExpr(expr.operator, expandExpr(expr.operand));
   }
 
   @Override
   public Expr visit(CallExpr expr) {
-    var target = (IsSymExpr) ((Expr) expr.target).accept(this);
     var argsIndices = new ArrayList<>(expr.argsIndices);
-    argsIndices.replaceAll(args -> {
-      var copy = new ArrayList<>(args);
-      copy.replaceAll(arg -> arg.accept(this));
-      return copy;
-    });
+    argsIndices.replaceAll(this::expandExprs);
     var subCalls = new ArrayList<>(expr.subCalls);
     subCalls.replaceAll(subCall -> {
       var subCallArgsIndices = new ArrayList<>(subCall.argsIndices());
-      subCallArgsIndices.replaceAll(args -> {
-        var copy = new ArrayList<>(args);
-        copy.replaceAll(arg -> arg.accept(this));
-        return copy;
-      });
+      subCallArgsIndices.replaceAll(this::expandExprs);
       return new CallExpr.SubCall(subCall.id(), subCallArgsIndices);
     });
+    var target = (IsSymExpr) expandExpr((Expr) expr.target);
     return new CallExpr(target, argsIndices, subCalls, expr.location);
   }
 
   @Override
   public Expr visit(IfExpr expr) {
     return new IfExpr(
-        expr.condition.accept(this),
-        expr.thenExpr.accept(this),
-        expr.elseExpr.accept(this),
+        expandExpr(expr.condition),
+        expandExpr(expr.thenExpr),
+        expandExpr(expr.elseExpr),
         expr.location
     );
   }
 
   @Override
   public Expr visit(LetExpr expr) {
-    var valueExpression = expr.valueExpr.accept(this);
-    var body = expr.body.accept(this);
+    var valueExpression = expandExpr(expr.valueExpr);
+    var body = expandExpr(expr.body);
     return new LetExpr(expr.identifiers, valueExpression, body, expr.location);
   }
 
   @Override
   public Expr visit(CastExpr expr) {
-    var value = expr.value.accept(this);
+    var value = expandExpr(expr.value);
     var type = resolveTypeLiteral(expr.type);
     return new CastExpr(value, type);
   }
 
   @Override
   public Expr visit(SymbolExpr expr) {
+    var path = (IsId) expandExpr((Expr) expr.path);
     var size = expr.size.accept(this);
-    return new SymbolExpr(expr.path, size, expr.location);
+    return new SymbolExpr(path, size, expr.location);
   }
 
   @Override
@@ -269,11 +292,44 @@ class MacroExpander
   }
 
   @Override
+  public Expr visit(MatchExpr expr) {
+    var candidate = expandExpr(expr.candidate);
+    var defaultResult = expandExpr(expr.defaultResult);
+    var cases = new ArrayList<>(expr.cases);
+    cases.replaceAll(matchCase -> new MatchExpr.Case(expandExprs(matchCase.patterns()),
+        expandExpr(matchCase.result())));
+    return new MatchExpr(candidate, cases, defaultResult, expr.loc);
+  }
+
+  @Override
+  public Expr visit(ExtendIdExpr expr) {
+    var name = new StringBuilder();
+    var expressions = expandExprs(expr.expr.expressions);
+    for (var inner : expressions) {
+      if (inner instanceof Identifier id) {
+        name.append(id.name);
+      } else if (inner instanceof StringLiteral string) {
+        name.append(string.value);
+      } else {
+        reportError("Unsupported 'ExtendId' parameter " + inner, inner.location());
+        name.append(inner);
+      }
+    }
+    return new Identifier(name.toString(), expr.location());
+  }
+
+  @Override
+  public Expr visit(IdToStrExpr expr) {
+    var id = resolvePlaceholderOrIdentifier(expr.id);
+    return new StringLiteral(id, expr.location());
+  }
+
+  @Override
   public Definition visit(ConstantDefinition definition) {
     var id = resolvePlaceholderOrIdentifier(definition.identifier);
-    var value = definition.value.accept(this);
+    var value = expandExpr(definition.value);
     return new ConstantDefinition(id, definition.type, value, definition.loc)
-        .withAnnotations(definition.annotations);
+        .withAnnotations(expandAnnotations(definition.annotations));
   }
 
   @Override
@@ -282,7 +338,7 @@ class MacroExpander
     fields.replaceAll(field -> {
       if (field instanceof FormatDefinition.DerivedFormatField derivedFormatField) {
         return new FormatDefinition.DerivedFormatField(derivedFormatField.identifier,
-            derivedFormatField.expr.accept(this));
+            expandExpr(derivedFormatField.expr));
       } else if (field instanceof FormatDefinition.TypedFormatField typedFormatField) {
         return new FormatDefinition.TypedFormatField(typedFormatField.identifier,
             resolveTypeLiteral(typedFormatField.type));
@@ -290,43 +346,50 @@ class MacroExpander
         return field;
       }
     });
+    var auxFields = new ArrayList<>(definition.auxiliaryFields);
+    auxFields.replaceAll(auxField -> {
+      var entries = new ArrayList<>(auxField.entries());
+      entries.replaceAll(entry ->
+          new FormatDefinition.AuxiliaryFieldEntry(entry.id(), expandExpr(entry.expr())));
+      return new FormatDefinition.AuxiliaryField(auxField.kind(), entries);
+    });
     var id = resolvePlaceholderOrIdentifier(definition.identifier);
-    return new FormatDefinition(id, definition.type, fields, definition.loc)
-        .withAnnotations(definition.annotations);
+    return new FormatDefinition(id, definition.type, fields, auxFields, definition.loc)
+        .withAnnotations(expandAnnotations(definition.annotations));
   }
 
   @Override
   public Definition visit(InstructionSetDefinition definition) {
-    definition.definitions = expandDefinitions(definition.definitions);
-    return definition;
+    return new InstructionSetDefinition(definition.identifier, definition.extending,
+        expandDefinitions(definition.definitions), definition.location());
   }
 
   @Override
   public Definition visit(CounterDefinition definition) {
     var id = resolvePlaceholderOrIdentifier(definition.identifier);
     return new CounterDefinition(definition.kind, id, definition.type, definition.loc)
-        .withAnnotations(definition.annotations);
+        .withAnnotations(expandAnnotations(definition.annotations));
   }
 
   @Override
   public Definition visit(MemoryDefinition definition) {
     var id = resolvePlaceholderOrIdentifier(definition.identifier);
     return new MemoryDefinition(id, definition.addressType, definition.dataType, definition.loc)
-        .withAnnotations(definition.annotations);
+        .withAnnotations(expandAnnotations(definition.annotations));
   }
 
   @Override
   public Definition visit(RegisterDefinition definition) {
     var id = resolvePlaceholderOrIdentifier(definition.identifier);
     return new RegisterDefinition(id, definition.type, definition.loc)
-        .withAnnotations(definition.annotations);
+        .withAnnotations(expandAnnotations(definition.annotations));
   }
 
   @Override
   public Definition visit(RegisterFileDefinition definition) {
     var id = resolvePlaceholderOrIdentifier(definition.identifier);
     return new RegisterFileDefinition(id, definition.indexType, definition.registerType,
-        definition.loc).withAnnotations(definition.annotations);
+        definition.loc).withAnnotations(expandAnnotations(definition.annotations));
   }
 
   @Override
@@ -336,63 +399,91 @@ class MacroExpander
     var behavior = definition.behavior.accept(this);
 
     return new InstructionDefinition(identifier, typeId, behavior, definition.loc)
-        .withAnnotations(definition.annotations);
+        .withAnnotations(expandAnnotations(definition.annotations));
+  }
+
+  @Override
+  public Definition visit(PseudoInstructionDefinition definition) {
+    var identifier = resolvePlaceholderOrIdentifier(definition.identifier);
+    var statements = new ArrayList<>(definition.statements);
+    statements.replaceAll(this::visit);
+
+    return new PseudoInstructionDefinition(identifier, definition.kind, definition.params,
+        statements, definition.loc).withAnnotations(expandAnnotations(definition.annotations));
   }
 
   @Override
   public Definition visit(EncodingDefinition definition) {
     var instrId = resolvePlaceholderOrIdentifier(definition.instrIdentifier);
-    var fieldEncodings = new ArrayList<>(resolveEncs(definition.fieldEncodings).encodings);
-    fieldEncodings.replaceAll(enc ->
-        new EncodingDefinition.FieldEncoding(enc.field(), enc.value().accept(this)));
+    var fieldEncodings = resolveEncs(definition.fieldEncodings);
 
-    return new EncodingDefinition(instrId, new EncodingDefinition.FieldEncodings(fieldEncodings),
-        definition.loc).withAnnotations(definition.annotations);
+    return new EncodingDefinition(instrId, fieldEncodings, definition.loc)
+        .withAnnotations(expandAnnotations(definition.annotations));
   }
 
   @Override
   public Definition visit(AssemblyDefinition definition) {
     var identifiers = new ArrayList<>(definition.identifiers);
     identifiers.replaceAll(this::resolvePlaceholderOrIdentifier);
-    var expr = definition.expr.accept(this);
-    return new AssemblyDefinition(identifiers, expr, definition.loc)
-        .withAnnotations(definition.annotations);
+    return new AssemblyDefinition(identifiers, expandExpr(definition.expr), definition.loc)
+        .withAnnotations(expandAnnotations(definition.annotations));
   }
 
   @Override
   public Definition visit(UsingDefinition definition) {
     var id = resolvePlaceholderOrIdentifier(definition.id);
     return new UsingDefinition(id, definition.type, definition.loc)
-        .withAnnotations(definition.annotations);
+        .withAnnotations(expandAnnotations(definition.annotations));
   }
 
   @Override
   public Definition visit(FunctionDefinition definition) {
     var name = resolvePlaceholderOrIdentifier(definition.name);
     return new FunctionDefinition(name, definition.params, definition.retType,
-        definition.expr.accept(this), definition.loc).withAnnotations(definition.annotations);
+        expandExpr(definition.expr), definition.loc
+    ).withAnnotations(expandAnnotations(definition.annotations));
+  }
+
+  @Override
+  public Definition visit(AliasDefinition definition) {
+    var id = resolvePlaceholderOrIdentifier(definition.id);
+    var value = expandExpr(definition.value);
+    return new AliasDefinition(id, definition.kind, definition.aliasType, definition.targetType,
+        value, definition.loc);
+  }
+
+  @Override
+  public Definition visit(EnumerationDefinition definition) {
+    var id = resolvePlaceholderOrIdentifier(definition.id);
+    var entries = new ArrayList<>(definition.entries);
+    entries.replaceAll(entry -> new EnumerationDefinition.Entry(entry.name(),
+        entry.value() == null ? null : expandExpr(entry.value()),
+        entry.behavior() == null ? null : expandExpr(entry.behavior())));
+    return new EnumerationDefinition(id, definition.enumType, entries, definition.loc);
+  }
+
+  @Override
+  public Definition visit(ExceptionDefinition definition) {
+    var id = resolvePlaceholderOrIdentifier(definition.id);
+    return new ExceptionDefinition(id, definition.statement.accept(this), definition.loc);
   }
 
   @Override
   public Definition visit(PlaceholderDefinition definition) {
-    var arg = Objects.requireNonNull(args.get(definition.placeholder.path().pathToString()));
+    var arg = resolveArg(definition.segments);
     return (Definition) arg;
   }
 
   @Override
   public Definition visit(MacroInstanceDefinition definition) {
     try {
-      assertValidMacro(definition.macro, definition.location());
+      var macro = resolveMacro(definition.macro);
+      assertValidMacro(macro, definition.location());
       var arguments =
-          collectMacroParameters(definition.macro, definition.arguments, definition.location());
-      var body = (Definition) definition.macro.body();
+          collectMacroParameters(macro, definition.arguments, definition.location());
+      var body = (Definition) macro.body();
       var subpass = new MacroExpander(arguments, macroOverrides);
-      if (body instanceof DefinitionList definitionList) {
-        var definitions = subpass.expandDefinitions(definitionList.items);
-        return new DefinitionList(definitions, definitionList.location);
-      } else {
-        return subpass.expandDefinition(body);
-      }
+      return body.accept(subpass);
     } catch (MacroExpansionException e) {
       reportError(e.message, e.sourceLocation);
       return definition;
@@ -405,22 +496,38 @@ class MacroExpander
   }
 
   @Override
+  public Definition visit(DefinitionList definition) {
+    var items = expandDefinitions(definition.items);
+    return new DefinitionList(items, definition.location);
+  }
+
+  @Override
+  public Definition visit(ModelDefinition definition) {
+    var id = resolvePlaceholderOrIdentifier(definition.id);
+    return new ModelDefinition(id, definition.params, definition.body,
+        definition.returnType, definition.loc);
+  }
+
+  @Override
+  public Definition visit(RecordTypeDefinition definition) {
+    return new RecordTypeDefinition(definition.recordType, definition.loc);
+  }
+
+  @Override
   public BlockStatement visit(BlockStatement blockStatement) {
-    var statements = new ArrayList<>(blockStatement.statements);
-    statements.replaceAll(statement -> statement.accept(this));
-    return new BlockStatement(statements, blockStatement.location);
+    return new BlockStatement(expandStatements(blockStatement.statements), blockStatement.location);
   }
 
   @Override
   public Statement visit(LetStatement letStatement) {
-    var valueExpression = letStatement.valueExpression.accept(this);
+    var valueExpression = expandExpr(letStatement.valueExpression);
     var body = letStatement.body.accept(this);
     return new LetStatement(letStatement.identifiers, valueExpression, body, letStatement.location);
   }
 
   @Override
   public Statement visit(IfStatement ifStatement) {
-    var condition = ifStatement.condition.accept(this);
+    var condition = expandExpr(ifStatement.condition);
     var thenStmt = ifStatement.thenStmt.accept(this);
     var elseStmt = ifStatement.elseStmt == null ? null : ifStatement.elseStmt.accept(this);
     return new IfStatement(condition, thenStmt, elseStmt, ifStatement.location);
@@ -428,30 +535,36 @@ class MacroExpander
 
   @Override
   public Statement visit(AssignmentStatement assignmentStatement) {
-    var target = assignmentStatement.target.accept(this);
-    var valueExpr = assignmentStatement.valueExpression.accept(this);
+    var target = expandExpr(assignmentStatement.target);
+    var valueExpr = expandExpr(assignmentStatement.valueExpression);
     return new AssignmentStatement(target, valueExpr);
   }
 
   @Override
+  public Statement visit(RaiseStatement raiseStatement) {
+    return new RaiseStatement(raiseStatement.statement.accept(this), raiseStatement.location);
+  }
+
+  @Override
+  public Statement visit(CallStatement callStatement) {
+    return new CallStatement(expandExpr(callStatement.expr));
+  }
+
+  @Override
   public Statement visit(PlaceholderStatement statement) {
-    var arg = Objects.requireNonNull(args.get(statement.placeholder.path().pathToString()));
+    var arg = resolveArg(statement.segments);
     return (Statement) arg;
   }
 
   @Override
   public Statement visit(MacroInstanceStatement stmt) {
     try {
-      assertValidMacro(stmt.macro, stmt.location());
-      var arguments = collectMacroParameters(stmt.macro, stmt.arguments, stmt.location());
-      var body = (Statement) stmt.macro.body();
+      var macro = resolveMacro(stmt.macro);
+      assertValidMacro(macro, stmt.location());
+      var arguments = collectMacroParameters(macro, stmt.arguments, stmt.location());
+      var body = (Statement) macro.body();
       var subpass = new MacroExpander(arguments, macroOverrides);
-      if (body instanceof StatementList statementList) {
-        var statements = subpass.expandStatements(statementList.items);
-        return new StatementList(statements, statementList.location);
-      } else {
-        return subpass.expandStatement(body);
-      }
+      return body.accept(subpass);
     } catch (MacroExpansionException e) {
       reportError(e.message, e.sourceLocation);
       return stmt;
@@ -463,9 +576,35 @@ class MacroExpander
     return (Statement) resolveMacroMatch(macroMatchStatement.macroMatch);
   }
 
+  @Override
+  public Statement visit(MatchStatement matchStatement) {
+    var candidate = expandExpr(matchStatement.candidate);
+    var defaultResult = matchStatement.defaultResult.accept(this);
+    var cases = new ArrayList<>(matchStatement.cases);
+    cases.replaceAll(matchCase -> new MatchStatement.Case(expandExprs(matchCase.patterns()),
+        matchCase.result().accept(this)));
+    return new MatchStatement(candidate, cases, defaultResult, matchStatement.loc);
+  }
+
+  @Override
+  public Statement visit(StatementList statementList) {
+    var items = expandStatements(statementList.items);
+    return new StatementList(items, statementList.location());
+  }
+
+  @Override
+  public InstructionCallStatement visit(InstructionCallStatement instructionCallStatement) {
+    var id = resolvePlaceholderOrIdentifier(instructionCallStatement.id);
+    var namedArguments = new ArrayList<>(instructionCallStatement.namedArguments);
+    namedArguments.replaceAll(namedArgument ->
+        new InstructionCallStatement.NamedArgument(namedArgument.name(),
+            expandExpr(namedArgument.value())));
+    return new InstructionCallStatement(id, namedArguments, instructionCallStatement.loc);
+  }
+
   private void assertValidMacro(Macro macro, SourceLocation sourceLocation)
       throws MacroExpansionException {
-    if (macro.returnType() == BasicSyntaxType.Invalid()) {
+    if (macro.returnType() == BasicSyntaxType.INVALID) {
       throw new MacroExpansionException(
           "Skipped expanding macro %s due to previous error".formatted(macro.name().name),
           sourceLocation);
@@ -485,6 +624,9 @@ class MacroExpander
     for (int i = 0; i < formalParams.size(); i++) {
       var formalParam = formalParams.get(i);
       var actualParam = expandNode(actualParams.get(i));
+      if (actualParam instanceof PlaceholderNode placeholderNode) {
+        actualParam = expandNode(resolveArg(placeholderNode.segments));
+      }
       if (actualParam.syntaxType().isSubTypeOf(formalParam.type())) {
         arguments.put(formalParam.name().name, actualParam);
       } else {
@@ -498,27 +640,45 @@ class MacroExpander
   }
 
   private Identifier resolvePlaceholderOrIdentifier(IdentifierOrPlaceholder idOrPlaceholder) {
-    if (idOrPlaceholder instanceof PlaceholderExpr p) {
-      return (Identifier) p.accept(this);
-    }
     if (idOrPlaceholder instanceof Identifier id) {
-      return id;
+      return (Identifier) expandExpr(id);
+    } else if (idOrPlaceholder instanceof Expr expr) {
+      return (Identifier) expandExpr(expr);
     }
     throw new IllegalStateException("Unknown resolved placeholder type " + idOrPlaceholder);
   }
 
   private TypeLiteral resolveTypeLiteral(TypeLiteralOrPlaceholder type) {
-    return type instanceof PlaceholderExpr p
+    var typeLiteral = type instanceof PlaceholderExpr p
         ? new TypeLiteral(resolvePlaceholderOrIdentifier(p))
         : (TypeLiteral) type;
+    var baseType = (Identifier) expandExpr((Expr) typeLiteral.baseType);
+    var sizeIndices = new ArrayList<>(typeLiteral.sizeIndices);
+    sizeIndices.replaceAll(this::expandExprs);
+    return new TypeLiteral(baseType, sizeIndices, typeLiteral.location());
   }
 
-  private EncodingDefinition.FieldEncodings resolveEncs(FieldEncodingsOrPlaceholder encodings) {
-    if (encodings instanceof PlaceholderExpr p) {
-      var arg = (EncodingDefinition.FieldEncodings) args.get(p.placeholder.path().pathToString());
-      return Objects.requireNonNull(arg);
+
+  private EncodingDefinition.FieldEncodings resolveEncs(EncodingDefinition.FieldEncodings encs) {
+    var fieldEncodings = new ArrayList<FieldEncodingOrPlaceholder>(encs.encodings.size());
+    for (var enc : encs.encodings) {
+      fieldEncodings.addAll(resolveEnc(enc));
     }
-    return (EncodingDefinition.FieldEncodings) encodings;
+    return new EncodingDefinition.FieldEncodings(fieldEncodings);
+  }
+
+  private List<FieldEncodingOrPlaceholder> resolveEnc(FieldEncodingOrPlaceholder encoding) {
+    if (encoding instanceof EncodingDefinition.FieldEncoding fieldEncoding) {
+      return List.of(new EncodingDefinition.FieldEncoding(fieldEncoding.field(),
+          expandExpr(fieldEncoding.value())));
+    } else if (encoding instanceof PlaceholderNode p) {
+      var arg = (EncodingDefinition.FieldEncodings) resolveArg(p.segments);
+      return arg.encodings;
+    } else if (encoding instanceof MacroMatchExpr macroMatchExpr) {
+      var match = (EncodingDefinition.FieldEncodings) resolveMacroMatch(macroMatchExpr.macroMatch);
+      return match.encodings;
+    }
+    return List.of(encoding);
   }
 
   private Node resolveMacroMatch(MacroMatch macroMatch) {
@@ -531,6 +691,31 @@ class MacroExpander
       }
     }
     return expandNode(macroMatch.defaultChoice());
+  }
+
+  private Node resolveArg(List<String> segments) {
+    Node arg = args.get(segments.get(0));
+    if (arg == null) {
+      throw new IllegalStateException("Could not resolve argument " + segments);
+    }
+    for (int i = 1; i < segments.size(); i++) {
+      var nextName = segments.get(i);
+      var tuple = (RecordInstance) arg;
+      for (int j = 0; j < tuple.type.entries.size(); j++) {
+        if (tuple.type.entries.get(j).name().equals(nextName)) {
+          arg = tuple.entries.get(j);
+          break;
+        }
+      }
+    }
+    return expandNode(arg);
+  }
+
+  private Macro resolveMacro(MacroOrPlaceholder macroOrPlaceholder) {
+    if (macroOrPlaceholder instanceof Macro macro) {
+      return macro;
+    }
+    return ((MacroReference) resolveArg(((MacroPlaceholder) macroOrPlaceholder).segments())).macro;
   }
 
   private void reportError(String error, SourceLocation location) {
