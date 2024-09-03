@@ -4,6 +4,7 @@ import static org.slf4j.LoggerFactory.getLogger;
 import static vadl.types.Type.constructDataType;
 
 import com.google.common.collect.Streams;
+import com.google.errorprone.annotations.FormatMethod;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Objects;
@@ -12,6 +13,7 @@ import java.util.function.BiFunction;
 import java.util.function.Function;
 import java.util.stream.Stream;
 import javax.annotation.Nullable;
+import org.jetbrains.annotations.Contract;
 import org.slf4j.Logger;
 import vadl.utils.functionInterfaces.TriFunction;
 import vadl.viam.Constant;
@@ -71,7 +73,7 @@ public class BuiltInTable {
           Type.relation(List.of(BitsType.class, BitsType.class, BoolType.class), TupleType.class))
           .compute(
               (Constant.Value a, Constant.Value b, Constant.Value carry) -> a.add(b, carry.bool()))
-          .takesAllWithSameBitWidths()
+          .takesFirstTwoWithSameBitWidths()
           .returnsFirstBitWidthAndStatus(BitsType.class)
           .build();
 
@@ -929,6 +931,17 @@ public class BuiltInTable {
           .build();
 
   /**
+   * Concatenates two bit values to a new bit value with a length of the sum of the input values.
+   *
+   * <p>{@code function concatenate(Bits<N>, Bits<M>) -> Bits<N + M>}
+   */
+  public static final BuiltIn CONCATENATE_BITS =
+      func("CONCATENATE",
+          Type.relation(BitsType.class, BitsType.class, BitsType.class))
+          .takesDefault()
+          .returnsFromDataTypes(args -> Type.bits(args.stream().mapToInt(DataType::bitWidth).sum()))
+          .build();
+  /**
    * Formats the register file index.
    *
    * <p>{@code function register(Bits<N>) -> String<M>}
@@ -1383,10 +1396,19 @@ public class BuiltInTable {
 
     public BuiltInBuilder returnsFromFirstAsDataType(Function<DataType, Type> returnFunction) {
       returns((args) -> {
-        ViamError.ensure(!args.isEmpty(), "Expected at least one argument, but found none.");
+        ensure(!args.isEmpty(), "Expected at least one argument, but found none.");
         var a = args.get(0);
-        ViamError.ensure(a instanceof DataType, "Expected a data type, but found %s", a);
+        ensure(a instanceof DataType, "Expected a data type, but found %s", a);
         return returnFunction.apply((DataType) a);
+      });
+      return this;
+    }
+
+    public BuiltInBuilder returnsFromDataTypes(Function<List<DataType>, Type> returnFunction) {
+      returns((args) -> {
+        ensure(!args.isEmpty(), "Expected at least one argument, but found none.");
+        var argDataTypes = args.stream().map(DataType.class::cast).toList();
+        return returnFunction.apply(argDataTypes);
       });
       return this;
     }
@@ -1395,12 +1417,12 @@ public class BuiltInTable {
     BuiltIn build() {
 
       var takesFunction = this.takesFunction;
-      ViamError.ensure(takesFunction != null,
+      ensure(takesFunction != null,
           "Built-in construction failed: No `takes` function specified for built-in %s",
           name);
 
       var returnsFunction = this.returnsFunction;
-      ViamError.ensure(returnsFunction != null,
+      ensure(returnsFunction != null,
           "Built-in construction failed: No `returns` function specified for built-in %s",
           name);
 
@@ -1443,6 +1465,18 @@ public class BuiltInTable {
           return returnsFunction.apply(argTypes);
         }
       };
+    }
+
+    @Contract("false, _, _ -> fail")
+    @FormatMethod
+    private void ensure(boolean condition, String message, Object... args) {
+      if (!condition) {
+        throw new ViamError(message.formatted(args))
+            .addContext("built-in", this.name)
+            .addContext("signature", this.signature)
+            .addContext("kind", this.kind)
+            .shrinkStacktrace(1);
+      }
     }
   }
 }
