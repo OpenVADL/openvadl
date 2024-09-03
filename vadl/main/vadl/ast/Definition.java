@@ -1936,16 +1936,21 @@ final class MacroMatchDefinition extends Definition {
 class ImportDefinition extends Definition {
 
   Ast moduleAst;
-  List<IsId> importPaths;
+  List<List<Identifier>> importedSymbols;
+  @Nullable
+  Identifier fileId;
   @Nullable
   StringLiteral filePath;
   List<StringLiteral> args;
   SourceLocation loc;
 
-  ImportDefinition(Ast moduleAst, List<IsId> importPaths, @Nullable StringLiteral filePath,
+  ImportDefinition(Ast moduleAst, List<List<Identifier>> importedSymbols,
+                   @Nullable Identifier fileId, @Nullable StringLiteral filePath,
                    List<StringLiteral> args, SourceLocation loc) {
+    Objects.requireNonNullElse(fileId, filePath);
     this.moduleAst = moduleAst;
-    this.importPaths = importPaths;
+    this.importedSymbols = importedSymbols;
+    this.fileId = fileId;
     this.filePath = filePath;
     this.args = args;
     this.loc = loc;
@@ -1969,21 +1974,33 @@ class ImportDefinition extends Definition {
   @Override
   void prettyPrint(int indent, StringBuilder builder) {
     builder.append("import ");
-    var isFirst = true;
-    for (IsId importPath : importPaths) {
-      if (!isFirst) {
-        builder.append(", ");
-      }
-      isFirst = false;
-      importPath.prettyPrint(0, builder);
-    }
-    if (filePath != null) {
-      builder.append(" from ");
+    if (fileId != null) {
+      fileId.prettyPrint(0, builder);
+    } else if (filePath != null) {
       filePath.prettyPrint(0, builder);
+    }
+    if (!importedSymbols.isEmpty()) {
+      builder.append("::{");
+      var isFirst = true;
+      for (List<Identifier> importedSymbol : importedSymbols) {
+        if (!isFirst) {
+          builder.append(", ");
+        }
+        isFirst = false;
+        var isFirstSegment = true;
+        for (Identifier segment : importedSymbol) {
+          if (!isFirstSegment) {
+            builder.append("::");
+          }
+          isFirstSegment = false;
+          segment.prettyPrint(0, builder);
+        }
+      }
+      builder.append("}");
     }
     if (!args.isEmpty()) {
       builder.append(" with (");
-      isFirst = true;
+      var isFirst = true;
       for (StringLiteral arg : args) {
         if (!isFirst) {
           builder.append(", ");
@@ -2006,14 +2023,15 @@ class ImportDefinition extends Definition {
     }
     ImportDefinition that = (ImportDefinition) o;
     return Objects.equals(moduleAst, that.moduleAst)
-        && Objects.equals(importPaths, that.importPaths)
+        && Objects.equals(importedSymbols, that.importedSymbols)
+        && Objects.equals(fileId, that.fileId)
         && Objects.equals(filePath, that.filePath)
         && Objects.equals(args, that.args);
   }
 
   @Override
   public int hashCode() {
-    return Objects.hash(moduleAst, importPaths, filePath, args);
+    return Objects.hash(moduleAst, importedSymbols, fileId, filePath, args);
   }
 
   @Override

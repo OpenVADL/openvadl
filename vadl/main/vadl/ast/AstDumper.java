@@ -367,14 +367,26 @@ public class AstDumper
   @Override
   public Void visit(ImportDefinition importDefinition) {
     dumpNode(importDefinition);
-    for (IsId importPath : importDefinition.importPaths) {
-      dumpChildren((Node) importPath);
+    indent++;
+    builder.append(indentString()).append("File\n");
+    if (importDefinition.fileId != null) {
+      dumpChildren(importDefinition.fileId);
     }
     if (importDefinition.filePath != null) {
       dumpChildren(importDefinition.filePath);
     }
-    dumpChildren(importDefinition.args);
-    indent++;
+    for (List<Identifier> importPath : importDefinition.importedSymbols) {
+      builder.append(indentString()).append("Import\n");
+      indent++;
+      dumpChildren(importPath);
+      indent--;
+    }
+    if (!importDefinition.args.isEmpty()) {
+      builder.append(indentString()).append("Args\n");
+      indent++;
+      dumpChildren(importDefinition.args);
+      indent--;
+    }
     builder.append(indentString()).append("Module AST\n");
     dumpChildren(importDefinition.moduleAst.definitions);
     indent--;

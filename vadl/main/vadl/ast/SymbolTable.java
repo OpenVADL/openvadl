@@ -136,29 +136,22 @@ class SymbolTable {
     symbols.putAll(other.symbols);
   }
 
-  void importFrom(Ast moduleAst, List<IsId> importPaths, @Nullable StringLiteral filePath) {
-    for (IsId importPath : importPaths) {
-      if (filePath == null && importPath instanceof IdentifierPath identifierPath) {
-        var importedSymbolPath = new ArrayList<String>();
-        for (IdentifierOrPlaceholder segment : identifierPath.segments) {
-          importedSymbolPath.add(segment.pathToString());
+  void importFrom(Ast moduleAst, List<List<Identifier>> importedSymbols) {
+    for (List<Identifier> importedSymbolSegments : importedSymbols) {
+      var importedSymbol = new StringBuilder();
+      for (Identifier segment : importedSymbolSegments) {
+        if (!importedSymbol.isEmpty()) {
+          importedSymbol.append("::");
         }
-        var importedSymbol =
-            String.join("::", importedSymbolPath.subList(1, importedSymbolPath.size()));
-        var symbol = moduleAst.rootSymbolTable().resolveSymbol(importedSymbol);
-        if (symbol == null) {
-          reportError("Unresolved symbol " + importedSymbol, importPath.location());
-        } else {
-          defineSymbol(symbol, importPath.location());
-        }
-      } else if (filePath != null) {
-        var importedSymbol = importPath.pathToString();
-        var symbol = moduleAst.rootSymbolTable().resolveSymbol(importedSymbol);
-        if (symbol == null) {
-          reportError("Unresolved symbol " + importedSymbol, importPath.location());
-        } else {
-          defineSymbol(symbol, importPath.location());
-        }
+        importedSymbol.append(segment.name);
+      }
+      var symbol = moduleAst.rootSymbolTable().resolveSymbol(importedSymbol.toString());
+      var location = importedSymbolSegments.get(0).location()
+          .join(importedSymbolSegments.get(importedSymbolSegments.size() - 1).location());
+      if (symbol == null) {
+        reportError("Unresolved symbol " + importedSymbol, location);
+      } else {
+        defineSymbol(symbol, location);
       }
     }
   }
@@ -364,7 +357,7 @@ class SymbolTable {
             exception.loc);
         collectSymbols(symbols, exception.statement);
       } else if (definition instanceof ImportDefinition importDef) {
-        symbols.importFrom(importDef.moduleAst, importDef.importPaths, importDef.filePath);
+        symbols.importFrom(importDef.moduleAst, importDef.importedSymbols);
       } else if (definition instanceof ModelDefinition model) {
         symbols.addMacro(model.toMacro(), model.location());
       }

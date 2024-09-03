@@ -3,6 +3,7 @@ package vadl.ast;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
@@ -421,11 +422,12 @@ class ParserUtils {
    * @param args        A list of arguments to pass to the imported module for model substitution
    * @return An import definition node
    */
-  static Definition importModules(Parser parser, List<IsId> importPaths,
-                                  @Nullable StringLiteral filePath, List<StringLiteral> args,
-                                  SourceLocation loc) {
+  static Definition importModules(Parser parser,
+                                  @Nullable Identifier fileId, @Nullable StringLiteral filePath,
+                                  List<List<Identifier>> importedSymbols,
+                                  List<StringLiteral> args, SourceLocation loc) {
     var modulePath = filePath == null
-        ? resolveUri(parser, importPaths.get(0)) : resolveUri(parser, filePath.value);
+        ? resolveUri(parser, Objects.requireNonNull(fileId)) : resolveUri(parser, filePath.value);
     if (modulePath != null) {
       var macroOverrides = new HashMap<String, String>();
       for (StringLiteral arg : args) {
@@ -434,8 +436,8 @@ class ParserUtils {
       }
       try {
         var ast = VadlParser.parse(modulePath, macroOverrides);
-        parser.macroTable.importFrom(ast, importPaths, filePath);
-        return new ImportDefinition(ast, importPaths, filePath, args, loc);
+        parser.macroTable.importFrom(ast, importedSymbols);
+        return new ImportDefinition(ast, importedSymbols, fileId, filePath, args, loc);
       } catch (Exception e) {
         parser.errors.SemErr("Error during module evaluation - " + e);
       }
@@ -480,5 +482,30 @@ class ParserUtils {
     return token.kind == Parser._SYM_MINUS
         || token.kind == Parser._SYM_EXCL
         || token.kind == Parser._SYM_TILDE;
+  }
+
+  /**
+   * Builds the list of imported symbol paths for an import declaration.
+   * For example, {@code "./file.vadl"::ISA_A::{Enum_A, Enum_B}} will lead to the result
+   * {@code [["ISA_A", "Enum_A"], ["ISA_A", "Enum_B"]]}
+   *
+   * @param segments   The segments of the import declaration, missing any leading file segment and
+   *                   trailing symbol lists
+   * @param symbolList The trailing list of imported symbols
+   * @return
+   */
+  static List<List<Identifier>> importedSymbols(List<Identifier> segments,
+                                                List<List<Identifier>> symbolList) {
+    if (symbolList.isEmpty()) {
+      return List.of(segments);
+    } else {
+      var result = new ArrayList<List<Identifier>>();
+      for (List<Identifier> symbols : symbolList) {
+        var path = new ArrayList<>(segments);
+        path.addAll(symbols);
+        result.add(path);
+      }
+      return result;
+    }
   }
 }

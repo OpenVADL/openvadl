@@ -85,7 +85,6 @@ TOKENS
   FALSE        = "false".
   FILE         = "file".
   FORMAT       = "format".
-  FROM_KW      = "from".
   FUNCTION     = "function".
   GROUP        = "group".
   ID_TO_STR    = "IdToStr".
@@ -539,20 +538,34 @@ PRODUCTIONS
     projectionType<out ProjectionType type> (. macroTable.addModelType(name, type); .)
   .
 
-  importDefinition<out Definition def>     (. var importPaths = new ArrayList<IsId>(); StringLiteral filePath = null; .)
+  importDefinition<out Definition def>     (. var importPaths = new ArrayList<IsId>(); Identifier fileId = null; StringLiteral filePath = null; .)
   = IMPORT                                 (. var start = loc(); .)
-    (
-      identifierPath<out IsId importPath>  (. importPaths.add(importPath); .)
+    ( identifier<out fileId>
+    | stringLiteral<out filePath>
+    )                                      (. var segments = new ArrayList<Identifier>(); .)
+    {
+      IF (la.kind == _SYM_NAMESPACE && scanner.Peek().kind != _SYM_BRACE_OPEN)
+      SYM_NAMESPACE
+      identifier<out Identifier segment>   (. segments.add(segment); .)
+    }                                      (. var symbolList = new ArrayList<List<Identifier>>(); .)
+    [
+      SYM_NAMESPACE
+      SYM_BRACE_OPEN                       (. var list = new ArrayList<Identifier>(); .)
+      identifier<out Identifier symbol>    (. list.add(symbol); .)
       {
-        SYM_COMMA
-        identifierPath<out importPath>     (. importPaths.add(importPath); .)
+        SYM_NAMESPACE
+        identifier<out symbol>             (. list.add(symbol); .)
+      }                                    (. symbolList.add(List.copyOf(list)); .)
+      {
+        SYM_COMMA                          (. list.clear(); .)
+        identifier<out symbol>             (. list.add(symbol); .)
+        {
+          SYM_NAMESPACE
+          identifier<out symbol>           (. list.add(symbol); .)
+        }                                  (. symbolList.add(List.copyOf(list)); .)
       }
-      ( IF (importPaths.size() > 1)
-        FROM_KW stringLiteral<out filePath>
-      | [ FROM_KW stringLiteral<out filePath> ]
-      )
-    | FROM_KW stringLiteral<out filePath>
-    )                                      (. var args = new ArrayList<StringLiteral>(); .)
+      SYM_BRACE_CLOSE
+    ]                                      (. var args = new ArrayList<StringLiteral>(); .)
     [
       WITH
       SYM_PAREN_OPEN
@@ -562,7 +575,7 @@ PRODUCTIONS
         stringLiteral<out arg>             (. args.add(arg); .)
       }
       SYM_PAREN_CLOSE
-    ]                                      (. def = importModules(this, importPaths, filePath, args, start.join(loc())); .)
+    ]                                      (. def = importModules(this, fileId, filePath, importedSymbols(segments, symbolList), args, start.join(loc())); .)
   .
 
   // -- STATEMENTS ---------------------------------------------------------------------------------------------------

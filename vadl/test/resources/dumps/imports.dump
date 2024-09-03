@@ -1,13 +1,18 @@
 ImportDefinition
-. Identifier name: "A"
-. Identifier name: "B"
-. Identifier name: "TopLevelModel"
-. StringLiteral literal: "./imports/entry.vadl" ("./imports/entry.vadl")
+. File
+. : StringLiteral literal: "./imports/entry.vadl" ("./imports/entry.vadl")
+. Import
+. : ' Identifier name: "A"
+. Import
+. : ' Identifier name: "B"
+. Import
+. : ' Identifier name: "TopLevelModel"
 . Module AST
 . : ImportDefinition
-. : ' IdentifierPath
+. : ' File
 . : ' | Identifier name: "isa_a"
-. : ' | Identifier name: "A"
+. : ' Import
+. : ' | . Identifier name: "A"
 . : ' Module AST
 . : ' | InstructionSetDefinition
 . : ' | . Identifier name: "A"
@@ -15,9 +20,10 @@ ImportDefinition
 . : ' | . : Identifier name: "a"
 . : ' | . : IntegerLiteral literal: 1 (1)
 . : ImportDefinition
-. : ' IdentifierPath
+. : ' File
 . : ' | Identifier name: "isa_a"
-. : ' | Identifier name: "TopLevelModel"
+. : ' Import
+. : ' | . Identifier name: "TopLevelModel"
 . : ' Module AST
 . : ' | InstructionSetDefinition
 . : ' | . Identifier name: "A"
@@ -25,9 +31,10 @@ ImportDefinition
 . : ' | . : Identifier name: "a"
 . : ' | . : IntegerLiteral literal: 1 (1)
 . : ImportDefinition
-. : ' IdentifierPath
+. : ' File
 . : ' | Identifier name: "isa_b"
-. : ' | Identifier name: "B"
+. : ' Import
+. : ' | . Identifier name: "B"
 . : ' Module AST
 . : ' | InstructionSetDefinition
 . : ' | . Identifier name: "B"

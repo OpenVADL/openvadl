@@ -1,4 +1,4 @@
-import A, B, TopLevelModel from "./imports/entry.vadl"
+import "./imports/entry.vadl"::{A, B, TopLevelModel}
 
 constant topLevelConstant = $TopLevelModel()
 
