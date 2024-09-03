@@ -6,7 +6,6 @@ import java.io.StringWriter;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import vadl.AbstractTest;
-import vadl.lcb.codegen.encoding.EncoderDecoderCodeGeneratorVisitor;
 import vadl.types.BuiltInTable;
 import vadl.types.DataType;
 import vadl.viam.Constant;

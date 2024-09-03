@@ -1,7 +1,14 @@
 package vadl.cppCodeGen;
 
+import static vadl.cppCodeGen.CppTypeMap.getCppTypeNameByVadlType;
+
 import java.io.StringWriter;
 import java.util.Objects;
+import vadl.cppCodeGen.passes.typeNormalization.CppSignExtendNode;
+import vadl.cppCodeGen.passes.typeNormalization.CppTruncateNode;
+import vadl.cppCodeGen.passes.typeNormalization.CppZeroExtendNode;
+import vadl.types.BitsType;
+import vadl.types.BoolType;
 import vadl.viam.Constant;
 import vadl.viam.graph.GraphNodeVisitor;
 import vadl.viam.graph.control.AbstractBeginNode;
@@ -22,15 +29,20 @@ import vadl.viam.graph.dependency.ReadMemNode;
 import vadl.viam.graph.dependency.ReadRegFileNode;
 import vadl.viam.graph.dependency.ReadRegNode;
 import vadl.viam.graph.dependency.SelectNode;
+import vadl.viam.graph.dependency.SideEffectNode;
+import vadl.viam.graph.dependency.SignExtendNode;
 import vadl.viam.graph.dependency.SliceNode;
+import vadl.viam.graph.dependency.TruncateNode;
 import vadl.viam.graph.dependency.WriteMemNode;
 import vadl.viam.graph.dependency.WriteRegFileNode;
 import vadl.viam.graph.dependency.WriteRegNode;
+import vadl.viam.graph.dependency.ZeroExtendNode;
 
 /**
  * Generic cpp code generator which can be used to emit cpp code for the lcb and qemu.
  */
-public abstract class GenericCppCodeGeneratorVisitor implements GraphNodeVisitor {
+public class GenericCppCodeGeneratorVisitor
+    implements GraphNodeVisitor, CppCodeGenGraphNodeVisitor {
   protected final StringWriter writer;
 
   public GenericCppCodeGeneratorVisitor(StringWriter writer) {
@@ -224,5 +236,60 @@ public abstract class GenericCppCodeGeneratorVisitor implements GraphNodeVisitor
     // we would need a cast. However,
     // we do not want to create explicit casts by hand.
     expressionNode.accept(this);
+  }
+
+  @Override
+  public void visit(SideEffectNode sideEffectNode) {
+    sideEffectNode.accept(this);
+  }
+
+  @Override
+  public void visit(ZeroExtendNode node) {
+    writer.write("((" + getCppTypeNameByVadlType(node.type()) + ") ");
+    visit(node.value());
+    writer.write(")");
+  }
+
+  @Override
+  public void visit(SignExtendNode node) {
+    writer.write("((" + getCppTypeNameByVadlType(node.type()) + ") ");
+    visit(node.value());
+    writer.write(")");
+  }
+
+  @Override
+  public void visit(TruncateNode node) {
+    if (node.type() instanceof BoolType) {
+      writer.write("((" + getCppTypeNameByVadlType(node.type()) + ") ");
+      visit(node.value());
+      writer.write(" & 0x1)");
+    } else {
+      writer.write("((" + getCppTypeNameByVadlType(node.type()) + ") ");
+      visit(node.value());
+      writer.write(")");
+    }
+  }
+
+  @Override
+  public void visit(CppSignExtendNode node) {
+    visit((SignExtendNode) node);
+
+    if (node.originalType() instanceof BitsType bitsType) {
+      writer.write(" & " + generateBitmask(bitsType.bitWidth()));
+    }
+  }
+
+  @Override
+  public void visit(CppZeroExtendNode node) {
+    visit((ZeroExtendNode) node);
+
+    if (node.originalType() instanceof BitsType bitsType) {
+      writer.write(" & " + generateBitmask(bitsType.bitWidth()));
+    }
+  }
+
+  @Override
+  public void visit(CppTruncateNode node) {
+    visit((TruncateNode) node);
   }
 }

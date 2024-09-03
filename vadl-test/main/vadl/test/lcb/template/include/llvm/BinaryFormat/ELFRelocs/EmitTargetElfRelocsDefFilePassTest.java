@@ -37,18 +37,21 @@ public class EmitTargetElfRelocsDefFilePassTest extends AbstractLcbTest {
         #error "ELF_RELOC must be defined"
         #endif
                 
+        ELF_RELOC(R_rv64im_NONE, 0)
+        ELF_RELOC(R_rv64im_32, 1)
+        ELF_RELOC(R_rv64im_64, 2)
                 
-        ELF_RELOC(R_processorNameValue_ABS_RV3264I_Btype, 0)
-        ELF_RELOC(R_processorNameValue_ABS_RV3264I_Ftype, 1)
-        ELF_RELOC(R_processorNameValue_ABS_RV3264I_Itype, 2)
-        ELF_RELOC(R_processorNameValue_ABS_RV3264I_Jtype, 3)
-        ELF_RELOC(R_processorNameValue_ABS_RV3264I_Rtype, 4)
-        ELF_RELOC(R_processorNameValue_ABS_RV3264I_Stype, 5)
-        ELF_RELOC(R_processorNameValue_ABS_RV3264I_Utype, 6)
-        ELF_RELOC(R_processorNameValue_REL_RV3264I_Btype, 7)
-        ELF_RELOC(R_processorNameValue_REL_RV3264I_Itype, 8)
-        ELF_RELOC(R_processorNameValue_REL_RV3264I_Jtype, 9)
-        ELF_RELOC(R_processorNameValue_REL_RV3264I_Utype, 10)
+        ELF_RELOC(R_processorNameValue_ABS_RV3264I_Btype, 3)
+        ELF_RELOC(R_processorNameValue_ABS_RV3264I_Ftype, 4)
+        ELF_RELOC(R_processorNameValue_ABS_RV3264I_Itype, 5)
+        ELF_RELOC(R_processorNameValue_ABS_RV3264I_Jtype, 6)
+        ELF_RELOC(R_processorNameValue_ABS_RV3264I_Rtype, 7)
+        ELF_RELOC(R_processorNameValue_ABS_RV3264I_Stype, 8)
+        ELF_RELOC(R_processorNameValue_ABS_RV3264I_Utype, 9)
+        ELF_RELOC(R_processorNameValue_REL_RV3264I_Btype, 10)
+        ELF_RELOC(R_processorNameValue_REL_RV3264I_Itype, 11)
+        ELF_RELOC(R_processorNameValue_REL_RV3264I_Jtype, 12)
+        ELF_RELOC(R_processorNameValue_REL_RV3264I_Utype, 13)
         """.trim().lines(), output);
   }
 }
