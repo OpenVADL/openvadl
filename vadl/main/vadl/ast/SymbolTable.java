@@ -169,7 +169,7 @@ class SymbolTable {
   enum SymbolType {
     CONSTANT, COUNTER, FORMAT, INSTRUCTION, PSEUDO_INSTRUCTION, INSTRUCTION_SET, MEMORY, REGISTER,
     REGISTER_FILE, FORMAT_FIELD, MACRO, ALIAS, FUNCTION, ENUM_FIELD, EXCEPTION, RECORD, MODEL_TYPE,
-    PARAMETER
+    PROCESS, PARAMETER
   }
 
   interface Symbol {
@@ -295,7 +295,7 @@ class SymbolTable {
         symbols.defineSymbol(new ValuedSymbol(function.name().name, null, SymbolType.FUNCTION),
             function.loc);
         function.symbolTable = symbols.createChild();
-        for (FunctionDefinition.Parameter param : function.params) {
+        for (Parameter param : function.params) {
           function.symbolTable.defineSymbol(
               new ValuedSymbol(param.name().name, null, SymbolType.PARAMETER),
               param.name().location());
@@ -364,6 +364,26 @@ class SymbolTable {
         symbols.addRecord(record.name, record.recordType);
       } else if (definition instanceof ModelTypeDefinition modelType) {
         symbols.addModelType(modelType.name, modelType.projectionType);
+      } else if (definition instanceof ProcessDefinition process) {
+        symbols.defineSymbol(new ValuedSymbol(process.name().name, null, SymbolType.PROCESS),
+            process.loc);
+        process.symbolTable = symbols.createChild();
+        for (ProcessDefinition.TemplateParam templateParam : process.templateParams) {
+          process.symbolTable.defineSymbol(
+              new ValuedSymbol(templateParam.name().name, null, SymbolType.PARAMETER),
+              templateParam.name().location());
+        }
+        for (Parameter input : process.inputs) {
+          process.symbolTable.defineSymbol(
+              new ValuedSymbol(input.name().name, null, SymbolType.PARAMETER),
+              input.name().location());
+        }
+        for (Parameter output : process.outputs) {
+          process.symbolTable.defineSymbol(
+              new ValuedSymbol(output.name().name, null, SymbolType.PARAMETER),
+              output.name().location());
+        }
+        collectSymbols(process.symbolTable, process.statement);
       }
     }
 
@@ -398,7 +418,9 @@ class SymbolTable {
         collectSymbols(symbols, call.expr);
       } else if (stmt instanceof MatchStatement match) {
         collectSymbols(symbols, match.candidate);
-        collectSymbols(symbols, match.defaultResult);
+        if (match.defaultResult != null) {
+          collectSymbols(symbols, match.defaultResult);
+        }
         for (MatchStatement.Case matchCase : match.cases) {
           collectSymbols(symbols, matchCase.result());
           for (Expr pattern : matchCase.patterns()) {
@@ -466,6 +488,26 @@ class SymbolTable {
             collectSymbols(symbols, pattern);
           }
         }
+      } else if (expr instanceof ExistsInExpr existsIn) {
+        for (IsId operation : existsIn.operations) {
+          ((Node) operation).symbolTable = symbols;
+        }
+      } else if (expr instanceof ExistsInThenExpr existsInThen) {
+        for (ExistsInThenExpr.Condition condition : existsInThen.conditions) {
+          ((Node) condition.id()).symbolTable = symbols;
+          for (IsId operation : condition.operations()) {
+            ((Node) operation).symbolTable = symbols;
+          }
+        }
+        collectSymbols(symbols, existsInThen.thenExpr);
+      } else if (expr instanceof ForAllThenExpr forAllThen) {
+        for (ForAllThenExpr.Condition condition : forAllThen.conditions) {
+          ((Node) condition.id()).symbolTable = symbols;
+          for (IsId operation : condition.operations()) {
+            ((Node) operation).symbolTable = symbols;
+          }
+        }
+        collectSymbols(symbols, forAllThen.thenExpr);
       }
     }
   }
@@ -549,6 +591,8 @@ class SymbolTable {
         }
       } else if (definition instanceof ExceptionDefinition exception) {
         verifyUsages(exception.statement);
+      } else if (definition instanceof ProcessDefinition process) {
+        verifyUsages(process.statement);
       }
     }
 
@@ -575,7 +619,9 @@ class SymbolTable {
         verifyUsages(call.expr);
       } else if (stmt instanceof MatchStatement match) {
         verifyUsages(match.candidate);
-        verifyUsages(match.defaultResult);
+        if (match.defaultResult != null) {
+          verifyUsages(match.defaultResult);
+        }
         for (MatchStatement.Case matchCase : match.cases) {
           verifyUsages(matchCase.result());
           for (Expr pattern : matchCase.patterns()) {
@@ -654,6 +700,10 @@ class SymbolTable {
             verifyUsages(pattern);
           }
         }
+      } else if (expr instanceof ExistsInThenExpr existsInThen) {
+        verifyUsages(existsInThen.thenExpr);
+      } else if (expr instanceof ForAllThenExpr forAllThen) {
+        verifyUsages(forAllThen.thenExpr);
       }
     }
 

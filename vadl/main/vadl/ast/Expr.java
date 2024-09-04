@@ -61,6 +61,12 @@ interface ExprVisitor<R> {
   R visit(ExtendIdExpr expr);
 
   R visit(IdToStrExpr expr);
+
+  R visit(ExistsInExpr expr);
+
+  R visit(ExistsInThenExpr expr);
+
+  R visit(ForAllThenExpr expr);
 }
 
 final class Identifier extends Expr implements IsId, IdentifierOrPlaceholder {
@@ -178,6 +184,8 @@ class Operator {
   private static final Operator opModulo = new Operator("%", precFactor);
   private static final Operator opIn = new Operator("in", precIn);
   private static final Operator opNotIn = new Operator("!in", precIn);
+  private static final Operator opElemOf = new Operator("∈", precIn);
+  private static final Operator opNotElemOf = new Operator("∉", precIn);
 
   static Operator LogicalOr() {
     return opLogicalOr;
@@ -266,6 +274,14 @@ class Operator {
 
   static Operator NotIn() {
     return opNotIn;
+  }
+
+  static Operator ElementOf() {
+    return opElemOf;
+  }
+
+  static Operator NotElementOf() {
+    return opNotElemOf;
   }
 }
 
@@ -760,7 +776,8 @@ class StringLiteral extends Expr {
   }
 
   public StringLiteral(Identifier fromId, SourceLocation loc) {
-    this.token = fromId.toString();
+    // TODO More robust string escaping - only used for prettifying expanded IdToStr code
+    this.token = '"' + fromId.name.replaceAll("\"", "\\\"") + '"';
     this.value = fromId.name;
     this.loc = loc;
   }
@@ -1936,5 +1953,219 @@ class MatchExpr extends Expr {
   }
 
   record Case(List<Expr> patterns, Expr result) {
+  }
+}
+
+class ExistsInExpr extends Expr {
+  List<IsId> operations;
+  SourceLocation loc;
+
+  ExistsInExpr(List<IsId> operations, SourceLocation loc) {
+    this.operations = operations;
+    this.loc = loc;
+  }
+
+  @Override
+  SourceLocation location() {
+    return loc;
+  }
+
+  @Override
+  SyntaxType syntaxType() {
+    return BasicSyntaxType.EX;
+  }
+
+  @Override
+  void prettyPrint(int indent, StringBuilder builder) {
+    builder.append("exists in {");
+    var isFirst = true;
+    for (IsId operation : operations) {
+      if (!isFirst) {
+        builder.append(", ");
+      }
+      isFirst = false;
+      operation.prettyPrint(0, builder);
+    }
+    builder.append("}");
+  }
+
+  @Override
+  <R> R accept(ExprVisitor<R> visitor) {
+    return visitor.visit(this);
+  }
+
+  @Override
+  public boolean equals(Object o) {
+    if (this == o) {
+      return true;
+    }
+    if (o == null || getClass() != o.getClass()) {
+      return false;
+    }
+    ExistsInExpr that = (ExistsInExpr) o;
+    return Objects.equals(operations, that.operations);
+  }
+
+  @Override
+  public int hashCode() {
+    return Objects.hashCode(operations);
+  }
+}
+
+class ExistsInThenExpr extends Expr {
+  List<Condition> conditions;
+  Expr thenExpr;
+  SourceLocation loc;
+
+  ExistsInThenExpr(List<Condition> conditions, Expr thenExpr, SourceLocation loc) {
+    this.conditions = conditions;
+    this.thenExpr = thenExpr;
+    this.loc = loc;
+  }
+
+  @Override
+  SourceLocation location() {
+    return loc;
+  }
+
+  @Override
+  SyntaxType syntaxType() {
+    return BasicSyntaxType.EX;
+  }
+
+  @Override
+  void prettyPrint(int indent, StringBuilder builder) {
+    builder.append("exists ");
+    var isFirst = true;
+    for (Condition condition : conditions) {
+      if (!isFirst) {
+        builder.append(", ");
+      }
+      isFirst = false;
+      condition.id.prettyPrint(0, builder);
+      builder.append(" in {");
+      var isFirstOp = true;
+      for (IsId operation : condition.operations) {
+        if (!isFirstOp) {
+          builder.append(", ");
+        }
+        isFirstOp = false;
+        operation.prettyPrint(0, builder);
+      }
+      builder.append("}");
+    }
+    if (isBlockLayout(thenExpr)) {
+      builder.append(" then\n");
+      thenExpr.prettyPrint(indent + 1, builder);
+    } else {
+      builder.append(" then ");
+      thenExpr.prettyPrint(0, builder);
+      builder.append("\n");
+    }
+  }
+
+  @Override
+  <R> R accept(ExprVisitor<R> visitor) {
+    return visitor.visit(this);
+  }
+
+  @Override
+  public boolean equals(Object o) {
+    if (this == o) {
+      return true;
+    }
+    if (o == null || getClass() != o.getClass()) {
+      return false;
+    }
+    ExistsInThenExpr that = (ExistsInThenExpr) o;
+    return Objects.equals(conditions, that.conditions)
+        && Objects.equals(thenExpr, that.thenExpr);
+  }
+
+  @Override
+  public int hashCode() {
+    return Objects.hash(conditions, thenExpr);
+  }
+
+  record Condition(IsId id, List<IsId> operations) {
+  }
+}
+
+class ForAllThenExpr extends Expr {
+  List<Condition> conditions;
+  Expr thenExpr;
+  SourceLocation loc;
+
+  ForAllThenExpr(List<Condition> conditions, Expr thenExpr, SourceLocation loc) {
+    this.conditions = conditions;
+    this.thenExpr = thenExpr;
+    this.loc = loc;
+  }
+
+  @Override
+  SourceLocation location() {
+    return loc;
+  }
+
+  @Override
+  SyntaxType syntaxType() {
+    return BasicSyntaxType.EX;
+  }
+
+  @Override
+  void prettyPrint(int indent, StringBuilder builder) {
+    builder.append("forall ");
+    var isFirst = true;
+    for (Condition condition : conditions) {
+      if (!isFirst) {
+        builder.append(", ");
+      }
+      isFirst = false;
+      condition.id.prettyPrint(0, builder);
+      builder.append(" in {");
+      var isFirstOp = true;
+      for (IsId operation : condition.operations) {
+        if (!isFirstOp) {
+          builder.append(", ");
+        }
+        isFirstOp = false;
+        operation.prettyPrint(0, builder);
+      }
+      builder.append("}");
+    }
+    if (isBlockLayout(thenExpr)) {
+      builder.append(" then\n");
+      thenExpr.prettyPrint(indent + 1, builder);
+    } else {
+      builder.append(" then ");
+      thenExpr.prettyPrint(0, builder);
+      builder.append("\n");
+    }
+  }
+
+  @Override
+  <R> R accept(ExprVisitor<R> visitor) {
+    return visitor.visit(this);
+  }
+
+  @Override
+  public boolean equals(Object o) {
+    if (this == o) {
+      return true;
+    }
+    if (o == null || getClass() != o.getClass()) {
+      return false;
+    }
+    ForAllThenExpr that = (ForAllThenExpr) o;
+    return Objects.equals(conditions, that.conditions)
+        && Objects.equals(thenExpr, that.thenExpr);
+  }
+
+  @Override
+  public int hashCode() {
+    return Objects.hash(conditions, thenExpr);
+  }
+
+  record Condition(IsId id, List<IsId> operations) {
   }
 }

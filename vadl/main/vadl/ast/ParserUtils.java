@@ -14,6 +14,8 @@ import vadl.utils.SourceLocation;
 
 class ParserUtils {
 
+  static String VADL_EXTENSION = ".vadl";
+
   static boolean[] NO_OPS;
   static boolean[] BIN_OPS;
   static boolean[] BIN_OPS_EXCEPT_GT;
@@ -48,6 +50,8 @@ class ParserUtils {
     BIN_OPS[Parser._SYM_MOD] = true;
     BIN_OPS[Parser._SYM_IN] = true;
     BIN_OPS[Parser._SYM_NIN] = true;
+    BIN_OPS[Parser._SYM_ELEM_OF] = true;
+    BIN_OPS[Parser._SYM_NOT_ELEM_OF] = true;
 
     BIN_OPS_EXCEPT_GT = BIN_OPS.clone();
     BIN_OPS_EXCEPT_GT[Parser._SYM_GT] = false;
@@ -64,6 +68,7 @@ class ParserUtils {
     ID_TOKENS[Parser._GROUP] = true;
     ID_TOKENS[Parser._INSTRUCTION] = true;
     ID_TOKENS[Parser._MEMORY] = true;
+    ID_TOKENS[Parser._OPERATION] = true;
     ID_TOKENS[Parser._PREDICATE] = true;
     ID_TOKENS[Parser._REGISTER] = true;
     ID_TOKENS[Parser._SYM_IN] = true;
@@ -477,9 +482,9 @@ class ParserUtils {
 
   static @Nullable Path resolveUri(Parser parser, IsId importPath) {
     if (importPath instanceof Identifier id) {
-      return resolveUri(parser, id.name + ".vadl");
+      return resolveUri(parser, id.name);
     } else if (importPath instanceof IdentifierPath identifierPath) {
-      return resolveUri(parser, ((Identifier) identifierPath.segments.get(0)).name + ".vadl");
+      return resolveUri(parser, ((Identifier) identifierPath.segments.get(0)).name);
     } else {
       parser.errors.SemErr("Could not resolve module path: " + importPath);
       return null;
@@ -492,9 +497,11 @@ class ParserUtils {
     if (Files.isRegularFile(relativeToSpec)) {
       return relativeToSpec;
     }
-    var relativeToWorkdir = Paths.get(name);
-    if (Files.isRegularFile(relativeToWorkdir)) {
-      return relativeToWorkdir;
+    var withAppendedExtension = relativeToSpec.resolveSibling(
+        relativeToSpec.getFileName() + VADL_EXTENSION
+    );
+    if (Files.isRegularFile(withAppendedExtension)) {
+      return withAppendedExtension;
     }
     parser.errors.SemErr("Could not resolve module path: " + name);
     return null;

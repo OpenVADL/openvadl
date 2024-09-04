@@ -9,7 +9,6 @@ import java.util.Objects;
 import javax.annotation.Nullable;
 
 import vadl.ast.EncodingDefinition.FieldEncoding;
-import vadl.ast.FunctionDefinition.Parameter;
 import vadl.utils.SourceLocation;
 
 import static vadl.ast.CounterDefinition.CounterKind.GROUP;
@@ -80,10 +79,12 @@ TOKENS
   ENCODING     = "encoding".
   ENUMERATION  = "enumeration".
   EXCEPTION    = "exception".
+  EXISTS       = "exists".
   EXTEND_ID    = "ExtendId".
   EXTENDING    = "extending".
   FALSE        = "false".
   FILE         = "file".
+  FORALL       = "forall".
   FORMAT       = "format".
   FUNCTION     = "function".
   GROUP        = "group".
@@ -96,7 +97,9 @@ TOKENS
   MEMORY       = "memory".
   MODEL        = "model".
   MODEL_TYPE   = "model-type".
+  OPERATION    = "operation".
   PREDICATE    = "predicate".
+  PROCESS      = "process".
   PROGRAM      = "program".
   PSEUDO       = "pseudo".
   RAISE        = "raise".
@@ -124,6 +127,7 @@ TOKENS
   SYM_DIV         = "/".
   SYM_DOLLAR      = "$".
   SYM_DOT         = ".".
+  SYM_ELEM_OF     = "∈".
   SYM_EQ          = "=".
   SYM_EXCL        = "!".
   SYM_GT          = ">".
@@ -136,6 +140,7 @@ TOKENS
   SYM_MINUS       = "-".
   SYM_MOD         = "%".
   SYM_MUL         = "*".
+  SYM_NOT_ELEM_OF = "∉".
   SYM_NAMESPACE   = "::".
   SYM_NEQ         = "!=".
   SYM_NIN         = "!in".
@@ -223,6 +228,8 @@ PRODUCTIONS
 
   isaDefinition<out Definition def> (. def = null; .)
   = commonDefinition<out def>
+  | IF (la.kind == _GROUP && scanner.Peek().kind != _COUNTER)
+    groupDefinition<out def>
   | counterDefinition<out def>
   | instructionDefinition<out def>
   | pseudoInstructionDefinition<out def>
@@ -235,6 +242,8 @@ PRODUCTIONS
   | aliasDefinition<out def>
   | enumerationDefinition<out def>
   | exceptionDefinition<out def>
+  | processDefinition<out def>
+  | operationDefinition<out def>
   .
 
   constantDefinition<out ConstantDefinition def> (. TypeLiteral type = null; .)
@@ -453,14 +462,14 @@ PRODUCTIONS
   functionDefinition<out Definition def>
   = FUNCTION                           (. var start = loc(); List<Parameter> params = new ArrayList<>(); .)
     identifierOrPlaceholder<out IdentifierOrPlaceholder name>
-    [ functionParameters<.out params.> ]
+    [ parameters<.out params.> ]
     SYM_ARROW
     typeLiteral<out TypeLiteral retType>
     SYM_EQ
     expression<out Expr expr, BIN_OPS> (. def = new FunctionDefinition(name, params, retType, expr, start.join(loc())); .)
   .
 
-  functionParameters<.out List<Parameter> params.>
+  parameters<.out List<Parameter> params.>
   = SYM_PAREN_OPEN                  (. params = new ArrayList<>(); .)
     parameter<out Parameter param>  (. params.add(param); .)
     {
@@ -578,6 +587,113 @@ PRODUCTIONS
     ]                                      (. def = importModules(this, fileId, filePath, importedSymbols(segments, symbolList), args, start.join(loc())); .)
   .
 
+  processDefinition<out Definition def>
+  = PROCESS                       (. var start = loc();
+                                     List<ProcessDefinition.TemplateParam> templateParams = new ArrayList<>();
+                                     List<Parameter> inputs = new ArrayList<>();
+                                     List<Parameter> outputs = new ArrayList<>(); .)
+    identifierOrPlaceholder<out IdentifierOrPlaceholder name>
+    [ processTemplateParameters<.out templateParams.> ]
+    [ parameters<.out inputs.> ]
+    [ SYM_ARROW parameters<.out outputs.> ]
+    SYM_EQ
+    statement<out Statement stmt> (. def = new ProcessDefinition(name, templateParams, inputs, outputs, stmt, start.join(loc())); .)
+  .
+
+  processTemplateParameters<.out List<ProcessDefinition.TemplateParam> templateParams.>
+  = SYM_LT                            (. templateParams = new ArrayList<>(); .)
+    identifier<out Identifier id>
+    SYM_COLON
+    typeLiteral<out TypeLiteral type> (. Expr value = null; .)
+    [
+      SYM_EQ
+      expression<out value, BIN_OPS_EXCEPT_GT>
+    ]                                 (. templateParams.add(new ProcessDefinition.TemplateParam(id, type, value)); .)
+    {
+        identifier<out id>
+        SYM_COLON
+        typeLiteral<out type>         (. value = null; .)
+        [
+          SYM_EQ
+          expression<out value, BIN_OPS_EXCEPT_GT>
+        ]                             (. templateParams.add(new ProcessDefinition.TemplateParam(id, type, value)); .)
+    }
+    SYM_GT
+  .
+
+  operationDefinition<out Definition def>
+  = OPERATION                       (. var start = loc(); .)
+    identifierOrPlaceholder<out IdentifierOrPlaceholder name>
+    SYM_EQ
+    SYM_BRACE_OPEN                  (. var resources = new ArrayList<IsId>(); .)
+    [
+      identifierPath<out IsId path> (. resources.add(path); .)
+      {
+        SYM_COMMA
+        identifierPath<out path>    (. resources.add(path); .)
+      }
+    ]
+    SYM_BRACE_CLOSE                 (. def = new OperationDefinition(name, resources, start.join(loc())); .)
+  .
+
+  groupDefinition<out Definition def>                   (. TypeLiteralOrPlaceholder type = null; .)
+  = GROUP                                               (. var start = loc(); .)
+    identifierOrPlaceholder<out IdentifierOrPlaceholder id>
+    [
+      SYM_COLON
+      typeLiteralOrPlaceholder<out type>
+    ]
+    SYM_EQ
+    groupSequence<out Group.Sequence seq> (. def = new GroupDefinition(id, type, seq, start.join(loc())); .)
+  .
+
+  groupSequence<out Group.Sequence seq> (. var groups = new ArrayList<Group>(); .)
+  = group<out Group group>              (. var start = loc(); groups.add(group); .)
+    {
+      SYM_DOT
+      group<out group>                  (. groups.add(group); .)
+    }                                   (. seq = new Group.Sequence(groups, start.join(loc())); .)
+  .
+
+  group<out Group group> (. group = null; .)
+  = groupLiteral<out group>
+  | groupAlternative<out group>
+  | groupPermutation<out group>
+  .
+
+  groupLiteral<out Group group>
+  = identifierPath<out IsId path>    (. var start = loc(); Expr size = null; .)
+    [
+      SYM_LT
+      intLiteral<out size>
+      [
+        SYM_RANGE
+        intLiteral<out Expr rangeTo> (. size = new RangeExpr(size, rangeTo); .)
+      ]
+      SYM_GT
+    ]                                (. group = new Group.Literal(path, size, start.join(loc())); .)
+  .
+
+  groupAlternative<out Group group>
+  = SYM_PAREN_OPEN                        (. var start = loc(); var sequences = new ArrayList<Group.Sequence>(); .)
+    groupSequence<out Group.Sequence seq> (. sequences.add(seq); .)
+    {
+      SYM_BINOR
+      groupSequence<out seq>              (. sequences.add(seq); .)
+    }
+    SYM_PAREN_CLOSE                       (. group = new Group.Alternative(sequences, start.join(loc())); .)
+  .
+
+  groupPermutation<out Group group>
+  = SYM_BRACE_OPEN                        (. var start = loc(); var sequences = new ArrayList<Group.Sequence>(); .)
+    groupSequence<out Group.Sequence seq> (. sequences.add(seq); .)
+    {
+      SYM_COMMA
+      groupSequence<out seq>              (. sequences.add(seq); .)
+    }
+    SYM_BRACE_CLOSE                       (. group = new Group.Permutation(sequences, start.join(loc())); .)
+  .
+
   // -- STATEMENTS ---------------------------------------------------------------------------------------------------
 
   statement<out Statement statement> (. statement = null; .)
@@ -659,28 +775,43 @@ PRODUCTIONS
   .
 
   matchStatement<out Statement match>
-  = MATCH                                     (. var start = loc(); .)
-    expression<out Expr candidate, BIN_OPS>
-    WITH
-    SYM_BRACE_OPEN                            (. var cases = new ArrayList<MatchStatement.Case>();  .)
-    {                                         (. var patterns = new ArrayList<Expr>(); .)
-      ( expression<out Expr pattern, BIN_OPS> (. patterns.add(pattern); .)
+  = MATCH                                   (. var start = loc(); .)
+    expression<out Expr candidate, BIN_OPS> (. var cases = new ArrayList<MatchStatement.Case>(); .)
+    WITH                                    (. var patterns = new ArrayList<Expr>(); .)
+    SYM_BRACE_OPEN                          (. Expr pattern = null; .)
+    ( expression<out pattern, BIN_OPS>      (. patterns.add(pattern); .)
+    | SYM_BRACE_OPEN
+      expression<out pattern, BIN_OPS>      (. patterns.add(pattern); .)
+      {
+        SYM_COMMA
+        expression<out pattern, BIN_OPS>    (. patterns.add(pattern); .)
+      }
+      SYM_BRACE_CLOSE
+    )
+    SYM_BIGARROW
+    statement<out Statement result>         (. cases.add(new MatchStatement.Case(List.copyOf(patterns), result)); .)
+    {
+      IF (la.kind == _SYM_COMMA && scanner.Peek().kind != _SYM_UNDERSCORE)
+      SYM_COMMA                             (. patterns.clear(); .)
+      ( expression<out pattern, BIN_OPS>    (. patterns.add(pattern); .)
       | SYM_BRACE_OPEN
-        expression<out Expr pattern, BIN_OPS> (. patterns.add(pattern); .)
+        expression<out pattern, BIN_OPS>    (. patterns.add(pattern); .)
         {
           SYM_COMMA
-          expression<out pattern, BIN_OPS>    (. patterns.add(pattern); .)
+          expression<out pattern, BIN_OPS>  (. patterns.add(pattern); .)
         }
         SYM_BRACE_CLOSE
       )
       SYM_BIGARROW
-      statement<out Statement result>         (. cases.add(new MatchStatement.Case(patterns, result)); .)
+      statement<out result>                 (. cases.add(new MatchStatement.Case(patterns, result)); .)
+    }                                       (. Statement defaultResult = null; .)
+    [
       SYM_COMMA
-    }
-    SYM_UNDERSCORE
-    SYM_BIGARROW
-    statement<out Statement defaultResult>
-    SYM_BRACE_CLOSE                           (. match = new MatchStatement(candidate, cases, defaultResult, start.join(loc())); .)
+      SYM_UNDERSCORE
+      SYM_BIGARROW
+      statement<out defaultResult>
+    ]
+    SYM_BRACE_CLOSE                         (. match = new MatchStatement(candidate, cases, defaultResult, start.join(loc())); .)
   .
 
   // -- EXPRESSIONS --------------------------------------------------------------------------------------------------
@@ -758,29 +889,31 @@ PRODUCTIONS
   | macroReplacement<out Node node>                          (. expr = castExpr(this, node); .)
   .
 
-  binaryOperator<out Operator op>    (.op = null;.)
-  = SYM_LOGOR  (. op = Operator.LogicalOr(); .)
-  | SYM_LOGAND (. op = Operator.LogicalAnd(); .)
-  | SYM_BINOR  (. op = Operator.Or(); .)
-  | SYM_CARET  (. op = Operator.Xor(); .)
-  | SYM_BINAND (. op = Operator.And(); .)
-  | SYM_EQ     (. op = Operator.Equal(); .)
-  | SYM_NEQ    (. op = Operator.NotEqual(); .)
-  | SYM_GTE    (. op = Operator.GreaterEqual(); .)
-  | SYM_GT     (. op = Operator.Greater(); .)
-  | SYM_LTE    (. op = Operator.LessEqual(); .)
-  | SYM_LT     (. op = Operator.Less(); .)
-  | SYM_ROTR   (. op = Operator.RotateRight(); .)
-  | SYM_ROTL   (. op = Operator.RotateLeft(); .)
-  | SYM_SHR    (. op = Operator.ShiftRight(); .)
-  | SYM_SHL    (. op = Operator.ShiftLeft(); .)
-  | SYM_PLUS   (. op = Operator.Add(); .)
-  | SYM_MINUS  (. op = Operator.Subtract(); .)
-  | SYM_MUL    (. op = Operator.Multiply(); .)
-  | SYM_DIV    (. op = Operator.Divide(); .)
-  | SYM_MOD    (. op = Operator.Modulo(); .)
-  | SYM_IN     (. op = Operator.In(); .)
-  | SYM_NIN    (. op = Operator.NotIn(); .)
+  binaryOperator<out Operator op> (. op = null; .)
+  = SYM_LOGOR                     (. op = Operator.LogicalOr(); .)
+  | SYM_LOGAND                    (. op = Operator.LogicalAnd(); .)
+  | SYM_BINOR                     (. op = Operator.Or(); .)
+  | SYM_CARET                     (. op = Operator.Xor(); .)
+  | SYM_BINAND                    (. op = Operator.And(); .)
+  | SYM_EQ                        (. op = Operator.Equal(); .)
+  | SYM_NEQ                       (. op = Operator.NotEqual(); .)
+  | SYM_GTE                       (. op = Operator.GreaterEqual(); .)
+  | SYM_GT                        (. op = Operator.Greater(); .)
+  | SYM_LTE                       (. op = Operator.LessEqual(); .)
+  | SYM_LT                        (. op = Operator.Less(); .)
+  | SYM_ROTR                      (. op = Operator.RotateRight(); .)
+  | SYM_ROTL                      (. op = Operator.RotateLeft(); .)
+  | SYM_SHR                       (. op = Operator.ShiftRight(); .)
+  | SYM_SHL                       (. op = Operator.ShiftLeft(); .)
+  | SYM_PLUS                      (. op = Operator.Add(); .)
+  | SYM_MINUS                     (. op = Operator.Subtract(); .)
+  | SYM_MUL                       (. op = Operator.Multiply(); .)
+  | SYM_DIV                       (. op = Operator.Divide(); .)
+  | SYM_MOD                       (. op = Operator.Modulo(); .)
+  | SYM_IN                        (. op = Operator.In(); .)
+  | SYM_NIN                       (. op = Operator.NotIn(); .)
+  | SYM_ELEM_OF                   (. op = Operator.ElementOf(); .)
+  | SYM_NOT_ELEM_OF               (. op = Operator.NotElementOf(); .)
   // When adding a new operator here, it must also be added to the "BIN_OPS" list in ParserUtils.java!
   .
 
@@ -812,6 +945,8 @@ PRODUCTIONS
     unary<out expr>
   | ifExpression<out expr, BIN_OPS>
   | letExpression<out expr>
+  | existsExpression<out expr>
+  | forallExpression<out expr>
   | // IF (isMacroReplacementOfType(this, BasicSyntaxType.EX))
     macroReplacement<out Node n> (. expr = castExpr(this, n); .)
   .
@@ -912,6 +1047,50 @@ PRODUCTIONS
     SYM_BRACE_CLOSE                           (. expr = new MatchExpr(candidate, cases, defaultResult, start.join(loc())); .)
   .
 
+  existsExpression<out Expr expr>                   (. expr = null; .)
+  = EXISTS                                          (. var start = loc(); .)
+    ( IF (la.kind == _SYM_IN)
+      SYM_IN
+      operationsList<.out List<IsId> operations.>   (. expr = new ExistsInExpr(operations, start.join(loc())); .)
+    | identifierOrPlaceholder<out IdentifierOrPlaceholder id>
+      SYM_IN                                        (. var conditions = new ArrayList<ExistsInThenExpr.Condition>(); .)
+      operationsList<.out List<IsId> operations.>   (. conditions.add(new ExistsInThenExpr.Condition(id, operations)); .)
+      {
+        SYM_COMMA
+        identifierOrPlaceholder<out id>
+        SYM_IN
+        operationsList<out operations>              (. conditions.add(new ExistsInThenExpr.Condition(id, operations)); .)
+      }
+      THEN
+      expression<out Expr thenExpr, BIN_OPS>        (. expr = new ExistsInThenExpr(conditions, thenExpr, start.join(loc())); .)
+    )
+  .
+
+  operationsList<.out List<IsId> operations.>
+  = SYM_BRACE_OPEN                (. operations = new ArrayList<>(); .)
+    identifierPath<out IsId path> (. operations.add(path); .)
+    {
+      SYM_COMMA
+      identifierPath<out path>    (. operations.add(path); .)
+    }
+    SYM_BRACE_CLOSE
+  .
+
+  forallExpression<out Expr expr>
+  = FORALL                                          (. var start = loc(); .)
+    identifierOrPlaceholder<out IdentifierOrPlaceholder id>
+    SYM_IN                                          (. var conditions = new ArrayList<ForAllThenExpr.Condition>(); .)
+    operationsList<.out List<IsId> operations.>     (. conditions.add(new ForAllThenExpr.Condition(id, operations)); .)
+    {
+      SYM_COMMA
+      identifierOrPlaceholder<out id>
+      SYM_IN
+      operationsList<out operations>                (. conditions.add(new ForAllThenExpr.Condition(id, operations)); .)
+    }
+    THEN
+    expression<out Expr thenExpr, BIN_OPS>          (. expr = new ForAllThenExpr(conditions, thenExpr, start.join(loc())); .)
+  .
+
   // -- PRIMITIVES ---------------------------------------------------------------------------------------------------
 
   typeLiteralOrPlaceholder<out TypeLiteralOrPlaceholder type> (. type = null; .)
@@ -962,7 +1141,7 @@ PRODUCTIONS
   // | MODIFIER
   // | NOP
   // | OPERAND
-  // | OPERATION
+  | OPERATION
   | PREDICATE
   // | PREDICTION
   // | PROCEDURE

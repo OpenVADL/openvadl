@@ -1,0 +1,1359 @@
+// Qualcomm Hexagon (QDSP6) V60
+
+instruction set architecture QDSP6 =
+{
+  using Byte    = Bits<8>           // byte, memory size
+  using Half    = Bits<16>          // half word size
+  using Word    = Bits<32>          // word size
+  using Double  = Bits<64>          // double word size
+  using Address = Word              // address has word size
+
+  using UByte = UInt<8>
+  using UHalf = UInt<16>
+  using UWord = UInt<32>
+  using UDouble = UInt<64>
+  using SByte = SInt<8>
+  using SHalf = SInt<16>
+  using SWord = SInt<32>
+  using SDouble = SInt<64>
+
+  using Index          = Bits<5>           // register file index for 32 registers
+  using PredicateIndex = Bits<2>           // predicate index for 4 predicates
+
+  [littleEndian]
+  memory MEM : Address -> Byte      // 32-bit, byte-addressable address space
+  // Instructions and instruction packets must be 32-bit aligned
+  // Data must be aligned to its native access size.
+  // Any unaligned memory access will cause a memory-alignment exception.
+
+  register file R   : Index -> Word   // general purpose register file
+  alias register SP : Word = R(29)    // stack pointer
+  alias register FP : Word = R(30)    // frame pointer
+  alias register LR : Word = R(31)    // link register
+
+  format USRFormat : Word =
+    { unimplemented [31..1]
+    , OVF    [0]                      // Sticky Saturation Overflow
+    }
+
+  constant C_INDEX_P  : Index = 4
+  constant C_INDEX_PC : Index = 9
+  register file C   : Index -> Word        // control register file
+  alias register SA0             = C(0)    // Loop start address register 0
+  alias register LC0             = C(1)    // Loop count register 0
+  alias register SA1             = C(2)    // Loop start address register 1
+  alias register LC1             = C(3)    // Loop count register 1
+  // TODO [read/write partial] is incompatible with alias registers
+  //             P               = C(4)    // Predicate registers 3:0
+  alias register M0              = C(6)    // Modifier register 0
+  alias register M1              = C(7)    // Modifier register 1
+  alias register USR : USRFormat = C(8)    // User status register
+  // TODO @nmischkulnig: `alias group/program register` isn't completely implemented
+  // [next]
+  // alias program counter PC : Address = C(9)    // Program counter
+  alias register UGP             = C(10)   // User general pointer
+  alias register GP              = C(11)   // Global pointer. 6..0 should always be 0 (read only)
+  alias register CS0             = C(12)   // Circular start register 0
+  alias register CS1             = C(13)   // Circular start register 1
+  alias register UPCYCLELO       = C(14)   // Cycle count register (low)
+  alias register UPCYCLEHI       = C(15)   // Cycle count register (high)
+  alias register FRAMELIMIT      = C(16)   // Frame limit register
+  alias register FRAMEKEY        = C(17)   // Frame key register
+  alias register PKTCOUNTLO      = C(18)   // Packet count register (low)
+  alias register PKTCOUNTHI      = C(19)   // Packet count register (high)
+  alias register UTIMERLO        = C(30)   // Qtimer register (low)
+  alias register UTIMERHI        = C(31)   // Qtimer register (high)
+
+  [next]
+  group counter PC : Address
+
+  // Valid 64-byte pairs:
+  // R1:0, R3:2, ... R29:28, R31:30
+  // C1:0, C3:2, ... C29:28, C31:30
+
+  function AsmR (reg: Index) -> String = ("R", decimal(reg))
+  function AsmRR(reg: Index) -> String = ("R", decimal(reg+1), ":", decimal(reg))
+  function AsmC (reg: Index) -> String = ("C", decimal(reg))
+  function AsmCC(reg: Index) -> String = ("C", decimal(reg+1), ":", decimal(reg))
+  function AsmP (reg: PredicateIndex) -> String = ("P", decimal(reg))
+  function AsmImmU(v: UWord) -> String = ("#", decimal(v), ")")
+  function AsmImmUX(v: UWord) -> String = ("##", decimal(v), ")")
+  function AsmImmS(v: SWord) -> String = ("#", decimal(v), ")")
+  function AsmImmSX(v: SWord) -> String = ("##", decimal(v), ")")
+  function AsmImmextS(v: Word) -> String = ("immext(#", decimal(v), ")")
+  function AsmImmextU(v: Word) -> String = ("immext(#", decimal(v), ")")
+  function AsmAddrAbsSet (reg: Index, imm6: UInt<6>) -> String = ("(",AsmR(reg),"=#",decimal(imm6),")")
+  function AsmAddrGPRel  (imm16: UInt<16>) -> String = ("(gp+#",decimal(imm16),")")
+  function AsmAddrRegRel (reg: Index, imm11: SInt<11>) -> String = ("(",AsmR(reg),"+#",decimal(imm11),")")
+  function AsmPred (reg: PredicateIndex, neg: Bool, dotnew: Bool) -> String =
+    ("if(",
+      (if neg then "!" as String else "" as String),
+      AsmP(reg),
+      (if dotnew then ".new" as String else "" as String),
+    ")")
+
+  format PFormat : Word =
+    { P3   : Byte
+    , P2   : Byte
+    , P1   : Byte
+    , P0   : Byte
+    }
+  [ read partial ]  // This is the default but it's essential that multiple instruction in a bundle
+  [ write partial ] // can write to (different) predicate subregisters
+  register P : PFormat
+
+  function testpred (reg: PredicateIndex) -> Bool =
+    match (reg) with
+      { 0 => P.P0(0) = 1
+      , 1 => P.P1(0) = 1
+      , 2 => P.P2(0) = 1
+      , _ => P.P3(0) = 1
+      }
+  process Pset ( reg: PredicateIndex, val: Byte ) = {
+    match (reg) with
+      { 0 => P.P0 := val
+      , 1 => P.P1 := val
+      , 2 => P.P2 := val
+      , 3 => P.P3 := val
+      }
+  }
+  function Pget ( reg: PredicateIndex ) -> Byte =
+    match (reg) with
+      { 0 => P.P0
+      , 1 => P.P1
+      , 2 => P.P2
+      , _ => P.P3
+      }
+
+  // "apply_extension" from the spec
+  // The encoded `imm` is actually smaller than Word, usually between 6 and 16 bits
+  function extendU(imm: UWord) -> UWord = imm
+  function extendS(imm: SWord) -> SWord = imm
+  function extendUExtender(imm: UWord, extender: Bits<26>) -> UWord = (extender, imm as Bits<6>)
+  function extendSExtender(imm: SWord, extender: Bits<26>) -> SWord = (extender, imm as Bits<6>)
+  // e.g. for `call #r22:2`
+  function extendR2(imm: SWord) -> SWord = scaledImmR2(imm)
+  // "When constant extenders are used, scaled immediates are not scaled by the processor"
+  function extendR2Extender(imm: SWord, extender: Bits<26>) -> SWord = align32((extender, imm as Bits<6>))
+
+  function toPValue(v: Bool) -> Byte = if v then 0xff else 0x00
+
+  function align32 (v: SWord) -> SWord = (v >> 2) << 2
+  function scaledImmR2(imm: SWord) -> SWord = imm << 2
+  function scaledImmU (imm: SWord, scale: UInt<2>) -> SWord = imm << scale
+  function scaledImmS (imm: SWord, scale: UInt<2>) -> SWord = imm << scale
+
+  function frameScramble  (addr: Address) -> Address = VADL::xor(addr, FRAMEKEY)
+  function frameUnscramble(addr: Address) -> Address = VADL::xor(addr, FRAMEKEY)
+
+  enumeration MemoryAccessType : Bits<2> =
+    { Byte   = 0b00
+    , Half   = 0b01
+    , Word   = 0b10
+    , Double = 0b11
+    }
+
+  format StandardFormat : Word =
+    { iclass [31..28]
+    , parse  [15..14]
+    , majop  [27..24]
+    , minop  [23..21]
+    , s5     [20..16]
+    , c      [13]
+    , t5     [12..8]
+    , d5     [4..0]
+    }
+
+  // ----------------------------------  operation ALU32/ALU ---------------------------------
+
+  format TransferImmHalfFormat : Word =
+    { iclass [31..28]
+    , rs     [27]
+    , majop  [26..24]
+    , minop  [21]
+    , parse  [15..14]
+    , imm    [23..22, 13..0]
+    , x5     [20..16]
+    , s5     = x5
+    , d5     = x5
+    , immU   = imm as UInt<16>
+    }
+
+  format TransferImmFormat : Word =
+    { iclass [31..28]
+    , rs     [27]
+    , majop  [26..24]
+    , parse  [15..14]
+    , imm    [23..22, 20..16, 13..5]
+    , d5     [4..0]
+    , immS   = imm as UInt<16>
+    }
+
+  format TransferImmXFormat : Double =
+    { iclassX [31..28]
+    , parseX  [15..14]
+    , immX    [27..16,13..0]
+    // ---
+    , iclass  [63..60]
+    , rs      [59]
+    , majop   [58..56]
+    , parse   [47..46]
+    , imm     [55..54, 52..48, 45..37]
+    , d5      [36..32]
+    , immS    = extendSExtender(imm, immX)
+    }
+
+  model TransferBase ( name: Id, iformat: Id, encs: Encs, asmprefix: Ex, asmpostfix: Ex, dst: Ex, val: Ex, asm: Ex ) : IsaDefs = {
+    [ operation ALU32 ]
+    instruction $name : $iformat = {
+      R($dst) := $val
+    }
+    encoding $name = { iclass = 0b0111, $encs }
+    assembly $name = ($asmprefix, AsmR($dst), $asmpostfix, " = ", $asm)
+  }
+
+  $TransferBase( TransferImmLow ; TransferImmHalfFormat; rs=0b0, majop=0b001, minop=0b1  ; ""              ; ".L"; x5; (R(x5) & 0xFFFF0000) | (immU as UInt<32>);            ("#", decimal(immU)))
+  $TransferBase( TransferImmHigh; TransferImmHalfFormat; rs=0b0, majop=0b010, minop=0b1  ; ""              ; ".H"; x5; (R(x5) & 0x0000FFFF) | ((immU as UInt<32>) << 16);    ("#", decimal(immU)))
+  $TransferBase( TransferImm    ; TransferImmFormat    ; rs=0b1, majop=0b000             ; ""              ; ""  ; d5; immS;                                                 ("#", decimal(immS)))
+  $TransferBase( TransferImmX   ; TransferImmXFormat   ; rs=0b1, majop=0b000, iclassX=0  ; AsmImmextU(immX); ""  ; d5; immS;                                                 ("#", decimal(immS)))
+  $TransferBase( TransferReg    ; StandardFormat       ; c=0b0, majop=0b0000, minop=0b011; ""              ; ""  ; d5; R(s5);                                                AsmR(s5))
+
+  format AddImmFormat : Word =
+    { iclass [31..28]
+    , parse  [15..14]
+    , imm    [27..21,13..5]
+    , s5     [20..16]
+    , d5     [4..0]
+    }
+  format ALUImmFormat : Word =
+    { iclass [31..28]
+    , parse  [15..14]
+    , majop  [27..24]
+    , minop  [23..22]
+    , imm    [21,13..5]
+    , s5     [20..16]
+    , d5     [4..0]
+    }
+  format ALURegFormat : Word =
+    { iclass [31..28]
+    , parse  [15..14]
+    , p      [27]
+    , majop  [26..24]
+    , minop  [23..21]
+    , s5     [20..16]
+    , t5     [12..8]
+    , d5     [4..0]
+    }
+
+  model ALUBase ( name: Id, iformat: Id, encs: Encs, op: Id, lhs: Ex, rhs: Ex, asm: Ex ) : IsaDefs = {
+    [ operation ALU32 ]
+    instruction $name : $iformat = {
+      R(d5) := VADL::$op($lhs, $rhs)
+    }
+    encoding $name = { $encs }
+    assembly $name = (AsmR(d5), " = ", IdToStr(op), "(", $asm, ")")
+  }
+
+  $ALUBase ( AddImm    ; AddImmFormat ; iclass=0b1011                               ; add   ; R(s5); extendS(imm) ; (AsmR(s5),",#",decimal(imm)) )
+  $ALUBase ( AddReg    ; ALURegFormat ; iclass=0b1111, p=0, majop=0b011, minop=0b000; add   ; R(s5); R(t5)        ; (AsmR(s5),"," ,AsmR(t5))     )
+  // TODO @nmischkulnig missing builtin VADL::satadd
+  // $AddBase ( AddRegSat ; ALURegFormat ; iclass=0b1111, p=0, majop=0b110, minop=0b010; satadd; R(s5)         ; R(t5); (AsmR(s5),",#",AsmR(t5))     )
+  $ALUBase ( SubImm    ; ALUImmFormat ; iclass=0b0111,      majop=0b0110, minop=0b01; sub   ; extendS(imm)  ; R(s5); (decimal(imm),",#",AsmR(s5)))
+  $ALUBase ( SubReg    ; ALURegFormat ; iclass=0b1111, p=0, majop=0b011, minop=0b001; sub   ; R(t5)         ; R(s5); (AsmR(t5),"," ,AsmR(s5))    )
+  // TODO @nmischkulnig missing builtin VADL::satsub
+  // $ALUBase ( SubRegSat ; ALURegFormat ; iclass=0b1111, p=0, majop=0b110, minop=0b110; satsub; R(t5)         ; R(s5); (AsmR(t5),"#", AsmR(s5))    )
+
+  $ALUBase( AndReg ; StandardFormat; iclass = 0b1111, majop = 0b0001, minop = 0b000 ; and ;           R(s5)  ; R(t5)       ; (AsmR(s5),"," ,AsmR(t5)) )
+  $ALUBase( OrReg  ; StandardFormat; iclass = 0b1111, majop = 0b0001, minop = 0b001 ; or  ;           R(s5)  ; R(t5)       ; (AsmR(s5),"," ,AsmR(t5)) )
+  $ALUBase( XorReg ; StandardFormat; iclass = 0b1111, majop = 0b0001, minop = 0b011 ; xor ;           R(s5)  ; R(t5)       ; (AsmR(s5),"," ,AsmR(t5)) )
+  $ALUBase( AndNReg; StandardFormat; iclass = 0b1111, majop = 0b0001, minop = 0b100 ; and ; VADL::not(R(s5)) ; R(t5)       ; (AsmR(t5),",~",AsmR(s5)) )
+  $ALUBase( OrNReg ; StandardFormat; iclass = 0b1111, majop = 0b0001, minop = 0b101 ; or  ; VADL::not(R(s5)) ; R(t5)       ; (AsmR(t5),",~",AsmR(s5)) )
+  $ALUBase( AndImm ; ALUImmFormat  ; iclass = 0b0111, majop = 0b0110, minop = 0b00  ; and ;           R(s5)  ; extendS(imm); (AsmR(s5),",#",decimal(imm)) )
+  $ALUBase( OrImm  ; ALUImmFormat  ; iclass = 0b0111, majop = 0b0110, minop = 0b10  ; or  ;           R(s5)  ; extendS(imm); (AsmR(s5),",#",decimal(imm)) )
+
+  [ operation ALU32 ]
+  instruction Nop : StandardFormat = {}
+  encoding Nop = { iclass = 0b0111, majop = 0b1111 }
+  assembly Nop = ("nop")
+
+  format CmpImmFormat : Word =
+    { iclass [31..28]
+    , parse  [15..14]
+    , rs     [27]
+    , majop  [26..24]
+    , minop  [23..22]
+    , neg    [4]
+    , op     [3..2]
+    , s5     [20..16]
+    , d2     [1..0]
+    , imm    [21,13..5]
+    , immS   = imm as SWord
+    }
+
+  format CmpImmUFormat : Word =
+    { iclass [31..28]
+    , parse  [15..14]
+    , rs     [27]
+    , majop  [26..24]
+    , minop  [23..21]
+    , neg    [4]
+    , op     [3..2]
+    , s5     [20..16]
+    , d2     [1..0]
+    , imm    [13..5]
+    , immU   = imm as UWord
+    }
+
+  format CmpRegFormat : Word =
+    { iclass [31..28]
+    , parse  [15..14]
+    , p      [27]
+    , majop  [26..24]
+    , minop  [22..21]
+    , neg    [4]
+    , op     [3..2]
+    , s5     [20..16]
+    , t5     [12..8]
+    , d2     [1..0]
+    }
+
+  model CmpBase ( name: Id, iformat: Id, encs: Encs, cond: Ex, asm: Ex ) : IsaDefs = {
+    [ operation ALU32_PRED_WRITING ]
+    instruction $name : $iformat = {
+      let val = toPValue($cond) in {
+        Pset(d2, val)
+      }
+    }
+    encoding $name = { op=0b00, $encs }
+    assembly $name = (AsmP(d2), "=", $asm)
+  }
+
+  $CmpBase( CmpImmEq  ; CmpImmFormat ; iclass = 0b0111, rs=0, majop = 0b101, minop = 0b00, neg = 0b0;  (R(s5) = extendS(immS)); ( "cmp.eq(" ,AsmR(s5),",#",decimal(immS),")") )
+  $CmpBase( CmpImmNeq ; CmpImmFormat ; iclass = 0b0111, rs=0, majop = 0b101, minop = 0b00, neg = 0b1; !(R(s5) = extendS(immS)); ("!cmp.eq(" ,AsmR(s5),",#",decimal(immS),")") )
+  $CmpBase( CmpImmGt  ; CmpImmFormat ; iclass = 0b0111, rs=0, majop = 0b101, minop = 0b01, neg = 0b0;  (R(s5) as SInt) > extendS(immS); ( "cmp.gt(" ,AsmR(s5),",#",decimal(immS),")") )
+  $CmpBase( CmpImmLte ; CmpImmFormat ; iclass = 0b0111, rs=0, majop = 0b101, minop = 0b01, neg = 0b1; !(R(s5) as SInt) > extendS(immS); ("!cmp.gt(" ,AsmR(s5),",#",decimal(immS),")") )
+  $CmpBase( CmpImmGtu ; CmpImmUFormat; iclass = 0b0111, rs=0, majop = 0b101, minop = 0b100, neg = 0b0; (R(s5) as UInt) > extendU(immU); ( "cmp.gtu(",AsmR(s5),",#",decimal(immU),")") )
+  $CmpBase( CmpImmLteu; CmpImmUFormat; iclass = 0b0111, rs=0, majop = 0b101, minop = 0b100, neg = 0b1; (R(s5) as UInt) > extendU(immU); ("!cmp.gtu(",AsmR(s5),",#",decimal(immU),")") )
+
+  $CmpBase( CmpRegEq  ; CmpRegFormat; iclass = 0b1111, p=0, majop = 0b010, minop = 0b00, neg = 0b0;  (R(s5) = R(t5)); ( "cmp.eq(" ,AsmR(s5),",",AsmR(t5),")") )
+  $CmpBase( CmpRegNeq ; CmpRegFormat; iclass = 0b1111, p=0, majop = 0b010, minop = 0b00, neg = 0b1; !(R(s5) = R(t5)); ("!cmp.eq(" ,AsmR(s5),",",AsmR(t5),")") )
+  $CmpBase( CmpRegGt  ; CmpRegFormat; iclass = 0b1111, p=0, majop = 0b010, minop = 0b10, neg = 0b0;  ((R(s5) as SInt) > (R(t5) as SInt)); ( "cmp.gt(" ,AsmR(s5),",",AsmR(t5),")") )
+  $CmpBase( CmpRegLte ; CmpRegFormat; iclass = 0b1111, p=0, majop = 0b010, minop = 0b10, neg = 0b1; !((R(s5) as SInt) > (R(t5) as SInt)); ("!cmp.gt(" ,AsmR(s5),",",AsmR(t5),")") )
+  $CmpBase( CmpRegGtu ; CmpRegFormat; iclass = 0b1111, p=0, majop = 0b010, minop = 0b11, neg = 0b0;  ((R(s5) as UInt) > (R(t5) as UInt)); ( "cmp.gtu(",AsmR(s5),",",AsmR(t5),")") )
+  $CmpBase( CmpRegLteu; CmpRegFormat; iclass = 0b1111, p=0, majop = 0b010, minop = 0b11, neg = 0b1; !((R(s5) as UInt) > (R(t5) as UInt)); ("!cmp.gtu(",AsmR(s5),",",AsmR(t5),")") )
+
+
+  format CombineRegImmFormat : Word =
+    { iclass [31..28]
+    , parse  [15..14]
+    , rs     [27]
+    , majop  [26..24]
+    , minop  [22..21]
+    , s5     [20..16]
+    , op     [13]
+    , imm    [12..5]
+    , d5     [4..0]
+    , immS   = imm as SWord
+    }
+  format CombineImmFormat : Word =
+    { iclass [31..28]
+    , parse  [15..14]
+    , rs     [27]
+    , majop  [26..24]
+    , minop  [23]
+    , immlow [22..16,13]
+    , immhigh[12..5]
+    , d5     [4..0]
+    , immhighS = immhigh as SWord
+    , immlowS  = immlow as SWord
+    , immlowU  = immlow(5..0) as UWord
+    }
+  format CombineRegWordFormat : Word =
+    { iclass [31..28]
+    , parse  [15..14]
+    , p      [27]
+    , majop  [26..24]
+    , minop  [23..21]
+    , s5     [20..16]
+    , t5     [12..8]
+    , d5     [4..0]
+    }
+
+  model CombineWordBase ( name: Id, iformat: Id, encs: Encs, vhigh: Ex, vlow: Ex, asm: Ex ) : IsaDefs = {
+    [ operation ALU32 ]
+    instruction $name : $iformat = {
+      R( d5 ) := ($vhigh as Half, $vlow as Half)
+    }
+    encoding $name = { $encs }
+    assembly $name = (AsmR(d5), "=", $asm)
+  }
+  model CombineDoubleBase ( name: Id, iformat: Id, encs: Encs, vhigh: Ex, vlow: Ex, asm: Ex ) : IsaDefs = {
+    [ operation ALU32 ]
+    instruction $name : $iformat = {
+      R( d5   ) := $vlow
+      R( d5+1 ) := $vhigh
+    }
+    encoding $name = { $encs }
+    assembly $name = (AsmRR(d5), "=combine(", $asm, ")")
+  }
+
+  $CombineDoubleBase( CombineDoubleRegImm; CombineRegImmFormat; iclass=0b0111, rs=0, majop=0b011, minop=0b00, op=1; R(rs); extendS(immS); (AsmR(rs),",#",decimal(immS)))
+  $CombineDoubleBase( CombineDoubleImmReg; CombineRegImmFormat; iclass=0b0111, rs=0, majop=0b011, minop=0b01, op=1; extendS(immS); R(rs); ("#",decimal(immS),",",AsmR(rs)))
+  $CombineDoubleBase( CombineDoubleImmSS ; CombineImmFormat   ; iclass=0b0111, rs=1, majop=0b100, minop=0b0 ; extendS(immhighS); immlowS; ("#",decimal(immhighS),",#",decimal(immlowS)))
+  $CombineDoubleBase( CombineDoubleImmSU ; CombineImmFormat   ; iclass=0b0111, rs=1, majop=0b100, minop=0b1 ; extendS(immhighS); immlowU; ("#",decimal(immhighS),",#",decimal(immlowU)))
+
+  $CombineWordBase  ( CombineWordRegHH   ; CombineRegWordFormat; iclass=0b1111, p=0, majop=0b011, minop=0b100 ; R(t5) >> 16; R(s5) >> 16; (AsmR(t5),".H,",AsmR(s5),".H"))
+  $CombineWordBase  ( CombineWordRegHL   ; CombineRegWordFormat; iclass=0b1111, p=0, majop=0b011, minop=0b101 ; R(t5) >> 16; R(s5)      ; (AsmR(t5),".H,",AsmR(s5),".L"))
+  $CombineWordBase  ( CombineWordRegLH   ; CombineRegWordFormat; iclass=0b1111, p=0, majop=0b011, minop=0b110 ; R(t5)      ; R(s5) >> 16; (AsmR(t5),".L,",AsmR(s5),".H"))
+  $CombineWordBase  ( CombineWordRegLL   ; CombineRegWordFormat; iclass=0b1111, p=0, majop=0b011, minop=0b111 ; R(t5)      ; R(s5)      ; (AsmR(t5),".L,",AsmR(s5),".L"))
+  // not implemented: Rdd=combine(Rs,Rt)
+
+  // ----------------------------------  operation ALU32/PRED ---------------------------------
+
+  format AddPredImmFormat : Word =
+    { iclass [31..28]
+    , parse  [15..14]
+    , rs     [27]
+    , majop  [26..24]
+    , ps     [23]
+    , u2     [22..21]
+    , s5     [20..16]
+    , dn     [13]
+    , imm    [12..5]
+    , d5     [4..0]
+    , immS   = imm as SInt
+    }
+  format ALUPredRegFormat : Word =
+    { iclass [31..28]
+    , parse  [15..14]
+    , p      [27]
+    , majop  [26..24]
+    , minop  [23,21]
+    , s5     [20..16]
+    , dn     [13]
+    , t5     [12..8]
+    , ps     [7]
+    , u2     [6..5]
+    , d5     [4..0]
+    }
+
+  model ALUPredBase ( name: Id, iformat: Id, encs: Encs, op: Id, lhs: Ex, rhs: Ex, asmprefix: Ex, asm: Ex, pred: Ex ) : IsaDefs = {
+    [ operation ALU32 ]
+    instruction $name : $iformat = {
+      R(d5) := VADL::$op($lhs, $rhs)
+    }
+    encoding $name = { $encs }
+    assembly $name = ($asmprefix, AsmR(d5), " = ", IdToStr($op), "(", $asm, ")")
+  }
+
+  $ALUPredBase( AddImmPredPos; AddPredImmFormat; iclass=0b0111, rs=0, majop=0b100, ps=0, dn=0; add; R(s5); extendS(immS); AsmPred(u2, false, false); (AsmR(s5),",#",decimal(immS));  testpred(u2))
+  // $ALUPredBase( AddImmPred; AddPredImmFormat; iclass=0b0111, rs=0, majop=0b100, ps=0, dn=1; add; R(s5); extendS(immS); AsmPred(u2, false, true ); (AsmR(s5),",#",decimal(immS));  testpred(u2))
+  $ALUPredBase( AddImmPredNeg; AddPredImmFormat; iclass=0b0111, rs=0, majop=0b100, ps=1, dn=0; add; R(s5); extendS(immS); AsmPred(u2, true , false); (AsmR(s5),",#",decimal(immS)); !testpred(u2))
+  // $ALUPredBase( AddImmPred; AddPredImmFormat; iclass=0b0111, rs=0, majop=0b100, ps=1, dn=1; add; R(s5); extendS(immS); AsmPred(u2, true , true ); (AsmR(s5),",#",decimal(immS)); !testpred(u2))
+
+  $ALUPredBase( AddRegPredPos; ALUPredRegFormat; iclass=0b1111, p=1, majop=0b011, minop=0b00, dn=0, ps=0; add; R(s5); R(t5); AsmPred(u2, false, false); (AsmR(s5),",",AsmR(t5));  testpred(u2))
+  $ALUPredBase( AddRegPredNeg; ALUPredRegFormat; iclass=0b1111, p=1, majop=0b011, minop=0b00, dn=0, ps=1; add; R(s5); R(t5); AsmPred(u2, true , false); (AsmR(s5),",",AsmR(t5)); !testpred(u2))
+  $ALUPredBase( SubRegPredPos; ALUPredRegFormat; iclass=0b1111, p=1, majop=0b011, minop=0b01, dn=0, ps=0; sub; R(t5); R(s5); AsmPred(u2, false, false); (AsmR(t5),",",AsmR(s5));  testpred(u2))
+  $ALUPredBase( SubRegPredNeg; ALUPredRegFormat; iclass=0b1111, p=1, majop=0b011, minop=0b01, dn=0, ps=1; sub; R(t5); R(s5); AsmPred(u2, true , false); (AsmR(t5),",",AsmR(s5)); !testpred(u2))
+
+
+  // ----------------------------------  operation CR ---------------------------------
+
+  // The value of C(idx) as prescribed by the ISA
+  function getCIsa(idx: Index) -> Word =
+    match idx with
+    { C_INDEX_P  => P
+    , C_INDEX_PC => PC
+    , _          => C(idx)
+    }
+
+  model TransferControlBase ( name: Id, encs: Encs, asmDst: Id, asmSrc: Id, stats: Stats ) : IsaDefs = {
+    [ operation CR ]
+    instruction $name : StandardFormat = {
+      $stats
+    }
+    encoding $name = { iclass = 0b0110, $encs }
+    assembly $name = ($asmDst(d5), "=", $asmSrc(s5))
+  }
+
+  // TODO @nmischkulnig PC is "not writable" in this instruction. The assembler rejects this as well.
+  // It's unclear if this should trigger an exception or simply ignore the attempted write.
+  $TransferControlBase( TransferCR  ; majop = 0b0010, minop = 0b001; AsmC ; AsmR; {
+    let val = R(s5) in
+    if d5 = C_INDEX_P then {
+      P := val
+    }
+    else if d5 != C_INDEX_PC then C(d5) := val
+  })
+  $TransferControlBase( TransferCCRR; majop = 0b0011, minop = 0b001; AsmCC; AsmRR; {
+    let valLo = R(s5) in
+    let valHi = R(s5+1) in
+    if d5 = C_INDEX_P then { // C5:4 = Rx:y
+      P := valLo
+      C(d5+1) := valHi
+    }
+    else if (d5+1) != C_INDEX_PC then { // C9:8 = Rx:y
+      C(d5  ) := valLo
+      C(d5+1) := valHi
+    }
+  })
+  $TransferControlBase( TransferRRCC; majop = 0b1000, minop = 0b000; AsmRR; AsmCC; R(d5) := getCIsa(s5) R(d5+1) := getCIsa(s5+1) )
+  $TransferControlBase( TransferRC  ; majop = 0b1010, minop = 0b000; AsmR ; AsmC ; R(d5) := getCIsa(s5)                          )
+
+  format AddRegPCFormat : Word =
+    { iclass [31..28]
+    , parse  [15..14]
+    , op     [27..16]
+    , imm    [12..7]
+    , d5     [4..0]
+    , immU   = extendU(imm)
+    }
+  format AddRegPCXFormat : Double =
+    { iclassX [31..28]
+    , parseX  [15..14]
+    , immX    [27..16,13..0]
+    // ---
+    , iclass [63..60]
+    , parse  [47..46]
+    , op     [59..48]
+    , imm    [44..39]
+    , d5     [36..32]
+    , immU   = extendUExtender(imm, immX)
+    }
+  model AddRegPCBase ( name: Id, iformat: Id, encs: Encs, asmPrefix: Ex, asmimm: Id ) : IsaDefs = {
+    [ operation CR ]
+    instruction $name : $iformat = {
+      R(d5) := PC.current + immU
+    }
+    encoding $name = { iclass = 0b0110, op = 0b101001001001, $encs }
+    assembly $name = ($asmPrefix, AsmR(d5), "=add(pc,", $asmimm(immU),")")
+  }
+  $AddRegPCBase( AddRegPC ; AddRegPCFormat ; /* unneeded */ iclass=0b0110; ""              ; AsmImmU )
+  $AddRegPCBase( AddRegPCX; AddRegPCXFormat; iclassX=0    ; AsmImmextU(immX); AsmImmUX )
+
+  format LogicalPredFormat : Word =
+    { iclass [31..28]
+    , parse  [15..14]
+    , opc    [27..24,13]
+    , op     [23..20]
+    , s2     [17..16]
+    , t2     [9..8]
+    , u2     [7..6]
+    , d2     [1..0]
+    }
+  // This instruction may execute on either slot2 or slot3, even though it is a CR-type
+  model LogicalPredBase ( name: Id, encs: Encs, val: Ex, asm: Ex ) : IsaDefs = {
+    [ operation CR23 ]
+    instruction $name : LogicalPredFormat = {
+      Pset(d2, $val)
+    }
+    encoding $name = { iclass = 0b0110, opc = 0b10110, $encs }
+    assembly $name = (AsmP(d2), "=", $asm)
+  }
+  $LogicalPredBase(LogicalPredAnd       ; op=0b0000; VADL::and(Pget(t2),Pget(s2))                                ; ("and(", AsmP(t2), ",", AsmP(s2), ")") )
+  $LogicalPredBase(LogicalPredAndAnd    ; op=0b0001; VADL::and(Pget(s2),VADL::and(Pget(t2),Pget(u2)))            ; ("and(", AsmP(s2), ",and(", AsmP(t2), ",", AsmP(u2), "))") )
+  $LogicalPredBase(LogicalPredOr        ; op=0b0010; VADL::or(Pget(t2),Pget(s2))                                 ; ( "or(", AsmP(t2), ",", AsmP(s2), ")") )
+  $LogicalPredBase(LogicalPredAndOr     ; op=0b0011; VADL::and(Pget(s2),VADL::or(Pget(t2),Pget(u2)))             ; ("and(", AsmP(s2), ",or(", AsmP(t2), ",", AsmP(u2), "))") )
+  $LogicalPredBase(LogicalPredXor       ; op=0b0100; VADL::xor(Pget(s2),Pget(t2))                                ; ("xor(", AsmP(s2), ",", AsmP(t2), ")") )
+  $LogicalPredBase(LogicalPredOrAnd     ; op=0b0101; VADL::or(Pget(s2),VADL::and(Pget(t2),Pget(u2)))             ; ( "or(", AsmP(s2), ",and(", AsmP(t2), ",", AsmP(u2), "))") )
+  $LogicalPredBase(LogicalPredAndNot    ; op=0b0110; VADL::and(Pget(t2),!Pget(s2))                               ; ("and(", AsmP(t2), ",!", AsmP(s2), ")") )
+  $LogicalPredBase(LogicalPredOrOr      ; op=0b0111; VADL::or(Pget(s2),VADL::or(Pget(t2),Pget(u2)))              ; ( "or(", AsmP(s2), ",or(", AsmP(t2), ",", AsmP(u2), "))") )
+  $LogicalPredBase(LogicalPredAndAndNot ; op=0b1001; VADL::and(Pget(s2),VADL::and(Pget(t2),VADL::not(Pget(u2)))) ; ("and(", AsmP(s2), ",and(", AsmP(t2), ",!", AsmP(u2), "))") )
+  $LogicalPredBase(LogicalPredAndOrNot  ; op=0b1011; VADL::and(Pget(s2),VADL::or(Pget(t2),VADL::not(Pget(u2))))  ; ("and(", AsmP(s2), ",or(", AsmP(t2), ",!", AsmP(u2), "))") )
+  $LogicalPredBase(LogicalPredNot       ; op=0b1100; VADL::not(Pget(s2))                                         ; ("not(", AsmP(s2), ")") )
+  $LogicalPredBase(LogicalPredOrAndNot  ; op=0b1101; VADL::or(Pget(s2),VADL::and(Pget(t2),VADL::not(Pget(u2))))  ; ( "or(", AsmP(s2), ",and(", AsmP(t2), ",!", AsmP(u2), "))") )
+  $LogicalPredBase(LogicalPredOrNot     ; op=0b1110; VADL::or(Pget(t2),!Pget(s2))                                ; ( "or(", AsmP(t2), ",!", AsmP(s2), ")") )
+  $LogicalPredBase(LogicalPredOrOrNot   ; op=0b1111; VADL::or(Pget(s2),VADL::or(Pget(t2),VADL::not(Pget(u2))))   ; ( "or(", AsmP(s2), ",or(", AsmP(t2), ",!", AsmP(u2), "))") )
+
+  // ----------------------------------  operation JR ---------------------------------
+  // Missing instructions:
+  //  - new value predicates: `if ([!]Pu.new) jumpr:{t,nt} Rs`
+  //  - hintjr
+
+  format BranchRegFormat : Word =
+    { iclass [31..28]
+    , parse  [15..14]
+    , op     [27..21]
+    , u2     [9,8]
+    , s5     [20..16]
+    , hintnew[12..11]
+    }
+
+  model CallRegBase ( name: Id, encs: Encs, asm: Ex, pred: Ex ) : IsaDefs = {
+    [ operation JR ]
+    instruction $name : BranchRegFormat = {
+      if $pred then {
+        LR := PC.next
+        PC := R(s5)
+      }
+    }
+    encoding $name = { iclass = 0b0101, $encs }
+    assembly $name = ($asm, "callr ", AsmR(s5))
+  }
+
+  $CallRegBase( CallReg       ; op = 0b0000101; ""; true )
+  $CallRegBase( CallRegPredPos; op = 0b0001000; AsmPred(u2, false, false);  testpred(u2) )
+  $CallRegBase( CallRegPredNeg; op = 0b0001001; AsmPred(u2, true , false); !testpred(u2) )
+
+
+  model JumpRegBase ( name: Id, encs: Encs, asmprefix: Ex, asmpostfix: Ex, pred: Ex ) : IsaDefs = {
+    [ operation JR ]
+    instruction $name : BranchRegFormat = {
+      if $pred then {
+        PC := R(s5)
+      }
+    }
+    encoding $name = { iclass = 0b0101, $encs }
+    assembly $name = ($asmprefix, "jumpr", $asmpostfix, " ", AsmR(s5))
+  }
+
+  $JumpRegBase( JumpReg         ; op = 0b0010100; ""; ""; true )
+  $JumpRegBase( JumpRegPredPosNT; op = 0b0011010, hintnew = 0b00; AsmPred(u2, false, false); ":nt ";  testpred(u2) )
+  $JumpRegBase( JumpRegPredPosT ; op = 0b0011010, hintnew = 0b10; AsmPred(u2, false, false); ":t " ;  testpred(u2) )
+  $JumpRegBase( JumpRegPredNegNT; op = 0b0011011, hintnew = 0b00; AsmPred(u2, true , false); ":nt "; !testpred(u2) )
+  $JumpRegBase( JumpRegPredNegT ; op = 0b0011011, hintnew = 0b10; AsmPred(u2, true , false); ":t " ; !testpred(u2) )
+
+  // ----------------------------------  operation J ---------------------------------
+
+  format JumpImmFormat : Word =
+    { iclass [31..28]
+    , parse  [15..14]
+    , op     [27..25]
+    , imm    [24..16,13..1]
+    , immS = scaledImmR2(imm)
+    }
+  format JumpImmPredFormat : Word =
+    { iclass [31..28]
+    , parse  [15..14]
+    , op     [27..24,21]
+    , hintnew[12..11]
+    , imm    [23..22,20..16,13,7..1]
+    , u2     [9..8]
+    , immS = scaledImmR2(imm)
+    }
+
+  model JumpImmBase ( name: Id, iformat: Id, encs: Encs, asmprefix: Ex, asmpostfix: Ex, pred: Ex ) : IsaDefs = {
+    [ operation J ]
+    instruction $name : $iformat = {
+      if $pred then {
+        PC := PC.current + extendR2(imm)
+      }
+    }
+    encoding $name = { $encs }
+    assembly $name = ($asmprefix, "jump", $asmpostfix, " ", decimal(immS))
+  }
+
+  $JumpImmBase( JumpImm         ; JumpImmFormat    ; iclass = 0b0101, op = 0b100; ""; ""; true )
+  $JumpImmBase( JumpImmPredPosNT; JumpImmPredFormat; iclass = 0b0101, op = 0b11000, hintnew = 0b00; AsmPred(u2, false, false); ":nt ";  testpred(u2) )
+  $JumpImmBase( JumpImmPredPosT ; JumpImmPredFormat; iclass = 0b0101, op = 0b11000, hintnew = 0b10; AsmPred(u2, false, false); ":t " ;  testpred(u2) )
+  $JumpImmBase( JumpImmPredNegNT; JumpImmPredFormat; iclass = 0b0101, op = 0b11001, hintnew = 0b00; AsmPred(u2, true , false); ":nt "; !testpred(u2) )
+  $JumpImmBase( JumpImmPredNegT ; JumpImmPredFormat; iclass = 0b0101, op = 0b11001, hintnew = 0b10; AsmPred(u2, true , false); ":t " ; !testpred(u2) )
+
+  format CallImmFormat : Word =
+    { iclass [31..28]
+    , parse  [15..14]
+    , op     [27..25,0]
+    , imm [24..16,13..1]
+    }
+  format CallImmPredFormat : Word =
+    { iclass [31..28]
+    , parse  [15..14]
+    , op     [27..24,11]
+    , pred   [9,8]
+    , neg    [21]
+    , imm    [23,22,20..16,13,7..1]
+    }
+
+  model CallImmBase ( name: Id, iformat: Id, encs: Encs, asm: Ex, pred: Ex ) : IsaDefs = {
+    [ operation J ]
+    instruction $name : $iformat = {
+      if $pred then {
+        LR := PC.next
+        PC := PC.current + extendR2(imm)
+      }
+    }
+    encoding $name = { iclass = 0b0101, $encs }
+    assembly $name = ($asm, "call #", decimal(imm))
+  }
+
+  $CallImmBase( CallImm       ; CallImmFormat    ; op = 0b1010; ""; true )
+  $CallImmBase( CallImmPredPos; CallImmPredFormat; op = 0b101, neg = 0b0; AsmPred(pred, false, false) ; testpred(pred) )
+  $CallImmBase( CallImmPredNeg; CallImmPredFormat; op = 0b101, neg = 0b1; AsmPred(pred, true , false); !testpred(pred) )
+
+  format CmpJumpFormat : Word =
+    { iclass [31..28]
+    , parse  [15..14]
+    , op     [27..26,24..23,9..8]
+    , d1     [25]
+    , neg    [22]
+    , hint   [13]
+    , s4     [19..16]
+    , disp   [21..20,7..1]
+    , dispS  = scaledImmR2(disp)
+    // Available registers are R0-R7 and R16-R23
+    , s5     = if s4 <= 7 then (s4 as Index) else ((s4 as Index) + 8)
+    , d2     = d1 as PredicateIndex // for the constraints
+    }
+  format CmpJumpImmFormat : Word =
+    { iclass [31..28]
+    , parse  [15..14]
+    , op     [27..26,24..23]
+    , d1     [25]
+    , neg    [22]
+    , hint   [13]
+    , s4     [19..16]
+    , imm    [12..8]
+    , disp   [21..20,7..1]
+    , immU   = imm as UWord
+    , dispS  = scaledImmR2(disp)
+    // Available registers are R0-R7 and R16-R23
+    , s5     = if s4 <= 7 then (s4 as Index) else ((s4 as Index) + 8)
+    , d2     = d1 as PredicateIndex // for the constraints
+    }
+  format CmpJumpRegFormat : Word =
+    { iclass [31..28]
+    , parse  [15..14]
+    , op     [27..23]
+    , d1     [12]
+    , neg    [22]
+    , hint   [13]
+    , s4     [19..16]
+    , t4     [11..8]
+    , disp   [21..20,7..1]
+    , dispS  = scaledImmR2(disp)
+    // Available registers are R0-R7 and R16-R23
+    , s5     = if s4 <= 7 then (s4 as Index) else ((s4 as Index) + 8)
+    , t5     = if t4 <= 7 then (t4 as Index) else ((t4 as Index) + 8)
+    , d2     = d1 as PredicateIndex // for the constraints
+    }
+
+  model CmpJumpBase ( name: Id, iformat: Id, encs: Encs, neg: Val, p: Val, predEx: Ex, asmPred: Ex, asmHint: Ex ) : IsaDefs = {
+    [ operation J_PRED_WRITING ]
+    instruction $name : $iformat = {
+      let pred   = $predEx in
+      let pvalue = toPValue($predEx) in {
+        Pset($p, pvalue)
+        if pred then {
+          PC := PC.current + extendR2(disp)
+        }
+      }
+    }
+    encoding $name = { iclass=0b0001, neg=$neg, d1=$p, $encs }
+    assembly $name = (AsmP($p), "=", $asmPred, "; ", AsmPred($p, $neg, true), " jump:", $asmHint, " #", decimal(dispS))
+  }
+  model CmpJump ( name: Id, iformat: Id, encs: Encs, predEx: Ex, asmPred: Ex ) : IsaDefs = {
+    $CmpJumpBase( ExtendId($name, "P0", "Pos", "NT"); $iformat; hint=0, $encs; 0; 0;  ($predEx); $asmPred; "nt" )
+    $CmpJumpBase( ExtendId($name, "P1", "Pos", "NT"); $iformat; hint=0, $encs; 0; 1;  ($predEx); $asmPred; "nt" )
+    $CmpJumpBase( ExtendId($name, "P0", "Neg", "NT"); $iformat; hint=0, $encs; 1; 0; !($predEx); $asmPred; "nt" )
+    $CmpJumpBase( ExtendId($name, "P1", "Neg", "NT"); $iformat; hint=0, $encs; 1; 1; !($predEx); $asmPred; "nt" )
+    $CmpJumpBase( ExtendId($name, "P0", "Pos", "T" ); $iformat; hint=1, $encs; 0; 0;  ($predEx); $asmPred; "t" )
+    $CmpJumpBase( ExtendId($name, "P1", "Pos", "T" ); $iformat; hint=1, $encs; 0; 1;  ($predEx); $asmPred; "t" )
+    $CmpJumpBase( ExtendId($name, "P0", "Neg", "T" ); $iformat; hint=1, $encs; 1; 0; !($predEx); $asmPred; "t" )
+    $CmpJumpBase( ExtendId($name, "P1", "Neg", "T" ); $iformat; hint=1, $encs; 1; 1; !($predEx); $asmPred; "t" )
+  }
+
+  $CmpJump( CmpJumpEqMinus1; CmpJumpFormat   ; op=0b001100;  R(s5)          =  -1            ; ("cmp.eq(",AsmR(s5),"#-1)") )
+  $CmpJump( CmpJumpGtMinus1; CmpJumpFormat   ; op=0b001101; (R(s5) as SInt) > (-1 as SInt)   ; ("cmp.gt(",AsmR(s5),"#-1)") )
+  $CmpJump( CmpJumpTstBit0 ; CmpJumpFormat   ; op=0b001111; (R(s5) & 0b1)   = 1              ; ("tstbit(",AsmR(s5),"#0)") )
+  $CmpJump( CmpJumpEqImm   ; CmpJumpImmFormat; op=0b0000  ;  R(s5)          = immU           ; ("cmp.eq(",AsmR(s5),"#",decimal(immU),")") )
+  $CmpJump( CmpJumpGtImm   ; CmpJumpImmFormat; op=0b0001  ; (R(s5)(15..0) as UWord) > immU   ; ("cmp.gt(",AsmR(s5),"#",decimal(immU),")") )
+  $CmpJump( CmpJumpGtuImm  ; CmpJumpImmFormat; op=0b0010  ; (R(s5) as UInt) > immU           ; ("cmp.gtu(",AsmR(s5),"#",decimal(immU),")") )
+  $CmpJump( CmpJumpEqReg   ; CmpJumpRegFormat; op=0b01000 ;  R(s5)          = R(t5)          ; ("cmp.eq(",AsmR(s5),"",AsmR(t5),")") )
+  $CmpJump( CmpJumpGtReg   ; CmpJumpRegFormat; op=0b01001 ; (R(s5) as SInt) > (R(t5) as SInt); ("cmp.gt(",AsmR(s5),"",AsmR(t5),")") )
+  $CmpJump( CmpJumpGtuReg  ; CmpJumpRegFormat; op=0b01010 ; (R(s5)(15..0) as UWord) > R(t5)  ; ("cmp.gtu(",AsmR(s5),"",AsmR(t5),")") )
+
+  // ----------------------------------  operation LD ---------------------------------
+
+  format LoadFormat : Word =
+    { iclass   [31..28]
+    , parse    [15..14]
+    , d5       [4..0]
+    , data     [26..25,20..16,13..5]
+    , gp       [27]
+    , type1    [24]
+    , type     [23..22]
+    , unsigned [21]
+    , immGPRel = data as UInt
+    , immRegRel= (data(15..14),data(8..0)) as SInt
+    , s5       = data(13..9)
+    }
+
+  format LoadRegRelPredFormat : Word =
+    { iclass   [31..28]
+    , parse    [15..14]
+    , op       [27,24,13]
+    , ps       [26]
+    , dn       [25]
+    , type     [23..22]
+    , unsigned [21]
+    , s5       [20..16]
+    , t2       [12..11]
+    , imm      [10..5]
+    , d5       [4..0]
+    , immRegRel= imm as UInt
+    }
+
+  model-type LoadBaseT = ( Id, Id, Encs, Lit, Ex, Id, Ex, Ex, Ex ) -> IsaDefs
+  model LoadSizeBase ( name: Id, iformat: Id, encs: Encs, size: Lit, addr: Ex, type: Id, asmprefix: Ex, asm: Ex, pred: Ex ) : IsaDefs = {
+    [ operation LD ]
+    instruction $name : $iformat = {
+      if $pred then {
+        R(d5) := MEM<$size>($addr) as $type
+      }
+    }
+    encoding $name = { $encs }
+    assembly $name = ($asmprefix, AsmR(d5), "=", $asm)
+  }
+  model LoadDoubleBase ( name: Id, iformat: Id, encs: Encs, size: Lit, addr: Ex, type: Id, asmprefix: Ex, asm: Ex, pred: Ex ): IsaDefs = {
+    [ operation LD ]
+    instruction $name : $iformat = {
+      if $pred then {
+        let result = MEM<8>($addr) as $type in {
+          R(d5)   := result(31..0)
+          R(d5+1) := result(63..32)
+        }
+      }
+    }
+    encoding $name = { $encs }
+    assembly $name = ($asmprefix, AsmRR(d5), "=", $asm)
+  }
+
+  model LoadBase ( base: LoadBaseT, name: Id, type: Id, size: Lit, scale: Lit, asmfunc: Ex) : IsaDefs = {
+    $base( ExtendId( $name, IdToStr($type), "GPRel" )        ; LoadFormat          ; iclass=0b0100, gp=1, type1=0b1,      type=MemoryAccessType::$type, unsigned=0; $size; GP + scaledImmU(immGPRel, $scale)    ; ExtendId(S, IdToStr($type)); ""; ($asmfunc, AsmAddrGPRel(immGPRel))       ; true )
+    $base( ExtendId( $name, IdToStr($type), "RegRel" )       ; LoadFormat          ; iclass=0b1001, gp=0, type1=0b1,      type=MemoryAccessType::$type, unsigned=0; $size; R(s5) + scaledImmS(immRegRel, $scale); ExtendId(S, IdToStr($type)); ""; ($asmfunc, AsmAddrRegRel(s5, immRegRel)) ; true )
+    $base( ExtendId( $name, IdToStr($type), "PredPosRegRel" ); LoadRegRelPredFormat; iclass=0b0100, op=0b010, dn=0, ps=0, type=MemoryAccessType::$type, unsigned=0; $size; R(s5) + scaledImmS(immRegRel, $scale); ExtendId(S, IdToStr($type)); AsmPred(t2, false, false); ($asmfunc, AsmAddrRegRel(s5, immRegRel)) ;  testpred(t2) )
+    $base( ExtendId( $name, IdToStr($type), "PredNegRegRel" ); LoadRegRelPredFormat; iclass=0b0100, op=0b010, dn=0, ps=1, type=MemoryAccessType::$type, unsigned=0; $size; R(s5) + scaledImmS(immRegRel, $scale); ExtendId(S, IdToStr($type)); AsmPred(t2, true , false); ($asmfunc, AsmAddrRegRel(s5, immRegRel)) ; !testpred(t2) )
+  }
+  model LoadBaseU (base: LoadBaseT, name: Id, type: Id, size: Lit, scale: Lit, asmfunc: Ex) : IsaDefs = {
+    $base( ExtendId( $name, "U", IdToStr($type), "GPRel" ) ; LoadFormat; iclass=0b0100, gp=1, type1=0b1, type=MemoryAccessType::$type, unsigned=1; $size; GP + scaledImmU(immGPRel, $scale)    ; ExtendId(U, IdToStr($type)); ""; ($asmfunc, AsmAddrGPRel(immGPRel))       ; true )
+    $base( ExtendId( $name, "U", IdToStr($type), "RegRel" ); LoadFormat; iclass=0b1001, gp=0, type1=0b1, type=MemoryAccessType::$type, unsigned=1; $size; R(s5) + scaledImmS(immRegRel, $scale); ExtendId(U, IdToStr($type)); ""; ($asmfunc, AsmAddrRegRel(s5, immRegRel)) ; true )
+  }
+
+  $LoadBase ( LoadSizeBase;   Load ; Byte   ; 1 ; 0; "memb"  )
+  $LoadBaseU( LoadSizeBase;   Load ; Byte   ; 1 ; 0; "memub" )
+  $LoadBase ( LoadSizeBase;   Load ; Half   ; 2 ; 1; "memh"  )
+  $LoadBaseU( LoadSizeBase;   Load ; Half   ; 2 ; 1; "memuh" )
+  $LoadBase ( LoadSizeBase;   Load ; Word   ; 4 ; 2; "memw"  )
+  $LoadBase ( LoadDoubleBase; Load ; Double ; 8 ; 3; "memd"  )
+
+  format DeallocFrameFormat : Word =
+    { iclass   [31..28]
+    , parse    [15..14]
+    , d5       [4..0]
+    , amode    [27..25]
+    , type     [24..22]
+    , unsigned [21]
+    , opc      [20..16]
+    , neg      [13]
+    , hintnew  [12..11]
+    , op1      [10]
+    , pred     [9..8]
+    }
+
+  [ operation LD ]
+  instruction DeallocFrame : DeallocFrameFormat = {
+    let restored = MEM<8>(FP) as Double in
+    let LRnew = frameUnscramble(restored(63..32)) in {
+      SP := FP + 8
+      LR := LRnew
+      FP := restored(31..0)
+    }
+  }
+  encoding DeallocFrame = { iclass = 0b1001, amode=0b000, type=0b000, unsigned=0b0, opc=0b11110, neg = 0, d5 = 0b11110 }
+  assembly DeallocFrame = ("deallocframe")
+
+
+  model DecallocReturnBase ( name: Id, encs: Encs, asmprefix: Ex, asmpostfix: Ex, pred: Ex ) : IsaDefs = {
+    [ operation LD ]
+    instruction $name : DeallocFrameFormat = {
+      if $pred then {
+        let restored = MEM<8>(FP) as Double in
+        let LRnew = frameUnscramble(restored(63..32)) in {
+          SP := FP + 8
+          LR := LRnew
+          FP := restored(31..0)
+          PC := LRnew
+        }
+      }
+    }
+    encoding $name = { iclass = 0b1001, amode = 0b011, type = 0b000, unsigned = 0b0, opc = 0b11110, op1 = 0b0, d5 = 0b11110, $encs }
+    assembly $name = ($asmprefix, "dealloc_return", $asmpostfix)
+  }
+
+  $DecallocReturnBase( DecallocReturn        ; hintnew = 0b00, neg = 0b0; ""; ""; true )
+  $DecallocReturnBase( DecallocReturnPredPos ; hintnew = 0b10, neg = 0b0; AsmPred(pred, false, false); "" ;  testpred(pred) )
+  $DecallocReturnBase( DecallocReturnPredNeg ; hintnew = 0b10, neg = 0b1; AsmPred(pred, true , false); " "; !testpred(pred) )
+
+
+  // ----------------------------------  operation MEMOP ---------------------------------
+
+
+
+  // ----------------------------------  operation ST ---------------------------------
+
+  format StoreFormat : Word =
+    { iclass   [31..28]
+    , parse    [15..14]
+    , t5       [12..8]
+    , data     [26..25,20..16,13,7..0]
+    , gp       [27]
+    , type1    [24]
+    , type     [23..22]
+    , unsigned [21]
+    , immGPRel = data as UInt
+    , immRegRel= (data(15..14),data(8..0)) as SInt
+    , s5       = data(13..9)
+    }
+
+  model-type StoreBaseT = ( Id, Encs, Lit, Ex, Id, Ex, Ex, Ex ) -> IsaDefs
+  model StoreSizeBase ( name: Id, encs: Encs, size: Lit, addr: Ex, type: Id, shift: Ex, asmprefix: Ex, asmpostfix: Ex ) : IsaDefs = {
+    [ operation ST ]
+    instruction $name : StoreFormat = {
+      MEM<$size>($addr) := (R(t5) >> ($shift as UInt<6>)) as $type
+    }
+    encoding $name = { $encs }
+    assembly $name = ($asmprefix, "=", AsmR(t5), $asmpostfix)
+  }
+  model StoreDoubleBase ( name: Id, encs: Encs, size: Lit, addr: Ex, type: Id, shift: Ex, asmprefix: Ex, asmpostfix: Ex ) : IsaDefs = {
+    [ operation ST ]
+    instruction $name : StoreFormat = {
+      MEM<$size>($addr) := ((R(t5+1), R(t5))) as $type
+    }
+    encoding $name = { $encs }
+    assembly $name = ($asmprefix, "=", AsmR(t5), $asmpostfix)
+  }
+
+  model StoreBase   ( base: StoreBaseT, name: Id, type: Id, size: Lit, scale: Lit, asmfunc: Ex) : IsaDefs = {
+    $base( ExtendId( $name, IdToStr($type), "GPRel" )      ; iclass=0b0100, gp=1, type1=0, type=MemoryAccessType::$type, unsigned = 0; $size; GP + scaledImmU(immGPRel, $scale)    ; $type; 0        ; ($asmfunc, AsmAddrGPRel(immGPRel))       ; "")
+    $base( ExtendId( $name, IdToStr($type), "RegRel" )     ; iclass=0b1010, gp=0, type1=1, type=MemoryAccessType::$type, unsigned = 0; $size; R(s5) + scaledImmS(immRegRel, $scale); $type; 0        ; ($asmfunc, AsmAddrRegRel(s5, immRegRel)) ; "")
+  }
+  model StoreBaseHigh( base: StoreBaseT, name: Id, type: Id, size: Lit, scale: Lit, asmfunc: Ex) : IsaDefs = {
+    $base( ExtendId( $name, "H", IdToStr($type), "GPRel" ) ; iclass=0b0100, gp=1, type1=0, type=MemoryAccessType::$type, unsigned = 1; $size; GP + scaledImmU(immGPRel, $scale)    ; $type; $size * 8; ($asmfunc, AsmAddrGPRel(immGPRel))       ; ".H")
+    $base( ExtendId( $name, "H", IdToStr($type), "RegRel" ); iclass=0b1010, gp=0, type1=1, type=MemoryAccessType::$type, unsigned = 1; $size; R(s5) + scaledImmS(immRegRel, $scale); $type; $size * 8; ($asmfunc, AsmAddrRegRel(s5, immRegRel)) ; ".H")
+  }
+
+  $StoreBase    ( StoreSizeBase ;  Store ; Byte ;   1 ; 0; "memb"  )
+  $StoreBase    ( StoreSizeBase ;  Store ; Half ;   2 ; 1; "memh"  )
+  $StoreBaseHigh( StoreSizeBase ;  Store ; Half ;   2 ; 1; "memh"  )
+  $StoreBase    ( StoreSizeBase ;  Store ; Word ;   4 ; 2; "memw"  )
+  $StoreBase    ( StoreDoubleBase; Store ; Double ; 8 ; 3; "memd"  )
+
+  format StoreImmFormat : Word =
+    { iclass    [31..28]
+    , parse     [15..14]
+    , amode     [27..25]
+    , type      [22..21]
+    , s5        [20..16]
+    , immOffset [12..7]
+    , imm       [13,6..0]
+    , immOffsetU= immOffset as UInt
+    , immS      = extendS(imm)
+    // , d2       = imm(6..5) as PredicateIndex
+    // , immSPred = (imm(6),imm(4..0)) as PredicateIndex
+    }
+  format StoreImmXFormat : Double =
+    { iclassX [31..28]
+    , parseX  [15..14]
+    , immX    [27..16,13..0]
+    // ---
+    , iclass    [63..60]
+    , parse     [47..46]
+    , amode     [59..57]
+    , type      [54..53]
+    , s5        [52..48]
+    , immOffset [44..39]
+    , imm       [45,38..32]
+    , immOffsetU= immOffset as UInt
+    , immS      = extendSExtender(imm, immX)
+    // , d2       = imm(6..5) as PredicateIndex
+    // , immSPred = (imm(6),imm(4..0)) as PredicateIndex
+    }
+
+  model StoreImmSizeBase ( name: Id, iformat: Id, type: Id, encs: Encs, size: Val, scale: Val, imm: Ex, asmprefix: Ex, pred: Ex ) : IsaDefs = {
+    [ operation ST ]
+    instruction $name : $iformat = {
+      if $pred then MEM<$size>( R(s5) + scaledImmU(immOffsetU, $scale) ) := $imm
+    }
+    encoding $name = { iclass = 0b0011, type=MemoryAccessType::$type, $encs }
+    assembly $name = ($asmprefix,"(",AsmR(s5),"+#",decimal(scaledImmU(immOffsetU, $scale)),")", "=#", decimal($imm))
+  }
+
+  $StoreImmSizeBase( StoreImmByte ; StoreImmFormat ; Byte;            amode = 0b110 ; 1 ; 0; immS as SByte; "memb" ; true )
+  $StoreImmSizeBase( StoreImmHalf ; StoreImmFormat ; Half;            amode = 0b110 ; 2 ; 1; immS as SHalf; "memh" ; true )
+  $StoreImmSizeBase( StoreImmWord ; StoreImmFormat ; Word;            amode = 0b110 ; 4 ; 2; immS as SWord; "memw" ; true )
+  $StoreImmSizeBase( StoreImmByteX; StoreImmXFormat; Byte; iclassX=0, amode = 0b110 ; 1 ; 0; immS as SByte; (AsmImmextU(immX), "memb") ; true )
+  $StoreImmSizeBase( StoreImmHalfX; StoreImmXFormat; Half; iclassX=0, amode = 0b110 ; 2 ; 1; immS as SHalf; (AsmImmextU(immX), "memh") ; true )
+  $StoreImmSizeBase( StoreImmWordX; StoreImmXFormat; Word; iclassX=0, amode = 0b110 ; 4 ; 2; immS as SWord; (AsmImmextU(immX), "memw") ; true )
+
+
+  format AllocFrameFormat : Word =
+    { iclass   [31..28]
+    , parse    [15..14]
+    , amode    [27..25]
+    , type     [24..22]
+    , unsigned [21]
+    , opc      [20..16,13..11]
+    , imm      [10..0]
+    , immU = (imm as UInt<11>) * (8 as UInt<4>)
+    }
+
+  [ operation ST ]
+  instruction AllocFrame : AllocFrameFormat = {
+    let SPnew = SP - 8 in {
+      MEM<8>(SPnew) := (frameScramble( LR ), FP)
+      FP := SPnew
+      // frame_check_limit(SPnew - immU);
+      SP := SPnew - immU
+    }
+  }
+
+  encoding AllocFrame = { iclass = 0b1010, amode = 0b000, type=0b010, unsigned=0, opc=0b11101000 }
+  assembly AllocFrame = ("allocframe(", ")")
+
+
+  // ----------------------------------  operation SYSTEM ---------------------------------
+
+  format BrkptFormat : Word =
+    { iclass [31..28]
+    , opc    [27..21,7..5]
+    , parse  [15..14]
+    }
+  [ operation SYSTEMSolo ]
+  instruction Brkpt : BrkptFormat = {
+    PC := 0xeeeeeeee
+  }
+  encoding Brkpt = { iclass = 0b0110, opc = 0b1100001000 }
+  assembly Brkpt = ( "brkpt" )
+
+  // ----------------------------------  operation XTYPE ---------------------------------
+
+  format AddImmShiftedFormat : Word =
+    { iclass [31..28]
+    , parse  [15..14]
+    , regtype[27..24]
+    , imm    [23..21,13,7..5,3]
+    , x5     [20..16]
+    , shift  [12..8]
+    , majop  [4,2..1]
+    , immU   = imm as UWord
+    , shiftU = shift as UInt
+    }
+
+  model ALUImmShifted ( name: Id, encs: Encs, op: Id, shiftop: Id ) : IsaDefs = {
+    [ operation XTYPE ]
+    instruction $name : AddImmShiftedFormat = {
+      R(x5) := VADL::$op(immU, VADL::$shiftop(R(x5), shiftU) as UInt)
+    }
+    encoding $name = { iclass=0b1101, regtype=0b1110, $encs }
+    assembly $name = (AsmR(x5), " = ", IdToStr($op), "(#", decimal(immU), IdToStr($shiftop), "(", AsmR(x5), "#", decimal(shiftU), "))")
+  }
+
+  $ALUImmShifted ( AddImmAsl ; majop=0b010 ; add ; asl )
+  $ALUImmShifted ( SubImmAsl ; majop=0b011 ; sub ; asl )
+  $ALUImmShifted ( AddImmLsr ; majop=0b110 ; add ; lsr )
+  $ALUImmShifted ( SubImmLsr ; majop=0b111 ; sub ; lsr )
+
+  format BitOpImmFormat : Word =
+    { iclass [31..28]
+    , parse  [15..14]
+    , regtype[27..24]
+    , majop  [23..22]
+    , op     [21,13]
+    , minop  [7..5]
+    , s5     [20..16]
+    , imm    [12..8]
+    , d5     [4..0]
+    , immU   = imm as UInt // no constant extender!
+    }
+  format BitOpRegFormat : Word =
+    { iclass [31..28]
+    , parse  [15..14]
+    , regtype[27..24]
+    , majop  [23..22]
+    , minop  [7..6]
+    , s5     [20..16]
+    , t5     [12..8]
+    , d5     [4..0]
+    }
+
+  model BitOp( name: Id, iformat: Id, encs: Encs, val: Ex, asmfunc: Ex, asmRhs: Ex ) : IsaDefs = {
+    [ operation XTYPE ]
+    instruction $name : $iformat = {
+      R(d5) := $val
+    }
+    encoding $name = { $encs }
+    assembly $name = (AsmR(d5), " = ", $asmfunc, "(", AsmR(s5), ",", $asmRhs, ")")
+  }
+  $BitOp( BitSetImm   ;BitOpImmFormat; iclass=0b1000, regtype=0b1100, majop=0b11, op=0b00, minop=0b000 ; R(s5) |          ((1 as Word) << imm) ; "setbit"    ; ("#",decimal(imm)) )
+  $BitOp( BitClrImm   ;BitOpImmFormat; iclass=0b1000, regtype=0b1100, majop=0b11, op=0b00, minop=0b001 ; R(s5) & VADL::not((1 as Word) << imm) ; "clrbit"    ; ("#",decimal(imm)) )
+  $BitOp( BitToggleImm;BitOpImmFormat; iclass=0b1000, regtype=0b1100, majop=0b11, op=0b00, minop=0b010 ; R(s5) ^          ((1 as Word) << imm) ; "togglebit" ; ("#",decimal(imm)) )
+
+  // TODO @nmischkulnig: not entirely sure what they mean:
+  // "If a register is used to indicate the bit position, and the value of the least-significant 7
+  // bits of Rt is out of range, then the destination register will be unchanged."
+  // $BitOp( BitSetReg   ;BitOpRegFormat; iclass=0b1100, regtype=0b0110, majop=0b10, minop=0b00 ; R(s5) | TODO ; "setbit"    ; (AsmR(t5)) )
+  // $BitOp( BitClrReg   ;BitOpRegFormat; iclass=0b1100, regtype=0b0110, majop=0b10, minop=0b01 ; R(s5) & TODO ; "clrbit"    ; (AsmR(t5)) )
+  // $BitOp( BitToggleReg;BitOpRegFormat; iclass=0b1100, regtype=0b0110, majop=0b10, minop=0b10 ; R(s5) ^ TODO ; "togglebit" ; (AsmR(t5)) )
+
+
+  format TransferPRFormat : Word =
+    { iclass [31..28]
+    , parse  [15..14]
+    , regtype[27..24]
+    , majop  [23..21]
+    , s5     [20..16]
+    , d2     [1..0]
+    }
+  format TransferRPFormat : Word =
+    { iclass [31..28]
+    , parse  [15..14]
+    , regtype[27..24]
+    , majop  [22]
+    , s2     [17..16]
+    , d5     [4..0]
+    }
+
+  [ operation XTYPE ]
+  instruction TransferPR : TransferPRFormat = {
+    Pset(d2, R(s5) as Byte)
+  }
+  encoding TransferPR = { iclass=0b1000, regtype=0b0101, majop=0b010 }
+  assembly TransferPR = (AsmP(d2), " = ", AsmR(s5))
+
+  [ operation XTYPE ]
+  instruction TransferRP : TransferRPFormat = {
+    R(d5) := Pget(s2)
+  }
+  encoding TransferRP = { iclass=0b1000, regtype=0b1001, majop=0b1 }
+  assembly TransferRP = (AsmR(d5), " = ", AsmP(s2))
+
+
+  format ALUDoubleCarryFormat : Word =
+    { iclass [31..28]
+    , parse  [15..14]
+    , regtype[27..24]
+    , majop  [23..22]
+    , op     [21]
+    , s5     [20..16]
+    , t5     [12..8]
+    , x2     [6..5]
+    , d5     [4..0]
+    , d2     = x2  // for the constraints
+    , u2     = x2  // for the constraints
+    }
+
+  model ALUDoubleCarryBase( name: Id, sub: Bool ) : IsaDefs = {
+    [ operation XTYPE_PRED_WRITING ]
+    instruction $name : ALUDoubleCarryFormat = {
+      let a = (R(s5+1),R(s5)) in
+      let b = (R(t5+1),R(t5)) in
+      let c = (P(x2) as Bits<1>) as Word in
+      // This just really just VADL::adds(a, b, c)
+      let temp, tempstatus = VADL::adds(a, if $sub then VADL::not(b) else b) in
+      let result, status = VADL::adds(temp, c) in {
+        R(d5  ) := result(31..0)
+        R(d5+1) := result(63..32)
+        Pset(x2, tempstatus.carry | status.carry)
+      }
+    }
+    encoding $name = { iclass=0b1100, regtype=0b0010, majop=0b11, op = match : Lit ($sub = true => 1; _ => 0 ) }
+    assembly $name = (AsmRR(d5), " = ", if $sub then "sub" else "add", "(", AsmRR(s5), ",", AsmRR(t5), ",", AsmP(x2), "):carry")
+  }
+  $ALUDoubleCarryBase( AddDoubleCarry; false)
+  $ALUDoubleCarryBase( SubDoubleCarry; true )
+
+  // -------------------------------------------------------------------------------------
+
+
+//   format ConstantExtenderFormat : Word =
+//     { iclass [31..28]
+//     , parse  [15..14]
+//     , imm    [27..16,13..0]
+//     }
+
+//   pseudo instruction Neg( d5: Index, s5: Index ) = {
+//     SubImm{ d5 = d5, imm = 0, s5 = rs }
+//   }
+//   assembly Neg = (AsmR(rd),'=neg(',AsmR(rs),')')
+
+
+  // These operations correspond to the classes and therefore form a partition over all instructions
+  operation XTYPE = { XTYPE_PRED_WRITING }
+  operation ALU32 = { ALU32_PRED_WRITING }
+  operation CR = { CR23 }
+  operation JR = {}
+  operation J = { J_PRED_WRITING }
+  operation LD = {}
+  operation MEMOP = {}
+  operation NV = {}
+  operation ST = {}
+  operation SYSTEM = {}
+  operation SYSTEMSolo = {}
+
+  operation ALL = { XTYPE, ALU32, CR, JR, J, LD, MEMOP, NV, ST, SYSTEM, SYSTEMSolo }
+
+  operation CR23 = {} // This instruction may execute on either slot2 or slot3, even though it is a CR-type
+
+  // TODO ideally these would also be annotations?
+  operation TRANSFER_C_R = { TransferCR }
+  operation TRANSFER_CC_RR = { TransferCCRR }
+  operation TRANSFER_P_R = { TransferPR }
+  operation ARITH_CARRY = { AddDoubleCarry, SubDoubleCarry }    // these carry instructions have special restrictions
+  operation MEMLOCKED_L2FETCH_TRACE = { /* memw_locked, memd_locked, l2fetch, trace */ }
+  operation CACHE_MAINTENANCE_SPECIAL = { /* dccleana, dcinva, dccleaninva, dczeroa */ }
+  operation JUMP_IMM = { JumpImm }
+  operation JUMP_CMP_NEW = { } // `if ([!]cmp.xx(Rs.new, Rt)) jump`
+
+  operation ALU32_XTYPE_NON_FP = { ALU32 /*, TODO NONFP */} // ALU32 or (non-FP) XTYPE instructions
+  operation CONDITIONAL_NEW = {} // conditional instruction that have a dot-.new predicate TODO currently empty
+  operation FLOATING_POINT = {} // all FP instructions TODO currently empty
+  operation SATURATING = { /* AddRegSat, SubRegSat */ } // saturating arithmetic instructions
+  operation DEALLOC_RETURN = { DecallocReturn, DecallocReturnPredPos, DecallocReturnPredNeg } // all dealloc_return variants
+  operation LD_ST = { LD, ST }
+
+  operation ALU32_PRED_WRITING = {  } // helper operation
+  operation J_PRED_WRITING = {  }     // helper operation
+  operation XTYPE_PRED_WRITING = {  } // helper operation
+  // These are all predicate writing instructions except for transfers
+  operation PRED_WRITING = { ALU32_PRED_WRITING, J_PRED_WRITING, XTYPE_PRED_WRITING }
+
+  // TODO Not very efficient because `b` is always evaluated
+  function implies(a: Bool, b: Bool) -> Bool = (!a) | b
+
+  // `parse` field:
+  //    11 = last instruction in packet
+  //    01/10 = not last
+  //    00 = duplex instruction
+  // An instruction packet can contain one duplex and up to two other (non-duplex) instructions.
+  // The duplex must always appear as the last word in a packet.
+  [ let parse = VLIW(VLIW.length - 1).parse in ( ( parse = 0b00 ) | (parse = 0b11 ) ) stop ]
+
+  // The constant extender effectively serves as a prefix for an instruction: it is not executed in
+  // a slot, nor does it consume any slot resources. Within a packet, a constant extender must be
+  // positioned immediately before the instruction that it extends. If a constant extender is
+  // encoded in a packet for an instruction that does not accept a constant extender, the execution
+  // result is undefined.
+  // - -> Handled via variable length instructions (a version with and without extender prefix)
+
+  // "Grouping constraints"
+  // - Dot-new conditional instructions (Section 6.2.4) must be grouped in a packet with an
+  //   instruction that generates dot-new predicates.
+    //    TODO disabled because CONDITIONAL_NEW is empty
+    //    [ forall i in {CONDITIONAL_NEW} then ((i.dn = 0) | (exists j in {PRED_WRITING} then j.d2 = i.u2)) assert ]
+  // - ST-class instructions can be placed in Slot 1. However, in this case Slot 0 must contain a
+  //   second ST-class instruction (Section 5.5). = "dual store"
+  //   - Unlike most packetized operations, dual stores are not executed in parallel (Section
+  //      3.4.1). Instead, the store instruction in Slot 1 effectively executes first, followed by
+  //      the store instruction in Slot 0.
+  //   - -> this should be the case already with the regex
+  // - J-class instructions can be placed in Slots 2 or 3. However, only certain combinations of
+  //   program flow instructions (J or JR) can be grouped together in a packet (Section 7.8).
+  //   Otherwise, at most one program flow instruction is allowed in a packet. = "dual jump"
+  //    - May not be first in dual jump: unconditional `jump`
+          [ !( (VLIW.length >= 2) & ((VLIW(0) ∈ JUMP_IMM) & (VLIW(1) ∈ J)) ) assert ]
+  //    - May not be in dual jump: `if ([!]cmp.xx(Rs.new, Rt)) jump`
+          [ !( (VLIW.length >= 2) & (((VLIW(0) ∈ JUMP_CMP_NEW) & (VLIW(1) ∈ J)) | ((VLIW(0) ∈ J) & (VLIW(1) ∈ JUMP_CMP_NEW))) ) assert ]
+  //    - May not be in dual jump: all `jumpr` (JR is only allowed in slot 1)
+          [ !( (VLIW.length >= 2) & ((VLIW(0) ∈ J) & (VLIW(1) ∈ JR))) assert ]
+  //    - May not be in dual jump: all `dealloc_return`
+          [ !( (VLIW.length >= 2) & (((VLIW(0) ∈ J) & (VLIW(1) ∈ J)) & exists in {DEALLOC_RETURN}) ) assert ]
+  //    - May not be in dual jump: `endloopN`
+  //      - -> See loop section below
+  // - JR-class instructions can be placed in Slot 2. However, when encoded in a duplex jumpr R31
+  //   can be placed in Slot 0 (Section 10.4).
+  //   - TODO (no duplexes yet)
+  // - Restrictions exist which limit the instructions that can appear in a packet at the setup or
+  //   end of a hardware loop (Section 7.3.4).
+  //   - The loop setup packet in loopN or spNloop0 (Section 7.3.4) cannot contain a speculative
+  //     indirect jump, new-value compare jump, or dealloc_return.
+  //   - endloopN instructions (Section 7.3.2) do not use any slots.
+  //     - The endloopN instruction is actually a pseudo-instruction encoded in bits 15:14 of each
+  //       instruction. Therefore, no distinct 32-bit encoding exists for this instruction.
+  //     - This instruction cannot be grouped in a packet with any program flow instructions
+  //       (including jumps or calls).
+  //     - The loop end packet in loop0 cannot contain any instruction that changes SA0o r LC0.
+  //       Similarly, the loop end packet in loop1 cannot contain any instruction that changes SA1
+  //       or LC1.
+  //     - The loop end packet in spNloop0 cannot contain any instruction that changes P3.
+  //   - TODO (no hardware loops yet)
+  // - A user control register transfer to the control register USR cannot be grouped with a
+  //   floating point instruction (Section 2.3.3).
+  //   - USR contains rounding modes, floating trap enable flags
+  //   - -> see below in dependency constraints
+  // - The SYSTEM-class instructions include prefetch, cache operations, bus operations, load
+  //   locked, and store conditional instructions (Section 5.10). These instructions have the
+  //   following grouping rules:
+  //    - brkpt,trap,pause,icinva,isync,and syncht are solo instructions.They must not be grouped
+  //      with other instructions in a packet.
+  //      - -> handled via regex
+  //    - memw_locked,memd_locked,l2fetch,and trace must execute on Slot 0. They must be grouped
+  //      only with ALU32 or (non-FP) XTYPE instructions.
+          [ implies(VLIW(VLIW.length-1) ∈ MEMLOCKED_L2FETCH_TRACE, forall j in {ALL} then ((j = VLIW(VLIW.length-1)) | (j ∈ ALU32_XTYPE_NON_FP)) ) assert ]
+  //    - dccleana,dcinva,dccleaninva,and dczeroa must execute on Slot 0. Slot 1 must be empty or an
+  //      ALU32 instruction. Note that Slot 1 being empty means that Slot 2 or 3 follow immediately.
+          [ implies(VLIW(VLIW.length-1) ∈ CACHE_MAINTENANCE_SPECIAL, (VLIW.length = 1) | !(VLIW(VLIW.length-2) ∈ LD_ST)) assert ]
+
+  // "Dependency constraints"
+  // - Instructions in a packet cannot write to the same destination register. The assembler
+  //   automatically flags such packets as invalid. If the processor executes a packet with two
+  //   writes to the same general register, an error exception is raised.
+  //   - TODO
+  // - If the processor executes a packet which performs multiple writes to the same predicate or
+  //   control register, the behavior is undefined. Three special cases exist for this rule:
+  //    - Conditional writes are allowed to target the same destination register only if at most one
+  //      of the writes is actually performed (Section 6.2.5).
+  //      -  multiple writes with different predicates are allowed. If multiple predicates are true
+  //         at runtime:
+  //         -  When writing to general registers, an error exception is raised.
+  //         -  When writing to predicate or control registers, the result is undefined.
+  //    - The overflow flag in the status register has defined behavior when multiple instructions
+  //      write to it (Section 2.3.3). Note that instructions that write to the entire user status
+  //      register (for example, USR=R2) are not allowed to be grouped in a packet with any
+  //      instruction that writes to a bit in the user status register.
+  //      - (floating point because it reads trap/rounding flags from USR)
+  //      - l2fetch sets "L2 prefetch active". But it can only be together with ALU and non-FP XTYPE anyway
+  //      - all instructions that set the OVF Sticky Saturation Overflow
+       [ !( (exists i in {TRANSFER_C_R,TRANSFER_CC_RR} then i.d5 = 8) & exists in {FLOATING_POINT, SATURATING} ) assert ]
+  //    - Multiple compare instructions are allowed to target the same predicate register in order
+  //      to perform a logical AND of the results (Section 6.2.3).
+  //      - If a packet contains endloopN, it cannot perform an auto-AND with predicate register P3.
+  //        - TODO
+  //      - If a packet contains a register transfer from a general register to a predicate
+  //        register, then no other instruction in the packet can write to the same predicate
+  //        register. (As a result, a register transfer to P3:0 or C5:4 cannot be grouped with any
+  //        other predicate-writing instruction.)
+            [ !( ((exists i in {TRANSFER_C_R,TRANSFER_CC_RR} then i.d5 = 4) | (exists in {TRANSFER_P_R})) &
+                 exists in {PRED_WRITING} ) assert ]
+  //      - The instructions spNloop0, decbin, tlbmatch, memw_locked, memd_locked, add:carry,
+  //        sub:carry, sfcmp, and dfcmp cannot be grouped with another instruction that sets the
+  //        same predicate register.
+            [ forall i in {ARITH_CARRY /*, CMP_FP, TODO */} then !(
+                ((exists j in {PRED_WRITING} then (i != j) & (j.d2 = i.u2)) |
+                 (exists j in {TRANSFER_C_R,TRANSFER_CC_RR} then j.d5 = 4)) |
+                 (exists j in {TRANSFER_P_R} then j.d2 = i.u2 )
+              ) assert ]
+
+
+	// Hexagon V60/V61 Programmer's Reference Manual p. 26
+  // - S0: Load/Store Unit 1. Instructions: LD, ST, ALU32, MEMOP, NV, SYSTEM
+  // - S1: Load/Store Unit 2. Instructions: LD, ST, ALU32
+  // - S2: Execute Unit 2. Instructions: XTYPE, ALU32, J, JR
+  // - S3: Execute Unit 3. Instructions: XTYPE, ALU32, J, CR
+  //
+  // "Ordering constraints"
+  // - The assembler automatically encodes instructions in the packet in the proper order.
+  // - In the binary encoding of a packet the instructions must be ordered from Slot 3 down to Slot
+  //   0. In memory, instructions in a packet must appear in strictly decreasing slot order.
+  //   Additionally, if an instruction can go in a higher-numbered slot, and that slot is empty,
+  //   then it must be moved into the higher-numbered slot.
+  [ VLIW.length <= 4 assert ]
+  group VLIW = (
+    (
+      ( XTYPE<0..1> | ALU32<0..1> | J<0..1> | CR<0..1> ).
+      ( XTYPE<0..1> | ALU32<0..1> | J<0..1> | JR<0..1> | CR23<0..1> ).
+      ( LD<0..1> | ST<0..1> | ALU32<0..1> ).
+      ( LD<0..1> | ST<0..1> | ALU32<0..1> /* | MEMOP<0..1> | NV<0..1> | SYSTEM<0..1> */)
+    )
+    | SYSTEMSolo
+  )
+}

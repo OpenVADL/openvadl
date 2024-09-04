@@ -187,6 +187,21 @@ class Ungrouper
   }
 
   @Override
+  public Expr visit(ExistsInExpr expr) {
+    return expr;
+  }
+
+  @Override
+  public Expr visit(ExistsInThenExpr expr) {
+    return expr;
+  }
+
+  @Override
+  public Expr visit(ForAllThenExpr expr) {
+    return expr;
+  }
+
+  @Override
   public Definition visit(ConstantDefinition definition) {
     ungroupAnnotations(definition);
     definition.value = definition.value.accept(this);
@@ -250,6 +265,7 @@ class Ungrouper
 
   @Override
   public Definition visit(PseudoInstructionDefinition definition) {
+    ungroupAnnotations(definition);
     definition.statements.replaceAll(this::visit);
     return definition;
   }
@@ -285,12 +301,14 @@ class Ungrouper
 
   @Override
   public Definition visit(AliasDefinition definition) {
+    ungroupAnnotations(definition);
     definition.value = definition.value.accept(this);
     return definition;
   }
 
   @Override
   public Definition visit(EnumerationDefinition definition) {
+    ungroupAnnotations(definition);
     definition.entries.replaceAll(entry -> new EnumerationDefinition.Entry(entry.name(),
         entry.value() == null ? null : entry.value().accept(this),
         entry.behavior() == null ? null : entry.behavior().accept(this)));
@@ -299,6 +317,7 @@ class Ungrouper
 
   @Override
   public Definition visit(ExceptionDefinition definition) {
+    ungroupAnnotations(definition);
     definition.statement = definition.statement.accept(this);
     return definition;
   }
@@ -346,6 +365,29 @@ class Ungrouper
   @Override
   public Definition visit(ImportDefinition importDefinition) {
     return importDefinition;
+  }
+
+  @Override
+  public Definition visit(ProcessDefinition processDefinition) {
+    ungroupAnnotations(processDefinition);
+    processDefinition.templateParams.replaceAll(
+        templateParam -> new ProcessDefinition.TemplateParam(templateParam.name(),
+            templateParam.type(),
+            templateParam.value() == null ? null : templateParam.value().accept(this)));
+    processDefinition.statement = processDefinition.statement.accept(this);
+    return processDefinition;
+  }
+
+  @Override
+  public Definition visit(OperationDefinition operationDefinition) {
+    ungroupAnnotations(operationDefinition);
+    return operationDefinition;
+  }
+
+  @Override
+  public Definition visit(GroupDefinition groupDefinition) {
+    ungroupAnnotations(groupDefinition);
+    return groupDefinition;
   }
 
   @Override
@@ -406,7 +448,8 @@ class Ungrouper
   @Override
   public Statement visit(MatchStatement matchStatement) {
     matchStatement.candidate = matchStatement.candidate.accept(this);
-    matchStatement.defaultResult = matchStatement.defaultResult.accept(this);
+    matchStatement.defaultResult =
+        matchStatement.defaultResult == null ? null : matchStatement.defaultResult.accept(this);
     matchStatement.cases.replaceAll(matchCase -> {
       matchCase.patterns().replaceAll(pattern -> pattern.accept(this));
       return new MatchStatement.Case(matchCase.patterns(), matchCase.result().accept(this));

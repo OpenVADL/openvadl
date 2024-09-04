@@ -539,10 +539,12 @@ final class MacroMatchStatement extends Statement {
 final class MatchStatement extends Statement {
   Expr candidate;
   List<Case> cases;
+  @Nullable
   Statement defaultResult;
   SourceLocation loc;
 
-  MatchStatement(Expr candidate, List<Case> cases, Statement defaultResult, SourceLocation loc) {
+  MatchStatement(Expr candidate, List<Case> cases, @Nullable Statement defaultResult,
+                 SourceLocation loc) {
     this.candidate = candidate;
     this.cases = cases;
     this.defaultResult = defaultResult;
@@ -589,9 +591,12 @@ final class MatchStatement extends Statement {
       matchCase.result.prettyPrint(0, builder);
       builder.append("\n");
     }
-    builder.append(prettyIndentString(indent + 1)).append(", _ => ");
-    defaultResult.prettyPrint(0, builder);
-    builder.append("\n").append(prettyIndentString(indent + 1)).append("}\n");
+    if (defaultResult != null) {
+      builder.append(prettyIndentString(indent + 1)).append(", _ => ");
+      defaultResult.prettyPrint(0, builder);
+      builder.append("\n");
+    }
+    builder.append(prettyIndentString(indent + 1)).append("}\n");
   }
 
   @Override
@@ -613,7 +618,7 @@ final class MatchStatement extends Statement {
   public int hashCode() {
     int result = cases.hashCode();
     result = 31 * result + cases.hashCode();
-    result = 31 * result + defaultResult.hashCode();
+    result = 31 * result + Objects.hashCode(defaultResult);
     return result;
   }
 
