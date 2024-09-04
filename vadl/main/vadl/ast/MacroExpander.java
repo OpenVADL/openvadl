@@ -567,7 +567,12 @@ class MacroExpander
 
   @Override
   public Definition visit(RecordTypeDefinition definition) {
-    return new RecordTypeDefinition(definition.recordType, definition.loc);
+    return new RecordTypeDefinition(definition.name, definition.recordType, definition.loc);
+  }
+
+  @Override
+  public Definition visit(ModelTypeDefinition definition) {
+    return new ModelTypeDefinition(definition.name, definition.projectionType, definition.loc);
   }
 
   @Override

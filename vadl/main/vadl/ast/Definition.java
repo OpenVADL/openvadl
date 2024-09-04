@@ -71,6 +71,8 @@ interface DefinitionVisitor<R> {
 
   R visit(RecordTypeDefinition definition);
 
+  R visit(ModelTypeDefinition definition);
+
   R visit(ImportDefinition importDefinition);
 }
 
@@ -2209,10 +2211,12 @@ final class ModelDefinition extends Definition {
  * This node should never leave the parser.
  */
 final class RecordTypeDefinition extends Definition {
+  Identifier name;
   RecordType recordType;
   SourceLocation loc;
 
-  RecordTypeDefinition(RecordType recordType, SourceLocation loc) {
+  RecordTypeDefinition(Identifier name, RecordType recordType, SourceLocation loc) {
+    this.name = name;
     this.recordType = recordType;
     this.loc = loc;
   }
@@ -2252,11 +2256,71 @@ final class RecordTypeDefinition extends Definition {
       return false;
     }
     RecordTypeDefinition that = (RecordTypeDefinition) o;
-    return Objects.equals(recordType, that.recordType);
+    return Objects.equals(name, that.name)
+        && Objects.equals(recordType, that.recordType);
   }
 
   @Override
   public int hashCode() {
-    return Objects.hash(recordType);
+    return Objects.hash(name, recordType);
+  }
+}
+
+/**
+ * An internal temporary placeholder of model type.
+ * This node should never leave the parser.
+ */
+final class ModelTypeDefinition extends Definition {
+  Identifier name;
+  ProjectionType projectionType;
+  SourceLocation loc;
+
+  ModelTypeDefinition(Identifier name, ProjectionType projectionType, SourceLocation loc) {
+    this.name = name;
+    this.projectionType = projectionType;
+    this.loc = loc;
+  }
+
+  @Override
+  <R> R accept(DefinitionVisitor<R> visitor) {
+    return visitor.visit(this);
+  }
+
+  @Override
+  SourceLocation location() {
+    return loc;
+  }
+
+  @Override
+  SyntaxType syntaxType() {
+    return BasicSyntaxType.ISA_DEFS;
+  }
+
+  @Override
+  void prettyPrint(int indent, StringBuilder builder) {
+    builder.append(prettyIndentString(indent));
+    builder.append("model-type ");
+    name.prettyPrint(0, builder);
+    builder.append(" = ");
+    builder.append(projectionType.print());
+    builder.append("\n");
+  }
+
+  @Override
+  public boolean equals(Object o) {
+    if (this == o) {
+      return true;
+    }
+    if (o == null || getClass() != o.getClass()) {
+      return false;
+    }
+    ModelTypeDefinition that = (ModelTypeDefinition) o;
+    return Objects.equals(name, that.name)
+        && Objects.equals(projectionType, that.projectionType);
+  }
+
+  @Override
+  public int hashCode() {
+    return Objects.hash(name, projectionType);
   }
 }

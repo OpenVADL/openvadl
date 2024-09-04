@@ -360,6 +360,10 @@ class SymbolTable {
         symbols.importFrom(importDef.moduleAst, importDef.importedSymbols);
       } else if (definition instanceof ModelDefinition model) {
         symbols.addMacro(model.toMacro(), model.location());
+      } else if (definition instanceof RecordTypeDefinition record) {
+        symbols.addRecord(record.name, record.recordType);
+      } else if (definition instanceof ModelTypeDefinition modelType) {
+        symbols.addModelType(modelType.name, modelType.projectionType);
       }
     }
 

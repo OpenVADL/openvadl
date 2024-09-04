@@ -339,6 +339,11 @@ class Ungrouper
   }
 
   @Override
+  public Definition visit(ModelTypeDefinition definition) {
+    return definition;
+  }
+
+  @Override
   public Definition visit(ImportDefinition importDefinition) {
     return importDefinition;
   }

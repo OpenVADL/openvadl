@@ -365,6 +365,12 @@ public class AstDumper
   }
 
   @Override
+  public Void visit(ModelTypeDefinition definition) {
+    dumpNode(definition);
+    return null;
+  }
+
+  @Override
   public Void visit(ImportDefinition importDefinition) {
     dumpNode(importDefinition);
     indent++;

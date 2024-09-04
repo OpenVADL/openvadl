@@ -412,14 +412,16 @@ class ParserUtils {
 
   /**
    * Loads the referenced module and makes any given symbols available in the current module.
-   * If a {@code filePath} is not specified, the first segment of the first import path is
-   * interpreted as the file path relative to this module file.
+   * Either a {@code fileId} or a {@code filePath} MUST be specified.
+   * If a {@code fileId} is used, the id will be resolved as a sibling {@code {id}.vadl} file.
+   * If a {@code filePath} is used, the file path will be resolved relative to the specification.
    *
-   * @param parser      The instance of the parser parsing the current module
-   * @param importPaths The list of symbol paths to import.
-   *                    If filePath is null, MUST have at least one element
-   * @param filePath    An optional path to the referenced specification file
-   * @param args        A list of arguments to pass to the imported module for model substitution
+   * @param parser          The instance of the parser parsing the current module
+   * @param fileId          An optional name of the referenced .vadl file
+   * @param filePath        An optional path to the referenced specification file
+   * @param importedSymbols The list of symbol paths to import
+   * @param args            A list of arguments to pass to the imported module
+   *                        for model substitution
    * @return An import definition node
    */
   static Definition importModules(Parser parser,
@@ -492,7 +494,7 @@ class ParserUtils {
    * @param segments   The segments of the import declaration, missing any leading file segment and
    *                   trailing symbol lists
    * @param symbolList The trailing list of imported symbols
-   * @return
+   * @return A list of symbol paths to import
    */
   static List<List<Identifier>> importedSymbols(List<Identifier> segments,
                                                 List<List<Identifier>> symbolList) {
