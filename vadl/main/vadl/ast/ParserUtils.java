@@ -19,6 +19,9 @@ class ParserUtils {
   static boolean[] BIN_OPS_EXCEPT_GT;
   static boolean[] BIN_OPS_EXCEPT_IN;
 
+  // Must be kept in sync with allowedIdentifierKeywords
+  static boolean[] ID_TOKENS;
+
   static {
     NO_OPS = new boolean[Parser.maxT + 1];
 
@@ -51,6 +54,34 @@ class ParserUtils {
 
     BIN_OPS_EXCEPT_IN = BIN_OPS.clone();
     BIN_OPS_EXCEPT_IN[Parser._SYM_IN] = false;
+
+    ID_TOKENS = NO_OPS.clone();
+    ID_TOKENS[Parser._identifierToken] = true;
+    ID_TOKENS[Parser._ALIAS] = true;
+    ID_TOKENS[Parser._CONSTANT] = true;
+    ID_TOKENS[Parser._ENCODE] = true;
+    ID_TOKENS[Parser._EXCEPTION] = true;
+    ID_TOKENS[Parser._GROUP] = true;
+    ID_TOKENS[Parser._INSTRUCTION] = true;
+    ID_TOKENS[Parser._MEMORY] = true;
+    ID_TOKENS[Parser._PREDICATE] = true;
+    ID_TOKENS[Parser._REGISTER] = true;
+    ID_TOKENS[Parser._SYM_IN] = true;
+    ID_TOKENS[Parser._T_BIN] = true;
+    ID_TOKENS[Parser._T_BIN_OP] = true;
+    ID_TOKENS[Parser._T_BOOL] = true;
+    ID_TOKENS[Parser._T_CALL_EX] = true;
+    ID_TOKENS[Parser._T_ENCS] = true;
+    ID_TOKENS[Parser._T_ID] = true;
+    ID_TOKENS[Parser._T_INT] = true;
+    ID_TOKENS[Parser._T_ISA_DEFS] = true;
+    ID_TOKENS[Parser._T_LIT] = true;
+    ID_TOKENS[Parser._T_STAT] = true;
+    ID_TOKENS[Parser._T_STATS] = true;
+    ID_TOKENS[Parser._T_STR] = true;
+    ID_TOKENS[Parser._T_SYM_EX] = true;
+    ID_TOKENS[Parser._T_UN_OP] = true;
+    ID_TOKENS[Parser._T_VAL] = true;
   }
 
   /**
@@ -200,17 +231,13 @@ class ParserUtils {
   /**
    * Checks whether the token is an identifier token.
    * Since some keywords are allowed as identifiers, this is not as simple as checking the type.
-   * Must be kept in sync with the "allowedIdentifierKeywords" rule.
    *
+   * @see ParserUtils#ID_TOKENS
    * @param token The token to inspect
-   * @return Whether the token is suitable for "identifier" substitution
+   * @return Whether the token is a suitable "identifier"
    */
   static boolean isIdentifierToken(Token token) {
-    return token.kind == Parser._identifierToken
-        || token.kind == Parser._T_BOOL
-        || token.kind == Parser._REGISTER
-        || token.kind == Parser._EXCEPTION
-        || token.kind == Parser._ENCODE;
+    return ID_TOKENS[token.kind];
   }
 
   /**

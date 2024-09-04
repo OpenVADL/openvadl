@@ -938,12 +938,65 @@ PRODUCTIONS
   = (identifierToken | allowedIdentifierKeywords) (. identifier = new Identifier(t.val, loc()); .)
   .
 
-  /// Must be kept in sync with the ParserUtils.isIdentifierToken function.
+  /// Must be kept in sync with ParserUtils.ID_TOKENS.
   allowedIdentifierKeywords
-  = T_BOOL
-  | REGISTER
-  | EXCEPTION
+  = // ADDRESS |
+    ALIAS
+  // | ASSERT
+  // | APPEND
+  // | BINARY
+  // | CALL
+  | CONSTANT
+  // | DESCRIPTION
   | ENCODE
+  | EXCEPTION
+  // | FETCH
+  // | FIRMWARE
+  | GROUP
+  | INSTRUCTION
+  // | INVALID
+  // | LABEL
+  | MEMORY
+  // | MNEMONIC
+  // | MODE
+  // | MODIFIER
+  // | NOP
+  // | OPERAND
+  // | OPERATION
+  | PREDICATE
+  // | PREDICTION
+  // | PROCEDURE
+  // | READ
+  // | REDIRECT
+  | REGISTER
+  // | RETURN
+  // | SEQUENCE
+  // | STAGE
+  // | START
+  // | STARTUP
+  // | STOP
+  // | SYMBOL
+  | SYM_IN
+  | T_BIN
+  | T_BIN_OP
+  | T_BOOL
+  | T_CALL_EX
+  | T_ENCS
+  // | SYMBOL
+  | T_ID
+  | T_INT
+  | T_ISA_DEFS
+  | T_LIT
+  | T_STAT
+  | T_STATS
+  | T_STR
+  | T_SYM_EX
+  | T_UN_OP
+  | T_VAL
+  // | TRANSLATION
+  // | UNIT
+  // | USER
+  // | WRITE
   // TODO Add all allowed keywords
   .
 
