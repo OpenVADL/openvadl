@@ -125,12 +125,12 @@ public class StatementTest {
                 new IfStatement(
                     new BinaryExpr(
                         new IntegerLiteral("3", loc),
-                        new OperatorExpr(Operator.Greater(), loc),
+                        new BinOpExpr(Operator.Greater(), loc),
                         new IntegerLiteral("4", loc)),
                     new IfStatement(
                         new BinaryExpr(
                             new IntegerLiteral("9", loc),
-                            new OperatorExpr(Operator.Less(), loc),
+                            new BinOpExpr(Operator.Less(), loc),
                             new IntegerLiteral("2", loc)),
                         new BlockStatement(loc),
                         new BlockStatement(loc),

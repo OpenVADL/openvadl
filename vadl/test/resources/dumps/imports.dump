@@ -1,0 +1,63 @@
+ImportDefinition
+. File
+. : StringLiteral literal: "./imports/entry.vadl" ("./imports/entry.vadl")
+. Import
+. : ' Identifier name: "A"
+. Import
+. : ' Identifier name: "B"
+. Import
+. : ' Identifier name: "TopLevelModel"
+. Module AST
+. : ImportDefinition
+. : ' File
+. : ' | Identifier name: "isa_a"
+. : ' Import
+. : ' | . Identifier name: "A"
+. : ' Module AST
+. : ' | InstructionSetDefinition
+. : ' | . Identifier name: "A"
+. : ' | . ConstantDefinition
+. : ' | . : Identifier name: "a"
+. : ' | . : IntegerLiteral literal: 1 (1)
+. : ImportDefinition
+. : ' File
+. : ' | Identifier name: "isa_a"
+. : ' Import
+. : ' | . Identifier name: "TopLevelModel"
+. : ' Module AST
+. : ' | InstructionSetDefinition
+. : ' | . Identifier name: "A"
+. : ' | . ConstantDefinition
+. : ' | . : Identifier name: "a"
+. : ' | . : IntegerLiteral literal: 1 (1)
+. : ImportDefinition
+. : ' File
+. : ' | Identifier name: "isa_b"
+. : ' Import
+. : ' | . Identifier name: "B"
+. : ' Module AST
+. : ' | InstructionSetDefinition
+. : ' | . Identifier name: "B"
+. : ' | . ConstantDefinition
+. : ' | . : Identifier name: "b"
+. : ' | . : IntegerLiteral literal: 2 (2)
+. : InstructionSetDefinition
+. : ' Identifier name: "C"
+. : ' ConstantDefinition
+. : ' | Identifier name: "c"
+. : ' | IntegerLiteral literal: 3 (3)
+ConstantDefinition
+. Identifier name: "topLevelConstant"
+. BinaryExpr operator: +
+. : IntegerLiteral literal: 456 (456)
+. : BinOpExpr +
+. : IntegerLiteral literal: 789 (789)
+InstructionSetDefinition
+. Identifier name: "ISA_A"
+. Identifier name: "A"
+InstructionSetDefinition
+. Identifier name: "ISA_B"
+. Identifier name: "B"
+. ConstantDefinition
+. : Identifier name: "modelInIsa"
+. : IntegerLiteral literal: 123 (123)

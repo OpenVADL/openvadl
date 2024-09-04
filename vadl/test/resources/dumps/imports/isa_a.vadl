@@ -1,0 +1,7 @@
+instruction set architecture A = {
+  constant a = 1
+}
+
+model TopLevelModel(): Ex = {
+  456 + 789
+}

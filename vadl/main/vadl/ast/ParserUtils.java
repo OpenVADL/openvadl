@@ -1,7 +1,14 @@
 package vadl.ast;
 
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
+import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
+import java.util.Map;
+import java.util.Objects;
 import javax.annotation.Nullable;
 import vadl.utils.SourceLocation;
 
@@ -202,7 +209,8 @@ class ParserUtils {
     return token.kind == Parser._identifierToken
         || token.kind == Parser._T_BOOL
         || token.kind == Parser._REGISTER
-        || token.kind == Parser._EXCEPTION;
+        || token.kind == Parser._EXCEPTION
+        || token.kind == Parser._ENCODE;
   }
 
   /**
@@ -227,7 +235,7 @@ class ParserUtils {
     parser.scanner.ResetPeek();
     var token = parser.scanner.Peek();
     var nextToken = parser.scanner.Peek();
-    var foundMacro = parser.symbolTable.getMacro(token.val);
+    var foundMacro = parser.macroTable.getMacro(token.val);
     if (foundMacro != null) {
       parser.scanner.ResetPeek();
       if (nextToken.kind == Parser._SYM_PAREN_OPEN) {
@@ -281,5 +289,225 @@ class ParserUtils {
       return false;
     }
     return true;
+  }
+
+  /**
+   * Casts the node to the type Expr, or reports an error and returns a dummy node of that type.
+   * Useful in the parser, where throwing cast exceptions is not the best way of error reporting.
+   */
+  static Expr castExpr(Parser parser, Node node) {
+    if (node instanceof Expr expr) {
+      return expr;
+    } else {
+      parser.errors.SemErr(node.location().begin().line(), node.location().begin().column(),
+          "Expected node of type Ex, received " + node.syntaxType().print() + " - " + node);
+      return new Identifier("invalid", node.location());
+    }
+  }
+
+  /**
+   * Casts the node to the type Encs, or reports an error and returns a dummy node of that type.
+   * Useful in the parser, where throwing cast exceptions is not the best way of error reporting.
+   */
+  static FieldEncodingOrPlaceholder castEncs(Parser parser, Node node) {
+    if (node instanceof FieldEncodingOrPlaceholder fieldEncodingOrPlaceholder) {
+      return fieldEncodingOrPlaceholder;
+    } else {
+      parser.errors.SemErr(node.location().begin().line(), node.location().begin().column(),
+          "Expected node of type Encs, received " + node.syntaxType().print() + " - " + node);
+      return new EncodingDefinition.FieldEncoding(new Identifier("invalid", node.location()),
+          new StringLiteral("<<invalid>>", node.location()));
+    }
+  }
+
+  /**
+   * Casts the node to the type Id, or reports an error and returns a dummy node of that type.
+   * Useful in the parser, where throwing cast exceptions is not the best way of error reporting.
+   */
+  static IdentifierOrPlaceholder castId(Parser parser, Node node) {
+    if (node instanceof IdentifierOrPlaceholder identifierOrPlaceholder) {
+      return identifierOrPlaceholder;
+    } else {
+      parser.errors.SemErr(node.location().begin().line(), node.location().begin().column(),
+          "Expected node of type Id, received " + node.syntaxType().print() + " - " + node);
+      return new Identifier("invalid", node.location());
+    }
+  }
+
+  /**
+   * Casts the node to the type BinOp, or reports an error and returns a dummy node of that type.
+   * Useful in the parser, where throwing cast exceptions is not the best way of error reporting.
+   */
+  static IsBinOp castBinOp(Parser parser, Node node) {
+    if (node instanceof IsBinOp isBinOp) {
+      return isBinOp;
+    } else {
+      parser.errors.SemErr(node.location().begin().line(), node.location().begin().column(),
+          "Expected node of type BinOp, received " + node.syntaxType().print() + " - " + node);
+      return new BinOpExpr(Operator.Xor(), node.location());
+    }
+  }
+
+  /**
+   * Casts the node to the type IsaDefs, or reports an error and returns a dummy node of that type.
+   * Useful in the parser, where throwing cast exceptions is not the best way of error reporting.
+   */
+  static Definition castDef(Parser parser, Node node) {
+    if (node instanceof Definition definition) {
+      return definition;
+    } else {
+      parser.errors.SemErr(node.location().begin().line(), node.location().begin().column(),
+          "Expected node of type IsaDefs, received " + node.syntaxType().print() + " - " + node);
+      return new ConstantDefinition(new Identifier("invalid", node.location()), null,
+          new Identifier("invalid", node.location()), node.location());
+    }
+  }
+
+  /**
+   * Casts the node to the type Stat, or reports an error and returns a dummy node of that type.
+   * Useful in the parser, where throwing cast exceptions is not the best way of error reporting.
+   */
+  static Statement castStat(Parser parser, Node node) {
+    if (node instanceof Statement statement) {
+      return statement;
+    } else {
+      parser.errors.SemErr(node.location().begin().line(), node.location().begin().column(),
+          "Expected node of type Stat, received " + node.syntaxType().print() + " - " + node);
+      return new CallStatement(new Identifier("invalid", node.location()));
+    }
+  }
+
+  /**
+   * Casts the node to the type Stats, or reports an error and returns a dummy node of that type.
+   * Useful in the parser, where throwing cast exceptions is not the best way of error reporting.
+   */
+  static Statement castStats(Parser parser, Node node) {
+    if (node instanceof Statement statement) {
+      return statement;
+    } else {
+      parser.errors.SemErr(node.location().begin().line(), node.location().begin().column(),
+          "Expected node of type Stats, received " + node.syntaxType().print() + " - " + node);
+      return new CallStatement(new Identifier("invalid", node.location()));
+    }
+  }
+
+  static Node expandMacro(Parser parser, Node node) {
+    if (node instanceof MacroInstance macroInstance
+        && macroInstance.macroOrPlaceholder() instanceof Macro) {
+      var macroExpander = new MacroExpander(Map.of(), parser.macroOverrides);
+      return macroExpander.expandNode(node);
+    }
+    return node;
+  }
+
+  static void readMacroSymbols(SymbolTable macroTable, List<Definition> definitions) {
+    for (Definition definition : definitions) {
+      if (definition instanceof DefinitionList list) {
+        readMacroSymbols(macroTable, list.items);
+      } else if (definition instanceof ModelDefinition modelDefinition) {
+        macroTable.addMacro(modelDefinition.toMacro(), modelDefinition.location());
+      }
+    }
+  }
+
+  /**
+   * Loads the referenced module and makes any given symbols available in the current module.
+   * Either a {@code fileId} or a {@code filePath} MUST be specified.
+   * If a {@code fileId} is used, the id will be resolved as a sibling {@code {id}.vadl} file.
+   * If a {@code filePath} is used, the file path will be resolved relative to the specification.
+   *
+   * @param parser          The instance of the parser parsing the current module
+   * @param fileId          An optional name of the referenced .vadl file
+   * @param filePath        An optional path to the referenced specification file
+   * @param importedSymbols The list of symbol paths to import
+   * @param args            A list of arguments to pass to the imported module
+   *                        for model substitution
+   * @return An import definition node
+   */
+  static Definition importModules(Parser parser,
+                                  @Nullable Identifier fileId, @Nullable StringLiteral filePath,
+                                  List<List<Identifier>> importedSymbols,
+                                  List<StringLiteral> args, SourceLocation loc) {
+    var modulePath = filePath == null
+        ? resolveUri(parser, Objects.requireNonNull(fileId)) : resolveUri(parser, filePath.value);
+    if (modulePath != null) {
+      var macroOverrides = new HashMap<String, String>();
+      for (StringLiteral arg : args) {
+        var keyValue = arg.value.split("=", 2);
+        macroOverrides.put(keyValue[0], keyValue[1]);
+      }
+      try {
+        var ast = VadlParser.parse(modulePath, macroOverrides);
+        parser.macroTable.importFrom(ast, importedSymbols);
+        return new ImportDefinition(ast, importedSymbols, fileId, filePath, args, loc);
+      } catch (Exception e) {
+        parser.errors.SemErr("Error during module evaluation - " + e);
+      }
+    }
+    return new ConstantDefinition(new Identifier("invalid", parser.loc()), null,
+        new Identifier("invalid", parser.loc()), parser.loc());
+  }
+
+  static @Nullable Path resolveUri(Parser parser, IsId importPath) {
+    if (importPath instanceof Identifier id) {
+      return resolveUri(parser, id.name + ".vadl");
+    } else if (importPath instanceof IdentifierPath identifierPath) {
+      return resolveUri(parser, ((Identifier) identifierPath.segments.get(0)).name + ".vadl");
+    } else {
+      parser.errors.SemErr("Could not resolve module path: " + importPath);
+      return null;
+    }
+  }
+
+  static @Nullable Path resolveUri(Parser parser, String name) {
+    var resolutionUri = Objects.requireNonNullElse(parser.resolutionUri, parser.sourceFile);
+    var relativeToSpec = Paths.get(resolutionUri.resolve(name));
+    if (Files.isRegularFile(relativeToSpec)) {
+      return relativeToSpec;
+    }
+    var relativeToWorkdir = Paths.get(name);
+    if (Files.isRegularFile(relativeToWorkdir)) {
+      return relativeToWorkdir;
+    }
+    parser.errors.SemErr("Could not resolve module path: " + name);
+    return null;
+  }
+
+  /**
+   * Checks whether the given token is a valid (concrete) unary operator token.
+   * Needs to be kept in sync with the {@code unaryOperator} rule.
+   *
+   * @param token The token to check
+   * @return Whether token is a unary operator token
+   */
+  static boolean isUnaryOperator(Token token) {
+    return token.kind == Parser._SYM_MINUS
+        || token.kind == Parser._SYM_EXCL
+        || token.kind == Parser._SYM_TILDE;
+  }
+
+  /**
+   * Builds the list of imported symbol paths for an import declaration.
+   * For example, {@code "./file.vadl"::ISA_A::{Enum_A, Enum_B}} will lead to the result
+   * {@code [["ISA_A", "Enum_A"], ["ISA_A", "Enum_B"]]}
+   *
+   * @param segments   The segments of the import declaration, missing any leading file segment and
+   *                   trailing symbol lists
+   * @param symbolList The trailing list of imported symbols
+   * @return A list of symbol paths to import
+   */
+  static List<List<Identifier>> importedSymbols(List<Identifier> segments,
+                                                List<List<Identifier>> symbolList) {
+    if (symbolList.isEmpty()) {
+      return List.of(segments);
+    } else {
+      var result = new ArrayList<List<Identifier>>();
+      for (List<Identifier> symbols : symbolList) {
+        var path = new ArrayList<>(segments);
+        path.addAll(symbols);
+        result.add(path);
+      }
+      return result;
+    }
   }
 }

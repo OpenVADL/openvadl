@@ -93,7 +93,7 @@ InstructionSetDefinition
 . : ' | . : ' | Identifier name: "rs1"
 . : ' | . : TypeLiteral
 . : ' | . : ' Identifier name: "Bits"
-. : ' | . OperatorExpr +
+. : ' | . BinOpExpr +
 . : ' | . CastExpr
 . : ' | . : CallExpr
 . : ' | . : ' Identifier name: "X"
@@ -121,7 +121,7 @@ InstructionSetDefinition
 . : ' | . : ' | . Identifier name: "rs1"
 . : ' | . : ' TypeLiteral
 . : ' | . : ' | Identifier name: "Bits"
-. : ' | . : OperatorExpr +
+. : ' | . : BinOpExpr +
 . : ' | . : CastExpr
 . : ' | . : ' CallExpr
 . : ' | . : ' | Identifier name: "X"

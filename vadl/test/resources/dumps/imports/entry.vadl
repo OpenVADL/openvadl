@@ -1,0 +1,7 @@
+import isa_a::A
+import isa_a::TopLevelModel
+import isa_b::B
+
+instruction set architecture C = {
+  constant c = 3
+}

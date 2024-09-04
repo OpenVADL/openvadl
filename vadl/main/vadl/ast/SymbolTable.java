@@ -136,6 +136,26 @@ class SymbolTable {
     symbols.putAll(other.symbols);
   }
 
+  void importFrom(Ast moduleAst, List<List<Identifier>> importedSymbols) {
+    for (List<Identifier> importedSymbolSegments : importedSymbols) {
+      var importedSymbol = new StringBuilder();
+      for (Identifier segment : importedSymbolSegments) {
+        if (!importedSymbol.isEmpty()) {
+          importedSymbol.append("::");
+        }
+        importedSymbol.append(segment.name);
+      }
+      var symbol = moduleAst.rootSymbolTable().resolveSymbol(importedSymbol.toString());
+      var location = importedSymbolSegments.get(0).location()
+          .join(importedSymbolSegments.get(importedSymbolSegments.size() - 1).location());
+      if (symbol == null) {
+        reportError("Unresolved symbol " + importedSymbol, location);
+      } else {
+        defineSymbol(symbol, location);
+      }
+    }
+  }
+
   private void verifyAvailable(String name, SourceLocation loc) {
     if (symbols.containsKey(name)) {
       reportError("Duplicate definition: " + name, loc);
@@ -228,6 +248,8 @@ class SymbolTable {
    * in the linked "format" definition.
    * Before: Ast is fully Macro-expanded
    * After: Ast is fully Macro-expanded and all relevant nodes have "symbolTable" set.
+   *
+   * @see VerificationPass
    */
   static class SymbolCollector {
     static void collectSymbols(Ast ast) {
@@ -334,6 +356,14 @@ class SymbolTable {
         symbols.defineSymbol(new ValuedSymbol(exception.id().name, null, SymbolType.EXCEPTION),
             exception.loc);
         collectSymbols(symbols, exception.statement);
+      } else if (definition instanceof ImportDefinition importDef) {
+        symbols.importFrom(importDef.moduleAst, importDef.importedSymbols);
+      } else if (definition instanceof ModelDefinition model) {
+        symbols.addMacro(model.toMacro(), model.location());
+      } else if (definition instanceof RecordTypeDefinition record) {
+        symbols.addRecord(record.name, record.recordType);
+      } else if (definition instanceof ModelTypeDefinition modelType) {
+        symbols.addModelType(modelType.name, modelType.projectionType);
       }
     }
 

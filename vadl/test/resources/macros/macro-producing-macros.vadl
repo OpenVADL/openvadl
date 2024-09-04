@@ -3,17 +3,27 @@
 
 instruction set architecture MacroProducingMacros = {
 
-  model LUTProducer(name: Id): IsaDefs = {
-    model $name(candidate: Ex, cond1: Ex, res1: Ex, cond2: Ex, res2: Ex, defaultRes: Ex): Ex = {
+  record BinOpParams (left: Ex, op: BinOp, right: Ex)
+  model-type BinOpModel = (BinOpParams) -> Ex
+
+  model TwiceAppliedBinOp(params: BinOpParams): Ex = {
+    $params.left $params.op $params.right $params.op $params.right
+  }
+
+  model LUTProducer(name: Id, cond1: Ex, cond2: Ex, params: BinOpParams): IsaDefs = {
+    model $name(candidate: Ex, res1: Ex, res2: Ex, defaultModel: BinOpModel): Ex = {
       match $candidate with
       { $cond1 => $res1
       , $cond2 => $res2
-      , _ => $defaultRes
+      , _ => $defaultModel(( $params.left ; $params.op ; $params.right ))
       }
     }
   }
 
-  $LUTProducer(SimpleLut)
-  constant a = $SimpleLut(5+2 ; 7 ; 1 ; 8 ; 0 ; -1)
-}
+  model LUTInvoker(): IsaDefs = {
+    $LUTProducer(SimpleLut ; 7 ; 8 ; ( 9 ; * ; 4 ))
+    constant a = $SimpleLut(5+2 ; 1 ; 0 ; TwiceAppliedBinOp)
+  }
 
+  $LUTInvoker()
+}

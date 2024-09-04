@@ -365,6 +365,41 @@ public class AstDumper
   }
 
   @Override
+  public Void visit(ModelTypeDefinition definition) {
+    dumpNode(definition);
+    return null;
+  }
+
+  @Override
+  public Void visit(ImportDefinition importDefinition) {
+    dumpNode(importDefinition);
+    indent++;
+    builder.append(indentString()).append("File\n");
+    if (importDefinition.fileId != null) {
+      dumpChildren(importDefinition.fileId);
+    }
+    if (importDefinition.filePath != null) {
+      dumpChildren(importDefinition.filePath);
+    }
+    for (List<Identifier> importPath : importDefinition.importedSymbols) {
+      builder.append(indentString()).append("Import\n");
+      indent++;
+      dumpChildren(importPath);
+      indent--;
+    }
+    if (!importDefinition.args.isEmpty()) {
+      builder.append(indentString()).append("Args\n");
+      indent++;
+      dumpChildren(importDefinition.args);
+      indent--;
+    }
+    builder.append(indentString()).append("Module AST\n");
+    dumpChildren(importDefinition.moduleAst.definitions);
+    indent--;
+    return null;
+  }
+
+  @Override
   public Void visit(CallExpr expr) {
     dumpNode(expr);
     dumpChildren((Expr) expr.target);
@@ -418,7 +453,13 @@ public class AstDumper
   }
 
   @Override
-  public Void visit(OperatorExpr expr) {
+  public Void visit(BinOpExpr expr) {
+    dumpNode(expr);
+    return null;
+  }
+
+  @Override
+  public Void visit(UnOpExpr expr) {
     dumpNode(expr);
     return null;
   }

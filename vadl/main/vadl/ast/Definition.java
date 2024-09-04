@@ -1,8 +1,10 @@
 package vadl.ast;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Locale;
+import java.util.Map;
 import java.util.Objects;
 import java.util.stream.Collectors;
 import javax.annotation.Nullable;
@@ -68,6 +70,10 @@ interface DefinitionVisitor<R> {
   R visit(ModelDefinition definition);
 
   R visit(RecordTypeDefinition definition);
+
+  R visit(ModelTypeDefinition definition);
+
+  R visit(ImportDefinition importDefinition);
 }
 
 class ConstantDefinition extends Definition {
@@ -110,8 +116,12 @@ class ConstantDefinition extends Definition {
       builder.append(": ");
       type.prettyPrint(indent, builder);
     }
-    builder.append(" = ");
-    value.prettyPrint(indent, builder);
+    if (isBlockLayout(value)) {
+      builder.append(" =\n");
+    } else {
+      builder.append(" = ");
+    }
+    value.prettyPrint(indent + 1, builder);
     builder.append("\n");
   }
 
@@ -1799,7 +1809,7 @@ final class PlaceholderDefinition extends Definition {
  * An internal temporary placeholder of macro instantiations.
  * This node should never leave the parser.
  */
-final class MacroInstanceDefinition extends Definition {
+final class MacroInstanceDefinition extends Definition implements MacroInstance {
   MacroOrPlaceholder macro;
   List<Node> arguments;
   SourceLocation loc;
@@ -1867,6 +1877,11 @@ final class MacroInstanceDefinition extends Definition {
     result = 31 * result + arguments.hashCode();
     return result;
   }
+
+  @Override
+  public MacroOrPlaceholder macroOrPlaceholder() {
+    return macro;
+  }
 }
 
 /**
@@ -1917,6 +1932,113 @@ final class MacroMatchDefinition extends Definition {
   @Override
   public int hashCode() {
     return macroMatch.hashCode();
+  }
+}
+
+class ImportDefinition extends Definition {
+
+  Ast moduleAst;
+  List<List<Identifier>> importedSymbols;
+  @Nullable
+  Identifier fileId;
+  @Nullable
+  StringLiteral filePath;
+  List<StringLiteral> args;
+  SourceLocation loc;
+
+  ImportDefinition(Ast moduleAst, List<List<Identifier>> importedSymbols,
+                   @Nullable Identifier fileId, @Nullable StringLiteral filePath,
+                   List<StringLiteral> args, SourceLocation loc) {
+    Objects.requireNonNullElse(fileId, filePath);
+    this.moduleAst = moduleAst;
+    this.importedSymbols = importedSymbols;
+    this.fileId = fileId;
+    this.filePath = filePath;
+    this.args = args;
+    this.loc = loc;
+  }
+
+  @Override
+  <R> R accept(DefinitionVisitor<R> visitor) {
+    return visitor.visit(this);
+  }
+
+  @Override
+  SourceLocation location() {
+    return loc;
+  }
+
+  @Override
+  SyntaxType syntaxType() {
+    return BasicSyntaxType.INVALID;
+  }
+
+  @Override
+  void prettyPrint(int indent, StringBuilder builder) {
+    builder.append("import ");
+    if (fileId != null) {
+      fileId.prettyPrint(0, builder);
+    } else if (filePath != null) {
+      filePath.prettyPrint(0, builder);
+    }
+    if (!importedSymbols.isEmpty()) {
+      builder.append("::{");
+      var isFirst = true;
+      for (List<Identifier> importedSymbol : importedSymbols) {
+        if (!isFirst) {
+          builder.append(", ");
+        }
+        isFirst = false;
+        var isFirstSegment = true;
+        for (Identifier segment : importedSymbol) {
+          if (!isFirstSegment) {
+            builder.append("::");
+          }
+          isFirstSegment = false;
+          segment.prettyPrint(0, builder);
+        }
+      }
+      builder.append("}");
+    }
+    if (!args.isEmpty()) {
+      builder.append(" with (");
+      var isFirst = true;
+      for (StringLiteral arg : args) {
+        if (!isFirst) {
+          builder.append(", ");
+        }
+        isFirst = false;
+        arg.prettyPrint(0, builder);
+      }
+      builder.append(")");
+    }
+    builder.append("\n");
+  }
+
+  @Override
+  public boolean equals(Object o) {
+    if (this == o) {
+      return true;
+    }
+    if (o == null || getClass() != o.getClass()) {
+      return false;
+    }
+    ImportDefinition that = (ImportDefinition) o;
+    return Objects.equals(moduleAst, that.moduleAst)
+        && Objects.equals(importedSymbols, that.importedSymbols)
+        && Objects.equals(fileId, that.fileId)
+        && Objects.equals(filePath, that.filePath)
+        && Objects.equals(args, that.args);
+  }
+
+  @Override
+  public int hashCode() {
+    return Objects.hash(moduleAst, importedSymbols, fileId, filePath, args);
+  }
+
+  @Override
+  public String toString() {
+    return this.getClass().getSimpleName();
   }
 }
 
@@ -1983,14 +2105,38 @@ class DefinitionList extends Definition {
  * This node should never leave the parser.
  */
 final class ModelDefinition extends Definition {
+  /**
+   * Either a concrete identifier for this model or, if it is a model-in-model, a placeholder ID.
+   */
   IdentifierOrPlaceholder id;
+
+  /**
+   * The list of formal parameters for the represented macro.
+   */
   List<MacroParam> params;
+
+  /**
+   * The actual macro body to be templated.
+   */
   Node body;
+
+  /**
+   * A macro return type - should only be a {@link BasicSyntaxType}.
+   */
   SyntaxType returnType;
+
+  /**
+   * In a model-in-model situation, the parent model's arguments can be referenced in the inner
+   * model. To preserve their value during macro expansion, the bound arguments field is used.
+   *
+   * @see MacroExpander#visit(ModelDefinition)
+   * @see MacroExpander#collectMacroParameters(Macro, List, SourceLocation)
+   */
+  Map<String, Node> boundArguments = new HashMap<>();
   SourceLocation loc;
 
   ModelDefinition(IdentifierOrPlaceholder id, List<MacroParam> params, Node body,
-                         SyntaxType returnType, SourceLocation loc) {
+                  SyntaxType returnType, SourceLocation loc) {
     this.id = id;
     this.params = params;
     this.body = body;
@@ -1998,12 +2144,9 @@ final class ModelDefinition extends Definition {
     this.loc = loc;
   }
 
-  Identifier id() {
-    return (Identifier) id;
-  }
-
   Macro toMacro() {
-    return new Macro(new Identifier(id.pathToString(), id.location()), params, body, returnType);
+    return new Macro(new Identifier(id.pathToString(), id.location()), params, body, returnType,
+        boundArguments);
   }
 
   @Override
@@ -2053,12 +2196,13 @@ final class ModelDefinition extends Definition {
     ModelDefinition that = (ModelDefinition) o;
     return Objects.equals(id, that.id) && Objects.equals(params, that.params)
         && Objects.equals(body, that.body)
-        && Objects.equals(returnType, that.returnType);
+        && Objects.equals(returnType, that.returnType)
+        && Objects.equals(boundArguments, that.boundArguments);
   }
 
   @Override
   public int hashCode() {
-    return Objects.hash(id, params, body, returnType);
+    return Objects.hash(id, params, body, returnType, boundArguments);
   }
 }
 
@@ -2067,10 +2211,12 @@ final class ModelDefinition extends Definition {
  * This node should never leave the parser.
  */
 final class RecordTypeDefinition extends Definition {
+  Identifier name;
   RecordType recordType;
   SourceLocation loc;
 
-  RecordTypeDefinition(RecordType recordType, SourceLocation loc) {
+  RecordTypeDefinition(Identifier name, RecordType recordType, SourceLocation loc) {
+    this.name = name;
     this.recordType = recordType;
     this.loc = loc;
   }
@@ -2110,11 +2256,71 @@ final class RecordTypeDefinition extends Definition {
       return false;
     }
     RecordTypeDefinition that = (RecordTypeDefinition) o;
-    return Objects.equals(recordType, that.recordType);
+    return Objects.equals(name, that.name)
+        && Objects.equals(recordType, that.recordType);
   }
 
   @Override
   public int hashCode() {
-    return Objects.hash(recordType);
+    return Objects.hash(name, recordType);
+  }
+}
+
+/**
+ * An internal temporary placeholder of model type.
+ * This node should never leave the parser.
+ */
+final class ModelTypeDefinition extends Definition {
+  Identifier name;
+  ProjectionType projectionType;
+  SourceLocation loc;
+
+  ModelTypeDefinition(Identifier name, ProjectionType projectionType, SourceLocation loc) {
+    this.name = name;
+    this.projectionType = projectionType;
+    this.loc = loc;
+  }
+
+  @Override
+  <R> R accept(DefinitionVisitor<R> visitor) {
+    return visitor.visit(this);
+  }
+
+  @Override
+  SourceLocation location() {
+    return loc;
+  }
+
+  @Override
+  SyntaxType syntaxType() {
+    return BasicSyntaxType.ISA_DEFS;
+  }
+
+  @Override
+  void prettyPrint(int indent, StringBuilder builder) {
+    builder.append(prettyIndentString(indent));
+    builder.append("model-type ");
+    name.prettyPrint(0, builder);
+    builder.append(" = ");
+    builder.append(projectionType.print());
+    builder.append("\n");
+  }
+
+  @Override
+  public boolean equals(Object o) {
+    if (this == o) {
+      return true;
+    }
+    if (o == null || getClass() != o.getClass()) {
+      return false;
+    }
+    ModelTypeDefinition that = (ModelTypeDefinition) o;
+    return Objects.equals(name, that.name)
+        && Objects.equals(projectionType, that.projectionType);
+  }
+
+  @Override
+  public int hashCode() {
+    return Objects.hash(name, projectionType);
   }
 }

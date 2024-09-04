@@ -1,0 +1,9 @@
+import "./imports/entry.vadl"::{A, B, TopLevelModel}
+
+constant topLevelConstant = $TopLevelModel()
+
+instruction set architecture ISA_A extending A = {}
+
+instruction set architecture ISA_B extending B = {
+  $ModelInIsa()
+}

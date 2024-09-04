@@ -6,6 +6,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
+import javax.annotation.Nullable;
 
 import vadl.ast.EncodingDefinition.FieldEncoding;
 import vadl.ast.FunctionDefinition.Parameter;
@@ -17,12 +18,13 @@ import static vadl.ast.ParserUtils.*;
 
 COMPILER vadl
   java.net.URI sourceFile = SourceLocation.INVALID_SOURCE_LOCATION.uri();
+  @Nullable java.net.URI resolutionUri;
   Deque<List<MacroParam>> macroContext = new ArrayDeque<>();
   Ast ast = new Ast();
-  SymbolTable symbolTable = new SymbolTable();
+  SymbolTable macroTable = new SymbolTable();
   Map<String, Identifier> macroOverrides = new HashMap<>();
 
-  { symbolTable.loadBuiltins(); }
+  { macroTable.loadBuiltins(); }
 
   SourceLocation loc() {
     return locationFromToken(this, t);
@@ -50,103 +52,104 @@ TOKENS
   ( '"' { "\\" (letter | '"' | "'" | "\\") | validDQStringCharacters } '"') |
   ( "'" { "\\" (letter | '"' | "'" | "\\") | validSQStringCharacters } "'").
 
-  T_STATS = "Stats".
-  T_STAT = "Stat".
-  T_ENCS = "Encs".
+  T_BIN      = "Bin".
+  T_BIN_OP   = "BinOp".
+  T_BOOL     = "Bool".
+  T_CALL_EX  = "CallEx".
+  T_ENCS     = "Encs".
+  T_EX       = "Ex".
+  T_ID       = "Id".
+  T_INT      = "Int".
   T_ISA_DEFS = "IsaDefs".
-  T_EX = "Ex".
-  T_LIT = "Lit".
-  T_STR = "Str".
-  T_VAL = "Val".
-  T_BOOL = "Bool".
-  T_INT = "Int".
-  T_BIN = "Bin".
-  T_CALL_EX = "CallEx".
-  T_SYM_EX = "SymEx".
-  T_ID = "Id".
-  T_BIN_OP = "BinOp".
-  T_UN_OP = "UnOp".
+  T_LIT      = "Lit".
+  T_STAT     = "Stat".
+  T_STATS    = "Stats".
+  T_STR      = "Str".
+  T_SYM_EX   = "SymEx".
+  T_UN_OP    = "UnOp".
+  T_VAL      = "Val".
 
-  INSTRUCTION = "instruction".
-  SET = "set".
+  ALIAS        = "alias".
   ARCHITECTURE = "architecture".
-  CONSTANT = "constant".
-  FORMAT = "format".
-  PROGRAM = "program".
-  GROUP = "group".
-  COUNTER = "counter".
-  ENCODING = "encoding".
-  ASSEMBLY = "assembly".
-  MEMORY = "memory".
-  REGISTER = "register".
-  MODEL = "model".
-  FILE = "file".
-  ALIAS = "alias".
-  LET = "let".
-  KW_IF = "if".
-  THEN = "then".
-  ELSE = "else".
-  USING = "using".
-  FUNCTION = "function".
-  TRUE = "true".
-  FALSE = "false".
-  EXTENDING = "extending".
-  MATCH = "match".
-  ENUMERATION = "enumeration".
-  WITH = "with".
-  RAISE = "raise".
-  EXCEPTION = "exception".
-  RECORD = "record".
-  MODEL_TYPE = "model-type".
-  EXTEND_ID = "ExtendId".
-  ID_TO_STR = "IdToStr".
-  PSEUDO = "pseudo".
-  KW_COMPILER = "compiler".
-  PREDICATE = "predicate".
-  ENCODE = "encode".
+  ASSEMBLY     = "assembly".
+  COMPILER_KW  = "compiler".
+  CONSTANT     = "constant".
+  COUNTER      = "counter".
+  ELSE         = "else".
+  ENCODE       = "encode".
+  ENCODING     = "encoding".
+  ENUMERATION  = "enumeration".
+  EXCEPTION    = "exception".
+  EXTEND_ID    = "ExtendId".
+  EXTENDING    = "extending".
+  FALSE        = "false".
+  FILE         = "file".
+  FORMAT       = "format".
+  FUNCTION     = "function".
+  GROUP        = "group".
+  ID_TO_STR    = "IdToStr".
+  IF_KW        = "if".
+  IMPORT       = "import".
+  INSTRUCTION  = "instruction".
+  LET          = "let".
+  MATCH        = "match".
+  MEMORY       = "memory".
+  MODEL        = "model".
+  MODEL_TYPE   = "model-type".
+  PREDICATE    = "predicate".
+  PROGRAM      = "program".
+  PSEUDO       = "pseudo".
+  RAISE        = "raise".
+  RECORD       = "record".
+  REGISTER     = "register".
+  SET          = "set".
+  THEN         = "then".
+  TRUE         = "true".
+  USING        = "using".
+  WITH         = "with".
 
-  SYM_IN = "in".
-  SYM_AS = "as".
-  SYM_EQ = "=".
-  SYM_GT = ">".
-  SYM_LT = "<".
-  SYM_NIN = "!in".
-  SYM_NEQ = "!=".
-  SYM_GTE = ">=".
-  SYM_LTE = "<=".
-  SYM_MUL = "*".
-  SYM_DIV = "/".
-  SYM_MOD = "%".
-  SYM_DOT = ".".
-  SYM_SHR = ">>".
-  SYM_SHL = "<<".
-  SYM_ROTR = "<>>".
-  SYM_ROTL = "<<>".
-  SYM_EXCL = "!".
-  SYM_PLUS = "+".
-  SYM_MINUS = "-".
-  SYM_TILDE = "~".
-  SYM_COLON = ":".
-  SYM_COMMA = ",".
-  SYM_CARET = "^".
-  SYM_BINOR = "|".
-  SYM_LOGOR = "||".
-  SYM_ARROW = "->".
-  SYM_RANGE = "..".
-  SYM_BINAND = "&".
-  SYM_LOGAND = "&&".
-  SYM_ASSIGN = ":=".
-  SYM_DOLLAR = "$".
-  SYM_BIGARROW = "=>".
-  SYM_SEMICOLON = ";".
-  SYM_NAMESPACE = "::".
-  SYM_UNDERSCORE = "_".
-  SYM_PAREN_OPEN = "(".
-  SYM_BRACK_OPEN = "[".
-  SYM_BRACE_OPEN = "{".
-  SYM_PAREN_CLOSE = ")".
-  SYM_BRACK_CLOSE = "]".
+  SYM_ARROW       = "->".
+  SYM_AS          = "as".
+  SYM_ASSIGN      = ":=".
+  SYM_BIGARROW    = "=>".
+  SYM_BINAND      = "&".
+  SYM_BINOR       = "|".
   SYM_BRACE_CLOSE = "}".
+  SYM_BRACE_OPEN  = "{".
+  SYM_BRACK_CLOSE = "]".
+  SYM_BRACK_OPEN  = "[".
+  SYM_CARET       = "^".
+  SYM_COLON       = ":".
+  SYM_COMMA       = ",".
+  SYM_DIV         = "/".
+  SYM_DOLLAR      = "$".
+  SYM_DOT         = ".".
+  SYM_EQ          = "=".
+  SYM_EXCL        = "!".
+  SYM_GT          = ">".
+  SYM_GTE         = ">=".
+  SYM_IN          = "in".
+  SYM_LOGAND      = "&&".
+  SYM_LOGOR       = "||".
+  SYM_LT          = "<".
+  SYM_LTE         = "<=".
+  SYM_MINUS       = "-".
+  SYM_MOD         = "%".
+  SYM_MUL         = "*".
+  SYM_NAMESPACE   = "::".
+  SYM_NEQ         = "!=".
+  SYM_NIN         = "!in".
+  SYM_PAREN_CLOSE = ")".
+  SYM_PAREN_OPEN  = "(".
+  SYM_PLUS        = "+".
+  SYM_RANGE       = "..".
+  SYM_ROTL        = "<<>".
+  SYM_ROTR        = "<>>".
+  SYM_SEMICOLON   = ";".
+  SYM_SHL         = "<<".
+  SYM_SHR         = ">>".
+  SYM_TILDE       = "~".
+  SYM_UNDERSCORE  = "_".
 
 COMMENTS FROM "//" TO '\n'
 COMMENTS FROM "/*" TO "*/" NESTED
@@ -158,14 +161,14 @@ PRODUCTIONS
   vadl =
   {
     topLevelDefinitions<out Definition def> (. ast.definitions.add(def); .)
-    | macroDef<out ModelDefinition def>     (. symbolTable.addMacro(def.toMacro(), def.location()); .)
-    | modelTypeDef
+    | macroDef<out ModelDefinition def>     (. ast.definitions.add(def); macroTable.addMacro(def.toMacro(), def.location()); .)
   }.
 
   // -- DEFINITIONS --------------------------------------------------------------------------------------------------
   topLevelDefinitions<out Definition def> (. def = null; .)
   = instructionsetDefinition<out def>
   | commonDefinition<out def>
+  | importDefinition<out def>
   .
 
   commonDefinition<out Definition def>    (. def = null; .)
@@ -174,43 +177,32 @@ PRODUCTIONS
   | usingDefinition<out def>
   | functionDefinition<out def>
   | recordDefinition<out def>
+  | modelTypeDefinition<out def>
   .
 
-  instructionsetDefinition<out InstructionSetDefinition isaDef>
+  instructionsetDefinition<out InstructionSetDefinition isaDef> (. macroTable = macroTable.createChild(); .)
   = INSTRUCTION SET ARCHITECTURE                                (. var startLocation = loc(); .)
     identifier<out Identifier identifier>                       (. Identifier extending = null; .)
     [
       EXTENDING
-      identifier<out extending>
+      identifier<out extending>                                 (. readMacroSymbols(macroTable, Objects.requireNonNull(macroTable.findIsa(extending)).definitions); .)
     ]
     SYM_EQ SYM_BRACE_OPEN
-    isaDefinitionList<.out List<Definition> definitions, true.>
-    SYM_BRACE_CLOSE                                             (. isaDef = new InstructionSetDefinition(identifier, extending, definitions, startLocation.join(loc())); .)
+    isaDefinitionList<.out List<Definition> definitions.>       (. macroTable = Objects.requireNonNull(macroTable.parent); .)
+    SYM_BRACE_CLOSE                                             (. isaDef = new InstructionSetDefinition(identifier, extending, definitions, startLocation.join(loc()));
+                                                                   macroTable.defineSymbol(new SymbolTable.IsaSymbol(identifier.name, isaDef), identifier.location()); .)
   .
 
-  isaDefinitionList<. out List<Definition> definitions, boolean expand .> (. definitions = new ArrayList<>(); .)
+  isaDefinitionList<.out List<Definition> definitions.> (. definitions = new ArrayList<>(); .)
   = {
     annotations<.out List<Annotation> annotations.>
-    isaDefinition<out Definition def>                                     (. def.annotations.annotations().addAll(annotations); definitions.add(def); .)
-  | macroDef<out ModelDefinition def>                                     (. definitions.add(def); symbolTable.addMacro(def.toMacro(), def.location()); .)
-  | modelTypeDef
+    isaDefinition<out Definition def>                   (. def.annotations.annotations().addAll(annotations); definitions.add(def); .)
+  | macroDef<out ModelDefinition def>                   (. definitions.add(def); macroTable.addMacro(def.toMacro(), def.location()); .)
   | // IF (isMacroReplacementOfType(this, BasicSyntaxType.ISA_DEFS))
-    macroReplacement<out Node n>                                          (. if (expand) {
-                                                                               var expanded = new MacroExpander(Map.of(), macroOverrides).expandDefinition((Definition) n);
-                                                                               if (expanded instanceof DefinitionList list) {
-                                                                                 for (var def : list.items) {
-                                                                                   if (def instanceof ModelDefinition modelDef) {
-                                                                                     symbolTable.addMacro(modelDef.toMacro(), modelDef.location());
-                                                                                   }
-                                                                                   definitions.add(def);
-                                                                                 }
-                                                                               } else {
-                                                                                 definitions.add(expanded);
-                                                                               }
-                                                                             } else {
-                                                                               definitions.add((Definition) n);
-                                                                             }
-                                                                          .)
+    macroReplacement<out Node n>                        (. if (n instanceof DefinitionList list) {
+                                                             readMacroSymbols(macroTable, list.items);
+                                                           }
+                                                           definitions.add(castDef(this, n)); .)
   }
   .
 
@@ -334,7 +326,7 @@ PRODUCTIONS
 
   pseudoInstructionDefinition<out Definition def>            (. PseudoInstructionDefinition.PseudoInstrKind kind = null; .)
   = ( PSEUDO                                                 (. kind = PseudoInstructionDefinition.PseudoInstrKind.PSEUDO; .)
-    | KW_COMPILER                                            (. kind = PseudoInstructionDefinition.PseudoInstrKind.COMPILER; .)
+    | COMPILER_KW                                            (. kind = PseudoInstructionDefinition.PseudoInstrKind.COMPILER; .)
     )                                                        (. var start = loc(); .)
     INSTRUCTION
     identifierOrPlaceholder<out IdentifierOrPlaceholder id>  (. var params = new ArrayList<PseudoInstructionDefinition.Param>(); .)
@@ -361,7 +353,7 @@ PRODUCTIONS
 
   identifierOrPlaceholder<out IdentifierOrPlaceholder id> (. id = null; .)
   = identifier<out id>
-  | macroReplacement<out Node node>                       (. id = (IdentifierOrPlaceholder) node; .)
+  | macroReplacement<out Node node>                       (. id = castId(this, node); .)
   .
 
   encodingDefinition<out EncodingDefinition def>
@@ -381,7 +373,7 @@ PRODUCTIONS
   .
 
   encodingEntry<out FieldEncodingOrPlaceholder enc> (. enc = null; .)
-  = macroReplacement<out Node node>                 (. enc = (FieldEncodingOrPlaceholder) node; .)
+  = macroReplacement<out Node node>                 (. enc = castEncs(this, node); .)
   | identifier<out Identifier id>
     SYM_EQ
     expression<out Expr expr, BIN_OPS>              (. enc = new FieldEncoding(id, expr); .)
@@ -534,15 +526,56 @@ PRODUCTIONS
       SYM_COLON
       syntaxType<out type>          (. entries.add(new RecordType.Entry(paramName.name, type)); .)
     }                               (. var recordType = new RecordType(recordName.name, entries); .)
-    SYM_PAREN_CLOSE                 (. symbolTable.addRecord(recordName, recordType);
-                                       def = new RecordTypeDefinition(recordType, start.join(loc())); .)
+    SYM_PAREN_CLOSE                 (. macroTable.addRecord(recordName, recordType);
+                                       def = new RecordTypeDefinition(recordName, recordType, start.join(loc())); .)
   .
 
-  modelTypeDef
-  = MODEL_TYPE
+  modelTypeDefinition<out Definition def>
+  = MODEL_TYPE                              (. var start = loc(); .)
     identifier<out Identifier name>
     SYM_EQ
-    projectionType<out ProjectionType type> (. symbolTable.addModelType(name, type); .)
+    projectionType<out ProjectionType type> (. macroTable.addModelType(name, type);
+                                              def = new ModelTypeDefinition(name, type, start.join(loc())); .)
+  .
+
+  importDefinition<out Definition def>     (. var importPaths = new ArrayList<IsId>(); Identifier fileId = null; StringLiteral filePath = null; .)
+  = IMPORT                                 (. var start = loc(); .)
+    ( identifier<out fileId>
+    | stringLiteral<out filePath>
+    )                                      (. var segments = new ArrayList<Identifier>(); .)
+    {
+      IF (la.kind == _SYM_NAMESPACE && scanner.Peek().kind != _SYM_BRACE_OPEN)
+      SYM_NAMESPACE
+      identifier<out Identifier segment>   (. segments.add(segment); .)
+    }                                      (. var symbolList = new ArrayList<List<Identifier>>(); .)
+    [
+      SYM_NAMESPACE
+      SYM_BRACE_OPEN                       (. var list = new ArrayList<Identifier>(); .)
+      identifier<out Identifier symbol>    (. list.add(symbol); .)
+      {
+        SYM_NAMESPACE
+        identifier<out symbol>             (. list.add(symbol); .)
+      }                                    (. symbolList.add(List.copyOf(list)); .)
+      {
+        SYM_COMMA                          (. list.clear(); .)
+        identifier<out symbol>             (. list.add(symbol); .)
+        {
+          SYM_NAMESPACE
+          identifier<out symbol>           (. list.add(symbol); .)
+        }                                  (. symbolList.add(List.copyOf(list)); .)
+      }
+      SYM_BRACE_CLOSE
+    ]                                      (. var args = new ArrayList<StringLiteral>(); .)
+    [
+      WITH
+      SYM_PAREN_OPEN
+      stringLiteral<out StringLiteral arg> (. args.add(arg); .)
+      {
+        SYM_COMMA
+        stringLiteral<out arg>             (. args.add(arg); .)
+      }
+      SYM_PAREN_CLOSE
+    ]                                      (. def = importModules(this, fileId, filePath, importedSymbols(segments, symbolList), args, start.join(loc())); .)
   .
 
   // -- STATEMENTS ---------------------------------------------------------------------------------------------------
@@ -555,7 +588,7 @@ PRODUCTIONS
   | IF (la.kind == _MATCH && scanner.Peek().kind != _SYM_COLON)
     matchStatement<out statement>
   | IF (isMacroReplacementOfType(this, BasicSyntaxType.STAT))
-    macroReplacement<out Node n>     (. statement = (Statement) n; .)
+    macroReplacement<out Node n>     (. statement = castStat(this, n); .)
   | assignmentOrCallStmt<out statement>
   .
 
@@ -568,7 +601,7 @@ PRODUCTIONS
   statementList<.out List<Statement> stmts.> (. stmts = new ArrayList<>(); .)
   = {
       IF (isMacroReplacementOfType(this, BasicSyntaxType.STATS))
-      macroReplacement<out Node n>           (. stmts.add((Statement) n); .)
+      macroReplacement<out Node n>           (. stmts.add(castStats(this, n)); .)
     | statement<out Statement statement>     (. stmts.add(statement); .)
     }
   .
@@ -604,7 +637,7 @@ PRODUCTIONS
       identifier<out Identifier nextId> (. identifiers.add(nextId); .)
     }
     SYM_EQ                              (. Expr valueExpr = null; .)
-    ( IF (la.kind == _KW_IF)
+    ( IF (la.kind == _IF_KW)
       ifExpression<out valueExpr, BIN_OPS_EXCEPT_IN>
     | expression<out valueExpr, BIN_OPS_EXCEPT_IN>
     )
@@ -613,7 +646,7 @@ PRODUCTIONS
   .
 
   ifStatement<out Statement ifStatement> (. Statement elseStmt = null; var start = loc(); .)
-  = KW_IF expression<out Expr condition, BIN_OPS>
+  = IF_KW expression<out Expr condition, BIN_OPS>
     THEN statement<out Statement thenStmt>
     [ IF (la.kind == _ELSE)
       ELSE statement<out elseStmt>
@@ -657,10 +690,10 @@ PRODUCTIONS
     {
       IF (allowedOps[la.kind] || la.kind == _SYM_AS || isMacroReplacementOfType(this, BasicSyntaxType.BIN_OP))
       (
-        binaryOperator<out Operator op>                   (. var operator = new OperatorExpr(op, loc()); .)
+        binaryOperator<out Operator op>                   (. var operator = new BinOpExpr(op, loc()); .)
         term<out Expr right>                              (. expr = new BinaryExpr(expr, operator, right); .)
       | macroReplacement<out Node node>
-        term<out Expr right>                              (. expr = new BinaryExpr(expr, (OperatorOrPlaceholder) node, right); .)
+        term<out Expr right>                              (. expr = new BinaryExpr(expr, castBinOp(this, node), right); .)
       | SYM_AS
         symbolOrBinaryExpression<out Expr symOrBin, true> (. expr = reorderCastExpr(expr, symOrBin); .)
       )
@@ -690,7 +723,7 @@ PRODUCTIONS
     }                                                      (. if (expr instanceof IsSymExpr symExpr && (!argsIndices.isEmpty() || !subCalls.isEmpty()))
                                                                 expr = new CallExpr(symExpr, argsIndices, subCalls, expr.location().join(loc()));
                                                            .)
-  | macroReplacement<out Node node>                        (. expr = (Expr) node; .)
+  | macroReplacement<out Node node>                        (. expr = castExpr(this, node); .)
   .
 
   /// Represents one set of invocation arguments.
@@ -720,9 +753,9 @@ PRODUCTIONS
       [
         IF (!allowLtOp || la.kind == _SYM_GT)
         SYM_GT                                               (. expr = new SymbolExpr(path, term, path.location().join(loc())); .)
-      ]                                                      (. if (expr == null) expr = new BinaryExpr((Expr) path, new OperatorExpr(Operator.Less(), lessLoc), term); .)
+      ]                                                      (. if (expr == null) expr = new BinaryExpr((Expr) path, new BinOpExpr(Operator.Less(), lessLoc), term); .)
     ]                                                        (. if (expr == null) expr = (Expr) path; .)
-  | macroReplacement<out Node node>                          (. expr = (Expr) node; .)
+  | macroReplacement<out Node node>                          (. expr = castExpr(this, node); .)
   .
 
   binaryOperator<out Operator op>    (.op = null;.)
@@ -752,7 +785,7 @@ PRODUCTIONS
   .
 
   unary<out Expr expr>
-  = unaryOperator<out UnaryOperator op>
+  = unaryOperator<out IsUnOp op>
     term<out Expr operand> (. if (operand instanceof BinaryExpr binExpr) {
                                 expr = new BinaryExpr(new UnaryExpr(op, binExpr.left), binExpr.operator, binExpr.right);
                               } else {
@@ -761,10 +794,11 @@ PRODUCTIONS
                            .)
   .
 
-  unaryOperator<out UnaryOperator op> (. op = null; .)
-  = SYM_MINUS (. op = UnaryOperator.NEGATIVE; .)
-  | SYM_EXCL  (. op = UnaryOperator.LOG_NOT; .)
-  | SYM_TILDE (. op = UnaryOperator.COMPLEMENT; .)
+  unaryOperator<out IsUnOp op>   (. op = null; .)
+  = SYM_MINUS                    (. op = new UnOpExpr(UnaryOperator.NEGATIVE, loc()); .)
+  | SYM_EXCL                     (. op = new UnOpExpr(UnaryOperator.LOG_NOT, loc()); .)
+  | SYM_TILDE                    (. op = new UnOpExpr(UnaryOperator.COMPLEMENT, loc()); .)
+  | macroReplacement<out Node n> (. op = (IsUnOp) n; .)
   .
 
   term<out Expr expr>            (. expr = null; .)
@@ -774,11 +808,12 @@ PRODUCTIONS
   | IF (isIdentifierToken(la) || isMacroReplacementOfType(this, BasicSyntaxType.CALL_EX))
     callOrBinaryExpression<out expr, true>
   | groupedExpression<out expr>
-  | unary<out expr>
+  | IF(isUnaryOperator(la) || isMacroReplacementOfType(this, BasicSyntaxType.UN_OP))
+    unary<out expr>
   | ifExpression<out expr, BIN_OPS>
   | letExpression<out expr>
   | // IF (isMacroReplacementOfType(this, BasicSyntaxType.EX))
-    macroReplacement<out Node n> (. expr = (Expr) n; .)
+    macroReplacement<out Node n> (. expr = castExpr(this, n); .)
   .
 
   groupedExpression<out GroupedExpr expr> (. expr = new GroupedExpr(new ArrayList<>(), loc()); .)
@@ -837,7 +872,7 @@ PRODUCTIONS
       identifier<out Identifier nextId> (. identifiers.add(nextId); .)
     }
     SYM_EQ                              (. Expr valueExpr = null; .)
-    ( IF (la.kind == _KW_IF)
+    ( IF (la.kind == _IF_KW)
       ifExpression<out valueExpr, BIN_OPS_EXCEPT_IN>
     | expression<out valueExpr, BIN_OPS_EXCEPT_IN>
     )
@@ -846,7 +881,7 @@ PRODUCTIONS
   .
 
   ifExpression<out Expr expr, boolean[] allowedElseOps>
-  = KW_IF                                              (. var startLoc = loc(); .)
+  = IF_KW                                              (. var startLoc = loc(); .)
     expression<out Expr condition, BIN_OPS>
     THEN expression<out Expr thenExpr, BIN_OPS>
     ELSE expression<out Expr elseExpr, allowedElseOps> (. expr = new IfExpr(condition, thenExpr, elseExpr, startLoc.join(loc())); .)
@@ -882,7 +917,7 @@ PRODUCTIONS
   typeLiteralOrPlaceholder<out TypeLiteralOrPlaceholder type> (. type = null; .)
   = IF (isMacroReplacementOfType(this, BasicSyntaxType.ID))
     macroReplacement<out Node n>                              (. if (n instanceof PlaceholderExpr p) type = p;
-                                                                 else type = new TypeLiteral((IsId) n, List.of(), n.location()); .)
+                                                                 else type = new TypeLiteral(castId(this, n), List.of(), n.location()); .)
   | typeLiteral<out type>
   .
 
@@ -908,6 +943,7 @@ PRODUCTIONS
   = T_BOOL
   | REGISTER
   | EXCEPTION
+  | ENCODE
   // TODO Add all allowed keywords
   .
 
@@ -960,7 +996,7 @@ PRODUCTIONS
   /// Parses the longest macro expression (either instance or placeholder) from the parser.
   maximumMacroExpr<out Node node>                 (. node = null; .)
   = SYM_DOLLAR                                    (. var segments = new ArrayList<String>(); .)
-    identifier<out Identifier id>                 (. var macro = symbolTable.getMacro(id.name);
+    identifier<out Identifier id>                 (. var macro = macroTable.getMacro(id.name);
                                                      var paramType = paramSyntaxType(this, id.name);
                                                      segments.add(id.name); .)
     { IF (macro == null && la.kind == _SYM_DOT && paramType instanceof RecordType record)
@@ -981,7 +1017,7 @@ PRODUCTIONS
           macroBody<out Node arg2, params.next()> (. args.add(arg2); .)
         }
         SYM_PAREN_CLOSE
-      )                                           (. node = createMacroInstance(macroOrPlaceholder, args, loc()); .)
+      )                                           (. node = expandMacro(this, createMacroInstance(macroOrPlaceholder, args, loc())); .)
     ]                                             (. node = Objects.requireNonNullElse(node, createPlaceholder(paramType, segments, loc())); .)
   .
 
@@ -1021,8 +1057,8 @@ PRODUCTIONS
     statement<out body>
   | IF (type == BasicSyntaxType.ENCS)
     encodingDefinitionList<out body>
-  | IF (type == BasicSyntaxType.ISA_DEFS)
-    isaDefinitionList<.out List<Definition> defs, false.>   (. body = new DefinitionList(defs, start.join(loc())); .)
+  | IF (type == BasicSyntaxType.ISA_DEFS)            (. macroTable = macroTable.createChild(); .)
+    isaDefinitionList<.out List<Definition> defs.>   (. body = new DefinitionList(defs, start.join(loc())); macroTable = macroTable.parent; .)
   | IF (type == BasicSyntaxType.EX)
     expression<out body, BIN_OPS>
   | IF (type == BasicSyntaxType.LIT)
@@ -1056,13 +1092,13 @@ PRODUCTIONS
   | IF (type == BasicSyntaxType.ID)
     identifierOrPlaceholder<out IdentifierOrPlaceholder id> (. body = (Node) id; .)
   | IF (type == BasicSyntaxType.BIN_OP)
-    ( binaryOperator<out Operator op>                       (. body = new OperatorExpr(op, loc()); .)
+    ( binaryOperator<out Operator op>                       (. body = new BinOpExpr(op, loc()); .)
     | macroReplacement<out body>
     )
-  | IF (type instanceof RecordType record)
-    ( SYM_PAREN_OPEN                                        (. var recordType = (RecordType) type;
-                                                               var entries = new ArrayList<Node>();
-                                                               var nextEntry = recordType.entries.iterator(); .)
+  | IF (type == BasicSyntaxType.UN_OP)
+    unaryOperator<out IsUnOp op>                            (. body = (Node) op; .)
+  | IF (type instanceof RecordType recordType)
+    ( SYM_PAREN_OPEN                                        (. var entries = new ArrayList<Node>(); var nextEntry = recordType.entries.iterator(); .)
       macroBody<out Node entry, nextEntry.next().type()>    (. entries.add(entry); .)
       {
         SYM_SEMICOLON
@@ -1072,7 +1108,7 @@ PRODUCTIONS
     | macroReplacement<out body>
     )
   | IF (type instanceof ProjectionType projection)
-    ( identifier<out Identifier id>                         (. body = new MacroReference(symbolTable.getMacro(id.name), projection, id.location()); .)
+    ( identifier<out Identifier id>                         (. body = new MacroReference(macroTable.getMacro(id.name), projection, id.location()); .)
     | macroReplacement<out body>
     )
   | internalError<"Unhandled syntax type " + type>
@@ -1081,7 +1117,7 @@ PRODUCTIONS
 
   syntaxType<out SyntaxType type> (. type = null; .)
   = IF (la.kind == _identifierToken)
-    identifier<out Identifier id> (. type = symbolTable.findType(id); .)
+    identifier<out Identifier id> (. type = macroTable.findType(id); .)
   | projectionType<out type>
   | basicSyntaxType<out type>
   .

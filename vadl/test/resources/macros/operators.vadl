@@ -1,0 +1,10 @@
+model BinExpr(left: Ex, op: BinOp, right: Ex): Ex = {
+   $left $op $right
+}
+
+model UnExpr(op: UnOp, operand: Ex): Ex = {
+  $op $operand
+}
+
+constant fiveTimesNine = $BinExpr(5 ; * ; 9)
+constant minusTwelve = $UnExpr(- ; 12)

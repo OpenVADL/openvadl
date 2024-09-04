@@ -151,7 +151,12 @@ class Ungrouper
   }
 
   @Override
-  public Expr visit(OperatorExpr expr) {
+  public Expr visit(BinOpExpr expr) {
+    return expr;
+  }
+
+  @Override
+  public Expr visit(UnOpExpr expr) {
     return expr;
   }
 
@@ -331,6 +336,16 @@ class Ungrouper
   @Override
   public Definition visit(RecordTypeDefinition definition) {
     return definition;
+  }
+
+  @Override
+  public Definition visit(ModelTypeDefinition definition) {
+    return definition;
+  }
+
+  @Override
+  public Definition visit(ImportDefinition importDefinition) {
+    return importDefinition;
   }
 
   @Override

@@ -124,7 +124,20 @@ class ModelRemover implements DefinitionVisitor<Definition> {
     return definition;
   }
 
+  @Override
+  public Definition visit(ModelTypeDefinition definition) {
+    return definition;
+  }
+
+  @Override
+  public Definition visit(ImportDefinition importDefinition) {
+    removeModels(importDefinition.moduleAst);
+    return importDefinition;
+  }
+
   private boolean shouldRemove(Definition definition) {
-    return definition instanceof ModelDefinition || definition instanceof RecordTypeDefinition;
+    return definition instanceof ModelDefinition
+        || definition instanceof RecordTypeDefinition
+        || definition instanceof ModelTypeDefinition;
   }
 }

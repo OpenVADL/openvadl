@@ -1,5 +1,6 @@
 package vadl.ast;
 
+import java.net.URI;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
@@ -13,8 +14,14 @@ import vadl.utils.SourceLocation;
  */
 public class Ast {
   List<Definition> definitions = new ArrayList<>();
+  URI fileUri = SourceLocation.INVALID_SOURCE_LOCATION.uri();
+
   @Nullable
   SymbolTable rootSymbolTable;
+
+  SymbolTable rootSymbolTable() {
+    return Objects.requireNonNull(rootSymbolTable, "Symbol collector has not been applied");
+  }
 
   /**
    * Convert the tree back into sourcecode.
@@ -71,8 +78,8 @@ abstract class Node {
   }
 
   static boolean isBlockLayout(Node n) {
-    return n instanceof LetExpr || n instanceof IfExpr || n instanceof Statement
-        || n instanceof Definition;
+    return n instanceof LetExpr || n instanceof IfExpr || n instanceof MatchExpr
+        || n instanceof Statement || n instanceof Definition;
   }
 
   abstract SourceLocation location();
@@ -145,8 +152,7 @@ class MacroReference extends Node {
   }
 }
 
-final class PlaceholderNode extends Node implements OperatorOrPlaceholder,
-    FieldEncodingOrPlaceholder {
+final class PlaceholderNode extends Node implements IsBinOp, IsUnOp, FieldEncodingOrPlaceholder {
 
   List<String> segments;
   SyntaxType syntaxType;

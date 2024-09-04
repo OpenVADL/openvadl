@@ -4,12 +4,14 @@ import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.PrintStream;
+import java.net.URI;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import javax.annotation.Nullable;
 import vadl.error.VadlError;
 import vadl.error.VadlException;
 import vadl.utils.SourceLocation;
@@ -21,7 +23,7 @@ public class VadlParser {
 
   /**
    * Parses the VADL source program at the specified path into an AST.
-   * Works just like {@link VadlParser#parse(String, Map)},
+   * Works just like {@link VadlParser#parse(String, Map, URI)},
    * except errors will have the proper file locations set.
    */
   public static Ast parse(Path path, Map<String, String> macroOverrides) throws IOException {
@@ -30,14 +32,23 @@ public class VadlParser {
     parser.sourceFile = path.toUri();
     macroOverrides.forEach((key, value) -> parser.macroOverrides.put(key,
         new Identifier(value, SourceLocation.INVALID_SOURCE_LOCATION)));
-    return parse(parser);
+    var ast = parse(parser);
+    ast.fileUri = path.toUri();
+    return ast;
   }
 
   /**
-   * Convenience overload for {@link VadlParser#parse(String, Map)} without any overrides.
+   * Convenience overload for {@link VadlParser#parse(String, Map, URI)} without any overrides.
    */
   public static Ast parse(String program) {
-    return parse(program, Map.of());
+    return parse(program, Map.of(), null);
+  }
+
+  /**
+   * Convenience overload for {@link VadlParser#parse(String, Map, URI)} without any overrides.
+   */
+  public static Ast parse(String program, URI resolutionUri) {
+    return parse(program, Map.of(), resolutionUri);
   }
 
   /**
@@ -48,9 +59,11 @@ public class VadlParser {
    * @return The parsed syntax tree.
    * @throws VadlException if there are any parsing errors.
    */
-  public static Ast parse(String program, Map<String, String> macroOverrides) {
+  public static Ast parse(String program, Map<String, String> macroOverrides,
+                          @Nullable URI resolutionUri) {
     var scanner = new Scanner(new ByteArrayInputStream(program.getBytes(StandardCharsets.UTF_8)));
     var parser = new Parser(scanner);
+    parser.resolutionUri = resolutionUri;
     macroOverrides.forEach((key, value) -> parser.macroOverrides.put(key,
         new Identifier(value, SourceLocation.INVALID_SOURCE_LOCATION)));
     return parse(parser);
@@ -85,11 +98,12 @@ public class VadlParser {
         }
 
         var fields = line.split(";", 3);
-        var lineNum = Integer.parseInt(fields[0]);
-        var colNum = Integer.parseInt(fields[1]);
-        var title = fields[2];
+        // Not every error has a location specified
+        var lineNum = fields.length == 3 ? Integer.parseInt(fields[0]) : -1;
+        var colNum = fields.length == 3 ? Integer.parseInt(fields[1]) : -1;
+        var title = fields[fields.length - 1];
         errors.add(new VadlError(
-            fields[2],
+            title,
             new SourceLocation(parser.sourceFile,
                 new SourceLocation.Position(lineNum, colNum)),
             null,
@@ -100,7 +114,7 @@ public class VadlParser {
       }
     }
     events.add(new Event(System.nanoTime(), "Errors parsed"));
-    errors.addAll(parser.symbolTable.errors);
+    errors.addAll(parser.macroTable.errors);
 
     if (!errors.isEmpty()) {
       throw new VadlException(errors.stream().distinct().toList());
