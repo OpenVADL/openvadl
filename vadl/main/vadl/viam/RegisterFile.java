@@ -1,5 +1,6 @@
 package vadl.viam;
 
+import javax.annotation.Nonnull;
 import vadl.types.ConcreteRelationType;
 import vadl.types.DataType;
 import vadl.types.Type;
@@ -37,6 +38,7 @@ public class RegisterFile extends Resource {
   }
 
   @Override
+  @Nonnull
   public DataType addressType() {
     return addressType;
   }

@@ -50,6 +50,8 @@ public class Function extends Definition implements DefProp.WithBehavior, DefPro
     this.behavior = behavior;
     this.returnType = returnType;
     this.parameters = parameters;
+
+    behavior.setParentDefinition(this);
   }
 
   @Override

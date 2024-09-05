@@ -20,10 +20,8 @@ public class InstructionSetArchitecture extends Definition {
   private final List<Register> registers;
   private final List<RegisterFile> registerFiles;
 
-  // The pc of the ISA. This field does not "own" the register
-  // but only references it. The pc register is "owned" by the `registers` field.
   @Nullable
-  private final Register.Counter pc;
+  private final Counter pc;
 
   private final List<Format> formats;
   private final List<Function> functions;
@@ -56,7 +54,7 @@ public class InstructionSetArchitecture extends Definition {
                                     List<PseudoInstruction> pseudoInstructions,
                                     List<Register> registers,
                                     List<RegisterFile> registerFiles,
-                                    @Nullable Register.Counter pc,
+                                    @Nullable Counter pc,
                                     List<Memory> memories
   ) {
     super(identifier);
@@ -71,6 +69,11 @@ public class InstructionSetArchitecture extends Definition {
     this.registerFiles = registerFiles;
     this.pc = pc;
     this.memories = memories;
+
+    // set parent architecture of instructions
+    for (var instr : instructions) {
+      instr.setParentArchitecture(this);
+    }
   }
 
   @Nullable
@@ -135,18 +138,6 @@ public class InstructionSetArchitecture extends Definition {
   }
 
   /**
-   * Returns the {@link Register.Counter}s <b>owned</b> by this ISA.
-   * So it might not include definitions accessible through the super ISA.
-   */
-  public List<Register.Counter> ownGroupCounters() {
-    return ownRegisters().stream()
-        .filter(Register.Counter.class::isInstance)
-        .map(Register.Counter.class::cast)
-        .filter(e -> e != pc)
-        .toList();
-  }
-
-  /**
    * Returns the {@link Memory}s <b>owned</b> by this ISA.
    * So it might not include definitions accessible through the super ISA.
    */
@@ -159,7 +150,7 @@ public class InstructionSetArchitecture extends Definition {
    * If the definition was in the super ISA, it will use that one instead.
    */
   @Nullable
-  public Register.Counter pc() {
+  public Counter pc() {
     if (pc != null) {
       return pc;
     }

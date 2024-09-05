@@ -3,6 +3,7 @@ package vadl.viam.passes.functionInliner;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import vadl.viam.Definition;
 import vadl.viam.graph.Graph;
 import vadl.viam.graph.Node;
 
@@ -11,16 +12,17 @@ import vadl.viam.graph.Node;
  * this graph has been not inlined.
  */
 public class UninlinedGraph extends Graph {
-  public UninlinedGraph(String name, List<Node> nodes) {
+  public UninlinedGraph(String name, List<Node> nodes, Definition parentDefinition) {
     super(name, new ArrayList<>(nodes));
+    setParentDefinition(parentDefinition);
   }
 
-  public UninlinedGraph(Graph graph) {
-    this(graph.name, graph.getNodes().toList());
+  public UninlinedGraph(Graph graph, Definition parentDefinition) {
+    this(graph.name, graph.getNodes().toList(), parentDefinition);
   }
 
   @Override
-  protected Graph createEmptyInstance(String name) {
-    return new UninlinedGraph(name, Collections.emptyList());
+  protected Graph createEmptyInstance(String name, Definition parentDefinition) {
+    return new UninlinedGraph(name, Collections.emptyList(), parentDefinition);
   }
 }

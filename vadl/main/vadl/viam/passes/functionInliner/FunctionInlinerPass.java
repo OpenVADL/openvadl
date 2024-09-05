@@ -84,7 +84,7 @@ public class FunctionInlinerPass extends Pass {
             fieldAccessRefNode.replaceAndDelete(returnNode.value().copy());
           });
 
-          original.put(instruction, new UninlinedGraph(copy));
+          original.put(instruction, new UninlinedGraph(copy, instruction));
         });
 
     return original;

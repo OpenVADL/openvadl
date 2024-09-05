@@ -6,6 +6,7 @@ import static vadl.lcb.passes.isaMatching.InstructionLabel.BGTH;
 import static vadl.lcb.passes.isaMatching.InstructionLabel.BLEQ;
 import static vadl.lcb.passes.isaMatching.InstructionLabel.BLTH;
 import static vadl.lcb.passes.isaMatching.InstructionLabel.BNEQ;
+import static vadl.viam.ViamError.ensure;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -26,6 +27,7 @@ import vadl.lcb.passes.llvmLowering.tablegen.model.TableGenInstructionOperand;
 import vadl.lcb.passes.llvmLowering.tablegen.model.TableGenPattern;
 import vadl.lcb.visitors.LcbGraphNodeVisitor;
 import vadl.types.Type;
+import vadl.viam.Counter;
 import vadl.viam.Instruction;
 import vadl.viam.graph.NodeList;
 import vadl.viam.graph.dependency.WriteResourceNode;
@@ -73,9 +75,16 @@ public class LlvmInstructionLoweringConditionalBranchesStrategyImpl
       Instruction instruction,
       InstructionLabel instructionLabel,
       UninlinedGraph visitedGraph) {
+
+    // TODO: @kper : double check this
+    var isa = instruction.parentArchitecture();
+    ensure(isa.pc() instanceof Counter.RegisterCounter,
+        "Only register counter pcs are currently supported");
+    var pc = (Counter.RegisterCounter) isa.pc();
+
     var inputOperands = getTableGenInputOperands(visitedGraph);
     var outputOperands = getTableGenOutputOperands(visitedGraph);
-    var flags = getFlags(visitedGraph);
+    var flags = getFlags(visitedGraph, pc);
 
     var writes = visitedGraph.getNodes(WriteResourceNode.class).toList();
     var patterns = generatePatterns(instruction, inputOperands, writes);

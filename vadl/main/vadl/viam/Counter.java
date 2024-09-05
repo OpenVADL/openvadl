@@ -29,16 +29,44 @@ public sealed abstract class Counter extends Definition {
     GROUP_COUNTER,
   }
 
+  /**
+   * The position of the counter.
+   *
+   * <p>{@code CURRENT} defines the counter to point to the start of the currently defined
+   * instruction (group). When no annotation is given this is the default behavior.
+   * This mode is the best for ARM AArch64 and RISC-V architectures. {@code NEXT} defines the
+   * counter to point to the end of the currently defined instruction (group).
+   * This mode is the best for Alpha and MIPS architectures. {@code NEXT_NEXT} defines the program
+   * counter to point to the end of the instruction after the currently defined instruction
+   * which is required to have the same size of the currently defined instruction.
+   * If the sizes are different the behavior is undefined. The {@code NEXT_NEXT} is not
+   * valid for group counters.
+   */
+  public enum Position {
+    CURRENT,
+    NEXT,
+    NEXT_NEXT
+  }
+
+  private final Position position;
+
   private final Kind kind;
 
-  public Counter(Identifier identifier, Kind kind) {
+  public Counter(Identifier identifier, Position position, Kind kind) {
     super(identifier);
     this.kind = kind;
+    this.position = position;
   }
 
   public Kind kind() {
     return kind;
   }
+
+  /**
+   * Returns either a {@link Register} or a {@link RegisterFile} that is referenced by this
+   * counter.
+   */
+  public abstract Resource registerResource();
 
   @Override
   public void accept(DefinitionVisitor visitor) {
@@ -60,12 +88,20 @@ public sealed abstract class Counter extends Definition {
     // not owned, but referenced. It is owned by the ISA.registers field
     private final Register registerRef;
 
-    public RegisterCounter(Register registerRef, Kind kind) {
-      super(registerRef.identifier.append("counter_" + idCounter.incrementAndGet() + "."), kind);
+    public RegisterCounter(Register registerRef, Position position, Kind kind) {
+      super(
+          registerRef.identifier.extendSimpleName("_counter_" + idCounter.incrementAndGet() + "."),
+          position,
+          kind);
       this.registerRef = registerRef;
     }
 
     public Register registerRef() {
+      return registerRef;
+    }
+
+    @Override
+    public Register registerResource() {
       return registerRef;
     }
   }
@@ -83,9 +119,10 @@ public sealed abstract class Counter extends Definition {
     private final RegisterFile registerFileRef;
     private final Constant.Value index;
 
-    public RegisterFileCounter(RegisterFile registerFileRef, Constant.Value index, Kind kind) {
+    public RegisterFileCounter(RegisterFile registerFileRef, Constant.Value index,
+                               Position position, Kind kind) {
       super(registerFileRef.identifier.append("counter_" + idCounter.incrementAndGet() + "."),
-          kind);
+          position, kind);
       this.registerFileRef = registerFileRef;
       this.index = index;
     }
@@ -104,6 +141,11 @@ public sealed abstract class Counter extends Definition {
       ensure(registerFileRef.addressType().isTrivialCastTo(index.type()),
           "Index type does not match register file address type. %s vs %s",
           registerFileRef.addressType(), index.type());
+    }
+
+    @Override
+    public RegisterFile registerResource() {
+      return registerFileRef;
     }
   }
 

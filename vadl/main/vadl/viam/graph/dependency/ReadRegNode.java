@@ -45,7 +45,7 @@ public class ReadRegNode extends ReadResourceNode {
   @Override
   public void verifyState() {
     super.verifyState();
-    
+
     ensure(register.resultType().isTrivialCastTo(type()),
         "Mismatching register type. Register's result type (%s) "
             + "cannot be trivially cast to node's type (%s).",
