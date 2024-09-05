@@ -6,8 +6,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import javax.annotation.Nullable;
-import vadl.error.VadlError;
-import vadl.error.VadlException;
+import vadl.error.Diagnostic;
+import vadl.error.DiagnosticList;
 import vadl.utils.SourceLocation;
 
 /**
@@ -25,7 +25,7 @@ class MacroExpander
     implements ExprVisitor<Expr>, DefinitionVisitor<Definition>, StatementVisitor<Statement> {
   final Map<String, Node> args;
   final Map<String, Identifier> macroOverrides;
-  final List<VadlError> errors = new ArrayList<>();
+  final List<Diagnostic> errors = new ArrayList<>();
 
   MacroExpander(Map<String, Node> args, Map<String, Identifier> macroOverrides) {
     this.args = args;
@@ -52,7 +52,7 @@ class MacroExpander
   public Expr expandExpr(Expr expr) {
     var result = expr.accept(this);
     if (!errors.isEmpty()) {
-      throw new VadlException(errors);
+      throw new DiagnosticList(errors);
     }
     if (result instanceof BinaryExpr binaryExpr) {
       return BinaryExpr.reorder(binaryExpr);
@@ -89,7 +89,7 @@ class MacroExpander
   public Definition expandDefinition(Definition def) {
     var result = def.accept(this);
     if (!errors.isEmpty()) {
-      throw new VadlException(errors);
+      throw new DiagnosticList(errors);
     }
     return result;
   }
@@ -97,7 +97,7 @@ class MacroExpander
   public Statement expandStatement(Statement statement) {
     var result = statement.accept(this);
     if (!errors.isEmpty()) {
-      throw new VadlException(errors);
+      throw new DiagnosticList(errors);
     }
     return result;
   }
@@ -896,7 +896,7 @@ class MacroExpander
   }
 
   private void reportError(String error, SourceLocation location) {
-    errors.add(new VadlError(error, location, null, null));
+    errors.add(Diagnostic.error(error, location).build());
   }
 
   private boolean isReplacementNode(Node node) {

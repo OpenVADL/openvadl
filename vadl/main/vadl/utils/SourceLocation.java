@@ -104,6 +104,31 @@ public record SourceLocation(
   }
 
   /**
+   * Produces version that is easily understandable for IDE's.
+   *
+   * <p>E.g.: {@code SourceLocation("relative/path/to/file.vadl", (1, 3), (2, 4))}
+   * becomes  {@code "relative/path/to/file.vadl:1:3"}
+   * </p>
+   */
+  public String toIDEString() {
+    String printablePath;
+
+    if (Objects.requireNonNullElse(System.getenv("TERMINAL_EMULATOR"), "")
+        .equals("JetBrains-JediTerm")) {
+      // IntelliJ integrated terminal needs special treatment
+      printablePath = this.uri.toString();
+    } else {
+      var filePath = Paths.get(this.uri);
+      var currentWorkingDir = Paths.get(System.getProperty("user.dir"));
+      printablePath = currentWorkingDir.relativize(filePath).toFile().getPath();
+    }
+
+    return printablePath
+        + ":"
+        + this.begin;
+  }
+
+  /**
    * Produces a concise version of a given location.
    *
    * <p>E.g.: {@code SourceLocation("/absolute/path/to/file.vadl", (1, 3), (2, 4))}

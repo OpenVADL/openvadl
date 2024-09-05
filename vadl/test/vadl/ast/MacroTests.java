@@ -4,7 +4,7 @@ import static vadl.ast.AstTestUtils.assertAstEquality;
 
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
-import vadl.error.VadlException;
+import vadl.error.DiagnosticList;
 
 public class MacroTests {
 
@@ -14,7 +14,7 @@ public class MacroTests {
         model example() : Ex =  {
           1 + 2
         }
-                
+        
         constant n = $example()
         """;
     var prog2 = "constant n = 1 + 2";
@@ -28,7 +28,7 @@ public class MacroTests {
         model example() : Ex =  {
           1 + 2 * 3 = 8 && 7 + 9 > 10
         }
-                
+        
         constant n = $example()
         """;
     var prog2 = "constant n = ((1 + (2 * 3))  = 8) && ((7 + 9) > 10)";
@@ -42,7 +42,7 @@ public class MacroTests {
         model example() : Ex =  {
           1 + 2
         }
-               
+        
         constant n = 3 * $example()
         """;
     var prog2 = "constant n = 3 * (1 + 2)";
@@ -56,10 +56,10 @@ public class MacroTests {
         model example() : Int =  {
            1 + 2
         }
-               
+        
         constant n = 3 * $example()
         """;
-    Assertions.assertThrows(VadlException.class, () -> VadlParser.parse(prog));
+    Assertions.assertThrows(DiagnosticList.class, () -> VadlParser.parse(prog));
   }
 
   @Test
@@ -68,7 +68,7 @@ public class MacroTests {
         model example(first: Int, second: Ex) : Ex =  {
           1 + 2
         }
-               
+        
         constant n = 3 * $example(3 ; 5)
         """;
     var prog2 = "constant n = 3 * (1 + 2)";
@@ -82,10 +82,10 @@ public class MacroTests {
         model example(arg: Ex) : Ex =  {
            1 + 2
         }
-               
+        
         constant n = 3 * $example()
         """;
-    Assertions.assertThrows(VadlException.class, () -> VadlParser.parse(prog));
+    Assertions.assertThrows(DiagnosticList.class, () -> VadlParser.parse(prog));
   }
 
   @Test
@@ -94,10 +94,10 @@ public class MacroTests {
         model example(arg: Bool) : Ex =  {
            1 + 2
         }
-               
+        
         constant n = 3 * $example(5)
         """;
-    Assertions.assertThrows(VadlException.class, () -> VadlParser.parse(prog));
+    Assertions.assertThrows(DiagnosticList.class, () -> VadlParser.parse(prog));
   }
 
   @Test
@@ -145,7 +145,7 @@ public class MacroTests {
         }
         """;
 
-    Assertions.assertThrows(VadlException.class, () -> VadlParser.parse(prog));
+    Assertions.assertThrows(DiagnosticList.class, () -> VadlParser.parse(prog));
   }
 
   @Test
