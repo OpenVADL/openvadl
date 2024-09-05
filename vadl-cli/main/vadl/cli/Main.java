@@ -1,18 +1,40 @@
 package vadl.cli;
 
+import com.google.errorprone.annotations.concurrent.LazyInit;
+import java.nio.file.Path;
+import java.util.concurrent.Callable;
 import picocli.CommandLine;
 import picocli.CommandLine.Command;
+import picocli.CommandLine.Model.CommandSpec;
+import picocli.CommandLine.Parameters;
+import picocli.CommandLine.Spec;
 
 /**
  * The VADL CLI entry class.
  */
 @Command(name = "OpenVADL", mixinStandardHelpOptions = true,
+    description = "When used without subcommand, checks the given specification for syntax errors",
     subcommands = { AstCommands.DumpAstCommand.class, AstCommands.ExpandAstCommand.class })
-public class Main implements Runnable {
+public class Main implements Callable<Integer> {
+
+  @Spec
+  @LazyInit
+  CommandSpec spec;
+
+  @Parameters(description = "Path to the input VADL specification", arity = "0..1")
+  @LazyInit
+  Path input;
 
   @Override
-  public void run() {
-    CommandLine.usage(this, System.out);
+  public Integer call() {
+    if (input == null) {
+      throw new CommandLine.ParameterException(spec.commandLine(), "Missing input parameter");
+    }
+    var result = AstCommands.checkSyntax(input);
+    if (result == 0) {
+      System.out.println("No errors found");
+    }
+    return result;
   }
 
   public static void main(String[] args) {
