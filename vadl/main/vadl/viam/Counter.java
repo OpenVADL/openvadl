@@ -22,8 +22,12 @@ import java.util.concurrent.atomic.AtomicInteger;
  * <p><b>Note:</b> The register and register file is not owned by the counter, but only
  * referenced by it.</p>
  */
-public sealed abstract class Counter extends Definition {
+public abstract sealed class Counter extends Definition {
 
+  /**
+   * The kind of the counter.
+   * It is either a program counter or a group counter.
+   */
   public enum Kind {
     PROGRAM_COUNTER,
     GROUP_COUNTER,
@@ -52,6 +56,9 @@ public sealed abstract class Counter extends Definition {
 
   private final Kind kind;
 
+  /**
+   * Constructs the Counter.
+   */
   public Counter(Identifier identifier, Position position, Kind kind) {
     super(identifier);
     this.kind = kind;
@@ -88,6 +95,11 @@ public sealed abstract class Counter extends Definition {
     // not owned, but referenced. It is owned by the ISA.registers field
     private final Register registerRef;
 
+    /**
+     * Constructs the RegisterCounter.
+     *
+     * @param registerRef the register this counter is represented by
+     */
     public RegisterCounter(Register registerRef, Position position, Kind kind) {
       super(
           registerRef.identifier.extendSimpleName("_counter_" + idCounter.incrementAndGet() + "."),
@@ -119,6 +131,12 @@ public sealed abstract class Counter extends Definition {
     private final RegisterFile registerFileRef;
     private final Constant.Value index;
 
+    /**
+     * Constructs the RegisterFileCounter.
+     *
+     * @param registerFileRef the register file of the counter-register
+     * @param index           the index of the counter-register in the register file
+     */
     public RegisterFileCounter(RegisterFile registerFileRef, Constant.Value index,
                                Position position, Kind kind) {
       super(registerFileRef.identifier.append("counter_" + idCounter.incrementAndGet() + "."),
