@@ -8,7 +8,7 @@ import java.util.ArrayList;
  * then be removed. This is especially useful for testing, where two AST trees are often tested
  * for semantic equality and thus ungrouped before comparison.
  */
-class Ungrouper
+public class Ungrouper
     implements ExprVisitor<Expr>, DefinitionVisitor<Definition>, StatementVisitor<Statement> {
 
   public void ungroup(Ast ast) {

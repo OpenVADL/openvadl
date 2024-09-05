@@ -35,6 +35,7 @@ class MacroExpander
   static void expandAst(Ast ast, Map<String, Identifier> macroOverrides) {
     var instance = new MacroExpander(new HashMap<>(), macroOverrides);
     ast.definitions = instance.expandDefinitions(ast.definitions);
+    ast.passTimings.add(new VadlParser.PassTimings(System.nanoTime(), "Macro expansion"));
   }
 
   /**

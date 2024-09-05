@@ -438,6 +438,7 @@ public class AstDumper
     for (Group group : groupDefinition.groupSequence.groups) {
       builder.append(indentString()).append("Group\n");
       indent++;
+      builder.append(indentString());
       group.prettyPrint(0, builder);
       indent--;
     }

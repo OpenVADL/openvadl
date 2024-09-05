@@ -54,7 +54,7 @@ public class VadlParser {
   /**
    * Parses a source program into an AST.
    *
-   * @param program a source code file to parse
+   * @param program        a source code file to parse
    * @param macroOverrides The overrides to perform in the macro evaluation
    * @return The parsed syntax tree.
    * @throws VadlException if there are any parsing errors.
@@ -70,11 +70,10 @@ public class VadlParser {
   }
 
   private static Ast parse(Parser parser) {
+    parser.ast.passTimings.add(new PassTimings(System.nanoTime(), "Start parsing"));
     // Setting up the Error printing, so we can parse it again.
     // This is mainly because coco/r doesn't give us access to the errors internally but always
     // want's to print them.
-    List<Event> events = new ArrayList<>();
-    events.add(new Event(System.nanoTime(), "---"));
     var outStream = new ByteArrayOutputStream();
     parser.errors.errorStream = new PrintStream(outStream);
     parser.errors.errMsgFormat = "{0};{1};{2}";
@@ -83,7 +82,7 @@ public class VadlParser {
 
     try {
       parser.Parse();
-      events.add(new Event(System.nanoTime(), "Parse finished"));
+      parser.ast.passTimings.add(new PassTimings(System.nanoTime(), "Syntax parsing"));
     } catch (Exception e) {
       e.printStackTrace();
       errors.add(new VadlError("Exception caught during parsing: " + e,
@@ -113,7 +112,6 @@ public class VadlParser {
         );
       }
     }
-    events.add(new Event(System.nanoTime(), "Errors parsed"));
     errors.addAll(parser.macroTable.errors);
 
     if (!errors.isEmpty()) {
@@ -122,31 +120,28 @@ public class VadlParser {
 
     var ast = parser.ast;
 
-    events.add(new Event(System.nanoTime(), "Before macro expansion"));
     MacroExpander.expandAst(ast, parser.macroOverrides);
-    events.add(new Event(System.nanoTime(), "Macros expanded"));
     SymbolTable.SymbolCollector.collectSymbols(ast);
-    events.add(new Event(System.nanoTime(), "Symbols collected"));
     errors.addAll(SymbolTable.VerificationPass.verifyUsages(ast));
-    events.add(new Event(System.nanoTime(), "Symbols verified"));
 
     if (!errors.isEmpty()) {
       throw new VadlException(errors.stream().distinct().toList());
     }
 
-    Event prev = null;
-    for (var event : events) {
-      if (prev != null) {
-        System.out.print("Δ " + (event.timestamp - prev.timestamp) / 1000_000 + " ms ");
-      } else {
-        System.out.print("Start ");
-      }
-      System.out.println(event.description);
-      prev = event;
-    }
-
     return ast;
   }
 
-  record Event(long timestamp, String description) {}
+  public static void printPassTimings(Ast ast) {
+    PassTimings prev = null;
+    for (var timing : ast.passTimings) {
+      if (prev != null) {
+        long deltaMillis = (timing.timestamp - prev.timestamp) / 1000_000;
+        System.out.println(timing.description + " - " + deltaMillis + " ms ");
+      }
+      prev = timing;
+    }
+  }
+
+  record PassTimings(long timestamp, String description) {
+  }
 }

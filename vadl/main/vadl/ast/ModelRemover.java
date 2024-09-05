@@ -6,7 +6,7 @@ package vadl.ast;
  * removed after macro expansion. This is especially useful for testing, where two AST trees are
  * often tested for semantic equality and thus stripped of models before comparison.
  */
-class ModelRemover implements DefinitionVisitor<Definition> {
+public class ModelRemover implements DefinitionVisitor<Definition> {
 
   public void removeModels(Ast ast) {
     ast.definitions.removeIf(this::shouldRemove);
