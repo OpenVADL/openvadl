@@ -8,6 +8,7 @@ import org.jetbrains.annotations.Nullable;
 import vadl.types.Type;
 import vadl.types.TypeList;
 import vadl.viam.graph.dependency.ExpressionNode;
+import vadl.viam.graph.dependency.SideEffectNode;
 
 /**
  * A list of nodes in the VIAM graph.
@@ -40,5 +41,9 @@ public class NodeList<T extends Node> extends ArrayList<T> {
       result.add(((ExpressionNode) node).type());
     }
     return result;
+  }
+
+  public NodeList<T> copy() {
+    return new NodeList<>(this.stream().map(x -> (T) x.copy()).toList());
   }
 }

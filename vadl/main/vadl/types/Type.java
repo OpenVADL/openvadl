@@ -33,6 +33,10 @@ public abstract class Type {
     return other == this;
   }
 
+  final public boolean isData() {
+    return this instanceof DataType;
+  }
+
   @Override
   public String toString() {
     return name();

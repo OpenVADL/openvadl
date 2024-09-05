@@ -28,6 +28,10 @@ public interface DefinitionVisitor {
 
   void visit(Function function);
 
+  void visit(Relocation relocation);
+
+  void visit(Procedure procedure);
+
   void visit(Parameter parameter);
 
   void visit(PseudoInstruction pseudoInstruction);
@@ -38,7 +42,7 @@ public interface DefinitionVisitor {
 
   void visit(Memory memory);
 
-  void visit(Relocation relocation);
+  void visit(ArtificialResource artificialResource);
 
   void visit(Counter counter);
 
@@ -222,11 +226,28 @@ public interface DefinitionVisitor {
     }
 
     @Override
+    public void visit(Procedure procedure) {
+      beforeTraversal(procedure);
+      for (var param : procedure.parameters()) {
+        param.accept(this);
+      }
+      afterTraversal(procedure);
+    }
+
+    @Override
     public void visit(Counter counter) {
       beforeTraversal(counter);
       // no visit of register/register file as they are not
       // owned by the counter
       afterTraversal(counter);
+    }
+
+    @Override
+    public void visit(ArtificialResource artificialResource) {
+      beforeTraversal(artificialResource);
+      artificialResource.readFunction().accept(this);
+      artificialResource.writeProcedure().accept(this);
+      afterTraversal(artificialResource);
     }
 
     @Override
@@ -325,7 +346,17 @@ public interface DefinitionVisitor {
     }
 
     @Override
+    public void visit(Procedure procedure) {
+
+    }
+
+    @Override
     public void visit(Counter counter) {
+
+    }
+
+    @Override
+    public void visit(ArtificialResource artificialResource) {
 
     }
 

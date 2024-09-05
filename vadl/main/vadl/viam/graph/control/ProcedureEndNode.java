@@ -1,33 +1,29 @@
 package vadl.viam.graph.control;
 
-
 import vadl.viam.graph.GraphNodeVisitor;
 import vadl.viam.graph.Node;
 import vadl.viam.graph.NodeList;
 import vadl.viam.graph.dependency.SideEffectNode;
 
-/**
- * The InstrEndNode class represents the end node of a control flow graph of some Instruction.
- */
-public class InstrEndNode extends AbstractEndNode {
-  public InstrEndNode(
+public class ProcedureEndNode extends AbstractEndNode {
+
+  public ProcedureEndNode(
       NodeList<SideEffectNode> sideEffects) {
     super(sideEffects);
   }
 
   @Override
   public Node copy() {
-    return new InstrEndNode(
-        sideEffects().copy());
+    return new ProcedureEndNode(sideEffects().copy());
   }
 
   @Override
   public Node shallowCopy() {
-    return new InstrEndNode(sideEffects());
+    return new ProcedureEndNode(sideEffects());
   }
 
   @Override
-  public void accept(GraphNodeVisitor visitor) {
+  public <T extends GraphNodeVisitor> void accept(T visitor) {
     visitor.visit(this);
   }
 }

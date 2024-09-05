@@ -19,11 +19,6 @@ public class ReturnNode extends AbstractEndNode {
   @Input
   private ExpressionNode value;
 
-  public ReturnNode(ExpressionNode value, NodeList<SideEffectNode> sideEffects) {
-    super(sideEffects);
-    this.value = value;
-  }
-
   public ReturnNode(ExpressionNode value) {
     super(new NodeList<>());
     this.value = value;

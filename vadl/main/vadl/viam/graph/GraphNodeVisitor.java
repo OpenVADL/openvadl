@@ -29,6 +29,9 @@ import vadl.viam.graph.dependency.ZeroExtendNode;
 
 /**
  * Interface for visiting multiple {@link Node} and its subtypes.
+ *
+ * <p>Note that this visitor should only be used if traditional node search/graph manipulation
+ * is not sufficient. Most of the times it is far easier to implement a pass without visitors.</p>
  */
 public interface GraphNodeVisitor {
   /**
