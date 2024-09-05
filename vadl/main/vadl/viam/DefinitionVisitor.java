@@ -95,6 +95,10 @@ public interface DefinitionVisitor {
       instructionSetArchitecture
           .ownPseudoInstructions()
           .forEach(e -> e.accept(this));
+      var pc = instructionSetArchitecture.pc();
+      if (pc != null) {
+        pc.accept(this);
+      }
       afterTraversal(instructionSetArchitecture);
     }
 
@@ -322,7 +326,7 @@ public interface DefinitionVisitor {
 
     @Override
     public void visit(Counter counter) {
-      
+
     }
 
     @Override

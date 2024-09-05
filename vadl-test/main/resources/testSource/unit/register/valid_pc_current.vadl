@@ -1,0 +1,7 @@
+
+instruction set architecture PcTest = {
+  using Regs = Bits<32>
+
+  [current]
+  program counter PC: Regs
+}

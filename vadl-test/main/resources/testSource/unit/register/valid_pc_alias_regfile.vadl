@@ -1,0 +1,8 @@
+
+instruction set architecture PcTest = {
+  using Regs = Bits<32>
+  using Index = Bits<5>
+
+  register file X: Index -> Regs
+  alias program counter PC: Regs = X(31)
+}

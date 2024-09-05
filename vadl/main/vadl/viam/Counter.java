@@ -30,7 +30,11 @@ public abstract sealed class Counter extends Definition {
    */
   public enum Kind {
     PROGRAM_COUNTER,
-    GROUP_COUNTER,
+    GROUP_COUNTER;
+
+    public String toString() {
+      return this == PROGRAM_COUNTER ? "program counter" : "group counter";
+    }
   }
 
   /**
@@ -63,6 +67,10 @@ public abstract sealed class Counter extends Definition {
     super(identifier);
     this.kind = kind;
     this.position = position;
+  }
+
+  public Position position() {
+    return position;
   }
 
   public Kind kind() {
@@ -100,9 +108,10 @@ public abstract sealed class Counter extends Definition {
      *
      * @param registerRef the register this counter is represented by
      */
-    public RegisterCounter(Register registerRef, Position position, Kind kind) {
+    public RegisterCounter(Identifier identifier, Register registerRef, Position position,
+                           Kind kind) {
       super(
-          registerRef.identifier.extendSimpleName("_counter_" + idCounter.incrementAndGet() + "."),
+          identifier,
           position,
           kind);
       this.registerRef = registerRef;
@@ -115,6 +124,15 @@ public abstract sealed class Counter extends Definition {
     @Override
     public Register registerResource() {
       return registerRef;
+    }
+
+    @Override
+    public String toString() {
+      var result = kind() + " " + identifier + ": " + registerRef.type();
+      if (!registerRef.identifier.equals(identifier)) {
+        result += " = " + registerRef.identifier;
+      }
+      return result;
     }
   }
 
@@ -137,10 +155,10 @@ public abstract sealed class Counter extends Definition {
      * @param registerFileRef the register file of the counter-register
      * @param index           the index of the counter-register in the register file
      */
-    public RegisterFileCounter(RegisterFile registerFileRef, Constant.Value index,
+    public RegisterFileCounter(Identifier identifier, RegisterFile registerFileRef,
+                               Constant.Value index,
                                Position position, Kind kind) {
-      super(registerFileRef.identifier.append("counter_" + idCounter.incrementAndGet() + "."),
-          position, kind);
+      super(identifier, position, kind);
       this.registerFileRef = registerFileRef;
       this.index = index;
     }
@@ -164,6 +182,13 @@ public abstract sealed class Counter extends Definition {
     @Override
     public RegisterFile registerResource() {
       return registerFileRef;
+    }
+
+    @Override
+    public String toString() {
+      var result = kind() + " " + identifier + ": " + registerFileRef.resultType();
+      result += " = " + registerFileRef.identifier + "(" + index.intValue() + ")";
+      return result;
     }
   }
 
