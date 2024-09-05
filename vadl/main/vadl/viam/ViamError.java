@@ -7,7 +7,7 @@ import java.util.List;
 import java.util.stream.Collectors;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.Nullable;
-import vadl.error.VadlError;
+import vadl.error.Diagnostic;
 import vadl.utils.SourceLocation;
 
 /**
@@ -72,8 +72,8 @@ public class ViamError extends RuntimeException {
     return this;
   }
 
-  public VadlError toVadlError() {
-    return new VadlError(getMessage(), location, null, null);
+  public Diagnostic toVadlDiagnostic() {
+    return Diagnostic.error(getMessage(), location).build();
   }
 
   /**

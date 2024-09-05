@@ -18,7 +18,8 @@ import vadl.ast.AstDumper;
 import vadl.ast.ModelRemover;
 import vadl.ast.Ungrouper;
 import vadl.ast.VadlParser;
-import vadl.error.VadlException;
+import vadl.error.DiagnosticList;
+import vadl.error.DiagnosticPrinter;
 
 class AstCommands {
 
@@ -33,9 +34,9 @@ class AstCommands {
       // TODO Log to slf4j
       e.printStackTrace();
       return 1;
-    } catch (VadlException vadlException) {
+    } catch (DiagnosticList diagnostics) {
       // TODO Log details to slf4j
-      System.out.println("Errors during parsing - " + vadlException.getMessage());
+      (new DiagnosticPrinter()).print(diagnostics);
       return 1;
     }
   }
@@ -72,9 +73,9 @@ class AstCommands {
         // TODO Log to slf4j
         e.printStackTrace();
         return 1;
-      } catch (VadlException vadlException) {
+      } catch (DiagnosticList diagnostics) {
         // TODO Log details to slf4j
-        System.out.println("Errors during parsing - " + vadlException.getMessage());
+        (new DiagnosticPrinter()).print(diagnostics);
         return 1;
       }
     }
@@ -112,9 +113,9 @@ class AstCommands {
         // TODO Log to slf4j
         e.printStackTrace();
         return 1;
-      } catch (VadlException vadlException) {
+      } catch (DiagnosticList diagnostics) {
         // TODO Log details to slf4j
-        System.out.println("Errors during parsing - " + vadlException.getMessage());
+        (new DiagnosticPrinter()).print(diagnostics);
         return 1;
       }
     }

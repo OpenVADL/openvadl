@@ -6,7 +6,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import javax.annotation.Nullable;
-import vadl.error.VadlError;
+import vadl.error.Diagnostic;
 import vadl.utils.SourceLocation;
 
 class SymbolTable {
@@ -14,7 +14,7 @@ class SymbolTable {
   SymbolTable parent = null;
   final List<SymbolTable> children = new ArrayList<>();
   final Map<String, Symbol> symbols = new HashMap<>();
-  List<VadlError> errors = new ArrayList<>();
+  List<Diagnostic> errors = new ArrayList<>();
 
   void loadBuiltins() {
     defineSymbol(new ValuedSymbol("mnemonic", null, SymbolType.CONSTANT),
@@ -163,7 +163,8 @@ class SymbolTable {
   }
 
   private void reportError(String error, SourceLocation location) {
-    errors.add(new VadlError(error, location, null, null));
+    errors.add(Diagnostic.error(error, location)
+        .build());
   }
 
   enum SymbolType {
@@ -521,7 +522,7 @@ class SymbolTable {
    */
   // TODO verify -> resolve, definition references
   static class VerificationPass {
-    static List<VadlError> verifyUsages(Ast ast) {
+    static List<Diagnostic> verifyUsages(Ast ast) {
       for (Definition definition : ast.definitions) {
         verifyUsages(definition);
       }

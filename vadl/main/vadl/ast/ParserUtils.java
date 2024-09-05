@@ -141,7 +141,7 @@ class ParserUtils {
     return new SourceLocation(
         parser.sourceFile,
         new SourceLocation.Position(token.line, token.col),
-        new SourceLocation.Position(token.line, token.col + token.val.length()));
+        new SourceLocation.Position(token.line, token.col + token.val.length() - 1));
   }
 
   static boolean isExprType(SyntaxType type) {
@@ -237,9 +237,9 @@ class ParserUtils {
    * Checks whether the token is an identifier token.
    * Since some keywords are allowed as identifiers, this is not as simple as checking the type.
    *
-   * @see ParserUtils#ID_TOKENS
    * @param token The token to inspect
    * @return Whether the token is a suitable "identifier"
+   * @see ParserUtils#ID_TOKENS
    */
   static boolean isIdentifierToken(Token token) {
     return ID_TOKENS[token.kind];
