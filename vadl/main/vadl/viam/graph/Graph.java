@@ -47,14 +47,20 @@ public class Graph {
 
   private static final int INITIAL_GRAPH_SIZE = 32;
 
+  /**
+   * Constructs a graph instance.
+   *
+   * <p>Note that you must set the parent definition right after construction.</p>
+   */
   public Graph(String name) {
     this.name = name;
     this.nodes = new ArrayList<>(INITIAL_GRAPH_SIZE);
   }
 
-  protected Graph(String name, ArrayList<Node> nodes) {
+  protected Graph(String name, ArrayList<Node> nodes, Definition parentDefinition) {
     this.name = name;
     this.nodes = nodes;
+    this.parentDefinition = parentDefinition;
   }
 
   public Definition parentDefinition() {

@@ -13,8 +13,7 @@ import vadl.viam.graph.Node;
  */
 public class UninlinedGraph extends Graph {
   public UninlinedGraph(String name, List<Node> nodes, Definition parentDefinition) {
-    super(name, new ArrayList<>(nodes));
-    setParentDefinition(parentDefinition);
+    super(name, new ArrayList<>(nodes), parentDefinition);
   }
 
   public UninlinedGraph(Graph graph, Definition parentDefinition) {

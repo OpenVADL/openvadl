@@ -76,7 +76,7 @@ public class LlvmInstructionLoweringConditionalBranchesStrategyImpl
       InstructionLabel instructionLabel,
       UninlinedGraph visitedGraph) {
 
-    // TODO: @kper : double check this
+    // TODO: @kper : double check or refactor this
     var isa = instruction.parentArchitecture();
     ensure(isa.pc() instanceof Counter.RegisterCounter,
         "Only register counter pcs are currently supported");

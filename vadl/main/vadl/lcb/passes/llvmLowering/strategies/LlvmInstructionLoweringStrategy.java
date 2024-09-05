@@ -97,7 +97,7 @@ public abstract class LlvmInstructionLoweringStrategy {
    */
   protected LlvmLoweringPass.Flags getFlags(UninlinedGraph uninlinedGraph,
                                             @Nullable Counter.RegisterCounter pc) {
-    // TODO: @kper : fix this with new Counter class instead of Register.Counter
+    // TODO: @kper : double check or refactor
     var isTerminator = uninlinedGraph.getNodes(WriteRegNode.class)
         .anyMatch(node -> pc != null && node.register() == pc.registerRef());
 
@@ -139,7 +139,7 @@ public abstract class LlvmInstructionLoweringStrategy {
     var copy = (UninlinedGraph) uninlinedBehavior.copy();
     var instructionIdentifier = instruction.identifier;
 
-    // TODO: @kper : double check this
+    // TODO: @kper : double check this or refactor
     var isa = instruction.parentArchitecture();
     ensure(isa.pc() instanceof Counter.RegisterCounter,
         "Only register counter pcs are currently supported");
@@ -382,7 +382,7 @@ public abstract class LlvmInstructionLoweringStrategy {
   private static Graph getPatternSelector(WriteResourceNode sideEffectNode) {
     var graph = new Graph(sideEffectNode.id().toString() + ".selector.lowering");
     graph.setParentDefinition(Objects.requireNonNull(sideEffectNode.graph()).parentDefinition());
-    
+
     Node root = sideEffectNode instanceof LlvmSideEffectPatternIncluded ? sideEffectNode :
         sideEffectNode.value();
     root.clearUsages();
