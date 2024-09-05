@@ -77,6 +77,7 @@ public class Function extends Definition implements DefProp.WithBehavior, DefPro
 
   public void setBehavior(Graph graph) {
     this.behavior = graph;
+    graph.setParentDefinition(this);
   }
 
   public ConcreteRelationType signature() {

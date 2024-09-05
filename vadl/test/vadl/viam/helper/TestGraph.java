@@ -13,6 +13,6 @@ public class TestGraph extends Graph {
   }
 
   public TestGraph(String name) {
-    super(name);
+    super(name, new DummyDefinition());
   }
 }

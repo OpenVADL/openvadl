@@ -57,6 +57,13 @@ public class Graph {
     this.nodes = new ArrayList<>(INITIAL_GRAPH_SIZE);
   }
 
+  /**
+   * Constructs a graph instance.
+   */
+  public Graph(String name, Definition parentDefinition) {
+    this(name, new ArrayList<>(INITIAL_GRAPH_SIZE), parentDefinition);
+  }
+
   protected Graph(String name, ArrayList<Node> nodes, Definition parentDefinition) {
     this.name = name;
     this.nodes = nodes;
