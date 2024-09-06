@@ -6,11 +6,13 @@ import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.Map;
+import java.util.Objects;
 import java.util.concurrent.Callable;
 import javax.annotation.Nullable;
 import picocli.CommandLine.Command;
 import picocli.CommandLine.Option;
 import picocli.CommandLine.Parameters;
+import picocli.CommandLine.ParentCommand;
 import vadl.ast.Ast;
 import vadl.ast.AstDumper;
 import vadl.ast.ModelRemover;
@@ -20,9 +22,12 @@ import vadl.error.VadlException;
 
 class AstCommands {
 
-  static int checkSyntax(Path input) {
+  static int checkSyntax(Main main) {
     try {
-      parse(input);
+      Ast ast = parse(main.input, main.modelOverrides);
+      if (main.printPassStatistics) {
+        VadlParser.printPassTimings(ast);
+      }
       return 0;
     } catch (IOException e) {
       // TODO Log to slf4j
@@ -38,26 +43,28 @@ class AstCommands {
   @Command(name = "dump-ast", description = "Dumps an AST representation of the VADL specification")
   static class DumpAstCommand implements Callable<Integer> {
 
+    @ParentCommand
+    @LazyInit
+    Main main;
+
     @Parameters(description = "Path to the input VADL specification")
     @LazyInit
     Path input;
 
-    @Option(names = {"--output", "-o"}, description = "Output path for dumped AST contents")
+    @Option(names = {"--output", "-o"},
+        description = "Output path for dumped AST contents, or - for stdout")
     @Nullable
     Path output;
-
-    @Option(names = {"-p", "--pass-stats"}, description = "Print performance statistics of passes")
-    boolean printPassStatistics;
 
     @Override
     public Integer call() {
       try {
-        Ast ast = parse(input);
+        Ast ast = parse(input, main.modelOverrides);
         String dump = new AstDumper().dump(ast);
         if (output != null) {
           writeToPath(dump, output);
         }
-        if (printPassStatistics) {
+        if (main.printPassStatistics) {
           VadlParser.printPassTimings(ast);
         }
         return 0;
@@ -76,26 +83,28 @@ class AstCommands {
   @Command(name = "expand-ast", description = "Expands all macros in the given VADL specification")
   static class ExpandAstCommand implements Callable<Integer> {
 
+    @ParentCommand
+    @LazyInit
+    Main main;
+
     @Parameters(description = "Path to the input VADL specification")
     @LazyInit
     Path input;
 
-    @Option(names = {"--output", "-o"}, description = "Output path for pretty-printed expanded AST, or - for stdout")
+    @Option(names = {"--output", "-o"},
+        description = "Output path for pretty-printed expanded AST, or - for stdout")
     @Nullable
     Path output;
-
-    @Option(names = {"-p", "--pass-stats"}, description = "Print performance statistics of passes")
-    boolean printPassStatistics;
 
     @Override
     public Integer call() {
       try {
-        Ast ast = parse(input);
+        Ast ast = parse(input, main.modelOverrides);
         String prettified = ast.prettyPrint();
         if (output != null) {
           writeToPath(prettified, output);
         }
-        if (printPassStatistics) {
+        if (main.printPassStatistics) {
           VadlParser.printPassTimings(ast);
         }
         return 0;
@@ -111,8 +120,9 @@ class AstCommands {
     }
   }
 
-  private static Ast parse(Path input) throws IOException {
-    Ast ast = VadlParser.parse(input, Map.of());
+  private static Ast parse(Path input, @Nullable Map<String, String> modelOverrides)
+      throws IOException {
+    Ast ast = VadlParser.parse(input, Objects.requireNonNullElseGet(modelOverrides, Map::of));
     new Ungrouper().ungroup(ast);
     new ModelRemover().removeModels(ast);
     return ast;
