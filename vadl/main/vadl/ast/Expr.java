@@ -1,6 +1,7 @@
 package vadl.ast;
 
 import com.google.common.base.Preconditions;
+import java.math.BigInteger;
 import java.util.List;
 import java.util.Objects;
 import javax.annotation.Nullable;
@@ -584,11 +585,11 @@ class UnaryExpr extends Expr {
 
 class IntegerLiteral extends Expr {
   String token;
-  long number;
+  BigInteger number;
   SourceLocation loc;
 
-  private static long parse(String token) {
-    return Long.parseLong(token.replace("'", ""));
+  private static BigInteger parse(String token) {
+    return new BigInteger(token.replace("'", ""));
   }
 
   public IntegerLiteral(String token, SourceLocation loc) {
@@ -632,12 +633,12 @@ class IntegerLiteral extends Expr {
     }
 
     IntegerLiteral that = (IntegerLiteral) o;
-    return number == that.number && token.equals(that.token);
+    return number.equals(that.number) && token.equals(that.token);
   }
 
   @Override
   public int hashCode() {
-    int result = Long.hashCode(number);
+    int result = number.hashCode();
     result = 31 * result + Objects.hashCode(token);
     return result;
   }
@@ -645,15 +646,15 @@ class IntegerLiteral extends Expr {
 
 class BinaryLiteral extends Expr {
   String token;
-  long number;
+  BigInteger number;
   SourceLocation loc;
 
-  private static long parse(String token) {
+  private static BigInteger parse(String token) {
     token = token.replace("'", "");
     if (token.startsWith("0x")) {
-      return Long.parseLong(token.substring(2), 16);
+      return new BigInteger(token.substring(2), 16);
     } else if (token.startsWith("0b")) {
-      return Long.parseLong(token.substring(2), 2);
+      return new BigInteger(token.substring(2), 2);
     } else {
       throw new IllegalArgumentException("No conversion implemented for binary literal " + token);
     }
@@ -700,12 +701,12 @@ class BinaryLiteral extends Expr {
     }
 
     BinaryLiteral that = (BinaryLiteral) o;
-    return number == that.number && token.equals(that.token);
+    return number.equals(that.number) && token.equals(that.token);
   }
 
   @Override
   public int hashCode() {
-    int result = Long.hashCode(number);
+    int result = number.hashCode();
     result = 31 * result + Objects.hashCode(token);
     return result;
   }
