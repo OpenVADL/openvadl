@@ -24,7 +24,7 @@ class AstCommands {
 
   static int checkSyntax(Main main) {
     try {
-      Ast ast = parse(main.input, main.modelOverrides);
+      Ast ast = parse(Objects.requireNonNull(main.input), main.modelOverrides);
       if (main.printPassStatistics) {
         VadlParser.printPassTimings(ast);
       }
