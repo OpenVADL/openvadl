@@ -1498,7 +1498,7 @@ PRODUCTIONS
         sequenceCallExpr<out call>                        (. list.add(call); .)
       }
       SYM_BRACK_CLOSE
-    )
+    )                                                     (. list = expandSequenceCalls(this, list); .)
   .
 
   sequenceCallExpr<out SequenceCallExpr call> (. var start = lookaheadLoc(); .)

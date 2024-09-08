@@ -111,12 +111,21 @@ class SymbolTable {
 
   @Nullable
   FormatSymbol requireInstructionFormat(Identifier instrId) {
+    var symbol = findInstructionFormat(instrId);
+    if (symbol == null) {
+      reportError("Unresolved instruction " + instrId.name, instrId.location());
+      return null;
+    }
+    return symbol;
+  }
+
+  @Nullable
+  FormatSymbol findInstructionFormat(Identifier instrId) {
     var symbol = resolveSymbol(instrId.name);
     if (symbol instanceof InstructionSymbol instructionSymbol
         && instructionSymbol.definition.typeIdentifier instanceof Identifier typeId) {
       return requireFormat(typeId);
     } else {
-      reportError("Unresolved instruction " + instrId.name, instrId.location());
       return null;
     }
   }
@@ -459,8 +468,15 @@ class SymbolTable {
           collectSymbols(abi.symbolTable, def);
         }
       } else if (definition instanceof AbiSequenceDefinition abiSequence) {
+        abiSequence.symbolTable = symbols.createChild();
+        for (Parameter param : abiSequence.params) {
+          abiSequence.symbolTable.defineSymbol(
+              new ValuedSymbol(param.name().name, null, SymbolType.PARAMETER),
+              param.name().loc
+          );
+        }
         for (InstructionCallStatement statement : abiSequence.statements) {
-          collectSymbols(symbols, statement);
+          collectSymbols(abiSequence.symbolTable, statement);
         }
       } else if (definition instanceof MicroProcessorDefinition mip) {
         symbols.defineSymbol(new MipSymbol(mip.id.name, mip), mip.loc);
@@ -753,8 +769,14 @@ class SymbolTable {
       } else if (definition instanceof ProcessDefinition process) {
         verifyUsages(process.statement);
       } else if (definition instanceof ApplicationBinaryInterfaceDefinition abi) {
-        for (Definition def : abi.definitions) {
-          verifyUsages(def);
+        var isa = abi.symbolTable().findIsa((Identifier) abi.isa);
+        if (isa == null) {
+          abi.symbolTable().reportError("Unknown ISA " + abi.isa.pathToString(), abi.loc);
+        } else {
+          abi.symbolTable().copyFrom(isa.symbolTable());
+          for (Definition def : abi.definitions) {
+            verifyUsages(def);
+          }
         }
       } else if (definition instanceof AbiSequenceDefinition abiSequence) {
         for (InstructionCallStatement statement : abiSequence.statements) {
@@ -820,7 +842,7 @@ class SymbolTable {
           }
         }
       } else if (stmt instanceof InstructionCallStatement instructionCall) {
-        var format = instructionCall.symbolTable().requireInstructionFormat(instructionCall.id());
+        var format = instructionCall.symbolTable().findInstructionFormat(instructionCall.id());
         if (format != null) {
           for (var namedArgument : instructionCall.namedArguments) {
             FormatDefinition.FormatField foundField = null;
@@ -837,9 +859,35 @@ class SymbolTable {
             }
             verifyUsages(namedArgument.value());
           }
-          for (Expr unnamedArgument : instructionCall.unnamedArguments) {
-            verifyUsages(unnamedArgument);
+        } else {
+          var pseudoInstr =
+              instructionCall.symbolTable().findPseudoInstruction(instructionCall.id());
+          if (pseudoInstr != null) {
+            for (var namedArgument : instructionCall.namedArguments) {
+              Parameter foundParam = null;
+              for (var param : pseudoInstr.params) {
+                if (param.name().name.equals(namedArgument.name().name)) {
+                  foundParam = param;
+                  break;
+                }
+              }
+              if (foundParam == null) {
+                instructionCall.symbolTable()
+                    .reportError(
+                        "Unknown instruction param %s (%s)".formatted(namedArgument.name().name,
+                            pseudoInstr.id().name),
+                        namedArgument.name().location());
+              }
+              verifyUsages(namedArgument.value());
+            }
+          } else {
+            instructionCall.symbolTable()
+                .reportError("Unknown instruction " + instructionCall.id().name,
+                    instructionCall.loc);
           }
+        }
+        for (Expr unnamedArgument : instructionCall.unnamedArguments) {
+          verifyUsages(unnamedArgument);
         }
       }
     }
@@ -898,6 +946,8 @@ class SymbolTable {
         verifyUsages(existsInThen.thenExpr);
       } else if (expr instanceof ForAllThenExpr forAllThen) {
         verifyUsages(forAllThen.thenExpr);
+      } else if (expr instanceof SequenceCallExpr sequenceCall) {
+        verifyUsages(sequenceCall.target);
       }
     }
 

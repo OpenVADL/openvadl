@@ -1,5 +1,6 @@
 package vadl.ast;
 
+import java.math.BigInteger;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -566,5 +567,46 @@ class ParserUtils {
       }
       return result;
     }
+  }
+
+  static List<SequenceCallExpr> expandSequenceCalls(Parser parser, List<SequenceCallExpr> calls) {
+    var expandedCalls = new ArrayList<SequenceCallExpr>(calls.size());
+    for (SequenceCallExpr callExpr : calls) {
+      if (callExpr.range == null) {
+        expandedCalls.add(callExpr);
+      } else {
+        BigInteger start = BigInteger.ZERO;
+        BigInteger end = BigInteger.ZERO;
+        if (callExpr.range instanceof RangeExpr rangeExpr) {
+          if (rangeExpr.from instanceof IntegerLiteral integerLiteral) {
+            start = integerLiteral.number;
+          } else {
+            reportError(parser, "Unknown start index type " + rangeExpr.from,
+                rangeExpr.from.location());
+          }
+          if (rangeExpr.to instanceof IntegerLiteral integerLiteral) {
+            end = integerLiteral.number;
+          } else {
+            reportError(parser, "Unknown start index type " + rangeExpr.to,
+                rangeExpr.to.location());
+          }
+        } else if (callExpr.range instanceof IntegerLiteral integerLiteral) {
+          start = end = integerLiteral.number;
+        } else {
+          reportError(parser, "Unknown index type " + callExpr.range, callExpr.range.location());
+        }
+        for (; !start.equals(end); start = start.add(BigInteger.valueOf(end.compareTo(start)))) {
+          expandedCalls.add(
+              new SequenceCallExpr(new Identifier(callExpr.target.name + start, callExpr.loc), null,
+                  callExpr.loc));
+        }
+      }
+    }
+    return expandedCalls;
+  }
+
+
+  private static void reportError(Parser parser, String error, SourceLocation location) {
+    parser.errors.SemErr(location.begin().line(), location.begin().column(), error);
   }
 }
