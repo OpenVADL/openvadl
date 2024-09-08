@@ -68,15 +68,23 @@ class ParserUtils {
     ID_TOKENS[Parser._CONSTANT] = true;
     ID_TOKENS[Parser._ENCODE] = true;
     ID_TOKENS[Parser._EXCEPTION] = true;
+    ID_TOKENS[Parser._FETCH] = true;
+    ID_TOKENS[Parser._FIRMWARE] = true;
     ID_TOKENS[Parser._GROUP] = true;
     ID_TOKENS[Parser._INSTRUCTION] = true;
     ID_TOKENS[Parser._MEMORY] = true;
     ID_TOKENS[Parser._NOP] = true;
     ID_TOKENS[Parser._OPERATION] = true;
     ID_TOKENS[Parser._PREDICATE] = true;
+    ID_TOKENS[Parser._PREDICTION] = true;
+    ID_TOKENS[Parser._READ] = true;
     ID_TOKENS[Parser._REGISTER] = true;
     ID_TOKENS[Parser._RETURN] = true;
     ID_TOKENS[Parser._SEQUENCE] = true;
+    ID_TOKENS[Parser._STAGE] = true;
+    ID_TOKENS[Parser._START] = true;
+    ID_TOKENS[Parser._STARTUP] = true;
+    ID_TOKENS[Parser._STOP] = true;
     ID_TOKENS[Parser._SYM_IN] = true;
     ID_TOKENS[Parser._T_BIN] = true;
     ID_TOKENS[Parser._T_BIN_OP] = true;
@@ -93,6 +101,8 @@ class ParserUtils {
     ID_TOKENS[Parser._T_SYM_EX] = true;
     ID_TOKENS[Parser._T_UN_OP] = true;
     ID_TOKENS[Parser._T_VAL] = true;
+    ID_TOKENS[Parser._TRANSLATION] = true;
+    ID_TOKENS[Parser._WRITE] = true;
   }
 
   /**

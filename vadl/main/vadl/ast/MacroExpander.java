@@ -683,6 +683,93 @@ class MacroExpander
   }
 
   @Override
+  public Definition visit(MicroProcessorDefinition definition) {
+    var definitions = expandDefinitions(definition.definitions);
+    return new MicroProcessorDefinition(definition.id, definition.implementedIsas, definition.abi,
+        definitions, definition.loc).withAnnotations(expandAnnotations(definition.annotations));
+  }
+
+  @Override
+  public Definition visit(PatchDefinition definition) {
+    return new PatchDefinition(definition.generator, definition.handle, definition.reference,
+        definition.source, definition.loc
+    ).withAnnotations(expandAnnotations(definition.annotations));
+  }
+
+  @Override
+  public Definition visit(SourceDefinition definition) {
+    return new SourceDefinition(definition.id, definition.source, definition.loc)
+        .withAnnotations(expandAnnotations(definition.annotations));
+  }
+
+  @Override
+  public Definition visit(CpuFunctionDefinition definition) {
+    return new CpuFunctionDefinition(definition.kind, definition.stopWithReference,
+        expandExpr(definition.expr), definition.loc
+    ).withAnnotations(expandAnnotations(definition.annotations));
+  }
+
+  @Override
+  public Definition visit(CpuProcessDefinition definition) {
+    return new CpuProcessDefinition(definition.kind, definition.startupOutputs,
+        definition.statement.accept(this), definition.loc
+    ).withAnnotations(expandAnnotations(definition.annotations));
+  }
+
+  @Override
+  public Definition visit(MicroArchitectureDefinition definition) {
+    return new MicroArchitectureDefinition(definition.id, definition.processor,
+        expandDefinitions(definition.definitions), definition.loc
+    ).withAnnotations(expandAnnotations(definition.annotations));
+  }
+
+  @Override
+  public Definition visit(MacroInstructionDefinition definition) {
+    return new MacroInstructionDefinition(definition.kind, definition.inputs, definition.outputs,
+        definition.statement.accept(this), definition.loc
+    ).withAnnotations(expandAnnotations(definition.annotations));
+  }
+
+  @Override
+  public Definition visit(PortBehaviorDefinition definition) {
+    return new PortBehaviorDefinition(definition.id, definition.kind, definition.inputs,
+        definition.outputs, definition.statement.accept(this), definition.loc
+    ).withAnnotations(expandAnnotations(definition.annotations));
+  }
+
+  @Override
+  public Definition visit(PipelineDefinition definition) {
+    return new PipelineDefinition(definition.id, definition.outputs,
+        definition.statement.accept(this), definition.loc
+    ).withAnnotations(expandAnnotations(definition.annotations));
+  }
+
+  @Override
+  public Definition visit(StageDefinition definition) {
+    return new StageDefinition(definition.id, definition.outputs, definition.statement.accept(this),
+        definition.loc
+    ).withAnnotations(expandAnnotations(definition.annotations));
+  }
+
+  @Override
+  public Definition visit(CacheDefinition definition) {
+    return new CacheDefinition(definition.id, definition.sourceType, definition.targetType,
+        definition.loc).withAnnotations(definition.annotations);
+  }
+
+  @Override
+  public Definition visit(LogicDefinition definition) {
+    return new LogicDefinition(definition.id, definition.loc)
+        .withAnnotations(expandAnnotations(definition.annotations));
+  }
+
+  @Override
+  public Definition visit(SignalDefinition definition) {
+    return new SignalDefinition(definition.id, definition.type, definition.loc)
+        .withAnnotations(expandAnnotations(definition.annotations));
+  }
+
+  @Override
   public BlockStatement visit(BlockStatement blockStatement) {
     return new BlockStatement(expandStatements(blockStatement.statements),
         copyLoc(blockStatement.location));

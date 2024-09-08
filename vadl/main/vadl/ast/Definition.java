@@ -86,6 +86,32 @@ interface DefinitionVisitor<R> {
   R visit(AbiSequenceDefinition definition);
 
   R visit(SpecialPurposeRegisterDefinition definition);
+
+  R visit(MicroProcessorDefinition definition);
+
+  R visit(PatchDefinition definition);
+
+  R visit(SourceDefinition definition);
+
+  R visit(CpuFunctionDefinition definition);
+
+  R visit(CpuProcessDefinition definition);
+
+  R visit(MicroArchitectureDefinition definition);
+
+  R visit(MacroInstructionDefinition definition);
+
+  R visit(PortBehaviorDefinition definition);
+
+  R visit(PipelineDefinition definition);
+
+  R visit(StageDefinition definition);
+
+  R visit(CacheDefinition definition);
+
+  R visit(LogicDefinition definition);
+
+  R visit(SignalDefinition definition);
 }
 
 /**
@@ -2634,6 +2660,7 @@ class ApplicationBinaryInterfaceDefinition extends Definition {
 
   @Override
   void prettyPrint(int indent, StringBuilder builder) {
+    annotations.prettyPrint(indent, builder);
     builder.append(prettyIndentString(indent)).append("application binary interface ");
     id.prettyPrint(indent, builder);
     builder.append(" for ");
@@ -2696,6 +2723,7 @@ class AbiSequenceDefinition extends Definition {
 
   @Override
   void prettyPrint(int indent, StringBuilder builder) {
+    annotations.prettyPrint(indent, builder);
     builder.append(prettyIndentString(indent));
     builder.append(kind.keyword);
     builder.append(" sequence ");
@@ -2779,6 +2807,7 @@ class SpecialPurposeRegisterDefinition extends Definition {
 
   @Override
   void prettyPrint(int indent, StringBuilder builder) {
+    annotations.prettyPrint(indent, builder);
     builder.append(prettyIndentString(indent));
     builder.append(purpose.keywords);
     builder.append(" = ");
@@ -2830,5 +2859,619 @@ class SpecialPurposeRegisterDefinition extends Definition {
     Purpose(String keywords) {
       this.keywords = keywords;
     }
+  }
+}
+
+class MicroProcessorDefinition extends Definition {
+  Identifier id;
+  List<IsId> implementedIsas;
+  IsId abi;
+  List<Definition> definitions;
+  SourceLocation loc;
+
+  MicroProcessorDefinition(Identifier id, List<IsId> implementedIsas, IsId abi,
+                           List<Definition> definitions, SourceLocation loc) {
+    this.id = id;
+    this.implementedIsas = implementedIsas;
+    this.abi = abi;
+    this.definitions = definitions;
+    this.loc = loc;
+  }
+
+  @Override
+  <R> R accept(DefinitionVisitor<R> visitor) {
+    return visitor.visit(this);
+  }
+
+  @Override
+  SourceLocation location() {
+    return loc;
+  }
+
+  @Override
+  SyntaxType syntaxType() {
+    return BasicSyntaxType.INVALID;
+  }
+
+  @Override
+  void prettyPrint(int indent, StringBuilder builder) {
+    annotations.prettyPrint(indent, builder);
+    builder.append(prettyIndentString(indent)).append("micro processor ");
+    id.prettyPrint(0, builder);
+    builder.append(" implements ");
+    var isFirst = true;
+    for (IsId implementedIsa : implementedIsas) {
+      if (!isFirst) {
+        builder.append(", ");
+      }
+      isFirst = false;
+      implementedIsa.prettyPrint(0, builder);
+    }
+    builder.append(" with ");
+    abi.prettyPrint(0, builder);
+    builder.append(" = {\n");
+    for (Definition definition : definitions) {
+      definition.prettyPrint(indent + 1, builder);
+    }
+    builder.append(prettyIndentString(indent)).append("}\n");
+  }
+}
+
+class PatchDefinition extends Definition {
+  Identifier generator;
+  Identifier handle;
+  @Nullable
+  IsId reference;
+  @Nullable
+  String source;
+  SourceLocation loc;
+
+  PatchDefinition(Identifier generator, Identifier handle, @Nullable IsId reference,
+                  @Nullable String source, SourceLocation loc) {
+    this.generator = generator;
+    this.handle = handle;
+    this.reference = reference;
+    this.source = source;
+    this.loc = loc;
+  }
+
+  @Override
+  <R> R accept(DefinitionVisitor<R> visitor) {
+    return visitor.visit(this);
+  }
+
+  @Override
+  SourceLocation location() {
+    return loc;
+  }
+
+  @Override
+  SyntaxType syntaxType() {
+    return BasicSyntaxType.INVALID;
+  }
+
+  @Override
+  void prettyPrint(int indent, StringBuilder builder) {
+    annotations.prettyPrint(indent, builder);
+    builder.append(prettyIndentString(indent));
+    builder.append("patch ");
+    generator.prettyPrint(0, builder);
+    builder.append(" ");
+    handle.prettyPrint(0, builder);
+    builder.append(" = ");
+    if (reference != null) {
+      reference.prettyPrint(0, builder);
+    }
+    if (source != null) {
+      builder.append("-<{").append(source).append("}>-");
+    }
+    builder.append("\n");
+  }
+}
+
+class SourceDefinition extends Definition {
+  Identifier id;
+  String source;
+  SourceLocation loc;
+
+  SourceDefinition(Identifier id, String source, SourceLocation loc) {
+    this.id = id;
+    this.source = source;
+    this.loc = loc;
+  }
+
+  @Override
+  <R> R accept(DefinitionVisitor<R> visitor) {
+    return visitor.visit(this);
+  }
+
+  @Override
+  SourceLocation location() {
+    return loc;
+  }
+
+  @Override
+  SyntaxType syntaxType() {
+    return BasicSyntaxType.INVALID;
+  }
+
+  @Override
+  void prettyPrint(int indent, StringBuilder builder) {
+    builder.append(prettyIndentString(indent));
+    builder.append("source ");
+    id.prettyPrint(0, builder);
+    builder.append(" = ");
+    builder.append("-<{").append(source).append("}>-\n");
+  }
+}
+
+class CpuFunctionDefinition extends Definition {
+  BehaviorKind kind;
+  @Nullable
+  IsId stopWithReference;
+  Expr expr;
+  SourceLocation loc;
+
+  CpuFunctionDefinition(BehaviorKind kind, @Nullable IsId stopWithReference, Expr expr,
+                        SourceLocation loc) {
+    this.kind = kind;
+    this.stopWithReference = stopWithReference;
+    this.expr = expr;
+    this.loc = loc;
+  }
+
+  @Override
+  <R> R accept(DefinitionVisitor<R> visitor) {
+    return visitor.visit(this);
+  }
+
+  @Override
+  SourceLocation location() {
+    return loc;
+  }
+
+  @Override
+  SyntaxType syntaxType() {
+    return BasicSyntaxType.INVALID;
+  }
+
+  @Override
+  void prettyPrint(int indent, StringBuilder builder) {
+    annotations.prettyPrint(indent, builder);
+    builder.append(prettyIndentString(indent));
+    builder.append(kind.keyword);
+    if (stopWithReference != null) {
+      builder.append(" with @");
+      stopWithReference.prettyPrint(0, builder);
+    }
+    if (isBlockLayout(expr)) {
+      builder.append(" =\n");
+      expr.prettyPrint(indent + 1, builder);
+    } else {
+      builder.append(" = ");
+      expr.prettyPrint(0, builder);
+      builder.append("\n");
+    }
+  }
+
+  enum BehaviorKind {
+    START("start"), STOP("stop");
+
+    private final String keyword;
+
+    BehaviorKind(String keyword) {
+      this.keyword = keyword;
+    }
+  }
+}
+
+class CpuProcessDefinition extends Definition {
+  ProcessKind kind;
+  List<Parameter> startupOutputs;
+  Statement statement;
+  SourceLocation loc;
+
+  CpuProcessDefinition(ProcessKind kind, List<Parameter> startupOutputs, Statement stmt,
+                       SourceLocation loc) {
+    this.kind = kind;
+    this.startupOutputs = startupOutputs;
+    this.statement = stmt;
+    this.loc = loc;
+  }
+
+  @Override
+  <R> R accept(DefinitionVisitor<R> visitor) {
+    return visitor.visit(this);
+  }
+
+  @Override
+  SourceLocation location() {
+    return loc;
+  }
+
+  @Override
+  SyntaxType syntaxType() {
+    return BasicSyntaxType.INVALID;
+  }
+
+  @Override
+  void prettyPrint(int indent, StringBuilder builder) {
+    annotations.prettyPrint(indent, builder);
+    builder.append(prettyIndentString(indent));
+    builder.append(kind.keyword);
+    if (kind == ProcessKind.STARTUP) {
+      builder.append(" -> ");
+      Parameter.prettyPrint(startupOutputs, builder);
+    }
+    builder.append(" =\n");
+    statement.prettyPrint(indent + 1, builder);
+  }
+
+  enum ProcessKind {
+    FIRMWARE("firmware"), STARTUP("startup");
+
+    private final String keyword;
+
+    ProcessKind(String keyword) {
+      this.keyword = keyword;
+    }
+  }
+}
+
+class MicroArchitectureDefinition extends Definition {
+  Identifier id;
+  IsId processor;
+  List<Definition> definitions;
+  SourceLocation loc;
+
+  MicroArchitectureDefinition(Identifier id, IsId processor, List<Definition> definitions,
+                              SourceLocation loc) {
+    this.id = id;
+    this.processor = processor;
+    this.definitions = definitions;
+    this.loc = loc;
+  }
+
+  @Override
+  <R> R accept(DefinitionVisitor<R> visitor) {
+    return visitor.visit(this);
+  }
+
+  @Override
+  SourceLocation location() {
+    return loc;
+  }
+
+  @Override
+  SyntaxType syntaxType() {
+    return BasicSyntaxType.INVALID;
+  }
+
+  @Override
+  void prettyPrint(int indent, StringBuilder builder) {
+    builder.append(prettyIndentString(indent));
+    builder.append("micro architecture ");
+    id.prettyPrint(0, builder);
+    builder.append(" implements ");
+    processor.prettyPrint(0, builder);
+    builder.append(" = {\n");
+    for (Definition definition : definitions) {
+      definition.prettyPrint(indent + 1, builder);
+    }
+    builder.append(prettyIndentString(indent)).append("}\n");
+  }
+}
+
+class MacroInstructionDefinition extends Definition {
+  MacroBehaviorKind kind;
+  List<Parameter> inputs;
+  List<Parameter> outputs;
+  Statement statement;
+  SourceLocation loc;
+
+  MacroInstructionDefinition(MacroBehaviorKind kind, List<Parameter> inputs,
+                             List<Parameter> outputs, Statement statement, SourceLocation loc) {
+    this.kind = kind;
+    this.inputs = inputs;
+    this.outputs = outputs;
+    this.statement = statement;
+    this.loc = loc;
+  }
+
+  @Override
+  <R> R accept(DefinitionVisitor<R> visitor) {
+    return visitor.visit(this);
+  }
+
+  @Override
+  SourceLocation location() {
+    return loc;
+  }
+
+  @Override
+  SyntaxType syntaxType() {
+    return BasicSyntaxType.INVALID;
+  }
+
+  @Override
+  void prettyPrint(int indent, StringBuilder builder) {
+    annotations.prettyPrint(indent, builder);
+    builder.append(prettyIndentString(indent));
+    builder.append(kind.keyword);
+    Parameter.prettyPrint(inputs, builder);
+    builder.append(" -> ");
+    Parameter.prettyPrint(outputs, builder);
+    builder.append(" =\n");
+    statement.prettyPrint(indent + 1, builder);
+  }
+
+  enum MacroBehaviorKind {
+    TRANSLATION("translation"), PREDICTION("prediction"), FETCH("fetch"), DECODER("decoder"),
+    STARTUP("startup");
+
+    private final String keyword;
+
+    MacroBehaviorKind(String keyword) {
+      this.keyword = keyword;
+    }
+  }
+}
+
+class PortBehaviorDefinition extends Definition {
+  Identifier id;
+  PortKind kind;
+  List<Parameter> inputs;
+  List<Parameter> outputs;
+  Statement statement;
+  SourceLocation loc;
+
+  PortBehaviorDefinition(Identifier id, PortKind kind, List<Parameter> inputs,
+                         List<Parameter> outputs, Statement statement, SourceLocation loc) {
+    this.id = id;
+    this.kind = kind;
+    this.inputs = inputs;
+    this.outputs = outputs;
+    this.statement = statement;
+    this.loc = loc;
+  }
+
+  @Override
+  <R> R accept(DefinitionVisitor<R> visitor) {
+    return visitor.visit(this);
+  }
+
+  @Override
+  SourceLocation location() {
+    return loc;
+  }
+
+  @Override
+  SyntaxType syntaxType() {
+    return BasicSyntaxType.INVALID;
+  }
+
+  @Override
+  void prettyPrint(int indent, StringBuilder builder) {
+    annotations.prettyPrint(indent, builder);
+    builder.append(prettyIndentString(indent));
+    builder.append(kind.keyword);
+    id.prettyPrint(0, builder);
+    Parameter.prettyPrint(inputs, builder);
+    builder.append(" -> ");
+    Parameter.prettyPrint(outputs, builder);
+    builder.append(" =\n");
+    statement.prettyPrint(indent + 1, builder);
+  }
+
+  enum PortKind {
+    READ("read"), WRITE("write"), HIT("hit"), MISS("miss");
+
+    private final String keyword;
+
+    PortKind(String keyword) {
+      this.keyword = keyword;
+    }
+  }
+}
+
+class PipelineDefinition extends Definition {
+  Identifier id;
+  List<Parameter> outputs;
+  Statement statement;
+  SourceLocation loc;
+
+  PipelineDefinition(Identifier id, List<Parameter> outputs, Statement statement,
+                     SourceLocation loc) {
+    this.id = id;
+    this.outputs = outputs;
+    this.statement = statement;
+    this.loc = loc;
+  }
+
+  @Override
+  <R> R accept(DefinitionVisitor<R> visitor) {
+    return visitor.visit(this);
+  }
+
+  @Override
+  SourceLocation location() {
+    return loc;
+  }
+
+  @Override
+  SyntaxType syntaxType() {
+    return BasicSyntaxType.INVALID;
+  }
+
+  @Override
+  void prettyPrint(int indent, StringBuilder builder) {
+    annotations.prettyPrint(indent, builder);
+    builder.append(prettyIndentString(indent));
+    builder.append("pipeline");
+    id.prettyPrint(0, builder);
+    if (!outputs.isEmpty()) {
+      builder.append(" -> ");
+      Parameter.prettyPrint(outputs, builder);
+    }
+    builder.append(" = ");
+    statement.prettyPrint(indent + 1, builder);
+  }
+}
+
+class StageDefinition extends Definition {
+  Identifier id;
+  List<Parameter> outputs;
+  Statement statement;
+  SourceLocation loc;
+
+  StageDefinition(Identifier id, List<Parameter> outputs, Statement statement,
+                  SourceLocation loc) {
+    this.id = id;
+    this.outputs = outputs;
+    this.statement = statement;
+    this.loc = loc;
+  }
+
+  @Override
+  <R> R accept(DefinitionVisitor<R> visitor) {
+    return visitor.visit(this);
+  }
+
+  @Override
+  SourceLocation location() {
+    return loc;
+  }
+
+  @Override
+  SyntaxType syntaxType() {
+    return BasicSyntaxType.INVALID;
+  }
+
+  @Override
+  void prettyPrint(int indent, StringBuilder builder) {
+    annotations.prettyPrint(indent, builder);
+    builder.append(prettyIndentString(indent));
+    builder.append("stage ");
+    id.prettyPrint(0, builder);
+    if (!outputs.isEmpty()) {
+      Parameter.prettyPrint(outputs, builder);
+    }
+    builder.append(" =\n");
+    statement.prettyPrint(indent + 1, builder);
+  }
+}
+
+class CacheDefinition extends Definition {
+  Identifier id;
+  TypeLiteral sourceType;
+  TypeLiteral targetType;
+  SourceLocation loc;
+
+  CacheDefinition(Identifier id, TypeLiteral sourceType, TypeLiteral targetType,
+                  SourceLocation loc) {
+    this.id = id;
+    this.sourceType = sourceType;
+    this.targetType = targetType;
+    this.loc = loc;
+  }
+
+  @Override
+  <R> R accept(DefinitionVisitor<R> visitor) {
+    return visitor.visit(this);
+  }
+
+  @Override
+  SourceLocation location() {
+    return loc;
+  }
+
+  @Override
+  SyntaxType syntaxType() {
+    return BasicSyntaxType.INVALID;
+  }
+
+  @Override
+  void prettyPrint(int indent, StringBuilder builder) {
+    annotations.prettyPrint(indent, builder);
+    builder.append(prettyIndentString(indent));
+    builder.append("cache ");
+    id.prettyPrint(0, builder);
+    builder.append(" : ");
+    sourceType.prettyPrint(0, builder);
+    builder.append(" -> ");
+    targetType.prettyPrint(0, builder);
+    builder.append("\n");
+  }
+}
+
+class LogicDefinition extends Definition {
+  Identifier id;
+  SourceLocation loc;
+
+  LogicDefinition(Identifier id, SourceLocation loc) {
+    this.id = id;
+    this.loc = loc;
+  }
+
+  @Override
+  <R> R accept(DefinitionVisitor<R> visitor) {
+    return visitor.visit(this);
+  }
+
+  @Override
+  SourceLocation location() {
+    return loc;
+  }
+
+  @Override
+  SyntaxType syntaxType() {
+    return BasicSyntaxType.INVALID;
+  }
+
+  @Override
+  void prettyPrint(int indent, StringBuilder builder) {
+    annotations.prettyPrint(indent, builder);
+    builder.append(prettyIndentString(indent));
+    builder.append("logic ");
+    id.prettyPrint(0, builder);
+    builder.append("\n");
+  }
+}
+
+class SignalDefinition extends Definition {
+  Identifier id;
+  TypeLiteral type;
+  SourceLocation loc;
+
+  SignalDefinition(Identifier id, TypeLiteral type, SourceLocation loc) {
+    this.id = id;
+    this.type = type;
+    this.loc = loc;
+  }
+
+  @Override
+  <R> R accept(DefinitionVisitor<R> visitor) {
+    return visitor.visit(this);
+  }
+
+  @Override
+  SourceLocation location() {
+    return loc;
+  }
+
+  @Override
+  SyntaxType syntaxType() {
+    return BasicSyntaxType.INVALID;
+  }
+
+  @Override
+  void prettyPrint(int indent, StringBuilder builder) {
+    annotations.prettyPrint(indent, builder);
+    builder.append(prettyIndentString(indent));
+    builder.append("signal ");
+    id.prettyPrint(0, builder);
+    builder.append(" : ");
+    type.prettyPrint(0, builder);
+    builder.append("\n");
   }
 }

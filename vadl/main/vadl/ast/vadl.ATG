@@ -40,11 +40,13 @@ CHARACTERS
   letter = 'a' .. 'z' + 'A' .. 'Z'.
   validDQStringCharacters = ANY - '"' - "\\".
   validSQStringCharacters = ANY - "'" - "\\".
+  validSourceCharacters = ANY.
 
 TOKENS
   hexLit = "0x" hexDigit {hexDigit | "'"}.
   binLit = "0b" binDigit {binDigit | "'"}.
   decLit = digit {digit | "'"}.
+  embeddedSource = "-<{" {validSourceCharacters} "}>-".
 
   identifierToken = letter {letter | digit | "_"}.
   string =
@@ -75,12 +77,14 @@ TOKENS
   ARGUMENT     = "argument".
   ASSEMBLY     = "assembly".
   BINARY       = "binary".
+  CACHE        = "cache".
   CALL         = "call".
   CALLEE       = "callee".
   CALLER       = "caller".
   COMPILER_KW  = "compiler".
   CONSTANT     = "constant".
   COUNTER      = "counter".
+  DECODER      = "decoder".
   ELSE         = "else".
   ENCODE       = "encode".
   ENCODING     = "encoding".
@@ -90,7 +94,9 @@ TOKENS
   EXTEND_ID    = "ExtendId".
   EXTENDING    = "extending".
   FALSE        = "false".
+  FETCH        = "fetch".
   FILE         = "file".
+  FIRMWARE     = "firmware".
   FOR          = "for".
   FORALL       = "forall".
   FORMAT       = "format".
@@ -98,40 +104,59 @@ TOKENS
   FUNCTION     = "function".
   GLOBAL       = "global".
   GROUP        = "group".
+  HIT          = "hit".
   ID_TO_STR    = "IdToStr".
   IF_KW        = "if".
+  IMPLEMENTS   = "implements".
   IMPORT       = "import".
   INSTRUCTION  = "instruction".
   INTERFACE    = "interface".
   LET          = "let".
+  LOGIC        = "logic".
   MATCH        = "match".
   MEMORY       = "memory".
+  MICRO        = "micro".
+  MISS         = "miss".
   MODEL        = "model".
   MODEL_TYPE   = "model-type".
   NOP          = "nop".
   OPERATION    = "operation".
+  PATCH        = "patch".
+  PIPELINE     = "pipeline".
   POINTER      = "pointer".
   PREDICATE    = "predicate".
+  PREDICTION   = "prediction".
   PROCESS      = "process".
+  PROCESSOR    = "processor".
   PROGRAM      = "program".
   PSEUDO       = "pseudo".
   RAISE        = "raise".
+  READ         = "read".
   RECORD       = "record".
   REGISTER     = "register".
   RETURN       = "return".
   SAVED        = "saved".
   SEQUENCE     = "sequence".
   SET          = "set".
+  SIGNAL       = "signal".
+  SOURCE       = "source".
   STACK        = "stack".
+  STAGE        = "stage".
+  START        = "start".
+  STARTUP      = "startup".
+  STOP         = "stop".
   THEN         = "then".
+  TRANSLATION  = "translation".
   TRUE         = "true".
   USING        = "using".
   VALUE        = "value".
   WITH         = "with".
+  WRITE        = "write".
 
   SYM_ARROW       = "->".
   SYM_AS          = "as".
   SYM_ASSIGN      = ":=".
+  SYM_AT          = "@".
   SYM_BIGARROW    = "=>".
   SYM_BINAND      = "&".
   SYM_BINOR       = "|".
@@ -189,10 +214,15 @@ PRODUCTIONS
 
   // -- DEFINITIONS --------------------------------------------------------------------------------------------------
   topLevelDefinitions<out Definition def> (. def = null; .)
-  = instructionsetDefinition<out def>
+  = annotations<out Annotations annotations>
+  ( instructionsetDefinition<out def>
   | applicationBinaryInterfaceDefinition<out def>
+  | IF (la.kind == _MICRO && scanner.Peek().kind == _PROCESSOR)
+    microProcessorDefinition<out def>
+  | microArchitectureDefinition<out def>
   | commonDefinition<out def>
   | importDefinition<out def>
+  )                                       (. def.withAnnotations(annotations); .)
   .
 
   commonDefinition<out Definition def>    (. def = null; .)
@@ -219,8 +249,8 @@ PRODUCTIONS
 
   isaDefinitionList<.out List<Definition> definitions.> (. definitions = new ArrayList<>(); .)
   = {
-    annotations<.out List<Annotation> annotations.>
-    isaDefinition<out Definition def>                   (. def.annotations.annotations().addAll(annotations); definitions.add(def); .)
+    annotations<out Annotations annotations>
+    isaDefinition<out Definition def>                   (. def.withAnnotations(annotations); definitions.add(def); .)
   | macroDef<out ModelDefinition def>                   (. definitions.add(def); macroTable.addMacro(def.toMacro(), def.location()); .)
   | // IF (isMacroReplacementOfType(this, BasicSyntaxType.ISA_DEFS))
     macroReplacement<out Node n>                        (. if (n instanceof DefinitionList list) {
@@ -230,10 +260,10 @@ PRODUCTIONS
   }
   .
 
-  annotations<.out List<Annotation> annotations.> (. annotations = new ArrayList<>(); .)
+  annotations<out Annotations annotations> (. var list = new ArrayList<Annotation>(); .)
   = {
-    annotation<out Annotation annotation>         (. annotations.add(annotation); .)
-  }
+    annotation<out Annotation annotation>  (. list.add(annotation); .)
+  }                                        (. annotations = new Annotations(list); .)
   .
 
   annotation<out Annotation annotation> (. TypeLiteral type = null; Identifier property = null; .)
@@ -481,7 +511,7 @@ PRODUCTIONS
   functionDefinition<out Definition def>
   = FUNCTION                           (. var start = loc(); List<Parameter> params = new ArrayList<>(); .)
     identifierOrPlaceholder<out IdentifierOrPlaceholder name>
-    [ parameters<.out params.> ]
+    [ parameters<out params> ]
     SYM_ARROW
     typeLiteral<out TypeLiteral retType>
     SYM_EQ
@@ -714,6 +744,7 @@ PRODUCTIONS
   .
 
   // -- ABI DEFINITIONS-----------------------------------------------------------------------------------------------
+
   applicationBinaryInterfaceDefinition<out Definition def>
   = APPLICATION                                 (. var start = loc(); .)
     BINARY
@@ -730,12 +761,12 @@ PRODUCTIONS
   .
 
   abiElementDefinition<out Definition def> (. def = null; .)
-  = annotations<.out List<Annotation> annotations.>
+  = annotations<out Annotations annotations>
     ( IF (scanner.Peek().kind == _SEQUENCE) // RETURN can be followed by both SEQUENCE and VALUE / ADDRESS
       abiSequenceDef<out def>
     | specialPurposeRegisterDef<out def>
     | aliasDefinition<out def>
-    )                                      (. def.withAnnotations(new Annotations(annotations)); .)
+    )                                      (. def.withAnnotations(annotations); .)
   .
 
   specialPurposeRegisterDef<out Definition def>              (. var start = lookaheadLoc(); .)
@@ -771,6 +802,188 @@ PRODUCTIONS
       instructionCallStmt<out InstructionCallStatement stmt> (. stmts.add(stmt); .)
     }
     SYM_BRACE_CLOSE                                          (. def = new AbiSequenceDefinition(kind, params, stmts, start.join(loc())); .)
+  .
+
+
+  // -- CPU DEFINITIONS-----------------------------------------------------------------------------------------------
+  microProcessorDefinition<out Definition def>
+  = MICRO                                  (. var start = loc(); .)
+    PROCESSOR
+    identifier<out Identifier id>
+    IMPLEMENTS                             (. var implementedIsas = new ArrayList<IsId>(); .)
+    identifierPath<out IsId isa>           (. implementedIsas.add(isa); .)
+    {
+      SYM_COMMA
+      identifierPath<out isa>              (. implementedIsas.add(isa); .)
+    }
+    WITH
+    identifierPath<out IsId abi>
+    SYM_EQ
+    SYM_BRACE_OPEN                         (. var definitions = new ArrayList<Definition>(); .)
+    {
+      cpuDefinition<out Definition cpuDef> (. definitions.add(cpuDef); .)
+    }
+    SYM_BRACE_CLOSE                        (. def = new MicroProcessorDefinition(id, implementedIsas, abi, definitions, start.join(loc())); .)
+  .
+
+  cpuDefinition<out Definition def> (. def = null; .)
+  = annotations<out Annotations annotations>
+    ( usingDefinition<out def>
+    | patchDefinition<out def>
+    | sourceDefinition<out def>
+    | exceptionDefinition<out def>
+    | cpuFunctionDefinition<out def>
+    | cpuProcessDefinition<out def>
+    )                               (. def.withAnnotations(annotations); .)
+  .
+
+  patchDefinition<out Definition def>
+  = PATCH                                (. var start = loc(); .)
+    identifier<out Identifier generator>
+    identifier<out Identifier handle>
+    SYM_EQ                               (. IsId reference = null; String source = null; .)
+    ( identifierPath<out reference>
+    | sourceLiteral<out source> )        (. def = new PatchDefinition(generator, handle, reference, source, start.join(loc())); .)
+  .
+
+  sourceDefinition<out Definition def>
+  = SOURCE                           (. var start = loc(); .)
+    identifier<out Identifier id>
+    SYM_EQ
+    sourceLiteral<out String source> (. def = new SourceDefinition(id, source, start.join(loc())); .)
+  .
+
+  sourceLiteral<out String source>
+  = embeddedSource (. source = t.val.substring(3, t.val.length() - 3); .)
+  .
+
+  cpuFunctionDefinition<out Definition def> (. var start = lookaheadLoc(); .)
+  =                                         (. CpuFunctionDefinition.BehaviorKind kind = null; IsId stopWithRef = null; .)
+  ( START                                   (. kind = CpuFunctionDefinition.BehaviorKind.START; .)
+  | STOP                                    (. kind = CpuFunctionDefinition.BehaviorKind.STOP; .)
+    [ WITH referenceLiteral<out stopWithRef> ]
+    /* TODO Verify if "redirect" is needed - "redirect is unstable and must not be used"
+    | REDIRECT
+      parameters<out redirectParams>
+      SYM_ARROW
+      typeLiteral<out redirectType>
+    */
+  )
+    SYM_EQ
+    expression<out Expr expr, BIN_OPS>      (. def = new CpuFunctionDefinition(kind, stopWithRef, expr, start.join(loc())); .)
+  .
+
+  cpuProcessDefinition<out Definition def> (. var start = lookaheadLoc(); .)
+  =                                        (. CpuProcessDefinition.ProcessKind kind = null; List<Parameter> startupOutputs = List.of(); .)
+  ( FIRMWARE                               (. kind = CpuProcessDefinition.ProcessKind.FIRMWARE; .)
+  | STARTUP                                (. kind = CpuProcessDefinition.ProcessKind.STARTUP; .)
+    SYM_ARROW
+    parameters<out startupOutputs>
+  )
+    SYM_EQ
+    statement<out Statement stmt>          (. def = new CpuProcessDefinition(kind, startupOutputs, stmt, start.join(loc())); .)
+  .
+
+  // -- MiA DEFINITIONS-----------------------------------------------------------------------------------------------
+
+  microArchitectureDefinition<out Definition def>
+  = MICRO                                 (. var start = loc(); .)
+    ARCHITECTURE
+    identifier<out Identifier id>
+    IMPLEMENTS
+    identifierPath<out IsId processor>
+    SYM_EQ
+    SYM_BRACE_OPEN                        (. var definitions = new ArrayList<Definition>(); .)
+    {
+      miaDefinition<out Definition child> (. definitions.add(child); .)
+    }
+    SYM_BRACE_CLOSE                       (. def = new MicroArchitectureDefinition(id, processor, definitions, start.join(loc())); .)
+  .
+
+  miaDefinition<out Definition def> (. def = null; .)
+  = annotations<out Annotations annotations>
+    ( macroInstructionDefinition<out def>
+    | portBehaviorDefinition<out def>
+    | pipelineDefinition<out def>
+    | stageDefinition<out def>
+    | cacheDefinition<out def>
+    | logicDefinition<out def>
+    | signalDefinition<out def>
+    | memoryDefinition<out def>
+    | IF (la.kind == _REGISTER && scanner.Peek().kind == _FILE)
+      registerFileDefinition<out def>
+    | registerDefinition<out def>
+    | processDefinition<out def>
+    | operationDefinition<out def>
+    | commonDefinition<out def>
+    )                               (. def.withAnnotations(annotations); .)
+  .
+
+  macroInstructionDefinition<out Definition def> (. var start = lookaheadLoc(); .)
+  =                                              (. MacroInstructionDefinition.MacroBehaviorKind kind = null; List<Parameter> inputs = List.of(); .)
+  ( TRANSLATION                                  (. kind = MacroInstructionDefinition.MacroBehaviorKind.TRANSLATION; .)
+  | PREDICTION                                   (. kind = MacroInstructionDefinition.MacroBehaviorKind.PREDICTION; .)
+  | FETCH                                        (. kind = MacroInstructionDefinition.MacroBehaviorKind.FETCH; .)
+  | DECODER                                      (. kind = MacroInstructionDefinition.MacroBehaviorKind.DECODER; .)
+  | STARTUP                                      (. kind = MacroInstructionDefinition.MacroBehaviorKind.STARTUP; .)
+  )
+    [ parameters<out inputs> ]
+    SYM_ARROW
+    parameters<.out List<Parameter> outputs.>
+    SYM_EQ
+    statement<out Statement stmt>                (. def = new MacroInstructionDefinition(kind, inputs, outputs, stmt, start.join(loc())); .)
+  .
+
+  portBehaviorDefinition<out Definition def> (. var start = lookaheadLoc(); .)
+  =                                          (. PortBehaviorDefinition.PortKind kind = null; .)
+  ( READ                                     (. kind = PortBehaviorDefinition.PortKind.READ; .)
+  | WRITE                                    (. kind = PortBehaviorDefinition.PortKind.WRITE; .)
+  | HIT                                      (. kind = PortBehaviorDefinition.PortKind.HIT; .)
+  | MISS                                     (. kind = PortBehaviorDefinition.PortKind.MISS; .)
+  )
+    identifier<out Identifier id>
+    parameters<.out List<Parameter> inputs.>
+    SYM_ARROW
+    parameters<.out List<Parameter> outputs.>
+    SYM_EQ
+    statement<out Statement stmt>            (. def = new PortBehaviorDefinition(id, kind, inputs, outputs, stmt, start.join(loc())); .)
+  .
+
+  pipelineDefinition<out Definition def>
+  = PIPELINE                      (. var start = loc(); .)
+    identifier<out Identifier id> (. List<Parameter> outputs = List.of(); .)
+    [ SYM_ARROW parameters<out outputs> ]
+    SYM_EQ
+    statement<out Statement stmt> (. def = new PipelineDefinition(id, outputs, stmt, start.join(loc())); .)
+  .
+
+  stageDefinition<out Definition def>
+  = STAGE                         (. var start = loc(); .)
+    identifier<out Identifier id> (. List<Parameter> outputs = List.of(); .)
+    [ SYM_ARROW parameters<out outputs> ]
+    SYM_EQ
+    statement<out Statement stmt> (. def = new StageDefinition(id, outputs, stmt, start.join(loc())); .)
+  .
+
+  cacheDefinition<out Definition def>
+  = CACHE                                   (. var start = loc(); .)
+    identifier<out Identifier id>
+    SYM_COLON
+    typeLiteral<out TypeLiteral sourceType>
+    SYM_ARROW
+    typeLiteral<out TypeLiteral targetType> (. def = new CacheDefinition(id, sourceType, targetType, start.join(loc())); .)
+  .
+
+  logicDefinition<out Definition def>
+  = LOGIC                         (. var start = loc(); .)
+    identifier<out Identifier id> (. def = new LogicDefinition(id, start.join(loc())); .)
+  .
+
+  signalDefinition<out Definition def>
+  = SIGNAL                            (. var start = loc(); .)
+    identifier<out Identifier id>
+    SYM_COLON
+    typeLiteral<out TypeLiteral type> (. def = new SignalDefinition(id, type, start.join(loc())); .)
   .
 
   // -- STATEMENTS ---------------------------------------------------------------------------------------------------
@@ -857,7 +1070,7 @@ PRODUCTIONS
   = MATCH                                   (. var start = loc(); .)
     expression<out Expr candidate, BIN_OPS> (. var cases = new ArrayList<MatchStatement.Case>(); .)
     WITH                                    (. var patterns = new ArrayList<Expr>(); .)
-    SYM_BRACE_OPEN                          (. Expr pattern = null; .)
+    SYM_BRACE_OPEN                          (. Expr pattern; .)
     ( expression<out pattern, BIN_OPS>      (. patterns.add(pattern); .)
     | SYM_BRACE_OPEN
       expression<out pattern, BIN_OPS>      (. patterns.add(pattern); .)
@@ -1064,6 +1277,11 @@ PRODUCTIONS
   | FALSE                    (. expr = new BoolLiteral(false, loc()); .)
   .
 
+  referenceLiteral<out IsId reference>
+  = SYM_AT
+    identifierPath<out reference>
+  .
+
   identifierPath<out IsId path>                                 (. List<IdentifierOrPlaceholder> segments = new ArrayList<>(); .)
   = identifierOrPlaceholder<out IdentifierOrPlaceholder id>     (. segments.add(id); .)
     {
@@ -1208,8 +1426,8 @@ PRODUCTIONS
   // | DESCRIPTION
   | ENCODE
   | EXCEPTION
-  // | FETCH
-  // | FIRMWARE
+  | FETCH
+  | FIRMWARE
   | GROUP
   | INSTRUCTION
   // | INVALID
@@ -1222,17 +1440,17 @@ PRODUCTIONS
   // | OPERAND
   | OPERATION
   | PREDICATE
-  // | PREDICTION
+  | PREDICTION
   // | PROCEDURE
-  // | READ
+  | READ
   // | REDIRECT
   | REGISTER
   | RETURN
   | SEQUENCE
-  // | STAGE
-  // | START
-  // | STARTUP
-  // | STOP
+  | STAGE
+  | START
+  | STARTUP
+  | STOP
   // | SYMBOL
   | SYM_IN
   | T_BIN
@@ -1240,7 +1458,6 @@ PRODUCTIONS
   | T_BOOL
   | T_CALL_EX
   | T_ENCS
-  // | SYMBOL
   | T_ID
   | T_INT
   | T_ISA_DEFS
@@ -1251,24 +1468,23 @@ PRODUCTIONS
   | T_SYM_EX
   | T_UN_OP
   | T_VAL
-  // | TRANSLATION
+  | TRANSLATION
   // | UNIT
   // | USER
-  // | WRITE
+  | WRITE
   // TODO Add all allowed keywords
   .
 
-  sequenceCallExprList<.out List<SequenceCallExpr> list.> (. var start = lookaheadLoc(); .)
-  =                                                       (. list = new ArrayList<>(); .)
-  ( sequenceCallExpr<out SequenceCallExpr call>           (. list.add(call); .)
-  | SYM_BRACK_OPEN
-    sequenceCallExpr<out SequenceCallExpr call>           (. list.add(call); .)
-    {
-      SYM_COMMA
-      sequenceCallExpr<out call>                          (. list.add(call); .)
-    }
-    SYM_BRACK_CLOSE
-  )
+  sequenceCallExprList<.out List<SequenceCallExpr> list.> (. list = new ArrayList<>(); .)
+  = ( sequenceCallExpr<out SequenceCallExpr call>         (. list.add(call); .)
+    | SYM_BRACK_OPEN
+      sequenceCallExpr<out SequenceCallExpr call>         (. list.add(call); .)
+      {
+        SYM_COMMA
+        sequenceCallExpr<out call>                        (. list.add(call); .)
+      }
+      SYM_BRACK_CLOSE
+    )
   .
 
   sequenceCallExpr<out SequenceCallExpr call> (. var start = lookaheadLoc(); .)

@@ -415,6 +415,91 @@ public class Ungrouper
   }
 
   @Override
+  public Definition visit(MicroProcessorDefinition definition) {
+    ungroupAnnotations(definition);
+    definition.definitions.replaceAll(def -> def.accept(this));
+    return definition;
+  }
+
+  @Override
+  public Definition visit(PatchDefinition definition) {
+    ungroupAnnotations(definition);
+    return definition;
+  }
+
+  @Override
+  public Definition visit(SourceDefinition definition) {
+    ungroupAnnotations(definition);
+    return definition;
+  }
+
+  @Override
+  public Definition visit(CpuFunctionDefinition definition) {
+    ungroupAnnotations(definition);
+    return definition;
+  }
+
+  @Override
+  public Definition visit(CpuProcessDefinition definition) {
+    ungroupAnnotations(definition);
+    definition.statement = definition.statement.accept(this);
+    return definition;
+  }
+
+  @Override
+  public Definition visit(MicroArchitectureDefinition definition) {
+    ungroupAnnotations(definition);
+    definition.definitions.replaceAll(def -> def.accept(this));
+    return definition;
+  }
+
+  @Override
+  public Definition visit(MacroInstructionDefinition definition) {
+    ungroupAnnotations(definition);
+    definition.statement = definition.statement.accept(this);
+    return definition;
+  }
+
+  @Override
+  public Definition visit(PortBehaviorDefinition definition) {
+    ungroupAnnotations(definition);
+    definition.statement = definition.statement.accept(this);
+    return definition;
+  }
+
+  @Override
+  public Definition visit(PipelineDefinition definition) {
+    ungroupAnnotations(definition);
+    definition.statement = definition.statement.accept(this);
+    return definition;
+  }
+
+  @Override
+  public Definition visit(StageDefinition definition) {
+    ungroupAnnotations(definition);
+    definition.statement = definition.statement.accept(this);
+    return definition;
+  }
+
+  @Override
+  public Definition visit(CacheDefinition definition) {
+    ungroupAnnotations(definition);
+    return definition;
+  }
+
+  @Override
+  public Definition visit(LogicDefinition definition) {
+    ungroupAnnotations(definition);
+    return definition;
+  }
+
+  @Override
+  public Definition visit(SignalDefinition definition) {
+    ungroupAnnotations(definition);
+    return definition;
+  }
+
+  @Override
   public Statement visit(BlockStatement blockStatement) {
     blockStatement.statements.replaceAll(statement -> statement.accept(this));
     return blockStatement;

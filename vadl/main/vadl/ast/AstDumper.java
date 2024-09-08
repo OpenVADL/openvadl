@@ -468,6 +468,131 @@ public class AstDumper
   }
 
   @Override
+  public Void visit(MicroProcessorDefinition definition) {
+    dumpNode(definition);
+    dumpChildren(definition.id);
+    dumpChildren(definition.implementedIsas.stream().map(Node.class::cast).toList());
+    dumpChildren((Node) definition.abi);
+    dumpChildren(definition.definitions);
+    return null;
+  }
+
+  @Override
+  public Void visit(PatchDefinition definition) {
+    dumpNode(definition);
+    dumpChildren(definition.generator, definition.handle);
+    if (definition.reference != null) {
+      dumpChildren((Node) definition.reference);
+    }
+    return null;
+  }
+
+  @Override
+  public Void visit(SourceDefinition definition) {
+    dumpNode(definition);
+    dumpChildren(definition.id);
+    return null;
+  }
+
+  @Override
+  public Void visit(CpuFunctionDefinition definition) {
+    dumpNode(definition);
+    if (definition.stopWithReference != null) {
+      dumpChildren((Node) definition.stopWithReference);
+    }
+    dumpChildren(definition.expr);
+    return null;
+  }
+
+  @Override
+  public Void visit(CpuProcessDefinition definition) {
+    dumpNode(definition);
+    for (Parameter startupOutput : definition.startupOutputs) {
+      dumpChildren(startupOutput.name(), startupOutput.type());
+    }
+    dumpChildren(definition.statement);
+    return null;
+  }
+
+  @Override
+  public Void visit(MicroArchitectureDefinition definition) {
+    dumpNode(definition);
+    dumpChildren(definition.id, (Node) definition.processor);
+    dumpChildren(definition.definitions);
+    return null;
+  }
+
+  @Override
+  public Void visit(MacroInstructionDefinition definition) {
+    dumpNode(definition);
+    for (Parameter input : definition.inputs) {
+      dumpChildren(input.name(), input.type());
+    }
+    for (Parameter output : definition.outputs) {
+      dumpChildren(output.name(), output.type());
+    }
+    dumpChildren(definition.statement);
+    return null;
+  }
+
+  @Override
+  public Void visit(PortBehaviorDefinition definition) {
+    dumpNode(definition);
+    dumpChildren(definition.id);
+    for (Parameter input : definition.inputs) {
+      dumpChildren(input.name(), input.type());
+    }
+    for (Parameter output : definition.outputs) {
+      dumpChildren(output.name(), output.type());
+    }
+    dumpChildren(definition.statement);
+    return null;
+  }
+
+  @Override
+  public Void visit(PipelineDefinition definition) {
+    dumpNode(definition);
+    dumpChildren(definition.id);
+    for (Parameter output : definition.outputs) {
+      dumpChildren(output.name(), output.type());
+    }
+    dumpChildren(definition.statement);
+    return null;
+  }
+
+  @Override
+  public Void visit(StageDefinition definition) {
+    dumpNode(definition);
+    dumpChildren(definition.id);
+    for (Parameter output : definition.outputs) {
+      dumpChildren(output.name(), output.type());
+    }
+    dumpChildren(definition.statement);
+    return null;
+  }
+
+  @Override
+  public Void visit(CacheDefinition definition) {
+    dumpNode(definition);
+    dumpChildren(definition.id, definition.sourceType, definition.targetType);
+    return null;
+  }
+
+  @Override
+  public Void visit(LogicDefinition definition) {
+    dumpNode(definition);
+    dumpChildren(definition.id);
+    return null;
+  }
+
+  @Override
+  public Void visit(SignalDefinition definition) {
+    dumpNode(definition);
+    dumpChildren(definition.id, definition.type);
+    return null;
+  }
+
+  @Override
   public Void visit(CallExpr expr) {
     dumpNode(expr);
     dumpChildren((Expr) expr.target);
