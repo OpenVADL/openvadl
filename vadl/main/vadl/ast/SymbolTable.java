@@ -14,6 +14,7 @@ class SymbolTable {
   SymbolTable parent = null;
   final List<SymbolTable> children = new ArrayList<>();
   final Map<String, Symbol> symbols = new HashMap<>();
+  final Map<String, Symbol> macroSymbols = new HashMap<>();
   List<Diagnostic> errors = new ArrayList<>();
 
   void loadBuiltins() {
@@ -30,8 +31,14 @@ class SymbolTable {
   }
 
   void defineSymbol(Symbol symbol, SourceLocation loc) {
-    verifyAvailable(symbol.name(), loc);
-    symbols.put(symbol.name(), symbol);
+    if (symbol instanceof ModelTypeSymbol || symbol instanceof MacroSymbol ||
+        symbol instanceof RecordSymbol) {
+      verifyMacroAvailable(symbol.name(), loc);
+      macroSymbols.put(symbol.name(), symbol);
+    } else {
+      verifyAvailable(symbol.name(), loc);
+      symbols.put(symbol.name(), symbol);
+    }
   }
 
   SymbolTable createChild() {
@@ -43,13 +50,12 @@ class SymbolTable {
   }
 
   void addMacro(Macro macro, SourceLocation loc) {
-    verifyAvailable(macro.name().name, loc);
-    symbols.put(macro.name().name, new MacroSymbol(macro.name().name, macro));
+    defineSymbol(new MacroSymbol(macro.name().name, macro), loc);
   }
 
   @Nullable
   Macro getMacro(String name) {
-    Symbol symbol = resolveSymbol(name);
+    Symbol symbol = resolveMacroSymbol(name);
     if (symbol instanceof MacroSymbol macroSymbol) {
       return macroSymbol.macro();
     }
@@ -63,6 +69,18 @@ class SymbolTable {
       return symbol;
     } else if (parent != null) {
       return parent.resolveSymbol(name);
+    } else {
+      return null;
+    }
+  }
+
+  @Nullable
+  Symbol resolveMacroSymbol(String name) {
+    Symbol symbol = macroSymbols.get(name);
+    if (symbol != null) {
+      return symbol;
+    } else if (parent != null) {
+      return parent.resolveMacroSymbol(name);
     } else {
       return null;
     }
@@ -118,7 +136,7 @@ class SymbolTable {
   }
 
   SyntaxType findType(Identifier recordName) {
-    var symbol = resolveSymbol(recordName.name);
+    var symbol = resolveMacroSymbol(recordName.name);
     if (symbol instanceof RecordSymbol recordSymbol) {
       return recordSymbol.recordType();
     } else if (symbol instanceof ModelTypeSymbol modelTypeSymbol) {
@@ -134,6 +152,7 @@ class SymbolTable {
 
   void copyFrom(SymbolTable other) {
     symbols.putAll(other.symbols);
+    macroSymbols.putAll(other.macroSymbols);
   }
 
   void importFrom(Ast moduleAst, List<List<Identifier>> importedSymbols) {
@@ -146,18 +165,30 @@ class SymbolTable {
         importedSymbol.append(segment.name);
       }
       var symbol = moduleAst.rootSymbolTable().resolveSymbol(importedSymbol.toString());
+      var macroSymbol = moduleAst.rootSymbolTable().resolveMacroSymbol(importedSymbol.toString());
       var location = importedSymbolSegments.get(0).location()
           .join(importedSymbolSegments.get(importedSymbolSegments.size() - 1).location());
-      if (symbol == null) {
+      if (symbol == null && macroSymbol == null) {
         reportError("Unresolved symbol " + importedSymbol, location);
       } else {
-        defineSymbol(symbol, location);
+        if (symbol != null) {
+          defineSymbol(symbol, location);
+        }
+        if (macroSymbol != null) {
+          defineSymbol(macroSymbol, location);
+        }
       }
     }
   }
 
   private void verifyAvailable(String name, SourceLocation loc) {
     if (symbols.containsKey(name)) {
+      reportError("Duplicate definition: " + name, loc);
+    }
+  }
+
+  private void verifyMacroAvailable(String name, SourceLocation loc) {
+    if (macroSymbols.containsKey(name)) {
       reportError("Duplicate definition: " + name, loc);
     }
   }
@@ -171,7 +202,7 @@ class SymbolTable {
     ALIAS, APPLICATION_BINARY_INTERFACE, CACHE, CONSTANT, COUNTER, ENUM_FIELD, EXCEPTION, FORMAT,
     FORMAT_FIELD, FUNCTION, INSTRUCTION, INSTRUCTION_SET, MACRO, MEMORY, MICRO_PROCESSOR,
     MICRO_ARCHITECTURE, MODEL_TYPE, PARAMETER, PROCESS, PSEUDO_INSTRUCTION, RECORD, REGISTER,
-    REGISTER_FILE, SIGNAL
+    REGISTER_FILE, RELOCATION, SIGNAL
   }
 
   interface Symbol {
@@ -351,7 +382,15 @@ class SymbolTable {
           collectSymbols(pseudo.symbolTable, statement);
         }
       } else if (definition instanceof RelocationDefinition relocation) {
-        collectSymbols(symbols, relocation.expr);
+        symbols.defineSymbol(
+            new ValuedSymbol(relocation.identifier.name, null, SymbolType.RELOCATION),
+            relocation.loc);
+        relocation.symbolTable = symbols.createChild();
+        for (Parameter param : relocation.params) {
+          relocation.symbolTable.defineSymbol(
+              new ValuedSymbol(param.name().name, null, SymbolType.PARAMETER), param.name().loc);
+        }
+        collectSymbols(relocation.symbolTable, relocation.expr);
       } else if (definition instanceof AssemblyDefinition assembly) {
         assembly.symbolTable = symbols.createChild();
         collectSymbols(assembly.symbolTable, assembly.expr);
