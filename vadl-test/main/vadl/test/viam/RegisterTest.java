@@ -11,6 +11,7 @@ import static org.junit.jupiter.params.provider.Arguments.arguments;
 import static vadl.test.TestUtils.findDefinitionByNameIn;
 import static vadl.test.TestUtils.findFormatByName;
 import static vadl.test.TestUtils.findResourceByName;
+import static vadl.utils.GraphUtils.getSingleLeafNode;
 import static vadl.utils.GraphUtils.getSingleNode;
 
 import java.util.Objects;
@@ -374,11 +375,32 @@ public class RegisterTest extends AbstractTest {
       var resource = findDefinitionByNameIn(resourceName, spec, Resource.class);
       var counter = findDefinitionByNameIn(counterName, spec, Counter.class);
 
+      var readInstr = findDefinitionByNameIn("PcTest::READ_PC", spec, Instruction.class);
+      var writeInstr = findDefinitionByNameIn("PcTest::WRITE_PC", spec, Instruction.class);
+
       assertEquals(resource, counter.registerResource());
       if (index != null) {
         assertInstanceOf(Counter.RegisterFileCounter.class, counter);
         assertEquals(index, ((Counter.RegisterFileCounter) counter).index().intValue());
       }
+
+      if (resource instanceof Register) {
+        var readReg = getSingleNode(readInstr.behavior(), ReadRegNode.class);
+        assertEquals(resource, readReg.register());
+        var writeReg = getSingleNode(writeInstr.behavior(), WriteRegNode.class);
+        assertEquals(resource, writeReg.register());
+      } else {
+        var readReg = getSingleNode(readInstr.behavior(), ReadRegFileNode.class);
+        assertEquals(resource, readReg.registerFile());
+        var regFileCoutner = (Counter.RegisterFileCounter) counter;
+        assertEquals(regFileCoutner.index(), ((ConstantNode) readReg.address()).constant().asVal());
+        var writeReg = getSingleNode(writeInstr.behavior(), WriteRegFileNode.class);
+        assertEquals(resource, writeReg.registerFile());
+        assertEquals(regFileCoutner.index(),
+            ((ConstantNode) Objects.requireNonNull(writeReg.address())).constant().asVal());
+      }
+
+
       assertEquals(kind, counter.kind());
       assertEquals(position, counter.position());
     });
@@ -410,10 +432,10 @@ public class RegisterTest extends AbstractTest {
       if (constraintIndex != null) {
         var ifNode = getSingleNode(instr.behavior(), IfNode.class);
         var condMatcher = new BuiltInMatcher(BuiltInTable.EQU,
-            (node) -> node instanceof TypeCastNode cast &&
-                cast.value() instanceof ConstantNode constVal &&
-                constVal.constant().asVal().intValue() == index,
-            new ConstantValueMatcher(Constant.Value.of(constraintIndex, Type.bits(5)))
+            (node) -> getSingleLeafNode(node, ConstantNode.class).constant().asVal().intValue() ==
+                index,
+            (node) -> getSingleLeafNode(node, ConstantNode.class).constant().asVal().intValue() ==
+                constraintIndex
         );
         assertTrue(condMatcher.matches(ifNode.condition()), "was " + ifNode.condition());
 
@@ -440,10 +462,10 @@ public class RegisterTest extends AbstractTest {
       if (constraintIndex != null) {
         var selectNode = getSingleNode(instr.behavior(), SelectNode.class);
         var condMatcher = new BuiltInMatcher(BuiltInTable.EQU,
-            (node) -> node instanceof TypeCastNode cast &&
-                cast.value() instanceof ConstantNode constVal &&
-                constVal.constant().asVal().intValue() == index,
-            new ConstantValueMatcher(Constant.Value.of(constraintIndex, Type.bits(5)))
+            (node) -> getSingleLeafNode(node, ConstantNode.class).constant().asVal().intValue() ==
+                index,
+            (node) -> getSingleLeafNode(node, ConstantNode.class).constant().asVal().intValue() ==
+                constraintIndex
         );
         assertTrue(condMatcher.matches(selectNode.condition()), "was " + selectNode.condition());
         var trueMatcher = new ConstantValueMatcher(Constant.Value.of(0, Type.bits(32)));
@@ -457,6 +479,5 @@ public class RegisterTest extends AbstractTest {
       assertEquals(x, readRegFile.registerFile());
     });
   }
-
 
 }

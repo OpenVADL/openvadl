@@ -4,4 +4,15 @@ instruction set architecture PcTest = {
 
   register A: Regs
   alias program counter PC: Regs = A
+
+  instruction READ_PC: F = A := PC
+  instruction WRITE_PC: F = PC := A
+
+  encoding READ_PC = { I = 2 }
+  encoding WRITE_PC = { I = 2 }
+  assembly READ_PC, WRITE_PC = "Test"
+
+  format F: Regs = {
+    I: Regs
+  }
 }
