@@ -11,6 +11,7 @@ import static org.junit.jupiter.params.provider.Arguments.arguments;
 import static vadl.test.TestUtils.findDefinitionByNameIn;
 import static vadl.test.TestUtils.findFormatByName;
 import static vadl.test.TestUtils.findResourceByName;
+import static vadl.utils.GraphUtils.getSingleNode;
 
 import java.util.Objects;
 import java.util.Set;
@@ -18,13 +19,14 @@ import java.util.stream.Stream;
 import javax.annotation.Nullable;
 import org.hamcrest.Factory;
 import org.junit.jupiter.api.DynamicTest;
-import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.TestFactory;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.Arguments;
 import org.junit.jupiter.params.provider.MethodSource;
 import vadl.test.AbstractTest;
+import vadl.types.BuiltInTable;
 import vadl.types.Type;
+import vadl.viam.Constant;
 import vadl.viam.Counter;
 import vadl.viam.Format;
 import vadl.viam.Instruction;
@@ -32,12 +34,21 @@ import vadl.viam.InstructionSetArchitecture;
 import vadl.viam.Register;
 import vadl.viam.RegisterFile;
 import vadl.viam.Resource;
+import vadl.viam.Specification;
+import vadl.viam.graph.control.BranchEndNode;
+import vadl.viam.graph.control.IfNode;
+import vadl.viam.graph.dependency.ConstantNode;
 import vadl.viam.graph.dependency.DependencyNode;
 import vadl.viam.graph.dependency.FuncCallNode;
 import vadl.viam.graph.dependency.ReadRegFileNode;
 import vadl.viam.graph.dependency.ReadRegNode;
+import vadl.viam.graph.dependency.SelectNode;
+import vadl.viam.graph.dependency.TypeCastNode;
 import vadl.viam.graph.dependency.WriteRegFileNode;
 import vadl.viam.graph.dependency.WriteRegNode;
+import vadl.viam.matching.impl.AnyNodeMatcher;
+import vadl.viam.matching.impl.BuiltInMatcher;
+import vadl.viam.matching.impl.ConstantValueMatcher;
 
 
 public class RegisterTest extends AbstractTest {
@@ -370,6 +381,80 @@ public class RegisterTest extends AbstractTest {
       }
       assertEquals(kind, counter.kind());
       assertEquals(position, counter.position());
+    });
+  }
+
+
+  @TestFactory
+  public Stream<DynamicTest> testAliasRegisterFiles() {
+    var spec = runAndGetViamSpecification("unit/register/valid_alias_regfile.vadl");
+
+    return Stream.of(
+        testReadAliasRegisterFile(spec, "ReadA_Hit", 12, 12),
+        testReadAliasRegisterFile(spec, "ReadA_Miss", 31, 12),
+        testReadAliasRegisterFile(spec, "ReadB", 31, null),
+
+        testWriteAliasRegisterFile(spec, "WriteA_Hit", 12, 12),
+        testWriteAliasRegisterFile(spec, "WriteA_Miss", 31, 12),
+        testWriteAliasRegisterFile(spec, "WriteB", 31, null)
+    );
+
+  }
+
+  private DynamicTest testWriteAliasRegisterFile(Specification spec, String instruction,
+                                                 long index,
+                                                 @Nullable Integer constraintIndex) {
+    return dynamicTest(instruction, () -> {
+      var instr = findDefinitionByNameIn("Test::" + instruction, spec, Instruction.class);
+
+      if (constraintIndex != null) {
+        var ifNode = getSingleNode(instr.behavior(), IfNode.class);
+        var condMatcher = new BuiltInMatcher(BuiltInTable.EQU,
+            (node) -> node instanceof TypeCastNode cast &&
+                cast.value() instanceof ConstantNode constVal &&
+                constVal.constant().asVal().intValue() == index,
+            new ConstantValueMatcher(Constant.Value.of(constraintIndex, Type.bits(5)))
+        );
+        assertTrue(condMatcher.matches(ifNode.condition()), "was " + ifNode.condition());
+
+        var trueBranchEnd = (BranchEndNode) ifNode.trueBranch().next();
+        var falseBranchEnd = (BranchEndNode) ifNode.falseBranch().next();
+        assertEquals(0, trueBranchEnd.sideEffects().size());
+        assertEquals(1, falseBranchEnd.sideEffects().size());
+      } else {
+        assertEquals(0, instr.behavior().getNodes(IfNode.class).count());
+      }
+
+      var x = (RegisterFile) findResourceByName("Test::X", spec);
+      var readRegFile = getSingleNode(instr.behavior(), ReadRegFileNode.class);
+      assertEquals(x, readRegFile.registerFile());
+    });
+  }
+
+  private DynamicTest testReadAliasRegisterFile(Specification spec, String instruction,
+                                                long index,
+                                                @Nullable Integer constraintIndex) {
+    return dynamicTest(instruction, () -> {
+      var instr = findDefinitionByNameIn("Test::" + instruction, spec, Instruction.class);
+
+      if (constraintIndex != null) {
+        var selectNode = getSingleNode(instr.behavior(), SelectNode.class);
+        var condMatcher = new BuiltInMatcher(BuiltInTable.EQU,
+            (node) -> node instanceof TypeCastNode cast &&
+                cast.value() instanceof ConstantNode constVal &&
+                constVal.constant().asVal().intValue() == index,
+            new ConstantValueMatcher(Constant.Value.of(constraintIndex, Type.bits(5)))
+        );
+        assertTrue(condMatcher.matches(selectNode.condition()), "was " + selectNode.condition());
+        var trueMatcher = new ConstantValueMatcher(Constant.Value.of(0, Type.bits(32)));
+        assertTrue(trueMatcher.matches(selectNode.trueCase()));
+      } else {
+        assertEquals(0, instr.behavior().getNodes(SelectNode.class).count());
+      }
+
+      var x = (RegisterFile) findResourceByName("Test::X", spec);
+      var readRegFile = getSingleNode(instr.behavior(), WriteRegFileNode.class);
+      assertEquals(x, readRegFile.registerFile());
     });
   }
 
