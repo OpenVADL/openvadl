@@ -168,9 +168,10 @@ class SymbolTable {
   }
 
   enum SymbolType {
-    CONSTANT, COUNTER, FORMAT, INSTRUCTION, PSEUDO_INSTRUCTION, INSTRUCTION_SET, MEMORY, REGISTER,
-    REGISTER_FILE, FORMAT_FIELD, MACRO, ALIAS, FUNCTION, ENUM_FIELD, EXCEPTION, RECORD, MODEL_TYPE,
-    PROCESS, PARAMETER
+    ALIAS, APPLICATION_BINARY_INTERFACE, CACHE, CONSTANT, COUNTER, ENUM_FIELD, EXCEPTION, FORMAT,
+    FORMAT_FIELD, FUNCTION, INSTRUCTION, INSTRUCTION_SET, MACRO, MEMORY, MICRO_PROCESSOR,
+    MICRO_ARCHITECTURE, MODEL_TYPE, PARAMETER, PROCESS, PSEUDO_INSTRUCTION, RECORD, REGISTER,
+    REGISTER_FILE, SIGNAL
   }
 
   interface Symbol {
@@ -184,6 +185,30 @@ class SymbolTable {
     @Override
     public SymbolType type() {
       return SymbolType.INSTRUCTION_SET;
+    }
+  }
+
+  record AbiSymbol(String name, ApplicationBinaryInterfaceDefinition definition)
+      implements Symbol {
+    @Override
+    public SymbolType type() {
+      return SymbolType.APPLICATION_BINARY_INTERFACE;
+    }
+  }
+
+  record MipSymbol(String name, MicroProcessorDefinition definition)
+      implements Symbol {
+    @Override
+    public SymbolType type() {
+      return SymbolType.MICRO_PROCESSOR;
+    }
+  }
+
+  record MiaSymbol(String name, MicroArchitectureDefinition definition)
+      implements Symbol {
+    @Override
+    public SymbolType type() {
+      return SymbolType.MICRO_ARCHITECTURE;
     }
   }
 
@@ -386,6 +411,86 @@ class SymbolTable {
               output.name().location());
         }
         collectSymbols(process.symbolTable, process.statement);
+      } else if (definition instanceof ApplicationBinaryInterfaceDefinition abi) {
+        symbols.defineSymbol(new AbiSymbol(abi.id.name, abi), abi.loc);
+        abi.symbolTable = symbols.createChild();
+        for (Definition def : abi.definitions) {
+          collectSymbols(abi.symbolTable, def);
+        }
+      } else if (definition instanceof AbiSequenceDefinition abiSequence) {
+        for (InstructionCallStatement statement : abiSequence.statements) {
+          collectSymbols(symbols, statement);
+        }
+      } else if (definition instanceof MicroProcessorDefinition mip) {
+        symbols.defineSymbol(new MipSymbol(mip.id.name, mip), mip.loc);
+        mip.symbolTable = symbols.createChild();
+        for (Definition def : mip.definitions) {
+          collectSymbols(mip.symbolTable, def);
+        }
+      } else if (definition instanceof SpecialPurposeRegisterDefinition specialPurposeRegister) {
+        for (SequenceCallExpr call : specialPurposeRegister.calls) {
+          collectSymbols(symbols, call);
+        }
+      } else if (definition instanceof CpuFunctionDefinition cpuFunction) {
+        collectSymbols(symbols, cpuFunction.expr);
+      } else if (definition instanceof CpuProcessDefinition cpuProcess) {
+        cpuProcess.symbolTable = symbols.createChild();
+        for (Parameter startupOutput : cpuProcess.startupOutputs) {
+          cpuProcess.symbolTable.defineSymbol(
+              new ValuedSymbol(startupOutput.name().name, null, SymbolType.PARAMETER),
+              startupOutput.name().loc
+          );
+        }
+        collectSymbols(cpuProcess.symbolTable, cpuProcess.statement);
+      } else if (definition instanceof MicroArchitectureDefinition mia) {
+        symbols.defineSymbol(new MiaSymbol(mia.id.name, mia), mia.loc);
+        mia.symbolTable = symbols.createChild();
+        for (Definition def : mia.definitions) {
+          collectSymbols(mia.symbolTable, def);
+        }
+      } else if (definition instanceof MacroInstructionDefinition macroInstruction) {
+        macroInstruction.symbolTable = symbols.createChild();
+        for (Parameter startupOutput : macroInstruction.inputs) {
+          macroInstruction.symbolTable.defineSymbol(
+              new ValuedSymbol(startupOutput.name().name, null, SymbolType.PARAMETER),
+              startupOutput.name().loc
+          );
+        }
+        for (Parameter startupOutput : macroInstruction.outputs) {
+          macroInstruction.symbolTable.defineSymbol(
+              new ValuedSymbol(startupOutput.name().name, null, SymbolType.PARAMETER),
+              startupOutput.name().loc
+          );
+        }
+        collectSymbols(macroInstruction.symbolTable, macroInstruction.statement);
+      } else if (definition instanceof PortBehaviorDefinition portBehavior) {
+        // TODO Clarify behavior - do special symbols "translation", "cachedData" exist?
+        collectSymbols(symbols, portBehavior.statement);
+      } else if (definition instanceof PipelineDefinition pipeline) {
+        pipeline.symbolTable = symbols.createChild();
+        pipeline.symbolTable.defineSymbol(new ValuedSymbol("stage", null, SymbolType.FUNCTION),
+            SourceLocation.INVALID_SOURCE_LOCATION);
+        for (Parameter output : pipeline.outputs) {
+          pipeline.symbolTable.defineSymbol(
+              new ValuedSymbol(output.name().name, null, SymbolType.PARAMETER),
+              output.name().loc
+          );
+        }
+        collectSymbols(pipeline.symbolTable, pipeline.statement);
+      } else if (definition instanceof StageDefinition stage) {
+        stage.symbolTable = symbols.createChild();
+        for (Parameter output : stage.outputs) {
+          stage.symbolTable.defineSymbol(
+              new ValuedSymbol(output.name().name, null, SymbolType.PARAMETER),
+              output.name().loc
+          );
+        }
+        collectSymbols(stage.symbolTable, stage.statement);
+      } else if (definition instanceof CacheDefinition cache) {
+        symbols.defineSymbol(new ValuedSymbol(cache.id.name, null, SymbolType.CACHE), cache.loc);
+      } else if (definition instanceof SignalDefinition signal) {
+        symbols.defineSymbol(new ValuedSymbol(signal.id.name, null, SymbolType.SIGNAL),
+            signal.loc);
       }
     }
 
@@ -510,6 +615,11 @@ class SymbolTable {
           }
         }
         collectSymbols(symbols, forAllThen.thenExpr);
+      } else if (expr instanceof SequenceCallExpr sequenceCall) {
+        collectSymbols(symbols, sequenceCall.target);
+        if (sequenceCall.range != null) {
+          collectSymbols(symbols, sequenceCall.range);
+        }
       }
     }
   }
@@ -596,6 +706,38 @@ class SymbolTable {
         verifyUsages(exception.statement);
       } else if (definition instanceof ProcessDefinition process) {
         verifyUsages(process.statement);
+      } else if (definition instanceof ApplicationBinaryInterfaceDefinition abi) {
+        for (Definition def : abi.definitions) {
+          verifyUsages(def);
+        }
+      } else if (definition instanceof AbiSequenceDefinition abiSequence) {
+        for (InstructionCallStatement statement : abiSequence.statements) {
+          verifyUsages(statement);
+        }
+      } else if (definition instanceof MicroProcessorDefinition mip) {
+        for (Definition def : mip.definitions) {
+          verifyUsages(def);
+        }
+      } else if (definition instanceof SpecialPurposeRegisterDefinition specialPurposeRegister) {
+        for (SequenceCallExpr call : specialPurposeRegister.calls) {
+          verifyUsages(call);
+        }
+      } else if (definition instanceof CpuFunctionDefinition cpuFunction) {
+        verifyUsages(cpuFunction.expr);
+      } else if (definition instanceof CpuProcessDefinition cpuProcess) {
+        verifyUsages(cpuProcess.statement);
+      } else if (definition instanceof MicroArchitectureDefinition mia) {
+        for (Definition def : mia.definitions) {
+          verifyUsages(def);
+        }
+      } else if (definition instanceof MacroInstructionDefinition macroInstruction) {
+        verifyUsages(macroInstruction.statement);
+      } else if (definition instanceof PortBehaviorDefinition portBehavior) {
+        verifyUsages(portBehavior.statement);
+      } else if (definition instanceof PipelineDefinition pipeline) {
+        verifyUsages(pipeline.statement);
+      } else if (definition instanceof StageDefinition stage) {
+        verifyUsages(stage.statement);
       }
     }
 
