@@ -393,11 +393,12 @@ public class RegisterTest extends AbstractTest {
         var readReg = getSingleNode(readInstr.behavior(), ReadRegFileNode.class);
         assertEquals(resource, readReg.registerFile());
         var regFileCoutner = (Counter.RegisterFileCounter) counter;
-        assertEquals(regFileCoutner.index(), ((ConstantNode) readReg.address()).constant().asVal());
+        var readAddrConst = getSingleLeafNode(readReg.address(), ConstantNode.class);
+        assertEquals(regFileCoutner.index(), readAddrConst.constant().asVal());
         var writeReg = getSingleNode(writeInstr.behavior(), WriteRegFileNode.class);
         assertEquals(resource, writeReg.registerFile());
-        assertEquals(regFileCoutner.index(),
-            ((ConstantNode) Objects.requireNonNull(writeReg.address())).constant().asVal());
+        var writeAddrConst = getSingleLeafNode(writeReg.address(), ConstantNode.class);
+        assertEquals(regFileCoutner.index(), (writeAddrConst.constant().asVal()));
       }
 
 
