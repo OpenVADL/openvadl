@@ -61,16 +61,22 @@ class ParserUtils {
 
     ID_TOKENS = NO_OPS.clone();
     ID_TOKENS[Parser._identifierToken] = true;
+    ID_TOKENS[Parser._ADDRESS] = true;
     ID_TOKENS[Parser._ALIAS] = true;
+    ID_TOKENS[Parser._BINARY] = true;
+    ID_TOKENS[Parser._CALL] = true;
     ID_TOKENS[Parser._CONSTANT] = true;
     ID_TOKENS[Parser._ENCODE] = true;
     ID_TOKENS[Parser._EXCEPTION] = true;
     ID_TOKENS[Parser._GROUP] = true;
     ID_TOKENS[Parser._INSTRUCTION] = true;
     ID_TOKENS[Parser._MEMORY] = true;
+    ID_TOKENS[Parser._NOP] = true;
     ID_TOKENS[Parser._OPERATION] = true;
     ID_TOKENS[Parser._PREDICATE] = true;
     ID_TOKENS[Parser._REGISTER] = true;
+    ID_TOKENS[Parser._RETURN] = true;
+    ID_TOKENS[Parser._SEQUENCE] = true;
     ID_TOKENS[Parser._SYM_IN] = true;
     ID_TOKENS[Parser._T_BIN] = true;
     ID_TOKENS[Parser._T_BIN_OP] = true;

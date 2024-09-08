@@ -446,6 +446,28 @@ public class AstDumper
   }
 
   @Override
+  public Void visit(ApplicationBinaryInterfaceDefinition definition) {
+    dumpNode(definition);
+    dumpChildren(definition.id, (Node) definition.isa);
+    dumpChildren(definition.definitions);
+    return null;
+  }
+
+  @Override
+  public Void visit(AbiSequenceDefinition definition) {
+    dumpNode(definition);
+    dumpChildren(definition.statements);
+    return null;
+  }
+
+  @Override
+  public Void visit(SpecialPurposeRegisterDefinition definition) {
+    dumpNode(definition);
+    dumpChildren(definition.calls);
+    return null;
+  }
+
+  @Override
   public Void visit(CallExpr expr) {
     dumpNode(expr);
     dumpChildren((Expr) expr.target);
@@ -571,6 +593,16 @@ public class AstDumper
       }
     }
     dumpChildren(expr.thenExpr);
+    return null;
+  }
+
+  @Override
+  public Void visit(SequenceCallExpr expr) {
+    dumpNode(expr);
+    dumpChildren(expr.target);
+    if (expr.range != null) {
+      dumpChildren(expr.range);
+    }
     return null;
   }
 

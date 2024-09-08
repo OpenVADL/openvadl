@@ -80,6 +80,12 @@ interface DefinitionVisitor<R> {
   R visit(OperationDefinition operationDefinition);
 
   R visit(GroupDefinition groupDefinition);
+
+  R visit(ApplicationBinaryInterfaceDefinition definition);
+
+  R visit(AbiSequenceDefinition definition);
+
+  R visit(SpecialPurposeRegisterDefinition definition);
 }
 
 /**
@@ -89,6 +95,22 @@ interface DefinitionVisitor<R> {
  * @param type The declared type of this parameter.
  */
 record Parameter(Identifier name, TypeLiteral type) {
+  static void prettyPrint(List<Parameter> params, StringBuilder builder) {
+    if (!params.isEmpty()) {
+      builder.append("(");
+      var isFirst = true;
+      for (var param : params) {
+        if (!isFirst) {
+          builder.append(", ");
+        }
+        isFirst = false;
+        param.name().prettyPrint(0, builder);
+        builder.append(" : ");
+        param.type().prettyPrint(0, builder);
+      }
+      builder.append(")");
+    }
+  }
 }
 
 class ConstantDefinition extends Definition {
@@ -1450,20 +1472,7 @@ class FunctionDefinition extends Definition {
     builder.append(prettyIndentString(indent));
     builder.append("function ");
     name.prettyPrint(indent, builder);
-    if (!params.isEmpty()) {
-      builder.append("(");
-      var isFirst = true;
-      for (var param : params) {
-        if (!isFirst) {
-          builder.append(", ");
-        }
-        isFirst = false;
-        param.name().prettyPrint(0, builder);
-        builder.append(" : ");
-        param.type().prettyPrint(0, builder);
-      }
-      builder.append(")");
-    }
+    Parameter.prettyPrint(params, builder);
     builder.append(" -> ");
     retType.prettyPrint(0, builder);
     if (!isBlockLayout(expr)) {
@@ -2394,33 +2403,10 @@ class ProcessDefinition extends Definition {
       }
       builder.append("> ");
     }
-    if (!inputs.isEmpty()) {
-      builder.append("(");
-      var isFirst = true;
-      for (var input : inputs) {
-        if (!isFirst) {
-          builder.append(", ");
-        }
-        isFirst = false;
-        input.name().prettyPrint(0, builder);
-        builder.append(" : ");
-        input.type().prettyPrint(0, builder);
-      }
-      builder.append(")");
-    }
+    Parameter.prettyPrint(inputs, builder);
     if (!outputs.isEmpty()) {
-      builder.append(" -> (");
-      var isFirst = true;
-      for (var output : outputs) {
-        if (!isFirst) {
-          builder.append(", ");
-        }
-        isFirst = false;
-        output.name().prettyPrint(0, builder);
-        builder.append(" : ");
-        output.type().prettyPrint(0, builder);
-      }
-      builder.append(")");
+      builder.append(" -> ");
+      Parameter.prettyPrint(outputs, builder);
     }
     builder.append(" =\n");
     statement.prettyPrint(indent + 1, builder);
@@ -2558,7 +2544,8 @@ class GroupDefinition extends Definition {
     return (Identifier) name;
   }
 
-  @Nullable TypeLiteral type() {
+  @Nullable
+  TypeLiteral type() {
     return (TypeLiteral) type;
   }
 
@@ -2613,5 +2600,235 @@ class GroupDefinition extends Definition {
   @Override
   public int hashCode() {
     return Objects.hash(name, type, groupSequence);
+  }
+}
+
+class ApplicationBinaryInterfaceDefinition extends Definition {
+  Identifier id;
+  IsId isa;
+  List<Definition> definitions;
+  SourceLocation loc;
+
+  ApplicationBinaryInterfaceDefinition(Identifier id, IsId isa, List<Definition> definitions,
+                                       SourceLocation loc) {
+    this.id = id;
+    this.isa = isa;
+    this.definitions = definitions;
+    this.loc = loc;
+  }
+
+  @Override
+  <R> R accept(DefinitionVisitor<R> visitor) {
+    return visitor.visit(this);
+  }
+
+  @Override
+  SourceLocation location() {
+    return loc;
+  }
+
+  @Override
+  SyntaxType syntaxType() {
+    return BasicSyntaxType.INVALID;
+  }
+
+  @Override
+  void prettyPrint(int indent, StringBuilder builder) {
+    builder.append(prettyIndentString(indent)).append("application binary interface ");
+    id.prettyPrint(indent, builder);
+    builder.append(" for ");
+    isa.prettyPrint(indent, builder);
+    builder.append(" = {\n");
+    for (Definition definition : definitions) {
+      definition.prettyPrint(indent + 1, builder);
+    }
+    builder.append(prettyIndentString(indent)).append("}\n");
+  }
+
+  @Override
+  public boolean equals(Object o) {
+    if (this == o) {
+      return true;
+    }
+    if (o == null || getClass() != o.getClass()) {
+      return false;
+    }
+    ApplicationBinaryInterfaceDefinition that = (ApplicationBinaryInterfaceDefinition) o;
+    return Objects.equals(id, that.id) && Objects.equals(isa, that.isa)
+        && Objects.equals(definitions, that.definitions);
+  }
+
+  @Override
+  public int hashCode() {
+    return Objects.hash(id, isa, definitions);
+  }
+}
+
+class AbiSequenceDefinition extends Definition {
+
+  SeqKind kind;
+  List<Parameter> params;
+  List<InstructionCallStatement> statements;
+  SourceLocation loc;
+
+  AbiSequenceDefinition(SeqKind kind, List<Parameter> params,
+                        List<InstructionCallStatement> statements, SourceLocation loc) {
+    this.kind = kind;
+    this.params = params;
+    this.statements = statements;
+    this.loc = loc;
+  }
+
+  @Override
+  <R> R accept(DefinitionVisitor<R> visitor) {
+    return visitor.visit(this);
+  }
+
+  @Override
+  SourceLocation location() {
+    return loc;
+  }
+
+  @Override
+  SyntaxType syntaxType() {
+    return BasicSyntaxType.INVALID;
+  }
+
+  @Override
+  void prettyPrint(int indent, StringBuilder builder) {
+    builder.append(prettyIndentString(indent));
+    builder.append(kind.keyword);
+    builder.append(" sequence ");
+    if (!params.isEmpty()) {
+      builder.append("(");
+      var isFirst = true;
+      for (Parameter param : params) {
+        if (!isFirst) {
+          builder.append(", ");
+        }
+        isFirst = false;
+        param.name().prettyPrint(0, builder);
+        builder.append(" : ");
+        param.type().prettyPrint(0, builder);
+      }
+      builder.append(")");
+    }
+    builder.append(" = {\n");
+    for (InstructionCallStatement statement : statements) {
+      statement.prettyPrint(indent + 1, builder);
+    }
+    builder.append(prettyIndentString(indent)).append("}\n");
+  }
+
+  @Override
+  public boolean equals(Object o) {
+    if (this == o) {
+      return true;
+    }
+    if (o == null || getClass() != o.getClass()) {
+      return false;
+    }
+    AbiSequenceDefinition that = (AbiSequenceDefinition) o;
+    return kind == that.kind && Objects.equals(params, that.params) &&
+        Objects.equals(statements, that.statements);
+  }
+
+  @Override
+  public int hashCode() {
+    return Objects.hash(kind, params, statements);
+  }
+
+  enum SeqKind {
+    ADDRESS("address"), CALL("call"), CONSTANT("constant"), NOP("nop"), RETURN("return");
+
+    private final String keyword;
+
+    SeqKind(String keyword) {
+      this.keyword = keyword;
+    }
+  }
+}
+
+class SpecialPurposeRegisterDefinition extends Definition {
+
+  Purpose purpose;
+  List<SequenceCallExpr> calls;
+  SourceLocation loc;
+
+  SpecialPurposeRegisterDefinition(Purpose purpose, List<SequenceCallExpr> calls,
+                                   SourceLocation loc) {
+    this.purpose = purpose;
+    this.calls = calls;
+    this.loc = loc;
+  }
+
+  @Override
+  <R> R accept(DefinitionVisitor<R> visitor) {
+    return visitor.visit(this);
+  }
+
+  @Override
+  SourceLocation location() {
+    return loc;
+  }
+
+  @Override
+  SyntaxType syntaxType() {
+    return BasicSyntaxType.INVALID;
+  }
+
+  @Override
+  void prettyPrint(int indent, StringBuilder builder) {
+    builder.append(prettyIndentString(indent));
+    builder.append(purpose.keywords);
+    builder.append(" = ");
+    if (calls.size() == 1) {
+      calls.get(0).prettyPrint(0, builder);
+    } else {
+      builder.append("[");
+      var isFirst = true;
+      for (SequenceCallExpr call : calls) {
+        if (!isFirst) {
+          builder.append(", ");
+        }
+        isFirst = false;
+        call.prettyPrint(0, builder);
+      }
+      builder.append("]");
+    }
+  }
+
+  @Override
+  public boolean equals(Object o) {
+    if (this == o) {
+      return true;
+    }
+    if (o == null || getClass() != o.getClass()) {
+      return false;
+    }
+    SpecialPurposeRegisterDefinition that = (SpecialPurposeRegisterDefinition) o;
+    return purpose == that.purpose && Objects.equals(calls, that.calls);
+  }
+
+  @Override
+  public int hashCode() {
+    return Objects.hash(purpose, calls);
+  }
+
+  enum Purpose {
+    RETURN_ADDRESS("return address"),
+    RETURN_VALUE("return value"),
+    STACK_POINTER("stack pointer"),
+    GLOBAL_POINTER("global pointer"),
+    FRAME_POINTER("frame pointer"),
+    FUNCTION_ARGUMENT("function argument"),
+    CALLER_SAVED("caller saved"),
+    CALLEE_SAVED("callee saved");
+
+    private final String keywords;
+
+    Purpose(String keywords) {
+      this.keywords = keywords;
+    }
   }
 }

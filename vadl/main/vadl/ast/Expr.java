@@ -68,6 +68,8 @@ interface ExprVisitor<R> {
   R visit(ExistsInThenExpr expr);
 
   R visit(ForAllThenExpr expr);
+
+  R visit(SequenceCallExpr expr);
 }
 
 final class Identifier extends Expr implements IsId, IdentifierOrPlaceholder {
@@ -2168,5 +2170,43 @@ class ForAllThenExpr extends Expr {
   }
 
   record Condition(IsId id, List<IsId> operations) {
+  }
+}
+
+class SequenceCallExpr extends Expr {
+
+  Identifier target;
+  @Nullable Expr range;
+  SourceLocation loc;
+
+  SequenceCallExpr(Identifier target, @Nullable Expr range, SourceLocation loc) {
+    this.target = target;
+    this.range = range;
+    this.loc = loc;
+  }
+
+  @Override
+  <R> R accept(ExprVisitor<R> visitor) {
+    return visitor.visit(this);
+  }
+
+  @Override
+  SourceLocation location() {
+    return loc;
+  }
+
+  @Override
+  SyntaxType syntaxType() {
+    return BasicSyntaxType.EX;
+  }
+
+  @Override
+  void prettyPrint(int indent, StringBuilder builder) {
+    target.prettyPrint(0, builder);
+    if (range != null) {
+      builder.append("{");
+      range.prettyPrint(0, builder);
+      builder.append("}");
+    }
   }
 }

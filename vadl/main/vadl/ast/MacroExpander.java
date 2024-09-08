@@ -398,6 +398,12 @@ class MacroExpander
   }
 
   @Override
+  public Expr visit(SequenceCallExpr expr) {
+    return new SequenceCallExpr(expr.target, expr.range == null ? null : expr.range.accept(this),
+        expr.loc);
+  }
+
+  @Override
   public Definition visit(ConstantDefinition definition) {
     var id = resolvePlaceholderOrIdentifier(definition.identifier);
     var value = expandExpr(definition.value);
@@ -652,6 +658,28 @@ class MacroExpander
         groupDefinition.groupSequence,
         copyLoc(groupDefinition.loc)
     ).withAnnotations(expandAnnotations(groupDefinition.annotations));
+  }
+
+  @Override
+  public Definition visit(ApplicationBinaryInterfaceDefinition definition) {
+    return new ApplicationBinaryInterfaceDefinition(
+        definition.id, definition.isa, expandDefinitions(definition.definitions), definition.loc
+    ).withAnnotations(expandAnnotations(definition.annotations));
+  }
+
+  @Override
+  public Definition visit(AbiSequenceDefinition definition) {
+    var statements = new ArrayList<>(definition.statements);
+    statements.replaceAll(stmt -> (InstructionCallStatement) expandStatement(stmt));
+    return new AbiSequenceDefinition(definition.kind, definition.params, statements, definition.loc)
+        .withAnnotations(expandAnnotations(definition.annotations));
+  }
+
+  @Override
+  public Definition visit(SpecialPurposeRegisterDefinition definition) {
+    return new SpecialPurposeRegisterDefinition(
+        definition.purpose, definition.calls, definition.loc
+    ).withAnnotations(expandAnnotations(definition.annotations));
   }
 
   @Override

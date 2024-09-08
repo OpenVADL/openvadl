@@ -150,6 +150,21 @@ public class ModelRemover implements DefinitionVisitor<Definition> {
     return groupDefinition;
   }
 
+  @Override
+  public Definition visit(ApplicationBinaryInterfaceDefinition definition) {
+    return definition;
+  }
+
+  @Override
+  public Definition visit(AbiSequenceDefinition definition) {
+    return definition;
+  }
+
+  @Override
+  public Definition visit(SpecialPurposeRegisterDefinition definition) {
+    return definition;
+  }
+
   private boolean shouldRemove(Definition definition) {
     return definition instanceof ModelDefinition
         || definition instanceof RecordTypeDefinition

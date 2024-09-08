@@ -202,6 +202,11 @@ public class Ungrouper
   }
 
   @Override
+  public Expr visit(SequenceCallExpr expr) {
+    return expr;
+  }
+
+  @Override
   public Definition visit(ConstantDefinition definition) {
     ungroupAnnotations(definition);
     definition.value = definition.value.accept(this);
@@ -388,6 +393,25 @@ public class Ungrouper
   public Definition visit(GroupDefinition groupDefinition) {
     ungroupAnnotations(groupDefinition);
     return groupDefinition;
+  }
+
+  @Override
+  public Definition visit(ApplicationBinaryInterfaceDefinition definition) {
+    ungroupAnnotations(definition);
+    return definition;
+  }
+
+  @Override
+  public Definition visit(AbiSequenceDefinition definition) {
+    ungroupAnnotations(definition);
+    definition.statements.replaceAll(stmt -> (InstructionCallStatement) stmt.accept(this));
+    return definition;
+  }
+
+  @Override
+  public Definition visit(SpecialPurposeRegisterDefinition definition) {
+    ungroupAnnotations(definition);
+    return definition;
   }
 
   @Override

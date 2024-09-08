@@ -68,9 +68,16 @@ TOKENS
   T_UN_OP    = "UnOp".
   T_VAL      = "Val".
 
+  ADDRESS      = "address".
   ALIAS        = "alias".
+  APPLICATION  = "application".
   ARCHITECTURE = "architecture".
+  ARGUMENT     = "argument".
   ASSEMBLY     = "assembly".
+  BINARY       = "binary".
+  CALL         = "call".
+  CALLEE       = "callee".
+  CALLER       = "caller".
   COMPILER_KW  = "compiler".
   CONSTANT     = "constant".
   COUNTER      = "counter".
@@ -84,20 +91,26 @@ TOKENS
   EXTENDING    = "extending".
   FALSE        = "false".
   FILE         = "file".
+  FOR          = "for".
   FORALL       = "forall".
   FORMAT       = "format".
+  FRAME        = "frame".
   FUNCTION     = "function".
+  GLOBAL       = "global".
   GROUP        = "group".
   ID_TO_STR    = "IdToStr".
   IF_KW        = "if".
   IMPORT       = "import".
   INSTRUCTION  = "instruction".
+  INTERFACE    = "interface".
   LET          = "let".
   MATCH        = "match".
   MEMORY       = "memory".
   MODEL        = "model".
   MODEL_TYPE   = "model-type".
+  NOP          = "nop".
   OPERATION    = "operation".
+  POINTER      = "pointer".
   PREDICATE    = "predicate".
   PROCESS      = "process".
   PROGRAM      = "program".
@@ -105,10 +118,15 @@ TOKENS
   RAISE        = "raise".
   RECORD       = "record".
   REGISTER     = "register".
+  RETURN       = "return".
+  SAVED        = "saved".
+  SEQUENCE     = "sequence".
   SET          = "set".
+  STACK        = "stack".
   THEN         = "then".
   TRUE         = "true".
   USING        = "using".
+  VALUE        = "value".
   WITH         = "with".
 
   SYM_ARROW       = "->".
@@ -172,6 +190,7 @@ PRODUCTIONS
   // -- DEFINITIONS --------------------------------------------------------------------------------------------------
   topLevelDefinitions<out Definition def> (. def = null; .)
   = instructionsetDefinition<out def>
+  | applicationBinaryInterfaceDefinition<out def>
   | commonDefinition<out def>
   | importDefinition<out def>
   .
@@ -694,6 +713,66 @@ PRODUCTIONS
     SYM_BRACE_CLOSE                       (. group = new Group.Permutation(sequences, start.join(loc())); .)
   .
 
+  // -- ABI DEFINITIONS-----------------------------------------------------------------------------------------------
+  applicationBinaryInterfaceDefinition<out Definition def>
+  = APPLICATION                                 (. var start = loc(); .)
+    BINARY
+    INTERFACE
+    identifier<out Identifier id>
+    FOR
+    identifierPath<out IsId isaPath>
+    SYM_EQ
+    SYM_BRACE_OPEN                              (. var elements = new ArrayList<Definition>(); .)
+    {
+      abiElementDefinition<out Definition elem> (. elements.add(elem); .)
+    }
+    SYM_BRACE_CLOSE                             (. def = new ApplicationBinaryInterfaceDefinition(id, isaPath, elements, start.join(loc())); .)
+  .
+
+  abiElementDefinition<out Definition def> (. def = null; .)
+  = annotations<.out List<Annotation> annotations.>
+    ( IF (scanner.Peek().kind == _SEQUENCE) // RETURN can be followed by both SEQUENCE and VALUE / ADDRESS
+      abiSequenceDef<out def>
+    | specialPurposeRegisterDef<out def>
+    | aliasDefinition<out def>
+    )                                      (. def.withAnnotations(new Annotations(annotations)); .)
+  .
+
+  specialPurposeRegisterDef<out Definition def>              (. var start = lookaheadLoc(); .)
+  =                                                          (. SpecialPurposeRegisterDefinition.Purpose purpose = null; .)
+  ( RETURN
+    ( ADDRESS                                                (. purpose = SpecialPurposeRegisterDefinition.Purpose.RETURN_ADDRESS; .)
+    | VALUE                                                  (. purpose = SpecialPurposeRegisterDefinition.Purpose.RETURN_VALUE; .)
+  )
+  | STACK POINTER                                            (. purpose = SpecialPurposeRegisterDefinition.Purpose.STACK_POINTER; .)
+  | GLOBAL POINTER                                           (. purpose = SpecialPurposeRegisterDefinition.Purpose.GLOBAL_POINTER; .)
+  | FRAME POINTER                                            (. purpose = SpecialPurposeRegisterDefinition.Purpose.FRAME_POINTER; .)
+  | FUNCTION ARGUMENT                                        (. purpose = SpecialPurposeRegisterDefinition.Purpose.FUNCTION_ARGUMENT; .)
+  | CALLER SAVED                                             (. purpose = SpecialPurposeRegisterDefinition.Purpose.CALLER_SAVED; .)
+  | CALLEE SAVED                                             (. purpose = SpecialPurposeRegisterDefinition.Purpose.CALLEE_SAVED; .)
+  )
+    SYM_EQ
+    sequenceCallExprList<.out List<SequenceCallExpr> calls.> (. def = new SpecialPurposeRegisterDefinition(purpose, calls, start.join(loc())); .)
+  .
+
+  abiSequenceDef<out Definition def>                         (. var start = lookaheadLoc(); .)
+  =                                                          (. AbiSequenceDefinition.SeqKind kind = null; .)
+  ( ADDRESS                                                  (. kind = AbiSequenceDefinition.SeqKind.ADDRESS; .)
+  | CALL                                                     (. kind = AbiSequenceDefinition.SeqKind.CALL; .)
+  | CONSTANT                                                 (. kind = AbiSequenceDefinition.SeqKind.CONSTANT; .)
+  | NOP                                                      (. kind = AbiSequenceDefinition.SeqKind.NOP; .)
+  | RETURN                                                   (. kind = AbiSequenceDefinition.SeqKind.RETURN; .)
+  )
+    SEQUENCE                                                 (. List<Parameter> params = new ArrayList<>(); .)
+    [ parameters<.out params.> ]
+    SYM_EQ
+    SYM_BRACE_OPEN                                           (. var stmts = new ArrayList<InstructionCallStatement>(); .)
+    {
+      instructionCallStmt<out InstructionCallStatement stmt> (. stmts.add(stmt); .)
+    }
+    SYM_BRACE_CLOSE                                          (. def = new AbiSequenceDefinition(kind, params, stmts, start.join(loc())); .)
+  .
+
   // -- STATEMENTS ---------------------------------------------------------------------------------------------------
 
   statement<out Statement statement> (. statement = null; .)
@@ -1119,12 +1198,12 @@ PRODUCTIONS
 
   /// Must be kept in sync with ParserUtils.ID_TOKENS.
   allowedIdentifierKeywords
-  = // ADDRESS |
-    ALIAS
+  = ADDRESS
+  | ALIAS
   // | ASSERT
   // | APPEND
-  // | BINARY
-  // | CALL
+  | BINARY
+  | CALL
   | CONSTANT
   // | DESCRIPTION
   | ENCODE
@@ -1139,7 +1218,7 @@ PRODUCTIONS
   // | MNEMONIC
   // | MODE
   // | MODIFIER
-  // | NOP
+  | NOP
   // | OPERAND
   | OPERATION
   | PREDICATE
@@ -1148,8 +1227,8 @@ PRODUCTIONS
   // | READ
   // | REDIRECT
   | REGISTER
-  // | RETURN
-  // | SEQUENCE
+  | RETURN
+  | SEQUENCE
   // | STAGE
   // | START
   // | STARTUP
@@ -1177,6 +1256,28 @@ PRODUCTIONS
   // | USER
   // | WRITE
   // TODO Add all allowed keywords
+  .
+
+  sequenceCallExprList<.out List<SequenceCallExpr> list.> (. var start = lookaheadLoc(); .)
+  =                                                       (. list = new ArrayList<>(); .)
+  ( sequenceCallExpr<out SequenceCallExpr call>           (. list.add(call); .)
+  | SYM_BRACK_OPEN
+    sequenceCallExpr<out SequenceCallExpr call>           (. list.add(call); .)
+    {
+      SYM_COMMA
+      sequenceCallExpr<out call>                          (. list.add(call); .)
+    }
+    SYM_BRACK_CLOSE
+  )
+  .
+
+  sequenceCallExpr<out SequenceCallExpr call> (. var start = lookaheadLoc(); .)
+  = identifier<out Identifier id>             (. Expr range = null; .)
+    [
+      SYM_BRACE_OPEN
+      rangeExpression<out range>
+      SYM_BRACE_CLOSE
+    ]                                         (. call = new SequenceCallExpr(id, range, start.join(loc())); .)
   .
 
   // -- MACROS -------------------------------------------------------------------------------------------------------
@@ -1384,8 +1485,8 @@ PRODUCTIONS
   | T_UN_OP                                 (. type = BasicSyntaxType.UN_OP; .)
   .
 
-  internalError<String message>
-  = ANY                                     (. throw new IllegalStateException("Internal error in grammar: " + message); .)
+  internalError<String message>             (. var position = t.line + ":" + t.col; .)
+  = ANY                                     (. throw new IllegalStateException("Internal error in grammar at token (" + position + "): " + message); .)
   .
 
 END vadl.
