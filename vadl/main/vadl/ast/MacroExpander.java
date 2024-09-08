@@ -494,6 +494,13 @@ class MacroExpander
   }
 
   @Override
+  public Definition visit(RelocationDefinition definition) {
+    return new RelocationDefinition(definition.identifier, definition.params, definition.resultType,
+        expandExpr(definition.expr), copyLoc(definition.loc)
+    ).withAnnotations(expandAnnotations(definition.annotations));
+  }
+
+  @Override
   public Definition visit(EncodingDefinition definition) {
     var instrId = resolvePlaceholderOrIdentifier(definition.instrIdentifier);
     var fieldEncodings = resolveEncs(definition.fieldEncodings);
@@ -877,7 +884,9 @@ class MacroExpander
     namedArguments.replaceAll(namedArgument ->
         new InstructionCallStatement.NamedArgument(namedArgument.name(),
             expandExpr(namedArgument.value())));
-    return new InstructionCallStatement(id, namedArguments, copyLoc(instructionCallStatement.loc));
+    var unnamedArguments = expandExprs(instructionCallStatement.unnamedArguments);
+    return new InstructionCallStatement(id, namedArguments, unnamedArguments,
+        copyLoc(instructionCallStatement.loc));
   }
 
   private void assertValidMacro(Macro macro, SourceLocation sourceLocation)

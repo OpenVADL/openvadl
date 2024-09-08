@@ -113,7 +113,9 @@ public class StatementTest {
                 List.of(List.of(new IntegerLiteral("32", loc))), loc),
             List.of(new FormatDefinition.RangeFormatField(
                 new Identifier("bits", loc),
-                List.of(new RangeExpr(new IntegerLiteral("31", loc), new IntegerLiteral("0", loc)))
+                List.of(new RangeExpr(new IntegerLiteral("31", loc),
+                    new IntegerLiteral("0", loc))),
+                null
             )),
             List.of(),
             loc

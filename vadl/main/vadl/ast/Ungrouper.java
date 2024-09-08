@@ -276,6 +276,12 @@ public class Ungrouper
   }
 
   @Override
+  public Definition visit(RelocationDefinition definition) {
+    definition.expr = definition.expr.accept(this);
+    return definition;
+  }
+
+  @Override
   public Definition visit(EncodingDefinition definition) {
     ungroupAnnotations(definition);
     definition.fieldEncodings().encodings.replaceAll(encoding -> {
@@ -577,6 +583,7 @@ public class Ungrouper
     instructionCallStatement.namedArguments.replaceAll(namedArgument ->
         new InstructionCallStatement.NamedArgument(namedArgument.name(),
             namedArgument.value().accept(this)));
+    instructionCallStatement.unnamedArguments.replaceAll(expr -> expr.accept(this));
     return instructionCallStatement;
   }
 

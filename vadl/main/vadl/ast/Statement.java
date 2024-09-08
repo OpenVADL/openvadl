@@ -630,12 +630,14 @@ final class InstructionCallStatement extends Statement {
 
   IdentifierOrPlaceholder id;
   List<NamedArgument> namedArguments;
+  List<Expr> unnamedArguments;
   SourceLocation loc;
 
   InstructionCallStatement(IdentifierOrPlaceholder id, List<NamedArgument> namedArguments,
-                           SourceLocation loc) {
+                           List<Expr> unnamedArguments, SourceLocation loc) {
     this.id = id;
     this.namedArguments = namedArguments;
+    this.unnamedArguments = unnamedArguments;
     this.loc = loc;
   }
 
@@ -652,18 +654,33 @@ final class InstructionCallStatement extends Statement {
   void prettyPrint(int indent, StringBuilder builder) {
     builder.append(prettyIndentString(indent));
     id.prettyPrint(0, builder);
-    builder.append("{");
-    var isFirst = true;
-    for (NamedArgument namedArgument : namedArguments) {
-      if (!isFirst) {
-        builder.append(", ");
+    if (!namedArguments.isEmpty()) {
+      builder.append("{");
+      var isFirst = true;
+      for (NamedArgument namedArgument : namedArguments) {
+        if (!isFirst) {
+          builder.append(", ");
+        }
+        isFirst = false;
+        namedArgument.name.prettyPrint(0, builder);
+        builder.append(" = ");
+        namedArgument.value.prettyPrint(0, builder);
       }
-      isFirst = false;
-      namedArgument.name.prettyPrint(0, builder);
-      builder.append(" = ");
-      namedArgument.value.prettyPrint(0, builder);
+      builder.append("}");
     }
-    builder.append("}\n");
+    if (!unnamedArguments.isEmpty()) {
+      builder.append("(");
+      var isFirst = true;
+      for (Expr arg : unnamedArguments) {
+        if (!isFirst) {
+          builder.append(", ");
+        }
+        isFirst = false;
+        arg.prettyPrint(0, builder);
+      }
+      builder.append(")");
+    }
+    builder.append("\n");
   }
 
   @Override
@@ -676,12 +693,13 @@ final class InstructionCallStatement extends Statement {
     }
     InstructionCallStatement that = (InstructionCallStatement) o;
     return Objects.equals(id, that.id)
-        && Objects.equals(namedArguments, that.namedArguments);
+        && Objects.equals(namedArguments, that.namedArguments)
+        && Objects.equals(unnamedArguments, that.unnamedArguments);
   }
 
   @Override
   public int hashCode() {
-    return Objects.hash(id, namedArguments, loc);
+    return Objects.hash(id, namedArguments, unnamedArguments);
   }
 
   record NamedArgument(Identifier name, Expr value) {

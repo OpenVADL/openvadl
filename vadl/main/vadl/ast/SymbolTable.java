@@ -345,11 +345,13 @@ class SymbolTable {
         pseudo.symbolTable = symbols.createChild();
         for (var param : pseudo.params) {
           pseudo.symbolTable.defineSymbol(
-              new ValuedSymbol(param.id().name, null, SymbolType.PARAMETER), param.id().location());
+              new ValuedSymbol(param.name().name, null, SymbolType.PARAMETER), param.name().loc);
         }
         for (InstructionCallStatement statement : pseudo.statements) {
           collectSymbols(pseudo.symbolTable, statement);
         }
+      } else if (definition instanceof RelocationDefinition relocation) {
+        collectSymbols(symbols, relocation.expr);
       } else if (definition instanceof AssemblyDefinition assembly) {
         assembly.symbolTable = symbols.createChild();
         collectSymbols(assembly.symbolTable, assembly.expr);
@@ -538,6 +540,9 @@ class SymbolTable {
         for (var namedArgument : instructionCall.namedArguments) {
           collectSymbols(symbols, namedArgument.value());
         }
+        for (var unnamedArgument : instructionCall.unnamedArguments) {
+          collectSymbols(symbols, unnamedArgument);
+        }
       }
     }
 
@@ -665,6 +670,8 @@ class SymbolTable {
         for (InstructionCallStatement statement : pseudo.statements) {
           verifyUsages(statement);
         }
+      } else if (definition instanceof RelocationDefinition relocation) {
+        verifyUsages(relocation.expr);
       } else if (definition instanceof AssemblyDefinition assembly) {
         for (IdentifierOrPlaceholder identifier : assembly.identifiers) {
           var pseudoInstr = assembly.symbolTable().findPseudoInstruction((Identifier) identifier);
@@ -790,6 +797,9 @@ class SymbolTable {
                       namedArgument.name().location());
             }
             verifyUsages(namedArgument.value());
+          }
+          for (Expr unnamedArgument : instructionCall.unnamedArguments) {
+            verifyUsages(unnamedArgument);
           }
         }
       }

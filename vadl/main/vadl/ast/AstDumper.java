@@ -244,8 +244,15 @@ public class AstDumper
     dumpNode(definition);
     dumpChildren(definition.id());
     dumpChildren(definition.params.stream()
-        .flatMap(param -> Stream.of(param.id(), param.type())).toList());
+        .flatMap(param -> Stream.of(param.name(), param.type())).toList());
     dumpChildren(definition.statements);
+    return null;
+  }
+
+  @Override
+  public Void visit(RelocationDefinition definition) {
+    dumpNode(definition);
+    dumpChildren(definition.identifier, definition.resultType, definition.expr);
     return null;
   }
 
@@ -824,6 +831,7 @@ public class AstDumper
     dumpChildren(instructionCallStatement.id());
     dumpChildren(instructionCallStatement.namedArguments.stream()
         .flatMap(namedArgument -> Stream.of(namedArgument.name(), namedArgument.value())).toList());
+    dumpChildren(instructionCallStatement.unnamedArguments);
     return null;
   }
 }

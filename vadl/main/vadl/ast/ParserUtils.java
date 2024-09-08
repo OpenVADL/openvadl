@@ -24,6 +24,9 @@ class ParserUtils {
   // Must be kept in sync with allowedIdentifierKeywords
   static boolean[] ID_TOKENS;
 
+  // Must be kept in sync with auxiliaryFields
+  static boolean[] AUX_FIELD_TOKENS;
+
   static {
     NO_OPS = new boolean[Parser.maxT + 1];
 
@@ -103,6 +106,10 @@ class ParserUtils {
     ID_TOKENS[Parser._T_VAL] = true;
     ID_TOKENS[Parser._TRANSLATION] = true;
     ID_TOKENS[Parser._WRITE] = true;
+
+    AUX_FIELD_TOKENS = NO_OPS.clone();
+    AUX_FIELD_TOKENS[Parser._PREDICATE] = true;
+    AUX_FIELD_TOKENS[Parser._ENCODE] = true;
   }
 
   /**

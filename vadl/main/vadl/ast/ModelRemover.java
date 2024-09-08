@@ -60,6 +60,11 @@ public class ModelRemover implements DefinitionVisitor<Definition> {
   }
 
   @Override
+  public Definition visit(RelocationDefinition definition) {
+    return definition;
+  }
+
+  @Override
   public Definition visit(EncodingDefinition definition) {
     return definition;
   }

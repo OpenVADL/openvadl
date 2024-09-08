@@ -45,6 +45,8 @@ interface DefinitionVisitor<R> {
 
   R visit(PseudoInstructionDefinition definition);
 
+  R visit(RelocationDefinition definition);
+
   R visit(EncodingDefinition definition);
 
   R visit(AssemblyDefinition definition);
@@ -240,10 +242,13 @@ class FormatDefinition extends Definition {
   static class RangeFormatField extends Node implements FormatField {
     Identifier identifier;
     List<Expr> ranges;
+    @Nullable
+    TypeLiteral type;
 
-    public RangeFormatField(Identifier identifier, List<Expr> ranges) {
+    public RangeFormatField(Identifier identifier, List<Expr> ranges, @Nullable TypeLiteral type) {
       this.identifier = identifier;
       this.ranges = ranges;
+      this.type = type;
     }
 
     @Override
@@ -271,6 +276,10 @@ class FormatDefinition extends Definition {
         ranges.get(i).prettyPrint(indent, builder);
       }
       builder.append("]");
+      if (type != null) {
+        builder.append(" : ");
+        type.prettyPrint(0, builder);
+      }
     }
 
     @Override
@@ -1069,12 +1078,12 @@ class InstructionDefinition extends Definition {
 class PseudoInstructionDefinition extends Definition {
   IdentifierOrPlaceholder identifier;
   PseudoInstrKind kind;
-  List<Param> params;
+  List<Parameter> params;
   List<InstructionCallStatement> statements;
   SourceLocation loc;
 
   PseudoInstructionDefinition(IdentifierOrPlaceholder identifier, PseudoInstrKind kind,
-                              List<Param> params, List<InstructionCallStatement> statements,
+                              List<Parameter> params, List<InstructionCallStatement> statements,
                               SourceLocation loc) {
     this.identifier = identifier;
     this.kind = kind;
@@ -1107,20 +1116,7 @@ class PseudoInstructionDefinition extends Definition {
     };
     builder.append(kindStr).append(" instruction ");
     identifier.prettyPrint(indent, builder);
-    if (!params.isEmpty()) {
-      builder.append("(");
-      var isFirst = true;
-      for (var param : params) {
-        if (!isFirst) {
-          builder.append(", ");
-        }
-        isFirst = false;
-        param.id.prettyPrint(0, builder);
-        builder.append(" : ");
-        param.type.prettyPrint(0, builder);
-      }
-      builder.append(")");
-    }
+    Parameter.prettyPrint(params, builder);
     builder.append(" = {\n");
     for (InstructionCallStatement statement : statements) {
       statement.prettyPrint(indent + 1, builder);
@@ -1168,8 +1164,88 @@ class PseudoInstructionDefinition extends Definition {
   enum PseudoInstrKind {
     PSEUDO, COMPILER
   }
+}
 
-  record Param(Identifier id, TypeLiteral type) {
+class RelocationDefinition extends Definition {
+  Identifier identifier;
+  List<Parameter> params;
+  TypeLiteral resultType;
+  Expr expr;
+  SourceLocation loc;
+
+  RelocationDefinition(Identifier identifier, List<Parameter> params, TypeLiteral resultType,
+                       Expr expr, SourceLocation loc) {
+    this.identifier = identifier;
+    this.params = params;
+    this.resultType = resultType;
+    this.expr = expr;
+    this.loc = loc;
+  }
+
+  @Override
+  SourceLocation location() {
+    return loc;
+  }
+
+  @Override
+  SyntaxType syntaxType() {
+    return BasicSyntaxType.ISA_DEFS;
+  }
+
+  @Override
+  void prettyPrint(int indent, StringBuilder builder) {
+    annotations.prettyPrint(indent, builder);
+    builder.append(prettyIndentString(indent));
+    builder.append("relocation");
+    identifier.prettyPrint(indent, builder);
+    Parameter.prettyPrint(params, builder);
+    builder.append(" -> ");
+    resultType.prettyPrint(0, builder);
+    if (isBlockLayout(expr)) {
+      builder.append(" =\n");
+      expr.prettyPrint(indent + 1, builder);
+    } else {
+      builder.append(" = ");
+      expr.prettyPrint(0, builder);
+      builder.append("\n");
+    }
+  }
+
+  @Override
+  <R> R accept(DefinitionVisitor<R> visitor) {
+    return visitor.visit(this);
+  }
+
+  @Override
+  public String toString() {
+    return this.getClass().getSimpleName();
+  }
+
+  @Override
+  public boolean equals(Object o) {
+    if (this == o) {
+      return true;
+    }
+    if (o == null || getClass() != o.getClass()) {
+      return false;
+    }
+
+    var that = (RelocationDefinition) o;
+    return Objects.equals(annotations, that.annotations)
+        && Objects.equals(identifier, that.identifier)
+        && Objects.equals(params, that.params)
+        && Objects.equals(resultType, that.resultType)
+        && Objects.equals(expr, that.expr);
+  }
+
+  @Override
+  public int hashCode() {
+    int result = Objects.hashCode(annotations);
+    result = 31 * result + Objects.hashCode(identifier);
+    result = 31 * result + Objects.hashCode(params);
+    result = 31 * result + Objects.hashCode(resultType);
+    result = 31 * result + Objects.hashCode(expr);
+    return result;
   }
 }
 

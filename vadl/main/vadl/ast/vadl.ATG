@@ -134,6 +134,7 @@ TOKENS
   READ         = "read".
   RECORD       = "record".
   REGISTER     = "register".
+  RELOCATION   = "relocation".
   RETURN       = "return".
   SAVED        = "saved".
   SEQUENCE     = "sequence".
@@ -282,6 +283,7 @@ PRODUCTIONS
   | counterDefinition<out def>
   | instructionDefinition<out def>
   | pseudoInstructionDefinition<out def>
+  | relocationDefinition<out def>
   | encodingDefinition<out def>
   | assemblyDefinition<out def>
   | memoryDefinition<out def>
@@ -312,9 +314,7 @@ PRODUCTIONS
     formatField<out FormatDefinition.FormatField f1>             (. fields.add(f1); .)
     {
       SYM_COMMA formatField<out FormatDefinition.FormatField f2> (. fields.add(f2); .)
-    }
-    {
-      SYM_COLON
+    | SYM_COLON
       auxiliaryField<out FormatDefinition.AuxiliaryField aux>    (. auxFields.add(aux); .)
     }
     SYM_BRACE_CLOSE
@@ -354,7 +354,12 @@ PRODUCTIONS
       SYM_COMMA
       rangeExpression<out Expr e2>      (. ranges.add(e2); .)
     }
-    SYM_BRACK_CLOSE                     (. field = new FormatDefinition.RangeFormatField(id, ranges); .)
+    SYM_BRACK_CLOSE                     (. TypeLiteral type = null; .)
+    [
+      IF (la.kind == _SYM_COLON && !AUX_FIELD_TOKENS[la.kind])
+      SYM_COLON
+      typeLiteral<out type>
+    ]                                   (. field = new FormatDefinition.RangeFormatField(id, ranges, type); .)
   .
 
   formatFieldType<out FormatDefinition.FormatField field, Identifier id>
@@ -387,26 +392,24 @@ PRODUCTIONS
     | COMPILER_KW                                            (. kind = PseudoInstructionDefinition.PseudoInstrKind.COMPILER; .)
     )                                                        (. var start = loc(); .)
     INSTRUCTION
-    identifierOrPlaceholder<out IdentifierOrPlaceholder id>  (. var params = new ArrayList<PseudoInstructionDefinition.Param>(); .)
-    [
-      SYM_PAREN_OPEN
-      identifier<out Identifier paramName>
-      SYM_COLON
-      typeLiteral<out TypeLiteral paramType>                 (. params.add(new PseudoInstructionDefinition.Param(paramName, paramType)); .)
-      {
-        SYM_COMMA
-        identifier<out paramName>
-        SYM_COLON
-        typeLiteral<out paramType>                           (. params.add(new PseudoInstructionDefinition.Param(paramName, paramType)); .)
-      }
-      SYM_PAREN_CLOSE
-    ]
+    identifierOrPlaceholder<out IdentifierOrPlaceholder id>  (. List<Parameter> params = new ArrayList<>(); .)
+    [ parameters<out params> ]
     SYM_EQ
     SYM_BRACE_OPEN                                           (. var stmts = new ArrayList<InstructionCallStatement>(); .)
     {
       instructionCallStmt<out InstructionCallStatement stmt> (. stmts.add(stmt); .)
     }
     SYM_BRACE_CLOSE                                          (. def = new PseudoInstructionDefinition(id, kind, params, stmts, start.join(loc())); .)
+  .
+
+  relocationDefinition<out Definition def>
+  = RELOCATION                         (. var start = loc(); .)
+    identifier<out Identifier id>
+    parameters<.out List<Parameter> params.>
+    SYM_ARROW
+    typeLiteral<out TypeLiteral resultType>
+    SYM_EQ
+    expression<out Expr expr, BIN_OPS> (. def = new RelocationDefinition(id, params, resultType, expr, start.join(loc())); .)
   .
 
   identifierOrPlaceholder<out IdentifierOrPlaceholder id> (. id = null; .)
@@ -1022,19 +1025,30 @@ PRODUCTIONS
     ]                                           (. if (statement == null) statement = new CallStatement(target); .)
   .
 
-  instructionCallStmt<out InstructionCallStatement statement>
-  = identifierOrPlaceholder<out IdentifierOrPlaceholder id> (. var start = loc(); .)
-    SYM_BRACE_OPEN                                          (. var namedArguments = new ArrayList<InstructionCallStatement.NamedArgument>(); .)
-    identifier<out Identifier argName>
-    SYM_EQ
-    expression<out Expr argExpr, BIN_OPS>                   (. namedArguments.add(new InstructionCallStatement.NamedArgument(argName, argExpr)); .)
-    {
-      SYM_COMMA
-      identifier<out argName>
+  instructionCallStmt<out InstructionCallStatement statement> (. var namedArguments = new ArrayList<InstructionCallStatement.NamedArgument>(); .)
+  = identifierOrPlaceholder<out IdentifierOrPlaceholder id>   (. var start = loc(); .)
+    [
+      SYM_BRACE_OPEN
+      identifier<out Identifier argName>
       SYM_EQ
-      expression<out argExpr, BIN_OPS>                      (. namedArguments.add(new InstructionCallStatement.NamedArgument(argName, argExpr)); .)
-    }
-    SYM_BRACE_CLOSE                                         (. statement = new InstructionCallStatement(id, namedArguments, start.join(loc())); .)
+      expression<out Expr argExpr, BIN_OPS>                   (. namedArguments.add(new InstructionCallStatement.NamedArgument(argName, argExpr)); .)
+      {
+        SYM_COMMA
+        identifier<out argName>
+        SYM_EQ
+        expression<out argExpr, BIN_OPS>                      (. namedArguments.add(new InstructionCallStatement.NamedArgument(argName, argExpr)); .)
+      }
+      SYM_BRACE_CLOSE
+    ]                                                         (. var unnamedArguments = new ArrayList<Expr>(); .)
+    [
+      SYM_PAREN_OPEN
+      expression<out Expr argExpr, BIN_OPS>                   (. unnamedArguments.add(argExpr); .)
+      {
+        SYM_COMMA
+        expression<out argExpr, BIN_OPS>                      (. unnamedArguments.add(argExpr); .)
+      }
+      SYM_PAREN_CLOSE
+    ]                                                         (. statement = new InstructionCallStatement(id, namedArguments, unnamedArguments, start.join(loc())); .)
   .
 
   letStatement<out Statement letStatement>
