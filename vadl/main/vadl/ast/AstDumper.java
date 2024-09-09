@@ -138,7 +138,9 @@ public class AstDumper
   @Override
   public Void visit(RegisterFileDefinition definition) {
     dumpNode(definition);
-    dumpChildren(definition.identifier(), definition.indexType, definition.registerType);
+    dumpChildren(definition.identifier());
+    dumpChildren(definition.type.argTypes());
+    dumpChildren(definition.type.resultType());
     return null;
   }
 

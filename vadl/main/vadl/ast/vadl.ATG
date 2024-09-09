@@ -469,11 +469,21 @@ PRODUCTIONS
   .
 
   registerFileDefinition<out Definition def>
-  = REGISTER                                          (. var startLocation = loc(); .)
+  = REGISTER                                                   (. var startLocation = loc(); .)
     FILE
     identifierOrPlaceholder<out IdentifierOrPlaceholder id>
-    SYM_COLON typeLiteral<out TypeLiteral t1>
-    SYM_ARROW typeLiteral<out TypeLiteral t2>         (. def = new RegisterFileDefinition(id, t1, t2, startLocation.join(t2.location())); .)
+    SYM_COLON
+    relationType<out RegisterFileDefinition.RelationType type> (. def = new RegisterFileDefinition(id, type, startLocation.join(loc())); .)
+  .
+
+  relationType<out RegisterFileDefinition.RelationType type> (. var argTypes = new ArrayList<TypeLiteral>(); .)
+  = typeLiteral<out TypeLiteral argType>                     (. argTypes.add(argType); .)
+    {
+      SYM_MUL
+      typeLiteral<out argType>                               (. argTypes.add(argType); .)
+    }
+    SYM_ARROW
+    typeLiteral<out TypeLiteral resultType>                  (. type = new RegisterFileDefinition.RelationType(argTypes, resultType); .)
   .
 
   aliasDefinition<out Definition def>

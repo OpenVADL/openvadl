@@ -919,15 +919,12 @@ class RegisterDefinition extends Definition {
 
 class RegisterFileDefinition extends Definition {
   IdentifierOrPlaceholder identifier;
-  TypeLiteral indexType;
-  TypeLiteral registerType;
+  RelationType type;
   SourceLocation loc;
 
-  public RegisterFileDefinition(IdentifierOrPlaceholder identifier, TypeLiteral indexType,
-                                TypeLiteral registerType, SourceLocation location) {
+  public RegisterFileDefinition(IdentifierOrPlaceholder identifier, RelationType type, SourceLocation location) {
     this.identifier = identifier;
-    this.indexType = indexType;
-    this.registerType = registerType;
+    this.type = type;
     this.loc = location;
   }
 
@@ -952,9 +949,16 @@ class RegisterFileDefinition extends Definition {
     builder.append("register file ");
     identifier.prettyPrint(indent, builder);
     builder.append(": ");
-    indexType.prettyPrint(indent, builder);
+    var isFirst = true;
+    for (TypeLiteral argType : type.argTypes) {
+      if (!isFirst) {
+        builder.append(" * ");
+      }
+      isFirst = false;
+      argType.prettyPrint(0, builder);
+    }
     builder.append(" -> ");
-    registerType.prettyPrint(indent, builder);
+    type.resultType.prettyPrint(indent, builder);
     builder.append("\n");
   }
 
@@ -980,17 +984,18 @@ class RegisterFileDefinition extends Definition {
     RegisterFileDefinition that = (RegisterFileDefinition) o;
     return annotations.equals(that.annotations)
         && identifier.equals(that.identifier)
-        && indexType.equals(that.indexType)
-        && registerType.equals(that.registerType);
+        && type.equals(that.type);
   }
 
   @Override
   public int hashCode() {
     int result = annotations.hashCode();
     result = 31 * result + identifier.hashCode();
-    result = 31 * result + indexType.hashCode();
-    result = 31 * result + registerType.hashCode();
+    result = 31 * result + type.hashCode();
     return result;
+  }
+
+  record RelationType(List<TypeLiteral> argTypes, TypeLiteral resultType) {
   }
 }
 

@@ -6,11 +6,16 @@ class Builtins {
       "decimal",
       "hex",
       "register",
+      "isInDelaySlot",
 
       // TODO Legacy functions, only needed for compatibility with old vadl files
       "VADL::mod", // Required by rv3264im, verify if necessary
       "VADL::div", // Required by miniARMv7, verify if necessary
       "VADL::asl", // Required by hexagon, verify if necessary
+      "VADL::lth", // Required by mipsiv, verify if necessary
+      "VADL::leq", // Required by mipsiv, verify if necessary
+      "VADL::gth", // Required by mipsiv, verify if necessary
+      "VADL::geq", // Required by mipsiv, verify if necessary
 
       "VADL::neg",
       "VADL::add",
