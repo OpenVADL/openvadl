@@ -108,7 +108,7 @@ public class GenericCppCodeGeneratorVisitor
     writer.write("(");
     for (int i = 0; i < parts.size(); i++) {
       if (i != 0) {
-        writer.write(" & ");
+        writer.write(" | ");
       }
 
       var part = parts.get(i);
@@ -148,62 +148,6 @@ public class GenericCppCodeGeneratorVisitor
     cppUpdateBitRangeNode.field.bitSlice().parts().forEach(part -> {
       writer.write(String.format(", std::make_pair(%d, %d)", part.lsb(), part.msb()));
     });
-
-    /*
-    // First, reset the instruction word bits
-    cppUpdateBitRangeNode.field.bitSlice().parts().forEach(part -> {
-      for (int i = part.msb(); i >= part.lsb(); i--) {
-        writer.write(String.format(".reset(%d)", i));
-      }
-    });
-
-     */
-
-
-    /*
-    writer.write(String.format("(std::bitset<%d>(", bitWidth));
-    visit(cppUpdateBitRangeNode.value);
-    writer.write(")");
-
-    // First, reset the instruction word bits
-    cppUpdateBitRangeNode.field.bitSlice().parts().forEach(part -> {
-      for (int i = part.msb(); i >= part.lsb(); i--) {
-        writer.write(String.format(".reset(%d)", i));
-      }
-    });
-
-    // Then create a new value where with the relevant bits
-    var parts = cppUpdateBitRangeNode.field.bitSlice().parts().toList();
-    int accumulator = 0;
-    for (int i = parts.size() - 1; i >= 0; i--) {
-      var part = parts.get(i);
-      writer.write(
-          String.format(" | (project_range<%d, %d>(std::bitset<%d>(", accumulator,
-              accumulator + part.size() - 1,
-              bitWidth));
-      visit(cppUpdateBitRangeNode.patch);
-      writer.write("))");
-      writer.write(" << " + (part.lsb()));
-      writer.write(")");
-      accumulator += part.size();
-    }
-     */
-
-
-    /*
-    cppUpdateBitRangeNode.field.bitSlice().parts().forEach(part -> {
-      writer.write(
-          String.format(" | (project_range<%d, %d>(std::bitset<%d>(", 0, part.size(),
-              bitWidth));
-      visit(cppUpdateBitRangeNode.patch);
-      writer.write("))");
-
-      writer.write(" << " + (part.lsb() - 1));
-
-      writer.write(")");
-    });
-
-     */
 
     writer.write(").to_ulong()");
   }

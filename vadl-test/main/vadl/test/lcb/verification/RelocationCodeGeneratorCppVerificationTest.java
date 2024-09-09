@@ -160,7 +160,7 @@ public class RelocationCodeGeneratorCppVerificationTest extends AbstractLcbTest 
             
             template<std::size_t N, std::size_t M>
             std::bitset<N> set_bit_range(std::bitset<N> dest, const std::bitset<M> source, size_t dest_start, size_t dest_end) {
-                for (size_t i = 0; i < dest_end - dest_start; ++i) {
+                for (size_t i = 0; i <= dest_end - dest_start; ++i) {
                     dest.set(dest_start + i, source[i]);
                 }
                 
