@@ -8,7 +8,7 @@ import vadl.viam.Format;
  */
 public class RelocationOverrideCodeGenerator extends CodeGenerator {
   @Override
-  protected String getFunctionName(String rawName) {
+  public String getFunctionName(String rawName) {
     return rawName;
   }
 }

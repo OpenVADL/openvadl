@@ -10,7 +10,7 @@ import vadl.viam.ViamError;
 import vadl.viam.graph.control.ReturnNode;
 
 public abstract class CodeGenerator {
-  protected abstract String getFunctionName(String rawName);
+  public abstract String getFunctionName(String rawName);
 
   /**
    * Returns the function header of a {@link Function}.

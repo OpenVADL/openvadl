@@ -3,6 +3,7 @@ package vadl.gcb.passes.relocation;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.IdentityHashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import org.jetbrains.annotations.Nullable;
@@ -64,6 +65,18 @@ public class DetectImmediatePass extends Pass {
         throw new ViamError("Hashmap must not be null");
       }
       return obj;
+    }
+
+    /**
+     * Get the immediate fields for the given format.
+     */
+    public List<Format.Field> getImmediates(Format format) {
+      return value.getOrDefault(format, new IdentityHashMap<>())
+          .entrySet()
+          .stream()
+          .filter(x -> x.getValue() == FieldUsage.IMMEDIATE)
+          .map(Map.Entry::getKey)
+          .toList();
     }
 
     public Map<Format, IdentityHashMap<Format.Field, FieldUsage>> getMap() {

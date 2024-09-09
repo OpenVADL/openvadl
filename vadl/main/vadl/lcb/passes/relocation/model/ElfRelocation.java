@@ -18,7 +18,11 @@ public class ElfRelocation {
     return logicalRelocation.kind();
   }
 
-  public Relocation function() {
+  public LogicalRelocation logicalRelocation() {
+    return logicalRelocation;
+  }
+
+  public Relocation logicalRelocationFunction() {
     return logicalRelocation.relocation();
   }
 

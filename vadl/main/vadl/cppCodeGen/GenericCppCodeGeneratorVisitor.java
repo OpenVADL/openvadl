@@ -103,40 +103,33 @@ public class GenericCppCodeGeneratorVisitor
 
   @Override
   public void visit(SliceNode sliceNode) {
-    sliceNode.ensure(sliceNode.bitSlice().isContinuous(), "We only support continuous slices");
-    writer.write("(((");
+    writer.write("(");
     visit(sliceNode.value());
     writer.write(")");
-    sliceNode.bitSlice().parts().forEach(part -> {
-      /* It is `2` because both borders in [4..0] are included. So 5 bits + 1 bit to make sure
-         that subtraction in the `bitmask` works.
-       */
-      int msbOffset = 2;
-      if (part.lsb() > 0) {
-        writer.write(
-            " & " + generateBitmask(part.msb() + msbOffset) + " & ~((1 << " + part.lsb()
-                + ") - 1))");
-      } else {
-        /*
-        Example
-                 Slice: [4..0]
-               Max val: 32
-               Bitmask: ((1UL << %d) - 1)
-                   Msb: 4 (decimal)
-        Number of Bit :   7   6   5   4  3 2 1 0 (decimal)
-                   2^x: 128  64  32  16  8 4 2 1 (decimal)
-        Encoding of 32:   0   0   1   0  0 0 0 0 (binary)
-               BitMask:   0   0   1   1  1 1 1 1 (binary)
-           Logical And:   0   0   1   0  0 0 0 0 (binary)
-         */
-        writer.write(
-            " & " + generateBitmask(part.msb() + msbOffset) + ")");
+    writer.write(" & (");
+    var parts = sliceNode.bitSlice().parts().toList();
+
+    for (int i = 0; i < parts.size(); i++) {
+      if (i != 0) {
+        writer.write(" & ");
       }
 
-      // First, we cleared the upper bits
-      // Now, extract the bits by shifting the lowest bits.
-      writer.write(" >> " + part.lsb() + ")");
-    });
+      var part = parts.get(i);
+      var bitWidth = ((BitsType) sliceNode.value().type()).bitWidth();
+      if (part.isIndex()) {
+        writer.write(
+            String.format("std::bitset<%d>(", bitWidth));
+        visit(sliceNode.value()); // same expression
+        writer.write(String.format(").test(%d)", part.lsb()));
+      } else {
+        writer.write(
+            String.format("project_range<%d, %d>(std::bitset<%d>(", part.lsb(), part.msb(),
+                bitWidth));
+        visit(sliceNode.value()); // same expression
+        writer.write(")).to_ulong()");
+      }
+    }
+    writer.write(")");
   }
 
   @Override

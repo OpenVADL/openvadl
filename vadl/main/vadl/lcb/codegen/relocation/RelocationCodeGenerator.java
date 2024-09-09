@@ -7,7 +7,7 @@ import vadl.lcb.codegen.CodeGenerator;
  */
 public class RelocationCodeGenerator extends CodeGenerator {
   @Override
-  protected String getFunctionName(String rawName) {
+  public String getFunctionName(String rawName) {
     return rawName;
   }
 }

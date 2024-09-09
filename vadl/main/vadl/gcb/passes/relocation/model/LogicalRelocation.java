@@ -1,6 +1,7 @@
 package vadl.gcb.passes.relocation.model;
 
 import java.util.Arrays;
+import java.util.Map;
 import java.util.Objects;
 import java.util.stream.Stream;
 import org.jetbrains.annotations.Nullable;
@@ -86,14 +87,6 @@ public class LogicalRelocation {
     } else {
       return new RelocationName("REL_" + suffix);
     }
-  }
-
-  /**
-   * Get the bit slices the linker needs to patch when applying the relocation.
-   */
-  public Stream<Constant.BitSlice> patches() {
-    return Arrays.stream(format.fieldAccesses())
-        .map(fieldAccess -> fieldAccess.fieldRef().bitSlice());
   }
 
   public Function updateFunction() {

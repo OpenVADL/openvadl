@@ -47,7 +47,7 @@ public final class PassOrder {
       = new ConcurrentHashMap<>();
 
   // the actual list of pass steps
-  private LinkedList<PassStep> order = new LinkedList<>();
+  private final LinkedList<PassStep> order = new LinkedList<>();
 
   /**
    * Add a pass to the pass order. If the passKey is null, it will generate a unique one.
@@ -84,6 +84,25 @@ public final class PassOrder {
    */
   public List<PassStep> passSteps() {
     return order;
+  }
+
+  /**
+   * Adds a given pass after the pass with the given {@code passName}.
+   */
+  public PassOrder addAfterLast(Class<?> passName, Pass pass) {
+    int index = -1;
+    for (int i = 0; i < passSteps().size(); i++) {
+      if (passName.isInstance(passSteps().get(i).pass())) {
+        index = i;
+      }
+    }
+
+    if (index != -1) {
+      var step = createPassStep(null, pass);
+      passSteps().add(index + 1, step);
+    }
+
+    return this;
   }
 
   /**

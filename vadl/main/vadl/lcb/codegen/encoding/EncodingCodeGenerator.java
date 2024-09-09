@@ -15,7 +15,7 @@ public class EncodingCodeGenerator extends CodeGenerator {
   }
 
   @Override
-  protected String getFunctionName(String rawName) {
+  public String getFunctionName(String rawName) {
     return generateFunctionName(rawName);
   }
 }
