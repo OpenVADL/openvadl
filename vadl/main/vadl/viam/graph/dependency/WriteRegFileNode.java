@@ -35,7 +35,7 @@ public class WriteRegFileNode extends WriteResourceNode {
   // it is generally set during the `StaticCounterAccessResolvingPass`
   @DataValue
   @Nullable
-  private Counter staticCounterAccess;
+  private Counter.RegisterFileCounter staticCounterAccess;
 
   /**
    * Writes a value to a register file node.
@@ -47,7 +47,8 @@ public class WriteRegFileNode extends WriteResourceNode {
    *                            or null if it is not known
    */
   public WriteRegFileNode(RegisterFile registerFile, ExpressionNode address,
-                          ExpressionNode value, @Nullable Counter staticCounterAccess) {
+                          ExpressionNode value,
+                          @Nullable Counter.RegisterFileCounter staticCounterAccess) {
     super(address, value);
     this.registerFile = registerFile;
     this.staticCounterAccess = staticCounterAccess;
@@ -58,11 +59,11 @@ public class WriteRegFileNode extends WriteResourceNode {
   }
 
   @Nullable
-  public Counter staticCounterAccess() {
+  public Counter.RegisterFileCounter staticCounterAccess() {
     return staticCounterAccess;
   }
 
-  public void setStaticCounterAccess(@Nonnull Counter staticCounterAccess) {
+  public void setStaticCounterAccess(@Nonnull Counter.RegisterFileCounter staticCounterAccess) {
     this.staticCounterAccess = staticCounterAccess;
   }
 

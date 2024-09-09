@@ -27,7 +27,7 @@ public class LlvmReadRegFileNode extends ReadRegFileNode implements LlvmNodeLowe
   public LlvmReadRegFileNode(RegisterFile registerFile,
                              ExpressionNode address,
                              DataType type,
-                             @Nullable Counter staticCounterAccess) {
+                             @Nullable Counter.RegisterFileCounter staticCounterAccess) {
     super(registerFile, address, type, staticCounterAccess);
     ensure(address instanceof FieldRefNode, "address must be a field");
     this.parameterIdentity = ParameterIdentity.from(this, (FieldRefNode) address);

@@ -25,7 +25,7 @@ public class ReadRegNode extends ReadResourceNode {
   // it is generally set during the `StaticCounterAccessResolvingPass`
   @DataValue
   @Nullable
-  private Counter staticCounterAccess;
+  private Counter.RegisterCounter staticCounterAccess;
 
   /**
    * Reads a value from a register.
@@ -35,7 +35,8 @@ public class ReadRegNode extends ReadResourceNode {
    * @param staticCounterAccess the {@link Counter} that is read,
    *                            or null if no counter is read
    */
-  public ReadRegNode(Register register, DataType type, @Nullable Counter staticCounterAccess) {
+  public ReadRegNode(Register register, DataType type,
+                     @Nullable Counter.RegisterCounter staticCounterAccess) {
     super(null, type);
     this.register = register;
     this.staticCounterAccess = staticCounterAccess;
@@ -46,11 +47,11 @@ public class ReadRegNode extends ReadResourceNode {
   }
 
   @Nullable
-  public Counter staticCounterAccess() {
+  public Counter.RegisterCounter staticCounterAccess() {
     return staticCounterAccess;
   }
 
-  public void setStaticCounterAccess(@Nonnull Counter staticCounterAccess) {
+  public void setStaticCounterAccess(@Nonnull Counter.RegisterCounter staticCounterAccess) {
     this.staticCounterAccess = staticCounterAccess;
   }
 

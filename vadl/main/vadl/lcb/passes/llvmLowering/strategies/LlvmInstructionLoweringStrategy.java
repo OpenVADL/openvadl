@@ -95,11 +95,9 @@ public abstract class LlvmInstructionLoweringStrategy {
    *
    * @return the flags of an {@link UninlinedGraph}.
    */
-  protected LlvmLoweringPass.Flags getFlags(UninlinedGraph uninlinedGraph,
-                                            @Nullable Counter.RegisterCounter pc) {
-    // TODO: @kper : double check or refactor
+  protected LlvmLoweringPass.Flags getFlags(UninlinedGraph uninlinedGraph) {
     var isTerminator = uninlinedGraph.getNodes(WriteRegNode.class)
-        .anyMatch(node -> pc != null && node.register() == pc.registerRef());
+        .anyMatch(node -> node.staticCounterAccess() != null);
 
     var isBranch = isTerminator
         && uninlinedGraph.getNodes(Set.of(IfNode.class, LlvmBrCcSD.class, LlvmBrCondSD.class))
@@ -139,12 +137,6 @@ public abstract class LlvmInstructionLoweringStrategy {
     var copy = (UninlinedGraph) uninlinedBehavior.copy();
     var instructionIdentifier = instruction.identifier;
 
-    // TODO: @kper : double check this or refactor
-    var isa = instruction.parentArchitecture();
-    ensure(isa.pc() instanceof Counter.RegisterCounter,
-        "Only register counter pcs are currently supported");
-    var pc = (Counter.RegisterCounter) isa.pc();
-
     if (!checkIfNoControlFlow(copy) && !checkIfNotAllowedDataflowNodes(copy)) {
       logger.atWarn().log("Instruction '{}' is not lowerable and will be skipped",
           instructionIdentifier.toString());
@@ -166,7 +158,7 @@ public abstract class LlvmInstructionLoweringStrategy {
     var outputOperands = getTableGenOutputOperands(copy);
     var registerUses = getRegisterUses(copy);
     var registerDefs = getRegisterDefs(copy);
-    var flags = getFlags(copy, pc);
+    var flags = getFlags(copy);
 
     copy.deinitializeNodes();
 

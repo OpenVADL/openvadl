@@ -28,7 +28,7 @@ public class ReadRegFileNode extends ReadResourceNode {
   // it is generally set during the `StaticCounterAccessResolvingPass`
   @DataValue
   @Nullable
-  private Counter staticCounterAccess;
+  private Counter.RegisterFileCounter staticCounterAccess;
 
   /**
    * Constructs the node, which represents a read from a register file at some specific index.
@@ -40,7 +40,7 @@ public class ReadRegFileNode extends ReadResourceNode {
    *                            it is not known
    */
   public ReadRegFileNode(RegisterFile registerFile, ExpressionNode address,
-                         DataType type, @Nullable Counter staticCounterAccess) {
+                         DataType type, @Nullable Counter.RegisterFileCounter staticCounterAccess) {
     super(address, type);
     this.registerFile = registerFile;
     this.staticCounterAccess = staticCounterAccess;
@@ -51,11 +51,11 @@ public class ReadRegFileNode extends ReadResourceNode {
   }
 
   @Nullable
-  public Counter staticCounterAccess() {
+  public Counter.RegisterFileCounter staticCounterAccess() {
     return staticCounterAccess;
   }
 
-  public void setStaticCounterAccess(@Nonnull Counter staticCounterAccess) {
+  public void setStaticCounterAccess(@Nonnull Counter.RegisterFileCounter staticCounterAccess) {
     this.staticCounterAccess = staticCounterAccess;
   }
 

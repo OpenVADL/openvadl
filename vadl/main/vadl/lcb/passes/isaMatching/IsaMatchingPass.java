@@ -161,21 +161,21 @@ public class IsaMatchingPass extends Pass {
               extend(matched, InstructionLabel.SMOD, instruction);
             } else if (findRR_OR_findRI(behavior, List.of(UMOD, UMODS))) {
               extend(matched, InstructionLabel.UMOD, instruction);
-            } else if (pc != null && findBranchWithConditional(behavior, pc, EQU)) {
+            } else if (pc != null && findBranchWithConditional(behavior, EQU)) {
               extend(matched, InstructionLabel.BEQ, instruction);
-            } else if (pc != null && findBranchWithConditional(behavior, pc, NEQ)) {
+            } else if (pc != null && findBranchWithConditional(behavior, NEQ)) {
               extend(matched, InstructionLabel.BNEQ, instruction);
             } else if (pc != null
-                && findBranchWithConditional(behavior, pc, Set.of(SGEQ, UGEQ))) {
+                && findBranchWithConditional(behavior, Set.of(SGEQ, UGEQ))) {
               extend(matched, InstructionLabel.BGEQ, instruction);
             } else if (pc != null
-                && findBranchWithConditional(behavior, pc, Set.of(SLEQ, ULEQ))) {
+                && findBranchWithConditional(behavior, Set.of(SLEQ, ULEQ))) {
               extend(matched, InstructionLabel.BLEQ, instruction);
             } else if (pc != null
-                && findBranchWithConditional(behavior, pc, Set.of(SLTH, ULTH))) {
+                && findBranchWithConditional(behavior, Set.of(SLTH, ULTH))) {
               extend(matched, InstructionLabel.BLTH, instruction);
             } else if (pc != null
-                && findBranchWithConditional(behavior, pc, Set.of(SGTH, UGTH))) {
+                && findBranchWithConditional(behavior, Set.of(SGTH, UGTH))) {
               extend(matched, InstructionLabel.BGTH, instruction);
             } else if (findRR_OR_findRI(behavior, List.of(SLTH, ULTH))) {
               extend(matched, InstructionLabel.LT, instruction);
@@ -352,13 +352,11 @@ public class IsaMatchingPass extends Pass {
   }
 
   private boolean findBranchWithConditional(UninlinedGraph behavior,
-                                            Counter.RegisterCounter pc,
                                             BuiltInTable.BuiltIn builtin) {
-    return findBranchWithConditional(behavior, pc, Set.of(builtin));
+    return findBranchWithConditional(behavior, Set.of(builtin));
   }
 
   private boolean findBranchWithConditional(UninlinedGraph behavior,
-                                            Counter.RegisterCounter pc,
                                             Set<BuiltInTable.BuiltIn> builtins) {
     var hasCondition =
         behavior.getNodes(IfNode.class)
@@ -366,7 +364,7 @@ public class IsaMatchingPass extends Pass {
                 x -> x.condition() instanceof BuiltInCall
                     && builtins.contains(((BuiltInCall) x.condition()).builtIn()));
     var writesPc = behavior.getNodes(WriteRegNode.class)
-        .anyMatch(x -> x.register() == pc.registerRef());
+        .anyMatch(x -> x.staticCounterAccess() != null);
 
     return hasCondition && writesPc;
   }

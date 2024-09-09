@@ -35,15 +35,10 @@ public class ReplaceWithLlvmSDNodesWithControlFlowVisitor
 
     visit(writeRegNode.value());
 
-    // TODO: @kper : double check this / refactor this
-    var instr = (Instruction) Objects.requireNonNull(writeRegNode.graph())
-        .parentDefinition();
-    var isa = instr.parentArchitecture();
-    isa.ensure(isa.pc() instanceof Counter.RegisterCounter,
-        "Only register counter definitions currently supported.");
-    var pc = ((Counter.RegisterCounter) isa.pc());
-
-    if (pc != null && writeRegNode.register() == pc.registerRef()) {
+    // this will get the nullable static counter access
+    // if the reg write node writes the pc, this will not be null
+    var pc = writeRegNode.staticCounterAccess();
+    if (pc != null) {
       if (writeRegNode.value() instanceof BuiltInCall builtin && Set.of(
           BuiltInTable.ADD,
           BuiltInTable.ADDS,

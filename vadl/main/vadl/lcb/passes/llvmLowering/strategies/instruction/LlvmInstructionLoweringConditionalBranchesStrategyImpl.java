@@ -76,15 +76,9 @@ public class LlvmInstructionLoweringConditionalBranchesStrategyImpl
       InstructionLabel instructionLabel,
       UninlinedGraph visitedGraph) {
 
-    // TODO: @kper : double check or refactor this
-    var isa = instruction.parentArchitecture();
-    ensure(isa.pc() instanceof Counter.RegisterCounter,
-        "Only register counter pcs are currently supported");
-    var pc = (Counter.RegisterCounter) isa.pc();
-
     var inputOperands = getTableGenInputOperands(visitedGraph);
     var outputOperands = getTableGenOutputOperands(visitedGraph);
-    var flags = getFlags(visitedGraph, pc);
+    var flags = getFlags(visitedGraph);
 
     var writes = visitedGraph.getNodes(WriteResourceNode.class).toList();
     var patterns = generatePatterns(instruction, inputOperands, writes);

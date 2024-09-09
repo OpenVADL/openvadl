@@ -30,8 +30,8 @@ public class WriteRegNode extends WriteResourceNode {
   // if this is the case, the counter is set.
   @DataValue
   @Nullable
-  private Counter staticCounterAccess;
-  
+  private Counter.RegisterCounter staticCounterAccess;
+
   /**
    * Writes a value to a register node.
    *
@@ -41,7 +41,7 @@ public class WriteRegNode extends WriteResourceNode {
    *                            or null if no counter is written
    */
   public WriteRegNode(Register register, ExpressionNode value,
-                      @Nullable Counter staticCounterAccess) {
+                      @Nullable Counter.RegisterCounter staticCounterAccess) {
     super(null, value);
     this.register = register;
     this.staticCounterAccess = staticCounterAccess;
@@ -52,11 +52,11 @@ public class WriteRegNode extends WriteResourceNode {
   }
 
   @Nullable
-  public Counter staticCounterAccess() {
+  public Counter.RegisterCounter staticCounterAccess() {
     return staticCounterAccess;
   }
 
-  public void setStaticCounterAccess(@Nonnull Counter staticCounterAccess) {
+  public void setStaticCounterAccess(@Nonnull Counter.RegisterCounter staticCounterAccess) {
     this.staticCounterAccess = staticCounterAccess;
   }
 

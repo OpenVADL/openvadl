@@ -23,7 +23,7 @@ public class LlvmFrameIndexSD extends ReadRegFileNode implements LlvmNodeLowerab
   }
 
   private LlvmFrameIndexSD(RegisterFile registerFile, ExpressionNode address, DataType type,
-                           @Nullable Counter staticCounterAccess) {
+                           @Nullable Counter.RegisterFileCounter staticCounterAccess) {
     super(registerFile, address, type, staticCounterAccess);
   }
 
