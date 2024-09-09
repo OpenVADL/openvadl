@@ -63,8 +63,7 @@ public class DotGraphVisualizer implements GraphVisualizer<String, Graph> {
       });
 
     });
-
-
+    
     dotBuilder.append("} \n");
     return dotBuilder.toString();
 

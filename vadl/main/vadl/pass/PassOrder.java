@@ -29,6 +29,7 @@ import vadl.viam.passes.canonicalization.CanonicalizationPass;
 import vadl.viam.passes.dummyAbi.DummyAbiPass;
 import vadl.viam.passes.functionInliner.FunctionInlinerPass;
 import vadl.viam.passes.sideeffect_condition.SideEffectConditionResolvingPass;
+import vadl.viam.passes.staticCounterAccess.StaticCounterAccessResolvingPass;
 import vadl.viam.passes.typeCastElimination.TypeCastEliminationPass;
 import vadl.viam.passes.verification.ViamVerificationPass;
 
@@ -172,6 +173,7 @@ public final class PassOrder {
 
     order.add(new CanonicalizationPass(configuration));
     order.add(new AlgebraicSimplificationPass(configuration));
+    order.add(new StaticCounterAccessResolvingPass(configuration));
 
     // verification after viam optimizations
     order.add(new ViamVerificationPass(configuration));

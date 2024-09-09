@@ -2,7 +2,10 @@ package vadl.viam.graph.dependency;
 
 import java.util.List;
 import java.util.Objects;
+import javax.annotation.Nonnull;
+import javax.annotation.Nullable;
 import vadl.javaannotations.viam.DataValue;
+import vadl.viam.Counter;
 import vadl.viam.RegisterFile;
 import vadl.viam.Resource;
 import vadl.viam.graph.GraphNodeVisitor;
@@ -24,21 +27,43 @@ public class WriteRegFileNode extends WriteResourceNode {
   @DataValue
   protected RegisterFile registerFile;
 
+  // a register-file-write might write to a counter.
+  // if this is the case, the counter is set.
+  // however, not all counter-accesses are statically known, as if the register file
+  // is known, but the concrete index isn't,
+  // it could be a counter written, but doesn't have to be.
+  // it is generally set during the `StaticCounterAccessResolvingPass`
+  @DataValue
+  @Nullable
+  private Counter staticCounterAccess;
+
   /**
    * Writes a value to a register file node.
    *
-   * @param registerFile The register file to write to.
-   * @param address      The index/address node of the register file.
-   * @param value        The value to be written.
+   * @param registerFile        The register file to write to.
+   * @param address             The index/address node of the register file.
+   * @param value               The value to be written.
+   * @param staticCounterAccess the {@link Counter} that is written,
+   *                            or null if it is not known
    */
   public WriteRegFileNode(RegisterFile registerFile, ExpressionNode address,
-                          ExpressionNode value) {
+                          ExpressionNode value, @Nullable Counter staticCounterAccess) {
     super(address, value);
     this.registerFile = registerFile;
+    this.staticCounterAccess = staticCounterAccess;
   }
 
   public RegisterFile registerFile() {
     return registerFile;
+  }
+
+  @Nullable
+  public Counter staticCounterAccess() {
+    return staticCounterAccess;
+  }
+
+  public void setStaticCounterAccess(@Nonnull Counter staticCounterAccess) {
+    this.staticCounterAccess = staticCounterAccess;
   }
 
   @Override
@@ -50,17 +75,26 @@ public class WriteRegFileNode extends WriteResourceNode {
   protected void collectData(List<Object> collection) {
     super.collectData(collection);
     collection.add(registerFile);
+    collection.add(staticCounterAccess);
+  }
+
+  @Override
+  @Nonnull
+  public ExpressionNode address() {
+    return Objects.requireNonNull(super.address());
   }
 
   @Override
   public Node copy() {
     return new WriteRegFileNode(registerFile,
-        (ExpressionNode) Objects.requireNonNull(address).copy(), (ExpressionNode) value.copy());
+        (ExpressionNode) address().copy(), (ExpressionNode) value.copy(),
+        staticCounterAccess);
   }
 
   @Override
   public Node shallowCopy() {
-    return new WriteRegFileNode(registerFile, Objects.requireNonNull(address), value);
+    return new WriteRegFileNode(registerFile, Objects.requireNonNull(address), value,
+        staticCounterAccess);
   }
 
   @Override

@@ -1,9 +1,11 @@
 package vadl.viam.graph.dependency;
 
 import java.util.List;
-import org.jetbrains.annotations.Nullable;
+import javax.annotation.Nonnull;
+import javax.annotation.Nullable;
 import vadl.javaannotations.viam.DataValue;
 import vadl.types.DataType;
+import vadl.viam.Counter;
 import vadl.viam.RegisterFile;
 import vadl.viam.Resource;
 import vadl.viam.graph.GraphNodeVisitor;
@@ -18,14 +20,43 @@ public class ReadRegFileNode extends ReadResourceNode {
   @DataValue
   protected RegisterFile registerFile;
 
+  // a register-file-read might read from a counter.
+  // if this can be inferred, the counter is set.
+  // however, not all counter-accesses are statically known, as if the register file
+  // is known, but the concrete index isn't,
+  // it could be a counter written, but doesn't have to be.
+  // it is generally set during the `StaticCounterAccessResolvingPass`
+  @DataValue
+  @Nullable
+  private Counter staticCounterAccess;
+
+  /**
+   * Constructs the node, which represents a read from a register file at some specific index.
+   *
+   * @param registerFile        the register-file definition to be read from
+   * @param address             the index of the specific register in the register-file
+   * @param type                the type this node should be result in
+   * @param staticCounterAccess the {@link Counter} this node reads from, or null if
+   *                            it is not known
+   */
   public ReadRegFileNode(RegisterFile registerFile, ExpressionNode address,
-                         DataType type) {
+                         DataType type, @Nullable Counter staticCounterAccess) {
     super(address, type);
     this.registerFile = registerFile;
+    this.staticCounterAccess = staticCounterAccess;
   }
 
   public RegisterFile registerFile() {
     return registerFile;
+  }
+
+  @Nullable
+  public Counter staticCounterAccess() {
+    return staticCounterAccess;
+  }
+
+  public void setStaticCounterAccess(@Nonnull Counter staticCounterAccess) {
+    this.staticCounterAccess = staticCounterAccess;
   }
 
   @Override
@@ -47,16 +78,18 @@ public class ReadRegFileNode extends ReadResourceNode {
   protected void collectData(List<Object> collection) {
     super.collectData(collection);
     collection.add(registerFile);
+    collection.add(staticCounterAccess);
   }
 
   @Override
   public Node copy() {
-    return new ReadRegFileNode(registerFile, (ExpressionNode) address().copy(), type());
+    return new ReadRegFileNode(registerFile, (ExpressionNode) address().copy(), type(),
+        staticCounterAccess());
   }
 
   @Override
   public Node shallowCopy() {
-    return new ReadRegFileNode(registerFile, address(), type());
+    return new ReadRegFileNode(registerFile, address(), type(), staticCounterAccess());
   }
 
   @Override
