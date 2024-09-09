@@ -3,6 +3,7 @@ package vadl.gcb.passes.relocation;
 import java.math.BigInteger;
 import java.util.Arrays;
 import java.util.List;
+import vadl.cppCodeGen.model.CppUpdateBitRangeNode;
 import vadl.types.BuiltInTable;
 import vadl.utils.SourceLocation;
 import vadl.viam.Constant;
@@ -50,10 +51,14 @@ public class BitMaskFunctionGenerator {
         getBehavior(format, field, parameterInstWord, parameterNewValue));
   }
 
-  private static Graph getBehavior(Format format, Format.Field field, Parameter parameterInstWord,
+  private static Graph getBehavior(Format format,
+                                   Format.Field field,
+                                   Parameter parameterInstWord,
                                    Parameter parameterNewValue) {
     var graph = new Graph("updatingValue");
     var ty = format.type();
+
+    /*
 
     var otherFields =
         Arrays.stream(format.fields()).filter(x -> x != field).map(Format.Field::bitSlice).toList();
@@ -86,8 +91,14 @@ public class BitMaskFunctionGenerator {
                 ty)),
         ty
     );
+     */
 
-    var node = new ReturnNode(orNode);
+    var node = new ReturnNode(new CppUpdateBitRangeNode(
+        ty,
+        new FuncParamNode(parameterInstWord),
+        new FuncParamNode(parameterNewValue),
+        field
+    ));
     graph.addWithInputs(new StartNode(node));
     graph.addWithInputs(node);
 

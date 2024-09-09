@@ -1,6 +1,7 @@
 package vadl.lcb.passes.llvmLowering.tablegen.lowering;
 
 import java.io.StringWriter;
+import vadl.cppCodeGen.model.CppUpdateBitRangeNode;
 import vadl.lcb.passes.llvmLowering.model.MachineInstructionNode;
 import vadl.lcb.passes.llvmLowering.model.MachineInstructionParameterNode;
 import vadl.lcb.passes.llvmLowering.strategies.visitors.TableGenMachineInstructionVisitor;

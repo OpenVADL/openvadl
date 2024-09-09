@@ -12,6 +12,8 @@ import org.junit.jupiter.api.TestFactory;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.testcontainers.images.builder.ImageFromDockerfile;
+import vadl.cppCodeGen.CppTypeMap;
+import vadl.cppCodeGen.model.CppUpdateBitRangeNode;
 import vadl.gcb.passes.relocation.DetectImmediatePass;
 import vadl.gcb.passes.type_normalization.CppTypeNormalizationForImmediateExtractionPass;
 import vadl.gcb.passes.type_normalization.CppTypeNormalizationForPredicatesPass;
@@ -141,17 +143,35 @@ public class RelocationCodeGeneratorCppVerificationTest extends AbstractLcbTest 
             #include <iostream>
             #include <bitset>
             
-            // drop bits outside the range (R, L) == [R, L]
-            template<std::size_t R, std::size_t L, std::size_t N>
-            std::bitset<N> project_range(std::bitset<N> b)
+            template<std::size_t start, std::size_t end, std::size_t N>
+            std::bitset<N> project_range(std::bitset<N> bits)
             {
-                static_assert(R <= L && L <= N, "invalid bitrange");
-                b >>= R;            // drop R rightmost bits
-                b <<= (N - L + R + 1);  // drop L-1 leftmost bits
-                b >>= (N - L);      // shift back into place
-                return b;
+                std::bitset<N> result;
+                size_t result_index = 0; // Index for the new bitset
+                        
+                // Extract bits from the range [start, end]
+                for (size_t i = start; i <= end; ++i) {
+                  result[result_index] = bits[i];
+            	  result_index++;
+                }
+                        
+                return result;
             }
-                    
+            
+            template<std::size_t N, std::size_t M>
+            std::bitset<N> set_bit_range(std::bitset<N> dest, const std::bitset<M> source, size_t dest_start, size_t dest_end) {
+                for (size_t i = 0; i < dest_end - dest_start; ++i) {
+                    dest.set(dest_start + i, source[i]);
+                }
+                
+                return dest;
+            }
+            
+            template<std::size_t N, std::size_t M, typename... Ranges>
+            std::bitset<N> set_multiple_bit_ranges(std::bitset<N> dest, const std::bitset<M> source, Ranges... ranges) {
+                return (set_bit_range(dest, source, ranges.first, ranges.second), ...);
+            }
+            
             // Extraction Function
             %s
                     
@@ -159,7 +179,7 @@ public class RelocationCodeGeneratorCppVerificationTest extends AbstractLcbTest 
             %s
                         
             int main() {
-              auto expected = %d;
+              %s expected = %d;
               auto actual = %s(%s(%s, %s));
               if(actual == expected) {
                 std::cout << "ok" << std::endl;
@@ -173,6 +193,7 @@ public class RelocationCodeGeneratorCppVerificationTest extends AbstractLcbTest 
         extractionFunctionCodeGenerator.generateFunction(normalisedImmediateExtractionFunction),
         relocationOverrideFunctionCodeGenerator.generateFunction(
             relocation.logicalRelocation().updateFunction()),
+        CppTypeMap.getCppTypeNameByVadlType(normalisedImmediateExtractionFunction.returnType()),
         updatedValue,
         extractionFunctionName,
         relocationFunctionName,
