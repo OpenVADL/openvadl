@@ -67,6 +67,7 @@ class ParserUtils {
     ID_TOKENS[Parser._identifierToken] = true;
     ID_TOKENS[Parser._ADDRESS] = true;
     ID_TOKENS[Parser._ALIAS] = true;
+    ID_TOKENS[Parser._APPEND] = true;
     ID_TOKENS[Parser._BINARY] = true;
     ID_TOKENS[Parser._CALL] = true;
     ID_TOKENS[Parser._CONSTANT] = true;
@@ -327,7 +328,7 @@ class ParserUtils {
     if (isMacroMatch) {
       String type = parser.scanner.Peek().val;
       for (var basicType : BasicSyntaxType.values()) {
-        if (basicType.name().equals(type)) {
+        if (basicType.getName().equals(type)) {
           parser.scanner.ResetPeek();
           return basicType;
         }

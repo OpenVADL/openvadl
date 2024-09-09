@@ -922,7 +922,8 @@ class RegisterFileDefinition extends Definition {
   RelationType type;
   SourceLocation loc;
 
-  public RegisterFileDefinition(IdentifierOrPlaceholder identifier, RelationType type, SourceLocation location) {
+  public RegisterFileDefinition(IdentifierOrPlaceholder identifier, RelationType type,
+                                SourceLocation location) {
     this.identifier = identifier;
     this.type = type;
     this.loc = location;
@@ -2180,7 +2181,8 @@ record Annotations(List<Annotation> annotations) {
   }
 }
 
-record Annotation(Expr expr, @Nullable TypeLiteral type, @Nullable Identifier property) {
+record Annotation(Expr expr, @Nullable TypeLiteral type,
+                  @Nullable IdentifierOrPlaceholder property) {
   void prettyPrint(int indent, StringBuilder builder) {
     builder.append(Node.prettyIndentString(indent));
     builder.append('[');

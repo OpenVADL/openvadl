@@ -72,6 +72,7 @@ TOKENS
 
   ADDRESS      = "address".
   ALIAS        = "alias".
+  APPEND       = "append".
   APPLICATION  = "application".
   ARCHITECTURE = "architecture".
   ARGUMENT     = "argument".
@@ -85,6 +86,7 @@ TOKENS
   CONSTANT     = "constant".
   COUNTER      = "counter".
   DECODER      = "decoder".
+  DO           = "do".
   ELSE         = "else".
   ENCODE       = "encode".
   ENCODING     = "encoding".
@@ -97,6 +99,7 @@ TOKENS
   FETCH        = "fetch".
   FILE         = "file".
   FIRMWARE     = "firmware".
+  FOLD         = "fold".
   FOR          = "for".
   FORALL       = "forall".
   FORMAT       = "format".
@@ -147,6 +150,7 @@ TOKENS
   START        = "start".
   STARTUP      = "startup".
   STOP         = "stop".
+  TENSOR       = "tensor".
   THEN         = "then".
   TRANSLATION  = "translation".
   TRUE         = "true".
@@ -241,7 +245,7 @@ PRODUCTIONS
     identifier<out Identifier identifier>                       (. Identifier extending = null; .)
     [
       EXTENDING
-      identifier<out extending>                                 (. readMacroSymbols(macroTable, Objects.requireNonNull(macroTable.findIsa(extending)).definitions); .)
+      identifier<out extending>                                 (. readMacroSymbols(macroTable, Objects.requireNonNull(macroTable.requireIsa(extending)).definitions); .)
     ]
     SYM_EQ SYM_BRACE_OPEN
     isaDefinitionList<.out List<Definition> definitions.>       (. macroTable = Objects.requireNonNull(macroTable.parent); .)
@@ -268,11 +272,11 @@ PRODUCTIONS
   }                                        (. annotations = new Annotations(list); .)
   .
 
-  annotation<out Annotation annotation> (. TypeLiteral type = null; Identifier property = null; .)
+  annotation<out Annotation annotation> (. TypeLiteral type = null; IdentifierOrPlaceholder property = null; .)
   = SYM_BRACK_OPEN
     expression<out Expr expr, BIN_OPS>
     [ (SYM_COLON typeLiteral<out type>)
-    | identifier<out property>
+    | identifierOrPlaceholder<out property>
     ]
     SYM_BRACK_CLOSE                     (. annotation = new Annotation(expr, type, property); .)
   .
@@ -1013,6 +1017,7 @@ PRODUCTIONS
     macroReplacement<out Node n>     (. statement = castStat(this, n); .)
   | assignmentOrCallStmt<out statement>
   | lockStatement<out statement>
+  | forallStatement<out statement>
   .
 
   blockStatement<out BlockStatement block>     (. var start = loc(); .)
@@ -1137,6 +1142,21 @@ PRODUCTIONS
     callOrBinaryExpression<out Expr expr, false>
     SYM_IN
     statement<out Statement statement> (. lock = new LockStatement(expr, statement, start.join(loc())); .)
+  .
+
+  forallStatement<out Statement forall> (. var start = lookaheadLoc(); .)
+  = FORALL                              (. var indices = new ArrayList<ForallStatement.Index>(); .)
+    identifier<out Identifier indexName>
+    SYM_IN
+    rangeExpression<out Expr domain>    (. indices.add(new ForallStatement.Index(indexName, domain)); .)
+    {
+      SYM_COMMA
+      identifier<out indexName>
+      SYM_IN
+      rangeExpression<out domain>       (. indices.add(new ForallStatement.Index(indexName, domain)); .)
+    }
+    DO
+    statement<out Statement statement>  (. forall = new ForallStatement(indices, statement, start.join(loc())); .)
   .
 
   // -- EXPRESSIONS --------------------------------------------------------------------------------------------------
@@ -1406,19 +1426,36 @@ PRODUCTIONS
     SYM_BRACE_CLOSE
   .
 
-  forallExpression<out Expr expr>
-  = FORALL                                          (. var start = loc(); .)
+  forallExpression<out Expr forallExpr>           (. forallExpr = null; .)
+  = FORALL                                        (. var start = loc(); .)
     identifierOrPlaceholder<out IdentifierOrPlaceholder id>
-    SYM_IN                                          (. var conditions = new ArrayList<ForAllThenExpr.Condition>(); .)
-    operationsList<.out List<IsId> operations.>     (. conditions.add(new ForAllThenExpr.Condition(id, operations)); .)
-    {
-      SYM_COMMA
-      identifierOrPlaceholder<out id>
-      SYM_IN
-      operationsList<out operations>                (. conditions.add(new ForAllThenExpr.Condition(id, operations)); .)
-    }
-    THEN
-    expression<out Expr thenExpr, BIN_OPS>          (. expr = new ForAllThenExpr(conditions, thenExpr, start.join(loc())); .)
+    SYM_IN
+    (                                             (. var indices = new ArrayList<ForallThenExpr.Index>(); .)
+      operationsList<.out List<IsId> operations.> (. indices.add(new ForallThenExpr.Index(id, operations)); .)
+      {
+        SYM_COMMA
+        identifierOrPlaceholder<out id>
+        SYM_IN
+        operationsList<out operations>            (. indices.add(new ForallThenExpr.Index(id, operations)); .)
+      }
+      THEN
+      expression<out Expr thenExpr, BIN_OPS>      (. forallExpr = new ForallThenExpr(indices, thenExpr, start.join(loc())); .)
+    |                                             (. var indices = new ArrayList<ForallExpr.Index>(); .)
+      rangeExpression<out Expr domain>            (. indices.add(new ForallExpr.Index(id, domain)); .)
+      {
+        SYM_COMMA
+        identifierOrPlaceholder<out id>
+        SYM_IN
+        rangeExpression<out domain>               (. indices.add(new ForallExpr.Index(id, domain)); .)
+      }                                           (. ForallExpr.Operation operation = null; Operator foldAction = null; .)
+      ( APPEND                                    (. operation = ForallExpr.Operation.APPEND; .)
+      | TENSOR                                    (. operation = ForallExpr.Operation.TENSOR; .)
+      | FOLD                                      (. operation = ForallExpr.Operation.FOLD; .)
+        binaryOperator<out foldAction>
+        WITH
+      )
+      expression<out Expr expr, BIN_OPS>          (. forallExpr = new ForallExpr(indices, operation, foldAction, expr, start.join(loc())); .)
+    )
   .
 
   // -- PRIMITIVES ---------------------------------------------------------------------------------------------------
@@ -1452,7 +1489,7 @@ PRODUCTIONS
   = ADDRESS
   | ALIAS
   // | ASSERT
-  // | APPEND
+  | APPEND
   | BINARY
   | CALL
   | CONSTANT

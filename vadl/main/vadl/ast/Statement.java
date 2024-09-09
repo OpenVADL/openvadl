@@ -7,7 +7,7 @@ import javax.annotation.Nullable;
 import vadl.utils.SourceLocation;
 
 abstract sealed class Statement extends Node
-    permits AssignmentStatement, BlockStatement, CallStatement, IfStatement,
+    permits AssignmentStatement, BlockStatement, CallStatement, ForallStatement, IfStatement,
     InstructionCallStatement, LetStatement, LockStatement, MacroInstanceStatement,
     MacroMatchStatement, MatchStatement, PlaceholderStatement, RaiseStatement, StatementList {
   <T> T accept(StatementVisitor<T> visitor) {
@@ -38,6 +38,8 @@ abstract sealed class Statement extends Node
       return visitor.visit(s);
     } else if (this instanceof LockStatement l) {
       return visitor.visit(l);
+    } else if (this instanceof ForallStatement f) {
+      return visitor.visit(f);
     } else {
       throw new IllegalStateException("Unhandled statement type " + getClass().getSimpleName());
     }
@@ -75,6 +77,8 @@ interface StatementVisitor<T> {
   T visit(InstructionCallStatement instructionCallStatement);
 
   T visit(LockStatement lockStatement);
+
+  T visit(ForallStatement forallStatement);
 }
 
 final class BlockStatement extends Statement {
@@ -751,6 +755,61 @@ final class LockStatement extends Statement {
   @Override
   public int hashCode() {
     return Objects.hash(expr, statement);
+  }
+}
+
+final class ForallStatement extends Statement {
+  List<Index> indices;
+  Statement statement;
+  SourceLocation loc;
+
+  ForallStatement(List<Index> indices, Statement statement, SourceLocation loc) {
+    this.indices = indices;
+    this.statement = statement;
+    this.loc = loc;
+  }
+
+  @Override
+  SourceLocation location() {
+    return loc;
+  }
+
+  @Override
+  void prettyPrint(int indent, StringBuilder builder) {
+    builder.append(prettyIndentString(indent));
+    builder.append("forall ");
+    var isFirst = true;
+    for (Index index : indices) {
+      if (!isFirst) {
+        builder.append(", ");
+      }
+      index.name.prettyPrint(0, builder);
+      builder.append(" in ");
+      index.domain.prettyPrint(0, builder);
+    }
+    builder.append(" do\n");
+    statement.prettyPrint(indent + 1, builder);
+  }
+
+  @Override
+  public boolean equals(Object o) {
+    if (this == o) {
+      return true;
+    }
+    if (o == null || getClass() != o.getClass()) {
+      return false;
+    }
+    ForallStatement that = (ForallStatement) o;
+    return Objects.equals(indices, that.indices) &&
+        Objects.equals(statement, that.statement);
+  }
+
+  @Override
+  public int hashCode() {
+    return Objects.hash(indices, statement);
+  }
+
+  record Index(Identifier name, Expr domain) {
   }
 }
 

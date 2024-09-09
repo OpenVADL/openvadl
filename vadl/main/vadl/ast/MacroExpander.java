@@ -347,7 +347,8 @@ class MacroExpander
         name.append(id.name);
       } else if (inner instanceof StringLiteral string) {
         name.append(string.value);
-      } else if (inner instanceof PlaceholderExpr || inner instanceof ExtendIdExpr) {
+      } else if (inner instanceof PlaceholderExpr
+          || inner instanceof ExtendIdExpr || inner instanceof IdToStrExpr) {
         // Will be expanded as soon as the used placeholders are bound
         return new ExtendIdExpr(expressions, copyLoc(expr.location()));
       } else {
@@ -364,7 +365,7 @@ class MacroExpander
     if (idOrPlaceholder instanceof Identifier id) {
       return new StringLiteral(id, copyLoc(expr.location()));
     } else {
-      return new IdToStrExpr(expr.id, copyLoc(expr.location()));
+      return new IdToStrExpr(idOrPlaceholder, copyLoc(expr.location()));
     }
   }
 
@@ -387,14 +388,23 @@ class MacroExpander
   }
 
   @Override
-  public Expr visit(ForAllThenExpr expr) {
-    var conditions = new ArrayList<>(expr.conditions);
-    conditions.replaceAll(condition -> {
-      var operations = new ArrayList<>(condition.operations());
+  public Expr visit(ForallThenExpr expr) {
+    var indices = new ArrayList<>(expr.indices);
+    indices.replaceAll(index -> {
+      var operations = new ArrayList<>(index.operations());
       operations.replaceAll(id -> (IsId) expandExpr((Expr) id));
-      return new ForAllThenExpr.Condition((IsId) expandExpr((Expr) condition.id()), operations);
+      return new ForallThenExpr.Index((IsId) expandExpr((Expr) index.id()), operations);
     });
-    return new ForAllThenExpr(conditions, expandExpr(expr.thenExpr), copyLoc(expr.loc));
+    return new ForallThenExpr(indices, expandExpr(expr.thenExpr), copyLoc(expr.loc));
+  }
+
+  @Override
+  public Expr visit(ForallExpr expr) {
+    var indices = new ArrayList<>(expr.indices);
+    indices.replaceAll(index -> new ForallExpr.Index((IsId) expandExpr((Expr) index.id()),
+        expandExpr(index.domain())));
+    return new ForallExpr(indices, expr.operation, expr.foldOperator, expandExpr(expr.expr),
+        copyLoc(expr.loc));
   }
 
   @Override
@@ -896,6 +906,15 @@ class MacroExpander
         expandStatement(lockStatement.statement),
         lockStatement.loc
     );
+  }
+
+  @Override
+  public Statement visit(ForallStatement forallStatement) {
+    var indices = new ArrayList<>(forallStatement.indices);
+    indices.replaceAll(
+        index -> new ForallStatement.Index(index.name(), expandExpr(index.domain())));
+    var statement = expandStatement(forallStatement.statement);
+    return new ForallStatement(indices, statement, copyLoc(forallStatement.loc));
   }
 
   private void assertValidMacro(Macro macro, SourceLocation sourceLocation)

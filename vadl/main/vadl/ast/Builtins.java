@@ -3,10 +3,16 @@ package vadl.ast;
 class Builtins {
   // TODO Replace with BuiltInTable
   static final String[] BUILTIN_FUNCTIONS = new String[] {
+      // TODO Clean up actual global built-ins and context-specific built-ins (e.g. "firmware")
       "decimal",
       "hex",
       "register",
       "isInDelaySlot",
+      "delayed",
+      "start",
+      "executable",
+      "halt",
+      "firmware",
 
       // TODO Legacy functions, only needed for compatibility with old vadl files
       "VADL::mod", // Required by rv3264im, verify if necessary

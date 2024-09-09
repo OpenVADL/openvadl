@@ -718,15 +718,25 @@ public class AstDumper
   }
 
   @Override
-  public Void visit(ForAllThenExpr expr) {
+  public Void visit(ForallThenExpr expr) {
     dumpNode(expr);
-    for (ForAllThenExpr.Condition condition : expr.conditions) {
-      dumpChildren((Node) condition.id());
-      for (IsId operation : condition.operations()) {
+    for (ForallThenExpr.Index index : expr.indices) {
+      dumpChildren((Node) index.id());
+      for (IsId operation : index.operations()) {
         dumpChildren((Node) operation);
       }
     }
     dumpChildren(expr.thenExpr);
+    return null;
+  }
+
+  @Override
+  public Void visit(ForallExpr expr) {
+    dumpNode(expr);
+    for (ForallExpr.Index index : expr.indices) {
+      dumpChildren((Node) index.id(), index.domain());
+    }
+    dumpChildren(expr.expr);
     return null;
   }
 
@@ -841,6 +851,16 @@ public class AstDumper
   public Void visit(LockStatement lockStatement) {
     dumpNode(lockStatement);
     dumpChildren(lockStatement.expr, lockStatement.statement);
+    return null;
+  }
+
+  @Override
+  public Void visit(ForallStatement forallStatement) {
+    dumpNode(forallStatement);
+    for (ForallStatement.Index index : forallStatement.indices) {
+      dumpChildren(index.name(), index.domain());
+    }
+    dumpChildren(forallStatement.statement);
     return null;
   }
 }

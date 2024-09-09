@@ -197,7 +197,14 @@ public class Ungrouper
   }
 
   @Override
-  public Expr visit(ForAllThenExpr expr) {
+  public Expr visit(ForallThenExpr expr) {
+    return expr;
+  }
+
+  @Override
+  public Expr visit(ForallExpr expr) {
+    expr.indices.replaceAll(index -> new ForallExpr.Index(index.id(), index.domain().accept(this)));
+    expr.expr = expr.expr.accept(this);
     return expr;
   }
 
@@ -592,6 +599,14 @@ public class Ungrouper
     lockStatement.expr = lockStatement.expr.accept(this);
     lockStatement.statement = lockStatement.statement.accept(this);
     return lockStatement;
+  }
+
+  @Override
+  public Statement visit(ForallStatement forallStatement) {
+    forallStatement.indices.replaceAll(
+        index -> new ForallStatement.Index(index.name(), index.domain().accept(this)));
+    forallStatement.statement = forallStatement.statement.accept(this);
+    return forallStatement;
   }
 
   private void ungroupAnnotations(Definition definition) {

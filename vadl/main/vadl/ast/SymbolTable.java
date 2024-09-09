@@ -131,12 +131,22 @@ class SymbolTable {
   }
 
   @Nullable
-  InstructionSetDefinition findIsa(Identifier isa) {
+  InstructionSetDefinition requireIsa(Identifier isa) {
     var symbol = resolveSymbol(isa.name);
     if (symbol instanceof IsaSymbol isaSymbol) {
       return isaSymbol.definition;
     }
     reportError("Unresolved ISA " + isa.name, isa.location());
+    return null;
+  }
+
+  @Nullable
+  ApplicationBinaryInterfaceDefinition requireAbi(Identifier abi) {
+    var symbol = resolveSymbol(abi.name);
+    if (symbol instanceof AbiSymbol abiSymbol) {
+      return abiSymbol.definition;
+    }
+    reportError("Unresolved ABI " + abi.name, abi.location());
     return null;
   }
 
@@ -601,6 +611,14 @@ class SymbolTable {
       } else if (stmt instanceof LockStatement lock) {
         collectSymbols(symbols, lock.expr);
         collectSymbols(symbols, lock.statement);
+      } else if (stmt instanceof ForallStatement forall) {
+        forall.symbolTable = symbols.createChild();
+        for (ForallStatement.Index index : forall.indices) {
+          forall.symbolTable.defineSymbol(
+              new ValuedSymbol(index.name().name, null, SymbolType.CONSTANT), index.name().loc);
+          collectSymbols(symbols, index.domain());
+        }
+        collectSymbols(forall.symbolTable, forall.statement);
       }
     }
 
@@ -670,14 +688,26 @@ class SymbolTable {
           }
         }
         collectSymbols(symbols, existsInThen.thenExpr);
-      } else if (expr instanceof ForAllThenExpr forAllThen) {
-        for (ForAllThenExpr.Condition condition : forAllThen.conditions) {
-          ((Node) condition.id()).symbolTable = symbols;
-          for (IsId operation : condition.operations()) {
+      } else if (expr instanceof ForallThenExpr forallThen) {
+        forallThen.symbolTable = symbols.createChild();
+        for (ForallThenExpr.Index index : forallThen.indices) {
+          forallThen.symbolTable().defineSymbol(
+              new ValuedSymbol(index.id().pathToString(), null, SymbolType.PARAMETER),
+              index.id().location());
+          for (IsId operation : index.operations()) {
             ((Node) operation).symbolTable = symbols;
           }
         }
-        collectSymbols(symbols, forAllThen.thenExpr);
+        collectSymbols(forallThen.symbolTable(), forallThen.thenExpr);
+      } else if (expr instanceof ForallExpr forallExpr) {
+        forallExpr.symbolTable = symbols.createChild();
+        for (ForallExpr.Index index : forallExpr.indices) {
+          forallExpr.symbolTable().defineSymbol(
+              new ValuedSymbol(index.id().pathToString(), null, SymbolType.PARAMETER),
+              index.id().location());
+          collectSymbols(symbols, index.domain());
+        }
+        collectSymbols(forallExpr.symbolTable(), forallExpr.expr);
       } else if (expr instanceof SequenceCallExpr sequenceCall) {
         collectSymbols(symbols, sequenceCall.target);
         if (sequenceCall.range != null) {
@@ -706,7 +736,7 @@ class SymbolTable {
     static void verifyUsages(Definition definition) {
       if (definition instanceof InstructionSetDefinition isa) {
         if (isa.extending != null) {
-          var extending = isa.symbolTable().findIsa(isa.extending);
+          var extending = isa.symbolTable().requireIsa(isa.extending);
           if (extending != null) {
             isa.symbolTable().copyFrom(extending.symbolTable());
           }
@@ -772,10 +802,8 @@ class SymbolTable {
       } else if (definition instanceof ProcessDefinition process) {
         verifyUsages(process.statement);
       } else if (definition instanceof ApplicationBinaryInterfaceDefinition abi) {
-        var isa = abi.symbolTable().findIsa((Identifier) abi.isa);
-        if (isa == null) {
-          abi.symbolTable().reportError("Unknown ISA " + abi.isa.pathToString(), abi.loc);
-        } else {
+        var isa = abi.symbolTable().requireIsa((Identifier) abi.isa);
+        if (isa != null) {
           abi.symbolTable().copyFrom(isa.symbolTable());
           for (Definition def : abi.definitions) {
             verifyUsages(def);
@@ -786,8 +814,15 @@ class SymbolTable {
           verifyUsages(statement);
         }
       } else if (definition instanceof MicroProcessorDefinition mip) {
-        for (Definition def : mip.definitions) {
-          verifyUsages(def);
+        for (IsId implementedIsa : mip.implementedIsas) {
+          mip.symbolTable().requireIsa((Identifier) implementedIsa);
+        }
+        var abi = mip.symbolTable().requireAbi((Identifier) mip.abi);
+        if (abi != null) {
+          mip.symbolTable().copyFrom(abi.symbolTable());
+          for (Definition def : mip.definitions) {
+            verifyUsages(def);
+          }
         }
       } else if (definition instanceof SpecialPurposeRegisterDefinition specialPurposeRegister) {
         for (SequenceCallExpr call : specialPurposeRegister.calls) {
@@ -895,6 +930,11 @@ class SymbolTable {
       } else if (stmt instanceof LockStatement lock) {
         verifyUsages(lock.expr);
         verifyUsages(lock.statement);
+      } else if (stmt instanceof ForallStatement forall) {
+        for (ForallStatement.Index index : forall.indices) {
+          verifyUsages(index.domain());
+        }
+        verifyUsages(forall.statement);
       }
     }
 
@@ -950,8 +990,13 @@ class SymbolTable {
         }
       } else if (expr instanceof ExistsInThenExpr existsInThen) {
         verifyUsages(existsInThen.thenExpr);
-      } else if (expr instanceof ForAllThenExpr forAllThen) {
+      } else if (expr instanceof ForallThenExpr forAllThen) {
         verifyUsages(forAllThen.thenExpr);
+      }  else if (expr instanceof ForallExpr forallExpr) {
+        for (ForallExpr.Index index : forallExpr.indices) {
+          verifyUsages(index.domain());
+        }
+        verifyUsages(forallExpr.expr);
       } else if (expr instanceof SequenceCallExpr sequenceCall) {
         verifyUsages(sequenceCall.target);
       }

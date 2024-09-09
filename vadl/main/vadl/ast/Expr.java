@@ -67,7 +67,9 @@ interface ExprVisitor<R> {
 
   R visit(ExistsInThenExpr expr);
 
-  R visit(ForAllThenExpr expr);
+  R visit(ForallThenExpr expr);
+
+  R visit(ForallExpr expr);
 
   R visit(SequenceCallExpr expr);
 }
@@ -2094,13 +2096,13 @@ class ExistsInThenExpr extends Expr {
   }
 }
 
-class ForAllThenExpr extends Expr {
-  List<Condition> conditions;
+class ForallThenExpr extends Expr {
+  List<Index> indices;
   Expr thenExpr;
   SourceLocation loc;
 
-  ForAllThenExpr(List<Condition> conditions, Expr thenExpr, SourceLocation loc) {
-    this.conditions = conditions;
+  ForallThenExpr(List<Index> indices, Expr thenExpr, SourceLocation loc) {
+    this.indices = indices;
     this.thenExpr = thenExpr;
     this.loc = loc;
   }
@@ -2119,15 +2121,15 @@ class ForAllThenExpr extends Expr {
   void prettyPrint(int indent, StringBuilder builder) {
     builder.append("forall ");
     var isFirst = true;
-    for (Condition condition : conditions) {
+    for (Index index : indices) {
       if (!isFirst) {
         builder.append(", ");
       }
       isFirst = false;
-      condition.id.prettyPrint(0, builder);
+      index.id.prettyPrint(0, builder);
       builder.append(" in {");
       var isFirstOp = true;
-      for (IsId operation : condition.operations) {
+      for (IsId operation : index.operations) {
         if (!isFirstOp) {
           builder.append(", ");
         }
@@ -2159,24 +2161,121 @@ class ForAllThenExpr extends Expr {
     if (o == null || getClass() != o.getClass()) {
       return false;
     }
-    ForAllThenExpr that = (ForAllThenExpr) o;
-    return Objects.equals(conditions, that.conditions)
+    ForallThenExpr that = (ForallThenExpr) o;
+    return Objects.equals(indices, that.indices)
         && Objects.equals(thenExpr, that.thenExpr);
   }
 
   @Override
   public int hashCode() {
-    return Objects.hash(conditions, thenExpr);
+    return Objects.hash(indices, thenExpr);
   }
 
-  record Condition(IsId id, List<IsId> operations) {
+  record Index(IsId id, List<IsId> operations) {
+  }
+}
+
+class ForallExpr extends Expr {
+  List<Index> indices;
+  Operation operation;
+  @Nullable
+  Operator foldOperator;
+  Expr expr;
+  SourceLocation loc;
+
+  ForallExpr(List<Index> indices, Operation operation, @Nullable Operator foldOperator, Expr expr,
+             SourceLocation loc) {
+    this.indices = indices;
+    this.operation = operation;
+    this.foldOperator = foldOperator;
+    this.expr = expr;
+    this.loc = loc;
+  }
+
+  @Override
+  SourceLocation location() {
+    return loc;
+  }
+
+  @Override
+  SyntaxType syntaxType() {
+    return BasicSyntaxType.EX;
+  }
+
+  @Override
+  void prettyPrint(int indent, StringBuilder builder) {
+    builder.append("forall ");
+    var isFirst = true;
+    for (Index index : indices) {
+      if (!isFirst) {
+        builder.append(", ");
+      }
+      isFirst = false;
+      index.id.prettyPrint(0, builder);
+      builder.append(" in ");
+      index.domain.prettyPrint(0, builder);
+    }
+    builder.append(" ").append(operation.keyword);
+    if (foldOperator != null) {
+      builder.append(" ").append(foldOperator.symbol).append(" with");
+    }
+    if (isBlockLayout(expr)) {
+      builder.append("\n");
+      expr.prettyPrint(indent + 1, builder);
+    } else {
+      builder.append(" ");
+      expr.prettyPrint(0, builder);
+      builder.append("\n");
+    }
+  }
+
+  @Override
+  <R> R accept(ExprVisitor<R> visitor) {
+    return visitor.visit(this);
+  }
+
+  @Override
+  public boolean equals(Object o) {
+    if (this == o) {
+      return true;
+    }
+    if (o == null || getClass() != o.getClass()) {
+      return false;
+    }
+    ForallExpr that = (ForallExpr) o;
+    return Objects.equals(indices, that.indices) && operation == that.operation
+        && Objects.equals(foldOperator, that.foldOperator) && Objects.equals(expr, that.expr);
+  }
+
+  @Override
+  public int hashCode() {
+    return Objects.hash(indices, operation, foldOperator, expr);
+  }
+
+  @Override
+  public String toString() {
+    return getClass().getSimpleName() + " " + operation.keyword;
+  }
+
+  record Index(IsId id, Expr domain) {
+  }
+
+  enum Operation {
+    APPEND("append"), TENSOR("tensor"), FOLD("fold");
+
+    private final String keyword;
+
+    Operation(String keyword) {
+      this.keyword = keyword;
+    }
   }
 }
 
 class SequenceCallExpr extends Expr {
 
   Identifier target;
-  @Nullable Expr range;
+  @Nullable
+  Expr range;
   SourceLocation loc;
 
   SequenceCallExpr(Identifier target, @Nullable Expr range, SourceLocation loc) {
