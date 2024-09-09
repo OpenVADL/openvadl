@@ -258,6 +258,7 @@ class SymbolTable {
       for (Definition definition : ast.definitions) {
         collectSymbols(ast.rootSymbolTable, definition);
       }
+      ast.passTimings.add(new VadlParser.PassTimings(System.nanoTime(), "Symbol collection"));
     }
 
     static void collectSymbols(SymbolTable symbols, Definition definition) {
@@ -524,6 +525,7 @@ class SymbolTable {
       for (Definition definition : ast.definitions) {
         verifyUsages(definition);
       }
+      ast.passTimings.add(new VadlParser.PassTimings(System.nanoTime(), "Symbol verification"));
       return Objects.requireNonNull(ast.rootSymbolTable).errors;
     }
 

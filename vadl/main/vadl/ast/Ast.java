@@ -15,6 +15,7 @@ import vadl.utils.SourceLocation;
 public class Ast {
   List<Definition> definitions = new ArrayList<>();
   URI fileUri = SourceLocation.INVALID_SOURCE_LOCATION.uri();
+  List<VadlParser.PassTimings> passTimings = new ArrayList<>();
 
   @Nullable
   SymbolTable rootSymbolTable;
