@@ -13,7 +13,7 @@ import vadl.pass.PassResults;
 import vadl.viam.Specification;
 
 /**
- * TODO define what this does.
+ * This file contains the function to update an immediate when a relocation has to be applied.
  */
 public class EmitLldManualEncodingHeaderFilePass extends LcbTemplateRenderingPass {
 
