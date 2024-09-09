@@ -29,7 +29,7 @@ graalvmNative {
         named("main") {
             imageName.set("openvadl")
             mainClass.set(application.mainClass)
-            buildArgs.addAll("-Ob", "--gc=G1") // Use -0b for faster dev builds, -O4 for production
+            buildArgs.addAll("-O4", "--gc=epsilon") // Use -0b for faster dev builds, -O4 for production
         }
     }
 }

@@ -131,6 +131,12 @@ public class VadlParser {
     return ast;
   }
 
+  /**
+   * Reads the pass timings persisted in the AST and prints them to stdout
+   * in a human-readable way.
+   *
+   * @param ast The AST whose pass timings should be printed
+   */
   public static void printPassTimings(Ast ast) {
     PassTimings prev = null;
     for (var timing : ast.passTimings) {
