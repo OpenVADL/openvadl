@@ -49,11 +49,10 @@ public class GenerateLogicalRelocationPass extends Pass {
     // Generate relocations based on the specified relocations.
     // The user can specify relocations in the vadl specification.
     var u = generateRelocationsBasedOnSpecifiedRelocation(viam, immediates);
-    var v = generateRelocationsBasedOnSpecifiedRelocationPseudoInstructions(viam);
     var x = generateAbsoluteRelocationsForEveryFormat(viam, immediates);
     var y = generateRelativeRelocations(viam, immediates);
 
-    return Stream.concat(Stream.concat(Stream.concat(u, v), x), y)
+    return Stream.concat(Stream.concat(u, x), y)
         .sorted(Comparator.comparing(o -> o.name().value()))
         .toList();
   }
@@ -82,44 +81,6 @@ public class GenerateLogicalRelocationPass extends Pass {
                           updateFunction));
                 }
               }
-            });
-      }
-    }
-
-    // We do not need to emit a relocation for every instruction.
-    // We just care about the formats.
-    return logicalRelocations.stream().distinct();
-  }
-
-  private Stream<LogicalRelocation> generateRelocationsBasedOnSpecifiedRelocationPseudoInstructions(
-      Specification viam) {
-    var logicalRelocations = new ArrayList<LogicalRelocation>();
-    for (var isa : viam.isas().toList()) {
-      var pc = isa.pc();
-      for (var instruction : isa.ownPseudoInstructions()) {
-        /* We would like to generate relocations for every pseudo instruction.
-           However, the problem is that pseudo instruction has no relocation itself
-           because it contains references to other instructions.
-           Example:
-
-          pseudo instruction CALL( symbol : Bits<32> ) =
-          {
-              LUI{ rd = 1, imm20 = hi20( symbol ) }
-              JALR{ rd = 1, rs1 = 1, imm = lo12( symbol ) }
-          }
-
-           The pseudo instruction CALL will have two InstrCallNode nodes which have the
-           references to the instructions LUI and JALR.
-           We check both machine instructions whether the have relocations. If they have then
-           we generate relocations for it.
-         */
-
-        instruction.behavior().getNodes(FuncCallNode.class)
-            .map(FuncCallNode::function)
-            .filter(Relocation.class::isInstance)
-            .map(Relocation.class::cast)
-            .forEach(relocation -> {
-              //logicalRelocations.add(new LogicalRelocation(pc, relocation, instruction. ()));
             });
       }
     }
