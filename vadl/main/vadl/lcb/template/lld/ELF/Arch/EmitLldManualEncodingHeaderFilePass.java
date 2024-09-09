@@ -1,6 +1,7 @@
 package vadl.lcb.template.lld.ELF.Arch;
 
 import java.io.IOException;
+import java.util.Comparator;
 import java.util.List;
 import java.util.Map;
 import vadl.configuration.LcbConfiguration;
@@ -38,6 +39,7 @@ public class EmitLldManualEncodingHeaderFilePass extends LcbTemplateRenderingPas
         (List<ElfRelocation>) passResults.lastResultOf(GenerateElfRelocationPass.class);
     return Map.of(CommonVarNames.NAMESPACE, specification.name(),
         "functions", elfRelocations.stream()
+            .sorted(Comparator.comparing(o -> o.name().value()))
             .map(elfRelocation -> new RelocationOverrideCodeGenerator().generateFunction(
                 elfRelocation.updateFunction())).toList());
   }
