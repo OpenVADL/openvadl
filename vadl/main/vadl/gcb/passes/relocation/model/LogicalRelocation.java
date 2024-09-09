@@ -7,6 +7,7 @@ import org.jetbrains.annotations.Nullable;
 import vadl.utils.SourceLocation;
 import vadl.viam.Constant;
 import vadl.viam.Format;
+import vadl.viam.Function;
 import vadl.viam.Identifier;
 import vadl.viam.Parameter;
 import vadl.viam.Register;
@@ -31,23 +32,30 @@ public class LogicalRelocation {
   private final Format format;
   private final Relocation relocation;
   private final Format.Field immediate;
+  private final Function updateFunction;
 
   public LogicalRelocation(@Nullable Register.Counter pc,
                            Relocation relocation,
                            Format.Field field,
-                           Format format) {
+                           Format format,
+                           Function updateFunction) {
     this.kind = relocation.isAbsolute(pc) ? Kind.ABSOLUTE : Kind.RELATIVE;
     this.format = format;
     this.relocation = relocation;
     this.immediate = field;
+    this.updateFunction = updateFunction;
   }
 
   /**
    * Generate a {@link LogicalRelocation} where the relocation returns the same
    * value as input.
    */
-  public LogicalRelocation(Kind kind, Format.Field immediate, Format format) {
+  public LogicalRelocation(Kind kind,
+                           Format.Field immediate,
+                           Format format,
+                           Function updateFunction) {
     this.kind = kind;
+    this.updateFunction = updateFunction;
     this.format = format;
     var parameter = new Parameter(new Identifier("input", SourceLocation.INVALID_SOURCE_LOCATION),
         format.type());
@@ -86,6 +94,10 @@ public class LogicalRelocation {
   public Stream<Constant.BitSlice> patches() {
     return Arrays.stream(format.fieldAccesses())
         .map(fieldAccess -> fieldAccess.fieldRef().bitSlice());
+  }
+
+  public Function updateFunction() {
+    return updateFunction;
   }
 
   @Override

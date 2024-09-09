@@ -2,6 +2,7 @@ package vadl.lcb.passes.relocation.model;
 
 import vadl.gcb.passes.relocation.model.LogicalRelocation;
 import vadl.gcb.valuetypes.ProcessorName;
+import vadl.viam.Function;
 import vadl.viam.Relocation;
 
 public class ElfRelocation {
@@ -19,6 +20,10 @@ public class ElfRelocation {
 
   public Relocation function() {
     return logicalRelocation.relocation();
+  }
+
+  public Function updateFunction() {
+    return logicalRelocation.updateFunction();
   }
 
   public ElfRelocationName name() {

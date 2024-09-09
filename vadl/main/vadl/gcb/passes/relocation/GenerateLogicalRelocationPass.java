@@ -72,11 +72,14 @@ public class GenerateLogicalRelocationPass extends Pass {
               for (var entry : immediates.get(instruction.format()).entrySet()) {
                 if (entry.getValue() == DetectImmediatePass.FieldUsage.IMMEDIATE) {
                   var field = entry.getKey();
+                  var updateFunction =
+                      BitMaskFunctionGenerator.generateUpdateFunction(instruction.format(), field);
                   logicalRelocations.add(
                       new LogicalRelocation(pc,
                           relocation,
                           field,
-                          instruction.format()));
+                          instruction.format(),
+                          updateFunction));
                 }
               }
             });
@@ -126,8 +129,9 @@ public class GenerateLogicalRelocationPass extends Pass {
     return logicalRelocations.stream().distinct();
   }
 
-  private Stream<LogicalRelocation> generateAbsoluteRelocationsForEveryFormat(Specification viam,
-                                                                              DetectImmediatePass.ImmediateDetectionContainer immediates) {
+  private Stream<LogicalRelocation> generateAbsoluteRelocationsForEveryFormat(
+      Specification viam,
+      DetectImmediatePass.ImmediateDetectionContainer immediates) {
     return viam.isas()
         .flatMap(isa -> isa.ownFormats().stream())
         .flatMap(format -> {
@@ -135,9 +139,11 @@ public class GenerateLogicalRelocationPass extends Pass {
           for (var entry : immediates.get(format).entrySet()) {
             if (entry.getValue() == DetectImmediatePass.FieldUsage.IMMEDIATE) {
               var field = entry.getKey();
-
+              var updateFunction =
+                  BitMaskFunctionGenerator.generateUpdateFunction(format, field);
               relocations.add(
-                  new LogicalRelocation(LogicalRelocation.Kind.ABSOLUTE, field, format));
+                  new LogicalRelocation(LogicalRelocation.Kind.ABSOLUTE, field, format,
+                      updateFunction));
             }
           }
           return relocations.stream();
@@ -147,8 +153,9 @@ public class GenerateLogicalRelocationPass extends Pass {
   /**
    * Generates relative relocations for formats when the instruction touches a {@link Counter}.
    */
-  private Stream<LogicalRelocation> generateRelativeRelocations(Specification viam,
-                                                                DetectImmediatePass.ImmediateDetectionContainer immediates) {
+  private Stream<LogicalRelocation> generateRelativeRelocations(
+      Specification viam,
+      DetectImmediatePass.ImmediateDetectionContainer immediates) {
     return viam.isas()
         .flatMap(isa -> isa.ownInstructions().stream())
         .filter(instruction -> instruction.behavior().getNodes(ReadRegNode.class)
@@ -161,9 +168,11 @@ public class GenerateLogicalRelocationPass extends Pass {
           for (var entry : immediates.get(format).entrySet()) {
             if (entry.getValue() == DetectImmediatePass.FieldUsage.IMMEDIATE) {
               var field = entry.getKey();
-
+              var updateFunction =
+                  BitMaskFunctionGenerator.generateUpdateFunction(format, field);
               relocations.add(
-                  new LogicalRelocation(LogicalRelocation.Kind.RELATIVE, field, format));
+                  new LogicalRelocation(LogicalRelocation.Kind.RELATIVE, field, format,
+                      updateFunction));
             }
           }
           return relocations.stream();
