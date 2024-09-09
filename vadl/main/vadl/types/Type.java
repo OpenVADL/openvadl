@@ -33,7 +33,7 @@ public abstract class Type {
     return other == this;
   }
 
-  final public boolean isData() {
+  public final boolean isData() {
     return this instanceof DataType;
   }
 

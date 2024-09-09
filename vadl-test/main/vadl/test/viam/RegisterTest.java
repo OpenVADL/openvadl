@@ -433,10 +433,10 @@ public class RegisterTest extends AbstractTest {
       if (constraintIndex != null) {
         var ifNode = getSingleNode(instr.behavior(), IfNode.class);
         var condMatcher = new BuiltInMatcher(BuiltInTable.EQU,
-            (node) -> getSingleLeafNode(node, ConstantNode.class).constant().asVal().intValue() ==
-                index,
-            (node) -> getSingleLeafNode(node, ConstantNode.class).constant().asVal().intValue() ==
-                constraintIndex
+            (node) -> getSingleLeafNode(node, ConstantNode.class).constant().asVal().intValue()
+                == index,
+            (node) -> getSingleLeafNode(node, ConstantNode.class).constant().asVal().intValue()
+                == constraintIndex
         );
         assertTrue(condMatcher.matches(ifNode.condition()), "was " + ifNode.condition());
 
@@ -463,10 +463,10 @@ public class RegisterTest extends AbstractTest {
       if (constraintIndex != null) {
         var selectNode = getSingleNode(instr.behavior(), SelectNode.class);
         var condMatcher = new BuiltInMatcher(BuiltInTable.EQU,
-            (node) -> getSingleLeafNode(node, ConstantNode.class).constant().asVal().intValue() ==
-                index,
-            (node) -> getSingleLeafNode(node, ConstantNode.class).constant().asVal().intValue() ==
-                constraintIndex
+            (node) -> getSingleLeafNode(node, ConstantNode.class).constant().asVal().intValue()
+                == index,
+            (node) -> getSingleLeafNode(node, ConstantNode.class).constant().asVal().intValue()
+                == constraintIndex
         );
         assertTrue(condMatcher.matches(selectNode.condition()), "was " + selectNode.condition());
         var trueMatcher = new ConstantValueMatcher(Constant.Value.of(0, Type.bits(32)));

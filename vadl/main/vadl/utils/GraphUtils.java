@@ -29,6 +29,16 @@ public class GraphUtils {
     return nodes.get(0);
   }
 
+  /**
+   * Find and ensures a single leaf node of the given node class with the given node
+   * as search root.
+   * If it could not find exactly one leaf or the leaf is not an instance of the given
+   * node class, this method will fail.
+   *
+   * @param node      the search root
+   * @param nodeClass the expected node class of the leaf
+   * @return the found leaf node
+   */
   public static <T extends Node> T getSingleLeafNode(Node node, Class<T> nodeClass) {
     var leaves = getLeafNodes(node).toList();
     node.ensure(leaves.size() == 1, "Expected exactly 1 leave node, but got %s", leaves.size());
@@ -37,6 +47,9 @@ public class GraphUtils {
     return nodeClass.cast(result);
   }
 
+  /**
+   * Finds all leaf nodes (nodes that have no inputs) with the given node as search root.
+   */
   public static Stream<Node> getLeafNodes(Node node) {
     var inputs = node.inputs().toList();
     if (inputs.isEmpty()) {

@@ -19,6 +19,28 @@ import vadl.viam.graph.dependency.ReadRegNode;
 import vadl.viam.graph.dependency.WriteRegFileNode;
 import vadl.viam.graph.dependency.WriteRegNode;
 
+/**
+ * The Static Counter Access Resolving Pass adds a {@link Counter} reference to some
+ * register(-file) read/write nodes.
+ * Essentially it tries to mark nodes that access a {@link Counter} (mostly the program counter),
+ * so generators like the LCB can determine if the user intended a PC read/write or not
+ * (e.g. {@link WriteRegNode#staticCounterAccess()} returns the (nullable) counter that
+ * it writes to).
+ *
+ * <p>You might ask why we need this, as the user can use the {@code program counter} definition
+ * so it should always be clear if a node accesses the PC.
+ * However, users can also use alias definitions like
+ * {@code alias program counter PC: Regs = X(31)}, which
+ * means that the program counter is one register in the register file {@code X}.
+ * Now giving a {@link WriteRegFileNode} in a behavior, in general, we cannot determine
+ * if the node writes the {@code PC} or not (e.g. if the index comes from a format field).
+ * So most generators (such as the simulator) must add runtime checks to know if this node
+ * actually writes to the PC.
+ * However, in some cases we can statically know if the write-node writes the PC, because
+ * of constant evaluation or because the user wrote {@code PC := ...}.
+ * These two cases come down to the same, and this is exactly what this pass is doing.
+ * It finds nodes that access the counter and adds a marker to such nodes.
+ */
 public class StaticCounterAccessResolvingPass extends Pass {
 
   public StaticCounterAccessResolvingPass(GeneralConfiguration configuration) {
@@ -34,12 +56,11 @@ public class StaticCounterAccessResolvingPass extends Pass {
   public @Nullable Object execute(PassResults passResults, Specification viam)
       throws IOException {
 
+    // TODO: Refactor this as soon as we only have a single ISA per specification
     var pcs = viam.isas()
         .map(InstructionSetArchitecture::pc)
         .distinct()
         .toList();
-
-    // TODO: Refactor this as soon as we only have a single ISA per specification
     viam.ensure(pcs.size() <= 1,
         "Only a single PC must be used per specification. Couldn't derive which one to use from %s",
         pcs);
@@ -79,8 +100,8 @@ public class StaticCounterAccessResolvingPass extends Pass {
             // we set the static counter access field of the read node
             read.setStaticCounterAccess(regCounter);
 
-          } else if (node instanceof WriteRegNode write &&
-              write.register() == regCounter.registerRef()) {
+          } else if (node instanceof WriteRegNode write
+              && write.register() == regCounter.registerRef()) {
             // if the node is a write and
             // the register file matches the register file of the counter
             // we set the static counter access field of the write node
@@ -118,7 +139,6 @@ public class StaticCounterAccessResolvingPass extends Pass {
             // and the value of the address is the same as the one of the counter's index
             // we set the static counter access field of the write node
             write.setStaticCounterAccess(fileCounter);
-
           }
         });
   }
