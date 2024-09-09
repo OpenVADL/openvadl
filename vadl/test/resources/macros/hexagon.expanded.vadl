@@ -1,0 +1,4751 @@
+instruction set architecture QDSP6 = {
+  using Byte = Bits<8>
+  using Half = Bits<16>
+  using Word = Bits<32>
+  using Double = Bits<64>
+  using Address = Word
+  using UByte = UInt<8>
+  using UHalf = UInt<16>
+  using UWord = UInt<32>
+  using UDouble = UInt<64>
+  using SByte = SInt<8>
+  using SHalf = SInt<16>
+  using SWord = SInt<32>
+  using SDouble = SInt<64>
+  using Index = Bits<5>
+  using PredicateIndex = Bits<2>
+
+  [littleEndian ]
+  memory MEM: Address -> Byte
+
+  register file R: Index -> Word
+
+  alias register SP : Word = R(29)
+  alias register FP : Word = R(30)
+  alias register LR : Word = R(31)
+
+  format USRFormat: Word =
+  { unimplemented	 [31..1]
+  , OVF	 [0]
+  }
+
+  constant C_INDEX_P: Index = 4
+  constant C_INDEX_PC: Index = 9
+
+  register file C: Index -> Word
+
+  alias register SA0 = C(0)
+  alias register LC0 = C(1)
+  alias register SA1 = C(2)
+  alias register LC1 = C(3)
+  alias register M0 = C(6)
+  alias register M1 = C(7)
+  alias register USR : USRFormat = C(8)
+  alias register UGP = C(10)
+  alias register GP = C(11)
+  alias register CS0 = C(12)
+  alias register CS1 = C(13)
+  alias register UPCYCLELO = C(14)
+  alias register UPCYCLEHI = C(15)
+  alias register FRAMELIMIT = C(16)
+  alias register FRAMEKEY = C(17)
+  alias register PKTCOUNTLO = C(18)
+  alias register PKTCOUNTHI = C(19)
+  alias register UTIMERLO = C(30)
+  alias register UTIMERHI = C(31)
+
+  [next ]
+  group counter PC: Address
+
+  function AsmR(reg : Index) -> String = ("R", decimal(reg))
+  function AsmRR(reg : Index) -> String = ("R", decimal((reg + 1)), ":", decimal(reg))
+  function AsmC(reg : Index) -> String = ("C", decimal(reg))
+  function AsmCC(reg : Index) -> String = ("C", decimal((reg + 1)), ":", decimal(reg))
+  function AsmP(reg : PredicateIndex) -> String = ("P", decimal(reg))
+  function AsmImmU(v : UWord) -> String = ("#", decimal(v), ")")
+  function AsmImmUX(v : UWord) -> String = ("##", decimal(v), ")")
+  function AsmImmS(v : SWord) -> String = ("#", decimal(v), ")")
+  function AsmImmSX(v : SWord) -> String = ("##", decimal(v), ")")
+  function AsmImmextS(v : Word) -> String = ("immext(#", decimal(v), ")")
+  function AsmImmextU(v : Word) -> String = ("immext(#", decimal(v), ")")
+  function AsmAddrAbsSet(reg : Index, imm6 : UInt<6>) -> String = ("(", AsmR(reg), "=#", decimal(imm6), ")")
+  function AsmAddrGPRel(imm16 : UInt<16>) -> String = ("(gp+#", decimal(imm16), ")")
+  function AsmAddrRegRel(reg : Index, imm11 : SInt<11>) -> String = ("(", AsmR(reg), "+#", decimal(imm11), ")")
+  function AsmPred(reg : PredicateIndex, neg : Bool, dotnew : Bool) -> String = ("if(", if neg then
+  "!" as String
+else
+  "" as String, AsmP(reg), if dotnew then
+  ".new" as String
+else
+  "" as String, ")")
+
+  format PFormat: Word =
+  { P3 : Byte
+  , P2 : Byte
+  , P1 : Byte
+  , P0 : Byte
+  }
+
+  [read partial ]
+  [write partial ]
+  register P: PFormat
+
+  function testpred(reg : PredicateIndex) -> Bool =
+    match reg with
+      { 0 => (P.P0(0) = 1)
+      , 1 => (P.P1(0) = 1)
+      , 2 => (P.P2(0) = 1)
+      , _ => (P.P3(0) = 1)
+      }
+
+
+  process Pset(reg : PredicateIndex, val : Byte) =
+    {
+match reg with
+        { 0 => P.P0 := val
+
+        , 3 => P.P1 := val
+
+        , 3 => P.P2 := val
+
+        , 3 => P.P3 := val
+
+        }
+    }
+
+
+  function Pget(reg : PredicateIndex) -> Byte =
+    match reg with
+      { 0 => P.P0
+      , 1 => P.P1
+      , 2 => P.P2
+      , _ => P.P3
+      }
+
+  function extendU(imm : UWord) -> UWord = imm
+  function extendS(imm : SWord) -> SWord = imm
+  function extendUExtender(imm : UWord, extender : Bits<26>) -> UWord = (extender, imm as Bits<6>)
+  function extendSExtender(imm : SWord, extender : Bits<26>) -> SWord = (extender, imm as Bits<6>)
+  function extendR2(imm : SWord) -> SWord = scaledImmR2(imm)
+  function extendR2Extender(imm : SWord, extender : Bits<26>) -> SWord = align32((extender, imm as Bits<6>))
+  function toPValue(v : Bool) -> Byte =
+    if v then
+      0xff
+    else
+      0x00
+  function align32(v : SWord) -> SWord = ((v >> 2) << 2)
+  function scaledImmR2(imm : SWord) -> SWord = (imm << 2)
+  function scaledImmU(imm : SWord, scale : UInt<2>) -> SWord = (imm << scale)
+  function scaledImmS(imm : SWord, scale : UInt<2>) -> SWord = (imm << scale)
+  function frameScramble(addr : Address) -> Address = VADL::xor(addr, FRAMEKEY)
+  function frameUnscramble(addr : Address) -> Address = VADL::xor(addr, FRAMEKEY)
+
+  enumeration MemoryAccessType : Bits<2> =
+    { Byte = 0b00
+    , Half = 0b01
+    , Word = 0b10
+    , Double = 0b11
+    }
+
+  format StandardFormat: Word =
+  { iclass	 [31..28]
+  , parse	 [15..14]
+  , majop	 [27..24]
+  , minop	 [23..21]
+  , s5	 [20..16]
+  , c	 [13]
+  , t5	 [12..8]
+  , d5	 [4..0]
+  }
+  format TransferImmHalfFormat: Word =
+  { iclass	 [31..28]
+  , rs	 [27]
+  , majop	 [26..24]
+  , minop	 [21]
+  , parse	 [15..14]
+  , imm	 [23..22, 13..0]
+  , x5	 [20..16]
+  , s5 = x5
+  , d5 = x5
+  , immU = imm as UInt<16>
+  }
+  format TransferImmFormat: Word =
+  { iclass	 [31..28]
+  , rs	 [27]
+  , majop	 [26..24]
+  , parse	 [15..14]
+  , imm	 [23..22, 20..16, 13..5]
+  , d5	 [4..0]
+  , immS = imm as UInt<16>
+  }
+  format TransferImmXFormat: Double =
+  { iclassX	 [31..28]
+  , parseX	 [15..14]
+  , immX	 [27..16, 13..0]
+  , iclass	 [63..60]
+  , rs	 [59]
+  , majop	 [58..56]
+  , parse	 [47..46]
+  , imm	 [55..54, 52..48, 45..37]
+  , d5	 [36..32]
+  , immS = extendSExtender(imm, immX)
+  }
+
+  [operation ALU32 ]
+  instruction TransferImmLow : TransferImmHalfFormat =   {
+    R(x5) := ((R(x5) & 0xFFFF0000) | immU as UInt<32>)
+  }
+
+
+  encoding TransferImmLow =
+  { iclass = 0b0111
+  , rs = 0b0
+  , majop = 0b001
+  , minop = 0b1
+  }
+
+  assembly TransferImmLow = ("", AsmR(x5), ".L", " = ", ("#", decimal(immU)))
+
+  [operation ALU32 ]
+  instruction TransferImmHigh : TransferImmHalfFormat =   {
+    R(x5) := ((R(x5) & 0x0000FFFF) | (immU as UInt<32> << 16))
+  }
+
+
+  encoding TransferImmHigh =
+  { iclass = 0b0111
+  , rs = 0b0
+  , majop = 0b010
+  , minop = 0b1
+  }
+
+  assembly TransferImmHigh = ("", AsmR(x5), ".H", " = ", ("#", decimal(immU)))
+
+  [operation ALU32 ]
+  instruction TransferImm : TransferImmFormat =   {
+    R(d5) := immS
+  }
+
+
+  encoding TransferImm =
+  { iclass = 0b0111
+  , rs = 0b1
+  , majop = 0b000
+  }
+
+  assembly TransferImm = ("", AsmR(d5), "", " = ", ("#", decimal(immS)))
+
+  [operation ALU32 ]
+  instruction TransferImmX : TransferImmXFormat =   {
+    R(d5) := immS
+  }
+
+
+  encoding TransferImmX =
+  { iclass = 0b0111
+  , rs = 0b1
+  , majop = 0b000
+  , iclassX = 0
+  }
+
+  assembly TransferImmX = (AsmImmextU(immX), AsmR(d5), "", " = ", ("#", decimal(immS)))
+
+  [operation ALU32 ]
+  instruction TransferReg : StandardFormat =   {
+    R(d5) := R(s5)
+  }
+
+
+  encoding TransferReg =
+  { iclass = 0b0111
+  , c = 0b0
+  , majop = 0b0000
+  , minop = 0b011
+  }
+
+  assembly TransferReg = ("", AsmR(d5), "", " = ", AsmR(s5))
+
+  format AddImmFormat: Word =
+  { iclass	 [31..28]
+  , parse	 [15..14]
+  , imm	 [27..21, 13..5]
+  , s5	 [20..16]
+  , d5	 [4..0]
+  }
+  format ALUImmFormat: Word =
+  { iclass	 [31..28]
+  , parse	 [15..14]
+  , majop	 [27..24]
+  , minop	 [23..22]
+  , imm	 [21, 13..5]
+  , s5	 [20..16]
+  , d5	 [4..0]
+  }
+  format ALURegFormat: Word =
+  { iclass	 [31..28]
+  , parse	 [15..14]
+  , p	 [27]
+  , majop	 [26..24]
+  , minop	 [23..21]
+  , s5	 [20..16]
+  , t5	 [12..8]
+  , d5	 [4..0]
+  }
+
+  [operation ALU32 ]
+  instruction AddImm : AddImmFormat =   {
+    R(d5) := VADL::add(R(s5), extendS(imm))
+  }
+
+
+  encoding AddImm =
+  { iclass = 0b1011
+  }
+
+  assembly AddImm = (AsmR(d5), " = ", "op", "(", (AsmR(s5), ",#", decimal(imm)), ")")
+
+  [operation ALU32 ]
+  instruction AddReg : ALURegFormat =   {
+    R(d5) := VADL::add(R(s5), R(t5))
+  }
+
+
+  encoding AddReg =
+  { iclass = 0b1111
+  , p = 0
+  , majop = 0b011
+  , minop = 0b000
+  }
+
+  assembly AddReg = (AsmR(d5), " = ", "op", "(", (AsmR(s5), ",", AsmR(t5)), ")")
+
+  [operation ALU32 ]
+  instruction SubImm : ALUImmFormat =   {
+    R(d5) := VADL::sub(extendS(imm), R(s5))
+  }
+
+
+  encoding SubImm =
+  { iclass = 0b0111
+  , majop = 0b0110
+  , minop = 0b01
+  }
+
+  assembly SubImm = (AsmR(d5), " = ", "op", "(", (decimal(imm), ",#", AsmR(s5)), ")")
+
+  [operation ALU32 ]
+  instruction SubReg : ALURegFormat =   {
+    R(d5) := VADL::sub(R(t5), R(s5))
+  }
+
+
+  encoding SubReg =
+  { iclass = 0b1111
+  , p = 0
+  , majop = 0b011
+  , minop = 0b001
+  }
+
+  assembly SubReg = (AsmR(d5), " = ", "op", "(", (AsmR(t5), ",", AsmR(s5)), ")")
+
+  [operation ALU32 ]
+  instruction AndReg : StandardFormat =   {
+    R(d5) := VADL::and(R(s5), R(t5))
+  }
+
+
+  encoding AndReg =
+  { iclass = 0b1111
+  , majop = 0b0001
+  , minop = 0b000
+  }
+
+  assembly AndReg = (AsmR(d5), " = ", "op", "(", (AsmR(s5), ",", AsmR(t5)), ")")
+
+  [operation ALU32 ]
+  instruction OrReg : StandardFormat =   {
+    R(d5) := VADL::or(R(s5), R(t5))
+  }
+
+
+  encoding OrReg =
+  { iclass = 0b1111
+  , majop = 0b0001
+  , minop = 0b001
+  }
+
+  assembly OrReg = (AsmR(d5), " = ", "op", "(", (AsmR(s5), ",", AsmR(t5)), ")")
+
+  [operation ALU32 ]
+  instruction XorReg : StandardFormat =   {
+    R(d5) := VADL::xor(R(s5), R(t5))
+  }
+
+
+  encoding XorReg =
+  { iclass = 0b1111
+  , majop = 0b0001
+  , minop = 0b011
+  }
+
+  assembly XorReg = (AsmR(d5), " = ", "op", "(", (AsmR(s5), ",", AsmR(t5)), ")")
+
+  [operation ALU32 ]
+  instruction AndNReg : StandardFormat =   {
+    R(d5) := VADL::and(VADL::not(R(s5)), R(t5))
+  }
+
+
+  encoding AndNReg =
+  { iclass = 0b1111
+  , majop = 0b0001
+  , minop = 0b100
+  }
+
+  assembly AndNReg = (AsmR(d5), " = ", "op", "(", (AsmR(t5), ",~", AsmR(s5)), ")")
+
+  [operation ALU32 ]
+  instruction OrNReg : StandardFormat =   {
+    R(d5) := VADL::or(VADL::not(R(s5)), R(t5))
+  }
+
+
+  encoding OrNReg =
+  { iclass = 0b1111
+  , majop = 0b0001
+  , minop = 0b101
+  }
+
+  assembly OrNReg = (AsmR(d5), " = ", "op", "(", (AsmR(t5), ",~", AsmR(s5)), ")")
+
+  [operation ALU32 ]
+  instruction AndImm : ALUImmFormat =   {
+    R(d5) := VADL::and(R(s5), extendS(imm))
+  }
+
+
+  encoding AndImm =
+  { iclass = 0b0111
+  , majop = 0b0110
+  , minop = 0b00
+  }
+
+  assembly AndImm = (AsmR(d5), " = ", "op", "(", (AsmR(s5), ",#", decimal(imm)), ")")
+
+  [operation ALU32 ]
+  instruction OrImm : ALUImmFormat =   {
+    R(d5) := VADL::or(R(s5), extendS(imm))
+  }
+
+
+  encoding OrImm =
+  { iclass = 0b0111
+  , majop = 0b0110
+  , minop = 0b10
+  }
+
+  assembly OrImm = (AsmR(d5), " = ", "op", "(", (AsmR(s5), ",#", decimal(imm)), ")")
+
+  [operation ALU32 ]
+  instruction Nop : StandardFormat =   {
+  }
+
+
+  encoding Nop =
+  { iclass = 0b0111
+  , majop = 0b1111
+  }
+
+  assembly Nop = ("nop")
+
+  format CmpImmFormat: Word =
+  { iclass	 [31..28]
+  , parse	 [15..14]
+  , rs	 [27]
+  , majop	 [26..24]
+  , minop	 [23..22]
+  , neg	 [4]
+  , op	 [3..2]
+  , s5	 [20..16]
+  , d2	 [1..0]
+  , imm	 [21, 13..5]
+  , immS = imm as SWord
+  }
+  format CmpImmUFormat: Word =
+  { iclass	 [31..28]
+  , parse	 [15..14]
+  , rs	 [27]
+  , majop	 [26..24]
+  , minop	 [23..21]
+  , neg	 [4]
+  , op	 [3..2]
+  , s5	 [20..16]
+  , d2	 [1..0]
+  , imm	 [13..5]
+  , immU = imm as UWord
+  }
+  format CmpRegFormat: Word =
+  { iclass	 [31..28]
+  , parse	 [15..14]
+  , p	 [27]
+  , majop	 [26..24]
+  , minop	 [22..21]
+  , neg	 [4]
+  , op	 [3..2]
+  , s5	 [20..16]
+  , t5	 [12..8]
+  , d2	 [1..0]
+  }
+
+  [operation ALU32_PRED_WRITING ]
+  instruction CmpImmEq : CmpImmFormat =   {
+    let val = toPValue((R(s5) = extendS(immS))) in
+      {
+        Pset(d2, val)      }
+  }
+
+
+  encoding CmpImmEq =
+  { op = 0b00
+  , iclass = 0b0111
+  , rs = 0
+  , majop = 0b101
+  , minop = 0b00
+  , neg = 0b0
+  }
+
+  assembly CmpImmEq = (AsmP(d2), "=", ("cmp.eq(", AsmR(s5), ",#", decimal(immS), ")"))
+
+  [operation ALU32_PRED_WRITING ]
+  instruction CmpImmNeq : CmpImmFormat =   {
+    let val = toPValue(!(R(s5) = extendS(immS))) in
+      {
+        Pset(d2, val)      }
+  }
+
+
+  encoding CmpImmNeq =
+  { op = 0b00
+  , iclass = 0b0111
+  , rs = 0
+  , majop = 0b101
+  , minop = 0b00
+  , neg = 0b1
+  }
+
+  assembly CmpImmNeq = (AsmP(d2), "=", ("!cmp.eq(", AsmR(s5), ",#", decimal(immS), ")"))
+
+  [operation ALU32_PRED_WRITING ]
+  instruction CmpImmGt : CmpImmFormat =   {
+    let val = toPValue((R(s5) as SInt > extendS(immS))) in
+      {
+        Pset(d2, val)      }
+  }
+
+
+  encoding CmpImmGt =
+  { op = 0b00
+  , iclass = 0b0111
+  , rs = 0
+  , majop = 0b101
+  , minop = 0b01
+  , neg = 0b0
+  }
+
+  assembly CmpImmGt = (AsmP(d2), "=", ("cmp.gt(", AsmR(s5), ",#", decimal(immS), ")"))
+
+  [operation ALU32_PRED_WRITING ]
+  instruction CmpImmLte : CmpImmFormat =   {
+    let val = toPValue((!R(s5) as SInt > extendS(immS))) in
+      {
+        Pset(d2, val)      }
+  }
+
+
+  encoding CmpImmLte =
+  { op = 0b00
+  , iclass = 0b0111
+  , rs = 0
+  , majop = 0b101
+  , minop = 0b01
+  , neg = 0b1
+  }
+
+  assembly CmpImmLte = (AsmP(d2), "=", ("!cmp.gt(", AsmR(s5), ",#", decimal(immS), ")"))
+
+  [operation ALU32_PRED_WRITING ]
+  instruction CmpImmGtu : CmpImmUFormat =   {
+    let val = toPValue((R(s5) as UInt > extendU(immU))) in
+      {
+        Pset(d2, val)      }
+  }
+
+
+  encoding CmpImmGtu =
+  { op = 0b00
+  , iclass = 0b0111
+  , rs = 0
+  , majop = 0b101
+  , minop = 0b100
+  , neg = 0b0
+  }
+
+  assembly CmpImmGtu = (AsmP(d2), "=", ("cmp.gtu(", AsmR(s5), ",#", decimal(immU), ")"))
+
+  [operation ALU32_PRED_WRITING ]
+  instruction CmpImmLteu : CmpImmUFormat =   {
+    let val = toPValue((R(s5) as UInt > extendU(immU))) in
+      {
+        Pset(d2, val)      }
+  }
+
+
+  encoding CmpImmLteu =
+  { op = 0b00
+  , iclass = 0b0111
+  , rs = 0
+  , majop = 0b101
+  , minop = 0b100
+  , neg = 0b1
+  }
+
+  assembly CmpImmLteu = (AsmP(d2), "=", ("!cmp.gtu(", AsmR(s5), ",#", decimal(immU), ")"))
+
+  [operation ALU32_PRED_WRITING ]
+  instruction CmpRegEq : CmpRegFormat =   {
+    let val = toPValue((R(s5) = R(t5))) in
+      {
+        Pset(d2, val)      }
+  }
+
+
+  encoding CmpRegEq =
+  { op = 0b00
+  , iclass = 0b1111
+  , p = 0
+  , majop = 0b010
+  , minop = 0b00
+  , neg = 0b0
+  }
+
+  assembly CmpRegEq = (AsmP(d2), "=", ("cmp.eq(", AsmR(s5), ",", AsmR(t5), ")"))
+
+  [operation ALU32_PRED_WRITING ]
+  instruction CmpRegNeq : CmpRegFormat =   {
+    let val = toPValue(!(R(s5) = R(t5))) in
+      {
+        Pset(d2, val)      }
+  }
+
+
+  encoding CmpRegNeq =
+  { op = 0b00
+  , iclass = 0b1111
+  , p = 0
+  , majop = 0b010
+  , minop = 0b00
+  , neg = 0b1
+  }
+
+  assembly CmpRegNeq = (AsmP(d2), "=", ("!cmp.eq(", AsmR(s5), ",", AsmR(t5), ")"))
+
+  [operation ALU32_PRED_WRITING ]
+  instruction CmpRegGt : CmpRegFormat =   {
+    let val = toPValue((R(s5) as SInt > R(t5) as SInt)) in
+      {
+        Pset(d2, val)      }
+  }
+
+
+  encoding CmpRegGt =
+  { op = 0b00
+  , iclass = 0b1111
+  , p = 0
+  , majop = 0b010
+  , minop = 0b10
+  , neg = 0b0
+  }
+
+  assembly CmpRegGt = (AsmP(d2), "=", ("cmp.gt(", AsmR(s5), ",", AsmR(t5), ")"))
+
+  [operation ALU32_PRED_WRITING ]
+  instruction CmpRegLte : CmpRegFormat =   {
+    let val = toPValue(!(R(s5) as SInt > R(t5) as SInt)) in
+      {
+        Pset(d2, val)      }
+  }
+
+
+  encoding CmpRegLte =
+  { op = 0b00
+  , iclass = 0b1111
+  , p = 0
+  , majop = 0b010
+  , minop = 0b10
+  , neg = 0b1
+  }
+
+  assembly CmpRegLte = (AsmP(d2), "=", ("!cmp.gt(", AsmR(s5), ",", AsmR(t5), ")"))
+
+  [operation ALU32_PRED_WRITING ]
+  instruction CmpRegGtu : CmpRegFormat =   {
+    let val = toPValue((R(s5) as UInt > R(t5) as UInt)) in
+      {
+        Pset(d2, val)      }
+  }
+
+
+  encoding CmpRegGtu =
+  { op = 0b00
+  , iclass = 0b1111
+  , p = 0
+  , majop = 0b010
+  , minop = 0b11
+  , neg = 0b0
+  }
+
+  assembly CmpRegGtu = (AsmP(d2), "=", ("cmp.gtu(", AsmR(s5), ",", AsmR(t5), ")"))
+
+  [operation ALU32_PRED_WRITING ]
+  instruction CmpRegLteu : CmpRegFormat =   {
+    let val = toPValue(!(R(s5) as UInt > R(t5) as UInt)) in
+      {
+        Pset(d2, val)      }
+  }
+
+
+  encoding CmpRegLteu =
+  { op = 0b00
+  , iclass = 0b1111
+  , p = 0
+  , majop = 0b010
+  , minop = 0b11
+  , neg = 0b1
+  }
+
+  assembly CmpRegLteu = (AsmP(d2), "=", ("!cmp.gtu(", AsmR(s5), ",", AsmR(t5), ")"))
+
+  format CombineRegImmFormat: Word =
+  { iclass	 [31..28]
+  , parse	 [15..14]
+  , rs	 [27]
+  , majop	 [26..24]
+  , minop	 [22..21]
+  , s5	 [20..16]
+  , op	 [13]
+  , imm	 [12..5]
+  , d5	 [4..0]
+  , immS = imm as SWord
+  }
+  format CombineImmFormat: Word =
+  { iclass	 [31..28]
+  , parse	 [15..14]
+  , rs	 [27]
+  , majop	 [26..24]
+  , minop	 [23]
+  , immlow	 [22..16, 13]
+  , immhigh	 [12..5]
+  , d5	 [4..0]
+  , immhighS = immhigh as SWord
+  , immlowS = immlow as SWord
+  , immlowU = immlow(5..0) as UWord
+  }
+  format CombineRegWordFormat: Word =
+  { iclass	 [31..28]
+  , parse	 [15..14]
+  , p	 [27]
+  , majop	 [26..24]
+  , minop	 [23..21]
+  , s5	 [20..16]
+  , t5	 [12..8]
+  , d5	 [4..0]
+  }
+
+  [operation ALU32 ]
+  instruction CombineDoubleRegImm : CombineRegImmFormat =   {
+    R(d5) := extendS(immS)
+    R((d5 + 1)) := R(rs)
+  }
+
+
+  encoding CombineDoubleRegImm =
+  { iclass = 0b0111
+  , rs = 0
+  , majop = 0b011
+  , minop = 0b00
+  , op = 1
+  }
+
+  assembly CombineDoubleRegImm = (AsmRR(d5), "=combine(", (AsmR(rs), ",#", decimal(immS)), ")")
+
+  [operation ALU32 ]
+  instruction CombineDoubleImmReg : CombineRegImmFormat =   {
+    R(d5) := R(rs)
+    R((d5 + 1)) := extendS(immS)
+  }
+
+
+  encoding CombineDoubleImmReg =
+  { iclass = 0b0111
+  , rs = 0
+  , majop = 0b011
+  , minop = 0b01
+  , op = 1
+  }
+
+  assembly CombineDoubleImmReg = (AsmRR(d5), "=combine(", ("#", decimal(immS), ",", AsmR(rs)), ")")
+
+  [operation ALU32 ]
+  instruction CombineDoubleImmSS : CombineImmFormat =   {
+    R(d5) := immlowS
+    R((d5 + 1)) := extendS(immhighS)
+  }
+
+
+  encoding CombineDoubleImmSS =
+  { iclass = 0b0111
+  , rs = 1
+  , majop = 0b100
+  , minop = 0b0
+  }
+
+  assembly CombineDoubleImmSS = (AsmRR(d5), "=combine(", ("#", decimal(immhighS), ",#", decimal(immlowS)), ")")
+
+  [operation ALU32 ]
+  instruction CombineDoubleImmSU : CombineImmFormat =   {
+    R(d5) := immlowU
+    R((d5 + 1)) := extendS(immhighS)
+  }
+
+
+  encoding CombineDoubleImmSU =
+  { iclass = 0b0111
+  , rs = 1
+  , majop = 0b100
+  , minop = 0b1
+  }
+
+  assembly CombineDoubleImmSU = (AsmRR(d5), "=combine(", ("#", decimal(immhighS), ",#", decimal(immlowU)), ")")
+
+  [operation ALU32 ]
+  instruction CombineWordRegHH : CombineRegWordFormat =   {
+    R(d5) := ((R(t5) >> 16) as Half, (R(s5) >> 16) as Half)
+  }
+
+
+  encoding CombineWordRegHH =
+  { iclass = 0b1111
+  , p = 0
+  , majop = 0b011
+  , minop = 0b100
+  }
+
+  assembly CombineWordRegHH = (AsmR(d5), "=", (AsmR(t5), ".H,", AsmR(s5), ".H"))
+
+  [operation ALU32 ]
+  instruction CombineWordRegHL : CombineRegWordFormat =   {
+    R(d5) := ((R(t5) >> 16) as Half, R(s5) as Half)
+  }
+
+
+  encoding CombineWordRegHL =
+  { iclass = 0b1111
+  , p = 0
+  , majop = 0b011
+  , minop = 0b101
+  }
+
+  assembly CombineWordRegHL = (AsmR(d5), "=", (AsmR(t5), ".H,", AsmR(s5), ".L"))
+
+  [operation ALU32 ]
+  instruction CombineWordRegLH : CombineRegWordFormat =   {
+    R(d5) := (R(t5) as Half, (R(s5) >> 16) as Half)
+  }
+
+
+  encoding CombineWordRegLH =
+  { iclass = 0b1111
+  , p = 0
+  , majop = 0b011
+  , minop = 0b110
+  }
+
+  assembly CombineWordRegLH = (AsmR(d5), "=", (AsmR(t5), ".L,", AsmR(s5), ".H"))
+
+  [operation ALU32 ]
+  instruction CombineWordRegLL : CombineRegWordFormat =   {
+    R(d5) := (R(t5) as Half, R(s5) as Half)
+  }
+
+
+  encoding CombineWordRegLL =
+  { iclass = 0b1111
+  , p = 0
+  , majop = 0b011
+  , minop = 0b111
+  }
+
+  assembly CombineWordRegLL = (AsmR(d5), "=", (AsmR(t5), ".L,", AsmR(s5), ".L"))
+
+  format AddPredImmFormat: Word =
+  { iclass	 [31..28]
+  , parse	 [15..14]
+  , rs	 [27]
+  , majop	 [26..24]
+  , ps	 [23]
+  , u2	 [22..21]
+  , s5	 [20..16]
+  , dn	 [13]
+  , imm	 [12..5]
+  , d5	 [4..0]
+  , immS = imm as SInt
+  }
+  format ALUPredRegFormat: Word =
+  { iclass	 [31..28]
+  , parse	 [15..14]
+  , p	 [27]
+  , majop	 [26..24]
+  , minop	 [23, 21]
+  , s5	 [20..16]
+  , dn	 [13]
+  , t5	 [12..8]
+  , ps	 [7]
+  , u2	 [6..5]
+  , d5	 [4..0]
+  }
+
+  [operation ALU32 ]
+  instruction AddImmPredPos : AddPredImmFormat =   {
+    R(d5) := VADL::add(R(s5), extendS(immS))
+  }
+
+
+  encoding AddImmPredPos =
+  { iclass = 0b0111
+  , rs = 0
+  , majop = 0b100
+  , ps = 0
+  , dn = 0
+  }
+
+  assembly AddImmPredPos = (AsmPred(u2, false, false), AsmR(d5), " = ", "add", "(", (AsmR(s5), ",#", decimal(immS)), ")")
+
+  [operation ALU32 ]
+  instruction AddImmPredNeg : AddPredImmFormat =   {
+    R(d5) := VADL::add(R(s5), extendS(immS))
+  }
+
+
+  encoding AddImmPredNeg =
+  { iclass = 0b0111
+  , rs = 0
+  , majop = 0b100
+  , ps = 1
+  , dn = 0
+  }
+
+  assembly AddImmPredNeg = (AsmPred(u2, true, false), AsmR(d5), " = ", "add", "(", (AsmR(s5), ",#", decimal(immS)), ")")
+
+  [operation ALU32 ]
+  instruction AddRegPredPos : ALUPredRegFormat =   {
+    R(d5) := VADL::add(R(s5), R(t5))
+  }
+
+
+  encoding AddRegPredPos =
+  { iclass = 0b1111
+  , p = 1
+  , majop = 0b011
+  , minop = 0b00
+  , dn = 0
+  , ps = 0
+  }
+
+  assembly AddRegPredPos = (AsmPred(u2, false, false), AsmR(d5), " = ", "add", "(", (AsmR(s5), ",", AsmR(t5)), ")")
+
+  [operation ALU32 ]
+  instruction AddRegPredNeg : ALUPredRegFormat =   {
+    R(d5) := VADL::add(R(s5), R(t5))
+  }
+
+
+  encoding AddRegPredNeg =
+  { iclass = 0b1111
+  , p = 1
+  , majop = 0b011
+  , minop = 0b00
+  , dn = 0
+  , ps = 1
+  }
+
+  assembly AddRegPredNeg = (AsmPred(u2, true, false), AsmR(d5), " = ", "add", "(", (AsmR(s5), ",", AsmR(t5)), ")")
+
+  [operation ALU32 ]
+  instruction SubRegPredPos : ALUPredRegFormat =   {
+    R(d5) := VADL::sub(R(t5), R(s5))
+  }
+
+
+  encoding SubRegPredPos =
+  { iclass = 0b1111
+  , p = 1
+  , majop = 0b011
+  , minop = 0b01
+  , dn = 0
+  , ps = 0
+  }
+
+  assembly SubRegPredPos = (AsmPred(u2, false, false), AsmR(d5), " = ", "sub", "(", (AsmR(t5), ",", AsmR(s5)), ")")
+
+  [operation ALU32 ]
+  instruction SubRegPredNeg : ALUPredRegFormat =   {
+    R(d5) := VADL::sub(R(t5), R(s5))
+  }
+
+
+  encoding SubRegPredNeg =
+  { iclass = 0b1111
+  , p = 1
+  , majop = 0b011
+  , minop = 0b01
+  , dn = 0
+  , ps = 1
+  }
+
+  assembly SubRegPredNeg = (AsmPred(u2, true, false), AsmR(d5), " = ", "sub", "(", (AsmR(t5), ",", AsmR(s5)), ")")
+
+  function getCIsa(idx : Index) -> Word =
+    match idx with
+      { C_INDEX_P => P
+      , C_INDEX_PC => PC
+      , _ => C(idx)
+      }
+
+
+  [operation CR ]
+  instruction TransferCR : StandardFormat =   {
+    {
+      let val = R(s5) in
+        if (d5 = C_INDEX_P) then
+          {
+            P := val
+          }
+
+        else
+          if (d5 != C_INDEX_PC) then
+            C(d5) := val
+
+
+    }
+  }
+
+
+  encoding TransferCR =
+  { iclass = 0b0110
+  , majop = 0b0010
+  , minop = 0b001
+  }
+
+  assembly TransferCR = (AsmC(d5), "=", AsmR(s5))
+
+  [operation CR ]
+  instruction TransferCCRR : StandardFormat =   {
+    {
+      let valLo = R(s5) in
+        let valHi = R((s5 + 1)) in
+          if (d5 = C_INDEX_P) then
+            {
+              P := valLo
+              C((d5 + 1)) := valHi
+            }
+
+          else
+            if ((d5 + 1) != C_INDEX_PC) then
+              {
+                C(d5) := valLo
+                C((d5 + 1)) := valHi
+              }
+
+
+    }
+  }
+
+
+  encoding TransferCCRR =
+  { iclass = 0b0110
+  , majop = 0b0011
+  , minop = 0b001
+  }
+
+  assembly TransferCCRR = (AsmCC(d5), "=", AsmRR(s5))
+
+  [operation CR ]
+  instruction TransferRRCC : StandardFormat =   {
+    R(d5) := getCIsa(s5)
+    R((d5 + 1)) := getCIsa((s5 + 1))
+  }
+
+
+  encoding TransferRRCC =
+  { iclass = 0b0110
+  , majop = 0b1000
+  , minop = 0b000
+  }
+
+  assembly TransferRRCC = (AsmRR(d5), "=", AsmCC(s5))
+
+  [operation CR ]
+  instruction TransferRC : StandardFormat =   {
+    R(d5) := getCIsa(s5)
+  }
+
+
+  encoding TransferRC =
+  { iclass = 0b0110
+  , majop = 0b1010
+  , minop = 0b000
+  }
+
+  assembly TransferRC = (AsmR(d5), "=", AsmC(s5))
+
+  format AddRegPCFormat: Word =
+  { iclass	 [31..28]
+  , parse	 [15..14]
+  , op	 [27..16]
+  , imm	 [12..7]
+  , d5	 [4..0]
+  , immU = extendU(imm)
+  }
+  format AddRegPCXFormat: Double =
+  { iclassX	 [31..28]
+  , parseX	 [15..14]
+  , immX	 [27..16, 13..0]
+  , iclass	 [63..60]
+  , parse	 [47..46]
+  , op	 [59..48]
+  , imm	 [44..39]
+  , d5	 [36..32]
+  , immU = extendUExtender(imm, immX)
+  }
+
+  [operation CR ]
+  instruction AddRegPC : AddRegPCFormat =   {
+    R(d5) := (PC.current + immU)
+  }
+
+
+  encoding AddRegPC =
+  { iclass = 0b0110
+  , op = 0b101001001001
+  , iclass = 0b0110
+  }
+
+  assembly AddRegPC = ("", AsmR(d5), "=add(pc,", AsmImmU(immU), ")")
+
+  [operation CR ]
+  instruction AddRegPCX : AddRegPCXFormat =   {
+    R(d5) := (PC.current + immU)
+  }
+
+
+  encoding AddRegPCX =
+  { iclass = 0b0110
+  , op = 0b101001001001
+  , iclassX = 0
+  }
+
+  assembly AddRegPCX = (AsmImmextU(immX), AsmR(d5), "=add(pc,", AsmImmUX(immU), ")")
+
+  format LogicalPredFormat: Word =
+  { iclass	 [31..28]
+  , parse	 [15..14]
+  , opc	 [27..24, 13]
+  , op	 [23..20]
+  , s2	 [17..16]
+  , t2	 [9..8]
+  , u2	 [7..6]
+  , d2	 [1..0]
+  }
+
+  [operation CR23 ]
+  instruction LogicalPredAnd : LogicalPredFormat =   {
+    Pset(d2, VADL::and(Pget(t2), Pget(s2)))  }
+
+
+  encoding LogicalPredAnd =
+  { iclass = 0b0110
+  , opc = 0b10110
+  , op = 0b0000
+  }
+
+  assembly LogicalPredAnd = (AsmP(d2), "=", ("and(", AsmP(t2), ",", AsmP(s2), ")"))
+
+  [operation CR23 ]
+  instruction LogicalPredAndAnd : LogicalPredFormat =   {
+    Pset(d2, VADL::and(Pget(s2), VADL::and(Pget(t2), Pget(u2))))  }
+
+
+  encoding LogicalPredAndAnd =
+  { iclass = 0b0110
+  , opc = 0b10110
+  , op = 0b0001
+  }
+
+  assembly LogicalPredAndAnd = (AsmP(d2), "=", ("and(", AsmP(s2), ",and(", AsmP(t2), ",", AsmP(u2), "))"))
+
+  [operation CR23 ]
+  instruction LogicalPredOr : LogicalPredFormat =   {
+    Pset(d2, VADL::or(Pget(t2), Pget(s2)))  }
+
+
+  encoding LogicalPredOr =
+  { iclass = 0b0110
+  , opc = 0b10110
+  , op = 0b0010
+  }
+
+  assembly LogicalPredOr = (AsmP(d2), "=", ("or(", AsmP(t2), ",", AsmP(s2), ")"))
+
+  [operation CR23 ]
+  instruction LogicalPredAndOr : LogicalPredFormat =   {
+    Pset(d2, VADL::and(Pget(s2), VADL::or(Pget(t2), Pget(u2))))  }
+
+
+  encoding LogicalPredAndOr =
+  { iclass = 0b0110
+  , opc = 0b10110
+  , op = 0b0011
+  }
+
+  assembly LogicalPredAndOr = (AsmP(d2), "=", ("and(", AsmP(s2), ",or(", AsmP(t2), ",", AsmP(u2), "))"))
+
+  [operation CR23 ]
+  instruction LogicalPredXor : LogicalPredFormat =   {
+    Pset(d2, VADL::xor(Pget(s2), Pget(t2)))  }
+
+
+  encoding LogicalPredXor =
+  { iclass = 0b0110
+  , opc = 0b10110
+  , op = 0b0100
+  }
+
+  assembly LogicalPredXor = (AsmP(d2), "=", ("xor(", AsmP(s2), ",", AsmP(t2), ")"))
+
+  [operation CR23 ]
+  instruction LogicalPredOrAnd : LogicalPredFormat =   {
+    Pset(d2, VADL::or(Pget(s2), VADL::and(Pget(t2), Pget(u2))))  }
+
+
+  encoding LogicalPredOrAnd =
+  { iclass = 0b0110
+  , opc = 0b10110
+  , op = 0b0101
+  }
+
+  assembly LogicalPredOrAnd = (AsmP(d2), "=", ("or(", AsmP(s2), ",and(", AsmP(t2), ",", AsmP(u2), "))"))
+
+  [operation CR23 ]
+  instruction LogicalPredAndNot : LogicalPredFormat =   {
+    Pset(d2, VADL::and(Pget(t2), !Pget(s2)))  }
+
+
+  encoding LogicalPredAndNot =
+  { iclass = 0b0110
+  , opc = 0b10110
+  , op = 0b0110
+  }
+
+  assembly LogicalPredAndNot = (AsmP(d2), "=", ("and(", AsmP(t2), ",!", AsmP(s2), ")"))
+
+  [operation CR23 ]
+  instruction LogicalPredOrOr : LogicalPredFormat =   {
+    Pset(d2, VADL::or(Pget(s2), VADL::or(Pget(t2), Pget(u2))))  }
+
+
+  encoding LogicalPredOrOr =
+  { iclass = 0b0110
+  , opc = 0b10110
+  , op = 0b0111
+  }
+
+  assembly LogicalPredOrOr = (AsmP(d2), "=", ("or(", AsmP(s2), ",or(", AsmP(t2), ",", AsmP(u2), "))"))
+
+  [operation CR23 ]
+  instruction LogicalPredAndAndNot : LogicalPredFormat =   {
+    Pset(d2, VADL::and(Pget(s2), VADL::and(Pget(t2), VADL::not(Pget(u2)))))  }
+
+
+  encoding LogicalPredAndAndNot =
+  { iclass = 0b0110
+  , opc = 0b10110
+  , op = 0b1001
+  }
+
+  assembly LogicalPredAndAndNot = (AsmP(d2), "=", ("and(", AsmP(s2), ",and(", AsmP(t2), ",!", AsmP(u2), "))"))
+
+  [operation CR23 ]
+  instruction LogicalPredAndOrNot : LogicalPredFormat =   {
+    Pset(d2, VADL::and(Pget(s2), VADL::or(Pget(t2), VADL::not(Pget(u2)))))  }
+
+
+  encoding LogicalPredAndOrNot =
+  { iclass = 0b0110
+  , opc = 0b10110
+  , op = 0b1011
+  }
+
+  assembly LogicalPredAndOrNot = (AsmP(d2), "=", ("and(", AsmP(s2), ",or(", AsmP(t2), ",!", AsmP(u2), "))"))
+
+  [operation CR23 ]
+  instruction LogicalPredNot : LogicalPredFormat =   {
+    Pset(d2, VADL::not(Pget(s2)))  }
+
+
+  encoding LogicalPredNot =
+  { iclass = 0b0110
+  , opc = 0b10110
+  , op = 0b1100
+  }
+
+  assembly LogicalPredNot = (AsmP(d2), "=", ("not(", AsmP(s2), ")"))
+
+  [operation CR23 ]
+  instruction LogicalPredOrAndNot : LogicalPredFormat =   {
+    Pset(d2, VADL::or(Pget(s2), VADL::and(Pget(t2), VADL::not(Pget(u2)))))  }
+
+
+  encoding LogicalPredOrAndNot =
+  { iclass = 0b0110
+  , opc = 0b10110
+  , op = 0b1101
+  }
+
+  assembly LogicalPredOrAndNot = (AsmP(d2), "=", ("or(", AsmP(s2), ",and(", AsmP(t2), ",!", AsmP(u2), "))"))
+
+  [operation CR23 ]
+  instruction LogicalPredOrNot : LogicalPredFormat =   {
+    Pset(d2, VADL::or(Pget(t2), !Pget(s2)))  }
+
+
+  encoding LogicalPredOrNot =
+  { iclass = 0b0110
+  , opc = 0b10110
+  , op = 0b1110
+  }
+
+  assembly LogicalPredOrNot = (AsmP(d2), "=", ("or(", AsmP(t2), ",!", AsmP(s2), ")"))
+
+  [operation CR23 ]
+  instruction LogicalPredOrOrNot : LogicalPredFormat =   {
+    Pset(d2, VADL::or(Pget(s2), VADL::or(Pget(t2), VADL::not(Pget(u2)))))  }
+
+
+  encoding LogicalPredOrOrNot =
+  { iclass = 0b0110
+  , opc = 0b10110
+  , op = 0b1111
+  }
+
+  assembly LogicalPredOrOrNot = (AsmP(d2), "=", ("or(", AsmP(s2), ",or(", AsmP(t2), ",!", AsmP(u2), "))"))
+
+  format BranchRegFormat: Word =
+  { iclass	 [31..28]
+  , parse	 [15..14]
+  , op	 [27..21]
+  , u2	 [9, 8]
+  , s5	 [20..16]
+  , hintnew	 [12..11]
+  }
+
+  [operation JR ]
+  instruction CallReg : BranchRegFormat =   {
+    if true then
+      {
+        LR := PC.next
+        PC := R(s5)
+      }
+
+  }
+
+
+  encoding CallReg =
+  { iclass = 0b0101
+  , op = 0b0000101
+  }
+
+  assembly CallReg = ("", "callr ", AsmR(s5))
+
+  [operation JR ]
+  instruction CallRegPredPos : BranchRegFormat =   {
+    if testpred(u2) then
+      {
+        LR := PC.next
+        PC := R(s5)
+      }
+
+  }
+
+
+  encoding CallRegPredPos =
+  { iclass = 0b0101
+  , op = 0b0001000
+  }
+
+  assembly CallRegPredPos = (AsmPred(u2, false, false), "callr ", AsmR(s5))
+
+  [operation JR ]
+  instruction CallRegPredNeg : BranchRegFormat =   {
+    if !testpred(u2) then
+      {
+        LR := PC.next
+        PC := R(s5)
+      }
+
+  }
+
+
+  encoding CallRegPredNeg =
+  { iclass = 0b0101
+  , op = 0b0001001
+  }
+
+  assembly CallRegPredNeg = (AsmPred(u2, true, false), "callr ", AsmR(s5))
+
+  [operation JR ]
+  instruction JumpReg : BranchRegFormat =   {
+    if true then
+      {
+        PC := R(s5)
+      }
+
+  }
+
+
+  encoding JumpReg =
+  { iclass = 0b0101
+  , op = 0b0010100
+  }
+
+  assembly JumpReg = ("", "jumpr", "", " ", AsmR(s5))
+
+  [operation JR ]
+  instruction JumpRegPredPosNT : BranchRegFormat =   {
+    if testpred(u2) then
+      {
+        PC := R(s5)
+      }
+
+  }
+
+
+  encoding JumpRegPredPosNT =
+  { iclass = 0b0101
+  , op = 0b0011010
+  , hintnew = 0b00
+  }
+
+  assembly JumpRegPredPosNT = (AsmPred(u2, false, false), "jumpr", ":nt ", " ", AsmR(s5))
+
+  [operation JR ]
+  instruction JumpRegPredPosT : BranchRegFormat =   {
+    if testpred(u2) then
+      {
+        PC := R(s5)
+      }
+
+  }
+
+
+  encoding JumpRegPredPosT =
+  { iclass = 0b0101
+  , op = 0b0011010
+  , hintnew = 0b10
+  }
+
+  assembly JumpRegPredPosT = (AsmPred(u2, false, false), "jumpr", ":t ", " ", AsmR(s5))
+
+  [operation JR ]
+  instruction JumpRegPredNegNT : BranchRegFormat =   {
+    if !testpred(u2) then
+      {
+        PC := R(s5)
+      }
+
+  }
+
+
+  encoding JumpRegPredNegNT =
+  { iclass = 0b0101
+  , op = 0b0011011
+  , hintnew = 0b00
+  }
+
+  assembly JumpRegPredNegNT = (AsmPred(u2, true, false), "jumpr", ":nt ", " ", AsmR(s5))
+
+  [operation JR ]
+  instruction JumpRegPredNegT : BranchRegFormat =   {
+    if !testpred(u2) then
+      {
+        PC := R(s5)
+      }
+
+  }
+
+
+  encoding JumpRegPredNegT =
+  { iclass = 0b0101
+  , op = 0b0011011
+  , hintnew = 0b10
+  }
+
+  assembly JumpRegPredNegT = (AsmPred(u2, true, false), "jumpr", ":t ", " ", AsmR(s5))
+
+  format JumpImmFormat: Word =
+  { iclass	 [31..28]
+  , parse	 [15..14]
+  , op	 [27..25]
+  , imm	 [24..16, 13..1]
+  , immS = scaledImmR2(imm)
+  }
+  format JumpImmPredFormat: Word =
+  { iclass	 [31..28]
+  , parse	 [15..14]
+  , op	 [27..24, 21]
+  , hintnew	 [12..11]
+  , imm	 [23..22, 20..16, 13, 7..1]
+  , u2	 [9..8]
+  , immS = scaledImmR2(imm)
+  }
+
+  [operation J ]
+  instruction JumpImm : JumpImmFormat =   {
+    if true then
+      {
+        PC := (PC.current + extendR2(imm))
+      }
+
+  }
+
+
+  encoding JumpImm =
+  { iclass = 0b0101
+  , op = 0b100
+  }
+
+  assembly JumpImm = ("", "jump", "", " ", decimal(immS))
+
+  [operation J ]
+  instruction JumpImmPredPosNT : JumpImmPredFormat =   {
+    if testpred(u2) then
+      {
+        PC := (PC.current + extendR2(imm))
+      }
+
+  }
+
+
+  encoding JumpImmPredPosNT =
+  { iclass = 0b0101
+  , op = 0b11000
+  , hintnew = 0b00
+  }
+
+  assembly JumpImmPredPosNT = (AsmPred(u2, false, false), "jump", ":nt ", " ", decimal(immS))
+
+  [operation J ]
+  instruction JumpImmPredPosT : JumpImmPredFormat =   {
+    if testpred(u2) then
+      {
+        PC := (PC.current + extendR2(imm))
+      }
+
+  }
+
+
+  encoding JumpImmPredPosT =
+  { iclass = 0b0101
+  , op = 0b11000
+  , hintnew = 0b10
+  }
+
+  assembly JumpImmPredPosT = (AsmPred(u2, false, false), "jump", ":t ", " ", decimal(immS))
+
+  [operation J ]
+  instruction JumpImmPredNegNT : JumpImmPredFormat =   {
+    if !testpred(u2) then
+      {
+        PC := (PC.current + extendR2(imm))
+      }
+
+  }
+
+
+  encoding JumpImmPredNegNT =
+  { iclass = 0b0101
+  , op = 0b11001
+  , hintnew = 0b00
+  }
+
+  assembly JumpImmPredNegNT = (AsmPred(u2, true, false), "jump", ":nt ", " ", decimal(immS))
+
+  [operation J ]
+  instruction JumpImmPredNegT : JumpImmPredFormat =   {
+    if !testpred(u2) then
+      {
+        PC := (PC.current + extendR2(imm))
+      }
+
+  }
+
+
+  encoding JumpImmPredNegT =
+  { iclass = 0b0101
+  , op = 0b11001
+  , hintnew = 0b10
+  }
+
+  assembly JumpImmPredNegT = (AsmPred(u2, true, false), "jump", ":t ", " ", decimal(immS))
+
+  format CallImmFormat: Word =
+  { iclass	 [31..28]
+  , parse	 [15..14]
+  , op	 [27..25, 0]
+  , imm	 [24..16, 13..1]
+  }
+  format CallImmPredFormat: Word =
+  { iclass	 [31..28]
+  , parse	 [15..14]
+  , op	 [27..24, 11]
+  , pred	 [9, 8]
+  , neg	 [21]
+  , imm	 [23, 22, 20..16, 13, 7..1]
+  }
+
+  [operation J ]
+  instruction CallImm : CallImmFormat =   {
+    if true then
+      {
+        LR := PC.next
+        PC := (PC.current + extendR2(imm))
+      }
+
+  }
+
+
+  encoding CallImm =
+  { iclass = 0b0101
+  , op = 0b1010
+  }
+
+  assembly CallImm = ("", "call #", decimal(imm))
+
+  [operation J ]
+  instruction CallImmPredPos : CallImmPredFormat =   {
+    if testpred(pred) then
+      {
+        LR := PC.next
+        PC := (PC.current + extendR2(imm))
+      }
+
+  }
+
+
+  encoding CallImmPredPos =
+  { iclass = 0b0101
+  , op = 0b101
+  , neg = 0b0
+  }
+
+  assembly CallImmPredPos = (AsmPred(pred, false, false), "call #", decimal(imm))
+
+  [operation J ]
+  instruction CallImmPredNeg : CallImmPredFormat =   {
+    if !testpred(pred) then
+      {
+        LR := PC.next
+        PC := (PC.current + extendR2(imm))
+      }
+
+  }
+
+
+  encoding CallImmPredNeg =
+  { iclass = 0b0101
+  , op = 0b101
+  , neg = 0b1
+  }
+
+  assembly CallImmPredNeg = (AsmPred(pred, true, false), "call #", decimal(imm))
+
+  format CmpJumpFormat: Word =
+  { iclass	 [31..28]
+  , parse	 [15..14]
+  , op	 [27..26, 24..23, 9..8]
+  , d1	 [25]
+  , neg	 [22]
+  , hint	 [13]
+  , s4	 [19..16]
+  , disp	 [21..20, 7..1]
+  , dispS = scaledImmR2(disp)
+  , s5 =   if (s4 <= 7) then
+    s4 as Index
+  else
+    (s4 as Index + 8)
+  , d2 = d1 as PredicateIndex
+  }
+  format CmpJumpImmFormat: Word =
+  { iclass	 [31..28]
+  , parse	 [15..14]
+  , op	 [27..26, 24..23]
+  , d1	 [25]
+  , neg	 [22]
+  , hint	 [13]
+  , s4	 [19..16]
+  , imm	 [12..8]
+  , disp	 [21..20, 7..1]
+  , immU = imm as UWord
+  , dispS = scaledImmR2(disp)
+  , s5 =   if (s4 <= 7) then
+    s4 as Index
+  else
+    (s4 as Index + 8)
+  , d2 = d1 as PredicateIndex
+  }
+  format CmpJumpRegFormat: Word =
+  { iclass	 [31..28]
+  , parse	 [15..14]
+  , op	 [27..23]
+  , d1	 [12]
+  , neg	 [22]
+  , hint	 [13]
+  , s4	 [19..16]
+  , t4	 [11..8]
+  , disp	 [21..20, 7..1]
+  , dispS = scaledImmR2(disp)
+  , s5 =   if (s4 <= 7) then
+    s4 as Index
+  else
+    (s4 as Index + 8)
+  , t5 =   if (t4 <= 7) then
+    t4 as Index
+  else
+    (t4 as Index + 8)
+  , d2 = d1 as PredicateIndex
+  }
+
+  [operation J_PRED_WRITING ]
+  instruction CmpJumpEqMinus1P0PosNT : CmpJumpFormat =   {
+    let pred = (R(s5) = -1) in
+      let pvalue = toPValue((R(s5) = -1)) in
+        {
+          Pset(0, pvalue)          if pred then
+            {
+              PC := (PC.current + extendR2(disp))
+            }
+
+        }
+  }
+
+
+  encoding CmpJumpEqMinus1P0PosNT =
+  { iclass = 0b0001
+  , neg = 0
+  , d1 = 0
+  , hint = 0
+  , op = 0b001100
+  }
+
+  assembly CmpJumpEqMinus1P0PosNT = (AsmP(0), "=", ("cmp.eq(", AsmR(s5), "#-1)"), "; ", AsmPred(0, 0, true), " jump:", "nt", " #", decimal(dispS))
+
+  [operation J_PRED_WRITING ]
+  instruction CmpJumpEqMinus1P1PosNT : CmpJumpFormat =   {
+    let pred = (R(s5) = -1) in
+      let pvalue = toPValue((R(s5) = -1)) in
+        {
+          Pset(1, pvalue)          if pred then
+            {
+              PC := (PC.current + extendR2(disp))
+            }
+
+        }
+  }
+
+
+  encoding CmpJumpEqMinus1P1PosNT =
+  { iclass = 0b0001
+  , neg = 0
+  , d1 = 1
+  , hint = 0
+  , op = 0b001100
+  }
+
+  assembly CmpJumpEqMinus1P1PosNT = (AsmP(1), "=", ("cmp.eq(", AsmR(s5), "#-1)"), "; ", AsmPred(1, 0, true), " jump:", "nt", " #", decimal(dispS))
+
+  [operation J_PRED_WRITING ]
+  instruction CmpJumpEqMinus1P0NegNT : CmpJumpFormat =   {
+    let pred = !(R(s5) = -1) in
+      let pvalue = toPValue(!(R(s5) = -1)) in
+        {
+          Pset(0, pvalue)          if pred then
+            {
+              PC := (PC.current + extendR2(disp))
+            }
+
+        }
+  }
+
+
+  encoding CmpJumpEqMinus1P0NegNT =
+  { iclass = 0b0001
+  , neg = 1
+  , d1 = 0
+  , hint = 0
+  , op = 0b001100
+  }
+
+  assembly CmpJumpEqMinus1P0NegNT = (AsmP(0), "=", ("cmp.eq(", AsmR(s5), "#-1)"), "; ", AsmPred(0, 1, true), " jump:", "nt", " #", decimal(dispS))
+
+  [operation J_PRED_WRITING ]
+  instruction CmpJumpEqMinus1P1NegNT : CmpJumpFormat =   {
+    let pred = !(R(s5) = -1) in
+      let pvalue = toPValue(!(R(s5) = -1)) in
+        {
+          Pset(1, pvalue)          if pred then
+            {
+              PC := (PC.current + extendR2(disp))
+            }
+
+        }
+  }
+
+
+  encoding CmpJumpEqMinus1P1NegNT =
+  { iclass = 0b0001
+  , neg = 1
+  , d1 = 1
+  , hint = 0
+  , op = 0b001100
+  }
+
+  assembly CmpJumpEqMinus1P1NegNT = (AsmP(1), "=", ("cmp.eq(", AsmR(s5), "#-1)"), "; ", AsmPred(1, 1, true), " jump:", "nt", " #", decimal(dispS))
+
+  [operation J_PRED_WRITING ]
+  instruction CmpJumpEqMinus1P0PosT : CmpJumpFormat =   {
+    let pred = (R(s5) = -1) in
+      let pvalue = toPValue((R(s5) = -1)) in
+        {
+          Pset(0, pvalue)          if pred then
+            {
+              PC := (PC.current + extendR2(disp))
+            }
+
+        }
+  }
+
+
+  encoding CmpJumpEqMinus1P0PosT =
+  { iclass = 0b0001
+  , neg = 0
+  , d1 = 0
+  , hint = 1
+  , op = 0b001100
+  }
+
+  assembly CmpJumpEqMinus1P0PosT = (AsmP(0), "=", ("cmp.eq(", AsmR(s5), "#-1)"), "; ", AsmPred(0, 0, true), " jump:", "t", " #", decimal(dispS))
+
+  [operation J_PRED_WRITING ]
+  instruction CmpJumpEqMinus1P1PosT : CmpJumpFormat =   {
+    let pred = (R(s5) = -1) in
+      let pvalue = toPValue((R(s5) = -1)) in
+        {
+          Pset(1, pvalue)          if pred then
+            {
+              PC := (PC.current + extendR2(disp))
+            }
+
+        }
+  }
+
+
+  encoding CmpJumpEqMinus1P1PosT =
+  { iclass = 0b0001
+  , neg = 0
+  , d1 = 1
+  , hint = 1
+  , op = 0b001100
+  }
+
+  assembly CmpJumpEqMinus1P1PosT = (AsmP(1), "=", ("cmp.eq(", AsmR(s5), "#-1)"), "; ", AsmPred(1, 0, true), " jump:", "t", " #", decimal(dispS))
+
+  [operation J_PRED_WRITING ]
+  instruction CmpJumpEqMinus1P0NegT : CmpJumpFormat =   {
+    let pred = !(R(s5) = -1) in
+      let pvalue = toPValue(!(R(s5) = -1)) in
+        {
+          Pset(0, pvalue)          if pred then
+            {
+              PC := (PC.current + extendR2(disp))
+            }
+
+        }
+  }
+
+
+  encoding CmpJumpEqMinus1P0NegT =
+  { iclass = 0b0001
+  , neg = 1
+  , d1 = 0
+  , hint = 1
+  , op = 0b001100
+  }
+
+  assembly CmpJumpEqMinus1P0NegT = (AsmP(0), "=", ("cmp.eq(", AsmR(s5), "#-1)"), "; ", AsmPred(0, 1, true), " jump:", "t", " #", decimal(dispS))
+
+  [operation J_PRED_WRITING ]
+  instruction CmpJumpEqMinus1P1NegT : CmpJumpFormat =   {
+    let pred = !(R(s5) = -1) in
+      let pvalue = toPValue(!(R(s5) = -1)) in
+        {
+          Pset(1, pvalue)          if pred then
+            {
+              PC := (PC.current + extendR2(disp))
+            }
+
+        }
+  }
+
+
+  encoding CmpJumpEqMinus1P1NegT =
+  { iclass = 0b0001
+  , neg = 1
+  , d1 = 1
+  , hint = 1
+  , op = 0b001100
+  }
+
+  assembly CmpJumpEqMinus1P1NegT = (AsmP(1), "=", ("cmp.eq(", AsmR(s5), "#-1)"), "; ", AsmPred(1, 1, true), " jump:", "t", " #", decimal(dispS))
+
+  [operation J_PRED_WRITING ]
+  instruction CmpJumpGtMinus1P0PosNT : CmpJumpFormat =   {
+    let pred = (R(s5) as SInt > -1 as SInt) in
+      let pvalue = toPValue((R(s5) as SInt > -1 as SInt)) in
+        {
+          Pset(0, pvalue)          if pred then
+            {
+              PC := (PC.current + extendR2(disp))
+            }
+
+        }
+  }
+
+
+  encoding CmpJumpGtMinus1P0PosNT =
+  { iclass = 0b0001
+  , neg = 0
+  , d1 = 0
+  , hint = 0
+  , op = 0b001101
+  }
+
+  assembly CmpJumpGtMinus1P0PosNT = (AsmP(0), "=", ("cmp.gt(", AsmR(s5), "#-1)"), "; ", AsmPred(0, 0, true), " jump:", "nt", " #", decimal(dispS))
+
+  [operation J_PRED_WRITING ]
+  instruction CmpJumpGtMinus1P1PosNT : CmpJumpFormat =   {
+    let pred = (R(s5) as SInt > -1 as SInt) in
+      let pvalue = toPValue((R(s5) as SInt > -1 as SInt)) in
+        {
+          Pset(1, pvalue)          if pred then
+            {
+              PC := (PC.current + extendR2(disp))
+            }
+
+        }
+  }
+
+
+  encoding CmpJumpGtMinus1P1PosNT =
+  { iclass = 0b0001
+  , neg = 0
+  , d1 = 1
+  , hint = 0
+  , op = 0b001101
+  }
+
+  assembly CmpJumpGtMinus1P1PosNT = (AsmP(1), "=", ("cmp.gt(", AsmR(s5), "#-1)"), "; ", AsmPred(1, 0, true), " jump:", "nt", " #", decimal(dispS))
+
+  [operation J_PRED_WRITING ]
+  instruction CmpJumpGtMinus1P0NegNT : CmpJumpFormat =   {
+    let pred = !(R(s5) as SInt > -1 as SInt) in
+      let pvalue = toPValue(!(R(s5) as SInt > -1 as SInt)) in
+        {
+          Pset(0, pvalue)          if pred then
+            {
+              PC := (PC.current + extendR2(disp))
+            }
+
+        }
+  }
+
+
+  encoding CmpJumpGtMinus1P0NegNT =
+  { iclass = 0b0001
+  , neg = 1
+  , d1 = 0
+  , hint = 0
+  , op = 0b001101
+  }
+
+  assembly CmpJumpGtMinus1P0NegNT = (AsmP(0), "=", ("cmp.gt(", AsmR(s5), "#-1)"), "; ", AsmPred(0, 1, true), " jump:", "nt", " #", decimal(dispS))
+
+  [operation J_PRED_WRITING ]
+  instruction CmpJumpGtMinus1P1NegNT : CmpJumpFormat =   {
+    let pred = !(R(s5) as SInt > -1 as SInt) in
+      let pvalue = toPValue(!(R(s5) as SInt > -1 as SInt)) in
+        {
+          Pset(1, pvalue)          if pred then
+            {
+              PC := (PC.current + extendR2(disp))
+            }
+
+        }
+  }
+
+
+  encoding CmpJumpGtMinus1P1NegNT =
+  { iclass = 0b0001
+  , neg = 1
+  , d1 = 1
+  , hint = 0
+  , op = 0b001101
+  }
+
+  assembly CmpJumpGtMinus1P1NegNT = (AsmP(1), "=", ("cmp.gt(", AsmR(s5), "#-1)"), "; ", AsmPred(1, 1, true), " jump:", "nt", " #", decimal(dispS))
+
+  [operation J_PRED_WRITING ]
+  instruction CmpJumpGtMinus1P0PosT : CmpJumpFormat =   {
+    let pred = (R(s5) as SInt > -1 as SInt) in
+      let pvalue = toPValue((R(s5) as SInt > -1 as SInt)) in
+        {
+          Pset(0, pvalue)          if pred then
+            {
+              PC := (PC.current + extendR2(disp))
+            }
+
+        }
+  }
+
+
+  encoding CmpJumpGtMinus1P0PosT =
+  { iclass = 0b0001
+  , neg = 0
+  , d1 = 0
+  , hint = 1
+  , op = 0b001101
+  }
+
+  assembly CmpJumpGtMinus1P0PosT = (AsmP(0), "=", ("cmp.gt(", AsmR(s5), "#-1)"), "; ", AsmPred(0, 0, true), " jump:", "t", " #", decimal(dispS))
+
+  [operation J_PRED_WRITING ]
+  instruction CmpJumpGtMinus1P1PosT : CmpJumpFormat =   {
+    let pred = (R(s5) as SInt > -1 as SInt) in
+      let pvalue = toPValue((R(s5) as SInt > -1 as SInt)) in
+        {
+          Pset(1, pvalue)          if pred then
+            {
+              PC := (PC.current + extendR2(disp))
+            }
+
+        }
+  }
+
+
+  encoding CmpJumpGtMinus1P1PosT =
+  { iclass = 0b0001
+  , neg = 0
+  , d1 = 1
+  , hint = 1
+  , op = 0b001101
+  }
+
+  assembly CmpJumpGtMinus1P1PosT = (AsmP(1), "=", ("cmp.gt(", AsmR(s5), "#-1)"), "; ", AsmPred(1, 0, true), " jump:", "t", " #", decimal(dispS))
+
+  [operation J_PRED_WRITING ]
+  instruction CmpJumpGtMinus1P0NegT : CmpJumpFormat =   {
+    let pred = !(R(s5) as SInt > -1 as SInt) in
+      let pvalue = toPValue(!(R(s5) as SInt > -1 as SInt)) in
+        {
+          Pset(0, pvalue)          if pred then
+            {
+              PC := (PC.current + extendR2(disp))
+            }
+
+        }
+  }
+
+
+  encoding CmpJumpGtMinus1P0NegT =
+  { iclass = 0b0001
+  , neg = 1
+  , d1 = 0
+  , hint = 1
+  , op = 0b001101
+  }
+
+  assembly CmpJumpGtMinus1P0NegT = (AsmP(0), "=", ("cmp.gt(", AsmR(s5), "#-1)"), "; ", AsmPred(0, 1, true), " jump:", "t", " #", decimal(dispS))
+
+  [operation J_PRED_WRITING ]
+  instruction CmpJumpGtMinus1P1NegT : CmpJumpFormat =   {
+    let pred = !(R(s5) as SInt > -1 as SInt) in
+      let pvalue = toPValue(!(R(s5) as SInt > -1 as SInt)) in
+        {
+          Pset(1, pvalue)          if pred then
+            {
+              PC := (PC.current + extendR2(disp))
+            }
+
+        }
+  }
+
+
+  encoding CmpJumpGtMinus1P1NegT =
+  { iclass = 0b0001
+  , neg = 1
+  , d1 = 1
+  , hint = 1
+  , op = 0b001101
+  }
+
+  assembly CmpJumpGtMinus1P1NegT = (AsmP(1), "=", ("cmp.gt(", AsmR(s5), "#-1)"), "; ", AsmPred(1, 1, true), " jump:", "t", " #", decimal(dispS))
+
+  [operation J_PRED_WRITING ]
+  instruction CmpJumpTstBit0P0PosNT : CmpJumpFormat =   {
+    let pred = ((R(s5) & 0b1) = 1) in
+      let pvalue = toPValue(((R(s5) & 0b1) = 1)) in
+        {
+          Pset(0, pvalue)          if pred then
+            {
+              PC := (PC.current + extendR2(disp))
+            }
+
+        }
+  }
+
+
+  encoding CmpJumpTstBit0P0PosNT =
+  { iclass = 0b0001
+  , neg = 0
+  , d1 = 0
+  , hint = 0
+  , op = 0b001111
+  }
+
+  assembly CmpJumpTstBit0P0PosNT = (AsmP(0), "=", ("tstbit(", AsmR(s5), "#0)"), "; ", AsmPred(0, 0, true), " jump:", "nt", " #", decimal(dispS))
+
+  [operation J_PRED_WRITING ]
+  instruction CmpJumpTstBit0P1PosNT : CmpJumpFormat =   {
+    let pred = ((R(s5) & 0b1) = 1) in
+      let pvalue = toPValue(((R(s5) & 0b1) = 1)) in
+        {
+          Pset(1, pvalue)          if pred then
+            {
+              PC := (PC.current + extendR2(disp))
+            }
+
+        }
+  }
+
+
+  encoding CmpJumpTstBit0P1PosNT =
+  { iclass = 0b0001
+  , neg = 0
+  , d1 = 1
+  , hint = 0
+  , op = 0b001111
+  }
+
+  assembly CmpJumpTstBit0P1PosNT = (AsmP(1), "=", ("tstbit(", AsmR(s5), "#0)"), "; ", AsmPred(1, 0, true), " jump:", "nt", " #", decimal(dispS))
+
+  [operation J_PRED_WRITING ]
+  instruction CmpJumpTstBit0P0NegNT : CmpJumpFormat =   {
+    let pred = !((R(s5) & 0b1) = 1) in
+      let pvalue = toPValue(!((R(s5) & 0b1) = 1)) in
+        {
+          Pset(0, pvalue)          if pred then
+            {
+              PC := (PC.current + extendR2(disp))
+            }
+
+        }
+  }
+
+
+  encoding CmpJumpTstBit0P0NegNT =
+  { iclass = 0b0001
+  , neg = 1
+  , d1 = 0
+  , hint = 0
+  , op = 0b001111
+  }
+
+  assembly CmpJumpTstBit0P0NegNT = (AsmP(0), "=", ("tstbit(", AsmR(s5), "#0)"), "; ", AsmPred(0, 1, true), " jump:", "nt", " #", decimal(dispS))
+
+  [operation J_PRED_WRITING ]
+  instruction CmpJumpTstBit0P1NegNT : CmpJumpFormat =   {
+    let pred = !((R(s5) & 0b1) = 1) in
+      let pvalue = toPValue(!((R(s5) & 0b1) = 1)) in
+        {
+          Pset(1, pvalue)          if pred then
+            {
+              PC := (PC.current + extendR2(disp))
+            }
+
+        }
+  }
+
+
+  encoding CmpJumpTstBit0P1NegNT =
+  { iclass = 0b0001
+  , neg = 1
+  , d1 = 1
+  , hint = 0
+  , op = 0b001111
+  }
+
+  assembly CmpJumpTstBit0P1NegNT = (AsmP(1), "=", ("tstbit(", AsmR(s5), "#0)"), "; ", AsmPred(1, 1, true), " jump:", "nt", " #", decimal(dispS))
+
+  [operation J_PRED_WRITING ]
+  instruction CmpJumpTstBit0P0PosT : CmpJumpFormat =   {
+    let pred = ((R(s5) & 0b1) = 1) in
+      let pvalue = toPValue(((R(s5) & 0b1) = 1)) in
+        {
+          Pset(0, pvalue)          if pred then
+            {
+              PC := (PC.current + extendR2(disp))
+            }
+
+        }
+  }
+
+
+  encoding CmpJumpTstBit0P0PosT =
+  { iclass = 0b0001
+  , neg = 0
+  , d1 = 0
+  , hint = 1
+  , op = 0b001111
+  }
+
+  assembly CmpJumpTstBit0P0PosT = (AsmP(0), "=", ("tstbit(", AsmR(s5), "#0)"), "; ", AsmPred(0, 0, true), " jump:", "t", " #", decimal(dispS))
+
+  [operation J_PRED_WRITING ]
+  instruction CmpJumpTstBit0P1PosT : CmpJumpFormat =   {
+    let pred = ((R(s5) & 0b1) = 1) in
+      let pvalue = toPValue(((R(s5) & 0b1) = 1)) in
+        {
+          Pset(1, pvalue)          if pred then
+            {
+              PC := (PC.current + extendR2(disp))
+            }
+
+        }
+  }
+
+
+  encoding CmpJumpTstBit0P1PosT =
+  { iclass = 0b0001
+  , neg = 0
+  , d1 = 1
+  , hint = 1
+  , op = 0b001111
+  }
+
+  assembly CmpJumpTstBit0P1PosT = (AsmP(1), "=", ("tstbit(", AsmR(s5), "#0)"), "; ", AsmPred(1, 0, true), " jump:", "t", " #", decimal(dispS))
+
+  [operation J_PRED_WRITING ]
+  instruction CmpJumpTstBit0P0NegT : CmpJumpFormat =   {
+    let pred = !((R(s5) & 0b1) = 1) in
+      let pvalue = toPValue(!((R(s5) & 0b1) = 1)) in
+        {
+          Pset(0, pvalue)          if pred then
+            {
+              PC := (PC.current + extendR2(disp))
+            }
+
+        }
+  }
+
+
+  encoding CmpJumpTstBit0P0NegT =
+  { iclass = 0b0001
+  , neg = 1
+  , d1 = 0
+  , hint = 1
+  , op = 0b001111
+  }
+
+  assembly CmpJumpTstBit0P0NegT = (AsmP(0), "=", ("tstbit(", AsmR(s5), "#0)"), "; ", AsmPred(0, 1, true), " jump:", "t", " #", decimal(dispS))
+
+  [operation J_PRED_WRITING ]
+  instruction CmpJumpTstBit0P1NegT : CmpJumpFormat =   {
+    let pred = !((R(s5) & 0b1) = 1) in
+      let pvalue = toPValue(!((R(s5) & 0b1) = 1)) in
+        {
+          Pset(1, pvalue)          if pred then
+            {
+              PC := (PC.current + extendR2(disp))
+            }
+
+        }
+  }
+
+
+  encoding CmpJumpTstBit0P1NegT =
+  { iclass = 0b0001
+  , neg = 1
+  , d1 = 1
+  , hint = 1
+  , op = 0b001111
+  }
+
+  assembly CmpJumpTstBit0P1NegT = (AsmP(1), "=", ("tstbit(", AsmR(s5), "#0)"), "; ", AsmPred(1, 1, true), " jump:", "t", " #", decimal(dispS))
+
+  [operation J_PRED_WRITING ]
+  instruction CmpJumpEqImmP0PosNT : CmpJumpImmFormat =   {
+    let pred = (R(s5) = immU) in
+      let pvalue = toPValue((R(s5) = immU)) in
+        {
+          Pset(0, pvalue)          if pred then
+            {
+              PC := (PC.current + extendR2(disp))
+            }
+
+        }
+  }
+
+
+  encoding CmpJumpEqImmP0PosNT =
+  { iclass = 0b0001
+  , neg = 0
+  , d1 = 0
+  , hint = 0
+  , op = 0b0000
+  }
+
+  assembly CmpJumpEqImmP0PosNT = (AsmP(0), "=", ("cmp.eq(", AsmR(s5), "#", decimal(immU), ")"), "; ", AsmPred(0, 0, true), " jump:", "nt", " #", decimal(dispS))
+
+  [operation J_PRED_WRITING ]
+  instruction CmpJumpEqImmP1PosNT : CmpJumpImmFormat =   {
+    let pred = (R(s5) = immU) in
+      let pvalue = toPValue((R(s5) = immU)) in
+        {
+          Pset(1, pvalue)          if pred then
+            {
+              PC := (PC.current + extendR2(disp))
+            }
+
+        }
+  }
+
+
+  encoding CmpJumpEqImmP1PosNT =
+  { iclass = 0b0001
+  , neg = 0
+  , d1 = 1
+  , hint = 0
+  , op = 0b0000
+  }
+
+  assembly CmpJumpEqImmP1PosNT = (AsmP(1), "=", ("cmp.eq(", AsmR(s5), "#", decimal(immU), ")"), "; ", AsmPred(1, 0, true), " jump:", "nt", " #", decimal(dispS))
+
+  [operation J_PRED_WRITING ]
+  instruction CmpJumpEqImmP0NegNT : CmpJumpImmFormat =   {
+    let pred = !(R(s5) = immU) in
+      let pvalue = toPValue(!(R(s5) = immU)) in
+        {
+          Pset(0, pvalue)          if pred then
+            {
+              PC := (PC.current + extendR2(disp))
+            }
+
+        }
+  }
+
+
+  encoding CmpJumpEqImmP0NegNT =
+  { iclass = 0b0001
+  , neg = 1
+  , d1 = 0
+  , hint = 0
+  , op = 0b0000
+  }
+
+  assembly CmpJumpEqImmP0NegNT = (AsmP(0), "=", ("cmp.eq(", AsmR(s5), "#", decimal(immU), ")"), "; ", AsmPred(0, 1, true), " jump:", "nt", " #", decimal(dispS))
+
+  [operation J_PRED_WRITING ]
+  instruction CmpJumpEqImmP1NegNT : CmpJumpImmFormat =   {
+    let pred = !(R(s5) = immU) in
+      let pvalue = toPValue(!(R(s5) = immU)) in
+        {
+          Pset(1, pvalue)          if pred then
+            {
+              PC := (PC.current + extendR2(disp))
+            }
+
+        }
+  }
+
+
+  encoding CmpJumpEqImmP1NegNT =
+  { iclass = 0b0001
+  , neg = 1
+  , d1 = 1
+  , hint = 0
+  , op = 0b0000
+  }
+
+  assembly CmpJumpEqImmP1NegNT = (AsmP(1), "=", ("cmp.eq(", AsmR(s5), "#", decimal(immU), ")"), "; ", AsmPred(1, 1, true), " jump:", "nt", " #", decimal(dispS))
+
+  [operation J_PRED_WRITING ]
+  instruction CmpJumpEqImmP0PosT : CmpJumpImmFormat =   {
+    let pred = (R(s5) = immU) in
+      let pvalue = toPValue((R(s5) = immU)) in
+        {
+          Pset(0, pvalue)          if pred then
+            {
+              PC := (PC.current + extendR2(disp))
+            }
+
+        }
+  }
+
+
+  encoding CmpJumpEqImmP0PosT =
+  { iclass = 0b0001
+  , neg = 0
+  , d1 = 0
+  , hint = 1
+  , op = 0b0000
+  }
+
+  assembly CmpJumpEqImmP0PosT = (AsmP(0), "=", ("cmp.eq(", AsmR(s5), "#", decimal(immU), ")"), "; ", AsmPred(0, 0, true), " jump:", "t", " #", decimal(dispS))
+
+  [operation J_PRED_WRITING ]
+  instruction CmpJumpEqImmP1PosT : CmpJumpImmFormat =   {
+    let pred = (R(s5) = immU) in
+      let pvalue = toPValue((R(s5) = immU)) in
+        {
+          Pset(1, pvalue)          if pred then
+            {
+              PC := (PC.current + extendR2(disp))
+            }
+
+        }
+  }
+
+
+  encoding CmpJumpEqImmP1PosT =
+  { iclass = 0b0001
+  , neg = 0
+  , d1 = 1
+  , hint = 1
+  , op = 0b0000
+  }
+
+  assembly CmpJumpEqImmP1PosT = (AsmP(1), "=", ("cmp.eq(", AsmR(s5), "#", decimal(immU), ")"), "; ", AsmPred(1, 0, true), " jump:", "t", " #", decimal(dispS))
+
+  [operation J_PRED_WRITING ]
+  instruction CmpJumpEqImmP0NegT : CmpJumpImmFormat =   {
+    let pred = !(R(s5) = immU) in
+      let pvalue = toPValue(!(R(s5) = immU)) in
+        {
+          Pset(0, pvalue)          if pred then
+            {
+              PC := (PC.current + extendR2(disp))
+            }
+
+        }
+  }
+
+
+  encoding CmpJumpEqImmP0NegT =
+  { iclass = 0b0001
+  , neg = 1
+  , d1 = 0
+  , hint = 1
+  , op = 0b0000
+  }
+
+  assembly CmpJumpEqImmP0NegT = (AsmP(0), "=", ("cmp.eq(", AsmR(s5), "#", decimal(immU), ")"), "; ", AsmPred(0, 1, true), " jump:", "t", " #", decimal(dispS))
+
+  [operation J_PRED_WRITING ]
+  instruction CmpJumpEqImmP1NegT : CmpJumpImmFormat =   {
+    let pred = !(R(s5) = immU) in
+      let pvalue = toPValue(!(R(s5) = immU)) in
+        {
+          Pset(1, pvalue)          if pred then
+            {
+              PC := (PC.current + extendR2(disp))
+            }
+
+        }
+  }
+
+
+  encoding CmpJumpEqImmP1NegT =
+  { iclass = 0b0001
+  , neg = 1
+  , d1 = 1
+  , hint = 1
+  , op = 0b0000
+  }
+
+  assembly CmpJumpEqImmP1NegT = (AsmP(1), "=", ("cmp.eq(", AsmR(s5), "#", decimal(immU), ")"), "; ", AsmPred(1, 1, true), " jump:", "t", " #", decimal(dispS))
+
+  [operation J_PRED_WRITING ]
+  instruction CmpJumpGtImmP0PosNT : CmpJumpImmFormat =   {
+    let pred = (R(s5)(15..0) as UWord > immU) in
+      let pvalue = toPValue((R(s5)(15..0) as UWord > immU)) in
+        {
+          Pset(0, pvalue)          if pred then
+            {
+              PC := (PC.current + extendR2(disp))
+            }
+
+        }
+  }
+
+
+  encoding CmpJumpGtImmP0PosNT =
+  { iclass = 0b0001
+  , neg = 0
+  , d1 = 0
+  , hint = 0
+  , op = 0b0001
+  }
+
+  assembly CmpJumpGtImmP0PosNT = (AsmP(0), "=", ("cmp.gt(", AsmR(s5), "#", decimal(immU), ")"), "; ", AsmPred(0, 0, true), " jump:", "nt", " #", decimal(dispS))
+
+  [operation J_PRED_WRITING ]
+  instruction CmpJumpGtImmP1PosNT : CmpJumpImmFormat =   {
+    let pred = (R(s5)(15..0) as UWord > immU) in
+      let pvalue = toPValue((R(s5)(15..0) as UWord > immU)) in
+        {
+          Pset(1, pvalue)          if pred then
+            {
+              PC := (PC.current + extendR2(disp))
+            }
+
+        }
+  }
+
+
+  encoding CmpJumpGtImmP1PosNT =
+  { iclass = 0b0001
+  , neg = 0
+  , d1 = 1
+  , hint = 0
+  , op = 0b0001
+  }
+
+  assembly CmpJumpGtImmP1PosNT = (AsmP(1), "=", ("cmp.gt(", AsmR(s5), "#", decimal(immU), ")"), "; ", AsmPred(1, 0, true), " jump:", "nt", " #", decimal(dispS))
+
+  [operation J_PRED_WRITING ]
+  instruction CmpJumpGtImmP0NegNT : CmpJumpImmFormat =   {
+    let pred = !(R(s5)(15..0) as UWord > immU) in
+      let pvalue = toPValue(!(R(s5)(15..0) as UWord > immU)) in
+        {
+          Pset(0, pvalue)          if pred then
+            {
+              PC := (PC.current + extendR2(disp))
+            }
+
+        }
+  }
+
+
+  encoding CmpJumpGtImmP0NegNT =
+  { iclass = 0b0001
+  , neg = 1
+  , d1 = 0
+  , hint = 0
+  , op = 0b0001
+  }
+
+  assembly CmpJumpGtImmP0NegNT = (AsmP(0), "=", ("cmp.gt(", AsmR(s5), "#", decimal(immU), ")"), "; ", AsmPred(0, 1, true), " jump:", "nt", " #", decimal(dispS))
+
+  [operation J_PRED_WRITING ]
+  instruction CmpJumpGtImmP1NegNT : CmpJumpImmFormat =   {
+    let pred = !(R(s5)(15..0) as UWord > immU) in
+      let pvalue = toPValue(!(R(s5)(15..0) as UWord > immU)) in
+        {
+          Pset(1, pvalue)          if pred then
+            {
+              PC := (PC.current + extendR2(disp))
+            }
+
+        }
+  }
+
+
+  encoding CmpJumpGtImmP1NegNT =
+  { iclass = 0b0001
+  , neg = 1
+  , d1 = 1
+  , hint = 0
+  , op = 0b0001
+  }
+
+  assembly CmpJumpGtImmP1NegNT = (AsmP(1), "=", ("cmp.gt(", AsmR(s5), "#", decimal(immU), ")"), "; ", AsmPred(1, 1, true), " jump:", "nt", " #", decimal(dispS))
+
+  [operation J_PRED_WRITING ]
+  instruction CmpJumpGtImmP0PosT : CmpJumpImmFormat =   {
+    let pred = (R(s5)(15..0) as UWord > immU) in
+      let pvalue = toPValue((R(s5)(15..0) as UWord > immU)) in
+        {
+          Pset(0, pvalue)          if pred then
+            {
+              PC := (PC.current + extendR2(disp))
+            }
+
+        }
+  }
+
+
+  encoding CmpJumpGtImmP0PosT =
+  { iclass = 0b0001
+  , neg = 0
+  , d1 = 0
+  , hint = 1
+  , op = 0b0001
+  }
+
+  assembly CmpJumpGtImmP0PosT = (AsmP(0), "=", ("cmp.gt(", AsmR(s5), "#", decimal(immU), ")"), "; ", AsmPred(0, 0, true), " jump:", "t", " #", decimal(dispS))
+
+  [operation J_PRED_WRITING ]
+  instruction CmpJumpGtImmP1PosT : CmpJumpImmFormat =   {
+    let pred = (R(s5)(15..0) as UWord > immU) in
+      let pvalue = toPValue((R(s5)(15..0) as UWord > immU)) in
+        {
+          Pset(1, pvalue)          if pred then
+            {
+              PC := (PC.current + extendR2(disp))
+            }
+
+        }
+  }
+
+
+  encoding CmpJumpGtImmP1PosT =
+  { iclass = 0b0001
+  , neg = 0
+  , d1 = 1
+  , hint = 1
+  , op = 0b0001
+  }
+
+  assembly CmpJumpGtImmP1PosT = (AsmP(1), "=", ("cmp.gt(", AsmR(s5), "#", decimal(immU), ")"), "; ", AsmPred(1, 0, true), " jump:", "t", " #", decimal(dispS))
+
+  [operation J_PRED_WRITING ]
+  instruction CmpJumpGtImmP0NegT : CmpJumpImmFormat =   {
+    let pred = !(R(s5)(15..0) as UWord > immU) in
+      let pvalue = toPValue(!(R(s5)(15..0) as UWord > immU)) in
+        {
+          Pset(0, pvalue)          if pred then
+            {
+              PC := (PC.current + extendR2(disp))
+            }
+
+        }
+  }
+
+
+  encoding CmpJumpGtImmP0NegT =
+  { iclass = 0b0001
+  , neg = 1
+  , d1 = 0
+  , hint = 1
+  , op = 0b0001
+  }
+
+  assembly CmpJumpGtImmP0NegT = (AsmP(0), "=", ("cmp.gt(", AsmR(s5), "#", decimal(immU), ")"), "; ", AsmPred(0, 1, true), " jump:", "t", " #", decimal(dispS))
+
+  [operation J_PRED_WRITING ]
+  instruction CmpJumpGtImmP1NegT : CmpJumpImmFormat =   {
+    let pred = !(R(s5)(15..0) as UWord > immU) in
+      let pvalue = toPValue(!(R(s5)(15..0) as UWord > immU)) in
+        {
+          Pset(1, pvalue)          if pred then
+            {
+              PC := (PC.current + extendR2(disp))
+            }
+
+        }
+  }
+
+
+  encoding CmpJumpGtImmP1NegT =
+  { iclass = 0b0001
+  , neg = 1
+  , d1 = 1
+  , hint = 1
+  , op = 0b0001
+  }
+
+  assembly CmpJumpGtImmP1NegT = (AsmP(1), "=", ("cmp.gt(", AsmR(s5), "#", decimal(immU), ")"), "; ", AsmPred(1, 1, true), " jump:", "t", " #", decimal(dispS))
+
+  [operation J_PRED_WRITING ]
+  instruction CmpJumpGtuImmP0PosNT : CmpJumpImmFormat =   {
+    let pred = (R(s5) as UInt > immU) in
+      let pvalue = toPValue((R(s5) as UInt > immU)) in
+        {
+          Pset(0, pvalue)          if pred then
+            {
+              PC := (PC.current + extendR2(disp))
+            }
+
+        }
+  }
+
+
+  encoding CmpJumpGtuImmP0PosNT =
+  { iclass = 0b0001
+  , neg = 0
+  , d1 = 0
+  , hint = 0
+  , op = 0b0010
+  }
+
+  assembly CmpJumpGtuImmP0PosNT = (AsmP(0), "=", ("cmp.gtu(", AsmR(s5), "#", decimal(immU), ")"), "; ", AsmPred(0, 0, true), " jump:", "nt", " #", decimal(dispS))
+
+  [operation J_PRED_WRITING ]
+  instruction CmpJumpGtuImmP1PosNT : CmpJumpImmFormat =   {
+    let pred = (R(s5) as UInt > immU) in
+      let pvalue = toPValue((R(s5) as UInt > immU)) in
+        {
+          Pset(1, pvalue)          if pred then
+            {
+              PC := (PC.current + extendR2(disp))
+            }
+
+        }
+  }
+
+
+  encoding CmpJumpGtuImmP1PosNT =
+  { iclass = 0b0001
+  , neg = 0
+  , d1 = 1
+  , hint = 0
+  , op = 0b0010
+  }
+
+  assembly CmpJumpGtuImmP1PosNT = (AsmP(1), "=", ("cmp.gtu(", AsmR(s5), "#", decimal(immU), ")"), "; ", AsmPred(1, 0, true), " jump:", "nt", " #", decimal(dispS))
+
+  [operation J_PRED_WRITING ]
+  instruction CmpJumpGtuImmP0NegNT : CmpJumpImmFormat =   {
+    let pred = !(R(s5) as UInt > immU) in
+      let pvalue = toPValue(!(R(s5) as UInt > immU)) in
+        {
+          Pset(0, pvalue)          if pred then
+            {
+              PC := (PC.current + extendR2(disp))
+            }
+
+        }
+  }
+
+
+  encoding CmpJumpGtuImmP0NegNT =
+  { iclass = 0b0001
+  , neg = 1
+  , d1 = 0
+  , hint = 0
+  , op = 0b0010
+  }
+
+  assembly CmpJumpGtuImmP0NegNT = (AsmP(0), "=", ("cmp.gtu(", AsmR(s5), "#", decimal(immU), ")"), "; ", AsmPred(0, 1, true), " jump:", "nt", " #", decimal(dispS))
+
+  [operation J_PRED_WRITING ]
+  instruction CmpJumpGtuImmP1NegNT : CmpJumpImmFormat =   {
+    let pred = !(R(s5) as UInt > immU) in
+      let pvalue = toPValue(!(R(s5) as UInt > immU)) in
+        {
+          Pset(1, pvalue)          if pred then
+            {
+              PC := (PC.current + extendR2(disp))
+            }
+
+        }
+  }
+
+
+  encoding CmpJumpGtuImmP1NegNT =
+  { iclass = 0b0001
+  , neg = 1
+  , d1 = 1
+  , hint = 0
+  , op = 0b0010
+  }
+
+  assembly CmpJumpGtuImmP1NegNT = (AsmP(1), "=", ("cmp.gtu(", AsmR(s5), "#", decimal(immU), ")"), "; ", AsmPred(1, 1, true), " jump:", "nt", " #", decimal(dispS))
+
+  [operation J_PRED_WRITING ]
+  instruction CmpJumpGtuImmP0PosT : CmpJumpImmFormat =   {
+    let pred = (R(s5) as UInt > immU) in
+      let pvalue = toPValue((R(s5) as UInt > immU)) in
+        {
+          Pset(0, pvalue)          if pred then
+            {
+              PC := (PC.current + extendR2(disp))
+            }
+
+        }
+  }
+
+
+  encoding CmpJumpGtuImmP0PosT =
+  { iclass = 0b0001
+  , neg = 0
+  , d1 = 0
+  , hint = 1
+  , op = 0b0010
+  }
+
+  assembly CmpJumpGtuImmP0PosT = (AsmP(0), "=", ("cmp.gtu(", AsmR(s5), "#", decimal(immU), ")"), "; ", AsmPred(0, 0, true), " jump:", "t", " #", decimal(dispS))
+
+  [operation J_PRED_WRITING ]
+  instruction CmpJumpGtuImmP1PosT : CmpJumpImmFormat =   {
+    let pred = (R(s5) as UInt > immU) in
+      let pvalue = toPValue((R(s5) as UInt > immU)) in
+        {
+          Pset(1, pvalue)          if pred then
+            {
+              PC := (PC.current + extendR2(disp))
+            }
+
+        }
+  }
+
+
+  encoding CmpJumpGtuImmP1PosT =
+  { iclass = 0b0001
+  , neg = 0
+  , d1 = 1
+  , hint = 1
+  , op = 0b0010
+  }
+
+  assembly CmpJumpGtuImmP1PosT = (AsmP(1), "=", ("cmp.gtu(", AsmR(s5), "#", decimal(immU), ")"), "; ", AsmPred(1, 0, true), " jump:", "t", " #", decimal(dispS))
+
+  [operation J_PRED_WRITING ]
+  instruction CmpJumpGtuImmP0NegT : CmpJumpImmFormat =   {
+    let pred = !(R(s5) as UInt > immU) in
+      let pvalue = toPValue(!(R(s5) as UInt > immU)) in
+        {
+          Pset(0, pvalue)          if pred then
+            {
+              PC := (PC.current + extendR2(disp))
+            }
+
+        }
+  }
+
+
+  encoding CmpJumpGtuImmP0NegT =
+  { iclass = 0b0001
+  , neg = 1
+  , d1 = 0
+  , hint = 1
+  , op = 0b0010
+  }
+
+  assembly CmpJumpGtuImmP0NegT = (AsmP(0), "=", ("cmp.gtu(", AsmR(s5), "#", decimal(immU), ")"), "; ", AsmPred(0, 1, true), " jump:", "t", " #", decimal(dispS))
+
+  [operation J_PRED_WRITING ]
+  instruction CmpJumpGtuImmP1NegT : CmpJumpImmFormat =   {
+    let pred = !(R(s5) as UInt > immU) in
+      let pvalue = toPValue(!(R(s5) as UInt > immU)) in
+        {
+          Pset(1, pvalue)          if pred then
+            {
+              PC := (PC.current + extendR2(disp))
+            }
+
+        }
+  }
+
+
+  encoding CmpJumpGtuImmP1NegT =
+  { iclass = 0b0001
+  , neg = 1
+  , d1 = 1
+  , hint = 1
+  , op = 0b0010
+  }
+
+  assembly CmpJumpGtuImmP1NegT = (AsmP(1), "=", ("cmp.gtu(", AsmR(s5), "#", decimal(immU), ")"), "; ", AsmPred(1, 1, true), " jump:", "t", " #", decimal(dispS))
+
+  [operation J_PRED_WRITING ]
+  instruction CmpJumpEqRegP0PosNT : CmpJumpRegFormat =   {
+    let pred = (R(s5) = R(t5)) in
+      let pvalue = toPValue((R(s5) = R(t5))) in
+        {
+          Pset(0, pvalue)          if pred then
+            {
+              PC := (PC.current + extendR2(disp))
+            }
+
+        }
+  }
+
+
+  encoding CmpJumpEqRegP0PosNT =
+  { iclass = 0b0001
+  , neg = 0
+  , d1 = 0
+  , hint = 0
+  , op = 0b01000
+  }
+
+  assembly CmpJumpEqRegP0PosNT = (AsmP(0), "=", ("cmp.eq(", AsmR(s5), "", AsmR(t5), ")"), "; ", AsmPred(0, 0, true), " jump:", "nt", " #", decimal(dispS))
+
+  [operation J_PRED_WRITING ]
+  instruction CmpJumpEqRegP1PosNT : CmpJumpRegFormat =   {
+    let pred = (R(s5) = R(t5)) in
+      let pvalue = toPValue((R(s5) = R(t5))) in
+        {
+          Pset(1, pvalue)          if pred then
+            {
+              PC := (PC.current + extendR2(disp))
+            }
+
+        }
+  }
+
+
+  encoding CmpJumpEqRegP1PosNT =
+  { iclass = 0b0001
+  , neg = 0
+  , d1 = 1
+  , hint = 0
+  , op = 0b01000
+  }
+
+  assembly CmpJumpEqRegP1PosNT = (AsmP(1), "=", ("cmp.eq(", AsmR(s5), "", AsmR(t5), ")"), "; ", AsmPred(1, 0, true), " jump:", "nt", " #", decimal(dispS))
+
+  [operation J_PRED_WRITING ]
+  instruction CmpJumpEqRegP0NegNT : CmpJumpRegFormat =   {
+    let pred = !(R(s5) = R(t5)) in
+      let pvalue = toPValue(!(R(s5) = R(t5))) in
+        {
+          Pset(0, pvalue)          if pred then
+            {
+              PC := (PC.current + extendR2(disp))
+            }
+
+        }
+  }
+
+
+  encoding CmpJumpEqRegP0NegNT =
+  { iclass = 0b0001
+  , neg = 1
+  , d1 = 0
+  , hint = 0
+  , op = 0b01000
+  }
+
+  assembly CmpJumpEqRegP0NegNT = (AsmP(0), "=", ("cmp.eq(", AsmR(s5), "", AsmR(t5), ")"), "; ", AsmPred(0, 1, true), " jump:", "nt", " #", decimal(dispS))
+
+  [operation J_PRED_WRITING ]
+  instruction CmpJumpEqRegP1NegNT : CmpJumpRegFormat =   {
+    let pred = !(R(s5) = R(t5)) in
+      let pvalue = toPValue(!(R(s5) = R(t5))) in
+        {
+          Pset(1, pvalue)          if pred then
+            {
+              PC := (PC.current + extendR2(disp))
+            }
+
+        }
+  }
+
+
+  encoding CmpJumpEqRegP1NegNT =
+  { iclass = 0b0001
+  , neg = 1
+  , d1 = 1
+  , hint = 0
+  , op = 0b01000
+  }
+
+  assembly CmpJumpEqRegP1NegNT = (AsmP(1), "=", ("cmp.eq(", AsmR(s5), "", AsmR(t5), ")"), "; ", AsmPred(1, 1, true), " jump:", "nt", " #", decimal(dispS))
+
+  [operation J_PRED_WRITING ]
+  instruction CmpJumpEqRegP0PosT : CmpJumpRegFormat =   {
+    let pred = (R(s5) = R(t5)) in
+      let pvalue = toPValue((R(s5) = R(t5))) in
+        {
+          Pset(0, pvalue)          if pred then
+            {
+              PC := (PC.current + extendR2(disp))
+            }
+
+        }
+  }
+
+
+  encoding CmpJumpEqRegP0PosT =
+  { iclass = 0b0001
+  , neg = 0
+  , d1 = 0
+  , hint = 1
+  , op = 0b01000
+  }
+
+  assembly CmpJumpEqRegP0PosT = (AsmP(0), "=", ("cmp.eq(", AsmR(s5), "", AsmR(t5), ")"), "; ", AsmPred(0, 0, true), " jump:", "t", " #", decimal(dispS))
+
+  [operation J_PRED_WRITING ]
+  instruction CmpJumpEqRegP1PosT : CmpJumpRegFormat =   {
+    let pred = (R(s5) = R(t5)) in
+      let pvalue = toPValue((R(s5) = R(t5))) in
+        {
+          Pset(1, pvalue)          if pred then
+            {
+              PC := (PC.current + extendR2(disp))
+            }
+
+        }
+  }
+
+
+  encoding CmpJumpEqRegP1PosT =
+  { iclass = 0b0001
+  , neg = 0
+  , d1 = 1
+  , hint = 1
+  , op = 0b01000
+  }
+
+  assembly CmpJumpEqRegP1PosT = (AsmP(1), "=", ("cmp.eq(", AsmR(s5), "", AsmR(t5), ")"), "; ", AsmPred(1, 0, true), " jump:", "t", " #", decimal(dispS))
+
+  [operation J_PRED_WRITING ]
+  instruction CmpJumpEqRegP0NegT : CmpJumpRegFormat =   {
+    let pred = !(R(s5) = R(t5)) in
+      let pvalue = toPValue(!(R(s5) = R(t5))) in
+        {
+          Pset(0, pvalue)          if pred then
+            {
+              PC := (PC.current + extendR2(disp))
+            }
+
+        }
+  }
+
+
+  encoding CmpJumpEqRegP0NegT =
+  { iclass = 0b0001
+  , neg = 1
+  , d1 = 0
+  , hint = 1
+  , op = 0b01000
+  }
+
+  assembly CmpJumpEqRegP0NegT = (AsmP(0), "=", ("cmp.eq(", AsmR(s5), "", AsmR(t5), ")"), "; ", AsmPred(0, 1, true), " jump:", "t", " #", decimal(dispS))
+
+  [operation J_PRED_WRITING ]
+  instruction CmpJumpEqRegP1NegT : CmpJumpRegFormat =   {
+    let pred = !(R(s5) = R(t5)) in
+      let pvalue = toPValue(!(R(s5) = R(t5))) in
+        {
+          Pset(1, pvalue)          if pred then
+            {
+              PC := (PC.current + extendR2(disp))
+            }
+
+        }
+  }
+
+
+  encoding CmpJumpEqRegP1NegT =
+  { iclass = 0b0001
+  , neg = 1
+  , d1 = 1
+  , hint = 1
+  , op = 0b01000
+  }
+
+  assembly CmpJumpEqRegP1NegT = (AsmP(1), "=", ("cmp.eq(", AsmR(s5), "", AsmR(t5), ")"), "; ", AsmPred(1, 1, true), " jump:", "t", " #", decimal(dispS))
+
+  [operation J_PRED_WRITING ]
+  instruction CmpJumpGtRegP0PosNT : CmpJumpRegFormat =   {
+    let pred = (R(s5) as SInt > R(t5) as SInt) in
+      let pvalue = toPValue((R(s5) as SInt > R(t5) as SInt)) in
+        {
+          Pset(0, pvalue)          if pred then
+            {
+              PC := (PC.current + extendR2(disp))
+            }
+
+        }
+  }
+
+
+  encoding CmpJumpGtRegP0PosNT =
+  { iclass = 0b0001
+  , neg = 0
+  , d1 = 0
+  , hint = 0
+  , op = 0b01001
+  }
+
+  assembly CmpJumpGtRegP0PosNT = (AsmP(0), "=", ("cmp.gt(", AsmR(s5), "", AsmR(t5), ")"), "; ", AsmPred(0, 0, true), " jump:", "nt", " #", decimal(dispS))
+
+  [operation J_PRED_WRITING ]
+  instruction CmpJumpGtRegP1PosNT : CmpJumpRegFormat =   {
+    let pred = (R(s5) as SInt > R(t5) as SInt) in
+      let pvalue = toPValue((R(s5) as SInt > R(t5) as SInt)) in
+        {
+          Pset(1, pvalue)          if pred then
+            {
+              PC := (PC.current + extendR2(disp))
+            }
+
+        }
+  }
+
+
+  encoding CmpJumpGtRegP1PosNT =
+  { iclass = 0b0001
+  , neg = 0
+  , d1 = 1
+  , hint = 0
+  , op = 0b01001
+  }
+
+  assembly CmpJumpGtRegP1PosNT = (AsmP(1), "=", ("cmp.gt(", AsmR(s5), "", AsmR(t5), ")"), "; ", AsmPred(1, 0, true), " jump:", "nt", " #", decimal(dispS))
+
+  [operation J_PRED_WRITING ]
+  instruction CmpJumpGtRegP0NegNT : CmpJumpRegFormat =   {
+    let pred = !(R(s5) as SInt > R(t5) as SInt) in
+      let pvalue = toPValue(!(R(s5) as SInt > R(t5) as SInt)) in
+        {
+          Pset(0, pvalue)          if pred then
+            {
+              PC := (PC.current + extendR2(disp))
+            }
+
+        }
+  }
+
+
+  encoding CmpJumpGtRegP0NegNT =
+  { iclass = 0b0001
+  , neg = 1
+  , d1 = 0
+  , hint = 0
+  , op = 0b01001
+  }
+
+  assembly CmpJumpGtRegP0NegNT = (AsmP(0), "=", ("cmp.gt(", AsmR(s5), "", AsmR(t5), ")"), "; ", AsmPred(0, 1, true), " jump:", "nt", " #", decimal(dispS))
+
+  [operation J_PRED_WRITING ]
+  instruction CmpJumpGtRegP1NegNT : CmpJumpRegFormat =   {
+    let pred = !(R(s5) as SInt > R(t5) as SInt) in
+      let pvalue = toPValue(!(R(s5) as SInt > R(t5) as SInt)) in
+        {
+          Pset(1, pvalue)          if pred then
+            {
+              PC := (PC.current + extendR2(disp))
+            }
+
+        }
+  }
+
+
+  encoding CmpJumpGtRegP1NegNT =
+  { iclass = 0b0001
+  , neg = 1
+  , d1 = 1
+  , hint = 0
+  , op = 0b01001
+  }
+
+  assembly CmpJumpGtRegP1NegNT = (AsmP(1), "=", ("cmp.gt(", AsmR(s5), "", AsmR(t5), ")"), "; ", AsmPred(1, 1, true), " jump:", "nt", " #", decimal(dispS))
+
+  [operation J_PRED_WRITING ]
+  instruction CmpJumpGtRegP0PosT : CmpJumpRegFormat =   {
+    let pred = (R(s5) as SInt > R(t5) as SInt) in
+      let pvalue = toPValue((R(s5) as SInt > R(t5) as SInt)) in
+        {
+          Pset(0, pvalue)          if pred then
+            {
+              PC := (PC.current + extendR2(disp))
+            }
+
+        }
+  }
+
+
+  encoding CmpJumpGtRegP0PosT =
+  { iclass = 0b0001
+  , neg = 0
+  , d1 = 0
+  , hint = 1
+  , op = 0b01001
+  }
+
+  assembly CmpJumpGtRegP0PosT = (AsmP(0), "=", ("cmp.gt(", AsmR(s5), "", AsmR(t5), ")"), "; ", AsmPred(0, 0, true), " jump:", "t", " #", decimal(dispS))
+
+  [operation J_PRED_WRITING ]
+  instruction CmpJumpGtRegP1PosT : CmpJumpRegFormat =   {
+    let pred = (R(s5) as SInt > R(t5) as SInt) in
+      let pvalue = toPValue((R(s5) as SInt > R(t5) as SInt)) in
+        {
+          Pset(1, pvalue)          if pred then
+            {
+              PC := (PC.current + extendR2(disp))
+            }
+
+        }
+  }
+
+
+  encoding CmpJumpGtRegP1PosT =
+  { iclass = 0b0001
+  , neg = 0
+  , d1 = 1
+  , hint = 1
+  , op = 0b01001
+  }
+
+  assembly CmpJumpGtRegP1PosT = (AsmP(1), "=", ("cmp.gt(", AsmR(s5), "", AsmR(t5), ")"), "; ", AsmPred(1, 0, true), " jump:", "t", " #", decimal(dispS))
+
+  [operation J_PRED_WRITING ]
+  instruction CmpJumpGtRegP0NegT : CmpJumpRegFormat =   {
+    let pred = !(R(s5) as SInt > R(t5) as SInt) in
+      let pvalue = toPValue(!(R(s5) as SInt > R(t5) as SInt)) in
+        {
+          Pset(0, pvalue)          if pred then
+            {
+              PC := (PC.current + extendR2(disp))
+            }
+
+        }
+  }
+
+
+  encoding CmpJumpGtRegP0NegT =
+  { iclass = 0b0001
+  , neg = 1
+  , d1 = 0
+  , hint = 1
+  , op = 0b01001
+  }
+
+  assembly CmpJumpGtRegP0NegT = (AsmP(0), "=", ("cmp.gt(", AsmR(s5), "", AsmR(t5), ")"), "; ", AsmPred(0, 1, true), " jump:", "t", " #", decimal(dispS))
+
+  [operation J_PRED_WRITING ]
+  instruction CmpJumpGtRegP1NegT : CmpJumpRegFormat =   {
+    let pred = !(R(s5) as SInt > R(t5) as SInt) in
+      let pvalue = toPValue(!(R(s5) as SInt > R(t5) as SInt)) in
+        {
+          Pset(1, pvalue)          if pred then
+            {
+              PC := (PC.current + extendR2(disp))
+            }
+
+        }
+  }
+
+
+  encoding CmpJumpGtRegP1NegT =
+  { iclass = 0b0001
+  , neg = 1
+  , d1 = 1
+  , hint = 1
+  , op = 0b01001
+  }
+
+  assembly CmpJumpGtRegP1NegT = (AsmP(1), "=", ("cmp.gt(", AsmR(s5), "", AsmR(t5), ")"), "; ", AsmPred(1, 1, true), " jump:", "t", " #", decimal(dispS))
+
+  [operation J_PRED_WRITING ]
+  instruction CmpJumpGtuRegP0PosNT : CmpJumpRegFormat =   {
+    let pred = (R(s5)(15..0) as UWord > R(t5)) in
+      let pvalue = toPValue((R(s5)(15..0) as UWord > R(t5))) in
+        {
+          Pset(0, pvalue)          if pred then
+            {
+              PC := (PC.current + extendR2(disp))
+            }
+
+        }
+  }
+
+
+  encoding CmpJumpGtuRegP0PosNT =
+  { iclass = 0b0001
+  , neg = 0
+  , d1 = 0
+  , hint = 0
+  , op = 0b01010
+  }
+
+  assembly CmpJumpGtuRegP0PosNT = (AsmP(0), "=", ("cmp.gtu(", AsmR(s5), "", AsmR(t5), ")"), "; ", AsmPred(0, 0, true), " jump:", "nt", " #", decimal(dispS))
+
+  [operation J_PRED_WRITING ]
+  instruction CmpJumpGtuRegP1PosNT : CmpJumpRegFormat =   {
+    let pred = (R(s5)(15..0) as UWord > R(t5)) in
+      let pvalue = toPValue((R(s5)(15..0) as UWord > R(t5))) in
+        {
+          Pset(1, pvalue)          if pred then
+            {
+              PC := (PC.current + extendR2(disp))
+            }
+
+        }
+  }
+
+
+  encoding CmpJumpGtuRegP1PosNT =
+  { iclass = 0b0001
+  , neg = 0
+  , d1 = 1
+  , hint = 0
+  , op = 0b01010
+  }
+
+  assembly CmpJumpGtuRegP1PosNT = (AsmP(1), "=", ("cmp.gtu(", AsmR(s5), "", AsmR(t5), ")"), "; ", AsmPred(1, 0, true), " jump:", "nt", " #", decimal(dispS))
+
+  [operation J_PRED_WRITING ]
+  instruction CmpJumpGtuRegP0NegNT : CmpJumpRegFormat =   {
+    let pred = !(R(s5)(15..0) as UWord > R(t5)) in
+      let pvalue = toPValue(!(R(s5)(15..0) as UWord > R(t5))) in
+        {
+          Pset(0, pvalue)          if pred then
+            {
+              PC := (PC.current + extendR2(disp))
+            }
+
+        }
+  }
+
+
+  encoding CmpJumpGtuRegP0NegNT =
+  { iclass = 0b0001
+  , neg = 1
+  , d1 = 0
+  , hint = 0
+  , op = 0b01010
+  }
+
+  assembly CmpJumpGtuRegP0NegNT = (AsmP(0), "=", ("cmp.gtu(", AsmR(s5), "", AsmR(t5), ")"), "; ", AsmPred(0, 1, true), " jump:", "nt", " #", decimal(dispS))
+
+  [operation J_PRED_WRITING ]
+  instruction CmpJumpGtuRegP1NegNT : CmpJumpRegFormat =   {
+    let pred = !(R(s5)(15..0) as UWord > R(t5)) in
+      let pvalue = toPValue(!(R(s5)(15..0) as UWord > R(t5))) in
+        {
+          Pset(1, pvalue)          if pred then
+            {
+              PC := (PC.current + extendR2(disp))
+            }
+
+        }
+  }
+
+
+  encoding CmpJumpGtuRegP1NegNT =
+  { iclass = 0b0001
+  , neg = 1
+  , d1 = 1
+  , hint = 0
+  , op = 0b01010
+  }
+
+  assembly CmpJumpGtuRegP1NegNT = (AsmP(1), "=", ("cmp.gtu(", AsmR(s5), "", AsmR(t5), ")"), "; ", AsmPred(1, 1, true), " jump:", "nt", " #", decimal(dispS))
+
+  [operation J_PRED_WRITING ]
+  instruction CmpJumpGtuRegP0PosT : CmpJumpRegFormat =   {
+    let pred = (R(s5)(15..0) as UWord > R(t5)) in
+      let pvalue = toPValue((R(s5)(15..0) as UWord > R(t5))) in
+        {
+          Pset(0, pvalue)          if pred then
+            {
+              PC := (PC.current + extendR2(disp))
+            }
+
+        }
+  }
+
+
+  encoding CmpJumpGtuRegP0PosT =
+  { iclass = 0b0001
+  , neg = 0
+  , d1 = 0
+  , hint = 1
+  , op = 0b01010
+  }
+
+  assembly CmpJumpGtuRegP0PosT = (AsmP(0), "=", ("cmp.gtu(", AsmR(s5), "", AsmR(t5), ")"), "; ", AsmPred(0, 0, true), " jump:", "t", " #", decimal(dispS))
+
+  [operation J_PRED_WRITING ]
+  instruction CmpJumpGtuRegP1PosT : CmpJumpRegFormat =   {
+    let pred = (R(s5)(15..0) as UWord > R(t5)) in
+      let pvalue = toPValue((R(s5)(15..0) as UWord > R(t5))) in
+        {
+          Pset(1, pvalue)          if pred then
+            {
+              PC := (PC.current + extendR2(disp))
+            }
+
+        }
+  }
+
+
+  encoding CmpJumpGtuRegP1PosT =
+  { iclass = 0b0001
+  , neg = 0
+  , d1 = 1
+  , hint = 1
+  , op = 0b01010
+  }
+
+  assembly CmpJumpGtuRegP1PosT = (AsmP(1), "=", ("cmp.gtu(", AsmR(s5), "", AsmR(t5), ")"), "; ", AsmPred(1, 0, true), " jump:", "t", " #", decimal(dispS))
+
+  [operation J_PRED_WRITING ]
+  instruction CmpJumpGtuRegP0NegT : CmpJumpRegFormat =   {
+    let pred = !(R(s5)(15..0) as UWord > R(t5)) in
+      let pvalue = toPValue(!(R(s5)(15..0) as UWord > R(t5))) in
+        {
+          Pset(0, pvalue)          if pred then
+            {
+              PC := (PC.current + extendR2(disp))
+            }
+
+        }
+  }
+
+
+  encoding CmpJumpGtuRegP0NegT =
+  { iclass = 0b0001
+  , neg = 1
+  , d1 = 0
+  , hint = 1
+  , op = 0b01010
+  }
+
+  assembly CmpJumpGtuRegP0NegT = (AsmP(0), "=", ("cmp.gtu(", AsmR(s5), "", AsmR(t5), ")"), "; ", AsmPred(0, 1, true), " jump:", "t", " #", decimal(dispS))
+
+  [operation J_PRED_WRITING ]
+  instruction CmpJumpGtuRegP1NegT : CmpJumpRegFormat =   {
+    let pred = !(R(s5)(15..0) as UWord > R(t5)) in
+      let pvalue = toPValue(!(R(s5)(15..0) as UWord > R(t5))) in
+        {
+          Pset(1, pvalue)          if pred then
+            {
+              PC := (PC.current + extendR2(disp))
+            }
+
+        }
+  }
+
+
+  encoding CmpJumpGtuRegP1NegT =
+  { iclass = 0b0001
+  , neg = 1
+  , d1 = 1
+  , hint = 1
+  , op = 0b01010
+  }
+
+  assembly CmpJumpGtuRegP1NegT = (AsmP(1), "=", ("cmp.gtu(", AsmR(s5), "", AsmR(t5), ")"), "; ", AsmPred(1, 1, true), " jump:", "t", " #", decimal(dispS))
+
+  format LoadFormat: Word =
+  { iclass	 [31..28]
+  , parse	 [15..14]
+  , d5	 [4..0]
+  , data	 [26..25, 20..16, 13..5]
+  , gp	 [27]
+  , type1	 [24]
+  , type	 [23..22]
+  , unsigned	 [21]
+  , immGPRel = data as UInt
+  , immRegRel = (data(15..14), data(8..0)) as SInt
+  , s5 = data(13..9)
+  }
+  format LoadRegRelPredFormat: Word =
+  { iclass	 [31..28]
+  , parse	 [15..14]
+  , op	 [27, 24, 13]
+  , ps	 [26]
+  , dn	 [25]
+  , type	 [23..22]
+  , unsigned	 [21]
+  , s5	 [20..16]
+  , t2	 [12..11]
+  , imm	 [10..5]
+  , d5	 [4..0]
+  , immRegRel = imm as UInt
+  }
+
+  [operation LD ]
+  instruction LoadByteGPRel : LoadFormat =   {
+    if true then
+      {
+        R(d5) := MEM< 1 >((GP + scaledImmU(immGPRel, 0))) as SByte
+      }
+
+  }
+
+
+  encoding LoadByteGPRel =
+  { iclass = 0b0100
+  , gp = 1
+  , type1 = 0b1
+  , type = MemoryAccessType::Byte
+  , unsigned = 0
+  }
+
+  assembly LoadByteGPRel = ("", AsmR(d5), "=", ("memb", AsmAddrGPRel(immGPRel)))
+
+  [operation LD ]
+  instruction LoadByteRegRel : LoadFormat =   {
+    if true then
+      {
+        R(d5) := MEM< 1 >((R(s5) + scaledImmS(immRegRel, 0))) as SByte
+      }
+
+  }
+
+
+  encoding LoadByteRegRel =
+  { iclass = 0b1001
+  , gp = 0
+  , type1 = 0b1
+  , type = MemoryAccessType::Byte
+  , unsigned = 0
+  }
+
+  assembly LoadByteRegRel = ("", AsmR(d5), "=", ("memb", AsmAddrRegRel(s5, immRegRel)))
+
+  [operation LD ]
+  instruction LoadBytePredPosRegRel : LoadRegRelPredFormat =   {
+    if testpred(t2) then
+      {
+        R(d5) := MEM< 1 >((R(s5) + scaledImmS(immRegRel, 0))) as SByte
+      }
+
+  }
+
+
+  encoding LoadBytePredPosRegRel =
+  { iclass = 0b0100
+  , op = 0b010
+  , dn = 0
+  , ps = 0
+  , type = MemoryAccessType::Byte
+  , unsigned = 0
+  }
+
+  assembly LoadBytePredPosRegRel = (AsmPred(t2, false, false), AsmR(d5), "=", ("memb", AsmAddrRegRel(s5, immRegRel)))
+
+  [operation LD ]
+  instruction LoadBytePredNegRegRel : LoadRegRelPredFormat =   {
+    if !testpred(t2) then
+      {
+        R(d5) := MEM< 1 >((R(s5) + scaledImmS(immRegRel, 0))) as SByte
+      }
+
+  }
+
+
+  encoding LoadBytePredNegRegRel =
+  { iclass = 0b0100
+  , op = 0b010
+  , dn = 0
+  , ps = 1
+  , type = MemoryAccessType::Byte
+  , unsigned = 0
+  }
+
+  assembly LoadBytePredNegRegRel = (AsmPred(t2, true, false), AsmR(d5), "=", ("memb", AsmAddrRegRel(s5, immRegRel)))
+
+  [operation LD ]
+  instruction LoadUByteGPRel : LoadFormat =   {
+    if true then
+      {
+        R(d5) := MEM< 1 >((GP + scaledImmU(immGPRel, 0))) as UByte
+      }
+
+  }
+
+
+  encoding LoadUByteGPRel =
+  { iclass = 0b0100
+  , gp = 1
+  , type1 = 0b1
+  , type = MemoryAccessType::Byte
+  , unsigned = 1
+  }
+
+  assembly LoadUByteGPRel = ("", AsmR(d5), "=", ("memub", AsmAddrGPRel(immGPRel)))
+
+  [operation LD ]
+  instruction LoadUByteRegRel : LoadFormat =   {
+    if true then
+      {
+        R(d5) := MEM< 1 >((R(s5) + scaledImmS(immRegRel, 0))) as UByte
+      }
+
+  }
+
+
+  encoding LoadUByteRegRel =
+  { iclass = 0b1001
+  , gp = 0
+  , type1 = 0b1
+  , type = MemoryAccessType::Byte
+  , unsigned = 1
+  }
+
+  assembly LoadUByteRegRel = ("", AsmR(d5), "=", ("memub", AsmAddrRegRel(s5, immRegRel)))
+
+  [operation LD ]
+  instruction LoadHalfGPRel : LoadFormat =   {
+    if true then
+      {
+        R(d5) := MEM< 2 >((GP + scaledImmU(immGPRel, 1))) as SHalf
+      }
+
+  }
+
+
+  encoding LoadHalfGPRel =
+  { iclass = 0b0100
+  , gp = 1
+  , type1 = 0b1
+  , type = MemoryAccessType::Half
+  , unsigned = 0
+  }
+
+  assembly LoadHalfGPRel = ("", AsmR(d5), "=", ("memh", AsmAddrGPRel(immGPRel)))
+
+  [operation LD ]
+  instruction LoadHalfRegRel : LoadFormat =   {
+    if true then
+      {
+        R(d5) := MEM< 2 >((R(s5) + scaledImmS(immRegRel, 1))) as SHalf
+      }
+
+  }
+
+
+  encoding LoadHalfRegRel =
+  { iclass = 0b1001
+  , gp = 0
+  , type1 = 0b1
+  , type = MemoryAccessType::Half
+  , unsigned = 0
+  }
+
+  assembly LoadHalfRegRel = ("", AsmR(d5), "=", ("memh", AsmAddrRegRel(s5, immRegRel)))
+
+  [operation LD ]
+  instruction LoadHalfPredPosRegRel : LoadRegRelPredFormat =   {
+    if testpred(t2) then
+      {
+        R(d5) := MEM< 2 >((R(s5) + scaledImmS(immRegRel, 1))) as SHalf
+      }
+
+  }
+
+
+  encoding LoadHalfPredPosRegRel =
+  { iclass = 0b0100
+  , op = 0b010
+  , dn = 0
+  , ps = 0
+  , type = MemoryAccessType::Half
+  , unsigned = 0
+  }
+
+  assembly LoadHalfPredPosRegRel = (AsmPred(t2, false, false), AsmR(d5), "=", ("memh", AsmAddrRegRel(s5, immRegRel)))
+
+  [operation LD ]
+  instruction LoadHalfPredNegRegRel : LoadRegRelPredFormat =   {
+    if !testpred(t2) then
+      {
+        R(d5) := MEM< 2 >((R(s5) + scaledImmS(immRegRel, 1))) as SHalf
+      }
+
+  }
+
+
+  encoding LoadHalfPredNegRegRel =
+  { iclass = 0b0100
+  , op = 0b010
+  , dn = 0
+  , ps = 1
+  , type = MemoryAccessType::Half
+  , unsigned = 0
+  }
+
+  assembly LoadHalfPredNegRegRel = (AsmPred(t2, true, false), AsmR(d5), "=", ("memh", AsmAddrRegRel(s5, immRegRel)))
+
+  [operation LD ]
+  instruction LoadUHalfGPRel : LoadFormat =   {
+    if true then
+      {
+        R(d5) := MEM< 2 >((GP + scaledImmU(immGPRel, 1))) as UHalf
+      }
+
+  }
+
+
+  encoding LoadUHalfGPRel =
+  { iclass = 0b0100
+  , gp = 1
+  , type1 = 0b1
+  , type = MemoryAccessType::Half
+  , unsigned = 1
+  }
+
+  assembly LoadUHalfGPRel = ("", AsmR(d5), "=", ("memuh", AsmAddrGPRel(immGPRel)))
+
+  [operation LD ]
+  instruction LoadUHalfRegRel : LoadFormat =   {
+    if true then
+      {
+        R(d5) := MEM< 2 >((R(s5) + scaledImmS(immRegRel, 1))) as UHalf
+      }
+
+  }
+
+
+  encoding LoadUHalfRegRel =
+  { iclass = 0b1001
+  , gp = 0
+  , type1 = 0b1
+  , type = MemoryAccessType::Half
+  , unsigned = 1
+  }
+
+  assembly LoadUHalfRegRel = ("", AsmR(d5), "=", ("memuh", AsmAddrRegRel(s5, immRegRel)))
+
+  [operation LD ]
+  instruction LoadWordGPRel : LoadFormat =   {
+    if true then
+      {
+        R(d5) := MEM< 4 >((GP + scaledImmU(immGPRel, 2))) as SWord
+      }
+
+  }
+
+
+  encoding LoadWordGPRel =
+  { iclass = 0b0100
+  , gp = 1
+  , type1 = 0b1
+  , type = MemoryAccessType::Word
+  , unsigned = 0
+  }
+
+  assembly LoadWordGPRel = ("", AsmR(d5), "=", ("memw", AsmAddrGPRel(immGPRel)))
+
+  [operation LD ]
+  instruction LoadWordRegRel : LoadFormat =   {
+    if true then
+      {
+        R(d5) := MEM< 4 >((R(s5) + scaledImmS(immRegRel, 2))) as SWord
+      }
+
+  }
+
+
+  encoding LoadWordRegRel =
+  { iclass = 0b1001
+  , gp = 0
+  , type1 = 0b1
+  , type = MemoryAccessType::Word
+  , unsigned = 0
+  }
+
+  assembly LoadWordRegRel = ("", AsmR(d5), "=", ("memw", AsmAddrRegRel(s5, immRegRel)))
+
+  [operation LD ]
+  instruction LoadWordPredPosRegRel : LoadRegRelPredFormat =   {
+    if testpred(t2) then
+      {
+        R(d5) := MEM< 4 >((R(s5) + scaledImmS(immRegRel, 2))) as SWord
+      }
+
+  }
+
+
+  encoding LoadWordPredPosRegRel =
+  { iclass = 0b0100
+  , op = 0b010
+  , dn = 0
+  , ps = 0
+  , type = MemoryAccessType::Word
+  , unsigned = 0
+  }
+
+  assembly LoadWordPredPosRegRel = (AsmPred(t2, false, false), AsmR(d5), "=", ("memw", AsmAddrRegRel(s5, immRegRel)))
+
+  [operation LD ]
+  instruction LoadWordPredNegRegRel : LoadRegRelPredFormat =   {
+    if !testpred(t2) then
+      {
+        R(d5) := MEM< 4 >((R(s5) + scaledImmS(immRegRel, 2))) as SWord
+      }
+
+  }
+
+
+  encoding LoadWordPredNegRegRel =
+  { iclass = 0b0100
+  , op = 0b010
+  , dn = 0
+  , ps = 1
+  , type = MemoryAccessType::Word
+  , unsigned = 0
+  }
+
+  assembly LoadWordPredNegRegRel = (AsmPred(t2, true, false), AsmR(d5), "=", ("memw", AsmAddrRegRel(s5, immRegRel)))
+
+  [operation LD ]
+  instruction LoadDoubleGPRel : LoadFormat =   {
+    if true then
+      {
+        let result = MEM< 8 >((GP + scaledImmU(immGPRel, 3))) as SDouble in
+          {
+            R(d5) := result(31..0)
+            R((d5 + 1)) := result(63..32)
+          }
+      }
+
+  }
+
+
+  encoding LoadDoubleGPRel =
+  { iclass = 0b0100
+  , gp = 1
+  , type1 = 0b1
+  , type = MemoryAccessType::Double
+  , unsigned = 0
+  }
+
+  assembly LoadDoubleGPRel = ("", AsmRR(d5), "=", ("memd", AsmAddrGPRel(immGPRel)))
+
+  [operation LD ]
+  instruction LoadDoubleRegRel : LoadFormat =   {
+    if true then
+      {
+        let result = MEM< 8 >((R(s5) + scaledImmS(immRegRel, 3))) as SDouble in
+          {
+            R(d5) := result(31..0)
+            R((d5 + 1)) := result(63..32)
+          }
+      }
+
+  }
+
+
+  encoding LoadDoubleRegRel =
+  { iclass = 0b1001
+  , gp = 0
+  , type1 = 0b1
+  , type = MemoryAccessType::Double
+  , unsigned = 0
+  }
+
+  assembly LoadDoubleRegRel = ("", AsmRR(d5), "=", ("memd", AsmAddrRegRel(s5, immRegRel)))
+
+  [operation LD ]
+  instruction LoadDoublePredPosRegRel : LoadRegRelPredFormat =   {
+    if testpred(t2) then
+      {
+        let result = MEM< 8 >((R(s5) + scaledImmS(immRegRel, 3))) as SDouble in
+          {
+            R(d5) := result(31..0)
+            R((d5 + 1)) := result(63..32)
+          }
+      }
+
+  }
+
+
+  encoding LoadDoublePredPosRegRel =
+  { iclass = 0b0100
+  , op = 0b010
+  , dn = 0
+  , ps = 0
+  , type = MemoryAccessType::Double
+  , unsigned = 0
+  }
+
+  assembly LoadDoublePredPosRegRel = (AsmPred(t2, false, false), AsmRR(d5), "=", ("memd", AsmAddrRegRel(s5, immRegRel)))
+
+  [operation LD ]
+  instruction LoadDoublePredNegRegRel : LoadRegRelPredFormat =   {
+    if !testpred(t2) then
+      {
+        let result = MEM< 8 >((R(s5) + scaledImmS(immRegRel, 3))) as SDouble in
+          {
+            R(d5) := result(31..0)
+            R((d5 + 1)) := result(63..32)
+          }
+      }
+
+  }
+
+
+  encoding LoadDoublePredNegRegRel =
+  { iclass = 0b0100
+  , op = 0b010
+  , dn = 0
+  , ps = 1
+  , type = MemoryAccessType::Double
+  , unsigned = 0
+  }
+
+  assembly LoadDoublePredNegRegRel = (AsmPred(t2, true, false), AsmRR(d5), "=", ("memd", AsmAddrRegRel(s5, immRegRel)))
+
+  format DeallocFrameFormat: Word =
+  { iclass	 [31..28]
+  , parse	 [15..14]
+  , d5	 [4..0]
+  , amode	 [27..25]
+  , type	 [24..22]
+  , unsigned	 [21]
+  , opc	 [20..16]
+  , neg	 [13]
+  , hintnew	 [12..11]
+  , op1	 [10]
+  , pred	 [9..8]
+  }
+
+  [operation LD ]
+  instruction DeallocFrame : DeallocFrameFormat =   {
+    let restored = MEM< 8 >(FP) as Double in
+      let LRnew = frameUnscramble(restored(63..32)) in
+        {
+          SP := (FP + 8)
+          LR := LRnew
+          FP := restored(31..0)
+        }
+  }
+
+
+  encoding DeallocFrame =
+  { iclass = 0b1001
+  , amode = 0b000
+  , type = 0b000
+  , unsigned = 0b0
+  , opc = 0b11110
+  , neg = 0
+  , d5 = 0b11110
+  }
+
+  assembly DeallocFrame = ("deallocframe")
+
+  [operation LD ]
+  instruction DecallocReturn : DeallocFrameFormat =   {
+    if true then
+      {
+        let restored = MEM< 8 >(FP) as Double in
+          let LRnew = frameUnscramble(restored(63..32)) in
+            {
+              SP := (FP + 8)
+              LR := LRnew
+              FP := restored(31..0)
+              PC := LRnew
+            }
+      }
+
+  }
+
+
+  encoding DecallocReturn =
+  { iclass = 0b1001
+  , amode = 0b011
+  , type = 0b000
+  , unsigned = 0b0
+  , opc = 0b11110
+  , op1 = 0b0
+  , d5 = 0b11110
+  , hintnew = 0b00
+  , neg = 0b0
+  }
+
+  assembly DecallocReturn = ("", "dealloc_return", "")
+
+  [operation LD ]
+  instruction DecallocReturnPredPos : DeallocFrameFormat =   {
+    if testpred(pred) then
+      {
+        let restored = MEM< 8 >(FP) as Double in
+          let LRnew = frameUnscramble(restored(63..32)) in
+            {
+              SP := (FP + 8)
+              LR := LRnew
+              FP := restored(31..0)
+              PC := LRnew
+            }
+      }
+
+  }
+
+
+  encoding DecallocReturnPredPos =
+  { iclass = 0b1001
+  , amode = 0b011
+  , type = 0b000
+  , unsigned = 0b0
+  , opc = 0b11110
+  , op1 = 0b0
+  , d5 = 0b11110
+  , hintnew = 0b10
+  , neg = 0b0
+  }
+
+  assembly DecallocReturnPredPos = (AsmPred(pred, false, false), "dealloc_return", "")
+
+  [operation LD ]
+  instruction DecallocReturnPredNeg : DeallocFrameFormat =   {
+    if !testpred(pred) then
+      {
+        let restored = MEM< 8 >(FP) as Double in
+          let LRnew = frameUnscramble(restored(63..32)) in
+            {
+              SP := (FP + 8)
+              LR := LRnew
+              FP := restored(31..0)
+              PC := LRnew
+            }
+      }
+
+  }
+
+
+  encoding DecallocReturnPredNeg =
+  { iclass = 0b1001
+  , amode = 0b011
+  , type = 0b000
+  , unsigned = 0b0
+  , opc = 0b11110
+  , op1 = 0b0
+  , d5 = 0b11110
+  , hintnew = 0b10
+  , neg = 0b1
+  }
+
+  assembly DecallocReturnPredNeg = (AsmPred(pred, true, false), "dealloc_return", " ")
+
+  format StoreFormat: Word =
+  { iclass	 [31..28]
+  , parse	 [15..14]
+  , t5	 [12..8]
+  , data	 [26..25, 20..16, 13, 7..0]
+  , gp	 [27]
+  , type1	 [24]
+  , type	 [23..22]
+  , unsigned	 [21]
+  , immGPRel = data as UInt
+  , immRegRel = (data(15..14), data(8..0)) as SInt
+  , s5 = data(13..9)
+  }
+
+  [operation ST ]
+  instruction StoreByteGPRel : StoreFormat =   {
+    MEM< 1 >((GP + scaledImmU(immGPRel, 0))) := (R(t5) >> 0 as UInt<6>) as Byte
+  }
+
+
+  encoding StoreByteGPRel =
+  { iclass = 0b0100
+  , gp = 1
+  , type1 = 0
+  , type = MemoryAccessType::Byte
+  , unsigned = 0
+  }
+
+  assembly StoreByteGPRel = (("memb", AsmAddrGPRel(immGPRel)), "=", AsmR(t5), "")
+
+  [operation ST ]
+  instruction StoreByteRegRel : StoreFormat =   {
+    MEM< 1 >((R(s5) + scaledImmS(immRegRel, 0))) := (R(t5) >> 0 as UInt<6>) as Byte
+  }
+
+
+  encoding StoreByteRegRel =
+  { iclass = 0b1010
+  , gp = 0
+  , type1 = 1
+  , type = MemoryAccessType::Byte
+  , unsigned = 0
+  }
+
+  assembly StoreByteRegRel = (("memb", AsmAddrRegRel(s5, immRegRel)), "=", AsmR(t5), "")
+
+  [operation ST ]
+  instruction StoreHalfGPRel : StoreFormat =   {
+    MEM< 2 >((GP + scaledImmU(immGPRel, 1))) := (R(t5) >> 0 as UInt<6>) as Half
+  }
+
+
+  encoding StoreHalfGPRel =
+  { iclass = 0b0100
+  , gp = 1
+  , type1 = 0
+  , type = MemoryAccessType::Half
+  , unsigned = 0
+  }
+
+  assembly StoreHalfGPRel = (("memh", AsmAddrGPRel(immGPRel)), "=", AsmR(t5), "")
+
+  [operation ST ]
+  instruction StoreHalfRegRel : StoreFormat =   {
+    MEM< 2 >((R(s5) + scaledImmS(immRegRel, 1))) := (R(t5) >> 0 as UInt<6>) as Half
+  }
+
+
+  encoding StoreHalfRegRel =
+  { iclass = 0b1010
+  , gp = 0
+  , type1 = 1
+  , type = MemoryAccessType::Half
+  , unsigned = 0
+  }
+
+  assembly StoreHalfRegRel = (("memh", AsmAddrRegRel(s5, immRegRel)), "=", AsmR(t5), "")
+
+  [operation ST ]
+  instruction StoreHHalfGPRel : StoreFormat =   {
+    MEM< 2 >((GP + scaledImmU(immGPRel, 1))) := (R(t5) >> (2 * 8) as UInt<6>) as Half
+  }
+
+
+  encoding StoreHHalfGPRel =
+  { iclass = 0b0100
+  , gp = 1
+  , type1 = 0
+  , type = MemoryAccessType::Half
+  , unsigned = 1
+  }
+
+  assembly StoreHHalfGPRel = (("memh", AsmAddrGPRel(immGPRel)), "=", AsmR(t5), ".H")
+
+  [operation ST ]
+  instruction StoreHHalfRegRel : StoreFormat =   {
+    MEM< 2 >((R(s5) + scaledImmS(immRegRel, 1))) := (R(t5) >> (2 * 8) as UInt<6>) as Half
+  }
+
+
+  encoding StoreHHalfRegRel =
+  { iclass = 0b1010
+  , gp = 0
+  , type1 = 1
+  , type = MemoryAccessType::Half
+  , unsigned = 1
+  }
+
+  assembly StoreHHalfRegRel = (("memh", AsmAddrRegRel(s5, immRegRel)), "=", AsmR(t5), ".H")
+
+  [operation ST ]
+  instruction StoreWordGPRel : StoreFormat =   {
+    MEM< 4 >((GP + scaledImmU(immGPRel, 2))) := (R(t5) >> 0 as UInt<6>) as Word
+  }
+
+
+  encoding StoreWordGPRel =
+  { iclass = 0b0100
+  , gp = 1
+  , type1 = 0
+  , type = MemoryAccessType::Word
+  , unsigned = 0
+  }
+
+  assembly StoreWordGPRel = (("memw", AsmAddrGPRel(immGPRel)), "=", AsmR(t5), "")
+
+  [operation ST ]
+  instruction StoreWordRegRel : StoreFormat =   {
+    MEM< 4 >((R(s5) + scaledImmS(immRegRel, 2))) := (R(t5) >> 0 as UInt<6>) as Word
+  }
+
+
+  encoding StoreWordRegRel =
+  { iclass = 0b1010
+  , gp = 0
+  , type1 = 1
+  , type = MemoryAccessType::Word
+  , unsigned = 0
+  }
+
+  assembly StoreWordRegRel = (("memw", AsmAddrRegRel(s5, immRegRel)), "=", AsmR(t5), "")
+
+  [operation ST ]
+  instruction StoreDoubleGPRel : StoreFormat =   {
+    MEM< 8 >((GP + scaledImmU(immGPRel, 3))) := (R((t5 + 1)), R(t5)) as Double
+  }
+
+
+  encoding StoreDoubleGPRel =
+  { iclass = 0b0100
+  , gp = 1
+  , type1 = 0
+  , type = MemoryAccessType::Double
+  , unsigned = 0
+  }
+
+  assembly StoreDoubleGPRel = (("memd", AsmAddrGPRel(immGPRel)), "=", AsmR(t5), "")
+
+  [operation ST ]
+  instruction StoreDoubleRegRel : StoreFormat =   {
+    MEM< 8 >((R(s5) + scaledImmS(immRegRel, 3))) := (R((t5 + 1)), R(t5)) as Double
+  }
+
+
+  encoding StoreDoubleRegRel =
+  { iclass = 0b1010
+  , gp = 0
+  , type1 = 1
+  , type = MemoryAccessType::Double
+  , unsigned = 0
+  }
+
+  assembly StoreDoubleRegRel = (("memd", AsmAddrRegRel(s5, immRegRel)), "=", AsmR(t5), "")
+
+  format StoreImmFormat: Word =
+  { iclass	 [31..28]
+  , parse	 [15..14]
+  , amode	 [27..25]
+  , type	 [22..21]
+  , s5	 [20..16]
+  , immOffset	 [12..7]
+  , imm	 [13, 6..0]
+  , immOffsetU = immOffset as UInt
+  , immS = extendS(imm)
+  }
+  format StoreImmXFormat: Double =
+  { iclassX	 [31..28]
+  , parseX	 [15..14]
+  , immX	 [27..16, 13..0]
+  , iclass	 [63..60]
+  , parse	 [47..46]
+  , amode	 [59..57]
+  , type	 [54..53]
+  , s5	 [52..48]
+  , immOffset	 [44..39]
+  , imm	 [45, 38..32]
+  , immOffsetU = immOffset as UInt
+  , immS = extendSExtender(imm, immX)
+  }
+
+  [operation ST ]
+  instruction StoreImmByte : StoreImmFormat =   {
+    if true then
+      MEM< 1 >((R(s5) + scaledImmU(immOffsetU, 0))) := immS as SByte
+
+  }
+
+
+  encoding StoreImmByte =
+  { iclass = 0b0011
+  , type = MemoryAccessType::Byte
+  , amode = 0b110
+  }
+
+  assembly StoreImmByte = ("memb", "(", AsmR(s5), "+#", decimal(scaledImmU(immOffsetU, 0)), ")", "=#", decimal(immS as SByte))
+
+  [operation ST ]
+  instruction StoreImmHalf : StoreImmFormat =   {
+    if true then
+      MEM< 2 >((R(s5) + scaledImmU(immOffsetU, 1))) := immS as SHalf
+
+  }
+
+
+  encoding StoreImmHalf =
+  { iclass = 0b0011
+  , type = MemoryAccessType::Half
+  , amode = 0b110
+  }
+
+  assembly StoreImmHalf = ("memh", "(", AsmR(s5), "+#", decimal(scaledImmU(immOffsetU, 1)), ")", "=#", decimal(immS as SHalf))
+
+  [operation ST ]
+  instruction StoreImmWord : StoreImmFormat =   {
+    if true then
+      MEM< 4 >((R(s5) + scaledImmU(immOffsetU, 2))) := immS as SWord
+
+  }
+
+
+  encoding StoreImmWord =
+  { iclass = 0b0011
+  , type = MemoryAccessType::Word
+  , amode = 0b110
+  }
+
+  assembly StoreImmWord = ("memw", "(", AsmR(s5), "+#", decimal(scaledImmU(immOffsetU, 2)), ")", "=#", decimal(immS as SWord))
+
+  [operation ST ]
+  instruction StoreImmByteX : StoreImmXFormat =   {
+    if true then
+      MEM< 1 >((R(s5) + scaledImmU(immOffsetU, 0))) := immS as SByte
+
+  }
+
+
+  encoding StoreImmByteX =
+  { iclass = 0b0011
+  , type = MemoryAccessType::Byte
+  , iclassX = 0
+  , amode = 0b110
+  }
+
+  assembly StoreImmByteX = ((AsmImmextU(immX), "memb"), "(", AsmR(s5), "+#", decimal(scaledImmU(immOffsetU, 0)), ")", "=#", decimal(immS as SByte))
+
+  [operation ST ]
+  instruction StoreImmHalfX : StoreImmXFormat =   {
+    if true then
+      MEM< 2 >((R(s5) + scaledImmU(immOffsetU, 1))) := immS as SHalf
+
+  }
+
+
+  encoding StoreImmHalfX =
+  { iclass = 0b0011
+  , type = MemoryAccessType::Half
+  , iclassX = 0
+  , amode = 0b110
+  }
+
+  assembly StoreImmHalfX = ((AsmImmextU(immX), "memh"), "(", AsmR(s5), "+#", decimal(scaledImmU(immOffsetU, 1)), ")", "=#", decimal(immS as SHalf))
+
+  [operation ST ]
+  instruction StoreImmWordX : StoreImmXFormat =   {
+    if true then
+      MEM< 4 >((R(s5) + scaledImmU(immOffsetU, 2))) := immS as SWord
+
+  }
+
+
+  encoding StoreImmWordX =
+  { iclass = 0b0011
+  , type = MemoryAccessType::Word
+  , iclassX = 0
+  , amode = 0b110
+  }
+
+  assembly StoreImmWordX = ((AsmImmextU(immX), "memw"), "(", AsmR(s5), "+#", decimal(scaledImmU(immOffsetU, 2)), ")", "=#", decimal(immS as SWord))
+
+  format AllocFrameFormat: Word =
+  { iclass	 [31..28]
+  , parse	 [15..14]
+  , amode	 [27..25]
+  , type	 [24..22]
+  , unsigned	 [21]
+  , opc	 [20..16, 13..11]
+  , imm	 [10..0]
+  , immU = (imm as UInt<11> * 8 as UInt<4>)
+  }
+
+  [operation ST ]
+  instruction AllocFrame : AllocFrameFormat =   {
+    let SPnew = (SP - 8) in
+      {
+        MEM< 8 >(SPnew) := (frameScramble(LR), FP)
+        FP := SPnew
+        SP := (SPnew - immU)
+      }
+  }
+
+
+  encoding AllocFrame =
+  { iclass = 0b1010
+  , amode = 0b000
+  , type = 0b010
+  , unsigned = 0
+  , opc = 0b11101000
+  }
+
+  assembly AllocFrame = ("allocframe(", ")")
+
+  format BrkptFormat: Word =
+  { iclass	 [31..28]
+  , opc	 [27..21, 7..5]
+  , parse	 [15..14]
+  }
+
+  [operation SYSTEMSolo ]
+  instruction Brkpt : BrkptFormat =   {
+    PC := 0xeeeeeeee
+  }
+
+
+  encoding Brkpt =
+  { iclass = 0b0110
+  , opc = 0b1100001000
+  }
+
+  assembly Brkpt = ("brkpt")
+
+  format AddImmShiftedFormat: Word =
+  { iclass	 [31..28]
+  , parse	 [15..14]
+  , regtype	 [27..24]
+  , imm	 [23..21, 13, 7..5, 3]
+  , x5	 [20..16]
+  , shift	 [12..8]
+  , majop	 [4, 2..1]
+  , immU = imm as UWord
+  , shiftU = shift as UInt
+  }
+
+  [operation XTYPE ]
+  instruction AddImmAsl : AddImmShiftedFormat =   {
+    R(x5) := VADL::add(immU, VADL::asl(R(x5), shiftU) as UInt)
+  }
+
+
+  encoding AddImmAsl =
+  { iclass = 0b1101
+  , regtype = 0b1110
+  , majop = 0b010
+  }
+
+  assembly AddImmAsl = (AsmR(x5), " = ", "add", "(#", decimal(immU), "asl", "(", AsmR(x5), "#", decimal(shiftU), "))")
+
+  [operation XTYPE ]
+  instruction SubImmAsl : AddImmShiftedFormat =   {
+    R(x5) := VADL::sub(immU, VADL::asl(R(x5), shiftU) as UInt)
+  }
+
+
+  encoding SubImmAsl =
+  { iclass = 0b1101
+  , regtype = 0b1110
+  , majop = 0b011
+  }
+
+  assembly SubImmAsl = (AsmR(x5), " = ", "sub", "(#", decimal(immU), "asl", "(", AsmR(x5), "#", decimal(shiftU), "))")
+
+  [operation XTYPE ]
+  instruction AddImmLsr : AddImmShiftedFormat =   {
+    R(x5) := VADL::add(immU, VADL::lsr(R(x5), shiftU) as UInt)
+  }
+
+
+  encoding AddImmLsr =
+  { iclass = 0b1101
+  , regtype = 0b1110
+  , majop = 0b110
+  }
+
+  assembly AddImmLsr = (AsmR(x5), " = ", "add", "(#", decimal(immU), "lsr", "(", AsmR(x5), "#", decimal(shiftU), "))")
+
+  [operation XTYPE ]
+  instruction SubImmLsr : AddImmShiftedFormat =   {
+    R(x5) := VADL::sub(immU, VADL::lsr(R(x5), shiftU) as UInt)
+  }
+
+
+  encoding SubImmLsr =
+  { iclass = 0b1101
+  , regtype = 0b1110
+  , majop = 0b111
+  }
+
+  assembly SubImmLsr = (AsmR(x5), " = ", "sub", "(#", decimal(immU), "lsr", "(", AsmR(x5), "#", decimal(shiftU), "))")
+
+  format BitOpImmFormat: Word =
+  { iclass	 [31..28]
+  , parse	 [15..14]
+  , regtype	 [27..24]
+  , majop	 [23..22]
+  , op	 [21, 13]
+  , minop	 [7..5]
+  , s5	 [20..16]
+  , imm	 [12..8]
+  , d5	 [4..0]
+  , immU = imm as UInt
+  }
+  format BitOpRegFormat: Word =
+  { iclass	 [31..28]
+  , parse	 [15..14]
+  , regtype	 [27..24]
+  , majop	 [23..22]
+  , minop	 [7..6]
+  , s5	 [20..16]
+  , t5	 [12..8]
+  , d5	 [4..0]
+  }
+
+  [operation XTYPE ]
+  instruction BitSetImm : BitOpImmFormat =   {
+    R(d5) := (R(s5) | (1 as Word << imm))
+  }
+
+
+  encoding BitSetImm =
+  { iclass = 0b1000
+  , regtype = 0b1100
+  , majop = 0b11
+  , op = 0b00
+  , minop = 0b000
+  }
+
+  assembly BitSetImm = (AsmR(d5), " = ", "setbit", "(", AsmR(s5), ",", ("#", decimal(imm)), ")")
+
+  [operation XTYPE ]
+  instruction BitClrImm : BitOpImmFormat =   {
+    R(d5) := (R(s5) & VADL::not((1 as Word << imm)))
+  }
+
+
+  encoding BitClrImm =
+  { iclass = 0b1000
+  , regtype = 0b1100
+  , majop = 0b11
+  , op = 0b00
+  , minop = 0b001
+  }
+
+  assembly BitClrImm = (AsmR(d5), " = ", "clrbit", "(", AsmR(s5), ",", ("#", decimal(imm)), ")")
+
+  [operation XTYPE ]
+  instruction BitToggleImm : BitOpImmFormat =   {
+    R(d5) := (R(s5) ^ (1 as Word << imm))
+  }
+
+
+  encoding BitToggleImm =
+  { iclass = 0b1000
+  , regtype = 0b1100
+  , majop = 0b11
+  , op = 0b00
+  , minop = 0b010
+  }
+
+  assembly BitToggleImm = (AsmR(d5), " = ", "togglebit", "(", AsmR(s5), ",", ("#", decimal(imm)), ")")
+
+  format TransferPRFormat: Word =
+  { iclass	 [31..28]
+  , parse	 [15..14]
+  , regtype	 [27..24]
+  , majop	 [23..21]
+  , s5	 [20..16]
+  , d2	 [1..0]
+  }
+  format TransferRPFormat: Word =
+  { iclass	 [31..28]
+  , parse	 [15..14]
+  , regtype	 [27..24]
+  , majop	 [22]
+  , s2	 [17..16]
+  , d5	 [4..0]
+  }
+
+  [operation XTYPE ]
+  instruction TransferPR : TransferPRFormat =   {
+    Pset(d2, R(s5) as Byte)  }
+
+
+  encoding TransferPR =
+  { iclass = 0b1000
+  , regtype = 0b0101
+  , majop = 0b010
+  }
+
+  assembly TransferPR = (AsmP(d2), " = ", AsmR(s5))
+
+  [operation XTYPE ]
+  instruction TransferRP : TransferRPFormat =   {
+    R(d5) := Pget(s2)
+  }
+
+
+  encoding TransferRP =
+  { iclass = 0b1000
+  , regtype = 0b1001
+  , majop = 0b1
+  }
+
+  assembly TransferRP = (AsmR(d5), " = ", AsmP(s2))
+
+  format ALUDoubleCarryFormat: Word =
+  { iclass	 [31..28]
+  , parse	 [15..14]
+  , regtype	 [27..24]
+  , majop	 [23..22]
+  , op	 [21]
+  , s5	 [20..16]
+  , t5	 [12..8]
+  , x2	 [6..5]
+  , d5	 [4..0]
+  , d2 = x2
+  , u2 = x2
+  }
+
+  [operation XTYPE_PRED_WRITING ]
+  instruction AddDoubleCarry : ALUDoubleCarryFormat =   {
+    let a = (R((s5 + 1)), R(s5)) in
+      let b = (R((t5 + 1)), R(t5)) in
+        let c = P(x2) as Bits<1> as Word in
+          let temp, tempstatus = VADL::adds(a, if false then
+  VADL::not(b)
+else
+  b) in
+            let result, status = VADL::adds(temp, c) in
+              {
+                R(d5) := result(31..0)
+                R((d5 + 1)) := result(63..32)
+                Pset(x2, (tempstatus.carry | status.carry))              }
+  }
+
+
+  encoding AddDoubleCarry =
+  { iclass = 0b1100
+  , regtype = 0b0010
+  , majop = 0b11
+  , op = 0
+  }
+
+  assembly AddDoubleCarry = (AsmRR(d5), " = ", if false then
+  "sub"
+else
+  "add", "(", AsmRR(s5), ",", AsmRR(t5), ",", AsmP(x2), "):carry")
+
+  [operation XTYPE_PRED_WRITING ]
+  instruction SubDoubleCarry : ALUDoubleCarryFormat =   {
+    let a = (R((s5 + 1)), R(s5)) in
+      let b = (R((t5 + 1)), R(t5)) in
+        let c = P(x2) as Bits<1> as Word in
+          let temp, tempstatus = VADL::adds(a, if true then
+  VADL::not(b)
+else
+  b) in
+            let result, status = VADL::adds(temp, c) in
+              {
+                R(d5) := result(31..0)
+                R((d5 + 1)) := result(63..32)
+                Pset(x2, (tempstatus.carry | status.carry))              }
+  }
+
+
+  encoding SubDoubleCarry =
+  { iclass = 0b1100
+  , regtype = 0b0010
+  , majop = 0b11
+  , op = 1
+  }
+
+  assembly SubDoubleCarry = (AsmRR(d5), " = ", if true then
+  "sub"
+else
+  "add", "(", AsmRR(s5), ",", AsmRR(t5), ",", AsmP(x2), "):carry")
+
+  operation XTYPE =
+  { XTYPE_PRED_WRITING
+  }
+  operation ALU32 =
+  { ALU32_PRED_WRITING
+  }
+  operation CR =
+  { CR23
+  }
+  operation JR = {}
+  operation J =
+  { J_PRED_WRITING
+  }
+  operation LD = {}
+  operation MEMOP = {}
+  operation NV = {}
+  operation ST = {}
+  operation SYSTEM = {}
+  operation SYSTEMSolo = {}
+  operation ALL =
+  { XTYPE
+  , ALU32
+  , CR
+  , JR
+  , J
+  , LD
+  , MEMOP
+  , NV
+  , ST
+  , SYSTEM
+  , SYSTEMSolo
+  }
+  operation CR23 = {}
+  operation TRANSFER_C_R =
+  { TransferCR
+  }
+  operation TRANSFER_CC_RR =
+  { TransferCCRR
+  }
+  operation TRANSFER_P_R =
+  { TransferPR
+  }
+  operation ARITH_CARRY =
+  { AddDoubleCarry
+  , SubDoubleCarry
+  }
+  operation MEMLOCKED_L2FETCH_TRACE = {}
+  operation CACHE_MAINTENANCE_SPECIAL = {}
+  operation JUMP_IMM =
+  { JumpImm
+  }
+  operation JUMP_CMP_NEW = {}
+  operation ALU32_XTYPE_NON_FP =
+  { ALU32
+  }
+  operation CONDITIONAL_NEW = {}
+  operation FLOATING_POINT = {}
+  operation SATURATING = {}
+  operation DEALLOC_RETURN =
+  { DecallocReturn
+  , DecallocReturnPredPos
+  , DecallocReturnPredNeg
+  }
+  operation LD_ST =
+  { LD
+  , ST
+  }
+  operation ALU32_PRED_WRITING = {}
+  operation J_PRED_WRITING = {}
+  operation XTYPE_PRED_WRITING = {}
+  operation PRED_WRITING =
+  { ALU32_PRED_WRITING
+  , J_PRED_WRITING
+  , XTYPE_PRED_WRITING
+  }
+
+  function implies(a : Bool, b : Bool) -> Bool = (!a | b)
+
+  [  let parse = VLIW((VLIW.length - 1)).parse in
+    ((parse = 0b00) | (parse = 0b11)) stop ]
+  [!((VLIW.length >= 2) & ((VLIW(0) ∈ JUMP_IMM) & (VLIW(1) ∈ J))) assert ]
+  [!((VLIW.length >= 2) & (((VLIW(0) ∈ JUMP_CMP_NEW) & (VLIW(1) ∈ J)) | ((VLIW(0) ∈ J) & (VLIW(1) ∈ JUMP_CMP_NEW)))) assert ]
+  [!((VLIW.length >= 2) & ((VLIW(0) ∈ J) & (VLIW(1) ∈ JR))) assert ]
+  [!((VLIW.length >= 2) & (((VLIW(0) ∈ J) & (VLIW(1) ∈ J)) & exists in {DEALLOC_RETURN})) assert ]
+  [implies((VLIW((VLIW.length - 1)) ∈ MEMLOCKED_L2FETCH_TRACE), forall j in {ALL} then ((((j = VLIW((VLIW.length - 1)))) | ((j ∈ ALU32_XTYPE_NON_FP))))
+) assert ]
+  [implies((VLIW((VLIW.length - 1)) ∈ CACHE_MAINTENANCE_SPECIAL), ((VLIW.length = 1) | !(VLIW((VLIW.length - 2)) ∈ LD_ST))) assert ]
+  [!(exists i in {TRANSFER_C_R, TRANSFER_CC_RR} then (i.d5 = 8)
+ & exists in {FLOATING_POINT, SATURATING}) assert ]
+  [!((exists i in {TRANSFER_C_R, TRANSFER_CC_RR} then (i.d5 = 4)
+ | exists in {TRANSFER_P_R}) & exists in {PRED_WRITING}) assert ]
+  [forall i in {ARITH_CARRY} then !(((((exists j in {PRED_WRITING} then (((i != j)) & ((j.d2 = i.u2)))
+) | (exists j in {TRANSFER_C_R, TRANSFER_CC_RR} then (j.d5 = 4)
+))) | (exists j in {TRANSFER_P_R} then (j.d2 = i.u2)
+)))
+ assert ]
+  [(VLIW.length <= 4) assert ]
+  group VLIW = (((XTYPE<0..1> | ALU32<0..1> | J<0..1> | CR<0..1>).(XTYPE<0..1> | ALU32<0..1> | J<0..1> | JR<0..1> | CR23<0..1>).(LD<0..1> | ST<0..1> | ALU32<0..1>).(LD<0..1> | ST<0..1> | ALU32<0..1>)) | SYSTEMSolo)
+}

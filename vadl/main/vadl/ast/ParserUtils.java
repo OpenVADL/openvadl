@@ -14,10 +14,15 @@ import vadl.utils.SourceLocation;
 
 class ParserUtils {
 
+  static String VADL_EXTENSION = ".vadl";
+
   static boolean[] NO_OPS;
   static boolean[] BIN_OPS;
   static boolean[] BIN_OPS_EXCEPT_GT;
   static boolean[] BIN_OPS_EXCEPT_IN;
+
+  // Must be kept in sync with allowedIdentifierKeywords
+  static boolean[] ID_TOKENS;
 
   static {
     NO_OPS = new boolean[Parser.maxT + 1];
@@ -45,12 +50,43 @@ class ParserUtils {
     BIN_OPS[Parser._SYM_MOD] = true;
     BIN_OPS[Parser._SYM_IN] = true;
     BIN_OPS[Parser._SYM_NIN] = true;
+    BIN_OPS[Parser._SYM_ELEM_OF] = true;
+    BIN_OPS[Parser._SYM_NOT_ELEM_OF] = true;
 
     BIN_OPS_EXCEPT_GT = BIN_OPS.clone();
     BIN_OPS_EXCEPT_GT[Parser._SYM_GT] = false;
 
     BIN_OPS_EXCEPT_IN = BIN_OPS.clone();
     BIN_OPS_EXCEPT_IN[Parser._SYM_IN] = false;
+
+    ID_TOKENS = NO_OPS.clone();
+    ID_TOKENS[Parser._identifierToken] = true;
+    ID_TOKENS[Parser._ALIAS] = true;
+    ID_TOKENS[Parser._CONSTANT] = true;
+    ID_TOKENS[Parser._ENCODE] = true;
+    ID_TOKENS[Parser._EXCEPTION] = true;
+    ID_TOKENS[Parser._GROUP] = true;
+    ID_TOKENS[Parser._INSTRUCTION] = true;
+    ID_TOKENS[Parser._MEMORY] = true;
+    ID_TOKENS[Parser._OPERATION] = true;
+    ID_TOKENS[Parser._PREDICATE] = true;
+    ID_TOKENS[Parser._REGISTER] = true;
+    ID_TOKENS[Parser._SYM_IN] = true;
+    ID_TOKENS[Parser._T_BIN] = true;
+    ID_TOKENS[Parser._T_BIN_OP] = true;
+    ID_TOKENS[Parser._T_BOOL] = true;
+    ID_TOKENS[Parser._T_CALL_EX] = true;
+    ID_TOKENS[Parser._T_ENCS] = true;
+    ID_TOKENS[Parser._T_ID] = true;
+    ID_TOKENS[Parser._T_INT] = true;
+    ID_TOKENS[Parser._T_ISA_DEFS] = true;
+    ID_TOKENS[Parser._T_LIT] = true;
+    ID_TOKENS[Parser._T_STAT] = true;
+    ID_TOKENS[Parser._T_STATS] = true;
+    ID_TOKENS[Parser._T_STR] = true;
+    ID_TOKENS[Parser._T_SYM_EX] = true;
+    ID_TOKENS[Parser._T_UN_OP] = true;
+    ID_TOKENS[Parser._T_VAL] = true;
   }
 
   /**
@@ -200,17 +236,13 @@ class ParserUtils {
   /**
    * Checks whether the token is an identifier token.
    * Since some keywords are allowed as identifiers, this is not as simple as checking the type.
-   * Must be kept in sync with the "allowedIdentifierKeywords" rule.
    *
+   * @see ParserUtils#ID_TOKENS
    * @param token The token to inspect
-   * @return Whether the token is suitable for "identifier" substitution
+   * @return Whether the token is a suitable "identifier"
    */
   static boolean isIdentifierToken(Token token) {
-    return token.kind == Parser._identifierToken
-        || token.kind == Parser._T_BOOL
-        || token.kind == Parser._REGISTER
-        || token.kind == Parser._EXCEPTION
-        || token.kind == Parser._ENCODE;
+    return ID_TOKENS[token.kind];
   }
 
   /**
@@ -450,9 +482,9 @@ class ParserUtils {
 
   static @Nullable Path resolveUri(Parser parser, IsId importPath) {
     if (importPath instanceof Identifier id) {
-      return resolveUri(parser, id.name + ".vadl");
+      return resolveUri(parser, id.name);
     } else if (importPath instanceof IdentifierPath identifierPath) {
-      return resolveUri(parser, ((Identifier) identifierPath.segments.get(0)).name + ".vadl");
+      return resolveUri(parser, ((Identifier) identifierPath.segments.get(0)).name);
     } else {
       parser.errors.SemErr("Could not resolve module path: " + importPath);
       return null;
@@ -465,9 +497,11 @@ class ParserUtils {
     if (Files.isRegularFile(relativeToSpec)) {
       return relativeToSpec;
     }
-    var relativeToWorkdir = Paths.get(name);
-    if (Files.isRegularFile(relativeToWorkdir)) {
-      return relativeToWorkdir;
+    var withAppendedExtension = relativeToSpec.resolveSibling(
+        relativeToSpec.getFileName() + VADL_EXTENSION
+    );
+    if (Files.isRegularFile(withAppendedExtension)) {
+      return withAppendedExtension;
     }
     parser.errors.SemErr("Could not resolve module path: " + name);
     return null;

@@ -400,6 +400,51 @@ public class AstDumper
   }
 
   @Override
+  public Void visit(ProcessDefinition processDefinition) {
+    dumpNode(processDefinition);
+    dumpChildren(processDefinition.name());
+    for (var templateParam : processDefinition.templateParams) {
+      dumpChildren(templateParam.name(), templateParam.type());
+      if (templateParam.value() != null) {
+        dumpChildren(templateParam.value());
+      }
+    }
+    for (var input : processDefinition.inputs) {
+      dumpChildren(input.name(), input.type());
+    }
+    for (var output : processDefinition.outputs) {
+      dumpChildren(output.name(), output.type());
+    }
+    return null;
+  }
+
+  @Override
+  public Void visit(OperationDefinition operationDefinition) {
+    dumpNode(operationDefinition);
+    dumpChildren(operationDefinition.name());
+    for (IsId resource : operationDefinition.resources) {
+      dumpChildren((Node) resource);
+    }
+    return null;
+  }
+
+  @Override
+  public Void visit(GroupDefinition groupDefinition) {
+    dumpNode(groupDefinition);
+    dumpChildren(groupDefinition.name());
+    if (groupDefinition.type() != null) {
+      dumpChildren(groupDefinition.type());
+    }
+    for (Group group : groupDefinition.groupSequence.groups) {
+      builder.append(indentString()).append("Group\n");
+      indent++;
+      group.prettyPrint(0, builder);
+      indent--;
+    }
+    return null;
+  }
+
+  @Override
   public Void visit(CallExpr expr) {
     dumpNode(expr);
     dumpChildren((Expr) expr.target);
@@ -494,6 +539,41 @@ public class AstDumper
   }
 
   @Override
+  public Void visit(ExistsInExpr expr) {
+    dumpNode(expr);
+    for (IsId operation : expr.operations) {
+      dumpChildren((Node) operation);
+    }
+    return null;
+  }
+
+  @Override
+  public Void visit(ExistsInThenExpr expr) {
+    dumpNode(expr);
+    for (ExistsInThenExpr.Condition condition : expr.conditions) {
+      dumpChildren((Node) condition.id());
+      for (IsId operation : condition.operations()) {
+        dumpChildren((Node) operation);
+      }
+    }
+    dumpChildren(expr.thenExpr);
+    return null;
+  }
+
+  @Override
+  public Void visit(ForAllThenExpr expr) {
+    dumpNode(expr);
+    for (ForAllThenExpr.Condition condition : expr.conditions) {
+      dumpChildren((Node) condition.id());
+      for (IsId operation : condition.operations()) {
+        dumpChildren((Node) operation);
+      }
+    }
+    dumpChildren(expr.thenExpr);
+    return null;
+  }
+
+  @Override
   public Void visit(BlockStatement blockStatement) {
     dumpNode(blockStatement);
     dumpChildren(blockStatement.statements);
@@ -562,7 +642,10 @@ public class AstDumper
   @Override
   public Void visit(MatchStatement matchStatement) {
     dumpNode(matchStatement);
-    dumpChildren(matchStatement.candidate, matchStatement.defaultResult);
+    dumpChildren(matchStatement.candidate);
+    if (matchStatement.defaultResult != null) {
+      dumpChildren(matchStatement.defaultResult);
+    }
     for (var matchCase : matchStatement.cases) {
       dumpChildren(matchCase.patterns());
       dumpChildren(matchCase.result());

@@ -11,6 +11,7 @@ class Builtins {
       "VADL::adds",
       "VADL::and",
       "VADL::ands",
+      "VADL::asl",
       "VADL::asr",
       "VADL::div",
       "VADL::equ",

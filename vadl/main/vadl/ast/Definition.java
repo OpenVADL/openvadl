@@ -74,6 +74,21 @@ interface DefinitionVisitor<R> {
   R visit(ModelTypeDefinition definition);
 
   R visit(ImportDefinition importDefinition);
+
+  R visit(ProcessDefinition processDefinition);
+
+  R visit(OperationDefinition operationDefinition);
+
+  R visit(GroupDefinition groupDefinition);
+}
+
+/**
+ * A common parameter type that corresponds to the {@code parameter} grammar rule.
+ *
+ * @param name The declared name of this parameter.
+ * @param type The declared type of this parameter.
+ */
+record Parameter(Identifier name, TypeLiteral type) {
 }
 
 class ConstantDefinition extends Definition {
@@ -1443,9 +1458,9 @@ class FunctionDefinition extends Definition {
           builder.append(", ");
         }
         isFirst = false;
-        param.name.prettyPrint(0, builder);
+        param.name().prettyPrint(0, builder);
         builder.append(" : ");
-        param.type.prettyPrint(0, builder);
+        param.type().prettyPrint(0, builder);
       }
       builder.append(")");
     }
@@ -1495,9 +1510,6 @@ class FunctionDefinition extends Definition {
     result = 31 * result + Objects.hashCode(retType);
     result = 31 * result + Objects.hashCode(expr);
     return result;
-  }
-
-  record Parameter(Identifier name, TypeLiteral type) {
   }
 }
 
@@ -2322,5 +2334,284 @@ final class ModelTypeDefinition extends Definition {
   @Override
   public int hashCode() {
     return Objects.hash(name, projectionType);
+  }
+}
+
+class ProcessDefinition extends Definition {
+  IdentifierOrPlaceholder name;
+  List<TemplateParam> templateParams;
+  List<Parameter> inputs;
+  List<Parameter> outputs;
+  Statement statement;
+  SourceLocation loc;
+
+  ProcessDefinition(IdentifierOrPlaceholder name, List<TemplateParam> templateParams,
+                    List<Parameter> inputs, List<Parameter> outputs, Statement statement,
+                    SourceLocation loc) {
+    this.name = name;
+    this.templateParams = templateParams;
+    this.inputs = inputs;
+    this.outputs = outputs;
+    this.statement = statement;
+    this.loc = loc;
+  }
+
+  Identifier name() {
+    return (Identifier) name;
+  }
+
+  @Override
+  SourceLocation location() {
+    return loc;
+  }
+
+  @Override
+  SyntaxType syntaxType() {
+    return BasicSyntaxType.ISA_DEFS;
+  }
+
+  @Override
+  void prettyPrint(int indent, StringBuilder builder) {
+    annotations.prettyPrint(indent, builder);
+    builder.append(prettyIndentString(indent));
+    builder.append("process ");
+    name.prettyPrint(indent, builder);
+    if (!templateParams.isEmpty()) {
+      builder.append("<");
+      var isFirst = true;
+      for (TemplateParam templateParam : templateParams) {
+        if (!isFirst) {
+          builder.append(", ");
+        }
+        isFirst = false;
+        templateParam.name.prettyPrint(0, builder);
+        builder.append(": ");
+        templateParam.type.prettyPrint(0, builder);
+        if (templateParam.value != null) {
+          builder.append(" = ");
+          templateParam.value.prettyPrint(0, builder);
+        }
+      }
+      builder.append("> ");
+    }
+    if (!inputs.isEmpty()) {
+      builder.append("(");
+      var isFirst = true;
+      for (var input : inputs) {
+        if (!isFirst) {
+          builder.append(", ");
+        }
+        isFirst = false;
+        input.name().prettyPrint(0, builder);
+        builder.append(" : ");
+        input.type().prettyPrint(0, builder);
+      }
+      builder.append(")");
+    }
+    if (!outputs.isEmpty()) {
+      builder.append(" -> (");
+      var isFirst = true;
+      for (var output : outputs) {
+        if (!isFirst) {
+          builder.append(", ");
+        }
+        isFirst = false;
+        output.name().prettyPrint(0, builder);
+        builder.append(" : ");
+        output.type().prettyPrint(0, builder);
+      }
+      builder.append(")");
+    }
+    builder.append(" =\n");
+    statement.prettyPrint(indent + 1, builder);
+    builder.append("\n");
+  }
+
+  @Override
+  <R> R accept(DefinitionVisitor<R> visitor) {
+    return visitor.visit(this);
+  }
+
+  @Override
+  public String toString() {
+    return this.getClass().getSimpleName() + " " + name;
+  }
+
+  @Override
+  public boolean equals(Object o) {
+    if (this == o) {
+      return true;
+    }
+    if (o == null || getClass() != o.getClass()) {
+      return false;
+    }
+    ProcessDefinition that = (ProcessDefinition) o;
+    return Objects.equals(name, that.name)
+        && Objects.equals(templateParams, that.templateParams)
+        && Objects.equals(inputs, that.inputs)
+        && Objects.equals(outputs, that.outputs)
+        && Objects.equals(statement, that.statement);
+  }
+
+  @Override
+  public int hashCode() {
+    return Objects.hash(name, templateParams, inputs, outputs, statement);
+  }
+
+  record TemplateParam(Identifier name, TypeLiteral type, @Nullable Expr value) {
+  }
+}
+
+class OperationDefinition extends Definition {
+  IdentifierOrPlaceholder name;
+  List<IsId> resources;
+  SourceLocation loc;
+
+  OperationDefinition(IdentifierOrPlaceholder name, List<IsId> resources, SourceLocation loc) {
+    this.name = name;
+    this.resources = resources;
+    this.loc = loc;
+  }
+
+  Identifier name() {
+    return (Identifier) name;
+  }
+
+  @Override
+  SourceLocation location() {
+    return loc;
+  }
+
+  @Override
+  SyntaxType syntaxType() {
+    return BasicSyntaxType.ISA_DEFS;
+  }
+
+  @Override
+  void prettyPrint(int indent, StringBuilder builder) {
+    annotations.prettyPrint(indent, builder);
+    builder.append(prettyIndentString(indent));
+    builder.append("operation ");
+    name.prettyPrint(indent, builder);
+    builder.append(" =");
+    if (resources.isEmpty()) {
+      builder.append(" {}\n");
+    } else {
+      builder.append("\n");
+      var isFirst = true;
+      for (IsId resource : resources) {
+        builder.append(prettyIndentString(indent));
+        builder.append(isFirst ? "{ " : ", ");
+        isFirst = false;
+        resource.prettyPrint(0, builder);
+        builder.append("\n");
+      }
+      builder.append(prettyIndentString(indent)).append("}\n");
+    }
+  }
+
+  @Override
+  <R> R accept(DefinitionVisitor<R> visitor) {
+    return visitor.visit(this);
+  }
+
+  @Override
+  public String toString() {
+    return this.getClass().getSimpleName() + " " + name;
+  }
+
+  @Override
+  public boolean equals(Object o) {
+    if (this == o) {
+      return true;
+    }
+    if (o == null || getClass() != o.getClass()) {
+      return false;
+    }
+    OperationDefinition that = (OperationDefinition) o;
+    return Objects.equals(name, that.name)
+        && Objects.equals(resources, that.resources);
+  }
+
+  @Override
+  public int hashCode() {
+    return Objects.hash(name, resources);
+  }
+}
+
+class GroupDefinition extends Definition {
+  IdentifierOrPlaceholder name;
+  @Nullable
+  TypeLiteralOrPlaceholder type;
+  Group.Sequence groupSequence;
+  SourceLocation loc;
+
+  GroupDefinition(IdentifierOrPlaceholder name, @Nullable TypeLiteralOrPlaceholder type,
+                  Group.Sequence groupSequence, SourceLocation loc) {
+    this.name = name;
+    this.type = type;
+    this.groupSequence = groupSequence;
+    this.loc = loc;
+  }
+
+  Identifier name() {
+    return (Identifier) name;
+  }
+
+  @Nullable TypeLiteral type() {
+    return (TypeLiteral) type;
+  }
+
+  @Override
+  SourceLocation location() {
+    return loc;
+  }
+
+  @Override
+  SyntaxType syntaxType() {
+    return BasicSyntaxType.ISA_DEFS;
+  }
+
+  @Override
+  void prettyPrint(int indent, StringBuilder builder) {
+    annotations.prettyPrint(indent, builder);
+    builder.append(prettyIndentString(indent));
+    builder.append("group ");
+    name.prettyPrint(indent, builder);
+    if (type != null) {
+      builder.append(" : ");
+      type.prettyPrint(indent, builder);
+    }
+    builder.append(" = ");
+    groupSequence.prettyPrint(indent, builder);
+    builder.append("\n");
+  }
+
+  @Override
+  <R> R accept(DefinitionVisitor<R> visitor) {
+    return visitor.visit(this);
+  }
+
+  @Override
+  public String toString() {
+    return this.getClass().getSimpleName() + " " + name;
+  }
+
+  @Override
+  public boolean equals(Object o) {
+    if (this == o) {
+      return true;
+    }
+    if (o == null || getClass() != o.getClass()) {
+      return false;
+    }
+    GroupDefinition that = (GroupDefinition) o;
+    return Objects.equals(name, that.name) && Objects.equals(type, that.type)
+        && Objects.equals(groupSequence, that.groupSequence);
+  }
+
+  @Override
+  public int hashCode() {
+    return Objects.hash(name, type, groupSequence);
   }
 }

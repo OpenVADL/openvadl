@@ -364,6 +364,35 @@ class MacroExpander
   }
 
   @Override
+  public Expr visit(ExistsInExpr expr) {
+    var operations = new ArrayList<>(expr.operations);
+    operations.replaceAll(id -> (IsId) expandExpr((Expr) id));
+    return new ExistsInExpr(operations, expr.loc);
+  }
+
+  @Override
+  public Expr visit(ExistsInThenExpr expr) {
+    var conditions = new ArrayList<>(expr.conditions);
+    conditions.replaceAll(condition -> {
+      var operations = new ArrayList<>(condition.operations());
+      operations.replaceAll(id -> (IsId) expandExpr((Expr) id));
+      return new ExistsInThenExpr.Condition((IsId) expandExpr((Expr) condition.id()), operations);
+    });
+    return new ExistsInThenExpr(conditions, expandExpr(expr.thenExpr), expr.loc);
+  }
+
+  @Override
+  public Expr visit(ForAllThenExpr expr) {
+    var conditions = new ArrayList<>(expr.conditions);
+    conditions.replaceAll(condition -> {
+      var operations = new ArrayList<>(condition.operations());
+      operations.replaceAll(id -> (IsId) expandExpr((Expr) id));
+      return new ForAllThenExpr.Condition((IsId) expandExpr((Expr) condition.id()), operations);
+    });
+    return new ForAllThenExpr(conditions, expandExpr(expr.thenExpr), expr.loc);
+  }
+
+  @Override
   public Definition visit(ConstantDefinition definition) {
     var id = resolvePlaceholderOrIdentifier(definition.identifier);
     var value = expandExpr(definition.value);
@@ -488,7 +517,7 @@ class MacroExpander
     var id = resolvePlaceholderOrIdentifier(definition.id);
     var value = expandExpr(definition.value);
     return new AliasDefinition(id, definition.kind, definition.aliasType, definition.targetType,
-        value, definition.loc);
+        value, definition.loc).withAnnotations(definition.annotations);
   }
 
   @Override
@@ -498,13 +527,15 @@ class MacroExpander
     entries.replaceAll(entry -> new EnumerationDefinition.Entry(entry.name(),
         entry.value() == null ? null : expandExpr(entry.value()),
         entry.behavior() == null ? null : expandExpr(entry.behavior())));
-    return new EnumerationDefinition(id, definition.enumType, entries, definition.loc);
+    return new EnumerationDefinition(id, definition.enumType, entries, definition.loc)
+        .withAnnotations(definition.annotations);
   }
 
   @Override
   public Definition visit(ExceptionDefinition definition) {
     var id = resolvePlaceholderOrIdentifier(definition.id);
-    return new ExceptionDefinition(id, definition.statement.accept(this), definition.loc);
+    return new ExceptionDefinition(id, definition.statement.accept(this), definition.loc)
+        .withAnnotations(definition.annotations);
   }
 
   @Override
@@ -578,6 +609,38 @@ class MacroExpander
   @Override
   public Definition visit(ImportDefinition importDefinition) {
     return importDefinition;
+  }
+
+  @Override
+  public Definition visit(ProcessDefinition processDefinition) {
+    var id = resolvePlaceholderOrIdentifier(processDefinition.name);
+    var templateParams = new ArrayList<>(processDefinition.templateParams);
+    templateParams.replaceAll(
+        templateParam -> new ProcessDefinition.TemplateParam(templateParam.name(),
+            templateParam.type(),
+            templateParam.value() == null ? null : expandExpr(templateParam.value())));
+    return new ProcessDefinition(id, templateParams, processDefinition.inputs,
+        processDefinition.outputs, processDefinition.statement.accept(this),
+        processDefinition.loc).withAnnotations(expandAnnotations(processDefinition.annotations));
+  }
+
+  @Override
+  public Definition visit(OperationDefinition operationDefinition) {
+    var name = resolvePlaceholderOrIdentifier(operationDefinition.name);
+    var resources = new ArrayList<>(operationDefinition.resources);
+    resources.replaceAll(id -> (IsId) expandExpr((Expr) id));
+    return new OperationDefinition(name, resources, operationDefinition.loc)
+        .withAnnotations(expandAnnotations(operationDefinition.annotations));
+  }
+
+  @Override
+  public Definition visit(GroupDefinition groupDefinition) {
+    return new GroupDefinition(
+        resolvePlaceholderOrIdentifier(groupDefinition.name),
+        groupDefinition.type == null ? null : resolveTypeLiteral(groupDefinition.type),
+        groupDefinition.groupSequence,
+        groupDefinition.loc
+    ).withAnnotations(expandAnnotations(groupDefinition.annotations));
   }
 
   @Override
@@ -662,7 +725,8 @@ class MacroExpander
   @Override
   public Statement visit(MatchStatement matchStatement) {
     var candidate = expandExpr(matchStatement.candidate);
-    var defaultResult = matchStatement.defaultResult.accept(this);
+    var defaultResult =
+        matchStatement.defaultResult == null ? null : matchStatement.defaultResult.accept(this);
     var cases = new ArrayList<>(matchStatement.cases);
     cases.replaceAll(matchCase -> new MatchStatement.Case(expandExprs(matchCase.patterns()),
         matchCase.result().accept(this)));
