@@ -152,8 +152,8 @@ public class VadlParser {
     PassTimings prev = null;
     for (var timing : ast.passTimings) {
       if (prev != null) {
-        long deltaMillis = (timing.timestamp - prev.timestamp) / 1000_000;
-        System.out.println(timing.description + " - " + deltaMillis + " ms ");
+        double deltaMillis = (timing.timestamp - prev.timestamp) / 1000_000.0;
+        System.out.printf("%s - %.3f ms\n", timing.description, deltaMillis);
       }
       prev = timing;
     }
