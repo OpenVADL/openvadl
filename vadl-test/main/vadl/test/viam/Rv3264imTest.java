@@ -29,7 +29,7 @@ public class Rv3264imTest extends AbstractTest {
     assertEquals(0, rv32i.ownInstructions().size());
     assertEquals(2, spec.isas().count());
     assertEquals(rv3264i, rv32i.dependencyRef());
-    assertEquals(Type.bits(32), Objects.requireNonNull(rv32i.pc()).type());
+    assertEquals(Type.bits(32), Objects.requireNonNull(rv32i.pc()).registerResource().type());
   }
 
   void testRv32im(Specification spec) {
@@ -41,7 +41,7 @@ public class Rv3264imTest extends AbstractTest {
     assertEquals(3, spec.isas().count());
     assertEquals(rv3264i, rv3264im.dependencyRef());
     assertEquals(rv3264im, rv32im.dependencyRef());
-    assertEquals(Type.bits(32), Objects.requireNonNull(rv32im.pc()).type());
+    assertEquals(Type.bits(32), Objects.requireNonNull(rv32im.pc()).registerResource().type());
   }
 
   void testRv64i(Specification spec) {
@@ -51,7 +51,7 @@ public class Rv3264imTest extends AbstractTest {
     assertEquals(0, rv64i.ownInstructions().size());
     assertEquals(2, spec.isas().count());
     assertEquals(rv3264i, rv64i.dependencyRef());
-    assertEquals(Type.bits(64), Objects.requireNonNull(rv64i.pc()).type());
+    assertEquals(Type.bits(64), Objects.requireNonNull(rv64i.pc()).registerResource().type());
   }
 
   void testRv64im(Specification spec) {
@@ -63,7 +63,7 @@ public class Rv3264imTest extends AbstractTest {
     assertEquals(3, spec.isas().count());
     assertEquals(rv3264i, rv3264im.dependencyRef());
     assertEquals(rv3264im, rv64im.dependencyRef());
-    assertEquals(Type.bits(64), Objects.requireNonNull(rv64im.pc()).type());
+    assertEquals(Type.bits(64), Objects.requireNonNull(rv64im.pc()).registerResource().type());
   }
 
   void testRv3264im(Specification spec) {
@@ -72,7 +72,7 @@ public class Rv3264imTest extends AbstractTest {
 
     assertEquals(2, spec.isas().count());
     assertEquals(rv3264i, rv3264im.dependencyRef());
-    assertEquals(Type.bits(32), Objects.requireNonNull(rv3264im.pc()).type());
+    assertEquals(Type.bits(32), Objects.requireNonNull(rv3264im.pc()).registerResource().type());
   }
 
 

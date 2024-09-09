@@ -43,6 +43,12 @@ public class BuiltInMatcher implements Matcher {
     this.matchers = List.of(matcher);
   }
 
+  public BuiltInMatcher(BuiltInTable.BuiltIn builtIn,
+                        Matcher left, Matcher right) {
+    this.builtIns = Set.of(builtIn);
+    this.matchers = List.of(left, right);
+  }
+
   @Override
   public boolean matches(Node node) {
     if (node instanceof BuiltInCall && builtIns.contains(((BuiltInCall) node).builtIn())) {

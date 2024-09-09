@@ -1,5 +1,6 @@
 package vadl.viam;
 
+import com.google.errorprone.annotations.concurrent.LazyInit;
 import java.util.List;
 import vadl.viam.graph.Graph;
 
@@ -13,6 +14,9 @@ public class Instruction extends Definition implements DefProp.WithBehavior {
   private final Graph behavior;
   private final Assembly assembly;
   private final Encoding encoding;
+
+  @LazyInit
+  private InstructionSetArchitecture parentArchitecture;
 
   /**
    * Creates an Instruction object with the given parameters.
@@ -32,6 +36,8 @@ public class Instruction extends Definition implements DefProp.WithBehavior {
     this.behavior = behavior;
     this.assembly = assembly;
     this.encoding = encoding;
+
+    behavior.setParentDefinition(this);
   }
 
   public Graph behavior() {
@@ -48,6 +54,15 @@ public class Instruction extends Definition implements DefProp.WithBehavior {
 
   public Format format() {
     return encoding.format();
+  }
+
+  // this is set by InstructionSetArchitecture the Instruction is added to
+  void setParentArchitecture(InstructionSetArchitecture parentArchitecture) {
+    this.parentArchitecture = parentArchitecture;
+  }
+
+  public InstructionSetArchitecture parentArchitecture() {
+    return parentArchitecture;
   }
 
   @Override

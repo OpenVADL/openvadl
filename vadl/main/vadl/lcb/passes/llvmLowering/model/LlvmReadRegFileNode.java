@@ -1,10 +1,12 @@
 package vadl.lcb.passes.llvmLowering.model;
 
+import org.jetbrains.annotations.Nullable;
 import vadl.lcb.passes.llvmLowering.LlvmNodeLowerable;
 import vadl.lcb.passes.llvmLowering.strategies.visitors.TableGenMachineInstructionVisitor;
 import vadl.lcb.passes.llvmLowering.strategies.visitors.TableGenNodeVisitor;
 import vadl.lcb.passes.llvmLowering.tablegen.model.ParameterIdentity;
 import vadl.types.DataType;
+import vadl.viam.Counter;
 import vadl.viam.RegisterFile;
 import vadl.viam.graph.GraphNodeVisitor;
 import vadl.viam.graph.Node;
@@ -24,8 +26,9 @@ public class LlvmReadRegFileNode extends ReadRegFileNode implements LlvmNodeLowe
    */
   public LlvmReadRegFileNode(RegisterFile registerFile,
                              ExpressionNode address,
-                             DataType type) {
-    super(registerFile, address, type);
+                             DataType type,
+                             @Nullable Counter.RegisterFileCounter staticCounterAccess) {
+    super(registerFile, address, type, staticCounterAccess);
     ensure(address instanceof FieldRefNode, "address must be a field");
     this.parameterIdentity = ParameterIdentity.from(this, (FieldRefNode) address);
   }
@@ -37,12 +40,13 @@ public class LlvmReadRegFileNode extends ReadRegFileNode implements LlvmNodeLowe
 
   @Override
   public Node copy() {
-    return new LlvmReadRegFileNode(registerFile, (ExpressionNode) address().copy(), type());
+    return new LlvmReadRegFileNode(registerFile, (ExpressionNode) address().copy(), type(),
+        staticCounterAccess());
   }
 
   @Override
   public Node shallowCopy() {
-    return new LlvmReadRegFileNode(registerFile, address(), type());
+    return new LlvmReadRegFileNode(registerFile, address(), type(), staticCounterAccess());
   }
 
   @Override

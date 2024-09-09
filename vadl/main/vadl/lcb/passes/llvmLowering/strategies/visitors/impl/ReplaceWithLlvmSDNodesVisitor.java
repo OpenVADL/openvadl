@@ -207,7 +207,7 @@ public class ReplaceWithLlvmSDNodesVisitor
 
     readRegFileNode.replaceAndDelete(
         new LlvmReadRegFileNode(readRegFileNode.registerFile(), readRegFileNode.address(),
-            readRegFileNode.type()));
+            readRegFileNode.type(), readRegFileNode.staticCounterAccess()));
   }
 
   @Override

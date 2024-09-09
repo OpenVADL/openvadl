@@ -50,6 +50,8 @@ public class Function extends Definition implements DefProp.WithBehavior, DefPro
     this.behavior = behavior;
     this.returnType = returnType;
     this.parameters = parameters;
+
+    behavior.setParentDefinition(this);
   }
 
   @Override
@@ -75,6 +77,7 @@ public class Function extends Definition implements DefProp.WithBehavior, DefPro
 
   public void setBehavior(Graph graph) {
     this.behavior = graph;
+    graph.setParentDefinition(this);
   }
 
   public ConcreteRelationType signature() {

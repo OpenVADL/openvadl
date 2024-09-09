@@ -1,6 +1,7 @@
 package vadl.viam;
 
 import javax.annotation.Nullable;
+import vadl.types.DataType;
 import vadl.types.Type;
 
 /**
@@ -45,6 +46,7 @@ public class Parameter extends Definition implements DefProp.WithType {
   public Type type() {
     return type;
   }
+
 
   @Override
   public String toString() {

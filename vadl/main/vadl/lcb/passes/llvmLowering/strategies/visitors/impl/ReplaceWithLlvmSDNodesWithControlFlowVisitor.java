@@ -7,6 +7,8 @@ import vadl.lcb.passes.llvmLowering.model.LlvmCondCode;
 import vadl.lcb.passes.llvmLowering.model.LlvmFieldAccessRefNode;
 import vadl.lcb.passes.llvmLowering.model.LlvmSetccSD;
 import vadl.types.BuiltInTable;
+import vadl.viam.Counter;
+import vadl.viam.Instruction;
 import vadl.viam.Register;
 import vadl.viam.ViamError;
 import vadl.viam.graph.Graph;
@@ -33,7 +35,10 @@ public class ReplaceWithLlvmSDNodesWithControlFlowVisitor
 
     visit(writeRegNode.value());
 
-    if (writeRegNode.register() instanceof Register.Counter) {
+    // this will get the nullable static counter access
+    // if the reg write node writes the pc, this will not be null
+    var pc = writeRegNode.staticCounterAccess();
+    if (pc != null) {
       if (writeRegNode.value() instanceof BuiltInCall builtin && Set.of(
           BuiltInTable.ADD,
           BuiltInTable.ADDS,

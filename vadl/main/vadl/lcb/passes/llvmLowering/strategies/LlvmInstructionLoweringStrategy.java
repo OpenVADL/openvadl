@@ -5,12 +5,14 @@ import static vadl.viam.ViamError.ensure;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
 import java.util.function.BiFunction;
 import java.util.function.Function;
 import java.util.stream.Stream;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import vadl.lcb.passes.isaMatching.InstructionLabel;
@@ -35,6 +37,7 @@ import vadl.lcb.passes.llvmLowering.tablegen.model.TableGenInstructionOperand;
 import vadl.lcb.passes.llvmLowering.tablegen.model.TableGenInstructionRegisterFileOperand;
 import vadl.lcb.passes.llvmLowering.tablegen.model.TableGenPattern;
 import vadl.lcb.visitors.LcbGraphNodeVisitor;
+import vadl.viam.Counter;
 import vadl.viam.Instruction;
 import vadl.viam.InstructionSetArchitecture;
 import vadl.viam.Register;
@@ -94,7 +97,8 @@ public abstract class LlvmInstructionLoweringStrategy {
    */
   protected LlvmLoweringPass.Flags getFlags(UninlinedGraph uninlinedGraph) {
     var isTerminator = uninlinedGraph.getNodes(WriteRegNode.class)
-        .anyMatch(node -> node.register() instanceof Register.Counter);
+        .anyMatch(node -> node.staticCounterAccess() != null);
+
     var isBranch = isTerminator
         && uninlinedGraph.getNodes(Set.of(IfNode.class, LlvmBrCcSD.class, LlvmBrCondSD.class))
         .findFirst().isPresent();
@@ -369,6 +373,8 @@ public abstract class LlvmInstructionLoweringStrategy {
   @NotNull
   private static Graph getPatternSelector(WriteResourceNode sideEffectNode) {
     var graph = new Graph(sideEffectNode.id().toString() + ".selector.lowering");
+    graph.setParentDefinition(Objects.requireNonNull(sideEffectNode.graph()).parentDefinition());
+
     Node root = sideEffectNode instanceof LlvmSideEffectPatternIncluded ? sideEffectNode :
         sideEffectNode.value();
     root.clearUsages();
@@ -380,6 +386,8 @@ public abstract class LlvmInstructionLoweringStrategy {
   private static Graph getMachinePattern(Instruction instruction,
                                          List<TableGenInstructionOperand> inputOperands) {
     var graph = new Graph(instruction.name() + ".machine.lowering");
+    graph.setParentDefinition(Objects.requireNonNull(instruction));
+
     var params =
         inputOperands.stream()
             .map(MachineInstructionParameterNode::new)

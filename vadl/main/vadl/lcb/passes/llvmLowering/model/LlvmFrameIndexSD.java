@@ -1,9 +1,11 @@
 package vadl.lcb.passes.llvmLowering.model;
 
+import org.jetbrains.annotations.Nullable;
 import vadl.lcb.passes.llvmLowering.LlvmNodeLowerable;
 import vadl.lcb.passes.llvmLowering.strategies.visitors.TableGenMachineInstructionVisitor;
 import vadl.lcb.passes.llvmLowering.strategies.visitors.TableGenNodeVisitor;
 import vadl.types.DataType;
+import vadl.viam.Counter;
 import vadl.viam.RegisterFile;
 import vadl.viam.graph.GraphNodeVisitor;
 import vadl.viam.graph.Node;
@@ -17,22 +19,24 @@ public class LlvmFrameIndexSD extends ReadRegFileNode implements LlvmNodeLowerab
   public static final String NAME = "AddrFI";
 
   public LlvmFrameIndexSD(ReadRegFileNode obj) {
-    this(obj.registerFile(), obj.address(), obj.type());
+    this(obj.registerFile(), obj.address(), obj.type(), obj.staticCounterAccess());
   }
 
-  private LlvmFrameIndexSD(RegisterFile registerFile, ExpressionNode address, DataType type) {
-    super(registerFile, address, type);
+  private LlvmFrameIndexSD(RegisterFile registerFile, ExpressionNode address, DataType type,
+                           @Nullable Counter.RegisterFileCounter staticCounterAccess) {
+    super(registerFile, address, type, staticCounterAccess);
   }
 
 
   @Override
   public Node copy() {
-    return new LlvmFrameIndexSD(registerFile(), (ExpressionNode) address().copy(), type());
+    return new LlvmFrameIndexSD(registerFile(), (ExpressionNode) address().copy(), type(),
+        staticCounterAccess());
   }
 
   @Override
   public Node shallowCopy() {
-    return new LlvmFrameIndexSD(registerFile(), address(), type());
+    return new LlvmFrameIndexSD(registerFile(), address(), type(), staticCounterAccess());
   }
 
   @Override

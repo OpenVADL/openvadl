@@ -43,11 +43,11 @@ public class FuncCallNode extends AbstractFunctionCallNode {
     for (int i = 0; i < args.size(); i++) {
       var arg = args.get(i);
       var param = params[i];
-      ensure(param.type().equals(arg.type()),
+      ensure(param.type().isTrivialCastTo(arg.type()),
           "Argument does not match type of param %s, %s vs %s", param.name(), param.type(),
           arg.type());
     }
-    ensure(function.returnType().equals(type()),
+    ensure(function.returnType().isTrivialCastTo(type()),
         "Return type of function does not match declared result type %s",
         type());
   }

@@ -28,6 +28,8 @@ public interface DefinitionVisitor {
 
   void visit(Function function);
 
+  void visit(Relocation relocation);
+  
   void visit(Parameter parameter);
 
   void visit(PseudoInstruction pseudoInstruction);
@@ -38,7 +40,7 @@ public interface DefinitionVisitor {
 
   void visit(Memory memory);
 
-  void visit(Relocation relocation);
+  void visit(Counter counter);
 
   void visit(DummyAbi dummyAbi);
 
@@ -93,6 +95,10 @@ public interface DefinitionVisitor {
       instructionSetArchitecture
           .ownPseudoInstructions()
           .forEach(e -> e.accept(this));
+      var pc = instructionSetArchitecture.pc();
+      if (pc != null) {
+        pc.accept(this);
+      }
       afterTraversal(instructionSetArchitecture);
     }
 
@@ -216,6 +222,14 @@ public interface DefinitionVisitor {
     }
 
     @Override
+    public void visit(Counter counter) {
+      beforeTraversal(counter);
+      // no visit of register/register file as they are not
+      // owned by the counter
+      afterTraversal(counter);
+    }
+
+    @Override
     public void visit(DummyAbi dummyAbi) {
       beforeTraversal(dummyAbi);
       afterTraversal(dummyAbi);
@@ -309,6 +323,13 @@ public interface DefinitionVisitor {
     public void visit(Relocation relocation) {
 
     }
+
+
+    @Override
+    public void visit(Counter counter) {
+
+    }
+
 
     @Override
     public void visit(DummyAbi dummyAbi) {

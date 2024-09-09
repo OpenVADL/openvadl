@@ -1,0 +1,55 @@
+
+instruction set architecture Test = {
+  using Regs = Bits<32>
+  using Index = Bits<5>
+
+  register file X: Index -> Regs
+
+  [A(12) = 0]
+  alias register file A = X
+
+  alias register file B = X
+
+
+  instruction ReadA_Hit: F = {
+    X(31) := A(12)
+  }
+  instruction ReadA_Miss: F = {
+    X(31) := A(31)
+  }
+  instruction ReadB: F = {
+     X(31) := B(31)
+  }
+
+
+  instruction WriteA_Hit: F = {
+    A(12) := X(31)
+  }
+  instruction WriteA_Miss: F = {
+    A(31) := X(31)
+  }
+  instruction WriteB: F = {
+    B(31) := X(31)
+  }
+
+
+  encoding ReadA_Hit = { I = 2 }
+  encoding ReadA_Miss = { I = 2 }
+  encoding ReadB = { I = 2 }
+  encoding WriteA_Hit = { I = 2 }
+  encoding WriteA_Miss = { I = 2 }
+  encoding WriteB = { I = 2 }
+  assembly
+    ReadA_Hit,
+    ReadA_Miss,
+    ReadB,
+    WriteA_Hit,
+    WriteA_Miss,
+    WriteB = "A"
+
+
+  format F: Regs = {
+    I: Regs
+  }
+
+}

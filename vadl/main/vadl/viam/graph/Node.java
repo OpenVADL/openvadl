@@ -183,7 +183,7 @@ public abstract class Node {
    * (annotated with {@link vadl.javaannotations.viam.DataValue})</li>
    * <li>The subclass must call {@code super.collectData(collection)} before
    * adding its own data!</li>
-   * <li>Optional successors must be added even if they might be null!</li>
+   * <li>Optional data must be added even if they might be null!</li>
    *
    * @param collection to add the successors to.
    */
@@ -614,7 +614,7 @@ public abstract class Node {
     var dataList = dataList();
     var data = !dataList.isEmpty()
         ? "<%s>".formatted(
-        dataList.stream().map(Object::toString).collect(Collectors.joining(", "))) :
+        dataList.stream().map(Objects::toString).collect(Collectors.joining(", "))) :
         "";
     return "(%s) %s%s".formatted(id, nodeName(), data);
   }

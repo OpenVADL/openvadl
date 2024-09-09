@@ -19,6 +19,7 @@ import vadl.viam.graph.dependency.ConstantNode;
 import vadl.viam.graph.dependency.FieldRefNode;
 import vadl.viam.graph.dependency.SignExtendNode;
 import vadl.viam.graph.dependency.ZeroExtendNode;
+import vadl.viam.helper.TestGraph;
 
 public class EncodingCodeGeneratorTestInputs extends AbstractTest {
   public static Stream<Arguments> createFieldAccessFunctions() {
@@ -45,7 +46,7 @@ public class EncodingCodeGeneratorTestInputs extends AbstractTest {
         32);
     var returnNode = new ReturnNode(
         new ZeroExtendNode(new FieldRefNode(field, DataType.bits(20)), Type.unsignedInt(32)));
-    var graph = new Graph("graphValue");
+    var graph = new TestGraph();
     graph.addWithInputs(returnNode);
     function.setBehavior(graph);
     return function;
@@ -58,7 +59,7 @@ public class EncodingCodeGeneratorTestInputs extends AbstractTest {
         32);
     var returnNode = new ReturnNode(
         new SignExtendNode(new FieldRefNode(field, DataType.bits(20)), Type.signedInt(32)));
-    var graph = new Graph("graphValue");
+    var graph = new TestGraph();
     graph.addWithInputs(returnNode);
     function.setBehavior(graph);
     return function;
@@ -76,7 +77,7 @@ public class EncodingCodeGeneratorTestInputs extends AbstractTest {
                 Constant.Value.of(6, DataType.unsignedInt(32)))),
             Type.unsignedInt(32))
     );
-    var graph = new Graph("graphValue");
+    var graph = new TestGraph();
     graph.addWithInputs(returnNode);
     function.setBehavior(graph);
     return function;
@@ -94,7 +95,7 @@ public class EncodingCodeGeneratorTestInputs extends AbstractTest {
                 Constant.Value.of(6, DataType.unsignedInt(32)))),
             Type.signedInt(32))
     );
-    var graph = new Graph("graphValue");
+    var graph = new TestGraph();
     graph.addWithInputs(returnNode);
     function.setBehavior(graph);
     return function;
@@ -112,7 +113,7 @@ public class EncodingCodeGeneratorTestInputs extends AbstractTest {
                 Constant.Value.of(6, DataType.unsignedInt(32)))),
             Type.unsignedInt(32))
     );
-    var graph = new Graph("graphValue");
+    var graph = new TestGraph();
     graph.addWithInputs(returnNode);
     function.setBehavior(graph);
     return function;
@@ -129,7 +130,7 @@ public class EncodingCodeGeneratorTestInputs extends AbstractTest {
             new ConstantNode(Constant.Value.of(6, DataType.signedInt(32)))),
             Type.signedInt(32))
     );
-    var graph = new Graph("graphValue");
+    var graph = new TestGraph();
     graph.addWithInputs(returnNode);
     function.setBehavior(graph);
     return function;
@@ -147,7 +148,7 @@ public class EncodingCodeGeneratorTestInputs extends AbstractTest {
                 Constant.Value.of(6, DataType.unsignedInt(32)))),
             Type.unsignedInt(32))
     );
-    var graph = new Graph("graphValue");
+    var graph = new TestGraph();
     graph.addWithInputs(returnNode);
     function.setBehavior(graph);
     return function;
@@ -164,7 +165,7 @@ public class EncodingCodeGeneratorTestInputs extends AbstractTest {
             new ConstantNode(Constant.Value.of(6, DataType.signedInt(32)))),
             Type.signedInt(32))
     );
-    var graph = new Graph("graphValue");
+    var graph = new TestGraph();
     graph.addWithInputs(returnNode);
     function.setBehavior(graph);
     return function;

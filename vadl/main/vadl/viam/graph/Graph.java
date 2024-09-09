@@ -5,6 +5,7 @@ import static java.util.Objects.requireNonNull;
 import com.google.common.collect.Streams;
 import com.google.errorprone.annotations.FormatMethod;
 import com.google.errorprone.annotations.FormatString;
+import com.google.errorprone.annotations.concurrent.LazyInit;
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -14,6 +15,7 @@ import java.util.Set;
 import java.util.stream.Stream;
 import javax.annotation.Nullable;
 import vadl.utils.SourceLocation;
+import vadl.viam.Definition;
 import vadl.viam.graph.control.AbstractEndNode;
 import vadl.viam.graph.control.BranchEndNode;
 import vadl.viam.graph.control.ControlNode;
@@ -38,19 +40,46 @@ public class Graph {
 
   public final String name;
   private SourceLocation sourceLocation = SourceLocation.INVALID_SOURCE_LOCATION;
+  @LazyInit
+  private Definition parentDefinition;
 
   ArrayList<Node> nodes;
 
   private static final int INITIAL_GRAPH_SIZE = 32;
 
+  /**
+   * Constructs a graph instance.
+   *
+   * <p>Note that you must set the parent definition right after construction.</p>
+   */
   public Graph(String name) {
     this.name = name;
     this.nodes = new ArrayList<>(INITIAL_GRAPH_SIZE);
   }
 
-  protected Graph(String name, ArrayList<Node> nodes) {
+  /**
+   * Constructs a graph instance.
+   */
+  public Graph(String name, Definition parentDefinition) {
+    this(name, new ArrayList<>(INITIAL_GRAPH_SIZE), parentDefinition);
+  }
+
+  protected Graph(String name, ArrayList<Node> nodes, Definition parentDefinition) {
     this.name = name;
     this.nodes = nodes;
+    this.parentDefinition = parentDefinition;
+  }
+
+  public Definition parentDefinition() {
+    ensure(parentDefinition != null, "Parent definition not set but should be set!");
+    return parentDefinition;
+  }
+
+  /**
+   * Only called by the {@link Definition} that contains this graph.
+   */
+  public void setParentDefinition(Definition parentDefinition) {
+    this.parentDefinition = parentDefinition;
   }
 
   /**
@@ -343,8 +372,10 @@ public class Graph {
     this.sourceLocation = sourceLocation;
   }
 
-  protected Graph createEmptyInstance(String name) {
-    return new Graph(name);
+  protected Graph createEmptyInstance(String name, Definition parentDefinition) {
+    var graph = new Graph(name);
+    graph.setParentDefinition(parentDefinition);
+    return graph;
   }
 
   /**
@@ -410,7 +441,7 @@ public class Graph {
     });
 
     // create new empty graph instance
-    var graph = createEmptyInstance(name);
+    var graph = createEmptyInstance(name, this.parentDefinition());
 
     // add all nodes to the graph
     cache.values().forEach(newNode -> {
