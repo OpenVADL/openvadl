@@ -889,6 +889,15 @@ class MacroExpander
         copyLoc(instructionCallStatement.loc));
   }
 
+  @Override
+  public Statement visit(LockStatement lockStatement) {
+    return new LockStatement(
+        expandExpr(lockStatement.expr),
+        expandStatement(lockStatement.statement),
+        lockStatement.loc
+    );
+  }
+
   private void assertValidMacro(Macro macro, SourceLocation sourceLocation)
       throws MacroExpansionException {
     if (macro.returnType() == BasicSyntaxType.INVALID) {

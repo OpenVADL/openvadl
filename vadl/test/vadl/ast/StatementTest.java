@@ -154,4 +154,22 @@ public class StatementTest {
     Assertions.assertEquals(expectedAst.prettyPrint(), ast.prettyPrint());
     Assertions.assertEquals(expectedAst, ast);
   }
+
+  @Test
+  void parseLockStatement() {
+    var prog = """
+        instruction set architecture ISA = {
+          memory MEM  : Bits<32> -> Bits<32>
+          format Btype : Bits<32> = { bits [31..0] }
+          instruction INC : Btype = {
+            lock MEM(0x1000'0000) in {
+              MEM(0x1000'0000) := MEM(0x1000'0000) + 0x1
+            }
+          }
+        }
+        """;
+    var ast = Assertions.assertDoesNotThrow(() -> VadlParser.parse(prog), "Cannot parse input");
+    verifyPrettifiedAst(ast);
+  }
+
 }

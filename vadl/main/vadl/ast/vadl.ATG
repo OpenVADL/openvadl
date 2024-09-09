@@ -112,6 +112,7 @@ TOKENS
   INSTRUCTION  = "instruction".
   INTERFACE    = "interface".
   LET          = "let".
+  LOCK         = "lock".
   LOGIC        = "logic".
   MATCH        = "match".
   MEMORY       = "memory".
@@ -1011,6 +1012,7 @@ PRODUCTIONS
   | IF (isMacroReplacementOfType(this, BasicSyntaxType.STAT))
     macroReplacement<out Node n>     (. statement = castStat(this, n); .)
   | assignmentOrCallStmt<out statement>
+  | lockStatement<out statement>
   .
 
   blockStatement<out BlockStatement block>     (. var start = loc(); .)
@@ -1128,6 +1130,13 @@ PRODUCTIONS
       statement<out defaultResult>
     ]
     SYM_BRACE_CLOSE                         (. match = new MatchStatement(candidate, cases, defaultResult, start.join(loc())); .)
+  .
+
+  lockStatement<out Statement lock>
+  = LOCK (. var start = loc(); .)
+    callOrBinaryExpression<out Expr expr, false>
+    SYM_IN
+    statement<out Statement statement> (. lock = new LockStatement(expr, statement, start.join(loc())); .)
   .
 
   // -- EXPRESSIONS --------------------------------------------------------------------------------------------------

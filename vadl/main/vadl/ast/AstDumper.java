@@ -836,4 +836,11 @@ public class AstDumper
     dumpChildren(instructionCallStatement.unnamedArguments);
     return null;
   }
+
+  @Override
+  public Void visit(LockStatement lockStatement) {
+    dumpNode(lockStatement);
+    dumpChildren(lockStatement.expr, lockStatement.statement);
+    return null;
+  }
 }

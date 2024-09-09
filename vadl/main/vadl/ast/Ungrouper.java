@@ -587,6 +587,13 @@ public class Ungrouper
     return instructionCallStatement;
   }
 
+  @Override
+  public Statement visit(LockStatement lockStatement) {
+    lockStatement.expr = lockStatement.expr.accept(this);
+    lockStatement.statement = lockStatement.statement.accept(this);
+    return lockStatement;
+  }
+
   private void ungroupAnnotations(Definition definition) {
     definition.annotations.annotations().replaceAll(
         annotation -> new Annotation(annotation.expr().accept(this), annotation.type(),

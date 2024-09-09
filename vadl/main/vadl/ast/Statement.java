@@ -8,8 +8,8 @@ import vadl.utils.SourceLocation;
 
 abstract sealed class Statement extends Node
     permits AssignmentStatement, BlockStatement, CallStatement, IfStatement,
-    InstructionCallStatement, LetStatement, MacroInstanceStatement, MacroMatchStatement,
-    MatchStatement, PlaceholderStatement, RaiseStatement, StatementList {
+    InstructionCallStatement, LetStatement, LockStatement, MacroInstanceStatement,
+    MacroMatchStatement, MatchStatement, PlaceholderStatement, RaiseStatement, StatementList {
   <T> T accept(StatementVisitor<T> visitor) {
     // TODO Use exhaustive switch with patterns in future Java versions
     if (this instanceof BlockStatement b) {
@@ -36,6 +36,8 @@ abstract sealed class Statement extends Node
       return visitor.visit(m);
     } else if (this instanceof StatementList s) {
       return visitor.visit(s);
+    } else if (this instanceof LockStatement l) {
+      return visitor.visit(l);
     } else {
       throw new IllegalStateException("Unhandled statement type " + getClass().getSimpleName());
     }
@@ -71,6 +73,8 @@ interface StatementVisitor<T> {
   T visit(StatementList statementList);
 
   T visit(InstructionCallStatement instructionCallStatement);
+
+  T visit(LockStatement lockStatement);
 }
 
 final class BlockStatement extends Statement {
@@ -705,3 +709,48 @@ final class InstructionCallStatement extends Statement {
   record NamedArgument(Identifier name, Expr value) {
   }
 }
+
+final class LockStatement extends Statement {
+  Expr expr;
+  Statement statement;
+  SourceLocation loc;
+
+  LockStatement(Expr expr, Statement statement, SourceLocation loc) {
+    this.expr = expr;
+    this.statement = statement;
+    this.loc = loc;
+  }
+
+  @Override
+  SourceLocation location() {
+    return loc;
+  }
+
+  @Override
+  void prettyPrint(int indent, StringBuilder builder) {
+    builder.append(prettyIndentString(indent));
+    builder.append("lock ");
+    expr.prettyPrint(0, builder);
+    builder.append(" in\n");
+    statement.prettyPrint(indent + 1, builder);
+  }
+
+  @Override
+  public boolean equals(Object o) {
+    if (this == o) {
+      return true;
+    }
+    if (o == null || getClass() != o.getClass()) {
+      return false;
+    }
+    LockStatement that = (LockStatement) o;
+    return Objects.equals(expr, that.expr) &&
+        Objects.equals(statement, that.statement);
+  }
+
+  @Override
+  public int hashCode() {
+    return Objects.hash(expr, statement);
+  }
+}
+

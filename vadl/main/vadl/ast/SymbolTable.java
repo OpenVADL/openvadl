@@ -598,6 +598,9 @@ class SymbolTable {
         for (var unnamedArgument : instructionCall.unnamedArguments) {
           collectSymbols(symbols, unnamedArgument);
         }
+      } else if (stmt instanceof LockStatement lock) {
+        collectSymbols(symbols, lock.expr);
+        collectSymbols(symbols, lock.statement);
       }
     }
 
@@ -889,6 +892,9 @@ class SymbolTable {
         for (Expr unnamedArgument : instructionCall.unnamedArguments) {
           verifyUsages(unnamedArgument);
         }
+      } else if (stmt instanceof LockStatement lock) {
+        verifyUsages(lock.expr);
+        verifyUsages(lock.statement);
       }
     }
 
