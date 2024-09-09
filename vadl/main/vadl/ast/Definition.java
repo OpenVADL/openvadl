@@ -2840,8 +2840,8 @@ class AbiSequenceDefinition extends Definition {
       return false;
     }
     AbiSequenceDefinition that = (AbiSequenceDefinition) o;
-    return kind == that.kind && Objects.equals(params, that.params) &&
-        Objects.equals(statements, that.statements);
+    return kind == that.kind && Objects.equals(params, that.params)
+        && Objects.equals(statements, that.statements);
   }
 
   @Override

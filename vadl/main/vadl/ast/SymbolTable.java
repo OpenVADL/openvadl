@@ -31,8 +31,8 @@ class SymbolTable {
   }
 
   void defineSymbol(Symbol symbol, SourceLocation loc) {
-    if (symbol instanceof ModelTypeSymbol || symbol instanceof MacroSymbol ||
-        symbol instanceof RecordSymbol) {
+    if (symbol instanceof ModelTypeSymbol || symbol instanceof MacroSymbol
+        || symbol instanceof RecordSymbol) {
       verifyMacroAvailable(symbol.name(), loc);
       macroSymbols.put(symbol.name(), symbol);
     } else {
@@ -992,7 +992,7 @@ class SymbolTable {
         verifyUsages(existsInThen.thenExpr);
       } else if (expr instanceof ForallThenExpr forAllThen) {
         verifyUsages(forAllThen.thenExpr);
-      }  else if (expr instanceof ForallExpr forallExpr) {
+      } else if (expr instanceof ForallExpr forallExpr) {
         for (ForallExpr.Index index : forallExpr.indices) {
           verifyUsages(index.domain());
         }

@@ -748,8 +748,8 @@ final class LockStatement extends Statement {
       return false;
     }
     LockStatement that = (LockStatement) o;
-    return Objects.equals(expr, that.expr) &&
-        Objects.equals(statement, that.statement);
+    return Objects.equals(expr, that.expr)
+        && Objects.equals(statement, that.statement);
   }
 
   @Override
@@ -800,8 +800,8 @@ final class ForallStatement extends Statement {
       return false;
     }
     ForallStatement that = (ForallStatement) o;
-    return Objects.equals(indices, that.indices) &&
-        Objects.equals(statement, that.statement);
+    return Objects.equals(indices, that.indices)
+        && Objects.equals(statement, that.statement);
   }
 
   @Override
