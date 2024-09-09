@@ -58,7 +58,7 @@ public class IsaMatchingPassTest extends AbstractLcbTest {
     var passManager = setup.passManager();
 
     // When
-    HashMap<InstructionLabel, List<Instruction>> matchings =
+    var matchings =
         (HashMap<InstructionLabel, List<Instruction>>) passManager.getPassResults()
             .lastResultOf(IsaMatchingPass.class);
 
