@@ -10,7 +10,7 @@ import vadl.viam.graph.dependency.WriteRegFileNode;
 /**
  * {@code X:$rs2} and {@code AddrFI:$rs1} are both
  * parameter identifies in the pattern.
- * def : Pat<(truncstorei8 X:$rs2, AddrFI:$rs1),
+ * {@code def : Pat<(truncstorei8 X:$rs2, AddrFI:$rs1),}
  */
 public record ParameterIdentity(String type, String name) {
   public String render() {

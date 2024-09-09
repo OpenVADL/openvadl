@@ -9,7 +9,7 @@ import vadl.viam.graph.dependency.TruncateNode;
 
 /**
  * VADL and CPP have not the same types. VADL supports arbitrary bit sizes whereas CPP does not.
- * The {@link CppTypeNormalizer} converts these types, however, we want to keep the original
+ * The {@link CppTypeNormalizationPass} converts these types, however, we want to keep the original
  * type information. This class extends the {@link TruncateNode}. So the {@link TruncateNode}
  * contains the upcasted type and this {@link CppTruncateNode} has a member for the
  * {@code originalType}.
