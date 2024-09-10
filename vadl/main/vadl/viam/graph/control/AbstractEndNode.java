@@ -46,6 +46,6 @@ public abstract class AbstractEndNode extends ControlNode {
    */
   public void addSideEffect(SideEffectNode sideEffectNode) {
     this.sideEffects.add(sideEffectNode);
-    sideEffectNode.addUsage(this);
+    updateUsageOf(null, sideEffectNode);
   }
 }
