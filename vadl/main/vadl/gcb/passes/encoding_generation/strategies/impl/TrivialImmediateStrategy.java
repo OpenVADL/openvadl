@@ -12,16 +12,20 @@ import vadl.viam.graph.dependency.SliceNode;
 
 /**
  * A trivial immediate is where the field access function is simply an immediate.
+ * <pre>{@code
  * format Utype : Inst =
  * {     imm    : Bits<20>
  * , rd     : Index
  * , opcode : Bits7
  * , immU = imm as UInt<32>
  * }
+ * }</pre>
  * This class should compute the following encoding function automatically:
+ * <pre>{@code
  * encode {
  * imm => immU(19..0)
  * }
+ * }</pre>
  */
 public class TrivialImmediateStrategy implements EncodingGenerationStrategy {
   @Override

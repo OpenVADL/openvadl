@@ -21,16 +21,20 @@ import vadl.viam.graph.dependency.ZeroExtendNode;
 
 /**
  * This strategy will create an encoding when the access function only contains add or sub.
+ * <pre>{@code
  * format Utype : Inst =
  * { imm    : Bits<20>
  * , rd     : Index
  * , opcode : Bits7
  * , immU = ((31) as UInt<20>) - imm
  * }
+ * }</pre>
  * This class should compute the following encoding function automatically:
+ * <pre>{@code
  * encode {
  * imm => ((31) as UInt<20>) - immU
  * }
+ * }</pre>
  */
 public class ArithmeticImmediateStrategy implements EncodingGenerationStrategy {
   @Override

@@ -15,16 +15,20 @@ import vadl.viam.graph.dependency.SliceNode;
 
 /**
  * This strategy will create an encoding when the immediate is shifted.
+ * <pre>{@code
  * format Utype : Inst =
  * {     imm    : Bits<20>
  * , rd     : Index
  * , opcode : Bits7
  * , ImmediateU = ( imm, 0 as Bits<12> ) as UInt
  * }
+ * }</pre>
  * This class should compute the following encoding function automatically:
+ * <pre>{@code
  * encode {
  * imm => ImmediateU(31..12)
  * }
+ * }</pre>
  */
 public class ShiftedImmediateStrategy implements EncodingGenerationStrategy {
   @Override
