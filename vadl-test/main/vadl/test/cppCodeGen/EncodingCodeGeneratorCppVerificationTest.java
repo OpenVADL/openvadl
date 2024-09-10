@@ -25,7 +25,6 @@ import vadl.pass.PassOrder;
 import vadl.pass.exception.DuplicatedPassKeyException;
 import vadl.types.BitsType;
 import vadl.utils.Quadruple;
-import vadl.viam.Function;
 
 public class EncodingCodeGeneratorCppVerificationTest extends AbstractCppCodeGenTest {
   private static final String MOUNT_PATH = "/app/main.cpp";
@@ -86,7 +85,7 @@ public class EncodingCodeGeneratorCppVerificationTest extends AbstractCppCodeGen
 
 
   Arbitrary<Integer> uint(int bitWidth) {
-    return Arbitraries.integers().greaterOrEqual(0).lessOrEqual((int) Math.pow(2, bitWidth));
+    return Arbitraries.integers().greaterOrEqual(0).lessOrEqual((int) Math.pow(2, bitWidth - 1));
   }
 
   void testFieldAccess(String testName,
