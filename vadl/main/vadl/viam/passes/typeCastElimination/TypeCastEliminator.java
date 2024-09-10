@@ -31,11 +31,17 @@ import vadl.viam.passes.GraphProcessor;
  * <li>has the <b>same bit representation</b> as the source type,
  * the type cast is removed without a replacement. See {@link DataType#isTrivialCastTo(Type)}
  * for an more concrete definition of nodes with <i>same bit representations</i>.</li>
+ * <li>is a <b>bool</b>,
+ * the type cast is replaced by a {@link vadl.viam.graph.dependency.BuiltInCall} to the
+ * {@link vadl.types.BuiltInTable#NEQ} built-in and {@code 0} as second operand.
+ * So the result is a bool of the expression {@code source != 0}.</li>
  * <li>has a <b>smaller bit-width</b> than the source type,
  * the type cast is replaced by a {@link TruncateNode}. The result type of the new node
  * will have the same type as the target type.</li>
- * <li>is a signed integer ({@code SInt}) and the source type is SInt or Bits the node will be
- * replaced by a {@link SignExtendNode}.</li>
+ * <li>is a any kind and the <b>source type is {@code SInt}</b>,
+ * the type cast is replaced by a {@link SignExtendNode}.</li>
+ * <li>is a <b>{@code SInt}</b> and the <b>source type is {@code Bits}</b>,
+ * the type cast is also replaced by a {@link SignExtendNode}.</li>
  * <li>is a unsigned integer, signed integer or bits ({@code SInt, Bits}),
  * the node will be replaced by a {@link ZeroExtendNode}.</li>
  * </ol>
@@ -43,8 +49,29 @@ import vadl.viam.passes.GraphProcessor;
  * <a href="https://ea.complang.tuwien.ac.at/vadl/open-vadl/issues/93">open-vadl#93</a>.
  *
  * <p>If non of the rules matches, an error is thrown.</p>
+ *
+ * <p>Here is a cast type table (truncation is not shown):
+ * <pre>
+ * Bits -> Bits : zero
+ * Bits -> UInt : zero
+ * Bits -> SInt : sign
+ * Bits -> Bool : != 0
+ *
+ * UInt -> Bits : zero
+ * UInt -> UInt : zero
+ * UInt -> SInt : zero
+ * UInt -> Bool : != 0
+ *
+ * SInt -> Bits : sign
+ * SInt -> UInt : sign
+ * SInt -> SInt : sign
+ * SInt -> Bool : != 0
+ *
+ * Bool -> Bits : zero
+ * Bool -> UInt : zero
+ * Bool -> SInt : zero
+ * </pre></p>
  */
-// TODO: @jzottele revisit when https://ea.complang.tuwien.ac.at/vadl/open-vadl/issues/93 is resolved
 public class TypeCastEliminator extends GraphProcessor {
 
   /**
