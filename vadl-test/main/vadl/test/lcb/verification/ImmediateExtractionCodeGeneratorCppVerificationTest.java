@@ -11,22 +11,17 @@ import net.jqwik.api.Arbitraries;
 import net.jqwik.api.Arbitrary;
 import org.junit.jupiter.api.DynamicTest;
 import org.junit.jupiter.api.TestFactory;
+import org.junit.jupiter.api.parallel.Execution;
+import org.junit.jupiter.api.parallel.ExecutionMode;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.testcontainers.images.builder.ImageFromDockerfile;
 import org.testcontainers.shaded.com.google.common.collect.Streams;
 import vadl.cppCodeGen.CppTypeMap;
-import vadl.gcb.passes.relocation.DetectImmediatePass;
-import vadl.gcb.passes.type_normalization.CppTypeNormalizationForDecodingsPass;
-import vadl.gcb.passes.type_normalization.CppTypeNormalizationForEncodingsPass;
 import vadl.gcb.passes.type_normalization.CppTypeNormalizationForImmediateExtractionPass;
 import vadl.gcb.passes.type_normalization.CppTypeNormalizationForPredicatesPass;
-import vadl.lcb.codegen.encoding.DecodingCodeGenerator;
-import vadl.lcb.codegen.encoding.EncodingCodeGenerator;
 import vadl.lcb.codegen.relocation.RelocationCodeGenerator;
-import vadl.lcb.codegen.relocation.RelocationOverrideCodeGenerator;
 import vadl.lcb.passes.relocation.GenerateElfRelocationPass;
-import vadl.lcb.passes.relocation.model.ElfRelocation;
 import vadl.pass.PassKey;
 import vadl.pass.exception.DuplicatedPassKeyException;
 import vadl.test.lcb.AbstractLcbTest;
@@ -51,7 +46,7 @@ public class ImmediateExtractionCodeGeneratorCppVerificationTest extends Abstrac
 
 
   @TestFactory
-    //@Execution(ExecutionMode.CONCURRENT)
+  @Execution(ExecutionMode.CONCURRENT)
   Collection<DynamicTest> instructions() throws IOException, DuplicatedPassKeyException {
     var configuration = getConfiguration(false);
     var temporaryPasses = List.of(
@@ -64,15 +59,6 @@ public class ImmediateExtractionCodeGeneratorCppVerificationTest extends Abstrac
         "sys/risc-v/rv64im.vadl", new PassKey(GenerateElfRelocationPass.class.getName()),
         temporaryPasses);
 
-    var immediateDetection =
-        (DetectImmediatePass.ImmediateDetectionContainer) testSetup.passManager().getPassResults()
-            .lastResultOf(DetectImmediatePass.class);
-    var normalizedDecodings =
-        (IdentityHashMap<Function, Function>) testSetup.passManager().getPassResults()
-            .lastResultOf(CppTypeNormalizationForDecodingsPass.class);
-    var normalizedEncodings =
-        (IdentityHashMap<Function, Function>) testSetup.passManager().getPassResults()
-            .lastResultOf(CppTypeNormalizationForEncodingsPass.class);
     var cppNormalisedImmediateExtraction = (IdentityHashMap<Function, Function>)
         testSetup.passManager().getPassResults()
             .lastResultOf(CppTypeNormalizationForImmediateExtractionPass.class);
@@ -83,7 +69,6 @@ public class ImmediateExtractionCodeGeneratorCppVerificationTest extends Abstrac
         .flatMap(isa -> isa.ownFormats().stream())
         .flatMap(format -> Arrays.stream(format.fieldAccesses()))
         .forEach(fieldAccess -> {
-          var params = fieldAccess.fieldRef().extractFunction().parameters();
           var bitWidth = fieldAccess.fieldRef().format().type().bitWidth();
           var arbitraryImmediate =
               getArbitrary(fieldAccess.accessFunction().parameters()[0]);
@@ -101,8 +86,6 @@ public class ImmediateExtractionCodeGeneratorCppVerificationTest extends Abstrac
                 tests.add(DynamicTest.dynamicTest(displayName,
                     () -> testExtractFunction(displayName, fieldAccess, pair.left(), pair.right(),
                         bitWidth,
-                        normalizedDecodings,
-                        normalizedEncodings,
                         cppNormalisedImmediateExtraction)));
               });
 
@@ -115,11 +98,7 @@ public class ImmediateExtractionCodeGeneratorCppVerificationTest extends Abstrac
                                    Long imm,
                                    Long tail,
                                    int bitWidth,
-                                   IdentityHashMap<Function, Function> normalisedDecodings,
-                                   IdentityHashMap<Function, Function> normalisedEncodings,
                                    IdentityHashMap<Function, Function> cppNormalisedImmediateExtraction) {
-    var decodeCodeGenerator = new DecodingCodeGenerator();
-    var encodeCodeGenerator = new EncodingCodeGenerator();
     var extractionFunctionCodeGenerator = new RelocationCodeGenerator();
 
     var extractFunction =
@@ -153,29 +132,14 @@ public class ImmediateExtractionCodeGeneratorCppVerificationTest extends Abstrac
             }
                         
             template<std::size_t N, std::size_t M>
-            std::bitset<N> set_bit_range(std::bitset<N> dest, const std::bitset<M> source, int dest_start, int dest_end, int offset = 0) {
-                auto j = dest_end;
-                std::cout << "Dest start " << dest_start << std::endl;
-                for (int i = M - offset - 1; j >= dest_start ; --i) {
+            std::bitset<N> set_bits(std::bitset<N> dest, const std::bitset<M> source, std::vector<int> bits) {
+                auto target = 0;
+                for (int i = M - 1; i >= 0 ; --i) {
+                    auto j = bits[target];
                     dest.set(j, source[i]);
-                    std::cout << "Set " << j << " from " << i << std::endl;
-                    j--;
+                    target++;
                 }
-                std::cout << std::endl;
                 
-                return dest;
-            }
-                        
-            template<std::size_t N, std::size_t M>
-            std::bitset<N> set_multiple_bit_ranges(std::bitset<N> dest, const std::bitset<M> source, std::vector<std::tuple<int, int>> ranges) {
-                auto acc = 0;
-                for(const auto &i : ranges) {
-                  dest |= set_bit_range(dest, source, std::get<0>(i), std::get<1>(i), acc) << acc;
-                  std::cout << "acc " << acc << std::endl;
-                  acc += std::get<1>(i) - std::get<0>(i) + 1;
-                  //std::cout << "dest " << dest.to_string() << std::endl;
-                }
-                 
                 return dest;
             }
                         
@@ -184,8 +148,8 @@ public class ImmediateExtractionCodeGeneratorCppVerificationTest extends Abstrac
                     
             int main() {
               %s expected = %d;
-              std::vector<std::tuple<int, int>> args = { %s };
-              auto actual = %s(set_multiple_bit_ranges(std::bitset<%d>(%d), std::bitset<%d>(%d), args).to_ulong());
+              std::vector<int> args = { %s };
+              auto actual = %s(set_bits(std::bitset<%d>(%d), std::bitset<%d>(%d), args).to_ulong());
               if(actual == expected) {
                 std::cout << "ok" << std::endl;
                 return 0;
@@ -198,8 +162,8 @@ public class ImmediateExtractionCodeGeneratorCppVerificationTest extends Abstrac
         extractionFunctionCode,
         CppTypeMap.getCppTypeNameByVadlType(extractFunction.returnType()),
         imm,
-        fieldAccess.fieldRef().bitSlice().parts()
-            .map(slice -> String.format("std::make_pair(%d, %d)", slice.lsb(), slice.msb()))
+        fieldAccess.fieldRef().bitSlice().stream()
+            .mapToObj(String::valueOf)
             .collect(
                 Collectors.joining(", ")),
         extractionFunctionName,
@@ -220,10 +184,6 @@ public class ImmediateExtractionCodeGeneratorCppVerificationTest extends Abstrac
   private Arbitrary<Long> getArbitrary(Parameter parameter) {
     var type = (BitsType) parameter.type();
     return uint(type.bitWidth());
-  }
-
-  private Arbitrary<Long> getArbitrary(Format.Field field) {
-    return uint(field.size());
   }
 
   Arbitrary<Long> uint(int bitWidth) {
