@@ -916,6 +916,7 @@ public class BuiltInTable {
       func("MNEMONIC", Type.relation(StringType.class))
           .takesDefault()
           .returns(Type.string())
+          .noCompute()
           .build();
 
   /**
@@ -1291,7 +1292,7 @@ public class BuiltInTable {
     private RelationType signature;
     private BuiltIn.Kind kind;
     @Nullable
-    private Function<List<Constant>, Constant> computeFunction;
+    private Function<List<Constant>, Optional<Constant>> computeFunction;
     @Nullable
     private Function<List<Type>, Boolean> takesFunction;
     @Nullable
@@ -1308,21 +1309,21 @@ public class BuiltInTable {
     public <T extends Constant, R extends Constant> BuiltInBuilder computeUnary(
         Function<T, R> computeFunction) {
       this.computeFunction =
-          (args) -> computeFunction.apply((T) args.get(0));
+          (args) -> Optional.of(computeFunction.apply((T) args.get(0)));
       return this;
     }
 
     public <T extends Constant, R extends Constant> BuiltInBuilder compute(
         Function<List<T>, R> computeFunction) {
       this.computeFunction =
-          (args) -> computeFunction.apply(args.stream().map(a -> (T) a).toList());
+          (args) -> Optional.of(computeFunction.apply(args.stream().map(a -> (T) a).toList()));
       return this;
     }
 
     public <A extends Constant, B extends Constant, R extends Constant> BuiltInBuilder compute(
         BiFunction<A, B, R> computeFunction) {
       this.computeFunction =
-          (args) -> computeFunction.apply((A) args.get(0), (B) args.get(1));
+          (args) -> Optional.of(computeFunction.apply((A) args.get(0), (B) args.get(1)));
       return this;
     }
 
@@ -1330,10 +1331,15 @@ public class BuiltInTable {
     public <A extends Constant, B extends Constant, C extends Constant, R extends Constant> BuiltInBuilder compute(
         TriFunction<A, B, C, R> computeFunction) {
       this.computeFunction =
-          (args) -> computeFunction.apply((A) args.get(0), (B) args.get(1), (C) args.get(2));
+          (args) -> Optional.of(
+              computeFunction.apply((A) args.get(0), (B) args.get(1), (C) args.get(2)));
       return this;
     }
 
+    public BuiltInBuilder noCompute() {
+      this.computeFunction = (args) -> Optional.empty();
+      return this;
+    }
 
     public BuiltInBuilder takesData(Function<List<DataType>, Boolean> takesFunction) {
       this.takesFunction = (args) -> args.stream().allMatch(DataType.class::isInstance)
@@ -1441,12 +1447,10 @@ public class BuiltInTable {
                 .addContext("built-in", this)
                 .addContext("constants", List.of(args));
           }
-          var result = computeFunction.apply(args);
-          if (result instanceof Constant.Value value) {
-            var returnType = returns(argTypes);
-            result = value.trivialCastTo(returnType);
-          }
-          return Optional.of(result);
+          return computeFunction.apply(args)
+              .map(result -> result instanceof Constant.Value value
+                  ? value.trivialCastTo(returns(argTypes))
+                  : result);
         }
 
         @Override
