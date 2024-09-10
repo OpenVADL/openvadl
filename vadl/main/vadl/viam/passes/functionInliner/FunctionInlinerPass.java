@@ -12,6 +12,7 @@ import vadl.pass.Pass;
 import vadl.pass.PassName;
 import vadl.pass.PassResults;
 import vadl.utils.GraphUtils;
+import vadl.utils.Pair;
 import vadl.viam.Instruction;
 import vadl.viam.Parameter;
 import vadl.viam.Specification;
@@ -38,10 +39,6 @@ public class FunctionInlinerPass extends Pass {
   @Override
   public PassName getName() {
     return new PassName("FunctionInlinerPass");
-  }
-
-  record Pair<T, X>(T arg, X parameter) {
-
   }
 
   @Nullable
@@ -80,8 +77,8 @@ public class FunctionInlinerPass extends Pass {
                     Pair::new)
                 .forEach(pair -> {
                   behaviorCopy.getNodes(FuncParamNode.class)
-                      .filter(n -> n.parameter() == pair.parameter())
-                      .forEach(usedParam -> usedParam.replaceAndDelete(pair.arg.copy()));
+                      .filter(n -> n.parameter() == pair.right())
+                      .forEach(usedParam -> usedParam.replaceAndDelete(pair.left().copy()));
                 });
 
             // replace the function call by a copy of the return value of the function
@@ -98,38 +95,6 @@ public class FunctionInlinerPass extends Pass {
           });
 
           original.put(instruction, new UninlinedGraph(copy, instruction));
-        });
-  }
-
-  private void pseudoInstructions(Specification viam) {
-    viam.isas()
-        .flatMap(isa -> isa.ownPseudoInstructions().stream())
-        .forEach(pseudoInstruction -> {
-          var copy = pseudoInstruction.behavior().copy();
-          var topLevelInstrEnd = getSingleNode(copy, InstrEndNode.class);
-          var functionCalls = pseudoInstruction.behavior().getNodes(InstrCallNode.class).toList();
-
-          functionCalls.forEach(functionCall -> {
-            var nestedInstruction = functionCall.target().behavior().copy();
-            var instrEndNode = getSingleNode(nestedInstruction, InstrEndNode.class);
-
-            instrEndNode.sideEffects().forEach(sideEffectNode -> {
-              // Replace every occurrence of param field by a copy of the
-              // given argument from the `FunctionCallNode`.
-              Streams.zip(
-                      functionCall.arguments().stream(),
-                      functionCall.getParamFields().stream(),
-                      Pair::new)
-                  .forEach(pair ->
-                      nestedInstruction.getNodes(FieldRefNode.class)
-                          .filter(n -> n.formatField().equals(pair.parameter))
-                          .forEach(usedParam -> usedParam.replaceAndDelete(pair.arg.copy())));
-
-              // replace the function call by a copy of the return value of the function
-              topLevelInstrEnd.sideEffects().add(sideEffectNode);
-              sideEffectNode.addUsage(topLevelInstrEnd);
-            });
-          });
         });
   }
 }
