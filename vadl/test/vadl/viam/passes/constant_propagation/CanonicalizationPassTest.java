@@ -64,7 +64,6 @@ class CanonicalizationPassTest extends AbstractTest {
     var isa = new InstructionSetArchitecture(
         Identifier.noLocation("isaIdentifierValue"),
         viam,
-        null,
         List.of(),
         List.of(),
         Collections.emptyList(),
