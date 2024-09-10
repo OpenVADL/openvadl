@@ -2,13 +2,17 @@ package vadl.viam.passes.typeCastElimination;
 
 import org.jetbrains.annotations.Nullable;
 import vadl.types.BitsType;
+import vadl.types.BuiltInTable;
 import vadl.types.DataType;
 import vadl.types.SIntType;
 import vadl.types.Type;
 import vadl.types.UIntType;
+import vadl.viam.Constant;
 import vadl.viam.graph.Graph;
 import vadl.viam.graph.Node;
 import vadl.viam.graph.ViamGraphError;
+import vadl.viam.graph.dependency.BuiltInCall;
+import vadl.viam.graph.dependency.ConstantNode;
 import vadl.viam.graph.dependency.ExpressionNode;
 import vadl.viam.graph.dependency.SignExtendNode;
 import vadl.viam.graph.dependency.TruncateNode;
@@ -127,40 +131,49 @@ public class TypeCastEliminator extends GraphProcessor {
         "Currently only casts from data types are supported");
 
     var graph = castNode.graph();
-    var castType = (DataType) castNode.type();
-    var inputType = (DataType) source.type();
+    var targetType = (DataType) castNode.type();
+    var sourceType = (DataType) source.type();
 
     ExpressionNode replacement = null;
 
     // check the different rules and apply them accordingly
-    if (inputType.isTrivialCastTo(castType)) {
+    if (sourceType.isTrivialCastTo(targetType)) {
       // match 1. rule: same bit representation
       // -> remove the node and remap edges
       castNode.replaceByNothingAndDelete();
       // no new node was created
       replacement = null;
 
-    } else if (castType.bitWidth() < inputType.bitWidth()) {
-      // match 2. rule: cast type bit-width is smaller than source type
+    } else if (targetType.getClass() == vadl.types.BoolType.class) {
+      // match 2. rule: target type is bool
+      // -> produce != 0 call
+      replacement = castNode.replaceAndDelete(produceNeqToZero(source));
+    } else if (targetType.bitWidth() < sourceType.bitWidth()) {
+      // match 3. rule: cast type bit-width is smaller than source type
       // -> create TruncateNode and add it
-      var truncateNode = new TruncateNode(source, castType);
-      replacement = (TruncateNode) castNode.replaceAndDelete(truncateNode);
+      var truncateNode = new TruncateNode(source, targetType);
+      replacement = castNode.replaceAndDelete(truncateNode);
 
-    } else if (castType.getClass() == SIntType.class
-        && (inputType.getClass() == BitsType.class || inputType.getClass() == SIntType.class)) {
-      // match 3.
-      // rule: cast type is a signed integer and input type is either sint or bits
+    } else if (sourceType.getClass() == SIntType.class) {
+      // match 4.
+      // rule: source type is a signed integer
       // -> create sign extend node
-      var signExtendNode = new SignExtendNode(source, castType);
-      replacement = (SignExtendNode) castNode.replaceAndDelete(signExtendNode);
-
-    } else if (castType.getClass() == UIntType.class
-        || castType.getClass() == BitsType.class
-        || castType.getClass() == SIntType.class
+      var signExtendNode = new SignExtendNode(source, targetType);
+      replacement = castNode.replaceAndDelete(signExtendNode);
+    } else if (sourceType.getClass() == BitsType.class
+        && targetType.getClass() == SIntType.class) {
+      // match 5.
+      // rule: source type is a bits type and target type is SInt
+      // -> create sign extend node
+      var signExtendNode = new SignExtendNode(source, targetType);
+      replacement = castNode.replaceAndDelete(signExtendNode);
+    } else if (targetType.getClass() == UIntType.class
+        || targetType.getClass() == BitsType.class
+        || targetType.getClass() == SIntType.class
     ) {
-      // match 4. rule: cast type is one of sint, uint, or bits
-      var zeroExtendNode = new ZeroExtendNode(source, castType);
-      replacement = (ZeroExtendNode) castNode.replaceAndDelete(zeroExtendNode);
+      // match 5. rule: cast type is one of sint, uint, or bits
+      var zeroExtendNode = new ZeroExtendNode(source, targetType);
+      replacement = castNode.replaceAndDelete(zeroExtendNode);
 
     } else {
       throw new ViamGraphError("Could not handle type cast, as non of the rules apply.")
@@ -192,6 +205,13 @@ public class TypeCastEliminator extends GraphProcessor {
     }
 
     return toProcess;
+  }
+
+  private static BuiltInCall produceNeqToZero(ExpressionNode node) {
+    return BuiltInCall.of(BuiltInTable.NEQ,
+        node,
+        new ConstantNode(Constant.Value.of(0, (DataType) node.type()))
+    );
   }
 
 }
