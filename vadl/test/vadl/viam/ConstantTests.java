@@ -621,13 +621,15 @@ public class ConstantTests {
 
 
   static Stream<Arguments> testCastConstant_Sources() {
+    // remember  5: 0b00101
+    // remember -5: 0b11011
     return Stream.of(
         // intS -> bits
         Arguments.of(intS(5, 4), Type.bits(4), bits(0b101, 4)),
         Arguments.of(intS(5, 4), Type.bits(6), bits(0b101, 6)),
         Arguments.of(intS(5, 4), Type.bits(2), bits(0b01, 2)),
         Arguments.of(intS(-5, 4), Type.bits(4), bits(0b1011, 4)),
-        Arguments.of(intS(-5, 4), Type.bits(6), bits(0b001011, 6)),
+        Arguments.of(intS(-5, 4), Type.bits(6), bits(0b111011, 6)),
         Arguments.of(intS(-5, 4), Type.bits(2), bits(0b11, 2)),
 
         // intS -> uInt
@@ -635,7 +637,7 @@ public class ConstantTests {
         Arguments.of(intS(5, 4), Type.unsignedInt(6), intU(0b101, 6)),
         Arguments.of(intS(5, 4), Type.unsignedInt(2), intU(0b01, 2)),
         Arguments.of(intS(-5, 4), Type.unsignedInt(4), intU(0b1011, 4)),
-        Arguments.of(intS(-5, 4), Type.unsignedInt(6), intU(0b001011, 6)),
+        Arguments.of(intS(-5, 4), Type.unsignedInt(6), intU(0b111011, 6)),
         Arguments.of(intS(-5, 4), Type.unsignedInt(2), intU(0b11, 2)),
 
         // intS -> intS
@@ -648,6 +650,7 @@ public class ConstantTests {
 
         // intS -> bool
         Arguments.of(intS(5, 4), Type.bool(), bool(true)),
+        Arguments.of(intS(2, 4), Type.bool(), bool(true)),
         Arguments.of(intS(0, 4), Type.bool(), bool(false)),
         Arguments.of(intS(-5, 4), Type.bool(), bool(true)),
 

@@ -75,6 +75,9 @@ import vadl.viam.passes.GraphProcessor;
  * Bool -> UInt : zero
  * Bool -> SInt : zero
  * </pre></p>
+ *
+ * <p><b>If these rules change, we must also update
+ * {@link Constant.Value#castTo(DataType)}!</b></p>
  */
 public class TypeCastEliminator extends GraphProcessor {
 

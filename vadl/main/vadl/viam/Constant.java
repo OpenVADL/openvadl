@@ -205,34 +205,41 @@ public abstract class Constant {
     /**
      * Casts the constant value to the specified data type.
      *
-     * @param newType the data type to cast the value to
-     * @return a new Constant.Value object representing the casted value
-     * @throws ViamError if the constant cannot be cast to the specified data type
-     * @deprecated as constant casting can be replaced by sign/zero extension and truncation
+     * <p>For the concrete casting rules take a look at
+     * {@link vadl.viam.passes.typeCastElimination.TypeCastEliminator}</p>
+     *
+     * @param targetType the data type to cast the value to
+     * @return a new Constant.Value object representing the cast value
+     * @see vadl.viam.passes.typeCastElimination.TypeCastEliminator
      */
-    @Deprecated
-    public Constant.Value castTo(DataType newType) {
-      if (type().bitWidth() >= newType.bitWidth()) {
+    public Constant.Value castTo(DataType targetType) {
+      var sourceType = type();
+
+      if (sourceType.isTrivialCastTo(targetType)) {
+        // same memory representation
+        return fromTwosComplement(value, targetType);
+      } else if (targetType instanceof BoolType) {
+        // != 0 for casts to boolean
+        return of(!this.integer().equals(BigInteger.ZERO));
+      } else if (targetType.bitWidth() < sourceType.bitWidth()) {
         // the current type is larger (so we just truncate)
         var truncatedValue = value
-            .and(mask(newType.bitWidth(), 0));
-        return Value.fromTwosComplement(truncatedValue, newType);
+            .and(mask(targetType.bitWidth(), 0));
+        return Value.fromTwosComplement(truncatedValue, targetType);
+      } else if (sourceType.getClass() == SIntType.class) {
+        // source type is SInt -> sign extend
+        return signExtend(targetType);
+      } else if (sourceType.getClass() == BitsType.class
+          && targetType.getClass() == SIntType.class) {
+        // source type is Bits and target type is SInt -> zero extend
+        return signExtend(targetType);
+      } else if (targetType.getClass() == UIntType.class
+          || targetType.getClass() == BitsType.class
+          || targetType.getClass() == SIntType.class) {
+        // if the target type is one of UInt, Bits, SInt, we zero extend
+        return zeroExtend(targetType);
       } else {
-        if (newType.isSigned()) {
-          // we have to sign extend the value
-          var val = this;
-          if (this.type().getClass() == BitsType.class) {
-            // we want bits type to be signed extended
-            // so we have to convert this value to a integer value first
-            val = fromTwosComplement(value, Type.signedInt(type().bitWidth()));
-          }
-          // now we use the big integer value (which is signed) to construct the new type
-          return fromInteger(val.integer(), newType);
-        } else {
-          // we just have to zero extend it... so the current bit representation
-          // is correct, we just pass a new type
-          return fromTwosComplement(value, newType);
-        }
+        throw new ViamError("Couldn't cast %s to %s. None of the rules apply.", this, targetType);
       }
     }
 
@@ -533,11 +540,18 @@ public abstract class Constant {
       ensure(type().bitWidth() <= newType.bitWidth(),
           "Value's bit-width must be less or equal to result type: %s", newType);
 
-      // first we want a signed integer value, as we use the BigInteger implementation
-      // for the signExtension
-      var signedIntegerValue = fromTwosComplement(value, Type.signedInt(type().bitWidth()));
-      // now we use the big integer value (which is signed) to construct the new type
-      return fromInteger(signedIntegerValue.integer(), newType);
+      var signSet = value.testBit(type().bitWidth() - 1);
+
+      if (signSet) {
+        var lenDiff = newType.bitWidth() - type().bitWidth();
+        var shiftLeft = type().bitWidth();
+        var bitMask = mask(lenDiff, shiftLeft);
+        var result = value.or(bitMask);
+        return fromTwosComplement(result, newType);
+      } else {
+        // sign not set -> no sign extension
+        return fromTwosComplement(value, newType);
+      }
     }
 
     private BigInteger maxUnsignedValue() {
