@@ -9,6 +9,8 @@ import net.jqwik.api.Arbitraries;
 import net.jqwik.api.Arbitrary;
 import org.junit.jupiter.api.DynamicTest;
 import org.junit.jupiter.api.TestFactory;
+import org.junit.jupiter.api.parallel.Execution;
+import org.junit.jupiter.api.parallel.ExecutionMode;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.testcontainers.images.builder.ImageFromDockerfile;
@@ -43,8 +45,8 @@ public class RelocationCodeGeneratorCppVerificationTest extends AbstractLcbTest 
               .build());
 
 
-  //@TestFactory
-    //@Execution(ExecutionMode.CONCURRENT)
+  @TestFactory
+  @Execution(ExecutionMode.CONCURRENT)
   Collection<DynamicTest> instructions() throws IOException, DuplicatedPassKeyException {
     var configuration = getConfiguration(false);
     var temporaryPasses = List.of(
@@ -78,8 +80,9 @@ public class RelocationCodeGeneratorCppVerificationTest extends AbstractLcbTest 
             getArbitrary(params[0]);
         var arbitraryImmediateValue = getArbitrary(immField);
 
-        arbitraryInstructionWord.sampleStream().limit(1).forEach(instructionWordSample -> {
-          arbitraryImmediateValue.sampleStream().limit(1).forEach(immediateValue -> {
+        var limit = 5;
+        arbitraryInstructionWord.sampleStream().limit(limit).forEach(instructionWordSample -> {
+          arbitraryImmediateValue.sampleStream().limit(limit).forEach(immediateValue -> {
             var displayName =
                 String.format("immField = %s, instr = %s, imm = %s",
                     immField.identifier.lower(),
@@ -99,11 +102,11 @@ public class RelocationCodeGeneratorCppVerificationTest extends AbstractLcbTest 
 
   private Arbitrary<Long> getArbitrary(Parameter parameter) {
     var type = (BitsType) parameter.type();
-    return uint(type.bitWidth());
+    return uint(type.bitWidth() - 1);
   }
 
   private Arbitrary<Long> getArbitrary(Format.Field field) {
-    return uint(field.size());
+    return uint(field.size() - 1);
   }
 
   Arbitrary<Long> uint(int bitWidth) {
@@ -142,8 +145,10 @@ public class RelocationCodeGeneratorCppVerificationTest extends AbstractLcbTest 
             #include <cstdint>
             #include <iostream>
             #include <bitset>
-            
-            template<std::size_t start, std::size_t end, std::size_t N>
+            #include <vector>
+            #include <tuple>
+                        
+            template<int start, int end, std::size_t N>
             std::bitset<N> project_range(std::bitset<N> bits)
             {
                 std::bitset<N> result;
@@ -157,21 +162,19 @@ public class RelocationCodeGeneratorCppVerificationTest extends AbstractLcbTest 
                         
                 return result;
             }
-            
+                        
             template<std::size_t N, std::size_t M>
-            std::bitset<N> set_bit_range(std::bitset<N> dest, const std::bitset<M> source, size_t dest_start, size_t dest_end) {
-                for (size_t i = 0; i <= dest_end - dest_start; ++i) {
-                    dest.set(dest_start + i, source[i]);
+            std::bitset<N> set_bits(std::bitset<N> dest, const std::bitset<M> source, std::vector<int> bits) {
+                auto target = 0;
+                for (int i = bits.size() - 1; i >= 0 ; --i) {
+                    auto j = bits[target];
+                    dest.set(j, source[i]);
+                    target++;
                 }
                 
                 return dest;
             }
-            
-            template<std::size_t N, std::size_t M, typename... Ranges>
-            std::bitset<N> set_multiple_bit_ranges(std::bitset<N> dest, const std::bitset<M> source, Ranges... ranges) {
-                return (set_bit_range(dest, source, ranges.first, ranges.second), ...);
-            }
-            
+                        
             // Extraction Function
             %s
                     

@@ -5,6 +5,7 @@ import static vadl.cppCodeGen.CppTypeMap.getCppTypeNameByVadlType;
 import java.io.StringWriter;
 import java.util.Collections;
 import java.util.Objects;
+import java.util.stream.Collectors;
 import vadl.cppCodeGen.model.CppUpdateBitRangeNode;
 import vadl.cppCodeGen.passes.typeNormalization.CppSignExtendNode;
 import vadl.cppCodeGen.passes.typeNormalization.CppTruncateNode;
@@ -138,7 +139,7 @@ public class GenericCppCodeGeneratorVisitor
   @Override
   public void visit(CppUpdateBitRangeNode cppUpdateBitRangeNode) {
     var bitWidth = ((BitsType) cppUpdateBitRangeNode.type()).bitWidth();
-    writer.write("set_multiple_bit_ranges(");
+    writer.write("set_bits(");
 
     // Inst
     writer.write(String.format("std::bitset<%d>(", bitWidth));
@@ -151,9 +152,12 @@ public class GenericCppCodeGeneratorVisitor
     writer.write(")");
 
     // Parts
-    cppUpdateBitRangeNode.field.bitSlice().parts().forEach(part -> {
-      writer.write(String.format(", std::make_pair(%d, %d)", part.lsb(), part.msb()));
-    });
+    writer.write(", std::vector<int> { ");
+    writer.write(cppUpdateBitRangeNode.field.bitSlice()
+        .stream()
+        .mapToObj(String::valueOf)
+        .collect(Collectors.joining(", ")));
+    writer.write(" } ");
 
     writer.write(").to_ulong()");
   }
