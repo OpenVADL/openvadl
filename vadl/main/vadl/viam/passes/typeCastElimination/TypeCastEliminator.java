@@ -147,7 +147,8 @@ public class TypeCastEliminator extends GraphProcessor {
     } else if (targetType.getClass() == vadl.types.BoolType.class) {
       // match 2. rule: target type is bool
       // -> produce != 0 call
-      replacement = castNode.replaceAndDelete(produceNeqToZero(source));
+      var comparison = produceNeqToZero(source);
+      replacement = castNode.replaceAndDelete(comparison);
     } else if (targetType.bitWidth() < sourceType.bitWidth()) {
       // match 3. rule: cast type bit-width is smaller than source type
       // -> create TruncateNode and add it

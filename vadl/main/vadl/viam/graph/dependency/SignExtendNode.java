@@ -28,7 +28,6 @@ public class SignExtendNode extends UnaryNode implements Canonicalizable {
     ensure(value.type() instanceof DataType, "Value must be a data type");
     ensure(((DataType) value.type()).bitWidth() <= type().bitWidth(),
         "Value's type bit-width must be less or equal node's type");
-    ensure(type() instanceof SIntType, "Sign extension is only possible to SInt.");
   }
 
   @Override

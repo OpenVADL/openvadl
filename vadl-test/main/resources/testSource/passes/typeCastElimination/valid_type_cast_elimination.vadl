@@ -40,33 +40,24 @@ function Truncate_SInt10_Bits5(a: SInt<10>) -> Bits<5> = a as Bits<5>
 function Truncate_Bits10_Bits5(a: Bits<10>) -> Bits<5> = a as Bits<5>
 function Truncate_UInt10_Bits5(a: UInt<10>) -> Bits<5> = a as Bits<5>
 
-function Truncate_SInt10_Bool(a: SInt<10>) -> Bool = a as Bool
-function Truncate_Bits10_Bool(a: Bits<10>) -> Bool = a as Bool
-function Truncate_UInt10_Bool(a: UInt<10>) -> Bool = a as Bool
-
 
 //// ZERO EXTEND TESTS ////
-function ZeroExtend_UInt10_UInt20(a: UInt<10>) -> UInt<20> = a as UInt<20>
-function ZeroExtend_SInt10_UInt20(a: SInt<10>) -> UInt<20> = a as UInt<20>
+function ZeroExtend_Bits10_Bits20(a: Bits<10>) -> Bits<20> = a as UInt<20>
 function ZeroExtend_Bits10_UInt20(a: Bits<10>) -> UInt<20> = a as UInt<20>
-function ZeroExtend_Bool_UInt20(a: Bool) -> UInt<20> = a as UInt<20>
 
 function ZeroExtend_UInt10_Bits20(a: UInt<10>) -> Bits<20> = a as UInt<20>
-function ZeroExtend_SInt10_Bits20(a: SInt<10>) -> Bits<20> = a as UInt<20>
-function ZeroExtend_Bits10_Bits20(a: Bits<10>) -> Bits<20> = a as UInt<20>
-function ZeroExtend_Bool_Bits20(a: Bool) -> Bits<20> = a as UInt<20>
-
-// TODO: @jzottele remove or uncomment when https://ea.complang.tuwien.ac.at/vadl/open-vadl/issues/93 is resolved
+function ZeroExtend_UInt10_UInt20(a: UInt<10>) -> UInt<20> = a as UInt<20>
 function ZeroExtend_UInt10_SInt20(a: UInt<10>) -> SInt<20> = a as SInt<20>
+
+function ZeroExtend_Bool_Bits20(a: Bool) -> Bits<20> = a as UInt<20>
+function ZeroExtend_Bool_UInt20(a: Bool) -> UInt<20> = a as UInt<20>
 function ZeroExtend_Bool_SInt20(a: Bool) -> SInt<20> = a as SInt<20>
 
 //// SIGN EXTEND TESTS ////
 function SignExtend_SInt_SInt(a: SInt<10>) -> SInt<20> = a as SInt<20>
 function SignExtend_Bits_SInt(a: Bits<10>) -> SInt<20> = a as SInt<20>
-
-// TODO: @jzottele remove or uncomment when https://ea.complang.tuwien.ac.at/vadl/open-vadl/issues/93 is resolved
-// function SignExtend_UInt_SInt(a: UInt<10>) -> SInt<20> = a as SInt<20>
-// function SignExtend_Bool_SInt(a: Bool) -> SInt<20> = a as SInt<20>
+function SignExtend_SInt_UInt(a: SInt<10>) -> UInt<20> = a as UInt<20>
+function SignExtend_SInt_Bits(a: SInt<10>) -> Bits<20> = a as Bits<20>
 
 // TODO: @jzottele remove or uncomment when https://ea.complang.tuwien.ac.at/vadl/open-vadl/issues/93 is resolved
 // If there would be no sign extend for UInts this would be a zero extend!
@@ -75,12 +66,9 @@ function SignExtend_Bits_SInt(a: Bits<10>) -> SInt<20> = a as SInt<20>
 // function SignExtend_NonTrivial(a: SInt<10>) -> UInt<20> = (a as SInt<20>) as UInt<20>
 
 //// BOOL CAST TESTS ////
-// TODO: @jzottele remove or uncomment when https://ea.complang.tuwien.ac.at/vadl/open-vadl/issues/93 is resolved
-// function BoolCast_Bits1(a: Bits<1>) -> Bool = a as Bool
-// function BoolCast_SInt1(a: SInt<1>) -> Bool = a as Bool
-// function BoolCast_UInt1(a: UInt<1>) -> Bool = a as Bool
-// function BoolCast_Bool1(a: Bool) -> Bool = a as Bool
-// function BoolCast_SInt10(a: SInt<10>) -> Bool = a as Bool
+function BoolCast_Bits10(a: Bits<10>) -> Bool = a as Bool
+function BoolCast_UInt10(a: UInt<10>) -> Bool = a as Bool
+function BoolCast_SInt10(a: SInt<10>) -> Bool = a as Bool
 
 
 //// CASES WITH OPTIMIZATION POTENTIAL ////

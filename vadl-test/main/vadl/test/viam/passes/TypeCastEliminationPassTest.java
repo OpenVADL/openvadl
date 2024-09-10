@@ -8,11 +8,13 @@ import static vadl.utils.GraphUtils.getSingleNode;
 import java.io.IOException;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.stream.Stream;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.Arguments;
+import org.junit.jupiter.params.provider.EmptySource;
 import org.junit.jupiter.params.provider.MethodSource;
 import vadl.configuration.GeneralConfiguration;
 import vadl.pass.PassResults;
@@ -108,29 +110,29 @@ public class TypeCastEliminationPassTest extends AbstractTest {
     return findFuncNameArgumentsByPrefix("SignExtend_", validFrontend.getViam());
   }
 
-// TODO: @jzottele remove or uncomment when https://ea.complang.tuwien.ac.at/vadl/open-vadl/issues/93 is resolved
-//  @ParameterizedTest
-//  @MethodSource("testBoolCast_Source")
-//  void testBoolCast_shouldReplaceByNegCallWithSecondArg0Const(String functionName) {
-//    var behavior = getTestBehavior(functionName);
-//    assertEquals(4, behavior.getNodes().count());
-//    var paramNode = getSingleNode(behavior, FuncParamNode.class);
-//    var compareNode = getSingleNode(behavior, BuiltInCall.class);
-//    var zeroConstant = getSingleNode(behavior, ConstantNode.class);
-//    assertEquals(BuiltInTable.NEG, compareNode.builtIn());
-//    assertEquals(0, zeroConstant.constant().asVal().intValue());
-//    assertEquals(paramNode, compareNode.arguments().get(0));
-//    assertEquals(zeroConstant, compareNode.arguments().get(1));
-//    var returnNode = getSingleNode(behavior, ReturnNode.class);
-//    assertEquals(compareNode, returnNode.value());
-//  }
-//
-//  static Stream<Arguments> testBoolCast_Source() {
-//    return findFuncNameArgumentsByPrefix("BoolCast_", validFrontend.getViam());
-//  }
+  @ParameterizedTest
+  @MethodSource("testBoolCast_Source")
+  void testBoolCast_shouldReplaceByNegCallWithSecondArg0Const(String functionName) {
+    var behavior = getTestBehavior(functionName);
+    assertEquals(5, behavior.getNodes().count());
+    var paramNode = getSingleNode(behavior, FuncParamNode.class);
+    var compareNode = getSingleNode(behavior, BuiltInCall.class);
+    var zeroConstant = getSingleNode(behavior, ConstantNode.class);
+    assertEquals(BuiltInTable.NEQ, compareNode.builtIn());
+    assertEquals(0, zeroConstant.constant().asVal().intValue());
+    assertEquals(paramNode, compareNode.arguments().get(0));
+    assertEquals(zeroConstant, compareNode.arguments().get(1));
+    var returnNode = getSingleNode(behavior, ReturnNode.class);
+    assertEquals(compareNode, returnNode.value());
+  }
 
-  @Test
-  void testNonOptimalExample() {
+  static Stream<Arguments> testBoolCast_Source() {
+    return findFuncNameArgumentsByPrefix("BoolCast_", validFrontend.getViam());
+  }
+
+  @ParameterizedTest
+  @EmptySource
+  void testNonOptimalExample(List<Object> sources) {
     var behavior = getTestBehavior("NonOptimalExample");
     assertEquals(5, behavior.getNodes().count());
     var truncateNode = getSingleNode(behavior, TruncateNode.class);
