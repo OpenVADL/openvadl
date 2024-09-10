@@ -6,6 +6,7 @@ import java.io.IOException;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
+import java.util.stream.Stream;
 import vadl.configuration.LcbConfiguration;
 import vadl.lcb.codegen.encoding.DecodingCodeGenerator;
 import vadl.lcb.template.CommonVarNames;
@@ -42,15 +43,16 @@ public class EmitDisassemblerCppFilePass extends LcbTemplateRenderingPass {
   }
 
   private List<RegisterUtils.RegisterClass> extractRegisterClasses(Specification specification) {
-    return specification.isas()
-        .flatMap(x -> x.ownRegisterFiles().stream())
+    return specification.isa().map(x -> x.ownRegisterFiles().stream())
+        .orElse(Stream.empty())
         .map(RegisterUtils::getRegisterClass)
         .toList();
   }
 
   private List<Immediate> extractImmediates(Specification specification) {
-    return specification.isas()
-        .flatMap(x -> x.ownFormats().stream())
+    return specification.isa()
+        .map(x -> x.ownFormats().stream())
+        .orElse(Stream.empty())
         .flatMap(x -> Arrays.stream(x.fieldAccesses()))
         .map(fieldAccess -> {
           var simpleName = fieldAccess.fieldRef().identifier.lower();
@@ -68,8 +70,8 @@ public class EmitDisassemblerCppFilePass extends LcbTemplateRenderingPass {
    * The method throws an exception when different sizes exist.
    */
   private int getInstructionSize(Specification specification) {
-    List<Integer> sizes = specification.isas()
-        .flatMap(x -> x.ownFormats().stream())
+    List<Integer> sizes = specification.isa()
+        .map(x -> x.ownFormats().stream()).orElseGet(Stream::empty)
         .mapToInt(x -> Arrays.stream(x.fields()).mapToInt(Format.Field::size).sum())
         .distinct()
         .boxed()

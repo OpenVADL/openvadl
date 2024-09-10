@@ -6,6 +6,7 @@ import java.util.Comparator;
 import java.util.IdentityHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.stream.Stream;
 import vadl.configuration.LcbConfiguration;
 import vadl.gcb.passes.type_normalization.CppTypeNormalizationForDecodingsPass;
 import vadl.gcb.passes.type_normalization.CppTypeNormalizationForEncodingsPass;
@@ -76,7 +77,8 @@ public class EmitImmediateFilePass extends LcbTemplateRenderingPass {
   }
 
   private List<DecodeFunctionEntry> generateDecodeFunctionNames(Specification specification) {
-    return specification.isas().flatMap(isa -> isa.ownFormats().stream())
+    return specification.isa().map(isa -> isa.ownFormats().stream())
+        .orElse(Stream.empty())
         .flatMap(format -> Arrays.stream(format.fieldAccesses()))
         .map(Format.FieldAccess::accessFunction)
         .sorted(Comparator.comparing(Definition::name))
@@ -90,7 +92,8 @@ public class EmitImmediateFilePass extends LcbTemplateRenderingPass {
   private List<String> generateDecodeFunctions(Specification specification,
                                                IdentityHashMap<Function, Function>
                                                    decodeVadlFunctions) {
-    return specification.isas().flatMap(isa -> isa.ownFormats().stream())
+    return specification.isa().map(isa -> isa.ownFormats().stream())
+        .orElse(Stream.empty())
         .flatMap(format -> Arrays.stream(format.fieldAccesses()))
         .map(Format.FieldAccess::accessFunction)
         .sorted(Comparator.comparing(Definition::name))
@@ -107,7 +110,8 @@ public class EmitImmediateFilePass extends LcbTemplateRenderingPass {
   private List<String> generateEncodeFunctions(Specification specification,
                                                IdentityHashMap<Function, Function>
                                                    encodeVadlFunctions) {
-    return specification.isas().flatMap(isa -> isa.ownFormats().stream())
+    return specification.isa().map(isa -> isa.ownFormats().stream())
+        .orElse(Stream.empty())
         .flatMap(format -> Arrays.stream(format.fieldAccesses()))
         .map(Format.FieldAccess::encoding)
         .sorted(Comparator.comparing(Definition::name))
@@ -124,7 +128,8 @@ public class EmitImmediateFilePass extends LcbTemplateRenderingPass {
   private List<String> generatePredicateFunctions(Specification specification,
                                                   IdentityHashMap<Function, Function>
                                                       predicateVadlFunctions) {
-    return specification.isas().flatMap(isa -> isa.ownFormats().stream())
+    return specification.isa().map(isa -> isa.ownFormats().stream())
+        .orElse(Stream.empty())
         .flatMap(format -> Arrays.stream(format.fieldAccesses()))
         .map(Format.FieldAccess::predicate)
         .sorted(Comparator.comparing(Definition::name))

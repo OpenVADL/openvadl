@@ -1,6 +1,7 @@
 package vadl.gcb.passes.assembly;
 
 import java.io.IOException;
+import java.util.stream.Stream;
 import org.jetbrains.annotations.Nullable;
 import vadl.configuration.GeneralConfiguration;
 import vadl.pass.Pass;
@@ -43,11 +44,12 @@ public class AssemblyReplacementNodePass extends Pass {
   }
 
   private static void replaceConstants(Specification viam) {
-    var affectedNodes = viam.isas().flatMap(isa -> isa.ownInstructions().stream())
-        .flatMap(instruction -> instruction.assembly().function().behavior()
-            .getNodes(ConstantNode.class))
-        .filter(constantNode -> constantNode.constant() instanceof Constant.Str)
-        .toList();
+    var affectedNodes =
+        viam.isa().map(isa -> isa.ownInstructions().stream()).orElseGet(Stream::empty)
+            .flatMap(instruction -> instruction.assembly().function().behavior()
+                .getNodes(ConstantNode.class))
+            .filter(constantNode -> constantNode.constant() instanceof Constant.Str)
+            .toList();
 
     for (var node : affectedNodes) {
       node.replaceAndDelete(new AssemblyConstant((Constant.Str) node.constant()));
@@ -55,11 +57,12 @@ public class AssemblyReplacementNodePass extends Pass {
   }
 
   private static void replaceRegisters(Specification viam) {
-    var affectedNodes = viam.isas().flatMap(isa -> isa.ownInstructions().stream())
-        .flatMap(instruction -> instruction.assembly().function().behavior()
-            .getNodes(BuiltInCall.class))
-        .filter(x -> x.builtIn() == BuiltInTable.REGISTER)
-        .toList();
+    var affectedNodes =
+        viam.isa().map(isa -> isa.ownInstructions().stream()).orElseGet(Stream::empty)
+            .flatMap(instruction -> instruction.assembly().function().behavior()
+                .getNodes(BuiltInCall.class))
+            .filter(x -> x.builtIn() == BuiltInTable.REGISTER)
+            .toList();
 
     for (var node : affectedNodes) {
       node.replaceAndDelete(

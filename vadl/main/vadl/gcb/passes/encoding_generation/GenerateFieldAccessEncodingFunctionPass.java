@@ -2,6 +2,7 @@ package vadl.gcb.passes.encoding_generation;
 
 import java.util.Arrays;
 import java.util.List;
+import java.util.stream.Stream;
 import org.jetbrains.annotations.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -45,8 +46,9 @@ public class GenerateFieldAccessEncodingFunctionPass extends Pass {
   @Nullable
   @Override
   public Object execute(PassResults passResults, Specification viam) {
-    viam.isas()
-        .flatMap(x -> x.ownFormats().stream())
+    viam.isa()
+        .map(x -> x.ownFormats().stream())
+        .orElseGet(Stream::empty)
         .flatMap(x -> Arrays.stream(x.fieldAccesses()))
         .filter(x -> x.encoding() == null)
         .forEach(fieldAccess -> {

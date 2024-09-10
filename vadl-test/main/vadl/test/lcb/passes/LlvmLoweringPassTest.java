@@ -279,7 +279,8 @@ public class LlvmLoweringPassTest extends AbstractLcbTest {
                 .lastResultOf(LlvmLoweringPass.class);
 
     // Then
-    return spec.isas().flatMap(x -> x.ownInstructions().stream())
+    return spec.isa().map(x -> x.ownInstructions().stream())
+        .orElse(Stream.empty())
         .filter(x -> expectedResults.containsKey(x.identifier.simpleName()))
         .map(t -> DynamicTest.dynamicTest(t.identifier.simpleName(), () -> {
           var expectedTestOutput = expectedResults.get(t.identifier.simpleName());

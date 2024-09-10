@@ -6,6 +6,7 @@ import com.google.common.collect.Streams;
 import java.io.IOException;
 import java.util.Arrays;
 import java.util.IdentityHashMap;
+import java.util.stream.Stream;
 import org.jetbrains.annotations.Nullable;
 import vadl.configuration.GeneralConfiguration;
 import vadl.pass.Pass;
@@ -46,8 +47,8 @@ public class FunctionInlinerPass extends Pass {
       throws IOException {
     IdentityHashMap<Instruction, UninlinedGraph> original = new IdentityHashMap<>();
 
-    viam.isas()
-        .flatMap(isa -> isa.ownInstructions().stream())
+    viam.isa().map(isa -> isa.ownInstructions().stream())
+        .orElse(Stream.empty())
         .forEach(instruction -> {
           var copy = instruction.behavior().copy();
           var functionCalls = instruction.behavior().getNodes(FuncCallNode.class)

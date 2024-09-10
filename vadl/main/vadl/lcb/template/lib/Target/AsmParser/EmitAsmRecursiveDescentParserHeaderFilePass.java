@@ -57,8 +57,9 @@ public class EmitAsmRecursiveDescentParserHeaderFilePass extends LcbTemplateRend
   @NotNull
   private static Stream<ParserGenerator.FieldStructEnumeration> composedStructs(
       Specification specification) {
-    return specification.isas()
-        .flatMap(isa -> isa.ownInstructions().stream())
+    return specification.isa()
+        .map(isa -> isa.ownInstructions().stream())
+        .orElse(Stream.empty())
         .flatMap(
             instruction -> instruction.assembly().function().behavior().getNodes(BuiltInCall.class))
         .filter(node -> node.builtIn() == BuiltInTable.CONCATENATE_STRINGS)
@@ -70,8 +71,9 @@ public class EmitAsmRecursiveDescentParserHeaderFilePass extends LcbTemplateRend
   @NotNull
   private static Stream<ParserGenerator.FieldStructEnumeration> singleFieldStructs(
       Specification specification) {
-    return specification.isas()
-        .flatMap(isa -> isa.ownFormats().stream())
+    return specification.isa()
+        .map(isa -> isa.ownFormats().stream())
+        .orElse(Stream.empty())
         .flatMap(format -> Arrays.stream(format.fields()))
         .map(field -> new ParserGenerator.FieldStructEnumeration(
             ParserGenerator.generateStructName(List.of(field)),
@@ -83,7 +85,9 @@ public class EmitAsmRecursiveDescentParserHeaderFilePass extends LcbTemplateRend
   @NotNull
   private static Stream<ParsingResultRecord> instructions(
       Specification specification) {
-    return specification.isas().flatMap(isa -> isa.ownInstructions().stream())
+    return specification.isa()
+        .map(isa -> isa.ownInstructions().stream())
+        .orElse(Stream.empty())
         .map(instruction -> new ParsingResultRecord("NoData",
             ParserGenerator.generateInstructionName(instruction), instruction.name()));
   }
@@ -92,7 +96,9 @@ public class EmitAsmRecursiveDescentParserHeaderFilePass extends LcbTemplateRend
   private static Stream<ParsingResultRecord> constants(
       Specification specification) {
     return
-        specification.isas().flatMap(isa -> isa.ownInstructions().stream())
+        specification.isa()
+            .map(isa -> isa.ownInstructions().stream())
+            .orElse(Stream.empty())
             .flatMap(instruction -> instruction.assembly().function().behavior().getNodes(
                 AssemblyConstant.class))
             .sorted(Comparator.comparing(AssemblyConstant::kind)) // Sort by something

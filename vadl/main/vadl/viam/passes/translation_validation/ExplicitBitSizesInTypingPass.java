@@ -3,6 +3,7 @@ package vadl.viam.passes.translation_validation;
 import java.io.IOException;
 import java.util.List;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 import org.jetbrains.annotations.Nullable;
 import vadl.configuration.GeneralConfiguration;
 import vadl.pass.Pass;
@@ -34,8 +35,8 @@ public class ExplicitBitSizesInTypingPass extends Pass {
   @Override
   public Object execute(PassResults passResults, Specification viam)
       throws IOException {
-    viam.isas()
-        .flatMap(isa -> isa.ownInstructions().stream())
+    viam.isa().map(isa -> isa.ownInstructions().stream())
+        .orElse(Stream.empty())
         .flatMap(instruction -> instruction.behavior().getNodes(BuiltInCall.class))
         .filter(node -> !node.arguments().isEmpty())
         .filter(
