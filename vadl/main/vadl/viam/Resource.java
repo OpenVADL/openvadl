@@ -33,7 +33,7 @@ public abstract class Resource extends Definition implements DefProp.WithType {
   public abstract DataType resultType();
 
   /**
-   * Returns the type of this resource as relation type.
+   * Returns the type of this resource as a relation type.
    * E.g. a register {@code Z: Bits<3>} has the relation type {@code () -> Bits<3>}
    * while the register file {@code X: Bits<2> -> Bits<3>} has the relation type
    * {@code (Bits<2>) -> Bits<3>},
