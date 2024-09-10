@@ -39,6 +39,9 @@ public class LogicalRelocation {
   private final Format.Field immediate;
   private final Function updateFunction;
 
+  /**
+   * Constructor.
+   */
   public LogicalRelocation(Relocation relocation,
                            Format.Field field,
                            Format format,
@@ -79,10 +82,16 @@ public class LogicalRelocation {
     return format;
   }
 
+  /**
+   * Get relocation.
+   */
   public Relocation relocation() {
     return relocation;
   }
 
+  /**
+   * Get name.
+   */
   public RelocationName name() {
     var suffix = format.identifier.lower() + "_" + immediate.identifier.lower();
     if (kind == Kind.ABSOLUTE) {
