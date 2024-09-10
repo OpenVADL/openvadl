@@ -5,6 +5,9 @@ import vadl.gcb.valuetypes.ProcessorName;
 import vadl.viam.Function;
 import vadl.viam.Relocation;
 
+/**
+ * Wrapper for {@link LogicalRelocation}.
+ */
 public class ElfRelocation {
   private final ProcessorName processorName;
   private final LogicalRelocation logicalRelocation;

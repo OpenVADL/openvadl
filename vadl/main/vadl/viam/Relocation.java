@@ -38,20 +38,20 @@ public class Relocation extends Function {
   }
 
   /**
-   * A {@link Relocation} is relative when it references the {@link Register.Counter} which is
+   * A {@link Relocation} is relative when it references the {@link Counter} which is
    * declared in {@link InstructionSetArchitecture#pc()}.
    */
-  public boolean isRelative(@Nullable Register.Counter pc) {
+  public boolean isRelative() {
     return this.behavior().getNodes(ReadRegNode.class)
-        .anyMatch(x -> x.register().equals(pc));
+        .anyMatch(x -> x.staticCounterAccess() != null);
   }
 
   /**
-   * A {@link Relocation} is absolute when it does not reference the {@link Register.Counter} which
+   * A {@link Relocation} is absolute when it does not reference the {@link Counter} which
    * is declared in {@link InstructionSetArchitecture#pc()}.
    */
-  public boolean isAbsolute(@Nullable Register.Counter pc) {
+  public boolean isAbsolute() {
     return this.behavior().getNodes(ReadRegNode.class)
-        .noneMatch(x -> x.register().equals(pc));
+        .noneMatch(x -> x.staticCounterAccess() != null);
   }
 }

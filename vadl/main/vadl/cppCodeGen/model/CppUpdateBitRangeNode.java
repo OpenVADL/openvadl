@@ -18,13 +18,21 @@ import vadl.viam.graph.dependency.ExpressionNode;
  * application of the slice .
  */
 public class CppUpdateBitRangeNode extends ExpressionNode {
+  // Destination value
   @Input
   public ExpressionNode value;
+
+  // Source value
   @Input
   public ExpressionNode patch;
+
+  // Contains the encoding to determine which bits of `value` should be overwritten by `patch`.
   @DataValue
   public Format.Field field;
 
+  /**
+   * Constructor.
+   */
   public CppUpdateBitRangeNode(Type type,
                                ExpressionNode value,
                                ExpressionNode patch,

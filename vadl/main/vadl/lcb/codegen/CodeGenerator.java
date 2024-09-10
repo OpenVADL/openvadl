@@ -9,6 +9,9 @@ import vadl.viam.Function;
 import vadl.viam.ViamError;
 import vadl.viam.graph.control.ReturnNode;
 
+/**
+ * Parent code generator to encapsulate generic functionality.
+ */
 public abstract class CodeGenerator {
   public abstract String getFunctionName(String rawName);
 

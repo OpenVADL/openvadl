@@ -7,6 +7,7 @@ import java.util.stream.Stream;
 import org.jetbrains.annotations.Nullable;
 import vadl.utils.SourceLocation;
 import vadl.viam.Constant;
+import vadl.viam.Counter;
 import vadl.viam.Format;
 import vadl.viam.Function;
 import vadl.viam.Identifier;
@@ -20,11 +21,14 @@ import vadl.viam.graph.dependency.FuncParamNode;
  * A logical relocation is helper construct for the {@link vadl.viam.Relocation}.
  */
 public class LogicalRelocation {
+  /**
+   * Determines what kind of relocation this is.
+   * A relocation is relative when it patches a value based on the previous value.
+   * More concretely, it is relative when reads from the PC.
+   * A relocation is absolute when the patched value overwrites the previous value.
+   */
   public enum Kind {
-    // A relocation is relative when it patches a value based on the previous value.
-    // More concretely, it is relative when reads from the PC.
     RELATIVE,
-    // A relocation is absolute when the patched value overwrites the previous value.
     ABSOLUTE
   }
 
@@ -35,12 +39,11 @@ public class LogicalRelocation {
   private final Format.Field immediate;
   private final Function updateFunction;
 
-  public LogicalRelocation(@Nullable Register.Counter pc,
-                           Relocation relocation,
+  public LogicalRelocation(Relocation relocation,
                            Format.Field field,
                            Format format,
                            Function updateFunction) {
-    this.kind = relocation.isAbsolute(pc) ? Kind.ABSOLUTE : Kind.RELATIVE;
+    this.kind = relocation.isAbsolute() ? Kind.ABSOLUTE : Kind.RELATIVE;
     this.format = format;
     this.relocation = relocation;
     this.immediate = field;

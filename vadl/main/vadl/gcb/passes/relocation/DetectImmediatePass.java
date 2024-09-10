@@ -38,19 +38,31 @@ public class DetectImmediatePass extends Pass {
     return new PassName("detectImmediatePass");
   }
 
+  /**
+   * Helper class for the result of this pass.
+   */
   public static class ImmediateDetectionContainer {
     private final IdentityHashMap<Format, IdentityHashMap<Format.Field, FieldUsage>> value;
 
+    /**
+     * Constructor.
+     */
     public ImmediateDetectionContainer() {
       this.value = new IdentityHashMap<>();
     }
 
+    /**
+     * Adding a {@link Format} to the result.
+     */
     public void addFormat(Format format) {
       if (!value.containsKey(format)) {
         value.put(format, new IdentityHashMap<>());
       }
     }
 
+    /**
+     * Adding a {@link FieldUsage} to the result.
+     */
     public void addField(Format format, Format.Field field, FieldUsage kind) {
       var f = value.get(format);
       if (f == null) {
@@ -59,6 +71,9 @@ public class DetectImmediatePass extends Pass {
       f.put(field, kind);
     }
 
+    /**
+     * Get a result by format.
+     */
     public Map<Format.Field, FieldUsage> get(Format format) {
       var obj = value.get(format);
       if (obj == null) {

@@ -91,9 +91,9 @@ public class Format extends Definition implements DefProp.WithType {
       return false;
     }
     Format format = (Format) o;
-    return Objects.equals(type, format.type) &&
-        Arrays.equals(fields, format.fields) &&
-        Arrays.equals(fieldAccesses, format.fieldAccesses);
+    return Objects.equals(type, format.type)
+        && Arrays.equals(fields, format.fields)
+        && Arrays.equals(fieldAccesses, format.fieldAccesses);
   }
 
   @Override
@@ -244,8 +244,8 @@ public class Format extends Definition implements DefProp.WithType {
         return false;
       }
       Field field = (Field) o;
-      return Objects.equals(type, field.type) &&
-          Objects.equals(bitSlice, field.bitSlice);
+      return Objects.equals(type, field.type)
+          && Objects.equals(bitSlice, field.bitSlice);
     }
 
     @Override
@@ -360,10 +360,10 @@ public class Format extends Definition implements DefProp.WithType {
         return false;
       }
       FieldAccess that = (FieldAccess) o;
-      return Objects.equals(accessFunction, that.accessFunction) &&
-          Objects.equals(encoding, that.encoding) &&
-          Objects.equals(predicate, that.predicate) &&
-          Objects.equals(fieldRef, that.fieldRef);
+      return Objects.equals(accessFunction, that.accessFunction)
+          && Objects.equals(encoding, that.encoding)
+          && Objects.equals(predicate, that.predicate)
+          && Objects.equals(fieldRef, that.fieldRef);
     }
 
     @Override
@@ -371,5 +371,4 @@ public class Format extends Definition implements DefProp.WithType {
       return Objects.hash(accessFunction, encoding, predicate, fieldRef);
     }
   }
-
 }

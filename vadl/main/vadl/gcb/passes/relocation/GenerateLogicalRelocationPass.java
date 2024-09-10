@@ -11,10 +11,9 @@ import vadl.gcb.passes.relocation.model.LogicalRelocation;
 import vadl.pass.Pass;
 import vadl.pass.PassName;
 import vadl.pass.PassResults;
+import vadl.viam.Counter;
 import vadl.viam.Instruction;
 import vadl.viam.InstructionSetArchitecture;
-import vadl.viam.Register;
-import vadl.viam.Register.Counter;
 import vadl.viam.Relocation;
 import vadl.viam.Specification;
 import vadl.viam.graph.dependency.FuncCallNode;
@@ -74,8 +73,7 @@ public class GenerateLogicalRelocationPass extends Pass {
                   var updateFunction =
                       BitMaskFunctionGenerator.generateUpdateFunction(instruction.format(), field);
                   logicalRelocations.add(
-                      new LogicalRelocation(pc,
-                          relocation,
+                      new LogicalRelocation(relocation,
                           field,
                           instruction.format(),
                           updateFunction));
@@ -120,8 +118,7 @@ public class GenerateLogicalRelocationPass extends Pass {
     return viam.isas()
         .flatMap(isa -> isa.ownInstructions().stream())
         .filter(instruction -> instruction.behavior().getNodes(ReadRegNode.class)
-            .map(ReadRegNode::register)
-            .anyMatch(Register.Counter.class::isInstance))
+            .anyMatch(x -> x.staticCounterAccess() != null))
         .map(Instruction::format)
         .distinct()
         .flatMap(format -> {

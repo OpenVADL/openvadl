@@ -157,7 +157,7 @@ public class RelocationCodeGeneratorCppVerificationTest extends AbstractLcbTest 
                 // Extract bits from the range [start, end]
                 for (size_t i = start; i <= end; ++i) {
                   result[result_index] = bits[i];
-            	  result_index++;
+                  result_index++;
                 }
                         
                 return result;
