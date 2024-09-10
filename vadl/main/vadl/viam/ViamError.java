@@ -25,6 +25,11 @@ public class ViamError extends RuntimeException {
     super(message);
   }
 
+  @FormatMethod
+  public ViamError(String message, Object... args) {
+    super(message.formatted(args));
+  }
+
   public ViamError(String message, Throwable cause) {
     super(message, cause);
   }
