@@ -16,10 +16,11 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.testcontainers.images.builder.ImageFromDockerfile;
 import vadl.cppCodeGen.CppTypeMap;
+import vadl.cppCodeGen.model.CppFunction;
+import vadl.cppCodeGen.passes.typeNormalization.CppTypeNormalizationPass;
 import vadl.gcb.passes.type_normalization.CppTypeNormalizationForDecodingsPass;
 import vadl.gcb.passes.type_normalization.CppTypeNormalizationForEncodingsPass;
-import vadl.lcb.codegen.encoding.DecodingCodeGenerator;
-import vadl.lcb.codegen.encoding.EncodingCodeGenerator;
+import vadl.lcb.codegen.CodeGenerator;
 import vadl.pass.PassOrder;
 import vadl.pass.exception.DuplicatedPassKeyException;
 import vadl.types.BitsType;
@@ -40,8 +41,8 @@ public class EncodingCodeGeneratorCppVerificationTest extends AbstractCppCodeGen
               .build());
 
 
-  //@TestFactory
-  //@Execution(ExecutionMode.CONCURRENT)
+  @TestFactory
+  @Execution(ExecutionMode.CONCURRENT)
   Collection<DynamicTest> instructions() throws IOException, DuplicatedPassKeyException {
     var setup = setupPassManagerAndRunSpec("sys/risc-v/rv64im.vadl",
         PassOrder.gcbAndCppCodeGen(getConfiguration(false)));
@@ -49,10 +50,10 @@ public class EncodingCodeGeneratorCppVerificationTest extends AbstractCppCodeGen
     var spec = setup.specification();
 
     var normalizedDecodings =
-        (IdentityHashMap<Function, Function>) passManager.getPassResults()
+        (CppTypeNormalizationPass.NormalisedTypeResult) passManager.getPassResults()
             .lastResultOf(CppTypeNormalizationForDecodingsPass.class);
     var normalizedEncodings =
-        (IdentityHashMap<Function, Function>) passManager.getPassResults()
+        (CppTypeNormalizationPass.NormalisedTypeResult) passManager.getPassResults()
             .lastResultOf(CppTypeNormalizationForEncodingsPass.class);
 
     var entries = spec.isa().map(isa -> isa.ownFormats().stream())
@@ -60,8 +61,8 @@ public class EncodingCodeGeneratorCppVerificationTest extends AbstractCppCodeGen
         .flatMap(format -> Arrays.stream(format.fieldAccesses()))
         .map(
             fieldAccess -> {
-              var accessFunction = normalizedDecodings.get(fieldAccess.accessFunction());
-              var encodeFunction = normalizedEncodings.get(fieldAccess.encoding());
+              var accessFunction = normalizedDecodings.byFunction(fieldAccess.accessFunction());
+              var encodeFunction = normalizedEncodings.byFunction(fieldAccess.encoding());
               var inputType =
                   Arrays.stream(fieldAccess.accessFunction().parameters()).findFirst().get().type();
               return new Quadruple<>(fieldAccess.identifier.name(), (BitsType) inputType,
@@ -90,24 +91,21 @@ public class EncodingCodeGeneratorCppVerificationTest extends AbstractCppCodeGen
 
   void testFieldAccess(String testName,
                        int sample,
-                       Function acccessFunction,
-                       Function encodingFunction) {
-    var decodeCodeGenerator = new DecodingCodeGenerator();
-    var encodeCodeGenerator = new EncodingCodeGenerator();
-
-    var decodeFunction = decodeCodeGenerator.generateFunction(acccessFunction);
-    var encodeFunction = encodeCodeGenerator.generateFunction(encodingFunction);
+                       CppFunction acccessFunction,
+                       CppFunction encodingFunction) {
+    var decodeFunction = new CodeGenerator().generateFunction(acccessFunction);
+    var encodeFunction = new CodeGenerator().generateFunction(encodingFunction);
     String expectedReturnType =
         CppTypeMap.getCppTypeNameByVadlType(encodingFunction.returnType());
 
     String cppCode = String.format("""
             #include <cstdint>
             #include <iostream>
-            
+                        
             %s 
-            
+                        
             %s
-            
+                        
             int main() {
               %s expected = %d;
               auto actual = %s(%s(expected));
@@ -124,8 +122,8 @@ public class EncodingCodeGeneratorCppVerificationTest extends AbstractCppCodeGen
         encodeFunction,
         expectedReturnType,
         sample,
-        EncodingCodeGenerator.generateFunctionName(encodingFunction.identifier.lower()),
-        DecodingCodeGenerator.generateFunctionName(acccessFunction.identifier.lower()));
+        encodingFunction.identifier.lower(),
+        acccessFunction.identifier.lower());
 
     logger.info(testName + "\n" + cppCode);
 

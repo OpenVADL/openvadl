@@ -1,12 +1,17 @@
 package vadl.lcb.template.lib.Target.MCTargetDesc;
 
 import java.io.IOException;
+import java.util.IdentityHashMap;
 import java.util.List;
 import java.util.Map;
 import vadl.configuration.LcbConfiguration;
+import vadl.cppCodeGen.model.CppFunction;
+import vadl.gcb.passes.pseudo.PseudoExpansionFunctionGeneratorPass;
+import vadl.gcb.passes.relocation.DetectImmediatePass;
 import vadl.lcb.codegen.expansion.PseudoExpansionCodeGenerator;
 import vadl.lcb.template.CommonVarNames;
 import vadl.lcb.template.LcbTemplateRenderingPass;
+import vadl.lcb.template.utils.ImmediateDecodingFunctionProvider;
 import vadl.pass.PassResults;
 import vadl.viam.Instruction;
 import vadl.viam.PseudoInstruction;
@@ -40,18 +45,24 @@ public class EmitMCInstExpanderHeaderFilePass extends LcbTemplateRenderingPass {
   /**
    * Get the simple names of the pseudo instructions
    */
-  private List<RenderedPseudoInstruction> pseudoInstructions(Specification specification) {
+  private List<RenderedPseudoInstruction> pseudoInstructions(Specification specification,
+                                                             IdentityHashMap<PseudoInstruction, CppFunction> cppFunctions
+  ) {
     return specification.isas()
         .flatMap(isa -> isa.ownPseudoInstructions().stream())
         .map(x -> new RenderedPseudoInstruction(
-            new PseudoExpansionCodeGenerator().getFunctionName(x.identifier.simpleName()), x))
+            ensureNonNull(cppFunctions.get(x), "cppFunction must exist").functionName().lower(),
+            x
+        ))
         .toList();
   }
 
   @Override
   protected Map<String, Object> createVariables(final PassResults passResults,
                                                 Specification specification) {
+    var cppFunctions = (IdentityHashMap<PseudoInstruction, CppFunction>) passResults.lastResultOf(
+        PseudoExpansionFunctionGeneratorPass.class);
     return Map.of(CommonVarNames.NAMESPACE, specification.name(),
-        "pseudoInstructions", pseudoInstructions(specification));
+        "pseudoInstructions", pseudoInstructions(specification, cppFunctions));
   }
 }

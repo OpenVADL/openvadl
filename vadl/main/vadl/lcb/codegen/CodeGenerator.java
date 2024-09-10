@@ -5,6 +5,9 @@ import java.util.Arrays;
 import java.util.stream.Collectors;
 import vadl.cppCodeGen.CppTypeMap;
 import vadl.cppCodeGen.GenericCppCodeGeneratorVisitor;
+import vadl.cppCodeGen.model.CppFunction;
+import vadl.cppCodeGen.model.CppFunctionCode;
+import vadl.cppCodeGen.model.CppType;
 import vadl.viam.Function;
 import vadl.viam.ViamError;
 import vadl.viam.graph.control.ReturnNode;
@@ -12,15 +15,13 @@ import vadl.viam.graph.control.ReturnNode;
 /**
  * Parent code generator to encapsulate generic functionality.
  */
-public abstract class CodeGenerator {
-  public abstract String getFunctionName(String rawName);
-
+public class CodeGenerator {
   /**
    * Returns the function header of a {@link Function}.
    * For example: int testFunction(int param1, int param2)
    */
-  protected String generateFunctionHeader(Function function) {
-    var name = getFunctionName(function.identifier.lower());
+  public String generateFunctionHeader(CppFunction function) {
+    var name = function.functionName().lower();
     var parameters = Arrays.stream(function.parameters()).map(param -> {
       var cppTypeName = CppTypeMap.getCppTypeNameByVadlType(param.type());
       return cppTypeName + " " + param.name();
@@ -31,7 +32,7 @@ public abstract class CodeGenerator {
     return cppTypeReturnType + " " + name + "(" + parameters + ")";
   }
 
-  private String generateFunctionBody(Function function) {
+  protected String generateFunctionBody(CppFunction function) {
     var writer = new StringWriter();
     var returnNode = function.behavior().getNodes(ReturnNode.class).findFirst();
 
@@ -46,8 +47,8 @@ public abstract class CodeGenerator {
   /**
    * Generate a cpp function from the given {@link Function}.
    */
-  public String generateFunction(Function function) {
-    return generateFunctionHeader(function) + " {\n"
-        + generateFunctionBody(function) + ";\n}";
+  public CppFunctionCode generateFunction(CppFunction function) {
+    return new CppFunctionCode(generateFunctionHeader(function) + " {\n"
+        + generateFunctionBody(function) + ";\n}");
   }
 }

@@ -1,5 +1,7 @@
 package vadl.lcb.passes.relocation.model;
 
+import vadl.cppCodeGen.model.CppFunction;
+import vadl.cppCodeGen.model.CppFunctionCode;
 import vadl.gcb.passes.relocation.model.LogicalRelocation;
 import vadl.gcb.valuetypes.ProcessorName;
 import vadl.viam.Function;
@@ -29,7 +31,7 @@ public class ElfRelocation {
     return logicalRelocation.relocation();
   }
 
-  public Function updateFunction() {
+  public CppFunction updateFunction() {
     return logicalRelocation.updateFunction();
   }
 

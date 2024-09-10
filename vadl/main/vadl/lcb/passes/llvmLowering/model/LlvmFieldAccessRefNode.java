@@ -1,5 +1,6 @@
 package vadl.lcb.passes.llvmLowering.model;
 
+import java.util.Objects;
 import vadl.lcb.codegen.model.llvm.ValueType;
 import vadl.lcb.passes.llvmLowering.strategies.visitors.TableGenMachineInstructionVisitor;
 import vadl.lcb.passes.llvmLowering.strategies.visitors.TableGenNodeVisitor;
@@ -29,7 +30,10 @@ public class LlvmFieldAccessRefNode extends FieldAccessRefNode {
   public LlvmFieldAccessRefNode(Format.FieldAccess fieldAccess, Type type) {
     super(fieldAccess, type);
     this.immediateOperand =
-        new TableGenImmediateRecord(fieldAccess.accessFunction().identifier.lower(),
+        new TableGenImmediateRecord(fieldAccess.accessFunction().identifier,
+            Objects.requireNonNull(fieldAccess.encoding()).identifier,
+            fieldAccess.accessFunction().identifier,
+            fieldAccess.predicate().identifier,
             ValueType.from(type));
     this.parameterIdentity = ParameterIdentity.from(this);
   }

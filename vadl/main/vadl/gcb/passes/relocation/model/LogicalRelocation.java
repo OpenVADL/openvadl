@@ -1,18 +1,13 @@
 package vadl.gcb.passes.relocation.model;
 
-import java.util.Arrays;
-import java.util.Map;
 import java.util.Objects;
-import java.util.stream.Stream;
-import org.jetbrains.annotations.Nullable;
+import vadl.cppCodeGen.model.CppFunction;
+import vadl.cppCodeGen.model.VariantKind;
 import vadl.utils.SourceLocation;
-import vadl.viam.Constant;
-import vadl.viam.Counter;
 import vadl.viam.Format;
 import vadl.viam.Function;
 import vadl.viam.Identifier;
 import vadl.viam.Parameter;
-import vadl.viam.Register;
 import vadl.viam.Relocation;
 import vadl.viam.graph.control.ReturnNode;
 import vadl.viam.graph.dependency.FuncParamNode;
@@ -37,7 +32,8 @@ public class LogicalRelocation {
   private final Format format;
   private final Relocation relocation;
   private final Format.Field immediate;
-  private final Function updateFunction;
+  private final CppFunction updateFunction;
+  private final VariantKind variantKind;
 
   /**
    * Constructor.
@@ -45,12 +41,13 @@ public class LogicalRelocation {
   public LogicalRelocation(Relocation relocation,
                            Format.Field field,
                            Format format,
-                           Function updateFunction) {
+                           CppFunction updateFunction) {
     this.kind = relocation.isAbsolute() ? Kind.ABSOLUTE : Kind.RELATIVE;
     this.format = format;
     this.relocation = relocation;
     this.immediate = field;
     this.updateFunction = updateFunction;
+    this.variantKind = new VariantKind(relocation);
   }
 
   /**
@@ -60,7 +57,7 @@ public class LogicalRelocation {
   public LogicalRelocation(Kind kind,
                            Format.Field immediate,
                            Format format,
-                           Function updateFunction) {
+                           CppFunction updateFunction) {
     this.kind = kind;
     this.updateFunction = updateFunction;
     this.format = format;
@@ -72,6 +69,7 @@ public class LogicalRelocation {
     this.immediate = immediate;
     // Add a single return
     this.relocation.behavior().addWithInputs(new ReturnNode(new FuncParamNode(parameter)));
+    this.variantKind = new VariantKind(relocation);
   }
 
   public Kind kind() {
@@ -101,8 +99,12 @@ public class LogicalRelocation {
     }
   }
 
-  public Function updateFunction() {
+  public CppFunction updateFunction() {
     return updateFunction;
+  }
+
+  public VariantKind variantKind() {
+    return variantKind;
   }
 
   @Override

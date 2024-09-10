@@ -12,17 +12,14 @@ namespace llvm
     public:
         enum VariantKind
         {
-            VK_[(${namespace})]_None,
-                        «FOR relocation : relocations»
-                            «relocation.variantKindIdentifier»,
-                        «ENDFOR»
-
-                         // internal vk values
-                        «FOR immediate : immediates»
-                            «immediate.loweredImmediate.variantKindIdentifier»,
-                        «ENDFOR»
-
-                VK_[(${namespace})]_Invalid
+            VK_[(${namespace})]_None
+            [# th:each="relocation : ${relocations}" ]
+            , [(${relocation.logicalRelocation().variantKind()})]
+            [/]
+            [# th:each="imm : ${immediates}" ]
+            , [(${imm.value()})]
+            [/]
+            , VK_[(${namespace})]_Invalid
         };
 
     private:

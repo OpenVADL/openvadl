@@ -5,7 +5,7 @@ import java.util.Comparator;
 import java.util.List;
 import java.util.Map;
 import vadl.configuration.LcbConfiguration;
-import vadl.lcb.codegen.relocation.RelocationOverrideCodeGenerator;
+import vadl.lcb.codegen.CodeGenerator;
 import vadl.lcb.passes.relocation.GenerateElfRelocationPass;
 import vadl.lcb.passes.relocation.model.ElfRelocation;
 import vadl.lcb.template.CommonVarNames;
@@ -40,7 +40,7 @@ public class EmitLldManualEncodingHeaderFilePass extends LcbTemplateRenderingPas
     return Map.of(CommonVarNames.NAMESPACE, specification.name(),
         "functions", elfRelocations.stream()
             .sorted(Comparator.comparing(o -> o.name().value()))
-            .map(elfRelocation -> new RelocationOverrideCodeGenerator().generateFunction(
+            .map(elfRelocation -> new CodeGenerator().generateFunction(
                 elfRelocation.updateFunction())).toList());
   }
 }

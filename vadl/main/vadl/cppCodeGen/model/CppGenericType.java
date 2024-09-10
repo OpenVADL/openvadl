@@ -1,19 +1,19 @@
 package vadl.cppCodeGen.model;
 
-import vadl.types.Type;
+public class CppGenericType extends CppType {
+  private final CppType generic;
 
-public class CppGenericType extends Type {
-  private final String generic;
-
-  private final String container;
-
-  public CppGenericType(String container, String generic) {
-    this.container = container;
+  public CppGenericType(String container, CppType generic) {
+    super(container, false, false);
     this.generic = generic;
   }
 
   @Override
   public String name() {
-    return generic;
+    return generic.name();
+  }
+
+  public String lower() {
+    return String.format("%s<%s>", typeName, generic.lower());
   }
 }

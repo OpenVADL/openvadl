@@ -1,30 +1,31 @@
 package vadl.lcb.passes.llvmLowering.tablegen.model;
 
 import java.util.Objects;
-import vadl.lcb.codegen.encoding.DecodingCodeGenerator;
-import vadl.lcb.codegen.encoding.EncodingCodeGenerator;
-import vadl.lcb.codegen.encoding.PredicateCodeGenerator;
 import vadl.lcb.codegen.model.llvm.ValueType;
+import vadl.viam.Identifier;
 
 /**
  * Represents an immediate record in TableGen.
  */
 public class TableGenImmediateRecord {
   private final String name;
-  private final String encoderMethod;
-  private final String decoderMethod;
-  private final String predicateMethod;
+  private final Identifier encoderMethod;
+  private final Identifier decoderMethod;
+  private final Identifier predicateMethod;
   private final ValueType type;
 
   /**
    * Constructor for an immediate operand.
    */
-  public TableGenImmediateRecord(String rawName,
+  public TableGenImmediateRecord(Identifier identifier,
+                                 Identifier encoderIdentifier,
+                                 Identifier decoderIdentifier,
+                                 Identifier predicateIdentifier,
                                  ValueType type) {
-    this.name = rawName;
-    this.encoderMethod = EncodingCodeGenerator.generateFunctionName(rawName);
-    this.decoderMethod = DecodingCodeGenerator.generateFunctionName(rawName);
-    this.predicateMethod = PredicateCodeGenerator.generateFunctionName(rawName);
+    this.name = identifier.lower();
+    this.encoderMethod = encoderIdentifier;
+    this.decoderMethod = decoderIdentifier;
+    this.predicateMethod = predicateIdentifier;
     this.type = type;
   }
 
@@ -33,11 +34,11 @@ public class TableGenImmediateRecord {
   }
 
   public String encoderMethod() {
-    return encoderMethod;
+    return encoderMethod.lower();
   }
 
   public String decoderMethod() {
-    return decoderMethod;
+    return decoderMethod.lower();
   }
 
   public ValueType type() {
@@ -50,7 +51,7 @@ public class TableGenImmediateRecord {
 
 
   public String predicateMethod() {
-    return predicateMethod;
+    return predicateMethod.lower();
   }
 
   @Override

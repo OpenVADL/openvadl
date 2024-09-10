@@ -15,12 +15,12 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.testcontainers.images.builder.ImageFromDockerfile;
 import vadl.cppCodeGen.CppTypeMap;
-import vadl.cppCodeGen.model.CppUpdateBitRangeNode;
+import vadl.cppCodeGen.model.CppFunction;
+import vadl.cppCodeGen.passes.typeNormalization.CppTypeNormalizationPass;
 import vadl.gcb.passes.relocation.DetectImmediatePass;
 import vadl.gcb.passes.type_normalization.CppTypeNormalizationForImmediateExtractionPass;
 import vadl.gcb.passes.type_normalization.CppTypeNormalizationForPredicatesPass;
-import vadl.lcb.codegen.relocation.RelocationCodeGenerator;
-import vadl.lcb.codegen.relocation.RelocationOverrideCodeGenerator;
+import vadl.lcb.codegen.CodeGenerator;
 import vadl.lcb.passes.relocation.GenerateElfRelocationPass;
 import vadl.lcb.passes.relocation.model.ElfRelocation;
 import vadl.pass.PassKey;
@@ -65,7 +65,7 @@ public class RelocationCodeGeneratorCppVerificationTest extends AbstractLcbTest 
     var immediateDetection =
         (DetectImmediatePass.ImmediateDetectionContainer) testSetup.passManager().getPassResults()
             .lastResultOf(DetectImmediatePass.class);
-    var cppNormalisedImmediateExtraction = (IdentityHashMap<Function, Function>)
+    var cppNormalisedImmediateExtraction = (CppTypeNormalizationPass.NormalisedTypeResult)
         testSetup.passManager().getPassResults()
             .lastResultOf(CppTypeNormalizationForImmediateExtractionPass.class);
 
@@ -118,7 +118,8 @@ public class RelocationCodeGeneratorCppVerificationTest extends AbstractLcbTest 
                           long instructionWord,
                           long updatedValue,
                           ElfRelocation relocation,
-                          IdentityHashMap<Function, Function> cppNormalisedImmediateExtraction) {
+                          CppTypeNormalizationPass.NormalisedTypeResult
+                              cppNormalisedImmediateExtraction) {
     // How do we test the relocation?
     // We have an extraction function for the immediate.
     // And we have an updating function.
@@ -131,15 +132,13 @@ public class RelocationCodeGeneratorCppVerificationTest extends AbstractLcbTest 
     // TODO handle encoding.
 
     var normalisedImmediateExtractionFunction =
-        cppNormalisedImmediateExtraction.get(immField.extractFunction());
+        cppNormalisedImmediateExtraction.byFunction(immField.extractFunction());
 
-    var extractionFunctionCodeGenerator = new RelocationCodeGenerator();
-    var relocationOverrideFunctionCodeGenerator = new RelocationOverrideCodeGenerator();
+    var extractionFunctionCodeGenerator = new CodeGenerator();
+    var relocationOverrideFunctionCodeGenerator = new CodeGenerator();
 
-    var extractionFunctionName = extractionFunctionCodeGenerator.getFunctionName(
-        immField.extractFunction().identifier.lower());
-    var relocationFunctionName = relocationOverrideFunctionCodeGenerator.getFunctionName(
-        relocation.logicalRelocation().updateFunction().identifier.lower());
+    var extractionFunctionName = immField.extractFunction().identifier.lower();
+    var relocationFunctionName = relocation.logicalRelocation().updateFunction().identifier.lower();
 
     String cppCode = String.format("""
             #include <cstdint>

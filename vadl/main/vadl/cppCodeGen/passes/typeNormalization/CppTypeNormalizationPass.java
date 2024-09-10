@@ -2,20 +2,27 @@ package vadl.cppCodeGen.passes.typeNormalization;
 
 import java.io.IOException;
 import java.util.Arrays;
+import java.util.Collection;
+import java.util.Collections;
 import java.util.HashSet;
 import java.util.IdentityHashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.stream.Stream;
 import org.jetbrains.annotations.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import vadl.configuration.GcbConfiguration;
+import vadl.cppCodeGen.model.CppFunction;
+import vadl.cppCodeGen.model.CppType;
 import vadl.pass.Pass;
 import vadl.pass.PassResults;
 import vadl.types.BitsType;
 import vadl.types.DataType;
 import vadl.types.Type;
+import vadl.utils.Pair;
 import vadl.viam.Constant;
+import vadl.viam.Format;
 import vadl.viam.Function;
 import vadl.viam.Parameter;
 import vadl.viam.Specification;
@@ -42,20 +49,45 @@ public abstract class CppTypeNormalizationPass extends Pass {
     super(gcbConfiguration);
   }
 
+  public class NormalisedTypeResult {
+    private final IdentityHashMap<Function, CppFunction> functions = new IdentityHashMap<>();
+    private final IdentityHashMap<Format.Field, CppFunction> fields = new IdentityHashMap<>();
+
+    private void add(Function key, Format.Field key2, CppFunction value) {
+      functions.put(key, value);
+      fields.put(key2, value);
+    }
+
+    @Nullable
+    public CppFunction byFunction(Function key) {
+      return functions.get(key);
+    }
+
+    public Collection<Map.Entry<Function, CppFunction>> functions() {
+      return functions.entrySet();
+    }
+
+    public Collection<Map.Entry<Format.Field, CppFunction>> fields() {
+      return fields.entrySet();
+    }
+  }
+
   /**
    * Get a list of functions on which the pass should be applied on.
    */
-  protected abstract Stream<Function> getApplicable(Specification viam);
+  protected abstract Stream<Pair<Format.Field, Function>> getApplicable(Specification viam);
 
   @Nullable
   @Override
   public Object execute(PassResults passResults, Specification viam)
       throws IOException {
-    IdentityHashMap<Function, Function> results = new IdentityHashMap<>();
+    var results = new NormalisedTypeResult();
 
-    getApplicable(viam).forEach(function -> {
+    getApplicable(viam).forEach(pair -> {
+      var field = pair.left();
+      var function = pair.right();
       var cppFunction = makeTypesCppConform(function);
-      results.put(function, cppFunction);
+      results.add(function, field, cppFunction);
     });
 
     return results;
@@ -87,13 +119,13 @@ public abstract class CppTypeNormalizationPass extends Pass {
    * Changes the function so that all vadl types conform to CPP types
    * which simplifies the code generation.
    */
-  public static Function makeTypesCppConform(Function function) {
+  public static CppFunction makeTypesCppConform(Function function) {
     var liftedParameters = getParameters(function);
     var liftedResultTy = getResultTy(function);
     updateGraph(function.behavior());
 
     // We updated the old function's graph, so just take it for the new function.
-    return new Function(function.identifier,
+    return new CppFunction(function.identifier,
         liftedParameters.toArray(Parameter[]::new),
         liftedResultTy,
         function.behavior());

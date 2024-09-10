@@ -4,7 +4,6 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
-import java.util.IdentityHashMap;
 import java.util.List;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
@@ -19,9 +18,10 @@ import org.slf4j.LoggerFactory;
 import org.testcontainers.images.builder.ImageFromDockerfile;
 import org.testcontainers.shaded.com.google.common.collect.Streams;
 import vadl.cppCodeGen.CppTypeMap;
+import vadl.cppCodeGen.passes.typeNormalization.CppTypeNormalizationPass;
 import vadl.gcb.passes.type_normalization.CppTypeNormalizationForImmediateExtractionPass;
 import vadl.gcb.passes.type_normalization.CppTypeNormalizationForPredicatesPass;
-import vadl.lcb.codegen.relocation.RelocationCodeGenerator;
+import vadl.lcb.codegen.CodeGenerator;
 import vadl.lcb.passes.relocation.GenerateElfRelocationPass;
 import vadl.pass.PassKey;
 import vadl.pass.exception.DuplicatedPassKeyException;
@@ -29,7 +29,6 @@ import vadl.test.lcb.AbstractLcbTest;
 import vadl.types.BitsType;
 import vadl.utils.Pair;
 import vadl.viam.Format;
-import vadl.viam.Function;
 import vadl.viam.Parameter;
 
 public class ImmediateExtractionCodeGeneratorCppVerificationTest extends AbstractLcbTest {
@@ -60,7 +59,7 @@ public class ImmediateExtractionCodeGeneratorCppVerificationTest extends Abstrac
         "sys/risc-v/rv64im.vadl", new PassKey(GenerateElfRelocationPass.class.getName()),
         temporaryPasses);
 
-    var cppNormalisedImmediateExtraction = (IdentityHashMap<Function, Function>)
+    var cppNormalisedImmediateExtraction = (CppTypeNormalizationPass.NormalisedTypeResult)
         testSetup.passManager().getPassResults()
             .lastResultOf(CppTypeNormalizationForImmediateExtractionPass.class);
 
@@ -100,16 +99,16 @@ public class ImmediateExtractionCodeGeneratorCppVerificationTest extends Abstrac
                                    Long imm,
                                    Long tail,
                                    int bitWidth,
-                                   IdentityHashMap<Function, Function> cppNormalisedImmediateExtraction) {
-    var extractionFunctionCodeGenerator = new RelocationCodeGenerator();
+                                   CppTypeNormalizationPass.NormalisedTypeResult cppNormalisedImmediateExtraction) {
+    var extractionFunctionCodeGenerator = new CodeGenerator();
 
     var extractFunction =
-        cppNormalisedImmediateExtraction.get(fieldAccess.fieldRef().extractFunction());
+        cppNormalisedImmediateExtraction.byFunction(fieldAccess.fieldRef().extractFunction());
 
     var extractionFunctionCode = extractionFunctionCodeGenerator.generateFunction(extractFunction);
 
-    var extractionFunctionName = extractionFunctionCodeGenerator.getFunctionName(
-        fieldAccess.fieldRef().extractFunction().identifier.lower());
+    var extractionFunctionName =
+        fieldAccess.fieldRef().extractFunction().identifier.lower();
 
     String cppCode = String.format("""
             #include <cstdint>

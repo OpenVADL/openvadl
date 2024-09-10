@@ -1,5 +1,7 @@
 package vadl.cppCodeGen;
 
+import vadl.cppCodeGen.model.CppGenericType;
+import vadl.cppCodeGen.model.CppType;
 import vadl.types.BitsType;
 import vadl.types.BoolType;
 import vadl.types.SIntType;
@@ -51,6 +53,8 @@ public class CppTypeMap {
       return "uint64_t";
     } else if (type instanceof BitsType && ((BitsType) type).bitWidth() == 128) {
       return "uint128_t";
+    } else if(type instanceof CppType cppType) {
+      return cppType.lower();
     }
 
     throw new RuntimeException(String.format("not implemented: type %s", type.toString()));

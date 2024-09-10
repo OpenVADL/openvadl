@@ -49,7 +49,7 @@ namespace
         // Currently this is only used in the pseudo expansion pass.
         enum [(${namespace})]ImmediateKind{IK_UNKNOWN_IMMEDIATE // used for side effect registers which are interpreted as immediate
                       [#th:block th:each="function, iterStat : ${decodeFunctionNames}" ]
-                      , IK_[(${function.loweredName})]
+                      , IK_[(${function})]
                       [/th:block]
                     };
 
@@ -62,8 +62,8 @@ namespace
             case IK_UNKNOWN_IMMEDIATE:
                 return value;
             [#th:block th:each="function, iterStat : ${decodeFunctionNames}" ]
-              case IK_[(${function.loweredName})]:
-                return [(${function.functionName})](value);
+              case IK_[(${function})]:
+                return [(${function})](value);
             [/th:block]
             }
         }

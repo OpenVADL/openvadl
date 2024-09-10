@@ -5,12 +5,21 @@ import java.util.IdentityHashMap;
 import java.util.List;
 import java.util.Map;
 import vadl.configuration.LcbConfiguration;
+import vadl.cppCodeGen.model.CppFunction;
+import vadl.cppCodeGen.model.CppFunctionCode;
+import vadl.cppCodeGen.model.CppFunctionName;
+import vadl.cppCodeGen.model.VariantKind;
 import vadl.gcb.passes.pseudo.PseudoExpansionFunctionGeneratorPass;
+import vadl.gcb.passes.relocation.DetectImmediatePass;
+import vadl.lcb.codegen.GenerateImmediateKindPass;
 import vadl.lcb.codegen.expansion.PseudoExpansionCodeGenerator;
+import vadl.lcb.passes.relocation.GenerateElfRelocationPass;
+import vadl.lcb.passes.relocation.model.ElfRelocation;
 import vadl.lcb.template.CommonVarNames;
 import vadl.lcb.template.LcbTemplateRenderingPass;
+import vadl.lcb.template.utils.ImmediateDecodingFunctionProvider;
 import vadl.pass.PassResults;
-import vadl.viam.Function;
+import vadl.viam.Format;
 import vadl.viam.PseudoInstruction;
 import vadl.viam.Specification;
 
@@ -35,7 +44,7 @@ public class EmitMCInstExpanderCppFilePass extends LcbTemplateRenderingPass {
         + processorName + "MCInstExpander.cpp";
   }
 
-  record RenderedPseudoInstruction(String header, String code,
+  record RenderedPseudoInstruction(CppFunctionName header, CppFunctionCode code,
                                    PseudoInstruction pseudoInstruction) {
 
   }
@@ -44,15 +53,27 @@ public class EmitMCInstExpanderCppFilePass extends LcbTemplateRenderingPass {
    * Get the simple names of the pseudo instructions
    */
   private List<RenderedPseudoInstruction> pseudoInstructions(
-      Specification specification, IdentityHashMap<PseudoInstruction, Function> wrapped) {
+      Specification specification,
+      IdentityHashMap<PseudoInstruction, CppFunction> wrapped,
+      DetectImmediatePass.ImmediateDetectionContainer fieldUsages,
+      IdentityHashMap<Format.Field, VariantKind> variants,
+      List<ElfRelocation> relocations,
+      PassResults passResults) {
     return specification.isas()
         .flatMap(isa -> isa.ownPseudoInstructions().stream())
-        .map(x -> {
-          var codeGen = new PseudoExpansionCodeGenerator();
-          var function = wrapped.get(x);
+        .map(pseudoInstruction -> {
+          var codeGen =
+              new PseudoExpansionCodeGenerator(lcbConfiguration().processorName().value(),
+                  fieldUsages,
+                  ImmediateDecodingFunctionProvider.generateDecodeFunctions(passResults),
+                  variants,
+                  relocations);
+          var function = wrapped.get(pseudoInstruction);
+          ensureNonNull(function, "a function must exist");
           return new RenderedPseudoInstruction(
-              codeGen.getFunctionName(x.identifier.simpleName()),
-              codeGen.generateFunction(function), x);
+              function.functionName(),
+              codeGen.generateFunction(function),
+              pseudoInstruction);
         })
         .toList();
   }
@@ -61,9 +82,16 @@ public class EmitMCInstExpanderCppFilePass extends LcbTemplateRenderingPass {
   protected Map<String, Object> createVariables(final PassResults passResults,
                                                 Specification specification) {
     var wrapped =
-        (IdentityHashMap<PseudoInstruction, Function>) passResults.lastResultOf(
+        (IdentityHashMap<PseudoInstruction, CppFunction>) passResults.lastResultOf(
             PseudoExpansionFunctionGeneratorPass.class);
+    var fieldUsages = (DetectImmediatePass.ImmediateDetectionContainer) passResults.lastResultOf(
+        DetectImmediatePass.class);
+    var variants = (IdentityHashMap<Format.Field, VariantKind>) passResults.lastResultOf(
+        GenerateImmediateKindPass.class);
+    var relocations =
+        (List<ElfRelocation>) passResults.lastResultOf(GenerateElfRelocationPass.class);
     return Map.of(CommonVarNames.NAMESPACE, specification.name(),
-        "pseudoInstructions", pseudoInstructions(specification, wrapped));
+        "pseudoInstructions",
+        pseudoInstructions(specification, wrapped, fieldUsages, variants, relocations, passResults));
   }
 }

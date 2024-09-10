@@ -4,6 +4,7 @@ import java.io.IOException;
 import java.util.IdentityHashMap;
 import org.jetbrains.annotations.Nullable;
 import vadl.configuration.GeneralConfiguration;
+import vadl.cppCodeGen.model.CppFunction;
 import vadl.cppCodeGen.model.CppGenericType;
 import vadl.cppCodeGen.model.CppParameter;
 import vadl.cppCodeGen.model.CppType;
@@ -25,7 +26,7 @@ import vadl.viam.graph.Graph;
  * {@link Function}.
  */
 public class PseudoExpansionFunctionGeneratorPass extends Pass {
-  protected PseudoExpansionFunctionGeneratorPass(
+  public PseudoExpansionFunctionGeneratorPass(
       GeneralConfiguration configuration) {
     super(configuration);
   }
@@ -38,7 +39,7 @@ public class PseudoExpansionFunctionGeneratorPass extends Pass {
   @Nullable
   @Override
   public Object execute(PassResults passResults, Specification viam) throws IOException {
-    var result = new IdentityHashMap<PseudoInstruction, Function>();
+    var result = new IdentityHashMap<PseudoInstruction, CppFunction>();
 
     viam.isas()
         .flatMap(isa -> isa.ownPseudoInstructions().stream())
@@ -47,8 +48,9 @@ public class PseudoExpansionFunctionGeneratorPass extends Pass {
           var param = new CppParameter(new Identifier("instruction",
               SourceLocation.INVALID_SOURCE_LOCATION),
               ty);
-          var function = new Function(pseudoInstruction.identifier.append("expand"),
-              new Parameter[] {param}, new CppGenericType("std::vector", "MCInst"),
+          var function = new CppFunction(pseudoInstruction.identifier.append("expand"),
+              new Parameter[] {param},
+              new CppGenericType("std::vector", new CppType("MCInst", false, false)),
               pseudoInstruction.behavior());
 
           result.put(pseudoInstruction, function);

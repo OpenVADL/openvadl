@@ -1,9 +1,10 @@
 package vadl.cppCodeGen.model;
 
+import vadl.types.BitsType;
 import vadl.types.Type;
 
 public class CppType extends Type {
-  private final String typeName;
+  protected final String typeName;
   private final boolean isCopy;
   private final boolean isConst;
 
@@ -16,5 +17,9 @@ public class CppType extends Type {
   @Override
   public String name() {
     return typeName;
+  }
+
+  public String lower() {
+    return String.format("%s %s%s", isConst ? "const" : "", typeName, isCopy ? "" : "&");
   }
 }

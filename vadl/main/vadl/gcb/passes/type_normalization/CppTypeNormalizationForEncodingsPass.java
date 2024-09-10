@@ -1,11 +1,11 @@
 package vadl.gcb.passes.type_normalization;
 
 import java.util.Arrays;
-import java.util.Objects;
 import java.util.stream.Stream;
 import vadl.configuration.GcbConfiguration;
 import vadl.cppCodeGen.passes.typeNormalization.CppTypeNormalizationPass;
 import vadl.pass.PassName;
+import vadl.utils.Pair;
 import vadl.viam.Format;
 import vadl.viam.Function;
 import vadl.viam.Specification;
@@ -27,11 +27,11 @@ public class CppTypeNormalizationForEncodingsPass extends CppTypeNormalizationPa
   }
 
   @Override
-  protected Stream<Function> getApplicable(Specification viam) {
+  protected Stream<Pair<Format.Field, Function>> getApplicable(Specification viam) {
     return viam.isa()
         .map(x -> x.ownFormats().stream()).orElseGet(Stream::empty)
         .flatMap(x -> Arrays.stream(x.fieldAccesses()))
-        .map(Format.FieldAccess::encoding)
-        .filter(Objects::nonNull);
+        .map(fieldAccess -> new Pair<>(fieldAccess.fieldRef(),
+            ensureNonNull(fieldAccess.encoding(), "encoding must not be null")));
   }
 }

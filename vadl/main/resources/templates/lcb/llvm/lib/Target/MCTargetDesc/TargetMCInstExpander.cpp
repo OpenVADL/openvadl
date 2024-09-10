@@ -21,12 +21,9 @@ bool [(${namespace})]MCInstExpander::needsExpansion(const MCInst &MCI) const
     switch (opcode)
     {
     // instructions
-    «FOR instruction : internalInstructions » case «emitOpcode(instruction)»:
-    «ENDFOR»
-
-        // sequences
-                «FOR instruction : abiInstructions» case [(${namespace})]::«instruction.simpleName»:
-        «ENDFOR»
+    [# th:each="instruction : ${pseudoInstructions}" ]
+    case [(${namespace})][(${instruction.pseudoInstruction.identifier.simpleName})]:
+    [/]
         {
             return true;
         }
@@ -44,12 +41,9 @@ bool [(${namespace})]MCInstExpander::isExpandable(const MCInst &MCI) const
     switch (opcode)
     {
     // instructions
-    «FOR instruction : expandableInstructions» case «emitOpcode(instruction)»:
-    «ENDFOR»
-
-        // sequences
-                «FOR instruction : abiInstructions» case [(${namespace})]::«instruction.simpleName»:
-        «ENDFOR»
+    [# th:each="instruction : ${pseudoInstructions}" ]
+        case [(${namespace})][(${instruction.pseudoInstruction.identifier.simpleName})]:
+    [/]
         {
             return true;
         }
@@ -70,23 +64,14 @@ bool [(${namespace})]MCInstExpander::expand(const MCInst &MCI, std::vector<MCIns
         // instructions
         //
 
-    «FOR instruction : expandableInstructions» case «emitOpcode(instruction)»:
-    {
-        MCIExpansion = «emitExpandMethodName(instruction)»(MCI);
+    [# th:each="instruction : ${pseudoInstructions}" ]
+      case [(${namespace})][(${instruction.pseudoInstruction.identifier.simpleName})]:
+      {
+        MCIExpansion = [(${instruction.header})](MCI);
         return true;
-    }
-    «ENDFOR»
-
-        //
-        // sequences
-        //
-
-                «FOR instruction : abiInstructions» case [(${namespace})]::«instruction.simpleName»:
-    {
-        MCIExpansion = «instruction.MCInstExpanderMethod.identifier»(MCI);
-        return true;
-    }
-        «ENDFOR» default:
+      }
+    [/]
+      default:
         {
             return false;
         }
@@ -129,22 +114,6 @@ const int64_t [(${namespace})]MCInstExpander::MCOperandToInt64(const MCOperand &
     llvm_unreachable("<unsupported operand type or value>");
 }
 
-///////////////////////
-//
-// Instructions
-//
-
-«FOR instruction : expandableInstructions»
-            «emitExpandMethod(instruction)»
-
-        «ENDFOR»
-
-                   ///////////////////////
-                   //
-                   // Sequences
-                   //
-
-        «FOR instruction : abiInstructions»
-            «emitAbiSequenceMethod(instruction)»
-
-        «ENDFOR»
+[# th:each="instruction : ${pseudoInstructions}" ]
+[(${instruction.code})]
+[/]
