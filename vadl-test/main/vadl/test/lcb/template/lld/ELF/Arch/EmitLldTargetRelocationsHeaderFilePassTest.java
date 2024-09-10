@@ -38,28 +38,13 @@ public class EmitLldTargetRelocationsHeaderFilePassTest extends AbstractLcbTest 
         uint32_t RV3264I_Ftype_generated(uint32_t input) {
         return input;
         }
-        uint32_t RV3264I_Ftype_generated(uint32_t input) {
-        return input;
-        }
-        uint32_t RV3264I_Itype_generated(uint32_t input) {
-        return input;
-        }
         uint32_t RV3264I_Itype_generated(uint32_t input) {
         return input;
         }
         uint32_t RV3264I_Jtype_generated(uint32_t input) {
-        return input;
-        }
-        uint32_t RV3264I_Jtype_generated(uint32_t input) {
-        return input;
-        }
-        uint32_t RV3264I_Rtype_generated(uint32_t input) {
         return input;
         }
         uint32_t RV3264I_Stype_generated(uint32_t input) {
-        return input;
-        }
-        uint32_t RV3264I_Utype_generated(uint32_t input) {
         return input;
         }
         uint32_t RV3264I_Utype_generated(uint32_t input) {

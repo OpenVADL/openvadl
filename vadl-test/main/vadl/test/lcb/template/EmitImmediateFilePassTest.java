@@ -35,10 +35,26 @@ public class EmitImmediateFilePassTest extends AbstractLcbTest {
         #include <unordered_map>
         #include <vector>
         #include <stdio.h>
+        #include <bitset>
                 
         // "__extension__" suppresses warning
         __extension__ typedef          __int128 int128_t;
         __extension__ typedef unsigned __int128 uint128_t;
+                
+        template<int start, int end, std::size_t N>
+        std::bitset<N> project_range(std::bitset<N> bits)
+        {
+            std::bitset<N> result;
+            size_t result_index = 0; // Index for the new bitset
+                
+            // Extract bits from the range [start, end]
+            for (size_t i = start; i <= end; ++i) {
+              result[result_index] = bits[i];
+            result_index++;
+            }
+                
+            return result;
+        }
                 
                 
         int64_t RV3264I_Btype_immS_decode_decode(uint16_t param) {
@@ -66,25 +82,25 @@ public class EmitImmediateFilePassTest extends AbstractLcbTest {
                 
                 
         uint8_t RV3264I_Ftype_shamt_encoding_encode(uint8_t shamt) {
-        return (((shamt) & ((1UL << 7) - 1)) >> 0);
+        return (project_range<0, 5>(std::bitset<6>(shamt)) << 0).to_ulong();
         }
         uint16_t RV3264I_Btype_immS_encoding_encode(int64_t immS) {
-        return (((immS) & ((1UL << 14) - 1) & ~((1 << 1) - 1)) >> 1);
+        return (project_range<1, 12>(std::bitset<64>(immS)) << 0).to_ulong();
         }
         uint16_t RV3264I_Stype_immS_encoding_encode(int64_t immS) {
-        return (((immS) & ((1UL << 13) - 1)) >> 0);
+        return (project_range<0, 11>(std::bitset<64>(immS)) << 0).to_ulong();
         }
         uint8_t RV3264I_Rtype_shamt_encoding_encode(uint8_t shamt) {
-        return (((shamt) & ((1UL << 6) - 1)) >> 0);
+        return (project_range<0, 4>(std::bitset<5>(shamt)) << 0).to_ulong();
         }
         uint16_t RV3264I_Itype_immS_encoding_encode(int64_t immS) {
-        return (((immS) & ((1UL << 13) - 1)) >> 0);
+        return (project_range<0, 11>(std::bitset<64>(immS)) << 0).to_ulong();
         }
         uint32_t RV3264I_Utype_immU_encoding_encode(uint64_t immU) {
-        return (((immU) & ((1UL << 33) - 1) & ~((1 << 12) - 1)) >> 12);
+        return (project_range<12, 31>(std::bitset<64>(immU)) << 0).to_ulong();
         }
         uint32_t RV3264I_Jtype_immS_encoding_encode(int64_t immS) {
-        return (((immS) & ((1UL << 22) - 1) & ~((1 << 1) - 1)) >> 1);
+        return (project_range<1, 20>(std::bitset<64>(immS)) << 0).to_ulong();
         }
                 
                 
@@ -93,14 +109,14 @@ public class EmitImmediateFilePassTest extends AbstractLcbTest {
         bool RV3264I_Btype_immS_predicate_predicate(int64_t immS_decode) {
         return 1;
         }
+        bool RV3264I_Stype_immS_predicate_predicate(int64_t immS_decode) {
+        return 1;
+        }
         bool RV3264I_Itype_immS_predicate_predicate(int64_t immS_decode) {
         return 1;
         }
         bool RV3264I_Jtype_immS_predicate_predicate(int64_t immS_decode) {
         return 1;
-        }
-        bool RV3264I_Stype_immS_predicate0_predicate(int64_t immS) {
-        return ((((immS) & ((1UL << 33) - 1) & ~((1 << 11) - 1)) >> 11)) == (0)? 1:((((immS) & ((1UL << 33) - 1) & ~((1 << 11) - 1)) >> 11)) == (2097151)? 1:0;
         }
         bool RV3264I_Utype_immU_predicate_predicate(uint64_t immU_decode) {
         return 1;

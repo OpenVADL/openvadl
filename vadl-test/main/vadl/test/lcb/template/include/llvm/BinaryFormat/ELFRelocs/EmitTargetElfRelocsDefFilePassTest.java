@@ -41,17 +41,16 @@ public class EmitTargetElfRelocsDefFilePassTest extends AbstractLcbTest {
         ELF_RELOC(R_rv64im_32, 1)
         ELF_RELOC(R_rv64im_64, 2)
                 
-        ELF_RELOC(R_processorNameValue_ABS_RV3264I_Btype, 3)
-        ELF_RELOC(R_processorNameValue_ABS_RV3264I_Ftype, 4)
-        ELF_RELOC(R_processorNameValue_ABS_RV3264I_Itype, 5)
-        ELF_RELOC(R_processorNameValue_ABS_RV3264I_Jtype, 6)
-        ELF_RELOC(R_processorNameValue_ABS_RV3264I_Rtype, 7)
-        ELF_RELOC(R_processorNameValue_ABS_RV3264I_Stype, 8)
-        ELF_RELOC(R_processorNameValue_ABS_RV3264I_Utype, 9)
-        ELF_RELOC(R_processorNameValue_REL_RV3264I_Btype, 10)
-        ELF_RELOC(R_processorNameValue_REL_RV3264I_Itype, 11)
-        ELF_RELOC(R_processorNameValue_REL_RV3264I_Jtype, 12)
-        ELF_RELOC(R_processorNameValue_REL_RV3264I_Utype, 13)
+        ELF_RELOC(R_processorNameValue_ABS_RV3264I_Btype_RV3264I_Btype_imm, 3)
+        ELF_RELOC(R_processorNameValue_ABS_RV3264I_Ftype_RV3264I_Ftype_sft, 4)
+        ELF_RELOC(R_processorNameValue_ABS_RV3264I_Itype_RV3264I_Itype_imm, 5)
+        ELF_RELOC(R_processorNameValue_ABS_RV3264I_Jtype_RV3264I_Jtype_imm, 6)
+        ELF_RELOC(R_processorNameValue_ABS_RV3264I_Stype_RV3264I_Stype_imm, 7)
+        ELF_RELOC(R_processorNameValue_ABS_RV3264I_Utype_RV3264I_Utype_imm, 8)
+        ELF_RELOC(R_processorNameValue_REL_RV3264I_Btype_RV3264I_Btype_imm, 9)
+        ELF_RELOC(R_processorNameValue_REL_RV3264I_Itype_RV3264I_Itype_imm, 10)
+        ELF_RELOC(R_processorNameValue_REL_RV3264I_Jtype_RV3264I_Jtype_imm, 11)
+        ELF_RELOC(R_processorNameValue_REL_RV3264I_Utype_RV3264I_Utype_imm, 12)
         """.trim().lines(), output);
   }
 }

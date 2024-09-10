@@ -12,15 +12,19 @@
 __extension__ typedef          __int128 int128_t;
 __extension__ typedef unsigned __int128 uint128_t;
 
-// drop bits outside the range (R, L) == [R, L]
-template<std::size_t R, std::size_t L, std::size_t N>
-std::bitset<N> project_range(std::bitset<N> b)
+template<int start, int end, std::size_t N>
+std::bitset<N> project_range(std::bitset<N> bits)
 {
-    static_assert(R <= L && L <= N, "invalid bitrange");
-    b >>= R;            // drop R rightmost bits
-    b <<= (N - L + R + 1);  // drop L-1 leftmost bits
-    b >>= (N - L);      // shift back into place
-    return b;
+    std::bitset<N> result;
+    size_t result_index = 0; // Index for the new bitset
+
+    // Extract bits from the range [start, end]
+    for (size_t i = start; i <= end; ++i) {
+      result[result_index] = bits[i];
+    result_index++;
+    }
+
+    return result;
 }
 
 [# th:each="function : ${decodeFunctions}" ]

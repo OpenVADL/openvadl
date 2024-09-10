@@ -33,36 +33,71 @@ public class EmitLldManualEncodingHeaderFilePassTest extends AbstractLcbTest {
     var output = trimmed.lines();
 
     Assertions.assertLinesMatch("""
+        #include <cstdint>
+        #include <iostream>
+        #include <bitset>
+        #include <vector>
+        #include <tuple>
+               
+        template<int start, int end, std::size_t N>
+        std::bitset<N> project_range(std::bitset<N> bits)
+        {
+            std::bitset<N> result;
+            size_t result_index = 0; // Index for the new bitset
+               
+            // Extract bits from the range [start, end]
+            for (size_t i = start; i <= end; ++i) {
+              result[result_index] = bits[i];
+            result_index++;
+            }
+               
+            return result;
+        }
+               
+        template<std::size_t N, std::size_t M>
+        std::bitset<N> set_bits(std::bitset<N> dest, const std::bitset<M> source, std::vector<int> bits) {
+            auto target = 0;
+            for (int i = bits.size() - 1; i >= 0 ; --i) {
+                auto j = bits[target];
+                dest.set(j, source[i]);
+                target++;
+            }
+               
+            return dest;
+        }
+               
+               
+               
         uint32_t RV3264I_BtypeRV3264I_Btype_imm(uint32_t instWord,uint32_t newValue) {
-        return ((instWord) & (2)) | (((newValue) & (4095)) << (7));
+        return set_bits(std::bitset<32>(instWord), std::bitset<32>(newValue), std::vector<int> { 31, 7, 30, 29, 28, 27, 26, 25, 11, 10, 9, 8 } ).to_ulong();
         }
         uint32_t RV3264I_FtypeRV3264I_Ftype_sft(uint32_t instWord,uint32_t newValue) {
-        return ((instWord) & (2)) | (((newValue) & (63)) << (20));
+        return set_bits(std::bitset<32>(instWord), std::bitset<32>(newValue), std::vector<int> { 25, 24, 23, 22, 21, 20 } ).to_ulong();
         }
         uint32_t RV3264I_ItypeRV3264I_Itype_imm(uint32_t instWord,uint32_t newValue) {
-        return ((instWord) & (2)) | (((newValue) & (4095)) << (20));
+        return set_bits(std::bitset<32>(instWord), std::bitset<32>(newValue), std::vector<int> { 31, 30, 29, 28, 27, 26, 25, 24, 23, 22, 21, 20 } ).to_ulong();
         }
         uint32_t RV3264I_JtypeRV3264I_Jtype_imm(uint32_t instWord,uint32_t newValue) {
-        return ((instWord) & (2)) | (((newValue) & (1048575)) << (12));
+        return set_bits(std::bitset<32>(instWord), std::bitset<32>(newValue), std::vector<int> { 31, 19, 18, 17, 16, 15, 14, 13, 12, 20, 30, 29, 28, 27, 26, 25, 24, 23, 22, 21 } ).to_ulong();
         }
         uint32_t RV3264I_StypeRV3264I_Stype_imm(uint32_t instWord,uint32_t newValue) {
-        return ((instWord) & (2)) | (((newValue) & (4095)) << (7));
+        return set_bits(std::bitset<32>(instWord), std::bitset<32>(newValue), std::vector<int> { 31, 30, 29, 28, 27, 26, 25, 11, 10, 9, 8, 7 } ).to_ulong();
         }
         uint32_t RV3264I_UtypeRV3264I_Utype_imm(uint32_t instWord,uint32_t newValue) {
-        return ((instWord) & (2)) | (((newValue) & (1048575)) << (12));
+        return set_bits(std::bitset<32>(instWord), std::bitset<32>(newValue), std::vector<int> { 31, 30, 29, 28, 27, 26, 25, 24, 23, 22, 21, 20, 19, 18, 17, 16, 15, 14, 13, 12 } ).to_ulong();
         }
         uint32_t RV3264I_BtypeRV3264I_Btype_imm(uint32_t instWord,uint32_t newValue) {
-        return ((instWord) & (2)) | (((newValue) & (4095)) << (7));
+        return set_bits(std::bitset<32>(instWord), std::bitset<32>(newValue), std::vector<int> { 31, 7, 30, 29, 28, 27, 26, 25, 11, 10, 9, 8 } ).to_ulong();
         }
         uint32_t RV3264I_ItypeRV3264I_Itype_imm(uint32_t instWord,uint32_t newValue) {
-        return ((instWord) & (2)) | (((newValue) & (4095)) << (20));
+        return set_bits(std::bitset<32>(instWord), std::bitset<32>(newValue), std::vector<int> { 31, 30, 29, 28, 27, 26, 25, 24, 23, 22, 21, 20 } ).to_ulong();
         }
         uint32_t RV3264I_JtypeRV3264I_Jtype_imm(uint32_t instWord,uint32_t newValue) {
-        return ((instWord) & (2)) | (((newValue) & (1048575)) << (12));
+        return set_bits(std::bitset<32>(instWord), std::bitset<32>(newValue), std::vector<int> { 31, 19, 18, 17, 16, 15, 14, 13, 12, 20, 30, 29, 28, 27, 26, 25, 24, 23, 22, 21 } ).to_ulong();
         }
         uint32_t RV3264I_UtypeRV3264I_Utype_imm(uint32_t instWord,uint32_t newValue) {
-        return ((instWord) & (2)) | (((newValue) & (1048575)) << (12));
-        } 
+        return set_bits(std::bitset<32>(instWord), std::bitset<32>(newValue), std::vector<int> { 31, 30, 29, 28, 27, 26, 25, 24, 23, 22, 21, 20, 19, 18, 17, 16, 15, 14, 13, 12 } ).to_ulong();
+        }
         """.trim().lines(), output);
   }
 }
