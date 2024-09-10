@@ -1,12 +1,13 @@
 package vadl.lcb.codegen.encoding;
 
+import vadl.lcb.codegen.CodeGenerator;
 import vadl.viam.graph.Graph;
 
 /**
  * Generates Cpp Code given a behavior {@link Graph}.
  * This class will be used to generate the {@code AccessFunction}.
  */
-public class DecodingCodeGenerator extends EncoderDecoderCodeGenerator {
+public class DecodingCodeGenerator extends CodeGenerator {
 
   public static String generateFunctionName(String rawName) {
     return rawName.trim() + "_" + "decode";
@@ -14,7 +15,7 @@ public class DecodingCodeGenerator extends EncoderDecoderCodeGenerator {
 
 
   @Override
-  protected String getFunctionName(String rawName) {
+  public String getFunctionName(String rawName) {
     return generateFunctionName(rawName);
   }
 }

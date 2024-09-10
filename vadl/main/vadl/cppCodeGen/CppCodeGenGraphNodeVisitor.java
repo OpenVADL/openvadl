@@ -1,5 +1,6 @@
 package vadl.cppCodeGen;
 
+import vadl.cppCodeGen.model.CppUpdateBitRangeNode;
 import vadl.cppCodeGen.passes.typeNormalization.CppSignExtendNode;
 import vadl.cppCodeGen.passes.typeNormalization.CppTruncateNode;
 import vadl.cppCodeGen.passes.typeNormalization.CppZeroExtendNode;
@@ -23,4 +24,9 @@ public interface CppCodeGenGraphNodeVisitor extends GraphNodeVisitor {
    * Visit {@link CppTruncateNode}.
    */
   void visit(CppTruncateNode node);
+
+  /**
+   * Visit {@link CppUpdateBitRangeNode}.
+   */
+  void visit(CppUpdateBitRangeNode node);
 }

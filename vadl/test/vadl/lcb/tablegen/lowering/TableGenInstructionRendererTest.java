@@ -28,7 +28,7 @@ class TableGenInstructionRendererTest extends AbstractTest {
         new Constant.BitSlice(new Constant.BitSlice.Part[] {new Constant.BitSlice.Part(9, 0)}),
         format);
     var noneEncodedField = new Format.Field(createIdentifier("register"), DataType.bits(10),
-        new Constant.BitSlice(new Constant.BitSlice.Part[] {new Constant.BitSlice.Part(9, 0)}),
+        new Constant.BitSlice(new Constant.BitSlice.Part[] {new Constant.BitSlice.Part(19, 10)}),
         format);
     format.setFields(
         new Format.Field[] {encodedField, noneEncodedField});
@@ -62,50 +62,47 @@ class TableGenInstructionRendererTest extends AbstractTest {
 
     // Then
     assertThat(result).isEqualToIgnoringWhitespace("""
-        
-         def nameValue : Instruction
-         {
-              let Namespace = "namespaceValue";
-        \s
-              let Size = 4;
-              let CodeSize = 4;
-        \s
-              let OutOperandList = ( outs  );
-              let InOperandList = ( ins  );
-        \s
-              field bits<32> Inst;
-              \s
-              // SoftFail is a field the disassembler can use to provide a way for
-              // instructions to not match without killing the whole decode process. It is
-              // mainly used for ARM, but Tablegen expects this field to exist or it fails
-              // to build the decode table.
-              field bits<32> SoftFail = 0;
-              \s
-              bits<10> opCode = 0b0101;
-         bits<10> register;
-        \s
-              let Inst{9-0} = opCode{9-0};
-        \s
-         let Inst{9-0} = register{9-0};
-        \s
-        \s
-              let isTerminator  = 0;
-              let isBranch      = 0;
-              let isCall        = 0;
-              let isReturn      = 0;
-              let isPseudo      = 0;
-              let isCodeGenOnly = 0;
-              let mayLoad       = 0;
-              let mayStore      = 0;
-        \s
-              let Constraints = "";
-              let AddedComplexity = 0;
-        \s
-              let Pattern = [];
-        \s
-              let Uses = [  ];
-              let Defs = [  ];
-         }
+        def nameValue : Instruction
+        {
+        let Namespace = "namespaceValue";
+                
+        let Size = 4;
+        let CodeSize = 4;
+                
+        let OutOperandList = ( outs  );
+        let InOperandList = ( ins  );
+                
+        field bits<32> Inst;
+                
+        // SoftFail is a field the disassembler can use to provide a way for
+        // instructions to not match without killing the whole decode process. It is
+        // mainly used for ARM, but Tablegen expects this field to exist or it fails
+        // to build the decode table.
+        field bits<32> SoftFail = 0;
+                
+        bits<10> opCode = 0b0101;
+        bits<10> register;
+                
+        let Inst{19-10} = register{9-0};
+        let Inst{9-0} = opCode{9-0};
+                
+        let isTerminator  = 0;
+        let isBranch      = 0;
+        let isCall        = 0;
+        let isReturn      = 0;
+        let isPseudo      = 0;
+        let isCodeGenOnly = 0;
+        let mayLoad       = 0;
+        let mayStore      = 0;
+                
+        let Constraints = "";
+        let AddedComplexity = 0;
+                
+        let Pattern = [];
+                
+        let Uses = [  ];
+        let Defs = [  ];
+        }
         """);
   }
 

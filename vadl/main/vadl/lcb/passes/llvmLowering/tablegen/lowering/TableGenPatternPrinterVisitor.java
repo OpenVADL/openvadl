@@ -2,6 +2,7 @@ package vadl.lcb.passes.llvmLowering.tablegen.lowering;
 
 import java.io.StringWriter;
 import java.util.Objects;
+import vadl.cppCodeGen.model.CppUpdateBitRangeNode;
 import vadl.lcb.passes.llvmLowering.LlvmNodeLowerable;
 import vadl.lcb.passes.llvmLowering.model.LlvmBrCcSD;
 import vadl.lcb.passes.llvmLowering.model.LlvmBrCondSD;

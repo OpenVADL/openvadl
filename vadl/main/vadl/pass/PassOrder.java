@@ -16,11 +16,14 @@ import vadl.dump.HtmlDumpPass;
 import vadl.gcb.passes.assembly.AssemblyConcatBuiltinMergingPass;
 import vadl.gcb.passes.assembly.AssemblyReplacementNodePass;
 import vadl.gcb.passes.encoding_generation.GenerateFieldAccessEncodingFunctionPass;
+import vadl.gcb.passes.relocation.DetectImmediatePass;
+import vadl.gcb.passes.relocation.GenerateLogicalRelocationPass;
 import vadl.gcb.passes.type_normalization.CppTypeNormalizationForDecodingsPass;
 import vadl.gcb.passes.type_normalization.CppTypeNormalizationForEncodingsPass;
 import vadl.gcb.passes.type_normalization.CppTypeNormalizationForPredicatesPass;
 import vadl.lcb.passes.isaMatching.IsaMatchingPass;
 import vadl.lcb.passes.llvmLowering.LlvmLoweringPass;
+import vadl.lcb.passes.relocation.GenerateElfRelocationPass;
 import vadl.lcb.template.lib.Target.EmitMCInstLowerCppFilePass;
 import vadl.lcb.template.lib.Target.EmitMCInstLowerHeaderFilePass;
 import vadl.template.AbstractTemplateRenderingPass;
@@ -44,7 +47,7 @@ public final class PassOrder {
       = new ConcurrentHashMap<>();
 
   // the actual list of pass steps
-  private LinkedList<PassStep> order = new LinkedList<>();
+  private final LinkedList<PassStep> order = new LinkedList<>();
 
   /**
    * Add a pass to the pass order. If the passKey is null, it will generate a unique one.
@@ -81,6 +84,25 @@ public final class PassOrder {
    */
   public List<PassStep> passSteps() {
     return order;
+  }
+
+  /**
+   * Adds a given pass after the pass with the given {@code passName}.
+   */
+  public PassOrder addAfterLast(Class<?> passName, Pass pass) {
+    int index = -1;
+    for (int i = 0; i < passSteps().size(); i++) {
+      if (passName.isInstance(passSteps().get(i).pass())) {
+        index = i;
+      }
+    }
+
+    if (index != -1) {
+      var step = createPassStep(null, pass);
+      passSteps().add(index + 1, step);
+    }
+
+    return this;
   }
 
   /**
@@ -208,6 +230,8 @@ public final class PassOrder {
     order.add(new CppTypeNormalizationForPredicatesPass(gcbConfiguration));
     order.add(new AssemblyReplacementNodePass(gcbConfiguration));
     order.add(new AssemblyConcatBuiltinMergingPass(gcbConfiguration));
+    order.add(new DetectImmediatePass(gcbConfiguration));
+    order.add(new GenerateLogicalRelocationPass(gcbConfiguration));
 
     if (gcbConfiguration.doDump()) {
       var config = HtmlDumpPass.Config.from(gcbConfiguration,
@@ -229,6 +253,7 @@ public final class PassOrder {
     var order = gcbAndCppCodeGen(configuration);
     order.add(new IsaMatchingPass(configuration));
     order.add(new LlvmLoweringPass(configuration));
+    order.add(new GenerateElfRelocationPass(configuration));
 
     if (configuration.doDump()) {
       var config = HtmlDumpPass.Config.from(

@@ -40,4 +40,12 @@ public abstract class AbstractEndNode extends ControlNode {
         .map(e -> visitor.apply(this, e, SideEffectNode.class))
         .collect(Collectors.toCollection(NodeList::new));
   }
+
+  /**
+   * Adds a side effect to the node.
+   */
+  public void addSideEffect(SideEffectNode sideEffectNode) {
+    this.sideEffects.add(sideEffectNode);
+    updateUsageOf(null, sideEffectNode);
+  }
 }

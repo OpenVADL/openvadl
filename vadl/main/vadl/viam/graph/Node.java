@@ -482,7 +482,14 @@ public abstract class Node {
   }
 
 
-  protected void addUsage(Node usage) {
+  /**
+   * Adds a given node as usage.
+   * Avoid making this public, as usage modifications
+   * should be graph-internally updated.
+   * You can use {@code updateUsagesOf(null, <node-to-add-usage>)} to update the usage
+   * of a given node.
+   */
+  protected final void addUsage(Node usage) {
     usages.add(usage);
   }
 

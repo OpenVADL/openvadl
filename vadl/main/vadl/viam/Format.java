@@ -1,6 +1,8 @@
 package vadl.viam;
 
+import java.util.Arrays;
 import java.util.Comparator;
+import java.util.Objects;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 import javax.annotation.Nullable;
@@ -78,6 +80,28 @@ public class Format extends Definition implements DefProp.WithType {
   @Override
   public void accept(DefinitionVisitor visitor) {
     visitor.visit(this);
+  }
+
+  @Override
+  public boolean equals(Object o) {
+    if (this == o) {
+      return true;
+    }
+    if (o == null || getClass() != o.getClass()) {
+      return false;
+    }
+    Format format = (Format) o;
+    return Objects.equals(type, format.type)
+        && Arrays.equals(fields, format.fields)
+        && Arrays.equals(fieldAccesses, format.fieldAccesses);
+  }
+
+  @Override
+  public int hashCode() {
+    int result = Objects.hash(type);
+    result = 31 * result + Arrays.hashCode(fields);
+    result = 31 * result + Arrays.hashCode(fieldAccesses);
+    return result;
   }
 
   /**
@@ -211,6 +235,23 @@ public class Format extends Definition implements DefProp.WithType {
       return function;
     }
 
+    @Override
+    public boolean equals(Object o) {
+      if (this == o) {
+        return true;
+      }
+      if (o == null || getClass() != o.getClass()) {
+        return false;
+      }
+      Field field = (Field) o;
+      return Objects.equals(type, field.type)
+          && Objects.equals(bitSlice, field.bitSlice);
+    }
+
+    @Override
+    public int hashCode() {
+      return Objects.hash(type, bitSlice);
+    }
   }
 
 
@@ -309,6 +350,25 @@ public class Format extends Definition implements DefProp.WithType {
     public void accept(DefinitionVisitor visitor) {
       visitor.visit(this);
     }
-  }
 
+    @Override
+    public boolean equals(Object o) {
+      if (this == o) {
+        return true;
+      }
+      if (o == null || getClass() != o.getClass()) {
+        return false;
+      }
+      FieldAccess that = (FieldAccess) o;
+      return Objects.equals(accessFunction, that.accessFunction)
+          && Objects.equals(encoding, that.encoding)
+          && Objects.equals(predicate, that.predicate)
+          && Objects.equals(fieldRef, that.fieldRef);
+    }
+
+    @Override
+    public int hashCode() {
+      return Objects.hash(accessFunction, encoding, predicate, fieldRef);
+    }
+  }
 }
