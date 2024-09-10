@@ -4,6 +4,7 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
+import vadl.viam.ViamError;
 
 /**
  * A class that represents a tuple type in VADL containing a list of subtypes.
@@ -27,8 +28,7 @@ public class TupleType extends Type {
   }
 
   public Type get(int i) {
-    // TODO: Ensure
-    return types.get(0);
+    return types.get(i);
   }
 
   public Stream<Type> types() {

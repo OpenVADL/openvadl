@@ -4,6 +4,7 @@ import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Objects;
+import java.util.Set;
 import javax.annotation.Nullable;
 
 /**
@@ -277,6 +278,17 @@ public abstract class Type {
                                                       Type secondType,
                                                       Type returnType) {
     return concreteRelation(List.of(firstType, secondType), returnType);
+  }
+
+  private static final HashMap<Integer, AlternativeType> alternativeTypes = new HashMap<>();
+
+  /**
+   * Retrieves the {@link AlternativeType} with the given types.
+   */
+  public static AlternativeType alternative(Set<Type> types) {
+    var hash = Objects.hash(types);
+    return alternativeTypes
+        .computeIfAbsent(hash, k -> new AlternativeType(types));
   }
 
 
