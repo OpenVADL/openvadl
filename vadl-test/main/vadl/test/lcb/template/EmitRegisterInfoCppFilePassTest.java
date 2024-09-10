@@ -474,7 +474,7 @@ public class EmitRegisterInfoCppFilePassTest extends AbstractLcbTest {
             // try to inline the offset into the instruction
             //
                 
-            if(immS_predicate0_predicate(Offset))
+            if(immS_predicate_predicate(Offset))
             {
                 // immediate can be encoded and instruction can be inlined.
                 FIOp.ChangeToRegister( FrameReg, false /* isDef */ );
@@ -526,7 +526,7 @@ public class EmitRegisterInfoCppFilePassTest extends AbstractLcbTest {
             // try to inline the offset into the instruction
             //
                 
-            if(immS_predicate0_predicate(Offset))
+            if(immS_predicate_predicate(Offset))
             {
                 // immediate can be encoded and instruction can be inlined.
                 FIOp.ChangeToRegister( FrameReg, false /* isDef */ );
@@ -578,7 +578,7 @@ public class EmitRegisterInfoCppFilePassTest extends AbstractLcbTest {
             // try to inline the offset into the instruction
             //
                 
-            if(immS_predicate0_predicate(Offset))
+            if(immS_predicate_predicate(Offset))
             {
                 // immediate can be encoded and instruction can be inlined.
                 FIOp.ChangeToRegister( FrameReg, false /* isDef */ );
@@ -630,7 +630,7 @@ public class EmitRegisterInfoCppFilePassTest extends AbstractLcbTest {
             // try to inline the offset into the instruction
             //
                 
-            if(immS_predicate0_predicate(Offset))
+            if(immS_predicate_predicate(Offset))
             {
                 // immediate can be encoded and instruction can be inlined.
                 FIOp.ChangeToRegister( FrameReg, false /* isDef */ );

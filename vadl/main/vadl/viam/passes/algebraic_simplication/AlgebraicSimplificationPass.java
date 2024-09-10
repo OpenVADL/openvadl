@@ -61,7 +61,13 @@ public class AlgebraicSimplificationPass extends Pass {
         .orElse(Stream.empty())
         .forEach(instruction -> new AlgebraicSimplifier(rules).run(instruction.behavior()));
 
-    viam.isa().map(isa -> isa.ownFormats().stream())
+    viam.isa()
+        .map(isa -> isa.ownPseudoInstructions().stream())
+        .orElse(Stream.empty())
+        .forEach(instruction -> new AlgebraicSimplifier(rules).run(instruction.behavior()));
+
+    viam.isa()
+        .map(isa -> isa.ownFormats().stream())
         .orElse(Stream.empty())
         .flatMap(x -> Arrays.stream(x.fieldAccesses()))
         .map(x -> x.accessFunction().behavior())

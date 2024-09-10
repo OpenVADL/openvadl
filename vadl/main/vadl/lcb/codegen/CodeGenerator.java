@@ -1,18 +1,19 @@
-package vadl.lcb.codegen.encoding;
+package vadl.lcb.codegen;
 
 import java.io.StringWriter;
 import java.util.Arrays;
 import java.util.stream.Collectors;
 import vadl.cppCodeGen.CppTypeMap;
+import vadl.cppCodeGen.GenericCppCodeGeneratorVisitor;
 import vadl.viam.Function;
 import vadl.viam.ViamError;
 import vadl.viam.graph.control.ReturnNode;
 
 /**
- * A superclass for generating CPP functions for encoding and decoding.
+ * Parent code generator to encapsulate generic functionality.
  */
-public abstract class EncoderDecoderCodeGenerator {
-  protected abstract String getFunctionName(String rawName);
+public abstract class CodeGenerator {
+  public abstract String getFunctionName(String rawName);
 
   /**
    * Returns the function header of a {@link Function}.
@@ -38,7 +39,7 @@ public abstract class EncoderDecoderCodeGenerator {
       throw new ViamError("For the function is a return node required.");
     }
 
-    new EncoderDecoderCodeGeneratorVisitor(writer).visit(returnNode.get());
+    new GenericCppCodeGeneratorVisitor(writer).visit(returnNode.get());
     return writer.toString();
   }
 

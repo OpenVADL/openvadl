@@ -766,6 +766,15 @@ public abstract class Constant {
       return parts.stream();
     }
 
+    /**
+     * Returns a stream with every bit which is a part of the bit slice.
+     * Example: [(3, 6), (21, 21)] = [3, 4, 5, 6, 21]
+     */
+    public IntStream stream() {
+      return this.parts.stream()
+          .flatMapToInt(part -> StreamUtils.directionalRangeClosed(part.msb(), part.lsb()));
+    }
+
     public boolean isContinuous() {
       // this works because the parts are normalized
       return parts.size() == 1;
@@ -812,11 +821,6 @@ public abstract class Constant {
       int result = super.hashCode();
       result = 31 * result + parts.hashCode();
       return result;
-    }
-
-    public IntStream stream() {
-      return this.parts.stream()
-          .flatMapToInt(part -> StreamUtils.directionalRangeClosed(part.msb(), part.lsb()));
     }
 
     @NotNull

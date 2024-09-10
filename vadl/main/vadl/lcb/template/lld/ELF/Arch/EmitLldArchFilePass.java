@@ -4,6 +4,8 @@ import java.io.IOException;
 import java.util.List;
 import java.util.Map;
 import vadl.configuration.LcbConfiguration;
+import vadl.lcb.passes.relocation.GenerateElfRelocationPass;
+import vadl.lcb.passes.relocation.model.ElfRelocation;
 import vadl.lcb.template.CommonVarNames;
 import vadl.lcb.template.LcbTemplateRenderingPass;
 import vadl.pass.PassResults;
@@ -33,30 +35,19 @@ public class EmitLldArchFilePass extends LcbTemplateRenderingPass {
 
   }
 
-  record Relocation(String identifier, String relExpr, RelocationKind kind) {
-
-  }
-
-  enum RelocationKind {
-    ABSOLUTE,
-    PC_RELATIVE,
-  }
-
   private ElfInfo createElfInfo() {
     return new ElfInfo(false, 32);
-  }
-
-  private List<Relocation> createRelocation() {
-    return List.of(new Relocation("identifierValue", "relExprValue", RelocationKind.ABSOLUTE));
   }
 
   @Override
   protected Map<String, Object> createVariables(final PassResults passResults,
                                                 Specification specification) {
+    var relocations =
+        (List<ElfRelocation>) passResults.lastResultOf(GenerateElfRelocationPass.class);
     var elfInfo = createElfInfo();
     return Map.of(CommonVarNames.NAMESPACE, specification.name(),
         CommonVarNames.MAX_INSTRUCTION_WORDSIZE, elfInfo.maxInstructionWordSize(),
         CommonVarNames.IS_BIG_ENDIAN, elfInfo.isBigEndian(),
-        CommonVarNames.RELOCATIONS, createRelocation());
+        CommonVarNames.RELOCATIONS, relocations);
   }
 }

@@ -6,10 +6,26 @@
 #include <unordered_map>
 #include <vector>
 #include <stdio.h>
+#include <bitset>
 
 // "__extension__" suppresses warning
 __extension__ typedef          __int128 int128_t;
 __extension__ typedef unsigned __int128 uint128_t;
+
+template<int start, int end, std::size_t N>
+std::bitset<N> project_range(std::bitset<N> bits)
+{
+    std::bitset<N> result;
+    size_t result_index = 0; // Index for the new bitset
+
+    // Extract bits from the range [start, end]
+    for (size_t i = start; i <= end; ++i) {
+      result[result_index] = bits[i];
+    result_index++;
+    }
+
+    return result;
+}
 
 [# th:each="function : ${decodeFunctions}" ]
 [(${function})]

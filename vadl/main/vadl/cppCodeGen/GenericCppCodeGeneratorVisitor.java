@@ -1,7 +1,17 @@
 package vadl.cppCodeGen;
 
+import static vadl.cppCodeGen.CppTypeMap.getCppTypeNameByVadlType;
+
 import java.io.StringWriter;
+import java.util.Collections;
 import java.util.Objects;
+import java.util.stream.Collectors;
+import vadl.cppCodeGen.model.CppUpdateBitRangeNode;
+import vadl.cppCodeGen.passes.typeNormalization.CppSignExtendNode;
+import vadl.cppCodeGen.passes.typeNormalization.CppTruncateNode;
+import vadl.cppCodeGen.passes.typeNormalization.CppZeroExtendNode;
+import vadl.types.BitsType;
+import vadl.types.BoolType;
 import vadl.viam.Constant;
 import vadl.viam.graph.GraphNodeVisitor;
 import vadl.viam.graph.control.AbstractBeginNode;
@@ -22,15 +32,20 @@ import vadl.viam.graph.dependency.ReadMemNode;
 import vadl.viam.graph.dependency.ReadRegFileNode;
 import vadl.viam.graph.dependency.ReadRegNode;
 import vadl.viam.graph.dependency.SelectNode;
+import vadl.viam.graph.dependency.SideEffectNode;
+import vadl.viam.graph.dependency.SignExtendNode;
 import vadl.viam.graph.dependency.SliceNode;
+import vadl.viam.graph.dependency.TruncateNode;
 import vadl.viam.graph.dependency.WriteMemNode;
 import vadl.viam.graph.dependency.WriteRegFileNode;
 import vadl.viam.graph.dependency.WriteRegNode;
+import vadl.viam.graph.dependency.ZeroExtendNode;
 
 /**
  * Generic cpp code generator which can be used to emit cpp code for the lcb and qemu.
  */
-public abstract class GenericCppCodeGeneratorVisitor implements GraphNodeVisitor {
+public class GenericCppCodeGeneratorVisitor
+    implements GraphNodeVisitor, CppCodeGenGraphNodeVisitor {
   protected final StringWriter writer;
 
   public GenericCppCodeGeneratorVisitor(StringWriter writer) {
@@ -91,40 +106,60 @@ public abstract class GenericCppCodeGeneratorVisitor implements GraphNodeVisitor
 
   @Override
   public void visit(SliceNode sliceNode) {
-    sliceNode.ensure(sliceNode.bitSlice().isContinuous(), "We only support continuous slices");
-    writer.write("(((");
-    visit(sliceNode.value());
-    writer.write(")");
-    sliceNode.bitSlice().parts().forEach(part -> {
-      /* It is `2` because both borders in [4..0] are included. So 5 bits + 1 bit to make sure
-         that subtraction in the `bitmask` works.
-       */
-      int msbOffset = 2;
-      if (part.lsb() > 0) {
-        writer.write(
-            " & " + generateBitmask(part.msb() + msbOffset) + " & ~((1 << " + part.lsb()
-                + ") - 1))");
-      } else {
-        /*
-        Example
-                 Slice: [4..0]
-               Max val: 32
-               Bitmask: ((1UL << %d) - 1)
-                   Msb: 4 (decimal)
-        Number of Bit :   7   6   5   4  3 2 1 0 (decimal)
-                   2^x: 128  64  32  16  8 4 2 1 (decimal)
-        Encoding of 32:   0   0   1   0  0 0 0 0 (binary)
-               BitMask:   0   0   1   1  1 1 1 1 (binary)
-           Logical And:   0   0   1   0  0 0 0 0 (binary)
-         */
-        writer.write(
-            " & " + generateBitmask(part.msb() + msbOffset) + ")");
+    var parts = sliceNode.bitSlice().parts().toList();
+    writer.write("(");
+
+    int acc = 0;
+    for (int i = parts.size() - 1; i >= 0; i--) {
+      if (i != parts.size() - 1) {
+        writer.write(" | ");
       }
 
-      // First, we cleared the upper bits
-      // Now, extract the bits by shifting the lowest bits.
-      writer.write(" >> " + part.lsb() + ")");
-    });
+      var part = parts.get(i);
+      var bitWidth = ((BitsType) sliceNode.value().type()).bitWidth();
+      if (part.isIndex()) {
+        writer.write(
+            String.format("project_range<%d, %d>(std::bitset<%d>(", part.lsb(), part.msb(),
+                bitWidth));
+        visit(sliceNode.value()); // same expression
+        writer.write(String.format(")) << %d", acc));
+      } else {
+        writer.write(
+            String.format("project_range<%d, %d>(std::bitset<%d>(", part.lsb(), part.msb(),
+                bitWidth));
+        visit(sliceNode.value()); // same expression
+        writer.write(String.format(")) << %d", acc));
+      }
+
+      acc += part.msb() - part.lsb() + 1;
+    }
+    writer.write(").to_ulong()");
+  }
+
+  @Override
+  public void visit(CppUpdateBitRangeNode cppUpdateBitRangeNode) {
+    var bitWidth = ((BitsType) cppUpdateBitRangeNode.type()).bitWidth();
+    writer.write("set_bits(");
+
+    // Inst
+    writer.write(String.format("std::bitset<%d>(", bitWidth));
+    visit(cppUpdateBitRangeNode.value);
+    writer.write("), ");
+
+    // New value
+    writer.write(String.format("std::bitset<%d>(", bitWidth));
+    visit(cppUpdateBitRangeNode.patch);
+    writer.write(")");
+
+    // Parts
+    writer.write(", std::vector<int> { ");
+    writer.write(cppUpdateBitRangeNode.field.bitSlice()
+        .stream()
+        .mapToObj(String::valueOf)
+        .collect(Collectors.joining(", ")));
+    writer.write(" } ");
+
+    writer.write(").to_ulong()");
   }
 
   @Override
@@ -224,5 +259,60 @@ public abstract class GenericCppCodeGeneratorVisitor implements GraphNodeVisitor
     // we would need a cast. However,
     // we do not want to create explicit casts by hand.
     expressionNode.accept(this);
+  }
+
+  @Override
+  public void visit(SideEffectNode sideEffectNode) {
+    sideEffectNode.accept(this);
+  }
+
+  @Override
+  public void visit(ZeroExtendNode node) {
+    writer.write("((" + getCppTypeNameByVadlType(node.type()) + ") ");
+    visit(node.value());
+    writer.write(")");
+  }
+
+  @Override
+  public void visit(SignExtendNode node) {
+    writer.write("((" + getCppTypeNameByVadlType(node.type()) + ") ");
+    visit(node.value());
+    writer.write(")");
+  }
+
+  @Override
+  public void visit(TruncateNode node) {
+    if (node.type() instanceof BoolType) {
+      writer.write("((" + getCppTypeNameByVadlType(node.type()) + ") ");
+      visit(node.value());
+      writer.write(" & 0x1)");
+    } else {
+      writer.write("((" + getCppTypeNameByVadlType(node.type()) + ") ");
+      visit(node.value());
+      writer.write(")");
+    }
+  }
+
+  @Override
+  public void visit(CppSignExtendNode node) {
+    visit((SignExtendNode) node);
+
+    if (node.originalType() instanceof BitsType bitsType) {
+      writer.write(" & " + generateBitmask(bitsType.bitWidth()));
+    }
+  }
+
+  @Override
+  public void visit(CppZeroExtendNode node) {
+    visit((ZeroExtendNode) node);
+
+    if (node.originalType() instanceof BitsType bitsType) {
+      writer.write(" & " + generateBitmask(bitsType.bitWidth()));
+    }
+  }
+
+  @Override
+  public void visit(CppTruncateNode node) {
+    visit((TruncateNode) node);
   }
 }
