@@ -28,16 +28,16 @@ std::bitset<N> project_range(std::bitset<N> bits)
 }
 
 [# th:each="function : ${decodeFunctions}" ]
-[(${function})]
+[(${function.value()})]
 [/]
 
 [# th:each="function : ${encodeFunctions}" ]
-[(${function})]
+[(${function.value()})]
 [/]
 
 
 [# th:each="function : ${predicateFunctions}" ]
-[(${function})]
+[(${function.value()})]
 [/]
 
 namespace

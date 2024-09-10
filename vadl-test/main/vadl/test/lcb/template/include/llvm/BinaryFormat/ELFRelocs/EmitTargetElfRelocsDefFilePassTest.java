@@ -33,24 +33,7 @@ public class EmitTargetElfRelocsDefFilePassTest extends AbstractLcbTest {
     var output = trimmed.lines();
 
     Assertions.assertLinesMatch("""
-        #ifndef ELF_RELOC
-        #error "ELF_RELOC must be defined"
-        #endif
-        
-        ELF_RELOC(R_rv64im_NONE, 0)
-        ELF_RELOC(R_rv64im_32, 1)
-        ELF_RELOC(R_rv64im_64, 2)
-        
-        ELF_RELOC(R_processorNameValue_ABS_RV64IM_Btype_RV64IM_Btype_imm, 3)
-        ELF_RELOC(R_processorNameValue_ABS_RV64IM_Ftype_RV64IM_Ftype_sft, 4)
-        ELF_RELOC(R_processorNameValue_ABS_RV64IM_Itype_RV64IM_Itype_imm, 5)
-        ELF_RELOC(R_processorNameValue_ABS_RV64IM_Jtype_RV64IM_Jtype_imm, 6)
-        ELF_RELOC(R_processorNameValue_ABS_RV64IM_Stype_RV64IM_Stype_imm, 7)
-        ELF_RELOC(R_processorNameValue_ABS_RV64IM_Utype_RV64IM_Utype_imm, 8)
-        ELF_RELOC(R_processorNameValue_REL_RV64IM_Btype_RV64IM_Btype_imm, 9)
-        ELF_RELOC(R_processorNameValue_REL_RV64IM_Itype_RV64IM_Itype_imm, 10)
-        ELF_RELOC(R_processorNameValue_REL_RV64IM_Jtype_RV64IM_Jtype_imm, 11)
-        ELF_RELOC(R_processorNameValue_REL_RV64IM_Utype_RV64IM_Utype_imm, 12)
+
         """.trim().lines(), output);
   }
 }

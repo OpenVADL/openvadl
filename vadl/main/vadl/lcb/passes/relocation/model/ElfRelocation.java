@@ -27,10 +27,6 @@ public class ElfRelocation {
     return logicalRelocation;
   }
 
-  public Relocation logicalRelocationFunction() {
-    return logicalRelocation.relocation();
-  }
-
   public CppFunction updateFunction() {
     return logicalRelocation.updateFunction();
   }

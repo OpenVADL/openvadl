@@ -22,7 +22,7 @@ bool [(${namespace})]MCInstExpander::needsExpansion(const MCInst &MCI) const
     {
     // instructions
     [# th:each="instruction : ${pseudoInstructions}" ]
-    case [(${namespace})][(${instruction.pseudoInstruction.identifier.simpleName})]:
+    case [(${namespace})]::[(${instruction.pseudoInstruction.identifier.simpleName})]:
     [/]
         {
             return true;
@@ -42,7 +42,7 @@ bool [(${namespace})]MCInstExpander::isExpandable(const MCInst &MCI) const
     {
     // instructions
     [# th:each="instruction : ${pseudoInstructions}" ]
-        case [(${namespace})][(${instruction.pseudoInstruction.identifier.simpleName})]:
+        case [(${namespace})]::[(${instruction.pseudoInstruction.identifier.simpleName})]:
     [/]
         {
             return true;
@@ -65,7 +65,7 @@ bool [(${namespace})]MCInstExpander::expand(const MCInst &MCI, std::vector<MCIns
         //
 
     [# th:each="instruction : ${pseudoInstructions}" ]
-      case [(${namespace})][(${instruction.pseudoInstruction.identifier.simpleName})]:
+      case [(${namespace})]::[(${instruction.pseudoInstruction.identifier.simpleName})]:
       {
         MCIExpansion = [(${instruction.header})](MCI);
         return true;

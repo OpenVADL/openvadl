@@ -83,6 +83,7 @@ public class EmitDisassemblerCppFilePassTest extends AbstractLcbTest {
         
         
         /* == Immediate Decoding == */
+<<<<<<< HEAD
         
         DecodeStatus decodeRV64IM_Ftype_sft(MCInst &Inst, uint64_t Imm, int64_t Address, const void *Decoder)
         {
@@ -92,12 +93,17 @@ public class EmitDisassemblerCppFilePassTest extends AbstractLcbTest {
             return MCDisassembler::Success;
         }
         DecodeStatus decodeRV64IM_Btype_imm(MCInst &Inst, uint64_t Imm, int64_t Address, const void *Decoder)
+=======
+                
+        DecodeStatus decodeRV3264I_Btype_imm(MCInst &Inst, uint64_t Imm, int64_t Address, const void *Decoder)
+>>>>>>> 00720d84 (lcb: Generated more relocations for pseudo instructions)
         {
             Imm = Imm & 4095;
             Imm = RV64IM_Btype_immS_decode_decode;
             Inst.addOperand(MCOperand::createImm(Imm));
             return MCDisassembler::Success;
         }
+<<<<<<< HEAD
         DecodeStatus decodeRV64IM_Stype_imm(MCInst &Inst, uint64_t Imm, int64_t Address, const void *Decoder)
         {
             Imm = Imm & 4095;
@@ -109,6 +115,12 @@ public class EmitDisassemblerCppFilePassTest extends AbstractLcbTest {
         {
             Imm = Imm & 31;
             Imm = RV64IM_Rtype_shamt_decode_decode;
+=======
+        DecodeStatus decodeRV3264I_Ftype_sft(MCInst &Inst, uint64_t Imm, int64_t Address, const void *Decoder)
+        {
+            Imm = Imm & 63;
+            Imm = RV3264I_Ftype_shamt_decode_decode;
+>>>>>>> 00720d84 (lcb: Generated more relocations for pseudo instructions)
             Inst.addOperand(MCOperand::createImm(Imm));
             return MCDisassembler::Success;
         }
@@ -119,6 +131,7 @@ public class EmitDisassemblerCppFilePassTest extends AbstractLcbTest {
             Inst.addOperand(MCOperand::createImm(Imm));
             return MCDisassembler::Success;
         }
+<<<<<<< HEAD
         DecodeStatus decodeRV64IM_Utype_imm(MCInst &Inst, uint64_t Imm, int64_t Address, const void *Decoder)
         {
             Imm = Imm & 1048575;
@@ -127,15 +140,45 @@ public class EmitDisassemblerCppFilePassTest extends AbstractLcbTest {
             return MCDisassembler::Success;
         }
         DecodeStatus decodeRV64IM_Jtype_imm(MCInst &Inst, uint64_t Imm, int64_t Address, const void *Decoder)
+=======
+        DecodeStatus decodeRV3264I_Jtype_imm(MCInst &Inst, uint64_t Imm, int64_t Address, const void *Decoder)
+>>>>>>> 00720d84 (lcb: Generated more relocations for pseudo instructions)
         {
             Imm = Imm & 1048575;
             Imm = RV64IM_Jtype_immS_decode_decode;
             Inst.addOperand(MCOperand::createImm(Imm));
             return MCDisassembler::Success;
         }
+<<<<<<< HEAD
         
         
         
+=======
+        DecodeStatus decodeRV3264I_Rtype_rs2(MCInst &Inst, uint64_t Imm, int64_t Address, const void *Decoder)
+        {
+            Imm = Imm & 31;
+            Imm = RV3264I_Rtype_shamt_decode_decode;
+            Inst.addOperand(MCOperand::createImm(Imm));
+            return MCDisassembler::Success;
+        }
+        DecodeStatus decodeRV3264I_Stype_imm(MCInst &Inst, uint64_t Imm, int64_t Address, const void *Decoder)
+        {
+            Imm = Imm & 4095;
+            Imm = RV3264I_Stype_immS_decode_decode;
+            Inst.addOperand(MCOperand::createImm(Imm));
+            return MCDisassembler::Success;
+        }
+        DecodeStatus decodeRV3264I_Utype_imm(MCInst &Inst, uint64_t Imm, int64_t Address, const void *Decoder)
+        {
+            Imm = Imm & 1048575;
+            Imm = RV3264I_Utype_immU_decode_decode;
+            Inst.addOperand(MCOperand::createImm(Imm));
+            return MCDisassembler::Success;
+        }
+                
+                
+                
+>>>>>>> 00720d84 (lcb: Generated more relocations for pseudo instructions)
         static DecodeStatus DecodeXRegisterClass
             ( MCInst &Inst
             , uint64_t RegNo

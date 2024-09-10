@@ -4,6 +4,7 @@ import java.io.IOException;
 import java.util.IdentityHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.stream.Stream;
 import vadl.configuration.LcbConfiguration;
 import vadl.cppCodeGen.model.CppFunction;
 import vadl.cppCodeGen.model.CppFunctionCode;
@@ -59,8 +60,9 @@ public class EmitMCInstExpanderCppFilePass extends LcbTemplateRenderingPass {
       IdentityHashMap<Format.Field, VariantKind> variants,
       List<ElfRelocation> relocations,
       PassResults passResults) {
-    return specification.isas()
-        .flatMap(isa -> isa.ownPseudoInstructions().stream())
+    return specification
+        .isa()
+        .map(isa -> isa.ownPseudoInstructions().stream()).orElseGet(Stream::empty)
         .map(pseudoInstruction -> {
           var codeGen =
               new PseudoExpansionCodeGenerator(lcbConfiguration().processorName().value(),
@@ -92,6 +94,7 @@ public class EmitMCInstExpanderCppFilePass extends LcbTemplateRenderingPass {
         (List<ElfRelocation>) passResults.lastResultOf(GenerateElfRelocationPass.class);
     return Map.of(CommonVarNames.NAMESPACE, specification.name(),
         "pseudoInstructions",
-        pseudoInstructions(specification, wrapped, fieldUsages, variants, relocations, passResults));
+        pseudoInstructions(specification, wrapped, fieldUsages, variants, relocations,
+            passResults));
   }
 }

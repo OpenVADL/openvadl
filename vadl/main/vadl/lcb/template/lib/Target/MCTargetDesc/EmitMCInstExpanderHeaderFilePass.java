@@ -4,6 +4,7 @@ import java.io.IOException;
 import java.util.IdentityHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.stream.Stream;
 import vadl.configuration.LcbConfiguration;
 import vadl.cppCodeGen.model.CppFunction;
 import vadl.gcb.passes.pseudo.PseudoExpansionFunctionGeneratorPass;
@@ -48,8 +49,8 @@ public class EmitMCInstExpanderHeaderFilePass extends LcbTemplateRenderingPass {
   private List<RenderedPseudoInstruction> pseudoInstructions(Specification specification,
                                                              IdentityHashMap<PseudoInstruction, CppFunction> cppFunctions
   ) {
-    return specification.isas()
-        .flatMap(isa -> isa.ownPseudoInstructions().stream())
+    return specification.isa()
+        .map(x -> x.ownPseudoInstructions().stream()).orElseGet(Stream::empty)
         .map(x -> new RenderedPseudoInstruction(
             ensureNonNull(cppFunctions.get(x), "cppFunction must exist").functionName().lower(),
             x

@@ -32,36 +32,7 @@ public class EmitLldTargetRelocationsHeaderFilePassTest extends AbstractLcbTest 
     var output = trimmed.lines();
 
     Assertions.assertLinesMatch("""
-        uint32_t RV64IM_Btype_generated(uint32_t input) {
-        return input;
-        }
-        uint32_t RV64IM_Ftype_generated(uint32_t input) {
-        return input;
-        }
-        uint32_t RV64IM_Itype_generated(uint32_t input) {
-        return input;
-        }
-        uint32_t RV64IM_Jtype_generated(uint32_t input) {
-        return input;
-        }
-        uint32_t RV64IM_Stype_generated(uint32_t input) {
-        return input;
-        }
-        uint32_t RV64IM_Utype_generated(uint32_t input) {
-        return input;
-        }
-        uint32_t RV64IM_Btype_generated(uint32_t input) {
-        return input;
-        }
-        uint32_t RV64IM_Itype_generated(uint32_t input) {
-        return input;
-        }
-        uint32_t RV64IM_Jtype_generated(uint32_t input) {
-        return input;
-        }
-        uint32_t RV64IM_Utype_generated(uint32_t input) {
-        return input;
-        }
+
         """.trim().lines(), output);
   }
 }

@@ -2,6 +2,7 @@ package vadl.gcb.passes.pseudo;
 
 import java.io.IOException;
 import java.util.IdentityHashMap;
+import java.util.stream.Stream;
 import org.jetbrains.annotations.Nullable;
 import vadl.configuration.GeneralConfiguration;
 import vadl.cppCodeGen.model.CppFunction;
@@ -41,8 +42,8 @@ public class PseudoExpansionFunctionGeneratorPass extends Pass {
   public Object execute(PassResults passResults, Specification viam) throws IOException {
     var result = new IdentityHashMap<PseudoInstruction, CppFunction>();
 
-    viam.isas()
-        .flatMap(isa -> isa.ownPseudoInstructions().stream())
+    viam.isa()
+        .map(isa -> isa.ownPseudoInstructions().stream()).orElseGet(Stream::empty)
         .forEach(pseudoInstruction -> {
           var ty = new CppType("MCInst", true, true);
           var param = new CppParameter(new Identifier("instruction",

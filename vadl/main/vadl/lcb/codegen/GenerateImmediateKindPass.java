@@ -3,6 +3,7 @@ package vadl.lcb.codegen;
 import java.io.IOException;
 import java.util.Arrays;
 import java.util.IdentityHashMap;
+import java.util.stream.Stream;
 import org.jetbrains.annotations.Nullable;
 import vadl.configuration.GeneralConfiguration;
 import vadl.cppCodeGen.model.VariantKind;
@@ -38,8 +39,8 @@ public class GenerateImmediateKindPass extends Pass {
     var fieldUsages = (DetectImmediatePass.ImmediateDetectionContainer) passResults.lastResultOf(
         DetectImmediatePass.class);
 
-    viam.isas()
-        .flatMap(isa -> isa.ownFormats().stream())
+    viam.isa()
+        .map(isa -> isa.ownFormats().stream()).orElseGet(Stream::empty)
         .flatMap(format -> Arrays.stream(format.fields()))
         .filter(field -> {
           var usage = fieldUsages.get(field.format()).get(field);

@@ -101,6 +101,35 @@ public class EncodingCodeGeneratorCppVerificationTest extends AbstractCppCodeGen
     String cppCode = String.format("""
             #include <cstdint>
             #include <iostream>
+            #include <bitset>
+            #include <vector>
+            
+            template<int start, int end, std::size_t N>
+            std::bitset<N> project_range(std::bitset<N> bits)
+            {
+                std::bitset<N> result;
+                size_t result_index = 0; // Index for the new bitset
+                        
+                // Extract bits from the range [start, end]
+                for (size_t i = start; i <= end; ++i) {
+                  result[result_index] = bits[i];
+                  result_index++;
+                }
+                        
+                return result;
+            }
+                        
+            template<std::size_t N, std::size_t M>
+            std::bitset<N> set_bits(std::bitset<N> dest, const std::bitset<M> source, std::vector<int> bits) {
+                auto target = 0;
+                for (int i = bits.size() - 1; i >= 0 ; --i) {
+                    auto j = bits[target];
+                    dest.set(j, source[i]);
+                    target++;
+                }
+                
+                return dest;
+            }
                         
             %s 
                         
@@ -118,8 +147,8 @@ public class EncodingCodeGeneratorCppVerificationTest extends AbstractCppCodeGen
               }
             }
             """,
-        decodeFunction,
-        encodeFunction,
+        decodeFunction.value(),
+        encodeFunction.value(),
         expectedReturnType,
         sample,
         encodingFunction.identifier.lower(),

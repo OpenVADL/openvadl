@@ -5,10 +5,13 @@ import static vadl.lcb.template.utils.ImmediateEncodingFunctionProvider.generate
 import static vadl.lcb.template.utils.ImmediatePredicateFunctionProvider.generatePredicateFunctions;
 
 import java.io.IOException;
+import java.util.Comparator;
 import java.util.Map;
 import vadl.configuration.LcbConfiguration;
 import vadl.cppCodeGen.model.CppFunction;
+import vadl.cppCodeGen.model.CppFunctionCode;
 import vadl.cppCodeGen.model.CppFunctionName;
+import vadl.lcb.codegen.CodeGenerator;
 import vadl.lcb.template.CommonVarNames;
 import vadl.lcb.template.LcbTemplateRenderingPass;
 import vadl.pass.PassResults;
@@ -40,9 +43,18 @@ public abstract class AbstractEmitImmediateFilePass extends LcbTemplateRendering
         .toList();
 
     return Map.of(CommonVarNames.NAMESPACE, specification.name(),
-        "decodeFunctions", decodeFunctions,
+        "decodeFunctions",
+        decodeFunctions.values().stream().map(x -> new CodeGenerator().generateFunction(x))
+            .sorted(Comparator.comparing(CppFunctionCode::value))
+            .toList(),
         "decodeFunctionNames", decodeFunctionNames,
-        "encodeFunctions", encodeFunctions,
-        "predicateFunctions", predicateFunctions);
+        "encodeFunctions",
+        encodeFunctions.values().stream().map(x -> new CodeGenerator().generateFunction(x))
+            .sorted(Comparator.comparing(CppFunctionCode::value))
+            .toList(),
+        "predicateFunctions", predicateFunctions.values().stream()
+            .map(x -> new CodeGenerator().generateFunction(x))
+            .sorted(Comparator.comparing(CppFunctionCode::value))
+            .toList());
   }
 }

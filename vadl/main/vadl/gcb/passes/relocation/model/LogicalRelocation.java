@@ -5,7 +5,6 @@ import vadl.cppCodeGen.model.CppFunction;
 import vadl.cppCodeGen.model.VariantKind;
 import vadl.utils.SourceLocation;
 import vadl.viam.Format;
-import vadl.viam.Function;
 import vadl.viam.Identifier;
 import vadl.viam.Parameter;
 import vadl.viam.Relocation;
@@ -31,6 +30,7 @@ public class LogicalRelocation {
 
   private final Format format;
   private final Relocation relocation;
+  private final CppFunction cppRelocation;
   private final Format.Field immediate;
   private final CppFunction updateFunction;
   private final VariantKind variantKind;
@@ -38,16 +38,19 @@ public class LogicalRelocation {
   /**
    * Constructor.
    */
-  public LogicalRelocation(Relocation relocation,
-                           Format.Field field,
-                           Format format,
-                           CppFunction updateFunction) {
-    this.kind = relocation.isAbsolute() ? Kind.ABSOLUTE : Kind.RELATIVE;
+  public LogicalRelocation(
+      Relocation originalRelocation,
+      CppFunction relocation,
+      Format.Field field,
+      Format format,
+      CppFunction updateFunction) {
+    this.relocation = originalRelocation;
+    this.kind = originalRelocation.isAbsolute() ? Kind.ABSOLUTE : Kind.RELATIVE;
     this.format = format;
-    this.relocation = relocation;
+    this.cppRelocation = relocation;
     this.immediate = field;
     this.updateFunction = updateFunction;
-    this.variantKind = new VariantKind(relocation);
+    this.variantKind = new VariantKind(originalRelocation);
   }
 
   /**
@@ -63,12 +66,13 @@ public class LogicalRelocation {
     this.format = format;
     var parameter = new Parameter(new Identifier("input", SourceLocation.INVALID_SOURCE_LOCATION),
         format.type());
-    this.relocation = new Relocation(format.identifier.append(".generated"),
+    this.relocation = new Relocation(immediate.identifier,
         new Parameter[] {parameter},
         format.type());
+    this.cppRelocation = new CppFunction(relocation, "relocation");
     this.immediate = immediate;
     // Add a single return
-    this.relocation.behavior().addWithInputs(new ReturnNode(new FuncParamNode(parameter)));
+    this.cppRelocation.behavior().addWithInputs(new ReturnNode(new FuncParamNode(parameter)));
     this.variantKind = new VariantKind(relocation);
   }
 
@@ -85,6 +89,10 @@ public class LogicalRelocation {
    */
   public Relocation relocation() {
     return relocation;
+  }
+
+  public CppFunction cppRelocation() {
+    return cppRelocation;
   }
 
   /**

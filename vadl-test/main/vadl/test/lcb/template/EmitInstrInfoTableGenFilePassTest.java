@@ -44,6 +44,7 @@ public class EmitInstrInfoTableGenFilePassTest extends AbstractLcbTest {
         
         class RV64IM_Itype_immS_decode<ValueType ty> : Operand<ty>
         {
+<<<<<<< HEAD
           let EncoderMethod = "RV64IM_Itype_immS_decode_encode";
           let DecoderMethod = "RV64IM_Itype_immS_decode_decode";
         }
@@ -78,6 +79,42 @@ public class EmitInstrInfoTableGenFilePassTest extends AbstractLcbTest {
         
         
         
+=======
+          let EncoderMethod = "RV3264I_Itype_immS_encoding";
+          let DecoderMethod = "RV3264I_Itype_immS_decode";
+        }
+                
+        def RV3264I_Itype_immS_decodeAsInt64
+            : RV3264I_Itype_immS_decode<i64>
+            , ImmLeaf<i64, [{ return RV3264I_Itype_immS_predicate(Imm); }]>;
+                
+                
+        class RV3264I_Btype_immS_decode<ValueType ty> : Operand<ty>
+        {
+          let EncoderMethod = "RV3264I_Btype_immS_encoding";
+          let DecoderMethod = "RV3264I_Btype_immS_decode";
+        }
+                
+        def RV3264I_Btype_immS_decodeAsInt64
+            : RV3264I_Btype_immS_decode<i64>
+            , ImmLeaf<i64, [{ return RV3264I_Btype_immS_predicate(Imm); }]>;
+                
+                
+        class RV3264I_Stype_immS_decode<ValueType ty> : Operand<ty>
+        {
+          let EncoderMethod = "RV3264I_Stype_immS_encoding";
+          let DecoderMethod = "RV3264I_Stype_immS_decode";
+        }
+                
+        def RV3264I_Stype_immS_decodeAsInt64
+            : RV3264I_Stype_immS_decode<i64>
+            , ImmLeaf<i64, [{ return RV3264I_Stype_immS_predicate(Imm); }]>;
+                
+                
+                
+                
+                
+>>>>>>> 00720d84 (lcb: Generated more relocations for pseudo instructions)
         def ADD : Instruction
         {
         let Namespace = "processorNameValue";

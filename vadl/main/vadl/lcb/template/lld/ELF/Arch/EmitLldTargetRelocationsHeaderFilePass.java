@@ -45,7 +45,7 @@ public class EmitLldTargetRelocationsHeaderFilePass extends LcbTemplateRendering
             .map(relocation -> {
               var generator = new CodeGenerator();
               return generator.generateFunction(
-                  new CppFunction(relocation.logicalRelocationFunction(), "relocation"));
+                  relocation.logicalRelocation().cppRelocation());
             }).toList());
   }
 }

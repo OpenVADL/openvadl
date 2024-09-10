@@ -192,9 +192,9 @@ public class RelocationCodeGeneratorCppVerificationTest extends AbstractLcbTest 
               }
             }
             """,
-        extractionFunctionCodeGenerator.generateFunction(normalisedImmediateExtractionFunction),
+        extractionFunctionCodeGenerator.generateFunction(normalisedImmediateExtractionFunction).value(),
         relocationOverrideFunctionCodeGenerator.generateFunction(
-            relocation.logicalRelocation().updateFunction()),
+            relocation.logicalRelocation().updateFunction()).value(),
         CppTypeMap.getCppTypeNameByVadlType(normalisedImmediateExtractionFunction.returnType()),
         updatedValue,
         extractionFunctionName,

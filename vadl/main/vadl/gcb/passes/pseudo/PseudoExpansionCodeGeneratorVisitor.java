@@ -69,7 +69,7 @@ public class PseudoExpansionCodeGeneratorVisitor extends GenericCppCodeGenerator
         ensure(fn.function() instanceof Relocation, "function must be a relocation");
         lowerExpressionWithRelocation(sym, field, index, (Relocation) fn.function());
       } else if (argument instanceof FuncParamNode) {
-        lowerExpressionWithImm(sym, field, index);
+        lowerExpressionWithImmOrRegister(sym, field, index);
       } else {
         throw new RuntimeException("not implemented");
       }
@@ -122,25 +122,37 @@ public class PseudoExpansionCodeGeneratorVisitor extends GenericCppCodeGenerator
         argumentRelocationSymbol));
   }
 
-  private void lowerExpressionWithImm(String sym,
-                                      Format.Field field,
-                                      int argumentIndex) {
-    // Here we generate the relocations.
-    var argumentSymbol = symbolTable.getNextVariable();
-    writer.write(
-        String.format("const MCExpr* %s = MCOperandToMCExpr(instruction.getOperand(%d));\n",
-            argumentSymbol,
-            argumentIndex));
+  private void lowerExpressionWithImmOrRegister(String sym,
+                                                Format.Field field,
+                                                int argumentIndex) {
+    var usage = fieldUsages.get(field.format()).get(field);
+    ensure(usage != null, "usage must not be null");
+    switch (usage) {
+      case IMMEDIATE -> {
+        var argumentSymbol = symbolTable.getNextVariable();
+        writer.write(
+            String.format("const MCExpr* %s = MCOperandToMCExpr(instruction.getOperand(%d));\n",
+                argumentSymbol,
+                argumentIndex));
 
-    var argumentImmSymbol = symbolTable.getNextVariable();
-    var variant = immVariants.get(field);
-    ensure(variant != null, "variant must exist");
-    writer.write(
-        String.format("const MCExpr* %s = CPUMCExpr::create(%s, %sMCExpr::VariantKind::%s, Ctx);\n",
-            argumentImmSymbol, argumentSymbol, namespace, variant));
-    writer.write(String.format("%s.addOperand(%s);\n",
-        sym,
-        argumentImmSymbol));
+        var argumentImmSymbol = symbolTable.getNextVariable();
+        var variant = immVariants.get(field);
+        ensure(variant != null, "variant must exist: %s", field.identifier.lower());
+        writer.write(
+            String.format(
+                "const MCExpr* %s = CPUMCExpr::create(%s, %sMCExpr::VariantKind::%s, Ctx);\n",
+                argumentImmSymbol, argumentSymbol, namespace, variant));
+        writer.write(String.format("%s.addOperand(%s);\n",
+            sym,
+            argumentImmSymbol));
+      }
+      case REGISTER -> {
+        writer.write(
+            String.format("%s.addOperand(instruction.getOperand(%d));\n", sym, argumentIndex));
+      }
+    }
+
+
   }
 
   @Override

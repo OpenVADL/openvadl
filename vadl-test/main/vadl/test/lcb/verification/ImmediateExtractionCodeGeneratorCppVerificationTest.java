@@ -160,7 +160,7 @@ public class ImmediateExtractionCodeGeneratorCppVerificationTest extends Abstrac
               }
             }
             """,
-        extractionFunctionCode,
+        extractionFunctionCode.value(),
         CppTypeMap.getCppTypeNameByVadlType(extractFunction.returnType()),
         imm,
         fieldAccess.fieldRef().bitSlice().stream()

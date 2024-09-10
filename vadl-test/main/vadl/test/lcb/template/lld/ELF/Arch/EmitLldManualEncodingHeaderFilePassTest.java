@@ -38,22 +38,37 @@ public class EmitLldManualEncodingHeaderFilePassTest extends AbstractLcbTest {
         #include <bitset>
         #include <vector>
         #include <tuple>
+<<<<<<< HEAD
         
+=======
+                
+>>>>>>> 00720d84 (lcb: Generated more relocations for pseudo instructions)
         template<int start, int end, std::size_t N>
         std::bitset<N> project_range(std::bitset<N> bits)
         {
             std::bitset<N> result;
             size_t result_index = 0; // Index for the new bitset
+<<<<<<< HEAD
         
+=======
+                
+>>>>>>> 00720d84 (lcb: Generated more relocations for pseudo instructions)
             // Extract bits from the range [start, end]
             for (size_t i = start; i <= end; ++i) {
               result[result_index] = bits[i];
             result_index++;
             }
+<<<<<<< HEAD
         
             return result;
         }
         
+=======
+                
+            return result;
+        }
+                
+>>>>>>> 00720d84 (lcb: Generated more relocations for pseudo instructions)
         template<std::size_t N, std::size_t M>
         std::bitset<N> set_bits(std::bitset<N> dest, const std::bitset<M> source, std::vector<int> bits) {
             auto target = 0;
@@ -62,6 +77,7 @@ public class EmitLldManualEncodingHeaderFilePassTest extends AbstractLcbTest {
                 dest.set(j, source[i]);
                 target++;
             }
+<<<<<<< HEAD
         
             return dest;
         }
@@ -69,6 +85,15 @@ public class EmitLldManualEncodingHeaderFilePassTest extends AbstractLcbTest {
         
         
         uint32_t RV64IM_BtypeRV64IM_Btype_imm(uint32_t instWord,uint32_t newValue) {
+=======
+                
+            return dest;
+        }
+                
+                
+                
+        uint32_t RV3264I_BtypeRV3264I_Btype_imm(uint32_t instWord,uint32_t newValue) {
+>>>>>>> 00720d84 (lcb: Generated more relocations for pseudo instructions)
         return set_bits(std::bitset<32>(instWord), std::bitset<32>(newValue), std::vector<int> { 31, 7, 30, 29, 28, 27, 26, 25, 11, 10, 9, 8 } ).to_ulong();
         }
         uint32_t RV64IM_FtypeRV64IM_Ftype_sft(uint32_t instWord,uint32_t newValue) {
@@ -77,7 +102,14 @@ public class EmitLldManualEncodingHeaderFilePassTest extends AbstractLcbTest {
         uint32_t RV64IM_ItypeRV64IM_Itype_imm(uint32_t instWord,uint32_t newValue) {
         return set_bits(std::bitset<32>(instWord), std::bitset<32>(newValue), std::vector<int> { 31, 30, 29, 28, 27, 26, 25, 24, 23, 22, 21, 20 } ).to_ulong();
         }
+<<<<<<< HEAD
         uint32_t RV64IM_JtypeRV64IM_Jtype_imm(uint32_t instWord,uint32_t newValue) {
+=======
+        uint32_t RV3264I_ItypeRV3264I_Itype_imm(uint32_t instWord,uint32_t newValue) {
+        return set_bits(std::bitset<32>(instWord), std::bitset<32>(newValue), std::vector<int> { 31, 30, 29, 28, 27, 26, 25, 24, 23, 22, 21, 20 } ).to_ulong();
+        }
+        uint32_t RV3264I_JtypeRV3264I_Jtype_imm(uint32_t instWord,uint32_t newValue) {
+>>>>>>> 00720d84 (lcb: Generated more relocations for pseudo instructions)
         return set_bits(std::bitset<32>(instWord), std::bitset<32>(newValue), std::vector<int> { 31, 19, 18, 17, 16, 15, 14, 13, 12, 20, 30, 29, 28, 27, 26, 25, 24, 23, 22, 21 } ).to_ulong();
         }
         uint32_t RV64IM_StypeRV64IM_Stype_imm(uint32_t instWord,uint32_t newValue) {
@@ -86,7 +118,14 @@ public class EmitLldManualEncodingHeaderFilePassTest extends AbstractLcbTest {
         uint32_t RV64IM_UtypeRV64IM_Utype_imm(uint32_t instWord,uint32_t newValue) {
         return set_bits(std::bitset<32>(instWord), std::bitset<32>(newValue), std::vector<int> { 31, 30, 29, 28, 27, 26, 25, 24, 23, 22, 21, 20, 19, 18, 17, 16, 15, 14, 13, 12 } ).to_ulong();
         }
+<<<<<<< HEAD
         uint32_t RV64IM_BtypeRV64IM_Btype_imm(uint32_t instWord,uint32_t newValue) {
+=======
+        uint32_t RV3264I_UtypeRV3264I_Utype_imm(uint32_t instWord,uint32_t newValue) {
+        return set_bits(std::bitset<32>(instWord), std::bitset<32>(newValue), std::vector<int> { 31, 30, 29, 28, 27, 26, 25, 24, 23, 22, 21, 20, 19, 18, 17, 16, 15, 14, 13, 12 } ).to_ulong();
+        }
+        uint32_t RV3264I_BtypeRV3264I_Btype_imm(uint32_t instWord,uint32_t newValue) {
+>>>>>>> 00720d84 (lcb: Generated more relocations for pseudo instructions)
         return set_bits(std::bitset<32>(instWord), std::bitset<32>(newValue), std::vector<int> { 31, 7, 30, 29, 28, 27, 26, 25, 11, 10, 9, 8 } ).to_ulong();
         }
         uint32_t RV64IM_ItypeRV64IM_Itype_imm(uint32_t instWord,uint32_t newValue) {
