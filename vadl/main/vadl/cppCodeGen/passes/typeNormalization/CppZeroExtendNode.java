@@ -10,7 +10,7 @@ import vadl.viam.graph.dependency.ZeroExtendNode;
 
 /**
  * VADL and CPP have not the same types. VADL supports arbitrary bit sizes whereas CPP does not.
- * The {@link CppTypeNormalizer} converts these types, however, we want to keep the original
+ * The {@link CppTypeNormalizationPass} converts these types, however, we want to keep the original
  * type information. This class extends the {@link ZeroExtendNode}. So the {@link ZeroExtendNode}
  * contains the upcasted type and this {@link CppZeroExtendNode} has a member for the
  * {@code originalType}.

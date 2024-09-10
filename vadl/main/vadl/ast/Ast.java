@@ -28,8 +28,8 @@ public class Ast {
    * Convert the tree back into sourcecode.
    * The generated sourcecode might look quite different but is semantically equal. Some notable
    * details are however:
-   * - All macros are expanded and macro definitions are no longer in the tree.
-   * - Grouping with parenthesis might be lost.
+   * <li> All macros are expanded and macro definitions are no longer in the tree.
+   * <li> Grouping with parenthesis might be lost.
    *
    * @return a source code resulting in the same AST.
    */
