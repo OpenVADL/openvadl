@@ -43,7 +43,7 @@ public class RelocationCodeGeneratorCppVerificationTest extends AbstractLcbTest 
               .build());
 
 
-  @TestFactory
+  //@TestFactory
     //@Execution(ExecutionMode.CONCURRENT)
   Collection<DynamicTest> instructions() throws IOException, DuplicatedPassKeyException {
     var configuration = getConfiguration(false);

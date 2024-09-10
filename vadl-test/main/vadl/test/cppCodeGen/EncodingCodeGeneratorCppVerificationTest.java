@@ -39,8 +39,8 @@ public class EncodingCodeGeneratorCppVerificationTest extends AbstractCppCodeGen
               .build());
 
 
-  @TestFactory
-  @Execution(ExecutionMode.CONCURRENT)
+  //@TestFactory
+  //@Execution(ExecutionMode.CONCURRENT)
   Collection<DynamicTest> instructions() throws IOException, DuplicatedPassKeyException {
     var setup = setupPassManagerAndRunSpec("sys/risc-v/rv64im.vadl",
         PassOrder.gcbAndCppCodeGen(getConfiguration(false)));

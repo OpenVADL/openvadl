@@ -3,6 +3,7 @@ package vadl.cppCodeGen;
 import static vadl.cppCodeGen.CppTypeMap.getCppTypeNameByVadlType;
 
 import java.io.StringWriter;
+import java.util.Collections;
 import java.util.Objects;
 import vadl.cppCodeGen.model.CppUpdateBitRangeNode;
 import vadl.cppCodeGen.passes.typeNormalization.CppSignExtendNode;
@@ -106,8 +107,10 @@ public class GenericCppCodeGeneratorVisitor
   public void visit(SliceNode sliceNode) {
     var parts = sliceNode.bitSlice().parts().toList();
     writer.write("(");
-    for (int i = 0; i < parts.size(); i++) {
-      if (i != 0) {
+
+    int acc = 0;
+    for (int i = parts.size() - 1; i >= 0; i--) {
+      if (i != parts.size() - 1) {
         writer.write(" | ");
       }
 
@@ -115,18 +118,21 @@ public class GenericCppCodeGeneratorVisitor
       var bitWidth = ((BitsType) sliceNode.value().type()).bitWidth();
       if (part.isIndex()) {
         writer.write(
-            String.format("std::bitset<%d>(", bitWidth));
+            String.format("project_range<%d, %d>(std::bitset<%d>(", part.lsb(), part.msb(),
+                bitWidth));
         visit(sliceNode.value()); // same expression
-        writer.write(String.format(").test(%d)", part.lsb()));
+        writer.write(String.format(")) << %d", acc));
       } else {
         writer.write(
             String.format("project_range<%d, %d>(std::bitset<%d>(", part.lsb(), part.msb(),
                 bitWidth));
         visit(sliceNode.value()); // same expression
-        writer.write(")).to_ulong()");
+        writer.write(String.format(")) << %d", acc));
       }
+
+      acc += part.msb() - part.lsb() + 1;
     }
-    writer.write(")");
+    writer.write(").to_ulong()");
   }
 
   @Override
@@ -144,7 +150,7 @@ public class GenericCppCodeGeneratorVisitor
     visit(cppUpdateBitRangeNode.patch);
     writer.write(")");
 
-    // Pairs
+    // Parts
     cppUpdateBitRangeNode.field.bitSlice().parts().forEach(part -> {
       writer.write(String.format(", std::make_pair(%d, %d)", part.lsb(), part.msb()));
     });
