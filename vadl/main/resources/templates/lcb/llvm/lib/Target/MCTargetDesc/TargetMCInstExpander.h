@@ -29,19 +29,9 @@ namespace llvm
         // instruction expansion method
         //
 
-        «IF expandableInstructions.size > 0»
-                        «FOR instruction : expandableInstructions»
-                                                std::vector<MCInst> «emitExpandMethodName(instruction)»(const MCInst &instruction) const;
-        «ENDFOR»
-                    «ENDIF»
-
-            //
-            // sequence expansion method
-            //
-
-                    «FOR instruction : abiInstructions»
-                        «cppEmitter.emitMethodDeclaration(instruction.MCInstExpanderMethod)»
-                    «ENDFOR»
+        [# th:each="instruction : ${pseudoInstructions}" ]
+        std::vector<MCInst> [(${instruction.header})]( const MCInst& instruction ) const;
+        [/]
     };
 }
 
