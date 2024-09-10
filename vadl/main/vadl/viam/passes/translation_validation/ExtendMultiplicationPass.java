@@ -7,6 +7,7 @@ import static vadl.types.BuiltInTable.UMULL;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Objects;
+import java.util.stream.Stream;
 import org.jetbrains.annotations.Nullable;
 import vadl.configuration.GeneralConfiguration;
 import vadl.pass.Pass;
@@ -44,8 +45,8 @@ public class ExtendMultiplicationPass extends Pass {
   public Object execute(PassResults passResults, Specification viam)
       throws IOException {
     ArrayList<Triple<BuiltInCall, ExpressionNode, Node>> worklist = new ArrayList<>();
-    viam.isas()
-        .flatMap(isa -> isa.ownInstructions().stream())
+    viam.isa().map(isa -> isa.ownInstructions().stream())
+        .orElse(Stream.empty())
         .flatMap(instruction -> instruction.behavior().getNodes(BuiltInCall.class))
         .forEach(builtinCall -> {
           if (builtinCall.builtIn() == SMULL

@@ -3,8 +3,10 @@ package vadl.test.viam.algebraic_simplification;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.List;
 import java.util.function.Function;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 import org.junit.jupiter.api.DynamicTest;
 import org.junit.jupiter.api.TestFactory;
 import org.junit.jupiter.api.parallel.Execution;
@@ -15,6 +17,7 @@ import org.testcontainers.images.builder.ImageFromDockerfile;
 import vadl.pass.PassResults;
 import vadl.test.DockerExecutionTest;
 import vadl.viam.Instruction;
+import vadl.viam.InstructionSetArchitecture;
 import vadl.viam.Specification;
 import vadl.viam.passes.algebraic_simplication.AlgebraicSimplificationPass;
 import vadl.viam.passes.functionInliner.FunctionInlinerPass;
@@ -57,9 +60,11 @@ public class AlgebraicSimplificationTest extends DockerExecutionTest {
     new ExplicitBitSizesInTypingPass(configuration).execute(PassResults.empty(), spec);
 
     var allBeforeInstructions =
-        initialSpec.isas().flatMap(x -> x.ownInstructions().stream()).toList();
-    var allAfterInstructions = spec.isas().flatMap(x -> x.ownInstructions().stream()).collect(
-        Collectors.toMap(Instruction::name, Function.identity()));
+        initialSpec.isa().map(InstructionSetArchitecture::ownInstructions).orElseGet(List::of);
+    var allAfterInstructions =
+        spec.isa().map(x -> x.ownInstructions().stream())
+            .orElse(Stream.empty())
+            .collect(Collectors.toMap(Instruction::name, Function.identity()));
 
     // When
     var pass = new AlgebraicSimplificationPass(configuration);

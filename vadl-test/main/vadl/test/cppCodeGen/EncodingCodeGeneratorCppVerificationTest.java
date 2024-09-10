@@ -5,6 +5,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.IdentityHashMap;
+import java.util.stream.Stream;
 import net.jqwik.api.Arbitraries;
 import net.jqwik.api.Arbitrary;
 import org.junit.jupiter.api.DynamicTest;
@@ -54,7 +55,8 @@ public class EncodingCodeGeneratorCppVerificationTest extends AbstractCppCodeGen
         (IdentityHashMap<Function, Function>) passManager.getPassResults()
             .lastResultOf(CppTypeNormalizationForEncodingsPass.class);
 
-    var entries = spec.isas().flatMap(isa -> isa.ownFormats().stream())
+    var entries = spec.isa().map(isa -> isa.ownFormats().stream())
+        .orElse(Stream.empty())
         .flatMap(format -> Arrays.stream(format.fieldAccesses()))
         .map(
             fieldAccess -> {

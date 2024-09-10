@@ -1,6 +1,8 @@
 package vadl.lcb.codegen.docker;
 
 import java.io.IOException;
+import org.junit.jupiter.api.parallel.Execution;
+import org.junit.jupiter.api.parallel.ExecutionMode;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.MethodSource;
 import org.slf4j.Logger;
@@ -13,6 +15,7 @@ import vadl.viam.Format;
 import vadl.viam.Function;
 import vadl.viam.graph.control.ReturnNode;
 
+@Execution(ExecutionMode.CONCURRENT)
 public class EncodingCodeGeneratorSymbolicVerificationTest extends DockerExecutionTest {
   private static final Logger logger =
       LoggerFactory.getLogger(EncodingCodeGeneratorSymbolicVerificationTest.class);
@@ -56,12 +59,12 @@ public class EncodingCodeGeneratorSymbolicVerificationTest extends DockerExecuti
     var generatedEncodeWithDecodeFunctionCode = visitorEncode.getResult();
     String z3Code = String.format("""
             from z3 import *
-                    
+            
             x = BitVec('x', %d) # field
-                    
+            
             f_x = %s
             f_z = %s
-                        
+            
             def prove(f):
                 s = Solver()
                 s.add(Not(f))
@@ -71,7 +74,7 @@ public class EncodingCodeGeneratorSymbolicVerificationTest extends DockerExecuti
                 else:
                     print("failed to prove")
                     exit(1)
-                    
+            
             prove(x == f_z)
             """, fieldAccess.fieldRef().bitSlice().bitSize(),
         generatedDecodeFunctionCode,

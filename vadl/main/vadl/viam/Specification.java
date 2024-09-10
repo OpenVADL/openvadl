@@ -3,7 +3,9 @@ package vadl.viam;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
+import java.util.Optional;
 import java.util.stream.Stream;
+import org.jetbrains.annotations.Nullable;
 
 /**
  * The Specification is the root of the VIAM, as it contains all other definitions of a
@@ -28,14 +30,15 @@ public class Specification extends Definition {
   }
 
   /**
-   * Returns all instruction set architectures as stream.
+   * Returns the instruction set architecture of the specification.
    */
-  public Stream<InstructionSetArchitecture> isas() {
+  public Optional<InstructionSetArchitecture> isa() {
     return definitions()
         .filter(InstructionSetArchitecture.class::isInstance)
-        .map(InstructionSetArchitecture.class::cast);
+        .map(InstructionSetArchitecture.class::cast)
+        .findFirst();
   }
-
+  
   /**
    * Returns all global format definitions as stream.
    */
@@ -49,8 +52,9 @@ public class Specification extends Definition {
    * Returns all registers as stream.
    */
   public Stream<Register> registers() {
-    return isas()
-        .flatMap(x -> x.ownRegisters().stream())
+    return isa()
+        .map(x -> x.ownRegisters().stream())
+        .orElseGet(Stream::empty)
         .map(Register.class::cast);
   }
 
@@ -58,8 +62,9 @@ public class Specification extends Definition {
    * Returns all register files as stream.
    */
   public Stream<RegisterFile> registerFiles() {
-    return isas()
-        .flatMap(x -> x.ownRegisterFiles().stream())
+    return isa()
+        .map(x -> x.ownRegisterFiles().stream())
+        .orElseGet(Stream::empty)
         .map(RegisterFile.class::cast);
   }
 

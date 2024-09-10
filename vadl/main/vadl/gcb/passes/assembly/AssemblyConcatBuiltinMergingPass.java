@@ -3,6 +3,7 @@ package vadl.gcb.passes.assembly;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.stream.Stream;
 import org.jetbrains.annotations.Nullable;
 import vadl.configuration.GeneralConfiguration;
 import vadl.pass.Pass;
@@ -36,8 +37,9 @@ public class AssemblyConcatBuiltinMergingPass extends Pass {
     // It is a candidate when it is a builtin with concatenate string
     // and all users are not concatenate string (so it is a "root")
     // and one argument is also a builtin with concatenate string.
-    var candidates = viam.isas()
-        .flatMap(isa -> isa.ownInstructions().stream())
+    var candidates = viam.isa()
+        .map(isa -> isa.ownInstructions().stream())
+        .orElseGet(Stream::empty)
         .flatMap(
             instruction -> instruction.assembly().function().behavior().getNodes(BuiltInCall.class))
         .filter(builtin -> builtin.builtIn() == BuiltInTable.CONCATENATE_STRINGS)

@@ -28,8 +28,8 @@ public class CppTypeNormalizationForDecodingsPass extends CppTypeNormalizationPa
 
   @Override
   protected Stream<Function> getApplicable(Specification viam) {
-    return viam.isas()
-        .flatMap(x -> x.ownFormats().stream())
+    return viam.isa()
+        .map(x -> x.ownFormats().stream()).orElseGet(Stream::empty)
         .flatMap(x -> Arrays.stream(x.fieldAccesses()))
         .map(Format.FieldAccess::accessFunction)
         .filter(Objects::nonNull);

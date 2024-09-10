@@ -108,88 +108,89 @@ public class IsaMatchingPass extends Pass {
     Objects.requireNonNull(uninlined);
     HashMap<InstructionLabel, List<Instruction>> matched = new HashMap<>();
 
-    viam.isas()
-        .forEach(isa -> {
-          // TODO: @kper : Support RegisterFileCounters
+    var isa = viam.isa().orElse(null);
+    if (isa == null) {
+      return matched;
+    }
 
-          ensure(isa.pc() instanceof Counter.RegisterCounter,
-              "Only counter to single registers are supported.");
-          var pc = (Counter.RegisterCounter) isa.pc();
+    // TODO: @kper : Support RegisterFileCounters
+    ensure(isa.pc() instanceof Counter.RegisterCounter,
+        "Only counter to single registers are supported.");
+    var pc = (Counter.RegisterCounter) isa.pc();
 
-          isa.ownInstructions().forEach(instruction -> {
-            // Get uninlined or the normal behavior if nothing was uninlined.
-            var behavior = uninlined.get(instruction);
-            ensureNonNull(behavior, "IsaMatching must happen on the uninlined graph");
+    isa.ownInstructions().forEach(instruction -> {
+      // Get uninlined or the normal behavior if nothing was uninlined.
+      var behavior = uninlined.get(instruction);
+      ensureNonNull(behavior, "IsaMatching must happen on the uninlined graph");
 
-            // Some are typed and some aren't.
-            // The reason is that most of the time we do not care because
-            // the instruction selection will figure out the types anyway.
-            // The raw cases where we need the type are typed like addition.
-            if (findAdd32Bit(behavior)) {
-              matched.put(InstructionLabel.ADD_32, List.of(instruction));
-            } else if (findAdd64Bit(behavior)) {
-              matched.put(InstructionLabel.ADD_64, List.of(instruction));
-            } else if (findAddWithImmediate32Bit(behavior)) {
-              matched.put(InstructionLabel.ADDI_32, List.of(instruction));
-            } else if (findAddWithImmediate64Bit(behavior)) {
-              matched.put(InstructionLabel.ADDI_64, List.of(instruction));
-            } else if (findRR_OR_findRI(behavior, SUB)) {
-              extend(matched, InstructionLabel.SUB, instruction);
-            } else if (findRR_OR_findRI(behavior, List.of(SUBB, SUBSB))) {
-              extend(matched, InstructionLabel.SUBB, instruction);
-            } else if (findRR_OR_findRI(behavior, List.of(SUBC, SUBSC))) {
-              extend(matched, InstructionLabel.SUBC, instruction);
-            } else if (findRR_OR_findRI(behavior, List.of(AND, ANDS))) {
-              extend(matched, InstructionLabel.AND, instruction);
-            } else if (findRR_OR_findRI(behavior, List.of(OR, ORS))) {
-              extend(matched, InstructionLabel.OR, instruction);
-            } else if (findRR(behavior, List.of(XOR, XORS))) {
-              extend(matched, InstructionLabel.XOR, instruction);
-            } else if (findRI(behavior, List.of(XOR, XORS))) {
-              // Here is an exception:
-              // Usually, it is good enough to group RR and RI together.
-              // However, when generating alternative patterns for conditionals,
-              // then we need the XORI instruction. Therefore, we put it extra.
-              extend(matched, InstructionLabel.XORI, instruction);
-            } else if (findRR_OR_findRI(behavior, List.of(MUL, SMULL, SMULLS))) {
-              extend(matched, InstructionLabel.MUL, instruction);
-            } else if (findRR_OR_findRI(behavior, List.of(SDIV, SDIVS))) {
-              extend(matched, InstructionLabel.SDIV, instruction);
-            } else if (findRR_OR_findRI(behavior, List.of(UDIV, UDIVS))) {
-              extend(matched, InstructionLabel.UDIV, instruction);
-            } else if (findRR_OR_findRI(behavior, List.of(SMOD, SMODS))) {
-              extend(matched, InstructionLabel.SMOD, instruction);
-            } else if (findRR_OR_findRI(behavior, List.of(UMOD, UMODS))) {
-              extend(matched, InstructionLabel.UMOD, instruction);
-            } else if (pc != null && findBranchWithConditional(behavior, EQU)) {
-              extend(matched, InstructionLabel.BEQ, instruction);
-            } else if (pc != null && findBranchWithConditional(behavior, NEQ)) {
-              extend(matched, InstructionLabel.BNEQ, instruction);
-            } else if (pc != null
-                && findBranchWithConditional(behavior, Set.of(SGEQ, UGEQ))) {
-              extend(matched, InstructionLabel.BGEQ, instruction);
-            } else if (pc != null
-                && findBranchWithConditional(behavior, Set.of(SLEQ, ULEQ))) {
-              extend(matched, InstructionLabel.BLEQ, instruction);
-            } else if (pc != null
-                && findBranchWithConditional(behavior, Set.of(SLTH, ULTH))) {
-              extend(matched, InstructionLabel.BLTH, instruction);
-            } else if (pc != null
-                && findBranchWithConditional(behavior, Set.of(SGTH, UGTH))) {
-              extend(matched, InstructionLabel.BGTH, instruction);
-            } else if (findRR_OR_findRI(behavior, List.of(SLTH, ULTH))) {
-              extend(matched, InstructionLabel.LT, instruction);
-            } else if (findWriteMem(behavior)) {
-              extend(matched, InstructionLabel.STORE_MEM, instruction);
-            } else if (findLoadMem(behavior)) {
-              extend(matched, InstructionLabel.LOAD_MEM, instruction);
-            } else if (pc != null && findJalr(behavior, pc)) {
-              extend(matched, InstructionLabel.JALR, instruction);
-            } else if (pc != null && findJal(behavior, pc)) {
-              extend(matched, InstructionLabel.JAL, instruction);
-            }
-          });
-        });
+      // Some are typed and some aren't.
+      // The reason is that most of the time we do not care because
+      // the instruction selection will figure out the types anyway.
+      // The raw cases where we need the type are typed like addition.
+      if (findAdd32Bit(behavior)) {
+        matched.put(InstructionLabel.ADD_32, List.of(instruction));
+      } else if (findAdd64Bit(behavior)) {
+        matched.put(InstructionLabel.ADD_64, List.of(instruction));
+      } else if (findAddWithImmediate32Bit(behavior)) {
+        matched.put(InstructionLabel.ADDI_32, List.of(instruction));
+      } else if (findAddWithImmediate64Bit(behavior)) {
+        matched.put(InstructionLabel.ADDI_64, List.of(instruction));
+      } else if (findRR_OR_findRI(behavior, SUB)) {
+        extend(matched, InstructionLabel.SUB, instruction);
+      } else if (findRR_OR_findRI(behavior, List.of(SUBB, SUBSB))) {
+        extend(matched, InstructionLabel.SUBB, instruction);
+      } else if (findRR_OR_findRI(behavior, List.of(SUBC, SUBSC))) {
+        extend(matched, InstructionLabel.SUBC, instruction);
+      } else if (findRR_OR_findRI(behavior, List.of(AND, ANDS))) {
+        extend(matched, InstructionLabel.AND, instruction);
+      } else if (findRR_OR_findRI(behavior, List.of(OR, ORS))) {
+        extend(matched, InstructionLabel.OR, instruction);
+      } else if (findRR(behavior, List.of(XOR, XORS))) {
+        extend(matched, InstructionLabel.XOR, instruction);
+      } else if (findRI(behavior, List.of(XOR, XORS))) {
+        // Here is an exception:
+        // Usually, it is good enough to group RR and RI together.
+        // However, when generating alternative patterns for conditionals,
+        // then we need the XORI instruction. Therefore, we put it extra.
+        extend(matched, InstructionLabel.XORI, instruction);
+      } else if (findRR_OR_findRI(behavior, List.of(MUL, SMULL, SMULLS))) {
+        extend(matched, InstructionLabel.MUL, instruction);
+      } else if (findRR_OR_findRI(behavior, List.of(SDIV, SDIVS))) {
+        extend(matched, InstructionLabel.SDIV, instruction);
+      } else if (findRR_OR_findRI(behavior, List.of(UDIV, UDIVS))) {
+        extend(matched, InstructionLabel.UDIV, instruction);
+      } else if (findRR_OR_findRI(behavior, List.of(SMOD, SMODS))) {
+        extend(matched, InstructionLabel.SMOD, instruction);
+      } else if (findRR_OR_findRI(behavior, List.of(UMOD, UMODS))) {
+        extend(matched, InstructionLabel.UMOD, instruction);
+      } else if (pc != null && findBranchWithConditional(behavior, EQU)) {
+        extend(matched, InstructionLabel.BEQ, instruction);
+      } else if (pc != null && findBranchWithConditional(behavior, NEQ)) {
+        extend(matched, InstructionLabel.BNEQ, instruction);
+      } else if (pc != null
+          && findBranchWithConditional(behavior, Set.of(SGEQ, UGEQ))) {
+        extend(matched, InstructionLabel.BGEQ, instruction);
+      } else if (pc != null
+          && findBranchWithConditional(behavior, Set.of(SLEQ, ULEQ))) {
+        extend(matched, InstructionLabel.BLEQ, instruction);
+      } else if (pc != null
+          && findBranchWithConditional(behavior, Set.of(SLTH, ULTH))) {
+        extend(matched, InstructionLabel.BLTH, instruction);
+      } else if (pc != null
+          && findBranchWithConditional(behavior, Set.of(SGTH, UGTH))) {
+        extend(matched, InstructionLabel.BGTH, instruction);
+      } else if (findRR_OR_findRI(behavior, List.of(SLTH, ULTH))) {
+        extend(matched, InstructionLabel.LT, instruction);
+      } else if (findWriteMem(behavior)) {
+        extend(matched, InstructionLabel.STORE_MEM, instruction);
+      } else if (findLoadMem(behavior)) {
+        extend(matched, InstructionLabel.LOAD_MEM, instruction);
+      } else if (pc != null && findJalr(behavior, pc)) {
+        extend(matched, InstructionLabel.JALR, instruction);
+      } else if (pc != null && findJal(behavior, pc)) {
+        extend(matched, InstructionLabel.JAL, instruction);
+      }
+    });
 
     return matched;
   }

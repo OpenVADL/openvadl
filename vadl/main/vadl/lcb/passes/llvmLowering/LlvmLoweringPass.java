@@ -5,6 +5,7 @@ import java.util.HashMap;
 import java.util.IdentityHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.stream.Stream;
 import org.jetbrains.annotations.Nullable;
 import vadl.configuration.LcbConfiguration;
 import vadl.lcb.passes.isaMatching.InstructionLabel;
@@ -111,7 +112,8 @@ public class LlvmLoweringPass extends Pass {
 
     var instructionLookup = flipIsaMatching(supportedInstructions);
 
-    viam.isas().flatMap(isa -> isa.ownInstructions().stream())
+    viam.isa().map(isa -> isa.ownInstructions().stream())
+        .orElseGet(Stream::empty)
         .forEach(instruction -> {
           var instructionLabel = instructionLookup.get(instruction);
 

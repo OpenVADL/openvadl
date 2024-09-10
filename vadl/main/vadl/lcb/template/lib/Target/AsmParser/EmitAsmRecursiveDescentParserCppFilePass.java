@@ -5,6 +5,7 @@ import java.io.StringWriter;
 import java.util.Comparator;
 import java.util.List;
 import java.util.Map;
+import java.util.stream.Stream;
 import org.jetbrains.annotations.NotNull;
 import vadl.configuration.LcbConfiguration;
 import vadl.gcb.passes.assembly.AssemblyConstant;
@@ -64,7 +65,9 @@ public class EmitAsmRecursiveDescentParserCppFilePass extends LcbTemplateRenderi
 
   @NotNull
   private static List<RuleParsingResultForLex> lexes(Specification specification) {
-    return specification.isas().flatMap(isa -> isa.ownInstructions().stream())
+    return specification.isa()
+        .map(isa -> isa.ownInstructions().stream())
+        .orElse(Stream.empty())
         .flatMap(instruction -> instruction.assembly().function().behavior().getNodes(
             AssemblyConstant.class))
         .sorted(Comparator.comparing(AssemblyConstant::kind)) // Sort by something
@@ -77,8 +80,9 @@ public class EmitAsmRecursiveDescentParserCppFilePass extends LcbTemplateRenderi
 
   @NotNull
   private List<RuleParsingResultWhenInstruction> instructions(Specification specification) {
-    return specification.isas()
-        .flatMap(isa -> isa.ownInstructions().stream())
+    return specification.isa()
+        .map(isa -> isa.ownInstructions().stream())
+        .orElse(Stream.empty())
         .map(instruction -> {
           var writer = new StringWriter();
           var visitor =

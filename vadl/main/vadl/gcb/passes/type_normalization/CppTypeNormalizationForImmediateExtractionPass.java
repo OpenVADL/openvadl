@@ -27,8 +27,9 @@ public class CppTypeNormalizationForImmediateExtractionPass extends CppTypeNorma
 
   @Override
   protected Stream<Function> getApplicable(Specification viam) {
-    return viam.isas()
-        .flatMap(x -> x.ownFormats().stream())
+    return viam.isa()
+        .map(x -> x.ownFormats().stream())
+        .orElse(Stream.empty())
         .flatMap(x -> Arrays.stream(x.fields()))
         .map(Format.Field::extractFunction)
         .distinct();

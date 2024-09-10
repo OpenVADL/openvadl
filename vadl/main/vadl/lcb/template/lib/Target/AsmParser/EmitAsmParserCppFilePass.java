@@ -3,6 +3,7 @@ package vadl.lcb.template.lib.Target.AsmParser;
 import java.io.IOException;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.stream.Stream;
 import vadl.configuration.LcbConfiguration;
 import vadl.lcb.template.CommonVarNames;
@@ -38,16 +39,16 @@ public class EmitAsmParserCppFilePass extends LcbTemplateRenderingPass {
 
   }
 
-  private List<Instruction> mapInstructions(Stream<InstructionSetArchitecture> isas) {
-    return isas
-        .flatMap(x -> x.ownInstructions().stream())
-        .toList();
+  private List<Instruction> mapInstructions(Optional<InstructionSetArchitecture> isa) {
+    return isa
+        .map(InstructionSetArchitecture::ownInstructions)
+        .orElse(List.of());
   }
 
-  private List<PseudoInstruction> mapPseudoInstructions(Stream<InstructionSetArchitecture> isas) {
-    return isas
-        .flatMap(x -> x.ownPseudoInstructions().stream())
-        .toList();
+  private List<PseudoInstruction> mapPseudoInstructions(Optional<InstructionSetArchitecture> isa) {
+    return isa
+        .map(InstructionSetArchitecture::ownPseudoInstructions)
+        .orElse(List.of());
   }
 
 
@@ -56,8 +57,8 @@ public class EmitAsmParserCppFilePass extends LcbTemplateRenderingPass {
                                                 Specification specification) {
     //TODO: kper; add alias directives
     return Map.of(CommonVarNames.NAMESPACE, specification.name(),
-        CommonVarNames.INSTRUCTIONS, mapInstructions(specification.isas()),
-        CommonVarNames.PSEUDO_INSTRUCTIONS, mapPseudoInstructions(specification.isas()),
+        CommonVarNames.INSTRUCTIONS, mapInstructions(specification.isa()),
+        CommonVarNames.PSEUDO_INSTRUCTIONS, mapPseudoInstructions(specification.isa()),
         CommonVarNames.ALIASES, List.of()
     );
   }

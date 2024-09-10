@@ -3,6 +3,7 @@ package vadl.viam.passes.algebraic_simplication;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import java.util.stream.Stream;
 import org.jetbrains.annotations.Nullable;
 import vadl.configuration.GeneralConfiguration;
 import vadl.pass.Pass;
@@ -56,16 +57,18 @@ public class AlgebraicSimplificationPass extends Pass {
   @Nullable
   @Override
   public Object execute(PassResults passResults, Specification viam) {
-    viam.isas()
-        .flatMap(isa -> isa.ownInstructions().stream())
+    viam.isa().map(isa -> isa.ownInstructions().stream())
+        .orElse(Stream.empty())
         .forEach(instruction -> new AlgebraicSimplifier(rules).run(instruction.behavior()));
 
-    viam.isas()
-        .flatMap(isa -> isa.ownPseudoInstructions().stream())
+    viam.isa()
+        .map(isa -> isa.ownPseudoInstructions().stream())
+        .orElse(Stream.empty())
         .forEach(instruction -> new AlgebraicSimplifier(rules).run(instruction.behavior()));
 
-    viam.isas()
-        .flatMap(isa -> isa.ownFormats().stream())
+    viam.isa()
+        .map(isa -> isa.ownFormats().stream())
+        .orElse(Stream.empty())
         .flatMap(x -> Arrays.stream(x.fieldAccesses()))
         .map(x -> x.accessFunction().behavior())
         .forEach(x -> new AlgebraicSimplifier(rules).run(x));

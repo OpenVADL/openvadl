@@ -6,6 +6,7 @@ import java.util.IdentityHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
+import java.util.stream.Stream;
 import org.jetbrains.annotations.Nullable;
 import vadl.configuration.GcbConfiguration;
 import vadl.pass.Pass;
@@ -104,8 +105,9 @@ public class DetectImmediatePass extends Pass {
   public Object execute(PassResults passResults, Specification viam) throws IOException {
     var container = new ImmediateDetectionContainer();
 
-    viam.isas()
-        .flatMap(isa -> isa.ownInstructions().stream())
+    viam.isa()
+        .map(isa -> isa.ownInstructions().stream())
+        .orElse(Stream.empty())
         .flatMap(instruction -> instruction.behavior().getNodes(FieldRefNode.class))
         .forEach(fieldRefNode -> {
           var isRegisterRead = fieldRefNode.usages()

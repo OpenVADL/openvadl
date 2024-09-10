@@ -55,22 +55,15 @@ public class StaticCounterAccessResolvingPass extends Pass {
   @Override
   public @Nullable Object execute(PassResults passResults, Specification viam)
       throws IOException {
-
-    // TODO: Refactor this as soon as we only have a single ISA per specification
-    var pcs = viam.isas()
+    
+    var pc = viam.isa()
         .map(InstructionSetArchitecture::pc)
-        .distinct()
-        .toList();
-    viam.ensure(pcs.size() <= 1,
-        "Only a single PC must be used per specification. Couldn't derive which one to use from %s",
-        pcs);
+        .orElse(null);
 
-    if (pcs.isEmpty()) {
+    if (pc == null) {
       // if we got no PC we have nothing to resolve!
       return null;
     }
-
-    var pc = pcs.get(0);
 
     ViamUtils.findDefinitionByFilter(viam, d -> d instanceof DefProp.WithBehavior)
         .stream()

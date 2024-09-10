@@ -3,6 +3,7 @@ package vadl.lcb.clang.lib.Basic.Targets;
 import java.io.IOException;
 import java.util.List;
 import java.util.Map;
+import java.util.stream.Stream;
 import vadl.configuration.LcbConfiguration;
 import vadl.lcb.template.CommonVarNames;
 import vadl.lcb.template.LcbTemplateRenderingPass;
@@ -38,8 +39,9 @@ public class EmitClangTargetCppFilePass extends LcbTemplateRenderingPass {
   }
 
   private List<Register> extractRegisters(Specification specification) {
-    return specification.isas()
-        .flatMap(x -> x.ownRegisters().stream())
+    return specification.isa()
+        .map(x -> x.ownRegisters().stream())
+        .orElseGet(Stream::empty)
         .toList();
   }
 }
