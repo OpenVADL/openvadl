@@ -15,7 +15,7 @@ import vadl.gcb.passes.relocation.DetectImmediatePass;
 import vadl.lcb.codegen.GenerateImmediateKindPass;
 import vadl.lcb.codegen.expansion.PseudoExpansionCodeGenerator;
 import vadl.lcb.passes.relocation.GenerateElfRelocationPass;
-import vadl.lcb.passes.relocation.model.ElfRelocation;
+import vadl.gcb.passes.relocation.model.ElfRelocation;
 import vadl.lcb.template.CommonVarNames;
 import vadl.lcb.template.LcbTemplateRenderingPass;
 import vadl.lcb.template.utils.ImmediateDecodingFunctionProvider;

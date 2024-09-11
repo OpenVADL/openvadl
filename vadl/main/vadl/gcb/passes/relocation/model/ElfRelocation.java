@@ -1,11 +1,6 @@
-package vadl.lcb.passes.relocation.model;
+package vadl.gcb.passes.relocation.model;
 
 import vadl.cppCodeGen.model.CppFunction;
-import vadl.cppCodeGen.model.CppFunctionCode;
-import vadl.gcb.passes.relocation.model.LogicalRelocation;
-import vadl.gcb.valuetypes.ProcessorName;
-import vadl.viam.Function;
-import vadl.viam.Relocation;
 
 /**
  * Wrapper for {@link LogicalRelocation}.

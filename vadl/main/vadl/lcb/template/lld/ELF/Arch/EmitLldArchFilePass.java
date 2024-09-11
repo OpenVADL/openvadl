@@ -5,7 +5,7 @@ import java.util.List;
 import java.util.Map;
 import vadl.configuration.LcbConfiguration;
 import vadl.lcb.passes.relocation.GenerateElfRelocationPass;
-import vadl.lcb.passes.relocation.model.ElfRelocation;
+import vadl.gcb.passes.relocation.model.ElfRelocation;
 import vadl.lcb.template.CommonVarNames;
 import vadl.lcb.template.LcbTemplateRenderingPass;
 import vadl.pass.PassResults;

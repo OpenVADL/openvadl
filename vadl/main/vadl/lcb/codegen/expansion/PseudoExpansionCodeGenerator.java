@@ -9,10 +9,9 @@ import vadl.cppCodeGen.model.VariantKind;
 import vadl.gcb.passes.pseudo.PseudoExpansionCodeGeneratorVisitor;
 import vadl.gcb.passes.relocation.DetectImmediatePass;
 import vadl.lcb.codegen.CodeGenerator;
-import vadl.lcb.passes.relocation.model.ElfRelocation;
+import vadl.gcb.passes.relocation.model.ElfRelocation;
 import vadl.viam.Format;
 import vadl.viam.PseudoInstruction;
-import vadl.viam.Relocation;
 import vadl.viam.ViamError;
 import vadl.viam.graph.control.InstrCallNode;
 

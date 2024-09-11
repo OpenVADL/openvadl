@@ -13,7 +13,7 @@ import vadl.cppCodeGen.SymbolTable;
 import vadl.cppCodeGen.model.CppFunction;
 import vadl.cppCodeGen.model.VariantKind;
 import vadl.gcb.passes.relocation.DetectImmediatePass;
-import vadl.lcb.passes.relocation.model.ElfRelocation;
+import vadl.gcb.passes.relocation.model.ElfRelocation;
 import vadl.utils.Pair;
 import vadl.viam.Format;
 import vadl.viam.Relocation;

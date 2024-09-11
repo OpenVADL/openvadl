@@ -9,7 +9,7 @@ import vadl.configuration.LcbConfiguration;
 import vadl.cppCodeGen.model.VariantKind;
 import vadl.lcb.codegen.GenerateImmediateKindPass;
 import vadl.lcb.passes.relocation.GenerateElfRelocationPass;
-import vadl.lcb.passes.relocation.model.ElfRelocation;
+import vadl.gcb.passes.relocation.model.ElfRelocation;
 import vadl.lcb.template.CommonVarNames;
 import vadl.lcb.template.LcbTemplateRenderingPass;
 import vadl.pass.PassResults;

@@ -29,7 +29,7 @@ class DecodingCodeGeneratorTest extends AbstractTest {
     String code = new CodeGenerator().generateFunction(function).value();
 
     // Then
-    assertEquals("int32_t functionNameValue_decode(uint32_t parameterValue) {\n"
+    assertEquals("int32_t functionNameValue(uint32_t parameterValue) {\n"
         + "return parameterValue;\n"
         + "}", code);
   }
