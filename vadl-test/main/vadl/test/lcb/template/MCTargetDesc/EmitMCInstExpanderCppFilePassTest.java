@@ -132,87 +132,87 @@ public class EmitMCInstExpanderCppFilePassTest extends AbstractLcbTest {
            \s
               case rv64im::CALL:
               {
-                MCIExpansion = CppFunctionName[identifier=RV3264I::CALL::expand](MCI);
+                MCIExpansion = CppFunctionName[identifier=RV64IM::CALL::expand](MCI);
                 return true;
               }
               case rv64im::TAIL:
               {
-                MCIExpansion = CppFunctionName[identifier=RV3264I::TAIL::expand](MCI);
+                MCIExpansion = CppFunctionName[identifier=RV64IM::TAIL::expand](MCI);
                 return true;
               }
               case rv64im::RET:
               {
-                MCIExpansion = CppFunctionName[identifier=RV3264I::RET::expand](MCI);
+                MCIExpansion = CppFunctionName[identifier=RV64IM::RET::expand](MCI);
                 return true;
               }
               case rv64im::J:
               {
-                MCIExpansion = CppFunctionName[identifier=RV3264I::J::expand](MCI);
+                MCIExpansion = CppFunctionName[identifier=RV64IM::J::expand](MCI);
                 return true;
               }
               case rv64im::NOP:
               {
-                MCIExpansion = CppFunctionName[identifier=RV3264I::NOP::expand](MCI);
+                MCIExpansion = CppFunctionName[identifier=RV64IM::NOP::expand](MCI);
                 return true;
               }
               case rv64im::MOV:
               {
-                MCIExpansion = CppFunctionName[identifier=RV3264I::MOV::expand](MCI);
+                MCIExpansion = CppFunctionName[identifier=RV64IM::MOV::expand](MCI);
                 return true;
               }
               case rv64im::NOT:
               {
-                MCIExpansion = CppFunctionName[identifier=RV3264I::NOT::expand](MCI);
+                MCIExpansion = CppFunctionName[identifier=RV64IM::NOT::expand](MCI);
                 return true;
               }
               case rv64im::NEG:
               {
-                MCIExpansion = CppFunctionName[identifier=RV3264I::NEG::expand](MCI);
+                MCIExpansion = CppFunctionName[identifier=RV64IM::NEG::expand](MCI);
                 return true;
               }
               case rv64im::SNEZ:
               {
-                MCIExpansion = CppFunctionName[identifier=RV3264I::SNEZ::expand](MCI);
+                MCIExpansion = CppFunctionName[identifier=RV64IM::SNEZ::expand](MCI);
                 return true;
               }
               case rv64im::SLTZ:
               {
-                MCIExpansion = CppFunctionName[identifier=RV3264I::SLTZ::expand](MCI);
+                MCIExpansion = CppFunctionName[identifier=RV64IM::SLTZ::expand](MCI);
                 return true;
               }
               case rv64im::SGTZ:
               {
-                MCIExpansion = CppFunctionName[identifier=RV3264I::SGTZ::expand](MCI);
+                MCIExpansion = CppFunctionName[identifier=RV64IM::SGTZ::expand](MCI);
                 return true;
               }
               case rv64im::BEQZ:
               {
-                MCIExpansion = CppFunctionName[identifier=RV3264I::BEQZ::expand](MCI);
+                MCIExpansion = CppFunctionName[identifier=RV64IM::BEQZ::expand](MCI);
                 return true;
               }
               case rv64im::BNEZ:
               {
-                MCIExpansion = CppFunctionName[identifier=RV3264I::BNEZ::expand](MCI);
+                MCIExpansion = CppFunctionName[identifier=RV64IM::BNEZ::expand](MCI);
                 return true;
               }
               case rv64im::BLEZ:
               {
-                MCIExpansion = CppFunctionName[identifier=RV3264I::BLEZ::expand](MCI);
+                MCIExpansion = CppFunctionName[identifier=RV64IM::BLEZ::expand](MCI);
                 return true;
               }
               case rv64im::BGEZ:
               {
-                MCIExpansion = CppFunctionName[identifier=RV3264I::BGEZ::expand](MCI);
+                MCIExpansion = CppFunctionName[identifier=RV64IM::BGEZ::expand](MCI);
                 return true;
               }
               case rv64im::BLTZ:
               {
-                MCIExpansion = CppFunctionName[identifier=RV3264I::BLTZ::expand](MCI);
+                MCIExpansion = CppFunctionName[identifier=RV64IM::BLTZ::expand](MCI);
                 return true;
               }
               case rv64im::BGTZ:
               {
-                MCIExpansion = CppFunctionName[identifier=RV3264I::BGTZ::expand](MCI);
+                MCIExpansion = CppFunctionName[identifier=RV64IM::BGTZ::expand](MCI);
                 return true;
               }
            \s
@@ -260,87 +260,87 @@ public class EmitMCInstExpanderCppFilePassTest extends AbstractLcbTest {
         }
                 
                 
-        CppFunctionCode[value=std::vector< MCInst&> RV3264I_CALL_expand(const MCInst instruction) {
+        CppFunctionCode[value=std::vector< MCInst&> RV64IM_CALL_expand(const MCInst instruction) {
         std::vector< MCInst > result;
         MCInst a = MCInst();
         a.setOpcode(processorNameValue::LUI);
         a.addOperand(MCOperand::createReg(processorNameValue::1));
         const MCExpr* b = MCOperandToMCExpr(instruction.getOperand(1));
-        const MCExpr* c = CPUMCExpr::create(b, processorNameValueMCExpr::VariantKind::VK_RV3264I_hi20, Ctx);
+        const MCExpr* c = CPUMCExpr::create(b, processorNameValueMCExpr::VariantKind::VK_RV64IM_hi20, Ctx);
         a.addOperand(c);
         MCInst d = MCInst();
         d.setOpcode(processorNameValue::JALR);
         d.addOperand(MCOperand::createReg(processorNameValue::1));
         d.addOperand(MCOperand::createReg(processorNameValue::1));
         const MCExpr* e = MCOperandToMCExpr(instruction.getOperand(2));
-        const MCExpr* f = CPUMCExpr::create(e, processorNameValueMCExpr::VariantKind::VK_RV3264I_lo12, Ctx);
+        const MCExpr* f = CPUMCExpr::create(e, processorNameValueMCExpr::VariantKind::VK_RV64IM_lo12, Ctx);
         d.addOperand(f);
         return result;;
         }]
-        CppFunctionCode[value=std::vector< MCInst&> RV3264I_TAIL_expand(const MCInst instruction) {
+        CppFunctionCode[value=std::vector< MCInst&> RV64IM_TAIL_expand(const MCInst instruction) {
         std::vector< MCInst > result;
         MCInst a = MCInst();
         a.setOpcode(processorNameValue::AUIPC);
         a.addOperand(MCOperand::createReg(processorNameValue::6));
         const MCExpr* b = MCOperandToMCExpr(instruction.getOperand(1));
-        const MCExpr* c = CPUMCExpr::create(b, processorNameValueMCExpr::VariantKind::VK_RV3264I_hi20, Ctx);
+        const MCExpr* c = CPUMCExpr::create(b, processorNameValueMCExpr::VariantKind::VK_RV64IM_hi20, Ctx);
         a.addOperand(c);
         MCInst d = MCInst();
         d.setOpcode(processorNameValue::JALR);
         d.addOperand(MCOperand::createReg(processorNameValue::6));
         d.addOperand(MCOperand::createReg(processorNameValue::0));
         const MCExpr* e = MCOperandToMCExpr(instruction.getOperand(2));
-        const MCExpr* f = CPUMCExpr::create(e, processorNameValueMCExpr::VariantKind::VK_RV3264I_lo12, Ctx);
+        const MCExpr* f = CPUMCExpr::create(e, processorNameValueMCExpr::VariantKind::VK_RV64IM_lo12, Ctx);
         d.addOperand(f);
         return result;;
         }]
-        CppFunctionCode[value=std::vector< MCInst&> RV3264I_RET_expand(const MCInst instruction) {
+        CppFunctionCode[value=std::vector< MCInst&> RV64IM_RET_expand(const MCInst instruction) {
         std::vector< MCInst > result;
         MCInst a = MCInst();
         a.setOpcode(processorNameValue::JALR);
         a.addOperand(MCOperand::createReg(processorNameValue::1));
         a.addOperand(MCOperand::createReg(processorNameValue::0));
-        a.addOperand(MCOperand::createImm(RV3264I_Itype_immS_decode_decode(0)));
+        a.addOperand(MCOperand::createImm(RV64IM_Itype_immS_decode_decode(0)));
         return result;;
         }]
-        CppFunctionCode[value=std::vector< MCInst&> RV3264I_J_expand(const MCInst instruction) {
+        CppFunctionCode[value=std::vector< MCInst&> RV64IM_J_expand(const MCInst instruction) {
         std::vector< MCInst > result;
         MCInst a = MCInst();
         a.setOpcode(processorNameValue::JAL);
         a.addOperand(MCOperand::createReg(processorNameValue::0));
         const MCExpr* b = MCOperandToMCExpr(instruction.getOperand(1));
-        const MCExpr* c = CPUMCExpr::create(b, processorNameValueMCExpr::VariantKind::VariantKind[value=VK_RV3264I_Jtype_imm], Ctx);
+        const MCExpr* c = CPUMCExpr::create(b, processorNameValueMCExpr::VariantKind::VariantKind[value=VK_RV64IM_Jtype_imm], Ctx);
         a.addOperand(c);
         return result;;
         }]
-        CppFunctionCode[value=std::vector< MCInst&> RV3264I_NOP_expand(const MCInst instruction) {
+        CppFunctionCode[value=std::vector< MCInst&> RV64IM_NOP_expand(const MCInst instruction) {
         std::vector< MCInst > result;
         MCInst a = MCInst();
         a.setOpcode(processorNameValue::ADDI);
         a.addOperand(MCOperand::createReg(processorNameValue::0));
         a.addOperand(MCOperand::createReg(processorNameValue::0));
-        a.addOperand(MCOperand::createImm(RV3264I_Itype_immS_decode_decode(0)));
+        a.addOperand(MCOperand::createImm(RV64IM_Itype_immS_decode_decode(0)));
         return result;;
         }]
-        CppFunctionCode[value=std::vector< MCInst&> RV3264I_MOV_expand(const MCInst instruction) {
+        CppFunctionCode[value=std::vector< MCInst&> RV64IM_MOV_expand(const MCInst instruction) {
         std::vector< MCInst > result;
         MCInst a = MCInst();
         a.setOpcode(processorNameValue::ADDI);
         a.addOperand(instruction.getOperand(0));
         a.addOperand(instruction.getOperand(1));
-        a.addOperand(MCOperand::createImm(RV3264I_Itype_immS_decode_decode(0)));
+        a.addOperand(MCOperand::createImm(RV64IM_Itype_immS_decode_decode(0)));
         return result;;
         }]
-        CppFunctionCode[value=std::vector< MCInst&> RV3264I_NOT_expand(const MCInst instruction) {
+        CppFunctionCode[value=std::vector< MCInst&> RV64IM_NOT_expand(const MCInst instruction) {
         std::vector< MCInst > result;
         MCInst a = MCInst();
         a.setOpcode(processorNameValue::XORI);
         a.addOperand(instruction.getOperand(0));
         a.addOperand(instruction.getOperand(1));
-        a.addOperand(MCOperand::createImm(RV3264I_Itype_immS_decode_decode(4095)));
+        a.addOperand(MCOperand::createImm(RV64IM_Itype_immS_decode_decode(4095)));
         return result;;
         }]
-        CppFunctionCode[value=std::vector< MCInst&> RV3264I_NEG_expand(const MCInst instruction) {
+        CppFunctionCode[value=std::vector< MCInst&> RV64IM_NEG_expand(const MCInst instruction) {
         std::vector< MCInst > result;
         MCInst a = MCInst();
         a.setOpcode(processorNameValue::SUB);
@@ -349,7 +349,7 @@ public class EmitMCInstExpanderCppFilePassTest extends AbstractLcbTest {
         a.addOperand(instruction.getOperand(2));
         return result;;
         }]
-        CppFunctionCode[value=std::vector< MCInst&> RV3264I_SNEZ_expand(const MCInst instruction) {
+        CppFunctionCode[value=std::vector< MCInst&> RV64IM_SNEZ_expand(const MCInst instruction) {
         std::vector< MCInst > result;
         MCInst a = MCInst();
         a.setOpcode(processorNameValue::SLTU);
@@ -358,7 +358,7 @@ public class EmitMCInstExpanderCppFilePassTest extends AbstractLcbTest {
         a.addOperand(instruction.getOperand(2));
         return result;;
         }]
-        CppFunctionCode[value=std::vector< MCInst&> RV3264I_SLTZ_expand(const MCInst instruction) {
+        CppFunctionCode[value=std::vector< MCInst&> RV64IM_SLTZ_expand(const MCInst instruction) {
         std::vector< MCInst > result;
         MCInst a = MCInst();
         a.setOpcode(processorNameValue::SLT);
@@ -367,7 +367,7 @@ public class EmitMCInstExpanderCppFilePassTest extends AbstractLcbTest {
         a.addOperand(instruction.getOperand(2));
         return result;;
         }]
-        CppFunctionCode[value=std::vector< MCInst&> RV3264I_SGTZ_expand(const MCInst instruction) {
+        CppFunctionCode[value=std::vector< MCInst&> RV64IM_SGTZ_expand(const MCInst instruction) {
         std::vector< MCInst > result;
         MCInst a = MCInst();
         a.setOpcode(processorNameValue::SLT);
@@ -376,69 +376,69 @@ public class EmitMCInstExpanderCppFilePassTest extends AbstractLcbTest {
         a.addOperand(instruction.getOperand(2));
         return result;;
         }]
-        CppFunctionCode[value=std::vector< MCInst&> RV3264I_BEQZ_expand(const MCInst instruction) {
+        CppFunctionCode[value=std::vector< MCInst&> RV64IM_BEQZ_expand(const MCInst instruction) {
         std::vector< MCInst > result;
         MCInst a = MCInst();
         a.setOpcode(processorNameValue::BEQ);
         a.addOperand(MCOperand::createReg(processorNameValue::0));
         a.addOperand(instruction.getOperand(1));
         const MCExpr* b = MCOperandToMCExpr(instruction.getOperand(2));
-        const MCExpr* c = CPUMCExpr::create(b, processorNameValueMCExpr::VariantKind::VariantKind[value=VK_RV3264I_Btype_imm], Ctx);
+        const MCExpr* c = CPUMCExpr::create(b, processorNameValueMCExpr::VariantKind::VariantKind[value=VK_RV64IM_Btype_imm], Ctx);
         a.addOperand(c);
         return result;;
         }]
-        CppFunctionCode[value=std::vector< MCInst&> RV3264I_BNEZ_expand(const MCInst instruction) {
+        CppFunctionCode[value=std::vector< MCInst&> RV64IM_BNEZ_expand(const MCInst instruction) {
         std::vector< MCInst > result;
         MCInst a = MCInst();
         a.setOpcode(processorNameValue::BNE);
         a.addOperand(MCOperand::createReg(processorNameValue::0));
         a.addOperand(instruction.getOperand(1));
         const MCExpr* b = MCOperandToMCExpr(instruction.getOperand(2));
-        const MCExpr* c = CPUMCExpr::create(b, processorNameValueMCExpr::VariantKind::VariantKind[value=VK_RV3264I_Btype_imm], Ctx);
+        const MCExpr* c = CPUMCExpr::create(b, processorNameValueMCExpr::VariantKind::VariantKind[value=VK_RV64IM_Btype_imm], Ctx);
         a.addOperand(c);
         return result;;
         }]
-        CppFunctionCode[value=std::vector< MCInst&> RV3264I_BLEZ_expand(const MCInst instruction) {
+        CppFunctionCode[value=std::vector< MCInst&> RV64IM_BLEZ_expand(const MCInst instruction) {
         std::vector< MCInst > result;
         MCInst a = MCInst();
         a.setOpcode(processorNameValue::BGE);
         a.addOperand(instruction.getOperand(0));
         a.addOperand(MCOperand::createReg(processorNameValue::0));
         const MCExpr* b = MCOperandToMCExpr(instruction.getOperand(2));
-        const MCExpr* c = CPUMCExpr::create(b, processorNameValueMCExpr::VariantKind::VariantKind[value=VK_RV3264I_Btype_imm], Ctx);
+        const MCExpr* c = CPUMCExpr::create(b, processorNameValueMCExpr::VariantKind::VariantKind[value=VK_RV64IM_Btype_imm], Ctx);
         a.addOperand(c);
         return result;;
         }]
-        CppFunctionCode[value=std::vector< MCInst&> RV3264I_BGEZ_expand(const MCInst instruction) {
+        CppFunctionCode[value=std::vector< MCInst&> RV64IM_BGEZ_expand(const MCInst instruction) {
         std::vector< MCInst > result;
         MCInst a = MCInst();
         a.setOpcode(processorNameValue::BGE);
         a.addOperand(MCOperand::createReg(processorNameValue::0));
         a.addOperand(instruction.getOperand(1));
         const MCExpr* b = MCOperandToMCExpr(instruction.getOperand(2));
-        const MCExpr* c = CPUMCExpr::create(b, processorNameValueMCExpr::VariantKind::VariantKind[value=VK_RV3264I_Btype_imm], Ctx);
+        const MCExpr* c = CPUMCExpr::create(b, processorNameValueMCExpr::VariantKind::VariantKind[value=VK_RV64IM_Btype_imm], Ctx);
         a.addOperand(c);
         return result;;
         }]
-        CppFunctionCode[value=std::vector< MCInst&> RV3264I_BLTZ_expand(const MCInst instruction) {
+        CppFunctionCode[value=std::vector< MCInst&> RV64IM_BLTZ_expand(const MCInst instruction) {
         std::vector< MCInst > result;
         MCInst a = MCInst();
         a.setOpcode(processorNameValue::BLT);
         a.addOperand(MCOperand::createReg(processorNameValue::0));
         a.addOperand(instruction.getOperand(1));
         const MCExpr* b = MCOperandToMCExpr(instruction.getOperand(2));
-        const MCExpr* c = CPUMCExpr::create(b, processorNameValueMCExpr::VariantKind::VariantKind[value=VK_RV3264I_Btype_imm], Ctx);
+        const MCExpr* c = CPUMCExpr::create(b, processorNameValueMCExpr::VariantKind::VariantKind[value=VK_RV64IM_Btype_imm], Ctx);
         a.addOperand(c);
         return result;;
         }]
-        CppFunctionCode[value=std::vector< MCInst&> RV3264I_BGTZ_expand(const MCInst instruction) {
+        CppFunctionCode[value=std::vector< MCInst&> RV64IM_BGTZ_expand(const MCInst instruction) {
         std::vector< MCInst > result;
         MCInst a = MCInst();
         a.setOpcode(processorNameValue::BLT);
         a.addOperand(instruction.getOperand(0));
         a.addOperand(MCOperand::createReg(processorNameValue::0));
         const MCExpr* b = MCOperandToMCExpr(instruction.getOperand(2));
-        const MCExpr* c = CPUMCExpr::create(b, processorNameValueMCExpr::VariantKind::VariantKind[value=VK_RV3264I_Btype_imm], Ctx);
+        const MCExpr* c = CPUMCExpr::create(b, processorNameValueMCExpr::VariantKind::VariantKind[value=VK_RV64IM_Btype_imm], Ctx);
         a.addOperand(c);
         return result;;
         }]
