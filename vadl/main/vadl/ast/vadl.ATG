@@ -215,8 +215,8 @@ IGNORE '\t' + '\r' + '\n'
 PRODUCTIONS
   vadl =
   {
-    topLevelDefinitions<out Definition def> (. ast.definitions.add(def); .)
-    | macroDef<out ModelDefinition def>     (. ast.definitions.add(def); macroTable.addMacro(def.toMacro(), def.location()); .)
+    topLevelDefinitions<out Definition def> (. addDef(ast.definitions, expandDef(this, def)); .)
+    | macroDef<out ModelDefinition def>     (. addDef(ast.definitions, def); macroTable.addMacro(def.toMacro(), def.location()); .)
   }.
 
   // -- DEFINITIONS --------------------------------------------------------------------------------------------------
@@ -258,12 +258,13 @@ PRODUCTIONS
   = {
     annotations<out Annotations annotations>
     isaDefinition<out Definition def>                   (. def.withAnnotations(annotations); definitions.add(def); .)
-  | macroDef<out ModelDefinition def>                   (. definitions.add(def); macroTable.addMacro(def.toMacro(), def.location()); .)
+  | macroDef<out ModelDefinition def>                   (. addDef(definitions, def); macroTable.addMacro(def.toMacro(), def.location()); .)
   | // IF (isMacroReplacementOfType(this, BasicSyntaxType.ISA_DEFS))
-    macroReplacement<out Node n>                        (. if (n instanceof DefinitionList list) {
+    macroReplacement<out Node n>                        (. var expanded = expandDef(this, castDef(this, n));
+                                                           if (expanded instanceof DefinitionList list) {
                                                              readMacroSymbols(macroTable, list.items);
                                                            }
-                                                           definitions.add(castDef(this, n)); .)
+                                                           addDef(definitions, expanded); .)
   }
   .
 
@@ -1646,7 +1647,7 @@ PRODUCTIONS
           macroBody<out Node arg2, params.next()> (. args.add(arg2); .)
         }
         SYM_PAREN_CLOSE
-      )                                           (. node = expandMacro(this, createMacroInstance(macroOrPlaceholder, args, startLoc.join(loc()))); .)
+      )                                           (. node = createMacroInstance(macroOrPlaceholder, args, startLoc.join(loc())); .)
     ]                                             (. node = Objects.requireNonNullElse(node, createPlaceholder(paramType, segments, startLoc.join(loc()))); .)
   .
 

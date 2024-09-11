@@ -3,6 +3,10 @@ package vadl.ast;
 import java.util.List;
 import vadl.utils.SourceLocation;
 
+sealed interface IsMacroMatch
+    permits MacroMatchNode, MacroMatchExpr, MacroMatchStatement, MacroMatchDefinition {
+}
+
 record MacroMatch(SyntaxType resultType, List<Choice> choices, Node defaultChoice,
                   SourceLocation sourceLocation) {
 
@@ -29,5 +33,6 @@ record MacroMatch(SyntaxType resultType, List<Choice> choices, Node defaultChoic
 
   enum Comparison { EQUAL, NOT_EQUAL }
 
-  record Choice(Node candidate, Comparison comparison, Node match, Node result) {}
+  record Choice(Node candidate, Comparison comparison, Node match, Node result) {
+  }
 }

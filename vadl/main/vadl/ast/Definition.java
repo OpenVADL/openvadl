@@ -1935,7 +1935,7 @@ final class PlaceholderDefinition extends Definition {
  * An internal temporary placeholder of macro instantiations.
  * This node should never leave the parser.
  */
-final class MacroInstanceDefinition extends Definition implements MacroInstance {
+final class MacroInstanceDefinition extends Definition implements IsMacroInstance {
   MacroOrPlaceholder macro;
   List<Node> arguments;
   SourceLocation loc;
@@ -2014,7 +2014,7 @@ final class MacroInstanceDefinition extends Definition implements MacroInstance 
  * An internal temporary placeholder of a macro-level "match" construct.
  * This node should never leave the parser.
  */
-final class MacroMatchDefinition extends Definition {
+final class MacroMatchDefinition extends Definition implements IsMacroMatch {
   MacroMatch macroMatch;
 
   MacroMatchDefinition(MacroMatch macroMatch) {

@@ -426,13 +426,9 @@ class ParserUtils {
     }
   }
 
-  static Node expandMacro(Parser parser, Node node) {
-    if (node instanceof MacroInstance macroInstance
-        && macroInstance.macroOrPlaceholder() instanceof Macro) {
-      var macroExpander = new MacroExpander(Map.of(), parser.macroOverrides, node.location());
-      return macroExpander.expandNode(node);
-    }
-    return node;
+  static Definition expandDef(Parser parser, Definition node) {
+    var macroExpander = new MacroExpander(Map.of(), parser.macroOverrides, node.location());
+    return parser.macroExpander.expandDefinition(node);
   }
 
   static void readMacroSymbols(SymbolTable macroTable, List<Definition> definitions) {
@@ -584,6 +580,15 @@ class ParserUtils {
     return expandedCalls;
   }
 
+  static void addDef(List<Definition> definitions, Definition def) {
+    if (def instanceof DefinitionList list) {
+      for (Definition item : list.items) {
+        addDef(definitions, item);
+      }
+    } else {
+      definitions.add(def);
+    }
+  }
 
   private static void reportError(Parser parser, String error, SourceLocation location) {
     parser.errors.SemErr(location.begin().line(), location.begin().column(), error);

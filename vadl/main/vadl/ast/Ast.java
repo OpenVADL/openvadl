@@ -179,7 +179,7 @@ final class PlaceholderNode extends Node implements IsBinOp, IsUnOp, FieldEncodi
   }
 }
 
-final class MacroInstanceNode extends Node implements MacroInstance, FieldEncodingOrPlaceholder {
+final class MacroInstanceNode extends Node implements IsMacroInstance, FieldEncodingOrPlaceholder {
 
   MacroOrPlaceholder macro;
   List<Node> arguments;
@@ -253,7 +253,7 @@ final class MacroInstanceNode extends Node implements MacroInstance, FieldEncodi
  * An internal temporary placeholder of a macro-level "match" construct.
  * This node should never leave the parser.
  */
-final class MacroMatchNode extends Node implements FieldEncodingOrPlaceholder {
+final class MacroMatchNode extends Node implements IsMacroMatch, FieldEncodingOrPlaceholder {
   MacroMatch macroMatch;
 
   MacroMatchNode(MacroMatch macroMatch) {

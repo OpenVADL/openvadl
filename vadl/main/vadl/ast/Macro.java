@@ -11,7 +11,7 @@ record Macro(Identifier name, List<MacroParam> params, Node body, SyntaxType ret
 record MacroParam(Identifier name, SyntaxType type) {
 }
 
-interface MacroInstance {
+interface IsMacroInstance {
   MacroOrPlaceholder macroOrPlaceholder();
 }
 

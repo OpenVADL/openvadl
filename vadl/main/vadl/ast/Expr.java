@@ -903,7 +903,7 @@ final class PlaceholderExpr extends Expr implements IdentifierOrPlaceholder, IsI
  * This node should never leave the parser.
  */
 final class MacroInstanceExpr extends Expr
-    implements MacroInstance, IdentifierOrPlaceholder, IsId, IsBinOp, IsUnOp {
+    implements IsMacroInstance, IdentifierOrPlaceholder, IsId, IsBinOp, IsUnOp {
   MacroOrPlaceholder macro;
   List<Node> arguments;
   SourceLocation loc;
@@ -988,7 +988,8 @@ final class MacroInstanceExpr extends Expr
  * An internal temporary placeholder of a macro-level "match" construct.
  * This node should never leave the parser.
  */
-final class MacroMatchExpr extends Expr implements IdentifierOrPlaceholder, IsId, IsUnOp, IsBinOp {
+final class MacroMatchExpr extends Expr implements IsMacroMatch, IdentifierOrPlaceholder, IsId,
+    IsUnOp, IsBinOp {
   MacroMatch macroMatch;
 
   MacroMatchExpr(MacroMatch macroMatch) {

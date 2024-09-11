@@ -450,7 +450,7 @@ final class PlaceholderStatement extends Statement {
  * An internal temporary placeholder of macro instantiations.
  * This node should never leave the parser.
  */
-final class MacroInstanceStatement extends Statement implements MacroInstance {
+final class MacroInstanceStatement extends Statement implements IsMacroInstance {
   MacroOrPlaceholder macro;
   List<Node> arguments;
   SourceLocation loc;
@@ -503,7 +503,7 @@ final class MacroInstanceStatement extends Statement implements MacroInstance {
  * An internal temporary placeholder of a macro-level "match" construct.
  * This node should never leave the parser.
  */
-final class MacroMatchStatement extends Statement {
+final class MacroMatchStatement extends Statement implements IsMacroMatch {
   MacroMatch macroMatch;
 
   MacroMatchStatement(MacroMatch macroMatch) {
