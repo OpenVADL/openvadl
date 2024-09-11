@@ -33,5 +33,5 @@ std::bitset<N> set_bits(std::bitset<N> dest, const std::bitset<M> source, std::v
 
 
 [# th:each="function : ${functions}" ]
-[(${function})]
+[(${function.value()})]
 [/]

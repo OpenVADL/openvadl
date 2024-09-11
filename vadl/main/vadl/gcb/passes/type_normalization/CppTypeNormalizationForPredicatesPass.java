@@ -5,6 +5,7 @@ import java.util.stream.Stream;
 import vadl.configuration.GcbConfiguration;
 import vadl.cppCodeGen.passes.typeNormalization.CppTypeNormalizationPass;
 import vadl.pass.PassName;
+import vadl.utils.Pair;
 import vadl.viam.Format;
 import vadl.viam.Function;
 import vadl.viam.Specification;
@@ -25,11 +26,11 @@ public class CppTypeNormalizationForPredicatesPass extends CppTypeNormalizationP
   }
 
   @Override
-  protected Stream<Function> getApplicable(Specification viam) {
+  protected Stream<Pair<Format.Field, Function>> getApplicable(Specification viam) {
     return viam.isa()
         .map(x -> x.ownFormats().stream()).orElseGet(Stream::empty)
         .flatMap(x -> Arrays.stream(x.fieldAccesses()))
         .filter(x -> x.encoding() != null)
-        .map(Format.FieldAccess::predicate);
+        .map(fieldAccess -> new Pair<>(fieldAccess.fieldRef(), fieldAccess.predicate()));
   }
 }

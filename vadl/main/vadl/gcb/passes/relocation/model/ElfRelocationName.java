@@ -1,4 +1,4 @@
-package vadl.lcb.passes.relocation.model;
+package vadl.gcb.passes.relocation.model;
 
 /**
  * Value type for {@link ElfRelocation}'s name.

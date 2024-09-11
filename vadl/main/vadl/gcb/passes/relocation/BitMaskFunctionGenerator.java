@@ -3,6 +3,7 @@ package vadl.gcb.passes.relocation;
 import java.math.BigInteger;
 import java.util.Arrays;
 import java.util.List;
+import vadl.cppCodeGen.model.CppFunction;
 import vadl.cppCodeGen.model.CppUpdateBitRangeNode;
 import vadl.types.BuiltInTable;
 import vadl.utils.SourceLocation;
@@ -36,7 +37,7 @@ public class BitMaskFunctionGenerator {
    * @param field  which should be updated. It must be a field of the {@code format}.
    * @return a {@link Function} which updates the value.
    */
-  public static Function generateUpdateFunction(Format format, Format.Field field) {
+  public static CppFunction generateUpdateFunction(Format format, Format.Field field) {
     var parameterInstWord =
         new Parameter(new Identifier("instWord", SourceLocation.INVALID_SOURCE_LOCATION),
             format.type());
@@ -44,7 +45,7 @@ public class BitMaskFunctionGenerator {
         new Parameter(new Identifier("newValue", SourceLocation.INVALID_SOURCE_LOCATION),
             format.type());
 
-    return new Function(
+    return new CppFunction(
         new Identifier(generateFunctionName(format, field), SourceLocation.INVALID_SOURCE_LOCATION),
         new Parameter[] {parameterInstWord, parameterNewValue},
         format.type(),

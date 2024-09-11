@@ -32,35 +32,41 @@ public class EmitLldTargetRelocationsHeaderFilePassTest extends AbstractLcbTest 
     var output = trimmed.lines();
 
     Assertions.assertLinesMatch("""
-        uint32_t RV64IM_Btype_generated(uint32_t input) {
+        uint32_t RV64IM_Btype_ABSOLUTE_imm_relocation(uint32_t input) {
         return input;
         }
-        uint32_t RV64IM_Ftype_generated(uint32_t input) {
+        uint32_t RV64IM_Btype_RELATIVE_imm_relocation(uint32_t input) {
         return input;
         }
-        uint32_t RV64IM_Itype_generated(uint32_t input) {
+        uint32_t RV64IM_Ftype_ABSOLUTE_sft_relocation(uint32_t input) {
         return input;
         }
-        uint32_t RV64IM_Jtype_generated(uint32_t input) {
+        uint32_t RV64IM_Itype_ABSOLUTE_imm_relocation(uint32_t input) {
         return input;
         }
-        uint32_t RV64IM_Stype_generated(uint32_t input) {
+        uint32_t RV64IM_Itype_RELATIVE_imm_relocation(uint32_t input) {
         return input;
         }
-        uint32_t RV64IM_Utype_generated(uint32_t input) {
+        uint32_t RV64IM_Jtype_ABSOLUTE_imm_relocation(uint32_t input) {
         return input;
         }
-        uint32_t RV64IM_Btype_generated(uint32_t input) {
+        uint32_t RV64IM_Jtype_RELATIVE_imm_relocation(uint32_t input) {
         return input;
         }
-        uint32_t RV64IM_Itype_generated(uint32_t input) {
+        uint32_t RV64IM_Stype_ABSOLUTE_imm_relocation(uint32_t input) {
         return input;
         }
-        uint32_t RV64IM_Jtype_generated(uint32_t input) {
+        uint32_t RV64IM_Utype_ABSOLUTE_imm_relocation(uint32_t input) {
         return input;
         }
-        uint32_t RV64IM_Utype_generated(uint32_t input) {
+        uint32_t RV64IM_Utype_RELATIVE_imm_relocation(uint32_t input) {
         return input;
+        }
+        uint32_t RV64IM_hi20(uint32_t symbol) {
+        return ((uint32_t) ((symbol) + (2048)) >> (12));
+        }
+        int16_t RV64IM_lo12(uint32_t symbol) {
+        return ((int16_t) symbol);
         }
         """.trim().lines(), output);
   }

@@ -5,9 +5,9 @@ import java.util.Comparator;
 import java.util.List;
 import java.util.Map;
 import vadl.configuration.LcbConfiguration;
-import vadl.lcb.codegen.relocation.RelocationCodeGenerator;
+import vadl.gcb.passes.relocation.model.ElfRelocation;
+import vadl.lcb.codegen.CodeGenerator;
 import vadl.lcb.passes.relocation.GenerateElfRelocationPass;
-import vadl.lcb.passes.relocation.model.ElfRelocation;
 import vadl.lcb.template.CommonVarNames;
 import vadl.lcb.template.LcbTemplateRenderingPass;
 import vadl.pass.PassResults;
@@ -42,8 +42,9 @@ public class EmitLldTargetRelocationsHeaderFilePass extends LcbTemplateRendering
         "relocations", relocations.stream()
             .sorted(Comparator.comparing(o -> o.name().value()))
             .map(relocation -> {
-              var generator = new RelocationCodeGenerator();
-              return generator.generateFunction(relocation.logicalRelocationFunction());
+              var generator = new CodeGenerator();
+              return generator.generateFunction(
+                  relocation.logicalRelocation().cppRelocation());
             }).toList());
   }
 }

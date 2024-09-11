@@ -1,6 +1,5 @@
 package vadl.viam;
 
-import org.jetbrains.annotations.Nullable;
 import vadl.types.Type;
 import vadl.viam.graph.Graph;
 import vadl.viam.graph.dependency.ReadRegNode;

@@ -8,11 +8,8 @@ import java.util.HashMap;
 import java.util.IdentityHashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.stream.IntStream;
-import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import vadl.configuration.LcbConfiguration;
-import vadl.lcb.codegen.encoding.PredicateCodeGenerator;
 import vadl.lcb.passes.isaMatching.InstructionLabel;
 import vadl.lcb.passes.isaMatching.IsaMatchingPass;
 import vadl.lcb.template.CommonVarNames;
@@ -20,7 +17,6 @@ import vadl.lcb.template.LcbTemplateRenderingPass;
 import vadl.lcb.templateUtils.RegisterUtils;
 import vadl.pass.PassResults;
 import vadl.viam.Instruction;
-import vadl.viam.RegisterFile;
 import vadl.viam.Specification;
 import vadl.viam.graph.dependency.FieldAccessRefNode;
 import vadl.viam.passes.dummyAbi.DummyAbi;
@@ -94,8 +90,7 @@ public class EmitRegisterInfoCppFilePass extends LcbTemplateRenderingPass {
         var immediate = behavior.getNodes(FieldAccessRefNode.class).findAny();
         ensure(immediate.isPresent(), "An immediate is required for frame index elimination");
         var entry = new FrameIndexElimination(label, instruction, immediate.get(),
-            PredicateCodeGenerator.generateFunctionName(
-                immediate.get().fieldAccess().predicate().name()));
+            immediate.get().fieldAccess().predicate().name());
         entries.add(entry);
       }
     }

@@ -16,11 +16,13 @@ import vadl.dump.HtmlDumpPass;
 import vadl.gcb.passes.assembly.AssemblyConcatBuiltinMergingPass;
 import vadl.gcb.passes.assembly.AssemblyReplacementNodePass;
 import vadl.gcb.passes.encoding_generation.GenerateFieldAccessEncodingFunctionPass;
+import vadl.gcb.passes.pseudo.PseudoExpansionFunctionGeneratorPass;
 import vadl.gcb.passes.relocation.DetectImmediatePass;
 import vadl.gcb.passes.relocation.GenerateLogicalRelocationPass;
 import vadl.gcb.passes.type_normalization.CppTypeNormalizationForDecodingsPass;
 import vadl.gcb.passes.type_normalization.CppTypeNormalizationForEncodingsPass;
 import vadl.gcb.passes.type_normalization.CppTypeNormalizationForPredicatesPass;
+import vadl.lcb.codegen.GenerateImmediateKindPass;
 import vadl.lcb.passes.isaMatching.IsaMatchingPass;
 import vadl.lcb.passes.llvmLowering.LlvmLoweringPass;
 import vadl.lcb.passes.relocation.GenerateElfRelocationPass;
@@ -232,6 +234,7 @@ public final class PassOrder {
     order.add(new AssemblyConcatBuiltinMergingPass(gcbConfiguration));
     order.add(new DetectImmediatePass(gcbConfiguration));
     order.add(new GenerateLogicalRelocationPass(gcbConfiguration));
+    order.add(new PseudoExpansionFunctionGeneratorPass(gcbConfiguration));
 
     if (gcbConfiguration.doDump()) {
       var config = HtmlDumpPass.Config.from(gcbConfiguration,
@@ -251,6 +254,7 @@ public final class PassOrder {
   public static PassOrder lcb(LcbConfiguration configuration)
       throws IOException {
     var order = gcbAndCppCodeGen(configuration);
+    order.add(new GenerateImmediateKindPass(configuration));
     order.add(new IsaMatchingPass(configuration));
     order.add(new LlvmLoweringPass(configuration));
     order.add(new GenerateElfRelocationPass(configuration));

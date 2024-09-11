@@ -1,18 +1,12 @@
 package vadl.gcb.passes.relocation.model;
 
-import java.util.Arrays;
-import java.util.Map;
 import java.util.Objects;
-import java.util.stream.Stream;
-import org.jetbrains.annotations.Nullable;
+import vadl.cppCodeGen.model.CppFunction;
+import vadl.cppCodeGen.model.VariantKind;
 import vadl.utils.SourceLocation;
-import vadl.viam.Constant;
-import vadl.viam.Counter;
 import vadl.viam.Format;
-import vadl.viam.Function;
 import vadl.viam.Identifier;
 import vadl.viam.Parameter;
-import vadl.viam.Register;
 import vadl.viam.Relocation;
 import vadl.viam.graph.control.ReturnNode;
 import vadl.viam.graph.dependency.FuncParamNode;
@@ -32,25 +26,31 @@ public class LogicalRelocation {
     ABSOLUTE
   }
 
+  private final Identifier identifier;
   private final Kind kind;
 
   private final Format format;
   private final Relocation relocation;
-  private final Format.Field immediate;
-  private final Function updateFunction;
+  private final CppFunction cppRelocation;
+  private final CppFunction updateFunction;
+  private final VariantKind variantKind;
 
   /**
    * Constructor.
    */
-  public LogicalRelocation(Relocation relocation,
-                           Format.Field field,
-                           Format format,
-                           Function updateFunction) {
-    this.kind = relocation.isAbsolute() ? Kind.ABSOLUTE : Kind.RELATIVE;
+  public LogicalRelocation(
+      Relocation originalRelocation,
+      CppFunction relocation,
+      Format.Field field,
+      Format format,
+      CppFunction updateFunction) {
+    this.relocation = originalRelocation;
+    this.kind = originalRelocation.isAbsolute() ? Kind.ABSOLUTE : Kind.RELATIVE;
+    this.identifier = generateName(format, field, kind);
     this.format = format;
-    this.relocation = relocation;
-    this.immediate = field;
+    this.cppRelocation = relocation;
     this.updateFunction = updateFunction;
+    this.variantKind = new VariantKind(originalRelocation);
   }
 
   /**
@@ -60,18 +60,28 @@ public class LogicalRelocation {
   public LogicalRelocation(Kind kind,
                            Format.Field immediate,
                            Format format,
-                           Function updateFunction) {
+                           CppFunction updateFunction) {
     this.kind = kind;
     this.updateFunction = updateFunction;
     this.format = format;
     var parameter = new Parameter(new Identifier("input", SourceLocation.INVALID_SOURCE_LOCATION),
         format.type());
-    this.relocation = new Relocation(format.identifier.append(".generated"),
+    this.identifier = generateName(format, immediate, kind);
+    this.relocation = new Relocation(identifier,
         new Parameter[] {parameter},
         format.type());
-    this.immediate = immediate;
+    this.cppRelocation = new CppFunction(relocation, "relocation");
     // Add a single return
-    this.relocation.behavior().addWithInputs(new ReturnNode(new FuncParamNode(parameter)));
+    this.cppRelocation.behavior().addWithInputs(new ReturnNode(new FuncParamNode(parameter)));
+    this.variantKind = new VariantKind(relocation);
+  }
+
+  private Identifier generateName(Format format, Format.Field imm, Kind kind) {
+    return format.identifier.append(kind.name(), imm.identifier.simpleName());
+  }
+
+  public Identifier identifier() {
+    return identifier;
   }
 
   public Kind kind() {
@@ -89,20 +99,16 @@ public class LogicalRelocation {
     return relocation;
   }
 
-  /**
-   * Get name.
-   */
-  public RelocationName name() {
-    var suffix = format.identifier.lower() + "_" + immediate.identifier.lower();
-    if (kind == Kind.ABSOLUTE) {
-      return new RelocationName("ABS_" + suffix);
-    } else {
-      return new RelocationName("REL_" + suffix);
-    }
+  public CppFunction cppRelocation() {
+    return cppRelocation;
   }
 
-  public Function updateFunction() {
+  public CppFunction updateFunction() {
     return updateFunction;
+  }
+
+  public VariantKind variantKind() {
+    return variantKind;
   }
 
   @Override

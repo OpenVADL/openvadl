@@ -1,5 +1,6 @@
 package vadl.gcb.passes.relocation;
 
+import com.google.common.collect.Streams;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Comparator;
@@ -7,15 +8,18 @@ import java.util.List;
 import java.util.stream.Stream;
 import org.jetbrains.annotations.Nullable;
 import vadl.configuration.GeneralConfiguration;
+import vadl.cppCodeGen.passes.typeNormalization.CppTypeNormalizationPass;
 import vadl.gcb.passes.relocation.model.LogicalRelocation;
 import vadl.pass.Pass;
 import vadl.pass.PassName;
 import vadl.pass.PassResults;
+import vadl.utils.Pair;
 import vadl.viam.Counter;
 import vadl.viam.Instruction;
 import vadl.viam.InstructionSetArchitecture;
 import vadl.viam.Relocation;
 import vadl.viam.Specification;
+import vadl.viam.graph.control.InstrCallNode;
 import vadl.viam.graph.dependency.FuncCallNode;
 import vadl.viam.graph.dependency.ReadRegNode;
 
@@ -47,43 +51,98 @@ public class GenerateLogicalRelocationPass extends Pass {
 
     // Generate relocations based on the specified relocations.
     // The user can specify relocations in the vadl specification.
-    var u = generateRelocationsBasedOnSpecifiedRelocation(viam, immediates);
+    var u = generateRelocationsBasedOnUsedRelocations(viam, immediates);
+    var v = generateRelocationsBasedOnPseudoInstructions(viam, immediates);
     var x = generateAbsoluteRelocationsForEveryFormat(viam, immediates);
     var y = generateRelativeRelocations(viam, immediates);
 
-    return Stream.concat(Stream.concat(u, x), y)
-        .sorted(Comparator.comparing(o -> o.name().value()))
+    return Stream.concat(Stream.concat(Stream.concat(u, v), x), y)
+        .sorted(Comparator.comparing(o -> o.identifier().lower()))
         .toList();
   }
 
-  private Stream<LogicalRelocation> generateRelocationsBasedOnSpecifiedRelocation(
+  private Stream<LogicalRelocation> generateRelocationsBasedOnPseudoInstructions(
+      Specification viam,
+      DetectImmediatePass.ImmediateDetectionContainer immediates) {
+    var logicalRelocations = new ArrayList<LogicalRelocation>();
+
+    viam.isa().ifPresent((isa) -> {
+      for (var pseudo : isa.ownPseudoInstructions()) {
+        pseudo
+            .behavior()
+            .getNodes(FuncCallNode.class)
+            .filter(funcCallNode -> funcCallNode.function() instanceof Relocation)
+            .forEach(funcCallNode -> {
+              var relocation = (Relocation) funcCallNode.function();
+              var usage = (InstrCallNode) funcCallNode.usages().toList().get(0);
+              ensureNonNull(usage, "There must be usage for the relocation");
+
+              // We have to find the field which the relocation is applied on.
+              // We have two lists: paramFields and arguments
+              // LUI{ rd = 1 as Bits5, imm = hi20( symbol ) }
+              // paramFields: rd, imm
+              // arguments:   1, hi20
+
+              Streams.zip(usage.getParamFields().stream(), usage.arguments().stream(),
+                      Pair::new)
+                  .filter(pair -> pair.right() == funcCallNode)
+                  .map(Pair::left)
+                  .forEach(field -> {
+                    // Now, we have the `field` for the relocation.
+                    var instruction = usage.target();
+                    var format = instruction.format();
+                    var updateFunction =
+                        BitMaskFunctionGenerator.generateUpdateFunction(format, field);
+                    var cppConformRelocation =
+                        CppTypeNormalizationPass.makeTypesCppConform(relocation);
+                    logicalRelocations.add(
+                        new LogicalRelocation(
+                            relocation,
+                            cppConformRelocation,
+                            field,
+                            format,
+                            updateFunction));
+                  });
+            });
+      }
+    });
+
+    return logicalRelocations.stream().distinct();
+  }
+
+  /**
+   * This method generates relocations when a relocation is used in a machine instruction.
+   */
+  private Stream<LogicalRelocation> generateRelocationsBasedOnUsedRelocations(
       Specification viam, DetectImmediatePass.ImmediateDetectionContainer immediates) {
     var logicalRelocations = new ArrayList<LogicalRelocation>();
-    var isa = viam.isa().orElse(null);
-    if (isa == null) {
-      return Stream.empty();
-    }
 
-    for (var instruction : isa.ownInstructions()) {
-      instruction.behavior().getNodes(FuncCallNode.class)
-          .map(FuncCallNode::function)
-          .filter(Relocation.class::isInstance)
-          .map(Relocation.class::cast)
-          .forEach(relocation -> {
-            for (var entry : immediates.get(instruction.format()).entrySet()) {
-              if (entry.getValue() == DetectImmediatePass.FieldUsage.IMMEDIATE) {
-                var field = entry.getKey();
-                var updateFunction =
-                    BitMaskFunctionGenerator.generateUpdateFunction(instruction.format(), field);
-                logicalRelocations.add(
-                    new LogicalRelocation(relocation,
-                        field,
-                        instruction.format(),
-                        updateFunction));
+    viam.isa().ifPresent((isa) -> {
+      for (var instruction : isa.ownInstructions()) {
+        instruction.behavior().getNodes(FuncCallNode.class)
+            .map(FuncCallNode::function)
+            .filter(Relocation.class::isInstance)
+            .map(Relocation.class::cast)
+            .forEach(relocation -> {
+              for (var entry : immediates.get(instruction.format()).entrySet()) {
+                if (entry.getValue() == DetectImmediatePass.FieldUsage.IMMEDIATE) {
+                  var field = entry.getKey();
+                  var updateFunction =
+                      BitMaskFunctionGenerator.generateUpdateFunction(instruction.format(), field);
+                  var cppConformRelocation =
+                      CppTypeNormalizationPass.makeTypesCppConform(relocation);
+                  logicalRelocations.add(
+                      new LogicalRelocation(
+                          relocation,
+                          cppConformRelocation,
+                          field,
+                          instruction.format(),
+                          updateFunction));
+                }
               }
-            }
-          });
-    }
+            });
+      }
+    });
 
     // We do not need to emit a relocation for every instruction.
     // We just care about the formats.
@@ -138,7 +197,6 @@ public class GenerateLogicalRelocationPass extends Pass {
             }
           }
           return relocations.stream();
-        })
-        .distinct();
+        });
   }
 }

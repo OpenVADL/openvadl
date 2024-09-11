@@ -3,17 +3,21 @@ package vadl.lcb.tablegen.lowering;
 import static org.assertj.core.api.AssertionsForClassTypes.assertThat;
 
 import org.junit.jupiter.api.Test;
+import vadl.AbstractTest;
 import vadl.lcb.codegen.model.llvm.ValueType;
 import vadl.lcb.passes.llvmLowering.tablegen.lowering.TableGenImmediateOperandRenderer;
 import vadl.lcb.passes.llvmLowering.tablegen.model.TableGenImmediateRecord;
 
-class TableGenImmediateRecordRendererTest {
+class TableGenImmediateRecordRendererTest extends AbstractTest {
 
   @Test
   void shouldRenderOperand() {
     // Given
     var operand =
-        new TableGenImmediateRecord("nameValue",
+        new TableGenImmediateRecord(createIdentifier("nameValue"),
+            createIdentifier("nameValue_encode"),
+            createIdentifier("nameValue_decode"),
+            createIdentifier("nameValue_predicate"),
             ValueType.I32);
 
     // When
@@ -27,7 +31,7 @@ class TableGenImmediateRecordRendererTest {
           let EncoderMethod = "nameValue_encode";
           let DecoderMethod = "nameValue_decode";
         } 
-        
+                
         def nameValueAsInt32
               : nameValue<i32>
               , ImmLeaf<i32, [{ return nameValue_predicate(Imm); }]>;

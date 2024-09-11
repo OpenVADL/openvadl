@@ -5,6 +5,7 @@ import java.util.stream.Stream;
 import vadl.configuration.GcbConfiguration;
 import vadl.cppCodeGen.passes.typeNormalization.CppTypeNormalizationPass;
 import vadl.pass.PassName;
+import vadl.utils.Pair;
 import vadl.viam.Format;
 import vadl.viam.Function;
 import vadl.viam.Specification;
@@ -26,12 +27,12 @@ public class CppTypeNormalizationForImmediateExtractionPass extends CppTypeNorma
   }
 
   @Override
-  protected Stream<Function> getApplicable(Specification viam) {
+  protected Stream<Pair<Format.Field, Function>> getApplicable(Specification viam) {
     return viam.isa()
         .map(x -> x.ownFormats().stream())
         .orElse(Stream.empty())
         .flatMap(x -> Arrays.stream(x.fields()))
-        .map(Format.Field::extractFunction)
+        .map(field -> new Pair<>(field, field.extractFunction()))
         .distinct();
   }
 }

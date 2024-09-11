@@ -1,16 +1,18 @@
 package vadl.lcb.template.lib.Target.Disassembler;
 
+import static java.util.stream.Collectors.filtering;
 import static java.util.stream.Collectors.toList;
 
 import java.io.IOException;
 import java.util.Arrays;
+import java.util.Comparator;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Stream;
 import vadl.configuration.LcbConfiguration;
-import vadl.lcb.codegen.encoding.DecodingCodeGenerator;
 import vadl.lcb.template.CommonVarNames;
 import vadl.lcb.template.LcbTemplateRenderingPass;
+import vadl.lcb.template.utils.ImmediateDecodingFunctionProvider;
 import vadl.lcb.templateUtils.RegisterUtils;
 import vadl.pass.PassResults;
 import vadl.viam.Format;
@@ -49,19 +51,20 @@ public class EmitDisassemblerCppFilePass extends LcbTemplateRenderingPass {
         .toList();
   }
 
-  private List<Immediate> extractImmediates(Specification specification) {
-    return specification.isa()
-        .map(x -> x.ownFormats().stream())
-        .orElse(Stream.empty())
-        .flatMap(x -> Arrays.stream(x.fieldAccesses()))
-        .map(fieldAccess -> {
-          var simpleName = fieldAccess.fieldRef().identifier.lower();
-          var decodeMethodName = DecodingCodeGenerator.generateFunctionName(
-              fieldAccess.accessFunction().identifier.lower());
-          var bitWidth = fieldAccess.fieldRef().size();
-          return new Immediate(simpleName, decodeMethodName, bitWidth,
+  private List<Immediate> extractImmediates(PassResults passResults) {
+    return ImmediateDecodingFunctionProvider.generateDecodeFunctions(passResults)
+        .entrySet()
+        .stream()
+        .map(entry -> {
+          var field = entry.getKey();
+          var simpleName = field.identifier.lower();
+          var decoderMethod = entry.getValue().functionName().lower();
+          var bitWidth = field.size();
+
+          return new Immediate(simpleName, decoderMethod, bitWidth,
               (int) Math.pow(2, bitWidth) - 1);
         })
+        .sorted(Comparator.comparing(o -> o.simpleName))
         .toList();
   }
 
@@ -87,7 +90,7 @@ public class EmitDisassemblerCppFilePass extends LcbTemplateRenderingPass {
                                                 Specification specification) {
     return Map.of(CommonVarNames.NAMESPACE, specification.name(),
         "immediates",
-        extractImmediates(specification),
+        extractImmediates(passResults),
         "instructionSize", getInstructionSize(specification),
         CommonVarNames.REGISTERS_CLASSES, extractRegisterClasses(specification));
   }
