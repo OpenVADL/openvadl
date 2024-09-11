@@ -1078,6 +1078,8 @@ PRODUCTIONS
     SYM_EQ                              (. Expr valueExpr = null; .)
     ( IF (la.kind == _IF_KW)
       ifExpression<out valueExpr, BIN_OPS_EXCEPT_IN>
+    | IF (la.kind == _FORALL)
+      forallExpression<out valueExpr, BIN_OPS_EXCEPT_IN>
     | expression<out valueExpr, BIN_OPS_EXCEPT_IN>
     )
     SYM_IN
@@ -1300,7 +1302,7 @@ PRODUCTIONS
   | ifExpression<out expr, BIN_OPS>
   | letExpression<out expr>
   | existsExpression<out expr>
-  | forallExpression<out expr>
+  | forallExpression<out expr, BIN_OPS>
   | // IF (isMacroReplacementOfType(this, BasicSyntaxType.EX))
     macroReplacement<out Node n> (. expr = castExpr(this, n); .)
   .
@@ -1368,6 +1370,8 @@ PRODUCTIONS
     SYM_EQ                              (. Expr valueExpr = null; .)
     ( IF (la.kind == _IF_KW)
       ifExpression<out valueExpr, BIN_OPS_EXCEPT_IN>
+    | IF (la.kind == _FORALL)
+      forallExpression<out expr, BIN_OPS_EXCEPT_IN>
     | expression<out valueExpr, BIN_OPS_EXCEPT_IN>
     )
     SYM_IN
@@ -1435,35 +1439,35 @@ PRODUCTIONS
     SYM_BRACE_CLOSE
   .
 
-  forallExpression<out Expr forallExpr>           (. forallExpr = null; .)
-  = FORALL                                        (. var start = loc(); .)
+  forallExpression<out Expr forallExpr, boolean[] allowedOps> (. forallExpr = null; .)
+  = FORALL                                                    (. var start = loc(); .)
     identifierOrPlaceholder<out IdentifierOrPlaceholder id>
     SYM_IN
-    (                                             (. var indices = new ArrayList<ForallThenExpr.Index>(); .)
-      operationsList<.out List<IsId> operations.> (. indices.add(new ForallThenExpr.Index(id, operations)); .)
+    (                                                         (. var indices = new ArrayList<ForallThenExpr.Index>(); .)
+      operationsList<.out List<IsId> operations.>             (. indices.add(new ForallThenExpr.Index(id, operations)); .)
       {
         SYM_COMMA
         identifierOrPlaceholder<out id>
         SYM_IN
-        operationsList<out operations>            (. indices.add(new ForallThenExpr.Index(id, operations)); .)
+        operationsList<out operations>                        (. indices.add(new ForallThenExpr.Index(id, operations)); .)
       }
       THEN
-      expression<out Expr thenExpr, BIN_OPS>      (. forallExpr = new ForallThenExpr(indices, thenExpr, start.join(loc())); .)
-    |                                             (. var indices = new ArrayList<ForallExpr.Index>(); .)
-      rangeExpression<out Expr domain>            (. indices.add(new ForallExpr.Index(id, domain)); .)
+      expression<out Expr thenExpr, allowedOps>               (. forallExpr = new ForallThenExpr(indices, thenExpr, start.join(loc())); .)
+    |                                                         (. var indices = new ArrayList<ForallExpr.Index>(); .)
+      rangeExpression<out Expr domain>                        (. indices.add(new ForallExpr.Index(id, domain)); .)
       {
         SYM_COMMA
         identifierOrPlaceholder<out id>
         SYM_IN
-        rangeExpression<out domain>               (. indices.add(new ForallExpr.Index(id, domain)); .)
-      }                                           (. ForallExpr.Operation operation = null; Operator foldAction = null; .)
-      ( APPEND                                    (. operation = ForallExpr.Operation.APPEND; .)
-      | TENSOR                                    (. operation = ForallExpr.Operation.TENSOR; .)
-      | FOLD                                      (. operation = ForallExpr.Operation.FOLD; .)
+        rangeExpression<out domain>                           (. indices.add(new ForallExpr.Index(id, domain)); .)
+      }                                                       (. ForallExpr.Operation operation = null; Operator foldAction = null; .)
+      ( APPEND                                                (. operation = ForallExpr.Operation.APPEND; .)
+      | TENSOR                                                (. operation = ForallExpr.Operation.TENSOR; .)
+      | FOLD                                                  (. operation = ForallExpr.Operation.FOLD; .)
         binaryOperator<out foldAction>
         WITH
       )
-      expression<out Expr expr, BIN_OPS>          (. forallExpr = new ForallExpr(indices, operation, foldAction, expr, start.join(loc())); .)
+      expression<out Expr expr, allowedOps>                   (. forallExpr = new ForallExpr(indices, operation, foldAction, expr, start.join(loc())); .)
     )
   .
 
