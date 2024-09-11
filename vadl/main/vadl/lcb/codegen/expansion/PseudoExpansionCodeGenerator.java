@@ -26,6 +26,9 @@ public class PseudoExpansionCodeGenerator extends CodeGenerator {
   private final IdentityHashMap<Format.Field, VariantKind> variants;
   private final List<ElfRelocation> relocations;
 
+  /**
+   * Constructor.
+   */
   public PseudoExpansionCodeGenerator(String namespace,
                                       DetectImmediatePass.ImmediateDetectionContainer fieldUsages,
                                       Map<Format.Field, CppFunction> immediateDecodings,

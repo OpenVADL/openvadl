@@ -9,7 +9,13 @@ import vadl.pass.PassResults;
 import vadl.utils.Pair;
 import vadl.viam.Format;
 
+/**
+ * Utility class for encodings.
+ */
 public class ImmediateEncodingFunctionProvider {
+  /**
+   * Get the encoding functions.
+   */
   public static Map<Format.Field, CppFunction> generateEncodeFunctions(
       PassResults passResults) {
     return ((CppTypeNormalizationPass.NormalisedTypeResult)

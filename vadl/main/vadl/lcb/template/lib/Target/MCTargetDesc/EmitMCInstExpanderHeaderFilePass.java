@@ -35,8 +35,8 @@ public class EmitMCInstExpanderHeaderFilePass extends LcbTemplateRenderingPass {
   @Override
   protected String getOutputPath() {
     var processorName = lcbConfiguration().processorName().value();
-    return "lcb/llvm/lib/Target/" + processorName + "/MCTargetDesc/"
-        + processorName + "MCInstExpander.h";
+    return "lcb/llvm/lib/Target/" + processorName + "/MCTargetDesc/" + processorName
+        + "MCInstExpander.h";
   }
 
   record RenderedPseudoInstruction(String header, PseudoInstruction pseudoInstruction) {
@@ -44,18 +44,19 @@ public class EmitMCInstExpanderHeaderFilePass extends LcbTemplateRenderingPass {
   }
 
   /**
-   * Get the simple names of the pseudo instructions
+   * Get the simple names of the pseudo instructions.
    */
-  private List<RenderedPseudoInstruction> pseudoInstructions(Specification specification,
-                                                             IdentityHashMap<PseudoInstruction, CppFunction> cppFunctions
+  private List<RenderedPseudoInstruction> pseudoInstructions(
+      Specification specification,
+      IdentityHashMap<PseudoInstruction, CppFunction> cppFunctions
   ) {
     return specification.isa()
         .map(x -> x.ownPseudoInstructions().stream()).orElseGet(Stream::empty)
         .map(x -> new RenderedPseudoInstruction(
-            ensureNonNull(cppFunctions.get(x), "cppFunction must exist").functionName().lower(),
+            ensureNonNull(cppFunctions.get(x), "cppFunction must exist")
+                .functionName().lower(),
             x
-        ))
-        .toList();
+        )).toList();
   }
 
   @Override
@@ -63,7 +64,7 @@ public class EmitMCInstExpanderHeaderFilePass extends LcbTemplateRenderingPass {
                                                 Specification specification) {
     var cppFunctions = (IdentityHashMap<PseudoInstruction, CppFunction>) passResults.lastResultOf(
         PseudoExpansionFunctionGeneratorPass.class);
-    return Map.of(CommonVarNames.NAMESPACE, specification.name(),
-        "pseudoInstructions", pseudoInstructions(specification, cppFunctions));
+    return Map.of(CommonVarNames.NAMESPACE, specification.name(), "pseudoInstructions",
+        pseudoInstructions(specification, cppFunctions));
   }
 }

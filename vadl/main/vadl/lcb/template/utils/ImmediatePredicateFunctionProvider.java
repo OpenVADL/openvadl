@@ -9,7 +9,13 @@ import vadl.pass.PassResults;
 import vadl.utils.Pair;
 import vadl.viam.Format;
 
+/**
+ * Utility class for predicates.
+ */
 public class ImmediatePredicateFunctionProvider {
+  /**
+   * Get the predicates.
+   */
   public static Map<Format.Field, CppFunction> generatePredicateFunctions(
       PassResults passResults) {
     return ((CppTypeNormalizationPass.NormalisedTypeResult)

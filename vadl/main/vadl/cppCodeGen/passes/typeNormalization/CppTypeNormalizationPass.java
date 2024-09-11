@@ -49,7 +49,10 @@ public abstract class CppTypeNormalizationPass extends Pass {
     super(gcbConfiguration);
   }
 
-  public class NormalisedTypeResult {
+  /**
+   * A container for storing the result of {@link CppTypeNormalizationPass}.
+   */
+  public static class NormalisedTypeResult {
     private final IdentityHashMap<Function, CppFunction> functions = new IdentityHashMap<>();
     private final IdentityHashMap<Format.Field, CppFunction> fields = new IdentityHashMap<>();
 

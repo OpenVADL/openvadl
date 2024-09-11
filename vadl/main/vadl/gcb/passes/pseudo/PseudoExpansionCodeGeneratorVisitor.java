@@ -17,6 +17,7 @@ import vadl.lcb.passes.relocation.model.ElfRelocation;
 import vadl.utils.Pair;
 import vadl.viam.Format;
 import vadl.viam.Relocation;
+import vadl.viam.ViamError;
 import vadl.viam.graph.control.InstrCallNode;
 import vadl.viam.graph.control.InstrEndNode;
 import vadl.viam.graph.dependency.ConstantNode;
@@ -24,6 +25,9 @@ import vadl.viam.graph.dependency.FuncCallNode;
 import vadl.viam.graph.dependency.FuncParamNode;
 import vadl.viam.graph.dependency.WriteRegFileNode;
 
+/**
+ * More specialised generator visitor for generating the expansion of pseudo instructions.
+ */
 public class PseudoExpansionCodeGeneratorVisitor extends GenericCppCodeGeneratorVisitor {
   private final Stack<String> operands = new Stack<>();
   private final SymbolTable symbolTable = new SymbolTable();
@@ -33,6 +37,9 @@ public class PseudoExpansionCodeGeneratorVisitor extends GenericCppCodeGenerator
   private final IdentityHashMap<Format.Field, VariantKind> immVariants;
   private final List<ElfRelocation> relocations;
 
+  /**
+   * Constructor.
+   */
   public PseudoExpansionCodeGeneratorVisitor(StringWriter writer, String namespace,
                                              DetectImmediatePass.ImmediateDetectionContainer
                                                  fieldUsages,
@@ -76,6 +83,28 @@ public class PseudoExpansionCodeGeneratorVisitor extends GenericCppCodeGenerator
     }
   }
 
+  @Override
+  public void visit(ConstantNode node) {
+
+  }
+
+
+  @Override
+  public void visit(FuncParamNode node) {
+
+  }
+
+
+  @Override
+  public void visit(InstrEndNode instrEndNode) {
+    instrEndNode.sideEffects().forEach(this::visit);
+  }
+
+  @Override
+  public void visit(WriteRegFileNode writeRegFileNode) {
+    throw new RuntimeException("not implemented");
+  }
+
   private void lowerExpression(String sym, Format.Field field, ConstantNode argument) {
     var usage = fieldUsages.get(field.format()).get(field);
     ensure(usage != null, "usage must not be null");
@@ -93,9 +122,9 @@ public class PseudoExpansionCodeGeneratorVisitor extends GenericCppCodeGenerator
           sym,
           namespace,
           argument.constant().asVal().intValue()));
+      default -> throw new ViamError("not supported");
     }
   }
-
 
   private void lowerExpressionWithRelocation(String sym,
                                              Format.Field field,
@@ -146,34 +175,9 @@ public class PseudoExpansionCodeGeneratorVisitor extends GenericCppCodeGenerator
             sym,
             argumentImmSymbol));
       }
-      case REGISTER -> {
-        writer.write(
-            String.format("%s.addOperand(instruction.getOperand(%d));\n", sym, argumentIndex));
-      }
+      case REGISTER -> writer.write(
+          String.format("%s.addOperand(instruction.getOperand(%d));\n", sym, argumentIndex));
+      default -> throw new ViamError("not supported");
     }
-
-
-  }
-
-  @Override
-  public void visit(ConstantNode node) {
-
-  }
-
-
-  @Override
-  public void visit(FuncParamNode node) {
-
-  }
-
-
-  @Override
-  public void visit(InstrEndNode instrEndNode) {
-    instrEndNode.sideEffects().forEach(this::visit);
-  }
-
-  @Override
-  public void visit(WriteRegFileNode writeRegFileNode) {
-    throw new RuntimeException("not implemented");
   }
 }

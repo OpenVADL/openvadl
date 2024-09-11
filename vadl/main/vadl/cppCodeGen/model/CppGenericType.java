@@ -1,5 +1,8 @@
 package vadl.cppCodeGen.model;
 
+/**
+ * Special type which indicates that the type is a generic.
+ */
 public class CppGenericType extends CppType {
   private final CppType generic;
 

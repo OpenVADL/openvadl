@@ -53,7 +53,7 @@ public class CppTypeMap {
       return "uint64_t";
     } else if (type instanceof BitsType && ((BitsType) type).bitWidth() == 128) {
       return "uint128_t";
-    } else if(type instanceof CppType cppType) {
+    } else if (type instanceof CppType cppType) {
       return cppType.lower();
     }
 

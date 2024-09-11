@@ -51,7 +51,7 @@ public class EmitMCInstExpanderCppFilePass extends LcbTemplateRenderingPass {
   }
 
   /**
-   * Get the simple names of the pseudo instructions
+   * Get the simple names of the pseudo instructions.
    */
   private List<RenderedPseudoInstruction> pseudoInstructions(
       Specification specification,
