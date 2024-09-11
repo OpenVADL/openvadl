@@ -3000,10 +3000,10 @@ class MicroProcessorDefinition extends Definition {
       return false;
     }
     MicroProcessorDefinition that = (MicroProcessorDefinition) o;
-    return Objects.equals(id, that.id) &&
-        Objects.equals(implementedIsas, that.implementedIsas) &&
-        Objects.equals(abi, that.abi) &&
-        Objects.equals(definitions, that.definitions);
+    return Objects.equals(id, that.id)
+        && Objects.equals(implementedIsas, that.implementedIsas)
+        && Objects.equals(abi, that.abi)
+        && Objects.equals(definitions, that.definitions);
   }
 
   @Override
@@ -3265,9 +3265,9 @@ class MicroArchitectureDefinition extends Definition {
       return false;
     }
     MicroArchitectureDefinition that = (MicroArchitectureDefinition) o;
-    return Objects.equals(id, that.id) &&
-        Objects.equals(processor, that.processor) &&
-        Objects.equals(definitions, that.definitions);
+    return Objects.equals(id, that.id)
+        && Objects.equals(processor, that.processor)
+        && Objects.equals(definitions, that.definitions);
   }
 
   @Override
