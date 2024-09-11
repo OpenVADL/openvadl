@@ -26,12 +26,12 @@ public class LogicalRelocation {
     ABSOLUTE
   }
 
+  private final Identifier identifier;
   private final Kind kind;
 
   private final Format format;
   private final Relocation relocation;
   private final CppFunction cppRelocation;
-  private final Format.Field immediate;
   private final CppFunction updateFunction;
   private final VariantKind variantKind;
 
@@ -46,9 +46,9 @@ public class LogicalRelocation {
       CppFunction updateFunction) {
     this.relocation = originalRelocation;
     this.kind = originalRelocation.isAbsolute() ? Kind.ABSOLUTE : Kind.RELATIVE;
+    this.identifier = generateName(format, field, kind);
     this.format = format;
     this.cppRelocation = relocation;
-    this.immediate = field;
     this.updateFunction = updateFunction;
     this.variantKind = new VariantKind(originalRelocation);
   }
@@ -66,14 +66,22 @@ public class LogicalRelocation {
     this.format = format;
     var parameter = new Parameter(new Identifier("input", SourceLocation.INVALID_SOURCE_LOCATION),
         format.type());
-    this.relocation = new Relocation(immediate.identifier,
+    this.identifier = generateName(format, immediate, kind);
+    this.relocation = new Relocation(identifier,
         new Parameter[] {parameter},
         format.type());
     this.cppRelocation = new CppFunction(relocation, "relocation");
-    this.immediate = immediate;
     // Add a single return
     this.cppRelocation.behavior().addWithInputs(new ReturnNode(new FuncParamNode(parameter)));
     this.variantKind = new VariantKind(relocation);
+  }
+
+  private Identifier generateName(Format format, Format.Field imm, Kind kind) {
+    return format.identifier.append(kind.name(), imm.identifier.simpleName());
+  }
+
+  public Identifier identifier() {
+    return identifier;
   }
 
   public Kind kind() {
@@ -93,18 +101,6 @@ public class LogicalRelocation {
 
   public CppFunction cppRelocation() {
     return cppRelocation;
-  }
-
-  /**
-   * Get name.
-   */
-  public RelocationName name() {
-    var suffix = format.identifier.lower() + "_" + immediate.identifier.lower();
-    if (kind == Kind.ABSOLUTE) {
-      return new RelocationName("ABS_" + suffix);
-    } else {
-      return new RelocationName("REL_" + suffix);
-    }
   }
 
   public CppFunction updateFunction() {

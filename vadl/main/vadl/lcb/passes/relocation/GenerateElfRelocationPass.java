@@ -30,12 +30,11 @@ public class GenerateElfRelocationPass extends Pass {
   @Override
   public List<ElfRelocation> execute(PassResults passResults, Specification viam)
       throws IOException {
-    var configuration = (LcbConfiguration) configuration();
     var logicalRelocations =
         (List<LogicalRelocation>) passResults.lastResultOf(GenerateLogicalRelocationPass.class);
 
     return logicalRelocations.stream()
-        .map(relocation -> new ElfRelocation(configuration.processorName(), relocation))
+        .map(ElfRelocation::new)
         .toList();
   }
 }

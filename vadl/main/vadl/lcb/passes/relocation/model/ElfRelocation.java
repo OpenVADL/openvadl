@@ -11,11 +11,9 @@ import vadl.viam.Relocation;
  * Wrapper for {@link LogicalRelocation}.
  */
 public class ElfRelocation {
-  private final ProcessorName processorName;
   private final LogicalRelocation logicalRelocation;
 
-  public ElfRelocation(ProcessorName processorName, LogicalRelocation relocation) {
-    this.processorName = processorName;
+  public ElfRelocation(LogicalRelocation relocation) {
     this.logicalRelocation = relocation;
   }
 
@@ -33,6 +31,6 @@ public class ElfRelocation {
 
   public ElfRelocationName name() {
     return new ElfRelocationName(
-        "R_" + processorName.value() + "_" + logicalRelocation.name().value());
+        "R_" + logicalRelocation.relocation().identifier.lower());
   }
 }

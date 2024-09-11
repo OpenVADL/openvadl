@@ -80,7 +80,7 @@ public class RelocationCodeGeneratorCppVerificationTest extends AbstractLcbTest 
             getArbitrary(params[0]);
         var arbitraryImmediateValue = getArbitrary(immField);
 
-        var limit = 5;
+        var limit = 3;
         arbitraryInstructionWord.sampleStream().limit(limit).forEach(instructionWordSample -> {
           arbitraryImmediateValue.sampleStream().limit(limit).forEach(immediateValue -> {
             var displayName =

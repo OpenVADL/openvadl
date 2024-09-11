@@ -90,9 +90,9 @@ public class EncodingCodeGeneratorCppVerificationTest extends AbstractCppCodeGen
 
   void testFieldAccess(String testName,
                        int sample,
-                       CppFunction acccessFunction,
+                       CppFunction accessFunction,
                        CppFunction encodingFunction) {
-    var decodeFunction = new CodeGenerator().generateFunction(acccessFunction);
+    var decodeFunction = new CodeGenerator().generateFunction(accessFunction);
     var encodeFunction = new CodeGenerator().generateFunction(encodingFunction);
     String expectedReturnType =
         CppTypeMap.getCppTypeNameByVadlType(encodingFunction.returnType());
@@ -151,7 +151,7 @@ public class EncodingCodeGeneratorCppVerificationTest extends AbstractCppCodeGen
         expectedReturnType,
         sample,
         encodingFunction.identifier.lower(),
-        acccessFunction.identifier.lower());
+        accessFunction.identifier.lower());
 
     logger.info(testName + "\n" + cppCode);
 

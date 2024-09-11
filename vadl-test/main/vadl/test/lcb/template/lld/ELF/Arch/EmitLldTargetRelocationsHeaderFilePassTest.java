@@ -32,7 +32,42 @@ public class EmitLldTargetRelocationsHeaderFilePassTest extends AbstractLcbTest 
     var output = trimmed.lines();
 
     Assertions.assertLinesMatch("""
-
+        uint32_t RV3264I_Btype_ABSOLUTE_imm_relocation(uint32_t input) {
+        return input;
+        }
+        uint32_t RV3264I_Btype_RELATIVE_imm_relocation(uint32_t input) {
+        return input;
+        }
+        uint32_t RV3264I_Ftype_ABSOLUTE_sft_relocation(uint32_t input) {
+        return input;
+        }
+        uint32_t RV3264I_Itype_ABSOLUTE_imm_relocation(uint32_t input) {
+        return input;
+        }
+        uint32_t RV3264I_Itype_RELATIVE_imm_relocation(uint32_t input) {
+        return input;
+        }
+        uint32_t RV3264I_Jtype_ABSOLUTE_imm_relocation(uint32_t input) {
+        return input;
+        }
+        uint32_t RV3264I_Jtype_RELATIVE_imm_relocation(uint32_t input) {
+        return input;
+        }
+        uint32_t RV3264I_Stype_ABSOLUTE_imm_relocation(uint32_t input) {
+        return input;
+        }
+        uint32_t RV3264I_Utype_ABSOLUTE_imm_relocation(uint32_t input) {
+        return input;
+        }
+        uint32_t RV3264I_Utype_RELATIVE_imm_relocation(uint32_t input) {
+        return input;
+        }
+        uint32_t RV3264I_hi20(uint32_t symbol) {
+        return ((uint32_t) ((symbol) + (2048)) >> (12));
+        }
+        int16_t RV3264I_lo12(uint32_t symbol) {
+        return ((int16_t) symbol);
+        }
         """.trim().lines(), output);
   }
 }

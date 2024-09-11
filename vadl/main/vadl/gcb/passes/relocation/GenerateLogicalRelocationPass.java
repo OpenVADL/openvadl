@@ -57,7 +57,7 @@ public class GenerateLogicalRelocationPass extends Pass {
     var y = generateRelativeRelocations(viam, immediates);
 
     return Stream.concat(Stream.concat(Stream.concat(u, v), x), y)
-        .sorted(Comparator.comparing(o -> o.name().value()))
+        .sorted(Comparator.comparing(o -> o.identifier().lower()))
         .toList();
   }
 
@@ -197,7 +197,6 @@ public class GenerateLogicalRelocationPass extends Pass {
             }
           }
           return relocations.stream();
-        })
-        .distinct();
+        });
   }
 }

@@ -4,6 +4,7 @@ import java.io.IOException;
 import java.util.Comparator;
 import java.util.List;
 import java.util.Map;
+import java.util.stream.Collectors;
 import vadl.configuration.LcbConfiguration;
 import vadl.lcb.codegen.CodeGenerator;
 import vadl.lcb.passes.relocation.GenerateElfRelocationPass;
@@ -39,8 +40,13 @@ public class EmitLldManualEncodingHeaderFilePass extends LcbTemplateRenderingPas
         (List<ElfRelocation>) passResults.lastResultOf(GenerateElfRelocationPass.class);
     return Map.of(CommonVarNames.NAMESPACE, specification.name(),
         "functions", elfRelocations.stream()
+            .collect(Collectors.groupingBy(x -> x.updateFunction().functionName().lower()))
+            .values()
+            .stream()
+            .map(x -> x.get(0)) // only consider one relocation because we do not need duplication
             .sorted(Comparator.comparing(o -> o.name().value()))
             .map(elfRelocation -> new CodeGenerator().generateFunction(
-                elfRelocation.updateFunction())).toList());
+                elfRelocation.updateFunction()))
+            .toList());
   }
 }
