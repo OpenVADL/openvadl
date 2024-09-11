@@ -10,7 +10,7 @@
 
 instruction set architecture RV3264I = {
 
-  model ArchSize() : Id = {Arch64}        // invoke vadl -m "ArchSize=Arch64" for 64 bit arch
+  model ArchSize() : Id = {Arch32}        // invoke vadl -m "ArchSize=Arch64" for 64 bit arch
 
   // if $ArchSize() equals Arch64 expands to second arg else to first arg
   model Arch3264 (arch32 : IsaDefs, arch64 : IsaDefs) : IsaDefs = {
@@ -237,7 +237,7 @@ instruction set architecture RV3264I = {
   $BtypeInstr (BLT  ; <  ; 0b100 ; SInt)               // branch less than
   $BtypeInstr (BLTU ; <  ; 0b110 ; UInt)               // branch less than unsigned
 
-  // $JLinkInstr (JAL  ; Jtype ; PC     ; opcode = 0b110'1111 ; "") // jump and link
+  $JLinkInstr (JAL  ; Jtype ; PC     ; opcode = 0b110'1111 ; "") // jump and link
   $JLinkInstr (JALR ; Itype ; X(rs1) ; opcode = 0b110'0111,      // jump and link register
                                        funct3 = 0b000 ; ("(", register(rs1), ")"))
 
@@ -303,12 +303,12 @@ instruction set architecture RV3264IM extending RV3264I = {
 // | Overflow (signed only)  | TopBitSet |    -1   | TopBitSet |    -    |     0    |     -    |
 // +-------------------------+-----------+---------+-----------|---------+----------+----------+
 
-  model DivModInstr (name : Id, opName : Id, funct3 : Bin, opCode : Bin, opTy : Id) : IsaDefs = {
+  model DivModInstr (name : Id, opName : Id, funct3 : Bin, opCode : Bin, opTy : Id, sign : Id) : IsaDefs = {
     instruction $name : Rtype =                        // division and remainder instructions
       let dividend = X(rs1) as $opTy in let divisor = X(rs2) as $opTy in
         X(rd) :=  if divisor = (0 as $opTy)
                     then match : Ex ($opName = div => AllOnes; _  => dividend)
-                  else match : Ex ($opTy = SInt =>
+                  else match : Ex ($sign = SInt =>
                     if isOverflow (dividend, divisor)
                       then match : Ex ($opName = div => TopBitSet; _  => 0)
                       else VADL::$opName(dividend, divisor) as SIntR
@@ -324,29 +324,29 @@ instruction set architecture RV3264IM extending RV3264I = {
   $MtypeInstr (MULHSU ; 0b010 ; SInt ; UInt ; result(MLen2_1..MLen)) // multiply high signed * unsigned
   $MtypeInstr (MULHU  ; 0b011 ; UInt ; UInt ; result(MLen2_1..MLen)) // multiply high unsigned * unsigned
 
-  $DivModInstr(DIV   ; div ; 0b100 ; 0b011'0011 ; SIntR)               // signed division
-  $DivModInstr(DIVU  ; div ; 0b101 ; 0b011'0011 ; UIntR)               // unsigned division
-  $DivModInstr(REM   ; mod ; 0b110 ; 0b011'0011 ; SIntR)               // signed remainder
+  $DivModInstr(DIV   ; div ; 0b100 ; 0b011'0011 ; SIntR ; SInt)      // signed division
+  $DivModInstr(DIVU  ; div ; 0b101 ; 0b011'0011 ; UIntR ; UInt)      // unsigned division
+  $DivModInstr(REM   ; mod ; 0b110 ; 0b011'0011 ; SIntR ; SInt)      // signed remainder
 
 $Arch3264 ( // ((((((((((((((((((((((((((((((((((((((((
 
-  $DivModInstr(REMU  ; mod ; 0b111 ; 0b011'0011 ; UIntR)               // unsigned remainder
+  $DivModInstr(REMU  ; mod ; 0b111 ; 0b011'0011 ; UIntR ; UInt)      // unsigned remainder
 
 ;           // ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
-  $DivModInstr(REMU  ; mod ; 0b111 ; 0b011'0011 ; UIntR)               // unsigned remainder
+  $DivModInstr(REMU  ; mod ; 0b111 ; 0b011'0011 ; UIntR ; UInt)      // unsigned remainder
 
-  $WtypeInstr (MULW  ;  *  ; 0b000 ; 0b000'0001 ; SIntW ; SIntW)       // multiply signed word
+  $WtypeInstr (MULW  ;  *  ; 0b000 ; 0b000'0001 ; SIntW ; SIntW)     // multiply signed word
 
-  $DivModInstr(DIVW  ; div ; 0b100 ; 0b011'1011 ; SIntW)               // signed division word
-  $DivModInstr(DIVUW ; div ; 0b101 ; 0b011'1011 ; UIntW)               // unsigned division word
-  $DivModInstr(REMW  ; mod ; 0b110 ; 0b011'1011 ; SIntW)               // signed remainder word
-  $DivModInstr(REMUW ; mod ; 0b111 ; 0b011'1011 ; UIntW)               // unsigned remainder word
+  $DivModInstr(DIVW  ; div ; 0b100 ; 0b011'1011 ; SIntW ; SInt)      // signed division word
+  $DivModInstr(DIVUW ; div ; 0b101 ; 0b011'1011 ; UIntW ; UInt)      // unsigned division word
+  $DivModInstr(REMW  ; mod ; 0b110 ; 0b011'1011 ; SIntW ; SInt)      // signed remainder word
+  $DivModInstr(REMUW ; mod ; 0b111 ; 0b011'1011 ; UIntW ; UInt)      // unsigned remainder word
 
 )           // ))))))))))))))))))))))))))))))))))))))))
 
   }
 
-//   application binary interface ABI for RV3264IM = {}
+  application binary interface ABI for RV3264IM = {}
 
-  // micro processor CPU implements RV3264IM with ABI = {}
+  micro processor CPU implements RV3264IM with ABI = {}

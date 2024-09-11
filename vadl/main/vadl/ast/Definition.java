@@ -2990,6 +2990,26 @@ class MicroProcessorDefinition extends Definition {
     }
     builder.append(prettyIndentString(indent)).append("}\n");
   }
+
+  @Override
+  public boolean equals(Object o) {
+    if (this == o) {
+      return true;
+    }
+    if (o == null || getClass() != o.getClass()) {
+      return false;
+    }
+    MicroProcessorDefinition that = (MicroProcessorDefinition) o;
+    return Objects.equals(id, that.id) &&
+        Objects.equals(implementedIsas, that.implementedIsas) &&
+        Objects.equals(abi, that.abi) &&
+        Objects.equals(definitions, that.definitions);
+  }
+
+  @Override
+  public int hashCode() {
+    return Objects.hash(id, implementedIsas, abi, definitions);
+  }
 }
 
 class PatchDefinition extends Definition {
@@ -3234,6 +3254,25 @@ class MicroArchitectureDefinition extends Definition {
       definition.prettyPrint(indent + 1, builder);
     }
     builder.append(prettyIndentString(indent)).append("}\n");
+  }
+
+  @Override
+  public boolean equals(Object o) {
+    if (this == o) {
+      return true;
+    }
+    if (o == null || getClass() != o.getClass()) {
+      return false;
+    }
+    MicroArchitectureDefinition that = (MicroArchitectureDefinition) o;
+    return Objects.equals(id, that.id) &&
+        Objects.equals(processor, that.processor) &&
+        Objects.equals(definitions, that.definitions);
+  }
+
+  @Override
+  public int hashCode() {
+    return Objects.hash(id, processor, definitions);
   }
 }
 
