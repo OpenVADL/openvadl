@@ -147,7 +147,11 @@ class MacroExpander
     } else if (node instanceof EncodingDefinition.FieldEncodings encs) {
       return resolveEncs(encs);
     } else if (node instanceof PlaceholderNode placeholderNode) {
-      return Objects.requireNonNullElse(resolveArg(placeholderNode.segments), node);
+      return expand(placeholderNode);
+    } else if (node instanceof MacroInstanceNode macroInstanceNode) {
+      return expand(macroInstanceNode);
+    } else if (node instanceof MacroMatchNode macroMatchNode) {
+      return expand(macroMatchNode);
     } else {
       return node;
     }
@@ -967,27 +971,37 @@ class MacroExpander
     for (var enc : encs.encodings) {
       fieldEncodings.addAll(resolveEnc(enc));
     }
-    return new EncodingDefinition.FieldEncodings(fieldEncodings);
+    return new EncodingDefinition.FieldEncodings(fieldEncodings, encs.loc);
   }
 
   private List<FieldEncodingOrPlaceholder> resolveEnc(FieldEncodingOrPlaceholder encoding) {
     if (encoding instanceof EncodingDefinition.FieldEncoding fieldEncoding) {
       return List.of(new EncodingDefinition.FieldEncoding(fieldEncoding.field(),
           expandExpr(fieldEncoding.value())));
-    } else if (encoding instanceof PlaceholderNode p) {
-      var arg = (EncodingDefinition.FieldEncodings) resolveArg(p.segments);
-      if (arg == null) {
-        return List.of(encoding);
-      } else {
-        return arg.encodings;
+    } else if (encoding instanceof EncodingDefinition.FieldEncodings encodings) {
+      var encs = new ArrayList<FieldEncodingOrPlaceholder>(encodings.encodings.size());
+      for (FieldEncodingOrPlaceholder enc : encodings.encodings) {
+        encs.addAll(resolveEnc(enc));
       }
-    } else if (encoding instanceof MacroMatchExpr macroMatchExpr) {
-      var macroMatch = expandMacroMatch(macroMatchExpr.macroMatch);
-      var resolved = resolveMacroMatch(macroMatch);
-      if (resolved == null) {
-        return List.of(new MacroMatchExpr(macroMatch));
+      return encs;
+    } else if (encoding instanceof PlaceholderNode placeholder) {
+      var expanded = expand(placeholder);
+      if (expanded instanceof EncodingDefinition.FieldEncodings encs) {
+        return encs.encodings;
+      }
+    } else if (encoding instanceof MacroMatchNode macroMatchNode) {
+      var expanded = expand(macroMatchNode);
+      if (expanded instanceof EncodingDefinition.FieldEncodings encs) {
+        return encs.encodings;
       } else {
-        return ((EncodingDefinition.FieldEncodings) resolved).encodings;
+        return List.of((FieldEncodingOrPlaceholder) expanded);
+      }
+    } else if (encoding instanceof MacroInstanceNode macroInstanceNode) {
+      var expanded = expand(macroInstanceNode);
+      if (expanded instanceof EncodingDefinition.FieldEncodings encs) {
+        return encs.encodings;
+      } else {
+        return List.of((FieldEncodingOrPlaceholder) expanded);
       }
     }
     return List.of(encoding);
@@ -1051,6 +1065,41 @@ class MacroExpander
       return macroReference.macro;
     }
     return null;
+  }
+
+  private Node expand(PlaceholderNode node) {
+    return Objects.requireNonNullElse(resolveArg(node.segments), node);
+  }
+
+  private Node expand(MacroInstanceNode node) {
+    var macro = resolveMacro(node.macro);
+    if (macro == null) {
+      // Macro reference passed down multiple layers - let parent layer expand
+      var arguments = new ArrayList<>(node.arguments);
+      arguments.replaceAll(this::expandNode);
+      var placeholder = (MacroPlaceholder) node.macro;
+      var resolved = resolveArg(placeholder.segments());
+      var newSegments =
+          resolved == null ? placeholder.segments() : ((PlaceholderNode) resolved).segments;
+      return new MacroInstanceNode(new MacroPlaceholder(placeholder.syntaxType(), newSegments),
+          arguments, node.loc);
+    }
+
+    try {
+      assertValidMacro(macro, node.location());
+      var arguments = collectMacroParameters(macro, node.arguments, node.location());
+      var subpass = new MacroExpander(arguments, macroOverrides);
+      return subpass.expandNode(macro.body());
+    } catch (MacroExpansionException e) {
+      reportError(e.message, e.sourceLocation);
+      return node;
+    }
+  }
+
+  private Node expand(MacroMatchNode node) {
+    var macroMatch = expandMacroMatch(node.macroMatch);
+    var resolved = resolveMacroMatch(macroMatch);
+    return Objects.requireNonNullElseGet(resolved, () -> new MacroMatchNode(macroMatch));
   }
 
   private void reportError(String error, SourceLocation location) {

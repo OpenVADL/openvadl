@@ -178,3 +178,118 @@ final class PlaceholderNode extends Node implements IsBinOp, IsUnOp, FieldEncodi
     builder.append(String.join(".", segments));
   }
 }
+
+final class MacroInstanceNode extends Node implements MacroInstance, FieldEncodingOrPlaceholder {
+
+  MacroOrPlaceholder macro;
+  List<Node> arguments;
+  SourceLocation loc;
+
+  public MacroInstanceNode(MacroOrPlaceholder macro, List<Node> arguments, SourceLocation loc) {
+    this.macro = macro;
+    this.arguments = arguments;
+    this.loc = loc;
+  }
+
+  @Override
+  public SourceLocation location() {
+    return loc;
+  }
+
+  @Override
+  SyntaxType syntaxType() {
+    return macro.returnType();
+  }
+
+  @Override
+  public void prettyPrint(int indent, StringBuilder builder) {
+    builder.append(prettyIndentString(indent));
+    builder.append("$");
+    if (macro instanceof Macro m) {
+      builder.append(m.name().name);
+    } else if (macro instanceof MacroPlaceholder mp) {
+      builder.append(String.join(".", mp.segments()));
+    }
+    builder.append("(");
+    var isFirst = true;
+    for (var arg : arguments) {
+      if (!isFirst) {
+        builder.append(" ; ");
+      }
+      isFirst = false;
+      arg.prettyPrint(0, builder);
+    }
+    builder.append(")");
+  }
+
+  @Override
+  public boolean equals(Object o) {
+    if (this == o) {
+      return true;
+    }
+    if (o == null || getClass() != o.getClass()) {
+      return false;
+    }
+
+    MacroInstanceNode that = (MacroInstanceNode) o;
+    return macro.equals(that.macro)
+        && arguments.equals(that.arguments);
+  }
+
+  @Override
+  public int hashCode() {
+    int result = macro.hashCode();
+    result = 31 * result + arguments.hashCode();
+    return result;
+  }
+
+  @Override
+  public MacroOrPlaceholder macroOrPlaceholder() {
+    return macro;
+  }
+}
+
+/**
+ * An internal temporary placeholder of a macro-level "match" construct.
+ * This node should never leave the parser.
+ */
+final class MacroMatchNode extends Node implements FieldEncodingOrPlaceholder {
+  MacroMatch macroMatch;
+
+  MacroMatchNode(MacroMatch macroMatch) {
+    this.macroMatch = macroMatch;
+  }
+
+  @Override
+  public SourceLocation location() {
+    return macroMatch.sourceLocation();
+  }
+
+  @Override
+  SyntaxType syntaxType() {
+    return macroMatch.resultType();
+  }
+
+  @Override
+  public void prettyPrint(int indent, StringBuilder builder) {
+    macroMatch.prettyPrint(indent, builder);
+  }
+
+  @Override
+  public boolean equals(Object o) {
+    if (this == o) {
+      return true;
+    }
+    if (o == null || getClass() != o.getClass()) {
+      return false;
+    }
+
+    MacroMatchNode that = (MacroMatchNode) o;
+    return macroMatch.equals(that.macroMatch);
+  }
+
+  @Override
+  public int hashCode() {
+    return macroMatch.hashCode();
+  }
+}

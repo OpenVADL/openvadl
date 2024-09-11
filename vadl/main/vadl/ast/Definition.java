@@ -1251,8 +1251,8 @@ class RelocationDefinition extends Definition {
   }
 }
 
-sealed interface FieldEncodingOrPlaceholder
-    permits EncodingDefinition.FieldEncoding, PlaceholderNode, MacroInstanceExpr, MacroMatchExpr {
+sealed interface FieldEncodingOrPlaceholder permits EncodingDefinition.FieldEncodings,
+    EncodingDefinition.FieldEncoding, PlaceholderNode, MacroInstanceNode, MacroMatchNode {
   SourceLocation location();
 
   void prettyPrint(int indent, StringBuilder builder);
@@ -1333,17 +1333,18 @@ class EncodingDefinition extends Definition {
     return result;
   }
 
-  static final class FieldEncodings extends Node {
+  static final class FieldEncodings extends Node implements FieldEncodingOrPlaceholder {
     List<FieldEncodingOrPlaceholder> encodings;
+    SourceLocation loc;
 
-    FieldEncodings(List<FieldEncodingOrPlaceholder> encodings) {
+    FieldEncodings(List<FieldEncodingOrPlaceholder> encodings, SourceLocation loc) {
       this.encodings = encodings;
+      this.loc = loc;
     }
 
     @Override
-    SourceLocation location() {
-      return encodings.get(0).location()
-          .join(encodings.get(encodings.size() - 1).location());
+    public SourceLocation location() {
+      return loc;
     }
 
     @Override
@@ -1352,7 +1353,7 @@ class EncodingDefinition extends Definition {
     }
 
     @Override
-    void prettyPrint(int indent, StringBuilder builder) {
+    public void prettyPrint(int indent, StringBuilder builder) {
       boolean first = true;
       for (var entry : encodings) {
         if (!first) {

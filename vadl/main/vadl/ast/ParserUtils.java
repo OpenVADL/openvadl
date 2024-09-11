@@ -78,6 +78,7 @@ class ParserUtils {
     ID_TOKENS[Parser._GROUP] = true;
     ID_TOKENS[Parser._INSTRUCTION] = true;
     ID_TOKENS[Parser._MEMORY] = true;
+    ID_TOKENS[Parser._NONE] = true;
     ID_TOKENS[Parser._NOP] = true;
     ID_TOKENS[Parser._OPERATION] = true;
     ID_TOKENS[Parser._PREDICATE] = true;
@@ -168,8 +169,10 @@ class ParserUtils {
       return new MacroInstanceDefinition(macroOrPlaceholder, args, sourceLocation);
     } else if (isStmtType(macroOrPlaceholder.returnType())) {
       return new MacroInstanceStatement(macroOrPlaceholder, args, sourceLocation);
-    } else {
+    } else if (isExprType(macroOrPlaceholder.returnType())) {
       return new MacroInstanceExpr(macroOrPlaceholder, args, sourceLocation);
+    } else {
+      return new MacroInstanceNode(macroOrPlaceholder, args, sourceLocation);
     }
   }
 
@@ -203,8 +206,10 @@ class ParserUtils {
       return new MacroMatchDefinition(macroMatch);
     } else if (isStmtType(resultType)) {
       return new MacroMatchStatement(macroMatch);
-    } else {
+    } else if (isExprType(resultType)) {
       return new MacroMatchExpr(macroMatch);
+    } else {
+      return new MacroMatchNode(macroMatch);
     }
   }
 

@@ -123,6 +123,7 @@ TOKENS
   MISS         = "miss".
   MODEL        = "model".
   MODEL_TYPE   = "model-type".
+  NONE         = "none".
   NOP          = "nop".
   OPERATION    = "operation".
   PATCH        = "patch".
@@ -430,16 +431,18 @@ PRODUCTIONS
     SYM_BRACE_CLOSE  (. def = new EncodingDefinition(instrId, encodings, startLocation.join(loc())); .)
   .
 
-  encodingDefinitionList<out EncodingDefinition.FieldEncodings encs> (. var entries = new ArrayList<FieldEncodingOrPlaceholder>(); .)
+  encodingDefinitionList<out EncodingDefinition.FieldEncodings encs> (. var start = lookaheadLoc(); var entries = new ArrayList<FieldEncodingOrPlaceholder>(); .)
   = encodingEntry<out FieldEncodingOrPlaceholder enc>                (. entries.add(enc); .)
     {
       SYM_COMMA
-      encodingEntry<out enc>                                         (. entries.add(enc); .)
-    }                                                                (. encs = new EncodingDefinition.FieldEncodings(entries); .)
+      encodingEntry<out enc>              (. entries.add(enc); .)
+    }                                                                (. encs = new EncodingDefinition.FieldEncodings(entries, start.join(loc())); .)
   .
 
   encodingEntry<out FieldEncodingOrPlaceholder enc> (. enc = null; .)
   = macroReplacement<out Node node>                 (. enc = castEncs(this, node); .)
+  | IF (la.kind == _NONE)
+    NONE                                            (. enc = new EncodingDefinition.FieldEncodings(new ArrayList<>(), loc()); .)
   | identifier<out Identifier id>
     SYM_EQ
     expression<out Expr expr, BIN_OPS>              (. enc = new FieldEncoding(id, expr); .)
@@ -1512,6 +1515,7 @@ PRODUCTIONS
   // | MNEMONIC
   // | MODE
   // | MODIFIER
+  | NONE
   | NOP
   // | OPERAND
   | OPERATION
