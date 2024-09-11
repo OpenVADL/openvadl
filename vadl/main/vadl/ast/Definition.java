@@ -311,9 +311,9 @@ class FormatDefinition extends Definition {
 
   static class TypedFormatField extends Node implements FormatField {
     final Identifier identifier;
-    final TypeLiteralOrPlaceholder type;
+    final TypeLiteral type;
 
-    public TypedFormatField(Identifier identifier, TypeLiteralOrPlaceholder type) {
+    public TypedFormatField(Identifier identifier, TypeLiteral type) {
       this.identifier = identifier;
       this.type = type;
     }
@@ -323,13 +323,9 @@ class FormatDefinition extends Definition {
       return identifier;
     }
 
-    TypeLiteral type() {
-      return (TypeLiteral) type;
-    }
-
     @Override
     SourceLocation location() {
-      return identifier().location().join(type().location());
+      return identifier().location().join(type.location());
     }
 
     @Override
@@ -2637,11 +2633,11 @@ class OperationDefinition extends Definition {
 class GroupDefinition extends Definition {
   IdentifierOrPlaceholder name;
   @Nullable
-  TypeLiteralOrPlaceholder type;
+  TypeLiteral type;
   Group.Sequence groupSequence;
   SourceLocation loc;
 
-  GroupDefinition(IdentifierOrPlaceholder name, @Nullable TypeLiteralOrPlaceholder type,
+  GroupDefinition(IdentifierOrPlaceholder name, @Nullable TypeLiteral type,
                   Group.Sequence groupSequence, SourceLocation loc) {
     this.name = name;
     this.type = type;
@@ -2651,11 +2647,6 @@ class GroupDefinition extends Definition {
 
   Identifier name() {
     return (Identifier) name;
-  }
-
-  @Nullable
-  TypeLiteral type() {
-    return (TypeLiteral) type;
   }
 
   @Override

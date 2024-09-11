@@ -243,9 +243,10 @@ class MacroExpander
 
   @Override
   public Expr visit(TypeLiteral expr) {
-    List<List<Expr>> sizeIndices = new ArrayList<>(expr.sizeIndices);
+    var baseType = (IsId) expandExpr((Expr) expr.baseType);
+    var sizeIndices = new ArrayList<>(expr.sizeIndices);
     sizeIndices.replaceAll(this::expandExprs);
-    return new TypeLiteral(expr.baseType, sizeIndices, copyLoc(expr.loc));
+    return new TypeLiteral(baseType, sizeIndices, copyLoc(expr.location()));
   }
 
   @Override
@@ -296,8 +297,8 @@ class MacroExpander
   @Override
   public Expr visit(CastExpr expr) {
     var value = expandExpr(expr.value);
-    var type = resolveTypeLiteral(expr.type);
-    return new CastExpr(value, type);
+    var type = expandExpr(expr.type);
+    return new CastExpr(value, (TypeLiteral) type);
   }
 
   @Override
@@ -430,7 +431,7 @@ class MacroExpander
             expandExpr(derivedFormatField.expr));
       } else if (field instanceof FormatDefinition.TypedFormatField typedFormatField) {
         return new FormatDefinition.TypedFormatField(typedFormatField.identifier,
-            resolveTypeLiteral(typedFormatField.type));
+            (TypeLiteral) expandExpr(typedFormatField.type));
       } else {
         return field;
       }
@@ -671,7 +672,7 @@ class MacroExpander
   public Definition visit(GroupDefinition groupDefinition) {
     return new GroupDefinition(
         resolvePlaceholderOrIdentifier(groupDefinition.name),
-        groupDefinition.type == null ? null : resolveTypeLiteral(groupDefinition.type),
+        groupDefinition.type == null ? null : (TypeLiteral) expandExpr(groupDefinition.type),
         groupDefinition.groupSequence,
         copyLoc(groupDefinition.loc)
     ).withAnnotations(expandAnnotations(groupDefinition.annotations));
@@ -960,17 +961,6 @@ class MacroExpander
     }
     throw new IllegalStateException("Unknown resolved placeholder type " + idOrPlaceholder);
   }
-
-  private TypeLiteral resolveTypeLiteral(TypeLiteralOrPlaceholder type) {
-    var typeLiteral = type instanceof PlaceholderExpr p
-        ? new TypeLiteral(resolvePlaceholderOrIdentifier(p))
-        : (TypeLiteral) type;
-    var baseType = (IsId) expandExpr((Expr) typeLiteral.baseType);
-    var sizeIndices = new ArrayList<>(typeLiteral.sizeIndices);
-    sizeIndices.replaceAll(this::expandExprs);
-    return new TypeLiteral(baseType, sizeIndices, typeLiteral.location());
-  }
-
 
   private EncodingDefinition.FieldEncodings resolveEncs(EncodingDefinition.FieldEncodings encs) {
     var fieldEncodings = new ArrayList<FieldEncodingOrPlaceholder>(encs.encodings.size());

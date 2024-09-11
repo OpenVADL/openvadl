@@ -115,48 +115,21 @@ class ParserUtils {
   }
 
   /**
-   * Reorders the tail end of a left-sided binary expression tree "expr" to apply a cast.
-   * If the given "symOrBin" is a symbol expression, it will be converted to the type to cast to.
-   * If the given "symOrBin" is a binary expression, it has to have a SymbolExpr in its left side,
-   * which will be interpreted as the target type.
-   * If the given "expr" is not a binary expression, the cast operand will be the whole "expr".
-   * If the given "expr" is a binary expression, only its right leaf will be the cast operand.
+   * Given a cast expression, unpacks the cast value and, if it is a binary expression,
+   * reorders the tree as to only apply the cast to the right side of the binary expression.
+   * This represents the cast operator having the strongest precedence of all binary operators.
    *
-   * @param expr     A left-sided binary expression tree or a non-binary expression.
-   * @param symOrBin Either a SymbolExpr of the cast target type, or a BinaryExpr with the
-   *                 SymbolExpr as the left operand.
-   * @return A left-sided binary expression tree with a CastExpr as its leaf — or a simple CastExpr.
+   * @param expr A {@link CastExpr}, optionally containing a {@link BinaryExpr}.
+   * @return A cast expression with the proper precedence applied.
    */
-  static Expr reorderCastExpr(Expr expr, Expr symOrBin) {
-    Expr castee = expr instanceof BinaryExpr binExpr ? binExpr.right : expr;
-    if (symOrBin instanceof BinaryExpr binSym) {
-      var castExpr = new CastExpr(castee, typeLiteral(binSym.left));
-      if (expr instanceof BinaryExpr binExpr) {
-        binExpr.right = castExpr;
-        binSym.left = binExpr;
-      } else {
-        binSym.left = castExpr;
-      }
-      return binSym;
-    } else {
-      var castExpr = new CastExpr(castee, typeLiteral(symOrBin));
-      if (expr instanceof BinaryExpr binExpr) {
-        binExpr.right = castExpr;
-        return binExpr;
-      } else {
-        return castExpr;
+  static Expr reorderCastExpr(Expr expr) {
+    if (expr instanceof CastExpr castExpr) {
+      if (castExpr.value instanceof BinaryExpr binExpr) {
+        return new BinaryExpr(binExpr.left, binExpr.operator,
+            new CastExpr(binExpr.right, castExpr.type));
       }
     }
-  }
-
-  private static TypeLiteralOrPlaceholder typeLiteral(Expr expr) {
-    if (expr instanceof PlaceholderExpr placeholderExpr) {
-      return placeholderExpr;
-    } else if (expr instanceof IsSymExpr symExpr) {
-      return new TypeLiteral(symExpr);
-    } else {
-      throw new IllegalArgumentException("Unknown type literal node " + expr);
-    }
+    return expr;
   }
 
   /**

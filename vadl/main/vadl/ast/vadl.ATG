@@ -369,7 +369,7 @@ PRODUCTIONS
 
   formatFieldType<out FormatDefinition.FormatField field, Identifier id>
   = SYM_COLON
-    typeLiteralOrPlaceholder<out TypeLiteralOrPlaceholder type> (. field = new FormatDefinition.TypedFormatField(id, type); .)
+    typeLiteral<out TypeLiteral type> (. field = new FormatDefinition.TypedFormatField(id, type); .)
   .
 
   formatFieldDerived<out FormatDefinition.FormatField field, Identifier id>
@@ -703,12 +703,12 @@ PRODUCTIONS
     SYM_BRACE_CLOSE                 (. def = new OperationDefinition(name, resources, start.join(loc())); .)
   .
 
-  groupDefinition<out Definition def>                   (. TypeLiteralOrPlaceholder type = null; .)
+  groupDefinition<out Definition def>                   (. TypeLiteral type = null; .)
   = GROUP                                               (. var start = loc(); .)
     identifierOrPlaceholder<out IdentifierOrPlaceholder id>
     [
       SYM_COLON
-      typeLiteralOrPlaceholder<out type>
+      typeLiteral<out type>
     ]
     SYM_EQ
     groupSequence<out Group.Sequence seq> (. def = new GroupDefinition(id, type, seq, start.join(loc())); .)
@@ -1166,12 +1166,21 @@ PRODUCTIONS
     {
       IF (allowedOps[la.kind] || la.kind == _SYM_AS || isMacroReplacementOfType(this, BasicSyntaxType.BIN_OP))
       (
-        binaryOperator<out Operator op>                   (. var operator = new BinOpExpr(op, loc()); .)
-        term<out Expr right>                              (. expr = new BinaryExpr(expr, operator, right); .)
+        binaryOperator<out Operator op>           (. var operator = new BinOpExpr(op, loc()); .)
+        term<out Expr right>                      (. expr = new BinaryExpr(expr, operator, right); .)
       | macroReplacement<out Node node>
-        term<out Expr right>                              (. expr = new BinaryExpr(expr, castBinOp(this, node), right); .)
-      | SYM_AS
-        symbolOrBinaryExpression<out Expr symOrBin, true> (. expr = reorderCastExpr(expr, symOrBin); .)
+        term<out Expr right>                      (. expr = new BinaryExpr(expr, castBinOp(this, node), right); .)
+      | SYM_AS                                    (. var typeStart = loc(); .)
+        identifierPath<out IsId path>             (. TypeLiteral castTarget = new TypeLiteral(path, new ArrayList<>(), typeStart.join(loc()));
+                                                     expr = new CastExpr(expr, castTarget); .)
+        { IF (expr instanceof CastExpr && la.kind == _SYM_LT)
+          SYM_LT                                  (. var lessLoc = loc(); .)
+          term<out Expr term>                     (. var isSize = false; .)
+          [
+            IF (!allowedOps[_SYM_LT] || la.kind == _SYM_GT) (. isSize = true; .)
+            SYM_GT                                (. castTarget.sizeIndices.add(List.of(term)); .)
+          ]                                       (. if (!isSize) expr = new BinaryExpr(reorderCastExpr(expr), new BinOpExpr(Operator.Less(), lessLoc), term); .)
+        }                                         (. if (expr instanceof CastExpr) expr = reorderCastExpr(expr); .)
       )
     }
   .
@@ -1459,13 +1468,6 @@ PRODUCTIONS
   .
 
   // -- PRIMITIVES ---------------------------------------------------------------------------------------------------
-
-  typeLiteralOrPlaceholder<out TypeLiteralOrPlaceholder type> (. type = null; .)
-  = IF (isMacroReplacementOfType(this, BasicSyntaxType.ID))
-    macroReplacement<out Node n>                              (. if (n instanceof PlaceholderExpr p) type = p;
-                                                                 else type = new TypeLiteral(castId(this, n), List.of(), n.location()); .)
-  | typeLiteral<out type>
-  .
 
   typeLiteral<out TypeLiteral type>
   = identifierPath<out IsId path>                        (. List<List<Expr>> sizeIndices = new ArrayList<>(); .)

@@ -66,6 +66,46 @@ public class ExprTest {
   }
 
   @Test
+  void multiRankCast() {
+    var prog = """
+        constant a = -4 as Bits<3><9> + 2
+        constant b = 9 + 1 as Bits<3><4> < 5
+        """;
+    var equiv = """
+        constant a = ((-4) as Bits<3><9>) + 2
+        constant b = (9 + (1 as Bits<3><4>)) < 5
+        """;
+
+    var ast = VadlParser.parse(prog);
+    var expected = VadlParser.parse(equiv);
+    assertAstEquality(ast, expected);
+  }
+
+  @Test
+  void macroCast() {
+    var prog = """
+        instruction set architecture TEST = {
+          model Test (tyId: Id) : IsaDefs = {
+            constant a = -4 as $tyId + 2
+            constant b = 9 + 1 as $tyId<3><4> < 5
+          }
+        
+          $Test(Bits)
+        }
+        """;
+    var equiv = """
+        instruction set architecture TEST = {
+          constant a = ((-4) as Bits) + 2
+          constant b = (9 + (1 as Bits<3><4>)) < 5
+        }
+        """;
+
+    var ast = VadlParser.parse(prog);
+    var expected = VadlParser.parse(equiv);
+    assertAstEquality(ast, expected);
+  }
+
+  @Test
   void callExpressions() {
     var prog = """
         instruction set architecture TEST = {

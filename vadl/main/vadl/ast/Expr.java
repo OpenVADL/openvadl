@@ -840,8 +840,7 @@ sealed interface IdentifierOrPlaceholder extends IsId
  * An internal temporary placeholder node inside model definitions.
  * This node should never leave the parser.
  */
-final class PlaceholderExpr extends Expr
-    implements IdentifierOrPlaceholder, TypeLiteralOrPlaceholder, IsId {
+final class PlaceholderExpr extends Expr implements IdentifierOrPlaceholder, IsId {
   List<String> segments;
   SyntaxType type;
   SourceLocation loc;
@@ -904,7 +903,7 @@ final class PlaceholderExpr extends Expr
  * This node should never leave the parser.
  */
 final class MacroInstanceExpr extends Expr implements MacroInstance, IdentifierOrPlaceholder,
-    TypeLiteralOrPlaceholder, FieldEncodingOrPlaceholder, IsId, IsBinOp, IsUnOp {
+    FieldEncodingOrPlaceholder, IsId, IsBinOp, IsUnOp {
   MacroOrPlaceholder macro;
   List<Node> arguments;
   SourceLocation loc;
@@ -990,7 +989,7 @@ final class MacroInstanceExpr extends Expr implements MacroInstance, IdentifierO
  * This node should never leave the parser.
  */
 final class MacroMatchExpr extends Expr implements IdentifierOrPlaceholder,
-    TypeLiteralOrPlaceholder, FieldEncodingOrPlaceholder, IsId, IsUnOp, IsBinOp {
+    FieldEncodingOrPlaceholder, IsId, IsUnOp, IsBinOp {
   MacroMatch macroMatch;
 
   MacroMatchExpr(MacroMatch macroMatch) {
@@ -1045,8 +1044,7 @@ final class MacroMatchExpr extends Expr implements IdentifierOrPlaceholder,
  * An internal temporary node representing the ExtendId built-in.
  * This node should never leave the parser.
  */
-final class ExtendIdExpr extends Expr
-    implements IdentifierOrPlaceholder, TypeLiteralOrPlaceholder, IsId {
+final class ExtendIdExpr extends Expr implements IdentifierOrPlaceholder, IsId {
   GroupedExpr expr;
   SourceLocation loc;
 
@@ -1276,17 +1274,12 @@ class RangeExpr extends Expr {
   }
 }
 
-sealed interface TypeLiteralOrPlaceholder
-    permits ExtendIdExpr, MacroInstanceExpr, MacroMatchExpr, PlaceholderExpr, TypeLiteral {
-  void prettyPrint(int indent, StringBuilder builder);
-}
-
 /**
  * TypeLiterals are needed as the types are not known during parsing.
  * For example {@code Bits<counter>} depends on the constant {@code counter} used here and so some
  * constant evaluation has to be performed for the concrete type to be known here.
  */
-final class TypeLiteral extends Expr implements TypeLiteralOrPlaceholder {
+final class TypeLiteral extends Expr {
   IsId baseType;
 
   /**
@@ -1811,9 +1804,9 @@ class LetExpr extends Expr {
 
 class CastExpr extends Expr {
   Expr value;
-  TypeLiteralOrPlaceholder type;
+  TypeLiteral type;
 
-  public CastExpr(Expr value, TypeLiteralOrPlaceholder type) {
+  public CastExpr(Expr value, TypeLiteral type) {
     this.value = value;
     this.type = type;
   }
