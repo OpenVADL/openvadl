@@ -104,7 +104,7 @@ public final class TableGenInstructionRenderer {
     }
 
     return String.format("""
-        def : Pat<%s
+        def : Pat<%s,
                 %s>;
           """, visitor.getResult(), machineVisitor.getResult());
   }
@@ -116,7 +116,7 @@ public final class TableGenInstructionRenderer {
   private static String lower(TableGenInstruction.BitBlock bitBlock) {
     if (bitBlock.getBitSet().isPresent()) {
       return String.format("bits<%s> %s = 0b%s;", bitBlock.getSize(), bitBlock.getName(),
-          toBinaryString(bitBlock.getBitSet().get()));
+          toBinaryString(bitBlock.getBitSet().get(), bitBlock.getSize()));
     } else {
       return String.format("bits<%s> %s;", bitBlock.getSize(), bitBlock.getName());
     }
@@ -139,14 +139,16 @@ public final class TableGenInstructionRenderer {
    * Converts a bitset into string representation.
    *
    * @param bitSet bitset
+   * @param size   the real size of the {@code bitSet}. {@code bitSet} returns only
+   *               the highest bit + 1.
    * @return "01010000" binary string
    */
   @Nullable
-  private static String toBinaryString(BitSet bitSet) {
+  private static String toBinaryString(BitSet bitSet, int size) {
     if (bitSet == null) {
       return null;
     }
-    return IntStream.range(0, bitSet.length())
+    return IntStream.range(0, size)
         .mapToObj(b -> String.valueOf(bitSet.get(b) ? 1 : 0))
         .collect(Collectors.joining());
   }

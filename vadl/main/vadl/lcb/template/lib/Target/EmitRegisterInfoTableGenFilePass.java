@@ -46,8 +46,7 @@ public class EmitRegisterInfoTableGenFilePass extends LcbTemplateRenderingPass {
                       String aliases,
                       String subRegs,
                       String subRegIndices,
-                      int dwarfNumber,
-                      String coveredBySubRegs,
+                      int coveredBySubRegs,
                       int hwEncodingMsb,
                       int hwEncodingValue) {
 
@@ -78,6 +77,23 @@ public class EmitRegisterInfoTableGenFilePass extends LcbTemplateRenderingPass {
             32, //TODO make changeable in spec
             getRegisterClass(registerFile, abi)
         )).toList();
+
+    var isaRegisters = specification
+        .registers()
+        .map(x -> new LlvmRegister(
+            lcbConfiguration().processorName().value(),
+            x.identifier.simpleName(),
+            "",
+            "",
+            "",
+            "",
+            "",
+            0,
+            0,
+            0
+        ))
+        .toList();
+
     var registers =
         specification.registerFiles()
             .map(registerFile -> getRegisters(registerFile, abi))
@@ -86,7 +102,7 @@ public class EmitRegisterInfoTableGenFilePass extends LcbTemplateRenderingPass {
 
     return Map.of(CommonVarNames.NAMESPACE, specification.name(),
         "registerFiles", registerFiles,
-        "registers", registers);
+        "registers", Stream.concat(isaRegisters.stream(), registers.stream()).toList());
   }
 
   private List<LlvmRegister> getRegisters(RegisterFile registerFile, DummyAbi abi) {
@@ -108,8 +124,7 @@ public class EmitRegisterInfoTableGenFilePass extends LcbTemplateRenderingPass {
               "",
               "",
               "",
-              number,
-              "",
+              0,
               bitWidth - 1,
               number
           );
