@@ -35,7 +35,7 @@ public class EmitInstrInfoTableGenFilePassTest extends AbstractLcbTest {
          * The method CPUDAGToDAGISel::SelectAddrFI is used to determine
          * if the specific register is a frame pointer.
          */
-        def AddrFI : ComplexPattern<iPtr, 1, "SelectAddrFI", [frameindex], []>;
+        def AddrFI : ComplexPattern<iPTR, 1, "SelectAddrFI", [frameindex], []>;
                 
         def SDT_CallSeqStart : SDCallSeqStart<[SDTCisVT<0, i32>, SDTCisVT<1, i32>]>;
         def SDT_CallSeqEnd   : SDCallSeqEnd<[SDTCisVT<0, i32>, SDTCisVT<1, i32>]>;
@@ -96,9 +96,9 @@ public class EmitInstrInfoTableGenFilePassTest extends AbstractLcbTest {
         // to build the decode table.
         field bits<32> SoftFail = 0;
                 
-        bits<7> opcode = 0b110011;
-        bits<3> funct3 = 0b;
-        bits<7> funct7 = 0b;
+        bits<7> opcode = 0b1100110;
+        bits<3> funct3 = 0b000;
+        bits<7> funct7 = 0b0000000;
         bits<5> rs2;
         bits<5> rs1;
         bits<5> rd;
@@ -128,7 +128,7 @@ public class EmitInstrInfoTableGenFilePassTest extends AbstractLcbTest {
         let Defs = [  ];
         }
                 
-        def : Pat<(add X:$rs1, X:$rs2)
+        def : Pat<(add X:$rs1, X:$rs2),
                 (ADD X:$rs1, X:$rs2)>;
                 
                 
@@ -151,8 +151,8 @@ public class EmitInstrInfoTableGenFilePassTest extends AbstractLcbTest {
         // to build the decode table.
         field bits<32> SoftFail = 0;
                 
-        bits<7> opcode = 0b11001;
-        bits<3> funct3 = 0b;
+        bits<7> opcode = 0b1100100;
+        bits<3> funct3 = 0b000;
         bits<12> imm;
         bits<5> rs1;
         bits<5> rd;
@@ -181,10 +181,10 @@ public class EmitInstrInfoTableGenFilePassTest extends AbstractLcbTest {
         let Defs = [  ];
         }
                 
-        def : Pat<(add X:$rs1, RV64IM_Itype_immS_decodeAsInt64:$immS)
+        def : Pat<(add X:$rs1, RV64IM_Itype_immS_decodeAsInt64:$immS),
                 (ADDI X:$rs1, RV64IM_Itype_immS_decodeAsInt64:$immS)>;
                 
-        def : Pat<(add AddrFI:$rs1, RV64IM_Itype_immS_decodeAsInt64:$immS)
+        def : Pat<(add AddrFI:$rs1, RV64IM_Itype_immS_decodeAsInt64:$immS),
                 (ADDI AddrFI:$rs1, RV64IM_Itype_immS_decodeAsInt64:$immS)>;
                 
                 
@@ -207,9 +207,9 @@ public class EmitInstrInfoTableGenFilePassTest extends AbstractLcbTest {
         // to build the decode table.
         field bits<32> SoftFail = 0;
                 
-        bits<7> opcode = 0b110011;
+        bits<7> opcode = 0b1100110;
         bits<3> funct3 = 0b111;
-        bits<7> funct7 = 0b;
+        bits<7> funct7 = 0b0000000;
         bits<5> rs2;
         bits<5> rs1;
         bits<5> rd;
@@ -239,7 +239,7 @@ public class EmitInstrInfoTableGenFilePassTest extends AbstractLcbTest {
         let Defs = [  ];
         }
                 
-        def : Pat<(and X:$rs1, X:$rs2)
+        def : Pat<(and X:$rs1, X:$rs2),
                 (AND X:$rs1, X:$rs2)>;
                 
                 
@@ -262,7 +262,7 @@ public class EmitInstrInfoTableGenFilePassTest extends AbstractLcbTest {
         // to build the decode table.
         field bits<32> SoftFail = 0;
                 
-        bits<7> opcode = 0b11001;
+        bits<7> opcode = 0b1100100;
         bits<3> funct3 = 0b111;
         bits<12> imm;
         bits<5> rs1;
@@ -292,7 +292,7 @@ public class EmitInstrInfoTableGenFilePassTest extends AbstractLcbTest {
         let Defs = [  ];
         }
                 
-        def : Pat<(and X:$rs1, RV64IM_Itype_immS_decodeAsInt64:$immS)
+        def : Pat<(and X:$rs1, RV64IM_Itype_immS_decodeAsInt64:$immS),
                 (ANDI X:$rs1, RV64IM_Itype_immS_decodeAsInt64:$immS)>;
                 
                 
@@ -316,7 +316,7 @@ public class EmitInstrInfoTableGenFilePassTest extends AbstractLcbTest {
         field bits<32> SoftFail = 0;
                 
         bits<7> opcode = 0b1100011;
-        bits<3> funct3 = 0b;
+        bits<3> funct3 = 0b000;
         bits<12> imm;
         bits<5> rs2;
         bits<5> rs1;
@@ -348,10 +348,10 @@ public class EmitInstrInfoTableGenFilePassTest extends AbstractLcbTest {
         let Defs = [ PC ];
         }
                 
-        def : Pat<(brcc (SETEQ X:$rs1, X:$rs2), RV64IM_Btype_immS_decodeAsInt64:$immS)
+        def : Pat<(brcc (SETEQ X:$rs1, X:$rs2), RV64IM_Btype_immS_decodeAsInt64:$immS),
                 (BEQ X:$rs1, X:$rs2, RV64IM_Btype_immS_decodeAsInt64:$immS)>;
                 
-        def : Pat<(brcond (i32 (seteq X:$rs1, X:$rs2)), RV64IM_Btype_immS_decodeAsInt64:$immS)
+        def : Pat<(brcond (i32 (seteq X:$rs1, X:$rs2)), RV64IM_Btype_immS_decodeAsInt64:$immS),
                 (BEQ X:$rs1, X:$rs2, RV64IM_Btype_immS_decodeAsInt64:$immS)>;
                 
                 
@@ -407,10 +407,10 @@ public class EmitInstrInfoTableGenFilePassTest extends AbstractLcbTest {
         let Defs = [ PC ];
         }
                 
-        def : Pat<(brcc (SETGE X:$rs1, X:$rs2), RV64IM_Btype_immS_decodeAsInt64:$immS)
+        def : Pat<(brcc (SETGE X:$rs1, X:$rs2), RV64IM_Btype_immS_decodeAsInt64:$immS),
                 (BGE X:$rs1, X:$rs2, RV64IM_Btype_immS_decodeAsInt64:$immS)>;
                 
-        def : Pat<(brcond (i32 (setge X:$rs1, X:$rs2)), RV64IM_Btype_immS_decodeAsInt64:$immS)
+        def : Pat<(brcond (i32 (setge X:$rs1, X:$rs2)), RV64IM_Btype_immS_decodeAsInt64:$immS),
                 (BGE X:$rs1, X:$rs2, RV64IM_Btype_immS_decodeAsInt64:$immS)>;
                 
                 
@@ -466,10 +466,10 @@ public class EmitInstrInfoTableGenFilePassTest extends AbstractLcbTest {
         let Defs = [ PC ];
         }
                 
-        def : Pat<(brcc (SETUGE X:$rs1, X:$rs2), RV64IM_Btype_immS_decodeAsInt64:$immS)
+        def : Pat<(brcc (SETUGE X:$rs1, X:$rs2), RV64IM_Btype_immS_decodeAsInt64:$immS),
                 (BGEU X:$rs1, X:$rs2, RV64IM_Btype_immS_decodeAsInt64:$immS)>;
                 
-        def : Pat<(brcond (i32 (setuge X:$rs1, X:$rs2)), RV64IM_Btype_immS_decodeAsInt64:$immS)
+        def : Pat<(brcond (i32 (setuge X:$rs1, X:$rs2)), RV64IM_Btype_immS_decodeAsInt64:$immS),
                 (BGEU X:$rs1, X:$rs2, RV64IM_Btype_immS_decodeAsInt64:$immS)>;
                 
                 
@@ -525,10 +525,10 @@ public class EmitInstrInfoTableGenFilePassTest extends AbstractLcbTest {
         let Defs = [ PC ];
         }
                 
-        def : Pat<(brcc (SETLT X:$rs1, X:$rs2), RV64IM_Btype_immS_decodeAsInt64:$immS)
+        def : Pat<(brcc (SETLT X:$rs1, X:$rs2), RV64IM_Btype_immS_decodeAsInt64:$immS),
                 (BLT X:$rs1, X:$rs2, RV64IM_Btype_immS_decodeAsInt64:$immS)>;
                 
-        def : Pat<(brcond (i32 (setlt X:$rs1, X:$rs2)), RV64IM_Btype_immS_decodeAsInt64:$immS)
+        def : Pat<(brcond (i32 (setlt X:$rs1, X:$rs2)), RV64IM_Btype_immS_decodeAsInt64:$immS),
                 (BLT X:$rs1, X:$rs2, RV64IM_Btype_immS_decodeAsInt64:$immS)>;
                 
                 
@@ -584,10 +584,10 @@ public class EmitInstrInfoTableGenFilePassTest extends AbstractLcbTest {
         let Defs = [ PC ];
         }
                 
-        def : Pat<(brcc (SETULT X:$rs1, X:$rs2), RV64IM_Btype_immS_decodeAsInt64:$immS)
+        def : Pat<(brcc (SETULT X:$rs1, X:$rs2), RV64IM_Btype_immS_decodeAsInt64:$immS),
                 (BLTU X:$rs1, X:$rs2, RV64IM_Btype_immS_decodeAsInt64:$immS)>;
                 
-        def : Pat<(brcond (i32 (setult X:$rs1, X:$rs2)), RV64IM_Btype_immS_decodeAsInt64:$immS)
+        def : Pat<(brcond (i32 (setult X:$rs1, X:$rs2)), RV64IM_Btype_immS_decodeAsInt64:$immS),
                 (BLTU X:$rs1, X:$rs2, RV64IM_Btype_immS_decodeAsInt64:$immS)>;
                 
                 
@@ -611,7 +611,7 @@ public class EmitInstrInfoTableGenFilePassTest extends AbstractLcbTest {
         field bits<32> SoftFail = 0;
                 
         bits<7> opcode = 0b1100011;
-        bits<3> funct3 = 0b1;
+        bits<3> funct3 = 0b100;
         bits<12> imm;
         bits<5> rs2;
         bits<5> rs1;
@@ -643,10 +643,10 @@ public class EmitInstrInfoTableGenFilePassTest extends AbstractLcbTest {
         let Defs = [ PC ];
         }
                 
-        def : Pat<(brcc (SETNE X:$rs1, X:$rs2), RV64IM_Btype_immS_decodeAsInt64:$immS)
+        def : Pat<(brcc (SETNE X:$rs1, X:$rs2), RV64IM_Btype_immS_decodeAsInt64:$immS),
                 (BNE X:$rs1, X:$rs2, RV64IM_Btype_immS_decodeAsInt64:$immS)>;
                 
-        def : Pat<(brcond (i32 (setne X:$rs1, X:$rs2)), RV64IM_Btype_immS_decodeAsInt64:$immS)
+        def : Pat<(brcond (i32 (setne X:$rs1, X:$rs2)), RV64IM_Btype_immS_decodeAsInt64:$immS),
                 (BNE X:$rs1, X:$rs2, RV64IM_Btype_immS_decodeAsInt64:$immS)>;
                 
                 
@@ -670,7 +670,7 @@ public class EmitInstrInfoTableGenFilePassTest extends AbstractLcbTest {
         field bits<32> SoftFail = 0;
                 
         bits<7> opcode = 0b1110011;
-        bits<3> funct3 = 0b;
+        bits<3> funct3 = 0b000;
         bits<12> imm;
         bits<5> rs1;
         bits<5> rd;
@@ -720,8 +720,8 @@ public class EmitInstrInfoTableGenFilePassTest extends AbstractLcbTest {
         // to build the decode table.
         field bits<32> SoftFail = 0;
                 
-        bits<7> opcode = 0b11;
-        bits<3> funct3 = 0b;
+        bits<7> opcode = 0b1100000;
+        bits<3> funct3 = 0b000;
         bits<12> imm;
         bits<5> rs1;
         bits<5> rd;
@@ -750,10 +750,10 @@ public class EmitInstrInfoTableGenFilePassTest extends AbstractLcbTest {
         let Defs = [  ];
         }
                 
-        def : Pat<(i64 (sextloadi8 (add X:$rs1, RV64IM_Itype_immS_decodeAsInt64:$immS)))
+        def : Pat<(i64 (sextloadi8 (add X:$rs1, RV64IM_Itype_immS_decodeAsInt64:$immS))),
                 (LB X:$rs1, RV64IM_Itype_immS_decodeAsInt64:$immS)>;
                 
-        def : Pat<(i64 (sextloadi8 (add AddrFI:$rs1, RV64IM_Itype_immS_decodeAsInt64:$immS)))
+        def : Pat<(i64 (sextloadi8 (add AddrFI:$rs1, RV64IM_Itype_immS_decodeAsInt64:$immS))),
                 (LB AddrFI:$rs1, RV64IM_Itype_immS_decodeAsInt64:$immS)>;
                 
                 
@@ -776,7 +776,7 @@ public class EmitInstrInfoTableGenFilePassTest extends AbstractLcbTest {
         // to build the decode table.
         field bits<32> SoftFail = 0;
                 
-        bits<7> opcode = 0b11;
+        bits<7> opcode = 0b1100000;
         bits<3> funct3 = 0b001;
         bits<12> imm;
         bits<5> rs1;
@@ -806,10 +806,10 @@ public class EmitInstrInfoTableGenFilePassTest extends AbstractLcbTest {
         let Defs = [  ];
         }
                 
-        def : Pat<(u64 (zextloadi8 (add X:$rs1, RV64IM_Itype_immS_decodeAsInt64:$immS)))
+        def : Pat<(i64 (zextloadi8 (add X:$rs1, RV64IM_Itype_immS_decodeAsInt64:$immS))),
                 (LBU X:$rs1, RV64IM_Itype_immS_decodeAsInt64:$immS)>;
                 
-        def : Pat<(u64 (zextloadi8 (add AddrFI:$rs1, RV64IM_Itype_immS_decodeAsInt64:$immS)))
+        def : Pat<(i64 (zextloadi8 (add AddrFI:$rs1, RV64IM_Itype_immS_decodeAsInt64:$immS))),
                 (LBU AddrFI:$rs1, RV64IM_Itype_immS_decodeAsInt64:$immS)>;
                 
                 
@@ -832,8 +832,8 @@ public class EmitInstrInfoTableGenFilePassTest extends AbstractLcbTest {
         // to build the decode table.
         field bits<32> SoftFail = 0;
                 
-        bits<7> opcode = 0b11;
-        bits<3> funct3 = 0b11;
+        bits<7> opcode = 0b1100000;
+        bits<3> funct3 = 0b110;
         bits<12> imm;
         bits<5> rs1;
         bits<5> rd;
@@ -862,10 +862,10 @@ public class EmitInstrInfoTableGenFilePassTest extends AbstractLcbTest {
         let Defs = [  ];
         }
                 
-        def : Pat<(i64 (load (add X:$rs1, RV64IM_Itype_immS_decodeAsInt64:$immS)))
+        def : Pat<(i64 (load (add X:$rs1, RV64IM_Itype_immS_decodeAsInt64:$immS))),
                 (LD X:$rs1, RV64IM_Itype_immS_decodeAsInt64:$immS)>;
                 
-        def : Pat<(i64 (load (add AddrFI:$rs1, RV64IM_Itype_immS_decodeAsInt64:$immS)))
+        def : Pat<(i64 (load (add AddrFI:$rs1, RV64IM_Itype_immS_decodeAsInt64:$immS))),
                 (LD AddrFI:$rs1, RV64IM_Itype_immS_decodeAsInt64:$immS)>;
                 
                 
@@ -888,8 +888,8 @@ public class EmitInstrInfoTableGenFilePassTest extends AbstractLcbTest {
         // to build the decode table.
         field bits<32> SoftFail = 0;
                 
-        bits<7> opcode = 0b11;
-        bits<3> funct3 = 0b1;
+        bits<7> opcode = 0b1100000;
+        bits<3> funct3 = 0b100;
         bits<12> imm;
         bits<5> rs1;
         bits<5> rd;
@@ -918,10 +918,10 @@ public class EmitInstrInfoTableGenFilePassTest extends AbstractLcbTest {
         let Defs = [  ];
         }
                 
-        def : Pat<(i64 (sextloadi16 (add X:$rs1, RV64IM_Itype_immS_decodeAsInt64:$immS)))
+        def : Pat<(i64 (sextloadi16 (add X:$rs1, RV64IM_Itype_immS_decodeAsInt64:$immS))),
                 (LH X:$rs1, RV64IM_Itype_immS_decodeAsInt64:$immS)>;
                 
-        def : Pat<(i64 (sextloadi16 (add AddrFI:$rs1, RV64IM_Itype_immS_decodeAsInt64:$immS)))
+        def : Pat<(i64 (sextloadi16 (add AddrFI:$rs1, RV64IM_Itype_immS_decodeAsInt64:$immS))),
                 (LH AddrFI:$rs1, RV64IM_Itype_immS_decodeAsInt64:$immS)>;
                 
                 
@@ -944,7 +944,7 @@ public class EmitInstrInfoTableGenFilePassTest extends AbstractLcbTest {
         // to build the decode table.
         field bits<32> SoftFail = 0;
                 
-        bits<7> opcode = 0b11;
+        bits<7> opcode = 0b1100000;
         bits<3> funct3 = 0b101;
         bits<12> imm;
         bits<5> rs1;
@@ -974,10 +974,10 @@ public class EmitInstrInfoTableGenFilePassTest extends AbstractLcbTest {
         let Defs = [  ];
         }
                 
-        def : Pat<(u64 (zextloadi16 (add X:$rs1, RV64IM_Itype_immS_decodeAsInt64:$immS)))
+        def : Pat<(i64 (zextloadi16 (add X:$rs1, RV64IM_Itype_immS_decodeAsInt64:$immS))),
                 (LHU X:$rs1, RV64IM_Itype_immS_decodeAsInt64:$immS)>;
                 
-        def : Pat<(u64 (zextloadi16 (add AddrFI:$rs1, RV64IM_Itype_immS_decodeAsInt64:$immS)))
+        def : Pat<(i64 (zextloadi16 (add AddrFI:$rs1, RV64IM_Itype_immS_decodeAsInt64:$immS))),
                 (LHU AddrFI:$rs1, RV64IM_Itype_immS_decodeAsInt64:$immS)>;
                 
                 
@@ -1000,8 +1000,8 @@ public class EmitInstrInfoTableGenFilePassTest extends AbstractLcbTest {
         // to build the decode table.
         field bits<32> SoftFail = 0;
                 
-        bits<7> opcode = 0b11;
-        bits<3> funct3 = 0b01;
+        bits<7> opcode = 0b1100000;
+        bits<3> funct3 = 0b010;
         bits<12> imm;
         bits<5> rs1;
         bits<5> rd;
@@ -1030,10 +1030,10 @@ public class EmitInstrInfoTableGenFilePassTest extends AbstractLcbTest {
         let Defs = [  ];
         }
                 
-        def : Pat<(i64 (sextloadi32 (add X:$rs1, RV64IM_Itype_immS_decodeAsInt64:$immS)))
+        def : Pat<(i64 (sextloadi32 (add X:$rs1, RV64IM_Itype_immS_decodeAsInt64:$immS))),
                 (LW X:$rs1, RV64IM_Itype_immS_decodeAsInt64:$immS)>;
                 
-        def : Pat<(i64 (sextloadi32 (add AddrFI:$rs1, RV64IM_Itype_immS_decodeAsInt64:$immS)))
+        def : Pat<(i64 (sextloadi32 (add AddrFI:$rs1, RV64IM_Itype_immS_decodeAsInt64:$immS))),
                 (LW AddrFI:$rs1, RV64IM_Itype_immS_decodeAsInt64:$immS)>;
                 
                 
@@ -1056,7 +1056,7 @@ public class EmitInstrInfoTableGenFilePassTest extends AbstractLcbTest {
         // to build the decode table.
         field bits<32> SoftFail = 0;
                 
-        bits<7> opcode = 0b11;
+        bits<7> opcode = 0b1100000;
         bits<3> funct3 = 0b011;
         bits<12> imm;
         bits<5> rs1;
@@ -1086,10 +1086,10 @@ public class EmitInstrInfoTableGenFilePassTest extends AbstractLcbTest {
         let Defs = [  ];
         }
                 
-        def : Pat<(u64 (zextloadi32 (add X:$rs1, RV64IM_Itype_immS_decodeAsInt64:$immS)))
+        def : Pat<(i64 (zextloadi32 (add X:$rs1, RV64IM_Itype_immS_decodeAsInt64:$immS))),
                 (LWU X:$rs1, RV64IM_Itype_immS_decodeAsInt64:$immS)>;
                 
-        def : Pat<(u64 (zextloadi32 (add AddrFI:$rs1, RV64IM_Itype_immS_decodeAsInt64:$immS)))
+        def : Pat<(i64 (zextloadi32 (add AddrFI:$rs1, RV64IM_Itype_immS_decodeAsInt64:$immS))),
                 (LWU AddrFI:$rs1, RV64IM_Itype_immS_decodeAsInt64:$immS)>;
                 
                 
@@ -1112,9 +1112,9 @@ public class EmitInstrInfoTableGenFilePassTest extends AbstractLcbTest {
         // to build the decode table.
         field bits<32> SoftFail = 0;
                 
-        bits<7> opcode = 0b110011;
-        bits<3> funct3 = 0b;
-        bits<7> funct7 = 0b1;
+        bits<7> opcode = 0b1100110;
+        bits<3> funct3 = 0b000;
+        bits<7> funct7 = 0b1000000;
         bits<5> rs2;
         bits<5> rs1;
         bits<5> rd;
@@ -1144,7 +1144,7 @@ public class EmitInstrInfoTableGenFilePassTest extends AbstractLcbTest {
         let Defs = [  ];
         }
                 
-        def : Pat<(smul_lohi X:$rs1, X:$rs2)
+        def : Pat<(smul_lohi X:$rs1, X:$rs2),
                 (MUL X:$rs1, X:$rs2)>;
                 
                 
@@ -1167,9 +1167,9 @@ public class EmitInstrInfoTableGenFilePassTest extends AbstractLcbTest {
         // to build the decode table.
         field bits<32> SoftFail = 0;
                 
-        bits<7> opcode = 0b110011;
-        bits<3> funct3 = 0b1;
-        bits<7> funct7 = 0b1;
+        bits<7> opcode = 0b1100110;
+        bits<3> funct3 = 0b100;
+        bits<7> funct7 = 0b1000000;
         bits<5> rs2;
         bits<5> rs1;
         bits<5> rd;
@@ -1199,7 +1199,7 @@ public class EmitInstrInfoTableGenFilePassTest extends AbstractLcbTest {
         let Defs = [  ];
         }
                 
-        def : Pat<
+        def : Pat<,
                 (MULH X:$rs1, X:$rs2)>;
                 
                 
@@ -1222,9 +1222,9 @@ public class EmitInstrInfoTableGenFilePassTest extends AbstractLcbTest {
         // to build the decode table.
         field bits<32> SoftFail = 0;
                 
-        bits<7> opcode = 0b110011;
-        bits<3> funct3 = 0b01;
-        bits<7> funct7 = 0b1;
+        bits<7> opcode = 0b1100110;
+        bits<3> funct3 = 0b010;
+        bits<7> funct7 = 0b1000000;
         bits<5> rs2;
         bits<5> rs1;
         bits<5> rd;
@@ -1254,7 +1254,7 @@ public class EmitInstrInfoTableGenFilePassTest extends AbstractLcbTest {
         let Defs = [  ];
         }
                 
-        def : Pat<
+        def : Pat<,
                 (MULHSU X:$rs1, X:$rs2)>;
                 
                 
@@ -1277,9 +1277,9 @@ public class EmitInstrInfoTableGenFilePassTest extends AbstractLcbTest {
         // to build the decode table.
         field bits<32> SoftFail = 0;
                 
-        bits<7> opcode = 0b110111;
-        bits<3> funct3 = 0b;
-        bits<7> funct7 = 0b1;
+        bits<7> opcode = 0b1101110;
+        bits<3> funct3 = 0b000;
+        bits<7> funct7 = 0b1000000;
         bits<5> rs2;
         bits<5> rs1;
         bits<5> rd;
@@ -1309,7 +1309,7 @@ public class EmitInstrInfoTableGenFilePassTest extends AbstractLcbTest {
         let Defs = [  ];
         }
                 
-        def : Pat<(smul_lohi X:$rs1, X:$rs2)
+        def : Pat<(smul_lohi X:$rs1, X:$rs2),
                 (MULW X:$rs1, X:$rs2)>;
                 
                 
@@ -1332,9 +1332,9 @@ public class EmitInstrInfoTableGenFilePassTest extends AbstractLcbTest {
         // to build the decode table.
         field bits<32> SoftFail = 0;
                 
-        bits<7> opcode = 0b110011;
+        bits<7> opcode = 0b1100110;
         bits<3> funct3 = 0b011;
-        bits<7> funct7 = 0b;
+        bits<7> funct7 = 0b0000000;
         bits<5> rs2;
         bits<5> rs1;
         bits<5> rd;
@@ -1364,7 +1364,7 @@ public class EmitInstrInfoTableGenFilePassTest extends AbstractLcbTest {
         let Defs = [  ];
         }
                 
-        def : Pat<(or X:$rs1, X:$rs2)
+        def : Pat<(or X:$rs1, X:$rs2),
                 (OR X:$rs1, X:$rs2)>;
                 
                 
@@ -1387,7 +1387,7 @@ public class EmitInstrInfoTableGenFilePassTest extends AbstractLcbTest {
         // to build the decode table.
         field bits<32> SoftFail = 0;
                 
-        bits<7> opcode = 0b11001;
+        bits<7> opcode = 0b1100100;
         bits<3> funct3 = 0b011;
         bits<12> imm;
         bits<5> rs1;
@@ -1417,7 +1417,7 @@ public class EmitInstrInfoTableGenFilePassTest extends AbstractLcbTest {
         let Defs = [  ];
         }
                 
-        def : Pat<(or X:$rs1, RV64IM_Itype_immS_decodeAsInt64:$immS)
+        def : Pat<(or X:$rs1, RV64IM_Itype_immS_decodeAsInt64:$immS),
                 (ORI X:$rs1, RV64IM_Itype_immS_decodeAsInt64:$immS)>;
                 
                 
@@ -1440,8 +1440,8 @@ public class EmitInstrInfoTableGenFilePassTest extends AbstractLcbTest {
         // to build the decode table.
         field bits<32> SoftFail = 0;
                 
-        bits<7> opcode = 0b110001;
-        bits<3> funct3 = 0b;
+        bits<7> opcode = 0b1100010;
+        bits<3> funct3 = 0b000;
         bits<12> imm;
         bits<5> rs2;
         bits<5> rs1;
@@ -1471,10 +1471,10 @@ public class EmitInstrInfoTableGenFilePassTest extends AbstractLcbTest {
         let Defs = [  ];
         }
                 
-        def : Pat<(truncstorei8 X:$rs2, (add X:$rs1, RV64IM_Stype_immS_decodeAsInt64:$immS))
+        def : Pat<(truncstorei8 X:$rs2, (add X:$rs1, RV64IM_Stype_immS_decodeAsInt64:$immS)),
                 (SB X:$rs1, X:$rs2, RV64IM_Stype_immS_decodeAsInt64:$immS)>;
                 
-        def : Pat<(truncstorei8 X:$rs2, (add AddrFI:$rs1, RV64IM_Stype_immS_decodeAsInt64:$immS))
+        def : Pat<(truncstorei8 X:$rs2, (add AddrFI:$rs1, RV64IM_Stype_immS_decodeAsInt64:$immS)),
                 (SB AddrFI:$rs1, X:$rs2, RV64IM_Stype_immS_decodeAsInt64:$immS)>;
                 
                 
@@ -1497,8 +1497,8 @@ public class EmitInstrInfoTableGenFilePassTest extends AbstractLcbTest {
         // to build the decode table.
         field bits<32> SoftFail = 0;
                 
-        bits<7> opcode = 0b110001;
-        bits<3> funct3 = 0b11;
+        bits<7> opcode = 0b1100010;
+        bits<3> funct3 = 0b110;
         bits<12> imm;
         bits<5> rs2;
         bits<5> rs1;
@@ -1528,10 +1528,10 @@ public class EmitInstrInfoTableGenFilePassTest extends AbstractLcbTest {
         let Defs = [  ];
         }
                 
-        def : Pat<(store X:$rs2, (add X:$rs1, RV64IM_Stype_immS_decodeAsInt64:$immS))
+        def : Pat<(store X:$rs2, (add X:$rs1, RV64IM_Stype_immS_decodeAsInt64:$immS)),
                 (SD X:$rs1, X:$rs2, RV64IM_Stype_immS_decodeAsInt64:$immS)>;
                 
-        def : Pat<(store X:$rs2, (add AddrFI:$rs1, RV64IM_Stype_immS_decodeAsInt64:$immS))
+        def : Pat<(store X:$rs2, (add AddrFI:$rs1, RV64IM_Stype_immS_decodeAsInt64:$immS)),
                 (SD AddrFI:$rs1, X:$rs2, RV64IM_Stype_immS_decodeAsInt64:$immS)>;
                 
                 
@@ -1554,8 +1554,8 @@ public class EmitInstrInfoTableGenFilePassTest extends AbstractLcbTest {
         // to build the decode table.
         field bits<32> SoftFail = 0;
                 
-        bits<7> opcode = 0b110001;
-        bits<3> funct3 = 0b1;
+        bits<7> opcode = 0b1100010;
+        bits<3> funct3 = 0b100;
         bits<12> imm;
         bits<5> rs2;
         bits<5> rs1;
@@ -1585,10 +1585,10 @@ public class EmitInstrInfoTableGenFilePassTest extends AbstractLcbTest {
         let Defs = [  ];
         }
                 
-        def : Pat<(truncstorei16 X:$rs2, (add X:$rs1, RV64IM_Stype_immS_decodeAsInt64:$immS))
+        def : Pat<(truncstorei16 X:$rs2, (add X:$rs1, RV64IM_Stype_immS_decodeAsInt64:$immS)),
                 (SH X:$rs1, X:$rs2, RV64IM_Stype_immS_decodeAsInt64:$immS)>;
                 
-        def : Pat<(truncstorei16 X:$rs2, (add AddrFI:$rs1, RV64IM_Stype_immS_decodeAsInt64:$immS))
+        def : Pat<(truncstorei16 X:$rs2, (add AddrFI:$rs1, RV64IM_Stype_immS_decodeAsInt64:$immS)),
                 (SH AddrFI:$rs1, X:$rs2, RV64IM_Stype_immS_decodeAsInt64:$immS)>;
                 
                 
@@ -1611,9 +1611,9 @@ public class EmitInstrInfoTableGenFilePassTest extends AbstractLcbTest {
         // to build the decode table.
         field bits<32> SoftFail = 0;
                 
-        bits<7> opcode = 0b110011;
-        bits<3> funct3 = 0b01;
-        bits<7> funct7 = 0b;
+        bits<7> opcode = 0b1100110;
+        bits<3> funct3 = 0b010;
+        bits<7> funct7 = 0b0000000;
         bits<5> rs2;
         bits<5> rs1;
         bits<5> rd;
@@ -1643,7 +1643,7 @@ public class EmitInstrInfoTableGenFilePassTest extends AbstractLcbTest {
         let Defs = [  ];
         }
                 
-        def : Pat<(setcc X:$rs1, X:$rs2, SETLT)
+        def : Pat<(setcc X:$rs1, X:$rs2, SETLT),
                 (SLT X:$rs1, X:$rs2)>;
                 
                 
@@ -1666,8 +1666,8 @@ public class EmitInstrInfoTableGenFilePassTest extends AbstractLcbTest {
         // to build the decode table.
         field bits<32> SoftFail = 0;
                 
-        bits<7> opcode = 0b11001;
-        bits<3> funct3 = 0b01;
+        bits<7> opcode = 0b1100100;
+        bits<3> funct3 = 0b010;
         bits<12> imm;
         bits<5> rs1;
         bits<5> rd;
@@ -1696,7 +1696,7 @@ public class EmitInstrInfoTableGenFilePassTest extends AbstractLcbTest {
         let Defs = [  ];
         }
                 
-        def : Pat<(setcc X:$rs1, RV64IM_Itype_immS_decodeAsInt64:$immS, SETLT)
+        def : Pat<(setcc X:$rs1, RV64IM_Itype_immS_decodeAsInt64:$immS, SETLT),
                 (SLTI X:$rs1, RV64IM_Itype_immS_decodeAsInt64:$immS)>;
                 
                 
@@ -1719,8 +1719,8 @@ public class EmitInstrInfoTableGenFilePassTest extends AbstractLcbTest {
         // to build the decode table.
         field bits<32> SoftFail = 0;
                 
-        bits<7> opcode = 0b11001;
-        bits<3> funct3 = 0b11;
+        bits<7> opcode = 0b1100100;
+        bits<3> funct3 = 0b110;
         bits<12> imm;
         bits<5> rs1;
         bits<5> rd;
@@ -1749,7 +1749,7 @@ public class EmitInstrInfoTableGenFilePassTest extends AbstractLcbTest {
         let Defs = [  ];
         }
                 
-        def : Pat<(setcc X:$rs1, RV64IM_Itype_immS_decodeAsInt64:$immS, SETULT)
+        def : Pat<(setcc X:$rs1, RV64IM_Itype_immS_decodeAsInt64:$immS, SETULT),
                 (SLTIU X:$rs1, RV64IM_Itype_immS_decodeAsInt64:$immS)>;
                 
                 
@@ -1772,9 +1772,9 @@ public class EmitInstrInfoTableGenFilePassTest extends AbstractLcbTest {
         // to build the decode table.
         field bits<32> SoftFail = 0;
                 
-        bits<7> opcode = 0b110011;
-        bits<3> funct3 = 0b11;
-        bits<7> funct7 = 0b;
+        bits<7> opcode = 0b1100110;
+        bits<3> funct3 = 0b110;
+        bits<7> funct7 = 0b0000000;
         bits<5> rs2;
         bits<5> rs1;
         bits<5> rd;
@@ -1804,7 +1804,7 @@ public class EmitInstrInfoTableGenFilePassTest extends AbstractLcbTest {
         let Defs = [  ];
         }
                 
-        def : Pat<(setcc X:$rs1, X:$rs2, SETULT)
+        def : Pat<(setcc X:$rs1, X:$rs2, SETULT),
                 (SLTU X:$rs1, X:$rs2)>;
                 
                 
@@ -1827,9 +1827,9 @@ public class EmitInstrInfoTableGenFilePassTest extends AbstractLcbTest {
         // to build the decode table.
         field bits<32> SoftFail = 0;
                 
-        bits<7> opcode = 0b110011;
-        bits<3> funct3 = 0b;
-        bits<7> funct7 = 0b000001;
+        bits<7> opcode = 0b1100110;
+        bits<3> funct3 = 0b000;
+        bits<7> funct7 = 0b0000010;
         bits<5> rs2;
         bits<5> rs1;
         bits<5> rd;
@@ -1859,7 +1859,7 @@ public class EmitInstrInfoTableGenFilePassTest extends AbstractLcbTest {
         let Defs = [  ];
         }
                 
-        def : Pat<(sub X:$rs1, X:$rs2)
+        def : Pat<(sub X:$rs1, X:$rs2),
                 (SUB X:$rs1, X:$rs2)>;
                 
                 
@@ -1882,9 +1882,9 @@ public class EmitInstrInfoTableGenFilePassTest extends AbstractLcbTest {
         // to build the decode table.
         field bits<32> SoftFail = 0;
                 
-        bits<7> opcode = 0b110111;
-        bits<3> funct3 = 0b;
-        bits<7> funct7 = 0b000001;
+        bits<7> opcode = 0b1101110;
+        bits<3> funct3 = 0b000;
+        bits<7> funct7 = 0b0000010;
         bits<5> rs2;
         bits<5> rs1;
         bits<5> rd;
@@ -1914,7 +1914,7 @@ public class EmitInstrInfoTableGenFilePassTest extends AbstractLcbTest {
         let Defs = [  ];
         }
                 
-        def : Pat<(sub X:$rs1, X:$rs2)
+        def : Pat<(sub X:$rs1, X:$rs2),
                 (SUBW X:$rs1, X:$rs2)>;
                 
                 
@@ -1937,8 +1937,8 @@ public class EmitInstrInfoTableGenFilePassTest extends AbstractLcbTest {
         // to build the decode table.
         field bits<32> SoftFail = 0;
                 
-        bits<7> opcode = 0b110001;
-        bits<3> funct3 = 0b01;
+        bits<7> opcode = 0b1100010;
+        bits<3> funct3 = 0b010;
         bits<12> imm;
         bits<5> rs2;
         bits<5> rs1;
@@ -1968,10 +1968,10 @@ public class EmitInstrInfoTableGenFilePassTest extends AbstractLcbTest {
         let Defs = [  ];
         }
                 
-        def : Pat<(truncstorei32 X:$rs2, (add X:$rs1, RV64IM_Stype_immS_decodeAsInt64:$immS))
+        def : Pat<(truncstorei32 X:$rs2, (add X:$rs1, RV64IM_Stype_immS_decodeAsInt64:$immS)),
                 (SW X:$rs1, X:$rs2, RV64IM_Stype_immS_decodeAsInt64:$immS)>;
                 
-        def : Pat<(truncstorei32 X:$rs2, (add AddrFI:$rs1, RV64IM_Stype_immS_decodeAsInt64:$immS))
+        def : Pat<(truncstorei32 X:$rs2, (add AddrFI:$rs1, RV64IM_Stype_immS_decodeAsInt64:$immS)),
                 (SW AddrFI:$rs1, X:$rs2, RV64IM_Stype_immS_decodeAsInt64:$immS)>;
                 
                 
@@ -1994,9 +1994,9 @@ public class EmitInstrInfoTableGenFilePassTest extends AbstractLcbTest {
         // to build the decode table.
         field bits<32> SoftFail = 0;
                 
-        bits<7> opcode = 0b110011;
+        bits<7> opcode = 0b1100110;
         bits<3> funct3 = 0b001;
-        bits<7> funct7 = 0b;
+        bits<7> funct7 = 0b0000000;
         bits<5> rs2;
         bits<5> rs1;
         bits<5> rd;
@@ -2026,7 +2026,7 @@ public class EmitInstrInfoTableGenFilePassTest extends AbstractLcbTest {
         let Defs = [  ];
         }
                 
-        def : Pat<(xor X:$rs1, X:$rs2)
+        def : Pat<(xor X:$rs1, X:$rs2),
                 (XOR X:$rs1, X:$rs2)>;
         """.trim().lines(), output);
   }

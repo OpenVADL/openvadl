@@ -14,6 +14,7 @@ import vadl.lcb.template.CommonVarNames;
 import vadl.lcb.template.LcbTemplateRenderingPass;
 import vadl.pass.PassResults;
 import vadl.utils.Pair;
+import vadl.viam.Register;
 import vadl.viam.RegisterFile;
 import vadl.viam.Specification;
 import vadl.viam.passes.dummyAbi.DummyAbi;
@@ -83,7 +84,7 @@ public class EmitRegisterInfoTableGenFilePass extends LcbTemplateRenderingPass {
         .map(x -> new LlvmRegister(
             lcbConfiguration().processorName().value(),
             x.identifier.simpleName(),
-            "",
+            x.identifier.simpleName(),
             "",
             "",
             "",
@@ -140,12 +141,14 @@ public class EmitRegisterInfoTableGenFilePass extends LcbTemplateRenderingPass {
     var bitWidth = registerFile.addressType().bitWidth();
     var numberOfRegisters = (int) Math.pow(2, bitWidth);
     var allRegisters = IntStream.range(0, numberOfRegisters)
-        .mapToObj(x -> x + "")
+        .mapToObj(x -> registerFile.identifier.simpleName() + x)
         .collect(Collectors.toList());
-    var callerSaved = abi.callerSaved().stream().map(x -> x.addr() + "")
-        .toList();
-    var calleeSaved = abi.calleeSaved().stream().map(x -> x.addr() + "")
-        .toList();
+    var callerSaved =
+        abi.callerSaved().stream().map(x -> registerFile.identifier.simpleName() + x.addr())
+            .toList();
+    var calleeSaved =
+        abi.calleeSaved().stream().map(x -> registerFile.identifier.simpleName() + x.addr())
+            .toList();
     allRegisters.removeAll(callerSaved);
     allRegisters.removeAll(calleeSaved);
 

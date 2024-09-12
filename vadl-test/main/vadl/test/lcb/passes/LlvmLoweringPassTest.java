@@ -257,10 +257,10 @@ public class LlvmLoweringPassTest extends AbstractLcbTest {
     expectedResults.put("LH", createTestOutputLoadMemory("i64", "sextloadi16", "LH"));
     expectedResults.put("LW", createTestOutputLoadMemory("i64", "sextloadi32", "LW"));
     expectedResults.put("LD", createTestOutputLoadMemory("i64", "load", "LD"));
-    expectedResults.put("LBU", createTestOutputLoadMemory("u64", "zextloadi8", "LBU"));
-    expectedResults.put("LHU", createTestOutputLoadMemory("u64", "zextloadi16", "LHU"));
-    expectedResults.put("LWU", createTestOutputLoadMemory("u64", "zextloadi32", "LWU"));
-    expectedResults.put("LDU", createTestOutputLoadMemory("u64", "zextloadi64", "LDU"));
+    expectedResults.put("LBU", createTestOutputLoadMemory("i64", "zextloadi8", "LBU"));
+    expectedResults.put("LHU", createTestOutputLoadMemory("i64", "zextloadi16", "LHU"));
+    expectedResults.put("LWU", createTestOutputLoadMemory("i64", "zextloadi32", "LWU"));
+    expectedResults.put("LDU", createTestOutputLoadMemory("i64", "zextloadi64", "LDU"));
   }
 
   @TestFactory
