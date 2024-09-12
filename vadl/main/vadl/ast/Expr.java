@@ -184,9 +184,12 @@ class Operator {
   private static final Operator opShiftLeft = new Operator("<<", precShift);
   private static final Operator opAdd = new Operator("+", precTerm);
   private static final Operator opSubtract = new Operator("-", precTerm);
+  private static final Operator opSatAdd = new Operator("+|", precTerm);
+  private static final Operator opSatSubtract = new Operator("-|", precTerm);
   private static final Operator opMultiply = new Operator("*", precFactor);
   private static final Operator opDivide = new Operator("/", precFactor);
   private static final Operator opModulo = new Operator("%", precFactor);
+  private static final Operator opLongMultiply = new Operator("*#", precFactor);
   private static final Operator opIn = new Operator("in", precIn);
   private static final Operator opNotIn = new Operator("!in", precIn);
   private static final Operator opElemOf = new Operator("∈", precIn);
@@ -261,6 +264,14 @@ class Operator {
     return opSubtract;
   }
 
+  static Operator SaturatedAdd() {
+    return opSatAdd;
+  }
+
+  static Operator SaturatedSubtract() {
+    return opSatSubtract;
+  }
+
   static Operator Multiply() {
     return opMultiply;
   }
@@ -271,6 +282,10 @@ class Operator {
 
   static Operator Modulo() {
     return opModulo;
+  }
+
+  static Operator LongMultiply() {
+    return opLongMultiply;
   }
 
   static Operator In() {

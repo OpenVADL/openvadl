@@ -49,9 +49,12 @@ class ParserUtils {
     BIN_OPS[Parser._SYM_SHL] = true;
     BIN_OPS[Parser._SYM_PLUS] = true;
     BIN_OPS[Parser._SYM_MINUS] = true;
+    BIN_OPS[Parser._SYM_SAT_ADD] = true;
+    BIN_OPS[Parser._SYM_SAT_SUB] = true;
     BIN_OPS[Parser._SYM_MUL] = true;
     BIN_OPS[Parser._SYM_DIV] = true;
     BIN_OPS[Parser._SYM_MOD] = true;
+    BIN_OPS[Parser._SYM_LONG_MUL] = true;
     BIN_OPS[Parser._SYM_IN] = true;
     BIN_OPS[Parser._SYM_NIN] = true;
     BIN_OPS[Parser._SYM_ELEM_OF] = true;

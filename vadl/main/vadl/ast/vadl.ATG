@@ -185,21 +185,24 @@ TOKENS
   SYM_IN          = "in".
   SYM_LOGAND      = "&&".
   SYM_LOGOR       = "||".
+  SYM_LONG_MUL    = "*#".
   SYM_LT          = "<".
   SYM_LTE         = "<=".
   SYM_MINUS       = "-".
   SYM_MOD         = "%".
   SYM_MUL         = "*".
-  SYM_NOT_ELEM_OF = "∉".
   SYM_NAMESPACE   = "::".
   SYM_NEQ         = "!=".
   SYM_NIN         = "!in".
+  SYM_NOT_ELEM_OF = "∉".
   SYM_PAREN_CLOSE = ")".
   SYM_PAREN_OPEN  = "(".
   SYM_PLUS        = "+".
   SYM_RANGE       = "..".
   SYM_ROTL        = "<<>".
   SYM_ROTR        = "<>>".
+  SYM_SAT_ADD     = "+|".
+  SYM_SAT_SUB     = "-|".
   SYM_SEMICOLON   = ";".
   SYM_SHL         = "<<".
   SYM_SHR         = ">>".
@@ -1267,9 +1270,12 @@ PRODUCTIONS
   | SYM_SHL                       (. op = Operator.ShiftLeft(); .)
   | SYM_PLUS                      (. op = Operator.Add(); .)
   | SYM_MINUS                     (. op = Operator.Subtract(); .)
+  | SYM_SAT_ADD                   (. op = Operator.SaturatedAdd(); .)
+  | SYM_SAT_SUB                   (. op = Operator.SaturatedSubtract(); .)
   | SYM_MUL                       (. op = Operator.Multiply(); .)
   | SYM_DIV                       (. op = Operator.Divide(); .)
   | SYM_MOD                       (. op = Operator.Modulo(); .)
+  | SYM_LONG_MUL                  (. op = Operator.LongMultiply(); .)
   | SYM_IN                        (. op = Operator.In(); .)
   | SYM_NIN                       (. op = Operator.NotIn(); .)
   | SYM_ELEM_OF                   (. op = Operator.ElementOf(); .)

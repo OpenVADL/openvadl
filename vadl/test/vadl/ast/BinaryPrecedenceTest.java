@@ -163,4 +163,16 @@ public class BinaryPrecedenceTest {
 
     assertAstEquality(VadlParser.parse(prog1), VadlParser.parse(prog2));
   }
+
+  @Test
+  void saturatedOpsBehaveAsNormal() {
+    var prog1 = """
+        constant a = 2 +| 3 *# 4 -| 5 + 6
+        """;
+    var prog2 = """
+        constant a = ((2 +| (3 *# 4)) -| 5) + 6
+        """;
+
+    assertAstEquality(VadlParser.parse(prog1), VadlParser.parse(prog2));
+  }
 }
