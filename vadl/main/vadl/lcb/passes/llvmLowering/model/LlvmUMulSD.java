@@ -22,7 +22,7 @@ public class LlvmUMulSD extends BuiltInCall implements LlvmNodeLowerable {
 
   @Override
   public String lower() {
-    return "umul_lohi";
+    return "umullohi";
   }
 
 

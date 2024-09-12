@@ -1,5 +1,7 @@
 package vadl.lcb.passes.llvmLowering.tablegen.lowering;
 
+import static vadl.viam.ViamError.ensure;
+
 import java.util.BitSet;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
@@ -16,6 +18,7 @@ import vadl.viam.Definition;
 public final class TableGenInstructionRenderer {
   /**
    * Transforms the given {@code instruction} into a string which can be used by LLVM's TableGen.
+   * It will *ONLY* print the anonymous pattern if the pattern is actually lowerable.
    */
   public static String lower(TableGenInstruction instruction) {
     return String.format("""
@@ -86,12 +89,15 @@ public final class TableGenInstructionRenderer {
         toInt(instruction.getFlags().mayStore()),
         instruction.getUses().stream().map(Definition::name).collect(Collectors.joining(",")),
         instruction.getDefs().stream().map(Definition::name).collect(Collectors.joining(",")),
-        instruction.getAnonymousPatterns().stream().map(TableGenInstructionRenderer::lower)
+        instruction.getAnonymousPatterns().stream()
+            .filter(TableGenPattern::isPatternLowerable)
+            .map(TableGenInstructionRenderer::lower)
             .collect(Collectors.joining("\n"))
     );
   }
 
   private static String lower(TableGenPattern tableGenPattern) {
+    ensure(tableGenPattern.isPatternLowerable(), "TableGen pattern must be lowerable");
     var visitor = new TableGenPatternPrinterVisitor();
     var machineVisitor = new TableGenMachineInstructionPrinterVisitor();
 
