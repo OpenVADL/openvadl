@@ -347,6 +347,8 @@ public final class PassOrder {
     order.add(new vadl.lcb.template.lib.Target.MCTargetDesc.EmitMCCodeEmitterHeaderFilePass(
         configuration));
     order.add(
+        new vadl.lcb.template.lib.Target.MCTargetDesc.EmitMcTargetDescCMakeFilePass(configuration));
+    order.add(
         new vadl.lcb.template.lib.Target.MCTargetDesc.EmitMCCodeEmitterCppFilePass(configuration));
     order.add(
         new vadl.lcb.template.lib.Target.MCTargetDesc.EmitAsmStreamerCppFilePass(configuration));
@@ -364,8 +366,6 @@ public final class PassOrder {
     order.add(new vadl.lcb.template.lib.Target.MCTargetDesc.EmitMCExprCppFilePass(configuration));
     order.add(new vadl.lcb.template.lib.Target.MCTargetDesc.EmitMCTargetDescHeaderFilePass(
         configuration));
-    order.add(
-        new vadl.lcb.template.lib.Target.MCTargetDesc.EmitMCTargetDescCMakeFilePass(configuration));
     order.add(
         new vadl.lcb.template.lib.Target.MCTargetDesc.EmitAsmUtilsCppFilePass(configuration));
     order.add(

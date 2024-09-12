@@ -9,11 +9,12 @@ import vadl.pass.PassResults;
 import vadl.viam.Specification;
 
 /**
- * This file contains the CMakefile for the MCTarget.
+ * This file contains the CMakefile for the MCTargetDesc.
  */
-public class EmitMCTargetDescCMakeFilePass extends LcbTemplateRenderingPass {
+public class EmitMcTargetDescCMakeFilePass extends LcbTemplateRenderingPass {
 
-  public EmitMCTargetDescCMakeFilePass(LcbConfiguration lcbConfiguration) throws IOException {
+  public EmitMcTargetDescCMakeFilePass(LcbConfiguration lcbConfiguration)
+      throws IOException {
     super(lcbConfiguration);
   }
 
@@ -24,7 +25,7 @@ public class EmitMCTargetDescCMakeFilePass extends LcbTemplateRenderingPass {
 
   @Override
   protected String getOutputPath() {
-    return "lcb/llvm/lib/Target/" + lcbConfiguration().processorName().value()
+    return "llvm/lib/Target/" + lcbConfiguration().processorName().value()
         + "/MCTargetDesc/CMakeLists.txt";
   }
 

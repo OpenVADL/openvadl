@@ -25,7 +25,7 @@ public class EmitMCInstLowerHeaderFilePass extends LcbTemplateRenderingPass {
   @Override
   protected String getOutputPath() {
     var processorName = lcbConfiguration().processorName().value();
-    return "lcb/llvm/lib/Target/" + processorName + "/"
+    return "llvm/lib/Target/" + processorName + "/"
         + processorName + "MCInstLower.h";
   }
 

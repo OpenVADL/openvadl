@@ -17,7 +17,7 @@ add_llvm_target([(${namespace})]CodeGen
           [(${namespace})]TargetMachine.cpp
           [(${namespace})]InstrInfo.cpp
           [(${namespace})]RegisterInfo.cpp
-          [(${namespace})]Subtarget.cpp
+          [(${namespace})]SubTarget.cpp
           [(${namespace})]FrameLowering.cpp
           [(${namespace})]ISelLowering.cpp
           [(${namespace})]DAGToDAGISel.cpp
@@ -33,7 +33,6 @@ add_llvm_target([(${namespace})]CodeGen
           Core
           MC
           Support
-          Target
           SelectionDAG
           [(${namespace})]Info
           [(${namespace})]Desc

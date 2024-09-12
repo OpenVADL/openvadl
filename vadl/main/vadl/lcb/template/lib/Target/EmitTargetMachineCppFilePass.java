@@ -25,7 +25,7 @@ public class EmitTargetMachineCppFilePass extends LcbTemplateRenderingPass {
   @Override
   protected String getOutputPath() {
     var processorName = lcbConfiguration().processorName().value();
-    return "llvm/lib/Target/" + processorName + "/" + processorName + ".cpp";
+    return "llvm/lib/Target/" + processorName + "/" + processorName + "TargetMachine.cpp";
   }
 
   @Override

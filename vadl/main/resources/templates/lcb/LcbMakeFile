@@ -1,6 +1,7 @@
 TARGET="[(${namespace})]"
 
 CMAKE_CXX_STANDARD="14"
+LLVM_SOURCE_PATH="llvm-final"
 
 ifndef LLVM_PARALLEL_COMPILE_JOBS
     LLVM_PARALLEL_COMPILE_JOBS=10
@@ -39,7 +40,8 @@ default: build
 .PHONY: build
 
 build:
-    cp -r ./llvm/* $(LLVM_SOURCE_PATH)
+    git clone https://github.com/llvm/llvm-project --depth=1 -b llvmorg-17.0.6 $(LLVM_SOURCE_PATH) || true
+    cp -r ./llvm/* $(LLVM_SOURCE_PATH)/llvm
     mkdir -p $(LLVM_SOURCE_PATH)/build
     cmake -GNinja -S $(LLVM_SOURCE_PATH)/llvm -B $(LLVM_SOURCE_PATH)/build \
           -DCMAKE_BUILD_TYPE=$(LLVM_CMAKE_BUILD_TYPE) \
