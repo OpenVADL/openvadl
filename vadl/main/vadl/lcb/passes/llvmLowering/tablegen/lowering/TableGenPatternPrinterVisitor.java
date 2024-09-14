@@ -276,11 +276,12 @@ public class TableGenPatternPrinterVisitor
   @Override
   public void visit(LlvmBrCcSD node) {
     writer.write("(");
-    writer.write(node.lower() + " (" + node.condition() + " ");
+    writer.write(node.lower() + " ");
+    writer.write(node.condition() + ", ");
     visit(node.first());
     writer.write(", ");
     visit(node.second());
-    writer.write("), ");
+    writer.write(", ");
     visit(node.immOffset());
     writer.write(")");
   }
