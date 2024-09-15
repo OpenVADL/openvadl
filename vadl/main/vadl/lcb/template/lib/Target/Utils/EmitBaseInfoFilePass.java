@@ -26,13 +26,14 @@ public class EmitBaseInfoFilePass extends LcbTemplateRenderingPass {
   @Override
   protected String getOutputPath() {
     var processorName = lcbConfiguration().processorName().value();
-    return "lcb/llvm/lib/Target/" + processorName + "/Utils/"
+    return "llvm/lib/Target/" + processorName + "/Utils/"
         + processorName + "BaseInfo.h";
   }
 
   @Override
   protected Map<String, Object> createVariables(final PassResults passResults,
                                                 Specification specification) {
-    return Map.of(CommonVarNames.NAMESPACE, specification.name());
+    return Map.of(CommonVarNames.NAMESPACE, specification.name(),
+        "isBigEndian", false);
   }
 }

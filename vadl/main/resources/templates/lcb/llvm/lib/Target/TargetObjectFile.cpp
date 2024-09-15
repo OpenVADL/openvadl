@@ -1,5 +1,5 @@
 #include "[(${namespace})]TargetObjectFile.h"
-#include "[(${namespace})]Subtarget.h"
+#include "[(${namespace})]SubTarget.h"
 #include "[(${namespace})]TargetMachine.h"
 #include "llvm/MC/MCContext.h"
 #include "llvm/Target/TargetMachine.h"

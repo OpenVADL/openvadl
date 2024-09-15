@@ -1,4 +1,4 @@
-#include "[(${namespace})]Subtarget.h"
+#include "[(${namespace})]SubTarget.h"
 #include "llvm/Support/Debug.h"
 
 #define DEBUG_TYPE "[(${namespace})]Subtarget"

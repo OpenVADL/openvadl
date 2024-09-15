@@ -2,7 +2,7 @@
 #include "[(${namespace})].h"
 #include "Utils/[(${namespace})]BaseInfo.h"
 #include "[(${namespace})]RegisterInfo.h"
-#include "[(${namespace})]Subtarget.h"
+#include "[(${namespace})]SubTarget.h"
 #include "[(${namespace})]MachineFunctionInfo.h"
 #include "MCTargetDesc/[(${namespace})]MCTargetDesc.h"
 #include "llvm/CodeGen/MachineValueType.h"

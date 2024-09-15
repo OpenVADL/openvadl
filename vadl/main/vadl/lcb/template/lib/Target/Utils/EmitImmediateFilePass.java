@@ -22,7 +22,6 @@ public class EmitImmediateFilePass extends AbstractEmitImmediateFilePass {
   @Override
   protected String getOutputPath() {
     var processorName = lcbConfiguration().processorName().value();
-    return "lcb/llvm/lib/Target/" + processorName + "/Utils/"
-        + processorName + "ImmediateUtils.h";
+    return "llvm/lib/Target/" + processorName + "/Utils/ImmediateUtils.h";
   }
 }

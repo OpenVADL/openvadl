@@ -1,6 +1,6 @@
 #include "[(${namespace})]FrameLowering.h"
 #include "[(${namespace})].h"
-#include "[(${namespace})]Subtarget.h"
+#include "[(${namespace})]SubTarget.h"
 #include "MCTargetDesc/[(${namespace})]MCTargetDesc.h"
 #include "Utils/[(${namespace})]BaseInfo.h"
 #include "[(${namespace})]MachineFunctionInfo.h"
@@ -56,7 +56,7 @@ MachineBasicBlock::iterator [(${namespace})]FrameLowering::eliminateCallFramePse
         MI->getOpcode() == [(${namespace})]::ADJCALLSTACKDOWN)
     {
 
-        Register SPReg = «emit(stackPointer)»;
+        Register SPReg = [(${namespace})]::[(${stackPointer})];
         DebugLoc DL = MI->getDebugLoc();
 
         if (!hasReservedCallFrame(MF))

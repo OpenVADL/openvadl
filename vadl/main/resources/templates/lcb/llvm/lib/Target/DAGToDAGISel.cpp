@@ -1,6 +1,6 @@
 #include "[(${namespace})]DAGToDAGISel.h"
 #include "[(${namespace})]RegisterInfo.h"
-#include "[(${namespace})]Subtarget.h"
+#include "[(${namespace})]SubTarget.h"
 #include "[(${namespace})]TargetMachine.h"
 #include "llvm/CodeGen/MachineConstantPool.h"
 #include "llvm/CodeGen/MachineFrameInfo.h"
