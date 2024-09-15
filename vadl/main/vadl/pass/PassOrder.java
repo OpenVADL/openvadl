@@ -404,6 +404,8 @@ public final class PassOrder {
     order.add(new vadl.lcb.template.lib.Target.EmitExpandPseudoCppFilePass(configuration));
     order.add(new vadl.lcb.template.lib.Target.EmitTargetObjectFileHeaderFilePass(configuration));
     order.add(new vadl.lcb.template.lib.Target.EmitISelLoweringHeaderFilePass(configuration));
+    order.add(
+        new vadl.lcb.template.include.llvm.TargetParser.EmitTripleHeaderFilePass(configuration));
     order.add(new vadl.lcb.template.lib.TargetParser.EmitTripleCppFilePass(configuration));
     order.add(new vadl.lcb.template.lib.Object.EmitElfCppFilePass(configuration));
 
