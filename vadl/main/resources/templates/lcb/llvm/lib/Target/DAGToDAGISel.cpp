@@ -35,7 +35,7 @@ bool [(${namespace})]DAGToDAGISel::SelectAddrFI(SDValue Addr, SDValue &Base)
 {
     if (auto FIN = dyn_cast<FrameIndexSDNode>(Addr))
     {
-        Base = CurDAG->getTargetFrameIndex(FIN->getIndex(), MVT::SimpleValueType[(${stackPointerValueType})]);
+        Base = CurDAG->getTargetFrameIndex(FIN->getIndex(), MVT::SimpleValueType::[(${stackPointerType})]);
         return true;
     }
     return false;

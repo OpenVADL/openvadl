@@ -82,9 +82,9 @@ public class LlvmLoweringPassTest extends AbstractLcbTest {
                 condCode.name().toLowerCase())),
         // We have the same pattern twice because we have to selectors which emit the same
         // machine instruction.
-        List.of(String.format("(%s X:$rs1, X:$rs2, RV64IM_Btype_immAsLabel:$immS)",
+        List.of(String.format("(%s X:$rs1, X:$rs2, RV64IM_Btype_immAsLabel:$imm)",
                 machineInstruction),
-            String.format("(%s X:$rs1, X:$rs2, RV64IM_Btype_immAsLabel:$immS)",
+            String.format("(%s X:$rs1, X:$rs2, RV64IM_Btype_immAsLabel:$imm)",
                 machineInstruction)
         ),
         createBranchFlags(),
@@ -95,7 +95,7 @@ public class LlvmLoweringPassTest extends AbstractLcbTest {
   private static TestOutput createTestOutputAddI() {
     return new TestOutput(
         List.of(new TableGenInstructionOperand(DUMMY_NODE, "X", "rs1"),
-            new TableGenInstructionOperand(DUMMY_NODE, "RV64IM_Itype_immAsInt64", "immS")),
+            new TableGenInstructionOperand(DUMMY_NODE, "RV64IM_Itype_immAsInt64", "imm")),
         List.of(new TableGenInstructionOperand(DUMMY_NODE, "X", "rd")),
         List.of(String.format("(add X:$rs1, %s:$%s)", "RV64IM_Itype_immAsInt64",
                 "immS"),
@@ -150,15 +150,15 @@ public class LlvmLoweringPassTest extends AbstractLcbTest {
     return new TestOutput(
         List.of(new TableGenInstructionOperand(DUMMY_NODE, "X", "rs1"),
             new TableGenInstructionOperand(DUMMY_NODE, "X", "rs2"),
-            new TableGenInstructionOperand(DUMMY_NODE, "RV64IM_Stype_immAsInt64", "immS")),
+            new TableGenInstructionOperand(DUMMY_NODE, "RV64IM_Stype_immAsInt64", "imm")),
         List.of(),
-        List.of(String.format("(%s X:$rs2, (add X:$rs1, RV64IM_Stype_immAsInt64:$immS))",
+        List.of(String.format("(%s X:$rs2, (add X:$rs1, RV64IM_Stype_immAsInt64:$imm))",
                 dagNode),
-            String.format("(%s X:$rs2, (add AddrFI:$rs1, RV64IM_Stype_immAsInt64:$immS))",
+            String.format("(%s X:$rs2, (add AddrFI:$rs1, RV64IM_Stype_immAsInt64:$imm))",
                 dagNode)),
-        List.of(String.format("(%s X:$rs1, X:$rs2, RV64IM_Stype_immAsInt64:$immS)",
+        List.of(String.format("(%s X:$rs1, X:$rs2, RV64IM_Stype_immAsInt64:$imm)",
                 machineInstruction),
-            String.format("(%s AddrFI:$rs1, X:$rs2, RV64IM_Stype_immAsInt64:$immS)",
+            String.format("(%s AddrFI:$rs1, X:$rs2, RV64IM_Stype_immAsInt64:$imm)",
                 machineInstruction)),
         createStoreMemoryFlags(),
         false
@@ -171,15 +171,15 @@ public class LlvmLoweringPassTest extends AbstractLcbTest {
       String machineInstruction) {
     return new TestOutput(
         List.of(new TableGenInstructionOperand(DUMMY_NODE, "X", "rs1"),
-            new TableGenInstructionOperand(DUMMY_NODE, "RV64IM_Itype_immAsInt64", "immS")),
+            new TableGenInstructionOperand(DUMMY_NODE, "RV64IM_Itype_immAsInt64", "imm")),
         List.of(new TableGenInstructionOperand(DUMMY_NODE, "X", "rd")),
-        List.of(String.format("(%s (%s (add X:$rs1, RV64IM_Itype_immAsInt64:$immS)))",
+        List.of(String.format("(%s (%s (add X:$rs1, RV64IM_Itype_immAsInt64:$imm)))",
                 typeNode, dagNode),
-            String.format("(%s (%s (add AddrFI:$rs1, RV64IM_Itype_immAsInt64:$immS)))",
+            String.format("(%s (%s (add AddrFI:$rs1, RV64IM_Itype_immAsInt64:$imm)))",
                 typeNode, dagNode)),
-        List.of(String.format("(%s X:$rs1, RV64IM_Itype_immAsInt64:$immS)",
+        List.of(String.format("(%s X:$rs1, RV64IM_Itype_immAsInt64:$imm)",
                 machineInstruction),
-            String.format("(%s AddrFI:$rs1, RV64IM_Itype_immAsInt64:$immS)",
+            String.format("(%s AddrFI:$rs1, RV64IM_Itype_immAsInt64:$imm)",
                 machineInstruction)),
         createLoadMemoryFlags(),
         false

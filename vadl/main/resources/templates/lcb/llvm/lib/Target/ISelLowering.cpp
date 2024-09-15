@@ -24,15 +24,15 @@ void [(${namespace})]TargetLowering::anchor() {}
 {
     // Set up the register classes defined by register files
     [# th:each="rg : ${registerFiles}" ]
-      addRegisterClass([(${rg.regType})], &[(${namespace})]::[(${rg.name})]);
+      addRegisterClass(MVT::[(${rg.regType})], &[(${namespace})]::[(${rg.name})]RegClass);
     [/]
 
-    setStackPointerRegisterToSaveRestore([(${stackPointer})]);
+    setStackPointerRegisterToSaveRestore([(${namespace})]::[(${stackPointer})]);
 
-    setOperationAction(ISD::GlobalAddress, [(${stackPointerType})], Custom);
-    setOperationAction(ISD::BlockAddress, [(${stackPointerType})], Custom);
-    setOperationAction(ISD::ConstantPool, [(${stackPointerType})], Custom);
-    setOperationAction(ISD::JumpTable, [(${stackPointerType})], Custom);
+    setOperationAction(ISD::GlobalAddress, MVT::[(${stackPointerType})], Custom);
+    setOperationAction(ISD::BlockAddress, MVT::[(${stackPointerType})], Custom);
+    setOperationAction(ISD::ConstantPool, MVT::[(${stackPointerType})], Custom);
+    setOperationAction(ISD::JumpTable, MVT::[(${stackPointerType})], Custom);
 
     setOperationAction(ISD::VASTART, MVT::Other, Custom);
     setOperationAction(ISD::VAARG, MVT::Other, Custom);
@@ -113,7 +113,7 @@ static SDValue unpackFromRegLoc(SelectionDAG &DAG, SDValue Chain, const CCValAss
 
     [# th:each="rg : ${registerClasses}" ]
       if(RegVT.getSimpleVT().SimpleTy == [(${rg.regType})])  {
-        const unsigned VReg = RegInfo.createVirtualRegister(&[(${namespace})]::[(${rg.name})] «emitRegClsSymbol(registerClass)» );
+        const unsigned VReg = RegInfo.createVirtualRegister(&[(${namespace})]::[(${rg.name})]);
         RegInfo.addLiveIn(VA.getLocReg(), VReg);
         SDValue ArgIn = DAG.getCopyFromReg(Chain, DL, VReg, RegVT);
         return ArgIn;
@@ -130,7 +130,7 @@ static SDValue unpackFromMemLoc(SelectionDAG &DAG, SDValue Chain, const CCValAss
     MachineFrameInfo &MFI = MF.getFrameInfo();
     EVT LocVT = VA.getLocVT();
     EVT ValVT = VA.getValVT();
-    EVT PtrVT = MVT::«emit(stackPointer.type)»; // TODO: @chochrainer --> MVT::getIntegerVT( DAG.getDataLayout().getPointerSizeInBits( 0 ) );
+    EVT PtrVT = MVT::[(${stackPointerType})]; // TODO: @chochrainer --> MVT::getIntegerVT( DAG.getDataLayout().getPointerSizeInBits( 0 ) );
     unsigned ObjectSize = ValVT.getSizeInBits() / 8;
     int FI = MFI.CreateFixedObject(ObjectSize, VA.getLocMemOffset(), /* Immutable= */ true);
     SDValue FIN = DAG.getFrameIndex(FI, PtrVT);
@@ -263,15 +263,15 @@ void [(${namespace})]TargetLowering::WriteToVarArgs(std::vector<SDValue> &OutCha
         const MCPhysReg Arg[(${cl.identifier.simpleName()})]s[] =
         {
           // We only support currently one register class for all the argument registers.
-          [#th:block th:each="rg : ${argumentRegisters}" ]
-            , [(${rg.render()})]
+          [#th:block th:each="rg, iterStat : ${argumentRegisters}" ]
+            [(${namespace})]::[(${rg.render()})][#th:block th:if="${!iterStat.last}"],[/th:block]
           [/th:block]
-        }
+        };
         [/th:block]
 
         [#th:block th:each="cl : ${argumentRegisterClasses}" ]
           unsigned [(${cl.identifier.simpleName()})]LenInBytes = [(${cl.resultType.bitWidth / 8})];
-          MVT [(${cl.identifier.simpleName()})]LenVT = [(${cl.llvmResultType()})];
+          MVT [(${cl.identifier.simpleName()})]LenVT = MVT::[(${cl.llvmResultType()})];
           ArrayRef<MCPhysReg> [(${cl.identifier.simpleName()})]ArgRegs = makeArrayRef(Arg[(${cl.identifier.simpleName()})]s);
           unsigned [(${cl.identifier.simpleName()})]Idx = CCInfo.getFirstUnallocated( [(${cl.identifier.simpleName()})]ArgRegs);
           const TargetRegisterClass *[(${cl.identifier.simpleName()})]RC = &[(${namespace})]::[(${cl.identifier.simpleName()})]RegClass;
@@ -572,6 +572,7 @@ SDValue [(${namespace})]TargetLowering::getAddr(NodeTy *N, SelectionDAG &DAG, bo
     {
         report_fatal_error("Unsupported code model for lowering");
     }
+    }
     /*
     IF this.optionalLoadAddressSmall.isPresent» case CodeModel::Small:
     {
@@ -728,6 +729,7 @@ static unsigned getBranchOpcodeForIntCondCode(ISD::CondCode CC, MVT::SimpleValue
 }
 */
 
+/*
 SDValue [(${namespace})]TargetLowering::lowerSelect(SDValue Op, SelectionDAG &DAG) const
 {
     SDValue CondV = Op.getOperand(0);
@@ -770,6 +772,7 @@ SDValue [(${namespace})]TargetLowering::lowerSelect(SDValue Op, SelectionDAG &DA
 
     return DAG.getNode([(${namespace})]ISD::SELECT_CC, DL, VTs, Ops);
 }
+*/
 
 MachineBasicBlock *
     [(${namespace})]TargetLowering::EmitInstrWithCustomInserter(MachineInstr &MI,
@@ -778,6 +781,7 @@ MachineBasicBlock *
     const TargetInstrInfo &TII = *BB->getParent()->getSubtarget().getInstrInfo();
     DebugLoc DL = MI.getDebugLoc();
 
+/*
     switch (MI.getOpcode())
     {
     default:
@@ -844,4 +848,7 @@ MachineBasicBlock *
 
     MI.eraseFromParent(); // The pseudo instruction is gone now.
     return TailMBB;
+    */
+
+    return nullptr;
 }

@@ -67,8 +67,11 @@ public class EmitRegisterInfoCppFilePass extends LcbTemplateRenderingPass {
         IsaMatchingPass.class);
     var uninlined = (IdentityHashMap<Instruction, UninlinedGraph>) passResults.lastResultOf(
         FunctionInlinerPass.class);
-    return Map.of(CommonVarNames.NAMESPACE, specification.name(), "framePointer",
-        abi.framePointer(), "stackPointer", abi.stackPointer(), "globalPointer",
+    return Map.of(CommonVarNames.NAMESPACE, specification.name(),
+        "framePointer", abi.framePointer(),
+        "returnAddress", abi.returnAddress(),
+        "stackPointer", abi.stackPointer(),
+        "globalPointer",
         abi.globalPointer(), "frameIndexEliminations",
         getEliminateFrameIndexEntries(instructionLabels, uninlined).stream()
             .sorted(Comparator.comparing(o -> o.instruction.identifier.name())).toList(),
@@ -93,7 +96,7 @@ public class EmitRegisterInfoCppFilePass extends LcbTemplateRenderingPass {
         var immediate = behavior.getNodes(FieldAccessRefNode.class).findAny();
         ensure(immediate.isPresent(), "An immediate is required for frame index elimination");
         var entry = new FrameIndexElimination(label, instruction, immediate.get(),
-            immediate.get().fieldAccess().predicate().name(),
+            immediate.get().fieldAccess().predicate().identifier.lower(),
             instruction.behavior().getNodes(ReadRegFileNode.class).findFirst().get()
                 .registerFile());
         entries.add(entry);

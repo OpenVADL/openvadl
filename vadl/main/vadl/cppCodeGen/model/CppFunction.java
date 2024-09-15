@@ -17,8 +17,8 @@ public class CppFunction extends Function {
     super(identifier, parameters, returnType, behavior);
   }
 
-  public CppFunction(Function function, String part) {
-    super(function.identifier.append(part), function.parameters(), function.returnType(),
+  public CppFunction(Function function) {
+    super(function.identifier, function.parameters(), function.returnType(),
         function.behavior());
   }
 

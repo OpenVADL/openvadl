@@ -90,30 +90,37 @@ void [(${namespace})]MCExpr::visitUsedExpr(MCStreamer &Streamer) const
 [(${namespace})]MCExpr::VariantKind [(${namespace})]MCExpr::getVariantKindForName(StringRef name)
 {
     return StringSwitch<[(${namespace})]MCExpr::VariantKind>(name)
+    /*
                 «FOR relocation : relocations»
                                        .Case( «emitAsStr(relocation)», «emitAsKind(relocation)» )
                 «ENDFOR»
+                */
                                        .Default(VK_[(${namespace})]_Invalid);
 }
 
 StringRef [(${namespace})]MCExpr::getVariantKindName(VariantKind Kind)
 {
+    return StringRef();
+    /*
     switch (Kind)
     {
-    «FOR relocation : relocations» case «emitAsKind(relocation)»:
-        return «emitAsStr(relocation)»;
-        «ENDFOR» default : llvm_unreachable("Invalid symbol kind");
+    FOR relocation : relocations» case emitAsKind(relocation):
+        return <<emitAsStr(relocation)>>;
+        ENDFOR default : llvm_unreachable("Invalid symbol kind");
     }
+    */
 }
 
 bool [(${namespace})]MCExpr::isInternalImmExpr() const
 {
+    /*
     «IF immediates.size > 0» switch (Kind)
     {
     «FOR immediate : immediates» case «emitAsKind(immediate)»:
         «ENDFOR» return true;
     }
-    «ENDIF» return false;
+    «ENDIF» */
+    return false;
 }
 
 bool [(${namespace})]MCExpr::evaluateAsConstant(int64_t &Res) const
@@ -146,8 +153,8 @@ int64_t [(${namespace})]MCExpr::evaluateAsInt64(int64_t Value) const
 {
     int64_t resultValue = Value;
 
+    /*
     «IF relocations.size > 0»
-        /* apply modifier to constant */
                 «FOR relocation : relocations» if (Kind == «emitAsKind(relocation)» )
     {
         resultValue = [(${namespace})]BaseInfo::«emitAsFunc(relocation)»(resultValue);
@@ -157,12 +164,13 @@ int64_t [(${namespace})]MCExpr::evaluateAsInt64(int64_t Value) const
             «ENDIF»
 
             «IF immediates.size > 0»
-        /* apply immediate functions to constant */
                 «FOR immediate : immediates» if (Kind == «emitAsKind(immediate)» )
     {
         resultValue = «emitDecoderFunc(immediate)»(resultValue);
     }
     «ENDFOR»
 
-            «ENDIF» return resultValue;
+    «ENDIF» */
+
+    return resultValue;
 }

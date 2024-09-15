@@ -25,12 +25,12 @@ public record ParameterIdentity(String type, String name) {
 
   public static ParameterIdentity from(LlvmFieldAccessRefNode node) {
     return new ParameterIdentity(node.immediateOperand().fullname(),
-        node.fieldAccess().identifier.simpleName());
+        node.fieldAccess().fieldRef().identifier.simpleName());
   }
 
   public static ParameterIdentity from(LlvmBasicBlockSD node) {
     return new ParameterIdentity(node.lower(),
-        node.fieldAccess().identifier.simpleName());
+        node.fieldAccess().fieldRef().identifier.simpleName());
   }
 
   public static ParameterIdentity from(FieldRefNode node) {

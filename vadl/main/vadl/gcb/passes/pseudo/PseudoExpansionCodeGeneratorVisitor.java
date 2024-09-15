@@ -29,7 +29,6 @@ import vadl.viam.graph.dependency.WriteRegFileNode;
  * More specialised generator visitor for generating the expansion of pseudo instructions.
  */
 public class PseudoExpansionCodeGeneratorVisitor extends GenericCppCodeGeneratorVisitor {
-  private final Stack<String> operands = new Stack<>();
   private final SymbolTable symbolTable = new SymbolTable();
   private final String namespace;
   private final DetectImmediatePass.ImmediateDetectionContainer fieldUsages;
@@ -57,7 +56,6 @@ public class PseudoExpansionCodeGeneratorVisitor extends GenericCppCodeGenerator
   @Override
   public void visit(InstrCallNode instrCallNode) {
     var sym = symbolTable.getNextVariable();
-    operands.add(sym);
     writer.write(String.format("MCInst %s = MCInst();\n", sym));
     writer.write(String.format("%s.setOpcode(%s::%s);\n", sym, namespace,
         instrCallNode.target().identifier.simpleName()));

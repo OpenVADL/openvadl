@@ -23,20 +23,22 @@ namespace llvm
             static std::string formatImm(MCOperand Op, uint8_t Radix, const MCAsmInfo *MAI);
             static std::string formatImm(int64_t value, uint8_t Radix, const MCAsmInfo *MAI);
             static std::string formatExpr(const MCExpr *Expr, uint8_t Radix, const MCAsmInfo *MAI);
-            static std::string FormatModifier(const «processorName»MCExpr::VariantKind VariantKind);
+            static std::string FormatModifier(const [(${namespace})]MCExpr::VariantKind VariantKind);
             static std::string FormatModifier(const MCSymbolRefExpr::VariantKind VariantKind);
             static bool MatchRegNo(StringRef Reg, unsigned &RegNo);
             static bool MatchOpcode(StringRef Mnemonic, unsigned &Opcode);
-            static bool MatchCustomModifier(StringRef String, «processorName»MCExpr::VariantKind &VariantKind);
+            static bool MatchCustomModifier(StringRef String, [(${namespace})]MCExpr::VariantKind &VariantKind);
             static bool MatchLlvmModifier(StringRef String, MCSymbolRefExpr::VariantKind &VariantKind);
             static bool evaluateConstantImm(const MCExpr *Expr, int64_t &Imm);
             static bool evaluateConstantImm(const MCOperand *MCOp, int64_t &Imm);
 
             // register helper function
             static std::string getRegisterName( unsigned RegNo );
+            /*
             «FOR cls : processor.list( RegisterClass ).filter[ sideEffect == false ]»
                 static std::string getRegisterNameFrom«cls.simpleName»ByIndex( unsigned RegIndex );
             «ENDFOR»
+            */
     };
 
     class MCOperandWrapper
@@ -55,6 +57,7 @@ namespace llvm
             {
                 if( MCOp.isReg() )
                 {
+                    /*
                     switch( MCOp.getReg() )
                     {
                         «FOR hwc : processor.list( HardwareRegisterClass ).filter[ sideEffect == false ]»
@@ -66,6 +69,7 @@ namespace llvm
                             case [(${namespace})]::«reg.simpleName» : return «reg.hardwareEncoding»;
                         «ENDFOR»
                     }
+                    */
 
                     report_fatal_error("Cannot convert register operand to integral value.");
                 }

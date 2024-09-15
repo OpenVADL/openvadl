@@ -48,6 +48,7 @@ MCFixupKind getFixupKind(unsigned Opcode, unsigned OpNo, const MCExpr *Expr)
         [(${namespace})]MCExpr::VariantKind targetKind = targetExpr->getKind();
         switch (targetKind)
         {
+        /*
         «FOR relocation : processor.list(Relocation)» case ([(${namespace})]MCExpr::VariantKind::«relocation.variantKindIdentifier»):
         {
             «FOR elfRelocation : processor.list(ElfRelocation)»
@@ -64,7 +65,9 @@ MCFixupKind getFixupKind(unsigned Opcode, unsigned OpNo, const MCExpr *Expr)
                 assert(false && "Could not match variant kind «relocation.variantKindIdentifier»");
             return MCFixupKind::FK_NONE;
         }
-            «ENDFOR» default:
+            «ENDFOR»
+            */
+        default:
             {
                 // This is an immediate variant kind. Emit fixup for sub expression.
                 return getFixupKind(Opcode, OpNo, targetExpr->getSubExpr());
@@ -74,6 +77,7 @@ MCFixupKind getFixupKind(unsigned Opcode, unsigned OpNo, const MCExpr *Expr)
     }
     else if (kind == MCExpr::ExprKind::SymbolRef)
     {
+        /*
         switch (Opcode)
         {
         «FOR instruction : machineInstructionsWithRelocations» case ([(${namespace})]::«instruction.simpleName»):
@@ -90,6 +94,7 @@ MCFixupKind getFixupKind(unsigned Opcode, unsigned OpNo, const MCExpr *Expr)
         }
             «ENDFOR»
         }
+        */
     }
     if (kind == MCExpr::ExprKind::Binary)
     {
@@ -126,6 +131,7 @@ void [(${namespace})]MCCodeEmitter::emitFixups(const MCInst MI, unsigned OpNo, c
     }
 }
 
+/*
 «FOR Immediate immediate : processor.list(Immediate) SEPARATOR "\n"» unsigned [(${namespace})]MCCodeEmitter::encode«immediate.loweredImmediate.identifier»(const MCInst &MI, unsigned OpNo, SmallVectorImpl<MCFixup> &Fixups, const MCSubtargetInfo &STI) const
 {
     const MCOperand &MO = MI.getOperand(OpNo);
@@ -144,6 +150,7 @@ void [(${namespace})]MCCodeEmitter::emitFixups(const MCInst MI, unsigned OpNo, c
     return 0;
 }
 «ENDFOR»
+*/
 
     void [(${namespace})]MCCodeEmitter::encodeInstruction(const MCInst &MCI, raw_ostream &OS, SmallVectorImpl<MCFixup> &Fixups, const MCSubtargetInfo &STI) const
 {

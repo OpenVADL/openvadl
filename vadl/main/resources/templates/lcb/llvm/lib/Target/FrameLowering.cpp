@@ -315,7 +315,7 @@ StackOffset [(${namespace})]FrameLowering::getFrameIndexReference(const MachineF
     if (FI >= MinCSFI && FI <= MaxCSFI)
     {
         // use the stack pointer for callee saved register
-        FrameReg = «emit(stackPointer)»;
+        FrameReg = [(${namespace})]::[(${stackPointer})];
         Offset += StackOffset::getFixed(StackSize);
     }
     else if (RI->hasStackRealignment(MF) && !MFI.isFixedObjectIndex(FI))
@@ -325,7 +325,7 @@ StackOffset [(${namespace})]FrameLowering::getFrameIndexReference(const MachineF
         // after realignment.
         // TODO: @chochrainer RISCV uses base register
 
-        FrameReg = «emit(stackPointer)»;
+        FrameReg = [(${namespace})]::[(${stackPointer})];
         Offset += StackOffset::getFixed(StackSize);
     }
     else

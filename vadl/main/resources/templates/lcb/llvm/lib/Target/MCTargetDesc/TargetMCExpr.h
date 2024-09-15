@@ -14,7 +14,7 @@ namespace llvm
         {
             VK_[(${namespace})]_None
             [# th:each="relocation : ${relocations}" ]
-            , [(${relocation.logicalRelocation().variantKind()})]
+            , [(${relocation.logicalRelocation().variantKind().value()})]
             [/]
             [# th:each="imm : ${immediates}" ]
             , [(${imm.value()})]
@@ -60,7 +60,7 @@ namespace llvm
             return E->getKind() == MCExpr::Target;
         }
 
-        static bool classof(const «processorName»MCExpr *) { return true; }
+        static bool classof(const [(${namespace})]MCExpr *) { return true; }
         static VariantKind getVariantKindForName(StringRef name);
         static StringRef getVariantKindName(VariantKind Kind);
     };

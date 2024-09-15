@@ -30,7 +30,7 @@ using namespace llvm;
 void [(${namespace})]RegisterInfo::anchor() {}
 
 [(${namespace})]RegisterInfo::[(${namespace})]RegisterInfo()
-    : [(${namespace})]GenRegisterInfo( «emitWithNamespace(returnAddress)» )
+    : [(${namespace})]GenRegisterInfo( [(${namespace})]::[(${returnAddress.render()})] )
 {
 }
 

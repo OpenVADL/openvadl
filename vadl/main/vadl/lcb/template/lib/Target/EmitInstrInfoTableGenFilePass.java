@@ -5,6 +5,7 @@ import java.util.Comparator;
 import java.util.Map;
 import java.util.stream.Stream;
 import vadl.configuration.LcbConfiguration;
+import vadl.lcb.codegen.model.llvm.ValueType;
 import vadl.lcb.passes.llvmLowering.LlvmLoweringPass;
 import vadl.lcb.passes.llvmLowering.tablegen.lowering.TableGenImmediateOperandRenderer;
 import vadl.lcb.passes.llvmLowering.tablegen.lowering.TableGenInstructionRenderer;
@@ -17,6 +18,7 @@ import vadl.pass.PassKey;
 import vadl.pass.PassResults;
 import vadl.viam.Instruction;
 import vadl.viam.Specification;
+import vadl.viam.passes.dummyAbi.DummyAbi;
 
 /**
  * This file contains the mapping for ISelNodes to MI.
@@ -42,6 +44,8 @@ public class EmitInstrInfoTableGenFilePass extends LcbTemplateRenderingPass {
   @Override
   protected Map<String, Object> createVariables(final PassResults passResults,
                                                 Specification specification) {
+    var abi =
+        (DummyAbi) specification.definitions().filter(x -> x instanceof DummyAbi).findFirst().get();
     Map<Instruction, LlvmLoweringPass.LlvmLoweringIntermediateResult> instructions =
         (Map<Instruction, LlvmLoweringPass.LlvmLoweringIntermediateResult>) ensureNonNull(
             passResults.lastResultOf(LlvmLoweringPass.class),
@@ -91,6 +95,8 @@ public class EmitInstrInfoTableGenFilePass extends LcbTemplateRenderingPass {
         .toList();
 
     return Map.of(CommonVarNames.NAMESPACE, specification.name(),
+        "stackPointerType",
+        ValueType.from(abi.stackPointer().registerFile().resultType()).getLlvmType(),
         "immediates", Stream.concat(renderedImmediates.stream(), renderedImmediateLabels.stream()),
         "instructions", renderedTableGenRecords);
   }

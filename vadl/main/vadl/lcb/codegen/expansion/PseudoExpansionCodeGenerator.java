@@ -54,7 +54,7 @@ public class PseudoExpansionCodeGenerator extends CodeGenerator {
         new PseudoExpansionCodeGeneratorVisitor(writer, namespace, fieldUsages,
             immediateDecodings, variants, relocations);
     instrCallNodes.forEach(visitor::visit);
-    writer.write("return result;");
+    writer.write("return result");
     return writer.toString();
   }
 }

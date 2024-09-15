@@ -21,7 +21,7 @@ public class ImmediateDecodingFunctionProvider {
         passResults.lastResultOf(CppTypeNormalizationForDecodingsPass.class))
         .fields()
         .stream()
-        .map(x -> new Pair<>(x.getKey(), new CppFunction(x.getValue(), "decode")))
+        .map(x -> new Pair<>(x.getKey(), new CppFunction(x.getValue())))
         .collect(Collectors.toMap(Pair::left, Pair::right));
   }
 }

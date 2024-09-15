@@ -70,7 +70,7 @@ public class LogicalRelocation {
     this.relocation = new Relocation(identifier,
         new Parameter[] {parameter},
         format.type());
-    this.cppRelocation = new CppFunction(relocation, "relocation");
+    this.cppRelocation = new CppFunction(relocation);
     // Add a single return
     this.cppRelocation.behavior().addWithInputs(new ReturnNode(new FuncParamNode(parameter)));
     this.variantKind = new VariantKind(relocation);
