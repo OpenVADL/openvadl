@@ -68,6 +68,19 @@ public class EmitInstrInfoTableGenFilePassTest extends AbstractLcbTest {
         def RV64IM_Stype_immAsLabel : RV64IM_Stype_imm<OtherVT>;
                 
                 
+        class RV64IM_Btype_imm<ValueType ty> : Operand<ty>
+        {
+          let EncoderMethod = "RV64IM_Btype_immS_encoding";
+          let DecoderMethod = "RV64IM_Btype_immS_decode";
+        }
+                
+        def RV64IM_Btype_immAsInt64
+            : RV64IM_Btype_imm<i64>
+            , ImmLeaf<i64, [{ return RV64IM_Btype_immS_predicate(Imm); }]>;
+                
+        def RV64IM_Btype_immAsLabel : RV64IM_Btype_imm<OtherVT>;
+                
+                
                 
                 
                 

@@ -3,11 +3,13 @@ package vadl.lcb.template.lib.Target;
 import java.io.IOException;
 import java.util.Comparator;
 import java.util.Map;
+import java.util.stream.Stream;
 import vadl.configuration.LcbConfiguration;
 import vadl.lcb.passes.llvmLowering.LlvmLoweringPass;
 import vadl.lcb.passes.llvmLowering.tablegen.lowering.TableGenImmediateOperandRenderer;
 import vadl.lcb.passes.llvmLowering.tablegen.lowering.TableGenInstructionRenderer;
 import vadl.lcb.passes.llvmLowering.tablegen.model.TableGenInstruction;
+import vadl.lcb.passes.llvmLowering.tablegen.model.TableGenInstructionImmediateLabelOperand;
 import vadl.lcb.passes.llvmLowering.tablegen.model.TableGenInstructionImmediateOperand;
 import vadl.lcb.template.CommonVarNames;
 import vadl.lcb.template.LcbTemplateRenderingPass;
@@ -74,13 +76,22 @@ public class EmitInstrInfoTableGenFilePass extends LcbTemplateRenderingPass {
         .map(TableGenImmediateOperandRenderer::lower)
         .toList();
 
+    var renderedImmediateLabels = tableGenRecords
+        .stream()
+        .flatMap(tableGenRecord -> tableGenRecord.getInOperands().stream())
+        .filter(operand -> operand instanceof TableGenInstructionImmediateLabelOperand)
+        .map(operand -> ((TableGenInstructionImmediateLabelOperand) operand).immediateOperand())
+        .distinct()
+        .map(TableGenImmediateOperandRenderer::lower)
+        .toList();
+
     var renderedTableGenRecords = tableGenRecords
         .stream()
         .map(TableGenInstructionRenderer::lower)
         .toList();
 
     return Map.of(CommonVarNames.NAMESPACE, specification.name(),
-        "immediates", renderedImmediates,
+        "immediates", Stream.concat(renderedImmediates.stream(), renderedImmediateLabels.stream()),
         "instructions", renderedTableGenRecords);
   }
 }
