@@ -298,7 +298,7 @@ public class EmitInstrInfoTableGenFilePassTest extends AbstractLcbTest {
         let CodeSize = 4;
                 
         let OutOperandList = ( outs  );
-        let InOperandList = ( ins X:$rs1, X:$rs2, bb:$immS );
+        let InOperandList = ( ins X:$rs1, X:$rs2, RV64IM_Btype_immS_decodeAsLabel:$immS );
                 
         field bits<32> Inst;
                 
@@ -357,7 +357,7 @@ public class EmitInstrInfoTableGenFilePassTest extends AbstractLcbTest {
         let CodeSize = 4;
                 
         let OutOperandList = ( outs  );
-        let InOperandList = ( ins X:$rs1, X:$rs2, bb:$immS );
+        let InOperandList = ( ins X:$rs1, X:$rs2, RV64IM_Btype_immS_decodeAsLabel:$immS );
                 
         field bits<32> Inst;
                 
@@ -416,7 +416,7 @@ public class EmitInstrInfoTableGenFilePassTest extends AbstractLcbTest {
         let CodeSize = 4;
                 
         let OutOperandList = ( outs  );
-        let InOperandList = ( ins X:$rs1, X:$rs2, bb:$immS );
+        let InOperandList = ( ins X:$rs1, X:$rs2, RV64IM_Btype_immS_decodeAsLabel:$immS );
                 
         field bits<32> Inst;
                 
@@ -475,7 +475,7 @@ public class EmitInstrInfoTableGenFilePassTest extends AbstractLcbTest {
         let CodeSize = 4;
                 
         let OutOperandList = ( outs  );
-        let InOperandList = ( ins X:$rs1, X:$rs2, bb:$immS );
+        let InOperandList = ( ins X:$rs1, X:$rs2, RV64IM_Btype_immS_decodeAsLabel:$immS );
                 
         field bits<32> Inst;
                 
@@ -534,7 +534,7 @@ public class EmitInstrInfoTableGenFilePassTest extends AbstractLcbTest {
         let CodeSize = 4;
                 
         let OutOperandList = ( outs  );
-        let InOperandList = ( ins X:$rs1, X:$rs2, bb:$immS );
+        let InOperandList = ( ins X:$rs1, X:$rs2, RV64IM_Btype_immS_decodeAsLabel:$immS );
                 
         field bits<32> Inst;
                 
@@ -593,7 +593,7 @@ public class EmitInstrInfoTableGenFilePassTest extends AbstractLcbTest {
         let CodeSize = 4;
                 
         let OutOperandList = ( outs  );
-        let InOperandList = ( ins X:$rs1, X:$rs2, bb:$immS );
+        let InOperandList = ( ins X:$rs1, X:$rs2, RV64IM_Btype_immS_decodeAsLabel:$immS );
                 
         field bits<32> Inst;
                 

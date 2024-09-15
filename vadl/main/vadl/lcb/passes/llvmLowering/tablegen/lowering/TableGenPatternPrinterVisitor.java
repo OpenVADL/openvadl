@@ -226,7 +226,7 @@ public class TableGenPatternPrinterVisitor
   @Override
   public void visit(LlvmBasicBlockSD node) {
     var operand = LlvmInstructionLoweringStrategy.generateTableGenInputOutput(node);
-    writer.write(operand.render());
+    writer.write(node.lower() + ":$" + operand.identity().name());
   }
 
   @Override

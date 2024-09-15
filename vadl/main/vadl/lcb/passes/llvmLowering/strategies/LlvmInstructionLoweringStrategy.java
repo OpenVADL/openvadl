@@ -33,6 +33,7 @@ import vadl.lcb.passes.llvmLowering.strategies.visitors.impl.ReplaceWithLlvmSDNo
 import vadl.lcb.passes.llvmLowering.tablegen.model.ParameterIdentity;
 import vadl.lcb.passes.llvmLowering.tablegen.model.TableGenInstruction;
 import vadl.lcb.passes.llvmLowering.tablegen.model.TableGenInstructionFrameRegisterOperand;
+import vadl.lcb.passes.llvmLowering.tablegen.model.TableGenInstructionImmediateLabelOperand;
 import vadl.lcb.passes.llvmLowering.tablegen.model.TableGenInstructionImmediateOperand;
 import vadl.lcb.passes.llvmLowering.tablegen.model.TableGenInstructionOperand;
 import vadl.lcb.passes.llvmLowering.tablegen.model.TableGenInstructionRegisterFileOperand;
@@ -303,8 +304,9 @@ public abstract class LlvmInstructionLoweringStrategy {
    * Returns a {@link TableGenInstructionOperand} given a {@link Node}.
    */
   private static TableGenInstructionOperand generateInstructionOperand(LlvmBasicBlockSD node) {
-    return new TableGenInstructionOperand(node,
-        ParameterIdentity.from(node));
+    return new TableGenInstructionImmediateLabelOperand(
+        ParameterIdentity.fromBasicBlockToImmediateLabel(node),
+        node);
   }
 
   /**
