@@ -20,6 +20,7 @@ import vadl.lcb.passes.llvmLowering.LlvmLoweringPass;
 import vadl.lcb.passes.llvmLowering.LlvmMayLoadMemory;
 import vadl.lcb.passes.llvmLowering.LlvmMayStoreMemory;
 import vadl.lcb.passes.llvmLowering.LlvmSideEffectPatternIncluded;
+import vadl.lcb.passes.llvmLowering.model.LlvmBasicBlockSD;
 import vadl.lcb.passes.llvmLowering.model.LlvmBrCcSD;
 import vadl.lcb.passes.llvmLowering.model.LlvmBrCondSD;
 import vadl.lcb.passes.llvmLowering.model.LlvmFieldAccessRefNode;
@@ -291,9 +292,19 @@ public abstract class LlvmInstructionLoweringStrategy {
       return generateInstructionOperand(node);
     } else if (operand instanceof FieldRefNode node) {
       return generateInstructionOperand(node);
+    } else if (operand instanceof LlvmBasicBlockSD node) {
+      return generateInstructionOperand(node);
     } else {
       throw new ViamError("Input operand not supported yet: " + operand);
     }
+  }
+
+  /**
+   * Returns a {@link TableGenInstructionOperand} given a {@link Node}.
+   */
+  private static TableGenInstructionOperand generateInstructionOperand(LlvmBasicBlockSD node) {
+    return new TableGenInstructionOperand(node,
+        ParameterIdentity.from(node));
   }
 
   /**

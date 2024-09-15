@@ -2,8 +2,8 @@ package vadl.lcb.passes.llvmLowering.tablegen.lowering;
 
 import java.io.StringWriter;
 import java.util.Objects;
-import vadl.cppCodeGen.model.CppUpdateBitRangeNode;
 import vadl.lcb.passes.llvmLowering.LlvmNodeLowerable;
+import vadl.lcb.passes.llvmLowering.model.LlvmBasicBlockSD;
 import vadl.lcb.passes.llvmLowering.model.LlvmBrCcSD;
 import vadl.lcb.passes.llvmLowering.model.LlvmBrCondSD;
 import vadl.lcb.passes.llvmLowering.model.LlvmFieldAccessRefNode;
@@ -221,6 +221,12 @@ public class TableGenPatternPrinterVisitor
     joinArgumentsWithComma(node.arguments());
 
     writer.write(")");
+  }
+
+  @Override
+  public void visit(LlvmBasicBlockSD node) {
+    var operand = LlvmInstructionLoweringStrategy.generateTableGenInputOutput(node);
+    writer.write(operand.render());
   }
 
   @Override

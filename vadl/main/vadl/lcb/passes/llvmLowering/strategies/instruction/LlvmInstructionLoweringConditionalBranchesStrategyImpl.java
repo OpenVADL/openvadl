@@ -16,13 +16,18 @@ import java.util.Set;
 import java.util.stream.Stream;
 import vadl.lcb.passes.isaMatching.InstructionLabel;
 import vadl.lcb.passes.llvmLowering.LlvmLoweringPass;
+import vadl.lcb.passes.llvmLowering.model.LlvmBasicBlockSD;
 import vadl.lcb.passes.llvmLowering.model.LlvmBrCcSD;
 import vadl.lcb.passes.llvmLowering.model.LlvmBrCondSD;
 import vadl.lcb.passes.llvmLowering.model.LlvmCondCode;
 import vadl.lcb.passes.llvmLowering.model.LlvmSetCondSD;
 import vadl.lcb.passes.llvmLowering.model.LlvmTypeCastSD;
+import vadl.lcb.passes.llvmLowering.model.MachineInstructionParameterNode;
 import vadl.lcb.passes.llvmLowering.strategies.LlvmInstructionLoweringStrategy;
 import vadl.lcb.passes.llvmLowering.strategies.visitors.impl.ReplaceWithLlvmSDNodesWithControlFlowVisitor;
+import vadl.lcb.passes.llvmLowering.tablegen.model.ParameterIdentity;
+import vadl.lcb.passes.llvmLowering.tablegen.model.TableGenInstructionImmediateLabelOperand;
+import vadl.lcb.passes.llvmLowering.tablegen.model.TableGenInstructionImmediateOperand;
 import vadl.lcb.passes.llvmLowering.tablegen.model.TableGenInstructionOperand;
 import vadl.lcb.passes.llvmLowering.tablegen.model.TableGenPattern;
 import vadl.lcb.visitors.LcbGraphNodeVisitor;
@@ -87,15 +92,37 @@ public class LlvmInstructionLoweringConditionalBranchesStrategyImpl
             visitedGraph,
             inputOperands, outputOperands, patterns);
 
+    var allPatterns = Stream.concat(patterns.stream(), alternatives.stream())
+        .map(this::replaceBasicBlockByLabelImmediateInMachineInstruction)
+        .toList();
+
     return new LlvmLoweringPass.LlvmLoweringIntermediateResult(
         visitedGraph,
         inputOperands,
         outputOperands,
         flags,
-        Stream.concat(patterns.stream(), alternatives.stream()).toList(),
+        allPatterns,
         getRegisterUses(visitedGraph),
         getRegisterDefs(visitedGraph)
     );
+  }
+
+  /**
+   * Conditional branch patterns reference the {@code bb} selection dag node. However,
+   * the machine instruction should use the label immediate to properly encode the instruction.
+   */
+  private TableGenPattern replaceBasicBlockByLabelImmediateInMachineInstruction(
+      TableGenPattern pattern) {
+    // We know that the `selector` already has LlvmBasicBlock nodes.
+    var candidates = pattern.machine().getNodes(MachineInstructionParameterNode.class).toList();
+    for (var candidate : candidates) {
+      if (candidate.instructionOperand().origin() instanceof LlvmBasicBlockSD basicBlockSD) {
+        candidate.setInstructionOperand(new TableGenInstructionImmediateLabelOperand(
+            ParameterIdentity.fromBasicBlockToImmediateLabel(basicBlockSD), basicBlockSD));
+      }
+    }
+
+    return pattern;
   }
 
   @Override

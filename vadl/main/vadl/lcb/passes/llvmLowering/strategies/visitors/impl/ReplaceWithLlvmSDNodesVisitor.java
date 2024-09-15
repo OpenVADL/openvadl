@@ -9,6 +9,7 @@ import vadl.cppCodeGen.model.CppUpdateBitRangeNode;
 import vadl.lcb.passes.llvmLowering.LlvmNodeLowerable;
 import vadl.lcb.passes.llvmLowering.model.LlvmAddSD;
 import vadl.lcb.passes.llvmLowering.model.LlvmAndSD;
+import vadl.lcb.passes.llvmLowering.model.LlvmBasicBlockSD;
 import vadl.lcb.passes.llvmLowering.model.LlvmBrCcSD;
 import vadl.lcb.passes.llvmLowering.model.LlvmBrCondSD;
 import vadl.lcb.passes.llvmLowering.model.LlvmFieldAccessRefNode;
@@ -401,6 +402,11 @@ public class ReplaceWithLlvmSDNodesVisitor
     for (var arg : node.arguments()) {
       visit(arg);
     }
+  }
+
+  @Override
+  public void visit(LlvmBasicBlockSD node) {
+
   }
 
   private Type makeSigned(DataType type) {

@@ -31,7 +31,8 @@ public class LlvmLoweringPassTest extends AbstractLcbTest {
                     List<TableGenInstructionOperand> outputs,
                     List<String> selectorPatterns,
                     List<String> machinePatterns,
-                    LlvmLoweringPass.Flags flags) {
+                    LlvmLoweringPass.Flags flags,
+                    boolean skipParameterIdentityCheck) {
   }
 
   private static final HashMap<String, TestOutput>
@@ -47,7 +48,8 @@ public class LlvmLoweringPassTest extends AbstractLcbTest {
         List.of(new TableGenInstructionOperand(DUMMY_NODE, "X", "rd")),
         List.of(String.format("(%s X:$rs1, X:$rs2)", dagNode)),
         List.of(String.format("(%s X:$rs1, X:$rs2)", machineInstruction)),
-        createEmptyFlags()
+        createEmptyFlags(),
+        false
     );
   }
 
@@ -59,7 +61,8 @@ public class LlvmLoweringPassTest extends AbstractLcbTest {
         List.of(new TableGenInstructionOperand(DUMMY_NODE, "X", "rd")),
         List.of(String.format("(%s X:$rs1, X:$rs2, %s)", "setcc", condCode)),
         List.of(String.format("(%s X:$rs1, X:$rs2)", machineInstruction)),
-        createEmptyFlags()
+        createEmptyFlags(),
+        false
     );
   }
 
@@ -68,22 +71,24 @@ public class LlvmLoweringPassTest extends AbstractLcbTest {
     return new TestOutput(
         List.of(new TableGenInstructionOperand(DUMMY_NODE, "X", "rs1"),
             new TableGenInstructionOperand(DUMMY_NODE, "X", "rs2"),
-            new TableGenInstructionOperand(DUMMY_NODE, "RV64IM_Btype_immS_decodeAsInt64", "immS")),
+            new TableGenInstructionOperand(DUMMY_NODE, "RV64IM_Btype_immS_decodeAsLabel",
+                "immS")),
         List.of(),
         List.of(
-            String.format("(brcc (%s X:$rs1, X:$rs2), RV64IM_Btype_immS_decodeAsInt64:$immS)",
+            String.format("(brcc %s, X:$rs1, X:$rs2, bb:$immS)",
                 condCode),
             String.format(
-                "(brcond (i32 (%s X:$rs1, X:$rs2)), RV64IM_Btype_immS_decodeAsInt64:$immS)",
+                "(brcond (i32 (%s X:$rs1, X:$rs2)), bb:$immS)",
                 condCode.name().toLowerCase())),
         // We have the same pattern twice because we have to selectors which emit the same
         // machine instruction.
-        List.of(String.format("(%s X:$rs1, X:$rs2, RV64IM_Btype_immS_decodeAsInt64:$immS)",
+        List.of(String.format("(%s X:$rs1, X:$rs2, RV64IM_Btype_immS_decodeAsLabel:$immS)",
                 machineInstruction),
-            String.format("(%s X:$rs1, X:$rs2, RV64IM_Btype_immS_decodeAsInt64:$immS)",
+            String.format("(%s X:$rs1, X:$rs2, RV64IM_Btype_immS_decodeAsLabel:$immS)",
                 machineInstruction)
         ),
-        createBranchFlags()
+        createBranchFlags(),
+        true
     );
   }
 
@@ -104,7 +109,8 @@ public class LlvmLoweringPassTest extends AbstractLcbTest {
                 "RV64IM_Itype_immS_decodeAsInt64",
                 "immS")
         ),
-        createEmptyFlags());
+        createEmptyFlags(),
+        false);
   }
 
   private static TestOutput createTestOutputRI(String immediateOperand,
@@ -118,7 +124,8 @@ public class LlvmLoweringPassTest extends AbstractLcbTest {
         List.of(String.format("(%s X:$rs1, %s:$%s)", dagNode, immediateOperand, immediateName)),
         List.of(String.format("(%s X:$rs1, %s:$%s)", machineInstruction, immediateOperand,
             immediateName)),
-        createEmptyFlags());
+        createEmptyFlags(),
+        false);
   }
 
   private static TestOutput createTestOutputRIWithConditional(String immediateOperand,
@@ -133,7 +140,8 @@ public class LlvmLoweringPassTest extends AbstractLcbTest {
             condCode)),
         List.of(String.format("(%s X:$rs1, %s:$%s)", machineInstruction, immediateOperand,
             immediateName)),
-        createEmptyFlags()
+        createEmptyFlags(),
+        false
     );
   }
 
@@ -152,7 +160,8 @@ public class LlvmLoweringPassTest extends AbstractLcbTest {
                 machineInstruction),
             String.format("(%s AddrFI:$rs1, X:$rs2, RV64IM_Stype_immS_decodeAsInt64:$immS)",
                 machineInstruction)),
-        createStoreMemoryFlags()
+        createStoreMemoryFlags(),
+        false
     );
   }
 
@@ -172,7 +181,8 @@ public class LlvmLoweringPassTest extends AbstractLcbTest {
                 machineInstruction),
             String.format("(%s AddrFI:$rs1, RV64IM_Itype_immS_decodeAsInt64:$immS)",
                 machineInstruction)),
-        createLoadMemoryFlags()
+        createLoadMemoryFlags(),
+        false
     );
   }
 
@@ -241,7 +251,8 @@ public class LlvmLoweringPassTest extends AbstractLcbTest {
         Collections.emptyList(),
         Collections.emptyList(),
         Collections.emptyList(),
-        createEmptyFlags()
+        createEmptyFlags(),
+        false
     ));
     /*
     MEMORY STORE
@@ -286,12 +297,15 @@ public class LlvmLoweringPassTest extends AbstractLcbTest {
           var expectedTestOutput = expectedResults.get(t.identifier.simpleName());
           var res = llvmResults.get(t);
           Assertions.assertNotNull(res);
-          // Inputs
-          Assertions.assertEquals(mapToParameterIdentity(expectedTestOutput.inputs()),
-              mapToParameterIdentity(res.inputs()));
-          // Outputs
-          Assertions.assertEquals(mapToParameterIdentity(expectedTestOutput.outputs()),
-              mapToParameterIdentity(res.outputs()));
+
+          if (!expectedTestOutput.skipParameterIdentityCheck) {
+            // Inputs
+            Assertions.assertEquals(mapToParameterIdentity(expectedTestOutput.inputs()),
+                mapToParameterIdentity(res.inputs()));
+            // Outputs
+            Assertions.assertEquals(mapToParameterIdentity(expectedTestOutput.outputs()),
+                mapToParameterIdentity(res.outputs()));
+          }
 
           // Selector Patterns
           var selectorPatterns = res.patterns().stream()

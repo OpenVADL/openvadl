@@ -2,6 +2,7 @@ package vadl.lcb.passes.llvmLowering.strategies.visitors.impl;
 
 import java.util.Objects;
 import java.util.Set;
+import vadl.lcb.passes.llvmLowering.model.LlvmBasicBlockSD;
 import vadl.lcb.passes.llvmLowering.model.LlvmBrCcSD;
 import vadl.lcb.passes.llvmLowering.model.LlvmCondCode;
 import vadl.lcb.passes.llvmLowering.model.LlvmFieldAccessRefNode;
@@ -16,6 +17,7 @@ import vadl.viam.graph.Node;
 import vadl.viam.graph.control.IfNode;
 import vadl.viam.graph.dependency.BuiltInCall;
 import vadl.viam.graph.dependency.ExpressionNode;
+import vadl.viam.graph.dependency.FieldAccessRefNode;
 import vadl.viam.graph.dependency.SideEffectNode;
 import vadl.viam.graph.dependency.WriteRegNode;
 
@@ -60,7 +62,7 @@ public class ReplaceWithLlvmSDNodesWithControlFlowVisitor
         var first = conditional.arguments().get(0);
         var second = conditional.arguments().get(1);
         var immOffset =
-            builtin.arguments().stream().filter(x -> x instanceof LlvmFieldAccessRefNode)
+            builtin.arguments().stream().filter(x -> x instanceof LlvmBasicBlockSD)
                 .findFirst();
 
         if (immOffset.isEmpty()) {
@@ -86,6 +88,12 @@ public class ReplaceWithLlvmSDNodesWithControlFlowVisitor
   @Override
   public void visit(SideEffectNode node) {
     node.accept(this);
+  }
+
+  @Override
+  public void visit(FieldAccessRefNode fieldAccessRefNode) {
+    fieldAccessRefNode.replaceAndDelete(new LlvmBasicBlockSD(fieldAccessRefNode.fieldAccess(),
+        fieldAccessRefNode.type()));
   }
 
   @Override
