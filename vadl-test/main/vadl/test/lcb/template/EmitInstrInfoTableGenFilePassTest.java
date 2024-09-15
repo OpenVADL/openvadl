@@ -42,30 +42,30 @@ public class EmitInstrInfoTableGenFilePassTest extends AbstractLcbTest {
                 
                 
                 
-        class RV64IM_Itype_immS_decode<ValueType ty> : Operand<ty>
+        class RV64IM_Itype_imm<ValueType ty> : Operand<ty>
         {
           let EncoderMethod = "RV64IM_Itype_immS_encoding";
           let DecoderMethod = "RV64IM_Itype_immS_decode";
         }
                 
-        def RV64IM_Itype_immS_decodeAsInt64
-            : RV64IM_Itype_immS_decode<i64>
+        def RV64IM_Itype_immAsInt64
+            : RV64IM_Itype_imm<i64>
             , ImmLeaf<i64, [{ return RV64IM_Itype_immS_predicate(Imm); }]>;
                 
-        def RV64IM_Itype_immS_decodeAsLabel : RV64IM_Itype_immS_decode<OtherVT>;
+        def RV64IM_Itype_immAsLabel : RV64IM_Itype_imm<OtherVT>;
                 
                 
-        class RV64IM_Stype_immS_decode<ValueType ty> : Operand<ty>
+        class RV64IM_Stype_imm<ValueType ty> : Operand<ty>
         {
           let EncoderMethod = "RV64IM_Stype_immS_encoding";
           let DecoderMethod = "RV64IM_Stype_immS_decode";
         }
                 
-        def RV64IM_Stype_immS_decodeAsInt64
-            : RV64IM_Stype_immS_decode<i64>
+        def RV64IM_Stype_immAsInt64
+            : RV64IM_Stype_imm<i64>
             , ImmLeaf<i64, [{ return RV64IM_Stype_immS_predicate(Imm); }]>;
                 
-        def RV64IM_Stype_immS_decodeAsLabel : RV64IM_Stype_immS_decode<OtherVT>;
+        def RV64IM_Stype_immAsLabel : RV64IM_Stype_imm<OtherVT>;
                 
                 
                 
@@ -134,7 +134,7 @@ public class EmitInstrInfoTableGenFilePassTest extends AbstractLcbTest {
         let CodeSize = 4;
                 
         let OutOperandList = ( outs X:$rd );
-        let InOperandList = ( ins X:$rs1, RV64IM_Itype_immS_decodeAsInt64:$immS );
+        let InOperandList = ( ins X:$rs1, RV64IM_Itype_immAsInt64:$immS );
                 
         field bits<32> Inst;
                 
@@ -174,11 +174,11 @@ public class EmitInstrInfoTableGenFilePassTest extends AbstractLcbTest {
         let Defs = [  ];
         }
                 
-        def : Pat<(add X:$rs1, RV64IM_Itype_immS_decodeAsInt64:$immS),
-                (ADDI X:$rs1, RV64IM_Itype_immS_decodeAsInt64:$immS)>;
+        def : Pat<(add X:$rs1, RV64IM_Itype_immAsInt64:$immS),
+                (ADDI X:$rs1, RV64IM_Itype_immAsInt64:$immS)>;
                 
-        def : Pat<(add AddrFI:$rs1, RV64IM_Itype_immS_decodeAsInt64:$immS),
-                (ADDI AddrFI:$rs1, RV64IM_Itype_immS_decodeAsInt64:$immS)>;
+        def : Pat<(add AddrFI:$rs1, RV64IM_Itype_immAsInt64:$immS),
+                (ADDI AddrFI:$rs1, RV64IM_Itype_immAsInt64:$immS)>;
                 
                 
                 
@@ -245,7 +245,7 @@ public class EmitInstrInfoTableGenFilePassTest extends AbstractLcbTest {
         let CodeSize = 4;
                 
         let OutOperandList = ( outs X:$rd );
-        let InOperandList = ( ins X:$rs1, RV64IM_Itype_immS_decodeAsInt64:$immS );
+        let InOperandList = ( ins X:$rs1, RV64IM_Itype_immAsInt64:$immS );
                 
         field bits<32> Inst;
                 
@@ -285,8 +285,8 @@ public class EmitInstrInfoTableGenFilePassTest extends AbstractLcbTest {
         let Defs = [  ];
         }
                 
-        def : Pat<(and X:$rs1, RV64IM_Itype_immS_decodeAsInt64:$immS),
-                (ANDI X:$rs1, RV64IM_Itype_immS_decodeAsInt64:$immS)>;
+        def : Pat<(and X:$rs1, RV64IM_Itype_immAsInt64:$immS),
+                (ANDI X:$rs1, RV64IM_Itype_immAsInt64:$immS)>;
                 
                 
                 
@@ -298,7 +298,7 @@ public class EmitInstrInfoTableGenFilePassTest extends AbstractLcbTest {
         let CodeSize = 4;
                 
         let OutOperandList = ( outs  );
-        let InOperandList = ( ins X:$rs1, X:$rs2, RV64IM_Btype_immS_decodeAsLabel:$immS );
+        let InOperandList = ( ins X:$rs1, X:$rs2, RV64IM_Btype_immAsLabel:$immS );
                 
         field bits<32> Inst;
                 
@@ -342,10 +342,10 @@ public class EmitInstrInfoTableGenFilePassTest extends AbstractLcbTest {
         }
                 
         def : Pat<(brcc SETEQ, X:$rs1, X:$rs2, bb:$immS),
-                (BEQ X:$rs1, X:$rs2, RV64IM_Btype_immS_decodeAsLabel:$immS)>;
+                (BEQ X:$rs1, X:$rs2, RV64IM_Btype_immAsLabel:$immS)>;
                 
         def : Pat<(brcond (i32 (seteq X:$rs1, X:$rs2)), bb:$immS),
-                (BEQ X:$rs1, X:$rs2, RV64IM_Btype_immS_decodeAsLabel:$immS)>;
+                (BEQ X:$rs1, X:$rs2, RV64IM_Btype_immAsLabel:$immS)>;
                 
                 
                 
@@ -357,7 +357,7 @@ public class EmitInstrInfoTableGenFilePassTest extends AbstractLcbTest {
         let CodeSize = 4;
                 
         let OutOperandList = ( outs  );
-        let InOperandList = ( ins X:$rs1, X:$rs2, RV64IM_Btype_immS_decodeAsLabel:$immS );
+        let InOperandList = ( ins X:$rs1, X:$rs2, RV64IM_Btype_immAsLabel:$immS );
                 
         field bits<32> Inst;
                 
@@ -401,10 +401,10 @@ public class EmitInstrInfoTableGenFilePassTest extends AbstractLcbTest {
         }
                 
         def : Pat<(brcc SETGE, X:$rs1, X:$rs2, bb:$immS),
-                (BGE X:$rs1, X:$rs2, RV64IM_Btype_immS_decodeAsLabel:$immS)>;
+                (BGE X:$rs1, X:$rs2, RV64IM_Btype_immAsLabel:$immS)>;
                 
         def : Pat<(brcond (i32 (setge X:$rs1, X:$rs2)), bb:$immS),
-                (BGE X:$rs1, X:$rs2, RV64IM_Btype_immS_decodeAsLabel:$immS)>;
+                (BGE X:$rs1, X:$rs2, RV64IM_Btype_immAsLabel:$immS)>;
                 
                 
                 
@@ -416,7 +416,7 @@ public class EmitInstrInfoTableGenFilePassTest extends AbstractLcbTest {
         let CodeSize = 4;
                 
         let OutOperandList = ( outs  );
-        let InOperandList = ( ins X:$rs1, X:$rs2, RV64IM_Btype_immS_decodeAsLabel:$immS );
+        let InOperandList = ( ins X:$rs1, X:$rs2, RV64IM_Btype_immAsLabel:$immS );
                 
         field bits<32> Inst;
                 
@@ -460,10 +460,10 @@ public class EmitInstrInfoTableGenFilePassTest extends AbstractLcbTest {
         }
                 
         def : Pat<(brcc SETUGE, X:$rs1, X:$rs2, bb:$immS),
-                (BGEU X:$rs1, X:$rs2, RV64IM_Btype_immS_decodeAsLabel:$immS)>;
+                (BGEU X:$rs1, X:$rs2, RV64IM_Btype_immAsLabel:$immS)>;
                 
         def : Pat<(brcond (i32 (setuge X:$rs1, X:$rs2)), bb:$immS),
-                (BGEU X:$rs1, X:$rs2, RV64IM_Btype_immS_decodeAsLabel:$immS)>;
+                (BGEU X:$rs1, X:$rs2, RV64IM_Btype_immAsLabel:$immS)>;
                 
                 
                 
@@ -475,7 +475,7 @@ public class EmitInstrInfoTableGenFilePassTest extends AbstractLcbTest {
         let CodeSize = 4;
                 
         let OutOperandList = ( outs  );
-        let InOperandList = ( ins X:$rs1, X:$rs2, RV64IM_Btype_immS_decodeAsLabel:$immS );
+        let InOperandList = ( ins X:$rs1, X:$rs2, RV64IM_Btype_immAsLabel:$immS );
                 
         field bits<32> Inst;
                 
@@ -519,10 +519,10 @@ public class EmitInstrInfoTableGenFilePassTest extends AbstractLcbTest {
         }
                 
         def : Pat<(brcc SETLT, X:$rs1, X:$rs2, bb:$immS),
-                (BLT X:$rs1, X:$rs2, RV64IM_Btype_immS_decodeAsLabel:$immS)>;
+                (BLT X:$rs1, X:$rs2, RV64IM_Btype_immAsLabel:$immS)>;
                 
         def : Pat<(brcond (i32 (setlt X:$rs1, X:$rs2)), bb:$immS),
-                (BLT X:$rs1, X:$rs2, RV64IM_Btype_immS_decodeAsLabel:$immS)>;
+                (BLT X:$rs1, X:$rs2, RV64IM_Btype_immAsLabel:$immS)>;
                 
                 
                 
@@ -534,7 +534,7 @@ public class EmitInstrInfoTableGenFilePassTest extends AbstractLcbTest {
         let CodeSize = 4;
                 
         let OutOperandList = ( outs  );
-        let InOperandList = ( ins X:$rs1, X:$rs2, RV64IM_Btype_immS_decodeAsLabel:$immS );
+        let InOperandList = ( ins X:$rs1, X:$rs2, RV64IM_Btype_immAsLabel:$immS );
                 
         field bits<32> Inst;
                 
@@ -578,10 +578,10 @@ public class EmitInstrInfoTableGenFilePassTest extends AbstractLcbTest {
         }
                 
         def : Pat<(brcc SETULT, X:$rs1, X:$rs2, bb:$immS),
-                (BLTU X:$rs1, X:$rs2, RV64IM_Btype_immS_decodeAsLabel:$immS)>;
+                (BLTU X:$rs1, X:$rs2, RV64IM_Btype_immAsLabel:$immS)>;
                 
         def : Pat<(brcond (i32 (setult X:$rs1, X:$rs2)), bb:$immS),
-                (BLTU X:$rs1, X:$rs2, RV64IM_Btype_immS_decodeAsLabel:$immS)>;
+                (BLTU X:$rs1, X:$rs2, RV64IM_Btype_immAsLabel:$immS)>;
                 
                 
                 
@@ -593,7 +593,7 @@ public class EmitInstrInfoTableGenFilePassTest extends AbstractLcbTest {
         let CodeSize = 4;
                 
         let OutOperandList = ( outs  );
-        let InOperandList = ( ins X:$rs1, X:$rs2, RV64IM_Btype_immS_decodeAsLabel:$immS );
+        let InOperandList = ( ins X:$rs1, X:$rs2, RV64IM_Btype_immAsLabel:$immS );
                 
         field bits<32> Inst;
                 
@@ -637,10 +637,10 @@ public class EmitInstrInfoTableGenFilePassTest extends AbstractLcbTest {
         }
                 
         def : Pat<(brcc SETNE, X:$rs1, X:$rs2, bb:$immS),
-                (BNE X:$rs1, X:$rs2, RV64IM_Btype_immS_decodeAsLabel:$immS)>;
+                (BNE X:$rs1, X:$rs2, RV64IM_Btype_immAsLabel:$immS)>;
                 
         def : Pat<(brcond (i32 (setne X:$rs1, X:$rs2)), bb:$immS),
-                (BNE X:$rs1, X:$rs2, RV64IM_Btype_immS_decodeAsLabel:$immS)>;
+                (BNE X:$rs1, X:$rs2, RV64IM_Btype_immAsLabel:$immS)>;
                 
                 
                 
@@ -652,7 +652,7 @@ public class EmitInstrInfoTableGenFilePassTest extends AbstractLcbTest {
         let CodeSize = 4;
                 
         let OutOperandList = ( outs  );
-        let InOperandList = ( ins X:$rs1, RV64IM_Itype_immS_decodeAsInt64:$immS );
+        let InOperandList = ( ins X:$rs1, RV64IM_Itype_immAsInt64:$immS );
                 
         field bits<32> Inst;
                 
@@ -703,7 +703,7 @@ public class EmitInstrInfoTableGenFilePassTest extends AbstractLcbTest {
         let CodeSize = 4;
                 
         let OutOperandList = ( outs X:$rd );
-        let InOperandList = ( ins X:$rs1, RV64IM_Itype_immS_decodeAsInt64:$immS );
+        let InOperandList = ( ins X:$rs1, RV64IM_Itype_immAsInt64:$immS );
                 
         field bits<32> Inst;
                 
@@ -743,11 +743,11 @@ public class EmitInstrInfoTableGenFilePassTest extends AbstractLcbTest {
         let Defs = [  ];
         }
                 
-        def : Pat<(i64 (sextloadi8 (add X:$rs1, RV64IM_Itype_immS_decodeAsInt64:$immS))),
-                (LB X:$rs1, RV64IM_Itype_immS_decodeAsInt64:$immS)>;
+        def : Pat<(i64 (sextloadi8 (add X:$rs1, RV64IM_Itype_immAsInt64:$immS))),
+                (LB X:$rs1, RV64IM_Itype_immAsInt64:$immS)>;
                 
-        def : Pat<(i64 (sextloadi8 (add AddrFI:$rs1, RV64IM_Itype_immS_decodeAsInt64:$immS))),
-                (LB AddrFI:$rs1, RV64IM_Itype_immS_decodeAsInt64:$immS)>;
+        def : Pat<(i64 (sextloadi8 (add AddrFI:$rs1, RV64IM_Itype_immAsInt64:$immS))),
+                (LB AddrFI:$rs1, RV64IM_Itype_immAsInt64:$immS)>;
                 
                 
                 
@@ -759,7 +759,7 @@ public class EmitInstrInfoTableGenFilePassTest extends AbstractLcbTest {
         let CodeSize = 4;
                 
         let OutOperandList = ( outs X:$rd );
-        let InOperandList = ( ins X:$rs1, RV64IM_Itype_immS_decodeAsInt64:$immS );
+        let InOperandList = ( ins X:$rs1, RV64IM_Itype_immAsInt64:$immS );
                 
         field bits<32> Inst;
                 
@@ -799,11 +799,11 @@ public class EmitInstrInfoTableGenFilePassTest extends AbstractLcbTest {
         let Defs = [  ];
         }
                 
-        def : Pat<(i64 (zextloadi8 (add X:$rs1, RV64IM_Itype_immS_decodeAsInt64:$immS))),
-                (LBU X:$rs1, RV64IM_Itype_immS_decodeAsInt64:$immS)>;
+        def : Pat<(i64 (zextloadi8 (add X:$rs1, RV64IM_Itype_immAsInt64:$immS))),
+                (LBU X:$rs1, RV64IM_Itype_immAsInt64:$immS)>;
                 
-        def : Pat<(i64 (zextloadi8 (add AddrFI:$rs1, RV64IM_Itype_immS_decodeAsInt64:$immS))),
-                (LBU AddrFI:$rs1, RV64IM_Itype_immS_decodeAsInt64:$immS)>;
+        def : Pat<(i64 (zextloadi8 (add AddrFI:$rs1, RV64IM_Itype_immAsInt64:$immS))),
+                (LBU AddrFI:$rs1, RV64IM_Itype_immAsInt64:$immS)>;
                 
                 
                 
@@ -815,7 +815,7 @@ public class EmitInstrInfoTableGenFilePassTest extends AbstractLcbTest {
         let CodeSize = 4;
                 
         let OutOperandList = ( outs X:$rd );
-        let InOperandList = ( ins X:$rs1, RV64IM_Itype_immS_decodeAsInt64:$immS );
+        let InOperandList = ( ins X:$rs1, RV64IM_Itype_immAsInt64:$immS );
                 
         field bits<32> Inst;
                 
@@ -855,11 +855,11 @@ public class EmitInstrInfoTableGenFilePassTest extends AbstractLcbTest {
         let Defs = [  ];
         }
                 
-        def : Pat<(i64 (load (add X:$rs1, RV64IM_Itype_immS_decodeAsInt64:$immS))),
-                (LD X:$rs1, RV64IM_Itype_immS_decodeAsInt64:$immS)>;
+        def : Pat<(i64 (load (add X:$rs1, RV64IM_Itype_immAsInt64:$immS))),
+                (LD X:$rs1, RV64IM_Itype_immAsInt64:$immS)>;
                 
-        def : Pat<(i64 (load (add AddrFI:$rs1, RV64IM_Itype_immS_decodeAsInt64:$immS))),
-                (LD AddrFI:$rs1, RV64IM_Itype_immS_decodeAsInt64:$immS)>;
+        def : Pat<(i64 (load (add AddrFI:$rs1, RV64IM_Itype_immAsInt64:$immS))),
+                (LD AddrFI:$rs1, RV64IM_Itype_immAsInt64:$immS)>;
                 
                 
                 
@@ -871,7 +871,7 @@ public class EmitInstrInfoTableGenFilePassTest extends AbstractLcbTest {
         let CodeSize = 4;
                 
         let OutOperandList = ( outs X:$rd );
-        let InOperandList = ( ins X:$rs1, RV64IM_Itype_immS_decodeAsInt64:$immS );
+        let InOperandList = ( ins X:$rs1, RV64IM_Itype_immAsInt64:$immS );
                 
         field bits<32> Inst;
                 
@@ -911,11 +911,11 @@ public class EmitInstrInfoTableGenFilePassTest extends AbstractLcbTest {
         let Defs = [  ];
         }
                 
-        def : Pat<(i64 (sextloadi16 (add X:$rs1, RV64IM_Itype_immS_decodeAsInt64:$immS))),
-                (LH X:$rs1, RV64IM_Itype_immS_decodeAsInt64:$immS)>;
+        def : Pat<(i64 (sextloadi16 (add X:$rs1, RV64IM_Itype_immAsInt64:$immS))),
+                (LH X:$rs1, RV64IM_Itype_immAsInt64:$immS)>;
                 
-        def : Pat<(i64 (sextloadi16 (add AddrFI:$rs1, RV64IM_Itype_immS_decodeAsInt64:$immS))),
-                (LH AddrFI:$rs1, RV64IM_Itype_immS_decodeAsInt64:$immS)>;
+        def : Pat<(i64 (sextloadi16 (add AddrFI:$rs1, RV64IM_Itype_immAsInt64:$immS))),
+                (LH AddrFI:$rs1, RV64IM_Itype_immAsInt64:$immS)>;
                 
                 
                 
@@ -927,7 +927,7 @@ public class EmitInstrInfoTableGenFilePassTest extends AbstractLcbTest {
         let CodeSize = 4;
                 
         let OutOperandList = ( outs X:$rd );
-        let InOperandList = ( ins X:$rs1, RV64IM_Itype_immS_decodeAsInt64:$immS );
+        let InOperandList = ( ins X:$rs1, RV64IM_Itype_immAsInt64:$immS );
                 
         field bits<32> Inst;
                 
@@ -967,11 +967,11 @@ public class EmitInstrInfoTableGenFilePassTest extends AbstractLcbTest {
         let Defs = [  ];
         }
                 
-        def : Pat<(i64 (zextloadi16 (add X:$rs1, RV64IM_Itype_immS_decodeAsInt64:$immS))),
-                (LHU X:$rs1, RV64IM_Itype_immS_decodeAsInt64:$immS)>;
+        def : Pat<(i64 (zextloadi16 (add X:$rs1, RV64IM_Itype_immAsInt64:$immS))),
+                (LHU X:$rs1, RV64IM_Itype_immAsInt64:$immS)>;
                 
-        def : Pat<(i64 (zextloadi16 (add AddrFI:$rs1, RV64IM_Itype_immS_decodeAsInt64:$immS))),
-                (LHU AddrFI:$rs1, RV64IM_Itype_immS_decodeAsInt64:$immS)>;
+        def : Pat<(i64 (zextloadi16 (add AddrFI:$rs1, RV64IM_Itype_immAsInt64:$immS))),
+                (LHU AddrFI:$rs1, RV64IM_Itype_immAsInt64:$immS)>;
                 
                 
                 
@@ -983,7 +983,7 @@ public class EmitInstrInfoTableGenFilePassTest extends AbstractLcbTest {
         let CodeSize = 4;
                 
         let OutOperandList = ( outs X:$rd );
-        let InOperandList = ( ins X:$rs1, RV64IM_Itype_immS_decodeAsInt64:$immS );
+        let InOperandList = ( ins X:$rs1, RV64IM_Itype_immAsInt64:$immS );
                 
         field bits<32> Inst;
                 
@@ -1023,11 +1023,11 @@ public class EmitInstrInfoTableGenFilePassTest extends AbstractLcbTest {
         let Defs = [  ];
         }
                 
-        def : Pat<(i64 (sextloadi32 (add X:$rs1, RV64IM_Itype_immS_decodeAsInt64:$immS))),
-                (LW X:$rs1, RV64IM_Itype_immS_decodeAsInt64:$immS)>;
+        def : Pat<(i64 (sextloadi32 (add X:$rs1, RV64IM_Itype_immAsInt64:$immS))),
+                (LW X:$rs1, RV64IM_Itype_immAsInt64:$immS)>;
                 
-        def : Pat<(i64 (sextloadi32 (add AddrFI:$rs1, RV64IM_Itype_immS_decodeAsInt64:$immS))),
-                (LW AddrFI:$rs1, RV64IM_Itype_immS_decodeAsInt64:$immS)>;
+        def : Pat<(i64 (sextloadi32 (add AddrFI:$rs1, RV64IM_Itype_immAsInt64:$immS))),
+                (LW AddrFI:$rs1, RV64IM_Itype_immAsInt64:$immS)>;
                 
                 
                 
@@ -1039,7 +1039,7 @@ public class EmitInstrInfoTableGenFilePassTest extends AbstractLcbTest {
         let CodeSize = 4;
                 
         let OutOperandList = ( outs X:$rd );
-        let InOperandList = ( ins X:$rs1, RV64IM_Itype_immS_decodeAsInt64:$immS );
+        let InOperandList = ( ins X:$rs1, RV64IM_Itype_immAsInt64:$immS );
                 
         field bits<32> Inst;
                 
@@ -1079,11 +1079,11 @@ public class EmitInstrInfoTableGenFilePassTest extends AbstractLcbTest {
         let Defs = [  ];
         }
                 
-        def : Pat<(i64 (zextloadi32 (add X:$rs1, RV64IM_Itype_immS_decodeAsInt64:$immS))),
-                (LWU X:$rs1, RV64IM_Itype_immS_decodeAsInt64:$immS)>;
+        def : Pat<(i64 (zextloadi32 (add X:$rs1, RV64IM_Itype_immAsInt64:$immS))),
+                (LWU X:$rs1, RV64IM_Itype_immAsInt64:$immS)>;
                 
-        def : Pat<(i64 (zextloadi32 (add AddrFI:$rs1, RV64IM_Itype_immS_decodeAsInt64:$immS))),
-                (LWU AddrFI:$rs1, RV64IM_Itype_immS_decodeAsInt64:$immS)>;
+        def : Pat<(i64 (zextloadi32 (add AddrFI:$rs1, RV64IM_Itype_immAsInt64:$immS))),
+                (LWU AddrFI:$rs1, RV64IM_Itype_immAsInt64:$immS)>;
                 
                 
                 
@@ -1366,7 +1366,7 @@ public class EmitInstrInfoTableGenFilePassTest extends AbstractLcbTest {
         let CodeSize = 4;
                 
         let OutOperandList = ( outs X:$rd );
-        let InOperandList = ( ins X:$rs1, RV64IM_Itype_immS_decodeAsInt64:$immS );
+        let InOperandList = ( ins X:$rs1, RV64IM_Itype_immAsInt64:$immS );
                 
         field bits<32> Inst;
                 
@@ -1406,8 +1406,8 @@ public class EmitInstrInfoTableGenFilePassTest extends AbstractLcbTest {
         let Defs = [  ];
         }
                 
-        def : Pat<(or X:$rs1, RV64IM_Itype_immS_decodeAsInt64:$immS),
-                (ORI X:$rs1, RV64IM_Itype_immS_decodeAsInt64:$immS)>;
+        def : Pat<(or X:$rs1, RV64IM_Itype_immAsInt64:$immS),
+                (ORI X:$rs1, RV64IM_Itype_immAsInt64:$immS)>;
                 
                 
                 
@@ -1419,7 +1419,7 @@ public class EmitInstrInfoTableGenFilePassTest extends AbstractLcbTest {
         let CodeSize = 4;
                 
         let OutOperandList = ( outs  );
-        let InOperandList = ( ins X:$rs1, X:$rs2, RV64IM_Stype_immS_decodeAsInt64:$immS );
+        let InOperandList = ( ins X:$rs1, X:$rs2, RV64IM_Stype_immAsInt64:$immS );
                 
         field bits<32> Inst;
                 
@@ -1460,11 +1460,11 @@ public class EmitInstrInfoTableGenFilePassTest extends AbstractLcbTest {
         let Defs = [  ];
         }
                 
-        def : Pat<(truncstorei8 X:$rs2, (add X:$rs1, RV64IM_Stype_immS_decodeAsInt64:$immS)),
-                (SB X:$rs1, X:$rs2, RV64IM_Stype_immS_decodeAsInt64:$immS)>;
+        def : Pat<(truncstorei8 X:$rs2, (add X:$rs1, RV64IM_Stype_immAsInt64:$immS)),
+                (SB X:$rs1, X:$rs2, RV64IM_Stype_immAsInt64:$immS)>;
                 
-        def : Pat<(truncstorei8 X:$rs2, (add AddrFI:$rs1, RV64IM_Stype_immS_decodeAsInt64:$immS)),
-                (SB AddrFI:$rs1, X:$rs2, RV64IM_Stype_immS_decodeAsInt64:$immS)>;
+        def : Pat<(truncstorei8 X:$rs2, (add AddrFI:$rs1, RV64IM_Stype_immAsInt64:$immS)),
+                (SB AddrFI:$rs1, X:$rs2, RV64IM_Stype_immAsInt64:$immS)>;
                 
                 
                 
@@ -1476,7 +1476,7 @@ public class EmitInstrInfoTableGenFilePassTest extends AbstractLcbTest {
         let CodeSize = 4;
                 
         let OutOperandList = ( outs  );
-        let InOperandList = ( ins X:$rs1, X:$rs2, RV64IM_Stype_immS_decodeAsInt64:$immS );
+        let InOperandList = ( ins X:$rs1, X:$rs2, RV64IM_Stype_immAsInt64:$immS );
                 
         field bits<32> Inst;
                 
@@ -1517,11 +1517,11 @@ public class EmitInstrInfoTableGenFilePassTest extends AbstractLcbTest {
         let Defs = [  ];
         }
                 
-        def : Pat<(store X:$rs2, (add X:$rs1, RV64IM_Stype_immS_decodeAsInt64:$immS)),
-                (SD X:$rs1, X:$rs2, RV64IM_Stype_immS_decodeAsInt64:$immS)>;
+        def : Pat<(store X:$rs2, (add X:$rs1, RV64IM_Stype_immAsInt64:$immS)),
+                (SD X:$rs1, X:$rs2, RV64IM_Stype_immAsInt64:$immS)>;
                 
-        def : Pat<(store X:$rs2, (add AddrFI:$rs1, RV64IM_Stype_immS_decodeAsInt64:$immS)),
-                (SD AddrFI:$rs1, X:$rs2, RV64IM_Stype_immS_decodeAsInt64:$immS)>;
+        def : Pat<(store X:$rs2, (add AddrFI:$rs1, RV64IM_Stype_immAsInt64:$immS)),
+                (SD AddrFI:$rs1, X:$rs2, RV64IM_Stype_immAsInt64:$immS)>;
                 
                 
                 
@@ -1533,7 +1533,7 @@ public class EmitInstrInfoTableGenFilePassTest extends AbstractLcbTest {
         let CodeSize = 4;
                 
         let OutOperandList = ( outs  );
-        let InOperandList = ( ins X:$rs1, X:$rs2, RV64IM_Stype_immS_decodeAsInt64:$immS );
+        let InOperandList = ( ins X:$rs1, X:$rs2, RV64IM_Stype_immAsInt64:$immS );
                 
         field bits<32> Inst;
                 
@@ -1574,11 +1574,11 @@ public class EmitInstrInfoTableGenFilePassTest extends AbstractLcbTest {
         let Defs = [  ];
         }
                 
-        def : Pat<(truncstorei16 X:$rs2, (add X:$rs1, RV64IM_Stype_immS_decodeAsInt64:$immS)),
-                (SH X:$rs1, X:$rs2, RV64IM_Stype_immS_decodeAsInt64:$immS)>;
+        def : Pat<(truncstorei16 X:$rs2, (add X:$rs1, RV64IM_Stype_immAsInt64:$immS)),
+                (SH X:$rs1, X:$rs2, RV64IM_Stype_immAsInt64:$immS)>;
                 
-        def : Pat<(truncstorei16 X:$rs2, (add AddrFI:$rs1, RV64IM_Stype_immS_decodeAsInt64:$immS)),
-                (SH AddrFI:$rs1, X:$rs2, RV64IM_Stype_immS_decodeAsInt64:$immS)>;
+        def : Pat<(truncstorei16 X:$rs2, (add AddrFI:$rs1, RV64IM_Stype_immAsInt64:$immS)),
+                (SH AddrFI:$rs1, X:$rs2, RV64IM_Stype_immAsInt64:$immS)>;
                 
                 
                 
@@ -1645,7 +1645,7 @@ public class EmitInstrInfoTableGenFilePassTest extends AbstractLcbTest {
         let CodeSize = 4;
                 
         let OutOperandList = ( outs X:$rd );
-        let InOperandList = ( ins X:$rs1, RV64IM_Itype_immS_decodeAsInt64:$immS );
+        let InOperandList = ( ins X:$rs1, RV64IM_Itype_immAsInt64:$immS );
                 
         field bits<32> Inst;
                 
@@ -1685,8 +1685,8 @@ public class EmitInstrInfoTableGenFilePassTest extends AbstractLcbTest {
         let Defs = [  ];
         }
                 
-        def : Pat<(setcc X:$rs1, RV64IM_Itype_immS_decodeAsInt64:$immS, SETLT),
-                (SLTI X:$rs1, RV64IM_Itype_immS_decodeAsInt64:$immS)>;
+        def : Pat<(setcc X:$rs1, RV64IM_Itype_immAsInt64:$immS, SETLT),
+                (SLTI X:$rs1, RV64IM_Itype_immAsInt64:$immS)>;
                 
                 
                 
@@ -1698,7 +1698,7 @@ public class EmitInstrInfoTableGenFilePassTest extends AbstractLcbTest {
         let CodeSize = 4;
                 
         let OutOperandList = ( outs X:$rd );
-        let InOperandList = ( ins X:$rs1, RV64IM_Itype_immS_decodeAsInt64:$immS );
+        let InOperandList = ( ins X:$rs1, RV64IM_Itype_immAsInt64:$immS );
                 
         field bits<32> Inst;
                 
@@ -1738,8 +1738,8 @@ public class EmitInstrInfoTableGenFilePassTest extends AbstractLcbTest {
         let Defs = [  ];
         }
                 
-        def : Pat<(setcc X:$rs1, RV64IM_Itype_immS_decodeAsInt64:$immS, SETULT),
-                (SLTIU X:$rs1, RV64IM_Itype_immS_decodeAsInt64:$immS)>;
+        def : Pat<(setcc X:$rs1, RV64IM_Itype_immAsInt64:$immS, SETULT),
+                (SLTIU X:$rs1, RV64IM_Itype_immAsInt64:$immS)>;
                 
                 
                 
@@ -1916,7 +1916,7 @@ public class EmitInstrInfoTableGenFilePassTest extends AbstractLcbTest {
         let CodeSize = 4;
                 
         let OutOperandList = ( outs  );
-        let InOperandList = ( ins X:$rs1, X:$rs2, RV64IM_Stype_immS_decodeAsInt64:$immS );
+        let InOperandList = ( ins X:$rs1, X:$rs2, RV64IM_Stype_immAsInt64:$immS );
                 
         field bits<32> Inst;
                 
@@ -1957,11 +1957,11 @@ public class EmitInstrInfoTableGenFilePassTest extends AbstractLcbTest {
         let Defs = [  ];
         }
                 
-        def : Pat<(truncstorei32 X:$rs2, (add X:$rs1, RV64IM_Stype_immS_decodeAsInt64:$immS)),
-                (SW X:$rs1, X:$rs2, RV64IM_Stype_immS_decodeAsInt64:$immS)>;
+        def : Pat<(truncstorei32 X:$rs2, (add X:$rs1, RV64IM_Stype_immAsInt64:$immS)),
+                (SW X:$rs1, X:$rs2, RV64IM_Stype_immAsInt64:$immS)>;
                 
-        def : Pat<(truncstorei32 X:$rs2, (add AddrFI:$rs1, RV64IM_Stype_immS_decodeAsInt64:$immS)),
-                (SW AddrFI:$rs1, X:$rs2, RV64IM_Stype_immS_decodeAsInt64:$immS)>;
+        def : Pat<(truncstorei32 X:$rs2, (add AddrFI:$rs1, RV64IM_Stype_immAsInt64:$immS)),
+                (SW AddrFI:$rs1, X:$rs2, RV64IM_Stype_immAsInt64:$immS)>;
                 
                 
                 
