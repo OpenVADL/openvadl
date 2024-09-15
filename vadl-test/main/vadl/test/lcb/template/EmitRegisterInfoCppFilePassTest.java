@@ -33,7 +33,7 @@ public class EmitRegisterInfoCppFilePassTest extends AbstractLcbTest {
         #include "rv64imRegisterInfo.h"
         #include "rv64imFrameLowering.h"
         #include "rv64imInstrInfo.h"
-        #include "rv64imSubtarget.h"
+        #include "rv64imSubTarget.h"
         #include "Utils/rv64imBaseInfo.h"
         #include "Utils/ImmediateUtils.h"
         #include "MCTargetDesc/rv64imMCTargetDesc.h"

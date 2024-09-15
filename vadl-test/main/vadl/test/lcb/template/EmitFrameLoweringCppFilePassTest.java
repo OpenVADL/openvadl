@@ -33,7 +33,7 @@ public class EmitFrameLoweringCppFilePassTest extends AbstractLcbTest {
     Assertions.assertLinesMatch("""
         #include "rv64imFrameLowering.h"
         #include "rv64im.h"
-        #include "rv64imSubtarget.h"
+        #include "rv64imSubTarget.h"
         #include "MCTargetDesc/rv64imMCTargetDesc.h"
         #include "Utils/rv64imBaseInfo.h"
         #include "rv64imMachineFunctionInfo.h"
@@ -89,7 +89,7 @@ public class EmitFrameLoweringCppFilePassTest extends AbstractLcbTest {
                 MI->getOpcode() == rv64im::ADJCALLSTACKDOWN)
             {
                 
-                Register SPReg = «emit(stackPointer)»;
+                Register SPReg = rv64im::X2;
                 DebugLoc DL = MI->getDebugLoc();
                 
                 if (!hasReservedCallFrame(MF))
