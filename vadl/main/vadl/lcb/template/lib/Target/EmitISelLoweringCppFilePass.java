@@ -79,6 +79,7 @@ public class EmitISelLoweringCppFilePass extends LcbTemplateRenderingPass {
         "stackPointerByteSize", abi.stackPointer().registerFile().resultType().bitWidth() / 8,
         "argumentRegisterClasses", abi.argumentRegisters().stream().map(
                 DummyAbi.RegisterRef::registerFile)
+            .distinct()
             .map(LlvmRegisterFile::new)
             .toList(),
         "argumentRegisters", abi.argumentRegisters(),

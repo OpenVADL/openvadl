@@ -287,7 +287,7 @@ void [(${namespace})]TargetLowering::WriteToVarArgs(std::vector<SDValue> &OutCha
         // stack and we don't need to save any argregs.
         if (
           [#th:block th:each="cl, iterStat : ${argumentRegisterClasses}" ]
-          [(${cl.identifier.simpleName()})]ArgsRegs.size() == [(${cl.identifier.simpleName()})]Idx [#th:block th:if="${!iterStat.last}"]&&[/th:block]
+          [(${cl.identifier.simpleName()})]ArgRegs.size() == [(${cl.identifier.simpleName()})]Idx [#th:block th:if="${!iterStat.last}"]&&[/th:block]
           [/th:block]
         )
         {
@@ -385,7 +385,7 @@ SDValue [(${namespace})]TargetLowering::LowerCall(TargetLowering::CallLoweringIn
         if (VA.isMemLoc())
         {
             // TODO handle arguments that do not fit in one register
-            SDValue StackPtr = DAG.getRegister( [(${stackPointer})], MVT::[(${stackPointerType})] );
+            SDValue StackPtr = DAG.getRegister( [(${namespace})]::[(${stackPointer})], MVT::[(${stackPointerType})] );
             SDValue PtrOff = DAG.getIntPtrConstant(VA.getLocMemOffset(), dl);
             PtrOff = DAG.getNode(ISD::ADD, dl, MVT::[(${stackPointerType})], StackPtr, PtrOff);
             MemOpChains.push_back(DAG.getStore(Chain, dl, Arg, PtrOff, MachinePointerInfo()));
@@ -606,7 +606,7 @@ SDValue [(${namespace})]TargetLowering::lowerGlobalAddress(SDValue Op, Selection
     // fold it back in when profitable.
     if (Offset != 0)
     {
-        return DAG.getNode(ISD::ADD, DL, Ty, Addr, DAG.getConstant(Offset, DL, «emitMVTType(stackPointer)»));
+        return DAG.getNode(ISD::ADD, DL, Ty, Addr, DAG.getConstant(Offset, DL, MVT::[(${stackPointerType})]));
     }
 
     return Addr;
