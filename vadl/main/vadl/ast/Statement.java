@@ -641,6 +641,8 @@ final class InstructionCallStatement extends Statement {
   List<Expr> unnamedArguments;
   SourceLocation loc;
 
+  @Nullable Definition instrNode;
+
   InstructionCallStatement(IdentifierOrPlaceholder id, List<NamedArgument> namedArguments,
                            List<Expr> unnamedArguments, SourceLocation loc) {
     this.id = id;

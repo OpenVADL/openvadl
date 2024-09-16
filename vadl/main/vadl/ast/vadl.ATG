@@ -221,7 +221,7 @@ PRODUCTIONS
   vadl =
   {
     topLevelDefinitions<out Definition def> (. addDef(ast.definitions, def); SymbolTable.SymbolCollector.collectSymbols(ast.rootSymbolTable(), def); .)
-    | macroDef<out ModelDefinition def>     (. addDef(ast.definitions, def); SymbolTable.SymbolCollector.collectSymbols(ast.rootSymbolTable(), def); macroTable.addMacro(def.toMacro(), def.location()); .)
+    | macroDef<out ModelDefinition def>     (. addDef(ast.definitions, def); SymbolTable.SymbolCollector.collectSymbols(ast.rootSymbolTable(), def); macroTable.addModelDefinition(def); .)
   }.
 
   // -- DEFINITIONS --------------------------------------------------------------------------------------------------
@@ -263,7 +263,7 @@ PRODUCTIONS
   = {
     annotations<out Annotations annotations>
     isaDefinition<out Definition def>                   (. def.withAnnotations(annotations); definitions.add(def); .)
-  | macroDef<out ModelDefinition def>                   (. addDef(definitions, def); macroTable.addMacro(def.toMacro(), def.location()); .)
+  | macroDef<out ModelDefinition def>                   (. addDef(definitions, def); macroTable.addModelDefinition(def); .)
   | // IF (isMacroReplacementOfType(this, BasicSyntaxType.ISA_DEFS))
     macroReplacement<out Node n>                        (. var def = castDef(this, n);
                                                            if (def instanceof DefinitionList list) {
@@ -598,7 +598,7 @@ PRODUCTIONS
     statement<out Statement statement> (. def = new ExceptionDefinition(id, statement, start.join(loc())); .)
   .
 
-  recordDefinition<out Definition def>
+  recordDefinition<out RecordTypeDefinition def>
   = RECORD                          (. var start = loc(); .)
     identifier<out Identifier recordName>
     SYM_PAREN_OPEN
@@ -611,16 +611,16 @@ PRODUCTIONS
       SYM_COLON
       syntaxType<out type>          (. entries.add(new RecordType.Entry(paramName.name, type)); .)
     }                               (. var recordType = new RecordType(recordName.name, entries); .)
-    SYM_PAREN_CLOSE                 (. macroTable.addRecord(recordName, recordType);
-                                       def = new RecordTypeDefinition(recordName, recordType, start.join(loc())); .)
+    SYM_PAREN_CLOSE                 (. def = new RecordTypeDefinition(recordName, recordType, start.join(loc()));
+                                       macroTable.addRecord(def); .)
   .
 
-  modelTypeDefinition<out Definition def>
+  modelTypeDefinition<out ModelTypeDefinition def>
   = MODEL_TYPE                              (. var start = loc(); .)
     identifier<out Identifier name>
     SYM_EQ
-    projectionType<out ProjectionType type> (. macroTable.addModelType(name, type);
-                                              def = new ModelTypeDefinition(name, type, start.join(loc())); .)
+    projectionType<out ProjectionType type> (. def = new ModelTypeDefinition(name, type, start.join(loc()));
+                                               macroTable.addModelType(def); .)
   .
 
   importDefinition<out Definition def>     (. var importPaths = new ArrayList<IsId>(); Identifier fileId = null; StringLiteral filePath = null; .)

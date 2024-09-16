@@ -610,6 +610,9 @@ class InstructionSetDefinition extends Definition {
   List<Definition> definitions;
   SourceLocation loc;
 
+  @Nullable
+  InstructionSetDefinition extendingNode;
+
   InstructionSetDefinition(Identifier identifier, @Nullable Identifier extending,
                            List<Definition> statements, SourceLocation location) {
     this.identifier = identifier;
@@ -672,6 +675,7 @@ class InstructionSetDefinition extends Definition {
     return Objects.equals(annotations, that.annotations)
         && Objects.equals(identifier, that.identifier)
         && Objects.equals(extending, that.extending)
+        && Objects.equals(extendingNode, that.extendingNode)
         && Objects.equals(definitions, that.definitions);
   }
 
@@ -680,6 +684,7 @@ class InstructionSetDefinition extends Definition {
     int result = Objects.hashCode(annotations);
     result = 31 * result + Objects.hashCode(identifier);
     result = 31 * result + Objects.hashCode(extending);
+    result = 31 * result + Objects.hashCode(extendingNode);
     result = 31 * result + Objects.hashCode(definitions);
     return result;
   }
@@ -1000,7 +1005,10 @@ class InstructionDefinition extends Definition {
   IdentifierOrPlaceholder identifier;
   IdentifierOrPlaceholder typeIdentifier;
   Statement behavior;
-  final SourceLocation loc;
+  SourceLocation loc;
+
+  @Nullable
+  FormatDefinition formatNode;
 
   InstructionDefinition(IdentifierOrPlaceholder identifier, IdentifierOrPlaceholder typeIdentifier,
                         Statement behavior, SourceLocation location) {
@@ -1263,6 +1271,9 @@ class EncodingDefinition extends Definition {
   EncsNode encodings;
   SourceLocation loc;
 
+  @Nullable
+  FormatDefinition formatNode;
+
   EncodingDefinition(IdentifierOrPlaceholder instrIdentifier, EncsNode encodings,
                      SourceLocation location) {
     this.instrIdentifier = instrIdentifier;
@@ -1398,6 +1409,9 @@ class AssemblyDefinition extends Definition {
   List<IdentifierOrPlaceholder> identifiers;
   Expr expr;
   SourceLocation loc;
+
+  // Can hold InstructionDefinition or PseudoInstructionDefinition
+  List<Definition> instructionNodes = new ArrayList<>();
 
   AssemblyDefinition(List<IdentifierOrPlaceholder> identifiers, Expr expr,
                      SourceLocation location) {
@@ -2706,6 +2720,9 @@ class ApplicationBinaryInterfaceDefinition extends Definition {
   List<Definition> definitions;
   SourceLocation loc;
 
+  @Nullable
+  InstructionSetDefinition isaNode;
+
   ApplicationBinaryInterfaceDefinition(Identifier id, IsId isa, List<Definition> definitions,
                                        SourceLocation loc) {
     this.id = id;
@@ -2939,6 +2956,10 @@ class MicroProcessorDefinition extends Definition {
   IsId abi;
   List<Definition> definitions;
   SourceLocation loc;
+
+  List<InstructionSetDefinition> implementedIsaNodes = new ArrayList<>();
+  @Nullable
+  ApplicationBinaryInterfaceDefinition abiNode;
 
   MicroProcessorDefinition(Identifier id, List<IsId> implementedIsas, IsId abi,
                            List<Definition> definitions, SourceLocation loc) {

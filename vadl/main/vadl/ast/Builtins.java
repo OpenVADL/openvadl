@@ -4,6 +4,7 @@ class Builtins {
   // TODO Replace with BuiltInTable
   static final String[] BUILTIN_FUNCTIONS = new String[] {
       // TODO Clean up actual global built-ins and context-specific built-ins (e.g. "firmware")
+      "mnemonic",
       "decimal",
       "hex",
       "register",
