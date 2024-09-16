@@ -8,7 +8,6 @@ import java.util.Map;
 import java.util.Objects;
 import javax.annotation.Nullable;
 
-import vadl.ast.EncodingDefinition.FieldEncoding;
 import vadl.utils.SourceLocation;
 
 import static vadl.ast.CounterDefinition.CounterKind.GROUP;
@@ -431,25 +430,25 @@ PRODUCTIONS
   = ENCODING         (. var startLocation = loc(); .)
     identifierOrPlaceholder<out IdentifierOrPlaceholder instrId>
     SYM_EQ SYM_BRACE_OPEN
-    encodingDefinitionList<out EncodingDefinition.FieldEncodings encodings>
+    encodingDefinitionList<out EncodingDefinition.EncsNode encodings>
     SYM_BRACE_CLOSE  (. def = new EncodingDefinition(instrId, encodings, startLocation.join(loc())); .)
   .
 
-  encodingDefinitionList<out EncodingDefinition.FieldEncodings encs> (. var start = lookaheadLoc(); var entries = new ArrayList<FieldEncodingOrPlaceholder>(); .)
-  = encodingEntry<out FieldEncodingOrPlaceholder enc>                (. addEncs(entries, enc); .)
+  encodingDefinitionList<out EncodingDefinition.EncsNode encs> (. var start = lookaheadLoc(); var entries = new ArrayList<IsEncs>(); .)
+  = encodingEntry<out IsEncs enc>                              (. addEncs(entries, enc); .)
     {
       SYM_COMMA
-      encodingEntry<out enc>                                         (. addEncs(entries, enc); .)
-    }                                                                (. encs = new EncodingDefinition.FieldEncodings(entries, start.join(loc())); .)
+      encodingEntry<out enc>                                   (. addEncs(entries, enc); .)
+    }                                                          (. encs = new EncodingDefinition.EncsNode(entries, start.join(loc())); .)
   .
 
-  encodingEntry<out FieldEncodingOrPlaceholder enc> (. enc = null; .)
-  = macroReplacement<out Node node>                 (. enc = castEncs(this, node); .)
-  | IF (la.kind == _NONE)
-    NONE                                            (. enc = new EncodingDefinition.FieldEncodings(new ArrayList<>(), loc()); .)
+  encodingEntry<out IsEncs enc>        (. enc = null; .)
+  = IF (la.kind == _NONE)
+    NONE
+  | macroReplacement<out Node node>    (. enc = castEncs(this, node); .)
   | identifier<out Identifier id>
     SYM_EQ
-    expression<out Expr expr, BIN_OPS>              (. enc = new FieldEncoding(id, expr); .)
+    expression<out Expr expr, BIN_OPS> (. enc = new EncodingDefinition.EncodingField(id, expr); .)
   .
 
   assemblyDefinition<out AssemblyDefinition def>                        (. List<IdentifierOrPlaceholder> ids = new ArrayList<>(); var start = loc(); .)
@@ -1253,33 +1252,33 @@ PRODUCTIONS
   .
 
   binaryOperator<out Operator op> (. op = null; .)
-  = SYM_LOGOR                     (. op = Operator.LogicalOr(); .)
-  | SYM_LOGAND                    (. op = Operator.LogicalAnd(); .)
+  = SYM_BINAND                    (. op = Operator.And(); .)
   | SYM_BINOR                     (. op = Operator.Or(); .)
   | SYM_CARET                     (. op = Operator.Xor(); .)
-  | SYM_BINAND                    (. op = Operator.And(); .)
+  | SYM_DIV                       (. op = Operator.Divide(); .)
+  | SYM_ELEM_OF                   (. op = Operator.ElementOf(); .)
   | SYM_EQ                        (. op = Operator.Equal(); .)
-  | SYM_NEQ                       (. op = Operator.NotEqual(); .)
-  | SYM_GTE                       (. op = Operator.GreaterEqual(); .)
   | SYM_GT                        (. op = Operator.Greater(); .)
-  | SYM_LTE                       (. op = Operator.LessEqual(); .)
+  | SYM_GTE                       (. op = Operator.GreaterEqual(); .)
+  | SYM_IN                        (. op = Operator.In(); .)
+  | SYM_LOGAND                    (. op = Operator.LogicalAnd(); .)
+  | SYM_LOGOR                     (. op = Operator.LogicalOr(); .)
+  | SYM_LONG_MUL                  (. op = Operator.LongMultiply(); .)
   | SYM_LT                        (. op = Operator.Less(); .)
-  | SYM_ROTR                      (. op = Operator.RotateRight(); .)
-  | SYM_ROTL                      (. op = Operator.RotateLeft(); .)
-  | SYM_SHR                       (. op = Operator.ShiftRight(); .)
-  | SYM_SHL                       (. op = Operator.ShiftLeft(); .)
-  | SYM_PLUS                      (. op = Operator.Add(); .)
+  | SYM_LTE                       (. op = Operator.LessEqual(); .)
   | SYM_MINUS                     (. op = Operator.Subtract(); .)
+  | SYM_MOD                       (. op = Operator.Modulo(); .)
+  | SYM_MUL                       (. op = Operator.Multiply(); .)
+  | SYM_NEQ                       (. op = Operator.NotEqual(); .)
+  | SYM_NIN                       (. op = Operator.NotIn(); .)
+  | SYM_NOT_ELEM_OF               (. op = Operator.NotElementOf(); .)
+  | SYM_PLUS                      (. op = Operator.Add(); .)
+  | SYM_ROTL                      (. op = Operator.RotateLeft(); .)
+  | SYM_ROTR                      (. op = Operator.RotateRight(); .)
   | SYM_SAT_ADD                   (. op = Operator.SaturatedAdd(); .)
   | SYM_SAT_SUB                   (. op = Operator.SaturatedSubtract(); .)
-  | SYM_MUL                       (. op = Operator.Multiply(); .)
-  | SYM_DIV                       (. op = Operator.Divide(); .)
-  | SYM_MOD                       (. op = Operator.Modulo(); .)
-  | SYM_LONG_MUL                  (. op = Operator.LongMultiply(); .)
-  | SYM_IN                        (. op = Operator.In(); .)
-  | SYM_NIN                       (. op = Operator.NotIn(); .)
-  | SYM_ELEM_OF                   (. op = Operator.ElementOf(); .)
-  | SYM_NOT_ELEM_OF               (. op = Operator.NotElementOf(); .)
+  | SYM_SHL                       (. op = Operator.ShiftLeft(); .)
+  | SYM_SHR                       (. op = Operator.ShiftRight(); .)
   // When adding a new operator here, it must also be added to the "BIN_OPS" list in ParserUtils.java!
   .
 
@@ -1771,22 +1770,22 @@ PRODUCTIONS
   .
 
   basicSyntaxType<out BasicSyntaxType type> (. type = null; .)
-  = T_STATS                                 (. type = BasicSyntaxType.STATS; .)
-  | T_STAT                                  (. type = BasicSyntaxType.STAT; .)
-  | T_ENCS                                  (. type = BasicSyntaxType.ENCS; .)
-  | T_ISA_DEFS                              (. type = BasicSyntaxType.ISA_DEFS; .)
-  | T_EX                                    (. type = BasicSyntaxType.EX; .)
-  | T_LIT                                   (. type = BasicSyntaxType.LIT; .)
-  | T_STR                                   (. type = BasicSyntaxType.STR; .)
-  | T_VAL                                   (. type = BasicSyntaxType.VAL; .)
-  | T_BOOL                                  (. type = BasicSyntaxType.BOOL; .)
-  | T_INT                                   (. type = BasicSyntaxType.INT; .)
-  | T_BIN                                   (. type = BasicSyntaxType.BIN; .)
-  | T_CALL_EX                               (. type = BasicSyntaxType.CALL_EX; .)
-  | T_SYM_EX                                (. type = BasicSyntaxType.SYM_EX; .)
-  | T_ID                                    (. type = BasicSyntaxType.ID; .)
+  = T_BIN                                   (. type = BasicSyntaxType.BIN; .)
   | T_BIN_OP                                (. type = BasicSyntaxType.BIN_OP; .)
+  | T_BOOL                                  (. type = BasicSyntaxType.BOOL; .)
+  | T_CALL_EX                               (. type = BasicSyntaxType.CALL_EX; .)
+  | T_ENCS                                  (. type = BasicSyntaxType.ENCS; .)
+  | T_EX                                    (. type = BasicSyntaxType.EX; .)
+  | T_ID                                    (. type = BasicSyntaxType.ID; .)
+  | T_INT                                   (. type = BasicSyntaxType.INT; .)
+  | T_ISA_DEFS                              (. type = BasicSyntaxType.ISA_DEFS; .)
+  | T_LIT                                   (. type = BasicSyntaxType.LIT; .)
+  | T_STAT                                  (. type = BasicSyntaxType.STAT; .)
+  | T_STATS                                 (. type = BasicSyntaxType.STATS; .)
+  | T_STR                                   (. type = BasicSyntaxType.STR; .)
+  | T_SYM_EX                                (. type = BasicSyntaxType.SYM_EX; .)
   | T_UN_OP                                 (. type = BasicSyntaxType.UN_OP; .)
+  | T_VAL                                   (. type = BasicSyntaxType.VAL; .)
   .
 
   internalError<String message>             (. var position = t.line + ":" + t.col; .)

@@ -2107,11 +2107,11 @@ class ExistsInThenExpr extends Expr {
 }
 
 class ForallThenExpr extends Expr {
-  List<Index> indices;
+  List<ForallThenExpr.Index> indices;
   Expr thenExpr;
   SourceLocation loc;
 
-  ForallThenExpr(List<Index> indices, Expr thenExpr, SourceLocation loc) {
+  ForallThenExpr(List<ForallThenExpr.Index> indices, Expr thenExpr, SourceLocation loc) {
     this.indices = indices;
     this.thenExpr = thenExpr;
     this.loc = loc;
@@ -2131,7 +2131,7 @@ class ForallThenExpr extends Expr {
   void prettyPrint(int indent, StringBuilder builder) {
     builder.append("forall ");
     var isFirst = true;
-    for (Index index : indices) {
+    for (ForallThenExpr.Index index : indices) {
       if (!isFirst) {
         builder.append(", ");
       }
@@ -2186,15 +2186,15 @@ class ForallThenExpr extends Expr {
 }
 
 class ForallExpr extends Expr {
-  List<Index> indices;
+  List<ForallExpr.Index> indices;
   Operation operation;
   @Nullable
   Operator foldOperator;
   Expr expr;
   SourceLocation loc;
 
-  ForallExpr(List<Index> indices, Operation operation, @Nullable Operator foldOperator, Expr expr,
-             SourceLocation loc) {
+  ForallExpr(List<ForallExpr.Index> indices, Operation operation, @Nullable Operator foldOperator,
+             Expr expr, SourceLocation loc) {
     this.indices = indices;
     this.operation = operation;
     this.foldOperator = foldOperator;
@@ -2216,7 +2216,7 @@ class ForallExpr extends Expr {
   void prettyPrint(int indent, StringBuilder builder) {
     builder.append("forall ");
     var isFirst = true;
-    for (Index index : indices) {
+    for (ForallExpr.Index index : indices) {
       if (!isFirst) {
         builder.append(", ");
       }

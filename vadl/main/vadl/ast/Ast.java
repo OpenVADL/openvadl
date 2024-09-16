@@ -31,12 +31,12 @@ public class Ast {
    *
    * @return a source code resulting in the same AST.
    */
-  public String prettyPrint() {
+  public StringBuilder prettyPrint() {
     StringBuilder builder = new StringBuilder();
     for (var definition : definitions) {
       definition.prettyPrint(0, builder);
     }
-    return builder.toString();
+    return builder;
   }
 
   @Override
@@ -150,7 +150,7 @@ class MacroReference extends Node {
   }
 }
 
-final class PlaceholderNode extends Node implements IsBinOp, IsUnOp, FieldEncodingOrPlaceholder {
+final class PlaceholderNode extends Node implements IsBinOp, IsUnOp, IsEncs {
 
   List<String> segments;
   SyntaxType syntaxType;
@@ -179,7 +179,7 @@ final class PlaceholderNode extends Node implements IsBinOp, IsUnOp, FieldEncodi
   }
 }
 
-final class MacroInstanceNode extends Node implements IsMacroInstance, FieldEncodingOrPlaceholder {
+final class MacroInstanceNode extends Node implements IsMacroInstance, IsEncs {
 
   MacroOrPlaceholder macro;
   List<Node> arguments;
@@ -253,7 +253,7 @@ final class MacroInstanceNode extends Node implements IsMacroInstance, FieldEnco
  * An internal temporary placeholder of a macro-level "match" construct.
  * This node should never leave the parser.
  */
-final class MacroMatchNode extends Node implements IsMacroMatch, FieldEncodingOrPlaceholder {
+final class MacroMatchNode extends Node implements IsMacroMatch, IsEncs {
   MacroMatch macroMatch;
 
   MacroMatchNode(MacroMatch macroMatch) {

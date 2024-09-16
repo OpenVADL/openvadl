@@ -138,7 +138,7 @@ class MacroExpander
       var entries = new ArrayList<>(recordInstance.entries);
       entries.replaceAll(this::expandNode);
       return new RecordInstance(recordInstance.type, entries, recordInstance.sourceLocation);
-    } else if (node instanceof EncodingDefinition.FieldEncodings encs) {
+    } else if (node instanceof EncodingDefinition.EncsNode encs) {
       return resolveEncs(encs);
     } else if (node instanceof PlaceholderNode placeholderNode) {
       return expand(placeholderNode);
@@ -514,7 +514,7 @@ class MacroExpander
   @Override
   public Definition visit(EncodingDefinition definition) {
     var instrId = resolvePlaceholderOrIdentifier(definition.instrIdentifier);
-    var fieldEncodings = resolveEncs(definition.fieldEncodings);
+    var fieldEncodings = resolveEncs(definition.encodings);
 
     return new EncodingDefinition(instrId, fieldEncodings, copyLoc(definition.loc))
         .withAnnotations(expandAnnotations(definition.annotations));
@@ -962,42 +962,42 @@ class MacroExpander
     throw new IllegalStateException("Unknown resolved placeholder type " + idOrPlaceholder);
   }
 
-  private EncodingDefinition.FieldEncodings resolveEncs(EncodingDefinition.FieldEncodings encs) {
-    var fieldEncodings = new ArrayList<FieldEncodingOrPlaceholder>(encs.encodings.size());
-    for (var enc : encs.encodings) {
-      fieldEncodings.addAll(resolveEnc(enc));
+  private EncodingDefinition.EncsNode resolveEncs(EncodingDefinition.EncsNode encs) {
+    var encodings = new ArrayList<IsEncs>(encs.items.size());
+    for (var enc : encs.items) {
+      encodings.addAll(resolveEnc(enc));
     }
-    return new EncodingDefinition.FieldEncodings(fieldEncodings, encs.loc);
+    return new EncodingDefinition.EncsNode(encodings, encs.loc);
   }
 
-  private List<FieldEncodingOrPlaceholder> resolveEnc(FieldEncodingOrPlaceholder encoding) {
-    if (encoding instanceof EncodingDefinition.FieldEncoding fieldEncoding) {
-      return List.of(new EncodingDefinition.FieldEncoding(fieldEncoding.field(),
-          expandExpr(fieldEncoding.value())));
-    } else if (encoding instanceof EncodingDefinition.FieldEncodings encodings) {
-      var encs = new ArrayList<FieldEncodingOrPlaceholder>(encodings.encodings.size());
-      for (FieldEncodingOrPlaceholder enc : encodings.encodings) {
+  private List<IsEncs> resolveEnc(IsEncs encoding) {
+    if (encoding instanceof EncodingDefinition.EncodingField encodingField) {
+      return List.of(new EncodingDefinition.EncodingField(encodingField.field(),
+          expandExpr(encodingField.value())));
+    } else if (encoding instanceof EncodingDefinition.EncsNode encodings) {
+      var encs = new ArrayList<IsEncs>(encodings.items.size());
+      for (IsEncs enc : encodings.items) {
         encs.addAll(resolveEnc(enc));
       }
       return encs;
     } else if (encoding instanceof PlaceholderNode placeholder) {
       var expanded = expand(placeholder);
-      if (expanded instanceof EncodingDefinition.FieldEncodings encs) {
-        return encs.encodings;
+      if (expanded instanceof EncodingDefinition.EncsNode encs) {
+        return encs.items;
       }
     } else if (encoding instanceof MacroMatchNode macroMatchNode) {
       var expanded = expand(macroMatchNode);
-      if (expanded instanceof EncodingDefinition.FieldEncodings encs) {
-        return encs.encodings;
+      if (expanded instanceof EncodingDefinition.EncsNode encs) {
+        return encs.items;
       } else {
-        return List.of((FieldEncodingOrPlaceholder) expanded);
+        return List.of((IsEncs) expanded);
       }
     } else if (encoding instanceof MacroInstanceNode macroInstanceNode) {
       var expanded = expand(macroInstanceNode);
-      if (expanded instanceof EncodingDefinition.FieldEncodings encs) {
-        return encs.encodings;
+      if (expanded instanceof EncodingDefinition.EncsNode encs) {
+        return encs.items;
       } else {
-        return List.of((FieldEncodingOrPlaceholder) expanded);
+        return List.of((IsEncs) expanded);
       }
     }
     return List.of(encoding);

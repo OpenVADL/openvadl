@@ -32,33 +32,33 @@ class ParserUtils {
     NO_OPS = new boolean[Parser.maxT + 1];
 
     BIN_OPS = NO_OPS.clone();
-    BIN_OPS[Parser._SYM_LOGOR] = true;
-    BIN_OPS[Parser._SYM_LOGAND] = true;
+    BIN_OPS[Parser._SYM_BINAND] = true;
     BIN_OPS[Parser._SYM_BINOR] = true;
     BIN_OPS[Parser._SYM_CARET] = true;
-    BIN_OPS[Parser._SYM_BINAND] = true;
+    BIN_OPS[Parser._SYM_DIV] = true;
+    BIN_OPS[Parser._SYM_ELEM_OF] = true;
     BIN_OPS[Parser._SYM_EQ] = true;
-    BIN_OPS[Parser._SYM_NEQ] = true;
-    BIN_OPS[Parser._SYM_GTE] = true;
     BIN_OPS[Parser._SYM_GT] = true;
-    BIN_OPS[Parser._SYM_LTE] = true;
+    BIN_OPS[Parser._SYM_GTE] = true;
+    BIN_OPS[Parser._SYM_IN] = true;
+    BIN_OPS[Parser._SYM_LOGAND] = true;
+    BIN_OPS[Parser._SYM_LOGOR] = true;
+    BIN_OPS[Parser._SYM_LONG_MUL] = true;
     BIN_OPS[Parser._SYM_LT] = true;
-    BIN_OPS[Parser._SYM_ROTR] = true;
-    BIN_OPS[Parser._SYM_ROTL] = true;
-    BIN_OPS[Parser._SYM_SHR] = true;
-    BIN_OPS[Parser._SYM_SHL] = true;
-    BIN_OPS[Parser._SYM_PLUS] = true;
+    BIN_OPS[Parser._SYM_LTE] = true;
     BIN_OPS[Parser._SYM_MINUS] = true;
+    BIN_OPS[Parser._SYM_MOD] = true;
+    BIN_OPS[Parser._SYM_MUL] = true;
+    BIN_OPS[Parser._SYM_NEQ] = true;
+    BIN_OPS[Parser._SYM_NIN] = true;
+    BIN_OPS[Parser._SYM_NOT_ELEM_OF] = true;
+    BIN_OPS[Parser._SYM_PLUS] = true;
+    BIN_OPS[Parser._SYM_ROTL] = true;
+    BIN_OPS[Parser._SYM_ROTR] = true;
     BIN_OPS[Parser._SYM_SAT_ADD] = true;
     BIN_OPS[Parser._SYM_SAT_SUB] = true;
-    BIN_OPS[Parser._SYM_MUL] = true;
-    BIN_OPS[Parser._SYM_DIV] = true;
-    BIN_OPS[Parser._SYM_MOD] = true;
-    BIN_OPS[Parser._SYM_LONG_MUL] = true;
-    BIN_OPS[Parser._SYM_IN] = true;
-    BIN_OPS[Parser._SYM_NIN] = true;
-    BIN_OPS[Parser._SYM_ELEM_OF] = true;
-    BIN_OPS[Parser._SYM_NOT_ELEM_OF] = true;
+    BIN_OPS[Parser._SYM_SHL] = true;
+    BIN_OPS[Parser._SYM_SHR] = true;
 
     BIN_OPS_EXCEPT_GT = BIN_OPS.clone();
     BIN_OPS_EXCEPT_GT[Parser._SYM_GT] = false;
@@ -370,13 +370,13 @@ class ParserUtils {
    * Casts the node to the type Encs, or reports an error and returns a dummy node of that type.
    * Useful in the parser, where throwing cast exceptions is not the best way of error reporting.
    */
-  static FieldEncodingOrPlaceholder castEncs(Parser parser, Node node) {
-    if (node instanceof FieldEncodingOrPlaceholder fieldEncodingOrPlaceholder) {
-      return fieldEncodingOrPlaceholder;
+  static IsEncs castEncs(Parser parser, Node node) {
+    if (node instanceof IsEncs encs) {
+      return encs;
     } else {
       parser.errors.SemErr(node.location().begin().line(), node.location().begin().column(),
           "Expected node of type Encs, received " + node.syntaxType().print() + " - " + node);
-      return new EncodingDefinition.FieldEncoding(new Identifier("invalid", node.location()),
+      return new EncodingDefinition.EncodingField(new Identifier("invalid", node.location()),
           new StringLiteral("<<invalid>>", node.location()));
     }
   }
@@ -456,7 +456,8 @@ class ParserUtils {
     var macroExpander = new MacroExpander(Map.of(), parser.macroOverrides, node.location());
     var expanded = macroExpander.expandNode(node);
     if (parser.macroContext.isEmpty()) {
-      // TODO This is necessary to completely copy all nodes to not cause issues in symbol collection - find out why
+      // TODO This is necessary to completely copy all nodes to not cause issues
+      //  in symbol collection - find out why
       return macroExpander.expandNode(expanded);
     }
     return expanded;
@@ -621,12 +622,12 @@ class ParserUtils {
     }
   }
 
-  static void addEncs(List<FieldEncodingOrPlaceholder> encs, FieldEncodingOrPlaceholder enc) {
-    if (enc instanceof EncodingDefinition.FieldEncodings list) {
-      for (FieldEncodingOrPlaceholder item : list.encodings) {
+  static void addEncs(List<IsEncs> encs, @Nullable IsEncs enc) {
+    if (enc instanceof EncodingDefinition.EncsNode list) {
+      for (IsEncs item : list.items) {
         addEncs(encs, item);
       }
-    } else {
+    } else if (enc != null) {
       encs.add(enc);
     }
   }

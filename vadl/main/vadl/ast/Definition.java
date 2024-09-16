@@ -1251,8 +1251,8 @@ class RelocationDefinition extends Definition {
   }
 }
 
-sealed interface FieldEncodingOrPlaceholder permits EncodingDefinition.FieldEncodings,
-    EncodingDefinition.FieldEncoding, PlaceholderNode, MacroInstanceNode, MacroMatchNode {
+sealed interface IsEncs permits EncodingDefinition.EncsNode,
+    EncodingDefinition.EncodingField, PlaceholderNode, MacroInstanceNode, MacroMatchNode {
   SourceLocation location();
 
   void prettyPrint(int indent, StringBuilder builder);
@@ -1260,22 +1260,18 @@ sealed interface FieldEncodingOrPlaceholder permits EncodingDefinition.FieldEnco
 
 class EncodingDefinition extends Definition {
   IdentifierOrPlaceholder instrIdentifier;
-  FieldEncodings fieldEncodings;
+  EncsNode encodings;
   SourceLocation loc;
 
-  EncodingDefinition(IdentifierOrPlaceholder instrIdentifier, FieldEncodings fieldEncodings,
+  EncodingDefinition(IdentifierOrPlaceholder instrIdentifier, EncsNode encodings,
                      SourceLocation location) {
     this.instrIdentifier = instrIdentifier;
-    this.fieldEncodings = fieldEncodings;
+    this.encodings = encodings;
     this.loc = location;
   }
 
   Identifier instrId() {
     return (Identifier) instrIdentifier;
-  }
-
-  FieldEncodings fieldEncodings() {
-    return fieldEncodings;
   }
 
   @Override
@@ -1296,7 +1292,7 @@ class EncodingDefinition extends Definition {
     instrIdentifier.prettyPrint(0, builder);
     builder.append(" =\n");
     builder.append(prettyIndentString(indent)).append("{ ");
-    fieldEncodings().prettyPrint(indent, builder);
+    encodings.prettyPrint(indent, builder);
     builder.append(prettyIndentString(indent)).append("}\n");
   }
 
@@ -1322,23 +1318,23 @@ class EncodingDefinition extends Definition {
     var that = (EncodingDefinition) o;
     return Objects.equals(annotations, that.annotations)
         && Objects.equals(instrIdentifier, that.instrIdentifier)
-        && Objects.equals(fieldEncodings, that.fieldEncodings);
+        && Objects.equals(encodings, that.encodings);
   }
 
   @Override
   public int hashCode() {
     int result = Objects.hashCode(annotations);
     result = 31 * result + Objects.hashCode(instrIdentifier);
-    result = 31 * result + Objects.hashCode(fieldEncodings);
+    result = 31 * result + Objects.hashCode(encodings);
     return result;
   }
 
-  static final class FieldEncodings extends Node implements FieldEncodingOrPlaceholder {
-    List<FieldEncodingOrPlaceholder> encodings;
+  static final class EncsNode extends Node implements IsEncs {
+    List<IsEncs> items;
     SourceLocation loc;
 
-    FieldEncodings(List<FieldEncodingOrPlaceholder> encodings, SourceLocation loc) {
-      this.encodings = encodings;
+    EncsNode(List<IsEncs> items, SourceLocation loc) {
+      this.items = items;
       this.loc = loc;
     }
 
@@ -1355,7 +1351,7 @@ class EncodingDefinition extends Definition {
     @Override
     public void prettyPrint(int indent, StringBuilder builder) {
       boolean first = true;
-      for (var entry : encodings) {
+      for (var entry : items) {
         if (!first) {
           builder.append(prettyIndentString(indent)).append(", ");
         }
@@ -1373,17 +1369,17 @@ class EncodingDefinition extends Definition {
       if (o == null || getClass() != o.getClass()) {
         return false;
       }
-      FieldEncodings that = (FieldEncodings) o;
-      return Objects.equals(encodings, that.encodings);
+      EncsNode that = (EncsNode) o;
+      return Objects.equals(items, that.items);
     }
 
     @Override
     public int hashCode() {
-      return Objects.hashCode(encodings);
+      return Objects.hashCode(items);
     }
   }
 
-  record FieldEncoding(Identifier field, Expr value) implements FieldEncodingOrPlaceholder {
+  record EncodingField(Identifier field, Expr value) implements IsEncs {
     @Override
     public SourceLocation location() {
       return field.location().join(value.location());

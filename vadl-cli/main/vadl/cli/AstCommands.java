@@ -120,7 +120,7 @@ class AstCommands {
     public Integer call() {
       try {
         Ast ast = parse(input, main.modelOverrides, true);
-        String prettified = ast.prettyPrint();
+        CharSequence prettified = ast.prettyPrint();
         if (output != null) {
           writeToPath(prettified, output);
         }
@@ -160,7 +160,7 @@ class AstCommands {
     return ast;
   }
 
-  private static void writeToPath(String string, Path output) throws IOException {
+  private static void writeToPath(CharSequence string, Path output) throws IOException {
     if (output.toString().equals("-")) {
       System.out.println(string);
     } else {

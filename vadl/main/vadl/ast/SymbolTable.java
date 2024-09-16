@@ -413,9 +413,9 @@ class SymbolTable {
         collectSymbols(assembly.symbolTable, assembly.expr);
       } else if (definition instanceof EncodingDefinition encoding) {
         encoding.symbolTable = symbols.createChild();
-        for (var fieldEncoding : encoding.fieldEncodings().encodings) {
+        for (var fieldEncoding : encoding.encodings.items) {
           collectSymbols(encoding.symbolTable,
-              ((EncodingDefinition.FieldEncoding) fieldEncoding).value());
+              ((EncodingDefinition.EncodingField) fieldEncoding).value());
         }
       } else if (definition instanceof AliasDefinition alias) {
         var type = switch (alias.kind) {
@@ -774,9 +774,8 @@ class SymbolTable {
       } else if (definition instanceof EncodingDefinition encoding) {
         var format = encoding.symbolTable().requireInstructionFormat(encoding.instrId());
         if (format != null) {
-          var encodings = encoding.fieldEncodings().encodings;
-          for (var enc : encodings) {
-            var fieldEncoding = (EncodingDefinition.FieldEncoding) enc;
+          for (var item : encoding.encodings.items) {
+            var fieldEncoding = (EncodingDefinition.EncodingField) item;
             var field = fieldEncoding.field();
             if (findField(format.definition, field.name) == null) {
               encoding.symbolTable()

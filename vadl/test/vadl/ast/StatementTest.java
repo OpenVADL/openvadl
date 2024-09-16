@@ -151,7 +151,7 @@ public class StatementTest {
         loc
     ));
     verifyPrettifiedAst(ast);
-    Assertions.assertEquals(expectedAst.prettyPrint(), ast.prettyPrint());
+    Assertions.assertEquals(expectedAst.prettyPrint().toString(), ast.prettyPrint().toString());
     Assertions.assertEquals(expectedAst, ast);
   }
 

@@ -291,9 +291,9 @@ public class Ungrouper
   @Override
   public Definition visit(EncodingDefinition definition) {
     ungroupAnnotations(definition);
-    definition.fieldEncodings().encodings.replaceAll(encoding -> {
-      var enc = (EncodingDefinition.FieldEncoding) encoding;
-      return new EncodingDefinition.FieldEncoding(enc.field(), enc.value().accept(this));
+    definition.encodings.items.replaceAll(encoding -> {
+      var enc = (EncodingDefinition.EncodingField) encoding;
+      return new EncodingDefinition.EncodingField(enc.field(), enc.value().accept(this));
     });
     return definition;
   }
