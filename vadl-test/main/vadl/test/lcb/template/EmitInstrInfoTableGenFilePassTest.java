@@ -350,7 +350,7 @@ public class EmitInstrInfoTableGenFilePassTest extends AbstractLcbTest {
         let CodeSize = 4;
                 
         let OutOperandList = ( outs  );
-        let InOperandList = ( ins X:$rs1, X:$rs2, RV64IM_Btype_immAsLabel:$immS );
+        let InOperandList = ( ins X:$rs1, X:$rs2, RV64IM_Btype_immAsLabel:$imm );
                 
         field bits<32> Inst;
                 
@@ -393,11 +393,11 @@ public class EmitInstrInfoTableGenFilePassTest extends AbstractLcbTest {
         let Defs = [ PC ];
         }
                 
-        def : Pat<(brcc SETEQ, X:$rs1, X:$rs2, bb:$immS),
-                (BEQ X:$rs1, X:$rs2, RV64IM_Btype_immAsLabel:$immS)>;
+        def : Pat<(brcc SETEQ, X:$rs1, X:$rs2, bb:$imm),
+                (BEQ X:$rs1, X:$rs2, RV64IM_Btype_immAsLabel:$imm)>;
                 
-        def : Pat<(brcond (i32 (seteq X:$rs1, X:$rs2)), bb:$immS),
-                (BEQ X:$rs1, X:$rs2, RV64IM_Btype_immAsLabel:$immS)>;
+        def : Pat<(brcond (i32 (seteq X:$rs1, X:$rs2)), bb:$imm),
+                (BEQ X:$rs1, X:$rs2, RV64IM_Btype_immAsLabel:$imm)>;
                 
                 
                 
@@ -409,7 +409,7 @@ public class EmitInstrInfoTableGenFilePassTest extends AbstractLcbTest {
         let CodeSize = 4;
                 
         let OutOperandList = ( outs  );
-        let InOperandList = ( ins X:$rs1, X:$rs2, RV64IM_Btype_immAsLabel:$immS );
+        let InOperandList = ( ins X:$rs1, X:$rs2, RV64IM_Btype_immAsLabel:$imm );
                 
         field bits<32> Inst;
                 
@@ -452,11 +452,11 @@ public class EmitInstrInfoTableGenFilePassTest extends AbstractLcbTest {
         let Defs = [ PC ];
         }
                 
-        def : Pat<(brcc SETGE, X:$rs1, X:$rs2, bb:$immS),
-                (BGE X:$rs1, X:$rs2, RV64IM_Btype_immAsLabel:$immS)>;
+        def : Pat<(brcc SETGE, X:$rs1, X:$rs2, bb:$imm),
+                (BGE X:$rs1, X:$rs2, RV64IM_Btype_immAsLabel:$imm)>;
                 
-        def : Pat<(brcond (i32 (setge X:$rs1, X:$rs2)), bb:$immS),
-                (BGE X:$rs1, X:$rs2, RV64IM_Btype_immAsLabel:$immS)>;
+        def : Pat<(brcond (i32 (setge X:$rs1, X:$rs2)), bb:$imm),
+                (BGE X:$rs1, X:$rs2, RV64IM_Btype_immAsLabel:$imm)>;
                 
                 
                 
@@ -468,7 +468,7 @@ public class EmitInstrInfoTableGenFilePassTest extends AbstractLcbTest {
         let CodeSize = 4;
                 
         let OutOperandList = ( outs  );
-        let InOperandList = ( ins X:$rs1, X:$rs2, RV64IM_Btype_immAsLabel:$immS );
+        let InOperandList = ( ins X:$rs1, X:$rs2, RV64IM_Btype_immAsLabel:$imm );
                 
         field bits<32> Inst;
                 
@@ -511,11 +511,11 @@ public class EmitInstrInfoTableGenFilePassTest extends AbstractLcbTest {
         let Defs = [ PC ];
         }
                 
-        def : Pat<(brcc SETUGE, X:$rs1, X:$rs2, bb:$immS),
-                (BGEU X:$rs1, X:$rs2, RV64IM_Btype_immAsLabel:$immS)>;
+        def : Pat<(brcc SETUGE, X:$rs1, X:$rs2, bb:$imm),
+                (BGEU X:$rs1, X:$rs2, RV64IM_Btype_immAsLabel:$imm)>;
                 
-        def : Pat<(brcond (i32 (setuge X:$rs1, X:$rs2)), bb:$immS),
-                (BGEU X:$rs1, X:$rs2, RV64IM_Btype_immAsLabel:$immS)>;
+        def : Pat<(brcond (i32 (setuge X:$rs1, X:$rs2)), bb:$imm),
+                (BGEU X:$rs1, X:$rs2, RV64IM_Btype_immAsLabel:$imm)>;
                 
                 
                 
@@ -527,7 +527,7 @@ public class EmitInstrInfoTableGenFilePassTest extends AbstractLcbTest {
         let CodeSize = 4;
                 
         let OutOperandList = ( outs  );
-        let InOperandList = ( ins X:$rs1, X:$rs2, RV64IM_Btype_immAsLabel:$immS );
+        let InOperandList = ( ins X:$rs1, X:$rs2, RV64IM_Btype_immAsLabel:$imm );
                 
         field bits<32> Inst;
                 
@@ -570,11 +570,11 @@ public class EmitInstrInfoTableGenFilePassTest extends AbstractLcbTest {
         let Defs = [ PC ];
         }
                 
-        def : Pat<(brcc SETLT, X:$rs1, X:$rs2, bb:$immS),
-                (BLT X:$rs1, X:$rs2, RV64IM_Btype_immAsLabel:$immS)>;
+        def : Pat<(brcc SETLT, X:$rs1, X:$rs2, bb:$imm),
+                (BLT X:$rs1, X:$rs2, RV64IM_Btype_immAsLabel:$imm)>;
                 
-        def : Pat<(brcond (i32 (setlt X:$rs1, X:$rs2)), bb:$immS),
-                (BLT X:$rs1, X:$rs2, RV64IM_Btype_immAsLabel:$immS)>;
+        def : Pat<(brcond (i32 (setlt X:$rs1, X:$rs2)), bb:$imm),
+                (BLT X:$rs1, X:$rs2, RV64IM_Btype_immAsLabel:$imm)>;
                 
                 
                 
@@ -586,7 +586,7 @@ public class EmitInstrInfoTableGenFilePassTest extends AbstractLcbTest {
         let CodeSize = 4;
                 
         let OutOperandList = ( outs  );
-        let InOperandList = ( ins X:$rs1, X:$rs2, RV64IM_Btype_immAsLabel:$immS );
+        let InOperandList = ( ins X:$rs1, X:$rs2, RV64IM_Btype_immAsLabel:$imm );
                 
         field bits<32> Inst;
                 
@@ -629,11 +629,11 @@ public class EmitInstrInfoTableGenFilePassTest extends AbstractLcbTest {
         let Defs = [ PC ];
         }
                 
-        def : Pat<(brcc SETULT, X:$rs1, X:$rs2, bb:$immS),
-                (BLTU X:$rs1, X:$rs2, RV64IM_Btype_immAsLabel:$immS)>;
+        def : Pat<(brcc SETULT, X:$rs1, X:$rs2, bb:$imm),
+                (BLTU X:$rs1, X:$rs2, RV64IM_Btype_immAsLabel:$imm)>;
                 
-        def : Pat<(brcond (i32 (setult X:$rs1, X:$rs2)), bb:$immS),
-                (BLTU X:$rs1, X:$rs2, RV64IM_Btype_immAsLabel:$immS)>;
+        def : Pat<(brcond (i32 (setult X:$rs1, X:$rs2)), bb:$imm),
+                (BLTU X:$rs1, X:$rs2, RV64IM_Btype_immAsLabel:$imm)>;
                 
                 
                 
@@ -645,7 +645,7 @@ public class EmitInstrInfoTableGenFilePassTest extends AbstractLcbTest {
         let CodeSize = 4;
                 
         let OutOperandList = ( outs  );
-        let InOperandList = ( ins X:$rs1, X:$rs2, RV64IM_Btype_immAsLabel:$immS );
+        let InOperandList = ( ins X:$rs1, X:$rs2, RV64IM_Btype_immAsLabel:$imm );
                 
         field bits<32> Inst;
                 
@@ -688,11 +688,11 @@ public class EmitInstrInfoTableGenFilePassTest extends AbstractLcbTest {
         let Defs = [ PC ];
         }
                 
-        def : Pat<(brcc SETNE, X:$rs1, X:$rs2, bb:$immS),
-                (BNE X:$rs1, X:$rs2, RV64IM_Btype_immAsLabel:$immS)>;
+        def : Pat<(brcc SETNE, X:$rs1, X:$rs2, bb:$imm),
+                (BNE X:$rs1, X:$rs2, RV64IM_Btype_immAsLabel:$imm)>;
                 
-        def : Pat<(brcond (i32 (setne X:$rs1, X:$rs2)), bb:$immS),
-                (BNE X:$rs1, X:$rs2, RV64IM_Btype_immAsLabel:$immS)>;
+        def : Pat<(brcond (i32 (setne X:$rs1, X:$rs2)), bb:$imm),
+                (BNE X:$rs1, X:$rs2, RV64IM_Btype_immAsLabel:$imm)>;
                 
                 
                 

@@ -20,7 +20,7 @@ public record ParameterIdentity(String type, String name) {
 
   public static ParameterIdentity fromBasicBlockToImmediateLabel(LlvmBasicBlockSD basicBlockSD) {
     return new ParameterIdentity(basicBlockSD.immediateOperand().rawName() + "AsLabel",
-        basicBlockSD.fieldAccess().identifier.simpleName());
+        basicBlockSD.fieldAccess().fieldRef().identifier.simpleName());
   }
 
   public static ParameterIdentity from(LlvmFieldAccessRefNode node) {
