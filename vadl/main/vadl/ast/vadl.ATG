@@ -22,7 +22,10 @@ COMPILER vadl
   SymbolTable macroTable = new SymbolTable();
   Map<String, Identifier> macroOverrides = new HashMap<>();
 
-  { macroTable.loadBuiltins(); }
+  {
+    ast.rootSymbolTable = new SymbolTable();
+    ast.rootSymbolTable.loadBuiltins();
+  }
 
   SourceLocation loc() {
     return locationFromToken(this, t);
@@ -217,8 +220,8 @@ IGNORE '\t' + '\r' + '\n'
 PRODUCTIONS
   vadl =
   {
-    topLevelDefinitions<out Definition def> (. addDef(ast.definitions, def); .)
-    | macroDef<out ModelDefinition def>     (. addDef(ast.definitions, def); macroTable.addMacro(def.toMacro(), def.location()); .)
+    topLevelDefinitions<out Definition def> (. addDef(ast.definitions, def); SymbolTable.SymbolCollector.collectSymbols(ast.rootSymbolTable(), def); .)
+    | macroDef<out ModelDefinition def>     (. addDef(ast.definitions, def); SymbolTable.SymbolCollector.collectSymbols(ast.rootSymbolTable(), def); macroTable.addMacro(def.toMacro(), def.location()); .)
   }.
 
   // -- DEFINITIONS --------------------------------------------------------------------------------------------------

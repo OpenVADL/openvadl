@@ -131,7 +131,6 @@ public class VadlParser {
 
     var ast = parser.ast;
 
-    SymbolTable.SymbolCollector.collectSymbols(ast);
     errors.addAll(SymbolTable.VerificationPass.verifyUsages(ast));
 
     if (!errors.isEmpty()) {
