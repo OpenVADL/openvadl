@@ -90,8 +90,6 @@ class SymbolTable {
   FormatSymbol requireFormat(Identifier formatId) {
     var symbol = resolveSymbol(formatId.name);
     if (symbol instanceof FormatSymbol formatSymbol) {
-      formatSymbol.definition.fields.forEach(field -> symbols.put(field.identifier().name,
-          new ValuedSymbol(field.identifier().name, null, SymbolType.FORMAT_FIELD)));
       return formatSymbol;
     } else {
       reportError("Unresolved format " + formatId.name, formatId.location());

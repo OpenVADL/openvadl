@@ -36,12 +36,6 @@ class MacroExpander
     this.expandingFrom = expanedingFrom;
   }
 
-  static void expandAst(Ast ast, Map<String, Identifier> macroOverrides) {
-    var instance = new MacroExpander(new HashMap<>(), macroOverrides, null);
-    ast.definitions = instance.expandDefinitions(ast.definitions);
-    ast.passTimings.add(new VadlParser.PassTimings(System.nanoTime(), "Macro expansion"));
-  }
-
   /**
    * Expands the given expr and, if applicable, performs binary expression reordering on it.
    * Since binary expression reordering is absolutely necessary to preserve the original semantics,
@@ -58,8 +52,8 @@ class MacroExpander
     if (!errors.isEmpty()) {
       throw new DiagnosticList(errors);
     }
-    if (result instanceof BinaryExpr binaryExpr) {
-      return BinaryExpr.reorder(binaryExpr);
+    if (result instanceof BinaryExpr binaryExpr && !binaryExpr.hasBeenReordered) {
+      return ParserUtils.reorderBinaryExpr(binaryExpr);
     }
     return result;
   }
@@ -166,8 +160,10 @@ class MacroExpander
   public Expr visit(BinaryExpr expr) {
     var operator = expr.operator instanceof PlaceholderNode p
         ? Objects.requireNonNullElse(resolveArg(p.segments), p) : expr.operator;
-    return new BinaryExpr(expr.left.accept(this), (IsBinOp) operator,
+    var expanded = new BinaryExpr(expr.left.accept(this), (IsBinOp) operator,
         expr.right.accept(this));
+    expanded.hasBeenReordered = expr.hasBeenReordered;
+    return expanded;
   }
 
   @Override
@@ -1109,9 +1105,11 @@ class MacroExpander
   private boolean isReplacementNode(Node node) {
     return node instanceof PlaceholderNode || node instanceof PlaceholderDefinition
         || node instanceof PlaceholderExpr || node instanceof PlaceholderStatement
-        || node instanceof MacroMatchDefinition || node instanceof MacroMatchExpr
-        || node instanceof MacroMatchStatement || node instanceof MacroInstanceDefinition
-        || node instanceof MacroInstanceStatement || node instanceof MacroInstanceExpr;
+        || node instanceof MacroMatchNode || node instanceof MacroMatchDefinition
+        || node instanceof MacroMatchExpr || node instanceof MacroMatchStatement
+        || node instanceof MacroInstanceNode || node instanceof MacroInstanceDefinition
+        || node instanceof MacroInstanceExpr || node instanceof MacroInstanceStatement
+        || node instanceof ExtendIdExpr || node instanceof IdToStrExpr;
 
   }
 

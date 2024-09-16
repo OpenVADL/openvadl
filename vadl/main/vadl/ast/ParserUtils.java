@@ -136,6 +136,29 @@ class ParserUtils {
     return expr;
   }
 
+  static Expr reorderBinaryExpr(Expr expr) {
+    if (expr instanceof BinaryExpr binExpr) {
+      var canReorder = canReorder(binExpr);
+      if (canReorder) {
+        return BinaryExpr.reorder(binExpr);
+      }
+    }
+    return expr;
+  }
+
+  static boolean canReorder(BinaryExpr binExpr) {
+    if (!(binExpr.operator instanceof BinOpExpr)) {
+      return false;
+    }
+    if (binExpr.left instanceof BinaryExpr leftBin && !canReorder(leftBin)) {
+      return false;
+    }
+    if (binExpr.right instanceof BinaryExpr rightBin && !canReorder(rightBin)) {
+      return false;
+    }
+    return true;
+  }
+
   /**
    * Converts the parser's current token position to a vadl location.
    */
@@ -429,9 +452,14 @@ class ParserUtils {
     }
   }
 
-  static Definition expandDef(Parser parser, Definition node) {
+  static Node expandNode(Parser parser, Node node) {
     var macroExpander = new MacroExpander(Map.of(), parser.macroOverrides, node.location());
-    return parser.macroExpander.expandDefinition(node);
+    var expanded = macroExpander.expandNode(node);
+    if (parser.macroContext.isEmpty()) {
+      // TODO This is necessary to completely copy all nodes to not cause issues in symbol collection - find out why
+      return macroExpander.expandNode(expanded);
+    }
+    return expanded;
   }
 
   static void readMacroSymbols(SymbolTable macroTable, List<Definition> definitions) {
@@ -590,6 +618,26 @@ class ParserUtils {
       }
     } else {
       definitions.add(def);
+    }
+  }
+
+  static void addEncs(List<FieldEncodingOrPlaceholder> encs, FieldEncodingOrPlaceholder enc) {
+    if (enc instanceof EncodingDefinition.FieldEncodings list) {
+      for (FieldEncodingOrPlaceholder item : list.encodings) {
+        addEncs(encs, item);
+      }
+    } else {
+      encs.add(enc);
+    }
+  }
+
+  static void addStats(List<Statement> stats, Statement stmt) {
+    if (stmt instanceof StatementList list) {
+      for (Statement item : list.items) {
+        addStats(stats, item);
+      }
+    } else {
+      stats.add(stmt);
     }
   }
 

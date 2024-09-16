@@ -218,7 +218,7 @@ IGNORE '\t' + '\r' + '\n'
 PRODUCTIONS
   vadl =
   {
-    topLevelDefinitions<out Definition def> (. addDef(ast.definitions, expandDef(this, def)); .)
+    topLevelDefinitions<out Definition def> (. addDef(ast.definitions, def); .)
     | macroDef<out ModelDefinition def>     (. addDef(ast.definitions, def); macroTable.addMacro(def.toMacro(), def.location()); .)
   }.
 
@@ -263,11 +263,11 @@ PRODUCTIONS
     isaDefinition<out Definition def>                   (. def.withAnnotations(annotations); definitions.add(def); .)
   | macroDef<out ModelDefinition def>                   (. addDef(definitions, def); macroTable.addMacro(def.toMacro(), def.location()); .)
   | // IF (isMacroReplacementOfType(this, BasicSyntaxType.ISA_DEFS))
-    macroReplacement<out Node n>                        (. var expanded = expandDef(this, castDef(this, n));
-                                                           if (expanded instanceof DefinitionList list) {
+    macroReplacement<out Node n>                        (. var def = castDef(this, n);
+                                                           if (def instanceof DefinitionList list) {
                                                              readMacroSymbols(macroTable, list.items);
                                                            }
-                                                           addDef(definitions, expanded); .)
+                                                           addDef(definitions, def); .)
   }
   .
 
@@ -436,10 +436,10 @@ PRODUCTIONS
   .
 
   encodingDefinitionList<out EncodingDefinition.FieldEncodings encs> (. var start = lookaheadLoc(); var entries = new ArrayList<FieldEncodingOrPlaceholder>(); .)
-  = encodingEntry<out FieldEncodingOrPlaceholder enc>                (. entries.add(enc); .)
+  = encodingEntry<out FieldEncodingOrPlaceholder enc>                (. addEncs(entries, enc); .)
     {
       SYM_COMMA
-      encodingEntry<out enc>              (. entries.add(enc); .)
+      encodingEntry<out enc>                                         (. addEncs(entries, enc); .)
     }                                                                (. encs = new EncodingDefinition.FieldEncodings(entries, start.join(loc())); .)
   .
 
@@ -1036,8 +1036,8 @@ PRODUCTIONS
   statementList<.out List<Statement> stmts.> (. stmts = new ArrayList<>(); .)
   = {
       IF (isMacroReplacementOfType(this, BasicSyntaxType.STATS))
-      macroReplacement<out Node n>           (. stmts.add(castStats(this, n)); .)
-    | statement<out Statement statement>     (. stmts.add(statement); .)
+      macroReplacement<out Node n>           (. addStats(stmts, castStats(this, n)); .)
+    | statement<out Statement statement>     (. addStats(stmts, statement); .)
     }
   .
 
@@ -1121,7 +1121,7 @@ PRODUCTIONS
       SYM_BRACE_CLOSE
     )
     SYM_BIGARROW
-    statement<out Statement result>         (. cases.add(new MatchStatement.Case(List.copyOf(patterns), result)); .)
+    statement<out Statement result>         (. cases.add(new MatchStatement.Case(new ArrayList<>(patterns), result)); .)
     {
       IF (la.kind == _SYM_COMMA && scanner.Peek().kind != _SYM_UNDERSCORE)
       SYM_COMMA                             (. patterns.clear(); .)
@@ -1191,7 +1191,7 @@ PRODUCTIONS
           ]                                       (. if (!isSize) expr = new BinaryExpr(reorderCastExpr(expr), new BinOpExpr(Operator.Less(), lessLoc), term); .)
         }                                         (. if (expr instanceof CastExpr) expr = reorderCastExpr(expr); .)
       )
-    }
+    }                                             (. expr = reorderBinaryExpr(expr); .)
   .
 
   /// Call expressions of form "a::b<3>().c()".
@@ -1586,10 +1586,11 @@ PRODUCTIONS
   // -- MACROS -------------------------------------------------------------------------------------------------------
 
   macroReplacement<out Node body> (. body = null; .)
-  = macroMatch<out body>
-  | maximumMacroExpr<out body>
-  | extendId<out body>
-  | idToStr<out body>
+  = ( macroMatch<out body>
+    | maximumMacroExpr<out body>
+    | extendId<out body>
+    | idToStr<out body>
+    )                             (. body = expandNode(this, body); .)
   .
 
   extendId<out Node body>
@@ -1734,7 +1735,7 @@ PRODUCTIONS
   | IF (type == BasicSyntaxType.UN_OP)
     unaryOperator<out IsUnOp op>                            (. body = (Node) op; .)
   | IF (type instanceof RecordType recordType)
-    ( SYM_PAREN_OPEN                                        (. var entries = new ArrayList<Node>(); var nextEntry = recordType.entries.iterator(); .)
+    ( SYM_PAREN_OPEN                                        (. var entries = new ArrayList<Node>(recordType.entries.size()); var nextEntry = recordType.entries.iterator(); .)
       macroBody<out Node entry, nextEntry.next().type()>    (. entries.add(entry); .)
       {
         SYM_SEMICOLON

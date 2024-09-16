@@ -26,13 +26,13 @@ public class MacroTests {
   @Test
   void binaryOrderInMacroTest() {
     var prog1 = """
-        model example() : Ex =  {
-          1 + 2 * 3 = 8 && 7 + 9 > 10
+        model example(op1: BinOp, op2: BinOp, op3: BinOp, op4: BinOp, op5: BinOp, op6: BinOp) : Ex = {
+          1 $op1 2 $op2 3 $op3 8 $op4 7 $op5 9 $op6 10
         }
         
-        constant n = $example()
+        constant n = $example(+ ; * ; = ; && ; + ; >)
         """;
-    var prog2 = "constant n = ((1 + (2 * 3))  = 8) && ((7 + 9) > 10)";
+    var prog2 = "constant n = ((1 + (2 * 3)) = 8) && ((7 + 9) > 10)";
 
     assertAstEquality(VadlParser.parse(prog1), VadlParser.parse(prog2));
   }

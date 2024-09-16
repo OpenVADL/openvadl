@@ -375,6 +375,7 @@ class BinaryExpr extends Expr {
   Expr left;
   IsBinOp operator;
   Expr right;
+  boolean hasBeenReordered = false;
 
   BinaryExpr(Expr left, IsBinOp operator, Expr right) {
     this.left = left;
@@ -413,6 +414,7 @@ class BinaryExpr extends Expr {
   }
 
   static BinaryExpr transformRecRightToLeft(@Nullable BinaryExpr parpar, BinaryExpr par) {
+    par.hasBeenReordered = true;
     while (par.left instanceof BinaryExpr curr) {
       if (par.operator().precedence > curr.operator().precedence) {
         par.left = curr.right;
