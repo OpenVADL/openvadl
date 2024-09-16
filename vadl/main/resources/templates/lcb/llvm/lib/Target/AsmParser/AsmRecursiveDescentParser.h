@@ -1,7 +1,7 @@
 #ifndef LLVM_LIB_TARGET_[(${namespace})]_ASMPARSER_H
 #define LLVM_LIB_TARGET_[(${namespace})]_ASMPARSER_H
 
-#include "[(${namespace})]ParsedOperand.h"
+#include "AsmParsedOperand.h"
 #include "MCTargetDesc/[(${namespace})]MCExpr.h"
 #include "llvm/MC/MCParser/MCAsmLexer.h"
 #include "llvm/MC/MCParser/MCAsmParser.h"

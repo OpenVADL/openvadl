@@ -30,7 +30,7 @@ const MCFixupKindInfo &[(${namespace})]AsmBackend::getFixupKindInfo
     ( MCFixupKind Kind
     ) const
 {
-    const static std::array<MCFixupKindInfo, «relocations.size»> Infos =
+    const static std::array<MCFixupKindInfo, [(${relocations.size()})]> Infos =
     {
         // This table *must* be in the order that the fixup_* kinds are defined in
         // [(${namespace})]FixupKinds.h.
@@ -123,7 +123,7 @@ unsigned [(${namespace})]AsmBackend::getNumFixupKinds() const
     return [(${namespace})]::NumTargetFixupKinds;
 }
 
-[(${namespace})]ELFAsmBackend::«processorName»ELFAsmBackend
+[(${namespace})]ELFAsmBackend::[(${namespace})]ELFAsmBackend
     ( const Target &T
     , Triple::OSType OSType
     , bool IsBigEndian

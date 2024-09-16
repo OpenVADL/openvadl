@@ -1,5 +1,5 @@
 #include "MCTargetDesc/[(${namespace})]MCTargetDesc.h"
-#include "[(${namespace})]InstPrinter.h"
+#include "MCTargetDesc/[(${namespace})]InstPrinter.h"
 #include "Utils/ImmediateUtils.h"
 #include "llvm/MC/MCInst.h"
 #include "llvm/MC/MCExpr.h"
@@ -53,6 +53,7 @@ MCOperand [(${namespace})]InstPrinter::adjustImmediateOp
     {
         switch(OpCode)
         {
+            /*
             «FOR inst : processor.list( MachineInstruction )»
                 «IF inst.inputOperands( ImmediateOperand ).size == 1»
                     «IF inst.inputOperands( ImmediateOperand ).head.isEncodeBeforeEmit»
@@ -60,6 +61,7 @@ MCOperand [(${namespace})]InstPrinter::adjustImmediateOp
                     «ENDIF»
                 «ENDIF»
             «ENDFOR»
+            */
         }
     }
 

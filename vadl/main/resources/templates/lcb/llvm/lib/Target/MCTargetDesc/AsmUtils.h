@@ -34,11 +34,10 @@ namespace llvm
 
             // register helper function
             static std::string getRegisterName( unsigned RegNo );
-            /*
-            «FOR cls : processor.list( RegisterClass ).filter[ sideEffect == false ]»
-                static std::string getRegisterNameFrom«cls.simpleName»ByIndex( unsigned RegIndex );
-            «ENDFOR»
-            */
+
+            [# th:each="rg : ${registerClasses}" ]
+            static std::string getRegisterNameFrom[(${rg.simpleName()})]ByIndex( unsigned RegIndex );
+            [/]
     };
 
     class MCOperandWrapper

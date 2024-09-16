@@ -1,7 +1,7 @@
 add_llvm_component_library(LLVM[(${namespace})]Desc
           [(${namespace})]MCTargetDesc.cpp
           [(${namespace})]MCAsmInfo.cpp
-          [(${namespace})]InstrPrinter.cpp
+          [(${namespace})]InstPrinter.cpp
           [(${namespace})]MCExpr.cpp
           [(${namespace})]AsmBackend.cpp
           [(${namespace})]ELFStreamer.cpp

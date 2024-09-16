@@ -450,7 +450,7 @@ SDValue [(${namespace})]TargetLowering::LowerCall(TargetLowering::CallLoweringIn
     Chain = DAG.getNode( [(${namespace})]ISD::CALL, dl, NodeTys, Ops);
     InFlag = Chain.getValue(1);
 
-    Chain = DAG.getCALLSEQ_END(Chain, DAG.getConstant(NextStackOffset, dl, [(${namespace})]::[(${stackPointer})], true), DAG.getConstant(0, dl, [(${namespace})]::[(${stackPointer})], true), InFlag, dl);
+    Chain = DAG.getCALLSEQ_END(Chain, DAG.getConstant(NextStackOffset, dl, MVT::[(${stackPointerType})], true), DAG.getConstant(0, dl, MVT::[(${stackPointerType})], true), InFlag, dl);
 
     InFlag = Chain.getValue(1);
 

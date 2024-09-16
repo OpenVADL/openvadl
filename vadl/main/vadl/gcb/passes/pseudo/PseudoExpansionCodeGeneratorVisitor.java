@@ -7,7 +7,6 @@ import java.io.StringWriter;
 import java.util.IdentityHashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Stack;
 import vadl.cppCodeGen.GenericCppCodeGeneratorVisitor;
 import vadl.cppCodeGen.SymbolTable;
 import vadl.cppCodeGen.model.CppFunction;
@@ -116,10 +115,15 @@ public class PseudoExpansionCodeGeneratorVisitor extends GenericCppCodeGenerator
                 decodingFunctionName,
                 argument.constant().asVal().intValue()));
       }
-      case REGISTER -> writer.write(String.format("%s.addOperand(MCOperand::createReg(%s::%s));\n",
-          sym,
-          namespace,
-          argument.constant().asVal().intValue()));
+      case REGISTER -> {
+        /*
+        TODO this doesn't work because we do not know which register file
+        writer.write(String.format("%s.addOperand(MCOperand::createReg(%s::%s));\n",
+            sym,
+            namespace,
+            argument.constant().asVal().intValue()));
+         */
+      }
       default -> throw new ViamError("not supported");
     }
   }
@@ -142,8 +146,8 @@ public class PseudoExpansionCodeGeneratorVisitor extends GenericCppCodeGenerator
     ensure(logicalRelocation.isPresent(), "logicalRelocation must exist");
     var variant = logicalRelocation.get().logicalRelocation().variantKind().value();
     writer.write(
-        String.format("const MCExpr* %s = CPUMCExpr::create(%s, %sMCExpr::VariantKind::%s, Ctx);\n",
-            argumentRelocationSymbol, argumentSymbol, namespace, variant));
+        String.format("const MCExpr* %s = %sMCExpr::create(%s, %sMCExpr::VariantKind::%s, Ctx);\n",
+            argumentRelocationSymbol, namespace, argumentSymbol, namespace, variant));
     writer.write(String.format("%s.addOperand(%s);\n",
         sym,
         argumentRelocationSymbol));
@@ -167,8 +171,8 @@ public class PseudoExpansionCodeGeneratorVisitor extends GenericCppCodeGenerator
         ensure(variant != null, "variant must exist: %s", field.identifier.lower());
         writer.write(
             String.format(
-                "const MCExpr* %s = CPUMCExpr::create(%s, %sMCExpr::VariantKind::%s, Ctx);\n",
-                argumentImmSymbol, argumentSymbol, namespace, variant));
+                "const MCExpr* %s = %sMCExpr::create(%s, %sMCExpr::VariantKind::%s, Ctx);\n",
+                argumentImmSymbol, namespace, argumentSymbol, namespace, variant.value()));
         writer.write(String.format("%s.addOperand(%s);\n",
             sym,
             argumentImmSymbol));

@@ -1,4 +1,4 @@
-#include "[(${namespace})]AsmRecursiveDescentParser.h"
+#include "AsmParser/AsmRecursiveDescentParser.h"
 #include "MCTargetDesc/[(${namespace})]MCTargetDesc.h"
 #include "MCTargetDesc/[(${namespace})]TargetStreamer.h"
 #include "MCTargetDesc/AsmUtils.h"

@@ -43,7 +43,7 @@ static DecodeStatus Decode[(${registerClass.registerFile.identifier.simpleName()
         return MCDisassembler::Fail;
 
     // access custom generated decoder table in register info
-    Register reg = [(${registerClass.registerFile.identifier.simpleName()})]DecoderTableName[RegNo];
+    Register reg = [(${registerClass.registerFile.identifier.simpleName()})]DecoderTable[RegNo];
 
     // check if decoded register is valid
     if( reg == [(${namespace})]::NoRegister )
