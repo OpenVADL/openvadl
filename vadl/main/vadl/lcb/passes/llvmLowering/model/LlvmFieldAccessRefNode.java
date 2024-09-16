@@ -6,6 +6,8 @@ import vadl.lcb.passes.llvmLowering.strategies.visitors.TableGenMachineInstructi
 import vadl.lcb.passes.llvmLowering.strategies.visitors.TableGenNodeVisitor;
 import vadl.lcb.passes.llvmLowering.tablegen.model.ParameterIdentity;
 import vadl.lcb.passes.llvmLowering.tablegen.model.TableGenImmediateRecord;
+import vadl.lcb.template.lib.Target.Disassembler.EmitDisassemblerCppFilePass;
+import vadl.lcb.template.lib.Target.MCTargetDesc.EmitMCCodeEmitterCppFilePass;
 import vadl.types.Type;
 import vadl.viam.Format;
 import vadl.viam.graph.GraphNodeVisitor;
@@ -31,8 +33,9 @@ public class LlvmFieldAccessRefNode extends FieldAccessRefNode {
     super(fieldAccess, type);
     this.immediateOperand =
         new TableGenImmediateRecord(fieldAccess.fieldRef().identifier,
-            Objects.requireNonNull(fieldAccess.encoding()).identifier,
-            fieldAccess.accessFunction().identifier,
+            Objects.requireNonNull(fieldAccess.encoding()).identifier.append(
+                EmitMCCodeEmitterCppFilePass.WRAPPER),
+            fieldAccess.accessFunction().identifier.append(EmitDisassemblerCppFilePass.WRAPPER),
             fieldAccess.predicate().identifier,
             ValueType.from(type));
     this.parameterIdentity = ParameterIdentity.from(this);

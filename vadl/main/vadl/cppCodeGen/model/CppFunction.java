@@ -18,7 +18,16 @@ public class CppFunction extends Function {
   }
 
   public CppFunction(Function function) {
-    super(function.identifier, function.parameters(), function.returnType(),
+    super(function.identifier,
+        function.parameters(),
+        function.returnType(),
+        function.behavior());
+  }
+
+  public CppFunction(Function function, String suffix) {
+    super(function.identifier.append(suffix),
+        function.parameters(),
+        function.returnType(),
         function.behavior());
   }
 

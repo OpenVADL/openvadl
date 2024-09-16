@@ -21,7 +21,7 @@ static const unsigned [(${registerClass.registerFile.identifier.simpleName()})]D
 
 /* == Immediate Decoding == */
 [#th:block th:each="immediate : ${immediates}" ]
-DecodeStatus decode[(${immediate.simpleName})](MCInst &Inst, uint64_t Imm, int64_t Address, const void *Decoder)
+DecodeStatus [(${immediate.wrapperName})](MCInst &Inst, uint64_t Imm, int64_t Address, const void *Decoder)
 {
     Imm = Imm & [(${immediate.mask})];
     Imm = [(${immediate.decodeMethodName})](Imm);

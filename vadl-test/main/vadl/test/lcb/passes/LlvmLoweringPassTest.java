@@ -72,13 +72,13 @@ public class LlvmLoweringPassTest extends AbstractLcbTest {
         List.of(new TableGenInstructionOperand(DUMMY_NODE, "X", "rs1"),
             new TableGenInstructionOperand(DUMMY_NODE, "X", "rs2"),
             new TableGenInstructionOperand(DUMMY_NODE, "RV64IM_Btype_immAsLabel",
-                "immS")),
+                "imm")),
         List.of(),
         List.of(
-            String.format("(brcc %s, X:$rs1, X:$rs2, bb:$immS)",
+            String.format("(brcc %s, X:$rs1, X:$rs2, bb:$imm)",
                 condCode),
             String.format(
-                "(brcond (i32 (%s X:$rs1, X:$rs2)), bb:$immS)",
+                "(brcond (i32 (%s X:$rs1, X:$rs2)), bb:$imm)",
                 condCode.name().toLowerCase())),
         // We have the same pattern twice because we have to selectors which emit the same
         // machine instruction.
@@ -98,16 +98,16 @@ public class LlvmLoweringPassTest extends AbstractLcbTest {
             new TableGenInstructionOperand(DUMMY_NODE, "RV64IM_Itype_immAsInt64", "imm")),
         List.of(new TableGenInstructionOperand(DUMMY_NODE, "X", "rd")),
         List.of(String.format("(add X:$rs1, %s:$%s)", "RV64IM_Itype_immAsInt64",
-                "immS"),
+                "imm"),
             String.format("(add AddrFI:$rs1, %s:$%s)", "RV64IM_Itype_immAsInt64",
-                "immS")
+                "imm")
         ),
         List.of(String.format("(%s X:$rs1, %s:$%s)", "ADDI",
                 "RV64IM_Itype_immAsInt64",
-                "immS"),
+                "imm"),
             String.format("(%s AddrFI:$rs1, %s:$%s)", "ADDI",
                 "RV64IM_Itype_immAsInt64",
-                "immS")
+                "imm")
         ),
         createEmptyFlags(),
         false);
@@ -215,9 +215,9 @@ public class LlvmLoweringPassTest extends AbstractLcbTest {
     expectedResults.put("ADDI",
         createTestOutputAddI());
     expectedResults.put("ORI",
-        createTestOutputRI("RV64IM_Itype_immAsInt64", "immS", "or", "ORI"));
+        createTestOutputRI("RV64IM_Itype_immAsInt64", "imm", "or", "ORI"));
     expectedResults.put("ANDI",
-        createTestOutputRI("RV64IM_Itype_immAsInt64", "immS", "and", "ANDI"));
+        createTestOutputRI("RV64IM_Itype_immAsInt64", "imm", "and", "ANDI"));
     /*
     CONDITIONALS
      */
@@ -226,10 +226,10 @@ public class LlvmLoweringPassTest extends AbstractLcbTest {
     expectedResults.put("SLTU",
         createTestOutputRRWithConditional(LlvmCondCode.SETULT, "SLTU"));
     expectedResults.put("SLTI",
-        createTestOutputRIWithConditional("RV64IM_Itype_immAsInt64", "immS",
+        createTestOutputRIWithConditional("RV64IM_Itype_immAsInt64", "imm",
             LlvmCondCode.SETLT, "SLTI"));
     expectedResults.put("SLTUI",
-        createTestOutputRIWithConditional("RV64IM_Btype_immAsInt64", "immS",
+        createTestOutputRIWithConditional("RV64IM_Btype_immAsInt64", "imm",
             LlvmCondCode.SETULT, "SLTUI"));
     /*
     CONDITIONAL BRANCHES
@@ -247,7 +247,7 @@ public class LlvmLoweringPassTest extends AbstractLcbTest {
      */
     expectedResults.put("JALR", new TestOutput(
         List.of(new TableGenInstructionOperand(DUMMY_NODE, "X", "rs1"),
-            new TableGenInstructionOperand(DUMMY_NODE, "RV64IM_Itype_immAsInt64", "immS")),
+            new TableGenInstructionOperand(DUMMY_NODE, "RV64IM_Itype_immAsInt64", "imm")),
         Collections.emptyList(),
         Collections.emptyList(),
         Collections.emptyList(),

@@ -131,28 +131,27 @@ void [(${namespace})]MCCodeEmitter::emitFixups(const MCInst MI, unsigned OpNo, c
     }
 }
 
-/*
-«FOR Immediate immediate : processor.list(Immediate) SEPARATOR "\n"» unsigned [(${namespace})]MCCodeEmitter::encode«immediate.loweredImmediate.identifier»(const MCInst &MI, unsigned OpNo, SmallVectorImpl<MCFixup> &Fixups, const MCSubtargetInfo &STI) const
+[# th:each="imm : ${immediates}" ]
+unsigned [(${namespace})]MCCodeEmitter::[(${imm.encodeWrapper})](const MCInst &MI, unsigned OpNo, SmallVectorImpl<MCFixup> &Fixups, const MCSubtargetInfo &STI) const
 {
     const MCOperand &MO = MI.getOperand(OpNo);
 
     if (MO.isImm())
-        return «immediate.loweredImmediate.identifier»::«immediate.loweredImmediate.encoding.identifier»(MO.getImm());
+        return [(${imm.encode})](MO.getImm());
 
     int64_t imm;
     if (AsmUtils::evaluateConstantImm(&MO, imm))
-        return «immediate.loweredImmediate.identifier»::«immediate.loweredImmediate.encoding.identifier»(imm);
+        return [(${imm.encode})](imm);
 
-    assert(MO.isExpr() && "encode«immediate.loweredImmediate.identifier» expects only expressions or immediates");
+    assert(MO.isExpr() && "[(${imm.encodeWrapper})] expects only expressions or immediates");
 
     emitFixups(MI, OpNo, MO.getExpr(), Fixups);
 
     return 0;
 }
-«ENDFOR»
-*/
+[/]
 
-    void [(${namespace})]MCCodeEmitter::encodeInstruction(const MCInst &MCI, raw_ostream &OS, SmallVectorImpl<MCFixup> &Fixups, const MCSubtargetInfo &STI) const
+void [(${namespace})]MCCodeEmitter::encodeInstruction(const MCInst &MCI, raw_ostream &OS, SmallVectorImpl<MCFixup> &Fixups, const MCSubtargetInfo &STI) const
 {
     Offset = 0;
     std::vector<MCInst> resultVec;

@@ -17,7 +17,12 @@ using namespace llvm;
 #define DEBUG_TYPE "[(${namespace})]-asm-parser"
 
 namespace llvm {
+
+  RuleParsingResult<NoData> [(${namespace})]AsmRecursiveDescentParser::ParseStatement() {
+    return RuleParsingResult<NoData>(ParsedValue<NoData>(NoData {}));
+  }
+
   RuleParsingResult<uint64_t /* UInt<64> */> [(${namespace})]AsmRecursiveDescentParser::ParseRegister() {
-    return Register();
+    return RuleParsingResult<uint64_t>(ParsedValue<uint64_t>(0));
   }
 }

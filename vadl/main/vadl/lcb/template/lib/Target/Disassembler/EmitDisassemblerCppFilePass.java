@@ -16,6 +16,7 @@ import vadl.lcb.template.utils.ImmediateDecodingFunctionProvider;
 import vadl.lcb.templateUtils.RegisterUtils;
 import vadl.pass.PassResults;
 import vadl.viam.Format;
+import vadl.viam.Identifier;
 import vadl.viam.Specification;
 
 /**
@@ -40,7 +41,15 @@ public class EmitDisassemblerCppFilePass extends LcbTemplateRenderingPass {
         + "Disassembler.cpp";
   }
 
-  record Immediate(String simpleName, String decodeMethodName, int bitWidth, long mask) {
+  /**
+   * The LLVM's encoder/decoder does not interact with the {@code uint64_t decode(uint64_t)} functions but
+   * with {@code unsigned decode(const MCInst InstMI, ...} from the MCCodeEmitter.
+   * This {@code WRAPPER} is just the magic suffix for the
+   * function.
+   */
+  public static final String WRAPPER = "wrapper";
+
+  record Immediate(String wrapperName, String decodeMethodName, int bitWidth, long mask) {
 
   }
 
@@ -57,14 +66,14 @@ public class EmitDisassemblerCppFilePass extends LcbTemplateRenderingPass {
         .stream()
         .map(entry -> {
           var field = entry.getKey();
-          var simpleName = field.identifier.lower();
+          var wrapperName = entry.getValue().identifier.append(WRAPPER).lower();
           var decoderMethod = entry.getValue().functionName().lower();
           var bitWidth = field.size();
 
-          return new Immediate(simpleName, decoderMethod, bitWidth,
+          return new Immediate(wrapperName, decoderMethod, bitWidth,
               (int) Math.pow(2, bitWidth) - 1);
         })
-        .sorted(Comparator.comparing(o -> o.simpleName))
+        .sorted(Comparator.comparing(o -> o.wrapperName))
         .toList();
   }
 

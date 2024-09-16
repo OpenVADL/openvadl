@@ -63,10 +63,9 @@ namespace llvm
 
         void emitFixups(const MCInst MI, unsigned OpNo, const MCExpr *Expr, SmallVectorImpl<MCFixup> &Fixups) const;
 
-        /*
-        «FOR Immediate immediate : processor.list(Immediate) SEPARATOR "\n"» unsigned encode«immediate.loweredImmediate.identifier»(const MCInst &MI, unsigned OpNo, SmallVectorImpl<MCFixup> &Fixups, const MCSubtargetInfo &STI) const;
-        «ENDFOR»
-        */
+        [# th:each="imm : ${immediates}" ]
+        unsigned [(${imm.encodeWrapper})](const MCInst &MI, unsigned OpNo, SmallVectorImpl<MCFixup> &Fixups, const MCSubtargetInfo &STI) const;
+        [/]
     };
 } // end llvm namespace
 
