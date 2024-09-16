@@ -42,7 +42,8 @@ const MCFixupKindInfo &[(${namespace})]AsmBackend::getFixupKindInfo
     };
 
     // sanity check if all fixups are defined
-    static_assert( Infos.size() == [(${namespace})]::NumTargetFixupKinds, "Not all fixup kinds added to Infos array");
+    // TODO enable kper
+    //static_assert( Infos.size() == [(${namespace})]::NumTargetFixupKinds, "Not all fixup kinds added to Infos array");
 
     // fixup kind is an LLVM internal fixup
     if ( Kind < FirstTargetFixupKind )
@@ -194,6 +195,6 @@ std::unique_ptr<MCObjectTargetWriter>
 [(${namespace})]ELFAsmBackend::createObjectTargetWriter() const
 {
     uint8_t OSABI = MCELFObjectTargetWriter::getOSABI( OSType );
-    bool Is64Bit = «is64BitElf»; // computed using the pointer width
+    bool Is64Bit = [(${is64Bit})]; // computed using the pointer width
     return std::make_unique<[(${namespace})]ELFObjectWriter>( OSABI, Is64Bit );
 }

@@ -65,21 +65,23 @@ class [(${namespace})]AsmRecursiveDescentParser {
     MCAsmParser &Parser;
     OperandVector &Operands;
 
-private:
-    [# th:each="pr : ${parsingResult}" ]
+//private:
+    /*
+    [# th:each="pr : ${parsingResults}" ]
     RuleParsingResult<[(${pr.type})]> <[(${namespace})]AsmRecursiveDescentParser::[(${pr.functionName})](); // [(${pr.comment})]
     [/]
+    */
     // «visitor.resultType( AsmType.String )» Literal(std::string toParse);
     // «visitor.resultType( AsmType.Expression )» BuiltinExpression();
 
-public:
-    [(${namespace})]AsmRecursiveDescentParser(MCAsmLexer &lexer, MCAsmParser &parser, OperandVector& operands)
+//public:
+    /*[(${namespace})]AsmRecursiveDescentParser(MCAsmLexer &lexer, MCAsmParser &parser, OperandVector& operands)
         : Lexer(lexer), Parser(parser), Operands(operands) {
-    }
+    }*/
 
-    RuleParsingResult<StringRef> IDENTIFIER();
-    RuleParsingResult<NoData> ParseStatement();
-    RuleParsingResult<uint64> ParseRegister();
+    //RuleParsingResult<NoData> EOL();
+    //RuleParsingResult<NoData> ParseStatement();
+    RuleParsingResult<uint64_t> ParseRegister();
 };
 
 }
