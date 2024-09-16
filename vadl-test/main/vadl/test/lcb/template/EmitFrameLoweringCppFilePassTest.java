@@ -151,7 +151,7 @@ public class EmitFrameLoweringCppFilePassTest extends AbstractLcbTest {
            \s
                 Register FPReg = rv64im::X8;
            \s
-           \s
+            Register SPReg = rv64im::X2;
                 
             // Debug location must be unknown since the first debug location is used
             // to determine the end of the prologue.
@@ -195,7 +195,7 @@ public class EmitFrameLoweringCppFilePassTest extends AbstractLcbTest {
            \s
                 Register FPReg = rv64im::X8;
            \s
-           \s
+            Register SPReg = rv64im::X2;
                 
             // Get the insert location for the epilogue. If there were no terminators in
             // the block, get the last instruction.
@@ -342,7 +342,7 @@ public class EmitFrameLoweringCppFilePassTest extends AbstractLcbTest {
             if (FI >= MinCSFI && FI <= MaxCSFI)
             {
                 // use the stack pointer for callee saved register
-                FrameReg = «emit(stackPointer)»;
+                FrameReg = rv64im::X2;
                 Offset += StackOffset::getFixed(StackSize);
             }
             else if (RI->hasStackRealignment(MF) && !MFI.isFixedObjectIndex(FI))
@@ -352,7 +352,7 @@ public class EmitFrameLoweringCppFilePassTest extends AbstractLcbTest {
                 // after realignment.
                 // TODO: @chochrainer RISCV uses base register
                 
-                FrameReg = «emit(stackPointer)»;
+                FrameReg = rv64im::X2;
                 Offset += StackOffset::getFixed(StackSize);
             }
             else
