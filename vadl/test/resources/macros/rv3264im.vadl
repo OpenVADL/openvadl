@@ -286,7 +286,7 @@ instruction set architecture RV3264IM extending RV3264I = {
   constant AllOnes = (- (1 as SIntR)) as Regs
 
   function isOverflow (dividend : Regs, divisor : Regs) -> Bool =
-    (dividend = TopBitSet) & (dividend = AllOnes)
+    (dividend = TopBitSet) & (divisor = AllOnes)
 
   model MtypeInstr (name : Id, funct3 : Bin, lhsTy : Id, rhsTy : Id, resEx : Ex) : IsaDefs = {
     instruction $name : Rtype =                        // multiply instructions
@@ -303,12 +303,12 @@ instruction set architecture RV3264IM extending RV3264I = {
 // | Overflow (signed only)  | TopBitSet |    -1   | TopBitSet |    -    |     0    |     -    |
 // +-------------------------+-----------+---------+-----------|---------+----------+----------+
 
-  model DivModInstr (name : Id, opName : Id, funct3 : Bin, opCode : Bin, opTy : Id, sign : Id) : IsaDefs = {
+  model DivModInstr (name : Id, opName : Id, funct3 : Bin, opCode : Bin, opTy : Id) : IsaDefs = {
     instruction $name : Rtype =                        // division and remainder instructions
       let dividend = X(rs1) as $opTy in let divisor = X(rs2) as $opTy in
         X(rd) :=  if divisor = (0 as $opTy)
                     then match : Ex ($opName = div => AllOnes; _  => dividend)
-                  else match : Ex ($sign = SInt =>
+                  else match : Ex ($opTy = SIntR, $opTy = SIntW =>
                     if isOverflow (dividend, divisor)
                       then match : Ex ($opName = div => TopBitSet; _  => 0)
                       else VADL::$opName(dividend, divisor) as SIntR
@@ -324,24 +324,24 @@ instruction set architecture RV3264IM extending RV3264I = {
   $MtypeInstr (MULHSU ; 0b010 ; SInt ; UInt ; result(MLen2_1..MLen)) // multiply high signed * unsigned
   $MtypeInstr (MULHU  ; 0b011 ; UInt ; UInt ; result(MLen2_1..MLen)) // multiply high unsigned * unsigned
 
-  $DivModInstr(DIV   ; div ; 0b100 ; 0b011'0011 ; SIntR ; SInt)      // signed division
-  $DivModInstr(DIVU  ; div ; 0b101 ; 0b011'0011 ; UIntR ; UInt)      // unsigned division
-  $DivModInstr(REM   ; mod ; 0b110 ; 0b011'0011 ; SIntR ; SInt)      // signed remainder
+  $DivModInstr(DIV   ; div ; 0b100 ; 0b011'0011 ; SIntR)             // signed division
+  $DivModInstr(DIVU  ; div ; 0b101 ; 0b011'0011 ; UIntR)             // unsigned division
+  $DivModInstr(REM   ; mod ; 0b110 ; 0b011'0011 ; SIntR)             // signed remainder
 
 $Arch3264 ( // ((((((((((((((((((((((((((((((((((((((((
 
-  $DivModInstr(REMU  ; mod ; 0b111 ; 0b011'0011 ; UIntR ; UInt)      // unsigned remainder
+  $DivModInstr(REMU  ; mod ; 0b111 ; 0b011'0011 ; UIntR)             // unsigned remainder
 
 ;           // ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
-  $DivModInstr(REMU  ; mod ; 0b111 ; 0b011'0011 ; UIntR ; UInt)      // unsigned remainder
+  $DivModInstr(REMU  ; mod ; 0b111 ; 0b011'0011 ; UIntR)             // unsigned remainder
 
   $WtypeInstr (MULW  ;  *  ; 0b000 ; 0b000'0001 ; SIntW ; SIntW)     // multiply signed word
 
-  $DivModInstr(DIVW  ; div ; 0b100 ; 0b011'1011 ; SIntW ; SInt)      // signed division word
-  $DivModInstr(DIVUW ; div ; 0b101 ; 0b011'1011 ; UIntW ; UInt)      // unsigned division word
-  $DivModInstr(REMW  ; mod ; 0b110 ; 0b011'1011 ; SIntW ; SInt)      // signed remainder word
-  $DivModInstr(REMUW ; mod ; 0b111 ; 0b011'1011 ; UIntW ; UInt)      // unsigned remainder word
+  $DivModInstr(DIVW  ; div ; 0b100 ; 0b011'1011 ; SIntW)             // signed division word
+  $DivModInstr(DIVUW ; div ; 0b101 ; 0b011'1011 ; UIntW)             // unsigned division word
+  $DivModInstr(REMW  ; mod ; 0b110 ; 0b011'1011 ; SIntW)             // signed remainder word
+  $DivModInstr(REMUW ; mod ; 0b111 ; 0b011'1011 ; UIntW)             // unsigned remainder word
 
 )           // ))))))))))))))))))))))))))))))))))))))))
 

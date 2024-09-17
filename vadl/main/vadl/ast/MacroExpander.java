@@ -1005,12 +1005,13 @@ class MacroExpander
 
   private MacroMatch expandMacroMatch(MacroMatch macroMatch) {
     var choices = new ArrayList<>(macroMatch.choices());
-    choices.replaceAll(choice -> new MacroMatch.Choice(
-        expandNode(choice.candidate()),
-        choice.comparison(),
-        expandNode(choice.match()),
-        expandNode(choice.result())
-    ));
+    choices.replaceAll(choice -> {
+      var patterns = new ArrayList<>(choice.patterns());
+      patterns.replaceAll(pattern -> new MacroMatch.Pattern(
+          expandNode(pattern.candidate()), pattern.comparison(), expandNode(pattern.match()))
+      );
+      return new MacroMatch.Choice(patterns, expandNode(choice.result()));
+    });
     var defChoice = expandNode(macroMatch.defaultChoice());
     return new MacroMatch(macroMatch.resultType(), choices, defChoice,
         copyLoc(macroMatch.sourceLocation()));
@@ -1018,14 +1019,17 @@ class MacroExpander
 
   private @Nullable Node resolveMacroMatch(MacroMatch macroMatch) {
     for (var choice : macroMatch.choices()) {
-      var candidate = expandNode(choice.candidate());
-      if (isReplacementNode(candidate)) {
-        return null;
-      }
-      var equals = candidate.equals(choice.match());
-      var shouldEqual = choice.comparison() == MacroMatch.Comparison.EQUAL;
-      if (equals == shouldEqual) {
-        return expandNode(choice.result());
+      for (var pattern : choice.patterns()) {
+        var candidate = expandNode(pattern.candidate());
+        if (isReplacementNode(candidate)) {
+          // Cannot fully evaluate macro match, as at least one placeholder remains
+          return null;
+        }
+        var equals = candidate.equals(pattern.match());
+        var shouldEqual = pattern.comparison() == MacroMatch.Comparison.EQUAL;
+        if (equals == shouldEqual) {
+          return expandNode(choice.result());
+        }
       }
     }
     return expandNode(macroMatch.defaultChoice());

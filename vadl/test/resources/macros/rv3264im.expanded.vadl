@@ -660,7 +660,7 @@ instruction set architecture RV3264IM extending RV3264I = {
   constant TopBitSet = (1 as Regs << (MLen - 1)) as Regs
   constant AllOnes = -1 as SIntR as Regs
 
-  function isOverflow(dividend : Regs, divisor : Regs) -> Bool = ((dividend = TopBitSet) & (dividend = AllOnes))
+  function isOverflow(dividend : Regs, divisor : Regs) -> Bool = ((dividend = TopBitSet) & (divisor = AllOnes))
 
   instruction MUL : Rtype =   let result = (X(rs1) as SInt * X(rs2) as SInt) in
     X(rd) := result as Regs

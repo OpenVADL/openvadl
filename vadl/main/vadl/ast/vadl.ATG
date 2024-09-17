@@ -225,7 +225,7 @@ PRODUCTIONS
   }.
 
   // -- DEFINITIONS --------------------------------------------------------------------------------------------------
-  topLevelDefinitions<out Definition def> (. def = null; .)
+  topLevelDefinitions<out Definition def> (. def = DUMMY_DEF; .)
   = annotations<out Annotations annotations>
   ( instructionsetDefinition<out def>
   | applicationBinaryInterfaceDefinition<out def>
@@ -237,7 +237,7 @@ PRODUCTIONS
   )                                       (. def.withAnnotations(annotations); .)
   .
 
-  commonDefinition<out Definition def>    (. def = null; .)
+  commonDefinition<out Definition def>    (. def = DUMMY_DEF; .)
   = constantDefinition<out def>
   | formatDefinition<out def>
   | usingDefinition<out def>
@@ -251,7 +251,10 @@ PRODUCTIONS
     identifier<out Identifier identifier>                       (. Identifier extending = null; .)
     [
       EXTENDING
-      identifier<out extending>                                 (. readMacroSymbols(macroTable, Objects.requireNonNull(macroTable.requireIsa(extending)).definitions); .)
+      identifier<out extending>                                 (. var extendingIsa = macroTable.requireIsa(extending);
+                                                                   if (extendingIsa != null)
+                                                                     readMacroSymbols(macroTable, extendingIsa.definitions);
+                                                                .)
     ]
     SYM_EQ SYM_BRACE_OPEN
     isaDefinitionList<.out List<Definition> definitions.>       (. macroTable = Objects.requireNonNull(macroTable.parent); .)
@@ -288,7 +291,7 @@ PRODUCTIONS
     SYM_BRACK_CLOSE                     (. annotation = new Annotation(expr, type, property); .)
   .
 
-  isaDefinition<out Definition def> (. def = null; .)
+  isaDefinition<out Definition def> (. def = DUMMY_DEF; .)
   = commonDefinition<out def>
   | IF (la.kind == _GROUP && scanner.Peek().kind != _COUNTER)
     groupDefinition<out def>
@@ -333,7 +336,7 @@ PRODUCTIONS
   ]                                                              (. def = new FormatDefinition(id, type, fields, auxFields, startLoc.join(loc())); .)
   .
 
-  formatField<out FormatDefinition.FormatField field>             (. field = null; .)
+  formatField<out FormatDefinition.FormatField field> (. field = null; .)
   = identifier<out Identifier id>
     ( formatFieldRange<out field, id>
     | formatFieldType<out field, id>
@@ -424,7 +427,7 @@ PRODUCTIONS
     expression<out Expr expr, BIN_OPS> (. def = new RelocationDefinition(id, params, resultType, expr, start.join(loc())); .)
   .
 
-  identifierOrPlaceholder<out IdentifierOrPlaceholder id> (. id = null; .)
+  identifierOrPlaceholder<out IdentifierOrPlaceholder id> (. id = DUMMY_ID; .)
   = identifier<out id>
   | macroReplacement<out Node node>                       (. id = castId(this, node); .)
   .
@@ -440,6 +443,11 @@ PRODUCTIONS
   encodingDefinitionList<out EncodingDefinition.EncsNode encs> (. var start = lookaheadLoc(); var entries = new ArrayList<IsEncs>(); .)
   = encodingEntry<out IsEncs enc>                              (. addEncs(entries, enc); .)
     {
+      // In a macro match, commas are used for separating multiple pattern alternatives
+      // In the unlikely event that someone uses macro match with Encs literals,
+      // we interpret commas as part of the Encs body, not the macro match alternatives.
+      // Instead, the specification author can use multiple macro match productions with the same effect.
+      IF (la.kind == _SYM_COMMA)
       SYM_COMMA
       encodingEntry<out enc>                                   (. addEncs(entries, enc); .)
     }                                                          (. encs = new EncodingDefinition.EncsNode(entries, start.join(loc())); .)
@@ -712,8 +720,8 @@ PRODUCTIONS
     SYM_BRACE_CLOSE                 (. def = new OperationDefinition(name, resources, start.join(loc())); .)
   .
 
-  groupDefinition<out Definition def>                   (. TypeLiteral type = null; .)
-  = GROUP                                               (. var start = loc(); .)
+  groupDefinition<out Definition def>     (. TypeLiteral type = null; .)
+  = GROUP                                 (. var start = loc(); .)
     identifierOrPlaceholder<out IdentifierOrPlaceholder id>
     [
       SYM_COLON
@@ -787,7 +795,7 @@ PRODUCTIONS
     SYM_BRACE_CLOSE                             (. def = new ApplicationBinaryInterfaceDefinition(id, isaPath, elements, start.join(loc())); .)
   .
 
-  abiElementDefinition<out Definition def> (. def = null; .)
+  abiElementDefinition<out Definition def> (. def = DUMMY_DEF; .)
   = annotations<out Annotations annotations>
     ( IF (scanner.Peek().kind == _SEQUENCE) // RETURN can be followed by both SEQUENCE and VALUE / ADDRESS
       abiSequenceDef<out def>
@@ -853,7 +861,7 @@ PRODUCTIONS
     SYM_BRACE_CLOSE                        (. def = new MicroProcessorDefinition(id, implementedIsas, abi, definitions, start.join(loc())); .)
   .
 
-  cpuDefinition<out Definition def> (. def = null; .)
+  cpuDefinition<out Definition def> (. def = DUMMY_DEF; .)
   = annotations<out Annotations annotations>
     ( usingDefinition<out def>
     | patchDefinition<out def>
@@ -927,7 +935,7 @@ PRODUCTIONS
     SYM_BRACE_CLOSE                       (. def = new MicroArchitectureDefinition(id, processor, definitions, start.join(loc())); .)
   .
 
-  miaDefinition<out Definition def> (. def = null; .)
+  miaDefinition<out Definition def> (. def = DUMMY_DEF; .)
   = annotations<out Annotations annotations>
     ( macroInstructionDefinition<out def>
     | portBehaviorDefinition<out def>
@@ -1015,7 +1023,7 @@ PRODUCTIONS
 
   // -- STATEMENTS ---------------------------------------------------------------------------------------------------
 
-  statement<out Statement statement> (. statement = null; .)
+  statement<out Statement statement> (. statement = DUMMY_STAT; .)
   = letStatement<out statement>
   | ifStatement<out statement>
   | blockStatement<out statement>
@@ -1043,12 +1051,12 @@ PRODUCTIONS
     }
   .
 
-  assignmentOrCallStmt<out Statement statement> (. statement = null; .)
+  assignmentOrCallStmt<out Statement statement> (. statement = DUMMY_STAT; .)
   = callOrBinaryExpression<out Expr target, false>
     [
       SYM_ASSIGN
       expression<out Expr expr, BIN_OPS>        (. statement = new AssignmentStatement(target, expr); .)
-    ]                                           (. if (statement == null) statement = new CallStatement(target); .)
+    ]                                           (. if (statement.equals(DUMMY_STAT)) statement = new CallStatement(target); .)
   .
 
   instructionCallStmt<out InstructionCallStatement statement> (. var namedArguments = new ArrayList<InstructionCallStatement.NamedArgument>(); .)
@@ -1084,7 +1092,7 @@ PRODUCTIONS
       SYM_COMMA
       identifier<out Identifier nextId> (. identifiers.add(nextId); .)
     }
-    SYM_EQ                              (. Expr valueExpr = null; .)
+    SYM_EQ                              (. Expr valueExpr = DUMMY_EXPR; .)
     ( IF (la.kind == _IF_KW)
       ifExpression<out valueExpr, BIN_OPS_EXCEPT_IN>
     | IF (la.kind == _FORALL)
@@ -1114,6 +1122,10 @@ PRODUCTIONS
     WITH                                    (. var patterns = new ArrayList<Expr>(); .)
     SYM_BRACE_OPEN                          (. Expr pattern; .)
     ( expression<out pattern, BIN_OPS>      (. patterns.add(pattern); .)
+      {
+        SYM_COMMA
+        expression<out pattern, BIN_OPS>    (. patterns.add(pattern); .)
+      }
     | SYM_BRACE_OPEN
       expression<out pattern, BIN_OPS>      (. patterns.add(pattern); .)
       {
@@ -1128,6 +1140,10 @@ PRODUCTIONS
       IF (la.kind == _SYM_COMMA && scanner.Peek().kind != _SYM_UNDERSCORE)
       SYM_COMMA                             (. patterns.clear(); .)
       ( expression<out pattern, BIN_OPS>    (. patterns.add(pattern); .)
+        {
+          SYM_COMMA
+          expression<out pattern, BIN_OPS>  (. patterns.add(pattern); .)
+        }
       | SYM_BRACE_OPEN
         expression<out pattern, BIN_OPS>    (. patterns.add(pattern); .)
         {
@@ -1199,7 +1215,7 @@ PRODUCTIONS
   /// Call expressions of form "a::b<3>().c()".
   /// Due to the "<"-ambiguity with the less-than operator, this rule can also return a BinaryExpr.
   /// Use the "allowLtOp" parameter to disallow this behavior, e.g. in type literals.
-  callOrBinaryExpression<out Expr expr, boolean allowLtOp> (. expr = null; .)
+  callOrBinaryExpression<out Expr expr, boolean allowLtOp> (. expr = DUMMY_EXPR; .)
   = IF (isIdentifierToken(la) || isMacroReplacementOfType(this, BasicSyntaxType.SYM_EX))
     symbolOrBinaryExpression<out expr, allowLtOp>          (. List<List<Expr>> argsIndices = new ArrayList<>(); .)
     {
@@ -1239,7 +1255,7 @@ PRODUCTIONS
   /// Symbol expressions of form "a::b<3>".
   /// Due to the "<"-ambiguity with the less-than operator, this rule can also return a BinaryExpr.
   /// Use the "allowLtOp" parameter to disallow this behavior, e.g. in type literals.
-  symbolOrBinaryExpression<out Expr expr, boolean allowLtOp> (. expr = null; .)
+  symbolOrBinaryExpression<out Expr expr, boolean allowLtOp> (. expr = DUMMY_EXPR; .)
   = IF (isIdentifierToken(la) || isMacroReplacementOfType(this, BasicSyntaxType.ID))
     identifierPath<out IsId path>
     [
@@ -1249,8 +1265,8 @@ PRODUCTIONS
       [
         IF (!allowLtOp || la.kind == _SYM_GT)
         SYM_GT                                               (. expr = new SymbolExpr(path, term, path.location().join(loc())); .)
-      ]                                                      (. if (expr == null) expr = new BinaryExpr((Expr) path, new BinOpExpr(Operator.Less(), lessLoc), term); .)
-    ]                                                        (. if (expr == null) expr = (Expr) path; .)
+      ]                                                      (. if (expr.equals(DUMMY_EXPR)) expr = new BinaryExpr((Expr) path, new BinOpExpr(Operator.Less(), lessLoc), term); .)
+    ]                                                        (. if (expr.equals(DUMMY_EXPR)) expr = (Expr) path; .)
   | macroReplacement<out Node node>                          (. expr = castExpr(this, node); .)
   .
 
@@ -1302,7 +1318,7 @@ PRODUCTIONS
   | macroReplacement<out Node n> (. op = (IsUnOp) n; .)
   .
 
-  term<out Expr expr>            (. expr = null; .)
+  term<out Expr expr>            (. expr = DUMMY_EXPR; .)
   = literal<out expr>
   | IF (la.kind == _MATCH && scanner.Peek().kind != _SYM_COLON) // Disambiguate from macro match
     matchExpression<out expr>
@@ -1329,12 +1345,12 @@ PRODUCTIONS
     SYM_PAREN_CLOSE                       (. expr.loc = expr.loc.join(loc()); .)
   .
 
-  literal<out Expr expr> (. expr = null; .)
+  literal<out Expr expr> (. expr = DUMMY_EXPR; .)
   = valLiteral<out expr>
   | stringLiteral<out expr>
   .
 
-  valLiteral<out Expr expr> (. expr = null; .)
+  valLiteral<out Expr expr> (. expr = DUMMY_EXPR; .)
   = boolLiteral<out expr>
   | intLiteral<out expr>
   | binLiteral<out expr>
@@ -1348,7 +1364,7 @@ PRODUCTIONS
   = (hexLit | binLit) (. expr = new BinaryLiteral(t.val, loc()); .)
   .
 
-  boolLiteral<out Expr expr> (. expr = null; .)
+  boolLiteral<out Expr expr> (. expr = DUMMY_EXPR; .)
   = TRUE                     (. expr = new BoolLiteral(true, loc()); .)
   | FALSE                    (. expr = new BoolLiteral(false, loc()); .)
   .
@@ -1379,7 +1395,7 @@ PRODUCTIONS
       SYM_COMMA
       identifier<out Identifier nextId> (. identifiers.add(nextId); .)
     }
-    SYM_EQ                              (. Expr valueExpr = null; .)
+    SYM_EQ                              (. Expr valueExpr = DUMMY_EXPR; .)
     ( IF (la.kind == _IF_KW)
       ifExpression<out valueExpr, BIN_OPS_EXCEPT_IN>
     | IF (la.kind == _FORALL)
@@ -1404,6 +1420,10 @@ PRODUCTIONS
     SYM_BRACE_OPEN                            (. var cases = new ArrayList<MatchExpr.Case>();  .)
     {                                         (. var patterns = new ArrayList<Expr>(); .)
       ( expression<out Expr pattern, BIN_OPS> (. patterns.add(pattern); .)
+        {
+          SYM_COMMA
+          expression<out pattern, BIN_OPS>    (. patterns.add(pattern); .)
+        }
       | SYM_BRACE_OPEN
         expression<out Expr pattern, BIN_OPS> (. patterns.add(pattern); .)
         {
@@ -1422,7 +1442,7 @@ PRODUCTIONS
     SYM_BRACE_CLOSE                           (. expr = new MatchExpr(candidate, cases, defaultResult, start.join(loc())); .)
   .
 
-  existsExpression<out Expr expr>                   (. expr = null; .)
+  existsExpression<out Expr expr>                   (. expr = DUMMY_EXPR; .)
   = EXISTS                                          (. var start = loc(); .)
     ( IF (la.kind == _SYM_IN)
       SYM_IN
@@ -1451,7 +1471,7 @@ PRODUCTIONS
     SYM_BRACE_CLOSE
   .
 
-  forallExpression<out Expr forallExpr, boolean[] allowedOps> (. forallExpr = null; .)
+  forallExpression<out Expr forallExpr, boolean[] allowedOps> (. forallExpr = DUMMY_EXPR; .)
   = FORALL                                                    (. var start = loc(); .)
     identifierOrPlaceholder<out IdentifierOrPlaceholder id>
     SYM_IN
@@ -1587,7 +1607,7 @@ PRODUCTIONS
 
   // -- MACROS -------------------------------------------------------------------------------------------------------
 
-  macroReplacement<out Node body> (. body = null; .)
+  macroReplacement<out Node body> (. body = DUMMY_ID; .)
   = ( macroMatch<out body>
     | maximumMacroExpr<out body>
     | extendId<out body>
@@ -1608,28 +1628,40 @@ PRODUCTIONS
   .
 
   macroMatch<out Node node>
-  = MATCH                                (. var start = loc(); .)
+  = MATCH                                             (. var start = loc(); .)
     SYM_COLON
     basicSyntaxType<out SyntaxType type>
-    SYM_PAREN_OPEN                       (. var choices = new ArrayList<MacroMatch.Choice>(); .)
-    macroReplacement<out Node candidate>
-    (SYM_EQ | SYM_NEQ )                  (. var comparison = t.kind == _SYM_EQ ? MacroMatch.Comparison.EQUAL : MacroMatch.Comparison.NOT_EQUAL; .)
-    macroBody<out Node match, candidate.syntaxType()>
-    SYM_BIGARROW
-    macroBody<out Node result, type>     (. choices.add(new MacroMatch.Choice(candidate, comparison, match, result)); .)
-    SYM_SEMICOLON
+    SYM_PAREN_OPEN                                    (. var choices = new ArrayList<MacroMatch.Choice>(); .)
+    macroReplacement<out Node candidate>              (. var patterns = new ArrayList<MacroMatch.Pattern>(); .)
+    (SYM_EQ | SYM_NEQ )                               (. var comparison = t.kind == _SYM_EQ ? MacroMatch.Comparison.EQUAL : MacroMatch.Comparison.NOT_EQUAL; .)
+    macroBody<out Node match, candidate.syntaxType()> (. patterns.add(new MacroMatch.Pattern(candidate, comparison, match)); .)
     {
+      SYM_COMMA
       macroReplacement<out candidate>
-      (SYM_EQ | SYM_NEQ )                (. comparison = t.kind == _SYM_EQ ? MacroMatch.Comparison.EQUAL : MacroMatch.Comparison.NOT_EQUAL; .)
-      macroBody<out match, candidate.syntaxType()>
+      (SYM_EQ | SYM_NEQ )                             (. comparison = t.kind == _SYM_EQ ? MacroMatch.Comparison.EQUAL : MacroMatch.Comparison.NOT_EQUAL; .)
+      macroBody<out match, candidate.syntaxType()>    (. patterns.add(new MacroMatch.Pattern(candidate, comparison, match)); .)
+    }
+    SYM_BIGARROW
+    macroBody<out Node result, type>                  (. choices.add(new MacroMatch.Choice(patterns, result)); .)
+    SYM_SEMICOLON
+    {                                                 (. patterns = new ArrayList<MacroMatch.Pattern>(); .)
+      macroReplacement<out candidate>
+      (SYM_EQ | SYM_NEQ )                             (. comparison = t.kind == _SYM_EQ ? MacroMatch.Comparison.EQUAL : MacroMatch.Comparison.NOT_EQUAL; .)
+      macroBody<out match, candidate.syntaxType()>    (. patterns.add(new MacroMatch.Pattern(candidate, comparison, match)); .)
+      {
+        SYM_COMMA
+        macroReplacement<out candidate>
+        (SYM_EQ | SYM_NEQ )                           (. comparison = t.kind == _SYM_EQ ? MacroMatch.Comparison.EQUAL : MacroMatch.Comparison.NOT_EQUAL; .)
+        macroBody<out match, candidate.syntaxType()>  (. patterns.add(new MacroMatch.Pattern(candidate, comparison, match)); .)
+      }
       SYM_BIGARROW
-      macroBody<out result, type>        (. choices.add(new MacroMatch.Choice(candidate, comparison, match, result)); .)
+      macroBody<out result, type>                     (. choices.add(new MacroMatch.Choice(patterns, result)); .)
       SYM_SEMICOLON
     }
     SYM_UNDERSCORE
     SYM_BIGARROW
     macroBody<out Node defaultChoice, type>
-    SYM_PAREN_CLOSE                      (. node = createMacroMatch(type, choices, defaultChoice, start.join(loc())); .)
+    SYM_PAREN_CLOSE                                   (. node = createMacroMatch(type, choices, defaultChoice, start.join(loc())); .)
   .
 
   /// Parses the longest macro expression (either instance or placeholder) from the parser.
@@ -1688,7 +1720,7 @@ PRODUCTIONS
                                             .)
   .
 
-  macroBody<out Node body, SyntaxType type>                 (. body = null; var start = lookaheadLoc(); .)
+  macroBody<out Node body, SyntaxType type>                 (. body = DUMMY_ID; var start = lookaheadLoc(); .)
   = (
     IF (type == BasicSyntaxType.STATS)
     statementList<.out List<Statement> stmts.>              (. body = new StatementList(stmts, start.join(loc())); .)
@@ -1696,8 +1728,8 @@ PRODUCTIONS
     statement<out body>
   | IF (type == BasicSyntaxType.ENCS)
     encodingDefinitionList<out body>
-  | IF (type == BasicSyntaxType.ISA_DEFS)            (. macroTable = macroTable.createChild(); .)
-    isaDefinitionList<.out List<Definition> defs.>   (. body = new DefinitionList(defs, start.join(loc())); macroTable = macroTable.parent; .)
+  | IF (type == BasicSyntaxType.ISA_DEFS)                   (. macroTable = macroTable.createChild(); .)
+    isaDefinitionList<.out List<Definition> defs.>          (. body = new DefinitionList(defs, start.join(loc())); macroTable = macroTable.parent; .)
   | IF (type == BasicSyntaxType.EX)
     expression<out body, BIN_OPS>
   | IF (type == BasicSyntaxType.LIT)
@@ -1754,7 +1786,7 @@ PRODUCTIONS
   )                                                         (. assertSyntaxType(this, body, type, "Mismatched node type"); .)
   .
 
-  syntaxType<out SyntaxType type> (. type = null; .)
+  syntaxType<out SyntaxType type> (. type = BasicSyntaxType.INVALID; .)
   = IF (la.kind == _identifierToken)
     identifier<out Identifier id> (. type = macroTable.findType(id); .)
   | projectionType<out type>
@@ -1772,7 +1804,7 @@ PRODUCTIONS
     syntaxType<out SyntaxType resultType>     (. type = new ProjectionType(arguments, resultType); .)
   .
 
-  basicSyntaxType<out BasicSyntaxType type> (. type = null; .)
+  basicSyntaxType<out BasicSyntaxType type> (. type = BasicSyntaxType.INVALID; .)
   = T_BIN                                   (. type = BasicSyntaxType.BIN; .)
   | T_BIN_OP                                (. type = BasicSyntaxType.BIN_OP; .)
   | T_BOOL                                  (. type = BasicSyntaxType.BOOL; .)

@@ -130,4 +130,20 @@ public class ExprTest {
     var ast = VadlParser.parse(prog);
     verifyPrettifiedAst(ast);
   }
+
+  @Test
+  void matchExpressions() {
+    var prog = """
+        constant x = 5
+        constant a = match x with 
+        { 1 => 0
+        , 2, 3 => 4
+        , {4, 5} => 6
+        , _ => 7
+        }
+        """;
+
+    var ast = VadlParser.parse(prog);
+    verifyPrettifiedAst(ast);
+  }
 }

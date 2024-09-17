@@ -28,6 +28,14 @@ class ParserUtils {
   // Must be kept in sync with auxiliaryFields
   static boolean[] AUX_FIELD_TOKENS;
 
+  // Dummy nodes - for use in scenarios where the parser encountered an error, but since the parser
+  // keeps going, using null would lead to a NullPointerException.
+  static Identifier DUMMY_ID = new Identifier("dummy", SourceLocation.INVALID_SOURCE_LOCATION);
+  static Expr DUMMY_EXPR = DUMMY_ID;
+  static Definition DUMMY_DEF =
+      new ConstantDefinition(DUMMY_ID, null, DUMMY_EXPR, SourceLocation.INVALID_SOURCE_LOCATION);
+  static Statement DUMMY_STAT = new CallStatement(DUMMY_ID);
+
   static {
     NO_OPS = new boolean[Parser.maxT + 1];
 
@@ -362,7 +370,7 @@ class ParserUtils {
     } else {
       parser.errors.SemErr(node.location().begin().line(), node.location().begin().column(),
           "Expected node of type Ex, received " + node.syntaxType().print() + " - " + node);
-      return new Identifier("invalid", node.location());
+      return DUMMY_EXPR;
     }
   }
 
@@ -376,8 +384,7 @@ class ParserUtils {
     } else {
       parser.errors.SemErr(node.location().begin().line(), node.location().begin().column(),
           "Expected node of type Encs, received " + node.syntaxType().print() + " - " + node);
-      return new EncodingDefinition.EncodingField(new Identifier("invalid", node.location()),
-          new StringLiteral("<<invalid>>", node.location()));
+      return new EncodingDefinition.EncodingField(DUMMY_ID, DUMMY_ID);
     }
   }
 
@@ -391,7 +398,7 @@ class ParserUtils {
     } else {
       parser.errors.SemErr(node.location().begin().line(), node.location().begin().column(),
           "Expected node of type Id, received " + node.syntaxType().print() + " - " + node);
-      return new Identifier("invalid", node.location());
+      return DUMMY_ID;
     }
   }
 
@@ -419,8 +426,7 @@ class ParserUtils {
     } else {
       parser.errors.SemErr(node.location().begin().line(), node.location().begin().column(),
           "Expected node of type IsaDefs, received " + node.syntaxType().print() + " - " + node);
-      return new ConstantDefinition(new Identifier("invalid", node.location()), null,
-          new Identifier("invalid", node.location()), node.location());
+      return DUMMY_DEF;
     }
   }
 
@@ -434,7 +440,7 @@ class ParserUtils {
     } else {
       parser.errors.SemErr(node.location().begin().line(), node.location().begin().column(),
           "Expected node of type Stat, received " + node.syntaxType().print() + " - " + node);
-      return new CallStatement(new Identifier("invalid", node.location()));
+      return DUMMY_STAT;
     }
   }
 
@@ -448,7 +454,7 @@ class ParserUtils {
     } else {
       parser.errors.SemErr(node.location().begin().line(), node.location().begin().column(),
           "Expected node of type Stats, received " + node.syntaxType().print() + " - " + node);
-      return new CallStatement(new Identifier("invalid", node.location()));
+      return DUMMY_STAT;
     }
   }
 
