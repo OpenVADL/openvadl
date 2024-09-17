@@ -278,9 +278,9 @@ public class EmitAsmRecursiveDescentParserHeaderFilePassTest extends AbstractLcb
             // «visitor.resultType( AsmType.Expression )» BuiltinExpression();
                 
         public:
-            /*rv64imAsmRecursiveDescentParser(MCAsmLexer &lexer, MCAsmParser &parser, OperandVector& operands)
+            rv64imAsmRecursiveDescentParser(MCAsmLexer &lexer, MCAsmParser &parser, OperandVector& operands)
                 : Lexer(lexer), Parser(parser), Operands(operands) {
-            }*/
+            }
                 
             //RuleParsingResult<NoData> EOL();
             RuleParsingResult<NoData> ParseStatement();
@@ -289,7 +289,7 @@ public class EmitAsmRecursiveDescentParserHeaderFilePassTest extends AbstractLcb
                 
         }
                 
-        #endif // LLVM_LIB_TARGET_rv64im_ASMPARSER_H        
+        #endif // LLVM_LIB_TARGET_rv64im_ASMPARSER_H
         """.trim().lines(), output);
   }
 }
