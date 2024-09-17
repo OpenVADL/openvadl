@@ -7,15 +7,15 @@ import vadl.types.Type;
  */
 public class CppType extends Type {
   protected final String typeName;
-  private final boolean isCopy;
+  private final boolean isReference;
   private final boolean isConst;
 
   /**
    * Constructor.
    */
-  public CppType(String typeName, boolean isCopy, boolean isConst) {
+  public CppType(String typeName, boolean isReference, boolean isConst) {
     this.typeName = typeName;
-    this.isCopy = isCopy;
+    this.isReference = isReference;
     this.isConst = isConst;
   }
 
@@ -25,6 +25,6 @@ public class CppType extends Type {
   }
 
   public String lower() {
-    return String.format("%s %s%s", isConst ? "const" : "", typeName, isCopy ? "" : "&");
+    return String.format("%s %s%s", isConst ? "const" : "", typeName, isReference ? "&" : "");
   }
 }

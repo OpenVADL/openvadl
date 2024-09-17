@@ -50,7 +50,7 @@ public class PseudoExpansionCodeGenerator extends CodeGenerator {
       throw new ViamError("For the function is a return node required.");
     }
 
-    writer.write("std::vector< MCInst& > result;\n");
+    writer.write("std::vector< MCInst > result;\n");
     var visitor =
         new TemporaryCodeGeneratorVisitor(writer, namespace, fieldUsages,
             immediateDecodings, variants, relocations);

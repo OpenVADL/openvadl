@@ -21,12 +21,14 @@ bool [(${namespace})]MCInstExpander::needsExpansion(const MCInst &MCI) const
     switch (opcode)
     {
     // instructions
+    /*
     [# th:each="instruction : ${pseudoInstructions}" ]
     case [(${namespace})]::[(${instruction.pseudoInstruction.identifier.simpleName})]:
     [/]
         {
             return true;
         }
+        */
         default:
         {
             return false;
@@ -40,6 +42,7 @@ bool [(${namespace})]MCInstExpander::isExpandable(const MCInst &MCI) const
     auto opcode = MCI.getOpcode();
     switch (opcode)
     {
+    /*
     // instructions
     [# th:each="instruction : ${pseudoInstructions}" ]
         case [(${namespace})]::[(${instruction.pseudoInstruction.identifier.simpleName})]:
@@ -47,6 +50,7 @@ bool [(${namespace})]MCInstExpander::isExpandable(const MCInst &MCI) const
         {
             return true;
         }
+        */
         default:
         {
             return false;
