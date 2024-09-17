@@ -6,7 +6,6 @@
 #include "llvm/MC/MCParser/MCAsmLexer.h"
 #include "llvm/MC/MCParser/MCAsmParser.h"
 #include "llvm/MC/MCParser/MCTargetAsmParser.h"
-#include "llvm/MC/MCParser/MCTargetAsmParser.h"
 #include "llvm/MC/TargetRegistry.h"
 #include "Utils/ImmediateUtils.h"
 #include "llvm/MC/MCRegister.h"
@@ -86,6 +85,7 @@ bool [(${namespace})]AsmParser::MatchAndEmitInstruction(SMLoc IDLoc, unsigned &O
 
     std::vector<size_t> OpIndex;
     std::vector<std::string> targets;
+    /*
     switch(Opcode) {
         [# th:each="instruction : ${instructions}" ]
         case [(${namespace})]::[(${instruction.identifier.simpleName()})]: targets = {
@@ -93,6 +93,7 @@ bool [(${namespace})]AsmParser::MatchAndEmitInstruction(SMLoc IDLoc, unsigned &O
         }; break;
         [/]
     }
+    */
 
     for( unsigned i = 0; i < targets.size(); i++ )
     {

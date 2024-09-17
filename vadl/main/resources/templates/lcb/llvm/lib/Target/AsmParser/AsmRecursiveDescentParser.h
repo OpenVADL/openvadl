@@ -75,9 +75,9 @@ class [(${namespace})]AsmRecursiveDescentParser {
     // «visitor.resultType( AsmType.Expression )» BuiltinExpression();
 
 public:
-    /*[(${namespace})]AsmRecursiveDescentParser(MCAsmLexer &lexer, MCAsmParser &parser, OperandVector& operands)
+    [(${namespace})]AsmRecursiveDescentParser(MCAsmLexer &lexer, MCAsmParser &parser, OperandVector& operands)
         : Lexer(lexer), Parser(parser), Operands(operands) {
-    }*/
+    }
 
     //RuleParsingResult<NoData> EOL();
     RuleParsingResult<NoData> ParseStatement();

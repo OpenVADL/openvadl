@@ -68,6 +68,7 @@ bool [(${namespace})]MCInstExpander::expand(const MCInst &MCI, std::vector<MCIns
         // instructions
         //
 
+    /*
     [# th:each="instruction : ${pseudoInstructions}" ]
       case [(${namespace})]::[(${instruction.pseudoInstruction.identifier.simpleName})]:
       {
@@ -75,6 +76,7 @@ bool [(${namespace})]MCInstExpander::expand(const MCInst &MCI, std::vector<MCIns
         return true;
       }
     [/]
+    */
       default:
         {
             return false;
