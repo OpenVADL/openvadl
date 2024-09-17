@@ -248,7 +248,7 @@ public class LlvmLoweringPassTest extends AbstractLcbTest {
     expectedResults.put("JALR", new TestOutput(
         List.of(new TableGenInstructionOperand(DUMMY_NODE, "X", "rs1"),
             new TableGenInstructionOperand(DUMMY_NODE, "RV64IM_Itype_immAsInt64", "imm")),
-        Collections.emptyList(),
+        List.of(new TableGenInstructionOperand(DUMMY_NODE, "X", "rd")),
         Collections.emptyList(),
         Collections.emptyList(),
         createEmptyFlags(),

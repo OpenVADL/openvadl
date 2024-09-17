@@ -12,6 +12,7 @@ import vadl.lcb.passes.llvmLowering.strategies.LlvmInstructionLoweringStrategy;
 import vadl.lcb.passes.llvmLowering.tablegen.model.TableGenInstructionOperand;
 import vadl.lcb.passes.llvmLowering.tablegen.model.TableGenPattern;
 import vadl.viam.Instruction;
+import vadl.viam.graph.dependency.WriteRegFileNode;
 import vadl.viam.passes.functionInliner.UninlinedGraph;
 
 /**
@@ -41,7 +42,7 @@ public class LlvmInstructionLoweringIndirectJumpStrategyImpl
     return Optional.of(new LlvmLoweringIntermediateResult(
         copy,
         getTableGenInputOperands(copy),
-        Collections.emptyList(), // expecting no outputs
+        getTableGenOutputOperands(copy),
         LlvmLoweringPass.Flags.empty(),
         Collections.emptyList(), // TODO: currently do not generate indirect call
         getRegisterUses(copy),

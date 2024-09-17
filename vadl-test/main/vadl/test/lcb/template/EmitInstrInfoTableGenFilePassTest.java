@@ -703,7 +703,7 @@ public class EmitInstrInfoTableGenFilePassTest extends AbstractLcbTest {
         let Size = 4;
         let CodeSize = 4;
                 
-        let OutOperandList = ( outs  );
+        let OutOperandList = ( outs X:$rd );
         let InOperandList = ( ins X:$rs1, RV64IM_Itype_immAsInt64:$imm );
                 
         field bits<32> Inst;
