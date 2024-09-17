@@ -426,7 +426,7 @@ class ParserUtils {
   static Node expandMacro(Parser parser, Node node) {
     if (node instanceof MacroInstance macroInstance
         && macroInstance.macroOrPlaceholder() instanceof Macro) {
-      var macroExpander = new MacroExpander(Map.of(), parser.macroOverrides);
+      var macroExpander = new MacroExpander(Map.of(), parser.macroOverrides, node.location());
       return macroExpander.expandNode(node);
     }
     return node;

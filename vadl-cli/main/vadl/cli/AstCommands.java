@@ -36,7 +36,7 @@ class AstCommands {
       return 1;
     } catch (DiagnosticList diagnostics) {
       // TODO Log details to slf4j
-      (new DiagnosticPrinter()).print(diagnostics);
+      new DiagnosticPrinter().print(diagnostics);
       return 1;
     }
   }
@@ -75,7 +75,7 @@ class AstCommands {
         return 1;
       } catch (DiagnosticList diagnostics) {
         // TODO Log details to slf4j
-        (new DiagnosticPrinter()).print(diagnostics);
+        new DiagnosticPrinter().print(diagnostics);
         return 1;
       }
     }
@@ -115,7 +115,7 @@ class AstCommands {
         return 1;
       } catch (DiagnosticList diagnostics) {
         // TODO Log details to slf4j
-        (new DiagnosticPrinter()).print(diagnostics);
+        new DiagnosticPrinter().print(diagnostics);
         return 1;
       }
     }

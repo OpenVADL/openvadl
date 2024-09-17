@@ -74,6 +74,7 @@ public class VadlParser {
     var scanner = new Scanner(new ByteArrayInputStream(program.getBytes(StandardCharsets.UTF_8)));
     var parser = new Parser(scanner);
     parser.resolutionUri = resolutionUri;
+    parser.sourceFile = URI.create("memory://internal");
     macroOverrides.forEach((key, value) -> parser.macroOverrides.put(key,
         new Identifier(value, SourceLocation.INVALID_SOURCE_LOCATION)));
     return parse(parser);
