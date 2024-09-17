@@ -22,7 +22,7 @@ public class ImmediatePredicateFunctionProvider {
         passResults.lastResultOf(CppTypeNormalizationForPredicatesPass.class))
         .fields()
         .stream()
-        .map(x -> new Pair<>(x.getKey(), new CppFunction(x.getValue(), "predicate")))
+        .map(x -> new Pair<>(x.getKey(), new CppFunction(x.getValue())))
         .collect(Collectors.toMap(Pair::left, Pair::right));
   }
 }

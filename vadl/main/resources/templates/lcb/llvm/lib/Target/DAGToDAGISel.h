@@ -2,7 +2,7 @@
 #define LLVM_LIB_TARGET_[(${namespace})]_[(${namespace})]DAGTODDAGISEL_H
 
 #include "[(${namespace})]RegisterInfo.h"
-#include "[(${namespace})]Subtarget.h"
+#include "[(${namespace})]SubTarget.h"
 #include "[(${namespace})]TargetMachine.h"
 #include "Utils/[(${namespace})]BaseInfo.h"
 #include "Utils/ImmediateUtils.h"

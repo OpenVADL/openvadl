@@ -10,35 +10,37 @@ import vadl.pass.PassResults;
 import vadl.viam.Specification;
 
 /**
- * This file contains the implementation for emitting asm instructions.
+ * This file contains the definitions for emitting asm instructions.
  */
-public class EmitInstrPrinterCppFilePass extends LcbTemplateRenderingPass {
+public class EmitInstPrinterHeaderFilePass extends LcbTemplateRenderingPass {
 
-  public EmitInstrPrinterCppFilePass(LcbConfiguration lcbConfiguration)
-      throws IOException {
+  public EmitInstPrinterHeaderFilePass(LcbConfiguration lcbConfiguration) throws IOException {
     super(lcbConfiguration);
   }
 
   @Override
   protected String getTemplatePath() {
-    return "lcb/llvm/lib/Target/MCTargetDesc/TargetInstrPrinter.cpp";
+    return "lcb/llvm/lib/Target/MCTargetDesc/TargetInstPrinter.h";
   }
 
   @Override
   protected String getOutputPath() {
     var processorName = lcbConfiguration().processorName().value();
     return "llvm/lib/Target/" + processorName + "/MCTargetDesc/"
-        + processorName + "InstrPrinter.cpp";
+        + processorName + "InstPrinter.h";
   }
 
-  record Instruction(String simpleName) {
+  record RegisterClass(String simpleName) {
 
   }
 
   @Override
   protected Map<String, Object> createVariables(final PassResults passResults,
                                                 Specification specification) {
+    var registerFiles =
+        specification.registerFiles().map(x -> new RegisterClass(x.identifier.simpleName()))
+            .toList();
     return Map.of(CommonVarNames.NAMESPACE, specification.name(),
-        CommonVarNames.PRINTABLE_INSTRUCTIONS, List.of(new Instruction("instructionValue")));
+        CommonVarNames.REGISTERS_CLASSES, registerFiles);
   }
 }

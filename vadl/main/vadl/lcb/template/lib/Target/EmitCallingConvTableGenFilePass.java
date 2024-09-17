@@ -58,7 +58,7 @@ public class EmitCallingConvTableGenFilePass extends LcbTemplateRenderingPass {
     return new AssignToReg(
         ValueType.from(abi.returnRegisters().get(0).registerFile().resultType()).getLlvmType(),
         abi.returnRegisters().stream().map(DummyAbi.RegisterRef::render)
-            .collect(Collectors.joining(",")));
+            .collect(Collectors.joining(", ")));
   }
 
   @NotNull
@@ -69,6 +69,6 @@ public class EmitCallingConvTableGenFilePass extends LcbTemplateRenderingPass {
     return new AssignToReg(
         ValueType.from(abi.argumentRegisters().get(0).registerFile().resultType()).getLlvmType(),
         abi.argumentRegisters().stream().map(DummyAbi.RegisterRef::render)
-            .collect(Collectors.joining(",")));
+            .collect(Collectors.joining(", ")));
   }
 }

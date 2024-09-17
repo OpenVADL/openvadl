@@ -10,7 +10,7 @@ ArrayRef<const char *> [(${namespace})]TargetInfo::getGCCRegNames() const
     static const char *const GCCRegNames[] =
     {
         [#th:block th:each="register, iterStat : ${registers}" ]
-            [(${register.name})][#th:block th:if="${!iterStat.last}"],[/th:block]
+            "[(${register.name})]"[#th:block th:if="${!iterStat.last}"],[/th:block]
         [/th:block]
     };
     return llvm::makeArrayRef( GCCRegNames );
@@ -22,8 +22,8 @@ ArrayRef<TargetInfo::GCCRegAlias> [(${namespace})]TargetInfo::getGCCRegAliases()
     {
     [# th:each="register, iterStat : ${registers}" ]
         {
-            {[# th:each="alias, iterAliasStat : ${registers}" ] [(${alias})][# th:if="${!iterAliasStat.last}" ],[/] [/]},
-            [(${register.name})]
+            {[# th:each="alias, iterAliasStat : ${registers}" ] "[(${alias.name})]"[# th:if="${!iterAliasStat.last}" ],[/] [/]},
+            "[(${register.name})]"
         }[# th:if="${!iterStat.last}" ],[/]
     [/]
     };

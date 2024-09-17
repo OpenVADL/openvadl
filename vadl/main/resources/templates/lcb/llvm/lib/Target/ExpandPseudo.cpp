@@ -1,10 +1,10 @@
-#include "«namespace»ExpandPseudo.h"
+#include "[(${namespace})]ExpandPseudo.h"
 
 using namespace llvm;
 
-bool «namespace»ExpandPseudo::runOnMachineFunction(MachineFunction &MF)
+bool [(${namespace})]ExpandPseudo::runOnMachineFunction(MachineFunction &MF)
 {
-    TII = static_cast<const «namespace»InstrInfo *>(MF.getSubtarget().getInstrInfo());
+    TII = static_cast<const [(${namespace})]InstrInfo *>(MF.getSubtarget().getInstrInfo());
     bool Modified = false;
     for (auto &MBB : MF)
     {
@@ -13,7 +13,7 @@ bool «namespace»ExpandPseudo::runOnMachineFunction(MachineFunction &MF)
     return Modified;
 }
 
-bool «namespace»ExpandPseudo::expandMBB(MachineBasicBlock &MBB)
+bool [(${namespace})]ExpandPseudo::expandMBB(MachineBasicBlock &MBB)
 {
     bool Modified = false;
     MachineBasicBlock::iterator MBBI = MBB.begin();
@@ -32,7 +32,7 @@ bool «namespace»ExpandPseudo::expandMBB(MachineBasicBlock &MBB)
 // Machine Instruction Expansion Methods
 //
 
-bool «namespace»ExpandPseudo::expandMI(MachineBasicBlock &MBB, MachineBasicBlock::iterator MBBI, MachineBasicBlock::iterator &NextMBBI)
+bool [(${namespace})]ExpandPseudo::expandMI(MachineBasicBlock &MBB, MachineBasicBlock::iterator MBBI, MachineBasicBlock::iterator &NextMBBI)
 {
     MachineInstr &MI = *MBBI;
     if (requiresExpansion(MI) == false)
@@ -44,37 +44,22 @@ bool «namespace»ExpandPseudo::expandMI(MachineBasicBlock &MBB, MachineBasicBlo
     switch (opcode)
     {
     // auto generated cases
-    «FOR instruction : expandableInstructions» case «emitOpcode(instruction)»:
-        expand«instruction.simpleName»(MBB, MBBI);
-        break;
-        «ENDFOR» default : MI.print(errs());
-        llvm_unreachable("expandMI() is unable to expand machine instruction");
     }
 
     // success and machine basic block was modified
     return true;
 }
 
-bool «namespace»ExpandPseudo::requiresExpansion(MachineInstr &MI)
+bool [(${namespace})]ExpandPseudo::requiresExpansion(MachineInstr &MI)
 {
     unsigned opcode = MI.getOpcode();
     switch (opcode)
     {
-        // TODO: @chochrainer uncomment the generation in TargetExpandPseudo.xtend
-        //       once the pseudo/compiler immediate problem is solved.
-        //       Additionally this section needs to check the sequence instructions.
-    ««« // auto generated cases
-«««                «FOR instruction : expandableInstructions»
-«««                    «IF isExpansionRequired(instruction)»
-««« case «emitOpcode(instruction)»:
-        «««                    «ENDIF»
-«««                «ENDFOR»
-««« return true;
         default : return false;
     }
 }
 
-MachineOperand «namespace»ExpandPseudo::copyImmOp(const MachineOperand &MO, unsigned TargetFlag, ImmediateUtils::«namespace»ImmediateKind ImmediateFlag)
+MachineOperand [(${namespace})]ExpandPseudo::copyImmOp(const MachineOperand &MO, unsigned TargetFlag, ImmediateUtils::[(${namespace})]ImmediateKind ImmediateFlag)
 {
     //
     // special imm behavior
@@ -83,10 +68,10 @@ MachineOperand «namespace»ExpandPseudo::copyImmOp(const MachineOperand &MO, un
     if (MO.isImm())
     {
         int64_t value = MO.getImm();
-        if (TargetFlag != «namespace»BaseInfo::MO_None) // needs calculations
+        if (TargetFlag != [(${namespace})]BaseInfo::MO_None) // needs calculations
         {
             // This applies the relocation based on the TargetFlag
-            value = «namespace»BaseInfo::applyRelocation(value, TargetFlag);
+            value = [(${namespace})]BaseInfo::applyRelocation(value, TargetFlag);
 
             // After the relocation the immediate has its "encoded" form and needs to be "decoded" again.
             // This is way the ImmediateFlag is needed to indicate which decoding should be applied.
@@ -118,7 +103,7 @@ MachineOperand «namespace»ExpandPseudo::copyImmOp(const MachineOperand &MO, un
     }
 }
 
-MachineOperand «namespace»ExpandPseudo::copyRegOp(const MachineOperand &MO, bool isDef, unsigned SubReg)
+MachineOperand [(${namespace})]ExpandPseudo::copyRegOp(const MachineOperand &MO, bool isDef, unsigned SubReg)
 {
     assert(MO.isReg() && "Wrong machine operand type for 'copyRegOp'");
     // MachineOperand MOCopy = MachineOperand::CreateReg( MO.getReg(), isDef );
@@ -130,31 +115,19 @@ MachineOperand «namespace»ExpandPseudo::copyRegOp(const MachineOperand &MO, bo
     return MOCopy;
 }
 
+////
 //
-// auto generated
+// LLVM pass registration
 //
 
-// TODO: @chochrainer uncomment the generation in TargetExpandPseudo.xtend
-//       once the pseudo/compiler immediate problem is solved.
-//       Additionally this section needs to check the sequence instructions.
-«««        «FOR expandableInstruction : expandableInstructions»
-«««            «emitExpansionMethod(expandableInstruction)»
-«««
-«««        «ENDFOR»
-
-                                        ////
-                                        //
-                                        // LLVM pass registration
-                                        //
-
-                                        // generates the necessary pass setups
-                                        char «namespace»ExpandPseudo::ID = 0;
-INITIALIZE_PASS(«namespace»ExpandPseudo, "«namespace»-expand-pseudo",
-                        «namespace»_EXPAND_PSEUDO_NAME, false, false)
+// generates the necessary pass setups
+char [(${namespace})]ExpandPseudo::ID = 0;
+INITIALIZE_PASS([(${namespace})]ExpandPseudo, "«namespace»-expand-pseudo",
+                        [(${namespace})]_EXPAND_PSEUDO_NAME, false, false)
 
 // global function is declared in '«namespace».h'
 // used to create the pass and add it in the '«namespace»PassConfig.h'
-FunctionPass *llvm::create«namespace»ExpandPseudoPass()
+FunctionPass *llvm::create[(${namespace})]ExpandPseudoPass()
 {
-    return new «namespace»ExpandPseudo();
+    return new [(${namespace})]ExpandPseudo();
 }

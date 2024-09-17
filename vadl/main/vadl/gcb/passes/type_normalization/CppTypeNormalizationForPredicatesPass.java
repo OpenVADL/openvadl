@@ -3,6 +3,7 @@ package vadl.gcb.passes.type_normalization;
 import java.util.Arrays;
 import java.util.stream.Stream;
 import vadl.configuration.GcbConfiguration;
+import vadl.cppCodeGen.model.CppFunction;
 import vadl.cppCodeGen.passes.typeNormalization.CppTypeNormalizationPass;
 import vadl.pass.PassName;
 import vadl.utils.Pair;
@@ -32,5 +33,10 @@ public class CppTypeNormalizationForPredicatesPass extends CppTypeNormalizationP
         .flatMap(x -> Arrays.stream(x.fieldAccesses()))
         .filter(x -> x.encoding() != null)
         .map(fieldAccess -> new Pair<>(fieldAccess.fieldRef(), fieldAccess.predicate()));
+  }
+
+  @Override
+  protected CppFunction liftFunction(Function function) {
+    return makeTypesCppConform(function);
   }
 }

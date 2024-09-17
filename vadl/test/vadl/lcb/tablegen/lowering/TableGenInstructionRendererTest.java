@@ -62,6 +62,7 @@ class TableGenInstructionRendererTest extends AbstractTest {
 
     // Then
     assertThat(result).isEqualToIgnoringWhitespace("""
+        
         def nameValue : Instruction
         {
         let Namespace = "namespaceValue";
@@ -80,7 +81,7 @@ class TableGenInstructionRendererTest extends AbstractTest {
         // to build the decode table.
         field bits<32> SoftFail = 0;
                 
-        bits<10> opCode = 0b0101;
+        bits<10> opCode = 0b0101000000;
         bits<10> register;
                 
         let Inst{19-10} = register{9-0};

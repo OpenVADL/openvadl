@@ -25,7 +25,7 @@ public class EmitTargetInfoCMakeFilePass extends LcbTemplateRenderingPass {
 
   @Override
   protected String getOutputPath() {
-    return "lcb/llvm/lib/Target/" + lcbConfiguration().processorName().value()
+    return "llvm/lib/Target/" + lcbConfiguration().processorName().value()
         + "/TargetInfo/CMakeLists.txt";
   }
 

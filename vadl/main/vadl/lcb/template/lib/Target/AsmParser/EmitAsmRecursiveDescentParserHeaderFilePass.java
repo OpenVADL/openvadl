@@ -5,6 +5,9 @@ import java.util.Arrays;
 import java.util.Comparator;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.function.Function;
+import java.util.function.Predicate;
 import java.util.stream.Stream;
 import org.jetbrains.annotations.NotNull;
 import vadl.configuration.LcbConfiguration;
@@ -49,9 +52,10 @@ public class EmitAsmRecursiveDescentParserHeaderFilePass extends LcbTemplateRend
     var singleFieldStructs = singleFieldStructs(specification);
     var instructions = instructions(specification);
     var constants = constants(specification);
+    var parsingResults = Stream.concat(constants, instructions).toList();
     return Map.of(CommonVarNames.NAMESPACE, specification.name(),
-        "formats", Stream.concat(composedStructs, singleFieldStructs),
-        "parsingResults", Stream.concat(constants, instructions));
+        "formats", Stream.concat(composedStructs, singleFieldStructs).toList(),
+        "parsingResults", parsingResults);
   }
 
   @NotNull
@@ -104,6 +108,13 @@ public class EmitAsmRecursiveDescentParserHeaderFilePass extends LcbTemplateRend
             .sorted(Comparator.comparing(AssemblyConstant::kind)) // Sort by something
             .map(assemblyConstant -> new ParsingResultRecord("StringRef",
                 ParserGenerator.generateConstantName(assemblyConstant),
-                assemblyConstant.constant().toString()));
+                assemblyConstant.constant().toString()))
+            .filter(distinctByKeyClass(x -> x.functionName));
+  }
+
+  public static <T> Predicate<T> distinctByKeyClass(
+      final Function<? super T, Object> keyExtractor) {
+    Map<Object, Boolean> seen = new ConcurrentHashMap<>();
+    return t -> seen.putIfAbsent(keyExtractor.apply(t), Boolean.TRUE) == null;
   }
 }

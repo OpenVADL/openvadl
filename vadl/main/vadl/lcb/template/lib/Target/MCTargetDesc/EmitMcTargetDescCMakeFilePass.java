@@ -1,4 +1,4 @@
-package vadl.lcb.template.lib.Target;
+package vadl.lcb.template.lib.Target.MCTargetDesc;
 
 import java.io.IOException;
 import java.util.Map;
@@ -9,23 +9,24 @@ import vadl.pass.PassResults;
 import vadl.viam.Specification;
 
 /**
- * This file contains the setups a target machine which LLVM compiles to.
+ * This file contains the CMakefile for the MCTargetDesc.
  */
-public class EmitTargetMachineCppFilePass extends LcbTemplateRenderingPass {
+public class EmitMcTargetDescCMakeFilePass extends LcbTemplateRenderingPass {
 
-  public EmitTargetMachineCppFilePass(LcbConfiguration lcbConfiguration) throws IOException {
+  public EmitMcTargetDescCMakeFilePass(LcbConfiguration lcbConfiguration)
+      throws IOException {
     super(lcbConfiguration);
   }
 
   @Override
   protected String getTemplatePath() {
-    return "lcb/llvm/lib/Target/TargetMachine.cpp";
+    return "lcb/llvm/lib/Target/MCTargetDesc/CMakeLists.txt";
   }
 
   @Override
   protected String getOutputPath() {
-    var processorName = lcbConfiguration().processorName().value();
-    return "llvm/lib/Target/" + processorName + "/" + processorName + "TargetMachine.cpp";
+    return "llvm/lib/Target/" + lcbConfiguration().processorName().value()
+        + "/MCTargetDesc/CMakeLists.txt";
   }
 
   @Override

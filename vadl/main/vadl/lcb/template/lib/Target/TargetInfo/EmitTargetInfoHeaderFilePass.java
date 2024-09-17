@@ -25,7 +25,7 @@ public class EmitTargetInfoHeaderFilePass extends LcbTemplateRenderingPass {
   @Override
   protected String getOutputPath() {
     var processorName = lcbConfiguration().processorName().value();
-    return "lcb/llvm/lib/Target/" + processorName + "/TargetInfo/"
+    return "llvm/lib/Target/" + processorName + "/TargetInfo/"
         + processorName + "TargetInfo.h";
   }
 

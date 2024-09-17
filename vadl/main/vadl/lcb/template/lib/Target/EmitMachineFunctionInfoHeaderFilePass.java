@@ -20,14 +20,14 @@ public class EmitMachineFunctionInfoHeaderFilePass extends LcbTemplateRenderingP
 
   @Override
   protected String getTemplatePath() {
-    return "lcb/llvm/lib/Target/MachineFunction.h";
+    return "lcb/llvm/lib/Target/MachineFunctionInfo.h";
   }
 
   @Override
   protected String getOutputPath() {
     var processorName = lcbConfiguration().processorName().value();
     return "llvm/lib/Target/" + processorName + "/" + processorName
-        + "MachineFunction.h";
+        + "MachineFunctionInfo.h";
   }
 
   @Override

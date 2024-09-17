@@ -31,10 +31,6 @@ public class EmitFrameLoweringCppFilePass extends LcbTemplateRenderingPass {
         + "FrameLowering.cpp";
   }
 
-  private String renderRegister(RegisterFile registerFile, int addr) {
-    return registerFile.identifier.simpleName() + addr;
-  }
-
   @Override
   protected Map<String, Object> createVariables(final PassResults passResults,
                                                 Specification specification) {

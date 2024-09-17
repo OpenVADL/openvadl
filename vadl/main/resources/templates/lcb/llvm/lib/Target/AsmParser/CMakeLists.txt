@@ -1,7 +1,7 @@
 add_llvm_component_library(LLVM[(${namespace})]AsmParser
-          [(${namespace})]ParsedOperand.cpp
+          AsmParsedOperand.cpp
           [(${namespace})]AsmParser.cpp
-          [(${namespace})]AsmRecursiveDescentParser.cpp
+          AsmRecursiveDescentParser.cpp
 
         LINK_COMPONENTS
         MC

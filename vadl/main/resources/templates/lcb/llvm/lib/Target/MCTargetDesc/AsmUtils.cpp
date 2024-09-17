@@ -224,76 +224,26 @@ std::string AsmUtils::formatExpr(const MCExpr *Expr, uint8_t Radix, const MCAsmI
 
 std::string AsmUtils::FormatModifier(const [(${namespace})]MCExpr::VariantKind VariantKind)
 {
-    «FOR entry : processor.assemblerDescription.modifierMapping.modifiers»
-    if(VariantKind == [(${namespace})]MCExpr::VariantKind::VK_«entry.value.variantKindName»)
-    {
-        return "«entry.key»";
-    }
-    «ENDFOR»
     return "unknown";
 }
 
 std::string AsmUtils::getRegisterName( unsigned RegNo )
 {
-    switch( RegNo )
-    {
-        «FOR reg : processor.registers( /*sideEffect=*/ false )»
-            case [(${namespace})]::«reg.simpleName» :
-                return "«IF reg.aliases.size > 0»«reg.aliases.get( 0 )»«ELSE»«reg.simpleName»«ENDIF»";
-        «ENDFOR»
-    }
+    return "";
 }
-
-«FOR cls : processor.list( RegisterClass ).filter[ sideEffect == false ]»
-    std::string AsmUtils::getRegisterNameFrom«cls.simpleName»ByIndex( unsigned RegIndex )
-    {
-        «emitIndexTable(cls)»
-
-        assert(«cls.indexUpperBound» >= RegIndex && "Register index was out of bounds for '«cls.simpleName»'" );
-        assert(registers[ RegIndex ] != -1 && "Register index was not allowed for '«cls.simpleName»'" );
-
-        unsigned regNo = registers[ RegIndex ];
-        return AsmUtils::getRegisterName( regNo );
-    }
-«ENDFOR»
 
 bool AsmUtils::MatchRegNo(StringRef Reg, unsigned &RegNo)
 {
-    «FOR register : processor.registers( /*sideEffect:*/ false )»
-    if(Reg.«compareFunction»("«LLVMNameUtility.getName( register )»")) {
-        RegNo = [(${namespace})]::«LLVMNameUtility.getName( register )»;
-        return true;
-    }
-    «FOR alias : register.aliases»
-    if(Reg.«compareFunction»("«LLVMNameUtility.getLastPartOfName(alias)»")) {
-        RegNo = [(${namespace})]::«LLVMNameUtility.getName( register )»;
-        return true;
-    }
-    «ENDFOR»
-    «ENDFOR»
     return false;
 }
 
 bool AsmUtils::MatchOpcode(StringRef Mnemonic, unsigned &Opcode)
 {
-    «FOR instruction : this.possibleInstructions»
-    if(Mnemonic.«compareFunction»("«instruction.simpleName»")) {
-        Opcode = [(${namespace})]::«instruction.simpleName»;
-        return true;
-    }
-    «ENDFOR»
     return false;
 }
 
 bool AsmUtils::MatchCustomModifier(StringRef String, [(${namespace})]MCExpr::VariantKind &VariantKind)
 {
-    «FOR entry : processor.assemblerDescription.modifierMapping.modifiers»
-    if(String.«compareFunction»("«entry.key»"))
-    {
-        VariantKind = [(${namespace})]MCExpr::VariantKind::VK_«entry.value.variantKindName»;
-        return true;
-    }
-    «ENDFOR»
     return false;
 }
 

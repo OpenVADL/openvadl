@@ -110,7 +110,7 @@ namespace llvm
       renderscript64,         // 64-bit RenderScript
       ve,                     // NEC SX-Aurora Vector Engine
       // VADL generated LLVM Compiler Backend (LCB)
-      [(${namespace})], // [(${namespace})]: «processorDesc»: '«processorArch»'
+      [(${namespace})],
 
       LastArchType = [(${namespace})]
     };

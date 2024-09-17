@@ -1,5 +1,7 @@
 package vadl.lcb.passes.llvmLowering.tablegen.model;
 
+import vadl.lcb.passes.llvmLowering.LlvmNodeLowerable;
+import vadl.lcb.passes.llvmLowering.model.MachineInstructionNode;
 import vadl.viam.graph.Graph;
 
 /**
@@ -13,5 +15,16 @@ public record TableGenPattern(Graph selector, Graph machine) {
    */
   public TableGenPattern copy() {
     return new TableGenPattern(selector.copy(), machine.copy());
+  }
+
+  /**
+   * Checks whether the {@code selector} is a valid TableGen pattern.
+   *
+   * @return true if ok.
+   */
+  public boolean isPatternLowerable() {
+    return selector.getDataflowRoots().stream().allMatch(node ->
+        node instanceof LlvmNodeLowerable
+            || node instanceof MachineInstructionNode);
   }
 }

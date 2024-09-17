@@ -3,6 +3,7 @@ package vadl.gcb.passes.type_normalization;
 import java.util.Arrays;
 import java.util.stream.Stream;
 import vadl.configuration.GcbConfiguration;
+import vadl.cppCodeGen.model.CppFunction;
 import vadl.cppCodeGen.passes.typeNormalization.CppTypeNormalizationPass;
 import vadl.pass.PassName;
 import vadl.utils.Pair;
@@ -34,5 +35,10 @@ public class CppTypeNormalizationForImmediateExtractionPass extends CppTypeNorma
         .flatMap(x -> Arrays.stream(x.fields()))
         .map(field -> new Pair<>(field, field.extractFunction()))
         .distinct();
+  }
+
+  @Override
+  protected CppFunction liftFunction(Function function) {
+    return makeTypesCppConform(function);
   }
 }

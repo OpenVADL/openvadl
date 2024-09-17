@@ -1,6 +1,10 @@
 package vadl.lcb.template.lib.Target.MCTargetDesc;
 
+import static vadl.lcb.template.lib.Target.MCTargetDesc.EmitMCCodeEmitterCppFilePass.WRAPPER;
+import static vadl.lcb.template.utils.ImmediateEncodingFunctionProvider.generateEncodeFunctions;
+
 import java.io.IOException;
+import java.util.List;
 import java.util.Map;
 import vadl.configuration.LcbConfiguration;
 import vadl.lcb.template.CommonVarNames;
@@ -25,13 +29,27 @@ public class EmitMCCodeEmitterHeaderFilePass extends LcbTemplateRenderingPass {
   @Override
   protected String getOutputPath() {
     var processorName = lcbConfiguration().processorName().value();
-    return "lcb/llvm/lib/Target/" + processorName + "/MCTargetDesc/"
+    return "llvm/lib/Target/" + processorName + "/MCTargetDesc/"
         + processorName + "MCCodeEmitter.h";
+  }
+
+  record Aggregate(String encodeWrapper, String encode) {
+
   }
 
   @Override
   protected Map<String, Object> createVariables(final PassResults passResults,
                                                 Specification specification) {
-    return Map.of(CommonVarNames.NAMESPACE, specification.name());
+    return Map.of(CommonVarNames.NAMESPACE, specification.name(),
+        "immediates", generateImmediates(passResults));
+  }
+
+  private List<Aggregate> generateImmediates(PassResults passResults) {
+    return generateEncodeFunctions(passResults)
+        .values()
+        .stream()
+        .map(f -> new Aggregate(f.identifier.append(WRAPPER).lower(),
+            f.identifier.lower()))
+        .toList();
   }
 }

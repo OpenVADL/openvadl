@@ -1,11 +1,10 @@
-#include "[(${namespace})]AsmRecursiveDescentParser.h"
+#include "AsmRecursiveDescentParser.h"
 #include "MCTargetDesc/[(${namespace})]MCTargetDesc.h"
 #include "MCTargetDesc/[(${namespace})]TargetStreamer.h"
 #include "MCTargetDesc/AsmUtils.h"
 #include "TargetInfo/[(${namespace})]TargetInfo.h"
 #include "llvm/MC/MCParser/MCAsmLexer.h"
 #include "llvm/MC/MCParser/MCAsmParser.h"
-#include "llvm/MC/MCParser/MCTargetAsmParser.h"
 #include "llvm/MC/MCParser/MCTargetAsmParser.h"
 #include "llvm/MC/TargetRegistry.h"
 #include "Utils/ImmediateUtils.h"
@@ -86,13 +85,15 @@ bool [(${namespace})]AsmParser::MatchAndEmitInstruction(SMLoc IDLoc, unsigned &O
 
     std::vector<size_t> OpIndex;
     std::vector<std::string> targets;
+    /*
     switch(Opcode) {
         [# th:each="instruction : ${instructions}" ]
-        case [(${namespace})]::[(${instruction.simpleName})]: targets = {
+        case [(${namespace})]::[(${instruction.identifier.simpleName()})]: targets = {
             // TODO llvmOperands printing here
-        }; break
+        }; break;
         [/]
     }
+    */
 
     for( unsigned i = 0; i < targets.size(); i++ )
     {

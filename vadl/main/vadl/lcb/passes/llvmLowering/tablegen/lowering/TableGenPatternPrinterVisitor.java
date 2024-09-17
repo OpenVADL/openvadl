@@ -2,8 +2,8 @@ package vadl.lcb.passes.llvmLowering.tablegen.lowering;
 
 import java.io.StringWriter;
 import java.util.Objects;
-import vadl.cppCodeGen.model.CppUpdateBitRangeNode;
 import vadl.lcb.passes.llvmLowering.LlvmNodeLowerable;
+import vadl.lcb.passes.llvmLowering.model.LlvmBasicBlockSD;
 import vadl.lcb.passes.llvmLowering.model.LlvmBrCcSD;
 import vadl.lcb.passes.llvmLowering.model.LlvmBrCondSD;
 import vadl.lcb.passes.llvmLowering.model.LlvmFieldAccessRefNode;
@@ -224,6 +224,12 @@ public class TableGenPatternPrinterVisitor
   }
 
   @Override
+  public void visit(LlvmBasicBlockSD node) {
+    var operand = LlvmInstructionLoweringStrategy.generateTableGenInputOutput(node);
+    writer.write(node.lower() + ":$" + operand.identity().name());
+  }
+
+  @Override
   public void visit(FieldAccessRefNode fieldAccessRefNode) {
 
   }
@@ -276,11 +282,12 @@ public class TableGenPatternPrinterVisitor
   @Override
   public void visit(LlvmBrCcSD node) {
     writer.write("(");
-    writer.write(node.lower() + " (" + node.condition() + " ");
+    writer.write(node.lower() + " ");
+    writer.write(node.condition() + ", ");
     visit(node.first());
     writer.write(", ");
     visit(node.second());
-    writer.write("), ");
+    writer.write(", ");
     visit(node.immOffset());
     writer.write(")");
   }

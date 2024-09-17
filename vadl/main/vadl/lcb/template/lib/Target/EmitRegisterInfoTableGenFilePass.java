@@ -14,6 +14,7 @@ import vadl.lcb.template.CommonVarNames;
 import vadl.lcb.template.LcbTemplateRenderingPass;
 import vadl.pass.PassResults;
 import vadl.utils.Pair;
+import vadl.viam.Register;
 import vadl.viam.RegisterFile;
 import vadl.viam.Specification;
 import vadl.viam.passes.dummyAbi.DummyAbi;
@@ -46,8 +47,7 @@ public class EmitRegisterInfoTableGenFilePass extends LcbTemplateRenderingPass {
                       String aliases,
                       String subRegs,
                       String subRegIndices,
-                      int dwarfNumber,
-                      String coveredBySubRegs,
+                      int coveredBySubRegs,
                       int hwEncodingMsb,
                       int hwEncodingValue) {
 
@@ -78,6 +78,23 @@ public class EmitRegisterInfoTableGenFilePass extends LcbTemplateRenderingPass {
             32, //TODO make changeable in spec
             getRegisterClass(registerFile, abi)
         )).toList();
+
+    var isaRegisters = specification
+        .registers()
+        .map(x -> new LlvmRegister(
+            lcbConfiguration().processorName().value(),
+            x.identifier.simpleName(),
+            x.identifier.simpleName(),
+            "",
+            "",
+            "",
+            "",
+            0,
+            0,
+            0
+        ))
+        .toList();
+
     var registers =
         specification.registerFiles()
             .map(registerFile -> getRegisters(registerFile, abi))
@@ -86,7 +103,7 @@ public class EmitRegisterInfoTableGenFilePass extends LcbTemplateRenderingPass {
 
     return Map.of(CommonVarNames.NAMESPACE, specification.name(),
         "registerFiles", registerFiles,
-        "registers", registers);
+        "registers", Stream.concat(isaRegisters.stream(), registers.stream()).toList());
   }
 
   private List<LlvmRegister> getRegisters(RegisterFile registerFile, DummyAbi abi) {
@@ -108,8 +125,7 @@ public class EmitRegisterInfoTableGenFilePass extends LcbTemplateRenderingPass {
               "",
               "",
               "",
-              number,
-              "",
+              0,
               bitWidth - 1,
               number
           );
@@ -125,12 +141,14 @@ public class EmitRegisterInfoTableGenFilePass extends LcbTemplateRenderingPass {
     var bitWidth = registerFile.addressType().bitWidth();
     var numberOfRegisters = (int) Math.pow(2, bitWidth);
     var allRegisters = IntStream.range(0, numberOfRegisters)
-        .mapToObj(x -> x + "")
+        .mapToObj(x -> registerFile.identifier.simpleName() + x)
         .collect(Collectors.toList());
-    var callerSaved = abi.callerSaved().stream().map(x -> x.addr() + "")
-        .toList();
-    var calleeSaved = abi.calleeSaved().stream().map(x -> x.addr() + "")
-        .toList();
+    var callerSaved =
+        abi.callerSaved().stream().map(x -> registerFile.identifier.simpleName() + x.addr())
+            .toList();
+    var calleeSaved =
+        abi.calleeSaved().stream().map(x -> registerFile.identifier.simpleName() + x.addr())
+            .toList();
     allRegisters.removeAll(callerSaved);
     allRegisters.removeAll(calleeSaved);
 

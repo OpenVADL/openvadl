@@ -2,6 +2,7 @@ package vadl.lcb.passes.llvmLowering.model;
 
 import java.util.Objects;
 import vadl.lcb.codegen.model.llvm.ValueType;
+import vadl.lcb.passes.llvmLowering.LlvmNodeLowerable;
 import vadl.lcb.passes.llvmLowering.strategies.visitors.TableGenMachineInstructionVisitor;
 import vadl.lcb.passes.llvmLowering.strategies.visitors.TableGenNodeVisitor;
 import vadl.lcb.passes.llvmLowering.tablegen.model.ParameterIdentity;
@@ -15,21 +16,20 @@ import vadl.viam.graph.Node;
 import vadl.viam.graph.dependency.FieldAccessRefNode;
 
 /**
- * This class represents a field access in LLVM. It extends {@link FieldAccessRefNode} because
- * it requires additional information for rendering an immediate.
+ * LLVM node which represents the basic block as selection dag node.
  */
-public class LlvmFieldAccessRefNode extends FieldAccessRefNode {
+public class LlvmBasicBlockSD extends FieldAccessRefNode implements LlvmNodeLowerable {
   private final TableGenImmediateRecord immediateOperand;
   protected final ParameterIdentity parameterIdentity;
 
   /**
-   * Creates an {@link LlvmFieldAccessRefNode} object that holds a reference to a format field
-   * access.
+   * Creates an {@link LlvmBasicBlockSD} object that holds a reference to a format field
+   * access. But in the selection dag, the immediate is a reference to a basic block.
    *
    * @param fieldAccess the format immediate to be referenced
    * @param type        of the node.
    */
-  public LlvmFieldAccessRefNode(Format.FieldAccess fieldAccess, Type type) {
+  public LlvmBasicBlockSD(Format.FieldAccess fieldAccess, Type type) {
     super(fieldAccess, type);
     this.immediateOperand =
         new TableGenImmediateRecord(fieldAccess.fieldRef().identifier,
@@ -41,29 +41,32 @@ public class LlvmFieldAccessRefNode extends FieldAccessRefNode {
     this.parameterIdentity = ParameterIdentity.from(this);
   }
 
-  @Override
-  public Node copy() {
-    return new LlvmFieldAccessRefNode(fieldAccess, type());
-  }
-
-  @Override
-  public Node shallowCopy() {
-    return new LlvmFieldAccessRefNode(fieldAccess, type());
-  }
-
   public TableGenImmediateRecord immediateOperand() {
     return immediateOperand;
   }
 
+  @Override
+  public Node copy() {
+    return new LlvmBasicBlockSD(fieldAccess, type());
+  }
+
+  @Override
+  public Node shallowCopy() {
+    return new LlvmBasicBlockSD(fieldAccess, type());
+  }
 
   @Override
   public void accept(GraphNodeVisitor visitor) {
     if (visitor instanceof TableGenMachineInstructionVisitor v) {
       v.visit(this);
-    } else if (visitor instanceof TableGenNodeVisitor v) {
-      v.visit(this);
-    } else {
-      visitor.visit(this);
     }
+    if (visitor instanceof TableGenNodeVisitor v) {
+      v.visit(this);
+    }
+  }
+
+  @Override
+  public String lower() {
+    return "bb";
   }
 }

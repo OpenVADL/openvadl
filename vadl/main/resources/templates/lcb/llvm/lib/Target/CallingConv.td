@@ -2,12 +2,16 @@
 // This file specifies register calling conventions for [(${namespace})] target.
 //===--------------------------------------------------------------------------===//
 
-def CSR_[(${namespace})] : CalleeSavedRegs<(add calleeSavedRegs)>;
+def CSR_[(${namespace})] : CalleeSavedRegs<(add
+[#th:block th:each="r, iterStat : ${calleeRegisters}" ]
+[(${r.render()})][#th:block th:if="${!iterStat.last}"],[/th:block]
+[/th:block]
+)>;
 
 def CC_[(${namespace})] : CallingConv<[
     CCIfType
     <
-    [(${functionRegisters.type})]
+    [ [(${functionRegisters.type})] ],
     CCAssignToReg< [ [(${functionRegisters.registerRefs})] ] >
     >,
 
@@ -22,7 +26,7 @@ def CC_[(${namespace})] : CallingConv<[
 def RetCC_[(${namespace})] : CallingConv<[
     CCIfType
     <
-    [(${returnRegisters.type})]
+    [ [(${returnRegisters.type})] ],
     CCAssignToReg< [ [(${returnRegisters.registerRefs})] ] >
     >
 ]>;

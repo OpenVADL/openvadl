@@ -10,14 +10,14 @@ namespace llvm
     class [(${namespace})]PassConfig : public TargetPassConfig
     {
     public:
-        [(${namespace})]PassConfig( «processorName»TargetMachine& TM, PassManagerBase* PassManager)
+        [(${namespace})]PassConfig( [(${namespace})]TargetMachine& TM, PassManagerBase* PassManager)
             : TargetPassConfig(TM, *PassManager)
         {
         }
 
-        [(${namespace})]TargetMachine &get«processorName»TargetMachine() const
+        [(${namespace})]TargetMachine &get[(${namespace})]TargetMachine() const
         {
-            return getTM<«processorName»TargetMachine>();
+            return getTM<[(${namespace})]TargetMachine>();
         }
 
         bool addInstSelector() override;

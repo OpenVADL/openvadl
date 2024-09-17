@@ -21,12 +21,14 @@ bool [(${namespace})]MCInstExpander::needsExpansion(const MCInst &MCI) const
     switch (opcode)
     {
     // instructions
+    /*
     [# th:each="instruction : ${pseudoInstructions}" ]
     case [(${namespace})]::[(${instruction.pseudoInstruction.identifier.simpleName})]:
     [/]
         {
             return true;
         }
+        */
         default:
         {
             return false;
@@ -40,6 +42,7 @@ bool [(${namespace})]MCInstExpander::isExpandable(const MCInst &MCI) const
     auto opcode = MCI.getOpcode();
     switch (opcode)
     {
+    /*
     // instructions
     [# th:each="instruction : ${pseudoInstructions}" ]
         case [(${namespace})]::[(${instruction.pseudoInstruction.identifier.simpleName})]:
@@ -47,6 +50,7 @@ bool [(${namespace})]MCInstExpander::isExpandable(const MCInst &MCI) const
         {
             return true;
         }
+        */
         default:
         {
             return false;
@@ -64,13 +68,15 @@ bool [(${namespace})]MCInstExpander::expand(const MCInst &MCI, std::vector<MCIns
         // instructions
         //
 
+    /*
     [# th:each="instruction : ${pseudoInstructions}" ]
       case [(${namespace})]::[(${instruction.pseudoInstruction.identifier.simpleName})]:
       {
-        MCIExpansion = [(${instruction.header})](MCI);
+        MCIExpansion = [(${instruction.header.identifier.lower()})](MCI);
         return true;
       }
     [/]
+    */
       default:
         {
             return false;
@@ -115,5 +121,7 @@ const int64_t [(${namespace})]MCInstExpander::MCOperandToInt64(const MCOperand &
 }
 
 [# th:each="instruction : ${pseudoInstructions}" ]
-[(${instruction.code})]
+
+[(${instruction.code.value()})]
+
 [/]

@@ -84,52 +84,52 @@ public class EmitDisassemblerCppFilePassTest extends AbstractLcbTest {
                 
         /* == Immediate Decoding == */
                 
-        DecodeStatus decodeRV64IM_Btype_imm(MCInst &Inst, uint64_t Imm, int64_t Address, const void *Decoder)
+        DecodeStatus RV64IM_Btype_immS_decode_wrapper(MCInst &Inst, uint64_t Imm, int64_t Address, const void *Decoder)
         {
             Imm = Imm & 4095;
-            Imm = RV64IM_Btype_immS_decode_decode;
+            Imm = RV64IM_Btype_immS_decode(Imm);
             Inst.addOperand(MCOperand::createImm(Imm));
             return MCDisassembler::Success;
         }
-        DecodeStatus decodeRV64IM_Ftype_sft(MCInst &Inst, uint64_t Imm, int64_t Address, const void *Decoder)
+        DecodeStatus RV64IM_Ftype_shamt_decode_wrapper(MCInst &Inst, uint64_t Imm, int64_t Address, const void *Decoder)
         {
             Imm = Imm & 63;
-            Imm = RV64IM_Ftype_shamt_decode_decode;
+            Imm = RV64IM_Ftype_shamt_decode(Imm);
             Inst.addOperand(MCOperand::createImm(Imm));
             return MCDisassembler::Success;
         }
-        DecodeStatus decodeRV64IM_Itype_imm(MCInst &Inst, uint64_t Imm, int64_t Address, const void *Decoder)
+        DecodeStatus RV64IM_Itype_immS_decode_wrapper(MCInst &Inst, uint64_t Imm, int64_t Address, const void *Decoder)
         {
             Imm = Imm & 4095;
-            Imm = RV64IM_Itype_immS_decode_decode;
+            Imm = RV64IM_Itype_immS_decode(Imm);
             Inst.addOperand(MCOperand::createImm(Imm));
             return MCDisassembler::Success;
         }
-        DecodeStatus decodeRV64IM_Jtype_imm(MCInst &Inst, uint64_t Imm, int64_t Address, const void *Decoder)
+        DecodeStatus RV64IM_Jtype_immS_decode_wrapper(MCInst &Inst, uint64_t Imm, int64_t Address, const void *Decoder)
         {
             Imm = Imm & 1048575;
-            Imm = RV64IM_Jtype_immS_decode_decode;
+            Imm = RV64IM_Jtype_immS_decode(Imm);
             Inst.addOperand(MCOperand::createImm(Imm));
             return MCDisassembler::Success;
         }
-        DecodeStatus decodeRV64IM_Rtype_rs2(MCInst &Inst, uint64_t Imm, int64_t Address, const void *Decoder)
+        DecodeStatus RV64IM_Rtype_shamt_decode_wrapper(MCInst &Inst, uint64_t Imm, int64_t Address, const void *Decoder)
         {
             Imm = Imm & 31;
-            Imm = RV64IM_Rtype_shamt_decode_decode;
+            Imm = RV64IM_Rtype_shamt_decode(Imm);
             Inst.addOperand(MCOperand::createImm(Imm));
             return MCDisassembler::Success;
         }
-        DecodeStatus decodeRV64IM_Stype_imm(MCInst &Inst, uint64_t Imm, int64_t Address, const void *Decoder)
+        DecodeStatus RV64IM_Stype_immS_decode_wrapper(MCInst &Inst, uint64_t Imm, int64_t Address, const void *Decoder)
         {
             Imm = Imm & 4095;
-            Imm = RV64IM_Stype_immS_decode_decode;
+            Imm = RV64IM_Stype_immS_decode(Imm);
             Inst.addOperand(MCOperand::createImm(Imm));
             return MCDisassembler::Success;
         }
-        DecodeStatus decodeRV64IM_Utype_imm(MCInst &Inst, uint64_t Imm, int64_t Address, const void *Decoder)
+        DecodeStatus RV64IM_Utype_immU_decode_wrapper(MCInst &Inst, uint64_t Imm, int64_t Address, const void *Decoder)
         {
             Imm = Imm & 1048575;
-            Imm = RV64IM_Utype_immU_decode_decode;
+            Imm = RV64IM_Utype_immU_decode(Imm);
             Inst.addOperand(MCOperand::createImm(Imm));
             return MCDisassembler::Success;
         }
@@ -148,7 +148,7 @@ public class EmitDisassemblerCppFilePassTest extends AbstractLcbTest {
                 return MCDisassembler::Fail;
                 
             // access custom generated decoder table in register info
-            Register reg = XDecoderTableName[RegNo];
+            Register reg = XDecoderTable[RegNo];
                 
             // check if decoded register is valid
             if( reg == rv64im::NoRegister )
@@ -161,7 +161,7 @@ public class EmitDisassemblerCppFilePassTest extends AbstractLcbTest {
                 
         #include "rv64imGenDisassemblerTables.inc"
                 
-            DecodeStatus rv64imDisassembler::getInstruction(MCInst &MI, uint64_t &Size, ArrayRef<uint8_t> Bytes, uint64_t Address, raw_ostream &CS) const
+        DecodeStatus rv64imDisassembler::getInstruction(MCInst &MI, uint64_t &Size, ArrayRef<uint8_t> Bytes, uint64_t Address, raw_ostream &CS) const
         {
             if (Bytes.size() < 4)
             {
@@ -169,7 +169,7 @@ public class EmitDisassemblerCppFilePassTest extends AbstractLcbTest {
                 return MCDisassembler::Fail;
             }
                 
-            uint4_t Instr;
+            uint32_t Instr;
            \s
            \s
                 if (IsBigEndian)

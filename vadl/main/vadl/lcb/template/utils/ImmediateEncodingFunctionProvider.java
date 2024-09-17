@@ -22,7 +22,7 @@ public class ImmediateEncodingFunctionProvider {
         passResults.lastResultOf(CppTypeNormalizationForEncodingsPass.class))
         .fields()
         .stream()
-        .map(x -> new Pair<>(x.getKey(), new CppFunction(x.getValue(), "encode")))
+        .map(x -> new Pair<>(x.getKey(), new CppFunction(x.getValue())))
         .collect(Collectors.toMap(Pair::left, Pair::right));
   }
 }

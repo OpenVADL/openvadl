@@ -1,5 +1,7 @@
 package vadl.lcb.passes.llvmLowering.tablegen.lowering;
 
+import static vadl.viam.ViamError.ensure;
+
 import java.util.BitSet;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
@@ -16,6 +18,7 @@ import vadl.viam.Definition;
 public final class TableGenInstructionRenderer {
   /**
    * Transforms the given {@code instruction} into a string which can be used by LLVM's TableGen.
+   * It will *ONLY* print the anonymous pattern if the pattern is actually lowerable.
    */
   public static String lower(TableGenInstruction instruction) {
     return String.format("""
@@ -86,12 +89,15 @@ public final class TableGenInstructionRenderer {
         toInt(instruction.getFlags().mayStore()),
         instruction.getUses().stream().map(Definition::name).collect(Collectors.joining(",")),
         instruction.getDefs().stream().map(Definition::name).collect(Collectors.joining(",")),
-        instruction.getAnonymousPatterns().stream().map(TableGenInstructionRenderer::lower)
+        instruction.getAnonymousPatterns().stream()
+            .filter(TableGenPattern::isPatternLowerable)
+            .map(TableGenInstructionRenderer::lower)
             .collect(Collectors.joining("\n"))
     );
   }
 
   private static String lower(TableGenPattern tableGenPattern) {
+    ensure(tableGenPattern.isPatternLowerable(), "TableGen pattern must be lowerable");
     var visitor = new TableGenPatternPrinterVisitor();
     var machineVisitor = new TableGenMachineInstructionPrinterVisitor();
 
@@ -104,7 +110,7 @@ public final class TableGenInstructionRenderer {
     }
 
     return String.format("""
-        def : Pat<%s
+        def : Pat<%s,
                 %s>;
           """, visitor.getResult(), machineVisitor.getResult());
   }
@@ -116,7 +122,7 @@ public final class TableGenInstructionRenderer {
   private static String lower(TableGenInstruction.BitBlock bitBlock) {
     if (bitBlock.getBitSet().isPresent()) {
       return String.format("bits<%s> %s = 0b%s;", bitBlock.getSize(), bitBlock.getName(),
-          toBinaryString(bitBlock.getBitSet().get()));
+          toBinaryString(bitBlock.getBitSet().get(), bitBlock.getSize()));
     } else {
       return String.format("bits<%s> %s;", bitBlock.getSize(), bitBlock.getName());
     }
@@ -139,14 +145,16 @@ public final class TableGenInstructionRenderer {
    * Converts a bitset into string representation.
    *
    * @param bitSet bitset
+   * @param size   the real size of the {@code bitSet}. {@code bitSet} returns only
+   *               the highest bit + 1.
    * @return "01010000" binary string
    */
   @Nullable
-  private static String toBinaryString(BitSet bitSet) {
+  private static String toBinaryString(BitSet bitSet, int size) {
     if (bitSet == null) {
       return null;
     }
-    return IntStream.range(0, bitSet.length())
+    return IntStream.range(0, size)
         .mapToObj(b -> String.valueOf(bitSet.get(b) ? 1 : 0))
         .collect(Collectors.joining());
   }
