@@ -62,7 +62,6 @@ public class DiagnosticPrinter {
 
   private void printMultiSourcePreview(Diagnostic diagnostic) {
     // Print preview header
-    System.out.printf("%s\n", diagnostic.multiLocation.primaryLocation().location().toIDEString());
     System.out.printf("    %s╭──[%s]\n", Ansi.Cyan,
         diagnostic.multiLocation.primaryLocation().location().toIDEString());
     System.out.println("    │");
@@ -74,23 +73,31 @@ public class DiagnosticPrinter {
     for (int i = 0; i < allSnippets.size(); i++) {
       var snippet = allSnippets.get(i);
 
+      // FIXME: if the first location is not from the same file as the primary we don't currently
+      //        the file it is from.
+
       // Delimiter in multilocation
       if (i > 0) {
         var previous = allSnippets.get(i - 1);
-
-        if (!snippet.location().uri()
-            .equals(diagnostic.multiLocation.primaryLocation().location().uri())) {
-          // This is so unusual that we print the location evertime
-          System.out.printf("    %s⋮", Ansi.Cyan);
-          System.out.printf("    ╭─ %s\n", snippet.location().toIDEString());
-        } else if (snippet.location().begin().line() == previous.location().end().line() + 1) {
-          // do nothing
-        } else {
-          System.out.printf("    %s⋮", Ansi.Cyan);
-        }
+        printSourceDelimiter(previous.location(), snippet.location());
       }
 
       printSourcePreview(snippet, snippet == diagnostic.multiLocation.primaryLocation());
+    }
+    System.out.printf("    %s│ %s\n", Ansi.Cyan, Ansi.Reset);
+  }
+
+  private void printSourceDelimiter(SourceLocation previous,
+                                    SourceLocation next) {
+    if (!previous.uri()
+        .equals(next.uri())) {
+      // This is so unusual that we print the location evertime
+      System.out.printf("    %s⋮\n", Ansi.Cyan);
+      System.out.printf("    ╭─ %s\n", next.toIDEString());
+    } else if (next.begin().line() == previous.end().line() + 1) {
+      // do nothing
+    } else {
+      System.out.printf("    %s⋮\n", Ansi.Cyan);
     }
   }
 
@@ -145,7 +152,17 @@ public class DiagnosticPrinter {
       System.out.println();
     }
 
-    System.out.printf("    %s│ %s\n", Ansi.Cyan, Ansi.Reset);
+
+    if (location.location().expandedFrom() != null) {
+      printSourceDelimiter(location.location(), location.location().expandedFrom());
+      printSourcePreview(
+          new Diagnostic.LabeledLocation(
+              location.location().expandedFrom(),
+              List.of(
+                  new Diagnostic.Message(Diagnostic.MsgType.PLAIN, "from this model invocation"))),
+          false);
+    }
+
   }
 
 

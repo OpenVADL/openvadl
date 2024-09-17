@@ -2,6 +2,7 @@ package vadl.ast;
 
 import static vadl.ast.AstTestUtils.assertAstEquality;
 
+import java.net.URI;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 import vadl.error.DiagnosticList;
@@ -213,5 +214,52 @@ public class MacroTests {
         """;
 
     assertAstEquality(VadlParser.parse(prog1), VadlParser.parse(prog2));
+  }
+
+  @Test
+  void attachesCorrectExpandedFrom() {
+    // Since the macroExpander is responsible for attaching the correct expandedFrom locations
+    // to each locations these tests are here.
+
+    var prog = """
+        model x() : Ex = {
+          1 + doesnotExists
+        }
+        
+        constant a = $x()
+        """;
+
+    var exception = Assertions.assertThrows(DiagnosticList.class,
+        () -> VadlParser.parse(prog, URI.create("memory://hardcoded")));
+    var location = exception.items.get(0).multiLocation.primaryLocation().location();
+    Assertions.assertNotNull(location.expandedFrom());
+    Assertions.assertEquals(5, location.expandedFrom().begin().line());
+    Assertions.assertNull(location.expandedFrom().expandedFrom());
+  }
+
+  @Test
+  void attachesCorrectNestedExpandedFrom() {
+    // Since the macroExpander is responsible for attaching the correct expandedFrom locations
+    // to each locations these tests are here.
+
+    var prog = """
+        model inner(): Ex = {
+            2 + xyz
+        }
+        
+        model outer(): Ex = {
+            1 + $inner()
+        }
+        
+        constant name = $outer()
+        """;
+
+    var exception = Assertions.assertThrows(DiagnosticList.class, () -> VadlParser.parse(prog));
+    var location = exception.items.get(0).multiLocation.primaryLocation().location();
+    Assertions.assertNotNull(location.expandedFrom());
+    Assertions.assertEquals(6, location.expandedFrom().begin().line());
+    Assertions.assertNotNull(location.expandedFrom().expandedFrom());
+    Assertions.assertEquals(9, location.expandedFrom().expandedFrom().begin().line());
+    Assertions.assertNull(location.expandedFrom().expandedFrom().expandedFrom());
   }
 }

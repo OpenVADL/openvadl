@@ -10,24 +10,33 @@ import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 import java.util.stream.Stream;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 /**
  * References a location span in source.
  *
- * @param uri   uri to concrete source file
- * @param begin the span begin with line and column
- * @param end   the span end with line and column
+ * @param uri          uri to concrete source file
+ * @param begin        the span begin with line and column
+ * @param end          the span end with line and column
+ * @param expandedFrom pointing to the location of a macro instantiation from which the current ast
+ *                     got expanded. This is useful to both print the code in the macro as well as
+ *                     the invocation. Is null for location that weren't expanded.
  */
 public record SourceLocation(
     URI uri,
     Position begin,
-    Position end
+    Position end,
+    @Nullable SourceLocation expandedFrom
 ) {
 
   private static final URI INVALID_MEMORY = URI.create("memory://unknown");
 
   public static final SourceLocation INVALID_SOURCE_LOCATION =
       new SourceLocation(INVALID_MEMORY, 0);
+
+  public SourceLocation(URI uri, Position begin, Position end) {
+    this(uri, begin, end, null);
+  }
 
   public SourceLocation(URI uri, Position begin) {
     this(uri, begin, begin);
@@ -65,8 +74,11 @@ public record SourceLocation(
 
     Position begin = this.begin.compareTo(other.begin) < 0 ? this.begin : other.begin;
     Position end = this.end.compareTo(other.end) > 0 ? this.end : other.end;
+    SourceLocation expanedFrom =
+        Objects.equals(this.expandedFrom, other.expandedFrom)
+            ? this.expandedFrom : null;
 
-    return new SourceLocation(this.uri, begin, end);
+    return new SourceLocation(this.uri, begin, end, expanedFrom);
   }
 
 
@@ -99,8 +111,11 @@ public record SourceLocation(
 
     Position begin = (this.begin.compareTo(other.begin) > 0) ? this.begin : other.begin;
     Position end = (this.end.compareTo(other.end) < 0) ? this.end : other.end;
+    SourceLocation expanedFrom =
+        Objects.equals(this.expandedFrom, other.expandedFrom)
+            ? this.expandedFrom : null;
 
-    return new SourceLocation(this.uri, begin, end);
+    return new SourceLocation(this.uri, begin, end, expanedFrom);
   }
 
   /**
@@ -197,7 +212,8 @@ public record SourceLocation(
   @Override
   public String toString() {
     var printPath = !uri.getPath().isEmpty() ? uri.getPath() : "unknown";
-    return printPath + ":" + begin + ".." + end;
+    printPath += ":" + begin + ".." + end;
+    return printPath;
   }
 
   @Override
@@ -209,13 +225,15 @@ public record SourceLocation(
       return false;
     }
     SourceLocation that = (SourceLocation) o;
-    return Objects.equals(uri, that.uri) && Objects.equals(begin, that.begin)
-        && Objects.equals(end, that.end);
+    return Objects.equals(uri, that.uri)
+        && Objects.equals(begin, that.begin)
+        && Objects.equals(end, that.end)
+        && Objects.equals(expandedFrom, that.expandedFrom);
   }
 
   @Override
   public int hashCode() {
-    return Objects.hash(uri, begin, end);
+    return Objects.hash(uri, begin, end, expandedFrom);
   }
 
 

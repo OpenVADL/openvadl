@@ -79,6 +79,29 @@ public class Diagnostic extends RuntimeException {
     return new DiagnosticBuilder(Level.WARNING, reason, location);
   }
 
+  @Override
+  public boolean equals(Object o) {
+    if (this == o) {
+      return true;
+    }
+    if (o == null || getClass() != o.getClass()) {
+      return false;
+    }
+
+    Diagnostic that = (Diagnostic) o;
+    return level == that.level && reason.equals(that.reason)
+        && multiLocation.equals(that.multiLocation) && messages.equals(that.messages);
+  }
+
+  @Override
+  public int hashCode() {
+    int result = level.hashCode();
+    result = 31 * result + reason.hashCode();
+    result = 31 * result + multiLocation.hashCode();
+    result = 31 * result + messages.hashCode();
+    return result;
+  }
+
   /**
    * A bundle of multiple location with messages attached to them.
    *
