@@ -17,6 +17,9 @@ public class CppFunction extends Function {
     super(identifier, parameters, returnType, behavior);
   }
 
+  /**
+   * Converts a given {@link Function} into a {@link CppFunction}.
+   */
   public CppFunction(Function function) {
     super(function.identifier,
         function.parameters(),
@@ -24,6 +27,10 @@ public class CppFunction extends Function {
         function.behavior());
   }
 
+  /**
+   * Converts a given {@link Function} into a {@link CppFunction} and extends the identifier with
+   * the given {@code suffix}.
+   */
   public CppFunction(Function function, String suffix) {
     super(function.identifier.append(suffix),
         function.parameters(),

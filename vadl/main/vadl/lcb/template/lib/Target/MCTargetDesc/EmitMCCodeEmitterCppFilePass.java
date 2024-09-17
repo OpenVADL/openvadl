@@ -34,8 +34,8 @@ public class EmitMCCodeEmitterCppFilePass extends LcbTemplateRenderingPass {
   }
 
   /**
-   * The LLVM's encoder/decoder does not interact with the {@code uint64_t decode(uint64_t)} functions but
-   * with {@code unsigned decode(const MCInst InstMI, ...} from the MCCodeEmitter.
+   * The LLVM's encoder/decoder does not interact with the {@code uint64_t decode(uint64_t)}
+   * functions but with {@code unsigned decode(const MCInst InstMI, ...} from the MCCodeEmitter.
    * This {@code WRAPPER} is just the magic suffix for the
    * function.
    */
