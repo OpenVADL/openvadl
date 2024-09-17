@@ -1674,6 +1674,7 @@ class AliasDefinition extends Definition {
 
   @Override
   void prettyPrint(int indent, StringBuilder builder) {
+    annotations.prettyPrint(indent, builder);
     builder.append(prettyIndentString(indent)).append("alias ");
     switch (kind) {
       case REGISTER -> builder.append("register ");

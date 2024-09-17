@@ -1137,7 +1137,7 @@ PRODUCTIONS
         SYM_BRACE_CLOSE
       )
       SYM_BIGARROW
-      statement<out result>                 (. cases.add(new MatchStatement.Case(patterns, result)); .)
+      statement<out result>                 (. cases.add(new MatchStatement.Case(new ArrayList<>(patterns), result)); .)
     }                                       (. Statement defaultResult = null; .)
     [
       SYM_COMMA
