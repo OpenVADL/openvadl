@@ -161,8 +161,8 @@ public class LlvmInstructionLoweringConditionalBranchesStrategyImpl
             new LlvmSetCondSD(builtin, new NodeList<>(node.first(), node.second()),
                 node.first().type());
 
-        // We also extend the result of the condition to i32.
-        var typeCast = new LlvmTypeCastSD(builtinCall, Type.signedInt(32));
+        // We also extend the result of the condition to i32 or i64.
+        var typeCast = new LlvmTypeCastSD(builtinCall, node.immOffset().type());
         var brCond = new LlvmBrCondSD(typeCast, node.immOffset());
         node.replaceAndDelete(brCond);
         hasChanged = true;

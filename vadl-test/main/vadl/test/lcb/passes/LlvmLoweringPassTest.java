@@ -78,7 +78,7 @@ public class LlvmLoweringPassTest extends AbstractLcbTest {
             String.format("(brcc %s, X:$rs1, X:$rs2, bb:$imm)",
                 condCode),
             String.format(
-                "(brcond (i32 (%s X:$rs1, X:$rs2)), bb:$imm)",
+                "(brcond (i64 (%s X:$rs1, X:$rs2)), bb:$imm)",
                 condCode.name().toLowerCase())),
         // We have the same pattern twice because we have to selectors which emit the same
         // machine instruction.

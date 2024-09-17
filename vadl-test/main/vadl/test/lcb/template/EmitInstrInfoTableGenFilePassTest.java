@@ -396,7 +396,7 @@ public class EmitInstrInfoTableGenFilePassTest extends AbstractLcbTest {
         def : Pat<(brcc SETEQ, X:$rs1, X:$rs2, bb:$imm),
                 (BEQ X:$rs1, X:$rs2, RV64IM_Btype_immAsLabel:$imm)>;
                 
-        def : Pat<(brcond (i32 (seteq X:$rs1, X:$rs2)), bb:$imm),
+        def : Pat<(brcond (i64 (seteq X:$rs1, X:$rs2)), bb:$imm),
                 (BEQ X:$rs1, X:$rs2, RV64IM_Btype_immAsLabel:$imm)>;
                 
                 
@@ -455,7 +455,7 @@ public class EmitInstrInfoTableGenFilePassTest extends AbstractLcbTest {
         def : Pat<(brcc SETGE, X:$rs1, X:$rs2, bb:$imm),
                 (BGE X:$rs1, X:$rs2, RV64IM_Btype_immAsLabel:$imm)>;
                 
-        def : Pat<(brcond (i32 (setge X:$rs1, X:$rs2)), bb:$imm),
+        def : Pat<(brcond (i64 (setge X:$rs1, X:$rs2)), bb:$imm),
                 (BGE X:$rs1, X:$rs2, RV64IM_Btype_immAsLabel:$imm)>;
                 
                 
@@ -514,7 +514,7 @@ public class EmitInstrInfoTableGenFilePassTest extends AbstractLcbTest {
         def : Pat<(brcc SETUGE, X:$rs1, X:$rs2, bb:$imm),
                 (BGEU X:$rs1, X:$rs2, RV64IM_Btype_immAsLabel:$imm)>;
                 
-        def : Pat<(brcond (i32 (setuge X:$rs1, X:$rs2)), bb:$imm),
+        def : Pat<(brcond (i64 (setuge X:$rs1, X:$rs2)), bb:$imm),
                 (BGEU X:$rs1, X:$rs2, RV64IM_Btype_immAsLabel:$imm)>;
                 
                 
@@ -573,7 +573,7 @@ public class EmitInstrInfoTableGenFilePassTest extends AbstractLcbTest {
         def : Pat<(brcc SETLT, X:$rs1, X:$rs2, bb:$imm),
                 (BLT X:$rs1, X:$rs2, RV64IM_Btype_immAsLabel:$imm)>;
                 
-        def : Pat<(brcond (i32 (setlt X:$rs1, X:$rs2)), bb:$imm),
+        def : Pat<(brcond (i64 (setlt X:$rs1, X:$rs2)), bb:$imm),
                 (BLT X:$rs1, X:$rs2, RV64IM_Btype_immAsLabel:$imm)>;
                 
                 
@@ -632,7 +632,7 @@ public class EmitInstrInfoTableGenFilePassTest extends AbstractLcbTest {
         def : Pat<(brcc SETULT, X:$rs1, X:$rs2, bb:$imm),
                 (BLTU X:$rs1, X:$rs2, RV64IM_Btype_immAsLabel:$imm)>;
                 
-        def : Pat<(brcond (i32 (setult X:$rs1, X:$rs2)), bb:$imm),
+        def : Pat<(brcond (i64 (setult X:$rs1, X:$rs2)), bb:$imm),
                 (BLTU X:$rs1, X:$rs2, RV64IM_Btype_immAsLabel:$imm)>;
                 
                 
@@ -691,7 +691,7 @@ public class EmitInstrInfoTableGenFilePassTest extends AbstractLcbTest {
         def : Pat<(brcc SETNE, X:$rs1, X:$rs2, bb:$imm),
                 (BNE X:$rs1, X:$rs2, RV64IM_Btype_immAsLabel:$imm)>;
                 
-        def : Pat<(brcond (i32 (setne X:$rs1, X:$rs2)), bb:$imm),
+        def : Pat<(brcond (i64 (setne X:$rs1, X:$rs2)), bb:$imm),
                 (BNE X:$rs1, X:$rs2, RV64IM_Btype_immAsLabel:$imm)>;
                 
                 
