@@ -3,7 +3,7 @@ package vadl.ast;
 
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
-import vadl.error.VadlException;
+import vadl.error.DiagnosticList;
 
 /**
  * Checks if the name resolution in the parser works as expected.
@@ -30,9 +30,9 @@ public class NameResolutionTest {
           constant a = 13
           constant a = 13
         """;
-    var thrown = Assertions.assertThrows(VadlException.class, () -> VadlParser.parse(prog),
+    var thrown = Assertions.assertThrows(DiagnosticList.class, () -> VadlParser.parse(prog),
         "Expected to throw name conflict");
-    Assertions.assertEquals(1, thrown.errors.size());
+    Assertions.assertEquals(1, thrown.items.size());
   }
 
   @Test
@@ -40,9 +40,9 @@ public class NameResolutionTest {
     var prog = """
           constant a = b
         """;
-    var thrown = Assertions.assertThrows(VadlException.class, () -> VadlParser.parse(prog),
+    var thrown = Assertions.assertThrows(DiagnosticList.class, () -> VadlParser.parse(prog),
         "Expected to throw unresolved variable");
-    Assertions.assertEquals(1, thrown.errors.size());
+    Assertions.assertEquals(1, thrown.items.size());
   }
 
   @Test
@@ -68,9 +68,9 @@ public class NameResolutionTest {
     var prog = """
           constant a = a
         """;
-    var thrown = Assertions.assertThrows(VadlException.class, () -> VadlParser.parse(prog),
+    var thrown = Assertions.assertThrows(DiagnosticList.class, () -> VadlParser.parse(prog),
         "Expected to throw unresolved variable");
-    Assertions.assertEquals(1, thrown.errors.size());
+    Assertions.assertEquals(1, thrown.items.size());
   }
 
   // @Test
@@ -79,9 +79,9 @@ public class NameResolutionTest {
           constant a = b
           constant b = a
         """;
-    var thrown = Assertions.assertThrows(VadlException.class, () -> VadlParser.parse(prog),
+    var thrown = Assertions.assertThrows(DiagnosticList.class, () -> VadlParser.parse(prog),
         "Expected to throw unresolved variable");
-    Assertions.assertEquals(1, thrown.errors.size());
+    Assertions.assertEquals(1, thrown.items.size());
   }
 
   @Test
@@ -103,9 +103,9 @@ public class NameResolutionTest {
           memory MEM: Bits<6> -> Bits<2>
         }
         """;
-    var thrown = Assertions.assertThrows(VadlException.class, () -> VadlParser.parse(prog),
+    var thrown = Assertions.assertThrows(DiagnosticList.class, () -> VadlParser.parse(prog),
         "Expected to throw name conflict");
-    Assertions.assertEquals(1, thrown.errors.size());
+    Assertions.assertEquals(1, thrown.items.size());
   }
 
   @Test
@@ -116,9 +116,9 @@ public class NameResolutionTest {
           register X : Bits<2>
         }
         """;
-    var thrown = Assertions.assertThrows(VadlException.class, () -> VadlParser.parse(prog),
+    var thrown = Assertions.assertThrows(DiagnosticList.class, () -> VadlParser.parse(prog),
         "Expected to throw name conflict");
-    Assertions.assertEquals(1, thrown.errors.size());
+    Assertions.assertEquals(1, thrown.items.size());
   }
 
   @Test
@@ -129,9 +129,9 @@ public class NameResolutionTest {
           register file X : Bits<2> -> Bits<4>
         }
         """;
-    var thrown = Assertions.assertThrows(VadlException.class, () -> VadlParser.parse(prog),
+    var thrown = Assertions.assertThrows(DiagnosticList.class, () -> VadlParser.parse(prog),
         "Expected to throw name conflict");
-    Assertions.assertEquals(1, thrown.errors.size());
+    Assertions.assertEquals(1, thrown.items.size());
   }
 
   @Test
@@ -219,6 +219,7 @@ public class NameResolutionTest {
           }
         }
         """;
-    Assertions.assertThrows(VadlException.class, () -> VadlParser.parse(prog), "Should reject typos");
+    Assertions.assertThrows(DiagnosticList.class, () -> VadlParser.parse(prog),
+        "Should reject typos");
   }
 }

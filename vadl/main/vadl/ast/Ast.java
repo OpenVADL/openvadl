@@ -5,8 +5,6 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
 import javax.annotation.Nullable;
-import vadl.error.VadlError;
-import vadl.error.VadlException;
 import vadl.utils.SourceLocation;
 
 /**
@@ -66,9 +64,8 @@ abstract class Node {
 
   SymbolTable symbolTable() {
     if (symbolTable == null) {
-      throw new VadlException(List.of(
-          new VadlError("Node " + this + " should have received a symbol table in a previous pass",
-              location(), null, null)));
+      throw new IllegalStateException(
+          "Node " + this + " should have received a symbol table in a previous pass");
     }
     return symbolTable;
   }

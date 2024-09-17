@@ -42,6 +42,35 @@ enum BasicSyntaxType implements SyntaxType {
     return name;
   }
 
+  /**
+   * Returns whether the current object is a subtype of another.
+   * Note, they are always a subtype of themself.
+   *
+   * <p>Here is the complete structure for basic types:
+   * <pre>{@code
+   *                                        T
+   *          +---------+--------+---------/ \-------+------------------------------------+
+   *          |         |        |                   |                             |      |
+   *          |         |        |                   |                             |      |
+   *          |         |        |                   |                             |      |
+   *          |         |        |                   |                             |      |
+   *          |         |        |                   |                             |      |
+   *          |         |        |            +------Ex------------+               |      |
+   *          |         |        |            |                    |               |      |
+   *          |         |        |            |                    |               |      |
+   *          |         |        |        +--Lit-----+           CallEx            |      |
+   *        Stats       |        |        |          |             |               |      |
+   *          |         |     IsaDefs     |          |             |               |     UnOp
+   *          |         |                 |     +-- Val----+      SymEx            |
+   *          |       Encs               Str    |    |     |       |               |
+   *        Stat                                |    |     |       |             BinOp
+   *                                           Bool  |    Bin      Id
+   *                                                 |
+   *                                                Int
+   * }</pre>
+   *
+   * @param other the type to check against.
+   */
   @Override
   public boolean isSubTypeOf(SyntaxType other) {
     return other instanceof BasicSyntaxType bst && IS_SUBTYPE[this.ordinal()][bst.ordinal()];
@@ -51,6 +80,7 @@ enum BasicSyntaxType implements SyntaxType {
   public String print() {
     return name;
   }
+
 
   static {
     IS_SUBTYPE = new boolean[BasicSyntaxType.values().length][BasicSyntaxType.values().length];

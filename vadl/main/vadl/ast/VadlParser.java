@@ -12,14 +12,24 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import javax.annotation.Nullable;
-import vadl.error.VadlError;
-import vadl.error.VadlException;
+import vadl.error.Diagnostic;
+import vadl.error.DiagnosticList;
 import vadl.utils.SourceLocation;
 
 /**
  * A parser for the VADL language, generated using Coco.
  */
 public class VadlParser {
+
+  /**
+   * Parses the VADL source program at the specified path into an AST.
+   */
+  public static Ast parse(Path path) throws IOException {
+    var scanner = new Scanner(Files.newInputStream(path));
+    var parser = new Parser(scanner);
+    parser.sourceFile = path.toUri();
+    return parse(parser);
+  }
 
   /**
    * Parses the VADL source program at the specified path into an AST.
@@ -57,13 +67,14 @@ public class VadlParser {
    * @param program        a source code file to parse
    * @param macroOverrides The overrides to perform in the macro evaluation
    * @return The parsed syntax tree.
-   * @throws VadlException if there are any parsing errors.
+   * @throws DiagnosticList if there are any parsing errors.
    */
   public static Ast parse(String program, Map<String, String> macroOverrides,
                           @Nullable URI resolutionUri) {
     var scanner = new Scanner(new ByteArrayInputStream(program.getBytes(StandardCharsets.UTF_8)));
     var parser = new Parser(scanner);
     parser.resolutionUri = resolutionUri;
+    parser.sourceFile = URI.create("memory://internal");
     macroOverrides.forEach((key, value) -> parser.macroOverrides.put(key,
         new Identifier(value, SourceLocation.INVALID_SOURCE_LOCATION)));
     return parse(parser);
@@ -78,15 +89,15 @@ public class VadlParser {
     parser.errors.errorStream = new PrintStream(outStream);
     parser.errors.errMsgFormat = "{0};{1};{2}";
 
-    List<VadlError> errors = new ArrayList<>();
+    List<Diagnostic> errors = new ArrayList<>();
 
     try {
       parser.Parse();
       parser.ast.passTimings.add(new PassTimings(System.nanoTime(), "Syntax parsing"));
     } catch (Exception e) {
       e.printStackTrace();
-      errors.add(new VadlError("Exception caught during parsing: " + e,
-          SourceLocation.INVALID_SOURCE_LOCATION, null, null));
+      errors.add(Diagnostic.error("Exception caught during parsing: " + e,
+          SourceLocation.INVALID_SOURCE_LOCATION).build());
     }
 
     if (parser.errors.count > 0) {
@@ -101,21 +112,21 @@ public class VadlParser {
         var lineNum = fields.length == 3 ? Integer.parseInt(fields[0]) : -1;
         var colNum = fields.length == 3 ? Integer.parseInt(fields[1]) : -1;
         var title = fields[fields.length - 1];
-        errors.add(new VadlError(
+        var error = Diagnostic.error(
             title,
-            new SourceLocation(parser.sourceFile,
-                new SourceLocation.Position(lineNum, colNum)),
-            null,
-            title.contains("expected")
-                ? "Sometimes the expected is just something with what the parser could work with "
-                + " but maybe not what you intended." : null)
+            new SourceLocation(parser.sourceFile, new SourceLocation.Position(lineNum, colNum))
         );
+        if (title.contains("expected")) {
+          error.note(
+              "Sometimes the expected is just something with what the parser could work with "
+                  + " but maybe not what you intended.");
+        }
+        errors.add(error.build());
       }
     }
-    errors.addAll(parser.macroTable.errors);
 
     if (!errors.isEmpty()) {
-      throw new VadlException(errors.stream().distinct().toList());
+      throw new DiagnosticList(errors.stream().distinct().toList());
     }
 
     var ast = parser.ast;
@@ -125,7 +136,7 @@ public class VadlParser {
     errors.addAll(SymbolTable.VerificationPass.verifyUsages(ast));
 
     if (!errors.isEmpty()) {
-      throw new VadlException(errors.stream().distinct().toList());
+      throw new DiagnosticList(errors.stream().distinct().toList());
     }
 
     return ast;

@@ -5,7 +5,7 @@ import static vadl.ast.AstTestUtils.verifyPrettifiedAst;
 
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
-import vadl.error.VadlException;
+import vadl.error.DiagnosticList;
 
 public class ExprTest {
   @Test
@@ -30,7 +30,7 @@ public class ExprTest {
         constant a: Bits<31 > 2> = 9
         """;
 
-    Assertions.assertThrows(VadlException.class, () -> VadlParser.parse(prog));
+    Assertions.assertThrows(DiagnosticList.class, () -> VadlParser.parse(prog));
   }
 
   @Test

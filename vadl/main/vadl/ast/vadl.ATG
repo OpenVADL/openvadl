@@ -1227,7 +1227,7 @@ PRODUCTIONS
 
   /// Parses the longest macro expression (either instance or placeholder) from the parser.
   maximumMacroExpr<out Node node>                 (. node = null; .)
-  = SYM_DOLLAR                                    (. var segments = new ArrayList<String>(); .)
+  = SYM_DOLLAR                                    (. var segments = new ArrayList<String>(); var startLoc = loc();.)
     identifier<out Identifier id>                 (. var macro = macroTable.getMacro(id.name);
                                                      var paramType = paramSyntaxType(this, id.name);
                                                      segments.add(id.name); .)
@@ -1249,8 +1249,8 @@ PRODUCTIONS
           macroBody<out Node arg2, params.next()> (. args.add(arg2); .)
         }
         SYM_PAREN_CLOSE
-      )                                           (. node = expandMacro(this, createMacroInstance(macroOrPlaceholder, args, loc())); .)
-    ]                                             (. node = Objects.requireNonNullElse(node, createPlaceholder(paramType, segments, loc())); .)
+      )                                           (. node = expandMacro(this, createMacroInstance(macroOrPlaceholder, args, startLoc.join(loc()))); .)
+    ]                                             (. node = Objects.requireNonNullElse(node, createPlaceholder(paramType, segments, startLoc.join(loc()))); .)
   .
 
   macroDef<out ModelDefinition def>
