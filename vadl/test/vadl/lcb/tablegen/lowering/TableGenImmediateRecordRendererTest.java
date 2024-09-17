@@ -25,16 +25,18 @@ class TableGenImmediateRecordRendererTest extends AbstractTest {
 
     // Then
     assertThat(result).isEqualToIgnoringWhitespace("""
-               
+        
         class nameValue<ValueType ty> : Operand<ty>
         {
           let EncoderMethod = "nameValue_encode";
           let DecoderMethod = "nameValue_decode";
-        } 
+        }
                 
         def nameValueAsInt32
-              : nameValue<i32>
-              , ImmLeaf<i32, [{ return nameValue_predicate(Imm); }]>;
+            : nameValue<i32>
+            , ImmLeaf<i32, [{ return nameValue_predicate(Imm); }]>;
+                
+        def nameValueAsLabel : nameValue<OtherVT>;
         """);
   }
 }
