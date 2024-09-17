@@ -54,6 +54,7 @@ public class EmitMCInstExpanderCppFilePassTest extends AbstractLcbTest {
             switch (opcode)
             {
             // instructions
+            /*
            \s
             case rv64im::CALL:
             case rv64im::TAIL:
@@ -76,6 +77,7 @@ public class EmitMCInstExpanderCppFilePassTest extends AbstractLcbTest {
                 {
                     return true;
                 }
+                */
                 default:
                 {
                     return false;
@@ -89,6 +91,7 @@ public class EmitMCInstExpanderCppFilePassTest extends AbstractLcbTest {
             auto opcode = MCI.getOpcode();
             switch (opcode)
             {
+            /*
             // instructions
            \s
                 case rv64im::CALL:
@@ -112,6 +115,7 @@ public class EmitMCInstExpanderCppFilePassTest extends AbstractLcbTest {
                 {
                     return true;
                 }
+                */
                 default:
                 {
                     return false;
@@ -129,6 +133,7 @@ public class EmitMCInstExpanderCppFilePassTest extends AbstractLcbTest {
                 // instructions
                 //
                 
+            /*
            \s
               case rv64im::CALL:
               {
@@ -216,6 +221,7 @@ public class EmitMCInstExpanderCppFilePassTest extends AbstractLcbTest {
                 return true;
               }
            \s
+            */
               default:
                 {
                     return false;
@@ -261,104 +267,104 @@ public class EmitMCInstExpanderCppFilePassTest extends AbstractLcbTest {
                 
                 
                 
-        std::vector< MCInst&> RV64IM_CALL_expand(const MCInst instruction) {
-        std::vector< MCInst& > result;
+        std::vector< MCInst> RV64IM_CALL_expand(const MCInst& instruction) {
+        std::vector< MCInst > result;
         return result;
         }
                 
                 
-        std::vector< MCInst&> RV64IM_TAIL_expand(const MCInst instruction) {
-        std::vector< MCInst& > result;
+        std::vector< MCInst> RV64IM_TAIL_expand(const MCInst& instruction) {
+        std::vector< MCInst > result;
         return result;
         }
                 
                 
-        std::vector< MCInst&> RV64IM_RET_expand(const MCInst instruction) {
-        std::vector< MCInst& > result;
+        std::vector< MCInst> RV64IM_RET_expand(const MCInst& instruction) {
+        std::vector< MCInst > result;
         return result;
         }
                 
                 
-        std::vector< MCInst&> RV64IM_J_expand(const MCInst instruction) {
-        std::vector< MCInst& > result;
+        std::vector< MCInst> RV64IM_J_expand(const MCInst& instruction) {
+        std::vector< MCInst > result;
         return result;
         }
                 
                 
-        std::vector< MCInst&> RV64IM_NOP_expand(const MCInst instruction) {
-        std::vector< MCInst& > result;
+        std::vector< MCInst> RV64IM_NOP_expand(const MCInst& instruction) {
+        std::vector< MCInst > result;
         return result;
         }
                 
                 
-        std::vector< MCInst&> RV64IM_MOV_expand(const MCInst instruction) {
-        std::vector< MCInst& > result;
+        std::vector< MCInst> RV64IM_MOV_expand(const MCInst& instruction) {
+        std::vector< MCInst > result;
         return result;
         }
                 
                 
-        std::vector< MCInst&> RV64IM_NOT_expand(const MCInst instruction) {
-        std::vector< MCInst& > result;
+        std::vector< MCInst> RV64IM_NOT_expand(const MCInst& instruction) {
+        std::vector< MCInst > result;
         return result;
         }
                 
                 
-        std::vector< MCInst&> RV64IM_NEG_expand(const MCInst instruction) {
-        std::vector< MCInst& > result;
+        std::vector< MCInst> RV64IM_NEG_expand(const MCInst& instruction) {
+        std::vector< MCInst > result;
         return result;
         }
                 
                 
-        std::vector< MCInst&> RV64IM_SNEZ_expand(const MCInst instruction) {
-        std::vector< MCInst& > result;
+        std::vector< MCInst> RV64IM_SNEZ_expand(const MCInst& instruction) {
+        std::vector< MCInst > result;
         return result;
         }
                 
                 
-        std::vector< MCInst&> RV64IM_SLTZ_expand(const MCInst instruction) {
-        std::vector< MCInst& > result;
+        std::vector< MCInst> RV64IM_SLTZ_expand(const MCInst& instruction) {
+        std::vector< MCInst > result;
         return result;
         }
                 
                 
-        std::vector< MCInst&> RV64IM_SGTZ_expand(const MCInst instruction) {
-        std::vector< MCInst& > result;
+        std::vector< MCInst> RV64IM_SGTZ_expand(const MCInst& instruction) {
+        std::vector< MCInst > result;
         return result;
         }
                 
                 
-        std::vector< MCInst&> RV64IM_BEQZ_expand(const MCInst instruction) {
-        std::vector< MCInst& > result;
+        std::vector< MCInst> RV64IM_BEQZ_expand(const MCInst& instruction) {
+        std::vector< MCInst > result;
         return result;
         }
                 
                 
-        std::vector< MCInst&> RV64IM_BNEZ_expand(const MCInst instruction) {
-        std::vector< MCInst& > result;
+        std::vector< MCInst> RV64IM_BNEZ_expand(const MCInst& instruction) {
+        std::vector< MCInst > result;
         return result;
         }
                 
                 
-        std::vector< MCInst&> RV64IM_BLEZ_expand(const MCInst instruction) {
-        std::vector< MCInst& > result;
+        std::vector< MCInst> RV64IM_BLEZ_expand(const MCInst& instruction) {
+        std::vector< MCInst > result;
         return result;
         }
                 
                 
-        std::vector< MCInst&> RV64IM_BGEZ_expand(const MCInst instruction) {
-        std::vector< MCInst& > result;
+        std::vector< MCInst> RV64IM_BGEZ_expand(const MCInst& instruction) {
+        std::vector< MCInst > result;
         return result;
         }
                 
                 
-        std::vector< MCInst&> RV64IM_BLTZ_expand(const MCInst instruction) {
-        std::vector< MCInst& > result;
+        std::vector< MCInst> RV64IM_BLTZ_expand(const MCInst& instruction) {
+        std::vector< MCInst > result;
         return result;
         }
                 
                 
-        std::vector< MCInst&> RV64IM_BGTZ_expand(const MCInst instruction) {
-        std::vector< MCInst& > result;
+        std::vector< MCInst> RV64IM_BGTZ_expand(const MCInst& instruction) {
+        std::vector< MCInst > result;
         return result;
         }
         """.trim().lines(), output);
