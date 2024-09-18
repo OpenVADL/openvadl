@@ -1,0 +1,8 @@
+
+# TODO: Delete
+config [(${gen_arch_upper})]_VIRT_MCU
+    bool
+
+config [(${gen_arch_upper})]_VIRT
+    bool
+    select [(${gen_arch_upper})]_VIRT_MCU
