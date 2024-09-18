@@ -680,8 +680,8 @@ class MacroExpander
 
   @Override
   public Definition visit(ApplicationBinaryInterfaceDefinition definition) {
-    return new ApplicationBinaryInterfaceDefinition(
-        definition.id, definition.isa, expandDefinitions(definition.definitions), definition.loc
+    return new ApplicationBinaryInterfaceDefinition(definition.id, definition.isa,
+        expandDefinitions(definition.definitions), copyLoc(definition.loc)
     ).withAnnotations(expandAnnotations(definition.annotations));
   }
 
@@ -689,14 +689,15 @@ class MacroExpander
   public Definition visit(AbiSequenceDefinition definition) {
     var statements = new ArrayList<>(definition.statements);
     statements.replaceAll(stmt -> (InstructionCallStatement) expandStatement(stmt));
-    return new AbiSequenceDefinition(definition.kind, definition.params, statements, definition.loc)
-        .withAnnotations(expandAnnotations(definition.annotations));
+    return new AbiSequenceDefinition(definition.kind, definition.params, statements,
+        copyLoc(definition.loc)
+    ).withAnnotations(expandAnnotations(definition.annotations));
   }
 
   @Override
   public Definition visit(SpecialPurposeRegisterDefinition definition) {
     return new SpecialPurposeRegisterDefinition(
-        definition.purpose, definition.calls, definition.loc
+        definition.purpose, definition.calls, copyLoc(definition.loc)
     ).withAnnotations(expandAnnotations(definition.annotations));
   }
 
@@ -704,86 +705,88 @@ class MacroExpander
   public Definition visit(MicroProcessorDefinition definition) {
     var definitions = expandDefinitions(definition.definitions);
     return new MicroProcessorDefinition(definition.id, definition.implementedIsas, definition.abi,
-        definitions, definition.loc).withAnnotations(expandAnnotations(definition.annotations));
+        definitions, copyLoc(definition.loc)
+    ).withAnnotations(expandAnnotations(definition.annotations));
   }
 
   @Override
   public Definition visit(PatchDefinition definition) {
     return new PatchDefinition(definition.generator, definition.handle, definition.reference,
-        definition.source, definition.loc
+        definition.source, copyLoc(definition.loc)
     ).withAnnotations(expandAnnotations(definition.annotations));
   }
 
   @Override
   public Definition visit(SourceDefinition definition) {
-    return new SourceDefinition(definition.id, definition.source, definition.loc)
+    return new SourceDefinition(definition.id, definition.source, copyLoc(definition.loc))
         .withAnnotations(expandAnnotations(definition.annotations));
   }
 
   @Override
   public Definition visit(CpuFunctionDefinition definition) {
     return new CpuFunctionDefinition(definition.kind, definition.stopWithReference,
-        expandExpr(definition.expr), definition.loc
+        expandExpr(definition.expr), copyLoc(definition.loc)
     ).withAnnotations(expandAnnotations(definition.annotations));
   }
 
   @Override
   public Definition visit(CpuProcessDefinition definition) {
     return new CpuProcessDefinition(definition.kind, definition.startupOutputs,
-        definition.statement.accept(this), definition.loc
+        definition.statement.accept(this), copyLoc(definition.loc)
     ).withAnnotations(expandAnnotations(definition.annotations));
   }
 
   @Override
   public Definition visit(MicroArchitectureDefinition definition) {
     return new MicroArchitectureDefinition(definition.id, definition.processor,
-        expandDefinitions(definition.definitions), definition.loc
+        expandDefinitions(definition.definitions), copyLoc(definition.loc)
     ).withAnnotations(expandAnnotations(definition.annotations));
   }
 
   @Override
   public Definition visit(MacroInstructionDefinition definition) {
     return new MacroInstructionDefinition(definition.kind, definition.inputs, definition.outputs,
-        definition.statement.accept(this), definition.loc
+        definition.statement.accept(this), copyLoc(definition.loc)
     ).withAnnotations(expandAnnotations(definition.annotations));
   }
 
   @Override
   public Definition visit(PortBehaviorDefinition definition) {
     return new PortBehaviorDefinition(definition.id, definition.kind, definition.inputs,
-        definition.outputs, definition.statement.accept(this), definition.loc
+        definition.outputs, definition.statement.accept(this), copyLoc(definition.loc)
     ).withAnnotations(expandAnnotations(definition.annotations));
   }
 
   @Override
   public Definition visit(PipelineDefinition definition) {
     return new PipelineDefinition(definition.id, definition.outputs,
-        definition.statement.accept(this), definition.loc
+        definition.statement.accept(this), copyLoc(definition.loc)
     ).withAnnotations(expandAnnotations(definition.annotations));
   }
 
   @Override
   public Definition visit(StageDefinition definition) {
     return new StageDefinition(definition.id, definition.outputs, definition.statement.accept(this),
-        definition.loc
+        copyLoc(definition.loc)
     ).withAnnotations(expandAnnotations(definition.annotations));
   }
 
   @Override
   public Definition visit(CacheDefinition definition) {
     return new CacheDefinition(definition.id, definition.sourceType, definition.targetType,
-        definition.loc).withAnnotations(definition.annotations);
+        copyLoc(definition.loc)
+    ).withAnnotations(definition.annotations);
   }
 
   @Override
   public Definition visit(LogicDefinition definition) {
-    return new LogicDefinition(definition.id, definition.loc)
+    return new LogicDefinition(definition.id, copyLoc(definition.loc))
         .withAnnotations(expandAnnotations(definition.annotations));
   }
 
   @Override
   public Definition visit(SignalDefinition definition) {
-    return new SignalDefinition(definition.id, definition.type, definition.loc)
+    return new SignalDefinition(definition.id, definition.type, copyLoc(definition.loc))
         .withAnnotations(expandAnnotations(definition.annotations));
   }
 
@@ -905,7 +908,7 @@ class MacroExpander
     return new LockStatement(
         expandExpr(lockStatement.expr),
         expandStatement(lockStatement.statement),
-        lockStatement.loc
+        copyLoc(lockStatement.loc)
     );
   }
 
@@ -1088,7 +1091,7 @@ class MacroExpander
     try {
       assertValidMacro(macro, node.location());
       var arguments = collectMacroParameters(macro, node.arguments, node.location());
-      var subpass = new MacroExpander(arguments, macroOverrides);
+      var subpass = new MacroExpander(arguments, macroOverrides, copyLoc(node.loc));
       return subpass.expandNode(macro.body());
     } catch (MacroExpansionException e) {
       reportError(e.message, e.sourceLocation);
