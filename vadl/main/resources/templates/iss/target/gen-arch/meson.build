@@ -4,7 +4,7 @@ gen_arch_ss = ss.source_set()
 gen_arch_system_ss = ss.source_set()
 
 gen_arch_ss.add(files(
-#               'translate.c',
+               'translate.c',
 #               'cpu.c',
 #               'disas.c'
 ))

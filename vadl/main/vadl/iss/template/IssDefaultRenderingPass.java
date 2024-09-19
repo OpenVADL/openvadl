@@ -23,11 +23,6 @@ public class IssDefaultRenderingPass extends IssTemplateRenderingPass {
   }
 
   @Override
-  public PassName getName() {
-    return PassName.of("Rendering ISS " + issTemplatePath);
-  }
-
-  @Override
   protected String issTemplatePath() {
     return issTemplatePath;
   }

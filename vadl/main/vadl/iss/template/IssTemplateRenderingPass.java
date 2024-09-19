@@ -3,6 +3,7 @@ package vadl.iss.template;
 import java.util.HashMap;
 import java.util.Map;
 import vadl.configuration.IssConfiguration;
+import vadl.pass.PassName;
 import vadl.pass.PassResults;
 import vadl.template.AbstractTemplateRenderingPass;
 import vadl.viam.Specification;
@@ -42,6 +43,11 @@ public abstract class IssTemplateRenderingPass extends AbstractTemplateRendering
    * The path to the template within th {@code resource/templates/iss} directory.
    */
   protected abstract String issTemplatePath();
+
+  @Override
+  public PassName getName() {
+    return PassName.of("Rendering ISS " + issTemplatePath());
+  }
 
   @Override
   protected String getOutputPath() {

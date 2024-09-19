@@ -24,6 +24,10 @@ import vadl.gcb.passes.type_normalization.CppTypeNormalizationForDecodingsPass;
 import vadl.gcb.passes.type_normalization.CppTypeNormalizationForEncodingsPass;
 import vadl.gcb.passes.type_normalization.CppTypeNormalizationForPredicatesPass;
 import vadl.iss.passes.IssConfigurationPass;
+import vadl.iss.template.target.EmitIssCpuHeaderPass;
+import vadl.iss.template.target.EmitIssCpuParamHeaderPass;
+import vadl.iss.template.target.EmitIssCpuQomHeaderPass;
+import vadl.iss.template.target.EmitIssTranslatePass;
 import vadl.lcb.codegen.GenerateImmediateKindPass;
 import vadl.lcb.passes.isaMatching.IsaMatchingPass;
 import vadl.lcb.passes.llvmLowering.GenerateRegisterClassesPass;
@@ -438,6 +442,7 @@ public final class PassOrder {
         // config rendering
         .add(issDefault("/configs/devices/gen-arch-softmmu/default.mak", config))
         .add(issDefault("/configs/targets/gen-arch-softmmu.mak", config))
+        .add(issDefault("/target/gen-arch/cpu.h", config))
 
         // arch init rendering
         .add(issDefault("/include/disas/dis-asm.h", config))
@@ -454,7 +459,14 @@ public final class PassOrder {
         .add(issDefault("/target/meson.build", config))
         .add(issDefault("/target/gen-arch/Kconfig", config))
         .add(issDefault("/target/gen-arch/meson.build", config))
-
+        // target/gen-arch/cpu.h
+        .add(new EmitIssCpuHeaderPass(config))
+        // target/gen-arch/cpu-qom.h
+        .add(new EmitIssCpuQomHeaderPass(config))
+        // target/gen-arch/cpu-param.h
+        .add(new EmitIssCpuParamHeaderPass(config))
+        // target/gen-arch/translate.c
+        .add(new EmitIssTranslatePass(config))
     ;
   }
 
