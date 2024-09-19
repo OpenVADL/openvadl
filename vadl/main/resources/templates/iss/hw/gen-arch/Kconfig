@@ -1,3 +1,4 @@
+# VADL generated file
 
 # TODO: Delete
 config [(${gen_arch_upper})]_VIRT_MCU

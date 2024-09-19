@@ -1,2 +1,4 @@
+# VADL generated file
+
 config [(${gen_arch_upper})]
     bool

@@ -1,3 +1,4 @@
+# VADL generated file
 # Default configuration for [(${gen_arch})]-softmmu
 
 # Virtual board config
