@@ -1,5 +1,7 @@
 package vadl.pass;
 
+import static vadl.iss.template.IssDefaultRenderingPass.issDefault;
+
 import java.io.IOException;
 import java.util.LinkedList;
 import java.util.List;
@@ -8,6 +10,7 @@ import java.util.concurrent.ConcurrentHashMap;
 import javax.annotation.Nullable;
 import vadl.configuration.GcbConfiguration;
 import vadl.configuration.GeneralConfiguration;
+import vadl.configuration.IssConfiguration;
 import vadl.configuration.LcbConfiguration;
 import vadl.cppCodeGen.passes.fieldNodeReplacement.FieldNodeReplacementPassForDecoding;
 import vadl.dump.HtmlDumpPass;
@@ -21,6 +24,7 @@ import vadl.gcb.passes.type_normalization.CppTypeNormalizationForDecodingsPass;
 import vadl.gcb.passes.type_normalization.CppTypeNormalizationForEncodingsPass;
 import vadl.gcb.passes.type_normalization.CppTypeNormalizationForPredicatesPass;
 import vadl.lcb.codegen.GenerateImmediateKindPass;
+import vadl.iss.passes.IssConfigurationPass;
 import vadl.lcb.passes.isaMatching.IsaMatchingPass;
 import vadl.lcb.passes.llvmLowering.GenerateRegisterClassesPass;
 import vadl.lcb.passes.llvmLowering.LlvmLoweringPass;
@@ -413,4 +417,42 @@ public final class PassOrder {
 
     return order;
   }
+
+  public static PassOrder iss(IssConfiguration config) throws IOException {
+    var order = viam(config);
+    // iss function passes
+    order
+        .add(new IssConfigurationPass(config));
+
+    // add iss template emitting passes to order
+    addIssEmitPasses(order, config);
+
+    return order;
+  }
+
+  private static void addIssEmitPasses(PassOrder order, IssConfiguration config) {
+    order
+        // config rendering
+        .add(issDefault("/configs/devices/gen-arch-softmmu/default.mak", config))
+        .add(issDefault("/configs/targets/gen-arch-softmmu.mak", config))
+
+        // arch init rendering
+        .add(issDefault("/include/disas/dis-asm.h", config))
+        .add(issDefault("/include/sysemu/arch_init.h", config))
+
+        // hardware rendering
+        .add(issDefault("/hw/Kconfig", config))
+        .add(issDefault("/hw/meson.build", config))
+        .add(issDefault("/hw/gen-arch/Kconfig", config))
+        .add(issDefault("/hw/gen-arch/meson.build", config))
+
+        // target rendering
+        .add(issDefault("/target/Kconfig", config))
+        .add(issDefault("/target/meson.build", config))
+        .add(issDefault("/target/gen-arch/Kconfig", config))
+        .add(issDefault("/target/gen-arch/meson.build", config))
+
+    ;
+  }
+
 }
