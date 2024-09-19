@@ -9,6 +9,10 @@ import vadl.pass.PassName;
 import vadl.pass.PassResults;
 import vadl.viam.Specification;
 
+/**
+ * Sets configurations in the {@link IssConfiguration} if the information must be determined
+ * from the VIAM.
+ */
 public class IssConfigurationPass extends AbstractIssPass {
 
   public IssConfigurationPass(IssConfiguration configuration) {
@@ -25,7 +29,7 @@ public class IssConfigurationPass extends AbstractIssPass {
       throws IOException {
     var configuration = configuration();
     // TODO: Determine actual architecture name
-    
+
     configuration.setArchitectureName("vadl");
 
     // we return the configuration but also manipulate the original one,

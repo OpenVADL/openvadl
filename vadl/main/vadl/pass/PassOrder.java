@@ -23,8 +23,8 @@ import vadl.gcb.passes.relocation.GenerateLogicalRelocationPass;
 import vadl.gcb.passes.type_normalization.CppTypeNormalizationForDecodingsPass;
 import vadl.gcb.passes.type_normalization.CppTypeNormalizationForEncodingsPass;
 import vadl.gcb.passes.type_normalization.CppTypeNormalizationForPredicatesPass;
-import vadl.lcb.codegen.GenerateImmediateKindPass;
 import vadl.iss.passes.IssConfigurationPass;
+import vadl.lcb.codegen.GenerateImmediateKindPass;
 import vadl.lcb.passes.isaMatching.IsaMatchingPass;
 import vadl.lcb.passes.llvmLowering.GenerateRegisterClassesPass;
 import vadl.lcb.passes.llvmLowering.LlvmLoweringPass;
@@ -418,6 +418,9 @@ public final class PassOrder {
     return order;
   }
 
+  /**
+   * Constructs the pass order used to generate the ISS (QEMU) from a VADL specification.
+   */
   public static PassOrder iss(IssConfiguration config) throws IOException {
     var order = viam(config);
     // iss function passes

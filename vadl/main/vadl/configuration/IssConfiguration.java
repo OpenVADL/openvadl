@@ -1,5 +1,10 @@
 package vadl.configuration;
 
+/**
+ * The configurations required to control the generation of the ISS (QEMU).
+ * Some settings may be added by the {@link vadl.iss.passes.IssConfigurationPass}
+ * if they are not statically available.
+ */
 public class IssConfiguration extends GeneralConfiguration {
 
   // is set by the IssConfigurationPass

@@ -7,6 +7,21 @@ import vadl.pass.PassResults;
 import vadl.template.AbstractTemplateRenderingPass;
 import vadl.viam.Specification;
 
+/**
+ * The template rendering pass all ISS (QEMU) rendering passes extend from.
+ *
+ * <p>It overrides the {@link #getOutputPath()} and uses the {@link #issTemplatePath()}
+ * to determine the output location.
+ * This is done by replacing all occurrences of {@code gen-arch} in the path, by the
+ * {@link IssConfiguration#architectureName()}.
+ *
+ * <p>All subclasses must provide the {@link #issTemplatePath()} that defines the
+ * path inside the {@code resource/templates/iss} directory.
+ *
+ * <p>It also sets some default variables, required by many templates.
+ * Subclasses should use the map returned by {@code super.createVariables} when overriding
+ * the {@link #createVariables(PassResults, Specification)} method.
+ */
 public abstract class IssTemplateRenderingPass extends AbstractTemplateRenderingPass {
 
   public IssTemplateRenderingPass(IssConfiguration configuration) {
@@ -23,6 +38,9 @@ public abstract class IssTemplateRenderingPass extends AbstractTemplateRendering
     return "iss/" + issTemplatePath();
   }
 
+  /**
+   * The path to the template within th {@code resource/templates/iss} directory.
+   */
   protected abstract String issTemplatePath();
 
   @Override
