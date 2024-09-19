@@ -19,6 +19,10 @@ public class GeneralConfiguration {
     this(outputPath, doDump, new FileOutputFactory());
   }
 
+  public GeneralConfiguration(GeneralConfiguration generalConfig) {
+    this(generalConfig.outputPath, generalConfig.doDump, generalConfig.outputFactory);
+  }
+
   /**
    * Constructor.
    */
