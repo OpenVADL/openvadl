@@ -31,10 +31,13 @@ struct ArchCPU {
 };
 
 
-static inline void cpu_get_tb_cpu_state(CPU[(${gen_arch_upper})]State *env, target_long *pc,
-                                    target_ulong *cs_base, uint32_t *pflags)
+static inline void cpu_get_tb_cpu_state(CPU[(${gen_arch_upper})]State *env, vaddr *pc,
+                                        uint64_t *cs_base, uint32_t *pflags)
 {
     // TODO: Implement !
+    *pc = 0;
+    *cs_base = 0;
+    *pflags = 0;
 }
 
 #include "exec/cpu-all.h"

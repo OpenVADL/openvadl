@@ -20,3 +20,5 @@ subdir('tricore')
 subdir('xtensa')
 # VADL generated line
 subdir('[(${gen_arch})]')
+
+specific_ss.add(files('target-common.c'))
