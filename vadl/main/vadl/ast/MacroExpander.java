@@ -624,6 +624,7 @@ class MacroExpander
     var id = resolvePlaceholderOrIdentifier(definition.id);
     var boundModel = new ModelDefinition(id, definition.params, definition.body,
         definition.returnType, copyLoc(definition.loc));
+    boundModel.boundArguments = new HashMap<>(definition.boundArguments);
     boundModel.boundArguments.putAll(args);
     return boundModel;
   }
