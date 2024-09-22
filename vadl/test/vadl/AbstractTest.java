@@ -1,5 +1,6 @@
 package vadl;
 
+import java.nio.file.Path;
 import vadl.configuration.GeneralConfiguration;
 import vadl.types.BitsType;
 import vadl.types.DataType;
@@ -17,7 +18,7 @@ import vadl.viam.graph.Graph;
 
 public abstract class AbstractTest {
   protected static GeneralConfiguration createConfiguration() {
-    return new GeneralConfiguration("output", false);
+    return new GeneralConfiguration(Path.of("output"), false);
   }
 
   protected static Identifier createIdentifier(String name) {

@@ -1,5 +1,6 @@
 package vadl.configuration;
 
+import java.nio.file.Path;
 import vadl.pass.AbstractOutputFactory;
 import vadl.pass.FileOutputFactory;
 
@@ -7,7 +8,7 @@ import vadl.pass.FileOutputFactory;
  * This configuration holds information for all passes.
  */
 public class GeneralConfiguration {
-  private final String outputPath;
+  private final Path outputPath;
   private final boolean doDump;
 
   /**
@@ -15,7 +16,7 @@ public class GeneralConfiguration {
    */
   private final AbstractOutputFactory outputFactory;
 
-  public GeneralConfiguration(String outputPath, boolean doDump) {
+  public GeneralConfiguration(Path outputPath, boolean doDump) {
     this(outputPath, doDump, new FileOutputFactory());
   }
 
@@ -26,14 +27,15 @@ public class GeneralConfiguration {
   /**
    * Constructor.
    */
-  public GeneralConfiguration(String outputPath, boolean doDump,
+  public GeneralConfiguration(Path outputPath, boolean doDump,
                               AbstractOutputFactory outputFactory) {
+    outputPath = outputPath.toAbsolutePath();
     this.outputPath = outputPath;
     this.doDump = doDump;
     this.outputFactory = outputFactory;
   }
 
-  public String outputPath() {
+  public Path outputPath() {
     return outputPath;
   }
 

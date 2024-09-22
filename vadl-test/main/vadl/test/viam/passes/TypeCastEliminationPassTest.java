@@ -49,7 +49,7 @@ public class TypeCastEliminationPassTest extends AbstractTest {
             "passes/typeCastElimination/valid_type_cast_elimination.vadl");
     // execute type cast elimination
     new TypeCastEliminationPass(
-        new GeneralConfiguration(createDirectory().toAbsolutePath().toString(), false)).execute(
+        new GeneralConfiguration(createDirectory().toAbsolutePath(), false)).execute(
         PassResults.empty(), validFrontend.getViam());
     ViamVerifier.verifyAllIn(validFrontend.getViam());
   }

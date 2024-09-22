@@ -3,6 +3,7 @@ package vadl.pass;
 import static vadl.iss.template.IssDefaultRenderingPass.issDefault;
 
 import java.io.IOException;
+import java.nio.file.Path;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
@@ -138,7 +139,7 @@ public final class PassOrder {
    * executed pass.
    */
   public PassOrder dumpAfterEach(String outPath) {
-    var config = new GeneralConfiguration(outPath, true);
+    var config = new GeneralConfiguration(Path.of(outPath), true);
     // We use a ListIterator for safe modification while iterating
     var iterator = order.listIterator();
 
@@ -172,7 +173,7 @@ public final class PassOrder {
    * Adds a dump pass that outputs the dump to the given path.
    */
   public PassOrder addDump(String outPath) {
-    var config = new GeneralConfiguration(outPath, true);
+    var config = new GeneralConfiguration(Path.of(outPath), true);
     var last = order.getLast();
     HtmlDumpPass dumpPass = new HtmlDumpPass(HtmlDumpPass.Config.from(config,
         last.pass().getName().value(),

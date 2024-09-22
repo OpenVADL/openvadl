@@ -6,6 +6,7 @@ import static org.junit.jupiter.api.DynamicTest.dynamicTest;
 import static vadl.utils.GraphUtils.getSingleNode;
 
 import java.io.IOException;
+import java.nio.file.Path;
 import java.util.List;
 import java.util.stream.Stream;
 import org.junit.jupiter.api.DynamicTest;
@@ -168,7 +169,7 @@ public class SideEffectConditionResolvingPassTest extends AbstractTest {
   @TestFactory
   Stream<DynamicTest> sideEffectConditionResolvingPass()
       throws IOException, DuplicatedPassKeyException {
-    var config = new GeneralConfiguration("build/test-out", true);
+    var config = new GeneralConfiguration(Path.of("build/test-out"), true);
     var setup = setupPassManagerAndRunSpec(
         "passes/sideEffectConditionResolving/valid_test_cases.vadl",
         PassOrder.viam(config)

@@ -324,7 +324,7 @@ public abstract class AbstractTest {
 
   public GeneralConfiguration getConfiguration(boolean doDump) throws IOException {
     var directory = createDirectory();
-    return new GeneralConfiguration(directory.toAbsolutePath().toString(), doDump);
+    return new GeneralConfiguration(directory.toAbsolutePath(), doDump);
   }
 
   public record TestSetup(PassManager passManager,
