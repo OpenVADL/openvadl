@@ -4,9 +4,6 @@ import java.io.IOException;
 import org.junit.jupiter.api.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import vadl.configuration.GeneralConfiguration;
-import vadl.configuration.IssConfiguration;
-import vadl.pass.PassOrder;
 import vadl.pass.exception.DuplicatedPassKeyException;
 
 public class RiscvCompilationTest extends QemuIssTest {

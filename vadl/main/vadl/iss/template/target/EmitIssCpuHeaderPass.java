@@ -8,6 +8,10 @@ import vadl.iss.template.IssTemplateRenderingPass;
 import vadl.pass.PassResults;
 import vadl.viam.Specification;
 
+/**
+ * Emits the target/gen-arch/cpu.h file that contains all required
+ * CPU definitions required by QEMU.
+ */
 public class EmitIssCpuHeaderPass extends IssTemplateRenderingPass {
   public EmitIssCpuHeaderPass(IssConfiguration configuration) {
     super(configuration);
@@ -31,11 +35,11 @@ public class EmitIssCpuHeaderPass extends IssTemplateRenderingPass {
         .ownRegisterFiles()
         .stream()
         .map(rf -> Map.of(
-            "name", rf.identifier.simpleName()
-            , "name_upper", rf.identifier.simpleName().toUpperCase()
-            , "name_lower", rf.identifier.simpleName().toLowerCase()
-            , "size", String.valueOf((int) Math.pow(2, rf.addressType().bitWidth()))
-            , "value_c_type", CppTypeMap.getCppTypeNameByVadlType(rf.resultType())
+            "name", rf.identifier.simpleName(),
+            "name_upper", rf.identifier.simpleName().toUpperCase(),
+            "name_lower", rf.identifier.simpleName().toLowerCase(),
+            "size", String.valueOf((int) Math.pow(2, rf.addressType().bitWidth())),
+            "value_c_type", CppTypeMap.getCppTypeNameByVadlType(rf.resultType())
         ))
         .toList();
   }

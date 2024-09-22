@@ -7,6 +7,10 @@ import vadl.iss.template.IssTemplateRenderingPass;
 import vadl.pass.PassResults;
 import vadl.viam.Specification;
 
+/**
+ * Emits the target/gen-arch/cpu-qom.h that contains the QOM (QEMU Object Model) definition
+ * to generate the class for the CPU.
+ */
 public class EmitIssCpuQomHeaderPass extends IssTemplateRenderingPass {
   public EmitIssCpuQomHeaderPass(IssConfiguration configuration) {
     super(configuration);

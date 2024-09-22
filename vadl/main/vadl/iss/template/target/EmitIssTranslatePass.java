@@ -6,6 +6,12 @@ import vadl.iss.template.IssTemplateRenderingPass;
 import vadl.pass.PassResults;
 import vadl.viam.Specification;
 
+/**
+ * Emits the target/gen-arch/translate.c that contains the functions to generate
+ * the TCG instructions from decoded guest instructions.
+ * It also contains the {@code gen_intermediate_code} function, called by QEMU as
+ * entry point to start the TCG generation.
+ */
 public class EmitIssTranslatePass extends IssTemplateRenderingPass {
   public EmitIssTranslatePass(IssConfiguration configuration) {
     super(configuration);
