@@ -1,4 +1,4 @@
-FROM jozott/qemu-rv64
+FROM jozott/qemu
 
 RUN . /scripts/.venv/bin/activate && pip install pyyaml
 
