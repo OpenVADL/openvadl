@@ -43,7 +43,8 @@ public abstract class QemuIssTest extends DockerExecutionTest {
     return new ImageFromDockerfile()
         .withDockerfileFromBuilder(d -> {
               d
-                  .from("jozott/qemu")
+                  .from(
+                      "jozott/qemu@sha256:52374f4ad649c64decc07696b4d88108aabed96d8c3862c668bec7dc0c6a5772")
                   .copy("iss", "/qemu");
               if (precompile) {
                 d.workDir("/qemu/build");
