@@ -16,7 +16,7 @@ ifndef LLVM_SOURCE_PATH
 		$(error LLVM_SOURCE_PATH is not set)
 endif
 ifndef LLVM_CMAKE_BUILD_TYPE
-		LLVM_CMAKE_BUILD_TYPE="Debug"
+		LLVM_CMAKE_BUILD_TYPE="MinSizeRel"
 endif
 ifndef LLVM_ENABLE_ASSERTIONS
 		LLVM_ENABLE_ASSERTIONS=Off
@@ -42,6 +42,8 @@ default: build
 build:
 		git clone https://github.com/llvm/llvm-project --depth=1 -b llvmorg-17.0.6 $(LLVM_SOURCE_PATH) || true
 		cp -r ./llvm/* $(LLVM_SOURCE_PATH)/llvm
+		cp -r ./clang/* $(LLVM_SOURCE_PATH)/clang
+		cp -r ./lld/* $(LLVM_SOURCE_PATH)/lld
 		mkdir -p $(LLVM_SOURCE_PATH)/build
 		cmake -GNinja -S $(LLVM_SOURCE_PATH)/llvm -B $(LLVM_SOURCE_PATH)/build \
 					-DCMAKE_BUILD_TYPE=$(LLVM_CMAKE_BUILD_TYPE) \
