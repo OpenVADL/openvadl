@@ -6,7 +6,7 @@
     </appender>
 
     <root level="info">
-        <appender-ref ref="STDOUT" />
+        <appender-ref ref="STDOUT"/>
     </root>
     <logger name="tc" level="DEBUG"/>
 </configuration>
