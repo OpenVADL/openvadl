@@ -454,6 +454,10 @@ public final class PassOrder {
         .add(issDefault("/hw/meson.build", config))
         .add(issDefault("/hw/gen-arch/Kconfig", config))
         .add(issDefault("/hw/gen-arch/meson.build", config))
+        .add(issDefault("/hw/gen-arch/virt.c", config))
+        .add(issDefault("/hw/gen-arch/virt.h", config))
+        .add(issDefault("/hw/gen-arch/boot.c", config))
+        .add(issDefault("/hw/gen-arch/boot.h", config))
 
         // target rendering
         .add(issDefault("/target/Kconfig", config))

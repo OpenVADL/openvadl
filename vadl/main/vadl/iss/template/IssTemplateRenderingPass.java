@@ -66,6 +66,7 @@ public abstract class IssTemplateRenderingPass extends AbstractTemplateRendering
     var vars = new HashMap<String, Object>();
     vars.put("gen_arch", configuration().architectureName().toLowerCase());
     vars.put("gen_arch_upper", configuration().architectureName().toUpperCase());
+    vars.put("gen_arch_lower", configuration().architectureName().toLowerCase());
     return vars;
   }
 }
