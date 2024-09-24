@@ -51,11 +51,19 @@ void [(${namespace})]InstrInfo::storeRegToStackSlot(MachineBasicBlock &MBB, Mach
         DL = MBBI->getDebugLoc();
     }
 
-    /*
-    «FOR sequence : storeRegToStackSequences»
-      «emitStore(sequence)»
-    «ENDFOR»
-    */
+
+    [# th:each="r : ${storeStackSlotInstructions}" ]
+      if ( [(${namespace})]::[(${r.destRegisterFile.identifier.simpleName()})]RegClass.hasSubClassEq(RC) )
+      {
+          BuildMI( MBB, MBBI, DL, get( [(${namespace})]::[(${r.instruction.identifier.simpleName()})] ) )
+              .addFrameIndex( FrameIndex )
+              .addReg( SrcReg, getKillRegState( IsKill ) )
+              .addImm( 0 )
+              ;
+
+          return; // success
+      }
+    [/]
 
     llvm_unreachable("Can't store this register to stack slot");
 }
