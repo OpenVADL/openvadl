@@ -23,13 +23,20 @@ void [(${namespace})]InstrInfo::anchor() {}
 
 void [(${namespace})]InstrInfo::copyPhysReg(MachineBasicBlock &MBB, MachineBasicBlock::iterator MBBI, const DebugLoc &DL, MCRegister DestReg, MCRegister SrcReg, bool KillSrc) const
 {
-    /*
-    «FOR sequence : copyPhysRegSequences»
-                «emitCopy(sequence)»
-    «ENDFOR»
-    */
+  [# th:each="r : ${copyPhysInstructions}" ]
+  if ( [(${namespace})]::[(${r.destRegisterFile.identifier.simpleName()})]RegClass.contains( DestReg )
+                && [(${namespace})]::[(${r.srcRegisterFile.identifier.simpleName()})]RegClass.contains( SrcReg ) )
+    {
+        BuildMI( MBB, MBBI, DL, get( [(${namespace})]::[(${r.instruction.identifier.simpleName()})] ) )
+            .addReg( DestReg, RegState::Define )
+            .addReg( SrcReg, getKillRegState( KillSrc ) )
+            ;
 
-    llvm_unreachable("Can't copy source to destination register");
+        return; // success
+    }
+  [/]
+
+  llvm_unreachable("Can't copy source to destination register");
 }
 
 void [(${namespace})]InstrInfo::storeRegToStackSlot(MachineBasicBlock &MBB, MachineBasicBlock::iterator MBBI, Register SrcReg, bool IsKill, int FrameIndex, const TargetRegisterClass *RC, const TargetRegisterInfo *TRI, Register VReg) const
