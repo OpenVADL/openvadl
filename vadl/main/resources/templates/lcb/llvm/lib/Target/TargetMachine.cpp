@@ -18,7 +18,7 @@ extern "C" void LLVMInitialize[(${namespace})]Target()
 
 static std::string getDataLayout()
 {
-    return "«dataLayout»";
+    return "[(${dataLayout})]";
 }
 
 static Reloc::Model get[(${namespace})]EffectiveRelocModel(std::optional<Reloc::Model> RM)
