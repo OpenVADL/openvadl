@@ -184,4 +184,11 @@ public class Diagnostic extends RuntimeException {
     WARNING,
   }
 
+  @Override
+  public String getMessage() {
+    // This is just used to see some information when using an other frontend than the
+    // open-vadl one (namely the old one from the vadl project).
+    // TODO: Add more infos
+    return reason;
+  }
 }
