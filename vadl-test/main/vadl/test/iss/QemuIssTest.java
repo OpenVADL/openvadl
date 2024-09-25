@@ -52,7 +52,7 @@ public abstract class QemuIssTest extends DockerExecutionTest {
                 d.run("../configure --target-list=vadl-softmmu");
                 d.run("make -j 8");
                 // validate existence of vadl
-                d.run("ls qemu-system-vadl");
+                d.run("qemu-system-vadl --help");
 
                 d.workDir("/work");
               }

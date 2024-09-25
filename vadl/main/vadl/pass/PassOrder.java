@@ -25,9 +25,11 @@ import vadl.gcb.passes.type_normalization.CppTypeNormalizationForDecodingsPass;
 import vadl.gcb.passes.type_normalization.CppTypeNormalizationForEncodingsPass;
 import vadl.gcb.passes.type_normalization.CppTypeNormalizationForPredicatesPass;
 import vadl.iss.passes.IssConfigurationPass;
+import vadl.iss.passes.IssVerificationPass;
 import vadl.iss.template.target.EmitIssCpuHeaderPass;
 import vadl.iss.template.target.EmitIssCpuParamHeaderPass;
 import vadl.iss.template.target.EmitIssCpuQomHeaderPass;
+import vadl.iss.template.target.EmitIssCpuSourcePass;
 import vadl.iss.template.target.EmitIssTranslatePass;
 import vadl.lcb.codegen.GenerateImmediateKindPass;
 import vadl.lcb.passes.isaMatching.IsaMatchingPass;
@@ -430,10 +432,24 @@ public final class PassOrder {
     var order = viam(config);
     // iss function passes
     order
+        .add(new IssVerificationPass(config))
         .add(new IssConfigurationPass(config));
+
+    if (config.doDump()) {
+      order.add(new HtmlDumpPass(HtmlDumpPass.Config.from(config, "ISS Generation Dump", """
+          This dump is executed after the iss transformation passes were executed.
+          """)));
+    }
 
     // add iss template emitting passes to order
     addIssEmitPasses(order, config);
+
+    if (config.doDump()) {
+      order.add(new HtmlDumpPass(HtmlDumpPass.Config.from(config, "ISS Rendering Dump", """
+          This dump is executed after the iss got rendered passes were executed.
+          """)));
+    }
+
 
     return order;
   }
@@ -464,12 +480,14 @@ public final class PassOrder {
         .add(issDefault("/target/meson.build", config))
         .add(issDefault("/target/gen-arch/Kconfig", config))
         .add(issDefault("/target/gen-arch/meson.build", config))
-        // target/gen-arch/cpu.h
-        .add(new EmitIssCpuHeaderPass(config))
         // target/gen-arch/cpu-qom.h
         .add(new EmitIssCpuQomHeaderPass(config))
         // target/gen-arch/cpu-param.h
         .add(new EmitIssCpuParamHeaderPass(config))
+        // target/gen-arch/cpu.h
+        .add(new EmitIssCpuHeaderPass(config))
+        // target/gen-arch/cpu.c
+        .add(new EmitIssCpuSourcePass(config))
         // target/gen-arch/translate.c
         .add(new EmitIssTranslatePass(config))
     ;

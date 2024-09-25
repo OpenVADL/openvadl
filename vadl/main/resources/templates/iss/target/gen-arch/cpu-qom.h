@@ -9,13 +9,5 @@
 
 OBJECT_DECLARE_CPU_TYPE([(${gen_arch_upper})]CPU, [(${gen_arch_upper})]CPUClass, [(${gen_arch_upper})]_CPU)
 
-struct [(${gen_arch_upper})]CPUCLass {
-  /*< private >*/
-  CPUClass parent_class;
-
-  /*< public >*/
-  DeviceRealize parent_realize;
-  DeviceReset   parent_reset;
-};
 
 #endif

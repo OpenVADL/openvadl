@@ -1,5 +1,8 @@
 package vadl.iss.template;
 
+import static vadl.iss.template.IssRenderUtils.mapRegFiles;
+import static vadl.iss.template.IssRenderUtils.mapRegs;
+
 import java.util.HashMap;
 import java.util.Map;
 import vadl.configuration.IssConfiguration;
@@ -67,6 +70,8 @@ public abstract class IssTemplateRenderingPass extends AbstractTemplateRendering
     vars.put("gen_arch", configuration().architectureName().toLowerCase());
     vars.put("gen_arch_upper", configuration().architectureName().toUpperCase());
     vars.put("gen_arch_lower", configuration().architectureName().toLowerCase());
+    vars.put("register_files", mapRegFiles(specification));
+    vars.put("registers", mapRegs(specification));
     return vars;
   }
 }
