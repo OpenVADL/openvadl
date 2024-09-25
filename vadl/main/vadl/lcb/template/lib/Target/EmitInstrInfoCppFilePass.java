@@ -98,7 +98,8 @@ public class EmitInstrInfoCppFilePass extends LcbTemplateRenderingPass {
   private List<CopyPhysRegInstruction> mapWithInstructionLabel(
       InstructionLabel label,
       HashMap<InstructionLabel, List<Instruction>> isaMatching) {
-    var instructions = (List<Instruction>) isaMatching.getOrDefault(label, Collections.emptyList());
+    var instructions = (List<Instruction>)
+        isaMatching.getOrDefault(label, Collections.emptyList());
 
     return instructions.stream()
         .map(i -> {
