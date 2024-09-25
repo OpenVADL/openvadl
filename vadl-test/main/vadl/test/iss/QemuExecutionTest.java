@@ -48,7 +48,7 @@ public abstract class QemuExecutionTest extends DockerExecutionTest {
     }
 
     var image = new ImageFromDockerfile()
-        .withFileFromClasspath("Dockerfile", "/images/iss_qemu/Dockerfile")
+        .withFileFromClasspath("images/llvm_riscv/Dockerfile", "/images/iss_qemu/Dockerfile")
         .withFileFromClasspath("/scripts/iss_qemu", "/scripts/iss_qemu");
 
     specQemuBuildImageCache.put(spec.identifier, image);

@@ -8,8 +8,9 @@ import java.io.InputStreamReader;
 import java.util.stream.Collectors;
 import org.junit.jupiter.api.Assertions;
 import vadl.test.AbstractTest;
+import vadl.test.DockerExecutionTest;
 
-public abstract class LlvmTest extends AbstractTest {
+public abstract class LlvmTest extends DockerExecutionTest {
   protected final String TEMP_DIR = System.getProperty("java.io.tmpdir");
 
   protected final String LLVM_BIN_DIR = System.getenv("LLVM_SOURCE_PATH") + "/build/bin";
