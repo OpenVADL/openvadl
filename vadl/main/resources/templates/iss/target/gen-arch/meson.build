@@ -10,7 +10,7 @@ gen_arch_ss.add(files(
 ))
 
 gen_arch_system_ss.add(files(
-#  'machine.c'
+  'machine.c'
 ))
 
 target_arch += {'[(${gen_arch})]': gen_arch_ss}
