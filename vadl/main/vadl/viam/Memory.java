@@ -1,6 +1,7 @@
 package vadl.viam;
 
 import java.util.Objects;
+import javax.annotation.Nonnull;
 import vadl.types.ConcreteRelationType;
 import vadl.types.DataType;
 import vadl.types.Type;
@@ -42,6 +43,7 @@ public class Memory extends Resource {
   }
 
   @Override
+  @Nonnull
   public DataType addressType() {
     return addressType;
   }

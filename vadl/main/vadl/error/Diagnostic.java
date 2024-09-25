@@ -2,6 +2,9 @@ package vadl.error;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.function.Consumer;
+import java.util.function.Supplier;
+import org.jetbrains.annotations.Contract;
 import vadl.utils.SourceLocation;
 
 
@@ -77,6 +80,13 @@ public class Diagnostic extends RuntimeException {
    */
   public static DiagnosticBuilder warning(String reason, SourceLocation location) {
     return new DiagnosticBuilder(Level.WARNING, reason, location);
+  }
+
+  @Contract("false, _ -> fail")
+  public static void ensure(boolean condition, Supplier<DiagnosticBuilder> builder) {
+    if (!condition) {
+      throw builder.get().build();
+    }
   }
 
   @Override

@@ -1,7 +1,11 @@
 package vadl.iss.template.target;
 
+import static vadl.error.Diagnostic.error;
+
+import java.util.List;
 import java.util.Map;
 import vadl.configuration.IssConfiguration;
+import vadl.error.Diagnostic;
 import vadl.iss.template.IssTemplateRenderingPass;
 import vadl.pass.PassResults;
 import vadl.viam.Specification;
@@ -25,6 +29,47 @@ public class EmitIssTranslatePass extends IssTemplateRenderingPass {
   @Override
   protected Map<String, Object> createVariables(PassResults passResults,
                                                 Specification specification) {
-    return super.createVariables(passResults, specification);
+    var vars = super.createVariables(passResults, specification);
+    vars.put("insn_width", getInstructionWidth(specification));
+    vars.put("mem_word_size", getMemoryWordSize(specification));
+    return vars;
   }
+
+  private static Map<String, Object> getMemoryWordSize(Specification specification) {
+    return Map.of(
+        "int", 8
+    );
+  }
+
+  private static Map<String, Object> getInstructionWidth(Specification specification) {
+    var refFormat = specification.isa().get().ownInstructions()
+        .get(0).format();
+    var width = refFormat.type().bitWidth();
+
+    return switch (width) {
+      case 8 -> Map.of(
+          "short", "b",
+          "int", 8
+      );
+      case 16 -> Map.of(
+          "short", "uw",
+          "int", 16
+      );
+      case 32 -> Map.of(
+          "short", "l",
+          "int", 32
+      );
+      case 64 -> Map.of(
+          "short", "q",
+          "int", 64
+      );
+      default -> throw error("Invalid instruction width", refFormat.identifier.sourceLocation())
+          .description(
+              ("The ISS generator requires that every instruction width " +
+                  "is one of [8, 16, 32, 64], but found %s")
+                  .formatted(width))
+          .build();
+    };
+  }
+
 }

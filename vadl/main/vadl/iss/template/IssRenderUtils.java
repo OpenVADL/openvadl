@@ -1,5 +1,6 @@
 package vadl.iss.template;
 
+import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
@@ -18,10 +19,16 @@ public class IssRenderUtils {
         "name_upper", name.toUpperCase(),
         "name_lower", name.toLowerCase(),
         "size", String.valueOf(size),
+        "value_width", rf.resultType().bitWidth(),
         "value_c_type", CppTypeMap.getCppTypeNameByVadlType(rf.resultType()),
         "names", IntStream.range(0, size)
             .mapToObj(i -> name + i)
-            .toList()
+            .toList(),
+        "constraints", Arrays.stream(rf.constraints())
+            .map(c -> Map.of(
+                "index", c.address().intValue(),
+                "value", c.value().intValue()
+            )).toList()
     );
   }
 

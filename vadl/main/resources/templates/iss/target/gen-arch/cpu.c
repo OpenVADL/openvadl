@@ -10,7 +10,7 @@
 static [(${gen_arch_upper})]CPU* cpu_self;
 
 [# th:each="reg_file, iterState : ${register_files}"] // define the register file sizes
-static const char * const [(${gen_arch_lower})]_cpu_[(${reg_file.name_lower})]_names[[(${"[" + reg_file["size"] + "]"})]] = {
+const char * const [(${gen_arch_lower})]_cpu_[(${reg_file.name_lower})]_names[[(${"[" + reg_file["size"] + "]"})]] = {
   "[(${#strings.arrayJoin(reg_file.names, '", "')})]"
 };
 [/]

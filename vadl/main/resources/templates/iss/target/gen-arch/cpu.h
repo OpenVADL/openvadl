@@ -15,6 +15,9 @@
 #define [[${gen_arch_upper + '_REG_FILE_' + reg_file.name_upper + '_SIZE'}]] [(${reg_file["size"]})]
 [/]
 
+[# th:each="reg_file, iterState : ${register_files}"] // define the register file sizes
+extern const char * const [(${gen_arch_lower})]_cpu_[(${reg_file.name_lower})]_names[(${"[" + reg_file["size"] + "]"})];
+[/]
 
 // the CPU environment across all cores/ArchCPU instances.
 // e.g. it holds the state of all registers.
