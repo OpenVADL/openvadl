@@ -1,3 +1,4 @@
+// VADL generated file
 #include "qemu/osdep.h"
 #include "exec/translator.h"
 #include "qemu/qemu-print.h"

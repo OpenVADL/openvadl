@@ -1,10 +1,8 @@
-
+// VADL generated file
 #include "qemu/osdep.h"
 #include "cpu.h"
 #include "qemu/error-report.h"
-#include "sysemu/kvm.h"
 #include "migration/cpu.h"
-#include "sysemu/cpu-timers.h"
 
 
 // TODO: Activate/Use in cpu.h#cpu_class_init at DeviceClass#vmsd (dc->vmsd=&vms_..._cpu)

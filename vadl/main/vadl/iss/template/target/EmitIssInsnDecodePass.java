@@ -7,20 +7,19 @@ import vadl.pass.PassResults;
 import vadl.viam.Specification;
 
 /**
- * Emits the target/gen-arch/machine.c that contains VM state information to
- * save and restore the state of QEMU for the generated CPU device.
- *
- * <p>Note that this is not yet activated and doesn't work yet.</p>
+ * Emits the target/gen-arch/insn.decode that contains the decoding tree for the
+ * given ISA.
+ * This file is used during ISS compile time to generate a C decoder that calls
+ * the correct translation functions for given instructions.
  */
-// TODO: Make this work (look at machine.c TODO comment).
-public class EmitIssMachinePass extends IssTemplateRenderingPass {
-  public EmitIssMachinePass(IssConfiguration configuration) {
+public class EmitIssInsnDecodePass extends IssTemplateRenderingPass {
+  public EmitIssInsnDecodePass(IssConfiguration configuration) {
     super(configuration);
   }
 
   @Override
   protected String issTemplatePath() {
-    return "target/gen-arch/machine.c";
+    return "target/gen-arch/insn.decode";
   }
 
   @Override

@@ -1,4 +1,4 @@
-
+// VADL generated file
 #include "qemu/osdep.h"
 #include "qapi/error.h"
 #include "qemu/qemu-print.h"

@@ -12,8 +12,8 @@ import vadl.viam.Register;
 import vadl.viam.Specification;
 
 /**
- * Emits the target/gen-arch/cpu.h file that contains all required
- * CPU definitions required by QEMU.
+ * Emits the target/gen-arch/cpu.c file that contains all required
+ * CPU function/method implementations required by QEMU.
  */
 public class EmitIssCpuSourcePass extends IssTemplateRenderingPass {
   public EmitIssCpuSourcePass(IssConfiguration configuration) {
