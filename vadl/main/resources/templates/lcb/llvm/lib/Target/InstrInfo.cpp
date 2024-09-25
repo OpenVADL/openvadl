@@ -80,11 +80,18 @@ void [(${namespace})]InstrInfo::loadRegFromStackSlot(MachineBasicBlock &MBB, Mac
         DL = MBBI->getDebugLoc();
     }
 
-    /*
-    «FOR sequence : loadRegFromStackSequences»
-      «emitLoad(sequence)»
-    «ENDFOR»
-    */
+    [# th:each="r : ${loadStackSlotInstructions}" ]
+    if ( [(${namespace})]::[(${r.destRegisterFile.identifier.simpleName()})]RegClass.hasSubClassEq(RC) )
+    {
+        BuildMI( MBB, MBBI, DL, get( [(${namespace})]::[(${r.instruction.identifier.simpleName()})] ) )
+          .addReg( DestReg, RegState::Define )
+          .addFrameIndex( FrameIndex )
+          .addImm( 0 )
+          ;
+
+        return; // success
+    }
+    [/]
 
     llvm_unreachable("Can't load this register from stack slot");
 }

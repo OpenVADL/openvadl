@@ -15,6 +15,7 @@ import vadl.pass.PassResults;
 import vadl.viam.Instruction;
 import vadl.viam.RegisterFile;
 import vadl.viam.Specification;
+import vadl.viam.graph.dependency.ReadMemNode;
 import vadl.viam.graph.dependency.ReadRegFileNode;
 import vadl.viam.graph.dependency.WriteMemNode;
 import vadl.viam.graph.dependency.WriteRegFileNode;
@@ -55,11 +56,22 @@ public class EmitInstrInfoCppFilePass extends LcbTemplateRenderingPass {
   /**
    * An {@link Instruction} for storing on the stack.
    *
-   * @param instruction      is the machine instruction which does the copying.
+   * @param instruction      is the machine instruction which does the storing.
    * @param destRegisterFile is the register file for the destination register in LLVM.
    * @param words            indicates how many words are stored.
    */
   record StoreRegSlot(Instruction instruction, RegisterFile destRegisterFile, int words) {
+
+  }
+
+  /**
+   * An {@link Instruction} for loading from the stack.
+   *
+   * @param instruction      is the machine instruction which does the loading.
+   * @param destRegisterFile is the register file for the destination register in LLVM.
+   * @param words            indicates how many words are stored.
+   */
+  record LoadRegSlot(Instruction instruction, RegisterFile destRegisterFile, int words) {
 
   }
 
@@ -93,6 +105,28 @@ public class EmitInstrInfoCppFilePass extends LcbTemplateRenderingPass {
     return mapped;
   }
 
+  private List<LoadRegSlot> getLoadMemoryInstructions(
+      HashMap<InstructionLabel, List<Instruction>> isaMatching) {
+    var instructions = (List<Instruction>) isaMatching.getOrDefault(InstructionLabel.LOAD_MEM,
+        Collections.emptyList());
+
+    var mapped = instructions.stream()
+        .map(i -> {
+          var destRegisterFile =
+              ensurePresent(i.behavior().getNodes(WriteRegFileNode.class).findFirst(),
+                  "There must be destination register").registerFile();
+          var words =
+              ensurePresent(i.behavior().getNodes(ReadMemNode.class).findFirst(),
+                  "There must be a read mem node").words();
+          return new LoadRegSlot(i, destRegisterFile, words);
+        })
+        // Sort by largest word size descending
+        .sorted((loadRegSlot, t1) -> Integer.compare(t1.words, loadRegSlot.words))
+        .toList();
+
+    return mapped;
+  }
+
   private List<CopyPhysRegInstruction> mapWithInstructionLabel(
       InstructionLabel label,
       HashMap<InstructionLabel, List<Instruction>> isaMatching) {
@@ -120,7 +154,8 @@ public class EmitInstrInfoCppFilePass extends LcbTemplateRenderingPass {
         IsaMatchingPass.class);
     return Map.of(CommonVarNames.NAMESPACE, specification.name(),
         "copyPhysInstructions", getMovInstructions(isaMatches),
-        "storeStackSlotInstructions", getStoreMemoryInstructions(isaMatches)
+        "storeStackSlotInstructions", getStoreMemoryInstructions(isaMatches),
+        "loadStackSlotInstructions", getLoadMemoryInstructions(isaMatches)
     );
   }
 }
