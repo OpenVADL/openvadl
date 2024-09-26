@@ -429,22 +429,6 @@ class MacroExpander
         .withAnnotations(expandAnnotations(definition.annotations));
   }
 
-  private List<FormatDefinition.FormatField> expandFields(FormatDefinition definition) {
-    var fields = new ArrayList<>(definition.fields);
-    fields.replaceAll(field -> {
-      if (field instanceof FormatDefinition.DerivedFormatField derivedFormatField) {
-        return new FormatDefinition.DerivedFormatField(derivedFormatField.identifier,
-            expandExpr(derivedFormatField.expr));
-      } else if (field instanceof FormatDefinition.TypedFormatField typedFormatField) {
-        return new FormatDefinition.TypedFormatField(typedFormatField.identifier,
-            (TypeLiteral) expandExpr(typedFormatField.type));
-      } else {
-        return field;
-      }
-    });
-    return fields;
-  }
-
   @Override
   public Definition visit(InstructionSetDefinition definition) {
     return new InstructionSetDefinition(definition.identifier, definition.extending,
@@ -915,6 +899,22 @@ class MacroExpander
         index -> new ForallStatement.Index(index.name(), expandExpr(index.domain())));
     var statement = expandStatement(forallStatement.statement);
     return new ForallStatement(indices, statement, copyLoc(forallStatement.loc));
+  }
+
+  private List<FormatDefinition.FormatField> expandFields(FormatDefinition definition) {
+    var fields = new ArrayList<>(definition.fields);
+    fields.replaceAll(field -> {
+      if (field instanceof FormatDefinition.DerivedFormatField derivedFormatField) {
+        return new FormatDefinition.DerivedFormatField(derivedFormatField.identifier,
+            expandExpr(derivedFormatField.expr));
+      } else if (field instanceof FormatDefinition.TypedFormatField typedFormatField) {
+        return new FormatDefinition.TypedFormatField(typedFormatField.identifier,
+            (TypeLiteral) expandExpr(typedFormatField.type));
+      } else {
+        return field;
+      }
+    });
+    return fields;
   }
 
   private void assertValidMacro(Macro macro, SourceLocation sourceLocation)
