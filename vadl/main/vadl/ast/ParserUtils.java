@@ -155,7 +155,7 @@ class ParserUtils {
   }
 
   static boolean canReorder(BinaryExpr binExpr) {
-    if (!(binExpr.operator instanceof BinOpExpr)) {
+    if (!(binExpr.operator instanceof BinOp)) {
       return false;
     }
     if (binExpr.left instanceof BinaryExpr leftBin && !canReorder(leftBin)) {
@@ -412,7 +412,7 @@ class ParserUtils {
     } else {
       parser.errors.SemErr(node.location().begin().line(), node.location().begin().column(),
           "Expected node of type BinOp, received " + node.syntaxType().print() + " - " + node);
-      return new BinOpExpr(Operator.Xor(), node.location());
+      return new BinOp(Operator.Xor(), node.location());
     }
   }
 

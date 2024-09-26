@@ -51,10 +51,6 @@ interface ExprVisitor<R> {
 
   R visit(SymbolExpr expr);
 
-  R visit(BinOpExpr expr);
-
-  R visit(UnOpExpr expr);
-
   R visit(MacroMatchExpr expr);
 
   R visit(MatchExpr expr);
@@ -78,7 +74,8 @@ final class Identifier extends Expr implements IsId, IdentifierOrPlaceholder {
   String name;
   SourceLocation loc;
 
-  @Nullable Object refNode; // TODO should always be a Node
+  @Nullable
+  Object refNode; // TODO should always be a Node
 
   public Identifier(String name, SourceLocation location) {
     this.loc = location;
@@ -134,13 +131,11 @@ final class Identifier extends Expr implements IsId, IdentifierOrPlaceholder {
   }
 }
 
-sealed interface IsBinOp
-    permits BinOpExpr, PlaceholderNode, MacroInstanceExpr, MacroMatchExpr {
+sealed interface IsBinOp permits BinOp, PlaceholderNode, MacroInstanceNode, MacroMatchNode {
   void prettyPrint(int indent, StringBuilder builder);
 }
 
-sealed interface IsUnOp
-    permits UnOpExpr, PlaceholderNode, MacroInstanceExpr, MacroMatchExpr {
+sealed interface IsUnOp permits UnOp, PlaceholderNode, MacroInstanceNode, MacroMatchNode {
   void prettyPrint(int indent, StringBuilder builder);
 }
 
@@ -317,59 +312,6 @@ enum UnaryOperator {
   }
 }
 
-final class BinOpExpr extends Expr implements IsBinOp {
-
-  Operator operator;
-  SourceLocation location;
-
-  BinOpExpr(Operator operator, SourceLocation location) {
-    this.operator = operator;
-    this.location = location;
-  }
-
-  @Override
-  SourceLocation location() {
-    return location;
-  }
-
-  @Override
-  SyntaxType syntaxType() {
-    return BasicSyntaxType.BIN_OP;
-  }
-
-  @Override
-  public void prettyPrint(int indent, StringBuilder builder) {
-    builder.append(operator.symbol);
-  }
-
-  @Override
-  public String toString() {
-    return getClass().getSimpleName() + " " + operator.symbol;
-  }
-
-  @Override
-  public boolean equals(Object o) {
-    if (this == o) {
-      return true;
-    }
-    if (o == null || getClass() != o.getClass()) {
-      return false;
-    }
-    BinOpExpr that = (BinOpExpr) o;
-    return Objects.equals(operator, that.operator);
-  }
-
-  @Override
-  public int hashCode() {
-    return operator.hashCode();
-  }
-
-  @Override
-  <R> R accept(ExprVisitor<R> visitor) {
-    return visitor.visit(this);
-  }
-}
-
 /**
  * Any kind of binary expression (often written with the infix notation in vadl).
  */
@@ -433,7 +375,7 @@ class BinaryExpr extends Expr {
   }
 
   Operator operator() {
-    return ((BinOpExpr) operator).operator;
+    return ((BinOp) operator).operator;
   }
 
   @Override
@@ -491,59 +433,6 @@ class BinaryExpr extends Expr {
   }
 }
 
-final class UnOpExpr extends Expr implements IsUnOp {
-
-  UnaryOperator operator;
-  SourceLocation location;
-
-  UnOpExpr(UnaryOperator operator, SourceLocation location) {
-    this.operator = operator;
-    this.location = location;
-  }
-
-  @Override
-  SourceLocation location() {
-    return location;
-  }
-
-  @Override
-  SyntaxType syntaxType() {
-    return BasicSyntaxType.UN_OP;
-  }
-
-  @Override
-  public void prettyPrint(int indent, StringBuilder builder) {
-    builder.append(operator.symbol);
-  }
-
-  @Override
-  public String toString() {
-    return getClass().getSimpleName() + " " + operator.symbol;
-  }
-
-  @Override
-  public boolean equals(Object o) {
-    if (this == o) {
-      return true;
-    }
-    if (o == null || getClass() != o.getClass()) {
-      return false;
-    }
-    UnOpExpr that = (UnOpExpr) o;
-    return Objects.equals(operator, that.operator);
-  }
-
-  @Override
-  public int hashCode() {
-    return operator.hashCode();
-  }
-
-  @Override
-  <R> R accept(ExprVisitor<R> visitor) {
-    return visitor.visit(this);
-  }
-}
-
 class UnaryExpr extends Expr {
   IsUnOp operator;
   Expr operand;
@@ -566,7 +455,7 @@ class UnaryExpr extends Expr {
   @Override
   void prettyPrint(int indent, StringBuilder builder) {
     operator.prettyPrint(indent, builder);
-    if (operator instanceof UnOpExpr) {
+    if (operator instanceof UnOp) {
       operand.prettyPrint(indent, builder);
     } else {
       builder.append(" (");
@@ -806,7 +695,6 @@ class StringLiteral extends Expr {
     this.loc = loc;
   }
 
-
   @Override
   SourceLocation location() {
     return loc;
@@ -922,7 +810,7 @@ final class PlaceholderExpr extends Expr implements IdentifierOrPlaceholder, IsI
  * This node should never leave the parser.
  */
 final class MacroInstanceExpr extends Expr
-    implements IsMacroInstance, IdentifierOrPlaceholder, IsId, IsBinOp, IsUnOp {
+    implements IsMacroInstance, IdentifierOrPlaceholder, IsId {
   MacroOrPlaceholder macro;
   List<Node> arguments;
   SourceLocation loc;
@@ -1007,8 +895,7 @@ final class MacroInstanceExpr extends Expr
  * An internal temporary placeholder of a macro-level "match" construct.
  * This node should never leave the parser.
  */
-final class MacroMatchExpr extends Expr implements IsMacroMatch, IdentifierOrPlaceholder, IsId,
-    IsUnOp, IsBinOp {
+final class MacroMatchExpr extends Expr implements IsMacroMatch, IdentifierOrPlaceholder, IsId {
   MacroMatch macroMatch;
 
   MacroMatchExpr(MacroMatch macroMatch) {
@@ -1425,7 +1312,8 @@ final class IdentifierPath extends Expr implements IsId {
    */
   List<IdentifierOrPlaceholder> segments;
 
-  @Nullable Object refNode; // TODO should always be a Node
+  @Nullable
+  Object refNode; // TODO should always be a Node
 
   public IdentifierPath(List<IdentifierOrPlaceholder> segments) {
     Preconditions.checkArgument(!segments.isEmpty(),

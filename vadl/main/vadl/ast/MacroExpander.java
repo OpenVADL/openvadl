@@ -30,10 +30,10 @@ class MacroExpander
   final SourceLocation expandingFrom;
 
   MacroExpander(Map<String, Node> args, Map<String, Identifier> macroOverrides,
-                @Nullable SourceLocation expanedingFrom) {
+                @Nullable SourceLocation expandingFrom) {
     this.args = args;
     this.macroOverrides = macroOverrides;
-    this.expandingFrom = expanedingFrom;
+    this.expandingFrom = expandingFrom;
   }
 
   /**
@@ -151,6 +151,12 @@ class MacroExpander
     }
   }
 
+  public List<Node> expandNodes(List<Node> nodes) {
+    var copy = new ArrayList<>(nodes);
+    copy.replaceAll(this::expandNode);
+    return copy;
+  }
+
   @Override
   public Expr visit(Identifier expr) {
     return new Identifier(expr.name, copyLoc(expr.location()));
@@ -158,10 +164,8 @@ class MacroExpander
 
   @Override
   public Expr visit(BinaryExpr expr) {
-    var operator = expr.operator instanceof PlaceholderNode p
-        ? Objects.requireNonNullElse(resolveArg(p.segments), p) : expr.operator;
-    var expanded = new BinaryExpr(expr.left.accept(this), (IsBinOp) operator,
-        expr.right.accept(this));
+    var expanded = new BinaryExpr(expr.left.accept(this),
+        (IsBinOp) expandNode((Node) expr.operator), expr.right.accept(this));
     expanded.hasBeenReordered = expr.hasBeenReordered;
     return expanded;
   }
@@ -258,9 +262,7 @@ class MacroExpander
 
   @Override
   public Expr visit(UnaryExpr expr) {
-    var operator = expr.operator instanceof PlaceholderNode p
-        ? Objects.requireNonNullElse(resolveArg(p.segments), p) : expr.operator;
-    return new UnaryExpr((IsUnOp) operator, expandExpr(expr.operand));
+    return new UnaryExpr((IsUnOp) expandNode((Node) expr.operator), expandExpr(expr.operand));
   }
 
   @Override
@@ -306,16 +308,6 @@ class MacroExpander
     var path = (IsId) expandExpr((Expr) expr.path);
     var size = expr.size.accept(this);
     return new SymbolExpr(path, size, copyLoc(expr.location));
-  }
-
-  @Override
-  public Expr visit(BinOpExpr expr) {
-    return new BinOpExpr(expr.operator, copyLoc(expr.location));
-  }
-
-  @Override
-  public Expr visit(UnOpExpr expr) {
-    return new UnOpExpr(expr.operator, copyLoc(expr.location));
   }
 
   @Override
@@ -424,6 +416,20 @@ class MacroExpander
 
   @Override
   public Definition visit(FormatDefinition definition) {
+    var fields = expandFields(definition);
+    var auxFields = new ArrayList<>(definition.auxiliaryFields);
+    auxFields.replaceAll(auxField -> {
+      var entries = new ArrayList<>(auxField.entries());
+      entries.replaceAll(entry ->
+          new FormatDefinition.AuxiliaryFieldEntry(entry.id(), expandExpr(entry.expr())));
+      return new FormatDefinition.AuxiliaryField(auxField.kind(), entries);
+    });
+    var id = resolvePlaceholderOrIdentifier(definition.identifier);
+    return new FormatDefinition(id, definition.type, fields, auxFields, copyLoc(definition.loc))
+        .withAnnotations(expandAnnotations(definition.annotations));
+  }
+
+  private List<FormatDefinition.FormatField> expandFields(FormatDefinition definition) {
     var fields = new ArrayList<>(definition.fields);
     fields.replaceAll(field -> {
       if (field instanceof FormatDefinition.DerivedFormatField derivedFormatField) {
@@ -436,16 +442,7 @@ class MacroExpander
         return field;
       }
     });
-    var auxFields = new ArrayList<>(definition.auxiliaryFields);
-    auxFields.replaceAll(auxField -> {
-      var entries = new ArrayList<>(auxField.entries());
-      entries.replaceAll(entry ->
-          new FormatDefinition.AuxiliaryFieldEntry(entry.id(), expandExpr(entry.expr())));
-      return new FormatDefinition.AuxiliaryField(auxField.kind(), entries);
-    });
-    var id = resolvePlaceholderOrIdentifier(definition.identifier);
-    return new FormatDefinition(id, definition.type, fields, auxFields, copyLoc(definition.loc))
-        .withAnnotations(expandAnnotations(definition.annotations));
+    return fields;
   }
 
   @Override
@@ -580,8 +577,7 @@ class MacroExpander
     try {
       var macro = resolveMacro(definition.macro);
       if (macro == null) {
-        var arguments = new ArrayList<>(definition.arguments);
-        arguments.replaceAll(this::expandNode);
+        var arguments = expandNodes(definition.arguments);
         var placeholder = (MacroPlaceholder) definition.macro;
         var resolved = resolveArg(placeholder.segments());
         var newSegments =
@@ -843,8 +839,7 @@ class MacroExpander
     try {
       var macro = resolveMacro(stmt.macro);
       if (macro == null) {
-        var arguments = new ArrayList<>(stmt.arguments);
-        arguments.replaceAll(this::expandNode);
+        var arguments = expandNodes(stmt.arguments);
         var placeholder = (MacroPlaceholder) stmt.macro;
         var resolved = resolveArg(placeholder.segments());
         var newSegments =
@@ -1079,8 +1074,7 @@ class MacroExpander
     var macro = resolveMacro(node.macro);
     if (macro == null) {
       // Macro reference passed down multiple layers - let parent layer expand
-      var arguments = new ArrayList<>(node.arguments);
-      arguments.replaceAll(this::expandNode);
+      var arguments = expandNodes(node.arguments);
       var placeholder = (MacroPlaceholder) node.macro;
       var resolved = resolveArg(placeholder.segments());
       var newSegments =

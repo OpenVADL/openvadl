@@ -151,16 +151,6 @@ public class Ungrouper
   }
 
   @Override
-  public Expr visit(BinOpExpr expr) {
-    return expr;
-  }
-
-  @Override
-  public Expr visit(UnOpExpr expr) {
-    return expr;
-  }
-
-  @Override
   public Expr visit(MacroMatchExpr expr) {
     return expr;
   }

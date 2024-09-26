@@ -1193,7 +1193,7 @@ PRODUCTIONS
     {
       IF (allowedOps[la.kind] || la.kind == _SYM_AS || isMacroReplacementOfType(this, BasicSyntaxType.BIN_OP))
       (
-        binaryOperator<out Operator op>           (. var operator = new BinOpExpr(op, loc()); .)
+        binaryOperator<out Operator op>           (. var operator = new BinOp(op, loc()); .)
         term<out Expr right>                      (. expr = new BinaryExpr(expr, operator, right); .)
       | macroReplacement<out Node node>
         term<out Expr right>                      (. expr = new BinaryExpr(expr, castBinOp(this, node), right); .)
@@ -1206,7 +1206,7 @@ PRODUCTIONS
           [
             IF (!allowedOps[_SYM_LT] || la.kind == _SYM_GT) (. isSize = true; .)
             SYM_GT                                (. castTarget.sizeIndices.add(List.of(term)); .)
-          ]                                       (. if (!isSize) expr = new BinaryExpr(reorderCastExpr(expr), new BinOpExpr(Operator.Less(), lessLoc), term); .)
+          ]                                       (. if (!isSize) expr = new BinaryExpr(reorderCastExpr(expr), new BinOp(Operator.Less(), lessLoc), term); .)
         }                                         (. if (expr instanceof CastExpr) expr = reorderCastExpr(expr); .)
       )
     }                                             (. expr = reorderBinaryExpr(expr); .)
@@ -1265,7 +1265,7 @@ PRODUCTIONS
       [
         IF (!allowLtOp || la.kind == _SYM_GT)
         SYM_GT                                               (. expr = new SymbolExpr(path, term, path.location().join(loc())); .)
-      ]                                                      (. if (expr.equals(DUMMY_EXPR)) expr = new BinaryExpr((Expr) path, new BinOpExpr(Operator.Less(), lessLoc), term); .)
+      ]                                                      (. if (expr.equals(DUMMY_EXPR)) expr = new BinaryExpr((Expr) path, new BinOp(Operator.Less(), lessLoc), term); .)
     ]                                                        (. if (expr.equals(DUMMY_EXPR)) expr = (Expr) path; .)
   | macroReplacement<out Node node>                          (. expr = castExpr(this, node); .)
   .
@@ -1312,9 +1312,9 @@ PRODUCTIONS
   .
 
   unaryOperator<out IsUnOp op>   (. op = null; .)
-  = SYM_MINUS                    (. op = new UnOpExpr(UnaryOperator.NEGATIVE, loc()); .)
-  | SYM_EXCL                     (. op = new UnOpExpr(UnaryOperator.LOG_NOT, loc()); .)
-  | SYM_TILDE                    (. op = new UnOpExpr(UnaryOperator.COMPLEMENT, loc()); .)
+  = SYM_MINUS                    (. op = new UnOp(UnaryOperator.NEGATIVE, loc()); .)
+  | SYM_EXCL                     (. op = new UnOp(UnaryOperator.LOG_NOT, loc()); .)
+  | SYM_TILDE                    (. op = new UnOp(UnaryOperator.COMPLEMENT, loc()); .)
   | macroReplacement<out Node n> (. op = (IsUnOp) n; .)
   .
 
@@ -1763,7 +1763,7 @@ PRODUCTIONS
   | IF (type == BasicSyntaxType.ID)
     identifierOrPlaceholder<out IdentifierOrPlaceholder id> (. body = (Node) id; .)
   | IF (type == BasicSyntaxType.BIN_OP)
-    ( binaryOperator<out Operator op>                       (. body = new BinOpExpr(op, loc()); .)
+    ( binaryOperator<out Operator op>                       (. body = new BinOp(op, loc()); .)
     | macroReplacement<out body>
     )
   | IF (type == BasicSyntaxType.UN_OP)

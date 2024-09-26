@@ -87,6 +87,102 @@ abstract class Node {
   abstract void prettyPrint(int indent, StringBuilder builder);
 }
 
+final class BinOp extends Node implements IsBinOp {
+
+  Operator operator;
+  SourceLocation location;
+
+  BinOp(Operator operator, SourceLocation location) {
+    this.operator = operator;
+    this.location = location;
+  }
+
+  @Override
+  SourceLocation location() {
+    return location;
+  }
+
+  @Override
+  SyntaxType syntaxType() {
+    return BasicSyntaxType.BIN_OP;
+  }
+
+  @Override
+  public void prettyPrint(int indent, StringBuilder builder) {
+    builder.append(operator.symbol);
+  }
+
+  @Override
+  public String toString() {
+    return getClass().getSimpleName() + " " + operator.symbol;
+  }
+
+  @Override
+  public boolean equals(Object o) {
+    if (this == o) {
+      return true;
+    }
+    if (o == null || getClass() != o.getClass()) {
+      return false;
+    }
+    BinOp that = (BinOp) o;
+    return Objects.equals(operator, that.operator);
+  }
+
+  @Override
+  public int hashCode() {
+    return operator.hashCode();
+  }
+}
+
+final class UnOp extends Node implements IsUnOp {
+
+  UnaryOperator operator;
+  SourceLocation location;
+
+  UnOp(UnaryOperator operator, SourceLocation location) {
+    this.operator = operator;
+    this.location = location;
+  }
+
+  @Override
+  SourceLocation location() {
+    return location;
+  }
+
+  @Override
+  SyntaxType syntaxType() {
+    return BasicSyntaxType.UN_OP;
+  }
+
+  @Override
+  public void prettyPrint(int indent, StringBuilder builder) {
+    builder.append(operator.symbol);
+  }
+
+  @Override
+  public String toString() {
+    return getClass().getSimpleName() + " " + operator.symbol;
+  }
+
+  @Override
+  public boolean equals(Object o) {
+    if (this == o) {
+      return true;
+    }
+    if (o == null || getClass() != o.getClass()) {
+      return false;
+    }
+    UnOp that = (UnOp) o;
+    return Objects.equals(operator, that.operator);
+  }
+
+  @Override
+  public int hashCode() {
+    return operator.hashCode();
+  }
+}
+
 class RecordInstance extends Node {
   RecordType type;
   List<Node> entries;
@@ -179,7 +275,7 @@ final class PlaceholderNode extends Node implements IsBinOp, IsUnOp, IsEncs {
   }
 }
 
-final class MacroInstanceNode extends Node implements IsMacroInstance, IsEncs {
+final class MacroInstanceNode extends Node implements IsMacroInstance, IsEncs, IsBinOp, IsUnOp {
 
   MacroOrPlaceholder macro;
   List<Node> arguments;
@@ -253,7 +349,7 @@ final class MacroInstanceNode extends Node implements IsMacroInstance, IsEncs {
  * An internal temporary placeholder of a macro-level "match" construct.
  * This node should never leave the parser.
  */
-final class MacroMatchNode extends Node implements IsMacroMatch, IsEncs {
+final class MacroMatchNode extends Node implements IsMacroMatch, IsEncs, IsBinOp, IsUnOp {
   MacroMatch macroMatch;
 
   MacroMatchNode(MacroMatch macroMatch) {
