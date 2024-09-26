@@ -5,13 +5,19 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.function.Supplier;
 import java.util.stream.Stream;
 import vadl.configuration.LcbConfiguration;
+import vadl.error.Diagnostic;
+import vadl.gcb.passes.relocation.DetectImmediatePass;
 import vadl.lcb.passes.isaMatching.InstructionLabel;
 import vadl.lcb.passes.isaMatching.IsaMatchingPass;
 import vadl.lcb.template.CommonVarNames;
 import vadl.lcb.template.LcbTemplateRenderingPass;
+import vadl.lcb.template.utils.ImmediatePredicateFunctionProvider;
 import vadl.pass.PassResults;
+import vadl.viam.Format;
+import vadl.viam.Identifier;
 import vadl.viam.Instruction;
 import vadl.viam.RegisterFile;
 import vadl.viam.Specification;
@@ -72,6 +78,15 @@ public class EmitInstrInfoCppFilePass extends LcbTemplateRenderingPass {
    * @param words            indicates how many words are stored.
    */
   record LoadRegSlot(Instruction instruction, RegisterFile destRegisterFile, int words) {
+
+  }
+
+  /**
+   * An entry to adapt a register with an immediate.
+   */
+  record AdjustRegCase(Instruction instruction,
+                       Identifier predicate,
+                       RegisterFile destRegisterFile) {
 
   }
 
@@ -147,15 +162,74 @@ public class EmitInstrInfoCppFilePass extends LcbTemplateRenderingPass {
         .toList();
   }
 
+  private Instruction getAddition(HashMap<InstructionLabel, List<Instruction>> isaMatches) {
+    var add64 = isaMatches.get(InstructionLabel.ADDI_64);
+
+    if (add64 == null) {
+      var instructions = isaMatches.get(InstructionLabel.ADDI_32);
+      ensureNonNull(instructions, "instructions with addition and immediate exist");
+      return ensurePresent(instructions.stream().findFirst(),
+          "There must be at least one instruction");
+    } else {
+      return ensurePresent(add64.stream().findFirst(), "There must be at least one instruction");
+    }
+  }
+
+  private int getImmBitSize(DetectImmediatePass.ImmediateDetectionContainer fieldUsages,
+                            Instruction addition) {
+    var fields = fieldUsages.getImmediates(addition.format());
+    verifyInstructionHasOnlyOneImm(addition, fields);
+    return ensurePresent(fields.stream().findFirst(), "already checked that it is present").size();
+  }
+
+  private void verifyInstructionHasOnlyOneImm(Instruction addition, List<Format.Field> fields) {
+    ensure(fields.size() == 1, () -> Diagnostic.error(
+            "The compiler requires an addition with immediate with only one immediate. "
+                + "The detected instruction has zero or more than one.",
+            addition.sourceLocation())
+        .build());
+  }
+
+  private List<AdjustRegCase> getAdjustCases(PassResults passResults,
+                                             HashMap<InstructionLabel, List<Instruction>>
+                                                 isaMatches,
+                                             DetectImmediatePass.ImmediateDetectionContainer
+                                                 fieldUsages) {
+    var predicates = ImmediatePredicateFunctionProvider.generatePredicateFunctions(passResults);
+    var addi32 = isaMatches.getOrDefault(InstructionLabel.ADDI_32, Collections.emptyList());
+    var addi64 = isaMatches.getOrDefault(InstructionLabel.ADDI_64, Collections.emptyList());
+
+    return Stream.concat(addi32.stream(), addi64.stream())
+        .map(addImm -> {
+          var fields = fieldUsages.getImmediates(addImm.format());
+          verifyInstructionHasOnlyOneImm(addImm, fields);
+          var imm =
+              ensurePresent(fields.stream().findFirst(), "already checked that it is present");
+          var destRegisterFile =
+              ensurePresent(addImm.behavior().getNodes(WriteRegFileNode.class).findFirst(),
+                  "There must be destination register").registerFile();
+          return new AdjustRegCase(addImm,
+              ensureNonNull(predicates.get(imm), "predicate must exist").identifier,
+              destRegisterFile);
+        })
+        .toList();
+  }
+
   @Override
   protected Map<String, Object> createVariables(final PassResults passResults,
                                                 Specification specification) {
     var isaMatches = (HashMap<InstructionLabel, List<Instruction>>) passResults.lastResultOf(
         IsaMatchingPass.class);
+    var fieldUsages = (DetectImmediatePass.ImmediateDetectionContainer) passResults.lastResultOf(
+        DetectImmediatePass.class);
+    var addition = getAddition(isaMatches);
     return Map.of(CommonVarNames.NAMESPACE, specification.name(),
         "copyPhysInstructions", getMovInstructions(isaMatches),
         "storeStackSlotInstructions", getStoreMemoryInstructions(isaMatches),
-        "loadStackSlotInstructions", getLoadMemoryInstructions(isaMatches)
+        "loadStackSlotInstructions", getLoadMemoryInstructions(isaMatches),
+        "additionImmInstruction", addition,
+        "additionImmSize", getImmBitSize(fieldUsages, addition),
+        "adjustCases", getAdjustCases(passResults, isaMatches, fieldUsages)
     );
   }
 }
