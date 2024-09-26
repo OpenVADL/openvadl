@@ -4,10 +4,10 @@ CMAKE_CXX_STANDARD="14"
 LLVM_SOURCE_PATH="llvm-final"
 
 ifndef LLVM_PARALLEL_COMPILE_JOBS
-		LLVM_PARALLEL_COMPILE_JOBS=10
+		LLVM_PARALLEL_COMPILE_JOBS=24
 endif
 ifndef LLVM_PARALLEL_LINK_JOBS
-		LLVM_PARALLEL_LINK_JOBS=2
+		LLVM_PARALLEL_LINK_JOBS=8
 endif
 ifndef LLVM_ENABLE_PROJECTS
 		LLVM_ENABLE_PROJECTS="clang"
@@ -16,7 +16,7 @@ ifndef LLVM_SOURCE_PATH
 		$(error LLVM_SOURCE_PATH is not set)
 endif
 ifndef LLVM_CMAKE_BUILD_TYPE
-		LLVM_CMAKE_BUILD_TYPE="Debug"
+		LLVM_CMAKE_BUILD_TYPE="MinSizeRel"
 endif
 ifndef LLVM_ENABLE_ASSERTIONS
 		LLVM_ENABLE_ASSERTIONS=Off
@@ -42,6 +42,8 @@ default: build
 build:
 		git clone https://github.com/llvm/llvm-project --depth=1 -b llvmorg-17.0.6 $(LLVM_SOURCE_PATH) || true
 		cp -r ./llvm/* $(LLVM_SOURCE_PATH)/llvm
+		cp -r ./clang/* $(LLVM_SOURCE_PATH)/clang
+		cp -r ./lld/* $(LLVM_SOURCE_PATH)/lld
 		mkdir -p $(LLVM_SOURCE_PATH)/build
 		cmake -GNinja -S $(LLVM_SOURCE_PATH)/llvm -B $(LLVM_SOURCE_PATH)/build \
 					-DCMAKE_BUILD_TYPE=$(LLVM_CMAKE_BUILD_TYPE) \
@@ -54,7 +56,9 @@ build:
 					-DLLVM_CCACHE_BUILD=$(LLVM_CCACHE_BUILD) \
 					-DLLVM_CCACHE_DIR=$(LLVM_CCACHE_DIR) \
 					-DLLVM_CCACHE_MAXSIZE=$(LLVM_CCACHE_MAXSIZE) \
-					-DLLVM_ENABLE_ASSERTIONS=$(LLVM_ENABLE_ASSERTIONS)
+					-DLLVM_ENABLE_ASSERTIONS=$(LLVM_ENABLE_ASSERTIONS) \
+					-DCMAKE_C_COMPILER_LAUNCHER=sccache \
+					-DCMAKE_CXX_COMPILER_LAUNCHER=sccache
 		cmake --build $(LLVM_SOURCE_PATH)/build
 
 build-llc:

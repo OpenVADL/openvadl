@@ -3526,7 +3526,7 @@ static void RenderFloatingPointOptions(const ToolChain &TC, const Driver &D,
             // If -Ofast is the optimization level, then -ffast-math should be enabled
             if (!OFastEnabled)
                 continue;
-            [[fallthrough]];
+            [ [ fallthrough ] ];
         case options::OPT_ffast_math:
             HonorINFs = false;
             HonorNaNs = false;

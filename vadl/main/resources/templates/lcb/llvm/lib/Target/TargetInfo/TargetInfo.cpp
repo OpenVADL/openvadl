@@ -11,5 +11,5 @@ Target &llvm::getThe[(${namespace})]Target()
 
 extern "C" void LLVMInitialize[(${namespace})]TargetInfo()
 {
-  RegisterTarget<Triple::[(${namespace})], /*HasJIT=*/false> X(getThe[(${namespace})]Target(), "«processorArch»", "«processorDesc»", "[(${namespace})]");
+  RegisterTarget<Triple::[(${namespace})], /*HasJIT=*/false> X(getThe[(${namespace})]Target(), "[(${namespace})]", "Custom vadl processor", "[(${namespace})]");
 }

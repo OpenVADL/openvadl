@@ -27,6 +27,14 @@ public abstract class AbstractLcbTest extends AbstractCppCodeGenTest {
         PassOrder.lcb(configuration), until);
   }
 
+
+  public TestSetup runLcb(LcbConfiguration configuration,
+                          String specPath)
+      throws IOException, DuplicatedPassKeyException {
+    return setupPassManagerAndRunSpec(specPath,
+        PassOrder.lcb(configuration));
+  }
+
   /**
    * Inject a temporary {@link Pass} into the {@link PassOrder}.
    *
