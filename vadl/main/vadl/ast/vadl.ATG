@@ -1315,6 +1315,7 @@ PRODUCTIONS
   = SYM_MINUS                    (. op = new UnOp(UnaryOperator.NEGATIVE, loc()); .)
   | SYM_EXCL                     (. op = new UnOp(UnaryOperator.LOG_NOT, loc()); .)
   | SYM_TILDE                    (. op = new UnOp(UnaryOperator.COMPLEMENT, loc()); .)
+  // When adding a new operator here, it must also be added to the "UN_OPS" list in ParserUtils.java!
   | macroReplacement<out Node n> (. op = (IsUnOp) n; .)
   .
 

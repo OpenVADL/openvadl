@@ -59,6 +59,30 @@ class ParserUtilsTest {
   }
 
   /**
+   * Tests whether all tokens that are accepted as "unaryOperator" by the generated parser
+   * are also marked as "UN_OPS" in the lookup table.
+   */
+  @Test
+  void unaryOperators() {
+    ByteArrayOutputStream out = new ByteArrayOutputStream();
+    for (int i = 0; i < Parser.maxT + 1; i++) {
+      var parser = parser("", out);
+      var token = new Token();
+      token.kind = i;
+      token.val = "dummy";
+      parser.la = token;
+      var isUnOpToken = ParserUtils.isUnaryOperator(token);
+      var parsedWithoutError = tryParse(parser::unaryOperator);
+      var wasParsedAsUnOp = parsedWithoutError && out.size() == 0;
+
+
+      var message = "Grammar / UN_OPS mismatch (token %d)".formatted(i);
+      assertThat(message, isUnOpToken, is(wasParsedAsUnOp));
+      out.reset();
+    }
+  }
+
+  /**
    * Tests whether all tokens that are accepted as "auxiliaryField" types by the generated parser
    * are also marked as "AUX_FIELD_TOKENS" in the lookup table.
    */

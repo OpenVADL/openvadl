@@ -21,6 +21,7 @@ class ParserUtils {
   static boolean[] BIN_OPS;
   static boolean[] BIN_OPS_EXCEPT_GT;
   static boolean[] BIN_OPS_EXCEPT_IN;
+  static boolean[] UN_OPS;
 
   // Must be kept in sync with allowedIdentifierKeywords
   static boolean[] ID_TOKENS;
@@ -73,6 +74,11 @@ class ParserUtils {
 
     BIN_OPS_EXCEPT_IN = BIN_OPS.clone();
     BIN_OPS_EXCEPT_IN[Parser._SYM_IN] = false;
+
+    UN_OPS = NO_OPS.clone();
+    UN_OPS[Parser._SYM_MINUS] = true;
+    UN_OPS[Parser._SYM_EXCL] = true;
+    UN_OPS[Parser._SYM_TILDE] = true;
 
     ID_TOKENS = NO_OPS.clone();
     ID_TOKENS[Parser._identifierToken] = true;
@@ -552,9 +558,7 @@ class ParserUtils {
    * @return Whether token is a unary operator token
    */
   static boolean isUnaryOperator(Token token) {
-    return token.kind == Parser._SYM_MINUS
-        || token.kind == Parser._SYM_EXCL
-        || token.kind == Parser._SYM_TILDE;
+    return UN_OPS[token.kind];
   }
 
   /**
