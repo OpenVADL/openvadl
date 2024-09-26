@@ -13,10 +13,10 @@ import vadl.pass.exception.DuplicatedPassKeyException;
 import vadl.test.lcb.AbstractLcbTest;
 
 public class LlvmRiscvAssemblyTest extends AbstractLcbTest {
-  protected final String BUCKET = System.getenv("BUCKET");
-  protected final String REGION = System.getenv("REGION");
-  protected final String AWS_ACCESS_KEY_ID = System.getenv("AWS_ACCESS_KEY_ID");
-  protected final String AWS_ACCESS_KEY = System.getenv("AWS_ACCESS_KEY");
+  protected final String bucket = System.getenv("BUCKET");
+  protected final String region = System.getenv("REGION");
+  protected final String awsAccessKeyId = System.getenv("AWS_ACCESS_KEY_ID");
+  protected final String awsAccessKey = System.getenv("AWS_ACCESS_KEY");
 
   @EnabledIfEnvironmentVariable(named = "test.llvm.enabled", matches = "true")
   @Test
@@ -45,12 +45,12 @@ public class LlvmRiscvAssemblyTest extends AbstractLcbTest {
       outputStream.close();
     }
 
-    var image = new ImageFromDockerfile("tc_llvm17", false)
+    var image = new ImageFromDockerfile("tc_llvm17")
         .withDockerfile(Paths.get(configuration.outputPath() + "/lcb/Dockerfile"))
-        .withBuildArg("BUCKET", BUCKET)
-        .withBuildArg("REGION", REGION)
-        .withBuildArg("AWS_ACCESS_KEY_ID", AWS_ACCESS_KEY_ID)
-        .withBuildArg("AWS_ACCESS_KEY", AWS_ACCESS_KEY);
+        .withBuildArg("BUCKET", bucket)
+        .withBuildArg("REGION", region)
+        .withBuildArg("AWS_ACCESS_KEY_ID", awsAccessKeyId)
+        .withBuildArg("AWS_ACCESS_KEY", awsAccessKey);
 
     runContainer(image, configuration.outputPath() + "/output", "/output");
   }
