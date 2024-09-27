@@ -85,6 +85,48 @@ static target_ulong next_insn(DisasContext *ctx)
     return translator_ld[(${insn_width.short})](ctx->env, &ctx->base, pc_next);
 }
 
+[# th:each="reg_file, iterState : ${register_files}"]
+static TCGv get_[(${reg_file.name_lower})](DisasContext *ctx, int reg_num)
+{
+    assert(reg_num < [(${reg_file["size"]})]);
+    [# th:each="constraint, iterState : ${reg_file.constraints}"]
+    if (reg_num == [(${constraint.index})]) return ctx->const[(${reg_file.name_lower})][(${constraint.value})];
+    [/]
+    return cpu_[(${reg_file.name_lower})][reg_num];
+}
+
+static TCGv dest_[(${reg_file.name_lower})](DisasContext *ctx, int reg_num)
+{
+    assert(reg_num < [(${reg_file["size"]})]);
+    [# th:each="constraint, iterState : ${reg_file.constraints}"]
+    if (reg_num == [(${constraint.index})]) return ctx->const[(${reg_file.name_lower})][(${constraint.value})];
+    [/]
+    return cpu_[(${reg_file.name_lower})][reg_num];
+}
+
+static void gen_set_[(${reg_file.name_lower})](DisasContext *ctx, int reg_num, TCGv t)
+{
+    if (
+    true
+    [# th:each="constraint, iterState : ${reg_file.constraints}"]
+    && reg_num != [(${constraint.index})]
+    [/]
+    ) {
+        // TODO: check if tl is fine. Better would be register file specific call
+        tcg_gen_mov_tl(cpu_[(${reg_file.name_lower})][reg_num], t);
+    }
+}
+[/]
+
+static void gen_goto_tb(DisasContext *ctx, target_long diff)
+{
+    target_ulong dest = ctx->base.pc_next + diff;
+
+    // TODO: optimize as lookup might be unnecessary
+    tcg_gen_movi_tl(cpu_pc, dest);
+    tcg_gen_lookup_and_goto_ptr();
+}
+
 
 /*
  * Instruction translation functions.
@@ -93,6 +135,17 @@ static target_ulong next_insn(DisasContext *ctx)
 
 static bool decode_insn(DisasContext *ctx, uint[(${insn_width.int})]_t insn);
 #include "decode-insn.c.inc"
+
+static bool trans_addi(DisasContext *ctx, arg_addi *a) {
+    TCGv dest = dest_x(ctx, a->rd);
+    TCGv src1 = get_x(ctx, a->rs1);
+
+    qemu_printf("[VADL] trans_addi imm: %d\n", a->imm);
+
+    tcg_gen_addi_tl(dest, src1, a->imm);
+    gen_set_x(ctx, a->rd, dest);
+    return true;
+}
 
 /*
  *  Core translation mechanism functions:
