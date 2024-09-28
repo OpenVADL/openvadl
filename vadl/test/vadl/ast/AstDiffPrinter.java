@@ -20,6 +20,10 @@ public class AstDiffPrinter {
             && expectedDef instanceof InstructionSetDefinition expectedIsa) {
           return "Top-level definition %d:\n%s".formatted(i, printDiff(actualIsa, expectedIsa));
         }
+        if (actualDef instanceof MicroProcessorDefinition actualMiP
+            && expectedDef instanceof MicroProcessorDefinition expectedMiP) {
+          return "Top-level definition %d:\n%s".formatted(i, printDiff(actualMiP, expectedMiP));
+        }
         StringBuilder actualPretty = new StringBuilder();
         StringBuilder expectedPretty = new StringBuilder();
         actualDef.prettyPrint(2, actualPretty);
@@ -55,6 +59,39 @@ public class AstDiffPrinter {
         actualDef.prettyPrint(2, actualPretty);
         expectedDef.prettyPrint(2, expectedPretty);
         return "Definition %d in ISA:\nExpected:\n%s\nActual:\n%s\n"
+            .formatted(i + 1, expectedPretty, actualPretty);
+      }
+    }
+    StringBuilder actualPretty = new StringBuilder();
+    StringBuilder expectedPretty = new StringBuilder();
+    actual.prettyPrint(2, actualPretty);
+    expected.prettyPrint(2, expectedPretty);
+    return "Expected:\n%s\nActual:\n%s\n".formatted(expectedPretty, actualPretty);
+  }
+
+  private static String printDiff(MicroProcessorDefinition actual,
+                                  MicroProcessorDefinition expected) {
+    if (actual.definitions.size() != expected.definitions.size()) {
+      return "Mismatched definitions: Expected %d, Actual %d".formatted(
+          expected.definitions.size(), actual.definitions.size());
+    }
+    if (!actual.annotations.equals(expected.annotations)) {
+      StringBuilder actualPretty = new StringBuilder();
+      StringBuilder expectedPretty = new StringBuilder();
+      actual.annotations.prettyPrint(2, actualPretty);
+      expected.annotations.prettyPrint(2, expectedPretty);
+      return "MiP definition annotations:\nExpected:\n%s\nActual:\n%s\n"
+          .formatted(expectedPretty, actualPretty);
+    }
+    for (int i = 0; i < actual.definitions.size(); i++) {
+      var actualDef = actual.definitions.get(i);
+      var expectedDef = expected.definitions.get(i);
+      if (!actualDef.equals(expectedDef)) {
+        StringBuilder actualPretty = new StringBuilder();
+        StringBuilder expectedPretty = new StringBuilder();
+        actualDef.prettyPrint(2, actualPretty);
+        expectedDef.prettyPrint(2, expectedPretty);
+        return "Definition %d in MiP:\nExpected:\n%s\nActual:\n%s\n"
             .formatted(i + 1, expectedPretty, actualPretty);
       }
     }

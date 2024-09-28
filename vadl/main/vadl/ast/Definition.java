@@ -3080,6 +3080,26 @@ class PatchDefinition extends Definition {
     }
     builder.append("\n");
   }
+
+  @Override
+  public boolean equals(Object o) {
+    if (this == o) {
+      return true;
+    }
+    if (o == null || getClass() != o.getClass()) {
+      return false;
+    }
+    PatchDefinition that = (PatchDefinition) o;
+    return Objects.equals(generator, that.generator) &&
+        Objects.equals(handle, that.handle) &&
+        Objects.equals(reference, that.reference) &&
+        Objects.equals(source, that.source);
+  }
+
+  @Override
+  public int hashCode() {
+    return Objects.hash(generator, handle, reference, source);
+  }
 }
 
 class SourceDefinition extends Definition {
@@ -3115,6 +3135,23 @@ class SourceDefinition extends Definition {
     id.prettyPrint(0, builder);
     builder.append(" = ");
     builder.append("-<{").append(source).append("}>-\n");
+  }
+
+  @Override
+  public boolean equals(Object o) {
+    if (this == o) {
+      return true;
+    }
+    if (o == null || getClass() != o.getClass()) {
+      return false;
+    }
+    SourceDefinition that = (SourceDefinition) o;
+    return Objects.equals(id, that.id) && Objects.equals(source, that.source);
+  }
+
+  @Override
+  public int hashCode() {
+    return Objects.hash(id, source);
   }
 }
 
@@ -3165,6 +3202,24 @@ class CpuFunctionDefinition extends Definition {
       expr.prettyPrint(0, builder);
       builder.append("\n");
     }
+  }
+
+  @Override
+  public boolean equals(Object o) {
+    if (this == o) {
+      return true;
+    }
+    if (o == null || getClass() != o.getClass()) {
+      return false;
+    }
+    CpuFunctionDefinition that = (CpuFunctionDefinition) o;
+    return kind == that.kind && Objects.equals(stopWithReference, that.stopWithReference) &&
+        Objects.equals(expr, that.expr);
+  }
+
+  @Override
+  public int hashCode() {
+    return Objects.hash(kind, stopWithReference, expr);
   }
 
   enum BehaviorKind {
@@ -3218,6 +3273,24 @@ class CpuProcessDefinition extends Definition {
     }
     builder.append(" =\n");
     statement.prettyPrint(indent + 1, builder);
+  }
+
+  @Override
+  public boolean equals(Object o) {
+    if (this == o) {
+      return true;
+    }
+    if (o == null || getClass() != o.getClass()) {
+      return false;
+    }
+    CpuProcessDefinition that = (CpuProcessDefinition) o;
+    return kind == that.kind && Objects.equals(startupOutputs, that.startupOutputs) &&
+        Objects.equals(statement, that.statement);
+  }
+
+  @Override
+  public int hashCode() {
+    return Objects.hash(kind, startupOutputs, statement);
   }
 
   enum ProcessKind {
@@ -3337,6 +3410,25 @@ class MacroInstructionDefinition extends Definition {
     statement.prettyPrint(indent + 1, builder);
   }
 
+  @Override
+  public boolean equals(Object o) {
+    if (this == o) {
+      return true;
+    }
+    if (o == null || getClass() != o.getClass()) {
+      return false;
+    }
+    MacroInstructionDefinition that = (MacroInstructionDefinition) o;
+    return kind == that.kind && Objects.equals(inputs, that.inputs) &&
+        Objects.equals(outputs, that.outputs) &&
+        Objects.equals(statement, that.statement);
+  }
+
+  @Override
+  public int hashCode() {
+    return Objects.hash(kind, inputs, outputs, statement);
+  }
+
   enum MacroBehaviorKind {
     TRANSLATION("translation"), PREDICTION("prediction"), FETCH("fetch"), DECODER("decoder"),
     STARTUP("startup");
@@ -3395,6 +3487,26 @@ class PortBehaviorDefinition extends Definition {
     statement.prettyPrint(indent + 1, builder);
   }
 
+  @Override
+  public boolean equals(Object o) {
+    if (this == o) {
+      return true;
+    }
+    if (o == null || getClass() != o.getClass()) {
+      return false;
+    }
+    PortBehaviorDefinition that = (PortBehaviorDefinition) o;
+    return Objects.equals(id, that.id) && kind == that.kind &&
+        Objects.equals(inputs, that.inputs) &&
+        Objects.equals(outputs, that.outputs) &&
+        Objects.equals(statement, that.statement);
+  }
+
+  @Override
+  public int hashCode() {
+    return Objects.hash(id, kind, inputs, outputs, statement);
+  }
+
   enum PortKind {
     READ("read"), WRITE("write"), HIT("hit"), MISS("miss");
 
@@ -3448,6 +3560,24 @@ class PipelineDefinition extends Definition {
     builder.append(" = ");
     statement.prettyPrint(indent + 1, builder);
   }
+
+  @Override
+  public boolean equals(Object o) {
+    if (this == o) {
+      return true;
+    }
+    if (o == null || getClass() != o.getClass()) {
+      return false;
+    }
+    PipelineDefinition that = (PipelineDefinition) o;
+    return Objects.equals(id, that.id) && Objects.equals(outputs, that.outputs) &&
+        Objects.equals(statement, that.statement);
+  }
+
+  @Override
+  public int hashCode() {
+    return Objects.hash(id, outputs, statement);
+  }
 }
 
 class StageDefinition extends Definition {
@@ -3490,6 +3620,24 @@ class StageDefinition extends Definition {
     }
     builder.append(" =\n");
     statement.prettyPrint(indent + 1, builder);
+  }
+
+  @Override
+  public boolean equals(Object o) {
+    if (this == o) {
+      return true;
+    }
+    if (o == null || getClass() != o.getClass()) {
+      return false;
+    }
+    StageDefinition that = (StageDefinition) o;
+    return Objects.equals(id, that.id) && Objects.equals(outputs, that.outputs) &&
+        Objects.equals(statement, that.statement);
+  }
+
+  @Override
+  public int hashCode() {
+    return Objects.hash(id, outputs, statement);
   }
 }
 
@@ -3534,6 +3682,25 @@ class CacheDefinition extends Definition {
     targetType.prettyPrint(0, builder);
     builder.append("\n");
   }
+
+  @Override
+  public boolean equals(Object o) {
+    if (this == o) {
+      return true;
+    }
+    if (o == null || getClass() != o.getClass()) {
+      return false;
+    }
+    CacheDefinition that = (CacheDefinition) o;
+    return Objects.equals(id, that.id) &&
+        Objects.equals(sourceType, that.sourceType) &&
+        Objects.equals(targetType, that.targetType);
+  }
+
+  @Override
+  public int hashCode() {
+    return Objects.hash(id, sourceType, targetType);
+  }
 }
 
 class LogicDefinition extends Definition {
@@ -3567,6 +3734,23 @@ class LogicDefinition extends Definition {
     builder.append("logic ");
     id.prettyPrint(0, builder);
     builder.append("\n");
+  }
+
+  @Override
+  public boolean equals(Object o) {
+    if (this == o) {
+      return true;
+    }
+    if (o == null || getClass() != o.getClass()) {
+      return false;
+    }
+    LogicDefinition that = (LogicDefinition) o;
+    return Objects.equals(id, that.id);
+  }
+
+  @Override
+  public int hashCode() {
+    return Objects.hashCode(id);
   }
 }
 
@@ -3605,5 +3789,22 @@ class SignalDefinition extends Definition {
     builder.append(" : ");
     type.prettyPrint(0, builder);
     builder.append("\n");
+  }
+
+  @Override
+  public boolean equals(Object o) {
+    if (this == o) {
+      return true;
+    }
+    if (o == null || getClass() != o.getClass()) {
+      return false;
+    }
+    SignalDefinition that = (SignalDefinition) o;
+    return Objects.equals(id, that.id) && Objects.equals(type, that.type);
+  }
+
+  @Override
+  public int hashCode() {
+    return Objects.hash(id, type);
   }
 }

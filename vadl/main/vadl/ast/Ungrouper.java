@@ -439,6 +439,7 @@ public class Ungrouper
   @Override
   public Definition visit(CpuFunctionDefinition definition) {
     ungroupAnnotations(definition);
+    definition.expr = definition.expr.accept(this);
     return definition;
   }
 
