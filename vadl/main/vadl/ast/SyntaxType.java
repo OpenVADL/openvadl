@@ -15,6 +15,7 @@ enum BasicSyntaxType implements SyntaxType {
   STATS("Stats"),
   STAT("Stat"),
   ENCS("Encs"),
+  COMMON_DEFS("CommonDefs"),
   ISA_DEFS("IsaDefs"),
   EX("Ex"),
   LIT("Lit"),
@@ -44,7 +45,7 @@ enum BasicSyntaxType implements SyntaxType {
 
   /**
    * Returns whether the current object is a subtype of another.
-   * Note, they are always a subtype of themself.
+   * Note, they are always a subtype of themselves.
    *
    * <p>Here is the complete structure for basic types:
    * <pre>{@code
@@ -56,11 +57,11 @@ enum BasicSyntaxType implements SyntaxType {
    *          |         |        |                   |                             |      |
    *          |         |        |                   |                             |      |
    *          |         |        |            +------Ex------------+               |      |
-   *          |         |        |            |                    |               |      |
+   *          |         |     IsaDefs         |                    |               |      |
    *          |         |        |            |                    |               |      |
    *          |         |        |        +--Lit-----+           CallEx            |      |
    *        Stats       |        |        |          |             |               |      |
-   *          |         |     IsaDefs     |          |             |               |     UnOp
+   *          |         |    CommonDefs   |          |             |               |     UnOp
    *          |         |                 |     +-- Val----+      SymEx            |
    *          |       Encs               Str    |    |     |       |               |
    *        Stat                                |    |     |       |             BinOp
@@ -91,6 +92,9 @@ enum BasicSyntaxType implements SyntaxType {
     IS_SUBTYPE[STAT.ordinal()][STATS.ordinal()] = true;
 
     IS_SUBTYPE[ENCS.ordinal()][ENCS.ordinal()] = true;
+
+    IS_SUBTYPE[COMMON_DEFS.ordinal()][COMMON_DEFS.ordinal()] = true;
+    IS_SUBTYPE[COMMON_DEFS.ordinal()][ISA_DEFS.ordinal()] = true;
 
     IS_SUBTYPE[ISA_DEFS.ordinal()][ISA_DEFS.ordinal()] = true;
 

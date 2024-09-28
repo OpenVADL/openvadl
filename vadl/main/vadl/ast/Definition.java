@@ -169,7 +169,7 @@ class ConstantDefinition extends Definition {
 
   @Override
   SyntaxType syntaxType() {
-    return BasicSyntaxType.ISA_DEFS;
+    return BasicSyntaxType.COMMON_DEFS;
   }
 
   @Override
@@ -524,7 +524,7 @@ class FormatDefinition extends Definition {
 
   @Override
   SyntaxType syntaxType() {
-    return BasicSyntaxType.ISA_DEFS;
+    return BasicSyntaxType.COMMON_DEFS;
   }
 
   @Override
@@ -1505,7 +1505,7 @@ class UsingDefinition extends Definition {
 
   @Override
   SyntaxType syntaxType() {
-    return BasicSyntaxType.ISA_DEFS;
+    return BasicSyntaxType.COMMON_DEFS;
   }
 
   @Override
@@ -1579,7 +1579,7 @@ class FunctionDefinition extends Definition {
 
   @Override
   SyntaxType syntaxType() {
-    return BasicSyntaxType.ISA_DEFS;
+    return BasicSyntaxType.COMMON_DEFS;
   }
 
   @Override
@@ -2299,7 +2299,7 @@ final class ModelDefinition extends Definition {
 
   @Override
   SyntaxType syntaxType() {
-    return BasicSyntaxType.ISA_DEFS;
+    return BasicSyntaxType.COMMON_DEFS;
   }
 
   @Override
@@ -2371,7 +2371,7 @@ final class RecordTypeDefinition extends Definition {
 
   @Override
   SyntaxType syntaxType() {
-    return BasicSyntaxType.ISA_DEFS;
+    return BasicSyntaxType.COMMON_DEFS;
   }
 
   @Override
@@ -2431,7 +2431,7 @@ final class ModelTypeDefinition extends Definition {
 
   @Override
   SyntaxType syntaxType() {
-    return BasicSyntaxType.ISA_DEFS;
+    return BasicSyntaxType.COMMON_DEFS;
   }
 
   @Override

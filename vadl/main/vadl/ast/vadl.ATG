@@ -55,22 +55,23 @@ TOKENS
   ( '"' { "\\" (letter | '"' | "'" | "\\") | validDQStringCharacters } '"') |
   ( "'" { "\\" (letter | '"' | "'" | "\\") | validSQStringCharacters } "'").
 
-  T_BIN      = "Bin".
-  T_BIN_OP   = "BinOp".
-  T_BOOL     = "Bool".
-  T_CALL_EX  = "CallEx".
-  T_ENCS     = "Encs".
-  T_EX       = "Ex".
-  T_ID       = "Id".
-  T_INT      = "Int".
-  T_ISA_DEFS = "IsaDefs".
-  T_LIT      = "Lit".
-  T_STAT     = "Stat".
-  T_STATS    = "Stats".
-  T_STR      = "Str".
-  T_SYM_EX   = "SymEx".
-  T_UN_OP    = "UnOp".
-  T_VAL      = "Val".
+  T_BIN         = "Bin".
+  T_BIN_OP      = "BinOp".
+  T_BOOL        = "Bool".
+  T_CALL_EX     = "CallEx".
+  T_COMMON_DEFS = "CommonDefs".
+  T_ENCS        = "Encs".
+  T_EX          = "Ex".
+  T_ID          = "Id".
+  T_INT         = "Int".
+  T_ISA_DEFS    = "IsaDefs".
+  T_LIT         = "Lit".
+  T_STAT        = "Stat".
+  T_STATS       = "Stats".
+  T_STR         = "Str".
+  T_SYM_EX      = "SymEx".
+  T_UN_OP       = "UnOp".
+  T_VAL         = "Val".
 
   ADDRESS      = "address".
   ALIAS        = "alias".
@@ -237,6 +238,20 @@ PRODUCTIONS
   )                                       (. def.withAnnotations(annotations); .)
   .
 
+  commonDefinitionList<.out List<Definition> definitions.> (. definitions = new ArrayList<>(); .)
+  = {
+    annotations<out Annotations annotations>
+    commonDefinition<out Definition def>                   (. def.withAnnotations(annotations); definitions.add(def); .)
+  | macroDef<out ModelDefinition def>                      (. addDef(definitions, def); macroTable.addModelDefinition(def); .)
+  | // IF (isMacroReplacementOfType(this, BasicSyntaxType.COMMON_DEFS))
+    macroReplacement<out Node n>                           (. var def = castCommonDef(this, n);
+                                                              if (def instanceof DefinitionList list) {
+                                                                readMacroSymbols(macroTable, list.items);
+                                                              }
+                                                              addDef(definitions, def); .)
+  }
+  .
+
   commonDefinition<out Definition def>    (. def = DUMMY_DEF; .)
   = constantDefinition<out def>
   | formatDefinition<out def>
@@ -268,7 +283,7 @@ PRODUCTIONS
     isaDefinition<out Definition def>                   (. def.withAnnotations(annotations); definitions.add(def); .)
   | macroDef<out ModelDefinition def>                   (. addDef(definitions, def); macroTable.addModelDefinition(def); .)
   | // IF (isMacroReplacementOfType(this, BasicSyntaxType.ISA_DEFS))
-    macroReplacement<out Node n>                        (. var def = castDef(this, n);
+    macroReplacement<out Node n>                        (. var def = castIsaDef(this, n);
                                                            if (def instanceof DefinitionList list) {
                                                              readMacroSymbols(macroTable, list.items);
                                                            }
@@ -790,7 +805,7 @@ PRODUCTIONS
     SYM_EQ
     SYM_BRACE_OPEN                              (. var elements = new ArrayList<Definition>(); .)
     {
-      abiElementDefinition<out Definition elem> (. elements.add(elem); .)
+      abiElementDefinition<out Definition elem> (. addDef(elements, elem); .)
     }
     SYM_BRACE_CLOSE                             (. def = new ApplicationBinaryInterfaceDefinition(id, isaPath, elements, start.join(loc())); .)
   .
@@ -801,7 +816,13 @@ PRODUCTIONS
       abiSequenceDef<out def>
     | specialPurposeRegisterDef<out def>
     | aliasDefinition<out def>
+ // | commonDefinition<out def> TODO conflict between FUNCTION ARGUMENT and function definition
     )                                      (. def.withAnnotations(annotations); .)
+  | // IF (isMacroReplacementOfType(this, BasicSyntaxType.COMMON_DEFS))
+    macroReplacement<out Node n>           (. def = castCommonDef(this, n);
+                                              if (def instanceof DefinitionList list) {
+                                                readMacroSymbols(macroTable, list.items);
+                                              } .)
   .
 
   specialPurposeRegisterDef<out Definition def>              (. var start = lookaheadLoc(); .)
@@ -856,20 +877,25 @@ PRODUCTIONS
     SYM_EQ
     SYM_BRACE_OPEN                         (. var definitions = new ArrayList<Definition>(); .)
     {
-      cpuDefinition<out Definition cpuDef> (. definitions.add(cpuDef); .)
+      cpuDefinition<out Definition cpuDef> (. addDef(definitions, cpuDef); .)
     }
     SYM_BRACE_CLOSE                        (. def = new MicroProcessorDefinition(id, implementedIsas, abi, definitions, start.join(loc())); .)
   .
 
   cpuDefinition<out Definition def> (. def = DUMMY_DEF; .)
   = annotations<out Annotations annotations>
-    ( usingDefinition<out def>
+    ( commonDefinition<out def>
     | patchDefinition<out def>
     | sourceDefinition<out def>
     | exceptionDefinition<out def>
     | cpuFunctionDefinition<out def>
     | cpuProcessDefinition<out def>
     )                               (. def.withAnnotations(annotations); .)
+  | // IF (isMacroReplacementOfType(this, BasicSyntaxType.COMMON_DEFS))
+    macroReplacement<out Node n>    (. def = castCommonDef(this, n);
+                                       if (def instanceof DefinitionList list) {
+                                         readMacroSymbols(macroTable, list.items);
+                                       } .)
   .
 
   patchDefinition<out Definition def>
@@ -930,7 +956,7 @@ PRODUCTIONS
     SYM_EQ
     SYM_BRACE_OPEN                        (. var definitions = new ArrayList<Definition>(); .)
     {
-      miaDefinition<out Definition child> (. definitions.add(child); .)
+      miaDefinition<out Definition child> (. addDef(definitions, child); .)
     }
     SYM_BRACE_CLOSE                       (. def = new MicroArchitectureDefinition(id, processor, definitions, start.join(loc())); .)
   .
@@ -946,12 +972,17 @@ PRODUCTIONS
     | signalDefinition<out def>
     | memoryDefinition<out def>
     | IF (la.kind == _REGISTER && scanner.Peek().kind == _FILE)
-      registerFileDefinition<out def>
-    | registerDefinition<out def>
+      registerFileDefinition<out def> // TODO Pass type MIA_DEFS - currently only ISA_DEFS
+    | registerDefinition<out def>     // TODO Pass type MIA_DEFS - currently only ISA_DEFS
     | processDefinition<out def>
     | operationDefinition<out def>
     | commonDefinition<out def>
     )                               (. def.withAnnotations(annotations); .)
+  | // IF (isMacroReplacementOfType(this, BasicSyntaxType.COMMON_DEFS))
+    macroReplacement<out Node n>    (. def = castCommonDef(this, n);
+                                       if (def instanceof DefinitionList list) {
+                                         readMacroSymbols(macroTable, list.items);
+                                       } .)
   .
 
   macroInstructionDefinition<out Definition def> (. var start = lookaheadLoc(); .)
@@ -1567,6 +1598,7 @@ PRODUCTIONS
   | T_BIN_OP
   | T_BOOL
   | T_CALL_EX
+  | T_COMMON_DEFS
   | T_ENCS
   | T_ID
   | T_INT
@@ -1731,6 +1763,8 @@ PRODUCTIONS
     encodingDefinitionList<out body>
   | IF (type == BasicSyntaxType.ISA_DEFS)                   (. macroTable = macroTable.createChild(); .)
     isaDefinitionList<.out List<Definition> defs.>          (. body = new DefinitionList(defs, start.join(loc())); macroTable = macroTable.parent; .)
+  | IF (type == BasicSyntaxType.COMMON_DEFS)
+    commonDefinitionList<.out List<Definition> defs.>       (. body = new DefinitionList(defs, start.join(loc())); macroTable = macroTable.parent; .)
   | IF (type == BasicSyntaxType.EX)
     expression<out body, BIN_OPS>
   | IF (type == BasicSyntaxType.LIT)
@@ -1810,6 +1844,7 @@ PRODUCTIONS
   | T_BIN_OP                                (. type = BasicSyntaxType.BIN_OP; .)
   | T_BOOL                                  (. type = BasicSyntaxType.BOOL; .)
   | T_CALL_EX                               (. type = BasicSyntaxType.CALL_EX; .)
+  | T_COMMON_DEFS                           (. type = BasicSyntaxType.COMMON_DEFS; .)
   | T_ENCS                                  (. type = BasicSyntaxType.ENCS; .)
   | T_EX                                    (. type = BasicSyntaxType.EX; .)
   | T_ID                                    (. type = BasicSyntaxType.ID; .)

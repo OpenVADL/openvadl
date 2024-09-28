@@ -113,6 +113,7 @@ class ParserUtils {
     ID_TOKENS[Parser._T_BIN_OP] = true;
     ID_TOKENS[Parser._T_BOOL] = true;
     ID_TOKENS[Parser._T_CALL_EX] = true;
+    ID_TOKENS[Parser._T_COMMON_DEFS] = true;
     ID_TOKENS[Parser._T_ENCS] = true;
     ID_TOKENS[Parser._T_ID] = true;
     ID_TOKENS[Parser._T_INT] = true;
@@ -426,8 +427,24 @@ class ParserUtils {
    * Casts the node to the type IsaDefs, or reports an error and returns a dummy node of that type.
    * Useful in the parser, where throwing cast exceptions is not the best way of error reporting.
    */
-  static Definition castDef(Parser parser, Node node) {
-    if (node instanceof Definition definition) {
+  static Definition castCommonDef(Parser parser, Node node) {
+    if (node instanceof Definition definition
+        && definition.syntaxType().isSubTypeOf(BasicSyntaxType.COMMON_DEFS)) {
+      return definition;
+    } else {
+      parser.errors.SemErr(node.location().begin().line(), node.location().begin().column(),
+          "Expected node of type CommonDefs, received " + node.syntaxType().print() + " - " + node);
+      return DUMMY_DEF;
+    }
+  }
+
+  /**
+   * Casts the node to the type IsaDefs, or reports an error and returns a dummy node of that type.
+   * Useful in the parser, where throwing cast exceptions is not the best way of error reporting.
+   */
+  static Definition castIsaDef(Parser parser, Node node) {
+    if (node instanceof Definition definition
+        && definition.syntaxType().isSubTypeOf(BasicSyntaxType.ISA_DEFS)) {
       return definition;
     } else {
       parser.errors.SemErr(node.location().begin().line(), node.location().begin().column(),
