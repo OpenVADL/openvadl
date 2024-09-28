@@ -1,6 +1,5 @@
 package vadl.lcb.template.lib.Target;
 
-import static vadl.lcb.template.utils.DataLayoutProvider.RISCV_DATALAYOUT;
 import static vadl.lcb.template.utils.DataLayoutProvider.createDataLayout;
 import static vadl.lcb.template.utils.DataLayoutProvider.createDataLayoutString;
 
