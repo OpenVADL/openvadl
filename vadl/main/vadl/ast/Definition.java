@@ -3090,10 +3090,10 @@ class PatchDefinition extends Definition {
       return false;
     }
     PatchDefinition that = (PatchDefinition) o;
-    return Objects.equals(generator, that.generator) &&
-        Objects.equals(handle, that.handle) &&
-        Objects.equals(reference, that.reference) &&
-        Objects.equals(source, that.source);
+    return Objects.equals(generator, that.generator)
+        && Objects.equals(handle, that.handle)
+        && Objects.equals(reference, that.reference)
+        && Objects.equals(source, that.source);
   }
 
   @Override
@@ -3213,8 +3213,8 @@ class CpuFunctionDefinition extends Definition {
       return false;
     }
     CpuFunctionDefinition that = (CpuFunctionDefinition) o;
-    return kind == that.kind && Objects.equals(stopWithReference, that.stopWithReference) &&
-        Objects.equals(expr, that.expr);
+    return kind == that.kind && Objects.equals(stopWithReference, that.stopWithReference)
+        && Objects.equals(expr, that.expr);
   }
 
   @Override
@@ -3284,8 +3284,8 @@ class CpuProcessDefinition extends Definition {
       return false;
     }
     CpuProcessDefinition that = (CpuProcessDefinition) o;
-    return kind == that.kind && Objects.equals(startupOutputs, that.startupOutputs) &&
-        Objects.equals(statement, that.statement);
+    return kind == that.kind && Objects.equals(startupOutputs, that.startupOutputs)
+        && Objects.equals(statement, that.statement);
   }
 
   @Override
@@ -3419,9 +3419,9 @@ class MacroInstructionDefinition extends Definition {
       return false;
     }
     MacroInstructionDefinition that = (MacroInstructionDefinition) o;
-    return kind == that.kind && Objects.equals(inputs, that.inputs) &&
-        Objects.equals(outputs, that.outputs) &&
-        Objects.equals(statement, that.statement);
+    return kind == that.kind && Objects.equals(inputs, that.inputs)
+        && Objects.equals(outputs, that.outputs)
+        && Objects.equals(statement, that.statement);
   }
 
   @Override
@@ -3496,10 +3496,10 @@ class PortBehaviorDefinition extends Definition {
       return false;
     }
     PortBehaviorDefinition that = (PortBehaviorDefinition) o;
-    return Objects.equals(id, that.id) && kind == that.kind &&
-        Objects.equals(inputs, that.inputs) &&
-        Objects.equals(outputs, that.outputs) &&
-        Objects.equals(statement, that.statement);
+    return Objects.equals(id, that.id) && kind == that.kind
+        && Objects.equals(inputs, that.inputs)
+        && Objects.equals(outputs, that.outputs)
+        && Objects.equals(statement, that.statement);
   }
 
   @Override
@@ -3570,8 +3570,9 @@ class PipelineDefinition extends Definition {
       return false;
     }
     PipelineDefinition that = (PipelineDefinition) o;
-    return Objects.equals(id, that.id) && Objects.equals(outputs, that.outputs) &&
-        Objects.equals(statement, that.statement);
+    return Objects.equals(id, that.id)
+        && Objects.equals(outputs, that.outputs)
+        && Objects.equals(statement, that.statement);
   }
 
   @Override
@@ -3631,8 +3632,8 @@ class StageDefinition extends Definition {
       return false;
     }
     StageDefinition that = (StageDefinition) o;
-    return Objects.equals(id, that.id) && Objects.equals(outputs, that.outputs) &&
-        Objects.equals(statement, that.statement);
+    return Objects.equals(id, that.id) && Objects.equals(outputs, that.outputs)
+        && Objects.equals(statement, that.statement);
   }
 
   @Override
@@ -3692,9 +3693,9 @@ class CacheDefinition extends Definition {
       return false;
     }
     CacheDefinition that = (CacheDefinition) o;
-    return Objects.equals(id, that.id) &&
-        Objects.equals(sourceType, that.sourceType) &&
-        Objects.equals(targetType, that.targetType);
+    return Objects.equals(id, that.id)
+        && Objects.equals(sourceType, that.sourceType)
+        && Objects.equals(targetType, that.targetType);
   }
 
   @Override
