@@ -2,6 +2,7 @@ package vadl.lcb.template.lib.Target;
 
 import static vadl.lcb.template.utils.DataLayoutProvider.RISCV_DATALAYOUT;
 import static vadl.lcb.template.utils.DataLayoutProvider.createDataLayout;
+import static vadl.lcb.template.utils.DataLayoutProvider.createDataLayoutString;
 
 import java.io.IOException;
 import java.util.Map;
@@ -34,7 +35,10 @@ public class EmitTargetMachineCppFilePass extends LcbTemplateRenderingPass {
   @Override
   protected Map<String, Object> createVariables(final PassResults passResults,
                                                 Specification specification) {
+    var gpr = ensurePresent(specification.registerFiles().findFirst(),
+        "Specification requires at least one register file");
     return Map.of(CommonVarNames.NAMESPACE, specification.name(),
-      "dataLayout", createDataLayout(RISCV_DATALAYOUT));
+        "dataLayout",
+        createDataLayoutString(createDataLayout(gpr)));
   }
 }
