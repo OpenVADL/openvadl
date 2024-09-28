@@ -12,7 +12,6 @@ import java.util.function.BiFunction;
 import java.util.function.Function;
 import java.util.stream.Stream;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import vadl.lcb.passes.isaMatching.InstructionLabel;
@@ -20,14 +19,15 @@ import vadl.lcb.passes.llvmLowering.LlvmLoweringPass;
 import vadl.lcb.passes.llvmLowering.LlvmMayLoadMemory;
 import vadl.lcb.passes.llvmLowering.LlvmMayStoreMemory;
 import vadl.lcb.passes.llvmLowering.LlvmSideEffectPatternIncluded;
-import vadl.lcb.passes.llvmLowering.model.LlvmBasicBlockSD;
-import vadl.lcb.passes.llvmLowering.model.LlvmBrCcSD;
-import vadl.lcb.passes.llvmLowering.model.LlvmBrCondSD;
-import vadl.lcb.passes.llvmLowering.model.LlvmFieldAccessRefNode;
-import vadl.lcb.passes.llvmLowering.model.LlvmFrameIndexSD;
-import vadl.lcb.passes.llvmLowering.model.LlvmNodeReplaceable;
-import vadl.lcb.passes.llvmLowering.model.MachineInstructionNode;
-import vadl.lcb.passes.llvmLowering.model.MachineInstructionParameterNode;
+import vadl.lcb.passes.llvmLowering.domain.LlvmLoweringRecord;
+import vadl.lcb.passes.llvmLowering.domain.selectionDag.LlvmBasicBlockSD;
+import vadl.lcb.passes.llvmLowering.domain.selectionDag.LlvmBrCcSD;
+import vadl.lcb.passes.llvmLowering.domain.selectionDag.LlvmBrCondSD;
+import vadl.lcb.passes.llvmLowering.domain.selectionDag.LlvmFieldAccessRefNode;
+import vadl.lcb.passes.llvmLowering.domain.selectionDag.LlvmFrameIndexSD;
+import vadl.lcb.passes.llvmLowering.domain.selectionDag.LlvmNodeReplaceable;
+import vadl.lcb.passes.llvmLowering.domain.machineDag.MachineInstructionNode;
+import vadl.lcb.passes.llvmLowering.domain.machineDag.MachineInstructionParameterNode;
 import vadl.lcb.passes.llvmLowering.strategies.visitors.TableGenPatternLowerable;
 import vadl.lcb.passes.llvmLowering.strategies.visitors.impl.ReplaceWithLlvmSDNodesVisitor;
 import vadl.lcb.passes.llvmLowering.tablegen.model.ParameterIdentity;
@@ -38,8 +38,8 @@ import vadl.lcb.passes.llvmLowering.tablegen.model.TableGenInstructionImmediateO
 import vadl.lcb.passes.llvmLowering.tablegen.model.TableGenInstructionOperand;
 import vadl.lcb.passes.llvmLowering.tablegen.model.TableGenInstructionRegisterFileOperand;
 import vadl.lcb.passes.llvmLowering.tablegen.model.TableGenPattern;
+import vadl.lcb.passes.llvmLowering.tablegen.model.TableGenSelectionMachinePattern;
 import vadl.lcb.visitors.LcbGraphNodeVisitor;
-import vadl.viam.Counter;
 import vadl.viam.Instruction;
 import vadl.viam.InstructionSetArchitecture;
 import vadl.viam.Register;
@@ -130,7 +130,7 @@ public abstract class LlvmInstructionLoweringStrategy {
    * Generate a lowering result for the given {@link Graph}.
    * If it is not lowerable then return {@link Optional#empty()}.
    */
-  public Optional<LlvmLoweringPass.LlvmLoweringIntermediateResult> lower(
+  public Optional<LlvmLoweringRecord> lower(
       Map<InstructionLabel, List<Instruction>> supportedInstructions,
       Instruction instruction,
       InstructionLabel instructionLabel,
@@ -177,7 +177,7 @@ public abstract class LlvmInstructionLoweringStrategy {
               inputOperands,
               outputOperands,
               patterns);
-      return Optional.of(new LlvmLoweringPass.LlvmLoweringIntermediateResult(copy,
+      return Optional.of(new LlvmLoweringRecord(copy,
           inputOperands,
           outputOperands,
           flags,
@@ -374,7 +374,7 @@ public abstract class LlvmInstructionLoweringStrategy {
       var patternSelector = getPatternSelector(sideEffectNode);
       var machineInstruction = getMachinePattern(instruction, inputOperands);
       patterns.add(
-          new TableGenPattern(patternSelector, machineInstruction));
+          new TableGenSelectionMachinePattern(patternSelector, machineInstruction));
     });
 
     return patterns;

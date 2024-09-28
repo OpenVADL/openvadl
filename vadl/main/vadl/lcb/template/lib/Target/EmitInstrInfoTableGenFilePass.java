@@ -7,6 +7,7 @@ import java.util.stream.Stream;
 import vadl.configuration.LcbConfiguration;
 import vadl.lcb.codegen.model.llvm.ValueType;
 import vadl.lcb.passes.llvmLowering.LlvmLoweringPass;
+import vadl.lcb.passes.llvmLowering.domain.LlvmLoweringRecord;
 import vadl.lcb.passes.llvmLowering.tablegen.lowering.TableGenImmediateOperandRenderer;
 import vadl.lcb.passes.llvmLowering.tablegen.lowering.TableGenInstructionRenderer;
 import vadl.lcb.passes.llvmLowering.tablegen.model.TableGenInstruction;
@@ -14,7 +15,6 @@ import vadl.lcb.passes.llvmLowering.tablegen.model.TableGenInstructionImmediateL
 import vadl.lcb.passes.llvmLowering.tablegen.model.TableGenInstructionImmediateOperand;
 import vadl.lcb.template.CommonVarNames;
 import vadl.lcb.template.LcbTemplateRenderingPass;
-import vadl.pass.PassKey;
 import vadl.pass.PassResults;
 import vadl.viam.Instruction;
 import vadl.viam.Specification;
@@ -46,10 +46,11 @@ public class EmitInstrInfoTableGenFilePass extends LcbTemplateRenderingPass {
                                                 Specification specification) {
     var abi =
         (DummyAbi) specification.definitions().filter(x -> x instanceof DummyAbi).findFirst().get();
-    Map<Instruction, LlvmLoweringPass.LlvmLoweringIntermediateResult> instructions =
-        (Map<Instruction, LlvmLoweringPass.LlvmLoweringIntermediateResult>) ensureNonNull(
+    var llvmLoweringPassResult =
+        (LlvmLoweringPass.LlvmLoweringPassResult) ensureNonNull(
             passResults.lastResultOf(LlvmLoweringPass.class),
             "llvmLowering must exist");
+    var instructions = llvmLoweringPassResult.machineInstructionRecords();
 
     var tableGenRecords = instructions.entrySet().stream()
         .sorted(

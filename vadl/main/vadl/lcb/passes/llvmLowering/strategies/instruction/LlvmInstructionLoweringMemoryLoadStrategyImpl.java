@@ -7,13 +7,14 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import vadl.lcb.passes.isaMatching.InstructionLabel;
-import vadl.lcb.passes.llvmLowering.model.LlvmFrameIndexSD;
-import vadl.lcb.passes.llvmLowering.model.LlvmLoadSD;
-import vadl.lcb.passes.llvmLowering.model.LlvmReadRegFileNode;
-import vadl.lcb.passes.llvmLowering.model.LlvmSExtLoad;
-import vadl.lcb.passes.llvmLowering.model.LlvmZExtLoad;
+import vadl.lcb.passes.llvmLowering.domain.selectionDag.LlvmFrameIndexSD;
+import vadl.lcb.passes.llvmLowering.domain.selectionDag.LlvmLoadSD;
+import vadl.lcb.passes.llvmLowering.domain.selectionDag.LlvmReadRegFileNode;
+import vadl.lcb.passes.llvmLowering.domain.selectionDag.LlvmSExtLoad;
+import vadl.lcb.passes.llvmLowering.domain.selectionDag.LlvmZExtLoad;
 import vadl.lcb.passes.llvmLowering.tablegen.model.TableGenInstructionOperand;
 import vadl.lcb.passes.llvmLowering.tablegen.model.TableGenPattern;
+import vadl.lcb.passes.llvmLowering.tablegen.model.TableGenSelectionMachinePattern;
 import vadl.viam.Instruction;
 import vadl.viam.Memory;
 import vadl.viam.Register;
@@ -56,7 +57,10 @@ public class LlvmInstructionLoweringMemoryLoadStrategyImpl
   private List<TableGenPattern> replaceRegisterWithFrameIndex(List<TableGenPattern> patterns) {
     var alternativePatterns = new ArrayList<TableGenPattern>();
 
-    for (var pattern : patterns) {
+    for (var pattern : patterns.stream()
+        .filter(x -> x instanceof TableGenSelectionMachinePattern)
+        .map(x -> (TableGenSelectionMachinePattern) x)
+        .toList()) {
       var selector = pattern.selector().copy();
       var machine = pattern.machine().copy();
 

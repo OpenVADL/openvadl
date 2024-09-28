@@ -82,8 +82,10 @@ public class ImmediateExtractionCodeGeneratorCppVerificationTest extends Abstrac
                   Pair::of)
               .forEach(pair -> {
                 var displayName =
-                    String.format("fieldAccess = %s",
-                        fieldAccess.identifier.lower());
+                    String.format("fieldAccess = %s (%s, %s",
+                        fieldAccess.identifier.lower(),
+                        pair.left(),
+                        pair.right());
                 tests.add(DynamicTest.dynamicTest(displayName,
                     () -> testExtractFunction(displayName, fieldAccess, pair.left(), pair.right(),
                         bitWidth,
@@ -116,22 +118,22 @@ public class ImmediateExtractionCodeGeneratorCppVerificationTest extends Abstrac
             #include <bitset>
             #include <vector>
             #include <tuple>
-            
+                        
             template<int start, int end, std::size_t N>
             std::bitset<N> project_range(std::bitset<N> bits)
             {
                 std::bitset<N> result;
                 size_t result_index = 0; // Index for the new bitset
-            
+                        
                 // Extract bits from the range [start, end]
                 for (size_t i = start; i <= end; ++i) {
                   result[result_index] = bits[i];
                   result_index++;
                 }
-            
+                        
                 return result;
             }
-            
+                        
             template<std::size_t N, std::size_t M>
             std::bitset<N> set_bits(std::bitset<N> dest, const std::bitset<M> source, std::vector<int> bits) {
                 auto target = 0;
@@ -140,13 +142,13 @@ public class ImmediateExtractionCodeGeneratorCppVerificationTest extends Abstrac
                     dest.set(j, source[i]);
                     target++;
                 }
-            
+                        
                 return dest;
             }
-            
+                        
             // Extraction Function
             %s
-            
+                        
             int main() {
               %s expected = %d;
               std::vector<int> args = { %s };

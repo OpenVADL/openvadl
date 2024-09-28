@@ -6,10 +6,12 @@ import java.util.BitSet;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 import org.jetbrains.annotations.Nullable;
-import vadl.lcb.passes.llvmLowering.model.MachineInstructionNode;
+import vadl.lcb.passes.llvmLowering.domain.machineDag.MachineInstructionNode;
 import vadl.lcb.passes.llvmLowering.tablegen.model.TableGenInstruction;
 import vadl.lcb.passes.llvmLowering.tablegen.model.TableGenInstructionOperand;
 import vadl.lcb.passes.llvmLowering.tablegen.model.TableGenPattern;
+import vadl.lcb.passes.llvmLowering.tablegen.model.TableGenSelectionMachinePattern;
+import vadl.lcb.passes.llvmLowering.tablegen.model.TableGenSelectionPattern;
 import vadl.viam.Definition;
 
 /**
@@ -22,7 +24,6 @@ public final class TableGenInstructionRenderer {
    */
   public static String lower(TableGenInstruction instruction) {
     return String.format("""
-                                    
             def %s : Instruction
             {
             let Namespace = "%s";
@@ -57,7 +58,7 @@ public final class TableGenInstructionRenderer {
             let Constraints = "";
             let AddedComplexity = 0;
 
-            let Pattern = [];
+            let Pattern = [%s];
 
             let Uses = [ %s ];
             let Defs = [ %s ];
@@ -87,16 +88,35 @@ public final class TableGenInstructionRenderer {
         toInt(instruction.getFlags().isCodeGenOnly()),
         toInt(instruction.getFlags().mayLoad()),
         toInt(instruction.getFlags().mayStore()),
+        instruction.getAnonymousPatterns()
+            .stream()
+            .filter(x -> x instanceof TableGenSelectionPattern)
+            .map(x -> (TableGenSelectionPattern) x)
+            .map(TableGenInstructionRenderer::lower)
+            .collect(Collectors.joining(",")),
         instruction.getUses().stream().map(Definition::name).collect(Collectors.joining(",")),
         instruction.getDefs().stream().map(Definition::name).collect(Collectors.joining(",")),
         instruction.getAnonymousPatterns().stream()
             .filter(TableGenPattern::isPatternLowerable)
+            .filter(x -> x instanceof TableGenSelectionMachinePattern)
+            .map(x -> (TableGenSelectionMachinePattern) x)
             .map(TableGenInstructionRenderer::lower)
             .collect(Collectors.joining("\n"))
     );
   }
 
-  private static String lower(TableGenPattern tableGenPattern) {
+  private static String lower(TableGenSelectionPattern tableGenPattern) {
+    ensure(tableGenPattern.isPatternLowerable(), "TableGen pattern must be lowerable");
+    var visitor = new TableGenPatternPrinterVisitor();
+
+    for (var root : tableGenPattern.selector().getDataflowRoots()) {
+      visitor.visit(root);
+    }
+
+    return "(" + visitor.getResult() + ")";
+  }
+
+  private static String lower(TableGenSelectionMachinePattern tableGenPattern) {
     ensure(tableGenPattern.isPatternLowerable(), "TableGen pattern must be lowerable");
     var visitor = new TableGenPatternPrinterVisitor();
     var machineVisitor = new TableGenMachineInstructionPrinterVisitor();
@@ -113,6 +133,7 @@ public final class TableGenInstructionRenderer {
         def : Pat<%s,
                 %s>;
           """, visitor.getResult(), machineVisitor.getResult());
+
   }
 
   private static String lower(TableGenInstructionOperand operand) {

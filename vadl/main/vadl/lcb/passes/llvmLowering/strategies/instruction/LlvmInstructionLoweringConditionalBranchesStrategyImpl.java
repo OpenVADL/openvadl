@@ -6,7 +6,6 @@ import static vadl.lcb.passes.isaMatching.InstructionLabel.BGTH;
 import static vadl.lcb.passes.isaMatching.InstructionLabel.BLEQ;
 import static vadl.lcb.passes.isaMatching.InstructionLabel.BLTH;
 import static vadl.lcb.passes.isaMatching.InstructionLabel.BNEQ;
-import static vadl.viam.ViamError.ensure;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -15,24 +14,22 @@ import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Stream;
 import vadl.lcb.passes.isaMatching.InstructionLabel;
-import vadl.lcb.passes.llvmLowering.LlvmLoweringPass;
-import vadl.lcb.passes.llvmLowering.model.LlvmBasicBlockSD;
-import vadl.lcb.passes.llvmLowering.model.LlvmBrCcSD;
-import vadl.lcb.passes.llvmLowering.model.LlvmBrCondSD;
-import vadl.lcb.passes.llvmLowering.model.LlvmCondCode;
-import vadl.lcb.passes.llvmLowering.model.LlvmSetCondSD;
-import vadl.lcb.passes.llvmLowering.model.LlvmTypeCastSD;
-import vadl.lcb.passes.llvmLowering.model.MachineInstructionParameterNode;
+import vadl.lcb.passes.llvmLowering.domain.LlvmLoweringRecord;
+import vadl.lcb.passes.llvmLowering.domain.selectionDag.LlvmBasicBlockSD;
+import vadl.lcb.passes.llvmLowering.domain.selectionDag.LlvmBrCcSD;
+import vadl.lcb.passes.llvmLowering.domain.selectionDag.LlvmBrCondSD;
+import vadl.lcb.passes.llvmLowering.domain.selectionDag.LlvmCondCode;
+import vadl.lcb.passes.llvmLowering.domain.selectionDag.LlvmSetCondSD;
+import vadl.lcb.passes.llvmLowering.domain.selectionDag.LlvmTypeCastSD;
+import vadl.lcb.passes.llvmLowering.domain.machineDag.MachineInstructionParameterNode;
 import vadl.lcb.passes.llvmLowering.strategies.LlvmInstructionLoweringStrategy;
 import vadl.lcb.passes.llvmLowering.strategies.visitors.impl.ReplaceWithLlvmSDNodesWithControlFlowVisitor;
 import vadl.lcb.passes.llvmLowering.tablegen.model.ParameterIdentity;
 import vadl.lcb.passes.llvmLowering.tablegen.model.TableGenInstructionImmediateLabelOperand;
-import vadl.lcb.passes.llvmLowering.tablegen.model.TableGenInstructionImmediateOperand;
 import vadl.lcb.passes.llvmLowering.tablegen.model.TableGenInstructionOperand;
 import vadl.lcb.passes.llvmLowering.tablegen.model.TableGenPattern;
+import vadl.lcb.passes.llvmLowering.tablegen.model.TableGenSelectionMachinePattern;
 import vadl.lcb.visitors.LcbGraphNodeVisitor;
-import vadl.types.Type;
-import vadl.viam.Counter;
 import vadl.viam.Instruction;
 import vadl.viam.graph.NodeList;
 import vadl.viam.graph.dependency.WriteResourceNode;
@@ -57,7 +54,7 @@ public class LlvmInstructionLoweringConditionalBranchesStrategyImpl
   }
 
   @Override
-  public Optional<LlvmLoweringPass.LlvmLoweringIntermediateResult> lower(
+  public Optional<LlvmLoweringRecord> lower(
       Map<InstructionLabel, List<Instruction>> supportedInstructions,
       Instruction instruction,
       InstructionLabel instructionLabel,
@@ -75,7 +72,7 @@ public class LlvmInstructionLoweringConditionalBranchesStrategyImpl
         createIntermediateResult(supportedInstructions, instruction, instructionLabel, copy));
   }
 
-  private LlvmLoweringPass.LlvmLoweringIntermediateResult createIntermediateResult(
+  private LlvmLoweringRecord createIntermediateResult(
       Map<InstructionLabel, List<Instruction>> supportedInstructions,
       Instruction instruction,
       InstructionLabel instructionLabel,
@@ -96,7 +93,7 @@ public class LlvmInstructionLoweringConditionalBranchesStrategyImpl
         .map(this::replaceBasicBlockByLabelImmediateInMachineInstruction)
         .toList();
 
-    return new LlvmLoweringPass.LlvmLoweringIntermediateResult(
+    return new LlvmLoweringRecord(
         visitedGraph,
         inputOperands,
         outputOperands,
@@ -113,12 +110,16 @@ public class LlvmInstructionLoweringConditionalBranchesStrategyImpl
    */
   private TableGenPattern replaceBasicBlockByLabelImmediateInMachineInstruction(
       TableGenPattern pattern) {
-    // We know that the `selector` already has LlvmBasicBlock nodes.
-    var candidates = pattern.machine().getNodes(MachineInstructionParameterNode.class).toList();
-    for (var candidate : candidates) {
-      if (candidate.instructionOperand().origin() instanceof LlvmBasicBlockSD basicBlockSD) {
-        candidate.setInstructionOperand(new TableGenInstructionImmediateLabelOperand(
-            ParameterIdentity.fromBasicBlockToImmediateLabel(basicBlockSD), basicBlockSD));
+
+    if (pattern instanceof TableGenSelectionMachinePattern) {
+      // We know that the `selector` already has LlvmBasicBlock nodes.
+      var candidates = ((TableGenSelectionMachinePattern) pattern).machine().getNodes(
+          MachineInstructionParameterNode.class).toList();
+      for (var candidate : candidates) {
+        if (candidate.instructionOperand().origin() instanceof LlvmBasicBlockSD basicBlockSD) {
+          candidate.setInstructionOperand(new TableGenInstructionImmediateLabelOperand(
+              ParameterIdentity.fromBasicBlockToImmediateLabel(basicBlockSD), basicBlockSD));
+        }
       }
     }
 
@@ -147,7 +148,9 @@ public class LlvmInstructionLoweringConditionalBranchesStrategyImpl
         (BEQ X:$rs1, X:$rs2, RV32I_Btype_ImmediateB_immediateAsLabel:$imm)>;
      */
 
-    for (var pattern : patterns) {
+    for (var pattern : patterns.stream()
+        .filter(x -> x instanceof TableGenSelectionMachinePattern)
+        .map(x -> (TableGenSelectionMachinePattern) x).toList()) {
       var selector = pattern.selector().copy();
       var machine = pattern.machine().copy();
 
@@ -170,7 +173,7 @@ public class LlvmInstructionLoweringConditionalBranchesStrategyImpl
 
       // If nothing had changed, then it makes no sense to add it.
       if (hasChanged) {
-        alternatives.add(new TableGenPattern(selector, machine));
+        alternatives.add(new TableGenSelectionMachinePattern(selector, machine));
       }
     }
 

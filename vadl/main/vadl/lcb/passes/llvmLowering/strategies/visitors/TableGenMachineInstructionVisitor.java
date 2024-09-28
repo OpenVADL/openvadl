@@ -1,7 +1,7 @@
 package vadl.lcb.passes.llvmLowering.strategies.visitors;
 
-import vadl.lcb.passes.llvmLowering.model.MachineInstructionNode;
-import vadl.lcb.passes.llvmLowering.model.MachineInstructionParameterNode;
+import vadl.lcb.passes.llvmLowering.domain.machineDag.MachineInstructionNode;
+import vadl.lcb.passes.llvmLowering.domain.machineDag.MachineInstructionParameterNode;
 import vadl.viam.graph.Graph;
 import vadl.viam.graph.GraphNodeVisitor;
 

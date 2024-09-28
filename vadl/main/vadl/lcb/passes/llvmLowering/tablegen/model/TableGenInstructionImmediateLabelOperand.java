@@ -1,9 +1,7 @@
 package vadl.lcb.passes.llvmLowering.tablegen.model;
 
 import java.util.Objects;
-import vadl.lcb.passes.llvmLowering.model.LlvmBasicBlockSD;
-import vadl.lcb.passes.llvmLowering.model.LlvmFieldAccessRefNode;
-import vadl.viam.graph.dependency.FieldAccessRefNode;
+import vadl.lcb.passes.llvmLowering.domain.selectionDag.LlvmBasicBlockSD;
 
 /**
  * Indicates that the operand is an immediate but as a label.
