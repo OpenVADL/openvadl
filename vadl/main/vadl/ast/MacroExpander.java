@@ -123,7 +123,8 @@ class MacroExpander
   Annotations expandAnnotations(Annotations annotations) {
     var list = new ArrayList<>(annotations.annotations());
     list.replaceAll(annotation -> new Annotation(
-        expandExpr(annotation.expr()), annotation.type(), annotation.property()));
+        expandExpr(annotation.expr()), annotation.type(), annotation.property() == null ? null :
+        resolvePlaceholderOrIdentifier(annotation.property())));
     return new Annotations(list);
   }
 
