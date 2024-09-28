@@ -208,8 +208,8 @@ public class IsaMatchingPass extends Pass {
       addi = isaMatched.get(InstructionLabel.ADDI_32);
     }
 
-    ensure(addi != null && !addi.isEmpty()
-        , () -> Diagnostic.error(
+    ensure(addi != null && !addi.isEmpty(),
+        () -> Diagnostic.error(
                 "There must be an instruction (addition with immediate), but we haven't found any.",
                 viam.sourceLocation())
             .build());
