@@ -54,3 +54,7 @@ def ADJCALLSTACKUP : Instruction
 [# th:each="instruction : ${instructions}" ]
 [(${instruction})]
 [/]
+
+[# th:each="pseudo : ${pseudos}" ]
+[(${pseudo})]
+[/]

@@ -77,4 +77,16 @@ public class RegisterRef extends Resource {
   public void accept(DefinitionVisitor visitor) {
 
   }
+
+  /**
+   * Get the name of the register or the name of register file with index.
+   */
+  public String lowerName() {
+    if (hasAddress()) {
+      ensure(address != null, "address must not be null");
+      return name() + address.asVal().decimal();
+    } else {
+      return name();
+    }
+  }
 }

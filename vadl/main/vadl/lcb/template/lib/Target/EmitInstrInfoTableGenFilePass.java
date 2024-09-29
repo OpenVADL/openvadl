@@ -13,6 +13,8 @@ import vadl.lcb.passes.llvmLowering.tablegen.lowering.TableGenInstructionRendere
 import vadl.lcb.passes.llvmLowering.tablegen.model.TableGenInstruction;
 import vadl.lcb.passes.llvmLowering.tablegen.model.TableGenInstructionImmediateLabelOperand;
 import vadl.lcb.passes.llvmLowering.tablegen.model.TableGenInstructionImmediateOperand;
+import vadl.lcb.passes.llvmLowering.tablegen.model.TableGenMachineInstruction;
+import vadl.lcb.passes.llvmLowering.tablegen.model.TableGenPseudoInstruction;
 import vadl.lcb.template.CommonVarNames;
 import vadl.lcb.template.LcbTemplateRenderingPass;
 import vadl.pass.PassResults;
@@ -50,15 +52,14 @@ public class EmitInstrInfoTableGenFilePass extends LcbTemplateRenderingPass {
         (LlvmLoweringPass.LlvmLoweringPassResult) ensureNonNull(
             passResults.lastResultOf(LlvmLoweringPass.class),
             "llvmLowering must exist");
-    var instructions = llvmLoweringPassResult.machineInstructionRecords();
 
-    var tableGenRecords = instructions.entrySet().stream()
+    var tableGenMachineRecords = llvmLoweringPassResult.machineInstructionRecords().entrySet().stream()
         .sorted(
             Comparator.comparing(o -> o.getKey().identifier.simpleName()))
         .map(entry -> {
           var instruction = entry.getKey();
           var result = entry.getValue();
-          return new TableGenInstruction(
+          return new TableGenMachineInstruction(
               instruction.identifier.simpleName(),
               lcbConfiguration().processorName().value(),
               instruction,
@@ -72,7 +73,26 @@ public class EmitInstrInfoTableGenFilePass extends LcbTemplateRenderingPass {
         })
         .toList();
 
-    var renderedImmediates = tableGenRecords
+    var tableGenPseudoRecords =
+        llvmLoweringPassResult.pseudoInstructionRecords().entrySet().stream()
+            .sorted(Comparator.comparing(o -> o.getKey().identifier.simpleName()))
+            .map(entry -> {
+              var instruction = entry.getKey();
+              var result = entry.getValue();
+              return new TableGenPseudoInstruction(
+                  instruction.identifier.simpleName(),
+                  lcbConfiguration().processorName().value(),
+                  result.flags(),
+                  result.inputs(),
+                  result.outputs(),
+                  result.uses(),
+                  result.defs(),
+                  result.patterns()
+              );
+            })
+            .toList();
+
+    var renderedImmediates = tableGenMachineRecords
         .stream()
         .flatMap(tableGenRecord -> tableGenRecord.getInOperands().stream())
         .filter(operand -> operand instanceof TableGenInstructionImmediateOperand)
@@ -81,7 +101,7 @@ public class EmitInstrInfoTableGenFilePass extends LcbTemplateRenderingPass {
         .map(TableGenImmediateOperandRenderer::lower)
         .toList();
 
-    var renderedImmediateLabels = tableGenRecords
+    var renderedImmediateLabels = tableGenMachineRecords
         .stream()
         .flatMap(tableGenRecord -> tableGenRecord.getInOperands().stream())
         .filter(operand -> operand instanceof TableGenInstructionImmediateLabelOperand)
@@ -90,7 +110,12 @@ public class EmitInstrInfoTableGenFilePass extends LcbTemplateRenderingPass {
         .map(TableGenImmediateOperandRenderer::lower)
         .toList();
 
-    var renderedTableGenRecords = tableGenRecords
+    var renderedTableGenMachineRecords = tableGenMachineRecords
+        .stream()
+        .map(TableGenInstructionRenderer::lower)
+        .toList();
+
+    var renderedTableGenPseudoRecords = tableGenPseudoRecords
         .stream()
         .map(TableGenInstructionRenderer::lower)
         .toList();
@@ -99,6 +124,7 @@ public class EmitInstrInfoTableGenFilePass extends LcbTemplateRenderingPass {
         "stackPointerType",
         ValueType.from(abi.stackPointer().registerFile().resultType()).getLlvmType(),
         "immediates", Stream.concat(renderedImmediates.stream(), renderedImmediateLabels.stream()),
-        "instructions", renderedTableGenRecords);
+        "instructions", renderedTableGenMachineRecords,
+        "pseudos", renderedTableGenPseudoRecords);
   }
 }
