@@ -29,9 +29,19 @@ public class EmitAsmUtilsHeaderFilePass extends LcbTemplateRenderingPass {
         + "/MCTargetDesc/AsmUtils.h";
   }
 
+
+  record RegisterClass(String simpleName) {
+
+  }
+
   @Override
   protected Map<String, Object> createVariables(final PassResults passResults,
                                                 Specification specification) {
-    return Map.of(CommonVarNames.NAMESPACE, specification.name());
+    var registerFiles =
+        specification.registerFiles()
+            .map(x -> new RegisterClass(x.identifier.simpleName()))
+            .toList();
+    return Map.of(CommonVarNames.NAMESPACE, specification.name(),
+        CommonVarNames.REGISTERS_CLASSES, registerFiles);
   }
 }

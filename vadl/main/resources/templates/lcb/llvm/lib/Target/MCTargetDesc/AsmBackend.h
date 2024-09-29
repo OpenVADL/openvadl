@@ -1,8 +1,8 @@
     #ifndef LLVM_LIB_TARGET_[(${namespace})]_MCTARGETDESC_[(${namespace})]ASMBACKEND_H
     #define LLVM_LIB_TARGET_[(${namespace})]_MCTARGETDESC_[(${namespace})]ASMBACKEND_H
 
-    #include "MCTargetDesc/«processorName»FixupKinds.h"
-    #include "MCTargetDesc/«processorName»MCTargetDesc.h"
+    #include "MCTargetDesc/[(${namespace})]FixupKinds.h"
+    #include "MCTargetDesc/[(${namespace})]MCTargetDesc.h"
     #include "llvm/MC/MCAsmBackend.h"
     #include "llvm/MC/MCELFObjectWriter.h"
     #include "llvm/MC/MCExpr.h"

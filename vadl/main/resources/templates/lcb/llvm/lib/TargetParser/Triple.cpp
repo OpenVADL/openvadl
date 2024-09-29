@@ -148,7 +148,7 @@ StringRef Triple::getArchTypeName(ArchType Kind)
   case xtensa:
     return "xtensa";
   case [(${namespace})]:
-    return "«processorArch»";
+    return "[(${namespace})]";
   }
 
   llvm_unreachable("Invalid ArchType!");
@@ -276,7 +276,7 @@ StringRef Triple::getArchTypePrefix(ArchType Kind)
   case xtensa:
     return "xtensa";
   case [(${namespace})]:
-    return "«processorArch»";
+    return "[(${namespace})]";
   }
 }
 
@@ -621,7 +621,7 @@ Triple::ArchType Triple::getArchTypeForLLVMName(StringRef Name)
       .Case("loongarch64", loongarch64)
       .Case("dxil", dxil)
       .Case("xtensa", xtensa)
-      .Case("«processorArch»", [(${namespace})])
+      .Case("[(${namespace})]", [(${namespace})])
       .Default(UnknownArch);
 }
 
@@ -773,7 +773,7 @@ static Triple::ArchType parseArch(StringRef ArchName)
                 .Case("loongarch64", Triple::loongarch64)
                 .Case("dxil", Triple::dxil)
                 .Case("xtensa", Triple::xtensa)
-                .Case("«processorArch»", Triple::[(${namespace})])
+                .Case("[(${namespace})]", Triple::[(${namespace})])
                 .Default(Triple::UnknownArch);
 
   // Some architectures require special parsing logic just to compute the
@@ -1788,7 +1788,7 @@ static unsigned getArchPointerBitWidth(llvm::Triple::ArchType Arch)
   case llvm::Triple::x86_64:
     return 64;
   case llvm::Triple::[(${namespace})]:
-    return «pointerBitWidth»; // TODO: @chochrainer think about a proper implementation «processorArch» - «processorName»
+    return [(${pointerBitWidth})]; // TODO: @chochrainer think about a proper implementation «processorArch» - «processorName»
   }
   llvm_unreachable("Invalid architecture value");
 }
@@ -2220,7 +2220,10 @@ bool Triple::isLittleEndian() const
   case Triple::xcore:
   case Triple::xtensa:
     return true;
-    «IF isBigEndian == false»case Triple::[(${namespace})] :«ENDIF» return true;
+  [#th:block th:if="${isLittleEndian}"]
+  case Triple::[(${namespace})]:
+      return true;
+  [/th:block]
   default:
     return false;
   }
@@ -2328,7 +2331,7 @@ VersionTuple Triple::getCanonicalVersionForOS(OSType OSKind,
     // macOS 10.16 is canonicalized to macOS 11.
     if (Version == VersionTuple(10, 16))
       return VersionTuple(11, 0);
-    [[fallthrough]];
+    [ [ fallthrough ] ];
   default:
     return Version;
   }

@@ -17,8 +17,24 @@ public class CppFunction extends Function {
     super(identifier, parameters, returnType, behavior);
   }
 
-  public CppFunction(Function function, String part) {
-    super(function.identifier.append(part), function.parameters(), function.returnType(),
+  /**
+   * Converts a given {@link Function} into a {@link CppFunction}.
+   */
+  public CppFunction(Function function) {
+    super(function.identifier,
+        function.parameters(),
+        function.returnType(),
+        function.behavior());
+  }
+
+  /**
+   * Converts a given {@link Function} into a {@link CppFunction} and extends the identifier with
+   * the given {@code suffix}.
+   */
+  public CppFunction(Function function, String suffix) {
+    super(function.identifier.append(suffix),
+        function.parameters(),
+        function.returnType(),
         function.behavior());
   }
 

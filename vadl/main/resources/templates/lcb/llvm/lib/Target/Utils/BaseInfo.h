@@ -12,15 +12,15 @@ class [(${namespace})]BaseInfo
         enum
         {
             MO_None,
-            «FOR relocation : relocations»
-                «emitMOId( relocation )»,
-            «ENDFOR»
             MO_Invalid
         };
 
         /* === Global Configs === */
 
-        static bool IsBigEndian() { return «IF isBigEndian»true«ELSE»false«ENDIF»; }
+        static bool IsBigEndian() {
+          [#th:block th:if="${isBigEndian}"]return true;[/th:block]
+          [#th:block th:if="${!isBigEndian}"]return false;[/th:block]
+        }
 
         static int64_t applyRelocation( int64_t value, unsigned MOAnnotation )
         {
@@ -30,21 +30,8 @@ class [(${namespace})]BaseInfo
                     llvm_unreachable( "unsupported machine operand annotation relocation" );
                 case MO_None:
                     return value;
-                «FOR relocation : relocations»
-                    case «relocation.moAnnotationIdentifier»:
-                        return «relocation.oopFunction.identifier»( value );
-                «ENDFOR»
             }
         }
-
-        «IF relocations.size > 0»
-            /* === Modifier Functions === */
-
-            «FOR relocation : relocations»
-                «emitRelocation( relocation )»
-
-            «ENDFOR»
-        «ENDIF»
 };
 
 #endif

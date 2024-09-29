@@ -49,8 +49,6 @@ namespace llvm
         MachineOperand copyRegOp(const MachineOperand &MO, bool isDef = false, unsigned SubReg = 0);
 
         // auto generated
-        «FOR expandableInstruction : expandableInstructions» void expand«expandableInstruction.simpleName»(MachineBasicBlock & MBB, MachineBasicBlockIterator & MBBI) {}
-        «ENDFOR»
     };
 }
 

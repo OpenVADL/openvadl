@@ -57,74 +57,74 @@ public class EmitImmediateFilePassTest extends AbstractLcbTest {
         }
                 
                 
-        int64_t RV64IM_Btype_immS_decode_decode(uint16_t param) {
+        static int64_t RV64IM_Btype_immS_decode(uint64_t param) {
         return (((int64_t) param)) << (1);
         }
-        int64_t RV64IM_Itype_immS_decode_decode(uint16_t param) {
+        static int64_t RV64IM_Itype_immS_decode(uint64_t param) {
         return ((int64_t) param);
         }
-        int64_t RV64IM_Jtype_immS_decode_decode(uint32_t param) {
+        static int64_t RV64IM_Jtype_immS_decode(uint64_t param) {
         return (((int64_t) param)) << (1);
         }
-        int64_t RV64IM_Stype_immS_decode_decode(uint16_t param) {
+        static int64_t RV64IM_Stype_immS_decode(uint64_t param) {
         return ((int64_t) param);
         }
-        uint64_t RV64IM_Utype_immU_decode_decode(uint32_t param) {
+        static uint64_t RV64IM_Utype_immU_decode(uint64_t param) {
         return (((uint64_t) param)) << (12);
         }
-        uint8_t RV64IM_Ftype_shamt_decode_decode(uint8_t param) {
+        static uint8_t RV64IM_Ftype_shamt_decode(uint64_t param) {
         return param;
         }
-        uint8_t RV64IM_Rtype_shamt_decode_decode(uint8_t param) {
+        static uint8_t RV64IM_Rtype_shamt_decode(uint64_t param) {
         return param;
         }
                 
                 
                 
-        uint16_t RV64IM_Btype_immS_encoding_encode(int64_t immS) {
+        static uint16_t RV64IM_Btype_immS_encoding(int64_t immS) {
         return (project_range<1, 12>(std::bitset<64>(immS)) << 0).to_ulong();
         }
-        uint16_t RV64IM_Itype_immS_encoding_encode(int64_t immS) {
+        static uint16_t RV64IM_Itype_immS_encoding(int64_t immS) {
         return (project_range<0, 11>(std::bitset<64>(immS)) << 0).to_ulong();
         }
-        uint16_t RV64IM_Stype_immS_encoding_encode(int64_t immS) {
+        static uint16_t RV64IM_Stype_immS_encoding(int64_t immS) {
         return (project_range<0, 11>(std::bitset<64>(immS)) << 0).to_ulong();
         }
-        uint32_t RV64IM_Jtype_immS_encoding_encode(int64_t immS) {
+        static uint32_t RV64IM_Jtype_immS_encoding(int64_t immS) {
         return (project_range<1, 20>(std::bitset<64>(immS)) << 0).to_ulong();
         }
-        uint32_t RV64IM_Utype_immU_encoding_encode(uint64_t immU) {
+        static uint32_t RV64IM_Utype_immU_encoding(uint64_t immU) {
         return (project_range<12, 31>(std::bitset<64>(immU)) << 0).to_ulong();
         }
-        uint8_t RV64IM_Ftype_shamt_encoding_encode(uint8_t shamt) {
+        static uint8_t RV64IM_Ftype_shamt_encoding(uint8_t shamt) {
         return (project_range<0, 5>(std::bitset<6>(shamt)) << 0).to_ulong();
         }
-        uint8_t RV64IM_Rtype_shamt_encoding_encode(uint8_t shamt) {
+        static uint8_t RV64IM_Rtype_shamt_encoding(uint8_t shamt) {
         return (project_range<0, 4>(std::bitset<5>(shamt)) << 0).to_ulong();
         }
                 
                 
                 
                 
-        bool RV64IM_Btype_immS_predicate_predicate(int64_t immS_decode) {
+        static bool RV64IM_Btype_immS_predicate(int64_t immS_decode) {
         return 1;
         }
-        bool RV64IM_Ftype_shamt_predicate_predicate(uint8_t shamt_decode) {
+        static bool RV64IM_Ftype_shamt_predicate(uint8_t shamt_decode) {
         return 1;
         }
-        bool RV64IM_Itype_immS_predicate_predicate(int64_t immS_decode) {
+        static bool RV64IM_Itype_immS_predicate(int64_t immS_decode) {
         return 1;
         }
-        bool RV64IM_Jtype_immS_predicate_predicate(int64_t immS_decode) {
+        static bool RV64IM_Jtype_immS_predicate(int64_t immS_decode) {
         return 1;
         }
-        bool RV64IM_Rtype_shamt_predicate_predicate(uint8_t shamt_decode) {
+        static bool RV64IM_Rtype_shamt_predicate(uint8_t shamt_decode) {
         return 1;
         }
-        bool RV64IM_Stype_immS_predicate_predicate(int64_t immS_decode) {
+        static bool RV64IM_Stype_immS_predicate(int64_t immS_decode) {
         return 1;
         }
-        bool RV64IM_Utype_immU_predicate_predicate(uint64_t immU_decode) {
+        static bool RV64IM_Utype_immU_predicate(uint64_t immU_decode) {
         return 1;
         }
                 
@@ -138,13 +138,13 @@ public class EmitImmediateFilePassTest extends AbstractLcbTest {
                 // Currently this is only used in the pseudo expansion pass.
                 enum rv64imImmediateKind{IK_UNKNOWN_IMMEDIATE // used for side effect registers which are interpreted as immediate
                              \s
-                              , IK_RV64IM_Btype_immS_decode_decode
-                              , IK_RV64IM_Ftype_shamt_decode_decode
-                              , IK_RV64IM_Itype_immS_decode_decode
-                              , IK_RV64IM_Jtype_immS_decode_decode
-                              , IK_RV64IM_Rtype_shamt_decode_decode
-                              , IK_RV64IM_Stype_immS_decode_decode
-                              , IK_RV64IM_Utype_immU_decode_decode
+                              , IK_RV64IM_Btype_immS_decode
+                              , IK_RV64IM_Ftype_shamt_decode
+                              , IK_RV64IM_Itype_immS_decode
+                              , IK_RV64IM_Jtype_immS_decode
+                              , IK_RV64IM_Rtype_shamt_decode
+                              , IK_RV64IM_Stype_immS_decode
+                              , IK_RV64IM_Utype_immU_decode
                              \s
                             };
                 
@@ -157,20 +157,20 @@ public class EmitImmediateFilePassTest extends AbstractLcbTest {
                     case IK_UNKNOWN_IMMEDIATE:
                         return value;
                    \s
-                      case IK_RV64IM_Btype_immS_decode_decode:
-                        return RV64IM_Btype_immS_decode_decode(value);
-                      case IK_RV64IM_Ftype_shamt_decode_decode:
-                        return RV64IM_Ftype_shamt_decode_decode(value);
-                      case IK_RV64IM_Itype_immS_decode_decode:
-                        return RV64IM_Itype_immS_decode_decode(value);
-                      case IK_RV64IM_Jtype_immS_decode_decode:
-                        return RV64IM_Jtype_immS_decode_decode(value);
-                      case IK_RV64IM_Rtype_shamt_decode_decode:
-                        return RV64IM_Rtype_shamt_decode_decode(value);
-                      case IK_RV64IM_Stype_immS_decode_decode:
-                        return RV64IM_Stype_immS_decode_decode(value);
-                      case IK_RV64IM_Utype_immU_decode_decode:
-                        return RV64IM_Utype_immU_decode_decode(value);
+                      case IK_RV64IM_Btype_immS_decode:
+                        return RV64IM_Btype_immS_decode(value);
+                      case IK_RV64IM_Ftype_shamt_decode:
+                        return RV64IM_Ftype_shamt_decode(value);
+                      case IK_RV64IM_Itype_immS_decode:
+                        return RV64IM_Itype_immS_decode(value);
+                      case IK_RV64IM_Jtype_immS_decode:
+                        return RV64IM_Jtype_immS_decode(value);
+                      case IK_RV64IM_Rtype_shamt_decode:
+                        return RV64IM_Rtype_shamt_decode(value);
+                      case IK_RV64IM_Stype_immS_decode:
+                        return RV64IM_Stype_immS_decode(value);
+                      case IK_RV64IM_Utype_immU_decode:
+                        return RV64IM_Utype_immU_decode(value);
                    \s
                     }
                 }

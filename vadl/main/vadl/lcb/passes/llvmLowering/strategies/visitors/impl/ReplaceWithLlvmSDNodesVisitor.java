@@ -9,6 +9,7 @@ import vadl.cppCodeGen.model.CppUpdateBitRangeNode;
 import vadl.lcb.passes.llvmLowering.LlvmNodeLowerable;
 import vadl.lcb.passes.llvmLowering.model.LlvmAddSD;
 import vadl.lcb.passes.llvmLowering.model.LlvmAndSD;
+import vadl.lcb.passes.llvmLowering.model.LlvmBasicBlockSD;
 import vadl.lcb.passes.llvmLowering.model.LlvmBrCcSD;
 import vadl.lcb.passes.llvmLowering.model.LlvmBrCondSD;
 import vadl.lcb.passes.llvmLowering.model.LlvmFieldAccessRefNode;
@@ -35,7 +36,12 @@ import vadl.lcb.passes.llvmLowering.model.LlvmXorSD;
 import vadl.lcb.passes.llvmLowering.model.LlvmZExtLoad;
 import vadl.lcb.passes.llvmLowering.strategies.visitors.TableGenNodeVisitor;
 import vadl.lcb.passes.llvmLowering.strategies.visitors.TableGenPatternLowerable;
+import vadl.types.BitsType;
 import vadl.types.BuiltInTable;
+import vadl.types.DataType;
+import vadl.types.SIntType;
+import vadl.types.Type;
+import vadl.types.UIntType;
 import vadl.viam.Constant;
 import vadl.viam.graph.Node;
 import vadl.viam.graph.control.AbstractBeginNode;
@@ -286,7 +292,8 @@ public class ReplaceWithLlvmSDNodesVisitor
   public void visit(ZeroExtendNode node) {
     if (node.value() instanceof ReadMemNode readMemNode) {
       // Merge SignExtend and ReadMem to LlvmZExtLoad
-      node.replaceAndDelete(new LlvmTypeCastSD(new LlvmZExtLoad(readMemNode), node.type()));
+      node.replaceAndDelete(
+          new LlvmTypeCastSD(new LlvmZExtLoad(readMemNode), makeSigned(node.type())));
       visit(readMemNode.address());
     } else {
       // Remove all nodes
@@ -301,7 +308,8 @@ public class ReplaceWithLlvmSDNodesVisitor
   public void visit(SignExtendNode node) {
     if (node.value() instanceof ReadMemNode readMemNode) {
       // Merge SignExtend and ReadMem to LlvmSExtLoad
-      node.replaceAndDelete(new LlvmTypeCastSD(new LlvmSExtLoad(readMemNode), node.type()));
+      node.replaceAndDelete(
+          new LlvmTypeCastSD(new LlvmSExtLoad(readMemNode), makeSigned(node.type())));
       visit(readMemNode.address());
     } else {
       // Remove all nodes
@@ -394,5 +402,20 @@ public class ReplaceWithLlvmSDNodesVisitor
     for (var arg : node.arguments()) {
       visit(arg);
     }
+  }
+
+  @Override
+  public void visit(LlvmBasicBlockSD node) {
+
+  }
+
+  private Type makeSigned(DataType type) {
+    if (!type.isSigned()) {
+      if (type instanceof BitsType bitsType) {
+        return SIntType.bits(bitsType.bitWidth());
+      }
+    }
+
+    return type;
   }
 }

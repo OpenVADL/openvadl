@@ -7,6 +7,7 @@ import java.util.Map;
 import vadl.cppCodeGen.model.CppFunction;
 import vadl.cppCodeGen.model.VariantKind;
 import vadl.gcb.passes.pseudo.PseudoExpansionCodeGeneratorVisitor;
+import vadl.gcb.passes.pseudo.TemporaryCodeGeneratorVisitor;
 import vadl.gcb.passes.relocation.DetectImmediatePass;
 import vadl.gcb.passes.relocation.model.ElfRelocation;
 import vadl.lcb.codegen.CodeGenerator;
@@ -51,10 +52,10 @@ public class PseudoExpansionCodeGenerator extends CodeGenerator {
 
     writer.write("std::vector< MCInst > result;\n");
     var visitor =
-        new PseudoExpansionCodeGeneratorVisitor(writer, namespace, fieldUsages,
+        new TemporaryCodeGeneratorVisitor(writer, namespace, fieldUsages,
             immediateDecodings, variants, relocations);
     instrCallNodes.forEach(visitor::visit);
-    writer.write("return result;");
+    writer.write("return result");
     return writer.toString();
   }
 }

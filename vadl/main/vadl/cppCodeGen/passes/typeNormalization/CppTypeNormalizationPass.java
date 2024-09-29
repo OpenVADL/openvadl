@@ -80,6 +80,11 @@ public abstract class CppTypeNormalizationPass extends Pass {
    */
   protected abstract Stream<Pair<Format.Field, Function>> getApplicable(Specification viam);
 
+  /**
+   * Converts a given {@code function} into a {@link CppFunction} which has cpp conforming types.
+   */
+  protected abstract CppFunction liftFunction(Function function);
+
   @Nullable
   @Override
   public Object execute(PassResults passResults, Specification viam)
@@ -89,7 +94,7 @@ public abstract class CppTypeNormalizationPass extends Pass {
     getApplicable(viam).forEach(pair -> {
       var field = pair.left();
       var function = pair.right();
-      var cppFunction = makeTypesCppConform(function);
+      var cppFunction = liftFunction(function);
       results.add(function, field, cppFunction);
     });
 
@@ -121,9 +126,21 @@ public abstract class CppTypeNormalizationPass extends Pass {
   /**
    * Changes the function so that all vadl types conform to CPP types
    * which simplifies the code generation.
+   * All the non-conforming types will be upcasted to next higher bit size.
    */
   public static CppFunction makeTypesCppConform(Function function) {
     var liftedParameters = getParameters(function);
+    return makeTypesCppConformWithParamType(function, liftedParameters);
+  }
+
+  /**
+   * Changes the function so that all vadl types conform to CPP types
+   * which simplifies the code generation.
+   * All the non-conforming types will be upcasted to next higher bit size except the parameter
+   * type.
+   */
+  public static CppFunction makeTypesCppConformWithParamType(Function function,
+                                                             List<Parameter> liftedParameters) {
     var liftedResultTy = getResultTy(function);
     updateGraph(function.behavior());
 

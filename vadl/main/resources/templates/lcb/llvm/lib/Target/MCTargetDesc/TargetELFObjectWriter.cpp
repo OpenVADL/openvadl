@@ -37,9 +37,11 @@ unsigned [(${namespace})]ELFObjectWriter::getRelocType(MCContext &Ctx, const MCV
         return ELF::R_[(${namespace})]_32;
     case FK_Data_8:
         return ELF::R_[(${namespace})]_64;
+        /*
         «FOR relocation : processor.list(ElfRelocation)»
                     «emitFixupELF(relocation)»
                 «ENDFOR»
+                */
     }
 
     return 0;

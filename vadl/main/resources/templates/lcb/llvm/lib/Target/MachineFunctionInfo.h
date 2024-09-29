@@ -1,7 +1,7 @@
 #ifndef LLVM_LIB_TARGET_[(${namespace})]_[(${namespace})]MACHINEFUNCTIONINFO_H
 #define LLVM_LIB_TARGET_[(${namespace})]_[(${namespace})]MACHINEFUNCTIONINFO_H
 
-#include "[(${namespace})]Subtarget.h"
+#include "[(${namespace})]SubTarget.h"
 #include "llvm/CodeGen/MachineFrameInfo.h"
 #include "llvm/CodeGen/MachineFunction.h"
 

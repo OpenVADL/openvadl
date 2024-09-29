@@ -1,5 +1,8 @@
 package vadl.lcb.template.lib.Target;
 
+import static vadl.lcb.template.utils.DataLayoutProvider.RISCV_DATALAYOUT;
+import static vadl.lcb.template.utils.DataLayoutProvider.createDataLayout;
+
 import java.io.IOException;
 import java.util.Map;
 import vadl.configuration.LcbConfiguration;
@@ -25,12 +28,13 @@ public class EmitTargetMachineCppFilePass extends LcbTemplateRenderingPass {
   @Override
   protected String getOutputPath() {
     var processorName = lcbConfiguration().processorName().value();
-    return "llvm/lib/Target/" + processorName + "/" + processorName + ".cpp";
+    return "llvm/lib/Target/" + processorName + "/" + processorName + "TargetMachine.cpp";
   }
 
   @Override
   protected Map<String, Object> createVariables(final PassResults passResults,
                                                 Specification specification) {
-    return Map.of(CommonVarNames.NAMESPACE, specification.name());
+    return Map.of(CommonVarNames.NAMESPACE, specification.name(),
+      "dataLayout", createDataLayout(RISCV_DATALAYOUT));
   }
 }

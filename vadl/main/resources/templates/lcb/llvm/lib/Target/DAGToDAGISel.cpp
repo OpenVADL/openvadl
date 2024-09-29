@@ -1,6 +1,6 @@
 #include "[(${namespace})]DAGToDAGISel.h"
 #include "[(${namespace})]RegisterInfo.h"
-#include "[(${namespace})]Subtarget.h"
+#include "[(${namespace})]SubTarget.h"
 #include "[(${namespace})]TargetMachine.h"
 #include "llvm/CodeGen/MachineConstantPool.h"
 #include "llvm/CodeGen/MachineFrameInfo.h"
@@ -35,7 +35,7 @@ bool [(${namespace})]DAGToDAGISel::SelectAddrFI(SDValue Addr, SDValue &Base)
 {
     if (auto FIN = dyn_cast<FrameIndexSDNode>(Addr))
     {
-        Base = CurDAG->getTargetFrameIndex(FIN->getIndex(), MVT::SimpleValueType[(${stackPointerValueType})]);
+        Base = CurDAG->getTargetFrameIndex(FIN->getIndex(), MVT::SimpleValueType::[(${stackPointerType})]);
         return true;
     }
     return false;

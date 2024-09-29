@@ -1,6 +1,6 @@
 #include "[(${namespace})]FrameLowering.h"
 #include "[(${namespace})].h"
-#include "[(${namespace})]Subtarget.h"
+#include "[(${namespace})]SubTarget.h"
 #include "MCTargetDesc/[(${namespace})]MCTargetDesc.h"
 #include "Utils/[(${namespace})]BaseInfo.h"
 #include "[(${namespace})]MachineFunctionInfo.h"
@@ -56,7 +56,7 @@ MachineBasicBlock::iterator [(${namespace})]FrameLowering::eliminateCallFramePse
         MI->getOpcode() == [(${namespace})]::ADJCALLSTACKDOWN)
     {
 
-        Register SPReg = «emit(stackPointer)»;
+        Register SPReg = [(${namespace})]::[(${stackPointer})];
         DebugLoc DL = MI->getDebugLoc();
 
         if (!hasReservedCallFrame(MF))
@@ -120,9 +120,7 @@ void [(${namespace})]FrameLowering::emitPrologue(MachineFunction &MF, MachineBas
     [#th:block th:if="${hasFramePointer}"]
         Register FPReg = [(${namespace})]::[(${framePointer})];
     [/th:block]
-    [#th:block th:if="${!hasFramePointer}"]
-        Register SPReg = [(${namespace})]::[(${stackPointer})];
-    [/th:block]
+    Register SPReg = [(${namespace})]::[(${stackPointer})];
 
     // Debug location must be unknown since the first debug location is used
     // to determine the end of the prologue.
@@ -166,9 +164,7 @@ void [(${namespace})]FrameLowering::emitEpilogue(MachineFunction &MF, MachineBas
     [#th:block th:if="${hasFramePointer}"]
         Register FPReg = [(${namespace})]::[(${framePointer})];
     [/th:block]
-    [#th:block th:if="${!hasFramePointer}"]
-        Register SPReg = [(${namespace})]::[(${stackPointer})];
-    [/th:block]
+    Register SPReg = [(${namespace})]::[(${stackPointer})];
 
     // Get the insert location for the epilogue. If there were no terminators in
     // the block, get the last instruction.
@@ -315,7 +311,7 @@ StackOffset [(${namespace})]FrameLowering::getFrameIndexReference(const MachineF
     if (FI >= MinCSFI && FI <= MaxCSFI)
     {
         // use the stack pointer for callee saved register
-        FrameReg = «emit(stackPointer)»;
+        FrameReg = [(${namespace})]::[(${stackPointer})];
         Offset += StackOffset::getFixed(StackSize);
     }
     else if (RI->hasStackRealignment(MF) && !MFI.isFixedObjectIndex(FI))
@@ -325,7 +321,7 @@ StackOffset [(${namespace})]FrameLowering::getFrameIndexReference(const MachineF
         // after realignment.
         // TODO: @chochrainer RISCV uses base register
 
-        FrameReg = «emit(stackPointer)»;
+        FrameReg = [(${namespace})]::[(${stackPointer})];
         Offset += StackOffset::getFixed(StackSize);
     }
     else

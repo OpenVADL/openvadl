@@ -1,7 +1,7 @@
 #ifndef LLVM_LIB_TARGET_[(${namespace})]_[(${namespace})]TARGETMACHINE_H
 #define LLVM_LIB_TARGET_[(${namespace})]_[(${namespace})]TARGETMACHINE_H
 
-#include "[(${namespace})]Subtarget.h"
+#include "[(${namespace})]SubTarget.h"
 
 #include "llvm/CodeGen/Passes.h"
 #include "llvm/CodeGen/TargetPassConfig.h"

@@ -35,7 +35,7 @@ public class EmitMCInstExpanderHeaderFilePass extends LcbTemplateRenderingPass {
   @Override
   protected String getOutputPath() {
     var processorName = lcbConfiguration().processorName().value();
-    return "lcb/llvm/lib/Target/" + processorName + "/MCTargetDesc/" + processorName
+    return "llvm/lib/Target/" + processorName + "/MCTargetDesc/" + processorName
         + "MCInstExpander.h";
   }
 

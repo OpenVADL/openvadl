@@ -7,6 +7,7 @@ import vadl.lcb.template.CommonVarNames;
 import vadl.lcb.template.LcbTemplateRenderingPass;
 import vadl.pass.PassResults;
 import vadl.viam.Specification;
+import vadl.viam.passes.dummyAbi.DummyAbi;
 
 /**
  * This file contains the driver logic for MCTarget.
@@ -25,13 +26,16 @@ public class EmitMCTargetDescCppFilePass extends LcbTemplateRenderingPass {
   @Override
   protected String getOutputPath() {
     var processorName = lcbConfiguration().processorName().value();
-    return "lcb/llvm/lib/Target/" + processorName + "/MCTargetDesc/"
+    return "llvm/lib/Target/" + processorName + "/MCTargetDesc/"
         + processorName + "MCTargetDesc.cpp";
   }
 
   @Override
   protected Map<String, Object> createVariables(final PassResults passResults,
                                                 Specification specification) {
-    return Map.of(CommonVarNames.NAMESPACE, specification.name());
+    var abi =
+        (DummyAbi) specification.definitions().filter(x -> x instanceof DummyAbi).findFirst().get();
+    return Map.of(CommonVarNames.NAMESPACE, specification.name(),
+        "returnAddress", abi.returnAddress());
   }
 }

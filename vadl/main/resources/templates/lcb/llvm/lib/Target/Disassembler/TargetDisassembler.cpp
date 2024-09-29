@@ -21,10 +21,10 @@ static const unsigned [(${registerClass.registerFile.identifier.simpleName()})]D
 
 /* == Immediate Decoding == */
 [#th:block th:each="immediate : ${immediates}" ]
-DecodeStatus decode[(${immediate.simpleName})](MCInst &Inst, uint64_t Imm, int64_t Address, const void *Decoder)
+DecodeStatus [(${immediate.wrapperName})](MCInst &Inst, uint64_t Imm, int64_t Address, const void *Decoder)
 {
     Imm = Imm & [(${immediate.mask})];
-    Imm = [(${immediate.decodeMethodName})];
+    Imm = [(${immediate.decodeMethodName})](Imm);
     Inst.addOperand(MCOperand::createImm(Imm));
     return MCDisassembler::Success;
 }
@@ -43,7 +43,7 @@ static DecodeStatus Decode[(${registerClass.registerFile.identifier.simpleName()
         return MCDisassembler::Fail;
 
     // access custom generated decoder table in register info
-    Register reg = [(${registerClass.registerFile.identifier.simpleName()})]DecoderTableName[RegNo];
+    Register reg = [(${registerClass.registerFile.identifier.simpleName()})]DecoderTable[RegNo];
 
     // check if decoded register is valid
     if( reg == [(${namespace})]::NoRegister )
@@ -56,7 +56,7 @@ static DecodeStatus Decode[(${registerClass.registerFile.identifier.simpleName()
 
 #include "[(${namespace})]GenDisassemblerTables.inc"
 
-    DecodeStatus [(${namespace})]Disassembler::getInstruction(MCInst &MI, uint64_t &Size, ArrayRef<uint8_t> Bytes, uint64_t Address, raw_ostream &CS) const
+DecodeStatus [(${namespace})]Disassembler::getInstruction(MCInst &MI, uint64_t &Size, ArrayRef<uint8_t> Bytes, uint64_t Address, raw_ostream &CS) const
 {
     if (Bytes.size() < [(${instructionSize / 8})])
     {
@@ -64,7 +64,7 @@ static DecodeStatus Decode[(${registerClass.registerFile.identifier.simpleName()
         return MCDisassembler::Fail;
     }
 
-    uint[(${instructionSize / 8})]_t Instr;
+    uint[(${instructionSize})]_t Instr;
     [#th:block th:if="${instructionSize <= 8}"]
         if (IsBigEndian)
         {

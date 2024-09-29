@@ -1,4 +1,4 @@
-package vadl.lcb.template.lib.Target.MCTargetDesc;
+package vadl.lcb.template.include.llvm.TargetParser;
 
 import java.io.IOException;
 import java.util.Map;
@@ -9,23 +9,23 @@ import vadl.pass.PassResults;
 import vadl.viam.Specification;
 
 /**
- * This file contains the CMakefile for the MCTarget.
+ * This file contains code which handles the triple.
  */
-public class EmitMCTargetDescCMakeFilePass extends LcbTemplateRenderingPass {
+public class EmitTripleHeaderFilePass extends LcbTemplateRenderingPass {
 
-  public EmitMCTargetDescCMakeFilePass(LcbConfiguration lcbConfiguration) throws IOException {
+  public EmitTripleHeaderFilePass(LcbConfiguration lcbConfiguration)
+      throws IOException {
     super(lcbConfiguration);
   }
 
   @Override
   protected String getTemplatePath() {
-    return "lcb/llvm/lib/Target/MCTargetDesc/CMakeLists.txt";
+    return "lcb/llvm/include/llvm/TargetParser/Triple.h";
   }
 
   @Override
   protected String getOutputPath() {
-    return "lcb/llvm/lib/Target/" + lcbConfiguration().processorName().value()
-        + "/MCTargetDesc/CMakeLists.txt";
+    return "llvm/include/llvm/TargetParser/Triple.h";
   }
 
   @Override

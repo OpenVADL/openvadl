@@ -3,6 +3,7 @@ package vadl.pass;
 import com.google.errorprone.annotations.FormatMethod;
 import com.google.errorprone.annotations.FormatString;
 import java.io.IOException;
+import java.util.Optional;
 import javax.annotation.Nullable;
 import org.jetbrains.annotations.Contract;
 import vadl.configuration.GeneralConfiguration;
@@ -76,6 +77,24 @@ public abstract class Pass {
   protected final <T> T ensureNonNull(@Nullable T obj, String msg) {
     ensure(obj != null, msg);
     return obj;
+  }
+
+  /**
+   * Ensures that the given object is present. If the object is null, an exception is thrown
+   * with the specified message.
+   *
+   * <p>The thrown exception has context information about the node and graph.</p>
+   *
+   * @param obj the object to check for null
+   * @param msg the message to include in the exception if the object is null
+   * @throws ViamGraphError if the object is null
+   */
+  @Contract("null, _  -> fail")
+  @FormatMethod
+  protected final <T> T ensurePresent(@Nullable Optional<T> obj, String msg) {
+    ensureNonNull(obj, "Optional must not be null");
+    ensure(obj.isPresent(), msg);
+    return obj.get();
   }
 
   public GeneralConfiguration configuration() {

@@ -1,7 +1,7 @@
 #ifndef LLVM_LIB_TARGET_[(${namespace})]_ASMPARSER_H
 #define LLVM_LIB_TARGET_[(${namespace})]_ASMPARSER_H
 
-#include "[(${namespace})]ParsedOperand.h"
+#include "AsmParsedOperand.h"
 #include "MCTargetDesc/[(${namespace})]MCExpr.h"
 #include "llvm/MC/MCParser/MCAsmLexer.h"
 #include "llvm/MC/MCParser/MCAsmParser.h"
@@ -65,10 +65,12 @@ class [(${namespace})]AsmRecursiveDescentParser {
     MCAsmParser &Parser;
     OperandVector &Operands;
 
-private:
-    [# th:each="pr : ${parsingResult}" ]
+//private:
+    /*
+    [# th:each="pr : ${parsingResults}" ]
     RuleParsingResult<[(${pr.type})]> <[(${namespace})]AsmRecursiveDescentParser::[(${pr.functionName})](); // [(${pr.comment})]
     [/]
+    */
     // «visitor.resultType( AsmType.String )» Literal(std::string toParse);
     // «visitor.resultType( AsmType.Expression )» BuiltinExpression();
 
@@ -77,9 +79,9 @@ public:
         : Lexer(lexer), Parser(parser), Operands(operands) {
     }
 
-    RuleParsingResult<StringRef> IDENTIFIER();
+    //RuleParsingResult<NoData> EOL();
     RuleParsingResult<NoData> ParseStatement();
-    RuleParsingResult<uint64> ParseRegister();
+    RuleParsingResult<uint64_t> ParseRegister();
 };
 
 }

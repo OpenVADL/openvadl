@@ -33,7 +33,7 @@ public class EmitRegisterInfoCppFilePassTest extends AbstractLcbTest {
         #include "rv64imRegisterInfo.h"
         #include "rv64imFrameLowering.h"
         #include "rv64imInstrInfo.h"
-        #include "rv64imSubtarget.h"
+        #include "rv64imSubTarget.h"
         #include "Utils/rv64imBaseInfo.h"
         #include "Utils/ImmediateUtils.h"
         #include "MCTargetDesc/rv64imMCTargetDesc.h"
@@ -62,7 +62,7 @@ public class EmitRegisterInfoCppFilePassTest extends AbstractLcbTest {
         void rv64imRegisterInfo::anchor() {}
                 
         rv64imRegisterInfo::rv64imRegisterInfo()
-            : rv64imGenRegisterInfo( «emitWithNamespace(returnAddress)» )
+            : rv64imGenRegisterInfo( rv64im::X1 )
         {
         }
                 
@@ -110,7 +110,7 @@ public class EmitRegisterInfoCppFilePassTest extends AbstractLcbTest {
             // try to inline the offset into the instruction
             //
                 
-            if(immS_predicate(Offset))
+            if(RV64IM_Itype_immS_predicate(Offset))
             {
                 // immediate can be encoded and instruction can be inlined.
                 FIOp.ChangeToRegister( FrameReg, false /* isDef */ );
@@ -123,13 +123,13 @@ public class EmitRegisterInfoCppFilePassTest extends AbstractLcbTest {
             MachineBasicBlock &MBB = *MI.getParent();
             MachineFunction *MF = MBB.getParent();
             MachineRegisterInfo &MRI = MF->getRegInfo();
-            const CPUInstrInfo *TII = MF->getSubtarget<CPUSubtarget>().getInstrInfo();
+            const rv64imInstrInfo *TII = MF->getSubtarget<rv64imSubtarget>().getInstrInfo();
                 
             //
             // try to generate a scratch register and adjust frame register with given offset
             //
                 
-            Register ScratchReg = MRI.createVirtualRegister(&CPU::XRegClass);
+            Register ScratchReg = MRI.createVirtualRegister(&rv64im::XRegClass);
             if(TII->adjustReg(MBB, II, DL, ScratchReg, FrameReg, Offset) == false) // MachineInstr::MIFlag Flag
             {
                 // the scratch register can properly be manipulated and used as address register.
@@ -162,7 +162,7 @@ public class EmitRegisterInfoCppFilePassTest extends AbstractLcbTest {
             // try to inline the offset into the instruction
             //
                 
-            if(immS_predicate(Offset))
+            if(RV64IM_Itype_immS_predicate(Offset))
             {
                 // immediate can be encoded and instruction can be inlined.
                 FIOp.ChangeToRegister( FrameReg, false /* isDef */ );
@@ -175,13 +175,13 @@ public class EmitRegisterInfoCppFilePassTest extends AbstractLcbTest {
             MachineBasicBlock &MBB = *MI.getParent();
             MachineFunction *MF = MBB.getParent();
             MachineRegisterInfo &MRI = MF->getRegInfo();
-            const CPUInstrInfo *TII = MF->getSubtarget<CPUSubtarget>().getInstrInfo();
+            const rv64imInstrInfo *TII = MF->getSubtarget<rv64imSubtarget>().getInstrInfo();
                 
             //
             // try to generate a scratch register and adjust frame register with given offset
             //
                 
-            Register ScratchReg = MRI.createVirtualRegister(&CPU::XRegClass);
+            Register ScratchReg = MRI.createVirtualRegister(&rv64im::XRegClass);
             if(TII->adjustReg(MBB, II, DL, ScratchReg, FrameReg, Offset) == false) // MachineInstr::MIFlag Flag
             {
                 // the scratch register can properly be manipulated and used as address register.
@@ -214,7 +214,7 @@ public class EmitRegisterInfoCppFilePassTest extends AbstractLcbTest {
             // try to inline the offset into the instruction
             //
                 
-            if(immS_predicate(Offset))
+            if(RV64IM_Itype_immS_predicate(Offset))
             {
                 // immediate can be encoded and instruction can be inlined.
                 FIOp.ChangeToRegister( FrameReg, false /* isDef */ );
@@ -227,13 +227,13 @@ public class EmitRegisterInfoCppFilePassTest extends AbstractLcbTest {
             MachineBasicBlock &MBB = *MI.getParent();
             MachineFunction *MF = MBB.getParent();
             MachineRegisterInfo &MRI = MF->getRegInfo();
-            const CPUInstrInfo *TII = MF->getSubtarget<CPUSubtarget>().getInstrInfo();
+            const rv64imInstrInfo *TII = MF->getSubtarget<rv64imSubtarget>().getInstrInfo();
                 
             //
             // try to generate a scratch register and adjust frame register with given offset
             //
                 
-            Register ScratchReg = MRI.createVirtualRegister(&CPU::XRegClass);
+            Register ScratchReg = MRI.createVirtualRegister(&rv64im::XRegClass);
             if(TII->adjustReg(MBB, II, DL, ScratchReg, FrameReg, Offset) == false) // MachineInstr::MIFlag Flag
             {
                 // the scratch register can properly be manipulated and used as address register.
@@ -266,7 +266,7 @@ public class EmitRegisterInfoCppFilePassTest extends AbstractLcbTest {
             // try to inline the offset into the instruction
             //
                 
-            if(immS_predicate(Offset))
+            if(RV64IM_Itype_immS_predicate(Offset))
             {
                 // immediate can be encoded and instruction can be inlined.
                 FIOp.ChangeToRegister( FrameReg, false /* isDef */ );
@@ -279,13 +279,13 @@ public class EmitRegisterInfoCppFilePassTest extends AbstractLcbTest {
             MachineBasicBlock &MBB = *MI.getParent();
             MachineFunction *MF = MBB.getParent();
             MachineRegisterInfo &MRI = MF->getRegInfo();
-            const CPUInstrInfo *TII = MF->getSubtarget<CPUSubtarget>().getInstrInfo();
+            const rv64imInstrInfo *TII = MF->getSubtarget<rv64imSubtarget>().getInstrInfo();
                 
             //
             // try to generate a scratch register and adjust frame register with given offset
             //
                 
-            Register ScratchReg = MRI.createVirtualRegister(&CPU::XRegClass);
+            Register ScratchReg = MRI.createVirtualRegister(&rv64im::XRegClass);
             if(TII->adjustReg(MBB, II, DL, ScratchReg, FrameReg, Offset) == false) // MachineInstr::MIFlag Flag
             {
                 // the scratch register can properly be manipulated and used as address register.
@@ -318,7 +318,7 @@ public class EmitRegisterInfoCppFilePassTest extends AbstractLcbTest {
             // try to inline the offset into the instruction
             //
                 
-            if(immS_predicate(Offset))
+            if(RV64IM_Itype_immS_predicate(Offset))
             {
                 // immediate can be encoded and instruction can be inlined.
                 FIOp.ChangeToRegister( FrameReg, false /* isDef */ );
@@ -331,13 +331,13 @@ public class EmitRegisterInfoCppFilePassTest extends AbstractLcbTest {
             MachineBasicBlock &MBB = *MI.getParent();
             MachineFunction *MF = MBB.getParent();
             MachineRegisterInfo &MRI = MF->getRegInfo();
-            const CPUInstrInfo *TII = MF->getSubtarget<CPUSubtarget>().getInstrInfo();
+            const rv64imInstrInfo *TII = MF->getSubtarget<rv64imSubtarget>().getInstrInfo();
                 
             //
             // try to generate a scratch register and adjust frame register with given offset
             //
                 
-            Register ScratchReg = MRI.createVirtualRegister(&CPU::XRegClass);
+            Register ScratchReg = MRI.createVirtualRegister(&rv64im::XRegClass);
             if(TII->adjustReg(MBB, II, DL, ScratchReg, FrameReg, Offset) == false) // MachineInstr::MIFlag Flag
             {
                 // the scratch register can properly be manipulated and used as address register.
@@ -370,7 +370,7 @@ public class EmitRegisterInfoCppFilePassTest extends AbstractLcbTest {
             // try to inline the offset into the instruction
             //
                 
-            if(immS_predicate(Offset))
+            if(RV64IM_Itype_immS_predicate(Offset))
             {
                 // immediate can be encoded and instruction can be inlined.
                 FIOp.ChangeToRegister( FrameReg, false /* isDef */ );
@@ -383,13 +383,13 @@ public class EmitRegisterInfoCppFilePassTest extends AbstractLcbTest {
             MachineBasicBlock &MBB = *MI.getParent();
             MachineFunction *MF = MBB.getParent();
             MachineRegisterInfo &MRI = MF->getRegInfo();
-            const CPUInstrInfo *TII = MF->getSubtarget<CPUSubtarget>().getInstrInfo();
+            const rv64imInstrInfo *TII = MF->getSubtarget<rv64imSubtarget>().getInstrInfo();
                 
             //
             // try to generate a scratch register and adjust frame register with given offset
             //
                 
-            Register ScratchReg = MRI.createVirtualRegister(&CPU::XRegClass);
+            Register ScratchReg = MRI.createVirtualRegister(&rv64im::XRegClass);
             if(TII->adjustReg(MBB, II, DL, ScratchReg, FrameReg, Offset) == false) // MachineInstr::MIFlag Flag
             {
                 // the scratch register can properly be manipulated and used as address register.
@@ -422,7 +422,7 @@ public class EmitRegisterInfoCppFilePassTest extends AbstractLcbTest {
             // try to inline the offset into the instruction
             //
                 
-            if(immS_predicate(Offset))
+            if(RV64IM_Itype_immS_predicate(Offset))
             {
                 // immediate can be encoded and instruction can be inlined.
                 FIOp.ChangeToRegister( FrameReg, false /* isDef */ );
@@ -435,13 +435,13 @@ public class EmitRegisterInfoCppFilePassTest extends AbstractLcbTest {
             MachineBasicBlock &MBB = *MI.getParent();
             MachineFunction *MF = MBB.getParent();
             MachineRegisterInfo &MRI = MF->getRegInfo();
-            const CPUInstrInfo *TII = MF->getSubtarget<CPUSubtarget>().getInstrInfo();
+            const rv64imInstrInfo *TII = MF->getSubtarget<rv64imSubtarget>().getInstrInfo();
                 
             //
             // try to generate a scratch register and adjust frame register with given offset
             //
                 
-            Register ScratchReg = MRI.createVirtualRegister(&CPU::XRegClass);
+            Register ScratchReg = MRI.createVirtualRegister(&rv64im::XRegClass);
             if(TII->adjustReg(MBB, II, DL, ScratchReg, FrameReg, Offset) == false) // MachineInstr::MIFlag Flag
             {
                 // the scratch register can properly be manipulated and used as address register.
@@ -474,7 +474,7 @@ public class EmitRegisterInfoCppFilePassTest extends AbstractLcbTest {
             // try to inline the offset into the instruction
             //
                 
-            if(immS_predicate(Offset))
+            if(RV64IM_Stype_immS_predicate(Offset))
             {
                 // immediate can be encoded and instruction can be inlined.
                 FIOp.ChangeToRegister( FrameReg, false /* isDef */ );
@@ -487,13 +487,13 @@ public class EmitRegisterInfoCppFilePassTest extends AbstractLcbTest {
             MachineBasicBlock &MBB = *MI.getParent();
             MachineFunction *MF = MBB.getParent();
             MachineRegisterInfo &MRI = MF->getRegInfo();
-            const CPUInstrInfo *TII = MF->getSubtarget<CPUSubtarget>().getInstrInfo();
+            const rv64imInstrInfo *TII = MF->getSubtarget<rv64imSubtarget>().getInstrInfo();
                 
             //
             // try to generate a scratch register and adjust frame register with given offset
             //
                 
-            Register ScratchReg = MRI.createVirtualRegister(&CPU::XRegClass);
+            Register ScratchReg = MRI.createVirtualRegister(&rv64im::XRegClass);
             if(TII->adjustReg(MBB, II, DL, ScratchReg, FrameReg, Offset) == false) // MachineInstr::MIFlag Flag
             {
                 // the scratch register can properly be manipulated and used as address register.
@@ -526,7 +526,7 @@ public class EmitRegisterInfoCppFilePassTest extends AbstractLcbTest {
             // try to inline the offset into the instruction
             //
                 
-            if(immS_predicate(Offset))
+            if(RV64IM_Stype_immS_predicate(Offset))
             {
                 // immediate can be encoded and instruction can be inlined.
                 FIOp.ChangeToRegister( FrameReg, false /* isDef */ );
@@ -539,13 +539,13 @@ public class EmitRegisterInfoCppFilePassTest extends AbstractLcbTest {
             MachineBasicBlock &MBB = *MI.getParent();
             MachineFunction *MF = MBB.getParent();
             MachineRegisterInfo &MRI = MF->getRegInfo();
-            const CPUInstrInfo *TII = MF->getSubtarget<CPUSubtarget>().getInstrInfo();
+            const rv64imInstrInfo *TII = MF->getSubtarget<rv64imSubtarget>().getInstrInfo();
                 
             //
             // try to generate a scratch register and adjust frame register with given offset
             //
                 
-            Register ScratchReg = MRI.createVirtualRegister(&CPU::XRegClass);
+            Register ScratchReg = MRI.createVirtualRegister(&rv64im::XRegClass);
             if(TII->adjustReg(MBB, II, DL, ScratchReg, FrameReg, Offset) == false) // MachineInstr::MIFlag Flag
             {
                 // the scratch register can properly be manipulated and used as address register.
@@ -578,7 +578,7 @@ public class EmitRegisterInfoCppFilePassTest extends AbstractLcbTest {
             // try to inline the offset into the instruction
             //
                 
-            if(immS_predicate(Offset))
+            if(RV64IM_Stype_immS_predicate(Offset))
             {
                 // immediate can be encoded and instruction can be inlined.
                 FIOp.ChangeToRegister( FrameReg, false /* isDef */ );
@@ -591,13 +591,13 @@ public class EmitRegisterInfoCppFilePassTest extends AbstractLcbTest {
             MachineBasicBlock &MBB = *MI.getParent();
             MachineFunction *MF = MBB.getParent();
             MachineRegisterInfo &MRI = MF->getRegInfo();
-            const CPUInstrInfo *TII = MF->getSubtarget<CPUSubtarget>().getInstrInfo();
+            const rv64imInstrInfo *TII = MF->getSubtarget<rv64imSubtarget>().getInstrInfo();
                 
             //
             // try to generate a scratch register and adjust frame register with given offset
             //
                 
-            Register ScratchReg = MRI.createVirtualRegister(&CPU::XRegClass);
+            Register ScratchReg = MRI.createVirtualRegister(&rv64im::XRegClass);
             if(TII->adjustReg(MBB, II, DL, ScratchReg, FrameReg, Offset) == false) // MachineInstr::MIFlag Flag
             {
                 // the scratch register can properly be manipulated and used as address register.
@@ -630,7 +630,7 @@ public class EmitRegisterInfoCppFilePassTest extends AbstractLcbTest {
             // try to inline the offset into the instruction
             //
                 
-            if(immS_predicate(Offset))
+            if(RV64IM_Stype_immS_predicate(Offset))
             {
                 // immediate can be encoded and instruction can be inlined.
                 FIOp.ChangeToRegister( FrameReg, false /* isDef */ );
@@ -643,13 +643,13 @@ public class EmitRegisterInfoCppFilePassTest extends AbstractLcbTest {
             MachineBasicBlock &MBB = *MI.getParent();
             MachineFunction *MF = MBB.getParent();
             MachineRegisterInfo &MRI = MF->getRegInfo();
-            const CPUInstrInfo *TII = MF->getSubtarget<CPUSubtarget>().getInstrInfo();
+            const rv64imInstrInfo *TII = MF->getSubtarget<rv64imSubtarget>().getInstrInfo();
                 
             //
             // try to generate a scratch register and adjust frame register with given offset
             //
                 
-            Register ScratchReg = MRI.createVirtualRegister(&CPU::XRegClass);
+            Register ScratchReg = MRI.createVirtualRegister(&rv64im::XRegClass);
             if(TII->adjustReg(MBB, II, DL, ScratchReg, FrameReg, Offset) == false) // MachineInstr::MIFlag Flag
             {
                 // the scratch register can properly be manipulated and used as address register.
@@ -778,7 +778,7 @@ public class EmitRegisterInfoCppFilePassTest extends AbstractLcbTest {
         Register rv64imRegisterInfo::getFrameRegister(const MachineFunction &MF) const
         {
             const TargetFrameLowering *TFI = getFrameLowering(MF);
-            return TFI->hasFP(MF) ? X8 /* FP */ : X2 /* SP */;
+            return TFI->hasFP(MF) ? rv64im::X8 /* FP */ : rv64im::X2 /* SP */;
         }
                 
         const uint32_t * rv64imRegisterInfo::getCallPreservedMask(const MachineFunction & /*MF*/

@@ -52,7 +52,7 @@ static MCInstrInfo *create[(${namespace})]MCInstrInfo()
 static MCRegisterInfo *create[(${namespace})]MCRegisterInfo(const Triple & /*TT*/)
 {
     MCRegisterInfo *X = new MCRegisterInfo();
-    Init[(${namespace})]MCRegisterInfo(X, «emit(returnAddressRegister)» /* = return address register */);
+    Init[(${namespace})]MCRegisterInfo(X, [(${namespace})]::[(${returnAddress.render()})] /* = return address register */);
     return X;
 }
 

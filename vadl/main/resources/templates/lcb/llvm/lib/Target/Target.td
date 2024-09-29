@@ -35,6 +35,6 @@ def [(${namespace})]InstPrinter : AsmWriter
 def [(${namespace})] : Target
 {
     let InstructionSet = [(${namespace})]InstrInfo;
-    let AssemblyWriters = [[(${namespace})]InstPrinter];
-    let AssemblyParsers  = [[(${namespace})]AsmParser];
+    let AssemblyWriters = [ [(${namespace})]InstPrinter ];
+    let AssemblyParsers  = [ [(${namespace})]AsmParser ];
 }

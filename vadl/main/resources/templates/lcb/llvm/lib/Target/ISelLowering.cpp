@@ -2,7 +2,7 @@
 #include "[(${namespace})].h"
 #include "Utils/[(${namespace})]BaseInfo.h"
 #include "[(${namespace})]RegisterInfo.h"
-#include "[(${namespace})]Subtarget.h"
+#include "[(${namespace})]SubTarget.h"
 #include "[(${namespace})]MachineFunctionInfo.h"
 #include "MCTargetDesc/[(${namespace})]MCTargetDesc.h"
 #include "llvm/CodeGen/MachineValueType.h"
@@ -23,26 +23,28 @@ void [(${namespace})]TargetLowering::anchor() {}
     : TargetLowering(TM), Subtarget(STI)
 {
     // Set up the register classes defined by register files
-    «FOR registerClass : registerClasses»
-                             addRegisterClass(«emitMVTType(registerClass)», &«emitRegClsSymbol(registerClass)»);
-    «ENDFOR»
+    [# th:each="rg : ${registerFiles}" ]
+      addRegisterClass(MVT::[(${rg.regType})], &[(${namespace})]::[(${rg.name})]RegClass);
+    [/]
 
-        setStackPointerRegisterToSaveRestore(«emit(stackPointer)»);
+    setStackPointerRegisterToSaveRestore([(${namespace})]::[(${stackPointer})]);
 
-    setOperationAction(ISD::GlobalAddress, «emitMVTType(stackPointer)», Custom);
-    setOperationAction(ISD::BlockAddress, «emitMVTType(stackPointer)», Custom);
-    setOperationAction(ISD::ConstantPool, «emitMVTType(stackPointer)», Custom);
-    setOperationAction(ISD::JumpTable, «emitMVTType(stackPointer)», Custom);
+    setOperationAction(ISD::GlobalAddress, MVT::[(${stackPointerType})], Custom);
+    setOperationAction(ISD::BlockAddress, MVT::[(${stackPointerType})], Custom);
+    setOperationAction(ISD::ConstantPool, MVT::[(${stackPointerType})], Custom);
+    setOperationAction(ISD::JumpTable, MVT::[(${stackPointerType})], Custom);
 
     setOperationAction(ISD::VASTART, MVT::Other, Custom);
     setOperationAction(ISD::VAARG, MVT::Other, Custom);
     setOperationAction(ISD::VACOPY, MVT::Other, Expand);
     setOperationAction(ISD::VAEND, MVT::Other, Expand);
-    «IF !hasConditionalMove»
+    /*
+    IF !hasConditionalMove»
         setOperationAction(ISD::SELECT, MVT::i32, Custom);
     setOperationAction(ISD::SELECT_CC, MVT::i32, Expand);
-    «ENDIF»
-        setOperationAction(ISD::SMUL_LOHI, MVT::i32, Expand);
+    ENDIF
+    */
+    setOperationAction(ISD::SMUL_LOHI, MVT::i32, Expand);
     setOperationAction(ISD::UMUL_LOHI, MVT::i32, Expand);
     for (auto VT : {MVT::i1, MVT::i8, MVT::i16})
         setOperationAction(ISD::SIGN_EXTEND_INREG, VT, Expand);
@@ -93,9 +95,12 @@ SDValue [(${namespace})]TargetLowering::LowerOperation(SDValue Op, SelectionDAG 
         return lowerVASTART(Op, DAG);
     case ISD::VAARG:
         return lowerVAARG(Op, DAG);
-    «IF !hasConditionalMove» case ISD::SELECT:
+        /*
+    IF !hasConditionalMove» case ISD::SELECT:
         return lowerSelect(Op, DAG);
-        «ENDIF» default : llvm_unreachable("unimplemented operand");
+        ENDI
+        */
+    default : llvm_unreachable("unimplemented operand");
     }
 }
 
@@ -106,19 +111,16 @@ static SDValue unpackFromRegLoc(SelectionDAG &DAG, SDValue Chain, const CCValAss
 
     EVT RegVT = VA.getLocVT();
 
-    «FOR registerClass : registerClasses» if (RegVT.getSimpleVT().SimpleTy == «emitMVTType(registerClass)» )
-    {
-        const unsigned VReg = RegInfo.createVirtualRegister(&«emitRegClsSymbol(registerClass)» );
+    [# th:each="rg : ${registerClasses}" ]
+      if(RegVT.getSimpleVT().SimpleTy == [(${rg.regType})])  {
+        const unsigned VReg = RegInfo.createVirtualRegister(&[(${namespace})]::[(${rg.name})]);
         RegInfo.addLiveIn(VA.getLocReg(), VReg);
         SDValue ArgIn = DAG.getCopyFromReg(Chain, DL, VReg, RegVT);
         return ArgIn;
-    }
+      }
+    [/]
 
-    «ENDFOR»
-
-        // TODO: @chochrainer try to sign extend if possible
-
-        LLVM_DEBUG(dbgs() << "unpackFromRegLoc Unhandled argument type: " << RegVT.getEVTString() << "\n");
+    LLVM_DEBUG(dbgs() << "unpackFromRegLoc Unhandled argument type: " << RegVT.getEVTString() << "\n");
     llvm_unreachable("arguments type did not fit a register class!");
 }
 
@@ -128,7 +130,7 @@ static SDValue unpackFromMemLoc(SelectionDAG &DAG, SDValue Chain, const CCValAss
     MachineFrameInfo &MFI = MF.getFrameInfo();
     EVT LocVT = VA.getLocVT();
     EVT ValVT = VA.getValVT();
-    EVT PtrVT = MVT::«emit(stackPointer.type)»; // TODO: @chochrainer --> MVT::getIntegerVT( DAG.getDataLayout().getPointerSizeInBits( 0 ) );
+    EVT PtrVT = MVT::[(${stackPointerType})]; // TODO: @chochrainer --> MVT::getIntegerVT( DAG.getDataLayout().getPointerSizeInBits( 0 ) );
     unsigned ObjectSize = ValVT.getSizeInBits() / 8;
     int FI = MFI.CreateFixedObject(ObjectSize, VA.getLocMemOffset(), /* Immutable= */ true);
     SDValue FIN = DAG.getFrameIndex(FI, PtrVT);
@@ -175,7 +177,6 @@ SDValue [(${namespace})]TargetLowering::LowerFormalArguments(SDValue Chain, Call
     {
     default:
     {
-        // TODO: @chochrainer CallingConv::Fast could be interesting
         report_fatal_error("Unsupported calling convention");
     }
     case CallingConv::Fast:
@@ -189,7 +190,7 @@ SDValue [(${namespace})]TargetLowering::LowerFormalArguments(SDValue Chain, Call
     CCState CCInfo(CallConv, isVarArg, DAG.getMachineFunction(), ArgLocs, *DAG.getContext());
     CCInfo.AnalyzeFormalArguments(Ins, CC_[(${namespace})]);
 
-    // Used with va_args to acumulate store chains.
+    // Used with va_args to accumulate store chains.
     std::vector<SDValue> OutChains;
 
     for (auto &VA : ArgLocs)
@@ -238,42 +239,43 @@ SDValue [(${namespace})]TargetLowering::LowerFormalArguments(SDValue Chain, Call
 /// argument.
 void [(${namespace})]TargetLowering::WriteToVarArgs(std::vector<SDValue> &OutChains, SDValue Chain, const SDLoc &DL, SelectionDAG &DAG, CCState &CCInfo) const
 {
-    «IF catFuncArg.empty»
+    [#th:block th:if="${argumentRegisters.size() == 0}"]
         /* architecture has no function argument registers */
 
         MachineFunction &MF = DAG.getMachineFunction();
-    MachineFrameInfo &MFI = MF.getFrameInfo();
-    [(${namespace})]MachineFunctionInfo *RVFI = MF.getInfo<[(${namespace})]MachineFunctionInfo>();
+        MachineFrameInfo &MFI = MF.getFrameInfo();
+        [(${namespace})]MachineFunctionInfo *RVFI = MF.getInfo<[(${namespace})]MachineFunctionInfo>();
 
-    int VarArgsSaveSize = 0;
-    int VaArgOffset = CCInfo.getStackSize();
+        int VarArgsSaveSize = 0;
+        int VaArgOffset = CCInfo.getStackSize();
 
-    int FI = MFI.CreateFixedObject(1 /* simple say 1 byte as only the pointer is relevant */, VaArgOffset, true);
-    RVFI->setVarArgsFrameIndex(FI);
-    RVFI->setVarArgsSaveSize(VarArgsSaveSize);
-    «ELSE» MachineFunction &MF = DAG.getMachineFunction();
-    MachineFrameInfo &MFI = MF.getFrameInfo();
-    MachineRegisterInfo &RegInfo = MF.getRegInfo();
-    [(${namespace})]MachineFunctionInfo *RVFI = MF.getInfo<[(${namespace})]MachineFunctionInfo>();
+        int FI = MFI.CreateFixedObject(1 /* simple say 1 byte as only the pointer is relevant */, VaArgOffset, true);
+        RVFI->setVarArgsFrameIndex(FI);
+        RVFI->setVarArgsSaveSize(VarArgsSaveSize);
+    [/th:block]
+    [#th:block th:if="${argumentRegisters.size() > 0}"]
+        MachineFunction &MF = DAG.getMachineFunction();
+        MachineFrameInfo &MFI = MF.getFrameInfo();
+        MachineRegisterInfo &RegInfo = MF.getRegInfo();
+        [(${namespace})]MachineFunctionInfo *RVFI = MF.getInfo<[(${namespace})]MachineFunctionInfo>();
 
-    «FOR entry : catFuncArg.entrySet SEPARATOR ","» const MCPhysReg Arg«emitName(entry.getKey)»s[] =
+        [#th:block th:each="cl : ${argumentRegisterClasses}" ]
+        const MCPhysReg Arg[(${cl.identifier.simpleName()})]s[] =
         {
-                        «FOR register : entry.getValue SEPARATOR ","»
-                            «emit(register)»
-                        «ENDFOR»};
-    «ENDFOR»
+          // We only support currently one register class for all the argument registers.
+          [#th:block th:each="rg, iterStat : ${argumentRegisters}" ]
+            [(${namespace})]::[(${rg.render()})][#th:block th:if="${!iterStat.last}"],[/th:block]
+          [/th:block]
+        };
+        [/th:block]
 
-                «FOR entry : catFuncArg.entrySet»
-                              ////
-                              // setup for arguments of register class "«emitName( entry.getKey )»"
-                              //
-                              unsigned «emitName(entry.getKey)»LenInBytes = «LLVMTypeUtility.getBytes(entry.getKey.type.result)»;
-    MVT «emitName(entry.getKey)»LenVT = «emitMVTType(entry.getKey)»;
-    ArrayRef<MCPhysReg> «emitName(entry.getKey)»ArgRegs = makeArrayRef(Arg«emitName(entry.getKey)»s);
-    unsigned «emitName(entry.getKey)»Idx = CCInfo.getFirstUnallocated( «emitName(entry.getKey)»ArgRegs);
-    const TargetRegisterClass *«emitName(entry.getKey)»RC = &«emitRegClsSymbol(entry.getKey)»;
-
-    «ENDFOR»
+        [#th:block th:each="cl : ${argumentRegisterClasses}" ]
+          unsigned [(${cl.identifier.simpleName()})]LenInBytes = [(${cl.resultType.bitWidth / 8})];
+          MVT [(${cl.identifier.simpleName()})]LenVT = MVT::[(${cl.llvmResultType()})];
+          ArrayRef<MCPhysReg> [(${cl.identifier.simpleName()})]ArgRegs = makeArrayRef(Arg[(${cl.identifier.simpleName()})]s);
+          unsigned [(${cl.identifier.simpleName()})]Idx = CCInfo.getFirstUnallocated( [(${cl.identifier.simpleName()})]ArgRegs);
+          const TargetRegisterClass *[(${cl.identifier.simpleName()})]RC = &[(${namespace})]::[(${cl.identifier.simpleName()})]RegClass;
+        [/th:block]
 
         // Offset of the first variable argument from stack pointer, and size of
         // the vararg save area. For now, the varargs save area is either zero or
@@ -281,55 +283,58 @@ void [(${namespace})]TargetLowering::WriteToVarArgs(std::vector<SDValue> &OutCha
         int VarArgsSaveSize,
         VaArgOffset;
 
-    // If all registers are allocated, then all varargs must be passed on the
-    // stack and we don't need to save any argregs.
-    if ( «FOR entry : catFuncArg.entrySet SEPARATOR " && "»«emitName(entry.getKey)»ArgRegs.size() == «emitName(entry.getKey)»Idx«ENDFOR»)
-    {
-        VarArgsSaveSize = 0;
-        VaArgOffset = CCInfo.getStackSize();
-    }
-    else
-    {
-        VarArgsSaveSize = 0;
-        «FOR entry : catFuncArg.entrySet»
-                         VarArgsSaveSize += «emitName(entry.getKey)»LenInBytes * ( «emitName(entry.getKey)»ArgRegs.size() - «emitName(entry.getKey)»Idx);
-        «ENDFOR»
+        // If all registers are allocated, then all varargs must be passed on the
+        // stack and we don't need to save any argregs.
+        if (
+          [#th:block th:each="cl, iterStat : ${argumentRegisterClasses}" ]
+          [(${cl.identifier.simpleName()})]ArgRegs.size() == [(${cl.identifier.simpleName()})]Idx [#th:block th:if="${!iterStat.last}"]&&[/th:block]
+          [/th:block]
+        )
+        {
+            VarArgsSaveSize = 0;
+            VaArgOffset = CCInfo.getStackSize();
+        }
+        else
+        {
+            VarArgsSaveSize = 0;
+            [#th:block th:each="cl : ${argumentRegisterClasses}" ]
+              VarArgsSaveSize += [(${cl.identifier.simpleName()})]LenInBytes * ( [(${cl.identifier.simpleName()})]ArgRegs.size() - [(${cl.identifier.simpleName()})]Idx);
+            [/th:block]
             VaArgOffset = -VarArgsSaveSize; // TODO: @chochrainer check if CCInfo.getStackSize() is needed
-    }
+        }
 
-    // TODO: @chochrainer eventually this could be optimized here with another offset calculation
+        // TODO: @chochrainer eventually this could be optimized here with another offset calculation
 
-    // Record the frame index of the first variable argument
-    // which is a value necessary to VASTART.
-    int FI = MFI.CreateFixedObject(1 /* simple say 1 byte as only the pointer is relevant */, VaArgOffset, true);
-    RVFI->setVarArgsFrameIndex(FI);
+        // Record the frame index of the first variable argument
+        // which is a value necessary to VASTART.
+        int FI = MFI.CreateFixedObject(1 /* simple say 1 byte as only the pointer is relevant */, VaArgOffset, true);
+        RVFI->setVarArgsFrameIndex(FI);
 
-    // TODO: @chochrainer add a stack alignment ( adapt VarArgsSaveSize )
+        // TODO: @chochrainer add a stack alignment ( adapt VarArgsSaveSize )
 
-    «FOR entry : catFuncArg.entrySet»
-                 ////
-                 // save call for arguments of register class "«emitName( entry.getKey )»"
-                 //
-                 // Copy the integer registers that may have been used for passing varargs
-                 // to the vararg save area.
-                 for (unsigned I = «emitName(entry.getKey)»Idx; I < «emitName(entry.getKey)»ArgRegs.size(); ++I, VaArgOffset += «emitName(entry.getKey)»LenInBytes)
-    {
-        const Register Reg = RegInfo.createVirtualRegister( «emitName(entry.getKey)»RC);
-        RegInfo.addLiveIn( «emitName(entry.getKey)»ArgRegs[I], Reg);
-        SDValue ArgValue = DAG.getCopyFromReg(Chain, DL, Reg, «emitName(entry.getKey)»LenVT);
-        FI = MFI.CreateFixedObject( «emitName(entry.getKey)»LenInBytes, VaArgOffset, true);
-        SDValue PtrOff = DAG.getFrameIndex(FI, getPointerTy(DAG.getDataLayout()));
-        SDValue Store = DAG.getStore(Chain, DL, ArgValue, PtrOff, MachinePointerInfo::getFixedStack(MF, FI));
-        cast<StoreSDNode>(Store.getNode())
-            ->getMemOperand()
-            ->setValue((Value *)nullptr);
-        OutChains.push_back(Store);
-    }
-
-    «ENDFOR»
+        [#th:block th:each="cl : ${argumentRegisterClasses}" ]
+        ////
+        // save call for arguments of register class "«emitName( entry.getKey )»"
+        //
+        // Copy the integer registers that may have been used for passing varargs
+        // to the vararg save area.
+        for (unsigned I = [(${cl.identifier.simpleName()})]Idx; I < [(${cl.identifier.simpleName()})]ArgRegs.size(); ++I, VaArgOffset += [(${cl.identifier.simpleName()})]LenInBytes)
+        {
+            const Register Reg = RegInfo.createVirtualRegister( [(${cl.identifier.simpleName()})]RC);
+            RegInfo.addLiveIn( [(${cl.identifier.simpleName()})]ArgRegs[I], Reg);
+            SDValue ArgValue = DAG.getCopyFromReg(Chain, DL, Reg, [(${cl.identifier.simpleName()})]LenVT);
+            FI = MFI.CreateFixedObject( [(${cl.identifier.simpleName()})]LenInBytes, VaArgOffset, true);
+            SDValue PtrOff = DAG.getFrameIndex(FI, getPointerTy(DAG.getDataLayout()));
+            SDValue Store = DAG.getStore(Chain, DL, ArgValue, PtrOff, MachinePointerInfo::getFixedStack(MF, FI));
+            cast<StoreSDNode>(Store.getNode())
+                ->getMemOperand()
+                ->setValue((Value *)nullptr);
+            OutChains.push_back(Store);
+        }
+        [/th:block]
 
         RVFI->setVarArgsSaveSize(VarArgsSaveSize);
-    «ENDIF»
+    [/th:block]
 }
 
 SDValue [(${namespace})]TargetLowering::LowerCall(TargetLowering::CallLoweringInfo &CLI, SmallVectorImpl<SDValue> &InVals) const
@@ -380,9 +385,9 @@ SDValue [(${namespace})]TargetLowering::LowerCall(TargetLowering::CallLoweringIn
         if (VA.isMemLoc())
         {
             // TODO handle arguments that do not fit in one register
-            SDValue StackPtr = DAG.getRegister( «emit(stackPointer)», MVT::«emit(stackPointer.type)» );
+            SDValue StackPtr = DAG.getRegister( [(${namespace})]::[(${stackPointer})], MVT::[(${stackPointerType})] );
             SDValue PtrOff = DAG.getIntPtrConstant(VA.getLocMemOffset(), dl);
-            PtrOff = DAG.getNode(ISD::ADD, dl, MVT::«emit(stackPointer.type)», StackPtr, PtrOff);
+            PtrOff = DAG.getNode(ISD::ADD, dl, MVT::[(${stackPointerType})], StackPtr, PtrOff);
             MemOpChains.push_back(DAG.getStore(Chain, dl, Arg, PtrOff, MachinePointerInfo()));
             continue;
         }
@@ -445,7 +450,7 @@ SDValue [(${namespace})]TargetLowering::LowerCall(TargetLowering::CallLoweringIn
     Chain = DAG.getNode( [(${namespace})]ISD::CALL, dl, NodeTys, Ops);
     InFlag = Chain.getValue(1);
 
-    Chain = DAG.getCALLSEQ_END(Chain, DAG.getConstant(NextStackOffset, dl, «emitMVTType(stackPointer)», true), DAG.getConstant(0, dl, «emitMVTType(stackPointer)», true), InFlag, dl);
+    Chain = DAG.getCALLSEQ_END(Chain, DAG.getConstant(NextStackOffset, dl, MVT::[(${stackPointerType})], true), DAG.getConstant(0, dl, MVT::[(${stackPointerType})], true), InFlag, dl);
 
     InFlag = Chain.getValue(1);
 
@@ -567,13 +572,16 @@ SDValue [(${namespace})]TargetLowering::getAddr(NodeTy *N, SelectionDAG &DAG, bo
     {
         report_fatal_error("Unsupported code model for lowering");
     }
-    «IF this.optionalLoadAddressSmall.isPresent» case CodeModel::Small:
+    }
+    /*
+    IF this.optionalLoadAddressSmall.isPresent» case CodeModel::Small:
     {
         SDValue Addr = getTargetNode(N, DL, Ty, DAG, 0);
-        return SDValue(DAG.getMachineNode([(${namespace})]::«this.optionalLoadAddressSmall.get.simpleName», DL, Ty, Addr), 0);
+        return SDValue(DAG.getMachineNode([(${namespace})]:: << this.optionalLoadAddressSmall.get.simpleName >>, DL, Ty, Addr), 0);
     }
-        «ENDIF»
+        ENDIF
     }
+    */
 }
 
 SDValue [(${namespace})]TargetLowering::lowerJumpTable(SDValue Op, SelectionDAG &DAG) const
@@ -599,7 +607,7 @@ SDValue [(${namespace})]TargetLowering::lowerGlobalAddress(SDValue Op, Selection
     // fold it back in when profitable.
     if (Offset != 0)
     {
-        return DAG.getNode(ISD::ADD, DL, Ty, Addr, DAG.getConstant(Offset, DL, «emitMVTType(stackPointer)»));
+        return DAG.getNode(ISD::ADD, DL, Ty, Addr, DAG.getConstant(Offset, DL, MVT::[(${stackPointerType})]));
     }
 
     return Addr;
@@ -639,7 +647,7 @@ SDValue [(${namespace})]TargetLowering::lowerVAARG(SDValue Op, SelectionDAG &DAG
     SDValue VAListPtr = Node->getOperand(1);
     const Value *SV = cast<SrcValueSDNode>(Node->getOperand(2))->getValue();
     SDLoc DL(Node);
-    unsigned ArgSlotSizeInBytes = «LLVMTypeUtility.getBytes(stackPointer.type)»; // <-- TODO: @chochrainer this is not always the same
+    unsigned ArgSlotSizeInBytes = [(${stackPointerByteSize})]; // <-- TODO: @chochrainer this is not always the same
 
     SDValue VAListLoad = DAG.getLoad(getPointerTy(DAG.getDataLayout()), DL, Chain, VAListPtr, MachinePointerInfo(SV));
     SDValue VAList = VAListLoad;
@@ -673,7 +681,8 @@ SDValue [(${namespace})]TargetLowering::lowerVAARG(SDValue Op, SelectionDAG &DAG
     return DAG.getLoad(VT, DL, Chain, VAList, MachinePointerInfo());
 }
 
-«IF !hasConditionalMove»
+/*
+IF !hasConditionalMove
     // Changes the condition code and swaps operands if necessary, so the SetCC
     // operation matches one of the comparisons supported directly in the target's
     // ISA.
@@ -693,13 +702,15 @@ SDValue [(${namespace})]TargetLowering::lowerVAARG(SDValue Op, SelectionDAG &DAG
         break;
     }
 }
+*/
 
+/*
 // Return the target's branch opcode that matches the given DAG integer
 // condition code. The CondCode must be one of those supported by the target's
 // ISA (see normaliseSetCC).
 static unsigned getBranchOpcodeForIntCondCode(ISD::CondCode CC, MVT::SimpleValueType Value)
 {
-    «FOR instruction : machineInstructions »
+    FOR instruction : machineInstructions
                 « var kind = MachineInstructionSelectNodeMatcher.getBranchCondCode(instruction) »
                 «IF kind.isPresent() »
                     «IF MachineInstructionSelectNodeMatcher.is32Integer(instruction) » if (CC == ISD::«ConditionFlag.conditionAsString(kind.get())» && MVT::i32 == Value)
@@ -716,7 +727,9 @@ static unsigned getBranchOpcodeForIntCondCode(ISD::CondCode CC, MVT::SimpleValue
 
         llvm_unreachable("Unsupported CondCode");
 }
+*/
 
+/*
 SDValue [(${namespace})]TargetLowering::lowerSelect(SDValue Op, SelectionDAG &DAG) const
 {
     SDValue CondV = Op.getOperand(0);
@@ -759,21 +772,24 @@ SDValue [(${namespace})]TargetLowering::lowerSelect(SDValue Op, SelectionDAG &DA
 
     return DAG.getNode([(${namespace})]ISD::SELECT_CC, DL, VTs, Ops);
 }
-«ENDIF»
+*/
 
-    MachineBasicBlock *
-        [(${namespace})]TargetLowering::EmitInstrWithCustomInserter(MachineInstr &MI,
-                                                                    MachineBasicBlock *BB) const
+MachineBasicBlock *
+    [(${namespace})]TargetLowering::EmitInstrWithCustomInserter(MachineInstr &MI,
+                                                                MachineBasicBlock *BB) const
 {
     const TargetInstrInfo &TII = *BB->getParent()->getSubtarget().getInstrInfo();
     DebugLoc DL = MI.getDebugLoc();
 
+/*
     switch (MI.getOpcode())
     {
     default:
         llvm_unreachable("Unexpected instr type to insert");
-    «FOR regClass : registerClasses » case [(${namespace})]::SelectCC_«regClass.simpleName()»:
-        «ENDFOR» break;
+    [# th:each="rg : ${registerFiles}" ]
+      case [(${namespace})]::SelectCC_[(${rg.registerFile.identifier.simpleName()})]:
+        break;
+    [/]
     }
 
     // To "insert" a SELECT instruction, we actually have to insert the triangle
@@ -832,4 +848,7 @@ SDValue [(${namespace})]TargetLowering::lowerSelect(SDValue Op, SelectionDAG &DA
 
     MI.eraseFromParent(); // The pseudo instruction is gone now.
     return TailMBB;
+    */
+
+    return nullptr;
 }

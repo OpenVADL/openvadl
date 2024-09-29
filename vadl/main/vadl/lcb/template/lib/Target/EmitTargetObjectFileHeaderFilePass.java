@@ -19,14 +19,14 @@ public class EmitTargetObjectFileHeaderFilePass extends LcbTemplateRenderingPass
 
   @Override
   protected String getTemplatePath() {
-    return "lcb/llvm/lib/Target/ObjectFile.h";
+    return "lcb/llvm/lib/Target/TargetObjectFile.h";
   }
 
   @Override
   protected String getOutputPath() {
     var processorName = lcbConfiguration().processorName().value();
-    return "llvm/lib/Target/" + processorName + "/" + processorName
-        + "/ObjectFile.h";
+    return "llvm/lib/Target/" + processorName
+        + "/" + processorName + "TargetObjectFile.h";
   }
 
   @Override

@@ -1,7 +1,7 @@
 #include "[(${namespace})]RegisterInfo.h"
 #include "[(${namespace})]FrameLowering.h"
 #include "[(${namespace})]InstrInfo.h"
-#include "[(${namespace})]Subtarget.h"
+#include "[(${namespace})]SubTarget.h"
 #include "Utils/[(${namespace})]BaseInfo.h"
 #include "Utils/ImmediateUtils.h"
 #include "MCTargetDesc/[(${namespace})]MCTargetDesc.h"
@@ -30,7 +30,7 @@ using namespace llvm;
 void [(${namespace})]RegisterInfo::anchor() {}
 
 [(${namespace})]RegisterInfo::[(${namespace})]RegisterInfo()
-    : [(${namespace})]GenRegisterInfo( «emitWithNamespace(returnAddress)» )
+    : [(${namespace})]GenRegisterInfo( [(${namespace})]::[(${returnAddress.render()})] )
 {
 }
 
@@ -91,13 +91,13 @@ bool eliminateFrameIndex[(${fe.instruction.identifier.simpleName()})]
     MachineBasicBlock &MBB = *MI.getParent();
     MachineFunction *MF = MBB.getParent();
     MachineRegisterInfo &MRI = MF->getRegInfo();
-    const CPUInstrInfo *TII = MF->getSubtarget<CPUSubtarget>().getInstrInfo();
+    const [(${namespace})]InstrInfo *TII = MF->getSubtarget<[(${namespace})]Subtarget>().getInstrInfo();
 
     //
     // try to generate a scratch register and adjust frame register with given offset
     //
 
-    Register ScratchReg = MRI.createVirtualRegister(&CPU::XRegClass);
+    Register ScratchReg = MRI.createVirtualRegister(&[(${namespace})]::[(${fe.registerFile.identifier.simpleName()})]RegClass);
     if(TII->adjustReg(MBB, II, DL, ScratchReg, FrameReg, Offset) == false) // MachineInstr::MIFlag Flag
     {
         // the scratch register can properly be manipulated and used as address register.
@@ -176,7 +176,7 @@ bool [(${namespace})]RegisterInfo::eliminateFrameIndex(MachineBasicBlock::iterat
 Register [(${namespace})]RegisterInfo::getFrameRegister(const MachineFunction &MF) const
 {
     const TargetFrameLowering *TFI = getFrameLowering(MF);
-    return TFI->hasFP(MF) ? [(${framePointer.render()})] /* FP */ : [(${stackPointer.render()})] /* SP */;
+    return TFI->hasFP(MF) ? [(${namespace})]::[(${framePointer.render()})] /* FP */ : [(${namespace})]::[(${stackPointer.render()})] /* SP */;
 }
 
 const uint32_t * [(${namespace})]RegisterInfo::getCallPreservedMask(const MachineFunction & /*MF*/

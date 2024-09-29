@@ -107,7 +107,7 @@ void [(${namespace})]AsmPrinter::emitInstruction( const MachineInstr *MI )
     }
 }
 
-extern "C" LLVM_EXTERNAL_VISIBILITY void LLVMInitialize«[(${namespace})]AsmPrinter()
+extern "C" LLVM_EXTERNAL_VISIBILITY void LLVMInitialize[(${namespace})]AsmPrinter()
 {
     RegisterAsmPrinter<[(${namespace})]AsmPrinter> X(getThe[(${namespace})]Target());
 }

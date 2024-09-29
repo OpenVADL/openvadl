@@ -20,6 +20,7 @@ import vadl.lcb.passes.llvmLowering.LlvmLoweringPass;
 import vadl.lcb.passes.llvmLowering.LlvmMayLoadMemory;
 import vadl.lcb.passes.llvmLowering.LlvmMayStoreMemory;
 import vadl.lcb.passes.llvmLowering.LlvmSideEffectPatternIncluded;
+import vadl.lcb.passes.llvmLowering.model.LlvmBasicBlockSD;
 import vadl.lcb.passes.llvmLowering.model.LlvmBrCcSD;
 import vadl.lcb.passes.llvmLowering.model.LlvmBrCondSD;
 import vadl.lcb.passes.llvmLowering.model.LlvmFieldAccessRefNode;
@@ -32,6 +33,7 @@ import vadl.lcb.passes.llvmLowering.strategies.visitors.impl.ReplaceWithLlvmSDNo
 import vadl.lcb.passes.llvmLowering.tablegen.model.ParameterIdentity;
 import vadl.lcb.passes.llvmLowering.tablegen.model.TableGenInstruction;
 import vadl.lcb.passes.llvmLowering.tablegen.model.TableGenInstructionFrameRegisterOperand;
+import vadl.lcb.passes.llvmLowering.tablegen.model.TableGenInstructionImmediateLabelOperand;
 import vadl.lcb.passes.llvmLowering.tablegen.model.TableGenInstructionImmediateOperand;
 import vadl.lcb.passes.llvmLowering.tablegen.model.TableGenInstructionOperand;
 import vadl.lcb.passes.llvmLowering.tablegen.model.TableGenInstructionRegisterFileOperand;
@@ -291,9 +293,20 @@ public abstract class LlvmInstructionLoweringStrategy {
       return generateInstructionOperand(node);
     } else if (operand instanceof FieldRefNode node) {
       return generateInstructionOperand(node);
+    } else if (operand instanceof LlvmBasicBlockSD node) {
+      return generateInstructionOperand(node);
     } else {
       throw new ViamError("Input operand not supported yet: " + operand);
     }
+  }
+
+  /**
+   * Returns a {@link TableGenInstructionOperand} given a {@link Node}.
+   */
+  private static TableGenInstructionOperand generateInstructionOperand(LlvmBasicBlockSD node) {
+    return new TableGenInstructionImmediateLabelOperand(
+        ParameterIdentity.fromBasicBlockToImmediateLabel(node),
+        node);
   }
 
   /**

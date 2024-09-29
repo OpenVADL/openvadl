@@ -1,5 +1,6 @@
 package vadl.lcb.passes.llvmLowering.tablegen.model;
 
+import vadl.lcb.passes.llvmLowering.model.LlvmBasicBlockSD;
 import vadl.lcb.passes.llvmLowering.model.LlvmFieldAccessRefNode;
 import vadl.lcb.passes.llvmLowering.model.LlvmFrameIndexSD;
 import vadl.lcb.passes.llvmLowering.model.LlvmReadRegFileNode;
@@ -17,9 +18,19 @@ public record ParameterIdentity(String type, String name) {
     return String.format("%s:$%s", type, name);
   }
 
+  public static ParameterIdentity fromBasicBlockToImmediateLabel(LlvmBasicBlockSD basicBlockSD) {
+    return new ParameterIdentity(basicBlockSD.immediateOperand().rawName() + "AsLabel",
+        basicBlockSD.fieldAccess().fieldRef().identifier.simpleName());
+  }
+
   public static ParameterIdentity from(LlvmFieldAccessRefNode node) {
     return new ParameterIdentity(node.immediateOperand().fullname(),
-        node.fieldAccess().identifier.simpleName());
+        node.fieldAccess().fieldRef().identifier.simpleName());
+  }
+
+  public static ParameterIdentity from(LlvmBasicBlockSD node) {
+    return new ParameterIdentity(node.lower(),
+        node.fieldAccess().fieldRef().identifier.simpleName());
   }
 
   public static ParameterIdentity from(FieldRefNode node) {
