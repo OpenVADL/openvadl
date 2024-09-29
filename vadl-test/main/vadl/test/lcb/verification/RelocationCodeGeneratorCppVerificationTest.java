@@ -19,7 +19,7 @@ import vadl.gcb.passes.relocation.DetectImmediatePass;
 import vadl.gcb.passes.relocation.model.ElfRelocation;
 import vadl.gcb.passes.type_normalization.CppTypeNormalizationForImmediateExtractionPass;
 import vadl.gcb.passes.type_normalization.CppTypeNormalizationForPredicatesPass;
-import vadl.lcb.codegen.CodeGenerator;
+import vadl.lcb.codegen.LcbCodeGenerator;
 import vadl.lcb.passes.relocation.GenerateElfRelocationPass;
 import vadl.pass.PassKey;
 import vadl.pass.exception.DuplicatedPassKeyException;
@@ -131,8 +131,8 @@ public class RelocationCodeGeneratorCppVerificationTest extends AbstractLcbTest 
     var normalisedImmediateExtractionFunction =
         cppNormalisedImmediateExtraction.byFunction(immField.extractFunction());
 
-    var extractionFunctionCodeGenerator = new CodeGenerator();
-    var relocationOverrideFunctionCodeGenerator = new CodeGenerator();
+    var extractionFunctionCodeGenerator = new LcbCodeGenerator();
+    var relocationOverrideFunctionCodeGenerator = new LcbCodeGenerator();
 
     var extractionFunctionName = immField.extractFunction().identifier.lower();
     var relocationFunctionName = relocation.logicalRelocation().updateFunction().identifier.lower();
@@ -143,22 +143,22 @@ public class RelocationCodeGeneratorCppVerificationTest extends AbstractLcbTest 
             #include <bitset>
             #include <vector>
             #include <tuple>
-                        
+            
             template<int start, int end, std::size_t N>
             std::bitset<N> project_range(std::bitset<N> bits)
             {
                 std::bitset<N> result;
                 size_t result_index = 0; // Index for the new bitset
-                        
+            
                 // Extract bits from the range [start, end]
                 for (size_t i = start; i <= end; ++i) {
                   result[result_index] = bits[i];
                   result_index++;
                 }
-                        
+            
                 return result;
             }
-                        
+            
             template<std::size_t N, std::size_t M>
             std::bitset<N> set_bits(std::bitset<N> dest, const std::bitset<M> source, std::vector<int> bits) {
                 auto target = 0;
@@ -167,16 +167,16 @@ public class RelocationCodeGeneratorCppVerificationTest extends AbstractLcbTest 
                     dest.set(j, source[i]);
                     target++;
                 }
-                
+            
                 return dest;
             }
-                        
+            
             // Extraction Function
             %s
-                    
+            
             // Relocation Function
             %s
-                        
+            
             int main() {
               %s expected = %d;
               auto actual = %s(%s(%s, %s));
@@ -189,7 +189,8 @@ public class RelocationCodeGeneratorCppVerificationTest extends AbstractLcbTest 
               }
             }
             """,
-        extractionFunctionCodeGenerator.generateFunction(normalisedImmediateExtractionFunction).value(),
+        extractionFunctionCodeGenerator.generateFunction(normalisedImmediateExtractionFunction)
+            .value(),
         relocationOverrideFunctionCodeGenerator.generateFunction(
             relocation.logicalRelocation().updateFunction()).value(),
         CppTypeMap.getCppTypeNameByVadlType(normalisedImmediateExtractionFunction.returnType()),

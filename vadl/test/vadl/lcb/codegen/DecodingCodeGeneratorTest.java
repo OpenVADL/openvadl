@@ -6,7 +6,6 @@ import org.junit.jupiter.api.Test;
 import vadl.AbstractTest;
 import vadl.cppCodeGen.model.CppFunction;
 import vadl.types.Type;
-import vadl.viam.Function;
 import vadl.viam.Parameter;
 import vadl.viam.graph.Graph;
 import vadl.viam.graph.control.ReturnNode;
@@ -26,7 +25,7 @@ class DecodingCodeGeneratorTest extends AbstractTest {
         Type.signedInt(32), graph);
 
     // When
-    String code = new CodeGenerator().generateFunction(function).value();
+    String code = new LcbCodeGenerator().generateFunction(function).value();
 
     // Then
     assertEquals("int32_t functionNameValue(uint32_t parameterValue) {\n"

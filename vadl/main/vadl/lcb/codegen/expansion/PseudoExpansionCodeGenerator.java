@@ -7,9 +7,10 @@ import java.util.Map;
 import vadl.cppCodeGen.model.CppFunction;
 import vadl.cppCodeGen.model.VariantKind;
 import vadl.gcb.passes.pseudo.PseudoExpansionCodeGeneratorVisitor;
+import vadl.gcb.passes.pseudo.TemporaryCodeGeneratorVisitor;
 import vadl.gcb.passes.relocation.DetectImmediatePass;
 import vadl.gcb.passes.relocation.model.ElfRelocation;
-import vadl.lcb.codegen.CodeGenerator;
+import vadl.lcb.codegen.LcbCodeGenerator;
 import vadl.viam.Format;
 import vadl.viam.PseudoInstruction;
 import vadl.viam.ViamError;
@@ -18,7 +19,7 @@ import vadl.viam.graph.control.InstrCallNode;
 /**
  * Generates functions which expands {@link PseudoInstruction} in LLVM.
  */
-public class PseudoExpansionCodeGenerator extends CodeGenerator {
+public class PseudoExpansionCodeGenerator extends LcbCodeGenerator {
   private final String namespace;
   private final DetectImmediatePass.ImmediateDetectionContainer fieldUsages;
   private final Map<Format.Field, CppFunction> immediateDecodings;

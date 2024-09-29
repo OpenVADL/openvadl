@@ -4,7 +4,6 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
-import java.util.IdentityHashMap;
 import java.util.stream.Stream;
 import net.jqwik.api.Arbitraries;
 import net.jqwik.api.Arbitrary;
@@ -20,7 +19,7 @@ import vadl.cppCodeGen.model.CppFunction;
 import vadl.cppCodeGen.passes.typeNormalization.CppTypeNormalizationPass;
 import vadl.gcb.passes.type_normalization.CppTypeNormalizationForDecodingsPass;
 import vadl.gcb.passes.type_normalization.CppTypeNormalizationForEncodingsPass;
-import vadl.lcb.codegen.CodeGenerator;
+import vadl.lcb.codegen.LcbCodeGenerator;
 import vadl.pass.PassOrder;
 import vadl.pass.exception.DuplicatedPassKeyException;
 import vadl.types.BitsType;
@@ -92,8 +91,8 @@ public class EncodingCodeGeneratorCppVerificationTest extends AbstractCppCodeGen
                        int sample,
                        CppFunction accessFunction,
                        CppFunction encodingFunction) {
-    var decodeFunction = new CodeGenerator().generateFunction(accessFunction);
-    var encodeFunction = new CodeGenerator().generateFunction(encodingFunction);
+    var decodeFunction = new LcbCodeGenerator().generateFunction(accessFunction);
+    var encodeFunction = new LcbCodeGenerator().generateFunction(encodingFunction);
     String expectedReturnType =
         CppTypeMap.getCppTypeNameByVadlType(encodingFunction.returnType());
 
@@ -108,16 +107,16 @@ public class EncodingCodeGeneratorCppVerificationTest extends AbstractCppCodeGen
             {
                 std::bitset<N> result;
                 size_t result_index = 0; // Index for the new bitset
-                        
+            
                 // Extract bits from the range [start, end]
                 for (size_t i = start; i <= end; ++i) {
                   result[result_index] = bits[i];
                   result_index++;
                 }
-                        
+            
                 return result;
             }
-                        
+            
             template<std::size_t N, std::size_t M>
             std::bitset<N> set_bits(std::bitset<N> dest, const std::bitset<M> source, std::vector<int> bits) {
                 auto target = 0;
@@ -126,14 +125,14 @@ public class EncodingCodeGeneratorCppVerificationTest extends AbstractCppCodeGen
                     dest.set(j, source[i]);
                     target++;
                 }
-                
+            
                 return dest;
             }
-                        
+            
             %s 
-                        
+            
             %s
-                        
+            
             int main() {
               %s expected = %d;
               auto actual = %s(%s(expected));

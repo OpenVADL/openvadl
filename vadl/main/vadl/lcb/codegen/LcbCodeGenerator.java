@@ -8,7 +8,6 @@ import vadl.cppCodeGen.GenericCppCodeGeneratorVisitor;
 import vadl.cppCodeGen.model.CppClassImplName;
 import vadl.cppCodeGen.model.CppFunction;
 import vadl.cppCodeGen.model.CppFunctionCode;
-import vadl.cppCodeGen.model.CppType;
 import vadl.viam.Function;
 import vadl.viam.ViamError;
 import vadl.viam.graph.control.ReturnNode;
@@ -16,7 +15,7 @@ import vadl.viam.graph.control.ReturnNode;
 /**
  * Parent code generator to encapsulate generic functionality.
  */
-public class CodeGenerator {
+public class LcbCodeGenerator {
   /**
    * Returns the function header of a {@link Function}.
    * For example: int testFunction(int param1, int param2)
