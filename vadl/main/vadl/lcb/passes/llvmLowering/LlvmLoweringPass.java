@@ -8,6 +8,8 @@ import java.util.Map;
 import java.util.stream.Stream;
 import org.jetbrains.annotations.Nullable;
 import vadl.configuration.LcbConfiguration;
+import vadl.error.DeferredDiagnosticStore;
+import vadl.error.Diagnostic;
 import vadl.lcb.passes.isaMatching.InstructionLabel;
 import vadl.lcb.passes.isaMatching.IsaMatchingPass;
 import vadl.lcb.passes.llvmLowering.domain.LlvmLoweringRecord;
@@ -125,6 +127,10 @@ public class LlvmLoweringPass extends Pass {
 
           // TODO: No label, then we need to have a default.
           if (instructionLabel == null) {
+            DeferredDiagnosticStore.add(Diagnostic.warning(
+                "Instruction was not matched. Therefore, it will be skipped for the compiler"
+                    + " lowering (todo)",
+                instruction.sourceLocation()).build());
             return;
           }
 

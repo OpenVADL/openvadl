@@ -4,6 +4,8 @@ import com.google.common.collect.Streams;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Optional;
+import vadl.error.DeferredDiagnosticStore;
+import vadl.error.Diagnostic;
 import vadl.lcb.passes.llvmLowering.LlvmLoweringPass;
 import vadl.lcb.passes.llvmLowering.domain.LlvmLoweringRecord;
 import vadl.lcb.passes.llvmLowering.domain.RegisterRef;
@@ -62,10 +64,13 @@ public class LlvmPseudoLoweringImpl {
               }
              */
             if (argument instanceof ConstantNode) {
-              // TODO(kper): emit a warning when not replaced.
               instructionBehavior.getNodes(FieldRefNode.class)
                   .filter(x -> x.formatField() == formatField)
                   .forEach(occurrence -> occurrence.replaceAndDelete(argument.copy()));
+            } else {
+              DeferredDiagnosticStore.add(Diagnostic.warning(
+                  "Argument is not constant, therefore it is ignored.",
+                  argument.sourceLocation()).build());
             }
           });
 
