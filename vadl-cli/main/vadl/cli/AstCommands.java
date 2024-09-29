@@ -18,6 +18,8 @@ import vadl.ast.AstDumper;
 import vadl.ast.ModelRemover;
 import vadl.ast.Ungrouper;
 import vadl.ast.VadlParser;
+import vadl.error.DeferredDiagnosticStore;
+import vadl.error.Diagnostic;
 import vadl.error.DiagnosticList;
 import vadl.error.DiagnosticPrinter;
 
@@ -34,8 +36,14 @@ class AstCommands {
       // TODO Log to slf4j
       e.printStackTrace();
       return 1;
+    } catch (Diagnostic diagnostic) {
+      // TODO Log details to slf4j
+      new DiagnosticPrinter().print(DeferredDiagnosticStore.getAll());
+      new DiagnosticPrinter().print(diagnostic);
+      return 1;
     } catch (DiagnosticList diagnostics) {
       // TODO Log details to slf4j
+      new DiagnosticPrinter().print(DeferredDiagnosticStore.getAll());
       new DiagnosticPrinter().print(diagnostics);
       return 1;
     }
@@ -68,13 +76,24 @@ class AstCommands {
         if (main.printPassStatistics) {
           VadlParser.printPassTimings(ast);
         }
+
+        if (!DeferredDiagnosticStore.isEmpty()) {
+          new DiagnosticPrinter().print(DeferredDiagnosticStore.getAll());
+        }
+
         return 0;
       } catch (IOException e) {
         // TODO Log to slf4j
         e.printStackTrace();
         return 1;
+      } catch (Diagnostic diagnostic) {
+        // TODO Log details to slf4j
+        new DiagnosticPrinter().print(DeferredDiagnosticStore.getAll());
+        new DiagnosticPrinter().print(diagnostic);
+        return 1;
       } catch (DiagnosticList diagnostics) {
         // TODO Log details to slf4j
+        new DiagnosticPrinter().print(DeferredDiagnosticStore.getAll());
         new DiagnosticPrinter().print(diagnostics);
         return 1;
       }
@@ -108,13 +127,22 @@ class AstCommands {
         if (main.printPassStatistics) {
           VadlParser.printPassTimings(ast);
         }
+        if (!DeferredDiagnosticStore.isEmpty()) {
+          new DiagnosticPrinter().print(DeferredDiagnosticStore.getAll());
+        }
         return 0;
       } catch (IOException e) {
         // TODO Log to slf4j
         e.printStackTrace();
         return 1;
+      } catch (Diagnostic diagnostic) {
+        // TODO Log details to slf4j
+        new DiagnosticPrinter().print(DeferredDiagnosticStore.getAll());
+        new DiagnosticPrinter().print(diagnostic);
+        return 1;
       } catch (DiagnosticList diagnostics) {
         // TODO Log details to slf4j
+        new DiagnosticPrinter().print(DeferredDiagnosticStore.getAll());
         new DiagnosticPrinter().print(diagnostics);
         return 1;
       }

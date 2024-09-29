@@ -126,6 +126,10 @@ public record SourceLocation(
    * </p>
    */
   public String toIDEString() {
+    if (!this.isValid()) {
+      return "Source Location was lost";
+    }
+
     String printablePath;
 
     if (Objects.requireNonNullElse(System.getenv("TERMINAL_EMULATOR"), "")
