@@ -20,6 +20,7 @@ import vadl.lcb.passes.llvmLowering.LlvmMayLoadMemory;
 import vadl.lcb.passes.llvmLowering.LlvmMayStoreMemory;
 import vadl.lcb.passes.llvmLowering.LlvmSideEffectPatternIncluded;
 import vadl.lcb.passes.llvmLowering.domain.LlvmLoweringRecord;
+import vadl.lcb.passes.llvmLowering.domain.RegisterRef;
 import vadl.lcb.passes.llvmLowering.domain.selectionDag.LlvmBasicBlockSD;
 import vadl.lcb.passes.llvmLowering.domain.selectionDag.LlvmBrCcSD;
 import vadl.lcb.passes.llvmLowering.domain.selectionDag.LlvmBrCondSD;
@@ -95,23 +96,23 @@ public abstract class LlvmInstructionLoweringStrategy {
    * Flags indicate special properties of a machine instruction. This method checks the
    * machine instruction's behavior for those and returns them.
    *
-   * @return the flags of an {@link UninlinedGraph}.
+   * @return the flags of an {@link Graph}.
    */
-  protected LlvmLoweringPass.Flags getFlags(UninlinedGraph uninlinedGraph) {
-    var isTerminator = uninlinedGraph.getNodes(WriteRegNode.class)
+  public static LlvmLoweringPass.Flags getFlags(Graph graph) {
+    var isTerminator = graph.getNodes(WriteRegNode.class)
         .anyMatch(node -> node.staticCounterAccess() != null);
 
     var isBranch = isTerminator
-        && uninlinedGraph.getNodes(Set.of(IfNode.class, LlvmBrCcSD.class, LlvmBrCondSD.class))
+        && graph.getNodes(Set.of(IfNode.class, LlvmBrCcSD.class, LlvmBrCondSD.class))
         .findFirst().isPresent();
 
-    var isCall = false; //TODO
+    var isCall = false;
     var isReturn = false;
-    var isPseudo = false; // This strategy always handles Instructions.
+    var isPseudo = false; // This strategy always handles instructions.
     var isCodeGenOnly = false;
-    var mayLoad = uninlinedGraph.getNodes(LlvmMayLoadMemory.class).findFirst().isPresent();
+    var mayLoad = graph.getNodes(LlvmMayLoadMemory.class).findFirst().isPresent();
     var mayStore =
-        uninlinedGraph.getNodes(Set.of(WriteMemNode.class, LlvmMayStoreMemory.class)).findFirst()
+        graph.getNodes(Set.of(WriteMemNode.class, LlvmMayStoreMemory.class)).findFirst()
             .isPresent();
 
     return new LlvmLoweringPass.Flags(
@@ -192,20 +193,22 @@ public abstract class LlvmInstructionLoweringStrategy {
   }
 
   /**
-   * Get a list of {@link Register} which are written.
+   * Get a list of {@link RegisterRef} which are written.
    */
-  protected List<Register> getRegisterDefs(Graph behavior) {
+  public static List<RegisterRef> getRegisterDefs(Graph behavior) {
     return behavior.getNodes(WriteRegNode.class)
         .map(WriteRegNode::register)
+        .map(RegisterRef::new)
         .toList();
   }
 
   /**
-   * Get a list of {@link Register} which are read.
+   * Get a list of {@link RegisterRef} which are read.
    */
-  protected List<Register> getRegisterUses(Graph behavior) {
+  public static List<RegisterRef> getRegisterUses(Graph behavior) {
     return behavior.getNodes(ReadRegNode.class)
         .map(ReadRegNode::register)
+        .map(RegisterRef::new)
         .toList();
   }
 
@@ -254,9 +257,16 @@ public abstract class LlvmInstructionLoweringStrategy {
   /**
    * Extract the output parameters of {@link Graph}.
    */
-  protected List<TableGenInstructionOperand> getTableGenOutputOperands(Graph graph) {
+  public static List<TableGenInstructionOperand> getTableGenOutputOperands(Graph graph) {
     return getOutputOperands(graph)
-        .stream().map(operand -> {
+        .stream()
+        .filter(operand -> {
+          // Why?
+          // Because LLVM cannot handle static registers in input or output operands.
+          // They belong to defs and uses instead.
+          return !operand.hasConstantAddress();
+        })
+        .map(operand -> {
           var address = (FieldRefNode) operand.address();
 
           if (address == null || address.formatField() == null) {
@@ -274,10 +284,18 @@ public abstract class LlvmInstructionLoweringStrategy {
   /**
    * Extracts the input operands from the {@link Graph}.
    */
-  protected List<TableGenInstructionOperand> getTableGenInputOperands(Graph graph) {
+  public static List<TableGenInstructionOperand> getTableGenInputOperands(Graph graph) {
     return getInputOperands(graph)
         .stream()
-        .map(LlvmInstructionLoweringStrategy::generateTableGenInputOutput)
+        .filter(node -> {
+          // Why?
+          // Because LLVM cannot handle static registers in input or output operands.
+          // They belong to defs and uses instead.
+          if (node instanceof ReadRegFileNode readRegFileNode) {
+            return !readRegFileNode.hasConstantAddress();
+          }
+          return true;
+        }).map(LlvmInstructionLoweringStrategy::generateTableGenInputOutput)
         .toList();
   }
 

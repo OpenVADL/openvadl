@@ -8,6 +8,7 @@ import java.util.List;
 import java.util.Optional;
 import java.util.stream.Stream;
 import vadl.lcb.passes.llvmLowering.LlvmLoweringPass;
+import vadl.lcb.passes.llvmLowering.domain.RegisterRef;
 import vadl.viam.Instruction;
 import vadl.viam.Register;
 
@@ -20,8 +21,8 @@ public class TableGenInstruction {
   private final List<TableGenPattern> anonymousPatterns;
   private final List<TableGenInstructionOperand> inOperands;
   private final List<TableGenInstructionOperand> outOperands;
-  private final List<Register> uses;
-  private final List<Register> defs;
+  private final List<RegisterRef> uses;
+  private final List<RegisterRef> defs;
   private final int formatSize;
   private final int size;
   private final int codeSize;
@@ -35,8 +36,8 @@ public class TableGenInstruction {
                              LlvmLoweringPass.Flags flags,
                              List<TableGenInstructionOperand> inOperands,
                              List<TableGenInstructionOperand> outOperands,
-                             List<Register> uses,
-                             List<Register> defs) {
+                             List<RegisterRef> uses,
+                             List<RegisterRef> defs) {
     this(name, namespace, instruction, flags, inOperands, outOperands, uses, defs,
         Collections.emptyList());
   }
@@ -50,8 +51,8 @@ public class TableGenInstruction {
                              LlvmLoweringPass.Flags flags,
                              List<TableGenInstructionOperand> inOperands,
                              List<TableGenInstructionOperand> outOperands,
-                             List<Register> uses,
-                             List<Register> defs,
+                             List<RegisterRef> uses,
+                             List<RegisterRef> defs,
                              List<TableGenPattern> anonymousPatterns) {
     this.name = name;
     this.namespace = namespace;
@@ -76,11 +77,11 @@ public class TableGenInstruction {
     return anonymousPatterns;
   }
 
-  public List<Register> getUses() {
+  public List<RegisterRef> getUses() {
     return uses;
   }
 
-  public List<Register> getDefs() {
+  public List<RegisterRef> getDefs() {
     return defs;
   }
 

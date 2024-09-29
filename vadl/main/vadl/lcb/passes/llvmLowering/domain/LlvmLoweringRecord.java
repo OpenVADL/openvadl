@@ -17,13 +17,13 @@ public class LlvmLoweringRecord {
   private final List<TableGenInstructionOperand> outputs;
   private final LlvmLoweringPass.Flags flags;
   private final List<TableGenPattern> patterns;
-  private final List<Register> uses;
-  private final List<Register> def;
+  private final List<RegisterRef> uses;
+  private final List<RegisterRef> def;
 
   public LlvmLoweringRecord(Graph behavior, List<TableGenInstructionOperand> inputs,
                             List<TableGenInstructionOperand> outputs, LlvmLoweringPass.Flags flags,
-                            List<TableGenPattern> patterns, List<Register> uses,
-                            List<Register> def) {
+                            List<TableGenPattern> patterns, List<RegisterRef> uses,
+                            List<RegisterRef> def) {
     this.behavior = behavior;
     this.inputs = inputs;
     this.outputs = outputs;
@@ -53,11 +53,11 @@ public class LlvmLoweringRecord {
     return patterns;
   }
 
-  public List<Register> uses() {
+  public List<RegisterRef> uses() {
     return uses;
   }
 
-  public List<Register> defs() {
+  public List<RegisterRef> defs() {
     return def;
   }
 }

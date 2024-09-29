@@ -74,4 +74,16 @@ public abstract class ReadResourceNode extends ExpressionNode {
     super.applyOnInputsUnsafe(visitor);
     address = visitor.applyNullable(this, address, ExpressionNode.class);
   }
+
+  /**
+   * Checks whether the {@code address} of the node is constant and therefore statically knonw.
+   */
+  public boolean hasConstantAddress() {
+    if (hasAddress()) {
+      ensureNonNull(address, "address must not be null");
+      return address.isConstant();
+    }
+
+    return false;
+  }
 }
