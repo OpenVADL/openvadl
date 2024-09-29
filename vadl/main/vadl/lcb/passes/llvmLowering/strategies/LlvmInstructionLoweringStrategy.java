@@ -52,12 +52,14 @@ import vadl.viam.graph.control.AbstractBeginNode;
 import vadl.viam.graph.control.AbstractEndNode;
 import vadl.viam.graph.control.ControlNode;
 import vadl.viam.graph.control.IfNode;
+import vadl.viam.graph.dependency.ConstantNode;
 import vadl.viam.graph.dependency.DependencyNode;
 import vadl.viam.graph.dependency.FieldAccessRefNode;
 import vadl.viam.graph.dependency.FieldRefNode;
 import vadl.viam.graph.dependency.FuncParamNode;
 import vadl.viam.graph.dependency.ReadRegFileNode;
 import vadl.viam.graph.dependency.ReadRegNode;
+import vadl.viam.graph.dependency.ReadResourceNode;
 import vadl.viam.graph.dependency.WriteMemNode;
 import vadl.viam.graph.dependency.WriteRegFileNode;
 import vadl.viam.graph.dependency.WriteRegNode;
@@ -193,22 +195,36 @@ public abstract class LlvmInstructionLoweringStrategy {
   }
 
   /**
-   * Get a list of {@link RegisterRef} which are written.
+   * Get a list of {@link RegisterRef} which are written. It is considered a
+   * register definition when a {@link WriteRegNode} or a {@link WriteRegFileNode} with a
+   * constant address exists.
    */
   public static List<RegisterRef> getRegisterDefs(Graph behavior) {
-    return behavior.getNodes(WriteRegNode.class)
-        .map(WriteRegNode::register)
-        .map(RegisterRef::new)
+    return Stream.concat(behavior.getNodes(WriteRegNode.class)
+                .map(WriteRegNode::register)
+                .map(RegisterRef::new),
+            behavior.getNodes(WriteRegFileNode.class)
+                .filter(WriteRegFileNode::hasConstantAddress)
+                .map(x -> new RegisterRef(x.registerFile(),
+                    ((ConstantNode) x.address()).constant()))
+        )
         .toList();
   }
 
   /**
-   * Get a list of {@link RegisterRef} which are read.
+   * Get a list of {@link RegisterRef} which are read. It is considered a
+   * register usage when a {@link ReadRegNode} or a {@link ReadRegFileNode} with a
+   * constant address exists.
    */
   public static List<RegisterRef> getRegisterUses(Graph behavior) {
-    return behavior.getNodes(ReadRegNode.class)
-        .map(ReadRegNode::register)
-        .map(RegisterRef::new)
+    return Stream.concat(behavior.getNodes(ReadRegNode.class)
+                .map(ReadRegNode::register)
+                .map(RegisterRef::new),
+            behavior.getNodes(ReadRegFileNode.class)
+                .filter(ReadResourceNode::hasConstantAddress)
+                .map(x -> new RegisterRef(x.registerFile(),
+                    ((ConstantNode) x.address()).constant()))
+        )
         .toList();
   }
 
