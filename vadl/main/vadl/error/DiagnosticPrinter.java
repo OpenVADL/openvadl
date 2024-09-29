@@ -24,10 +24,19 @@ public class DiagnosticPrinter {
    *
    * @param diagnosticList to print.
    */
-  public void print(DiagnosticList diagnosticList) {
-    for (var item : diagnosticList.items) {
+  public void print(List<Diagnostic> diagnosticList) {
+    for (var item : diagnosticList) {
       print(item);
     }
+  }
+
+  /**
+   * Prints a list of diagnostics to stdout.
+   *
+   * @param diagnosticList to print.
+   */
+  public void print(DiagnosticList diagnosticList) {
+    print(diagnosticList.items);
   }
 
   /**
@@ -105,7 +114,7 @@ public class DiagnosticPrinter {
     List<String> lines;
     try {
       lines = getFileLines(location.location().uri());
-    } catch (IOException e) {
+    } catch (IOException | IllegalArgumentException e) {
       System.out.printf("    │ %sNo Preview available: Could not find the file '%s'\n", Ansi.Reset,
           location.location().uri());
       return;
