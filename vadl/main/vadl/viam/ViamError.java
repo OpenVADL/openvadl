@@ -4,6 +4,8 @@ import com.google.errorprone.annotations.FormatMethod;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import java.util.Optional;
+import java.util.function.Supplier;
 import java.util.stream.Collectors;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.Nullable;
@@ -132,4 +134,67 @@ public class ViamError extends RuntimeException {
     }
   }
 
+  /**
+   * Ensures that the given object is present. If the object is null, an exception is thrown
+   * with the specified message.
+   *
+   * <p>The thrown exception has context information about the node and graph.</p>
+   *
+   * @param obj the object to check for null
+   * @param msg the message to include in the exception if the object is null
+   */
+  @Contract("null, _  -> fail")
+  @FormatMethod
+  public static <T> T ensurePresent(@Nullable Optional<T> obj, String msg) {
+    ensureNonNull(obj, "Optional must not be null");
+    ensure(obj.isPresent(), msg);
+    return obj.get();
+  }
+
+  /**
+   * Ensures that the given object is not null. If the object is null, an exception is thrown
+   * with the specified message.
+   *
+   * <p>The thrown exception has context information about the node and graph.</p>
+   *
+   * @param obj the object to check for null
+   * @param msg the message to include in the exception if the object is null
+   */
+  @Contract("null, _  -> fail")
+  @FormatMethod
+  public static <T> T ensureNonNull(@Nullable T obj, String msg) {
+    ensure(obj != null, msg);
+    return obj;
+  }
+
+  /**
+   * Ensures that a given object is not null.
+   * with the provided format string and arguments.
+   *
+   * <p>The thrown exception has context information about the node and graph.</p>
+   *
+   * @param obj          the object to check
+   * @param diagnosticSupplier is the function which provides the {@link Diagnostic}.
+   * @throws Diagnostic if the condition is false
+   */
+  public static <T> T ensureNonNull(@Nullable T obj, Supplier<Diagnostic> diagnosticSupplier) {
+    ensure(obj != null, diagnosticSupplier);
+    return obj;
+  }
+
+  /**
+   * Ensures that a given condition is true. If the condition is false, an exception is thrown
+   * with the provided format string and arguments.
+   *
+   * <p>The thrown exception has context information about the node and graph.</p>
+   *
+   * @param condition          the condition to check
+   * @param diagnosticSupplier is the function which provides the {@link Diagnostic}.
+   * @throws Diagnostic if the condition is false
+   */
+  public static void ensure(boolean condition, Supplier<Diagnostic> diagnosticSupplier) {
+    if (!condition) {
+      throw diagnosticSupplier.get();
+    }
+  }
 }

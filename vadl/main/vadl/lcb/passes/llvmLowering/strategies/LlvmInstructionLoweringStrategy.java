@@ -1,6 +1,7 @@
 package vadl.lcb.passes.llvmLowering.strategies;
 
 import static vadl.viam.ViamError.ensure;
+import static vadl.viam.ViamError.ensureNonNull;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -14,6 +15,7 @@ import java.util.stream.Stream;
 import org.jetbrains.annotations.NotNull;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import vadl.error.DeferredDiagnosticStore;
 import vadl.error.Diagnostic;
 import vadl.lcb.passes.isaMatching.InstructionLabel;
 import vadl.lcb.passes.llvmLowering.LlvmLoweringPass;
@@ -144,8 +146,9 @@ public abstract class LlvmInstructionLoweringStrategy {
     var instructionIdentifier = instruction.identifier;
 
     if (!checkIfNoControlFlow(copy) && !checkIfNotAllowedDataflowNodes(copy)) {
-      logger.atWarn().log("Instruction '{}' is not lowerable and will be skipped",
-          instructionIdentifier.toString());
+      DeferredDiagnosticStore.add(
+          Diagnostic.warning("Instruction is not lowerable and will be skipped",
+              instruction.sourceLocation()).build());
       return Optional.empty();
     }
 
@@ -154,8 +157,9 @@ public abstract class LlvmInstructionLoweringStrategy {
       visitor.visit(endNode);
 
       if (!((TableGenPatternLowerable) visitor).isPatternLowerable()) {
-        logger.atWarn().log("Instruction '{}' is not lowerable and will be skipped",
-            instructionIdentifier.toString());
+        DeferredDiagnosticStore.add(
+            Diagnostic.warning("Instruction is not lowerable and will be skipped",
+                instruction.sourceLocation()).build());
         return Optional.empty();
       }
     }
@@ -191,7 +195,9 @@ public abstract class LlvmInstructionLoweringStrategy {
       ));
     }
 
-    logger.atWarn().log("Instruction '{}' is not lowerable", instructionIdentifier.toString());
+    DeferredDiagnosticStore.add(
+        Diagnostic.warning("Instruction is not lowerable and will be skipped",
+            instruction.sourceLocation()).build());
     return Optional.empty();
   }
 
@@ -286,9 +292,13 @@ public abstract class LlvmInstructionLoweringStrategy {
         .map(operand -> {
           var address = (FieldRefNode) operand.address();
 
-          if (address == null || address.formatField() == null) {
-            throw new ViamError("address must not be null");
-          }
+          ensureNonNull(address,
+              () ->
+                  Diagnostic.error("address must no be null", operand.sourceLocation()).build());
+          ensureNonNull(address.formatField(),
+              () ->
+                  Diagnostic.error("formatField must no be null", address.sourceLocation())
+                      .build());
 
           return (TableGenInstructionOperand) new TableGenInstructionRegisterFileOperand(
               ParameterIdentity.from(operand, address),
@@ -331,7 +341,8 @@ public abstract class LlvmInstructionLoweringStrategy {
     } else if (operand instanceof LlvmBasicBlockSD node) {
       return generateInstructionOperand(node);
     } else {
-      throw new ViamError("Input operand not supported yet: " + operand);
+      throw Diagnostic.error("Cannot construct a tablegen instruction operand from the type",
+          operand.sourceLocation()).build();
     }
   }
 

@@ -2,6 +2,7 @@ package vadl.lcb.clang.lib.Basic.Targets;
 
 import static vadl.lcb.template.utils.DataLayoutProvider.createDataLayout;
 import static vadl.lcb.template.utils.DataLayoutProvider.createDataLayoutString;
+import static vadl.viam.ViamError.ensurePresent;
 
 import java.io.IOException;
 import java.util.Map;
