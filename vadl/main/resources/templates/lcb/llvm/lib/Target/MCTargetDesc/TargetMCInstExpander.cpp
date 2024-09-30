@@ -21,18 +21,16 @@ bool [(${namespace})]MCInstExpander::needsExpansion(const MCInst &MCI) const
     switch (opcode)
     {
     // instructions
-    /*
     [# th:each="instruction : ${pseudoInstructions}" ]
     case [(${namespace})]::[(${instruction.pseudoInstruction.identifier.simpleName})]:
     [/]
-        {
-            return true;
-        }
-        */
-        default:
-        {
-            return false;
-        }
+    {
+        return true;
+    }
+    default:
+    {
+        return false;
+    }
     }
     return false; // unreachable
 }
@@ -42,19 +40,17 @@ bool [(${namespace})]MCInstExpander::isExpandable(const MCInst &MCI) const
     auto opcode = MCI.getOpcode();
     switch (opcode)
     {
-    /*
     // instructions
     [# th:each="instruction : ${pseudoInstructions}" ]
         case [(${namespace})]::[(${instruction.pseudoInstruction.identifier.simpleName})]:
     [/]
-        {
-            return true;
-        }
-        */
-        default:
-        {
-            return false;
-        }
+    {
+        return true;
+    }
+    default:
+    {
+        return false;
+    }
     }
     return false; // unreachable
 }
@@ -68,7 +64,6 @@ bool [(${namespace})]MCInstExpander::expand(const MCInst &MCI, std::vector<MCIns
         // instructions
         //
 
-    /*
     [# th:each="instruction : ${pseudoInstructions}" ]
       case [(${namespace})]::[(${instruction.pseudoInstruction.identifier.simpleName})]:
       {
@@ -76,7 +71,6 @@ bool [(${namespace})]MCInstExpander::expand(const MCInst &MCI, std::vector<MCIns
         return true;
       }
     [/]
-    */
       default:
         {
             return false;
