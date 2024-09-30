@@ -15,7 +15,7 @@ import vadl.lcb.passes.isaMatching.IsaMatchingPass;
 import vadl.lcb.passes.llvmLowering.LlvmLoweringPass;
 import vadl.lcb.passes.llvmLowering.domain.LlvmLoweringRecord;
 import vadl.lcb.passes.llvmLowering.tablegen.model.TableGenInstructionOperand;
-import vadl.lcb.passes.llvmLowering.tablegen.model.TableGenSelectionMachinePattern;
+import vadl.lcb.passes.llvmLowering.tablegen.model.TableGenSelectionWithOutputPattern;
 import vadl.lcb.passes.llvmLowering.tablegen.model.TableGenSelectionPattern;
 import vadl.viam.Instruction;
 
@@ -104,11 +104,11 @@ public class LcbEnricherCollection {
 
           if (result != null) {
             for (var pattern : result.patterns()) {
-              if (pattern instanceof TableGenSelectionMachinePattern
-                  tableGenSelectionMachinePattern) {
+              if (pattern instanceof TableGenSelectionWithOutputPattern
+                  tableGenSelectionWithOutputPattern) {
                 var mergedGraph = pattern.selector().copy();
                 // TODO add function which merges two graphs
-                var machineCopy = tableGenSelectionMachinePattern.machine().copy();
+                var machineCopy = tableGenSelectionWithOutputPattern.machine().copy();
                 machineCopy.deinitializeNodes();
                 for (var node : machineCopy.getNodes().toList()) {
                   mergedGraph.addWithInputs(node);

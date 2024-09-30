@@ -6,12 +6,16 @@ import vadl.lcb.passes.llvmLowering.strategies.visitors.TableGenMachineInstructi
 import vadl.lcb.passes.llvmLowering.tablegen.model.TableGenInstructionOperand;
 import vadl.lcb.passes.llvmLowering.tablegen.model.TableGenPattern;
 import vadl.types.Type;
+import vadl.viam.Instruction;
+import vadl.viam.PseudoInstruction;
 import vadl.viam.graph.GraphNodeVisitor;
 import vadl.viam.graph.Node;
 import vadl.viam.graph.dependency.ExpressionNode;
 
 /**
  * Nodes in the machine graph for {@link TableGenPattern}.
+ * Note that {@link PseudoInstruction} can also mimic an {@link Instruction}. Even
+ * when they are not a machine instruction.
  */
 public class MachineInstructionParameterNode extends ExpressionNode {
   @DataValue

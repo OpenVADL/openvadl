@@ -51,6 +51,9 @@ public class LlvmLoweringPass extends Pass {
       new LlvmInstructionLoweringMemoryLoadStrategyImpl()
   );
 
+  private final LlvmPseudoLoweringImpl pseudoLowering =
+      new LlvmPseudoLoweringImpl(strategies);
+
   public LlvmLoweringPass(LcbConfiguration configuration) {
     super(configuration);
   }
@@ -92,9 +95,14 @@ public class LlvmLoweringPass extends Pass {
   @Override
   public Object execute(PassResults passResults, Specification viam)
       throws IOException {
-
-    var machineRecords = generateRecordsForMachineInstructions(passResults, viam);
-    var pseudoRecords = generateRecordsForPseudoInstructions(viam);
+    var supportedInstructions = ensureNonNull(
+        (HashMap<InstructionLabel, List<Instruction>>) passResults.lastResultOf(
+            IsaMatchingPass.class),
+        () -> Diagnostic.error("Cannot find semantics of the instructions", viam.sourceLocation())
+            .build());
+    var machineRecords =
+        generateRecordsForMachineInstructions(passResults, viam, supportedInstructions);
+    var pseudoRecords = generateRecordsForPseudoInstructions(viam, supportedInstructions);
 
     return new LlvmLoweringPassResult(machineRecords, pseudoRecords);
   }
@@ -103,18 +111,14 @@ public class LlvmLoweringPass extends Pass {
   private IdentityHashMap<Instruction, LlvmLoweringRecord>
   generateRecordsForMachineInstructions(
       PassResults passResults,
-      Specification viam
-  ) {
+      Specification viam,
+      HashMap<InstructionLabel, List<Instruction>> supportedInstructions) {
     var tableGenRecords = new IdentityHashMap<Instruction, LlvmLoweringRecord>();
 
     // Get the supported instructions from the matching.
     // We only instructions which we know about in this pass.
     // TODO: define a strategy as fallback when there is no matching.
-    var supportedInstructions = ensureNonNull(
-        (HashMap<InstructionLabel, List<Instruction>>) passResults.lastResultOf(
-            IsaMatchingPass.class),
-        () -> Diagnostic.error("Cannot find semantics of the instructions", viam.sourceLocation())
-            .build());
+
     var uninlined = ensureNonNull(
         (IdentityHashMap<Instruction, Graph>) passResults.lastResultOf(FunctionInlinerPass.class),
         () -> Diagnostic.error("Cannot find uninlined behaviors of the instructions",
@@ -161,13 +165,14 @@ public class LlvmLoweringPass extends Pass {
   }
 
   private IdentityHashMap<PseudoInstruction, LlvmLoweringRecord> generateRecordsForPseudoInstructions(
-      Specification viam) {
+      Specification viam,
+      HashMap<InstructionLabel, List<Instruction>> supportedInstructions) {
     var tableGenRecords = new IdentityHashMap<PseudoInstruction, LlvmLoweringRecord>();
 
     viam.isa().map(isa -> isa.ownPseudoInstructions().stream())
         .orElseGet(Stream::empty)
         .forEach(pseudo -> {
-          var record = new LlvmPseudoLoweringImpl().lower(pseudo);
+          var record = pseudoLowering.lower(pseudo, supportedInstructions);
 
           // Okay, we have to save record.
           record.ifPresent(llvmLoweringIntermediateResult -> tableGenRecords.put(pseudo,

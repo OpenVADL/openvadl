@@ -12,7 +12,7 @@ import vadl.lcb.passes.llvmLowering.tablegen.model.TableGenInstructionOperand;
 import vadl.lcb.passes.llvmLowering.tablegen.model.TableGenMachineInstruction;
 import vadl.lcb.passes.llvmLowering.tablegen.model.TableGenPattern;
 import vadl.lcb.passes.llvmLowering.tablegen.model.TableGenPseudoInstruction;
-import vadl.lcb.passes.llvmLowering.tablegen.model.TableGenSelectionMachinePattern;
+import vadl.lcb.passes.llvmLowering.tablegen.model.TableGenSelectionWithOutputPattern;
 import vadl.lcb.passes.llvmLowering.tablegen.model.TableGenSelectionPattern;
 import vadl.viam.Definition;
 import vadl.viam.Instruction;
@@ -102,8 +102,8 @@ public final class TableGenInstructionRenderer {
         instruction.getDefs().stream().map(Definition::name).collect(Collectors.joining(",")),
         instruction.getAnonymousPatterns().stream()
             .filter(TableGenPattern::isPatternLowerable)
-            .filter(x -> x instanceof TableGenSelectionMachinePattern)
-            .map(x -> (TableGenSelectionMachinePattern) x)
+            .filter(x -> x instanceof TableGenSelectionWithOutputPattern)
+            .map(x -> (TableGenSelectionWithOutputPattern) x)
             .map(TableGenInstructionRenderer::lower)
             .collect(Collectors.joining("\n"))
     );
@@ -165,8 +165,8 @@ public final class TableGenInstructionRenderer {
         instruction.getDefs().stream().map(RegisterRef::lowerName).collect(Collectors.joining(",")),
         instruction.getAnonymousPatterns().stream()
             .filter(TableGenPattern::isPatternLowerable)
-            .filter(x -> x instanceof TableGenSelectionMachinePattern)
-            .map(x -> (TableGenSelectionMachinePattern) x)
+            .filter(x -> x instanceof TableGenSelectionWithOutputPattern)
+            .map(x -> (TableGenSelectionWithOutputPattern) x)
             .map(TableGenInstructionRenderer::lower)
             .collect(Collectors.joining("\n"))
     );
@@ -183,7 +183,7 @@ public final class TableGenInstructionRenderer {
     return "(" + visitor.getResult() + ")";
   }
 
-  private static String lower(TableGenSelectionMachinePattern tableGenPattern) {
+  private static String lower(TableGenSelectionWithOutputPattern tableGenPattern) {
     ensure(tableGenPattern.isPatternLowerable(), "TableGen pattern must be lowerable");
     var visitor = new TableGenPatternPrinterVisitor();
     var machineVisitor = new TableGenMachineInstructionPrinterVisitor();

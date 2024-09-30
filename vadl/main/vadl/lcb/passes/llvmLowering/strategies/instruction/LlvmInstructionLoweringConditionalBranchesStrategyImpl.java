@@ -28,7 +28,7 @@ import vadl.lcb.passes.llvmLowering.tablegen.model.ParameterIdentity;
 import vadl.lcb.passes.llvmLowering.tablegen.model.TableGenInstructionImmediateLabelOperand;
 import vadl.lcb.passes.llvmLowering.tablegen.model.TableGenInstructionOperand;
 import vadl.lcb.passes.llvmLowering.tablegen.model.TableGenPattern;
-import vadl.lcb.passes.llvmLowering.tablegen.model.TableGenSelectionMachinePattern;
+import vadl.lcb.passes.llvmLowering.tablegen.model.TableGenSelectionWithOutputPattern;
 import vadl.lcb.visitors.LcbGraphNodeVisitor;
 import vadl.viam.Instruction;
 import vadl.viam.graph.NodeList;
@@ -111,9 +111,9 @@ public class LlvmInstructionLoweringConditionalBranchesStrategyImpl
   private TableGenPattern replaceBasicBlockByLabelImmediateInMachineInstruction(
       TableGenPattern pattern) {
 
-    if (pattern instanceof TableGenSelectionMachinePattern) {
+    if (pattern instanceof TableGenSelectionWithOutputPattern) {
       // We know that the `selector` already has LlvmBasicBlock nodes.
-      var candidates = ((TableGenSelectionMachinePattern) pattern).machine().getNodes(
+      var candidates = ((TableGenSelectionWithOutputPattern) pattern).machine().getNodes(
           MachineInstructionParameterNode.class).toList();
       for (var candidate : candidates) {
         if (candidate.instructionOperand().origin() instanceof LlvmBasicBlockSD basicBlockSD) {
@@ -149,8 +149,8 @@ public class LlvmInstructionLoweringConditionalBranchesStrategyImpl
      */
 
     for (var pattern : patterns.stream()
-        .filter(x -> x instanceof TableGenSelectionMachinePattern)
-        .map(x -> (TableGenSelectionMachinePattern) x).toList()) {
+        .filter(x -> x instanceof TableGenSelectionWithOutputPattern)
+        .map(x -> (TableGenSelectionWithOutputPattern) x).toList()) {
       var selector = pattern.selector().copy();
       var machine = pattern.machine().copy();
 
@@ -173,7 +173,7 @@ public class LlvmInstructionLoweringConditionalBranchesStrategyImpl
 
       // If nothing had changed, then it makes no sense to add it.
       if (hasChanged) {
-        alternatives.add(new TableGenSelectionMachinePattern(selector, machine));
+        alternatives.add(new TableGenSelectionWithOutputPattern(selector, machine));
       }
     }
 

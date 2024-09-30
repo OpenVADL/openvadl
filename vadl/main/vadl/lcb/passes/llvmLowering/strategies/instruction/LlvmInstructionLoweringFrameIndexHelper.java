@@ -11,7 +11,7 @@ import vadl.lcb.passes.llvmLowering.tablegen.model.ParameterIdentity;
 import vadl.lcb.passes.llvmLowering.tablegen.model.TableGenInstructionFrameRegisterOperand;
 import vadl.lcb.passes.llvmLowering.tablegen.model.TableGenInstructionOperand;
 import vadl.lcb.passes.llvmLowering.tablegen.model.TableGenPattern;
-import vadl.lcb.passes.llvmLowering.tablegen.model.TableGenSelectionMachinePattern;
+import vadl.lcb.passes.llvmLowering.tablegen.model.TableGenSelectionWithOutputPattern;
 import vadl.viam.graph.Graph;
 import vadl.viam.graph.Node;
 
@@ -50,6 +50,6 @@ public abstract class LlvmInstructionLoweringFrameIndexHelper
         selectorTransformation,
         machineInstructionTransformation);
 
-    return new TableGenSelectionMachinePattern(selector, machine);
+    return new TableGenSelectionWithOutputPattern(selector, machine);
   }
 }

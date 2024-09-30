@@ -43,11 +43,10 @@ import vadl.lcb.passes.llvmLowering.tablegen.model.TableGenInstructionIndexedReg
 import vadl.lcb.passes.llvmLowering.tablegen.model.TableGenInstructionOperand;
 import vadl.lcb.passes.llvmLowering.tablegen.model.TableGenInstructionRegisterFileOperand;
 import vadl.lcb.passes.llvmLowering.tablegen.model.TableGenPattern;
-import vadl.lcb.passes.llvmLowering.tablegen.model.TableGenSelectionMachinePattern;
+import vadl.lcb.passes.llvmLowering.tablegen.model.TableGenSelectionWithOutputPattern;
 import vadl.lcb.visitors.LcbGraphNodeVisitor;
 import vadl.viam.Instruction;
 import vadl.viam.InstructionSetArchitecture;
-import vadl.viam.ViamError;
 import vadl.viam.graph.Graph;
 import vadl.viam.graph.Node;
 import vadl.viam.graph.NodeList;
@@ -143,7 +142,6 @@ public abstract class LlvmInstructionLoweringStrategy {
       UninlinedGraph uninlinedBehavior) {
     var visitor = getVisitorForPatternSelectorLowering();
     var copy = (UninlinedGraph) uninlinedBehavior.copy();
-    var instructionIdentifier = instruction.identifier;
 
     if (!checkIfNoControlFlow(copy) && !checkIfNotAllowedDataflowNodes(copy)) {
       DeferredDiagnosticStore.add(
@@ -438,9 +436,9 @@ public abstract class LlvmInstructionLoweringStrategy {
 
     sideEffectNodes.forEach(sideEffectNode -> {
       var patternSelector = getPatternSelector(sideEffectNode);
-      var machineInstruction = getMachinePattern(instruction, inputOperands);
+      var machineInstruction = getOutputPattern(instruction, inputOperands);
       patterns.add(
-          new TableGenSelectionMachinePattern(patternSelector, machineInstruction));
+          new TableGenSelectionWithOutputPattern(patternSelector, machineInstruction));
     });
 
     return patterns;
@@ -454,16 +452,16 @@ public abstract class LlvmInstructionLoweringStrategy {
     var graph = new Graph(sideEffectNode.id().toString() + ".selector.lowering");
     graph.setParentDefinition(Objects.requireNonNull(sideEffectNode.graph()).parentDefinition());
 
-    Node root = sideEffectNode instanceof LlvmSideEffectPatternIncluded ? sideEffectNode :
-        sideEffectNode.value();
+    Node root = sideEffectNode instanceof LlvmSideEffectPatternIncluded ? sideEffectNode.copy() :
+        sideEffectNode.value().copy();
     root.clearUsages();
     graph.addWithInputs(root);
     return graph;
   }
 
   @NotNull
-  private static Graph getMachinePattern(Instruction instruction,
-                                         List<TableGenInstructionOperand> inputOperands) {
+  private static Graph getOutputPattern(Instruction instruction,
+                                        List<TableGenInstructionOperand> inputOperands) {
     var graph = new Graph(instruction.name() + ".machine.lowering");
     graph.setParentDefinition(Objects.requireNonNull(instruction));
 

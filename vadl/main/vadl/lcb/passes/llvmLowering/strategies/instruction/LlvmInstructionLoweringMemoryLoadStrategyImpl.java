@@ -14,7 +14,7 @@ import vadl.lcb.passes.llvmLowering.domain.selectionDag.LlvmSExtLoad;
 import vadl.lcb.passes.llvmLowering.domain.selectionDag.LlvmZExtLoad;
 import vadl.lcb.passes.llvmLowering.tablegen.model.TableGenInstructionOperand;
 import vadl.lcb.passes.llvmLowering.tablegen.model.TableGenPattern;
-import vadl.lcb.passes.llvmLowering.tablegen.model.TableGenSelectionMachinePattern;
+import vadl.lcb.passes.llvmLowering.tablegen.model.TableGenSelectionWithOutputPattern;
 import vadl.viam.Instruction;
 import vadl.viam.Memory;
 import vadl.viam.Register;
@@ -58,8 +58,8 @@ public class LlvmInstructionLoweringMemoryLoadStrategyImpl
     var alternativePatterns = new ArrayList<TableGenPattern>();
 
     for (var pattern : patterns.stream()
-        .filter(x -> x instanceof TableGenSelectionMachinePattern)
-        .map(x -> (TableGenSelectionMachinePattern) x)
+        .filter(x -> x instanceof TableGenSelectionWithOutputPattern)
+        .map(x -> (TableGenSelectionWithOutputPattern) x)
         .toList()) {
       var selector = pattern.selector().copy();
       var machine = pattern.machine().copy();

@@ -15,12 +15,11 @@ import vadl.lcb.passes.llvmLowering.tablegen.lowering.TableGenPatternPrinterVisi
 import vadl.lcb.passes.llvmLowering.tablegen.model.ParameterIdentity;
 import vadl.lcb.passes.llvmLowering.tablegen.model.TableGenInstructionOperand;
 import vadl.lcb.passes.llvmLowering.tablegen.model.TableGenPattern;
-import vadl.lcb.passes.llvmLowering.tablegen.model.TableGenSelectionMachinePattern;
+import vadl.lcb.passes.llvmLowering.tablegen.model.TableGenSelectionWithOutputPattern;
 import vadl.pass.PassKey;
 import vadl.pass.exception.DuplicatedPassKeyException;
 import vadl.test.lcb.AbstractLcbTest;
 import vadl.viam.Constant;
-import vadl.viam.Instruction;
 import vadl.viam.graph.Node;
 import vadl.viam.graph.dependency.ConstantNode;
 import vadl.viam.graph.dependency.ExpressionNode;
@@ -321,9 +320,9 @@ public class LlvmLoweringPassTest extends AbstractLcbTest {
 
           // Machine Patterns
           var machinePatterns = res.patterns().stream()
-              .filter(x -> x instanceof TableGenSelectionMachinePattern)
-              .map(x -> (TableGenSelectionMachinePattern) x)
-              .map(TableGenSelectionMachinePattern::machine)
+              .filter(x -> x instanceof TableGenSelectionWithOutputPattern)
+              .map(x -> (TableGenSelectionWithOutputPattern) x)
+              .map(TableGenSelectionWithOutputPattern::machine)
               .flatMap(x -> x.getDataflowRoots().stream())
               .map(rootNode -> {
                 var visitor = new TableGenMachineInstructionPrinterVisitor();

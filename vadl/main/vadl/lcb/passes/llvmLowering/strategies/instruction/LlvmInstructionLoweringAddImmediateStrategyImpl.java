@@ -13,7 +13,7 @@ import vadl.lcb.passes.llvmLowering.domain.selectionDag.LlvmReadRegFileNode;
 import vadl.lcb.passes.llvmLowering.tablegen.model.TableGenInstruction;
 import vadl.lcb.passes.llvmLowering.tablegen.model.TableGenInstructionOperand;
 import vadl.lcb.passes.llvmLowering.tablegen.model.TableGenPattern;
-import vadl.lcb.passes.llvmLowering.tablegen.model.TableGenSelectionMachinePattern;
+import vadl.lcb.passes.llvmLowering.tablegen.model.TableGenSelectionWithOutputPattern;
 import vadl.viam.Instruction;
 import vadl.viam.passes.functionInliner.UninlinedGraph;
 
@@ -43,8 +43,8 @@ public class LlvmInstructionLoweringAddImmediateStrategyImpl
 
     // We are only interested in the pattern with selector and machine pattern.
     patterns.stream()
-        .filter(p -> p instanceof TableGenSelectionMachinePattern)
-        .map(p -> (TableGenSelectionMachinePattern) p)
+        .filter(p -> p instanceof TableGenSelectionWithOutputPattern)
+        .map(p -> (TableGenSelectionWithOutputPattern) p)
         .forEach(pattern -> {
           var selector = pattern.selector().copy();
           var machine = pattern.machine().copy();

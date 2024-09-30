@@ -1,25 +1,33 @@
 package vadl.lcb.passes.llvmLowering.strategies;
 
 import static vadl.viam.ViamError.ensure;
+import static vadl.viam.ViamError.ensureNonNull;
 
 import com.google.common.collect.Streams;
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.HashMap;
+import java.util.IdentityHashMap;
 import java.util.List;
 import java.util.Optional;
+import vadl.error.DeferredDiagnosticStore;
 import vadl.error.Diagnostic;
+import vadl.lcb.passes.isaMatching.InstructionLabel;
 import vadl.lcb.passes.llvmLowering.LlvmLoweringPass;
 import vadl.lcb.passes.llvmLowering.domain.LlvmLoweringRecord;
 import vadl.lcb.passes.llvmLowering.domain.PseudoFuncParamNode;
 import vadl.lcb.passes.llvmLowering.domain.RegisterRef;
 import vadl.lcb.passes.llvmLowering.tablegen.model.TableGenInstructionOperand;
+import vadl.lcb.passes.llvmLowering.tablegen.model.TableGenPattern;
 import vadl.utils.Pair;
 import vadl.viam.Instruction;
 import vadl.viam.PseudoInstruction;
+import vadl.viam.graph.Graph;
 import vadl.viam.graph.control.InstrCallNode;
 import vadl.viam.graph.dependency.ExpressionNode;
 import vadl.viam.graph.dependency.FieldRefNode;
 import vadl.viam.graph.dependency.FuncParamNode;
+import vadl.viam.graph.dependency.WriteResourceNode;
 
 /**
  * Whereas {@link LlvmInstructionLoweringStrategy} defines multiple to lower {@link Instruction}
@@ -27,7 +35,19 @@ import vadl.viam.graph.dependency.FuncParamNode;
  */
 public class LlvmPseudoLoweringImpl {
 
-  public Optional<LlvmLoweringRecord> lower(PseudoInstruction pseudo) {
+  /**
+   * We use the strategies from {@link LlvmLoweringPass} for the individual
+   * {@link Instruction} from {@link InstrCallNode} in {@link PseudoInstruction}.
+   */
+  private final List<LlvmInstructionLoweringStrategy> strategies;
+
+  public LlvmPseudoLoweringImpl(List<LlvmInstructionLoweringStrategy> strategies) {
+    this.strategies = strategies;
+  }
+
+  public Optional<LlvmLoweringRecord> lower(
+      PseudoInstruction pseudo,
+      HashMap<InstructionLabel, List<Instruction>> supportedInstructions) {
     ensure(!pseudo.identifier.simpleName().equals("RESERVERD_PSEUDO_RET"),
         () -> Diagnostic.error("The name of the pseudo instruction is reserved.",
             pseudo.identifier.sourceLocation()).build());
@@ -43,8 +63,14 @@ public class LlvmPseudoLoweringImpl {
     var mayStore = false;
     var isBranch = false;
 
+    // This variable keeps track of the graph which has the applied arguments.
+    // Key: Instruction
+    // Value: Graph with applied arguments
+    var appliedInstructionBehavior = new IdentityHashMap<Instruction, Graph>();
+
     for (var callNode : pseudo.behavior().getNodes(InstrCallNode.class).toList()) {
       var instructionBehavior = callNode.target().behavior().copy();
+      appliedInstructionBehavior.put(callNode.target(), instructionBehavior);
 
       /*
       Example:
@@ -98,14 +124,62 @@ public class LlvmPseudoLoweringImpl {
         mayLoad,
         mayStore);
 
+    var patterns =
+        generatePatterns(pseudo, supportedInstructions, appliedInstructionBehavior, inputOperands);
+
     return Optional.of(new LlvmLoweringRecord(pseudo.behavior(),
         inputOperands,
         outputOperands,
         flags,
-        Collections.emptyList(),
+        patterns,
         uses,
         defs
     ));
+  }
+
+  private List<TableGenPattern> generatePatterns(
+      PseudoInstruction pseudo,
+      HashMap<InstructionLabel, List<Instruction>> supportedInstructions,
+      IdentityHashMap<Instruction, Graph> appliedInstructionBehavior,
+      ArrayList<TableGenInstructionOperand> inputOperands) {
+    ArrayList<TableGenPattern> patterns = new ArrayList<>();
+    var flippedInstructions = LlvmLoweringPass.flipIsaMatching(supportedInstructions);
+
+    if (pseudo.behavior().getNodes(InstrCallNode.class).toList().size() > 1) {
+      DeferredDiagnosticStore.add(
+          Diagnostic.warning(
+              "Cannot generate instruction selectors for pseudo instruction with multiple "
+                  + "machine instructions",
+              pseudo.sourceLocation()).build());
+      return Collections.emptyList();
+    }
+
+    pseudo
+        .behavior()
+        .getNodes(InstrCallNode.class)
+        .forEach(instrCallNode -> {
+          var label = flippedInstructions.get(instrCallNode.target());
+
+          // Skip not supported instructions
+          if (label == null) {
+            return;
+          }
+
+          for (var strategy : strategies) {
+            if (!strategy.isApplicable(label)) {
+              continue;
+            }
+
+            var graph = ensureNonNull(appliedInstructionBehavior.get(instrCallNode.target()),
+                "applied instruction behavior must exist");
+
+            strategy.generatePatterns(instrCallNode.target(),
+                inputOperands,
+                graph.getNodes(WriteResourceNode.class).toList());
+          }
+        });
+
+    return patterns;
   }
 
   /**
