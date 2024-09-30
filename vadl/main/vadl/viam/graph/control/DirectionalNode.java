@@ -17,13 +17,13 @@ public abstract class DirectionalNode extends ControlNode {
   // even though it is nullable, the next node is not optional!
   private @Nullable ControlNode next;
 
-  DirectionalNode() {
+  protected DirectionalNode() {
   }
 
   /**
    * The variant if it is possible to directly set the next node construction.
    */
-  DirectionalNode(@Nonnull ControlNode next) {
+  protected DirectionalNode(@Nonnull ControlNode next) {
     this.next = next;
   }
 
@@ -42,8 +42,6 @@ public abstract class DirectionalNode extends ControlNode {
    * @param next the successor of this node
    */
   public void setNext(@Nonnull ControlNode next) {
-    this.ensure(this.next == null || next == this.next,
-        "successor of DirectionalNode is only allowed to be set once");
     this.updatePredecessorOf(this.next, next);
     this.next = next;
   }
