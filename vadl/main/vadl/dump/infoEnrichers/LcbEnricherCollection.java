@@ -3,7 +3,6 @@ package vadl.dump.infoEnrichers;
 import static vadl.dump.InfoEnricher.forType;
 
 import java.util.HashMap;
-import java.util.IdentityHashMap;
 import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
@@ -63,11 +62,11 @@ public class LcbEnricherCollection {
         }
 
         var results =
-            (IdentityHashMap<Instruction, LlvmLoweringRecord>)
+            (LlvmLoweringPass.LlvmLoweringPassResult)
                 passResults.lastResultOf(LlvmLoweringPass.class);
 
         if (results != null && definitionEntity.origin() instanceof Instruction instruction) {
-          var result = (LlvmLoweringRecord) results.get(instruction);
+          var result = (LlvmLoweringRecord) results.machineInstructionRecords().get(instruction);
 
           if (result != null) {
             var renderedInputOperands =
@@ -97,11 +96,11 @@ public class LcbEnricherCollection {
         }
 
         var results =
-            (IdentityHashMap<Instruction, LlvmLoweringRecord>)
+            (LlvmLoweringPass.LlvmLoweringPassResult)
                 passResults.lastResultOf(LlvmLoweringPass.class);
 
         if (results != null && definitionEntity.origin() instanceof Instruction instruction) {
-          var result = (LlvmLoweringRecord) results.get(instruction);
+          var result = (LlvmLoweringRecord) results.machineInstructionRecords().get(instruction);
 
           if (result != null) {
             for (var pattern : result.patterns()) {
