@@ -8,6 +8,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.stream.Stream;
 import vadl.configuration.LcbConfiguration;
+import vadl.cppCodeGen.model.CppClassImplName;
 import vadl.cppCodeGen.model.CppFunction;
 import vadl.cppCodeGen.model.CppFunctionCode;
 import vadl.cppCodeGen.model.CppFunctionName;
@@ -47,7 +48,9 @@ public class EmitMCInstExpanderCppFilePass extends LcbTemplateRenderingPass {
         + processorName + "MCInstExpander.cpp";
   }
 
-  record RenderedPseudoInstruction(CppFunctionName header, CppFunctionCode code,
+  record RenderedPseudoInstruction(CppClassImplName classImpl,
+                                   CppFunctionName header,
+                                   CppFunctionCode code,
                                    PseudoInstruction pseudoInstruction) {
 
   }
@@ -73,10 +76,12 @@ public class EmitMCInstExpanderCppFilePass extends LcbTemplateRenderingPass {
                   variants,
                   relocations);
           var function = wrapped.get(pseudoInstruction);
+          var classPrefix = new CppClassImplName(specification.name() + "MCInstExpander");
           ensureNonNull(function, "a function must exist");
           return new RenderedPseudoInstruction(
+              classPrefix,
               function.functionName(),
-              codeGen.generateFunction(function),
+              codeGen.generateFunction(classPrefix, function, true),
               pseudoInstruction);
         })
         .toList();
