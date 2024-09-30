@@ -1,14 +1,16 @@
 package vadl.iss.template.target;
 
 import static vadl.error.Diagnostic.error;
+import static vadl.utils.GraphUtils.getSingleNode;
 
 import java.util.List;
 import java.util.Map;
 import vadl.configuration.IssConfiguration;
-import vadl.error.Diagnostic;
+import vadl.iss.codegen.IssTranslateCodeGenerator;
 import vadl.iss.template.IssTemplateRenderingPass;
 import vadl.pass.PassResults;
 import vadl.viam.Specification;
+import vadl.viam.graph.dependency.SignExtendNode;
 
 /**
  * Emits the target/gen-arch/translate.c that contains the functions to generate
@@ -32,7 +34,18 @@ public class EmitIssTranslatePass extends IssTemplateRenderingPass {
     var vars = super.createVariables(passResults, specification);
     vars.put("insn_width", getInstructionWidth(specification));
     vars.put("mem_word_size", getMemoryWordSize(specification));
+    vars.put("translate_functions", getTranslateFunctions(specification));
     return vars;
+  }
+
+  private static List<String> getTranslateFunctions(Specification specification) {
+    var insns = specification.isa().get().ownInstructions();
+    return List.of();
+//    return insns.stream()
+//        // TODO: Remove this filter (just for testing)
+//        .filter(i -> i.identifier.simpleName().equalsIgnoreCase("ADD"))
+//        .map(IssTranslateCodeGenerator::fetch)
+//        .toList();
   }
 
   private static Map<String, Object> getMemoryWordSize(Specification specification) {

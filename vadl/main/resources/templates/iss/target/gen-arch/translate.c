@@ -147,6 +147,10 @@ static bool trans_addi(DisasContext *ctx, arg_addi *a) {
     return true;
 }
 
+[# th:each="func, iterState : ${translate_functions}"]
+[(${func})]
+[/]
+
 /*
  *  Core translation mechanism functions:
  *
