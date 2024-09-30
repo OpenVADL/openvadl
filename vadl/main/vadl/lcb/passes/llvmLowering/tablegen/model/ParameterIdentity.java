@@ -10,9 +10,8 @@ import vadl.viam.graph.dependency.ReadRegFileNode;
 import vadl.viam.graph.dependency.WriteRegFileNode;
 
 /**
- * {@code X:$rs2} and {@code AddrFI:$rs1} are both
- * parameter identifies in the pattern.
- * {@code def : Pat<(truncstorei8 X:$rs2, AddrFI:$rs1),}
+ * The idea of a parameter identity is that operands in the selection and machine pattern
+ * can be both matched and replaced. This can be useful to change operands like {@code AddrFI}.
  */
 public record ParameterIdentity(String type, String name) {
   public String render() {
@@ -60,6 +59,11 @@ public record ParameterIdentity(String type, String name) {
   }
 
   public static ParameterIdentity from(ReadRegFileNode node, FuncParamNode address) {
+    return new ParameterIdentity(node.registerFile().name(),
+        address.parameter().identifier.simpleName());
+  }
+
+  public static ParameterIdentity from(WriteRegFileNode node, FuncParamNode address) {
     return new ParameterIdentity(node.registerFile().name(),
         address.parameter().identifier.simpleName());
   }

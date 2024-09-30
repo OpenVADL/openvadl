@@ -289,22 +289,7 @@ public abstract class LlvmInstructionLoweringStrategy {
           // They belong to defs and uses instead.
           return !operand.hasConstantAddress();
         })
-        .map(operand -> {
-          var address = (FieldRefNode) operand.address();
-
-          ensureNonNull(address,
-              () ->
-                  Diagnostic.error("address must no be null", operand.sourceLocation()).build());
-          ensureNonNull(address.formatField(),
-              () ->
-                  Diagnostic.error("formatField must no be null", address.sourceLocation())
-                      .build());
-
-          return (TableGenInstructionOperand) new TableGenInstructionRegisterFileOperand(
-              ParameterIdentity.from(operand, address),
-              operand,
-              address.formatField());
-        })
+        .map(LlvmInstructionLoweringStrategy::generateTableGenInputOutput)
         .toList();
   }
 
@@ -340,8 +325,11 @@ public abstract class LlvmInstructionLoweringStrategy {
       return generateInstructionOperand(node);
     } else if (operand instanceof LlvmBasicBlockSD node) {
       return generateInstructionOperand(node);
+    } else if (operand instanceof WriteRegFileNode node) {
+      return generateInstructionOperand(node);
     } else {
-      throw Diagnostic.error("Cannot construct a tablegen instruction operand from the type",
+      throw Diagnostic.error(
+          "Cannot construct a tablegen instruction operand from the type.",
           operand.sourceLocation()).build();
     }
   }
@@ -394,6 +382,27 @@ public abstract class LlvmInstructionLoweringStrategy {
     }
   }
 
+  /**
+   * Returns a {@link TableGenInstructionOperand} given a {@link Node}.
+   */
+  private static TableGenInstructionOperand generateInstructionOperand(WriteRegFileNode node) {
+    if (node.address() instanceof FieldRefNode field) {
+      return new TableGenInstructionRegisterFileOperand(
+          ParameterIdentity.from(node, field),
+          node,
+          field.formatField());
+    } else if (node.address() instanceof FuncParamNode funcParamNode) {
+      return new TableGenInstructionIndexedRegisterFileOperand(
+          ParameterIdentity.from(node, funcParamNode),
+          node,
+          funcParamNode.parameter());
+    } else {
+      throw Diagnostic.error(
+          "The compiler generator needs to generate a tablegen instruction operand from this "
+              + "address for a field but it does not support it.",
+          node.address().sourceLocation()).build();
+    }
+  }
   /**
    * Returns a {@link TableGenInstructionOperand} given a {@link Node}.
    */
