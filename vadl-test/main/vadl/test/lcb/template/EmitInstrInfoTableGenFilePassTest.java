@@ -2044,7 +2044,7 @@ public class EmitInstrInfoTableGenFilePassTest extends AbstractLcbTest {
         let Namespace = "processorNameValue";
                 
         let OutOperandList = ( outs  );
-        let InOperandList = ( ins X:$rs1 );
+        let InOperandList = ( ins X:$rs );
                 
         let isTerminator  = 1;
         let isBranch      = 1;

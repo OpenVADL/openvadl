@@ -1,18 +1,25 @@
 package vadl.lcb.passes.llvmLowering.strategies;
 
+import static vadl.viam.ViamError.ensure;
+
 import com.google.common.collect.Streams;
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.List;
 import java.util.Optional;
+import vadl.error.Diagnostic;
 import vadl.lcb.passes.llvmLowering.LlvmLoweringPass;
 import vadl.lcb.passes.llvmLowering.domain.LlvmLoweringRecord;
+import vadl.lcb.passes.llvmLowering.domain.PseudoFuncParamNode;
 import vadl.lcb.passes.llvmLowering.domain.RegisterRef;
 import vadl.lcb.passes.llvmLowering.tablegen.model.TableGenInstructionOperand;
 import vadl.utils.Pair;
 import vadl.viam.Instruction;
 import vadl.viam.PseudoInstruction;
 import vadl.viam.graph.control.InstrCallNode;
+import vadl.viam.graph.dependency.ExpressionNode;
 import vadl.viam.graph.dependency.FieldRefNode;
+import vadl.viam.graph.dependency.FuncParamNode;
 
 /**
  * Whereas {@link LlvmInstructionLoweringStrategy} defines multiple to lower {@link Instruction}
@@ -48,7 +55,8 @@ public class LlvmPseudoLoweringImpl {
               Pair::new)
           .forEach(app -> {
             var formatField = app.left();
-            var argument = app.right();
+            var argument = indexArgument(callNode.arguments(), app.right());
+
             /*
               pseudo instruction MOV( rd : Index, rs1 : Index ) =
               {
@@ -57,7 +65,9 @@ public class LlvmPseudoLoweringImpl {
              */
             instructionBehavior.getNodes(FieldRefNode.class)
                 .filter(x -> x.formatField() == formatField)
-                .forEach(occurrence -> occurrence.replaceAndDelete(argument.copy()));
+                .forEach(occurrence -> {
+                  occurrence.replaceAndDelete(argument.copy());
+                });
           });
 
       uses.addAll(LlvmInstructionLoweringStrategy.getRegisterUses(instructionBehavior));
@@ -92,5 +102,29 @@ public class LlvmPseudoLoweringImpl {
         uses,
         defs
     ));
+  }
+
+  /**
+   * There are two relevant cases.
+   * The first is that the {@code argument} is a constant. Then, we do not have to do anything.
+   * The second case is when {@link PseudoInstruction} uses an {@code index}. Then, the argument
+   * is replaced by a {@link FuncParamNode}. However, we still require to know the index for
+   * the pseudo instance expansion. That's why we extend {@link FuncParamNode} with
+   * {@link PseudoFuncParamNode} which has an {@code index} property.
+   * Here is an example of the index. Note that {@code rs} will be transformed into
+   * a {@link PseudoFuncParamNode} when it is replaced.
+   * <code>
+   * pseudo instruction BGEZ( rs : Index, offset : Bits<12> ) =
+   * {
+   * BGE{ rs1 = rs, rs2 = 0 as Bits5, imm = offset }
+   * }
+   * </code>
+   */
+  private ExpressionNode indexArgument(List<ExpressionNode> arguments, ExpressionNode argument) {
+    if (argument instanceof FuncParamNode funcParamNode) {
+      int index = arguments.indexOf(argument);
+      return new PseudoFuncParamNode(funcParamNode.parameter(), index);
+    }
+    return argument;
   }
 }
