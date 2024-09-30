@@ -14,6 +14,7 @@ import java.util.stream.Stream;
 import org.jetbrains.annotations.NotNull;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import vadl.error.Diagnostic;
 import vadl.lcb.passes.isaMatching.InstructionLabel;
 import vadl.lcb.passes.llvmLowering.LlvmLoweringPass;
 import vadl.lcb.passes.llvmLowering.LlvmMayLoadMemory;
@@ -36,6 +37,7 @@ import vadl.lcb.passes.llvmLowering.tablegen.model.TableGenInstruction;
 import vadl.lcb.passes.llvmLowering.tablegen.model.TableGenInstructionFrameRegisterOperand;
 import vadl.lcb.passes.llvmLowering.tablegen.model.TableGenInstructionImmediateLabelOperand;
 import vadl.lcb.passes.llvmLowering.tablegen.model.TableGenInstructionImmediateOperand;
+import vadl.lcb.passes.llvmLowering.tablegen.model.TableGenInstructionIndexedRegisterFileOperand;
 import vadl.lcb.passes.llvmLowering.tablegen.model.TableGenInstructionOperand;
 import vadl.lcb.passes.llvmLowering.tablegen.model.TableGenInstructionRegisterFileOperand;
 import vadl.lcb.passes.llvmLowering.tablegen.model.TableGenPattern;
@@ -43,7 +45,6 @@ import vadl.lcb.passes.llvmLowering.tablegen.model.TableGenSelectionMachinePatte
 import vadl.lcb.visitors.LcbGraphNodeVisitor;
 import vadl.viam.Instruction;
 import vadl.viam.InstructionSetArchitecture;
-import vadl.viam.Register;
 import vadl.viam.ViamError;
 import vadl.viam.graph.Graph;
 import vadl.viam.graph.Node;
@@ -364,12 +365,22 @@ public abstract class LlvmInstructionLoweringStrategy {
    * Returns a {@link TableGenInstructionOperand} given a {@link Node}.
    */
   private static TableGenInstructionOperand generateInstructionOperand(ReadRegFileNode node) {
-    var address = (FieldRefNode) node.address();
-    return new TableGenInstructionRegisterFileOperand(
-        ParameterIdentity.from(node, address),
-        node,
-        address.formatField()
-    );
+    if (node.address() instanceof FieldRefNode field) {
+      return new TableGenInstructionRegisterFileOperand(
+          ParameterIdentity.from(node, field),
+          node,
+          field.formatField());
+    } else if (node.address() instanceof FuncParamNode funcParamNode) {
+      return new TableGenInstructionIndexedRegisterFileOperand(
+          ParameterIdentity.from(node, funcParamNode),
+          node,
+          funcParamNode.parameter());
+    } else {
+      throw Diagnostic.error(
+          "The compiler generator needs to generate a tablegen instruction operand from this "
+              + "address for a field but it does not support it.",
+          node.address().sourceLocation()).build();
+    }
   }
 
   /**

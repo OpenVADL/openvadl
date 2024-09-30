@@ -5,6 +5,7 @@ import vadl.lcb.passes.llvmLowering.domain.selectionDag.LlvmFieldAccessRefNode;
 import vadl.lcb.passes.llvmLowering.domain.selectionDag.LlvmFrameIndexSD;
 import vadl.lcb.passes.llvmLowering.domain.selectionDag.LlvmReadRegFileNode;
 import vadl.viam.graph.dependency.FieldRefNode;
+import vadl.viam.graph.dependency.FuncParamNode;
 import vadl.viam.graph.dependency.ReadRegFileNode;
 import vadl.viam.graph.dependency.WriteRegFileNode;
 
@@ -58,6 +59,10 @@ public record ParameterIdentity(String type, String name) {
         address.formatField().identifier.simpleName());
   }
 
+  public static ParameterIdentity from(ReadRegFileNode node, FuncParamNode address) {
+    return new ParameterIdentity(node.registerFile().name(),
+        address.parameter().identifier.simpleName());
+  }
 
   public ParameterIdentity withType(String type) {
     return new ParameterIdentity(type, name);
