@@ -146,7 +146,8 @@ public class PseudoExpansionCodeGeneratorVisitor extends GenericCppCodeGenerator
     ensure(logicalRelocation.isPresent(), "logicalRelocation must exist");
     var variant = logicalRelocation.get().logicalRelocation().variantKind().value();
     writer.write(
-        String.format("const MCExpr* %s = %sMCExpr::create(%s, %sMCExpr::VariantKind::%s, Ctx);\n",
+        String.format("MCOperand %s = "
+                + "MCOperand::createExpr(%sMCExpr::create(%s, %sMCExpr::VariantKind::%s, Ctx));\n",
             argumentRelocationSymbol, namespace, argumentSymbol, namespace, variant));
     writer.write(String.format("%s.addOperand(%s);\n",
         sym,
@@ -171,7 +172,8 @@ public class PseudoExpansionCodeGeneratorVisitor extends GenericCppCodeGenerator
         ensure(variant != null, "variant must exist: %s", field.identifier.lower());
         writer.write(
             String.format(
-                "const MCExpr* %s = %sMCExpr::create(%s, %sMCExpr::VariantKind::%s, Ctx);\n",
+                "MCOperand %s = "
+                    + "MCOperand::createExpr(%sMCExpr::create(%s, %sMCExpr::VariantKind::%s, Ctx));\n",
                 argumentImmSymbol, namespace, argumentSymbol, namespace, variant.value()));
         writer.write(String.format("%s.addOperand(%s);\n",
             sym,
