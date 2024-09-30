@@ -1,7 +1,7 @@
 package vadl.lcb.clang.lib.Basic.Targets;
 
-import static vadl.lcb.template.utils.DataLayoutProvider.RISCV_DATALAYOUT;
 import static vadl.lcb.template.utils.DataLayoutProvider.createDataLayout;
+import static vadl.lcb.template.utils.DataLayoutProvider.createDataLayoutString;
 
 import java.io.IOException;
 import java.util.Map;
@@ -34,7 +34,9 @@ public class EmitClangTargetHeaderFilePass extends LcbTemplateRenderingPass {
   @Override
   protected Map<String, Object> createVariables(final PassResults passResults,
                                                 Specification specification) {
+    var gpr = ensurePresent(specification.registerFiles().findFirst(),
+        "Specification requires at least one register file");
     return Map.of(CommonVarNames.NAMESPACE, specification.name(),
-        CommonVarNames.DATALAYOUT, createDataLayout(RISCV_DATALAYOUT));
+        CommonVarNames.DATALAYOUT, createDataLayoutString(createDataLayout(gpr)));
   }
 }

@@ -51,7 +51,6 @@ void [(${namespace})]InstrInfo::storeRegToStackSlot(MachineBasicBlock &MBB, Mach
         DL = MBBI->getDebugLoc();
     }
 
-
     [# th:each="r : ${storeStackSlotInstructions}" ]
       if ( [(${namespace})]::[(${r.destRegisterFile.identifier.simpleName()})]RegClass.hasSubClassEq(RC) )
       {
@@ -80,11 +79,18 @@ void [(${namespace})]InstrInfo::loadRegFromStackSlot(MachineBasicBlock &MBB, Mac
         DL = MBBI->getDebugLoc();
     }
 
-    /*
-    «FOR sequence : loadRegFromStackSequences»
-      «emitLoad(sequence)»
-    «ENDFOR»
-    */
+    [# th:each="r : ${loadStackSlotInstructions}" ]
+    if ( [(${namespace})]::[(${r.destRegisterFile.identifier.simpleName()})]RegClass.hasSubClassEq(RC) )
+    {
+        BuildMI( MBB, MBBI, DL, get( [(${namespace})]::[(${r.instruction.identifier.simpleName()})] ) )
+          .addReg( DestReg, RegState::Define )
+          .addFrameIndex( FrameIndex )
+          .addImm( 0 )
+          ;
+
+        return; // success
+    }
+    [/]
 
     llvm_unreachable("Can't load this register from stack slot");
 }
@@ -92,16 +98,7 @@ void [(${namespace})]InstrInfo::loadRegFromStackSlot(MachineBasicBlock &MBB, Mac
 std::vector<int> splitNumber(int number)
 {
     std::vector<int> parts;
-
-    /*
-    «val additionInstruction = findAdditionImmediateMachineInstruction()»
-        // The most ugly hack ever
-        // This highly depends of the order of the immediate constraints. It extracts the last one.
-            «val encoding = additionInstruction.encoding().fields().stream().filter([a | a.isDynamic()]).reduce([ a, b | b ]).get() »
-            «val encodingStart = encoding.ranges().get(0).begin().value() »
-            «val encodingEnd = encoding.ranges().get(0).end().value() » int max = pow(2, «encodingEnd.subtract(encodingStart).intValue()») - 1;
-    */
-    auto max = 0; //TODO remove
+    auto max = pow(2, [(${additionImmSize})] - 1) - 1;
 
     number = abs(number);
     while (number >= max)
@@ -126,33 +123,42 @@ bool [(${namespace})]InstrInfo::adjustReg(MachineBasicBlock &MBB, MachineBasicBl
 
     int64_t negatedVal = -Val;
 
-    /*
-    «FOR sequence : adjRegSequences»
-                «emitAdjustRegCase(sequence)»
-            «ENDFOR»
-    */
+    [# th:each="r : ${adjustCases}" ]
+    if ( [(${r.predicate.lower()})]( Val ) /* check if immediate fits */
+           && [(${namespace})]::PC == SrcReg /* check if source register fits */
+           && ( (DestReg.isVirtual() && [(${namespace})]::[(${r.destRegisterFile.identifier.simpleName()})]RegClass.hasSubClassEq(MRI.getRegClass(DestReg)))
+           || (DestReg.isPhysical() && [(${namespace})]::[(${r.destRegisterFile.identifier.simpleName()})]RegClass.contains(DestReg))
+           )
+            /* check if destination register fits */
+           )
+       {
+           BuildMI( MBB, MBBI, DL, get( [(${namespace})]::[(${r.instruction.identifier.simpleName()})] ) )
+               .addReg( DestReg, RegState::Define )
+               .addImm( Val )
+               .setMIFlag(Flag)
+               ;
+
+           return false; // success
+       }
+    [/]
 
     auto parts = splitNumber(Val);
 
     // First define the destination register
-    /*
-    BuildMI(MBB, MBBI, DL, get(«processor.simpleName()»::«additionInstruction.simpleName()»))
+    BuildMI(MBB, MBBI, DL, get([(${namespace})]::[(${additionImmInstruction.identifier.simpleName()})]))
         .addReg(DestReg, RegState::Define)
         .addReg(SrcReg)
         .addImm(Val >= 0 ? parts.at(0) : parts.at(0) * -1)
         .setMIFlag(Flag);
-        */
 
     // Then add the remaining values
     for (auto v = ++parts.begin(); v != parts.end(); ++v)
     {
-        /*
-        BuildMI(MBB, MBBI, DL, get(«processor.simpleName()»::«additionInstruction.simpleName()»))
-            .addReg(DestReg)
-            .addReg(DestReg)
-            .addImm(Val >= 0 ? *v : (*v) * -1)
-            .setMIFlag(Flag);
-        */
+      BuildMI(MBB, MBBI, DL, get([(${namespace})]::[(${additionImmInstruction.identifier.simpleName()})]))
+        .addReg(DestReg)
+        .addReg(DestReg)
+        .addImm(Val >= 0 ? *v : (*v) * -1)
+        .setMIFlag(Flag);
     }
 
     return false; // success

@@ -122,6 +122,7 @@ public class PassManager {
       // the results.
       var pass = step.pass();
       var passResult = pass.execute(passResults, viam);
+      pass.verification(viam, passResult);
 
       // we always store the pass result, even if the result is `null`
       logger.atDebug().log("Storing result of pass with key: {}", step.key());

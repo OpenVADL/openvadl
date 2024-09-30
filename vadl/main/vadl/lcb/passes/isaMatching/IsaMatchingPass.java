@@ -42,8 +42,11 @@ import java.util.IdentityHashMap;
 import java.util.List;
 import java.util.Objects;
 import java.util.Set;
+import java.util.function.Supplier;
 import org.jetbrains.annotations.Nullable;
 import vadl.configuration.LcbConfiguration;
+import vadl.error.Diagnostic;
+import vadl.error.DiagnosticBuilder;
 import vadl.pass.Pass;
 import vadl.pass.PassName;
 import vadl.pass.PassResults;
@@ -193,6 +196,23 @@ public class IsaMatchingPass extends Pass {
     });
 
     return matched;
+  }
+
+  @Override
+  public void verification(Specification viam, @Nullable Object passResult) {
+    ensureNonNull(passResult, "There must be a passResult");
+    var isaMatched = (HashMap<InstructionLabel, List<Instruction>>) passResult;
+
+    var addi = isaMatched.get(InstructionLabel.ADDI_64);
+    if (addi == null) {
+      addi = isaMatched.get(InstructionLabel.ADDI_32);
+    }
+
+    ensure(addi != null && !addi.isEmpty(),
+        () -> Diagnostic.error(
+                "There must be an instruction (addition with immediate), but we haven't found any.",
+                viam.sourceLocation())
+            .build());
   }
 
   private boolean findLoadMem(UninlinedGraph graph) {

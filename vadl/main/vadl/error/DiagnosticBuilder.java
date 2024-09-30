@@ -4,7 +4,7 @@ import java.util.ArrayList;
 import vadl.utils.SourceLocation;
 
 /**
- * A ergonomic builder for a diagnostic.
+ * An ergonomic builder for a diagnostic.
  *
  * <p>Diagnostics can hold a lot of information making them quite powerful, but also cumbersome to
  * create since often not all of their features are needed.
