@@ -15,6 +15,7 @@ import vadl.lcb.codegen.expansion.PseudoExpansionCodeGenerator;
 import vadl.lcb.template.CommonVarNames;
 import vadl.lcb.template.LcbTemplateRenderingPass;
 import vadl.lcb.template.utils.ImmediateDecodingFunctionProvider;
+import vadl.lcb.template.utils.PseudoInstructionProvider;
 import vadl.pass.PassResults;
 import vadl.viam.Instruction;
 import vadl.viam.PseudoInstruction;
@@ -50,10 +51,10 @@ public class EmitMCInstExpanderHeaderFilePass extends LcbTemplateRenderingPass {
    */
   private List<RenderedPseudoInstruction> pseudoInstructions(
       Specification specification,
+      PassResults passResults,
       IdentityHashMap<PseudoInstruction, CppFunction> cppFunctions
   ) {
-    return specification.isa()
-        .map(x -> x.ownPseudoInstructions().stream()).orElseGet(Stream::empty)
+    return PseudoInstructionProvider.getSupportedPseudoInstructions(specification, passResults)
         .map(x -> new RenderedPseudoInstruction(
             ensureNonNull(cppFunctions.get(x), "cppFunction must exist")
                 .functionName().lower(),
@@ -67,6 +68,6 @@ public class EmitMCInstExpanderHeaderFilePass extends LcbTemplateRenderingPass {
     var cppFunctions = (IdentityHashMap<PseudoInstruction, CppFunction>) passResults.lastResultOf(
         PseudoExpansionFunctionGeneratorPass.class);
     return Map.of(CommonVarNames.NAMESPACE, specification.name(), "pseudoInstructions",
-        pseudoInstructions(specification, cppFunctions));
+        pseudoInstructions(specification, passResults, cppFunctions));
   }
 }
