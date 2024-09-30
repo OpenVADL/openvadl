@@ -1,5 +1,8 @@
 package vadl.gcb.passes.relocation;
 
+import static vadl.viam.ViamError.ensure;
+import static vadl.viam.ViamError.ensureNonNull;
+
 import com.google.common.collect.Streams;
 import java.io.IOException;
 import java.util.ArrayList;
@@ -9,6 +12,7 @@ import java.util.stream.Stream;
 import org.jetbrains.annotations.Nullable;
 import vadl.configuration.GeneralConfiguration;
 import vadl.cppCodeGen.passes.typeNormalization.CppTypeNormalizationPass;
+import vadl.error.Diagnostic;
 import vadl.gcb.passes.relocation.model.LogicalRelocation;
 import vadl.pass.Pass;
 import vadl.pass.PassName;
@@ -73,9 +77,14 @@ public class GenerateLogicalRelocationPass extends Pass {
             .getNodes(FuncCallNode.class)
             .filter(funcCallNode -> funcCallNode.function() instanceof Relocation)
             .forEach(funcCallNode -> {
+              var usages = funcCallNode.usages().toList();
               var relocation = (Relocation) funcCallNode.function();
-              var usage = (InstrCallNode) funcCallNode.usages().toList().get(0);
-              ensureNonNull(usage, "There must be usage for the relocation");
+              ensure(usages.size() == 1,
+                  () -> Diagnostic.error("There must be usage for the relocation",
+                      funcCallNode.sourceLocation()).build());
+              var usage = (InstrCallNode) usages.get(0);
+              ensureNonNull(usage, () -> Diagnostic.error("There must be usage for the relocation",
+                  funcCallNode.sourceLocation()).build());
 
               // We have to find the field which the relocation is applied on.
               // We have two lists: paramFields and arguments

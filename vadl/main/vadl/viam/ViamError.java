@@ -4,6 +4,7 @@ import com.google.errorprone.annotations.FormatMethod;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.function.Supplier;
 import java.util.stream.Collectors;
@@ -179,7 +180,7 @@ public class ViamError extends RuntimeException {
    */
   public static <T> T ensureNonNull(@Nullable T obj, Supplier<Diagnostic> diagnosticSupplier) {
     ensure(obj != null, diagnosticSupplier);
-    return obj;
+    return Objects.requireNonNull(obj);
   }
 
   /**

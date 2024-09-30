@@ -121,7 +121,7 @@ public class IsaMatchingPass extends Pass {
     // TODO: @kper : Support RegisterFileCounters
     ensure(isa.pc() instanceof Counter.RegisterCounter,
         () -> Diagnostic.error("Only counter to single registers are supported.",
-            isa.pc().sourceLocation()).build());
+            Objects.requireNonNull(isa.pc()).sourceLocation()).build());
     var pc = (Counter.RegisterCounter) isa.pc();
 
     isa.ownInstructions().forEach(instruction -> {
