@@ -3,7 +3,6 @@ package vadl.lcb.template.lib.Target;
 import static vadl.viam.ViamError.ensure;
 
 import java.io.IOException;
-import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
 import org.jetbrains.annotations.NotNull;
@@ -14,7 +13,6 @@ import vadl.lcb.template.LcbTemplateRenderingPass;
 import vadl.pass.PassResults;
 import vadl.viam.Specification;
 import vadl.viam.passes.dummyAbi.DummyAbi;
-import vadl.viam.passes.dummyAbi.DummyAbiPass;
 
 /**
  * This file contains the calling conventions for the defined backend.
@@ -45,7 +43,7 @@ public class EmitCallingConvTableGenFilePass extends LcbTemplateRenderingPass {
                                                 Specification specification) {
     var abi =
         (DummyAbi) specification.definitions().filter(x -> x instanceof DummyAbi).findFirst().get();
-    return Map.of(CommonVarNames.NAMESPACE, specification.name(),
+    return Map.of(CommonVarNames.NAMESPACE, specification.simpleName(),
         "calleeRegisters", abi.calleeSaved(),
         "functionRegisterType", getFuncArgsAssignToReg(abi).type,
         "functionRegisters", getFuncArgsAssignToReg(abi),

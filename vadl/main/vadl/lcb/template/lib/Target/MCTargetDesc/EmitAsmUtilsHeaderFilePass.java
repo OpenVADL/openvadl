@@ -41,7 +41,7 @@ public class EmitAsmUtilsHeaderFilePass extends LcbTemplateRenderingPass {
         specification.registerFiles()
             .map(x -> new RegisterClass(x.identifier.simpleName()))
             .toList();
-    return Map.of(CommonVarNames.NAMESPACE, specification.name(),
+    return Map.of(CommonVarNames.NAMESPACE, specification.simpleName(),
         CommonVarNames.REGISTERS_CLASSES, registerFiles);
   }
 }

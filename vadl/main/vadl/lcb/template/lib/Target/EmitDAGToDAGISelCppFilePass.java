@@ -37,7 +37,7 @@ public class EmitDAGToDAGISelCppFilePass extends LcbTemplateRenderingPass {
                                                 Specification specification) {
     var abi =
         (DummyAbi) specification.definitions().filter(x -> x instanceof DummyAbi).findFirst().get();
-    return Map.of(CommonVarNames.NAMESPACE, specification.name(),
+    return Map.of(CommonVarNames.NAMESPACE, specification.simpleName(),
         "stackPointerType",
         ValueType.from(abi.framePointer().registerFile().resultType()).get().getLlvmType());
   }

@@ -227,7 +227,7 @@ public class EmitInstrInfoCppFilePass extends LcbTemplateRenderingPass {
     var fieldUsages = (DetectImmediatePass.ImmediateDetectionContainer) passResults.lastResultOf(
         DetectImmediatePass.class);
     var addition = getAddition(isaMatches);
-    return Map.of(CommonVarNames.NAMESPACE, specification.name(),
+    return Map.of(CommonVarNames.NAMESPACE, specification.simpleName(),
         "copyPhysInstructions", getMovInstructions(isaMatches),
         "storeStackSlotInstructions", getStoreMemoryInstructions(isaMatches),
         "loadStackSlotInstructions", getLoadMemoryInstructions(isaMatches),

@@ -26,6 +26,7 @@ import vadl.gcb.passes.type_normalization.CppTypeNormalizationForEncodingsPass;
 import vadl.gcb.passes.type_normalization.CppTypeNormalizationForPredicatesPass;
 import vadl.iss.passes.IssConfigurationPass;
 import vadl.iss.passes.IssVerificationPass;
+import vadl.iss.passes.tcgLowering.TcgLoweringPass;
 import vadl.iss.template.target.EmitIssCpuHeaderPass;
 import vadl.iss.template.target.EmitIssCpuParamHeaderPass;
 import vadl.iss.template.target.EmitIssCpuQomHeaderPass;
@@ -435,7 +436,12 @@ public final class PassOrder {
     // iss function passes
     order
         .add(new IssVerificationPass(config))
-        .add(new IssConfigurationPass(config));
+        .add(new IssConfigurationPass(config))
+        .add(new TcgLoweringPass(config))
+        
+        .add(new ViamVerificationPass(config))
+    ;
+
 
     if (config.doDump()) {
       order.add(new HtmlDumpPass(HtmlDumpPass.Config.from(config, "ISS Generation Dump", """

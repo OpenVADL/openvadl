@@ -97,7 +97,7 @@ public class EmitMCInstExpanderCppFilePass extends LcbTemplateRenderingPass {
         GenerateImmediateKindPass.class);
     var relocations =
         (List<ElfRelocation>) passResults.lastResultOf(GenerateElfRelocationPass.class);
-    return Map.of(CommonVarNames.NAMESPACE, specification.name(),
+    return Map.of(CommonVarNames.NAMESPACE, specification.simpleName(),
         "pseudoInstructions",
         pseudoInstructions(specification, wrapped, fieldUsages, variants, relocations,
             passResults));

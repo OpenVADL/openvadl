@@ -70,7 +70,7 @@ public class EmitRegisterInfoCppFilePass extends LcbTemplateRenderingPass {
         IsaMatchingPass.class);
     var uninlined = (IdentityHashMap<Instruction, UninlinedGraph>) passResults.lastResultOf(
         FunctionInlinerPass.class);
-    return Map.of(CommonVarNames.NAMESPACE, specification.name(),
+    return Map.of(CommonVarNames.NAMESPACE, specification.simpleName(),
         "framePointer", abi.framePointer(),
         "returnAddress", abi.returnAddress(),
         "stackPointer", abi.stackPointer(),

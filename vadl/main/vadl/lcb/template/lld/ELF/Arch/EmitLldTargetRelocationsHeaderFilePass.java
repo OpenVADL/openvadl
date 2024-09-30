@@ -38,7 +38,7 @@ public class EmitLldTargetRelocationsHeaderFilePass extends LcbTemplateRendering
                                                 Specification specification) {
     var relocations =
         (List<ElfRelocation>) passResults.lastResultOf(GenerateElfRelocationPass.class);
-    return Map.of(CommonVarNames.NAMESPACE, specification.name(),
+    return Map.of(CommonVarNames.NAMESPACE, specification.simpleName(),
         "relocations", relocations.stream()
             .sorted(Comparator.comparing(o -> o.name().value()))
             .map(relocation -> {

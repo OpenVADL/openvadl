@@ -10,14 +10,11 @@ import java.util.stream.Stream;
 import vadl.configuration.LcbConfiguration;
 import vadl.cppCodeGen.model.CppFunction;
 import vadl.gcb.passes.pseudo.PseudoExpansionFunctionGeneratorPass;
-import vadl.gcb.passes.relocation.DetectImmediatePass;
-import vadl.lcb.codegen.expansion.PseudoExpansionCodeGenerator;
 import vadl.lcb.template.CommonVarNames;
 import vadl.lcb.template.LcbTemplateRenderingPass;
 import vadl.lcb.template.utils.ImmediateDecodingFunctionProvider;
 import vadl.lcb.template.utils.PseudoInstructionProvider;
 import vadl.pass.PassResults;
-import vadl.viam.Instruction;
 import vadl.viam.PseudoInstruction;
 import vadl.viam.Specification;
 
@@ -67,7 +64,7 @@ public class EmitMCInstExpanderHeaderFilePass extends LcbTemplateRenderingPass {
                                                 Specification specification) {
     var cppFunctions = (IdentityHashMap<PseudoInstruction, CppFunction>) passResults.lastResultOf(
         PseudoExpansionFunctionGeneratorPass.class);
-    return Map.of(CommonVarNames.NAMESPACE, specification.name(), "pseudoInstructions",
+    return Map.of(CommonVarNames.NAMESPACE, specification.simpleName(), "pseudoInstructions",
         pseudoInstructions(specification, passResults, cppFunctions));
   }
 }

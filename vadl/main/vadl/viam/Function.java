@@ -98,7 +98,7 @@ public class Function extends Definition implements DefProp.WithBehavior, DefPro
 
   @Override
   public String toString() {
-    return name() + signature();
+    return simpleName() + signature();
   }
 
   @Override

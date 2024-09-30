@@ -99,7 +99,7 @@ public class ViamEnricherCollection {
       var dotGraph = behavior.dotGraph();
       var info = InfoUtils.createGraphModal(
           "Behavior",
-          def.name() + " Behavior",
+          def.simpleName() + " Behavior",
           dotGraph
       );
       defEntity.addInfo(info);

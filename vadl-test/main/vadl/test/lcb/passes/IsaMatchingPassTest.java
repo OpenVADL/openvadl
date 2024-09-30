@@ -12,7 +12,6 @@ import org.junit.jupiter.params.provider.Arguments;
 import org.junit.jupiter.params.provider.MethodSource;
 import vadl.lcb.passes.isaMatching.InstructionLabel;
 import vadl.lcb.passes.isaMatching.IsaMatchingPass;
-import vadl.pass.Pass;
 import vadl.pass.PassKey;
 import vadl.pass.exception.DuplicatedPassKeyException;
 import vadl.test.lcb.AbstractLcbTest;
@@ -65,7 +64,7 @@ public class IsaMatchingPassTest extends AbstractLcbTest {
     // Then
     Assertions.assertNotNull(matchings);
     Assertions.assertFalse(matchings.isEmpty());
-    var result = matchings.get(label).stream().map(Definition::name).sorted().toList();
+    var result = matchings.get(label).stream().map(Definition::simpleName).sorted().toList();
     assertEquals(expectedInstructionName.stream().sorted().toList(), result);
   }
 }

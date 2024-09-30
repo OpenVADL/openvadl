@@ -3,7 +3,6 @@ package vadl.cppCodeGen.passes.typeNormalization;
 import java.io.IOException;
 import java.util.Arrays;
 import java.util.Collection;
-import java.util.Collections;
 import java.util.HashSet;
 import java.util.IdentityHashMap;
 import java.util.List;
@@ -14,7 +13,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import vadl.configuration.GcbConfiguration;
 import vadl.cppCodeGen.model.CppFunction;
-import vadl.cppCodeGen.model.CppType;
 import vadl.pass.Pass;
 import vadl.pass.PassResults;
 import vadl.types.BitsType;
@@ -157,7 +155,7 @@ public abstract class CppTypeNormalizationPass extends Pass {
           if (!cppSupportedTypes.contains(parameter.type())) {
             logger.atDebug()
                 .log("Parameter '{}' of type '{}' is not supported. Uplifting type.",
-                    parameter.name(),
+                    parameter.simpleName(),
                     parameter.type());
             return upcast(parameter);
           } else {

@@ -38,7 +38,7 @@ public class EmitLldManualEncodingHeaderFilePass extends LcbTemplateRenderingPas
                                                 Specification specification) {
     var elfRelocations =
         (List<ElfRelocation>) passResults.lastResultOf(GenerateElfRelocationPass.class);
-    return Map.of(CommonVarNames.NAMESPACE, specification.name(),
+    return Map.of(CommonVarNames.NAMESPACE, specification.simpleName(),
         "functions", elfRelocations.stream()
             .collect(Collectors.groupingBy(x -> x.updateFunction().functionName().lower()))
             .values()

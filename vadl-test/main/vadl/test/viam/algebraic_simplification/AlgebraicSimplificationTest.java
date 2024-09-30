@@ -64,7 +64,7 @@ public class AlgebraicSimplificationTest extends DockerExecutionTest {
     var allAfterInstructions =
         spec.isa().map(x -> x.ownInstructions().stream())
             .orElse(Stream.empty())
-            .collect(Collectors.toMap(Instruction::name, Function.identity()));
+            .collect(Collectors.toMap(Instruction::simpleName, Function.identity()));
 
     // When
     var pass = new AlgebraicSimplificationPass(configuration);
@@ -72,8 +72,8 @@ public class AlgebraicSimplificationTest extends DockerExecutionTest {
 
     ArrayList<DynamicTest> tests = new ArrayList<>();
     for (Instruction left : allBeforeInstructions) {
-      var right = allAfterInstructions.get(left.name());
-      tests.add(DynamicTest.dynamicTest(left.name(), () -> {
+      var right = allAfterInstructions.get(left.simpleName());
+      tests.add(DynamicTest.dynamicTest(left.simpleName(), () -> {
         testInstruction(spec, left, right);
       }));
     }
