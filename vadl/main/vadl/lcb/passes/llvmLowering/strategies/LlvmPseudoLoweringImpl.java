@@ -28,6 +28,10 @@ import vadl.viam.graph.dependency.FuncParamNode;
 public class LlvmPseudoLoweringImpl {
 
   public Optional<LlvmLoweringRecord> lower(PseudoInstruction pseudo) {
+    ensure(!pseudo.identifier.simpleName().equals("RESERVERD_PSEUDO_RET"),
+        () -> Diagnostic.error("The name of the pseudo instruction is reserved.",
+            pseudo.identifier.sourceLocation()).build());
+
     var uses = new ArrayList<RegisterRef>();
     var defs = new ArrayList<RegisterRef>();
     var inputOperands = new ArrayList<TableGenInstructionOperand>();
