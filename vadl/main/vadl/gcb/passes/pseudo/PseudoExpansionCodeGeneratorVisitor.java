@@ -78,6 +78,8 @@ public class PseudoExpansionCodeGeneratorVisitor extends GenericCppCodeGenerator
         throw new RuntimeException("not implemented");
       }
     }
+
+    writer.write(String.format("result.push_back(%s);\n", sym));
   }
 
   @Override
@@ -173,7 +175,8 @@ public class PseudoExpansionCodeGeneratorVisitor extends GenericCppCodeGenerator
         writer.write(
             String.format(
                 "MCOperand %s = "
-                    + "MCOperand::createExpr(%sMCExpr::create(%s, %sMCExpr::VariantKind::%s, Ctx));\n",
+                    +
+                    "MCOperand::createExpr(%sMCExpr::create(%s, %sMCExpr::VariantKind::%s, Ctx));\n",
                 argumentImmSymbol, namespace, argumentSymbol, namespace, variant.value()));
         writer.write(String.format("%s.addOperand(%s);\n",
             sym,
