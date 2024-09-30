@@ -1,5 +1,7 @@
 package vadl.lcb.template.lib.Target;
 
+import static vadl.viam.ViamError.ensureNonNull;
+
 import java.io.IOException;
 import java.util.Comparator;
 import java.util.Map;

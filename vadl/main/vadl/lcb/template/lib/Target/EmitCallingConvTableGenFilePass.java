@@ -1,5 +1,7 @@
 package vadl.lcb.template.lib.Target;
 
+import static vadl.viam.ViamError.ensure;
+
 import java.io.IOException;
 import java.util.List;
 import java.util.Map;

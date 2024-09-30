@@ -1,5 +1,7 @@
 package vadl.lcb.template.lib.Target.MCTargetDesc;
 
+import static vadl.viam.ViamError.ensureNonNull;
+
 import java.io.IOException;
 import java.util.IdentityHashMap;
 import java.util.List;

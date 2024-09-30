@@ -1,5 +1,8 @@
 package vadl.lcb.passes.llvmLowering;
 
+import static vadl.viam.ViamError.ensure;
+import static vadl.viam.ViamError.ensureNonNull;
+
 import java.io.IOException;
 import java.util.HashMap;
 import java.util.IdentityHashMap;
@@ -107,14 +110,16 @@ public class LlvmLoweringPass extends Pass {
     // Get the supported instructions from the matching.
     // We only instructions which we know about in this pass.
     // TODO: define a strategy as fallback when there is no matching.
-    var supportedInstructions =
-        (HashMap<InstructionLabel, List<Instruction>>) passResults
-            .lastResultOf(IsaMatchingPass.class);
-    ensure(supportedInstructions != null, "Cannot find pass results from IsaMatchPass");
-    var uninlined =
-        (IdentityHashMap<Instruction, Graph>) passResults.lastResultOf(FunctionInlinerPass.class);
-    ensureNonNull(uninlined, "Inlined Function data must exist");
-
+    var supportedInstructions = ensureNonNull(
+        (HashMap<InstructionLabel, List<Instruction>>) passResults.lastResultOf(
+            IsaMatchingPass.class),
+        () -> Diagnostic.error("Cannot find semantics of the instructions", viam.sourceLocation())
+            .build());
+    var uninlined = ensureNonNull(
+        (IdentityHashMap<Instruction, Graph>) passResults.lastResultOf(FunctionInlinerPass.class),
+        () -> Diagnostic.error("Cannot find uninlined behaviors of the instructions",
+                viam.sourceLocation())
+            .build());
     // We flip it because we need to know the label for the instruction to
     // apply one of the different lowering strategies.
     // A strategy knows whether it can lower it by the label.
