@@ -234,7 +234,7 @@ public class ReplaceWithLlvmSDNodesVisitor
 
   @Override
   public void visit(FuncCallNode funcCallNode) {
-    logger.warn("Function calls are in the instruction's behavior is not lowerable");
+    logger.warn("Function calls which are in the instruction's behavior are not lowerable");
     patternLowerable = false;
   }
 

@@ -47,6 +47,9 @@ public class EmitInstrInfoTableGenFilePassTest extends AbstractLcbTest {
         def callseq_start : SDNode<"ISD::CALLSEQ_START", SDT_CallSeqStart, [SDNPHasChain, SDNPOutGlue]>;
         def callseq_end   : SDNode<"ISD::CALLSEQ_END", SDT_CallSeqEnd, [SDNPHasChain, SDNPOptInGlue, SDNPOutGlue]>;
                 
+        def target_ret_flag : SDNode<"rv64imISD::RET_FLAG", SDTNone,
+                                   [SDNPHasChain, SDNPOptInGlue, SDNPVariadic]>;
+                
         /*
          * ADJCALLSTACKDOWN is a pseudo instruction used to represent the
          * 'CFSetupOpcode', which is needed for the call frame setup
@@ -77,6 +80,26 @@ public class EmitInstrInfoTableGenFilePassTest extends AbstractLcbTest {
             let isCodeGenOnly = 1;
             let Defs = [ X2 ]; // stack pointer
             let Uses = [ X2 ]; // stack pointer
+        }
+                
+        def RESERVERD_PSEUDO_RET : Instruction
+        {
+            let Namespace = "rv64im";
+            /* let Size = 4; // ( Bits<32> )
+            let CodeSize = 4; // ( Bits<32> ), used for ISEL cost */
+            let InOperandList = (ins);
+            let OutOperandList = (outs);
+            let Pattern =  [ (target_ret_flag) ];
+            let isTerminator  = 1;
+            let isBranch      = 0;
+            let isCall        = 0;
+            let isReturn      = 1;
+            let isPseudo      = 1;
+            let isCodeGenOnly = 1;
+            let mayLoad       = 0;
+            let mayStore      = 0;
+            let Defs = [];
+            let Uses = [];
         }
                 
                 
@@ -2044,223 +2067,7 @@ public class EmitInstrInfoTableGenFilePassTest extends AbstractLcbTest {
         let Namespace = "processorNameValue";
                 
         let OutOperandList = ( outs  );
-        let InOperandList = ( ins X:$rs );
-                
-        let isTerminator  = 1;
-        let isBranch      = 1;
-        let isCall        = 0;
-        let isReturn      = 0;
-        let isPseudo      = 1;
-        let isCodeGenOnly = 0;
-        let mayLoad       = 0;
-        let mayStore      = 0;
-                
-        let Constraints = "";
-        let AddedComplexity = 0;
-                
-        let Pattern = [];
-                
-        let Uses = [ PC,X0 ];
-        let Defs = [ PC ];
-        }
-                
-                
-                
-        def BGEZ : Instruction
-        {
-        let Namespace = "processorNameValue";
-                
-        let OutOperandList = ( outs  );
-        let InOperandList = ( ins X:$rs1 );
-                
-        let isTerminator  = 1;
-        let isBranch      = 1;
-        let isCall        = 0;
-        let isReturn      = 0;
-        let isPseudo      = 1;
-        let isCodeGenOnly = 0;
-        let mayLoad       = 0;
-        let mayStore      = 0;
-                
-        let Constraints = "";
-        let AddedComplexity = 0;
-                
-        let Pattern = [];
-                
-        let Uses = [ PC,X0 ];
-        let Defs = [ PC ];
-        }
-                
-                
-                
-        def BGTZ : Instruction
-        {
-        let Namespace = "processorNameValue";
-                
-        let OutOperandList = ( outs  );
-        let InOperandList = ( ins X:$rs2 );
-                
-        let isTerminator  = 1;
-        let isBranch      = 1;
-        let isCall        = 0;
-        let isReturn      = 0;
-        let isPseudo      = 1;
-        let isCodeGenOnly = 0;
-        let mayLoad       = 0;
-        let mayStore      = 0;
-                
-        let Constraints = "";
-        let AddedComplexity = 0;
-                
-        let Pattern = [];
-                
-        let Uses = [ PC,X0 ];
-        let Defs = [ PC ];
-        }
-                
-                
-                
-        def BLEZ : Instruction
-        {
-        let Namespace = "processorNameValue";
-                
-        let OutOperandList = ( outs  );
-        let InOperandList = ( ins X:$rs2 );
-                
-        let isTerminator  = 1;
-        let isBranch      = 1;
-        let isCall        = 0;
-        let isReturn      = 0;
-        let isPseudo      = 1;
-        let isCodeGenOnly = 0;
-        let mayLoad       = 0;
-        let mayStore      = 0;
-                
-        let Constraints = "";
-        let AddedComplexity = 0;
-                
-        let Pattern = [];
-                
-        let Uses = [ PC,X0 ];
-        let Defs = [ PC ];
-        }
-                
-                
-                
-        def BLTZ : Instruction
-        {
-        let Namespace = "processorNameValue";
-                
-        let OutOperandList = ( outs  );
-        let InOperandList = ( ins X:$rs1 );
-                
-        let isTerminator  = 1;
-        let isBranch      = 1;
-        let isCall        = 0;
-        let isReturn      = 0;
-        let isPseudo      = 1;
-        let isCodeGenOnly = 0;
-        let mayLoad       = 0;
-        let mayStore      = 0;
-                
-        let Constraints = "";
-        let AddedComplexity = 0;
-                
-        let Pattern = [];
-                
-        let Uses = [ PC,X0 ];
-        let Defs = [ PC ];
-        }
-                
-                
-                
-        def BNEZ : Instruction
-        {
-        let Namespace = "processorNameValue";
-                
-        let OutOperandList = ( outs  );
-        let InOperandList = ( ins X:$rs1 );
-                
-        let isTerminator  = 1;
-        let isBranch      = 1;
-        let isCall        = 0;
-        let isReturn      = 0;
-        let isPseudo      = 1;
-        let isCodeGenOnly = 0;
-        let mayLoad       = 0;
-        let mayStore      = 0;
-                
-        let Constraints = "";
-        let AddedComplexity = 0;
-                
-        let Pattern = [];
-                
-        let Uses = [ PC,X0 ];
-        let Defs = [ PC ];
-        }
-                
-                
-                
-        def CALL : Instruction
-        {
-        let Namespace = "processorNameValue";
-                
-        let OutOperandList = ( outs  );
         let InOperandList = ( ins  );
-                
-        let isTerminator  = 1;
-        let isBranch      = 0;
-        let isCall        = 0;
-        let isReturn      = 0;
-        let isPseudo      = 1;
-        let isCodeGenOnly = 0;
-        let mayLoad       = 0;
-        let mayStore      = 0;
-                
-        let Constraints = "";
-        let AddedComplexity = 0;
-                
-        let Pattern = [];
-                
-        let Uses = [ PC,X1 ];
-        let Defs = [ X1,PC,X1 ];
-        }
-                
-                
-                
-        def J : Instruction
-        {
-        let Namespace = "processorNameValue";
-                
-        let OutOperandList = ( outs  );
-        let InOperandList = ( ins  );
-                
-        let isTerminator  = 1;
-        let isBranch      = 0;
-        let isCall        = 0;
-        let isReturn      = 0;
-        let isPseudo      = 1;
-        let isCodeGenOnly = 0;
-        let mayLoad       = 0;
-        let mayStore      = 0;
-                
-        let Constraints = "";
-        let AddedComplexity = 0;
-                
-        let Pattern = [];
-                
-        let Uses = [ PC ];
-        let Defs = [ PC,X0 ];
-        }
-                
-                
-                
-        def MOV : Instruction
-        {
-        let Namespace = "processorNameValue";
-                
-        let OutOperandList = ( outs X:$rd );
-        let InOperandList = ( ins X:$rs1 );
                 
         let isTerminator  = 0;
         let isBranch      = 0;
@@ -2282,12 +2089,236 @@ public class EmitInstrInfoTableGenFilePassTest extends AbstractLcbTest {
                 
                 
                 
+        def BGEZ : Instruction
+        {
+        let Namespace = "processorNameValue";
+                
+        let OutOperandList = ( outs  );
+        let InOperandList = ( ins  );
+                
+        let isTerminator  = 0;
+        let isBranch      = 0;
+        let isCall        = 0;
+        let isReturn      = 0;
+        let isPseudo      = 1;
+        let isCodeGenOnly = 0;
+        let mayLoad       = 0;
+        let mayStore      = 0;
+                
+        let Constraints = "";
+        let AddedComplexity = 0;
+                
+        let Pattern = [];
+                
+        let Uses = [  ];
+        let Defs = [  ];
+        }
+                
+                
+                
+        def BGTZ : Instruction
+        {
+        let Namespace = "processorNameValue";
+                
+        let OutOperandList = ( outs  );
+        let InOperandList = ( ins  );
+                
+        let isTerminator  = 0;
+        let isBranch      = 0;
+        let isCall        = 0;
+        let isReturn      = 0;
+        let isPseudo      = 1;
+        let isCodeGenOnly = 0;
+        let mayLoad       = 0;
+        let mayStore      = 0;
+                
+        let Constraints = "";
+        let AddedComplexity = 0;
+                
+        let Pattern = [];
+                
+        let Uses = [  ];
+        let Defs = [  ];
+        }
+                
+                
+                
+        def BLEZ : Instruction
+        {
+        let Namespace = "processorNameValue";
+                
+        let OutOperandList = ( outs  );
+        let InOperandList = ( ins  );
+                
+        let isTerminator  = 0;
+        let isBranch      = 0;
+        let isCall        = 0;
+        let isReturn      = 0;
+        let isPseudo      = 1;
+        let isCodeGenOnly = 0;
+        let mayLoad       = 0;
+        let mayStore      = 0;
+                
+        let Constraints = "";
+        let AddedComplexity = 0;
+                
+        let Pattern = [];
+                
+        let Uses = [  ];
+        let Defs = [  ];
+        }
+                
+                
+                
+        def BLTZ : Instruction
+        {
+        let Namespace = "processorNameValue";
+                
+        let OutOperandList = ( outs  );
+        let InOperandList = ( ins  );
+                
+        let isTerminator  = 0;
+        let isBranch      = 0;
+        let isCall        = 0;
+        let isReturn      = 0;
+        let isPseudo      = 1;
+        let isCodeGenOnly = 0;
+        let mayLoad       = 0;
+        let mayStore      = 0;
+                
+        let Constraints = "";
+        let AddedComplexity = 0;
+                
+        let Pattern = [];
+                
+        let Uses = [  ];
+        let Defs = [  ];
+        }
+                
+                
+                
+        def BNEZ : Instruction
+        {
+        let Namespace = "processorNameValue";
+                
+        let OutOperandList = ( outs  );
+        let InOperandList = ( ins  );
+                
+        let isTerminator  = 0;
+        let isBranch      = 0;
+        let isCall        = 0;
+        let isReturn      = 0;
+        let isPseudo      = 1;
+        let isCodeGenOnly = 0;
+        let mayLoad       = 0;
+        let mayStore      = 0;
+                
+        let Constraints = "";
+        let AddedComplexity = 0;
+                
+        let Pattern = [];
+                
+        let Uses = [  ];
+        let Defs = [  ];
+        }
+                
+                
+                
+        def CALL : Instruction
+        {
+        let Namespace = "processorNameValue";
+                
+        let OutOperandList = ( outs  );
+        let InOperandList = ( ins  );
+                
+        let isTerminator  = 0;
+        let isBranch      = 0;
+        let isCall        = 0;
+        let isReturn      = 0;
+        let isPseudo      = 1;
+        let isCodeGenOnly = 0;
+        let mayLoad       = 0;
+        let mayStore      = 0;
+                
+        let Constraints = "";
+        let AddedComplexity = 0;
+                
+        let Pattern = [];
+                
+        let Uses = [ PC,X1 ];
+        let Defs = [ PC,X1 ];
+        }
+                
+                
+                
+        def J : Instruction
+        {
+        let Namespace = "processorNameValue";
+                
+        let OutOperandList = ( outs  );
+        let InOperandList = ( ins  );
+                
+        let isTerminator  = 0;
+        let isBranch      = 0;
+        let isCall        = 0;
+        let isReturn      = 0;
+        let isPseudo      = 1;
+        let isCodeGenOnly = 0;
+        let mayLoad       = 0;
+        let mayStore      = 0;
+                
+        let Constraints = "";
+        let AddedComplexity = 0;
+                
+        let Pattern = [];
+                
+        let Uses = [  ];
+        let Defs = [  ];
+        }
+                
+                
+                
+        def MOV : Instruction
+        {
+        let Namespace = "processorNameValue";
+                
+        let OutOperandList = ( outs X:$rd, X:$rd );
+        let InOperandList = ( ins X:$rs1, X:$rs1 );
+                
+        let isTerminator  = 0;
+        let isBranch      = 0;
+        let isCall        = 0;
+        let isReturn      = 0;
+        let isPseudo      = 1;
+        let isCodeGenOnly = 0;
+        let mayLoad       = 0;
+        let mayStore      = 0;
+                
+        let Constraints = "";
+        let AddedComplexity = 0;
+                
+        let Pattern = [];
+                
+        let Uses = [  ];
+        let Defs = [  ];
+        }
+                
+        def : Pat<(add X:$rs1, (i16 0)),
+                (ADDI X:$rs1)>;
+                
+        def : Pat<(add X:$rs1, (i16 0)),
+                (ADDI X:$rs1)>;
+                
+        def : Pat<(add X:$rs1, (i16 0)),
+                (ADDI AddrFI:$rs1)>;
+                
+                
         def NEG : Instruction
         {
         let Namespace = "processorNameValue";
                 
         let OutOperandList = ( outs X:$rd );
-        let InOperandList = ( ins X:$rs2 );
+        let InOperandList = ( ins X:$rs1 );
                 
         let isTerminator  = 0;
         let isBranch      = 0;
@@ -2307,6 +2338,8 @@ public class EmitInstrInfoTableGenFilePassTest extends AbstractLcbTest {
         let Defs = [  ];
         }
                 
+        def : Pat<(sub X:$0, X:$rs1),
+                (SUB X:$rs1)>;
                 
                 
         def NOP : Instruction
@@ -2330,18 +2363,26 @@ public class EmitInstrInfoTableGenFilePassTest extends AbstractLcbTest {
                 
         let Pattern = [];
                 
-        let Uses = [ X0 ];
-        let Defs = [ X0 ];
+        let Uses = [ X0,X0 ];
+        let Defs = [ X0,X0 ];
         }
                 
+        def : Pat<(add X:$0, (i8 0)),
+                (ADDI )>;
+                
+        def : Pat<(add X:$0, (i8 0)),
+                (ADDI )>;
+                
+        def : Pat<(add X:$0, (i8 0)),
+                (ADDI )>;
                 
                 
         def NOT : Instruction
         {
         let Namespace = "processorNameValue";
                 
-        let OutOperandList = ( outs X:$rd );
-        let InOperandList = ( ins X:$rs1 );
+        let OutOperandList = ( outs  );
+        let InOperandList = ( ins  );
                 
         let isTerminator  = 0;
         let isBranch      = 0;
@@ -2370,7 +2411,7 @@ public class EmitInstrInfoTableGenFilePassTest extends AbstractLcbTest {
         let OutOperandList = ( outs  );
         let InOperandList = ( ins  );
                 
-        let isTerminator  = 1;
+        let isTerminator  = 0;
         let isBranch      = 0;
         let isCall        = 0;
         let isReturn      = 0;
@@ -2395,7 +2436,7 @@ public class EmitInstrInfoTableGenFilePassTest extends AbstractLcbTest {
         let Namespace = "processorNameValue";
                 
         let OutOperandList = ( outs X:$rd );
-        let InOperandList = ( ins X:$rs2 );
+        let InOperandList = ( ins X:$rs1 );
                 
         let isTerminator  = 0;
         let isBranch      = 0;
@@ -2415,6 +2456,8 @@ public class EmitInstrInfoTableGenFilePassTest extends AbstractLcbTest {
         let Defs = [  ];
         }
                 
+        def : Pat<(setcc X:$0, X:$rs1, SETLT),
+                (SLT X:$rs1)>;
                 
                 
         def SLTZ : Instruction
@@ -2442,6 +2485,8 @@ public class EmitInstrInfoTableGenFilePassTest extends AbstractLcbTest {
         let Defs = [  ];
         }
                 
+        def : Pat<(setcc X:$rs1, X:$0, SETLT),
+                (SLT X:$rs1)>;
                 
                 
         def SNEZ : Instruction
@@ -2449,7 +2494,7 @@ public class EmitInstrInfoTableGenFilePassTest extends AbstractLcbTest {
         let Namespace = "processorNameValue";
                 
         let OutOperandList = ( outs X:$rd );
-        let InOperandList = ( ins X:$rs2 );
+        let InOperandList = ( ins X:$rs1 );
                 
         let isTerminator  = 0;
         let isBranch      = 0;
@@ -2469,6 +2514,8 @@ public class EmitInstrInfoTableGenFilePassTest extends AbstractLcbTest {
         let Defs = [  ];
         }
                 
+        def : Pat<(setcc X:$0, X:$rs1, SETULT),
+                (SLTU X:$rs1)>;
                 
                 
         def TAIL : Instruction
@@ -2478,7 +2525,7 @@ public class EmitInstrInfoTableGenFilePassTest extends AbstractLcbTest {
         let OutOperandList = ( outs  );
         let InOperandList = ( ins  );
                 
-        let isTerminator  = 1;
+        let isTerminator  = 0;
         let isBranch      = 0;
         let isCall        = 0;
         let isReturn      = 0;
@@ -2492,8 +2539,8 @@ public class EmitInstrInfoTableGenFilePassTest extends AbstractLcbTest {
                 
         let Pattern = [];
                 
-        let Uses = [ PC,PC,X6 ];
-        let Defs = [ X6,PC,X0 ];
+        let Uses = [ PC,X6 ];
+        let Defs = [ PC,X0 ];
         }
         """.trim().lines(), output);
   }

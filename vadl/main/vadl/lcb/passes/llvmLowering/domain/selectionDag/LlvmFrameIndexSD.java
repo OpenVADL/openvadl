@@ -16,7 +16,7 @@ import vadl.viam.graph.dependency.ReadRegFileNode;
 /**
  * LLVM node which represents the frame index as selection dag node.
  */
-public class LlvmFrameIndexSD extends LlvmReadRegFileNode implements LlvmNodeLowerable {
+public class LlvmFrameIndexSD extends ReadRegFileNode implements LlvmNodeLowerable {
   public static final String NAME = "AddrFI";
 
   public LlvmFrameIndexSD(ReadRegFileNode obj) {
@@ -26,7 +26,6 @@ public class LlvmFrameIndexSD extends LlvmReadRegFileNode implements LlvmNodeLow
   private LlvmFrameIndexSD(RegisterFile registerFile, ExpressionNode address, DataType type,
                            @Nullable Counter.RegisterFileCounter staticCounterAccess) {
     super(registerFile, address, type, staticCounterAccess);
-    parameterIdentity = ParameterIdentity.from(this, address);
   }
 
 

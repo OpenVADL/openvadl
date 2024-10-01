@@ -57,7 +57,7 @@ public class CppTypeNormalizationForDecodingsPass extends CppTypeNormalizationPa
         upcast(parameter.type()), parameter.parent());
   }
 
-  private static BitsType upcast(Type type) {
+  public static BitsType upcast(Type type) {
     if (type instanceof BitsType cast) {
       return cast.withBitWidth((64));
     } else {

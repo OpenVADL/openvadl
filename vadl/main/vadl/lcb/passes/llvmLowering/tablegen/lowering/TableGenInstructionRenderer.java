@@ -165,7 +165,7 @@ public final class TableGenInstructionRenderer {
         instruction.getDefs().stream().map(RegisterRef::lowerName).collect(Collectors.joining(",")),
         instruction.getAnonymousPatterns().stream()
             .filter(TableGenPattern::isPatternLowerable)
-            //.filter(x -> x instanceof TableGenSelectionWithOutputPattern)
+            .filter(x -> x instanceof TableGenSelectionWithOutputPattern)
             .map(x -> (TableGenSelectionWithOutputPattern) x)
             .map(TableGenInstructionRenderer::lower)
             .collect(Collectors.joining("\n"))

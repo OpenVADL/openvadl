@@ -2,6 +2,8 @@ package vadl.lcb.passes.llvmLowering.tablegen.lowering;
 
 import java.io.StringWriter;
 import java.util.Objects;
+import vadl.cppCodeGen.passes.typeNormalization.CppTypeNormalizationPass;
+import vadl.lcb.codegen.model.llvm.ValueType;
 import vadl.lcb.passes.llvmLowering.LlvmNodeLowerable;
 import vadl.lcb.passes.llvmLowering.domain.selectionDag.LlvmBasicBlockSD;
 import vadl.lcb.passes.llvmLowering.domain.selectionDag.LlvmBrCcSD;
@@ -69,7 +71,9 @@ public class TableGenPatternPrinterVisitor
     node.ensure(node.constant() instanceof Constant.Value
         || node.constant() instanceof Constant.Str, "constant must be value or string");
     if (node.constant() instanceof Constant.Value constant) {
-      writer.write(constant.intValue());
+      writer.write(String.format("(%s %d)",
+          ValueType.from(CppTypeNormalizationPass.upcast(constant.type())).getLlvmType(),
+          constant.intValue()));
     } else if (node.constant() instanceof Constant.Str str) {
       writer.write(str.value());
     }
