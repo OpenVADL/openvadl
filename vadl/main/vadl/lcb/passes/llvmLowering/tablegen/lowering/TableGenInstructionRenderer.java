@@ -113,7 +113,7 @@ public final class TableGenInstructionRenderer {
    * Transforms the given {@link PseudoInstruction} into a string which can be used by LLVM's TableGen.
    */
   public static String lower(TableGenPseudoInstruction instruction) {
-    return String.format("""
+    var y = String.format("""
             def %s : Instruction
             {
             let Namespace = "%s";
@@ -165,11 +165,13 @@ public final class TableGenInstructionRenderer {
         instruction.getDefs().stream().map(RegisterRef::lowerName).collect(Collectors.joining(",")),
         instruction.getAnonymousPatterns().stream()
             .filter(TableGenPattern::isPatternLowerable)
-            .filter(x -> x instanceof TableGenSelectionWithOutputPattern)
+            //.filter(x -> x instanceof TableGenSelectionWithOutputPattern)
             .map(x -> (TableGenSelectionWithOutputPattern) x)
             .map(TableGenInstructionRenderer::lower)
             .collect(Collectors.joining("\n"))
     );
+
+    return y;
   }
 
   private static String lower(TableGenSelectionPattern tableGenPattern) {

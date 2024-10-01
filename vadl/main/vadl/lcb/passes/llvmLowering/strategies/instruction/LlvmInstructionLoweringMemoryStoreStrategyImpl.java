@@ -17,6 +17,7 @@ import vadl.lcb.passes.llvmLowering.tablegen.model.TableGenSelectionWithOutputPa
 import vadl.viam.Instruction;
 import vadl.viam.Memory;
 import vadl.viam.Register;
+import vadl.viam.graph.Graph;
 import vadl.viam.graph.Node;
 import vadl.viam.graph.dependency.WriteResourceNode;
 import vadl.viam.passes.functionInliner.UninlinedGraph;
@@ -37,7 +38,7 @@ public class LlvmInstructionLoweringMemoryStoreStrategyImpl
       Instruction instruction,
       Map<InstructionLabel, List<Instruction>> supportedInstructions,
       InstructionLabel instructionLabel,
-      UninlinedGraph behavior,
+      Graph behavior,
       List<TableGenInstructionOperand> inputOperands,
       List<TableGenInstructionOperand> outputOperands,
       List<TableGenPattern> patterns) {

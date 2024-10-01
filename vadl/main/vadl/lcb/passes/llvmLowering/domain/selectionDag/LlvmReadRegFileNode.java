@@ -10,8 +10,10 @@ import vadl.viam.Counter;
 import vadl.viam.RegisterFile;
 import vadl.viam.graph.GraphNodeVisitor;
 import vadl.viam.graph.Node;
+import vadl.viam.graph.dependency.ConstantNode;
 import vadl.viam.graph.dependency.ExpressionNode;
 import vadl.viam.graph.dependency.FieldRefNode;
+import vadl.viam.graph.dependency.FuncParamNode;
 import vadl.viam.graph.dependency.ReadRegFileNode;
 
 /**
@@ -19,7 +21,7 @@ import vadl.viam.graph.dependency.ReadRegFileNode;
  */
 public class LlvmReadRegFileNode extends ReadRegFileNode implements LlvmNodeLowerable,
     LlvmNodeReplaceable {
-  private final ParameterIdentity parameterIdentity;
+  protected ParameterIdentity parameterIdentity;
 
   /**
    * Constructor.
@@ -29,8 +31,7 @@ public class LlvmReadRegFileNode extends ReadRegFileNode implements LlvmNodeLowe
                              DataType type,
                              @Nullable Counter.RegisterFileCounter staticCounterAccess) {
     super(registerFile, address, type, staticCounterAccess);
-    ensure(address instanceof FieldRefNode, "address must be a field");
-    this.parameterIdentity = ParameterIdentity.from(this, (FieldRefNode) address);
+    parameterIdentity = ParameterIdentity.from(this, address);
   }
 
   @Override

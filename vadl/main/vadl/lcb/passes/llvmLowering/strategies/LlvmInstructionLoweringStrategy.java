@@ -36,6 +36,7 @@ import vadl.lcb.passes.llvmLowering.strategies.visitors.TableGenPatternLowerable
 import vadl.lcb.passes.llvmLowering.strategies.visitors.impl.ReplaceWithLlvmSDNodesVisitor;
 import vadl.lcb.passes.llvmLowering.tablegen.model.ParameterIdentity;
 import vadl.lcb.passes.llvmLowering.tablegen.model.TableGenInstruction;
+import vadl.lcb.passes.llvmLowering.tablegen.model.TableGenInstructionConstantIndexedRegisterFileOperand;
 import vadl.lcb.passes.llvmLowering.tablegen.model.TableGenInstructionFrameRegisterOperand;
 import vadl.lcb.passes.llvmLowering.tablegen.model.TableGenInstructionImmediateLabelOperand;
 import vadl.lcb.passes.llvmLowering.tablegen.model.TableGenInstructionImmediateOperand;
@@ -47,6 +48,7 @@ import vadl.lcb.passes.llvmLowering.tablegen.model.TableGenSelectionWithOutputPa
 import vadl.lcb.visitors.LcbGraphNodeVisitor;
 import vadl.viam.Instruction;
 import vadl.viam.InstructionSetArchitecture;
+import vadl.viam.PseudoInstruction;
 import vadl.viam.graph.Graph;
 import vadl.viam.graph.Node;
 import vadl.viam.graph.NodeList;
@@ -132,16 +134,52 @@ public abstract class LlvmInstructionLoweringStrategy {
   }
 
   /**
-   * Generate a lowering result for the given {@link Graph}.
+   * Generate a lowering result for the given {@link Graph} for machine instructions.
    * If it is not lowerable then return {@link Optional#empty()}.
+   *
+   * @param supportedInstructions the instructions which have known semantics.
+   * @param instruction is the machine instruction which should be lowered.
+   * @param instructionLabel is the semantic label of the instruction.
+   * @param unmodifiedBehavior is the uninlined graph in the case of {@link Instruction}.
    */
   public Optional<LlvmLoweringRecord> lower(
       Map<InstructionLabel, List<Instruction>> supportedInstructions,
       Instruction instruction,
       InstructionLabel instructionLabel,
-      UninlinedGraph uninlinedBehavior) {
+      UninlinedGraph unmodifiedBehavior) {
+    return lowerInstruction(supportedInstructions, instruction, instructionLabel,
+        unmodifiedBehavior);
+  }
+
+  public Optional<LlvmLoweringRecord> lower(
+      Map<InstructionLabel, List<Instruction>> supportedInstructions,
+      PseudoInstruction pseudoInstruction,
+      Instruction instruction,
+      InstructionLabel instructionLabel,
+      Graph unmodifiedBehavior) {
+    logger.atDebug().log("Lowering {} with {}", instruction.identifier.simpleName(),
+        pseudoInstruction.identifier.simpleName());
+    return lowerInstruction(supportedInstructions, instruction, instructionLabel,
+        unmodifiedBehavior);
+  }
+
+  /**
+   * Generate a lowering result for the given {@link Graph} for pseudo instructions.
+   * If it is not lowerable then return {@link Optional#empty()}.
+   *
+   * @param supportedInstructions the instructions which have known semantics.
+   * @param instruction is the machine instruction which should be lowered.
+   * @param instructionLabel is the semantic label of the instruction.
+   * @param unmodifiedBehavior is the uninlined graph in the case of {@link Instruction} or
+   * the applied graph in the case of {@link PseudoInstruction}.
+   */
+  protected Optional<LlvmLoweringRecord> lowerInstruction(
+      Map<InstructionLabel, List<Instruction>> supportedInstructions,
+      Instruction instruction,
+      InstructionLabel instructionLabel,
+      Graph unmodifiedBehavior) {
     var visitor = getVisitorForPatternSelectorLowering();
-    var copy = (UninlinedGraph) uninlinedBehavior.copy();
+    var copy = unmodifiedBehavior.copy();
 
     if (!checkIfNoControlFlow(copy) && !checkIfNotAllowedDataflowNodes(copy)) {
       DeferredDiagnosticStore.add(
@@ -247,7 +285,7 @@ public abstract class LlvmInstructionLoweringStrategy {
       Instruction instruction,
       Map<InstructionLabel, List<Instruction>> supportedInstructions,
       InstructionLabel instructionLabel,
-      UninlinedGraph behavior,
+      Graph behavior,
       List<TableGenInstructionOperand> inputOperands,
       List<TableGenInstructionOperand> outputOperands,
       List<TableGenPattern> patterns);
@@ -353,9 +391,8 @@ public abstract class LlvmInstructionLoweringStrategy {
    * Returns a {@link TableGenInstructionOperand} given a {@link Node}.
    */
   private static TableGenInstructionOperand generateInstructionOperand(LlvmFrameIndexSD node) {
-    var address = (FieldRefNode) node.address();
     return new TableGenInstructionFrameRegisterOperand(
-        ParameterIdentity.from(node, address), node);
+        ParameterIdentity.from(node, node.address()), node);
   }
 
   /**
@@ -372,6 +409,11 @@ public abstract class LlvmInstructionLoweringStrategy {
           ParameterIdentity.from(node, funcParamNode),
           node,
           funcParamNode.parameter());
+    } else if (node.address() instanceof ConstantNode constantNode) {
+      return new TableGenInstructionConstantIndexedRegisterFileOperand(
+          ParameterIdentity.from(node, constantNode),
+          node,
+          constantNode.constant());
     } else {
       throw Diagnostic.error(
           "The compiler generator needs to generate a tablegen instruction operand from this "

@@ -31,6 +31,7 @@ import vadl.lcb.passes.llvmLowering.tablegen.model.TableGenPattern;
 import vadl.lcb.passes.llvmLowering.tablegen.model.TableGenSelectionWithOutputPattern;
 import vadl.lcb.visitors.LcbGraphNodeVisitor;
 import vadl.viam.Instruction;
+import vadl.viam.graph.Graph;
 import vadl.viam.graph.NodeList;
 import vadl.viam.graph.dependency.WriteResourceNode;
 import vadl.viam.passes.functionInliner.UninlinedGraph;
@@ -131,7 +132,7 @@ public class LlvmInstructionLoweringConditionalBranchesStrategyImpl
       Instruction instruction,
       Map<InstructionLabel, List<Instruction>> supportedInstructions,
       InstructionLabel instructionLabel,
-      UninlinedGraph behavior,
+      Graph behavior,
       List<TableGenInstructionOperand> inputOperands,
       List<TableGenInstructionOperand> outputOperands,
       List<TableGenPattern> patterns) {

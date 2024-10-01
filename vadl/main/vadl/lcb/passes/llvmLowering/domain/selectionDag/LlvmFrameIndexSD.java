@@ -4,6 +4,7 @@ import org.jetbrains.annotations.Nullable;
 import vadl.lcb.passes.llvmLowering.LlvmNodeLowerable;
 import vadl.lcb.passes.llvmLowering.strategies.visitors.TableGenMachineInstructionVisitor;
 import vadl.lcb.passes.llvmLowering.strategies.visitors.TableGenNodeVisitor;
+import vadl.lcb.passes.llvmLowering.tablegen.model.ParameterIdentity;
 import vadl.types.DataType;
 import vadl.viam.Counter;
 import vadl.viam.RegisterFile;
@@ -15,7 +16,7 @@ import vadl.viam.graph.dependency.ReadRegFileNode;
 /**
  * LLVM node which represents the frame index as selection dag node.
  */
-public class LlvmFrameIndexSD extends ReadRegFileNode implements LlvmNodeLowerable {
+public class LlvmFrameIndexSD extends LlvmReadRegFileNode implements LlvmNodeLowerable {
   public static final String NAME = "AddrFI";
 
   public LlvmFrameIndexSD(ReadRegFileNode obj) {
@@ -25,6 +26,7 @@ public class LlvmFrameIndexSD extends ReadRegFileNode implements LlvmNodeLowerab
   private LlvmFrameIndexSD(RegisterFile registerFile, ExpressionNode address, DataType type,
                            @Nullable Counter.RegisterFileCounter staticCounterAccess) {
     super(registerFile, address, type, staticCounterAccess);
+    parameterIdentity = ParameterIdentity.from(this, address);
   }
 
 

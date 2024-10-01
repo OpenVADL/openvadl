@@ -17,6 +17,7 @@ import vadl.lcb.passes.llvmLowering.LlvmLoweringPass;
 import vadl.lcb.passes.llvmLowering.domain.LlvmLoweringRecord;
 import vadl.lcb.passes.llvmLowering.domain.PseudoFuncParamNode;
 import vadl.lcb.passes.llvmLowering.domain.RegisterRef;
+import vadl.lcb.passes.llvmLowering.strategies.visitors.impl.ReplaceWithLlvmSDNodesVisitor;
 import vadl.lcb.passes.llvmLowering.tablegen.model.TableGenInstructionOperand;
 import vadl.lcb.passes.llvmLowering.tablegen.model.TableGenPattern;
 import vadl.utils.Pair;
@@ -52,6 +53,9 @@ public class LlvmPseudoLoweringImpl {
         () -> Diagnostic.error("The name of the pseudo instruction is reserved.",
             pseudo.identifier.sourceLocation()).build());
 
+    var patterns = new ArrayList<TableGenPattern>();
+    var flippedInstructions = LlvmLoweringPass.flipIsaMatching(supportedInstructions);
+
     var uses = new ArrayList<RegisterRef>();
     var defs = new ArrayList<RegisterRef>();
     var inputOperands = new ArrayList<TableGenInstructionOperand>();
@@ -63,6 +67,13 @@ public class LlvmPseudoLoweringImpl {
     var mayStore = false;
     var isBranch = false;
 
+    if (pseudo.behavior().getNodes(InstrCallNode.class).toList().size() > 1) {
+      DeferredDiagnosticStore.add(
+          Diagnostic.warning(
+              "Cannot generate instruction selectors for pseudo instruction with multiple "
+                  + "machine instructions",
+              pseudo.sourceLocation()).build());
+    }
     // This variable keeps track of the graph which has the applied arguments.
     // Key: Instruction
     // Value: Graph with applied arguments
@@ -100,19 +111,40 @@ public class LlvmPseudoLoweringImpl {
                 });
           });
 
-      uses.addAll(LlvmInstructionLoweringStrategy.getRegisterUses(instructionBehavior));
-      defs.addAll(LlvmInstructionLoweringStrategy.getRegisterDefs(instructionBehavior));
-      inputOperands.addAll(
-          LlvmInstructionLoweringStrategy.getTableGenInputOperands(instructionBehavior));
-      outputOperands.addAll(
-          LlvmInstructionLoweringStrategy.getTableGenOutputOperands(instructionBehavior));
+      var label = flippedInstructions.get(callNode.target());
 
-      var flags = LlvmInstructionLoweringStrategy.getFlags(instructionBehavior);
-      isTerminator |= flags.isTerminator();
-      isReturn |= flags.isReturn();
-      mayLoad |= flags.mayLoad();
-      mayStore |= flags.mayStore();
-      isBranch |= flags.isBranch();
+      // Skip not supported instructions
+      if (label == null) {
+        continue;
+      }
+
+
+      for (var strategy : strategies) {
+        if (!strategy.isApplicable(label)) {
+          continue;
+        }
+
+        var tableGenRecord = strategy.lower(supportedInstructions,
+            pseudo,
+            callNode.target(),
+            label,
+            instructionBehavior);
+
+        if (tableGenRecord.isPresent()) {
+          var record = tableGenRecord.get();
+          var flags = record.flags();
+          isTerminator |= flags.isTerminator();
+          isReturn |= flags.isReturn();
+          mayLoad |= flags.mayLoad();
+          mayStore |= flags.mayStore();
+          isBranch |= flags.isBranch();
+          defs.addAll(record.defs());
+          uses.addAll(record.uses());
+          inputOperands.addAll(record.inputs());
+          outputOperands.addAll(record.outputs());
+          patterns.addAll(record.patterns());
+        }
+      }
     }
 
     var flags = new LlvmLoweringPass.Flags(isTerminator,
@@ -124,9 +156,6 @@ public class LlvmPseudoLoweringImpl {
         mayLoad,
         mayStore);
 
-    var patterns =
-        generatePatterns(pseudo, supportedInstructions, appliedInstructionBehavior, inputOperands);
-
     return Optional.of(new LlvmLoweringRecord(pseudo.behavior(),
         inputOperands,
         outputOperands,
@@ -135,51 +164,6 @@ public class LlvmPseudoLoweringImpl {
         uses,
         defs
     ));
-  }
-
-  private List<TableGenPattern> generatePatterns(
-      PseudoInstruction pseudo,
-      HashMap<InstructionLabel, List<Instruction>> supportedInstructions,
-      IdentityHashMap<Instruction, Graph> appliedInstructionBehavior,
-      ArrayList<TableGenInstructionOperand> inputOperands) {
-    ArrayList<TableGenPattern> patterns = new ArrayList<>();
-    var flippedInstructions = LlvmLoweringPass.flipIsaMatching(supportedInstructions);
-
-    if (pseudo.behavior().getNodes(InstrCallNode.class).toList().size() > 1) {
-      DeferredDiagnosticStore.add(
-          Diagnostic.warning(
-              "Cannot generate instruction selectors for pseudo instruction with multiple "
-                  + "machine instructions",
-              pseudo.sourceLocation()).build());
-      return Collections.emptyList();
-    }
-
-    pseudo
-        .behavior()
-        .getNodes(InstrCallNode.class)
-        .forEach(instrCallNode -> {
-          var label = flippedInstructions.get(instrCallNode.target());
-
-          // Skip not supported instructions
-          if (label == null) {
-            return;
-          }
-
-          for (var strategy : strategies) {
-            if (!strategy.isApplicable(label)) {
-              continue;
-            }
-
-            var graph = ensureNonNull(appliedInstructionBehavior.get(instrCallNode.target()),
-                "applied instruction behavior must exist");
-
-            strategy.generatePatterns(instrCallNode.target(),
-                inputOperands,
-                graph.getNodes(WriteResourceNode.class).toList());
-          }
-        });
-
-    return patterns;
   }
 
   /**

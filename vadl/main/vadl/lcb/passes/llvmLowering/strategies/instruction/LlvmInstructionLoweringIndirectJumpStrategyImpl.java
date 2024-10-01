@@ -12,6 +12,7 @@ import vadl.lcb.passes.llvmLowering.strategies.LlvmInstructionLoweringStrategy;
 import vadl.lcb.passes.llvmLowering.tablegen.model.TableGenInstructionOperand;
 import vadl.lcb.passes.llvmLowering.tablegen.model.TableGenPattern;
 import vadl.viam.Instruction;
+import vadl.viam.graph.Graph;
 import vadl.viam.passes.functionInliner.UninlinedGraph;
 
 /**
@@ -26,12 +27,12 @@ public class LlvmInstructionLoweringIndirectJumpStrategyImpl
   }
 
   @Override
-  public Optional<LlvmLoweringRecord> lower(
+  protected Optional<LlvmLoweringRecord> lowerInstruction(
       Map<InstructionLabel, List<Instruction>> supportedInstructions,
       Instruction instruction,
       InstructionLabel instructionLabel,
-      UninlinedGraph uninlinedBehavior) {
-    var copy = uninlinedBehavior.copy();
+      Graph unmodifiedBehavior) {
+    var copy = unmodifiedBehavior.copy();
     var visitor = getVisitorForPatternSelectorLowering();
 
     for (var node : copy.getNodes().toList()) {
@@ -54,7 +55,7 @@ public class LlvmInstructionLoweringIndirectJumpStrategyImpl
       Instruction instruction,
       Map<InstructionLabel, List<Instruction>> supportedInstructions,
       InstructionLabel instructionLabel,
-      UninlinedGraph behavior,
+      Graph behavior,
       List<TableGenInstructionOperand> inputOperands,
       List<TableGenInstructionOperand> outputOperands,
       List<TableGenPattern> patterns) {

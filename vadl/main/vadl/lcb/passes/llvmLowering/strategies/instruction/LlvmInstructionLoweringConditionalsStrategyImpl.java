@@ -9,6 +9,7 @@ import vadl.lcb.passes.llvmLowering.strategies.LlvmInstructionLoweringStrategy;
 import vadl.lcb.passes.llvmLowering.tablegen.model.TableGenInstructionOperand;
 import vadl.lcb.passes.llvmLowering.tablegen.model.TableGenPattern;
 import vadl.viam.Instruction;
+import vadl.viam.graph.Graph;
 import vadl.viam.passes.functionInliner.UninlinedGraph;
 
 /**
@@ -29,7 +30,7 @@ public class LlvmInstructionLoweringConditionalsStrategyImpl
       Instruction instruction,
       Map<InstructionLabel, List<Instruction>> supportedInstructions,
       InstructionLabel instructionLabel,
-      UninlinedGraph behavior,
+      Graph behavior,
       List<TableGenInstructionOperand> inputOperands,
       List<TableGenInstructionOperand> outputOperands,
       List<TableGenPattern> patterns) {
