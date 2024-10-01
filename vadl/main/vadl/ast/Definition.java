@@ -2210,11 +2210,13 @@ record Annotation(Expr expr, @Nullable TypeLiteral type,
 class DefinitionList extends Definition {
 
   List<Definition> items;
+  SyntaxType syntaxType;
   SourceLocation location;
 
-  DefinitionList(List<Definition> items, SourceLocation location) {
+  DefinitionList(List<Definition> items, SyntaxType syntaxType, SourceLocation location) {
     this.items = items;
     this.location = location;
+    this.syntaxType = syntaxType;
   }
 
   @Override
@@ -2224,7 +2226,7 @@ class DefinitionList extends Definition {
 
   @Override
   SyntaxType syntaxType() {
-    return BasicSyntaxType.ISA_DEFS;
+    return syntaxType;
   }
 
   @Override

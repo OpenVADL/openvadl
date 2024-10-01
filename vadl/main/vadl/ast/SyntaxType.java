@@ -15,7 +15,7 @@ enum BasicSyntaxType implements SyntaxType {
   STATS("Stats"),
   STAT("Stat"),
   ENCS("Encs"),
-  COMMON_DEFS("CommonDefs"),
+  COMMON_DEFS("Defs"),
   ISA_DEFS("IsaDefs"),
   EX("Ex"),
   LIT("Lit"),

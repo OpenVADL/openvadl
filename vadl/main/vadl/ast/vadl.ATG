@@ -59,7 +59,7 @@ TOKENS
   T_BIN_OP      = "BinOp".
   T_BOOL        = "Bool".
   T_CALL_EX     = "CallEx".
-  T_COMMON_DEFS = "CommonDefs".
+  T_COMMON_DEFS = "Defs".
   T_ENCS        = "Encs".
   T_EX          = "Ex".
   T_ID          = "Id".
@@ -810,19 +810,21 @@ PRODUCTIONS
     SYM_BRACE_CLOSE                             (. def = new ApplicationBinaryInterfaceDefinition(id, isaPath, elements, start.join(loc())); .)
   .
 
-  abiElementDefinition<out Definition def> (. def = DUMMY_DEF; .)
-  = annotations<out Annotations annotations>
-    ( IF (scanner.Peek().kind == _SEQUENCE) // RETURN can be followed by both SEQUENCE and VALUE / ADDRESS
+  abiElementDefinition<out Definition def>   (. def = DUMMY_DEF; .)
+  = annotations<out Annotations annotations> (. var peek = scanner.Peek(); .)
+    ( IF (peek.kind == _SEQUENCE) // RETURN can be followed by both SEQUENCE and VALUE / ADDRESS
       abiSequenceDef<out def>
+    | IF (la.kind == _FUNCTION && peek.kind == _ARGUMENT)
+      functionArgumentRegisterDef<out def>
     | specialPurposeRegisterDef<out def>
     | aliasDefinition<out def>
- // | commonDefinition<out def> TODO conflict between FUNCTION ARGUMENT and function definition
-    )                                      (. def.withAnnotations(annotations); .)
+    | commonDefinition<out def>
+    )                                        (. def.withAnnotations(annotations); .)
   | // IF (isMacroReplacementOfType(this, BasicSyntaxType.COMMON_DEFS))
-    macroReplacement<out Node n>           (. def = castCommonDef(this, n);
-                                              if (def instanceof DefinitionList list) {
-                                                readMacroSymbols(macroTable, list.items);
-                                              } .)
+    macroReplacement<out Node n>             (. def = castCommonDef(this, n);
+                                                if (def instanceof DefinitionList list) {
+                                                  readMacroSymbols(macroTable, list.items);
+                                                } .)
   .
 
   specialPurposeRegisterDef<out Definition def>              (. var start = lookaheadLoc(); .)
@@ -834,12 +836,17 @@ PRODUCTIONS
   | STACK POINTER                                            (. purpose = SpecialPurposeRegisterDefinition.Purpose.STACK_POINTER; .)
   | GLOBAL POINTER                                           (. purpose = SpecialPurposeRegisterDefinition.Purpose.GLOBAL_POINTER; .)
   | FRAME POINTER                                            (. purpose = SpecialPurposeRegisterDefinition.Purpose.FRAME_POINTER; .)
-  | FUNCTION ARGUMENT                                        (. purpose = SpecialPurposeRegisterDefinition.Purpose.FUNCTION_ARGUMENT; .)
   | CALLER SAVED                                             (. purpose = SpecialPurposeRegisterDefinition.Purpose.CALLER_SAVED; .)
   | CALLEE SAVED                                             (. purpose = SpecialPurposeRegisterDefinition.Purpose.CALLEE_SAVED; .)
   )
     SYM_EQ
     sequenceCallExprList<.out List<SequenceCallExpr> calls.> (. def = new SpecialPurposeRegisterDefinition(purpose, calls, start.join(loc())); .)
+  .
+
+  // Only necessary to resolve LL(1) conflict between function in commonDef and this factored specialPurposeRegisterDef
+  functionArgumentRegisterDef<out Definition def>            (. var start = lookaheadLoc(); .)
+  = FUNCTION ARGUMENT SYM_EQ
+    sequenceCallExprList<.out List<SequenceCallExpr> calls.> (. def = new SpecialPurposeRegisterDefinition(SpecialPurposeRegisterDefinition.Purpose.FUNCTION_ARGUMENT, calls, start.join(loc())); .)
   .
 
   abiSequenceDef<out Definition def>                         (. var start = lookaheadLoc(); .)
@@ -1762,9 +1769,9 @@ PRODUCTIONS
   | IF (type == BasicSyntaxType.ENCS)
     encodingDefinitionList<out body>
   | IF (type == BasicSyntaxType.ISA_DEFS)                   (. macroTable = macroTable.createChild(); .)
-    isaDefinitionList<.out List<Definition> defs.>          (. body = new DefinitionList(defs, start.join(loc())); macroTable = macroTable.parent; .)
-  | IF (type == BasicSyntaxType.COMMON_DEFS)
-    commonDefinitionList<.out List<Definition> defs.>       (. body = new DefinitionList(defs, start.join(loc())); macroTable = macroTable.parent; .)
+    isaDefinitionList<.out List<Definition> defs.>          (. body = new DefinitionList(defs, type, start.join(loc())); macroTable = macroTable.parent; .)
+  | IF (type == BasicSyntaxType.COMMON_DEFS)                (. macroTable = macroTable.createChild(); .)
+    commonDefinitionList<.out List<Definition> defs.>       (. body = new DefinitionList(defs, type, start.join(loc())); macroTable = macroTable.parent; .)
   | IF (type == BasicSyntaxType.EX)
     expression<out body, BIN_OPS>
   | IF (type == BasicSyntaxType.LIT)

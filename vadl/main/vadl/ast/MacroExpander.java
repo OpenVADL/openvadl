@@ -481,15 +481,15 @@ class MacroExpander
     var statements = new ArrayList<>(definition.statements);
     statements.replaceAll(this::visit);
 
-    return new PseudoInstructionDefinition(identifier, definition.kind, definition.params,
-        statements, copyLoc(definition.loc)).withAnnotations(
-        expandAnnotations(definition.annotations));
+    return new PseudoInstructionDefinition(identifier, definition.kind,
+        expandParams(definition.params), statements, copyLoc(definition.loc)
+    ).withAnnotations(expandAnnotations(definition.annotations));
   }
 
   @Override
   public Definition visit(RelocationDefinition definition) {
-    return new RelocationDefinition(definition.identifier, definition.params, definition.resultType,
-        expandExpr(definition.expr), copyLoc(definition.loc)
+    return new RelocationDefinition(definition.identifier, expandParams(definition.params),
+        definition.resultType, expandExpr(definition.expr), copyLoc(definition.loc)
     ).withAnnotations(expandAnnotations(definition.annotations));
   }
 
@@ -520,7 +520,8 @@ class MacroExpander
   @Override
   public Definition visit(FunctionDefinition definition) {
     var name = resolvePlaceholderOrIdentifier(definition.name);
-    return new FunctionDefinition(name, definition.params, definition.retType,
+    var retType = (TypeLiteral) expandExpr(definition.retType);
+    return new FunctionDefinition(name, expandParams(definition.params), retType,
         expandExpr(definition.expr), copyLoc(definition.loc)
     ).withAnnotations(expandAnnotations(definition.annotations));
   }
@@ -597,7 +598,7 @@ class MacroExpander
   @Override
   public Definition visit(DefinitionList definition) {
     var items = expandDefinitions(definition.items);
-    return new DefinitionList(items, copyLoc(definition.location));
+    return new DefinitionList(items, definition.syntaxType, copyLoc(definition.location));
   }
 
   @Override
@@ -635,8 +636,8 @@ class MacroExpander
         templateParam -> new ProcessDefinition.TemplateParam(templateParam.name(),
             templateParam.type(),
             templateParam.value() == null ? null : expandExpr(templateParam.value())));
-    return new ProcessDefinition(id, templateParams, processDefinition.inputs,
-        processDefinition.outputs, processDefinition.statement.accept(this),
+    return new ProcessDefinition(id, templateParams, expandParams(processDefinition.inputs),
+        expandParams(processDefinition.outputs), processDefinition.statement.accept(this),
         copyLoc(processDefinition.loc)).withAnnotations(
         expandAnnotations(processDefinition.annotations));
   }
@@ -671,7 +672,7 @@ class MacroExpander
   public Definition visit(AbiSequenceDefinition definition) {
     var statements = new ArrayList<>(definition.statements);
     statements.replaceAll(stmt -> (InstructionCallStatement) expandStatement(stmt));
-    return new AbiSequenceDefinition(definition.kind, definition.params, statements,
+    return new AbiSequenceDefinition(definition.kind, expandParams(definition.params), statements,
         copyLoc(definition.loc)
     ).withAnnotations(expandAnnotations(definition.annotations));
   }
@@ -727,29 +728,31 @@ class MacroExpander
 
   @Override
   public Definition visit(MacroInstructionDefinition definition) {
-    return new MacroInstructionDefinition(definition.kind, definition.inputs, definition.outputs,
-        definition.statement.accept(this), copyLoc(definition.loc)
+    return new MacroInstructionDefinition(definition.kind, expandParams(definition.inputs),
+        expandParams(definition.outputs), definition.statement.accept(this),
+        copyLoc(definition.loc)
     ).withAnnotations(expandAnnotations(definition.annotations));
   }
 
   @Override
   public Definition visit(PortBehaviorDefinition definition) {
-    return new PortBehaviorDefinition(definition.id, definition.kind, definition.inputs,
-        definition.outputs, definition.statement.accept(this), copyLoc(definition.loc)
+    return new PortBehaviorDefinition(definition.id, definition.kind,
+        expandParams(definition.inputs), expandParams(definition.outputs),
+        definition.statement.accept(this), copyLoc(definition.loc)
     ).withAnnotations(expandAnnotations(definition.annotations));
   }
 
   @Override
   public Definition visit(PipelineDefinition definition) {
-    return new PipelineDefinition(definition.id, definition.outputs,
+    return new PipelineDefinition(definition.id, expandParams(definition.outputs),
         definition.statement.accept(this), copyLoc(definition.loc)
     ).withAnnotations(expandAnnotations(definition.annotations));
   }
 
   @Override
   public Definition visit(StageDefinition definition) {
-    return new StageDefinition(definition.id, definition.outputs, definition.statement.accept(this),
-        copyLoc(definition.loc)
+    return new StageDefinition(definition.id, expandParams(definition.outputs),
+        definition.statement.accept(this), copyLoc(definition.loc)
     ).withAnnotations(expandAnnotations(definition.annotations));
   }
 
@@ -1099,6 +1102,12 @@ class MacroExpander
     var macroMatch = expandMacroMatch(node.macroMatch);
     var resolved = resolveMacroMatch(macroMatch);
     return Objects.requireNonNullElseGet(resolved, () -> new MacroMatchNode(macroMatch));
+  }
+
+  private List<Parameter> expandParams(List<Parameter> params) {
+    var expandedParams = new ArrayList<>(params);
+    expandedParams.replaceAll(param -> new Parameter(param.name(), (TypeLiteral) expandExpr(param.type())));
+    return expandedParams;
   }
 
   private void reportError(String error, SourceLocation location) {
