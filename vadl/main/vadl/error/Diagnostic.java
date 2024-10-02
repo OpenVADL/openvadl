@@ -80,6 +80,11 @@ public class Diagnostic extends RuntimeException {
   }
 
   @Override
+  public String getMessage() {
+    return level + " " + reason + " " + multiLocation;
+  }
+
+  @Override
   public boolean equals(Object o) {
     if (this == o) {
       return true;

@@ -87,7 +87,7 @@ public class AstDumper
         dumpChildren(f.ranges);
       } else if (field instanceof FormatDefinition.TypedFormatField f) {
         dumpNode(f);
-        dumpChildren(f.identifier, f.type());
+        dumpChildren(f.identifier, f.type);
       } else if (field instanceof FormatDefinition.DerivedFormatField f) {
         dumpNode(f);
         dumpChildren(f.identifier, f.expr);
@@ -138,7 +138,9 @@ public class AstDumper
   @Override
   public Void visit(RegisterFileDefinition definition) {
     dumpNode(definition);
-    dumpChildren(definition.identifier(), definition.indexType, definition.registerType);
+    dumpChildren(definition.identifier());
+    dumpChildren(definition.type.argTypes());
+    dumpChildren(definition.type.resultType());
     return null;
   }
 
@@ -151,7 +153,7 @@ public class AstDumper
   @Override
   public Void visit(BinaryExpr expr) {
     dumpNode(expr);
-    dumpChildren(expr.left, (Node) expr.operator, expr.right);
+    dumpChildren(expr.left, expr.right);
     return null;
   }
 
@@ -244,8 +246,15 @@ public class AstDumper
     dumpNode(definition);
     dumpChildren(definition.id());
     dumpChildren(definition.params.stream()
-        .flatMap(param -> Stream.of(param.id(), param.type())).toList());
+        .flatMap(param -> Stream.of(param.name(), param.type())).toList());
     dumpChildren(definition.statements);
+    return null;
+  }
+
+  @Override
+  public Void visit(RelocationDefinition definition) {
+    dumpNode(definition);
+    dumpChildren(definition.identifier, definition.resultType, definition.expr);
     return null;
   }
 
@@ -253,8 +262,8 @@ public class AstDumper
   public Void visit(EncodingDefinition definition) {
     dumpNode(definition);
     dumpChildren(definition.instrId());
-    dumpChildren(definition.fieldEncodings().encodings.stream()
-        .map(EncodingDefinition.FieldEncoding.class::cast)
+    dumpChildren(definition.encodings.items.stream()
+        .map(EncodingDefinition.EncodingField.class::cast)
         .flatMap(entry -> Stream.of(entry.field(), (Node) entry.value()))
         .toList()
     );
@@ -432,8 +441,8 @@ public class AstDumper
   public Void visit(GroupDefinition groupDefinition) {
     dumpNode(groupDefinition);
     dumpChildren(groupDefinition.name());
-    if (groupDefinition.type() != null) {
-      dumpChildren(groupDefinition.type());
+    if (groupDefinition.type != null) {
+      dumpChildren(groupDefinition.type);
     }
     for (Group group : groupDefinition.groupSequence.groups) {
       builder.append(indentString()).append("Group\n");
@@ -442,6 +451,153 @@ public class AstDumper
       group.prettyPrint(0, builder);
       indent--;
     }
+    return null;
+  }
+
+  @Override
+  public Void visit(ApplicationBinaryInterfaceDefinition definition) {
+    dumpNode(definition);
+    dumpChildren(definition.id, (Node) definition.isa);
+    dumpChildren(definition.definitions);
+    return null;
+  }
+
+  @Override
+  public Void visit(AbiSequenceDefinition definition) {
+    dumpNode(definition);
+    dumpChildren(definition.statements);
+    return null;
+  }
+
+  @Override
+  public Void visit(SpecialPurposeRegisterDefinition definition) {
+    dumpNode(definition);
+    dumpChildren(definition.calls);
+    return null;
+  }
+
+  @Override
+  public Void visit(MicroProcessorDefinition definition) {
+    dumpNode(definition);
+    dumpChildren(definition.id);
+    dumpChildren(definition.implementedIsas.stream().map(Node.class::cast).toList());
+    dumpChildren((Node) definition.abi);
+    dumpChildren(definition.definitions);
+    return null;
+  }
+
+  @Override
+  public Void visit(PatchDefinition definition) {
+    dumpNode(definition);
+    dumpChildren(definition.generator, definition.handle);
+    if (definition.reference != null) {
+      dumpChildren((Node) definition.reference);
+    }
+    return null;
+  }
+
+  @Override
+  public Void visit(SourceDefinition definition) {
+    dumpNode(definition);
+    dumpChildren(definition.id);
+    return null;
+  }
+
+  @Override
+  public Void visit(CpuFunctionDefinition definition) {
+    dumpNode(definition);
+    if (definition.stopWithReference != null) {
+      dumpChildren((Node) definition.stopWithReference);
+    }
+    dumpChildren(definition.expr);
+    return null;
+  }
+
+  @Override
+  public Void visit(CpuProcessDefinition definition) {
+    dumpNode(definition);
+    for (Parameter startupOutput : definition.startupOutputs) {
+      dumpChildren(startupOutput.name(), startupOutput.type());
+    }
+    dumpChildren(definition.statement);
+    return null;
+  }
+
+  @Override
+  public Void visit(MicroArchitectureDefinition definition) {
+    dumpNode(definition);
+    dumpChildren(definition.id, (Node) definition.processor);
+    dumpChildren(definition.definitions);
+    return null;
+  }
+
+  @Override
+  public Void visit(MacroInstructionDefinition definition) {
+    dumpNode(definition);
+    for (Parameter input : definition.inputs) {
+      dumpChildren(input.name(), input.type());
+    }
+    for (Parameter output : definition.outputs) {
+      dumpChildren(output.name(), output.type());
+    }
+    dumpChildren(definition.statement);
+    return null;
+  }
+
+  @Override
+  public Void visit(PortBehaviorDefinition definition) {
+    dumpNode(definition);
+    dumpChildren(definition.id);
+    for (Parameter input : definition.inputs) {
+      dumpChildren(input.name(), input.type());
+    }
+    for (Parameter output : definition.outputs) {
+      dumpChildren(output.name(), output.type());
+    }
+    dumpChildren(definition.statement);
+    return null;
+  }
+
+  @Override
+  public Void visit(PipelineDefinition definition) {
+    dumpNode(definition);
+    dumpChildren(definition.id);
+    for (Parameter output : definition.outputs) {
+      dumpChildren(output.name(), output.type());
+    }
+    dumpChildren(definition.statement);
+    return null;
+  }
+
+  @Override
+  public Void visit(StageDefinition definition) {
+    dumpNode(definition);
+    dumpChildren(definition.id);
+    for (Parameter output : definition.outputs) {
+      dumpChildren(output.name(), output.type());
+    }
+    dumpChildren(definition.statement);
+    return null;
+  }
+
+  @Override
+  public Void visit(CacheDefinition definition) {
+    dumpNode(definition);
+    dumpChildren(definition.id, definition.sourceType, definition.targetType);
+    return null;
+  }
+
+  @Override
+  public Void visit(LogicDefinition definition) {
+    dumpNode(definition);
+    dumpChildren(definition.id);
+    return null;
+  }
+
+  @Override
+  public Void visit(SignalDefinition definition) {
+    dumpNode(definition);
+    dumpChildren(definition.id, definition.type);
     return null;
   }
 
@@ -499,18 +655,6 @@ public class AstDumper
   }
 
   @Override
-  public Void visit(BinOpExpr expr) {
-    dumpNode(expr);
-    return null;
-  }
-
-  @Override
-  public Void visit(UnOpExpr expr) {
-    dumpNode(expr);
-    return null;
-  }
-
-  @Override
   public Void visit(MacroMatchExpr expr) {
     dumpNode(expr);
     return null;
@@ -562,15 +706,35 @@ public class AstDumper
   }
 
   @Override
-  public Void visit(ForAllThenExpr expr) {
+  public Void visit(ForallThenExpr expr) {
     dumpNode(expr);
-    for (ForAllThenExpr.Condition condition : expr.conditions) {
-      dumpChildren((Node) condition.id());
-      for (IsId operation : condition.operations()) {
+    for (ForallThenExpr.Index index : expr.indices) {
+      dumpChildren((Node) index.id());
+      for (IsId operation : index.operations()) {
         dumpChildren((Node) operation);
       }
     }
     dumpChildren(expr.thenExpr);
+    return null;
+  }
+
+  @Override
+  public Void visit(ForallExpr expr) {
+    dumpNode(expr);
+    for (ForallExpr.Index index : expr.indices) {
+      dumpChildren((Node) index.id(), index.domain());
+    }
+    dumpChildren(expr.expr);
+    return null;
+  }
+
+  @Override
+  public Void visit(SequenceCallExpr expr) {
+    dumpNode(expr);
+    dumpChildren(expr.target);
+    if (expr.range != null) {
+      dumpChildren(expr.range);
+    }
     return null;
   }
 
@@ -667,6 +831,24 @@ public class AstDumper
     dumpChildren(instructionCallStatement.id());
     dumpChildren(instructionCallStatement.namedArguments.stream()
         .flatMap(namedArgument -> Stream.of(namedArgument.name(), namedArgument.value())).toList());
+    dumpChildren(instructionCallStatement.unnamedArguments);
+    return null;
+  }
+
+  @Override
+  public Void visit(LockStatement lockStatement) {
+    dumpNode(lockStatement);
+    dumpChildren(lockStatement.expr, lockStatement.statement);
+    return null;
+  }
+
+  @Override
+  public Void visit(ForallStatement forallStatement) {
+    dumpNode(forallStatement);
+    for (ForallStatement.Index index : forallStatement.indices) {
+      dumpChildren(index.name(), index.domain());
+    }
+    dumpChildren(forallStatement.statement);
     return null;
   }
 }

@@ -1,0 +1,16 @@
+model CastedOp(func: Id, op: Id, inType: Id, outType: Id): Defs = {
+  function $func(left: $inType, right: $inType) -> $outType =
+    VADL::$op(left, right) as $outType
+}
+
+using SInt16 = SInt<16>
+using SInt32 = SInt<32>
+using SInt64 = SInt<64>
+
+instruction set architecture ISA = {
+  $CastedOp(add1632 ; adds ; SInt16 ; SInt32)
+}
+
+application binary interface ABI for ISA = {
+  $CastedOp(mul3264 ; muls ; SInt32 ; SInt64)
+}

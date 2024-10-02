@@ -27,7 +27,7 @@ class AstCommands {
 
   static int checkSyntax(Main main) {
     try {
-      Ast ast = parse(Objects.requireNonNull(main.input), main.modelOverrides);
+      Ast ast = parse(Objects.requireNonNull(main.input), main.modelOverrides, false);
       if (main.printPassStatistics) {
         VadlParser.printPassTimings(ast);
       }
@@ -68,7 +68,7 @@ class AstCommands {
     @Override
     public Integer call() {
       try {
-        Ast ast = parse(input, main.modelOverrides);
+        Ast ast = parse(input, main.modelOverrides, true);
         String dump = new AstDumper().dump(ast);
         if (output != null) {
           writeToPath(dump, output);
@@ -119,8 +119,8 @@ class AstCommands {
     @Override
     public Integer call() {
       try {
-        Ast ast = parse(input, main.modelOverrides);
-        String prettified = ast.prettyPrint();
+        Ast ast = parse(input, main.modelOverrides, true);
+        CharSequence prettified = ast.prettyPrint();
         if (output != null) {
           writeToPath(prettified, output);
         }
@@ -149,15 +149,18 @@ class AstCommands {
     }
   }
 
-  private static Ast parse(Path input, @Nullable Map<String, String> modelOverrides)
+  private static Ast parse(Path input, @Nullable Map<String, String> modelOverrides,
+                           boolean stripAst)
       throws IOException {
     Ast ast = VadlParser.parse(input, Objects.requireNonNullElseGet(modelOverrides, Map::of));
-    new Ungrouper().ungroup(ast);
-    new ModelRemover().removeModels(ast);
+    if (stripAst) {
+      new Ungrouper().ungroup(ast);
+      new ModelRemover().removeModels(ast);
+    }
     return ast;
   }
 
-  private static void writeToPath(String string, Path output) throws IOException {
+  private static void writeToPath(CharSequence string, Path output) throws IOException {
     if (output.toString().equals("-")) {
       System.out.println(string);
     } else {

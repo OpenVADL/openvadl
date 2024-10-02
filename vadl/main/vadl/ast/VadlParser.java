@@ -131,9 +131,7 @@ public class VadlParser {
 
     var ast = parser.ast;
 
-    MacroExpander.expandAst(ast, parser.macroOverrides);
-    SymbolTable.SymbolCollector.collectSymbols(ast);
-    errors.addAll(SymbolTable.VerificationPass.verifyUsages(ast));
+    errors.addAll(SymbolTable.ResolutionPass.resolveSymbols(ast));
 
     if (!errors.isEmpty()) {
       throw new DiagnosticList(errors.stream().distinct().toList());
@@ -152,8 +150,8 @@ public class VadlParser {
     PassTimings prev = null;
     for (var timing : ast.passTimings) {
       if (prev != null) {
-        long deltaMillis = (timing.timestamp - prev.timestamp) / 1000_000;
-        System.out.println(timing.description + " - " + deltaMillis + " ms ");
+        double deltaMillis = (timing.timestamp - prev.timestamp) / 1000_000.0;
+        System.out.printf("%s - %.3f ms\n", timing.description, deltaMillis);
       }
       prev = timing;
     }

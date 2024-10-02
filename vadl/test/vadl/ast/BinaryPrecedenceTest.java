@@ -13,6 +13,7 @@ public class BinaryPrecedenceTest {
     var prog2 = "constant n = ((1 + 2) + 3)";
 
     assertAstEquality(VadlParser.parse(prog1), VadlParser.parse(prog2));
+    assertHasBeenReordered(VadlParser.parse(prog1), VadlParser.parse(prog2));
   }
 
   @Test
@@ -21,6 +22,7 @@ public class BinaryPrecedenceTest {
     var prog2 = "constant n = ((((1 + 2) + 3) + 4) + 5) + 6";
 
     assertAstEquality(VadlParser.parse(prog1), VadlParser.parse(prog2));
+    assertHasBeenReordered(VadlParser.parse(prog1), VadlParser.parse(prog2));
   }
 
   @Test
@@ -29,6 +31,7 @@ public class BinaryPrecedenceTest {
     var prog2 = "constant n = (40 + (4 * 8))";
 
     assertAstEquality(VadlParser.parse(prog1), VadlParser.parse(prog2));
+    assertHasBeenReordered(VadlParser.parse(prog1), VadlParser.parse(prog2));
   }
 
   @Test
@@ -37,6 +40,7 @@ public class BinaryPrecedenceTest {
     var prog2 = "constant n = ((40 + 4) * 8)";
 
     Assertions.assertNotEquals(VadlParser.parse(prog1), VadlParser.parse(prog2));
+    assertHasBeenReordered(VadlParser.parse(prog1), VadlParser.parse(prog2));
   }
 
   @Test
@@ -45,6 +49,7 @@ public class BinaryPrecedenceTest {
     var prog2 = "constant n = (40 * 4) + 8";
 
     assertAstEquality(VadlParser.parse(prog1), VadlParser.parse(prog2));
+    assertHasBeenReordered(VadlParser.parse(prog1), VadlParser.parse(prog2));
   }
 
   @Test
@@ -53,6 +58,7 @@ public class BinaryPrecedenceTest {
     var prog2 = "constant n = 40 * (4 + 8)";
 
     Assertions.assertNotEquals(VadlParser.parse(prog1), VadlParser.parse(prog2));
+    assertHasBeenReordered(VadlParser.parse(prog1), VadlParser.parse(prog2));
   }
 
   @Test
@@ -61,6 +67,7 @@ public class BinaryPrecedenceTest {
     var prog2 = "constant n = ((1 + 2) + (3 * 4))";
 
     assertAstEquality(VadlParser.parse(prog1), VadlParser.parse(prog2));
+    assertHasBeenReordered(VadlParser.parse(prog1), VadlParser.parse(prog2));
   }
 
   @Test
@@ -69,6 +76,7 @@ public class BinaryPrecedenceTest {
     var prog2 = "constant n = ((1 + 2) + 3) + (4 * 5)";
 
     assertAstEquality(VadlParser.parse(prog1), VadlParser.parse(prog2));
+    assertHasBeenReordered(VadlParser.parse(prog1), VadlParser.parse(prog2));
   }
 
   @Test
@@ -77,6 +85,7 @@ public class BinaryPrecedenceTest {
     var prog2 = "constant n = ((1 + 2) + ((3 * 4) * 5))";
 
     assertAstEquality(VadlParser.parse(prog1), VadlParser.parse(prog2));
+    assertHasBeenReordered(VadlParser.parse(prog1), VadlParser.parse(prog2));
   }
 
   @Test
@@ -85,6 +94,7 @@ public class BinaryPrecedenceTest {
     var prog2 = "constant n = ((((1 + 2) + (3 * 4)) + 5) + 6)";
 
     assertAstEquality(VadlParser.parse(prog1), VadlParser.parse(prog2));
+    assertHasBeenReordered(VadlParser.parse(prog1), VadlParser.parse(prog2));
   }
 
   @Test
@@ -93,6 +103,7 @@ public class BinaryPrecedenceTest {
     var prog2 = "constant n = (((1 + 2) + (3 * 4)) + (5 * 6))";
 
     assertAstEquality(VadlParser.parse(prog1), VadlParser.parse(prog2));
+    assertHasBeenReordered(VadlParser.parse(prog1), VadlParser.parse(prog2));
   }
 
   @Test
@@ -101,6 +112,7 @@ public class BinaryPrecedenceTest {
     var prog2 = "constant n = ((1 + 2) + (((3 * 4) * 5) * 6))";
 
     assertAstEquality(VadlParser.parse(prog1), VadlParser.parse(prog2));
+    assertHasBeenReordered(VadlParser.parse(prog1), VadlParser.parse(prog2));
   }
 
   @Test
@@ -109,6 +121,7 @@ public class BinaryPrecedenceTest {
     var prog2 = "constant n = ((((1 + 2) + (3 * 4)) + (5 * 6)) + 7)";
 
     assertAstEquality(VadlParser.parse(prog1), VadlParser.parse(prog2));
+    assertHasBeenReordered(VadlParser.parse(prog1), VadlParser.parse(prog2));
   }
 
   @Test
@@ -117,6 +130,7 @@ public class BinaryPrecedenceTest {
     var prog2 = "constant n = (2 << (3 + (4 * 5)))";
 
     assertAstEquality(VadlParser.parse(prog1), VadlParser.parse(prog2));
+    assertHasBeenReordered(VadlParser.parse(prog1), VadlParser.parse(prog2));
   }
 
   @Test
@@ -125,6 +139,7 @@ public class BinaryPrecedenceTest {
     var prog2 = "constant n = (((2 * 3) + 4) >> 5)";
 
     assertAstEquality(VadlParser.parse(prog1), VadlParser.parse(prog2));
+    assertHasBeenReordered(VadlParser.parse(prog1), VadlParser.parse(prog2));
   }
 
   @Test
@@ -133,6 +148,7 @@ public class BinaryPrecedenceTest {
     var prog2 = "constant n = (1 + 2) << (((3 * 4) + 5) + 6) < 7";
 
     assertAstEquality(VadlParser.parse(prog1), VadlParser.parse(prog2));
+    assertHasBeenReordered(VadlParser.parse(prog1), VadlParser.parse(prog2));
   }
 
   @Test
@@ -141,6 +157,7 @@ public class BinaryPrecedenceTest {
     var prog2 = "constant n = (1 < (2 + (3 * 4)))";
 
     assertAstEquality(VadlParser.parse(prog1), VadlParser.parse(prog2));
+    assertHasBeenReordered(VadlParser.parse(prog1), VadlParser.parse(prog2));
   }
 
   @Test
@@ -149,6 +166,7 @@ public class BinaryPrecedenceTest {
     var prog2 = "constant n = ((1 * (2 + 3)) << 4)";
 
     assertAstEquality(VadlParser.parse(prog1), VadlParser.parse(prog2));
+    assertHasBeenReordered(VadlParser.parse(prog1), VadlParser.parse(prog2));
   }
 
   @Test
@@ -162,5 +180,41 @@ public class BinaryPrecedenceTest {
         constant b = (-a) < 2""";
 
     assertAstEquality(VadlParser.parse(prog1), VadlParser.parse(prog2));
+    assertHasBeenReordered(VadlParser.parse(prog1), VadlParser.parse(prog2));
+  }
+
+  @Test
+  void saturatedOpsBehaveAsNormal() {
+    var prog1 = """
+        constant a = 2 +| 3 *# 4 -| 5 + 6
+        """;
+    var prog2 = """
+        constant a = ((2 +| (3 *# 4)) -| 5) + 6
+        """;
+
+    assertAstEquality(VadlParser.parse(prog1), VadlParser.parse(prog2));
+    assertHasBeenReordered(VadlParser.parse(prog1), VadlParser.parse(prog2));
+  }
+
+  private void assertHasBeenReordered(Ast... asts) {
+    for (Ast ast : asts) {
+      for (Definition definition : ast.definitions) {
+        var constant = (ConstantDefinition) definition;
+        assertHasBeenReordered(constant.value);
+      }
+    }
+  }
+
+  private void assertHasBeenReordered(Expr expr) {
+    if (expr instanceof BinaryExpr binExpr) {
+      Assertions.assertTrue(binExpr.hasBeenReordered, () -> {
+        var sb = new StringBuilder();
+        sb.append("Not reordered: ");
+        binExpr.prettyPrint(0, sb);
+        return sb.toString();
+      });
+      assertHasBeenReordered(binExpr.left);
+      assertHasBeenReordered(binExpr.right);
+    }
   }
 }

@@ -60,14 +60,11 @@ public class AstMacroTests {
     }
     var expectedAst = Files.readString(expectedAstPath).replaceAll("\r\n", "\n");
 
-    if (actualExpandedAst.equals(expectedAst)) {
+    if (expectedAst.contentEquals(actualExpandedAst)) {
       // Clean up any ".actual" files we might have left behind the last time this test failed
       Files.deleteIfExists(actualAstPath(vadlPath));
     } else {
       writeAst(actualAstPath(vadlPath), actualExpandedAst);
-    }
-
-    if (!expectedAst.equals(actualExpandedAst)) {
       Assertions.fail("Mismatched expanded ASTs - see " + actualAstPath(vadlPath).getFileName());
     }
   }
@@ -84,7 +81,7 @@ public class AstMacroTests {
             line -> line.substring(line.indexOf("=") + 1)));
   }
 
-  private void writeAst(Path astPath, String ast) throws IOException {
+  private void writeAst(Path astPath, CharSequence ast) throws IOException {
     Files.writeString(astPath, ast);
   }
 

@@ -425,6 +425,19 @@ instruction set architecture RV3264I = {
 
   assembly BLTU = (mnemonic, " ", register(rs1), ",", register(rs2), ",", decimal(imm))
 
+  instruction JAL : Jtype =   let retaddr = PC.next in
+    {
+      PC := ((PC + immS) as UInt & 0xffff'fffe)
+      X(rd) := retaddr
+    }
+
+
+  encoding JAL =
+  { opcode = 0b110'1111
+  }
+
+  assembly JAL = (mnemonic, " ", register(rd), ",", decimal(imm), "")
+
   instruction JALR : Itype =   let retaddr = PC.next in
     {
       PC := ((X(rs1) + immS) as UInt & 0xffff'fffe)
@@ -647,7 +660,7 @@ instruction set architecture RV3264IM extending RV3264I = {
   constant TopBitSet = (1 as Regs << (MLen - 1)) as Regs
   constant AllOnes = -1 as SIntR as Regs
 
-  function isOverflow(dividend : Regs, divisor : Regs) -> Bool = ((dividend = TopBitSet) & (dividend = AllOnes))
+  function isOverflow(dividend : Regs, divisor : Regs) -> Bool = ((dividend = TopBitSet) & (divisor = AllOnes))
 
   instruction MUL : Rtype =   let result = (X(rs1) as SInt * X(rs2) as SInt) in
     X(rd) := result as Regs
@@ -703,7 +716,10 @@ instruction set architecture RV3264IM extending RV3264I = {
         if (divisor = 0 as SIntR) then
           AllOnes
         else
-          VADL::div(dividend, divisor) as SIntR
+          if isOverflow(dividend, divisor) then
+            TopBitSet
+          else
+            VADL::div(dividend, divisor) as SIntR
 
 
   encoding DIV =
@@ -737,7 +753,10 @@ instruction set architecture RV3264IM extending RV3264I = {
         if (divisor = 0 as SIntR) then
           dividend
         else
-          VADL::mod(dividend, divisor) as SIntR
+          if isOverflow(dividend, divisor) then
+            0
+          else
+            VADL::mod(dividend, divisor) as SIntR
 
 
   encoding REM =
@@ -782,7 +801,10 @@ instruction set architecture RV3264IM extending RV3264I = {
         if (divisor = 0 as SIntW) then
           AllOnes
         else
-          VADL::div(dividend, divisor) as SIntR
+          if isOverflow(dividend, divisor) then
+            TopBitSet
+          else
+            VADL::div(dividend, divisor) as SIntR
 
 
   encoding DIVW =
@@ -816,7 +838,10 @@ instruction set architecture RV3264IM extending RV3264I = {
         if (divisor = 0 as SIntW) then
           dividend
         else
-          VADL::mod(dividend, divisor) as SIntR
+          if isOverflow(dividend, divisor) then
+            0
+          else
+            VADL::mod(dividend, divisor) as SIntR
 
 
   encoding REMW =
@@ -843,4 +868,8 @@ instruction set architecture RV3264IM extending RV3264I = {
   }
 
   assembly REMUW = (mnemonic, " ", register(rd), ",", register(rs1), ",", register(rs2))
+}
+application binary interface ABI for RV3264IM = {
+}
+micro processor CPU implements RV3264IM with ABI = {
 }

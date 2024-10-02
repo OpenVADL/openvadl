@@ -15,6 +15,6 @@ public class DiagnosticList extends RuntimeException {
   }
 
   private static String buildErrorMessage(List<Diagnostic> errors) {
-    return errors.stream().map(Diagnostic::toString).collect(Collectors.joining("\n"));
+    return errors.stream().map(Diagnostic::getMessage).collect(Collectors.joining("\n"));
   }
 }

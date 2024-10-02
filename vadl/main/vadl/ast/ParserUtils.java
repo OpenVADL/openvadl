@@ -1,5 +1,6 @@
 package vadl.ast;
 
+import java.math.BigInteger;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -20,38 +21,53 @@ class ParserUtils {
   static boolean[] BIN_OPS;
   static boolean[] BIN_OPS_EXCEPT_GT;
   static boolean[] BIN_OPS_EXCEPT_IN;
+  static boolean[] UN_OPS;
 
   // Must be kept in sync with allowedIdentifierKeywords
   static boolean[] ID_TOKENS;
+
+  // Must be kept in sync with auxiliaryFields
+  static boolean[] AUX_FIELD_TOKENS;
+
+  // Dummy nodes - for use in scenarios where the parser encountered an error, but since the parser
+  // keeps going, using null would lead to a NullPointerException.
+  static Identifier DUMMY_ID = new Identifier("dummy", SourceLocation.INVALID_SOURCE_LOCATION);
+  static Expr DUMMY_EXPR = DUMMY_ID;
+  static Definition DUMMY_DEF =
+      new ConstantDefinition(DUMMY_ID, null, DUMMY_EXPR, SourceLocation.INVALID_SOURCE_LOCATION);
+  static Statement DUMMY_STAT = new CallStatement(DUMMY_ID);
 
   static {
     NO_OPS = new boolean[Parser.maxT + 1];
 
     BIN_OPS = NO_OPS.clone();
-    BIN_OPS[Parser._SYM_LOGOR] = true;
-    BIN_OPS[Parser._SYM_LOGAND] = true;
+    BIN_OPS[Parser._SYM_BINAND] = true;
     BIN_OPS[Parser._SYM_BINOR] = true;
     BIN_OPS[Parser._SYM_CARET] = true;
-    BIN_OPS[Parser._SYM_BINAND] = true;
-    BIN_OPS[Parser._SYM_EQ] = true;
-    BIN_OPS[Parser._SYM_NEQ] = true;
-    BIN_OPS[Parser._SYM_GTE] = true;
-    BIN_OPS[Parser._SYM_GT] = true;
-    BIN_OPS[Parser._SYM_LTE] = true;
-    BIN_OPS[Parser._SYM_LT] = true;
-    BIN_OPS[Parser._SYM_ROTR] = true;
-    BIN_OPS[Parser._SYM_ROTL] = true;
-    BIN_OPS[Parser._SYM_SHR] = true;
-    BIN_OPS[Parser._SYM_SHL] = true;
-    BIN_OPS[Parser._SYM_PLUS] = true;
-    BIN_OPS[Parser._SYM_MINUS] = true;
-    BIN_OPS[Parser._SYM_MUL] = true;
     BIN_OPS[Parser._SYM_DIV] = true;
-    BIN_OPS[Parser._SYM_MOD] = true;
-    BIN_OPS[Parser._SYM_IN] = true;
-    BIN_OPS[Parser._SYM_NIN] = true;
     BIN_OPS[Parser._SYM_ELEM_OF] = true;
+    BIN_OPS[Parser._SYM_EQ] = true;
+    BIN_OPS[Parser._SYM_GT] = true;
+    BIN_OPS[Parser._SYM_GTE] = true;
+    BIN_OPS[Parser._SYM_IN] = true;
+    BIN_OPS[Parser._SYM_LOGAND] = true;
+    BIN_OPS[Parser._SYM_LOGOR] = true;
+    BIN_OPS[Parser._SYM_LONG_MUL] = true;
+    BIN_OPS[Parser._SYM_LT] = true;
+    BIN_OPS[Parser._SYM_LTE] = true;
+    BIN_OPS[Parser._SYM_MINUS] = true;
+    BIN_OPS[Parser._SYM_MOD] = true;
+    BIN_OPS[Parser._SYM_MUL] = true;
+    BIN_OPS[Parser._SYM_NEQ] = true;
+    BIN_OPS[Parser._SYM_NIN] = true;
     BIN_OPS[Parser._SYM_NOT_ELEM_OF] = true;
+    BIN_OPS[Parser._SYM_PLUS] = true;
+    BIN_OPS[Parser._SYM_ROTL] = true;
+    BIN_OPS[Parser._SYM_ROTR] = true;
+    BIN_OPS[Parser._SYM_SAT_ADD] = true;
+    BIN_OPS[Parser._SYM_SAT_SUB] = true;
+    BIN_OPS[Parser._SYM_SHL] = true;
+    BIN_OPS[Parser._SYM_SHR] = true;
 
     BIN_OPS_EXCEPT_GT = BIN_OPS.clone();
     BIN_OPS_EXCEPT_GT[Parser._SYM_GT] = false;
@@ -59,23 +75,45 @@ class ParserUtils {
     BIN_OPS_EXCEPT_IN = BIN_OPS.clone();
     BIN_OPS_EXCEPT_IN[Parser._SYM_IN] = false;
 
+    UN_OPS = NO_OPS.clone();
+    UN_OPS[Parser._SYM_MINUS] = true;
+    UN_OPS[Parser._SYM_EXCL] = true;
+    UN_OPS[Parser._SYM_TILDE] = true;
+
     ID_TOKENS = NO_OPS.clone();
     ID_TOKENS[Parser._identifierToken] = true;
+    ID_TOKENS[Parser._ADDRESS] = true;
     ID_TOKENS[Parser._ALIAS] = true;
+    ID_TOKENS[Parser._APPEND] = true;
+    ID_TOKENS[Parser._BINARY] = true;
+    ID_TOKENS[Parser._CALL] = true;
     ID_TOKENS[Parser._CONSTANT] = true;
     ID_TOKENS[Parser._ENCODE] = true;
     ID_TOKENS[Parser._EXCEPTION] = true;
+    ID_TOKENS[Parser._FETCH] = true;
+    ID_TOKENS[Parser._FIRMWARE] = true;
     ID_TOKENS[Parser._GROUP] = true;
     ID_TOKENS[Parser._INSTRUCTION] = true;
     ID_TOKENS[Parser._MEMORY] = true;
+    ID_TOKENS[Parser._NONE] = true;
+    ID_TOKENS[Parser._NOP] = true;
     ID_TOKENS[Parser._OPERATION] = true;
     ID_TOKENS[Parser._PREDICATE] = true;
+    ID_TOKENS[Parser._PREDICTION] = true;
+    ID_TOKENS[Parser._READ] = true;
     ID_TOKENS[Parser._REGISTER] = true;
+    ID_TOKENS[Parser._RETURN] = true;
+    ID_TOKENS[Parser._SEQUENCE] = true;
+    ID_TOKENS[Parser._STAGE] = true;
+    ID_TOKENS[Parser._START] = true;
+    ID_TOKENS[Parser._STARTUP] = true;
+    ID_TOKENS[Parser._STOP] = true;
     ID_TOKENS[Parser._SYM_IN] = true;
     ID_TOKENS[Parser._T_BIN] = true;
     ID_TOKENS[Parser._T_BIN_OP] = true;
     ID_TOKENS[Parser._T_BOOL] = true;
     ID_TOKENS[Parser._T_CALL_EX] = true;
+    ID_TOKENS[Parser._T_COMMON_DEFS] = true;
     ID_TOKENS[Parser._T_ENCS] = true;
     ID_TOKENS[Parser._T_ID] = true;
     ID_TOKENS[Parser._T_INT] = true;
@@ -87,51 +125,60 @@ class ParserUtils {
     ID_TOKENS[Parser._T_SYM_EX] = true;
     ID_TOKENS[Parser._T_UN_OP] = true;
     ID_TOKENS[Parser._T_VAL] = true;
+    ID_TOKENS[Parser._TRANSLATION] = true;
+    ID_TOKENS[Parser._WRITE] = true;
+
+    AUX_FIELD_TOKENS = NO_OPS.clone();
+    AUX_FIELD_TOKENS[Parser._PREDICATE] = true;
+    AUX_FIELD_TOKENS[Parser._ENCODE] = true;
   }
 
   /**
-   * Reorders the tail end of a left-sided binary expression tree "expr" to apply a cast.
-   * If the given "symOrBin" is a symbol expression, it will be converted to the type to cast to.
-   * If the given "symOrBin" is a binary expression, it has to have a SymbolExpr in its left side,
-   * which will be interpreted as the target type.
-   * If the given "expr" is not a binary expression, the cast operand will be the whole "expr".
-   * If the given "expr" is a binary expression, only its right leaf will be the cast operand.
+   * Given a cast expression, unpacks the cast value and, if it is a binary expression,
+   * reorders the tree as to only apply the cast to the right side of the binary expression.
+   * This represents the cast operator having the strongest precedence of all binary operators.
    *
-   * @param expr     A left-sided binary expression tree or a non-binary expression.
-   * @param symOrBin Either a SymbolExpr of the cast target type, or a BinaryExpr with the
-   *                 SymbolExpr as the left operand.
-   * @return A left-sided binary expression tree with a CastExpr as its leaf — or a simple CastExpr.
+   * @param expr A {@link CastExpr}, optionally containing a {@link BinaryExpr}.
+   * @return A cast expression with the proper precedence applied.
    */
-  static Expr reorderCastExpr(Expr expr, Expr symOrBin) {
-    Expr castee = expr instanceof BinaryExpr binExpr ? binExpr.right : expr;
-    if (symOrBin instanceof BinaryExpr binSym) {
-      var castExpr = new CastExpr(castee, typeLiteral(binSym.left));
-      if (expr instanceof BinaryExpr binExpr) {
-        binExpr.right = castExpr;
-        binSym.left = binExpr;
-      } else {
-        binSym.left = castExpr;
-      }
-      return binSym;
-    } else {
-      var castExpr = new CastExpr(castee, typeLiteral(symOrBin));
-      if (expr instanceof BinaryExpr binExpr) {
-        binExpr.right = castExpr;
-        return binExpr;
-      } else {
-        return castExpr;
+  static Expr reorderCastExpr(Expr expr) {
+    if (expr instanceof CastExpr castExpr) {
+      if (castExpr.value instanceof BinaryExpr binExpr) {
+        return new BinaryExpr(binExpr.left, binExpr.operator,
+            new CastExpr(binExpr.right, castExpr.type));
       }
     }
+    return expr;
   }
 
-  private static TypeLiteralOrPlaceholder typeLiteral(Expr expr) {
-    if (expr instanceof PlaceholderExpr placeholderExpr) {
-      return placeholderExpr;
-    } else if (expr instanceof IsSymExpr symExpr) {
-      return new TypeLiteral(symExpr);
-    } else {
-      throw new IllegalArgumentException("Unknown type literal node " + expr);
+  static Expr reorderBinaryExpr(Expr expr) {
+    if (expr instanceof BinaryExpr binExpr) {
+      var canReorder = canReorder(binExpr);
+      if (canReorder) {
+        return BinaryExpr.reorder(binExpr);
+      }
     }
+    return expr;
+  }
+
+  /**
+   * A binary expression can only be reordered if none of the operators in the binary expression
+   * tree use a macro or a placeholder as the operator.
+   *
+   * @param binExpr The top of a binary expression tree
+   * @return Whether the passed binary expression tree can be reordered
+   */
+  static boolean canReorder(BinaryExpr binExpr) {
+    if (!(binExpr.operator instanceof BinOp)) {
+      return false;
+    }
+    if (binExpr.left instanceof BinaryExpr leftBin && !canReorder(leftBin)) {
+      return false;
+    }
+    if (binExpr.right instanceof BinaryExpr rightBin && !canReorder(rightBin)) {
+      return false;
+    }
+    return true;
   }
 
   /**
@@ -170,8 +217,10 @@ class ParserUtils {
       return new MacroInstanceDefinition(macroOrPlaceholder, args, sourceLocation);
     } else if (isStmtType(macroOrPlaceholder.returnType())) {
       return new MacroInstanceStatement(macroOrPlaceholder, args, sourceLocation);
-    } else {
+    } else if (isExprType(macroOrPlaceholder.returnType())) {
       return new MacroInstanceExpr(macroOrPlaceholder, args, sourceLocation);
+    } else {
+      return new MacroInstanceNode(macroOrPlaceholder, args, sourceLocation);
     }
   }
 
@@ -205,8 +254,10 @@ class ParserUtils {
       return new MacroMatchDefinition(macroMatch);
     } else if (isStmtType(resultType)) {
       return new MacroMatchStatement(macroMatch);
-    } else {
+    } else if (isExprType(resultType)) {
       return new MacroMatchExpr(macroMatch);
+    } else {
+      return new MacroMatchNode(macroMatch);
     }
   }
 
@@ -303,7 +354,7 @@ class ParserUtils {
     if (isMacroMatch) {
       String type = parser.scanner.Peek().val;
       for (var basicType : BasicSyntaxType.values()) {
-        if (basicType.name().equals(type)) {
+        if (basicType.getName().equals(type)) {
           parser.scanner.ResetPeek();
           return basicType;
         }
@@ -333,7 +384,7 @@ class ParserUtils {
     } else {
       parser.errors.SemErr(node.location().begin().line(), node.location().begin().column(),
           "Expected node of type Ex, received " + node.syntaxType().print() + " - " + node);
-      return new Identifier("invalid", node.location());
+      return DUMMY_EXPR;
     }
   }
 
@@ -341,14 +392,13 @@ class ParserUtils {
    * Casts the node to the type Encs, or reports an error and returns a dummy node of that type.
    * Useful in the parser, where throwing cast exceptions is not the best way of error reporting.
    */
-  static FieldEncodingOrPlaceholder castEncs(Parser parser, Node node) {
-    if (node instanceof FieldEncodingOrPlaceholder fieldEncodingOrPlaceholder) {
-      return fieldEncodingOrPlaceholder;
+  static IsEncs castEncs(Parser parser, Node node) {
+    if (node instanceof IsEncs encs) {
+      return encs;
     } else {
       parser.errors.SemErr(node.location().begin().line(), node.location().begin().column(),
           "Expected node of type Encs, received " + node.syntaxType().print() + " - " + node);
-      return new EncodingDefinition.FieldEncoding(new Identifier("invalid", node.location()),
-          new StringLiteral("<<invalid>>", node.location()));
+      return new EncodingDefinition.EncodingField(DUMMY_ID, DUMMY_ID);
     }
   }
 
@@ -362,7 +412,7 @@ class ParserUtils {
     } else {
       parser.errors.SemErr(node.location().begin().line(), node.location().begin().column(),
           "Expected node of type Id, received " + node.syntaxType().print() + " - " + node);
-      return new Identifier("invalid", node.location());
+      return DUMMY_ID;
     }
   }
 
@@ -376,7 +426,7 @@ class ParserUtils {
     } else {
       parser.errors.SemErr(node.location().begin().line(), node.location().begin().column(),
           "Expected node of type BinOp, received " + node.syntaxType().print() + " - " + node);
-      return new BinOpExpr(Operator.Xor(), node.location());
+      return new BinOp(Operator.Xor(), node.location());
     }
   }
 
@@ -384,14 +434,29 @@ class ParserUtils {
    * Casts the node to the type IsaDefs, or reports an error and returns a dummy node of that type.
    * Useful in the parser, where throwing cast exceptions is not the best way of error reporting.
    */
-  static Definition castDef(Parser parser, Node node) {
-    if (node instanceof Definition definition) {
+  static Definition castCommonDef(Parser parser, Node node) {
+    if (node instanceof Definition definition
+        && definition.syntaxType().isSubTypeOf(BasicSyntaxType.COMMON_DEFS)) {
+      return definition;
+    } else {
+      parser.errors.SemErr(node.location().begin().line(), node.location().begin().column(),
+          "Expected node of type CommonDefs, received " + node.syntaxType().print() + " - " + node);
+      return DUMMY_DEF;
+    }
+  }
+
+  /**
+   * Casts the node to the type IsaDefs, or reports an error and returns a dummy node of that type.
+   * Useful in the parser, where throwing cast exceptions is not the best way of error reporting.
+   */
+  static Definition castIsaDef(Parser parser, Node node) {
+    if (node instanceof Definition definition
+        && definition.syntaxType().isSubTypeOf(BasicSyntaxType.ISA_DEFS)) {
       return definition;
     } else {
       parser.errors.SemErr(node.location().begin().line(), node.location().begin().column(),
           "Expected node of type IsaDefs, received " + node.syntaxType().print() + " - " + node);
-      return new ConstantDefinition(new Identifier("invalid", node.location()), null,
-          new Identifier("invalid", node.location()), node.location());
+      return DUMMY_DEF;
     }
   }
 
@@ -405,7 +470,7 @@ class ParserUtils {
     } else {
       parser.errors.SemErr(node.location().begin().line(), node.location().begin().column(),
           "Expected node of type Stat, received " + node.syntaxType().print() + " - " + node);
-      return new CallStatement(new Identifier("invalid", node.location()));
+      return DUMMY_STAT;
     }
   }
 
@@ -419,17 +484,19 @@ class ParserUtils {
     } else {
       parser.errors.SemErr(node.location().begin().line(), node.location().begin().column(),
           "Expected node of type Stats, received " + node.syntaxType().print() + " - " + node);
-      return new CallStatement(new Identifier("invalid", node.location()));
+      return DUMMY_STAT;
     }
   }
 
-  static Node expandMacro(Parser parser, Node node) {
-    if (node instanceof MacroInstance macroInstance
-        && macroInstance.macroOrPlaceholder() instanceof Macro) {
-      var macroExpander = new MacroExpander(Map.of(), parser.macroOverrides, node.location());
-      return macroExpander.expandNode(node);
+  static Node expandNode(Parser parser, Node node) {
+    var macroExpander = new MacroExpander(Map.of(), parser.macroOverrides, node.location());
+    var expanded = macroExpander.expandNode(node);
+    if (parser.macroContext.isEmpty()) {
+      // TODO This is necessary to completely copy all nodes to not cause issues
+      //  in symbol collection - find out why
+      return macroExpander.expandNode(expanded);
     }
-    return node;
+    return expanded;
   }
 
   static void readMacroSymbols(SymbolTable macroTable, List<Definition> definitions) {
@@ -437,7 +504,7 @@ class ParserUtils {
       if (definition instanceof DefinitionList list) {
         readMacroSymbols(macroTable, list.items);
       } else if (definition instanceof ModelDefinition modelDefinition) {
-        macroTable.addMacro(modelDefinition.toMacro(), modelDefinition.location());
+        macroTable.addModelDefinition(modelDefinition);
       }
     }
   }
@@ -515,9 +582,7 @@ class ParserUtils {
    * @return Whether token is a unary operator token
    */
   static boolean isUnaryOperator(Token token) {
-    return token.kind == Parser._SYM_MINUS
-        || token.kind == Parser._SYM_EXCL
-        || token.kind == Parser._SYM_TILDE;
+    return UN_OPS[token.kind];
   }
 
   /**
@@ -543,5 +608,75 @@ class ParserUtils {
       }
       return result;
     }
+  }
+
+  static List<SequenceCallExpr> expandSequenceCalls(Parser parser, List<SequenceCallExpr> calls) {
+    var expandedCalls = new ArrayList<SequenceCallExpr>(calls.size());
+    for (SequenceCallExpr callExpr : calls) {
+      if (callExpr.range == null) {
+        expandedCalls.add(callExpr);
+      } else {
+        BigInteger start = BigInteger.ZERO;
+        BigInteger end = BigInteger.ZERO;
+        if (callExpr.range instanceof RangeExpr rangeExpr) {
+          if (rangeExpr.from instanceof IntegerLiteral integerLiteral) {
+            start = integerLiteral.number;
+          } else {
+            reportError(parser, "Unknown start index type " + rangeExpr.from,
+                rangeExpr.from.location());
+          }
+          if (rangeExpr.to instanceof IntegerLiteral integerLiteral) {
+            end = integerLiteral.number;
+          } else {
+            reportError(parser, "Unknown start index type " + rangeExpr.to,
+                rangeExpr.to.location());
+          }
+        } else if (callExpr.range instanceof IntegerLiteral integerLiteral) {
+          start = end = integerLiteral.number;
+        } else {
+          reportError(parser, "Unknown index type " + callExpr.range, callExpr.range.location());
+        }
+        for (; !start.equals(end); start = start.add(BigInteger.valueOf(end.compareTo(start)))) {
+          expandedCalls.add(
+              new SequenceCallExpr(new Identifier(callExpr.target.name + start, callExpr.loc), null,
+                  callExpr.loc));
+        }
+      }
+    }
+    return expandedCalls;
+  }
+
+  static void addDef(List<Definition> definitions, Definition def) {
+    if (def instanceof DefinitionList list) {
+      for (Definition item : list.items) {
+        addDef(definitions, item);
+      }
+    } else {
+      definitions.add(def);
+    }
+  }
+
+  static void addEncs(List<IsEncs> encs, @Nullable IsEncs enc) {
+    if (enc instanceof EncodingDefinition.EncsNode list) {
+      for (IsEncs item : list.items) {
+        addEncs(encs, item);
+      }
+    } else if (enc != null) {
+      encs.add(enc);
+    }
+  }
+
+  static void addStats(List<Statement> stats, Statement stmt) {
+    if (stmt instanceof StatementList list) {
+      for (Statement item : list.items) {
+        addStats(stats, item);
+      }
+    } else {
+      stats.add(stmt);
+    }
+  }
+
+  private static void reportError(Parser parser, String error, SourceLocation location) {
+    parser.errors.SemErr(location.begin().line(), location.begin().column(), error);
   }
 }

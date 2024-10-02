@@ -113,7 +113,9 @@ public class StatementTest {
                 List.of(List.of(new IntegerLiteral("32", loc))), loc),
             List.of(new FormatDefinition.RangeFormatField(
                 new Identifier("bits", loc),
-                List.of(new RangeExpr(new IntegerLiteral("31", loc), new IntegerLiteral("0", loc)))
+                List.of(new RangeExpr(new IntegerLiteral("31", loc),
+                    new IntegerLiteral("0", loc))),
+                null
             )),
             List.of(),
             loc
@@ -125,12 +127,12 @@ public class StatementTest {
                 new IfStatement(
                     new BinaryExpr(
                         new IntegerLiteral("3", loc),
-                        new BinOpExpr(Operator.Greater(), loc),
+                        new BinOp(Operator.Greater(), loc),
                         new IntegerLiteral("4", loc)),
                     new IfStatement(
                         new BinaryExpr(
                             new IntegerLiteral("9", loc),
-                            new BinOpExpr(Operator.Less(), loc),
+                            new BinOp(Operator.Less(), loc),
                             new IntegerLiteral("2", loc)),
                         new BlockStatement(loc),
                         new BlockStatement(loc),
@@ -149,7 +151,25 @@ public class StatementTest {
         loc
     ));
     verifyPrettifiedAst(ast);
-    Assertions.assertEquals(expectedAst.prettyPrint(), ast.prettyPrint());
+    Assertions.assertEquals(expectedAst.prettyPrint().toString(), ast.prettyPrint().toString());
     Assertions.assertEquals(expectedAst, ast);
   }
+
+  @Test
+  void parseLockStatement() {
+    var prog = """
+        instruction set architecture ISA = {
+          memory MEM  : Bits<32> -> Bits<32>
+          format Btype : Bits<32> = { bits [31..0] }
+          instruction INC : Btype = {
+            lock MEM(0x1000'0000) in {
+              MEM(0x1000'0000) := MEM(0x1000'0000) + 0x1
+            }
+          }
+        }
+        """;
+    var ast = Assertions.assertDoesNotThrow(() -> VadlParser.parse(prog), "Cannot parse input");
+    verifyPrettifiedAst(ast);
+  }
+
 }

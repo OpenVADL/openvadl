@@ -31,12 +31,12 @@ public class Ast {
    *
    * @return a source code resulting in the same AST.
    */
-  public String prettyPrint() {
+  public CharSequence prettyPrint() {
     StringBuilder builder = new StringBuilder();
     for (var definition : definitions) {
       definition.prettyPrint(0, builder);
     }
-    return builder.toString();
+    return builder;
   }
 
   @Override
@@ -85,6 +85,102 @@ abstract class Node {
   abstract SyntaxType syntaxType();
 
   abstract void prettyPrint(int indent, StringBuilder builder);
+}
+
+final class BinOp extends Node implements IsBinOp {
+
+  Operator operator;
+  SourceLocation location;
+
+  BinOp(Operator operator, SourceLocation location) {
+    this.operator = operator;
+    this.location = location;
+  }
+
+  @Override
+  SourceLocation location() {
+    return location;
+  }
+
+  @Override
+  SyntaxType syntaxType() {
+    return BasicSyntaxType.BIN_OP;
+  }
+
+  @Override
+  public void prettyPrint(int indent, StringBuilder builder) {
+    builder.append(operator.symbol);
+  }
+
+  @Override
+  public String toString() {
+    return getClass().getSimpleName() + " " + operator.symbol;
+  }
+
+  @Override
+  public boolean equals(Object o) {
+    if (this == o) {
+      return true;
+    }
+    if (o == null || getClass() != o.getClass()) {
+      return false;
+    }
+    BinOp that = (BinOp) o;
+    return Objects.equals(operator, that.operator);
+  }
+
+  @Override
+  public int hashCode() {
+    return operator.hashCode();
+  }
+}
+
+final class UnOp extends Node implements IsUnOp {
+
+  UnaryOperator operator;
+  SourceLocation location;
+
+  UnOp(UnaryOperator operator, SourceLocation location) {
+    this.operator = operator;
+    this.location = location;
+  }
+
+  @Override
+  SourceLocation location() {
+    return location;
+  }
+
+  @Override
+  SyntaxType syntaxType() {
+    return BasicSyntaxType.UN_OP;
+  }
+
+  @Override
+  public void prettyPrint(int indent, StringBuilder builder) {
+    builder.append(operator.symbol);
+  }
+
+  @Override
+  public String toString() {
+    return getClass().getSimpleName() + " " + operator.symbol;
+  }
+
+  @Override
+  public boolean equals(Object o) {
+    if (this == o) {
+      return true;
+    }
+    if (o == null || getClass() != o.getClass()) {
+      return false;
+    }
+    UnOp that = (UnOp) o;
+    return Objects.equals(operator, that.operator);
+  }
+
+  @Override
+  public int hashCode() {
+    return operator.hashCode();
+  }
 }
 
 class RecordInstance extends Node {
@@ -150,7 +246,7 @@ class MacroReference extends Node {
   }
 }
 
-final class PlaceholderNode extends Node implements IsBinOp, IsUnOp, FieldEncodingOrPlaceholder {
+final class PlaceholderNode extends Node implements IsBinOp, IsUnOp, IsEncs {
 
   List<String> segments;
   SyntaxType syntaxType;
@@ -176,5 +272,120 @@ final class PlaceholderNode extends Node implements IsBinOp, IsUnOp, FieldEncodi
   public void prettyPrint(int indent, StringBuilder builder) {
     builder.append("$");
     builder.append(String.join(".", segments));
+  }
+}
+
+final class MacroInstanceNode extends Node implements IsMacroInstance, IsEncs, IsBinOp, IsUnOp {
+
+  MacroOrPlaceholder macro;
+  List<Node> arguments;
+  SourceLocation loc;
+
+  public MacroInstanceNode(MacroOrPlaceholder macro, List<Node> arguments, SourceLocation loc) {
+    this.macro = macro;
+    this.arguments = arguments;
+    this.loc = loc;
+  }
+
+  @Override
+  public SourceLocation location() {
+    return loc;
+  }
+
+  @Override
+  SyntaxType syntaxType() {
+    return macro.returnType();
+  }
+
+  @Override
+  public void prettyPrint(int indent, StringBuilder builder) {
+    builder.append(prettyIndentString(indent));
+    builder.append("$");
+    if (macro instanceof Macro m) {
+      builder.append(m.name().name);
+    } else if (macro instanceof MacroPlaceholder mp) {
+      builder.append(String.join(".", mp.segments()));
+    }
+    builder.append("(");
+    var isFirst = true;
+    for (var arg : arguments) {
+      if (!isFirst) {
+        builder.append(" ; ");
+      }
+      isFirst = false;
+      arg.prettyPrint(0, builder);
+    }
+    builder.append(")");
+  }
+
+  @Override
+  public boolean equals(Object o) {
+    if (this == o) {
+      return true;
+    }
+    if (o == null || getClass() != o.getClass()) {
+      return false;
+    }
+
+    MacroInstanceNode that = (MacroInstanceNode) o;
+    return macro.equals(that.macro)
+        && arguments.equals(that.arguments);
+  }
+
+  @Override
+  public int hashCode() {
+    int result = macro.hashCode();
+    result = 31 * result + arguments.hashCode();
+    return result;
+  }
+
+  @Override
+  public MacroOrPlaceholder macroOrPlaceholder() {
+    return macro;
+  }
+}
+
+/**
+ * An internal temporary placeholder of a macro-level "match" construct.
+ * This node should never leave the parser.
+ */
+final class MacroMatchNode extends Node implements IsMacroMatch, IsEncs, IsBinOp, IsUnOp {
+  MacroMatch macroMatch;
+
+  MacroMatchNode(MacroMatch macroMatch) {
+    this.macroMatch = macroMatch;
+  }
+
+  @Override
+  public SourceLocation location() {
+    return macroMatch.sourceLocation();
+  }
+
+  @Override
+  SyntaxType syntaxType() {
+    return macroMatch.resultType();
+  }
+
+  @Override
+  public void prettyPrint(int indent, StringBuilder builder) {
+    macroMatch.prettyPrint(indent, builder);
+  }
+
+  @Override
+  public boolean equals(Object o) {
+    if (this == o) {
+      return true;
+    }
+    if (o == null || getClass() != o.getClass()) {
+      return false;
+    }
+
+    MacroMatchNode that = (MacroMatchNode) o;
+    return macroMatch.equals(that.macroMatch);
+  }
+
+  @Override
+  public int hashCode() {
+    return macroMatch.hashCode();
   }
 }

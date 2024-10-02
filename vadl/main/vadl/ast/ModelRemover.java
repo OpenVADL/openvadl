@@ -60,6 +60,11 @@ public class ModelRemover implements DefinitionVisitor<Definition> {
   }
 
   @Override
+  public Definition visit(RelocationDefinition definition) {
+    return definition;
+  }
+
+  @Override
   public Definition visit(EncodingDefinition definition) {
     return definition;
   }
@@ -148,6 +153,90 @@ public class ModelRemover implements DefinitionVisitor<Definition> {
   @Override
   public Definition visit(GroupDefinition groupDefinition) {
     return groupDefinition;
+  }
+
+  @Override
+  public Definition visit(ApplicationBinaryInterfaceDefinition definition) {
+    return definition;
+  }
+
+  @Override
+  public Definition visit(AbiSequenceDefinition definition) {
+    return definition;
+  }
+
+  @Override
+  public Definition visit(SpecialPurposeRegisterDefinition definition) {
+    return definition;
+  }
+
+  @Override
+  public Definition visit(MicroProcessorDefinition definition) {
+    definition.definitions.removeIf(this::shouldRemove);
+    definition.definitions.replaceAll(def -> def.accept(this));
+    return definition;
+  }
+
+  @Override
+  public Definition visit(PatchDefinition definition) {
+    return definition;
+  }
+
+  @Override
+  public Definition visit(SourceDefinition definition) {
+    return definition;
+  }
+
+  @Override
+  public Definition visit(CpuFunctionDefinition definition) {
+    return definition;
+  }
+
+  @Override
+  public Definition visit(CpuProcessDefinition definition) {
+    return definition;
+  }
+
+  @Override
+  public Definition visit(MicroArchitectureDefinition definition) {
+    definition.definitions.replaceAll(def -> def.accept(this));
+    definition.definitions.removeIf(this::shouldRemove);
+    return definition;
+  }
+
+  @Override
+  public Definition visit(MacroInstructionDefinition definition) {
+    return definition;
+  }
+
+  @Override
+  public Definition visit(PortBehaviorDefinition definition) {
+    return definition;
+  }
+
+  @Override
+  public Definition visit(PipelineDefinition definition) {
+    return definition;
+  }
+
+  @Override
+  public Definition visit(StageDefinition definition) {
+    return definition;
+  }
+
+  @Override
+  public Definition visit(CacheDefinition definition) {
+    return definition;
+  }
+
+  @Override
+  public Definition visit(LogicDefinition definition) {
+    return definition;
+  }
+
+  @Override
+  public Definition visit(SignalDefinition definition) {
+    return definition;
   }
 
   private boolean shouldRemove(Definition definition) {

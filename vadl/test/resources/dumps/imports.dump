@@ -50,7 +50,6 @@ ConstantDefinition
 . Identifier name: "topLevelConstant"
 . BinaryExpr operator: +
 . : IntegerLiteral literal: 456 (456)
-. : BinOpExpr +
 . : IntegerLiteral literal: 789 (789)
 InstructionSetDefinition
 . Identifier name: "ISA_A"

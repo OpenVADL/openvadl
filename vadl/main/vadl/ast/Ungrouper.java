@@ -151,16 +151,6 @@ public class Ungrouper
   }
 
   @Override
-  public Expr visit(BinOpExpr expr) {
-    return expr;
-  }
-
-  @Override
-  public Expr visit(UnOpExpr expr) {
-    return expr;
-  }
-
-  @Override
   public Expr visit(MacroMatchExpr expr) {
     return expr;
   }
@@ -197,7 +187,19 @@ public class Ungrouper
   }
 
   @Override
-  public Expr visit(ForAllThenExpr expr) {
+  public Expr visit(ForallThenExpr expr) {
+    return expr;
+  }
+
+  @Override
+  public Expr visit(ForallExpr expr) {
+    expr.indices.replaceAll(index -> new ForallExpr.Index(index.id(), index.domain().accept(this)));
+    expr.expr = expr.expr.accept(this);
+    return expr;
+  }
+
+  @Override
+  public Expr visit(SequenceCallExpr expr) {
     return expr;
   }
 
@@ -271,11 +273,17 @@ public class Ungrouper
   }
 
   @Override
+  public Definition visit(RelocationDefinition definition) {
+    definition.expr = definition.expr.accept(this);
+    return definition;
+  }
+
+  @Override
   public Definition visit(EncodingDefinition definition) {
     ungroupAnnotations(definition);
-    definition.fieldEncodings().encodings.replaceAll(encoding -> {
-      var enc = (EncodingDefinition.FieldEncoding) encoding;
-      return new EncodingDefinition.FieldEncoding(enc.field(), enc.value().accept(this));
+    definition.encodings.items.replaceAll(encoding -> {
+      var enc = (EncodingDefinition.EncodingField) encoding;
+      return new EncodingDefinition.EncodingField(enc.field(), enc.value().accept(this));
     });
     return definition;
   }
@@ -391,6 +399,111 @@ public class Ungrouper
   }
 
   @Override
+  public Definition visit(ApplicationBinaryInterfaceDefinition definition) {
+    ungroupAnnotations(definition);
+    return definition;
+  }
+
+  @Override
+  public Definition visit(AbiSequenceDefinition definition) {
+    ungroupAnnotations(definition);
+    definition.statements.replaceAll(stmt -> (InstructionCallStatement) stmt.accept(this));
+    return definition;
+  }
+
+  @Override
+  public Definition visit(SpecialPurposeRegisterDefinition definition) {
+    ungroupAnnotations(definition);
+    return definition;
+  }
+
+  @Override
+  public Definition visit(MicroProcessorDefinition definition) {
+    ungroupAnnotations(definition);
+    definition.definitions.replaceAll(def -> def.accept(this));
+    return definition;
+  }
+
+  @Override
+  public Definition visit(PatchDefinition definition) {
+    ungroupAnnotations(definition);
+    return definition;
+  }
+
+  @Override
+  public Definition visit(SourceDefinition definition) {
+    ungroupAnnotations(definition);
+    return definition;
+  }
+
+  @Override
+  public Definition visit(CpuFunctionDefinition definition) {
+    ungroupAnnotations(definition);
+    definition.expr = definition.expr.accept(this);
+    return definition;
+  }
+
+  @Override
+  public Definition visit(CpuProcessDefinition definition) {
+    ungroupAnnotations(definition);
+    definition.statement = definition.statement.accept(this);
+    return definition;
+  }
+
+  @Override
+  public Definition visit(MicroArchitectureDefinition definition) {
+    ungroupAnnotations(definition);
+    definition.definitions.replaceAll(def -> def.accept(this));
+    return definition;
+  }
+
+  @Override
+  public Definition visit(MacroInstructionDefinition definition) {
+    ungroupAnnotations(definition);
+    definition.statement = definition.statement.accept(this);
+    return definition;
+  }
+
+  @Override
+  public Definition visit(PortBehaviorDefinition definition) {
+    ungroupAnnotations(definition);
+    definition.statement = definition.statement.accept(this);
+    return definition;
+  }
+
+  @Override
+  public Definition visit(PipelineDefinition definition) {
+    ungroupAnnotations(definition);
+    definition.statement = definition.statement.accept(this);
+    return definition;
+  }
+
+  @Override
+  public Definition visit(StageDefinition definition) {
+    ungroupAnnotations(definition);
+    definition.statement = definition.statement.accept(this);
+    return definition;
+  }
+
+  @Override
+  public Definition visit(CacheDefinition definition) {
+    ungroupAnnotations(definition);
+    return definition;
+  }
+
+  @Override
+  public Definition visit(LogicDefinition definition) {
+    ungroupAnnotations(definition);
+    return definition;
+  }
+
+  @Override
+  public Definition visit(SignalDefinition definition) {
+    ungroupAnnotations(definition);
+    return definition;
+  }
+
+  @Override
   public Statement visit(BlockStatement blockStatement) {
     blockStatement.statements.replaceAll(statement -> statement.accept(this));
     return blockStatement;
@@ -468,7 +581,23 @@ public class Ungrouper
     instructionCallStatement.namedArguments.replaceAll(namedArgument ->
         new InstructionCallStatement.NamedArgument(namedArgument.name(),
             namedArgument.value().accept(this)));
+    instructionCallStatement.unnamedArguments.replaceAll(expr -> expr.accept(this));
     return instructionCallStatement;
+  }
+
+  @Override
+  public Statement visit(LockStatement lockStatement) {
+    lockStatement.expr = lockStatement.expr.accept(this);
+    lockStatement.statement = lockStatement.statement.accept(this);
+    return lockStatement;
+  }
+
+  @Override
+  public Statement visit(ForallStatement forallStatement) {
+    forallStatement.indices.replaceAll(
+        index -> new ForallStatement.Index(index.name(), index.domain().accept(this)));
+    forallStatement.statement = forallStatement.statement.accept(this);
+    return forallStatement;
   }
 
   private void ungroupAnnotations(Definition definition) {

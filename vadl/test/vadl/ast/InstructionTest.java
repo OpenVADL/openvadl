@@ -1,5 +1,6 @@
 package vadl.ast;
 
+import static vadl.ast.AstTestUtils.assertAstEquality;
 import static vadl.ast.AstTestUtils.verifyPrettifiedAst;
 
 import org.junit.jupiter.api.Test;
@@ -36,5 +37,47 @@ public class InstructionTest {
 
     var ast = VadlParser.parse(prog);
     verifyPrettifiedAst(ast);
+  }
+
+  @Test
+  void noneIsValidEncodingKeyword() {
+    var prog1 = """
+        instruction set architecture TEST = {
+          model Encoding (head: Encs) : Encs = {
+            $head
+          , d = 4
+          , none
+          }
+        
+          format R_TYPE : Bits<32> = {
+            a: Bits<10>, b: Bits<10>, c: Bits<10>, d: Bits<10>
+          }
+
+          instruction ADD : R_TYPE = {}
+
+          encoding ADD = {
+            a = 1,
+            $Encoding(b = 2, none, c=3)
+          }
+        }
+        """;
+
+    var prog2 = """
+        instruction set architecture TEST = {
+          format R_TYPE : Bits<32> = {
+            a: Bits<10>, b: Bits<10>, c: Bits<10>, d: Bits<10>
+          }
+          instruction ADD : R_TYPE = {}
+          encoding ADD = {
+            a = 1
+          , b = 2
+          , c = 3
+          , d = 4
+          }
+        }
+        """;
+
+    Ast parse = VadlParser.parse(prog1);
+    assertAstEquality(parse, VadlParser.parse(prog2));
   }
 }

@@ -7,9 +7,9 @@ import javax.annotation.Nullable;
 import vadl.utils.SourceLocation;
 
 abstract sealed class Statement extends Node
-    permits AssignmentStatement, BlockStatement, CallStatement, IfStatement,
-    InstructionCallStatement, LetStatement, MacroInstanceStatement, MacroMatchStatement,
-    MatchStatement, PlaceholderStatement, RaiseStatement, StatementList {
+    permits AssignmentStatement, BlockStatement, CallStatement, ForallStatement, IfStatement,
+    InstructionCallStatement, LetStatement, LockStatement, MacroInstanceStatement,
+    MacroMatchStatement, MatchStatement, PlaceholderStatement, RaiseStatement, StatementList {
   <T> T accept(StatementVisitor<T> visitor) {
     // TODO Use exhaustive switch with patterns in future Java versions
     if (this instanceof BlockStatement b) {
@@ -36,6 +36,10 @@ abstract sealed class Statement extends Node
       return visitor.visit(m);
     } else if (this instanceof StatementList s) {
       return visitor.visit(s);
+    } else if (this instanceof LockStatement l) {
+      return visitor.visit(l);
+    } else if (this instanceof ForallStatement f) {
+      return visitor.visit(f);
     } else {
       throw new IllegalStateException("Unhandled statement type " + getClass().getSimpleName());
     }
@@ -71,6 +75,10 @@ interface StatementVisitor<T> {
   T visit(StatementList statementList);
 
   T visit(InstructionCallStatement instructionCallStatement);
+
+  T visit(LockStatement lockStatement);
+
+  T visit(ForallStatement forallStatement);
 }
 
 final class BlockStatement extends Statement {
@@ -442,7 +450,7 @@ final class PlaceholderStatement extends Statement {
  * An internal temporary placeholder of macro instantiations.
  * This node should never leave the parser.
  */
-final class MacroInstanceStatement extends Statement implements MacroInstance {
+final class MacroInstanceStatement extends Statement implements IsMacroInstance {
   MacroOrPlaceholder macro;
   List<Node> arguments;
   SourceLocation loc;
@@ -495,7 +503,7 @@ final class MacroInstanceStatement extends Statement implements MacroInstance {
  * An internal temporary placeholder of a macro-level "match" construct.
  * This node should never leave the parser.
  */
-final class MacroMatchStatement extends Statement {
+final class MacroMatchStatement extends Statement implements IsMacroMatch {
   MacroMatch macroMatch;
 
   MacroMatchStatement(MacroMatch macroMatch) {
@@ -630,12 +638,16 @@ final class InstructionCallStatement extends Statement {
 
   IdentifierOrPlaceholder id;
   List<NamedArgument> namedArguments;
+  List<Expr> unnamedArguments;
   SourceLocation loc;
 
+  @Nullable Definition instrNode;
+
   InstructionCallStatement(IdentifierOrPlaceholder id, List<NamedArgument> namedArguments,
-                           SourceLocation loc) {
+                           List<Expr> unnamedArguments, SourceLocation loc) {
     this.id = id;
     this.namedArguments = namedArguments;
+    this.unnamedArguments = unnamedArguments;
     this.loc = loc;
   }
 
@@ -652,18 +664,33 @@ final class InstructionCallStatement extends Statement {
   void prettyPrint(int indent, StringBuilder builder) {
     builder.append(prettyIndentString(indent));
     id.prettyPrint(0, builder);
-    builder.append("{");
-    var isFirst = true;
-    for (NamedArgument namedArgument : namedArguments) {
-      if (!isFirst) {
-        builder.append(", ");
+    if (!namedArguments.isEmpty()) {
+      builder.append("{");
+      var isFirst = true;
+      for (NamedArgument namedArgument : namedArguments) {
+        if (!isFirst) {
+          builder.append(", ");
+        }
+        isFirst = false;
+        namedArgument.name.prettyPrint(0, builder);
+        builder.append(" = ");
+        namedArgument.value.prettyPrint(0, builder);
       }
-      isFirst = false;
-      namedArgument.name.prettyPrint(0, builder);
-      builder.append(" = ");
-      namedArgument.value.prettyPrint(0, builder);
+      builder.append("}");
     }
-    builder.append("}\n");
+    if (!unnamedArguments.isEmpty()) {
+      builder.append("(");
+      var isFirst = true;
+      for (Expr arg : unnamedArguments) {
+        if (!isFirst) {
+          builder.append(", ");
+        }
+        isFirst = false;
+        arg.prettyPrint(0, builder);
+      }
+      builder.append(")");
+    }
+    builder.append("\n");
   }
 
   @Override
@@ -676,14 +703,115 @@ final class InstructionCallStatement extends Statement {
     }
     InstructionCallStatement that = (InstructionCallStatement) o;
     return Objects.equals(id, that.id)
-        && Objects.equals(namedArguments, that.namedArguments);
+        && Objects.equals(namedArguments, that.namedArguments)
+        && Objects.equals(unnamedArguments, that.unnamedArguments);
   }
 
   @Override
   public int hashCode() {
-    return Objects.hash(id, namedArguments, loc);
+    return Objects.hash(id, namedArguments, unnamedArguments);
   }
 
   record NamedArgument(Identifier name, Expr value) {
   }
 }
+
+final class LockStatement extends Statement {
+  Expr expr;
+  Statement statement;
+  SourceLocation loc;
+
+  LockStatement(Expr expr, Statement statement, SourceLocation loc) {
+    this.expr = expr;
+    this.statement = statement;
+    this.loc = loc;
+  }
+
+  @Override
+  SourceLocation location() {
+    return loc;
+  }
+
+  @Override
+  void prettyPrint(int indent, StringBuilder builder) {
+    builder.append(prettyIndentString(indent));
+    builder.append("lock ");
+    expr.prettyPrint(0, builder);
+    builder.append(" in\n");
+    statement.prettyPrint(indent + 1, builder);
+  }
+
+  @Override
+  public boolean equals(Object o) {
+    if (this == o) {
+      return true;
+    }
+    if (o == null || getClass() != o.getClass()) {
+      return false;
+    }
+    LockStatement that = (LockStatement) o;
+    return Objects.equals(expr, that.expr)
+        && Objects.equals(statement, that.statement);
+  }
+
+  @Override
+  public int hashCode() {
+    return Objects.hash(expr, statement);
+  }
+}
+
+final class ForallStatement extends Statement {
+  List<Index> indices;
+  Statement statement;
+  SourceLocation loc;
+
+  ForallStatement(List<Index> indices, Statement statement, SourceLocation loc) {
+    this.indices = indices;
+    this.statement = statement;
+    this.loc = loc;
+  }
+
+  @Override
+  SourceLocation location() {
+    return loc;
+  }
+
+  @Override
+  void prettyPrint(int indent, StringBuilder builder) {
+    builder.append(prettyIndentString(indent));
+    builder.append("forall ");
+    var isFirst = true;
+    for (Index index : indices) {
+      if (!isFirst) {
+        builder.append(", ");
+      }
+      index.name.prettyPrint(0, builder);
+      builder.append(" in ");
+      index.domain.prettyPrint(0, builder);
+    }
+    builder.append(" do\n");
+    statement.prettyPrint(indent + 1, builder);
+  }
+
+  @Override
+  public boolean equals(Object o) {
+    if (this == o) {
+      return true;
+    }
+    if (o == null || getClass() != o.getClass()) {
+      return false;
+    }
+    ForallStatement that = (ForallStatement) o;
+    return Objects.equals(indices, that.indices)
+        && Objects.equals(statement, that.statement);
+  }
+
+  @Override
+  public int hashCode() {
+    return Objects.hash(indices, statement);
+  }
+
+  record Index(Identifier name, Expr domain) {
+  }
+}
+
