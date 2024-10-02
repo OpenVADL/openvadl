@@ -39,7 +39,8 @@ instruction set architecture RV3264I = {
   using UInt5    = UInt< 5>               // 5 bit unsigned shift ammount
   using UShft    = UInt<SftLen>           // 5 or 6 bit unsigned shift ammount
 
-  [X(0) = 0]                              // register with index 0 always is 0
+  constant ZERO_REGISTER_INDEX = 0        // Index of the zero register
+  [X(ZERO_REGISTER_INDEX) = 0]            // register with index 0 always is 0
   register file    X : Index   -> Regs    // integer register file with 32 registers of 32 bits
   program counter PC : Address            // PC points to the start of the current instruction
   memory         MEM : Address -> Byte    // byte addressed memory
@@ -289,7 +290,7 @@ $Arch3264 ( // ((((((((((((((((((((((((((((((((((((((((
 
   pseudo instruction RET =
   {
-      JALR{ rs1 = 1 as Bits5, rd = 0 as Bits5, imm = 0 as Bits12 }
+      JALR{ rs1 = 1 as Bits5, rd = ZERO_REGISTER_INDEX as Bits5, imm = 0 as Bits12 }
   }
   assembly RET = mnemonic
 
@@ -301,7 +302,7 @@ $Arch3264 ( // ((((((((((((((((((((((((((((((((((((((((
 
   pseudo instruction NOP =
   {
-      ADDI{ rd = 0 as Bits5, rs1 = 0 as Bits5, imm = 0 as Bits12 }
+      ADDI{ rd = ZERO_REGISTER_INDEX as Bits5, rs1 = ZERO_REGISTER_INDEX as Bits5, imm = 0 as Bits12 }
   }
   assembly NOP = mnemonic
 
@@ -320,70 +321,70 @@ $Arch3264 ( // ((((((((((((((((((((((((((((((((((((((((
 
   pseudo instruction NEG( rd : Index, rs1 : Index ) =
   {
-      SUB{ rd = rd, rs1 = 0 as Bits5, rs2 = rs1 }
+      SUB{ rd = rd, rs1 = ZERO_REGISTER_INDEX as Bits5, rs2 = rs1 }
   }
 
   assembly NEG = (mnemonic, " ", register( rd ), ",", register( rs1 ))
 
   pseudo instruction SNEZ( rd : Index, rs1 : Index ) =
   {
-      SLTU{ rd = rd, rs1 = 0 as Bits5, rs2 = rs1 }
+      SLTU{ rd = rd, rs1 = ZERO_REGISTER_INDEX as Bits5, rs2 = rs1 }
   }
 
   assembly SNEZ = (mnemonic, " ", register( rd ), ",", register( rs1 ))
 
   pseudo instruction SLTZ( rd : Index, rs1 : Index ) =
   {
-      SLT{ rd = rd, rs1 = rs1, rs2 = 0 as Bits5 }
+      SLT{ rd = rd, rs1 = rs1, rs2 = ZERO_REGISTER_INDEX as Bits5 }
   }
 
   assembly SLTZ = (mnemonic, " ", register( rd ), ",", register( rs1 ))
 
   pseudo instruction SGTZ( rd : Index, rs1 : Index ) =
   {
-      SLT{ rd = rd, rs1 = 0 as Bits5, rs2 = rs1 }
+      SLT{ rd = rd, rs1 = ZERO_REGISTER_INDEX as Bits5, rs2 = rs1 }
   }
 
   assembly SGTZ = (mnemonic, " ", register( rd ), ",", register( rs1 ))
 
   pseudo instruction BEQZ( rs : Index, offset : Bits<12> ) =
   {
-      BEQ{ rs1 = rs, rs2 = 0 as Bits5, imm = offset }
+      BEQ{ rs1 = rs, rs2 = ZERO_REGISTER_INDEX as Bits5, imm = offset }
   }
 
   assembly BEQZ = (mnemonic, " ", register( rs ), ",", decimal( offset ))
 
   pseudo instruction BNEZ( rs : Index, offset : Bits<12> ) =
   {
-      BNE{ rs1 = rs, rs2 = 0 as Bits5, imm = offset }
+      BNE{ rs1 = rs, rs2 = ZERO_REGISTER_INDEX as Bits5, imm = offset }
   }
 
   assembly BNEZ = (mnemonic, " ", register( rs ), ",", decimal( offset ))
 
   pseudo instruction BLEZ( rs : Index, offset : Bits<12> ) =
   {
-      BGE{ rs1 = 0 as Bits5, rs2 = rs, imm = offset }
+      BGE{ rs1 = ZERO_REGISTER_INDEX as Bits5, rs2 = rs, imm = offset }
   }
 
   assembly BLEZ = (mnemonic, " ", register( rs ), ",", decimal( offset ))
 
   pseudo instruction BGEZ( rs : Index, offset : Bits<12> ) =
   {
-      BGE{ rs1 = rs, rs2 = 0 as Bits5, imm = offset }
+      BGE{ rs1 = rs, rs2 = ZERO_REGISTER_INDEX as Bits5, imm = offset }
   }
 
   assembly BGEZ = (mnemonic, " ", register( rs ), ",", decimal( offset ))
 
   pseudo instruction BLTZ( rs : Index, offset : Bits<12> ) =
   {
-      BLT{ rs1 = rs, rs2 = 0 as Bits5, imm = offset }
+      BLT{ rs1 = rs, rs2 = ZERO_REGISTER_INDEX as Bits5, imm = offset }
   }
 
   assembly BLTZ = (mnemonic, " ", register( rs ), ",", decimal( offset ))
 
   pseudo instruction BGTZ( rs : Index, offset : Bits<12> ) =
   {
-      BLT{ rs1 = 0 as Bits5, rs2 = rs, imm = offset }
+      BLT{ rs1 = ZERO_REGISTER_INDEX as Bits5, rs2 = rs, imm = offset }
   }
 
   assembly BGTZ = (mnemonic, " ", register( rs ), ",", decimal( offset ))
