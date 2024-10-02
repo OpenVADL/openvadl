@@ -1,16 +1,16 @@
 [# th:each="register, iterStat : ${registers}" ]
-def [(${register.id})] : Register<"[(${register.id})]">
+def [(${register.name})] : Register<"[(${register.name})]">
 {
-    let Namespace = "[(${register.namespace})]";
+    let Namespace = "[(${register.namespace.value()})]";
     let AsmName = "[(${register.asmName})]";
-    let AltNames = [ [(${register.altNames})] ];
-    let Aliases = [ [(${register.aliases})] ];
-    let SubRegs = [ [(${register.subRegs})] ];
-    let SubRegIndices = [ [(${register.subRegIndices})] ];
+    let AltNames = [ [(${register.altNamesString()})]  ];
+    let Aliases = [ ];
+    let SubRegs = [ ];
+    let SubRegIndices = [ ];
     let RegAltNameIndices = [];
     let DwarfNumbers = [ [(${iterStat.index})] ];
     list<int> CostPerUse = [0];
-    let CoveredBySubRegs = [(${register.coveredBySubRegs})];
+    let CoveredBySubRegs = 0;
     [#th:block th:if="${register.hwEncodingMsb != 0}"]
     let HWEncoding{[(${register.hwEncodingMsb})]-0} = [(${register.hwEncodingValue})];
     [/th:block]
@@ -24,9 +24,9 @@ def [(${register.id})] : Register<"[(${register.id})]">
 [# th:each="registerFile : ${registerFiles}" ]
 def [(${registerFile.name})] : RegisterClass
 < /* namespace = */ "[(${registerFile.namespace})]"
-, /* regTypes  = */ [ [(${registerFile.regType})] ]
+, /* regTypes  = */  [  [(${registerFile.regTypesString()})] ];
 , /* alignment = */ [(${registerFile.alignment})]
 , /* regList   = */
-  ( add [(${registerFile.regList})] )
+  ( add [(${registerFile.registerString()})] )
 >;
 [/]

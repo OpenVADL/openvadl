@@ -88,7 +88,7 @@ public class GenerateRegisterClassesPass extends Pass {
       for (var register : rg.registers()) {
         var tableGenRegisterClass = new TableGenRegisterClass(
             rg.namespace(),
-            register.registerName() + TABLE_GEN_REGISTER_CLASS_SUFFIX,
+            register.name() + TABLE_GEN_REGISTER_CLASS_SUFFIX,
             rg.alignment(),
             rg.regTypes(),
             List.of(register)

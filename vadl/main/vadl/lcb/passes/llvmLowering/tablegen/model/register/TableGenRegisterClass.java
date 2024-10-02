@@ -1,6 +1,7 @@
 package vadl.lcb.passes.llvmLowering.tablegen.model.register;
 
 import java.util.List;
+import java.util.stream.Collectors;
 import vadl.gcb.valuetypes.ProcessorName;
 import vadl.lcb.codegen.model.llvm.ValueType;
 import vadl.viam.RegisterFile;
@@ -14,4 +15,11 @@ public record TableGenRegisterClass(ProcessorName namespace,
                                     int alignment,
                                     List<ValueType> regTypes,
                                     List<TableGenRegister> registers) {
+  public String regTypesString() {
+    return regTypes.stream().map(ValueType::getLlvmType).collect(Collectors.joining(", "));
+  }
+
+  public String registerString() {
+    return registers.stream().map(TableGenRegister::name).collect(Collectors.joining(", "));
+  }
 }
