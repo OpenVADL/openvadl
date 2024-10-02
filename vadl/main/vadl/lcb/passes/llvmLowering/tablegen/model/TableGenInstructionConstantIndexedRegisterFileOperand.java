@@ -1,5 +1,6 @@
 package vadl.lcb.passes.llvmLowering.tablegen.model;
 
+import vadl.lcb.passes.llvmLowering.GenerateRegisterClassesPass;
 import vadl.viam.Constant;
 import vadl.viam.Format;
 import vadl.viam.RegisterFile;
@@ -52,5 +53,13 @@ public class TableGenInstructionConstantIndexedRegisterFileOperand
 
   public Constant constant() {
     return constant;
+  }
+
+  @Override
+  public String render() {
+    var registerClass = registerFile.identifier.simpleName() + constant.asVal().intValue() +
+        GenerateRegisterClassesPass.TABLE_GEN_REGISTER_CLASS_SUFFIX;
+    var variable = identity().name();
+    return String.format("%s:$%s", registerClass, variable);
   }
 }
