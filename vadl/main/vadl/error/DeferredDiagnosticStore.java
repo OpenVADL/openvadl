@@ -1,6 +1,6 @@
 package vadl.error;
 
-import java.util.ArrayList;
+import java.util.LinkedHashSet;
 import java.util.List;
 
 /**
@@ -11,14 +11,22 @@ import java.util.List;
  * a {@link DiagnosticList}.
  */
 public class DeferredDiagnosticStore {
-  private static final List<Diagnostic> diagnosticList = new ArrayList<Diagnostic>();
+  private static final LinkedHashSet<Diagnostic> diagnosticList = new LinkedHashSet<>();
 
+  /**
+   * Add another diagnostic to the store.
+   *
+   * <p>If the diagnostic is already in the store it won't be inserted a second time.
+   */
   public static void add(Diagnostic diagnostic) {
     diagnosticList.add(diagnostic);
   }
 
+  /**
+   * Retrieves all diagnostics in the order they were inserted.
+   */
   public static List<Diagnostic> getAll() {
-    return diagnosticList;
+    return diagnosticList.stream().toList();
   }
 
   public static boolean isEmpty() {
