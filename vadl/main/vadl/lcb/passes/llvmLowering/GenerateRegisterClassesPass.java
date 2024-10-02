@@ -40,13 +40,13 @@ public class GenerateRegisterClassesPass extends Pass {
     return new PassName("GenerateRegisterClassesPass");
   }
 
-  record Output(List<TableGenRegisterClass> registerClasses) {
+  public record Output(List<TableGenRegisterClass> registerClasses) {
 
   }
 
   @Nullable
   @Override
-  public Object execute(PassResults passResults, Specification viam) throws IOException {
+  public Output execute(PassResults passResults, Specification viam) throws IOException {
     var abi = (DummyAbi) viam.definitions().filter(x -> x instanceof DummyAbi).findFirst().get();
 
     var mainRegisterClasses = getMainRegisterClasses(viam.registerFiles(), abi);
