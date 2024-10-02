@@ -23,11 +23,9 @@ void [(${namespace})]TargetLowering::anchor() {}
     : TargetLowering(TM), Subtarget(STI)
 {
     // Set up the register classes defined by register files
-    [# th:each="rg : ${registerFiles}" ]
-    [# th:each="ty : ${rg.regTypes}" ]
-      addRegisterClass(MVT::[(${ty})], &[(${namespace})]::[(${rg.name})]RegClass);
-    [/]
-    [/]
+    [# th:each="rg : ${registerFiles}" ] [# th:each="ty : ${rg.regTypes}" ]
+      addRegisterClass(MVT::[(${ty.getLlvmType()})], &[(${namespace})]::[(${rg.name})]RegClass);
+    [/] [/]
 
     setStackPointerRegisterToSaveRestore([(${namespace})]::[(${stackPointer})]);
 

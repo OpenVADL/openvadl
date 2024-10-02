@@ -17,18 +17,21 @@ import vadl.lcb.passes.llvmLowering.LlvmLoweringPass;
 import vadl.lcb.passes.llvmLowering.domain.LlvmLoweringRecord;
 import vadl.lcb.passes.llvmLowering.domain.PseudoFuncParamNode;
 import vadl.lcb.passes.llvmLowering.domain.RegisterRef;
-import vadl.lcb.passes.llvmLowering.strategies.visitors.impl.ReplaceWithLlvmSDNodesVisitor;
+import vadl.lcb.passes.llvmLowering.domain.machineDag.MachineInstructionNode;
+import vadl.lcb.passes.llvmLowering.domain.machineDag.PseudoInstructionNode;
+import vadl.lcb.passes.llvmLowering.domain.selectionDag.LlvmConstantNode;
 import vadl.lcb.passes.llvmLowering.tablegen.model.TableGenInstructionOperand;
 import vadl.lcb.passes.llvmLowering.tablegen.model.TableGenPattern;
+import vadl.lcb.passes.llvmLowering.tablegen.model.TableGenSelectionWithOutputPattern;
 import vadl.utils.Pair;
 import vadl.viam.Instruction;
 import vadl.viam.PseudoInstruction;
 import vadl.viam.graph.Graph;
 import vadl.viam.graph.control.InstrCallNode;
+import vadl.viam.graph.dependency.ConstantNode;
 import vadl.viam.graph.dependency.ExpressionNode;
 import vadl.viam.graph.dependency.FieldRefNode;
 import vadl.viam.graph.dependency.FuncParamNode;
-import vadl.viam.graph.dependency.WriteResourceNode;
 
 /**
  * Whereas {@link LlvmInstructionLoweringStrategy} defines multiple to lower {@link Instruction}
@@ -107,7 +110,24 @@ public class LlvmPseudoLoweringImpl {
             instructionBehavior.getNodes(FieldRefNode.class)
                 .filter(x -> x.formatField() == formatField)
                 .forEach(occurrence -> {
-                  occurrence.replaceAndDelete(argument.copy());
+                  // Edge case:
+                  // When we have the following pseudo instruction. Note that "r1" is replaced
+                  // by a constant. Sometimes, we need to create instruction selectors in TableGen,
+                  // and it requires a variable. However, if we replace the field by a constant
+                  // we lose the name of the variable because we have no field anymore.
+                  // For constant values, we use LlvmConstantNode which keeps the original value.
+                  // pseudo instruction RET =
+                  // {
+                  //     JALR{ rs1 = 1 as Bits5, rd = 0 as Bits5, imm = 0 as Bits12 }
+                  // }
+
+                  if (argument instanceof ConstantNode constantNode) {
+                    var replacedArgument =
+                        new LlvmConstantNode(constantNode.constant(), formatField);
+                    occurrence.replaceAndDelete(replacedArgument);
+                  } else {
+                    occurrence.replaceAndDelete(argument.copy());
+                  }
                 });
           });
 
@@ -130,8 +150,22 @@ public class LlvmPseudoLoweringImpl {
             label,
             instructionBehavior);
 
+
         if (tableGenRecord.isPresent()) {
           var record = tableGenRecord.get();
+
+          // We need to update the output instruction because the pattern has the machine
+          // instruction now. But we want the pseudo instruction.
+          record.patterns().forEach(pattern -> {
+            if (pattern instanceof TableGenSelectionWithOutputPattern outputPattern) {
+              outputPattern.machine().getNodes(MachineInstructionNode.class)
+                  .forEach(machineInstructionNode -> machineInstructionNode.replaceAndDelete(
+                      new PseudoInstructionNode(machineInstructionNode.arguments(), pseudo)
+                  ));
+            }
+          });
+
+
           var flags = record.flags();
           isTerminator |= flags.isTerminator();
           isReturn |= flags.isReturn();
@@ -144,6 +178,8 @@ public class LlvmPseudoLoweringImpl {
           outputOperands.addAll(record.outputs());
           patterns.addAll(record.patterns());
         }
+
+        break;
       }
     }
 

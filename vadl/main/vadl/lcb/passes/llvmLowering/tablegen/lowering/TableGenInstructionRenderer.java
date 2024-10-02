@@ -8,6 +8,7 @@ import java.util.stream.IntStream;
 import org.jetbrains.annotations.Nullable;
 import vadl.lcb.passes.llvmLowering.domain.RegisterRef;
 import vadl.lcb.passes.llvmLowering.domain.machineDag.MachineInstructionNode;
+import vadl.lcb.passes.llvmLowering.domain.machineDag.PseudoInstructionNode;
 import vadl.lcb.passes.llvmLowering.tablegen.model.TableGenInstructionOperand;
 import vadl.lcb.passes.llvmLowering.tablegen.model.TableGenMachineInstruction;
 import vadl.lcb.passes.llvmLowering.tablegen.model.TableGenPattern;
@@ -195,7 +196,13 @@ public final class TableGenInstructionRenderer {
     }
 
     for (var root : tableGenPattern.machine().getDataflowRoots()) {
-      machineVisitor.visit((MachineInstructionNode) root);
+      ensure(root instanceof PseudoInstructionNode
+      || root instanceof MachineInstructionNode, "root node must be pseudo or machine node");
+      if(root instanceof MachineInstructionNode machineInstructionNode) {
+        machineVisitor.visit(machineInstructionNode);
+      } else if(root instanceof PseudoInstructionNode pseudoInstructionNode) {
+        machineVisitor.visit(pseudoInstructionNode);
+      }
     }
 
     return String.format("""

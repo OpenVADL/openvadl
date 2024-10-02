@@ -8,6 +8,7 @@ import vadl.lcb.passes.llvmLowering.LlvmNodeLowerable;
 import vadl.lcb.passes.llvmLowering.domain.selectionDag.LlvmBasicBlockSD;
 import vadl.lcb.passes.llvmLowering.domain.selectionDag.LlvmBrCcSD;
 import vadl.lcb.passes.llvmLowering.domain.selectionDag.LlvmBrCondSD;
+import vadl.lcb.passes.llvmLowering.domain.selectionDag.LlvmConstantNode;
 import vadl.lcb.passes.llvmLowering.domain.selectionDag.LlvmFieldAccessRefNode;
 import vadl.lcb.passes.llvmLowering.domain.selectionDag.LlvmLoadSD;
 import vadl.lcb.passes.llvmLowering.domain.selectionDag.LlvmSExtLoad;
@@ -77,6 +78,11 @@ public class TableGenPatternPrinterVisitor
     } else if (node.constant() instanceof Constant.Str str) {
       writer.write(str.value());
     }
+  }
+
+  @Override
+  public void visit(LlvmConstantNode node) {
+    visit((ConstantNode) node);
   }
 
   @Override
