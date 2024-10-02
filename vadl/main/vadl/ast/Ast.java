@@ -31,7 +31,7 @@ public class Ast {
    *
    * @return a source code resulting in the same AST.
    */
-  public StringBuilder prettyPrint() {
+  public CharSequence prettyPrint() {
     StringBuilder builder = new StringBuilder();
     for (var definition : definitions) {
       definition.prettyPrint(0, builder);

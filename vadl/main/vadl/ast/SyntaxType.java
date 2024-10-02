@@ -61,7 +61,7 @@ enum BasicSyntaxType implements SyntaxType {
    *          |         |        |            |                    |               |      |
    *          |         |        |        +--Lit-----+           CallEx            |      |
    *        Stats       |        |        |          |             |               |      |
-   *          |         |    CommonDefs   |          |             |               |     UnOp
+   *          |         |       Defs      |          |             |               |     UnOp
    *          |         |                 |     +-- Val----+      SymEx            |
    *          |       Encs               Str    |    |     |       |               |
    *        Stat                                |    |     |       |             BinOp

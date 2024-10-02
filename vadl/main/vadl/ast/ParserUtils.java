@@ -161,6 +161,13 @@ class ParserUtils {
     return expr;
   }
 
+  /**
+   * A binary expression can only be reordered if none of the operators in the binary expression
+   * tree use a macro or a placeholder as the operator.
+   *
+   * @param binExpr The top of a binary expression tree
+   * @return Whether the passed binary expression tree can be reordered
+   */
   static boolean canReorder(BinaryExpr binExpr) {
     if (!(binExpr.operator instanceof BinOp)) {
       return false;
