@@ -44,7 +44,8 @@ public class GenerateRegisterClassesPassTest extends AbstractLcbTest {
       "processorNameValue,X28Class,32,i64",
       "processorNameValue,X29Class,32,i64",
       "processorNameValue,X30Class,32,i64",
-      "processorNameValue,X31Class,32,i64"
+      "processorNameValue,X31Class,32,i64",
+      "processorNameValue,PCClass,32,i64",
   })
   void shouldHaveMainRegisterClasses(String namespace, String name, int alignment, String type)
       throws IOException, DuplicatedPassKeyException {
@@ -133,7 +134,8 @@ public class GenerateRegisterClassesPassTest extends AbstractLcbTest {
       "X28Class,X28",
       "X29Class,X29",
       "X30Class,X30",
-      "X31Class,X31"
+      "X31Class,X31",
+      "PCClass,PC"
   })
   void shouldHaveCorrectRegisterAssignments(String name, String reg)
       throws IOException, DuplicatedPassKeyException {

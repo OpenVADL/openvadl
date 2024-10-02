@@ -1,7 +1,6 @@
 package vadl.lcb.passes.llvmLowering.tablegen.model.register;
 
 import java.util.List;
-import java.util.stream.Collectors;
 import vadl.gcb.valuetypes.ProcessorName;
 
 /**

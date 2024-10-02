@@ -2,6 +2,7 @@ package vadl.lcb.passes.llvmLowering;
 
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
 import java.util.stream.IntStream;
@@ -16,6 +17,7 @@ import vadl.pass.PassName;
 import vadl.pass.PassResults;
 import vadl.utils.Pair;
 import vadl.viam.Instruction;
+import vadl.viam.Register;
 import vadl.viam.RegisterFile;
 import vadl.viam.Specification;
 import vadl.viam.passes.dummyAbi.DummyAbi;
@@ -49,11 +51,42 @@ public class GenerateRegisterClassesPass extends Pass {
   public Output execute(PassResults passResults, Specification viam) throws IOException {
     var abi = (DummyAbi) viam.definitions().filter(x -> x instanceof DummyAbi).findFirst().get();
 
+    var userDefinedRegisterClasses = getUserDefinedRegisterClasses(viam.registers());
     var mainRegisterClasses = getMainRegisterClasses(viam.registerFiles(), abi);
     var registerClassesForEachRegisterClass = getIndividualRegisterClasses(mainRegisterClasses);
     return new Output(
-        Stream.concat(mainRegisterClasses.stream(), registerClassesForEachRegisterClass.stream())
+        Stream.concat(userDefinedRegisterClasses.stream(),
+                Stream.concat(mainRegisterClasses.stream(),
+                    registerClassesForEachRegisterClass.stream()))
             .toList());
+  }
+
+  /**
+   * The specification can contain {@link Register} e.g. PC. Those need to be added to the
+   * register class tablegen. Additionally, we need to generate register classes to be able to
+   * match those in TableGen.
+   */
+  private List<TableGenRegisterClass> getUserDefinedRegisterClasses(Stream<Register> registers) {
+    var configuration = (LcbConfiguration) configuration();
+    var result = new ArrayList<TableGenRegisterClass>();
+
+    registers.forEach(register -> {
+      var tableGenRegister = new TableGenRegister(configuration.processorName(),
+          register.identifier.simpleName(),
+          register.identifier.simpleName(),
+          Collections.emptyList(),
+          0,
+          0);
+      result.add(new TableGenRegisterClass(
+          configuration.processorName(),
+          register.name() + TABLE_GEN_REGISTER_CLASS_SUFFIX,
+          32,
+          List.of(ValueType.from(register.resultType())),
+          List.of(tableGenRegister)
+      ));
+    });
+
+    return result;
   }
 
   /**
@@ -113,7 +146,7 @@ public class GenerateRegisterClassesPass extends Pass {
           registerAlias -> String.join(", ", wrapInQuotes(registerAlias.value()),
               wrapInQuotes(registerFile.identifier.simpleName() + number))).stream().toList();
       return new TableGenRegister(configuration.processorName(), name,
-          alias.orElse(new DummyAbi.RegisterAlias(registerFile.identifier.simpleName())).value(),
+          alias.orElse(new DummyAbi.RegisterAlias(registerFile.identifier.simpleName() + number)).value(),
           altNames, bitWidth - 1, number);
     }).toList();
   }

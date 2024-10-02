@@ -23,7 +23,7 @@ def [(${register.name})] : Register<"[(${register.name})]">
 
 [# th:each="registerFile : ${registerFiles}" ]
 def [(${registerFile.name})] : RegisterClass
-< /* namespace = */ "[(${registerFile.namespace})]"
+< /* namespace = */ "[(${registerFile.namespace.value()})]"
 , /* regTypes  = */  [  [(${registerFile.regTypesString()})] ];
 , /* alignment = */ [(${registerFile.alignment})]
 , /* regList   = */
