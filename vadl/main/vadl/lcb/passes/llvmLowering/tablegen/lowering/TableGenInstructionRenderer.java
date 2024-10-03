@@ -13,8 +13,8 @@ import vadl.lcb.passes.llvmLowering.tablegen.model.TableGenInstructionOperand;
 import vadl.lcb.passes.llvmLowering.tablegen.model.TableGenMachineInstruction;
 import vadl.lcb.passes.llvmLowering.tablegen.model.TableGenPattern;
 import vadl.lcb.passes.llvmLowering.tablegen.model.TableGenPseudoInstruction;
-import vadl.lcb.passes.llvmLowering.tablegen.model.TableGenSelectionWithOutputPattern;
 import vadl.lcb.passes.llvmLowering.tablegen.model.TableGenSelectionPattern;
+import vadl.lcb.passes.llvmLowering.tablegen.model.TableGenSelectionWithOutputPattern;
 import vadl.viam.Definition;
 import vadl.viam.Instruction;
 import vadl.viam.PseudoInstruction;
@@ -197,10 +197,11 @@ public final class TableGenInstructionRenderer {
 
     for (var root : tableGenPattern.machine().getDataflowRoots()) {
       ensure(root instanceof PseudoInstructionNode
-      || root instanceof MachineInstructionNode, "root node must be pseudo or machine node");
-      if(root instanceof MachineInstructionNode machineInstructionNode) {
+              || root instanceof MachineInstructionNode,
+          "root node must be pseudo or machine node");
+      if (root instanceof MachineInstructionNode machineInstructionNode) {
         machineVisitor.visit(machineInstructionNode);
-      } else if(root instanceof PseudoInstructionNode pseudoInstructionNode) {
+      } else if (root instanceof PseudoInstructionNode pseudoInstructionNode) {
         machineVisitor.visit(pseudoInstructionNode);
       }
     }

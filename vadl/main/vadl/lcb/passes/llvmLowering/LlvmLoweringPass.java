@@ -123,8 +123,8 @@ public class LlvmLoweringPass extends Pass {
           // TODO: No label, then we need to have a default.
           if (instructionLabel == null) {
             DeferredDiagnosticStore.add(Diagnostic.warning(
-                "Instruction was not matched. Therefore, it will be skipped for the compiler" +
-                    " lowering (todo)", instruction.sourceLocation()).build());
+                "Instruction was not matched. Therefore, it will be skipped for the compiler"
+                    + " lowering (todo)", instruction.sourceLocation()).build());
             return;
           }
 
@@ -148,8 +148,8 @@ public class LlvmLoweringPass extends Pass {
     return tableGenRecords;
   }
 
-  private IdentityHashMap<PseudoInstruction, LlvmLoweringRecord>
-  generateRecordsForPseudoInstructions(
+  private IdentityHashMap<PseudoInstruction,
+      LlvmLoweringRecord> generateRecordsForPseudoInstructions(
       Specification viam, HashMap<InstructionLabel, List<Instruction>> supportedInstructions) {
     var tableGenRecords = new IdentityHashMap<PseudoInstruction, LlvmLoweringRecord>();
 

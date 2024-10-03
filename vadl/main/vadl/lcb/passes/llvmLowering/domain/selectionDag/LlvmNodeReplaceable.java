@@ -1,7 +1,7 @@
 package vadl.lcb.passes.llvmLowering.domain.selectionDag;
 
-import vadl.lcb.passes.llvmLowering.tablegen.model.parameterIdentity.ParameterIdentity;
 import vadl.lcb.passes.llvmLowering.tablegen.model.TableGenPattern;
+import vadl.lcb.passes.llvmLowering.tablegen.model.parameterIdentity.ParameterIdentity;
 
 /**
  * Indicates that the node has a {@link ParameterIdentity} which

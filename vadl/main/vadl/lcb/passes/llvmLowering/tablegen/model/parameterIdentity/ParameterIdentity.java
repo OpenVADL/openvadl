@@ -78,6 +78,9 @@ public abstract class ParameterIdentity {
         address.parameter().identifier.simpleName());
   }
 
+  /**
+   * Construct a parameter identity.
+   */
   public static ParameterIdentity from(ReadRegFileNode node, ExpressionNode address) {
     ensure(address instanceof FieldRefNode
         || address instanceof ConstantNode

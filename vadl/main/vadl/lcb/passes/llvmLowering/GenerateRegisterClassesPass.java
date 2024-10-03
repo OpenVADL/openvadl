@@ -24,8 +24,6 @@ import vadl.viam.passes.dummyAbi.DummyAbi;
  */
 public class GenerateRegisterClassesPass extends Pass {
 
-  public static final String TABLE_GEN_REGISTER_CLASS_SUFFIX = "Class";
-
   public GenerateRegisterClassesPass(LcbConfiguration configuration) {
     super(configuration);
   }
@@ -39,9 +37,8 @@ public class GenerateRegisterClassesPass extends Pass {
    * Contains the output of the pass.
    */
   public record Output(List<TableGenRegisterClass> registerClasses,
-      /* These registers do not belong to any register class. */
                        List<TableGenRegister> registers) {
-
+    /* `registers` do not belong to any register class. */
   }
 
   @Nullable

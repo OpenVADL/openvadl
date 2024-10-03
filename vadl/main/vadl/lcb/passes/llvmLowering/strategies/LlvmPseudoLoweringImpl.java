@@ -133,8 +133,8 @@ public class LlvmPseudoLoweringImpl {
 
                           var constraintValue =
                               Arrays.stream(cast.registerFile().constraints()).filter(
-                                  c -> c.address().intValue() ==
-                                      constantNode.constant().asVal().intValue()).findFirst();
+                                  c -> c.address().intValue()
+                                      == constantNode.constant().asVal().intValue()).findFirst();
 
                           if (constraintValue.isEmpty()) {
                             DeferredDiagnosticStore.add(Diagnostic.warning(

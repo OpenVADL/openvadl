@@ -38,8 +38,8 @@ public class TableGenConstantOperand extends TableGenInstructionOperand {
   public String render() {
     var llvmType = ValueType.from(constant.type());
     var unpackedLlvmType = ensurePresent(llvmType, () -> Diagnostic.error(
-        "Constant value at given index has an invalid type which is not supported by llvm: " +
-            constant.type(),
+        "Constant value at given index has an invalid type which is not supported by llvm: "
+            + constant.type(),
         origin.sourceLocation()).build());
     return "(" + unpackedLlvmType.getLlvmType() + " " + constant.asVal().intValue() + ")";
   }
