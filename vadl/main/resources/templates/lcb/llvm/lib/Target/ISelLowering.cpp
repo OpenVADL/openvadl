@@ -113,7 +113,7 @@ static SDValue unpackFromRegLoc(SelectionDAG &DAG, SDValue Chain, const CCValAss
 
     [# th:each="rg : ${registerFiles}" ]
     [# th:each="ty : ${rg.regTypes}" ]
-      if(RegVT.getSimpleVT().SimpleTy == MVT::[(${ty})])  {
+      if(RegVT.getSimpleVT().SimpleTy == MVT::[(${ty.getLlvmType()})])  {
         const unsigned VReg = RegInfo.createVirtualRegister(&[(${namespace})]::[(${rg.name})]RegClass);
         RegInfo.addLiveIn(VA.getLocReg(), VReg);
         SDValue ArgIn = DAG.getCopyFromReg(Chain, DL, VReg, RegVT);
