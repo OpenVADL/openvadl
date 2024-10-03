@@ -9,6 +9,7 @@ import vadl.viam.Counter;
 import vadl.viam.RegisterFile;
 import vadl.viam.Resource;
 import vadl.viam.graph.GraphNodeVisitor;
+import vadl.viam.graph.HasRegisterFile;
 import vadl.viam.graph.Node;
 import vadl.viam.graph.UniqueNode;
 
@@ -22,7 +23,7 @@ import vadl.viam.graph.UniqueNode;
  * <li>All reads must occur before all writes</li>
  * </p>
  */
-public class WriteRegFileNode extends WriteResourceNode {
+public class WriteRegFileNode extends WriteResourceNode implements HasRegisterFile {
 
   @DataValue
   protected RegisterFile registerFile;

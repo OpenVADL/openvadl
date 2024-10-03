@@ -27,6 +27,7 @@ import vadl.viam.Constant;
 import vadl.viam.Instruction;
 import vadl.viam.PseudoInstruction;
 import vadl.viam.graph.Graph;
+import vadl.viam.graph.HasRegisterFile;
 import vadl.viam.graph.control.InstrCallNode;
 import vadl.viam.graph.dependency.ConstantNode;
 import vadl.viam.graph.dependency.ExpressionNode;
@@ -124,50 +125,27 @@ public class LlvmPseudoLoweringImpl {
                   if (argument instanceof ConstantNode constantNode) {
                     // The constantNode tells me the register index.
 
-                    occurrence.usages().filter(node -> (node instanceof ReadRegFileNode))
+                    // Go over the usages to emit warnings.
+                    // We need the usage because we need to find out what the register file
+                    // to check for constraints.
+                    occurrence.usages().filter(node -> (node instanceof HasRegisterFile))
                         .forEach(node -> {
-                          var cast = (ReadRegFileNode) node;
+                          var cast = (HasRegisterFile) node;
 
                           var constraintValue =
                               Arrays.stream(cast.registerFile().constraints()).filter(
                                   c -> c.address().intValue() ==
                                       constantNode.constant().asVal().intValue()).findFirst();
 
-                          if (constraintValue.isPresent()) {
-                            cast.replaceAndDelete(new ConstantNode(
-                                constraintValue.get().value()
-                            ));
-                          } else {
+                          if (constraintValue.isEmpty()) {
                             DeferredDiagnosticStore.add(Diagnostic.warning(
                                 "There is no constraint value for this register. "
-                                    + "Therefore, we cannot generate instruction selectors it.",
+                                    + "Therefore, we cannot generate instruction selectors for it.",
                                 occurrence.sourceLocation()).build());
                           }
                         });
-
-                    occurrence.usages().filter(node -> (node instanceof WriteRegFileNode))
-                        .forEach(node -> {
-                          var cast = (WriteRegFileNode) node;
-
-                          var constraintValue =
-                              Arrays.stream(cast.registerFile().constraints()).filter(
-                                  c -> c.address().intValue() ==
-                                      constantNode.constant().asVal().intValue()).findFirst();
-
-                          if (constraintValue.isPresent()) {
-                            cast.replaceAndDelete(new ConstantNode(
-                                constraintValue.get().value()
-                            ));
-                          } else {
-                            DeferredDiagnosticStore.add(Diagnostic.warning(
-                                "There is no constraint value for this register. "
-                                    + "Therefore, we cannot generate instruction selectors it.",
-                                occurrence.sourceLocation()).build());
-                          }
-                        });
-                  } else {
-                    occurrence.replaceAndDelete(argument.copy());
                   }
+                  occurrence.replaceAndDelete(argument.copy());
                 });
           });
 

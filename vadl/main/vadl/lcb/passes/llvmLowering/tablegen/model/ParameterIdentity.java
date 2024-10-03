@@ -67,6 +67,11 @@ public record ParameterIdentity(String type, String name) {
         address.parameter().identifier.simpleName());
   }
 
+  public static ParameterIdentity from(ReadRegFileNode node, ConstantNode address) {
+    return new ParameterIdentity(node.registerFile().name(),
+        address.constant().asVal().toString());
+  }
+
   public static ParameterIdentity from(WriteRegFileNode node, FuncParamNode address) {
     return new ParameterIdentity(node.registerFile().name(),
         address.parameter().identifier.simpleName());
