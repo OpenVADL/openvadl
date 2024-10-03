@@ -1,7 +1,10 @@
 package vadl.lcb.passes.llvmLowering.tablegen.model;
 
 import static vadl.viam.ViamError.ensure;
+import static vadl.viam.ViamError.ensurePresent;
 
+import vadl.error.Diagnostic;
+import vadl.lcb.codegen.model.llvm.ValueType;
 import vadl.lcb.passes.llvmLowering.tablegen.model.parameterIdentity.NoParameterIdentity;
 import vadl.viam.Constant;
 import vadl.viam.Format;
@@ -29,5 +32,15 @@ public class TableGenConstantOperand extends TableGenInstructionOperand {
 
   public Constant constant() {
     return constant;
+  }
+
+  @Override
+  public String render() {
+    var llvmType = ValueType.from(constant.type());
+    var unpackedLlvmType = ensurePresent(llvmType, () -> Diagnostic.error(
+        "Constant value at given index has an invalid type which is not supported by llvm: " +
+            constant.type(),
+        origin.sourceLocation()).build());
+    return "(" + unpackedLlvmType.getLlvmType() + " " + constant.asVal().intValue() + ")";
   }
 }
