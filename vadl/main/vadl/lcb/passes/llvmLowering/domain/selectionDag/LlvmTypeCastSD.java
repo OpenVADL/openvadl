@@ -21,7 +21,7 @@ public class LlvmTypeCastSD extends UnaryNode implements LlvmNodeLowerable {
 
   public LlvmTypeCastSD(ExpressionNode value, Type type) {
     super(value, type);
-    this.valueType = ValueType.from(type);
+    this.valueType = ValueType.from(type).get();
   }
 
   @Override

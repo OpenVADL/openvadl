@@ -71,9 +71,14 @@ public class TableGenPatternPrinterVisitor
     node.ensure(node.constant() instanceof Constant.Value
         || node.constant() instanceof Constant.Str, "constant must be value or string");
     if (node.constant() instanceof Constant.Value constant) {
-      writer.write(String.format("(%s %d)",
-          ValueType.from(CppTypeNormalizationPass.upcast(constant.type())).getLlvmType(),
-          constant.intValue()));
+      var ty = ValueType.from(constant.type());
+      if (ty.isPresent()) {
+        writer.write(String.format("(%s %d)",
+            ty.get().getLlvmType(),
+            constant.intValue()));
+      } else {
+
+      }
     } else if (node.constant() instanceof Constant.Str str) {
       writer.write(str.value());
     }

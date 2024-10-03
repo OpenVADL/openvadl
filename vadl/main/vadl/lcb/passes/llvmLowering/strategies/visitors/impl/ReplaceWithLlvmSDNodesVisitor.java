@@ -1,13 +1,18 @@
 package vadl.lcb.passes.llvmLowering.strategies.visitors.impl;
 
 import static vadl.viam.ViamError.ensure;
+import static vadl.viam.ViamError.ensureNonNull;
 
 import java.util.Arrays;
+import java.util.HashSet;
 import java.util.Objects;
+import java.util.Set;
+import javax.annotation.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import vadl.error.DeferredDiagnosticStore;
 import vadl.error.Diagnostic;
+import vadl.lcb.codegen.model.llvm.ValueType;
 import vadl.lcb.passes.llvmLowering.LlvmNodeLowerable;
 import vadl.lcb.passes.llvmLowering.domain.selectionDag.LlvmAddSD;
 import vadl.lcb.passes.llvmLowering.domain.selectionDag.LlvmAndSD;
@@ -94,7 +99,32 @@ public class ReplaceWithLlvmSDNodesVisitor
 
   @Override
   public void visit(ConstantNode node) {
+    // Upcast it to a higher type because TableGen is not able to cast implicitly.
+    var types = node.usages()
+        .filter(x -> x instanceof ExpressionNode)
+        .map(x -> {
+          var y = (ExpressionNode) x;
+          return y.type();
+        })
+        .toList();
 
+    if (new HashSet<>(types).size() == 1) {
+      var type = types.stream().findFirst().get();
+      node.setType(type);
+    } else {
+      DeferredDiagnosticStore.add(
+          Diagnostic.warning("Constant must be upcasted but it has multiple candidates"
+                  + " or none.",
+              node.sourceLocation()).build());
+    }
+
+    /*
+    if (node.constant().type() instanceof BitsType bitsType) {
+      ensure(ValueType.from(bitsType).isPresent(), () -> Diagnostic.error(String.format(
+          "Constant's type '%s' is not llvm compatible but couldn't also be automatically replaced",
+          bitsType.name()), node.sourceLocation()).build());
+    }
+     */
   }
 
   @Override
@@ -147,7 +177,7 @@ public class ReplaceWithLlvmSDNodesVisitor
       ensure(replaced.graph() != null, "graph must exist");
       replaced.arguments().add(replaced.graph().addWithInputs(newArg));
     } else {
-      throw new RuntimeException("not implemented: " + node.builtIn());
+      throw Diagnostic.error("Lowering to LLVM was not implemented", node.sourceLocation()).build();
     }
 
     for (var arg : node.arguments()) {
@@ -157,6 +187,10 @@ public class ReplaceWithLlvmSDNodesVisitor
 
   @Override
   public void visit(WriteRegNode writeRegNode) {
+    if (writeRegNode.hasAddress()) {
+      visit(Objects.requireNonNull(writeRegNode.address()));
+    }
+    visit(writeRegNode.value());
   }
 
   @Override

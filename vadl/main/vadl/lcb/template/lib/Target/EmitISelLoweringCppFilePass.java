@@ -47,7 +47,7 @@ public class EmitISelLoweringCppFilePass extends LcbTemplateRenderingPass {
     }
 
     public String llvmResultType() {
-      return ValueType.from(type()).getLlvmType();
+      return ValueType.from(type()).get().getLlvmType();
     }
   }
 
@@ -73,6 +73,6 @@ public class EmitISelLoweringCppFilePass extends LcbTemplateRenderingPass {
             .toList(),
         "argumentRegisters", abi.argumentRegisters(),
         "stackPointerType",
-        ValueType.from(abi.stackPointer().registerFile().resultType()).getLlvmType());
+        ValueType.from(abi.stackPointer().registerFile().resultType()).get().getLlvmType());
   }
 }

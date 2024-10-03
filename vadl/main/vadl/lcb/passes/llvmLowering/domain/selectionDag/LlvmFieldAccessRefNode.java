@@ -37,7 +37,7 @@ public class LlvmFieldAccessRefNode extends FieldAccessRefNode {
                 EmitMCCodeEmitterCppFilePass.WRAPPER),
             fieldAccess.accessFunction().identifier.append(EmitDisassemblerCppFilePass.WRAPPER),
             fieldAccess.predicate().identifier,
-            ValueType.from(type));
+            ValueType.from(type).get());
     this.parameterIdentity = ParameterIdentity.from(this);
   }
 

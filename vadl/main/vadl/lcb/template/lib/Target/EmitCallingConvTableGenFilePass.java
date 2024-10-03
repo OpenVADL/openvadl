@@ -58,7 +58,8 @@ public class EmitCallingConvTableGenFilePass extends LcbTemplateRenderingPass {
             Collectors.toSet()).size() == 1,
         "All return registers must have the same type and at least one must exist");
     return new AssignToReg(
-        ValueType.from(abi.returnRegisters().get(0).registerFile().resultType()).getLlvmType(),
+        ValueType.from(abi.returnRegisters().get(0).registerFile().resultType()).get()
+            .getLlvmType(),
         abi.returnRegisters().stream().map(DummyAbi.RegisterRef::render)
             .collect(Collectors.joining(", ")));
   }
@@ -69,7 +70,8 @@ public class EmitCallingConvTableGenFilePass extends LcbTemplateRenderingPass {
             Collectors.toSet()).size() == 1,
         "All function argument registers must have the same type and at least one must exist");
     return new AssignToReg(
-        ValueType.from(abi.argumentRegisters().get(0).registerFile().resultType()).getLlvmType(),
+        ValueType.from(abi.argumentRegisters().get(0).registerFile().resultType()).get()
+            .getLlvmType(),
         abi.argumentRegisters().stream().map(DummyAbi.RegisterRef::render)
             .collect(Collectors.joining(", ")));
   }

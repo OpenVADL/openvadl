@@ -107,6 +107,11 @@ public class Diagnostic extends RuntimeException {
     return result;
   }
 
+  @Override
+  public String toString() {
+    return reason;
+  }
+
   /**
    * A bundle of multiple location with messages attached to them.
    *

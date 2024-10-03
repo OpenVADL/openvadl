@@ -61,7 +61,7 @@ public class GenerateRegisterClassesPass extends Pass {
     var configuration = (LcbConfiguration) configuration();
     return
         registerFiles.map(registerFile -> {
-          var type = ValueType.from(registerFile.resultType());
+          var type = ValueType.from(registerFile.resultType()).get();
           return new TableGenRegisterClass(configuration.processorName(),
               registerFile.identifier.simpleName(), 32, //TODO(kper): hardcoded alignment
               List.of(type), getRegisters(registerFile, abi));
