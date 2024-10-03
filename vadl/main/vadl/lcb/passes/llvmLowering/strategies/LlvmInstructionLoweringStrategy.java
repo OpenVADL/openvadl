@@ -153,6 +153,9 @@ public abstract class LlvmInstructionLoweringStrategy {
         unmodifiedBehavior);
   }
 
+  /**
+   * Lower a pseudo instruction.
+   */
   public Optional<LlvmLoweringRecord> lower(
       Map<InstructionLabel, List<Instruction>> supportedInstructions,
       PseudoInstruction pseudoInstruction,
@@ -534,7 +537,9 @@ public abstract class LlvmInstructionLoweringStrategy {
       List<T> selectorNodes,
       Graph machine,
       Function<T, Node> selectorNodeTransformation,
-      BiFunction<MachineInstructionParameterNode, ParameterTypeAndNameIdentity, TableGenInstructionOperand>
+      BiFunction<MachineInstructionParameterNode,
+          ParameterTypeAndNameIdentity,
+          TableGenInstructionOperand>
           machineNodeTransformation) {
     for (var node : selectorNodes) {
       // Something like `X:$rs1`

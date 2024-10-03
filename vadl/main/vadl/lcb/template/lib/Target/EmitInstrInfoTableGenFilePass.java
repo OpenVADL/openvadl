@@ -8,6 +8,7 @@ import java.util.Map;
 import java.util.stream.Stream;
 import vadl.configuration.LcbConfiguration;
 import vadl.lcb.codegen.model.llvm.ValueType;
+import vadl.lcb.passes.llvmLowering.GenerateRegisterClassesPass;
 import vadl.lcb.passes.llvmLowering.LlvmLoweringPass;
 import vadl.lcb.passes.llvmLowering.domain.LlvmLoweringRecord;
 import vadl.lcb.passes.llvmLowering.tablegen.lowering.TableGenImmediateOperandRenderer;
@@ -50,6 +51,8 @@ public class EmitInstrInfoTableGenFilePass extends LcbTemplateRenderingPass {
                                                 Specification specification) {
     var abi =
         (DummyAbi) specification.definitions().filter(x -> x instanceof DummyAbi).findFirst().get();
+    var registerClassOutput = (GenerateRegisterClassesPass.Output) passResults.lastResultOf(
+        GenerateRegisterClassesPass.class);
     var llvmLoweringPassResult =
         (LlvmLoweringPass.LlvmLoweringPassResult) ensureNonNull(
             passResults.lastResultOf(LlvmLoweringPass.class),

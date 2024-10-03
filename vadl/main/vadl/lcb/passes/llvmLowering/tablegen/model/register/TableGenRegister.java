@@ -1,6 +1,7 @@
 package vadl.lcb.passes.llvmLowering.tablegen.model.register;
 
 import java.util.List;
+import java.util.Optional;
 import vadl.gcb.valuetypes.ProcessorName;
 
 /**
@@ -11,7 +12,8 @@ public record TableGenRegister(ProcessorName namespace,
                                String asmName,
                                List<String> altNames,
                                int hwEncodingMsb,
-                               int hwEncodingValue) {
+                               int hwEncodingValue,
+                               Optional<Integer> index) {
 
   public String altNamesString() {
     return String.join(", ", altNames);

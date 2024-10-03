@@ -14,7 +14,8 @@ public record TableGenRegisterClass(ProcessorName namespace,
                                     String name,
                                     int alignment,
                                     List<ValueType> regTypes,
-                                    List<TableGenRegister> registers) {
+                                    List<TableGenRegister> registers,
+                                    RegisterFile registerFileRef) {
   public String regTypesString() {
     return regTypes.stream().map(ValueType::getLlvmType).collect(Collectors.joining(", "));
   }

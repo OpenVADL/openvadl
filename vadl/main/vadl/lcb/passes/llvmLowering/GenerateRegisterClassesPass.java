@@ -1,6 +1,7 @@
 package vadl.lcb.passes.llvmLowering;
 
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
@@ -15,7 +16,9 @@ import vadl.pass.Pass;
 import vadl.pass.PassName;
 import vadl.pass.PassResults;
 import vadl.utils.Pair;
+import vadl.viam.Constant;
 import vadl.viam.RegisterFile;
+import vadl.viam.RegisterFile.Constraint;
 import vadl.viam.Specification;
 import vadl.viam.passes.dummyAbi.DummyAbi;
 
@@ -34,10 +37,18 @@ public class GenerateRegisterClassesPass extends Pass {
   }
 
   /**
+   * Represents a {@link Constraint} in LLVM.
+   */
+  public record LlvmConstraint(ValueType type, int value, TableGenRegister register) {
+
+  }
+
+  /**
    * Contains the output of the pass.
    */
   public record Output(List<TableGenRegisterClass> registerClasses,
-                       List<TableGenRegister> registers) {
+                       List<TableGenRegister> registers,
+                       List<LlvmConstraint> constraints) {
     /* `registers` do not belong to any register class. */
   }
 
@@ -53,11 +64,34 @@ public class GenerateRegisterClassesPass extends Pass {
         register.identifier.simpleName(),
         Collections.emptyList(),
         0,
-        0
+        0,
+        Optional.empty()
     )).toList();
 
     var mainRegisterClasses = getMainRegisterClasses(configuration, viam.registerFiles(), abi);
-    return new Output(mainRegisterClasses, registers);
+    var constraints = getConstraints(mainRegisterClasses);
+    return new Output(mainRegisterClasses, registers, constraints);
+  }
+
+  private List<LlvmConstraint> getConstraints(List<TableGenRegisterClass> mainRegisterClasses) {
+    var constraints = new ArrayList<LlvmConstraint>();
+
+    for (var rc : mainRegisterClasses) {
+      var registerFile = rc.registerFileRef();
+      for (var constraint : registerFile.constraints()) {
+        var addr = constraint.address().intValue();
+        var value = constraint.value().intValue();
+
+        rc.registers().stream().filter(r -> r.index().isPresent() && r.index().get().equals(addr))
+            .findFirst()
+            .ifPresent(register -> constraints.add(
+                new LlvmConstraint(ValueType.from(registerFile.resultType()).get(),
+                    value,
+                    register)));
+
+      }
+    }
+    return constraints;
   }
 
   /**
@@ -73,7 +107,8 @@ public class GenerateRegisterClassesPass extends Pass {
           var type = ValueType.from(registerFile.resultType()).get();
           return new TableGenRegisterClass(configuration.processorName(),
               registerFile.identifier.simpleName(), 32, //TODO(kper): hardcoded alignment
-              List.of(type), getRegisters(registerFile, abi));
+              List.of(type), getRegisters(registerFile, abi),
+              registerFile);
         }).toList();
   }
 
@@ -91,7 +126,7 @@ public class GenerateRegisterClassesPass extends Pass {
       return new TableGenRegister(configuration.processorName(), name,
           alias.orElse(new DummyAbi.RegisterAlias(registerFile.identifier.simpleName() + number))
               .value(),
-          altNames, bitWidth - 1, number);
+          altNames, bitWidth - 1, number, Optional.of(number));
     }).toList();
   }
 

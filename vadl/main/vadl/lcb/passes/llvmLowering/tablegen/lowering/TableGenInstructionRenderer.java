@@ -111,7 +111,8 @@ public final class TableGenInstructionRenderer {
   }
 
   /**
-   * Transforms the given {@link PseudoInstruction} into a string which can be used by LLVM's TableGen.
+   * Transforms the given {@link PseudoInstruction} into a string which can be used by LLVM's
+   * TableGen.
    */
   public static String lower(TableGenPseudoInstruction instruction) {
     var y = String.format("""

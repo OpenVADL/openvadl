@@ -85,8 +85,8 @@ public abstract class ParameterIdentity {
     ensure(address instanceof FieldRefNode
         || address instanceof ConstantNode
         || address instanceof FuncParamNode, "address must be a field or constant or func param");
-    if (node instanceof LlvmFrameIndexSD frameIndexSD &&
-        address instanceof FieldRefNode fieldRefNode) {
+    if (node instanceof LlvmFrameIndexSD frameIndexSD
+        && address instanceof FieldRefNode fieldRefNode) {
       return ParameterIdentity.from(frameIndexSD, fieldRefNode);
     } else if (address instanceof FieldRefNode fieldRefNode) {
       return ParameterIdentity.from(node, fieldRefNode);
