@@ -136,6 +136,22 @@ public class ViamError extends RuntimeException {
   }
 
   /**
+   * Ensures that a given condition is true. If the condition is false, an exception is thrown
+   * with the provided format string and arguments.
+   *
+   * <p>The thrown exception has context information about the node and graph.</p>
+   *
+   * @param condition          the condition to check
+   * @param diagnosticSupplier is the function which provides the {@link Diagnostic}.
+   * @throws Diagnostic if the condition is false
+   */
+  public static void ensure(boolean condition, Supplier<Diagnostic> diagnosticSupplier) {
+    if (!condition) {
+      throw diagnosticSupplier.get();
+    }
+  }
+
+  /**
    * Ensures that the given object is present. If the object is null, an exception is thrown
    * with the specified message.
    *
@@ -149,6 +165,23 @@ public class ViamError extends RuntimeException {
   public static <T> T ensurePresent(@Nullable Optional<T> obj, String msg) {
     ensureNonNull(obj, "Optional must not be null");
     ensure(obj.isPresent(), msg);
+    return obj.get();
+  }
+
+  /**
+   * Ensures that a given object is present.
+   * with the provided format string and arguments.
+   *
+   * <p>The thrown exception has context information about the node and graph.</p>
+   *
+   * @param obj                the object to check
+   * @param diagnosticSupplier is the function which provides the {@link Diagnostic}.
+   * @throws Diagnostic if the condition is false
+   */
+  public static <T> T ensurePresent(@Nullable Optional<T> obj,
+                                    Supplier<Diagnostic> diagnosticSupplier) {
+    ensureNonNull(obj, "Optional must not be null");
+    ensure(obj.isPresent(), diagnosticSupplier);
     return obj.get();
   }
 
@@ -181,38 +214,5 @@ public class ViamError extends RuntimeException {
   public static <T> T ensureNonNull(@Nullable T obj, Supplier<Diagnostic> diagnosticSupplier) {
     ensure(obj != null, diagnosticSupplier);
     return Objects.requireNonNull(obj);
-  }
-
-  /**
-   * Ensures that a given object is present.
-   * with the provided format string and arguments.
-   *
-   * <p>The thrown exception has context information about the node and graph.</p>
-   *
-   * @param obj                the object to check
-   * @param diagnosticSupplier is the function which provides the {@link Diagnostic}.
-   * @throws Diagnostic if the condition is false
-   */
-  public static <T> T ensurePresent(@Nullable Optional<T> obj,
-                                    Supplier<Diagnostic> diagnosticSupplier) {
-    ensureNonNull(obj, "Optional must not be null");
-    ensure(obj.isPresent(), diagnosticSupplier);
-    return obj.get();
-  }
-
-  /**
-   * Ensures that a given condition is true. If the condition is false, an exception is thrown
-   * with the provided format string and arguments.
-   *
-   * <p>The thrown exception has context information about the node and graph.</p>
-   *
-   * @param condition          the condition to check
-   * @param diagnosticSupplier is the function which provides the {@link Diagnostic}.
-   * @throws Diagnostic if the condition is false
-   */
-  public static void ensure(boolean condition, Supplier<Diagnostic> diagnosticSupplier) {
-    if (!condition) {
-      throw diagnosticSupplier.get();
-    }
   }
 }

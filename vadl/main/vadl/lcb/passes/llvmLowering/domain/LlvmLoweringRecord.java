@@ -20,6 +20,9 @@ public class LlvmLoweringRecord {
   private final List<RegisterRef> uses;
   private final List<RegisterRef> def;
 
+  /**
+   * Constructor.
+   */
   public LlvmLoweringRecord(Graph behavior, List<TableGenInstructionOperand> inputs,
                             List<TableGenInstructionOperand> outputs, LlvmLoweringPass.Flags flags,
                             List<TableGenPattern> patterns, List<RegisterRef> uses,

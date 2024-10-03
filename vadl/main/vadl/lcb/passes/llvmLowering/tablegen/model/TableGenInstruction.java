@@ -1,17 +1,10 @@
 package vadl.lcb.passes.llvmLowering.tablegen.model;
 
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.BitSet;
-import java.util.Collections;
 import java.util.List;
-import java.util.Optional;
-import java.util.stream.Stream;
 import vadl.lcb.passes.llvmLowering.LlvmLoweringPass;
 import vadl.lcb.passes.llvmLowering.domain.RegisterRef;
 import vadl.viam.Instruction;
 import vadl.viam.PseudoInstruction;
-import vadl.viam.Register;
 
 /**
  * Models an {@link Instruction} and {@link PseudoInstruction} for TableGen.
@@ -27,6 +20,9 @@ public abstract class TableGenInstruction {
   private final LlvmLoweringPass.Flags flags;
 
 
+  /**
+   * Constructor.
+   */
   public TableGenInstruction(String name,
                              String namespace,
                              LlvmLoweringPass.Flags flags,

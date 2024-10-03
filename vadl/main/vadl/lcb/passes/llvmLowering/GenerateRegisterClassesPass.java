@@ -35,6 +35,9 @@ public class GenerateRegisterClassesPass extends Pass {
     return new PassName("GenerateRegisterClassesPass");
   }
 
+  /**
+   * Contains the output of the pass.
+   */
   public record Output(List<TableGenRegisterClass> registerClasses,
       /* These registers do not belong to any register class. */
                        List<TableGenRegister> registers) {

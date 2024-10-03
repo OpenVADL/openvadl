@@ -31,6 +31,9 @@ public class RegisterRef extends Resource {
   @Nullable
   private Constant address;
 
+  /**
+   * Constructor.
+   */
   public RegisterRef(Register register) {
     super(register.identifier);
     this.resultType = register.resultType();
@@ -39,6 +42,9 @@ public class RegisterRef extends Resource {
     this.address = null;
   }
 
+  /**
+   * Constructor.
+   */
   public RegisterRef(RegisterFile registerFile, Constant address) {
     super(registerFile.identifier);
     this.resultType = registerFile.resultType();

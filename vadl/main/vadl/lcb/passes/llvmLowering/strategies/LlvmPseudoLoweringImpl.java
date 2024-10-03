@@ -1,7 +1,6 @@
 package vadl.lcb.passes.llvmLowering.strategies;
 
 import static vadl.viam.ViamError.ensure;
-import static vadl.viam.ViamError.ensureNonNull;
 
 import com.google.common.collect.Streams;
 import java.util.ArrayList;
@@ -23,7 +22,6 @@ import vadl.lcb.passes.llvmLowering.tablegen.model.TableGenInstructionOperand;
 import vadl.lcb.passes.llvmLowering.tablegen.model.TableGenPattern;
 import vadl.lcb.passes.llvmLowering.tablegen.model.TableGenSelectionWithOutputPattern;
 import vadl.utils.Pair;
-import vadl.viam.Constant;
 import vadl.viam.Instruction;
 import vadl.viam.PseudoInstruction;
 import vadl.viam.graph.Graph;
@@ -33,8 +31,6 @@ import vadl.viam.graph.dependency.ConstantNode;
 import vadl.viam.graph.dependency.ExpressionNode;
 import vadl.viam.graph.dependency.FieldRefNode;
 import vadl.viam.graph.dependency.FuncParamNode;
-import vadl.viam.graph.dependency.ReadRegFileNode;
-import vadl.viam.graph.dependency.WriteRegFileNode;
 
 /**
  * Whereas {@link LlvmInstructionLoweringStrategy} defines multiple to lower {@link Instruction}
@@ -52,6 +48,9 @@ public class LlvmPseudoLoweringImpl {
     this.strategies = strategies;
   }
 
+  /**
+   * Lower a {@link PseudoInstruction} into a {@link LlvmLoweringRecord}.
+   */
   public Optional<LlvmLoweringRecord> lower(
       PseudoInstruction pseudo,
       HashMap<InstructionLabel, List<Instruction>> supportedInstructions) {

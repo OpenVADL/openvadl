@@ -176,7 +176,8 @@ public class PseudoExpansionCodeGeneratorVisitor extends GenericCppCodeGenerator
             String.format(
                 "MCOperand %s = "
                     +
-                    "MCOperand::createExpr(%sMCExpr::create(%s, %sMCExpr::VariantKind::%s, Ctx));\n",
+                    "MCOperand::createExpr(%sMCExpr::create(%s, %sMCExpr::VariantKind::%s, "
+                    + "Ctx));\n",
                 argumentImmSymbol, namespace, argumentSymbol, namespace, variant.value()));
         writer.write(String.format("%s.addOperand(%s);\n",
             sym,

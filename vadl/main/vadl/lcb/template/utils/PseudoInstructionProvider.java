@@ -34,7 +34,8 @@ public class PseudoInstructionProvider {
               var isSupported = supportedInstructions.contains(i.target());
               if (!isSupported) {
                 DeferredDiagnosticStore.add(Diagnostic.warning(
-                    "Instruction was not lowered. Therefore, it cannot be used in the pseudo instruction",
+                    "Instruction was not lowered. "
+                        + "Therefore, it cannot be used in the pseudo instruction",
                     i.sourceLocation()).build());
               }
               return isSupported;

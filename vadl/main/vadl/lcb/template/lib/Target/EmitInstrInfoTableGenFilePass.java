@@ -55,25 +55,26 @@ public class EmitInstrInfoTableGenFilePass extends LcbTemplateRenderingPass {
             passResults.lastResultOf(LlvmLoweringPass.class),
             "llvmLowering must exist");
 
-    var tableGenMachineRecords = llvmLoweringPassResult.machineInstructionRecords().entrySet().stream()
-        .sorted(
-            Comparator.comparing(o -> o.getKey().identifier.simpleName()))
-        .map(entry -> {
-          var instruction = entry.getKey();
-          var result = entry.getValue();
-          return new TableGenMachineInstruction(
-              instruction.identifier.simpleName(),
-              lcbConfiguration().processorName().value(),
-              instruction,
-              result.flags(),
-              result.inputs(),
-              result.outputs(),
-              result.uses(),
-              result.defs(),
-              result.patterns()
-          );
-        })
-        .toList();
+    var tableGenMachineRecords =
+        llvmLoweringPassResult.machineInstructionRecords().entrySet().stream()
+            .sorted(
+                Comparator.comparing(o -> o.getKey().identifier.simpleName()))
+            .map(entry -> {
+              var instruction = entry.getKey();
+              var result = entry.getValue();
+              return new TableGenMachineInstruction(
+                  instruction.identifier.simpleName(),
+                  lcbConfiguration().processorName().value(),
+                  instruction,
+                  result.flags(),
+                  result.inputs(),
+                  result.outputs(),
+                  result.uses(),
+                  result.defs(),
+                  result.patterns()
+              );
+            })
+            .toList();
 
     var tableGenPseudoRecords =
         llvmLoweringPassResult.pseudoInstructionRecords().entrySet().stream()

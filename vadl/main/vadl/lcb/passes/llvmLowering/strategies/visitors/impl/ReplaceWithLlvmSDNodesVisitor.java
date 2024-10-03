@@ -117,8 +117,8 @@ public class ReplaceWithLlvmSDNodesVisitor
 
     if (distinctTypes.size() > 1) {
       DeferredDiagnosticStore.add(
-          Diagnostic.warning("Constant must be upcasted but it has multiple candidates. " +
-                  "The compiler generator considered only the first type as upcast.",
+          Diagnostic.warning("Constant must be upcasted but it has multiple candidates. "
+                  + "The compiler generator considered only the first type as upcast.",
               node.sourceLocation()).build());
     } else if (distinctTypes.isEmpty()) {
       DeferredDiagnosticStore.add(
