@@ -23,11 +23,7 @@ import vadl.viam.Specification;
 import vadl.viam.passes.dummyAbi.DummyAbi;
 
 /**
- * Pseudo instructions contain multiple {@link Instruction} which they should be expanded to.
- * It is possible to redefine the arguments of each instruction. Therefore, a {@link RegisterFile}
- * becomes fixated to a register. TableGen cannot generate instruction patterns for single registers.
- * To fix that, we must create a separate register class for every single register which then
- * TableGen can match.
+ * Generate register classes from {@link RegisterFile}.
  */
 public class GenerateRegisterClassesPass extends Pass {
 
@@ -51,42 +47,8 @@ public class GenerateRegisterClassesPass extends Pass {
   public Output execute(PassResults passResults, Specification viam) throws IOException {
     var abi = (DummyAbi) viam.definitions().filter(x -> x instanceof DummyAbi).findFirst().get();
 
-    var userDefinedRegisterClasses = getUserDefinedRegisterClasses(viam.registers());
     var mainRegisterClasses = getMainRegisterClasses(viam.registerFiles(), abi);
-    var registerClassesForEachRegisterClass = getIndividualRegisterClasses(mainRegisterClasses);
-    return new Output(
-        Stream.concat(userDefinedRegisterClasses.stream(),
-                Stream.concat(mainRegisterClasses.stream(),
-                    registerClassesForEachRegisterClass.stream()))
-            .toList());
-  }
-
-  /**
-   * The specification can contain {@link Register} e.g. PC. Those need to be added to the
-   * register class tablegen. Additionally, we need to generate register classes to be able to
-   * match those in TableGen.
-   */
-  private List<TableGenRegisterClass> getUserDefinedRegisterClasses(Stream<Register> registers) {
-    var configuration = (LcbConfiguration) configuration();
-    var result = new ArrayList<TableGenRegisterClass>();
-
-    registers.forEach(register -> {
-      var tableGenRegister = new TableGenRegister(configuration.processorName(),
-          register.identifier.simpleName(),
-          register.identifier.simpleName(),
-          Collections.emptyList(),
-          0,
-          0);
-      result.add(new TableGenRegisterClass(
-          configuration.processorName(),
-          register.name() + TABLE_GEN_REGISTER_CLASS_SUFFIX,
-          32,
-          List.of(ValueType.from(register.resultType())),
-          List.of(tableGenRegister)
-      ));
-    });
-
-    return result;
+    return new Output(mainRegisterClasses);
   }
 
   /**
@@ -106,38 +68,10 @@ public class GenerateRegisterClassesPass extends Pass {
         }).toList();
   }
 
-  /**
-   * TableGen cannot match direct registers. When you specify an {@link Instruction} which adds
-   * two registers together and the register's indices are hardcoded then we need a
-   * {@link TableGenRegisterClass} with only one register in it to match it correctly.
-   * This function generates a {@link TableGenRegisterClass} from every {@link TableGenRegister} in
-   * the given {@code mainRegisterClasses}.
-   */
-  private List<TableGenRegisterClass> getIndividualRegisterClasses(
-      List<TableGenRegisterClass> mainRegisterClasses) {
-    var result = new ArrayList<TableGenRegisterClass>();
-
-    for (var rg : mainRegisterClasses) {
-      for (var register : rg.registers()) {
-        var tableGenRegisterClass = new TableGenRegisterClass(
-            rg.namespace(),
-            register.name() + TABLE_GEN_REGISTER_CLASS_SUFFIX,
-            rg.alignment(),
-            rg.regTypes(),
-            List.of(register)
-        );
-        result.add(tableGenRegisterClass);
-      }
-    }
-
-    return result;
-  }
-
   private List<TableGenRegister> getRegisters(RegisterFile registerFile, DummyAbi abi) {
     var configuration = (LcbConfiguration) configuration();
     var bitWidth = registerFile.addressType().bitWidth();
     var numberOfRegisters = (int) Math.pow(2, bitWidth);
-
 
     return IntStream.range(0, numberOfRegisters).mapToObj(number -> {
       var name = registerFile.identifier.simpleName() + number;
@@ -146,7 +80,8 @@ public class GenerateRegisterClassesPass extends Pass {
           registerAlias -> String.join(", ", wrapInQuotes(registerAlias.value()),
               wrapInQuotes(registerFile.identifier.simpleName() + number))).stream().toList();
       return new TableGenRegister(configuration.processorName(), name,
-          alias.orElse(new DummyAbi.RegisterAlias(registerFile.identifier.simpleName() + number)).value(),
+          alias.orElse(new DummyAbi.RegisterAlias(registerFile.identifier.simpleName() + number))
+              .value(),
           altNames, bitWidth - 1, number);
     }).toList();
   }
