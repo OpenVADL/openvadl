@@ -2,9 +2,12 @@ package vadl.lcb.passes.llvmLowering.strategies.visitors.impl;
 
 import static vadl.viam.ViamError.ensure;
 
+import java.util.Arrays;
 import java.util.Objects;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import vadl.error.DeferredDiagnosticStore;
+import vadl.error.Diagnostic;
 import vadl.lcb.passes.llvmLowering.LlvmNodeLowerable;
 import vadl.lcb.passes.llvmLowering.domain.selectionDag.LlvmAddSD;
 import vadl.lcb.passes.llvmLowering.domain.selectionDag.LlvmAndSD;
@@ -205,14 +208,36 @@ public class ReplaceWithLlvmSDNodesVisitor
 
   @Override
   public void visit(ReadRegFileNode readRegFileNode) {
-    visit(readRegFileNode.address());
-    if (readRegFileNode instanceof LlvmReadRegFileNode) {
-      return;
-    }
+    // If the address is constant and register file has a constraint for, then we should replace it
+    // by the constraint value.
 
-    readRegFileNode.replaceAndDelete(
-        new LlvmReadRegFileNode(readRegFileNode.registerFile(), readRegFileNode.address(),
-            readRegFileNode.type(), readRegFileNode.staticCounterAccess()));
+    if (readRegFileNode.hasConstantAddress()) {
+      var address = (ConstantNode) readRegFileNode.address();
+      var constraint = Arrays.stream(readRegFileNode.registerFile().constraints())
+          .filter(c -> c.address().equals(address.constant()))
+          .findFirst();
+
+      if (constraint.isPresent()) {
+        var constantNode = new ConstantNode(constraint.get().value());
+        readRegFileNode.replaceAndDelete(constantNode);
+        visit(constantNode);
+      } else {
+        DeferredDiagnosticStore.add(Diagnostic.warning(
+            "Reading from a register file with constant index but the register has no "
+                + "constraint value.",
+            address.sourceLocation()).build());
+      }
+    } else {
+
+      visit(readRegFileNode.address());
+      if (readRegFileNode instanceof LlvmReadRegFileNode) {
+        return;
+      }
+
+      readRegFileNode.replaceAndDelete(
+          new LlvmReadRegFileNode(readRegFileNode.registerFile(), readRegFileNode.address(),
+              readRegFileNode.type(), readRegFileNode.staticCounterAccess()));
+    }
   }
 
   @Override
