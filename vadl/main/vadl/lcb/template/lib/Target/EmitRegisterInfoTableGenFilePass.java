@@ -44,9 +44,10 @@ public class EmitRegisterInfoTableGenFilePass extends LcbTemplateRenderingPass {
   @Override
   protected Map<String, Object> createVariables(final PassResults passResults,
                                                 Specification specification) {
-    var registerClasses = ((GenerateRegisterClassesPass.Output) passResults.lastResultOf(
-        GenerateRegisterClassesPass.class)).registerClasses();
-    var registers = registerClasses
+    var output = ((GenerateRegisterClassesPass.Output) passResults.lastResultOf(
+        GenerateRegisterClassesPass.class));
+    var registerClasses = output.registerClasses();
+    var registersFromClasses = registerClasses
         .stream()
         .flatMap(rc -> rc.registers().stream())
         .distinct()
@@ -54,6 +55,6 @@ public class EmitRegisterInfoTableGenFilePass extends LcbTemplateRenderingPass {
 
     return Map.of(CommonVarNames.NAMESPACE, specification.name(),
         "registerFiles", registerClasses,
-        "registers", registers);
+        "registers", Stream.concat(output.registers().stream(), registersFromClasses.stream()));
   }
 }

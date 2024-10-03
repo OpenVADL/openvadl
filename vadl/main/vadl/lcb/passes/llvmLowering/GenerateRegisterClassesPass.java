@@ -1,7 +1,6 @@
 package vadl.lcb.passes.llvmLowering;
 
 import java.io.IOException;
-import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
@@ -16,8 +15,6 @@ import vadl.pass.Pass;
 import vadl.pass.PassName;
 import vadl.pass.PassResults;
 import vadl.utils.Pair;
-import vadl.viam.Instruction;
-import vadl.viam.Register;
 import vadl.viam.RegisterFile;
 import vadl.viam.Specification;
 import vadl.viam.passes.dummyAbi.DummyAbi;
@@ -38,7 +35,9 @@ public class GenerateRegisterClassesPass extends Pass {
     return new PassName("GenerateRegisterClassesPass");
   }
 
-  public record Output(List<TableGenRegisterClass> registerClasses) {
+  public record Output(List<TableGenRegisterClass> registerClasses,
+      /* These registers do not belong to any register class. */
+                       List<TableGenRegister> registers) {
 
   }
 
@@ -46,9 +45,19 @@ public class GenerateRegisterClassesPass extends Pass {
   @Override
   public Output execute(PassResults passResults, Specification viam) throws IOException {
     var abi = (DummyAbi) viam.definitions().filter(x -> x instanceof DummyAbi).findFirst().get();
+    var configuration = (LcbConfiguration) configuration();
 
-    var mainRegisterClasses = getMainRegisterClasses(viam.registerFiles(), abi);
-    return new Output(mainRegisterClasses);
+    var registers = viam.registers().map(register -> new TableGenRegister(
+        configuration.processorName(),
+        register.identifier.simpleName(),
+        register.identifier.simpleName(),
+        Collections.emptyList(),
+        0,
+        0
+    )).toList();
+
+    var mainRegisterClasses = getMainRegisterClasses(configuration, viam.registerFiles(), abi);
+    return new Output(mainRegisterClasses, registers);
   }
 
   /**
@@ -56,9 +65,9 @@ public class GenerateRegisterClassesPass extends Pass {
    * {@link Specification}.
    */
   private List<TableGenRegisterClass> getMainRegisterClasses(
+      LcbConfiguration configuration,
       Stream<RegisterFile> registerFiles,
       DummyAbi abi) {
-    var configuration = (LcbConfiguration) configuration();
     return
         registerFiles.map(registerFile -> {
           var type = ValueType.from(registerFile.resultType()).get();
