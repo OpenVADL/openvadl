@@ -2,8 +2,10 @@ package vadl.lcb.passes.llvmLowering.strategies;
 
 import static vadl.viam.ViamError.ensure;
 import static vadl.viam.ViamError.ensureNonNull;
+import static vadl.viam.ViamError.ensurePresent;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
@@ -34,9 +36,9 @@ import vadl.lcb.passes.llvmLowering.domain.machineDag.MachineInstructionNode;
 import vadl.lcb.passes.llvmLowering.domain.machineDag.MachineInstructionParameterNode;
 import vadl.lcb.passes.llvmLowering.strategies.visitors.TableGenPatternLowerable;
 import vadl.lcb.passes.llvmLowering.strategies.visitors.impl.ReplaceWithLlvmSDNodesVisitor;
-import vadl.lcb.passes.llvmLowering.tablegen.model.ParameterIdentity;
+import vadl.lcb.passes.llvmLowering.tablegen.model.TableGenConstantOperand;
+import vadl.lcb.passes.llvmLowering.tablegen.model.parameterIdentity.ParameterIdentity;
 import vadl.lcb.passes.llvmLowering.tablegen.model.TableGenInstruction;
-import vadl.lcb.passes.llvmLowering.tablegen.model.TableGenInstructionConstantIndexedRegisterFileOperand;
 import vadl.lcb.passes.llvmLowering.tablegen.model.TableGenInstructionFrameRegisterOperand;
 import vadl.lcb.passes.llvmLowering.tablegen.model.TableGenInstructionImmediateLabelOperand;
 import vadl.lcb.passes.llvmLowering.tablegen.model.TableGenInstructionImmediateOperand;
@@ -45,6 +47,7 @@ import vadl.lcb.passes.llvmLowering.tablegen.model.TableGenInstructionOperand;
 import vadl.lcb.passes.llvmLowering.tablegen.model.TableGenInstructionRegisterFileOperand;
 import vadl.lcb.passes.llvmLowering.tablegen.model.TableGenPattern;
 import vadl.lcb.passes.llvmLowering.tablegen.model.TableGenSelectionWithOutputPattern;
+import vadl.lcb.passes.llvmLowering.tablegen.model.parameterIdentity.ParameterTypeAndNameIdentity;
 import vadl.lcb.visitors.LcbGraphNodeVisitor;
 import vadl.viam.Instruction;
 import vadl.viam.InstructionSetArchitecture;
@@ -138,9 +141,9 @@ public abstract class LlvmInstructionLoweringStrategy {
    * If it is not lowerable then return {@link Optional#empty()}.
    *
    * @param supportedInstructions the instructions which have known semantics.
-   * @param instruction is the machine instruction which should be lowered.
-   * @param instructionLabel is the semantic label of the instruction.
-   * @param unmodifiedBehavior is the uninlined graph in the case of {@link Instruction}.
+   * @param instruction           is the machine instruction which should be lowered.
+   * @param instructionLabel      is the semantic label of the instruction.
+   * @param unmodifiedBehavior    is the uninlined graph in the case of {@link Instruction}.
    */
   public Optional<LlvmLoweringRecord> lower(
       Map<InstructionLabel, List<Instruction>> supportedInstructions,
@@ -168,10 +171,10 @@ public abstract class LlvmInstructionLoweringStrategy {
    * If it is not lowerable then return {@link Optional#empty()}.
    *
    * @param supportedInstructions the instructions which have known semantics.
-   * @param instruction is the machine instruction which should be lowered.
-   * @param instructionLabel is the semantic label of the instruction.
-   * @param unmodifiedBehavior is the uninlined graph in the case of {@link Instruction} or
-   * the applied graph in the case of {@link PseudoInstruction}.
+   * @param instruction           is the machine instruction which should be lowered.
+   * @param instructionLabel      is the semantic label of the instruction.
+   * @param unmodifiedBehavior    is the uninlined graph in the case of {@link Instruction} or
+   *                              the applied graph in the case of {@link PseudoInstruction}.
    */
   protected Optional<LlvmLoweringRecord> lowerInstruction(
       Map<InstructionLabel, List<Instruction>> supportedInstructions,
@@ -409,6 +412,19 @@ public abstract class LlvmInstructionLoweringStrategy {
           ParameterIdentity.from(node, funcParamNode),
           node,
           funcParamNode.parameter());
+    } else if (node.address() instanceof ConstantNode constantNode) {
+      // The register file has a constant as address.
+      // This is ok as long as the value of the register file at the address is also constant.
+      // For example, the X0 register in RISC-V which always has a constant value.
+      var constraints = Arrays.stream(node.registerFile().constraints()).toList();
+      var constraintValue = constraints.stream()
+          .filter(x -> x.address().intValue() == constantNode.constant().asVal().intValue())
+          .findFirst();
+      var constRegisterValue = ensurePresent(constraintValue,
+          () -> Diagnostic.error("Register file with constant index has no constant value.",
+                  constantNode.sourceLocation())
+              .help("Consider adding a constraint to register file for the given index.").build());
+      return new TableGenConstantOperand(constantNode, constRegisterValue.value());
     } else {
       throw Diagnostic.error(
           "The compiler generator needs to generate a tablegen instruction operand from this "
@@ -515,7 +531,7 @@ public abstract class LlvmInstructionLoweringStrategy {
       List<T> selectorNodes,
       Graph machine,
       Function<T, Node> selectorNodeTransformation,
-      BiFunction<MachineInstructionParameterNode, ParameterIdentity, TableGenInstructionOperand>
+      BiFunction<MachineInstructionParameterNode, ParameterTypeAndNameIdentity, TableGenInstructionOperand>
           machineNodeTransformation) {
     for (var node : selectorNodes) {
       // Something like `X:$rs1`
@@ -532,7 +548,8 @@ public abstract class LlvmInstructionLoweringStrategy {
               candidate.instructionOperand().origin() instanceof LlvmNodeReplaceable cast
                   && cast.parameterIdentity().equals(selectorParameter))
           .forEach(occurrence -> {
-            var operand = machineNodeTransformation.apply(occurrence, selectorParameter);
+            var operand = machineNodeTransformation.apply(occurrence,
+                (ParameterTypeAndNameIdentity) selectorParameter);
             ensure(operand != occurrence.instructionOperand(),
                 "The returned operand must be a new instance because it was modified");
             occurrence.setInstructionOperand(operand);

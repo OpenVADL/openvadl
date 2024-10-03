@@ -1,4 +1,4 @@
-package vadl.lcb.passes.llvmLowering.tablegen.model;
+package vadl.lcb.passes.llvmLowering.tablegen.model.parameterIdentity;
 
 import static vadl.viam.ViamError.ensure;
 
@@ -17,63 +17,64 @@ import vadl.viam.graph.dependency.WriteRegFileNode;
  * The idea of a parameter identity is that operands in the selection and machine pattern
  * can be both matched and replaced. This can be useful to change operands like {@code AddrFI}.
  */
-public record ParameterIdentity(String type, String name) {
-  public String render() {
-    return String.format("%s:$%s", type, name);
-  }
+public abstract class ParameterIdentity {
+  /**
+   * Render the parameter identity to a string.
+   */
+  public abstract String render();
 
   public static ParameterIdentity fromBasicBlockToImmediateLabel(LlvmBasicBlockSD basicBlockSD) {
-    return new ParameterIdentity(basicBlockSD.immediateOperand().rawName() + "AsLabel",
+    return new ParameterTypeAndNameIdentity(basicBlockSD.immediateOperand().rawName() + "AsLabel",
         basicBlockSD.fieldAccess().fieldRef().identifier.simpleName());
   }
 
   public static ParameterIdentity from(LlvmFieldAccessRefNode node) {
-    return new ParameterIdentity(node.immediateOperand().fullname(),
+    return new ParameterTypeAndNameIdentity(node.immediateOperand().fullname(),
         node.fieldAccess().fieldRef().identifier.simpleName());
   }
 
   public static ParameterIdentity from(LlvmBasicBlockSD node) {
-    return new ParameterIdentity(node.lower(),
+    return new ParameterTypeAndNameIdentity(node.lower(),
         node.fieldAccess().fieldRef().identifier.simpleName());
   }
 
   public static ParameterIdentity from(FieldRefNode node) {
-    return new ParameterIdentity(node.formatField().identifier.simpleName(),
+    return new ParameterTypeAndNameIdentity(node.formatField().identifier.simpleName(),
         node.nodeName());
   }
 
   public static ParameterIdentity from(LlvmFrameIndexSD node, FieldRefNode address) {
-    return new ParameterIdentity(LlvmFrameIndexSD.NAME,
+    return new ParameterTypeAndNameIdentity(LlvmFrameIndexSD.NAME,
         address.formatField().identifier.simpleName());
   }
 
   public static ParameterIdentity from(WriteRegFileNode node, FieldRefNode address) {
-    return new ParameterIdentity(node.registerFile().name(),
+    return new ParameterTypeAndNameIdentity(node.registerFile().name(),
         address.formatField().identifier.simpleName());
   }
 
   public static ParameterIdentity from(ReadRegFileNode node, FieldRefNode address) {
-    return new ParameterIdentity(node.registerFile().name(),
+    return new ParameterTypeAndNameIdentity(node.registerFile().name(),
         address.formatField().identifier.simpleName());
   }
 
   public static ParameterIdentity from(LlvmReadRegFileNode node, FieldRefNode address) {
-    return new ParameterIdentity(node.registerFile().name(),
+    return new ParameterTypeAndNameIdentity(node.registerFile().name(),
         address.formatField().identifier.simpleName());
   }
 
   public static ParameterIdentity from(ReadRegFileNode node, FuncParamNode address) {
-    return new ParameterIdentity(node.registerFile().name(),
+    return new ParameterTypeAndNameIdentity(node.registerFile().name(),
         address.parameter().identifier.simpleName());
   }
 
   public static ParameterIdentity from(ReadRegFileNode node, ConstantNode address) {
-    return new ParameterIdentity(node.registerFile().name(),
+    return new ParameterTypeAndNameIdentity(node.registerFile().name(),
         address.constant().asVal().toString());
   }
 
   public static ParameterIdentity from(WriteRegFileNode node, FuncParamNode address) {
-    return new ParameterIdentity(node.registerFile().name(),
+    return new ParameterTypeAndNameIdentity(node.registerFile().name(),
         address.parameter().identifier.simpleName());
   }
 
@@ -91,9 +92,5 @@ public record ParameterIdentity(String type, String name) {
     } else {
       return ParameterIdentity.from(node, (FuncParamNode) address);
     }
-  }
-
-  public ParameterIdentity withType(String type) {
-    return new ParameterIdentity(type, name);
   }
 }

@@ -174,13 +174,30 @@ public class ViamError extends RuntimeException {
    *
    * <p>The thrown exception has context information about the node and graph.</p>
    *
-   * @param obj          the object to check
+   * @param obj                the object to check
    * @param diagnosticSupplier is the function which provides the {@link Diagnostic}.
    * @throws Diagnostic if the condition is false
    */
   public static <T> T ensureNonNull(@Nullable T obj, Supplier<Diagnostic> diagnosticSupplier) {
     ensure(obj != null, diagnosticSupplier);
     return Objects.requireNonNull(obj);
+  }
+
+  /**
+   * Ensures that a given object is present.
+   * with the provided format string and arguments.
+   *
+   * <p>The thrown exception has context information about the node and graph.</p>
+   *
+   * @param obj                the object to check
+   * @param diagnosticSupplier is the function which provides the {@link Diagnostic}.
+   * @throws Diagnostic if the condition is false
+   */
+  public static <T> T ensurePresent(@Nullable Optional<T> obj,
+                                    Supplier<Diagnostic> diagnosticSupplier) {
+    ensureNonNull(obj, "Optional must not be null");
+    ensure(obj.isPresent(), diagnosticSupplier);
+    return obj.get();
   }
 
   /**

@@ -4,6 +4,7 @@ import static vadl.viam.ViamError.ensure;
 import static vadl.viam.ViamError.ensureNonNull;
 
 import java.util.Arrays;
+import java.util.Comparator;
 import java.util.HashSet;
 import java.util.Objects;
 import java.util.Set;
@@ -104,27 +105,31 @@ public class ReplaceWithLlvmSDNodesVisitor
         .filter(x -> x instanceof ExpressionNode)
         .map(x -> {
           var y = (ExpressionNode) x;
+          // Cast to BitsType when SIntType
           return y.type();
         })
+        .filter(x -> x instanceof BitsType)
+        .map(x -> (BitsType) x)
+        .sorted(Comparator.comparingInt(BitsType::bitWidth))
         .toList();
 
-    if (new HashSet<>(types).size() == 1) {
-      var type = types.stream().findFirst().get();
-      node.setType(type);
-    } else {
+    var distinctTypes = new HashSet<>(types);
+
+    if (distinctTypes.size() > 1) {
       DeferredDiagnosticStore.add(
-          Diagnostic.warning("Constant must be upcasted but it has multiple candidates"
-                  + " or none.",
+          Diagnostic.warning("Constant must be upcasted but it has multiple candidates. " +
+                  "The compiler generator considered only the first type as upcast.",
               node.sourceLocation()).build());
+    } else if (distinctTypes.isEmpty()) {
+      DeferredDiagnosticStore.add(
+          Diagnostic.warning("Constant must be upcasted but it has no candidates.",
+              node.sourceLocation()).build());
+      return;
     }
 
-    /*
-    if (node.constant().type() instanceof BitsType bitsType) {
-      ensure(ValueType.from(bitsType).isPresent(), () -> Diagnostic.error(String.format(
-          "Constant's type '%s' is not llvm compatible but couldn't also be automatically replaced",
-          bitsType.name()), node.sourceLocation()).build());
-    }
-     */
+    var type = types.stream().findFirst().get();
+    node.setType(type);
+    node.constant().setType(type);
   }
 
   @Override

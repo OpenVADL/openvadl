@@ -1,6 +1,6 @@
 package vadl.lcb.passes.llvmLowering.domain.selectionDag;
 
-import vadl.lcb.passes.llvmLowering.tablegen.model.ParameterIdentity;
+import vadl.lcb.passes.llvmLowering.tablegen.model.parameterIdentity.ParameterIdentity;
 import vadl.lcb.passes.llvmLowering.tablegen.model.TableGenPattern;
 
 /**

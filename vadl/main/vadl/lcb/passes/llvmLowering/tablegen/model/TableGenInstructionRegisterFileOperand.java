@@ -1,5 +1,6 @@
 package vadl.lcb.passes.llvmLowering.tablegen.model;
 
+import vadl.lcb.passes.llvmLowering.tablegen.model.parameterIdentity.ParameterIdentity;
 import vadl.viam.Format;
 import vadl.viam.RegisterFile;
 import vadl.viam.graph.dependency.ReadRegFileNode;

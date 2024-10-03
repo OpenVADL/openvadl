@@ -2,6 +2,7 @@ package vadl.lcb.passes.llvmLowering.tablegen.model;
 
 import java.util.Objects;
 import vadl.lcb.passes.llvmLowering.domain.selectionDag.LlvmFieldAccessRefNode;
+import vadl.lcb.passes.llvmLowering.tablegen.model.parameterIdentity.ParameterIdentity;
 
 /**
  * Indicates that the operand is an immediate.

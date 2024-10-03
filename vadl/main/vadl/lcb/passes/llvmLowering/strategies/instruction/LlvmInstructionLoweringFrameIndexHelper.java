@@ -7,11 +7,12 @@ import vadl.lcb.passes.llvmLowering.domain.selectionDag.LlvmFrameIndexSD;
 import vadl.lcb.passes.llvmLowering.domain.selectionDag.LlvmReadRegFileNode;
 import vadl.lcb.passes.llvmLowering.domain.machineDag.MachineInstructionParameterNode;
 import vadl.lcb.passes.llvmLowering.strategies.LlvmInstructionLoweringStrategy;
-import vadl.lcb.passes.llvmLowering.tablegen.model.ParameterIdentity;
+import vadl.lcb.passes.llvmLowering.tablegen.model.parameterIdentity.ParameterIdentity;
 import vadl.lcb.passes.llvmLowering.tablegen.model.TableGenInstructionFrameRegisterOperand;
 import vadl.lcb.passes.llvmLowering.tablegen.model.TableGenInstructionOperand;
 import vadl.lcb.passes.llvmLowering.tablegen.model.TableGenPattern;
 import vadl.lcb.passes.llvmLowering.tablegen.model.TableGenSelectionWithOutputPattern;
+import vadl.lcb.passes.llvmLowering.tablegen.model.parameterIdentity.ParameterTypeAndNameIdentity;
 import vadl.viam.graph.Graph;
 import vadl.viam.graph.Node;
 
@@ -37,7 +38,7 @@ public abstract class LlvmInstructionLoweringFrameIndexHelper
     Function<LlvmReadRegFileNode, Node> selectorTransformation = LlvmFrameIndexSD::new;
     // Machine: replace by frame register operand but the `affectedParameterIdentity`
     // should change the type. So `X:$rs1` should be `Addr:$rs1`.
-    BiFunction<MachineInstructionParameterNode, ParameterIdentity, TableGenInstructionOperand>
+    BiFunction<MachineInstructionParameterNode, ParameterTypeAndNameIdentity, TableGenInstructionOperand>
         machineInstructionTransformation = (machineInstructionParameterNode,
                                             affectedParameterIdentity) ->
         new TableGenInstructionFrameRegisterOperand(
