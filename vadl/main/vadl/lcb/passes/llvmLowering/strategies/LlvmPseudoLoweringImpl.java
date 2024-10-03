@@ -5,7 +5,7 @@ import static vadl.viam.ViamError.ensureNonNull;
 
 import com.google.common.collect.Streams;
 import java.util.ArrayList;
-import java.util.Collections;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.IdentityHashMap;
 import java.util.List;
@@ -19,11 +19,11 @@ import vadl.lcb.passes.llvmLowering.domain.PseudoFuncParamNode;
 import vadl.lcb.passes.llvmLowering.domain.RegisterRef;
 import vadl.lcb.passes.llvmLowering.domain.machineDag.MachineInstructionNode;
 import vadl.lcb.passes.llvmLowering.domain.machineDag.PseudoInstructionNode;
-import vadl.lcb.passes.llvmLowering.domain.selectionDag.LlvmConstantNode;
 import vadl.lcb.passes.llvmLowering.tablegen.model.TableGenInstructionOperand;
 import vadl.lcb.passes.llvmLowering.tablegen.model.TableGenPattern;
 import vadl.lcb.passes.llvmLowering.tablegen.model.TableGenSelectionWithOutputPattern;
 import vadl.utils.Pair;
+import vadl.viam.Constant;
 import vadl.viam.Instruction;
 import vadl.viam.PseudoInstruction;
 import vadl.viam.graph.Graph;
@@ -32,6 +32,8 @@ import vadl.viam.graph.dependency.ConstantNode;
 import vadl.viam.graph.dependency.ExpressionNode;
 import vadl.viam.graph.dependency.FieldRefNode;
 import vadl.viam.graph.dependency.FuncParamNode;
+import vadl.viam.graph.dependency.ReadRegFileNode;
+import vadl.viam.graph.dependency.WriteRegFileNode;
 
 /**
  * Whereas {@link LlvmInstructionLoweringStrategy} defines multiple to lower {@link Instruction}
@@ -115,16 +117,54 @@ public class LlvmPseudoLoweringImpl {
                   // by a constant. Sometimes, we need to create instruction selectors in TableGen,
                   // and it requires a variable. However, if we replace the field by a constant
                   // we lose the name of the variable because we have no field anymore.
-                  // For constant values, we use LlvmConstantNode which keeps the original value.
-                  // pseudo instruction RET =
                   // {
                   //     JALR{ rs1 = 1 as Bits5, rd = 0 as Bits5, imm = 0 as Bits12 }
                   // }
 
                   if (argument instanceof ConstantNode constantNode) {
-                    var replacedArgument =
-                        new LlvmConstantNode(constantNode.constant(), formatField);
-                    occurrence.replaceAndDelete(replacedArgument);
+                    // The constantNode tells me the register index.
+
+                    occurrence.usages().filter(node -> (node instanceof ReadRegFileNode))
+                        .forEach(node -> {
+                          var cast = (ReadRegFileNode) node;
+
+                          var constraintValue =
+                              Arrays.stream(cast.registerFile().constraints()).filter(
+                                  c -> c.address().intValue() ==
+                                      constantNode.constant().asVal().intValue()).findFirst();
+
+                          if (constraintValue.isPresent()) {
+                            cast.replaceAndDelete(new ConstantNode(
+                                constraintValue.get().value()
+                            ));
+                          } else {
+                            DeferredDiagnosticStore.add(Diagnostic.warning(
+                                "There is no constraint value for this register. "
+                                    + "Therefore, we cannot generate instruction selectors it.",
+                                occurrence.sourceLocation()).build());
+                          }
+                        });
+
+                    occurrence.usages().filter(node -> (node instanceof WriteRegFileNode))
+                        .forEach(node -> {
+                          var cast = (WriteRegFileNode) node;
+
+                          var constraintValue =
+                              Arrays.stream(cast.registerFile().constraints()).filter(
+                                  c -> c.address().intValue() ==
+                                      constantNode.constant().asVal().intValue()).findFirst();
+
+                          if (constraintValue.isPresent()) {
+                            cast.replaceAndDelete(new ConstantNode(
+                                constraintValue.get().value()
+                            ));
+                          } else {
+                            DeferredDiagnosticStore.add(Diagnostic.warning(
+                                "There is no constraint value for this register. "
+                                    + "Therefore, we cannot generate instruction selectors it.",
+                                occurrence.sourceLocation()).build());
+                          }
+                        });
                   } else {
                     occurrence.replaceAndDelete(argument.copy());
                   }

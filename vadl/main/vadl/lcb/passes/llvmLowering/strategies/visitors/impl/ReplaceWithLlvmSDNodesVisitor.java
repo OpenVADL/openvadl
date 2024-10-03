@@ -11,7 +11,6 @@ import vadl.lcb.passes.llvmLowering.domain.selectionDag.LlvmAndSD;
 import vadl.lcb.passes.llvmLowering.domain.selectionDag.LlvmBasicBlockSD;
 import vadl.lcb.passes.llvmLowering.domain.selectionDag.LlvmBrCcSD;
 import vadl.lcb.passes.llvmLowering.domain.selectionDag.LlvmBrCondSD;
-import vadl.lcb.passes.llvmLowering.domain.selectionDag.LlvmConstantNode;
 import vadl.lcb.passes.llvmLowering.domain.selectionDag.LlvmFieldAccessRefNode;
 import vadl.lcb.passes.llvmLowering.domain.selectionDag.LlvmLoadSD;
 import vadl.lcb.passes.llvmLowering.domain.selectionDag.LlvmMulSD;
@@ -336,11 +335,6 @@ public class ReplaceWithLlvmSDNodesVisitor
   @Override
   public void visit(SideEffectNode sideEffectNode) {
     sideEffectNode.accept(this);
-  }
-
-  @Override
-  public void visit(LlvmConstantNode node) {
-
   }
 
   @Override

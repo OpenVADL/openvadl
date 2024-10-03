@@ -3,10 +3,10 @@ package vadl.lcb.passes.llvmLowering.tablegen.model;
 import static vadl.viam.ViamError.ensure;
 
 import vadl.lcb.passes.llvmLowering.domain.selectionDag.LlvmBasicBlockSD;
-import vadl.lcb.passes.llvmLowering.domain.selectionDag.LlvmConstantNode;
 import vadl.lcb.passes.llvmLowering.domain.selectionDag.LlvmFieldAccessRefNode;
 import vadl.lcb.passes.llvmLowering.domain.selectionDag.LlvmFrameIndexSD;
 import vadl.lcb.passes.llvmLowering.domain.selectionDag.LlvmReadRegFileNode;
+import vadl.viam.graph.dependency.ConstantNode;
 import vadl.viam.graph.dependency.ExpressionNode;
 import vadl.viam.graph.dependency.FieldRefNode;
 import vadl.viam.graph.dependency.FuncParamNode;
@@ -62,11 +62,6 @@ public record ParameterIdentity(String type, String name) {
         address.formatField().identifier.simpleName());
   }
 
-  public static ParameterIdentity from(ReadRegFileNode node, LlvmConstantNode address) {
-    return new ParameterIdentity(node.registerFile().name(),
-        address.replacedField().identifier.simpleName());
-  }
-
   public static ParameterIdentity from(ReadRegFileNode node, FuncParamNode address) {
     return new ParameterIdentity(node.registerFile().name(),
         address.parameter().identifier.simpleName());
@@ -77,21 +72,16 @@ public record ParameterIdentity(String type, String name) {
         address.parameter().identifier.simpleName());
   }
 
-  public static ParameterIdentity from(WriteRegFileNode node, LlvmConstantNode address) {
-    return new ParameterIdentity(node.registerFile().name(),
-        address.replacedField().identifier.simpleName());
-  }
-
   public static ParameterIdentity from(ReadRegFileNode node, ExpressionNode address) {
     ensure(address instanceof FieldRefNode
-        || address instanceof LlvmConstantNode
+        || address instanceof ConstantNode
         || address instanceof FuncParamNode, "address must be a field or constant or func param");
     if (node instanceof LlvmFrameIndexSD frameIndexSD &&
         address instanceof FieldRefNode fieldRefNode) {
       return ParameterIdentity.from(frameIndexSD, fieldRefNode);
     } else if (address instanceof FieldRefNode fieldRefNode) {
       return ParameterIdentity.from(node, fieldRefNode);
-    } else if (address instanceof LlvmConstantNode constantNode) {
+    } else if (address instanceof ConstantNode constantNode) {
       return ParameterIdentity.from(node, constantNode);
     } else {
       return ParameterIdentity.from(node, (FuncParamNode) address);

@@ -27,7 +27,6 @@ import vadl.lcb.passes.llvmLowering.domain.RegisterRef;
 import vadl.lcb.passes.llvmLowering.domain.selectionDag.LlvmBasicBlockSD;
 import vadl.lcb.passes.llvmLowering.domain.selectionDag.LlvmBrCcSD;
 import vadl.lcb.passes.llvmLowering.domain.selectionDag.LlvmBrCondSD;
-import vadl.lcb.passes.llvmLowering.domain.selectionDag.LlvmConstantNode;
 import vadl.lcb.passes.llvmLowering.domain.selectionDag.LlvmFieldAccessRefNode;
 import vadl.lcb.passes.llvmLowering.domain.selectionDag.LlvmFrameIndexSD;
 import vadl.lcb.passes.llvmLowering.domain.selectionDag.LlvmNodeReplaceable;
@@ -410,11 +409,6 @@ public abstract class LlvmInstructionLoweringStrategy {
           ParameterIdentity.from(node, funcParamNode),
           node,
           funcParamNode.parameter());
-    } else if (node.address() instanceof LlvmConstantNode constantNode) {
-      return new TableGenInstructionConstantIndexedRegisterFileOperand(
-          ParameterIdentity.from(node, constantNode),
-          node,
-          constantNode.constant());
     } else {
       throw Diagnostic.error(
           "The compiler generator needs to generate a tablegen instruction operand from this "
