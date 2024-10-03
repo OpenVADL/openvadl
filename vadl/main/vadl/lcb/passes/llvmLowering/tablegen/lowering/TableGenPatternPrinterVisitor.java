@@ -3,6 +3,7 @@ package vadl.lcb.passes.llvmLowering.tablegen.lowering;
 import java.io.StringWriter;
 import java.util.Objects;
 import vadl.cppCodeGen.passes.typeNormalization.CppTypeNormalizationPass;
+import vadl.error.Diagnostic;
 import vadl.lcb.codegen.model.llvm.ValueType;
 import vadl.lcb.passes.llvmLowering.LlvmNodeLowerable;
 import vadl.lcb.passes.llvmLowering.domain.selectionDag.LlvmBasicBlockSD;
@@ -78,7 +79,8 @@ public class TableGenPatternPrinterVisitor
             ty.get().getLlvmType(),
             constant.intValue()));
       } else {
-
+        throw Diagnostic.error(String.format("Constant has no valid LLVM type: '%s'.",
+            node.constant().type().toString()), node.sourceLocation()).build();
       }
     } else if (node.constant() instanceof Constant.Str str) {
       writer.write(str.value());

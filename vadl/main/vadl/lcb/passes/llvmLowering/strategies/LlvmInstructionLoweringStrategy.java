@@ -424,7 +424,11 @@ public abstract class LlvmInstructionLoweringStrategy {
           () -> Diagnostic.error("Register file with constant index has no constant value.",
                   constantNode.sourceLocation())
               .help("Consider adding a constraint to register file for the given index.").build());
-      return new TableGenConstantOperand(constantNode, constRegisterValue.value());
+      // Update the type of the constant because it needs to be upcasted.
+      // Heuristically, we take the type of the index because indices were also upcasted.
+      var constantValue = constRegisterValue.value();
+      constantValue.setType(constantNode.type());
+      return new TableGenConstantOperand(constantNode, constantValue);
     } else {
       throw Diagnostic.error(
           "The compiler generator needs to generate a tablegen instruction operand from this "
