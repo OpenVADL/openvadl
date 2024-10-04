@@ -6,6 +6,9 @@ import java.io.IOException;
 import java.util.IdentityHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
+import org.jetbrains.annotations.NotNull;
 import vadl.configuration.LcbConfiguration;
 import vadl.cppCodeGen.model.CppClassImplName;
 import vadl.cppCodeGen.model.CppFunction;
@@ -17,6 +20,9 @@ import vadl.gcb.passes.relocation.DetectImmediatePass;
 import vadl.gcb.passes.relocation.model.ElfRelocation;
 import vadl.lcb.codegen.GenerateImmediateKindPass;
 import vadl.lcb.codegen.expansion.PseudoExpansionCodeGenerator;
+import vadl.lcb.passes.llvmLowering.ConstMaterialisationPseudoExpansionFunctionGeneratorPass;
+import vadl.lcb.passes.llvmLowering.domain.ConstantMatPseudoInstruction;
+import vadl.lcb.passes.llvmLowering.immediates.GenerateConstantMaterialisationPass;
 import vadl.lcb.passes.relocation.GenerateElfRelocationPass;
 import vadl.lcb.template.CommonVarNames;
 import vadl.lcb.template.LcbTemplateRenderingPass;
@@ -60,46 +66,88 @@ public class EmitMCInstExpanderCppFilePass extends LcbTemplateRenderingPass {
    */
   private List<RenderedPseudoInstruction> pseudoInstructions(
       Specification specification,
-      IdentityHashMap<PseudoInstruction, CppFunction> wrapped,
+      Map<PseudoInstruction, CppFunction> cppFunctions,
       DetectImmediatePass.ImmediateDetectionContainer fieldUsages,
       IdentityHashMap<Format.Field, VariantKind> variants,
       List<ElfRelocation> relocations,
       PassResults passResults) {
     return PseudoInstructionProvider.getSupportedPseudoInstructions(specification, passResults)
-        .map(pseudoInstruction -> {
-          var codeGen =
-              new PseudoExpansionCodeGenerator(lcbConfiguration().processorName().value(),
-                  fieldUsages,
-                  ImmediateDecodingFunctionProvider.generateDecodeFunctions(passResults),
-                  variants,
-                  relocations);
-          var function = wrapped.get(pseudoInstruction);
-          var classPrefix = new CppClassImplName(specification.simpleName() + "MCInstExpander");
-          ensureNonNull(function, "a function must exist");
-          return new RenderedPseudoInstruction(
-              classPrefix,
-              function.functionName(),
-              codeGen.generateFunction(classPrefix, function, true),
-              pseudoInstruction);
-        })
+        .map(pseudoInstruction -> renderPseudoInstruction(specification, cppFunctions, fieldUsages,
+            variants,
+            relocations,
+            passResults, pseudoInstruction))
+        .toList();
+  }
+
+  private @NotNull RenderedPseudoInstruction renderPseudoInstruction(Specification specification,
+                                                                     Map<PseudoInstruction, CppFunction> cppFunctions,
+                                                                     DetectImmediatePass.ImmediateDetectionContainer fieldUsages,
+                                                                     IdentityHashMap<Format.Field, VariantKind> variants,
+                                                                     List<ElfRelocation> relocations,
+                                                                     PassResults passResults,
+                                                                     PseudoInstruction pseudoInstruction) {
+    var codeGen =
+        new PseudoExpansionCodeGenerator(lcbConfiguration().processorName().value(),
+            fieldUsages,
+            ImmediateDecodingFunctionProvider.generateDecodeFunctions(passResults),
+            variants,
+            relocations);
+    var function = cppFunctions.get(pseudoInstruction);
+    var classPrefix = new CppClassImplName(specification.name() + "MCInstExpander");
+    ensureNonNull(function, "a function must exist");
+    return new RenderedPseudoInstruction(
+        classPrefix,
+        function.functionName(),
+        codeGen.generateFunction(classPrefix, function, true),
+        pseudoInstruction);
+  }
+
+  private List<RenderedPseudoInstruction> constMatInstructions(
+      Specification specification,
+      Map<PseudoInstruction, CppFunction> cppFunctions,
+      DetectImmediatePass.ImmediateDetectionContainer fieldUsages,
+      IdentityHashMap<Format.Field, VariantKind> variants,
+      List<ElfRelocation> relocations,
+      PassResults passResults) {
+    var constMats = (List<ConstantMatPseudoInstruction>) passResults.lastResultOf(
+        GenerateConstantMaterialisationPass.class);
+
+    return constMats.stream()
+        .map(pseudoInstruction -> renderPseudoInstruction(specification, cppFunctions, fieldUsages,
+            variants,
+            relocations,
+            passResults, pseudoInstruction))
         .toList();
   }
 
   @Override
   protected Map<String, Object> createVariables(final PassResults passResults,
                                                 Specification specification) {
-    var wrapped =
+    var cppFunctionsForPseudoInstructions =
         (IdentityHashMap<PseudoInstruction, CppFunction>) passResults.lastResultOf(
             PseudoExpansionFunctionGeneratorPass.class);
+    var cppFunctionsForConstMatInstructions =
+        (IdentityHashMap<PseudoInstruction, CppFunction>) passResults.lastResultOf(
+            ConstMaterialisationPseudoExpansionFunctionGeneratorPass.class);
+    var cppFunctions = Stream.concat(cppFunctionsForPseudoInstructions.entrySet().stream(),
+            cppFunctionsForConstMatInstructions.entrySet().stream())
+        .collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue));
     var fieldUsages = (DetectImmediatePass.ImmediateDetectionContainer) passResults.lastResultOf(
         DetectImmediatePass.class);
     var variants = (IdentityHashMap<Format.Field, VariantKind>) passResults.lastResultOf(
         GenerateImmediateKindPass.class);
     var relocations =
         (List<ElfRelocation>) passResults.lastResultOf(GenerateElfRelocationPass.class);
+
+    var pseudoInstructions =
+        pseudoInstructions(specification, cppFunctions, fieldUsages, variants, relocations,
+            passResults);
+    var constMatInstructions =
+        constMatInstructions(specification, cppFunctions, fieldUsages, variants, relocations,
+            passResults);
     return Map.of(CommonVarNames.NAMESPACE, specification.simpleName(),
         "pseudoInstructions",
-        pseudoInstructions(specification, wrapped, fieldUsages, variants, relocations,
-            passResults));
+        Stream.concat(pseudoInstructions.stream(), constMatInstructions.stream())
+    );
   }
 }

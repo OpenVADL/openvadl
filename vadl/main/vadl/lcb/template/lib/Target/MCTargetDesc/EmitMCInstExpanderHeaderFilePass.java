@@ -6,13 +6,15 @@ import java.io.IOException;
 import java.util.IdentityHashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.stream.Stream;
 import vadl.configuration.LcbConfiguration;
 import vadl.cppCodeGen.model.CppFunction;
+<<<<<<<HEAD
 import vadl.gcb.passes.pseudo.PseudoExpansionFunctionGeneratorPass;
+=======
+import vadl.gcb.passes.pseudo.AbstractPseudoExpansionFunctionGeneratorPass;
+>>>>>>>ab3e21a5(lcb:Refactored pseudo expansion)
 import vadl.lcb.template.CommonVarNames;
 import vadl.lcb.template.LcbTemplateRenderingPass;
-import vadl.lcb.template.utils.ImmediateDecodingFunctionProvider;
 import vadl.lcb.template.utils.PseudoInstructionProvider;
 import vadl.pass.PassResults;
 import vadl.viam.PseudoInstruction;
@@ -63,7 +65,7 @@ public class EmitMCInstExpanderHeaderFilePass extends LcbTemplateRenderingPass {
   protected Map<String, Object> createVariables(final PassResults passResults,
                                                 Specification specification) {
     var cppFunctions = (IdentityHashMap<PseudoInstruction, CppFunction>) passResults.lastResultOf(
-        PseudoExpansionFunctionGeneratorPass.class);
+        AbstractPseudoExpansionFunctionGeneratorPass.class);
     return Map.of(CommonVarNames.NAMESPACE, specification.simpleName(), "pseudoInstructions",
         pseudoInstructions(specification, passResults, cppFunctions));
   }

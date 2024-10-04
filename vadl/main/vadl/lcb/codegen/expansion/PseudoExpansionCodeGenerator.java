@@ -4,6 +4,7 @@ import java.io.StringWriter;
 import java.util.IdentityHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.stream.Stream;
 import vadl.cppCodeGen.model.CppFunction;
 import vadl.cppCodeGen.model.VariantKind;
 import vadl.gcb.passes.pseudo.PseudoExpansionCodeGeneratorVisitor;
@@ -14,6 +15,7 @@ import vadl.viam.Format;
 import vadl.viam.PseudoInstruction;
 import vadl.viam.ViamError;
 import vadl.viam.graph.control.InstrCallNode;
+import vadl.viam.graph.control.ReturnNode;
 
 /**
  * Generates functions which expands {@link PseudoInstruction} in LLVM.
@@ -43,9 +45,11 @@ public class PseudoExpansionCodeGenerator extends LcbCodeGenerator {
   @Override
   protected String generateFunctionBody(CppFunction function) {
     var writer = new StringWriter();
-    var instrCallNodes = function.behavior().getNodes(InstrCallNode.class).toList();
+    var endNodes = Stream.concat(function.behavior().getNodes(InstrCallNode.class),
+        function.behavior().getNodes(ReturnNode.class)
+    ).toList();
 
-    if (instrCallNodes.isEmpty()) {
+    if (endNodes.isEmpty()) {
       throw new ViamError("For the function is a return node required.");
     }
 
@@ -53,7 +57,7 @@ public class PseudoExpansionCodeGenerator extends LcbCodeGenerator {
     var visitor =
         new PseudoExpansionCodeGeneratorVisitor(writer, namespace, fieldUsages,
             immediateDecodings, variants, relocations);
-    instrCallNodes.forEach(visitor::visit);
+    endNodes.forEach(visitor::visit);
     writer.write("return result");
     return writer.toString();
   }

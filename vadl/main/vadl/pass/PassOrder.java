@@ -36,6 +36,7 @@ import vadl.iss.template.target.EmitIssMachinePass;
 import vadl.iss.template.target.EmitIssTranslatePass;
 import vadl.lcb.codegen.GenerateImmediateKindPass;
 import vadl.lcb.passes.isaMatching.IsaMatchingPass;
+import vadl.lcb.passes.llvmLowering.ConstMaterialisationPseudoExpansionFunctionGeneratorPass;
 import vadl.lcb.passes.llvmLowering.GenerateRegisterClassesPass;
 import vadl.lcb.passes.llvmLowering.GenerateTableGenMachineInstructionRecordPass;
 import vadl.lcb.passes.llvmLowering.LlvmLoweringPass;
@@ -285,6 +286,7 @@ public final class PassOrder {
     order.add(new GenerateTableGenImmediateRecordPass(configuration));
     order.add(new GenerateConstantMaterialisationPass(configuration));
     order.add(new GenerateConstantMaterialisationTableGenRecordPass(configuration));
+    order.add(new ConstMaterialisationPseudoExpansionFunctionGeneratorPass(configuration));
     order.add(new GenerateElfRelocationPass(configuration));
 
     if (configuration.doDump()) {

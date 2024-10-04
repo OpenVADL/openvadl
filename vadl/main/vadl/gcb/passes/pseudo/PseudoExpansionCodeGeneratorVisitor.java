@@ -11,6 +11,7 @@ import vadl.cppCodeGen.GenericCppCodeGeneratorVisitor;
 import vadl.cppCodeGen.SymbolTable;
 import vadl.cppCodeGen.model.CppFunction;
 import vadl.cppCodeGen.model.VariantKind;
+import vadl.error.Diagnostic;
 import vadl.gcb.passes.relocation.DetectImmediatePass;
 import vadl.gcb.passes.relocation.model.ElfRelocation;
 import vadl.utils.Pair;
@@ -70,12 +71,14 @@ public class PseudoExpansionCodeGeneratorVisitor extends GenericCppCodeGenerator
       if (argument instanceof ConstantNode cn) {
         lowerExpression(sym, field, cn);
       } else if (argument instanceof FuncCallNode fn) {
-        ensure(fn.function() instanceof Relocation, "function must be a relocation");
+        ensure(fn.function() instanceof Relocation,
+            () -> Diagnostic.error("Function must be a relocation", fn.sourceLocation()).build());
         lowerExpressionWithRelocation(sym, field, index, (Relocation) fn.function());
       } else if (argument instanceof FuncParamNode) {
         lowerExpressionWithImmOrRegister(sym, field, index);
       } else {
-        throw new RuntimeException("not implemented");
+        throw Diagnostic.error("Not implemented for this node type.", argument.sourceLocation())
+            .build();
       }
     }
 
