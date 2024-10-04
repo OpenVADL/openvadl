@@ -6,6 +6,7 @@ import static vadl.viam.ViamError.ensurePresent;
 import vadl.error.Diagnostic;
 import vadl.lcb.codegen.model.llvm.ValueType;
 import vadl.lcb.passes.llvmLowering.tablegen.model.parameterIdentity.NoParameterIdentity;
+import vadl.utils.SourceLocation;
 import vadl.viam.Constant;
 import vadl.viam.Format;
 import vadl.viam.RegisterFile;
@@ -40,7 +41,7 @@ public class TableGenConstantOperand extends TableGenInstructionOperand {
     var unpackedLlvmType = ensurePresent(llvmType, () -> Diagnostic.error(
         "Constant value at given index has an invalid type which is not supported by llvm: "
             + constant.type(),
-        origin.sourceLocation()).build());
+        origin != null ? origin.sourceLocation() : SourceLocation.INVALID_SOURCE_LOCATION).build());
     return "(" + unpackedLlvmType.getLlvmType() + " " + constant.asVal().intValue() + ")";
   }
 }

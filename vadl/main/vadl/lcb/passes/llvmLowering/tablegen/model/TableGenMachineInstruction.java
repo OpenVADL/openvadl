@@ -20,6 +20,7 @@ public class TableGenMachineInstruction extends TableGenInstruction {
   private final int codeSize;
   private final List<BitBlock> bitBlocks;
   private final List<FieldEncoding> fieldEncodings;
+  private final Instruction instruction;
 
 
   /**
@@ -40,6 +41,7 @@ public class TableGenMachineInstruction extends TableGenInstruction {
     this.codeSize = instruction.encoding().format().type().bitWidth() / 8;
     this.bitBlocks = BitBlock.from(instruction.encoding());
     this.fieldEncodings = FieldEncoding.from(instruction.encoding());
+    this.instruction = instruction;
   }
 
 
@@ -61,6 +63,10 @@ public class TableGenMachineInstruction extends TableGenInstruction {
 
   public int getFormatSize() {
     return formatSize;
+  }
+
+  public Instruction instruction() {
+    return instruction;
   }
 
   /**

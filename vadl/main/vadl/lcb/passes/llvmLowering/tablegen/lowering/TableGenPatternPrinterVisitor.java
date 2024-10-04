@@ -83,7 +83,7 @@ public class TableGenPatternPrinterVisitor
             node.constant().type().toString()), node.sourceLocation()).build();
       }
     } else if (node.constant() instanceof Constant.Str str) {
-      writer.write(str.value());
+      writer.write("(" + str.value() + ")");
     }
   }
 

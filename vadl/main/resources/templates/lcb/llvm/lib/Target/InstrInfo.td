@@ -74,6 +74,10 @@ def RESERVERD_PSEUDO_RET : Instruction
 [(${imm})]
 [/]
 
+[# th:each="m : ${constMats}" ]
+[(${m})]
+[/]
+
 [# th:each="instruction : ${instructions}" ]
 [(${instruction})]
 [/]

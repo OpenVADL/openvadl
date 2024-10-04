@@ -11,6 +11,7 @@ import vadl.configuration.LcbConfiguration;
 import vadl.lcb.codegen.model.llvm.ValueType;
 import vadl.lcb.passes.llvmLowering.GenerateTableGenMachineInstructionRecordPass;
 import vadl.lcb.passes.llvmLowering.LlvmLoweringPass;
+import vadl.lcb.passes.llvmLowering.immediates.GenerateConstantMaterialisationTableGenRecordPass;
 import vadl.lcb.passes.llvmLowering.immediates.GenerateTableGenImmediateRecordPass;
 import vadl.lcb.passes.llvmLowering.tablegen.lowering.TableGenImmediateOperandRenderer;
 import vadl.lcb.passes.llvmLowering.tablegen.lowering.TableGenInstructionRenderer;
@@ -76,6 +77,9 @@ public class EmitInstrInfoTableGenFilePass extends LcbTemplateRenderingPass {
             })
             .toList();
 
+    var tableGenConstMatRecords = ((List<TableGenPseudoInstruction>) passResults.lastResultOf(
+        GenerateConstantMaterialisationTableGenRecordPass.class));
+
     var renderedImmediates = ((List<TableGenImmediateRecord>) passResults.lastResultOf(
         GenerateTableGenImmediateRecordPass.class))
         .stream()
@@ -106,6 +110,7 @@ public class EmitInstrInfoTableGenFilePass extends LcbTemplateRenderingPass {
         ValueType.from(abi.stackPointer().registerFile().resultType()).get().getLlvmType(),
         "immediates", Stream.concat(renderedImmediates.stream(), renderedImmediateLabels.stream()),
         "instructions", renderedTableGenMachineRecords,
-        "pseudos", renderedTableGenPseudoRecords);
+        "pseudos", renderedTableGenPseudoRecords,
+        "constMats", renderedTableGenConstMatRecords);
   }
 }
