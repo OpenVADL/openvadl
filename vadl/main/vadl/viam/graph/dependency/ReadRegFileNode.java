@@ -9,13 +9,14 @@ import vadl.viam.Counter;
 import vadl.viam.RegisterFile;
 import vadl.viam.Resource;
 import vadl.viam.graph.GraphNodeVisitor;
+import vadl.viam.graph.HasRegisterFile;
 import vadl.viam.graph.Node;
 
 /**
  * A read of a register file in the behaviour graph. It takes one expression node as input
  * that represents the address/index value.
  */
-public class ReadRegFileNode extends ReadResourceNode {
+public class ReadRegFileNode extends ReadResourceNode implements HasRegisterFile {
 
   @DataValue
   protected RegisterFile registerFile;

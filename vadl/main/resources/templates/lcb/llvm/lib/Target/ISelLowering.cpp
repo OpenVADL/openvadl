@@ -23,9 +23,9 @@ void [(${namespace})]TargetLowering::anchor() {}
     : TargetLowering(TM), Subtarget(STI)
 {
     // Set up the register classes defined by register files
-    [# th:each="rg : ${registerFiles}" ]
-      addRegisterClass(MVT::[(${rg.regType})], &[(${namespace})]::[(${rg.name})]RegClass);
-    [/]
+    [# th:each="rg : ${registerFiles}" ] [# th:each="ty : ${rg.regTypes}" ]
+      addRegisterClass(MVT::[(${ty.getLlvmType()})], &[(${namespace})]::[(${rg.name})]RegClass);
+    [/] [/]
 
     setStackPointerRegisterToSaveRestore([(${namespace})]::[(${stackPointer})]);
 
@@ -112,12 +112,14 @@ static SDValue unpackFromRegLoc(SelectionDAG &DAG, SDValue Chain, const CCValAss
     EVT RegVT = VA.getLocVT();
 
     [# th:each="rg : ${registerFiles}" ]
-      if(RegVT.getSimpleVT().SimpleTy == MVT::[(${rg.regType})])  {
+    [# th:each="ty : ${rg.regTypes}" ]
+      if(RegVT.getSimpleVT().SimpleTy == MVT::[(${ty.getLlvmType()})])  {
         const unsigned VReg = RegInfo.createVirtualRegister(&[(${namespace})]::[(${rg.name})]RegClass);
         RegInfo.addLiveIn(VA.getLocReg(), VReg);
         SDValue ArgIn = DAG.getCopyFromReg(Chain, DL, VReg, RegVT);
         return ArgIn;
       }
+    [/]
     [/]
 
     LLVM_DEBUG(dbgs() << "unpackFromRegLoc Unhandled argument type: " << RegVT.getEVTString() << "\n");
@@ -787,7 +789,7 @@ MachineBasicBlock *
     default:
         llvm_unreachable("Unexpected instr type to insert");
     [# th:each="rg : ${registerFiles}" ]
-      case [(${namespace})]::SelectCC_[(${rg.registerFile.identifier.simpleName()})]:
+      case [(${namespace})]::SelectCC_${rg.registerFile.identifier.simpleName()}:
         break;
     [/]
     }

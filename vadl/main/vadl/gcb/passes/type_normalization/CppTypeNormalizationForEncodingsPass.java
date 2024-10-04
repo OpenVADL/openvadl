@@ -1,10 +1,13 @@
 package vadl.gcb.passes.type_normalization;
 
+import static vadl.viam.ViamError.ensureNonNull;
+
 import java.util.Arrays;
 import java.util.stream.Stream;
 import vadl.configuration.GcbConfiguration;
 import vadl.cppCodeGen.model.CppFunction;
 import vadl.cppCodeGen.passes.typeNormalization.CppTypeNormalizationPass;
+import vadl.error.Diagnostic;
 import vadl.pass.PassName;
 import vadl.utils.Pair;
 import vadl.viam.Format;
@@ -33,7 +36,11 @@ public class CppTypeNormalizationForEncodingsPass extends CppTypeNormalizationPa
         .map(x -> x.ownFormats().stream()).orElseGet(Stream::empty)
         .flatMap(x -> Arrays.stream(x.fieldAccesses()))
         .map(fieldAccess -> new Pair<>(fieldAccess.fieldRef(),
-            ensureNonNull(fieldAccess.encoding(), "encoding must not be null")));
+            ensureNonNull(fieldAccess.encoding(),
+                () -> Diagnostic.error(
+                        "Encoding must not be null. Maybe it does not exist or was not generated?",
+                        fieldAccess.sourceLocation())
+                    .build())));
   }
 
   @Override

@@ -1,8 +1,10 @@
 package vadl.lcb.passes.llvmLowering.strategies;
 
 import static vadl.viam.ViamError.ensure;
+import static vadl.viam.ViamError.ensurePresent;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
@@ -12,38 +14,43 @@ import java.util.function.BiFunction;
 import java.util.function.Function;
 import java.util.stream.Stream;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import vadl.error.DeferredDiagnosticStore;
+import vadl.error.Diagnostic;
 import vadl.lcb.passes.isaMatching.InstructionLabel;
 import vadl.lcb.passes.llvmLowering.LlvmLoweringPass;
 import vadl.lcb.passes.llvmLowering.LlvmMayLoadMemory;
 import vadl.lcb.passes.llvmLowering.LlvmMayStoreMemory;
 import vadl.lcb.passes.llvmLowering.LlvmSideEffectPatternIncluded;
-import vadl.lcb.passes.llvmLowering.model.LlvmBasicBlockSD;
-import vadl.lcb.passes.llvmLowering.model.LlvmBrCcSD;
-import vadl.lcb.passes.llvmLowering.model.LlvmBrCondSD;
-import vadl.lcb.passes.llvmLowering.model.LlvmFieldAccessRefNode;
-import vadl.lcb.passes.llvmLowering.model.LlvmFrameIndexSD;
-import vadl.lcb.passes.llvmLowering.model.LlvmNodeReplaceable;
-import vadl.lcb.passes.llvmLowering.model.MachineInstructionNode;
-import vadl.lcb.passes.llvmLowering.model.MachineInstructionParameterNode;
+import vadl.lcb.passes.llvmLowering.domain.LlvmLoweringRecord;
+import vadl.lcb.passes.llvmLowering.domain.RegisterRef;
+import vadl.lcb.passes.llvmLowering.domain.machineDag.MachineInstructionNode;
+import vadl.lcb.passes.llvmLowering.domain.machineDag.MachineInstructionParameterNode;
+import vadl.lcb.passes.llvmLowering.domain.selectionDag.LlvmBasicBlockSD;
+import vadl.lcb.passes.llvmLowering.domain.selectionDag.LlvmBrCcSD;
+import vadl.lcb.passes.llvmLowering.domain.selectionDag.LlvmBrCondSD;
+import vadl.lcb.passes.llvmLowering.domain.selectionDag.LlvmFieldAccessRefNode;
+import vadl.lcb.passes.llvmLowering.domain.selectionDag.LlvmFrameIndexSD;
+import vadl.lcb.passes.llvmLowering.domain.selectionDag.LlvmNodeReplaceable;
 import vadl.lcb.passes.llvmLowering.strategies.visitors.TableGenPatternLowerable;
 import vadl.lcb.passes.llvmLowering.strategies.visitors.impl.ReplaceWithLlvmSDNodesVisitor;
-import vadl.lcb.passes.llvmLowering.tablegen.model.ParameterIdentity;
+import vadl.lcb.passes.llvmLowering.tablegen.model.TableGenConstantOperand;
 import vadl.lcb.passes.llvmLowering.tablegen.model.TableGenInstruction;
 import vadl.lcb.passes.llvmLowering.tablegen.model.TableGenInstructionFrameRegisterOperand;
 import vadl.lcb.passes.llvmLowering.tablegen.model.TableGenInstructionImmediateLabelOperand;
 import vadl.lcb.passes.llvmLowering.tablegen.model.TableGenInstructionImmediateOperand;
+import vadl.lcb.passes.llvmLowering.tablegen.model.TableGenInstructionIndexedRegisterFileOperand;
 import vadl.lcb.passes.llvmLowering.tablegen.model.TableGenInstructionOperand;
 import vadl.lcb.passes.llvmLowering.tablegen.model.TableGenInstructionRegisterFileOperand;
 import vadl.lcb.passes.llvmLowering.tablegen.model.TableGenPattern;
+import vadl.lcb.passes.llvmLowering.tablegen.model.TableGenSelectionWithOutputPattern;
+import vadl.lcb.passes.llvmLowering.tablegen.model.parameterIdentity.ParameterIdentity;
+import vadl.lcb.passes.llvmLowering.tablegen.model.parameterIdentity.ParameterTypeAndNameIdentity;
 import vadl.lcb.visitors.LcbGraphNodeVisitor;
-import vadl.viam.Counter;
 import vadl.viam.Instruction;
 import vadl.viam.InstructionSetArchitecture;
-import vadl.viam.Register;
-import vadl.viam.ViamError;
+import vadl.viam.PseudoInstruction;
 import vadl.viam.graph.Graph;
 import vadl.viam.graph.Node;
 import vadl.viam.graph.NodeList;
@@ -51,12 +58,14 @@ import vadl.viam.graph.control.AbstractBeginNode;
 import vadl.viam.graph.control.AbstractEndNode;
 import vadl.viam.graph.control.ControlNode;
 import vadl.viam.graph.control.IfNode;
+import vadl.viam.graph.dependency.ConstantNode;
 import vadl.viam.graph.dependency.DependencyNode;
 import vadl.viam.graph.dependency.FieldAccessRefNode;
 import vadl.viam.graph.dependency.FieldRefNode;
 import vadl.viam.graph.dependency.FuncParamNode;
 import vadl.viam.graph.dependency.ReadRegFileNode;
 import vadl.viam.graph.dependency.ReadRegNode;
+import vadl.viam.graph.dependency.ReadResourceNode;
 import vadl.viam.graph.dependency.WriteMemNode;
 import vadl.viam.graph.dependency.WriteRegFileNode;
 import vadl.viam.graph.dependency.WriteRegNode;
@@ -95,23 +104,23 @@ public abstract class LlvmInstructionLoweringStrategy {
    * Flags indicate special properties of a machine instruction. This method checks the
    * machine instruction's behavior for those and returns them.
    *
-   * @return the flags of an {@link UninlinedGraph}.
+   * @return the flags of an {@link Graph}.
    */
-  protected LlvmLoweringPass.Flags getFlags(UninlinedGraph uninlinedGraph) {
-    var isTerminator = uninlinedGraph.getNodes(WriteRegNode.class)
+  public static LlvmLoweringPass.Flags getFlags(Graph graph) {
+    var isTerminator = graph.getNodes(WriteRegNode.class)
         .anyMatch(node -> node.staticCounterAccess() != null);
 
     var isBranch = isTerminator
-        && uninlinedGraph.getNodes(Set.of(IfNode.class, LlvmBrCcSD.class, LlvmBrCondSD.class))
+        && graph.getNodes(Set.of(IfNode.class, LlvmBrCcSD.class, LlvmBrCondSD.class))
         .findFirst().isPresent();
 
-    var isCall = false; //TODO
+    var isCall = false;
     var isReturn = false;
-    var isPseudo = false; // This strategy always handles Instructions.
+    var isPseudo = false; // This strategy always handles instructions.
     var isCodeGenOnly = false;
-    var mayLoad = uninlinedGraph.getNodes(LlvmMayLoadMemory.class).findFirst().isPresent();
+    var mayLoad = graph.getNodes(LlvmMayLoadMemory.class).findFirst().isPresent();
     var mayStore =
-        uninlinedGraph.getNodes(Set.of(WriteMemNode.class, LlvmMayStoreMemory.class)).findFirst()
+        graph.getNodes(Set.of(WriteMemNode.class, LlvmMayStoreMemory.class)).findFirst()
             .isPresent();
 
     return new LlvmLoweringPass.Flags(
@@ -127,21 +136,60 @@ public abstract class LlvmInstructionLoweringStrategy {
   }
 
   /**
-   * Generate a lowering result for the given {@link Graph}.
+   * Generate a lowering result for the given {@link Graph} for machine instructions.
    * If it is not lowerable then return {@link Optional#empty()}.
+   *
+   * @param supportedInstructions the instructions which have known semantics.
+   * @param instruction           is the machine instruction which should be lowered.
+   * @param instructionLabel      is the semantic label of the instruction.
+   * @param unmodifiedBehavior    is the uninlined graph in the case of {@link Instruction}.
    */
-  public Optional<LlvmLoweringPass.LlvmLoweringIntermediateResult> lower(
+  public Optional<LlvmLoweringRecord> lower(
       Map<InstructionLabel, List<Instruction>> supportedInstructions,
       Instruction instruction,
       InstructionLabel instructionLabel,
-      UninlinedGraph uninlinedBehavior) {
+      UninlinedGraph unmodifiedBehavior) {
+    return lowerInstruction(supportedInstructions, instruction, instructionLabel,
+        unmodifiedBehavior);
+  }
+
+  /**
+   * Lower a pseudo instruction.
+   */
+  public Optional<LlvmLoweringRecord> lower(
+      Map<InstructionLabel, List<Instruction>> supportedInstructions,
+      PseudoInstruction pseudoInstruction,
+      Instruction instruction,
+      InstructionLabel instructionLabel,
+      Graph unmodifiedBehavior) {
+    logger.atDebug().log("Lowering {} with {}", instruction.identifier.simpleName(),
+        pseudoInstruction.identifier.simpleName());
+    return lowerInstruction(supportedInstructions, instruction, instructionLabel,
+        unmodifiedBehavior);
+  }
+
+  /**
+   * Generate a lowering result for the given {@link Graph} for pseudo instructions.
+   * If it is not lowerable then return {@link Optional#empty()}.
+   *
+   * @param supportedInstructions the instructions which have known semantics.
+   * @param instruction           is the machine instruction which should be lowered.
+   * @param instructionLabel      is the semantic label of the instruction.
+   * @param unmodifiedBehavior    is the uninlined graph in the case of {@link Instruction} or
+   *                              the applied graph in the case of {@link PseudoInstruction}.
+   */
+  protected Optional<LlvmLoweringRecord> lowerInstruction(
+      Map<InstructionLabel, List<Instruction>> supportedInstructions,
+      Instruction instruction,
+      InstructionLabel instructionLabel,
+      Graph unmodifiedBehavior) {
     var visitor = getVisitorForPatternSelectorLowering();
-    var copy = (UninlinedGraph) uninlinedBehavior.copy();
-    var instructionIdentifier = instruction.identifier;
+    var copy = unmodifiedBehavior.copy();
 
     if (!checkIfNoControlFlow(copy) && !checkIfNotAllowedDataflowNodes(copy)) {
-      logger.atWarn().log("Instruction '{}' is not lowerable and will be skipped",
-          instructionIdentifier.toString());
+      DeferredDiagnosticStore.add(
+          Diagnostic.warning("Instruction is not lowerable and will be skipped",
+              instruction.sourceLocation()).build());
       return Optional.empty();
     }
 
@@ -150,8 +198,9 @@ public abstract class LlvmInstructionLoweringStrategy {
       visitor.visit(endNode);
 
       if (!((TableGenPatternLowerable) visitor).isPatternLowerable()) {
-        logger.atWarn().log("Instruction '{}' is not lowerable and will be skipped",
-            instructionIdentifier.toString());
+        DeferredDiagnosticStore.add(
+            Diagnostic.warning("Instruction is not lowerable and will be skipped",
+                instruction.sourceLocation()).build());
         return Optional.empty();
       }
     }
@@ -177,7 +226,7 @@ public abstract class LlvmInstructionLoweringStrategy {
               inputOperands,
               outputOperands,
               patterns);
-      return Optional.of(new LlvmLoweringPass.LlvmLoweringIntermediateResult(copy,
+      return Optional.of(new LlvmLoweringRecord(copy,
           inputOperands,
           outputOperands,
           flags,
@@ -187,25 +236,43 @@ public abstract class LlvmInstructionLoweringStrategy {
       ));
     }
 
-    logger.atWarn().log("Instruction '{}' is not lowerable", instructionIdentifier.toString());
+    DeferredDiagnosticStore.add(
+        Diagnostic.warning("Instruction is not lowerable and will be skipped",
+            instruction.sourceLocation()).build());
     return Optional.empty();
   }
 
   /**
-   * Get a list of {@link Register} which are written.
+   * Get a list of {@link RegisterRef} which are written. It is considered a
+   * register definition when a {@link WriteRegNode} or a {@link WriteRegFileNode} with a
+   * constant address exists.
    */
-  protected List<Register> getRegisterDefs(Graph behavior) {
-    return behavior.getNodes(WriteRegNode.class)
-        .map(WriteRegNode::register)
+  public static List<RegisterRef> getRegisterDefs(Graph behavior) {
+    return Stream.concat(behavior.getNodes(WriteRegNode.class)
+                .map(WriteRegNode::register)
+                .map(RegisterRef::new),
+            behavior.getNodes(WriteRegFileNode.class)
+                .filter(WriteRegFileNode::hasConstantAddress)
+                .map(x -> new RegisterRef(x.registerFile(),
+                    ((ConstantNode) x.address()).constant()))
+        )
         .toList();
   }
 
   /**
-   * Get a list of {@link Register} which are read.
+   * Get a list of {@link RegisterRef} which are read. It is considered a
+   * register usage when a {@link ReadRegNode} or a {@link ReadRegFileNode} with a
+   * constant address exists.
    */
-  protected List<Register> getRegisterUses(Graph behavior) {
-    return behavior.getNodes(ReadRegNode.class)
-        .map(ReadRegNode::register)
+  public static List<RegisterRef> getRegisterUses(Graph behavior) {
+    return Stream.concat(behavior.getNodes(ReadRegNode.class)
+                .map(ReadRegNode::register)
+                .map(RegisterRef::new),
+            behavior.getNodes(ReadRegFileNode.class)
+                .filter(ReadResourceNode::hasConstantAddress)
+                .map(x -> new RegisterRef(x.registerFile(),
+                    ((ConstantNode) x.address()).constant()))
+        )
         .toList();
   }
 
@@ -223,7 +290,7 @@ public abstract class LlvmInstructionLoweringStrategy {
       Instruction instruction,
       Map<InstructionLabel, List<Instruction>> supportedInstructions,
       InstructionLabel instructionLabel,
-      UninlinedGraph behavior,
+      Graph behavior,
       List<TableGenInstructionOperand> inputOperands,
       List<TableGenInstructionOperand> outputOperands,
       List<TableGenPattern> patterns);
@@ -254,30 +321,34 @@ public abstract class LlvmInstructionLoweringStrategy {
   /**
    * Extract the output parameters of {@link Graph}.
    */
-  protected List<TableGenInstructionOperand> getTableGenOutputOperands(Graph graph) {
+  public static List<TableGenInstructionOperand> getTableGenOutputOperands(Graph graph) {
     return getOutputOperands(graph)
-        .stream().map(operand -> {
-          var address = (FieldRefNode) operand.address();
-
-          if (address == null || address.formatField() == null) {
-            throw new ViamError("address must not be null");
-          }
-
-          return (TableGenInstructionOperand) new TableGenInstructionRegisterFileOperand(
-              ParameterIdentity.from(operand, address),
-              operand,
-              address.formatField());
+        .stream()
+        .filter(operand -> {
+          // Why?
+          // Because LLVM cannot handle static registers in input or output operands.
+          // They belong to defs and uses instead.
+          return !operand.hasConstantAddress();
         })
+        .map(LlvmInstructionLoweringStrategy::generateTableGenInputOutput)
         .toList();
   }
 
   /**
    * Extracts the input operands from the {@link Graph}.
    */
-  protected List<TableGenInstructionOperand> getTableGenInputOperands(Graph graph) {
+  public static List<TableGenInstructionOperand> getTableGenInputOperands(Graph graph) {
     return getInputOperands(graph)
         .stream()
-        .map(LlvmInstructionLoweringStrategy::generateTableGenInputOutput)
+        .filter(node -> {
+          // Why?
+          // Because LLVM cannot handle static registers in input or output operands.
+          // They belong to defs and uses instead.
+          if (node instanceof ReadRegFileNode readRegFileNode) {
+            return !readRegFileNode.hasConstantAddress();
+          }
+          return true;
+        }).map(LlvmInstructionLoweringStrategy::generateTableGenInputOutput)
         .toList();
   }
 
@@ -295,8 +366,12 @@ public abstract class LlvmInstructionLoweringStrategy {
       return generateInstructionOperand(node);
     } else if (operand instanceof LlvmBasicBlockSD node) {
       return generateInstructionOperand(node);
+    } else if (operand instanceof WriteRegFileNode node) {
+      return generateInstructionOperand(node);
     } else {
-      throw new ViamError("Input operand not supported yet: " + operand);
+      throw Diagnostic.error(
+          "Cannot construct a tablegen instruction operand from the type.",
+          operand.sourceLocation()).build();
     }
   }
 
@@ -321,21 +396,69 @@ public abstract class LlvmInstructionLoweringStrategy {
    * Returns a {@link TableGenInstructionOperand} given a {@link Node}.
    */
   private static TableGenInstructionOperand generateInstructionOperand(LlvmFrameIndexSD node) {
-    var address = (FieldRefNode) node.address();
     return new TableGenInstructionFrameRegisterOperand(
-        ParameterIdentity.from(node, address), node);
+        ParameterIdentity.from(node, node.address()), node);
   }
 
   /**
    * Returns a {@link TableGenInstructionOperand} given a {@link Node}.
    */
   private static TableGenInstructionOperand generateInstructionOperand(ReadRegFileNode node) {
-    var address = (FieldRefNode) node.address();
-    return new TableGenInstructionRegisterFileOperand(
-        ParameterIdentity.from(node, address),
-        node,
-        address.formatField()
-    );
+    if (node.address() instanceof FieldRefNode field) {
+      return new TableGenInstructionRegisterFileOperand(
+          ParameterIdentity.from(node, field),
+          node,
+          field.formatField());
+    } else if (node.address() instanceof FuncParamNode funcParamNode) {
+      return new TableGenInstructionIndexedRegisterFileOperand(
+          ParameterIdentity.from(node, funcParamNode),
+          node,
+          funcParamNode.parameter());
+    } else if (node.address() instanceof ConstantNode constantNode) {
+      // The register file has a constant as address.
+      // This is ok as long as the value of the register file at the address is also constant.
+      // For example, the X0 register in RISC-V which always has a constant value.
+      var constraints = Arrays.stream(node.registerFile().constraints()).toList();
+      var constraintValue = constraints.stream()
+          .filter(x -> x.address().intValue() == constantNode.constant().asVal().intValue())
+          .findFirst();
+      var constRegisterValue = ensurePresent(constraintValue,
+          () -> Diagnostic.error("Register file with constant index has no constant value.",
+                  constantNode.sourceLocation())
+              .help("Consider adding a constraint to register file for the given index.").build());
+      // Update the type of the constant because it needs to be upcasted.
+      // Heuristically, we take the type of the index because indices were also upcasted.
+      var constantValue = constRegisterValue.value();
+      constantValue.setType(constantNode.type());
+      return new TableGenConstantOperand(constantNode, constantValue);
+    } else {
+      throw Diagnostic.error(
+          "The compiler generator needs to generate a tablegen instruction operand from this "
+              + "address for a field but it does not support it.",
+          node.address().sourceLocation()).build();
+    }
+  }
+
+  /**
+   * Returns a {@link TableGenInstructionOperand} given a {@link Node}.
+   */
+  private static TableGenInstructionOperand generateInstructionOperand(WriteRegFileNode node) {
+    if (node.address() instanceof FieldRefNode field) {
+      return new TableGenInstructionRegisterFileOperand(
+          ParameterIdentity.from(node, field),
+          node,
+          field.formatField());
+    } else if (node.address() instanceof FuncParamNode funcParamNode) {
+      return new TableGenInstructionIndexedRegisterFileOperand(
+          ParameterIdentity.from(node, funcParamNode),
+          node,
+          funcParamNode.parameter());
+    } else {
+      throw Diagnostic.error(
+          "The compiler generator needs to generate a tablegen instruction operand from this "
+              + "address for a field but it does not support it.",
+          node.address().sourceLocation()).build();
+    }
   }
 
   /**
@@ -372,9 +495,9 @@ public abstract class LlvmInstructionLoweringStrategy {
 
     sideEffectNodes.forEach(sideEffectNode -> {
       var patternSelector = getPatternSelector(sideEffectNode);
-      var machineInstruction = getMachinePattern(instruction, inputOperands);
+      var machineInstruction = getOutputPattern(instruction, inputOperands);
       patterns.add(
-          new TableGenPattern(patternSelector, machineInstruction));
+          new TableGenSelectionWithOutputPattern(patternSelector, machineInstruction));
     });
 
     return patterns;
@@ -388,16 +511,16 @@ public abstract class LlvmInstructionLoweringStrategy {
     var graph = new Graph(sideEffectNode.id().toString() + ".selector.lowering");
     graph.setParentDefinition(Objects.requireNonNull(sideEffectNode.graph()).parentDefinition());
 
-    Node root = sideEffectNode instanceof LlvmSideEffectPatternIncluded ? sideEffectNode :
-        sideEffectNode.value();
+    Node root = sideEffectNode instanceof LlvmSideEffectPatternIncluded ? sideEffectNode.copy() :
+        sideEffectNode.value().copy();
     root.clearUsages();
     graph.addWithInputs(root);
     return graph;
   }
 
   @NotNull
-  private static Graph getMachinePattern(Instruction instruction,
-                                         List<TableGenInstructionOperand> inputOperands) {
+  private static Graph getOutputPattern(Instruction instruction,
+                                        List<TableGenInstructionOperand> inputOperands) {
     var graph = new Graph(instruction.name() + ".machine.lowering");
     graph.setParentDefinition(Objects.requireNonNull(instruction));
 
@@ -414,7 +537,9 @@ public abstract class LlvmInstructionLoweringStrategy {
       List<T> selectorNodes,
       Graph machine,
       Function<T, Node> selectorNodeTransformation,
-      BiFunction<MachineInstructionParameterNode, ParameterIdentity, TableGenInstructionOperand>
+      BiFunction<MachineInstructionParameterNode,
+          ParameterTypeAndNameIdentity,
+          TableGenInstructionOperand>
           machineNodeTransformation) {
     for (var node : selectorNodes) {
       // Something like `X:$rs1`
@@ -431,7 +556,8 @@ public abstract class LlvmInstructionLoweringStrategy {
               candidate.instructionOperand().origin() instanceof LlvmNodeReplaceable cast
                   && cast.parameterIdentity().equals(selectorParameter))
           .forEach(occurrence -> {
-            var operand = machineNodeTransformation.apply(occurrence, selectorParameter);
+            var operand = machineNodeTransformation.apply(occurrence,
+                (ParameterTypeAndNameIdentity) selectorParameter);
             ensure(operand != occurrence.instructionOperand(),
                 "The returned operand must be a new instance because it was modified");
             occurrence.setInstructionOperand(operand);

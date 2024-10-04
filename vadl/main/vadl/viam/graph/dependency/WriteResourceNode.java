@@ -35,6 +35,18 @@ public abstract class WriteResourceNode extends SideEffectNode {
     return address != null;
   }
 
+  /**
+   * Checks whether the {@code address} of the node is constant and therefore statically knonw.
+   */
+  public boolean hasConstantAddress() {
+    if (hasAddress()) {
+      ensureNonNull(address, "address must not be null");
+      return address.isConstant();
+    }
+
+    return false;
+  }
+
   @Nullable
   public ExpressionNode address() {
     ensureNonNull(address, "Address is not set. Check hasAddress() first.");

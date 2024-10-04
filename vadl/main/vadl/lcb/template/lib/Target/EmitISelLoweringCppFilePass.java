@@ -4,6 +4,7 @@ import java.io.IOException;
 import java.util.Map;
 import vadl.configuration.LcbConfiguration;
 import vadl.lcb.codegen.model.llvm.ValueType;
+import vadl.lcb.passes.llvmLowering.GenerateRegisterClassesPass;
 import vadl.lcb.template.CommonVarNames;
 import vadl.lcb.template.LcbTemplateRenderingPass;
 import vadl.pass.PassResults;
@@ -35,13 +36,6 @@ public class EmitISelLoweringCppFilePass extends LcbTemplateRenderingPass {
         + "ISelLowering.cpp";
   }
 
-  record LlvmRegisterClass(String namespace,
-                           RegisterFile registerFile,
-                           String name,
-                           String regType) {
-
-  }
-
   static class LlvmRegisterFile extends RegisterFile {
 
     /**
@@ -53,7 +47,7 @@ public class EmitISelLoweringCppFilePass extends LcbTemplateRenderingPass {
     }
 
     public String llvmResultType() {
-      return ValueType.from(type()).getLlvmType();
+      return ValueType.from(type()).get().getLlvmType();
     }
   }
 
@@ -62,15 +56,10 @@ public class EmitISelLoweringCppFilePass extends LcbTemplateRenderingPass {
                                                 Specification specification) {
     var abi =
         (DummyAbi) specification.definitions().filter(x -> x instanceof DummyAbi).findFirst().get();
+    var registerFiles = ((GenerateRegisterClassesPass.Output) passResults.lastResultOf(
+        GenerateRegisterClassesPass.class)).registerClasses();
     var framePointer = renderRegister(abi.framePointer().registerFile(), abi.framePointer().addr());
     var stackPointer = renderRegister(abi.stackPointer().registerFile(), abi.stackPointer().addr());
-    var registerFiles = specification.registerFiles()
-        .map(registerFile -> new LlvmRegisterClass(
-            lcbConfiguration().processorName().value(),
-            registerFile,
-            registerFile.identifier.simpleName(),
-            ValueType.from(registerFile.resultType()).getLlvmType()
-        )).toList();
 
     return Map.of(CommonVarNames.NAMESPACE, specification.name(),
         "registerFiles", registerFiles,
@@ -84,6 +73,6 @@ public class EmitISelLoweringCppFilePass extends LcbTemplateRenderingPass {
             .toList(),
         "argumentRegisters", abi.argumentRegisters(),
         "stackPointerType",
-        ValueType.from(abi.stackPointer().registerFile().resultType()).getLlvmType());
+        ValueType.from(abi.stackPointer().registerFile().resultType()).get().getLlvmType());
   }
 }

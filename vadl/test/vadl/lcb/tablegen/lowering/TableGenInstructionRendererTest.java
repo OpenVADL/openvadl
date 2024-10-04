@@ -8,6 +8,7 @@ import vadl.AbstractTest;
 import vadl.lcb.passes.llvmLowering.LlvmLoweringPass;
 import vadl.lcb.passes.llvmLowering.tablegen.lowering.TableGenInstructionRenderer;
 import vadl.lcb.passes.llvmLowering.tablegen.model.TableGenInstruction;
+import vadl.lcb.passes.llvmLowering.tablegen.model.TableGenMachineInstruction;
 import vadl.types.BitsType;
 import vadl.types.DataType;
 import vadl.viam.Constant;
@@ -48,10 +49,11 @@ class TableGenInstructionRendererTest extends AbstractTest {
         false
     );
     var instruction =
-        new TableGenInstruction(name,
+        new TableGenMachineInstruction(name,
             namespace,
             viamInstruction,
             flags,
+            Collections.emptyList(),
             Collections.emptyList(),
             Collections.emptyList(),
             Collections.emptyList(),

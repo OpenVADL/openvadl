@@ -1,16 +1,16 @@
 package vadl.lcb.passes.llvmLowering.strategies.visitors;
 
-import vadl.lcb.passes.llvmLowering.model.LlvmBasicBlockSD;
-import vadl.lcb.passes.llvmLowering.model.LlvmBrCcSD;
-import vadl.lcb.passes.llvmLowering.model.LlvmBrCondSD;
-import vadl.lcb.passes.llvmLowering.model.LlvmFieldAccessRefNode;
-import vadl.lcb.passes.llvmLowering.model.LlvmLoadSD;
-import vadl.lcb.passes.llvmLowering.model.LlvmSExtLoad;
-import vadl.lcb.passes.llvmLowering.model.LlvmSetccSD;
-import vadl.lcb.passes.llvmLowering.model.LlvmStoreSD;
-import vadl.lcb.passes.llvmLowering.model.LlvmTruncStore;
-import vadl.lcb.passes.llvmLowering.model.LlvmTypeCastSD;
-import vadl.lcb.passes.llvmLowering.model.LlvmZExtLoad;
+import vadl.lcb.passes.llvmLowering.domain.selectionDag.LlvmBasicBlockSD;
+import vadl.lcb.passes.llvmLowering.domain.selectionDag.LlvmBrCcSD;
+import vadl.lcb.passes.llvmLowering.domain.selectionDag.LlvmBrCondSD;
+import vadl.lcb.passes.llvmLowering.domain.selectionDag.LlvmFieldAccessRefNode;
+import vadl.lcb.passes.llvmLowering.domain.selectionDag.LlvmLoadSD;
+import vadl.lcb.passes.llvmLowering.domain.selectionDag.LlvmSExtLoad;
+import vadl.lcb.passes.llvmLowering.domain.selectionDag.LlvmSetccSD;
+import vadl.lcb.passes.llvmLowering.domain.selectionDag.LlvmStoreSD;
+import vadl.lcb.passes.llvmLowering.domain.selectionDag.LlvmTruncStore;
+import vadl.lcb.passes.llvmLowering.domain.selectionDag.LlvmTypeCastSD;
+import vadl.lcb.passes.llvmLowering.domain.selectionDag.LlvmZExtLoad;
 import vadl.lcb.visitors.LcbGraphNodeVisitor;
 
 /**

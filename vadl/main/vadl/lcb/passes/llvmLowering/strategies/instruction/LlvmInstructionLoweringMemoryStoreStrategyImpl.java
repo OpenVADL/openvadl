@@ -7,15 +7,17 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import vadl.lcb.passes.isaMatching.InstructionLabel;
-import vadl.lcb.passes.llvmLowering.model.LlvmFrameIndexSD;
-import vadl.lcb.passes.llvmLowering.model.LlvmReadRegFileNode;
-import vadl.lcb.passes.llvmLowering.model.LlvmStoreSD;
-import vadl.lcb.passes.llvmLowering.model.LlvmTruncStore;
+import vadl.lcb.passes.llvmLowering.domain.selectionDag.LlvmFrameIndexSD;
+import vadl.lcb.passes.llvmLowering.domain.selectionDag.LlvmReadRegFileNode;
+import vadl.lcb.passes.llvmLowering.domain.selectionDag.LlvmStoreSD;
+import vadl.lcb.passes.llvmLowering.domain.selectionDag.LlvmTruncStore;
 import vadl.lcb.passes.llvmLowering.tablegen.model.TableGenInstructionOperand;
 import vadl.lcb.passes.llvmLowering.tablegen.model.TableGenPattern;
+import vadl.lcb.passes.llvmLowering.tablegen.model.TableGenSelectionWithOutputPattern;
 import vadl.viam.Instruction;
 import vadl.viam.Memory;
 import vadl.viam.Register;
+import vadl.viam.graph.Graph;
 import vadl.viam.graph.Node;
 import vadl.viam.graph.dependency.WriteResourceNode;
 import vadl.viam.passes.functionInliner.UninlinedGraph;
@@ -36,7 +38,7 @@ public class LlvmInstructionLoweringMemoryStoreStrategyImpl
       Instruction instruction,
       Map<InstructionLabel, List<Instruction>> supportedInstructions,
       InstructionLabel instructionLabel,
-      UninlinedGraph behavior,
+      Graph behavior,
       List<TableGenInstructionOperand> inputOperands,
       List<TableGenInstructionOperand> outputOperands,
       List<TableGenPattern> patterns) {
@@ -54,7 +56,10 @@ public class LlvmInstructionLoweringMemoryStoreStrategyImpl
   private List<TableGenPattern> replaceRegisterWithFrameIndex(List<TableGenPattern> patterns) {
     var alternativePatterns = new ArrayList<TableGenPattern>();
 
-    for (var pattern : patterns) {
+    for (var pattern : patterns.stream()
+        .filter(x -> x instanceof TableGenSelectionWithOutputPattern)
+        .map(x -> (TableGenSelectionWithOutputPattern) x)
+        .toList()) {
       var selector = pattern.selector().copy();
       var machine = pattern.machine().copy();
 

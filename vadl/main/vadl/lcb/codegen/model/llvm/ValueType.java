@@ -1,5 +1,6 @@
 package vadl.lcb.codegen.model.llvm;
 
+import java.util.Optional;
 import vadl.types.BitsType;
 import vadl.types.SIntType;
 import vadl.types.Type;
@@ -32,40 +33,40 @@ public enum ValueType {
   /**
    * Map {@link Type} into a {@link ValueType}.
    */
-  public static ValueType from(Type type) {
+  public static Optional<ValueType> from(Type type) {
     if (type instanceof SIntType sint) {
       if (sint.bitWidth() == 8) {
-        return ValueType.I8;
+        return Optional.of(ValueType.I8);
       } else if (sint.bitWidth() == 16) {
-        return ValueType.I16;
+        return Optional.of(ValueType.I16);
       } else if (sint.bitWidth() == 32) {
-        return ValueType.I32;
+        return Optional.of(ValueType.I32);
       } else if (sint.bitWidth() == 64) {
-        return ValueType.I64;
+        return Optional.of(ValueType.I64);
       }
     } else if (type instanceof UIntType uint) {
       if (uint.bitWidth() == 8) {
-        return ValueType.U8;
+        return Optional.of(ValueType.U8);
       } else if (uint.bitWidth() == 16) {
-        return ValueType.U16;
+        return Optional.of(ValueType.U16);
       } else if (uint.bitWidth() == 32) {
-        return ValueType.U32;
+        return Optional.of(ValueType.U32);
       } else if (uint.bitWidth() == 64) {
-        return ValueType.U64;
+        return Optional.of(ValueType.U64);
       }
     } else if (type instanceof BitsType bitsType) {
       if (bitsType.bitWidth() == 8) {
-        return ValueType.I8;
+        return Optional.of(ValueType.I8);
       } else if (bitsType.bitWidth() == 16) {
-        return ValueType.I16;
+        return Optional.of(ValueType.I16);
       } else if (bitsType.bitWidth() == 32) {
-        return ValueType.I32;
+        return Optional.of(ValueType.I32);
       } else if (bitsType.bitWidth() == 64) {
-        return ValueType.I64;
+        return Optional.of(ValueType.I64);
       }
     }
 
-    throw new RuntimeException("not implemented");
+    return Optional.empty();
   }
 
   public String getFancyName() {

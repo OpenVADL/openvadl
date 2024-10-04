@@ -1,9 +1,9 @@
 package vadl.lcb.passes.llvmLowering.tablegen.lowering;
 
 import java.io.StringWriter;
-import vadl.cppCodeGen.model.CppUpdateBitRangeNode;
-import vadl.lcb.passes.llvmLowering.model.MachineInstructionNode;
-import vadl.lcb.passes.llvmLowering.model.MachineInstructionParameterNode;
+import vadl.lcb.passes.llvmLowering.domain.machineDag.MachineInstructionNode;
+import vadl.lcb.passes.llvmLowering.domain.machineDag.MachineInstructionParameterNode;
+import vadl.lcb.passes.llvmLowering.domain.machineDag.PseudoInstructionNode;
 import vadl.lcb.passes.llvmLowering.strategies.visitors.TableGenMachineInstructionVisitor;
 import vadl.viam.graph.NodeList;
 import vadl.viam.graph.control.AbstractBeginNode;
@@ -51,6 +51,16 @@ public class TableGenMachineInstructionPrinterVisitor implements TableGenMachine
         writer.write(", ");
       }
     }
+  }
+
+  @Override
+  public void visit(PseudoInstructionNode node) {
+    writer.write("(");
+    writer.write(node.instruction().identifier.simpleName() + " ");
+
+    joinArgumentsWithComma(node.arguments());
+
+    writer.write(")");
   }
 
   @Override

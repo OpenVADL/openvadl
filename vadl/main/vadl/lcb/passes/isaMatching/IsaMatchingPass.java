@@ -34,6 +34,8 @@ import static vadl.types.BuiltInTable.UMOD;
 import static vadl.types.BuiltInTable.UMODS;
 import static vadl.types.BuiltInTable.XOR;
 import static vadl.types.BuiltInTable.XORS;
+import static vadl.viam.ViamError.ensure;
+import static vadl.viam.ViamError.ensureNonNull;
 
 import java.io.IOException;
 import java.util.ArrayList;
@@ -118,13 +120,15 @@ public class IsaMatchingPass extends Pass {
 
     // TODO: @kper : Support RegisterFileCounters
     ensure(isa.pc() instanceof Counter.RegisterCounter,
-        "Only counter to single registers are supported.");
+        () -> Diagnostic.error("Only counter to single registers are supported.",
+            Objects.requireNonNull(isa.pc()).sourceLocation()).build());
     var pc = (Counter.RegisterCounter) isa.pc();
 
     isa.ownInstructions().forEach(instruction -> {
       // Get uninlined or the normal behavior if nothing was uninlined.
-      var behavior = uninlined.get(instruction);
-      ensureNonNull(behavior, "IsaMatching must happen on the uninlined graph");
+      var behavior = ensureNonNull(uninlined.get(instruction),
+          () -> Diagnostic.error("Cannot find the uninlined graph of this instruction",
+              instruction.sourceLocation()).build());
 
       // Some are typed and some aren't.
       // The reason is that most of the time we do not care because

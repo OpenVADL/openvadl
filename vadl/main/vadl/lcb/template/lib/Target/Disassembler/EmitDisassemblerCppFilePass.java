@@ -1,7 +1,6 @@
 package vadl.lcb.template.lib.Target.Disassembler;
 
-import static java.util.stream.Collectors.filtering;
-import static java.util.stream.Collectors.toList;
+import static vadl.viam.ViamError.ensure;
 
 import java.io.IOException;
 import java.util.Arrays;
@@ -16,7 +15,6 @@ import vadl.lcb.template.utils.ImmediateDecodingFunctionProvider;
 import vadl.lcb.templateUtils.RegisterUtils;
 import vadl.pass.PassResults;
 import vadl.viam.Format;
-import vadl.viam.Identifier;
 import vadl.viam.Specification;
 
 /**

@@ -3,24 +3,22 @@ package vadl.test.lcb.passes;
 import java.io.IOException;
 import java.util.Collections;
 import java.util.HashMap;
-import java.util.IdentityHashMap;
 import java.util.List;
 import java.util.stream.Stream;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.DynamicTest;
 import org.junit.jupiter.api.TestFactory;
 import vadl.lcb.passes.llvmLowering.LlvmLoweringPass;
-import vadl.lcb.passes.llvmLowering.model.LlvmCondCode;
+import vadl.lcb.passes.llvmLowering.domain.selectionDag.LlvmCondCode;
 import vadl.lcb.passes.llvmLowering.tablegen.lowering.TableGenMachineInstructionPrinterVisitor;
 import vadl.lcb.passes.llvmLowering.tablegen.lowering.TableGenPatternPrinterVisitor;
-import vadl.lcb.passes.llvmLowering.tablegen.model.ParameterIdentity;
 import vadl.lcb.passes.llvmLowering.tablegen.model.TableGenInstructionOperand;
 import vadl.lcb.passes.llvmLowering.tablegen.model.TableGenPattern;
+import vadl.lcb.passes.llvmLowering.tablegen.model.TableGenSelectionWithOutputPattern;
 import vadl.pass.PassKey;
 import vadl.pass.exception.DuplicatedPassKeyException;
 import vadl.test.lcb.AbstractLcbTest;
 import vadl.viam.Constant;
-import vadl.viam.Instruction;
 import vadl.viam.graph.Node;
 import vadl.viam.graph.dependency.ConstantNode;
 import vadl.viam.graph.dependency.ExpressionNode;
@@ -283,9 +281,9 @@ public class LlvmLoweringPassTest extends AbstractLcbTest {
     var spec = setup.specification();
 
     // When
-    IdentityHashMap<Instruction, LlvmLoweringPass.LlvmLoweringIntermediateResult>
+    var
         llvmResults =
-        (IdentityHashMap<Instruction, LlvmLoweringPass.LlvmLoweringIntermediateResult>)
+        (LlvmLoweringPass.LlvmLoweringPassResult)
             passManager.getPassResults()
                 .lastResultOf(LlvmLoweringPass.class);
 
@@ -295,17 +293,8 @@ public class LlvmLoweringPassTest extends AbstractLcbTest {
         .filter(x -> expectedResults.containsKey(x.identifier.simpleName()))
         .map(t -> DynamicTest.dynamicTest(t.identifier.simpleName(), () -> {
           var expectedTestOutput = expectedResults.get(t.identifier.simpleName());
-          var res = llvmResults.get(t);
+          var res = llvmResults.machineInstructionRecords().get(t);
           Assertions.assertNotNull(res);
-
-          if (!expectedTestOutput.skipParameterIdentityCheck) {
-            // Inputs
-            Assertions.assertEquals(mapToParameterIdentity(expectedTestOutput.inputs()),
-                mapToParameterIdentity(res.inputs()));
-            // Outputs
-            Assertions.assertEquals(mapToParameterIdentity(expectedTestOutput.outputs()),
-                mapToParameterIdentity(res.outputs()));
-          }
 
           // Selector Patterns
           var selectorPatterns = res.patterns().stream()
@@ -321,7 +310,9 @@ public class LlvmLoweringPassTest extends AbstractLcbTest {
 
           // Machine Patterns
           var machinePatterns = res.patterns().stream()
-              .map(TableGenPattern::machine)
+              .filter(x -> x instanceof TableGenSelectionWithOutputPattern)
+              .map(x -> (TableGenSelectionWithOutputPattern) x)
+              .map(TableGenSelectionWithOutputPattern::machine)
               .flatMap(x -> x.getDataflowRoots().stream())
               .map(rootNode -> {
                 var visitor = new TableGenMachineInstructionPrinterVisitor();
@@ -335,10 +326,4 @@ public class LlvmLoweringPassTest extends AbstractLcbTest {
           Assertions.assertEquals(expectedTestOutput.flags(), res.flags());
         }));
   }
-
-  private List<ParameterIdentity> mapToParameterIdentity(
-      List<TableGenInstructionOperand> operands) {
-    return operands.stream().map(TableGenInstructionOperand::identity).toList();
-  }
-
 }

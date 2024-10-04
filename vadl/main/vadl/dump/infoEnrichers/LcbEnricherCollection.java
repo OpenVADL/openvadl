@@ -3,7 +3,6 @@ package vadl.dump.infoEnrichers;
 import static vadl.dump.InfoEnricher.forType;
 
 import java.util.HashMap;
-import java.util.IdentityHashMap;
 import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
@@ -14,7 +13,10 @@ import vadl.dump.entities.DefinitionEntity;
 import vadl.lcb.passes.isaMatching.InstructionLabel;
 import vadl.lcb.passes.isaMatching.IsaMatchingPass;
 import vadl.lcb.passes.llvmLowering.LlvmLoweringPass;
+import vadl.lcb.passes.llvmLowering.domain.LlvmLoweringRecord;
 import vadl.lcb.passes.llvmLowering.tablegen.model.TableGenInstructionOperand;
+import vadl.lcb.passes.llvmLowering.tablegen.model.TableGenSelectionPattern;
+import vadl.lcb.passes.llvmLowering.tablegen.model.TableGenSelectionWithOutputPattern;
 import vadl.viam.Instruction;
 
 /**
@@ -60,11 +62,11 @@ public class LcbEnricherCollection {
         }
 
         var results =
-            (IdentityHashMap<Instruction, LlvmLoweringPass.LlvmLoweringIntermediateResult>)
+            (LlvmLoweringPass.LlvmLoweringPassResult)
                 passResults.lastResultOf(LlvmLoweringPass.class);
 
         if (results != null && definitionEntity.origin() instanceof Instruction instruction) {
-          var result = (LlvmLoweringPass.LlvmLoweringIntermediateResult) results.get(instruction);
+          var result = (LlvmLoweringRecord) results.machineInstructionRecords().get(instruction);
 
           if (result != null) {
             var renderedInputOperands =
@@ -94,30 +96,42 @@ public class LcbEnricherCollection {
         }
 
         var results =
-            (IdentityHashMap<Instruction, LlvmLoweringPass.LlvmLoweringIntermediateResult>)
+            (LlvmLoweringPass.LlvmLoweringPassResult)
                 passResults.lastResultOf(LlvmLoweringPass.class);
 
         if (results != null && definitionEntity.origin() instanceof Instruction instruction) {
-          var result = (LlvmLoweringPass.LlvmLoweringIntermediateResult) results.get(instruction);
+          var result = (LlvmLoweringRecord) results.machineInstructionRecords().get(instruction);
 
           if (result != null) {
             for (var pattern : result.patterns()) {
-              var mergedGraph = pattern.selector().copy();
-              // TODO add function which merges two graphs
-              var machineCopy = pattern.machine().copy();
-              machineCopy.deinitializeNodes();
-              for (var node : machineCopy.getNodes().toList()) {
-                mergedGraph.addWithInputs(node);
+              if (pattern instanceof TableGenSelectionWithOutputPattern
+                  tableGenSelectionWithOutputPattern) {
+                var mergedGraph = pattern.selector().copy();
+                // TODO add function which merges two graphs
+                var machineCopy = tableGenSelectionWithOutputPattern.machine().copy();
+                machineCopy.deinitializeNodes();
+                for (var node : machineCopy.getNodes().toList()) {
+                  mergedGraph.addWithInputs(node);
+                }
+
+                var dotGraph = mergedGraph.dotGraph();
+                var info = InfoUtils.createGraphModal(
+                    "TableGen Pattern",
+                    "TableGen Pattern",
+                    dotGraph
+                );
+
+                definitionEntity.addInfo(info);
+              } else if (pattern instanceof TableGenSelectionPattern tableGenSelectionPattern) {
+                var graph = pattern.selector().copy();
+                var dotGraph = graph.dotGraph();
+                var info = InfoUtils.createGraphModal(
+                    "TableGen Pattern",
+                    "TableGen Pattern",
+                    dotGraph
+                );
+                definitionEntity.addInfo(info);
               }
-
-              var dotGraph = mergedGraph.dotGraph();
-              var info = InfoUtils.createGraphModal(
-                  "TableGen Pattern",
-                  "TableGen Pattern",
-                  dotGraph
-              );
-
-              definitionEntity.addInfo(info);
             }
           }
         }

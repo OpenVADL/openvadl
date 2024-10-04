@@ -15,6 +15,9 @@ def SDT_CPU_Call : SDTypeProfile<0, -1, [SDTCisVT<0, [(${stackPointerType})]>]>;
 def callseq_start : SDNode<"ISD::CALLSEQ_START", SDT_CallSeqStart, [SDNPHasChain, SDNPOutGlue]>;
 def callseq_end   : SDNode<"ISD::CALLSEQ_END", SDT_CallSeqEnd, [SDNPHasChain, SDNPOptInGlue, SDNPOutGlue]>;
 
+def target_ret_flag : SDNode<"[(${namespace})]ISD::RET_FLAG", SDTNone,
+                           [SDNPHasChain, SDNPOptInGlue, SDNPVariadic]>;
+
 /*
  * ADJCALLSTACKDOWN is a pseudo instruction used to represent the
  * 'CFSetupOpcode', which is needed for the call frame setup
@@ -47,10 +50,34 @@ def ADJCALLSTACKUP : Instruction
     let Uses = [ X2 ]; // stack pointer
 }
 
+def RESERVERD_PSEUDO_RET : Instruction
+{
+    let Namespace = "[(${namespace})]";
+    /* let Size = 4; // ( Bits<32> )
+    let CodeSize = 4; // ( Bits<32> ), used for ISEL cost */
+    let InOperandList = (ins);
+    let OutOperandList = (outs);
+    let Pattern =  [ (target_ret_flag) ];
+    let isTerminator  = 1;
+    let isBranch      = 0;
+    let isCall        = 0;
+    let isReturn      = 1;
+    let isPseudo      = 1;
+    let isCodeGenOnly = 1;
+    let mayLoad       = 0;
+    let mayStore      = 0;
+    let Defs = [];
+    let Uses = [];
+}
+
 [# th:each="imm : ${immediates}" ]
 [(${imm})]
 [/]
 
 [# th:each="instruction : ${instructions}" ]
 [(${instruction})]
+[/]
+
+[# th:each="pseudo : ${pseudos}" ]
+[(${pseudo})]
 [/]

@@ -1,6 +1,8 @@
 package vadl.lcb.passes.llvmLowering.tablegen.model;
 
 import java.util.Objects;
+import vadl.lcb.passes.llvmLowering.tablegen.model.parameterIdentity.ParameterIdentity;
+import vadl.lcb.passes.llvmLowering.tablegen.model.parameterIdentity.ParameterTypeAndNameIdentity;
 import vadl.viam.graph.Node;
 
 /**
@@ -19,7 +21,7 @@ public class TableGenInstructionOperand {
   }
 
   public TableGenInstructionOperand(Node origin, String type, String name) {
-    this(origin, new ParameterIdentity(type, name));
+    this(origin, new ParameterTypeAndNameIdentity(type, name));
   }
 
   public String render() {
@@ -28,10 +30,6 @@ public class TableGenInstructionOperand {
 
   public ParameterIdentity identity() {
     return identity;
-  }
-
-  public void updateIdentity(ParameterIdentity identity) {
-    this.identity = identity;
   }
 
   public Node origin() {

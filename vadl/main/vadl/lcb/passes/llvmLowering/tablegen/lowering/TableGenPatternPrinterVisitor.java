@@ -2,20 +2,24 @@ package vadl.lcb.passes.llvmLowering.tablegen.lowering;
 
 import java.io.StringWriter;
 import java.util.Objects;
+import vadl.cppCodeGen.passes.typeNormalization.CppTypeNormalizationPass;
+import vadl.error.Diagnostic;
+import vadl.lcb.codegen.model.llvm.ValueType;
 import vadl.lcb.passes.llvmLowering.LlvmNodeLowerable;
-import vadl.lcb.passes.llvmLowering.model.LlvmBasicBlockSD;
-import vadl.lcb.passes.llvmLowering.model.LlvmBrCcSD;
-import vadl.lcb.passes.llvmLowering.model.LlvmBrCondSD;
-import vadl.lcb.passes.llvmLowering.model.LlvmFieldAccessRefNode;
-import vadl.lcb.passes.llvmLowering.model.LlvmLoadSD;
-import vadl.lcb.passes.llvmLowering.model.LlvmSExtLoad;
-import vadl.lcb.passes.llvmLowering.model.LlvmSetccSD;
-import vadl.lcb.passes.llvmLowering.model.LlvmStoreSD;
-import vadl.lcb.passes.llvmLowering.model.LlvmTruncStore;
-import vadl.lcb.passes.llvmLowering.model.LlvmTypeCastSD;
-import vadl.lcb.passes.llvmLowering.model.LlvmZExtLoad;
+import vadl.lcb.passes.llvmLowering.domain.selectionDag.LlvmBasicBlockSD;
+import vadl.lcb.passes.llvmLowering.domain.selectionDag.LlvmBrCcSD;
+import vadl.lcb.passes.llvmLowering.domain.selectionDag.LlvmBrCondSD;
+import vadl.lcb.passes.llvmLowering.domain.selectionDag.LlvmFieldAccessRefNode;
+import vadl.lcb.passes.llvmLowering.domain.selectionDag.LlvmLoadSD;
+import vadl.lcb.passes.llvmLowering.domain.selectionDag.LlvmSExtLoad;
+import vadl.lcb.passes.llvmLowering.domain.selectionDag.LlvmSetccSD;
+import vadl.lcb.passes.llvmLowering.domain.selectionDag.LlvmStoreSD;
+import vadl.lcb.passes.llvmLowering.domain.selectionDag.LlvmTruncStore;
+import vadl.lcb.passes.llvmLowering.domain.selectionDag.LlvmTypeCastSD;
+import vadl.lcb.passes.llvmLowering.domain.selectionDag.LlvmZExtLoad;
 import vadl.lcb.passes.llvmLowering.strategies.LlvmInstructionLoweringStrategy;
 import vadl.lcb.passes.llvmLowering.strategies.visitors.TableGenNodeVisitor;
+import vadl.lcb.passes.llvmLowering.tablegen.model.parameterIdentity.ParameterTypeAndNameIdentity;
 import vadl.viam.Constant;
 import vadl.viam.graph.Node;
 import vadl.viam.graph.NodeList;
@@ -69,7 +73,15 @@ public class TableGenPatternPrinterVisitor
     node.ensure(node.constant() instanceof Constant.Value
         || node.constant() instanceof Constant.Str, "constant must be value or string");
     if (node.constant() instanceof Constant.Value constant) {
-      writer.write(constant.intValue());
+      var ty = ValueType.from(constant.type());
+      if (ty.isPresent()) {
+        writer.write(String.format("(%s %d)",
+            ty.get().getLlvmType(),
+            constant.intValue()));
+      } else {
+        throw Diagnostic.error(String.format("Constant has no valid LLVM type: '%s'.",
+            node.constant().type().toString()), node.sourceLocation()).build();
+      }
     } else if (node.constant() instanceof Constant.Str str) {
       writer.write(str.value());
     }
@@ -226,7 +238,8 @@ public class TableGenPatternPrinterVisitor
   @Override
   public void visit(LlvmBasicBlockSD node) {
     var operand = LlvmInstructionLoweringStrategy.generateTableGenInputOutput(node);
-    writer.write(node.lower() + ":$" + operand.identity().name());
+    var identity = (ParameterTypeAndNameIdentity) operand.identity();
+    writer.write(node.lower() + ":$" + identity.name());
   }
 
   @Override

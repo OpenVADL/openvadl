@@ -47,6 +47,9 @@ public class EmitInstrInfoTableGenFilePassTest extends AbstractLcbTest {
         def callseq_start : SDNode<"ISD::CALLSEQ_START", SDT_CallSeqStart, [SDNPHasChain, SDNPOutGlue]>;
         def callseq_end   : SDNode<"ISD::CALLSEQ_END", SDT_CallSeqEnd, [SDNPHasChain, SDNPOptInGlue, SDNPOutGlue]>;
                 
+        def target_ret_flag : SDNode<"rv64imISD::RET_FLAG", SDTNone,
+                                   [SDNPHasChain, SDNPOptInGlue, SDNPVariadic]>;
+                
         /*
          * ADJCALLSTACKDOWN is a pseudo instruction used to represent the
          * 'CFSetupOpcode', which is needed for the call frame setup
@@ -77,6 +80,26 @@ public class EmitInstrInfoTableGenFilePassTest extends AbstractLcbTest {
             let isCodeGenOnly = 1;
             let Defs = [ X2 ]; // stack pointer
             let Uses = [ X2 ]; // stack pointer
+        }
+                
+        def RESERVERD_PSEUDO_RET : Instruction
+        {
+            let Namespace = "rv64im";
+            /* let Size = 4; // ( Bits<32> )
+            let CodeSize = 4; // ( Bits<32> ), used for ISEL cost */
+            let InOperandList = (ins);
+            let OutOperandList = (outs);
+            let Pattern =  [ (target_ret_flag) ];
+            let isTerminator  = 1;
+            let isBranch      = 0;
+            let isCall        = 0;
+            let isReturn      = 1;
+            let isPseudo      = 1;
+            let isCodeGenOnly = 1;
+            let mayLoad       = 0;
+            let mayStore      = 0;
+            let Defs = [];
+            let Uses = [];
         }
                 
                 
@@ -118,7 +141,6 @@ public class EmitInstrInfoTableGenFilePassTest extends AbstractLcbTest {
             , ImmLeaf<i64, [{ return RV64IM_Btype_immS_predicate(Imm); }]>;
                 
         def RV64IM_Btype_immAsLabel : RV64IM_Btype_imm<OtherVT>;
-                
                 
                 
                 
@@ -177,7 +199,6 @@ public class EmitInstrInfoTableGenFilePassTest extends AbstractLcbTest {
                 (ADD X:$rs1, X:$rs2)>;
                 
                 
-                
         def ADDI : Instruction
         {
         let Namespace = "processorNameValue";
@@ -231,7 +252,6 @@ public class EmitInstrInfoTableGenFilePassTest extends AbstractLcbTest {
                 
         def : Pat<(add AddrFI:$rs1, RV64IM_Itype_immAsInt64:$imm),
                 (ADDI AddrFI:$rs1, RV64IM_Itype_immAsInt64:$imm)>;
-                
                 
                 
         def AND : Instruction
@@ -288,7 +308,6 @@ public class EmitInstrInfoTableGenFilePassTest extends AbstractLcbTest {
                 (AND X:$rs1, X:$rs2)>;
                 
                 
-                
         def ANDI : Instruction
         {
         let Namespace = "processorNameValue";
@@ -339,7 +358,6 @@ public class EmitInstrInfoTableGenFilePassTest extends AbstractLcbTest {
                 
         def : Pat<(and X:$rs1, RV64IM_Itype_immAsInt64:$imm),
                 (ANDI X:$rs1, RV64IM_Itype_immAsInt64:$imm)>;
-                
                 
                 
         def BEQ : Instruction
@@ -400,7 +418,6 @@ public class EmitInstrInfoTableGenFilePassTest extends AbstractLcbTest {
                 (BEQ X:$rs1, X:$rs2, RV64IM_Btype_immAsLabel:$imm)>;
                 
                 
-                
         def BGE : Instruction
         {
         let Namespace = "processorNameValue";
@@ -457,7 +474,6 @@ public class EmitInstrInfoTableGenFilePassTest extends AbstractLcbTest {
                 
         def : Pat<(brcond (i64 (setge X:$rs1, X:$rs2)), bb:$imm),
                 (BGE X:$rs1, X:$rs2, RV64IM_Btype_immAsLabel:$imm)>;
-                
                 
                 
         def BGEU : Instruction
@@ -518,7 +534,6 @@ public class EmitInstrInfoTableGenFilePassTest extends AbstractLcbTest {
                 (BGEU X:$rs1, X:$rs2, RV64IM_Btype_immAsLabel:$imm)>;
                 
                 
-                
         def BLT : Instruction
         {
         let Namespace = "processorNameValue";
@@ -575,7 +590,6 @@ public class EmitInstrInfoTableGenFilePassTest extends AbstractLcbTest {
                 
         def : Pat<(brcond (i64 (setlt X:$rs1, X:$rs2)), bb:$imm),
                 (BLT X:$rs1, X:$rs2, RV64IM_Btype_immAsLabel:$imm)>;
-                
                 
                 
         def BLTU : Instruction
@@ -636,7 +650,6 @@ public class EmitInstrInfoTableGenFilePassTest extends AbstractLcbTest {
                 (BLTU X:$rs1, X:$rs2, RV64IM_Btype_immAsLabel:$imm)>;
                 
                 
-                
         def BNE : Instruction
         {
         let Namespace = "processorNameValue";
@@ -695,7 +708,6 @@ public class EmitInstrInfoTableGenFilePassTest extends AbstractLcbTest {
                 (BNE X:$rs1, X:$rs2, RV64IM_Btype_immAsLabel:$imm)>;
                 
                 
-                
         def JALR : Instruction
         {
         let Namespace = "processorNameValue";
@@ -743,7 +755,6 @@ public class EmitInstrInfoTableGenFilePassTest extends AbstractLcbTest {
         let Uses = [ PC ];
         let Defs = [ PC ];
         }
-                
                 
                 
                 
@@ -802,7 +813,6 @@ public class EmitInstrInfoTableGenFilePassTest extends AbstractLcbTest {
                 (LB AddrFI:$rs1, RV64IM_Itype_immAsInt64:$imm)>;
                 
                 
-                
         def LBU : Instruction
         {
         let Namespace = "processorNameValue";
@@ -856,7 +866,6 @@ public class EmitInstrInfoTableGenFilePassTest extends AbstractLcbTest {
                 
         def : Pat<(i64 (zextloadi8 (add AddrFI:$rs1, RV64IM_Itype_immAsInt64:$imm))),
                 (LBU AddrFI:$rs1, RV64IM_Itype_immAsInt64:$imm)>;
-                
                 
                 
         def LD : Instruction
@@ -914,7 +923,6 @@ public class EmitInstrInfoTableGenFilePassTest extends AbstractLcbTest {
                 (LD AddrFI:$rs1, RV64IM_Itype_immAsInt64:$imm)>;
                 
                 
-                
         def LH : Instruction
         {
         let Namespace = "processorNameValue";
@@ -968,7 +976,6 @@ public class EmitInstrInfoTableGenFilePassTest extends AbstractLcbTest {
                 
         def : Pat<(i64 (sextloadi16 (add AddrFI:$rs1, RV64IM_Itype_immAsInt64:$imm))),
                 (LH AddrFI:$rs1, RV64IM_Itype_immAsInt64:$imm)>;
-                
                 
                 
         def LHU : Instruction
@@ -1026,7 +1033,6 @@ public class EmitInstrInfoTableGenFilePassTest extends AbstractLcbTest {
                 (LHU AddrFI:$rs1, RV64IM_Itype_immAsInt64:$imm)>;
                 
                 
-                
         def LW : Instruction
         {
         let Namespace = "processorNameValue";
@@ -1080,7 +1086,6 @@ public class EmitInstrInfoTableGenFilePassTest extends AbstractLcbTest {
                 
         def : Pat<(i64 (sextloadi32 (add AddrFI:$rs1, RV64IM_Itype_immAsInt64:$imm))),
                 (LW AddrFI:$rs1, RV64IM_Itype_immAsInt64:$imm)>;
-                
                 
                 
         def LWU : Instruction
@@ -1138,7 +1143,6 @@ public class EmitInstrInfoTableGenFilePassTest extends AbstractLcbTest {
                 (LWU AddrFI:$rs1, RV64IM_Itype_immAsInt64:$imm)>;
                 
                 
-                
         def MUL : Instruction
         {
         let Namespace = "processorNameValue";
@@ -1193,7 +1197,6 @@ public class EmitInstrInfoTableGenFilePassTest extends AbstractLcbTest {
                 (MUL X:$rs1, X:$rs2)>;
                 
                 
-                
         def MULH : Instruction
         {
         let Namespace = "processorNameValue";
@@ -1246,7 +1249,6 @@ public class EmitInstrInfoTableGenFilePassTest extends AbstractLcbTest {
                 
                 
                 
-                
         def MULHSU : Instruction
         {
         let Namespace = "processorNameValue";
@@ -1296,7 +1298,6 @@ public class EmitInstrInfoTableGenFilePassTest extends AbstractLcbTest {
         let Uses = [  ];
         let Defs = [  ];
         }
-                
                 
                 
                 
@@ -1354,7 +1355,6 @@ public class EmitInstrInfoTableGenFilePassTest extends AbstractLcbTest {
                 (MULW X:$rs1, X:$rs2)>;
                 
                 
-                
         def OR : Instruction
         {
         let Namespace = "processorNameValue";
@@ -1409,7 +1409,6 @@ public class EmitInstrInfoTableGenFilePassTest extends AbstractLcbTest {
                 (OR X:$rs1, X:$rs2)>;
                 
                 
-                
         def ORI : Instruction
         {
         let Namespace = "processorNameValue";
@@ -1460,7 +1459,6 @@ public class EmitInstrInfoTableGenFilePassTest extends AbstractLcbTest {
                 
         def : Pat<(or X:$rs1, RV64IM_Itype_immAsInt64:$imm),
                 (ORI X:$rs1, RV64IM_Itype_immAsInt64:$imm)>;
-                
                 
                 
         def SB : Instruction
@@ -1519,7 +1517,6 @@ public class EmitInstrInfoTableGenFilePassTest extends AbstractLcbTest {
                 (SB AddrFI:$rs1, X:$rs2, RV64IM_Stype_immAsInt64:$imm)>;
                 
                 
-                
         def SD : Instruction
         {
         let Namespace = "processorNameValue";
@@ -1574,7 +1571,6 @@ public class EmitInstrInfoTableGenFilePassTest extends AbstractLcbTest {
                 
         def : Pat<(store X:$rs2, (add AddrFI:$rs1, RV64IM_Stype_immAsInt64:$imm)),
                 (SD AddrFI:$rs1, X:$rs2, RV64IM_Stype_immAsInt64:$imm)>;
-                
                 
                 
         def SH : Instruction
@@ -1633,7 +1629,6 @@ public class EmitInstrInfoTableGenFilePassTest extends AbstractLcbTest {
                 (SH AddrFI:$rs1, X:$rs2, RV64IM_Stype_immAsInt64:$imm)>;
                 
                 
-                
         def SLT : Instruction
         {
         let Namespace = "processorNameValue";
@@ -1688,7 +1683,6 @@ public class EmitInstrInfoTableGenFilePassTest extends AbstractLcbTest {
                 (SLT X:$rs1, X:$rs2)>;
                 
                 
-                
         def SLTI : Instruction
         {
         let Namespace = "processorNameValue";
@@ -1741,7 +1735,6 @@ public class EmitInstrInfoTableGenFilePassTest extends AbstractLcbTest {
                 (SLTI X:$rs1, RV64IM_Itype_immAsInt64:$imm)>;
                 
                 
-                
         def SLTIU : Instruction
         {
         let Namespace = "processorNameValue";
@@ -1792,7 +1785,6 @@ public class EmitInstrInfoTableGenFilePassTest extends AbstractLcbTest {
                 
         def : Pat<(setcc X:$rs1, RV64IM_Itype_immAsInt64:$imm, SETULT),
                 (SLTIU X:$rs1, RV64IM_Itype_immAsInt64:$imm)>;
-                
                 
                 
         def SLTU : Instruction
@@ -1849,7 +1841,6 @@ public class EmitInstrInfoTableGenFilePassTest extends AbstractLcbTest {
                 (SLTU X:$rs1, X:$rs2)>;
                 
                 
-                
         def SUB : Instruction
         {
         let Namespace = "processorNameValue";
@@ -1904,7 +1895,6 @@ public class EmitInstrInfoTableGenFilePassTest extends AbstractLcbTest {
                 (SUB X:$rs1, X:$rs2)>;
                 
                 
-                
         def SUBW : Instruction
         {
         let Namespace = "processorNameValue";
@@ -1957,7 +1947,6 @@ public class EmitInstrInfoTableGenFilePassTest extends AbstractLcbTest {
                 
         def : Pat<(sub X:$rs1, X:$rs2),
                 (SUBW X:$rs1, X:$rs2)>;
-                
                 
                 
         def SW : Instruction
@@ -2016,7 +2005,6 @@ public class EmitInstrInfoTableGenFilePassTest extends AbstractLcbTest {
                 (SW AddrFI:$rs1, X:$rs2, RV64IM_Stype_immAsInt64:$imm)>;
                 
                 
-                
         def XOR : Instruction
         {
         let Namespace = "processorNameValue";
@@ -2069,6 +2057,479 @@ public class EmitInstrInfoTableGenFilePassTest extends AbstractLcbTest {
                 
         def : Pat<(xor X:$rs1, X:$rs2),
                 (XOR X:$rs1, X:$rs2)>;
+                
+                
+                
+                
+                
+        def BEQZ : Instruction
+        {
+        let Namespace = "processorNameValue";
+                
+        let OutOperandList = ( outs  );
+        let InOperandList = ( ins  );
+                
+        let isTerminator  = 0;
+        let isBranch      = 0;
+        let isCall        = 0;
+        let isReturn      = 0;
+        let isPseudo      = 1;
+        let isCodeGenOnly = 0;
+        let mayLoad       = 0;
+        let mayStore      = 0;
+                
+        let Constraints = "";
+        let AddedComplexity = 0;
+                
+        let Pattern = [];
+                
+        let Uses = [  ];
+        let Defs = [  ];
+        }
+                
+                
+                
+        def BGEZ : Instruction
+        {
+        let Namespace = "processorNameValue";
+                
+        let OutOperandList = ( outs  );
+        let InOperandList = ( ins  );
+                
+        let isTerminator  = 0;
+        let isBranch      = 0;
+        let isCall        = 0;
+        let isReturn      = 0;
+        let isPseudo      = 1;
+        let isCodeGenOnly = 0;
+        let mayLoad       = 0;
+        let mayStore      = 0;
+                
+        let Constraints = "";
+        let AddedComplexity = 0;
+                
+        let Pattern = [];
+                
+        let Uses = [  ];
+        let Defs = [  ];
+        }
+                
+                
+                
+        def BGTZ : Instruction
+        {
+        let Namespace = "processorNameValue";
+                
+        let OutOperandList = ( outs  );
+        let InOperandList = ( ins  );
+                
+        let isTerminator  = 0;
+        let isBranch      = 0;
+        let isCall        = 0;
+        let isReturn      = 0;
+        let isPseudo      = 1;
+        let isCodeGenOnly = 0;
+        let mayLoad       = 0;
+        let mayStore      = 0;
+                
+        let Constraints = "";
+        let AddedComplexity = 0;
+                
+        let Pattern = [];
+                
+        let Uses = [  ];
+        let Defs = [  ];
+        }
+                
+                
+                
+        def BLEZ : Instruction
+        {
+        let Namespace = "processorNameValue";
+                
+        let OutOperandList = ( outs  );
+        let InOperandList = ( ins  );
+                
+        let isTerminator  = 0;
+        let isBranch      = 0;
+        let isCall        = 0;
+        let isReturn      = 0;
+        let isPseudo      = 1;
+        let isCodeGenOnly = 0;
+        let mayLoad       = 0;
+        let mayStore      = 0;
+                
+        let Constraints = "";
+        let AddedComplexity = 0;
+                
+        let Pattern = [];
+                
+        let Uses = [  ];
+        let Defs = [  ];
+        }
+                
+                
+                
+        def BLTZ : Instruction
+        {
+        let Namespace = "processorNameValue";
+                
+        let OutOperandList = ( outs  );
+        let InOperandList = ( ins  );
+                
+        let isTerminator  = 0;
+        let isBranch      = 0;
+        let isCall        = 0;
+        let isReturn      = 0;
+        let isPseudo      = 1;
+        let isCodeGenOnly = 0;
+        let mayLoad       = 0;
+        let mayStore      = 0;
+                
+        let Constraints = "";
+        let AddedComplexity = 0;
+                
+        let Pattern = [];
+                
+        let Uses = [  ];
+        let Defs = [  ];
+        }
+                
+                
+                
+        def BNEZ : Instruction
+        {
+        let Namespace = "processorNameValue";
+                
+        let OutOperandList = ( outs  );
+        let InOperandList = ( ins  );
+                
+        let isTerminator  = 0;
+        let isBranch      = 0;
+        let isCall        = 0;
+        let isReturn      = 0;
+        let isPseudo      = 1;
+        let isCodeGenOnly = 0;
+        let mayLoad       = 0;
+        let mayStore      = 0;
+                
+        let Constraints = "";
+        let AddedComplexity = 0;
+                
+        let Pattern = [];
+                
+        let Uses = [  ];
+        let Defs = [  ];
+        }
+                
+                
+                
+        def CALL : Instruction
+        {
+        let Namespace = "processorNameValue";
+                
+        let OutOperandList = ( outs  );
+        let InOperandList = ( ins  );
+                
+        let isTerminator  = 0;
+        let isBranch      = 0;
+        let isCall        = 0;
+        let isReturn      = 0;
+        let isPseudo      = 1;
+        let isCodeGenOnly = 0;
+        let mayLoad       = 0;
+        let mayStore      = 0;
+                
+        let Constraints = "";
+        let AddedComplexity = 0;
+                
+        let Pattern = [];
+                
+        let Uses = [ PC,X1 ];
+        let Defs = [ PC,X1 ];
+        }
+                
+                
+                
+        def J : Instruction
+        {
+        let Namespace = "processorNameValue";
+                
+        let OutOperandList = ( outs  );
+        let InOperandList = ( ins  );
+                
+        let isTerminator  = 0;
+        let isBranch      = 0;
+        let isCall        = 0;
+        let isReturn      = 0;
+        let isPseudo      = 1;
+        let isCodeGenOnly = 0;
+        let mayLoad       = 0;
+        let mayStore      = 0;
+                
+        let Constraints = "";
+        let AddedComplexity = 0;
+                
+        let Pattern = [];
+                
+        let Uses = [  ];
+        let Defs = [  ];
+        }
+                
+                
+                
+        def MOV : Instruction
+        {
+        let Namespace = "processorNameValue";
+                
+        let OutOperandList = ( outs X:$rd );
+        let InOperandList = ( ins X:$rs1 );
+                
+        let isTerminator  = 0;
+        let isBranch      = 0;
+        let isCall        = 0;
+        let isReturn      = 0;
+        let isPseudo      = 1;
+        let isCodeGenOnly = 0;
+        let mayLoad       = 0;
+        let mayStore      = 0;
+                
+        let Constraints = "";
+        let AddedComplexity = 0;
+                
+        let Pattern = [];
+                
+        let Uses = [  ];
+        let Defs = [  ];
+        }
+                
+        def : Pat<(add X:$rs1, (i64 0)),
+                (MOV X:$rs1)>;
+                
+                
+        def NEG : Instruction
+        {
+        let Namespace = "processorNameValue";
+                
+        let OutOperandList = ( outs X:$rd );
+        let InOperandList = ( ins X:$rs1 );
+                
+        let isTerminator  = 0;
+        let isBranch      = 0;
+        let isCall        = 0;
+        let isReturn      = 0;
+        let isPseudo      = 1;
+        let isCodeGenOnly = 0;
+        let mayLoad       = 0;
+        let mayStore      = 0;
+                
+        let Constraints = "";
+        let AddedComplexity = 0;
+                
+        let Pattern = [];
+                
+        let Uses = [  ];
+        let Defs = [  ];
+        }
+                
+        def : Pat<(sub (i64 0), X:$rs1),
+                (NEG X:$rs1)>;
+                
+                
+        def NOP : Instruction
+        {
+        let Namespace = "processorNameValue";
+                
+        let OutOperandList = ( outs  );
+        let InOperandList = ( ins  );
+                
+        let isTerminator  = 0;
+        let isBranch      = 0;
+        let isCall        = 0;
+        let isReturn      = 0;
+        let isPseudo      = 1;
+        let isCodeGenOnly = 0;
+        let mayLoad       = 0;
+        let mayStore      = 0;
+                
+        let Constraints = "";
+        let AddedComplexity = 0;
+                
+        let Pattern = [];
+                
+        let Uses = [ X0 ];
+        let Defs = [ X0 ];
+        }
+                
+        def : Pat<(add (i64 0), (i64 0)),
+                (NOP )>;
+                
+                
+        def NOT : Instruction
+        {
+        let Namespace = "processorNameValue";
+                
+        let OutOperandList = ( outs  );
+        let InOperandList = ( ins  );
+                
+        let isTerminator  = 0;
+        let isBranch      = 0;
+        let isCall        = 0;
+        let isReturn      = 0;
+        let isPseudo      = 1;
+        let isCodeGenOnly = 0;
+        let mayLoad       = 0;
+        let mayStore      = 0;
+                
+        let Constraints = "";
+        let AddedComplexity = 0;
+                
+        let Pattern = [];
+                
+        let Uses = [  ];
+        let Defs = [  ];
+        }
+                
+                
+                
+        def RET : Instruction
+        {
+        let Namespace = "processorNameValue";
+                
+        let OutOperandList = ( outs  );
+        let InOperandList = ( ins  );
+                
+        let isTerminator  = 0;
+        let isBranch      = 0;
+        let isCall        = 0;
+        let isReturn      = 0;
+        let isPseudo      = 1;
+        let isCodeGenOnly = 0;
+        let mayLoad       = 0;
+        let mayStore      = 0;
+                
+        let Constraints = "";
+        let AddedComplexity = 0;
+                
+        let Pattern = [];
+                
+        let Uses = [ PC,X1 ];
+        let Defs = [ PC,X0 ];
+        }
+                
+                
+                
+        def SGTZ : Instruction
+        {
+        let Namespace = "processorNameValue";
+                
+        let OutOperandList = ( outs X:$rd );
+        let InOperandList = ( ins X:$rs1 );
+                
+        let isTerminator  = 0;
+        let isBranch      = 0;
+        let isCall        = 0;
+        let isReturn      = 0;
+        let isPseudo      = 1;
+        let isCodeGenOnly = 0;
+        let mayLoad       = 0;
+        let mayStore      = 0;
+                
+        let Constraints = "";
+        let AddedComplexity = 0;
+                
+        let Pattern = [];
+                
+        let Uses = [  ];
+        let Defs = [  ];
+        }
+                
+        def : Pat<(setcc (i64 0), X:$rs1, SETLT),
+                (SGTZ X:$rs1)>;
+                
+                
+        def SLTZ : Instruction
+        {
+        let Namespace = "processorNameValue";
+                
+        let OutOperandList = ( outs X:$rd );
+        let InOperandList = ( ins X:$rs1 );
+                
+        let isTerminator  = 0;
+        let isBranch      = 0;
+        let isCall        = 0;
+        let isReturn      = 0;
+        let isPseudo      = 1;
+        let isCodeGenOnly = 0;
+        let mayLoad       = 0;
+        let mayStore      = 0;
+                
+        let Constraints = "";
+        let AddedComplexity = 0;
+                
+        let Pattern = [];
+                
+        let Uses = [  ];
+        let Defs = [  ];
+        }
+                
+        def : Pat<(setcc X:$rs1, (i64 0), SETLT),
+                (SLTZ X:$rs1)>;
+                
+                
+        def SNEZ : Instruction
+        {
+        let Namespace = "processorNameValue";
+                
+        let OutOperandList = ( outs X:$rd );
+        let InOperandList = ( ins X:$rs1 );
+                
+        let isTerminator  = 0;
+        let isBranch      = 0;
+        let isCall        = 0;
+        let isReturn      = 0;
+        let isPseudo      = 1;
+        let isCodeGenOnly = 0;
+        let mayLoad       = 0;
+        let mayStore      = 0;
+                
+        let Constraints = "";
+        let AddedComplexity = 0;
+                
+        let Pattern = [];
+                
+        let Uses = [  ];
+        let Defs = [  ];
+        }
+                
+        def : Pat<(setcc (i64 0), X:$rs1, SETULT),
+                (SNEZ X:$rs1)>;
+                
+                
+        def TAIL : Instruction
+        {
+        let Namespace = "processorNameValue";
+                
+        let OutOperandList = ( outs  );
+        let InOperandList = ( ins  );
+                
+        let isTerminator  = 0;
+        let isBranch      = 0;
+        let isCall        = 0;
+        let isReturn      = 0;
+        let isPseudo      = 1;
+        let isCodeGenOnly = 0;
+        let mayLoad       = 0;
+        let mayStore      = 0;
+                
+        let Constraints = "";
+        let AddedComplexity = 0;
+                
+        let Pattern = [];
+                
+        let Uses = [ PC,X6 ];
+        let Defs = [ PC,X0 ];
+        }
         """.trim().lines(), output);
   }
 }

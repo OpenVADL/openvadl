@@ -1,39 +1,47 @@
 package vadl.lcb.passes.llvmLowering.strategies.visitors.impl;
 
 import static vadl.viam.ViamError.ensure;
+import static vadl.viam.ViamError.ensureNonNull;
 
+import java.util.Arrays;
+import java.util.Comparator;
+import java.util.HashSet;
 import java.util.Objects;
+import java.util.Set;
+import javax.annotation.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import vadl.cppCodeGen.model.CppUpdateBitRangeNode;
+import vadl.error.DeferredDiagnosticStore;
+import vadl.error.Diagnostic;
+import vadl.lcb.codegen.model.llvm.ValueType;
 import vadl.lcb.passes.llvmLowering.LlvmNodeLowerable;
-import vadl.lcb.passes.llvmLowering.model.LlvmAddSD;
-import vadl.lcb.passes.llvmLowering.model.LlvmAndSD;
-import vadl.lcb.passes.llvmLowering.model.LlvmBasicBlockSD;
-import vadl.lcb.passes.llvmLowering.model.LlvmBrCcSD;
-import vadl.lcb.passes.llvmLowering.model.LlvmBrCondSD;
-import vadl.lcb.passes.llvmLowering.model.LlvmFieldAccessRefNode;
-import vadl.lcb.passes.llvmLowering.model.LlvmLoadSD;
-import vadl.lcb.passes.llvmLowering.model.LlvmMulSD;
-import vadl.lcb.passes.llvmLowering.model.LlvmOrSD;
-import vadl.lcb.passes.llvmLowering.model.LlvmReadRegFileNode;
-import vadl.lcb.passes.llvmLowering.model.LlvmSDivSD;
-import vadl.lcb.passes.llvmLowering.model.LlvmSExtLoad;
-import vadl.lcb.passes.llvmLowering.model.LlvmSMulSD;
-import vadl.lcb.passes.llvmLowering.model.LlvmSRemSD;
-import vadl.lcb.passes.llvmLowering.model.LlvmSetccSD;
-import vadl.lcb.passes.llvmLowering.model.LlvmShlSD;
-import vadl.lcb.passes.llvmLowering.model.LlvmShrSD;
-import vadl.lcb.passes.llvmLowering.model.LlvmSraSD;
-import vadl.lcb.passes.llvmLowering.model.LlvmStoreSD;
-import vadl.lcb.passes.llvmLowering.model.LlvmSubSD;
-import vadl.lcb.passes.llvmLowering.model.LlvmTruncStore;
-import vadl.lcb.passes.llvmLowering.model.LlvmTypeCastSD;
-import vadl.lcb.passes.llvmLowering.model.LlvmUDivSD;
-import vadl.lcb.passes.llvmLowering.model.LlvmUMulSD;
-import vadl.lcb.passes.llvmLowering.model.LlvmURemSD;
-import vadl.lcb.passes.llvmLowering.model.LlvmXorSD;
-import vadl.lcb.passes.llvmLowering.model.LlvmZExtLoad;
+import vadl.lcb.passes.llvmLowering.domain.selectionDag.LlvmAddSD;
+import vadl.lcb.passes.llvmLowering.domain.selectionDag.LlvmAndSD;
+import vadl.lcb.passes.llvmLowering.domain.selectionDag.LlvmBasicBlockSD;
+import vadl.lcb.passes.llvmLowering.domain.selectionDag.LlvmBrCcSD;
+import vadl.lcb.passes.llvmLowering.domain.selectionDag.LlvmBrCondSD;
+import vadl.lcb.passes.llvmLowering.domain.selectionDag.LlvmFieldAccessRefNode;
+import vadl.lcb.passes.llvmLowering.domain.selectionDag.LlvmLoadSD;
+import vadl.lcb.passes.llvmLowering.domain.selectionDag.LlvmMulSD;
+import vadl.lcb.passes.llvmLowering.domain.selectionDag.LlvmOrSD;
+import vadl.lcb.passes.llvmLowering.domain.selectionDag.LlvmReadRegFileNode;
+import vadl.lcb.passes.llvmLowering.domain.selectionDag.LlvmSDivSD;
+import vadl.lcb.passes.llvmLowering.domain.selectionDag.LlvmSExtLoad;
+import vadl.lcb.passes.llvmLowering.domain.selectionDag.LlvmSMulSD;
+import vadl.lcb.passes.llvmLowering.domain.selectionDag.LlvmSRemSD;
+import vadl.lcb.passes.llvmLowering.domain.selectionDag.LlvmSetccSD;
+import vadl.lcb.passes.llvmLowering.domain.selectionDag.LlvmShlSD;
+import vadl.lcb.passes.llvmLowering.domain.selectionDag.LlvmShrSD;
+import vadl.lcb.passes.llvmLowering.domain.selectionDag.LlvmSraSD;
+import vadl.lcb.passes.llvmLowering.domain.selectionDag.LlvmStoreSD;
+import vadl.lcb.passes.llvmLowering.domain.selectionDag.LlvmSubSD;
+import vadl.lcb.passes.llvmLowering.domain.selectionDag.LlvmTruncStore;
+import vadl.lcb.passes.llvmLowering.domain.selectionDag.LlvmTypeCastSD;
+import vadl.lcb.passes.llvmLowering.domain.selectionDag.LlvmUDivSD;
+import vadl.lcb.passes.llvmLowering.domain.selectionDag.LlvmUMulSD;
+import vadl.lcb.passes.llvmLowering.domain.selectionDag.LlvmURemSD;
+import vadl.lcb.passes.llvmLowering.domain.selectionDag.LlvmXorSD;
+import vadl.lcb.passes.llvmLowering.domain.selectionDag.LlvmZExtLoad;
 import vadl.lcb.passes.llvmLowering.strategies.visitors.TableGenNodeVisitor;
 import vadl.lcb.passes.llvmLowering.strategies.visitors.TableGenPatternLowerable;
 import vadl.types.BitsType;
@@ -41,7 +49,6 @@ import vadl.types.BuiltInTable;
 import vadl.types.DataType;
 import vadl.types.SIntType;
 import vadl.types.Type;
-import vadl.types.UIntType;
 import vadl.viam.Constant;
 import vadl.viam.graph.Node;
 import vadl.viam.graph.control.AbstractBeginNode;
@@ -93,7 +100,36 @@ public class ReplaceWithLlvmSDNodesVisitor
 
   @Override
   public void visit(ConstantNode node) {
+    // Upcast it to a higher type because TableGen is not able to cast implicitly.
+    var types = node.usages()
+        .filter(x -> x instanceof ExpressionNode)
+        .map(x -> {
+          var y = (ExpressionNode) x;
+          // Cast to BitsType when SIntType
+          return y.type();
+        })
+        .filter(x -> x instanceof BitsType)
+        .map(x -> (BitsType) x)
+        .sorted(Comparator.comparingInt(BitsType::bitWidth))
+        .toList();
 
+    var distinctTypes = new HashSet<>(types);
+
+    if (distinctTypes.size() > 1) {
+      DeferredDiagnosticStore.add(
+          Diagnostic.warning("Constant must be upcasted but it has multiple candidates. "
+                  + "The compiler generator considered only the first type as upcast.",
+              node.sourceLocation()).build());
+    } else if (distinctTypes.isEmpty()) {
+      DeferredDiagnosticStore.add(
+          Diagnostic.warning("Constant must be upcasted but it has no candidates.",
+              node.sourceLocation()).build());
+      return;
+    }
+
+    var type = types.stream().findFirst().get();
+    node.setType(type);
+    node.constant().setType(type);
   }
 
   @Override
@@ -146,7 +182,7 @@ public class ReplaceWithLlvmSDNodesVisitor
       ensure(replaced.graph() != null, "graph must exist");
       replaced.arguments().add(replaced.graph().addWithInputs(newArg));
     } else {
-      throw new RuntimeException("not implemented: " + node.builtIn());
+      throw Diagnostic.error("Lowering to LLVM was not implemented", node.sourceLocation()).build();
     }
 
     for (var arg : node.arguments()) {
@@ -156,6 +192,10 @@ public class ReplaceWithLlvmSDNodesVisitor
 
   @Override
   public void visit(WriteRegNode writeRegNode) {
+    if (writeRegNode.hasAddress()) {
+      visit(Objects.requireNonNull(writeRegNode.address()));
+    }
+    visit(writeRegNode.value());
   }
 
   @Override
@@ -207,14 +247,36 @@ public class ReplaceWithLlvmSDNodesVisitor
 
   @Override
   public void visit(ReadRegFileNode readRegFileNode) {
-    visit(readRegFileNode.address());
-    if (readRegFileNode instanceof LlvmReadRegFileNode) {
-      return;
-    }
+    // If the address is constant and register file has a constraint for, then we should replace it
+    // by the constraint value.
 
-    readRegFileNode.replaceAndDelete(
-        new LlvmReadRegFileNode(readRegFileNode.registerFile(), readRegFileNode.address(),
-            readRegFileNode.type(), readRegFileNode.staticCounterAccess()));
+    if (readRegFileNode.hasConstantAddress()) {
+      var address = (ConstantNode) readRegFileNode.address();
+      var constraint = Arrays.stream(readRegFileNode.registerFile().constraints())
+          .filter(c -> c.address().equals(address.constant()))
+          .findFirst();
+
+      if (constraint.isPresent()) {
+        var constantNode = new ConstantNode(constraint.get().value());
+        readRegFileNode.replaceAndDelete(constantNode);
+        visit(constantNode);
+      } else {
+        DeferredDiagnosticStore.add(Diagnostic.warning(
+            "Reading from a register file with constant index but the register has no "
+                + "constraint value.",
+            address.sourceLocation()).build());
+      }
+    } else {
+
+      visit(readRegFileNode.address());
+      if (readRegFileNode instanceof LlvmReadRegFileNode) {
+        return;
+      }
+
+      readRegFileNode.replaceAndDelete(
+          new LlvmReadRegFileNode(readRegFileNode.registerFile(), readRegFileNode.address(),
+              readRegFileNode.type(), readRegFileNode.staticCounterAccess()));
+    }
   }
 
   @Override
@@ -236,7 +298,7 @@ public class ReplaceWithLlvmSDNodesVisitor
 
   @Override
   public void visit(FuncCallNode funcCallNode) {
-    logger.warn("Function calls are in the instruction's behavior is not lowerable");
+    logger.warn("Function calls which are in the instruction's behavior are not lowerable");
     patternLowerable = false;
   }
 

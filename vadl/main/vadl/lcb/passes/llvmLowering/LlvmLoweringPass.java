@@ -1,5 +1,7 @@
 package vadl.lcb.passes.llvmLowering;
 
+import static vadl.viam.ViamError.ensureNonNull;
+
 import java.io.IOException;
 import java.util.HashMap;
 import java.util.IdentityHashMap;
@@ -8,9 +10,13 @@ import java.util.Map;
 import java.util.stream.Stream;
 import org.jetbrains.annotations.Nullable;
 import vadl.configuration.LcbConfiguration;
+import vadl.error.DeferredDiagnosticStore;
+import vadl.error.Diagnostic;
 import vadl.lcb.passes.isaMatching.InstructionLabel;
 import vadl.lcb.passes.isaMatching.IsaMatchingPass;
+import vadl.lcb.passes.llvmLowering.domain.LlvmLoweringRecord;
 import vadl.lcb.passes.llvmLowering.strategies.LlvmInstructionLoweringStrategy;
+import vadl.lcb.passes.llvmLowering.strategies.LlvmPseudoLoweringImpl;
 import vadl.lcb.passes.llvmLowering.strategies.instruction.LlvmInstructionLoweringAddImmediateStrategyImpl;
 import vadl.lcb.passes.llvmLowering.strategies.instruction.LlvmInstructionLoweringArithmeticAndLogicStrategyImpl;
 import vadl.lcb.passes.llvmLowering.strategies.instruction.LlvmInstructionLoweringConditionalBranchesStrategyImpl;
@@ -18,15 +24,12 @@ import vadl.lcb.passes.llvmLowering.strategies.instruction.LlvmInstructionLoweri
 import vadl.lcb.passes.llvmLowering.strategies.instruction.LlvmInstructionLoweringIndirectJumpStrategyImpl;
 import vadl.lcb.passes.llvmLowering.strategies.instruction.LlvmInstructionLoweringMemoryLoadStrategyImpl;
 import vadl.lcb.passes.llvmLowering.strategies.instruction.LlvmInstructionLoweringMemoryStoreStrategyImpl;
-import vadl.lcb.passes.llvmLowering.strategies.visitors.impl.ReplaceWithLlvmSDNodesVisitor;
 import vadl.lcb.passes.llvmLowering.tablegen.model.TableGenInstruction;
-import vadl.lcb.passes.llvmLowering.tablegen.model.TableGenInstructionOperand;
-import vadl.lcb.passes.llvmLowering.tablegen.model.TableGenPattern;
 import vadl.pass.Pass;
 import vadl.pass.PassName;
 import vadl.pass.PassResults;
 import vadl.viam.Instruction;
-import vadl.viam.Register;
+import vadl.viam.PseudoInstruction;
 import vadl.viam.Specification;
 import vadl.viam.graph.Graph;
 import vadl.viam.passes.functionInliner.FunctionInlinerPass;
@@ -37,15 +40,16 @@ import vadl.viam.passes.functionInliner.UninlinedGraph;
  */
 public class LlvmLoweringPass extends Pass {
 
-  private final List<LlvmInstructionLoweringStrategy> strategies = List.of(
-      new LlvmInstructionLoweringArithmeticAndLogicStrategyImpl(),
-      new LlvmInstructionLoweringAddImmediateStrategyImpl(),
-      new LlvmInstructionLoweringConditionalsStrategyImpl(),
-      new LlvmInstructionLoweringConditionalBranchesStrategyImpl(),
-      new LlvmInstructionLoweringIndirectJumpStrategyImpl(),
-      new LlvmInstructionLoweringMemoryStoreStrategyImpl(),
-      new LlvmInstructionLoweringMemoryLoadStrategyImpl()
-  );
+  private final List<LlvmInstructionLoweringStrategy> strategies =
+      List.of(new LlvmInstructionLoweringArithmeticAndLogicStrategyImpl(),
+          new LlvmInstructionLoweringAddImmediateStrategyImpl(),
+          new LlvmInstructionLoweringConditionalsStrategyImpl(),
+          new LlvmInstructionLoweringConditionalBranchesStrategyImpl(),
+          new LlvmInstructionLoweringIndirectJumpStrategyImpl(),
+          new LlvmInstructionLoweringMemoryStoreStrategyImpl(),
+          new LlvmInstructionLoweringMemoryLoadStrategyImpl());
+
+  private final LlvmPseudoLoweringImpl pseudoLowering = new LlvmPseudoLoweringImpl(strategies);
 
   public LlvmLoweringPass(LcbConfiguration configuration) {
     super(configuration);
@@ -55,39 +59,20 @@ public class LlvmLoweringPass extends Pass {
    * A {@link TableGenInstruction} has many boolean flags which are required for the
    * code generation.
    */
-  public record Flags(boolean isTerminator,
-                      boolean isBranch,
-                      boolean isCall,
-                      boolean isReturn,
-                      boolean isPseudo,
-                      boolean isCodeGenOnly,
-                      boolean mayLoad,
-                      boolean mayStore) {
+  public record Flags(boolean isTerminator, boolean isBranch, boolean isCall, boolean isReturn,
+                      boolean isPseudo, boolean isCodeGenOnly, boolean mayLoad, boolean mayStore) {
     public static Flags empty() {
       return new Flags(false, false, false, false, false, false, false, false);
     }
   }
 
   /**
-   * Contains information for the lowering of instructions.
-   *
-   * @param behavior has replaced nodes from {@link ReplaceWithLlvmSDNodesVisitor}.
-   * @param inputs   are the input operands for the tablegen instruction.
-   * @param outputs  are the output operands for the tablegen instruction.
-   * @param flags    are indicators of special properties of the machine instruction.
-   * @param patterns are a list of {@link Graph} which contain the pattern selectors for the
-   *                 tablegen instruction.
-   * @param uses     a list of {@link Register} which are read.
-   * @param defs     a list of {@link Register} which are written but are not part of the
-   *                 {@code outputs}
+   * This is the result of the {@link LlvmLoweringPass}. It contains the
+   * tablegen records for machine instructions and pseudo instructions.
    */
-  public record LlvmLoweringIntermediateResult(Graph behavior,
-                                               List<TableGenInstructionOperand> inputs,
-                                               List<TableGenInstructionOperand> outputs,
-                                               Flags flags,
-                                               List<TableGenPattern> patterns,
-                                               List<Register> uses,
-                                               List<Register> defs) {
+  public record LlvmLoweringPassResult(
+      IdentityHashMap<Instruction, LlvmLoweringRecord> machineInstructionRecords,
+      IdentityHashMap<PseudoInstruction, LlvmLoweringRecord> pseudoInstructionRecords) {
 
   }
 
@@ -98,26 +83,47 @@ public class LlvmLoweringPass extends Pass {
 
   @Nullable
   @Override
-  public Object execute(PassResults passResults, Specification viam)
-      throws IOException {
-    IdentityHashMap<Instruction, Graph> uninlined =
-        (IdentityHashMap<Instruction, Graph>) passResults.lastResultOf(FunctionInlinerPass.class);
-    ensureNonNull(uninlined, "Inlined Function data must exist");
-    IdentityHashMap<Instruction, LlvmLoweringIntermediateResult>
-        llvmPatterns = new IdentityHashMap<>();
-    var supportedInstructions =
-        (HashMap<InstructionLabel, List<Instruction>>) passResults
-            .lastResultOf(IsaMatchingPass.class);
-    ensure(supportedInstructions != null, "Cannot find pass results from IsaMatchPass");
+  public Object execute(PassResults passResults, Specification viam) throws IOException {
+    var supportedInstructions = ensureNonNull(
+        (HashMap<InstructionLabel, List<Instruction>>) passResults.lastResultOf(
+            IsaMatchingPass.class),
+        () -> Diagnostic.error("Cannot find semantics of the instructions", viam.sourceLocation())
+            .build());
+    var machineRecords =
+        generateRecordsForMachineInstructions(passResults, viam, supportedInstructions);
+    var pseudoRecords = generateRecordsForPseudoInstructions(viam, supportedInstructions);
 
+    return new LlvmLoweringPassResult(machineRecords, pseudoRecords);
+  }
+
+
+  private IdentityHashMap<Instruction, LlvmLoweringRecord> generateRecordsForMachineInstructions(
+      PassResults passResults, Specification viam,
+      HashMap<InstructionLabel, List<Instruction>> supportedInstructions) {
+    var tableGenRecords = new IdentityHashMap<Instruction, LlvmLoweringRecord>();
+
+    // Get the supported instructions from the matching.
+    // We only instructions which we know about in this pass.
+    // TODO: define a strategy as fallback when there is no matching.
+
+    var uninlined = ensureNonNull(
+        (IdentityHashMap<Instruction, Graph>) passResults.lastResultOf(FunctionInlinerPass.class),
+        () -> Diagnostic.error("Cannot find uninlined behaviors of the instructions",
+            viam.sourceLocation()).build());
+    // We flip it because we need to know the label for the instruction to
+    // apply one of the different lowering strategies.
+    // A strategy knows whether it can lower it by the label.
     var instructionLookup = flipIsaMatching(supportedInstructions);
 
-    viam.isa().map(isa -> isa.ownInstructions().stream())
-        .orElseGet(Stream::empty)
+    viam.isa().map(isa -> isa.ownInstructions().stream()).orElseGet(Stream::empty)
         .forEach(instruction -> {
           var instructionLabel = instructionLookup.get(instruction);
 
+          // TODO: No label, then we need to have a default.
           if (instructionLabel == null) {
+            DeferredDiagnosticStore.add(Diagnostic.warning(
+                "Instruction was not matched. Therefore, it will be skipped for the compiler"
+                    + " lowering (todo)", instruction.sourceLocation()).build());
             return;
           }
 
@@ -125,19 +131,37 @@ public class LlvmLoweringPass extends Pass {
           ensureNonNull(uninlinedBehavior, "uninlinedBehavior graph must exist");
           for (var strategy : strategies) {
             if (!strategy.isApplicable(instructionLabel)) {
+              // Try next strategy
               continue;
             }
 
-            var res =
-                strategy.lower(supportedInstructions, instruction, instructionLabel,
-                    uninlinedBehavior);
+            var record = strategy.lower(supportedInstructions, instruction, instructionLabel,
+                uninlinedBehavior);
 
-            res.ifPresent(llvmLoweringIntermediateResult -> llvmPatterns.put(instruction,
+            // Okay, we have to save record.
+            record.ifPresent(llvmLoweringIntermediateResult -> tableGenRecords.put(instruction,
                 llvmLoweringIntermediateResult));
           }
         });
 
-    return llvmPatterns;
+    return tableGenRecords;
+  }
+
+  private IdentityHashMap<PseudoInstruction,
+      LlvmLoweringRecord> generateRecordsForPseudoInstructions(
+      Specification viam, HashMap<InstructionLabel, List<Instruction>> supportedInstructions) {
+    var tableGenRecords = new IdentityHashMap<PseudoInstruction, LlvmLoweringRecord>();
+
+    viam.isa().map(isa -> isa.ownPseudoInstructions().stream()).orElseGet(Stream::empty)
+        .forEach(pseudo -> {
+          var record = pseudoLowering.lower(pseudo, supportedInstructions);
+
+          // Okay, we have to save record.
+          record.ifPresent(llvmLoweringIntermediateResult -> tableGenRecords.put(pseudo,
+              llvmLoweringIntermediateResult));
+        });
+
+    return tableGenRecords;
   }
 
   /**

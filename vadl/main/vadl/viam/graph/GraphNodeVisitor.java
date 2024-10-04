@@ -1,6 +1,5 @@
 package vadl.viam.graph;
 
-import vadl.cppCodeGen.model.CppUpdateBitRangeNode;
 import vadl.viam.graph.control.AbstractBeginNode;
 import vadl.viam.graph.control.BranchEndNode;
 import vadl.viam.graph.control.IfNode;

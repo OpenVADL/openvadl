@@ -54,15 +54,10 @@ public class EmitMCInstExpanderCppFilePassTest extends AbstractLcbTest {
             switch (opcode)
             {
             // instructions
-            /*
            \s
-            case rv64im::CALL:
-            case rv64im::TAIL:
             case rv64im::RET:
-            case rv64im::J:
             case rv64im::NOP:
             case rv64im::MOV:
-            case rv64im::NOT:
             case rv64im::NEG:
             case rv64im::SNEZ:
             case rv64im::SLTZ:
@@ -74,14 +69,13 @@ public class EmitMCInstExpanderCppFilePassTest extends AbstractLcbTest {
             case rv64im::BLTZ:
             case rv64im::BGTZ:
            \s
-                {
-                    return true;
-                }
-                */
-                default:
-                {
-                    return false;
-                }
+            {
+                return true;
+            }
+            default:
+            {
+                return false;
+            }
             }
             return false; // unreachable
         }
@@ -91,16 +85,11 @@ public class EmitMCInstExpanderCppFilePassTest extends AbstractLcbTest {
             auto opcode = MCI.getOpcode();
             switch (opcode)
             {
-            /*
             // instructions
            \s
-                case rv64im::CALL:
-                case rv64im::TAIL:
                 case rv64im::RET:
-                case rv64im::J:
                 case rv64im::NOP:
                 case rv64im::MOV:
-                case rv64im::NOT:
                 case rv64im::NEG:
                 case rv64im::SNEZ:
                 case rv64im::SLTZ:
@@ -112,14 +101,13 @@ public class EmitMCInstExpanderCppFilePassTest extends AbstractLcbTest {
                 case rv64im::BLTZ:
                 case rv64im::BGTZ:
            \s
-                {
-                    return true;
-                }
-                */
-                default:
-                {
-                    return false;
-                }
+            {
+                return true;
+            }
+            default:
+            {
+                return false;
+            }
             }
             return false; // unreachable
         }
@@ -133,26 +121,10 @@ public class EmitMCInstExpanderCppFilePassTest extends AbstractLcbTest {
                 // instructions
                 //
                 
-            /*
            \s
-              case rv64im::CALL:
-              {
-                MCIExpansion = RV64IM_CALL_expand(MCI);
-                return true;
-              }
-              case rv64im::TAIL:
-              {
-                MCIExpansion = RV64IM_TAIL_expand(MCI);
-                return true;
-              }
               case rv64im::RET:
               {
                 MCIExpansion = RV64IM_RET_expand(MCI);
-                return true;
-              }
-              case rv64im::J:
-              {
-                MCIExpansion = RV64IM_J_expand(MCI);
                 return true;
               }
               case rv64im::NOP:
@@ -163,11 +135,6 @@ public class EmitMCInstExpanderCppFilePassTest extends AbstractLcbTest {
               case rv64im::MOV:
               {
                 MCIExpansion = RV64IM_MOV_expand(MCI);
-                return true;
-              }
-              case rv64im::NOT:
-              {
-                MCIExpansion = RV64IM_NOT_expand(MCI);
                 return true;
               }
               case rv64im::NEG:
@@ -221,7 +188,6 @@ public class EmitMCInstExpanderCppFilePassTest extends AbstractLcbTest {
                 return true;
               }
            \s
-            */
               default:
                 {
                     return false;
@@ -267,104 +233,156 @@ public class EmitMCInstExpanderCppFilePassTest extends AbstractLcbTest {
                 
                 
                 
-        std::vector< MCInst> RV64IM_CALL_expand(const MCInst& instruction) {
+        std::vector< MCInst> rv64imMCInstExpander::RV64IM_RET_expand(const MCInst& instruction) const {
         std::vector< MCInst > result;
+        MCInst a = MCInst();
+        a.setOpcode(processorNameValue::JALR);
+        a.addOperand(MCOperand::createImm(RV64IM_Itype_immS_decode(0)));
+        result.push_back(a);
         return result;
         }
                 
                 
-        std::vector< MCInst> RV64IM_TAIL_expand(const MCInst& instruction) {
+        std::vector< MCInst> rv64imMCInstExpander::RV64IM_NOP_expand(const MCInst& instruction) const {
         std::vector< MCInst > result;
+        MCInst a = MCInst();
+        a.setOpcode(processorNameValue::ADDI);
+        a.addOperand(MCOperand::createImm(RV64IM_Itype_immS_decode(0)));
+        result.push_back(a);
         return result;
         }
                 
                 
-        std::vector< MCInst> RV64IM_RET_expand(const MCInst& instruction) {
+        std::vector< MCInst> rv64imMCInstExpander::RV64IM_MOV_expand(const MCInst& instruction) const {
         std::vector< MCInst > result;
+        MCInst a = MCInst();
+        a.setOpcode(processorNameValue::ADDI);
+        a.addOperand(instruction.getOperand(0));
+        a.addOperand(instruction.getOperand(1));
+        a.addOperand(MCOperand::createImm(RV64IM_Itype_immS_decode(0)));
+        result.push_back(a);
         return result;
         }
                 
                 
-        std::vector< MCInst> RV64IM_J_expand(const MCInst& instruction) {
+        std::vector< MCInst> rv64imMCInstExpander::RV64IM_NEG_expand(const MCInst& instruction) const {
         std::vector< MCInst > result;
+        MCInst a = MCInst();
+        a.setOpcode(processorNameValue::SUB);
+        a.addOperand(instruction.getOperand(0));
+        a.addOperand(instruction.getOperand(2));
+        result.push_back(a);
         return result;
         }
                 
                 
-        std::vector< MCInst> RV64IM_NOP_expand(const MCInst& instruction) {
+        std::vector< MCInst> rv64imMCInstExpander::RV64IM_SNEZ_expand(const MCInst& instruction) const {
         std::vector< MCInst > result;
+        MCInst a = MCInst();
+        a.setOpcode(processorNameValue::SLTU);
+        a.addOperand(instruction.getOperand(0));
+        a.addOperand(instruction.getOperand(2));
+        result.push_back(a);
         return result;
         }
                 
                 
-        std::vector< MCInst> RV64IM_MOV_expand(const MCInst& instruction) {
+        std::vector< MCInst> rv64imMCInstExpander::RV64IM_SLTZ_expand(const MCInst& instruction) const {
         std::vector< MCInst > result;
+        MCInst a = MCInst();
+        a.setOpcode(processorNameValue::SLT);
+        a.addOperand(instruction.getOperand(1));
+        a.addOperand(instruction.getOperand(2));
+        result.push_back(a);
         return result;
         }
                 
                 
-        std::vector< MCInst> RV64IM_NOT_expand(const MCInst& instruction) {
+        std::vector< MCInst> rv64imMCInstExpander::RV64IM_SGTZ_expand(const MCInst& instruction) const {
         std::vector< MCInst > result;
+        MCInst a = MCInst();
+        a.setOpcode(processorNameValue::SLT);
+        a.addOperand(instruction.getOperand(0));
+        a.addOperand(instruction.getOperand(2));
+        result.push_back(a);
         return result;
         }
                 
                 
-        std::vector< MCInst> RV64IM_NEG_expand(const MCInst& instruction) {
+        std::vector< MCInst> rv64imMCInstExpander::RV64IM_BEQZ_expand(const MCInst& instruction) const {
         std::vector< MCInst > result;
+        MCInst a = MCInst();
+        a.setOpcode(processorNameValue::BEQ);
+        a.addOperand(instruction.getOperand(1));
+        const MCExpr* b = MCOperandToMCExpr(instruction.getOperand(2));
+        MCOperand c = MCOperand::createExpr(processorNameValueMCExpr::create(b, processorNameValueMCExpr::VariantKind::VK_RV64IM_Btype_imm, Ctx));
+        a.addOperand(c);
+        result.push_back(a);
         return result;
         }
                 
                 
-        std::vector< MCInst> RV64IM_SNEZ_expand(const MCInst& instruction) {
+        std::vector< MCInst> rv64imMCInstExpander::RV64IM_BNEZ_expand(const MCInst& instruction) const {
         std::vector< MCInst > result;
+        MCInst a = MCInst();
+        a.setOpcode(processorNameValue::BNE);
+        a.addOperand(instruction.getOperand(1));
+        const MCExpr* b = MCOperandToMCExpr(instruction.getOperand(2));
+        MCOperand c = MCOperand::createExpr(processorNameValueMCExpr::create(b, processorNameValueMCExpr::VariantKind::VK_RV64IM_Btype_imm, Ctx));
+        a.addOperand(c);
+        result.push_back(a);
         return result;
         }
                 
                 
-        std::vector< MCInst> RV64IM_SLTZ_expand(const MCInst& instruction) {
+        std::vector< MCInst> rv64imMCInstExpander::RV64IM_BLEZ_expand(const MCInst& instruction) const {
         std::vector< MCInst > result;
+        MCInst a = MCInst();
+        a.setOpcode(processorNameValue::BGE);
+        a.addOperand(instruction.getOperand(0));
+        const MCExpr* b = MCOperandToMCExpr(instruction.getOperand(2));
+        MCOperand c = MCOperand::createExpr(processorNameValueMCExpr::create(b, processorNameValueMCExpr::VariantKind::VK_RV64IM_Btype_imm, Ctx));
+        a.addOperand(c);
+        result.push_back(a);
         return result;
         }
                 
                 
-        std::vector< MCInst> RV64IM_SGTZ_expand(const MCInst& instruction) {
+        std::vector< MCInst> rv64imMCInstExpander::RV64IM_BGEZ_expand(const MCInst& instruction) const {
         std::vector< MCInst > result;
+        MCInst a = MCInst();
+        a.setOpcode(processorNameValue::BGE);
+        a.addOperand(instruction.getOperand(1));
+        const MCExpr* b = MCOperandToMCExpr(instruction.getOperand(2));
+        MCOperand c = MCOperand::createExpr(processorNameValueMCExpr::create(b, processorNameValueMCExpr::VariantKind::VK_RV64IM_Btype_imm, Ctx));
+        a.addOperand(c);
+        result.push_back(a);
         return result;
         }
                 
                 
-        std::vector< MCInst> RV64IM_BEQZ_expand(const MCInst& instruction) {
+        std::vector< MCInst> rv64imMCInstExpander::RV64IM_BLTZ_expand(const MCInst& instruction) const {
         std::vector< MCInst > result;
+        MCInst a = MCInst();
+        a.setOpcode(processorNameValue::BLT);
+        a.addOperand(instruction.getOperand(1));
+        const MCExpr* b = MCOperandToMCExpr(instruction.getOperand(2));
+        MCOperand c = MCOperand::createExpr(processorNameValueMCExpr::create(b, processorNameValueMCExpr::VariantKind::VK_RV64IM_Btype_imm, Ctx));
+        a.addOperand(c);
+        result.push_back(a);
         return result;
         }
                 
                 
-        std::vector< MCInst> RV64IM_BNEZ_expand(const MCInst& instruction) {
+        std::vector< MCInst> rv64imMCInstExpander::RV64IM_BGTZ_expand(const MCInst& instruction) const {
         std::vector< MCInst > result;
-        return result;
-        }
-                
-                
-        std::vector< MCInst> RV64IM_BLEZ_expand(const MCInst& instruction) {
-        std::vector< MCInst > result;
-        return result;
-        }
-                
-                
-        std::vector< MCInst> RV64IM_BGEZ_expand(const MCInst& instruction) {
-        std::vector< MCInst > result;
-        return result;
-        }
-                
-                
-        std::vector< MCInst> RV64IM_BLTZ_expand(const MCInst& instruction) {
-        std::vector< MCInst > result;
-        return result;
-        }
-                
-                
-        std::vector< MCInst> RV64IM_BGTZ_expand(const MCInst& instruction) {
-        std::vector< MCInst > result;
+        MCInst a = MCInst();
+        a.setOpcode(processorNameValue::BLT);
+        a.addOperand(instruction.getOperand(0));
+        const MCExpr* b = MCOperandToMCExpr(instruction.getOperand(2));
+        MCOperand c = MCOperand::createExpr(processorNameValueMCExpr::create(b, processorNameValueMCExpr::VariantKind::VK_RV64IM_Btype_imm, Ctx));
+        a.addOperand(c);
+        result.push_back(a);
         return result;
         }
         """.trim().lines(), output);
