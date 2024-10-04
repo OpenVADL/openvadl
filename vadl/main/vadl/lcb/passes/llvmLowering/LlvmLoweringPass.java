@@ -1,6 +1,5 @@
 package vadl.lcb.passes.llvmLowering;
 
-import static vadl.viam.ViamError.ensure;
 import static vadl.viam.ViamError.ensureNonNull;
 
 import java.io.IOException;

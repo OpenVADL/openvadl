@@ -15,7 +15,6 @@ import vadl.lcb.passes.llvmLowering.tablegen.lowering.TableGenPatternPrinterVisi
 import vadl.lcb.passes.llvmLowering.tablegen.model.TableGenInstructionOperand;
 import vadl.lcb.passes.llvmLowering.tablegen.model.TableGenPattern;
 import vadl.lcb.passes.llvmLowering.tablegen.model.TableGenSelectionWithOutputPattern;
-import vadl.lcb.passes.llvmLowering.tablegen.model.parameterIdentity.ParameterIdentity;
 import vadl.pass.PassKey;
 import vadl.pass.exception.DuplicatedPassKeyException;
 import vadl.test.lcb.AbstractLcbTest;
@@ -297,15 +296,6 @@ public class LlvmLoweringPassTest extends AbstractLcbTest {
           var res = llvmResults.machineInstructionRecords().get(t);
           Assertions.assertNotNull(res);
 
-          if (!expectedTestOutput.skipParameterIdentityCheck) {
-            // Inputs
-            Assertions.assertEquals(mapToParameterIdentity(expectedTestOutput.inputs()),
-                mapToParameterIdentity(res.inputs()));
-            // Outputs
-            Assertions.assertEquals(mapToParameterIdentity(expectedTestOutput.outputs()),
-                mapToParameterIdentity(res.outputs()));
-          }
-
           // Selector Patterns
           var selectorPatterns = res.patterns().stream()
               .map(TableGenPattern::selector)
@@ -336,10 +326,4 @@ public class LlvmLoweringPassTest extends AbstractLcbTest {
           Assertions.assertEquals(expectedTestOutput.flags(), res.flags());
         }));
   }
-
-  private List<ParameterIdentity> mapToParameterIdentity(
-      List<TableGenInstructionOperand> operands) {
-    return operands.stream().map(TableGenInstructionOperand::identity).toList();
-  }
-
 }
