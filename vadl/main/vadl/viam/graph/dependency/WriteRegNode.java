@@ -61,7 +61,7 @@ public class WriteRegNode extends WriteResourceNode {
   }
 
   @Override
-  protected Resource resourceDefinition() {
+  public Resource resourceDefinition() {
     return register;
   }
 

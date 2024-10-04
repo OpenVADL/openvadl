@@ -50,7 +50,7 @@ public class ReadMemNode extends ReadResourceNode {
   }
 
   @Override
-  protected Resource resourceDefinition() {
+  public Resource resourceDefinition() {
     return memory;
   }
 

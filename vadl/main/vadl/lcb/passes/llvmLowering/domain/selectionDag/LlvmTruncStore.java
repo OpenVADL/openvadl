@@ -83,7 +83,7 @@ public class LlvmTruncStore extends WriteResourceNode implements LlvmNodeLowerab
   }
 
   @Override
-  protected Resource resourceDefinition() {
+  public Resource resourceDefinition() {
     return memory;
   }
 

@@ -39,7 +39,7 @@ public abstract class ReadResourceNode extends ExpressionNode {
     return (DataType) super.type();
   }
 
-  protected abstract Resource resourceDefinition();
+  public abstract Resource resourceDefinition();
 
   @Override
   public void verifyState() {
