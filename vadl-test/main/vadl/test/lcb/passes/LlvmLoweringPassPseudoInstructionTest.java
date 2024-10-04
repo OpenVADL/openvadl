@@ -65,13 +65,13 @@ public class LlvmLoweringPassPseudoInstructionTest extends AbstractLcbTest {
         Collections.emptyList(), Collections.emptyList(), getPseudoFlags()));
     expectedResults.put("SGTZ",
         new TestOutput(List.of(createOperand("X", "rd")), List.of(createOperand("X", "rs1")),
-            List.of("(setcc (i64 0), X:$rs1, SETLT)"), List.of("(SGTZ X:$rs1)"), getPseudoFlags()));
+            List.of("(setcc (i64 0), X:$rs1, (SETLT))"), List.of("(SGTZ X:$rs1)"), getPseudoFlags()));
     expectedResults.put("SLTZ",
         new TestOutput(List.of(createOperand("X", "rd")), List.of(createOperand("X", "rs1")),
-            List.of("(setcc X:$rs1, (i64 0), SETLT)"), List.of("(SLTZ X:$rs1)"), getPseudoFlags()));
+            List.of("(setcc X:$rs1, (i64 0), (SETLT))"), List.of("(SLTZ X:$rs1)"), getPseudoFlags()));
     expectedResults.put("SNEZ", new TestOutput(List.of(createOperand("X", "rd")),
         List.of(createOperand("X", "rs1")),
-        List.of("(setcc (i64 0), X:$rs1, SETULT)"), List.of("(SNEZ X:$rs1)"), getPseudoFlags()));
+        List.of("(setcc (i64 0), X:$rs1, (SETULT))"), List.of("(SNEZ X:$rs1)"), getPseudoFlags()));
     expectedResults.put("TAIL", new TestOutput(Collections.emptyList(), Collections.emptyList(),
         Collections.emptyList(), Collections.emptyList(), getPseudoFlags()));
   }

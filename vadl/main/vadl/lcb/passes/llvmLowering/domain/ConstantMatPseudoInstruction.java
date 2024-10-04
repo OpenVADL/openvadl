@@ -1,6 +1,7 @@
 package vadl.lcb.passes.llvmLowering.domain;
 
 import vadl.lcb.passes.llvmLowering.tablegen.model.TableGenImmediateRecord;
+import vadl.viam.Assembly;
 import vadl.viam.Identifier;
 import vadl.viam.Instruction;
 import vadl.viam.Parameter;
@@ -13,7 +14,6 @@ import vadl.viam.graph.Graph;
  */
 public class ConstantMatPseudoInstruction extends PseudoInstruction {
 
-  private final Instruction instructionRef;
   private final TableGenImmediateRecord immediateRecord;
 
   /**
@@ -22,21 +22,14 @@ public class ConstantMatPseudoInstruction extends PseudoInstruction {
    * @param identifier     the identifier of the pseudo instruction
    * @param parameters     the list of parameters for the pseudo instruction
    * @param behavior       the behavior graph of the pseudo instruction
-   * @param instructionRef the reference to the machine instruction.
-   * @param imm
    */
   public ConstantMatPseudoInstruction(Identifier identifier,
                                       Parameter[] parameters,
                                       Graph behavior,
-                                      Instruction instructionRef,
+                                      Assembly assembly,
                                       TableGenImmediateRecord imm) {
-    super(identifier, parameters, behavior, instructionRef.assembly());
-    this.instructionRef = instructionRef;
+    super(identifier, parameters, behavior, assembly);
     this.immediateRecord = imm;
-  }
-
-  public Instruction instructionRef() {
-    return instructionRef;
   }
 
   public TableGenImmediateRecord immediateRecord() {

@@ -45,19 +45,17 @@ public class PseudoExpansionCodeGenerator extends LcbCodeGenerator {
   @Override
   protected String generateFunctionBody(CppFunction function) {
     var writer = new StringWriter();
-    var endNodes = Stream.concat(function.behavior().getNodes(InstrCallNode.class),
-        function.behavior().getNodes(ReturnNode.class)
-    ).toList();
+    var instrCallNodes = function.behavior().getNodes(InstrCallNode.class).toList();
 
-    if (endNodes.isEmpty()) {
-      throw new ViamError("For the function is a return node required.");
+    if (instrCallNodes.isEmpty()) {
+      throw new ViamError("For the function is an InstrCallNode required.");
     }
 
     writer.write("std::vector< MCInst > result;\n");
     var visitor =
         new PseudoExpansionCodeGeneratorVisitor(writer, namespace, fieldUsages,
             immediateDecodings, variants, relocations);
-    endNodes.forEach(visitor::visit);
+    instrCallNodes.forEach(visitor::visit);
     writer.write("return result");
     return writer.toString();
   }

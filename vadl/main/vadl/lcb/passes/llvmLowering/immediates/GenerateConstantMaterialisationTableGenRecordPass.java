@@ -7,6 +7,7 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.stream.Stream;
 import org.jetbrains.annotations.Nullable;
 import vadl.configuration.GeneralConfiguration;
 import vadl.configuration.LcbConfiguration;
@@ -27,9 +28,11 @@ import vadl.pass.Pass;
 import vadl.pass.PassName;
 import vadl.pass.PassResults;
 import vadl.viam.Constant;
+import vadl.viam.Instruction;
 import vadl.viam.graph.Graph;
 import vadl.viam.Specification;
 import vadl.viam.graph.NodeList;
+import vadl.viam.graph.control.InstrCallNode;
 import vadl.viam.graph.dependency.ConstantNode;
 import vadl.viam.graph.dependency.WriteRegFileNode;
 
@@ -48,6 +51,13 @@ public class GenerateConstantMaterialisationTableGenRecordPass extends Pass {
     return new PassName("GenerateConstantMaterialisationTableGenRecordPass");
   }
 
+  private Stream<WriteRegFileNode> writeRegFileNodes(Graph behavior) {
+    return behavior.getNodes(InstrCallNode.class)
+        .map(InstrCallNode::target)
+        .map(Instruction::behavior)
+        .flatMap(i -> i.getNodes(WriteRegFileNode.class));
+  }
+
   @Nullable
   @Override
   public Object execute(PassResults passResults, Specification viam) throws IOException {
@@ -56,12 +66,13 @@ public class GenerateConstantMaterialisationTableGenRecordPass extends Pass {
         GenerateConstantMaterialisationPass.class);
     var configuration = (LcbConfiguration) configuration();
     for (var instruction : instructions) {
-      var writeRegFileNode = ensurePresent(
-          instruction.instructionRef().behavior().getNodes(WriteRegFileNode.class)
-              .findFirst(),
-          () -> Diagnostic.error("Cannot find register file for constant materialisation",
-              instruction.instructionRef().sourceLocation()).build()
-      );
+      var writeRegFileNode =
+          ensurePresent(
+              writeRegFileNodes(instruction.behavior())
+                  .findFirst(), () ->
+                  Diagnostic.error("Cannot find register file for constant materialisation",
+                      instruction.sourceLocation()).build()
+          );
 
       /*
       def : Pat<(vadl_uimm32_immediateAsInt32:$imm), (PSEUDO_CONST_MAT1 vadl_uimm32_immediateAsInt32:$imm)>;
