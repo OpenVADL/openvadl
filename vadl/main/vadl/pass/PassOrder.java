@@ -44,6 +44,7 @@ import vadl.lcb.template.lib.Target.EmitMCInstLowerHeaderFilePass;
 import vadl.lcb.template.lib.Target.MCTargetDesc.EmitInstPrinterCppFilePass;
 import vadl.lcb.template.lib.Target.MCTargetDesc.EmitInstPrinterHeaderFilePass;
 import vadl.template.AbstractTemplateRenderingPass;
+import vadl.viam.passes.InstructionResourceAccessAnalysisPass;
 import vadl.viam.passes.algebraic_simplication.AlgebraicSimplificationPass;
 import vadl.viam.passes.canonicalization.CanonicalizationPass;
 import vadl.viam.passes.dummyAbi.DummyAbiPass;
@@ -216,8 +217,11 @@ public final class PassOrder {
     order.add(new FunctionInlinerPass(configuration));
     order.add(new SideEffectConditionResolvingPass(configuration));
 
+    // Common optimizations
     order.add(new CanonicalizationPass(configuration));
     order.add(new AlgebraicSimplificationPass(configuration));
+
+    order.add(new InstructionResourceAccessAnalysisPass(configuration));
 
     // verification after viam optimizations
     order.add(new ViamVerificationPass(configuration));
@@ -438,7 +442,7 @@ public final class PassOrder {
         .add(new IssVerificationPass(config))
         .add(new IssConfigurationPass(config))
         .add(new TcgLoweringPass(config))
-        
+
         .add(new ViamVerificationPass(config))
     ;
 

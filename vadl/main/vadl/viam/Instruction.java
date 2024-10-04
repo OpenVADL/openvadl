@@ -2,6 +2,7 @@ package vadl.viam;
 
 import com.google.errorprone.annotations.concurrent.LazyInit;
 import java.util.List;
+import java.util.Set;
 import org.checkerframework.checker.nullness.qual.NonNull;
 import org.jetbrains.annotations.Nullable;
 import vadl.viam.graph.Graph;
@@ -24,12 +25,12 @@ public class Instruction extends Definition implements DefProp.WithBehavior {
    * Set during the {@link vadl.viam.passes.InstructionResourceAccessAnalysisPass}.
    */
   @Nullable
-  private List<Resource> writtenResources;
+  private Set<Resource> writtenResources;
   /**
    * Set during the {@link vadl.viam.passes.InstructionResourceAccessAnalysisPass}.
    */
   @Nullable
-  private List<Resource> readResources;
+  private Set<Resource> readResources;
 
   /**
    * Creates an Instruction object with the given parameters.
@@ -69,11 +70,11 @@ public class Instruction extends Definition implements DefProp.WithBehavior {
     return encoding.format();
   }
 
-  public @Nullable List<Resource> writtenResources() {
+  public @Nullable Set<Resource> writtenResources() {
     return writtenResources;
   }
 
-  public @Nullable List<Resource> readResources() {
+  public @Nullable Set<Resource> readResources() {
     return readResources;
   }
 
@@ -99,15 +100,14 @@ public class Instruction extends Definition implements DefProp.WithBehavior {
   /**
    * Used by the {@link vadl.viam.passes.InstructionResourceAccessAnalysisPass}.
    */
-  public void setWrittenResources(
-      @NonNull List<Resource> writtenResources) {
+  public void setWrittenResources(@NonNull Set<Resource> writtenResources) {
     this.writtenResources = writtenResources;
   }
 
   /**
    * Used by the {@link vadl.viam.passes.InstructionResourceAccessAnalysisPass}.
    */
-  public void setReadResources(@NonNull List<Resource> readResources) {
+  public void setReadResources(@NonNull Set<Resource> readResources) {
     this.readResources = readResources;
   }
 

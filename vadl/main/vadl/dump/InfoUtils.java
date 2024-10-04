@@ -1,5 +1,7 @@
 package vadl.dump;
 
+import java.util.List;
+
 /**
  * Utility functions to create common info objects.
  */
@@ -64,6 +66,49 @@ public class InfoUtils {
             </code></pre>
             """.formatted(code)
     );
+  }
+
+  /**
+   * Constructs a {@link Info.Expandable} that shows a table with custom information.
+   *
+   * @param title of the modal button (can be HTML)
+   * @param table to show. The outer list represents holds the individual columns.
+   */
+  public static <T> Info.Expandable createTableExpandable(String title,
+                                                          List<List<T>> table) {
+    StringBuilder html = new StringBuilder(
+        "<table class=\"w-full text-sm text-left rtl:text-right text-gray-500 \">");
+
+    // Determine the maximum number of rows
+    int maxRows = table.stream().mapToInt(List::size).max().orElse(0);
+
+    // Build each row of the table
+    for (int i = 0; i < maxRows; i++) {
+      if (i == 0) {
+        html.append("<thead class=\"text-xs text-gray-700 uppercase ");
+        html.append("bg-gray-50 dark:bg-gray-700 dark:text-gray-400\">");
+      }
+      html.append("<tr class=\"bg-white border-b\">");
+      for (List<T> column : table) {
+        // Check if the column has a value for this row index
+        if (i < column.size()) {
+          html.append("<td class=\"px-6 py-4\">")
+              .append(column.get(i))
+              .append("</td>");
+        } else {
+          // Fill empty cells if some columns are shorter
+          html.append("<td></td>");
+        }
+      }
+      html.append("</tr>");
+      if (i == 0) {
+        html.append("</thead>");
+      }
+    }
+
+    html.append("</table>");
+
+    return new Info.Expandable(title, html.toString());
   }
 
 
