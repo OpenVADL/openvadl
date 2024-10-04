@@ -4,24 +4,23 @@ import static vadl.viam.ViamError.ensureNonNull;
 
 import java.io.IOException;
 import java.util.Comparator;
+import java.util.List;
 import java.util.Map;
 import java.util.stream.Stream;
 import vadl.configuration.LcbConfiguration;
 import vadl.lcb.codegen.model.llvm.ValueType;
-import vadl.lcb.passes.llvmLowering.GenerateRegisterClassesPass;
+import vadl.lcb.passes.llvmLowering.GenerateTableGenMachineInstructionRecordPass;
 import vadl.lcb.passes.llvmLowering.LlvmLoweringPass;
-import vadl.lcb.passes.llvmLowering.domain.LlvmLoweringRecord;
+import vadl.lcb.passes.llvmLowering.immediates.GenerateTableGenImmediateRecordPass;
 import vadl.lcb.passes.llvmLowering.tablegen.lowering.TableGenImmediateOperandRenderer;
 import vadl.lcb.passes.llvmLowering.tablegen.lowering.TableGenInstructionRenderer;
-import vadl.lcb.passes.llvmLowering.tablegen.model.TableGenInstruction;
+import vadl.lcb.passes.llvmLowering.tablegen.model.TableGenImmediateRecord;
 import vadl.lcb.passes.llvmLowering.tablegen.model.TableGenInstructionImmediateLabelOperand;
-import vadl.lcb.passes.llvmLowering.tablegen.model.TableGenInstructionImmediateOperand;
 import vadl.lcb.passes.llvmLowering.tablegen.model.TableGenMachineInstruction;
 import vadl.lcb.passes.llvmLowering.tablegen.model.TableGenPseudoInstruction;
 import vadl.lcb.template.CommonVarNames;
 import vadl.lcb.template.LcbTemplateRenderingPass;
 import vadl.pass.PassResults;
-import vadl.viam.Instruction;
 import vadl.viam.Specification;
 import vadl.viam.passes.dummyAbi.DummyAbi;
 
@@ -51,33 +50,12 @@ public class EmitInstrInfoTableGenFilePass extends LcbTemplateRenderingPass {
                                                 Specification specification) {
     var abi =
         (DummyAbi) specification.definitions().filter(x -> x instanceof DummyAbi).findFirst().get();
-    var registerClassOutput = (GenerateRegisterClassesPass.Output) passResults.lastResultOf(
-        GenerateRegisterClassesPass.class);
     var llvmLoweringPassResult =
         (LlvmLoweringPass.LlvmLoweringPassResult) ensureNonNull(
             passResults.lastResultOf(LlvmLoweringPass.class),
             "llvmLowering must exist");
-
-    var tableGenMachineRecords =
-        llvmLoweringPassResult.machineInstructionRecords().entrySet().stream()
-            .sorted(
-                Comparator.comparing(o -> o.getKey().identifier.simpleName()))
-            .map(entry -> {
-              var instruction = entry.getKey();
-              var result = entry.getValue();
-              return new TableGenMachineInstruction(
-                  instruction.identifier.simpleName(),
-                  lcbConfiguration().processorName().value(),
-                  instruction,
-                  result.flags(),
-                  result.inputs(),
-                  result.outputs(),
-                  result.uses(),
-                  result.defs(),
-                  result.patterns()
-              );
-            })
-            .toList();
+    var tableGenMachineRecords = (List<TableGenMachineInstruction>) passResults.lastResultOf(
+        GenerateTableGenMachineInstructionRecordPass.class);
 
     var tableGenPseudoRecords =
         llvmLoweringPassResult.pseudoInstructionRecords().entrySet().stream()
@@ -98,12 +76,9 @@ public class EmitInstrInfoTableGenFilePass extends LcbTemplateRenderingPass {
             })
             .toList();
 
-    var renderedImmediates = tableGenMachineRecords
+    var renderedImmediates = ((List<TableGenImmediateRecord>) passResults.lastResultOf(
+        GenerateTableGenImmediateRecordPass.class))
         .stream()
-        .flatMap(tableGenRecord -> tableGenRecord.getInOperands().stream())
-        .filter(operand -> operand instanceof TableGenInstructionImmediateOperand)
-        .map(operand -> ((TableGenInstructionImmediateOperand) operand).immediateOperand())
-        .distinct()
         .map(TableGenImmediateOperandRenderer::lower)
         .toList();
 
