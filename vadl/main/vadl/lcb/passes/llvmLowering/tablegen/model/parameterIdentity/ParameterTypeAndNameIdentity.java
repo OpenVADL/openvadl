@@ -48,4 +48,5 @@ public class ParameterTypeAndNameIdentity extends ParameterIdentity {
   @Override
   public int hashCode() {
     return Objects.hash(super.hashCode(), name, type);
-  }}
+  }
+}
