@@ -2,6 +2,8 @@ package vadl.viam;
 
 import com.google.errorprone.annotations.concurrent.LazyInit;
 import java.util.List;
+import org.checkerframework.checker.nullness.qual.NonNull;
+import org.jetbrains.annotations.Nullable;
 import vadl.viam.graph.Graph;
 
 /**
@@ -17,6 +19,17 @@ public class Instruction extends Definition implements DefProp.WithBehavior {
 
   @LazyInit
   private InstructionSetArchitecture parentArchitecture;
+
+  /**
+   * Set during the {@link vadl.viam.passes.InstructionResourceAccessAnalysisPass}.
+   */
+  @Nullable
+  private List<Resource> writtenResources;
+  /**
+   * Set during the {@link vadl.viam.passes.InstructionResourceAccessAnalysisPass}.
+   */
+  @Nullable
+  private List<Resource> readResources;
 
   /**
    * Creates an Instruction object with the given parameters.
@@ -56,6 +69,14 @@ public class Instruction extends Definition implements DefProp.WithBehavior {
     return encoding.format();
   }
 
+  public @Nullable List<Resource> writtenResources() {
+    return writtenResources;
+  }
+
+  public @Nullable List<Resource> readResources() {
+    return readResources;
+  }
+
   // this is set by InstructionSetArchitecture the Instruction is added to
   void setParentArchitecture(InstructionSetArchitecture parentArchitecture) {
     this.parentArchitecture = parentArchitecture;
@@ -72,6 +93,22 @@ public class Instruction extends Definition implements DefProp.WithBehavior {
     ensure(behavior.isInstruction(), "Behavior is not a valid instruction behavior");
 
     behavior.verify();
+  }
+
+
+  /**
+   * Used by the {@link vadl.viam.passes.InstructionResourceAccessAnalysisPass}.
+   */
+  public void setWrittenResources(
+      @NonNull List<Resource> writtenResources) {
+    this.writtenResources = writtenResources;
+  }
+
+  /**
+   * Used by the {@link vadl.viam.passes.InstructionResourceAccessAnalysisPass}.
+   */
+  public void setReadResources(@NonNull List<Resource> readResources) {
+    this.readResources = readResources;
   }
 
   @Override

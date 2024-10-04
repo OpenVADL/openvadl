@@ -46,7 +46,6 @@ public class IssTranslateCodeGenerator extends CodeGenerator
           writer.write("static bool trans_addi(DisasContext *ctx, arg_add *a) {\n");
 
           var current = start.next();
-          log.info("Generating " + current);
 
           while (current instanceof DirectionalNode dirNode) {
             gen(dirNode);
