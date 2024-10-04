@@ -171,7 +171,7 @@ public class EmitInstrInfoTableGenFilePassTest extends AbstractLcbTest {
         }
                 
         def : Pat<(RV64IM_Itype_immAsInt64:$imm),
-                (RV64IM_Itype_imm_const_mat RV64IM_Itype_imm_const_mat RV64IM_Itype_immAsInt64:$imm)>;
+                (RV64IM_Itype_imm_const_mat RV64IM_Itype_immAsInt64:$imm)>;
                 
                 
         def RV64IM_Stype_imm_const_mat : Instruction
@@ -200,7 +200,7 @@ public class EmitInstrInfoTableGenFilePassTest extends AbstractLcbTest {
         }
                 
         def : Pat<(RV64IM_Stype_immAsInt64:$imm),
-                (RV64IM_Stype_imm_const_mat RV64IM_Stype_imm_const_mat RV64IM_Stype_immAsInt64:$imm)>;
+                (RV64IM_Stype_imm_const_mat RV64IM_Stype_immAsInt64:$imm)>;
                 
                 
                 
@@ -1740,7 +1740,7 @@ public class EmitInstrInfoTableGenFilePassTest extends AbstractLcbTest {
         let Defs = [  ];
         }
                 
-        def : Pat<(setcc X:$rs1, X:$rs2, (SETLT)),
+        def : Pat<(setcc X:$rs1, X:$rs2, SETLT),
                 (SLT X:$rs1, X:$rs2)>;
                 
                 
@@ -1792,7 +1792,7 @@ public class EmitInstrInfoTableGenFilePassTest extends AbstractLcbTest {
         let Defs = [  ];
         }
                 
-        def : Pat<(setcc X:$rs1, RV64IM_Itype_immAsInt64:$imm, (SETLT)),
+        def : Pat<(setcc X:$rs1, RV64IM_Itype_immAsInt64:$imm, SETLT),
                 (SLTI X:$rs1, RV64IM_Itype_immAsInt64:$imm)>;
                 
                 
@@ -1844,7 +1844,7 @@ public class EmitInstrInfoTableGenFilePassTest extends AbstractLcbTest {
         let Defs = [  ];
         }
                 
-        def : Pat<(setcc X:$rs1, RV64IM_Itype_immAsInt64:$imm, (SETULT)),
+        def : Pat<(setcc X:$rs1, RV64IM_Itype_immAsInt64:$imm, SETULT),
                 (SLTIU X:$rs1, RV64IM_Itype_immAsInt64:$imm)>;
                 
                 
@@ -1898,7 +1898,7 @@ public class EmitInstrInfoTableGenFilePassTest extends AbstractLcbTest {
         let Defs = [  ];
         }
                 
-        def : Pat<(setcc X:$rs1, X:$rs2, (SETULT)),
+        def : Pat<(setcc X:$rs1, X:$rs2, SETULT),
                 (SLTU X:$rs1, X:$rs2)>;
                 
                 
@@ -2505,7 +2505,7 @@ public class EmitInstrInfoTableGenFilePassTest extends AbstractLcbTest {
         let Defs = [  ];
         }
                 
-        def : Pat<(setcc (i64 0), X:$rs1, (SETLT)),
+        def : Pat<(setcc (i64 0), X:$rs1, SETLT),
                 (SGTZ X:$rs1)>;
                 
                 
@@ -2534,7 +2534,7 @@ public class EmitInstrInfoTableGenFilePassTest extends AbstractLcbTest {
         let Defs = [  ];
         }
                 
-        def : Pat<(setcc X:$rs1, (i64 0), (SETLT)),
+        def : Pat<(setcc X:$rs1, (i64 0), SETLT),
                 (SLTZ X:$rs1)>;
                 
                 
@@ -2563,7 +2563,7 @@ public class EmitInstrInfoTableGenFilePassTest extends AbstractLcbTest {
         let Defs = [  ];
         }
                 
-        def : Pat<(setcc (i64 0), X:$rs1, (SETULT)),
+        def : Pat<(setcc (i64 0), X:$rs1, SETULT),
                 (SNEZ X:$rs1)>;
                 
                 

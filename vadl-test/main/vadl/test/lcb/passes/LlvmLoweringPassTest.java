@@ -57,7 +57,7 @@ public class LlvmLoweringPassTest extends AbstractLcbTest {
         List.of(new TableGenInstructionOperand(DUMMY_NODE, "X", "rs1"),
             new TableGenInstructionOperand(DUMMY_NODE, "X", "rs2")),
         List.of(new TableGenInstructionOperand(DUMMY_NODE, "X", "rd")),
-        List.of(String.format("(%s X:$rs1, X:$rs2, (%s))", "setcc", condCode)),
+        List.of(String.format("(%s X:$rs1, X:$rs2, %s)", "setcc", condCode)),
         List.of(String.format("(%s X:$rs1, X:$rs2)", machineInstruction)),
         createEmptyFlags(),
         false

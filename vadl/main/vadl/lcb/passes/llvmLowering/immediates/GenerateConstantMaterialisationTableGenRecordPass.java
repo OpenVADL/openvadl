@@ -80,10 +80,10 @@ public class GenerateConstantMaterialisationTableGenRecordPass extends Pass {
       var selector = new Graph("selector");
       var selectorContent = instruction.immediateRecord().fullname() + ":$imm";
       selector.add(new LlvmConstantSD(
-          new Constant.Str(selectorContent)));
+          new Constant.Str("(" + selectorContent + ")")));
       var machine = new Graph("machine");
       machine.addWithInputs(new PseudoInstructionNode(new NodeList<>(
-          new LlvmConstantSD(new Constant.Str(instruction.name() + " " + selectorContent))),
+          new LlvmConstantSD(new Constant.Str(selectorContent))),
           instruction));
 
       List<TableGenPattern> patterns =
