@@ -6,9 +6,12 @@ import java.util.BitSet;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 import org.jetbrains.annotations.Nullable;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import vadl.lcb.passes.llvmLowering.domain.RegisterRef;
 import vadl.lcb.passes.llvmLowering.domain.machineDag.MachineInstructionNode;
 import vadl.lcb.passes.llvmLowering.domain.machineDag.PseudoInstructionNode;
+import vadl.lcb.passes.llvmLowering.tablegen.model.TableGenInstruction;
 import vadl.lcb.passes.llvmLowering.tablegen.model.TableGenInstructionOperand;
 import vadl.lcb.passes.llvmLowering.tablegen.model.TableGenMachineInstruction;
 import vadl.lcb.passes.llvmLowering.tablegen.model.TableGenPattern;
@@ -23,11 +26,19 @@ import vadl.viam.PseudoInstruction;
  * Utility class for mapping into tablegen.
  */
 public final class TableGenInstructionRenderer {
+  private static final Logger logger = LoggerFactory.getLogger(
+      TableGenInstructionRenderer.class);
+
   /**
    * Transforms the given {@link Instruction} into a string which can be used by LLVM's TableGen.
    * It will *ONLY* print the anonymous pattern if the pattern is actually lowerable.
    */
   public static String lower(TableGenMachineInstruction instruction) {
+    var anonymousPatterns = instruction.getAnonymousPatterns().stream()
+        .filter(TableGenPattern::isPatternLowerable)
+        .filter(x -> x instanceof TableGenSelectionWithOutputPattern)
+        .map(x -> (TableGenSelectionWithOutputPattern) x)
+        .toList();
     return String.format("""
             def %s : Instruction
             {
@@ -101,11 +112,9 @@ public final class TableGenInstructionRenderer {
             .collect(Collectors.joining(",")),
         instruction.getUses().stream().map(Definition::name).collect(Collectors.joining(",")),
         instruction.getDefs().stream().map(Definition::name).collect(Collectors.joining(",")),
-        instruction.getAnonymousPatterns().stream()
-            .filter(TableGenPattern::isPatternLowerable)
-            .filter(x -> x instanceof TableGenSelectionWithOutputPattern)
-            .map(x -> (TableGenSelectionWithOutputPattern) x)
-            .map(TableGenInstructionRenderer::lower)
+        anonymousPatterns
+            .stream()
+            .map(x -> lower(instruction, x))
             .collect(Collectors.joining("\n"))
     );
   }
@@ -115,6 +124,11 @@ public final class TableGenInstructionRenderer {
    * TableGen.
    */
   public static String lower(TableGenPseudoInstruction instruction) {
+    var anonymousPatterns = instruction.getAnonymousPatterns().stream()
+        .filter(TableGenPattern::isPatternLowerable)
+        .filter(x -> x instanceof TableGenSelectionWithOutputPattern)
+        .map(x -> (TableGenSelectionWithOutputPattern) x)
+        .toList();
     var y = String.format("""
             def %s : Instruction
             {
@@ -165,11 +179,8 @@ public final class TableGenInstructionRenderer {
             .collect(Collectors.joining(",")),
         instruction.getUses().stream().map(RegisterRef::lowerName).collect(Collectors.joining(",")),
         instruction.getDefs().stream().map(RegisterRef::lowerName).collect(Collectors.joining(",")),
-        instruction.getAnonymousPatterns().stream()
-            .filter(TableGenPattern::isPatternLowerable)
-            .filter(x -> x instanceof TableGenSelectionWithOutputPattern)
-            .map(x -> (TableGenSelectionWithOutputPattern) x)
-            .map(TableGenInstructionRenderer::lower)
+        anonymousPatterns.stream()
+            .map(x -> lower(instruction, x))
             .collect(Collectors.joining("\n"))
     );
 
@@ -187,7 +198,9 @@ public final class TableGenInstructionRenderer {
     return "(" + visitor.getResult() + ")";
   }
 
-  private static String lower(TableGenSelectionWithOutputPattern tableGenPattern) {
+  private static String lower(TableGenInstruction instruction,
+                              TableGenSelectionWithOutputPattern tableGenPattern) {
+    logger.atTrace().log("Lowering pattern for " + instruction.getName());
     ensure(tableGenPattern.isPatternLowerable(), "TableGen pattern must be lowerable");
     var visitor = new TableGenPatternPrinterVisitor();
     var machineVisitor = new TableGenMachineInstructionPrinterVisitor();
