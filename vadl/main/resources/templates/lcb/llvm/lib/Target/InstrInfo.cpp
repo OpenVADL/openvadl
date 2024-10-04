@@ -30,6 +30,7 @@ void [(${namespace})]InstrInfo::copyPhysReg(MachineBasicBlock &MBB, MachineBasic
         BuildMI( MBB, MBBI, DL, get( [(${namespace})]::[(${r.instruction.identifier.simpleName()})] ) )
             .addReg( DestReg, RegState::Define )
             .addReg( SrcReg, getKillRegState( KillSrc ) )
+            .addImm( 0 )
             ;
 
         return; // success
