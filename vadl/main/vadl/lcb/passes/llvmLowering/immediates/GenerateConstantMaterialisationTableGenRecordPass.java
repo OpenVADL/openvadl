@@ -12,14 +12,11 @@ import org.jetbrains.annotations.Nullable;
 import vadl.configuration.GeneralConfiguration;
 import vadl.configuration.LcbConfiguration;
 import vadl.error.Diagnostic;
-import vadl.lcb.passes.llvmLowering.GenerateTableGenMachineInstructionRecordPass;
 import vadl.lcb.passes.llvmLowering.LlvmLoweringPass;
 import vadl.lcb.passes.llvmLowering.domain.ConstantMatPseudoInstruction;
-import vadl.lcb.passes.llvmLowering.domain.machineDag.MachineInstructionNode;
 import vadl.lcb.passes.llvmLowering.domain.machineDag.PseudoInstructionNode;
 import vadl.lcb.passes.llvmLowering.domain.selectionDag.LlvmConstantSD;
 import vadl.lcb.passes.llvmLowering.tablegen.model.TableGenInstructionImmediateOperand;
-import vadl.lcb.passes.llvmLowering.tablegen.model.TableGenMachineInstruction;
 import vadl.lcb.passes.llvmLowering.tablegen.model.TableGenPattern;
 import vadl.lcb.passes.llvmLowering.tablegen.model.TableGenPseudoInstruction;
 import vadl.lcb.passes.llvmLowering.tablegen.model.TableGenSelectionWithOutputPattern;
@@ -29,11 +26,10 @@ import vadl.pass.PassName;
 import vadl.pass.PassResults;
 import vadl.viam.Constant;
 import vadl.viam.Instruction;
-import vadl.viam.graph.Graph;
 import vadl.viam.Specification;
+import vadl.viam.graph.Graph;
 import vadl.viam.graph.NodeList;
 import vadl.viam.graph.control.InstrCallNode;
-import vadl.viam.graph.dependency.ConstantNode;
 import vadl.viam.graph.dependency.WriteRegFileNode;
 
 /**
@@ -75,7 +71,8 @@ public class GenerateConstantMaterialisationTableGenRecordPass extends Pass {
           );
 
       /*
-      def : Pat<(vadl_uimm32_immediateAsInt32:$imm), (PSEUDO_CONST_MAT1 vadl_uimm32_immediateAsInt32:$imm)>;
+      def : Pat<(vadl_uimm32_immediateAsInt32:$imm),
+        (PSEUDO_CONST_MAT1 vadl_uimm32_immediateAsInt32:$imm)>;
        */
       var selector = new Graph("selector");
       var selectorContent = instruction.immediateRecord().fullname() + ":$imm";

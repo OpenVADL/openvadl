@@ -14,6 +14,9 @@ import vadl.pass.PassName;
 import vadl.pass.PassResults;
 import vadl.viam.Specification;
 
+/**
+ * This pass generates {@link TableGenMachineInstruction} from the {@link LlvmLoweringPass}.
+ */
 public class GenerateTableGenMachineInstructionRecordPass extends Pass {
 
   public GenerateTableGenMachineInstructionRecordPass(

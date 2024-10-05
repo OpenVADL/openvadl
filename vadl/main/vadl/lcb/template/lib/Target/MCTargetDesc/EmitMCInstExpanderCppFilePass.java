@@ -79,13 +79,14 @@ public class EmitMCInstExpanderCppFilePass extends LcbTemplateRenderingPass {
         .toList();
   }
 
-  private @NotNull RenderedPseudoInstruction renderPseudoInstruction(Specification specification,
-                                                                     Map<PseudoInstruction, CppFunction> cppFunctions,
-                                                                     DetectImmediatePass.ImmediateDetectionContainer fieldUsages,
-                                                                     IdentityHashMap<Format.Field, VariantKind> variants,
-                                                                     List<ElfRelocation> relocations,
-                                                                     PassResults passResults,
-                                                                     PseudoInstruction pseudoInstruction) {
+  private @NotNull RenderedPseudoInstruction
+  renderPseudoInstruction(Specification specification,
+                          Map<PseudoInstruction, CppFunction> cppFunctions,
+                          DetectImmediatePass.ImmediateDetectionContainer fieldUsages,
+                          IdentityHashMap<Format.Field, VariantKind> variants,
+                          List<ElfRelocation> relocations,
+                          PassResults passResults,
+                          PseudoInstruction pseudoInstruction) {
     var codeGen =
         new PseudoExpansionCodeGenerator(lcbConfiguration().processorName().value(),
             fieldUsages,
