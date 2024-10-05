@@ -11,11 +11,12 @@ import vadl.cppCodeGen.model.CppParameter;
 import vadl.cppCodeGen.model.CppType;
 import vadl.lcb.codegen.expansion.PseudoExpansionCodeGenerator;
 import vadl.pass.Pass;
-import vadl.pass.PassName;
 import vadl.pass.PassResults;
+import vadl.utils.Pair;
 import vadl.utils.SourceLocation;
 import vadl.viam.Function;
 import vadl.viam.Identifier;
+import vadl.viam.Instruction;
 import vadl.viam.Parameter;
 import vadl.viam.PseudoInstruction;
 import vadl.viam.Specification;
@@ -35,8 +36,9 @@ public abstract class AbstractPseudoExpansionFunctionGeneratorPass extends Pass 
   /**
    * Get the instructions for which {@link CppFunction} should be generated.
    */
-  protected abstract Stream<PseudoInstruction> getApplicable(PassResults passResults,
-                                                             Specification viam);
+  protected abstract Stream<Pair<PseudoInstruction, Graph>> getApplicable(
+      PassResults passResults,
+      Specification viam);
 
   @Nullable
   @Override
@@ -44,7 +46,11 @@ public abstract class AbstractPseudoExpansionFunctionGeneratorPass extends Pass 
     var result = new IdentityHashMap<PseudoInstruction, CppFunction>();
 
     getApplicable(passResults, viam)
-        .forEach(pseudoInstruction -> {
+        .forEach(x -> {
+          var pseudoInstruction = x.left();
+          // The `appliedGraph` is the pseudo instruction's behavior which
+          // has InstrCallNodes with applied arguments.
+          var appliedGraph = x.right();
           var ty = new CppType("MCInst", true, true);
           var param = new CppParameter(new Identifier("instruction",
               SourceLocation.INVALID_SOURCE_LOCATION),
@@ -52,7 +58,7 @@ public abstract class AbstractPseudoExpansionFunctionGeneratorPass extends Pass 
           var function = new CppFunction(pseudoInstruction.identifier.append("expand"),
               new Parameter[] {param},
               new CppGenericType("std::vector", new CppType("MCInst", false, false)),
-              pseudoInstruction.behavior());
+              appliedGraph);
 
           result.put(pseudoInstruction, function);
         });

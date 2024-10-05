@@ -18,7 +18,10 @@ import vadl.dump.HtmlDumpPass;
 import vadl.gcb.passes.assembly.AssemblyConcatBuiltinMergingPass;
 import vadl.gcb.passes.assembly.AssemblyReplacementNodePass;
 import vadl.gcb.passes.encoding_generation.GenerateFieldAccessEncodingFunctionPass;
+import vadl.gcb.passes.pseudo.ConstMatPseudoInstructionArgumentReplacementPass;
 import vadl.gcb.passes.pseudo.PseudoExpansionFunctionGeneratorPass;
+import vadl.gcb.passes.pseudo.AbstractPseudoInstructionArgumentReplacementPass;
+import vadl.gcb.passes.pseudo.PseudoInstructionArgumentReplacementPass;
 import vadl.gcb.passes.relocation.DetectImmediatePass;
 import vadl.gcb.passes.relocation.GenerateLogicalRelocationPass;
 import vadl.gcb.passes.type_normalization.CppTypeNormalizationForDecodingsPass;
@@ -259,6 +262,7 @@ public final class PassOrder {
     order.add(new AssemblyConcatBuiltinMergingPass(gcbConfiguration));
     order.add(new DetectImmediatePass(gcbConfiguration));
     order.add(new GenerateLogicalRelocationPass(gcbConfiguration));
+    order.add(new PseudoInstructionArgumentReplacementPass(gcbConfiguration));
     order.add(new PseudoExpansionFunctionGeneratorPass(gcbConfiguration));
 
     if (gcbConfiguration.doDump()) {
@@ -288,6 +292,7 @@ public final class PassOrder {
     order.add(new GenerateTableGenImmediateRecordPass(configuration));
     order.add(new GenerateConstantMaterialisationPass(configuration));
     order.add(new GenerateConstantMaterialisationTableGenRecordPass(configuration));
+    order.add(new ConstMatPseudoInstructionArgumentReplacementPass(configuration));
     order.add(new ConstMaterialisationPseudoExpansionFunctionGeneratorPass(configuration));
     order.add(new GenerateElfRelocationPass(configuration));
 

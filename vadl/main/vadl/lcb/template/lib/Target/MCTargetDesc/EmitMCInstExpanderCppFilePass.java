@@ -114,7 +114,9 @@ public class EmitMCInstExpanderCppFilePass extends LcbTemplateRenderingPass {
         GenerateConstantMaterialisationPass.class);
 
     return constMats.stream()
-        .map(pseudoInstruction -> renderPseudoInstruction(specification, cppFunctions, fieldUsages,
+        .map(pseudoInstruction -> renderPseudoInstruction(specification,
+            cppFunctions,
+            fieldUsages,
             variants,
             relocations,
             passResults, pseudoInstruction))
