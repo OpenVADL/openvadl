@@ -1,6 +1,7 @@
 package vadl.gcb.passes.pseudo;
 
 import static vadl.viam.ViamError.ensure;
+import static vadl.viam.ViamError.ensurePresent;
 
 import com.google.common.collect.Streams;
 import java.io.StringWriter;
@@ -16,11 +17,14 @@ import vadl.gcb.passes.relocation.DetectImmediatePass;
 import vadl.gcb.passes.relocation.model.ElfRelocation;
 import vadl.utils.Pair;
 import vadl.viam.Format;
+import vadl.viam.Instruction;
 import vadl.viam.Relocation;
 import vadl.viam.ViamError;
+import vadl.viam.graph.HasRegisterFile;
 import vadl.viam.graph.control.InstrCallNode;
 import vadl.viam.graph.control.InstrEndNode;
 import vadl.viam.graph.dependency.ConstantNode;
+import vadl.viam.graph.dependency.FieldRefNode;
 import vadl.viam.graph.dependency.FuncCallNode;
 import vadl.viam.graph.dependency.FuncParamNode;
 import vadl.viam.graph.dependency.WriteRegFileNode;
@@ -69,7 +73,7 @@ public class PseudoExpansionCodeGeneratorVisitor extends GenericCppCodeGenerator
       var argument = pairs.get(index).right();
 
       if (argument instanceof ConstantNode cn) {
-        lowerExpression(sym, field, cn);
+        lowerExpression(instrCallNode.target(), sym, field, cn);
       } else if (argument instanceof FuncCallNode fn) {
         ensure(fn.function() instanceof Relocation,
             () -> Diagnostic.error("Function must be a relocation", fn.sourceLocation()).build());
@@ -107,7 +111,8 @@ public class PseudoExpansionCodeGeneratorVisitor extends GenericCppCodeGenerator
     throw new RuntimeException("not implemented");
   }
 
-  private void lowerExpression(String sym, Format.Field field, ConstantNode argument) {
+  private void lowerExpression(Instruction machineInstruction, String sym, Format.Field field,
+                               ConstantNode argument) {
     var usage = fieldUsages.get(field.format()).get(field);
     ensure(usage != null, "usage must not be null");
     switch (usage) {
@@ -121,15 +126,37 @@ public class PseudoExpansionCodeGeneratorVisitor extends GenericCppCodeGenerator
                 argument.constant().asVal().intValue()));
       }
       case REGISTER -> {
-        /*
-        TODO this doesn't work because we do not know which register file
-        writer.write(String.format("%s.addOperand(MCOperand::createReg(%s::%s));\n",
+        // We know that `field` is used as a register index.
+        // But we don't know which register file.
+        // We look for the `field` in the machine instruction's behavior and return the usages.
+        var registerFiles = machineInstruction.behavior().getNodes(FieldRefNode.class)
+            .filter(x -> x.formatField() == field)
+            .flatMap(
+                fieldRefNode -> fieldRefNode.usages().filter(y -> y instanceof HasRegisterFile))
+            .map(x -> ((HasRegisterFile) x).registerFile())
+            .distinct()
+            .toList();
+
+        ensure(registerFiles.size() == 1,
+            () -> Diagnostic.error("Found multiple or none register files for this field.",
+                    field.sourceLocation())
+                .note(
+                    "The pseudo instruction expansion requires one register file to detect "
+                        + "the register file name. In this particular case is the field used by "
+                        + "multiple register files or none and we don't know which name to use.")
+                .build());
+
+        var registerFile =
+            ensurePresent(registerFiles.stream().findFirst(), "Expected one register file");
+
+        writer.write(String.format("%s.addOperand(MCOperand::createReg(%s::%s%s));\n",
             sym,
             namespace,
+            registerFile.identifier.simpleName(),
             argument.constant().asVal().intValue()));
-         */
       }
-      default -> throw new ViamError("not supported");
+      default -> throw Diagnostic.error("Cannot generate cpp code for this argument",
+          field.sourceLocation()).build();
     }
   }
 

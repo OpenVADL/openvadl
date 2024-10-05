@@ -16,7 +16,6 @@ import vadl.utils.Pair;
 import vadl.utils.SourceLocation;
 import vadl.viam.Function;
 import vadl.viam.Identifier;
-import vadl.viam.Instruction;
 import vadl.viam.Parameter;
 import vadl.viam.PseudoInstruction;
 import vadl.viam.Specification;
@@ -48,6 +47,7 @@ public abstract class AbstractPseudoExpansionFunctionGeneratorPass extends Pass 
     getApplicable(passResults, viam)
         .forEach(x -> {
           var pseudoInstruction = x.left();
+          // TODO: wrong, we use the old one
           // The `appliedGraph` is the pseudo instruction's behavior which
           // has InstrCallNodes with applied arguments.
           var appliedGraph = x.right();
@@ -58,7 +58,7 @@ public abstract class AbstractPseudoExpansionFunctionGeneratorPass extends Pass 
           var function = new CppFunction(pseudoInstruction.identifier.append("expand"),
               new Parameter[] {param},
               new CppGenericType("std::vector", new CppType("MCInst", false, false)),
-              appliedGraph);
+              pseudoInstruction.behavior());
 
           result.put(pseudoInstruction, function);
         });
