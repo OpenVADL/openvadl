@@ -115,8 +115,20 @@ public class IdentifyFieldUsagePass extends Pass {
     /**
      * Get a result by format.
      */
-    public Map<Field, FieldUsage> getFieldUsage(Format format) {
+    public Map<Field, FieldUsage> getFieldUsages(Format format) {
       var obj = fieldUsage.get(format);
+      if (obj == null) {
+        throw new ViamError("Hashmap must not be null");
+      }
+      return obj;
+    }
+
+
+    /**
+     * Get a result by format.
+     */
+    public Map<Field, RegisterUsage> getRegisterUsages(Instruction instruction) {
+      var obj = registerUsage.get(instruction);
       if (obj == null) {
         throw new ViamError("Hashmap must not be null");
       }

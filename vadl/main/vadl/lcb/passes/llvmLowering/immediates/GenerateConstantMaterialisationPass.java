@@ -1,23 +1,24 @@
 package vadl.lcb.passes.llvmLowering.immediates;
 
 import static vadl.viam.ViamError.ensure;
+import static vadl.viam.ViamError.ensureNonNull;
 import static vadl.viam.ViamError.ensurePresent;
 
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
-import java.util.stream.Stream;
-import org.checkerframework.checker.units.qual.C;
+import java.util.Objects;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import vadl.configuration.GeneralConfiguration;
 import vadl.error.Diagnostic;
-import vadl.gcb.passes.pseudo.PseudoExpansionCodeGeneratorVisitor;
+import vadl.gcb.passes.relocation.IdentifyFieldUsagePass;
 import vadl.lcb.passes.isaMatching.InstructionLabel;
 import vadl.lcb.passes.isaMatching.IsaMatchingPass;
 import vadl.lcb.passes.llvmLowering.domain.ConstantMatPseudoInstruction;
-import vadl.lcb.passes.llvmLowering.domain.selectionDag.LlvmConstantSD;
 import vadl.lcb.passes.llvmLowering.tablegen.model.TableGenImmediateRecord;
 import vadl.pass.Pass;
 import vadl.pass.PassName;
@@ -28,14 +29,15 @@ import vadl.viam.Identifier;
 import vadl.viam.Instruction;
 import vadl.viam.Parameter;
 import vadl.viam.PseudoInstruction;
+import vadl.viam.RegisterFile;
 import vadl.viam.Specification;
 import vadl.viam.graph.Graph;
-import vadl.viam.graph.Node;
+import vadl.viam.graph.HasRegisterFile;
 import vadl.viam.graph.NodeList;
 import vadl.viam.graph.control.InstrCallNode;
-import vadl.viam.graph.control.InstrEndNode;
 import vadl.viam.graph.control.StartNode;
 import vadl.viam.graph.dependency.ConstantNode;
+import vadl.viam.graph.dependency.ExpressionNode;
 import vadl.viam.graph.dependency.FieldRefNode;
 import vadl.viam.graph.dependency.FuncParamNode;
 import vadl.viam.graph.dependency.ReadResourceNode;
@@ -62,6 +64,8 @@ public class GenerateConstantMaterialisationPass extends Pass {
   @Override
   public Object execute(PassResults passResults, Specification viam) throws IOException {
     var constantMatInstructions = new ArrayList<ConstantMatPseudoInstruction>();
+    var fieldUsages = (IdentifyFieldUsagePass.ImmediateDetectionContainer) passResults.lastResultOf(
+        IdentifyFieldUsagePass.class);
     var isaMatching = ((HashMap<InstructionLabel, List<Instruction>>) passResults.lastResultOf(
         IsaMatchingPass.class));
     var immediates = ((List<TableGenImmediateRecord>) passResults.lastResultOf(
@@ -78,7 +82,7 @@ public class GenerateConstantMaterialisationPass extends Pass {
     for (var imm : immediates) {
       var name = addi.identifier.append(imm.rawName() + "_const_mat");
       var copy = addi.behavior().copy();
-      var graph = setupGraph(name, copy, addi);
+      var graph = setupGraph(fieldUsages, name, copy, addi);
       var instruction =
           new ConstantMatPseudoInstruction(name,
               new Parameter[] {}, graph, addi.assembly(), imm);
@@ -88,11 +92,14 @@ public class GenerateConstantMaterialisationPass extends Pass {
     return constantMatInstructions;
   }
 
-  private Graph setupGraph(Identifier name, Graph copy, Instruction addi) {
+  private Graph setupGraph(IdentifyFieldUsagePass.ImmediateDetectionContainer fieldUsages,
+                           Identifier name, Graph copy, Instruction addi) {
     var pseudoInstructionGraph = new Graph(name.toString());
+    var arguments =
+        new ArrayList<ExpressionNode>();
 
-    var fields = copy.getNodes(FieldRefNode.class).toList();
-    var immField = ensurePresent(fields
+    var fieldsNodes = copy.getNodes(FieldRefNode.class).toList();
+    var immField = ensurePresent(fieldsNodes
             .stream()
             .filter(fieldNode -> fieldNode.usages().noneMatch(
                 usage -> usage instanceof ReadResourceNode || usage instanceof WriteResourceNode))
@@ -100,20 +107,77 @@ public class GenerateConstantMaterialisationPass extends Pass {
         () -> Diagnostic.error("Expected immediate in instruction", addi.sourceLocation())
             .build());
 
-    var registerArguments = fields
-        .stream()
-        .filter(field -> field != immField) // only registers are relevant
-        .map(ri -> new FuncParamNode(new Parameter(ri.formatField().identifier, ri.type())))
-        .toList();
-    var immArgument = new ConstantNode(Constant.Value.of(0, (DataType) immField.type()));
-    var arguments = Stream.concat(registerArguments.stream(), Stream.of(immArgument)).toList();
+    // The order of the parameters is important.
+    // In the loop, we construct the arguments. We set the source registers to the zero registers.
+    for (var fieldRefNode : fieldsNodes) {
+      if (fieldRefNode == immField) {
+        arguments.add(
+            new FuncParamNode(
+                new Parameter(fieldRefNode.formatField().identifier, fieldRefNode.type())));
+      } else {
+        var registerUsages = fieldUsages.getRegisterUsages(addi);
+        var registerUsage = registerUsages.get(fieldRefNode.formatField());
+        ensureNonNull(registerUsage,
+            () -> Diagnostic.error("Could not detect how the register field is used.",
+                    fieldRefNode.sourceLocation())
+                .note("A register field can be used as source, destination or both.")
+                .build());
+
+        switch (Objects.requireNonNull(registerUsage)) {
+          case BOTH ->
+              throw Diagnostic.error("Register field cannot be used as source and destination.",
+                  fieldRefNode.sourceLocation()).build();
+          case DESTINATION -> {
+            arguments.add(
+                new FuncParamNode(
+                    new Parameter(fieldRefNode.formatField().identifier, fieldRefNode.type())));
+          }
+          case SOURCE -> {
+            var zeroConstraint = extractZeroConstraintFromRegisterFile(fieldRefNode);
+            var addressOfZeroRegister = zeroConstraint.address().intValue();
+            var registerArgument = new ConstantNode(
+                Constant.Value.of(addressOfZeroRegister, zeroConstraint.address().type()));
+            arguments.add(registerArgument);
+          }
+        }
+      }
+    }
+
+
     var instrCallNode =
-        new InstrCallNode(addi, fields.stream().map(FieldRefNode::formatField).toList(),
-            new NodeList<>(arguments));
+        new InstrCallNode(addi, fieldsNodes.stream().map(FieldRefNode::formatField).toList(),
+            new NodeList<ExpressionNode>(arguments));
     var start = new StartNode(instrCallNode);
     pseudoInstructionGraph.addWithInputs(start);
     pseudoInstructionGraph.addWithInputs(instrCallNode);
 
     return pseudoInstructionGraph;
+  }
+
+  /**
+   * We use the addition with immediate instruction to generate constant materialisation.
+   * For that we set the source registers to zero. However, we need a zero register for that.
+   * This method tries to find such a constraint and throws an error if cannot find it.
+   */
+  private static RegisterFile.@NotNull Constraint extractZeroConstraintFromRegisterFile(
+      FieldRefNode fieldRefNode) {
+    var registerFile = ensurePresent(fieldRefNode.usages()
+        .filter(x -> x instanceof HasRegisterFile)
+        .map(x -> ((HasRegisterFile) x).registerFile())
+        .findFirst(), () -> Diagnostic.error(
+        "Cannot find a register file. This field is not used as a register index.",
+        fieldRefNode.sourceLocation()).build());
+    return ensurePresent(Arrays.stream(registerFile.constraints())
+        .filter(constraint -> constraint.value().intValue() == 0)
+        .findFirst(), () -> Diagnostic.error(
+            "It is required that the register file has a zero constraint at some address.",
+            registerFile.sourceLocation())
+        .note(
+            "The compiler generator creates a constant materialisation pseudo "
+                + "instruction which uses the underlying addition with immediate machine "
+                +
+                "instruction. It tries to set the source register to zero, but was not able "
+                + "to do so because a zero register is missing.")
+        .build());
   }
 }

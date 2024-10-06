@@ -42,7 +42,7 @@ public class GenerateImmediateKindPass extends Pass {
         .map(isa -> isa.ownFormats().stream()).orElseGet(Stream::empty)
         .flatMap(format -> Arrays.stream(format.fields()))
         .filter(field -> {
-          var usage = fieldUsages.getFieldUsage(field.format()).get(field);
+          var usage = fieldUsages.getFieldUsages(field.format()).get(field);
           return usage == IdentifyFieldUsagePass.FieldUsage.IMMEDIATE;
         })
         .forEach(field -> result.put(field, new VariantKind(field)));

@@ -133,7 +133,7 @@ public class GenerateLogicalRelocationPass extends Pass {
             .filter(Relocation.class::isInstance)
             .map(Relocation.class::cast)
             .forEach(relocation -> {
-              for (var entry : immediates.getFieldUsage(instruction.format()).entrySet()) {
+              for (var entry : immediates.getFieldUsages(instruction.format()).entrySet()) {
                 if (entry.getValue() == IdentifyFieldUsagePass.FieldUsage.IMMEDIATE) {
                   var field = entry.getKey();
                   var updateFunction =
@@ -166,7 +166,7 @@ public class GenerateLogicalRelocationPass extends Pass {
         .orElse(Stream.empty())
         .flatMap(format -> {
           var relocations = new ArrayList<LogicalRelocation>();
-          for (var entry : immediates.getFieldUsage(format).entrySet()) {
+          for (var entry : immediates.getFieldUsages(format).entrySet()) {
             if (entry.getValue() == IdentifyFieldUsagePass.FieldUsage.IMMEDIATE) {
               var field = entry.getKey();
               var updateFunction =
@@ -195,7 +195,7 @@ public class GenerateLogicalRelocationPass extends Pass {
         .distinct()
         .flatMap(format -> {
           var relocations = new ArrayList<LogicalRelocation>();
-          for (var entry : immediates.getFieldUsage(format).entrySet()) {
+          for (var entry : immediates.getFieldUsages(format).entrySet()) {
             if (entry.getValue() == IdentifyFieldUsagePass.FieldUsage.IMMEDIATE) {
               var field = entry.getKey();
               var updateFunction =

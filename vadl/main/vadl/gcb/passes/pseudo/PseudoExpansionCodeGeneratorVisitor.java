@@ -71,7 +71,7 @@ public class PseudoExpansionCodeGeneratorVisitor extends GenericCppCodeGenerator
       List<Pair<Format.Field, ExpressionNode>> pairs) {
     var result = new ArrayList<Pair<Format.Field, ExpressionNode>>();
     var lookup = pairs.stream().collect(Collectors.toMap(Pair::left, Pair::right));
-    var usages = fieldUsages.getFieldUsage(format).keySet();
+    var usages = fieldUsages.getFieldUsages(format).keySet();
     // The `fieldsSortedByLsbDesc` returns all fields from the format.
     // However, we are only interested in the registers and immediates.
     // That's why we filter with `contains`. `fieldUsages` only stores REGISTER and IMMEDIATE.
@@ -145,7 +145,7 @@ public class PseudoExpansionCodeGeneratorVisitor extends GenericCppCodeGenerator
 
   private void lowerExpression(Instruction machineInstruction, String sym, Format.Field field,
                                ConstantNode argument) {
-    var usage = fieldUsages.getFieldUsage(field.format()).get(field);
+    var usage = fieldUsages.getFieldUsages(field.format()).get(field);
     ensure(usage != null, "usage must not be null");
     switch (usage) {
       case IMMEDIATE -> {
@@ -221,7 +221,7 @@ public class PseudoExpansionCodeGeneratorVisitor extends GenericCppCodeGenerator
   private void lowerExpressionWithImmOrRegister(String sym,
                                                 Format.Field field,
                                                 int argumentIndex) {
-    var usage = fieldUsages.getFieldUsage(field.format()).get(field);
+    var usage = fieldUsages.getFieldUsages(field.format()).get(field);
     ensure(usage != null, "usage must not be null");
     switch (usage) {
       case IMMEDIATE -> {
