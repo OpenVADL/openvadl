@@ -7,34 +7,25 @@ import static vadl.viam.ViamError.ensurePresent;
 import com.google.common.collect.Streams;
 import java.io.StringWriter;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.IdentityHashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.function.Supplier;
 import java.util.stream.Collectors;
-import java.util.stream.Stream;
-import org.jetbrains.annotations.Nullable;
 import vadl.cppCodeGen.GenericCppCodeGeneratorVisitor;
 import vadl.cppCodeGen.SymbolTable;
 import vadl.cppCodeGen.model.CppFunction;
 import vadl.cppCodeGen.model.VariantKind;
 import vadl.error.Diagnostic;
-import vadl.gcb.passes.relocation.DetectImmediatePass;
+import vadl.gcb.passes.relocation.IdentifyFieldUsagePass;
 import vadl.gcb.passes.relocation.model.ElfRelocation;
 import vadl.utils.Pair;
-import vadl.viam.Assembly;
 import vadl.viam.Format;
 import vadl.viam.Instruction;
 import vadl.viam.Relocation;
 import vadl.viam.ViamError;
-import vadl.viam.graph.Graph;
-import vadl.viam.graph.GraphVisitor;
 import vadl.viam.graph.HasRegisterFile;
-import vadl.viam.graph.Node;
 import vadl.viam.graph.control.InstrCallNode;
 import vadl.viam.graph.control.InstrEndNode;
-import vadl.viam.graph.control.ReturnNode;
 import vadl.viam.graph.dependency.ConstantNode;
 import vadl.viam.graph.dependency.ExpressionNode;
 import vadl.viam.graph.dependency.FieldRefNode;
@@ -48,7 +39,7 @@ import vadl.viam.graph.dependency.WriteRegFileNode;
 public class PseudoExpansionCodeGeneratorVisitor extends GenericCppCodeGeneratorVisitor {
   private final SymbolTable symbolTable = new SymbolTable();
   private final String namespace;
-  private final DetectImmediatePass.ImmediateDetectionContainer fieldUsages;
+  private final IdentifyFieldUsagePass.ImmediateDetectionContainer fieldUsages;
   private final Map<Format.Field, CppFunction> immediateDecodings;
   private final IdentityHashMap<Format.Field, VariantKind> immVariants;
   private final List<ElfRelocation> relocations;
@@ -57,7 +48,7 @@ public class PseudoExpansionCodeGeneratorVisitor extends GenericCppCodeGenerator
    * Constructor.
    */
   public PseudoExpansionCodeGeneratorVisitor(StringWriter writer, String namespace,
-                                             DetectImmediatePass.ImmediateDetectionContainer
+                                             IdentifyFieldUsagePass.ImmediateDetectionContainer
                                                  fieldUsages,
                                              Map<Format.Field, CppFunction> immediateDecodings,
                                              IdentityHashMap<Format.Field, VariantKind> immVariants,
@@ -80,7 +71,7 @@ public class PseudoExpansionCodeGeneratorVisitor extends GenericCppCodeGenerator
       List<Pair<Format.Field, ExpressionNode>> pairs) {
     var result = new ArrayList<Pair<Format.Field, ExpressionNode>>();
     var lookup = pairs.stream().collect(Collectors.toMap(Pair::left, Pair::right));
-    var usages = fieldUsages.get(format).keySet();
+    var usages = fieldUsages.getFieldUsage(format).keySet();
     // The `fieldsSortedByLsbDesc` returns all fields from the format.
     // However, we are only interested in the registers and immediates.
     // That's why we filter with `contains`. `fieldUsages` only stores REGISTER and IMMEDIATE.
@@ -154,7 +145,7 @@ public class PseudoExpansionCodeGeneratorVisitor extends GenericCppCodeGenerator
 
   private void lowerExpression(Instruction machineInstruction, String sym, Format.Field field,
                                ConstantNode argument) {
-    var usage = fieldUsages.get(field.format()).get(field);
+    var usage = fieldUsages.getFieldUsage(field.format()).get(field);
     ensure(usage != null, "usage must not be null");
     switch (usage) {
       case IMMEDIATE -> {
@@ -230,7 +221,7 @@ public class PseudoExpansionCodeGeneratorVisitor extends GenericCppCodeGenerator
   private void lowerExpressionWithImmOrRegister(String sym,
                                                 Format.Field field,
                                                 int argumentIndex) {
-    var usage = fieldUsages.get(field.format()).get(field);
+    var usage = fieldUsages.getFieldUsage(field.format()).get(field);
     ensure(usage != null, "usage must not be null");
     switch (usage) {
       case IMMEDIATE -> {

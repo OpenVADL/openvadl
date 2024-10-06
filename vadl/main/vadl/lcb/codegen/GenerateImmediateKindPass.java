@@ -7,9 +7,8 @@ import java.util.stream.Stream;
 import org.jetbrains.annotations.Nullable;
 import vadl.configuration.GeneralConfiguration;
 import vadl.cppCodeGen.model.VariantKind;
-import vadl.gcb.passes.relocation.DetectImmediatePass;
+import vadl.gcb.passes.relocation.IdentifyFieldUsagePass;
 import vadl.gcb.passes.relocation.model.LogicalRelocation;
-import vadl.lcb.passes.relocation.GenerateElfRelocationPass;
 import vadl.pass.Pass;
 import vadl.pass.PassName;
 import vadl.pass.PassResults;
@@ -36,15 +35,15 @@ public class GenerateImmediateKindPass extends Pass {
   public Object execute(PassResults passResults, Specification viam) throws IOException {
     var result = new IdentityHashMap<Format.Field, VariantKind>();
 
-    var fieldUsages = (DetectImmediatePass.ImmediateDetectionContainer) passResults.lastResultOf(
-        DetectImmediatePass.class);
+    var fieldUsages = (IdentifyFieldUsagePass.ImmediateDetectionContainer) passResults.lastResultOf(
+        IdentifyFieldUsagePass.class);
 
     viam.isa()
         .map(isa -> isa.ownFormats().stream()).orElseGet(Stream::empty)
         .flatMap(format -> Arrays.stream(format.fields()))
         .filter(field -> {
-          var usage = fieldUsages.get(field.format()).get(field);
-          return usage == DetectImmediatePass.FieldUsage.IMMEDIATE;
+          var usage = fieldUsages.getFieldUsage(field.format()).get(field);
+          return usage == IdentifyFieldUsagePass.FieldUsage.IMMEDIATE;
         })
         .forEach(field -> result.put(field, new VariantKind(field)));
 

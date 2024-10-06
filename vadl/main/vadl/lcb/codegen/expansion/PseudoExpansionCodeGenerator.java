@@ -4,25 +4,23 @@ import java.io.StringWriter;
 import java.util.IdentityHashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.stream.Stream;
 import vadl.cppCodeGen.model.CppFunction;
 import vadl.cppCodeGen.model.VariantKind;
 import vadl.gcb.passes.pseudo.PseudoExpansionCodeGeneratorVisitor;
-import vadl.gcb.passes.relocation.DetectImmediatePass;
+import vadl.gcb.passes.relocation.IdentifyFieldUsagePass;
 import vadl.gcb.passes.relocation.model.ElfRelocation;
 import vadl.lcb.codegen.LcbCodeGenerator;
 import vadl.viam.Format;
 import vadl.viam.PseudoInstruction;
 import vadl.viam.ViamError;
 import vadl.viam.graph.control.InstrCallNode;
-import vadl.viam.graph.control.ReturnNode;
 
 /**
  * Generates functions which expands {@link PseudoInstruction} in LLVM.
  */
 public class PseudoExpansionCodeGenerator extends LcbCodeGenerator {
   private final String namespace;
-  private final DetectImmediatePass.ImmediateDetectionContainer fieldUsages;
+  private final IdentifyFieldUsagePass.ImmediateDetectionContainer fieldUsages;
   private final Map<Format.Field, CppFunction> immediateDecodings;
   private final IdentityHashMap<Format.Field, VariantKind> variants;
   private final List<ElfRelocation> relocations;
@@ -31,7 +29,7 @@ public class PseudoExpansionCodeGenerator extends LcbCodeGenerator {
    * Constructor.
    */
   public PseudoExpansionCodeGenerator(String namespace,
-                                      DetectImmediatePass.ImmediateDetectionContainer fieldUsages,
+                                      IdentifyFieldUsagePass.ImmediateDetectionContainer fieldUsages,
                                       Map<Format.Field, CppFunction> immediateDecodings,
                                       IdentityHashMap<Format.Field, VariantKind> variants,
                                       List<ElfRelocation> relocations) {

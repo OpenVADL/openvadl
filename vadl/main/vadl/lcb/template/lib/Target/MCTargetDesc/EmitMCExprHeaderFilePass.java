@@ -8,7 +8,7 @@ import java.util.Map;
 import vadl.configuration.LcbConfiguration;
 import vadl.cppCodeGen.model.VariantKind;
 import vadl.gcb.passes.relocation.model.ElfRelocation;
-import vadl.lcb.codegen.GenerateImmediateKindPass;
+import vadl.lcb.codegen.IdentifyFieldsInstructionPass;
 import vadl.lcb.passes.relocation.GenerateElfRelocationPass;
 import vadl.lcb.template.CommonVarNames;
 import vadl.lcb.template.LcbTemplateRenderingPass;
@@ -48,7 +48,7 @@ public class EmitMCExprHeaderFilePass extends LcbTemplateRenderingPass {
 
   private List<VariantKind> immediates(PassResults passResults) {
     return ((IdentityHashMap<Format.Field, VariantKind>) passResults.lastResultOf(
-        GenerateImmediateKindPass.class))
+        IdentifyFieldsInstructionPass.class))
         .values()
         .stream().sorted(Comparator.comparing(VariantKind::value))
         .toList();

@@ -50,8 +50,8 @@ public class GenerateLogicalRelocationPass extends Pass {
   public List<LogicalRelocation> execute(PassResults passResults, Specification viam)
       throws IOException {
     var immediates =
-        (DetectImmediatePass.ImmediateDetectionContainer) passResults.lastResultOf(
-            DetectImmediatePass.class);
+        (IdentifyFieldUsagePass.ImmediateDetectionContainer) passResults.lastResultOf(
+            IdentifyFieldUsagePass.class);
 
     // Generate relocations based on the specified relocations.
     // The user can specify relocations in the vadl specification.
@@ -67,7 +67,7 @@ public class GenerateLogicalRelocationPass extends Pass {
 
   private Stream<LogicalRelocation> generateRelocationsBasedOnPseudoInstructions(
       Specification viam,
-      DetectImmediatePass.ImmediateDetectionContainer immediates) {
+      IdentifyFieldUsagePass.ImmediateDetectionContainer immediates) {
     var logicalRelocations = new ArrayList<LogicalRelocation>();
 
     viam.isa().ifPresent((isa) -> {
@@ -123,7 +123,7 @@ public class GenerateLogicalRelocationPass extends Pass {
    * This method generates relocations when a relocation is used in a machine instruction.
    */
   private Stream<LogicalRelocation> generateRelocationsBasedOnUsedRelocations(
-      Specification viam, DetectImmediatePass.ImmediateDetectionContainer immediates) {
+      Specification viam, IdentifyFieldUsagePass.ImmediateDetectionContainer immediates) {
     var logicalRelocations = new ArrayList<LogicalRelocation>();
 
     viam.isa().ifPresent((isa) -> {
@@ -133,8 +133,8 @@ public class GenerateLogicalRelocationPass extends Pass {
             .filter(Relocation.class::isInstance)
             .map(Relocation.class::cast)
             .forEach(relocation -> {
-              for (var entry : immediates.get(instruction.format()).entrySet()) {
-                if (entry.getValue() == DetectImmediatePass.FieldUsage.IMMEDIATE) {
+              for (var entry : immediates.getFieldUsage(instruction.format()).entrySet()) {
+                if (entry.getValue() == IdentifyFieldUsagePass.FieldUsage.IMMEDIATE) {
                   var field = entry.getKey();
                   var updateFunction =
                       BitMaskFunctionGenerator.generateUpdateFunction(instruction.format(), field);
@@ -160,14 +160,14 @@ public class GenerateLogicalRelocationPass extends Pass {
 
   private Stream<LogicalRelocation> generateAbsoluteRelocationsForEveryFormat(
       Specification viam,
-      DetectImmediatePass.ImmediateDetectionContainer immediates) {
+      IdentifyFieldUsagePass.ImmediateDetectionContainer immediates) {
     return viam.isa()
         .map(isa -> isa.ownFormats().stream())
         .orElse(Stream.empty())
         .flatMap(format -> {
           var relocations = new ArrayList<LogicalRelocation>();
-          for (var entry : immediates.get(format).entrySet()) {
-            if (entry.getValue() == DetectImmediatePass.FieldUsage.IMMEDIATE) {
+          for (var entry : immediates.getFieldUsage(format).entrySet()) {
+            if (entry.getValue() == IdentifyFieldUsagePass.FieldUsage.IMMEDIATE) {
               var field = entry.getKey();
               var updateFunction =
                   BitMaskFunctionGenerator.generateUpdateFunction(format, field);
@@ -185,7 +185,7 @@ public class GenerateLogicalRelocationPass extends Pass {
    */
   private Stream<LogicalRelocation> generateRelativeRelocations(
       Specification viam,
-      DetectImmediatePass.ImmediateDetectionContainer immediates) {
+      IdentifyFieldUsagePass.ImmediateDetectionContainer immediates) {
     return viam.isa()
         .map(isa -> isa.ownInstructions().stream())
         .orElse(Stream.empty())
@@ -195,8 +195,8 @@ public class GenerateLogicalRelocationPass extends Pass {
         .distinct()
         .flatMap(format -> {
           var relocations = new ArrayList<LogicalRelocation>();
-          for (var entry : immediates.get(format).entrySet()) {
-            if (entry.getValue() == DetectImmediatePass.FieldUsage.IMMEDIATE) {
+          for (var entry : immediates.getFieldUsage(format).entrySet()) {
+            if (entry.getValue() == IdentifyFieldUsagePass.FieldUsage.IMMEDIATE) {
               var field = entry.getKey();
               var updateFunction =
                   BitMaskFunctionGenerator.generateUpdateFunction(format, field);
