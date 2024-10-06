@@ -14,6 +14,7 @@ import vadl.pass.PassName;
 import vadl.pass.PassResults;
 import vadl.viam.Format;
 import vadl.viam.Format.Field;
+import vadl.viam.Instruction;
 import vadl.viam.Specification;
 import vadl.viam.ViamError;
 import vadl.viam.graph.Node;
@@ -42,8 +43,16 @@ public class IdentifyFieldUsagePass extends Pass {
    * Helper class for the result of this pass.
    */
   public static class ImmediateDetectionContainer {
+    /**
+     * fieldUsage tracks how a field is used. This is true for all instructions and formats.
+     * Thus, can be stored based on the {@link Format}
+     */
     private final IdentityHashMap<Format, IdentityHashMap<Field, FieldUsage>> fieldUsage;
-    private final IdentityHashMap<Format, IdentityHashMap<Field, RegisterUsage>>
+    /**
+     * Tracks how a register is used in an {@link Instruction}. This is not true for all
+     * {@link Format}. That's why the key is {@link Instruction}.
+     */
+    private final IdentityHashMap<Instruction, IdentityHashMap<Field, RegisterUsage>>
         registerUsage;
 
     /**
@@ -61,8 +70,15 @@ public class IdentifyFieldUsagePass extends Pass {
       if (!fieldUsage.containsKey(format)) {
         fieldUsage.put(format, new IdentityHashMap<>());
       }
-      if (!registerUsage.containsKey(format)) {
-        registerUsage.put(format, new IdentityHashMap<>());
+
+    }
+
+    /**
+     * Adding a {@link Instruction} to the result.
+     */
+    public void addInstruction(Instruction instruction) {
+      if (!registerUsage.containsKey(instruction)) {
+        registerUsage.put(instruction, new IdentityHashMap<>());
       }
     }
 
@@ -82,8 +98,8 @@ public class IdentifyFieldUsagePass extends Pass {
      * If a {@link Field} is already stored then {@code kind} is ignored and
      * {@link RegisterUsage#BOTH} is added.
      */
-    public void addField(Format format, Field field, RegisterUsage kind) {
-      var f = registerUsage.get(format);
+    public void addField(Instruction instruction, Field field, RegisterUsage kind) {
+      var f = registerUsage.get(instruction);
       if (f == null) {
         throw new ViamError("Format must not be null");
       }
@@ -129,47 +145,50 @@ public class IdentifyFieldUsagePass extends Pass {
   public Object execute(PassResults passResults, Specification viam) throws IOException {
     var container = new ImmediateDetectionContainer();
 
-    viam.isa()
+    for (var instruction : viam.isa()
         .map(isa -> isa.ownInstructions().stream())
         .orElse(Stream.empty())
-        .flatMap(instruction -> instruction.behavior().getNodes(FieldRefNode.class))
-        .forEach(fieldRefNode -> {
-          var isRegisterRead = fieldRefNode.usages()
-              .anyMatch(
-                  usage -> usage instanceof ReadRegNode || usage instanceof ReadRegFileNode);
-          var isRegisterWrite = fieldRefNode.usages()
-              .filter(usage -> usage instanceof WriteResourceNode)
-              .anyMatch(usage -> {
-                var cast = (WriteResourceNode) usage;
-                var nodes = new ArrayList<Node>();
-                // The field should be marked as REGISTER when the field is used as a register
-                // index. Therefore, we need to check whether the node is in the address tree.
-                // We avoid a direct check because it is theoretically possible to do
-                // arithmetic with the register file's index. However, this is very unlikely.
-                Objects.requireNonNull(cast.address()).collectInputsWithChildren(nodes);
-                return cast.address() == fieldRefNode || nodes.contains(fieldRefNode);
-              });
+        .toList()) {
+      container.addInstruction(instruction);
+      instruction.behavior().getNodes(FieldRefNode.class)
+          .forEach(fieldRefNode -> {
+            var isRegisterRead = fieldRefNode.usages()
+                .anyMatch(
+                    usage -> usage instanceof ReadRegNode || usage instanceof ReadRegFileNode);
+            var isRegisterWrite = fieldRefNode.usages()
+                .filter(usage -> usage instanceof WriteResourceNode)
+                .anyMatch(usage -> {
+                  var cast = (WriteResourceNode) usage;
+                  var nodes = new ArrayList<Node>();
+                  // The field should be marked as REGISTER when the field is used as a register
+                  // index. Therefore, we need to check whether the node is in the address tree.
+                  // We avoid a direct check because it is theoretically possible to do
+                  // arithmetic with the register file's index. However, this is very unlikely.
+                  Objects.requireNonNull(cast.address()).collectInputsWithChildren(nodes);
+                  return cast.address() == fieldRefNode || nodes.contains(fieldRefNode);
+                });
 
-          container.addFormat(fieldRefNode.formatField().format());
+            container.addFormat(fieldRefNode.formatField().format());
 
-          if (isRegisterRead || isRegisterWrite) {
-            container.addField(fieldRefNode.formatField().format(), fieldRefNode.formatField(),
-                FieldUsage.REGISTER);
-            if (isRegisterRead) {
+            if (isRegisterRead || isRegisterWrite) {
               container.addField(fieldRefNode.formatField().format(), fieldRefNode.formatField(),
-                  RegisterUsage.SOURCE);
+                  FieldUsage.REGISTER);
+              if (isRegisterRead) {
+                container.addField(instruction, fieldRefNode.formatField(),
+                    RegisterUsage.SOURCE);
+              } else {
+                container.addField(instruction, fieldRefNode.formatField(),
+                    RegisterUsage.DESTINATION);
+              }
             } else {
               container.addField(fieldRefNode.formatField().format(), fieldRefNode.formatField(),
-                  RegisterUsage.DESTINATION);
+                  FieldUsage.IMMEDIATE);
             }
-          } else {
-            container.addField(fieldRefNode.formatField().format(), fieldRefNode.formatField(),
-                FieldUsage.IMMEDIATE);
-          }
 
-          // There is no other option because any other field like opcode will never be referenced
-          // the viam.
-        });
+            // There is no other option because any other field like opcode will never be referenced
+            // the viam.
+          });
+    }
 
 
     return container;
