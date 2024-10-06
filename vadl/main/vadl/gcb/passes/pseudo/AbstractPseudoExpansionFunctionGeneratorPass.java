@@ -47,10 +47,6 @@ public abstract class AbstractPseudoExpansionFunctionGeneratorPass extends Pass 
     getApplicable(passResults, viam)
         .forEach(x -> {
           var pseudoInstruction = x.left();
-          // TODO: wrong, we use the old one
-          // The `appliedGraph` is the pseudo instruction's behavior which
-          // has InstrCallNodes with applied arguments.
-          var appliedGraph = x.right();
           var ty = new CppType("MCInst", true, true);
           var param = new CppParameter(new Identifier("instruction",
               SourceLocation.INVALID_SOURCE_LOCATION),

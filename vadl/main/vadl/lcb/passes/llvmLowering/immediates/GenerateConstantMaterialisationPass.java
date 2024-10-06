@@ -13,6 +13,7 @@ import org.checkerframework.checker.units.qual.C;
 import org.jetbrains.annotations.Nullable;
 import vadl.configuration.GeneralConfiguration;
 import vadl.error.Diagnostic;
+import vadl.gcb.passes.pseudo.PseudoExpansionCodeGeneratorVisitor;
 import vadl.lcb.passes.isaMatching.InstructionLabel;
 import vadl.lcb.passes.isaMatching.IsaMatchingPass;
 import vadl.lcb.passes.llvmLowering.domain.ConstantMatPseudoInstruction;
@@ -29,6 +30,7 @@ import vadl.viam.Parameter;
 import vadl.viam.PseudoInstruction;
 import vadl.viam.Specification;
 import vadl.viam.graph.Graph;
+import vadl.viam.graph.Node;
 import vadl.viam.graph.NodeList;
 import vadl.viam.graph.control.InstrCallNode;
 import vadl.viam.graph.control.InstrEndNode;
@@ -88,8 +90,10 @@ public class GenerateConstantMaterialisationPass extends Pass {
 
   private Graph setupGraph(Identifier name, Graph copy, Instruction addi) {
     var pseudoInstructionGraph = new Graph(name.toString());
+
     var fields = copy.getNodes(FieldRefNode.class).toList();
-    var immField = ensurePresent(copy.getNodes(FieldRefNode.class)
+    var immField = ensurePresent(fields
+            .stream()
             .filter(fieldNode -> fieldNode.usages().noneMatch(
                 usage -> usage instanceof ReadResourceNode || usage instanceof WriteResourceNode))
             .findFirst(),

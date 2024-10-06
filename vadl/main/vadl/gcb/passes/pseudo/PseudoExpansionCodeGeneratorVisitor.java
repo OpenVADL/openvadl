@@ -1,13 +1,20 @@
 package vadl.gcb.passes.pseudo;
 
 import static vadl.viam.ViamError.ensure;
+import static vadl.viam.ViamError.ensureNonNull;
 import static vadl.viam.ViamError.ensurePresent;
 
 import com.google.common.collect.Streams;
 import java.io.StringWriter;
+import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.IdentityHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.function.Supplier;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
+import org.jetbrains.annotations.Nullable;
 import vadl.cppCodeGen.GenericCppCodeGeneratorVisitor;
 import vadl.cppCodeGen.SymbolTable;
 import vadl.cppCodeGen.model.CppFunction;
@@ -16,14 +23,20 @@ import vadl.error.Diagnostic;
 import vadl.gcb.passes.relocation.DetectImmediatePass;
 import vadl.gcb.passes.relocation.model.ElfRelocation;
 import vadl.utils.Pair;
+import vadl.viam.Assembly;
 import vadl.viam.Format;
 import vadl.viam.Instruction;
 import vadl.viam.Relocation;
 import vadl.viam.ViamError;
+import vadl.viam.graph.Graph;
+import vadl.viam.graph.GraphVisitor;
 import vadl.viam.graph.HasRegisterFile;
+import vadl.viam.graph.Node;
 import vadl.viam.graph.control.InstrCallNode;
 import vadl.viam.graph.control.InstrEndNode;
+import vadl.viam.graph.control.ReturnNode;
 import vadl.viam.graph.dependency.ConstantNode;
+import vadl.viam.graph.dependency.ExpressionNode;
 import vadl.viam.graph.dependency.FieldRefNode;
 import vadl.viam.graph.dependency.FuncCallNode;
 import vadl.viam.graph.dependency.FuncParamNode;
@@ -57,6 +70,32 @@ public class PseudoExpansionCodeGeneratorVisitor extends GenericCppCodeGenerator
     this.relocations = relocations;
   }
 
+  /**
+   * The order of the parameters is not necessarily the order in which the expansion should happen.
+   * This function looks at the {@link Format} and reorders the list to the same
+   * order.
+   */
+  private List<Pair<Format.Field, ExpressionNode>> reorderParameters(
+      Format format,
+      List<Pair<Format.Field, ExpressionNode>> pairs) {
+    var result = new ArrayList<Pair<Format.Field, ExpressionNode>>();
+    var lookup = pairs.stream().collect(Collectors.toMap(Pair::left, Pair::right));
+    var usages = fieldUsages.get(format).keySet();
+    // The `fieldsSortedByLsbDesc` returns all fields from the format.
+    // However, we are only interested in the registers and immediates.
+    // That's why we filter with `contains`. `fieldUsages` only stores REGISTER and IMMEDIATE.
+    var order = format.fieldsSortedByLsbDesc().filter(usages::contains).toList();
+
+    for (var item : order) {
+      var l = ensureNonNull(lookup.get(item),
+          () -> Diagnostic.error("Cannot find format's field in pseudo instruction",
+              item.sourceLocation()).build());
+      result.add(Pair.of(item, l));
+    }
+
+    return result;
+  }
+
   @Override
   public void visit(InstrCallNode instrCallNode) {
     var sym = symbolTable.getNextVariable();
@@ -68,9 +107,11 @@ public class PseudoExpansionCodeGeneratorVisitor extends GenericCppCodeGenerator
         Streams.zip(instrCallNode.getParamFields().stream(), instrCallNode.arguments().stream(),
             Pair::of).toList();
 
-    for (int index = 0; index < pairs.size(); index++) {
-      var field = pairs.get(index).left();
-      var argument = pairs.get(index).right();
+    var reorderedPairs = reorderParameters(instrCallNode.target().format(), pairs);
+
+    for (int index = 0; index < reorderedPairs.size(); index++) {
+      var field = reorderedPairs.get(index).left();
+      var argument = reorderedPairs.get(index).right();
 
       if (argument instanceof ConstantNode cn) {
         lowerExpression(instrCallNode.target(), sym, field, cn);
