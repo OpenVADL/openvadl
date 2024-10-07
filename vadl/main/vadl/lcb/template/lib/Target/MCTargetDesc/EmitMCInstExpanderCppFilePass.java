@@ -18,7 +18,6 @@ import vadl.cppCodeGen.model.VariantKind;
 import vadl.gcb.passes.pseudo.PseudoExpansionFunctionGeneratorPass;
 import vadl.gcb.passes.relocation.IdentifyFieldUsagePass;
 import vadl.gcb.passes.relocation.model.ElfRelocation;
-import vadl.lcb.codegen.GenerateImmediateKindPass;
 import vadl.lcb.codegen.expansion.PseudoExpansionCodeGenerator;
 import vadl.lcb.passes.llvmLowering.ConstMaterialisationPseudoExpansionFunctionGeneratorPass;
 import vadl.lcb.passes.llvmLowering.domain.ConstantMatPseudoInstruction;
@@ -27,6 +26,7 @@ import vadl.lcb.passes.relocation.GenerateElfRelocationPass;
 import vadl.lcb.template.CommonVarNames;
 import vadl.lcb.template.LcbTemplateRenderingPass;
 import vadl.lcb.template.utils.ImmediateDecodingFunctionProvider;
+import vadl.lcb.template.utils.ImmediateVariantKindProvider;
 import vadl.lcb.template.utils.PseudoInstructionProvider;
 import vadl.pass.PassResults;
 import vadl.viam.Format;
@@ -68,7 +68,7 @@ public class EmitMCInstExpanderCppFilePass extends LcbTemplateRenderingPass {
       Specification specification,
       Map<PseudoInstruction, CppFunction> cppFunctions,
       IdentifyFieldUsagePass.ImmediateDetectionContainer fieldUsages,
-      IdentityHashMap<Format.Field, VariantKind> variants,
+      Map<Format.Field, VariantKind> variants,
       List<ElfRelocation> relocations,
       PassResults passResults) {
     return PseudoInstructionProvider.getSupportedPseudoInstructions(specification, passResults)
@@ -83,7 +83,7 @@ public class EmitMCInstExpanderCppFilePass extends LcbTemplateRenderingPass {
   renderPseudoInstruction(Specification specification,
                           Map<PseudoInstruction, CppFunction> cppFunctions,
                           IdentifyFieldUsagePass.ImmediateDetectionContainer fieldUsages,
-                          IdentityHashMap<Format.Field, VariantKind> variants,
+                          Map<Format.Field, VariantKind> variants,
                           List<ElfRelocation> relocations,
                           PassResults passResults,
                           PseudoInstruction pseudoInstruction) {
@@ -107,7 +107,7 @@ public class EmitMCInstExpanderCppFilePass extends LcbTemplateRenderingPass {
       Specification specification,
       Map<PseudoInstruction, CppFunction> cppFunctions,
       IdentifyFieldUsagePass.ImmediateDetectionContainer fieldUsages,
-      IdentityHashMap<Format.Field, VariantKind> variants,
+      Map<Format.Field, VariantKind> variants,
       List<ElfRelocation> relocations,
       PassResults passResults) {
     var constMats = (List<ConstantMatPseudoInstruction>) passResults.lastResultOf(
@@ -137,8 +137,7 @@ public class EmitMCInstExpanderCppFilePass extends LcbTemplateRenderingPass {
         .collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue));
     var fieldUsages = (IdentifyFieldUsagePass.ImmediateDetectionContainer) passResults.lastResultOf(
         IdentifyFieldUsagePass.class);
-    var variants = (IdentityHashMap<Format.Field, VariantKind>) passResults.lastResultOf(
-        GenerateImmediateKindPass.class);
+    var variants = ImmediateVariantKindProvider.variantKindsByField(passResults);
     var relocations =
         (List<ElfRelocation>) passResults.lastResultOf(GenerateElfRelocationPass.class);
 

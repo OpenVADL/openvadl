@@ -10,6 +10,7 @@ import java.util.ArrayList;
 import java.util.IdentityHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.stream.Collectors;
 import vadl.cppCodeGen.GenericCppCodeGeneratorVisitor;
 import vadl.cppCodeGen.SymbolTable;
@@ -41,7 +42,7 @@ public class PseudoExpansionCodeGeneratorVisitor extends GenericCppCodeGenerator
   private final String namespace;
   private final IdentifyFieldUsagePass.ImmediateDetectionContainer fieldUsages;
   private final Map<Format.Field, CppFunction> immediateDecodings;
-  private final IdentityHashMap<Format.Field, VariantKind> immVariants;
+  private final Map<Format.Field, VariantKind> immVariants;
   private final List<ElfRelocation> relocations;
 
   /**
@@ -51,7 +52,7 @@ public class PseudoExpansionCodeGeneratorVisitor extends GenericCppCodeGenerator
                                              IdentifyFieldUsagePass.ImmediateDetectionContainer
                                                  fieldUsages,
                                              Map<Format.Field, CppFunction> immediateDecodings,
-                                             IdentityHashMap<Format.Field, VariantKind> immVariants,
+                                             Map<Format.Field, VariantKind> immVariants,
                                              List<ElfRelocation> relocations) {
     super(writer);
     this.namespace = namespace;
@@ -233,14 +234,23 @@ public class PseudoExpansionCodeGeneratorVisitor extends GenericCppCodeGenerator
 
         var argumentImmSymbol = symbolTable.getNextVariable();
         var variant = immVariants.get(field);
-        ensure(variant != null, "variant must exist: %s", field.identifier.lower());
+        ensure(variant != null, () -> Diagnostic.error(
+                String.format("Variant must exist for the field '%s' but it doesn't.",
+                    field.identifier.lower()),
+                field.sourceLocation())
+            .note(
+                "The compiler generator tries to lower an immediate in the "
+                    + "pseudo expansion. To do so it requires to generate variants for immediates. "
+                    + "It seems like that that this variant was not generated.")
+            .build());
         writer.write(
             String.format(
                 "MCOperand %s = "
                     +
                     "MCOperand::createExpr(%sMCExpr::create(%s, %sMCExpr::VariantKind::%s, "
                     + "Ctx));\n",
-                argumentImmSymbol, namespace, argumentSymbol, namespace, variant.value()));
+                argumentImmSymbol, namespace, argumentSymbol, namespace,
+                Objects.requireNonNull(variant).value()));
         writer.write(String.format("%s.addOperand(%s);\n",
             sym,
             argumentImmSymbol));

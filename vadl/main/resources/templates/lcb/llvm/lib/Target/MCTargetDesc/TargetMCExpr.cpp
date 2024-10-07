@@ -120,7 +120,15 @@ bool [(${namespace})]MCExpr::isInternalImmExpr() const
         «ENDFOR» return true;
     }
     «ENDIF» */
-    return false;
+    switch(Kind)
+    {
+    [# th:each="imm : ${immediates}" ]
+      case [(${imm.variantKind().value()})]:
+        return true;
+    [/]
+      default:
+        return false;
+    }
 }
 
 bool [(${namespace})]MCExpr::evaluateAsConstant(int64_t &Res) const
@@ -172,5 +180,10 @@ int64_t [(${namespace})]MCExpr::evaluateAsInt64(int64_t Value) const
 
     «ENDIF» */
 
-    return resultValue;
+    [# th:each="imm : ${immediates}" ]
+      if(Kind == [(${imm.variantKind().value()})])
+      {
+        resultValue = [(${imm.decoderMethod().lower()})];
+      }
+    [/]
 }

@@ -10,9 +10,12 @@ import vadl.cppCodeGen.model.VariantKind;
 import vadl.gcb.passes.relocation.IdentifyFieldUsagePass;
 import vadl.gcb.passes.relocation.model.ElfRelocation;
 import vadl.lcb.codegen.GenerateImmediateKindPass;
+import vadl.lcb.passes.llvmLowering.immediates.GenerateTableGenImmediateRecordPass;
+import vadl.lcb.passes.llvmLowering.tablegen.model.TableGenImmediateRecord;
 import vadl.lcb.passes.relocation.GenerateElfRelocationPass;
 import vadl.lcb.template.CommonVarNames;
 import vadl.lcb.template.LcbTemplateRenderingPass;
+import vadl.lcb.template.utils.ImmediateVariantKindProvider;
 import vadl.pass.PassResults;
 import vadl.viam.Format;
 import vadl.viam.Specification;
@@ -44,15 +47,7 @@ public class EmitMCExprHeaderFilePass extends LcbTemplateRenderingPass {
                                                 Specification specification) {
     return Map.of(CommonVarNames.NAMESPACE, specification.simpleName(),
         "relocations", relocations(passResults),
-        "immediates", immediates(passResults));
-  }
-
-  private List<VariantKind> immediates(PassResults passResults) {
-    return ((IdentityHashMap<Format.Field, VariantKind>) passResults.lastResultOf(
-        GenerateImmediateKindPass.class))
-        .values()
-        .stream().sorted(Comparator.comparing(VariantKind::value))
-        .toList();
+        "immediates", ImmediateVariantKindProvider.variantKinds(passResults));
   }
 
   private List<ElfRelocation> relocations(PassResults passResults) {

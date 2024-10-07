@@ -1,7 +1,9 @@
 package vadl.lcb.passes.llvmLowering.tablegen.model;
 
 import java.util.Objects;
+import vadl.cppCodeGen.model.VariantKind;
 import vadl.lcb.codegen.model.llvm.ValueType;
+import vadl.viam.Format;
 import vadl.viam.Identifier;
 
 /**
@@ -13,6 +15,8 @@ public class TableGenImmediateRecord {
   private final Identifier decoderMethod;
   private final Identifier predicateMethod;
   private final ValueType type;
+  private final Format.FieldAccess fieldAccessRef;
+  private final VariantKind variantKind;
 
   /**
    * Constructor for an immediate operand.
@@ -21,12 +25,15 @@ public class TableGenImmediateRecord {
                                  Identifier encoderIdentifier,
                                  Identifier decoderIdentifier,
                                  Identifier predicateIdentifier,
-                                 ValueType type) {
+                                 ValueType type,
+                                 Format.FieldAccess fieldAccessRef) {
     this.name = identifier.lower();
     this.encoderMethod = encoderIdentifier;
     this.decoderMethod = decoderIdentifier;
     this.predicateMethod = predicateIdentifier;
     this.type = type;
+    this.fieldAccessRef = fieldAccessRef;
+    this.variantKind = new VariantKind(fieldAccessRef.fieldRef());
   }
 
   public String rawName() {
@@ -73,5 +80,13 @@ public class TableGenImmediateRecord {
   @Override
   public int hashCode() {
     return Objects.hash(name, encoderMethod, decoderMethod, predicateMethod, type);
+  }
+
+  public Format.FieldAccess fieldAccessRef() {
+    return fieldAccessRef;
+  }
+
+  public VariantKind variantKind() {
+    return variantKind;
   }
 }

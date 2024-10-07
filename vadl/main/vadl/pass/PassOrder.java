@@ -282,7 +282,6 @@ public final class PassOrder {
   public static PassOrder lcb(LcbConfiguration configuration)
       throws IOException {
     var order = gcbAndCppCodeGen(configuration);
-    order.add(new GenerateImmediateKindPass(configuration));
     order.add(new IsaMatchingPass(configuration));
     order.add(new GenerateRegisterClassesPass(configuration));
     order.add(new LlvmLoweringPass(configuration));
