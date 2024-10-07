@@ -49,7 +49,10 @@ BitVector [(${namespace})]RegisterInfo::getReservedRegs(const MachineFunction &M
     markSuperRegs(Reserved, [(${namespace})]::[(${stackPointer.render()})]); // stack pointer
     markSuperRegs(Reserved, [(${namespace})]::[(${globalPointer.render()})]); // global pointer
 
-    // TODO: Add constant registers
+    [# th:each="constraint : ${constraints}" ]
+    markSuperRegs(Reserved,  [(${namespace})]::[(${constraint.registerFile})][(${constraint.index})]);
+    [/]
+
     assert(checkAllSuperRegsMarked(Reserved));
 
     return Reserved;

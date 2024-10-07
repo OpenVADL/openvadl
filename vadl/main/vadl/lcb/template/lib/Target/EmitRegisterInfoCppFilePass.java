@@ -70,7 +70,9 @@ public class EmitRegisterInfoCppFilePass extends LcbTemplateRenderingPass {
         IsaMatchingPass.class);
     var uninlined = (IdentityHashMap<Instruction, UninlinedGraph>) passResults.lastResultOf(
         FunctionInlinerPass.class);
+    var constraints = getConstraints(specification);
     return Map.of(CommonVarNames.NAMESPACE, specification.simpleName(),
+        "constraints", constraints,
         "framePointer", abi.framePointer(),
         "returnAddress", abi.returnAddress(),
         "stackPointer", abi.stackPointer(),
@@ -80,6 +82,25 @@ public class EmitRegisterInfoCppFilePass extends LcbTemplateRenderingPass {
             .sorted(Comparator.comparing(o -> o.instruction.identifier.name())).toList(),
         "registerClasses",
         specification.registerFiles().map(RegisterUtils::getRegisterClass).toList());
+  }
+
+  record ReservedRegister(String registerFile, int index) {
+
+  }
+
+  private List<ReservedRegister> getConstraints(Specification specification) {
+    var reserved = new ArrayList<ReservedRegister>();
+    var registerFiles = specification.registerFiles().toList();
+
+    for (var registerFile : registerFiles) {
+      for (var constraint : registerFile.constraints()) {
+        reserved.add(
+            new ReservedRegister(registerFile.identifier.simpleName(),
+                constraint.address().intValue()));
+      }
+    }
+
+    return reserved;
   }
 
   private List<FrameIndexElimination> getEliminateFrameIndexEntries(
