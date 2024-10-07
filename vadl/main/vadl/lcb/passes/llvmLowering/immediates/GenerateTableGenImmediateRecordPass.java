@@ -34,11 +34,10 @@ public class GenerateTableGenImmediateRecordPass extends Pass {
   @Override
   public List<TableGenImmediateRecord> execute(PassResults passResults,
                                                Specification viam) throws IOException {
-    var x= viam.isa().map(isa -> isa.ownFormats().stream()).orElseGet(Stream::empty)
+    return viam.isa().map(isa -> isa.ownFormats().stream()).orElseGet(Stream::empty)
         .flatMap(fieldUsages -> Arrays.stream(fieldUsages.fieldAccesses()))
         .distinct()
         .map(TableGenImmediateRecord::new)
         .toList();
-    return x;
   }
 }
