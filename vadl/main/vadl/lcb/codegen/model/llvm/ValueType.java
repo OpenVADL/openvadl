@@ -5,6 +5,7 @@ import vadl.types.BitsType;
 import vadl.types.SIntType;
 import vadl.types.Type;
 import vadl.types.UIntType;
+import vadl.viam.ViamError;
 
 /**
  * LLVM types which can be used.
@@ -28,6 +29,19 @@ public enum ValueType {
   ValueType(String llvmType, String fancyName) {
     this.llvmType = llvmType;
     this.fancyName = fancyName;
+  }
+
+  public int getBitwidth() {
+    return switch (this) {
+      case I8 -> 8;
+      case I16 -> 16;
+      case I32 -> 32;
+      case I64 -> 64;
+      case U8 -> 8;
+      case U16 -> 16;
+      case U32 -> 32;
+      case U64 -> 64;
+    };
   }
 
   /**
@@ -69,11 +83,57 @@ public enum ValueType {
     return Optional.empty();
   }
 
+  public static Optional<ValueType> nextFit(Type type) {
+    if (type instanceof SIntType cast) {
+      var size = nextFittingType(cast.bitWidth());
+      return ValueType.from(Type.signedInt(size));
+    } else if (type instanceof UIntType cast) {
+      var size = nextFittingType(cast.bitWidth());
+      return ValueType.from(Type.unsignedInt(size));
+    }
+
+    return Optional.empty();
+  }
+
+  private static int nextFittingType(int old) {
+    if (old == 1) {
+      return 1;
+    } else if (old > 1 && old <= 8) {
+      return 8;
+    } else if (old > 8 && old <= 16) {
+      return 16;
+    } else if (old > 16 && old <= 32) {
+      return 32;
+    } else if (old > 32 && old <= 64) {
+      return 64;
+    } else if (old > 64 && old <= 128) {
+      return 128;
+    }
+
+    throw new ViamError("Types with more than 128 bits are not supported");
+  }
+
   public String getFancyName() {
     return fancyName;
   }
 
   public String getLlvmType() {
     return llvmType;
+  }
+
+  public boolean isSigned() {
+    return switch (this) {
+      case I8 -> true;
+      case I16 -> true;
+      case I32 -> true;
+      case I64 -> true;
+      default -> false;
+    };
+  }
+
+  public ValueType makeSigned() {
+    int bitwith = getBitwidth();
+    Type type = Type.signedInt(bitwith);
+    return ValueType.from(type).get();
   }
 }

@@ -1,5 +1,7 @@
 package vadl.lcb.template.lib.Target.MCTargetDesc;
 
+import static vadl.viam.ViamError.ensureNonNull;
+
 import java.io.IOException;
 import java.util.List;
 import java.util.Map;
@@ -8,6 +10,7 @@ import vadl.lcb.passes.llvmLowering.immediates.GenerateTableGenImmediateRecordPa
 import vadl.lcb.passes.llvmLowering.tablegen.model.TableGenImmediateRecord;
 import vadl.lcb.template.CommonVarNames;
 import vadl.lcb.template.LcbTemplateRenderingPass;
+import vadl.lcb.template.utils.ImmediateDecodingFunctionProvider;
 import vadl.pass.PassResults;
 import vadl.viam.Specification;
 
@@ -32,13 +35,29 @@ public class EmitMCExprCppFilePass extends LcbTemplateRenderingPass {
         + processorName + "MCExpr.cpp";
   }
 
+  record Wrapper(TableGenImmediateRecord record, String decoderFunctionName) {
+
+  }
+
   @Override
   protected Map<String, Object> createVariables(final PassResults passResults,
                                                 Specification specification) {
     var immediateRecords = ((List<TableGenImmediateRecord>) passResults.lastResultOf(
         GenerateTableGenImmediateRecordPass.class));
+    var decodingFunctions = ImmediateDecodingFunctionProvider.generateDecodeFunctions(passResults);
 
+    var wrapped = immediateRecords.stream().map(x -> {
+      var function = decodingFunctions.get(x.fieldAccessRef().fieldRef());
+      ensureNonNull(function, "function must not be null");
+      return new Wrapper(x, function.functionName().lower());
+    }).toList();
+
+<<<<<<< HEAD
     return Map.of(CommonVarNames.NAMESPACE, specification.simpleName(),
         "immediates", immediateRecords);
+=======
+    return Map.of(CommonVarNames.NAMESPACE, specification.name(),
+        "immediates", wrapped);
+>>>>>>> 604ea8fe (lcb: Fixed immediates)
   }
 }

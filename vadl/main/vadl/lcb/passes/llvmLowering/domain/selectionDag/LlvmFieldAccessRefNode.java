@@ -32,13 +32,7 @@ public class LlvmFieldAccessRefNode extends FieldAccessRefNode {
   public LlvmFieldAccessRefNode(Format.FieldAccess fieldAccess, Type type) {
     super(fieldAccess, type);
     this.immediateOperand =
-        new TableGenImmediateRecord(fieldAccess.fieldRef().identifier,
-            Objects.requireNonNull(fieldAccess.encoding()).identifier.append(
-                EmitMCCodeEmitterCppFilePass.WRAPPER),
-            fieldAccess.accessFunction().identifier.append(EmitDisassemblerCppFilePass.WRAPPER),
-            fieldAccess.predicate().identifier,
-            ValueType.from(type).get(),
-            fieldAccess);
+        new TableGenImmediateRecord(fieldAccess);
     this.parameterIdentity = ParameterIdentity.from(this);
   }
 

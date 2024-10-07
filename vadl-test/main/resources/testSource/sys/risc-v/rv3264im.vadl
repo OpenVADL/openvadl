@@ -36,8 +36,8 @@ instruction set architecture RV3264I = {
   using Bits7    = Bits< 7>               // 7 bit type
   using Bits12   = Bits<12>              // 12 bit type
   using Index    = Bits< 5>               // 5 bit register index type for 32 registers
-  using UInt5    = UInt< 5>               // 5 bit unsigned shift ammount
-  using UShft    = UInt<SftLen>           // 5 or 6 bit unsigned shift ammount
+  using UInt5    = UInt< 5>               // 5 bit unsigned shift amount
+  using UShft    = UInt<SftLen>           // 5 or 6 bit unsigned shift amount
 
   [X(0) = 0]            // register with index 0 always is 0
   register file    X : Index   -> Regs    // integer register file with 32 registers of 32 bits
@@ -51,18 +51,18 @@ instruction set architecture RV3264I = {
     , funct3 : Bits3                      // [14..12] 3 bit function code
     , rd     : Index                      // [11..7]  destination register index
     , opcode : Bits7                      // [6..0]   7 bit operation code
-    , shamt  = rs2 as UInt                // 5 bit unsigned shift ammount
+    , shamt  = rs2 as UInt                // 5 bit unsigned shift amount
     }
 
   model FtypeModel (funct67 : Id, shift : Id) : IsaDefs = {
     format Ftype : Inst =                 // Ftype shift immediate instruction format
       { fun67  : $funct67                 // [31..26/25] 6 or 7 bit function code
-      , sft    : $shift                   // [24/25..20] 5 or 6 bit shift ammount
+      , sft    : $shift                   // [24/25..20] 5 or 6 bit shift amount
       , rs1    : Index                    // [19..15] 1st source register index
       , funct3 : Bits3                    // [14..12] 3 bit function code
       , rd     : Index                    // [11..7]  destination register index
       , opcode : Bits7                    // [6..0]   7 bit operation code
-      , shamt  = sft as UInt              // 5/6 bit unsigned shift ammount
+      , shamt  = sft as UInt              // 5/6 bit unsigned shift amount
       }
     }
 

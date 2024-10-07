@@ -1,16 +1,13 @@
 package vadl.lcb.passes.llvmLowering.immediates;
 
 
-import static vadl.viam.ViamError.ensureNonNull;
-
 import java.io.IOException;
+import java.util.Arrays;
 import java.util.List;
+import java.util.stream.Stream;
 import org.jetbrains.annotations.Nullable;
 import vadl.configuration.GeneralConfiguration;
-import vadl.lcb.passes.llvmLowering.GenerateTableGenMachineInstructionRecordPass;
 import vadl.lcb.passes.llvmLowering.tablegen.model.TableGenImmediateRecord;
-import vadl.lcb.passes.llvmLowering.tablegen.model.TableGenInstructionImmediateOperand;
-import vadl.lcb.passes.llvmLowering.tablegen.model.TableGenMachineInstruction;
 import vadl.pass.Pass;
 import vadl.pass.PassName;
 import vadl.pass.PassResults;
@@ -30,22 +27,18 @@ public class GenerateTableGenImmediateRecordPass extends Pass {
 
   @Override
   public PassName getName() {
-    return new PassName("ExtractTableGenImmediatePass");
+    return new PassName("GenerateTableGenImmediateRecordPass");
   }
 
   @Nullable
   @Override
   public List<TableGenImmediateRecord> execute(PassResults passResults,
                                                Specification viam) throws IOException {
-    var tableGenMachineRecords = (List<TableGenMachineInstruction>) passResults.lastResultOf(
-        GenerateTableGenMachineInstructionRecordPass.class);
-
-    return tableGenMachineRecords
-        .stream()
-        .flatMap(tableGenRecord -> tableGenRecord.getInOperands().stream())
-        .filter(operand -> operand instanceof TableGenInstructionImmediateOperand)
-        .map(operand -> ((TableGenInstructionImmediateOperand) operand).immediateOperand())
+    var x= viam.isa().map(isa -> isa.ownFormats().stream()).orElseGet(Stream::empty)
+        .flatMap(fieldUsages -> Arrays.stream(fieldUsages.fieldAccesses()))
         .distinct()
+        .map(TableGenImmediateRecord::new)
         .toList();
+    return x;
   }
 }

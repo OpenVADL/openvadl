@@ -1,8 +1,14 @@
 package vadl.lcb.passes.llvmLowering.tablegen.model;
 
+import static vadl.viam.ViamError.ensurePresent;
+
 import java.util.Objects;
 import vadl.cppCodeGen.model.VariantKind;
+import vadl.error.DeferredDiagnosticStore;
+import vadl.error.Diagnostic;
 import vadl.lcb.codegen.model.llvm.ValueType;
+import vadl.lcb.template.lib.Target.Disassembler.EmitDisassemblerCppFilePass;
+import vadl.lcb.template.lib.Target.MCTargetDesc.EmitMCCodeEmitterCppFilePass;
 import vadl.viam.Format;
 import vadl.viam.Identifier;
 
@@ -21,12 +27,12 @@ public class TableGenImmediateRecord {
   /**
    * Constructor for an immediate operand.
    */
-  public TableGenImmediateRecord(Identifier identifier,
-                                 Identifier encoderIdentifier,
-                                 Identifier decoderIdentifier,
-                                 Identifier predicateIdentifier,
-                                 ValueType type,
-                                 Format.FieldAccess fieldAccessRef) {
+  private TableGenImmediateRecord(Identifier identifier,
+                                  Identifier encoderIdentifier,
+                                  Identifier decoderIdentifier,
+                                  Identifier predicateIdentifier,
+                                  ValueType type,
+                                  Format.FieldAccess fieldAccessRef) {
     this.name = identifier.lower();
     this.encoderMethod = encoderIdentifier;
     this.decoderMethod = decoderIdentifier;
@@ -34,6 +40,31 @@ public class TableGenImmediateRecord {
     this.type = type;
     this.fieldAccessRef = fieldAccessRef;
     this.variantKind = new VariantKind(fieldAccessRef.fieldRef());
+  }
+
+  /**
+   * Constructor.
+   */
+  public TableGenImmediateRecord(Format.FieldAccess fieldAccess) {
+    this(fieldAccess.fieldRef().identifier,
+        Objects.requireNonNull(fieldAccess.encoding()).identifier.append(
+            EmitMCCodeEmitterCppFilePass.WRAPPER),
+        fieldAccess.accessFunction().identifier.append(EmitDisassemblerCppFilePass.WRAPPER),
+        fieldAccess.predicate().identifier,
+        ValueType.from(fieldAccess.type()).orElseGet(() -> {
+          DeferredDiagnosticStore.add(
+              Diagnostic.warning("Field has a not supported size for the compiler.",
+                      fieldAccess.sourceLocation())
+                  .note(
+                      "The compiler generator will automatically uplift the type to next "
+                          + "fitting LLVM type.")
+                  .build());
+          return ensurePresent(ValueType.nextFit(fieldAccess.type()),
+              () -> Diagnostic.error(
+                  "The compiler was not able to uplift the type to a supported type.",
+                  fieldAccess.sourceLocation()).build());
+        }),
+        fieldAccess);
   }
 
   public String rawName() {

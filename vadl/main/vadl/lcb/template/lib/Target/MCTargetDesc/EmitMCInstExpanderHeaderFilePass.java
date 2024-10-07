@@ -10,18 +10,10 @@ import java.util.stream.Collectors;
 import java.util.stream.Stream;
 import vadl.configuration.LcbConfiguration;
 import vadl.cppCodeGen.model.CppFunction;
-<<<<<<<HEAD
-import vadl.gcb.passes.pseudo.PseudoExpansionFunctionGeneratorPass;
-=======
-import vadl.gcb.passes.pseudo.AbstractPseudoExpansionFunctionGeneratorPass;
-<<<<<<<HEAD
-    >>>>>>>ab3e21a5(lcb:Refactored pseudo expansion)
-    =======
 import vadl.gcb.passes.pseudo.PseudoExpansionFunctionGeneratorPass;
 import vadl.lcb.passes.llvmLowering.ConstMaterialisationPseudoExpansionFunctionGeneratorPass;
 import vadl.lcb.passes.llvmLowering.domain.ConstantMatPseudoInstruction;
 import vadl.lcb.passes.llvmLowering.immediates.GenerateConstantMaterialisationPass;
->>>>>>>48575cf7(lcb:Implemented pseudo instruction expansion for const mat)
 import vadl.lcb.template.CommonVarNames;
 import vadl.lcb.template.LcbTemplateRenderingPass;
 import vadl.lcb.template.utils.PseudoInstructionProvider;
