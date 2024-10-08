@@ -12,7 +12,7 @@ public final class TableGenImmediateOperandRenderer {
    * Transforms the given {@code operand} into a string which can be used by LLVM's TableGen.
    */
   public static String lower(TableGenImmediateRecord operand) {
-    var type = operand.type().isSigned()? operand.type() : operand.type().makeSigned();
+    var type = operand.type().isSigned() ? operand.type() : operand.type().makeSigned();
     return String.format("""
             class %s<ValueType ty> : Operand<ty>
             {

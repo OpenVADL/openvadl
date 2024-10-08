@@ -1,7 +1,6 @@
 package vadl.lcb.codegen.expansion;
 
 import java.io.StringWriter;
-import java.util.IdentityHashMap;
 import java.util.List;
 import java.util.Map;
 import vadl.cppCodeGen.model.CppFunction;
@@ -30,7 +29,8 @@ public class PseudoExpansionCodeGenerator extends LcbCodeGenerator {
    * Constructor.
    */
   public PseudoExpansionCodeGenerator(String namespace,
-                                      IdentifyFieldUsagePass.ImmediateDetectionContainer fieldUsages,
+                                      IdentifyFieldUsagePass.ImmediateDetectionContainer
+                                          fieldUsages,
                                       Map<Format.Field, CppFunction> immediateDecodings,
                                       Map<Format.Field, VariantKind> variants,
                                       List<ElfRelocation> relocations,

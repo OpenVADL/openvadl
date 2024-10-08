@@ -107,8 +107,8 @@ public class GenerateConstantMaterialisationPass extends Pass {
     var imm =
         ensurePresent(copy.getNodes(FieldRefNode.class).filter(fieldRefNode -> fieldRefNode.usages()
                     .allMatch(
-                        usage -> !(usage instanceof WriteResourceNode ||
-                            usage instanceof ReadResourceNode)))
+                        usage -> !(usage instanceof WriteResourceNode
+                            || usage instanceof ReadResourceNode)))
                 .findFirst(),
             () -> Diagnostic.error("Immediate required for instruction", copy.sourceLocation())
                 .build());
@@ -164,6 +164,7 @@ public class GenerateConstantMaterialisationPass extends Pass {
                 Constant.Value.of(addressOfZeroRegister, zeroConstraint.address().type()));
             arguments.add(registerArgument);
           }
+          default -> throw new RuntimeException("not implemented")
         }
       }
     }

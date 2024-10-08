@@ -31,6 +31,9 @@ public enum ValueType {
     this.fancyName = fancyName;
   }
 
+  /**
+   * Get the bit width of the type.
+   */
   public int getBitwidth() {
     return switch (this) {
       case I8 -> 8;
@@ -83,36 +86,6 @@ public enum ValueType {
     return Optional.empty();
   }
 
-  public static Optional<ValueType> nextFit(Type type) {
-    if (type instanceof SIntType cast) {
-      var size = nextFittingType(cast.bitWidth());
-      return ValueType.from(Type.signedInt(size));
-    } else if (type instanceof UIntType cast) {
-      var size = nextFittingType(cast.bitWidth());
-      return ValueType.from(Type.unsignedInt(size));
-    }
-
-    return Optional.empty();
-  }
-
-  private static int nextFittingType(int old) {
-    if (old == 1) {
-      return 1;
-    } else if (old > 1 && old <= 8) {
-      return 8;
-    } else if (old > 8 && old <= 16) {
-      return 16;
-    } else if (old > 16 && old <= 32) {
-      return 32;
-    } else if (old > 32 && old <= 64) {
-      return 64;
-    } else if (old > 64 && old <= 128) {
-      return 128;
-    }
-
-    throw new ViamError("Types with more than 128 bits are not supported");
-  }
-
   public String getFancyName() {
     return fancyName;
   }
@@ -121,6 +94,9 @@ public enum ValueType {
     return llvmType;
   }
 
+  /**
+   * Check whether the type is signed.
+   */
   public boolean isSigned() {
     return switch (this) {
       case I8 -> true;
@@ -131,6 +107,9 @@ public enum ValueType {
     };
   }
 
+  /**
+   * Make the type signed.
+   */
   public ValueType makeSigned() {
     int bitwith = getBitwidth();
     Type type = Type.signedInt(bitwith);

@@ -39,7 +39,6 @@ import vadl.viam.graph.dependency.FuncParamNode;
  * ADDI{ rd = 0 as Bits5, rs1 = 0 as Bits5, imm = 0 as Bits12 }
  * }
  * </code>
- * <p>
  * Why is this class split up into two subclasses?
  * Because the {@link PseudoInstructionArgumentReplacementPass} is part of the gcb & cppCodeGen,
  * while {@code ConstMatPseudoInstructionArgumentReplacementPass} is part of the lcb and
@@ -178,8 +177,8 @@ public abstract class AbstractPseudoInstructionArgumentReplacementPass extends P
   private static void checkForWarnings(PseudoInstruction pseudoInstruction) {
     if (pseudoInstruction.behavior().getNodes(InstrCallNode.class).toList().size() > 1) {
       DeferredDiagnosticStore.add(Diagnostic.warning(
-          "Cannot generate instruction selectors for pseudo instruction with multiple " +
-              "machine instructions", pseudoInstruction.sourceLocation()).build());
+          "Cannot generate instruction selectors for pseudo instruction with multiple "
+              + "machine instructions", pseudoInstruction.sourceLocation()).build());
     }
   }
 
