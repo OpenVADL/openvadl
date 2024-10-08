@@ -46,6 +46,15 @@ public abstract class DirectionalNode extends ControlNode {
     this.next = next;
   }
 
+  public void addAfter(@Nonnull DirectionalNode after) {
+    ensure(isActive() && graph() != null, "Node is not active");
+    if (!after.isActive()) {
+      after = graph().addWithInputs(after);
+    }
+    after.setNext(this);
+    this.setNext(after);
+  }
+
   public ControlNode next() {
     ensure(next != null, "next node is null but must be set!");
     return next;

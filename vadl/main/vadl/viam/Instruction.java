@@ -70,11 +70,15 @@ public class Instruction extends Definition implements DefProp.WithBehavior {
     return encoding.format();
   }
 
-  public @Nullable Set<Resource> writtenResources() {
+  public Set<Resource> writtenResources() {
+    ensure(writtenResources != null,
+        "No read resources set. The InstructionResourceAccessAnalysisPass has to run before accessing this.");
     return writtenResources;
   }
 
-  public @Nullable Set<Resource> readResources() {
+  public Set<Resource> readResources() {
+    ensure(readResources != null,
+        "No read resources set. The InstructionResourceAccessAnalysisPass has to run before accessing this.");
     return readResources;
   }
 

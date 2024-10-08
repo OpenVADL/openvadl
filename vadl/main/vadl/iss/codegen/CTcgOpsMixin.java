@@ -1,17 +1,12 @@
 package vadl.iss.codegen;
 
-import static vadl.error.Diagnostic.error;
-
 import java.io.StringWriter;
 import vadl.cppCodeGen.CodeGenerator;
 import vadl.cppCodeGen.mixins.CGenMixin;
-import vadl.iss.passes.tcgLowering.nodes.TcgAddNode;
 import vadl.iss.passes.tcgLowering.nodes.TcgBinaryOpNode;
-import vadl.iss.passes.tcgLowering.nodes.TcgGetRegFile;
+import vadl.iss.passes.tcgLowering.nodes.TcgGetVar;
 import vadl.iss.passes.tcgLowering.nodes.TcgMoveNode;
-import vadl.types.BuiltInTable;
 import vadl.viam.graph.Node;
-import vadl.viam.graph.dependency.BuiltInCall;
 
 public interface CTcgOpsMixin extends CGenMixin {
 
@@ -24,7 +19,7 @@ public interface CTcgOpsMixin extends CGenMixin {
           writer.write("," + node.arg2().varName() + ");\n");
         })
 
-        .set(TcgGetRegFile.class, (TcgGetRegFile node, StringWriter writer) -> {
+        .set(TcgGetVar.TcgGetRegFile.class, (TcgGetVar.TcgGetRegFile node, StringWriter writer) -> {
           writer.write("\tTCGv_" + node.res().width() + " " + node.res().varName() + " = ");
           writer.write("get_" + node.registerFile().simpleName().toLowerCase());
           writer.write("(ctx, ");

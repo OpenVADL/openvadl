@@ -40,11 +40,12 @@ public class EmitIssTranslatePass extends IssTemplateRenderingPass {
 
   private static List<String> getTranslateFunctions(Specification specification) {
     var insns = specification.isa().get().ownInstructions();
-    return insns.stream()
-        // TODO: Remove this filter (just for testing)
-        .filter(i -> i.identifier.simpleName().equalsIgnoreCase("ADD"))
-        .map(IssTranslateCodeGenerator::fetch)
-        .toList();
+    return List.of();
+//    return insns.stream()
+//        // TODO: Remove this filter (just for testing)
+//        .filter(i -> i.identifier.simpleName().equalsIgnoreCase("ADD"))
+//        .map(IssTranslateCodeGenerator::fetch)
+//        .toList();
   }
 
   private static Map<String, Object> getMemoryWordSize(Specification specification) {

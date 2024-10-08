@@ -18,6 +18,10 @@ public class TcgV {
     return new TcgV("_" + node.letName().name(), width);
   }
 
+  public static TcgV of(String name, TcgWidth width) {
+    return new TcgV("v" + name, width);
+  }
+
   private static AtomicInteger counter = new AtomicInteger(0);
 
   public static TcgV gen(TcgWidth width) {

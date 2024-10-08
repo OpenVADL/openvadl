@@ -8,7 +8,7 @@ import org.jetbrains.annotations.Nullable;
 import vadl.configuration.IssConfiguration;
 import vadl.iss.passes.AbstractIssPass;
 import vadl.iss.passes.tcgLowering.nodes.TcgAddNode;
-import vadl.iss.passes.tcgLowering.nodes.TcgGetRegFile;
+import vadl.iss.passes.tcgLowering.nodes.TcgGetVar;
 import vadl.iss.passes.tcgLowering.nodes.TcgMoveNode;
 import vadl.iss.passes.tcgLowering.nodes.TcgOpNode;
 import vadl.pass.PassName;
@@ -129,8 +129,11 @@ class TcgLoweringExecutor extends GraphProcessor {
 
     // TODO: @jozott Don't hardcode type!
     var width = TcgWidth.i64;
-    return new TcgGetRegFile(toProcess.registerFile(), (ExpressionNode) addressRepl,
-        TcgV.gen(width), width);
+    return new TcgGetVar.TcgGetRegFile(
+        toProcess.registerFile(), (ExpressionNode) addressRepl,
+        TcgGetVar.TcgGetRegFile.Kind.SRC,
+        TcgV.gen(width)
+    );
   }
 
   private Node process(WriteRegFileNode toProcess) {
