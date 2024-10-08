@@ -58,7 +58,7 @@ public class TableGenImmediateRecord {
         ensurePresent(ValueType.from(architectureType), () -> Diagnostic.error(
             "Compiler generator was not able to change the type to the architecture's "
                 + "bit width: " + architectureType.toString(),
-            fieldAccess.sourceLocation()).build()),
+            fieldAccess.sourceLocation())),
         fieldAccess);
   }
 

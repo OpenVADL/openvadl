@@ -77,7 +77,7 @@ public class GenerateConstantMaterialisationPass extends Pass {
     ensure(!additionWithImmediates.isEmpty(), () -> Diagnostic.error(
         "Specification has no instruction for addition with immediate. Therefore, vadl "
             + "cannot generate an instruction for constant materialisation.",
-        viam.sourceLocation()).build());
+        viam.sourceLocation()));
     var addi = additionWithImmediates.stream().findFirst().get();
 
     for (var imm : immediates) {
@@ -97,11 +97,10 @@ public class GenerateConstantMaterialisationPass extends Pass {
   private Parameter[] createParameters(Graph copy) {
     var rawRd = ensurePresent(
         copy.getNodes(WriteRegFileNode.class).map(WriteRegFileNode::address).findFirst(),
-        () -> Diagnostic.error("Destination register write must exist.", copy.sourceLocation())
-            .build());
+        () -> Diagnostic.error("Destination register write must exist.", copy.sourceLocation()));
     ensure(rawRd instanceof FieldRefNode,
         () -> Diagnostic.error("Address of register write must be a field",
-            rawRd.sourceLocation()).build());
+            rawRd.sourceLocation()));
     FieldRefNode rd = (FieldRefNode) rawRd;
 
     var imm =
@@ -111,7 +110,7 @@ public class GenerateConstantMaterialisationPass extends Pass {
                             || usage instanceof ReadResourceNode)))
                 .findFirst(),
             () -> Diagnostic.error("Immediate required for instruction", copy.sourceLocation())
-                .build());
+        );
 
     return new Parameter[] {new Parameter(rd.formatField().identifier, rd.type()),
         new Parameter(imm.formatField().identifier, imm.type())};
@@ -130,7 +129,7 @@ public class GenerateConstantMaterialisationPass extends Pass {
                 usage -> usage instanceof ReadResourceNode || usage instanceof WriteResourceNode))
             .findFirst(),
         () -> Diagnostic.error("Expected immediate in instruction", addi.sourceLocation())
-            .build());
+    );
 
     // The order of the parameters is important.
     // In the loop, we construct the arguments. We set the source registers to the zero registers.
@@ -146,7 +145,7 @@ public class GenerateConstantMaterialisationPass extends Pass {
             () -> Diagnostic.error("Could not detect how the register field is used.",
                     fieldRefNode.sourceLocation())
                 .note("A register field can be used as source, destination or both.")
-                .build());
+        );
 
         switch (Objects.requireNonNull(registerUsage)) {
           case BOTH ->
@@ -192,7 +191,7 @@ public class GenerateConstantMaterialisationPass extends Pass {
         .map(x -> ((HasRegisterFile) x).registerFile())
         .findFirst(), () -> Diagnostic.error(
         "Cannot find a register file. This field is not used as a register index.",
-        fieldRefNode.sourceLocation()).build());
+        fieldRefNode.sourceLocation()));
     return ensurePresent(Arrays.stream(registerFile.constraints())
         .filter(constraint -> constraint.value().intValue() == 0)
         .findFirst(), () -> Diagnostic.error(
@@ -204,6 +203,6 @@ public class GenerateConstantMaterialisationPass extends Pass {
                 +
                 "instruction. It tries to set the source register to zero, but was not able "
                 + "to do so because a zero register is missing.")
-        .build());
+    );
   }
 }

@@ -116,7 +116,7 @@ public abstract class AbstractPseudoInstructionArgumentReplacementPass extends P
 
           // Get all the fields in the instruction.
           machineInstructionBehavior.getNodes(FieldRefNode.class)
-              .filter(x -> x.formatField() == formatField)
+              .filter(x -> x.formatField().equals(formatField))
               .forEach(occurrence -> {
                 // Edge case:
                 // When we have the following pseudo instruction. Note that "r1" is replaced
