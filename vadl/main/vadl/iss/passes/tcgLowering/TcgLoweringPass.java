@@ -3,7 +3,9 @@ package vadl.iss.passes.tcgLowering;
 import static vadl.utils.GraphUtils.getSingleNode;
 
 import java.io.IOException;
+import java.util.HashSet;
 import java.util.Objects;
+import java.util.Set;
 import org.jetbrains.annotations.Nullable;
 import vadl.configuration.IssConfiguration;
 import vadl.iss.passes.AbstractIssPass;
@@ -68,14 +70,19 @@ public class TcgLoweringPass extends AbstractIssPass {
 class TcgLoweringExecutor extends GraphProcessor {
 
   Instruction instruction;
+  StartNode insnStartNode;
   InstrEndNode insnEndNode;
   DirectionalNode lastNode;
+
+  Set<TcgV> tempVars;
 
 
   TcgLoweringExecutor(Instruction instruction) {
     this.instruction = instruction;
-    this.lastNode = getSingleNode(instruction.behavior(), StartNode.class);
+    this.insnStartNode = getSingleNode(instruction.behavior(), StartNode.class);
+    this.lastNode = insnStartNode;
     this.insnEndNode = getSingleNode(instruction.behavior(), InstrEndNode.class);
+    this.tempVars = new HashSet<>();
   }
 
   protected void run() {
@@ -87,6 +94,9 @@ class TcgLoweringExecutor extends GraphProcessor {
         new InstrEndNode(new NodeList<>())
     );
     insnEndNode.replaceAndDelete(newEndNode);
+
+    // this pass inserts all TcgGetTemp nodes necessary
+    insertTemporaryVariableRetrievals();
   }
 
   @Override
@@ -121,7 +131,7 @@ class TcgLoweringExecutor extends GraphProcessor {
     } else if (toProcess instanceof FieldRefNode) {
       return toProcess;
     } else if (toProcess instanceof ConstantNode) {
-      // TODO: @jozott Make sense of this
+      // TODO: @jzottele Make sense of this
       return toProcess;
     } else {
       throw new ViamGraphError("node not yet supported by tcg lowering")
@@ -134,22 +144,22 @@ class TcgLoweringExecutor extends GraphProcessor {
     var addressRepl = processedNodes.get(toProcess.address());
     toProcess.ensure(addressRepl instanceof ExpressionNode, "unexpected TctNode as input");
 
-    // TODO: @jozott Don't hardcode type!
+    // TODO: @jzottele Don't hardcode type!
     var width = TcgWidth.i64;
+    var tcgVar = genVar(width);
     return new TcgGetVar.TcgGetRegFile(
         toProcess.registerFile(), (ExpressionNode) addressRepl,
         TcgGetVar.TcgGetRegFile.Kind.SRC,
-        TcgV.gen(width)
+        tcgVar
     );
   }
 
   private Node process(WriteRegFileNode toProcess) {
     var valRepl = getResultOf(toProcess.value(), TcgOpNode.class);
 
-    // TODO: @jozott Don't hardcode type!
+    // TODO: @jzottele Don't hardcode type!
     var width = TcgWidth.i64;
-    // TODO: @jozott Don't hardcode result var!
-    var res = TcgV.gen(width);
+    var res = genVar(width);
     return new TcgMoveNode(
         res, valRepl.res(), width);
   }
@@ -165,7 +175,7 @@ class TcgLoweringExecutor extends GraphProcessor {
         .toList();
 
     if (call.builtIn() == BuiltInTable.ADD) {
-      // TODO: @jozott Don't hardcode width!
+      // TODO: @jzottele Don't hardcode width!
       var width = TcgWidth.i64;
       var res = TcgV.gen(width);
       return new TcgAddNode(res, args.get(0).res(), args.get(1).res(), width);
@@ -177,4 +187,18 @@ class TcgLoweringExecutor extends GraphProcessor {
   }
 
 
+  private void insertTemporaryVariableRetrievals() {
+    for (var tcgVar : tempVars) {
+      var getTmp = new TcgGetVar.TcgGetTemp(tcgVar);
+      insnStartNode.addAfter(getTmp);
+    }
+  }
+
+  private TcgV genVar(TcgWidth width) {
+    var tcgVar = TcgV.gen(width);
+    tempVars.add(tcgVar);
+    return tcgVar;
+  }
+
 }
+

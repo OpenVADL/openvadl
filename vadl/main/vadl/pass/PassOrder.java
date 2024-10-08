@@ -461,7 +461,7 @@ public final class PassOrder {
 
 
     if (config.doDump()) {
-      order.add(new HtmlDumpPass(HtmlDumpPass.Config.from(config, "ISS Generation Dump", """
+      order.add(new HtmlDumpPass(HtmlDumpPass.Config.from(config, "ISS Lowering Dump", """
           This dump is executed after the iss transformation passes were executed.
           """)));
     }

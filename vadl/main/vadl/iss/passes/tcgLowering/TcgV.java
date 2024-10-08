@@ -28,6 +28,7 @@ public class TcgV {
 
   private static AtomicInteger counter = new AtomicInteger(0);
 
+  // TODO: @jzottele Maybe remove this
   public static TcgV gen(TcgWidth width) {
     var c = counter.getAndIncrement();
     return new TcgV("v" + c, width);

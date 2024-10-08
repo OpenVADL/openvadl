@@ -5,6 +5,7 @@ import java.io.StringWriter;
 import java.io.Writer;
 import java.nio.file.Path;
 import java.util.Map;
+import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
 import org.thymeleaf.TemplateEngine;
 import org.thymeleaf.context.Context;
@@ -92,9 +93,9 @@ public abstract class AbstractTemplateRenderingPass extends Pass {
     return new PassName("EmitFile " + getOutputPath());
   }
 
-  @Nullable
+  @Nonnull
   @Override
-  public Object execute(final PassResults passResults, Specification viam)
+  public Result execute(final PassResults passResults, Specification viam)
       throws IOException {
 
     var writer =
