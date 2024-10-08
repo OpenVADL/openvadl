@@ -11,8 +11,6 @@ import org.jetbrains.annotations.Nullable;
 import vadl.configuration.GeneralConfiguration;
 import vadl.error.DeferredDiagnosticStore;
 import vadl.error.Diagnostic;
-import vadl.lcb.passes.llvmLowering.domain.ConstantMatPseudoInstruction;
-import vadl.lcb.passes.llvmLowering.domain.PseudoFuncParamNode;
 import vadl.pass.Pass;
 import vadl.pass.PassResults;
 import vadl.utils.Pair;

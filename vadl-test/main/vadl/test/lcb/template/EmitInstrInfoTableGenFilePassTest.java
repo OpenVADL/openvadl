@@ -103,32 +103,17 @@ public class EmitInstrInfoTableGenFilePassTest extends AbstractLcbTest {
         }
                 
                 
-                
-        class RV64IM_Itype_imm<ValueType ty> : Operand<ty>
+        class RV64IM_Ftype_sft<ValueType ty> : Operand<ty>
         {
-          let EncoderMethod = "RV64IM_Itype_immS_encoding_wrapper";
-          let DecoderMethod = "RV64IM_Itype_immS_decode_wrapper";
+          let EncoderMethod = "RV64IM_Ftype_shamt_encoding_wrapper";
+          let DecoderMethod = "RV64IM_Ftype_shamt_decode_wrapper";
         }
                 
-        def RV64IM_Itype_immAsInt64
-            : RV64IM_Itype_imm<i64>
-            , ImmLeaf<i64, [{ return RV64IM_Itype_immS_predicate(Imm); }]>;
+        def RV64IM_Ftype_sftAsInt64
+            : RV64IM_Ftype_sft<i64>
+            , ImmLeaf<i64, [{ return RV64IM_Ftype_shamt_predicate(Imm); }]>;
                 
-        def RV64IM_Itype_immAsLabel : RV64IM_Itype_imm<OtherVT>;
-                
-                
-        class RV64IM_Stype_imm<ValueType ty> : Operand<ty>
-        {
-          let EncoderMethod = "RV64IM_Stype_immS_encoding_wrapper";
-          let DecoderMethod = "RV64IM_Stype_immS_decode_wrapper";
-        }
-                
-        def RV64IM_Stype_immAsInt64
-            : RV64IM_Stype_imm<i64>
-            , ImmLeaf<i64, [{ return RV64IM_Stype_immS_predicate(Imm); }]>;
-                
-        def RV64IM_Stype_immAsLabel : RV64IM_Stype_imm<OtherVT>;
-                
+        def RV64IM_Ftype_sftAsLabel : RV64IM_Ftype_sft<OtherVT>;
                 
         class RV64IM_Btype_imm<ValueType ty> : Operand<ty>
         {
@@ -142,7 +127,183 @@ public class EmitInstrInfoTableGenFilePassTest extends AbstractLcbTest {
                 
         def RV64IM_Btype_immAsLabel : RV64IM_Btype_imm<OtherVT>;
                 
+        class RV64IM_Stype_imm<ValueType ty> : Operand<ty>
+        {
+          let EncoderMethod = "RV64IM_Stype_immS_encoding_wrapper";
+          let DecoderMethod = "RV64IM_Stype_immS_decode_wrapper";
+        }
                 
+        def RV64IM_Stype_immAsInt64
+            : RV64IM_Stype_imm<i64>
+            , ImmLeaf<i64, [{ return RV64IM_Stype_immS_predicate(Imm); }]>;
+                
+        def RV64IM_Stype_immAsLabel : RV64IM_Stype_imm<OtherVT>;
+                
+        class RV64IM_Rtype_rs2<ValueType ty> : Operand<ty>
+        {
+          let EncoderMethod = "RV64IM_Rtype_shamt_encoding_wrapper";
+          let DecoderMethod = "RV64IM_Rtype_shamt_decode_wrapper";
+        }
+                
+        def RV64IM_Rtype_rs2AsInt64
+            : RV64IM_Rtype_rs2<i64>
+            , ImmLeaf<i64, [{ return RV64IM_Rtype_shamt_predicate(Imm); }]>;
+                
+        def RV64IM_Rtype_rs2AsLabel : RV64IM_Rtype_rs2<OtherVT>;
+                
+        class RV64IM_Itype_imm<ValueType ty> : Operand<ty>
+        {
+          let EncoderMethod = "RV64IM_Itype_immS_encoding_wrapper";
+          let DecoderMethod = "RV64IM_Itype_immS_decode_wrapper";
+        }
+                
+        def RV64IM_Itype_immAsInt64
+            : RV64IM_Itype_imm<i64>
+            , ImmLeaf<i64, [{ return RV64IM_Itype_immS_predicate(Imm); }]>;
+                
+        def RV64IM_Itype_immAsLabel : RV64IM_Itype_imm<OtherVT>;
+                
+        class RV64IM_Utype_imm<ValueType ty> : Operand<ty>
+        {
+          let EncoderMethod = "RV64IM_Utype_immU_encoding_wrapper";
+          let DecoderMethod = "RV64IM_Utype_immU_decode_wrapper";
+        }
+                
+        def RV64IM_Utype_immAsInt64
+            : RV64IM_Utype_imm<i64>
+            , ImmLeaf<i64, [{ return RV64IM_Utype_immU_predicate(Imm); }]>;
+                
+        def RV64IM_Utype_immAsLabel : RV64IM_Utype_imm<OtherVT>;
+                
+        class RV64IM_Jtype_imm<ValueType ty> : Operand<ty>
+        {
+          let EncoderMethod = "RV64IM_Jtype_immS_encoding_wrapper";
+          let DecoderMethod = "RV64IM_Jtype_immS_decode_wrapper";
+        }
+                
+        def RV64IM_Jtype_immAsInt64
+            : RV64IM_Jtype_imm<i64>
+            , ImmLeaf<i64, [{ return RV64IM_Jtype_immS_predicate(Imm); }]>;
+                
+        def RV64IM_Jtype_immAsLabel : RV64IM_Jtype_imm<OtherVT>;
+                
+                
+                
+                
+        def RV64IM_Ftype_sft_const_mat : Instruction
+        {
+        let Namespace = "processorNameValue";
+                
+        let OutOperandList = ( outs X:$rd );
+        let InOperandList = ( ins RV64IM_Ftype_sftAsInt64:$imm );
+                
+        let isTerminator  = 0;
+        let isBranch      = 0;
+        let isCall        = 0;
+        let isReturn      = 0;
+        let isPseudo      = 1;
+        let isCodeGenOnly = 1;
+        let mayLoad       = 0;
+        let mayStore      = 0;
+                
+        let Constraints = "";
+        let AddedComplexity = 0;
+                
+        let Pattern = [];
+                
+        let Uses = [  ];
+        let Defs = [  ];
+        }
+                
+        def : Pat<(RV64IM_Ftype_sftAsInt64:$imm),
+                (RV64IM_Ftype_sft_const_mat RV64IM_Ftype_sftAsInt64:$imm)>;
+                
+                
+        def RV64IM_Btype_imm_const_mat : Instruction
+        {
+        let Namespace = "processorNameValue";
+                
+        let OutOperandList = ( outs X:$rd );
+        let InOperandList = ( ins RV64IM_Btype_immAsInt64:$imm );
+                
+        let isTerminator  = 0;
+        let isBranch      = 0;
+        let isCall        = 0;
+        let isReturn      = 0;
+        let isPseudo      = 1;
+        let isCodeGenOnly = 1;
+        let mayLoad       = 0;
+        let mayStore      = 0;
+                
+        let Constraints = "";
+        let AddedComplexity = 0;
+                
+        let Pattern = [];
+                
+        let Uses = [  ];
+        let Defs = [  ];
+        }
+                
+        def : Pat<(RV64IM_Btype_immAsInt64:$imm),
+                (RV64IM_Btype_imm_const_mat RV64IM_Btype_immAsInt64:$imm)>;
+                
+                
+        def RV64IM_Stype_imm_const_mat : Instruction
+        {
+        let Namespace = "processorNameValue";
+                
+        let OutOperandList = ( outs X:$rd );
+        let InOperandList = ( ins RV64IM_Stype_immAsInt64:$imm );
+                
+        let isTerminator  = 0;
+        let isBranch      = 0;
+        let isCall        = 0;
+        let isReturn      = 0;
+        let isPseudo      = 1;
+        let isCodeGenOnly = 1;
+        let mayLoad       = 0;
+        let mayStore      = 0;
+                
+        let Constraints = "";
+        let AddedComplexity = 0;
+                
+        let Pattern = [];
+                
+        let Uses = [  ];
+        let Defs = [  ];
+        }
+                
+        def : Pat<(RV64IM_Stype_immAsInt64:$imm),
+                (RV64IM_Stype_imm_const_mat RV64IM_Stype_immAsInt64:$imm)>;
+                
+                
+        def RV64IM_Rtype_rs2_const_mat : Instruction
+        {
+        let Namespace = "processorNameValue";
+                
+        let OutOperandList = ( outs X:$rd );
+        let InOperandList = ( ins RV64IM_Rtype_rs2AsInt64:$imm );
+                
+        let isTerminator  = 0;
+        let isBranch      = 0;
+        let isCall        = 0;
+        let isReturn      = 0;
+        let isPseudo      = 1;
+        let isCodeGenOnly = 1;
+        let mayLoad       = 0;
+        let mayStore      = 0;
+                
+        let Constraints = "";
+        let AddedComplexity = 0;
+                
+        let Pattern = [];
+                
+        let Uses = [  ];
+        let Defs = [  ];
+        }
+                
+        def : Pat<(RV64IM_Rtype_rs2AsInt64:$imm),
+                (RV64IM_Rtype_rs2_const_mat RV64IM_Rtype_rs2AsInt64:$imm)>;
                 
                 
         def RV64IM_Itype_imm_const_mat : Instruction
@@ -174,12 +335,12 @@ public class EmitInstrInfoTableGenFilePassTest extends AbstractLcbTest {
                 (RV64IM_Itype_imm_const_mat RV64IM_Itype_immAsInt64:$imm)>;
                 
                 
-        def RV64IM_Stype_imm_const_mat : Instruction
+        def RV64IM_Utype_imm_const_mat : Instruction
         {
         let Namespace = "processorNameValue";
                 
         let OutOperandList = ( outs X:$rd );
-        let InOperandList = ( ins RV64IM_Stype_immAsInt64:$imm );
+        let InOperandList = ( ins RV64IM_Utype_immAsInt64:$imm );
                 
         let isTerminator  = 0;
         let isBranch      = 0;
@@ -199,8 +360,37 @@ public class EmitInstrInfoTableGenFilePassTest extends AbstractLcbTest {
         let Defs = [  ];
         }
                 
-        def : Pat<(RV64IM_Stype_immAsInt64:$imm),
-                (RV64IM_Stype_imm_const_mat RV64IM_Stype_immAsInt64:$imm)>;
+        def : Pat<(RV64IM_Utype_immAsInt64:$imm),
+                (RV64IM_Utype_imm_const_mat RV64IM_Utype_immAsInt64:$imm)>;
+                
+                
+        def RV64IM_Jtype_imm_const_mat : Instruction
+        {
+        let Namespace = "processorNameValue";
+                
+        let OutOperandList = ( outs X:$rd );
+        let InOperandList = ( ins RV64IM_Jtype_immAsInt64:$imm );
+                
+        let isTerminator  = 0;
+        let isBranch      = 0;
+        let isCall        = 0;
+        let isReturn      = 0;
+        let isPseudo      = 1;
+        let isCodeGenOnly = 1;
+        let mayLoad       = 0;
+        let mayStore      = 0;
+                
+        let Constraints = "";
+        let AddedComplexity = 0;
+                
+        let Pattern = [];
+                
+        let Uses = [  ];
+        let Defs = [  ];
+        }
+                
+        def : Pat<(RV64IM_Jtype_immAsInt64:$imm),
+                (RV64IM_Jtype_imm_const_mat RV64IM_Jtype_immAsInt64:$imm)>;
                 
                 
                 

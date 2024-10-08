@@ -5,7 +5,6 @@ import vadl.configuration.GeneralConfiguration;
 import vadl.cppCodeGen.model.CppFunction;
 import vadl.gcb.passes.pseudo.AbstractPseudoExpansionFunctionGeneratorPass;
 import vadl.gcb.passes.pseudo.AbstractPseudoInstructionArgumentReplacementPass;
-import vadl.gcb.passes.pseudo.ConstMatPseudoInstructionArgumentReplacementPass;
 import vadl.lcb.passes.llvmLowering.domain.ConstantMatPseudoInstruction;
 import vadl.pass.PassName;
 import vadl.pass.PassResults;

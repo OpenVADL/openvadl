@@ -7,6 +7,7 @@ import vadl.AbstractTest;
 import vadl.lcb.codegen.model.llvm.ValueType;
 import vadl.lcb.passes.llvmLowering.tablegen.lowering.TableGenImmediateOperandRenderer;
 import vadl.lcb.passes.llvmLowering.tablegen.model.TableGenImmediateRecord;
+import vadl.types.DataType;
 import vadl.types.Type;
 import vadl.viam.Function;
 import vadl.viam.Parameter;
@@ -18,14 +19,9 @@ class TableGenImmediateRecordRendererTest extends AbstractTest {
   void shouldRenderOperand() {
     // Given
     var operand =
-        new TableGenImmediateRecord(createIdentifier("nameValue"),
-            createIdentifier("nameValue_encode"),
-            createIdentifier("nameValue_decode"),
-            createIdentifier("nameValue_predicate"),
-            ValueType.I32,
-            createFieldAccess("fieldAccessValue",
-                new Function(createIdentifier("functionValue"), new Parameter[] {},
-                    Type.dummy(), new Graph("graphValue"))));
+        new TableGenImmediateRecord(
+            createFieldAccess("nameValue", createFunction("functionNameValue", DataType.bool())),
+            Type.bool());
 
     // When
     var result = TableGenImmediateOperandRenderer.lower(operand);

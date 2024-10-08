@@ -18,7 +18,7 @@ import vadl.dump.HtmlDumpPass;
 import vadl.gcb.passes.assembly.AssemblyConcatBuiltinMergingPass;
 import vadl.gcb.passes.assembly.AssemblyReplacementNodePass;
 import vadl.gcb.passes.encoding_generation.GenerateFieldAccessEncodingFunctionPass;
-import vadl.gcb.passes.pseudo.ConstMatPseudoInstructionArgumentReplacementPass;
+import vadl.lcb.passes.llvmLowering.ConstMatPseudoInstructionArgumentReplacementPass;
 import vadl.gcb.passes.pseudo.PseudoExpansionFunctionGeneratorPass;
 import vadl.gcb.passes.pseudo.PseudoInstructionArgumentReplacementPass;
 import vadl.gcb.passes.relocation.IdentifyFieldUsagePass;

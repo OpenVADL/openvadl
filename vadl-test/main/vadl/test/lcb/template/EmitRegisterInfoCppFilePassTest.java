@@ -81,13 +81,68 @@ public class EmitRegisterInfoCppFilePassTest extends AbstractLcbTest {
             markSuperRegs(Reserved, rv64im::X2); // stack pointer
             markSuperRegs(Reserved, rv64im::X3); // global pointer
                 
-            // TODO: Add constant registers
+           \s
+            markSuperRegs(Reserved,  rv64im::X0);
+           \s
+                
             assert(checkAllSuperRegsMarked(Reserved));
                 
             return Reserved;
         }
                 
                 
+        bool eliminateFrameIndexADDI
+            ( MachineBasicBlock::iterator II
+            , int SPAdj
+            , unsigned FIOperandNum
+            , unsigned FrameReg
+            , StackOffset FrameIndexOffset
+            , RegScavenger *RS
+            )
+        {
+            MachineInstr &MI = *II;
+            assert(  MI.getOperand(FIOperandNum).isFI() && "Frame Index operand position does not match expected position!" );
+            assert(  MI.getOperand(FIOperandNum + 1).isImm() && "Immediate operand position does not match expected position!" );
+                
+            MachineOperand &FIOp = MI.getOperand(FIOperandNum);
+            MachineOperand &ImmOp = MI.getOperand(FIOperandNum + 1);
+                
+            int Offset = FrameIndexOffset.getFixed() + ImmOp.getImm();
+                
+            //
+            // try to inline the offset into the instruction
+            //
+                
+            if(RV64IM_Itype_immS_predicate(Offset))
+            {
+                // immediate can be encoded and instruction can be inlined.
+                FIOp.ChangeToRegister( FrameReg, false /* isDef */ );
+                ImmOp.setImm( Offset );
+                return false; // success
+            }
+                
+                
+            DebugLoc DL = MI.getDebugLoc();
+            MachineBasicBlock &MBB = *MI.getParent();
+            MachineFunction *MF = MBB.getParent();
+            MachineRegisterInfo &MRI = MF->getRegInfo();
+            const rv64imInstrInfo *TII = MF->getSubtarget<rv64imSubtarget>().getInstrInfo();
+                
+            //
+            // try to generate a scratch register and adjust frame register with given offset
+            //
+                
+            Register ScratchReg = MRI.createVirtualRegister(&rv64im::XRegClass);
+            if(TII->adjustReg(MBB, II, DL, ScratchReg, FrameReg, Offset) == false) // MachineInstr::MIFlag Flag
+            {
+                // the scratch register can properly be manipulated and used as address register.
+                FIOp.ChangeToRegister( ScratchReg, false /*isDef*/, false /*isImpl*/, true /*isKill*/ );
+                ImmOp.setImm( 0 );
+                return false; // success
+            }
+                
+            return true; // failure
+        }
         bool eliminateFrameIndexLB
             ( MachineBasicBlock::iterator II
             , int SPAdj
@@ -97,12 +152,12 @@ public class EmitRegisterInfoCppFilePassTest extends AbstractLcbTest {
             , RegScavenger *RS
             )
         {
-            // sanity check for generated code
-            assert( FIOperandNum == 1 && "Frame Index operand position does not match expected position!" );
-                
             MachineInstr &MI = *II;
-            MachineOperand &FIOp = MI.getOperand(1);
-            MachineOperand &ImmOp = MI.getOperand(2);
+            assert(  MI.getOperand(FIOperandNum).isFI() && "Frame Index operand position does not match expected position!" );
+            assert(  MI.getOperand(FIOperandNum + 1).isImm() && "Immediate operand position does not match expected position!" );
+                
+            MachineOperand &FIOp = MI.getOperand(FIOperandNum);
+            MachineOperand &ImmOp = MI.getOperand(FIOperandNum + 1);
                 
             int Offset = FrameIndexOffset.getFixed() + ImmOp.getImm();
                 
@@ -149,12 +204,12 @@ public class EmitRegisterInfoCppFilePassTest extends AbstractLcbTest {
             , RegScavenger *RS
             )
         {
-            // sanity check for generated code
-            assert( FIOperandNum == 1 && "Frame Index operand position does not match expected position!" );
-                
             MachineInstr &MI = *II;
-            MachineOperand &FIOp = MI.getOperand(1);
-            MachineOperand &ImmOp = MI.getOperand(2);
+            assert(  MI.getOperand(FIOperandNum).isFI() && "Frame Index operand position does not match expected position!" );
+            assert(  MI.getOperand(FIOperandNum + 1).isImm() && "Immediate operand position does not match expected position!" );
+                
+            MachineOperand &FIOp = MI.getOperand(FIOperandNum);
+            MachineOperand &ImmOp = MI.getOperand(FIOperandNum + 1);
                 
             int Offset = FrameIndexOffset.getFixed() + ImmOp.getImm();
                 
@@ -201,12 +256,12 @@ public class EmitRegisterInfoCppFilePassTest extends AbstractLcbTest {
             , RegScavenger *RS
             )
         {
-            // sanity check for generated code
-            assert( FIOperandNum == 1 && "Frame Index operand position does not match expected position!" );
-                
             MachineInstr &MI = *II;
-            MachineOperand &FIOp = MI.getOperand(1);
-            MachineOperand &ImmOp = MI.getOperand(2);
+            assert(  MI.getOperand(FIOperandNum).isFI() && "Frame Index operand position does not match expected position!" );
+            assert(  MI.getOperand(FIOperandNum + 1).isImm() && "Immediate operand position does not match expected position!" );
+                
+            MachineOperand &FIOp = MI.getOperand(FIOperandNum);
+            MachineOperand &ImmOp = MI.getOperand(FIOperandNum + 1);
                 
             int Offset = FrameIndexOffset.getFixed() + ImmOp.getImm();
                 
@@ -253,12 +308,12 @@ public class EmitRegisterInfoCppFilePassTest extends AbstractLcbTest {
             , RegScavenger *RS
             )
         {
-            // sanity check for generated code
-            assert( FIOperandNum == 1 && "Frame Index operand position does not match expected position!" );
-                
             MachineInstr &MI = *II;
-            MachineOperand &FIOp = MI.getOperand(1);
-            MachineOperand &ImmOp = MI.getOperand(2);
+            assert(  MI.getOperand(FIOperandNum).isFI() && "Frame Index operand position does not match expected position!" );
+            assert(  MI.getOperand(FIOperandNum + 1).isImm() && "Immediate operand position does not match expected position!" );
+                
+            MachineOperand &FIOp = MI.getOperand(FIOperandNum);
+            MachineOperand &ImmOp = MI.getOperand(FIOperandNum + 1);
                 
             int Offset = FrameIndexOffset.getFixed() + ImmOp.getImm();
                 
@@ -305,12 +360,12 @@ public class EmitRegisterInfoCppFilePassTest extends AbstractLcbTest {
             , RegScavenger *RS
             )
         {
-            // sanity check for generated code
-            assert( FIOperandNum == 1 && "Frame Index operand position does not match expected position!" );
-                
             MachineInstr &MI = *II;
-            MachineOperand &FIOp = MI.getOperand(1);
-            MachineOperand &ImmOp = MI.getOperand(2);
+            assert(  MI.getOperand(FIOperandNum).isFI() && "Frame Index operand position does not match expected position!" );
+            assert(  MI.getOperand(FIOperandNum + 1).isImm() && "Immediate operand position does not match expected position!" );
+                
+            MachineOperand &FIOp = MI.getOperand(FIOperandNum);
+            MachineOperand &ImmOp = MI.getOperand(FIOperandNum + 1);
                 
             int Offset = FrameIndexOffset.getFixed() + ImmOp.getImm();
                 
@@ -357,12 +412,12 @@ public class EmitRegisterInfoCppFilePassTest extends AbstractLcbTest {
             , RegScavenger *RS
             )
         {
-            // sanity check for generated code
-            assert( FIOperandNum == 1 && "Frame Index operand position does not match expected position!" );
-                
             MachineInstr &MI = *II;
-            MachineOperand &FIOp = MI.getOperand(1);
-            MachineOperand &ImmOp = MI.getOperand(2);
+            assert(  MI.getOperand(FIOperandNum).isFI() && "Frame Index operand position does not match expected position!" );
+            assert(  MI.getOperand(FIOperandNum + 1).isImm() && "Immediate operand position does not match expected position!" );
+                
+            MachineOperand &FIOp = MI.getOperand(FIOperandNum);
+            MachineOperand &ImmOp = MI.getOperand(FIOperandNum + 1);
                 
             int Offset = FrameIndexOffset.getFixed() + ImmOp.getImm();
                 
@@ -409,12 +464,12 @@ public class EmitRegisterInfoCppFilePassTest extends AbstractLcbTest {
             , RegScavenger *RS
             )
         {
-            // sanity check for generated code
-            assert( FIOperandNum == 1 && "Frame Index operand position does not match expected position!" );
-                
             MachineInstr &MI = *II;
-            MachineOperand &FIOp = MI.getOperand(1);
-            MachineOperand &ImmOp = MI.getOperand(2);
+            assert(  MI.getOperand(FIOperandNum).isFI() && "Frame Index operand position does not match expected position!" );
+            assert(  MI.getOperand(FIOperandNum + 1).isImm() && "Immediate operand position does not match expected position!" );
+                
+            MachineOperand &FIOp = MI.getOperand(FIOperandNum);
+            MachineOperand &ImmOp = MI.getOperand(FIOperandNum + 1);
                 
             int Offset = FrameIndexOffset.getFixed() + ImmOp.getImm();
                 
@@ -461,12 +516,12 @@ public class EmitRegisterInfoCppFilePassTest extends AbstractLcbTest {
             , RegScavenger *RS
             )
         {
-            // sanity check for generated code
-            assert( FIOperandNum == 1 && "Frame Index operand position does not match expected position!" );
-                
             MachineInstr &MI = *II;
-            MachineOperand &FIOp = MI.getOperand(1);
-            MachineOperand &ImmOp = MI.getOperand(2);
+            assert(  MI.getOperand(FIOperandNum).isFI() && "Frame Index operand position does not match expected position!" );
+            assert(  MI.getOperand(FIOperandNum + 2).isImm() && "Immediate operand position does not match expected position!" );
+                
+            MachineOperand &FIOp = MI.getOperand(FIOperandNum);
+            MachineOperand &ImmOp = MI.getOperand(FIOperandNum + 2);
                 
             int Offset = FrameIndexOffset.getFixed() + ImmOp.getImm();
                 
@@ -513,12 +568,12 @@ public class EmitRegisterInfoCppFilePassTest extends AbstractLcbTest {
             , RegScavenger *RS
             )
         {
-            // sanity check for generated code
-            assert( FIOperandNum == 1 && "Frame Index operand position does not match expected position!" );
-                
             MachineInstr &MI = *II;
-            MachineOperand &FIOp = MI.getOperand(1);
-            MachineOperand &ImmOp = MI.getOperand(2);
+            assert(  MI.getOperand(FIOperandNum).isFI() && "Frame Index operand position does not match expected position!" );
+            assert(  MI.getOperand(FIOperandNum + 2).isImm() && "Immediate operand position does not match expected position!" );
+                
+            MachineOperand &FIOp = MI.getOperand(FIOperandNum);
+            MachineOperand &ImmOp = MI.getOperand(FIOperandNum + 2);
                 
             int Offset = FrameIndexOffset.getFixed() + ImmOp.getImm();
                 
@@ -565,12 +620,12 @@ public class EmitRegisterInfoCppFilePassTest extends AbstractLcbTest {
             , RegScavenger *RS
             )
         {
-            // sanity check for generated code
-            assert( FIOperandNum == 1 && "Frame Index operand position does not match expected position!" );
-                
             MachineInstr &MI = *II;
-            MachineOperand &FIOp = MI.getOperand(1);
-            MachineOperand &ImmOp = MI.getOperand(2);
+            assert(  MI.getOperand(FIOperandNum).isFI() && "Frame Index operand position does not match expected position!" );
+            assert(  MI.getOperand(FIOperandNum + 2).isImm() && "Immediate operand position does not match expected position!" );
+                
+            MachineOperand &FIOp = MI.getOperand(FIOperandNum);
+            MachineOperand &ImmOp = MI.getOperand(FIOperandNum + 2);
                 
             int Offset = FrameIndexOffset.getFixed() + ImmOp.getImm();
                 
@@ -617,12 +672,12 @@ public class EmitRegisterInfoCppFilePassTest extends AbstractLcbTest {
             , RegScavenger *RS
             )
         {
-            // sanity check for generated code
-            assert( FIOperandNum == 1 && "Frame Index operand position does not match expected position!" );
-                
             MachineInstr &MI = *II;
-            MachineOperand &FIOp = MI.getOperand(1);
-            MachineOperand &ImmOp = MI.getOperand(2);
+            assert(  MI.getOperand(FIOperandNum).isFI() && "Frame Index operand position does not match expected position!" );
+            assert(  MI.getOperand(FIOperandNum + 2).isImm() && "Immediate operand position does not match expected position!" );
+                
+            MachineOperand &FIOp = MI.getOperand(FIOperandNum);
+            MachineOperand &ImmOp = MI.getOperand(FIOperandNum + 2);
                 
             int Offset = FrameIndexOffset.getFixed() + ImmOp.getImm();
                 
@@ -695,6 +750,11 @@ public class EmitRegisterInfoCppFilePassTest extends AbstractLcbTest {
             switch (MI.getOpcode())
             {
                \s
+                case rv64im::ADDI:
+                {
+                  error = eliminateFrameIndexADDI(II, SPAdj, FIOperandNum, FrameReg, FrameIndexOffset, RS);
+                  break;
+                }
                 case rv64im::LB:
                 {
                   error = eliminateFrameIndexLB(II, SPAdj, FIOperandNum, FrameReg, FrameIndexOffset, RS);
