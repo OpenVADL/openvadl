@@ -69,6 +69,11 @@ public class EmitInstrInfoTableGenFilePass extends LcbTemplateRenderingPass {
         .map(TableGenInstructionRenderer::lower)
         .toList();
 
+    var renderedTableGenConstMatRecords = tableGenConstMatRecords
+        .stream()
+        .map(TableGenInstructionRenderer::lower)
+        .toList();
+
     return Map.of(CommonVarNames.NAMESPACE, specification.simpleName(),
         "stackPointerType",
         ValueType.from(abi.stackPointer().registerFile().resultType()).get().getLlvmType(),
