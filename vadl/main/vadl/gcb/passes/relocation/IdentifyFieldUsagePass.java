@@ -123,6 +123,9 @@ public class IdentifyFieldUsagePass extends Pass {
       return obj;
     }
 
+    public Map<Format, IdentityHashMap<Field, FieldUsage>> getFieldUsages() {
+      return fieldUsage;
+    }
 
     /**
      * Get a result by format.
@@ -145,10 +148,6 @@ public class IdentifyFieldUsagePass extends Pass {
           .filter(x -> x.getValue() == FieldUsage.IMMEDIATE)
           .map(Map.Entry::getKey)
           .toList();
-    }
-
-    public Map<Format, IdentityHashMap<Field, FieldUsage>> getFieldUsages() {
-      return fieldUsage;
     }
   }
 
