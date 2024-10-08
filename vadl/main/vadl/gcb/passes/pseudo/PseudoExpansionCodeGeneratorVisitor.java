@@ -21,7 +21,9 @@ import vadl.gcb.passes.relocation.IdentifyFieldUsagePass;
 import vadl.gcb.passes.relocation.model.ElfRelocation;
 import vadl.utils.Pair;
 import vadl.viam.Format;
+import vadl.viam.Identifier;
 import vadl.viam.Instruction;
+import vadl.viam.PseudoInstruction;
 import vadl.viam.Relocation;
 import vadl.viam.ViamError;
 import vadl.viam.graph.HasRegisterFile;
@@ -44,6 +46,7 @@ public class PseudoExpansionCodeGeneratorVisitor extends GenericCppCodeGenerator
   private final Map<Format.Field, CppFunction> immediateDecodings;
   private final Map<Format.Field, VariantKind> immVariants;
   private final List<ElfRelocation> relocations;
+  private final PseudoInstruction pseudoInstruction;
 
   /**
    * Constructor.
@@ -53,13 +56,15 @@ public class PseudoExpansionCodeGeneratorVisitor extends GenericCppCodeGenerator
                                                  fieldUsages,
                                              Map<Format.Field, CppFunction> immediateDecodings,
                                              Map<Format.Field, VariantKind> immVariants,
-                                             List<ElfRelocation> relocations) {
+                                             List<ElfRelocation> relocations,
+                                             PseudoInstruction pseudoInstruction) {
     super(writer);
     this.namespace = namespace;
     this.fieldUsages = fieldUsages;
     this.immediateDecodings = immediateDecodings;
     this.immVariants = immVariants;
     this.relocations = relocations;
+    this.pseudoInstruction = pseudoInstruction;
   }
 
   /**
@@ -88,6 +93,20 @@ public class PseudoExpansionCodeGeneratorVisitor extends GenericCppCodeGenerator
     return result;
   }
 
+
+  private int getOperandIndexFromPseudoInstruction(Identifier parameter) {
+    for (int i = 0; i < pseudoInstruction.parameters().length; i++) {
+      if (parameter.simpleName()
+          .equals(pseudoInstruction.parameters()[i].identifier.simpleName())) {
+        return i;
+      }
+    }
+
+    throw Diagnostic.error(
+        "Cannot extract the pseudo instruction's operand index for this parameter",
+        parameter.sourceLocation()).build();
+  }
+
   @Override
   public void visit(InstrCallNode instrCallNode) {
     var sym = symbolTable.getNextVariable();
@@ -101,23 +120,27 @@ public class PseudoExpansionCodeGeneratorVisitor extends GenericCppCodeGenerator
 
     var reorderedPairs = reorderParameters(instrCallNode.target().format(), pairs);
 
-    for (int index = 0; index < reorderedPairs.size(); index++) {
-      var field = reorderedPairs.get(index).left();
-      var argument = reorderedPairs.get(index).right();
+    reorderedPairs.forEach(pair -> {
+      var field = pair.left();
+      var argument = pair.right();
 
       if (argument instanceof ConstantNode cn) {
         lowerExpression(instrCallNode.target(), sym, field, cn);
       } else if (argument instanceof FuncCallNode fn) {
+        var pseudoInstructionIndex = getOperandIndexFromPseudoInstruction(fn.function().identifier);
         ensure(fn.function() instanceof Relocation,
             () -> Diagnostic.error("Function must be a relocation", fn.sourceLocation()).build());
-        lowerExpressionWithRelocation(sym, field, index, (Relocation) fn.function());
-      } else if (argument instanceof FuncParamNode) {
-        lowerExpressionWithImmOrRegister(sym, field, index);
+        lowerExpressionWithRelocation(sym, field, pseudoInstructionIndex,
+            (Relocation) fn.function());
+      } else if (argument instanceof FuncParamNode funcParamNode) {
+        var pseudoInstructionIndex =
+            getOperandIndexFromPseudoInstruction(funcParamNode.parameter().identifier);
+        lowerExpressionWithImmOrRegister(sym, field, pseudoInstructionIndex);
       } else {
         throw Diagnostic.error("Not implemented for this node type.", argument.sourceLocation())
             .build();
       }
-    }
+    });
 
     writer.write(String.format("result.push_back(%s);\n", sym));
   }

@@ -41,6 +41,7 @@ import vadl.viam.graph.dependency.ExpressionNode;
 import vadl.viam.graph.dependency.FieldRefNode;
 import vadl.viam.graph.dependency.FuncParamNode;
 import vadl.viam.graph.dependency.ReadResourceNode;
+import vadl.viam.graph.dependency.WriteRegFileNode;
 import vadl.viam.graph.dependency.WriteResourceNode;
 
 /**
@@ -83,13 +84,37 @@ public class GenerateConstantMaterialisationPass extends Pass {
       var name = addi.identifier.append(imm.rawName() + "_const_mat");
       var copy = addi.behavior().copy();
       var graph = setupGraph(fieldUsages, name, copy, addi);
+      var parameters = createParameters(copy);
       var instruction =
           new ConstantMatPseudoInstruction(name,
-              new Parameter[] {}, graph, addi.assembly(), imm);
+              parameters, graph, addi.assembly(), imm);
       constantMatInstructions.add(instruction);
     }
 
     return constantMatInstructions;
+  }
+
+  private Parameter[] createParameters(Graph copy) {
+    var rawRd = ensurePresent(
+        copy.getNodes(WriteRegFileNode.class).map(WriteRegFileNode::address).findFirst(),
+        () -> Diagnostic.error("Destination register write must exist.", copy.sourceLocation())
+            .build());
+    ensure(rawRd instanceof FieldRefNode,
+        () -> Diagnostic.error("Address of register write must be a field",
+            rawRd.sourceLocation()).build());
+    FieldRefNode rd = (FieldRefNode) rawRd;
+
+    var imm =
+        ensurePresent(copy.getNodes(FieldRefNode.class).filter(fieldRefNode -> fieldRefNode.usages()
+                    .allMatch(
+                        usage -> !(usage instanceof WriteResourceNode ||
+                            usage instanceof ReadResourceNode)))
+                .findFirst(),
+            () -> Diagnostic.error("Immediate required for instruction", copy.sourceLocation())
+                .build());
+
+    return new Parameter[] {new Parameter(rd.formatField().identifier, rd.type()),
+        new Parameter(imm.formatField().identifier, imm.type())};
   }
 
   private Graph setupGraph(IdentifyFieldUsagePass.ImmediateDetectionContainer fieldUsages,

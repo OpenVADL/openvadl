@@ -24,6 +24,7 @@ public class PseudoExpansionCodeGenerator extends LcbCodeGenerator {
   private final Map<Format.Field, CppFunction> immediateDecodings;
   private final Map<Format.Field, VariantKind> variants;
   private final List<ElfRelocation> relocations;
+  private final PseudoInstruction pseudoInstruction;
 
   /**
    * Constructor.
@@ -32,12 +33,14 @@ public class PseudoExpansionCodeGenerator extends LcbCodeGenerator {
                                       IdentifyFieldUsagePass.ImmediateDetectionContainer fieldUsages,
                                       Map<Format.Field, CppFunction> immediateDecodings,
                                       Map<Format.Field, VariantKind> variants,
-                                      List<ElfRelocation> relocations) {
+                                      List<ElfRelocation> relocations,
+                                      PseudoInstruction pseudoInstruction) {
     this.namespace = namespace;
     this.fieldUsages = fieldUsages;
     this.immediateDecodings = immediateDecodings;
     this.variants = variants;
     this.relocations = relocations;
+    this.pseudoInstruction = pseudoInstruction;
   }
 
   @Override
@@ -52,7 +55,7 @@ public class PseudoExpansionCodeGenerator extends LcbCodeGenerator {
     writer.write("std::vector< MCInst > result;\n");
     var visitor =
         new PseudoExpansionCodeGeneratorVisitor(writer, namespace, fieldUsages,
-            immediateDecodings, variants, relocations);
+            immediateDecodings, variants, relocations, pseudoInstruction);
     instrCallNodes.forEach(visitor::visit);
     writer.write("return result");
     return writer.toString();

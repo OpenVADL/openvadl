@@ -92,7 +92,8 @@ public class EmitMCInstExpanderCppFilePass extends LcbTemplateRenderingPass {
             fieldUsages,
             ImmediateDecodingFunctionProvider.generateDecodeFunctions(passResults),
             variants,
-            relocations);
+            relocations,
+            pseudoInstruction);
     var function = cppFunctions.get(pseudoInstruction);
     var classPrefix = new CppClassImplName(specification.name() + "MCInstExpander");
     ensureNonNull(function, "a function must exist");
