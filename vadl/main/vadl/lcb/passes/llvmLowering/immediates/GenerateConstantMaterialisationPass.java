@@ -164,7 +164,7 @@ public class GenerateConstantMaterialisationPass extends Pass {
                 Constant.Value.of(addressOfZeroRegister, zeroConstraint.address().type()));
             arguments.add(registerArgument);
           }
-          default -> throw new RuntimeException("not implemented")
+          default -> throw new RuntimeException("not implementedEmitMCExprCppFilePass");
         }
       }
     }
