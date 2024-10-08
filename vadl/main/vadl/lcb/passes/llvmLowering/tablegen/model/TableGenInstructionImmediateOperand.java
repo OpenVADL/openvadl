@@ -1,6 +1,7 @@
 package vadl.lcb.passes.llvmLowering.tablegen.model;
 
 import java.util.Objects;
+import org.jetbrains.annotations.Nullable;
 import vadl.lcb.passes.llvmLowering.domain.selectionDag.LlvmFieldAccessRefNode;
 import vadl.lcb.passes.llvmLowering.tablegen.model.parameterIdentity.ParameterIdentity;
 
@@ -14,6 +15,13 @@ public class TableGenInstructionImmediateOperand extends TableGenInstructionOper
                                              LlvmFieldAccessRefNode node) {
     super(node, identity);
     this.immediateOperand = node.immediateOperand();
+  }
+
+
+  public TableGenInstructionImmediateOperand(ParameterIdentity identity,
+                                             TableGenImmediateRecord immediateRecord) {
+    super(null, identity);
+    this.immediateOperand = immediateRecord;
   }
 
   public TableGenImmediateRecord immediateOperand() {

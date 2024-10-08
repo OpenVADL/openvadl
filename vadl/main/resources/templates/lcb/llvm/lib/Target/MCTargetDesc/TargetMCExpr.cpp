@@ -113,14 +113,15 @@ StringRef [(${namespace})]MCExpr::getVariantKindName(VariantKind Kind)
 
 bool [(${namespace})]MCExpr::isInternalImmExpr() const
 {
-    /*
-    «IF immediates.size > 0» switch (Kind)
+    switch(Kind)
     {
-    «FOR immediate : immediates» case «emitAsKind(immediate)»:
-        «ENDFOR» return true;
+    [# th:each="imm : ${immediates}" ]
+      case [(${imm.record.variantKind().value()})]:
+        return true;
+    [/]
+      default:
+        return false;
     }
-    «ENDIF» */
-    return false;
 }
 
 bool [(${namespace})]MCExpr::evaluateAsConstant(int64_t &Res) const
@@ -162,15 +163,12 @@ int64_t [(${namespace})]MCExpr::evaluateAsInt64(int64_t Value) const
     «ENDFOR»
 
             «ENDIF»
-
-            «IF immediates.size > 0»
-                «FOR immediate : immediates» if (Kind == «emitAsKind(immediate)» )
-    {
-        resultValue = «emitDecoderFunc(immediate)»(resultValue);
-    }
-    «ENDFOR»
-
     «ENDIF» */
 
-    return resultValue;
+    [# th:each="imm : ${immediates}" ]
+      if(Kind == [(${imm.record.variantKind().value()})])
+      {
+        resultValue = [(${imm.decoderFunctionName})](resultValue);
+      }
+    [/]
 }

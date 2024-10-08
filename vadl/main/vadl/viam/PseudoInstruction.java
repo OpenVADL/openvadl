@@ -25,6 +25,7 @@ public class PseudoInstruction extends Definition implements DefProp.WithBehavio
    * @param identifier the identifier of the pseudo instruction
    * @param parameters the list of parameters for the pseudo instruction
    * @param behavior   the behavior graph of the pseudo instruction
+   * @param assembly   the assembly of the pseudo instruction
    */
   public PseudoInstruction(
       Identifier identifier,

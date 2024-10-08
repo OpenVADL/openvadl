@@ -2,6 +2,7 @@ package vadl.viam;
 
 import java.util.Arrays;
 import java.util.Comparator;
+import java.util.List;
 import java.util.Objects;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
@@ -42,6 +43,15 @@ public class Format extends Definition implements DefProp.WithType {
 
   public Field[] fields() {
     return fields;
+  }
+
+  /**
+   * Get the {@link Field} of this format but sorted by the least significant bit in descending
+   * order.
+   */
+  public Stream<Field> fieldsSortedByLsbDesc() {
+    return Arrays.stream(fields).sorted(
+        (o1, o2) -> Integer.compare(o1.bitSlice().lsb(), o2.bitSlice.lsb()));
   }
 
   /**

@@ -1,5 +1,7 @@
 package vadl.lcb.passes.llvmLowering.strategies.instruction;
 
+import static vadl.viam.ViamError.ensureNonNull;
+
 import java.util.List;
 import java.util.function.BiFunction;
 import java.util.function.Function;
@@ -44,7 +46,8 @@ public abstract class LlvmInstructionLoweringFrameIndexHelper
                                             affectedParameterIdentity) ->
         new TableGenInstructionFrameRegisterOperand(
             affectedParameterIdentity.withType(LlvmFrameIndexSD.NAME),
-            machineInstructionParameterNode.instructionOperand().origin()
+            ensureNonNull(machineInstructionParameterNode.instructionOperand().origin(),
+                "origin must exist")
         );
 
     replaceNodeByParameterIdentity(affectedNodes,

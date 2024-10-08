@@ -1,62 +1,55 @@
 package vadl.gcb.passes.pseudo;
 
-import java.io.IOException;
+import static vadl.viam.ViamError.ensure;
+import static vadl.viam.ViamError.ensureNonNull;
+
 import java.util.IdentityHashMap;
+import java.util.Objects;
 import java.util.stream.Stream;
-import org.jetbrains.annotations.Nullable;
 import vadl.configuration.GeneralConfiguration;
-import vadl.cppCodeGen.model.CppFunction;
-import vadl.cppCodeGen.model.CppGenericType;
-import vadl.cppCodeGen.model.CppParameter;
-import vadl.cppCodeGen.model.CppType;
-import vadl.lcb.codegen.expansion.PseudoExpansionCodeGenerator;
-import vadl.pass.Pass;
+import vadl.error.Diagnostic;
 import vadl.pass.PassName;
 import vadl.pass.PassResults;
-import vadl.utils.SourceLocation;
-import vadl.viam.Function;
-import vadl.viam.Identifier;
-import vadl.viam.Parameter;
+import vadl.utils.Pair;
+import vadl.viam.Instruction;
 import vadl.viam.PseudoInstruction;
 import vadl.viam.Specification;
 import vadl.viam.graph.Graph;
 
 /**
- * The {@link PseudoExpansionCodeGenerator} requires a function to generate the expansion.
- * However, we only have a {@link Graph} as behavior. This pass wraps the graph to a
- * {@link Function}.
+ * Expand "real" pseudo instructions which are defined in the specification.
  */
-public class PseudoExpansionFunctionGeneratorPass extends Pass {
-  public PseudoExpansionFunctionGeneratorPass(
-      GeneralConfiguration configuration) {
+public class PseudoExpansionFunctionGeneratorPass
+    extends AbstractPseudoExpansionFunctionGeneratorPass {
+  public PseudoExpansionFunctionGeneratorPass(GeneralConfiguration configuration) {
     super(configuration);
   }
 
   @Override
   public PassName getName() {
-    return new PassName("pseudoExpansionFunctionGeneratorPass");
+    return new PassName("PseudoExpansionFunctionGeneratorPass");
   }
 
-  @Nullable
   @Override
-  public Object execute(PassResults passResults, Specification viam) throws IOException {
-    var result = new IdentityHashMap<PseudoInstruction, CppFunction>();
+  protected Stream<Pair<PseudoInstruction, Graph>> getApplicable(
+      PassResults passResults,
+      Specification viam) {
+    var appliedArguments =
+        (AbstractPseudoInstructionArgumentReplacementPass.Output) passResults.lastResultOf(
+            PseudoInstructionArgumentReplacementPass.class);
 
-    viam.isa()
+    // We do not use the behavior of the pseudo instruction because each InstrCallNode
+    // has the instruction behavior to the original instruction.
+    // However, we did apply the arguments, and now we want to expand the pseudo instruction
+    // with those arguments. That's why we have to use the result of a previous pass.
+    return viam.isa()
         .map(isa -> isa.ownPseudoInstructions().stream()).orElseGet(Stream::empty)
-        .forEach(pseudoInstruction -> {
-          var ty = new CppType("MCInst", true, true);
-          var param = new CppParameter(new Identifier("instruction",
-              SourceLocation.INVALID_SOURCE_LOCATION),
-              ty);
-          var function = new CppFunction(pseudoInstruction.identifier.append("expand"),
-              new Parameter[] {param},
-              new CppGenericType("std::vector", new CppType("MCInst", false, false)),
-              pseudoInstruction.behavior());
-
-          result.put(pseudoInstruction, function);
+        .map(pseudoInstruction -> {
+          var appliedInstructions = appliedArguments.appliedGraph().get(pseudoInstruction);
+          ensureNonNull(appliedInstructions,
+              () -> Diagnostic.error("There is no graph with the applied arguments.",
+                  pseudoInstruction.sourceLocation()).build());
+          return Pair.of(pseudoInstruction, Objects.requireNonNull(appliedInstructions));
         });
-
-    return result;
   }
 }

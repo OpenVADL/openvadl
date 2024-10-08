@@ -11,10 +11,11 @@ import java.util.List;
 import java.util.Optional;
 import vadl.error.DeferredDiagnosticStore;
 import vadl.error.Diagnostic;
+import vadl.gcb.passes.pseudo.PseudoFuncParamNode;
 import vadl.lcb.passes.isaMatching.InstructionLabel;
 import vadl.lcb.passes.llvmLowering.LlvmLoweringPass;
+import vadl.lcb.passes.llvmLowering.domain.LlvmLoweringPseudoRecord;
 import vadl.lcb.passes.llvmLowering.domain.LlvmLoweringRecord;
-import vadl.lcb.passes.llvmLowering.domain.PseudoFuncParamNode;
 import vadl.lcb.passes.llvmLowering.domain.RegisterRef;
 import vadl.lcb.passes.llvmLowering.domain.machineDag.MachineInstructionNode;
 import vadl.lcb.passes.llvmLowering.domain.machineDag.PseudoInstructionNode;
@@ -51,7 +52,7 @@ public class LlvmPseudoLoweringImpl {
   /**
    * Lower a {@link PseudoInstruction} into a {@link LlvmLoweringRecord}.
    */
-  public Optional<LlvmLoweringRecord> lower(
+  public Optional<LlvmLoweringPseudoRecord> lower(
       PseudoInstruction pseudo,
       HashMap<InstructionLabel, List<Instruction>> supportedInstructions) {
     ensure(!pseudo.identifier.simpleName().equals("RESERVERD_PSEUDO_RET"),
@@ -209,13 +210,14 @@ public class LlvmPseudoLoweringImpl {
         mayLoad,
         mayStore);
 
-    return Optional.of(new LlvmLoweringRecord(pseudo.behavior(),
+    return Optional.of(new LlvmLoweringPseudoRecord(pseudo.behavior(),
         inputOperands,
         outputOperands,
         flags,
         patterns,
         uses,
-        defs
+        defs,
+        appliedInstructionBehavior
     ));
   }
 

@@ -9,11 +9,10 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.function.Supplier;
 import java.util.stream.Stream;
 import vadl.configuration.LcbConfiguration;
 import vadl.error.Diagnostic;
-import vadl.gcb.passes.relocation.DetectImmediatePass;
+import vadl.gcb.passes.relocation.IdentifyFieldUsagePass;
 import vadl.lcb.passes.isaMatching.InstructionLabel;
 import vadl.lcb.passes.isaMatching.IsaMatchingPass;
 import vadl.lcb.template.CommonVarNames;
@@ -179,7 +178,7 @@ public class EmitInstrInfoCppFilePass extends LcbTemplateRenderingPass {
     }
   }
 
-  private int getImmBitSize(DetectImmediatePass.ImmediateDetectionContainer fieldUsages,
+  private int getImmBitSize(IdentifyFieldUsagePass.ImmediateDetectionContainer fieldUsages,
                             Instruction addition) {
     var fields = fieldUsages.getImmediates(addition.format());
     verifyInstructionHasOnlyOneImm(addition, fields);
@@ -197,7 +196,7 @@ public class EmitInstrInfoCppFilePass extends LcbTemplateRenderingPass {
   private List<AdjustRegCase> getAdjustCases(PassResults passResults,
                                              HashMap<InstructionLabel, List<Instruction>>
                                                  isaMatches,
-                                             DetectImmediatePass.ImmediateDetectionContainer
+                                             IdentifyFieldUsagePass.ImmediateDetectionContainer
                                                  fieldUsages) {
     var predicates = ImmediatePredicateFunctionProvider.generatePredicateFunctions(passResults);
     var addi32 = isaMatches.getOrDefault(InstructionLabel.ADDI_32, Collections.emptyList());
@@ -224,8 +223,8 @@ public class EmitInstrInfoCppFilePass extends LcbTemplateRenderingPass {
                                                 Specification specification) {
     var isaMatches = (HashMap<InstructionLabel, List<Instruction>>) passResults.lastResultOf(
         IsaMatchingPass.class);
-    var fieldUsages = (DetectImmediatePass.ImmediateDetectionContainer) passResults.lastResultOf(
-        DetectImmediatePass.class);
+    var fieldUsages = (IdentifyFieldUsagePass.ImmediateDetectionContainer) passResults.lastResultOf(
+        IdentifyFieldUsagePass.class);
     var addition = getAddition(isaMatches);
     return Map.of(CommonVarNames.NAMESPACE, specification.simpleName(),
         "copyPhysInstructions", getMovInstructions(isaMatches),

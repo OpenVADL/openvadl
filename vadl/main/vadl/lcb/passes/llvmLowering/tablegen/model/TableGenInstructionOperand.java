@@ -1,6 +1,7 @@
 package vadl.lcb.passes.llvmLowering.tablegen.model;
 
 import java.util.Objects;
+import org.jetbrains.annotations.Nullable;
 import vadl.lcb.passes.llvmLowering.tablegen.model.parameterIdentity.ParameterIdentity;
 import vadl.lcb.passes.llvmLowering.tablegen.model.parameterIdentity.ParameterTypeAndNameIdentity;
 import vadl.viam.graph.Node;
@@ -11,16 +12,17 @@ import vadl.viam.graph.Node;
  */
 public class TableGenInstructionOperand {
 
+  @Nullable
   protected final Node origin;
 
   private ParameterIdentity identity;
 
-  public TableGenInstructionOperand(Node origin, ParameterIdentity identity) {
+  public TableGenInstructionOperand(@Nullable Node origin, ParameterIdentity identity) {
     this.identity = identity;
     this.origin = origin;
   }
 
-  public TableGenInstructionOperand(Node origin, String type, String name) {
+  public TableGenInstructionOperand(@Nullable Node origin, String type, String name) {
     this(origin, new ParameterTypeAndNameIdentity(type, name));
   }
 
@@ -32,6 +34,7 @@ public class TableGenInstructionOperand {
     return identity;
   }
 
+  @Nullable
   public Node origin() {
     return origin;
   }

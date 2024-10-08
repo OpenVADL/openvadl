@@ -19,8 +19,9 @@ import vadl.gcb.passes.assembly.AssemblyConcatBuiltinMergingPass;
 import vadl.gcb.passes.assembly.AssemblyReplacementNodePass;
 import vadl.gcb.passes.encoding_generation.GenerateFieldAccessEncodingFunctionPass;
 import vadl.gcb.passes.pseudo.PseudoExpansionFunctionGeneratorPass;
-import vadl.gcb.passes.relocation.DetectImmediatePass;
+import vadl.gcb.passes.pseudo.PseudoInstructionArgumentReplacementPass;
 import vadl.gcb.passes.relocation.GenerateLogicalRelocationPass;
+import vadl.gcb.passes.relocation.IdentifyFieldUsagePass;
 import vadl.gcb.passes.type_normalization.CppTypeNormalizationForDecodingsPass;
 import vadl.gcb.passes.type_normalization.CppTypeNormalizationForEncodingsPass;
 import vadl.gcb.passes.type_normalization.CppTypeNormalizationForPredicatesPass;
@@ -34,10 +35,16 @@ import vadl.iss.template.target.EmitIssCpuSourcePass;
 import vadl.iss.template.target.EmitIssInsnDecodePass;
 import vadl.iss.template.target.EmitIssMachinePass;
 import vadl.iss.template.target.EmitIssTranslatePass;
-import vadl.lcb.codegen.GenerateImmediateKindPass;
 import vadl.lcb.passes.isaMatching.IsaMatchingPass;
+import vadl.lcb.passes.llvmLowering.ConstMatPseudoInstructionArgumentReplacementPass;
+import vadl.lcb.passes.llvmLowering.ConstMaterialisationPseudoExpansionFunctionGeneratorPass;
 import vadl.lcb.passes.llvmLowering.GenerateRegisterClassesPass;
+import vadl.lcb.passes.llvmLowering.GenerateTableGenMachineInstructionRecordPass;
+import vadl.lcb.passes.llvmLowering.GenerateTableGenPseudoInstructionRecordPass;
 import vadl.lcb.passes.llvmLowering.LlvmLoweringPass;
+import vadl.lcb.passes.llvmLowering.immediates.GenerateConstantMaterialisationPass;
+import vadl.lcb.passes.llvmLowering.immediates.GenerateConstantMaterialisationTableGenRecordPass;
+import vadl.lcb.passes.llvmLowering.immediates.GenerateTableGenImmediateRecordPass;
 import vadl.lcb.passes.relocation.GenerateElfRelocationPass;
 import vadl.lcb.template.lib.Target.EmitMCInstLowerCppFilePass;
 import vadl.lcb.template.lib.Target.EmitMCInstLowerHeaderFilePass;
@@ -251,8 +258,9 @@ public final class PassOrder {
     order.add(new CppTypeNormalizationForPredicatesPass(gcbConfiguration));
     order.add(new AssemblyReplacementNodePass(gcbConfiguration));
     order.add(new AssemblyConcatBuiltinMergingPass(gcbConfiguration));
-    order.add(new DetectImmediatePass(gcbConfiguration));
+    order.add(new IdentifyFieldUsagePass(gcbConfiguration));
     order.add(new GenerateLogicalRelocationPass(gcbConfiguration));
+    order.add(new PseudoInstructionArgumentReplacementPass(gcbConfiguration));
     order.add(new PseudoExpansionFunctionGeneratorPass(gcbConfiguration));
 
     if (gcbConfiguration.doDump()) {
@@ -273,10 +281,16 @@ public final class PassOrder {
   public static PassOrder lcb(LcbConfiguration configuration)
       throws IOException {
     var order = gcbAndCppCodeGen(configuration);
-    order.add(new GenerateImmediateKindPass(configuration));
     order.add(new IsaMatchingPass(configuration));
     order.add(new GenerateRegisterClassesPass(configuration));
     order.add(new LlvmLoweringPass(configuration));
+    order.add(new GenerateTableGenMachineInstructionRecordPass(configuration));
+    order.add(new GenerateTableGenPseudoInstructionRecordPass(configuration));
+    order.add(new GenerateTableGenImmediateRecordPass(configuration));
+    order.add(new GenerateConstantMaterialisationPass(configuration));
+    order.add(new GenerateConstantMaterialisationTableGenRecordPass(configuration));
+    order.add(new ConstMatPseudoInstructionArgumentReplacementPass(configuration));
+    order.add(new ConstMaterialisationPseudoExpansionFunctionGeneratorPass(configuration));
     order.add(new GenerateElfRelocationPass(configuration));
 
     if (configuration.doDump()) {

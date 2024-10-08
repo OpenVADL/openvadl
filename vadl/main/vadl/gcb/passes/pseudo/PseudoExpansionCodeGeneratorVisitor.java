@@ -1,25 +1,37 @@
 package vadl.gcb.passes.pseudo;
 
 import static vadl.viam.ViamError.ensure;
+import static vadl.viam.ViamError.ensureNonNull;
+import static vadl.viam.ViamError.ensurePresent;
 
 import com.google.common.collect.Streams;
 import java.io.StringWriter;
+import java.util.ArrayList;
 import java.util.IdentityHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
+import java.util.stream.Collectors;
 import vadl.cppCodeGen.GenericCppCodeGeneratorVisitor;
 import vadl.cppCodeGen.SymbolTable;
 import vadl.cppCodeGen.model.CppFunction;
 import vadl.cppCodeGen.model.VariantKind;
-import vadl.gcb.passes.relocation.DetectImmediatePass;
+import vadl.error.Diagnostic;
+import vadl.gcb.passes.relocation.IdentifyFieldUsagePass;
 import vadl.gcb.passes.relocation.model.ElfRelocation;
 import vadl.utils.Pair;
 import vadl.viam.Format;
+import vadl.viam.Identifier;
+import vadl.viam.Instruction;
+import vadl.viam.PseudoInstruction;
 import vadl.viam.Relocation;
 import vadl.viam.ViamError;
+import vadl.viam.graph.HasRegisterFile;
 import vadl.viam.graph.control.InstrCallNode;
 import vadl.viam.graph.control.InstrEndNode;
 import vadl.viam.graph.dependency.ConstantNode;
+import vadl.viam.graph.dependency.ExpressionNode;
+import vadl.viam.graph.dependency.FieldRefNode;
 import vadl.viam.graph.dependency.FuncCallNode;
 import vadl.viam.graph.dependency.FuncParamNode;
 import vadl.viam.graph.dependency.WriteRegFileNode;
@@ -30,26 +42,69 @@ import vadl.viam.graph.dependency.WriteRegFileNode;
 public class PseudoExpansionCodeGeneratorVisitor extends GenericCppCodeGeneratorVisitor {
   private final SymbolTable symbolTable = new SymbolTable();
   private final String namespace;
-  private final DetectImmediatePass.ImmediateDetectionContainer fieldUsages;
+  private final IdentifyFieldUsagePass.ImmediateDetectionContainer fieldUsages;
   private final Map<Format.Field, CppFunction> immediateDecodings;
-  private final IdentityHashMap<Format.Field, VariantKind> immVariants;
+  private final Map<Format.Field, VariantKind> immVariants;
   private final List<ElfRelocation> relocations;
+  private final PseudoInstruction pseudoInstruction;
 
   /**
    * Constructor.
    */
   public PseudoExpansionCodeGeneratorVisitor(StringWriter writer, String namespace,
-                                             DetectImmediatePass.ImmediateDetectionContainer
+                                             IdentifyFieldUsagePass.ImmediateDetectionContainer
                                                  fieldUsages,
                                              Map<Format.Field, CppFunction> immediateDecodings,
-                                             IdentityHashMap<Format.Field, VariantKind> immVariants,
-                                             List<ElfRelocation> relocations) {
+                                             Map<Format.Field, VariantKind> immVariants,
+                                             List<ElfRelocation> relocations,
+                                             PseudoInstruction pseudoInstruction) {
     super(writer);
     this.namespace = namespace;
     this.fieldUsages = fieldUsages;
     this.immediateDecodings = immediateDecodings;
     this.immVariants = immVariants;
     this.relocations = relocations;
+    this.pseudoInstruction = pseudoInstruction;
+  }
+
+  /**
+   * The order of the parameters is not necessarily the order in which the expansion should happen.
+   * This function looks at the {@link Format} and reorders the list to the same
+   * order.
+   */
+  private List<Pair<Format.Field, ExpressionNode>> reorderParameters(
+      Format format,
+      List<Pair<Format.Field, ExpressionNode>> pairs) {
+    var result = new ArrayList<Pair<Format.Field, ExpressionNode>>();
+    var lookup = pairs.stream().collect(Collectors.toMap(Pair::left, Pair::right));
+    var usages = fieldUsages.getFieldUsages(format).keySet();
+    // The `fieldsSortedByLsbDesc` returns all fields from the format.
+    // However, we are only interested in the registers and immediates.
+    // That's why we filter with `contains`. `fieldUsages` only stores REGISTER and IMMEDIATE.
+    var order = format.fieldsSortedByLsbDesc().filter(usages::contains).toList();
+
+    for (var item : order) {
+      var l = ensureNonNull(lookup.get(item),
+          () -> Diagnostic.error("Cannot find format's field in pseudo instruction",
+              item.sourceLocation()).build());
+      result.add(Pair.of(item, l));
+    }
+
+    return result;
+  }
+
+
+  private int getOperandIndexFromPseudoInstruction(Identifier parameter) {
+    for (int i = 0; i < pseudoInstruction.parameters().length; i++) {
+      if (parameter.simpleName()
+          .equals(pseudoInstruction.parameters()[i].identifier.simpleName())) {
+        return i;
+      }
+    }
+
+    throw Diagnostic.error(
+        "Cannot extract the pseudo instruction's operand index for this parameter",
+        parameter.sourceLocation()).build();
   }
 
   @Override
@@ -63,21 +118,29 @@ public class PseudoExpansionCodeGeneratorVisitor extends GenericCppCodeGenerator
         Streams.zip(instrCallNode.getParamFields().stream(), instrCallNode.arguments().stream(),
             Pair::of).toList();
 
-    for (int index = 0; index < pairs.size(); index++) {
-      var field = pairs.get(index).left();
-      var argument = pairs.get(index).right();
+    var reorderedPairs = reorderParameters(instrCallNode.target().format(), pairs);
+
+    reorderedPairs.forEach(pair -> {
+      var field = pair.left();
+      var argument = pair.right();
 
       if (argument instanceof ConstantNode cn) {
-        lowerExpression(sym, field, cn);
+        lowerExpression(instrCallNode.target(), sym, field, cn);
       } else if (argument instanceof FuncCallNode fn) {
-        ensure(fn.function() instanceof Relocation, "function must be a relocation");
-        lowerExpressionWithRelocation(sym, field, index, (Relocation) fn.function());
-      } else if (argument instanceof FuncParamNode) {
-        lowerExpressionWithImmOrRegister(sym, field, index);
+        var pseudoInstructionIndex = getOperandIndexFromPseudoInstruction(fn.function().identifier);
+        ensure(fn.function() instanceof Relocation,
+            () -> Diagnostic.error("Function must be a relocation", fn.sourceLocation()).build());
+        lowerExpressionWithRelocation(sym, field, pseudoInstructionIndex,
+            (Relocation) fn.function());
+      } else if (argument instanceof FuncParamNode funcParamNode) {
+        var pseudoInstructionIndex =
+            getOperandIndexFromPseudoInstruction(funcParamNode.parameter().identifier);
+        lowerExpressionWithImmOrRegister(sym, field, pseudoInstructionIndex);
       } else {
-        throw new RuntimeException("not implemented");
+        throw Diagnostic.error("Not implemented for this node type.", argument.sourceLocation())
+            .build();
       }
-    }
+    });
 
     writer.write(String.format("result.push_back(%s);\n", sym));
   }
@@ -104,8 +167,9 @@ public class PseudoExpansionCodeGeneratorVisitor extends GenericCppCodeGenerator
     throw new RuntimeException("not implemented");
   }
 
-  private void lowerExpression(String sym, Format.Field field, ConstantNode argument) {
-    var usage = fieldUsages.get(field.format()).get(field);
+  private void lowerExpression(Instruction machineInstruction, String sym, Format.Field field,
+                               ConstantNode argument) {
+    var usage = fieldUsages.getFieldUsages(field.format()).get(field);
     ensure(usage != null, "usage must not be null");
     switch (usage) {
       case IMMEDIATE -> {
@@ -118,15 +182,37 @@ public class PseudoExpansionCodeGeneratorVisitor extends GenericCppCodeGenerator
                 argument.constant().asVal().intValue()));
       }
       case REGISTER -> {
-        /*
-        TODO this doesn't work because we do not know which register file
-        writer.write(String.format("%s.addOperand(MCOperand::createReg(%s::%s));\n",
+        // We know that `field` is used as a register index.
+        // But we don't know which register file.
+        // We look for the `field` in the machine instruction's behavior and return the usages.
+        var registerFiles = machineInstruction.behavior().getNodes(FieldRefNode.class)
+            .filter(x -> x.formatField() == field)
+            .flatMap(
+                fieldRefNode -> fieldRefNode.usages().filter(y -> y instanceof HasRegisterFile))
+            .map(x -> ((HasRegisterFile) x).registerFile())
+            .distinct()
+            .toList();
+
+        ensure(registerFiles.size() == 1,
+            () -> Diagnostic.error("Found multiple or none register files for this field.",
+                    field.sourceLocation())
+                .note(
+                    "The pseudo instruction expansion requires one register file to detect "
+                        + "the register file name. In this particular case is the field used by "
+                        + "multiple register files or none and we don't know which name to use.")
+                .build());
+
+        var registerFile =
+            ensurePresent(registerFiles.stream().findFirst(), "Expected one register file");
+
+        writer.write(String.format("%s.addOperand(MCOperand::createReg(%s::%s%s));\n",
             sym,
             namespace,
+            registerFile.identifier.simpleName(),
             argument.constant().asVal().intValue()));
-         */
       }
-      default -> throw new ViamError("not supported");
+      default -> throw Diagnostic.error("Cannot generate cpp code for this argument",
+          field.sourceLocation()).build();
     }
   }
 
@@ -159,7 +245,7 @@ public class PseudoExpansionCodeGeneratorVisitor extends GenericCppCodeGenerator
   private void lowerExpressionWithImmOrRegister(String sym,
                                                 Format.Field field,
                                                 int argumentIndex) {
-    var usage = fieldUsages.get(field.format()).get(field);
+    var usage = fieldUsages.getFieldUsages(field.format()).get(field);
     ensure(usage != null, "usage must not be null");
     switch (usage) {
       case IMMEDIATE -> {
@@ -171,14 +257,23 @@ public class PseudoExpansionCodeGeneratorVisitor extends GenericCppCodeGenerator
 
         var argumentImmSymbol = symbolTable.getNextVariable();
         var variant = immVariants.get(field);
-        ensure(variant != null, "variant must exist: %s", field.identifier.lower());
+        ensure(variant != null, () -> Diagnostic.error(
+                String.format("Variant must exist for the field '%s' but it doesn't.",
+                    field.identifier.lower()),
+                field.sourceLocation())
+            .note(
+                "The compiler generator tries to lower an immediate in the "
+                    + "pseudo expansion. To do so it requires to generate variants for immediates. "
+                    + "It seems like that that this variant was not generated.")
+            .build());
         writer.write(
             String.format(
                 "MCOperand %s = "
                     +
                     "MCOperand::createExpr(%sMCExpr::create(%s, %sMCExpr::VariantKind::%s, "
                     + "Ctx));\n",
-                argumentImmSymbol, namespace, argumentSymbol, namespace, variant.value()));
+                argumentImmSymbol, namespace, argumentSymbol, namespace,
+                Objects.requireNonNull(variant).value()));
         writer.write(String.format("%s.addOperand(%s);\n",
             sym,
             argumentImmSymbol));

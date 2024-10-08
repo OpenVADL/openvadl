@@ -6,13 +6,16 @@ import java.io.IOException;
 import java.util.IdentityHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.stream.Collectors;
 import java.util.stream.Stream;
 import vadl.configuration.LcbConfiguration;
 import vadl.cppCodeGen.model.CppFunction;
 import vadl.gcb.passes.pseudo.PseudoExpansionFunctionGeneratorPass;
+import vadl.lcb.passes.llvmLowering.ConstMaterialisationPseudoExpansionFunctionGeneratorPass;
+import vadl.lcb.passes.llvmLowering.domain.ConstantMatPseudoInstruction;
+import vadl.lcb.passes.llvmLowering.immediates.GenerateConstantMaterialisationPass;
 import vadl.lcb.template.CommonVarNames;
 import vadl.lcb.template.LcbTemplateRenderingPass;
-import vadl.lcb.template.utils.ImmediateDecodingFunctionProvider;
 import vadl.lcb.template.utils.PseudoInstructionProvider;
 import vadl.pass.PassResults;
 import vadl.viam.PseudoInstruction;
@@ -49,7 +52,7 @@ public class EmitMCInstExpanderHeaderFilePass extends LcbTemplateRenderingPass {
   private List<RenderedPseudoInstruction> pseudoInstructions(
       Specification specification,
       PassResults passResults,
-      IdentityHashMap<PseudoInstruction, CppFunction> cppFunctions
+      Map<PseudoInstruction, CppFunction> cppFunctions
   ) {
     return PseudoInstructionProvider.getSupportedPseudoInstructions(specification, passResults)
         .map(x -> new RenderedPseudoInstruction(
@@ -59,12 +62,39 @@ public class EmitMCInstExpanderHeaderFilePass extends LcbTemplateRenderingPass {
         )).toList();
   }
 
+
+  private List<RenderedPseudoInstruction> constMatInstructions(
+      Map<PseudoInstruction, CppFunction> cppFunctions,
+      PassResults passResults) {
+    var constMats = (List<ConstantMatPseudoInstruction>) passResults.lastResultOf(
+        GenerateConstantMaterialisationPass.class);
+
+    return constMats.stream()
+        .map(x -> new RenderedPseudoInstruction(
+            ensureNonNull(cppFunctions.get(x), "cppFunction must exist")
+                .functionName().lower(),
+            x
+        ))
+        .toList();
+  }
+
   @Override
   protected Map<String, Object> createVariables(final PassResults passResults,
                                                 Specification specification) {
-    var cppFunctions = (IdentityHashMap<PseudoInstruction, CppFunction>) passResults.lastResultOf(
-        PseudoExpansionFunctionGeneratorPass.class);
+    var cppFunctionsForPseudoInstructions =
+        (IdentityHashMap<PseudoInstruction, CppFunction>) passResults.lastResultOf(
+            PseudoExpansionFunctionGeneratorPass.class);
+    var cppFunctionsForConstMatInstructions =
+        (IdentityHashMap<PseudoInstruction, CppFunction>) passResults.lastResultOf(
+            ConstMaterialisationPseudoExpansionFunctionGeneratorPass.class);
+    var cppFunctions = Stream.concat(cppFunctionsForPseudoInstructions.entrySet().stream(),
+            cppFunctionsForConstMatInstructions.entrySet().stream())
+        .collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue));
+    var pseudoInstructions =
+        pseudoInstructions(specification, passResults, cppFunctions);
+    var constMats = constMatInstructions(cppFunctions, passResults);
     return Map.of(CommonVarNames.NAMESPACE, specification.simpleName(), "pseudoInstructions",
-        pseudoInstructions(specification, passResults, cppFunctions));
+        Stream.concat(pseudoInstructions.stream(), constMats.stream()).toList()
+    );
   }
 }

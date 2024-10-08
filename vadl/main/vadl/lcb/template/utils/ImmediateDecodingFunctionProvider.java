@@ -1,12 +1,10 @@
 package vadl.lcb.template.utils;
 
-import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
 import vadl.cppCodeGen.model.CppFunction;
 import vadl.cppCodeGen.passes.typeNormalization.CppTypeNormalizationPass;
 import vadl.gcb.passes.type_normalization.CppTypeNormalizationForDecodingsPass;
-import vadl.gcb.passes.type_normalization.CppTypeNormalizationForEncodingsPass;
 import vadl.pass.PassResults;
 import vadl.utils.Pair;
 import vadl.viam.Format;

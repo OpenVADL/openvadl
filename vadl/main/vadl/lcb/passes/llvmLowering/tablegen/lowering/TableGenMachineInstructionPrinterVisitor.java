@@ -5,6 +5,7 @@ import vadl.lcb.passes.llvmLowering.domain.machineDag.MachineInstructionNode;
 import vadl.lcb.passes.llvmLowering.domain.machineDag.MachineInstructionParameterNode;
 import vadl.lcb.passes.llvmLowering.domain.machineDag.PseudoInstructionNode;
 import vadl.lcb.passes.llvmLowering.strategies.visitors.TableGenMachineInstructionVisitor;
+import vadl.viam.Constant;
 import vadl.viam.graph.NodeList;
 import vadl.viam.graph.control.AbstractBeginNode;
 import vadl.viam.graph.control.BranchEndNode;
@@ -80,122 +81,126 @@ public class TableGenMachineInstructionPrinterVisitor implements TableGenMachine
 
   @Override
   public void visit(ConstantNode node) {
-
+    if (node.constant() instanceof Constant.Str str) {
+      writer.write(str.value());
+    } else {
+      throw new RuntimeException("not implemented");
+    }
   }
 
   @Override
   public void visit(BuiltInCall node) {
-
+    throw new RuntimeException("not implemented");
   }
 
   @Override
   public void visit(WriteRegNode writeRegNode) {
-
+    throw new RuntimeException("not implemented");
   }
 
   @Override
   public void visit(WriteRegFileNode writeRegFileNode) {
-
+    throw new RuntimeException("not implemented");
   }
 
   @Override
   public void visit(WriteMemNode writeMemNode) {
-
+    throw new RuntimeException("not implemented");
   }
 
   @Override
   public void visit(SliceNode sliceNode) {
-
+    throw new RuntimeException("not implemented");
   }
 
   @Override
   public void visit(SelectNode selectNode) {
-
+    throw new RuntimeException("not implemented");
   }
 
   @Override
   public void visit(ReadRegNode readRegNode) {
-
+    throw new RuntimeException("not implemented");
   }
 
   @Override
   public void visit(ReadRegFileNode readRegFileNode) {
-
+    throw new RuntimeException("not implemented");
   }
 
   @Override
   public void visit(ReadMemNode readMemNode) {
-
+    throw new RuntimeException("not implemented");
   }
 
   @Override
   public void visit(LetNode letNode) {
-
+    throw new RuntimeException("not implemented");
   }
 
   @Override
   public void visit(FuncParamNode funcParamNode) {
-
+    throw new RuntimeException("not implemented");
   }
 
   @Override
   public void visit(FuncCallNode funcCallNode) {
-
+    throw new RuntimeException("not implemented");
   }
 
   @Override
   public void visit(FieldRefNode fieldRefNode) {
-
+    throw new RuntimeException("not implemented");
   }
 
   @Override
   public void visit(FieldAccessRefNode fieldAccessRefNode) {
-
+    throw new RuntimeException("not implemented");
   }
 
   @Override
   public void visit(AbstractBeginNode abstractBeginNode) {
-
+    throw new RuntimeException("not implemented");
   }
 
   @Override
   public void visit(InstrEndNode instrEndNode) {
-
+    throw new RuntimeException("not implemented");
   }
 
   @Override
   public void visit(ReturnNode returnNode) {
-
+    throw new RuntimeException("not implemented");
   }
 
   @Override
   public void visit(BranchEndNode branchEndNode) {
-
+    throw new RuntimeException("not implemented");
   }
 
   @Override
   public void visit(InstrCallNode instrCallNode) {
-
+    throw new RuntimeException("not implemented");
   }
 
   @Override
   public void visit(IfNode ifNode) {
-
+    throw new RuntimeException("not implemented");
   }
 
   @Override
   public void visit(ZeroExtendNode node) {
-
+    throw new RuntimeException("not implemented");
   }
 
   @Override
   public void visit(SignExtendNode node) {
-
+    throw new RuntimeException("not implemented");
   }
 
   @Override
   public void visit(TruncateNode node) {
-
+    throw new RuntimeException("not implemented");
   }
 
   @Override

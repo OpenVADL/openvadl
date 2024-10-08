@@ -62,6 +62,10 @@ public class InstrCallNode extends DirectionalNode {
     return target;
   }
 
+  public void setTarget(Instruction instruction) {
+    this.target = instruction;
+  }
+
   public List<Format.Field> getParamFields() {
     return paramFields;
   }

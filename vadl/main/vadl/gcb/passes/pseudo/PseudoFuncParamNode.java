@@ -1,4 +1,4 @@
-package vadl.lcb.passes.llvmLowering.domain;
+package vadl.gcb.passes.pseudo;
 
 import java.util.List;
 import vadl.javaannotations.viam.DataValue;

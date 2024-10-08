@@ -1,10 +1,16 @@
 package vadl.lcb.template.lib.Target.MCTargetDesc;
 
+import static vadl.viam.ViamError.ensureNonNull;
+
 import java.io.IOException;
+import java.util.List;
 import java.util.Map;
 import vadl.configuration.LcbConfiguration;
+import vadl.lcb.passes.llvmLowering.immediates.GenerateTableGenImmediateRecordPass;
+import vadl.lcb.passes.llvmLowering.tablegen.model.TableGenImmediateRecord;
 import vadl.lcb.template.CommonVarNames;
 import vadl.lcb.template.LcbTemplateRenderingPass;
+import vadl.lcb.template.utils.ImmediateDecodingFunctionProvider;
 import vadl.pass.PassResults;
 import vadl.viam.Specification;
 
@@ -12,7 +18,6 @@ import vadl.viam.Specification;
  * This file contains the logic for emitting MC operands.
  */
 public class EmitMCExprCppFilePass extends LcbTemplateRenderingPass {
-
   public EmitMCExprCppFilePass(LcbConfiguration lcbConfiguration)
       throws IOException {
     super(lcbConfiguration);
@@ -30,9 +35,24 @@ public class EmitMCExprCppFilePass extends LcbTemplateRenderingPass {
         + processorName + "MCExpr.cpp";
   }
 
+  record Wrapper(TableGenImmediateRecord record, String decoderFunctionName) {
+
+  }
+
   @Override
   protected Map<String, Object> createVariables(final PassResults passResults,
                                                 Specification specification) {
-    return Map.of(CommonVarNames.NAMESPACE, specification.simpleName());
+    var immediateRecords = ((List<TableGenImmediateRecord>) passResults.lastResultOf(
+        GenerateTableGenImmediateRecordPass.class));
+    var decodingFunctions = ImmediateDecodingFunctionProvider.generateDecodeFunctions(passResults);
+
+    var wrapped = immediateRecords.stream().map(x -> {
+      var function = decodingFunctions.get(x.fieldAccessRef().fieldRef());
+      ensureNonNull(function, "function must not be null");
+      return new Wrapper(x, function.functionName().lower());
+    }).toList();
+
+    return Map.of(CommonVarNames.NAMESPACE, specification.simpleName(),
+        "immediates", immediateRecords);
   }
 }

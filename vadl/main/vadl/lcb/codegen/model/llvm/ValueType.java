@@ -5,6 +5,7 @@ import vadl.types.BitsType;
 import vadl.types.SIntType;
 import vadl.types.Type;
 import vadl.types.UIntType;
+import vadl.viam.ViamError;
 
 /**
  * LLVM types which can be used.
@@ -28,6 +29,22 @@ public enum ValueType {
   ValueType(String llvmType, String fancyName) {
     this.llvmType = llvmType;
     this.fancyName = fancyName;
+  }
+
+  /**
+   * Get the bit width of the type.
+   */
+  public int getBitwidth() {
+    return switch (this) {
+      case I8 -> 8;
+      case I16 -> 16;
+      case I32 -> 32;
+      case I64 -> 64;
+      case U8 -> 8;
+      case U16 -> 16;
+      case U32 -> 32;
+      case U64 -> 64;
+    };
   }
 
   /**
@@ -75,5 +92,27 @@ public enum ValueType {
 
   public String getLlvmType() {
     return llvmType;
+  }
+
+  /**
+   * Check whether the type is signed.
+   */
+  public boolean isSigned() {
+    return switch (this) {
+      case I8 -> true;
+      case I16 -> true;
+      case I32 -> true;
+      case I64 -> true;
+      default -> false;
+    };
+  }
+
+  /**
+   * Make the type signed.
+   */
+  public ValueType makeSigned() {
+    int bitwith = getBitwidth();
+    Type type = Type.signedInt(bitwith);
+    return ValueType.from(type).get();
   }
 }
