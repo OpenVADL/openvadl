@@ -32,7 +32,7 @@ public class LlvmFieldAccessRefNode extends FieldAccessRefNode {
   public LlvmFieldAccessRefNode(Format.FieldAccess fieldAccess, Type type) {
     super(fieldAccess, type);
     this.immediateOperand =
-        new TableGenImmediateRecord(fieldAccess);
+        new TableGenImmediateRecord(fieldAccess, fieldAccess.accessFunction().returnType());
     this.parameterIdentity = ParameterIdentity.from(this);
   }
 

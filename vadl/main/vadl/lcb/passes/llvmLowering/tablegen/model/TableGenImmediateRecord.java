@@ -9,8 +9,10 @@ import vadl.error.Diagnostic;
 import vadl.lcb.codegen.model.llvm.ValueType;
 import vadl.lcb.template.lib.Target.Disassembler.EmitDisassemblerCppFilePass;
 import vadl.lcb.template.lib.Target.MCTargetDesc.EmitMCCodeEmitterCppFilePass;
+import vadl.types.Type;
 import vadl.viam.Format;
 import vadl.viam.Identifier;
+import vadl.viam.passes.dummyAbi.DummyAbi;
 
 /**
  * Represents an immediate record in TableGen.
@@ -45,25 +47,18 @@ public class TableGenImmediateRecord {
   /**
    * Constructor.
    */
-  public TableGenImmediateRecord(Format.FieldAccess fieldAccess) {
+  public TableGenImmediateRecord(Format.FieldAccess fieldAccess,
+                                 Type architectureType /* bitwidth of the architecture to
+                                 support immediates */) {
     this(fieldAccess.fieldRef().identifier,
         Objects.requireNonNull(fieldAccess.encoding()).identifier.append(
             EmitMCCodeEmitterCppFilePass.WRAPPER),
         fieldAccess.accessFunction().identifier.append(EmitDisassemblerCppFilePass.WRAPPER),
         fieldAccess.predicate().identifier,
-        ValueType.from(fieldAccess.type()).orElseGet(() -> {
-          DeferredDiagnosticStore.add(
-              Diagnostic.warning("Field has a not supported size for the compiler.",
-                      fieldAccess.sourceLocation())
-                  .note(
-                      "The compiler generator will automatically uplift the type to next "
-                          + "fitting LLVM type.")
-                  .build());
-          return ensurePresent(ValueType.nextFit(fieldAccess.type()),
-              () -> Diagnostic.error(
-                  "The compiler was not able to uplift the type to a supported type.",
-                  fieldAccess.sourceLocation()).build());
-        }),
+        ensurePresent(ValueType.from(architectureType), () -> Diagnostic.error(
+            "Compiler generator was not able to change the type to the architecture's "
+                + "bit width: " + architectureType.toString(),
+            fieldAccess.sourceLocation()).build()),
         fieldAccess);
   }
 
