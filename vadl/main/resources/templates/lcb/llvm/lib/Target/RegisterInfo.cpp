@@ -68,12 +68,12 @@ bool eliminateFrameIndex[(${fe.instruction.identifier.simpleName()})]
     , RegScavenger *RS
     )
 {
-    // sanity check for generated code
-    assert( FIOperandNum == 1 && "Frame Index operand position does not match expected position!" );
+    assert(  MI.getOperand(FIOperandNum).isFI() && "Frame Index operand position does not match expected position!" );
+    assert(  MI.getOperand(FIOperandNum + [(${fe.machineInstructionIndices.relativeDistance})]).isImm() && "Immediate operand position does not match expected position!" );
 
     MachineInstr &MI = *II;
-    MachineOperand &FIOp = MI.getOperand(1);
-    MachineOperand &ImmOp = MI.getOperand(2);
+    MachineOperand &FIOp = MI.getOperand(FIOperandNum);
+    MachineOperand &ImmOp = MI.getOperand(FIOperandNum + [(${fe.machineInstructionIndices.relativeDistance})]);
 
     int Offset = FrameIndexOffset.getFixed() + ImmOp.getImm();
 
