@@ -55,6 +55,7 @@ public class WriteRegFileNode extends WriteResourceNode implements HasRegisterFi
     this.staticCounterAccess = staticCounterAccess;
   }
 
+  @Override
   public RegisterFile registerFile() {
     return registerFile;
   }

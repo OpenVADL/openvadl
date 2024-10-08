@@ -1,5 +1,9 @@
 package vadl.utils;
 
+import static java.nio.charset.StandardCharsets.UTF_8;
+
+import com.google.common.base.Splitter;
+import com.google.common.collect.Iterables;
 import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileWriter;
@@ -43,7 +47,7 @@ public class VadlFileUtils {
       throws IOException {
     var tempFile = File.createTempFile(prefix, suffix);
     tempFile.deleteOnExit();
-    var writer = new FileWriter(tempFile);
+    var writer = Files.newBufferedWriter(tempFile.toPath(), UTF_8);
     writer.write(content);
     writer.close();
     return tempFile;
@@ -138,7 +142,9 @@ public class VadlFileUtils {
     }
 
     try (var fs = FileSystems.newFileSystem(jarDir, Collections.emptyMap())) {
-      var pathInJar = fs.getPath(jarDir.toString().split("!")[1]);
+      var pathInJar = fs.getPath(Iterables.get(Splitter.on('!')
+          .split(jarDir.toString()), 1)
+      );
       walktreeDirCopy(pathInJar, target, fileTransformer);
     }
   }
@@ -157,6 +163,7 @@ public class VadlFileUtils {
         return FileVisitResult.CONTINUE;
       }
 
+      @Override
       public FileVisitResult visitFile(Path file, BasicFileAttributes attrs) throws IOException {
         var relativePathInFs = sourceDir.relativize(file);
         var targetFilePath = destinationDir.resolve(relativePathInFs.toString());
@@ -167,8 +174,9 @@ public class VadlFileUtils {
         } else {
           // if the file transformer is given, we apply it to the copy process
           var isr = Files.newInputStream(file);
-          var reader = new BufferedReader(new InputStreamReader(isr));
-          try (var outFileWriter = new FileWriter(targetFilePath.toFile())) {
+          var reader = new BufferedReader(new InputStreamReader(isr, UTF_8));
+          var outPath = targetFilePath.toFile().toPath();
+          try (var outFileWriter = Files.newBufferedWriter(outPath, UTF_8)) {
             fileTransformer.accept(Pair.of(reader, outFileWriter));
           }
         }

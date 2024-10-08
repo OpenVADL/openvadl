@@ -554,21 +554,6 @@ public abstract class Constant {
       }
     }
 
-    private BigInteger maxUnsignedValue() {
-      // e.g. 4 bits: 1000 ... -8
-      return BigInteger.ZERO.setBit(type().bitWidth()).subtract(BigInteger.ONE);
-    }
-
-    private BigInteger maxSignedValue() {
-      // e.g. 4 bits: 1000 ... -8
-      return BigInteger.ZERO.setBit(type().bitWidth() - 1).subtract(BigInteger.ONE);
-    }
-
-    private BigInteger minSignedValue() {
-      // e.g. 4 bits: 1000 ... -8
-      return BigInteger.ZERO.setBit(type().bitWidth() - 1);
-    }
-
     @Override
     public java.lang.String toString() {
       return integer() + ": " + type().toString();

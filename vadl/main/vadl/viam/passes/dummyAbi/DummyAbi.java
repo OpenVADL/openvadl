@@ -18,6 +18,7 @@ public class DummyAbi extends Definition {
     HALF_WORD(4),
     WORD(8);
 
+    @SuppressWarnings("unused")
     private final int byteAlignment;
 
     Alignment(int byteAlignment) {

@@ -72,6 +72,7 @@ public final class PassOrder {
       = new ConcurrentHashMap<>();
 
   // the actual list of pass steps
+  @SuppressWarnings("JdkObsolete")
   private final LinkedList<PassStep> order = new LinkedList<>();
 
   /**

@@ -178,7 +178,7 @@ public class ReplaceWithLlvmSDNodesVisitor
       //def : Pat< ( setcc X:$rs1, 0, SETEQ ),
       //           ( SLTIU X:$rs1, 1 ) >;
       // By adding it as argument, we get the printing of "SETEQ" for free.
-      var newArg = (new ConstantNode(new Constant.Str(replaced.llvmCondCode().name())));
+      var newArg = new ConstantNode(new Constant.Str(replaced.llvmCondCode().name()));
       ensure(replaced.graph() != null, "graph must exist");
       replaced.arguments().add(replaced.graph().addWithInputs(newArg));
     } else {

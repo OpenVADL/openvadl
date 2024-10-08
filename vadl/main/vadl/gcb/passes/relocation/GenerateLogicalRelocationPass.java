@@ -81,10 +81,10 @@ public class GenerateLogicalRelocationPass extends Pass {
               var relocation = (Relocation) funcCallNode.function();
               ensure(usages.size() == 1,
                   () -> Diagnostic.error("There must be usage for the relocation",
-                      funcCallNode.sourceLocation()).build());
+                      funcCallNode.sourceLocation()));
               var usage = (InstrCallNode) usages.get(0);
               ensureNonNull(usage, () -> Diagnostic.error("There must be usage for the relocation",
-                  funcCallNode.sourceLocation()).build());
+                  funcCallNode.sourceLocation()));
 
               // We have to find the field which the relocation is applied on.
               // We have two lists: paramFields and arguments

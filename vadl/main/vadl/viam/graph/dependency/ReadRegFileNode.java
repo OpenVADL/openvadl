@@ -47,6 +47,7 @@ public class ReadRegFileNode extends ReadResourceNode implements HasRegisterFile
     this.staticCounterAccess = staticCounterAccess;
   }
 
+  @Override
   public RegisterFile registerFile() {
     return registerFile;
   }

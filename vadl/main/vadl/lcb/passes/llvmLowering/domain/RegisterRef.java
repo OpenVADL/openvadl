@@ -79,6 +79,10 @@ public class RegisterRef extends Resource {
     return relationType;
   }
 
+  public @Nullable Format refFormat() {
+    return refFormat;
+  }
+
   @Override
   public void accept(DefinitionVisitor visitor) {
 

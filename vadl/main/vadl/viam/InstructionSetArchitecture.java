@@ -25,6 +25,7 @@ public class InstructionSetArchitecture extends Definition {
   private final List<Relocation> relocations;
 
 
+  @SuppressWarnings("unused")
   private final Specification specification;
 
   /**

@@ -11,8 +11,6 @@ import javax.annotation.Nullable;
  */
 public class PassError extends RuntimeException {
 
-  private final List<String> context = new ArrayList<>();
-  
   public PassError(String message) {
     super(message);
   }

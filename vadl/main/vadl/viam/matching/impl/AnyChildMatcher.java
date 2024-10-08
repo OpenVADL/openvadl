@@ -209,6 +209,7 @@ public class AnyChildMatcher implements Matcher {
       sideEffectNode.accept(this);
     }
 
+    @Override
     public void visit(Node node) {
       node.accept(this);
     }

@@ -180,11 +180,11 @@ public class ViamEnricherCollection {
         var reads = Objects.requireNonNull(instr.readResources())
             .stream().sorted(Comparator.comparing(e -> e.getClass().getSimpleName()))
             .map(rsrc -> rsrc.getClass().getSimpleName() + " " + rsrc.simpleName())
-            .collect(Collectors.toCollection(LinkedList::new));
+            .collect(Collectors.toCollection(ArrayList::new));
         var writes = Objects.requireNonNull(instr.writtenResources())
             .stream().sorted(Comparator.comparing(e -> e.getClass().getSimpleName()))
             .map(rsrc -> rsrc.getClass().getSimpleName() + " " + rsrc.simpleName())
-            .collect(Collectors.toCollection(LinkedList::new));
+            .collect(Collectors.toCollection(ArrayList::new));
 
         reads.add(0, "Read");
         writes.add(0, "Written");

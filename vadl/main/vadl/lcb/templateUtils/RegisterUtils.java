@@ -36,7 +36,7 @@ public class RegisterUtils {
   public static RegisterClass getRegisterClass(
       RegisterFile registerFile) {
     return new RegisterClass(registerFile,
-        IntStream.range(0, (int) Math.pow(2, (long) registerFile.addressType().bitWidth()))
+        IntStream.range(0, (int) Math.pow(2, registerFile.addressType().bitWidth()))
             .mapToObj(i -> new Register(i, registerFile.identifier.simpleName() + i)).toList());
   }
 }

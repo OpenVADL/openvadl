@@ -42,6 +42,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.IdentityHashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
 import java.util.function.Supplier;
@@ -121,14 +122,14 @@ public class IsaMatchingPass extends Pass {
     // TODO: @kper : Support RegisterFileCounters
     ensure(isa.pc() instanceof Counter.RegisterCounter,
         () -> Diagnostic.error("Only counter to single registers are supported.",
-            Objects.requireNonNull(isa.pc()).sourceLocation()).build());
+            Objects.requireNonNull(isa.pc()).sourceLocation()));
     var pc = (Counter.RegisterCounter) isa.pc();
 
     isa.ownInstructions().forEach(instruction -> {
       // Get uninlined or the normal behavior if nothing was uninlined.
       var behavior = ensureNonNull(uninlined.get(instruction),
           () -> Diagnostic.error("Cannot find the uninlined graph of this instruction",
-              instruction.sourceLocation()).build());
+              instruction.sourceLocation()));
 
       // Some are typed and some aren't.
       // The reason is that most of the time we do not care because
@@ -214,9 +215,8 @@ public class IsaMatchingPass extends Pass {
 
     ensure(addi != null && !addi.isEmpty(),
         () -> Diagnostic.error(
-                "There must be an instruction (addition with immediate), but we haven't found any.",
-                viam.sourceLocation())
-            .build());
+            "There must be an instruction (addition with immediate), but we haven't found any.",
+            viam.sourceLocation()));
   }
 
   private boolean findLoadMem(UninlinedGraph graph) {
@@ -249,7 +249,7 @@ public class IsaMatchingPass extends Pass {
    * The {@code matched} hashmap contains a list of {@link Instruction} as value.
    * This value extends this list with the given {@link Instruction} when the key is matched.
    */
-  private void extend(HashMap<InstructionLabel, List<Instruction>> matched,
+  private void extend(Map<InstructionLabel, List<Instruction>> matched,
                       InstructionLabel instructionLabel, Instruction instruction) {
     matched.compute(instructionLabel, (k, v) -> {
       if (v == null) {

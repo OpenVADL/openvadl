@@ -30,7 +30,7 @@ public class LcbEnricherCollection {
    * It was detected by VADL then emit the label.
    */
   public static InfoEnricher ISA_MATCHING_SUPPLIER_TAG =
-      forType(DefinitionEntity.class, ((definitionEntity, passResults) -> {
+      forType(DefinitionEntity.class, (definitionEntity, passResults) -> {
         // This supplier also runs for the VIAM dump.
         // But, the pass wasn't scheduled yet.
         if (!passResults.hasRunPassOnce(IsaMatchingPass.class)) {
@@ -48,7 +48,7 @@ public class LcbEnricherCollection {
           definitionEntity.addInfo(info);
         }
 
-      }));
+      });
 
   /**
    * Renders tablegen's instruction operands.

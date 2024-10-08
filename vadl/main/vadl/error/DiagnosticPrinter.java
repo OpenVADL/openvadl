@@ -91,7 +91,7 @@ public class DiagnosticPrinter {
         printSourceDelimiter(previous.location(), snippet.location());
       }
 
-      printSourcePreview(snippet, snippet == diagnostic.multiLocation.primaryLocation());
+      printSourcePreview(snippet, snippet.equals(diagnostic.multiLocation.primaryLocation()));
     }
     System.out.printf("    %s│ %s\n", Ansi.Cyan, Ansi.Reset);
   }
@@ -120,7 +120,7 @@ public class DiagnosticPrinter {
       return;
     }
 
-    if (location.location() == SourceLocation.INVALID_SOURCE_LOCATION) {
+    if (location.location().equals(SourceLocation.INVALID_SOURCE_LOCATION)) {
       System.out.printf("    │ %sThe location was lost.\n", Ansi.Reset);
       return;
     }
