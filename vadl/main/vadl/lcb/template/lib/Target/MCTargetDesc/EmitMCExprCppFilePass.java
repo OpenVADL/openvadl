@@ -53,6 +53,6 @@ public class EmitMCExprCppFilePass extends LcbTemplateRenderingPass {
     }).toList();
 
     return Map.of(CommonVarNames.NAMESPACE, specification.simpleName(),
-        "immediates", immediateRecords);
+        "immediates", wrapped);
   }
 }
