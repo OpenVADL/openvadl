@@ -7,7 +7,6 @@ import java.util.Map;
 import vadl.cppCodeGen.model.CppFunction;
 import vadl.cppCodeGen.model.VariantKind;
 import vadl.gcb.passes.pseudo.PseudoExpansionCodeGeneratorVisitor;
-import vadl.gcb.passes.pseudo.TemporaryCodeGeneratorVisitor;
 import vadl.gcb.passes.relocation.DetectImmediatePass;
 import vadl.gcb.passes.relocation.model.ElfRelocation;
 import vadl.lcb.codegen.LcbCodeGenerator;

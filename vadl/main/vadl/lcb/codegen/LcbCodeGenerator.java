@@ -24,7 +24,7 @@ public class LcbCodeGenerator {
     var name = function.functionName().lower();
     var parameters = Arrays.stream(function.parameters()).map(param -> {
       var cppTypeName = CppTypeMap.getCppTypeNameByVadlType(param.type());
-      return cppTypeName + " " + param.name();
+      return cppTypeName + " " + param.simpleName();
     }).collect(Collectors.joining(","));
     var returnType = function.returnType();
     var cppTypeReturnType = CppTypeMap.getCppTypeNameByVadlType(returnType);
@@ -42,7 +42,7 @@ public class LcbCodeGenerator {
     var name = function.functionName().lower();
     var parameters = Arrays.stream(function.parameters()).map(param -> {
       var cppTypeName = CppTypeMap.getCppTypeNameByVadlType(param.type());
-      return cppTypeName + " " + param.name();
+      return cppTypeName + " " + param.simpleName();
     }).collect(Collectors.joining(","));
     var returnType = function.returnType();
     var cppTypeReturnType = CppTypeMap.getCppTypeNameByVadlType(returnType);

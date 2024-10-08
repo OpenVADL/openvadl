@@ -521,7 +521,7 @@ public abstract class LlvmInstructionLoweringStrategy {
   @NotNull
   private static Graph getOutputPattern(Instruction instruction,
                                         List<TableGenInstructionOperand> inputOperands) {
-    var graph = new Graph(instruction.name() + ".machine.lowering");
+    var graph = new Graph(instruction.simpleName() + ".machine.lowering");
     graph.setParentDefinition(Objects.requireNonNull(instruction));
 
     var params =
