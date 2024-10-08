@@ -126,7 +126,7 @@ public class EmitInstrInfoTableGenFilePass extends LcbTemplateRenderingPass {
         .map(TableGenInstructionRenderer::lower)
         .toList();
 
-    return Map.of(CommonVarNames.NAMESPACE, specification.name(),
+    return Map.of(CommonVarNames.NAMESPACE, specification.simpleName(),
         "stackPointerType",
         ValueType.from(abi.stackPointer().registerFile().resultType()).get().getLlvmType(),
         "immediates", Stream.concat(renderedImmediates.stream(), renderedImmediateLabels.stream()),

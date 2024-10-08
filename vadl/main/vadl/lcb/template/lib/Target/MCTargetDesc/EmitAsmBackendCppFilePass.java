@@ -2,7 +2,6 @@ package vadl.lcb.template.lib.Target.MCTargetDesc;
 
 import java.io.IOException;
 import java.util.Collections;
-import java.util.List;
 import java.util.Map;
 import vadl.configuration.LcbConfiguration;
 import vadl.lcb.template.CommonVarNames;
@@ -49,7 +48,7 @@ public class EmitAsmBackendCppFilePass extends LcbTemplateRenderingPass {
                                                 Specification specification) {
     var abi =
         (DummyAbi) specification.definitions().filter(x -> x instanceof DummyAbi).findFirst().get();
-    return Map.of(CommonVarNames.NAMESPACE, specification.name(),
+    return Map.of(CommonVarNames.NAMESPACE, specification.simpleName(),
         "is64Bit", abi.stackPointer().registerFile().resultType().bitWidth() == 64,
         "relocations", Collections.emptyList());
   }

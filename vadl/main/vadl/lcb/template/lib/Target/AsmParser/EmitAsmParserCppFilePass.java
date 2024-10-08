@@ -4,7 +4,6 @@ import java.io.IOException;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
-import java.util.stream.Stream;
 import vadl.configuration.LcbConfiguration;
 import vadl.lcb.template.CommonVarNames;
 import vadl.lcb.template.LcbTemplateRenderingPass;
@@ -56,7 +55,7 @@ public class EmitAsmParserCppFilePass extends LcbTemplateRenderingPass {
   protected Map<String, Object> createVariables(final PassResults passResults,
                                                 Specification specification) {
     //TODO: kper; add alias directives
-    return Map.of(CommonVarNames.NAMESPACE, specification.name(),
+    return Map.of(CommonVarNames.NAMESPACE, specification.simpleName(),
         CommonVarNames.INSTRUCTIONS, mapInstructions(specification.isa()),
         CommonVarNames.PSEUDO_INSTRUCTIONS, mapPseudoInstructions(specification.isa()),
         CommonVarNames.ALIASES, List.of()

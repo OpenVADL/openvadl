@@ -3,7 +3,6 @@ package vadl.cppCodeGen;
 import static vadl.cppCodeGen.CppTypeMap.getCppTypeNameByVadlType;
 
 import java.io.StringWriter;
-import java.util.Collections;
 import java.util.Objects;
 import java.util.stream.Collectors;
 import vadl.cppCodeGen.model.CppUpdateBitRangeNode;
@@ -193,12 +192,12 @@ public class GenericCppCodeGeneratorVisitor
 
   @Override
   public void visit(FuncParamNode funcParamNode) {
-    writer.write(funcParamNode.parameter().name());
+    writer.write(funcParamNode.parameter().simpleName());
   }
 
   @Override
   public void visit(FuncCallNode funcCallNode) {
-    var name = funcCallNode.function().name();
+    var name = funcCallNode.function().simpleName();
 
     writer.write(name + "(");
 

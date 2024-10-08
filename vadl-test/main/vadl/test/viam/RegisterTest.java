@@ -44,10 +44,8 @@ import vadl.viam.graph.dependency.FuncCallNode;
 import vadl.viam.graph.dependency.ReadRegFileNode;
 import vadl.viam.graph.dependency.ReadRegNode;
 import vadl.viam.graph.dependency.SelectNode;
-import vadl.viam.graph.dependency.TypeCastNode;
 import vadl.viam.graph.dependency.WriteRegFileNode;
 import vadl.viam.graph.dependency.WriteRegNode;
-import vadl.viam.matching.impl.AnyNodeMatcher;
 import vadl.viam.matching.impl.BuiltInMatcher;
 import vadl.viam.matching.impl.ConstantValueMatcher;
 
@@ -335,7 +333,7 @@ public class RegisterTest extends AbstractTest {
   private DynamicTest testRegister(Register reg, Type resType, Set<Register> subRegs,
                                    @Nullable Register parent, @Nullable Format format,
                                    Register.AccessKind read, Register.AccessKind write) {
-    return dynamicTest(reg.name(), () -> {
+    return dynamicTest(reg.simpleName(), () -> {
       assertFalse(false);
       assertEquals(resType, reg.resultType());
       assertThat(subRegs, containsInAnyOrder(reg.subRegisters()));

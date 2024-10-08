@@ -37,7 +37,7 @@ public class EmitTargetElfRelocsDefFilePass extends LcbTemplateRenderingPass {
     var relocations =
         (List<ElfRelocation>) passResults.lastResultOf(GenerateElfRelocationPass.class);
 
-    return Map.of(CommonVarNames.NAMESPACE, specification.name(),
+    return Map.of(CommonVarNames.NAMESPACE, specification.simpleName(),
         CommonVarNames.RELOCATIONS, relocations);
   }
 }

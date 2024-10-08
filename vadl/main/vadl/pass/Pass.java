@@ -20,7 +20,7 @@ import vadl.viam.graph.ViamGraphError;
 public abstract class Pass {
   private GeneralConfiguration configuration;
 
-  protected Pass(GeneralConfiguration configuration) {
+  public Pass(GeneralConfiguration configuration) {
     this.configuration = configuration;
   }
 

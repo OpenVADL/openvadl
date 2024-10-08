@@ -38,7 +38,7 @@ public class EmitInstPrinterCppFilePass extends LcbTemplateRenderingPass {
   @Override
   protected Map<String, Object> createVariables(final PassResults passResults,
                                                 Specification specification) {
-    return Map.of(CommonVarNames.NAMESPACE, specification.name(),
+    return Map.of(CommonVarNames.NAMESPACE, specification.simpleName(),
         CommonVarNames.PRINTABLE_INSTRUCTIONS, List.of());
   }
 }

@@ -5,6 +5,7 @@ import static vadl.viam.helper.TestGraphUtils.bits;
 import static vadl.viam.helper.TestGraphUtils.intU;
 
 import java.io.IOException;
+import java.nio.file.Path;
 import java.util.HashMap;
 import org.junit.jupiter.api.Test;
 import vadl.AbstractTest;
@@ -43,7 +44,7 @@ public class HtmlDumpTest extends AbstractTest {
     spec.add(func);
 
     new HtmlDumpPass(HtmlDumpPass.Config.from(
-        new GeneralConfiguration("build", true), "demoDump",
+        new GeneralConfiguration(Path.of("build"), true), "demoDump",
         "Now the gcb produced all necessary encoding function for field accesses "
             + "and normalized VIAM types to Cpp types."))
         .execute(PassResults.empty(), spec);

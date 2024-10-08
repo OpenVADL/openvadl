@@ -8,7 +8,6 @@ import vadl.cppCodeGen.GenericCppCodeGeneratorVisitor;
 import vadl.cppCodeGen.model.CppClassImplName;
 import vadl.cppCodeGen.model.CppFunction;
 import vadl.cppCodeGen.model.CppFunctionCode;
-import vadl.cppCodeGen.model.CppType;
 import vadl.viam.Function;
 import vadl.viam.ViamError;
 import vadl.viam.graph.control.ReturnNode;
@@ -16,7 +15,7 @@ import vadl.viam.graph.control.ReturnNode;
 /**
  * Parent code generator to encapsulate generic functionality.
  */
-public class CodeGenerator {
+public class LcbCodeGenerator {
   /**
    * Returns the function header of a {@link Function}.
    * For example: int testFunction(int param1, int param2)
@@ -25,7 +24,7 @@ public class CodeGenerator {
     var name = function.functionName().lower();
     var parameters = Arrays.stream(function.parameters()).map(param -> {
       var cppTypeName = CppTypeMap.getCppTypeNameByVadlType(param.type());
-      return cppTypeName + " " + param.name();
+      return cppTypeName + " " + param.simpleName();
     }).collect(Collectors.joining(","));
     var returnType = function.returnType();
     var cppTypeReturnType = CppTypeMap.getCppTypeNameByVadlType(returnType);
@@ -43,7 +42,7 @@ public class CodeGenerator {
     var name = function.functionName().lower();
     var parameters = Arrays.stream(function.parameters()).map(param -> {
       var cppTypeName = CppTypeMap.getCppTypeNameByVadlType(param.type());
-      return cppTypeName + " " + param.name();
+      return cppTypeName + " " + param.simpleName();
     }).collect(Collectors.joining(","));
     var returnType = function.returnType();
     var cppTypeReturnType = CppTypeMap.getCppTypeNameByVadlType(returnType);

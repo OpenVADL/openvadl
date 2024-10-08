@@ -1,6 +1,9 @@
 package vadl.pass;
 
+import static vadl.iss.template.IssDefaultRenderingPass.issDefault;
+
 import java.io.IOException;
+import java.nio.file.Path;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
@@ -8,6 +11,7 @@ import java.util.concurrent.ConcurrentHashMap;
 import javax.annotation.Nullable;
 import vadl.configuration.GcbConfiguration;
 import vadl.configuration.GeneralConfiguration;
+import vadl.configuration.IssConfiguration;
 import vadl.configuration.LcbConfiguration;
 import vadl.cppCodeGen.passes.fieldNodeReplacement.FieldNodeReplacementPassForDecoding;
 import vadl.dump.HtmlDumpPass;
@@ -20,6 +24,16 @@ import vadl.gcb.passes.relocation.GenerateLogicalRelocationPass;
 import vadl.gcb.passes.type_normalization.CppTypeNormalizationForDecodingsPass;
 import vadl.gcb.passes.type_normalization.CppTypeNormalizationForEncodingsPass;
 import vadl.gcb.passes.type_normalization.CppTypeNormalizationForPredicatesPass;
+import vadl.iss.passes.IssConfigurationPass;
+import vadl.iss.passes.IssVerificationPass;
+import vadl.iss.passes.tcgLowering.TcgLoweringPass;
+import vadl.iss.template.target.EmitIssCpuHeaderPass;
+import vadl.iss.template.target.EmitIssCpuParamHeaderPass;
+import vadl.iss.template.target.EmitIssCpuQomHeaderPass;
+import vadl.iss.template.target.EmitIssCpuSourcePass;
+import vadl.iss.template.target.EmitIssInsnDecodePass;
+import vadl.iss.template.target.EmitIssMachinePass;
+import vadl.iss.template.target.EmitIssTranslatePass;
 import vadl.lcb.codegen.GenerateImmediateKindPass;
 import vadl.lcb.passes.isaMatching.IsaMatchingPass;
 import vadl.lcb.passes.llvmLowering.GenerateRegisterClassesPass;
@@ -30,6 +44,7 @@ import vadl.lcb.template.lib.Target.EmitMCInstLowerHeaderFilePass;
 import vadl.lcb.template.lib.Target.MCTargetDesc.EmitInstPrinterCppFilePass;
 import vadl.lcb.template.lib.Target.MCTargetDesc.EmitInstPrinterHeaderFilePass;
 import vadl.template.AbstractTemplateRenderingPass;
+import vadl.viam.passes.InstructionResourceAccessAnalysisPass;
 import vadl.viam.passes.algebraic_simplication.AlgebraicSimplificationPass;
 import vadl.viam.passes.canonicalization.CanonicalizationPass;
 import vadl.viam.passes.dummyAbi.DummyAbiPass;
@@ -130,7 +145,7 @@ public final class PassOrder {
    * executed pass.
    */
   public PassOrder dumpAfterEach(String outPath) {
-    var config = new GeneralConfiguration(outPath, true);
+    var config = new GeneralConfiguration(Path.of(outPath), true);
     // We use a ListIterator for safe modification while iterating
     var iterator = order.listIterator();
 
@@ -164,7 +179,7 @@ public final class PassOrder {
    * Adds a dump pass that outputs the dump to the given path.
    */
   public PassOrder addDump(String outPath) {
-    var config = new GeneralConfiguration(outPath, true);
+    var config = new GeneralConfiguration(Path.of(outPath), true);
     var last = order.getLast();
     HtmlDumpPass dumpPass = new HtmlDumpPass(HtmlDumpPass.Config.from(config,
         last.pass().getName().value(),
@@ -202,8 +217,11 @@ public final class PassOrder {
     order.add(new FunctionInlinerPass(configuration));
     order.add(new SideEffectConditionResolvingPass(configuration));
 
+    // Common optimizations
     order.add(new CanonicalizationPass(configuration));
     order.add(new AlgebraicSimplificationPass(configuration));
+
+    order.add(new InstructionResourceAccessAnalysisPass(configuration));
 
     // verification after viam optimizations
     order.add(new ViamVerificationPass(configuration));
@@ -413,4 +431,83 @@ public final class PassOrder {
 
     return order;
   }
+
+  /**
+   * Constructs the pass order used to generate the ISS (QEMU) from a VADL specification.
+   */
+  public static PassOrder iss(IssConfiguration config) throws IOException {
+    var order = viam(config);
+    // iss function passes
+    order
+        .add(new IssVerificationPass(config))
+        .add(new IssConfigurationPass(config))
+        .add(new TcgLoweringPass(config))
+
+        .add(new ViamVerificationPass(config))
+    ;
+
+
+    if (config.doDump()) {
+      order.add(new HtmlDumpPass(HtmlDumpPass.Config.from(config, "ISS Generation Dump", """
+          This dump is executed after the iss transformation passes were executed.
+          """)));
+    }
+
+    // add iss template emitting passes to order
+    addIssEmitPasses(order, config);
+
+    if (config.doDump()) {
+      order.add(new HtmlDumpPass(HtmlDumpPass.Config.from(config, "ISS Rendering Dump", """
+          This dump is executed after the iss got rendered passes were executed.
+          """)));
+    }
+
+
+    return order;
+  }
+
+  private static void addIssEmitPasses(PassOrder order, IssConfiguration config) {
+    order
+        // config rendering
+        .add(issDefault("/configs/devices/gen-arch-softmmu/default.mak", config))
+        .add(issDefault("/configs/targets/gen-arch-softmmu.mak", config))
+        .add(issDefault("/target/gen-arch/cpu.h", config))
+
+        // arch init rendering
+        .add(issDefault("/include/disas/dis-asm.h", config))
+        .add(issDefault("/include/sysemu/arch_init.h", config))
+
+        // hardware rendering
+        .add(issDefault("/hw/Kconfig", config))
+        .add(issDefault("/hw/meson.build", config))
+        .add(issDefault("/hw/gen-arch/Kconfig", config))
+        .add(issDefault("/hw/gen-arch/meson.build", config))
+        .add(issDefault("/hw/gen-arch/virt.c", config))
+        .add(issDefault("/hw/gen-arch/virt.h", config))
+        .add(issDefault("/hw/gen-arch/boot.c", config))
+        .add(issDefault("/hw/gen-arch/boot.h", config))
+
+        // target rendering
+        .add(issDefault("/target/Kconfig", config))
+        .add(issDefault("/target/meson.build", config))
+        .add(issDefault("/target/gen-arch/Kconfig", config))
+        .add(issDefault("/target/gen-arch/meson.build", config))
+        // target/gen-arch/cpu-qom.h
+        .add(new EmitIssCpuQomHeaderPass(config))
+        // target/gen-arch/cpu-param.h
+        .add(new EmitIssCpuParamHeaderPass(config))
+        // target/gen-arch/cpu.h
+        .add(new EmitIssCpuHeaderPass(config))
+        // target/gen-arch/cpu.c
+        .add(new EmitIssCpuSourcePass(config))
+        // target/gen-arch/insn.decode
+        .add(new EmitIssInsnDecodePass(config))
+        // target/gen-arch/translate.c
+        .add(new EmitIssTranslatePass(config))
+        // target/gen-arch/machine.c
+        .add(new EmitIssMachinePass(config))
+
+    ;
+  }
+
 }

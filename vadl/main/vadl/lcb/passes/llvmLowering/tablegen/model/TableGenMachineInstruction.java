@@ -12,8 +12,8 @@ import vadl.lcb.passes.llvmLowering.domain.RegisterRef;
 import vadl.viam.Instruction;
 
 /**
-* Represents a record in tablegen for {@link Instruction}.
-*/
+ * Represents a record in tablegen for {@link Instruction}.
+ */
 public class TableGenMachineInstruction extends TableGenInstruction {
   private final int formatSize;
   private final int size;
@@ -83,10 +83,10 @@ public class TableGenMachineInstruction extends TableGenInstruction {
      */
     public static List<BitBlock> from(vadl.viam.Encoding encoding) {
       var encodedFields = Arrays.stream(encoding.fieldEncodings())
-          .map(field -> new BitBlock(field.formatField().size(), field.name(),
+          .map(field -> new BitBlock(field.formatField().size(), field.simpleName(),
               Optional.of(BitSet.valueOf(new long[] {field.constant().longValue()}))));
       var nonEncodedFields = Arrays.stream(encoding.nonEncodedFormatFields())
-          .map(field -> new BitBlock(field.size(), field.name(), Optional.empty()));
+          .map(field -> new BitBlock(field.size(), field.simpleName(), Optional.empty()));
 
       return Stream.concat(encodedFields, nonEncodedFields).toList();
     }
@@ -134,7 +134,8 @@ public class TableGenMachineInstruction extends TableGenInstruction {
         Collections.reverse(parts);
         for (var part : parts) {
           encodings.add(
-              new FieldEncoding(part.msb(), part.lsb(), field.name(), offset + part.size() - 1,
+              new FieldEncoding(part.msb(), part.lsb(), field.simpleName(),
+                  offset + part.size() - 1,
                   offset));
           offset += part.size();
         }

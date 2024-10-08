@@ -9,7 +9,6 @@ import vadl.configuration.LcbConfiguration;
 import vadl.lcb.template.CommonVarNames;
 import vadl.lcb.template.LcbTemplateRenderingPass;
 import vadl.pass.PassResults;
-import vadl.viam.Identifier;
 import vadl.viam.Specification;
 
 /**
@@ -49,7 +48,7 @@ public class EmitMCCodeEmitterCppFilePass extends LcbTemplateRenderingPass {
   protected Map<String, Object> createVariables(final PassResults passResults,
                                                 Specification specification) {
     var immediates = generateImmediates(passResults);
-    return Map.of(CommonVarNames.NAMESPACE, specification.name(),
+    return Map.of(CommonVarNames.NAMESPACE, specification.simpleName(),
         "immediates", immediates);
   }
 

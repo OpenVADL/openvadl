@@ -74,7 +74,7 @@ public class EmitMCInstExpanderCppFilePass extends LcbTemplateRenderingPass {
                   variants,
                   relocations);
           var function = wrapped.get(pseudoInstruction);
-          var classPrefix = new CppClassImplName(specification.name() + "MCInstExpander");
+          var classPrefix = new CppClassImplName(specification.simpleName() + "MCInstExpander");
           ensureNonNull(function, "a function must exist");
           return new RenderedPseudoInstruction(
               classPrefix,
@@ -97,7 +97,7 @@ public class EmitMCInstExpanderCppFilePass extends LcbTemplateRenderingPass {
         GenerateImmediateKindPass.class);
     var relocations =
         (List<ElfRelocation>) passResults.lastResultOf(GenerateElfRelocationPass.class);
-    return Map.of(CommonVarNames.NAMESPACE, specification.name(),
+    return Map.of(CommonVarNames.NAMESPACE, specification.simpleName(),
         "pseudoInstructions",
         pseudoInstructions(specification, wrapped, fieldUsages, variants, relocations,
             passResults));

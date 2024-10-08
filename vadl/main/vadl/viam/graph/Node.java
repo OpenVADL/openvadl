@@ -434,7 +434,6 @@ public abstract class Node {
         }
         return succ;
       });
-      updatePredecessorOf(this, replacement);
     }
   }
 
@@ -564,7 +563,7 @@ public abstract class Node {
         "failed to set remove %s as predecessor from %s and adding it to %s", this, oldSuccessor,
         newSuccessor);
     if (oldSuccessor != newSuccessor) {
-      if (oldSuccessor != null) {
+      if (oldSuccessor != null && oldSuccessor.predecessor != null) {
         ensure(newSuccessor == null || oldSuccessor.predecessor == this,
             "the old successor (%s) of this node has another predecessor: %s", oldSuccessor,
             oldSuccessor.predecessor);
@@ -664,6 +663,14 @@ public abstract class Node {
    * data values recursively.
    */
   public abstract Node copy();
+
+  /**
+   * Creates a copy from {@code this} node and returns it. It will also copy all
+   * data values recursively.
+   */
+  public final <T extends Node> T copy(Class<T> clazz) {
+    return clazz.cast(copy());
+  }
 
   /**
    * Indicates whether the node has commutative inputs.

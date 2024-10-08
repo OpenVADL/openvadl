@@ -61,4 +61,12 @@ public abstract class GraphProcessor implements GraphVisitor<Object> {
     // result is ignored anyway
     return null;
   }
+
+
+  protected <T extends Node> T getResultOf(Node unprocessed, Class<T> clazz) {
+    var node = processedNodes.get(unprocessed);
+    unprocessed.ensure(node != null, "node not processed");
+    node.ensure(clazz.isInstance(node), "expected node to be instance of %s", clazz);
+    return clazz.cast(node);
+  }
 }

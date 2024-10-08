@@ -58,7 +58,7 @@ public class EmitAsmRecursiveDescentParserCppFilePass extends LcbTemplateRenderi
                                                 Specification specification) {
     var lexes = lexes(specification);
     var instructions = instructions(specification);
-    return Map.of(CommonVarNames.NAMESPACE, specification.name(),
+    return Map.of(CommonVarNames.NAMESPACE, specification.simpleName(),
         "lexParsingResults", lexes,
         "instructionResults", instructions);
   }

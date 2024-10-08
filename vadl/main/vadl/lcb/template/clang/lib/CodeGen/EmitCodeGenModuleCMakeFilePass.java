@@ -30,6 +30,6 @@ public class EmitCodeGenModuleCMakeFilePass extends LcbTemplateRenderingPass {
   @Override
   protected Map<String, Object> createVariables(final PassResults passResults,
                                                 Specification specification) {
-    return Map.of(CommonVarNames.NAMESPACE, specification.name());
+    return Map.of(CommonVarNames.NAMESPACE, specification.simpleName());
   }
 }

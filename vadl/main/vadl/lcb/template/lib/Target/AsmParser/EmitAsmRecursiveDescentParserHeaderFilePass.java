@@ -53,7 +53,7 @@ public class EmitAsmRecursiveDescentParserHeaderFilePass extends LcbTemplateRend
     var instructions = instructions(specification);
     var constants = constants(specification);
     var parsingResults = Stream.concat(constants, instructions).toList();
-    return Map.of(CommonVarNames.NAMESPACE, specification.name(),
+    return Map.of(CommonVarNames.NAMESPACE, specification.simpleName(),
         "formats", Stream.concat(composedStructs, singleFieldStructs).toList(),
         "parsingResults", parsingResults);
   }
@@ -93,7 +93,7 @@ public class EmitAsmRecursiveDescentParserHeaderFilePass extends LcbTemplateRend
         .map(isa -> isa.ownInstructions().stream())
         .orElse(Stream.empty())
         .map(instruction -> new ParsingResultRecord("NoData",
-            ParserGenerator.generateInstructionName(instruction), instruction.name()));
+            ParserGenerator.generateInstructionName(instruction), instruction.simpleName()));
   }
 
   @NotNull

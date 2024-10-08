@@ -343,7 +343,8 @@ public class Format extends Definition implements DefProp.WithType {
 
     @Override
     public String toString() {
-      return "FieldAccess{ " + accessFunction.name() + " = " + accessFunction.signature() + " }";
+      return "FieldAccess{ " + accessFunction.simpleName() + " = " + accessFunction.signature()
+          + " }";
     }
 
     @Override

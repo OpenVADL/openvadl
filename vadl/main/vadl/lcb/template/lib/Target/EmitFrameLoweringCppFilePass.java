@@ -6,7 +6,6 @@ import vadl.configuration.LcbConfiguration;
 import vadl.lcb.template.CommonVarNames;
 import vadl.lcb.template.LcbTemplateRenderingPass;
 import vadl.pass.PassResults;
-import vadl.viam.RegisterFile;
 import vadl.viam.Specification;
 import vadl.viam.passes.dummyAbi.DummyAbi;
 
@@ -40,7 +39,7 @@ public class EmitFrameLoweringCppFilePass extends LcbTemplateRenderingPass {
     var stackPointer = renderRegister(abi.stackPointer().registerFile(), abi.stackPointer().addr());
     var returnAddress =
         renderRegister(abi.returnAddress().registerFile(), abi.returnAddress().addr());
-    return Map.of(CommonVarNames.NAMESPACE, specification.name(),
+    return Map.of(CommonVarNames.NAMESPACE, specification.simpleName(),
         "hasFramePointer", abi.hasFramePointer(),
         "framePointer", framePointer,
         "stackPointer", stackPointer,

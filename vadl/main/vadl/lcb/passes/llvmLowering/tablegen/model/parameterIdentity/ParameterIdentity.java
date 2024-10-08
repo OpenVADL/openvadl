@@ -49,32 +49,32 @@ public abstract class ParameterIdentity {
   }
 
   public static ParameterIdentity from(WriteRegFileNode node, FieldRefNode address) {
-    return new ParameterTypeAndNameIdentity(node.registerFile().name(),
+    return new ParameterTypeAndNameIdentity(node.registerFile().simpleName(),
         address.formatField().identifier.simpleName());
   }
 
   public static ParameterIdentity from(ReadRegFileNode node, FieldRefNode address) {
-    return new ParameterTypeAndNameIdentity(node.registerFile().name(),
+    return new ParameterTypeAndNameIdentity(node.registerFile().simpleName(),
         address.formatField().identifier.simpleName());
   }
 
   public static ParameterIdentity from(LlvmReadRegFileNode node, FieldRefNode address) {
-    return new ParameterTypeAndNameIdentity(node.registerFile().name(),
+    return new ParameterTypeAndNameIdentity(node.registerFile().simpleName(),
         address.formatField().identifier.simpleName());
   }
 
   public static ParameterIdentity from(ReadRegFileNode node, FuncParamNode address) {
-    return new ParameterTypeAndNameIdentity(node.registerFile().name(),
+    return new ParameterTypeAndNameIdentity(node.registerFile().simpleName(),
         address.parameter().identifier.simpleName());
   }
 
   public static ParameterIdentity from(ReadRegFileNode node, ConstantNode address) {
-    return new ParameterTypeAndNameIdentity(node.registerFile().name(),
+    return new ParameterTypeAndNameIdentity(node.registerFile().simpleName(),
         address.constant().asVal().toString());
   }
 
   public static ParameterIdentity from(WriteRegFileNode node, FuncParamNode address) {
-    return new ParameterTypeAndNameIdentity(node.registerFile().name(),
+    return new ParameterTypeAndNameIdentity(node.registerFile().simpleName(),
         address.parameter().identifier.simpleName());
   }
 

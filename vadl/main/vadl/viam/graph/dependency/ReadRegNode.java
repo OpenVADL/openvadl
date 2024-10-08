@@ -61,7 +61,7 @@ public class ReadRegNode extends ReadResourceNode {
   }
 
   @Override
-  protected Resource resourceDefinition() {
+  public Resource resourceDefinition() {
     return register;
   }
 

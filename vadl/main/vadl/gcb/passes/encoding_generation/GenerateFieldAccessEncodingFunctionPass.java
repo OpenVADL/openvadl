@@ -69,7 +69,7 @@ public class GenerateFieldAccessEncodingFunctionPass extends Pass {
 
     if (!hasNoEncoding.isEmpty()) {
       for (var format : hasNoEncoding) {
-        logger.atError().log("Format {} has no encoding", format.name());
+        logger.atError().log("Format {} has no encoding", format.simpleName());
       }
       throw new ViamError("Not all formats have an encoding");
     }

@@ -2,6 +2,9 @@ package vadl.viam;
 
 import com.google.errorprone.annotations.concurrent.LazyInit;
 import java.util.List;
+import java.util.Set;
+import org.checkerframework.checker.nullness.qual.NonNull;
+import org.jetbrains.annotations.Nullable;
 import vadl.viam.graph.Graph;
 
 /**
@@ -17,6 +20,17 @@ public class Instruction extends Definition implements DefProp.WithBehavior {
 
   @LazyInit
   private InstructionSetArchitecture parentArchitecture;
+
+  /**
+   * Set during the {@link vadl.viam.passes.InstructionResourceAccessAnalysisPass}.
+   */
+  @Nullable
+  private Set<Resource> writtenResources;
+  /**
+   * Set during the {@link vadl.viam.passes.InstructionResourceAccessAnalysisPass}.
+   */
+  @Nullable
+  private Set<Resource> readResources;
 
   /**
    * Creates an Instruction object with the given parameters.
@@ -56,6 +70,26 @@ public class Instruction extends Definition implements DefProp.WithBehavior {
     return encoding.format();
   }
 
+  /**
+   * Returns the {@link Resource}s that are written by this instruction.
+   */
+  public Set<Resource> writtenResources() {
+    ensure(writtenResources != null,
+        "No read resources set. "
+            + "The InstructionResourceAccessAnalysisPass has to run before accessing this.");
+    return writtenResources;
+  }
+
+  /**
+   * Returns the {@link Resource}s that are read by this instruction.
+   */
+  public Set<Resource> readResources() {
+    ensure(readResources != null,
+        "No read resources set. "
+            + "The InstructionResourceAccessAnalysisPass has to run before accessing this.");
+    return readResources;
+  }
+
   // this is set by InstructionSetArchitecture the Instruction is added to
   void setParentArchitecture(InstructionSetArchitecture parentArchitecture) {
     this.parentArchitecture = parentArchitecture;
@@ -72,6 +106,21 @@ public class Instruction extends Definition implements DefProp.WithBehavior {
     ensure(behavior.isInstruction(), "Behavior is not a valid instruction behavior");
 
     behavior.verify();
+  }
+
+
+  /**
+   * Used by the {@link vadl.viam.passes.InstructionResourceAccessAnalysisPass}.
+   */
+  public void setWrittenResources(@NonNull Set<Resource> writtenResources) {
+    this.writtenResources = writtenResources;
+  }
+
+  /**
+   * Used by the {@link vadl.viam.passes.InstructionResourceAccessAnalysisPass}.
+   */
+  public void setReadResources(@NonNull Set<Resource> readResources) {
+    this.readResources = readResources;
   }
 
   @Override

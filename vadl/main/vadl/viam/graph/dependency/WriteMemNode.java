@@ -52,7 +52,7 @@ public class WriteMemNode extends WriteResourceNode {
   }
 
   @Override
-  protected Resource resourceDefinition() {
+  public Resource resourceDefinition() {
     return memory;
   }
 

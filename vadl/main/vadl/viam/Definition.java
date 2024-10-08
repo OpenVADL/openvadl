@@ -24,10 +24,6 @@ public abstract class Definition {
     this.identifier = identifier;
   }
 
-  public final String simpleName() {
-    return identifier.name();
-  }
-
   public SourceLocation sourceLocation() {
     return sourceLocation;
   }
@@ -36,7 +32,17 @@ public abstract class Definition {
     this.sourceLocation = sourceLocation;
   }
 
-  public String name() {
+  public String simpleName() {
+    return identifier.simpleName();
+  }
+
+  /**
+   * This is only used because some templates rely on it.
+   *
+   * @deprecated use {@link #simpleName()} instead
+   */
+  @Deprecated
+  public final String name() {
     return identifier.simpleName();
   }
 

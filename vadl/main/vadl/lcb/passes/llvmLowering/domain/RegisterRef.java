@@ -90,9 +90,9 @@ public class RegisterRef extends Resource {
   public String lowerName() {
     if (hasAddress()) {
       ensure(address != null, "address must not be null");
-      return name() + address.asVal().decimal();
+      return simpleName() + address.asVal().decimal();
     } else {
-      return name();
+      return simpleName();
     }
   }
 }

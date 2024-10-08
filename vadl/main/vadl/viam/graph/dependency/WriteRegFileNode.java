@@ -69,7 +69,7 @@ public class WriteRegFileNode extends WriteResourceNode implements HasRegisterFi
   }
 
   @Override
-  protected Resource resourceDefinition() {
+  public Resource resourceDefinition() {
     return registerFile;
   }
 

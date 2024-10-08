@@ -18,4 +18,10 @@ public class BoolType extends DataType {
     return 1;
   }
 
+  @Override
+  public DataType fittingCppType() {
+    return this;
+  }
+
+
 }

@@ -2,7 +2,13 @@ package vadl.dump.infoEnrichers;
 
 import static vadl.dump.InfoEnricher.forType;
 
+import java.util.ArrayList;
+import java.util.Comparator;
+import java.util.LinkedList;
 import java.util.List;
+import java.util.Objects;
+import java.util.stream.Collector;
+import java.util.stream.Collectors;
 import vadl.dump.Info;
 import vadl.dump.InfoEnricher;
 import vadl.dump.InfoUtils;
@@ -14,6 +20,7 @@ import vadl.viam.Function;
 import vadl.viam.Instruction;
 import vadl.viam.Parameter;
 import vadl.viam.ViamError;
+import vadl.viam.passes.InstructionResourceAccessAnalysisPass;
 
 /**
  * A static collection of {@link InfoEnricher} that provides information about
@@ -99,7 +106,7 @@ public class ViamEnricherCollection {
       var dotGraph = behavior.dotGraph();
       var info = InfoUtils.createGraphModal(
           "Behavior",
-          def.name() + " Behavior",
+          def.simpleName() + " Behavior",
           dotGraph
       );
       defEntity.addInfo(info);
@@ -163,6 +170,32 @@ public class ViamEnricherCollection {
         entity.addInfo(info);
       });
 
+  public static InfoEnricher RESOURCE_ACCESS_SUPPLIER_EXPANDABLE =
+      forType(DefinitionEntity.class, (entity, passResult) -> {
+        if (!passResult.hasRunPassOnce(InstructionResourceAccessAnalysisPass.class)
+            || !(entity.origin() instanceof Instruction)) {
+          return;
+        }
+        var instr = (Instruction) entity.origin();
+        var reads = Objects.requireNonNull(instr.readResources())
+            .stream().sorted(Comparator.comparing(e -> e.getClass().getSimpleName()))
+            .map(rsrc -> rsrc.getClass().getSimpleName() + " " + rsrc.simpleName())
+            .collect(Collectors.toCollection(LinkedList::new));
+        var writes = Objects.requireNonNull(instr.writtenResources())
+            .stream().sorted(Comparator.comparing(e -> e.getClass().getSimpleName()))
+            .map(rsrc -> rsrc.getClass().getSimpleName() + " " + rsrc.simpleName())
+            .collect(Collectors.toCollection(LinkedList::new));
+
+        reads.add(0, "Read");
+        writes.add(0, "Written");
+
+        var info = InfoUtils.createTableExpandable(
+            "Accessed Resources",
+            List.of(reads, writes)
+        );
+        entity.addInfo(info);
+      });
+
   /**
    * A list of all info enrichers for the default VIAM specification.
    */
@@ -172,7 +205,8 @@ public class ViamEnricherCollection {
       PARENT_SUPPLIER_TAG,
       BEHAVIOR_SUPPLIER_MODAL,
       VERIFY_SUPPLIER_EXPANDABLE,
-      SOURCE_CODE_SUPPLIER_EXPANDABLE
+      SOURCE_CODE_SUPPLIER_EXPANDABLE,
+      RESOURCE_ACCESS_SUPPLIER_EXPANDABLE
   );
 
 }

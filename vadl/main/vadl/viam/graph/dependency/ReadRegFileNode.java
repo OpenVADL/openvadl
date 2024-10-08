@@ -61,7 +61,7 @@ public class ReadRegFileNode extends ReadResourceNode implements HasRegisterFile
   }
 
   @Override
-  protected Resource resourceDefinition() {
+  public Resource resourceDefinition() {
     return registerFile;
   }
 

@@ -89,7 +89,7 @@ public abstract class AbstractTemplateRenderingPass extends Pass {
 
   @Override
   public PassName getName() {
-    return new PassName("EmitFile");
+    return new PassName("EmitFile " + getOutputPath());
   }
 
   @Nullable

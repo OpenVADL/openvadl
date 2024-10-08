@@ -7,11 +7,8 @@ import static vadl.utils.GraphUtils.getSingleNode;
 
 import java.io.IOException;
 import java.util.List;
-import java.util.Map;
-import java.util.Objects;
 import java.util.stream.Stream;
 import org.junit.jupiter.api.BeforeAll;
-import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.Arguments;
 import org.junit.jupiter.params.provider.EmptySource;
@@ -49,7 +46,7 @@ public class TypeCastEliminationPassTest extends AbstractTest {
             "passes/typeCastElimination/valid_type_cast_elimination.vadl");
     // execute type cast elimination
     new TypeCastEliminationPass(
-        new GeneralConfiguration(createDirectory().toAbsolutePath().toString(), false)).execute(
+        new GeneralConfiguration(createDirectory().toAbsolutePath(), false)).execute(
         PassResults.empty(), validFrontend.getViam());
     ViamVerifier.verifyAllIn(validFrontend.getViam());
   }
@@ -160,7 +157,7 @@ public class TypeCastEliminationPassTest extends AbstractTest {
                 (def) -> def.identifier.name().startsWith(prefix)
                     && def instanceof Function)
             .stream()
-            .map(Definition::name)
+            .map(Definition::simpleName)
             .map(Arguments::of);
   }
 

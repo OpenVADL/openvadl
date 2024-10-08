@@ -2,6 +2,9 @@ package vadl.types;
 
 import java.util.Collection;
 import java.util.List;
+import javax.annotation.Nullable;
+import vadl.error.Diagnostic;
+import vadl.viam.ViamError;
 
 /**
  * An arbitrary sized sequence of Bits to represent anything.
@@ -86,6 +89,26 @@ public class BitsType extends DataType {
     // while it is possible to auto cast bits to SInt, the BitsType is not
     // signed, as it doesn't make sense for most bits purposes
     return false;
+  }
+
+  @Override
+  @Nullable
+  public DataType fittingCppType() {
+    if (bitWidth == 1) {
+      return this;
+    } else if (bitWidth <= 8) {
+      return constructDataType(this.getClass(), 8);
+    } else if (bitWidth <= 16) {
+      return constructDataType(this.getClass(), 16);
+    } else if (bitWidth <= 32) {
+      return constructDataType(this.getClass(), 32);
+    } else if (bitWidth <= 64) {
+      return constructDataType(this.getClass(), 64);
+    } else if (bitWidth <= 128) {
+      return constructDataType(this.getClass(), 128);
+    } else {
+      return null;
+    }
   }
 
   @Override

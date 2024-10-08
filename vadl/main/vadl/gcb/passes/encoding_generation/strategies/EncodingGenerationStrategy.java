@@ -29,7 +29,7 @@ public interface EncodingGenerationStrategy {
    */
   default Parameter setupEncodingForFieldAccess(Format.FieldAccess fieldAccess) {
     var ident = fieldAccess.identifier.append("encoding");
-    var identParam = ident.append(fieldAccess.name());
+    var identParam = ident.append(fieldAccess.simpleName());
     var param = new Parameter(identParam, fieldAccess.accessFunction().returnType());
     var function =
         new Function(ident, new Parameter[] {param}, fieldAccess.fieldRef().type());
