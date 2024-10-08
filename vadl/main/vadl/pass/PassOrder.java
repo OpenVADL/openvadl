@@ -36,7 +36,6 @@ import vadl.iss.template.target.EmitIssCpuSourcePass;
 import vadl.iss.template.target.EmitIssInsnDecodePass;
 import vadl.iss.template.target.EmitIssMachinePass;
 import vadl.iss.template.target.EmitIssTranslatePass;
-import vadl.lcb.codegen.GenerateImmediateKindPass;
 import vadl.lcb.passes.isaMatching.IsaMatchingPass;
 import vadl.lcb.passes.llvmLowering.ConstMaterialisationPseudoExpansionFunctionGeneratorPass;
 import vadl.lcb.passes.llvmLowering.GenerateRegisterClassesPass;
