@@ -16,6 +16,10 @@ import vadl.viam.Counter;
 import vadl.viam.Instruction;
 import vadl.viam.Specification;
 
+/**
+ * A pass that verifies that all necessary information required to generate a QEMU ISS are present.
+ * It also checks if the provided specification uses features that are not yet supported.
+ */
 public class IssVerificationPass extends AbstractIssPass {
   public IssVerificationPass(IssConfiguration configuration) {
     super(configuration);
@@ -79,8 +83,9 @@ public class IssVerificationPass extends AbstractIssPass {
             error("Only `program counter` definitions supported",
                 pc.sourceLocation())
                 .locationDescription(pc.sourceLocation(),
-                    "This is an alias program counter to a register file. " +
-                        "However the ISS generator currently only supports register cell program counters.")
+                    "This is an alias program counter to a register file. "
+                        + "However the ISS generator currently only supports register "
+                        + "cell program counters.")
                 .note("We have to implement this!")
                 .build()
         );
@@ -141,7 +146,8 @@ public class IssVerificationPass extends AbstractIssPass {
           .locationDescription(location,
               "Found %s different format sizes".formatted(formatWidths.size()))
           .description(
-              "The ISS generator currently requires that all instruction's formats have the same size.");
+              "The ISS generator currently requires that all instruction's formats have "
+                  + "the same size.");
       for (var f : diffFormats) {
         errBuilder.locationDescription(f.identifier.sourceLocation(),
             "has a bit-width of %s".formatted(f.type().bitWidth())

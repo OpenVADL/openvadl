@@ -2,8 +2,8 @@ package vadl.iss.passes.tcgLowering.nodes;
 
 import java.util.List;
 import java.util.Objects;
-import vadl.iss.passes.tcgLowering.TcgWidth;
 import vadl.iss.passes.tcgLowering.TcgV;
+import vadl.iss.passes.tcgLowering.TcgWidth;
 import vadl.javaannotations.viam.DataValue;
 import vadl.javaannotations.viam.Input;
 import vadl.types.DataType;
@@ -11,6 +11,10 @@ import vadl.viam.graph.GraphVisitor;
 import vadl.viam.graph.Node;
 import vadl.viam.graph.dependency.ExpressionNode;
 
+/**
+ * A common superclass that represents a TCG operator with one source variable, one
+ * immediate, and one result.
+ */
 public abstract class TcgBinaryImmOpNode extends TcgOpNode {
 
   @DataValue
@@ -19,6 +23,14 @@ public abstract class TcgBinaryImmOpNode extends TcgOpNode {
   @Input
   ExpressionNode arg2;
 
+  /**
+   * Constructs the tcg binary imm op.
+   *
+   * @param res   the result variable
+   * @param arg1  the first argument variable
+   * @param arg2  the second argument immediate
+   * @param width the op's width
+   */
   public TcgBinaryImmOpNode(TcgV res, TcgV arg1, ExpressionNode arg2, TcgWidth width) {
     super(res, width);
     this.arg1 = arg1;

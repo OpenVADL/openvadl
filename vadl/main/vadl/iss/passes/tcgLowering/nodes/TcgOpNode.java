@@ -1,12 +1,17 @@
 package vadl.iss.passes.tcgLowering.nodes;
 
 import java.util.List;
-import vadl.iss.passes.tcgLowering.TcgWidth;
 import vadl.iss.passes.tcgLowering.TcgV;
+import vadl.iss.passes.tcgLowering.TcgWidth;
 import vadl.javaannotations.viam.DataValue;
 import vadl.viam.graph.GraphNodeVisitor;
 import vadl.viam.graph.control.DirectionalNode;
 
+/**
+ * Represents an abstract TCG (Tiny Code Generation) operation node.
+ * It extends the DirectionalNode class and contains a result variable and a width specification.
+ * This class is designed to be the base class for specific TCG operator nodes.
+ */
 public abstract class TcgOpNode extends DirectionalNode {
 
   @DataValue

@@ -10,6 +10,9 @@ import vadl.viam.graph.GraphVisitor;
 import vadl.viam.graph.Node;
 import vadl.viam.graph.dependency.ExpressionNode;
 
+/**
+ * Abstract sealed class representing a variable retrieval operation in the TCG.
+ */
 public abstract sealed class TcgGetVar extends TcgOpNode
     permits TcgGetVar.TcgGetRegFile, TcgGetVar.TcgGetTemp {
 
@@ -17,6 +20,9 @@ public abstract sealed class TcgGetVar extends TcgOpNode
     super(res, res.width());
   }
 
+  /**
+   * Represents an operation in the TCG for retrieving a value from a temporary variable.
+   */
   public static final class TcgGetTemp extends TcgGetVar {
 
     public TcgGetTemp(TcgV res) {
@@ -34,6 +40,10 @@ public abstract sealed class TcgGetVar extends TcgOpNode
     }
   }
 
+  /**
+   * Represents an operation in the TCG for retrieving a value from a register file.
+   * This is emitted as e.g. {@code get_x(ctx, a->rs1)} in the instruction translation.
+   */
   public static final class TcgGetRegFile extends TcgGetVar {
 
     @DataValue
@@ -41,6 +51,11 @@ public abstract sealed class TcgGetVar extends TcgOpNode
     @Input
     ExpressionNode index;
 
+    /**
+     * The kind of the register file retrieval.
+     * If the result variable is used as destination, the kind is DEST.
+     * Otherwise, it is SRC.
+     */
     public enum Kind {
       SRC,
       DEST,
@@ -49,6 +64,16 @@ public abstract sealed class TcgGetVar extends TcgOpNode
     @DataValue
     Kind kind;
 
+    /**
+     * Constructs a TcgGetRegFile object representing an operation in the TCG for retrieving a value
+     * from a register file.
+     *
+     * @param registerFile The register file from which the variable is to be retrieved.
+     * @param index        The index expression node specifying
+     *                     the address within the register file.
+     * @param kind         The kind of the register file retrieval, either SRC or DEST.
+     * @param res          The result variable representing the output of this operation.
+     */
     public TcgGetRegFile(RegisterFile registerFile, ExpressionNode index, Kind kind, TcgV res) {
       super(res);
       this.registerFile = registerFile;
@@ -61,9 +86,9 @@ public abstract sealed class TcgGetVar extends TcgOpNode
     public void verifyState() {
       super.verifyState();
 
-      var cType = registerFile.resultType().fittingCppType();
-      ensure(cType != null, "Couldn't fit cpp type");
-      ensure(res.width().width <= cType.bitWidth(),
+      var cppType = registerFile.resultType().fittingCppType();
+      ensure(cppType != null, "Couldn't fit cpp type");
+      ensure(res.width().width <= cppType.bitWidth(),
           "register file result width does not fit in node's result var width");
     }
 

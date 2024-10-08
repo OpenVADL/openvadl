@@ -1,10 +1,13 @@
 package vadl.iss.passes.tcgLowering.nodes;
 
-import vadl.iss.passes.tcgLowering.TcgWidth;
 import vadl.iss.passes.tcgLowering.TcgV;
+import vadl.iss.passes.tcgLowering.TcgWidth;
 import vadl.viam.graph.Node;
 import vadl.viam.graph.dependency.ExpressionNode;
 
+/**
+ * Represents the {@code tcg_gen_addi} TCG instruction in the TCG VIAM lowering.
+ */
 public class TcgAddiNode extends TcgBinaryImmOpNode {
 
 

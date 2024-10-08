@@ -70,15 +70,23 @@ public class Instruction extends Definition implements DefProp.WithBehavior {
     return encoding.format();
   }
 
+  /**
+   * Returns the {@link Resource}s that are written by this instruction.
+   */
   public Set<Resource> writtenResources() {
     ensure(writtenResources != null,
-        "No read resources set. The InstructionResourceAccessAnalysisPass has to run before accessing this.");
+        "No read resources set. "
+            + "The InstructionResourceAccessAnalysisPass has to run before accessing this.");
     return writtenResources;
   }
 
+  /**
+   * Returns the {@link Resource}s that are read by this instruction.
+   */
   public Set<Resource> readResources() {
     ensure(readResources != null,
-        "No read resources set. The InstructionResourceAccessAnalysisPass has to run before accessing this.");
+        "No read resources set. "
+            + "The InstructionResourceAccessAnalysisPass has to run before accessing this.");
     return readResources;
   }
 

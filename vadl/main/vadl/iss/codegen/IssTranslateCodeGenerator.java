@@ -8,19 +8,20 @@ import java.io.StringWriter;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import vadl.cppCodeGen.CodeGenerator;
-import vadl.cppCodeGen.GenericCppCodeGeneratorVisitor;
 import vadl.cppCodeGen.mixins.CTypeCastMixin;
 import vadl.viam.Definition;
 import vadl.viam.Instruction;
 import vadl.viam.graph.Node;
-import vadl.viam.graph.control.ControlSplitNode;
 import vadl.viam.graph.control.DirectionalNode;
 import vadl.viam.graph.control.InstrEndNode;
 import vadl.viam.graph.control.StartNode;
 import vadl.viam.graph.dependency.FieldRefNode;
-import vadl.viam.graph.dependency.SignExtendNode;
-import vadl.viam.graph.dependency.WriteRegNode;
 
+/**
+ * The code generator for the {@code target/gen-arch/translate.c}.
+ * It produces translate functions for all instructions
+ * in the {@link vadl.viam.InstructionSetArchitecture}.
+ */
 public class IssTranslateCodeGenerator extends CodeGenerator
     implements CTypeCastMixin, CTcgOpsMixin {
 
@@ -30,6 +31,9 @@ public class IssTranslateCodeGenerator extends CodeGenerator
     super(writer);
   }
 
+  /**
+   * The static entry point to get the translation function for a given instruction.
+   */
   public static String fetch(Instruction def) {
     var generator = new IssTranslateCodeGenerator(new StringWriter());
     generator.gen(def);

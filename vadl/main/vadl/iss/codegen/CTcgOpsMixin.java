@@ -8,8 +8,14 @@ import vadl.iss.passes.tcgLowering.nodes.TcgGetVar;
 import vadl.iss.passes.tcgLowering.nodes.TcgMoveNode;
 import vadl.viam.graph.Node;
 
+/**
+ * A mixin to add C generation support for TCG operations in the ISS.
+ */
 public interface CTcgOpsMixin extends CGenMixin {
 
+  /**
+   * Adds the C gen TCG node implementations to the given impls.
+   */
   default void tcgOpImpls(CodeGenerator.Impls<Node> impls) {
     impls
         .set(TcgBinaryOpNode.class, (TcgBinaryOpNode node, StringWriter writer) -> {

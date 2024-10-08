@@ -82,6 +82,23 @@ public class Diagnostic extends RuntimeException {
     return new DiagnosticBuilder(Level.WARNING, reason, location);
   }
 
+  /**
+   * Ensures the given condition.
+   * If the condition is false, an error defined by the builder lambda is thrown.
+   *
+   * <p>
+   * Example:
+   * <pre>{@code
+   * ensure(current instanceof InstrEndNode, () ->
+   *     error("Instruction contains unsupported features.",
+   *         insn.identifier.sourceLocation())
+   * );}
+   * </pre>
+   * </p>
+   *
+   * @param condition to be checked
+   * @param builder   that builds error if condition is false
+   */
   @Contract("false, _ -> fail")
   public static void ensure(boolean condition, Supplier<DiagnosticBuilder> builder) {
     if (!condition) {

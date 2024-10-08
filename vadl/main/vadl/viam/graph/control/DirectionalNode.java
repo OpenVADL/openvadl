@@ -46,13 +46,19 @@ public abstract class DirectionalNode extends ControlNode {
     this.next = next;
   }
 
-  public void addAfter(@Nonnull DirectionalNode after) {
+  /**
+   * Inserts a direction node between this and the next node.
+   * If the new node is not yet active, it will be added to the graph.
+   *
+   * @param newNode node to be inserted.
+   */
+  public void addAfter(@Nonnull DirectionalNode newNode) {
     ensure(isActive() && graph() != null, "Node is not active");
-    if (!after.isActive()) {
-      after = graph().addWithInputs(after);
+    if (!newNode.isActive()) {
+      newNode = graph().addWithInputs(newNode);
     }
-    after.setNext(this);
-    this.setNext(after);
+    newNode.setNext(this);
+    this.setNext(newNode);
   }
 
   public ControlNode next() {

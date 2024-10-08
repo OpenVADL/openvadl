@@ -4,6 +4,10 @@ import java.util.Objects;
 import java.util.concurrent.atomic.AtomicInteger;
 import vadl.viam.graph.dependency.LetNode;
 
+/**
+ * The TcgV class represents a variable in the context of the QEMU ISS (TCG).
+ * It is used to manage and generate variable names along with their widths.
+ */
 public class TcgV {
 
   String name;

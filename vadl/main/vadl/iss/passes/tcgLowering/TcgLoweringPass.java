@@ -31,6 +31,13 @@ import vadl.viam.graph.dependency.SideEffectNode;
 import vadl.viam.graph.dependency.WriteRegFileNode;
 import vadl.viam.passes.GraphProcessor;
 
+
+/**
+ * Represents a transformation pass specifically for TCG (Tiny Code Generator) lowering within
+ * the ISS (Instruction Set Simulator).
+ * This class extends {@link AbstractIssPass} and executes a lowering operation
+ * on all instructions of the ISA.
+ */
 public class TcgLoweringPass extends AbstractIssPass {
 
   public TcgLoweringPass(IssConfiguration configuration) {
