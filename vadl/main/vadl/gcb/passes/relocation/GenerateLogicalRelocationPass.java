@@ -67,6 +67,7 @@ public class GenerateLogicalRelocationPass extends Pass {
 
   private Stream<LogicalRelocation> generateRelocationsBasedOnPseudoInstructions(
       Specification viam,
+      @SuppressWarnings("unused")
       IdentifyFieldUsagePass.ImmediateDetectionContainer immediates) {
     var logicalRelocations = new ArrayList<LogicalRelocation>();
 
