@@ -33,13 +33,12 @@ public class EmitIssTranslatePass extends IssTemplateRenderingPass {
                                                 Specification specification) {
     var vars = super.createVariables(passResults, specification);
     vars.put("insn_width", getInstructionWidth(specification));
-    vars.put("mem_word_size", getMemoryWordSize(specification));
-    vars.put("translate_functions", getTranslateFunctions(specification));
+    vars.put("mem_word_size", getMemoryWordSize());
+    vars.put("translate_functions", getTranslateFunctions());
     return vars;
   }
 
-  private static List<String> getTranslateFunctions(Specification specification) {
-    var insns = specification.isa().get().ownInstructions();
+  private static List<String> getTranslateFunctions() {
     return List.of();
     //    return insns.stream()
     //        // TODO: Remove this filter (just for testing)
@@ -48,7 +47,7 @@ public class EmitIssTranslatePass extends IssTemplateRenderingPass {
     //        .toList();
   }
 
-  private static Map<String, Object> getMemoryWordSize(Specification specification) {
+  private static Map<String, Object> getMemoryWordSize() {
     return Map.of(
         "int", 8
     );

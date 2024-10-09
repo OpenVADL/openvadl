@@ -81,6 +81,10 @@ subprojects {
                 excludedPaths.set(".*/generated/sources/coco/java/main/vadl/ast/*.*")
             }
         }
+
+        if (project.hasProperty("FailOnWarnings")) {
+            options.compilerArgs.add("-Werror")
+        }
     }
 
     tasks {

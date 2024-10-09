@@ -217,6 +217,7 @@ public class PseudoExpansionCodeGeneratorVisitor extends GenericCppCodeGenerator
   }
 
   private void lowerExpressionWithRelocation(String sym,
+                                             @SuppressWarnings("unused")
                                              Format.Field field,
                                              int argumentIndex,
                                              Relocation relocation) {

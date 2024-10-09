@@ -1,5 +1,10 @@
 #
-# Checkstyle Validation
+# Drone pipeline of the open-vadl CI.
+# It executes the following steps on updates to a pull request or pushes to master:
+#   - build             ... fails on warnings and errors
+#   - checkstyle        ... fails if there are checkstyle violations
+#   - test              ... fails on failing tests
+#   - checkstyle report ... runs on failure and comments the checkstyle report to the Gitea PR
 #
 kind: pipeline
 type: docker
@@ -15,7 +20,11 @@ steps:
       - git config --add --global url."https://$(ACCESS_TOKEN)@ea.complang.tuwien.ac.at/".insteadOf "git@ea.complang.tuwien.ac.at:"
       - git log -n 1 --oneline
 
-  - name: build and checkstyle
+  - name: build
+    image: c2.complang.tuwien.ac.at:5000/vadl-ci:f7222374638bccc355ba51bfcc2b17e9561204a4
+    commands:
+      - ./gradlew assemble testClasses -PFailOnWarnings
+  - name: checkstyle
     image: c2.complang.tuwien.ac.at:5000/vadl-ci:f7222374638bccc355ba51bfcc2b17e9561204a4
     commands:
       - ./gradlew checkstyleAll
@@ -43,6 +52,7 @@ volumes:
     host:
       path: /var/run/docker.sock
 
-triggers:
-  events:
-    - pull_request
+trigger:
+  ref:
+    - refs/pull/**
+    - refs/head/master

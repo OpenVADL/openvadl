@@ -131,7 +131,7 @@ public class EmitRegisterInfoCppFilePass extends LcbTemplateRenderingPass {
   }
 
   private List<FrameIndexElimination> getEliminateFrameIndexEntries(
-      @Nullable HashMap<InstructionLabel, List<Instruction>> instructionLabels,
+      @Nullable Map<InstructionLabel, List<Instruction>> instructionLabels,
       @Nullable IdentityHashMap<Instruction, UninlinedGraph> uninlined,
       List<TableGenMachineInstruction> tableGenMachineInstructions) {
     ensureNonNull(instructionLabels, "labels must exist");
