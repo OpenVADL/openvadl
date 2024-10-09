@@ -7,6 +7,7 @@ import com.google.common.collect.Streams;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Comparator;
+import java.util.IdentityHashMap;
 import java.util.List;
 import java.util.stream.Stream;
 import org.jetbrains.annotations.Nullable;
@@ -45,24 +46,31 @@ public class GenerateLogicalRelocationPass extends Pass {
     return new PassName("generateLogicalRelocationPass");
   }
 
+  public record Output(List<LogicalRelocation> all,
+                       IdentityHashMap<Instruction,
+                           List<LogicalRelocation>> relocationPerInstruction) {
+
+  }
+
   @Nullable
   @Override
-  public List<LogicalRelocation> execute(PassResults passResults, Specification viam)
+  public Output execute(PassResults passResults, Specification viam)
       throws IOException {
     var immediates =
         (IdentifyFieldUsagePass.ImmediateDetectionContainer) passResults.lastResultOf(
             IdentifyFieldUsagePass.class);
+    var relocationPerInstruction = new IdentityHashMap<Instruction, List<LogicalRelocation>>();
 
     // Generate relocations based on the specified relocations.
     // The user can specify relocations in the vadl specification.
-    var u = generateRelocationsBasedOnUsedRelocations(viam, immediates);
+    var u = generateRelocationsBasedOnUsedRelocations(viam, immediates, relocationPerInstruction);
     var v = generateRelocationsBasedOnPseudoInstructions(viam, immediates);
     var x = generateAbsoluteRelocationsForEveryFormat(viam, immediates);
-    var y = generateRelativeRelocations(viam, immediates);
+    var y = generateRelativeRelocations(viam, immediates, relocationPerInstruction);
 
-    return Stream.concat(Stream.concat(Stream.concat(u, v), x), y)
+    return new Output(Stream.concat(Stream.concat(Stream.concat(u, v), x), y)
         .sorted(Comparator.comparing(o -> o.identifier().lower()))
-        .toList();
+        .toList(), relocationPerInstruction);
   }
 
   private Stream<LogicalRelocation> generateRelocationsBasedOnPseudoInstructions(
@@ -124,7 +132,8 @@ public class GenerateLogicalRelocationPass extends Pass {
    * This method generates relocations when a relocation is used in a machine instruction.
    */
   private Stream<LogicalRelocation> generateRelocationsBasedOnUsedRelocations(
-      Specification viam, IdentifyFieldUsagePass.ImmediateDetectionContainer immediates) {
+      Specification viam, IdentifyFieldUsagePass.ImmediateDetectionContainer immediates,
+      IdentityHashMap<Instruction, List<LogicalRelocation>> relocationPerInstruction) {
     var logicalRelocations = new ArrayList<LogicalRelocation>();
 
     viam.isa().ifPresent((isa) -> {
@@ -141,13 +150,14 @@ public class GenerateLogicalRelocationPass extends Pass {
                       BitMaskFunctionGenerator.generateUpdateFunction(instruction.format(), field);
                   var cppConformRelocation =
                       CppTypeNormalizationPass.makeTypesCppConform(relocation);
-                  logicalRelocations.add(
-                      new LogicalRelocation(
-                          relocation,
-                          cppConformRelocation,
-                          field,
-                          instruction.format(),
-                          updateFunction));
+                  var obj = new LogicalRelocation(
+                      relocation,
+                      cppConformRelocation,
+                      field,
+                      instruction.format(),
+                      updateFunction);
+                  logicalRelocations.add(obj);
+                  append(relocationPerInstruction, instruction, obj);
                 }
               }
             });
@@ -157,6 +167,22 @@ public class GenerateLogicalRelocationPass extends Pass {
     // We do not need to emit a relocation for every instruction.
     // We just care about the formats.
     return logicalRelocations.stream().distinct();
+  }
+
+  /**
+   * Add to the hashmap the relocation.
+   */
+  private void append(
+      IdentityHashMap<Instruction, List<LogicalRelocation>> relocationPerInstruction,
+      Instruction instruction, LogicalRelocation relocation) {
+    if (relocationPerInstruction.containsKey(instruction)) {
+      var val = relocationPerInstruction.get(instruction);
+      val.add(relocation);
+    } else {
+      var val = new ArrayList<LogicalRelocation>();
+      val.add(relocation);
+      relocationPerInstruction.put(instruction, val);
+    }
   }
 
   private Stream<LogicalRelocation> generateAbsoluteRelocationsForEveryFormat(
@@ -172,9 +198,9 @@ public class GenerateLogicalRelocationPass extends Pass {
               var field = entry.getKey();
               var updateFunction =
                   BitMaskFunctionGenerator.generateUpdateFunction(format, field);
-              relocations.add(
-                  new LogicalRelocation(LogicalRelocation.Kind.ABSOLUTE, field, format,
-                      updateFunction));
+              var obj = new LogicalRelocation(LogicalRelocation.Kind.ABSOLUTE, field, format,
+                  updateFunction);
+              relocations.add(obj);
             }
           }
           return relocations.stream();
@@ -186,27 +212,31 @@ public class GenerateLogicalRelocationPass extends Pass {
    */
   private Stream<LogicalRelocation> generateRelativeRelocations(
       Specification viam,
-      IdentifyFieldUsagePass.ImmediateDetectionContainer immediates) {
-    return viam.isa()
-        .map(isa -> isa.ownInstructions().stream())
-        .orElse(Stream.empty())
-        .filter(instruction -> instruction.behavior().getNodes(ReadRegNode.class)
-            .anyMatch(x -> x.staticCounterAccess() != null))
-        .map(Instruction::format)
-        .distinct()
-        .flatMap(format -> {
-          var relocations = new ArrayList<LogicalRelocation>();
-          for (var entry : immediates.getFieldUsages(format).entrySet()) {
-            if (entry.getValue() == IdentifyFieldUsagePass.FieldUsage.IMMEDIATE) {
-              var field = entry.getKey();
-              var updateFunction =
-                  BitMaskFunctionGenerator.generateUpdateFunction(format, field);
-              relocations.add(
-                  new LogicalRelocation(LogicalRelocation.Kind.RELATIVE, field, format,
-                      updateFunction));
-            }
-          }
-          return relocations.stream();
-        });
+      IdentifyFieldUsagePass.ImmediateDetectionContainer immediates,
+      IdentityHashMap<Instruction, List<LogicalRelocation>> relocationPerInstruction) {
+    var instructions =
+        viam.isa()
+            .map(isa -> isa.ownInstructions().stream())
+            .orElse(Stream.empty())
+            .filter(instruction -> instruction.behavior().getNodes(ReadRegNode.class)
+                .anyMatch(x -> x.staticCounterAccess() != null))
+            .toList();
+    var relocations = new ArrayList<LogicalRelocation>();
+    for (var instruction : instructions) {
+      var format = instruction.format();
+      for (var entry : immediates.getFieldUsages(format).entrySet()) {
+        if (entry.getValue() == IdentifyFieldUsagePass.FieldUsage.IMMEDIATE) {
+          var field = entry.getKey();
+          var updateFunction =
+              BitMaskFunctionGenerator.generateUpdateFunction(format, field);
+          var obj = new LogicalRelocation(LogicalRelocation.Kind.RELATIVE, field, format,
+              updateFunction);
+          relocations.add(obj);
+          append(relocationPerInstruction, instruction, obj);
+        }
+      }
+    }
+
+    return relocations.stream().distinct();
   }
 }

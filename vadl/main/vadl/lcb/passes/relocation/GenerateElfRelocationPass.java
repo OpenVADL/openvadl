@@ -30,9 +30,10 @@ public class GenerateElfRelocationPass extends Pass {
   public List<ElfRelocation> execute(PassResults passResults, Specification viam)
       throws IOException {
     var logicalRelocations =
-        (List<LogicalRelocation>) passResults.lastResultOf(GenerateLogicalRelocationPass.class);
+        (GenerateLogicalRelocationPass.Output) passResults.lastResultOf(
+            GenerateLogicalRelocationPass.class);
 
-    return logicalRelocations.stream()
+    return logicalRelocations.all().stream()
         .map(ElfRelocation::new)
         .toList();
   }
