@@ -47,6 +47,7 @@ volumes:
     host:
       path: /var/run/docker.sock
 
-triggers:
-  events:
-    - pull_request
+trigger:
+  ref:
+    - refs/pull/**
+    - refs/head/master
