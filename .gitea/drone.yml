@@ -1,5 +1,10 @@
 #
-# Checkstyle Validation
+# Drone pipeline of the open-vadl CI.
+# It executes the following steps on updates to a pull request or pushes to master:
+#   - build             ... fails on warnings and errors
+#   - checkstyle        ... fails if there are checkstyle violations
+#   - test              ... fails on failing tests
+#   - checkstyle report ... runs on failure and comments the checkstyle report to the Gitea PR
 #
 kind: pipeline
 type: docker
