@@ -45,7 +45,13 @@ public class IssTranslateCodeGenerator extends CodeGenerator
         .set(Instruction.class, (insn, writer) -> {
           var start = getSingleNode(insn.behavior(), StartNode.class);
 
-          writer.write("static bool trans_addi(DisasContext *ctx, arg_add *a) {\n");
+          var name = insn.identifier.simpleName().toLowerCase();
+          // static bool trans_<name>(DisasContext *ctx, arg_<name> *a) {\n
+          writer.write("static bool trans_");
+          writer.write(name);
+          writer.write("(DisasContext *ctx, arg_");
+          writer.write(name);
+          writer.write(" *a) {\n");
 
           var current = start.next();
 
@@ -71,7 +77,8 @@ public class IssTranslateCodeGenerator extends CodeGenerator
     tcgOpImpls(impls);
 
     impls.set(FieldRefNode.class, (node, writer) -> {
-      writer.write("a->imm");
+      writer.write("a->");
+      writer.write(node.formatField().simpleName());
     });
   }
 

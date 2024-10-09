@@ -27,7 +27,8 @@ public interface CTcgOpsMixin extends CGenMixin {
 
         .set(TcgGetVar.TcgGetRegFile.class, (TcgGetVar.TcgGetRegFile node, StringWriter writer) -> {
           writer.write("\tTCGv_" + node.res().width() + " " + node.res().varName() + " = ");
-          writer.write("get_" + node.registerFile().simpleName().toLowerCase());
+          var prefix = node.kind() == TcgGetVar.TcgGetRegFile.Kind.DEST ? "dest" : "get";
+          writer.write(prefix + "_" + node.registerFile().simpleName().toLowerCase());
           writer.write("(ctx, ");
           gen(node.index());
           writer.write(");\n");
@@ -38,6 +39,13 @@ public interface CTcgOpsMixin extends CGenMixin {
           writer.write("(" + node.res().varName());
           writer.write(", " + node.arg1().varName() + ");\n");
         })
+
+        .set(TcgGetVar.TcgGetTemp.class, (TcgGetVar.TcgGetTemp node, StringWriter writer) -> {
+          writer.write("\tTCGv_" + node.res().width() + " " + node.res().varName() + " = ");
+          writer.write("tcg_temp_new_i" + node.res().width().width);
+          writer.write("();\n");
+        })
+
     ;
   }
 }
