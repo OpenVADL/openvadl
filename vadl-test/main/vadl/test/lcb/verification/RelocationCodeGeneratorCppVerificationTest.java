@@ -19,7 +19,7 @@ import vadl.gcb.passes.relocation.IdentifyFieldUsagePass;
 import vadl.gcb.passes.relocation.model.ElfRelocation;
 import vadl.gcb.passes.type_normalization.CppTypeNormalizationForImmediateExtractionPass;
 import vadl.gcb.passes.type_normalization.CppTypeNormalizationForPredicatesPass;
-import vadl.lcb.codegen.LcbCodeGenerator;
+import vadl.lcb.codegen.LcbGenericCodeGenerator;
 import vadl.lcb.passes.relocation.GenerateElfRelocationPass;
 import vadl.pass.PassKey;
 import vadl.pass.exception.DuplicatedPassKeyException;
@@ -131,8 +131,8 @@ public class RelocationCodeGeneratorCppVerificationTest extends AbstractLcbTest 
     var normalisedImmediateExtractionFunction =
         cppNormalisedImmediateExtraction.byFunction(immField.extractFunction());
 
-    var extractionFunctionCodeGenerator = new LcbCodeGenerator();
-    var relocationOverrideFunctionCodeGenerator = new LcbCodeGenerator();
+    var extractionFunctionCodeGenerator = new LcbGenericCodeGenerator();
+    var relocationOverrideFunctionCodeGenerator = new LcbGenericCodeGenerator();
 
     var extractionFunctionName = immField.extractFunction().identifier.lower();
     var relocationFunctionName = relocation.logicalRelocation().updateFunction().identifier.lower();

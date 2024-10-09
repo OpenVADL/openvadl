@@ -23,7 +23,14 @@ public class LogicalRelocation {
    */
   public enum Kind {
     RELATIVE,
-    ABSOLUTE
+    ABSOLUTE;
+
+    /**
+     * Returns {@code true} when kind is {@code RELATIVE}.
+     */
+    public boolean isRelative() {
+      return this == RELATIVE;
+    }
   }
 
   private final Identifier identifier;

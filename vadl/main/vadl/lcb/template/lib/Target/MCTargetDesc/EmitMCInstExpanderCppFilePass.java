@@ -18,6 +18,7 @@ import vadl.cppCodeGen.model.VariantKind;
 import vadl.gcb.passes.pseudo.PseudoExpansionFunctionGeneratorPass;
 import vadl.gcb.passes.relocation.IdentifyFieldUsagePass;
 import vadl.gcb.passes.relocation.model.ElfRelocation;
+import vadl.lcb.codegen.LcbGenericCodeGenerator;
 import vadl.lcb.codegen.expansion.PseudoExpansionCodeGenerator;
 import vadl.lcb.passes.llvmLowering.ConstMaterialisationPseudoExpansionFunctionGeneratorPass;
 import vadl.lcb.passes.llvmLowering.domain.ConstantMatPseudoInstruction;
@@ -100,7 +101,8 @@ public class EmitMCInstExpanderCppFilePass extends LcbTemplateRenderingPass {
     return new RenderedPseudoInstruction(
         classPrefix,
         function.functionName(),
-        codeGen.generateFunction(classPrefix, function, true),
+        codeGen.generateFunction(classPrefix, function,
+            new LcbGenericCodeGenerator.Options(true, false)),
         pseudoInstruction);
   }
 

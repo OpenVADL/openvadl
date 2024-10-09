@@ -21,7 +21,7 @@ import vadl.cppCodeGen.CppTypeMap;
 import vadl.cppCodeGen.passes.typeNormalization.CppTypeNormalizationPass;
 import vadl.gcb.passes.type_normalization.CppTypeNormalizationForImmediateExtractionPass;
 import vadl.gcb.passes.type_normalization.CppTypeNormalizationForPredicatesPass;
-import vadl.lcb.codegen.LcbCodeGenerator;
+import vadl.lcb.codegen.LcbGenericCodeGenerator;
 import vadl.lcb.passes.relocation.GenerateElfRelocationPass;
 import vadl.pass.PassKey;
 import vadl.pass.exception.DuplicatedPassKeyException;
@@ -102,7 +102,7 @@ public class ImmediateExtractionCodeGeneratorCppVerificationTest extends Abstrac
                                    Long tail,
                                    int bitWidth,
                                    CppTypeNormalizationPass.NormalisedTypeResult cppNormalisedImmediateExtraction) {
-    var extractionFunctionCodeGenerator = new LcbCodeGenerator();
+    var extractionFunctionCodeGenerator = new LcbGenericCodeGenerator();
 
     var extractFunction =
         cppNormalisedImmediateExtraction.byFunction(fieldAccess.fieldRef().extractFunction());

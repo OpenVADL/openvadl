@@ -35,6 +35,7 @@ import vadl.iss.template.target.EmitIssCpuSourcePass;
 import vadl.iss.template.target.EmitIssInsnDecodePass;
 import vadl.iss.template.target.EmitIssMachinePass;
 import vadl.iss.template.target.EmitIssTranslatePass;
+import vadl.lcb.passes.fixup.GenerateFixupPass;
 import vadl.lcb.passes.isaMatching.IsaMatchingPass;
 import vadl.lcb.passes.llvmLowering.ConstMatPseudoInstructionArgumentReplacementPass;
 import vadl.lcb.passes.llvmLowering.ConstMaterialisationPseudoExpansionFunctionGeneratorPass;
@@ -293,6 +294,7 @@ public final class PassOrder {
     order.add(new ConstMatPseudoInstructionArgumentReplacementPass(configuration));
     order.add(new ConstMaterialisationPseudoExpansionFunctionGeneratorPass(configuration));
     order.add(new GenerateElfRelocationPass(configuration));
+    order.add(new GenerateFixupPass(configuration));
 
     if (configuration.doDump()) {
       var config = HtmlDumpPass.Config.from(

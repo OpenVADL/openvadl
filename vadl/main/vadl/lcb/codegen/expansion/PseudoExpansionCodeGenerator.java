@@ -8,7 +8,7 @@ import vadl.cppCodeGen.model.VariantKind;
 import vadl.gcb.passes.pseudo.PseudoExpansionCodeGeneratorVisitor;
 import vadl.gcb.passes.relocation.IdentifyFieldUsagePass;
 import vadl.gcb.passes.relocation.model.ElfRelocation;
-import vadl.lcb.codegen.LcbCodeGenerator;
+import vadl.lcb.codegen.LcbGenericCodeGenerator;
 import vadl.viam.Format;
 import vadl.viam.PseudoInstruction;
 import vadl.viam.ViamError;
@@ -17,7 +17,7 @@ import vadl.viam.graph.control.InstrCallNode;
 /**
  * Generates functions which expands {@link PseudoInstruction} in LLVM.
  */
-public class PseudoExpansionCodeGenerator extends LcbCodeGenerator {
+public class PseudoExpansionCodeGenerator extends LcbGenericCodeGenerator {
   private final String namespace;
   private final IdentifyFieldUsagePass.ImmediateDetectionContainer fieldUsages;
   private final Map<Format.Field, CppFunction> immediateDecodings;

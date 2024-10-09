@@ -1,8 +1,13 @@
 package vadl.lcb.template.lib.Target.Utils;
 
 import java.io.IOException;
+import java.util.Comparator;
+import java.util.List;
 import java.util.Map;
 import vadl.configuration.LcbConfiguration;
+import vadl.gcb.passes.relocation.model.ElfRelocation;
+import vadl.lcb.codegen.LcbGenericCodeGenerator;
+import vadl.lcb.passes.relocation.GenerateElfRelocationPass;
 import vadl.lcb.template.CommonVarNames;
 import vadl.lcb.template.LcbTemplateRenderingPass;
 import vadl.pass.PassResults;
@@ -33,7 +38,20 @@ public class EmitBaseInfoFilePass extends LcbTemplateRenderingPass {
   @Override
   protected Map<String, Object> createVariables(final PassResults passResults,
                                                 Specification specification) {
+    var elfRelocations =
+        (List<ElfRelocation>) passResults.lastResultOf(GenerateElfRelocationPass.class);
+    var relocations = elfRelocations.stream()
+        .sorted(Comparator.comparing(o -> o.name().value()))
+        .map(relocation -> {
+          var generator = new LcbGenericCodeGenerator();
+          return generator.generateFunction(
+              relocation.logicalRelocation().cppRelocation(),
+              new LcbGenericCodeGenerator.Options(false, true));
+        }).toList();
+
     return Map.of(CommonVarNames.NAMESPACE, specification.simpleName(),
-        "isBigEndian", false);
+        "isBigEndian", false,
+        "relocations", relocations
+    );
   }
 }

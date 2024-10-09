@@ -32,6 +32,10 @@ class [(${namespace})]BaseInfo
                     return value;
             }
         }
+
+        [# th:each="relocation : ${relocations}" ]
+        [(${relocation.value()})]
+        [/]
 };
 
 #endif
