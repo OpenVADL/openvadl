@@ -18,7 +18,7 @@ steps:
   - name: build
     image: c2.complang.tuwien.ac.at:5000/vadl-ci:f7222374638bccc355ba51bfcc2b17e9561204a4
     commands:
-      - ./gradlew assemble
+      - ./gradlew assemble testClasses -PFailOnWarnings
   - name: checkstyle
     image: c2.complang.tuwien.ac.at:5000/vadl-ci:f7222374638bccc355ba51bfcc2b17e9561204a4
     commands:
