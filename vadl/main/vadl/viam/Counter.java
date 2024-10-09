@@ -32,6 +32,7 @@ public abstract sealed class Counter extends Definition {
     PROGRAM_COUNTER,
     GROUP_COUNTER;
 
+    @Override
     public String toString() {
       return this == PROGRAM_COUNTER ? "program counter" : "group counter";
     }
@@ -87,9 +88,6 @@ public abstract sealed class Counter extends Definition {
   public void accept(DefinitionVisitor visitor) {
     visitor.visit(this);
   }
-
-  // the id counter to produce unique counter simple names.
-  private static final AtomicInteger idCounter = new AtomicInteger();
 
   /**
    * A counter that refers to a {@link Register}. This is the case when defining a counter like

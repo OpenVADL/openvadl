@@ -25,8 +25,6 @@ import vadl.viam.graph.dependency.FieldRefNode;
 public class IssTranslateCodeGenerator extends CodeGenerator
     implements CTypeCastMixin, CTcgOpsMixin {
 
-  private static final Logger log = LoggerFactory.getLogger(IssTranslateCodeGenerator.class);
-
   public IssTranslateCodeGenerator(StringWriter writer) {
     super(writer);
   }

@@ -38,9 +38,9 @@ public class CppTypeNormalizationForEncodingsPass extends CppTypeNormalizationPa
         .map(fieldAccess -> new Pair<>(fieldAccess.fieldRef(),
             ensureNonNull(fieldAccess.encoding(),
                 () -> Diagnostic.error(
-                        "Encoding must not be null. Maybe it does not exist or was not generated?",
-                        fieldAccess.sourceLocation())
-                    .build())));
+                    "Encoding must not be null. Maybe it does not exist or was not generated?",
+                    fieldAccess.sourceLocation())
+            )));
   }
 
   @Override

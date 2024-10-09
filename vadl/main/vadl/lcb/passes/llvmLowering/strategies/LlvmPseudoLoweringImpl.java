@@ -8,6 +8,7 @@ import java.util.Arrays;
 import java.util.HashMap;
 import java.util.IdentityHashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 import vadl.error.DeferredDiagnosticStore;
 import vadl.error.Diagnostic;
@@ -54,10 +55,10 @@ public class LlvmPseudoLoweringImpl {
    */
   public Optional<LlvmLoweringPseudoRecord> lower(
       PseudoInstruction pseudo,
-      HashMap<InstructionLabel, List<Instruction>> supportedInstructions) {
+      Map<InstructionLabel, List<Instruction>> supportedInstructions) {
     ensure(!pseudo.identifier.simpleName().equals("RESERVERD_PSEUDO_RET"),
         () -> Diagnostic.error("The name of the pseudo instruction is reserved.",
-            pseudo.identifier.sourceLocation()).build());
+            pseudo.identifier.sourceLocation()));
 
     var patterns = new ArrayList<TableGenPattern>();
     var flippedInstructions = LlvmLoweringPass.flipIsaMatching(supportedInstructions);
@@ -111,7 +112,7 @@ public class LlvmPseudoLoweringImpl {
               }
              */
             instructionBehavior.getNodes(FieldRefNode.class)
-                .filter(x -> x.formatField() == formatField)
+                .filter(x -> x.formatField().equals(formatField))
                 .forEach(occurrence -> {
                   // Edge case:
                   // When we have the following pseudo instruction. Note that "r1" is replaced

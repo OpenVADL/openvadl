@@ -1461,7 +1461,7 @@ public class BuiltInTable {
             // if general case doesn't fail, then test specific constraints
             return takesFunction.apply(argTypes);
           }
-          return generalConstraintsValid;
+          return false;
         }
 
         @Override

@@ -11,6 +11,7 @@ import java.util.stream.Collectors;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.Nullable;
 import vadl.error.Diagnostic;
+import vadl.error.DiagnosticBuilder;
 import vadl.utils.SourceLocation;
 
 /**
@@ -145,9 +146,9 @@ public class ViamError extends RuntimeException {
    * @param diagnosticSupplier is the function which provides the {@link Diagnostic}.
    * @throws Diagnostic if the condition is false
    */
-  public static void ensure(boolean condition, Supplier<Diagnostic> diagnosticSupplier) {
+  public static void ensure(boolean condition, Supplier<DiagnosticBuilder> diagnosticSupplier) {
     if (!condition) {
-      throw diagnosticSupplier.get();
+      throw diagnosticSupplier.get().build();
     }
   }
 
@@ -160,10 +161,8 @@ public class ViamError extends RuntimeException {
    * @param obj the object to check for null
    * @param msg the message to include in the exception if the object is null
    */
-  @Contract("null, _  -> fail")
   @FormatMethod
-  public static <T> T ensurePresent(@Nullable Optional<T> obj, String msg) {
-    ensureNonNull(obj, "Optional must not be null");
+  public static <T> T ensurePresent(Optional<T> obj, String msg) {
     ensure(obj.isPresent(), msg);
     return obj.get();
   }
@@ -178,9 +177,8 @@ public class ViamError extends RuntimeException {
    * @param diagnosticSupplier is the function which provides the {@link Diagnostic}.
    * @throws Diagnostic if the condition is false
    */
-  public static <T> T ensurePresent(@Nullable Optional<T> obj,
-                                    Supplier<Diagnostic> diagnosticSupplier) {
-    ensureNonNull(obj, "Optional must not be null");
+  public static <T> T ensurePresent(Optional<T> obj,
+                                    Supplier<DiagnosticBuilder> diagnosticSupplier) {
     ensure(obj.isPresent(), diagnosticSupplier);
     return obj.get();
   }
@@ -211,7 +209,8 @@ public class ViamError extends RuntimeException {
    * @param diagnosticSupplier is the function which provides the {@link Diagnostic}.
    * @throws Diagnostic if the condition is false
    */
-  public static <T> T ensureNonNull(@Nullable T obj, Supplier<Diagnostic> diagnosticSupplier) {
+  public static <T> T ensureNonNull(@Nullable T obj,
+                                    Supplier<DiagnosticBuilder> diagnosticSupplier) {
     ensure(obj != null, diagnosticSupplier);
     return Objects.requireNonNull(obj);
   }

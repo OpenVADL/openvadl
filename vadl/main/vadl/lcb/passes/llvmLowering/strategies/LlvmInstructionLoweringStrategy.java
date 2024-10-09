@@ -425,7 +425,7 @@ public abstract class LlvmInstructionLoweringStrategy {
       var constRegisterValue = ensurePresent(constraintValue,
           () -> Diagnostic.error("Register file with constant index has no constant value.",
                   constantNode.sourceLocation())
-              .help("Consider adding a constraint to register file for the given index.").build());
+              .help("Consider adding a constraint to register file for the given index."));
       // Update the type of the constant because it needs to be upcasted.
       // Heuristically, we take the type of the index because indices were also upcasted.
       var constantValue = constRegisterValue.value();
@@ -558,7 +558,7 @@ public abstract class LlvmInstructionLoweringStrategy {
           .forEach(occurrence -> {
             var operand = machineNodeTransformation.apply(occurrence,
                 (ParameterTypeAndNameIdentity) selectorParameter);
-            ensure(operand != occurrence.instructionOperand(),
+            ensure(!operand.equals(occurrence.instructionOperand()),
                 "The returned operand must be a new instance because it was modified");
             occurrence.setInstructionOperand(operand);
           });

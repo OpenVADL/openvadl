@@ -87,8 +87,7 @@ public class LlvmLoweringPass extends Pass {
     var supportedInstructions = ensureNonNull(
         (HashMap<InstructionLabel, List<Instruction>>) passResults.lastResultOf(
             IsaMatchingPass.class),
-        () -> Diagnostic.error("Cannot find semantics of the instructions", viam.sourceLocation())
-            .build());
+        () -> Diagnostic.error("Cannot find semantics of the instructions", viam.sourceLocation()));
     var machineRecords =
         generateRecordsForMachineInstructions(passResults, viam, supportedInstructions);
     var pseudoRecords = generateRecordsForPseudoInstructions(viam, supportedInstructions);
@@ -99,7 +98,7 @@ public class LlvmLoweringPass extends Pass {
 
   private IdentityHashMap<Instruction, LlvmLoweringRecord> generateRecordsForMachineInstructions(
       PassResults passResults, Specification viam,
-      HashMap<InstructionLabel, List<Instruction>> supportedInstructions) {
+      Map<InstructionLabel, List<Instruction>> supportedInstructions) {
     var tableGenRecords = new IdentityHashMap<Instruction, LlvmLoweringRecord>();
 
     // Get the supported instructions from the matching.
@@ -109,7 +108,7 @@ public class LlvmLoweringPass extends Pass {
     var uninlined = ensureNonNull(
         (IdentityHashMap<Instruction, Graph>) passResults.lastResultOf(FunctionInlinerPass.class),
         () -> Diagnostic.error("Cannot find uninlined behaviors of the instructions",
-            viam.sourceLocation()).build());
+            viam.sourceLocation()));
     // We flip it because we need to know the label for the instruction to
     // apply one of the different lowering strategies.
     // A strategy knows whether it can lower it by the label.
@@ -149,7 +148,7 @@ public class LlvmLoweringPass extends Pass {
 
   private IdentityHashMap<PseudoInstruction,
       LlvmLoweringRecord> generateRecordsForPseudoInstructions(
-      Specification viam, HashMap<InstructionLabel, List<Instruction>> supportedInstructions) {
+      Specification viam, Map<InstructionLabel, List<Instruction>> supportedInstructions) {
     var tableGenRecords = new IdentityHashMap<PseudoInstruction, LlvmLoweringRecord>();
 
     viam.isa().map(isa -> isa.ownPseudoInstructions().stream()).orElseGet(Stream::empty)

@@ -83,7 +83,7 @@ public abstract class DumpEntity {
    * group belongs to.
    * The smaller the rank the higher it is visible in the TOC.
    */
-  public class TocKey {
+  public static class TocKey {
     private String name;
     private int rank;
 

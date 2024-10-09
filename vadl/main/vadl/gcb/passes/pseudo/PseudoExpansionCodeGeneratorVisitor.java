@@ -86,7 +86,7 @@ public class PseudoExpansionCodeGeneratorVisitor extends GenericCppCodeGenerator
     for (var item : order) {
       var l = ensureNonNull(lookup.get(item),
           () -> Diagnostic.error("Cannot find format's field in pseudo instruction",
-              item.sourceLocation()).build());
+              item.sourceLocation()));
       result.add(Pair.of(item, l));
     }
 
@@ -129,7 +129,7 @@ public class PseudoExpansionCodeGeneratorVisitor extends GenericCppCodeGenerator
       } else if (argument instanceof FuncCallNode fn) {
         var pseudoInstructionIndex = getOperandIndexFromPseudoInstruction(fn.function().identifier);
         ensure(fn.function() instanceof Relocation,
-            () -> Diagnostic.error("Function must be a relocation", fn.sourceLocation()).build());
+            () -> Diagnostic.error("Function must be a relocation", fn.sourceLocation()));
         lowerExpressionWithRelocation(sym, field, pseudoInstructionIndex,
             (Relocation) fn.function());
       } else if (argument instanceof FuncParamNode funcParamNode) {
@@ -186,7 +186,7 @@ public class PseudoExpansionCodeGeneratorVisitor extends GenericCppCodeGenerator
         // But we don't know which register file.
         // We look for the `field` in the machine instruction's behavior and return the usages.
         var registerFiles = machineInstruction.behavior().getNodes(FieldRefNode.class)
-            .filter(x -> x.formatField() == field)
+            .filter(x -> x.formatField().equals(field))
             .flatMap(
                 fieldRefNode -> fieldRefNode.usages().filter(y -> y instanceof HasRegisterFile))
             .map(x -> ((HasRegisterFile) x).registerFile())
@@ -200,7 +200,7 @@ public class PseudoExpansionCodeGeneratorVisitor extends GenericCppCodeGenerator
                     "The pseudo instruction expansion requires one register file to detect "
                         + "the register file name. In this particular case is the field used by "
                         + "multiple register files or none and we don't know which name to use.")
-                .build());
+        );
 
         var registerFile =
             ensurePresent(registerFiles.stream().findFirst(), "Expected one register file");
@@ -265,7 +265,7 @@ public class PseudoExpansionCodeGeneratorVisitor extends GenericCppCodeGenerator
                 "The compiler generator tries to lower an immediate in the "
                     + "pseudo expansion. To do so it requires to generate variants for immediates. "
                     + "It seems like that that this variant was not generated.")
-            .build());
+        );
         writer.write(
             String.format(
                 "MCOperand %s = "

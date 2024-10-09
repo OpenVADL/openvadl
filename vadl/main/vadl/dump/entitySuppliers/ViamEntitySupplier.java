@@ -1,5 +1,6 @@
 package vadl.dump.entitySuppliers;
 
+import java.util.ArrayDeque;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
@@ -42,7 +43,7 @@ public class ViamEntitySupplier extends DefinitionVisitor.Empty
   }
 
   // holds the parents of the currently handled definition
-  private final Stack<DefinitionEntity> parents = new Stack<>();
+  private final ArrayDeque<DefinitionEntity> parents = new ArrayDeque<>();
 
   // is run before a definition's children are visited
   private void beforeEach(Definition definition) {
@@ -61,7 +62,7 @@ public class ViamEntitySupplier extends DefinitionVisitor.Empty
 
   // is run after each child has been processed
   // and this definition was visited (if their was an implementation)
-  private void afterEach(Definition definition) {
+  private void afterEach(@SuppressWarnings("unused") Definition definition) {
     parents.pop();
   }
 

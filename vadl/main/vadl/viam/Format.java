@@ -74,6 +74,7 @@ public class Format extends Definition implements DefProp.WithType {
     this.fieldAccesses = fieldAccesses;
   }
 
+  @Override
   public BitsType type() {
     return type;
   }
@@ -161,6 +162,7 @@ public class Format extends Definition implements DefProp.WithType {
       return bitSlice;
     }
 
+    @Override
     public DataType type() {
       return type;
     }
@@ -336,6 +338,7 @@ public class Format extends Definition implements DefProp.WithType {
       return fieldRef;
     }
 
+    @Override
     public Type type() {
       return accessFunction.returnType();
     }

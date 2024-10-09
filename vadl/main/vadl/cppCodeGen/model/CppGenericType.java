@@ -16,6 +16,7 @@ public class CppGenericType extends CppType {
     return generic.name();
   }
 
+  @Override
   public String lower() {
     return String.format("%s<%s>", typeName, generic.lower());
   }

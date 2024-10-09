@@ -34,6 +34,7 @@ public class Encoding extends Definition implements DefProp.WithType {
     this.nonEncodedFormatFields = determineNoneEncodedFields(format, fieldEncodings);
   }
 
+  @Override
   public Type type() {
     return format.type();
   }

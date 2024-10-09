@@ -1,5 +1,7 @@
 package vadl.viam.graph.dependency;
 
+import static java.util.Collections.reverse;
+
 import java.util.List;
 import vadl.javaannotations.viam.DataValue;
 import vadl.types.BuiltInTable;
@@ -86,8 +88,8 @@ public class BuiltInCall extends AbstractFunctionCallNode implements Canonicaliz
       if (isCommutative() && args.get(0) instanceof ConstantNode) {
         // place constant node on the right side of operator
         var copy = (BuiltInCall) shallowCopy();
-        //noinspection ComparatorMethodParameterNotUsed
-        copy.arguments().sort((a, b) -> -1);
+        // from left to right -> reverse
+        reverse(copy.arguments());
         return copy;
       }
     }

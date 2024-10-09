@@ -106,6 +106,7 @@ public class BitMaskFunctionGenerator {
     return graph;
   }
 
+  // TODO: @kper remove this?
   private static BigInteger generateBitMaskForInstrWord(List<Constant.BitSlice> slices) {
     var x = BigInteger.ZERO;
 

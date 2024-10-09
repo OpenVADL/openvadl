@@ -67,7 +67,7 @@ public class GenerateConstantMaterialisationTableGenRecordPass extends Pass {
               writeRegFileNodes(instruction.behavior())
                   .findFirst(), () ->
                   Diagnostic.error("Cannot find register file for constant materialisation",
-                      instruction.sourceLocation()).build()
+                      instruction.sourceLocation())
           );
 
       /*
@@ -87,7 +87,7 @@ public class GenerateConstantMaterialisationTableGenRecordPass extends Pass {
           List.of(new TableGenSelectionWithOutputPattern(selector, machine));
 
       records.add(new TableGenPseudoInstruction(
-          instruction.name(),
+          instruction.simpleName(),
           configuration.processorName().value(),
           new LlvmLoweringPass.Flags(false, false, false, false, true, true, false, false),
           List.of(new TableGenInstructionImmediateOperand(

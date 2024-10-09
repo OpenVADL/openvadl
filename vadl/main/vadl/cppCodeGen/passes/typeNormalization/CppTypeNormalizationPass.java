@@ -189,21 +189,21 @@ public abstract class CppTypeNormalizationPass extends Pass {
     // Updating typecasts
     graph.getNodes(SignExtendNode.class)
         .filter(signExtendNode -> !cppSupportedTypes.contains(signExtendNode.type()))
-        .forEach((signExtendNode -> cast(signExtendNode,
+        .forEach(signExtendNode -> cast(signExtendNode,
             (newType) -> new CppSignExtendNode(signExtendNode.value(), newType,
-                signExtendNode.type()))));
+                signExtendNode.type())));
 
     graph.getNodes(ZeroExtendNode.class)
         .filter(zeroExtendNode -> !cppSupportedTypes.contains(zeroExtendNode.type()))
-        .forEach((zeroExtendNode -> cast(zeroExtendNode,
+        .forEach(zeroExtendNode -> cast(zeroExtendNode,
             (newType) -> new CppZeroExtendNode(zeroExtendNode.value(), newType,
-                zeroExtendNode.type()))));
+                zeroExtendNode.type())));
 
     graph.getNodes(TruncateNode.class)
         .filter(truncateNode -> !cppSupportedTypes.contains(truncateNode.type()))
-        .forEach((truncateNode -> cast(truncateNode,
+        .forEach(truncateNode -> cast(truncateNode,
             (newType) -> new CppTruncateNode(truncateNode.value(), newType,
-                truncateNode.type()))));
+                truncateNode.type())));
 
 
     // Updating constants

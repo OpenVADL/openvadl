@@ -43,7 +43,7 @@ public class Graph {
   @LazyInit
   private Definition parentDefinition;
 
-  ArrayList<Node> nodes;
+  List<Node> nodes;
 
   private static final int INITIAL_GRAPH_SIZE = 32;
 
@@ -64,7 +64,7 @@ public class Graph {
     this(name, new ArrayList<>(INITIAL_GRAPH_SIZE), parentDefinition);
   }
 
-  protected Graph(String name, ArrayList<Node> nodes, Definition parentDefinition) {
+  protected Graph(String name, List<Node> nodes, Definition parentDefinition) {
     this.name = name;
     this.nodes = nodes;
     this.parentDefinition = parentDefinition;

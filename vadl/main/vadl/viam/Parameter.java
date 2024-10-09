@@ -42,6 +42,7 @@ public class Parameter extends Definition implements DefProp.WithType {
             + "Someone created a Parameter without setting the parent.");
   }
 
+  @Override
   public Type type() {
     return type;
   }

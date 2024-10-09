@@ -1,5 +1,6 @@
 package vadl.lcb.template.lib.Target;
 
+import static vadl.error.Diagnostic.error;
 import static vadl.viam.ViamError.ensure;
 import static vadl.viam.ViamError.ensureNonNull;
 import static vadl.viam.ViamError.ensurePresent;
@@ -94,7 +95,7 @@ public class EmitInstrInfoCppFilePass extends LcbTemplateRenderingPass {
   }
 
   private List<CopyPhysRegInstruction> getMovInstructions(
-      HashMap<InstructionLabel, List<Instruction>> isaMatching) {
+      Map<InstructionLabel, List<Instruction>> isaMatching) {
     var addi32 = mapWithInstructionLabel(InstructionLabel.ADDI_32, isaMatching);
     var addi64 = mapWithInstructionLabel(InstructionLabel.ADDI_64, isaMatching);
 
@@ -102,7 +103,7 @@ public class EmitInstrInfoCppFilePass extends LcbTemplateRenderingPass {
   }
 
   private List<StoreRegSlot> getStoreMemoryInstructions(
-      HashMap<InstructionLabel, List<Instruction>> isaMatching) {
+      Map<InstructionLabel, List<Instruction>> isaMatching) {
     var instructions = (List<Instruction>) isaMatching.getOrDefault(InstructionLabel.STORE_MEM,
         Collections.emptyList());
 
@@ -124,7 +125,7 @@ public class EmitInstrInfoCppFilePass extends LcbTemplateRenderingPass {
   }
 
   private List<LoadRegSlot> getLoadMemoryInstructions(
-      HashMap<InstructionLabel, List<Instruction>> isaMatching) {
+      Map<InstructionLabel, List<Instruction>> isaMatching) {
     var instructions = (List<Instruction>) isaMatching.getOrDefault(InstructionLabel.LOAD_MEM,
         Collections.emptyList());
 
@@ -147,7 +148,7 @@ public class EmitInstrInfoCppFilePass extends LcbTemplateRenderingPass {
 
   private List<CopyPhysRegInstruction> mapWithInstructionLabel(
       InstructionLabel label,
-      HashMap<InstructionLabel, List<Instruction>> isaMatching) {
+      Map<InstructionLabel, List<Instruction>> isaMatching) {
     var instructions = (List<Instruction>)
         isaMatching.getOrDefault(label, Collections.emptyList());
 
@@ -165,7 +166,7 @@ public class EmitInstrInfoCppFilePass extends LcbTemplateRenderingPass {
         .toList();
   }
 
-  private Instruction getAddition(HashMap<InstructionLabel, List<Instruction>> isaMatches) {
+  private Instruction getAddition(Map<InstructionLabel, List<Instruction>> isaMatches) {
     var add64 = isaMatches.get(InstructionLabel.ADDI_64);
 
     if (add64 == null) {
@@ -186,15 +187,15 @@ public class EmitInstrInfoCppFilePass extends LcbTemplateRenderingPass {
   }
 
   private void verifyInstructionHasOnlyOneImm(Instruction addition, List<Format.Field> fields) {
-    ensure(fields.size() == 1, () -> Diagnostic.error(
-            "The compiler requires an addition with immediate with only one immediate. "
-                + "The detected instruction has zero or more than one.",
-            addition.sourceLocation())
-        .build());
+    ensure(fields.size() == 1, () -> error(
+        "The compiler requires an addition with immediate with only one immediate. "
+            + "The detected instruction has zero or more than one.",
+        addition.sourceLocation())
+    );
   }
 
   private List<AdjustRegCase> getAdjustCases(PassResults passResults,
-                                             HashMap<InstructionLabel, List<Instruction>>
+                                             Map<InstructionLabel, List<Instruction>>
                                                  isaMatches,
                                              IdentifyFieldUsagePass.ImmediateDetectionContainer
                                                  fieldUsages) {
@@ -221,7 +222,7 @@ public class EmitInstrInfoCppFilePass extends LcbTemplateRenderingPass {
   @Override
   protected Map<String, Object> createVariables(final PassResults passResults,
                                                 Specification specification) {
-    var isaMatches = (HashMap<InstructionLabel, List<Instruction>>) passResults.lastResultOf(
+    var isaMatches = (Map<InstructionLabel, List<Instruction>>) passResults.lastResultOf(
         IsaMatchingPass.class);
     var fieldUsages = (IdentifyFieldUsagePass.ImmediateDetectionContainer) passResults.lastResultOf(
         IdentifyFieldUsagePass.class);

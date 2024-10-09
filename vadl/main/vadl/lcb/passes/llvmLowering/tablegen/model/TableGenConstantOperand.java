@@ -26,7 +26,7 @@ public class TableGenConstantOperand extends TableGenInstructionOperand {
    */
   public TableGenConstantOperand(ConstantNode constantNode, Constant value) {
     super(constantNode, new NoParameterIdentity());
-    ensure(constantNode.constant() != value,
+    ensure(!constantNode.constant().equals(value),
         "This is definitely wrong because index and constraint value are mismatched");
     this.constant = value;
   }
@@ -41,7 +41,7 @@ public class TableGenConstantOperand extends TableGenInstructionOperand {
     var unpackedLlvmType = ensurePresent(llvmType, () -> Diagnostic.error(
         "Constant value at given index has an invalid type which is not supported by llvm: "
             + constant.type(),
-        origin != null ? origin.sourceLocation() : SourceLocation.INVALID_SOURCE_LOCATION).build());
+        origin != null ? origin.sourceLocation() : SourceLocation.INVALID_SOURCE_LOCATION));
     return "(" + unpackedLlvmType.getLlvmType() + " " + constant.asVal().intValue() + ")";
   }
 }

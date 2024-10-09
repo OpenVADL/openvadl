@@ -1,6 +1,7 @@
 package vadl.viam;
 
 import com.google.errorprone.annotations.FormatMethod;
+import com.google.errorprone.annotations.InlineMe;
 import org.jetbrains.annotations.Contract;
 import vadl.utils.SourceLocation;
 import vadl.viam.graph.Graph;
@@ -42,6 +43,7 @@ public abstract class Definition {
    * @deprecated use {@link #simpleName()} instead
    */
   @Deprecated
+  @InlineMe(replacement = "identifier.simpleName()")
   public final String name() {
     return identifier.simpleName();
   }

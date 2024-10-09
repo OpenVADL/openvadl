@@ -48,7 +48,7 @@ public class PseudoExpansionFunctionGeneratorPass
           var appliedInstructions = appliedArguments.appliedGraph().get(pseudoInstruction);
           ensureNonNull(appliedInstructions,
               () -> Diagnostic.error("There is no graph with the applied arguments.",
-                  pseudoInstruction.sourceLocation()).build());
+                  pseudoInstruction.sourceLocation()));
           return Pair.of(pseudoInstruction, Objects.requireNonNull(appliedInstructions));
         });
   }

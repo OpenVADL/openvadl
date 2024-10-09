@@ -4,6 +4,7 @@ import static vadl.lcb.codegen.assembly.ParserGenerator.mapParserRecord;
 
 import com.google.common.collect.Streams;
 import java.io.StringWriter;
+import java.util.ArrayDeque;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Map;
@@ -37,7 +38,7 @@ public class AssemblyCodeGeneratorVisitor extends GenericCppCodeGeneratorVisitor
   private final String namespace;
   private final SymbolTable symbolTable;
   private final Instruction instruction;
-  private final Stack<String> operands = new Stack<>();
+  private final ArrayDeque<String> operands = new ArrayDeque<>();
 
   /**
    * Constructor.
@@ -135,7 +136,7 @@ public class AssemblyCodeGeneratorVisitor extends GenericCppCodeGeneratorVisitor
           .filter(x -> !x.isEmpty())
           .map(field -> String.format("""
               Operands.push_back(std::make_unique<%sParsedOperand>(%s.Value.%s.Value));
-                    """, namespace, sequence, field))
+              """, namespace, sequence, field))
           .collect(Collectors.joining("\n"));
 
       var result = StringSubstitutor.replace("""
