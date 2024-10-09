@@ -51,7 +51,8 @@ public class EmitBaseInfoFilePass extends LcbTemplateRenderingPass {
 
     return Map.of(CommonVarNames.NAMESPACE, specification.simpleName(),
         "isBigEndian", false,
-        "relocations", relocations
+        "relocations", relocations,
+        "elfRelocations", elfRelocations
     );
   }
 }
