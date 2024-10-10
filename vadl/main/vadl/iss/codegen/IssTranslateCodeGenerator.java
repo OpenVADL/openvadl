@@ -53,6 +53,10 @@ public class IssTranslateCodeGenerator extends CodeGenerator
           writer.write(name);
           writer.write(" *a) {\n");
 
+          writer.write("\tqemu_printf(\"[VADL] trans_");
+          writer.write(name);
+          writer.write("\\n\");\n");
+
           var current = start.next();
 
           while (current instanceof DirectionalNode dirNode) {

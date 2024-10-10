@@ -64,7 +64,7 @@ public class TcgLoweringPass extends AbstractIssPass {
 
     var supportedInstructions = Set.of(
         "ADD"
-        , "ADDI"
+//        , "ADDI"
     );
 
     viam.isa().get().ownInstructions()
@@ -121,6 +121,9 @@ class TcgLoweringExecutor extends GraphProcessor {
     toProcess.visitInputs(this);
 
     var node = callProcess(toProcess);
+    if (node == null) {
+      return lastNode;
+    }
     if (!node.isActive()) {
       Objects.requireNonNull(toProcess.graph())
           .addWithInputs(node);
@@ -138,7 +141,7 @@ class TcgLoweringExecutor extends GraphProcessor {
     return node;
   }
 
-  protected Node callProcess(Node toProcess) {
+  protected @Nullable Node callProcess(Node toProcess) {
     if (toProcess instanceof BuiltInCall call) {
       return process(call);
     } else if (toProcess instanceof ReadRegFileNode regFileRead) {
@@ -177,15 +180,22 @@ class TcgLoweringExecutor extends GraphProcessor {
     );
   }
 
-  private Node process(WriteRegFileNode toProcess) {
+  private @Nullable Node process(WriteRegFileNode toProcess) {
     var valRepl = getResultOf(toProcess.value(), TcgOpNode.class);
 
     // TODO: @jzottele Don't hardcode type!
     var width = TcgWidth.i64;
     var res = TcgV.gen(width);
     destVars.add(Pair.of(res, toProcess));
-    return new TcgMoveNode(
-        res, valRepl.res(), width);
+
+    if (toProcess.value().usageCount() <= 1) {
+      replaceResultVar(valRepl, res);
+      return null;
+    } else {
+      // the value is used somewhere else, so we cannot directly write it here
+      return new TcgMoveNode(
+          res, valRepl.res(), width);
+    }
   }
 
   private Node process(BuiltInCall call) {
@@ -230,6 +240,14 @@ class TcgLoweringExecutor extends GraphProcessor {
           pair.left());
       insnStartNode.addAfter(getTmp);
     }
+  }
+
+
+  private void replaceResultVar(TcgOpNode opNode, TcgV newVar) {
+    var oldRes = opNode.res();
+    opNode.setRes(newVar);
+
+    tempVars.remove(oldRes);
   }
 
 }
