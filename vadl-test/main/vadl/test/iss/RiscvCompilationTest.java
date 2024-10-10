@@ -11,7 +11,7 @@ public class RiscvCompilationTest extends QemuIssTest {
   private static final Logger log = LoggerFactory.getLogger(RiscvCompilationTest.class);
 
   @Test
-  public void rv64i() throws IOException, DuplicatedPassKeyException {
+  public void rv64i() {
     var issImage = generateSimulator(
         "sys/risc-v/rv64i.vadl"
     );
