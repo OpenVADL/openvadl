@@ -20,7 +20,7 @@ import vadl.gcb.passes.relocation.model.ElfRelocation;
 import vadl.gcb.passes.type_normalization.CppTypeNormalizationForImmediateExtractionPass;
 import vadl.gcb.passes.type_normalization.CppTypeNormalizationForPredicatesPass;
 import vadl.lcb.codegen.LcbGenericCodeGenerator;
-import vadl.lcb.passes.relocation.GenerateElfRelocationPass;
+import vadl.lcb.passes.relocation.GenerateLinkerComponentsPass;
 import vadl.pass.PassKey;
 import vadl.pass.exception.DuplicatedPassKeyException;
 import vadl.test.lcb.AbstractLcbTest;
@@ -53,14 +53,16 @@ public class RelocationCodeGeneratorCppVerificationTest extends AbstractLcbTest 
         )
     );
     var testSetup = runLcb(configuration,
-        "sys/risc-v/rv64im.vadl", new PassKey(GenerateElfRelocationPass.class.getName()),
+        "sys/risc-v/rv64im.vadl", new PassKey(GenerateLinkerComponentsPass.class.getName()),
         temporaryPasses);
 
+    var output = (GenerateLinkerComponentsPass.Output) testSetup.passManager().getPassResults()
+        .lastResultOf(GenerateLinkerComponentsPass.class);
     var elfRelocations =
-        (List<ElfRelocation>) testSetup.passManager().getPassResults()
-            .lastResultOf(GenerateElfRelocationPass.class);
+        (List<ElfRelocation>) output.elfRelocations();
     var immediateDetection =
-        (IdentifyFieldUsagePass.ImmediateDetectionContainer) testSetup.passManager().getPassResults()
+        (IdentifyFieldUsagePass.ImmediateDetectionContainer) testSetup.passManager()
+            .getPassResults()
             .lastResultOf(IdentifyFieldUsagePass.class);
     var cppNormalisedImmediateExtraction = (CppTypeNormalizationPass.NormalisedTypeResult)
         testSetup.passManager().getPassResults()
@@ -68,9 +70,9 @@ public class RelocationCodeGeneratorCppVerificationTest extends AbstractLcbTest 
 
     ArrayList<DynamicTest> tests = new ArrayList<>();
     for (var relocation : elfRelocations) {
-      var format = relocation.logicalRelocation().format();
+      var format = relocation.format();
       immediateDetection.getImmediates(format).forEach(immField -> {
-        var params = relocation.updateFunction().parameters();
+        var params = relocation.fieldUpdateFunction().parameters();
         // The first parameter is hardcoded to be the instruction word.
         // The second parameter is the updated value.
         var arbitraryInstructionWord =
@@ -135,7 +137,7 @@ public class RelocationCodeGeneratorCppVerificationTest extends AbstractLcbTest 
     var relocationOverrideFunctionCodeGenerator = new LcbGenericCodeGenerator();
 
     var extractionFunctionName = immField.extractFunction().identifier.lower();
-    var relocationFunctionName = relocation.logicalRelocation().updateFunction().identifier.lower();
+    var relocationFunctionName = relocation.fieldUpdateFunction().identifier.lower();
 
     String cppCode = String.format("""
             #include <cstdint>
@@ -143,22 +145,22 @@ public class RelocationCodeGeneratorCppVerificationTest extends AbstractLcbTest 
             #include <bitset>
             #include <vector>
             #include <tuple>
-            
+                        
             template<int start, int end, std::size_t N>
             std::bitset<N> project_range(std::bitset<N> bits)
             {
                 std::bitset<N> result;
                 size_t result_index = 0; // Index for the new bitset
-            
+                        
                 // Extract bits from the range [start, end]
                 for (size_t i = start; i <= end; ++i) {
                   result[result_index] = bits[i];
                   result_index++;
                 }
-            
+                        
                 return result;
             }
-            
+                        
             template<std::size_t N, std::size_t M>
             std::bitset<N> set_bits(std::bitset<N> dest, const std::bitset<M> source, std::vector<int> bits) {
                 auto target = 0;
@@ -167,16 +169,16 @@ public class RelocationCodeGeneratorCppVerificationTest extends AbstractLcbTest 
                     dest.set(j, source[i]);
                     target++;
                 }
-            
+                        
                 return dest;
             }
-            
+                        
             // Extraction Function
             %s
-            
+                        
             // Relocation Function
             %s
-            
+                        
             int main() {
               %s expected = %d;
               auto actual = %s(%s(%s, %s));
@@ -192,7 +194,7 @@ public class RelocationCodeGeneratorCppVerificationTest extends AbstractLcbTest 
         extractionFunctionCodeGenerator.generateFunction(normalisedImmediateExtractionFunction)
             .value(),
         relocationOverrideFunctionCodeGenerator.generateFunction(
-            relocation.logicalRelocation().updateFunction()).value(),
+            relocation.fieldUpdateFunction()).value(),
         CppTypeMap.getCppTypeNameByVadlType(normalisedImmediateExtractionFunction.returnType()),
         updatedValue,
         extractionFunctionName,

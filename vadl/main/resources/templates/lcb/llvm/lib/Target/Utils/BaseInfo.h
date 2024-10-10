@@ -13,7 +13,7 @@ class [(${namespace})]BaseInfo
         {
             MO_None,
             [#th:block th:each="relocation : ${elfRelocations}" ]
-            MO_[(${relocation.logicalRelocation().cppRelocation().functionName().lower()})],
+            MO_[(${relocation.valueRelocation().functionName().lower()})],
             [/th:block]
             MO_Invalid
         };
@@ -32,8 +32,8 @@ class [(${namespace})]BaseInfo
                 default:
                     llvm_unreachable( "unsupported machine operand annotation relocation" );
                 [#th:block th:each="relocation : ${elfRelocations}" ]
-                case MO_[(${relocation.logicalRelocation().cppRelocation().functionName().lower()})]:
-                    return [(${relocation.logicalRelocation().cppRelocation().functionName().lower()})](value);
+                case MO_[(${relocation.valueRelocation().functionName().lower()})]:
+                    return [(${relocation.valueRelocation().functionName().lower()})](value);
                 [/th:block]
                 case MO_None:
                     return value;

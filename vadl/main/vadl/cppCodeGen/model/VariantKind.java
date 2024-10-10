@@ -15,4 +15,20 @@ public record VariantKind(String value) {
   public VariantKind(Relocation relocation) {
     this("VK_" + relocation.identifier.lower());
   }
+
+  public static VariantKind None() {
+    return new VariantKind("VK_None");
+  }
+
+  public static VariantKind Invalid() {
+    return new VariantKind("VK_Invalid");
+  }
+
+  public static VariantKind Absolute() {
+    return new VariantKind("VK_SYMB_ABS");
+  }
+
+  public static VariantKind Relative() {
+    return new VariantKind("VK_SYMB_PCREL");
+  }
 }

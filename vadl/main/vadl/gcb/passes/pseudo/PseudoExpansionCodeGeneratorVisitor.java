@@ -44,7 +44,7 @@ public class PseudoExpansionCodeGeneratorVisitor extends GenericCppCodeGenerator
   private final String namespace;
   private final IdentifyFieldUsagePass.ImmediateDetectionContainer fieldUsages;
   private final Map<Format.Field, CppFunction> immediateDecodings;
-  private final Map<Format.Field, VariantKind> immVariants;
+  private final Map<Format.Field, List<VariantKind>> immVariants;
   private final List<ElfRelocation> relocations;
   private final PseudoInstruction pseudoInstruction;
 
@@ -55,7 +55,7 @@ public class PseudoExpansionCodeGeneratorVisitor extends GenericCppCodeGenerator
                                              IdentifyFieldUsagePass.ImmediateDetectionContainer
                                                  fieldUsages,
                                              Map<Format.Field, CppFunction> immediateDecodings,
-                                             Map<Format.Field, VariantKind> immVariants,
+                                             Map<Format.Field, List<VariantKind>> immVariants,
                                              List<ElfRelocation> relocations,
                                              PseudoInstruction pseudoInstruction) {
     super(writer);
@@ -229,11 +229,11 @@ public class PseudoExpansionCodeGeneratorVisitor extends GenericCppCodeGenerator
             argumentIndex));
 
     var argumentRelocationSymbol = symbolTable.getNextVariable();
-    var logicalRelocation =
-        relocations.stream().filter(x -> x.logicalRelocation().relocation() == relocation)
+    var elfRelocation =
+        relocations.stream().filter(x -> x.relocation() == relocation)
             .findFirst();
-    ensure(logicalRelocation.isPresent(), "logicalRelocation must exist");
-    var variant = logicalRelocation.get().logicalRelocation().variantKind().value();
+    ensure(elfRelocation.isPresent(), "elfRelocation must exist");
+    var variant = elfRelocation.get().variantKind().value();
     writer.write(
         String.format("MCOperand %s = "
                 + "MCOperand::createExpr(%sMCExpr::create(%s, %sMCExpr::VariantKind::%s, Ctx));\n",

@@ -4,8 +4,8 @@ import java.io.IOException;
 import java.util.List;
 import java.util.Map;
 import vadl.configuration.LcbConfiguration;
-import vadl.lcb.passes.fixup.GenerateFixupPass;
-import vadl.lcb.passes.fixup.domain.Fixup;
+import vadl.gcb.passes.relocation.model.Fixup;
+import vadl.lcb.passes.relocation.GenerateLinkerComponentsPass;
 import vadl.lcb.template.CommonVarNames;
 import vadl.lcb.template.LcbTemplateRenderingPass;
 import vadl.pass.PassResults;
@@ -35,7 +35,9 @@ public class EmitFixupKindsHeaderFilePass extends LcbTemplateRenderingPass {
   @Override
   protected Map<String, Object> createVariables(final PassResults passResults,
                                                 Specification specification) {
-    var fixups = (List<Fixup>) passResults.lastResultOf(GenerateFixupPass.class);
+    var output = (GenerateLinkerComponentsPass.Output) passResults.lastResultOf(
+        GenerateLinkerComponentsPass.class);
+    var fixups = output.fixups();
 
     return Map.of(CommonVarNames.NAMESPACE, specification.simpleName(),
         "fixups", fixups);

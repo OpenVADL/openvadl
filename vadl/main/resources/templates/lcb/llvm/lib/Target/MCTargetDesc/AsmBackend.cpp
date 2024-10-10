@@ -148,7 +148,7 @@ static uint64_t adjustFixupValue
             return Value;
         [#th:block th:each="fixup, iterStat : ${fixups}" ]
          case [(${namespace})]::[(${fixup.name().value()})]:
-                    return [(${namespace})]BaseInfo::[(${fixup.logicalRelocation().cppRelocation().functionName().lower()})]( Value );
+                    return [(${namespace})]BaseInfo::[(${fixup.valueRelocation().functionName().lower()})]( Value );
         [/th:block]
     }
 }

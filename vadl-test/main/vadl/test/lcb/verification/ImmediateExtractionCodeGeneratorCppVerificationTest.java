@@ -22,7 +22,7 @@ import vadl.cppCodeGen.passes.typeNormalization.CppTypeNormalizationPass;
 import vadl.gcb.passes.type_normalization.CppTypeNormalizationForImmediateExtractionPass;
 import vadl.gcb.passes.type_normalization.CppTypeNormalizationForPredicatesPass;
 import vadl.lcb.codegen.LcbGenericCodeGenerator;
-import vadl.lcb.passes.relocation.GenerateElfRelocationPass;
+import vadl.lcb.passes.relocation.GenerateLinkerComponentsPass;
 import vadl.pass.PassKey;
 import vadl.pass.exception.DuplicatedPassKeyException;
 import vadl.test.lcb.AbstractLcbTest;
@@ -56,7 +56,7 @@ public class ImmediateExtractionCodeGeneratorCppVerificationTest extends Abstrac
         )
     );
     var testSetup = runLcb(configuration,
-        "sys/risc-v/rv64im.vadl", new PassKey(GenerateElfRelocationPass.class.getName()),
+        "sys/risc-v/rv64im.vadl", new PassKey(GenerateLinkerComponentsPass.class.getName()),
         temporaryPasses);
 
     var cppNormalisedImmediateExtraction = (CppTypeNormalizationPass.NormalisedTypeResult)

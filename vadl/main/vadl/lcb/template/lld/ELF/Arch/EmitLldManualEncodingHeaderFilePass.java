@@ -8,7 +8,7 @@ import java.util.stream.Collectors;
 import vadl.configuration.LcbConfiguration;
 import vadl.gcb.passes.relocation.model.ElfRelocation;
 import vadl.lcb.codegen.LcbGenericCodeGenerator;
-import vadl.lcb.passes.relocation.GenerateElfRelocationPass;
+import vadl.lcb.passes.relocation.GenerateLinkerComponentsPass;
 import vadl.lcb.template.CommonVarNames;
 import vadl.lcb.template.LcbTemplateRenderingPass;
 import vadl.pass.PassResults;
@@ -36,17 +36,19 @@ public class EmitLldManualEncodingHeaderFilePass extends LcbTemplateRenderingPas
   @Override
   protected Map<String, Object> createVariables(final PassResults passResults,
                                                 Specification specification) {
-    var elfRelocations =
-        (List<ElfRelocation>) passResults.lastResultOf(GenerateElfRelocationPass.class);
+    var output =
+        (GenerateLinkerComponentsPass.Output) passResults.lastResultOf(
+            GenerateLinkerComponentsPass.class);
+    var elfRelocations = output.elfRelocations();
     return Map.of(CommonVarNames.NAMESPACE, specification.simpleName(),
         "functions", elfRelocations.stream()
-            .collect(Collectors.groupingBy(x -> x.updateFunction().functionName().lower()))
+            .collect(Collectors.groupingBy(x -> x.fieldUpdateFunction().functionName().lower()))
             .values()
             .stream()
             .map(x -> x.get(0)) // only consider one relocation because we do not need duplication
             .sorted(Comparator.comparing(o -> o.name().value()))
             .map(elfRelocation -> new LcbGenericCodeGenerator().generateFunction(
-                elfRelocation.updateFunction()))
+                elfRelocation.fieldUpdateFunction()))
             .toList());
   }
 }

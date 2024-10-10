@@ -1,9 +1,7 @@
 package vadl.gcb.passes.pseudo;
 
-import static vadl.viam.ViamError.ensure;
 import static vadl.viam.ViamError.ensureNonNull;
 
-import java.util.IdentityHashMap;
 import java.util.Objects;
 import java.util.stream.Stream;
 import vadl.configuration.GeneralConfiguration;
@@ -11,7 +9,6 @@ import vadl.error.Diagnostic;
 import vadl.pass.PassName;
 import vadl.pass.PassResults;
 import vadl.utils.Pair;
-import vadl.viam.Instruction;
 import vadl.viam.PseudoInstruction;
 import vadl.viam.Specification;
 import vadl.viam.graph.Graph;

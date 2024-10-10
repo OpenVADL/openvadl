@@ -21,7 +21,7 @@ public class PseudoExpansionCodeGenerator extends LcbGenericCodeGenerator {
   private final String namespace;
   private final IdentifyFieldUsagePass.ImmediateDetectionContainer fieldUsages;
   private final Map<Format.Field, CppFunction> immediateDecodings;
-  private final Map<Format.Field, VariantKind> variants;
+  private final Map<Format.Field, List<VariantKind>> variants;
   private final List<ElfRelocation> relocations;
   private final PseudoInstruction pseudoInstruction;
 
@@ -32,7 +32,7 @@ public class PseudoExpansionCodeGenerator extends LcbGenericCodeGenerator {
                                       IdentifyFieldUsagePass.ImmediateDetectionContainer
                                           fieldUsages,
                                       Map<Format.Field, CppFunction> immediateDecodings,
-                                      Map<Format.Field, VariantKind> variants,
+                                      Map<Format.Field, List<VariantKind>> variants,
                                       List<ElfRelocation> relocations,
                                       PseudoInstruction pseudoInstruction) {
     this.namespace = namespace;

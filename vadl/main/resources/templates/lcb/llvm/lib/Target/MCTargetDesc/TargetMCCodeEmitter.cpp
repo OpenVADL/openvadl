@@ -48,25 +48,16 @@ MCFixupKind getFixupKind(unsigned Opcode, unsigned OpNo, const MCExpr *Expr)
         [(${namespace})]MCExpr::VariantKind targetKind = targetExpr->getKind();
         switch (targetKind)
         {
-        /*
-        «FOR relocation : processor.list(Relocation)» case ([(${namespace})]MCExpr::VariantKind::«relocation.variantKindIdentifier»):
-        {
-            «FOR elfRelocation : processor.list(ElfRelocation)»
-                    «IF elfRelocation.relocation == relocation»
-                    «FOR target : elfRelocation.targets»
-                    «val operand = target.instruction.operand(target.field.simpleName)»
-                    «val expectedIndex = target.instruction.LLVMOperandToIndexMap.get(operand)» if (Opcode == [(${namespace})]::«target.instruction.simpleName» && OpNo == «expectedIndex»)
-            {
-                return MCFixupKind([(${namespace})]::«elfRelocation.mcFixupKindInfoIdentifier»);
-            }
-            «ENDFOR»
-                    «ENDIF»
-                    «ENDFOR»
-                assert(false && "Could not match variant kind «relocation.variantKindIdentifier»");
-            return MCFixupKind::FK_NONE;
-        }
-            «ENDFOR»
-            */
+        [# th:each="fx : ${fixups}" ]
+          case ([(${namespace})]MCExpr::VariantKind::[(${fx.fixup.variantKind().value()})]):
+          {
+            [# th:each="i : ${fx.instructionUpdates}" ]
+             if(Opcode == [(${namespace})]::[(${i.instruction.identifier.simpleName()})] && OpNo == [(${i.opNo})]) {
+               return MCFixupKind([(${namespace})]::[(${fx.fixup.name().value()})]);
+             }
+            [/]
+          }
+        [/]
         default:
             {
                 // This is an immediate variant kind. Emit fixup for sub expression.
