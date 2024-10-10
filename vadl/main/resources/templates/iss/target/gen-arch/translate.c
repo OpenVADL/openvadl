@@ -136,17 +136,6 @@ static void gen_goto_tb(DisasContext *ctx, target_long diff)
 static bool decode_insn(DisasContext *ctx, uint[(${insn_width.int})]_t insn);
 #include "decode-insn.c.inc"
 
-static bool trans_addi(DisasContext *ctx, arg_addi *a) {
-    TCGv dest = dest_x(ctx, a->rd);
-    TCGv src1 = get_x(ctx, a->rs1);
-
-    qemu_printf("[VADL] trans_addi imm: %d\n", a->imm);
-
-    tcg_gen_addi_tl(dest, src1, a->imm);
-    gen_set_x(ctx, a->rd, dest);
-    return true;
-}
-
 //// START OF TRANSLATE FUNCTIONS ////
 
 [# th:each="func, iterState : ${translate_functions}"]

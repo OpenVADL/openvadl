@@ -3,9 +3,11 @@ package vadl.iss.codegen;
 import java.io.StringWriter;
 import vadl.cppCodeGen.CodeGenerator;
 import vadl.cppCodeGen.mixins.CGenMixin;
+import vadl.iss.passes.tcgLowering.nodes.TcgBinaryImmOpNode;
 import vadl.iss.passes.tcgLowering.nodes.TcgBinaryOpNode;
 import vadl.iss.passes.tcgLowering.nodes.TcgGetVar;
 import vadl.iss.passes.tcgLowering.nodes.TcgMoveNode;
+import vadl.iss.passes.tcgLowering.nodes.TcgSetRegFile;
 import vadl.viam.graph.Node;
 
 /**
@@ -18,13 +20,6 @@ public interface CTcgOpsMixin extends CGenMixin {
    */
   default void tcgOpImpls(CodeGenerator.Impls<Node> impls) {
     impls
-        .set(TcgBinaryOpNode.class, (TcgBinaryOpNode node, StringWriter writer) -> {
-          writer.write("\t" + node.tcgFunctionName() + "_i" + node.width().width);
-          writer.write("(" + node.res().varName());
-          writer.write("," + node.arg1().varName());
-          writer.write("," + node.arg2().varName() + ");\n");
-        })
-
         .set(TcgGetVar.TcgGetRegFile.class, (TcgGetVar.TcgGetRegFile node, StringWriter writer) -> {
           writer.write("\tTCGv_" + node.res().width() + " " + node.res().varName() + " = ");
           var prefix = node.kind() == TcgGetVar.TcgGetRegFile.Kind.DEST ? "dest" : "get";
@@ -44,6 +39,29 @@ public interface CTcgOpsMixin extends CGenMixin {
           writer.write("\tTCGv_" + node.res().width() + " " + node.res().varName() + " = ");
           writer.write("tcg_temp_new_i" + node.res().width().width);
           writer.write("();\n");
+        })
+
+        .set(TcgSetRegFile.class, (TcgSetRegFile node, StringWriter writer) -> {
+          writer.write("\tgen_set_" + node.registerFile().simpleName().toLowerCase());
+          writer.write("(ctx, ");
+          gen(node.index());
+          writer.write(", " + node.res().varName() + ");\n");
+        })
+
+        .set(TcgBinaryOpNode.class, (TcgBinaryOpNode node, StringWriter writer) -> {
+          writer.write("\t" + node.tcgFunctionName() + "_i" + node.width().width);
+          writer.write("(" + node.res().varName());
+          writer.write("," + node.arg1().varName());
+          writer.write("," + node.arg2().varName() + ");\n");
+        })
+
+        .set(TcgBinaryImmOpNode.class, (TcgBinaryImmOpNode node, StringWriter writer) -> {
+          writer.write("\t" + node.tcgFunctionName() + "_i" + node.width().width);
+          writer.write("(" + node.res().varName());
+          writer.write("," + node.arg1().varName());
+          writer.write(",");
+          gen(node.arg2());
+          writer.write(");\n");
         })
 
     ;

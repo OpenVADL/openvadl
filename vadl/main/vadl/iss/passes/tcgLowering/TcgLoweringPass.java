@@ -12,15 +12,18 @@ import org.jetbrains.annotations.Nullable;
 import vadl.configuration.IssConfiguration;
 import vadl.iss.passes.AbstractIssPass;
 import vadl.iss.passes.tcgLowering.nodes.TcgAddNode;
+import vadl.iss.passes.tcgLowering.nodes.TcgAddiNode;
 import vadl.iss.passes.tcgLowering.nodes.TcgGetVar;
 import vadl.iss.passes.tcgLowering.nodes.TcgMoveNode;
 import vadl.iss.passes.tcgLowering.nodes.TcgOpNode;
+import vadl.iss.passes.tcgLowering.nodes.TcgSetRegFile;
 import vadl.pass.PassName;
 import vadl.pass.PassResults;
 import vadl.types.BuiltInTable;
 import vadl.utils.Pair;
 import vadl.viam.Instruction;
 import vadl.viam.Specification;
+import vadl.viam.ViamError;
 import vadl.viam.graph.Node;
 import vadl.viam.graph.NodeList;
 import vadl.viam.graph.ViamGraphError;
@@ -64,7 +67,7 @@ public class TcgLoweringPass extends AbstractIssPass {
 
     var supportedInstructions = Set.of(
         "ADD"
-//        , "ADDI"
+        , "ADDI"
     );
 
     viam.isa().get().ownInstructions()
@@ -188,14 +191,20 @@ class TcgLoweringExecutor extends GraphProcessor {
     var res = TcgV.gen(width);
     destVars.add(Pair.of(res, toProcess));
 
+
+    var prevOp = valRepl;
     if (toProcess.value().usageCount() <= 1) {
       replaceResultVar(valRepl, res);
-      return null;
     } else {
       // the value is used somewhere else, so we cannot directly write it here
-      return new TcgMoveNode(
-          res, valRepl.res(), width);
+      prevOp = lastNode.addAfter(
+          new TcgMoveNode(
+              res, valRepl.res(), width)
+      );
+      lastNode = prevOp;
     }
+
+    return new TcgSetRegFile(toProcess.registerFile(), toProcess.address(), prevOp.res());
   }
 
   private Node process(BuiltInCall call) {
@@ -206,16 +215,20 @@ class TcgLoweringExecutor extends GraphProcessor {
   private TcgOpNode produceOpNode(BuiltInCall call) {
     var args = call.inputs()
         .map(processedNodes::get)
-        .map(n -> (TcgOpNode) n)
         .toList();
 
+    // TODO: @jzottele Don't hardcode width!
+    var width = TcgWidth.i64;
+    var res = TcgV.gen(width);
+    tempVars.add(res);
+
     if (call.builtIn() == BuiltInTable.ADD) {
-      // TODO: @jzottele Don't hardcode width!
-      var width = TcgWidth.i64;
-      var res = TcgV.gen(width);
-      // add result variable to tempVars
-      tempVars.add(res);
-      return new TcgAddNode(res, args.get(0).res(), args.get(1).res(), width);
+      if (isBinaryImm(args)) {
+        return new TcgAddiNode(res, asOp(args.get(0)).res(), (ExpressionNode) args.get(1), width);
+      } else {
+        // add result variable to tempVars
+        return new TcgAddNode(res, asOp(args.get(0)).res(), asOp(args.get(1)).res(), width);
+      }
     } else {
       throw new ViamGraphError("built-in call not yet supported by tcg lowering")
           .addContext(call)
@@ -248,6 +261,29 @@ class TcgLoweringExecutor extends GraphProcessor {
     opNode.setRes(newVar);
 
     tempVars.remove(oldRes);
+  }
+
+  /**
+   * Returns true if the args are indicate that the op is an immediate version.
+   * If it returns false, it is a normal reg to reg version.
+   *
+   * <p>It will fail if the args are not 2, or are neither reg-reg nor reg-imm.
+   */
+  private boolean isBinaryImm(List<Node> args) {
+    ensure(args.size() == 2, "Does not have two arguments: %s", args);
+    if (args.get(0) instanceof TcgOpNode && args.get(1) instanceof ExpressionNode) {
+      return true;
+    } else if (args.get(0) instanceof TcgOpNode && args.get(1) instanceof TcgOpNode) {
+      return false;
+    } else {
+      throw new ViamError("Invalid binary arguments")
+          .addContext("args", args);
+    }
+  }
+
+  private TcgOpNode asOp(Node node) {
+    node.ensure(node instanceof TcgOpNode, "Not a TcgOpNode");
+    return (TcgOpNode) node;
   }
 
 }

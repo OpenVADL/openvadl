@@ -17,6 +17,11 @@ public class TcgAddiNode extends TcgBinaryImmOpNode {
   }
 
   @Override
+  public String tcgFunctionName() {
+    return "tcg_gen_addi";
+  }
+
+  @Override
   public Node copy() {
     return new TcgAddiNode(
         res, arg1, arg2.copy(ExpressionNode.class), width);

@@ -52,7 +52,7 @@ public abstract class DirectionalNode extends ControlNode {
    *
    * @param newNode node to be inserted.
    */
-  public void addAfter(@Nonnull DirectionalNode newNode) {
+  public <T extends DirectionalNode> T addAfter(@Nonnull T newNode) {
     ensure(isActive() && graph() != null, "Node is not active");
     if (!newNode.isActive()) {
       newNode = graph().addWithInputs(newNode);
@@ -62,6 +62,7 @@ public abstract class DirectionalNode extends ControlNode {
     this.setNext(null);
     newNode.setNext(next);
     this.setNext(newNode);
+    return newNode;
   }
 
   public ControlNode next() {
