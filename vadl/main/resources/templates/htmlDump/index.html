@@ -6,6 +6,7 @@
     <title>[[${title}]]</title>
     <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.0.0/dist/tailwind.min.css" rel="stylesheet">
     <link href="https://cdn.jsdelivr.net/npm/flowbite@2.5.1/dist/flowbite.min.css" rel="stylesheet"/>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.6.0/css/all.min.css" rel="stylesheet"/>
     <style>
         .badge {
             /*text-xs font-medium me-2 px-2.5 py-0.5 rounded*/
@@ -62,17 +63,17 @@
              class="hidden">
             <th:block th:each="singlePass,iter : ${passes}">
                 <a th:if="${passDumps.get(singlePass.passKey) != null}" th:href="${passDumps.get(singlePass.passKey)}">
-                    <div th:replace="~{this :: pass(${singlePass}, ${iter.index + 1})}"></div>
+                    <div th:replace="~{this :: pass(${singlePass}, ${iter.index + 1}, ${true})}"></div>
                 </a>
                 <th:block th:if="${passDumps.get(singlePass.passKey) == null}">
-                    <div th:replace="~{this :: pass(${singlePass}, ${iter.index + 1})}"></div>
+                    <div th:replace="~{this :: pass(${singlePass}, ${iter.index + 1}, ${false})}"></div>
                 </th:block>
 
             </th:block>
         </div>
     </div>
 
-    <div th:fragment="pass(singlePass, number)" th:if="${singlePass != null}"
+    <div th:fragment="pass(singlePass, number, hasLink)" th:if="${singlePass != null}"
         class="flex items-center my-4 px-4 py-2 bg-white border border-gray-200 rounded-lg shadow gap-4">
 
         <h4 class="text-md font-semibold tracking-wide text-gray-900">[[${number}]]</h4>
@@ -85,6 +86,7 @@
                 <span class="badge text-blue-800 text-sm">[[${singlePass.pass.class.name}]]</span>
             </div>
         </div>
+        <i th:if="${hasLink}" class="fa-solid fa-book-open ml-auto mr-5"></i>
     </div>
 
     <!-- Separator between passes and start of specifications   -->
