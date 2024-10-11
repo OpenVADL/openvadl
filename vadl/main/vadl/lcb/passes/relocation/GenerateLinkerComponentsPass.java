@@ -19,14 +19,21 @@ import vadl.gcb.passes.relocation.model.ElfRelocation;
 import vadl.gcb.passes.relocation.model.GeneratedRelocation;
 import vadl.gcb.passes.relocation.model.RelocationLowerable;
 import vadl.gcb.passes.relocation.model.Fixup;
+import vadl.lcb.passes.llvmLowering.GenerateTableGenMachineInstructionRecordPass;
+import vadl.lcb.passes.llvmLowering.domain.selectionDag.LlvmBasicBlockSD;
+import vadl.lcb.passes.llvmLowering.domain.selectionDag.LlvmFieldAccessRefNode;
 import vadl.lcb.passes.llvmLowering.immediates.GenerateTableGenImmediateRecordPass;
 import vadl.lcb.passes.llvmLowering.tablegen.model.TableGenImmediateRecord;
+import vadl.lcb.passes.llvmLowering.tablegen.model.TableGenInstructionImmediateOperand;
+import vadl.lcb.passes.llvmLowering.tablegen.model.TableGenInstructionOperand;
+import vadl.lcb.passes.llvmLowering.tablegen.model.TableGenMachineInstruction;
 import vadl.pass.Pass;
 import vadl.pass.PassName;
 import vadl.pass.PassResults;
 import vadl.viam.Format;
 import vadl.viam.Instruction;
 import vadl.viam.Specification;
+import vadl.viam.graph.dependency.FieldRefNode;
 
 public class GenerateLinkerComponentsPass extends Pass {
   public GenerateLinkerComponentsPass(GeneralConfiguration configuration) {
@@ -44,9 +51,13 @@ public class GenerateLinkerComponentsPass extends Pass {
       List<CompilerRelocation> compilerRelocations,
       List<ElfRelocation> elfRelocations,
       Map<Format.Field, List<VariantKind>> variantKindMap,
+      //Map<Format.Field, List<GeneratedRelocation>> generatedRelocationsByField,
       Map<Format, List<CompilerRelocation>> relocationPerFormat,
       Map<CompilerRelocation, Fixup> fixupPerCompilerRelocation,
-      Map<CompilerRelocation, List<Instruction>> instructionsPerCompilerRelocation
+      Map<CompilerRelocation, List<Instruction>> instructionsPerCompilerRelocation,
+      List<VariantKind> immediateVariantKinds,
+      Map<VariantKind, List<Instruction>> instructionPerImmediateVariant,
+      Map<Format.Field, List<Fixup>> fixupsByField
   ) {
 
   }
@@ -67,6 +78,10 @@ public class GenerateLinkerComponentsPass extends Pass {
     var fixupPerCompilerRelocation = new IdentityHashMap<CompilerRelocation, Fixup>();
     var instructionsPerCompilerRelocation =
         new IdentityHashMap<CompilerRelocation, List<Instruction>>();
+    var immediateVariantKinds = new ArrayList<VariantKind>();
+    var instructionsPerImmediateVariant = new IdentityHashMap<VariantKind, List<Instruction>>();
+    var fixupsByField =
+        new IdentityHashMap<Format.Field, List<Fixup>>();
 
     variantKinds.add(VariantKind.None());
     variantKinds.add(VariantKind.Invalid());
@@ -130,6 +145,7 @@ public class GenerateLinkerComponentsPass extends Pass {
             var fixup = new Fixup(generated);
             compilerRelocations.add(generated);
             extend(variantKindMap, imm, absoluteVariantKind);
+            extend(fixupsByField, imm, fixup);
             fixups.add(fixup);
           }
         });
@@ -151,6 +167,7 @@ public class GenerateLinkerComponentsPass extends Pass {
             var fixup = new Fixup(generated);
             compilerRelocations.add(generated);
             extend(variantKindMap, imm, relativeRelocation);
+            extend(fixupsByField, imm, fixup);
             fixups.add(fixup);
           }
         });
@@ -158,10 +175,21 @@ public class GenerateLinkerComponentsPass extends Pass {
     // Immediates have variant kind as well because we emit them in the Pseudo Expansion
     var tableGenImmediateRecords = (List<TableGenImmediateRecord>) passResults.lastResultOf(
         GenerateTableGenImmediateRecordPass.class);
+    var tableGenMachineRecords = (List<TableGenMachineInstruction>) passResults.lastResultOf(
+        GenerateTableGenMachineInstructionRecordPass.class);
 
     for (var imm : tableGenImmediateRecords) {
       variantKinds.add(imm.variantKind());
+      immediateVariantKinds.add(imm.variantKind());
       extend(variantKindMap, imm.fieldAccessRef().fieldRef(), imm.variantKind());
+
+      for (var machine : tableGenMachineRecords) {
+        if (machine.getInOperands().stream()
+            .anyMatch(
+                operand -> operandMatchesImmediate(imm.fieldAccessRef().fieldRef(), operand))) {
+          extend(instructionsPerImmediateVariant, imm.variantKind(), machine.instruction());
+        }
+      }
     }
 
     return new Output(
@@ -173,8 +201,25 @@ public class GenerateLinkerComponentsPass extends Pass {
         variantKindMap,
         relocationPerFormat,
         fixupPerCompilerRelocation,
-        instructionsPerCompilerRelocation
+        instructionsPerCompilerRelocation,
+        immediateVariantKinds,
+        instructionsPerImmediateVariant,
+        fixupsByField
     );
+  }
+
+  public static boolean operandMatchesImmediate(Format.Field imm,
+                                                TableGenInstructionOperand operand) {
+    var isFieldAccess =
+        operand.origin() instanceof LlvmFieldAccessRefNode fieldAccessRefNode
+            && fieldAccessRefNode.immediateOperand().fieldAccessRef().fieldRef() ==
+            imm;
+    var isFieldRef = operand.origin() instanceof FieldRefNode fieldRefNode
+        && fieldRefNode.formatField() == imm;
+    var isLabel = operand.origin() instanceof LlvmBasicBlockSD basicBlockSD
+        && basicBlockSD.fieldAccess().fieldRef() == imm;
+
+    return isFieldAccess || isFieldRef || isLabel;
   }
 
   private <K, V> void extend(Map<K, List<V>> map,

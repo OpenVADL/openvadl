@@ -22,12 +22,16 @@ public class Fixup {
     return lowerable.variantKind();
   }
 
+  public RelocationLowerable relocationLowerable() {
+    return lowerable;
+  }
+
   public CppFunction valueRelocation() {
      return lowerable.valueRelocation();
   }
 
   public FixupName name() {
     return new FixupName(
-        "fixup_" + lowerable.relocation().identifier.lower());
+        "fixup_" + lowerable.identifier().lower());
   }
 }

@@ -90,25 +90,22 @@ void [(${namespace})]MCExpr::visitUsedExpr(MCStreamer &Streamer) const
 [(${namespace})]MCExpr::VariantKind [(${namespace})]MCExpr::getVariantKindForName(StringRef name)
 {
     return StringSwitch<[(${namespace})]MCExpr::VariantKind>(name)
-    /*
-                «FOR relocation : relocations»
-                                       .Case( «emitAsStr(relocation)», «emitAsKind(relocation)» )
-                «ENDFOR»
-                */
-                                       .Default(VK_[(${namespace})]_Invalid);
+    [# th:each="vk : ${variantKinds}" ]
+          .Case("[(${vk.human()})]", [(${vk.value()})])
+    [/]
+          .Default(VK_Invalid);
 }
 
 StringRef [(${namespace})]MCExpr::getVariantKindName(VariantKind Kind)
 {
-    return StringRef();
-    /*
     switch (Kind)
     {
-    FOR relocation : relocations» case emitAsKind(relocation):
-        return <<emitAsStr(relocation)>>;
-        ENDFOR default : llvm_unreachable("Invalid symbol kind");
+    [# th:each="vk : ${variantKinds}" ]
+      case [(${vk.value()})]:
+      return "[(${vk.human()})]";
+    [/]
+    default : llvm_unreachable("Invalid symbol kind");
     }
-    */
 }
 
 bool [(${namespace})]MCExpr::isInternalImmExpr() const
@@ -154,21 +151,17 @@ int64_t [(${namespace})]MCExpr::evaluateAsInt64(int64_t Value) const
 {
     int64_t resultValue = Value;
 
-    /*
-    «IF relocations.size > 0»
-                «FOR relocation : relocations» if (Kind == «emitAsKind(relocation)» )
-    {
-        resultValue = [(${namespace})]BaseInfo::«emitAsFunc(relocation)»(resultValue);
-    }
-    «ENDFOR»
-
-            «ENDIF»
-    «ENDIF» */
+    [# th:each="elf : ${elfRelocations}" ]
+      if(Kind == [(${elf.variantKind().value()})])
+      {
+        resultValue = [(${namespace})]BaseInfo::[(${elf.valueRelocation().identifier.lower()})](resultValue);
+      }
+    [/]
 
     [# th:each="imm : ${immediates}" ]
       if(Kind == [(${imm.record.variantKind().value()})])
       {
-        resultValue = [(${imm.decoderFunctionName})](resultValue);
+        resultValue = [(${namespace})]BaseInfo::[(${imm.decoderFunctionName})](resultValue);
       }
     [/]
 }

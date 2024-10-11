@@ -12,8 +12,8 @@ namespace llvm
     public:
         enum VariantKind
         {
-            [# th:each="relocation : ${relocations}" ]
-            , [(${relocation.variantKind().value()})]
+            [# th:each="relocation, iterStat : ${relocations}" ]
+            [#th:block th:if="${!iterStat.first}"],[/th:block] [(${relocation.variantKind().value()})]
             [/]
             [# th:each="imm : ${immediates}" ]
             , [(${imm.value()})]

@@ -5,9 +5,14 @@ import static vadl.viam.ViamError.ensureNonNull;
 import java.io.IOException;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.function.Function;
+import java.util.function.Predicate;
 import vadl.configuration.LcbConfiguration;
+import vadl.gcb.passes.relocation.model.ElfRelocation;
 import vadl.lcb.passes.llvmLowering.immediates.GenerateTableGenImmediateRecordPass;
 import vadl.lcb.passes.llvmLowering.tablegen.model.TableGenImmediateRecord;
+import vadl.lcb.passes.relocation.GenerateLinkerComponentsPass;
 import vadl.lcb.template.CommonVarNames;
 import vadl.lcb.template.LcbTemplateRenderingPass;
 import vadl.lcb.template.utils.ImmediateDecodingFunctionProvider;
@@ -44,6 +49,8 @@ public class EmitMCExprCppFilePass extends LcbTemplateRenderingPass {
                                                 Specification specification) {
     var immediateRecords = ((List<TableGenImmediateRecord>) passResults.lastResultOf(
         GenerateTableGenImmediateRecordPass.class));
+    var output = (GenerateLinkerComponentsPass.Output) passResults.lastResultOf(
+        GenerateLinkerComponentsPass.class);
     var decodingFunctions = ImmediateDecodingFunctionProvider.generateDecodeFunctions(passResults);
 
     var wrapped = immediateRecords.stream().map(x -> {
@@ -53,6 +60,17 @@ public class EmitMCExprCppFilePass extends LcbTemplateRenderingPass {
     }).toList();
 
     return Map.of(CommonVarNames.NAMESPACE, specification.simpleName(),
-        "immediates", wrapped);
+        "immediates", wrapped,
+        "variantKinds", output.variantKinds(),
+        "elfRelocations",
+        output.elfRelocations().stream().filter(distinctByKey(x -> x.variantKind().value()))
+            .toList());
+  }
+
+  static <T> Predicate<T> distinctByKey(
+      Function<? super T, ?> keyExtractor) {
+
+    Map<Object, Boolean> seen = new ConcurrentHashMap<>();
+    return t -> seen.putIfAbsent(keyExtractor.apply(t), Boolean.TRUE) == null;
   }
 }

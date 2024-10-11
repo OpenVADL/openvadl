@@ -4,6 +4,9 @@ import java.io.IOException;
 import java.util.Comparator;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.function.Function;
+import java.util.function.Predicate;
 import vadl.configuration.LcbConfiguration;
 import vadl.gcb.passes.relocation.model.ElfRelocation;
 import vadl.lcb.codegen.LcbGenericCodeGenerator;
@@ -39,21 +42,31 @@ public class EmitBaseInfoFilePass extends LcbTemplateRenderingPass {
   protected Map<String, Object> createVariables(final PassResults passResults,
                                                 Specification specification) {
     var output =
-        (GenerateLinkerComponentsPass.Output) passResults.lastResultOf(GenerateLinkerComponentsPass.class);
+        (GenerateLinkerComponentsPass.Output) passResults.lastResultOf(
+            GenerateLinkerComponentsPass.class);
     var elfRelocations = output.elfRelocations();
     var relocations = elfRelocations.stream()
+        .filter(distinctByKey(x -> x.relocation().identifier))
         .sorted(Comparator.comparing(o -> o.name().value()))
         .map(relocation -> {
           var generator = new LcbGenericCodeGenerator();
           return generator.generateFunction(
               relocation.valueRelocation(),
               new LcbGenericCodeGenerator.Options(false, true));
-        }).toList();
+        })
+        .toList();
 
     return Map.of(CommonVarNames.NAMESPACE, specification.simpleName(),
         "isBigEndian", false,
         "relocations", relocations,
         "elfRelocations", elfRelocations
     );
+  }
+
+  static <T> Predicate<T> distinctByKey(
+      Function<? super T, ?> keyExtractor) {
+
+    Map<Object, Boolean> seen = new ConcurrentHashMap<>();
+    return t -> seen.putIfAbsent(keyExtractor.apply(t), Boolean.TRUE) == null;
   }
 }
