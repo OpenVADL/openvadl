@@ -1,0 +1,16 @@
+instruction set architecture TEST = {
+  constant WORD = 16
+
+  model-type IsaDefsFactory = (Id) -> IsaDefs
+
+  model Constants(size: Ex): Defs = {
+    constant a = $size
+    constant b = $size / 2
+  }
+
+  model BitDefs(factory: IsaDefsFactory, size: Id): IsaDefs = {
+    $factory($size)
+  }
+
+  $BitDefs(Constants ; WORD)
+}
