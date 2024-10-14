@@ -6,7 +6,8 @@ from typing import List
 
 import yaml
 
-from test_case import TestCase, TestSpec
+from test_case_executer_v1 import QMPTestCaseExecutor, TestSpec
+from test_case_executer_v2 import LogTestCaseExecutor
 
 
 @dataclass
@@ -18,7 +19,8 @@ async def main():
     test_config = load_test_config("test-suite.yaml")
 
     # produces testcases
-    test_cases = [TestCase(spec, 1200 + i) for (i, spec) in enumerate(test_config.tests)]
+    # test_cases = [TestCaseExecutor2(spec) for (i, spec) in enumerate(test_config.tests)]
+    test_cases = [QMPTestCaseExecutor(spec, 1200 + i) for (i, spec) in enumerate(test_config.tests)]
 
     start_time = time.time()
 
