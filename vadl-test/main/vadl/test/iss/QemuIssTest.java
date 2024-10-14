@@ -1,26 +1,64 @@
 package vadl.test.iss;
 
+import static vadl.test.iss.IssTestUtils.writeTestSuiteConfigYaml;
+import static vadl.test.iss.IssTestUtils.yamlToTestResults;
+import static vadl.viam.ViamError.ensure;
+
 import java.io.IOException;
 import java.net.Socket;
 import java.nio.file.Path;
+import java.util.Collection;
+import java.util.List;
+import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
+import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.DynamicTest;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.testcontainers.images.builder.ImageFromDockerfile;
+import org.testcontainers.shaded.com.google.common.collect.Streams;
+import org.testcontainers.utility.MountableFile;
 import vadl.configuration.IssConfiguration;
 import vadl.pass.PassOrder;
 import vadl.pass.exception.DuplicatedPassKeyException;
 import vadl.test.DockerExecutionTest;
 
+/**
+ * The test class to build and run tests on the QEMU ISS.
+ * The {@link #generateSimulator(String)} methods runs the ISS generation and builds
+ * a working QEMU image with the new target.
+ * Every target specification is cached and therefore only built for the first test.
+ *
+ * <p>The class also provides functions to automatically run tests in the container.</p>
+ */
 public abstract class QemuIssTest extends DockerExecutionTest {
 
+  // config of cloud sccache
   private static final String REDIS_CACHE_HOST = "ea.complang.tuwien.ac.at";
   private static final int REDIS_CACHE_PORT = 6379;
 
+  // config of qemu test image
+  private static final String QEMU_TEST_IMAGE =
+      "jozott/qemu@sha256:59fd89489908864d9c5267a39152a55559903040299bcb7a65382c4beebac2e2";
+
+
+  // specification to image cache
   private static final ConcurrentHashMap<String, ImageFromDockerfile> issImageCache =
       new ConcurrentHashMap<>();
+
   private static final Logger log = LoggerFactory.getLogger(QemuIssTest.class);
 
+  /**
+   * This will run the given specification and produces a working docker image that contains
+   * a compiled QEMU ISS from the specification.
+   *
+   * <p>If the specification was already build by some other test, the image is reused.</p>
+   *
+   * @param specPath path to VADL specification in testSource
+   * @return the image containing the generated QEMU ISS
+   */
   protected ImageFromDockerfile generateSimulator(String specPath) {
     return issImageCache.computeIfAbsent(specPath, (path) -> {
       try {
@@ -42,42 +80,151 @@ public abstract class QemuIssTest extends DockerExecutionTest {
     });
   }
 
+  /**
+   * Runs a QEMU instr test on the given image with the given test cases.
+   *
+   * @param image     the QEMU image to run the tests on
+   * @param testCases the test cases passed to the container which runs the tests
+   * @return the test result as DynamicTests as integration with JUnit
+   */
+  protected Stream<DynamicTest> runQemuInstrTests(ImageFromDockerfile image,
+                                                  Collection<IssTestUtils.TestSpec> testCases)
+      throws IOException {
+    // resolve file that contains all test specifications.
+    // it is a yaml file that gets mapped to `/work/test-suite.yaml` of the container.
+    var testSuiteYaml = getTestDirectory().resolve("test-suite.yaml").toFile();
+    var resultsYamlPath = getTestDirectory().resolve("results.yaml").toAbsolutePath();
+    // write the test cases to this yaml file
+    writeTestSuiteConfigYaml(testCases, testSuiteYaml);
+    // run the container and copy the test cases into the container
+    // and after execution, copy the results from the container
+    runContainer(image, container -> container
+            .withCopyToContainer(MountableFile.forHostPath(testSuiteYaml.getPath()),
+                "/work/test-suite.yaml"),
+        container -> container
+            .copyFileFromContainer("/work/results.yaml", resultsYamlPath.toString())
+    );
 
+
+    List<IssTestUtils.TestResult> testResults = List.of();
+
+    try {
+      // parse the results yaml file into a list of TestResults
+      testResults = yamlToTestResults(resultsYamlPath.toFile());
+    } catch (Exception e) {
+      Assertions.fail("Failed to load test results.", e);
+    }
+
+    // just for fast access later
+    var specIds = testResults.stream()
+        .map(IssTestUtils.TestResult::id)
+        .collect(Collectors.toSet());
+    var testCaseMap = testCases.stream()
+        .collect(Collectors.toMap(IssTestUtils.TestSpec::id, s -> s));
+
+    // produce DynamicTests for all parsed test results.
+    // these will be listed in the JUnit test report
+    var normalTestResultDynamicTests = testResults.stream()
+        .map(e -> DynamicTest.dynamicTest(e.id(),
+            () -> {
+              var testSpec = testCaseMap.get(e.id());
+              System.out.println("Test " + e.id());
+              System.out.println("ASM: \n" + testSpec.asmCore());
+              System.out.println("-------");
+              System.out.println("Ran stages: " + e.completedStages());
+              System.out.println("Register tests: \n" + e.regTests());
+              System.out.println("Duration: " + e.duration());
+
+              Assertions.assertEquals(IssTestUtils.TestResult.Status.PASS, e.status(),
+                  String.join(", ", e.errors()));
+            }
+        ));
+
+    // produces dynamic tests for all cases where no result was found
+    var notFoundResultDynamicTests = testCases.stream()
+        .filter(c -> !specIds.contains(c.id()))
+        .map(c -> DynamicTest.dynamicTest("Find result of " + c.id(),
+            () -> Assertions.fail("No result found for test " + c.id())
+        ));
+
+    // return stream of all dynamic test cases
+    return Streams.concat(
+        normalTestResultDynamicTests,
+        notFoundResultDynamicTests
+    );
+  }
+
+
+  /**
+   * This will produce a new image for the given generated iss sources.
+   *
+   * @param generatedIssSources the path to the generated ISS/QEMU sources.
+   * @return a new image that builds the ISS at build time.
+   */
   private ImageFromDockerfile getIssImage(Path generatedIssSources
   ) {
 
     return new ImageFromDockerfile()
         .withDockerfileFromBuilder(d -> {
               d
-                  .from(
-                      "jozott/qemu@sha256:59fd89489908864d9c5267a39152a55559903040299bcb7a65382c4beebac2e2")
+                  .from(QEMU_TEST_IMAGE)
+                  // TODO: Remove when using updated docker image
+                  .run("pip install pyyaml qemu.qmp")
                   .copy("iss", "/qemu")
+                  // TODO: Move this to prebuilt docker image
                   .workDir("/qemu/build");
 
+              // determine the used compiler (gcc or sccache gcc)
               var cc = "gcc";
               if (testRedisCacheConnection()) {
                 log.info("Redis cache connection established. Using sccache cache...");
                 // TODO: Set redis port to our cache
                 d.env("SCCACHE_REDIS_ENDPOINT", "tcp://" + REDIS_CACHE_HOST + ":" + REDIS_CACHE_PORT);
                 cc = "sccache gcc";
+              } else if (System.getenv("SCCACHE_BUCKET") != null) {
+                // support for s3 sccache
+                var bucket = System.getenv("SCCACHE_BUCKET");
+                var region = System.getenv("SCCACHE_REGION");
+                var acccessKeyId = System.getenv("AWS_ACCESS_KEY_ID");
+                var accessKey = System.getenv("AWS_SECRET_ACCESS_KEY");
+                ensure(bucket != null && region != null && acccessKeyId != null && accessKey != null,
+                    "SCCACHE_BUCKET is set, some other variables are not set");
+                d.env("SCCACHE_BUCKET", bucket)
+                    .env("SCCACHE_REGION", region)
+                    .env("AWS_ACCESS_KEY_ID", acccessKeyId)
+                    .env("AWS_SECRET_ACCESS_KEY", accessKey);
+                cc = "sccache gcc";
               } else {
                 log.warn("Couldn't connect to redis sccache. Building without cache...");
               }
 
-              d.run("../configure --cc='" + cc + "' --target-list=vadl-softmmu");
               // TODO: update target name
-              d.run("make -j 8");
-              // validate existence of vadl
-              d.run("qemu-system-vadl --help");
+              // configure qemu with the new target from the specification
+              d.run("../configure --cc='" + cc + "' --target-list=vadl-softmmu");
+              // build qemu
+              d.run("make -j8");
+              // validate existence of generated qemu iss
+              d.run("qemu-system-vadl --version");
 
               d.workDir("/work");
+
+              d.copy("/scripts", "/scripts");
+              d.run("ls /scripts");
+              d.cmd("python3 /scripts/bare_metal_runner.py");
 
               d.build();
             }
         )
-        .withFileFromPath("iss", generatedIssSources);
+        // make iss sources available to image builder
+        .withFileFromPath("iss", generatedIssSources)
+        // make iss_qemu scripts available to image builder
+        .withFileFromClasspath("/scripts", "/scripts/iss_qemu");
   }
 
+  /**
+   * Tests if the redis cache is up and accessible.
+   * Currently, it only tests if a TCP socket connection can be established.
+   */
   private boolean testRedisCacheConnection() {
     var timeout = 2000;
     try (Socket socket = new Socket()) {
