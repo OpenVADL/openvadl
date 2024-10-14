@@ -1,0 +1,17 @@
+instruction set architecture OrigVADL = {
+  enumeration Flags =
+  { READ  = 0b001
+  , WRITE = 0b010
+  , EXEC  = 0b100
+  }
+}
+
+instruction set architecture OpenVADL = {
+  function nthBit(n: Int) -> Bits<3> = 0b001 << n
+
+  enumeration Flags =
+  { READ  = nthBit(0)
+  , WRITE = nthBit(1)
+  , EXEC  = nthBit(2)
+  }
+}

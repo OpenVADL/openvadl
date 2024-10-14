@@ -1,0 +1,5 @@
+instruction set architecture TEST = {
+  constant WORD = 16
+  constant a = WORD
+  constant b = (WORD / 2)
+}

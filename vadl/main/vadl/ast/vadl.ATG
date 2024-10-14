@@ -593,7 +593,7 @@ PRODUCTIONS
     identifier<out Identifier name>
     [
       SYM_EQ
-      valLiteral<out value>
+      expression<out value, BIN_OPS>
     ]
     [
       SYM_BIGARROW
@@ -604,7 +604,7 @@ PRODUCTIONS
       identifier<out name>
       [
         SYM_EQ
-        valLiteral<out value>
+        expression<out value, BIN_OPS>
       ]
       [
         SYM_BIGARROW
@@ -761,16 +761,16 @@ PRODUCTIONS
   .
 
   groupLiteral<out Group group>
-  = identifierPath<out IsId path>    (. var start = loc(); Expr size = null; .)
+  = identifierPath<out IsId path>                       (. var start = loc(); Expr size = null; .)
     [
       SYM_LT
-      intLiteral<out size>
+      expression<out size, BIN_OPS_EXCEPT_GT>
       [
         SYM_RANGE
-        intLiteral<out Expr rangeTo> (. size = new RangeExpr(size, rangeTo); .)
+        expression<out Expr rangeTo, BIN_OPS_EXCEPT_GT> (. size = new RangeExpr(size, rangeTo); .)
       ]
       SYM_GT
-    ]                                (. group = new Group.Literal(path, size, start.join(loc())); .)
+    ]                                                   (. group = new Group.Literal(path, size, start.join(loc())); .)
   .
 
   groupAlternative<out Group group>
@@ -1821,7 +1821,7 @@ PRODUCTIONS
     | macroReplacement<out body>
     )
   | IF (type instanceof ProjectionType projection)
-    ( identifier<out Identifier id>                         (. body = new MacroReference(macroTable.getMacro(id.name), projection, id.location()); .)
+    ( identifier<out Identifier id>                         (. body = createMacroReference(this, id); .)
     | macroReplacement<out body>
     )
   | internalError<"Unhandled syntax type " + type>

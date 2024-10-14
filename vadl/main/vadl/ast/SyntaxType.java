@@ -233,7 +233,7 @@ class ProjectionType implements SyntaxType {
       return false;
     }
     for (int i = 0; i < arguments.size(); i++) {
-      if (!arguments.get(i).isSubTypeOf(otherProjection.arguments.get(i))) {
+      if (!otherProjection.arguments.get(i).isSubTypeOf(arguments.get(i))) {
         return false;
       }
     }

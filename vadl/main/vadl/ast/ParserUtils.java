@@ -261,6 +261,21 @@ class ParserUtils {
     }
   }
 
+  static Node createMacroReference(Parser parser, Identifier id) {
+    @Nullable Macro macro = parser.macroTable.getMacro(id.name);
+    if (macro == null) {
+      reportError(parser, "Unknown model: " + id.name, id.location());
+      return DUMMY_ID;
+    } else {
+      List<SyntaxType> params = new ArrayList<>(macro.params().size());
+      for (MacroParam param : macro.params()) {
+        params.add(param.type());
+      }
+      return new MacroReference(macro, new ProjectionType(params, macro.returnType()),
+          id.location());
+    }
+  }
+
   /**
    * Returns either the given macro's parameter types or, if null, the given syntax type's
    * {@link ProjectionType#arguments}.
