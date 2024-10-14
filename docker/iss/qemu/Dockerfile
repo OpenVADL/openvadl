@@ -30,13 +30,6 @@ RUN mkdir build && cd build && \
     ../configure --enable-debug --target-list=riscv64-softmmu && \
     make -j 8
 
-WORKDIR /scripts
-
-# create python venv and
-# install qemu.qmp pip dependency for tests
-RUN python3 -m venv .venv
-RUN . .venv/bin/activate && pip install qemu.qmp
-
 WORKDIR /work
 
 # install sccache for cloud build cache
