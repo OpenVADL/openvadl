@@ -46,6 +46,8 @@ bin/
 ### Mac OS ###
 .DS_Store
 
+### Python ###
+.venv
 
 ### OTHER ###
 .swp
