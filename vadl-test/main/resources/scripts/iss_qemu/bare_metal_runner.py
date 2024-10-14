@@ -33,6 +33,7 @@ async def main():
     async def run_test(test_case):
         async with semaphore:
             print(f"Start test case {test_case.spec.id}...")
+            print(f"Test case:\n{test_case.spec}")
             test_start_time = time.time()
             try:
                 await test_case.compile_and_link()
@@ -44,7 +45,8 @@ async def main():
             finally:
                 test_end_time = time.time()
                 test_case.test_result.duration = f"{(test_end_time - test_start_time) * 1000:.2f}ms"
-                print(f"Finish test case {test_case.spec.id} in {test_case.test_result.duration}")
+                status = test_case.test_result.status == 'PASS' and "✅ PASS" or "❌ FAIL"
+                print(f"[{status}] Finish test case {test_case.spec.id} in {test_case.test_result.duration}")
                 # await test_case.emit_result(dir="results", prefix="result-")
                 result = test_case.get_test_result_map()
                 test_results.append(result)
