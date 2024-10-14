@@ -325,7 +325,7 @@ public abstract class AbstractTest {
   /**
    * Returns the path to the current test directory.
    */
-  synchronized public Path getTestDirectory() {
+  public synchronized Path getTestDirectory() {
     if (testDirectory == null) {
       try {
         testDirectory = createDirectory();

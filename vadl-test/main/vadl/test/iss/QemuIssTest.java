@@ -229,8 +229,7 @@ public abstract class QemuIssTest extends DockerExecutionTest {
     var timeout = 2000;
     try (Socket socket = new Socket()) {
       socket.connect(
-          new java.net.InetSocketAddress(REDIS_CACHE_HOST, REDIS_CACHE_PORT)
-          , timeout);
+          new java.net.InetSocketAddress(REDIS_CACHE_HOST, REDIS_CACHE_PORT), timeout);
       return true; // The port is open
     } catch (IOException e) {
       return false; // The port is not open, or the host is not reachable

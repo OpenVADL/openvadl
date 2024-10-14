@@ -66,8 +66,8 @@ public class TcgLoweringPass extends AbstractIssPass {
       throws IOException {
 
     var supportedInstructions = Set.of(
-        "ADD"
-        , "ADDI"
+        "ADD",
+        "ADDI"
     );
 
     viam.isa().get().ownInstructions()
