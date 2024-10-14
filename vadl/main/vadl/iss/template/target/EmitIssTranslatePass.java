@@ -53,8 +53,9 @@ public class EmitIssTranslatePass extends IssTemplateRenderingPass {
   }
 
   private static Map<String, Object> getMemoryWordSize(Specification specification) {
+    var wordSize = specification.isa().get().ownMemories().get(0).wordSize();
     return Map.of(
-        "int", 8
+        "int", wordSize
     );
   }
 
