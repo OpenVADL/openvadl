@@ -505,6 +505,8 @@ public final class PassOrder {
         .add(issDefault("/target/meson.build", config))
         .add(issDefault("/target/gen-arch/Kconfig", config))
         .add(issDefault("/target/gen-arch/meson.build", config))
+        .add(issDefault("/target/gen-arch/helper.c", config))
+        .add(issDefault("/target/gen-arch/helper.h", config))
         // target/gen-arch/cpu-qom.h
         .add(new EmitIssCpuQomHeaderPass(config))
         // target/gen-arch/cpu-param.h
