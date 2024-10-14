@@ -10,6 +10,7 @@ gen_arch_ss.add(gen)
 gen_arch_ss.add(files(
                'translate.c',
                'cpu.c',
+               'helper.c',
 #              'disas.c'
 ))
 
