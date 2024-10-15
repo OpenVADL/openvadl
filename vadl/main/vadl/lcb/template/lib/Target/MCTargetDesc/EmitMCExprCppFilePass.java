@@ -15,6 +15,7 @@ import vadl.lcb.passes.llvmLowering.tablegen.model.TableGenImmediateRecord;
 import vadl.lcb.passes.relocation.GenerateLinkerComponentsPass;
 import vadl.lcb.template.CommonVarNames;
 import vadl.lcb.template.LcbTemplateRenderingPass;
+import vadl.lcb.template.utils.BaseInfoFunctionProvider;
 import vadl.lcb.template.utils.ImmediateDecodingFunctionProvider;
 import vadl.pass.PassResults;
 import vadl.viam.Specification;
@@ -40,7 +41,7 @@ public class EmitMCExprCppFilePass extends LcbTemplateRenderingPass {
         + processorName + "MCExpr.cpp";
   }
 
-  record Wrapper(TableGenImmediateRecord record, String decoderFunctionName) {
+  record Wrapper(TableGenImmediateRecord record, String baseInfoName) {
 
   }
 
@@ -56,15 +57,16 @@ public class EmitMCExprCppFilePass extends LcbTemplateRenderingPass {
     var wrapped = immediateRecords.stream().map(x -> {
       var function = decodingFunctions.get(x.fieldAccessRef().fieldRef());
       ensureNonNull(function, "function must not be null");
-      return new Wrapper(x, function.functionName().lower());
+      return new Wrapper(x, x.rawName());
     }).toList();
+
+    var baseInfos = BaseInfoFunctionProvider.getBaseInfoRecords(passResults);
 
     return Map.of(CommonVarNames.NAMESPACE, specification.simpleName(),
         "immediates", wrapped,
         "variantKinds", output.variantKinds(),
-        "elfRelocations",
-        output.elfRelocations().stream().filter(distinctByKey(x -> x.variantKind().value()))
-            .toList());
+        "baseInfos", baseInfos
+    );
   }
 
   static <T> Predicate<T> distinctByKey(

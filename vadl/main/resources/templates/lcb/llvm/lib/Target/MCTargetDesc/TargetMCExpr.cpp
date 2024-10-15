@@ -151,17 +151,10 @@ int64_t [(${namespace})]MCExpr::evaluateAsInt64(int64_t Value) const
 {
     int64_t resultValue = Value;
 
-    [# th:each="elf : ${elfRelocations}" ]
-      if(Kind == [(${elf.variantKind().value()})])
+    [# th:each="bi : ${baseInfos}" ]
+      if(Kind == [(${bi.variantKind().value()})])
       {
-        resultValue = [(${namespace})]BaseInfo::[(${elf.valueRelocation().identifier.lower()})](resultValue);
-      }
-    [/]
-
-    [# th:each="imm : ${immediates}" ]
-      if(Kind == [(${imm.record.variantKind().value()})])
-      {
-        resultValue = [(${namespace})]BaseInfo::[(${imm.decoderFunctionName})](resultValue);
+        resultValue = [(${namespace})]BaseInfo::[(${bi.functionName()})](resultValue);
       }
     [/]
 }

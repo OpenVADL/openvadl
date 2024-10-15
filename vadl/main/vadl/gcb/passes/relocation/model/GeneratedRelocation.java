@@ -32,7 +32,7 @@ public class GeneratedRelocation extends CompilerRelocation implements Relocatio
         format.type());
     var identifier = generateName(format, field, kind);
     var relocation = new Relocation(identifier, new Parameter[] {parameter}, format.type());
-    var valueRelocation = CppTypeNormalizationPass.makeTypesCppConform(relocation);
+    var valueRelocation = CppTypeNormalizationPass.makeTypesCppConform(relocation, identifier);
     valueRelocation.behavior().addWithInputs(new ReturnNode(new FuncParamNode(parameter)));
     return new GeneratedRelocation(identifier, kind, format, field,
         relocation,

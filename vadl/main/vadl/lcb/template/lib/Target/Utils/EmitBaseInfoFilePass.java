@@ -13,6 +13,7 @@ import vadl.lcb.codegen.LcbGenericCodeGenerator;
 import vadl.lcb.passes.relocation.GenerateLinkerComponentsPass;
 import vadl.lcb.template.CommonVarNames;
 import vadl.lcb.template.LcbTemplateRenderingPass;
+import vadl.lcb.template.utils.BaseInfoFunctionProvider;
 import vadl.pass.PassResults;
 import vadl.viam.Specification;
 
@@ -45,21 +46,16 @@ public class EmitBaseInfoFilePass extends LcbTemplateRenderingPass {
         (GenerateLinkerComponentsPass.Output) passResults.lastResultOf(
             GenerateLinkerComponentsPass.class);
     var elfRelocations = output.elfRelocations();
-    var relocations = elfRelocations.stream()
-        .filter(distinctByKey(x -> x.relocation().identifier))
-        .sorted(Comparator.comparing(o -> o.name().value()))
-        .map(relocation -> {
-          var generator = new LcbGenericCodeGenerator();
-          return generator.generateFunction(
-              relocation.valueRelocation(),
-              new LcbGenericCodeGenerator.Options(false, true));
-        })
+    var relocations = BaseInfoFunctionProvider.getBaseInfoRecords(passResults);
+
+    var mos = elfRelocations.stream()
+        .filter(distinctByKey(x -> x.valueRelocation().functionName().lower()))
         .toList();
 
     return Map.of(CommonVarNames.NAMESPACE, specification.simpleName(),
         "isBigEndian", false,
         "relocations", relocations,
-        "elfRelocations", elfRelocations
+        "mos", mos
     );
   }
 

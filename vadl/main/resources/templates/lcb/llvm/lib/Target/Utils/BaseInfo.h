@@ -12,7 +12,7 @@ class [(${namespace})]BaseInfo
         enum
         {
             MO_None,
-            [#th:block th:each="relocation : ${elfRelocations}" ]
+            [#th:block th:each="relocation : ${mos}" ]
             MO_[(${relocation.valueRelocation().functionName().lower()})],
             [/th:block]
             MO_Invalid
@@ -31,7 +31,7 @@ class [(${namespace})]BaseInfo
             {
                 default:
                     llvm_unreachable( "unsupported machine operand annotation relocation" );
-                [#th:block th:each="relocation : ${elfRelocations}" ]
+                [#th:block th:each="relocation : ${mos}" ]
                 case MO_[(${relocation.valueRelocation().functionName().lower()})]:
                     return [(${relocation.valueRelocation().functionName().lower()})](value);
                 [/th:block]
@@ -41,7 +41,7 @@ class [(${namespace})]BaseInfo
         }
 
         [# th:each="relocation : ${relocations}" ]
-        [(${relocation.value()})]
+        [(${relocation.relocation().value()})]
         [/]
 };
 

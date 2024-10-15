@@ -44,8 +44,7 @@ public class EmitMCExprHeaderFilePass extends LcbTemplateRenderingPass {
             GenerateLinkerComponentsPass.class);
     var variantKinds = output.variantKinds();
     return Map.of(CommonVarNames.NAMESPACE, specification.simpleName(),
-        "relocations", relocations(passResults),
-        "immediates", variantKinds);
+        "variantKinds", variantKinds);
   }
 
   private List<ElfRelocation> relocations(PassResults passResults) {
