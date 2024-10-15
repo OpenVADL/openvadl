@@ -31,7 +31,7 @@ void [(${namespace})]MCExpr::printImpl(raw_ostream &OS, const MCAsmInfo *MAI) co
 
 std::string [(${namespace})]MCExpr::format(uint8_t Radix, const MCAsmInfo *MAI) const
 {
-    bool HasVariant = (Kind != VK_[(${namespace})]_None);
+    bool HasVariant = (Kind != VK_None);
     int64_t Res = 0;
 
     if (evaluateAsConstant(Res))

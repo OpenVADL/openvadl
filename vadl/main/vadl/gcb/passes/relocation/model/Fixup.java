@@ -27,11 +27,12 @@ public class Fixup {
   }
 
   public CppFunction valueRelocation() {
-     return lowerable.valueRelocation();
+    return lowerable.valueRelocation();
   }
 
   public FixupName name() {
     return new FixupName(
-        "fixup_" + lowerable.identifier().lower());
+        "fixup_" + lowerable.valueRelocation().functionName().identifier().simpleName() + "_"
+            + lowerable.identifier().lower());
   }
 }
