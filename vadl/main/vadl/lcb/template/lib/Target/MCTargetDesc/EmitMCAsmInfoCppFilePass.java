@@ -30,7 +30,7 @@ public class EmitMCAsmInfoCppFilePass extends LcbTemplateRenderingPass {
         + processorName + "MCAsmInfo.cpp";
   }
 
-  record AssemblyDescription(String commentString, int alignmentInBytes) {
+  record AssemblyDescription(String commentString, boolean alignmentInBytes) {
 
   }
 
@@ -38,7 +38,7 @@ public class EmitMCAsmInfoCppFilePass extends LcbTemplateRenderingPass {
   protected Map<String, Object> createVariables(final PassResults passResults,
                                                 Specification specification) {
     return Map.of(CommonVarNames.NAMESPACE, specification.simpleName(),
-        CommonVarNames.ASSEMBLY_DESCRIPTION, new AssemblyDescription("commentValue", 16)
+        CommonVarNames.ASSEMBLY_DESCRIPTION, new AssemblyDescription("#", false)
     );
   }
 }
