@@ -15,7 +15,6 @@ import vadl.gcb.passes.relocation.BitMaskFunctionGenerator;
 import vadl.gcb.passes.relocation.IdentifyFieldUsagePass;
 import vadl.gcb.passes.relocation.model.CompilerRelocation;
 import vadl.gcb.passes.relocation.model.ConcreteLogicalRelocation;
-import vadl.gcb.passes.relocation.model.ElfRelocation;
 import vadl.gcb.passes.relocation.model.GeneratedRelocation;
 import vadl.gcb.passes.relocation.model.RelocationLowerable;
 import vadl.gcb.passes.relocation.model.Fixup;
@@ -24,7 +23,6 @@ import vadl.lcb.passes.llvmLowering.domain.selectionDag.LlvmBasicBlockSD;
 import vadl.lcb.passes.llvmLowering.domain.selectionDag.LlvmFieldAccessRefNode;
 import vadl.lcb.passes.llvmLowering.immediates.GenerateTableGenImmediateRecordPass;
 import vadl.lcb.passes.llvmLowering.tablegen.model.TableGenImmediateRecord;
-import vadl.lcb.passes.llvmLowering.tablegen.model.TableGenInstructionImmediateOperand;
 import vadl.lcb.passes.llvmLowering.tablegen.model.TableGenInstructionOperand;
 import vadl.lcb.passes.llvmLowering.tablegen.model.TableGenMachineInstruction;
 import vadl.pass.Pass;
@@ -48,14 +46,9 @@ public class GenerateLinkerComponentsPass extends Pass {
   public record Output(
       List<VariantKind> variantKinds,
       List<Fixup> fixups,
-      List<CompilerRelocation> compilerRelocations,
-      List<ElfRelocation> elfRelocations,
+      List<CompilerRelocation> elfRelocations,
       Map<Format.Field, List<VariantKind>> variantKindMap,
-      //Map<Format.Field, List<GeneratedRelocation>> generatedRelocationsByField,
-      Map<Format, List<CompilerRelocation>> relocationPerFormat,
-      Map<CompilerRelocation, Fixup> fixupPerCompilerRelocation,
       Map<CompilerRelocation, List<Instruction>> instructionsPerCompilerRelocation,
-      List<VariantKind> immediateVariantKinds,
       Map<VariantKind, List<Instruction>> instructionPerImmediateVariant,
       Map<Format.Field, List<Fixup>> fixupsByField
   ) {
@@ -75,10 +68,8 @@ public class GenerateLinkerComponentsPass extends Pass {
     var compilerRelocations = new ArrayList<CompilerRelocation>();
     var fixups = new ArrayList<Fixup>();
     var relocationPerFormat = new IdentityHashMap<Format, List<CompilerRelocation>>();
-    var fixupPerCompilerRelocation = new IdentityHashMap<CompilerRelocation, Fixup>();
     var instructionsPerCompilerRelocation =
         new IdentityHashMap<CompilerRelocation, List<Instruction>>();
-    var immediateVariantKinds = new ArrayList<VariantKind>();
     var instructionsPerImmediateVariant = new IdentityHashMap<VariantKind, List<Instruction>>();
     var fixupsByField =
         new IdentityHashMap<Format.Field, List<Fixup>>();
@@ -93,7 +84,7 @@ public class GenerateLinkerComponentsPass extends Pass {
           var alreadySeen = new HashSet<Format.Field>();
 
           // Create a concrete relocations for each user defined + immediate field combination.
-          // The reason is that it it might exist a pseudo instruction which sets a relocation.
+          // The reason is that it might exist a pseudo instruction which sets a relocation.
           viam.isa().map(isa -> isa.ownInstructions().stream()).orElseGet(Stream::empty)
               .forEach(instruction -> {
                 var imms = immediates.getImmediates(instruction.format());
@@ -118,7 +109,6 @@ public class GenerateLinkerComponentsPass extends Pass {
                     extend(relocationPerFormat, format, concrete);
                     extend(variantKindMap, field, variantKind);
                     extend(instructionsPerCompilerRelocation, concrete, instruction);
-                    fixupPerCompilerRelocation.put(concrete, fixup);
                     alreadySeen.add(field);
                   }
                 }
@@ -180,7 +170,6 @@ public class GenerateLinkerComponentsPass extends Pass {
 
     for (var imm : tableGenImmediateRecords) {
       variantKinds.add(imm.variantKind());
-      immediateVariantKinds.add(imm.variantKind());
       extend(variantKindMap, imm.fieldAccessRef().fieldRef(), imm.variantKind());
 
       for (var machine : tableGenMachineRecords) {
@@ -196,13 +185,8 @@ public class GenerateLinkerComponentsPass extends Pass {
         variantKinds,
         fixups,
         compilerRelocations,
-        compilerRelocations.stream().filter(x -> x instanceof RelocationLowerable)
-            .map(x -> new ElfRelocation((RelocationLowerable) x)).toList(),
         variantKindMap,
-        relocationPerFormat,
-        fixupPerCompilerRelocation,
         instructionsPerCompilerRelocation,
-        immediateVariantKinds,
         instructionsPerImmediateVariant,
         fixupsByField
     );

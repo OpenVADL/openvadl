@@ -17,7 +17,7 @@ import vadl.cppCodeGen.model.CppFunctionName;
 import vadl.cppCodeGen.model.VariantKind;
 import vadl.gcb.passes.pseudo.PseudoExpansionFunctionGeneratorPass;
 import vadl.gcb.passes.relocation.IdentifyFieldUsagePass;
-import vadl.gcb.passes.relocation.model.ElfRelocation;
+import vadl.gcb.passes.relocation.model.CompilerRelocation;
 import vadl.lcb.codegen.LcbGenericCodeGenerator;
 import vadl.lcb.codegen.expansion.PseudoExpansionCodeGenerator;
 import vadl.lcb.passes.llvmLowering.ConstMaterialisationPseudoExpansionFunctionGeneratorPass;
@@ -69,7 +69,7 @@ public class EmitMCInstExpanderCppFilePass extends LcbTemplateRenderingPass {
       Map<PseudoInstruction, CppFunction> cppFunctions,
       IdentifyFieldUsagePass.ImmediateDetectionContainer fieldUsages,
       Map<Format.Field, List<VariantKind>> variants,
-      List<ElfRelocation> relocations,
+      List<CompilerRelocation> relocations,
       PassResults passResults) {
     return PseudoInstructionProvider.getSupportedPseudoInstructions(specification, passResults)
         .map(pseudoInstruction -> renderPseudoInstruction(specification, cppFunctions, fieldUsages,
@@ -84,7 +84,7 @@ public class EmitMCInstExpanderCppFilePass extends LcbTemplateRenderingPass {
       Map<PseudoInstruction, CppFunction> cppFunctions,
       IdentifyFieldUsagePass.ImmediateDetectionContainer fieldUsages,
       Map<Format.Field, List<VariantKind>> variants,
-      List<ElfRelocation> relocations,
+      List<CompilerRelocation> relocations,
       PassResults passResults,
       PseudoInstruction pseudoInstruction) {
     var codeGen =
@@ -110,7 +110,7 @@ public class EmitMCInstExpanderCppFilePass extends LcbTemplateRenderingPass {
       Map<PseudoInstruction, CppFunction> cppFunctions,
       IdentifyFieldUsagePass.ImmediateDetectionContainer fieldUsages,
       Map<Format.Field, List<VariantKind>> variants,
-      List<ElfRelocation> relocations,
+      List<CompilerRelocation> relocations,
       PassResults passResults) {
     var constMats = (List<ConstantMatPseudoInstruction>) passResults.lastResultOf(
         GenerateConstantMaterialisationPass.class);

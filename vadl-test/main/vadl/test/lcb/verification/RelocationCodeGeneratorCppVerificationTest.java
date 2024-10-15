@@ -16,7 +16,8 @@ import org.testcontainers.images.builder.ImageFromDockerfile;
 import vadl.cppCodeGen.CppTypeMap;
 import vadl.cppCodeGen.passes.typeNormalization.CppTypeNormalizationPass;
 import vadl.gcb.passes.relocation.IdentifyFieldUsagePass;
-import vadl.gcb.passes.relocation.model.ElfRelocation;
+import vadl.gcb.passes.relocation.model.CompilerRelocation;
+import vadl.gcb.passes.relocation.model.RelocationLowerable;
 import vadl.gcb.passes.type_normalization.CppTypeNormalizationForImmediateExtractionPass;
 import vadl.gcb.passes.type_normalization.CppTypeNormalizationForPredicatesPass;
 import vadl.lcb.codegen.LcbGenericCodeGenerator;
@@ -59,7 +60,10 @@ public class RelocationCodeGeneratorCppVerificationTest extends AbstractLcbTest 
     var output = (GenerateLinkerComponentsPass.Output) testSetup.passManager().getPassResults()
         .lastResultOf(GenerateLinkerComponentsPass.class);
     var elfRelocations =
-        (List<ElfRelocation>) output.elfRelocations();
+        output.elfRelocations().stream()
+            .filter(x -> x instanceof RelocationLowerable)
+            .map(x -> (RelocationLowerable) x)
+            .toList();
     var immediateDetection =
         (IdentifyFieldUsagePass.ImmediateDetectionContainer) testSetup.passManager()
             .getPassResults()
@@ -116,7 +120,7 @@ public class RelocationCodeGeneratorCppVerificationTest extends AbstractLcbTest 
                           Format.Field immField,
                           long instructionWord,
                           long updatedValue,
-                          ElfRelocation relocation,
+                          RelocationLowerable relocation,
                           CppTypeNormalizationPass.NormalisedTypeResult
                               cppNormalisedImmediateExtraction) {
     // How do we test the relocation?

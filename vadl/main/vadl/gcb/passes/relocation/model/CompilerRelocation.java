@@ -74,4 +74,13 @@ public abstract class CompilerRelocation {
   public Format.Field immediate() {
     return immediate;
   }
+
+  public ElfRelocationName elfRelocationName() {
+    return new ElfRelocationName(
+        "R_" + relocation().identifier.lower());
+  }
+
+  public VariantKind variantKind() {
+    return variantKindRef;
+  }
 }

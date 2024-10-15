@@ -7,7 +7,7 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.function.Function;
 import java.util.function.Predicate;
 import vadl.configuration.LcbConfiguration;
-import vadl.gcb.passes.relocation.model.ElfRelocation;
+import vadl.gcb.passes.relocation.model.CompilerRelocation;
 import vadl.lcb.passes.relocation.GenerateLinkerComponentsPass;
 import vadl.lcb.template.CommonVarNames;
 import vadl.lcb.template.LcbTemplateRenderingPass;
@@ -47,7 +47,7 @@ public class EmitMCExprHeaderFilePass extends LcbTemplateRenderingPass {
         "variantKinds", variantKinds);
   }
 
-  private List<ElfRelocation> relocations(PassResults passResults) {
+  private List<CompilerRelocation> relocations(PassResults passResults) {
     var output = (GenerateLinkerComponentsPass.Output) passResults.lastResultOf(
         GenerateLinkerComponentsPass.class);
     return output.elfRelocations().stream().filter(distinctByKey(x -> x.variantKind().value()))

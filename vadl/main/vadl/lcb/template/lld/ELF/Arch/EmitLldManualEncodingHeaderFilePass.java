@@ -2,11 +2,11 @@ package vadl.lcb.template.lld.ELF.Arch;
 
 import java.io.IOException;
 import java.util.Comparator;
-import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
 import vadl.configuration.LcbConfiguration;
-import vadl.gcb.passes.relocation.model.ElfRelocation;
+import vadl.gcb.passes.relocation.model.ConcreteLogicalRelocation;
+import vadl.gcb.passes.relocation.model.RelocationLowerable;
 import vadl.lcb.codegen.LcbGenericCodeGenerator;
 import vadl.lcb.passes.relocation.GenerateLinkerComponentsPass;
 import vadl.lcb.template.CommonVarNames;
@@ -42,11 +42,13 @@ public class EmitLldManualEncodingHeaderFilePass extends LcbTemplateRenderingPas
     var elfRelocations = output.elfRelocations();
     return Map.of(CommonVarNames.NAMESPACE, specification.simpleName(),
         "functions", elfRelocations.stream()
+            .filter(x -> x instanceof RelocationLowerable)
+            .map(x -> (RelocationLowerable) x)
             .collect(Collectors.groupingBy(x -> x.fieldUpdateFunction().functionName().lower()))
             .values()
             .stream()
             .map(x -> x.get(0)) // only consider one relocation because we do not need duplication
-            .sorted(Comparator.comparing(o -> o.name().value()))
+            .sorted(Comparator.comparing(o -> o.elfRelocationName().value()))
             .map(elfRelocation -> new LcbGenericCodeGenerator().generateFunction(
                 elfRelocation.fieldUpdateFunction()))
             .toList());

@@ -7,7 +7,6 @@ import static vadl.viam.ViamError.ensurePresent;
 import com.google.common.collect.Streams;
 import java.io.StringWriter;
 import java.util.ArrayList;
-import java.util.IdentityHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
@@ -18,7 +17,7 @@ import vadl.cppCodeGen.model.CppFunction;
 import vadl.cppCodeGen.model.VariantKind;
 import vadl.error.Diagnostic;
 import vadl.gcb.passes.relocation.IdentifyFieldUsagePass;
-import vadl.gcb.passes.relocation.model.ElfRelocation;
+import vadl.gcb.passes.relocation.model.CompilerRelocation;
 import vadl.utils.Pair;
 import vadl.viam.Format;
 import vadl.viam.Identifier;
@@ -45,7 +44,7 @@ public class PseudoExpansionCodeGeneratorVisitor extends GenericCppCodeGenerator
   private final IdentifyFieldUsagePass.ImmediateDetectionContainer fieldUsages;
   private final Map<Format.Field, CppFunction> immediateDecodings;
   private final Map<Format.Field, List<VariantKind>> immVariants;
-  private final List<ElfRelocation> relocations;
+  private final List<CompilerRelocation> relocations;
   private final PseudoInstruction pseudoInstruction;
 
   /**
@@ -56,7 +55,7 @@ public class PseudoExpansionCodeGeneratorVisitor extends GenericCppCodeGenerator
                                                  fieldUsages,
                                              Map<Format.Field, CppFunction> immediateDecodings,
                                              Map<Format.Field, List<VariantKind>> immVariants,
-                                             List<ElfRelocation> relocations,
+                                             List<CompilerRelocation> relocations,
                                              PseudoInstruction pseudoInstruction) {
     super(writer);
     this.namespace = namespace;

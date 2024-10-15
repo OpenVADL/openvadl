@@ -7,7 +7,7 @@ import vadl.cppCodeGen.model.CppFunction;
 import vadl.cppCodeGen.model.VariantKind;
 import vadl.gcb.passes.pseudo.PseudoExpansionCodeGeneratorVisitor;
 import vadl.gcb.passes.relocation.IdentifyFieldUsagePass;
-import vadl.gcb.passes.relocation.model.ElfRelocation;
+import vadl.gcb.passes.relocation.model.CompilerRelocation;
 import vadl.lcb.codegen.LcbGenericCodeGenerator;
 import vadl.viam.Format;
 import vadl.viam.PseudoInstruction;
@@ -22,7 +22,7 @@ public class PseudoExpansionCodeGenerator extends LcbGenericCodeGenerator {
   private final IdentifyFieldUsagePass.ImmediateDetectionContainer fieldUsages;
   private final Map<Format.Field, CppFunction> immediateDecodings;
   private final Map<Format.Field, List<VariantKind>> variants;
-  private final List<ElfRelocation> relocations;
+  private final List<CompilerRelocation> relocations;
   private final PseudoInstruction pseudoInstruction;
 
   /**
@@ -33,7 +33,7 @@ public class PseudoExpansionCodeGenerator extends LcbGenericCodeGenerator {
                                           fieldUsages,
                                       Map<Format.Field, CppFunction> immediateDecodings,
                                       Map<Format.Field, List<VariantKind>> variants,
-                                      List<ElfRelocation> relocations,
+                                      List<CompilerRelocation> relocations,
                                       PseudoInstruction pseudoInstruction) {
     this.namespace = namespace;
     this.fieldUsages = fieldUsages;

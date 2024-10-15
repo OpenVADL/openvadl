@@ -1,15 +1,12 @@
 package vadl.lcb.template.lib.Target.Utils;
 
 import java.io.IOException;
-import java.util.Comparator;
-import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.function.Function;
 import java.util.function.Predicate;
 import vadl.configuration.LcbConfiguration;
-import vadl.gcb.passes.relocation.model.ElfRelocation;
-import vadl.lcb.codegen.LcbGenericCodeGenerator;
+import vadl.gcb.passes.relocation.model.RelocationLowerable;
 import vadl.lcb.passes.relocation.GenerateLinkerComponentsPass;
 import vadl.lcb.template.CommonVarNames;
 import vadl.lcb.template.LcbTemplateRenderingPass;
@@ -49,6 +46,8 @@ public class EmitBaseInfoFilePass extends LcbTemplateRenderingPass {
     var relocations = BaseInfoFunctionProvider.getBaseInfoRecords(passResults);
 
     var mos = elfRelocations.stream()
+        .filter(x -> x instanceof RelocationLowerable)
+        .map(x -> (RelocationLowerable) x)
         .filter(distinctByKey(x -> x.valueRelocation().functionName().lower()))
         .toList();
 

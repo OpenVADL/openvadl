@@ -14,4 +14,6 @@ public interface RelocationLowerable {
   CppFunction valueRelocation();
   CppFunction fieldUpdateFunction();
   VariantKind variantKind();
+  Format.Field immediate();
+  ElfRelocationName elfRelocationName();
 }

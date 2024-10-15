@@ -42,4 +42,13 @@ public class ConcreteLogicalRelocation extends LogicalRelocation implements Relo
   public CppFunction fieldUpdateFunction() {
     return fieldUpdateFunction;
   }
+
+  @Override
+  public ElfRelocationName elfRelocationName() {
+    return new ElfRelocationName(
+        "R_" + relocation().identifier.lower() + "_"
+            + format.identifier.simpleName()
+            + "_" + immediate.identifier.simpleName()
+    );
+  }
 }
