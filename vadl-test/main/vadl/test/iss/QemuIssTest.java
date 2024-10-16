@@ -13,6 +13,7 @@ import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
+import javax.annotation.Nullable;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.DynamicTest;
 import org.slf4j.Logger;
@@ -36,7 +37,8 @@ import vadl.test.DockerExecutionTest;
 public abstract class QemuIssTest extends DockerExecutionTest {
 
   // config of cloud sccache
-  private static final String REDIS_CACHE_HOST = "ea.complang.tuwien.ac.at";
+  @Nullable
+  private static final String REDIS_CACHE_HOST = System.getenv("REDIS_CACHE_HOST");
   private static final int REDIS_CACHE_PORT = 6379;
 
   // config of qemu test image
@@ -174,9 +176,10 @@ public abstract class QemuIssTest extends DockerExecutionTest {
                   // TODO: Move this to prebuilt docker image
                   .workDir("/qemu/build");
 
+
               // determine the used compiler (gcc or sccache gcc)
               var cc = "gcc";
-              if (testRedisCacheConnection()) {
+              if (REDIS_CACHE_HOST != null) {
                 log.info("Redis cache connection established. Using sccache cache...");
                 // TODO: Set redis port to our cache
                 d.env("SCCACHE_REDIS_ENDPOINT", "tcp://" + REDIS_CACHE_HOST + ":" + REDIS_CACHE_PORT);
@@ -220,21 +223,5 @@ public abstract class QemuIssTest extends DockerExecutionTest {
         // make iss_qemu scripts available to image builder
         .withFileFromClasspath("/scripts", "/scripts/iss_qemu");
   }
-
-  /**
-   * Tests if the redis cache is up and accessible.
-   * Currently, it only tests if a TCP socket connection can be established.
-   */
-  private boolean testRedisCacheConnection() {
-    var timeout = 2000;
-    try (Socket socket = new Socket()) {
-      socket.connect(
-          new java.net.InetSocketAddress(REDIS_CACHE_HOST, REDIS_CACHE_PORT), timeout);
-      return true; // The port is open
-    } catch (IOException e) {
-      return false; // The port is not open, or the host is not reachable
-    }
-  }
-
 
 }
