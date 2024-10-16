@@ -95,10 +95,11 @@ steps:
         from_secret: ACCESS_TOKEN
     commands:
       - apk add --no-cache curl jq
+      - ISSUE_NUMBER=$DRONE_PULL_REQUEST
       - |
-        SKIP_TESTS=$(curl -s -H "Authorization: token $ACCESS_TOKEN" -H 'accept: application/json' \
-           'https://ea.complang.tuwien.ac.at/api/v1/repos/vadl/open-vadl/issues/192/labels' \
-           | jq '.[] | select(.name == "ci-skip-old-vadl").name' | grep -c ci-skip-old-vadl || echo)
+        RESPONSE=$(curl -s -H "Authorization: token $ACCESS_TOKEN" -H 'accept: application/json' \
+        "https://ea.complang.tuwien.ac.at/api/v1/repos/vadl/open-vadl/issues/$ISSUE_NUMBER/labels")
+      - SKIP_TESTS=$(echo $RESPONSE | jq '.[] | select(.name == "ci-skip-old-vadl").name' | grep -c "ci-skip-old-vadl" || echo)
       - echo "SKIP_TESTS=$SKIP_TESTS" > .env.pipeline
       - echo "Skipping OpenVADLTestSuite... $SKIP_TESTS"
 
@@ -126,7 +127,6 @@ steps:
 trigger:
   ref:
     - refs/pull/**
-    - refs/head/master
 
 volumes:
   - name: docker
