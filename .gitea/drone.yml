@@ -8,7 +8,7 @@
 #
 kind: pipeline
 type: docker
-name: checkstyle
+name: OpenVADL CI
 
 steps:
   - name: set gitea token
@@ -56,3 +56,79 @@ trigger:
   ref:
     - refs/pull/**
     - refs/head/master
+
+---
+
+#
+# Drone pipeline that tests the OpenVADL test suite with the old VADL backend.
+# It executes the following steps on updates to a pull request or pushes to master:
+#   - clone old vadl
+#   - check if the ci-skip-old-vadl label is set by the PR
+#   - checkout open-vadl in vadl/open-vadl
+#   - assemble (old)vadl
+#   - run at.ac.tuwien.complang.tests.OpenVADLTestSuite
+#
+# There might be a cyclic dependency between vadl and open-vadl (when making a breaking change in open-vadl).
+# This would result in a failing PR.
+# By setting the ci-skip-old-vadl label in the PR, you can skip the OpenVADLTestSuite execution.
+#
+kind: pipeline
+type: docker
+name: OpenVADL Test Suite
+
+clone:
+  disable: true
+
+steps:
+  - name: clone vadl
+    image: c2.complang.tuwien.ac.at:5000/vadl-ci:f7222374638bccc355ba51bfcc2b17e9561204a4
+    commands:
+      - git clone git@ea.complang.tuwien.ac.at:vadl/vadl.git .
+
+  # This step checks if the ci-skip-old-vadl label was set. It does this by sending a REST request to gitea.
+  # The result is stored in the .env.pipeline file of the CI workspace directory.
+  # This file must be sourced by the following steps to conditionally execute the step.
+  - name: check for ci-skip-old-vadl label
+    image: c2.complang.tuwien.ac.at:5000/vadl-ci:f7222374638bccc355ba51bfcc2b17e9561204a4
+    environment:
+      ACCESS_TOKEN:
+        from_secret: ACCESS_TOKEN
+    commands:
+      - apk add --no-cache curl jq
+      - |
+        SKIP_TESTS=$(curl -s -H "Authorization: token $ACCESS_TOKEN" -H 'accept: application/json' \
+           'https://ea.complang.tuwien.ac.at/api/v1/repos/vadl/open-vadl/issues/192/labels' \
+           | jq '.[] | select(.name == "ci-skip-old-vadl").name' | grep -c ci-skip-old-vadl || echo)
+      - echo "SKIP_TESTS=$SKIP_TESTS" > .env.pipeline
+      - echo "Skipping OpenVADLTestSuite... $SKIP_TESTS"
+
+  - name: checkout open-vadl
+    image: c2.complang.tuwien.ac.at:5000/vadl-ci:f7222374638bccc355ba51bfcc2b17e9561204a4
+    commands:
+      - git submodule update --init
+      - git -C open-vadl fetch
+      - git -C open-vadl checkout $DRONE_COMMIT
+
+  - name: build vadl
+    image: c2.complang.tuwien.ac.at:5000/vadl-ci:f7222374638bccc355ba51bfcc2b17e9561204a4
+    commands:
+      # Source to get the SKIP_TESTS variable set by the previous step
+      - source .env.pipeline
+      # If the SKIP_TESTS variable is set to 1, we will skip the command
+      - '[ "$SKIP_TESTS" = "1" ] || make gradle-build'
+
+  - name: run open-vadl test suite
+    image: c2.complang.tuwien.ac.at:5000/vadl-ci:f7222374638bccc355ba51bfcc2b17e9561204a4
+    commands:
+      - source .env.pipeline
+      - '[ "$SKIP_TESTS" = "1" ] || ./.gradlew test --tests at.ac.tuwien.complang.vadl.tests.OpenVADLTestSuite -i'
+
+trigger:
+  ref:
+    - refs/pull/**
+    - refs/head/master
+
+volumes:
+  - name: docker
+    host:
+      path: /var/run/docker.sock
