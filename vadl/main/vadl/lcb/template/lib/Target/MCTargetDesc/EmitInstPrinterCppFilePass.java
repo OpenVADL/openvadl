@@ -3,7 +3,14 @@ package vadl.lcb.template.lib.Target.MCTargetDesc;
 import java.io.IOException;
 import java.util.List;
 import java.util.Map;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 import vadl.configuration.LcbConfiguration;
+import vadl.cppCodeGen.model.CppFunctionCode;
+import vadl.gcb.passes.relocation.IdentifyFieldUsagePass;
+import vadl.lcb.codegen.assembly.AssemblyInstructionPrinterCodeGenerator;
+import vadl.lcb.passes.llvmLowering.GenerateTableGenMachineInstructionRecordPass;
+import vadl.lcb.passes.llvmLowering.tablegen.model.TableGenMachineInstruction;
 import vadl.lcb.template.CommonVarNames;
 import vadl.lcb.template.LcbTemplateRenderingPass;
 import vadl.pass.PassResults;
@@ -31,14 +38,31 @@ public class EmitInstPrinterCppFilePass extends LcbTemplateRenderingPass {
         + processorName + "InstPrinter.cpp";
   }
 
-  record Instruction(String simpleName) {
+  record PrintableInstruction(String name, CppFunctionCode code) {
 
   }
 
   @Override
   protected Map<String, Object> createVariables(final PassResults passResults,
                                                 Specification specification) {
+    var machineRecords = (List<TableGenMachineInstruction>) passResults.lastResultOf(
+        GenerateTableGenMachineInstructionRecordPass.class);
+    var fieldUsages = (IdentifyFieldUsagePass.ImmediateDetectionContainer) passResults.lastResultOf(
+        IdentifyFieldUsagePass.class);
+    var supported = machineRecords.stream().map(TableGenMachineInstruction::instruction)
+        .collect(Collectors.toSet());
+    var printableInstructions = specification
+        .isa().map(isa -> isa.ownInstructions().stream())
+        .orElse(Stream.empty())
+        .filter(supported::contains)
+        .map(instruction -> {
+          var codeGen = new AssemblyInstructionPrinterCodeGenerator();
+          var result = codeGen.generateFunctionBody(instruction, fieldUsages);
+          return new PrintableInstruction(instruction.identifier.simpleName(), result);
+        })
+        .toList();
+
     return Map.of(CommonVarNames.NAMESPACE, specification.simpleName(),
-        CommonVarNames.PRINTABLE_INSTRUCTIONS, List.of());
+        "instructions", printableInstructions);
   }
 }

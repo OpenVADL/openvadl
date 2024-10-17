@@ -56,6 +56,10 @@ namespace llvm
             {
                 if( MCOp.isReg() )
                 {
+                    switch(MCOp.getReg()) {
+                    [# th:each="rg : ${registers}" ]
+                      case [(${namespace})]::[(${rg.name()})]: return [(${rg.index()})];
+                    [/]
                     /*
                     switch( MCOp.getReg() )
                     {
@@ -69,6 +73,7 @@ namespace llvm
                         «ENDFOR»
                     }
                     */
+                    }
 
                     report_fatal_error("Cannot convert register operand to integral value.");
                 }

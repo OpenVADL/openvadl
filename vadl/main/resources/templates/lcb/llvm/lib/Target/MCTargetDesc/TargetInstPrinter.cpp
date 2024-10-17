@@ -87,10 +87,10 @@ std::string [(${namespace})]InstPrinter::instToString(const MCInst *MI, uint64_t
 {
     switch ( MI->getOpcode() )
     {
-        [#th:block th:each="instruction : ${printableInstructions}" ]
-            case [(${namespace})]::[(${instruction.simpleName})]:
+        [#th:block th:each="instruction : ${instructions}" ]
+            case [(${namespace})]::[(${instruction.name})]:
             {
-                // TODO
+                [(${instruction.code.value()})]
                 break;
             }
         [/th:block]

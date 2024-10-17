@@ -17,7 +17,6 @@ import vadl.gcb.passes.assembly.AssemblyConstant;
 import vadl.gcb.passes.assembly.visitors.AssemblyVisitor;
 import vadl.types.BuiltInTable;
 import vadl.viam.Constant;
-import vadl.viam.Identifier;
 import vadl.viam.Instruction;
 import vadl.viam.ViamError;
 import vadl.viam.graph.control.ReturnNode;
@@ -32,7 +31,7 @@ import vadl.viam.graph.dependency.ZeroExtendNode;
 /**
  * Generates the cpp code for assembly parsing.
  */
-public class AssemblyCodeGeneratorVisitor extends GenericCppCodeGeneratorVisitor implements
+public class AssemblyParserCodeGeneratorVisitor extends GenericCppCodeGeneratorVisitor implements
     AssemblyVisitor {
 
   private final String namespace;
@@ -43,8 +42,8 @@ public class AssemblyCodeGeneratorVisitor extends GenericCppCodeGeneratorVisitor
   /**
    * Constructor.
    */
-  public AssemblyCodeGeneratorVisitor(String namespace, Instruction instruction,
-                                      StringWriter writer) {
+  public AssemblyParserCodeGeneratorVisitor(String namespace, Instruction instruction,
+                                            StringWriter writer) {
     super(writer);
     this.namespace = namespace;
     this.instruction = instruction;

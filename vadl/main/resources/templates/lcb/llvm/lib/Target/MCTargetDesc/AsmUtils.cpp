@@ -229,7 +229,13 @@ std::string AsmUtils::FormatModifier(const [(${namespace})]MCExpr::VariantKind V
 
 std::string AsmUtils::getRegisterName( unsigned RegNo )
 {
-    return "";
+  switch(RegNo)
+  {
+  [# th:each="rg : ${registers}" ]
+  case [(${namespace})]::[(${rg.name})]:
+    return "[(${rg.name})]";
+  [/]
+  }
 }
 
 bool AsmUtils::MatchRegNo(StringRef Reg, unsigned &RegNo)
@@ -279,3 +285,21 @@ bool AsmUtils::evaluateConstantImm(const MCOperand *MCOp, int64_t &Imm)
 
     return false;
 }
+
+
+[# th:each="rg : ${registerClasses}" ]
+std::string AsmUtils::getRegisterNameFrom[(${rg.registerFile.identifier.simpleName()})]ByIndex( unsigned RegIndex ) {
+    const int registers[] =
+    {
+        [# th:each="reg, iterStat : ${rg.registers}" ]
+        [(${namespace})]::[(${reg.name()})][#th:block th:if="${!iterStat.last}"],[/th:block]
+      [/]
+    };
+
+    assert([(${rg.registers.size()})] - 1 >= RegIndex && "Register index was out of bounds for 'X'" );
+    assert(registers[ RegIndex ] != -1 && "Register index was not allowed for 'X'" );
+
+    unsigned regNo = registers[ RegIndex ];
+    return AsmUtils::getRegisterName( regNo );
+}
+[/]

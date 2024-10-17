@@ -5,6 +5,7 @@ import java.util.Map;
 import vadl.configuration.LcbConfiguration;
 import vadl.lcb.template.CommonVarNames;
 import vadl.lcb.template.LcbTemplateRenderingPass;
+import vadl.lcb.templateUtils.RegisterUtils;
 import vadl.pass.PassResults;
 import vadl.viam.Specification;
 
@@ -42,6 +43,9 @@ public class EmitAsmUtilsHeaderFilePass extends LcbTemplateRenderingPass {
             .map(x -> new RegisterClass(x.identifier.simpleName()))
             .toList();
     return Map.of(CommonVarNames.NAMESPACE, specification.simpleName(),
-        CommonVarNames.REGISTERS_CLASSES, registerFiles);
+        CommonVarNames.REGISTERS_CLASSES, registerFiles,
+        "registers",
+        specification.registerFiles().map(RegisterUtils::getRegisterClass)
+            .flatMap(x -> x.registers().stream()).toList());
   }
 }
