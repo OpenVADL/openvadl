@@ -123,6 +123,9 @@ steps:
     commands:
       - source .env.pipeline
       - '[ "$SKIP_TESTS" = "1" ] || ./.gradlew test --tests at.ac.tuwien.complang.vadl.tests.OpenVADLTestSuite -i'
+    volumes:
+      - name: docker
+        path: /var/run/docker.sock
 
 trigger:
   ref:
