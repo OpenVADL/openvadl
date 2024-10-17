@@ -1,8 +1,11 @@
 package vadl.lcb.template.lib.Target.MCTargetDesc;
 
+import static vadl.viam.ViamError.ensureNonNull;
+
 import java.io.IOException;
 import java.util.List;
 import java.util.Map;
+import java.util.function.Function;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 import vadl.configuration.LcbConfiguration;
@@ -51,13 +54,18 @@ public class EmitInstPrinterCppFilePass extends LcbTemplateRenderingPass {
         IdentifyFieldUsagePass.class);
     var supported = machineRecords.stream().map(TableGenMachineInstruction::instruction)
         .collect(Collectors.toSet());
+    var tableGenLookup = machineRecords.stream().collect(Collectors.toMap(
+        TableGenMachineInstruction::instruction,
+        x -> x));
     var printableInstructions = specification
         .isa().map(isa -> isa.ownInstructions().stream())
         .orElse(Stream.empty())
         .filter(supported::contains)
         .map(instruction -> {
           var codeGen = new AssemblyInstructionPrinterCodeGenerator();
-          var result = codeGen.generateFunctionBody(instruction, fieldUsages);
+          var tableGenRecord =
+              ensureNonNull(tableGenLookup.get(instruction), "tablegen record must exist");
+          var result = codeGen.generateFunctionBody(instruction, tableGenRecord, fieldUsages);
           return new PrintableInstruction(instruction.identifier.simpleName(), result);
         })
         .toList();

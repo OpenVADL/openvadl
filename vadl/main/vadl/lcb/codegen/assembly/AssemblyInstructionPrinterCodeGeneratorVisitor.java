@@ -1,14 +1,20 @@
 package vadl.lcb.codegen.assembly;
 
 import static vadl.viam.ViamError.ensure;
+import static vadl.viam.ViamError.ensurePresent;
 
 import java.io.StringWriter;
 import java.util.Deque;
 import java.util.LinkedList;
+import java.util.Optional;
 import java.util.stream.Collectors;
 import vadl.cppCodeGen.SymbolTable;
 import vadl.error.Diagnostic;
 import vadl.gcb.passes.relocation.IdentifyFieldUsagePass;
+import vadl.lcb.passes.llvmLowering.tablegen.model.ReferencesFormatField;
+import vadl.lcb.passes.llvmLowering.tablegen.model.TableGenImmediateRecord;
+import vadl.lcb.passes.llvmLowering.tablegen.model.TableGenInstruction;
+import vadl.lcb.passes.llvmLowering.tablegen.model.TableGenInstructionRegisterFileOperand;
 import vadl.types.BuiltInTable;
 import vadl.viam.Constant;
 import vadl.viam.Format;
@@ -34,7 +40,6 @@ import vadl.viam.graph.dependency.LetNode;
 import vadl.viam.graph.dependency.ReadMemNode;
 import vadl.viam.graph.dependency.ReadRegFileNode;
 import vadl.viam.graph.dependency.ReadRegNode;
-import vadl.viam.graph.dependency.ReadResourceNode;
 import vadl.viam.graph.dependency.SelectNode;
 import vadl.viam.graph.dependency.SideEffectNode;
 import vadl.viam.graph.dependency.SignExtendNode;
@@ -52,14 +57,17 @@ public class AssemblyInstructionPrinterCodeGeneratorVisitor
   private final StringWriter writer;
   private final Deque<String> operands = new LinkedList<>();
   private final IdentifyFieldUsagePass.ImmediateDetectionContainer fieldUsages;
+  private final TableGenInstruction tableGenInstruction;
 
   public AssemblyInstructionPrinterCodeGeneratorVisitor(
       StringWriter writer,
       Instruction instruction,
+      TableGenInstruction tableGenInstruction,
       IdentifyFieldUsagePass.ImmediateDetectionContainer fieldUsages) {
     this.writer = writer;
     this.instruction = instruction;
     this.fieldUsages = fieldUsages;
+    this.tableGenInstruction = tableGenInstruction;
   }
 
   @Override
@@ -102,7 +110,11 @@ public class AssemblyInstructionPrinterCodeGeneratorVisitor
       ensure(node.arguments().get(0) instanceof FieldRefNode,
           "Register argument is not a FieldRefNode");
       var cast = (FieldRefNode) node.arguments().get(0);
-      var index = indexInFormat(cast.formatField());
+      var index = indexInInputs(cast.formatField())
+          .or(() -> indexInOutputs(cast.formatField()))
+          .orElseThrow(() -> Diagnostic.error(
+              "Field is not part of an input or output operand in tablegen",
+              cast.sourceLocation()).build());
       var symbol = symbolTable.getNextVariable();
 
       // We need this helper function "getRegisterName..." because
@@ -123,7 +135,8 @@ public class AssemblyInstructionPrinterCodeGeneratorVisitor
       ensure(node.arguments().size() == 1, "Expected only one argument");
       writeImmediateWithRadix(node, 16);
     } else {
-      throw Diagnostic.error("Not supported builtin for assembly printing", node.sourceLocation())
+      throw Diagnostic.error("Not supported builtin for assembly printing",
+              node.sourceLocation())
           .build();
     }
   }
@@ -251,7 +264,10 @@ public class AssemblyInstructionPrinterCodeGeneratorVisitor
 
   private void writeImmediateWithRadix(BuiltInCall node, int radix) {
     if (node.arguments().get(0) instanceof FieldRefNode fieldRefNode) {
-      var index = indexInFormat(fieldRefNode.formatField());
+      var index = ensurePresent(indexInInputs(fieldRefNode.formatField()), () ->
+          Diagnostic.error("Immediate must be part of an tablegen input.",
+              fieldRefNode.sourceLocation())
+      );
       var symbol = symbolTable.getNextVariable();
       writer.write(String.format(
           "std::string %s = AsmUtils::formatImm(MCOperandWrapper(MI->getOperand(%d)), %d, &MAI);\n",
@@ -267,28 +283,31 @@ public class AssemblyInstructionPrinterCodeGeneratorVisitor
     }
   }
 
-  private int indexInFormat(Format.Field needle) {
-    // offset only counts when the field is an immediate or register.
-    int offset = 0;
-    var format = needle.format();
-    var nonOpCodes = fieldUsages.getFieldUsages(format).keySet();
-    // We use the `fieldsSortedByLsbDesc` because
-    // the actual field's order is not relevant in the array.
-    // The bit slices determine the actual order.
-    var fields = format.fieldsSortedByLsbDesc().toList();
-    for (var field : fields) {
-      if (needle == field) {
-        return offset;
-      }
-
-      if (nonOpCodes.contains(field)) {
-        offset++;
+  private Optional<Integer> indexInInputs(Format.Field needle) {
+    int outputOffset = tableGenInstruction.getOutOperands().size();
+    for (int i = 0; i < tableGenInstruction.getInOperands().size(); i++) {
+      var operand = tableGenInstruction.getInOperands().get(i);
+      if (operand instanceof ReferencesFormatField x
+          && x.formatField() == needle) {
+        return Optional.of(outputOffset + i);
       }
     }
 
-    throw Diagnostic.error("Field is not part of the parent format.", needle.sourceLocation())
-        .build();
+    return Optional.empty();
   }
+
+  private Optional<Integer> indexInOutputs(Format.Field needle) {
+    for (int i = 0; i < tableGenInstruction.getOutOperands().size(); i++) {
+      var operand = tableGenInstruction.getOutOperands().get(i);
+      if (operand instanceof ReferencesFormatField x
+          && x.formatField() == needle) {
+        return Optional.of(i);
+      }
+    }
+
+    return Optional.empty();
+  }
+
 
   private String getRegisterFile(Graph behavior, FieldRefNode fieldRefNode) {
     var candidates = behavior.getNodes(FieldRefNode.class)

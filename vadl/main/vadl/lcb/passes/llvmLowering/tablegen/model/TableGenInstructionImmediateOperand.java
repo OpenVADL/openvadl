@@ -4,11 +4,13 @@ import java.util.Objects;
 import org.jetbrains.annotations.Nullable;
 import vadl.lcb.passes.llvmLowering.domain.selectionDag.LlvmFieldAccessRefNode;
 import vadl.lcb.passes.llvmLowering.tablegen.model.parameterIdentity.ParameterIdentity;
+import vadl.viam.Format;
 
 /**
  * Indicates that the operand is an immediate.
  */
-public class TableGenInstructionImmediateOperand extends TableGenInstructionOperand {
+public class TableGenInstructionImmediateOperand extends TableGenInstructionOperand
+    implements ReferencesFormatField {
   private final TableGenImmediateRecord immediateOperand;
 
   public TableGenInstructionImmediateOperand(ParameterIdentity identity,
@@ -46,5 +48,10 @@ public class TableGenInstructionImmediateOperand extends TableGenInstructionOper
   @Override
   public int hashCode() {
     return Objects.hash(super.hashCode(), immediateOperand);
+  }
+
+  @Override
+  public Format.Field formatField() {
+    return immediateOperand.fieldAccessRef().fieldRef();
   }
 }
