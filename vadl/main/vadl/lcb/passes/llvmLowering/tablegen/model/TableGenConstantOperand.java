@@ -26,7 +26,7 @@ public class TableGenConstantOperand extends TableGenInstructionOperand {
    */
   public TableGenConstantOperand(ConstantNode constantNode, Constant value) {
     super(constantNode, new NoParameterIdentity());
-    ensure(!constantNode.constant().equals(value),
+    ensure(constantNode.constant().equals(value),
         "This is definitely wrong because index and constraint value are mismatched");
     this.constant = value;
   }
