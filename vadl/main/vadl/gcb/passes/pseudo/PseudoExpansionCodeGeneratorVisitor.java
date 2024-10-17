@@ -273,7 +273,7 @@ public class PseudoExpansionCodeGeneratorVisitor extends GenericCppCodeGenerator
                     "MCOperand::createExpr(%sMCExpr::create(%s, %sMCExpr::VariantKind::%s, "
                     + "Ctx));\n",
                 argumentImmSymbol, namespace, argumentSymbol, namespace,
-                Objects.requireNonNull(variant).value()));
+                Objects.requireNonNull(variant)));
         writer.write(String.format("%s.addOperand(%s);\n",
             sym,
             argumentImmSymbol));
