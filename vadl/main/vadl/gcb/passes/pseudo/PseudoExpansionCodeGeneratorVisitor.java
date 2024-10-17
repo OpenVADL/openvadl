@@ -256,16 +256,17 @@ public class PseudoExpansionCodeGeneratorVisitor extends GenericCppCodeGenerator
                 argumentIndex));
 
         var argumentImmSymbol = symbolTable.getNextVariable();
-        var variant = immVariants.get(field);
-        ensure(variant != null, () -> Diagnostic.error(
+        var variants = immVariants.get(field);
+        ensure(variants != null, () -> Diagnostic.error(
                 String.format("Variant must exist for the field '%s' but it doesn't.",
                     field.identifier.lower()),
                 field.sourceLocation())
             .note(
                 "The compiler generator tries to lower an immediate in the "
                     + "pseudo expansion. To do so it requires to generate variants for immediates. "
-                    + "It seems like that that this variant was not generated.")
+                    + "It seems like that that this variants was not generated.")
         );
+        var variant = Objects.requireNonNull(variants).get(0);
         writer.write(
             String.format(
                 "MCOperand %s = "
@@ -273,7 +274,7 @@ public class PseudoExpansionCodeGeneratorVisitor extends GenericCppCodeGenerator
                     "MCOperand::createExpr(%sMCExpr::create(%s, %sMCExpr::VariantKind::%s, "
                     + "Ctx));\n",
                 argumentImmSymbol, namespace, argumentSymbol, namespace,
-                Objects.requireNonNull(variant)));
+                Objects.requireNonNull(variant.value())));
         writer.write(String.format("%s.addOperand(%s);\n",
             sym,
             argumentImmSymbol));
