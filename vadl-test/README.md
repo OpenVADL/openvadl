@@ -46,7 +46,7 @@ The value format is `(<className>[#<methodName>],)+`.
 The following example executes all tests in the `FormatTest` class.
 
 ```bash
-./.gradlew test --tests at.ac.tuwien.complang.vadl.tests.OpenVADLTestSuite -PnoXtendCompile -PopenVadl.tests=FormatTest
+./.gradlew test --tests at.ac.tuwien.complang.vadl.tests.OpenVADLSpecificTests -PopenVadl.tests=FormatTest -PnoXtendCompile
 ```
 
 **Note:** If you use `@ParameterizedTest` or `@TestFactory` in your tests, you won't be able to execute
