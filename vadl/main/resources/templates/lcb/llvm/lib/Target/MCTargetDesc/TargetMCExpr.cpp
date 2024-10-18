@@ -157,4 +157,6 @@ int64_t [(${namespace})]MCExpr::evaluateAsInt64(int64_t Value) const
         resultValue = [(${namespace})]BaseInfo::[(${bi.functionName()})](resultValue);
       }
     [/]
+
+    return resultValue;
 }
