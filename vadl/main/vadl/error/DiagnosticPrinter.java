@@ -104,7 +104,7 @@ public class DiagnosticPrinter {
       System.out.printf("    %s⋮\n", Ansi.Cyan);
       System.out.printf("    ╭─ %s\n", next.toIDEString());
     } else if (next.begin().line() == previous.end().line() + 1) {
-      // do nothing
+      System.out.printf("    %s│\n", Ansi.Cyan);
     } else {
       System.out.printf("    %s⋮\n", Ansi.Cyan);
     }

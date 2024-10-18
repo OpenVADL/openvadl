@@ -203,9 +203,23 @@ class SymbolTable {
   }
 
   private void verifyAvailable(String name, SourceLocation loc) {
-    if (symbols.containsKey(name)) {
-      reportError("Duplicate definition: " + name, loc);
+    if (!symbols.containsKey(name)) {
+      return;
     }
+
+    var error = Diagnostic.error("Duplicate definition: " + name, loc)
+        .locationDescription(loc, "Second definition here.")
+        .note("All symbols must have a unique name.");
+
+    var other = symbols.get(name).origin();
+    if (other instanceof Node) {
+      // FIXME: it currently points to the whole expression and not just to the identifier who is
+      // responsible for the name clash.
+      var otherLoc = ((Node) other).location();
+      error.locationDescription(otherLoc, "First defined here.");
+    }
+
+    errors.add(error.build());
   }
 
   private void verifyMacroAvailable(String name, SourceLocation loc) {
