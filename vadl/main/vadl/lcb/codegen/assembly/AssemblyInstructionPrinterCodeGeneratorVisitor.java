@@ -4,6 +4,7 @@ import static vadl.viam.ViamError.ensure;
 import static vadl.viam.ViamError.ensurePresent;
 
 import java.io.StringWriter;
+import java.util.ArrayDeque;
 import java.util.Deque;
 import java.util.LinkedList;
 import java.util.Optional;
@@ -55,7 +56,7 @@ public class AssemblyInstructionPrinterCodeGeneratorVisitor
   private final Instruction instruction;
   private final SymbolTable symbolTable = new SymbolTable();
   private final StringWriter writer;
-  private final Deque<String> operands = new LinkedList<>();
+  private final Deque<String> operands = new ArrayDeque<>();
   private final TableGenInstruction tableGenInstruction;
 
   public AssemblyInstructionPrinterCodeGeneratorVisitor(
@@ -285,7 +286,7 @@ public class AssemblyInstructionPrinterCodeGeneratorVisitor
     for (int i = 0; i < tableGenInstruction.getInOperands().size(); i++) {
       var operand = tableGenInstruction.getInOperands().get(i);
       if (operand instanceof ReferencesFormatField x
-          && x.formatField() == needle) {
+          && x.formatField().equals(needle)) {
         return Optional.of(outputOffset + i);
       }
     }
@@ -297,7 +298,7 @@ public class AssemblyInstructionPrinterCodeGeneratorVisitor
     for (int i = 0; i < tableGenInstruction.getOutOperands().size(); i++) {
       var operand = tableGenInstruction.getOutOperands().get(i);
       if (operand instanceof ReferencesFormatField x
-          && x.formatField() == needle) {
+          && x.formatField().equals(needle)) {
         return Optional.of(i);
       }
     }
@@ -308,7 +309,7 @@ public class AssemblyInstructionPrinterCodeGeneratorVisitor
 
   private String getRegisterFile(Graph behavior, FieldRefNode fieldRefNode) {
     var candidates = behavior.getNodes(FieldRefNode.class)
-        .filter(x -> x.formatField() == fieldRefNode.formatField())
+        .filter(x -> x.formatField().equals(fieldRefNode.formatField()))
         .flatMap(Node::usages)
         .filter(x -> x instanceof HasRegisterFile)
         .map(x -> (HasRegisterFile) x)
