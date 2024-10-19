@@ -20,6 +20,7 @@ import vadl.lcb.template.utils.PseudoInstructionProvider;
 import vadl.pass.PassResults;
 import vadl.viam.PseudoInstruction;
 import vadl.viam.Specification;
+import vadl.viam.passes.dummyAbi.DummyAbi;
 
 /**
  * This file includes the definitions for expanding instructions in the MC layer.
@@ -78,6 +79,21 @@ public class EmitMCInstExpanderHeaderFilePass extends LcbTemplateRenderingPass {
         .toList();
   }
 
+  private List<RenderedPseudoInstruction> compilerInstructions(
+      Map<PseudoInstruction, CppFunction> cppFunctions,
+      Specification specification) {
+    var abi =
+        (DummyAbi) specification.definitions().filter(x -> x instanceof DummyAbi).findFirst().get();
+
+    return Stream.of(abi.returnSequence())
+        .map(x -> new RenderedPseudoInstruction(
+            ensureNonNull(cppFunctions.get(x), "cppFunction must exist")
+                .functionName().lower(),
+            x
+        ))
+        .toList();
+  }
+
   @Override
   protected Map<String, Object> createVariables(final PassResults passResults,
                                                 Specification specification) {
@@ -93,8 +109,10 @@ public class EmitMCInstExpanderHeaderFilePass extends LcbTemplateRenderingPass {
     var pseudoInstructions =
         pseudoInstructions(specification, passResults, cppFunctions);
     var constMats = constMatInstructions(cppFunctions, passResults);
+    var compilerInstructions = compilerInstructions(cppFunctions, specification);
     return Map.of(CommonVarNames.NAMESPACE, specification.simpleName(), "pseudoInstructions",
-        Stream.concat(pseudoInstructions.stream(), constMats.stream()).toList()
+        Stream.concat(pseudoInstructions.stream(),
+            Stream.concat(constMats.stream(), compilerInstructions.stream())).toList()
     );
   }
 }

@@ -32,6 +32,7 @@ import vadl.pass.PassResults;
 import vadl.viam.Format;
 import vadl.viam.PseudoInstruction;
 import vadl.viam.Specification;
+import vadl.viam.passes.dummyAbi.DummyAbi;
 
 /**
  * This file includes the implementations for expanding instructions in the MC layer.
@@ -125,9 +126,29 @@ public class EmitMCInstExpanderCppFilePass extends LcbTemplateRenderingPass {
         .toList();
   }
 
+  private List<RenderedPseudoInstruction> compilerInstructions(
+      DummyAbi dummyAbi,
+      Specification specification,
+      Map<PseudoInstruction, CppFunction> cppFunctions,
+      IdentifyFieldUsagePass.ImmediateDetectionContainer fieldUsages,
+      Map<Format.Field, List<VariantKind>> variants,
+      List<CompilerRelocation> relocations,
+      PassResults passResults) {
+    return Stream.of(dummyAbi.returnSequence())
+        .map(pseudoInstruction -> renderPseudoInstruction(specification,
+            cppFunctions,
+            fieldUsages,
+            variants,
+            relocations,
+            passResults, pseudoInstruction))
+        .toList();
+  }
+
   @Override
   protected Map<String, Object> createVariables(final PassResults passResults,
                                                 Specification specification) {
+    var abi =
+        (DummyAbi) specification.definitions().filter(x -> x instanceof DummyAbi).findFirst().get();
     var cppFunctionsForPseudoInstructions =
         (IdentityHashMap<PseudoInstruction, CppFunction>) passResults.lastResultOf(
             PseudoExpansionFunctionGeneratorPass.class);
@@ -150,9 +171,13 @@ public class EmitMCInstExpanderCppFilePass extends LcbTemplateRenderingPass {
     var constMatInstructions =
         constMatInstructions(specification, cppFunctions, fieldUsages, variants, relocations,
             passResults);
+    var compilerInstructions =
+        compilerInstructions(abi, specification, cppFunctions, fieldUsages, variants, relocations,
+            passResults);
     return Map.of(CommonVarNames.NAMESPACE, specification.simpleName(),
         "pseudoInstructions",
-        Stream.concat(pseudoInstructions.stream(), constMatInstructions.stream()).toList()
+        Stream.concat(pseudoInstructions.stream(),
+            Stream.concat(constMatInstructions.stream(), compilerInstructions.stream())).toList()
     );
   }
 }

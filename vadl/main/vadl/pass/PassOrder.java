@@ -212,14 +212,14 @@ public final class PassOrder {
     var order = new PassOrder();
 
     order.add(new ViamVerificationPass(configuration));
-    order.add(new DummyAbiPass(configuration));
 
     order.add(new TypeCastEliminationPass(configuration));
+    order.add(new DummyAbiPass(configuration));
     // TODO: @kper do you see any fix for this?
     // Note: we run the counter-access resolving pass before the func inliner pass
-    // because the lcb uses the unlinined version of the instructions.
+    // because the lcb uses the uninlined version of the instructions.
     // However, this might miss a lot of opportunities to statically resolve counter-accesses
-    // as the canicalization runs at a later point.
+    // as the canonicalization runs at a later point.
     order.add(new StaticCounterAccessResolvingPass(configuration));
     order.add(new FunctionInlinerPass(configuration));
     order.add(new SideEffectConditionResolvingPass(configuration));

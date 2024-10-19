@@ -3,14 +3,19 @@ package vadl.viam.passes.dummyAbi;
 import java.io.IOException;
 import java.util.List;
 import java.util.Map;
+import java.util.stream.Stream;
 import org.jetbrains.annotations.Nullable;
 import vadl.configuration.GeneralConfiguration;
+import vadl.gcb.domain.CompilerInstruction;
 import vadl.pass.Pass;
 import vadl.pass.PassName;
 import vadl.pass.PassResults;
 import vadl.utils.Pair;
 import vadl.utils.SourceLocation;
 import vadl.viam.Identifier;
+import vadl.viam.InstructionSetArchitecture;
+import vadl.viam.Parameter;
+import vadl.viam.PseudoInstruction;
 import vadl.viam.RegisterFile;
 import vadl.viam.Specification;
 
@@ -44,6 +49,7 @@ public class DummyAbiPass extends Pass {
     var aliases = getAliases(registerFile);
     var argumentRegisters = getArgumentRegisters(registerFile);
     var returnRegisters = getReturnRegisters(registerFile);
+    var returnSequence = getReturnSequence(viam);
 
     viam.add(new DummyAbi(new Identifier("dummyAbi", SourceLocation.INVALID_SOURCE_LOCATION),
         new DummyAbi.RegisterRef(registerFile, 1, DummyAbi.Alignment.WORD),
@@ -54,9 +60,24 @@ public class DummyAbiPass extends Pass {
         callerSaved,
         calleeSaved,
         argumentRegisters,
-        returnRegisters));
+        returnRegisters,
+        returnSequence));
 
     return null;
+  }
+
+  private PseudoInstruction getReturnSequence(Specification viam) {
+    var retInstruction =
+        viam.isa().map(isa -> isa.ownPseudoInstructions().stream()).orElseGet(Stream::empty)
+            .filter(x -> x.identifier.simpleName().equals("RET"))
+            .findFirst()
+            .get();
+
+    return new CompilerInstruction(new PseudoInstruction(
+        new Identifier("RESERVERD_PSEUDO_RET", SourceLocation.INVALID_SOURCE_LOCATION),
+        retInstruction.parameters(),
+        retInstruction.behavior().copy(),
+        retInstruction.assembly()));
   }
 
   private List<DummyAbi.RegisterRef> getReturnRegisters(RegisterFile registerFile) {

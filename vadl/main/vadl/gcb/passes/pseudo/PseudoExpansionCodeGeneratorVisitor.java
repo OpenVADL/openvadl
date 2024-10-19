@@ -34,6 +34,7 @@ import vadl.viam.graph.dependency.FieldRefNode;
 import vadl.viam.graph.dependency.FuncCallNode;
 import vadl.viam.graph.dependency.FuncParamNode;
 import vadl.viam.graph.dependency.WriteRegFileNode;
+import vadl.viam.graph.dependency.ZeroExtendNode;
 
 /**
  * More specialised generator visitor for generating the expansion of pseudo instructions.
@@ -135,6 +136,9 @@ public class PseudoExpansionCodeGeneratorVisitor extends GenericCppCodeGenerator
         var pseudoInstructionIndex =
             getOperandIndexFromPseudoInstruction(funcParamNode.parameter().identifier);
         lowerExpressionWithImmOrRegister(sym, field, pseudoInstructionIndex);
+      } else if (argument instanceof ZeroExtendNode zeroExtendNode
+          && zeroExtendNode.value() instanceof ConstantNode cn) {
+        lowerExpression(instrCallNode.target(), sym, field, cn);
       } else {
         throw Diagnostic.error("Not implemented for this node type.", argument.sourceLocation())
             .build();
@@ -166,7 +170,8 @@ public class PseudoExpansionCodeGeneratorVisitor extends GenericCppCodeGenerator
     throw new RuntimeException("not implemented");
   }
 
-  private void lowerExpression(Instruction machineInstruction, String sym, Format.Field field,
+  private void lowerExpression(Instruction machineInstruction,
+                               String sym, Format.Field field,
                                ConstantNode argument) {
     var usage = fieldUsages.getFieldUsages(field.format()).get(field);
     ensure(usage != null, "usage must not be null");
