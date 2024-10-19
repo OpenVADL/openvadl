@@ -44,12 +44,14 @@ public abstract class AbstractEmitImmediateFilePass extends LcbTemplateRendering
 
     return Map.of(CommonVarNames.NAMESPACE, specification.simpleName(),
         "decodeFunctions",
-        decodeFunctions.values().stream().map(x -> new LcbGenericCodeGenerator().generateFunction(x))
+        decodeFunctions.values().stream().map(x ->
+                new LcbGenericCodeGenerator().generateFunction(x))
             .sorted(Comparator.comparing(CppFunctionCode::value))
             .toList(),
         "decodeFunctionNames", decodeFunctionNames,
         "encodeFunctions",
-        encodeFunctions.values().stream().map(x -> new LcbGenericCodeGenerator().generateFunction(x))
+        encodeFunctions.values().stream()
+            .map(x -> new LcbGenericCodeGenerator().generateFunction(x))
             .sorted(Comparator.comparing(CppFunctionCode::value))
             .toList(),
         "predicateFunctions", predicateFunctions.values().stream()

@@ -23,6 +23,9 @@ public class GeneratedRelocation extends CompilerRelocation implements Relocatio
   // This is the function which updates the value in the format.
   protected final CppFunction fieldUpdateFunction;
 
+  /**
+   * Constructor.
+   */
   public static GeneratedRelocation create(Kind kind,
                                            Format format,
                                            Format.Field field,

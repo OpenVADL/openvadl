@@ -5,6 +5,10 @@ import vadl.cppCodeGen.model.VariantKind;
 import vadl.viam.Format;
 import vadl.viam.Relocation;
 
+/**
+ * A concrete logical relocation is like a logical relocation (lo, hi) but it already
+ * has the cpp functions for the compiler backend.
+ */
 public class ConcreteLogicalRelocation extends LogicalRelocation implements RelocationLowerable {
   // This is the function which computes the value for the
   // relocation.

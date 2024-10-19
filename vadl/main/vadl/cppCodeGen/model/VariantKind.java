@@ -16,19 +16,19 @@ public record VariantKind(String value, String human) {
     this("VK_" + relocation.identifier.lower(), relocation.identifier.simpleName());
   }
 
-  public static VariantKind None() {
+  public static VariantKind none() {
     return new VariantKind("VK_None", "None");
   }
 
-  public static VariantKind Invalid() {
+  public static VariantKind invalid() {
     return new VariantKind("VK_Invalid", "Invalid");
   }
 
-  public static VariantKind Absolute() {
+  public static VariantKind absolute() {
     return new VariantKind("VK_SYMB_ABS", "_SYMB_ABS");
   }
 
-  public static VariantKind Relative() {
+  public static VariantKind relative() {
     return new VariantKind("VK_SYMB_PCREL", "_SYMB_PCREL");
   }
 }

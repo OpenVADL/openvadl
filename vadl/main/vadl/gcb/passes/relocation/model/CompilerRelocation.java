@@ -33,6 +33,9 @@ public abstract class CompilerRelocation {
     }
   }
 
+  /**
+   * Constructor.
+   */
   public CompilerRelocation(Format format,
                             Format.Field immediate,
                             Relocation relocationRef,
@@ -45,6 +48,9 @@ public abstract class CompilerRelocation {
         variantKindRef);
   }
 
+  /**
+   * Constructor.
+   */
   public CompilerRelocation(
       Kind kind,
       Format format,
@@ -75,6 +81,9 @@ public abstract class CompilerRelocation {
     return immediate;
   }
 
+  /**
+   * Get the ELF name.
+   */
   public ElfRelocationName elfRelocationName() {
     return new ElfRelocationName(
         "R_" + relocation().identifier.lower());

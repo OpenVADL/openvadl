@@ -14,6 +14,9 @@ import vadl.lcb.codegen.LcbGenericCodeGenerator;
 import vadl.lcb.passes.relocation.GenerateLinkerComponentsPass;
 import vadl.pass.PassResults;
 
+/**
+ * Helper class for baseInfo.
+ */
 public class BaseInfoFunctionProvider {
   public record BaseInfoRecord(
       String functionName,
@@ -22,6 +25,9 @@ public class BaseInfoFunctionProvider {
 
   }
 
+  /**
+   * Get the records.
+   */
   public static List<BaseInfoRecord> getBaseInfoRecords(PassResults passResults) {
     var output =
         (GenerateLinkerComponentsPass.Output) passResults.lastResultOf(
@@ -46,7 +52,7 @@ public class BaseInfoFunctionProvider {
         .toList();
   }
 
-  static <T> Predicate<T> distinctByKey(
+  private static <T> Predicate<T> distinctByKey(
       Function<? super T, ?> keyExtractor) {
 
     Map<Object, Boolean> seen = new ConcurrentHashMap<>();

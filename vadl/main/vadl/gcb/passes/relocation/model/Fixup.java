@@ -1,6 +1,5 @@
 package vadl.gcb.passes.relocation.model;
 
-import vadl.cppCodeGen.model.CppFunction;
 import vadl.cppCodeGen.model.VariantKind;
 
 /**
@@ -10,6 +9,9 @@ import vadl.cppCodeGen.model.VariantKind;
 public class Fixup {
   private final RelocationLowerable lowerable;
 
+  /**
+   * Constructor.
+   */
   public Fixup(RelocationLowerable lowerable) {
     this.lowerable = lowerable;
   }
@@ -26,10 +28,9 @@ public class Fixup {
     return lowerable;
   }
 
-  public CppFunction valueRelocation() {
-    return lowerable.valueRelocation();
-  }
-
+  /**
+   * Get the name of the fixup.
+   */
   public FixupName name() {
     return new FixupName(
         "fixup_" + lowerable.valueRelocation().functionName().identifier().simpleName() + "_"

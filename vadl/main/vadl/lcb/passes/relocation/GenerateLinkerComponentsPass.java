@@ -15,9 +15,8 @@ import vadl.gcb.passes.relocation.BitMaskFunctionGenerator;
 import vadl.gcb.passes.relocation.IdentifyFieldUsagePass;
 import vadl.gcb.passes.relocation.model.CompilerRelocation;
 import vadl.gcb.passes.relocation.model.ConcreteLogicalRelocation;
-import vadl.gcb.passes.relocation.model.GeneratedRelocation;
-import vadl.gcb.passes.relocation.model.RelocationLowerable;
 import vadl.gcb.passes.relocation.model.Fixup;
+import vadl.gcb.passes.relocation.model.GeneratedRelocation;
 import vadl.lcb.passes.llvmLowering.GenerateTableGenMachineInstructionRecordPass;
 import vadl.lcb.passes.llvmLowering.domain.selectionDag.LlvmBasicBlockSD;
 import vadl.lcb.passes.llvmLowering.domain.selectionDag.LlvmFieldAccessRefNode;
@@ -33,6 +32,9 @@ import vadl.viam.Instruction;
 import vadl.viam.Specification;
 import vadl.viam.graph.dependency.FieldRefNode;
 
+/**
+ * This pass generates variant kinds, fixups and relocations.
+ */
 public class GenerateLinkerComponentsPass extends Pass {
   public GenerateLinkerComponentsPass(GeneralConfiguration configuration) {
     super(configuration);
@@ -71,11 +73,11 @@ public class GenerateLinkerComponentsPass extends Pass {
     var instructionsPerCompilerRelocation =
         new IdentityHashMap<CompilerRelocation, List<Instruction>>();
     var instructionsPerImmediateVariant = new IdentityHashMap<VariantKind, List<Instruction>>();
-    var fixupsByField =
+    final var fixupsByField =
         new IdentityHashMap<Format.Field, List<Fixup>>();
 
-    variantKinds.add(VariantKind.None());
-    variantKinds.add(VariantKind.Invalid());
+    variantKinds.add(VariantKind.none());
+    variantKinds.add(VariantKind.invalid());
 
     // User defined relocations
     viam.isa().map(isa -> isa.ownRelocations().stream()).orElseGet(Stream::empty)
@@ -118,7 +120,7 @@ public class GenerateLinkerComponentsPass extends Pass {
           variantKinds.add(variantKind);
         });
 
-    var absoluteVariantKind = VariantKind.Absolute();
+    var absoluteVariantKind = VariantKind.absolute();
     variantKinds.add(absoluteVariantKind);
     viam.isa().map(isa -> isa.ownFormats().stream()).orElseGet(Stream::empty)
         .forEach(format -> {
@@ -140,7 +142,7 @@ public class GenerateLinkerComponentsPass extends Pass {
           }
         });
 
-    var relativeRelocation = VariantKind.Relative();
+    var relativeRelocation = VariantKind.relative();
     variantKinds.add(relativeRelocation);
     viam.isa().map(isa -> isa.ownFormats().stream()).orElseGet(Stream::empty)
         .forEach(format -> {
@@ -192,6 +194,9 @@ public class GenerateLinkerComponentsPass extends Pass {
     );
   }
 
+  /**
+   * Checks whether the origin of {@code operand} is equal to {@code imm}.
+   */
   public static boolean operandMatchesImmediate(Format.Field imm,
                                                 TableGenInstructionOperand operand) {
     var isFieldAccess =

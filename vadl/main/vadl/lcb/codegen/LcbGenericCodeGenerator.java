@@ -71,8 +71,8 @@ public class LcbGenericCodeGenerator {
     var returnType = function.returnType();
     var cppTypeReturnType = CppTypeMap.getCppTypeNameByVadlType(returnType);
 
-    return (isStatic ? "static " : "") + cppTypeReturnType + " " + classImplName.lower() + "::" +
-        name + "(" + parameters + ")"
+    return (isStatic ? "static " : "") + cppTypeReturnType + " " + classImplName.lower() + "::"
+        + name + "(" + parameters + ")"
         + (isConst ? " const" : "");
   }
 

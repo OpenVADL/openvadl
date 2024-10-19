@@ -6,16 +6,12 @@ import static vadl.viam.ViamError.ensurePresent;
 import java.io.StringWriter;
 import java.util.ArrayDeque;
 import java.util.Deque;
-import java.util.LinkedList;
 import java.util.Optional;
 import java.util.stream.Collectors;
 import vadl.cppCodeGen.SymbolTable;
 import vadl.error.Diagnostic;
-import vadl.gcb.passes.relocation.IdentifyFieldUsagePass;
 import vadl.lcb.passes.llvmLowering.tablegen.model.ReferencesFormatField;
-import vadl.lcb.passes.llvmLowering.tablegen.model.TableGenImmediateRecord;
 import vadl.lcb.passes.llvmLowering.tablegen.model.TableGenInstruction;
-import vadl.lcb.passes.llvmLowering.tablegen.model.TableGenInstructionRegisterFileOperand;
 import vadl.types.BuiltInTable;
 import vadl.viam.Constant;
 import vadl.viam.Format;
@@ -51,6 +47,9 @@ import vadl.viam.graph.dependency.WriteRegFileNode;
 import vadl.viam.graph.dependency.WriteRegNode;
 import vadl.viam.graph.dependency.ZeroExtendNode;
 
+/**
+ * Visitor for printing instructions for the assembler.
+ */
 public class AssemblyInstructionPrinterCodeGeneratorVisitor
     implements GraphNodeVisitor {
   private final Instruction instruction;
@@ -59,6 +58,9 @@ public class AssemblyInstructionPrinterCodeGeneratorVisitor
   private final Deque<String> operands = new ArrayDeque<>();
   private final TableGenInstruction tableGenInstruction;
 
+  /**
+   * Constructor.
+   */
   public AssemblyInstructionPrinterCodeGeneratorVisitor(
       StringWriter writer,
       Instruction instruction,
