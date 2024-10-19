@@ -73,11 +73,11 @@ public class DummyAbiPass extends Pass {
             .findFirst()
             .get();
 
-    return new CompilerInstruction(new PseudoInstruction(
+    return new PseudoInstruction(
         new Identifier("RESERVERD_PSEUDO_RET", SourceLocation.INVALID_SOURCE_LOCATION),
         retInstruction.parameters(),
         retInstruction.behavior().copy(),
-        retInstruction.assembly()));
+        retInstruction.assembly());
   }
 
   private List<DummyAbi.RegisterRef> getReturnRegisters(RegisterFile registerFile) {
