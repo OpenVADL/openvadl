@@ -8,7 +8,6 @@ import java.util.function.Function;
 import java.util.function.Predicate;
 import vadl.cppCodeGen.model.CppFunctionCode;
 import vadl.cppCodeGen.model.VariantKind;
-import vadl.gcb.passes.relocation.model.ElfRelocationName;
 import vadl.gcb.passes.relocation.model.RelocationLowerable;
 import vadl.lcb.codegen.LcbGenericCodeGenerator;
 import vadl.lcb.passes.relocation.GenerateLinkerComponentsPass;
@@ -18,6 +17,9 @@ import vadl.pass.PassResults;
  * Helper class for baseInfo.
  */
 public class BaseInfoFunctionProvider {
+  /**
+   * A Base Info entry.
+   */
   public record BaseInfoRecord(
       String functionName,
       CppFunctionCode relocation,

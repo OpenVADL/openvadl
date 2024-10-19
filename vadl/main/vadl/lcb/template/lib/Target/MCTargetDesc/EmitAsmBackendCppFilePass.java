@@ -39,7 +39,8 @@ public class EmitAsmBackendCppFilePass extends LcbTemplateRenderingPass {
                                                 Specification specification) {
     var abi =
         (DummyAbi) specification.definitions().filter(x -> x instanceof DummyAbi).findFirst().get();
-    var output = (GenerateLinkerComponentsPass.Output) passResults.lastResultOf(GenerateLinkerComponentsPass.class);
+    var output = (GenerateLinkerComponentsPass.Output) passResults.lastResultOf(
+        GenerateLinkerComponentsPass.class);
     var fixups = output.fixups();
 
     return Map.of(CommonVarNames.NAMESPACE, specification.simpleName(),

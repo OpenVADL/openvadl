@@ -124,8 +124,8 @@ public class AssemblyInstructionPrinterCodeGeneratorVisitor
           String.format(
               "std::string %s = "
                   + "getRegisterNameFrom%sByIndex("
-                  + "MCOperandWrapper(MI->getOperand(%d)).unwrapToIntegral());" + " // " +
-                  cast.formatField().identifier.simpleName() + "\n",
+                  + "MCOperandWrapper(MI->getOperand(%d)).unwrapToIntegral());" + " // "
+                  + cast.formatField().identifier.simpleName() + "\n",
               symbol, registerFileName, index));
       operands.add(symbol);
     } else if (node.builtIn() == BuiltInTable.DECIMAL) {

@@ -45,6 +45,9 @@ public class GenerateLinkerComponentsPass extends Pass {
     return new PassName("GenerateLinkerComponentsPass");
   }
 
+  /**
+   * Output for this pass.
+   */
   public record Output(
       List<VariantKind> variantKinds,
       List<Fixup> fixups,
@@ -72,7 +75,6 @@ public class GenerateLinkerComponentsPass extends Pass {
     var relocationPerFormat = new IdentityHashMap<Format, List<CompilerRelocation>>();
     var instructionsPerCompilerRelocation =
         new IdentityHashMap<CompilerRelocation, List<Instruction>>();
-    var instructionsPerImmediateVariant = new IdentityHashMap<VariantKind, List<Instruction>>();
     final var fixupsByField =
         new IdentityHashMap<Format.Field, List<Fixup>>();
 
@@ -169,6 +171,7 @@ public class GenerateLinkerComponentsPass extends Pass {
         GenerateTableGenImmediateRecordPass.class);
     var tableGenMachineRecords = (List<TableGenMachineInstruction>) passResults.lastResultOf(
         GenerateTableGenMachineInstructionRecordPass.class);
+    var instructionsPerImmediateVariant = new IdentityHashMap<VariantKind, List<Instruction>>();
 
     for (var imm : tableGenImmediateRecords) {
       variantKinds.add(imm.variantKind());
