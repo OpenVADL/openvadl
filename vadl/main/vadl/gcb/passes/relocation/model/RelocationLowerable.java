@@ -4,7 +4,6 @@ import vadl.cppCodeGen.model.CppFunction;
 import vadl.cppCodeGen.model.VariantKind;
 import vadl.viam.Format;
 import vadl.viam.Identifier;
-import vadl.viam.Relocation;
 
 /**
  * Helper interface for the concrete relocation implementations.
@@ -39,4 +38,9 @@ public interface RelocationLowerable {
    * Get the ELF name.
    */
   ElfRelocationName elfRelocationName();
+
+  /**
+   * Get the format.
+   */
+  Format format();
 }
