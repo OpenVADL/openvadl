@@ -50,8 +50,6 @@ public class EmitInstPrinterCppFilePass extends LcbTemplateRenderingPass {
                                                 Specification specification) {
     var machineRecords = (List<TableGenMachineInstruction>) passResults.lastResultOf(
         GenerateTableGenMachineInstructionRecordPass.class);
-    var fieldUsages = (IdentifyFieldUsagePass.ImmediateDetectionContainer) passResults.lastResultOf(
-        IdentifyFieldUsagePass.class);
     var supported = machineRecords.stream().map(TableGenMachineInstruction::instruction)
         .collect(Collectors.toSet());
     var tableGenLookup = machineRecords.stream().collect(Collectors.toMap(
@@ -65,7 +63,7 @@ public class EmitInstPrinterCppFilePass extends LcbTemplateRenderingPass {
           var codeGen = new AssemblyInstructionPrinterCodeGenerator();
           var tableGenRecord =
               ensureNonNull(tableGenLookup.get(instruction), "tablegen record must exist");
-          var result = codeGen.generateFunctionBody(instruction, tableGenRecord, fieldUsages);
+          var result = codeGen.generateFunctionBody(instruction, tableGenRecord);
           return new PrintableInstruction(instruction.identifier.simpleName(), result);
         })
         .toList();

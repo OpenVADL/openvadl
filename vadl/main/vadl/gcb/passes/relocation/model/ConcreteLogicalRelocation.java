@@ -14,13 +14,6 @@ public class ConcreteLogicalRelocation extends LogicalRelocation implements Relo
 
   /**
    * Constructor.
-   *
-   * @param originalRelocation
-   * @param valueRelocation
-   * @param field
-   * @param format
-   * @param fieldUpdateFunction
-   * @param variantKindRef
    */
   public ConcreteLogicalRelocation(Relocation originalRelocation,
                                    CppFunction valueRelocation,

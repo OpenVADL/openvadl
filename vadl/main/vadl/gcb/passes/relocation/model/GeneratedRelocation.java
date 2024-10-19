@@ -70,6 +70,7 @@ public class GeneratedRelocation extends CompilerRelocation implements Relocatio
     return variantKindRef;
   }
 
+  @Override
   public Identifier identifier() {
     return identifier;
   }

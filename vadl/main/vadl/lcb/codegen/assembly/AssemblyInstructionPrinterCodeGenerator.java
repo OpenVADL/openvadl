@@ -12,13 +12,11 @@ public class AssemblyInstructionPrinterCodeGenerator {
 
   public CppFunctionCode generateFunctionBody(
       Instruction instruction,
-      TableGenInstruction tableGenInstruction,
-      IdentifyFieldUsagePass.ImmediateDetectionContainer fieldUsages) {
+      TableGenInstruction tableGenInstruction) {
     var visitor =
         new AssemblyInstructionPrinterCodeGeneratorVisitor(writer,
             instruction,
-            tableGenInstruction,
-            fieldUsages);
+            tableGenInstruction);
 
     instruction.assembly().function().behavior().getNodes(ReturnNode.class)
         .forEach(visitor::visit);

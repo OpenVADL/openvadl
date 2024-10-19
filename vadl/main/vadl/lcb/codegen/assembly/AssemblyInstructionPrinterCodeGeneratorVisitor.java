@@ -56,17 +56,14 @@ public class AssemblyInstructionPrinterCodeGeneratorVisitor
   private final SymbolTable symbolTable = new SymbolTable();
   private final StringWriter writer;
   private final Deque<String> operands = new LinkedList<>();
-  private final IdentifyFieldUsagePass.ImmediateDetectionContainer fieldUsages;
   private final TableGenInstruction tableGenInstruction;
 
   public AssemblyInstructionPrinterCodeGeneratorVisitor(
       StringWriter writer,
       Instruction instruction,
-      TableGenInstruction tableGenInstruction,
-      IdentifyFieldUsagePass.ImmediateDetectionContainer fieldUsages) {
+      TableGenInstruction tableGenInstruction) {
     this.writer = writer;
     this.instruction = instruction;
-    this.fieldUsages = fieldUsages;
     this.tableGenInstruction = tableGenInstruction;
   }
 

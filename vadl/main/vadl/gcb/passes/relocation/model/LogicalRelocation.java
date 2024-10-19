@@ -38,6 +38,7 @@ public class LogicalRelocation extends CompilerRelocation {
   }
 
 
+  @Override
   public VariantKind variantKind() {
     return variantKind;
   }
