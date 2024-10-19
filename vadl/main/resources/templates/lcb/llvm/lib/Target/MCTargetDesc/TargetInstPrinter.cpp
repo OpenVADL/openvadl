@@ -95,6 +95,6 @@ std::string [(${namespace})]InstPrinter::instToString(const MCInst *MI, uint64_t
             }
         [/th:block]
     default:
-        return "unknown instruction " + MI->getOpcode();
+        return std::string("unknown instruction");
     }
 }
