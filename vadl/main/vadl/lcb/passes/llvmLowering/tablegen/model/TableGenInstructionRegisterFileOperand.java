@@ -40,6 +40,7 @@ public class TableGenInstructionRegisterFileOperand extends TableGenInstructionO
     return registerFile;
   }
 
+  @Override
   public Format.Field formatField() {
     return formatField;
   }
