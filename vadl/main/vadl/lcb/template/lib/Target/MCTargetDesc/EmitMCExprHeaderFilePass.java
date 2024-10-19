@@ -46,18 +46,4 @@ public class EmitMCExprHeaderFilePass extends LcbTemplateRenderingPass {
     return Map.of(CommonVarNames.NAMESPACE, specification.simpleName(),
         "variantKinds", variantKinds);
   }
-
-  private List<CompilerRelocation> relocations(PassResults passResults) {
-    var output = (GenerateLinkerComponentsPass.Output) passResults.lastResultOf(
-        GenerateLinkerComponentsPass.class);
-    return output.elfRelocations().stream().filter(distinctByKey(x -> x.variantKind().value()))
-        .toList();
-  }
-
-  static <T> Predicate<T> distinctByKey(
-      Function<? super T, ?> keyExtractor) {
-
-    Map<Object, Boolean> seen = new ConcurrentHashMap<>();
-    return t -> seen.putIfAbsent(keyExtractor.apply(t), Boolean.TRUE) == null;
-  }
 }
