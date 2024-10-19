@@ -196,12 +196,11 @@ public class GenerateLinkerComponentsPass extends Pass {
                                                 TableGenInstructionOperand operand) {
     var isFieldAccess =
         operand.origin() instanceof LlvmFieldAccessRefNode fieldAccessRefNode
-            && fieldAccessRefNode.immediateOperand().fieldAccessRef().fieldRef() ==
-            imm;
+            && fieldAccessRefNode.immediateOperand().fieldAccessRef().fieldRef().equals(imm);
     var isFieldRef = operand.origin() instanceof FieldRefNode fieldRefNode
-        && fieldRefNode.formatField() == imm;
+        && fieldRefNode.formatField().equals(imm);
     var isLabel = operand.origin() instanceof LlvmBasicBlockSD basicBlockSD
-        && basicBlockSD.fieldAccess().fieldRef() == imm;
+        && basicBlockSD.fieldAccess().fieldRef().equals(imm);
 
     return isFieldAccess || isFieldRef || isLabel;
   }
