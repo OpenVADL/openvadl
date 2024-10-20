@@ -9,6 +9,7 @@ import vadl.viam.Instruction;
 import vadl.viam.InstructionSetArchitecture;
 import vadl.viam.PseudoInstruction;
 import vadl.viam.Specification;
+import vadl.viam.passes.dummyAbi.DummyAbi;
 
 /**
  * Applies the arguments of an {@link Instruction} of a {@link PseudoInstruction}.
@@ -22,10 +23,16 @@ public class PseudoInstructionArgumentReplacementPass
 
   @Override
   protected Stream<PseudoInstruction> getApplicable(PassResults passResults, Specification viam) {
-    return viam.isa()
-        .map(InstructionSetArchitecture::ownPseudoInstructions)
-        .orElse(Collections.emptyList())
-        .stream();
+    var abi = (DummyAbi) viam.definitions().filter(x -> x instanceof DummyAbi).findFirst().get();
+    // Pseudo Instructions + ABI sequences
+    return
+        Stream.concat(
+            viam.isa()
+                .map(InstructionSetArchitecture::ownPseudoInstructions)
+                .orElse(Collections.emptyList())
+                .stream(),
+            Stream.of(abi.returnSequence())
+        );
   }
 
   @Override

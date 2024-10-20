@@ -80,7 +80,7 @@ MCOperand [(${namespace})]MCInstLower::LowerSymbolOperand(const MachineOperand &
     switch (MO.getTargetFlags())
     {
     case [(${namespace})]BaseInfo::MO_None:
-        Kind = [(${namespace})]MCExpr::VariantKind::VK_[(${namespace})]_None;
+        Kind = [(${namespace})]MCExpr::VariantKind::VK_None;
         break;
         /*
     «FOR relocation : relocations» case [(${namespace})]BaseInfo::«relocation.moAnnotationIdentifier»:
@@ -100,7 +100,7 @@ MCOperand [(${namespace})]MCInstLower::LowerSymbolOperand(const MachineOperand &
         expr = MCBinaryExpr::createAdd(expr, OffsetExpr, Ctx);
     }
 
-    if (Kind != [(${namespace})]MCExpr::VariantKind::VK_[(${namespace})]_None)
+    if (Kind != [(${namespace})]MCExpr::VariantKind::VK_None)
     {
         expr = [(${namespace})]MCExpr::create(expr, Kind, Ctx);
     }

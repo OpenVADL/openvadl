@@ -3,11 +3,13 @@ package vadl.lcb.passes.llvmLowering.tablegen.model;
 import java.util.Objects;
 import vadl.lcb.passes.llvmLowering.domain.selectionDag.LlvmBasicBlockSD;
 import vadl.lcb.passes.llvmLowering.tablegen.model.parameterIdentity.ParameterIdentity;
+import vadl.viam.Format;
 
 /**
  * Indicates that the operand is an immediate but as a label.
  */
-public class TableGenInstructionImmediateLabelOperand extends TableGenInstructionOperand {
+public class TableGenInstructionImmediateLabelOperand extends TableGenInstructionOperand
+    implements ReferencesFormatField {
   private final TableGenImmediateRecord immediateOperand;
 
   public TableGenInstructionImmediateLabelOperand(ParameterIdentity identity,
@@ -38,5 +40,10 @@ public class TableGenInstructionImmediateLabelOperand extends TableGenInstructio
   @Override
   public int hashCode() {
     return Objects.hash(super.hashCode(), immediateOperand);
+  }
+
+  @Override
+  public Format.Field formatField() {
+    return immediateOperand.fieldAccessRef().fieldRef();
   }
 }

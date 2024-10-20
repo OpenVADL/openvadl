@@ -45,6 +45,10 @@ public class AssemblyRegisterNode extends BuiltInCall {
 
   @Override
   public void accept(GraphNodeVisitor visitor) {
-    ((AssemblyVisitor) visitor).visit(this);
+    if (visitor instanceof AssemblyVisitor v) {
+      v.visit(this);
+    } else {
+      visitor.visit(this);
+    }
   }
 }

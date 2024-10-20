@@ -43,7 +43,6 @@ public class FunctionInlinerPass extends Pass {
     IdentityHashMap<Instruction, UninlinedGraph> original = new IdentityHashMap<>();
 
     instructions(viam, original);
-    //pseudoInstructions(viam);
 
     return original;
   }

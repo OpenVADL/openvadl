@@ -31,7 +31,7 @@ void [(${namespace})]MCExpr::printImpl(raw_ostream &OS, const MCAsmInfo *MAI) co
 
 std::string [(${namespace})]MCExpr::format(uint8_t Radix, const MCAsmInfo *MAI) const
 {
-    bool HasVariant = (Kind != VK_[(${namespace})]_None);
+    bool HasVariant = (Kind != VK_None);
     int64_t Res = 0;
 
     if (evaluateAsConstant(Res))
@@ -90,25 +90,22 @@ void [(${namespace})]MCExpr::visitUsedExpr(MCStreamer &Streamer) const
 [(${namespace})]MCExpr::VariantKind [(${namespace})]MCExpr::getVariantKindForName(StringRef name)
 {
     return StringSwitch<[(${namespace})]MCExpr::VariantKind>(name)
-    /*
-                «FOR relocation : relocations»
-                                       .Case( «emitAsStr(relocation)», «emitAsKind(relocation)» )
-                «ENDFOR»
-                */
-                                       .Default(VK_[(${namespace})]_Invalid);
+    [# th:each="vk : ${variantKinds}" ]
+          .Case("[(${vk.human()})]", [(${vk.value()})])
+    [/]
+          .Default(VK_Invalid);
 }
 
 StringRef [(${namespace})]MCExpr::getVariantKindName(VariantKind Kind)
 {
-    return StringRef();
-    /*
     switch (Kind)
     {
-    FOR relocation : relocations» case emitAsKind(relocation):
-        return <<emitAsStr(relocation)>>;
-        ENDFOR default : llvm_unreachable("Invalid symbol kind");
+    [# th:each="vk : ${variantKinds}" ]
+      case [(${vk.value()})]:
+      return "[(${vk.human()})]";
+    [/]
+    default : llvm_unreachable("Invalid symbol kind");
     }
-    */
 }
 
 bool [(${namespace})]MCExpr::isInternalImmExpr() const
@@ -154,21 +151,12 @@ int64_t [(${namespace})]MCExpr::evaluateAsInt64(int64_t Value) const
 {
     int64_t resultValue = Value;
 
-    /*
-    «IF relocations.size > 0»
-                «FOR relocation : relocations» if (Kind == «emitAsKind(relocation)» )
-    {
-        resultValue = [(${namespace})]BaseInfo::«emitAsFunc(relocation)»(resultValue);
-    }
-    «ENDFOR»
-
-            «ENDIF»
-    «ENDIF» */
-
-    [# th:each="imm : ${immediates}" ]
-      if(Kind == [(${imm.record.variantKind().value()})])
+    [# th:each="bi : ${baseInfos}" ]
+      if(Kind == [(${bi.variantKind().value()})])
       {
-        resultValue = [(${imm.decoderFunctionName})](resultValue);
+        resultValue = [(${namespace})]BaseInfo::[(${bi.functionName()})](resultValue);
       }
     [/]
+
+    return resultValue;
 }

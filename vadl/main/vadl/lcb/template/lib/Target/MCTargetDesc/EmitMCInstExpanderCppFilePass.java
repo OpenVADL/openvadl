@@ -17,21 +17,22 @@ import vadl.cppCodeGen.model.CppFunctionName;
 import vadl.cppCodeGen.model.VariantKind;
 import vadl.gcb.passes.pseudo.PseudoExpansionFunctionGeneratorPass;
 import vadl.gcb.passes.relocation.IdentifyFieldUsagePass;
-import vadl.gcb.passes.relocation.model.ElfRelocation;
+import vadl.gcb.passes.relocation.model.CompilerRelocation;
+import vadl.lcb.codegen.LcbGenericCodeGenerator;
 import vadl.lcb.codegen.expansion.PseudoExpansionCodeGenerator;
 import vadl.lcb.passes.llvmLowering.ConstMaterialisationPseudoExpansionFunctionGeneratorPass;
 import vadl.lcb.passes.llvmLowering.domain.ConstantMatPseudoInstruction;
 import vadl.lcb.passes.llvmLowering.immediates.GenerateConstantMaterialisationPass;
-import vadl.lcb.passes.relocation.GenerateElfRelocationPass;
+import vadl.lcb.passes.relocation.GenerateLinkerComponentsPass;
 import vadl.lcb.template.CommonVarNames;
 import vadl.lcb.template.LcbTemplateRenderingPass;
 import vadl.lcb.template.utils.ImmediateDecodingFunctionProvider;
-import vadl.lcb.template.utils.ImmediateVariantKindProvider;
 import vadl.lcb.template.utils.PseudoInstructionProvider;
 import vadl.pass.PassResults;
 import vadl.viam.Format;
 import vadl.viam.PseudoInstruction;
 import vadl.viam.Specification;
+import vadl.viam.passes.dummyAbi.DummyAbi;
 
 /**
  * This file includes the implementations for expanding instructions in the MC layer.
@@ -68,8 +69,8 @@ public class EmitMCInstExpanderCppFilePass extends LcbTemplateRenderingPass {
       Specification specification,
       Map<PseudoInstruction, CppFunction> cppFunctions,
       IdentifyFieldUsagePass.ImmediateDetectionContainer fieldUsages,
-      Map<Format.Field, VariantKind> variants,
-      List<ElfRelocation> relocations,
+      Map<Format.Field, List<VariantKind>> variants,
+      List<CompilerRelocation> relocations,
       PassResults passResults) {
     return PseudoInstructionProvider.getSupportedPseudoInstructions(specification, passResults)
         .map(pseudoInstruction -> renderPseudoInstruction(specification, cppFunctions, fieldUsages,
@@ -83,8 +84,8 @@ public class EmitMCInstExpanderCppFilePass extends LcbTemplateRenderingPass {
       Specification specification,
       Map<PseudoInstruction, CppFunction> cppFunctions,
       IdentifyFieldUsagePass.ImmediateDetectionContainer fieldUsages,
-      Map<Format.Field, VariantKind> variants,
-      List<ElfRelocation> relocations,
+      Map<Format.Field, List<VariantKind>> variants,
+      List<CompilerRelocation> relocations,
       PassResults passResults,
       PseudoInstruction pseudoInstruction) {
     var codeGen =
@@ -100,7 +101,8 @@ public class EmitMCInstExpanderCppFilePass extends LcbTemplateRenderingPass {
     return new RenderedPseudoInstruction(
         classPrefix,
         function.functionName(),
-        codeGen.generateFunction(classPrefix, function, true),
+        codeGen.generateFunction(classPrefix, function,
+            new LcbGenericCodeGenerator.Options(true, false)),
         pseudoInstruction);
   }
 
@@ -108,8 +110,8 @@ public class EmitMCInstExpanderCppFilePass extends LcbTemplateRenderingPass {
       Specification specification,
       Map<PseudoInstruction, CppFunction> cppFunctions,
       IdentifyFieldUsagePass.ImmediateDetectionContainer fieldUsages,
-      Map<Format.Field, VariantKind> variants,
-      List<ElfRelocation> relocations,
+      Map<Format.Field, List<VariantKind>> variants,
+      List<CompilerRelocation> relocations,
       PassResults passResults) {
     var constMats = (List<ConstantMatPseudoInstruction>) passResults.lastResultOf(
         GenerateConstantMaterialisationPass.class);
@@ -124,9 +126,29 @@ public class EmitMCInstExpanderCppFilePass extends LcbTemplateRenderingPass {
         .toList();
   }
 
+  private List<RenderedPseudoInstruction> compilerInstructions(
+      DummyAbi dummyAbi,
+      Specification specification,
+      Map<PseudoInstruction, CppFunction> cppFunctions,
+      IdentifyFieldUsagePass.ImmediateDetectionContainer fieldUsages,
+      Map<Format.Field, List<VariantKind>> variants,
+      List<CompilerRelocation> relocations,
+      PassResults passResults) {
+    return Stream.of(dummyAbi.returnSequence())
+        .map(pseudoInstruction -> renderPseudoInstruction(specification,
+            cppFunctions,
+            fieldUsages,
+            variants,
+            relocations,
+            passResults, pseudoInstruction))
+        .toList();
+  }
+
   @Override
   protected Map<String, Object> createVariables(final PassResults passResults,
                                                 Specification specification) {
+    var abi =
+        (DummyAbi) specification.definitions().filter(x -> x instanceof DummyAbi).findFirst().get();
     var cppFunctionsForPseudoInstructions =
         (IdentityHashMap<PseudoInstruction, CppFunction>) passResults.lastResultOf(
             PseudoExpansionFunctionGeneratorPass.class);
@@ -138,9 +160,10 @@ public class EmitMCInstExpanderCppFilePass extends LcbTemplateRenderingPass {
         .collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue));
     var fieldUsages = (IdentifyFieldUsagePass.ImmediateDetectionContainer) passResults.lastResultOf(
         IdentifyFieldUsagePass.class);
-    var variants = ImmediateVariantKindProvider.variantKindsByField(passResults);
-    var relocations =
-        (List<ElfRelocation>) passResults.lastResultOf(GenerateElfRelocationPass.class);
+    var output = (GenerateLinkerComponentsPass.Output) passResults.lastResultOf(
+        GenerateLinkerComponentsPass.class);
+    var variants = output.variantKindMap();
+    var relocations = output.elfRelocations();
 
     var pseudoInstructions =
         pseudoInstructions(specification, cppFunctions, fieldUsages, variants, relocations,
@@ -148,9 +171,13 @@ public class EmitMCInstExpanderCppFilePass extends LcbTemplateRenderingPass {
     var constMatInstructions =
         constMatInstructions(specification, cppFunctions, fieldUsages, variants, relocations,
             passResults);
+    var compilerInstructions =
+        compilerInstructions(abi, specification, cppFunctions, fieldUsages, variants, relocations,
+            passResults);
     return Map.of(CommonVarNames.NAMESPACE, specification.simpleName(),
         "pseudoInstructions",
-        Stream.concat(pseudoInstructions.stream(), constMatInstructions.stream()).toList()
+        Stream.concat(pseudoInstructions.stream(),
+            Stream.concat(constMatInstructions.stream(), compilerInstructions.stream())).toList()
     );
   }
 }

@@ -9,7 +9,8 @@ import vadl.viam.graph.dependency.WriteRegFileNode;
 /**
  * Indicates that the operand is a {@link RegisterFile} when the address is a {@link Format.Field}.
  */
-public class TableGenInstructionRegisterFileOperand extends TableGenInstructionOperand {
+public class TableGenInstructionRegisterFileOperand extends TableGenInstructionOperand
+    implements ReferencesFormatField {
   private final RegisterFile registerFile;
   private final Format.Field formatField;
 
@@ -39,6 +40,7 @@ public class TableGenInstructionRegisterFileOperand extends TableGenInstructionO
     return registerFile;
   }
 
+  @Override
   public Format.Field formatField() {
     return formatField;
   }

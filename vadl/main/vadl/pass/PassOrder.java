@@ -20,7 +20,6 @@ import vadl.gcb.passes.assembly.AssemblyReplacementNodePass;
 import vadl.gcb.passes.encoding_generation.GenerateFieldAccessEncodingFunctionPass;
 import vadl.gcb.passes.pseudo.PseudoExpansionFunctionGeneratorPass;
 import vadl.gcb.passes.pseudo.PseudoInstructionArgumentReplacementPass;
-import vadl.gcb.passes.relocation.GenerateLogicalRelocationPass;
 import vadl.gcb.passes.relocation.IdentifyFieldUsagePass;
 import vadl.gcb.passes.type_normalization.CppTypeNormalizationForDecodingsPass;
 import vadl.gcb.passes.type_normalization.CppTypeNormalizationForEncodingsPass;
@@ -45,7 +44,7 @@ import vadl.lcb.passes.llvmLowering.LlvmLoweringPass;
 import vadl.lcb.passes.llvmLowering.immediates.GenerateConstantMaterialisationPass;
 import vadl.lcb.passes.llvmLowering.immediates.GenerateConstantMaterialisationTableGenRecordPass;
 import vadl.lcb.passes.llvmLowering.immediates.GenerateTableGenImmediateRecordPass;
-import vadl.lcb.passes.relocation.GenerateElfRelocationPass;
+import vadl.lcb.passes.relocation.GenerateLinkerComponentsPass;
 import vadl.lcb.template.lib.Target.EmitMCInstLowerCppFilePass;
 import vadl.lcb.template.lib.Target.EmitMCInstLowerHeaderFilePass;
 import vadl.lcb.template.lib.Target.MCTargetDesc.EmitInstPrinterCppFilePass;
@@ -213,14 +212,14 @@ public final class PassOrder {
     var order = new PassOrder();
 
     order.add(new ViamVerificationPass(configuration));
-    order.add(new DummyAbiPass(configuration));
 
     order.add(new TypeCastEliminationPass(configuration));
+    order.add(new DummyAbiPass(configuration));
     // TODO: @kper do you see any fix for this?
     // Note: we run the counter-access resolving pass before the func inliner pass
-    // because the lcb uses the unlinined version of the instructions.
+    // because the lcb uses the uninlined version of the instructions.
     // However, this might miss a lot of opportunities to statically resolve counter-accesses
-    // as the canicalization runs at a later point.
+    // as the canonicalization runs at a later point.
     order.add(new StaticCounterAccessResolvingPass(configuration));
     order.add(new FunctionInlinerPass(configuration));
     order.add(new SideEffectConditionResolvingPass(configuration));
@@ -260,7 +259,6 @@ public final class PassOrder {
     order.add(new AssemblyReplacementNodePass(gcbConfiguration));
     order.add(new AssemblyConcatBuiltinMergingPass(gcbConfiguration));
     order.add(new IdentifyFieldUsagePass(gcbConfiguration));
-    order.add(new GenerateLogicalRelocationPass(gcbConfiguration));
     order.add(new PseudoInstructionArgumentReplacementPass(gcbConfiguration));
     order.add(new PseudoExpansionFunctionGeneratorPass(gcbConfiguration));
 
@@ -292,7 +290,7 @@ public final class PassOrder {
     order.add(new GenerateConstantMaterialisationTableGenRecordPass(configuration));
     order.add(new ConstMatPseudoInstructionArgumentReplacementPass(configuration));
     order.add(new ConstMaterialisationPseudoExpansionFunctionGeneratorPass(configuration));
-    order.add(new GenerateElfRelocationPass(configuration));
+    order.add(new GenerateLinkerComponentsPass(configuration));
 
     if (configuration.doDump()) {
       var config = HtmlDumpPass.Config.from(

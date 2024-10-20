@@ -6,6 +6,7 @@ import vadl.utils.Pair;
 import vadl.viam.Definition;
 import vadl.viam.DefinitionVisitor;
 import vadl.viam.Identifier;
+import vadl.viam.PseudoInstruction;
 import vadl.viam.RegisterFile;
 
 /**
@@ -59,6 +60,7 @@ public class DummyAbi extends Definition {
   private final List<RegisterRef> calleeSaved;
   private final List<RegisterRef> argumentRegisters;
   private final List<RegisterRef> returnRegisters;
+  private final PseudoInstruction returnSequence;
 
   /**
    * Constructor.
@@ -72,7 +74,8 @@ public class DummyAbi extends Definition {
                   List<RegisterRef> callerSaved,
                   List<RegisterRef> calleeSaved,
                   List<RegisterRef> argumentRegisters,
-                  List<RegisterRef> returnRegisters
+                  List<RegisterRef> returnRegisters,
+                  PseudoInstruction returnSequence
   ) {
     super(identifier);
     this.returnAddress = returnAddress;
@@ -84,6 +87,7 @@ public class DummyAbi extends Definition {
     this.calleeSaved = calleeSaved;
     this.argumentRegisters = argumentRegisters;
     this.returnRegisters = returnRegisters;
+    this.returnSequence = returnSequence;
   }
 
   @Override
@@ -130,5 +134,9 @@ public class DummyAbi extends Definition {
 
   public boolean hasFramePointer() {
     return true;
+  }
+
+  public PseudoInstruction returnSequence() {
+    return returnSequence;
   }
 }

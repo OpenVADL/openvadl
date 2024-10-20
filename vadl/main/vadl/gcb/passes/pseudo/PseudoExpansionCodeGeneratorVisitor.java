@@ -7,7 +7,6 @@ import static vadl.viam.ViamError.ensurePresent;
 import com.google.common.collect.Streams;
 import java.io.StringWriter;
 import java.util.ArrayList;
-import java.util.IdentityHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
@@ -18,7 +17,7 @@ import vadl.cppCodeGen.model.CppFunction;
 import vadl.cppCodeGen.model.VariantKind;
 import vadl.error.Diagnostic;
 import vadl.gcb.passes.relocation.IdentifyFieldUsagePass;
-import vadl.gcb.passes.relocation.model.ElfRelocation;
+import vadl.gcb.passes.relocation.model.CompilerRelocation;
 import vadl.utils.Pair;
 import vadl.viam.Format;
 import vadl.viam.Identifier;
@@ -35,6 +34,7 @@ import vadl.viam.graph.dependency.FieldRefNode;
 import vadl.viam.graph.dependency.FuncCallNode;
 import vadl.viam.graph.dependency.FuncParamNode;
 import vadl.viam.graph.dependency.WriteRegFileNode;
+import vadl.viam.graph.dependency.ZeroExtendNode;
 
 /**
  * More specialised generator visitor for generating the expansion of pseudo instructions.
@@ -44,8 +44,8 @@ public class PseudoExpansionCodeGeneratorVisitor extends GenericCppCodeGenerator
   private final String namespace;
   private final IdentifyFieldUsagePass.ImmediateDetectionContainer fieldUsages;
   private final Map<Format.Field, CppFunction> immediateDecodings;
-  private final Map<Format.Field, VariantKind> immVariants;
-  private final List<ElfRelocation> relocations;
+  private final Map<Format.Field, List<VariantKind>> immVariants;
+  private final List<CompilerRelocation> relocations;
   private final PseudoInstruction pseudoInstruction;
 
   /**
@@ -55,8 +55,8 @@ public class PseudoExpansionCodeGeneratorVisitor extends GenericCppCodeGenerator
                                              IdentifyFieldUsagePass.ImmediateDetectionContainer
                                                  fieldUsages,
                                              Map<Format.Field, CppFunction> immediateDecodings,
-                                             Map<Format.Field, VariantKind> immVariants,
-                                             List<ElfRelocation> relocations,
+                                             Map<Format.Field, List<VariantKind>> immVariants,
+                                             List<CompilerRelocation> relocations,
                                              PseudoInstruction pseudoInstruction) {
     super(writer);
     this.namespace = namespace;
@@ -136,6 +136,9 @@ public class PseudoExpansionCodeGeneratorVisitor extends GenericCppCodeGenerator
         var pseudoInstructionIndex =
             getOperandIndexFromPseudoInstruction(funcParamNode.parameter().identifier);
         lowerExpressionWithImmOrRegister(sym, field, pseudoInstructionIndex);
+      } else if (argument instanceof ZeroExtendNode zeroExtendNode
+          && zeroExtendNode.value() instanceof ConstantNode cn) {
+        lowerExpression(instrCallNode.target(), sym, field, cn);
       } else {
         throw Diagnostic.error("Not implemented for this node type.", argument.sourceLocation())
             .build();
@@ -167,7 +170,8 @@ public class PseudoExpansionCodeGeneratorVisitor extends GenericCppCodeGenerator
     throw new RuntimeException("not implemented");
   }
 
-  private void lowerExpression(Instruction machineInstruction, String sym, Format.Field field,
+  private void lowerExpression(Instruction machineInstruction,
+                               String sym, Format.Field field,
                                ConstantNode argument) {
     var usage = fieldUsages.getFieldUsages(field.format()).get(field);
     ensure(usage != null, "usage must not be null");
@@ -229,11 +233,11 @@ public class PseudoExpansionCodeGeneratorVisitor extends GenericCppCodeGenerator
             argumentIndex));
 
     var argumentRelocationSymbol = symbolTable.getNextVariable();
-    var logicalRelocation =
-        relocations.stream().filter(x -> x.logicalRelocation().relocation() == relocation)
+    var elfRelocation =
+        relocations.stream().filter(x -> x.relocation() == relocation)
             .findFirst();
-    ensure(logicalRelocation.isPresent(), "logicalRelocation must exist");
-    var variant = logicalRelocation.get().logicalRelocation().variantKind().value();
+    ensure(elfRelocation.isPresent(), "elfRelocation must exist");
+    var variant = elfRelocation.get().variantKind().value();
     writer.write(
         String.format("MCOperand %s = "
                 + "MCOperand::createExpr(%sMCExpr::create(%s, %sMCExpr::VariantKind::%s, Ctx));\n",
@@ -257,16 +261,17 @@ public class PseudoExpansionCodeGeneratorVisitor extends GenericCppCodeGenerator
                 argumentIndex));
 
         var argumentImmSymbol = symbolTable.getNextVariable();
-        var variant = immVariants.get(field);
-        ensure(variant != null, () -> Diagnostic.error(
+        var variants = immVariants.get(field);
+        ensure(variants != null, () -> Diagnostic.error(
                 String.format("Variant must exist for the field '%s' but it doesn't.",
                     field.identifier.lower()),
                 field.sourceLocation())
             .note(
                 "The compiler generator tries to lower an immediate in the "
                     + "pseudo expansion. To do so it requires to generate variants for immediates. "
-                    + "It seems like that that this variant was not generated.")
+                    + "It seems like that that this variants was not generated.")
         );
+        var variant = Objects.requireNonNull(variants).get(0);
         writer.write(
             String.format(
                 "MCOperand %s = "
@@ -274,7 +279,7 @@ public class PseudoExpansionCodeGeneratorVisitor extends GenericCppCodeGenerator
                     "MCOperand::createExpr(%sMCExpr::create(%s, %sMCExpr::VariantKind::%s, "
                     + "Ctx));\n",
                 argumentImmSymbol, namespace, argumentSymbol, namespace,
-                Objects.requireNonNull(variant).value()));
+                Objects.requireNonNull(variant.value())));
         writer.write(String.format("%s.addOperand(%s);\n",
             sym,
             argumentImmSymbol));

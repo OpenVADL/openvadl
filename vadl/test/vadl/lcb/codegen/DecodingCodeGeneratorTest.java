@@ -25,7 +25,7 @@ class DecodingCodeGeneratorTest extends AbstractTest {
         Type.signedInt(32), graph);
 
     // When
-    String code = new LcbCodeGenerator().generateFunction(function).value();
+    String code = new LcbGenericCodeGenerator().generateFunction(function).value();
 
     // Then
     assertEquals("int32_t functionNameValue(uint32_t parameterValue) {\n"

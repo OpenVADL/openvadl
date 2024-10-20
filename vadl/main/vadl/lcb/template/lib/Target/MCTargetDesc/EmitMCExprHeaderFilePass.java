@@ -3,12 +3,14 @@ package vadl.lcb.template.lib.Target.MCTargetDesc;
 import java.io.IOException;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.function.Function;
+import java.util.function.Predicate;
 import vadl.configuration.LcbConfiguration;
-import vadl.gcb.passes.relocation.model.ElfRelocation;
-import vadl.lcb.passes.relocation.GenerateElfRelocationPass;
+import vadl.gcb.passes.relocation.model.CompilerRelocation;
+import vadl.lcb.passes.relocation.GenerateLinkerComponentsPass;
 import vadl.lcb.template.CommonVarNames;
 import vadl.lcb.template.LcbTemplateRenderingPass;
-import vadl.lcb.template.utils.ImmediateVariantKindProvider;
 import vadl.pass.PassResults;
 import vadl.viam.Specification;
 
@@ -37,12 +39,11 @@ public class EmitMCExprHeaderFilePass extends LcbTemplateRenderingPass {
   @Override
   protected Map<String, Object> createVariables(final PassResults passResults,
                                                 Specification specification) {
+    var output =
+        (GenerateLinkerComponentsPass.Output) passResults.lastResultOf(
+            GenerateLinkerComponentsPass.class);
+    var variantKinds = output.variantKinds();
     return Map.of(CommonVarNames.NAMESPACE, specification.simpleName(),
-        "relocations", relocations(passResults),
-        "immediates", ImmediateVariantKindProvider.variantKinds(passResults));
-  }
-
-  private List<ElfRelocation> relocations(PassResults passResults) {
-    return (List<ElfRelocation>) passResults.lastResultOf(GenerateElfRelocationPass.class);
+        "variantKinds", variantKinds);
   }
 }

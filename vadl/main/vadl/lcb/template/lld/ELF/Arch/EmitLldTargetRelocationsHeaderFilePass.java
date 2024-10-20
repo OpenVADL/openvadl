@@ -2,12 +2,11 @@ package vadl.lcb.template.lld.ELF.Arch;
 
 import java.io.IOException;
 import java.util.Comparator;
-import java.util.List;
 import java.util.Map;
 import vadl.configuration.LcbConfiguration;
-import vadl.gcb.passes.relocation.model.ElfRelocation;
-import vadl.lcb.codegen.LcbCodeGenerator;
-import vadl.lcb.passes.relocation.GenerateElfRelocationPass;
+import vadl.gcb.passes.relocation.model.RelocationLowerable;
+import vadl.lcb.codegen.LcbGenericCodeGenerator;
+import vadl.lcb.passes.relocation.GenerateLinkerComponentsPass;
 import vadl.lcb.template.CommonVarNames;
 import vadl.lcb.template.LcbTemplateRenderingPass;
 import vadl.pass.PassResults;
@@ -36,15 +35,19 @@ public class EmitLldTargetRelocationsHeaderFilePass extends LcbTemplateRendering
   @Override
   protected Map<String, Object> createVariables(final PassResults passResults,
                                                 Specification specification) {
-    var relocations =
-        (List<ElfRelocation>) passResults.lastResultOf(GenerateElfRelocationPass.class);
+    var output =
+        (GenerateLinkerComponentsPass.Output) passResults.lastResultOf(
+            GenerateLinkerComponentsPass.class);
+    var relocations = output.elfRelocations();
     return Map.of(CommonVarNames.NAMESPACE, specification.simpleName(),
         "relocations", relocations.stream()
-            .sorted(Comparator.comparing(o -> o.name().value()))
+            .filter(x -> x instanceof RelocationLowerable)
+            .map(x -> (RelocationLowerable) x)
+            .sorted(Comparator.comparing(o -> o.elfRelocationName().value()))
             .map(relocation -> {
-              var generator = new LcbCodeGenerator();
+              var generator = new LcbGenericCodeGenerator();
               return generator.generateFunction(
-                  relocation.logicalRelocation().cppRelocation());
+                  relocation.valueRelocation());
             }).toList());
   }
 }

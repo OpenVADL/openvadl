@@ -19,7 +19,7 @@ import vadl.cppCodeGen.model.CppFunction;
 import vadl.cppCodeGen.passes.typeNormalization.CppTypeNormalizationPass;
 import vadl.gcb.passes.type_normalization.CppTypeNormalizationForDecodingsPass;
 import vadl.gcb.passes.type_normalization.CppTypeNormalizationForEncodingsPass;
-import vadl.lcb.codegen.LcbCodeGenerator;
+import vadl.lcb.codegen.LcbGenericCodeGenerator;
 import vadl.pass.PassOrder;
 import vadl.pass.exception.DuplicatedPassKeyException;
 import vadl.types.BitsType;
@@ -91,8 +91,8 @@ public class EncodingCodeGeneratorCppVerificationTest extends AbstractCppCodeGen
                        int sample,
                        CppFunction accessFunction,
                        CppFunction encodingFunction) {
-    var decodeFunction = new LcbCodeGenerator().generateFunction(accessFunction);
-    var encodeFunction = new LcbCodeGenerator().generateFunction(encodingFunction);
+    var decodeFunction = new LcbGenericCodeGenerator().generateFunction(accessFunction);
+    var encodeFunction = new LcbGenericCodeGenerator().generateFunction(encodingFunction);
     String expectedReturnType =
         CppTypeMap.getCppTypeNameByVadlType(encodingFunction.returnType());
 

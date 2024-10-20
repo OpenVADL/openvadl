@@ -9,7 +9,7 @@ import java.util.stream.Stream;
 import org.jetbrains.annotations.NotNull;
 import vadl.configuration.LcbConfiguration;
 import vadl.gcb.passes.assembly.AssemblyConstant;
-import vadl.lcb.codegen.assembly.AssemblyCodeGeneratorVisitor;
+import vadl.lcb.codegen.assembly.AssemblyParserCodeGeneratorVisitor;
 import vadl.lcb.codegen.assembly.ParserGenerator;
 import vadl.lcb.template.CommonVarNames;
 import vadl.lcb.template.LcbTemplateRenderingPass;
@@ -86,7 +86,7 @@ public class EmitAsmRecursiveDescentParserCppFilePass extends LcbTemplateRenderi
         .map(instruction -> {
           var writer = new StringWriter();
           var visitor =
-              new AssemblyCodeGeneratorVisitor(lcbConfiguration().processorName().value(),
+              new AssemblyParserCodeGeneratorVisitor(lcbConfiguration().processorName().value(),
                   instruction,
                   writer);
           var returnNode =

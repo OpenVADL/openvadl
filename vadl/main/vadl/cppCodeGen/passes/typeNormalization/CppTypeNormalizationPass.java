@@ -22,6 +22,7 @@ import vadl.utils.Pair;
 import vadl.viam.Constant;
 import vadl.viam.Format;
 import vadl.viam.Function;
+import vadl.viam.Identifier;
 import vadl.viam.Parameter;
 import vadl.viam.Specification;
 import vadl.viam.ViamError;
@@ -124,11 +125,22 @@ public abstract class CppTypeNormalizationPass extends Pass {
   /**
    * Changes the function so that all vadl types conform to CPP types
    * which simplifies the code generation.
-   * All the non-conforming types will be upcasted to next higher bit size.
+   * All the non-conforming types will be upcasted to next higher bit size. The name of the
+   * {@link CppFunction} is taken from {@code function.identifier}.
    */
   public static CppFunction makeTypesCppConform(Function function) {
+    return makeTypesCppConform(function, function.identifier);
+  }
+
+  /**
+   * Changes the function so that all vadl types conform to CPP types
+   * which simplifies the code generation.
+   * All the non-conforming types will be upcasted to next higher bit size. The name of the
+   * {@link CppFunction} is determined by the parameter {@code newName}.
+   */
+  public static CppFunction makeTypesCppConform(Function function, Identifier newName) {
     var liftedParameters = getParameters(function);
-    return makeTypesCppConformWithParamType(function, liftedParameters);
+    return makeTypesCppConformWithParamType(newName, function, liftedParameters);
   }
 
   /**
@@ -137,13 +149,15 @@ public abstract class CppTypeNormalizationPass extends Pass {
    * All the non-conforming types will be upcasted to next higher bit size except the parameter
    * type.
    */
-  public static CppFunction makeTypesCppConformWithParamType(Function function,
-                                                             List<Parameter> liftedParameters) {
+  public static CppFunction makeTypesCppConformWithParamType(
+      Identifier newName,
+      Function function,
+      List<Parameter> liftedParameters) {
     var liftedResultTy = getResultTy(function);
     updateGraph(function.behavior());
 
     // We updated the old function's graph, so just take it for the new function.
-    return new CppFunction(function.identifier,
+    return new CppFunction(newName,
         liftedParameters.toArray(Parameter[]::new),
         liftedResultTy,
         function.behavior());

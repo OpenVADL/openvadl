@@ -47,7 +47,7 @@ namespace lld
             case R_[(${namespace})]_32:
             case R_[(${namespace})]_64:
             [#th:block th:each="relocation: ${relocations}" ]
-            case [(${relocation.name()})]:
+            case [(${relocation.elfRelocationName().value()})]:
                 return [#th:block th:text="${relocation.kind() == ABSOLUTE} ? 'R_ABS' : 'R_PC'" /];
             [/th:block]
             default:

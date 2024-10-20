@@ -148,7 +148,11 @@ public class AssemblyConstant extends ConstantNode {
 
   @Override
   public void accept(GraphNodeVisitor visitor) {
-    ((AssemblyVisitor) visitor).visit(this);
+    if (visitor instanceof AssemblyVisitor) {
+      ((AssemblyVisitor) visitor).visit(this);
+    } else {
+      visitor.visit(this);
+    }
   }
 
   public TokenKind kind() {

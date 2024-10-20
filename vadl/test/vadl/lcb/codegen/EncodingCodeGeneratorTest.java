@@ -25,7 +25,7 @@ class EncodingCodeGeneratorTest extends AbstractTest {
         Type.signedInt(32), graph);
 
     // When
-    String code = new LcbCodeGenerator().generateFunction(function).value();
+    String code = new LcbGenericCodeGenerator().generateFunction(function).value();
 
     // Then
     assertThat(code).isEqualToIgnoringWhitespace("""

@@ -27,7 +27,7 @@ import vadl.viam.graph.dependency.FuncParamNode;
  */
 public class BitMaskFunctionGenerator {
   public static String generateFunctionName(Format format, Format.Field field) {
-    return format.identifier.lower() + field.identifier.lower();
+    return format.identifier.lower() + "_" + field.identifier.simpleName();
   }
 
   /**

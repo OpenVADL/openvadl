@@ -11,7 +11,7 @@ import vadl.configuration.LcbConfiguration;
 import vadl.cppCodeGen.model.CppFunction;
 import vadl.cppCodeGen.model.CppFunctionCode;
 import vadl.cppCodeGen.model.CppFunctionName;
-import vadl.lcb.codegen.LcbCodeGenerator;
+import vadl.lcb.codegen.LcbGenericCodeGenerator;
 import vadl.lcb.template.CommonVarNames;
 import vadl.lcb.template.LcbTemplateRenderingPass;
 import vadl.pass.PassResults;
@@ -44,16 +44,18 @@ public abstract class AbstractEmitImmediateFilePass extends LcbTemplateRendering
 
     return Map.of(CommonVarNames.NAMESPACE, specification.simpleName(),
         "decodeFunctions",
-        decodeFunctions.values().stream().map(x -> new LcbCodeGenerator().generateFunction(x))
+        decodeFunctions.values().stream().map(x ->
+                new LcbGenericCodeGenerator().generateFunction(x))
             .sorted(Comparator.comparing(CppFunctionCode::value))
             .toList(),
         "decodeFunctionNames", decodeFunctionNames,
         "encodeFunctions",
-        encodeFunctions.values().stream().map(x -> new LcbCodeGenerator().generateFunction(x))
+        encodeFunctions.values().stream()
+            .map(x -> new LcbGenericCodeGenerator().generateFunction(x))
             .sorted(Comparator.comparing(CppFunctionCode::value))
             .toList(),
         "predicateFunctions", predicateFunctions.values().stream()
-            .map(x -> new LcbCodeGenerator().generateFunction(x))
+            .map(x -> new LcbGenericCodeGenerator().generateFunction(x))
             .sorted(Comparator.comparing(CppFunctionCode::value))
             .toList());
   }

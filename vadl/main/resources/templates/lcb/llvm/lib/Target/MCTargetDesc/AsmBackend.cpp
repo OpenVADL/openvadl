@@ -30,20 +30,19 @@ const MCFixupKindInfo &[(${namespace})]AsmBackend::getFixupKindInfo
     ( MCFixupKind Kind
     ) const
 {
-    const static std::array<MCFixupKindInfo, [(${relocations.size()})]> Infos =
+    const static std::array<MCFixupKindInfo, [(${fixups.size()})]> Infos =
     {
         // This table *must* be in the order that the fixup_* kinds are defined in
         // [(${namespace})]FixupKinds.h.
         //
         // name                 offset     bits     flags
-        [#th:block th:each="relocation, iterStat : ${relocations}" ]
-            (MCFixupKindInfo) { .Name="[(${relocation.mcFixupKindIdentifier})]", .TargetOffset=0, .TargetSize=0, .Flags=[#th:block th:text="${relocation.kind.toString() == 'PC_RELATIVE'} ? 'MCFixupKindInfo::FKF_IsPCRel' : '0'" /]}[#th:block th:if="${!iterStat.last}"],[/th:block]
+        [#th:block th:each="fixup, iterStat : ${fixups}" ]
+            (MCFixupKindInfo) { .Name="[(${fixup.name().value()})]", .TargetOffset=0, .TargetSize=0, .Flags=[#th:block th:text="${fixup.kind().isRelative()} ? 'MCFixupKindInfo::FKF_IsPCRel' : '0'" /]}[#th:block th:if="${!iterStat.last}"],[/th:block]
         [/th:block]
     };
 
     // sanity check if all fixups are defined
-    // TODO enable kper
-    //static_assert( Infos.size() == [(${namespace})]::NumTargetFixupKinds, "Not all fixup kinds added to Infos array");
+    static_assert( Infos.size() == [(${namespace})]::NumTargetFixupKinds, "Not all fixup kinds added to Infos array");
 
     // fixup kind is an LLVM internal fixup
     if ( Kind < FirstTargetFixupKind )
@@ -69,8 +68,8 @@ bool [(${namespace})]AsmBackend::shouldForceRelocation
     {
         default:
             return false;
-        [#th:block th:each="relocation : ${relocations}" ]
-            case [(${namespace})]::[(${relocation.mcFixupKindIdentifier})]:
+        [#th:block th:each="fixup : ${fixups}" ]
+            case [(${namespace})]::[(${fixup.name().value()})]:
         [/th:block]
             return true;
     }
@@ -147,9 +146,9 @@ static uint64_t adjustFixupValue
         case MCFixupKind::FK_Data_4:
         case MCFixupKind::FK_Data_8:
             return Value;
-        [#th:block th:each="relocation, iterStat : ${relocations}" ]
-         case [(${namespace})]::[(${relocation.mcFixupKindIdentifier})]:
-                    return [(${namespace})]BaseInfo::[(${relocation.functionIdentifier})]( Value );
+        [#th:block th:each="fixup, iterStat : ${fixups}" ]
+         case [(${namespace})]::[(${fixup.name().value()})]:
+                    return [(${namespace})]BaseInfo::[(${fixup.valueRelocation().functionName().lower()})]( Value );
         [/th:block]
     }
 }

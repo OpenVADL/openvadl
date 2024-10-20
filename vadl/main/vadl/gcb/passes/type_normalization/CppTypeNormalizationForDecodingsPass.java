@@ -43,7 +43,7 @@ public class CppTypeNormalizationForDecodingsPass extends CppTypeNormalizationPa
   @Override
   protected CppFunction liftFunction(Function function) {
     // LLVM's decoder requires uint64_t parameters.
-    return makeTypesCppConformWithParamType(function, getParameters(function));
+    return makeTypesCppConformWithParamType(function.identifier, function, getParameters(function));
   }
 
   private static List<Parameter> getParameters(Function function) {
