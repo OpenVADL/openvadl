@@ -29,7 +29,7 @@ public class GenerateFieldAccessEncodingFunctionPass extends Pass {
   private static final Logger logger = LoggerFactory.getLogger(
       GenerateFieldAccessEncodingFunctionPass.class);
 
-  private final List<EncodingGenerationStrategy> strategies = List.of(
+  public final static List<EncodingGenerationStrategy> strategies = List.of(
       new TrivialImmediateStrategy(),
       new ShiftedImmediateStrategy(),
       new ArithmeticImmediateStrategy());

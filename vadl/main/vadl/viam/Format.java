@@ -1,8 +1,9 @@
 package vadl.viam;
 
+import static vadl.viam.ViamError.ensure;
+
 import java.util.Arrays;
 import java.util.Comparator;
-import java.util.List;
 import java.util.Objects;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
@@ -326,7 +327,9 @@ public class Format extends Definition implements DefProp.WithType {
      * if the encoding was already set before.
      */
     public void setEncoding(Function encoding) {
-      ensure(this.encoding == null, "Field access encoding already set");
+      ViamError.ensure(this.encoding == null, () -> Diagnostic.error(
+          "Cannot regenerate an encoding for a field access which already has an encoding.",
+          encoding.sourceLocation()));
       this.encoding = encoding;
       verify();
     }
@@ -348,7 +351,7 @@ public class Format extends Definition implements DefProp.WithType {
     public void verify() {
       super.verify();
       if (encoding != null) {
-        encoding.ensure(encoding.returnType() instanceof DataType
+        ensure(encoding.returnType() instanceof DataType
                 && ((DataType) encoding.returnType()).isTrivialCastTo(fieldRef.type()),
             "Encoding type mismatch. Couldn't match encoding type %s with field reference type %s",
             encoding.returnType(), fieldRef().type());
