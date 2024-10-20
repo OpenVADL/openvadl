@@ -10,6 +10,7 @@ import java.util.IdentityHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.Set;
 import vadl.error.DeferredDiagnosticStore;
 import vadl.error.Diagnostic;
 import vadl.gcb.passes.pseudo.PseudoFuncParamNode;
@@ -45,7 +46,6 @@ public class LlvmPseudoLoweringImpl {
    * {@link Instruction} from {@link InstrCallNode} in {@link PseudoInstruction}.
    */
   private final List<LlvmInstructionLoweringStrategy> strategies;
-
   public LlvmPseudoLoweringImpl(List<LlvmInstructionLoweringStrategy> strategies) {
     this.strategies = strategies;
   }
@@ -56,10 +56,6 @@ public class LlvmPseudoLoweringImpl {
   public Optional<LlvmLoweringPseudoRecord> lower(
       PseudoInstruction pseudo,
       Map<InstructionLabel, List<Instruction>> supportedInstructions) {
-    ensure(!pseudo.identifier.simpleName().equals("RESERVERD_PSEUDO_RET"),
-        () -> Diagnostic.error("The name of the pseudo instruction is reserved.",
-            pseudo.identifier.sourceLocation()));
-
     var patterns = new ArrayList<TableGenPattern>();
     var flippedInstructions = LlvmLoweringPass.flipIsaMatching(supportedInstructions);
 

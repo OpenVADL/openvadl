@@ -70,6 +70,35 @@ def RESERVERD_PSEUDO_RET : Instruction
     let Uses = [];
 }
 
+/*
+ * PSEUDO_CALL is a pseudo instruction used to represent the
+ * 'target_call', which marks a function call.
+ * It will be later expanded into the defined calling sequence during code emission.
+ */
+def PSEUDO_CALL : Instruction
+{
+    let Namespace = "[(${namespace})]";
+    //let Size = 8; // ( Bits<32>, Bits<32> )
+    //let CodeSize = 8; // ( Bits<32>, Bits<32> ), used for ISEL cost
+    let InOperandList = (ins bare_symbol:$addr);
+    let OutOperandList = (outs);
+    let Pattern = [];
+    let isTerminator  = 0;
+    let isBranch      = 0;
+    let isCall        = 1;
+    let isReturn      = 0;
+    let isPseudo      = 1;
+    let isCodeGenOnly = 1;
+    let mayLoad       = 0;
+    let mayStore      = 0;
+    let Defs = [];
+    let Uses = [];
+}
+
+/* Match the call sequence for global and external symbols */
+def : Pat<(target_call tglobaladdr:$func), (PSEUDO_CALL tglobaladdr:$func)>;
+def : Pat<(target_call texternalsym:$func), (PSEUDO_CALL texternalsym:$func)>;
+
 [# th:each="imm : ${immediates}" ]
 [(${imm})]
 [/]
