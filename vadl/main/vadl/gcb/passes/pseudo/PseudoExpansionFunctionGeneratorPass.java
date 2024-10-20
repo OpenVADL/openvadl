@@ -37,7 +37,7 @@ public class PseudoExpansionFunctionGeneratorPass
         (AbstractPseudoInstructionArgumentReplacementPass.Output) passResults.lastResultOf(
             PseudoInstructionArgumentReplacementPass.class);
 
-    var specifiedSequences = Stream.of(abi.returnSequence());
+    var specifiedSequences = Stream.of(abi.returnSequence(), abi.callSequence());
 
     // We do not use the behavior of the pseudo instruction because each InstrCallNode
     // has the instruction behavior to the original instruction.

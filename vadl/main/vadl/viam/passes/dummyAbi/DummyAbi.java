@@ -61,6 +61,7 @@ public class DummyAbi extends Definition {
   private final List<RegisterRef> argumentRegisters;
   private final List<RegisterRef> returnRegisters;
   private final PseudoInstruction returnSequence;
+  private final PseudoInstruction callSequence;
 
   /**
    * Constructor.
@@ -75,7 +76,8 @@ public class DummyAbi extends Definition {
                   List<RegisterRef> calleeSaved,
                   List<RegisterRef> argumentRegisters,
                   List<RegisterRef> returnRegisters,
-                  PseudoInstruction returnSequence
+                  PseudoInstruction returnSequence,
+                  PseudoInstruction callSequence
   ) {
     super(identifier);
     this.returnAddress = returnAddress;
@@ -88,6 +90,7 @@ public class DummyAbi extends Definition {
     this.argumentRegisters = argumentRegisters;
     this.returnRegisters = returnRegisters;
     this.returnSequence = returnSequence;
+    this.callSequence = callSequence;
   }
 
   @Override
@@ -138,5 +141,9 @@ public class DummyAbi extends Definition {
 
   public PseudoInstruction returnSequence() {
     return returnSequence;
+  }
+
+  public PseudoInstruction callSequence() {
+    return callSequence;
   }
 }

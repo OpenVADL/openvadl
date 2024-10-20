@@ -7,6 +7,7 @@ import static vadl.viam.ViamError.ensurePresent;
 import com.google.common.collect.Streams;
 import java.io.StringWriter;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
@@ -94,7 +95,17 @@ public class PseudoExpansionCodeGeneratorVisitor extends GenericCppCodeGenerator
   }
 
 
-  private int getOperandIndexFromPseudoInstruction(Identifier parameter) {
+  /**
+   * Trying to get the index from {@code pseudoInstruction.parameters} based on the given
+   * {@code parameter}. This index is important because it is the index of the pseudo instruction's
+   * operands which will be used for the pseudo instruction's expansion.
+   * For example, you have pseudo instruction {@code X(arg1, arg2) } which has two arguments. You
+   * have to know that {@code arg2} has index {@code 1} to correctly map it to a machine
+   * instruction later.
+   */
+  private int getOperandIndexFromPseudoInstruction(Format.Field field,
+                                                   ExpressionNode argument,
+                                                   Identifier parameter) {
     for (int i = 0; i < pseudoInstruction.parameters().length; i++) {
       if (parameter.simpleName()
           .equals(pseudoInstruction.parameters()[i].identifier.simpleName())) {
@@ -103,8 +114,16 @@ public class PseudoExpansionCodeGeneratorVisitor extends GenericCppCodeGenerator
     }
 
     throw Diagnostic.error(
-        "Cannot extract the pseudo instruction's operand index for this parameter",
-        parameter.sourceLocation()).build();
+            "Cannot assign field because the field was not field.",
+            parameter.sourceLocation())
+        .locationDescription(argument.sourceLocation(), "Trying to match this argument.")
+        .locationDescription(field.sourceLocation(), "Trying to assign this field.")
+        .locationDescription(pseudoInstruction.sourceLocation(),
+            "This pseudo instruction is affected.")
+        .help(
+            String.format("The parameter '%s' must match any pseudo instruction's parameter names",
+                parameter.simpleName()))
+        .build();
   }
 
   @Override
@@ -127,14 +146,27 @@ public class PseudoExpansionCodeGeneratorVisitor extends GenericCppCodeGenerator
       if (argument instanceof ConstantNode cn) {
         lowerExpression(instrCallNode.target(), sym, field, cn);
       } else if (argument instanceof FuncCallNode fn) {
-        var pseudoInstructionIndex = getOperandIndexFromPseudoInstruction(fn.function().identifier);
         ensure(fn.function() instanceof Relocation,
-            () -> Diagnostic.error("Function must be a relocation", fn.sourceLocation()));
+            () -> Diagnostic.error("Function must be a relocation", fn.sourceLocation()));        /*
+         pseudo instruction CALL( symbol : Bits<32> ) =
+         {
+              LUI{ rd = 1 as Bits5, imm = hi20( symbol ) }
+              JALR{ rd = 1 as Bits5, rs1 = 1 as Bits5, imm = lo12( symbol ) }
+         }
+         Here we want to match the `symbol` from `CALL` with `hi20`'s `symbol`.
+         */
+        var relocationArgument =
+            ensurePresent(Arrays.stream(fn.function().parameters()).findFirst(),
+                () -> Diagnostic.error("Function does not have a parameter in pseudo instruction",
+                    fn.sourceLocation()));
+        var pseudoInstructionIndex =
+            getOperandIndexFromPseudoInstruction(field, argument, relocationArgument.identifier);
         lowerExpressionWithRelocation(sym, field, pseudoInstructionIndex,
             (Relocation) fn.function());
       } else if (argument instanceof FuncParamNode funcParamNode) {
         var pseudoInstructionIndex =
-            getOperandIndexFromPseudoInstruction(funcParamNode.parameter().identifier);
+            getOperandIndexFromPseudoInstruction(field, argument,
+                funcParamNode.parameter().identifier);
         lowerExpressionWithImmOrRegister(sym, field, pseudoInstructionIndex);
       } else if (argument instanceof ZeroExtendNode zeroExtendNode
           && zeroExtendNode.value() instanceof ConstantNode cn) {

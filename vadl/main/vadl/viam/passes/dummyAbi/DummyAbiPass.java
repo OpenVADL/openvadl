@@ -47,6 +47,7 @@ public class DummyAbiPass extends Pass {
     var argumentRegisters = getArgumentRegisters(registerFile);
     var returnRegisters = getReturnRegisters(registerFile);
     var returnSequence = getReturnSequence(viam);
+    var callSequence = getCallSequence(viam);
 
     viam.add(new DummyAbi(new Identifier("dummyAbi", SourceLocation.INVALID_SOURCE_LOCATION),
         new DummyAbi.RegisterRef(registerFile, 1, DummyAbi.Alignment.WORD),
@@ -58,7 +59,8 @@ public class DummyAbiPass extends Pass {
         calleeSaved,
         argumentRegisters,
         returnRegisters,
-        returnSequence));
+        returnSequence,
+        callSequence));
 
     return null;
   }
@@ -70,11 +72,29 @@ public class DummyAbiPass extends Pass {
             .findFirst()
             .get();
 
-    return new PseudoInstruction(
-        new Identifier("RESERVERD_PSEUDO_RET", SourceLocation.INVALID_SOURCE_LOCATION),
+    var x = new PseudoInstruction(
+        new Identifier("RESERVED_PSEUDO_RET", retInstruction.identifier.sourceLocation()),
         retInstruction.parameters(),
         retInstruction.behavior().copy(),
         retInstruction.assembly());
+    x.setSourceLocation(retInstruction.sourceLocation());
+    return x;
+  }
+
+  private PseudoInstruction getCallSequence(Specification viam) {
+    var callInstruction =
+        viam.isa().map(isa -> isa.ownPseudoInstructions().stream()).orElseGet(Stream::empty)
+            .filter(x -> x.identifier.simpleName().equals("CALL"))
+            .findFirst()
+            .get();
+
+    var x = new PseudoInstruction(
+        new Identifier("RESERVED_PSEUDO_CALL", callInstruction.identifier.sourceLocation()),
+        callInstruction.parameters(),
+        callInstruction.behavior().copy(),
+        callInstruction.assembly());
+    x.setSourceLocation(callInstruction.sourceLocation());
+    return x;
   }
 
   private List<DummyAbi.RegisterRef> getReturnRegisters(RegisterFile registerFile) {

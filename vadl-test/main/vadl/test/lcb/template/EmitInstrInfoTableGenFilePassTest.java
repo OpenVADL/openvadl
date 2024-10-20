@@ -36,6 +36,10 @@ public class EmitInstrInfoTableGenFilePassTest extends AbstractLcbTest {
          * if the specific register is a frame pointer.
          */
         def AddrFI : ComplexPattern<iPTR, 1, "SelectAddrFI", [frameindex], []>;
+        
+        // symbol operand used for matching load and call sequences.
+        // the size is determined by the program counter size.
+        def bare_symbol : Operand<i64>;
                 
         def SDT_CallSeqStart : SDCallSeqStart<[SDTCisVT<0, i64>, SDTCisVT<1, i64>]>;
         def SDT_CallSeqEnd   : SDCallSeqEnd<[SDTCisVT<0, i64>, SDTCisVT<1, i64>]>;
@@ -46,6 +50,9 @@ public class EmitInstrInfoTableGenFilePassTest extends AbstractLcbTest {
         // Target-independent nodes, but with target-specific formats
         def callseq_start : SDNode<"ISD::CALLSEQ_START", SDT_CallSeqStart, [SDNPHasChain, SDNPOutGlue]>;
         def callseq_end   : SDNode<"ISD::CALLSEQ_END", SDT_CallSeqEnd, [SDNPHasChain, SDNPOptInGlue, SDNPOutGlue]>;
+        
+        def target_call : SDNode<"CPUISD::CALL", SDT_CPU_Call,
+                                   [SDNPHasChain, SDNPOptInGlue, SDNPOutGlue, SDNPVariadic]>;
                 
         def target_ret_flag : SDNode<"rv64imISD::RET_FLAG", SDTNone,
                                    [SDNPHasChain, SDNPOptInGlue, SDNPVariadic]>;
