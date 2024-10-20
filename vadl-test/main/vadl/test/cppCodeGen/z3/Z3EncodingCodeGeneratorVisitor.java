@@ -1,4 +1,4 @@
-package vadl.lcb.codegen;
+package vadl.test.cppCodeGen.z3;
 
 import vadl.viam.graph.dependency.FieldRefNode;
 import vadl.viam.graph.dependency.FuncParamNode;
