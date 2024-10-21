@@ -3,7 +3,6 @@ import os
 import time
 from typing import Optional
 
-
 from qemu.qmp import QMPClient, EventListener
 
 from abstract_test_case_executor import AbstractTestCaseExecutor
@@ -41,7 +40,6 @@ class QMPTestCaseExecutor(AbstractTestCaseExecutor):
         await self._wait_until_done()
         await self._set_results()
         await self._shutdown()
-
 
     async def _event_handler(self):
         try:
@@ -103,21 +101,18 @@ class QMPTestCaseExecutor(AbstractTestCaseExecutor):
         response = await self.qmp.execute('human-monitor-command', {'command-line': f'info registers'})
         result = self._extract_register_value(response, reg)
         if result is None:
-            raise Exception(f"Failed to extract register value for {reg}")
+            raise Exception(f"Failed to extract register value for {reg}. Full dump:\n{response}")
         return result
-
 
     def _tmp_file(self, name: str) -> str:
         build_dir = f"/tmp/build-{self.spec.id}/"
         os.makedirs(build_dir, exist_ok=True)
         return f"{build_dir}/{name}"
 
-
-
     def _build_assembly_test(self, core: str, out_path: str) -> str:
         if SIGNAL_REG.lower() in core.lower():
             raise Exception(
-                "Failed to build assembly: You cannot use the t1 register, as it is used as internal signal register!")
+                f"Failed to build assembly: You cannot use the {SIGNAL_REG} register, as it is used as internal signal register!")
 
         content = f"""
         .global _start
@@ -135,7 +130,6 @@ class QMPTestCaseExecutor(AbstractTestCaseExecutor):
 
         with open(out_path, "w") as f:
             f.write(content)
-
 
     def _extract_register_value(self, registers_info: str, register_name: str) -> Optional[str]:
         # Split the registers_info into lines
