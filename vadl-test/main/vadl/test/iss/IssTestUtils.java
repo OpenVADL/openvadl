@@ -8,9 +8,14 @@ import java.util.Collection;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.yaml.snakeyaml.Yaml;
 
 public class IssTestUtils {
+
+  private static final Logger log = LoggerFactory.getLogger(IssTestUtils.class);
 
   protected record TestSpec(
       String id,
@@ -87,34 +92,40 @@ public class IssTestUtils {
       // load all results
       List<Object> results = yaml.load(reader);
 
-      return results.stream()
-          // map yaml to test result
-          .map(r -> {
-            Map<String, Object> data = (Map<String, Object>) r;
-            Map<String, Object> result = (Map<String, Object>) data.get("result");
+      try {
+        return results.stream()
+            // map yaml to test result
+            .map(r -> {
+              Map<String, Object> data = (Map<String, Object>) r;
+              Map<String, Object> result = (Map<String, Object>) data.get("result");
 
-            String id = data.get("id").toString();
-            // Assuming the YAML structure matches the fields in TestResult
-            TestResult.Status status =
-                TestResult.Status.valueOf((String) result.get("status"));
-            List<TestResult.Stage> completedStages =
-                ((List<String>) result.get("completedStages")).stream()
-                    .map(e -> TestResult.Stage.valueOf(e))
-                    .toList();
-            List<String> errors = (List<String>) result.get("errors");
-            String duration = (String) result.get("duration");
-            List<TestResult.RegTestResult> regTests =
-                ((Map<String, Object>) result.get("regTests")).entrySet()
-                    .stream().map(e -> {
-                      var val = (Map<String, String>) e.getValue();
-                      return new TestResult.RegTestResult(e.getKey(),
-                          val.get("expected"), val.get("actual"));
-                    }).toList();
+              String id = data.get("id").toString();
+              // Assuming the YAML structure matches the fields in TestResult
+              TestResult.Status status =
+                  TestResult.Status.valueOf((String) result.get("status"));
+              List<TestResult.Stage> completedStages =
+                  ((List<String>) result.get("completedStages")).stream()
+                      .map(e -> TestResult.Stage.valueOf(e))
+                      .toList();
+              List<String> errors = (List<String>) result.get("errors");
+              String duration = (String) result.get("duration");
+              List<TestResult.RegTestResult> regTests =
+                  ((Map<String, Object>) result.get("regTests")).entrySet()
+                      .stream().map(e -> {
+                        var val = (Map<String, String>) e.getValue();
+                        return new TestResult.RegTestResult(e.getKey(),
+                            Objects.toString(val.get("expected")),
+                            Objects.toString(val.get("actual")));
+                      }).toList();
 
-            return new TestResult(id, status, completedStages, regTests, errors,
-                duration);
-          })
-          .toList();
+              return new TestResult(id, status, completedStages, regTests, errors,
+                  duration);
+            })
+            .toList();
+      } catch (Exception e) {
+        log.error("Failed to parse file, result was\n {}", results);
+        throw e;
+      }
     }
   }
 
