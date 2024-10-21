@@ -5,12 +5,18 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.fail;
 
 import com.github.dockerjava.api.model.Bind;
+import com.github.dockerjava.api.model.Mount;
+import com.github.dockerjava.api.model.MountType;
+import com.github.dockerjava.api.model.Volume;
 import java.io.IOException;
 import java.nio.file.Path;
 import java.time.Duration;
+import java.util.List;
 import java.util.Objects;
 import java.util.function.Consumer;
 import javax.annotation.Nullable;
+import org.junit.jupiter.api.AfterAll;
+import org.junit.jupiter.api.AfterEach;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.testcontainers.containers.GenericContainer;
@@ -22,6 +28,16 @@ import org.testcontainers.utility.MountableFile;
 public abstract class DockerExecutionTest extends AbstractTest {
 
   private static final Logger logger = LoggerFactory.getLogger(DockerExecutionTest.class);
+
+  @Nullable
+  private static RedisCache redisCache;
+
+  @AfterAll
+  public static void tearDown() {
+    if (redisCache != null) {
+      redisCache.stop();
+    }
+  }
 
   /**
    * Starts a container and checks the status code for the exited container.
@@ -41,7 +57,7 @@ public abstract class DockerExecutionTest extends AbstractTest {
                                          String content,
                                          String mountPath) throws IOException {
     runContainer(image, (container) -> container
-        .withCopyToContainer(Transferable.of(content), mountPath),
+            .withCopyToContainer(Transferable.of(content), mountPath),
         null
     );
   }
@@ -50,7 +66,7 @@ public abstract class DockerExecutionTest extends AbstractTest {
                                             Path hostPath,
                                             String containerPath) {
     runContainer(image, container ->
-        withHostFsBind(container, hostPath, containerPath),
+            withHostFsBind(container, hostPath, containerPath),
         null
     );
   }
@@ -71,7 +87,7 @@ public abstract class DockerExecutionTest extends AbstractTest {
    */
   protected void runContainer(ImageFromDockerfile image, String path, String mountPath) {
     runContainer(image, (container) -> container.withCopyToContainer(
-        MountableFile.forHostPath(path), mountPath),
+            MountableFile.forHostPath(path), mountPath),
         null
     );
   }
@@ -84,12 +100,12 @@ public abstract class DockerExecutionTest extends AbstractTest {
    *
    * @param image             is the docker image for the {@link GenericContainer}.
    * @param containerModifier a consumer that allows modification of the container configuration
-   * @param postExecution a consumer that is called when the container successfully terminated
+   * @param postExecution     a consumer that is called when the container successfully terminated
    */
   protected void runContainer(ImageFromDockerfile image,
                               Consumer<GenericContainer<?>> containerModifier,
                               @Nullable Consumer<GenericContainer<?>> postExecution
-                              ) {
+  ) {
     try (GenericContainer<?> container = new GenericContainer<>(image)
         .withLogConsumer(new Slf4jLogConsumer(logger))) {
       containerModifier.accept(container);
@@ -115,6 +131,33 @@ public abstract class DockerExecutionTest extends AbstractTest {
     }
   }
 
+  /**
+   * Returns a running redis cache. If no redis cache exists yet, it will be created.
+   *
+   * @return an object containing redis cache information
+   */
+  protected synchronized static RedisCache getRunningRedisCache() {
+    if (redisCache != null && redisCache.redisContainer.isRunning()) {
+      return redisCache;
+    }
+
+    var container = new GenericContainer<>("redis:7.4")
+        .withCreateContainerCmdModifier(cmd -> {
+          var mount = new Mount()
+              .withType(MountType.VOLUME)
+              .withSource("open-vadl-redis-cache")
+              .withTarget("/data");
+
+          Objects.requireNonNull(cmd.getHostConfig())
+              .withMounts(List.of(mount));
+        })
+        .withExposedPorts(6379);
+    container.start();
+    redisCache = new RedisCache(container);
+    return redisCache;
+  }
+
+
   protected static <T extends GenericContainer<?>> T withHostFsBind(T container, Path hostPath,
                                                                     String containerPath) {
     // withFileSystemBind got deprecated and this is somewhat a replacement
@@ -125,5 +168,26 @@ public abstract class DockerExecutionTest extends AbstractTest {
             .withBinds(Bind.parse(hostPath.toAbsolutePath() + ":" + containerPath))
     );
     return container;
+  }
+
+  protected record RedisCache(
+      String host,
+      int port,
+      GenericContainer<?> redisContainer
+  ) {
+
+    RedisCache(GenericContainer<?> redisContainer) {
+      this(redisContainer.getHost(), redisContainer.getMappedPort(6379), redisContainer);
+    }
+
+    public void stop() {
+      try {
+        redisContainer.execInContainer("redis-cli", "shutdown", "save");
+        redisContainer.stop();
+      } catch (IOException | InterruptedException e) {
+        redisContainer.stop();
+        throw new RuntimeException(e);
+      }
+    }
   }
 }

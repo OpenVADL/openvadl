@@ -36,11 +36,6 @@ import vadl.test.DockerExecutionTest;
  */
 public abstract class QemuIssTest extends DockerExecutionTest {
 
-  // config of cloud sccache
-  @Nullable
-  private static final String REDIS_CACHE_HOST = System.getenv("REDIS_CACHE_HOST");
-  private static final int REDIS_CACHE_PORT = 6379;
-
   // config of qemu test image
   private static final String QEMU_TEST_IMAGE =
       "jozott/qemu@sha256:59fd89489908864d9c5267a39152a55559903040299bcb7a65382c4beebac2e2";
@@ -166,6 +161,9 @@ public abstract class QemuIssTest extends DockerExecutionTest {
   private ImageFromDockerfile getIssImage(Path generatedIssSources
   ) {
 
+    // get redis cache for faster compilation using sccache
+    var redisCache = getRunningRedisCache();
+
     return new ImageFromDockerfile()
         .withDockerfileFromBuilder(d -> {
               d
@@ -177,35 +175,24 @@ public abstract class QemuIssTest extends DockerExecutionTest {
                   .workDir("/qemu/build");
 
 
-              // determine the used compiler (gcc or sccache gcc)
-              var cc = "gcc";
-              if (REDIS_CACHE_HOST != null) {
-                log.info("Redis cache connection established. Using sccache cache...");
-                // TODO: Set redis port to our cache
-                d.env("SCCACHE_REDIS_ENDPOINT", "tcp://" + REDIS_CACHE_HOST + ":" + REDIS_CACHE_PORT);
-                cc = "sccache gcc";
-              } else if (System.getenv("SCCACHE_BUCKET") != null) {
-                // support for s3 sccache
-                var bucket = System.getenv("SCCACHE_BUCKET");
-                var region = System.getenv("SCCACHE_REGION");
-                var acccessKeyId = System.getenv("AWS_ACCESS_KEY_ID");
-                var accessKey = System.getenv("AWS_SECRET_ACCESS_KEY");
-                ensure(bucket != null && region != null && acccessKeyId != null && accessKey != null,
-                    "SCCACHE_BUCKET is set, some other variables are not set");
-                d.env("SCCACHE_BUCKET", bucket)
-                    .env("SCCACHE_REGION", region)
-                    .env("AWS_ACCESS_KEY_ID", acccessKeyId)
-                    .env("AWS_SECRET_ACCESS_KEY", accessKey);
-                cc = "sccache gcc";
+              // use redis cache for building
+              var cc = "sccache gcc";
+              if (!redisCache.host().equals("localhost")) {
+                // if the host is not localhost we cannot map to host.docker.internal
+                log.warn("Cannot use redis cache as host {} is unknown", redisCache.host());
+                cc = "gcc";
               } else {
-                log.warn("Couldn't connect to redis sccache. Building without cache...");
+                log.info("Using redis cache: {}", redisCache);
+                // we use host.docker.internal to access the service exposed on the host
+                d.env("SCCACHE_REDIS_ENDPOINT",
+                    "tcp://" + "host.docker.internal" + ":" + redisCache.port());
               }
 
               // TODO: update target name
               // configure qemu with the new target from the specification
               d.run("../configure --cc='" + cc + "' --target-list=vadl-softmmu");
               // build qemu
-              d.run("make -j8");
+              d.run("make");
               // validate existence of generated qemu iss
               d.run("qemu-system-vadl --version");
 
