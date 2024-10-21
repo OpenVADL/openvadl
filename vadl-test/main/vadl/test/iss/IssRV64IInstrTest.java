@@ -18,14 +18,14 @@ import vadl.types.DataType;
 import vadl.viam.Constant;
 
 /**
- * Tests the RV64I instructions set
+ * Tests the RV64I instructions set.
  */
 public class IssRV64IInstrTest extends QemuIssTest {
 
   private static final Logger log = LoggerFactory.getLogger(IssRV64IInstrTest.class);
 
   // Collection of all test generators
-  private final Stream<Function<Integer, IssTestUtils.TestSpec>> TEST_GENERATORS = Stream.of(
+  private static final Stream<Function<Integer, IssTestUtils.TestSpec>> TEST_GENERATORS = Stream.of(
       IssRV64IInstrTest::gen12BitAddiTest
   );
 
