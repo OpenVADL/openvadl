@@ -33,9 +33,12 @@ public abstract class DockerExecutionTest extends AbstractTest {
   private static RedisCache redisCache;
 
   @AfterAll
-  public static void tearDown() {
+  public static synchronized void tearDown() {
     if (redisCache != null) {
-      redisCache.stop();
+      if (!redisCache.redisContainer.isRunning()) {
+        redisCache.stop();
+      }
+      redisCache = null;
     }
   }
 
@@ -136,7 +139,7 @@ public abstract class DockerExecutionTest extends AbstractTest {
    *
    * @return an object containing redis cache information
    */
-  protected synchronized static RedisCache getRunningRedisCache() {
+  protected static synchronized RedisCache getRunningRedisCache() {
     if (redisCache != null && redisCache.redisContainer.isRunning()) {
       return redisCache;
     }
