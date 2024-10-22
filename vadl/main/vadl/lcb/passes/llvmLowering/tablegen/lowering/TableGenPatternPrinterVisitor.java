@@ -128,7 +128,7 @@ public class TableGenPatternPrinterVisitor
 
   @Override
   public void visit(ReadRegNode readRegNode) {
-
+    writer.write(readRegNode.register().identifier.simpleName());
   }
 
   @Override
