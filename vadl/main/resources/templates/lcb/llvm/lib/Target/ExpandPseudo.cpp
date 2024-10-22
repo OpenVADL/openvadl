@@ -122,11 +122,11 @@ MachineOperand [(${namespace})]ExpandPseudo::copyRegOp(const MachineOperand &MO,
 
 // generates the necessary pass setups
 char [(${namespace})]ExpandPseudo::ID = 0;
-INITIALIZE_PASS([(${namespace})]ExpandPseudo, "«namespace»-expand-pseudo",
+INITIALIZE_PASS([(${namespace})]ExpandPseudo, "[(${namespace})]-expand-pseudo",
                         [(${namespace})]_EXPAND_PSEUDO_NAME, false, false)
 
-// global function is declared in '«namespace».h'
-// used to create the pass and add it in the '«namespace»PassConfig.h'
+// global function is declared in '[(${namespace})].h'
+// used to create the pass and add it in the '[(${namespace})]PassConfig.h'
 FunctionPass *llvm::create[(${namespace})]ExpandPseudoPass()
 {
     return new [(${namespace})]ExpandPseudo();

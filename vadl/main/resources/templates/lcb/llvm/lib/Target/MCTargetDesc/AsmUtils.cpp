@@ -112,7 +112,7 @@ std::string AsmUtils::formatImm(int64_t Value, uint8_t Radix, const MCAsmInfo *M
             stream << "0x" << std::hex << Value;
             return stream.str();
         default:
-            return "Usupported radix " + Radix;
+            return std::string("Usupported radix ") + std::to_string(Radix);
     }
 }
 

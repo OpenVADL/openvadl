@@ -192,7 +192,7 @@ instruction set architecture RV3264I = {
 
   model ECallInstr (name : Id, imm : Lit) : IsaDefs = {
     instruction $name : Itype =  {}                    // ecall / ebreak instructions
-    encoding $name = {opcode = 0b111'0011, funct3 = 0b000, rd = 0b0'0000, rd = 0b0'0000, imm = $imm}
+    encoding $name = {opcode = 0b111'0011, funct3 = 0b000, rd = 0b0'0000, rs1 = 0b0'0000, imm = $imm}
     assembly $name = (mnemonic)
     }
 
