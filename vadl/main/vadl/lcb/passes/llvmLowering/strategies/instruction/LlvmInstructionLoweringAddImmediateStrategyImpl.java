@@ -56,8 +56,12 @@ public class LlvmInstructionLoweringAddImmediateStrategyImpl
           var machine = pattern.machine().copy();
 
           var affectedNodes = selector.getNodes(LlvmReadRegFileNode.class).toList();
-          alternativePatterns.add(
-              super.replaceRegisterWithFrameIndex(selector, machine, affectedNodes));
+          // Only add a new pattern when something is affected.
+          // Otherwise, we get a duplicated pattern.
+          if (!affectedNodes.isEmpty()) {
+            alternativePatterns.add(
+                super.replaceRegisterWithFrameIndex(selector, machine, affectedNodes));
+          }
         });
 
     return alternativePatterns;

@@ -50,7 +50,8 @@ public class LlvmLoweringPassPseudoInstructionTest extends AbstractLcbTest {
     expectedResults.put("CALL", new TestOutput(Collections.emptyList(), Collections.emptyList(),
         Collections.emptyList(), Collections.emptyList(), getPseudoFlags()));
     expectedResults.put("J", new TestOutput(Collections.emptyList(), Collections.emptyList(),
-        Collections.emptyList(), Collections.emptyList(), getPseudoFlags()));
+        Collections.emptyList(), Collections.emptyList(), new LlvmLoweringPass.Flags(
+        true, false, false, false, true, false, false, false)));
     expectedResults.put("MOV",
         new TestOutput(List.of(createOperand("X", "rd")), List.of(createOperand("X", "rs1")),
             List.of("(add X:$rs1, (i64 0))"), List.of("(MOV X:$rs1)"), getPseudoFlags()));
@@ -60,7 +61,7 @@ public class LlvmLoweringPassPseudoInstructionTest extends AbstractLcbTest {
     expectedResults.put("NOP", new TestOutput(Collections.emptyList(), Collections.emptyList(),
         List.of("(add (i64 0), (i64 0))"), List.of("(NOP )"), getPseudoFlags()));
     expectedResults.put("NOT", new TestOutput(Collections.emptyList(), Collections.emptyList(),
-        Collections.emptyList(), Collections.emptyList(), getPseudoFlags()));
+        List.of("(xor X:$rs1, (i64 4095))"), List.of("(NOT X:$rs1)"), getPseudoFlags()));
     expectedResults.put("RETURN", new TestOutput(Collections.emptyList(), Collections.emptyList(),
         Collections.emptyList(), Collections.emptyList(), getPseudoFlags()));
     expectedResults.put("SGTZ",
