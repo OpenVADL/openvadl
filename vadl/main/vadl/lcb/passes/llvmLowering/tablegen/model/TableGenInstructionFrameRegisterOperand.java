@@ -1,6 +1,7 @@
 package vadl.lcb.passes.llvmLowering.tablegen.model;
 
 import vadl.lcb.passes.llvmLowering.tablegen.model.parameterIdentity.ParameterIdentity;
+import vadl.lcb.passes.llvmLowering.tablegen.model.parameterIdentity.ParameterTypeAndNameIdentity;
 import vadl.viam.Register;
 import vadl.viam.graph.Node;
 
@@ -10,11 +11,17 @@ import vadl.viam.graph.Node;
 public class TableGenInstructionFrameRegisterOperand extends TableGenInstructionOperand {
 
   /**
-   * Contructor.
+   * Constructor.
    */
   public TableGenInstructionFrameRegisterOperand(ParameterIdentity identity, Node node) {
     // Note that `node` has the type `Node` and not `LlvmFrameIndex` because
     // the machine pattern requires that the node remains a register class file operand.
     super(node, identity);
+  }
+
+  @Override
+  public String render() {
+    var paramIdentity = (ParameterTypeAndNameIdentity) identity();
+    return "AddrFI:$" + paramIdentity.name();
   }
 }

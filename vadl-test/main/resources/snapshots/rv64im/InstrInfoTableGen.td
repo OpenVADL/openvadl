@@ -4072,7 +4072,7 @@ let Defs = [  ];
 def : Pat<(add X:$rs1, (i64 0)),
         (MOV X:$rs1)>;
 
-def : Pat<(add X:$rs1, (i64 0)),
+def : Pat<(add AddrFI:$rs1, (i64 0)),
         (MOV AddrFI:$rs1)>;
 
 

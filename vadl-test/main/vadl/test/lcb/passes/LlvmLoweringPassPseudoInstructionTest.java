@@ -54,7 +54,8 @@ public class LlvmLoweringPassPseudoInstructionTest extends AbstractLcbTest {
         true, false, false, false, true, false, false, false)));
     expectedResults.put("MOV",
         new TestOutput(List.of(createOperand("X", "rd")), List.of(createOperand("X", "rs1")),
-            List.of("(add X:$rs1, (i64 0))"), List.of("(MOV X:$rs1)"), getPseudoFlags()));
+            List.of("(add X:$rs1, (i64 0))", "(add AddrFI:$rs1, (i64 0))"),
+            List.of("(MOV X:$rs1)", "(MOV AddrFI:$rs1)"), getPseudoFlags()));
     expectedResults.put("NEG",
         new TestOutput(List.of(createOperand("X", "rd")), List.of(createOperand("X", "rs1")),
             List.of("(sub (i64 0), X:$rs1)"), List.of("(NEG X:$rs1)"), getPseudoFlags()));
