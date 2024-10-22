@@ -236,6 +236,9 @@ public abstract class CppTypeNormalizationPass extends Pass {
         upcast(parameter.type()));
   }
 
+  /**
+   * Upcast the given type to the next fitting bit size.
+   */
   public static BitsType upcast(Type type) {
     if (type instanceof BitsType cast) {
       return cast.withBitWidth(nextFittingBitSize(cast.bitWidth()));

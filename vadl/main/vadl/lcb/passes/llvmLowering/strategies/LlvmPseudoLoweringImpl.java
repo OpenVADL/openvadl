@@ -46,6 +46,7 @@ public class LlvmPseudoLoweringImpl {
    * {@link Instruction} from {@link InstrCallNode} in {@link PseudoInstruction}.
    */
   private final List<LlvmInstructionLoweringStrategy> strategies;
+
   public LlvmPseudoLoweringImpl(List<LlvmInstructionLoweringStrategy> strategies) {
     this.strategies = strategies;
   }
