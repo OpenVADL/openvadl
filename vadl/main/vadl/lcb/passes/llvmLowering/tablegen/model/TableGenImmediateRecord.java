@@ -49,7 +49,7 @@ public class TableGenImmediateRecord {
    * Constructor.
    */
   public TableGenImmediateRecord(Format.FieldAccess fieldAccess,
-                                 ValueType llvmType ) {
+                                 ValueType llvmType) {
     this(fieldAccess.fieldRef().identifier,
         Objects.requireNonNull(fieldAccess.encoding()).identifier.append(
             EmitMCCodeEmitterCppFilePass.WRAPPER),
@@ -76,7 +76,7 @@ public class TableGenImmediateRecord {
   }
 
   public String fullname() {
-    return String.format("%sAs%s", this.name, type.getFancyName());
+    return String.format("%sAs%s", this.name, type.getTableGen());
   }
 
 

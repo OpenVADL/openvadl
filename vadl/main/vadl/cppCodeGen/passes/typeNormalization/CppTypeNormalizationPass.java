@@ -233,7 +233,7 @@ public abstract class CppTypeNormalizationPass extends Pass {
 
   private static Parameter upcast(Parameter parameter) {
     return new Parameter(parameter.identifier,
-        upcast(parameter.type()), parameter.parent());
+        upcast(parameter.type()));
   }
 
   public static BitsType upcast(Type type) {

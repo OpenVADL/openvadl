@@ -41,7 +41,7 @@ public class GenerateTableGenImmediateRecordPass extends Pass {
                                                Specification viam) throws IOException {
     var abi = (DummyAbi) viam.definitions().filter(x -> x instanceof DummyAbi).findFirst().get();
     return viam.isa().map(isa -> isa.ownFormats().stream()).orElseGet(Stream::empty)
-        .flatMap(fieldUsages -> Arrays.stream(fieldUsages.fieldAccesses()))
+        .flatMap(fieldUsages -> fieldUsages.fieldAccesses().stream())
         .distinct()
         .map(fieldAccess -> {
           var originalType = abi.stackPointer().registerFile().resultType();

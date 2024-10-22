@@ -1,9 +1,9 @@
 package vadl.viam;
 
-import static vadl.viam.ViamError.ensure;
-
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Comparator;
+import java.util.List;
 import java.util.Objects;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
@@ -27,7 +27,7 @@ public class Format extends Definition implements DefProp.WithType {
 
   private final BitsType type;
   private Field[] fields;
-  private FieldAccess[] fieldAccesses;
+  private List<FieldAccess> fieldAccesses;
 
   /**
    * Constructs a new instance of a VADL format.
@@ -39,9 +39,8 @@ public class Format extends Definition implements DefProp.WithType {
     super(identifier);
     this.type = type;
     this.fields = new Field[] {};
-    this.fieldAccesses = new FieldAccess[] {};
+    this.fieldAccesses = new ArrayList<>();
   }
-
 
   public Field[] fields() {
     return fields;
@@ -65,15 +64,19 @@ public class Format extends Definition implements DefProp.WithType {
         .toArray(Field[]::new);
   }
 
-  public FieldAccess[] fieldAccesses() {
+  public List<FieldAccess> fieldAccesses() {
     return fieldAccesses;
+  }
+
+  public void addFieldAccess(FieldAccess fieldAccess) {
+    fieldAccesses.add(fieldAccess);
   }
 
   /**
    * Used by VIAM builder only.
    */
   public void setFieldAccesses(FieldAccess[] fieldAccesses) {
-    this.fieldAccesses = fieldAccesses;
+    this.fieldAccesses = new ArrayList<>(Arrays.stream(fieldAccesses).toList());
   }
 
   @Override
@@ -84,7 +87,7 @@ public class Format extends Definition implements DefProp.WithType {
   @Override
   public String toString() {
     return "Format{ " + identifier + ": " + type + "{\n\t"
-        + Stream.concat(Stream.of(fields), Stream.of(fieldAccesses))
+        + Stream.concat(Stream.of(fields), fieldAccesses.stream())
         .map(Definition::toString)
         .collect(Collectors.joining("\n\t"))
         + "\n}";
@@ -106,14 +109,14 @@ public class Format extends Definition implements DefProp.WithType {
     Format format = (Format) o;
     return Objects.equals(type, format.type)
         && Arrays.equals(fields, format.fields)
-        && Arrays.equals(fieldAccesses, format.fieldAccesses);
+        && fieldAccesses.equals(format.fieldAccesses);
   }
 
   @Override
   public int hashCode() {
     int result = Objects.hash(type);
     result = 31 * result + Arrays.hashCode(fields);
-    result = 31 * result + Arrays.hashCode(fieldAccesses);
+    result = 31 * result + fieldAccesses.hashCode();
     return result;
   }
 

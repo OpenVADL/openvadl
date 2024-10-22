@@ -30,7 +30,7 @@ public class CppTypeNormalizationForPredicatesPass extends CppTypeNormalizationP
   protected Stream<Pair<Format.Field, Function>> getApplicable(Specification viam) {
     return viam.isa()
         .map(x -> x.ownFormats().stream()).orElseGet(Stream::empty)
-        .flatMap(x -> Arrays.stream(x.fieldAccesses()))
+        .flatMap(x -> x.fieldAccesses().stream())
         .filter(x -> x.encoding() != null)
         .map(fieldAccess -> new Pair<>(fieldAccess.fieldRef(), fieldAccess.predicate()));
   }

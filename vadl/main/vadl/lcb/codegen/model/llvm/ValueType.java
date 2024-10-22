@@ -11,24 +11,27 @@ import vadl.viam.ViamError;
  * LLVM types which can be used.
  */
 public enum ValueType {
-  I8("i8", "Int8"),
-  I16("i16", "Int16"),
-  I32("i32", "Int32"),
+  I8("i8", "Int8", "Int8"),
+  I16("i16", "Int16", "Int16"),
+  I32("i32", "Int32", "Int32"),
 
-  I64("i64", "Int64"),
-  U8("u8", "Uint8"),
-  U16("u16", "Uint16"),
+  I64("i64", "Int64", "Int64"),
 
-  U32("u32", "Uint32"),
-
-  U64("u64", "Uint64");
+  // LLVM has no concept of unsigned integers because it's all interpretation.
+  // That's why sometimes have to use signed names.
+  U8("u8", "Uint8", "Int8"),
+  U16("u16", "Uint16", "Int16"),
+  U32("u32", "Uint32", "Int32"),
+  U64("u64", "Uint64", "Int64");
 
   private final String llvmType;
   private final String fancyName;
+  private final String tableGen;
 
-  ValueType(String llvmType, String fancyName) {
+  ValueType(String llvmType, String fancyName, String tableGen) {
     this.llvmType = llvmType;
     this.fancyName = fancyName;
+    this.tableGen = tableGen;
   }
 
   /**
@@ -92,6 +95,10 @@ public enum ValueType {
 
   public String getLlvmType() {
     return llvmType;
+  }
+
+  public String getTableGen() {
+    return tableGen;
   }
 
   /**
