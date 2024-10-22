@@ -19,6 +19,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import vadl.error.DeferredDiagnosticStore;
 import vadl.error.Diagnostic;
+import vadl.lcb.codegen.model.llvm.ValueType;
 import vadl.lcb.passes.isaMatching.InstructionLabel;
 import vadl.lcb.passes.llvmLowering.LlvmLoweringPass;
 import vadl.lcb.passes.llvmLowering.LlvmMayLoadMemory;
@@ -80,6 +81,12 @@ public abstract class LlvmInstructionLoweringStrategy {
   private static final Logger logger = LoggerFactory.getLogger(
       LlvmInstructionLoweringStrategy.class);
 
+  protected final ValueType architectureType;
+
+  public LlvmInstructionLoweringStrategy(ValueType architectureType) {
+    this.architectureType = architectureType;
+  }
+
   /**
    * Get the supported set of {@link InstructionLabel} which this strategy supports.
    */
@@ -102,7 +109,7 @@ public abstract class LlvmInstructionLoweringStrategy {
    * if-conditions and mark them as not lowerable.
    */
   protected LcbGraphNodeVisitor getVisitorForPatternSelectorLowering() {
-    return new ReplaceWithLlvmSDNodesVisitor();
+    return new ReplaceWithLlvmSDNodesVisitor(architectureType);
   }
 
   /**

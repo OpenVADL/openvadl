@@ -5,6 +5,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import javax.annotation.Nullable;
+import vadl.lcb.codegen.model.llvm.ValueType;
 import vadl.lcb.passes.isaMatching.InstructionLabel;
 import vadl.lcb.passes.llvmLowering.strategies.LlvmInstructionLoweringStrategy;
 import vadl.lcb.passes.llvmLowering.tablegen.model.TableGenInstruction;
@@ -18,6 +19,11 @@ import vadl.viam.graph.Graph;
  */
 public class LlvmInstructionLoweringDefaultStrategyImpl
     extends LlvmInstructionLoweringStrategy {
+  public LlvmInstructionLoweringDefaultStrategyImpl(
+      ValueType architectureType) {
+    super(architectureType);
+  }
+
   @Override
   protected Set<InstructionLabel> getSupportedInstructionLabels() {
     return Collections.emptySet();

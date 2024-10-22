@@ -90,6 +90,17 @@ public class ReplaceWithLlvmSDNodesVisitor
 
   private static final Logger logger = LoggerFactory.getLogger(ReplaceWithLlvmSDNodesVisitor.class);
   private boolean patternLowerable = true;
+  protected final ValueType architectureType;
+
+  /**
+   * Constructor.
+   *
+   * @param architectureType is the type for which tablegen types should be upcasted to.
+   *                         On 32 Bit architectures should all immediates upcasted to 32 Bit.
+   */
+  public ReplaceWithLlvmSDNodesVisitor(ValueType architectureType) {
+    this.architectureType = architectureType;
+  }
 
   @Override
   public boolean isPatternLowerable() {
@@ -312,12 +323,11 @@ public class ReplaceWithLlvmSDNodesVisitor
   @Override
   public void visit(FieldAccessRefNode fieldAccessRefNode) {
     var originalType = fieldAccessRefNode.fieldAccess().accessFunction().returnType();
-    var llvmType = getLlvmTypeOrUpcast(originalType, fieldAccessRefNode.sourceLocation());
 
     fieldAccessRefNode.replaceAndDelete(
         new LlvmFieldAccessRefNode(fieldAccessRefNode.fieldAccess(),
             originalType,
-            llvmType));
+            architectureType));
   }
 
   @Override

@@ -25,6 +25,16 @@ import vadl.viam.graph.dependency.WriteRegNode;
 public class ReplaceWithLlvmSDNodesWithControlFlowVisitor
     extends ReplaceWithLlvmSDNodesVisitor {
 
+  /**
+   * Constructor.
+   *
+   * @param architectureType is the type for which tablegen types should be upcasted to.
+   *                         On 32 Bit architectures should all immediates upcasted to 32 Bit.
+   */
+  public ReplaceWithLlvmSDNodesWithControlFlowVisitor(ValueType architectureType) {
+    super(architectureType);
+  }
+
   @Override
   public void visit(WriteRegNode writeRegNode) {
     if (writeRegNode.value() instanceof LlvmBrCcSD) {
@@ -90,11 +100,10 @@ public class ReplaceWithLlvmSDNodesWithControlFlowVisitor
   @Override
   public void visit(FieldAccessRefNode fieldAccessRefNode) {
     var originalType = fieldAccessRefNode.type();
-    var llvmType = getLlvmTypeOrUpcast(originalType, fieldAccessRefNode.sourceLocation());
 
     fieldAccessRefNode.replaceAndDelete(new LlvmBasicBlockSD(fieldAccessRefNode.fieldAccess(),
         originalType,
-        llvmType));
+        architectureType));
   }
 
   @Override

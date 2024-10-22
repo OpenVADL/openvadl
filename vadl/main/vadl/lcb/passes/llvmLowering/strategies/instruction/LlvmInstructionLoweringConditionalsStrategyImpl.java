@@ -4,6 +4,7 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import vadl.lcb.codegen.model.llvm.ValueType;
 import vadl.lcb.passes.isaMatching.InstructionLabel;
 import vadl.lcb.passes.llvmLowering.strategies.LlvmInstructionLoweringStrategy;
 import vadl.lcb.passes.llvmLowering.tablegen.model.TableGenInstructionOperand;
@@ -19,6 +20,11 @@ public class LlvmInstructionLoweringConditionalsStrategyImpl
     extends LlvmInstructionLoweringStrategy {
 
   private final Set<InstructionLabel> supported = Set.of(InstructionLabel.LT);
+
+  public LlvmInstructionLoweringConditionalsStrategyImpl(
+      ValueType architectureType) {
+    super(architectureType);
+  }
 
   @Override
   protected Set<InstructionLabel> getSupportedInstructionLabels() {

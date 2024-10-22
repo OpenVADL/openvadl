@@ -7,6 +7,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import vadl.lcb.codegen.model.llvm.ValueType;
 import vadl.lcb.passes.isaMatching.InstructionLabel;
 import vadl.lcb.passes.llvmLowering.domain.selectionDag.LlvmFrameIndexSD;
 import vadl.lcb.passes.llvmLowering.domain.selectionDag.LlvmReadRegFileNode;
@@ -25,6 +26,11 @@ import vadl.viam.passes.functionInliner.UninlinedGraph;
 public class LlvmInstructionLoweringAddImmediateStrategyImpl
     extends LlvmInstructionLoweringFrameIndexHelper {
   private final Set<InstructionLabel> supported = Set.of(ADDI_32, ADDI_64);
+
+  public LlvmInstructionLoweringAddImmediateStrategyImpl(
+      ValueType architectureType) {
+    super(architectureType);
+  }
 
   @Override
   protected Set<InstructionLabel> getSupportedInstructionLabels() {

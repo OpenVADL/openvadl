@@ -6,6 +6,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import vadl.lcb.codegen.model.llvm.ValueType;
 import vadl.lcb.passes.isaMatching.InstructionLabel;
 import vadl.lcb.passes.llvmLowering.domain.selectionDag.LlvmFrameIndexSD;
 import vadl.lcb.passes.llvmLowering.domain.selectionDag.LlvmReadRegFileNode;
@@ -26,6 +27,11 @@ import vadl.viam.graph.dependency.WriteResourceNode;
  */
 public class LlvmInstructionLoweringMemoryStoreStrategyImpl
     extends LlvmInstructionLoweringFrameIndexHelper {
+
+  public LlvmInstructionLoweringMemoryStoreStrategyImpl(
+      ValueType architectureType) {
+    super(architectureType);
+  }
 
   @Override
   protected Set<InstructionLabel> getSupportedInstructionLabels() {
