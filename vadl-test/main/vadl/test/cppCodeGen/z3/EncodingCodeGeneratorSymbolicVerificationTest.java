@@ -45,7 +45,7 @@ public class EncodingCodeGeneratorSymbolicVerificationTest extends AbstractGcbTe
         PassOrder.gcbAndCppCodeGen(getConfiguration(false)));
     var spec = setup.specification();
 
-    return spec.findAllFormats().flatMap(f -> Arrays.stream(f.fieldAccesses()))
+    return spec.findAllFormats().flatMap(f -> f.fieldAccesses().stream())
         .map(fieldAccess -> DynamicTest.dynamicTest(fieldAccess.identifier.lower(),
             () -> verify(fieldAccess)))
         .toList();
