@@ -5,6 +5,7 @@ import static vadl.viam.ViamError.ensurePresent;
 
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
@@ -202,6 +203,7 @@ public abstract class LlvmInstructionLoweringStrategy {
     }
 
     // Continue with lowering of nodes
+    var isLowerable = true;
     for (var endNode : copy.getNodes(AbstractEndNode.class).toList()) {
       visitor.visit(endNode);
 
@@ -209,8 +211,18 @@ public abstract class LlvmInstructionLoweringStrategy {
         DeferredDiagnosticStore.add(
             Diagnostic.warning("Instruction is not lowerable and will be skipped",
                 instruction.sourceLocation()).build());
-        return Optional.empty();
+        isLowerable = false;
       }
+    }
+
+    // If the behavior contains any registers then it is also not lowerable because LLVM's DAG
+    // has no concept of register in the IR.
+    if (copy.getNodes(ReadRegNode.class).findAny().isPresent()) {
+      DeferredDiagnosticStore.add(
+          Diagnostic.warning(
+              "Instruction is not lowerable because it tries to match fixed registers.",
+              instruction.sourceLocation()).build());
+      isLowerable = false;
     }
 
     var inputOperands = getTableGenInputOperands(copy);
@@ -221,7 +233,7 @@ public abstract class LlvmInstructionLoweringStrategy {
 
     copy.deinitializeNodes();
 
-    if (((TableGenPatternLowerable) visitor).isPatternLowerable()) {
+    if (isLowerable) {
       var patterns = generatePatterns(instruction,
           inputOperands,
           copy.getNodes(WriteResourceNode.class).toList());
@@ -241,12 +253,16 @@ public abstract class LlvmInstructionLoweringStrategy {
           registerUses,
           registerDefs
       ));
+    } else {
+      return Optional.of(new LlvmLoweringRecord(copy,
+          inputOperands,
+          outputOperands,
+          flags,
+          Collections.emptyList(),
+          registerUses,
+          registerDefs
+      ));
     }
-
-    DeferredDiagnosticStore.add(
-        Diagnostic.warning("Instruction is not lowerable and will be skipped",
-            instruction.sourceLocation()).build());
-    return Optional.empty();
   }
 
   /**
