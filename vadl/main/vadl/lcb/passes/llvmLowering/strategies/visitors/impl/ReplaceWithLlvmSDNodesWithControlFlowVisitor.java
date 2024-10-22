@@ -2,6 +2,7 @@ package vadl.lcb.passes.llvmLowering.strategies.visitors.impl;
 
 import java.util.Objects;
 import java.util.Set;
+import vadl.lcb.codegen.model.llvm.ValueType;
 import vadl.lcb.passes.llvmLowering.domain.selectionDag.LlvmBasicBlockSD;
 import vadl.lcb.passes.llvmLowering.domain.selectionDag.LlvmBrCcSD;
 import vadl.lcb.passes.llvmLowering.domain.selectionDag.LlvmCondCode;
@@ -88,8 +89,12 @@ public class ReplaceWithLlvmSDNodesWithControlFlowVisitor
 
   @Override
   public void visit(FieldAccessRefNode fieldAccessRefNode) {
+    var originalType = fieldAccessRefNode.type();
+    var llvmType = getLlvmTypeOrUpcast(originalType, fieldAccessRefNode.sourceLocation());
+
     fieldAccessRefNode.replaceAndDelete(new LlvmBasicBlockSD(fieldAccessRefNode.fieldAccess(),
-        fieldAccessRefNode.type()));
+        originalType,
+        llvmType));
   }
 
   @Override

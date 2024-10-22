@@ -21,7 +21,6 @@ import vadl.viam.Register;
 import vadl.viam.graph.Graph;
 import vadl.viam.graph.Node;
 import vadl.viam.graph.dependency.ReadMemNode;
-import vadl.viam.passes.functionInliner.UninlinedGraph;
 
 /**
  * Lowers instructions which can load from memory.
@@ -37,7 +36,6 @@ public class LlvmInstructionLoweringMemoryLoadStrategyImpl
   protected List<TableGenPattern> generatePatternVariations(Instruction instruction,
                                                             Map<InstructionLabel, List<Instruction>>
                                                                 supportedInstructions,
-                                                            InstructionLabel instructionLabel,
                                                             Graph behavior,
                                                             List<TableGenInstructionOperand>
                                                                 inputOperands,

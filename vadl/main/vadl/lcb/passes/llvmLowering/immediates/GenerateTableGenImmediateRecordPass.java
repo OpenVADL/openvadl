@@ -1,13 +1,16 @@
 package vadl.lcb.passes.llvmLowering.immediates;
 
+import static vadl.viam.ViamError.ensurePresent;
 
 import java.io.IOException;
 import java.util.Arrays;
 import java.util.List;
-import java.util.Objects;
 import java.util.stream.Stream;
 import org.jetbrains.annotations.Nullable;
 import vadl.configuration.GeneralConfiguration;
+import vadl.cppCodeGen.passes.typeNormalization.CppTypeNormalizationPass;
+import vadl.error.Diagnostic;
+import vadl.lcb.codegen.model.llvm.ValueType;
 import vadl.lcb.passes.llvmLowering.tablegen.model.TableGenImmediateRecord;
 import vadl.pass.Pass;
 import vadl.pass.PassName;
@@ -40,8 +43,24 @@ public class GenerateTableGenImmediateRecordPass extends Pass {
     return viam.isa().map(isa -> isa.ownFormats().stream()).orElseGet(Stream::empty)
         .flatMap(fieldUsages -> Arrays.stream(fieldUsages.fieldAccesses()))
         .distinct()
-        .map(fieldAccess -> new TableGenImmediateRecord(fieldAccess,
-            abi.stackPointer().registerFile().resultType()))
+        .map(fieldAccess -> {
+          var originalType = abi.stackPointer().registerFile().resultType();
+          var llvmType = ValueType.from(originalType);
+
+          if (llvmType.isEmpty()) {
+            var upcastedType = CppTypeNormalizationPass.upcast(originalType);
+            var upcastedValueType =
+                ensurePresent(ValueType.from(upcastedType), () -> Diagnostic.error(
+                    "Compiler generator was not able to change the type to the architecture's "
+                        + "bit width: " + upcastedType.toString(),
+                    fieldAccess.sourceLocation()));
+            return new TableGenImmediateRecord(fieldAccess,
+                upcastedValueType);
+          } else {
+            return new TableGenImmediateRecord(fieldAccess,
+                llvmType.get());
+          }
+        })
         .toList();
   }
 }

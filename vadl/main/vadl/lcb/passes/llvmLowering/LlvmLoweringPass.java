@@ -18,7 +18,7 @@ import vadl.lcb.passes.llvmLowering.domain.LlvmLoweringRecord;
 import vadl.lcb.passes.llvmLowering.strategies.LlvmInstructionLoweringStrategy;
 import vadl.lcb.passes.llvmLowering.strategies.LlvmPseudoLoweringImpl;
 import vadl.lcb.passes.llvmLowering.strategies.instruction.LlvmInstructionLoweringAddImmediateStrategyImpl;
-import vadl.lcb.passes.llvmLowering.strategies.instruction.LlvmInstructionLoweringArithmeticAndLogicStrategyImpl;
+import vadl.lcb.passes.llvmLowering.strategies.instruction.LlvmInstructionLoweringDefaultStrategyImpl;
 import vadl.lcb.passes.llvmLowering.strategies.instruction.LlvmInstructionLoweringConditionalBranchesStrategyImpl;
 import vadl.lcb.passes.llvmLowering.strategies.instruction.LlvmInstructionLoweringConditionalsStrategyImpl;
 import vadl.lcb.passes.llvmLowering.strategies.instruction.LlvmInstructionLoweringIndirectJumpStrategyImpl;
@@ -41,13 +41,14 @@ import vadl.viam.passes.functionInliner.UninlinedGraph;
 public class LlvmLoweringPass extends Pass {
 
   private final List<LlvmInstructionLoweringStrategy> strategies =
-      List.of(new LlvmInstructionLoweringArithmeticAndLogicStrategyImpl(),
+      List.of(
           new LlvmInstructionLoweringAddImmediateStrategyImpl(),
           new LlvmInstructionLoweringConditionalsStrategyImpl(),
           new LlvmInstructionLoweringConditionalBranchesStrategyImpl(),
           new LlvmInstructionLoweringIndirectJumpStrategyImpl(),
           new LlvmInstructionLoweringMemoryStoreStrategyImpl(),
-          new LlvmInstructionLoweringMemoryLoadStrategyImpl());
+          new LlvmInstructionLoweringMemoryLoadStrategyImpl(),
+          new LlvmInstructionLoweringDefaultStrategyImpl());
 
   private final LlvmPseudoLoweringImpl pseudoLowering = new LlvmPseudoLoweringImpl(strategies);
 
@@ -117,15 +118,6 @@ public class LlvmLoweringPass extends Pass {
     viam.isa().map(isa -> isa.ownInstructions().stream()).orElseGet(Stream::empty)
         .forEach(instruction -> {
           var instructionLabel = instructionLookup.get(instruction);
-
-          // TODO: No label, then we need to have a default.
-          if (instructionLabel == null) {
-            DeferredDiagnosticStore.add(Diagnostic.warning(
-                "Instruction was not matched. Therefore, it will be skipped for the compiler"
-                    + " lowering (todo)", instruction.sourceLocation()).build());
-            return;
-          }
-
           var uninlinedBehavior = (UninlinedGraph) uninlined.get(instruction);
           ensureNonNull(uninlinedBehavior, "uninlinedBehavior graph must exist");
           for (var strategy : strategies) {
@@ -134,12 +126,17 @@ public class LlvmLoweringPass extends Pass {
               continue;
             }
 
-            var record = strategy.lower(supportedInstructions, instruction, instructionLabel,
+            var record = strategy.lower(supportedInstructions,
+                instruction,
                 uninlinedBehavior);
 
             // Okay, we have to save record.
             record.ifPresent(llvmLoweringIntermediateResult -> tableGenRecords.put(instruction,
                 llvmLoweringIntermediateResult));
+
+            // Allow only one strategy to apply.
+            // Otherwise, the results from a previous strategy are overwritten.
+            break;
           }
         });
 

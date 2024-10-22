@@ -56,12 +56,4 @@ public class CppTypeNormalizationForDecodingsPass extends CppTypeNormalizationPa
     return new Parameter(parameter.identifier,
         upcast(parameter.type()), parameter.parent());
   }
-
-  private static BitsType upcast(Type type) {
-    if (type instanceof BitsType cast) {
-      return cast.withBitWidth(64);
-    } else {
-      throw new ViamError("Non bits type are not supported");
-    }
-  }
 }

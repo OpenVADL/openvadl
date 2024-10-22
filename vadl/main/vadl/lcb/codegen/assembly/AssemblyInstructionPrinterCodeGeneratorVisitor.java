@@ -13,6 +13,7 @@ import vadl.error.Diagnostic;
 import vadl.lcb.passes.llvmLowering.tablegen.model.ReferencesFormatField;
 import vadl.lcb.passes.llvmLowering.tablegen.model.TableGenInstruction;
 import vadl.types.BuiltInTable;
+import vadl.utils.SourceLocation;
 import vadl.viam.Constant;
 import vadl.viam.Format;
 import vadl.viam.Instruction;
@@ -264,23 +265,31 @@ public class AssemblyInstructionPrinterCodeGeneratorVisitor
 
   private void writeImmediateWithRadix(BuiltInCall node, int radix) {
     if (node.arguments().get(0) instanceof FieldRefNode fieldRefNode) {
-      var index = ensurePresent(indexInInputs(fieldRefNode.formatField()), () ->
-          Diagnostic.error("Immediate must be part of an tablegen input.",
-              fieldRefNode.sourceLocation())
-      );
-      var symbol = symbolTable.getNextVariable();
-      writer.write(String.format(
-          "std::string %s = AsmUtils::formatImm(MCOperandWrapper(MI->getOperand(%d)), %d, &MAI);\n",
-          symbol,
-          index,
-          radix
-      ));
-      operands.add(symbol);
+      writeImmediateWithRadix(fieldRefNode.formatField(), radix, fieldRefNode.sourceLocation());
+    } else if (node.arguments().get(0) instanceof FieldAccessRefNode fieldAccessRefNode) {
+      writeImmediateWithRadix(fieldAccessRefNode.fieldAccess().fieldRef(), radix,
+          fieldAccessRefNode.sourceLocation());
     } else {
       throw Diagnostic.error("Not supported argument "
               + "in assembly printing", node.sourceLocation())
           .build();
     }
+  }
+
+  private void writeImmediateWithRadix(Format.Field field, int radix,
+                                       SourceLocation sourceLocation) {
+    var index = ensurePresent(indexInInputs(field), () ->
+        Diagnostic.error("Immediate must be part of an tablegen input.",
+            sourceLocation)
+    );
+    var symbol = symbolTable.getNextVariable();
+    writer.write(String.format(
+        "std::string %s = AsmUtils::formatImm(MCOperandWrapper(MI->getOperand(%d)), %d, &MAI);\n",
+        symbol,
+        index,
+        radix
+    ));
+    operands.add(symbol);
   }
 
   private Optional<Integer> indexInInputs(Format.Field needle) {

@@ -35,7 +35,6 @@ public class LlvmInstructionLoweringAddImmediateStrategyImpl
   protected List<TableGenPattern> generatePatternVariations(
       Instruction instruction,
       Map<InstructionLabel, List<Instruction>> supportedInstructions,
-      InstructionLabel instructionLabel,
       Graph behavior,
       List<TableGenInstructionOperand> inputOperands,
       List<TableGenInstructionOperand> outputOperands,

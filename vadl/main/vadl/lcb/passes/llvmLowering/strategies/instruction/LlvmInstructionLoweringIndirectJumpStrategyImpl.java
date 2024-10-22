@@ -32,7 +32,6 @@ public class LlvmInstructionLoweringIndirectJumpStrategyImpl
   protected Optional<LlvmLoweringRecord> lowerInstruction(
       Map<InstructionLabel, List<Instruction>> supportedInstructions,
       Instruction instruction,
-      InstructionLabel instructionLabel,
       Graph unmodifiedBehavior) {
     var copy = unmodifiedBehavior.copy();
     var visitor = getVisitorForPatternSelectorLowering();
@@ -56,7 +55,6 @@ public class LlvmInstructionLoweringIndirectJumpStrategyImpl
   protected List<TableGenPattern> generatePatternVariations(
       Instruction instruction,
       Map<InstructionLabel, List<Instruction>> supportedInstructions,
-      InstructionLabel instructionLabel,
       Graph behavior,
       List<TableGenInstructionOperand> inputOperands,
       List<TableGenInstructionOperand> outputOperands,
