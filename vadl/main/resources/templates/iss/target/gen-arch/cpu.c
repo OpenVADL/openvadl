@@ -62,7 +62,7 @@ static void [(${gen_arch_lower})]_cpu_reset(DeviceState *dev)
     vcc->parent_reset(dev);
 
     [# th:each="reg_file, iterState : ${register_files}"]
-    for(int i=0; i < [(${reg_file.size})]; i++){
+    for(int i=0; i < [(${reg_file["size"]})]; i++){
       env->[(${reg_file.name_lower})][i] = 0;
     }
     [/]
@@ -104,7 +104,7 @@ static void [(${gen_arch_lower})]_cpu_dump_state(CPUState *cs, FILE *f, int flag
     [/]
     int i;
     [# th:each="reg_file, iterState : ${register_files}"]
-    for(i=0; i < [(${reg_file.size})]; i++){
+    for(i=0; i < [(${reg_file["size"]})]; i++){
       qemu_fprintf(f, " %-8s " TARGET_FMT_lx, [(${gen_arch_lower})]_cpu_[(${reg_file.name_lower})]_names[i], env->[(${reg_file.name_lower})][i]);
       if ((i & 3) == 3) {
           qemu_fprintf(f, "\n");

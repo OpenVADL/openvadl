@@ -2,6 +2,8 @@ package vadl.viam.passes.verification;
 
 import java.io.IOException;
 import org.jetbrains.annotations.Nullable;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import vadl.configuration.GeneralConfiguration;
 import vadl.dump.HtmlDumpPass;
 import vadl.pass.Pass;
@@ -19,6 +21,8 @@ import vadl.viam.ViamError;
  * @see ViamVerifier
  */
 public class ViamVerificationPass extends Pass {
+  private static final Logger log = LoggerFactory.getLogger(ViamVerificationPass.class);
+
   public ViamVerificationPass(GeneralConfiguration configuration) {
     super(configuration);
   }
@@ -35,11 +39,12 @@ public class ViamVerificationPass extends Pass {
     try {
       ViamVerifier.verifyAllIn(viam);
     } catch (ViamError e) {
-      new HtmlDumpPass(
+      var result = (HtmlDumpPass.Result) new HtmlDumpPass(
           HtmlDumpPass.Config.from(configuration(),
               getName().value() + " Exception",
               "This dump is due to an exception while running the viam verification pass.")
       ).execute(passResults, viam);
+      log.error("A verification error was found.\nSee the dump at {}\n\n", result.lastPass);
       throw e;
     }
     return null;

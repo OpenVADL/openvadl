@@ -7,6 +7,11 @@
 #include "qemu/qemu-print.h"
 #include "tcg/tcg-op.h"
 
+#include "exec/helper-proto.h"
+#include "exec/helper-gen.h"
+#define HELPER_H "helper.h"
+#include "exec/helper-info.c.inc"
+#undef  HELPER_H
 
 static TCGv cpu_pc;
 [# th:each="reg_file, iterState : ${register_files}"] // define the register file tcgs
@@ -136,20 +141,29 @@ static void gen_goto_tb(DisasContext *ctx, target_long diff)
 static bool decode_insn(DisasContext *ctx, uint[(${insn_width.int})]_t insn);
 #include "decode-insn.c.inc"
 
-static bool trans_addi(DisasContext *ctx, arg_addi *a) {
-    TCGv dest = dest_x(ctx, a->rd);
-    TCGv src1 = get_x(ctx, a->rs1);
-
-    qemu_printf("[VADL] trans_addi imm: %d\n", a->imm);
-
-    tcg_gen_addi_tl(dest, src1, a->imm);
-    gen_set_x(ctx, a->rd, dest);
-    return true;
-}
+//// START OF TRANSLATE FUNCTIONS ////
 
 [# th:each="func, iterState : ${translate_functions}"]
 [(${func})]
 [/]
+
+
+// TODO: Remove this hardcoded translate function in template
+static bool trans_jal(DisasContext *ctx, arg_jal *a) {
+    qemu_printf("[VADL] trans_jal rd: %d\n", a->rd);
+
+    // set rd to next pc
+    TCGv succ_pc = dest_x(ctx, a->rd);
+    target_ulong next_pc = ctx->base.pc_next + 4;
+    tcg_gen_movi_tl(succ_pc, next_pc);
+    gen_set_x(ctx, a->rd, succ_pc); // <-- is getting optimized
+
+    gen_goto_tb(ctx, a->imm);
+    ctx->base.is_jmp = DISAS_NORETURN;
+    return true;
+}
+
+//// END OF TRANSLATE FUNCTIONS ////
 
 /*
  *  Core translation mechanism functions:
@@ -163,10 +177,9 @@ static void translate(DisasContext *ctx)
     uint32_t insn = next_insn(ctx);
     if(!decode_insn(ctx, insn)) {
         error_report("[[(${gen_arch_upper})]] translate, illegal instr, pc: 0x%04llx , insn: 0x%04x\n", ctx->base.pc_next, insn);
-        CPUState *cs = env_cpu(ctx->env);
 
-        // TODO: produce exception
-        assert(false);
+        gen_helper_unsupported(tcg_env);
+        ctx->base.is_jmp = DISAS_NORETURN;
     }
 }
 

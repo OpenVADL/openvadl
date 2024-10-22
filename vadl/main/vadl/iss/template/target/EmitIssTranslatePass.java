@@ -5,6 +5,7 @@ import static vadl.utils.GraphUtils.getSingleNode;
 
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import vadl.configuration.IssConfiguration;
 import vadl.iss.codegen.IssTranslateCodeGenerator;
 import vadl.iss.template.IssTemplateRenderingPass;
@@ -33,23 +34,28 @@ public class EmitIssTranslatePass extends IssTemplateRenderingPass {
                                                 Specification specification) {
     var vars = super.createVariables(passResults, specification);
     vars.put("insn_width", getInstructionWidth(specification));
-    vars.put("mem_word_size", getMemoryWordSize());
-    vars.put("translate_functions", getTranslateFunctions());
+    vars.put("mem_word_size", getMemoryWordSize(specification));
+    vars.put("translate_functions", getTranslateFunctions(specification));
     return vars;
   }
 
-  private static List<String> getTranslateFunctions() {
-    return List.of();
-    //    return insns.stream()
-    //        // TODO: Remove this filter (just for testing)
-    //        .filter(i -> i.identifier.simpleName().equalsIgnoreCase("ADD"))
-    //        .map(IssTranslateCodeGenerator::fetch)
-    //        .toList();
+  private static List<String> getTranslateFunctions(Specification specification) {
+    var insns = specification.isa().get().ownInstructions();
+    // TODO: Remove this filter (just for testing)
+    var supportedInsns = Set.of(
+        "ADD",
+        "ADDI"
+    );
+    return insns.stream()
+        .filter(i -> supportedInsns.contains(i.identifier.simpleName()))
+        .map(IssTranslateCodeGenerator::fetch)
+        .toList();
   }
 
-  private static Map<String, Object> getMemoryWordSize() {
+  private static Map<String, Object> getMemoryWordSize(Specification specification) {
+    var wordSize = specification.isa().get().ownMemories().get(0).wordSize();
     return Map.of(
-        "int", 8
+        "int", wordSize
     );
   }
 

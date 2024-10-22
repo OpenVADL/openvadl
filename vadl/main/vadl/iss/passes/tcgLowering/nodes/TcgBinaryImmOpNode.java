@@ -48,6 +48,16 @@ public abstract class TcgBinaryImmOpNode extends TcgOpNode {
         "argument 2 width does not match");
   }
 
+  public TcgV arg1() {
+    return arg1;
+  }
+
+  public ExpressionNode arg2() {
+    return arg2;
+  }
+
+  public abstract String tcgFunctionName();
+
   @Override
   protected void collectData(List<Object> collection) {
     super.collectData(collection);

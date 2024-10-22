@@ -461,7 +461,7 @@ public final class PassOrder {
 
 
     if (config.doDump()) {
-      order.add(new HtmlDumpPass(HtmlDumpPass.Config.from(config, "ISS Generation Dump", """
+      order.add(new HtmlDumpPass(HtmlDumpPass.Config.from(config, "ISS Lowering Dump", """
           This dump is executed after the iss transformation passes were executed.
           """)));
     }
@@ -505,6 +505,8 @@ public final class PassOrder {
         .add(issDefault("/target/meson.build", config))
         .add(issDefault("/target/gen-arch/Kconfig", config))
         .add(issDefault("/target/gen-arch/meson.build", config))
+        .add(issDefault("/target/gen-arch/helper.c", config))
+        .add(issDefault("/target/gen-arch/helper.h", config))
         // target/gen-arch/cpu-qom.h
         .add(new EmitIssCpuQomHeaderPass(config))
         // target/gen-arch/cpu-param.h

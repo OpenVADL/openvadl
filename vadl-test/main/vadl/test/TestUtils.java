@@ -2,9 +2,13 @@ package vadl.test;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
+import java.math.BigInteger;
 import java.util.Set;
 import java.util.function.Function;
 import java.util.stream.Stream;
+import net.jqwik.api.Arbitraries;
+import net.jqwik.api.Arbitrary;
+import net.jqwik.api.arbitraries.BigDecimalArbitrary;
 import vadl.utils.ViamUtils;
 import vadl.viam.Definition;
 import vadl.viam.Format;
@@ -74,4 +78,45 @@ public class TestUtils {
                                                         Function<Definition, Boolean> filter) {
     return ViamUtils.findDefinitionByFilter(def, filter);
   }
+
+
+  /**
+   * Results a (positive) big integer that represents a random sequence of bits with the
+   * given bit-width.
+   * The caller must ensure that only the bits within the specified bit-width are used.
+   * So it is not ensured that the msb is 1.
+   *
+   * @param bitWidth the number of bits to generate.
+   * @return positive number with potentially zero bits within the bit-width
+   */
+  public static Arbitrary<BigInteger> arbitraryBits(int bitWidth) {
+    return Arbitraries.bigIntegers()
+        .greaterOrEqual(BigInteger.ZERO)
+        .lessOrEqual(BigInteger.valueOf(2)
+            .pow(bitWidth)
+            .subtract(BigInteger.ONE)
+        );
+  }
+
+
+  /**
+   * Results a (positive) big integer that represents a random sequence of bits with the
+   * given bit-width.
+   * The caller must ensure that only the bits within the specified bit-width are used.
+   * So it is not ensured that the msb is 1.
+   *
+   * @param bitWidth the number of bits to generate.
+   * @return positive number with potentially zero bits within the bit-width
+   */
+  public static Arbitrary<BigInteger> arbitrarySignedInt(int bitWidth) {
+    return Arbitraries.bigIntegers()
+        .greaterOrEqual(BigInteger.valueOf(-2)
+            .pow(bitWidth - 1))
+        .lessOrEqual(BigInteger.valueOf(2)
+            .pow(bitWidth - 1)
+            .subtract(BigInteger.ONE)
+        );
+  }
+
+
 }

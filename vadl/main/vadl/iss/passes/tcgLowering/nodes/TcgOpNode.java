@@ -39,6 +39,10 @@ public abstract class TcgOpNode extends DirectionalNode {
     return res;
   }
 
+  public void setRes(TcgV res) {
+    this.res = res;
+  }
+
   @Override
   public <T extends GraphNodeVisitor> void accept(T visitor) {
     // Do not visit by graph visitor

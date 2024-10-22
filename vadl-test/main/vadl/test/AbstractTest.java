@@ -51,6 +51,10 @@ public abstract class AbstractTest {
 
   private TestFrontend testFrontend;
 
+  // directory of the current test (used to emit files)
+  @Nullable
+  private Path testDirectory;
+
   /**
    * Checks if the test frontend provider is available.
    */
@@ -318,17 +322,34 @@ public abstract class AbstractTest {
     return new TestSetup(passManager, spec);
   }
 
-  public static Path createDirectory() throws IOException {
-    return VadlFileUtils.createTempDirectory("vadl-test");
+  /**
+   * Returns the path to the current test directory.
+   */
+  public synchronized Path getTestDirectory() {
+    if (testDirectory == null) {
+      try {
+        testDirectory = createDirectory();
+      } catch (IOException e) {
+        throw new RuntimeException(e);
+      }
+    }
+    return testDirectory;
   }
 
   public GeneralConfiguration getConfiguration(boolean doDump) throws IOException {
-    var directory = createDirectory();
+    var directory = getTestDirectory();
     return new GeneralConfiguration(directory.toAbsolutePath(), doDump);
   }
 
   public record TestSetup(PassManager passManager,
                           Specification specification) {
 
+  }
+
+  /**
+   * Vadl create a new temporary directory under the vadl-test namespace.
+   */
+  protected static Path createDirectory() throws IOException {
+    return VadlFileUtils.createTempDirectory("vadl-test");
   }
 }

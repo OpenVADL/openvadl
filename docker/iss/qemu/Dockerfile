@@ -30,11 +30,17 @@ RUN mkdir build && cd build && \
     ../configure --enable-debug --target-list=riscv64-softmmu && \
     make -j 8
 
-WORKDIR /scripts
-
-# create python venv and
-# install qemu.qmp pip dependency for tests
-RUN python3 -m venv .venv
-RUN . .venv/bin/activate && pip install qemu.qmp
-
 WORKDIR /work
+
+# install sccache for cloud build cache
+ENV PATH=/opt/sccache:$PATH
+RUN mkdir /opt/sccache
+RUN set -ex; \
+    ARCH=$(uname -m); \
+    case "$ARCH" in \
+        x86_64) SUFFIX="x86_64-unknown-linux-musl" ;; \
+        aarch64) SUFFIX="aarch64-unknown-linux-musl" ;; \
+        *) echo "Unsupported architecture: $ARCH" >&2; exit 1 ;; \
+    esac; \
+    curl -L https://github.com/mozilla/sccache/releases/download/v0.8.2/sccache-v0.8.2-$SUFFIX.tar.gz \
+    | tar -xz -C /opt/sccache --strip-components=1

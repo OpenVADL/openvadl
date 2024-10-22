@@ -84,7 +84,7 @@ public class EncodingCodeGeneratorCppVerificationTest extends AbstractCppCodeGen
 
 
   Arbitrary<Integer> uint(int bitWidth) {
-    return Arbitraries.integers().greaterOrEqual(0).lessOrEqual((int) Math.pow(2, bitWidth - 1));
+    return Arbitraries.integers().greaterOrEqual(0).lessOrEqual((int) Math.pow(2, bitWidth) - 1);
   }
 
   void testFieldAccess(String testName,

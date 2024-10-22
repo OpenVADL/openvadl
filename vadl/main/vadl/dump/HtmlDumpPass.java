@@ -184,7 +184,7 @@ public class HtmlDumpPass extends AbstractTemplateRenderingPass {
         .toList();
 
     var passList = passResults.executedPasses().stream()
-        .filter(p -> !(p.pass() instanceof HtmlDumpPass))
+        // .filter(p -> !(p.pass() instanceof HtmlDumpPass))
         .toList();
 
     return Map.of(
