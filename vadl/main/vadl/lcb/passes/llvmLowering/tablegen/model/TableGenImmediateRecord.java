@@ -20,7 +20,10 @@ import vadl.viam.passes.dummyAbi.DummyAbi;
  */
 public class TableGenImmediateRecord {
   private final String name;
+  // The `encoderMethod` will be used by tablegen and has different arguments.
   private final Identifier encoderMethod;
+  // The `rawEncoderMethod` is the method for the raw logic.
+  private final Identifier rawEncoderMethod;
   private final Identifier decoderMethod;
   private final Identifier predicateMethod;
   private final ValueType type;
@@ -32,12 +35,14 @@ public class TableGenImmediateRecord {
    */
   private TableGenImmediateRecord(Identifier identifier,
                                   Identifier encoderIdentifier,
+                                  Identifier rawEncoderIdentifier,
                                   Identifier decoderIdentifier,
                                   Identifier predicateIdentifier,
                                   ValueType type,
                                   Format.FieldAccess fieldAccessRef) {
     this.name = identifier.lower();
     this.encoderMethod = encoderIdentifier;
+    this.rawEncoderMethod = rawEncoderIdentifier;
     this.decoderMethod = decoderIdentifier;
     this.predicateMethod = predicateIdentifier;
     this.type = type;
@@ -53,6 +58,7 @@ public class TableGenImmediateRecord {
     this(fieldAccess.fieldRef().identifier,
         Objects.requireNonNull(fieldAccess.encoding()).identifier.append(
             EmitMCCodeEmitterCppFilePass.WRAPPER),
+        Objects.requireNonNull(fieldAccess.encoding()).identifier,
         fieldAccess.accessFunction().identifier.append(EmitDisassemblerCppFilePass.WRAPPER),
         fieldAccess.predicate().identifier,
         llvmType,
@@ -65,6 +71,10 @@ public class TableGenImmediateRecord {
 
   public String encoderMethod() {
     return encoderMethod.lower();
+  }
+
+  public String rawEncoderMethod() {
+    return rawEncoderMethod.lower();
   }
 
   public String decoderMethod() {

@@ -53,15 +53,13 @@ MCOperand [(${namespace})]InstPrinter::adjustImmediateOp
     {
         switch(OpCode)
         {
-            /*
-            «FOR inst : processor.list( MachineInstruction )»
-                «IF inst.inputOperands( ImmediateOperand ).size == 1»
-                    «IF inst.inputOperands( ImmediateOperand ).head.isEncodeBeforeEmit»
-                        «emitAdjustImmediateOpFor( inst )»
-                    «ENDIF»
-                «ENDIF»
-            «ENDFOR»
-            */
+          [# th:each="instruction : ${instructionsWithImmediate}" ]
+          case [(${namespace})]::[(${instruction.identifier().simpleName()})]:
+          {
+            auto newOp = [(${instruction.operand().immediateOperand().rawEncoderMethod()})](value);
+            return MCOperand::createImm(newOp);
+          }
+          [/]
         }
     }
 

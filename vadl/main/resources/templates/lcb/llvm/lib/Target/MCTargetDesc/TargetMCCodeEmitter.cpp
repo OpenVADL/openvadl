@@ -68,24 +68,6 @@ MCFixupKind getFixupKind(unsigned Opcode, unsigned OpNo, const MCExpr *Expr)
     }
     else if (kind == MCExpr::ExprKind::SymbolRef)
     {
-        /*
-        switch (Opcode)
-        {
-        «FOR instruction : machineInstructionsWithRelocations» case ([(${namespace})]::«instruction.simpleName»):
-        {
-            «FOR operand : instruction.LLVMInputOperands»
-                    «IF hasRelocation(instruction, operand)» if (OpNo == «instruction.LLVMOperandToIndexMap.get(operand)»)
-            {
-                return MCFixupKind([(${namespace})]::«getRelocationForOperand(instruction, operand).mcFixupKindInfoIdentifier»);
-            }
-            «ENDIF»
-                    «ENDFOR»
-                assert(false && "No immediate operand found.");
-            return MCFixupKind::FK_NONE;
-        }
-            «ENDFOR»
-        }
-        */
         [# th:each="i : ${syms}" ]
              if(Opcode == [(${namespace})]::[(${i.instruction.identifier.simpleName()})] && OpNo == [(${i.opNo})]) {
               return MCFixupKind([(${namespace})]::[(${i.fixup.name().value()})]);

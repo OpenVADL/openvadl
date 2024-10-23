@@ -1,5 +1,6 @@
 package vadl.lcb.template.lib.Target.MCTargetDesc;
 
+import static vadl.viam.ViamError.ensure;
 import static vadl.viam.ViamError.ensureNonNull;
 
 import java.io.IOException;
@@ -10,13 +11,16 @@ import java.util.stream.Collectors;
 import java.util.stream.Stream;
 import vadl.configuration.LcbConfiguration;
 import vadl.cppCodeGen.model.CppFunctionCode;
+import vadl.error.Diagnostic;
 import vadl.gcb.passes.relocation.IdentifyFieldUsagePass;
 import vadl.lcb.codegen.assembly.AssemblyInstructionPrinterCodeGenerator;
 import vadl.lcb.passes.llvmLowering.GenerateTableGenMachineInstructionRecordPass;
+import vadl.lcb.passes.llvmLowering.tablegen.model.TableGenInstructionImmediateOperand;
 import vadl.lcb.passes.llvmLowering.tablegen.model.TableGenMachineInstruction;
 import vadl.lcb.template.CommonVarNames;
 import vadl.lcb.template.LcbTemplateRenderingPass;
 import vadl.pass.PassResults;
+import vadl.viam.Identifier;
 import vadl.viam.Specification;
 
 /**
@@ -45,6 +49,11 @@ public class EmitInstPrinterCppFilePass extends LcbTemplateRenderingPass {
 
   }
 
+  record InstructionWithImmediate(Identifier identifier,
+                                  TableGenInstructionImmediateOperand operand) {
+
+  }
+
   @Override
   protected Map<String, Object> createVariables(final PassResults passResults,
                                                 Specification specification) {
@@ -68,7 +77,27 @@ public class EmitInstPrinterCppFilePass extends LcbTemplateRenderingPass {
         })
         .toList();
 
+    var machineInstructionsWithImmediate = machineRecords
+        .stream()
+        .filter(x -> x.getInOperands().stream()
+            .anyMatch(y -> y instanceof TableGenInstructionImmediateOperand))
+        .map(x -> {
+          var immOperand = x.getInOperands().stream()
+              .filter(y -> y instanceof TableGenInstructionImmediateOperand)
+              .map(y -> (TableGenInstructionImmediateOperand) y)
+              .toList();
+
+          ensure(immOperand.size() == 1, () -> Diagnostic.error(
+              "Currently only machine instructions with one immediate are supported",
+              x.instruction()
+                  .sourceLocation()));
+
+          return new InstructionWithImmediate(x.instruction().identifier, immOperand.get(0));
+        })
+        .toList();
+
     return Map.of(CommonVarNames.NAMESPACE, specification.simpleName(),
-        "instructions", printableInstructions);
+        "instructions", printableInstructions,
+        "instructionsWithImmediate", machineInstructionsWithImmediate);
   }
 }
