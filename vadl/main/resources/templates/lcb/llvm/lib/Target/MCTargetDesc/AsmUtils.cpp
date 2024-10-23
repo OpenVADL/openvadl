@@ -10,6 +10,8 @@
 #include <string>
 #include <iostream>
 #include <sstream>
+#include <bitset>
+#include <iomanip>
 
 #define DEBUG_TYPE "AsmUtils"
 

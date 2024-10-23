@@ -122,12 +122,13 @@ public class GenerateLinkerComponentsPass extends Pass {
           variantKinds.add(variantKind);
         });
 
-    var absoluteVariantKind = VariantKind.absolute();
-    variantKinds.add(absoluteVariantKind);
+
     viam.isa().map(isa -> isa.ownFormats().stream()).orElseGet(Stream::empty)
         .forEach(format -> {
           var imms = immediates.getImmediates(format);
           for (var imm : imms) {
+            var absoluteVariantKind = VariantKind.absolute(imm);
+            variantKinds.add(absoluteVariantKind);
             var updateFieldFunction =
                 BitMaskFunctionGenerator.generateUpdateFunction(format, imm);
             var generated = GeneratedRelocation.create(CompilerRelocation.Kind.ABSOLUTE,
@@ -144,12 +145,12 @@ public class GenerateLinkerComponentsPass extends Pass {
           }
         });
 
-    var relativeRelocation = VariantKind.relative();
-    variantKinds.add(relativeRelocation);
     viam.isa().map(isa -> isa.ownFormats().stream()).orElseGet(Stream::empty)
         .forEach(format -> {
           var imms = immediates.getImmediates(format);
           for (var imm : imms) {
+            var relativeRelocation = VariantKind.relative(imm);
+            variantKinds.add(relativeRelocation);
             var updateFieldFunction =
                 BitMaskFunctionGenerator.generateUpdateFunction(format, imm);
             var generated = GeneratedRelocation.create(CompilerRelocation.Kind.RELATIVE,
