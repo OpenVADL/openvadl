@@ -80,7 +80,7 @@ public class TcgLoweringPass extends AbstractIssPass {
 }
 
 
-class TcgLoweringExecutor extends GraphProcessor {
+class TcgLoweringExecutor extends GraphProcessor<Node> {
 
   Instruction instruction;
   StartNode insnStartNode;
