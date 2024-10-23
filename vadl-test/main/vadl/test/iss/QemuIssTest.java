@@ -186,7 +186,7 @@ public abstract class QemuIssTest extends DockerExecutionTest {
                 log.info("Using redis cache: {}", redisCache);
                 // we use host.docker.internal to access the service exposed on the host
                 d.env("SCCACHE_REDIS_ENDPOINT",
-                    "tcp://" + "host.docker.internal" + ":" + redisCache.port());
+                    "tcp://" + redisCache.host() + ":" + redisCache.port());
               }
 
               // TODO: update target name
@@ -209,7 +209,10 @@ public abstract class QemuIssTest extends DockerExecutionTest {
         // make iss sources available to image builder
         .withFileFromPath("iss", generatedIssSources)
         // make iss_qemu scripts available to image builder
-        .withFileFromClasspath("/scripts", "/scripts/iss_qemu");
+        .withFileFromClasspath("/scripts", "/scripts/iss_qemu")
+        // as we have to use the same network as the redis cache, we have to build it there
+        .withBuildImageCmdModifier(modifier -> modifier.withNetworkMode(testNetwork().getId()))
+    ;
   }
 
 }
