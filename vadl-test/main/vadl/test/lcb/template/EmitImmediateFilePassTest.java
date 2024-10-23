@@ -57,25 +57,25 @@ public class EmitImmediateFilePassTest extends AbstractLcbTest {
         }
                 
                 
-        static int64_t RV64IM_Btype_immS_decode(uint64_t param) {
+        static int64_t RV64IM_Btype_immS_decode(uint16_t param) {
         return (((int64_t) param)) << (1);
         }
-        static int64_t RV64IM_Itype_immS_decode(uint64_t param) {
+        static int64_t RV64IM_Itype_immS_decode(uint16_t param) {
         return ((int64_t) param);
         }
-        static int64_t RV64IM_Jtype_immS_decode(uint64_t param) {
+        static int64_t RV64IM_Jtype_immS_decode(uint32_t param) {
         return (((int64_t) param)) << (1);
         }
-        static int64_t RV64IM_Stype_immS_decode(uint64_t param) {
+        static int64_t RV64IM_Stype_immS_decode(uint16_t param) {
         return ((int64_t) param);
         }
-        static uint64_t RV64IM_Utype_immU_decode(uint64_t param) {
+        static uint64_t RV64IM_Utype_immU_decode(uint32_t param) {
         return (((uint64_t) param)) << (12);
         }
-        static uint8_t RV64IM_Ftype_shamt_decode(uint64_t param) {
+        static uint8_t RV64IM_Ftype_shamt_decode(uint8_t param) {
         return param;
         }
-        static uint8_t RV64IM_Rtype_shamt_decode(uint64_t param) {
+        static uint8_t RV64IM_Rtype_shamt_decode(uint8_t param) {
         return param;
         }
                 
