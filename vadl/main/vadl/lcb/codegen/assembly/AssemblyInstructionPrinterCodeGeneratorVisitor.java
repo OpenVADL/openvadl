@@ -284,7 +284,10 @@ public class AssemblyInstructionPrinterCodeGeneratorVisitor
     );
     var symbol = symbolTable.getNextVariable();
     writer.write(String.format(
-        "std::string %s = AsmUtils::formatImm(MCOperandWrapper(MI->getOperand(%d)), %d, &MAI);\n",
+        """
+            std::string %s = AsmUtils::formatImm(MCOperandWrapper(
+              adjustImmediateOp(MI, %d)), %d, &MAI);
+            """,
         symbol,
         index,
         radix
