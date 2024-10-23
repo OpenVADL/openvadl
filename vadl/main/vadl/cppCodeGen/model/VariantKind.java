@@ -24,11 +24,13 @@ public record VariantKind(String value, String human) {
     return new VariantKind("VK_Invalid", "Invalid");
   }
 
-  public static VariantKind absolute() {
-    return new VariantKind("VK_SYMB_ABS", "_SYMB_ABS");
+  public static VariantKind absolute(Format.Field field) {
+    return new VariantKind("VK_SYMB_ABS_" + field.identifier.lower(),
+        "SYMB_ABS_" + field.identifier.lower());
   }
 
-  public static VariantKind relative() {
-    return new VariantKind("VK_SYMB_PCREL", "_SYMB_PCREL");
+  public static VariantKind relative(Format.Field field) {
+    return new VariantKind("VK_SYMB_PCREL_" + field.identifier.lower(),
+        "SYMB_PCREL_" + field.identifier.lower());
   }
 }

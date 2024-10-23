@@ -2,9 +2,6 @@ package vadl.lcb.template.lib.Target.Utils;
 
 import java.io.IOException;
 import java.util.Map;
-import java.util.concurrent.ConcurrentHashMap;
-import java.util.function.Function;
-import java.util.function.Predicate;
 import vadl.configuration.LcbConfiguration;
 import vadl.gcb.passes.relocation.model.RelocationLowerable;
 import vadl.lcb.passes.relocation.GenerateLinkerComponentsPass;
@@ -56,12 +53,5 @@ public class EmitBaseInfoFilePass extends LcbTemplateRenderingPass {
         "relocations", relocations,
         "mos", mos
     );
-  }
-
-  static <T> Predicate<T> distinctByKey(
-      Function<? super T, ?> keyExtractor) {
-
-    Map<Object, Boolean> seen = new ConcurrentHashMap<>();
-    return t -> seen.putIfAbsent(keyExtractor.apply(t), Boolean.TRUE) == null;
   }
 }
