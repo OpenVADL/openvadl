@@ -53,6 +53,10 @@ import vadl.viam.passes.staticCounterAccess.StaticCounterAccessResolvingPass;
 import vadl.viam.passes.typeCastElimination.TypeCastEliminationPass;
 import vadl.viam.passes.verification.ViamVerificationPass;
 
+/**
+ * This class contains static methods that define the individual pass orders for different
+ * generation targets (e.g., LCB, ISS, ...).
+ */
 public class PassOrders {
 
   /**
