@@ -15,4 +15,12 @@ public enum TcgWidth {
   TcgWidth(int width) {
     this.width = width;
   }
+
+  public static TcgWidth fromWidth(int width) {
+    return switch (width) {
+      case 32 -> i32;
+      case 64 -> i64;
+      default -> throw new IllegalArgumentException("Invalid width: " + width);
+    };
+  }
 }

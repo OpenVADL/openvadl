@@ -11,9 +11,12 @@ import java.util.Set;
 import org.jetbrains.annotations.Nullable;
 import vadl.configuration.IssConfiguration;
 import vadl.iss.passes.AbstractIssPass;
+import vadl.iss.passes.IssTcgAnnotatePass;
 import vadl.iss.passes.tcgLowering.nodes.TcgAddNode;
 import vadl.iss.passes.tcgLowering.nodes.TcgAddiNode;
+import vadl.iss.passes.tcgLowering.nodes.TcgExtendNode;
 import vadl.iss.passes.tcgLowering.nodes.TcgGetVar;
+import vadl.iss.passes.tcgLowering.nodes.TcgLoadMemory;
 import vadl.iss.passes.tcgLowering.nodes.TcgMoveNode;
 import vadl.iss.passes.tcgLowering.nodes.TcgOpNode;
 import vadl.iss.passes.tcgLowering.nodes.TcgSetRegFile;
@@ -34,10 +37,13 @@ import vadl.viam.graph.dependency.BuiltInCall;
 import vadl.viam.graph.dependency.ConstantNode;
 import vadl.viam.graph.dependency.ExpressionNode;
 import vadl.viam.graph.dependency.FieldRefNode;
+import vadl.viam.graph.dependency.LetNode;
+import vadl.viam.graph.dependency.ReadMemNode;
 import vadl.viam.graph.dependency.ReadRegFileNode;
 import vadl.viam.graph.dependency.SideEffectNode;
 import vadl.viam.graph.dependency.SignExtendNode;
 import vadl.viam.graph.dependency.TruncateNode;
+import vadl.viam.graph.dependency.WriteMemNode;
 import vadl.viam.graph.dependency.WriteRegFileNode;
 import vadl.viam.graph.dependency.WriteResourceNode;
 import vadl.viam.graph.dependency.ZeroExtendNode;
@@ -68,12 +74,16 @@ public class TcgLoweringPass extends AbstractIssPass {
     var supportedInstructions = Set.of(
         "ADD",
         "ADDI"
+        , "LB"
     );
+
+    var tcgNodes = (IssTcgAnnotatePass.Result) passResults
+        .lastResultOf(IssTcgAnnotatePass.class);
 
     viam.isa().get().ownInstructions()
         .stream()
         .filter(i -> supportedInstructions.contains(i.identifier.simpleName()))
-        .forEach(TcgLoweringExecutor::runOn);
+        .forEach(i -> TcgLoweringExecutor.runOn(i, tcgNodes));
 
     return null;
   }
@@ -90,18 +100,22 @@ class TcgLoweringExecutor extends GraphProcessor<Node> {
   Set<Pair<TcgV, WriteResourceNode>> destVars;
   Set<TcgV> tempVars;
 
+  IssTcgAnnotatePass.Result tcgNodes;
 
-  TcgLoweringExecutor(Instruction instruction) {
+
+  TcgLoweringExecutor(Instruction instruction,
+                      IssTcgAnnotatePass.Result tcgNodes) {
     this.instruction = instruction;
     this.insnStartNode = getSingleNode(instruction.behavior(), StartNode.class);
     this.lastNode = insnStartNode;
     this.insnEndNode = getSingleNode(instruction.behavior(), InstrEndNode.class);
     this.destVars = new HashSet<>();
     this.tempVars = new HashSet<>();
+    this.tcgNodes = tcgNodes;
   }
 
-  static void runOn(Instruction instruction) {
-    new TcgLoweringExecutor(instruction).run();
+  static void runOn(Instruction instruction, IssTcgAnnotatePass.Result tcgNodes) {
+    new TcgLoweringExecutor(instruction, tcgNodes).run();
   }
 
   protected void run() {
@@ -145,23 +159,35 @@ class TcgLoweringExecutor extends GraphProcessor<Node> {
   }
 
   protected @Nullable Node callProcess(Node toProcess) {
+    if (!tcgNodes.tcgNodes().contains(toProcess)) {
+      // if not a tcg node, we just return it unprocessed
+      return toProcess;
+    }
+
     if (toProcess instanceof BuiltInCall call) {
       return process(call);
     } else if (toProcess instanceof ReadRegFileNode regFileRead) {
       return process(regFileRead);
     } else if (toProcess instanceof WriteRegFileNode regFileWrite) {
       return process(regFileWrite);
+    } if (toProcess instanceof ReadMemNode readMemNode) {
+      return process(readMemNode);
+//    } else if (toProcess instanceof WriteMemNode writeMemNode) {
+//      return process(writeMemNode);
     } else if (toProcess instanceof FieldRefNode) {
       return toProcess;
     } else if (toProcess instanceof ConstantNode) {
       // TODO: @jzottele Make sense of this
       return toProcess;
-    } else if (toProcess instanceof SignExtendNode) {
-      return toProcess;
+    } else if (toProcess instanceof SignExtendNode signExtendNode) {
+      return process(signExtendNode);
     } else if (toProcess instanceof ZeroExtendNode) {
       return toProcess;
     } else if (toProcess instanceof TruncateNode) {
       return toProcess;
+    } else if (toProcess instanceof LetNode letNode) {
+      process(letNode);
+      return null;
     } else {
       throw new ViamGraphError("node not yet supported by tcg lowering")
           .addContext(toProcess)
@@ -207,6 +233,33 @@ class TcgLoweringExecutor extends GraphProcessor<Node> {
     return new TcgSetRegFile(toProcess.registerFile(), toProcess.address(), prevOp.res());
   }
 
+  private TcgOpNode process(ReadMemNode toProcess) {
+    // TODO: Not always a TcgOpNode
+    var addrTcgRes = getResultOf(toProcess.address(), TcgOpNode.class);
+
+    var readWidth = toProcess.type().bitWidth();
+    var loadSize = TcgLoadMemory.LoadSize.fromWidth(readWidth);
+
+    // TODO: @jzottele Don't hardcode this
+    var mode = TcgLoadMemory.ExtendMode.SIGN_EXTEND;
+
+    // TODO: @jzottele Don't hardcode type!
+    var width = TcgWidth.i64;
+    var res = TcgV.gen(width);
+    tempVars.add(res);
+
+
+    return new TcgLoadMemory(loadSize, mode, res, addrTcgRes.res(), width);
+  }
+
+//  private TcgOpNode process(WriteMemNode toProcess) {
+//    var valRes = getResultOf(toProcess.value(), TcgOpNode.class);
+//    var addrRes = getResultOf(toProcess.address(), TcgOpNode.class);
+//
+//
+//    return
+//  }
+
   private Node process(BuiltInCall call) {
     return produceOpNode(call);
   }
@@ -236,6 +289,22 @@ class TcgLoweringExecutor extends GraphProcessor<Node> {
     }
   }
 
+  private TcgOpNode process(SignExtendNode toProcess) {
+    var argTcg = getResultOf(toProcess.value(), TcgOpNode.class);
+
+    var size = Tcg_8_16_32.fromWidth(toProcess.value().type().asDataType().bitWidth());
+    var resSize = TcgWidth.fromWidth(toProcess.type().bitWidth());
+    var res = TcgV.gen(resSize);
+
+    return new TcgExtendNode(size, TcgExtend.SIGN, res, argTcg.res());
+  }
+
+  private void process(LetNode node) {
+    var prevRes = getResultOf(node.expression(), TcgOpNode.class);
+
+    var var = prevRes.res();
+    var.setName(node.letName().name());
+  }
 
   private void insertTemporaryVariableRetrievals() {
     for (var tcgVar : tempVars) {

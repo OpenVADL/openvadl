@@ -1,0 +1,41 @@
+package vadl.iss.passes.tcgLowering.nodes;
+
+import java.util.List;
+import vadl.iss.passes.tcgLowering.TcgExtend;
+import vadl.iss.passes.tcgLowering.TcgV;
+import vadl.iss.passes.tcgLowering.TcgWidth;
+import vadl.iss.passes.tcgLowering.Tcg_8_16_32;
+import vadl.javaannotations.viam.DataValue;
+import vadl.viam.graph.Node;
+
+public class TcgExtendNode extends TcgUnaryOpNode {
+
+  @DataValue
+  Tcg_8_16_32 fromSize;
+
+  @DataValue
+  TcgExtend extend;
+
+  public TcgExtendNode(Tcg_8_16_32 fromSize, TcgExtend extend, TcgV res, TcgV arg) {
+    super(res, arg);
+    this.fromSize = fromSize;
+    this.extend = extend;
+  }
+
+  @Override
+  public Node copy() {
+    return new TcgExtendNode(fromSize, extend, res, arg);
+  }
+
+  @Override
+  public Node shallowCopy() {
+    return new TcgExtendNode(fromSize, extend, res, arg);
+  }
+
+  @Override
+  protected void collectData(List<Object> collection) {
+    super.collectData(collection);
+    collection.add(fromSize);
+    collection.add(extend);
+  }
+}
