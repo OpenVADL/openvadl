@@ -3,6 +3,7 @@ package vadl.viam.passes;
 import java.util.HashMap;
 import java.util.function.Function;
 import org.jetbrains.annotations.Nullable;
+import vadl.viam.ViamError;
 import vadl.viam.graph.Graph;
 import vadl.viam.graph.GraphVisitor;
 import vadl.viam.graph.Node;
@@ -17,8 +18,8 @@ import vadl.viam.graph.Node;
  * {@link #processUnprocessedNode(Node)} if the node was not yet processed.
  * To trigger processing of a node, the node should {@code accept(this)}.
  */
-public abstract class GraphProcessor implements GraphVisitor<Object> {
-  protected final HashMap<Node, Node> processedNodes = new HashMap<Node, Node>();
+public abstract class GraphProcessor<T> implements GraphVisitor<Object> {
+  protected final HashMap<Node, T> processedNodes = new HashMap<>();
 
   /**
    * Process the nodes in the graph that pass the given filter.
@@ -40,7 +41,7 @@ public abstract class GraphProcessor implements GraphVisitor<Object> {
    * @param toProcess The node to be processed
    * @return The processed node
    */
-  protected Node processNode(Node toProcess) {
+  protected T processNode(Node toProcess) {
     var resultNode = processedNodes.get(toProcess);
     if (resultNode != null) {
       return resultNode;
@@ -50,7 +51,7 @@ public abstract class GraphProcessor implements GraphVisitor<Object> {
     return resultNode;
   }
 
-  protected abstract Node processUnprocessedNode(Node toProcess);
+  protected abstract T processUnprocessedNode(Node toProcess);
 
   @Nullable
   @Override
@@ -63,10 +64,11 @@ public abstract class GraphProcessor implements GraphVisitor<Object> {
   }
 
 
-  protected <T extends Node> T getResultOf(Node unprocessed, Class<T> clazz) {
-    var node = processedNodes.get(unprocessed);
-    unprocessed.ensure(node != null, "node not processed");
-    node.ensure(clazz.isInstance(node), "expected node to be instance of %s", clazz);
-    return clazz.cast(node);
+  protected <R extends T> R getResultOf(Node unprocessed, Class<R> clazz) {
+    var result = processedNodes.get(unprocessed);
+    unprocessed.ensure(result != null, "node not processed");
+    ViamError.ensure(clazz.isInstance(result),
+        "expected result to be instance of %s, but was %s", clazz, result);
+    return clazz.cast(result);
   }
 }
