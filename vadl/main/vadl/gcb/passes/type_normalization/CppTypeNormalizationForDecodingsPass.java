@@ -36,7 +36,7 @@ public class CppTypeNormalizationForDecodingsPass extends CppTypeNormalizationPa
   protected Stream<Pair<Format.Field, Function>> getApplicable(Specification viam) {
     return viam.isa()
         .map(x -> x.ownFormats().stream()).orElseGet(Stream::empty)
-        .flatMap(x -> Arrays.stream(x.fieldAccesses()))
+        .flatMap(x -> x.fieldAccesses().stream())
         .map(x -> new Pair<>(x.fieldRef(), x.accessFunction()));
   }
 
@@ -55,13 +55,5 @@ public class CppTypeNormalizationForDecodingsPass extends CppTypeNormalizationPa
   private static Parameter upcast(Parameter parameter) {
     return new Parameter(parameter.identifier,
         upcast(parameter.type()), parameter.parent());
-  }
-
-  private static BitsType upcast(Type type) {
-    if (type instanceof BitsType cast) {
-      return cast.withBitWidth(64);
-    } else {
-      throw new ViamError("Non bits type are not supported");
-    }
   }
 }

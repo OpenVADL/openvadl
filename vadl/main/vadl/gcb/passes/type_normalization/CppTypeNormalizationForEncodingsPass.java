@@ -34,7 +34,7 @@ public class CppTypeNormalizationForEncodingsPass extends CppTypeNormalizationPa
   protected Stream<Pair<Format.Field, Function>> getApplicable(Specification viam) {
     return viam.isa()
         .map(x -> x.ownFormats().stream()).orElseGet(Stream::empty)
-        .flatMap(x -> Arrays.stream(x.fieldAccesses()))
+        .flatMap(x -> x.fieldAccesses().stream())
         .map(fieldAccess -> new Pair<>(fieldAccess.fieldRef(),
             ensureNonNull(fieldAccess.encoding(),
                 () -> Diagnostic.error(

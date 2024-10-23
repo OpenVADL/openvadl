@@ -189,7 +189,7 @@ public abstract class CppTypeNormalizationPass extends Pass {
 
   private static void cast(UnaryNode node, java.util.function.Function<BitsType, Node> buildNode) {
     var bitsType = (BitsType) node.type();
-    var newBitSizeType = bitsType.withBitWidth(nextFittingType(
+    var newBitSizeType = bitsType.withBitWidth(nextFittingBitSize(
         bitsType.bitWidth()));
     var newNode = buildNode.apply(newBitSizeType);
     node.replaceAndDelete(newNode);
@@ -233,18 +233,21 @@ public abstract class CppTypeNormalizationPass extends Pass {
 
   private static Parameter upcast(Parameter parameter) {
     return new Parameter(parameter.identifier,
-        upcast(parameter.type()), parameter.parent());
+        upcast(parameter.type()));
   }
 
-  private static BitsType upcast(Type type) {
+  /**
+   * Upcast the given type to the next fitting bit size.
+   */
+  public static BitsType upcast(Type type) {
     if (type instanceof BitsType cast) {
-      return cast.withBitWidth(nextFittingType(cast.bitWidth()));
+      return cast.withBitWidth(nextFittingBitSize(cast.bitWidth()));
     } else {
       throw new ViamError("Non bits type are not supported");
     }
   }
 
-  private static int nextFittingType(int old) {
+  private static int nextFittingBitSize(int old) {
     if (old == 1) {
       return 1;
     } else if (old > 1 && old <= 8) {

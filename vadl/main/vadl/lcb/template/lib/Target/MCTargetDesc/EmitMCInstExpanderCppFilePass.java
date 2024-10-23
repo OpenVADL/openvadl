@@ -134,7 +134,7 @@ public class EmitMCInstExpanderCppFilePass extends LcbTemplateRenderingPass {
       Map<Format.Field, List<VariantKind>> variants,
       List<CompilerRelocation> relocations,
       PassResults passResults) {
-    return Stream.of(dummyAbi.returnSequence())
+    return Stream.of(dummyAbi.returnSequence(), dummyAbi.callSequence())
         .map(pseudoInstruction -> renderPseudoInstruction(specification,
             cppFunctions,
             fieldUsages,

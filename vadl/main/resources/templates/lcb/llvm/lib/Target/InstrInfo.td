@@ -5,6 +5,10 @@
  */
 def AddrFI : ComplexPattern<iPTR, 1, "SelectAddrFI", [frameindex], []>;
 
+// symbol operand used for matching load and call sequences.
+// the size is determined by the program counter size.
+def bare_symbol : Operand<[(${stackPointerType})]>;
+
 def SDT_CallSeqStart : SDCallSeqStart<[SDTCisVT<0, [(${stackPointerType})]>, SDTCisVT<1, [(${stackPointerType})]>]>;
 def SDT_CallSeqEnd   : SDCallSeqEnd<[SDTCisVT<0, [(${stackPointerType})]>, SDTCisVT<1, [(${stackPointerType})]>]>;
 
@@ -14,6 +18,9 @@ def SDT_CPU_Call : SDTypeProfile<0, -1, [SDTCisVT<0, [(${stackPointerType})]>]>;
 // Target-independent nodes, but with target-specific formats
 def callseq_start : SDNode<"ISD::CALLSEQ_START", SDT_CallSeqStart, [SDNPHasChain, SDNPOutGlue]>;
 def callseq_end   : SDNode<"ISD::CALLSEQ_END", SDT_CallSeqEnd, [SDNPHasChain, SDNPOptInGlue, SDNPOutGlue]>;
+
+def target_call : SDNode<"[(${namespace})]ISD::CALL", SDT_CPU_Call,
+                           [SDNPHasChain, SDNPOptInGlue, SDNPOutGlue, SDNPVariadic]>;
 
 def target_ret_flag : SDNode<"[(${namespace})]ISD::RET_FLAG", SDTNone,
                            [SDNPHasChain, SDNPOptInGlue, SDNPVariadic]>;
@@ -30,8 +37,8 @@ def ADJCALLSTACKDOWN : Instruction
     let Namespace = "[(${namespace})]";
     let isPseudo = 1;
     let isCodeGenOnly = 1;
-    let Defs = [ X2 ]; // stack pointer
-    let Uses = [ X2 ]; // stack pointer
+    let Defs = [ [(${stackPointerRegister.render()})] ]; // stack pointer
+    let Uses = [ [(${stackPointerRegister.render()})] ]; // stack pointer
 }
 
 /*
@@ -46,15 +53,13 @@ def ADJCALLSTACKUP : Instruction
     let Namespace = "[(${namespace})]";
     let isPseudo = 1;
     let isCodeGenOnly = 1;
-    let Defs = [ X2 ]; // stack pointer
-    let Uses = [ X2 ]; // stack pointer
+    let Defs = [ [(${stackPointerRegister.render()})] ]; // stack pointer
+    let Uses = [ [(${stackPointerRegister.render()})] ]; // stack pointer
 }
 
-def RESERVERD_PSEUDO_RET : Instruction
+def RESERVED_PSEUDO_RET : Instruction
 {
     let Namespace = "[(${namespace})]";
-    /* let Size = 4; // ( Bits<32> )
-    let CodeSize = 4; // ( Bits<32> ), used for ISEL cost */
     let InOperandList = (ins);
     let OutOperandList = (outs);
     let Pattern =  [ (target_ret_flag) ];
@@ -69,6 +74,33 @@ def RESERVERD_PSEUDO_RET : Instruction
     let Defs = [];
     let Uses = [];
 }
+
+/*
+ * PSEUDO_CALL is a pseudo instruction used to represent the
+ * 'target_call', which marks a function call.
+ * It will be later expanded into the defined calling sequence during code emission.
+ */
+def RESERVED_PSEUDO_CALL : Instruction
+{
+    let Namespace = "[(${namespace})]";
+    let InOperandList = (ins bare_symbol:$addr);
+    let OutOperandList = (outs);
+    let Pattern = [];
+    let isTerminator  = 0;
+    let isBranch      = 0;
+    let isCall        = 1;
+    let isReturn      = 0;
+    let isPseudo      = 1;
+    let isCodeGenOnly = 1;
+    let mayLoad       = 0;
+    let mayStore      = 0;
+    let Defs = [];
+    let Uses = [];
+}
+
+/* Match the call sequence for global and external symbols */
+def : Pat<(target_call tglobaladdr:$func), (RESERVED_PSEUDO_CALL tglobaladdr:$func)>;
+def : Pat<(target_call texternalsym:$func), (RESERVED_PSEUDO_CALL texternalsym:$func)>;
 
 [# th:each="imm : ${immediates}" ]
 [(${imm})]

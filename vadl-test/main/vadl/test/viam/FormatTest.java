@@ -51,7 +51,7 @@ public class FormatTest extends AbstractTest {
 
     {
       var byte_slice = findFormatByName(formats, "BYTE_SLICE");
-      assertEquals(0, byte_slice.fieldAccesses().length);
+      assertEquals(0, byte_slice.fieldAccesses().size());
 
       var fields = byte_slice.fields();
       assertEquals(2, fields.length);
@@ -78,7 +78,7 @@ public class FormatTest extends AbstractTest {
 
     {
       var byte_type = findFormatByName(formats, "BYTE_TYPE");
-      assertEquals(0, byte_type.fieldAccesses().length);
+      assertEquals(0, byte_type.fieldAccesses().size());
 
       var fields = byte_type.fields();
       assertEquals(2, fields.length);
@@ -176,8 +176,8 @@ public class FormatTest extends AbstractTest {
       var hi = fields[0];
 
       var fieldAccesses = simple_access.fieldAccesses();
-      assertEquals(1, fieldAccesses.length);
-      var var = fieldAccesses[0];
+      assertEquals(1, fieldAccesses.size());
+      var var = fieldAccesses.get(0);
       assertEquals("SIMPLE_ACCESS::VAR", var.identifier.name());
 
       var accessFunction = var.accessFunction();
@@ -205,7 +205,7 @@ public class FormatTest extends AbstractTest {
       var hi = fields[0];
 
       var fieldAccesses = auxiliary_access.fieldAccesses();
-      var var = fieldAccesses[0];
+      var var = fieldAccesses.get(0);
 
       var predicate = var.predicate();
       assertEquals("AUXILIARY_ACCESS::VAR_predicate0", predicate.identifier.name());

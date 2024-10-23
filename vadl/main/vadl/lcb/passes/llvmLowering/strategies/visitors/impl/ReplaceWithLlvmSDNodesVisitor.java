@@ -2,6 +2,7 @@ package vadl.lcb.passes.llvmLowering.strategies.visitors.impl;
 
 import static vadl.viam.ViamError.ensure;
 import static vadl.viam.ViamError.ensureNonNull;
+import static vadl.viam.ViamError.ensurePresent;
 
 import java.util.Arrays;
 import java.util.Comparator;
@@ -11,6 +12,7 @@ import java.util.Set;
 import javax.annotation.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import vadl.cppCodeGen.passes.typeNormalization.CppTypeNormalizationPass;
 import vadl.error.DeferredDiagnosticStore;
 import vadl.error.Diagnostic;
 import vadl.lcb.codegen.model.llvm.ValueType;
@@ -49,6 +51,7 @@ import vadl.types.BuiltInTable;
 import vadl.types.DataType;
 import vadl.types.SIntType;
 import vadl.types.Type;
+import vadl.utils.SourceLocation;
 import vadl.viam.Constant;
 import vadl.viam.graph.Node;
 import vadl.viam.graph.control.AbstractBeginNode;
@@ -87,6 +90,17 @@ public class ReplaceWithLlvmSDNodesVisitor
 
   private static final Logger logger = LoggerFactory.getLogger(ReplaceWithLlvmSDNodesVisitor.class);
   private boolean patternLowerable = true;
+  protected final ValueType architectureType;
+
+  /**
+   * Constructor.
+   *
+   * @param architectureType is the type for which tablegen types should be upcasted to.
+   *                         On 32 Bit architectures should all immediates upcasted to 32 Bit.
+   */
+  public ReplaceWithLlvmSDNodesVisitor(ValueType architectureType) {
+    this.architectureType = architectureType;
+  }
 
   @Override
   public boolean isPatternLowerable() {
@@ -308,9 +322,12 @@ public class ReplaceWithLlvmSDNodesVisitor
 
   @Override
   public void visit(FieldAccessRefNode fieldAccessRefNode) {
+    var originalType = fieldAccessRefNode.fieldAccess().accessFunction().returnType();
+
     fieldAccessRefNode.replaceAndDelete(
         new LlvmFieldAccessRefNode(fieldAccessRefNode.fieldAccess(),
-            fieldAccessRefNode.type()));
+            originalType,
+            architectureType));
   }
 
   @Override
@@ -479,5 +496,22 @@ public class ReplaceWithLlvmSDNodesVisitor
     }
 
     return type;
+  }
+
+  protected ValueType getLlvmTypeOrUpcast(Type originalType, SourceLocation sourceLocation) {
+    var llvmType = ValueType.from(originalType);
+
+    // Llvm nodes require a valid LLVM type.
+    // We check whether the `originalType` is ok (it most likely will not)
+    // If not then upcast the type and use that one.
+    if (llvmType.isPresent()) {
+      return llvmType.get();
+    } else {
+      var upcastedType = CppTypeNormalizationPass.upcast(originalType);
+      return ensurePresent(ValueType.from(upcastedType), () -> Diagnostic.error(
+          "Compiler generator was not able to change the type to the architecture's "
+              + "bit width: " + upcastedType.toString(),
+          sourceLocation));
+    }
   }
 }

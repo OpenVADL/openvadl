@@ -75,6 +75,7 @@ public class EmitInstrInfoTableGenFilePass extends LcbTemplateRenderingPass {
         .toList();
 
     return Map.of(CommonVarNames.NAMESPACE, specification.simpleName(),
+        "stackPointerRegister", abi.stackPointer(),
         "stackPointerType",
         ValueType.from(abi.stackPointer().registerFile().resultType()).get().getLlvmType(),
         "immediates", renderedImmediates,

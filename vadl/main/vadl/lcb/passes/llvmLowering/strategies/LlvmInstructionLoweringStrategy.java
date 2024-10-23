@@ -5,6 +5,7 @@ import static vadl.viam.ViamError.ensurePresent;
 
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
@@ -13,11 +14,13 @@ import java.util.Set;
 import java.util.function.BiFunction;
 import java.util.function.Function;
 import java.util.stream.Stream;
+import javax.annotation.Nullable;
 import org.jetbrains.annotations.NotNull;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import vadl.error.DeferredDiagnosticStore;
 import vadl.error.Diagnostic;
+import vadl.lcb.codegen.model.llvm.ValueType;
 import vadl.lcb.passes.isaMatching.InstructionLabel;
 import vadl.lcb.passes.llvmLowering.LlvmLoweringPass;
 import vadl.lcb.passes.llvmLowering.LlvmMayLoadMemory;
@@ -79,6 +82,12 @@ public abstract class LlvmInstructionLoweringStrategy {
   private static final Logger logger = LoggerFactory.getLogger(
       LlvmInstructionLoweringStrategy.class);
 
+  protected final ValueType architectureType;
+
+  public LlvmInstructionLoweringStrategy(ValueType architectureType) {
+    this.architectureType = architectureType;
+  }
+
   /**
    * Get the supported set of {@link InstructionLabel} which this strategy supports.
    */
@@ -87,7 +96,11 @@ public abstract class LlvmInstructionLoweringStrategy {
   /**
    * Checks whether the given {@link Instruction} is lowerable with this strategy.
    */
-  public boolean isApplicable(InstructionLabel instructionLabel) {
+  public boolean isApplicable(@Nullable InstructionLabel instructionLabel) {
+    if (instructionLabel == null) {
+      return false;
+    }
+
     return getSupportedInstructionLabels().contains(instructionLabel);
   }
 
@@ -97,7 +110,7 @@ public abstract class LlvmInstructionLoweringStrategy {
    * if-conditions and mark them as not lowerable.
    */
   protected LcbGraphNodeVisitor getVisitorForPatternSelectorLowering() {
-    return new ReplaceWithLlvmSDNodesVisitor();
+    return new ReplaceWithLlvmSDNodesVisitor(architectureType);
   }
 
   /**
@@ -141,15 +154,13 @@ public abstract class LlvmInstructionLoweringStrategy {
    *
    * @param supportedInstructions the instructions which have known semantics.
    * @param instruction           is the machine instruction which should be lowered.
-   * @param instructionLabel      is the semantic label of the instruction.
    * @param unmodifiedBehavior    is the uninlined graph in the case of {@link Instruction}.
    */
   public Optional<LlvmLoweringRecord> lower(
       Map<InstructionLabel, List<Instruction>> supportedInstructions,
       Instruction instruction,
-      InstructionLabel instructionLabel,
       UninlinedGraph unmodifiedBehavior) {
-    return lowerInstruction(supportedInstructions, instruction, instructionLabel,
+    return lowerInstruction(supportedInstructions, instruction,
         unmodifiedBehavior);
   }
 
@@ -164,7 +175,7 @@ public abstract class LlvmInstructionLoweringStrategy {
       Graph unmodifiedBehavior) {
     logger.atDebug().log("Lowering {} with {}", instruction.identifier.simpleName(),
         pseudoInstruction.identifier.simpleName());
-    return lowerInstruction(supportedInstructions, instruction, instructionLabel,
+    return lowerInstruction(supportedInstructions, instruction,
         unmodifiedBehavior);
   }
 
@@ -174,14 +185,12 @@ public abstract class LlvmInstructionLoweringStrategy {
    *
    * @param supportedInstructions the instructions which have known semantics.
    * @param instruction           is the machine instruction which should be lowered.
-   * @param instructionLabel      is the semantic label of the instruction.
    * @param unmodifiedBehavior    is the uninlined graph in the case of {@link Instruction} or
    *                              the applied graph in the case of {@link PseudoInstruction}.
    */
   protected Optional<LlvmLoweringRecord> lowerInstruction(
       Map<InstructionLabel, List<Instruction>> supportedInstructions,
       Instruction instruction,
-      InstructionLabel instructionLabel,
       Graph unmodifiedBehavior) {
     var visitor = getVisitorForPatternSelectorLowering();
     var copy = unmodifiedBehavior.copy();
@@ -194,6 +203,7 @@ public abstract class LlvmInstructionLoweringStrategy {
     }
 
     // Continue with lowering of nodes
+    var isLowerable = true;
     for (var endNode : copy.getNodes(AbstractEndNode.class).toList()) {
       visitor.visit(endNode);
 
@@ -201,8 +211,18 @@ public abstract class LlvmInstructionLoweringStrategy {
         DeferredDiagnosticStore.add(
             Diagnostic.warning("Instruction is not lowerable and will be skipped",
                 instruction.sourceLocation()).build());
-        return Optional.empty();
+        isLowerable = false;
       }
+    }
+
+    // If the behavior contains any registers then it is also not lowerable because LLVM's DAG
+    // has no concept of register in the IR.
+    if (copy.getNodes(ReadRegNode.class).findAny().isPresent()) {
+      DeferredDiagnosticStore.add(
+          Diagnostic.warning(
+              "Instruction is not lowerable because it tries to match fixed registers.",
+              instruction.sourceLocation()).build());
+      isLowerable = false;
     }
 
     var inputOperands = getTableGenInputOperands(copy);
@@ -213,7 +233,7 @@ public abstract class LlvmInstructionLoweringStrategy {
 
     copy.deinitializeNodes();
 
-    if (((TableGenPatternLowerable) visitor).isPatternLowerable()) {
+    if (isLowerable) {
       var patterns = generatePatterns(instruction,
           inputOperands,
           copy.getNodes(WriteResourceNode.class).toList());
@@ -221,7 +241,6 @@ public abstract class LlvmInstructionLoweringStrategy {
           generatePatternVariations(
               instruction,
               supportedInstructions,
-              instructionLabel,
               copy,
               inputOperands,
               outputOperands,
@@ -234,12 +253,16 @@ public abstract class LlvmInstructionLoweringStrategy {
           registerUses,
           registerDefs
       ));
+    } else {
+      return Optional.of(new LlvmLoweringRecord(copy,
+          inputOperands,
+          outputOperands,
+          flags,
+          Collections.emptyList(),
+          registerUses,
+          registerDefs
+      ));
     }
-
-    DeferredDiagnosticStore.add(
-        Diagnostic.warning("Instruction is not lowerable and will be skipped",
-            instruction.sourceLocation()).build());
-    return Optional.empty();
   }
 
   /**
@@ -289,7 +312,6 @@ public abstract class LlvmInstructionLoweringStrategy {
   protected abstract List<TableGenPattern> generatePatternVariations(
       Instruction instruction,
       Map<InstructionLabel, List<Instruction>> supportedInstructions,
-      InstructionLabel instructionLabel,
       Graph behavior,
       List<TableGenInstructionOperand> inputOperands,
       List<TableGenInstructionOperand> outputOperands,

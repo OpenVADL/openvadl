@@ -56,7 +56,7 @@ public class EncodingCodeGeneratorCppVerificationTest extends AbstractCppCodeGen
 
     var entries = spec.isa().map(isa -> isa.ownFormats().stream())
         .orElse(Stream.empty())
-        .flatMap(format -> Arrays.stream(format.fieldAccesses()))
+        .flatMap(format -> format.fieldAccesses().stream())
         .map(
             fieldAccess -> {
               var accessFunction = normalizedDecodings.byFunction(fieldAccess.accessFunction());

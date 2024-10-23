@@ -49,7 +49,7 @@ public class GenerateFieldAccessEncodingFunctionPass extends Pass {
     viam.isa()
         .map(x -> x.ownFormats().stream())
         .orElseGet(Stream::empty)
-        .flatMap(x -> Arrays.stream(x.fieldAccesses()))
+        .flatMap(x -> x.fieldAccesses().stream())
         .filter(x -> x.encoding() == null)
         .forEach(fieldAccess -> {
           // We need to compute multiple encoding functions based on the field access function.
@@ -63,7 +63,7 @@ public class GenerateFieldAccessEncodingFunctionPass extends Pass {
         });
 
     var hasNoEncoding = viam.findAllFormats()
-        .flatMap(x -> Arrays.stream(x.fieldAccesses()))
+        .flatMap(x -> x.fieldAccesses().stream())
         .filter(x -> x.encoding() == null)
         .toList();
 

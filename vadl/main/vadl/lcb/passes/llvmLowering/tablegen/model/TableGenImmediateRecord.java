@@ -49,17 +49,13 @@ public class TableGenImmediateRecord {
    * Constructor.
    */
   public TableGenImmediateRecord(Format.FieldAccess fieldAccess,
-                                 Type architectureType /* bitwidth of the architecture to
-                                 support immediates */) {
+                                 ValueType llvmType) {
     this(fieldAccess.fieldRef().identifier,
         Objects.requireNonNull(fieldAccess.encoding()).identifier.append(
             EmitMCCodeEmitterCppFilePass.WRAPPER),
         fieldAccess.accessFunction().identifier.append(EmitDisassemblerCppFilePass.WRAPPER),
         fieldAccess.predicate().identifier,
-        ensurePresent(ValueType.from(architectureType), () -> Diagnostic.error(
-            "Compiler generator was not able to change the type to the architecture's "
-                + "bit width: " + architectureType.toString(),
-            fieldAccess.sourceLocation())),
+        llvmType,
         fieldAccess);
   }
 
@@ -80,7 +76,7 @@ public class TableGenImmediateRecord {
   }
 
   public String fullname() {
-    return String.format("%sAs%s", this.name, type.getFancyName());
+    return String.format("%sAs%s", this.name, type.getTableGen());
   }
 
 

@@ -68,7 +68,7 @@ public class ImmediateExtractionCodeGeneratorCppVerificationTest extends Abstrac
         .isa()
         .map(isa -> isa.ownFormats().stream())
         .orElse(Stream.empty())
-        .flatMap(format -> Arrays.stream(format.fieldAccesses()))
+        .flatMap(format -> format.fieldAccesses().stream())
         .forEach(fieldAccess -> {
           var bitWidth = fieldAccess.fieldRef().format().type().bitWidth();
           var arbitraryImmediate =

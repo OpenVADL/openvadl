@@ -2,6 +2,7 @@ package vadl.lcb.passes.llvmLowering.strategies.visitors.impl;
 
 import java.util.Objects;
 import java.util.Set;
+import vadl.lcb.codegen.model.llvm.ValueType;
 import vadl.lcb.passes.llvmLowering.domain.selectionDag.LlvmBasicBlockSD;
 import vadl.lcb.passes.llvmLowering.domain.selectionDag.LlvmBrCcSD;
 import vadl.lcb.passes.llvmLowering.domain.selectionDag.LlvmCondCode;
@@ -23,6 +24,16 @@ import vadl.viam.graph.dependency.WriteRegNode;
  */
 public class ReplaceWithLlvmSDNodesWithControlFlowVisitor
     extends ReplaceWithLlvmSDNodesVisitor {
+
+  /**
+   * Constructor.
+   *
+   * @param architectureType is the type for which tablegen types should be upcasted to.
+   *                         On 32 Bit architectures should all immediates upcasted to 32 Bit.
+   */
+  public ReplaceWithLlvmSDNodesWithControlFlowVisitor(ValueType architectureType) {
+    super(architectureType);
+  }
 
   @Override
   public void visit(WriteRegNode writeRegNode) {
@@ -88,8 +99,11 @@ public class ReplaceWithLlvmSDNodesWithControlFlowVisitor
 
   @Override
   public void visit(FieldAccessRefNode fieldAccessRefNode) {
+    var originalType = fieldAccessRefNode.type();
+
     fieldAccessRefNode.replaceAndDelete(new LlvmBasicBlockSD(fieldAccessRefNode.fieldAccess(),
-        fieldAccessRefNode.type()));
+        originalType,
+        architectureType));
   }
 
   @Override

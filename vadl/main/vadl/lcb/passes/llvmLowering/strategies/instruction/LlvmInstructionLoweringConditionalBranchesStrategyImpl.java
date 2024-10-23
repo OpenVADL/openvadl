@@ -13,6 +13,8 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Stream;
+import javax.annotation.Nullable;
+import vadl.lcb.codegen.model.llvm.ValueType;
 import vadl.lcb.passes.isaMatching.InstructionLabel;
 import vadl.lcb.passes.llvmLowering.domain.LlvmLoweringRecord;
 import vadl.lcb.passes.llvmLowering.domain.machineDag.MachineInstructionParameterNode;
@@ -41,6 +43,10 @@ import vadl.viam.passes.functionInliner.UninlinedGraph;
  */
 public class LlvmInstructionLoweringConditionalBranchesStrategyImpl
     extends LlvmInstructionLoweringStrategy {
+  public LlvmInstructionLoweringConditionalBranchesStrategyImpl(ValueType architectureType) {
+    super(architectureType);
+  }
+
   @Override
   protected Set<InstructionLabel> getSupportedInstructionLabels() {
     return Set.of(BEQ, BGEQ, BNEQ, BLEQ, BLTH, BGTH);
@@ -51,14 +57,13 @@ public class LlvmInstructionLoweringConditionalBranchesStrategyImpl
     // Branch instructions contain if conditionals.
     // The normal visitor denies those. But "xxxWithControlFlowVisitor" we are allowing
     // these instructions for conditional branches.
-    return new ReplaceWithLlvmSDNodesWithControlFlowVisitor();
+    return new ReplaceWithLlvmSDNodesWithControlFlowVisitor(architectureType);
   }
 
   @Override
   public Optional<LlvmLoweringRecord> lower(
       Map<InstructionLabel, List<Instruction>> supportedInstructions,
       Instruction instruction,
-      InstructionLabel instructionLabel,
       UninlinedGraph uninlinedBehavior) {
 
     var visitor = getVisitorForPatternSelectorLowering();
@@ -70,13 +75,12 @@ public class LlvmInstructionLoweringConditionalBranchesStrategyImpl
 
     copy.deinitializeNodes();
     return Optional.of(
-        createIntermediateResult(supportedInstructions, instruction, instructionLabel, copy));
+        createIntermediateResult(supportedInstructions, instruction, copy));
   }
 
   private LlvmLoweringRecord createIntermediateResult(
       Map<InstructionLabel, List<Instruction>> supportedInstructions,
       Instruction instruction,
-      InstructionLabel instructionLabel,
       UninlinedGraph visitedGraph) {
 
     var inputOperands = getTableGenInputOperands(visitedGraph);
@@ -86,7 +90,8 @@ public class LlvmInstructionLoweringConditionalBranchesStrategyImpl
     var writes = visitedGraph.getNodes(WriteResourceNode.class).toList();
     var patterns = generatePatterns(instruction, inputOperands, writes);
     var alternatives =
-        generatePatternVariations(instruction, supportedInstructions, instructionLabel,
+        generatePatternVariations(instruction,
+            supportedInstructions,
             visitedGraph,
             inputOperands, outputOperands, patterns);
 
@@ -131,7 +136,6 @@ public class LlvmInstructionLoweringConditionalBranchesStrategyImpl
   protected List<TableGenPattern> generatePatternVariations(
       Instruction instruction,
       Map<InstructionLabel, List<Instruction>> supportedInstructions,
-      InstructionLabel instructionLabel,
       Graph behavior,
       List<TableGenInstructionOperand> inputOperands,
       List<TableGenInstructionOperand> outputOperands,

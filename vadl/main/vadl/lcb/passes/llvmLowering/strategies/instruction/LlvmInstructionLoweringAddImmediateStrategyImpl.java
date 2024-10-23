@@ -7,6 +7,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import vadl.lcb.codegen.model.llvm.ValueType;
 import vadl.lcb.passes.isaMatching.InstructionLabel;
 import vadl.lcb.passes.llvmLowering.domain.selectionDag.LlvmFrameIndexSD;
 import vadl.lcb.passes.llvmLowering.domain.selectionDag.LlvmReadRegFileNode;
@@ -26,6 +27,11 @@ public class LlvmInstructionLoweringAddImmediateStrategyImpl
     extends LlvmInstructionLoweringFrameIndexHelper {
   private final Set<InstructionLabel> supported = Set.of(ADDI_32, ADDI_64);
 
+  public LlvmInstructionLoweringAddImmediateStrategyImpl(
+      ValueType architectureType) {
+    super(architectureType);
+  }
+
   @Override
   protected Set<InstructionLabel> getSupportedInstructionLabels() {
     return supported;
@@ -35,7 +41,6 @@ public class LlvmInstructionLoweringAddImmediateStrategyImpl
   protected List<TableGenPattern> generatePatternVariations(
       Instruction instruction,
       Map<InstructionLabel, List<Instruction>> supportedInstructions,
-      InstructionLabel instructionLabel,
       Graph behavior,
       List<TableGenInstructionOperand> inputOperands,
       List<TableGenInstructionOperand> outputOperands,
@@ -51,8 +56,12 @@ public class LlvmInstructionLoweringAddImmediateStrategyImpl
           var machine = pattern.machine().copy();
 
           var affectedNodes = selector.getNodes(LlvmReadRegFileNode.class).toList();
-          alternativePatterns.add(
-              super.replaceRegisterWithFrameIndex(selector, machine, affectedNodes));
+          // Only add a new pattern when something is affected.
+          // Otherwise, we get a duplicated pattern.
+          if (!affectedNodes.isEmpty()) {
+            alternativePatterns.add(
+                super.replaceRegisterWithFrameIndex(selector, machine, affectedNodes));
+          }
         });
 
     return alternativePatterns;

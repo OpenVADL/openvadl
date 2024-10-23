@@ -1,6 +1,7 @@
 package vadl.lcb.passes.llvmLowering;
 
 import static vadl.viam.ViamError.ensureNonNull;
+import static vadl.viam.ViamError.ensurePresent;
 
 import java.io.IOException;
 import java.util.HashMap;
@@ -10,17 +11,17 @@ import java.util.Map;
 import java.util.stream.Stream;
 import org.jetbrains.annotations.Nullable;
 import vadl.configuration.LcbConfiguration;
-import vadl.error.DeferredDiagnosticStore;
 import vadl.error.Diagnostic;
+import vadl.lcb.codegen.model.llvm.ValueType;
 import vadl.lcb.passes.isaMatching.InstructionLabel;
 import vadl.lcb.passes.isaMatching.IsaMatchingPass;
 import vadl.lcb.passes.llvmLowering.domain.LlvmLoweringRecord;
 import vadl.lcb.passes.llvmLowering.strategies.LlvmInstructionLoweringStrategy;
 import vadl.lcb.passes.llvmLowering.strategies.LlvmPseudoLoweringImpl;
 import vadl.lcb.passes.llvmLowering.strategies.instruction.LlvmInstructionLoweringAddImmediateStrategyImpl;
-import vadl.lcb.passes.llvmLowering.strategies.instruction.LlvmInstructionLoweringArithmeticAndLogicStrategyImpl;
 import vadl.lcb.passes.llvmLowering.strategies.instruction.LlvmInstructionLoweringConditionalBranchesStrategyImpl;
 import vadl.lcb.passes.llvmLowering.strategies.instruction.LlvmInstructionLoweringConditionalsStrategyImpl;
+import vadl.lcb.passes.llvmLowering.strategies.instruction.LlvmInstructionLoweringDefaultStrategyImpl;
 import vadl.lcb.passes.llvmLowering.strategies.instruction.LlvmInstructionLoweringIndirectJumpStrategyImpl;
 import vadl.lcb.passes.llvmLowering.strategies.instruction.LlvmInstructionLoweringMemoryLoadStrategyImpl;
 import vadl.lcb.passes.llvmLowering.strategies.instruction.LlvmInstructionLoweringMemoryStoreStrategyImpl;
@@ -32,6 +33,7 @@ import vadl.viam.Instruction;
 import vadl.viam.PseudoInstruction;
 import vadl.viam.Specification;
 import vadl.viam.graph.Graph;
+import vadl.viam.passes.dummyAbi.DummyAbi;
 import vadl.viam.passes.functionInliner.FunctionInlinerPass;
 import vadl.viam.passes.functionInliner.UninlinedGraph;
 
@@ -39,18 +41,6 @@ import vadl.viam.passes.functionInliner.UninlinedGraph;
  * This is a wrapper class which contains utility functions for the lowering.
  */
 public class LlvmLoweringPass extends Pass {
-
-  private final List<LlvmInstructionLoweringStrategy> strategies =
-      List.of(new LlvmInstructionLoweringArithmeticAndLogicStrategyImpl(),
-          new LlvmInstructionLoweringAddImmediateStrategyImpl(),
-          new LlvmInstructionLoweringConditionalsStrategyImpl(),
-          new LlvmInstructionLoweringConditionalBranchesStrategyImpl(),
-          new LlvmInstructionLoweringIndirectJumpStrategyImpl(),
-          new LlvmInstructionLoweringMemoryStoreStrategyImpl(),
-          new LlvmInstructionLoweringMemoryLoadStrategyImpl());
-
-  private final LlvmPseudoLoweringImpl pseudoLowering = new LlvmPseudoLoweringImpl(strategies);
-
   public LlvmLoweringPass(LcbConfiguration configuration) {
     super(configuration);
   }
@@ -88,9 +78,25 @@ public class LlvmLoweringPass extends Pass {
         (HashMap<InstructionLabel, List<Instruction>>) passResults.lastResultOf(
             IsaMatchingPass.class),
         () -> Diagnostic.error("Cannot find semantics of the instructions", viam.sourceLocation()));
+    var abi = (DummyAbi) viam.definitions().filter(x -> x instanceof DummyAbi).findFirst().get();
+
+    var architectureType = ensurePresent(
+        ValueType.from(abi.stackPointer().registerFile().resultType()),
+        "Architecture type is required.");
+    var strategies =
+        List.of(
+            new LlvmInstructionLoweringAddImmediateStrategyImpl(architectureType),
+            new LlvmInstructionLoweringConditionalsStrategyImpl(architectureType),
+            new LlvmInstructionLoweringConditionalBranchesStrategyImpl(architectureType),
+            new LlvmInstructionLoweringIndirectJumpStrategyImpl(architectureType),
+            new LlvmInstructionLoweringMemoryStoreStrategyImpl(architectureType),
+            new LlvmInstructionLoweringMemoryLoadStrategyImpl(architectureType),
+            new LlvmInstructionLoweringDefaultStrategyImpl(architectureType));
+
     var machineRecords =
-        generateRecordsForMachineInstructions(passResults, viam, supportedInstructions);
-    var pseudoRecords = generateRecordsForPseudoInstructions(viam, supportedInstructions);
+        generateRecordsForMachineInstructions(passResults, viam, strategies, supportedInstructions);
+    var pseudoRecords =
+        generateRecordsForPseudoInstructions(viam, strategies, supportedInstructions);
 
     return new LlvmLoweringPassResult(machineRecords, pseudoRecords);
   }
@@ -98,6 +104,7 @@ public class LlvmLoweringPass extends Pass {
 
   private IdentityHashMap<Instruction, LlvmLoweringRecord> generateRecordsForMachineInstructions(
       PassResults passResults, Specification viam,
+      List<LlvmInstructionLoweringStrategy> strategies,
       Map<InstructionLabel, List<Instruction>> supportedInstructions) {
     var tableGenRecords = new IdentityHashMap<Instruction, LlvmLoweringRecord>();
 
@@ -117,15 +124,6 @@ public class LlvmLoweringPass extends Pass {
     viam.isa().map(isa -> isa.ownInstructions().stream()).orElseGet(Stream::empty)
         .forEach(instruction -> {
           var instructionLabel = instructionLookup.get(instruction);
-
-          // TODO: No label, then we need to have a default.
-          if (instructionLabel == null) {
-            DeferredDiagnosticStore.add(Diagnostic.warning(
-                "Instruction was not matched. Therefore, it will be skipped for the compiler"
-                    + " lowering (todo)", instruction.sourceLocation()).build());
-            return;
-          }
-
           var uninlinedBehavior = (UninlinedGraph) uninlined.get(instruction);
           ensureNonNull(uninlinedBehavior, "uninlinedBehavior graph must exist");
           for (var strategy : strategies) {
@@ -134,12 +132,17 @@ public class LlvmLoweringPass extends Pass {
               continue;
             }
 
-            var record = strategy.lower(supportedInstructions, instruction, instructionLabel,
+            var record = strategy.lower(supportedInstructions,
+                instruction,
                 uninlinedBehavior);
 
             // Okay, we have to save record.
             record.ifPresent(llvmLoweringIntermediateResult -> tableGenRecords.put(instruction,
                 llvmLoweringIntermediateResult));
+
+            // Allow only one strategy to apply.
+            // Otherwise, the results from a previous strategy are overwritten.
+            break;
           }
         });
 
@@ -148,8 +151,11 @@ public class LlvmLoweringPass extends Pass {
 
   private IdentityHashMap<PseudoInstruction,
       LlvmLoweringRecord> generateRecordsForPseudoInstructions(
-      Specification viam, Map<InstructionLabel, List<Instruction>> supportedInstructions) {
+      Specification viam,
+      List<LlvmInstructionLoweringStrategy> strategies,
+      Map<InstructionLabel, List<Instruction>> supportedInstructions) {
     var tableGenRecords = new IdentityHashMap<PseudoInstruction, LlvmLoweringRecord>();
+    var pseudoLowering = new LlvmPseudoLoweringImpl(strategies);
 
     viam.isa().map(isa -> isa.ownPseudoInstructions().stream()).orElseGet(Stream::empty)
         .forEach(pseudo -> {

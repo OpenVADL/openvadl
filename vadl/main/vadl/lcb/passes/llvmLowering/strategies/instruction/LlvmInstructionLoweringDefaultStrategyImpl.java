@@ -4,31 +4,35 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import javax.annotation.Nullable;
 import vadl.lcb.codegen.model.llvm.ValueType;
 import vadl.lcb.passes.isaMatching.InstructionLabel;
 import vadl.lcb.passes.llvmLowering.strategies.LlvmInstructionLoweringStrategy;
+import vadl.lcb.passes.llvmLowering.tablegen.model.TableGenInstruction;
 import vadl.lcb.passes.llvmLowering.tablegen.model.TableGenInstructionOperand;
 import vadl.lcb.passes.llvmLowering.tablegen.model.TableGenPattern;
 import vadl.viam.Instruction;
 import vadl.viam.graph.Graph;
-import vadl.viam.passes.functionInliner.UninlinedGraph;
 
 /**
- * Lowering of conditionals into TableGen.
+ * Lowers instructions into {@link TableGenInstruction}.
  */
-public class LlvmInstructionLoweringConditionalsStrategyImpl
+public class LlvmInstructionLoweringDefaultStrategyImpl
     extends LlvmInstructionLoweringStrategy {
-
-  private final Set<InstructionLabel> supported = Set.of(InstructionLabel.LT);
-
-  public LlvmInstructionLoweringConditionalsStrategyImpl(
+  public LlvmInstructionLoweringDefaultStrategyImpl(
       ValueType architectureType) {
     super(architectureType);
   }
 
   @Override
   protected Set<InstructionLabel> getSupportedInstructionLabels() {
-    return this.supported;
+    return Collections.emptySet();
+  }
+
+  @Override
+  public boolean isApplicable(@Nullable InstructionLabel instructionLabel) {
+    // Accept every label.
+    return true;
   }
 
   @Override

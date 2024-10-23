@@ -1,5 +1,6 @@
 package vadl.viam;
 
+import vadl.error.Diagnostic;
 import vadl.types.Type;
 import vadl.viam.graph.Graph;
 import vadl.viam.graph.dependency.ReadRegNode;
@@ -28,7 +29,9 @@ public class Relocation extends Function {
   public void verify() {
     super.verify();
 
-    ensure(parameters().length == 1, "Relocations must have exactly one parameter");
+    ViamError.ensure(parameters().length == 1,
+        () -> Diagnostic.error("Relocations must have exactly one argument.",
+            this.sourceLocation()));
   }
 
   @Override

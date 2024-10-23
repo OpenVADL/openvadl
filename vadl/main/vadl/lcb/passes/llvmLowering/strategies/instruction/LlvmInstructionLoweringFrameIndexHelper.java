@@ -5,6 +5,7 @@ import static vadl.viam.ViamError.ensureNonNull;
 import java.util.List;
 import java.util.function.BiFunction;
 import java.util.function.Function;
+import vadl.lcb.codegen.model.llvm.ValueType;
 import vadl.lcb.passes.llvmLowering.domain.machineDag.MachineInstructionParameterNode;
 import vadl.lcb.passes.llvmLowering.domain.selectionDag.LlvmFrameIndexSD;
 import vadl.lcb.passes.llvmLowering.domain.selectionDag.LlvmReadRegFileNode;
@@ -23,6 +24,11 @@ import vadl.viam.graph.Node;
  */
 public abstract class LlvmInstructionLoweringFrameIndexHelper
     extends LlvmInstructionLoweringStrategy {
+  public LlvmInstructionLoweringFrameIndexHelper(
+      ValueType architectureType) {
+    super(architectureType);
+  }
+
   /**
    * Replaces {@link LlvmReadRegFileNode} with {@link LlvmFrameIndexSD} in the selector
    * and changes the same operands in the machine pattern to

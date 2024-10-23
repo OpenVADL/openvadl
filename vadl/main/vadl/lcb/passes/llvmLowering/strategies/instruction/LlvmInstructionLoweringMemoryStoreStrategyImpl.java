@@ -6,6 +6,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import vadl.lcb.codegen.model.llvm.ValueType;
 import vadl.lcb.passes.isaMatching.InstructionLabel;
 import vadl.lcb.passes.llvmLowering.domain.selectionDag.LlvmFrameIndexSD;
 import vadl.lcb.passes.llvmLowering.domain.selectionDag.LlvmReadRegFileNode;
@@ -20,13 +21,17 @@ import vadl.viam.Register;
 import vadl.viam.graph.Graph;
 import vadl.viam.graph.Node;
 import vadl.viam.graph.dependency.WriteResourceNode;
-import vadl.viam.passes.functionInliner.UninlinedGraph;
 
 /**
  * Lowers instructions which can store into memory.
  */
 public class LlvmInstructionLoweringMemoryStoreStrategyImpl
     extends LlvmInstructionLoweringFrameIndexHelper {
+
+  public LlvmInstructionLoweringMemoryStoreStrategyImpl(
+      ValueType architectureType) {
+    super(architectureType);
+  }
 
   @Override
   protected Set<InstructionLabel> getSupportedInstructionLabels() {
@@ -37,7 +42,6 @@ public class LlvmInstructionLoweringMemoryStoreStrategyImpl
   protected List<TableGenPattern> generatePatternVariations(
       Instruction instruction,
       Map<InstructionLabel, List<Instruction>> supportedInstructions,
-      InstructionLabel instructionLabel,
       Graph behavior,
       List<TableGenInstructionOperand> inputOperands,
       List<TableGenInstructionOperand> outputOperands,

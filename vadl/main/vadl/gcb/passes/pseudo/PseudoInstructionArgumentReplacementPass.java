@@ -31,7 +31,7 @@ public class PseudoInstructionArgumentReplacementPass
                 .map(InstructionSetArchitecture::ownPseudoInstructions)
                 .orElse(Collections.emptyList())
                 .stream(),
-            Stream.of(abi.returnSequence())
+            Stream.of(abi.returnSequence(), abi.callSequence())
         );
   }
 

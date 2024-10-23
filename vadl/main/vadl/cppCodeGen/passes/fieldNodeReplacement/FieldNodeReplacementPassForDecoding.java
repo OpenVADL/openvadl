@@ -31,7 +31,7 @@ public class FieldNodeReplacementPassForDecoding extends FieldNodeReplacementPas
     return viam.isa()
         .map(x -> x.ownFormats().stream())
         .orElseGet(Stream::empty)
-        .flatMap(x -> Arrays.stream(x.fieldAccesses()))
+        .flatMap(x -> x.fieldAccesses().stream())
         .map(Format.FieldAccess::accessFunction)
         .filter(Objects::nonNull);
   }

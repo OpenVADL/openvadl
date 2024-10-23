@@ -251,6 +251,8 @@ public final class PassOrder {
   public static PassOrder gcbAndCppCodeGen(GcbConfiguration gcbConfiguration) throws IOException {
     var order = viam(gcbConfiguration);
 
+    order.add(new IdentifyFieldUsagePass(gcbConfiguration));
+    //order.add(new AddMissingFieldAccessesPass(gcbConfiguration));
     order.add(new GenerateFieldAccessEncodingFunctionPass(gcbConfiguration));
     order.add(new FieldNodeReplacementPassForDecoding(gcbConfiguration));
     order.add(new CppTypeNormalizationForEncodingsPass(gcbConfiguration));
@@ -258,7 +260,6 @@ public final class PassOrder {
     order.add(new CppTypeNormalizationForPredicatesPass(gcbConfiguration));
     order.add(new AssemblyReplacementNodePass(gcbConfiguration));
     order.add(new AssemblyConcatBuiltinMergingPass(gcbConfiguration));
-    order.add(new IdentifyFieldUsagePass(gcbConfiguration));
     order.add(new PseudoInstructionArgumentReplacementPass(gcbConfiguration));
     order.add(new PseudoExpansionFunctionGeneratorPass(gcbConfiguration));
 

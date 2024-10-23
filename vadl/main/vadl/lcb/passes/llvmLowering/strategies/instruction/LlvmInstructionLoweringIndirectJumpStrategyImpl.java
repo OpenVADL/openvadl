@@ -5,6 +5,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
+import vadl.lcb.codegen.model.llvm.ValueType;
 import vadl.lcb.passes.isaMatching.InstructionLabel;
 import vadl.lcb.passes.llvmLowering.LlvmLoweringPass;
 import vadl.lcb.passes.llvmLowering.domain.LlvmLoweringRecord;
@@ -23,6 +24,11 @@ import vadl.viam.passes.functionInliner.UninlinedGraph;
  */
 public class LlvmInstructionLoweringIndirectJumpStrategyImpl
     extends LlvmInstructionLoweringStrategy {
+  public LlvmInstructionLoweringIndirectJumpStrategyImpl(
+      ValueType architectureType) {
+    super(architectureType);
+  }
+
   @Override
   protected Set<InstructionLabel> getSupportedInstructionLabels() {
     return Set.of(InstructionLabel.JALR);
@@ -32,7 +38,6 @@ public class LlvmInstructionLoweringIndirectJumpStrategyImpl
   protected Optional<LlvmLoweringRecord> lowerInstruction(
       Map<InstructionLabel, List<Instruction>> supportedInstructions,
       Instruction instruction,
-      InstructionLabel instructionLabel,
       Graph unmodifiedBehavior) {
     var copy = unmodifiedBehavior.copy();
     var visitor = getVisitorForPatternSelectorLowering();
@@ -56,7 +61,6 @@ public class LlvmInstructionLoweringIndirectJumpStrategyImpl
   protected List<TableGenPattern> generatePatternVariations(
       Instruction instruction,
       Map<InstructionLabel, List<Instruction>> supportedInstructions,
-      InstructionLabel instructionLabel,
       Graph behavior,
       List<TableGenInstructionOperand> inputOperands,
       List<TableGenInstructionOperand> outputOperands,
