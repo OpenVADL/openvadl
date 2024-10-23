@@ -64,9 +64,9 @@ public abstract class GraphProcessor<T> implements GraphVisitor<Object> {
   }
 
 
-  protected <R extends T> R getResultOf(Node unprocessed, Class<R> clazz) {
-    var result = processedNodes.get(unprocessed);
-    unprocessed.ensure(result != null, "node not processed");
+  protected <R extends T> R getResultOf(Node processedNode, Class<R> clazz) {
+    var result = processedNodes.get(processedNode);
+    processedNode.ensure(result != null, "node not processedNode");
     ViamError.ensure(clazz.isInstance(result),
         "expected result to be instance of %s, but was %s", clazz, result);
     return clazz.cast(result);

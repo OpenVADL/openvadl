@@ -1,0 +1,88 @@
+package vadl.iss.passes;
+
+import java.io.IOException;
+import java.util.Map;
+import java.util.Set;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
+import javax.annotation.Nonnull;
+import vadl.configuration.GeneralConfiguration;
+import vadl.pass.Pass;
+import vadl.pass.PassName;
+import vadl.pass.PassResults;
+import vadl.viam.Specification;
+import vadl.viam.graph.Graph;
+import vadl.viam.graph.Node;
+import vadl.viam.graph.dependency.ReadRegFileNode;
+import vadl.viam.graph.dependency.ReadResourceNode;
+import vadl.viam.graph.dependency.WriteRegFileNode;
+import vadl.viam.graph.dependency.WriteResourceNode;
+import vadl.viam.passes.GraphProcessor;
+
+public class IssTcgAnnotatePass extends Pass {
+
+  public IssTcgAnnotatePass(GeneralConfiguration configuration) {
+    super(configuration);
+  }
+
+  @Override
+  public PassName getName() {
+    return PassName.of("ISS TCG Annotate Pass");
+  }
+
+  @Override
+  public @Nonnull Result execute(PassResults passResults, Specification viam)
+      throws IOException {
+    var tcgNodes = viam.isa().get().ownInstructions().stream()
+        .flatMap(instr -> TcgAnnotator.runOn(instr.behavior()))
+        .collect(Collectors.toSet());
+    return new Result(tcgNodes);
+  }
+
+  public record Result(
+      Set<Node> tcgNodes
+  ) {
+  }
+}
+
+class TcgAnnotator extends GraphProcessor<Boolean> {
+
+  public static Stream<Node> runOn(Graph graph) {
+    var annotator = new TcgAnnotator();
+    annotator.processGraph(graph, (n) -> n.usageCount() == 0);
+    return annotator.processedNodes.entrySet().stream()
+        .filter(Map.Entry::getValue) // only annotated fields
+        .map(Map.Entry::getKey) // map to node
+        .distinct();
+  }
+
+  @Override
+  protected Boolean processUnprocessedNode(Node toProcess) {
+    // look at inputs first
+    toProcess.visitInputs(this);
+
+    if (toProcess instanceof ReadRegFileNode readRegFileNode) {
+      // check that the address is not a tcg resource.
+      // the address must be determined at "compile" time
+      var addressRes = getResultOf(readRegFileNode.address(), Boolean.class);
+      toProcess.ensure(!addressRes,
+          "node's address is not allowed to be tcg time but compile time annotated: %s",
+          readRegFileNode.address());
+    }
+
+    if (toProcess instanceof WriteRegFileNode writeResourceNode) {
+      var addressRes = getResultOf(writeResourceNode.address(), Boolean.class);
+      writeResourceNode.ensure(!addressRes,
+          "node's address is not allowed to be tcg time but compile time annotated: %s",
+          writeResourceNode.address()
+      );
+    }
+    if (toProcess instanceof ReadResourceNode || toProcess instanceof WriteResourceNode) {
+      return true;
+    } else {
+      // In general a node is tcg if one of its inputs is tcg
+      return toProcess.inputs()
+          .anyMatch(n -> getResultOf(n, Boolean.class));
+    }
+  }
+}
