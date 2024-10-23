@@ -194,7 +194,7 @@ public abstract class QemuIssTest extends DockerExecutionTest {
 
               d.copy("/scripts", "/scripts");
               d.run("ls /scripts");
-              d.cmd("python3 /scripts/bare_metal_runner.py");
+              d.cmd("python3 /scripts/bare_metal_runner.py /qemu/build/qemu-system-vadl");
 
               d.build();
             }
