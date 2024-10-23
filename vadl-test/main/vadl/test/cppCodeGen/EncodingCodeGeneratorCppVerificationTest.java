@@ -21,6 +21,7 @@ import vadl.gcb.passes.type_normalization.CppTypeNormalizationForDecodingsPass;
 import vadl.gcb.passes.type_normalization.CppTypeNormalizationForEncodingsPass;
 import vadl.lcb.codegen.LcbGenericCodeGenerator;
 import vadl.pass.PassOrder;
+import vadl.pass.PassOrders;
 import vadl.pass.exception.DuplicatedPassKeyException;
 import vadl.types.BitsType;
 import vadl.utils.Quadruple;
@@ -43,7 +44,7 @@ public class EncodingCodeGeneratorCppVerificationTest extends AbstractCppCodeGen
   @Execution(ExecutionMode.CONCURRENT)
   Collection<DynamicTest> instructions() throws IOException, DuplicatedPassKeyException {
     var setup = setupPassManagerAndRunSpec("sys/risc-v/rv64im.vadl",
-        PassOrder.gcbAndCppCodeGen(getConfiguration(false)));
+        PassOrders.gcbAndCppCodeGen(getConfiguration(false)));
     var passManager = setup.passManager();
     var spec = setup.specification();
 

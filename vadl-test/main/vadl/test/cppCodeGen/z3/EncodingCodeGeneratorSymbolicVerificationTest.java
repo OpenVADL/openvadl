@@ -12,6 +12,7 @@ import org.slf4j.LoggerFactory;
 import org.testcontainers.images.builder.ImageFromDockerfile;
 import vadl.gcb.passes.encoding_generation.GenerateFieldAccessEncodingFunctionPass;
 import vadl.pass.PassOrder;
+import vadl.pass.PassOrders;
 import vadl.pass.exception.DuplicatedPassKeyException;
 import vadl.test.gcb.AbstractGcbTest;
 import vadl.viam.Format;
@@ -42,7 +43,7 @@ public class EncodingCodeGeneratorSymbolicVerificationTest extends AbstractGcbTe
   @Execution(ExecutionMode.CONCURRENT)
   Collection<DynamicTest> instructions() throws IOException, DuplicatedPassKeyException {
     var setup = setupPassManagerAndRunSpec("sys/risc-v/rv64im.vadl",
-        PassOrder.gcbAndCppCodeGen(getConfiguration(false)));
+        PassOrders.gcbAndCppCodeGen(getConfiguration(false)));
     var spec = setup.specification();
 
     return spec.findAllFormats().flatMap(f -> f.fieldAccesses().stream())

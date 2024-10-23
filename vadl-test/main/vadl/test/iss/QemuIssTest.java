@@ -23,6 +23,7 @@ import org.testcontainers.shaded.com.google.common.collect.Streams;
 import org.testcontainers.utility.MountableFile;
 import vadl.configuration.IssConfiguration;
 import vadl.pass.PassOrder;
+import vadl.pass.PassOrders;
 import vadl.pass.exception.DuplicatedPassKeyException;
 import vadl.test.DockerExecutionTest;
 
@@ -61,7 +62,7 @@ public abstract class QemuIssTest extends DockerExecutionTest {
       try {
         var config = IssConfiguration.from(getConfiguration(false));
         // run iss generation
-        setupPassManagerAndRunSpec(path, PassOrder.iss(config));
+        setupPassManagerAndRunSpec(path, PassOrders.iss(config));
 
         // find iss output path
         var issOutputPath = Path.of(config.outputPath() + "/iss").toAbsolutePath();

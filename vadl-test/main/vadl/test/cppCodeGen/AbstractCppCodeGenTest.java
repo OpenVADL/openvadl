@@ -3,12 +3,9 @@ package vadl.test.cppCodeGen;
 import java.io.IOException;
 import vadl.configuration.GcbConfiguration;
 import vadl.pass.PassKey;
-import vadl.pass.PassManager;
-import vadl.pass.PassOrder;
+import vadl.pass.PassOrders;
 import vadl.pass.exception.DuplicatedPassKeyException;
 import vadl.test.DockerExecutionTest;
-import vadl.utils.Pair;
-import vadl.viam.Specification;
 
 public class AbstractCppCodeGenTest extends DockerExecutionTest {
 
@@ -21,6 +18,6 @@ public class AbstractCppCodeGenTest extends DockerExecutionTest {
                                        String specPath, PassKey until)
       throws IOException, DuplicatedPassKeyException {
     return setupPassManagerAndRunSpecUntil(specPath,
-        PassOrder.gcbAndCppCodeGen(configuration), until);
+        PassOrders.gcbAndCppCodeGen(configuration), until);
   }
 }

@@ -14,6 +14,7 @@ import org.junit.jupiter.api.TestFactory;
 import vadl.configuration.GeneralConfiguration;
 import vadl.dump.HtmlDumpPass;
 import vadl.pass.PassOrder;
+import vadl.pass.PassOrders;
 import vadl.pass.exception.DuplicatedPassKeyException;
 import vadl.test.AbstractTest;
 import vadl.test.TestUtils;
@@ -172,7 +173,7 @@ public class SideEffectConditionResolvingPassTest extends AbstractTest {
     var config = new GeneralConfiguration(Path.of("build/test-out"), true);
     var setup = setupPassManagerAndRunSpec(
         "passes/sideEffectConditionResolving/valid_test_cases.vadl",
-        PassOrder.viam(config)
+        PassOrders.viam(config)
             .untilFirst(SideEffectConditionResolvingPass.class)
             .add(new ViamVerificationPass(config))
     );
