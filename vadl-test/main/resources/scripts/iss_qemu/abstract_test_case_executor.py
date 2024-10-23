@@ -13,8 +13,10 @@ class AbstractTestCaseExecutor:
     spec: TestSpec
     test_result: TestResult
     test_elf: str
+    qemu_exec: str
 
-    def __init__(self, spec: TestSpec):
+    def __init__(self, qemu_exec: str, spec: TestSpec):
+        self.qemu_exec = qemu_exec
         self.spec = spec
         reg_tests_result: RegResultType = {str(key): {'expected': str(value), 'actual': 'unknown'} for key, value in
                                            spec.reg_tests.items()}
@@ -28,6 +30,9 @@ class AbstractTestCaseExecutor:
         # build assembly source
         asm_source = self._tmp_file(f"asm-{self.spec.id}.s")
         self._build_assembly_test(self.spec.asm_core, asm_source)
+
+        with open(asm_source, "r") as f:
+            self.test_result.full_asm = f.read()
 
         # compile source
         cmp_out = self._tmp_file(f"cmp-{self.spec.id}.o")

@@ -25,8 +25,8 @@ class QMPTestCaseExecutor(AbstractTestCaseExecutor):
     listener: EventListener
     event_handle_task: asyncio.Task
 
-    def __init__(self, spec: TestSpec, port: int):
-        super().__init__(spec)
+    def __init__(self, qemu_exec: str, spec: TestSpec, port: int):
+        super().__init__(qemu_exec, spec)
         self.port = port
         self.qmp = QMPClient(f"test-{spec.id}")
         self.listener = EventListener()
@@ -86,7 +86,7 @@ class QMPTestCaseExecutor(AbstractTestCaseExecutor):
     async def _start_qemu(self):
         qmp_addr = f"localhost:{self._get_qmp_port()}"
         self.process = await asyncio.create_subprocess_exec(
-            QEMU_EXEC,
+            self.qemu_exec,
             "-nographic",
             "-S",  # pause on start to wait for debugger
             "-qmp", f"tcp:{qmp_addr},server=on,wait=off",

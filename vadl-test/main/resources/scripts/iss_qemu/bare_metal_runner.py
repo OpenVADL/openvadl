@@ -1,6 +1,7 @@
 import time
 import asyncio
 import traceback
+import argparse
 from dataclasses import dataclass
 from typing import List
 
@@ -15,12 +16,12 @@ class TestSuiteConfig:
     tests: List[TestSpec]
 
 
-async def main():
+async def main(qemu_exec: str):
     test_config = load_test_config("test-suite.yaml")
 
     # produces testcases
     # test_cases = [TestCaseExecutor2(spec) for (i, spec) in enumerate(test_config.tests)]
-    test_cases = [QMPTestCaseExecutor(spec, 1200 + i) for (i, spec) in enumerate(test_config.tests)]
+    test_cases = [QMPTestCaseExecutor(qemu_exec, spec, 1200 + i) for (i, spec) in enumerate(test_config.tests)]
 
     start_time = time.time()
 
@@ -74,4 +75,7 @@ def load_test_config(filename: str) -> TestSuiteConfig:
 
 
 if __name__ == "__main__":
-    asyncio.run(main())
+    parser = argparse.ArgumentParser()
+    parser.add_argument('simexec', type=str, help='Path to the qemu executable', default= "qemu/build/qemu-system-vadl")
+    args = parser.parse_args()
+    asyncio.run(main(args.simexec))

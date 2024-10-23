@@ -19,3 +19,4 @@ class TestResult:
     reg_tests: RegResultType
     errors: [str]
     duration: str
+    full_asm: str = "not set"
