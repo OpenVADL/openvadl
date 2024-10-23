@@ -13,6 +13,7 @@ import org.junit.jupiter.api.DynamicTest;
 import org.junit.jupiter.api.TestFactory;
 import org.opentest4j.AssertionFailedError;
 import vadl.pass.PassOrder;
+import vadl.pass.PassOrders;
 import vadl.pass.exception.DuplicatedPassKeyException;
 import vadl.test.AbstractTest;
 import vadl.types.Type;
@@ -67,7 +68,7 @@ public class Rv3264imTest extends AbstractTest {
     var config = getConfiguration(false);
     var setup = setupPassManagerAndRunSpec(
         "sys/risc-v/" + rvFile,
-        PassOrder.viam(config)
+        PassOrders.viam(config)
     );
     return setup.specification();
   }

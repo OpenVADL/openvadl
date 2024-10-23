@@ -4,6 +4,7 @@ import java.io.IOException;
 import vadl.configuration.GcbConfiguration;
 import vadl.pass.PassKey;
 import vadl.pass.PassOrder;
+import vadl.pass.PassOrders;
 import vadl.pass.exception.DuplicatedPassKeyException;
 import vadl.test.cppCodeGen.AbstractCppCodeGenTest;
 
@@ -19,6 +20,6 @@ public abstract class AbstractGcbTest extends AbstractCppCodeGenTest {
                           PassKey until)
       throws IOException, DuplicatedPassKeyException {
     return setupPassManagerAndRunSpecUntil(specPath,
-        PassOrder.gcbAndCppCodeGen(configuration), until);
+        PassOrders.gcbAndCppCodeGen(configuration), until);
   }
 }
