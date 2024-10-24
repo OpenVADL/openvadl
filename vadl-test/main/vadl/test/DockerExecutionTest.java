@@ -17,9 +17,11 @@ import java.util.function.Consumer;
 import javax.annotation.Nullable;
 import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeAll;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.testcontainers.containers.GenericContainer;
+import org.testcontainers.containers.Network;
 import org.testcontainers.containers.output.Slf4jLogConsumer;
 import org.testcontainers.images.builder.ImageFromDockerfile;
 import org.testcontainers.images.builder.Transferable;
@@ -32,6 +34,13 @@ public abstract class DockerExecutionTest extends AbstractTest {
   @Nullable
   private static RedisCache redisCache;
 
+  private static Network testNetwork;
+
+  @BeforeAll
+  public static synchronized void setUp() {
+    testNetwork = Network.newNetwork();
+  }
+
   @AfterAll
   public static synchronized void tearDown() {
     if (redisCache != null) {
@@ -40,6 +49,8 @@ public abstract class DockerExecutionTest extends AbstractTest {
       }
       redisCache = null;
     }
+
+    testNetwork.close();
   }
 
   /**
@@ -65,14 +76,6 @@ public abstract class DockerExecutionTest extends AbstractTest {
     );
   }
 
-  protected void runContainerWithHostFsBind(ImageFromDockerfile image,
-                                            Path hostPath,
-                                            String containerPath) {
-    runContainer(image, container ->
-            withHostFsBind(container, hostPath, containerPath),
-        null
-    );
-  }
 
   protected void runContainer(ImageFromDockerfile image, Path hostPath, String mountPath) {
     runContainer(image, hostPath.toString(), mountPath);
@@ -110,7 +113,8 @@ public abstract class DockerExecutionTest extends AbstractTest {
                               @Nullable Consumer<GenericContainer<?>> postExecution
   ) {
     try (GenericContainer<?> container = new GenericContainer<>(image)
-        .withLogConsumer(new Slf4jLogConsumer(logger))) {
+        .withLogConsumer(new Slf4jLogConsumer(logger))
+        .withNetwork(testNetwork)) {
       containerModifier.accept(container);
       container.start();
 
@@ -144,6 +148,8 @@ public abstract class DockerExecutionTest extends AbstractTest {
       return redisCache;
     }
 
+    var hostName = "redis";
+
     var container = new GenericContainer<>("redis:7.4")
         .withCreateContainerCmdModifier(cmd -> {
           var mount = new Mount()
@@ -153,24 +159,22 @@ public abstract class DockerExecutionTest extends AbstractTest {
 
           Objects.requireNonNull(cmd.getHostConfig())
               .withMounts(List.of(mount));
+          cmd.withName("open-vadl-test-cache");
+          cmd.withAliases("redis");
         })
-        .withExposedPorts(6379);
+        // we need this custom network, because other containers must access
+        // the redis cache with the given hostname/alias
+        // (which is only available on custom networks)
+        .withNetwork(testNetwork)
+        .withNetworkAliases(hostName);
+
     container.start();
-    redisCache = new RedisCache(container);
+    redisCache = new RedisCache(hostName, 6379, container);
     return redisCache;
   }
 
-
-  protected static <T extends GenericContainer<?>> T withHostFsBind(T container, Path hostPath,
-                                                                    String containerPath) {
-    // withFileSystemBind got deprecated and this is somewhat a replacement
-    // https://github.com/testcontainers/testcontainers-java/pull/7652
-    // https://github.com/joyrex2001/kubedock/issues/89
-    container.withCreateContainerCmdModifier(cmd ->
-        Objects.requireNonNull(cmd.getHostConfig())
-            .withBinds(Bind.parse(hostPath.toAbsolutePath() + ":" + containerPath))
-    );
-    return container;
+  public static Network testNetwork() {
+    return testNetwork;
   }
 
   protected record RedisCache(
@@ -178,10 +182,6 @@ public abstract class DockerExecutionTest extends AbstractTest {
       int port,
       GenericContainer<?> redisContainer
   ) {
-
-    RedisCache(GenericContainer<?> redisContainer) {
-      this(redisContainer.getHost(), redisContainer.getMappedPort(6379), redisContainer);
-    }
 
     public void stop() {
       try {

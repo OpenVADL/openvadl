@@ -26,9 +26,8 @@ RUN apt update &&  \
 RUN curl -L $QEMU_RELEASE | tar -xvz --strip-components=1
 
 # build qemu for riscv64
-RUN mkdir build && cd build && \
-    ../configure --enable-debug --target-list=riscv64-softmmu && \
-    make -j 8
+ RUN mkdir build && cd build && \
+    ../configure --enable-debug --target-list=riscv64-softmmu
 
 WORKDIR /work
 
