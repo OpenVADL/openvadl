@@ -38,12 +38,8 @@ import vadl.test.DockerExecutionTest;
 public abstract class QemuIssTest extends DockerExecutionTest {
 
   // config of qemu test image
-//  private static final String QEMU_TEST_IMAGE =
-//      "jozott/qemu@sha256:59fd89489908864d9c5267a39152a55559903040299bcb7a65382c4beebac2e2";
   private static final String QEMU_TEST_IMAGE =
-      "qemu-test";
-
-
+      "jozott/qemu@sha256:59fd89489908864d9c5267a39152a55559903040299bcb7a65382c4beebac2e2";
 
   // specification to image cache
   private static final ConcurrentHashMap<String, ImageFromDockerfile> issImageCache =
@@ -186,10 +182,11 @@ public abstract class QemuIssTest extends DockerExecutionTest {
               var cc = "sccache gcc";
               log.info("Using redis cache: {}", redisCache);
               d.env("SCCACHE_REDIS_ENDPOINT",
-                "tcp://" + redisCache.host() + ":" + redisCache.port());
+                  "tcp://" + redisCache.host() + ":" + redisCache.port());
 
               // check if redis cache is available
-              d.run("timeout 5 bash -c '</dev/tcp/" + redisCache.host() + "/" + redisCache.port() + "'");
+              d.run(
+                  "timeout 5 bash -c '</dev/tcp/" + redisCache.host() + "/" + redisCache.port() + "'");
 
               // TODO: update target name
               // configure qemu with the new target from the specification
@@ -214,7 +211,7 @@ public abstract class QemuIssTest extends DockerExecutionTest {
         .withFileFromClasspath("/scripts", "/scripts/iss_qemu")
         // as we have to use the same network as the redis cache, we have to build it there
         .withBuildImageCmdModifier(modifier -> modifier.withNetworkMode(testNetwork().getId()))
-    ;
+        ;
   }
 
 }
