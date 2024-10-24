@@ -172,6 +172,7 @@ public abstract class QemuIssTest extends DockerExecutionTest {
         .withDockerfileFromBuilder(d -> {
               d
                   .from(QEMU_TEST_IMAGE)
+                  .run("apt install -y netcat")
                   // TODO: Remove when using updated docker image
                   .run("pip install pyyaml qemu.qmp")
                   .copy("iss", "/qemu")
@@ -186,6 +187,9 @@ public abstract class QemuIssTest extends DockerExecutionTest {
               log.info("Using redis cache: {}", redisCache);
               d.env("SCCACHE_REDIS_ENDPOINT",
                 "tcp://" + redisCache.host() + ":" + redisCache.port());
+
+              // check if redis cache is available
+              d.run("timeout 5 bash -c '</dev/tcp/" + redisCache.host() + "/" + redisCache.port() + "'");
 
               // TODO: update target name
               // configure qemu with the new target from the specification
