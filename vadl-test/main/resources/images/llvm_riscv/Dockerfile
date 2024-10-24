@@ -8,5 +8,5 @@ COPY . /src
 WORKDIR /src
 RUN mv /llvm llvm-final
 RUN make
-RUN mkdir /output
-CMD /src/llvm-final/build/bin/clang --target=${TARGET} -S -c ./input.c -o /output/input.s
+WORKDIR /output
+CMD /src/llvm-final/build/bin/clang --target=${TARGET} -S -c /src/input.c -o input.s
