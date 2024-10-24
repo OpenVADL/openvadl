@@ -40,9 +40,32 @@ public class LlvmRiscvAssemblyTest extends AbstractLcbTest {
       outputStream.close();
     }
 
+    /*
+    var image = new ImageFromDockerfile()
+        .withDockerfileFromBuilder(d -> {
+          d.from("kper1337/llvm17_base:latest")
+              .workDir("/src")
+              .run("mv /llvm /src/llvm-final");
+
+          SetupRedisEnv.setupEnv(d);
+
+          d
+              .workDir("/src")
+              .run("make && sccache -s")
+              .workDir("/output")
+              .cmd("/src/lcb/llvm-final/build/bin/clang --target=" + target
+                  + " -S -c /src/lcb/input.c -o input.s");
+          d.build();
+
+        })
+        .withFileFromString("/src", configuration.outputPath().toString() + "/lcb")
+        .withBuildImageCmdModifier(modifier -> modifier.withNetworkMode(testNetwork().getId()));
+     */
+
     var image = SetupRedisEnv.setupEnv(new ImageFromDockerfile("tc_llvm17")
-        .withDockerfile(Paths.get(configuration.outputPath() + "/lcb/Dockerfile"))
-        .withBuildArg("TARGET", target));
+            .withDockerfile(Paths.get(configuration.outputPath() + "/lcb/Dockerfile"))
+            .withBuildArg("TARGET", target))
+        .withBuildImageCmdModifier(modifier -> modifier.withNetworkMode(testNetwork().getId()));
 
     runContainer(image, configuration.outputPath() + "/output", "/output");
   }

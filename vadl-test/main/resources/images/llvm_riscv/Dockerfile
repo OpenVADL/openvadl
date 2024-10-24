@@ -6,7 +6,6 @@ ENV TARGET=${TARGET}
 ENV SCCACHE_REDIS_ENDPOINT=${SCCACHE_REDIS_ENDPOINT}
 COPY . /src
 WORKDIR /src
-RUN mv /llvm llvm-final
 RUN make && sccache -s
 WORKDIR /output
 CMD /src/llvm-final/build/bin/clang --target=${TARGET} -S -c /src/input.c -o input.s
