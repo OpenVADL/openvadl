@@ -126,6 +126,8 @@ steps:
     volumes:
       - name: docker
         path: /var/run/docker.sock
+    environment:
+      test.llvm.enabled: true
 
 trigger:
   ref:
