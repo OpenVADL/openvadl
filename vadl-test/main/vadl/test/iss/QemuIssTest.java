@@ -38,8 +38,11 @@ import vadl.test.DockerExecutionTest;
 public abstract class QemuIssTest extends DockerExecutionTest {
 
   // config of qemu test image
+//  private static final String QEMU_TEST_IMAGE =
+//      "jozott/qemu@sha256:59fd89489908864d9c5267a39152a55559903040299bcb7a65382c4beebac2e2";
   private static final String QEMU_TEST_IMAGE =
-      "jozott/qemu@sha256:59fd89489908864d9c5267a39152a55559903040299bcb7a65382c4beebac2e2";
+      "qemu-test";
+
 
 
   // specification to image cache
@@ -175,25 +178,20 @@ public abstract class QemuIssTest extends DockerExecutionTest {
                   // TODO: Move this to prebuilt docker image
                   .workDir("/qemu/build");
 
+              // TODO remove this when we updated the docker image
+              d.run("rm -rf *");
 
-              // use redis cache for building
+              // use redis cache for building (sccache allows remote caching)
               var cc = "sccache gcc";
-              if (!redisCache.host().equals("localhost")) {
-                // if the host is not localhost we cannot map to host.docker.internal
-                log.warn("Cannot use redis cache as host {} is unknown", redisCache.host());
-                cc = "gcc";
-              } else {
-                log.info("Using redis cache: {}", redisCache);
-                // we use host.docker.internal to access the service exposed on the host
-                d.env("SCCACHE_REDIS_ENDPOINT",
-                    "tcp://" + redisCache.host() + ":" + redisCache.port());
-              }
+              log.info("Using redis cache: {}", redisCache);
+              d.env("SCCACHE_REDIS_ENDPOINT",
+                "tcp://" + redisCache.host() + ":" + redisCache.port());
 
               // TODO: update target name
               // configure qemu with the new target from the specification
               d.run("../configure --cc='" + cc + "' --target-list=vadl-softmmu");
-              // build qemu
-              d.run("make");
+              // build qemu with all cpu cores and print if cache was used
+              d.run("make -j$(nproc) && sccache -s");
               // validate existence of generated qemu iss
               d.run("qemu-system-vadl --version");
 
