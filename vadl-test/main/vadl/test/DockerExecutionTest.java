@@ -25,22 +25,17 @@ import org.testcontainers.containers.Network;
 import org.testcontainers.containers.output.Slf4jLogConsumer;
 import org.testcontainers.images.builder.ImageFromDockerfile;
 import org.testcontainers.images.builder.Transferable;
+import org.testcontainers.images.builder.dockerfile.DockerfileBuilder;
 import org.testcontainers.utility.MountableFile;
 
 public abstract class DockerExecutionTest extends AbstractTest {
 
   private static final Logger logger = LoggerFactory.getLogger(DockerExecutionTest.class);
 
-  @Nullable
-  private static RedisCache redisCache;
+  private static final Network testNetwork = Network.newNetwork();
+  private static RedisCache redisCache = getRunningRedisCache();
 
-  private static Network testNetwork;
-
-  @BeforeAll
-  public static synchronized void setUp() {
-    testNetwork = Network.newNetwork();
-  }
-
+  /*
   @AfterAll
   public static synchronized void tearDown() {
     if (redisCache != null) {
@@ -52,6 +47,7 @@ public abstract class DockerExecutionTest extends AbstractTest {
 
     testNetwork.close();
   }
+   */
 
   /**
    * Starts a container and checks the status code for the exited container.
@@ -191,6 +187,32 @@ public abstract class DockerExecutionTest extends AbstractTest {
         redisContainer.stop();
         throw new RuntimeException(e);
       }
+    }
+  }
+
+  /**
+   * This class abstracts the configuration for the redis cache.
+   */
+  protected static class SetupRedisEnv {
+    /**
+     * Sets an environment variable to indicate to the distributed cache to use the redis
+     * docker instance as cache.
+     */
+    public static void setupEnv(DockerfileBuilder d) {
+      logger.info("Using redis cache: {}", redisCache);
+      d.env("SCCACHE_REDIS_ENDPOINT",
+          "tcp://" + Objects.requireNonNull(redisCache).host() + ":" + redisCache.port());
+
+      // check if redis cache is available
+      d.run(
+          "timeout 5 bash -c '</dev/tcp/" + redisCache.host() + "/" + redisCache.port() + "'");
+    }
+
+    public static ImageFromDockerfile setupEnv(ImageFromDockerfile image) {
+      image.withBuildArg("SCCACHE_REDIS_ENDPOINT",
+          "tcp://" + Objects.requireNonNull(redisCache).host() + ":" + redisCache.port());
+
+      return image;
     }
   }
 }

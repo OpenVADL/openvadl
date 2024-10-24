@@ -13,11 +13,6 @@ import vadl.pass.exception.DuplicatedPassKeyException;
 import vadl.test.lcb.AbstractLcbTest;
 
 public class LlvmRiscvAssemblyTest extends AbstractLcbTest {
-  protected final String bucket = System.getenv("BUCKET");
-  protected final String region = System.getenv("REGION");
-  protected final String awsAccessKeyId = System.getenv("AWS_ACCESS_KEY_ID");
-  protected final String awsAccessKey = System.getenv("AWS_ACCESS_KEY");
-
   @EnabledIfEnvironmentVariable(named = "test.llvm.enabled", matches = "true")
   @Test
   void compileLlvm() throws IOException, DuplicatedPassKeyException {
@@ -45,12 +40,9 @@ public class LlvmRiscvAssemblyTest extends AbstractLcbTest {
       outputStream.close();
     }
 
-    var image = new ImageFromDockerfile("tc_llvm17")
+    var image = SetupRedisEnv.setupEnv(new ImageFromDockerfile("tc_llvm17")
         .withDockerfile(Paths.get(configuration.outputPath() + "/lcb/Dockerfile"))
-        .withBuildArg("BUCKET", bucket)
-        .withBuildArg("REGION", region)
-        .withBuildArg("AWS_ACCESS_KEY_ID", awsAccessKeyId)
-        .withBuildArg("AWS_ACCESS_KEY", awsAccessKey);
+        .withBuildArg("TARGET", target));
 
     runContainer(image, configuration.outputPath() + "/output", "/output");
   }

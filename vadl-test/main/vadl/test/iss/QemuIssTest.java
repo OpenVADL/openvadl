@@ -180,13 +180,7 @@ public abstract class QemuIssTest extends DockerExecutionTest {
 
               // use redis cache for building (sccache allows remote caching)
               var cc = "sccache gcc";
-              log.info("Using redis cache: {}", redisCache);
-              d.env("SCCACHE_REDIS_ENDPOINT",
-                  "tcp://" + redisCache.host() + ":" + redisCache.port());
-
-              // check if redis cache is available
-              d.run(
-                  "timeout 5 bash -c '</dev/tcp/" + redisCache.host() + "/" + redisCache.port() + "'");
+              SetupRedisEnv.setupEnv(d);
 
               // TODO: update target name
               // configure qemu with the new target from the specification

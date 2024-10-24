@@ -1,16 +1,12 @@
 FROM kper1337/llvm17_base:latest
-ARG BUCKET
-ARG REGION
-ARG KEY_ID
-ARG ACCESS_KEY
 ARG TARGET
+ARG SCCACHE_REDIS_ENDPOINT
 WORKDIR /llvm/build
-ENV SCCACHE_BUCKET=${BUCKET}
-ENV SCCACHE_REGION=${REGION}
-ENV AWS_ACCESS_KEY_ID=${KEY_ID}
-ENV AWS_SECRET_ACCESS_KEY=${ACCESS_KEY}
+ENV TARGET=${TARGET}
+ENV SCCACHE_REDIS_ENDPOINT=${SCCACHE_REDIS_ENDPOINT}
 COPY . /src
 WORKDIR /src
 RUN mv /llvm llvm-final
-RUN make build
+RUN make
+RUN mkdir /output
 CMD /src/llvm-final/build/bin/clang --target=${TARGET} -S -c ./input.c -o /output/input.s
