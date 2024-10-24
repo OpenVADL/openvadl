@@ -83,6 +83,21 @@ public abstract class DockerExecutionTest extends AbstractTest {
    * than 10 seconds or the status code is not zero then it will throw an
    * exception.
    *
+   * @param image is the docker image for the {@link GenericContainer}.
+   */
+  protected void runContainer(ImageFromDockerfile image) {
+    runContainer(image, (container) -> {
+        },
+        null
+    );
+  }
+
+  /**
+   * Starts a container and checks the status code for the exited container.
+   * It will assert that the status code is zero. If the check takes longer
+   * than 10 seconds or the status code is not zero then it will throw an
+   * exception.
+   *
    * @param image     is the docker image for the {@link GenericContainer}.
    * @param path      is the path of the file which will be mapped to the container.
    * @param mountPath is the path where the {@code path} should be mounted to.
