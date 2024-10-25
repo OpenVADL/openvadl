@@ -312,7 +312,6 @@ public class PassOrders {
         .add(new IssTcgAnnotatePass(config))
         .add(new TcgLoweringPass(config))
 
-        .add(new ViamVerificationPass(config))
     ;
 
 
@@ -321,6 +320,8 @@ public class PassOrders {
           This dump is executed after the iss transformation passes were executed.
           """)));
     }
+
+    order.add(new ViamVerificationPass(config));
 
     // add iss template emitting passes to order
     addIssEmitPasses(order, config);

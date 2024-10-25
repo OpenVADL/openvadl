@@ -35,16 +35,17 @@ public class ViamVerificationPass extends Pass {
   @Nullable
   @Override
   public Object execute(PassResults passResults, Specification viam)
-      throws IOException {
+    throws IOException {
     try {
       ViamVerifier.verifyAllIn(viam);
     } catch (ViamError e) {
       var result = (HtmlDumpPass.Result) new HtmlDumpPass(
-          HtmlDumpPass.Config.from(configuration(),
-              getName().value() + " Exception",
-              "This dump is due to an exception while running the viam verification pass.")
+        HtmlDumpPass.Config.from(configuration(),
+          getName().value() + " Exception",
+          "This dump is due to an exception while running the viam verification pass.")
       ).execute(passResults, viam);
-      log.error("A verification error was found.\nSee the dump at {}\n\n", result.lastPass);
+      log.error("A verification error was found.\nSee the dump at {}\n\n",
+        result.emittedFile.toAbsolutePath());
       throw e;
     }
     return null;

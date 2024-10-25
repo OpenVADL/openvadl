@@ -15,9 +15,8 @@ public class TcgMoveNode extends TcgOpNode {
   @DataValue
   TcgV arg1;
 
-  public TcgMoveNode(TcgV res, TcgV arg1,
-                     TcgWidth width) {
-    super(res, width);
+  public TcgMoveNode(TcgV res, TcgV arg1) {
+    super(res, res.width());
     this.arg1 = arg1;
   }
 
@@ -27,12 +26,12 @@ public class TcgMoveNode extends TcgOpNode {
 
   @Override
   public Node copy() {
-    return new TcgMoveNode(res, arg1, width);
+    return new TcgMoveNode(res, arg1);
   }
 
   @Override
   public Node shallowCopy() {
-    return new TcgMoveNode(res, arg1, width);
+    return new TcgMoveNode(res, arg1);
   }
 
   @Override

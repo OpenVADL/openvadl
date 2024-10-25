@@ -7,6 +7,7 @@ import vadl.viam.ViamError;
 import vadl.viam.graph.Graph;
 import vadl.viam.graph.GraphVisitor;
 import vadl.viam.graph.Node;
+import vadl.viam.graph.ViamGraphError;
 
 /**
  * The GraphProcessor class is an abstract class that provides functionality for
@@ -29,8 +30,8 @@ public abstract class GraphProcessor<T> implements GraphVisitor<Object> {
    */
   protected void processGraph(Graph graph, Function<Node, Boolean> filter) {
     graph.getNodes()
-        .filter(filter::apply)
-        .forEach(this::processNode);
+      .filter(filter::apply)
+      .forEach(this::processNode);
   }
 
   /**
@@ -46,9 +47,20 @@ public abstract class GraphProcessor<T> implements GraphVisitor<Object> {
     if (resultNode != null) {
       return resultNode;
     }
-    resultNode = processUnprocessedNode(toProcess);
-    processedNodes.put(toProcess, resultNode);
-    return resultNode;
+    try {
+      resultNode = processUnprocessedNode(toProcess);
+      processedNodes.put(toProcess, resultNode);
+      return resultNode;
+    } catch (Exception e) {
+      // wrap exceptions in viam error
+      if (e instanceof ViamError) {
+        throw e;
+      }
+      throw new ViamGraphError("Exception during graph processing: " + e.getMessage(),
+        e)
+        .addContext(toProcess)
+        .addContext(toProcess.graph());
+    }
   }
 
   protected abstract T processUnprocessedNode(Node toProcess);
@@ -68,7 +80,7 @@ public abstract class GraphProcessor<T> implements GraphVisitor<Object> {
     var result = processedNodes.get(processedNode);
     processedNode.ensure(result != null, "node not processedNode");
     ViamError.ensure(clazz.isInstance(result),
-        "expected result to be instance of %s, but was %s", clazz, result);
+      "expected result to be instance of %s, but was %s", clazz, result);
     return clazz.cast(result);
   }
 }

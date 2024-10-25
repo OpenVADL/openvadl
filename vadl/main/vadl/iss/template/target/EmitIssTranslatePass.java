@@ -47,6 +47,7 @@ public class EmitIssTranslatePass extends IssTemplateRenderingPass {
         "ADDI",
         "LB"
         , "SB"
+        , "ADDIW"
     );
     return insns.stream()
         .filter(i -> supportedInsns.contains(i.identifier.simpleName()))
@@ -65,7 +66,7 @@ public class EmitIssTranslatePass extends IssTemplateRenderingPass {
     var refFormat = specification.isa().get().ownInstructions()
         .get(0).format();
     var width = refFormat.type().bitWidth();
-
+    
     return switch (width) {
       case 8 -> Map.of(
           "short", "b",

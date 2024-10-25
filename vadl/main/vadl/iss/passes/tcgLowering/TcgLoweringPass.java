@@ -77,6 +77,8 @@ public class TcgLoweringPass extends AbstractIssPass {
         "ADDI"
         , "LB"
         , "SB"
+        , "ADDIW"
+//        , "SLLI"
     );
 
     var tcgNodes = (IssTcgAnnotatePass.Result) passResults
@@ -172,7 +174,8 @@ class TcgLoweringExecutor extends GraphProcessor<Node> {
       return process(regFileRead);
     } else if (toProcess instanceof WriteRegFileNode regFileWrite) {
       return process(regFileWrite);
-    } if (toProcess instanceof ReadMemNode readMemNode) {
+    }
+    if (toProcess instanceof ReadMemNode readMemNode) {
       return process(readMemNode);
     } else if (toProcess instanceof WriteMemNode writeMemNode) {
       return process(writeMemNode);
@@ -185,8 +188,8 @@ class TcgLoweringExecutor extends GraphProcessor<Node> {
       return process(signExtendNode);
     } else if (toProcess instanceof ZeroExtendNode) {
       return null;
-    } else if (toProcess instanceof TruncateNode) {
-      return null;
+    } else if (toProcess instanceof TruncateNode truncateNode) {
+      return process(truncateNode);
     } else if (toProcess instanceof LetNode letNode) {
       process(letNode);
       return null;
@@ -227,7 +230,7 @@ class TcgLoweringExecutor extends GraphProcessor<Node> {
       // the value is used somewhere else, so we cannot directly write it here
       prevOp = lastNode.addAfter(
           new TcgMoveNode(
-              res, valRepl.res(), width)
+              res, valRepl.res())
       );
       lastNode = prevOp;
     }
@@ -286,17 +289,22 @@ class TcgLoweringExecutor extends GraphProcessor<Node> {
         .map(processedNodes::get)
         .toList();
 
-    // TODO: @jzottele Don't hardcode width!
-    var width = TcgWidth.i64;
-    var res = TcgV.gen(width);
-    tempVars.add(res);
 
     if (call.builtIn() == BuiltInTable.ADD) {
       if (isBinaryImm(args)) {
-        return new TcgAddiNode(res, asOp(args.get(0)).res(), (ExpressionNode) args.get(1), width);
+        var immArg = call.arguments().get(1).type().asDataType().bitWidth();
+        var width = TcgWidth.fromWidth(immArg);
+        var res = TcgV.gen(width);
+        tempVars.add(res);
+
+        return new TcgAddiNode(res, asOp(args.get(0)).res(), (ExpressionNode) args.get(1));
       } else {
+        // TODO: @jzottele Don't hardcode width!
+        var width = TcgWidth.i64;
+        var res = TcgV.gen(width);
+        tempVars.add(res);
         // add result variable to tempVars
-        return new TcgAddNode(res, asOp(args.get(0)).res(), asOp(args.get(1)).res(), width);
+        return new TcgAddNode(res, asOp(args.get(0)).res(), asOp(args.get(1)).res());
       }
     } else {
       throw new ViamGraphError("built-in call not yet supported by tcg lowering")
@@ -313,6 +321,22 @@ class TcgLoweringExecutor extends GraphProcessor<Node> {
     var res = TcgV.gen(resSize);
 
     return new TcgExtendNode(size, TcgExtend.SIGN, res, argTcg.res());
+  }
+
+  private @Nullable TcgOpNode process(TruncateNode toProcess) {
+    var argTcg = getResultOf(toProcess.value(), TcgOpNode.class);
+
+    var resultWidth = toProcess.type().asDataType().bitWidth();
+    // TODO: Remove this check when we have a stable VIAM
+    if (resultWidth != 32) {
+      return null;
+    }
+
+    var toSize = TcgWidth.fromWidth(resultWidth);
+    var res = TcgV.gen(toSize);
+    tempVars.add(res);
+
+    return new TcgMoveNode(res, argTcg.res());
   }
 
   private void process(LetNode node) {
