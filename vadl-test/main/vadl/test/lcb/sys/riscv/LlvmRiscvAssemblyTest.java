@@ -63,7 +63,7 @@ public class LlvmRiscvAssemblyTest extends AbstractLcbTest {
             .withBuildArg("TARGET", target))
         .withBuildImageCmdModifier(modifier -> modifier.withNetworkMode(testNetwork().getId()));
 
-    var hostOutput = "build/output";
+    var hostOutput = "build/output/llvm";
     new File(hostOutput).mkdirs();
 
     runContainerWithContent(image,
