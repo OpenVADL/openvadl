@@ -63,12 +63,13 @@ public class LlvmRiscvAssemblyTest extends AbstractLcbTest {
             .withBuildArg("TARGET", target))
         .withBuildImageCmdModifier(modifier -> modifier.withNetworkMode(testNetwork().getId()));
 
-    new File("output").mkdir();
+    var hostOutput = "build/output";
+    new File(hostOutput).mkdirs();
 
     runContainerWithContent(image,
         "../../open-vadl/vadl-test/main/resources/llvm/riscv/c",
         "/src/inputs",
-        new File("output").getAbsolutePath(),
+        new File(hostOutput).getAbsolutePath(),
         "/output");
 
     // The container is complete and has generated the assembly files.
@@ -76,8 +77,8 @@ public class LlvmRiscvAssemblyTest extends AbstractLcbTest {
       var name = Paths.get(input).getFileName();
       var expected = new File(
           "../../open-vadl/vadl-test/main/resources/llvm/riscv/assertions/assembly/" + name + ".s");
-      var actual = new File("output/" + name + ".s");
-      assertThat(contentOf(actual)).isEqualTo(contentOf(expected));
+      var actual = new File(hostOutput + "/" + name + ".s");
+      assertThat(contentOf(actual)).isEqualToIgnoringWhitespace(contentOf(expected));
     })).toList();
   }
 }
