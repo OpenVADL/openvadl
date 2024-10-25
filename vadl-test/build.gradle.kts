@@ -26,6 +26,8 @@ dependencies {
     implementation("org.testcontainers:testcontainers:1.20.0")
     implementation("org.testcontainers:junit-jupiter:1.20.0")
 
+    implementation("org.apache.commons:commons-compress:1.21")
+
     // Helps getting test files small and concise
     implementation("org.apache.velocity:velocity-engine-core:2.3")
 }

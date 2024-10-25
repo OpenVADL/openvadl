@@ -4,11 +4,17 @@ import static org.awaitility.Awaitility.await;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.fail;
 
+import com.github.dockerjava.api.command.CopyArchiveFromContainerCmd;
 import com.github.dockerjava.api.model.Bind;
 import com.github.dockerjava.api.model.Mount;
 import com.github.dockerjava.api.model.MountType;
 import com.github.dockerjava.api.model.Volume;
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileOutputStream;
 import java.io.IOException;
+import java.io.OutputStream;
+import java.nio.file.Files;
 import java.nio.file.Path;
 import java.time.Duration;
 import java.util.List;
@@ -17,6 +23,8 @@ import java.util.function.Consumer;
 import java.util.function.Function;
 import java.util.function.Supplier;
 import javax.annotation.Nullable;
+import org.apache.commons.compress.archivers.tar.TarArchiveEntry;
+import org.apache.commons.compress.archivers.tar.TarArchiveInputStream;
 import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeAll;
@@ -29,6 +37,7 @@ import org.testcontainers.containers.output.Slf4jLogConsumer;
 import org.testcontainers.images.builder.ImageFromDockerfile;
 import org.testcontainers.images.builder.Transferable;
 import org.testcontainers.images.builder.dockerfile.DockerfileBuilder;
+import org.testcontainers.shaded.com.github.dockerjava.core.command.CopyArchiveFromContainerCmdImpl;
 import org.testcontainers.utility.MountableFile;
 
 public abstract class DockerExecutionTest extends AbstractTest {
@@ -82,13 +91,45 @@ public abstract class DockerExecutionTest extends AbstractTest {
                                          String content,
                                          String mountPath,
                                          String hostPath,
-                                         String containerMountPath) throws IOException {
-    runContainer(image, (container) ->
-            withHostFsBind(
-                container
-                    .withCopyFileToContainer(MountableFile.forHostPath(Path.of(content)), mountPath),
-                hostPath, containerMountPath), null
+                                         String containerMountPath,
+                                         String archiveName) throws IOException {
+    runContainer(image, (container) -> container
+            .withCopyFileToContainer(MountableFile.forHostPath(Path.of(content)), mountPath),
+        (container) -> {
+          container.copyFileFromContainer(containerMountPath + archiveName, hostPath + archiveName);
+          try {
+            untar(new File(hostPath + archiveName), new File(hostPath));
+          } catch (IOException e) {
+            throw new RuntimeException(e);
+          }
+        }
     );
+  }
+
+  private static void untar(File tarFile, File outputDir) throws IOException {
+    try (FileInputStream fis = new FileInputStream(tarFile);
+         TarArchiveInputStream tais = new TarArchiveInputStream(fis)) {
+
+      TarArchiveEntry entry;
+      while ((entry = tais.getNextTarEntry()) != null) {
+        File outputFile = new File(outputDir, entry.getName());
+
+        // If entry is a directory, create it
+        if (entry.isDirectory()) {
+          outputFile.mkdirs();
+        } else {
+          // Ensure parent directory exists
+          outputFile.getParentFile().mkdirs();
+          try (OutputStream os = new FileOutputStream(outputFile)) {
+            byte[] buffer = new byte[1024];
+            int len;
+            while ((len = tais.read(buffer)) != -1) {
+              os.write(buffer, 0, len);
+            }
+          }
+        }
+      }
+    }
   }
 
   protected void runContainer(ImageFromDockerfile image, Path hostPath, String mountPath) {

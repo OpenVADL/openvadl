@@ -40,7 +40,7 @@ public class LlvmRiscvAssemblyTest extends AbstractLcbTest {
         .map(File::getName);
   }
 
-  @EnabledIfEnvironmentVariable(named = "test.llvm.enabled", matches = "true")
+  //@EnabledIfEnvironmentVariable(named = "test.llvm.enabled", matches = "true")
   @TestFactory
   List<DynamicTest> compileLlvm() throws IOException, DuplicatedPassKeyException {
     var target = "rv64im";
@@ -70,16 +70,14 @@ public class LlvmRiscvAssemblyTest extends AbstractLcbTest {
         "../../open-vadl/vadl-test/main/resources/llvm/riscv/c",
         "/src/inputs",
         new File(hostOutput).getAbsolutePath(),
-        "/output");
+        "/output",
+        "archive.tar");
 
     // The container is complete and has generated the assembly files.
     return inputFilesFromCFile().map(input -> DynamicTest.dynamicTest(input, () -> {
       var name = Paths.get(input).getFileName();
       var expected = new File(
           "../../open-vadl/vadl-test/main/resources/llvm/riscv/assertions/assembly/" + name + ".s");
-
-      Arrays.stream(new File(hostOutput).listFiles())
-          .forEach(x -> System.out.println(x.getAbsolutePath()));
 
       var actual = new File(hostOutput + "/" + name + ".s");
       assertThat(contentOf(actual)).isEqualToIgnoringWhitespace(contentOf(expected));
