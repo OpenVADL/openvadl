@@ -33,6 +33,12 @@ public class TcgExtendNode extends TcgUnaryOpNode {
   }
 
   @Override
+  public String tcgFunctionName() {
+    var postfix = extend == TcgExtend.SIGN ? "s" : "u";
+    return "tcg_gen_ext" + fromSize.width + postfix + "_i" + width.width;
+  }
+
+  @Override
   protected void collectData(List<Object> collection) {
     super.collectData(collection);
     collection.add(fromSize);

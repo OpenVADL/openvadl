@@ -238,10 +238,10 @@ class TcgLoweringExecutor extends GraphProcessor<Node> {
     var addrTcgRes = getResultOf(toProcess.address(), TcgOpNode.class);
 
     var readWidth = toProcess.type().bitWidth();
-    var loadSize = TcgLoadMemory.LoadSize.fromWidth(readWidth);
+    var loadSize = Tcg_8_16_32_64.fromWidth(readWidth);
 
     // TODO: @jzottele Don't hardcode this
-    var mode = TcgLoadMemory.ExtendMode.SIGN_EXTEND;
+    var mode = TcgExtend.SIGN;
 
     // TODO: @jzottele Don't hardcode type!
     var width = TcgWidth.i64;
@@ -310,6 +310,7 @@ class TcgLoweringExecutor extends GraphProcessor<Node> {
     for (var tcgVar : tempVars) {
       var getTmp = new TcgGetVar.TcgGetTemp(tcgVar);
       insnStartNode.addAfter(getTmp);
+      var beforeEnd = (DirectionalNode) insnEndNode.predecessor();
     }
     for (var pair : destVars) {
       var writeNode = pair.right();

@@ -15,6 +15,12 @@ public abstract class TcgUnaryOpNode extends TcgOpNode {
     this.arg = arg;
   }
 
+  public TcgV arg() {
+    return arg;
+  }
+
+  public abstract String tcgFunctionName();
+
   @Override
   protected void collectData(List<Object> collection) {
     super.collectData(collection);

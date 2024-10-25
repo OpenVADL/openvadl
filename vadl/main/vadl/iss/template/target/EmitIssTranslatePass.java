@@ -44,7 +44,8 @@ public class EmitIssTranslatePass extends IssTemplateRenderingPass {
     // TODO: Remove this filter (just for testing)
     var supportedInsns = Set.of(
         "ADD",
-        "ADDI"
+        "ADDI",
+        "LB"
     );
     return insns.stream()
         .filter(i -> supportedInsns.contains(i.identifier.simpleName()))
