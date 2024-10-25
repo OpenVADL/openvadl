@@ -77,6 +77,10 @@ public class LlvmRiscvAssemblyTest extends AbstractLcbTest {
       var name = Paths.get(input).getFileName();
       var expected = new File(
           "../../open-vadl/vadl-test/main/resources/llvm/riscv/assertions/assembly/" + name + ".s");
+
+      Arrays.stream(new File(hostOutput).listFiles())
+          .forEach(x -> System.out.println(x.getAbsolutePath()));
+
       var actual = new File(hostOutput + "/" + name + ".s");
       assertThat(contentOf(actual)).isEqualToIgnoringWhitespace(contentOf(expected));
     })).toList();
