@@ -87,8 +87,7 @@ public abstract class DockerExecutionTest extends AbstractTest {
             withHostFsBind(
                 container
                     .withCopyFileToContainer(MountableFile.forHostPath(Path.of(content)), mountPath),
-                hostPath, containerMountPath)
-        , null
+                hostPath, containerMountPath), null
     );
   }
 
