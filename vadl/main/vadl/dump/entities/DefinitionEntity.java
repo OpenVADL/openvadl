@@ -79,7 +79,9 @@ public class DefinitionEntity extends DumpEntity {
   }
 
   public static String cssIdFor(Definition def) {
-    return def.identifier.name() + "-" + def.getClass().getSimpleName();
+    var senatizedName = def.identifier.name()
+        .replaceAll("[^\\w-]", "_");
+    return senatizedName + "-" + def.getClass().getSimpleName();
   }
 
   // gets the rank of this definition kind
