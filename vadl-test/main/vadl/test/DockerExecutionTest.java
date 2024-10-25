@@ -96,9 +96,9 @@ public abstract class DockerExecutionTest extends AbstractTest {
     runContainer(image, (container) -> container
             .withCopyFileToContainer(MountableFile.forHostPath(Path.of(content)), mountPath),
         (container) -> {
-          container.copyFileFromContainer(containerMountPath + archiveName, hostPath + archiveName);
+          container.copyFileFromContainer(containerMountPath + "/" + archiveName, hostPath + "/" + archiveName);
           try {
-            untar(new File(hostPath + archiveName), new File(hostPath));
+            untar(new File(hostPath + "/" + archiveName), new File(hostPath));
           } catch (IOException e) {
             throw new RuntimeException(e);
           }
