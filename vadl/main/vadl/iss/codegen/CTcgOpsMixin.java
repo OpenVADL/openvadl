@@ -11,6 +11,7 @@ import vadl.iss.passes.tcgLowering.nodes.TcgGetVar;
 import vadl.iss.passes.tcgLowering.nodes.TcgLoadMemory;
 import vadl.iss.passes.tcgLowering.nodes.TcgMoveNode;
 import vadl.iss.passes.tcgLowering.nodes.TcgSetRegFile;
+import vadl.iss.passes.tcgLowering.nodes.TcgStoreMemory;
 import vadl.viam.graph.Node;
 
 /**
@@ -76,12 +77,23 @@ public interface CTcgOpsMixin extends CGenMixin {
             writer.write(");\n");
         })
 
+        .set(TcgStoreMemory.class, (TcgStoreMemory node, StringWriter writer) -> {
+            writer.write("\t" + "tcg_gen_qemu_st_i" + node.width().width);
+            writer.write("(" + node.val().varName());
+            writer.write(", " + node.addr().varName());
+            writer.write(", 0");
+            writer.write(", " + node.tcgMemOp());
+            writer.write(");\n");
+        })
+
         .set(TcgExtendNode.class, (TcgExtendNode node, StringWriter writer) -> {
             writer.write("\t" + node.tcgFunctionName());
             writer.write("(" + node.res().varName());
             writer.write(", " + node.arg().varName());
             writer.write(");\n");
         })
+
+
 
     ;
   }

@@ -20,6 +20,7 @@ import vadl.iss.passes.tcgLowering.nodes.TcgLoadMemory;
 import vadl.iss.passes.tcgLowering.nodes.TcgMoveNode;
 import vadl.iss.passes.tcgLowering.nodes.TcgOpNode;
 import vadl.iss.passes.tcgLowering.nodes.TcgSetRegFile;
+import vadl.iss.passes.tcgLowering.nodes.TcgStoreMemory;
 import vadl.pass.PassName;
 import vadl.pass.PassResults;
 import vadl.types.BuiltInTable;
@@ -75,6 +76,7 @@ public class TcgLoweringPass extends AbstractIssPass {
         "ADD",
         "ADDI"
         , "LB"
+        , "SB"
     );
 
     var tcgNodes = (IssTcgAnnotatePass.Result) passResults
@@ -172,8 +174,8 @@ class TcgLoweringExecutor extends GraphProcessor<Node> {
       return process(regFileWrite);
     } if (toProcess instanceof ReadMemNode readMemNode) {
       return process(readMemNode);
-//    } else if (toProcess instanceof WriteMemNode writeMemNode) {
-//      return process(writeMemNode);
+    } else if (toProcess instanceof WriteMemNode writeMemNode) {
+      return process(writeMemNode);
     } else if (toProcess instanceof FieldRefNode) {
       return toProcess;
     } else if (toProcess instanceof ConstantNode) {
@@ -182,9 +184,9 @@ class TcgLoweringExecutor extends GraphProcessor<Node> {
     } else if (toProcess instanceof SignExtendNode signExtendNode) {
       return process(signExtendNode);
     } else if (toProcess instanceof ZeroExtendNode) {
-      return toProcess;
+      return null;
     } else if (toProcess instanceof TruncateNode) {
-      return toProcess;
+      return null;
     } else if (toProcess instanceof LetNode letNode) {
       process(letNode);
       return null;
@@ -252,6 +254,20 @@ class TcgLoweringExecutor extends GraphProcessor<Node> {
     return new TcgLoadMemory(loadSize, mode, res, addrTcgRes.res(), width);
   }
 
+  private TcgOpNode process(WriteMemNode toProcess) {
+    // TODO: Not always a TcgOpNode
+    var addrTcgRes = getResultOf(toProcess.address(), TcgOpNode.class);
+    var valTcgRes = getResultOf(toProcess.value(), TcgOpNode.class);
+
+    var writeWidth = toProcess.value().type().asDataType().bitWidth();
+    var storeSize = Tcg_8_16_32_64.fromWidth(writeWidth);
+
+    // TODO: @jzottele Don't hardcode this
+    var mode = TcgExtend.SIGN;
+
+    return new TcgStoreMemory(storeSize, mode, valTcgRes.res(), addrTcgRes.res());
+  }
+
 //  private TcgOpNode process(WriteMemNode toProcess) {
 //    var valRes = getResultOf(toProcess.value(), TcgOpNode.class);
 //    var addrRes = getResultOf(toProcess.address(), TcgOpNode.class);
@@ -310,7 +326,6 @@ class TcgLoweringExecutor extends GraphProcessor<Node> {
     for (var tcgVar : tempVars) {
       var getTmp = new TcgGetVar.TcgGetTemp(tcgVar);
       insnStartNode.addAfter(getTmp);
-      var beforeEnd = (DirectionalNode) insnEndNode.predecessor();
     }
     for (var pair : destVars) {
       var writeNode = pair.right();
