@@ -35,20 +35,6 @@ public abstract class DockerExecutionTest extends AbstractTest {
   private static final Network testNetwork = Network.newNetwork();
   private static RedisCache redisCache = getRunningRedisCache();
 
-  /*
-  @AfterAll
-  public static synchronized void tearDown() {
-    if (redisCache != null) {
-      if (!redisCache.redisContainer.isRunning()) {
-        redisCache.stop();
-      }
-      redisCache = null;
-    }
-
-    testNetwork.close();
-  }
-   */
-
   /**
    * Starts a container and checks the status code for the exited container.
    * It will write the given {@code content} into a temporary file. The
