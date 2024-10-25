@@ -14,12 +14,15 @@ import java.time.Duration;
 import java.util.List;
 import java.util.Objects;
 import java.util.function.Consumer;
+import java.util.function.Function;
+import java.util.function.Supplier;
 import javax.annotation.Nullable;
 import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeAll;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.testcontainers.containers.BindMode;
 import org.testcontainers.containers.GenericContainer;
 import org.testcontainers.containers.Network;
 import org.testcontainers.containers.output.Slf4jLogConsumer;
@@ -59,23 +62,38 @@ public abstract class DockerExecutionTest extends AbstractTest {
   }
 
 
-  protected void runContainer(ImageFromDockerfile image, Path hostPath, String mountPath) {
-    runContainer(image, hostPath.toString(), mountPath);
-  }
-
   /**
    * Starts a container and checks the status code for the exited container.
+   * It will write the given {@code content} into a temporary file. The
+   * temporary file requires a {@code prefix} and {@code suffix}.
    * It will assert that the status code is zero. If the check takes longer
    * than 10 seconds or the status code is not zero then it will throw an
    * exception.
+   * Copies the data from {@code content} to {@code mountPath} and creates
+   * a mount between {@code hostPath} and {@code containerMountPath}.
    *
-   * @param image is the docker image for the {@link GenericContainer}.
+   * @param image     is the docker image for the {@link GenericContainer}.
+   * @param mountPath is the path where the {@code path} should be mounted to.
+   * @param content   is the content of file which will be written to the
+   *                  temp file.
+   * @throws IOException when the temp file is writable.
    */
-  protected void runContainer(ImageFromDockerfile image) {
-    runContainer(image, (container) -> {
-        },
-        null
+  protected void runContainerWithContent(ImageFromDockerfile image,
+                                         String content,
+                                         String mountPath,
+                                         String hostPath,
+                                         String containerMountPath) throws IOException {
+    runContainer(image, (container) ->
+            withHostFsBind(
+                container
+                    .withCopyFileToContainer(MountableFile.forHostPath(Path.of(content)), mountPath),
+                hostPath, containerMountPath)
+        , null
     );
+  }
+
+  protected void runContainer(ImageFromDockerfile image, Path hostPath, String mountPath) {
+    runContainer(image, hostPath.toString(), mountPath);
   }
 
   /**
@@ -106,33 +124,48 @@ public abstract class DockerExecutionTest extends AbstractTest {
    * @param postExecution     a consumer that is called when the container successfully terminated
    */
   protected void runContainer(ImageFromDockerfile image,
-                              Consumer<GenericContainer<?>> containerModifier,
+                              Function<GenericContainer<?>, GenericContainer<?>> containerModifier,
                               @Nullable Consumer<GenericContainer<?>> postExecution
   ) {
     try (GenericContainer<?> container = new GenericContainer<>(image)
         .withLogConsumer(new Slf4jLogConsumer(logger))
         .withNetwork(testNetwork)) {
-      containerModifier.accept(container);
-      container.start();
+      var modifiedContainer = containerModifier.apply(container);
+      modifiedContainer.setStartupAttempts(1);
+      modifiedContainer.start();
 
       await()
           .atMost(Duration.ofSeconds(20))
           .until(() -> {
             var result =
-                container.getDockerClient().inspectContainerCmd(container.getContainerId());
+                modifiedContainer.getDockerClient()
+                    .inspectContainerCmd(modifiedContainer.getContainerId());
             var state = result.exec().getState();
             return state.getStatus().equals("exited");
           });
 
-      var result = container.getDockerClient().inspectContainerCmd(container.getContainerId());
+      var result = modifiedContainer.getDockerClient()
+          .inspectContainerCmd(modifiedContainer.getContainerId());
 
       var state = result.exec().getState();
       assertEquals(0, state.getExitCodeLong().intValue());
 
       if (postExecution != null) {
-        postExecution.accept(container);
+        postExecution.accept(modifiedContainer);
       }
     }
+  }
+
+  protected static <T extends GenericContainer<?>> T withHostFsBind(T container, String hostPath,
+                                                                    String containerPath) {
+    // withFileSystemBind got deprecated and this is somewhat a replacement
+    // https://github.com/testcontainers/testcontainers-java/pull/7652
+    // https://github.com/joyrex2001/kubedock/issues/89
+    container.withCreateContainerCmdModifier(cmd ->
+        Objects.requireNonNull(cmd.getHostConfig())
+            .withBinds(Bind.parse(hostPath + ":" + containerPath))
+    );
+    return container;
   }
 
   /**

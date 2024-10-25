@@ -8,5 +8,4 @@ COPY . /src
 WORKDIR /src
 RUN mv /opt/sccache/sccache /usr/bin/sccache
 RUN make && sccache -s
-RUN mkdir /output
-CMD /src/llvm-final/build/bin/clang --target=${TARGET} -S -c /src/input.c -o input.s
+CMD ls /src/inputs | xargs -t -I {} /src/llvm-final/build/bin/clang --target=${TARGET} -S -c /src/inputs/{} -o /output/{}.s && cat /output/*.s

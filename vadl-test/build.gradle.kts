@@ -17,6 +17,7 @@ dependencies {
 
     implementation(platform("org.junit:junit-bom:5.10.2"))
     implementation("org.junit.jupiter:junit-jupiter")
+    implementation("org.assertj:assertj-core:3.26.0")
     implementation("org.hamcrest:hamcrest:2.2")
     implementation("org.yaml:snakeyaml:2.2")
     implementation("net.jqwik:jqwik:1.9.0")
