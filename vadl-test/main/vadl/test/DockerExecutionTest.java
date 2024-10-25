@@ -78,25 +78,30 @@ public abstract class DockerExecutionTest extends AbstractTest {
    * It will assert that the status code is zero. If the check takes longer
    * than 10 seconds or the status code is not zero then it will throw an
    * exception.
-   * Copies the data from {@code content} to {@code mountPath} and creates
-   * a mount between {@code hostPath} and {@code containerMountPath}.
+   * Copies the data from {@code content} to {@code mountPath} and copies
+   * an archive from {@code containerMountPath + archiveName} to {@code hostPath + archiveName}.
+   * Both {@code containerMountPath} and {@code hostPath} need to be paths.
+   * This method will also automatically untar the file.
    *
-   * @param image     is the docker image for the {@link GenericContainer}.
-   * @param mountPath is the path where the {@code path} should be mounted to.
-   * @param content   is the content of file which will be written to the
-   *                  temp file.
-   * @throws IOException when the temp file is writable.
+   * @param image              is the docker image for the {@link GenericContainer}.
+   * @param mountPath          is the path where the {@code path} should be mounted to.
+   * @param content            is the content of file which will be written to the
+   *                           temp file.
+   * @param hostPath           is the path on the host for the output archive.
+   * @param containerMountPath is the path in the container for the output archive.
+   * @param archiveName        is the name of the archive in {@code hostPath} and {@code archiveName}.
    */
   protected void runContainerWithContent(ImageFromDockerfile image,
                                          String content,
                                          String mountPath,
                                          String hostPath,
                                          String containerMountPath,
-                                         String archiveName) throws IOException {
+                                         String archiveName) {
     runContainer(image, (container) -> container
             .withCopyFileToContainer(MountableFile.forHostPath(Path.of(content)), mountPath),
         (container) -> {
-          container.copyFileFromContainer(containerMountPath + "/" + archiveName, hostPath + "/" + archiveName);
+          container.copyFileFromContainer(containerMountPath + "/" + archiveName,
+              hostPath + "/" + archiveName);
           try {
             untar(new File(hostPath + "/" + archiveName), new File(hostPath));
           } catch (IOException e) {

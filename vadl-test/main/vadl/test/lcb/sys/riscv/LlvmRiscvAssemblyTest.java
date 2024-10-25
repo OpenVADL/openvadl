@@ -40,7 +40,7 @@ public class LlvmRiscvAssemblyTest extends AbstractLcbTest {
         .map(File::getName);
   }
 
-  //@EnabledIfEnvironmentVariable(named = "test.llvm.enabled", matches = "true")
+  @EnabledIfEnvironmentVariable(named = "test.llvm.enabled", matches = "true")
   @TestFactory
   List<DynamicTest> compileLlvm() throws IOException, DuplicatedPassKeyException {
     var target = "rv64im";
@@ -79,7 +79,7 @@ public class LlvmRiscvAssemblyTest extends AbstractLcbTest {
       var expected = new File(
           "../../open-vadl/vadl-test/main/resources/llvm/riscv/assertions/assembly/" + name + ".s");
 
-      var actual = new File(hostOutput + "/" + name + ".s");
+      var actual = new File(hostOutput + "/output/" + name + ".s");
       assertThat(contentOf(actual)).isEqualToIgnoringWhitespace(contentOf(expected));
     })).toList();
   }

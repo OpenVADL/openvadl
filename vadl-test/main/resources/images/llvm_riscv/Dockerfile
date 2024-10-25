@@ -9,4 +9,4 @@ WORKDIR /src
 RUN mv /opt/sccache/sccache /usr/bin/sccache
 RUN make && sccache -s
 RUN mkdir /output
-CMD ls /src/inputs | xargs -t -I {} /src/llvm-final/build/bin/clang --target=${TARGET} -S -c /src/inputs/{} -o /output/{}.s && tar -cvf /output/archive.tar *
+CMD ls /src/inputs | xargs -t -I {} /src/llvm-final/build/bin/clang --target=${TARGET} -S -c /src/inputs/{} -o /output/{}.s && tar -cvf /output/archive.tar /output/*
