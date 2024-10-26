@@ -24,6 +24,9 @@ public class MachineInstructionValueNode extends ExpressionNode {
   @DataValue
   private Constant constant;
 
+  /**
+   * Constructor.
+   */
   public MachineInstructionValueNode(ValueType valueType, Constant constant) {
     super(Type.dummy());
     this.valueType = valueType;
