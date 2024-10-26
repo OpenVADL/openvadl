@@ -153,11 +153,17 @@ public class LlvmLoweringPassTest extends AbstractLcbTest {
         List.of(String.format("(%s X:$rs2, (add X:$rs1, RV64IM_Stype_immAsInt64:$imm))",
                 dagNode),
             String.format("(%s X:$rs2, (add AddrFI:$rs1, RV64IM_Stype_immAsInt64:$imm))",
-                dagNode)),
+                dagNode),
+            String.format("(%s X:$rs2, AddrFI:$rs1)",
+                dagNode)
+        ),
         List.of(String.format("(%s X:$rs1, X:$rs2, RV64IM_Stype_immAsInt64:$imm)",
                 machineInstruction),
             String.format("(%s AddrFI:$rs1, X:$rs2, RV64IM_Stype_immAsInt64:$imm)",
-                machineInstruction)),
+                machineInstruction),
+            String.format("(%s AddrFI:$rs1, X:$rs2, (i64 0))",
+                machineInstruction)
+        ),
         createStoreMemoryFlags(),
         false
     );
@@ -183,7 +189,7 @@ public class LlvmLoweringPassTest extends AbstractLcbTest {
                 machineInstruction),
             String.format("(%s AddrFI:$rs1, (i64 0))",
                 machineInstruction)
-                ),
+        ),
         createLoadMemoryFlags(),
         false
     );

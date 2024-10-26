@@ -1,25 +1,36 @@
 package vadl.lcb.passes.llvmLowering.strategies.instruction;
 
 import static vadl.viam.ViamError.ensure;
+import static vadl.viam.ViamError.ensurePresent;
 
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.stream.Stream;
+import vadl.error.Diagnostic;
 import vadl.lcb.codegen.model.llvm.ValueType;
 import vadl.lcb.passes.isaMatching.InstructionLabel;
+import vadl.lcb.passes.llvmLowering.domain.machineDag.MachineInstructionParameterNode;
+import vadl.lcb.passes.llvmLowering.domain.machineDag.MachineInstructionValueNode;
+import vadl.lcb.passes.llvmLowering.domain.selectionDag.LlvmAddSD;
+import vadl.lcb.passes.llvmLowering.domain.selectionDag.LlvmFieldAccessRefNode;
 import vadl.lcb.passes.llvmLowering.domain.selectionDag.LlvmFrameIndexSD;
 import vadl.lcb.passes.llvmLowering.domain.selectionDag.LlvmReadRegFileNode;
 import vadl.lcb.passes.llvmLowering.domain.selectionDag.LlvmStoreSD;
 import vadl.lcb.passes.llvmLowering.domain.selectionDag.LlvmTruncStore;
+import vadl.lcb.passes.llvmLowering.tablegen.model.TableGenInstructionImmediateOperand;
 import vadl.lcb.passes.llvmLowering.tablegen.model.TableGenInstructionOperand;
 import vadl.lcb.passes.llvmLowering.tablegen.model.TableGenPattern;
 import vadl.lcb.passes.llvmLowering.tablegen.model.TableGenSelectionWithOutputPattern;
+import vadl.types.Type;
+import vadl.viam.Constant;
 import vadl.viam.Instruction;
 import vadl.viam.Memory;
 import vadl.viam.Register;
 import vadl.viam.graph.Graph;
 import vadl.viam.graph.Node;
+import vadl.viam.graph.dependency.ReadRegFileNode;
 import vadl.viam.graph.dependency.WriteResourceNode;
 
 /**
@@ -46,7 +57,58 @@ public class LlvmInstructionLoweringMemoryStoreStrategyImpl
       List<TableGenInstructionOperand> inputOperands,
       List<TableGenInstructionOperand> outputOperands,
       List<TableGenPattern> patterns) {
-    return replaceRegisterWithFrameIndex(patterns);
+    var storeFromRegisterPatterns = createStoreFromsWithoutImmediate(patterns);
+    return replaceRegisterWithFrameIndex(
+        Stream.concat(patterns.stream(), storeFromRegisterPatterns.stream()).toList());
+  }
+
+  /**
+   * LLVM requires a pattern for loading directly from a frame index. But for example in the RISCV
+   * specification we only have an instruction which stores from register + immediate. This method
+   * will drop the immediate and replace it by {@code 0}.
+   */
+  private List<TableGenPattern> createStoreFromsWithoutImmediate(List<TableGenPattern> patterns) {
+    var alternativePatterns = new ArrayList<TableGenPattern>();
+
+    for (var pattern : patterns.stream()
+        .filter(x -> x instanceof TableGenSelectionWithOutputPattern)
+        .map(x -> (TableGenSelectionWithOutputPattern) x)
+        .toList()) {
+      var selector = pattern.selector().copy();
+      var machine = pattern.machine().copy();
+
+      // Check whether there is an addition with immediate.
+      if (selector.getNodes(LlvmAddSD.class).filter(add -> add.arguments().stream()
+          .anyMatch(child -> child instanceof LlvmFieldAccessRefNode)).count() == 1) {
+        // Yes, so replace the addition with the register which is a child of the addition.
+        var addition =
+            ensurePresent(selector.getNodes(LlvmAddSD.class).findFirst(),
+                "There must be an addition");
+        var register = ensurePresent(
+            addition.arguments().stream().filter(x -> x instanceof ReadRegFileNode).findFirst(),
+            () -> Diagnostic.error("Expected a register node as child.",
+                addition.sourceLocation()));
+
+        addition.replaceAndDelete(register);
+
+        // We also have to replace the immediate operand in the machine pattern.
+        var immediates = machine.getNodes(MachineInstructionParameterNode.class)
+            .filter(x -> x.instructionOperand() instanceof TableGenInstructionImmediateOperand)
+            .toList();
+
+        for (var imm : immediates) {
+          var ty = ensurePresent(ValueType.from(register.type()),
+              () -> Diagnostic.error("Register must have valid llvm type",
+                  register.sourceLocation()));
+          imm.replaceAndDelete(new MachineInstructionValueNode(ty, Constant.Value.of(0,
+              Type.signedInt(32))));
+        }
+
+        alternativePatterns.add(new TableGenSelectionWithOutputPattern(selector, machine));
+      }
+    }
+
+    return alternativePatterns;
   }
 
   /**
@@ -78,6 +140,7 @@ public class LlvmInstructionLoweringMemoryStoreStrategyImpl
             var inputs = new ArrayList<Node>();
             var address = x.address();
             ensure(address != null, "address must not be null");
+            inputs.add(address);
             address.collectInputsWithChildren(inputs);
             return inputs.stream();
           })
