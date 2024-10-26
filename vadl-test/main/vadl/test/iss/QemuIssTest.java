@@ -133,7 +133,7 @@ public abstract class QemuIssTest extends DockerExecutionTest {
               System.out.println("Duration: " + e.duration());
 
               Assertions.assertEquals(IssTestUtils.TestResult.Status.PASS, e.status(),
-                  String.join(", ", e.errors()));
+                  String.join(",\n\t", e.errors()));
             }
         ));
 
@@ -174,9 +174,10 @@ public abstract class QemuIssTest extends DockerExecutionTest {
                   .copy("iss", "/qemu")
                   // TODO: Move this to prebuilt docker image
                   .workDir("/qemu/build");
-
+              d.run("mv qemu-system-riscv64 /bin/qemu-system-riscv64");
               // TODO remove this when we updated the docker image
               d.run("rm -rf *");
+              d.run("qemu-system-riscv64 --version");
 
               // use redis cache for building (sccache allows remote caching)
               var cc = "sccache gcc";

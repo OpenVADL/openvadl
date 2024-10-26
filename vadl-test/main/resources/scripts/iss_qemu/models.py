@@ -1,5 +1,5 @@
-from dataclasses import dataclass
-from typing import Dict, Literal
+from dataclasses import dataclass, field
+from typing import Dict, List, Literal
 
 @dataclass
 class TestSpec:
@@ -7,6 +7,8 @@ class TestSpec:
     id: str
     asm_core: str
     reg_tests: Dict[str, str]
+    reference_exec: str = field(default="")
+    reference_regs: list[str] = field(default_factory=list)
 
 
 RegResultType = Dict[str, Dict[Literal['expected', 'actual'], str]]
@@ -19,4 +21,5 @@ class TestResult:
     reg_tests: RegResultType
     errors: [str]
     duration: str
+    qemu_log: dict[str, list[str]] = field(default_factory=dict)
     full_asm: str = "not set"

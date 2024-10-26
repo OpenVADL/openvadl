@@ -8,74 +8,72 @@ from typing import List
 import yaml
 
 from test_case_executer_v1 import QMPTestCaseExecutor, TestSpec
-from test_case_executer_v2 import LogTestCaseExecutor
 
 
 @dataclass
 class TestSuiteConfig:
-    tests: List[TestSpec]
+  tests: List[TestSpec]
 
 
 async def main(qemu_exec: str):
-    test_config = load_test_config("test-suite.yaml")
+  print(f"Starting runner with qemu executable: {qemu_exec}")
 
-    # produces testcases
-    # test_cases = [TestCaseExecutor2(spec) for (i, spec) in enumerate(test_config.tests)]
-    test_cases = [QMPTestCaseExecutor(qemu_exec, spec, 1200 + i) for (i, spec) in enumerate(test_config.tests)]
+  test_config = load_test_config("test-suite.yaml")
 
-    start_time = time.time()
+  # produces testcases
+  # test_cases = [TestCaseExecutor2(spec) for (i, spec) in enumerate(test_config.tests)]
+  test_cases = [QMPTestCaseExecutor(qemu_exec, spec, 1200 + i) for (i, spec) in enumerate(test_config.tests)]
 
-    # Create a semaphore to limit concurrent test cases
-    semaphore = asyncio.Semaphore(10)
+  start_time = time.time()
 
-    test_results = []
+  # Create a semaphore to limit concurrent test cases
+  semaphore = asyncio.Semaphore(10)
 
-    # define how tests should be executed
-    async def run_test(test_case):
-        async with semaphore:
-            print(f"Start test case {test_case.spec.id}...")
-            print(f"Test case:\n{test_case.spec}")
-            test_start_time = time.time()
-            try:
-                await test_case.compile_and_link()
-                await test_case.exec()
-            except Exception as e:
-                test_case.test_result.status = 'FAIL'
-                test_case.test_result.errors.append(str(e))
-                print(traceback.format_exc())
-            finally:
-                test_end_time = time.time()
-                test_case.test_result.duration = f"{(test_end_time - test_start_time) * 1000:.2f}ms"
-                status = test_case.test_result.status == 'PASS' and "✅ PASS" or "❌ FAIL"
-                print(f"[{status}] Finish test case {test_case.spec.id} in {test_case.test_result.duration}")
-                # await test_case.emit_result(dir="results", prefix="result-")
-                result = test_case.get_test_result_map()
-                test_results.append(result)
+  test_results = []
 
+  # define how tests should be executed
+  async def run_test(test_case):
+    async with semaphore:
+      test_start_time = time.time()
+      try:
+        await test_case.compile_and_link()
+        await test_case.exec()
+      except Exception as e:
+        test_case.test_result.status = 'FAIL'
+        test_case.test_result.errors.append(str(e))
+        print(traceback.format_exc())
+      finally:
+        test_end_time = time.time()
+        test_case.test_result.duration = f"{(test_end_time - test_start_time) * 1000:.2f}ms"
+        status = test_case.test_result.status == 'PASS' and "✅ PASS" or "❌ FAIL"
+        print(f"[{status}] Finish test case {test_case.spec.id} in {test_case.test_result.duration}")
+        # await test_case.emit_result(dir="results", prefix="result-")
+        result = test_case.get_test_result_map()
+        test_results.append(result)
 
-    # Create tasks with semaphore-controlled concurrency
-    tasks = [asyncio.create_task(run_test(test_case)) for test_case in test_cases]
+  # Create tasks with semaphore-controlled concurrency
+  tasks = [asyncio.create_task(run_test(test_case)) for test_case in test_cases]
 
-    # Wait for all tasks to complete
-    await asyncio.gather(*tasks)
+  # Wait for all tasks to complete
+  await asyncio.gather(*tasks)
 
-    result_file = f"results.yaml"
-    with open(result_file, 'w') as f:
-        yaml.dump(test_results, f)
+  result_file = f"results.yaml"
+  with open(result_file, 'w') as f:
+    yaml.dump(test_results, f)
 
-    end_time = time.time()
-    print(f"Total time: {end_time - start_time:.3f}s")
+  end_time = time.time()
+  print(f"Total time: {end_time - start_time:.3f}s")
 
 
 def load_test_config(filename: str) -> TestSuiteConfig:
-    with open(filename, 'r') as file:
-        data = yaml.safe_load(file)  # Load the YAML file
-        tests = [TestSpec(**test) for test in data['tests']]  # Create TestSpec instances
-        return TestSuiteConfig(tests=tests)  # Create TestSuiteConfig instance
+  with open(filename, 'r') as file:
+    data = yaml.safe_load(file)  # Load the YAML file
+    tests = [TestSpec(**test) for test in data['tests']]  # Create TestSpec instances
+    return TestSuiteConfig(tests=tests)  # Create TestSuiteConfig instance
 
 
 if __name__ == "__main__":
-    parser = argparse.ArgumentParser()
-    parser.add_argument('simexec', type=str, help='Path to the qemu executable', default= "qemu/build/qemu-system-vadl")
-    args = parser.parse_args()
-    asyncio.run(main(args.simexec))
+  parser = argparse.ArgumentParser()
+  parser.add_argument('simexec', type=str, help='Path to the qemu executable', default="qemu/build/qemu-system-vadl")
+  args = parser.parse_args()
+  asyncio.run(main(args.simexec))
