@@ -4,13 +4,16 @@ import static org.awaitility.Awaitility.await;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.fail;
 
+import com.github.dockerjava.api.DockerClient;
 import com.github.dockerjava.api.model.Bind;
 import com.github.dockerjava.api.model.Mount;
 import com.github.dockerjava.api.model.MountType;
+import com.github.dockerjava.api.model.Volume;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.IOException;
+import java.io.InputStream;
 import java.io.OutputStream;
 import java.nio.file.Path;
 import java.time.Duration;
@@ -18,18 +21,26 @@ import java.util.List;
 import java.util.Objects;
 import java.util.function.Consumer;
 import java.util.function.Function;
+import java.util.function.Supplier;
 import javax.annotation.Nullable;
 import org.apache.commons.compress.archivers.tar.TarArchiveEntry;
 import org.apache.commons.compress.archivers.tar.TarArchiveInputStream;
+import org.apache.commons.compress.utils.IOUtils;
+import org.junit.jupiter.api.AfterAll;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeAll;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.testcontainers.containers.BindMode;
 import org.testcontainers.containers.GenericContainer;
 import org.testcontainers.containers.Network;
 import org.testcontainers.containers.output.Slf4jLogConsumer;
 import org.testcontainers.images.builder.ImageFromDockerfile;
 import org.testcontainers.images.builder.Transferable;
 import org.testcontainers.images.builder.dockerfile.DockerfileBuilder;
+import org.testcontainers.shaded.org.apache.commons.io.FileUtils;
 import org.testcontainers.utility.MountableFile;
+import org.testcontainers.utility.ThrowingFunction;
 
 public abstract class DockerExecutionTest extends AbstractTest {
 
@@ -46,17 +57,17 @@ public abstract class DockerExecutionTest extends AbstractTest {
    * than 10 seconds or the status code is not zero then it will throw an
    * exception.
    *
-   * @param image     is the docker image for the {@link GenericContainer}.
-   * @param mountPath is the path where the {@code path} should be mounted to.
-   * @param path   is the content of file which will be written to the
-   *                  temp file.
+   * @param image         is the docker image for the {@link GenericContainer}.
+   * @param containerPath is the path where the {@code path} should be copied to.
+   * @param content       is the content of file which will be written to the
+   *                      temp file.
    * @throws IOException when the temp file is writable.
    */
   protected void runContainerAndCopyInputIntoContainer(ImageFromDockerfile image,
-                                                       String path,
-                                                       String mountPath) throws IOException {
+                                                       String content,
+                                                       String containerPath) throws IOException {
     runContainer(image, (container) -> container
-            .withCopyToContainer(Transferable.of(path), mountPath),
+            .withCopyToContainer(Transferable.of(content), containerPath),
         null
     );
   }
@@ -74,59 +85,24 @@ public abstract class DockerExecutionTest extends AbstractTest {
    * Both {@code containerMountPath} and {@code hostPath} need to be paths.
    * This method will also automatically untar the file.
    *
-   * @param image              is the docker image for the {@link GenericContainer}.
-   * @param mountPath          is the path where the {@code path} should be mounted to.
-   * @param content            is the content of file which will be written to the
-   *                           temp file.
-   * @param hostPath           is the path on the host for the output archive.
-   * @param containerMountPath is the path in the container for the output archive.
-   * @param archiveName        is the name of the archive in {@code hostPath} and {@code archiveName}.
+   * @param image            is the docker image for the {@link GenericContainer}.
+   * @param inContainerPath  is the path where the {@code path} should be mounted to.
+   * @param inHostPath       is the content of file which will be written to the
+   *                         temp file.
+   * @param outHostPath      is the path on the host for the output archive.
+   * @param outContainerPath is the path in the container for the output archive.
    */
   protected void runContainerAndCopyInputIntoAndCopyOutputFromContainer(ImageFromDockerfile image,
-                                                                        String content,
-                                                                        String mountPath,
-                                                                        String hostPath,
-                                                                        String containerMountPath,
-                                                                        String archiveName) {
+                                                                        Path inHostPath,
+                                                                        String inContainerPath,
+                                                                        Path outHostPath,
+                                                                        String outContainerPath) {
     runContainer(image, (container) -> container
-            .withCopyFileToContainer(MountableFile.forHostPath(Path.of(content)), mountPath),
-        (container) -> {
-          container.copyFileFromContainer(containerMountPath + "/" + archiveName,
-              hostPath + "/" + archiveName);
-          try {
-            untar(new File(hostPath + "/" + archiveName), new File(hostPath));
-          } catch (IOException e) {
-            throw new RuntimeException(e);
-          }
-        }
+            .withCopyFileToContainer(MountableFile.forHostPath(inHostPath), inContainerPath),
+        (container) -> copyPathFromContainer(container, outContainerPath, outHostPath)
     );
   }
 
-  private static void untar(File tarFile, File outputDir) throws IOException {
-    try (FileInputStream fis = new FileInputStream(tarFile);
-         TarArchiveInputStream tais = new TarArchiveInputStream(fis)) {
-
-      TarArchiveEntry entry;
-      while ((entry = tais.getNextTarEntry()) != null) {
-        File outputFile = new File(outputDir, entry.getName());
-
-        // If entry is a directory, create it
-        if (entry.isDirectory()) {
-          outputFile.mkdirs();
-        } else {
-          // Ensure parent directory exists
-          outputFile.getParentFile().mkdirs();
-          try (OutputStream os = new FileOutputStream(outputFile)) {
-            byte[] buffer = new byte[1024];
-            int len;
-            while ((len = tais.read(buffer)) != -1) {
-              os.write(buffer, 0, len);
-            }
-          }
-        }
-      }
-    }
-  }
 
   /**
    * Starts a container and checks the status code for the exited container.
@@ -216,6 +192,15 @@ public abstract class DockerExecutionTest extends AbstractTest {
       GenericContainer<?> redisContainer
   ) {
 
+    public void stop() {
+      try {
+        redisContainer.execInContainer("redis-cli", "shutdown", "save");
+        redisContainer.stop();
+      } catch (IOException | InterruptedException e) {
+        redisContainer.stop();
+        throw new RuntimeException(e);
+      }
+    }
   }
 
   /**
@@ -248,4 +233,107 @@ public abstract class DockerExecutionTest extends AbstractTest {
       return image;
     }
   }
+
+
+  /**
+   * Copies a path from a container to the host system.
+   *
+   * @param container     the {@link GenericContainer} from which to copy the path
+   * @param containerPath the path inside the container that should be copied
+   * @param hostPath      the path on the host system where the content should be copied to
+   * @return the container from which the path was copied for potential chaining of other operations
+   */
+  public static GenericContainer<?> copyPathFromContainer(GenericContainer<?> container,
+                                                          String containerPath,
+                                                          Path hostPath) {
+    copyPathFromContainer(container, containerPath, (tarStream) -> {
+      var currentEntry = tarStream.getCurrentEntry();
+
+      // copy is file only (no directory copy)
+      var fileOnly = currentEntry.isFile();
+      // in case of coping a directory,
+      // we don't want to emit the root directory (would result in double nested directories)
+      var dirPrefixToRemove = currentEntry.isDirectory() ? currentEntry.getName() : "";
+
+      while (currentEntry != null) {
+        File destFile;
+        if (fileOnly) {
+          // if we copy only a single file, we use the specified hostPath as destiniation
+          destFile = hostPath.toFile();
+        } else {
+          // if we copy a directory we have to resolve the path
+          destFile = hostPath.resolve(currentEntry.getName()
+              // remove the root directory of the copied TAR
+              .replaceFirst("^" + dirPrefixToRemove, "")
+          ).toFile();
+        }
+
+        if (currentEntry.isFile()) {
+          // create parent directory if they do not exist yet
+          FileUtils.forceMkdirParent(destFile);
+          // copy file to destination
+          try (FileOutputStream output = new FileOutputStream(destFile)) {
+            IOUtils.copy(tarStream, output);
+          }
+        } else if (currentEntry.isDirectory()) {
+          if (destFile.exists() && !destFile.isDirectory()) {
+            // throw exception if directory would override already existing file
+            throw new IllegalStateException(
+                "copyPathFromContainer cannot create directory %s as a file at this path already exists.".formatted(
+                    destFile));
+          }
+          // create a destination directory
+          FileUtils.forceMkdir(destFile);
+        } else {
+          // if we cannot handle the entry, we throw an exception
+          throw new IllegalStateException(
+              "copyPathFromContainer can only copy files and directories. %s is neither a file nor a directory."
+                  .formatted(currentEntry.getName()));
+        }
+
+        // jump to next tar entry
+        currentEntry = tarStream.getNextTarEntry();
+      }
+
+      return true;
+    });
+
+    return container;
+  }
+
+  /**
+   * Streams a path as {@link TarArchiveInputStream} which resides in the container.
+   * The stream is already advanced to the first entry.
+   * So you want to call {@link TarArchiveInputStream#getCurrentEntry()} to read the first
+   * tar entry.
+   *
+   * @param container     container to copy from
+   * @param containerPath path inside container that should be copied
+   * @param function      function that takes {@link TarArchiveInputStream} of the copied path
+   * @return whatever the {@code function} parameter returns
+   */
+  public static <T> T copyPathFromContainer(GenericContainer<?> container, String containerPath,
+                                            ThrowingFunction<TarArchiveInputStream, T> function) {
+    if (container.getContainerId() == null) {
+      throw new IllegalStateException(
+          "copyFileFromContainer can only be used when the Container is created.");
+    }
+
+    DockerClient dockerClient = container.getDockerClient();
+    try (
+        InputStream inputStream = dockerClient.copyArchiveFromContainerCmd(
+            container.getContainerId(), containerPath).exec();
+        TarArchiveInputStream tarInputStream = new TarArchiveInputStream(inputStream)
+    ) {
+      tarInputStream.getNextTarEntry();
+      return function.apply(tarInputStream);
+    } catch (Exception e) {
+      if (e instanceof RuntimeException) {
+        throw (RuntimeException) e;
+      }
+      throw new RuntimeException(e);
+    }
+  }
+
+
 }

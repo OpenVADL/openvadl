@@ -7,6 +7,7 @@ import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.IOException;
+import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.Arrays;
 import java.util.List;
@@ -58,14 +59,12 @@ public class LlvmRiscvAssemblyTest extends AbstractLcbTest {
     // The llvm compiler compiles all assembly files, and we copy them from the container
     // to the host (hostOutput folder).
     var hostOutput = "build/output/llvm";
-    new File(hostOutput).mkdirs();
 
     runContainerAndCopyInputIntoAndCopyOutputFromContainer(image,
-        "../../open-vadl/vadl-test/main/resources/llvm/riscv/c",
+        Path.of("../../open-vadl/vadl-test/main/resources/llvm/riscv/c"),
         "/src/inputs",
-        new File(hostOutput).getAbsolutePath(),
-        "/output",
-        "archive.tar");
+        Path.of(hostOutput),
+        "/output");
 
     // The container is complete and has generated the assembly files.
     return inputFilesFromCFile().map(input -> DynamicTest.dynamicTest(input, () -> {
@@ -73,7 +72,7 @@ public class LlvmRiscvAssemblyTest extends AbstractLcbTest {
       var expected = new File(
           "../../open-vadl/vadl-test/main/resources/llvm/riscv/assertions/assembly/" + name + ".s");
 
-      var actual = new File(hostOutput + "/output/" + name + ".s");
+      var actual = new File(hostOutput + "/" + name + ".s");
       assertThat(contentOf(actual)).isEqualToIgnoringWhitespace(contentOf(expected));
     })).toList();
   }
