@@ -164,7 +164,7 @@ public abstract class QemuIssTest extends DockerExecutionTest {
     // get redis cache for faster compilation using sccache
     var redisCache = getRunningRedisCache();
 
-    return new ImageFromDockerfile()
+    var dockerImage = new ImageFromDockerfile()
         .withDockerfileFromBuilder(d -> {
               d
                   .from(QEMU_TEST_IMAGE)
@@ -180,7 +180,7 @@ public abstract class QemuIssTest extends DockerExecutionTest {
 
               // use redis cache for building (sccache allows remote caching)
               var cc = "sccache gcc";
-              SetupRedisEnv.setupEnv(d);
+              redisCache.setupEnv(d);
 
               // TODO: update target name
               // configure qemu with the new target from the specification
@@ -202,10 +202,10 @@ public abstract class QemuIssTest extends DockerExecutionTest {
         // make iss sources available to image builder
         .withFileFromPath("iss", generatedIssSources)
         // make iss_qemu scripts available to image builder
-        .withFileFromClasspath("/scripts", "/scripts/iss_qemu")
-        // as we have to use the same network as the redis cache, we have to build it there
-        .withBuildImageCmdModifier(modifier -> modifier.withNetworkMode(testNetwork().getId()))
-        ;
+        .withFileFromClasspath("/scripts", "/scripts/iss_qemu");
+
+    // as we have to use the same network as the redis cache, we have to build it there
+    return redisCache.setupEnv(dockerImage);
   }
 
 }

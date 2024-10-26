@@ -50,10 +50,10 @@ public class LlvmRiscvAssemblyTest extends AbstractLcbTest {
       outputStream.close();
     }
 
-    var image = SetupRedisEnv.setupEnv(new ImageFromDockerfile("tc_llvm17", false)
-            .withDockerfile(Paths.get(configuration.outputPath() + "/lcb/Dockerfile"))
-            .withBuildArg("TARGET", target))
-        .withBuildImageCmdModifier(modifier -> modifier.withNetworkMode(testNetwork().getId()));
+    var redisCache = getRunningRedisCache();
+    var image = redisCache.setupEnv(new ImageFromDockerfile("tc_llvm17", false)
+        .withDockerfile(Paths.get(configuration.outputPath() + "/lcb/Dockerfile"))
+        .withBuildArg("TARGET", target));
 
     // We build the image and copy all the input files into the container.
     // The llvm compiler compiles all assembly files, and we copy them from the container

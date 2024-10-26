@@ -47,7 +47,19 @@ public abstract class DockerExecutionTest extends AbstractTest {
   private static final Logger logger = LoggerFactory.getLogger(DockerExecutionTest.class);
 
   private static final Network testNetwork = Network.newNetwork();
-  private static RedisCache redisCache = getRunningRedisCache();
+  @Nullable
+  private static RedisCache redisCache;
+
+  @AfterAll
+  public static void afterAll() {
+    if (redisCache != null) {
+      // this call will also persist the data cached in this test run
+      redisCache.stop();
+    }
+
+    testNetwork.close();
+  }
+
 
   /**
    * Starts a container and checks the status code for the exited container.
@@ -147,6 +159,10 @@ public abstract class DockerExecutionTest extends AbstractTest {
     }
   }
 
+  public static Network testNetwork() {
+    return testNetwork;
+  }
+
   /**
    * Returns a running redis cache. If no redis cache exists yet, it will be created.
    *
@@ -157,83 +173,10 @@ public abstract class DockerExecutionTest extends AbstractTest {
       return redisCache;
     }
 
-    var hostName = "redis";
-
-    var container = new GenericContainer<>("redis:7.4")
-        .withCreateContainerCmdModifier(cmd -> {
-          var mount = new Mount()
-              .withType(MountType.VOLUME)
-              .withSource("open-vadl-redis-cache")
-              .withTarget("/data");
-
-          Objects.requireNonNull(cmd.getHostConfig())
-              .withMounts(List.of(mount));
-          cmd.withName("open-vadl-test-cache");
-          cmd.withAliases("redis");
-        })
-        // we need this custom network, because other containers must access
-        // the redis cache with the given hostname/alias
-        // (which is only available on custom networks)
-        .withNetwork(testNetwork)
-        .withNetworkAliases(hostName);
-
-    container.start();
-    redisCache = new RedisCache(hostName, 6379, container);
+    redisCache = new RedisCache("redis", testNetwork());
+    redisCache.start();
     return redisCache;
   }
-
-  public static Network testNetwork() {
-    return testNetwork;
-  }
-
-  protected record RedisCache(
-      String host,
-      int port,
-      GenericContainer<?> redisContainer
-  ) {
-
-    public void stop() {
-      try {
-        redisContainer.execInContainer("redis-cli", "shutdown", "save");
-        redisContainer.stop();
-      } catch (IOException | InterruptedException e) {
-        redisContainer.stop();
-        throw new RuntimeException(e);
-      }
-    }
-  }
-
-  /**
-   * This class abstracts the configuration for the redis cache.
-   */
-  protected static class SetupRedisEnv {
-
-    private static final String SCCACHE_REDIS_ENDPOINT = "SCCACHE_REDIS_ENDPOINT";
-
-    private static String tcpAddress() {
-      return "tcp://" + Objects.requireNonNull(redisCache).host() + ":" + redisCache.port();
-    }
-
-    /**
-     * Sets an environment variable to indicate to the distributed cache to use the redis
-     * docker instance as cache.
-     */
-    public static void setupEnv(DockerfileBuilder d) {
-      logger.info("Using redis cache: {}", redisCache);
-      d.env(SCCACHE_REDIS_ENDPOINT, tcpAddress());
-
-      // check if redis cache is available
-      d.run(
-          "timeout 5 bash -c '</dev/tcp/" + redisCache.host() + "/" + redisCache.port() + "'");
-    }
-
-    public static ImageFromDockerfile setupEnv(ImageFromDockerfile image) {
-      image.withBuildArg(SCCACHE_REDIS_ENDPOINT, tcpAddress());
-
-      return image;
-    }
-  }
-
 
   /**
    * Copies a path from a container to the host system.
@@ -335,5 +278,111 @@ public abstract class DockerExecutionTest extends AbstractTest {
     }
   }
 
+
+  /**
+   * A containerized redis cache that persists the cached data across runs.
+   * If your test container should use the cache (e.g. via sccache) you must run the container
+   * (or build step) in the same network as the redis cache.
+   * The easiest way to do is by using the {@link RedisCache#setupEnv(ImageFromDockerfile)}
+   * and {@link RedisCache#setupEnv(DockerfileBuilder)}.
+   * While you must use the first method, the second one is only useful if you use
+   * the {@link DockerfileBuilder}.
+   */
+  protected record RedisCache(
+      String host,
+      int port,
+      GenericContainer<?> redisContainer,
+      Network network
+  ) {
+
+    private static final Logger log = LoggerFactory.getLogger(RedisCache.class);
+
+    private static final String SCCACHE_REDIS_ENDPOINT = "SCCACHE_REDIS_ENDPOINT";
+
+    RedisCache(String hostName, Network network) {
+      this(hostName, 6379, constructContainer(hostName, network), network);
+    }
+
+
+    private void start() {
+      redisContainer.start();
+    }
+
+    /**
+     * This will stop the redis cache if it is still running.
+     * It will also persist the data cached during this run, so it is available in
+     * the next run.
+     */
+    private void stop() {
+      try {
+        if (!redisContainer.isRunning()) {
+          log.info("Redis container isn't running anymore. Skipping shutdown.");
+          return;
+        }
+        // persist cache before shutting down
+        log.info("Persist redis cache data before shutdown...");
+        redisContainer.execInContainer("redis-cli", "shutdown", "save");
+
+        redisContainer.stop();
+        log.info("Stopped redis cache container.");
+      } catch (IOException | InterruptedException e) {
+        redisContainer.stop();
+        throw new RuntimeException(e);
+      }
+    }
+
+    /**
+     * Sets an environment variable to indicate to the distributed cache to use the redis
+     * docker instance as cache.
+     */
+    public DockerfileBuilder setupEnv(DockerfileBuilder d) {
+      logger.info("Using redis cache: {}", redisCache);
+      d.env(SCCACHE_REDIS_ENDPOINT, tcpAddress());
+
+      // check if redis cache is available
+      d.run(
+          "timeout 5 bash -c '</dev/tcp/" + redisCache.host() + "/" + redisCache.port() + "'");
+      return d;
+    }
+
+    /**
+     * Sets the sccache redis endpoint argument and configures the used build network to be
+     * the same as the one of the redis container.
+     */
+    public ImageFromDockerfile setupEnv(ImageFromDockerfile image) {
+      image.withBuildArg(SCCACHE_REDIS_ENDPOINT, tcpAddress())
+          .withBuildImageCmdModifier(modifier -> modifier.withNetworkMode(network.getId()));
+
+      return image;
+    }
+
+    private String tcpAddress() {
+      return "tcp://" + host + ":" + port;
+    }
+
+    /**
+     * Constructs a redis container that is mount to a cache volume.
+     * And exposed to the given network and the given hostName.
+     */
+    private static GenericContainer<?> constructContainer(String hostName,
+                                                          Network network) {
+      return new GenericContainer<>("redis:7.4")
+          .withCreateContainerCmdModifier(cmd -> {
+            var mount = new Mount()
+                .withType(MountType.VOLUME)
+                .withSource("open-vadl-redis-cache")
+                .withTarget("/data");
+
+            Objects.requireNonNull(cmd.getHostConfig())
+                .withMounts(List.of(mount));
+            cmd.withName("open-vadl-test-cache");
+          })
+          // we need this custom network, because other containers must access
+          // the redis cache with the given hostname/alias
+          // (which is only available on custom networks)
+          .withNetwork(network)
+          .withNetworkAliases(hostName);
+    }
+  }
 
 }
