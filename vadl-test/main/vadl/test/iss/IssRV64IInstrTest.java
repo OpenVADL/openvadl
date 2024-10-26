@@ -27,13 +27,7 @@ public class IssRV64IInstrTest extends QemuIssTest {
 
   @TestFactory
   Stream<DynamicTest> addi() throws IOException {
-    return runTestsWith(IssRV64IInstrTest::gen12BitAddiTest, (i) -> {
-      var test = gen12BitAddiTest(i);
-      test.regTests().put("x1", "123");
-      return new IssTestUtils.TestSpec("INVALID" + i, test.regTests(), test.asmCore(),
-          RISCV_QEMU_REF,
-          null);
-    });
+    return runTestsWith(IssRV64IInstrTest::gen12BitAddiTest);
   }
 
   @TestFactory
