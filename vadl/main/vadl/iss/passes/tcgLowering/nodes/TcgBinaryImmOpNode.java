@@ -44,8 +44,8 @@ public abstract class TcgBinaryImmOpNode extends TcgOpNode {
     ensure(arg1.width() == width, "argument 1 width does not match. %s vs %s", arg1.width(), width);
     ensure(arg2.type().isData(), "argument 2 is not a data type");
     ensure(
-      Objects.requireNonNull(((DataType) arg2.type()).fittingCppType()).bitWidth() == width.width,
-      "argument 2 width does not match. %s vs %s", arg1.width(), arg2.type());
+        Objects.requireNonNull(((DataType) arg2.type()).fittingCppType()).bitWidth() <= width.width,
+        "argument 2 width does not match. %s vs %s", arg1.width(), arg2.type());
   }
 
   public TcgV arg1() {

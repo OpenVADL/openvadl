@@ -21,6 +21,7 @@ import vadl.iss.passes.tcgLowering.nodes.TcgMoveNode;
 import vadl.iss.passes.tcgLowering.nodes.TcgOpNode;
 import vadl.iss.passes.tcgLowering.nodes.TcgSetRegFile;
 import vadl.iss.passes.tcgLowering.nodes.TcgStoreMemory;
+import vadl.iss.passes.tcgLowering.nodes.TcgTruncateNode;
 import vadl.pass.PassName;
 import vadl.pass.PassResults;
 import vadl.types.BuiltInTable;
@@ -289,20 +290,15 @@ class TcgLoweringExecutor extends GraphProcessor<Node> {
         .map(processedNodes::get)
         .toList();
 
+    // TODO: @jzottele Don't hardcode width!
+    var width = TcgWidth.i64;
+    var res = TcgV.gen(width);
+    tempVars.add(res);
 
     if (call.builtIn() == BuiltInTable.ADD) {
       if (isBinaryImm(args)) {
-        var immArg = call.arguments().get(1).type().asDataType().bitWidth();
-        var width = TcgWidth.fromWidth(immArg);
-        var res = TcgV.gen(width);
-        tempVars.add(res);
-
         return new TcgAddiNode(res, asOp(args.get(0)).res(), (ExpressionNode) args.get(1));
       } else {
-        // TODO: @jzottele Don't hardcode width!
-        var width = TcgWidth.i64;
-        var res = TcgV.gen(width);
-        tempVars.add(res);
         // add result variable to tempVars
         return new TcgAddNode(res, asOp(args.get(0)).res(), asOp(args.get(1)).res());
       }
@@ -323,20 +319,16 @@ class TcgLoweringExecutor extends GraphProcessor<Node> {
     return new TcgExtendNode(size, TcgExtend.SIGN, res, argTcg.res());
   }
 
-  private @Nullable TcgOpNode process(TruncateNode toProcess) {
+  private TcgOpNode process(TruncateNode toProcess) {
     var argTcg = getResultOf(toProcess.value(), TcgOpNode.class);
 
     var resultWidth = toProcess.type().asDataType().bitWidth();
-    // TODO: Remove this check when we have a stable VIAM
-    if (resultWidth != 32) {
-      return null;
-    }
 
-    var toSize = TcgWidth.fromWidth(resultWidth);
-    var res = TcgV.gen(toSize);
+    // TODO: Don't hardcode this
+    var res = TcgV.gen(TcgWidth.i64);
     tempVars.add(res);
 
-    return new TcgMoveNode(res, argTcg.res());
+    return new TcgTruncateNode(res, argTcg.res(), resultWidth);
   }
 
   private void process(LetNode node) {
