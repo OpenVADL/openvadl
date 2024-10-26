@@ -16,7 +16,6 @@ import org.testcontainers.images.builder.ImageFromDockerfile;
 import vadl.cppCodeGen.CppTypeMap;
 import vadl.cppCodeGen.passes.typeNormalization.CppTypeNormalizationPass;
 import vadl.gcb.passes.relocation.IdentifyFieldUsagePass;
-import vadl.gcb.passes.relocation.model.CompilerRelocation;
 import vadl.gcb.passes.relocation.model.RelocationLowerable;
 import vadl.gcb.passes.type_normalization.CppTypeNormalizationForImmediateExtractionPass;
 import vadl.gcb.passes.type_normalization.CppTypeNormalizationForPredicatesPass;
@@ -208,7 +207,7 @@ public class RelocationCodeGeneratorCppVerificationTest extends AbstractLcbTest 
 
     try {
       logger.info(testName + "\n" + cppCode);
-      runContainerWithContent(DOCKER_IMAGE, cppCode, MOUNT_PATH);
+      runContainerAndCopyInputIntoContainer(DOCKER_IMAGE, cppCode, MOUNT_PATH);
     } catch (IOException e) {
       throw new RuntimeException(e);
     }

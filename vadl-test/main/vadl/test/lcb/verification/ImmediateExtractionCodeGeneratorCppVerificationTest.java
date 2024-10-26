@@ -2,7 +2,6 @@ package vadl.test.lcb.verification;
 
 import java.io.IOException;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Collection;
 import java.util.List;
 import java.util.stream.Collectors;
@@ -178,7 +177,7 @@ public class ImmediateExtractionCodeGeneratorCppVerificationTest extends Abstrac
 
     try {
       logger.info(testName + "\n" + cppCode);
-      runContainerWithContent(DOCKER_IMAGE, cppCode, MOUNT_PATH);
+      runContainerAndCopyInputIntoContainer(DOCKER_IMAGE, cppCode, MOUNT_PATH);
     } catch (IOException e) {
       throw new RuntimeException(e);
     }

@@ -1,10 +1,20 @@
 package vadl.test.lcb.sys.riscv;
 
+import static org.assertj.core.api.AssertionsForClassTypes.assertThat;
+import static org.assertj.core.api.AssertionsForClassTypes.contentOf;
+
+import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.IOException;
+import java.nio.file.Path;
 import java.nio.file.Paths;
-import org.junit.jupiter.api.Test;
+import java.util.Arrays;
+import java.util.List;
+import java.util.Objects;
+import java.util.stream.Stream;
+import org.junit.jupiter.api.DynamicTest;
+import org.junit.jupiter.api.TestFactory;
 import org.junit.jupiter.api.condition.EnabledIfEnvironmentVariable;
 import org.testcontainers.images.builder.ImageFromDockerfile;
 import vadl.configuration.LcbConfiguration;
@@ -13,14 +23,18 @@ import vadl.pass.exception.DuplicatedPassKeyException;
 import vadl.test.lcb.AbstractLcbTest;
 
 public class LlvmRiscvAssemblyTest extends AbstractLcbTest {
-  protected final String bucket = System.getenv("BUCKET");
-  protected final String region = System.getenv("REGION");
-  protected final String awsAccessKeyId = System.getenv("AWS_ACCESS_KEY_ID");
-  protected final String awsAccessKey = System.getenv("AWS_ACCESS_KEY");
+
+  private static Stream<String> inputFilesFromCFile() {
+    return Arrays.stream(
+            Objects.requireNonNull(new File("../../open-vadl/vadl-test/main/resources/llvm/riscv/c")
+                .listFiles()))
+        .filter(File::isFile)
+        .map(File::getName);
+  }
 
   @EnabledIfEnvironmentVariable(named = "test.llvm.enabled", matches = "true")
-  @Test
-  void compileLlvm() throws IOException, DuplicatedPassKeyException {
+  @TestFactory
+  List<DynamicTest> compileLlvm() throws IOException, DuplicatedPassKeyException {
     var target = "rv64im";
     var configuration = new LcbConfiguration(getConfiguration(false),
         new ProcessorName(target));
@@ -36,22 +50,30 @@ public class LlvmRiscvAssemblyTest extends AbstractLcbTest {
       outputStream.close();
     }
 
-    // Move test into tempdir
-    {
-      var inputStream =
-          new FileInputStream("../../open-vadl/vadl-test/main/resources/llvm/riscv/c/ILP32_add.c");
-      var outputStream = new FileOutputStream(configuration.outputPath() + "/lcb/input.c");
-      inputStream.transferTo(outputStream);
-      outputStream.close();
-    }
-
-    var image = new ImageFromDockerfile("tc_llvm17")
+    var redisCache = getRunningRedisCache();
+    var image = redisCache.setupEnv(new ImageFromDockerfile("tc_llvm17", false)
         .withDockerfile(Paths.get(configuration.outputPath() + "/lcb/Dockerfile"))
-        .withBuildArg("BUCKET", bucket)
-        .withBuildArg("REGION", region)
-        .withBuildArg("AWS_ACCESS_KEY_ID", awsAccessKeyId)
-        .withBuildArg("AWS_ACCESS_KEY", awsAccessKey);
+        .withBuildArg("TARGET", target));
 
-    runContainer(image, configuration.outputPath() + "/output", "/output");
+    // We build the image and copy all the input files into the container.
+    // The llvm compiler compiles all assembly files, and we copy them from the container
+    // to the host (hostOutput folder).
+    var hostOutput = "build/output/llvm";
+
+    runContainerAndCopyInputIntoAndCopyOutputFromContainer(image,
+        Path.of("../../open-vadl/vadl-test/main/resources/llvm/riscv/c"),
+        "/src/inputs",
+        Path.of(hostOutput),
+        "/output");
+
+    // The container is complete and has generated the assembly files.
+    return inputFilesFromCFile().map(input -> DynamicTest.dynamicTest(input, () -> {
+      var name = Paths.get(input).getFileName();
+      var expected = new File(
+          "../../open-vadl/vadl-test/main/resources/llvm/riscv/assertions/assembly/" + name + ".s");
+
+      var actual = new File(hostOutput + "/" + name + ".s");
+      assertThat(contentOf(actual)).isEqualToIgnoringWhitespace(contentOf(expected));
+    })).toList();
   }
 }

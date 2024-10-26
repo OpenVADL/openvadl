@@ -1,7 +1,6 @@
 package vadl.test.cppCodeGen.z3;
 
 import java.io.IOException;
-import java.util.Arrays;
 import java.util.Collection;
 import org.junit.jupiter.api.DynamicTest;
 import org.junit.jupiter.api.TestFactory;
@@ -11,7 +10,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.testcontainers.images.builder.ImageFromDockerfile;
 import vadl.gcb.passes.encoding_generation.GenerateFieldAccessEncodingFunctionPass;
-import vadl.pass.PassOrder;
 import vadl.pass.PassOrders;
 import vadl.pass.exception.DuplicatedPassKeyException;
 import vadl.test.gcb.AbstractGcbTest;
@@ -112,7 +110,7 @@ public class EncodingCodeGeneratorSymbolicVerificationTest extends AbstractGcbTe
     logger.info(z3Code);
 
     try {
-      runContainerWithContent(DOCKER_IMAGE, z3Code, MOUNT_PATH);
+      runContainerAndCopyInputIntoContainer(DOCKER_IMAGE, z3Code, MOUNT_PATH);
     } catch (IOException e) {
       throw new RuntimeException(e);
     }

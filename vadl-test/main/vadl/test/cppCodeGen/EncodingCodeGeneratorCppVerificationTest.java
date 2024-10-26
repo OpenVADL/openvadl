@@ -20,7 +20,6 @@ import vadl.cppCodeGen.passes.typeNormalization.CppTypeNormalizationPass;
 import vadl.gcb.passes.type_normalization.CppTypeNormalizationForDecodingsPass;
 import vadl.gcb.passes.type_normalization.CppTypeNormalizationForEncodingsPass;
 import vadl.lcb.codegen.LcbGenericCodeGenerator;
-import vadl.pass.PassOrder;
 import vadl.pass.PassOrders;
 import vadl.pass.exception.DuplicatedPassKeyException;
 import vadl.types.BitsType;
@@ -156,7 +155,7 @@ public class EncodingCodeGeneratorCppVerificationTest extends AbstractCppCodeGen
     logger.info(testName + "\n" + cppCode);
 
     try {
-      runContainerWithContent(DOCKER_IMAGE, cppCode, MOUNT_PATH);
+      runContainerAndCopyInputIntoContainer(DOCKER_IMAGE, cppCode, MOUNT_PATH);
     } catch (IOException e) {
       throw new RuntimeException(e);
     }
