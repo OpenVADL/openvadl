@@ -62,6 +62,7 @@ public interface TableGenNodeVisitor extends LcbGraphNodeVisitor {
    * Visit {@link LlvmExtLoad}.
    */
   void visit(LlvmExtLoad node);
+
   /**
    * Visit {@link LlvmZExtLoad}.
    */
