@@ -5,12 +5,16 @@ import java.math.BigInteger;
 import java.util.List;
 import java.util.Objects;
 import javax.annotation.Nullable;
+import vadl.types.Type;
 import vadl.utils.SourceLocation;
 
 /**
  * The Expression node of the AST.
  */
 public abstract class Expr extends Node {
+  @Nullable
+  Type type = null;
+
   abstract <R> R accept(ExprVisitor<R> visitor);
 }
 
@@ -104,7 +108,8 @@ final class Identifier extends Expr implements IsId, IdentifierOrPlaceholder {
 
   @Override
   public String toString() {
-    return "%s name: \"%s\"".formatted(this.getClass().getSimpleName(), this.name);
+    return "%s name: \"%s\", type: %s".formatted(this.getClass().getSimpleName(), this.name,
+        this.type);
   }
 
   @Override
@@ -406,8 +411,8 @@ class BinaryExpr extends Expr {
 
   @Override
   public String toString() {
-    return "%s operator: %s".formatted(this.getClass().getSimpleName(),
-        operator().symbol);
+    return "%s operator: %s, type: %s".formatted(this.getClass().getSimpleName(),
+        operator().symbol, this.type);
   }
 
   @Override
@@ -471,7 +476,7 @@ class UnaryExpr extends Expr {
 
   @Override
   public String toString() {
-    return "%s operator: %s".formatted(this.getClass().getSimpleName(), operator);
+    return "%s operator: %s, type: %s".formatted(this.getClass().getSimpleName(), operator, type);
   }
 
   @Override
@@ -532,7 +537,8 @@ class IntegerLiteral extends Expr {
 
   @Override
   public String toString() {
-    return "%s literal: %s (%d)".formatted(this.getClass().getSimpleName(), token, number);
+    return "%s literal: %s (%d), type: %s".formatted(this.getClass().getSimpleName(), token, number,
+        type);
   }
 
   @Override
@@ -600,7 +606,8 @@ class BinaryLiteral extends Expr {
 
   @Override
   public String toString() {
-    return "%s literal: %s (%d)".formatted(this.getClass().getSimpleName(), token, number);
+    return "%s literal: %s (%d), type: %s".formatted(this.getClass().getSimpleName(), token, number,
+        type);
   }
 
   @Override
@@ -655,7 +662,7 @@ class BoolLiteral extends Expr {
 
   @Override
   public String toString() {
-    return "%s literal: %s".formatted(this.getClass().getSimpleName(), value);
+    return "%s literal: %s, type: %s".formatted(this.getClass().getSimpleName(), value, type);
   }
 
   @Override
@@ -717,7 +724,8 @@ class StringLiteral extends Expr {
 
   @Override
   public String toString() {
-    return "%s literal: \"%s\" (%s)".formatted(this.getClass().getSimpleName(), value, token);
+    return "%s literal: \"%s\" (%s), type: %s".formatted(this.getClass().getSimpleName(), value,
+        token, type);
   }
 
   @Override
@@ -749,12 +757,12 @@ sealed interface IdentifierOrPlaceholder extends IsId
  */
 final class PlaceholderExpr extends Expr implements IdentifierOrPlaceholder, IsId {
   List<String> segments;
-  SyntaxType type;
+  SyntaxType syntaxType;
   SourceLocation loc;
 
-  public PlaceholderExpr(List<String> segments, SyntaxType type, SourceLocation loc) {
+  public PlaceholderExpr(List<String> segments, SyntaxType syntaxType, SourceLocation loc) {
     this.segments = segments;
-    this.type = type;
+    this.syntaxType = syntaxType;
     this.loc = loc;
   }
 
@@ -770,7 +778,7 @@ final class PlaceholderExpr extends Expr implements IdentifierOrPlaceholder, IsI
 
   @Override
   SyntaxType syntaxType() {
-    return type;
+    return syntaxType;
   }
 
   @Override
@@ -1156,7 +1164,7 @@ class RangeExpr extends Expr {
 
   @Override
   public String toString() {
-    return this.getClass().getSimpleName();
+    return "%s type: %s".formatted(this.getClass().getSimpleName(), type);
   }
 
   @Override
@@ -1243,7 +1251,7 @@ final class TypeLiteral extends Expr {
 
   @Override
   public String toString() {
-    return this.getClass().getSimpleName();
+    return "%s type: %s".formatted(this.getClass().getSimpleName(), type);
   }
 
   @Override
@@ -1359,7 +1367,7 @@ final class IdentifierPath extends Expr implements IsId {
 
   @Override
   public String toString() {
-    return this.getClass().getSimpleName();
+    return "%s type: %s".formatted(this.getClass().getSimpleName(), type);
   }
 
   @Override
@@ -1430,7 +1438,7 @@ final class SymbolExpr extends Expr implements IsSymExpr {
 
   @Override
   public String toString() {
-    return this.getClass().getSimpleName();
+    return "%s type: %s".formatted(this.getClass().getSimpleName(), type);
   }
 
   @Override
@@ -1529,7 +1537,7 @@ final class CallExpr extends Expr implements IsCallExpr {
 
   @Override
   public String toString() {
-    return this.getClass().getSimpleName();
+    return "%s type: %s".formatted(this.getClass().getSimpleName(), type);
   }
 
   @Override
@@ -1606,7 +1614,7 @@ class IfExpr extends Expr {
 
   @Override
   public String toString() {
-    return this.getClass().getSimpleName();
+    return "%s type: %s".formatted(this.getClass().getSimpleName(), type);
   }
 
   @Override
@@ -1684,7 +1692,7 @@ class LetExpr extends Expr {
 
   @Override
   public String toString() {
-    return this.getClass().getSimpleName();
+    return "%s type: %s".formatted(this.getClass().getSimpleName(), type);
   }
 
   @Override
@@ -1713,16 +1721,16 @@ class LetExpr extends Expr {
 
 class CastExpr extends Expr {
   Expr value;
-  TypeLiteral type;
+  TypeLiteral typeLiteral;
 
-  public CastExpr(Expr value, TypeLiteral type) {
+  public CastExpr(Expr value, TypeLiteral typeLiteral) {
     this.value = value;
-    this.type = type;
+    this.typeLiteral = typeLiteral;
   }
 
   @Override
   SourceLocation location() {
-    return value.location().join(((Expr) type).location());
+    return value.location().join(((Expr) typeLiteral).location());
   }
 
   @Override
@@ -1734,7 +1742,7 @@ class CastExpr extends Expr {
   void prettyPrint(int indent, StringBuilder builder) {
     value.prettyPrint(indent, builder);
     builder.append(" as ");
-    ((Expr) type).prettyPrint(indent, builder);
+    ((Expr) typeLiteral).prettyPrint(indent, builder);
   }
 
   @Override
@@ -1744,7 +1752,7 @@ class CastExpr extends Expr {
 
   @Override
   public String toString() {
-    return this.getClass().getSimpleName();
+    return "%s type: %s".formatted(this.getClass().getSimpleName(), type);
   }
 
   @Override
@@ -1757,13 +1765,13 @@ class CastExpr extends Expr {
     }
 
     CastExpr that = (CastExpr) o;
-    return value.equals(that.value) && type.equals(that.type);
+    return value.equals(that.value) && typeLiteral.equals(that.typeLiteral);
   }
 
   @Override
   public int hashCode() {
     int result = value.hashCode();
-    result = 31 * result + Objects.hashCode(type);
+    result = 31 * result + Objects.hashCode(typeLiteral);
     return result;
   }
 }
@@ -1833,7 +1841,7 @@ class MatchExpr extends Expr {
 
   @Override
   public String toString() {
-    return this.getClass().getSimpleName();
+    return "%s type: %s".formatted(this.getClass().getSimpleName(), type);
   }
 
   @Override
@@ -2156,7 +2164,8 @@ class ForallExpr extends Expr {
 
   @Override
   public String toString() {
-    return getClass().getSimpleName() + " " + operation.keyword;
+    return "%s keyword: %s, type: %s".formatted(getClass().getSimpleName(), operation.keyword,
+        type);
   }
 
   record Index(IsId id, Expr domain) {

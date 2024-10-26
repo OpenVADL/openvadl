@@ -300,7 +300,7 @@ class MacroExpander
   @Override
   public Expr visit(CastExpr expr) {
     var value = expandExpr(expr.value);
-    var type = expandExpr(expr.type);
+    var type = expandExpr(expr.typeLiteral);
     return new CastExpr(value, (TypeLiteral) type);
   }
 
