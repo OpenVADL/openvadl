@@ -175,11 +175,15 @@ public class EmitRegisterInfoCppFilePass extends LcbTemplateRenderingPass {
       if (pattern instanceof TableGenSelectionWithOutputPattern outputPattern) {
         var rootNode =
             outputPattern.machine().getNodes(MachineInstructionNode.class).findFirst().get();
-        var nodeFI = rootNode.arguments().stream().filter(
+        var nodeFI = rootNode.arguments().stream()
+            .filter(x -> x instanceof MachineInstructionParameterNode)
+            .filter(
                 x -> ((MachineInstructionParameterNode) x).instructionOperand()
                     instanceof TableGenInstructionFrameRegisterOperand)
             .findFirst();
-        var nodeImm = rootNode.arguments().stream().filter(
+        var nodeImm = rootNode.arguments().stream()
+            .filter(x -> x instanceof MachineInstructionParameterNode)
+            .filter(
                 x -> ((MachineInstructionParameterNode) x).instructionOperand()
                     instanceof TableGenInstructionImmediateOperand)
             .findFirst();

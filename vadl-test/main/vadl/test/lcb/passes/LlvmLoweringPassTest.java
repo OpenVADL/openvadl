@@ -174,11 +174,51 @@ public class LlvmLoweringPassTest extends AbstractLcbTest {
         List.of(String.format("(%s (%s (add X:$rs1, RV64IM_Itype_immAsInt64:$imm)))",
                 typeNode, dagNode),
             String.format("(%s (%s (add AddrFI:$rs1, RV64IM_Itype_immAsInt64:$imm)))",
-                typeNode, dagNode)),
+                typeNode, dagNode),
+            String.format("(%s (%s AddrFI:$rs1))", typeNode, dagNode)
+        ),
         List.of(String.format("(%s X:$rs1, RV64IM_Itype_immAsInt64:$imm)",
                 machineInstruction),
             String.format("(%s AddrFI:$rs1, RV64IM_Itype_immAsInt64:$imm)",
-                machineInstruction)),
+                machineInstruction),
+            String.format("(%s AddrFI:$rs1, (i64 0))",
+                machineInstruction)
+                ),
+        createLoadMemoryFlags(),
+        false
+    );
+  }
+
+
+  private static TestOutput createTestOutputLoadMemoryWithExt(
+      String typeNode,
+      String dagNode,
+      String extNode,
+      String machineInstruction) {
+    return new TestOutput(
+        List.of(new TableGenInstructionOperand(DUMMY_NODE, "X", "rs1"),
+            new TableGenInstructionOperand(DUMMY_NODE, "RV64IM_Itype_immAsInt64", "imm")),
+        List.of(new TableGenInstructionOperand(DUMMY_NODE, "X", "rd")),
+        List.of(String.format("(%s (%s (add X:$rs1, RV64IM_Itype_immAsInt64:$imm)))",
+                typeNode, dagNode),
+            String.format("(%s (%s (add AddrFI:$rs1, RV64IM_Itype_immAsInt64:$imm)))",
+                typeNode, dagNode),
+            String.format("(%s (%s (add AddrFI:$rs1, RV64IM_Itype_immAsInt64:$imm)))", typeNode,
+                extNode),
+            String.format("(%s (%s AddrFI:$rs1))", typeNode, dagNode),
+            String.format("(%s (%s AddrFI:$rs1))", typeNode, extNode)
+        ),
+        List.of(String.format("(%s X:$rs1, RV64IM_Itype_immAsInt64:$imm)",
+                machineInstruction),
+            String.format("(%s AddrFI:$rs1, RV64IM_Itype_immAsInt64:$imm)",
+                machineInstruction),
+            String.format("(%s AddrFI:$rs1, RV64IM_Itype_immAsInt64:$imm)",
+                machineInstruction),
+            String.format("(%s AddrFI:$rs1, (i64 0))",
+                machineInstruction),
+            String.format("(%s AddrFI:$rs1, (i64 0))",
+                machineInstruction)
+        ),
         createLoadMemoryFlags(),
         false
     );
@@ -262,9 +302,12 @@ public class LlvmLoweringPassTest extends AbstractLcbTest {
     /*
     MEMORY LOAD
      */
-    expectedResults.put("LB", createTestOutputLoadMemory("i64", "sextloadi8", "LB"));
-    expectedResults.put("LH", createTestOutputLoadMemory("i64", "sextloadi16", "LH"));
-    expectedResults.put("LW", createTestOutputLoadMemory("i64", "sextloadi32", "LW"));
+    expectedResults.put("LB",
+        createTestOutputLoadMemoryWithExt("i64", "sextloadi8", "extloadi8", "LB"));
+    expectedResults.put("LH",
+        createTestOutputLoadMemoryWithExt("i64", "sextloadi16", "extloadi16", "LH"));
+    expectedResults.put("LW",
+        createTestOutputLoadMemoryWithExt("i64", "sextloadi32", "extloadi32", "LW"));
     expectedResults.put("LD", createTestOutputLoadMemory("i64", "load", "LD"));
     expectedResults.put("LBU", createTestOutputLoadMemory("i64", "zextloadi8", "LBU"));
     expectedResults.put("LHU", createTestOutputLoadMemory("i64", "zextloadi16", "LHU"));
