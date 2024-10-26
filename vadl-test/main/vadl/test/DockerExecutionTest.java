@@ -4,40 +4,31 @@ import static org.awaitility.Awaitility.await;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.fail;
 
-import com.github.dockerjava.api.command.CopyArchiveFromContainerCmd;
 import com.github.dockerjava.api.model.Bind;
 import com.github.dockerjava.api.model.Mount;
 import com.github.dockerjava.api.model.MountType;
-import com.github.dockerjava.api.model.Volume;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.OutputStream;
-import java.nio.file.Files;
 import java.nio.file.Path;
 import java.time.Duration;
 import java.util.List;
 import java.util.Objects;
 import java.util.function.Consumer;
 import java.util.function.Function;
-import java.util.function.Supplier;
 import javax.annotation.Nullable;
 import org.apache.commons.compress.archivers.tar.TarArchiveEntry;
 import org.apache.commons.compress.archivers.tar.TarArchiveInputStream;
-import org.junit.jupiter.api.AfterAll;
-import org.junit.jupiter.api.AfterEach;
-import org.junit.jupiter.api.BeforeAll;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.testcontainers.containers.BindMode;
 import org.testcontainers.containers.GenericContainer;
 import org.testcontainers.containers.Network;
 import org.testcontainers.containers.output.Slf4jLogConsumer;
 import org.testcontainers.images.builder.ImageFromDockerfile;
 import org.testcontainers.images.builder.Transferable;
 import org.testcontainers.images.builder.dockerfile.DockerfileBuilder;
-import org.testcontainers.shaded.com.github.dockerjava.core.command.CopyArchiveFromContainerCmdImpl;
 import org.testcontainers.utility.MountableFile;
 
 public abstract class DockerExecutionTest extends AbstractTest {
@@ -57,15 +48,15 @@ public abstract class DockerExecutionTest extends AbstractTest {
    *
    * @param image     is the docker image for the {@link GenericContainer}.
    * @param mountPath is the path where the {@code path} should be mounted to.
-   * @param content   is the content of file which will be written to the
+   * @param path   is the content of file which will be written to the
    *                  temp file.
    * @throws IOException when the temp file is writable.
    */
-  protected void runContainerWithContent(ImageFromDockerfile image,
-                                         String content,
-                                         String mountPath) throws IOException {
+  protected void runContainerAndCopyInputIntoContainer(ImageFromDockerfile image,
+                                                       String path,
+                                                       String mountPath) throws IOException {
     runContainer(image, (container) -> container
-            .withCopyToContainer(Transferable.of(content), mountPath),
+            .withCopyToContainer(Transferable.of(path), mountPath),
         null
     );
   }
@@ -91,12 +82,12 @@ public abstract class DockerExecutionTest extends AbstractTest {
    * @param containerMountPath is the path in the container for the output archive.
    * @param archiveName        is the name of the archive in {@code hostPath} and {@code archiveName}.
    */
-  protected void runContainerWithContent(ImageFromDockerfile image,
-                                         String content,
-                                         String mountPath,
-                                         String hostPath,
-                                         String containerMountPath,
-                                         String archiveName) {
+  protected void runContainerAndCopyInputIntoAndCopyOutputFromContainer(ImageFromDockerfile image,
+                                                                        String content,
+                                                                        String mountPath,
+                                                                        String hostPath,
+                                                                        String containerMountPath,
+                                                                        String archiveName) {
     runContainer(image, (container) -> container
             .withCopyFileToContainer(MountableFile.forHostPath(Path.of(content)), mountPath),
         (container) -> {
@@ -135,27 +126,6 @@ public abstract class DockerExecutionTest extends AbstractTest {
         }
       }
     }
-  }
-
-  protected void runContainer(ImageFromDockerfile image, Path hostPath, String mountPath) {
-    runContainer(image, hostPath.toString(), mountPath);
-  }
-
-  /**
-   * Starts a container and checks the status code for the exited container.
-   * It will assert that the status code is zero. If the check takes longer
-   * than 10 seconds or the status code is not zero then it will throw an
-   * exception.
-   *
-   * @param image     is the docker image for the {@link GenericContainer}.
-   * @param path      is the path of the file which will be mapped to the container.
-   * @param mountPath is the path where the {@code path} should be mounted to.
-   */
-  protected void runContainer(ImageFromDockerfile image, String path, String mountPath) {
-    runContainer(image, (container) -> container.withCopyToContainer(
-            MountableFile.forHostPath(path), mountPath),
-        null
-    );
   }
 
   /**
@@ -199,18 +169,6 @@ public abstract class DockerExecutionTest extends AbstractTest {
         postExecution.accept(modifiedContainer);
       }
     }
-  }
-
-  protected static <T extends GenericContainer<?>> T withHostFsBind(T container, String hostPath,
-                                                                    String containerPath) {
-    // withFileSystemBind got deprecated and this is somewhat a replacement
-    // https://github.com/testcontainers/testcontainers-java/pull/7652
-    // https://github.com/joyrex2001/kubedock/issues/89
-    container.withCreateContainerCmdModifier(cmd ->
-        Objects.requireNonNull(cmd.getHostConfig())
-            .withBinds(Bind.parse(hostPath + ":" + containerPath))
-    );
-    return container;
   }
 
   /**
@@ -258,29 +216,26 @@ public abstract class DockerExecutionTest extends AbstractTest {
       GenericContainer<?> redisContainer
   ) {
 
-    public void stop() {
-      try {
-        redisContainer.execInContainer("redis-cli", "shutdown", "save");
-        redisContainer.stop();
-      } catch (IOException | InterruptedException e) {
-        redisContainer.stop();
-        throw new RuntimeException(e);
-      }
-    }
   }
 
   /**
    * This class abstracts the configuration for the redis cache.
    */
   protected static class SetupRedisEnv {
+
+    private static final String SCCACHE_REDIS_ENDPOINT = "SCCACHE_REDIS_ENDPOINT";
+
+    private static String tcpAddress() {
+      return "tcp://" + Objects.requireNonNull(redisCache).host() + ":" + redisCache.port();
+    }
+
     /**
      * Sets an environment variable to indicate to the distributed cache to use the redis
      * docker instance as cache.
      */
     public static void setupEnv(DockerfileBuilder d) {
       logger.info("Using redis cache: {}", redisCache);
-      d.env("SCCACHE_REDIS_ENDPOINT",
-          "tcp://" + Objects.requireNonNull(redisCache).host() + ":" + redisCache.port());
+      d.env(SCCACHE_REDIS_ENDPOINT, tcpAddress());
 
       // check if redis cache is available
       d.run(
@@ -288,8 +243,7 @@ public abstract class DockerExecutionTest extends AbstractTest {
     }
 
     public static ImageFromDockerfile setupEnv(ImageFromDockerfile image) {
-      image.withBuildArg("SCCACHE_REDIS_ENDPOINT",
-          "tcp://" + Objects.requireNonNull(redisCache).host() + ":" + redisCache.port());
+      image.withBuildArg(SCCACHE_REDIS_ENDPOINT, tcpAddress());
 
       return image;
     }

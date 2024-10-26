@@ -87,7 +87,7 @@ public class AlgebraicSimplificationTest extends DockerExecutionTest {
     if (code.isPresent()) {
       logger.info(code.get().value());
       try {
-        runContainerWithContent(DOCKER_IMAGE, code.get().value(), MOUNT_PATH);
+        runContainerAndCopyInputIntoContainer(DOCKER_IMAGE, code.get().value(), MOUNT_PATH);
       } catch (IOException e) {
         throw new RuntimeException(e);
       }

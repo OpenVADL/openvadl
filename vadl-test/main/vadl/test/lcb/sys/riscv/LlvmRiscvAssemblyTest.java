@@ -7,24 +7,15 @@ import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.IOException;
-import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Objects;
 import java.util.stream.Stream;
-import org.junit.jupiter.api.Assertions;
-import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.DynamicTest;
-import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.TestFactory;
 import org.junit.jupiter.api.condition.EnabledIfEnvironmentVariable;
-import org.junit.jupiter.params.ParameterizedTest;
-import org.junit.jupiter.params.provider.Arguments;
-import org.junit.jupiter.params.provider.MethodSource;
-import org.testcontainers.containers.GenericContainer;
 import org.testcontainers.images.builder.ImageFromDockerfile;
-import org.testcontainers.shaded.org.apache.commons.io.file.DirectoryStreamFilter;
 import vadl.configuration.LcbConfiguration;
 import vadl.gcb.valuetypes.ProcessorName;
 import vadl.pass.exception.DuplicatedPassKeyException;
@@ -63,10 +54,13 @@ public class LlvmRiscvAssemblyTest extends AbstractLcbTest {
             .withBuildArg("TARGET", target))
         .withBuildImageCmdModifier(modifier -> modifier.withNetworkMode(testNetwork().getId()));
 
+    // We build the image and copy all the input files into the container.
+    // The llvm compiler compiles all assembly files, and we copy them from the container
+    // to the host (hostOutput folder).
     var hostOutput = "build/output/llvm";
     new File(hostOutput).mkdirs();
 
-    runContainerWithContent(image,
+    runContainerAndCopyInputIntoAndCopyOutputFromContainer(image,
         "../../open-vadl/vadl-test/main/resources/llvm/riscv/c",
         "/src/inputs",
         new File(hostOutput).getAbsolutePath(),
