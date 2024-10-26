@@ -72,8 +72,17 @@ public class LlvmRiscvAssemblyTest extends AbstractLcbTest {
       var expected = new File(
           "../../open-vadl/vadl-test/main/resources/llvm/riscv/assertions/assembly/" + name + ".s");
 
-      var actual = new File(hostOutput + "/" + name + ".s");
-      assertThat(contentOf(actual)).isEqualToIgnoringWhitespace(contentOf(expected));
+      var errorPath = hostOutput + "/output/" + name + ".err";
+      var errorFile = new File(errorPath);
+
+      // First check if an error file exists. Note that the container always
+      // creates an error file, so we also check for the size.
+      if (errorFile.exists() && errorFile.length() != 0) {
+        assertThat(contentOf(errorFile)).isEqualToIgnoringWhitespace(contentOf(expected));
+      } else {
+        var actual = new File(hostOutput + "/output/" + name + ".s");
+        assertThat(contentOf(actual)).isEqualToIgnoringWhitespace(contentOf(expected));
+      }
     })).toList();
   }
 }
