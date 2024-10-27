@@ -268,7 +268,8 @@ public abstract class LlvmInstructionLoweringStrategy {
   /**
    * Get a list of {@link RegisterRef} which are written. It is considered a
    * register definition when a {@link WriteRegNode} or a {@link WriteRegFileNode} with a
-   * constant address exists.
+   * constant address exists. However, the only registers without any constraints on the
+   * register file will be returned.
    */
   public static List<RegisterRef> getRegisterDefs(Graph behavior) {
     return Stream.concat(behavior.getNodes(WriteRegNode.class)
@@ -279,13 +280,17 @@ public abstract class LlvmInstructionLoweringStrategy {
                 .map(x -> new RegisterRef(x.registerFile(),
                     ((ConstantNode) x.address()).constant()))
         )
+        // Register should not have any constraints. When it does then there is no
+        // need that LLVM knows about it because it should not be a dependency.
+        .filter(register -> register.constraints().isEmpty())
         .toList();
   }
 
   /**
    * Get a list of {@link RegisterRef} which are read. It is considered a
    * register usage when a {@link ReadRegNode} or a {@link ReadRegFileNode} with a
-   * constant address exists.
+   * constant address exists. However, the only registers without any constraints on the
+   * register file will be returned.
    */
   public static List<RegisterRef> getRegisterUses(Graph behavior) {
     return Stream.concat(behavior.getNodes(ReadRegNode.class)
@@ -296,6 +301,9 @@ public abstract class LlvmInstructionLoweringStrategy {
                 .map(x -> new RegisterRef(x.registerFile(),
                     ((ConstantNode) x.address()).constant()))
         )
+        // Register should not have any constraints. When it does then there is no
+        // need that LLVM knows about it because it should not be a dependency.
+        .filter(register -> register.constraints().isEmpty())
         .toList();
   }
 

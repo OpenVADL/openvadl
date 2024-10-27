@@ -4102,7 +4102,7 @@ let AddedComplexity = 0;
 let Pattern = [];
 
 let Uses = [ PC ];
-let Defs = [ PC,X0 ];
+let Defs = [ PC ];
 }
 
 

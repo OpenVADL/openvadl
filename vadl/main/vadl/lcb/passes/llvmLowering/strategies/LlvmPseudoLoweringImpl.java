@@ -1,16 +1,12 @@
 package vadl.lcb.passes.llvmLowering.strategies;
 
-import static vadl.viam.ViamError.ensure;
-
 import com.google.common.collect.Streams;
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.HashMap;
 import java.util.IdentityHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
-import java.util.Set;
 import vadl.error.DeferredDiagnosticStore;
 import vadl.error.Diagnostic;
 import vadl.gcb.passes.pseudo.PseudoFuncParamNode;
