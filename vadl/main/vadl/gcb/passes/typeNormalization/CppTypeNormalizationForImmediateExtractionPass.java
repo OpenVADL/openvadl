@@ -1,4 +1,4 @@
-package vadl.gcb.passes.type_normalization;
+package vadl.gcb.passes.typeNormalization;
 
 import java.util.Arrays;
 import java.util.stream.Stream;

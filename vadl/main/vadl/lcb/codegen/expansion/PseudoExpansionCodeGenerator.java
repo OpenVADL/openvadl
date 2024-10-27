@@ -6,7 +6,7 @@ import java.util.Map;
 import vadl.cppCodeGen.model.CppFunction;
 import vadl.cppCodeGen.model.VariantKind;
 import vadl.gcb.passes.pseudo.PseudoExpansionCodeGeneratorVisitor;
-import vadl.gcb.passes.relocation.IdentifyFieldUsagePass;
+import vadl.gcb.passes.IdentifyFieldUsagePass;
 import vadl.gcb.passes.relocation.model.CompilerRelocation;
 import vadl.lcb.codegen.LcbGenericCodeGenerator;
 import vadl.viam.Format;

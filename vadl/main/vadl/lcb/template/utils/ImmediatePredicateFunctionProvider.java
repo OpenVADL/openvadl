@@ -4,7 +4,7 @@ import java.util.Map;
 import java.util.stream.Collectors;
 import vadl.cppCodeGen.model.CppFunction;
 import vadl.cppCodeGen.passes.typeNormalization.CppTypeNormalizationPass;
-import vadl.gcb.passes.type_normalization.CppTypeNormalizationForPredicatesPass;
+import vadl.gcb.passes.typeNormalization.CppTypeNormalizationForPredicatesPass;
 import vadl.pass.PassResults;
 import vadl.utils.Pair;
 import vadl.viam.Format;

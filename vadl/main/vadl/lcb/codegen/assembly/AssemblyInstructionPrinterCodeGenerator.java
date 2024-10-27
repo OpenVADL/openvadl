@@ -2,7 +2,6 @@ package vadl.lcb.codegen.assembly;
 
 import java.io.StringWriter;
 import vadl.cppCodeGen.model.CppFunctionCode;
-import vadl.gcb.passes.relocation.IdentifyFieldUsagePass;
 import vadl.lcb.passes.llvmLowering.tablegen.model.TableGenInstruction;
 import vadl.viam.Instruction;
 import vadl.viam.graph.control.ReturnNode;

@@ -12,7 +12,7 @@ import vadl.configuration.GeneralConfiguration;
 import vadl.cppCodeGen.model.VariantKind;
 import vadl.cppCodeGen.passes.typeNormalization.CppTypeNormalizationPass;
 import vadl.gcb.passes.relocation.BitMaskFunctionGenerator;
-import vadl.gcb.passes.relocation.IdentifyFieldUsagePass;
+import vadl.gcb.passes.IdentifyFieldUsagePass;
 import vadl.gcb.passes.relocation.model.CompilerRelocation;
 import vadl.gcb.passes.relocation.model.ConcreteLogicalRelocation;
 import vadl.gcb.passes.relocation.model.Fixup;

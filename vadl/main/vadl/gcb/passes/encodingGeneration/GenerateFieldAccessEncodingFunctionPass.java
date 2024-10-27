@@ -1,16 +1,15 @@
-package vadl.gcb.passes.encoding_generation;
+package vadl.gcb.passes.encodingGeneration;
 
-import java.util.Arrays;
 import java.util.List;
 import java.util.stream.Stream;
 import org.jetbrains.annotations.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import vadl.configuration.GcbConfiguration;
-import vadl.gcb.passes.encoding_generation.strategies.EncodingGenerationStrategy;
-import vadl.gcb.passes.encoding_generation.strategies.impl.ArithmeticImmediateStrategy;
-import vadl.gcb.passes.encoding_generation.strategies.impl.ShiftedImmediateStrategy;
-import vadl.gcb.passes.encoding_generation.strategies.impl.TrivialImmediateStrategy;
+import vadl.gcb.passes.encodingGeneration.strategies.EncodingGenerationStrategy;
+import vadl.gcb.passes.encodingGeneration.strategies.impl.ArithmeticImmediateStrategy;
+import vadl.gcb.passes.encodingGeneration.strategies.impl.ShiftedImmediateStrategy;
+import vadl.gcb.passes.encodingGeneration.strategies.impl.TrivialImmediateStrategy;
 import vadl.pass.Pass;
 import vadl.pass.PassName;
 import vadl.pass.PassResults;

@@ -1,4 +1,4 @@
-package vadl.gcb.passes.encoding_generation.strategies.impl;
+package vadl.gcb.passes.encodingGeneration.strategies.impl;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.jupiter.api.Assertions.assertEquals;

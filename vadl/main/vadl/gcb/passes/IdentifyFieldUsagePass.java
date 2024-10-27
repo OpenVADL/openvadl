@@ -1,4 +1,4 @@
-package vadl.gcb.passes.relocation;
+package vadl.gcb.passes;
 
 import java.io.IOException;
 import java.util.ArrayList;

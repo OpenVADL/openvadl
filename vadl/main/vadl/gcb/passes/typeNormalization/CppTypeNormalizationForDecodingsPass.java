@@ -1,4 +1,4 @@
-package vadl.gcb.passes.type_normalization;
+package vadl.gcb.passes.typeNormalization;
 
 import java.util.Arrays;
 import java.util.List;
@@ -7,14 +7,11 @@ import vadl.configuration.GcbConfiguration;
 import vadl.cppCodeGen.model.CppFunction;
 import vadl.cppCodeGen.passes.typeNormalization.CppTypeNormalizationPass;
 import vadl.pass.PassName;
-import vadl.types.BitsType;
-import vadl.types.Type;
 import vadl.utils.Pair;
 import vadl.viam.Format;
 import vadl.viam.Function;
 import vadl.viam.Parameter;
 import vadl.viam.Specification;
-import vadl.viam.ViamError;
 
 /**
  * When transforming a graph into a CPP code, we have to take care of unsupported types.
