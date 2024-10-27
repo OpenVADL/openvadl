@@ -50,12 +50,13 @@ public class LlvmInstructionLoweringMemoryLoadStrategyImpl
   }
 
   @Override
-  protected List<TableGenPattern> generatePatternVariations(Instruction instruction,
-                                                            Map<InstructionLabel, List<Instruction>> supportedInstructions,
-                                                            Graph behavior,
-                                                            List<TableGenInstructionOperand> inputOperands,
-                                                            List<TableGenInstructionOperand> outputOperands,
-                                                            List<TableGenPattern> patterns) {
+  protected List<TableGenPattern> generatePatternVariations(
+      Instruction instruction,
+      Map<InstructionLabel, List<Instruction>> supportedInstructions,
+      Graph behavior,
+      List<TableGenInstructionOperand> inputOperands,
+      List<TableGenInstructionOperand> outputOperands,
+      List<TableGenPattern> patterns) {
     var anyExtendPatterns = createAnyExtPatterns(patterns);
     var loadFromRegisterPatterns = createLoadsFromRegister(
         Stream.concat(patterns.stream(), anyExtendPatterns.stream()).toList());
