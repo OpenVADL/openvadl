@@ -1,35 +1,46 @@
 package vadl.lcb.passes.llvmLowering.strategies.instruction;
 
 import static vadl.viam.ViamError.ensure;
+import static vadl.viam.ViamError.ensurePresent;
 
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.stream.Stream;
+import vadl.error.Diagnostic;
 import vadl.lcb.codegen.model.llvm.ValueType;
 import vadl.lcb.passes.isaMatching.InstructionLabel;
+import vadl.lcb.passes.llvmLowering.domain.machineDag.MachineInstructionParameterNode;
+import vadl.lcb.passes.llvmLowering.domain.machineDag.MachineInstructionValueNode;
+import vadl.lcb.passes.llvmLowering.domain.selectionDag.LlvmAddSD;
+import vadl.lcb.passes.llvmLowering.domain.selectionDag.LlvmExtLoad;
+import vadl.lcb.passes.llvmLowering.domain.selectionDag.LlvmFieldAccessRefNode;
 import vadl.lcb.passes.llvmLowering.domain.selectionDag.LlvmFrameIndexSD;
 import vadl.lcb.passes.llvmLowering.domain.selectionDag.LlvmLoadSD;
 import vadl.lcb.passes.llvmLowering.domain.selectionDag.LlvmReadRegFileNode;
 import vadl.lcb.passes.llvmLowering.domain.selectionDag.LlvmSExtLoad;
 import vadl.lcb.passes.llvmLowering.domain.selectionDag.LlvmZExtLoad;
+import vadl.lcb.passes.llvmLowering.tablegen.model.TableGenInstructionImmediateOperand;
 import vadl.lcb.passes.llvmLowering.tablegen.model.TableGenInstructionOperand;
 import vadl.lcb.passes.llvmLowering.tablegen.model.TableGenPattern;
 import vadl.lcb.passes.llvmLowering.tablegen.model.TableGenSelectionWithOutputPattern;
+import vadl.types.Type;
+import vadl.viam.Constant;
 import vadl.viam.Instruction;
 import vadl.viam.Memory;
 import vadl.viam.Register;
 import vadl.viam.graph.Graph;
 import vadl.viam.graph.Node;
 import vadl.viam.graph.dependency.ReadMemNode;
+import vadl.viam.graph.dependency.ReadRegFileNode;
 
 /**
  * Lowers instructions which can load from memory.
  */
 public class LlvmInstructionLoweringMemoryLoadStrategyImpl
     extends LlvmInstructionLoweringFrameIndexHelper {
-  public LlvmInstructionLoweringMemoryLoadStrategyImpl(
-      ValueType architectureType) {
+  public LlvmInstructionLoweringMemoryLoadStrategyImpl(ValueType architectureType) {
     super(architectureType);
   }
 
@@ -39,16 +50,101 @@ public class LlvmInstructionLoweringMemoryLoadStrategyImpl
   }
 
   @Override
-  protected List<TableGenPattern> generatePatternVariations(Instruction instruction,
-                                                            Map<InstructionLabel, List<Instruction>>
-                                                                supportedInstructions,
-                                                            Graph behavior,
-                                                            List<TableGenInstructionOperand>
-                                                                inputOperands,
-                                                            List<TableGenInstructionOperand>
-                                                                outputOperands,
-                                                            List<TableGenPattern> patterns) {
-    return replaceRegisterWithFrameIndex(patterns);
+  protected List<TableGenPattern> generatePatternVariations(
+      Instruction instruction,
+      Map<InstructionLabel, List<Instruction>> supportedInstructions,
+      Graph behavior,
+      List<TableGenInstructionOperand> inputOperands,
+      List<TableGenInstructionOperand> outputOperands,
+      List<TableGenPattern> patterns) {
+    var anyExtendPatterns = createAnyExtPatterns(patterns);
+    var loadFromRegisterPatterns = createLoadsFromRegister(
+        Stream.concat(patterns.stream(), anyExtendPatterns.stream()).toList());
+    return replaceRegisterWithFrameIndex(Stream.concat(patterns.stream(),
+        Stream.concat(anyExtendPatterns.stream(), loadFromRegisterPatterns.stream())).toList());
+  }
+
+  /**
+   * LLVM requires a pattern for loading directly from a frame index. But for example in the RISCV
+   * specification we only have an instruction which loads from register + immediate. This method
+   * will drop the immediate and replace it by {@code 0}.
+   */
+  private List<TableGenPattern> createLoadsFromRegister(List<TableGenPattern> patterns) {
+    var alternativePatterns = new ArrayList<TableGenPattern>();
+
+    for (var pattern : patterns.stream()
+        .filter(x -> x instanceof TableGenSelectionWithOutputPattern)
+        .map(x -> (TableGenSelectionWithOutputPattern) x).toList()) {
+      var selector = pattern.selector().copy();
+      var machine = pattern.machine().copy();
+
+      // Check whether there is an addition with immediate.
+      if (selector.getNodes(LlvmAddSD.class).filter(add -> add.arguments().stream()
+          .anyMatch(child -> child instanceof LlvmFieldAccessRefNode)).count() == 1) {
+        // Yes, so replace the addition with the register which is a child of the addition.
+        var addition = ensurePresent(selector.getNodes(LlvmAddSD.class).findFirst(),
+            "There must be an addition");
+        var register = ensurePresent(
+            addition.arguments().stream().filter(x -> x instanceof ReadRegFileNode).findFirst(),
+            () -> Diagnostic.error("Expected a register node as child.",
+                addition.sourceLocation()));
+
+        addition.replaceAndDelete(register);
+
+        // We also have to replace the immediate operand in the machine pattern.
+        var immediates = machine.getNodes(MachineInstructionParameterNode.class)
+            .filter(x -> x.instructionOperand() instanceof TableGenInstructionImmediateOperand)
+            .toList();
+
+        for (var imm : immediates) {
+          var ty = ensurePresent(ValueType.from(register.type()),
+              () -> Diagnostic.error("Register must have valid llvm type",
+                  register.sourceLocation()));
+          imm.replaceAndDelete(
+              new MachineInstructionValueNode(ty, Constant.Value.of(0, Type.signedInt(32))));
+        }
+
+        alternativePatterns.add(new TableGenSelectionWithOutputPattern(selector, machine));
+      }
+
+    }
+    return alternativePatterns;
+  }
+
+  /**
+   * There three kinds of extensions in LLVM: sign-extend, zero-extend and any-extend.
+   * This method will create the any-extend patterns based on the zero-extend patterns by simply
+   * replacing them.
+   */
+  private List<TableGenPattern> createAnyExtPatterns(List<TableGenPattern> patterns) {
+    /*
+    def : Pat<(i64 (sextloadi32 (add AddrFI:$rs1, RV64IM_Itype_immAsInt64:$imm))),
+        (LW AddrFI:$rs1, RV64IM_Itype_immAsInt64:$imm)>;
+
+        will be mapped to
+
+    def : Pat<(i64 (extloadi32 (add X:$rs1, RV64IM_Itype_immAsInt64:$imm))),
+        (LW X:$rs1, RV64IM_Itype_immAsInt64:$imm)>;
+     */
+    var alternativePatterns = new ArrayList<TableGenPattern>();
+
+    for (var pattern : patterns.stream()
+        .filter(x -> x instanceof TableGenSelectionWithOutputPattern)
+        .map(x -> (TableGenSelectionWithOutputPattern) x).toList()) {
+      var selector = pattern.selector().copy();
+      var machine = pattern.machine().copy();
+
+      var signExtendedNodes = selector.getNodes(LlvmSExtLoad.class).toList();
+      for (var n : signExtendedNodes) {
+        n.replaceAndDelete(new LlvmExtLoad(n.address(), n.memory(), n.words()));
+      }
+
+      if (!signExtendedNodes.isEmpty()) {
+        alternativePatterns.add(new TableGenSelectionWithOutputPattern(selector, machine));
+      }
+    }
+
+    return alternativePatterns;
   }
 
   /**
@@ -64,8 +160,7 @@ public class LlvmInstructionLoweringMemoryLoadStrategyImpl
 
     for (var pattern : patterns.stream()
         .filter(x -> x instanceof TableGenSelectionWithOutputPattern)
-        .map(x -> (TableGenSelectionWithOutputPattern) x)
-        .toList()) {
+        .map(x -> (TableGenSelectionWithOutputPattern) x).toList()) {
       var selector = pattern.selector().copy();
       var machine = pattern.machine().copy();
 
@@ -73,23 +168,22 @@ public class LlvmInstructionLoweringMemoryLoadStrategyImpl
       // because the value register should remain unchanged.
       // Afterward, we get all the children of the `WriteResource` and only filter for
       // `LlvmReadRegFileNode` because we wil only change registers.
-      var affectedNodes =
-          selector.getNodes(Set.of(LlvmLoadSD.class, LlvmZExtLoad.class, LlvmSExtLoad.class))
-              .map(x -> (ReadMemNode) x)
-              .filter(ReadMemNode::hasAddress)
-              .flatMap(x -> {
-                var inputs = new ArrayList<Node>();
-                var address = x.address();
-                ensure(address != null, "address must not be null");
-                address.collectInputsWithChildren(inputs);
-                return inputs.stream();
-              })
-              .filter(x -> x instanceof LlvmReadRegFileNode)
-              .map(x -> (LlvmReadRegFileNode) x)
-              .toList();
+      var affectedNodes = selector.getNodes(
+              Set.of(LlvmLoadSD.class, LlvmZExtLoad.class, LlvmSExtLoad.class, LlvmExtLoad.class))
+          .map(x -> (ReadMemNode) x).filter(ReadMemNode::hasAddress).flatMap(x -> {
+            var inputs = new ArrayList<Node>();
+            var address = x.address();
+            ensure(address != null, "address must not be null");
+            inputs.add(address);
+            address.collectInputsWithChildren(inputs);
+            return inputs.stream();
+          }).filter(x -> x instanceof LlvmReadRegFileNode).map(x -> (LlvmReadRegFileNode) x)
+          .toList();
 
-      alternativePatterns.add(
-          super.replaceRegisterWithFrameIndex(selector, machine, affectedNodes));
+      if (!affectedNodes.isEmpty()) {
+        alternativePatterns.add(
+            super.replaceRegisterWithFrameIndex(selector, machine, affectedNodes));
+      }
     }
 
     return alternativePatterns;

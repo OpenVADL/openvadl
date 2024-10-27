@@ -7,6 +7,7 @@ import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.IOException;
+import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.Arrays;
@@ -17,6 +18,7 @@ import org.junit.jupiter.api.DynamicTest;
 import org.junit.jupiter.api.TestFactory;
 import org.junit.jupiter.api.condition.EnabledIfEnvironmentVariable;
 import org.testcontainers.images.builder.ImageFromDockerfile;
+import org.testcontainers.shaded.org.apache.commons.io.FileUtils;
 import vadl.configuration.LcbConfiguration;
 import vadl.gcb.valuetypes.ProcessorName;
 import vadl.pass.exception.DuplicatedPassKeyException;
@@ -58,7 +60,7 @@ public class LlvmRiscvAssemblyTest extends AbstractLcbTest {
     // We build the image and copy all the input files into the container.
     // The llvm compiler compiles all assembly files, and we copy them from the container
     // to the host (hostOutput folder).
-    var hostOutput = "build/output/llvm";
+    var hostOutput = configuration.outputPath() + "/output";
 
     runContainerAndCopyInputIntoAndCopyOutputFromContainer(image,
         Path.of("../../open-vadl/vadl-test/main/resources/llvm/riscv/c"),
@@ -72,8 +74,17 @@ public class LlvmRiscvAssemblyTest extends AbstractLcbTest {
       var expected = new File(
           "../../open-vadl/vadl-test/main/resources/llvm/riscv/assertions/assembly/" + name + ".s");
 
-      var actual = new File(hostOutput + "/" + name + ".s");
-      assertThat(contentOf(actual)).isEqualToIgnoringWhitespace(contentOf(expected));
+      var errorPath = hostOutput + name + ".err";
+      var errorFile = new File(errorPath);
+
+      // First check if an error file exists. Note that the container always
+      // creates an error file, so we also check for the size.
+      if (errorFile.exists() && errorFile.length() != 0) {
+        assertThat(contentOf(errorFile)).isEqualToIgnoringWhitespace(contentOf(expected));
+      } else {
+        var actual = new File(hostOutput + "/" + name + ".s");
+        assertThat(contentOf(actual)).isEqualToIgnoringWhitespace(contentOf(expected));
+      }
     })).toList();
   }
 }

@@ -1572,6 +1572,15 @@ def : Pat<(i64 (sextloadi8 (add X:$rs1, RV64IM_Itype_immAsInt64:$imm))),
 def : Pat<(i64 (sextloadi8 (add AddrFI:$rs1, RV64IM_Itype_immAsInt64:$imm))),
         (LB AddrFI:$rs1, RV64IM_Itype_immAsInt64:$imm)>;
 
+def : Pat<(i64 (extloadi8 (add AddrFI:$rs1, RV64IM_Itype_immAsInt64:$imm))),
+        (LB AddrFI:$rs1, RV64IM_Itype_immAsInt64:$imm)>;
+
+def : Pat<(i64 (sextloadi8 AddrFI:$rs1)),
+        (LB AddrFI:$rs1, (i64 0))>;
+
+def : Pat<(i64 (extloadi8 AddrFI:$rs1)),
+        (LB AddrFI:$rs1, (i64 0))>;
+
 
 def LBU : Instruction
 {
@@ -1626,6 +1635,9 @@ def : Pat<(i64 (zextloadi8 (add X:$rs1, RV64IM_Itype_immAsInt64:$imm))),
 
 def : Pat<(i64 (zextloadi8 (add AddrFI:$rs1, RV64IM_Itype_immAsInt64:$imm))),
         (LBU AddrFI:$rs1, RV64IM_Itype_immAsInt64:$imm)>;
+
+def : Pat<(i64 (zextloadi8 AddrFI:$rs1)),
+        (LBU AddrFI:$rs1, (i64 0))>;
 
 
 def LD : Instruction
@@ -1682,6 +1694,9 @@ def : Pat<(i64 (load (add X:$rs1, RV64IM_Itype_immAsInt64:$imm))),
 def : Pat<(i64 (load (add AddrFI:$rs1, RV64IM_Itype_immAsInt64:$imm))),
         (LD AddrFI:$rs1, RV64IM_Itype_immAsInt64:$imm)>;
 
+def : Pat<(i64 (load AddrFI:$rs1)),
+        (LD AddrFI:$rs1, (i64 0))>;
+
 
 def LH : Instruction
 {
@@ -1737,6 +1752,15 @@ def : Pat<(i64 (sextloadi16 (add X:$rs1, RV64IM_Itype_immAsInt64:$imm))),
 def : Pat<(i64 (sextloadi16 (add AddrFI:$rs1, RV64IM_Itype_immAsInt64:$imm))),
         (LH AddrFI:$rs1, RV64IM_Itype_immAsInt64:$imm)>;
 
+def : Pat<(i64 (extloadi16 (add AddrFI:$rs1, RV64IM_Itype_immAsInt64:$imm))),
+        (LH AddrFI:$rs1, RV64IM_Itype_immAsInt64:$imm)>;
+
+def : Pat<(i64 (sextloadi16 AddrFI:$rs1)),
+        (LH AddrFI:$rs1, (i64 0))>;
+
+def : Pat<(i64 (extloadi16 AddrFI:$rs1)),
+        (LH AddrFI:$rs1, (i64 0))>;
+
 
 def LHU : Instruction
 {
@@ -1791,6 +1815,9 @@ def : Pat<(i64 (zextloadi16 (add X:$rs1, RV64IM_Itype_immAsInt64:$imm))),
 
 def : Pat<(i64 (zextloadi16 (add AddrFI:$rs1, RV64IM_Itype_immAsInt64:$imm))),
         (LHU AddrFI:$rs1, RV64IM_Itype_immAsInt64:$imm)>;
+
+def : Pat<(i64 (zextloadi16 AddrFI:$rs1)),
+        (LHU AddrFI:$rs1, (i64 0))>;
 
 
 def LUI : Instruction
@@ -1893,6 +1920,15 @@ def : Pat<(i64 (sextloadi32 (add X:$rs1, RV64IM_Itype_immAsInt64:$imm))),
 def : Pat<(i64 (sextloadi32 (add AddrFI:$rs1, RV64IM_Itype_immAsInt64:$imm))),
         (LW AddrFI:$rs1, RV64IM_Itype_immAsInt64:$imm)>;
 
+def : Pat<(i64 (extloadi32 (add AddrFI:$rs1, RV64IM_Itype_immAsInt64:$imm))),
+        (LW AddrFI:$rs1, RV64IM_Itype_immAsInt64:$imm)>;
+
+def : Pat<(i64 (sextloadi32 AddrFI:$rs1)),
+        (LW AddrFI:$rs1, (i64 0))>;
+
+def : Pat<(i64 (extloadi32 AddrFI:$rs1)),
+        (LW AddrFI:$rs1, (i64 0))>;
+
 
 def LWU : Instruction
 {
@@ -1947,6 +1983,9 @@ def : Pat<(i64 (zextloadi32 (add X:$rs1, RV64IM_Itype_immAsInt64:$imm))),
 
 def : Pat<(i64 (zextloadi32 (add AddrFI:$rs1, RV64IM_Itype_immAsInt64:$imm))),
         (LWU AddrFI:$rs1, RV64IM_Itype_immAsInt64:$imm)>;
+
+def : Pat<(i64 (zextloadi32 AddrFI:$rs1)),
+        (LWU AddrFI:$rs1, (i64 0))>;
 
 
 def MUL : Instruction
@@ -2582,6 +2621,9 @@ def : Pat<(truncstorei8 X:$rs2, (add X:$rs1, RV64IM_Stype_immAsInt64:$imm)),
 def : Pat<(truncstorei8 X:$rs2, (add AddrFI:$rs1, RV64IM_Stype_immAsInt64:$imm)),
         (SB AddrFI:$rs1, X:$rs2, RV64IM_Stype_immAsInt64:$imm)>;
 
+def : Pat<(truncstorei8 X:$rs2, AddrFI:$rs1),
+        (SB AddrFI:$rs1, X:$rs2, (i64 0))>;
+
 
 def SD : Instruction
 {
@@ -2638,6 +2680,9 @@ def : Pat<(store X:$rs2, (add X:$rs1, RV64IM_Stype_immAsInt64:$imm)),
 def : Pat<(store X:$rs2, (add AddrFI:$rs1, RV64IM_Stype_immAsInt64:$imm)),
         (SD AddrFI:$rs1, X:$rs2, RV64IM_Stype_immAsInt64:$imm)>;
 
+def : Pat<(store X:$rs2, AddrFI:$rs1),
+        (SD AddrFI:$rs1, X:$rs2, (i64 0))>;
+
 
 def SH : Instruction
 {
@@ -2693,6 +2738,9 @@ def : Pat<(truncstorei16 X:$rs2, (add X:$rs1, RV64IM_Stype_immAsInt64:$imm)),
 
 def : Pat<(truncstorei16 X:$rs2, (add AddrFI:$rs1, RV64IM_Stype_immAsInt64:$imm)),
         (SH AddrFI:$rs1, X:$rs2, RV64IM_Stype_immAsInt64:$imm)>;
+
+def : Pat<(truncstorei16 X:$rs2, AddrFI:$rs1),
+        (SH AddrFI:$rs1, X:$rs2, (i64 0))>;
 
 
 def SLL : Instruction
@@ -3717,6 +3765,9 @@ def : Pat<(truncstorei32 X:$rs2, (add X:$rs1, RV64IM_Stype_immAsInt64:$imm)),
 
 def : Pat<(truncstorei32 X:$rs2, (add AddrFI:$rs1, RV64IM_Stype_immAsInt64:$imm)),
         (SW AddrFI:$rs1, X:$rs2, RV64IM_Stype_immAsInt64:$imm)>;
+
+def : Pat<(truncstorei32 X:$rs2, AddrFI:$rs1),
+        (SW AddrFI:$rs1, X:$rs2, (i64 0))>;
 
 
 def XOR : Instruction
