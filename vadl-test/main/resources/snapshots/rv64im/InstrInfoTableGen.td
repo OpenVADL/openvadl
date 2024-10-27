@@ -2618,6 +2618,9 @@ let Defs = [  ];
 def : Pat<(truncstorei8 X:$rs2, (add X:$rs1, RV64IM_Stype_immAsInt64:$imm)),
         (SB X:$rs1, X:$rs2, RV64IM_Stype_immAsInt64:$imm)>;
 
+def : Pat<(truncstorei8 X:$rs2, X:$rs1),
+        (SB X:$rs1, X:$rs2, (i64 0))>;
+
 def : Pat<(truncstorei8 X:$rs2, (add AddrFI:$rs1, RV64IM_Stype_immAsInt64:$imm)),
         (SB AddrFI:$rs1, X:$rs2, RV64IM_Stype_immAsInt64:$imm)>;
 
@@ -2677,6 +2680,9 @@ let Defs = [  ];
 def : Pat<(store X:$rs2, (add X:$rs1, RV64IM_Stype_immAsInt64:$imm)),
         (SD X:$rs1, X:$rs2, RV64IM_Stype_immAsInt64:$imm)>;
 
+def : Pat<(store X:$rs2, X:$rs1),
+        (SD X:$rs1, X:$rs2, (i64 0))>;
+
 def : Pat<(store X:$rs2, (add AddrFI:$rs1, RV64IM_Stype_immAsInt64:$imm)),
         (SD AddrFI:$rs1, X:$rs2, RV64IM_Stype_immAsInt64:$imm)>;
 
@@ -2735,6 +2741,9 @@ let Defs = [  ];
 
 def : Pat<(truncstorei16 X:$rs2, (add X:$rs1, RV64IM_Stype_immAsInt64:$imm)),
         (SH X:$rs1, X:$rs2, RV64IM_Stype_immAsInt64:$imm)>;
+
+def : Pat<(truncstorei16 X:$rs2, X:$rs1),
+        (SH X:$rs1, X:$rs2, (i64 0))>;
 
 def : Pat<(truncstorei16 X:$rs2, (add AddrFI:$rs1, RV64IM_Stype_immAsInt64:$imm)),
         (SH AddrFI:$rs1, X:$rs2, RV64IM_Stype_immAsInt64:$imm)>;
@@ -3762,6 +3771,9 @@ let Defs = [  ];
 
 def : Pat<(truncstorei32 X:$rs2, (add X:$rs1, RV64IM_Stype_immAsInt64:$imm)),
         (SW X:$rs1, X:$rs2, RV64IM_Stype_immAsInt64:$imm)>;
+
+def : Pat<(truncstorei32 X:$rs2, X:$rs1),
+        (SW X:$rs1, X:$rs2, (i64 0))>;
 
 def : Pat<(truncstorei32 X:$rs2, (add AddrFI:$rs1, RV64IM_Stype_immAsInt64:$imm)),
         (SW AddrFI:$rs1, X:$rs2, RV64IM_Stype_immAsInt64:$imm)>;

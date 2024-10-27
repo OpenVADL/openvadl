@@ -57,9 +57,15 @@ public class LlvmInstructionLoweringMemoryStoreStrategyImpl
       List<TableGenInstructionOperand> inputOperands,
       List<TableGenInstructionOperand> outputOperands,
       List<TableGenPattern> patterns) {
-    var storeFromRegisterPatterns = createStoreFromsWithoutImmediate(patterns);
-    return replaceRegisterWithFrameIndex(
-        Stream.concat(patterns.stream(), storeFromRegisterPatterns.stream()).toList());
+    var alternativePatterns = new ArrayList<TableGenPattern>();
+    var storesWithoutImmediates = createStoreFromsWithoutImmediate(patterns);
+    var frameIndexPatterns = replaceRegisterWithFrameIndex(
+        Stream.concat(patterns.stream(), storesWithoutImmediates.stream()).toList());
+
+    alternativePatterns.addAll(storesWithoutImmediates);
+    alternativePatterns.addAll(frameIndexPatterns);
+
+    return alternativePatterns;
   }
 
   /**
