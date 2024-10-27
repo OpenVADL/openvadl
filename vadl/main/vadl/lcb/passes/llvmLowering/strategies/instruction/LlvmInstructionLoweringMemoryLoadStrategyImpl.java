@@ -40,8 +40,7 @@ import vadl.viam.graph.dependency.ReadRegFileNode;
  */
 public class LlvmInstructionLoweringMemoryLoadStrategyImpl
     extends LlvmInstructionLoweringFrameIndexHelper {
-  public LlvmInstructionLoweringMemoryLoadStrategyImpl(
-      ValueType architectureType) {
+  public LlvmInstructionLoweringMemoryLoadStrategyImpl(ValueType architectureType) {
     super(architectureType);
   }
 
@@ -52,21 +51,16 @@ public class LlvmInstructionLoweringMemoryLoadStrategyImpl
 
   @Override
   protected List<TableGenPattern> generatePatternVariations(Instruction instruction,
-                                                            Map<InstructionLabel, List<Instruction>>
-                                                                supportedInstructions,
+                                                            Map<InstructionLabel, List<Instruction>> supportedInstructions,
                                                             Graph behavior,
-                                                            List<TableGenInstructionOperand>
-                                                                inputOperands,
-                                                            List<TableGenInstructionOperand>
-                                                                outputOperands,
+                                                            List<TableGenInstructionOperand> inputOperands,
+                                                            List<TableGenInstructionOperand> outputOperands,
                                                             List<TableGenPattern> patterns) {
     var anyExtendPatterns = createAnyExtPatterns(patterns);
     var loadFromRegisterPatterns = createLoadsFromRegister(
         Stream.concat(patterns.stream(), anyExtendPatterns.stream()).toList());
-    return replaceRegisterWithFrameIndex(
-        Stream.concat(patterns.stream(),
-                Stream.concat(anyExtendPatterns.stream(), loadFromRegisterPatterns.stream()))
-            .toList());
+    return replaceRegisterWithFrameIndex(Stream.concat(patterns.stream(),
+        Stream.concat(anyExtendPatterns.stream(), loadFromRegisterPatterns.stream())).toList());
   }
 
   /**
@@ -79,8 +73,7 @@ public class LlvmInstructionLoweringMemoryLoadStrategyImpl
 
     for (var pattern : patterns.stream()
         .filter(x -> x instanceof TableGenSelectionWithOutputPattern)
-        .map(x -> (TableGenSelectionWithOutputPattern) x)
-        .toList()) {
+        .map(x -> (TableGenSelectionWithOutputPattern) x).toList()) {
       var selector = pattern.selector().copy();
       var machine = pattern.machine().copy();
 
@@ -88,9 +81,8 @@ public class LlvmInstructionLoweringMemoryLoadStrategyImpl
       if (selector.getNodes(LlvmAddSD.class).filter(add -> add.arguments().stream()
           .anyMatch(child -> child instanceof LlvmFieldAccessRefNode)).count() == 1) {
         // Yes, so replace the addition with the register which is a child of the addition.
-        var addition =
-            ensurePresent(selector.getNodes(LlvmAddSD.class).findFirst(),
-                "There must be an addition");
+        var addition = ensurePresent(selector.getNodes(LlvmAddSD.class).findFirst(),
+            "There must be an addition");
         var register = ensurePresent(
             addition.arguments().stream().filter(x -> x instanceof ReadRegFileNode).findFirst(),
             () -> Diagnostic.error("Expected a register node as child.",
@@ -107,8 +99,8 @@ public class LlvmInstructionLoweringMemoryLoadStrategyImpl
           var ty = ensurePresent(ValueType.from(register.type()),
               () -> Diagnostic.error("Register must have valid llvm type",
                   register.sourceLocation()));
-          imm.replaceAndDelete(new MachineInstructionValueNode(ty, Constant.Value.of(0,
-              Type.signedInt(32))));
+          imm.replaceAndDelete(
+              new MachineInstructionValueNode(ty, Constant.Value.of(0, Type.signedInt(32))));
         }
 
         alternativePatterns.add(new TableGenSelectionWithOutputPattern(selector, machine));
@@ -137,8 +129,7 @@ public class LlvmInstructionLoweringMemoryLoadStrategyImpl
 
     for (var pattern : patterns.stream()
         .filter(x -> x instanceof TableGenSelectionWithOutputPattern)
-        .map(x -> (TableGenSelectionWithOutputPattern) x)
-        .toList()) {
+        .map(x -> (TableGenSelectionWithOutputPattern) x).toList()) {
       var selector = pattern.selector().copy();
       var machine = pattern.machine().copy();
 
@@ -168,8 +159,7 @@ public class LlvmInstructionLoweringMemoryLoadStrategyImpl
 
     for (var pattern : patterns.stream()
         .filter(x -> x instanceof TableGenSelectionWithOutputPattern)
-        .map(x -> (TableGenSelectionWithOutputPattern) x)
-        .toList()) {
+        .map(x -> (TableGenSelectionWithOutputPattern) x).toList()) {
       var selector = pattern.selector().copy();
       var machine = pattern.machine().copy();
 
@@ -177,22 +167,17 @@ public class LlvmInstructionLoweringMemoryLoadStrategyImpl
       // because the value register should remain unchanged.
       // Afterward, we get all the children of the `WriteResource` and only filter for
       // `LlvmReadRegFileNode` because we wil only change registers.
-      var affectedNodes =
-          selector.getNodes(
-                  Set.of(LlvmLoadSD.class, LlvmZExtLoad.class, LlvmSExtLoad.class, LlvmExtLoad.class))
-              .map(x -> (ReadMemNode) x)
-              .filter(ReadMemNode::hasAddress)
-              .flatMap(x -> {
-                var inputs = new ArrayList<Node>();
-                var address = x.address();
-                ensure(address != null, "address must not be null");
-                inputs.add(address);
-                address.collectInputsWithChildren(inputs);
-                return inputs.stream();
-              })
-              .filter(x -> x instanceof LlvmReadRegFileNode)
-              .map(x -> (LlvmReadRegFileNode) x)
-              .toList();
+      var affectedNodes = selector.getNodes(
+              Set.of(LlvmLoadSD.class, LlvmZExtLoad.class, LlvmSExtLoad.class, LlvmExtLoad.class))
+          .map(x -> (ReadMemNode) x).filter(ReadMemNode::hasAddress).flatMap(x -> {
+            var inputs = new ArrayList<Node>();
+            var address = x.address();
+            ensure(address != null, "address must not be null");
+            inputs.add(address);
+            address.collectInputsWithChildren(inputs);
+            return inputs.stream();
+          }).filter(x -> x instanceof LlvmReadRegFileNode).map(x -> (LlvmReadRegFileNode) x)
+          .toList();
 
       if (!affectedNodes.isEmpty()) {
         alternativePatterns.add(
