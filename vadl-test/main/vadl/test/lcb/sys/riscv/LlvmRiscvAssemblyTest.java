@@ -60,7 +60,7 @@ public class LlvmRiscvAssemblyTest extends AbstractLcbTest {
     // We build the image and copy all the input files into the container.
     // The llvm compiler compiles all assembly files, and we copy them from the container
     // to the host (hostOutput folder).
-    var hostOutput = configuration.outputPath() + "/output";
+    var hostOutput = configuration.outputPath() + "/output/";
 
     runContainerAndCopyInputIntoAndCopyOutputFromContainer(image,
         Path.of("../../open-vadl/vadl-test/main/resources/llvm/riscv/c"),
