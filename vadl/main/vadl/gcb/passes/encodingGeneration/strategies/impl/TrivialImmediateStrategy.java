@@ -1,6 +1,6 @@
-package vadl.gcb.passes.encoding_generation.strategies.impl;
+package vadl.gcb.passes.encodingGeneration.strategies.impl;
 
-import vadl.gcb.passes.encoding_generation.strategies.EncodingGenerationStrategy;
+import vadl.gcb.passes.encodingGeneration.strategies.EncodingGenerationStrategy;
 import vadl.viam.Constant;
 import vadl.viam.Format;
 import vadl.viam.ViamError;

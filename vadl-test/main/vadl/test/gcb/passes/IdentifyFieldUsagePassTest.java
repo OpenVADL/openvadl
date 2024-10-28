@@ -5,7 +5,7 @@ import java.util.IdentityHashMap;
 import java.util.Map;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
-import vadl.gcb.passes.relocation.IdentifyFieldUsagePass;
+import vadl.gcb.passes.IdentifyFieldUsagePass;
 import vadl.pass.PassKey;
 import vadl.pass.exception.DuplicatedPassKeyException;
 import vadl.test.gcb.AbstractGcbTest;

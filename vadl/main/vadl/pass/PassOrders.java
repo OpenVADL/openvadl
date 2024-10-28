@@ -9,15 +9,15 @@ import vadl.configuration.IssConfiguration;
 import vadl.configuration.LcbConfiguration;
 import vadl.cppCodeGen.passes.fieldNodeReplacement.FieldNodeReplacementPassForDecoding;
 import vadl.dump.HtmlDumpPass;
+import vadl.gcb.passes.IdentifyFieldUsagePass;
 import vadl.gcb.passes.assembly.AssemblyConcatBuiltinMergingPass;
 import vadl.gcb.passes.assembly.AssemblyReplacementNodePass;
-import vadl.gcb.passes.encoding_generation.GenerateFieldAccessEncodingFunctionPass;
+import vadl.gcb.passes.encodingGeneration.GenerateFieldAccessEncodingFunctionPass;
 import vadl.gcb.passes.pseudo.PseudoExpansionFunctionGeneratorPass;
 import vadl.gcb.passes.pseudo.PseudoInstructionArgumentReplacementPass;
-import vadl.gcb.passes.relocation.IdentifyFieldUsagePass;
-import vadl.gcb.passes.type_normalization.CppTypeNormalizationForDecodingsPass;
-import vadl.gcb.passes.type_normalization.CppTypeNormalizationForEncodingsPass;
-import vadl.gcb.passes.type_normalization.CppTypeNormalizationForPredicatesPass;
+import vadl.gcb.passes.typeNormalization.CppTypeNormalizationForDecodingsPass;
+import vadl.gcb.passes.typeNormalization.CppTypeNormalizationForEncodingsPass;
+import vadl.gcb.passes.typeNormalization.CppTypeNormalizationForPredicatesPass;
 import vadl.iss.passes.IssConfigurationPass;
 import vadl.iss.passes.IssVerificationPass;
 import vadl.iss.passes.tcgLowering.TcgLoweringPass;
@@ -106,7 +106,6 @@ public class PassOrders {
     var order = viam(gcbConfiguration);
 
     order.add(new IdentifyFieldUsagePass(gcbConfiguration));
-    //order.add(new AddMissingFieldAccessesPass(gcbConfiguration));
     order.add(new GenerateFieldAccessEncodingFunctionPass(gcbConfiguration));
     order.add(new FieldNodeReplacementPassForDecoding(gcbConfiguration));
     order.add(new CppTypeNormalizationForEncodingsPass(gcbConfiguration));

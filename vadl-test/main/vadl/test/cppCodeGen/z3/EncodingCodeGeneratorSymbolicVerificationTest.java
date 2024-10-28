@@ -9,7 +9,7 @@ import org.junit.jupiter.api.parallel.ExecutionMode;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.testcontainers.images.builder.ImageFromDockerfile;
-import vadl.gcb.passes.encoding_generation.GenerateFieldAccessEncodingFunctionPass;
+import vadl.gcb.passes.encodingGeneration.GenerateFieldAccessEncodingFunctionPass;
 import vadl.pass.PassOrders;
 import vadl.pass.exception.DuplicatedPassKeyException;
 import vadl.test.gcb.AbstractGcbTest;

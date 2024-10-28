@@ -1,5 +1,8 @@
 package vadl.lcb.passes.llvmLowering.domain;
 
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.List;
 import org.jetbrains.annotations.Nullable;
 import vadl.types.ConcreteRelationType;
 import vadl.types.DataType;
@@ -30,6 +33,7 @@ public class RegisterRef extends Resource {
   private Format refFormat;
   @Nullable
   private Constant address;
+  private final List<RegisterFile.Constraint> constraints;
 
   /**
    * Constructor.
@@ -40,6 +44,8 @@ public class RegisterRef extends Resource {
     this.refFormat = register.refFormat();
     this.relationType = register.relationType();
     this.address = null;
+    // When constructed over register then they are no constraints.
+    this.constraints = Collections.emptyList();
   }
 
   /**
@@ -51,6 +57,11 @@ public class RegisterRef extends Resource {
     this.relationType = registerFile.relationType();
     this.refFormat = null;
     this.address = address;
+    // Get all the constraints for this register.
+    // But types might not match, so just compare the values.
+    this.constraints =
+        Arrays.stream(registerFile.constraints())
+            .filter(x -> x.address().intValue() == address.asVal().intValue()).toList();
   }
 
   @Override
@@ -86,6 +97,10 @@ public class RegisterRef extends Resource {
   @Override
   public void accept(DefinitionVisitor visitor) {
 
+  }
+
+  public List<RegisterFile.Constraint> constraints() {
+    return constraints;
   }
 
   /**

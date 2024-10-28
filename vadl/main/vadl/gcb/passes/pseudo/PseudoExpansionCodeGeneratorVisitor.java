@@ -17,7 +17,7 @@ import vadl.cppCodeGen.SymbolTable;
 import vadl.cppCodeGen.model.CppFunction;
 import vadl.cppCodeGen.model.VariantKind;
 import vadl.error.Diagnostic;
-import vadl.gcb.passes.relocation.IdentifyFieldUsagePass;
+import vadl.gcb.passes.IdentifyFieldUsagePass;
 import vadl.gcb.passes.relocation.model.CompilerRelocation;
 import vadl.utils.Pair;
 import vadl.viam.Format;
