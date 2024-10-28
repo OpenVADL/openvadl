@@ -4102,7 +4102,7 @@ let AddedComplexity = 0;
 let Pattern = [];
 
 let Uses = [ PC ];
-let Defs = [ PC ];
+let Defs = [ PC,X0 ];
 }
 
 
@@ -4189,8 +4189,8 @@ let AddedComplexity = 0;
 
 let Pattern = [];
 
-let Uses = [  ];
-let Defs = [  ];
+let Uses = [ X0 ];
+let Defs = [ X0 ];
 }
 
 def : Pat<(add (i64 0), (i64 0)),
@@ -4248,7 +4248,7 @@ let AddedComplexity = 0;
 let Pattern = [];
 
 let Uses = [ PC,X1 ];
-let Defs = [ PC ];
+let Defs = [ PC,X0 ];
 }
 
 
@@ -4362,5 +4362,5 @@ let AddedComplexity = 0;
 let Pattern = [];
 
 let Uses = [ PC,X6 ];
-let Defs = [ PC ];
+let Defs = [ PC,X0 ];
 }

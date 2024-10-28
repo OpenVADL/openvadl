@@ -46,14 +46,25 @@ public class LlvmInstructionLoweringIndirectJumpStrategyImpl
       visitor.visit(node);
     }
 
+    var inputOperands = getTableGenInputOperands(copy);
+    var outputOperands = getTableGenOutputOperands(copy);
+
+    // If a TableGen record has no input or output operands,
+    // and no registers as def or use then it will throw an error.
+    // Therefore, when input and output operands are empty then do not filter any
+    // registers.
+    var filterRegistersWithConstraints = inputOperands.isEmpty() && outputOperands.isEmpty();
+    var uses = getRegisterUses(copy, filterRegistersWithConstraints);
+    var defs = getRegisterDefs(copy, filterRegistersWithConstraints);
+
     return Optional.of(new LlvmLoweringRecord(
         copy,
-        getTableGenInputOperands(copy),
-        getTableGenOutputOperands(copy),
+        inputOperands,
+        outputOperands,
         LlvmLoweringPass.Flags.empty(),
         Collections.emptyList(), // TODO: currently do not generate indirect call
-        getRegisterUses(copy),
-        getRegisterDefs(copy)
+        uses,
+        defs
     ));
   }
 

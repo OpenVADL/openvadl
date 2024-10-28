@@ -99,14 +99,22 @@ public class LlvmInstructionLoweringConditionalBranchesStrategyImpl
         .map(this::replaceBasicBlockByLabelImmediateInMachineInstruction)
         .toList();
 
+    // If a TableGen record has no input or output operands,
+    // and no registers as def or use then it will throw an error.
+    // Therefore, when input and output operands are empty then do not filter any
+    // registers.
+    var filterRegistersWithConstraints = inputOperands.isEmpty() && outputOperands.isEmpty();
+    var uses = getRegisterUses(visitedGraph, filterRegistersWithConstraints);
+    var defs = getRegisterDefs(visitedGraph, filterRegistersWithConstraints);
+
     return new LlvmLoweringRecord(
         visitedGraph,
         inputOperands,
         outputOperands,
         flags,
         allPatterns,
-        getRegisterUses(visitedGraph),
-        getRegisterDefs(visitedGraph)
+        uses,
+        defs
     );
   }
 
