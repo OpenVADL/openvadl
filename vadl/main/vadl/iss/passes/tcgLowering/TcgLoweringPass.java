@@ -20,6 +20,7 @@ import vadl.iss.passes.tcgLowering.nodes.TcgLoadMemory;
 import vadl.iss.passes.tcgLowering.nodes.TcgMoveNode;
 import vadl.iss.passes.tcgLowering.nodes.TcgOpNode;
 import vadl.iss.passes.tcgLowering.nodes.TcgSetRegFile;
+import vadl.iss.passes.tcgLowering.nodes.TcgShiftLeft;
 import vadl.iss.passes.tcgLowering.nodes.TcgStoreMemory;
 import vadl.iss.passes.tcgLowering.nodes.TcgTruncateNode;
 import vadl.pass.PassName;
@@ -79,7 +80,7 @@ public class TcgLoweringPass extends AbstractIssPass {
         , "LB"
         , "SB"
         , "ADDIW"
-//        , "SLLI"
+        , "SLLI"
     );
 
     var tcgNodes = (IssTcgAnnotatePass.Result) passResults
@@ -302,6 +303,8 @@ class TcgLoweringExecutor extends GraphProcessor<Node> {
         // add result variable to tempVars
         return new TcgAddNode(res, asOp(args.get(0)).res(), asOp(args.get(1)).res());
       }
+    } else if (call.builtIn() == BuiltInTable.LSL && isBinaryImm(args)) {
+      return new TcgShiftLeft(res, asOp(args.get(0)).res(), (ExpressionNode) args.get(1));
     } else {
       throw new ViamGraphError("built-in call not yet supported by tcg lowering")
           .addContext(call)

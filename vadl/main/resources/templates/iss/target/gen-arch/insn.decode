@@ -35,7 +35,7 @@
 &r2_s rs1 rs2
 &s    imm rs1 rs2
 &u    imm rd
-&shift     shamt rs1 rd
+&shift     sft rs1 rd
 &atomic    aq rl rs2 rs1 rd
 &rmrr      vm rd rs1 rs2
 &rmr       vm rd rs2
@@ -53,7 +53,7 @@
 @u       ....................      ..... ....... &u      imm=%imm_u          %rd
 @j       ....................      ..... ....... &j      imm=%imm_j          %rd
 
-@sh      ......  ...... .....  ... ..... ....... &shift  shamt=%sh7     %rs1 %rd
+@sh      ......  ...... .....  ... ..... ....... &shift  sft=%sh7     %rs1 %rd
 @csr     ............   .....  ... ..... .......               %csr     %rs1 %rd
 
 @atom_ld ..... aq:1 rl:1 ..... ........ ..... ....... &atomic rs2=0     %rs1 %rd
@@ -90,10 +90,10 @@
 @mop3 . . .. .. . ..... ..... ... ..... ....... &mop3 imm=%imm_mop3 %rd %rs1 %rs2
 
 # Formats 64:
-@sh5     .......  ..... .....  ... ..... ....... &shift  shamt=%sh5      %rs1 %rd
+@sh5     .......  ..... .....  ... ..... ....... &shift  sft=%sh5      %rs1 %rd
 
 # Formats 128:
-@sh6       ...... ...... ..... ... ..... ....... &shift shamt=%sh6 %rs1 %rd
+@sh6       ...... ...... ..... ... ..... ....... &shift sft=%sh6 %rs1 %rd
 
 # *** Privileged Instructions ***
 # ecall       000000000000     00000 000 00000 1110011
@@ -131,7 +131,7 @@ addi     ............     ..... 000 ..... 0010011 @i
 # cbo.prefetch_{i,r,m} instructions are ori with rd=x0 and not decoded.
 # ori      ............     ..... 110 ..... 0010011 @i
 # andi     ............     ..... 111 ..... 0010011 @i
-# slli     00000. ......    ..... 001 ..... 0010011 @sh
+slli     00000. ......    ..... 001 ..... 0010011 @sh
 # srli     00000. ......    ..... 101 ..... 0010011 @sh
 # srai     01000. ......    ..... 101 ..... 0010011 @sh
 add      0000000 .....    ..... 000 ..... 0110011 @r
