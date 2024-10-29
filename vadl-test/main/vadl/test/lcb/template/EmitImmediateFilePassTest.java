@@ -69,8 +69,8 @@ public class EmitImmediateFilePassTest extends AbstractLcbTest {
         static int64_t RV64IM_Stype_immS_decode(uint16_t param) {
         return ((int64_t) param);
         }
-        static uint64_t RV64IM_Utype_immU_decode(uint32_t param) {
-        return (((uint64_t) param)) << (12);
+        static int64_t RV64IM_Utype_immU_decode(uint32_t param) {
+        return (((int64_t) param)) << (12);
         }
         static uint8_t RV64IM_Ftype_shamt_decode(uint8_t param) {
         return param;
@@ -93,7 +93,7 @@ public class EmitImmediateFilePassTest extends AbstractLcbTest {
         static uint32_t RV64IM_Jtype_immS_encoding(int64_t immS) {
         return (project_range<1, 20>(std::bitset<64>(immS)) << 0).to_ulong();
         }
-        static int32_t RV64IM_Utype_immU_encoding(uint64_t immU) {
+        static uint32_t RV64IM_Utype_immU_encoding(int64_t immU) {
         return (project_range<12, 31>(std::bitset<64>(immU)) << 0).to_ulong();
         }
         static uint8_t RV64IM_Ftype_shamt_encoding(uint8_t shamt) {
@@ -124,7 +124,7 @@ public class EmitImmediateFilePassTest extends AbstractLcbTest {
         static bool RV64IM_Stype_immS_predicate(int64_t immS_decode) {
         return 1;
         }
-        static bool RV64IM_Utype_immU_predicate(uint64_t immU_decode) {
+        static bool RV64IM_Utype_immU_predicate(int64_t immU_decode) {
         return 1;
         }
         
