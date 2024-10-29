@@ -6,6 +6,7 @@ import vadl.cppCodeGen.mixins.CGenMixin;
 import vadl.iss.passes.tcgLowering.TcgExtend;
 import vadl.iss.passes.tcgLowering.nodes.TcgBinaryImmOpNode;
 import vadl.iss.passes.tcgLowering.nodes.TcgBinaryOpNode;
+import vadl.iss.passes.tcgLowering.nodes.TcgConstantNode;
 import vadl.iss.passes.tcgLowering.nodes.TcgExtendNode;
 import vadl.iss.passes.tcgLowering.nodes.TcgGetVar;
 import vadl.iss.passes.tcgLowering.nodes.TcgLoadMemory;
@@ -37,13 +38,21 @@ public interface CTcgOpsMixin extends CGenMixin {
         .set(TcgMoveNode.class, (TcgMoveNode node, StringWriter writer) -> {
           writer.write("\ttcg_gen_mov_i" + node.width().width);
           writer.write("(" + node.res().varName());
-          writer.write(", " + node.arg1().varName() + ");\n");
+          writer.write(", " + node.arg().varName() + ");\n");
         })
 
         .set(TcgGetVar.TcgGetTemp.class, (TcgGetVar.TcgGetTemp node, StringWriter writer) -> {
           writer.write("\tTCGv_" + node.res().width() + " " + node.res().varName() + " = ");
           writer.write("tcg_temp_new_i" + node.res().width().width);
           writer.write("();\n");
+        })
+
+        .set(TcgConstantNode.class, (TcgConstantNode node, StringWriter writer) -> {
+          writer.write("\tTCGv_" + node.res().width() + " " + node.res().varName() + " = ");
+          writer.write(node.tcgFunctionName());
+          writer.write("(");
+          gen(node.arg());
+          writer.write(");\n");
         })
 
         .set(TcgSetRegFile.class, (TcgSetRegFile node, StringWriter writer) -> {

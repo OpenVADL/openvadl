@@ -66,6 +66,15 @@ public class PassOrders {
   public static PassOrder viam(GeneralConfiguration configuration) throws IOException {
     var order = new PassOrder();
 
+    if (configuration.doDump()) {
+      var config = HtmlDumpPass.Config.from(
+          configuration,
+          "VIAM Creation",
+          "Dump directly after the VIAM got created from the AST."
+      );
+      order.add(new HtmlDumpPass(config));
+    }
+
     order.add(new ViamVerificationPass(configuration));
 
     order.add(new TypeCastEliminationPass(configuration));

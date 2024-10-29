@@ -14,6 +14,7 @@ import vadl.iss.passes.AbstractIssPass;
 import vadl.iss.passes.IssTcgAnnotatePass;
 import vadl.iss.passes.tcgLowering.nodes.TcgAddNode;
 import vadl.iss.passes.tcgLowering.nodes.TcgAddiNode;
+import vadl.iss.passes.tcgLowering.nodes.TcgConstantNode;
 import vadl.iss.passes.tcgLowering.nodes.TcgExtendNode;
 import vadl.iss.passes.tcgLowering.nodes.TcgGetVar;
 import vadl.iss.passes.tcgLowering.nodes.TcgLoadMemory;
@@ -81,6 +82,7 @@ public class TcgLoweringPass extends AbstractIssPass {
         , "SB"
         , "ADDIW"
         , "SLLI"
+        , "LUI"
     );
 
     var tcgNodes = (IssTcgAnnotatePass.Result) passResults
@@ -217,27 +219,35 @@ class TcgLoweringExecutor extends GraphProcessor<Node> {
   }
 
   private @Nullable Node process(WriteRegFileNode toProcess) {
-    var valRepl = getResultOf(toProcess.value(), TcgOpNode.class);
+    var valRes = getResultOf(toProcess.value(), Node.class);
 
-    // TODO: @jzottele Don't hardcode type!
+    // TODO: Don't hardcode this
     var width = TcgWidth.i64;
-    var res = TcgV.gen(width);
-    destVars.add(Pair.of(res, toProcess));
+    var destVar = TcgV.gen(width);
 
-
-    var prevOp = valRepl;
-    if (toProcess.value().usageCount() <= 1) {
-      replaceResultVar(valRepl, res);
+    if (valRes instanceof ExpressionNode valueImm) {
+      // if the value is an immediate (not from a tcg operation)
+      // we produce an immediate node
+      var constNode = lastNode.addAfter(new TcgConstantNode(destVar, valueImm));
+      lastNode = constNode;
     } else {
-      // the value is used somewhere else, so we cannot directly write it here
-      prevOp = lastNode.addAfter(
-          new TcgMoveNode(
-              res, valRepl.res())
-      );
-      lastNode = prevOp;
+      var prevOp = ((TcgOpNode) valRes);
+      // get destVar from register destination
+      destVars.add(Pair.of(destVar, toProcess));
+      if (toProcess.value().usageCount() <= 1) {
+        // if value is used by only this node, we can directly write the result to the register
+        replaceResultVar(prevOp, destVar);
+      } else {
+        // the value is used somewhere else, so we cannot directly write it here
+        prevOp = lastNode.addAfter(
+            new TcgMoveNode(
+                destVar, prevOp.res())
+        );
+        lastNode = prevOp;
+      }
     }
 
-    return new TcgSetRegFile(toProcess.registerFile(), toProcess.address(), prevOp.res());
+    return new TcgSetRegFile(toProcess.registerFile(), toProcess.address(), destVar);
   }
 
   private TcgOpNode process(ReadMemNode toProcess) {

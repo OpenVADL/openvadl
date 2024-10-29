@@ -59,4 +59,36 @@ public class CppTypeMap {
 
     throw new RuntimeException(String.format("not implemented: type %s", type.toString()));
   }
+
+  public static String cppUintType(int bitWidth) {
+    switch (bitWidth) {
+      case 1:
+        return "bool";
+      case 8:
+        return "uint8_t";
+      case 16:
+        return "uint16_t";
+      case 32:
+        return "uint32_t";
+      case 64:
+    }
+
+    throw new RuntimeException(String.format("not implemented: type %s", bitWidth));
+  }
+
+  public static String cppSintType(int bitWidth) {
+    switch (bitWidth) {
+      case 1:
+        return "bool";
+      case 8:
+        return "int8_t";
+      case 16:
+        return "int16_t";
+      case 32:
+        return "int32_t";
+      case 64:
+    }
+
+    throw new RuntimeException(String.format("not implemented: type %s", bitWidth));
+  }
 }

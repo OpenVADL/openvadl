@@ -5,6 +5,8 @@ import static vadl.error.Diagnostic.error;
 import static vadl.utils.GraphUtils.getSingleNode;
 
 import java.io.StringWriter;
+import java.util.Arrays;
+import java.util.stream.Collectors;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import vadl.cppCodeGen.CodeGenerator;
@@ -23,7 +25,7 @@ import vadl.viam.graph.dependency.FieldRefNode;
  * in the {@link vadl.viam.InstructionSetArchitecture}.
  */
 public class IssTranslateCodeGenerator extends CodeGenerator
-    implements CTypeCastMixin, CTcgOpsMixin {
+    implements CTypeCastMixin, CTcgOpsMixin, CBuiltinMixin {
 
   public IssTranslateCodeGenerator(StringWriter writer) {
     super(writer);
@@ -53,9 +55,21 @@ public class IssTranslateCodeGenerator extends CodeGenerator
           writer.write(name);
           writer.write(" *a) {\n");
 
+          // format debug string
+          var printingFields = Arrays.stream(insn.format().fields())
+              .filter(f -> insn.encoding().fieldEncodingOf(f) == null)
+              .toList();
+          var fmtString = printingFields.stream().map(f ->
+                  f.simpleName().toLowerCase() + ": %d ")
+              .collect(Collectors.joining(", "));
+          var fmtArgs = printingFields.stream().map(f ->
+                  "a->" + f.simpleName())
+              .collect(Collectors.joining(", "));
+
           writer.write("\tqemu_printf(\"[VADL] trans_");
           writer.write(name);
-          writer.write("\\n\");\n");
+          writer.write(" (" + fmtString + ")");
+          writer.write("\\n\", " + fmtArgs + ");\n");
 
           var current = start.next();
 
@@ -79,6 +93,7 @@ public class IssTranslateCodeGenerator extends CodeGenerator
   public void nodeImpls(Impls<Node> impls) {
     castImpls(impls);
     tcgOpImpls(impls);
+    builtinImpls(impls);
 
     impls.set(FieldRefNode.class, (node, writer) -> {
       writer.write("a->");

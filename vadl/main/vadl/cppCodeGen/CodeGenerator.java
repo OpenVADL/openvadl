@@ -104,7 +104,7 @@ public abstract class CodeGenerator {
      * @param impl  the actual function that implements a instance of the class.
      * @return THIS
      */
-    public <N> Impls<T> set(Class<N> clazz, BiConsumer<N, StringWriter> impl) {
+    public <N> Impls<T> set(Class<N> clazz, BiConsumer<? super N, StringWriter> impl) {
       set(Pair.of(clazz, (node, writer) -> {
         ViamError.ensure(clazz.isInstance(node), "Obj is not instance of %s: %s", clazz, node);
         impl.accept(clazz.cast(node), writer);
