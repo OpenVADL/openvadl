@@ -22,7 +22,7 @@ public final class TableGenImmediateOperandRenderer {
                     
             def %s
                 : %s<%s>
-                , ImmLeaf<%s, [{ return %s(Imm); }]>;
+                , ImmLeaf<%s, [{ return isInt<%s>(Imm) && %s(Imm); }]>;
                 
             def %sAsLabel : %s<OtherVT>;
             """, operand.rawName(),
@@ -32,6 +32,7 @@ public final class TableGenImmediateOperandRenderer {
         operand.rawName(),
         type.getLlvmType(),
         type.getLlvmType(),
+        operand.originalType().bitWidth(),
         operand.predicateMethod(),
         operand.rawName(),
         operand.rawName()
