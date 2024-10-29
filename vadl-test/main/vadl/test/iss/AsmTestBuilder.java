@@ -23,7 +23,17 @@ public abstract class AsmTestBuilder {
 
   abstract Arbitrary<String> anyReg();
 
-  abstract BigInteger fillReg(String reg, int size);
+  abstract BigInteger fillReg(String reg, BigInteger min, BigInteger max);
+
+  BigInteger fillReg(String reg, int size) {
+    return fillReg(reg,
+        BigInteger.valueOf(-2).pow(size - 1),
+        BigInteger.valueOf(2)
+            .pow(size - 1)
+            .subtract(BigInteger.ONE)
+    );
+  }
+
 
   @FormatMethod
   AsmTestBuilder add(String instr, Object... args) {

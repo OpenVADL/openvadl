@@ -4,6 +4,7 @@ import static vadl.test.TestUtils.arbitrarySignedInt;
 import static vadl.test.TestUtils.arbitraryUnsignedInt;
 
 import java.io.IOException;
+import java.math.BigInteger;
 import java.util.HashMap;
 import java.util.Objects;
 import java.util.function.Function;
@@ -24,7 +25,7 @@ import vadl.viam.Constant;
 public class IssRV64IInstrTest extends QemuIssTest {
 
   private static final String RISCV_QEMU_REF = "qemu-system-riscv64";
-  private static final int TESTS_PER_INSTRUCTION = 50;
+  private static final int TESTS_PER_INSTRUCTION = 100;
   private static final Logger log = LoggerFactory.getLogger(IssRV64IInstrTest.class);
 
   @TestFactory
@@ -83,6 +84,22 @@ public class IssRV64IInstrTest extends QemuIssTest {
     });
   }
 
+  @TestFactory
+  Stream<DynamicTest> lb() throws IOException {
+    return runTestsWith((id) -> {
+      var b = new RV64ITestBuilder("LB_" + id);
+      var storeReg = b.anyTempReg().sample();
+      b.fillReg(storeReg, 8);
+      var addrReg = b.anyTempReg().sample();
+      // some memory address in a valid space
+      b.fillReg(addrReg, BigInteger.valueOf(0x80000000L), BigInteger.valueOf(0x800F0000L));
+      b.add("sb %s, 0(%s)", storeReg, addrReg);
+
+      var loadReg = b.anyTempReg().sample();
+      b.add("lb %s, 0(%s)", loadReg, addrReg);
+      return b.toTestSpec(storeReg, loadReg, addrReg);
+    });
+  }
 
   @SafeVarargs
   private Stream<DynamicTest> runTestsWith(
@@ -95,5 +112,5 @@ public class IssRV64IInstrTest extends QemuIssTest {
         .toList();
     return runQemuInstrTests(image, testCases);
   }
-  
+
 }

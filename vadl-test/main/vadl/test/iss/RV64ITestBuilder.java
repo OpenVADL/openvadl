@@ -1,5 +1,6 @@
 package vadl.test.iss;
 
+import static vadl.test.TestUtils.arbitraryBetween;
 import static vadl.test.TestUtils.arbitrarySignedInt;
 
 import java.math.BigInteger;
@@ -8,14 +9,14 @@ import net.jqwik.api.Arbitraries;
 import net.jqwik.api.Arbitrary;
 
 public class RV64ITestBuilder extends AsmTestBuilder {
-  
+
   public RV64ITestBuilder(String testId) {
     super(testId);
   }
 
   @Override
-  BigInteger fillReg(String reg, int size) {
-    var val = arbitrarySignedInt(size).sample();
+  BigInteger fillReg(String reg, BigInteger min, BigInteger max) {
+    var val = arbitraryBetween(min, max).sample();
     add("li %s, %s", reg, val);
     return val;
   }
