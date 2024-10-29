@@ -21,13 +21,11 @@ class QMPTestCaseExecutor(AbstractTestCaseExecutor):
     Executes a test case by running QEMU with QMP to control the test execution.
     It listens for a signal register to check if the test has finished.
     """
-    port: int
 
-    def __init__(self, qemu_exec: str, spec: TestSpec, port: int):
+    def __init__(self, qemu_exec: str, spec: TestSpec):
         super().__init__(qemu_exec, spec)
-        self.port = port
 
-    async def exec(self):
+    async def exec(self, port: int):
         # combiniation of spec.reg_tests.keys and spec.reference_regs
         regs_of_interest = list(set(self.spec.reg_tests.keys())
                              .union(set(self.spec.reference_regs)))
@@ -36,6 +34,7 @@ class QMPTestCaseExecutor(AbstractTestCaseExecutor):
         vadl_reg_results = await self._execute_qemu_sim(
             f"vadl-{self.spec.id}",
             self.qemu_exec,
+            port,
             regs_of_interest
         )
 
@@ -46,6 +45,7 @@ class QMPTestCaseExecutor(AbstractTestCaseExecutor):
             ref_reg_results = await self._execute_qemu_sim(
                 f"reference-{self.spec.id}",
                 self.spec.reference_exec,
+                port,
                 regs_of_interest
             )
             self.test_result.completed_stages.append('RUN_REF')
@@ -54,11 +54,12 @@ class QMPTestCaseExecutor(AbstractTestCaseExecutor):
 
     async def _execute_qemu_sim(self, prefix: str, 
                                 qemu_exec: str,
+                                port: int,
                                 result_regs: list[str]) -> dict[str, str]:
         instance_name = f"{prefix}-{self.spec.id}"
         qemu_executer = QEMUExecuter(instance_name, 
                                     qemu_exec,
-                                    self.port)
+                                    port)
         
         self.test_result.qemu_log[instance_name] = qemu_executer.logs
 

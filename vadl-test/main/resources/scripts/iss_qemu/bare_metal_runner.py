@@ -1,3 +1,4 @@
+import socket
 import time
 import asyncio
 import traceback
@@ -14,6 +15,11 @@ from test_case_executer_v1 import QMPTestCaseExecutor, TestSpec
 class TestSuiteConfig:
   tests: List[TestSpec]
 
+async def find_free_port():
+    s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+    s.bind(('', 0))  # Bind to a free port provided by the host.
+    address, port = s.getsockname()
+    return s, port
 
 async def main(qemu_exec: str):
   print(f"Starting runner with qemu executable: {qemu_exec}")
@@ -22,7 +28,7 @@ async def main(qemu_exec: str):
 
   # produces testcases
   # test_cases = [TestCaseExecutor2(spec) for (i, spec) in enumerate(test_config.tests)]
-  test_cases = [QMPTestCaseExecutor(qemu_exec, spec, 1200 + i) for (i, spec) in enumerate(test_config.tests)]
+  test_cases = [QMPTestCaseExecutor(qemu_exec, spec) for (spec) in test_config.tests]
 
   start_time = time.time()
 
@@ -35,14 +41,17 @@ async def main(qemu_exec: str):
   async def run_test(test_case):
     async with semaphore:
       test_start_time = time.time()
+      socket, port = await find_free_port()
       try:
         await test_case.compile_and_link()
-        await test_case.exec()
+        print("Using port", port)
+        await test_case.exec(port)
       except Exception as e:
         test_case.test_result.status = 'FAIL'
         test_case.test_result.errors.append(str(e))
         print(traceback.format_exc())
       finally:
+        socket.close()
         test_end_time = time.time()
         test_case.test_result.duration = f"{(test_end_time - test_start_time) * 1000:.2f}ms"
         status = test_case.test_result.status == 'PASS' and "✅ PASS" or "❌ FAIL"

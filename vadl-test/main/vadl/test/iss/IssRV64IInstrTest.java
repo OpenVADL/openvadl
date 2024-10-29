@@ -29,13 +29,33 @@ public class IssRV64IInstrTest extends QemuIssTest {
 
   @TestFactory
   Stream<DynamicTest> addi() throws IOException {
-    return runTestsWith(IssRV64IInstrTest::gen12BitAddiTest);
+    return runTestsWith(id -> {
+      var b = new RV64ITestBuilder("ADDI_" + id);
+      var aImm = arbitrarySignedInt(12).sample();
+      var regSrc = b.anyTempReg().sample();
+      b.add("addi %s, x0, %s", regSrc, aImm);
+
+      var bImm = arbitrarySignedInt(12).sample();
+      var regDest = b.anyTempReg().sample();
+      b.add("addi %s, %s, %s", regDest, regSrc, bImm);
+      return b.toTestSpec(regSrc, regDest);
+    });
   }
 
 
   @TestFactory
   Stream<DynamicTest> addiw() throws IOException {
-    return runTestsWith(IssRV64IInstrTest::gen12BitAddiwTest);
+    return runTestsWith(id -> {
+      var b = new RV64ITestBuilder("ADDIW_" + id);
+      var aImm = arbitrarySignedInt(12).sample();
+      var regSrc = b.anyTempReg().sample();
+      b.add("addiw %s, x0, %s", regSrc, aImm);
+
+      var bImm = arbitrarySignedInt(12).sample();
+      var regDest = b.anyTempReg().sample();
+      b.add("addiw %s, %s, %s", regDest, regSrc, bImm);
+      return b.toTestSpec(regSrc, regDest);
+    });
   }
 
   @TestFactory
@@ -75,94 +95,5 @@ public class IssRV64IInstrTest extends QemuIssTest {
         .toList();
     return runQemuInstrTests(image, testCases);
   }
-
-
-  //// TEST CASE GENERATORS ////
-
-  /**
-   * Generates a random test that tests the ADDI instruction with 12-bit immediate values.
-   *
-   * @return test spec to run on QEMU ISS instance.
-   */
-  private static IssTestUtils.TestSpec gen12BitAddiTest(int testId) {
-    var immSrcReg = arbitrarySignedInt(12).sample();
-    var immArg = arbitrarySignedInt(12).sample();
-
-    var regSrc = arbitraryRegNonSignal().filter(r -> !r.equals("x0")).sample();
-    var regDest = arbitraryRegNonSignal().filter(r -> !r.equals("x0")).sample();
-
-    var instr = new StringBuilder()
-        .append("addi   %s, x0, %s\n".formatted(regSrc, immSrcReg))
-        .append("addi   %s, %s, %s\n".formatted(regDest, regSrc, immArg));
-
-    var arg1Const = Constant.Value.of(immSrcReg.intValue(), DataType.signedInt(12))
-        .signExtend(DataType.bits(64));
-    var arg2Const = Constant.Value.of(immArg.intValue(), DataType.bits(12))
-        .signExtend(DataType.bits(64));
-
-    var resultConst = arg1Const.add(arg2Const, false).firstValue();
-
-    var regTest = new HashMap<String, String>();
-    regTest.put(regDest, resultConst.hexadecimal(""));
-    if (!Objects.equals(regSrc, regDest)) {
-      regTest.put(regSrc, arg1Const.hexadecimal(""));
-    }
-
-    return new IssTestUtils.TestSpec(
-        "ADDI_" + testId,
-        regTest,
-        instr.toString(),
-        RISCV_QEMU_REF,
-        null
-    );
-  }
-
-
-  private static IssTestUtils.TestSpec gen12BitAddiwTest(int testId) {
-    var immSrcReg = arbitrarySignedInt(12).sample();
-    var immArg = arbitrarySignedInt(12).sample();
-
-    var regSrc = arbitraryRegNonSignal().filter(r -> !r.equals("x0")).sample();
-    var regDest = arbitraryRegNonSignal().filter(r -> !r.equals("x0")).sample();
-
-    var instr = new StringBuilder()
-        .append("addiw   %s, x0, %s\n".formatted(regSrc, immSrcReg))
-        .append("addiw   %s, %s, %s\n".formatted(regDest, regSrc, immArg));
-
-    var arg1Const = Constant.Value.of(immSrcReg.intValue(), DataType.signedInt(12))
-        .signExtend(DataType.bits(64));
-    var arg2Const = Constant.Value.of(immArg.intValue(), DataType.bits(12))
-        .signExtend(DataType.bits(64));
-
-    var resultConst = arg1Const.add(arg2Const, false).firstValue();
-
-    var regTest = new HashMap<String, String>();
-    regTest.put(regDest, resultConst.hexadecimal(""));
-    if (!Objects.equals(regSrc, regDest)) {
-      regTest.put(regSrc, arg1Const.hexadecimal(""));
-    }
-
-    return new IssTestUtils.TestSpec(
-        "ADDIW_" + testId,
-        regTest,
-        instr.toString(),
-        RISCV_QEMU_REF,
-        null
-    );
-  }
-
-  //// HELPER ////
-
-  private static Arbitrary<String> arbitraryReg(String... except) {
-    return arbitraryReg().filter(r -> Stream.of(except).noneMatch(r::equals));
-  }
-
-  private static Arbitrary<String> arbitraryReg() {
-    return Arbitraries.of(IntStream.range(0, 32).mapToObj(i -> "x" + i).toList());
-  }
-
-  private static Arbitrary<String> arbitraryRegNonSignal() {
-    return arbitraryReg("x6");
-  }
-
+  
 }

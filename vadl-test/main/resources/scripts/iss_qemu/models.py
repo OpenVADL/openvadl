@@ -6,7 +6,7 @@ class TestSpec:
     """Specifies a test case"""
     id: str
     asm_core: str
-    reg_tests: Dict[str, str]
+    reg_tests: Dict[str, str] = field(default_factory=dict)
     reference_exec: str = field(default="")
     reference_regs: list[str] = field(default_factory=list)
 
