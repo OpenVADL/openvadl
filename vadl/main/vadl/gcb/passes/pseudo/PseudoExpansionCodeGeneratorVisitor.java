@@ -114,7 +114,8 @@ public class PseudoExpansionCodeGeneratorVisitor extends GenericCppCodeGenerator
     }
 
     throw Diagnostic.error(
-            "Cannot assign field because the field was not field.",
+            String.format("Cannot assign field '%s' because the field is not a field.",
+                field.identifier.simpleName()),
             parameter.sourceLocation())
         .locationDescription(argument.sourceLocation(), "Trying to match this argument.")
         .locationDescription(field.sourceLocation(), "Trying to assign this field.")
