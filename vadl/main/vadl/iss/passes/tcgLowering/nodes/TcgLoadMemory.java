@@ -57,12 +57,12 @@ public class TcgLoadMemory extends TcgOpNode {
 
   @Override
   public Node copy() {
-    return new TcgLoadMemory(size, extendMode, res, addr, width);
+    return new TcgLoadMemory(size, extendMode, res, addr);
   }
 
   @Override
   public Node shallowCopy() {
-    return new TcgLoadMemory(size, extendMode, res, addr, width);
+    return new TcgLoadMemory(size, extendMode, res, addr);
   }
 
   /**
