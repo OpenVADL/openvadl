@@ -44,7 +44,6 @@ async def main(qemu_exec: str):
       socket, port = await find_free_port()
       try:
         await test_case.compile_and_link()
-        print("Using port", port)
         await test_case.exec(port)
       except Exception as e:
         test_case.test_result.status = 'FAIL'

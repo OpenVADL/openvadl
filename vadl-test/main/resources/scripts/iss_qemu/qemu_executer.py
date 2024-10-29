@@ -104,6 +104,10 @@ class QEMUExecuter:
         first_time = time.time()
         while True:
             try:
+                # sleep 10ms before trying to (re)connect via QMP
+                await asyncio.sleep(0.01)
+                if (self.process.returncode is not None):
+                    raise Exception(f"QEMU process has terminated with return code {self.process.returncode}")
                 await self.qmp.connect(("localhost", qmp_port))
                 break
             except Exception as e:
