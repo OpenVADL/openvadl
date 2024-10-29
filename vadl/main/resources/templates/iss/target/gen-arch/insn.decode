@@ -11,15 +11,24 @@
 %sh7    20:7
 %csr    20:12
 %rm     12:3
-%nf     29:3                     !function=ex_plus_1
+%nf     29:3
+# TODO: Check if this is done by decoder or translator
+# %nf     29:3                     !function=ex_plus_1
+
 
 # immediates:
 %imm_i    20:s12
 %imm_s    25:s7 7:5
-%imm_b    31:s1 7:1 25:6 8:4     !function=ex_shift_1
-%imm_j    31:s1 12:8 20:1 21:10  !function=ex_shift_1
-%imm_u    12:s20                 !function=ex_shift_12
-%imm_bs   30:2                   !function=ex_shift_3
+# TODO: Temporary without translation functionsf
+%imm_b    31:s1 7:1 25:6 8:4
+%imm_j    31:s1 12:8 20:1 21:10
+%imm_u    12:20
+%imm_bs   30:2
+# TODO: Check if this is done by decoder or translator
+# %imm_b    31:s1 7:1 25:6 8:4     !function=ex_shift_1
+# %imm_j    31:s1 12:8 20:1 21:10  !function=ex_shift_1
+# %imm_u    12:s20                 !function=ex_shift_12
+# %imm_bs   30:2                   !function=ex_shift_3
 %imm_rnum 20:4
 %imm_z6   26:1 15:5
 %imm_mop5 30:1 26:2 20:2
@@ -106,7 +115,7 @@
 # sfence_vm   0001000    00100 ..... 000 00000 1110011 @sfence_vm
 
 # *** RV32I Base Instruction Set ***
-# lui      ....................       ..... 0110111 @u
+lui      ....................       ..... 0110111 @u
 # auipc    ....................       ..... 0010111 @u
 jal      ....................       ..... 1101111 @j
 # jalr     ............     ..... 000 ..... 1100111 @i
