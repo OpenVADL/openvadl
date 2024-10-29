@@ -52,7 +52,7 @@ instruction set architecture RV3264I = {
   { imm : Bits<20>
   , rd : Index
   , opcode : Bits7
-  , immU = (imm as UIntR << 12)
+  , immU = (imm as SIntR << 12)
   }
   format Stype: Inst =
   { imm	 [31..25, 11..7]
