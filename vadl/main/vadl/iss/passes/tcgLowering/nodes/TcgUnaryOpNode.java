@@ -5,6 +5,11 @@ import vadl.iss.passes.tcgLowering.TcgV;
 import vadl.iss.passes.tcgLowering.TcgWidth;
 import vadl.javaannotations.viam.DataValue;
 
+/**
+ * Represents an abstract unary operation node within the Tiny Code Generator (TCG) framework.
+ * This class serves as a base for specific unary operations by handling
+ * common functionality such as argument management and data collection.
+ */
 public abstract class TcgUnaryOpNode extends TcgOpNode {
 
   @DataValue

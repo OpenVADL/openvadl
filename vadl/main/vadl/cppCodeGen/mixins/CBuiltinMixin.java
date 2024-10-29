@@ -1,17 +1,17 @@
-package vadl.iss.codegen;
-
-import static vadl.cppCodeGen.CppTypeMap.getCppTypeNameByVadlType;
+package vadl.cppCodeGen.mixins;
 
 import java.io.StringWriter;
-import java.util.function.BiConsumer;
 import vadl.cppCodeGen.CodeGenerator;
-import vadl.cppCodeGen.mixins.CGenMixin;
 import vadl.types.BuiltInTable;
 import vadl.viam.graph.Node;
 import vadl.viam.graph.ViamGraphError;
 import vadl.viam.graph.dependency.BuiltInCall;
-import vadl.viam.graph.dependency.ConstantNode;
 
+
+/**
+ * CBuiltinMixin provides default implementations of C generation
+ * for built-in operations to be used in conjunction with the {@link CodeGenerator}.
+ */
 public interface CBuiltinMixin extends CGenMixin {
 
   /**
@@ -40,14 +40,6 @@ public interface CBuiltinMixin extends CGenMixin {
 
           // close scope
           writer.write(")");
-        })
-
-        // TODO: Move in separate class
-        .set(ConstantNode.class, (ConstantNode op, StringWriter writer) -> {
-          var fittingCppType = op.type().asDataType().fittingCppType();
-          op.ensure(fittingCppType != null, "No fitting cpp type");
-          var cppType = getCppTypeNameByVadlType(fittingCppType);
-          writer.write("((" + cppType + ") " + op.constant().asVal().decimal() + " )");
         })
 
     ;

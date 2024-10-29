@@ -60,6 +60,13 @@ public class CppTypeMap {
     throw new RuntimeException(String.format("not implemented: type %s", type.toString()));
   }
 
+  /**
+   * Determines the C++ unsigned integer type corresponding to a specified bit width.
+   *
+   * @param bitWidth the bit width of the desired C++ unsigned integer type
+   * @return the corresponding C++ unsigned integer type as a String
+   * @throws RuntimeException if the bit width does not match a known C++ unsigned integer type
+   */
   public static String cppUintType(int bitWidth) {
     switch (bitWidth) {
       case 1:
@@ -71,15 +78,22 @@ public class CppTypeMap {
       case 32:
         return "uint32_t";
       case 64:
+        return "uint64_t";
+      default:
+        throw new RuntimeException(String.format("not implemented: type %s", bitWidth));
     }
 
-    throw new RuntimeException(String.format("not implemented: type %s", bitWidth));
   }
 
+  /**
+   * Determines the C++ signed integer type corresponding to a specified bit width.
+   *
+   * @param bitWidth the bit width of the desired C++ signed integer type
+   * @return the corresponding C++ signed integer type as a String
+   * @throws RuntimeException if the bit width does not match a known C++ signed integer type
+   */
   public static String cppSintType(int bitWidth) {
     switch (bitWidth) {
-      case 1:
-        return "bool";
       case 8:
         return "int8_t";
       case 16:
@@ -87,8 +101,10 @@ public class CppTypeMap {
       case 32:
         return "int32_t";
       case 64:
+        return "int64_t";
+      default:
+        throw new RuntimeException(String.format("not implemented: type %s", bitWidth));
     }
 
-    throw new RuntimeException(String.format("not implemented: type %s", bitWidth));
   }
 }

@@ -6,6 +6,11 @@ import vadl.javaannotations.viam.Input;
 import vadl.viam.graph.Node;
 import vadl.viam.graph.dependency.ExpressionNode;
 
+/**
+ * TcgConstantNode represents a node containing a constant value in the TCG.
+ * This node extends TcgUnaryImmOpNode and encapsulates the result variable and
+ * the constant value as an ExpressionNode.
+ */
 public class TcgConstantNode extends TcgUnaryImmOpNode {
 
   public TcgConstantNode(TcgV res, ExpressionNode value) {

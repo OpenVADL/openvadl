@@ -5,6 +5,11 @@ import vadl.iss.passes.tcgLowering.TcgV;
 import vadl.javaannotations.viam.DataValue;
 import vadl.viam.graph.Node;
 
+/**
+ * Class representing a truncation operation in the TCG (Tiny Code Generator).
+ * This node performs a bit-width truncation on a single operand.
+ * Extends from TcgUnaryOpNode to utilize unary operation functionality.
+ */
 public class TcgTruncateNode extends TcgUnaryOpNode {
 
   @DataValue

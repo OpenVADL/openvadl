@@ -8,6 +8,13 @@ import vadl.iss.passes.tcgLowering.Tcg_8_16_32_64;
 import vadl.javaannotations.viam.DataValue;
 import vadl.viam.graph.Node;
 
+/**
+ * Represents a TCG (Tiny Code Generation) operation node responsible for loading memory.
+ *
+ * <p>This class encapsulates the size, extension mode, and address of the memory to be loaded.
+ * It extends the TcgOpNode class, inheriting common properties of TCG operation nodes like
+ * result and width.
+ */
 public class TcgLoadMemory extends TcgOpNode {
 
   @DataValue
@@ -17,12 +24,20 @@ public class TcgLoadMemory extends TcgOpNode {
   @DataValue
   TcgV addr;
 
+  /**
+   * Constructs a new TcgLoadMemory operation node.
+   *
+   * @param size the size of the memory to be loaded, one of Tcg_8_16_32_64
+   *             values (i8, i16, i32, i64)
+   * @param mode the mode of an extension, one of TcgExtend values (SIGN, ZERO)
+   * @param res  the variable representing the result of the load operation
+   * @param addr the variable representing the address from where memory is to be loaded
+   */
   public TcgLoadMemory(Tcg_8_16_32_64 size,
                        TcgExtend mode,
                        TcgV res,
-                       TcgV addr,
-                       TcgWidth width) {
-    super(res, width);
+                       TcgV addr) {
+    super(res, res.width());
     this.size = size;
     this.extendMode = mode;
     this.addr = addr;
@@ -50,11 +65,22 @@ public class TcgLoadMemory extends TcgOpNode {
     return new TcgLoadMemory(size, extendMode, res, addr, width);
   }
 
+  /**
+   * Generates the memory operation string for a TCG (Tiny Code Generation) load operation.
+   *
+   * <p>The method composes a memory operation string based on the size of the memory to be loaded
+   * and the extension mode.
+   * The format of the memory operation string varies depending on whether
+   * the extension mode requires a sign extension or zero extension.
+   *
+   * @return A string representing the memory operation flags. It includes the memory operation size
+   *       and, if applicable, the sign extension flag.
+   */
   public String tcgMemOp() {
     var first = "MO_" + size.width;
     return switch (extendMode) {
-        case SIGN -> "MO_SIGN | " + first ;
-        case ZERO -> first; // no second flag required
+      case SIGN -> "MO_SIGN | " + first;
+      case ZERO -> first; // no second flag required
     };
   }
 

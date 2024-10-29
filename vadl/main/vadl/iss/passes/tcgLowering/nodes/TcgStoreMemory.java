@@ -8,6 +8,10 @@ import vadl.iss.passes.tcgLowering.Tcg_8_16_32_64;
 import vadl.javaannotations.viam.DataValue;
 import vadl.viam.graph.Node;
 
+/**
+ * Represents a memory store operation in the Tiny Code Generation (TCG) framework.
+ * This class is a specific node type that encapsulates storing a value into memory.
+ */
 public class TcgStoreMemory extends TcgOpNode {
 
   @DataValue
@@ -17,6 +21,15 @@ public class TcgStoreMemory extends TcgOpNode {
   @DataValue
   TcgV addr;
 
+  /**
+   * Constructs a TcgStoreMemory operation node which is used to store a value into memory
+   * within the Tiny Code Generation (TCG) framework.
+   *
+   * @param size The size of the memory to write, represented by `Tcg_8_16_32_64`.
+   * @param mode The extension mode for the value, represented by `TcgExtend`.
+   * @param val  The value to be stored into memory, represented by `TcgV`.
+   * @param addr The address in memory where the value is to be stored, represented by `TcgV`.
+   */
   public TcgStoreMemory(Tcg_8_16_32_64 size,
                         TcgExtend mode,
                         TcgV val,
@@ -53,11 +66,17 @@ public class TcgStoreMemory extends TcgOpNode {
     return new TcgStoreMemory(size, extendMode, res, addr);
   }
 
+  /**
+   * Generates a memory operation string based on the size and extension mode.
+   *
+   * @return A string representing the memory operation with the appropriate
+   *       size and extension flag.
+   */
   public String tcgMemOp() {
     var first = "MO_" + size.width;
     return switch (extendMode) {
-        case SIGN -> "MO_SIGN | " + first ;
-        case ZERO -> first; // no second flag required
+      case SIGN -> "MO_SIGN | " + first;
+      case ZERO -> first; // no second flag required
     };
   }
 

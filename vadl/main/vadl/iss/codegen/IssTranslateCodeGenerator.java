@@ -7,9 +7,9 @@ import static vadl.utils.GraphUtils.getSingleNode;
 import java.io.StringWriter;
 import java.util.Arrays;
 import java.util.stream.Collectors;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import vadl.cppCodeGen.CodeGenerator;
+import vadl.cppCodeGen.mixins.CBuiltinMixin;
+import vadl.cppCodeGen.mixins.CMiscMixin;
 import vadl.cppCodeGen.mixins.CTypeCastMixin;
 import vadl.viam.Definition;
 import vadl.viam.Instruction;
@@ -25,7 +25,7 @@ import vadl.viam.graph.dependency.FieldRefNode;
  * in the {@link vadl.viam.InstructionSetArchitecture}.
  */
 public class IssTranslateCodeGenerator extends CodeGenerator
-    implements CTypeCastMixin, CTcgOpsMixin, CBuiltinMixin {
+    implements CTypeCastMixin, CTcgOpsMixin, CBuiltinMixin, CMiscMixin {
 
   public IssTranslateCodeGenerator(StringWriter writer) {
     super(writer);
@@ -94,6 +94,7 @@ public class IssTranslateCodeGenerator extends CodeGenerator
     castImpls(impls);
     tcgOpImpls(impls);
     builtinImpls(impls);
+    miscImpls(impls);
 
     impls.set(FieldRefNode.class, (node, writer) -> {
       writer.write("a->");

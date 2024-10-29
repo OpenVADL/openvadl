@@ -19,6 +19,11 @@ import vadl.viam.graph.dependency.WriteRegFileNode;
 import vadl.viam.graph.dependency.WriteResourceNode;
 import vadl.viam.passes.GraphProcessor;
 
+/**
+ * A pass that determines what nodes are turned into TCG nodes.
+ * This is the case for nodes that are based on some memory/resource access
+ * (in their dependency tree).
+ */
 public class IssTcgAnnotatePass extends Pass {
 
   public IssTcgAnnotatePass(GeneralConfiguration configuration) {
@@ -32,15 +37,19 @@ public class IssTcgAnnotatePass extends Pass {
 
   @Override
   public @Nonnull Result execute(PassResults passResults, Specification viam)
-      throws IOException {
+        throws IOException {
     var tcgNodes = viam.isa().get().ownInstructions().stream()
-        .flatMap(instr -> TcgAnnotator.runOn(instr.behavior()))
-        .collect(Collectors.toSet());
+          .flatMap(instr -> TcgAnnotator.runOn(instr.behavior()))
+          .collect(Collectors.toSet());
     return new Result(tcgNodes);
   }
 
+  /**
+   * Represents the result of the ISS TCG annotate pass.
+   * This result contains the set of nodes that are determined to be TCG nodes.
+   */
   public record Result(
-      Set<Node> tcgNodes
+        Set<Node> tcgNodes
   ) {
   }
 }
@@ -51,9 +60,9 @@ class TcgAnnotator extends GraphProcessor<Boolean> {
     var annotator = new TcgAnnotator();
     annotator.processGraph(graph, (n) -> n.usageCount() == 0);
     return annotator.processedNodes.entrySet().stream()
-        .filter(Map.Entry::getValue) // only annotated fields
-        .map(Map.Entry::getKey) // map to node
-        .distinct();
+          .filter(Map.Entry::getValue) // only annotated fields
+          .map(Map.Entry::getKey) // map to node
+          .distinct();
   }
 
   @Override
@@ -66,15 +75,15 @@ class TcgAnnotator extends GraphProcessor<Boolean> {
       // the address must be determined at "compile" time
       var addressRes = getResultOf(readRegFileNode.address(), Boolean.class);
       toProcess.ensure(!addressRes,
-          "node's address is not allowed to be tcg time but compile time annotated: %s",
-          readRegFileNode.address());
+            "node's address is not allowed to be tcg time but compile time annotated: %s",
+            readRegFileNode.address());
     }
 
     if (toProcess instanceof WriteRegFileNode writeResourceNode) {
       var addressRes = getResultOf(writeResourceNode.address(), Boolean.class);
       writeResourceNode.ensure(!addressRes,
-          "node's address is not allowed to be tcg time but compile time annotated: %s",
-          writeResourceNode.address()
+            "node's address is not allowed to be tcg time but compile time annotated: %s",
+            writeResourceNode.address()
       );
     }
     if (toProcess instanceof ReadResourceNode || toProcess instanceof WriteResourceNode) {
@@ -82,7 +91,7 @@ class TcgAnnotator extends GraphProcessor<Boolean> {
     } else {
       // In general a node is tcg if one of its inputs is tcg
       return toProcess.inputs()
-          .anyMatch(n -> getResultOf(n, Boolean.class));
+            .anyMatch(n -> getResultOf(n, Boolean.class));
     }
   }
 }

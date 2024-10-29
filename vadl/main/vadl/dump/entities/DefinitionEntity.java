@@ -78,6 +78,14 @@ public class DefinitionEntity extends DumpEntity {
     return parent.parentLevel() + 1;
   }
 
+  /**
+   * Generates a CSS ID for a given Definition entity.
+   * The ID is constructed by sanitizing the definition's name to replace non-word characters
+   * with underscores and appending the class name of the definition.
+   *
+   * @param def The Definition object for which the CSS ID is to be generated.
+   * @return A string representing the CSS-safe ID for the given Definition.
+   */
   public static String cssIdFor(Definition def) {
     var senatizedName = def.identifier.name()
         .replaceAll("[^\\w-]", "_");
