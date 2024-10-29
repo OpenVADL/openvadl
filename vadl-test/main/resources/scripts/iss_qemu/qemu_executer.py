@@ -1,20 +1,32 @@
 import asyncio
 import os
+import socket
 import time
 from typing import Optional
+import uuid
 from qemu.qmp import QMPClient, EventListener
+
+from utils import get_unique_sock_addr
 
 
 class QEMUExecuter:
 
-    def __init__(self, name: str, qemu_exec: str, port: int):
+    def __init__(self, name: str, qemu_exec: str):
         self.qemu_exec = qemu_exec
-        self.port = port
         self.qmp = QMPClient(name)
         self.listener = EventListener()
         self.qmp.register_listener(self.listener)
         self.event_handle_task = asyncio.Task(self._event_handler())
         self.logs = []
+        self.sock_addr = get_unique_sock_addr()
+
+    def __del__(self):
+        try:
+            # remove socket file if it exists
+            os.remove(self.sock_addr)
+        except Exception as e:
+            print(f"Error when removing sock: {e}")
+            pass
 
     async def execute(self, test_elf: str,
                       result_regs: list[str], 
@@ -33,12 +45,13 @@ class QEMUExecuter:
         return reg_results
 
     async def _start_qemu(self, test_elf: str):
-        qmp_addr = f"localhost:{self._get_qmp_port()}"
+        qmp_addr = f"unix:{self.sock_addr}"
+        qmp_conn = f"{qmp_addr},server=on,wait=off"
         self.process = await asyncio.create_subprocess_exec(
             self.qemu_exec,
             "-nographic",
             "-S",  # pause on start to wait for debugger
-            "-qmp", f"tcp:{qmp_addr},server=on,wait=off",
+            "-qmp", qmp_conn,
             "-machine", "virt",
             "-bios", test_elf,
             stdout=asyncio.subprocess.PIPE,
@@ -100,15 +113,12 @@ class QEMUExecuter:
 
     async def _connect_qmp(self, timeout_sec: int):
         # TODO: make try counter
-        qmp_port = self._get_qmp_port()
         first_time = time.time()
         while True:
             try:
-                # sleep 10ms before trying to (re)connect via QMP
-                await asyncio.sleep(0.01)
                 if (self.process.returncode is not None):
                     raise Exception(f"QEMU process has terminated with return code {self.process.returncode}")
-                await self.qmp.connect(("localhost", qmp_port))
+                await self.qmp.connect(self.sock_addr)
                 break
             except Exception as e:
                 if (time.time() - first_time) > timeout_sec:
@@ -175,3 +185,9 @@ async def _capture_logs(self):
 
     # Optionally, log that process has terminated
     self.logs.append("[INFO] Process terminated.")
+
+    async def _find_free_port(self):
+        s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        s.bind(('', 0))  # Bind to a free port provided by the host.
+        address, port = s.getsockname()
+        return s, port

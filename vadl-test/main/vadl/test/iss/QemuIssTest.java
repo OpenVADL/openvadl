@@ -125,12 +125,21 @@ public abstract class QemuIssTest extends DockerExecutionTest {
         .map(e -> DynamicTest.dynamicTest(e.id(),
             () -> {
               var testSpec = testCaseMap.get(e.id());
+              var success = IssTestUtils.TestResult.Status.PASS == e.status();
+              System.out.println("----------------");
               System.out.println("Test " + e.id());
               System.out.println("ASM: \n" + testSpec.asmCore());
-              System.out.println("-------");
-              System.out.println("Ran stages: " + e.completedStages());
+              System.out.println("\nRan stages: " + e.completedStages());
               System.out.println("Register tests: \n" + e.regTests());
               System.out.println("Duration: " + e.duration());
+              if (!success) {
+                for (var log : e.logs().entrySet()) {
+                  System.out.println("Logs of " + log.getKey() + ": ");
+                  log.getValue().stream().map((l) -> "- " + l)
+                      .forEach(System.out::println);
+                }
+              }
+              System.out.println("----------------");
 
               Assertions.assertEquals(IssTestUtils.TestResult.Status.PASS, e.status(),
                   String.join(",\n\t", e.errors()));

@@ -1,6 +1,9 @@
 import asyncio
+from pathlib import Path
 import sys
+import uuid
 
+QEMU_COMM_SOCKET_DIR = "/tmp/vadl-iss-socks"
 
 class RunCommandException(Exception):
 
@@ -28,3 +31,12 @@ async def run_cmd_fail(program, *args, expect_code: int = 0):
         cmd = f'{program} {" ".join(args)}'
         print(f"command `{cmd}` failed with: {stderr_decoded}", file=sys.stderr)
         raise RunCommandException(cmd, proc.returncode, stderr_decoded)
+
+
+def get_unique_sock_addr() -> str:
+    """
+    Returns the path to a unix socket. The socket will be unique.
+    """
+    Path(QEMU_COMM_SOCKET_DIR).mkdir(parents=True, exist_ok=True)
+    unique_filename = uuid.uuid4()  # Generate a unique UUID
+    return f"{QEMU_COMM_SOCKET_DIR}/{unique_filename}.sock"

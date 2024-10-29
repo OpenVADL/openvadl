@@ -32,6 +32,7 @@ public class IssTestUtils {
       TestResult.Status status,
       List<TestResult.Stage> completedStages,
       List<TestResult.RegTestResult> regTests,
+      Map<String, List<String>> logs,
       List<String> errors,
       String duration
   ) {
@@ -118,6 +119,7 @@ public class IssTestUtils {
                       .map(e -> TestResult.Stage.valueOf(e))
                       .toList();
               List<String> errors = (List<String>) result.get("errors");
+              Map<String, List<String>> logs = (Map<String, List<String>>) result.get("qemuLog");
               String duration = (String) result.get("duration");
               List<TestResult.RegTestResult> regTests =
                   ((Map<String, Object>) result.get("regTests")).entrySet()
@@ -128,7 +130,7 @@ public class IssTestUtils {
                             Objects.toString(val.get("actual")));
                       }).toList();
 
-              return new TestResult(id, status, completedStages, regTests, errors,
+              return new TestResult(id, status, completedStages, regTests, logs, errors,
                   duration);
             })
             .toList();
