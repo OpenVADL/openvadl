@@ -574,16 +574,12 @@ SDValue [(${namespace})]TargetLowering::getAddr(NodeTy *N, SelectionDAG &DAG, bo
     {
         report_fatal_error("Unsupported code model for lowering");
     }
-    }
-    /*
-    IF this.optionalLoadAddressSmall.isPresent» case CodeModel::Small:
+    case CodeModel::Small:
     {
         SDValue Addr = getTargetNode(N, DL, Ty, DAG, 0);
-        return SDValue(DAG.getMachineNode([(${namespace})]:: << this.optionalLoadAddressSmall.get.simpleName >>, DL, Ty, Addr), 0);
+        return SDValue(DAG.getMachineNode([(${namespace})]::[(${addressSequence.identifier.simpleName()})], DL, Ty, Addr), 0);
     }
-        ENDIF
     }
-    */
 }
 
 SDValue [(${namespace})]TargetLowering::lowerJumpTable(SDValue Op, SelectionDAG &DAG) const
