@@ -58,7 +58,7 @@ public class EmitISelLoweringCppFilePass extends LcbTemplateRenderingPass {
         GenerateRegisterClassesPass.class)).registerClasses();
     var framePointer = renderRegister(abi.framePointer().registerFile(), abi.framePointer().addr());
     var stackPointer = renderRegister(abi.stackPointer().registerFile(), abi.stackPointer().addr());
-    var addressSequence = abi.callSequence();
+    var addressSequence = abi.addressSequence();
 
     return Map.of(CommonVarNames.NAMESPACE, specification.simpleName(),
         "registerFiles", registerFiles,
