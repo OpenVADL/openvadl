@@ -98,12 +98,23 @@ public class TestUtils {
         );
   }
 
-
   /**
    * Results a (positive) big integer that represents a random sequence of bits with the
    * given bit-width.
    * The caller must ensure that only the bits within the specified bit-width are used.
    * So it is not ensured that the msb is 1.
+   *
+   * @param bitWidth the number of bits to generate.
+   * @return positive number with potentially zero bits within the bit-width
+   */
+  public static Arbitrary<BigInteger> arbitraryUnsignedInt(int bitWidth) {
+    return arbitraryBits(bitWidth);
+  }
+
+
+  /**
+   * Results a big integer that represents a random sequence of bits with the
+   * given bit-width.
    *
    * @param bitWidth the number of bits to generate.
    * @return positive number with potentially zero bits within the bit-width

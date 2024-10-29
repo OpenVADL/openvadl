@@ -21,10 +21,13 @@ class QEMUExecuter:
                       signal_reg: str, 
                       signal_content: str, 
                       timeout_sec: int):
+        print(f"[QEMU_EXECUTOR] Starting QEMU ({self.qemu_exec}) with {test_elf}")
         await self._start_qemu(test_elf)
         await self._connect_qmp(timeout_sec)
         await self.qmp.execute('cont')
+        print(f"[QEMU_EXECUTOR] Wait until test is finished... ", end="", flush=True)
         await self._wait_until_done(signal_reg, signal_content, timeout_sec)
+        print(f"done.")
         reg_results = await self._fetch_result_regs(result_regs)
         await self._shutdown()
         return reg_results
@@ -44,12 +47,16 @@ class QEMUExecuter:
         self.log_task = asyncio.create_task(self._capture_logs())
 
     async def _capture_logs(self):
-        async for line in self.process.stdout:
-            decoded_line = line.decode().strip()
-            self.logs.append(f"[STDOUT]{decoded_line}")
-        async for line in self.process.stderr:
-            decoded_line = line.decode().strip()
-            self.logs.append(f"[STDERR]{decoded_line}")
+        async def capture_stream(stream, prefix):
+            async for line in stream:
+                decoded_line = line.decode().strip()
+                self.logs.append(f"{prefix}{decoded_line}")
+
+        # Create tasks for capturing stdout and stderr concurrently
+        await asyncio.gather(
+            capture_stream(self.process.stdout, "[STDOUT]"),
+            capture_stream(self.process.stderr, "[STDERR]")
+        )
 
     async def _event_handler(self):
         try:
@@ -66,8 +73,10 @@ class QEMUExecuter:
         return result
         
 
-    async def _shutdown(self):
-        await self.qmp.execute('stop')
+    async def _shutdown(self, force: bool = False):
+        print(f"[QEMU_EXECUTOR] Shutting down QEMU")
+        if not force:
+            await self.qmp.execute('stop')
         self.event_handle_task.cancel()
         await self.event_handle_task
         if self.process.returncode is None:
@@ -82,10 +91,11 @@ class QEMUExecuter:
             sig_reg = await self._reg_info(signal_reg)
             if sig_reg.endswith(signal_content):
                 break
-
+    
             diff_time = poll_time - start_time
             if diff_time > timeout_sec:
-                await self._shutdown()
+                print(f"timed out.")
+                await self._shutdown(force=True)
                 raise Exception(f"Timeout: Timeout of finish signal {signal_content} in {signal_reg} ({diff_time:.4f}s)")
 
     async def _connect_qmp(self, timeout_sec: int):
@@ -130,3 +140,34 @@ class QEMUExecuter:
 
         # If register name is not found, return None
         return None
+
+
+
+async def _capture_logs(self):
+    async def capture_stream(stream, prefix):
+        while True:
+            line = await stream.readline()
+            if not line:  # EOF received, stream is closed
+                break
+            decoded_line = line.decode().strip()
+            self.logs.append(f"{prefix}{decoded_line}")
+
+    # Create tasks for capturing stdout and stderr concurrently
+    tasks = [
+        asyncio.create_task(capture_stream(self.process.stdout, "[STDOUT]")),
+        asyncio.create_task(capture_stream(self.process.stderr, "[STDERR]"))
+    ]
+
+    # Wait for the process to complete
+    await self.process.wait()
+
+    # Once the process is done, cancel the capturing tasks if still running
+    for task in tasks:
+        task.cancel()
+        try:
+            await task  # Await task to handle cancellation
+        except asyncio.CancelledError:
+            pass  # Task was cancelled, so we ignore the cancellation error
+
+    # Optionally, log that process has terminated
+    self.logs.append("[INFO] Process terminated.")

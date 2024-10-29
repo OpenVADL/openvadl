@@ -119,21 +119,23 @@ class AbstractTestCaseExecutor:
 
     def _check_ref_regs(self, vadl_reg_results: dict[str, str], ref_reg_results: dict[str, str]):
         result_reg_tests = self.test_result.reg_tests
+
         for reg, ref_val in ref_reg_results.items():
             ref_val = ref_val.lower().strip()
-            vadl_val = vadl_reg_results[reg].lower().strip()
+            vadl_val = vadl_reg_results.get(reg, "").lower().strip()  # Use get with default empty string
             if ref_val != vadl_val:
                 self._add_error(f'Reference register test {reg} failed: {vadl_val} (vadl) != {ref_val} (ref)')            
             
-            if result_reg_tests[reg] is None:
-                # add to results if not already there
-                result_reg_tests[reg]['expected'] = ref_val
+            # Properly check and initialize result_reg_tests[reg]
+            if reg not in result_reg_tests or result_reg_tests[reg] is None:
+                # Initialize with a dict if not already done
+                result_reg_tests[reg] = {'expected': ref_val}
             else:
                 stored_expected = result_reg_tests[reg]['expected'].lower().strip()
                 if stored_expected != ref_val:
                     # fail if the hardcoded value is different from the reference value
                     self._add_error(f'Invalid hardcoded reg {reg}: {stored_expected} (hardcoded) != {ref_val} (ref)')
-
+                    
     async def emit_result(self, dir: str = "results", prefix: str = "result-"):
         os.makedirs(dir, exist_ok=True)
         filename = f"{dir}/{prefix}{self.spec.id}.yaml"

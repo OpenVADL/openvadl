@@ -1,6 +1,7 @@
 package vadl.test.iss;
 
 import static vadl.test.TestUtils.arbitrarySignedInt;
+import static vadl.test.TestUtils.arbitraryUnsignedInt;
 
 import java.io.IOException;
 import java.util.HashMap;
@@ -23,6 +24,7 @@ import vadl.viam.Constant;
 public class IssRV64IInstrTest extends QemuIssTest {
 
   private static final String RISCV_QEMU_REF = "qemu-system-riscv64";
+  private static final int TESTS_PER_INSTRUCTION = 50;
   private static final Logger log = LoggerFactory.getLogger(IssRV64IInstrTest.class);
 
   @TestFactory
@@ -30,9 +32,35 @@ public class IssRV64IInstrTest extends QemuIssTest {
     return runTestsWith(IssRV64IInstrTest::gen12BitAddiTest);
   }
 
+
   @TestFactory
   Stream<DynamicTest> addiw() throws IOException {
     return runTestsWith(IssRV64IInstrTest::gen12BitAddiwTest);
+  }
+
+  @TestFactory
+  Stream<DynamicTest> lui() throws IOException {
+    return runTestsWith((id) -> {
+      var b = new RV64ITestBuilder("LUI_" + id);
+      var destReg = b.anyTempReg().sample();
+      var value = arbitraryUnsignedInt(20).sample();
+      b.add("lui %s, %s", destReg, value);
+      return b.toTestSpec(destReg);
+    });
+  }
+
+
+  @TestFactory
+  Stream<DynamicTest> ssli() throws IOException {
+    return runTestsWith((id) -> {
+      var b = new RV64ITestBuilder("SSLI_" + id);
+      var srcReg = b.anyTempReg().sample();
+      b.fillReg(srcReg, 64);
+      var destReg = b.anyTempReg().sample();
+      var shiftAmount = arbitraryUnsignedInt(6).sample();
+      b.add("slli %s, %s, %s", destReg, srcReg, shiftAmount);
+      return b.toTestSpec(srcReg, destReg);
+    });
   }
 
 
@@ -40,10 +68,8 @@ public class IssRV64IInstrTest extends QemuIssTest {
   private Stream<DynamicTest> runTestsWith(
       Function<Integer, IssTestUtils.TestSpec>... generators) throws IOException {
     var image = generateSimulator("sys/risc-v/rv64i.vadl");
-
-    var testNumberPerGenerator = 200;
     var testCases = Stream.of(generators)
-        .flatMap(genFunc -> IntStream.range(0, testNumberPerGenerator)
+        .flatMap(genFunc -> IntStream.range(0, TESTS_PER_INSTRUCTION)
             .mapToObj(genFunc::apply)
         )
         .toList();
@@ -52,7 +78,6 @@ public class IssRV64IInstrTest extends QemuIssTest {
 
 
   //// TEST CASE GENERATORS ////
-
 
   /**
    * Generates a random test that tests the ADDI instruction with 12-bit immediate values.
