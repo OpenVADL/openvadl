@@ -136,7 +136,7 @@ static inline void gen_trunc(TCGv dest, TCGv arg, int bitWidth) {
     if (bitWidth == 32) {
         tcg_gen_extrl_i64_i32((TCGv_i32) dest, arg);
     } else {
-        tcg_gen_andi_tl(dest, arg, (bitWidth << 1) - 1);
+        tcg_gen_andi_tl(dest, arg, (1ULL << bitWidth) - 1);
     }
 }
 
