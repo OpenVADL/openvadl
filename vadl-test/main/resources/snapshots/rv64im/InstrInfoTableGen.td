@@ -4088,7 +4088,7 @@ def CALL : Instruction
 let Namespace = "processorNameValue";
 
 let OutOperandList = ( outs  );
-let InOperandList = ( ins  );
+let InOperandList = ( ins bare_symbol:$symbol );
 
 let isTerminator  = 0;
 let isBranch      = 0;
@@ -4141,8 +4141,8 @@ def LLA : Instruction
 {
 let Namespace = "processorNameValue";
 
-let OutOperandList = ( outs X:$rx );
-let InOperandList = ( ins X:$rs );
+let OutOperandList = ( outs X:$rd );
+let InOperandList = ( ins bare_symbol:$symbol );
 
 let isTerminator  = 0;
 let isBranch      = 0;
@@ -4402,7 +4402,7 @@ def TAIL : Instruction
 let Namespace = "processorNameValue";
 
 let OutOperandList = ( outs  );
-let InOperandList = ( ins  );
+let InOperandList = ( ins bare_symbol:$symbol );
 
 let isTerminator  = 0;
 let isBranch      = 0;

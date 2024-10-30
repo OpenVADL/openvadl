@@ -41,6 +41,7 @@ import vadl.lcb.passes.llvmLowering.strategies.visitors.TableGenPatternLowerable
 import vadl.lcb.passes.llvmLowering.strategies.visitors.impl.ReplaceWithLlvmSDNodesVisitor;
 import vadl.lcb.passes.llvmLowering.tablegen.model.TableGenConstantOperand;
 import vadl.lcb.passes.llvmLowering.tablegen.model.TableGenInstruction;
+import vadl.lcb.passes.llvmLowering.tablegen.model.TableGenInstructionBareSymbolOperand;
 import vadl.lcb.passes.llvmLowering.tablegen.model.TableGenInstructionFrameRegisterOperand;
 import vadl.lcb.passes.llvmLowering.tablegen.model.TableGenInstructionImmediateLabelOperand;
 import vadl.lcb.passes.llvmLowering.tablegen.model.TableGenInstructionImmediateOperand;
@@ -66,6 +67,7 @@ import vadl.viam.graph.dependency.ConstantNode;
 import vadl.viam.graph.dependency.DependencyNode;
 import vadl.viam.graph.dependency.FieldAccessRefNode;
 import vadl.viam.graph.dependency.FieldRefNode;
+import vadl.viam.graph.dependency.FuncCallNode;
 import vadl.viam.graph.dependency.FuncParamNode;
 import vadl.viam.graph.dependency.ReadRegFileNode;
 import vadl.viam.graph.dependency.ReadRegNode;
@@ -414,11 +416,16 @@ public abstract class LlvmInstructionLoweringStrategy {
   public static List<TableGenInstructionOperand> getTableGenInputOperands(
       List<TableGenInstructionOperand> outputOperands,
       Graph graph) {
-    var set = outputOperands.stream().map(TableGenInstructionOperand::origin)
-        .collect(Collectors.toSet());
+    var set =
+        outputOperands.stream()
+            .filter(x -> x instanceof TableGenInstructionIndexedRegisterFileOperand)
+            .map(x -> {
+              var mapped = (TableGenInstructionIndexedRegisterFileOperand) x;
+              return mapped.parameter();
+            })
+            .collect(Collectors.toSet());
     return getInputOperands(graph)
         .stream()
-        .filter(node -> !set.contains(node))
         .filter(node -> {
           // Why?
           // Because LLVM cannot handle static registers in input or output operands.
@@ -428,7 +435,11 @@ public abstract class LlvmInstructionLoweringStrategy {
           }
           return true;
         }).map(LlvmInstructionLoweringStrategy::generateTableGenInputOutput)
-        .toList();
+        .filter(
+            // If the node is a fieldRefNode then it must not be in the outputs.
+            // Otherwise, ok.
+            node -> !(node instanceof TableGenInstructionIndexedRegisterFileOperand operand) ||
+                !set.contains(operand.parameter())).toList();
   }
 
   /**
@@ -447,11 +458,22 @@ public abstract class LlvmInstructionLoweringStrategy {
       return generateInstructionOperand(node);
     } else if (operand instanceof WriteRegFileNode node) {
       return generateInstructionOperand(node);
+    } else if (operand instanceof FuncParamNode node) {
+      return generateInstructionOperand(node);
     } else {
       throw Diagnostic.error(
           "Cannot construct a tablegen instruction operand from the type.",
           operand.sourceLocation()).build();
     }
+  }
+
+  /**
+   * Returns a {@link TableGenInstructionOperand} given a {@link Node}.
+   */
+  private static TableGenInstructionOperand generateInstructionOperand(FuncParamNode node) {
+    return new TableGenInstructionBareSymbolOperand(node,
+        "bare_symbol",
+        node.parameter().simpleName());
   }
 
   /**
@@ -554,9 +576,12 @@ public abstract class LlvmInstructionLoweringStrategy {
    * Most instruction's behaviors have inputs. Those are the results which the instruction requires.
    */
   private static List<Node> getInputOperands(Graph graph) {
-    return Stream.concat(graph.getNodes(ReadRegFileNode.class),
-            graph.getNodes(FieldAccessRefNode.class))
-        .map(x -> (Node) x).toList();
+    var x = graph.getNodes(ReadRegFileNode.class);
+    var y = graph.getNodes(FieldAccessRefNode.class);
+    var z = graph.getNodes(FuncCallNode.class).flatMap(
+        funcCallNode -> funcCallNode.function().behavior().getNodes(FuncParamNode.class));
+    return Stream.concat(Stream.concat(x, y), z)
+        .map(k -> (Node) k).toList();
   }
 
   /**

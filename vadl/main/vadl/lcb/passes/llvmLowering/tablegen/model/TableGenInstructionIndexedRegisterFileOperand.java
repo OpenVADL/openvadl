@@ -50,7 +50,7 @@ public class TableGenInstructionIndexedRegisterFileOperand extends TableGenInstr
     return registerFile;
   }
 
-  public Parameter formatField() {
+  public Parameter parameter() {
     return parameter;
   }
 }

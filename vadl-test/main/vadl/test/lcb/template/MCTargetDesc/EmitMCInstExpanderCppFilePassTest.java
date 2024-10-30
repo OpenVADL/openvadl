@@ -571,15 +571,15 @@ public class EmitMCInstExpanderCppFilePassTest extends AbstractLcbTest {
         MCInst a = MCInst();
         a.setOpcode(processorNameValue::LUI);
         a.addOperand(instruction.getOperand(0));
-        const MCExpr* b = MCOperandToMCExpr(instruction.getOperand(2));
+        const MCExpr* b = MCOperandToMCExpr(instruction.getOperand(1));
         MCOperand c = MCOperand::createExpr(processorNameValueMCExpr::create(b, processorNameValueMCExpr::VariantKind::VK_RV64IM_hi20, Ctx));
         a.addOperand(c);
         result.push_back(a);
         MCInst d = MCInst();
         d.setOpcode(processorNameValue::ADDI);
         d.addOperand(instruction.getOperand(0));
-        d.addOperand(instruction.getOperand(1));
-        const MCExpr* e = MCOperandToMCExpr(instruction.getOperand(2));
+        d.addOperand(instruction.getOperand(0));
+        const MCExpr* e = MCOperandToMCExpr(instruction.getOperand(1));
         MCOperand f = MCOperand::createExpr(processorNameValueMCExpr::create(e, processorNameValueMCExpr::VariantKind::VK_RV64IM_lo12, Ctx));
         d.addOperand(f);
         result.push_back(d);
