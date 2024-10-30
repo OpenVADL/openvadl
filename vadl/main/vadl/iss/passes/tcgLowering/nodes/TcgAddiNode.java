@@ -11,9 +11,8 @@ import vadl.viam.graph.dependency.ExpressionNode;
 public class TcgAddiNode extends TcgBinaryImmOpNode {
 
 
-  public TcgAddiNode(TcgV res, TcgV arg1, ExpressionNode arg2,
-                     TcgWidth width) {
-    super(res, arg1, arg2, width);
+  public TcgAddiNode(TcgV res, TcgV arg1, ExpressionNode arg2) {
+    super(res, arg1, arg2, res.width());
   }
 
   @Override
@@ -24,12 +23,12 @@ public class TcgAddiNode extends TcgBinaryImmOpNode {
   @Override
   public Node copy() {
     return new TcgAddiNode(
-        res, arg1, arg2.copy(ExpressionNode.class), width);
+        res, arg1, arg2.copy(ExpressionNode.class));
   }
 
   @Override
   public Node shallowCopy() {
-    return new TcgAddiNode(res, arg1, arg2, width);
+    return new TcgAddiNode(res, arg1, arg2);
   }
 
 }

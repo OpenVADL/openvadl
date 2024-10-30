@@ -40,7 +40,10 @@
 
 <!-- Right side - List of definitions -->
 <div class="w-full max-w-screen-xl p-4 overflow-auto h-screen">
-    <h1 id="specification" class="text-xl font-bold mb-4 tracking-wide">[[${title}]]</h1>
+    <div class="flex items-center justify-between" >
+        <h1 id="specification" class="text-xl font-bold mb-4 tracking-wide">[[${title}]]</h1>
+        <h3 class="text-sm mb-4 tracking-wide">([[${renderDatetime}]])</h3>
+    </div>
     <div class="mb-6 p-6 border border-gray-300 shadow rounded-md"
          style="max-width: 700px"
     >
@@ -250,4 +253,13 @@
 <script src="https://cdn.jsdelivr.net/npm/flowbite@2.5.1/dist/flowbite.min.js"></script>
 <script src="https://d3js.org/d3.v7.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/d3-graphviz/5.6.0/d3-graphviz.min.js"></script>
+<script>
+    window.onload = function() {
+        if (window.location.hash) {
+            // scroll to selected hash header on load
+            const element = document.querySelector(window.location.hash);
+            if (element) element.scrollIntoView();
+        }
+    };
+</script>
 </html>

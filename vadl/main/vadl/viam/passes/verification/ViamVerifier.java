@@ -38,7 +38,7 @@ public class ViamVerifier extends DefinitionVisitor.Recursive {
   /**
    * Calls the verify method on all nodes in the given subgraph.
    */
-  public static class Graph extends GraphProcessor {
+  public static class Graph extends GraphProcessor<Node> {
 
     public static void verifySubGraph(Node node) {
       new Graph().processNode(node);

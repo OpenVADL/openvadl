@@ -132,6 +132,13 @@ static void gen_goto_tb(DisasContext *ctx, target_long diff)
     tcg_gen_lookup_and_goto_ptr();
 }
 
+static inline void gen_trunc(TCGv dest, TCGv arg, int bitWidth) {
+    if (bitWidth == 32) {
+        tcg_gen_extrl_i64_i32((TCGv_i32) dest, arg);
+    } else {
+        tcg_gen_andi_tl(dest, arg, (int64_t)((1ULL << bitWidth) - 1));
+    }
+}
 
 /*
  * Instruction translation functions.

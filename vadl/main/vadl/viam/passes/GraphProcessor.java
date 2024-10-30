@@ -3,9 +3,11 @@ package vadl.viam.passes;
 import java.util.HashMap;
 import java.util.function.Function;
 import org.jetbrains.annotations.Nullable;
+import vadl.viam.ViamError;
 import vadl.viam.graph.Graph;
 import vadl.viam.graph.GraphVisitor;
 import vadl.viam.graph.Node;
+import vadl.viam.graph.ViamGraphError;
 
 /**
  * The GraphProcessor class is an abstract class that provides functionality for
@@ -17,8 +19,8 @@ import vadl.viam.graph.Node;
  * {@link #processUnprocessedNode(Node)} if the node was not yet processed.
  * To trigger processing of a node, the node should {@code accept(this)}.
  */
-public abstract class GraphProcessor implements GraphVisitor<Object> {
-  protected final HashMap<Node, Node> processedNodes = new HashMap<Node, Node>();
+public abstract class GraphProcessor<T> implements GraphVisitor<Object> {
+  protected final HashMap<Node, T> processedNodes = new HashMap<>();
 
   /**
    * Process the nodes in the graph that pass the given filter.
@@ -28,8 +30,8 @@ public abstract class GraphProcessor implements GraphVisitor<Object> {
    */
   protected void processGraph(Graph graph, Function<Node, Boolean> filter) {
     graph.getNodes()
-        .filter(filter::apply)
-        .forEach(this::processNode);
+          .filter(filter::apply)
+          .forEach(this::processNode);
   }
 
   /**
@@ -40,17 +42,28 @@ public abstract class GraphProcessor implements GraphVisitor<Object> {
    * @param toProcess The node to be processed
    * @return The processed node
    */
-  protected Node processNode(Node toProcess) {
+  protected T processNode(Node toProcess) {
     var resultNode = processedNodes.get(toProcess);
     if (resultNode != null) {
       return resultNode;
     }
-    resultNode = processUnprocessedNode(toProcess);
-    processedNodes.put(toProcess, resultNode);
-    return resultNode;
+    try {
+      resultNode = processUnprocessedNode(toProcess);
+      processedNodes.put(toProcess, resultNode);
+      return resultNode;
+    } catch (Exception e) {
+      // wrap exceptions in viam error
+      if (e instanceof ViamError) {
+        throw e;
+      }
+      throw new ViamGraphError("Exception during graph processing: " + e.getMessage(),
+            e)
+            .addContext(toProcess)
+            .addContext(toProcess.graph());
+    }
   }
 
-  protected abstract Node processUnprocessedNode(Node toProcess);
+  protected abstract T processUnprocessedNode(Node toProcess);
 
   @Nullable
   @Override
@@ -63,10 +76,11 @@ public abstract class GraphProcessor implements GraphVisitor<Object> {
   }
 
 
-  protected <T extends Node> T getResultOf(Node unprocessed, Class<T> clazz) {
-    var node = processedNodes.get(unprocessed);
-    unprocessed.ensure(node != null, "node not processed");
-    node.ensure(clazz.isInstance(node), "expected node to be instance of %s", clazz);
-    return clazz.cast(node);
+  protected <R extends T> R getResultOf(Node processedNode, Class<R> clazz) {
+    var result = processedNodes.get(processedNode);
+    processedNode.ensure(result != null, "node not processedNode");
+    ViamError.ensure(clazz.isInstance(result),
+          "expected result to be instance of %s, but was %s", clazz, result);
+    return clazz.cast(result);
   }
 }

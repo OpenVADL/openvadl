@@ -21,6 +21,11 @@ public class ViamGraphError extends ViamError {
     super(message.formatted(args));
   }
 
+
+  public ViamGraphError(String message, Throwable cause) {
+    super(message, cause);
+  }
+
   @Override
   public ViamGraphError addLocation(SourceLocation location) {
     super.addLocation(location);
@@ -69,11 +74,11 @@ public class ViamGraphError extends ViamError {
                                      Object... args) {
     if (!condition) {
       throw new ViamGraphError(fmt, args)
-          .addContext(graph)
-          .addContext(node1)
-          .addContext(node2)
-          .shrinkStacktrace(2)
-          ;
+        .addContext(graph)
+        .addContext(node1)
+        .addContext(node2)
+        .shrinkStacktrace(2)
+        ;
     }
   }
 

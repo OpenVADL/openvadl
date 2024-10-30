@@ -9,9 +9,8 @@ import vadl.viam.graph.Node;
  */
 public class TcgAddNode extends TcgBinaryOpNode {
 
-  public TcgAddNode(TcgV resVar, TcgV arg1, TcgV arg2,
-                    TcgWidth width) {
-    super(resVar, arg1, arg2, width);
+  public TcgAddNode(TcgV resVar, TcgV arg1, TcgV arg2) {
+    super(resVar, arg1, arg2, resVar.width());
   }
 
   @Override
@@ -21,11 +20,11 @@ public class TcgAddNode extends TcgBinaryOpNode {
 
   @Override
   public Node copy() {
-    return new TcgAddNode(res, arg1, arg2, width);
+    return new TcgAddNode(res, arg1, arg2);
   }
 
   @Override
   public Node shallowCopy() {
-    return new TcgAddNode(res, arg1, arg2, width);
+    return new TcgAddNode(res, arg1, arg2);
   }
 }

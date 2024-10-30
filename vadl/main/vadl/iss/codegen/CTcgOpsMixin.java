@@ -3,11 +3,17 @@ package vadl.iss.codegen;
 import java.io.StringWriter;
 import vadl.cppCodeGen.CodeGenerator;
 import vadl.cppCodeGen.mixins.CGenMixin;
+import vadl.iss.passes.tcgLowering.TcgExtend;
 import vadl.iss.passes.tcgLowering.nodes.TcgBinaryImmOpNode;
 import vadl.iss.passes.tcgLowering.nodes.TcgBinaryOpNode;
+import vadl.iss.passes.tcgLowering.nodes.TcgConstantNode;
+import vadl.iss.passes.tcgLowering.nodes.TcgExtendNode;
 import vadl.iss.passes.tcgLowering.nodes.TcgGetVar;
+import vadl.iss.passes.tcgLowering.nodes.TcgLoadMemory;
 import vadl.iss.passes.tcgLowering.nodes.TcgMoveNode;
 import vadl.iss.passes.tcgLowering.nodes.TcgSetRegFile;
+import vadl.iss.passes.tcgLowering.nodes.TcgStoreMemory;
+import vadl.iss.passes.tcgLowering.nodes.TcgTruncateNode;
 import vadl.viam.graph.Node;
 
 /**
@@ -32,13 +38,21 @@ public interface CTcgOpsMixin extends CGenMixin {
         .set(TcgMoveNode.class, (TcgMoveNode node, StringWriter writer) -> {
           writer.write("\ttcg_gen_mov_i" + node.width().width);
           writer.write("(" + node.res().varName());
-          writer.write(", " + node.arg1().varName() + ");\n");
+          writer.write(", " + node.arg().varName() + ");\n");
         })
 
         .set(TcgGetVar.TcgGetTemp.class, (TcgGetVar.TcgGetTemp node, StringWriter writer) -> {
           writer.write("\tTCGv_" + node.res().width() + " " + node.res().varName() + " = ");
           writer.write("tcg_temp_new_i" + node.res().width().width);
           writer.write("();\n");
+        })
+
+        .set(TcgConstantNode.class, (TcgConstantNode node, StringWriter writer) -> {
+          writer.write("\tTCGv_" + node.res().width() + " " + node.res().varName() + " = ");
+          writer.write(node.tcgFunctionName());
+          writer.write("(");
+          gen(node.arg());
+          writer.write(");\n");
         })
 
         .set(TcgSetRegFile.class, (TcgSetRegFile node, StringWriter writer) -> {
@@ -63,6 +77,40 @@ public interface CTcgOpsMixin extends CGenMixin {
           gen(node.arg2());
           writer.write(");\n");
         })
+
+        .set(TcgLoadMemory.class, (TcgLoadMemory node, StringWriter writer) -> {
+          writer.write("\t" + "tcg_gen_qemu_ld_i" + node.width().width);
+          writer.write("(" + node.res().varName());
+          writer.write(", " + node.addr().varName());
+          writer.write(", 0");
+          writer.write(", " + node.tcgMemOp());
+          writer.write(");\n");
+        })
+
+        .set(TcgStoreMemory.class, (TcgStoreMemory node, StringWriter writer) -> {
+          writer.write("\t" + "tcg_gen_qemu_st_i" + node.width().width);
+          writer.write("(" + node.val().varName());
+          writer.write(", " + node.addr().varName());
+          writer.write(", 0");
+          writer.write(", " + node.tcgMemOp());
+          writer.write(");\n");
+        })
+
+        .set(TcgExtendNode.class, (TcgExtendNode node, StringWriter writer) -> {
+          writer.write("\t" + node.tcgFunctionName());
+          writer.write("(" + node.res().varName());
+          writer.write(", " + node.arg().varName());
+          writer.write(");\n");
+        })
+
+        .set(TcgTruncateNode.class, (TcgTruncateNode node, StringWriter writer) -> {
+          writer.write("\t" + node.tcgFunctionName());
+          writer.write("(" + node.res().varName());
+          writer.write(", " + node.arg().varName());
+          writer.write(", " + node.bitWidth());
+          writer.write(");\n");
+        })
+
 
     ;
   }

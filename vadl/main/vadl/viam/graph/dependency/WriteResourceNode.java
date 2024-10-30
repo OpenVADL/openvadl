@@ -47,7 +47,6 @@ public abstract class WriteResourceNode extends SideEffectNode {
     return false;
   }
 
-  @Nullable
   public ExpressionNode address() {
     ensureNonNull(address, "Address is not set. Check hasAddress() first.");
     return address;

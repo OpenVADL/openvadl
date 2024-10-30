@@ -12,6 +12,5 @@ void helper_unsupported(CPUVADLState *env) {
 
     cs->exception_index = EXCP_HLT;
 
-    qemu_log("Unsupported instruction at %08llx\n", env->pc);
     cpu_loop_exit(cs);
 }

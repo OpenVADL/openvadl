@@ -19,6 +19,7 @@ import vadl.gcb.passes.typeNormalization.CppTypeNormalizationForDecodingsPass;
 import vadl.gcb.passes.typeNormalization.CppTypeNormalizationForEncodingsPass;
 import vadl.gcb.passes.typeNormalization.CppTypeNormalizationForPredicatesPass;
 import vadl.iss.passes.IssConfigurationPass;
+import vadl.iss.passes.IssTcgAnnotatePass;
 import vadl.iss.passes.IssVerificationPass;
 import vadl.iss.passes.tcgLowering.TcgLoweringPass;
 import vadl.iss.template.target.EmitIssCpuHeaderPass;
@@ -64,6 +65,15 @@ public class PassOrders {
    */
   public static PassOrder viam(GeneralConfiguration configuration) throws IOException {
     var order = new PassOrder();
+
+    if (configuration.doDump()) {
+      var config = HtmlDumpPass.Config.from(
+          configuration,
+          "VIAM Creation",
+          "Dump directly after the VIAM got created from the AST."
+      );
+      order.add(new HtmlDumpPass(config));
+    }
 
     order.add(new ViamVerificationPass(configuration));
 
@@ -308,9 +318,9 @@ public class PassOrders {
     order
         .add(new IssVerificationPass(config))
         .add(new IssConfigurationPass(config))
+        .add(new IssTcgAnnotatePass(config))
         .add(new TcgLoweringPass(config))
 
-        .add(new ViamVerificationPass(config))
     ;
 
 
@@ -319,6 +329,8 @@ public class PassOrders {
           This dump is executed after the iss transformation passes were executed.
           """)));
     }
+
+    order.add(new ViamVerificationPass(config));
 
     // add iss template emitting passes to order
     addIssEmitPasses(order, config);

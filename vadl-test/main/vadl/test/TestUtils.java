@@ -98,7 +98,6 @@ public class TestUtils {
         );
   }
 
-
   /**
    * Results a (positive) big integer that represents a random sequence of bits with the
    * given bit-width.
@@ -108,6 +107,18 @@ public class TestUtils {
    * @param bitWidth the number of bits to generate.
    * @return positive number with potentially zero bits within the bit-width
    */
+  public static Arbitrary<BigInteger> arbitraryUnsignedInt(int bitWidth) {
+    return arbitraryBits(bitWidth);
+  }
+
+
+  /**
+   * Results a big integer that represents a random sequence of bits with the
+   * given bit-width.
+   *
+   * @param bitWidth the number of bits to generate.
+   * @return number with potentially zero bits within the bit-width
+   */
   public static Arbitrary<BigInteger> arbitrarySignedInt(int bitWidth) {
     return Arbitraries.bigIntegers()
         .greaterOrEqual(BigInteger.valueOf(-2)
@@ -116,6 +127,19 @@ public class TestUtils {
             .pow(bitWidth - 1)
             .subtract(BigInteger.ONE)
         );
+  }
+
+  /**
+   * Results a big integer that represents a random sequence of bits between the given
+   * range.
+   * Both boundaries are inclusive.
+   *
+   * @return number with potentially zero bits within the bit-width
+   */
+  public static Arbitrary<BigInteger> arbitraryBetween(BigInteger min, BigInteger max) {
+    return Arbitraries.bigIntegers()
+        .greaterOrEqual(min)
+        .lessOrEqual(max);
   }
 
 

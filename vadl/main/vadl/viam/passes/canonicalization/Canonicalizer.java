@@ -10,7 +10,7 @@ import vadl.viam.passes.GraphProcessor;
  * Either it is applied to the whole graph, so the canonical form of all nodes is evaluated
  * and applied. Or it is applied to a subgraph (a node and all its inputs).
  */
-public class Canonicalizer extends GraphProcessor {
+public class Canonicalizer extends GraphProcessor<Node> {
 
   /**
    * Applies the canonicalization on the whole graph.

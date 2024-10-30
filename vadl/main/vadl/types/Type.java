@@ -6,6 +6,7 @@ import java.util.List;
 import java.util.Objects;
 import java.util.Set;
 import javax.annotation.Nullable;
+import vadl.viam.ViamError;
 
 /**
  * The top type of VADL's type system.
@@ -36,6 +37,11 @@ public abstract class Type {
 
   public final boolean isData() {
     return this instanceof DataType;
+  }
+
+  public final DataType asDataType() {
+    ViamError.ensure(isData(), "Not a data type: %s", this);
+    return (DataType) this;
   }
 
   @Override
