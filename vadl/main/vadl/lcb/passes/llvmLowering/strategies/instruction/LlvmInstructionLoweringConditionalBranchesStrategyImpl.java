@@ -13,7 +13,6 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Stream;
-import javax.annotation.Nullable;
 import vadl.lcb.codegen.model.llvm.ValueType;
 import vadl.lcb.passes.isaMatching.InstructionLabel;
 import vadl.lcb.passes.llvmLowering.domain.LlvmLoweringRecord;
@@ -83,8 +82,8 @@ public class LlvmInstructionLoweringConditionalBranchesStrategyImpl
       Instruction instruction,
       UninlinedGraph visitedGraph) {
 
-    var inputOperands = getTableGenInputOperands(visitedGraph);
     var outputOperands = getTableGenOutputOperands(visitedGraph);
+    var inputOperands = getTableGenInputOperands(outputOperands, visitedGraph);
     var flags = getFlags(visitedGraph);
 
     var writes = visitedGraph.getNodes(WriteResourceNode.class).toList();

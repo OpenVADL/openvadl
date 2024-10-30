@@ -15,8 +15,6 @@ import vadl.lcb.passes.llvmLowering.tablegen.model.TableGenPattern;
 import vadl.viam.Instruction;
 import vadl.viam.graph.Graph;
 import vadl.viam.graph.control.AbstractEndNode;
-import vadl.viam.graph.dependency.SideEffectNode;
-import vadl.viam.passes.functionInliner.UninlinedGraph;
 
 /**
  * Generates the {@link LlvmLoweringRecord} for {@link InstructionLabel#JALR}
@@ -46,8 +44,8 @@ public class LlvmInstructionLoweringIndirectJumpStrategyImpl
       visitor.visit(node);
     }
 
-    var inputOperands = getTableGenInputOperands(copy);
     var outputOperands = getTableGenOutputOperands(copy);
+    var inputOperands = getTableGenInputOperands(outputOperands, copy);
 
     // If a TableGen record has no input or output operands,
     // and no registers as def or use then it will throw an error.

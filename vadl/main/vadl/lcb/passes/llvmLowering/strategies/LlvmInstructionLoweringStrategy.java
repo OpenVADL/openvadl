@@ -13,6 +13,7 @@ import java.util.Optional;
 import java.util.Set;
 import java.util.function.BiFunction;
 import java.util.function.Function;
+import java.util.stream.Collectors;
 import java.util.stream.Stream;
 import javax.annotation.Nullable;
 import org.jetbrains.annotations.NotNull;
@@ -171,7 +172,6 @@ public abstract class LlvmInstructionLoweringStrategy {
       Map<InstructionLabel, List<Instruction>> supportedInstructions,
       PseudoInstruction pseudoInstruction,
       Instruction instruction,
-      InstructionLabel instructionLabel,
       Graph unmodifiedBehavior) {
     logger.atDebug().log("Lowering {} with {}", instruction.identifier.simpleName(),
         pseudoInstruction.identifier.simpleName());
@@ -225,8 +225,8 @@ public abstract class LlvmInstructionLoweringStrategy {
       isLowerable = false;
     }
 
-    var inputOperands = getTableGenInputOperands(copy);
     var outputOperands = getTableGenOutputOperands(copy);
+    var inputOperands = getTableGenInputOperands(outputOperands, copy);
     // If a TableGen record has no input or output operands,
     // and no registers as def or use then it will throw an error.
     // Therefore, when input and output operands are empty then do not filter any
@@ -376,11 +376,19 @@ public abstract class LlvmInstructionLoweringStrategy {
   }
 
   /**
-   * Extracts the input operands from the {@link Graph}.
+   * Extracts the input operands from the {@link Graph}. But it will skip nodes which are
+   * already a {@link Node} in the {@code outputOperands}. Because if you have a
+   * {@link PseudoInstruction} like {@code ADDI rd, rd, 1} then is the output and one input
+   * the same which tablegen will not accept.
    */
-  public static List<TableGenInstructionOperand> getTableGenInputOperands(Graph graph) {
+  public static List<TableGenInstructionOperand> getTableGenInputOperands(
+      List<TableGenInstructionOperand> outputOperands,
+      Graph graph) {
+    var set = outputOperands.stream().map(TableGenInstructionOperand::origin)
+        .collect(Collectors.toSet());
     return getInputOperands(graph)
         .stream()
+        .filter(node -> !set.contains(node))
         .filter(node -> {
           // Why?
           // Because LLVM cannot handle static registers in input or output operands.

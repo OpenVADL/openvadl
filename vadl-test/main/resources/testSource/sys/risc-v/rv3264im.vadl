@@ -388,12 +388,12 @@ $Arch3264 ( // ((((((((((((((((((((((((((((((((((((((((
 
   assembly BGTZ = (mnemonic, " ", register( rs ), ",", decimal( offset ))
 
-  pseudo instruction LLA( rx: Index, rs: Index, symbol : Bits<32> ) =
+  pseudo instruction LLA( rd: Index, symbol : Bits<32> ) =
   {
-      LUI { rd = rx, imm = hi20( symbol ) }
-      ADDI { rd = rx, rs1 = rs, imm = lo12( symbol ) }
+      LUI { rd = rd, imm = hi20( symbol ) }
+      ADDI { rd = rd, rs1 = rd, imm = lo12( symbol ) }
   }
-  assembly LLA = (mnemonic, " ", register(rs), hex( symbol ))
+  assembly LLA = (mnemonic, " ", register(rd), hex( symbol ))
   }
 
 
