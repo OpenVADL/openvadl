@@ -227,13 +227,9 @@ public abstract class LlvmInstructionLoweringStrategy {
 
     var outputOperands = getTableGenOutputOperands(copy);
     var inputOperands = getTableGenInputOperands(outputOperands, copy);
-    // If a TableGen record has no input or output operands,
-    // and no registers as def or use then it will throw an error.
-    // Therefore, when input and output operands are empty then do not filter any
-    // registers.
-    var filterRegistersWithConstraints = inputOperands.isEmpty() && outputOperands.isEmpty();
-    var registerUses = getRegisterUses(copy, filterRegistersWithConstraints);
-    var registerDefs = getRegisterDefs(copy, filterRegistersWithConstraints);
+
+    var registerUses = getRegisterUses(copy, inputOperands, outputOperands);
+    var registerDefs = getRegisterDefs(copy, inputOperands, outputOperands);
     var flags = getFlags(copy);
 
     copy.deinitializeNodes();
@@ -279,7 +275,7 @@ public abstract class LlvmInstructionLoweringStrategy {
    * @param behavior          of the {@link Instruction}.
    * @param filterConstraints whether registers with constraints should be considered.
    */
-  public static List<RegisterRef> getRegisterDefs(Graph behavior, boolean filterConstraints) {
+  private static List<RegisterRef> getRegisterDefs(Graph behavior, boolean filterConstraints) {
     return Stream.concat(behavior.getNodes(WriteRegNode.class)
                 .map(WriteRegNode::register)
                 .map(RegisterRef::new),
@@ -295,6 +291,23 @@ public abstract class LlvmInstructionLoweringStrategy {
   }
 
   /**
+   * Get a list of {@link RegisterRef} which are written. It is considered a
+   * register definition when a {@link WriteRegNode} or a {@link WriteRegFileNode} with a
+   * constant address exists. However, the only registers without any constraints on the
+   * register file will be returned.
+   */
+  public static List<RegisterRef> getRegisterDefs(Graph behavior,
+                                                  List<TableGenInstructionOperand> inputOperands,
+                                                  List<TableGenInstructionOperand> outputOperands) {
+    // If a TableGen record has no input or output operands,
+    // and no registers as def or use then it will throw an error.
+    // Therefore, when input and output operands are empty then do not filter any
+    // registers.
+    var filterRegistersWithConstraints = inputOperands.isEmpty() && outputOperands.isEmpty();
+    return getRegisterDefs(behavior, filterRegistersWithConstraints);
+  }
+
+  /**
    * Get a list of {@link RegisterRef} which are read. It is considered a
    * register usage when a {@link ReadRegNode} or a {@link ReadRegFileNode} with a
    * constant address exists. However, the only registers without any constraints on the
@@ -303,7 +316,7 @@ public abstract class LlvmInstructionLoweringStrategy {
    * @param behavior          of the {@link Instruction}.
    * @param filterConstraints whether registers with constraints should be considered.
    */
-  public static List<RegisterRef> getRegisterUses(Graph behavior, boolean filterConstraints) {
+  private static List<RegisterRef> getRegisterUses(Graph behavior, boolean filterConstraints) {
     return Stream.concat(behavior.getNodes(ReadRegNode.class)
                 .map(ReadRegNode::register)
                 .map(RegisterRef::new),
@@ -316,6 +329,23 @@ public abstract class LlvmInstructionLoweringStrategy {
         // need that LLVM knows about it because it should not be a dependency.
         .filter(register -> filterConstraints || register.constraints().isEmpty())
         .toList();
+  }
+
+  /**
+   * Get a list of {@link RegisterRef} which are read. It is considered a
+   * register usage when a {@link ReadRegNode} or a {@link ReadRegFileNode} with a
+   * constant address exists. However, the only registers without any constraints on the
+   * register file will be returned.
+   */
+  public static List<RegisterRef> getRegisterUses(Graph behavior,
+                                                  List<TableGenInstructionOperand> inputOperands,
+                                                  List<TableGenInstructionOperand> outputOperands) {
+    // If a TableGen record has no input or output operands,
+    // and no registers as def or use then it will throw an error.
+    // Therefore, when input and output operands are empty then do not filter any
+    // registers.
+    var filterRegistersWithConstraints = inputOperands.isEmpty() && outputOperands.isEmpty();
+    return getRegisterUses(behavior, filterRegistersWithConstraints);
   }
 
   /**

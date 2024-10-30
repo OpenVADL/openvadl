@@ -159,7 +159,6 @@ public class LlvmPseudoLoweringImpl {
         var tableGenRecord = strategy.lower(supportedInstructions,
             pseudo,
             callNode.target(),
-            label,
             instructionBehavior);
 
 
