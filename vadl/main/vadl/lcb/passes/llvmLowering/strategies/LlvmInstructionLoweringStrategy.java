@@ -438,8 +438,8 @@ public abstract class LlvmInstructionLoweringStrategy {
         .filter(
             // If the node is a fieldRefNode then it must not be in the outputs.
             // Otherwise, ok.
-            node -> !(node instanceof TableGenInstructionIndexedRegisterFileOperand operand) ||
-                !set.contains(operand.parameter())).toList();
+            node -> !(node instanceof TableGenInstructionIndexedRegisterFileOperand operand)
+                || !set.contains(operand.parameter())).toList();
   }
 
   /**
