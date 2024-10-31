@@ -34,6 +34,7 @@ import vadl.lcb.passes.llvmLowering.domain.machineDag.MachineInstructionParamete
 import vadl.lcb.passes.llvmLowering.domain.selectionDag.LlvmBasicBlockSD;
 import vadl.lcb.passes.llvmLowering.domain.selectionDag.LlvmBrCcSD;
 import vadl.lcb.passes.llvmLowering.domain.selectionDag.LlvmBrCondSD;
+import vadl.lcb.passes.llvmLowering.domain.selectionDag.LlvmBrSD;
 import vadl.lcb.passes.llvmLowering.domain.selectionDag.LlvmFieldAccessRefNode;
 import vadl.lcb.passes.llvmLowering.domain.selectionDag.LlvmFrameIndexSD;
 import vadl.lcb.passes.llvmLowering.domain.selectionDag.LlvmNodeReplaceable;
@@ -127,8 +128,9 @@ public abstract class LlvmInstructionLoweringStrategy {
         .anyMatch(node -> node.staticCounterAccess() != null);
 
     var isBranch = isTerminator
-        && graph.getNodes(Set.of(IfNode.class, LlvmBrCcSD.class, LlvmBrCondSD.class))
-        .findFirst().isPresent();
+        &&
+        graph.getNodes(Set.of(IfNode.class, LlvmBrCcSD.class, LlvmBrCondSD.class, LlvmBrSD.class))
+            .findFirst().isPresent();
 
     var isCall = false;
     var isReturn = false;
@@ -155,15 +157,15 @@ public abstract class LlvmInstructionLoweringStrategy {
    * Generate a lowering result for the given {@link Graph} for machine instructions.
    * If it is not lowerable then return {@link Optional#empty()}.
    *
-   * @param supportedInstructions the instructions which have known semantics.
+   * @param labelledMachineInstructions the instructions which have known semantics.
    * @param instruction           is the machine instruction which should be lowered.
    * @param unmodifiedBehavior    is the uninlined graph in the case of {@link Instruction}.
    */
   public Optional<LlvmLoweringRecord> lower(
-      Map<MachineInstructionLabel, List<Instruction>> supportedInstructions,
+      Map<MachineInstructionLabel, List<Instruction>> labelledMachineInstructions,
       Instruction instruction,
       UninlinedGraph unmodifiedBehavior) {
-    return lowerInstruction(supportedInstructions, instruction,
+    return lowerInstruction(labelledMachineInstructions, instruction,
         unmodifiedBehavior);
   }
 
@@ -171,13 +173,13 @@ public abstract class LlvmInstructionLoweringStrategy {
    * Lower a pseudo instruction.
    */
   public Optional<LlvmLoweringRecord> lower(
-      Map<MachineInstructionLabel, List<Instruction>> supportedInstructions,
+      Map<MachineInstructionLabel, List<Instruction>> labelledMachineInstructions,
       PseudoInstruction pseudoInstruction,
       Instruction instruction,
       Graph unmodifiedBehavior) {
     logger.atDebug().log("Lowering {} with {}", instruction.identifier.simpleName(),
         pseudoInstruction.identifier.simpleName());
-    return lowerInstruction(supportedInstructions, instruction,
+    return lowerInstruction(labelledMachineInstructions, instruction,
         unmodifiedBehavior);
   }
 
@@ -185,13 +187,13 @@ public abstract class LlvmInstructionLoweringStrategy {
    * Generate a lowering result for the given {@link Graph} for pseudo instructions.
    * If it is not lowerable then return {@link Optional#empty()}.
    *
-   * @param supportedInstructions the instructions which have known semantics.
+   * @param labelledMachineInstructions the instructions which have known semantics.
    * @param instruction           is the machine instruction which should be lowered.
    * @param unmodifiedBehavior    is the uninlined graph in the case of {@link Instruction} or
    *                              the applied graph in the case of {@link PseudoInstruction}.
    */
   protected Optional<LlvmLoweringRecord> lowerInstruction(
-      Map<MachineInstructionLabel, List<Instruction>> supportedInstructions,
+      Map<MachineInstructionLabel, List<Instruction>> labelledMachineInstructions,
       Instruction instruction,
       Graph unmodifiedBehavior) {
     var visitor = getVisitorForPatternSelectorLowering();
@@ -243,7 +245,7 @@ public abstract class LlvmInstructionLoweringStrategy {
       var alternativePatterns =
           generatePatternVariations(
               instruction,
-              supportedInstructions,
+              labelledMachineInstructions,
               copy,
               inputOperands,
               outputOperands,
@@ -667,5 +669,28 @@ public abstract class LlvmInstructionLoweringStrategy {
             occurrence.setInstructionOperand(operand);
           });
     }
+  }
+
+  /**
+   * Conditional and unconditional branch patterns reference the {@code bb} selection dag node.
+   * However, the machine instruction should use the label immediate to properly encode the
+   * instruction.
+   */
+  protected TableGenPattern replaceBasicBlockByLabelImmediateInMachineInstruction(
+      TableGenPattern pattern) {
+
+    if (pattern instanceof TableGenSelectionWithOutputPattern) {
+      // We know that the `selector` already has LlvmBasicBlock nodes.
+      var candidates = ((TableGenSelectionWithOutputPattern) pattern).machine().getNodes(
+          MachineInstructionParameterNode.class).toList();
+      for (var candidate : candidates) {
+        if (candidate.instructionOperand().origin() instanceof LlvmBasicBlockSD basicBlockSD) {
+          candidate.setInstructionOperand(new TableGenInstructionImmediateLabelOperand(
+              ParameterIdentity.fromBasicBlockToImmediateLabel(basicBlockSD), basicBlockSD));
+        }
+      }
+    }
+
+    return pattern;
   }
 }

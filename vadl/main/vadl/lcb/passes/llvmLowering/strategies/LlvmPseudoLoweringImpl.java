@@ -1,6 +1,7 @@
 package vadl.lcb.passes.llvmLowering.strategies;
 
 import com.google.common.collect.Streams;
+import java.io.Writer;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.IdentityHashMap;
@@ -25,11 +26,13 @@ import vadl.viam.Instruction;
 import vadl.viam.PseudoInstruction;
 import vadl.viam.graph.Graph;
 import vadl.viam.graph.HasRegisterFile;
+import vadl.viam.graph.Node;
 import vadl.viam.graph.control.InstrCallNode;
 import vadl.viam.graph.dependency.ConstantNode;
 import vadl.viam.graph.dependency.ExpressionNode;
 import vadl.viam.graph.dependency.FieldRefNode;
 import vadl.viam.graph.dependency.FuncParamNode;
+import vadl.viam.graph.dependency.WriteRegFileNode;
 
 /**
  * Whereas {@link LlvmInstructionLoweringStrategy} defines multiple to lower {@link Instruction}
@@ -52,9 +55,9 @@ public class LlvmPseudoLoweringImpl {
    */
   public Optional<LlvmLoweringPseudoRecord> lower(
       PseudoInstruction pseudo,
-      Map<MachineInstructionLabel, List<Instruction>> supportedInstructions) {
+      Map<MachineInstructionLabel, List<Instruction>> labelledMachineInstructions) {
     var patterns = new ArrayList<TableGenPattern>();
-    var flippedInstructions = LlvmLoweringPass.flipIsaMatching(supportedInstructions);
+    var flippedInstructions = LlvmLoweringPass.flipIsaMatching(labelledMachineInstructions);
 
     var uses = new ArrayList<RegisterRef>();
     var defs = new ArrayList<RegisterRef>();
@@ -117,7 +120,7 @@ public class LlvmPseudoLoweringImpl {
                   // }
 
                   if (argument instanceof ConstantNode constantNode) {
-                    // The constantNode tells me the register index.
+                    // The constantNode tells me that it will be used as a register index.
 
                     // Go over the usages to emit warnings.
                     // We need the usage because we need to find out what the register file
@@ -138,8 +141,23 @@ public class LlvmPseudoLoweringImpl {
                                 occurrence.sourceLocation()).build());
                           }
                         });
+
+                    occurrence.replaceAndDelete(argument.copy());
+
+                    // After the replacement, we can check whether we have a write node with
+                    // constant node as address which has a constraint. If that's the case, then we
+                    // can remove the side effect.
+                    occurrence.usages()
+                        .filter(node -> node instanceof WriteRegFileNode writeRegFileNode
+                            && writeRegFileNode.hasConstantAddress()
+                            // Check if there is a constraint for this register index.
+                            && Arrays.stream(writeRegFileNode.registerFile().constraints())
+                            .anyMatch(constraint -> constraint.address().intValue() ==
+                                constantNode.constant().asVal().intValue()))
+                        .forEach(Node::safeDelete);
+                  } else {
+                    occurrence.replaceAndDelete(argument.copy());
                   }
-                  occurrence.replaceAndDelete(argument.copy());
                 });
           });
 
@@ -150,13 +168,12 @@ public class LlvmPseudoLoweringImpl {
         continue;
       }
 
-
       for (var strategy : strategies) {
         if (!strategy.isApplicable(label)) {
           continue;
         }
 
-        var tableGenRecord = strategy.lower(supportedInstructions,
+        var tableGenRecord = strategy.lower(labelledMachineInstructions,
             pseudo,
             callNode.target(),
             instructionBehavior);

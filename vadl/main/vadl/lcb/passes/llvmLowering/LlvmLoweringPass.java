@@ -13,8 +13,10 @@ import org.jetbrains.annotations.Nullable;
 import vadl.configuration.LcbConfiguration;
 import vadl.error.Diagnostic;
 import vadl.lcb.codegen.model.llvm.ValueType;
+import vadl.lcb.passes.isaMatching.IsaPseudoInstructionMatchingPass;
 import vadl.lcb.passes.isaMatching.MachineInstructionLabel;
 import vadl.lcb.passes.isaMatching.IsaMachineInstructionMatchingPass;
+import vadl.lcb.passes.isaMatching.PseudoInstructionLabel;
 import vadl.lcb.passes.llvmLowering.domain.LlvmLoweringRecord;
 import vadl.lcb.passes.llvmLowering.strategies.LlvmInstructionLoweringStrategy;
 import vadl.lcb.passes.llvmLowering.strategies.LlvmPseudoLoweringImpl;
@@ -25,6 +27,7 @@ import vadl.lcb.passes.llvmLowering.strategies.instruction.LlvmInstructionLoweri
 import vadl.lcb.passes.llvmLowering.strategies.instruction.LlvmInstructionLoweringIndirectJumpStrategyImpl;
 import vadl.lcb.passes.llvmLowering.strategies.instruction.LlvmInstructionLoweringMemoryLoadStrategyImpl;
 import vadl.lcb.passes.llvmLowering.strategies.instruction.LlvmInstructionLoweringMemoryStoreStrategyImpl;
+import vadl.lcb.passes.llvmLowering.strategies.instruction.LlvmInstructionLoweringUnconditionalJumpsStrategyImpl;
 import vadl.lcb.passes.llvmLowering.tablegen.model.TableGenInstruction;
 import vadl.pass.Pass;
 import vadl.pass.PassName;
@@ -74,9 +77,13 @@ public class LlvmLoweringPass extends Pass {
   @Nullable
   @Override
   public Object execute(PassResults passResults, Specification viam) throws IOException {
-    var supportedInstructions = ensureNonNull(
+    var labelledMachineInstructions = ensureNonNull(
         (HashMap<MachineInstructionLabel, List<Instruction>>) passResults.lastResultOf(
             IsaMachineInstructionMatchingPass.class),
+        () -> Diagnostic.error("Cannot find semantics of the instructions", viam.sourceLocation()));
+    var labelledPseudoInstructions = ensureNonNull(
+        (HashMap<PseudoInstructionLabel, List<PseudoInstruction>>) passResults.lastResultOf(
+            IsaPseudoInstructionMatchingPass.class),
         () -> Diagnostic.error("Cannot find semantics of the instructions", viam.sourceLocation()));
     var abi = (DummyAbi) viam.definitions().filter(x -> x instanceof DummyAbi).findFirst().get();
 
@@ -87,6 +94,7 @@ public class LlvmLoweringPass extends Pass {
         List.of(
             new LlvmInstructionLoweringAddImmediateStrategyImpl(architectureType),
             new LlvmInstructionLoweringConditionalsStrategyImpl(architectureType),
+            new LlvmInstructionLoweringUnconditionalJumpsStrategyImpl(architectureType),
             new LlvmInstructionLoweringConditionalBranchesStrategyImpl(architectureType),
             new LlvmInstructionLoweringIndirectJumpStrategyImpl(architectureType),
             new LlvmInstructionLoweringMemoryStoreStrategyImpl(architectureType),
@@ -94,9 +102,10 @@ public class LlvmLoweringPass extends Pass {
             new LlvmInstructionLoweringDefaultStrategyImpl(architectureType));
 
     var machineRecords =
-        generateRecordsForMachineInstructions(passResults, viam, strategies, supportedInstructions);
+        generateRecordsForMachineInstructions(passResults, viam, strategies,
+            labelledMachineInstructions);
     var pseudoRecords =
-        generateRecordsForPseudoInstructions(viam, strategies, supportedInstructions);
+        generateRecordsForPseudoInstructions(viam, strategies, labelledMachineInstructions);
 
     return new LlvmLoweringPassResult(machineRecords, pseudoRecords);
   }
@@ -105,7 +114,7 @@ public class LlvmLoweringPass extends Pass {
   private IdentityHashMap<Instruction, LlvmLoweringRecord> generateRecordsForMachineInstructions(
       PassResults passResults, Specification viam,
       List<LlvmInstructionLoweringStrategy> strategies,
-      Map<MachineInstructionLabel, List<Instruction>> supportedInstructions) {
+      Map<MachineInstructionLabel, List<Instruction>> labelledMachineInstructions) {
     var tableGenRecords = new IdentityHashMap<Instruction, LlvmLoweringRecord>();
 
     // Get the supported instructions from the matching.
@@ -119,7 +128,7 @@ public class LlvmLoweringPass extends Pass {
     // We flip it because we need to know the label for the instruction to
     // apply one of the different lowering strategies.
     // A strategy knows whether it can lower it by the label.
-    var instructionLookup = flipIsaMatching(supportedInstructions);
+    var instructionLookup = flipIsaMatching(labelledMachineInstructions);
 
     viam.isa().map(isa -> isa.ownInstructions().stream()).orElseGet(Stream::empty)
         .forEach(instruction -> {
@@ -132,7 +141,7 @@ public class LlvmLoweringPass extends Pass {
               continue;
             }
 
-            var record = strategy.lower(supportedInstructions,
+            var record = strategy.lower(labelledMachineInstructions,
                 instruction,
                 uninlinedBehavior);
 
@@ -153,13 +162,13 @@ public class LlvmLoweringPass extends Pass {
       LlvmLoweringRecord> generateRecordsForPseudoInstructions(
       Specification viam,
       List<LlvmInstructionLoweringStrategy> strategies,
-      Map<MachineInstructionLabel, List<Instruction>> supportedInstructions) {
+      Map<MachineInstructionLabel, List<Instruction>> labelledMachineInstructions) {
     var tableGenRecords = new IdentityHashMap<PseudoInstruction, LlvmLoweringRecord>();
     var pseudoLowering = new LlvmPseudoLoweringImpl(strategies);
 
     viam.isa().map(isa -> isa.ownPseudoInstructions().stream()).orElseGet(Stream::empty)
         .forEach(pseudo -> {
-          var record = pseudoLowering.lower(pseudo, supportedInstructions);
+          var record = pseudoLowering.lower(pseudo, labelledMachineInstructions);
 
           // Okay, we have to save record.
           record.ifPresent(llvmLoweringIntermediateResult -> tableGenRecords.put(pseudo,

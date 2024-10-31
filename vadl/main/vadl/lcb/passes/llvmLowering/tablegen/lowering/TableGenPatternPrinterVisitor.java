@@ -9,6 +9,7 @@ import vadl.lcb.passes.llvmLowering.LlvmNodeLowerable;
 import vadl.lcb.passes.llvmLowering.domain.selectionDag.LlvmBasicBlockSD;
 import vadl.lcb.passes.llvmLowering.domain.selectionDag.LlvmBrCcSD;
 import vadl.lcb.passes.llvmLowering.domain.selectionDag.LlvmBrCondSD;
+import vadl.lcb.passes.llvmLowering.domain.selectionDag.LlvmBrSD;
 import vadl.lcb.passes.llvmLowering.domain.selectionDag.LlvmExtLoad;
 import vadl.lcb.passes.llvmLowering.domain.selectionDag.LlvmFieldAccessRefNode;
 import vadl.lcb.passes.llvmLowering.domain.selectionDag.LlvmLoadSD;
@@ -298,6 +299,14 @@ public class TableGenPatternPrinterVisitor
   @Override
   public void visit(TruncateNode node) {
 
+  }
+
+  @Override
+  public void visit(LlvmBrSD node) {
+    writer.write("(");
+    writer.write(node.lower() + " ");
+    visit(node.bb());
+    writer.write(")");
   }
 
   @Override

@@ -61,7 +61,7 @@ public class LlvmInstructionLoweringConditionalBranchesStrategyImpl
 
   @Override
   public Optional<LlvmLoweringRecord> lower(
-      Map<MachineInstructionLabel, List<Instruction>> supportedInstructions,
+      Map<MachineInstructionLabel, List<Instruction>> labelledMachineInstructions,
       Instruction instruction,
       UninlinedGraph uninlinedBehavior) {
 
@@ -74,7 +74,7 @@ public class LlvmInstructionLoweringConditionalBranchesStrategyImpl
 
     copy.deinitializeNodes();
     return Optional.of(
-        createIntermediateResult(supportedInstructions, instruction, copy));
+        createIntermediateResult(labelledMachineInstructions, instruction, copy));
   }
 
   private LlvmLoweringRecord createIntermediateResult(
@@ -112,27 +112,7 @@ public class LlvmInstructionLoweringConditionalBranchesStrategyImpl
     );
   }
 
-  /**
-   * Conditional branch patterns reference the {@code bb} selection dag node. However,
-   * the machine instruction should use the label immediate to properly encode the instruction.
-   */
-  private TableGenPattern replaceBasicBlockByLabelImmediateInMachineInstruction(
-      TableGenPattern pattern) {
 
-    if (pattern instanceof TableGenSelectionWithOutputPattern) {
-      // We know that the `selector` already has LlvmBasicBlock nodes.
-      var candidates = ((TableGenSelectionWithOutputPattern) pattern).machine().getNodes(
-          MachineInstructionParameterNode.class).toList();
-      for (var candidate : candidates) {
-        if (candidate.instructionOperand().origin() instanceof LlvmBasicBlockSD basicBlockSD) {
-          candidate.setInstructionOperand(new TableGenInstructionImmediateLabelOperand(
-              ParameterIdentity.fromBasicBlockToImmediateLabel(basicBlockSD), basicBlockSD));
-        }
-      }
-    }
-
-    return pattern;
-  }
 
   @Override
   protected List<TableGenPattern> generatePatternVariations(

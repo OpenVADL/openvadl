@@ -34,7 +34,7 @@ public class LlvmInstructionLoweringIndirectJumpStrategyImpl
 
   @Override
   protected Optional<LlvmLoweringRecord> lowerInstruction(
-      Map<MachineInstructionLabel, List<Instruction>> supportedInstructions,
+      Map<MachineInstructionLabel, List<Instruction>> labelledMachineInstructions,
       Instruction instruction,
       Graph unmodifiedBehavior) {
     var copy = unmodifiedBehavior.copy();

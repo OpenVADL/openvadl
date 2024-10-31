@@ -3,6 +3,7 @@ package vadl.lcb.passes.llvmLowering.strategies.visitors;
 import vadl.lcb.passes.llvmLowering.domain.selectionDag.LlvmBasicBlockSD;
 import vadl.lcb.passes.llvmLowering.domain.selectionDag.LlvmBrCcSD;
 import vadl.lcb.passes.llvmLowering.domain.selectionDag.LlvmBrCondSD;
+import vadl.lcb.passes.llvmLowering.domain.selectionDag.LlvmBrSD;
 import vadl.lcb.passes.llvmLowering.domain.selectionDag.LlvmExtLoad;
 import vadl.lcb.passes.llvmLowering.domain.selectionDag.LlvmFieldAccessRefNode;
 import vadl.lcb.passes.llvmLowering.domain.selectionDag.LlvmLoadSD;
@@ -18,6 +19,11 @@ import vadl.lcb.visitors.LcbGraphNodeVisitor;
  * Visitor for TableGen patterns.
  */
 public interface TableGenNodeVisitor extends LcbGraphNodeVisitor {
+  /**
+   * Visit {@link LlvmBrSD}.
+   */
+  void visit(LlvmBrSD node);
+
   /**
    * Visit {@link LlvmBrCcSD}.
    */
