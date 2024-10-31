@@ -10,7 +10,7 @@ import java.util.Optional;
 import vadl.error.DeferredDiagnosticStore;
 import vadl.error.Diagnostic;
 import vadl.gcb.passes.pseudo.PseudoFuncParamNode;
-import vadl.lcb.passes.isaMatching.InstructionLabel;
+import vadl.lcb.passes.isaMatching.MachineInstructionLabel;
 import vadl.lcb.passes.llvmLowering.LlvmLoweringPass;
 import vadl.lcb.passes.llvmLowering.domain.LlvmLoweringPseudoRecord;
 import vadl.lcb.passes.llvmLowering.domain.LlvmLoweringRecord;
@@ -52,7 +52,7 @@ public class LlvmPseudoLoweringImpl {
    */
   public Optional<LlvmLoweringPseudoRecord> lower(
       PseudoInstruction pseudo,
-      Map<InstructionLabel, List<Instruction>> supportedInstructions) {
+      Map<MachineInstructionLabel, List<Instruction>> supportedInstructions) {
     var patterns = new ArrayList<TableGenPattern>();
     var flippedInstructions = LlvmLoweringPass.flipIsaMatching(supportedInstructions);
 

@@ -1,0 +1,70 @@
+package vadl.test.lcb.passes;
+
+import static org.junit.jupiter.api.Assertions.assertEquals;
+
+import java.io.IOException;
+import java.util.HashMap;
+import java.util.List;
+import java.util.stream.Stream;
+import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.Arguments;
+import org.junit.jupiter.params.provider.MethodSource;
+import vadl.lcb.passes.isaMatching.MachineInstructionLabel;
+import vadl.lcb.passes.isaMatching.IsaMachineInstructionMatchingPass;
+import vadl.pass.PassKey;
+import vadl.pass.exception.DuplicatedPassKeyException;
+import vadl.test.lcb.AbstractLcbTest;
+import vadl.viam.Definition;
+import vadl.viam.Instruction;
+
+public class IsaMachineInstructionMatchingPassTest extends AbstractLcbTest {
+
+  private static Stream<Arguments> getExpectedMatchings() {
+    return Stream.of(
+        Arguments.of(List.of("ADD"), MachineInstructionLabel.ADD_64),
+        Arguments.of(List.of("ADDI"), MachineInstructionLabel.ADDI_64),
+        Arguments.of(List.of("BEQ"), MachineInstructionLabel.BEQ),
+        Arguments.of(List.of("BNE"), MachineInstructionLabel.BNEQ),
+        Arguments.of(List.of("BGE", "BGEU"), MachineInstructionLabel.BGEQ),
+        Arguments.of(List.of("BLT", "BLTU"), MachineInstructionLabel.BLTH),
+        Arguments.of(List.of("AND", "ANDI"), MachineInstructionLabel.AND),
+        Arguments.of(List.of("SUB", "SUBW"), MachineInstructionLabel.SUB),
+        Arguments.of(List.of("OR", "ORI"), MachineInstructionLabel.OR),
+        Arguments.of(List.of("XOR"), MachineInstructionLabel.XOR),
+        Arguments.of(List.of("XORI"), MachineInstructionLabel.XORI),
+        Arguments.of(List.of("MUL", "MULW", "MULHSU", "MULH"), MachineInstructionLabel.MUL),
+        Arguments.of(List.of("DIV", "DIVW"), MachineInstructionLabel.SDIV),
+        Arguments.of(List.of("DIVU", "DIVUW"), MachineInstructionLabel.UDIV),
+        Arguments.of(List.of("REMU", "REMUW"), MachineInstructionLabel.UMOD),
+        Arguments.of(List.of("REM", "REMW"), MachineInstructionLabel.SMOD),
+        Arguments.of(List.of("SLT", "SLTU", "SLTI", "SLTIU"), MachineInstructionLabel.LT),
+        Arguments.of(List.of("LB", "LBU", "LD", "LH", "LHU", "LW", "LWU"),
+            MachineInstructionLabel.LOAD_MEM),
+        Arguments.of(List.of("SB", "SD", "SH", "SW"), MachineInstructionLabel.STORE_MEM),
+        Arguments.of(List.of("JALR"), MachineInstructionLabel.JALR),
+        Arguments.of(List.of("JAL"), MachineInstructionLabel.JAL)
+    );
+  }
+
+  @ParameterizedTest
+  @MethodSource("getExpectedMatchings")
+  void shouldFindMatchings(List<String> expectedInstructionName, MachineInstructionLabel label)
+      throws IOException, DuplicatedPassKeyException {
+    // Given
+    var setup = runLcb(getConfiguration(false), "sys/risc-v/rv64im.vadl",
+        new PassKey(IsaMachineInstructionMatchingPass.class.getName()));
+    var passManager = setup.passManager();
+
+    // When
+    var matchings =
+        (HashMap<MachineInstructionLabel, List<Instruction>>) passManager.getPassResults()
+            .lastResultOf(IsaMachineInstructionMatchingPass.class);
+
+    // Then
+    Assertions.assertNotNull(matchings);
+    Assertions.assertFalse(matchings.isEmpty());
+    var result = matchings.get(label).stream().map(Definition::simpleName).sorted().toList();
+    assertEquals(expectedInstructionName.stream().sorted().toList(), result);
+  }
+}

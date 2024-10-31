@@ -38,18 +38,14 @@ import static vadl.viam.ViamError.ensure;
 import static vadl.viam.ViamError.ensureNonNull;
 
 import java.io.IOException;
-import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.IdentityHashMap;
 import java.util.List;
-import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
-import java.util.function.Supplier;
 import org.jetbrains.annotations.Nullable;
 import vadl.configuration.LcbConfiguration;
 import vadl.error.Diagnostic;
-import vadl.error.DiagnosticBuilder;
 import vadl.pass.Pass;
 import vadl.pass.PassName;
 import vadl.pass.PassResults;
@@ -59,11 +55,9 @@ import vadl.types.Type;
 import vadl.viam.Counter;
 import vadl.viam.Instruction;
 import vadl.viam.InstructionSetArchitecture;
-import vadl.viam.Register;
 import vadl.viam.Specification;
 import vadl.viam.graph.control.IfNode;
 import vadl.viam.graph.dependency.BuiltInCall;
-import vadl.viam.graph.dependency.ReadMemNode;
 import vadl.viam.graph.dependency.WriteMemNode;
 import vadl.viam.graph.dependency.WriteRegFileNode;
 import vadl.viam.graph.dependency.WriteRegNode;
@@ -86,20 +80,20 @@ import vadl.viam.passes.functionInliner.UninlinedGraph;
  * instruction and create a mapping from LLVM's SelectionDag to the machine instruction.
  * Most instructions in an instruction set architecture will be "simple" and
  * a lot of them are required in almost every instruction set architecture. The goal
- * of {@link IsaMatchingPass} to label instructions which can be recognized.
+ * of {@link IsaMachineInstructionMatchingPass} to label instructions which can be recognized.
  * Why is this useful?
  * At some places, we need to create machine instructions by hand in LLVM, and we need to
  * know which instructions are supported by instruction set. This labelling makes it much
  * easier to search for these instructions.
  */
-public class IsaMatchingPass extends Pass {
-  public IsaMatchingPass(LcbConfiguration configuration) {
+public class IsaMachineInstructionMatchingPass extends Pass implements IsaMatchingUtils {
+  public IsaMachineInstructionMatchingPass(LcbConfiguration configuration) {
     super(configuration);
   }
 
   @Override
   public PassName getName() {
-    return new PassName("IsaMatchingPass");
+    return new PassName("IsaMachineInstructionMatchingPass");
   }
 
   @Nullable
@@ -112,7 +106,7 @@ public class IsaMatchingPass extends Pass {
         (IdentityHashMap<Instruction, UninlinedGraph>) passResults
             .lastResultOf(FunctionInlinerPass.class);
     Objects.requireNonNull(uninlined);
-    HashMap<InstructionLabel, List<Instruction>> matched = new HashMap<>();
+    HashMap<MachineInstructionLabel, List<Instruction>> matched = new HashMap<>();
 
     var isa = viam.isa().orElse(null);
     if (isa == null) {
@@ -136,67 +130,67 @@ public class IsaMatchingPass extends Pass {
       // the instruction selection will figure out the types anyway.
       // The raw cases where we need the type are typed like addition.
       if (findAdd32Bit(behavior)) {
-        matched.put(InstructionLabel.ADD_32, List.of(instruction));
+        matched.put(MachineInstructionLabel.ADD_32, List.of(instruction));
       } else if (findAdd64Bit(behavior)) {
-        matched.put(InstructionLabel.ADD_64, List.of(instruction));
+        matched.put(MachineInstructionLabel.ADD_64, List.of(instruction));
       } else if (findAddWithImmediate32Bit(behavior)) {
-        matched.put(InstructionLabel.ADDI_32, List.of(instruction));
+        matched.put(MachineInstructionLabel.ADDI_32, List.of(instruction));
       } else if (findAddWithImmediate64Bit(behavior)) {
-        matched.put(InstructionLabel.ADDI_64, List.of(instruction));
+        matched.put(MachineInstructionLabel.ADDI_64, List.of(instruction));
       } else if (findRR_OR_findRI(behavior, SUB)) {
-        extend(matched, InstructionLabel.SUB, instruction);
+        extend(matched, MachineInstructionLabel.SUB, instruction);
       } else if (findRR_OR_findRI(behavior, List.of(SUBB, SUBSB))) {
-        extend(matched, InstructionLabel.SUBB, instruction);
+        extend(matched, MachineInstructionLabel.SUBB, instruction);
       } else if (findRR_OR_findRI(behavior, List.of(SUBC, SUBSC))) {
-        extend(matched, InstructionLabel.SUBC, instruction);
+        extend(matched, MachineInstructionLabel.SUBC, instruction);
       } else if (findRR_OR_findRI(behavior, List.of(AND, ANDS))) {
-        extend(matched, InstructionLabel.AND, instruction);
+        extend(matched, MachineInstructionLabel.AND, instruction);
       } else if (findRR_OR_findRI(behavior, List.of(OR, ORS))) {
-        extend(matched, InstructionLabel.OR, instruction);
+        extend(matched, MachineInstructionLabel.OR, instruction);
       } else if (findRR(behavior, List.of(XOR, XORS))) {
-        extend(matched, InstructionLabel.XOR, instruction);
+        extend(matched, MachineInstructionLabel.XOR, instruction);
       } else if (findRI(behavior, List.of(XOR, XORS))) {
         // Here is an exception:
         // Usually, it is good enough to group RR and RI together.
         // However, when generating alternative patterns for conditionals,
         // then we need the XORI instruction. Therefore, we put it extra.
-        extend(matched, InstructionLabel.XORI, instruction);
+        extend(matched, MachineInstructionLabel.XORI, instruction);
       } else if (findRR_OR_findRI(behavior, List.of(MUL, SMULL, SMULLS))) {
-        extend(matched, InstructionLabel.MUL, instruction);
+        extend(matched, MachineInstructionLabel.MUL, instruction);
       } else if (findRR_OR_findRI(behavior, List.of(SDIV, SDIVS))) {
-        extend(matched, InstructionLabel.SDIV, instruction);
+        extend(matched, MachineInstructionLabel.SDIV, instruction);
       } else if (findRR_OR_findRI(behavior, List.of(UDIV, UDIVS))) {
-        extend(matched, InstructionLabel.UDIV, instruction);
+        extend(matched, MachineInstructionLabel.UDIV, instruction);
       } else if (findRR_OR_findRI(behavior, List.of(SMOD, SMODS))) {
-        extend(matched, InstructionLabel.SMOD, instruction);
+        extend(matched, MachineInstructionLabel.SMOD, instruction);
       } else if (findRR_OR_findRI(behavior, List.of(UMOD, UMODS))) {
-        extend(matched, InstructionLabel.UMOD, instruction);
+        extend(matched, MachineInstructionLabel.UMOD, instruction);
       } else if (pc != null && findBranchWithConditional(behavior, EQU)) {
-        extend(matched, InstructionLabel.BEQ, instruction);
+        extend(matched, MachineInstructionLabel.BEQ, instruction);
       } else if (pc != null && findBranchWithConditional(behavior, NEQ)) {
-        extend(matched, InstructionLabel.BNEQ, instruction);
+        extend(matched, MachineInstructionLabel.BNEQ, instruction);
       } else if (pc != null
           && findBranchWithConditional(behavior, Set.of(SGEQ, UGEQ))) {
-        extend(matched, InstructionLabel.BGEQ, instruction);
+        extend(matched, MachineInstructionLabel.BGEQ, instruction);
       } else if (pc != null
           && findBranchWithConditional(behavior, Set.of(SLEQ, ULEQ))) {
-        extend(matched, InstructionLabel.BLEQ, instruction);
+        extend(matched, MachineInstructionLabel.BLEQ, instruction);
       } else if (pc != null
           && findBranchWithConditional(behavior, Set.of(SLTH, ULTH))) {
-        extend(matched, InstructionLabel.BLTH, instruction);
+        extend(matched, MachineInstructionLabel.BLTH, instruction);
       } else if (pc != null
           && findBranchWithConditional(behavior, Set.of(SGTH, UGTH))) {
-        extend(matched, InstructionLabel.BGTH, instruction);
+        extend(matched, MachineInstructionLabel.BGTH, instruction);
       } else if (findRR_OR_findRI(behavior, List.of(SLTH, ULTH))) {
-        extend(matched, InstructionLabel.LT, instruction);
+        extend(matched, MachineInstructionLabel.LT, instruction);
       } else if (findWriteMem(behavior)) {
-        extend(matched, InstructionLabel.STORE_MEM, instruction);
+        extend(matched, MachineInstructionLabel.STORE_MEM, instruction);
       } else if (findLoadMem(behavior)) {
-        extend(matched, InstructionLabel.LOAD_MEM, instruction);
+        extend(matched, MachineInstructionLabel.LOAD_MEM, instruction);
       } else if (pc != null && findJalr(behavior, pc)) {
-        extend(matched, InstructionLabel.JALR, instruction);
+        extend(matched, MachineInstructionLabel.JALR, instruction);
       } else if (pc != null && findJal(behavior, pc)) {
-        extend(matched, InstructionLabel.JAL, instruction);
+        extend(matched, MachineInstructionLabel.JAL, instruction);
       }
     });
 
@@ -206,11 +200,11 @@ public class IsaMatchingPass extends Pass {
   @Override
   public void verification(Specification viam, @Nullable Object passResult) {
     ensureNonNull(passResult, "There must be a passResult");
-    var isaMatched = (HashMap<InstructionLabel, List<Instruction>>) passResult;
+    var isaMatched = (HashMap<MachineInstructionLabel, List<Instruction>>) passResult;
 
-    var addi = isaMatched.get(InstructionLabel.ADDI_64);
+    var addi = isaMatched.get(MachineInstructionLabel.ADDI_64);
     if (addi == null) {
-      addi = isaMatched.get(InstructionLabel.ADDI_32);
+      addi = isaMatched.get(MachineInstructionLabel.ADDI_32);
     }
 
     ensure(addi != null && !addi.isEmpty(),
@@ -243,92 +237,6 @@ public class IsaMatchingPass extends Pass {
         new WriteResourceMatcherForValue(new AnyChildMatcher(new AnyReadRegFileMatcher())));
 
     return !matched.isEmpty();
-  }
-
-  /**
-   * The {@code matched} hashmap contains a list of {@link Instruction} as value.
-   * This value extends this list with the given {@link Instruction} when the key is matched.
-   */
-  private void extend(Map<InstructionLabel, List<Instruction>> matched,
-                      InstructionLabel instructionLabel, Instruction instruction) {
-    matched.compute(instructionLabel, (k, v) -> {
-      if (v == null) {
-        return new ArrayList<>(List.of(instruction));
-      } else {
-        v.add(instruction);
-        return v;
-      }
-    });
-  }
-
-  private boolean findRR_OR_findRI(UninlinedGraph behavior, BuiltInTable.BuiltIn builtin) {
-    return findRR(behavior, List.of(builtin)) || findRI(behavior, List.of(builtin));
-  }
-
-  private boolean findRR_OR_findRI(UninlinedGraph behavior, List<BuiltInTable.BuiltIn> builtins) {
-    return findRR(behavior, builtins) || findRI(behavior, builtins);
-  }
-
-  /**
-   * Find register-registers instructions when it matches one of the given
-   * {@link BuiltInTable.BuiltIn}.
-   * Also, it must only write one register result.
-   */
-  private boolean findRR(UninlinedGraph behavior, List<BuiltInTable.BuiltIn> builtins) {
-    var matched = TreeMatcher.matches(behavior.getNodes(BuiltInCall.class).map(x -> x),
-        new BuiltInMatcher(builtins, List.of(
-            new AnyChildMatcher(new AnyReadRegFileMatcher()),
-            new AnyChildMatcher(new AnyReadRegFileMatcher())
-        )));
-
-    return !matched.isEmpty() && writesExactlyOneRegisterClass(behavior);
-  }
-
-  /**
-   * Find register-immediate instructions when it matches one of the given
-   * {@link BuiltInTable.BuiltIn}.
-   * Also, it must only write one register result.
-   */
-  private boolean findRI(UninlinedGraph behavior, List<BuiltInTable.BuiltIn> builtins) {
-    var matched = TreeMatcher.matches(behavior.getNodes(BuiltInCall.class).map(x -> x),
-        new BuiltInMatcher(builtins, List.of(
-            new AnyChildMatcher(new AnyReadRegFileMatcher()),
-            new AnyChildMatcher(new FieldAccessRefMatcher())
-        )));
-
-    return !matched.isEmpty() && writesExactlyOneRegisterClass(behavior);
-  }
-
-  private boolean writesExactlyOneRegisterClass(UninlinedGraph graph) {
-    var writesRegFiles = graph.getNodes(WriteRegFileNode.class).toList();
-    var writesReg = graph.getNodes(WriteRegNode.class).toList();
-    var writesMem = graph.getNodes(WriteMemNode.class).toList();
-    var readMem = graph.getNodes(ReadMemNode.class).toList();
-
-    if (writesRegFiles.size() != 1
-        || !writesReg.isEmpty()
-        || !writesMem.isEmpty()
-        || !readMem.isEmpty()) {
-      return false;
-    }
-
-    return true;
-  }
-
-  private boolean writesExactlyOneRegisterClassWithType(UninlinedGraph graph, Type resultType) {
-    var writesRegFiles = graph.getNodes(WriteRegFileNode.class).toList();
-    var writesReg = graph.getNodes(WriteRegNode.class).toList();
-    var writesMem = graph.getNodes(WriteMemNode.class).toList();
-    var readMem = graph.getNodes(ReadMemNode.class).toList();
-
-    if (writesRegFiles.size() != 1
-        || !writesReg.isEmpty()
-        || !writesMem.isEmpty()
-        || !readMem.isEmpty()) {
-      return false;
-    }
-
-    return writesRegFiles.get(0).registerFile().resultType() == resultType;
   }
 
   private boolean findAdd32Bit(UninlinedGraph behavior) {

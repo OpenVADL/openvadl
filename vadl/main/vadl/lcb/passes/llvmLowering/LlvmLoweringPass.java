@@ -13,8 +13,8 @@ import org.jetbrains.annotations.Nullable;
 import vadl.configuration.LcbConfiguration;
 import vadl.error.Diagnostic;
 import vadl.lcb.codegen.model.llvm.ValueType;
-import vadl.lcb.passes.isaMatching.InstructionLabel;
-import vadl.lcb.passes.isaMatching.IsaMatchingPass;
+import vadl.lcb.passes.isaMatching.MachineInstructionLabel;
+import vadl.lcb.passes.isaMatching.IsaMachineInstructionMatchingPass;
 import vadl.lcb.passes.llvmLowering.domain.LlvmLoweringRecord;
 import vadl.lcb.passes.llvmLowering.strategies.LlvmInstructionLoweringStrategy;
 import vadl.lcb.passes.llvmLowering.strategies.LlvmPseudoLoweringImpl;
@@ -75,8 +75,8 @@ public class LlvmLoweringPass extends Pass {
   @Override
   public Object execute(PassResults passResults, Specification viam) throws IOException {
     var supportedInstructions = ensureNonNull(
-        (HashMap<InstructionLabel, List<Instruction>>) passResults.lastResultOf(
-            IsaMatchingPass.class),
+        (HashMap<MachineInstructionLabel, List<Instruction>>) passResults.lastResultOf(
+            IsaMachineInstructionMatchingPass.class),
         () -> Diagnostic.error("Cannot find semantics of the instructions", viam.sourceLocation()));
     var abi = (DummyAbi) viam.definitions().filter(x -> x instanceof DummyAbi).findFirst().get();
 
@@ -105,7 +105,7 @@ public class LlvmLoweringPass extends Pass {
   private IdentityHashMap<Instruction, LlvmLoweringRecord> generateRecordsForMachineInstructions(
       PassResults passResults, Specification viam,
       List<LlvmInstructionLoweringStrategy> strategies,
-      Map<InstructionLabel, List<Instruction>> supportedInstructions) {
+      Map<MachineInstructionLabel, List<Instruction>> supportedInstructions) {
     var tableGenRecords = new IdentityHashMap<Instruction, LlvmLoweringRecord>();
 
     // Get the supported instructions from the matching.
@@ -153,7 +153,7 @@ public class LlvmLoweringPass extends Pass {
       LlvmLoweringRecord> generateRecordsForPseudoInstructions(
       Specification viam,
       List<LlvmInstructionLoweringStrategy> strategies,
-      Map<InstructionLabel, List<Instruction>> supportedInstructions) {
+      Map<MachineInstructionLabel, List<Instruction>> supportedInstructions) {
     var tableGenRecords = new IdentityHashMap<PseudoInstruction, LlvmLoweringRecord>();
     var pseudoLowering = new LlvmPseudoLoweringImpl(strategies);
 
@@ -170,14 +170,14 @@ public class LlvmLoweringPass extends Pass {
   }
 
   /**
-   * The {@link IsaMatchingPass} computes a hashmap with the instruction label as a key and all
+   * The {@link IsaMachineInstructionMatchingPass} computes a hashmap with the instruction label as a key and all
    * the matched instructions as value.
    * However, we would like to check whether {@link LlvmInstructionLoweringStrategy} supports this
    * {@link Instruction} in this pass. That's why we have the flip the hashmap.
    */
-  public static IdentityHashMap<Instruction, InstructionLabel> flipIsaMatching(
-      Map<InstructionLabel, List<Instruction>> isaMatched) {
-    IdentityHashMap<Instruction, InstructionLabel> inverse = new IdentityHashMap<>();
+  public static IdentityHashMap<Instruction, MachineInstructionLabel> flipIsaMatching(
+      Map<MachineInstructionLabel, List<Instruction>> isaMatched) {
+    IdentityHashMap<Instruction, MachineInstructionLabel> inverse = new IdentityHashMap<>();
 
     for (var entry : isaMatched.entrySet()) {
       for (var item : entry.getValue()) {

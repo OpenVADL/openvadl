@@ -4,13 +4,13 @@ import vadl.viam.Instruction;
 
 /**
  * A collection of labels for a {@link Instruction}.
- * The {@link IsaMatchingPass} tries to assign each {@link Instruction} a
- * {@link InstructionLabel}. This label can be used to quickly search for instructions.
+ * The {@link IsaMachineInstructionMatchingPass} tries to assign each {@link Instruction} a
+ * {@link MachineInstructionLabel}. This label can be used to quickly search for instructions.
  * How do I read this?
  * You can say the following: An {@link Instruction} with the semantics of summing two unsigned
- * 32bit registers will get the {@link InstructionLabel#ADD_32} assigned.
+ * 32bit registers will get the {@link MachineInstructionLabel#ADD_32} assigned.
  */
-public enum InstructionLabel {
+public enum MachineInstructionLabel {
   /*
   ARITHMETIC AND LOGIC
    */

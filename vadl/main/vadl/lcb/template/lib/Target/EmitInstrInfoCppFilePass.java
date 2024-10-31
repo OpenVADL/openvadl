@@ -12,8 +12,8 @@ import java.util.Map;
 import java.util.stream.Stream;
 import vadl.configuration.LcbConfiguration;
 import vadl.gcb.passes.IdentifyFieldUsagePass;
-import vadl.lcb.passes.isaMatching.InstructionLabel;
-import vadl.lcb.passes.isaMatching.IsaMatchingPass;
+import vadl.lcb.passes.isaMatching.MachineInstructionLabel;
+import vadl.lcb.passes.isaMatching.IsaMachineInstructionMatchingPass;
 import vadl.lcb.template.CommonVarNames;
 import vadl.lcb.template.LcbTemplateRenderingPass;
 import vadl.lcb.template.utils.ImmediatePredicateFunctionProvider;
@@ -93,16 +93,16 @@ public class EmitInstrInfoCppFilePass extends LcbTemplateRenderingPass {
   }
 
   private List<CopyPhysRegInstruction> getMovInstructions(
-      Map<InstructionLabel, List<Instruction>> isaMatching) {
-    var addi32 = mapWithInstructionLabel(InstructionLabel.ADDI_32, isaMatching);
-    var addi64 = mapWithInstructionLabel(InstructionLabel.ADDI_64, isaMatching);
+      Map<MachineInstructionLabel, List<Instruction>> isaMatching) {
+    var addi32 = mapWithInstructionLabel(MachineInstructionLabel.ADDI_32, isaMatching);
+    var addi64 = mapWithInstructionLabel(MachineInstructionLabel.ADDI_64, isaMatching);
 
     return Stream.concat(addi32.stream(), addi64.stream()).toList();
   }
 
   private List<StoreRegSlot> getStoreMemoryInstructions(
-      Map<InstructionLabel, List<Instruction>> isaMatching) {
-    var instructions = (List<Instruction>) isaMatching.getOrDefault(InstructionLabel.STORE_MEM,
+      Map<MachineInstructionLabel, List<Instruction>> isaMatching) {
+    var instructions = (List<Instruction>) isaMatching.getOrDefault(MachineInstructionLabel.STORE_MEM,
         Collections.emptyList());
 
     var mapped = instructions.stream()
@@ -123,8 +123,8 @@ public class EmitInstrInfoCppFilePass extends LcbTemplateRenderingPass {
   }
 
   private List<LoadRegSlot> getLoadMemoryInstructions(
-      Map<InstructionLabel, List<Instruction>> isaMatching) {
-    var instructions = (List<Instruction>) isaMatching.getOrDefault(InstructionLabel.LOAD_MEM,
+      Map<MachineInstructionLabel, List<Instruction>> isaMatching) {
+    var instructions = (List<Instruction>) isaMatching.getOrDefault(MachineInstructionLabel.LOAD_MEM,
         Collections.emptyList());
 
     var mapped = instructions.stream()
@@ -145,8 +145,8 @@ public class EmitInstrInfoCppFilePass extends LcbTemplateRenderingPass {
   }
 
   private List<CopyPhysRegInstruction> mapWithInstructionLabel(
-      InstructionLabel label,
-      Map<InstructionLabel, List<Instruction>> isaMatching) {
+      MachineInstructionLabel label,
+      Map<MachineInstructionLabel, List<Instruction>> isaMatching) {
     var instructions = (List<Instruction>)
         isaMatching.getOrDefault(label, Collections.emptyList());
 
@@ -164,11 +164,11 @@ public class EmitInstrInfoCppFilePass extends LcbTemplateRenderingPass {
         .toList();
   }
 
-  private Instruction getAddition(Map<InstructionLabel, List<Instruction>> isaMatches) {
-    var add64 = isaMatches.get(InstructionLabel.ADDI_64);
+  private Instruction getAddition(Map<MachineInstructionLabel, List<Instruction>> isaMatches) {
+    var add64 = isaMatches.get(MachineInstructionLabel.ADDI_64);
 
     if (add64 == null) {
-      var instructions = isaMatches.get(InstructionLabel.ADDI_32);
+      var instructions = isaMatches.get(MachineInstructionLabel.ADDI_32);
       ensureNonNull(instructions, "instructions with addition and immediate exist");
       return ensurePresent(instructions.stream().findFirst(),
           "There must be at least one instruction");
@@ -193,13 +193,13 @@ public class EmitInstrInfoCppFilePass extends LcbTemplateRenderingPass {
   }
 
   private List<AdjustRegCase> getAdjustCases(PassResults passResults,
-                                             Map<InstructionLabel, List<Instruction>>
+                                             Map<MachineInstructionLabel, List<Instruction>>
                                                  isaMatches,
                                              IdentifyFieldUsagePass.ImmediateDetectionContainer
                                                  fieldUsages) {
     var predicates = ImmediatePredicateFunctionProvider.generatePredicateFunctions(passResults);
-    var addi32 = isaMatches.getOrDefault(InstructionLabel.ADDI_32, Collections.emptyList());
-    var addi64 = isaMatches.getOrDefault(InstructionLabel.ADDI_64, Collections.emptyList());
+    var addi32 = isaMatches.getOrDefault(MachineInstructionLabel.ADDI_32, Collections.emptyList());
+    var addi64 = isaMatches.getOrDefault(MachineInstructionLabel.ADDI_64, Collections.emptyList());
 
     return Stream.concat(addi32.stream(), addi64.stream())
         .map(addImm -> {
@@ -220,8 +220,8 @@ public class EmitInstrInfoCppFilePass extends LcbTemplateRenderingPass {
   @Override
   protected Map<String, Object> createVariables(final PassResults passResults,
                                                 Specification specification) {
-    var isaMatches = (Map<InstructionLabel, List<Instruction>>) passResults.lastResultOf(
-        IsaMatchingPass.class);
+    var isaMatches = (Map<MachineInstructionLabel, List<Instruction>>) passResults.lastResultOf(
+        IsaMachineInstructionMatchingPass.class);
     var fieldUsages = (IdentifyFieldUsagePass.ImmediateDetectionContainer) passResults.lastResultOf(
         IdentifyFieldUsagePass.class);
     var addition = getAddition(isaMatches);

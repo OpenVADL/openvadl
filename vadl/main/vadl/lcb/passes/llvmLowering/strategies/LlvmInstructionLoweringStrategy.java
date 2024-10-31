@@ -22,7 +22,7 @@ import org.slf4j.LoggerFactory;
 import vadl.error.DeferredDiagnosticStore;
 import vadl.error.Diagnostic;
 import vadl.lcb.codegen.model.llvm.ValueType;
-import vadl.lcb.passes.isaMatching.InstructionLabel;
+import vadl.lcb.passes.isaMatching.MachineInstructionLabel;
 import vadl.lcb.passes.llvmLowering.LlvmLoweringPass;
 import vadl.lcb.passes.llvmLowering.LlvmMayLoadMemory;
 import vadl.lcb.passes.llvmLowering.LlvmMayStoreMemory;
@@ -92,19 +92,19 @@ public abstract class LlvmInstructionLoweringStrategy {
   }
 
   /**
-   * Get the supported set of {@link InstructionLabel} which this strategy supports.
+   * Get the supported set of {@link MachineInstructionLabel} which this strategy supports.
    */
-  protected abstract Set<InstructionLabel> getSupportedInstructionLabels();
+  protected abstract Set<MachineInstructionLabel> getSupportedInstructionLabels();
 
   /**
    * Checks whether the given {@link Instruction} is lowerable with this strategy.
    */
-  public boolean isApplicable(@Nullable InstructionLabel instructionLabel) {
-    if (instructionLabel == null) {
+  public boolean isApplicable(@Nullable MachineInstructionLabel machineInstructionLabel) {
+    if (machineInstructionLabel == null) {
       return false;
     }
 
-    return getSupportedInstructionLabels().contains(instructionLabel);
+    return getSupportedInstructionLabels().contains(machineInstructionLabel);
   }
 
   /**
@@ -160,7 +160,7 @@ public abstract class LlvmInstructionLoweringStrategy {
    * @param unmodifiedBehavior    is the uninlined graph in the case of {@link Instruction}.
    */
   public Optional<LlvmLoweringRecord> lower(
-      Map<InstructionLabel, List<Instruction>> supportedInstructions,
+      Map<MachineInstructionLabel, List<Instruction>> supportedInstructions,
       Instruction instruction,
       UninlinedGraph unmodifiedBehavior) {
     return lowerInstruction(supportedInstructions, instruction,
@@ -171,7 +171,7 @@ public abstract class LlvmInstructionLoweringStrategy {
    * Lower a pseudo instruction.
    */
   public Optional<LlvmLoweringRecord> lower(
-      Map<InstructionLabel, List<Instruction>> supportedInstructions,
+      Map<MachineInstructionLabel, List<Instruction>> supportedInstructions,
       PseudoInstruction pseudoInstruction,
       Instruction instruction,
       Graph unmodifiedBehavior) {
@@ -191,7 +191,7 @@ public abstract class LlvmInstructionLoweringStrategy {
    *                              the applied graph in the case of {@link PseudoInstruction}.
    */
   protected Optional<LlvmLoweringRecord> lowerInstruction(
-      Map<InstructionLabel, List<Instruction>> supportedInstructions,
+      Map<MachineInstructionLabel, List<Instruction>> supportedInstructions,
       Instruction instruction,
       Graph unmodifiedBehavior) {
     var visitor = getVisitorForPatternSelectorLowering();
@@ -362,7 +362,7 @@ public abstract class LlvmInstructionLoweringStrategy {
    */
   protected abstract List<TableGenPattern> generatePatternVariations(
       Instruction instruction,
-      Map<InstructionLabel, List<Instruction>> supportedInstructions,
+      Map<MachineInstructionLabel, List<Instruction>> supportedInstructions,
       Graph behavior,
       List<TableGenInstructionOperand> inputOperands,
       List<TableGenInstructionOperand> outputOperands,

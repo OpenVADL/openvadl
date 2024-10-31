@@ -1,11 +1,11 @@
 package vadl.lcb.passes.llvmLowering.strategies.instruction;
 
-import static vadl.lcb.passes.isaMatching.InstructionLabel.BEQ;
-import static vadl.lcb.passes.isaMatching.InstructionLabel.BGEQ;
-import static vadl.lcb.passes.isaMatching.InstructionLabel.BGTH;
-import static vadl.lcb.passes.isaMatching.InstructionLabel.BLEQ;
-import static vadl.lcb.passes.isaMatching.InstructionLabel.BLTH;
-import static vadl.lcb.passes.isaMatching.InstructionLabel.BNEQ;
+import static vadl.lcb.passes.isaMatching.MachineInstructionLabel.BEQ;
+import static vadl.lcb.passes.isaMatching.MachineInstructionLabel.BGEQ;
+import static vadl.lcb.passes.isaMatching.MachineInstructionLabel.BGTH;
+import static vadl.lcb.passes.isaMatching.MachineInstructionLabel.BLEQ;
+import static vadl.lcb.passes.isaMatching.MachineInstructionLabel.BLTH;
+import static vadl.lcb.passes.isaMatching.MachineInstructionLabel.BNEQ;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -14,7 +14,7 @@ import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Stream;
 import vadl.lcb.codegen.model.llvm.ValueType;
-import vadl.lcb.passes.isaMatching.InstructionLabel;
+import vadl.lcb.passes.isaMatching.MachineInstructionLabel;
 import vadl.lcb.passes.llvmLowering.domain.LlvmLoweringRecord;
 import vadl.lcb.passes.llvmLowering.domain.machineDag.MachineInstructionParameterNode;
 import vadl.lcb.passes.llvmLowering.domain.selectionDag.LlvmBasicBlockSD;
@@ -47,7 +47,7 @@ public class LlvmInstructionLoweringConditionalBranchesStrategyImpl
   }
 
   @Override
-  protected Set<InstructionLabel> getSupportedInstructionLabels() {
+  protected Set<MachineInstructionLabel> getSupportedInstructionLabels() {
     return Set.of(BEQ, BGEQ, BNEQ, BLEQ, BLTH, BGTH);
   }
 
@@ -61,7 +61,7 @@ public class LlvmInstructionLoweringConditionalBranchesStrategyImpl
 
   @Override
   public Optional<LlvmLoweringRecord> lower(
-      Map<InstructionLabel, List<Instruction>> supportedInstructions,
+      Map<MachineInstructionLabel, List<Instruction>> supportedInstructions,
       Instruction instruction,
       UninlinedGraph uninlinedBehavior) {
 
@@ -78,7 +78,7 @@ public class LlvmInstructionLoweringConditionalBranchesStrategyImpl
   }
 
   private LlvmLoweringRecord createIntermediateResult(
-      Map<InstructionLabel, List<Instruction>> supportedInstructions,
+      Map<MachineInstructionLabel, List<Instruction>> supportedInstructions,
       Instruction instruction,
       UninlinedGraph visitedGraph) {
 
@@ -137,7 +137,7 @@ public class LlvmInstructionLoweringConditionalBranchesStrategyImpl
   @Override
   protected List<TableGenPattern> generatePatternVariations(
       Instruction instruction,
-      Map<InstructionLabel, List<Instruction>> supportedInstructions,
+      Map<MachineInstructionLabel, List<Instruction>> supportedInstructions,
       Graph behavior,
       List<TableGenInstructionOperand> inputOperands,
       List<TableGenInstructionOperand> outputOperands,
