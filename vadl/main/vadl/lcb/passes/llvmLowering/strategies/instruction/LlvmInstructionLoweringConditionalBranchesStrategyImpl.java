@@ -13,7 +13,6 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Stream;
-import javax.annotation.Nullable;
 import vadl.lcb.codegen.model.llvm.ValueType;
 import vadl.lcb.passes.isaMatching.InstructionLabel;
 import vadl.lcb.passes.llvmLowering.domain.LlvmLoweringRecord;
@@ -83,8 +82,8 @@ public class LlvmInstructionLoweringConditionalBranchesStrategyImpl
       Instruction instruction,
       UninlinedGraph visitedGraph) {
 
-    var inputOperands = getTableGenInputOperands(visitedGraph);
     var outputOperands = getTableGenOutputOperands(visitedGraph);
+    var inputOperands = getTableGenInputOperands(outputOperands, visitedGraph);
     var flags = getFlags(visitedGraph);
 
     var writes = visitedGraph.getNodes(WriteResourceNode.class).toList();
@@ -99,13 +98,8 @@ public class LlvmInstructionLoweringConditionalBranchesStrategyImpl
         .map(this::replaceBasicBlockByLabelImmediateInMachineInstruction)
         .toList();
 
-    // If a TableGen record has no input or output operands,
-    // and no registers as def or use then it will throw an error.
-    // Therefore, when input and output operands are empty then do not filter any
-    // registers.
-    var filterRegistersWithConstraints = inputOperands.isEmpty() && outputOperands.isEmpty();
-    var uses = getRegisterUses(visitedGraph, filterRegistersWithConstraints);
-    var defs = getRegisterDefs(visitedGraph, filterRegistersWithConstraints);
+    var uses = getRegisterUses(visitedGraph, inputOperands, outputOperands);
+    var defs = getRegisterDefs(visitedGraph, inputOperands, outputOperands);
 
     return new LlvmLoweringRecord(
         visitedGraph,

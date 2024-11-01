@@ -1569,6 +1569,12 @@ let Defs = [  ];
 def : Pat<(i64 (sextloadi8 (add X:$rs1, RV64IM_Itype_immAsInt64:$imm))),
         (LB X:$rs1, RV64IM_Itype_immAsInt64:$imm)>;
 
+def : Pat<(i64 (sextloadi8 X:$rs1)),
+        (LB X:$rs1, (i64 0))>;
+
+def : Pat<(i64 (extloadi8 X:$rs1)),
+        (LB X:$rs1, (i64 0))>;
+
 def : Pat<(i64 (sextloadi8 (add AddrFI:$rs1, RV64IM_Itype_immAsInt64:$imm))),
         (LB AddrFI:$rs1, RV64IM_Itype_immAsInt64:$imm)>;
 
@@ -1633,6 +1639,9 @@ let Defs = [  ];
 def : Pat<(i64 (zextloadi8 (add X:$rs1, RV64IM_Itype_immAsInt64:$imm))),
         (LBU X:$rs1, RV64IM_Itype_immAsInt64:$imm)>;
 
+def : Pat<(i64 (zextloadi8 X:$rs1)),
+        (LBU X:$rs1, (i64 0))>;
+
 def : Pat<(i64 (zextloadi8 (add AddrFI:$rs1, RV64IM_Itype_immAsInt64:$imm))),
         (LBU AddrFI:$rs1, RV64IM_Itype_immAsInt64:$imm)>;
 
@@ -1691,6 +1700,9 @@ let Defs = [  ];
 def : Pat<(i64 (load (add X:$rs1, RV64IM_Itype_immAsInt64:$imm))),
         (LD X:$rs1, RV64IM_Itype_immAsInt64:$imm)>;
 
+def : Pat<(i64 (load X:$rs1)),
+        (LD X:$rs1, (i64 0))>;
+
 def : Pat<(i64 (load (add AddrFI:$rs1, RV64IM_Itype_immAsInt64:$imm))),
         (LD AddrFI:$rs1, RV64IM_Itype_immAsInt64:$imm)>;
 
@@ -1748,6 +1760,12 @@ let Defs = [  ];
 
 def : Pat<(i64 (sextloadi16 (add X:$rs1, RV64IM_Itype_immAsInt64:$imm))),
         (LH X:$rs1, RV64IM_Itype_immAsInt64:$imm)>;
+
+def : Pat<(i64 (sextloadi16 X:$rs1)),
+        (LH X:$rs1, (i64 0))>;
+
+def : Pat<(i64 (extloadi16 X:$rs1)),
+        (LH X:$rs1, (i64 0))>;
 
 def : Pat<(i64 (sextloadi16 (add AddrFI:$rs1, RV64IM_Itype_immAsInt64:$imm))),
         (LH AddrFI:$rs1, RV64IM_Itype_immAsInt64:$imm)>;
@@ -1812,6 +1830,9 @@ let Defs = [  ];
 
 def : Pat<(i64 (zextloadi16 (add X:$rs1, RV64IM_Itype_immAsInt64:$imm))),
         (LHU X:$rs1, RV64IM_Itype_immAsInt64:$imm)>;
+
+def : Pat<(i64 (zextloadi16 X:$rs1)),
+        (LHU X:$rs1, (i64 0))>;
 
 def : Pat<(i64 (zextloadi16 (add AddrFI:$rs1, RV64IM_Itype_immAsInt64:$imm))),
         (LHU AddrFI:$rs1, RV64IM_Itype_immAsInt64:$imm)>;
@@ -1917,6 +1938,12 @@ let Defs = [  ];
 def : Pat<(i64 (sextloadi32 (add X:$rs1, RV64IM_Itype_immAsInt64:$imm))),
         (LW X:$rs1, RV64IM_Itype_immAsInt64:$imm)>;
 
+def : Pat<(i64 (sextloadi32 X:$rs1)),
+        (LW X:$rs1, (i64 0))>;
+
+def : Pat<(i64 (extloadi32 X:$rs1)),
+        (LW X:$rs1, (i64 0))>;
+
 def : Pat<(i64 (sextloadi32 (add AddrFI:$rs1, RV64IM_Itype_immAsInt64:$imm))),
         (LW AddrFI:$rs1, RV64IM_Itype_immAsInt64:$imm)>;
 
@@ -1980,6 +2007,9 @@ let Defs = [  ];
 
 def : Pat<(i64 (zextloadi32 (add X:$rs1, RV64IM_Itype_immAsInt64:$imm))),
         (LWU X:$rs1, RV64IM_Itype_immAsInt64:$imm)>;
+
+def : Pat<(i64 (zextloadi32 X:$rs1)),
+        (LWU X:$rs1, (i64 0))>;
 
 def : Pat<(i64 (zextloadi32 (add AddrFI:$rs1, RV64IM_Itype_immAsInt64:$imm))),
         (LWU AddrFI:$rs1, RV64IM_Itype_immAsInt64:$imm)>;
@@ -4058,7 +4088,7 @@ def CALL : Instruction
 let Namespace = "processorNameValue";
 
 let OutOperandList = ( outs  );
-let InOperandList = ( ins  );
+let InOperandList = ( ins bare_symbol:$symbol );
 
 let isTerminator  = 0;
 let isBranch      = 0;
@@ -4103,6 +4133,33 @@ let Pattern = [];
 
 let Uses = [ PC ];
 let Defs = [ PC,X0 ];
+}
+
+
+
+def LLA : Instruction
+{
+let Namespace = "processorNameValue";
+
+let OutOperandList = ( outs X:$rd );
+let InOperandList = ( ins bare_symbol:$symbol );
+
+let isTerminator  = 0;
+let isBranch      = 0;
+let isCall        = 0;
+let isReturn      = 0;
+let isPseudo      = 1;
+let isCodeGenOnly = 0;
+let mayLoad       = 0;
+let mayStore      = 0;
+
+let Constraints = "";
+let AddedComplexity = 0;
+
+let Pattern = [];
+
+let Uses = [  ];
+let Defs = [  ];
 }
 
 
@@ -4345,7 +4402,7 @@ def TAIL : Instruction
 let Namespace = "processorNameValue";
 
 let OutOperandList = ( outs  );
-let InOperandList = ( ins  );
+let InOperandList = ( ins bare_symbol:$symbol );
 
 let isTerminator  = 0;
 let isBranch      = 0;
@@ -4362,5 +4419,5 @@ let AddedComplexity = 0;
 let Pattern = [];
 
 let Uses = [ PC,X6 ];
-let Defs = [ PC,X0 ];
+let Defs = [ PC ];
 }

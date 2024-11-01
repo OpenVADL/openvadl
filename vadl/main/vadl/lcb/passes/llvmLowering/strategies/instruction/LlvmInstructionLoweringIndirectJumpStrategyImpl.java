@@ -15,8 +15,6 @@ import vadl.lcb.passes.llvmLowering.tablegen.model.TableGenPattern;
 import vadl.viam.Instruction;
 import vadl.viam.graph.Graph;
 import vadl.viam.graph.control.AbstractEndNode;
-import vadl.viam.graph.dependency.SideEffectNode;
-import vadl.viam.passes.functionInliner.UninlinedGraph;
 
 /**
  * Generates the {@link LlvmLoweringRecord} for {@link InstructionLabel#JALR}
@@ -46,16 +44,11 @@ public class LlvmInstructionLoweringIndirectJumpStrategyImpl
       visitor.visit(node);
     }
 
-    var inputOperands = getTableGenInputOperands(copy);
     var outputOperands = getTableGenOutputOperands(copy);
+    var inputOperands = getTableGenInputOperands(outputOperands, copy);
 
-    // If a TableGen record has no input or output operands,
-    // and no registers as def or use then it will throw an error.
-    // Therefore, when input and output operands are empty then do not filter any
-    // registers.
-    var filterRegistersWithConstraints = inputOperands.isEmpty() && outputOperands.isEmpty();
-    var uses = getRegisterUses(copy, filterRegistersWithConstraints);
-    var defs = getRegisterDefs(copy, filterRegistersWithConstraints);
+    var uses = getRegisterUses(copy, inputOperands, outputOperands);
+    var defs = getRegisterDefs(copy, inputOperands, outputOperands);
 
     return Optional.of(new LlvmLoweringRecord(
         copy,

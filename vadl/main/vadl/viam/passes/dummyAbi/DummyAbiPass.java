@@ -48,6 +48,7 @@ public class DummyAbiPass extends Pass {
     var returnRegisters = getReturnRegisters(registerFile);
     var returnSequence = getReturnSequence(viam);
     var callSequence = getCallSequence(viam);
+    var addressSequence = getAddressSequence(viam);
 
     viam.add(new DummyAbi(new Identifier("dummyAbi", SourceLocation.INVALID_SOURCE_LOCATION),
         new DummyAbi.RegisterRef(registerFile, 1, DummyAbi.Alignment.WORD),
@@ -60,7 +61,8 @@ public class DummyAbiPass extends Pass {
         argumentRegisters,
         returnRegisters,
         returnSequence,
-        callSequence));
+        callSequence,
+        addressSequence));
 
     return null;
   }
@@ -79,6 +81,14 @@ public class DummyAbiPass extends Pass {
         retInstruction.assembly());
     x.setSourceLocation(retInstruction.sourceLocation());
     return x;
+  }
+
+  private PseudoInstruction getAddressSequence(Specification viam) {
+    return
+        viam.isa().map(isa -> isa.ownPseudoInstructions().stream()).orElseGet(Stream::empty)
+            .filter(x -> x.identifier.simpleName().equals("LLA"))
+            .findFirst()
+            .get();
   }
 
   private PseudoInstruction getCallSequence(Specification viam) {

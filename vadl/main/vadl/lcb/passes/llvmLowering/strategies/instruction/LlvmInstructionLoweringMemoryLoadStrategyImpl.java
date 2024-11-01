@@ -57,11 +57,14 @@ public class LlvmInstructionLoweringMemoryLoadStrategyImpl
       List<TableGenInstructionOperand> inputOperands,
       List<TableGenInstructionOperand> outputOperands,
       List<TableGenPattern> patterns) {
+    var alternativePatterns = new ArrayList<TableGenPattern>();
     var anyExtendPatterns = createAnyExtPatterns(patterns);
     var loadFromRegisterPatterns = createLoadsFromRegister(
         Stream.concat(patterns.stream(), anyExtendPatterns.stream()).toList());
-    return replaceRegisterWithFrameIndex(Stream.concat(patterns.stream(),
-        Stream.concat(anyExtendPatterns.stream(), loadFromRegisterPatterns.stream())).toList());
+    alternativePatterns.addAll(loadFromRegisterPatterns);
+    alternativePatterns.addAll(replaceRegisterWithFrameIndex(Stream.concat(patterns.stream(),
+        Stream.concat(anyExtendPatterns.stream(), loadFromRegisterPatterns.stream())).toList()));
+    return alternativePatterns;
   }
 
   /**

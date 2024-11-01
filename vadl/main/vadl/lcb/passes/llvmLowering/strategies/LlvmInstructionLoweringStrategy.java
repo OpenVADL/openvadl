@@ -13,6 +13,7 @@ import java.util.Optional;
 import java.util.Set;
 import java.util.function.BiFunction;
 import java.util.function.Function;
+import java.util.stream.Collectors;
 import java.util.stream.Stream;
 import javax.annotation.Nullable;
 import org.jetbrains.annotations.NotNull;
@@ -40,6 +41,7 @@ import vadl.lcb.passes.llvmLowering.strategies.visitors.TableGenPatternLowerable
 import vadl.lcb.passes.llvmLowering.strategies.visitors.impl.ReplaceWithLlvmSDNodesVisitor;
 import vadl.lcb.passes.llvmLowering.tablegen.model.TableGenConstantOperand;
 import vadl.lcb.passes.llvmLowering.tablegen.model.TableGenInstruction;
+import vadl.lcb.passes.llvmLowering.tablegen.model.TableGenInstructionBareSymbolOperand;
 import vadl.lcb.passes.llvmLowering.tablegen.model.TableGenInstructionFrameRegisterOperand;
 import vadl.lcb.passes.llvmLowering.tablegen.model.TableGenInstructionImmediateLabelOperand;
 import vadl.lcb.passes.llvmLowering.tablegen.model.TableGenInstructionImmediateOperand;
@@ -65,6 +67,7 @@ import vadl.viam.graph.dependency.ConstantNode;
 import vadl.viam.graph.dependency.DependencyNode;
 import vadl.viam.graph.dependency.FieldAccessRefNode;
 import vadl.viam.graph.dependency.FieldRefNode;
+import vadl.viam.graph.dependency.FuncCallNode;
 import vadl.viam.graph.dependency.FuncParamNode;
 import vadl.viam.graph.dependency.ReadRegFileNode;
 import vadl.viam.graph.dependency.ReadRegNode;
@@ -171,7 +174,6 @@ public abstract class LlvmInstructionLoweringStrategy {
       Map<InstructionLabel, List<Instruction>> supportedInstructions,
       PseudoInstruction pseudoInstruction,
       Instruction instruction,
-      InstructionLabel instructionLabel,
       Graph unmodifiedBehavior) {
     logger.atDebug().log("Lowering {} with {}", instruction.identifier.simpleName(),
         pseudoInstruction.identifier.simpleName());
@@ -225,15 +227,11 @@ public abstract class LlvmInstructionLoweringStrategy {
       isLowerable = false;
     }
 
-    var inputOperands = getTableGenInputOperands(copy);
     var outputOperands = getTableGenOutputOperands(copy);
-    // If a TableGen record has no input or output operands,
-    // and no registers as def or use then it will throw an error.
-    // Therefore, when input and output operands are empty then do not filter any
-    // registers.
-    var filterRegistersWithConstraints = inputOperands.isEmpty() && outputOperands.isEmpty();
-    var registerUses = getRegisterUses(copy, filterRegistersWithConstraints);
-    var registerDefs = getRegisterDefs(copy, filterRegistersWithConstraints);
+    var inputOperands = getTableGenInputOperands(outputOperands, copy);
+
+    var registerUses = getRegisterUses(copy, inputOperands, outputOperands);
+    var registerDefs = getRegisterDefs(copy, inputOperands, outputOperands);
     var flags = getFlags(copy);
 
     copy.deinitializeNodes();
@@ -279,7 +277,7 @@ public abstract class LlvmInstructionLoweringStrategy {
    * @param behavior          of the {@link Instruction}.
    * @param filterConstraints whether registers with constraints should be considered.
    */
-  public static List<RegisterRef> getRegisterDefs(Graph behavior, boolean filterConstraints) {
+  private static List<RegisterRef> getRegisterDefs(Graph behavior, boolean filterConstraints) {
     return Stream.concat(behavior.getNodes(WriteRegNode.class)
                 .map(WriteRegNode::register)
                 .map(RegisterRef::new),
@@ -295,6 +293,23 @@ public abstract class LlvmInstructionLoweringStrategy {
   }
 
   /**
+   * Get a list of {@link RegisterRef} which are written. It is considered a
+   * register definition when a {@link WriteRegNode} or a {@link WriteRegFileNode} with a
+   * constant address exists. However, the only registers without any constraints on the
+   * register file will be returned.
+   */
+  public static List<RegisterRef> getRegisterDefs(Graph behavior,
+                                                  List<TableGenInstructionOperand> inputOperands,
+                                                  List<TableGenInstructionOperand> outputOperands) {
+    // If a TableGen record has no input or output operands,
+    // and no registers as def or use then it will throw an error.
+    // Therefore, when input and output operands are empty then do not filter any
+    // registers.
+    var filterRegistersWithConstraints = inputOperands.isEmpty() && outputOperands.isEmpty();
+    return getRegisterDefs(behavior, filterRegistersWithConstraints);
+  }
+
+  /**
    * Get a list of {@link RegisterRef} which are read. It is considered a
    * register usage when a {@link ReadRegNode} or a {@link ReadRegFileNode} with a
    * constant address exists. However, the only registers without any constraints on the
@@ -303,7 +318,7 @@ public abstract class LlvmInstructionLoweringStrategy {
    * @param behavior          of the {@link Instruction}.
    * @param filterConstraints whether registers with constraints should be considered.
    */
-  public static List<RegisterRef> getRegisterUses(Graph behavior, boolean filterConstraints) {
+  private static List<RegisterRef> getRegisterUses(Graph behavior, boolean filterConstraints) {
     return Stream.concat(behavior.getNodes(ReadRegNode.class)
                 .map(ReadRegNode::register)
                 .map(RegisterRef::new),
@@ -316,6 +331,23 @@ public abstract class LlvmInstructionLoweringStrategy {
         // need that LLVM knows about it because it should not be a dependency.
         .filter(register -> filterConstraints || register.constraints().isEmpty())
         .toList();
+  }
+
+  /**
+   * Get a list of {@link RegisterRef} which are read. It is considered a
+   * register usage when a {@link ReadRegNode} or a {@link ReadRegFileNode} with a
+   * constant address exists. However, the only registers without any constraints on the
+   * register file will be returned.
+   */
+  public static List<RegisterRef> getRegisterUses(Graph behavior,
+                                                  List<TableGenInstructionOperand> inputOperands,
+                                                  List<TableGenInstructionOperand> outputOperands) {
+    // If a TableGen record has no input or output operands,
+    // and no registers as def or use then it will throw an error.
+    // Therefore, when input and output operands are empty then do not filter any
+    // registers.
+    var filterRegistersWithConstraints = inputOperands.isEmpty() && outputOperands.isEmpty();
+    return getRegisterUses(behavior, filterRegistersWithConstraints);
   }
 
   /**
@@ -376,9 +408,22 @@ public abstract class LlvmInstructionLoweringStrategy {
   }
 
   /**
-   * Extracts the input operands from the {@link Graph}.
+   * Extracts the input operands from the {@link Graph}. But it will skip nodes which are
+   * already a {@link Node} in the {@code outputOperands}. Because if you have a
+   * {@link PseudoInstruction} like {@code ADDI rd, rd, 1} then is the output and one input
+   * the same which tablegen will not accept.
    */
-  public static List<TableGenInstructionOperand> getTableGenInputOperands(Graph graph) {
+  public static List<TableGenInstructionOperand> getTableGenInputOperands(
+      List<TableGenInstructionOperand> outputOperands,
+      Graph graph) {
+    var set =
+        outputOperands.stream()
+            .filter(x -> x instanceof TableGenInstructionIndexedRegisterFileOperand)
+            .map(x -> {
+              var mapped = (TableGenInstructionIndexedRegisterFileOperand) x;
+              return mapped.parameter();
+            })
+            .collect(Collectors.toSet());
     return getInputOperands(graph)
         .stream()
         .filter(node -> {
@@ -390,7 +435,11 @@ public abstract class LlvmInstructionLoweringStrategy {
           }
           return true;
         }).map(LlvmInstructionLoweringStrategy::generateTableGenInputOutput)
-        .toList();
+        .filter(
+            // If the node is a fieldRefNode then it must not be in the outputs.
+            // Otherwise, ok.
+            node -> !(node instanceof TableGenInstructionIndexedRegisterFileOperand operand)
+                || !set.contains(operand.parameter())).toList();
   }
 
   /**
@@ -409,11 +458,22 @@ public abstract class LlvmInstructionLoweringStrategy {
       return generateInstructionOperand(node);
     } else if (operand instanceof WriteRegFileNode node) {
       return generateInstructionOperand(node);
+    } else if (operand instanceof FuncParamNode node) {
+      return generateInstructionOperand(node);
     } else {
       throw Diagnostic.error(
           "Cannot construct a tablegen instruction operand from the type.",
           operand.sourceLocation()).build();
     }
+  }
+
+  /**
+   * Returns a {@link TableGenInstructionOperand} given a {@link Node}.
+   */
+  private static TableGenInstructionOperand generateInstructionOperand(FuncParamNode node) {
+    return new TableGenInstructionBareSymbolOperand(node,
+        "bare_symbol",
+        node.parameter().simpleName());
   }
 
   /**
@@ -516,9 +576,12 @@ public abstract class LlvmInstructionLoweringStrategy {
    * Most instruction's behaviors have inputs. Those are the results which the instruction requires.
    */
   private static List<Node> getInputOperands(Graph graph) {
-    return Stream.concat(graph.getNodes(ReadRegFileNode.class),
-            graph.getNodes(FieldAccessRefNode.class))
-        .map(x -> (Node) x).toList();
+    var x = graph.getNodes(ReadRegFileNode.class);
+    var y = graph.getNodes(FieldAccessRefNode.class);
+    var z = graph.getNodes(FuncCallNode.class).flatMap(
+        funcCallNode -> funcCallNode.function().behavior().getNodes(FuncParamNode.class));
+    return Stream.concat(Stream.concat(x, y), z)
+        .map(k -> (Node) k).toList();
   }
 
   /**
