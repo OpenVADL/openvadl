@@ -602,6 +602,69 @@ public class AstDumper
   }
 
   @Override
+  public Void visit(AsmDescriptionDefinition definition) {
+    dumpNode(definition);
+    dumpChildren(definition.id, definition.abi);
+    dumpChildren(definition.rules);
+    return null;
+  }
+
+  @Override
+  public Void visit(AsmGrammarRuleDefinition definition) {
+    dumpNode(definition);
+    dumpChildren(definition.id);
+    if (definition.asmType != null) {
+      dumpChildren(definition.asmType);
+    }
+    dumpChildren(definition.alternatives);
+    return null;
+  }
+
+  @Override
+  public Void visit(AsmGrammarAlternativesDefinition definition) {
+    dumpNode(definition);
+    for (var alternative : definition.alternatives) {
+      dumpChildren(alternative);
+    }
+    return null;
+  }
+
+  @Override
+  public Void visit(AsmGrammarElementDefinition definition) {
+    dumpNode(definition);
+    if (definition.attribute != null) {
+      dumpChildren(definition.attribute);
+    }
+    if (definition.asmLiteral != null) {
+      dumpChildren(definition.asmLiteral);
+    }
+    return null;
+  }
+
+  @Override
+  public Void visit(AsmGrammarLiteralDefinition definition) {
+    dumpNode(definition);
+    if (definition.id != null) {
+      dumpChildren(definition.id);
+    }
+    if (definition.stringLiteral != null) {
+      dumpChildren(definition.stringLiteral);
+    }
+    if (definition.asmType != null) {
+      dumpChildren(definition.asmType);
+    }
+    dumpChildren(definition.parameters);
+    return null;
+  }
+
+  @Override
+  public Void visit(AsmGrammarTypeDefinition definition) {
+    dumpNode(definition);
+    dumpChildren(definition.id);
+    return null;
+  }
+
+  @Override
   public Void visit(CallExpr expr) {
     dumpNode(expr);
     dumpChildren((Expr) expr.target);

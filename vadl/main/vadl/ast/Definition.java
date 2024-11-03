@@ -114,6 +114,18 @@ interface DefinitionVisitor<R> {
   R visit(LogicDefinition definition);
 
   R visit(SignalDefinition definition);
+
+  R visit(AsmDescriptionDefinition definition);
+
+  R visit(AsmGrammarRuleDefinition definition);
+
+  R visit(AsmGrammarElementDefinition definition);
+
+  R visit(AsmGrammarAlternativesDefinition definition);
+
+  R visit(AsmGrammarLiteralDefinition definition);
+
+  R visit(AsmGrammarTypeDefinition definition);
 }
 
 /**
@@ -3809,5 +3821,388 @@ class SignalDefinition extends Definition {
   @Override
   public int hashCode() {
     return Objects.hash(id, type);
+  }
+}
+
+class AsmDescriptionDefinition extends Definition {
+  Identifier id;
+  Identifier abi;
+  List<AsmGrammarRuleDefinition> rules;
+  SourceLocation loc;
+
+  public AsmDescriptionDefinition(Identifier id, Identifier abi,
+                                  List<AsmGrammarRuleDefinition> rules,
+                                  SourceLocation loc) {
+    this.id = id;
+    this.abi = abi;
+    this.rules = rules;
+    this.loc = loc;
+  }
+
+  @Override
+  <R> R accept(DefinitionVisitor<R> visitor) {
+    return visitor.visit(this);
+  }
+
+  @Override
+  SourceLocation location() {
+    return loc;
+  }
+
+  @Override
+  SyntaxType syntaxType() {
+    return BasicSyntaxType.INVALID;
+  }
+
+  @Override
+  void prettyPrint(int indent, StringBuilder builder) {
+    builder.append("assembly description ");
+    id.prettyPrint(indent, builder);
+    builder.append(" for ");
+    abi.prettyPrint(indent, builder);
+    builder.append(" = {\n");
+
+    indent++;
+    builder.append(prettyIndentString(indent)).append("grammar = {\n");
+    indent++;
+    for (var rule : rules) {
+      builder.append(prettyIndentString(indent));
+      rule.prettyPrint(indent, builder);
+      if (!Objects.equals(rules.getLast(), rule)) {
+        builder.append("\n");
+      }
+    }
+    builder.append(prettyIndentString(--indent)).append("}\n");
+
+    builder.append(prettyIndentString(--indent)).append("}\n");
+  }
+
+  @Override
+  public boolean equals(Object o) {
+    if (this == o) {
+      return true;
+    }
+    if (o == null || getClass() != o.getClass()) {
+      return false;
+    }
+    AsmDescriptionDefinition that = (AsmDescriptionDefinition) o;
+    return Objects.equals(id, that.id) && Objects.equals(abi, that.abi);
+  }
+
+  @Override
+  public int hashCode() {
+    return Objects.hash(id, abi, rules);
+  }
+}
+
+class AsmGrammarRuleDefinition extends Definition {
+  Identifier id;
+  @Nullable
+  AsmGrammarTypeDefinition asmType;
+  AsmGrammarAlternativesDefinition alternatives;
+  SourceLocation loc;
+
+  public AsmGrammarRuleDefinition(Identifier id, @Nullable AsmGrammarTypeDefinition asmType,
+                                  AsmGrammarAlternativesDefinition alternatives,
+                                  SourceLocation loc) {
+    this.id = id;
+    this.asmType = asmType;
+    this.alternatives = alternatives;
+    this.loc = loc;
+  }
+
+  @Override
+  <R> R accept(DefinitionVisitor<R> visitor) {
+    return visitor.visit(this);
+  }
+
+  @Override
+  SourceLocation location() {
+    return loc;
+  }
+
+  @Override
+  SyntaxType syntaxType() {
+    return BasicSyntaxType.INVALID;
+  }
+
+  @Override
+  void prettyPrint(int indent, StringBuilder builder) {
+    annotations.prettyPrint(indent, builder);
+    id.prettyPrint(indent, builder);
+    if (asmType != null) {
+      asmType.prettyPrint(indent, builder);
+    }
+    builder.append(" : ");
+    builder.append("\n");
+
+    indent++;
+    alternatives.prettyPrint(indent, builder);
+    indent--;
+
+    builder.append(prettyIndentString(indent)).append(";\n");
+  }
+
+  @Override
+  public boolean equals(Object o) {
+    if (this == o) {
+      return true;
+    }
+    if (o == null || getClass() != o.getClass()) {
+      return false;
+    }
+    AsmGrammarRuleDefinition that = (AsmGrammarRuleDefinition) o;
+    return Objects.equals(id, that.id) && Objects.equals(asmType, that.asmType);
+  }
+
+  @Override
+  public int hashCode() {
+    return Objects.hash(id, asmType, alternatives);
+  }
+}
+
+class AsmGrammarAlternativesDefinition extends Definition {
+  List<List<AsmGrammarElementDefinition>> alternatives;
+  SourceLocation loc;
+
+  public AsmGrammarAlternativesDefinition(List<List<AsmGrammarElementDefinition>> alternatives,
+                                          SourceLocation loc) {
+    this.alternatives = alternatives;
+    this.loc = loc;
+  }
+
+  @Override
+  <R> R accept(DefinitionVisitor<R> visitor) {
+    return visitor.visit(this);
+  }
+
+  @Override
+  SourceLocation location() {
+    return loc;
+  }
+
+  @Override
+  SyntaxType syntaxType() {
+    return BasicSyntaxType.INVALID;
+  }
+
+  @Override
+  void prettyPrint(int indent, StringBuilder builder) {
+    for (var alternative : alternatives) {
+      for (var element : alternative) {
+        element.prettyPrint(indent, builder);
+        builder.append("\n");
+      }
+      if (!Objects.equals(alternatives.getLast(), alternative)) {
+        builder.append("\n");
+      }
+    }
+  }
+}
+
+class AsmGrammarElementDefinition extends Definition {
+  @Nullable
+  Identifier attribute;
+  Boolean isPlusEqualsAttributeAssign;
+  @Nullable
+  AsmGrammarLiteralDefinition asmLiteral;
+  @Nullable
+  AsmGrammarAlternativesDefinition groupAlternatives;
+
+  SourceLocation loc;
+
+  public AsmGrammarElementDefinition(@Nullable Identifier attribute,
+                                     Boolean isPlusEqualsAttributeAssign,
+                                     @Nullable AsmGrammarLiteralDefinition asmLiteral,
+                                     @Nullable AsmGrammarAlternativesDefinition groupAlternatives,
+                                     SourceLocation loc) {
+    this.attribute = attribute;
+    this.isPlusEqualsAttributeAssign = isPlusEqualsAttributeAssign;
+    this.asmLiteral = asmLiteral;
+    this.groupAlternatives = groupAlternatives;
+    this.loc = loc;
+  }
+
+  @Override
+  <R> R accept(DefinitionVisitor<R> visitor) {
+    return visitor.visit(this);
+  }
+
+  @Override
+  SourceLocation location() {
+    return loc;
+  }
+
+  @Override
+  SyntaxType syntaxType() {
+    return BasicSyntaxType.INVALID;
+  }
+
+  @Override
+  void prettyPrint(int indent, StringBuilder builder) {
+    annotations.prettyPrint(indent, builder);
+    builder.append(prettyIndentString(indent));
+
+    if (attribute != null) {
+      attribute.prettyPrint(indent, builder);
+      if (asmLiteral == null && isPlusEqualsAttributeAssign) {
+        builder.append(" += ");
+      } else {
+        builder.append(" = ");
+      }
+    }
+    if (asmLiteral != null) {
+      asmLiteral.prettyPrint(0, builder);
+    }
+    if (groupAlternatives != null) {
+      builder.append("(\n");
+      groupAlternatives.prettyPrint(++indent, builder);
+      builder.append(prettyIndentString(--indent));
+      builder.append(')');
+    }
+  }
+
+  @Override
+  public boolean equals(Object o) {
+    if (this == o) {
+      return true;
+    }
+    if (o == null || getClass() != o.getClass()) {
+      return false;
+    }
+    AsmGrammarElementDefinition that = (AsmGrammarElementDefinition) o;
+    return Objects.equals(attribute, that.attribute)
+        && Objects.equals(isPlusEqualsAttributeAssign, that.isPlusEqualsAttributeAssign)
+        && Objects.equals(asmLiteral, that.asmLiteral);
+  }
+
+  @Override
+  public int hashCode() {
+    return Objects.hash(attribute, isPlusEqualsAttributeAssign, asmLiteral);
+  }
+}
+
+class AsmGrammarLiteralDefinition extends Definition {
+  @Nullable
+  Identifier id;
+  List<AsmGrammarLiteralDefinition> parameters;
+  @Nullable
+  Expr stringLiteral;
+  @Nullable
+  AsmGrammarTypeDefinition asmType;
+  SourceLocation loc;
+
+  public AsmGrammarLiteralDefinition(@Nullable Identifier id,
+                                     List<AsmGrammarLiteralDefinition> parameters,
+                                     @Nullable Expr stringLiteral, @Nullable
+                                     AsmGrammarTypeDefinition asmType, SourceLocation loc) {
+    this.id = id;
+    this.parameters = parameters;
+    this.stringLiteral = stringLiteral;
+    this.asmType = asmType;
+    this.loc = loc;
+  }
+
+  @Override
+  <R> R accept(DefinitionVisitor<R> visitor) {
+    return visitor.visit(this);
+  }
+
+  @Override
+  SourceLocation location() {
+    return loc;
+  }
+
+  @Override
+  SyntaxType syntaxType() {
+    return BasicSyntaxType.INVALID;
+  }
+
+  @Override
+  void prettyPrint(int indent, StringBuilder builder) {
+    annotations.prettyPrint(indent, builder);
+    builder.append(prettyIndentString(indent));
+    if (id != null) {
+      id.prettyPrint(0, builder);
+      if (!parameters.isEmpty()) {
+        builder.append('<');
+        for (var param : parameters) {
+          param.prettyPrint(indent, builder);
+        }
+        builder.append('>');
+      }
+    }
+    if (stringLiteral != null) {
+      stringLiteral.prettyPrint(0, builder);
+    }
+    if (asmType != null) {
+      asmType.prettyPrint(0, builder);
+    }
+  }
+
+  @Override
+  public boolean equals(Object o) {
+    if (this == o) {
+      return true;
+    }
+    if (o == null || getClass() != o.getClass()) {
+      return false;
+    }
+    AsmGrammarLiteralDefinition that = (AsmGrammarLiteralDefinition) o;
+    return Objects.equals(id, that.id) && Objects.equals(stringLiteral, that.stringLiteral)
+        && Objects.equals(asmType, that.asmType);
+  }
+
+  @Override
+  public int hashCode() {
+    return Objects.hash(id, stringLiteral, asmType);
+  }
+}
+
+class AsmGrammarTypeDefinition extends Definition {
+  Identifier id;
+  SourceLocation loc;
+
+  public AsmGrammarTypeDefinition(Identifier id, SourceLocation loc) {
+    this.id = id;
+    this.loc = loc;
+  }
+
+  @Override
+  <R> R accept(DefinitionVisitor<R> visitor) {
+    return visitor.visit(this);
+  }
+
+  @Override
+  SourceLocation location() {
+    return loc;
+  }
+
+  @Override
+  SyntaxType syntaxType() {
+    return BasicSyntaxType.INVALID;
+  }
+
+  @Override
+  void prettyPrint(int indent, StringBuilder builder) {
+    builder.append(" @");
+    id.prettyPrint(0, builder);
+  }
+
+  @Override
+  public boolean equals(Object o) {
+    if (this == o) {
+      return true;
+    }
+    if (o == null || getClass() != o.getClass()) {
+      return false;
+    }
+    AsmGrammarTypeDefinition that = (AsmGrammarTypeDefinition) o;
+    return Objects.equals(id, that.id);
+  }
+
+  @Override
+  public int hashCode() {
+    return Objects.hash(id);
   }
 }
