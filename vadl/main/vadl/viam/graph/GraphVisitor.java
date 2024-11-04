@@ -38,7 +38,7 @@ public interface GraphVisitor<R> {
     default void visitApplicable(Node arg) {
       for (var applier : applicable(arg)) {
         NodeApplier<Node, Node> cast = (NodeApplier<Node, Node>) applier;
-        cast.visit(arg);
+        cast.apply(arg);
       }
     }
 
@@ -47,11 +47,17 @@ public interface GraphVisitor<R> {
       var newNode = visit(node);
 
       if (newNode == null) {
-        node.safeDelete();
+        if (!node.isDeleted()) {
+          node.safeDelete();
+        }
         return null;
       }
 
-      return node.replaceAndDelete(newNode);
+      if (!node.isDeleted() && node != newNode) {
+        return node.replaceAndDelete(newNode);
+      }
+
+      return null;
     }
   }
 
