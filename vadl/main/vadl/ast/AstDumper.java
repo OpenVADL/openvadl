@@ -638,6 +638,12 @@ public class AstDumper
     if (definition.asmLiteral != null) {
       dumpChildren(definition.asmLiteral);
     }
+    if (definition.groupAlternatives != null) {
+      dumpChildren(definition.groupAlternatives);
+    }
+    if (definition.asmType != null) {
+      dumpChildren(definition.asmType);
+    }
     return null;
   }
 

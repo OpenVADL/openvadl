@@ -1095,12 +1095,12 @@ PRODUCTIONS
     SYM_BRACE_CLOSE                                                             (. asmDescription = new AsmDescriptionDefinition(id, abi, rules, start.join(loc())); .)
   .
 
-  assemblyGrammarDefinition<.out List<AsmGrammarRuleDefinition> rules.>     (. rules = new ArrayList<>(); .)
+  assemblyGrammarDefinition<.out List<AsmGrammarRuleDefinition> rules.>         (. rules = new ArrayList<>(); .)
      = GRAMMAR
        SYM_EQ
        SYM_BRACE_OPEN
-         assemblyGrammarRuleDefinition<out AsmGrammarRuleDefinition first>       (. rules.add(first); .)
-         { assemblyGrammarRuleDefinition<out AsmGrammarRuleDefinition other>     (. rules.add(other); .)
+         assemblyGrammarRuleDefinition<out AsmGrammarRuleDefinition first>      (. rules.add(first); .)
+         { assemblyGrammarRuleDefinition<out AsmGrammarRuleDefinition other>    (. rules.add(other); .)
          }
        SYM_BRACE_CLOSE
      .
@@ -1128,31 +1128,29 @@ PRODUCTIONS
     }
   .
 
-  assemblyGrammarElement<out AsmGrammarElementDefinition element>                                    (. Identifier id = null; Boolean isPlusEq = false; AsmGrammarAlternativesDefinition alternatives = null;
-                                                                                                        AsmGrammarLiteralDefinition asmLiteral = null; AsmGrammarTypeDefinition type = null; var start = loc(); .)
+  assemblyGrammarElement<out AsmGrammarElementDefinition element>       (. Identifier id = null; Boolean isPlusEq = false; AsmGrammarAlternativesDefinition alternatives = null; List<AsmGrammarLiteralDefinition> params = new ArrayList<>();
+                                                                           AsmGrammarLiteralDefinition asmLiteral = null; AsmGrammarTypeDefinition type = null; var start = loc(); .)
      = (
        assemblyIdentifier<out id>
-           [ ( SYM_PLUS_EQ                                                                           (. isPlusEq = true; .)
-               | SYM_EQ
-             )
+           [ ( SYM_PLUS_EQ  (. isPlusEq = true; .)  | SYM_EQ)
              assemblyGrammarLiteral<out asmLiteral>
-             | SYM_LT assemblyParameterList<.out List<AsmGrammarLiteralDefinition> params.>  SYM_GT
-               [assemblyGrammarTypeDefinition<out type>]                                             (. asmLiteral = new AsmGrammarLiteralDefinition(id, params, null, type, start.join(loc()));
-                                                                                                       id = null; .)
-           ]
+             | SYM_LT assemblyParameterList<out params>  SYM_GT
+           ] [assemblyGrammarTypeDefinition<out type>]                  (. if(asmLiteral == null){ asmLiteral = new AsmGrammarLiteralDefinition(id, params, null, type, start.join(loc()));
+                                                                           id = null; type = null; } .)
        | assemblyGrammarGroup<out alternatives>
          [assemblyGrammarTypeDefinition<out type>]
        | stringLiteral<out Expr strLit>
-         [assemblyGrammarTypeDefinition<out type>]                                                   (. asmLiteral = new AsmGrammarLiteralDefinition(null, new ArrayList<>(), strLit, type, start.join(loc())); .)
-     )                                                                                               (. element =  new AsmGrammarElementDefinition(id, isPlusEq, asmLiteral, alternatives, start.join(loc())); .)
+         [assemblyGrammarTypeDefinition<out type>]                      (. asmLiteral = new AsmGrammarLiteralDefinition(null, new ArrayList<>(), strLit, type, start.join(loc())); type = null;.)
+     )                                                                  (. element =  new AsmGrammarElementDefinition(id, isPlusEq, asmLiteral, alternatives, type, start.join(loc())); .)
      .
 
-  assemblyGrammarLiteral<out AsmGrammarLiteralDefinition literal>        (. Identifier id = null; List<AsmGrammarLiteralDefinition> parameters = new ArrayList<>();
-                                                                            Expr strLit = null; AsmGrammarTypeDefinition type = null; var start = loc(); .)
+  assemblyGrammarLiteral<out AsmGrammarLiteralDefinition literal>       (. Identifier id = null; List<AsmGrammarLiteralDefinition> parameters = new ArrayList<>();
+                                                                           Expr strLit = null; AsmGrammarTypeDefinition type = null; var start = loc(); .)
   = ( assemblyIdentifier<out id>
         [SYM_LT assemblyParameterList<out parameters>  SYM_GT]
       | stringLiteral<out strLit> )
-    [assemblyGrammarTypeDefinition<out type>]                            (. literal = new AsmGrammarLiteralDefinition(id, parameters, strLit, type, start.join(loc())); .)
+    [IF(la.kind == _SYM_AT)
+      assemblyGrammarTypeDefinition<out type>]                          (. literal = new AsmGrammarLiteralDefinition(id, parameters, strLit, type, start.join(loc())); .)
   .
 
   assemblyParameterList<.out List<AsmGrammarLiteralDefinition> parameters.>               (. parameters = new ArrayList<>();  .)
@@ -1739,7 +1737,7 @@ PRODUCTIONS
 
   assemblyAllowedIdentifierKeywords
   = allowedIdentifierKeywords
-  // | TODO: other keywords
+  // | TODO other keywords
   .
 
   sequenceCallExprList<.out List<SequenceCallExpr> list.> (. list = new ArrayList<>(); .)
