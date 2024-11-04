@@ -58,6 +58,8 @@ import vadl.viam.Instruction;
 import vadl.viam.InstructionSetArchitecture;
 import vadl.viam.PseudoInstruction;
 import vadl.viam.graph.Graph;
+import vadl.viam.graph.GraphNodeVisitor;
+import vadl.viam.graph.GraphVisitor;
 import vadl.viam.graph.Node;
 import vadl.viam.graph.NodeList;
 import vadl.viam.graph.control.AbstractBeginNode;
@@ -114,6 +116,15 @@ public abstract class LlvmInstructionLoweringStrategy {
    * if-conditions and mark them as not lowerable.
    */
   protected LcbGraphNodeVisitor getVisitorForPatternSelectorLowering() {
+    var v1 = new GraphVisitor.Applier<ConstantNode>() {
+      @Nullable
+      @Override
+      public ConstantNode applyNullable(Node from, @Nullable Node to) {
+        return null;
+      }
+    };
+
+
     return new ReplaceWithLlvmSDNodesVisitor(architectureType);
   }
 
@@ -158,8 +169,8 @@ public abstract class LlvmInstructionLoweringStrategy {
    * If it is not lowerable then return {@link Optional#empty()}.
    *
    * @param labelledMachineInstructions the instructions which have known semantics.
-   * @param instruction           is the machine instruction which should be lowered.
-   * @param unmodifiedBehavior    is the uninlined graph in the case of {@link Instruction}.
+   * @param instruction                 is the machine instruction which should be lowered.
+   * @param unmodifiedBehavior          is the uninlined graph in the case of {@link Instruction}.
    */
   public Optional<LlvmLoweringRecord> lower(
       Map<MachineInstructionLabel, List<Instruction>> labelledMachineInstructions,
@@ -188,9 +199,9 @@ public abstract class LlvmInstructionLoweringStrategy {
    * If it is not lowerable then return {@link Optional#empty()}.
    *
    * @param labelledMachineInstructions the instructions which have known semantics.
-   * @param instruction           is the machine instruction which should be lowered.
-   * @param unmodifiedBehavior    is the uninlined graph in the case of {@link Instruction} or
-   *                              the applied graph in the case of {@link PseudoInstruction}.
+   * @param instruction                 is the machine instruction which should be lowered.
+   * @param unmodifiedBehavior          is the uninlined graph in the case of {@link Instruction} or
+   *                                    the applied graph in the case of {@link PseudoInstruction}.
    */
   protected Optional<LlvmLoweringRecord> lowerInstruction(
       Map<MachineInstructionLabel, List<Instruction>> labelledMachineInstructions,

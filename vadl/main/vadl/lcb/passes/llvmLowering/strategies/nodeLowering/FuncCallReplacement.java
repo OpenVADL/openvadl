@@ -1,0 +1,28 @@
+package vadl.lcb.passes.llvmLowering.strategies.nodeLowering;
+
+import java.util.List;
+import org.jetbrains.annotations.Nullable;
+import vadl.lcb.passes.llvmLowering.domain.selectionDag.LlvmUnlowerableSD;
+import vadl.viam.graph.GraphVisitor;
+import vadl.viam.graph.Node;
+import vadl.viam.graph.dependency.FuncCallNode;
+import vadl.viam.graph.dependency.SelectNode;
+
+public class FuncCallReplacement
+    implements GraphVisitor.NodeApplier<FuncCallNode, LlvmUnlowerableSD> {
+  @Nullable
+  @Override
+  public LlvmUnlowerableSD visit(FuncCallNode selectNode) {
+    return new LlvmUnlowerableSD();
+  }
+
+  @Override
+  public boolean acceptable(Node node) {
+    return node instanceof FuncCallNode;
+  }
+
+  @Override
+  public List<GraphVisitor.NodeApplier<Node, Node>> recursiveHooks() {
+    return List.of();
+  }
+}

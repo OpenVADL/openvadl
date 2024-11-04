@@ -1,5 +1,7 @@
 package vadl.viam.graph;
 
+import java.util.List;
+import java.util.stream.Stream;
 import javax.annotation.Nullable;
 
 /**
@@ -12,6 +14,46 @@ public interface GraphVisitor<R> {
 
   @Nullable
   R visit(Node from, @Nullable Node to);
+
+  /**
+   * The {@code NodeApplier} interface represents a graph node visitor that changes
+   * nodes in a graph. When the {@code visit} method returns {@code null} then the
+   * node will be deleted. If the same node was returned then it will be replaced nonetheless.
+   * Also note that mutability in {@code visit} method is allowed.
+   */
+  interface NodeApplier<T extends Node, R extends Node> {
+    @Nullable
+    R visit(T node);
+
+    boolean acceptable(Node node);
+
+    List<NodeApplier<Node, Node>> recursiveHooks();
+
+    default List<NodeApplier<Node, Node>> applicable(Node node) {
+      return recursiveHooks()
+          .stream()
+          .filter(x -> x.acceptable(node))
+          .toList();
+    }
+
+    default <T extends Node> void visitApplicable(T arg) {
+      for (var applier : applicable(arg)) {
+        applier.visit(arg);
+      }
+    }
+
+    @Nullable
+    default R apply(T node) {
+      var newNode = visit(node);
+
+      if (newNode == null) {
+        newNode.safeDelete();
+        return null;
+      }
+
+      return node.replaceAndDelete(newNode);
+    }
+  }
 
   /**
    * The Applier interface represents a graph visitor that assigns new values to inputs of
