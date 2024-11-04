@@ -59,11 +59,10 @@ public class LlvmInstructionLoweringUnconditionalJumpsStrategyImpl
 
     copy.deinitializeNodes();
     return Optional.of(
-        createIntermediateResult(labelledMachineInstructions, instruction, copy));
+        createIntermediateResult(instruction, copy));
   }
 
   private LlvmLoweringRecord createIntermediateResult(
-      Map<MachineInstructionLabel, List<Instruction>> labelledMachineInstructions,
       Instruction instruction,
       UninlinedGraph uninlinedGraph) {
 

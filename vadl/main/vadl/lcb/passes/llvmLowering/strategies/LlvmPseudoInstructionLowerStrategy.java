@@ -1,23 +1,25 @@
 package vadl.lcb.passes.llvmLowering.strategies;
 
 import com.google.common.collect.Streams;
-import java.io.Writer;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.IdentityHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.Set;
+import javax.annotation.Nullable;
 import vadl.error.DeferredDiagnosticStore;
 import vadl.error.Diagnostic;
 import vadl.gcb.passes.pseudo.PseudoFuncParamNode;
 import vadl.lcb.passes.isaMatching.MachineInstructionLabel;
+import vadl.lcb.passes.isaMatching.PseudoInstructionLabel;
 import vadl.lcb.passes.llvmLowering.LlvmLoweringPass;
 import vadl.lcb.passes.llvmLowering.domain.LlvmLoweringPseudoRecord;
-import vadl.lcb.passes.llvmLowering.domain.LlvmLoweringRecord;
 import vadl.lcb.passes.llvmLowering.domain.RegisterRef;
 import vadl.lcb.passes.llvmLowering.domain.machineDag.MachineInstructionNode;
 import vadl.lcb.passes.llvmLowering.domain.machineDag.PseudoInstructionNode;
+import vadl.lcb.passes.llvmLowering.tablegen.model.TableGenInstruction;
 import vadl.lcb.passes.llvmLowering.tablegen.model.TableGenInstructionOperand;
 import vadl.lcb.passes.llvmLowering.tablegen.model.TableGenPattern;
 import vadl.lcb.passes.llvmLowering.tablegen.model.TableGenSelectionWithOutputPattern;
@@ -35,23 +37,40 @@ import vadl.viam.graph.dependency.FuncParamNode;
 import vadl.viam.graph.dependency.WriteRegFileNode;
 
 /**
- * Whereas {@link LlvmInstructionLoweringStrategy} defines multiple to lower {@link Instruction}
- * a.k.a Machine Instructions, this class lowers {@link PseudoInstruction}.
+ * Defines a {@link PseudoInstruction} will be lowered to {@link TableGenInstruction}.
  */
-public class LlvmPseudoLoweringImpl {
-
+public abstract class LlvmPseudoInstructionLowerStrategy {
   /**
    * We use the strategies from {@link LlvmLoweringPass} for the individual
    * {@link Instruction} from {@link InstrCallNode} in {@link PseudoInstruction}.
    */
   private final List<LlvmInstructionLoweringStrategy> strategies;
 
-  public LlvmPseudoLoweringImpl(List<LlvmInstructionLoweringStrategy> strategies) {
+  /**
+   * Constructor.
+   */
+  protected LlvmPseudoInstructionLowerStrategy(List<LlvmInstructionLoweringStrategy> strategies) {
     this.strategies = strategies;
   }
 
   /**
-   * Lower a {@link PseudoInstruction} into a {@link LlvmLoweringRecord}.
+   * Get the supported set of {@link PseudoInstructionLabel} which this strategy supports.
+   */
+  protected abstract Set<PseudoInstructionLabel> getSupportedInstructionLabels();
+
+  /**
+   * Checks whether the given {@link PseudoInstruction} is lowerable with this strategy.
+   */
+  public boolean isApplicable(@Nullable PseudoInstructionLabel pseudoInstructionLabel) {
+    if (pseudoInstructionLabel == null) {
+      return false;
+    }
+
+    return getSupportedInstructionLabels().contains(pseudoInstructionLabel);
+  }
+
+  /**
+   * Lower a {@link PseudoInstruction} into a {@link LlvmLoweringPseudoRecord}.
    */
   public Optional<LlvmLoweringPseudoRecord> lower(
       PseudoInstruction pseudo,
@@ -137,7 +156,8 @@ public class LlvmPseudoLoweringImpl {
                           if (constraintValue.isEmpty()) {
                             DeferredDiagnosticStore.add(Diagnostic.warning(
                                 "There is no constraint value for this register. "
-                                    + "Therefore, we cannot generate instruction selectors for it.",
+                                    +
+                                    "Therefore, we cannot generate instruction selectors for it.",
                                 occurrence.sourceLocation()).build());
                           }
                         });
@@ -230,6 +250,7 @@ public class LlvmPseudoLoweringImpl {
         appliedInstructionBehavior
     ));
   }
+
 
   /**
    * There are two relevant cases.

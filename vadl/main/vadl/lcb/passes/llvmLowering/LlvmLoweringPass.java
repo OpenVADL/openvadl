@@ -19,7 +19,7 @@ import vadl.lcb.passes.isaMatching.IsaMachineInstructionMatchingPass;
 import vadl.lcb.passes.isaMatching.PseudoInstructionLabel;
 import vadl.lcb.passes.llvmLowering.domain.LlvmLoweringRecord;
 import vadl.lcb.passes.llvmLowering.strategies.LlvmInstructionLoweringStrategy;
-import vadl.lcb.passes.llvmLowering.strategies.LlvmPseudoLoweringImpl;
+import vadl.lcb.passes.llvmLowering.strategies.instruction.LlvmPseudoInstructionLoweringDefaultStrategyImpl;
 import vadl.lcb.passes.llvmLowering.strategies.instruction.LlvmInstructionLoweringAddImmediateStrategyImpl;
 import vadl.lcb.passes.llvmLowering.strategies.instruction.LlvmInstructionLoweringConditionalBranchesStrategyImpl;
 import vadl.lcb.passes.llvmLowering.strategies.instruction.LlvmInstructionLoweringConditionalsStrategyImpl;
@@ -164,7 +164,7 @@ public class LlvmLoweringPass extends Pass {
       List<LlvmInstructionLoweringStrategy> strategies,
       Map<MachineInstructionLabel, List<Instruction>> labelledMachineInstructions) {
     var tableGenRecords = new IdentityHashMap<PseudoInstruction, LlvmLoweringRecord>();
-    var pseudoLowering = new LlvmPseudoLoweringImpl(strategies);
+    var pseudoLowering = new LlvmPseudoInstructionLoweringDefaultStrategyImpl(strategies);
 
     viam.isa().map(isa -> isa.ownPseudoInstructions().stream()).orElseGet(Stream::empty)
         .forEach(pseudo -> {
