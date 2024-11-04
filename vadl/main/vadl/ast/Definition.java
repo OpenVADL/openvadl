@@ -3868,7 +3868,7 @@ class AsmDescriptionDefinition extends Definition {
     for (var rule : rules) {
       builder.append(prettyIndentString(indent));
       rule.prettyPrint(indent, builder);
-      if (!Objects.equals(rules.getLast(), rule)) {
+      if (!Objects.equals(rules.get(rules.size() - 1), rule)) {
         builder.append("\n");
       }
     }
@@ -3993,7 +3993,7 @@ class AsmGrammarAlternativesDefinition extends Definition {
         element.prettyPrint(indent, builder);
         builder.append("\n");
       }
-      if (!Objects.equals(alternatives.getLast(), alternative)) {
+      if (!Objects.equals(alternatives.get(alternatives.size() - 1), alternative)) {
         builder.append("\n");
       }
     }
@@ -4140,6 +4140,9 @@ class AsmGrammarLiteralDefinition extends Definition {
         builder.append('<');
         for (var param : parameters) {
           param.prettyPrint(indent, builder);
+          if (!Objects.equals(parameters.get(parameters.size() - 1), param)) {
+            builder.append(", ");
+          }
         }
         builder.append('>');
       }
