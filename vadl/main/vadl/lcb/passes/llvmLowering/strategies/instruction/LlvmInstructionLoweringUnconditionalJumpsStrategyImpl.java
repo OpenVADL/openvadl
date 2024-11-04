@@ -98,6 +98,7 @@ public class LlvmInstructionLoweringUnconditionalJumpsStrategyImpl
                                                    UninlinedGraph uninlinedGraph,
                                                    List<TableGenInstructionOperand> inputOperands,
                                                    List<WriteResourceNode> sideEffectNodes) {
+    /*
     var selector = new Graph("selector", instruction);
     var machine = new Graph("machine", instruction);
 
@@ -124,6 +125,8 @@ public class LlvmInstructionLoweringUnconditionalJumpsStrategyImpl
             new TableGenSelectionWithOutputPattern(selector, machine)
         )
     );
+     */
+    return Collections.emptyList();
   }
 
   @Override
