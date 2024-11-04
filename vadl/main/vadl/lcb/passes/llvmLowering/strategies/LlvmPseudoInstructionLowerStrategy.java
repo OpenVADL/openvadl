@@ -3,6 +3,7 @@ package vadl.lcb.passes.llvmLowering.strategies;
 import com.google.common.collect.Streams;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.IdentityHashMap;
 import java.util.List;
 import java.util.Map;
@@ -16,6 +17,7 @@ import vadl.lcb.passes.isaMatching.MachineInstructionLabel;
 import vadl.lcb.passes.isaMatching.PseudoInstructionLabel;
 import vadl.lcb.passes.llvmLowering.LlvmLoweringPass;
 import vadl.lcb.passes.llvmLowering.domain.LlvmLoweringPseudoRecord;
+import vadl.lcb.passes.llvmLowering.domain.LlvmLoweringRecord;
 import vadl.lcb.passes.llvmLowering.domain.RegisterRef;
 import vadl.lcb.passes.llvmLowering.domain.machineDag.MachineInstructionNode;
 import vadl.lcb.passes.llvmLowering.domain.machineDag.PseudoInstructionNode;
@@ -202,17 +204,8 @@ public abstract class LlvmPseudoInstructionLowerStrategy {
         if (tableGenRecord.isPresent()) {
           var record = tableGenRecord.get();
 
-          // We need to update the output instruction because the pattern has the machine
-          // instruction now. But we want the pseudo instruction.
-          record.patterns().forEach(pattern -> {
-            if (pattern instanceof TableGenSelectionWithOutputPattern outputPattern) {
-              outputPattern.machine().getNodes(MachineInstructionNode.class)
-                  .forEach(machineInstructionNode -> machineInstructionNode.replaceAndDelete(
-                      new PseudoInstructionNode(machineInstructionNode.arguments(), pseudo)
-                  ));
-            }
-          });
-
+          updatePatterns(pseudo, record);
+          var patternVariations = generatePatternVariations(pseudo, record);
 
           var flags = record.flags();
           isTerminator |= flags.isTerminator();
@@ -225,6 +218,7 @@ public abstract class LlvmPseudoInstructionLowerStrategy {
           inputOperands.addAll(record.inputs());
           outputOperands.addAll(record.outputs());
           patterns.addAll(record.patterns());
+          patterns.addAll(patternVariations);
         }
 
         break;
@@ -251,6 +245,23 @@ public abstract class LlvmPseudoInstructionLowerStrategy {
     ));
   }
 
+  protected List<TableGenPattern> generatePatternVariations(PseudoInstruction pseudo,
+                                                            LlvmLoweringRecord record) {
+    return Collections.emptyList();
+  }
+
+  protected void updatePatterns(PseudoInstruction pseudo, LlvmLoweringRecord record) {
+    // We need to update the output instruction because the pattern has the machine
+    // instruction now. But we want the pseudo instruction.
+    record.patterns().forEach(pattern -> {
+      if (pattern instanceof TableGenSelectionWithOutputPattern outputPattern) {
+        outputPattern.machine().getNodes(MachineInstructionNode.class)
+            .forEach(machineInstructionNode -> machineInstructionNode.replaceAndDelete(
+                new PseudoInstructionNode(machineInstructionNode.arguments(), pseudo)
+            ));
+      }
+    });
+  }
 
   /**
    * There are two relevant cases.
