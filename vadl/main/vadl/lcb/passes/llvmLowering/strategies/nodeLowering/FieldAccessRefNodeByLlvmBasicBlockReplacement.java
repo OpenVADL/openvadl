@@ -3,18 +3,24 @@ package vadl.lcb.passes.llvmLowering.strategies.nodeLowering;
 import java.util.List;
 import org.jetbrains.annotations.Nullable;
 import vadl.lcb.codegen.model.llvm.ValueType;
+import vadl.lcb.passes.llvmLowering.domain.selectionDag.LlvmBasicBlockSD;
 import vadl.lcb.passes.llvmLowering.domain.selectionDag.LlvmFieldAccessRefNode;
 import vadl.viam.graph.GraphVisitor;
 import vadl.viam.graph.Node;
 import vadl.viam.graph.dependency.FieldAccessRefNode;
-import vadl.viam.graph.dependency.SliceNode;
 
-public class FieldAccessRefNodeReplacement
+/**
+ * While {@link FieldAccessRefNodeReplacement} converts every
+ * {@link FieldAccessRefNode} into {@link LlvmFieldAccessRefNode},
+ * this class converts it into {@link LlvmBasicBlockSD}. This means that the field should be
+ * treated like an immediate, but it is a basic block.
+ */
+public class FieldAccessRefNodeByLlvmBasicBlockReplacement
     implements GraphVisitor.NodeApplier<FieldAccessRefNode, LlvmFieldAccessRefNode> {
   private final List<GraphVisitor.NodeApplier<? extends Node, ? extends Node>> replacer;
   private final ValueType architectureType;
 
-  public FieldAccessRefNodeReplacement(
+  public FieldAccessRefNodeByLlvmBasicBlockReplacement(
       List<GraphVisitor.NodeApplier<? extends Node, ? extends Node>> replacer,
       ValueType architectureType) {
     this.replacer = replacer;

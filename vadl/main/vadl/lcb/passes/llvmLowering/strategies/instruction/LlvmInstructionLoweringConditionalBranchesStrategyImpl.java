@@ -16,24 +16,21 @@ import java.util.stream.Stream;
 import vadl.lcb.codegen.model.llvm.ValueType;
 import vadl.lcb.passes.isaMatching.MachineInstructionLabel;
 import vadl.lcb.passes.llvmLowering.domain.LlvmLoweringRecord;
-import vadl.lcb.passes.llvmLowering.domain.machineDag.MachineInstructionParameterNode;
-import vadl.lcb.passes.llvmLowering.domain.selectionDag.LlvmBasicBlockSD;
 import vadl.lcb.passes.llvmLowering.domain.selectionDag.LlvmBrCcSD;
 import vadl.lcb.passes.llvmLowering.domain.selectionDag.LlvmBrCondSD;
 import vadl.lcb.passes.llvmLowering.domain.selectionDag.LlvmCondCode;
 import vadl.lcb.passes.llvmLowering.domain.selectionDag.LlvmSetCondSD;
 import vadl.lcb.passes.llvmLowering.domain.selectionDag.LlvmTypeCastSD;
 import vadl.lcb.passes.llvmLowering.strategies.LlvmInstructionLoweringStrategy;
-import vadl.lcb.passes.llvmLowering.strategies.visitors.impl.ReplaceWithLlvmSDNodesWithControlFlowVisitor;
-import vadl.lcb.passes.llvmLowering.tablegen.model.TableGenInstructionImmediateLabelOperand;
 import vadl.lcb.passes.llvmLowering.tablegen.model.TableGenInstructionOperand;
 import vadl.lcb.passes.llvmLowering.tablegen.model.TableGenPattern;
 import vadl.lcb.passes.llvmLowering.tablegen.model.TableGenSelectionWithOutputPattern;
-import vadl.lcb.passes.llvmLowering.tablegen.model.parameterIdentity.ParameterIdentity;
-import vadl.lcb.visitors.LcbGraphNodeVisitor;
 import vadl.viam.Instruction;
 import vadl.viam.graph.Graph;
+import vadl.viam.graph.GraphVisitor;
+import vadl.viam.graph.Node;
 import vadl.viam.graph.NodeList;
+import vadl.viam.graph.control.AbstractEndNode;
 import vadl.viam.graph.dependency.WriteResourceNode;
 import vadl.viam.passes.functionInliner.UninlinedGraph;
 
@@ -52,11 +49,8 @@ public class LlvmInstructionLoweringConditionalBranchesStrategyImpl
   }
 
   @Override
-  protected LcbGraphNodeVisitor getVisitorForPatternSelectorLowering() {
-    // Branch instructions contain if conditionals.
-    // The normal visitor denies those. But "xxxWithControlFlowVisitor" we are allowing
-    // these instructions for conditional branches.
-    return new ReplaceWithLlvmSDNodesWithControlFlowVisitor(architectureType);
+  protected List<GraphVisitor.NodeApplier<? extends Node, ? extends Node>> replacementHooks() {
+    return replacementHooksWithFieldAccessWithBasicBlockReplacement();
   }
 
   @Override
@@ -65,11 +59,11 @@ public class LlvmInstructionLoweringConditionalBranchesStrategyImpl
       Instruction instruction,
       UninlinedGraph uninlinedBehavior) {
 
-    var visitor = getVisitorForPatternSelectorLowering();
+    var visitor = replacementHooks();
     var copy = (UninlinedGraph) uninlinedBehavior.copy();
 
-    for (var node : copy.getNodes().toList()) {
-      visitor.visit(node);
+    for (var node : copy.getNodes(AbstractEndNode.class).toList()) {
+      visitReplacementHooks(visitor, node);
     }
 
     copy.deinitializeNodes();
@@ -111,7 +105,6 @@ public class LlvmInstructionLoweringConditionalBranchesStrategyImpl
         defs
     );
   }
-
 
 
   @Override

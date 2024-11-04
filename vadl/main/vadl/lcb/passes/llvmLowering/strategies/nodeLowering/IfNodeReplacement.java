@@ -23,7 +23,7 @@ public class IfNodeReplacement
   }
 
   @Override
-  public List<GraphVisitor.NodeApplier<Node, Node>> recursiveHooks() {
+  public List<GraphVisitor.NodeApplier<? extends Node, ? extends Node>> recursiveHooks() {
     return List.of();
   }
 }

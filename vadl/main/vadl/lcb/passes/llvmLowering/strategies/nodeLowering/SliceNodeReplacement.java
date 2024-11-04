@@ -8,9 +8,10 @@ import vadl.viam.graph.dependency.SliceNode;
 
 public class SliceNodeReplacement
     implements GraphVisitor.NodeApplier<SliceNode, SliceNode> {
-  private final List<GraphVisitor.NodeApplier<Node, Node>> replacer;
+  private final List<GraphVisitor.NodeApplier<? extends Node, ? extends Node>> replacer;
 
-  public SliceNodeReplacement(List<GraphVisitor.NodeApplier<Node, Node>> replacer) {
+  public SliceNodeReplacement(
+      List<GraphVisitor.NodeApplier<? extends Node, ? extends Node>> replacer) {
     this.replacer = replacer;
   }
 
@@ -26,7 +27,7 @@ public class SliceNodeReplacement
   }
 
   @Override
-  public List<GraphVisitor.NodeApplier<Node, Node>> recursiveHooks() {
+  public List<GraphVisitor.NodeApplier<? extends Node, ? extends Node>> recursiveHooks() {
     return replacer;
   }
 }

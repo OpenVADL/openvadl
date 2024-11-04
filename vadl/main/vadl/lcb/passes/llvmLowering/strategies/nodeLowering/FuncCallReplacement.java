@@ -6,7 +6,6 @@ import vadl.lcb.passes.llvmLowering.domain.selectionDag.LlvmUnlowerableSD;
 import vadl.viam.graph.GraphVisitor;
 import vadl.viam.graph.Node;
 import vadl.viam.graph.dependency.FuncCallNode;
-import vadl.viam.graph.dependency.SelectNode;
 
 public class FuncCallReplacement
     implements GraphVisitor.NodeApplier<FuncCallNode, LlvmUnlowerableSD> {
@@ -22,7 +21,7 @@ public class FuncCallReplacement
   }
 
   @Override
-  public List<GraphVisitor.NodeApplier<Node, Node>> recursiveHooks() {
+  public List<GraphVisitor.NodeApplier<? extends Node, ? extends Node>> recursiveHooks() {
     return List.of();
   }
 }

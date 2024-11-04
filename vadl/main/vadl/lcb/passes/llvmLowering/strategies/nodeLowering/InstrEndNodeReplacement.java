@@ -4,15 +4,14 @@ import java.util.List;
 import org.jetbrains.annotations.Nullable;
 import vadl.viam.graph.GraphVisitor;
 import vadl.viam.graph.Node;
-import vadl.viam.graph.control.InstrCallNode;
 import vadl.viam.graph.control.InstrEndNode;
-import vadl.viam.graph.dependency.SliceNode;
 
 public class InstrEndNodeReplacement
     implements GraphVisitor.NodeApplier<InstrEndNode, InstrEndNode> {
-  private final List<GraphVisitor.NodeApplier<Node, Node>> replacer;
+  private final List<GraphVisitor.NodeApplier<? extends Node, ? extends Node>> replacer;
 
-  public InstrEndNodeReplacement(List<GraphVisitor.NodeApplier<Node, Node>> replacer) {
+  public InstrEndNodeReplacement(
+      List<GraphVisitor.NodeApplier<? extends Node, ? extends Node>> replacer) {
     this.replacer = replacer;
   }
 
@@ -31,7 +30,7 @@ public class InstrEndNodeReplacement
   }
 
   @Override
-  public List<GraphVisitor.NodeApplier<Node, Node>> recursiveHooks() {
+  public List<GraphVisitor.NodeApplier<? extends Node, ? extends Node>> recursiveHooks() {
     return replacer;
   }
 }

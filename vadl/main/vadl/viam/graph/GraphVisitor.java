@@ -1,7 +1,6 @@
 package vadl.viam.graph;
 
 import java.util.List;
-import java.util.stream.Stream;
 import javax.annotation.Nullable;
 
 /**
@@ -27,18 +26,19 @@ public interface GraphVisitor<R> {
 
     boolean acceptable(Node node);
 
-    List<NodeApplier<Node, Node>> recursiveHooks();
+    List<NodeApplier<? extends Node, ? extends Node>> recursiveHooks();
 
-    default List<NodeApplier<Node, Node>> applicable(Node node) {
+    default List<NodeApplier<? extends Node, ? extends Node>> applicable(Node node) {
       return recursiveHooks()
           .stream()
           .filter(x -> x.acceptable(node))
           .toList();
     }
 
-    default <T extends Node> void visitApplicable(T arg) {
+    default void visitApplicable(Node arg) {
       for (var applier : applicable(arg)) {
-        applier.visit(arg);
+        NodeApplier<Node, Node> cast = (NodeApplier<Node, Node>) applier;
+        cast.visit(arg);
       }
     }
 
@@ -47,7 +47,7 @@ public interface GraphVisitor<R> {
       var newNode = visit(node);
 
       if (newNode == null) {
-        newNode.safeDelete();
+        node.safeDelete();
         return null;
       }
 

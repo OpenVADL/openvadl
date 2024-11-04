@@ -11,6 +11,8 @@ import vadl.lcb.passes.llvmLowering.tablegen.model.TableGenInstructionOperand;
 import vadl.lcb.passes.llvmLowering.tablegen.model.TableGenPattern;
 import vadl.viam.Instruction;
 import vadl.viam.graph.Graph;
+import vadl.viam.graph.GraphVisitor;
+import vadl.viam.graph.Node;
 
 /**
  * Lowering of conditionals into TableGen.
@@ -28,6 +30,11 @@ public class LlvmInstructionLoweringConditionalsStrategyImpl
   @Override
   protected Set<MachineInstructionLabel> getSupportedInstructionLabels() {
     return this.supported;
+  }
+
+  @Override
+  protected List<GraphVisitor.NodeApplier<? extends Node, ? extends Node>> replacementHooks() {
+    return replacementHooksWithDefaultFieldAccessReplacement();
   }
 
   @Override

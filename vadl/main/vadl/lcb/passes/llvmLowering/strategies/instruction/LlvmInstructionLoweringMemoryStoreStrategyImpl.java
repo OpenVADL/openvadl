@@ -29,6 +29,7 @@ import vadl.viam.Instruction;
 import vadl.viam.Memory;
 import vadl.viam.Register;
 import vadl.viam.graph.Graph;
+import vadl.viam.graph.GraphVisitor;
 import vadl.viam.graph.Node;
 import vadl.viam.graph.dependency.ReadRegFileNode;
 import vadl.viam.graph.dependency.WriteResourceNode;
@@ -47,6 +48,11 @@ public class LlvmInstructionLoweringMemoryStoreStrategyImpl
   @Override
   protected Set<MachineInstructionLabel> getSupportedInstructionLabels() {
     return Set.of(MachineInstructionLabel.STORE_MEM);
+  }
+
+  @Override
+  protected List<GraphVisitor.NodeApplier<? extends Node, ? extends Node>> replacementHooks() {
+    return replacementHooksWithDefaultFieldAccessReplacement();
   }
 
   @Override

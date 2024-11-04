@@ -6,13 +6,13 @@ import vadl.lcb.passes.llvmLowering.domain.selectionDag.LlvmUnlowerableSD;
 import vadl.viam.graph.GraphVisitor;
 import vadl.viam.graph.Node;
 import vadl.viam.graph.control.ReturnNode;
-import vadl.viam.graph.dependency.SelectNode;
 
 public class ReturnNodeReplacement
     implements GraphVisitor.NodeApplier<ReturnNode, LlvmUnlowerableSD> {
-  private final List<GraphVisitor.NodeApplier<Node, Node>> replacer;
+  private final List<GraphVisitor.NodeApplier<? extends Node, ? extends Node>> replacer;
 
-  public ReturnNodeReplacement(List<GraphVisitor.NodeApplier<Node, Node>> replacer) {
+  public ReturnNodeReplacement(
+      List<GraphVisitor.NodeApplier<? extends Node, ? extends Node>> replacer) {
     this.replacer = replacer;
   }
 
@@ -28,7 +28,7 @@ public class ReturnNodeReplacement
   }
 
   @Override
-  public List<GraphVisitor.NodeApplier<Node, Node>> recursiveHooks() {
+  public List<GraphVisitor.NodeApplier<? extends Node, ? extends Node>> recursiveHooks() {
     return replacer;
   }
 }

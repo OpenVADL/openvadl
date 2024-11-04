@@ -63,6 +63,7 @@ public class LlvmSetccSD extends BuiltInCall implements LlvmNodeLowerable {
   /**
    * Gets the {@link BuiltInTable.BuiltIn}.
    */
+  @Override
   public BuiltInTable.BuiltIn builtIn() {
     return this.builtIn;
   }

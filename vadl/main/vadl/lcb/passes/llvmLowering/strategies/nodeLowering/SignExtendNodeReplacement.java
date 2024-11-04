@@ -12,13 +12,13 @@ import vadl.viam.graph.GraphVisitor;
 import vadl.viam.graph.Node;
 import vadl.viam.graph.dependency.ReadMemNode;
 import vadl.viam.graph.dependency.SignExtendNode;
-import vadl.viam.graph.dependency.SliceNode;
 
 public class SignExtendNodeReplacement
     implements GraphVisitor.NodeApplier<SignExtendNode, Node> {
-  private final List<GraphVisitor.NodeApplier<Node, Node>> replacer;
+  private final List<GraphVisitor.NodeApplier<? extends Node, ? extends Node>> replacer;
 
-  public SignExtendNodeReplacement(List<GraphVisitor.NodeApplier<Node, Node>> replacer) {
+  public SignExtendNodeReplacement(
+      List<GraphVisitor.NodeApplier<? extends Node, ? extends Node>> replacer) {
     this.replacer = replacer;
   }
 
@@ -47,7 +47,7 @@ public class SignExtendNodeReplacement
   }
 
   @Override
-  public List<GraphVisitor.NodeApplier<Node, Node>> recursiveHooks() {
+  public List<GraphVisitor.NodeApplier<? extends Node, ? extends Node>> recursiveHooks() {
     return replacer;
   }
 

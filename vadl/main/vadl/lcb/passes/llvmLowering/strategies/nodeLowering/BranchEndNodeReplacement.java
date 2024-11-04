@@ -9,9 +9,10 @@ import vadl.viam.graph.control.InstrEndNode;
 
 public class BranchEndNodeReplacement
     implements GraphVisitor.NodeApplier<BranchEndNode, BranchEndNode> {
-  private final List<GraphVisitor.NodeApplier<Node, Node>> replacer;
+  private final List<GraphVisitor.NodeApplier<? extends Node, ? extends Node>> replacer;
 
-  public BranchEndNodeReplacement(List<GraphVisitor.NodeApplier<Node, Node>> replacer) {
+  public BranchEndNodeReplacement(
+      List<GraphVisitor.NodeApplier<? extends Node, ? extends Node>> replacer) {
     this.replacer = replacer;
   }
 
@@ -30,7 +31,7 @@ public class BranchEndNodeReplacement
   }
 
   @Override
-  public List<GraphVisitor.NodeApplier<Node, Node>> recursiveHooks() {
+  public List<GraphVisitor.NodeApplier<? extends Node, ? extends Node>> recursiveHooks() {
     return replacer;
   }
 }

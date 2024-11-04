@@ -17,6 +17,8 @@ import vadl.lcb.passes.llvmLowering.tablegen.model.TableGenPattern;
 import vadl.lcb.passes.llvmLowering.tablegen.model.TableGenSelectionWithOutputPattern;
 import vadl.viam.Instruction;
 import vadl.viam.graph.Graph;
+import vadl.viam.graph.GraphVisitor;
+import vadl.viam.graph.Node;
 
 /**
  * Lowers add with immediate into {@link TableGenInstruction} and additionally,
@@ -34,6 +36,11 @@ public class LlvmInstructionLoweringAddImmediateStrategyImpl
   @Override
   protected Set<MachineInstructionLabel> getSupportedInstructionLabels() {
     return supported;
+  }
+
+  @Override
+  protected List<GraphVisitor.NodeApplier<? extends Node, ? extends Node>> replacementHooks() {
+    return replacementHooksWithDefaultFieldAccessReplacement();
   }
 
   @Override

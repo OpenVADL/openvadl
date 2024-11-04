@@ -9,9 +9,10 @@ import vadl.viam.graph.dependency.LetNode;
 import vadl.viam.graph.dependency.ReadRegNode;
 
 public class LetNodeReplacement implements GraphVisitor.NodeApplier<LetNode, ExpressionNode> {
-  private final List<GraphVisitor.NodeApplier<Node, Node>> replacer;
+  private final List<GraphVisitor.NodeApplier<? extends Node, ? extends Node>> replacer;
 
-  public LetNodeReplacement(List<GraphVisitor.NodeApplier<Node, Node>> replacer) {
+  public LetNodeReplacement(
+      List<GraphVisitor.NodeApplier<? extends Node, ? extends Node>> replacer) {
     this.replacer = replacer;
   }
 
@@ -28,7 +29,7 @@ public class LetNodeReplacement implements GraphVisitor.NodeApplier<LetNode, Exp
   }
 
   @Override
-  public List<GraphVisitor.NodeApplier<Node, Node>> recursiveHooks() {
+  public List<GraphVisitor.NodeApplier<? extends Node, ? extends Node>> recursiveHooks() {
     return replacer;
   }
 }

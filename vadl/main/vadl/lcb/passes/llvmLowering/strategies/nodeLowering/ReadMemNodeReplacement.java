@@ -11,9 +11,10 @@ import vadl.viam.graph.dependency.ReadRegNode;
 
 public class ReadMemNodeReplacement
     implements GraphVisitor.NodeApplier<ReadMemNode, LlvmTypeCastSD> {
-  private final List<GraphVisitor.NodeApplier<Node, Node>> replacer;
+  private final List<GraphVisitor.NodeApplier<? extends Node, ? extends Node>> replacer;
 
-  public ReadMemNodeReplacement(List<GraphVisitor.NodeApplier<Node, Node>> replacer) {
+  public ReadMemNodeReplacement(
+      List<GraphVisitor.NodeApplier<? extends Node, ? extends Node>> replacer) {
     this.replacer = replacer;
   }
 
@@ -30,7 +31,7 @@ public class ReadMemNodeReplacement
   }
 
   @Override
-  public List<GraphVisitor.NodeApplier<Node, Node>> recursiveHooks() {
+  public List<GraphVisitor.NodeApplier<? extends Node, ? extends Node>> recursiveHooks() {
     return replacer;
   }
 }

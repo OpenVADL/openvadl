@@ -18,9 +18,10 @@ import vadl.viam.graph.dependency.WriteRegNode;
 
 public class WriteRegNodeReplacement
     implements GraphVisitor.NodeApplier<WriteRegNode, WriteRegNode> {
-  private final List<GraphVisitor.NodeApplier<Node, Node>> replacer;
+  private final List<GraphVisitor.NodeApplier<? extends Node, ? extends Node>> replacer;
 
-  public WriteRegNodeReplacement(List<GraphVisitor.NodeApplier<Node, Node>> replacer) {
+  public WriteRegNodeReplacement(
+      List<GraphVisitor.NodeApplier<? extends Node, ? extends Node>> replacer) {
     this.replacer = replacer;
   }
 
@@ -83,7 +84,7 @@ public class WriteRegNodeReplacement
   }
 
   @Override
-  public List<GraphVisitor.NodeApplier<Node, Node>> recursiveHooks() {
+  public List<GraphVisitor.NodeApplier<? extends Node, ? extends Node>> recursiveHooks() {
     return replacer;
   }
 

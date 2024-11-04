@@ -14,6 +14,8 @@ import vadl.lcb.passes.llvmLowering.tablegen.model.TableGenInstructionOperand;
 import vadl.lcb.passes.llvmLowering.tablegen.model.TableGenPattern;
 import vadl.viam.Instruction;
 import vadl.viam.graph.Graph;
+import vadl.viam.graph.GraphVisitor;
+import vadl.viam.graph.Node;
 import vadl.viam.graph.control.AbstractEndNode;
 
 /**
@@ -38,10 +40,10 @@ public class LlvmInstructionLoweringIndirectJumpStrategyImpl
       Instruction instruction,
       Graph unmodifiedBehavior) {
     var copy = unmodifiedBehavior.copy();
-    var visitor = getVisitorForPatternSelectorLowering();
+    var visitor = replacementHooksWithDefaultFieldAccessReplacement();
 
     for (var node : copy.getNodes(AbstractEndNode.class).toList()) {
-      visitor.visit(node);
+      visitReplacementHooks(visitor, node);
     }
 
     var outputOperands = getTableGenOutputOperands(copy);
@@ -59,6 +61,11 @@ public class LlvmInstructionLoweringIndirectJumpStrategyImpl
         uses,
         defs
     ));
+  }
+
+  @Override
+  protected List<GraphVisitor.NodeApplier<? extends Node, ? extends Node>> replacementHooks() {
+    return replacementHooksWithDefaultFieldAccessReplacement();
   }
 
   @Override

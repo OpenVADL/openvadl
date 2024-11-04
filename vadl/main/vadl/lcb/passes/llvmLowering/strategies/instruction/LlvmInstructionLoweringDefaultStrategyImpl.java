@@ -13,6 +13,8 @@ import vadl.lcb.passes.llvmLowering.tablegen.model.TableGenInstructionOperand;
 import vadl.lcb.passes.llvmLowering.tablegen.model.TableGenPattern;
 import vadl.viam.Instruction;
 import vadl.viam.graph.Graph;
+import vadl.viam.graph.GraphVisitor;
+import vadl.viam.graph.Node;
 
 /**
  * Lowers instructions into {@link TableGenInstruction}.
@@ -33,6 +35,11 @@ public class LlvmInstructionLoweringDefaultStrategyImpl
   public boolean isApplicable(@Nullable MachineInstructionLabel machineInstructionLabel) {
     // Accept every label.
     return true;
+  }
+
+  @Override
+  protected List<GraphVisitor.NodeApplier<? extends Node, ? extends Node>> replacementHooks() {
+    return replacementHooksWithDefaultFieldAccessReplacement();
   }
 
   @Override
