@@ -6,6 +6,9 @@ import vadl.viam.graph.GraphVisitor;
 import vadl.viam.graph.Node;
 import vadl.viam.graph.control.InstrEndNode;
 
+/**
+ * Replacement strategy for nodes.
+ */
 public class InstrEndNodeReplacement
     implements GraphVisitor.NodeApplier<InstrEndNode, InstrEndNode> {
   private final List<GraphVisitor.NodeApplier<? extends Node, ? extends Node>> replacer;

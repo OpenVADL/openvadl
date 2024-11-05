@@ -17,6 +17,9 @@ import vadl.viam.graph.dependency.BuiltInCall;
 import vadl.viam.graph.dependency.FieldAccessRefNode;
 import vadl.viam.graph.dependency.WriteRegNode;
 
+/**
+ * Replacement strategy for nodes.
+ */
 public class WriteRegNodeReplacement
     implements GraphVisitor.NodeApplier<WriteRegNode, WriteRegNode> {
   private final List<GraphVisitor.NodeApplier<? extends Node, ? extends Node>> replacer;

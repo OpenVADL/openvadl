@@ -6,6 +6,9 @@ import vadl.viam.graph.GraphVisitor;
 import vadl.viam.graph.Node;
 import vadl.viam.graph.dependency.SliceNode;
 
+/**
+ * Replacement strategy for nodes.
+ */
 public class SliceNodeReplacement
     implements GraphVisitor.NodeApplier<SliceNode, SliceNode> {
   private final List<GraphVisitor.NodeApplier<? extends Node, ? extends Node>> replacer;

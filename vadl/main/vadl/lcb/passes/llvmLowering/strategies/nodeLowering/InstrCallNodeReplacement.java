@@ -7,6 +7,9 @@ import vadl.viam.graph.Node;
 import vadl.viam.graph.control.InstrCallNode;
 import vadl.viam.graph.control.InstrEndNode;
 
+/**
+ * Replacement strategy for nodes.
+ */
 public class InstrCallNodeReplacement
     implements GraphVisitor.NodeApplier<InstrCallNode, InstrCallNode> {
   private final List<GraphVisitor.NodeApplier<? extends Node, ? extends Node>> replacer;

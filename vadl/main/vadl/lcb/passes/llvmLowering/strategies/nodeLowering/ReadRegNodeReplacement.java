@@ -6,6 +6,9 @@ import vadl.viam.graph.GraphVisitor;
 import vadl.viam.graph.Node;
 import vadl.viam.graph.dependency.ReadRegNode;
 
+/**
+ * Replacement strategy for nodes.
+ */
 public class ReadRegNodeReplacement implements GraphVisitor.NodeApplier<ReadRegNode, ReadRegNode> {
   private final List<GraphVisitor.NodeApplier<? extends Node, ? extends Node>> replacer;
 

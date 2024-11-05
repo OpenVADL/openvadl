@@ -14,6 +14,9 @@ import vadl.viam.graph.dependency.ReadMemNode;
 import vadl.viam.graph.dependency.SliceNode;
 import vadl.viam.graph.dependency.ZeroExtendNode;
 
+/**
+ * Replacement strategy for nodes.
+ */
 public class ZeroExtendNodeReplacement
     implements GraphVisitor.NodeApplier<ZeroExtendNode, Node> {
   private final List<GraphVisitor.NodeApplier<? extends Node, ? extends Node>> replacer;

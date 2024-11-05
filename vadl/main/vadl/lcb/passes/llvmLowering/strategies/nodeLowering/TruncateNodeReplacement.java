@@ -6,6 +6,9 @@ import vadl.viam.graph.GraphVisitor;
 import vadl.viam.graph.Node;
 import vadl.viam.graph.dependency.TruncateNode;
 
+/**
+ * Replacement strategy for nodes.
+ */
 public class TruncateNodeReplacement
     implements GraphVisitor.NodeApplier<TruncateNode, TruncateNode> {
   private final List<GraphVisitor.NodeApplier<? extends Node, ? extends Node>> replacer;

@@ -10,6 +10,9 @@ import vadl.viam.graph.Node;
 import vadl.viam.graph.dependency.TruncateNode;
 import vadl.viam.graph.dependency.WriteMemNode;
 
+/**
+ * Replacement strategy for nodes.
+ */
 public class WriteMemNodeReplacement
     implements GraphVisitor.NodeApplier<WriteMemNode, Node> {
   private final List<GraphVisitor.NodeApplier<? extends Node, ? extends Node>> replacer;

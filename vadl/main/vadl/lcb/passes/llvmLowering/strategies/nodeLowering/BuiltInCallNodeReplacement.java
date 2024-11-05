@@ -28,6 +28,9 @@ import vadl.viam.graph.Node;
 import vadl.viam.graph.dependency.BuiltInCall;
 import vadl.viam.graph.dependency.ConstantNode;
 
+/**
+ * Replacement strategy for nodes.
+ */
 public class BuiltInCallNodeReplacement
     implements GraphVisitor.NodeApplier<BuiltInCall, BuiltInCall> {
   private final List<GraphVisitor.NodeApplier<? extends Node, ? extends Node>> replacer;

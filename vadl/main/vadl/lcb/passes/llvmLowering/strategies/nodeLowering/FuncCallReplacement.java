@@ -7,6 +7,9 @@ import vadl.viam.graph.GraphVisitor;
 import vadl.viam.graph.Node;
 import vadl.viam.graph.dependency.FuncCallNode;
 
+/**
+ * Replacement strategy for nodes.
+ */
 public class FuncCallReplacement
     implements GraphVisitor.NodeApplier<FuncCallNode, FuncCallNode> {
   @Nullable

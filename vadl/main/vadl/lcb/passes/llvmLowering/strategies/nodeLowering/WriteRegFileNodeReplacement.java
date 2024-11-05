@@ -6,6 +6,9 @@ import vadl.viam.graph.GraphVisitor;
 import vadl.viam.graph.Node;
 import vadl.viam.graph.dependency.WriteRegFileNode;
 
+/**
+ * Replacement strategy for nodes.
+ */
 public class WriteRegFileNodeReplacement
     implements GraphVisitor.NodeApplier<WriteRegFileNode, WriteRegFileNode> {
   private final List<GraphVisitor.NodeApplier<? extends Node, ? extends Node>> replacer;

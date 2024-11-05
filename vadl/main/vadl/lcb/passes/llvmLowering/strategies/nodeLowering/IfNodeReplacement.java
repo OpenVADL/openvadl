@@ -9,6 +9,9 @@ import vadl.viam.graph.Node;
 import vadl.viam.graph.control.IfNode;
 import vadl.viam.graph.control.ReturnNode;
 
+/**
+ * Replacement strategy for nodes.
+ */
 public class IfNodeReplacement
     implements GraphVisitor.NodeApplier<IfNode, IfNode> {
   @Nullable

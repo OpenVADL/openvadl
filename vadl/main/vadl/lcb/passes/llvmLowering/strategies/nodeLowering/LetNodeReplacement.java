@@ -8,6 +8,9 @@ import vadl.viam.graph.dependency.ExpressionNode;
 import vadl.viam.graph.dependency.LetNode;
 import vadl.viam.graph.dependency.ReadRegNode;
 
+/**
+ * Replacement strategy for nodes.
+ */
 public class LetNodeReplacement implements GraphVisitor.NodeApplier<LetNode, ExpressionNode> {
   private final List<GraphVisitor.NodeApplier<? extends Node, ? extends Node>> replacer;
 

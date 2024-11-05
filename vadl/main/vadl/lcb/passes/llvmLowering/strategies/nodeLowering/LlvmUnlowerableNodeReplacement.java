@@ -7,6 +7,9 @@ import vadl.viam.graph.GraphVisitor;
 import vadl.viam.graph.Node;
 import vadl.viam.graph.dependency.SelectNode;
 
+/**
+ * Replacement strategy for nodes.
+ */
 public class LlvmUnlowerableNodeReplacement
     implements GraphVisitor.NodeApplier<LlvmUnlowerableSD, LlvmUnlowerableSD> {
   private final List<GraphVisitor.NodeApplier<? extends Node, ? extends Node>> replacer;

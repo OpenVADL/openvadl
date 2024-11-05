@@ -7,6 +7,9 @@ import vadl.viam.graph.Node;
 import vadl.viam.graph.control.BranchEndNode;
 import vadl.viam.graph.control.InstrEndNode;
 
+/**
+ * Replacement strategy for nodes.
+ */
 public class BranchEndNodeReplacement
     implements GraphVisitor.NodeApplier<BranchEndNode, BranchEndNode> {
   private final List<GraphVisitor.NodeApplier<? extends Node, ? extends Node>> replacer;

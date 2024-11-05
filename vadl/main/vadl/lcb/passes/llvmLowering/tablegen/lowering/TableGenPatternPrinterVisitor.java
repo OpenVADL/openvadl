@@ -2,7 +2,6 @@ package vadl.lcb.passes.llvmLowering.tablegen.lowering;
 
 import java.io.StringWriter;
 import java.util.Objects;
-import vadl.cppCodeGen.passes.typeNormalization.CppTypeNormalizationPass;
 import vadl.error.Diagnostic;
 import vadl.lcb.codegen.model.llvm.ValueType;
 import vadl.lcb.passes.llvmLowering.LlvmNodeLowerable;

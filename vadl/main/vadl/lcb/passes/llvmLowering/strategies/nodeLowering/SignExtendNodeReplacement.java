@@ -13,6 +13,9 @@ import vadl.viam.graph.Node;
 import vadl.viam.graph.dependency.ReadMemNode;
 import vadl.viam.graph.dependency.SignExtendNode;
 
+/**
+ * Replacement strategy for nodes.
+ */
 public class SignExtendNodeReplacement
     implements GraphVisitor.NodeApplier<SignExtendNode, Node> {
   private final List<GraphVisitor.NodeApplier<? extends Node, ? extends Node>> replacer;

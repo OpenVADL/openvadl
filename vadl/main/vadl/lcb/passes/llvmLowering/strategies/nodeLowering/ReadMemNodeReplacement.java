@@ -9,6 +9,9 @@ import vadl.viam.graph.Node;
 import vadl.viam.graph.dependency.ReadMemNode;
 import vadl.viam.graph.dependency.ReadRegNode;
 
+/**
+ * Replacement strategy for nodes.
+ */
 public class ReadMemNodeReplacement
     implements GraphVisitor.NodeApplier<ReadMemNode, LlvmTypeCastSD> {
   private final List<GraphVisitor.NodeApplier<? extends Node, ? extends Node>> replacer;

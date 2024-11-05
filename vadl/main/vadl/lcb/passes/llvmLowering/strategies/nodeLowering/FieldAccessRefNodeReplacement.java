@@ -9,6 +9,9 @@ import vadl.viam.graph.Node;
 import vadl.viam.graph.dependency.FieldAccessRefNode;
 import vadl.viam.graph.dependency.SliceNode;
 
+/**
+ * Replacement strategy for nodes.
+ */
 public class FieldAccessRefNodeReplacement
     implements GraphVisitor.NodeApplier<FieldAccessRefNode, LlvmFieldAccessRefNode> {
   private final List<GraphVisitor.NodeApplier<? extends Node, ? extends Node>> replacer;

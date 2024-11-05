@@ -12,6 +12,9 @@ import vadl.viam.graph.Node;
 import vadl.viam.graph.dependency.ConstantNode;
 import vadl.viam.graph.dependency.ExpressionNode;
 
+/**
+ * Replacement strategy for nodes.
+ */
 public class ConstantNodeReplacement
     implements GraphVisitor.NodeApplier<ConstantNode, ConstantNode> {
   private final List<GraphVisitor.NodeApplier<? extends Node, ? extends Node>> replacer;
