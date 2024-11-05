@@ -41,7 +41,7 @@ public class LcbEnricherCollection {
             (HashMap<MachineInstructionLabel, List<Instruction>>) passResults.lastNullableResultOf(
                 IsaMachineInstructionMatchingPass.class);
         if (labels != null && definitionEntity.origin() instanceof Instruction instruction) {
-          var flipped = LlvmLoweringPass.flipIsaMatching(labels);
+          var flipped = LlvmLoweringPass.flipIsaMatchingMachineInstructions(labels);
           var label =
               Optional.ofNullable(flipped.get(instruction)).map(Enum::name).orElse("No label");
           var info = Info.Tag.of("Instruction Label", label);

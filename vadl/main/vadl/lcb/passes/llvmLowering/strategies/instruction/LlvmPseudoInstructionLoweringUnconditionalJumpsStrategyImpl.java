@@ -14,7 +14,7 @@ public class LlvmPseudoInstructionLoweringUnconditionalJumpsStrategyImpl extends
   /**
    * Constructor.
    */
-  protected LlvmPseudoInstructionLoweringUnconditionalJumpsStrategyImpl(
+  public LlvmPseudoInstructionLoweringUnconditionalJumpsStrategyImpl(
       List<LlvmInstructionLoweringStrategy> strategies) {
     super(strategies);
   }
