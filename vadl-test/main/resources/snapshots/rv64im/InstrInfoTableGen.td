@@ -1119,7 +1119,7 @@ let Size = 4;
 let CodeSize = 4;
 
 let OutOperandList = ( outs X:$rd );
-let InOperandList = ( ins X:$rs1, X:$rs2 );
+let InOperandList = ( ins X:$rs2, X:$rs1 );
 
 field bits<32> Inst;
 
@@ -1171,7 +1171,7 @@ let Size = 4;
 let CodeSize = 4;
 
 let OutOperandList = ( outs X:$rd );
-let InOperandList = ( ins X:$rs1, X:$rs2 );
+let InOperandList = ( ins X:$rs2, X:$rs1 );
 
 field bits<32> Inst;
 
@@ -1223,7 +1223,7 @@ let Size = 4;
 let CodeSize = 4;
 
 let OutOperandList = ( outs X:$rd );
-let InOperandList = ( ins X:$rs1, X:$rs2 );
+let InOperandList = ( ins X:$rs2, X:$rs1 );
 
 field bits<32> Inst;
 
@@ -1275,7 +1275,7 @@ let Size = 4;
 let CodeSize = 4;
 
 let OutOperandList = ( outs X:$rd );
-let InOperandList = ( ins X:$rs1, X:$rs2 );
+let InOperandList = ( ins X:$rs2, X:$rs1 );
 
 field bits<32> Inst;
 
@@ -2396,7 +2396,7 @@ let Size = 4;
 let CodeSize = 4;
 
 let OutOperandList = ( outs X:$rd );
-let InOperandList = ( ins X:$rs1, X:$rs2 );
+let InOperandList = ( ins X:$rs2, X:$rs1 );
 
 field bits<32> Inst;
 
@@ -2448,7 +2448,7 @@ let Size = 4;
 let CodeSize = 4;
 
 let OutOperandList = ( outs X:$rd );
-let InOperandList = ( ins X:$rs1, X:$rs2 );
+let InOperandList = ( ins X:$rs2, X:$rs1 );
 
 field bits<32> Inst;
 
@@ -2500,7 +2500,7 @@ let Size = 4;
 let CodeSize = 4;
 
 let OutOperandList = ( outs X:$rd );
-let InOperandList = ( ins X:$rs1, X:$rs2 );
+let InOperandList = ( ins X:$rs2, X:$rs1 );
 
 field bits<32> Inst;
 
@@ -2552,7 +2552,7 @@ let Size = 4;
 let CodeSize = 4;
 
 let OutOperandList = ( outs X:$rd );
-let InOperandList = ( ins X:$rs1, X:$rs2 );
+let InOperandList = ( ins X:$rs2, X:$rs1 );
 
 field bits<32> Inst;
 

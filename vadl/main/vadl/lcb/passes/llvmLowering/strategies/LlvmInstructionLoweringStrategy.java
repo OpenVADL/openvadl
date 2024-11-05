@@ -511,7 +511,7 @@ public abstract class LlvmInstructionLoweringStrategy {
   public static List<TableGenInstructionOperand> getTableGenInputOperands(
       List<TableGenInstructionOperand> outputOperands,
       Graph graph) {
-    var set =
+    var setParameters =
         outputOperands.stream()
             .filter(x -> x instanceof TableGenInstructionIndexedRegisterFileOperand)
             .map(x -> {
@@ -519,6 +519,16 @@ public abstract class LlvmInstructionLoweringStrategy {
               return mapped.parameter();
             })
             .collect(Collectors.toSet());
+    var outputFields =
+        outputOperands.stream()
+            .filter(x -> x instanceof TableGenInstructionRegisterFileOperand)
+            .map(x -> {
+              var mapped = (TableGenInstructionRegisterFileOperand) x;
+              return mapped.formatField();
+            })
+            .collect(Collectors.toSet());
+
+
     return getInputOperands(graph)
         .stream()
         .filter(node -> {
@@ -534,7 +544,13 @@ public abstract class LlvmInstructionLoweringStrategy {
             // If the node is a fieldRefNode then it must not be in the outputs.
             // Otherwise, ok.
             node -> !(node instanceof TableGenInstructionIndexedRegisterFileOperand operand)
-                || !set.contains(operand.parameter())).toList();
+                || !setParameters.contains(operand.parameter()))
+        .filter(
+            // If the node is a fieldRefNode then it must not be in the outputs.
+            // Otherwise, ok.
+            node -> !(node instanceof TableGenInstructionRegisterFileOperand operand)
+                || !outputFields.contains(operand.formatField()))
+        .toList();
   }
 
   /**
@@ -671,8 +687,11 @@ public abstract class LlvmInstructionLoweringStrategy {
    * Most instruction's behaviors have inputs. Those are the results which the instruction requires.
    */
   private static List<Node> getInputOperands(Graph graph) {
+    // First, the registers
     var x = graph.getNodes(ReadRegFileNode.class);
+    // Then, immediates
     var y = graph.getNodes(FieldAccessRefNode.class);
+    // Then, the rest
     var z = graph.getNodes(FuncCallNode.class).flatMap(
         funcCallNode -> funcCallNode.function().behavior().getNodes(FuncParamNode.class));
     return Stream.concat(Stream.concat(x, y), z)
