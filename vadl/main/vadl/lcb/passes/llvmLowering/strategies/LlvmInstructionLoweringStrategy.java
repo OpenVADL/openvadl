@@ -528,7 +528,6 @@ public abstract class LlvmInstructionLoweringStrategy {
             })
             .collect(Collectors.toSet());
 
-
     return getInputOperands(graph)
         .stream()
         .filter(node -> {
@@ -781,28 +780,5 @@ public abstract class LlvmInstructionLoweringStrategy {
             occurrence.setInstructionOperand(operand);
           });
     }
-  }
-
-  /**
-   * Conditional and unconditional branch patterns reference the {@code bb} selection dag node.
-   * However, the machine instruction should use the label immediate to properly encode the
-   * instruction.
-   */
-  protected TableGenPattern replaceBasicBlockByLabelImmediateInMachineInstruction(
-      TableGenPattern pattern) {
-
-    if (pattern instanceof TableGenSelectionWithOutputPattern) {
-      // We know that the `selector` already has LlvmBasicBlock nodes.
-      var candidates = ((TableGenSelectionWithOutputPattern) pattern).machine().getNodes(
-          MachineInstructionParameterNode.class).toList();
-      for (var candidate : candidates) {
-        if (candidate.instructionOperand().origin() instanceof LlvmBasicBlockSD basicBlockSD) {
-          candidate.setInstructionOperand(new TableGenInstructionImmediateLabelOperand(
-              ParameterIdentity.fromBasicBlockToImmediateLabel(basicBlockSD), basicBlockSD));
-        }
-      }
-    }
-
-    return pattern;
   }
 }

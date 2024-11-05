@@ -22,6 +22,7 @@ import vadl.lcb.passes.llvmLowering.domain.selectionDag.LlvmCondCode;
 import vadl.lcb.passes.llvmLowering.domain.selectionDag.LlvmSetCondSD;
 import vadl.lcb.passes.llvmLowering.domain.selectionDag.LlvmTypeCastSD;
 import vadl.lcb.passes.llvmLowering.strategies.LlvmInstructionLoweringStrategy;
+import vadl.lcb.passes.llvmLowering.strategies.LoweringStrategyUtils;
 import vadl.lcb.passes.llvmLowering.tablegen.model.TableGenInstructionOperand;
 import vadl.lcb.passes.llvmLowering.tablegen.model.TableGenPattern;
 import vadl.lcb.passes.llvmLowering.tablegen.model.TableGenSelectionWithOutputPattern;
@@ -90,7 +91,7 @@ public class LlvmInstructionLoweringConditionalBranchesStrategyImpl
             inputOperands, outputOperands, patterns);
 
     var allPatterns = Stream.concat(patterns.stream(), alternatives.stream())
-        .map(this::replaceBasicBlockByLabelImmediateInMachineInstruction)
+        .map(LoweringStrategyUtils::replaceBasicBlockByLabelImmediateInMachineInstruction)
         .toList();
 
     var uses = getRegisterUses(visitedGraph, inputOperands, outputOperands);

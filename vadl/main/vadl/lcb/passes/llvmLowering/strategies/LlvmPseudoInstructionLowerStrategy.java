@@ -78,7 +78,8 @@ public abstract class LlvmPseudoInstructionLowerStrategy {
       PseudoInstruction pseudo,
       Map<MachineInstructionLabel, List<Instruction>> labelledMachineInstructions) {
     var patterns = new ArrayList<TableGenPattern>();
-    var flippedInstructions = LlvmLoweringPass.flipIsaMatchingMachineInstructions(labelledMachineInstructions);
+    var flippedInstructions =
+        LlvmLoweringPass.flipIsaMatchingMachineInstructions(labelledMachineInstructions);
 
     var uses = new ArrayList<RegisterRef>();
     var defs = new ArrayList<RegisterRef>();
@@ -205,7 +206,8 @@ public abstract class LlvmPseudoInstructionLowerStrategy {
           var record = tableGenRecord.get();
 
           updatePatterns(pseudo, record);
-          var patternVariations = generatePatternVariations(pseudo, record);
+          var patternVariations =
+              generatePatternVariations(pseudo, record, appliedInstructionBehavior);
 
           var flags = record.flags();
           isTerminator |= flags.isTerminator();
@@ -245,8 +247,10 @@ public abstract class LlvmPseudoInstructionLowerStrategy {
     ));
   }
 
-  protected List<TableGenPattern> generatePatternVariations(PseudoInstruction pseudo,
-                                                            LlvmLoweringRecord record) {
+  protected List<TableGenPattern> generatePatternVariations(
+      PseudoInstruction pseudo,
+      LlvmLoweringRecord record,
+      IdentityHashMap<Instruction, Graph> appliedInstructionBehavior) {
     return Collections.emptyList();
   }
 
@@ -279,7 +283,7 @@ public abstract class LlvmPseudoInstructionLowerStrategy {
    * }
    * </code>
    */
-  private ExpressionNode indexArgument(List<ExpressionNode> arguments, ExpressionNode argument) {
+  protected ExpressionNode indexArgument(List<ExpressionNode> arguments, ExpressionNode argument) {
     if (argument instanceof FuncParamNode funcParamNode) {
       int index = arguments.indexOf(argument);
       return new PseudoFuncParamNode(funcParamNode.parameter(), index);

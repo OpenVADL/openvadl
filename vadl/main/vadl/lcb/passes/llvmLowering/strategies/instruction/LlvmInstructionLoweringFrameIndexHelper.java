@@ -10,6 +10,7 @@ import vadl.lcb.passes.llvmLowering.domain.machineDag.MachineInstructionParamete
 import vadl.lcb.passes.llvmLowering.domain.selectionDag.LlvmFrameIndexSD;
 import vadl.lcb.passes.llvmLowering.domain.selectionDag.LlvmReadRegFileNode;
 import vadl.lcb.passes.llvmLowering.strategies.LlvmInstructionLoweringStrategy;
+import vadl.lcb.passes.llvmLowering.strategies.LoweringStrategyUtils;
 import vadl.lcb.passes.llvmLowering.tablegen.model.TableGenInstructionFrameRegisterOperand;
 import vadl.lcb.passes.llvmLowering.tablegen.model.TableGenInstructionOperand;
 import vadl.lcb.passes.llvmLowering.tablegen.model.TableGenPattern;

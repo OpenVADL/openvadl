@@ -4135,6 +4135,8 @@ let Uses = [ PC ];
 let Defs = [ PC,X0 ];
 }
 
+def : Pat<(br bb:$imm),
+        (J RV64IM_Jtype_immAsLabel:$imm)>;
 
 
 def LLA : Instruction
