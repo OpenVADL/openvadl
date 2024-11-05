@@ -62,8 +62,6 @@ import vadl.lcb.passes.llvmLowering.strategies.nodeLowering.WriteMemNodeReplacem
 import vadl.lcb.passes.llvmLowering.strategies.nodeLowering.WriteRegFileNodeReplacement;
 import vadl.lcb.passes.llvmLowering.strategies.nodeLowering.WriteRegNodeReplacement;
 import vadl.lcb.passes.llvmLowering.strategies.nodeLowering.ZeroExtendNodeReplacement;
-import vadl.lcb.passes.llvmLowering.strategies.visitors.TableGenPatternLowerable;
-import vadl.lcb.passes.llvmLowering.strategies.visitors.impl.ReplaceWithLlvmSDNodesVisitor;
 import vadl.lcb.passes.llvmLowering.tablegen.model.TableGenConstantOperand;
 import vadl.lcb.passes.llvmLowering.tablegen.model.TableGenInstruction;
 import vadl.lcb.passes.llvmLowering.tablegen.model.TableGenInstructionBareSymbolOperand;
