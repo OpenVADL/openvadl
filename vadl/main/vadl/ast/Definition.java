@@ -3940,7 +3940,7 @@ class AsmGrammarRuleDefinition extends Definition {
     alternatives.prettyPrint(indent, builder);
     indent--;
 
-    builder.append(prettyIndentString(indent)).append(";\n");
+    builder.append("\n").append(prettyIndentString(indent)).append(";\n");
   }
 
   @Override
@@ -3952,7 +3952,8 @@ class AsmGrammarRuleDefinition extends Definition {
       return false;
     }
     AsmGrammarRuleDefinition that = (AsmGrammarRuleDefinition) o;
-    return Objects.equals(id, that.id) && Objects.equals(asmType, that.asmType);
+    return Objects.equals(id, that.id) && Objects.equals(asmType, that.asmType)
+        && Objects.equals(alternatives, that.alternatives);
   }
 
   @Override
@@ -3988,15 +3989,51 @@ class AsmGrammarAlternativesDefinition extends Definition {
 
   @Override
   void prettyPrint(int indent, StringBuilder builder) {
+    var elementIndent = indent + 1;
     for (var alternative : alternatives) {
+      if (!Objects.equals(alternatives.get(0), alternative)) {
+        builder.append(prettyIndentString(indent));
+        builder.append("|\n");
+      }
       for (var element : alternative) {
-        element.prettyPrint(indent, builder);
-        builder.append("\n");
+        element.prettyPrint(elementIndent, builder);
+        if (!Objects.equals(alternative.get(alternative.size() - 1), element)) {
+          builder.append("\n");
+        }
       }
       if (!Objects.equals(alternatives.get(alternatives.size() - 1), alternative)) {
         builder.append("\n");
       }
     }
+  }
+
+  @Override
+  public boolean equals(Object o) {
+    if (this == o) {
+      return true;
+    }
+    if (o == null || getClass() != o.getClass()) {
+      return false;
+    }
+    AsmGrammarAlternativesDefinition that = (AsmGrammarAlternativesDefinition) o;
+
+    boolean equal = true;
+    for (int i = 0; i < alternatives.size(); i++) {
+      var curAlternative = alternatives.get(i);
+      for (int j = 0; j < curAlternative.size(); j++) {
+        try {
+          equal &= Objects.equals(curAlternative.get(j), that.alternatives.get(i).get(j));
+        } catch (IndexOutOfBoundsException e) {
+          return false;
+        }
+      }
+    }
+    return equal;
+  }
+
+  @Override
+  public int hashCode() {
+    return Objects.hash(alternatives);
   }
 }
 
@@ -4063,7 +4100,7 @@ class AsmGrammarElementDefinition extends Definition {
       builder.append("(\n");
       groupAlternatives.prettyPrint(++indent, builder);
       builder.append(prettyIndentString(--indent));
-      builder.append(')');
+      builder.append("\n").append(prettyIndentString(indent)).append(')');
     }
 
     if (asmType != null) {

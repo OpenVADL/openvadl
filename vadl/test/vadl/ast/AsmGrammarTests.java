@@ -180,4 +180,60 @@ public class AsmGrammarTests {
         """;
     verifyPrettifiedAst(VadlParser.parse(prog));
   }
+
+  @Test
+  void simpleAlternativesGrammarRule() {
+    var prog = """
+          assembly description AD for ABI = {
+            grammar = {
+              A@typeA :
+                B | C
+              ;
+            }
+          }
+        """;
+    verifyPrettifiedAst(VadlParser.parse(prog));
+  }
+
+  @Test
+  void alternativesWithGroups() {
+    var prog = """
+          assembly description AD for ABI = {
+            grammar = {
+              A@typeA :
+                B | (C@c D) | F<Int>@f
+              ;
+            }
+          }
+        """;
+    verifyPrettifiedAst(VadlParser.parse(prog));
+  }
+
+  @Test
+  void alternativesWithGroupsAndNestedAlternatives() {
+    var prog = """
+          assembly description AD for ABI = {
+            grammar = {
+              A@typeA :
+                B | (C@c | D | G<>@g) | F<Int>@f
+              ;
+            }
+          }
+        """;
+    verifyPrettifiedAst(VadlParser.parse(prog));
+  }
+
+  @Test
+  void alternativesWithAttributesAndGroups() {
+    var prog = """
+          assembly description AD for ABI = {
+            grammar = {
+              A@typeA :
+                attrB = B | (C@c | attrD = "D" | G<>@g) | F<Int>@f
+              ;
+            }
+          }
+        """;
+    verifyPrettifiedAst(VadlParser.parse(prog));
+  }
 }
