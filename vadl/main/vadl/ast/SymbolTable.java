@@ -45,7 +45,7 @@ class SymbolTable {
 
   void addModelDefinition(ModelDefinition modelDefinition) {
     defineSymbol(new ModelSymbol(modelDefinition.toMacro().name().name, modelDefinition,
-        modelDefinition.toMacro()), modelDefinition.loc);
+        modelDefinition.toMacro()), modelDefinition.id.location());
   }
 
   @Nullable
@@ -168,7 +168,7 @@ class SymbolTable {
   }
 
   void addModelType(ModelTypeDefinition definition) {
-    defineSymbol(new ModelTypeSymbol(definition.name.name, definition), definition.location());
+    defineSymbol(new ModelTypeSymbol(definition.name.name, definition), definition.name.location());
   }
 
   void copyFrom(SymbolTable other) {
@@ -202,20 +202,92 @@ class SymbolTable {
     }
   }
 
+  private SourceLocation getIdentifierLocation(Node node) {
+    if (node instanceof AliasDefinition) {
+      return ((AliasDefinition) node).id().location();
+    } else if (node instanceof ApplicationBinaryInterfaceDefinition) {
+      return ((ApplicationBinaryInterfaceDefinition) node).id.location();
+    } else if (node instanceof AssemblyDefinition) {
+      var identifiers = ((AssemblyDefinition) node).identifiers;
+      return identifiers.get(0).location().join(identifiers.get(identifiers.size() - 1).location());
+    } else if (node instanceof CacheDefinition) {
+      return ((CacheDefinition) node).id.location();
+    } else if (node instanceof ConstantDefinition) {
+      return ((ConstantDefinition) node).identifier.location();
+    } else if (node instanceof CounterDefinition) {
+      return ((CounterDefinition) node).identifier.location();
+    } else if (node instanceof EncodingDefinition) {
+      return ((EncodingDefinition) node).instrId().location();
+    } else if (node instanceof EnumerationDefinition) {
+      return ((EnumerationDefinition) node).id().location();
+    } else if (node instanceof ExceptionDefinition) {
+      return ((ExceptionDefinition) node).id().location();
+    } else if (node instanceof FormatDefinition) {
+      return ((FormatDefinition) node).identifier().location();
+    } else if (node instanceof FunctionDefinition) {
+      return ((FunctionDefinition) node).name().location();
+    } else if (node instanceof InstructionDefinition) {
+      return ((InstructionDefinition) node).id().location();
+    } else if (node instanceof InstructionSetDefinition) {
+      return ((InstructionSetDefinition) node).identifier.location();
+    } else if (node instanceof LogicDefinition) {
+      return ((LogicDefinition) node).id.location();
+    } else if (node instanceof MemoryDefinition) {
+      return ((MemoryDefinition) node).identifier().location();
+    } else if (node instanceof MicroArchitectureDefinition) {
+      return ((MicroArchitectureDefinition) node).id.location();
+    } else if (node instanceof MicroProcessorDefinition) {
+      return ((MicroProcessorDefinition) node).id.location();
+    } else if (node instanceof ModelDefinition) {
+      return ((ModelDefinition) node).id.location();
+    } else if (node instanceof ModelTypeDefinition) {
+      return ((ModelTypeDefinition) node).name.location();
+    } else if (node instanceof OperationDefinition) {
+      return ((OperationDefinition) node).name().location();
+      // FIXME: Must be a Node to work.
+      // } else if (node instanceof ParameterDefinition) {
+      //  return ((ParameterDefinition) node).name().location();
+    } else if (node instanceof PipelineDefinition) {
+      return ((PipelineDefinition) node).id.location();
+    } else if (node instanceof PortBehaviorDefinition) {
+      return ((PortBehaviorDefinition) node).id.location();
+    } else if (node instanceof ProcessDefinition) {
+      return ((ProcessDefinition) node).name().location();
+    } else if (node instanceof PseudoInstructionDefinition) {
+      return ((PseudoInstructionDefinition) node).id().location();
+    } else if (node instanceof RecordTypeDefinition) {
+      return ((RecordTypeDefinition) node).name.location();
+    } else if (node instanceof RegisterDefinition) {
+      return ((RegisterDefinition) node).identifier().location();
+    } else if (node instanceof RegisterFileDefinition) {
+      return ((RegisterFileDefinition) node).identifier().location();
+    } else if (node instanceof RelocationDefinition) {
+      return ((RelocationDefinition) node).identifier.location();
+    } else if (node instanceof SignalDefinition) {
+      return ((SignalDefinition) node).id.location();
+    } else if (node instanceof SourceDefinition) {
+      return ((SourceDefinition) node).id.location();
+    } else if (node instanceof StageDefinition) {
+      return ((StageDefinition) node).id.location();
+    } else if (node instanceof UsingDefinition) {
+      return ((UsingDefinition) node).identifier().location();
+    } else {
+      return node.location();
+    }
+  }
+
   private void verifyAvailable(String name, SourceLocation loc) {
     if (!symbols.containsKey(name)) {
       return;
     }
 
-    var error = Diagnostic.error("Duplicate definition: " + name, loc)
+    var error = Diagnostic.error("Symbol name already used: " + name, loc)
         .locationDescription(loc, "Second definition here.")
         .note("All symbols must have a unique name.");
 
     var other = symbols.get(name).origin();
     if (other instanceof Node) {
-      // FIXME: it currently points to the whole expression and not just to the identifier who is
-      // responsible for the name clash.
-      var otherLoc = ((Node) other).location();
+      var otherLoc = getIdentifierLocation((Node) other);
       error.locationDescription(otherLoc, "First defined here.");
     }
 
@@ -223,9 +295,21 @@ class SymbolTable {
   }
 
   private void verifyMacroAvailable(String name, SourceLocation loc) {
-    if (macroSymbols.containsKey(name)) {
-      reportError("Duplicate definition: " + name, loc);
+    if (!macroSymbols.containsKey(name)) {
+      return;
     }
+
+    var error = Diagnostic.error("Macro name already used: " + name, loc)
+        .locationDescription(loc, "Second definition here.")
+        .note("All macros must have a unique name.");
+
+    var other = macroSymbols.get(name).origin();
+    if (other instanceof Node) {
+      var otherLoc = getIdentifierLocation((Node) other);
+      error.locationDescription(otherLoc, "First defined here.");
+    }
+
+    errors.add(error.build());
   }
 
   private void reportError(String error, SourceLocation location) {
@@ -321,9 +405,11 @@ class SymbolTable {
         symbols.defineSymbol(new GenericSymbol(memory.identifier().name, memory),
             memory.identifier().location());
       } else if (definition instanceof UsingDefinition using) {
-        symbols.defineSymbol(new AliasSymbol(using.identifier().name, using), using.loc);
+        symbols.defineSymbol(new AliasSymbol(using.identifier().name, using),
+            using.identifier().loc);
       } else if (definition instanceof FunctionDefinition function) {
-        symbols.defineSymbol(new GenericSymbol(function.name().name, function), function.loc);
+        symbols.defineSymbol(new GenericSymbol(function.name().name, function),
+            function.name.location());
         function.symbolTable = symbols.createChild();
         for (Parameter param : function.params) {
           function.symbolTable.defineSymbol(new GenericSymbol(param.name().name, param),
@@ -332,18 +418,19 @@ class SymbolTable {
         collectSymbols(function.symbolTable, function.expr);
       } else if (definition instanceof FormatDefinition format) {
         format.symbolTable = symbols.createChild();
-        symbols.defineSymbol(new FormatSymbol(format.identifier().name, format), format.location());
+        symbols.defineSymbol(new FormatSymbol(format.identifier().name, format),
+            format.identifier.location());
         for (FormatDefinition.FormatField field : format.fields) {
           format.symbolTable().defineSymbol(new GenericSymbol(field.identifier().name, field),
               field.identifier().location());
         }
       } else if (definition instanceof InstructionDefinition instr) {
-        symbols.defineSymbol(new InstructionSymbol(instr.id().name, instr), instr.location());
+        symbols.defineSymbol(new InstructionSymbol(instr.id().name, instr), instr.id().location());
         instr.symbolTable = symbols.createChild();
         collectSymbols(instr.symbolTable, instr.behavior);
       } else if (definition instanceof PseudoInstructionDefinition pseudo) {
         symbols.defineSymbol(new PseudoInstructionSymbol(pseudo.id().name, pseudo),
-            pseudo.location());
+            pseudo.id().location());
         pseudo.symbolTable = symbols.createChild();
         for (var param : pseudo.params) {
           pseudo.symbolTable.defineSymbol(new GenericSymbol(param.name().name, param),
@@ -354,7 +441,7 @@ class SymbolTable {
         }
       } else if (definition instanceof RelocationDefinition relocation) {
         symbols.defineSymbol(new GenericSymbol(relocation.identifier.name, relocation),
-            relocation.loc);
+            relocation.identifier.loc);
         relocation.symbolTable = symbols.createChild();
         for (Parameter param : relocation.params) {
           relocation.symbolTable.defineSymbol(new GenericSymbol(param.name().name, param),
@@ -371,7 +458,7 @@ class SymbolTable {
               ((EncodingDefinition.EncodingField) fieldEncoding).value());
         }
       } else if (definition instanceof AliasDefinition alias) {
-        symbols.defineSymbol(new GenericSymbol(alias.id().name, alias), alias.loc);
+        symbols.defineSymbol(new GenericSymbol(alias.id().name, alias), alias.id().loc);
         collectSymbols(symbols, alias.value);
       } else if (definition instanceof EnumerationDefinition enumeration) {
         for (EnumerationDefinition.Entry entry : enumeration.entries) {
@@ -385,7 +472,7 @@ class SymbolTable {
           }
         }
       } else if (definition instanceof ExceptionDefinition exception) {
-        symbols.defineSymbol(new GenericSymbol(exception.id().name, exception), exception.loc);
+        symbols.defineSymbol(new GenericSymbol(exception.id().name, exception), exception.id().loc);
         collectSymbols(symbols, exception.statement);
       } else if (definition instanceof ImportDefinition importDef) {
         symbols.importFrom(importDef.moduleAst, importDef.importedSymbols);
@@ -396,7 +483,7 @@ class SymbolTable {
       } else if (definition instanceof ModelTypeDefinition modelType) {
         symbols.addModelType(modelType);
       } else if (definition instanceof ProcessDefinition process) {
-        symbols.defineSymbol(new GenericSymbol(process.name().name, process), process.loc);
+        symbols.defineSymbol(new GenericSymbol(process.name().name, process), process.name().loc);
         process.symbolTable = symbols.createChild();
         for (ProcessDefinition.TemplateParam templateParam : process.templateParams) {
           process.symbolTable.defineSymbol(
@@ -413,7 +500,7 @@ class SymbolTable {
         }
         collectSymbols(process.symbolTable, process.statement);
       } else if (definition instanceof ApplicationBinaryInterfaceDefinition abi) {
-        symbols.defineSymbol(new AbiSymbol(abi.id.name, abi), abi.loc);
+        symbols.defineSymbol(new AbiSymbol(abi.id.name, abi), abi.id.loc);
         abi.symbolTable = symbols.createChild();
         for (Definition def : abi.definitions) {
           collectSymbols(abi.symbolTable, def);
@@ -428,7 +515,7 @@ class SymbolTable {
           collectSymbols(abiSequence.symbolTable, statement);
         }
       } else if (definition instanceof MicroProcessorDefinition mip) {
-        symbols.defineSymbol(new MipSymbol(mip.id.name, mip), mip.loc);
+        symbols.defineSymbol(new MipSymbol(mip.id.name, mip), mip.id.loc);
         mip.symbolTable = symbols.createChild();
         for (Definition def : mip.definitions) {
           collectSymbols(mip.symbolTable, def);
@@ -449,7 +536,7 @@ class SymbolTable {
         }
         collectSymbols(cpuProcess.symbolTable, cpuProcess.statement);
       } else if (definition instanceof MicroArchitectureDefinition mia) {
-        symbols.defineSymbol(new MiaSymbol(mia.id.name, mia), mia.loc);
+        symbols.defineSymbol(new MiaSymbol(mia.id.name, mia), mia.id.loc);
         mia.symbolTable = symbols.createChild();
         for (Definition def : mia.definitions) {
           collectSymbols(mia.symbolTable, def);
@@ -485,9 +572,9 @@ class SymbolTable {
         }
         collectSymbols(stage.symbolTable, stage.statement);
       } else if (definition instanceof CacheDefinition cache) {
-        symbols.defineSymbol(new GenericSymbol(cache.id.name, cache), cache.loc);
+        symbols.defineSymbol(new GenericSymbol(cache.id.name, cache), cache.id.loc);
       } else if (definition instanceof SignalDefinition signal) {
-        symbols.defineSymbol(new GenericSymbol(signal.id.name, signal), signal.loc);
+        symbols.defineSymbol(new GenericSymbol(signal.id.name, signal), signal.id.loc);
       }
     }
 
