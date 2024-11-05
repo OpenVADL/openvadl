@@ -31,6 +31,7 @@ import vadl.viam.graph.GraphVisitor;
 import vadl.viam.graph.Node;
 import vadl.viam.graph.NodeList;
 import vadl.viam.graph.control.AbstractEndNode;
+import vadl.viam.graph.dependency.SideEffectNode;
 import vadl.viam.graph.dependency.WriteResourceNode;
 import vadl.viam.passes.functionInliner.UninlinedGraph;
 
@@ -62,7 +63,7 @@ public class LlvmInstructionLoweringConditionalBranchesStrategyImpl
     var visitor = replacementHooks();
     var copy = (UninlinedGraph) uninlinedBehavior.copy();
 
-    for (var node : copy.getNodes(AbstractEndNode.class).toList()) {
+    for (var node : copy.getNodes(SideEffectNode.class).toList()) {
       visitReplacementHooks(visitor, node);
     }
 

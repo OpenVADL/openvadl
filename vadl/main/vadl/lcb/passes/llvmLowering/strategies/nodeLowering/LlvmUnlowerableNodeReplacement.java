@@ -5,29 +5,29 @@ import org.jetbrains.annotations.Nullable;
 import vadl.lcb.passes.llvmLowering.domain.selectionDag.LlvmUnlowerableSD;
 import vadl.viam.graph.GraphVisitor;
 import vadl.viam.graph.Node;
-import vadl.viam.graph.control.ReturnNode;
+import vadl.viam.graph.dependency.SelectNode;
 
-public class ReturnNodeReplacement
-    implements GraphVisitor.NodeApplier<ReturnNode, ReturnNode> {
+public class LlvmUnlowerableNodeReplacement
+    implements GraphVisitor.NodeApplier<LlvmUnlowerableSD, LlvmUnlowerableSD> {
   private final List<GraphVisitor.NodeApplier<? extends Node, ? extends Node>> replacer;
 
-  public ReturnNodeReplacement(
+  public LlvmUnlowerableNodeReplacement(
       List<GraphVisitor.NodeApplier<? extends Node, ? extends Node>> replacer) {
     this.replacer = replacer;
   }
 
   @Nullable
   @Override
-  public ReturnNode visit(ReturnNode selectNode) {
-    if (selectNode.graph() != null) {
-      selectNode.graph().add(new LlvmUnlowerableSD());
+  public LlvmUnlowerableSD visit(LlvmUnlowerableSD node) {
+    if (node.next() != null) {
+      visitApplicable(node.next());
     }
-    return selectNode;
+    return node;
   }
 
   @Override
   public boolean acceptable(Node node) {
-    return node instanceof ReturnNode;
+    return node instanceof LlvmUnlowerableSD;
   }
 
   @Override

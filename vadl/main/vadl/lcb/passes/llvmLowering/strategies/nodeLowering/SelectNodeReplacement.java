@@ -9,7 +9,7 @@ import vadl.viam.graph.dependency.SelectNode;
 import vadl.viam.graph.dependency.SliceNode;
 
 public class SelectNodeReplacement
-    implements GraphVisitor.NodeApplier<SelectNode, LlvmUnlowerableSD> {
+    implements GraphVisitor.NodeApplier<SelectNode, SelectNode> {
   private final List<GraphVisitor.NodeApplier<? extends Node, ? extends Node>> replacer;
 
   public SelectNodeReplacement(
@@ -19,8 +19,14 @@ public class SelectNodeReplacement
 
   @Nullable
   @Override
-  public LlvmUnlowerableSD visit(SelectNode selectNode) {
-    return new LlvmUnlowerableSD();
+  public SelectNode visit(SelectNode selectNode) {
+    visitApplicable(selectNode.condition());
+    visitApplicable(selectNode.trueCase());
+    visitApplicable(selectNode.falseCase());
+    if (selectNode.graph() != null) {
+      selectNode.graph().add(new LlvmUnlowerableSD());
+    }
+    return selectNode;
   }
 
   @Override

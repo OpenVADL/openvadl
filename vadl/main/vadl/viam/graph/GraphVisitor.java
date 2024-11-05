@@ -1,7 +1,10 @@
 package vadl.viam.graph;
 
+import static vadl.viam.ViamError.ensure;
+
 import java.util.List;
 import javax.annotation.Nullable;
+import vadl.lcb.passes.llvmLowering.domain.selectionDag.LlvmUnlowerableSD;
 
 /**
  * The {@link GraphVisitor} interface represents a visitor that can visit nodes in a graph and
@@ -36,7 +39,9 @@ public interface GraphVisitor<R> {
     }
 
     default void visitApplicable(Node arg) {
-      for (var applier : applicable(arg)) {
+      var applicable = applicable(arg);
+      ensure(applicable.size() <= 1, "There are multiple replacement strategies applicable.");
+      for (var applier : applicable) {
         NodeApplier<Node, Node> cast = (NodeApplier<Node, Node>) applier;
         cast.apply(arg);
       }
@@ -55,6 +60,8 @@ public interface GraphVisitor<R> {
 
       if (!node.isDeleted() && node != newNode) {
         return node.replaceAndDelete(newNode);
+      } else if (!node.isDeleted() && node == newNode) {
+        return newNode;
       }
 
       return null;

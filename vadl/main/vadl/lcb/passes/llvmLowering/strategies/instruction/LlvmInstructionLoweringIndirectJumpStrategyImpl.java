@@ -17,6 +17,7 @@ import vadl.viam.graph.Graph;
 import vadl.viam.graph.GraphVisitor;
 import vadl.viam.graph.Node;
 import vadl.viam.graph.control.AbstractEndNode;
+import vadl.viam.graph.dependency.SideEffectNode;
 
 /**
  * Generates the {@link LlvmLoweringRecord} for {@link MachineInstructionLabel#JALR}
@@ -42,7 +43,7 @@ public class LlvmInstructionLoweringIndirectJumpStrategyImpl
     var copy = unmodifiedBehavior.copy();
     var visitor = replacementHooksWithDefaultFieldAccessReplacement();
 
-    for (var node : copy.getNodes(AbstractEndNode.class).toList()) {
+    for (var node : copy.getNodes(SideEffectNode.class).toList()) {
       visitReplacementHooks(visitor, node);
     }
 

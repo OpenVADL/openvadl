@@ -14,6 +14,7 @@ import vadl.viam.graph.Graph;
 import vadl.viam.graph.GraphVisitor;
 import vadl.viam.graph.Node;
 import vadl.viam.graph.dependency.BuiltInCall;
+import vadl.viam.graph.dependency.FieldAccessRefNode;
 import vadl.viam.graph.dependency.WriteRegNode;
 
 public class WriteRegNodeReplacement
@@ -59,7 +60,7 @@ public class WriteRegNodeReplacement
         var first = conditional.arguments().get(0);
         var second = conditional.arguments().get(1);
         var immOffset =
-            builtin.arguments().stream().filter(x -> x instanceof LlvmBasicBlockSD)
+            builtin.arguments().stream().filter(x -> x instanceof FieldAccessRefNode)
                 .findFirst();
 
         if (immOffset.isEmpty()) {
@@ -88,8 +89,8 @@ public class WriteRegNodeReplacement
     return replacer;
   }
 
-  private LlvmSetccSD getConditional(Graph behavior) {
-    var builtIn = behavior.getNodes(LlvmSetccSD.class)
+  private BuiltInCall getConditional(Graph behavior) {
+    var builtIn = behavior.getNodes(BuiltInCall.class)
         .filter(
             x -> Set.of(BuiltInTable.EQU, BuiltInTable.NEQ, BuiltInTable.SLTH, BuiltInTable.ULTH,
                     BuiltInTable.SGEQ, BuiltInTable.UGEQ, BuiltInTable.SLEQ, BuiltInTable.ULEQ)

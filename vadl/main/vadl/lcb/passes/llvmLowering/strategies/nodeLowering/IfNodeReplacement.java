@@ -10,11 +10,14 @@ import vadl.viam.graph.control.IfNode;
 import vadl.viam.graph.control.ReturnNode;
 
 public class IfNodeReplacement
-    implements GraphVisitor.NodeApplier<IfNode, LlvmUnlowerableSD> {
+    implements GraphVisitor.NodeApplier<IfNode, IfNode> {
   @Nullable
   @Override
-  public LlvmUnlowerableSD visit(IfNode selectNode) {
-    return new LlvmUnlowerableSD();
+  public IfNode visit(IfNode selectNode) {
+    if (selectNode.graph() != null) {
+      selectNode.graph().add(new LlvmUnlowerableSD());
+    }
+    return selectNode;
   }
 
   @Override

@@ -49,6 +49,7 @@ import vadl.lcb.passes.llvmLowering.strategies.nodeLowering.IfNodeReplacement;
 import vadl.lcb.passes.llvmLowering.strategies.nodeLowering.InstrCallNodeReplacement;
 import vadl.lcb.passes.llvmLowering.strategies.nodeLowering.InstrEndNodeReplacement;
 import vadl.lcb.passes.llvmLowering.strategies.nodeLowering.LetNodeReplacement;
+import vadl.lcb.passes.llvmLowering.strategies.nodeLowering.LlvmUnlowerableNodeReplacement;
 import vadl.lcb.passes.llvmLowering.strategies.nodeLowering.ReadMemNodeReplacement;
 import vadl.lcb.passes.llvmLowering.strategies.nodeLowering.ReadRegFileNodeReplacement;
 import vadl.lcb.passes.llvmLowering.strategies.nodeLowering.ReadRegNodeReplacement;
@@ -96,6 +97,7 @@ import vadl.viam.graph.dependency.FuncParamNode;
 import vadl.viam.graph.dependency.ReadRegFileNode;
 import vadl.viam.graph.dependency.ReadRegNode;
 import vadl.viam.graph.dependency.ReadResourceNode;
+import vadl.viam.graph.dependency.SideEffectNode;
 import vadl.viam.graph.dependency.WriteMemNode;
 import vadl.viam.graph.dependency.WriteRegFileNode;
 import vadl.viam.graph.dependency.WriteRegNode;
@@ -170,6 +172,7 @@ public abstract class LlvmInstructionLoweringStrategy {
     var v19 = new WriteRegFileNodeReplacement(hooks);
     var v20 = new WriteRegNodeReplacement(hooks);
     var v21 = new ZeroExtendNodeReplacement(hooks);
+    var v22 = new LlvmUnlowerableNodeReplacement(hooks);
 
     hooks.add(v1);
     hooks.add(v2);
@@ -192,6 +195,7 @@ public abstract class LlvmInstructionLoweringStrategy {
     hooks.add(v19);
     hooks.add(v20);
     hooks.add(v21);
+    hooks.add(v22);
 
     return hooks;
   }
@@ -287,7 +291,7 @@ public abstract class LlvmInstructionLoweringStrategy {
 
     // Continue with lowering of nodes
     var isLowerable = true;
-    for (var endNode : copy.getNodes(AbstractEndNode.class).toList()) {
+    for (var endNode : copy.getNodes(SideEffectNode.class).toList()) {
       visitReplacementHooks(visitor, endNode);
 
       if (!copy.getNodes(LlvmUnlowerableSD.class).toList().isEmpty()) {
@@ -351,11 +355,9 @@ public abstract class LlvmInstructionLoweringStrategy {
 
   protected void visitReplacementHooks(
       List<GraphVisitor.NodeApplier<? extends Node, ? extends Node>> visitor,
-      AbstractEndNode endNode) {
-    for (var sideEffect : endNode.sideEffects()) {
-      for (var v : visitor.stream().filter(x -> x.acceptable(sideEffect)).toList()) {
-        v.visitApplicable(sideEffect);
-      }
+      SideEffectNode sideEffect) {
+    for (var v : visitor.stream().filter(x -> x.acceptable(sideEffect)).toList()) {
+      v.visitApplicable(sideEffect);
     }
   }
 

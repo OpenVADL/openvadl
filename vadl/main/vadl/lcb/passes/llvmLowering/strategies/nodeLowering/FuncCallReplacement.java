@@ -8,11 +8,14 @@ import vadl.viam.graph.Node;
 import vadl.viam.graph.dependency.FuncCallNode;
 
 public class FuncCallReplacement
-    implements GraphVisitor.NodeApplier<FuncCallNode, LlvmUnlowerableSD> {
+    implements GraphVisitor.NodeApplier<FuncCallNode, FuncCallNode> {
   @Nullable
   @Override
-  public LlvmUnlowerableSD visit(FuncCallNode selectNode) {
-    return new LlvmUnlowerableSD();
+  public FuncCallNode visit(FuncCallNode selectNode) {
+    if (selectNode.graph() != null) {
+      selectNode.graph().add(new LlvmUnlowerableSD());
+    }
+    return selectNode;
   }
 
   @Override
