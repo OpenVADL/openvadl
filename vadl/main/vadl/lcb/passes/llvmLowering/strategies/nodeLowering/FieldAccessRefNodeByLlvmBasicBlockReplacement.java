@@ -16,7 +16,7 @@ import vadl.viam.graph.dependency.FieldAccessRefNode;
  * treated like an immediate, but it is a basic block.
  */
 public class FieldAccessRefNodeByLlvmBasicBlockReplacement
-    implements GraphVisitor.NodeApplier<FieldAccessRefNode, LlvmFieldAccessRefNode> {
+    implements GraphVisitor.NodeApplier<FieldAccessRefNode, LlvmBasicBlockSD> {
   private final List<GraphVisitor.NodeApplier<? extends Node, ? extends Node>> replacer;
   private final ValueType architectureType;
 
@@ -29,13 +29,12 @@ public class FieldAccessRefNodeByLlvmBasicBlockReplacement
 
   @Nullable
   @Override
-  public LlvmFieldAccessRefNode visit(FieldAccessRefNode fieldAccessRefNode) {
+  public LlvmBasicBlockSD visit(FieldAccessRefNode fieldAccessRefNode) {
     var originalType = fieldAccessRefNode.fieldAccess().accessFunction().returnType();
 
-    return
-        new LlvmFieldAccessRefNode(fieldAccessRefNode.fieldAccess(),
-            originalType,
-            architectureType);
+    return new LlvmBasicBlockSD(fieldAccessRefNode.fieldAccess(),
+        originalType,
+        architectureType);
   }
 
   @Override
