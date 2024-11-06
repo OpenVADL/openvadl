@@ -39,6 +39,9 @@ public class ViamGraphError extends ViamError {
     if (node != null) {
       this.node = node;
       addContext("node", node);
+      if (this.graph == null) {
+        addContext(node.graph());
+      }
     }
     return this;
   }
@@ -74,11 +77,11 @@ public class ViamGraphError extends ViamError {
                                      Object... args) {
     if (!condition) {
       throw new ViamGraphError(fmt, args)
-        .addContext(graph)
-        .addContext(node1)
-        .addContext(node2)
-        .shrinkStacktrace(2)
-        ;
+          .addContext(graph)
+          .addContext(node1)
+          .addContext(node2)
+          .shrinkStacktrace(2)
+          ;
     }
   }
 

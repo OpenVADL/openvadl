@@ -30,8 +30,8 @@ public abstract class GraphProcessor<T> implements GraphVisitor<Object> {
    */
   protected void processGraph(Graph graph, Function<Node, Boolean> filter) {
     graph.getNodes()
-          .filter(filter::apply)
-          .forEach(this::processNode);
+        .filter(filter::apply)
+        .forEach(this::processNode);
   }
 
   /**
@@ -57,9 +57,9 @@ public abstract class GraphProcessor<T> implements GraphVisitor<Object> {
         throw e;
       }
       throw new ViamGraphError("Exception during graph processing: " + e.getMessage(),
-            e)
-            .addContext(toProcess)
-            .addContext(toProcess.graph());
+          e)
+          .addContext(toProcess)
+          .addContext(toProcess.graph());
     }
   }
 
@@ -67,7 +67,7 @@ public abstract class GraphProcessor<T> implements GraphVisitor<Object> {
 
   @Nullable
   @Override
-  public Object visit(Node from, @Nullable Node to) {
+  public T visit(Node from, @Nullable Node to) {
     if (to != null) {
       processNode(to);
     }
@@ -77,10 +77,14 @@ public abstract class GraphProcessor<T> implements GraphVisitor<Object> {
 
 
   protected <R extends T> R getResultOf(Node processedNode, Class<R> clazz) {
+    if (!processedNodes.containsKey(processedNode)) {
+      processNode(processedNode);
+    }
     var result = processedNodes.get(processedNode);
-    processedNode.ensure(result != null, "node not processedNode");
+    processedNode.ensure(result != null,
+        "node processing implementation is faulty. no result found");
     ViamError.ensure(clazz.isInstance(result),
-          "expected result to be instance of %s, but was %s", clazz, result);
+        "expected result to be instance of %s, but was %s", clazz, result);
     return clazz.cast(result);
   }
 }

@@ -1,12 +1,12 @@
 package vadl.iss.passes.tcgLowering;
 
+import static java.util.Objects.requireNonNull;
 import static vadl.utils.GraphUtils.getSingleNode;
 import static vadl.viam.ViamError.ensure;
 
 import java.io.IOException;
 import java.util.HashSet;
 import java.util.List;
-import java.util.Objects;
 import java.util.Set;
 import org.jetbrains.annotations.Nullable;
 import vadl.configuration.IssConfiguration;
@@ -14,12 +14,18 @@ import vadl.iss.passes.AbstractIssPass;
 import vadl.iss.passes.IssTcgAnnotatePass;
 import vadl.iss.passes.tcgLowering.nodes.TcgAddNode;
 import vadl.iss.passes.tcgLowering.nodes.TcgAddiNode;
+import vadl.iss.passes.tcgLowering.nodes.TcgBr;
+import vadl.iss.passes.tcgLowering.nodes.TcgBrCondImm;
 import vadl.iss.passes.tcgLowering.nodes.TcgConstantNode;
 import vadl.iss.passes.tcgLowering.nodes.TcgExtendNode;
+import vadl.iss.passes.tcgLowering.nodes.TcgGenLabel;
 import vadl.iss.passes.tcgLowering.nodes.TcgGetVar;
 import vadl.iss.passes.tcgLowering.nodes.TcgLoadMemory;
 import vadl.iss.passes.tcgLowering.nodes.TcgMoveNode;
 import vadl.iss.passes.tcgLowering.nodes.TcgOpNode;
+import vadl.iss.passes.tcgLowering.nodes.TcgSetCond;
+import vadl.iss.passes.tcgLowering.nodes.TcgSetLabel;
+import vadl.iss.passes.tcgLowering.nodes.TcgSetReg;
 import vadl.iss.passes.tcgLowering.nodes.TcgSetRegFile;
 import vadl.iss.passes.tcgLowering.nodes.TcgShiftLeft;
 import vadl.iss.passes.tcgLowering.nodes.TcgStoreMemory;
@@ -27,28 +33,37 @@ import vadl.iss.passes.tcgLowering.nodes.TcgTruncateNode;
 import vadl.pass.PassName;
 import vadl.pass.PassResults;
 import vadl.types.BuiltInTable;
+import vadl.types.Type;
 import vadl.utils.Pair;
+import vadl.viam.Constant;
 import vadl.viam.Instruction;
 import vadl.viam.Specification;
 import vadl.viam.ViamError;
 import vadl.viam.graph.Node;
 import vadl.viam.graph.NodeList;
 import vadl.viam.graph.ViamGraphError;
+import vadl.viam.graph.control.AbstractEndNode;
+import vadl.viam.graph.control.BeginNode;
+import vadl.viam.graph.control.ControlNode;
 import vadl.viam.graph.control.DirectionalNode;
+import vadl.viam.graph.control.IfNode;
 import vadl.viam.graph.control.InstrEndNode;
+import vadl.viam.graph.control.MergeNode;
 import vadl.viam.graph.control.StartNode;
 import vadl.viam.graph.dependency.BuiltInCall;
 import vadl.viam.graph.dependency.ConstantNode;
+import vadl.viam.graph.dependency.DependencyNode;
 import vadl.viam.graph.dependency.ExpressionNode;
 import vadl.viam.graph.dependency.FieldRefNode;
 import vadl.viam.graph.dependency.LetNode;
 import vadl.viam.graph.dependency.ReadMemNode;
 import vadl.viam.graph.dependency.ReadRegFileNode;
-import vadl.viam.graph.dependency.SideEffectNode;
+import vadl.viam.graph.dependency.ReadRegNode;
 import vadl.viam.graph.dependency.SignExtendNode;
 import vadl.viam.graph.dependency.TruncateNode;
 import vadl.viam.graph.dependency.WriteMemNode;
 import vadl.viam.graph.dependency.WriteRegFileNode;
+import vadl.viam.graph.dependency.WriteRegNode;
 import vadl.viam.graph.dependency.WriteResourceNode;
 import vadl.viam.graph.dependency.ZeroExtendNode;
 import vadl.viam.passes.GraphProcessor;
@@ -73,25 +88,26 @@ public class TcgLoweringPass extends AbstractIssPass {
 
   @Override
   public @Nullable Object execute(PassResults passResults, Specification viam)
-        throws IOException {
+      throws IOException {
 
     var supportedInstructions = Set.of(
-          "ADD",
-          "ADDI",
-          "LB",
-          "SB",
-          "ADDIW",
-          "SLLI",
-          "LUI"
+        "ADD",
+        "ADDI",
+        "LB",
+        "SB",
+        "ADDIW",
+        "SLLI",
+        "LUI"
+        , "BEQ"
     );
 
     var tcgNodes = (IssTcgAnnotatePass.Result) passResults
-          .lastResultOf(IssTcgAnnotatePass.class);
+        .lastResultOf(IssTcgAnnotatePass.class);
 
     viam.isa().get().ownInstructions()
-          .stream()
-          .filter(i -> supportedInstructions.contains(i.identifier.simpleName()))
-          .forEach(i -> TcgLoweringExecutor.runOn(i, tcgNodes));
+        .stream()
+        .filter(i -> supportedInstructions.contains(i.identifier.simpleName()))
+        .forEach(i -> TcgLoweringExecutor.runOn(i, tcgNodes));
 
     return null;
   }
@@ -103,6 +119,7 @@ class TcgLoweringExecutor extends GraphProcessor<Node> {
   Instruction instruction;
   StartNode insnStartNode;
   InstrEndNode insnEndNode;
+  InstrEndNode newInsnEndNode;
   DirectionalNode lastNode;
 
   Set<Pair<TcgV, WriteResourceNode>> destVars;
@@ -117,6 +134,7 @@ class TcgLoweringExecutor extends GraphProcessor<Node> {
     this.insnStartNode = getSingleNode(instruction.behavior(), StartNode.class);
     this.lastNode = insnStartNode;
     this.insnEndNode = getSingleNode(instruction.behavior(), InstrEndNode.class);
+    this.newInsnEndNode = instruction.behavior().add(new InstrEndNode(new NodeList<>()));
     this.destVars = new HashSet<>();
     this.tempVars = new HashSet<>();
     this.tcgNodes = tcgNodes;
@@ -128,21 +146,117 @@ class TcgLoweringExecutor extends GraphProcessor<Node> {
 
   protected void run() {
     processGraph(instruction.behavior(),
-          n -> n instanceof SideEffectNode
+        n -> n instanceof StartNode
     );
 
     // this pass inserts all TcgGetTemp nodes necessary
     insertTemporaryVariableRetrievals();
 
-    // Remove original end node with side effects
-    var newEndNode = instruction.behavior().add(
-          new InstrEndNode(new NodeList<>())
-    );
-    insnEndNode.replaceAndDelete(newEndNode);
+    // remove all control nodes from the initial graph
+    instruction.behavior().getNodes(ControlNode.class)
+        .forEach(n -> {
+          if (n.id().numericId() > insnEndNode.id().numericId() || n.isDeleted()) {
+            return;
+          }
+          recusiveDeletion(n);
+        });
+  }
+
+  private void recusiveDeletion(Node node) {
+    node.usages().toList().forEach(this::recusiveDeletion);
+    var pred = node.predecessor();
+    if (pred != null) {
+      recusiveDeletion(pred);
+    }
+    if (!node.isDeleted()) {
+      node.safeDelete();
+    }
   }
 
   @Override
   protected Node processUnprocessedNode(Node toProcess) {
+    if (toProcess instanceof DirectionalNode castedNode) {
+      return processDirectional(castedNode);
+    } else if (toProcess instanceof AbstractEndNode castedNode) {
+      return processEndNode(castedNode);
+    } else if (toProcess instanceof IfNode castedNode) {
+      return processIf(castedNode);
+    } else if (toProcess instanceof DependencyNode castedNode) {
+      return processDependencyNodes(castedNode);
+    } else {
+      throw new ViamGraphError("node not yet supported by tcg lowering")
+          .addContext(toProcess);
+    }
+  }
+
+  /*
+   * Any directional node does not have any side effects and just passes the processing
+   * to its successor.
+   */
+  protected Node processDirectional(DirectionalNode dirNode) {
+    processNode(dirNode.next());
+    return dirNode;
+  }
+
+  /*
+   * Processes side effect nodes. But does nothing more.
+   */
+  protected Node processEndNode(AbstractEndNode node) {
+    node.sideEffects().forEach(this::processNode);
+    return node;
+  }
+
+  /*
+   * Just removes the node and calls the next node
+   */
+  protected Node processBeginNode(BeginNode node) {
+    node.replaceByNothingAndDelete();
+    return lastNode;
+  }
+
+
+  /*
+   * Firstly emits the TCG for the condition, than emits the else branch
+   * if a branch forward to the end of the statement and lastly produces the if branch.
+   */
+  protected Node processIf(IfNode dirNode) {
+    var ifLabel = genLabelObj("if_label");
+    var endLabel = genLabelObj("end_label");
+
+
+    // create tcg if and end labels
+    addLast(new TcgGenLabel(ifLabel));
+    addLast(new TcgGenLabel(endLabel));
+
+
+    // TODO: here we have potential to optimize the branch by using a branch condition
+    // instead of the result of the condition.
+    var condition = getResultOf(dirNode.condition(), TcgOpNode.class);
+
+    // produce 0 value node to compare to
+    var zeroValue = requireNonNull(dirNode.graph())
+        .add(new ConstantNode(Constant.Value.of(0, Type.bits(condition.res().width.width))));
+
+    // check if true by check if value is not 0.
+    // if true, we branch to the ifLabel.
+    addLast(new TcgBrCondImm(condition.res(), zeroValue, TcgCondition.NE, ifLabel));
+
+    processNode(dirNode.falseBranch());
+
+    // unconditionally jump to endLabel
+    addLast(new TcgBr(endLabel));
+
+    // set branch of ifLabel to mark start of ifBranch
+    addLast(new TcgSetLabel(ifLabel));
+
+    // produce the true branch
+    processNode(dirNode.trueBranch());
+
+    // set end label and return it just to have some value in graph processor
+    return addLast(new TcgSetLabel(endLabel));
+  }
+
+  protected Node processDependencyNodes(DependencyNode toProcess) {
     toProcess.visitInputs(this);
 
     var node = callProcess(toProcess);
@@ -150,17 +264,12 @@ class TcgLoweringExecutor extends GraphProcessor<Node> {
       return lastNode;
     }
     if (!node.isActive()) {
-      Objects.requireNonNull(toProcess.graph())
-            .addWithInputs(node);
+      requireNonNull(toProcess.graph())
+          .addWithInputs(node);
     }
 
     if (node instanceof TcgOpNode tcgOpNode) {
-      if (lastNode != null) {
-        lastNode.setNext(tcgOpNode);
-      }
-
-      tcgOpNode.setNext(insnEndNode);
-      lastNode = tcgOpNode;
+      addLast(tcgOpNode);
     }
 
     return node;
@@ -178,15 +287,17 @@ class TcgLoweringExecutor extends GraphProcessor<Node> {
       return process(regFileRead);
     } else if (toProcess instanceof WriteRegFileNode regFileWrite) {
       return process(regFileWrite);
-    }
-    if (toProcess instanceof ReadMemNode readMemNode) {
+    } else if (toProcess instanceof ReadRegNode castedNode) {
+      return process(castedNode);
+    } else if (toProcess instanceof WriteRegNode castedNode) {
+      return process(castedNode);
+    } else if (toProcess instanceof ReadMemNode readMemNode) {
       return process(readMemNode);
     } else if (toProcess instanceof WriteMemNode writeMemNode) {
       return process(writeMemNode);
     } else if (toProcess instanceof FieldRefNode) {
       return toProcess;
     } else if (toProcess instanceof ConstantNode) {
-      // TODO: @jzottele Make sense of this
       return toProcess;
     } else if (toProcess instanceof SignExtendNode signExtendNode) {
       return process(signExtendNode);
@@ -199,8 +310,8 @@ class TcgLoweringExecutor extends GraphProcessor<Node> {
       return null;
     } else {
       throw new ViamGraphError("node not yet supported by tcg lowering")
-            .addContext(toProcess)
-            .addContext(instruction);
+          .addContext(toProcess)
+          .addContext(instruction);
     }
   }
 
@@ -212,10 +323,47 @@ class TcgLoweringExecutor extends GraphProcessor<Node> {
     var width = TcgWidth.i64;
     var tcgVar = TcgV.gen(width);
     return new TcgGetVar.TcgGetRegFile(
-          toProcess.registerFile(), (ExpressionNode) addressRepl,
-          TcgGetVar.TcgGetRegFile.Kind.SRC,
-          tcgVar
+        toProcess.registerFile(), (ExpressionNode) addressRepl,
+        TcgGetVar.TcgGetRegFile.Kind.SRC,
+        tcgVar
     );
+  }
+
+  private Node process(ReadRegNode toProcess) {
+    // TODO: @jzottele Don't hardcode type!
+    var width = TcgWidth.i64;
+    var tcgVar = TcgV.gen(width);
+    return new TcgGetVar.TcgGetReg(
+        toProcess.register(),
+        tcgVar
+    );
+  }
+
+  private @Nullable Node process(WriteRegNode toProcess) {
+    var valRes = getResultOf(toProcess.value(), Node.class);
+
+    // TODO: Don't hardcode this
+    var width = TcgWidth.i64;
+    var destVar = TcgV.gen(width);
+
+    if (valRes instanceof ExpressionNode valueImm) {
+      // if the value is an immediate (not from a tcg operation)
+      // we produce an immediate node
+      addLast(new TcgConstantNode(destVar, valueImm));
+    } else {
+      var prevOp = ((TcgOpNode) valRes);
+      // get destVar from register destination
+      destVars.add(Pair.of(destVar, toProcess));
+      if (toProcess.value().usageCount() <= 1) {
+        // if value is used by only this node, we can directly write the result to the register
+        replaceResultVar(prevOp, destVar);
+      } else {
+        // the value is used somewhere else, so we cannot directly write it here
+        addLast(new TcgMoveNode(destVar, prevOp.res()));
+      }
+    }
+
+    return new TcgSetReg(toProcess.register(), destVar);
   }
 
   private @Nullable Node process(WriteRegFileNode toProcess) {
@@ -228,8 +376,7 @@ class TcgLoweringExecutor extends GraphProcessor<Node> {
     if (valRes instanceof ExpressionNode valueImm) {
       // if the value is an immediate (not from a tcg operation)
       // we produce an immediate node
-      var constNode = lastNode.addAfter(new TcgConstantNode(destVar, valueImm));
-      lastNode = constNode;
+      addLast(new TcgConstantNode(destVar, valueImm));
     } else {
       var prevOp = ((TcgOpNode) valRes);
       // get destVar from register destination
@@ -239,11 +386,7 @@ class TcgLoweringExecutor extends GraphProcessor<Node> {
         replaceResultVar(prevOp, destVar);
       } else {
         // the value is used somewhere else, so we cannot directly write it here
-        prevOp = lastNode.addAfter(
-              new TcgMoveNode(
-                    destVar, prevOp.res())
-        );
-        lastNode = prevOp;
+        addLast(new TcgMoveNode(destVar, prevOp.res()));
       }
     }
 
@@ -319,8 +462,8 @@ class TcgLoweringExecutor extends GraphProcessor<Node> {
 
   private TcgOpNode produceOpNode(BuiltInCall call) {
     var args = call.inputs()
-          .map(processedNodes::get)
-          .toList();
+        .map(processedNodes::get)
+        .toList();
 
     // TODO: @jzottele Don't hardcode width!
     var width = TcgWidth.i64;
@@ -336,10 +479,12 @@ class TcgLoweringExecutor extends GraphProcessor<Node> {
       }
     } else if (call.builtIn() == BuiltInTable.LSL && isBinaryImm(args)) {
       return new TcgShiftLeft(res, asOp(args.get(0)).res(), (ExpressionNode) args.get(1));
+    } else if (call.builtIn() == BuiltInTable.EQU && !isBinaryImm(args)) {
+      return new TcgSetCond(res, asOp(args.get(0)).res(), asOp(args.get(1)).res(), TcgCondition.EQ);
     } else {
       throw new ViamGraphError("built-in call not yet supported by tcg lowering")
-            .addContext(call)
-            .addContext(instruction);
+          .addContext(call)
+          .addContext(instruction);
     }
   }
 
@@ -350,14 +495,22 @@ class TcgLoweringExecutor extends GraphProcessor<Node> {
     }
     for (var pair : destVars) {
       var writeNode = pair.right();
-      writeNode.ensure(writeNode instanceof WriteRegFileNode, "Write node not implemented yet");
-      var writeRegNode = (WriteRegFileNode) writeNode;
-      var getTmp = new TcgGetVar.TcgGetRegFile(
-            writeRegNode.registerFile(),
-            writeRegNode.address(),
+      if (writeNode instanceof WriteRegNode writeRegNode) {
+        var getTmp = new TcgGetVar.TcgGetReg(
+            writeRegNode.register(),
+            pair.left()
+        );
+        insnStartNode.addAfter(getTmp);
+      } else if (writeNode instanceof WriteRegFileNode writeRegFileNode) {
+        var getTmp = new TcgGetVar.TcgGetRegFile(
+            writeRegFileNode.registerFile(),
+            writeRegFileNode.address(),
             TcgGetVar.TcgGetRegFile.Kind.DEST,
             pair.left());
-      insnStartNode.addAfter(getTmp);
+        insnStartNode.addAfter(getTmp);
+      } else {
+        writeNode.ensure(false, "Write node not implemented yet");
+      }
     }
   }
 
@@ -367,6 +520,13 @@ class TcgLoweringExecutor extends GraphProcessor<Node> {
     opNode.setRes(newVar);
 
     tempVars.remove(oldRes);
+  }
+
+  private <T extends DirectionalNode> T addLast(T opNode) {
+    var node = lastNode.addAfter(opNode);
+    lastNode = opNode;
+    lastNode.setNext(newInsnEndNode);
+    return node;
   }
 
   /**
@@ -383,13 +543,23 @@ class TcgLoweringExecutor extends GraphProcessor<Node> {
       return false;
     } else {
       throw new ViamError("Invalid binary arguments")
-            .addContext("args", args);
+          .addContext("args", args);
     }
   }
 
   private TcgOpNode asOp(Node node) {
     node.ensure(node instanceof TcgOpNode, "Not a TcgOpNode");
     return (TcgOpNode) node;
+  }
+
+  private int labelCnt = 0;
+
+  private TcgLabel genLabelObj(@Nullable String namePrefix) {
+    var prefix = "l";
+    if (namePrefix != null) {
+      prefix = namePrefix + "_";
+    }
+    return new TcgLabel(prefix + labelCnt++);
   }
 
 }

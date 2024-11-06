@@ -65,6 +65,15 @@ public abstract class DirectionalNode extends ControlNode {
     return newNode;
   }
 
+  public void replaceByNothingAndDelete() {
+    ensure(this.predecessor() != null, "Can only remove this node if the predecessor is set!");
+    // set successor to successor of predecessor
+    var successor = this.next();
+    replaceSuccessor(successor, null);
+    predecessor().replaceSuccessor(this, successor);
+    safeDelete();
+  }
+
   public ControlNode next() {
     ensure(next != null, "next node is null but must be set!");
     return next;

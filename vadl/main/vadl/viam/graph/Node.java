@@ -321,9 +321,15 @@ public abstract class Node implements WithSourceLocation {
    *
    * @param visitor the visitor that gets visited
    */
-  public final void visitInputs(GraphVisitor visitor) {
+  public final <T> void visitInputs(GraphVisitor<T> visitor) {
     for (var input : inputs().toList()) {
       visitor.visit(this, input);
+    }
+  }
+
+  public final <T> void visitSuccessors(GraphVisitor<T> visitor) {
+    for (var succ : successors().toList()) {
+      visitor.visit(this, succ);
     }
   }
 
@@ -861,7 +867,7 @@ public abstract class Node implements WithSourceLocation {
       this.state = IdState.DELETED;
     }
 
-    protected int numericId() {
+    public int numericId() {
       ensure(state != IdState.INIT, "id in Init state has no numeric id");
       return numericId;
     }
