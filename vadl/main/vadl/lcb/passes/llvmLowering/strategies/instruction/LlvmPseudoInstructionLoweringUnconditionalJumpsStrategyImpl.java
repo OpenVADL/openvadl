@@ -18,8 +18,8 @@ import vadl.lcb.passes.isaMatching.MachineInstructionLabel;
 import vadl.lcb.passes.isaMatching.PseudoInstructionLabel;
 import vadl.lcb.passes.llvmLowering.domain.LlvmLoweringPseudoRecord;
 import vadl.lcb.passes.llvmLowering.domain.LlvmLoweringRecord;
-import vadl.lcb.passes.llvmLowering.domain.machineDag.MachineInstructionParameterNode;
-import vadl.lcb.passes.llvmLowering.domain.machineDag.PseudoInstructionNode;
+import vadl.lcb.passes.llvmLowering.domain.machineDag.LcbMachineInstructionParameterNode;
+import vadl.lcb.passes.llvmLowering.domain.machineDag.LcbPseudoInstructionNode;
 import vadl.lcb.passes.llvmLowering.domain.selectionDag.LlvmBasicBlockSD;
 import vadl.lcb.passes.llvmLowering.domain.selectionDag.LlvmBrSD;
 import vadl.lcb.passes.llvmLowering.domain.selectionDag.LlvmFieldAccessRefNode;
@@ -115,9 +115,9 @@ public class LlvmPseudoInstructionLoweringUnconditionalJumpsStrategyImpl extends
 
     selector.addWithInputs(
         new LlvmBrSD(new LlvmBasicBlockSD(fieldAccess, fieldAccess.type(), upcasted)));
-    machine.addWithInputs(new PseudoInstructionNode(
+    machine.addWithInputs(new LcbPseudoInstructionNode(
         new NodeList<>(
-            new MachineInstructionParameterNode(new TableGenInstructionBareSymbolOperand(
+            new LcbMachineInstructionParameterNode(new TableGenInstructionBareSymbolOperand(
                 new LlvmBasicBlockSD(fieldAccess, fieldAccess.type(), upcasted), "type",
                 fieldAccess.simpleName()))
         ), pseudo));

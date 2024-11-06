@@ -4,10 +4,8 @@ import java.util.List;
 import java.util.Objects;
 import java.util.Set;
 import org.jetbrains.annotations.Nullable;
-import vadl.lcb.passes.llvmLowering.domain.selectionDag.LlvmBasicBlockSD;
 import vadl.lcb.passes.llvmLowering.domain.selectionDag.LlvmBrCcSD;
 import vadl.lcb.passes.llvmLowering.domain.selectionDag.LlvmCondCode;
-import vadl.lcb.passes.llvmLowering.domain.selectionDag.LlvmSetccSD;
 import vadl.types.BuiltInTable;
 import vadl.viam.ViamError;
 import vadl.viam.graph.Graph;
@@ -20,11 +18,11 @@ import vadl.viam.graph.dependency.WriteRegNode;
 /**
  * Replacement strategy for nodes.
  */
-public class WriteRegNodeReplacement
+public class LcbWriteRegNodeReplacement
     implements GraphVisitor.NodeApplier<WriteRegNode, WriteRegNode> {
   private final List<GraphVisitor.NodeApplier<? extends Node, ? extends Node>> replacer;
 
-  public WriteRegNodeReplacement(
+  public LcbWriteRegNodeReplacement(
       List<GraphVisitor.NodeApplier<? extends Node, ? extends Node>> replacer) {
     this.replacer = replacer;
   }

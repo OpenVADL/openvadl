@@ -1,9 +1,9 @@
 package vadl.lcb.passes.llvmLowering.strategies.visitors;
 
-import vadl.lcb.passes.llvmLowering.domain.machineDag.MachineInstructionNode;
-import vadl.lcb.passes.llvmLowering.domain.machineDag.MachineInstructionParameterNode;
-import vadl.lcb.passes.llvmLowering.domain.machineDag.MachineInstructionValueNode;
-import vadl.lcb.passes.llvmLowering.domain.machineDag.PseudoInstructionNode;
+import vadl.lcb.passes.llvmLowering.domain.machineDag.LcbMachineInstructionNode;
+import vadl.lcb.passes.llvmLowering.domain.machineDag.LcbMachineInstructionParameterNode;
+import vadl.lcb.passes.llvmLowering.domain.machineDag.LcbMachineInstructionValueNode;
+import vadl.lcb.passes.llvmLowering.domain.machineDag.LcbPseudoInstructionNode;
 import vadl.viam.graph.Graph;
 import vadl.viam.graph.GraphNodeVisitor;
 
@@ -12,22 +12,22 @@ import vadl.viam.graph.GraphNodeVisitor;
  */
 public interface TableGenMachineInstructionVisitor extends GraphNodeVisitor {
   /**
-   * Visit {@link PseudoInstructionNode}.
+   * Visit {@link LcbPseudoInstructionNode}.
    */
-  void visit(PseudoInstructionNode pseudoInstructionNode);
+  void visit(LcbPseudoInstructionNode pseudoInstructionNode);
 
   /**
-   * Visit {@link MachineInstructionNode}.
+   * Visit {@link LcbMachineInstructionNode}.
    */
-  void visit(MachineInstructionNode machineInstructionNode);
+  void visit(LcbMachineInstructionNode machineInstructionNode);
 
   /**
-   * Visit {@link MachineInstructionParameterNode}.
+   * Visit {@link LcbMachineInstructionParameterNode}.
    */
-  void visit(MachineInstructionParameterNode machineInstructionParameterNode);
+  void visit(LcbMachineInstructionParameterNode machineInstructionParameterNode);
 
   /**
-   * Visit {@link MachineInstructionValueNode}.
+   * Visit {@link LcbMachineInstructionValueNode}.
    */
-  void visit(MachineInstructionValueNode machineInstructionValueNode);
+  void visit(LcbMachineInstructionValueNode machineInstructionValueNode);
 }

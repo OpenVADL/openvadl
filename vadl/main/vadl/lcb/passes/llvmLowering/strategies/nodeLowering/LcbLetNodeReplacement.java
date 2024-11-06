@@ -4,33 +4,30 @@ import java.util.List;
 import org.jetbrains.annotations.Nullable;
 import vadl.viam.graph.GraphVisitor;
 import vadl.viam.graph.Node;
-import vadl.viam.graph.control.BranchEndNode;
-import vadl.viam.graph.control.InstrEndNode;
+import vadl.viam.graph.dependency.ExpressionNode;
+import vadl.viam.graph.dependency.LetNode;
 
 /**
  * Replacement strategy for nodes.
  */
-public class BranchEndNodeReplacement
-    implements GraphVisitor.NodeApplier<BranchEndNode, BranchEndNode> {
+public class LcbLetNodeReplacement implements GraphVisitor.NodeApplier<LetNode, ExpressionNode> {
   private final List<GraphVisitor.NodeApplier<? extends Node, ? extends Node>> replacer;
 
-  public BranchEndNodeReplacement(
+  public LcbLetNodeReplacement(
       List<GraphVisitor.NodeApplier<? extends Node, ? extends Node>> replacer) {
     this.replacer = replacer;
   }
 
   @Nullable
   @Override
-  public BranchEndNode visit(BranchEndNode branchEndNode) {
-    for (var arg : branchEndNode.sideEffects()) {
-      visitApplicable(arg);
-    }
-    return branchEndNode;
+  public ExpressionNode visit(LetNode node) {
+    visitApplicable(node.expression());
+    return node.expression();
   }
 
   @Override
   public boolean acceptable(Node node) {
-    return node instanceof BranchEndNode;
+    return node instanceof LetNode;
   }
 
   @Override

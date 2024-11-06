@@ -7,17 +7,16 @@ import vadl.lcb.passes.llvmLowering.domain.selectionDag.LlvmFieldAccessRefNode;
 import vadl.viam.graph.GraphVisitor;
 import vadl.viam.graph.Node;
 import vadl.viam.graph.dependency.FieldAccessRefNode;
-import vadl.viam.graph.dependency.SliceNode;
 
 /**
  * Replacement strategy for nodes.
  */
-public class FieldAccessRefNodeReplacement
+public class LcbFieldAccessRefNodeReplacement
     implements GraphVisitor.NodeApplier<FieldAccessRefNode, LlvmFieldAccessRefNode> {
   private final List<GraphVisitor.NodeApplier<? extends Node, ? extends Node>> replacer;
   private final ValueType architectureType;
 
-  public FieldAccessRefNodeReplacement(
+  public LcbFieldAccessRefNodeReplacement(
       List<GraphVisitor.NodeApplier<? extends Node, ? extends Node>> replacer,
       ValueType architectureType) {
     this.replacer = replacer;

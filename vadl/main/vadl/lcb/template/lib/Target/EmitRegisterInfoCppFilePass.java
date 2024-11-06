@@ -17,8 +17,8 @@ import vadl.configuration.LcbConfiguration;
 import vadl.lcb.passes.isaMatching.IsaMachineInstructionMatchingPass;
 import vadl.lcb.passes.isaMatching.MachineInstructionLabel;
 import vadl.lcb.passes.llvmLowering.GenerateTableGenMachineInstructionRecordPass;
-import vadl.lcb.passes.llvmLowering.domain.machineDag.MachineInstructionNode;
-import vadl.lcb.passes.llvmLowering.domain.machineDag.MachineInstructionParameterNode;
+import vadl.lcb.passes.llvmLowering.domain.machineDag.LcbMachineInstructionNode;
+import vadl.lcb.passes.llvmLowering.domain.machineDag.LcbMachineInstructionParameterNode;
 import vadl.lcb.passes.llvmLowering.tablegen.model.TableGenInstructionFrameRegisterOperand;
 import vadl.lcb.passes.llvmLowering.tablegen.model.TableGenInstructionImmediateOperand;
 import vadl.lcb.passes.llvmLowering.tablegen.model.TableGenMachineInstruction;
@@ -176,17 +176,17 @@ public class EmitRegisterInfoCppFilePass extends LcbTemplateRenderingPass {
     for (var pattern : record.getAnonymousPatterns()) {
       if (pattern instanceof TableGenSelectionWithOutputPattern outputPattern) {
         var rootNode =
-            outputPattern.machine().getNodes(MachineInstructionNode.class).findFirst().get();
+            outputPattern.machine().getNodes(LcbMachineInstructionNode.class).findFirst().get();
         var nodeFI = rootNode.arguments().stream()
-            .filter(x -> x instanceof MachineInstructionParameterNode)
+            .filter(x -> x instanceof LcbMachineInstructionParameterNode)
             .filter(
-                x -> ((MachineInstructionParameterNode) x).instructionOperand()
+                x -> ((LcbMachineInstructionParameterNode) x).instructionOperand()
                     instanceof TableGenInstructionFrameRegisterOperand)
             .findFirst();
         var nodeImm = rootNode.arguments().stream()
-            .filter(x -> x instanceof MachineInstructionParameterNode)
+            .filter(x -> x instanceof LcbMachineInstructionParameterNode)
             .filter(
-                x -> ((MachineInstructionParameterNode) x).instructionOperand()
+                x -> ((LcbMachineInstructionParameterNode) x).instructionOperand()
                     instanceof TableGenInstructionImmediateOperand)
             .findFirst();
 

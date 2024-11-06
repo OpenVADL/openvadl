@@ -2,39 +2,34 @@ package vadl.lcb.passes.llvmLowering.strategies.nodeLowering;
 
 import java.util.List;
 import org.jetbrains.annotations.Nullable;
-import vadl.lcb.passes.llvmLowering.domain.selectionDag.LlvmUnlowerableSD;
+import vadl.lcb.passes.llvmLowering.domain.selectionDag.LlvmLoadSD;
+import vadl.lcb.passes.llvmLowering.domain.selectionDag.LlvmTypeCastSD;
 import vadl.viam.graph.GraphVisitor;
 import vadl.viam.graph.Node;
-import vadl.viam.graph.dependency.SelectNode;
-import vadl.viam.graph.dependency.SliceNode;
+import vadl.viam.graph.dependency.ReadMemNode;
 
 /**
  * Replacement strategy for nodes.
  */
-public class SelectNodeReplacement
-    implements GraphVisitor.NodeApplier<SelectNode, SelectNode> {
+public class LcbReadMemNodeReplacement
+    implements GraphVisitor.NodeApplier<ReadMemNode, LlvmTypeCastSD> {
   private final List<GraphVisitor.NodeApplier<? extends Node, ? extends Node>> replacer;
 
-  public SelectNodeReplacement(
+  public LcbReadMemNodeReplacement(
       List<GraphVisitor.NodeApplier<? extends Node, ? extends Node>> replacer) {
     this.replacer = replacer;
   }
 
   @Nullable
   @Override
-  public SelectNode visit(SelectNode selectNode) {
-    visitApplicable(selectNode.condition());
-    visitApplicable(selectNode.trueCase());
-    visitApplicable(selectNode.falseCase());
-    if (selectNode.graph() != null) {
-      selectNode.graph().add(new LlvmUnlowerableSD());
-    }
-    return selectNode;
+  public LlvmTypeCastSD visit(ReadMemNode readMemNode) {
+    visitApplicable(readMemNode.address());
+    return new LlvmTypeCastSD(new LlvmLoadSD(readMemNode), readMemNode.type());
   }
 
   @Override
   public boolean acceptable(Node node) {
-    return node instanceof SelectNode;
+    return node instanceof ReadMemNode;
   }
 
   @Override

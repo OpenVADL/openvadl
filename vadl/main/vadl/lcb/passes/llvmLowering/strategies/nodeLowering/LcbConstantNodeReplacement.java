@@ -15,11 +15,11 @@ import vadl.viam.graph.dependency.ExpressionNode;
 /**
  * Replacement strategy for nodes.
  */
-public class ConstantNodeReplacement
+public class LcbConstantNodeReplacement
     implements GraphVisitor.NodeApplier<ConstantNode, ConstantNode> {
   private final List<GraphVisitor.NodeApplier<? extends Node, ? extends Node>> replacer;
 
-  public ConstantNodeReplacement(
+  public LcbConstantNodeReplacement(
       List<GraphVisitor.NodeApplier<? extends Node, ? extends Node>> replacer) {
     this.replacer = replacer;
   }

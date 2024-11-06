@@ -4,7 +4,7 @@ import java.util.List;
 import vadl.javaannotations.viam.DataValue;
 import vadl.lcb.passes.llvmLowering.strategies.visitors.TableGenMachineInstructionVisitor;
 import vadl.types.Type;
-import vadl.viam.Instruction;
+import vadl.viam.PseudoInstruction;
 import vadl.viam.graph.Graph;
 import vadl.viam.graph.GraphNodeVisitor;
 import vadl.viam.graph.Node;
@@ -13,17 +13,17 @@ import vadl.viam.graph.dependency.AbstractFunctionCallNode;
 import vadl.viam.graph.dependency.ExpressionNode;
 
 /**
- * Represents an {@link Instruction} in a {@link Graph}.
+ * Represents an {@link PseudoInstruction} in a {@link Graph}.
  */
-public class MachineInstructionNode extends AbstractFunctionCallNode {
+public class LcbPseudoInstructionNode extends AbstractFunctionCallNode {
   @DataValue
-  protected final Instruction instruction;
+  protected final PseudoInstruction instruction;
 
   /**
    * Constructor.
    */
-  public MachineInstructionNode(NodeList<ExpressionNode> args,
-                                Instruction instruction) {
+  public LcbPseudoInstructionNode(NodeList<ExpressionNode> args,
+                                  PseudoInstruction instruction) {
     super(args,
         Type.dummy());
     this.instruction = instruction;
@@ -32,14 +32,14 @@ public class MachineInstructionNode extends AbstractFunctionCallNode {
 
   @Override
   public Node copy() {
-    return new MachineInstructionNode(
+    return new LcbPseudoInstructionNode(
         new NodeList<>(args.stream().map(x -> (ExpressionNode) x.copy()).toList()),
         instruction);
   }
 
   @Override
   public Node shallowCopy() {
-    return new MachineInstructionNode(args, instruction);
+    return new LcbPseudoInstructionNode(args, instruction);
   }
 
   @Override
@@ -53,7 +53,7 @@ public class MachineInstructionNode extends AbstractFunctionCallNode {
     collection.add(instruction);
   }
 
-  public Instruction instruction() {
+  public PseudoInstruction instruction() {
     return instruction;
   }
 }

@@ -17,11 +17,11 @@ import vadl.viam.graph.dependency.ExpressionNode;
  * Note that {@link PseudoInstruction} can also mimic an {@link Instruction}. Even
  * when they are not a machine instruction.
  */
-public class MachineInstructionParameterNode extends ExpressionNode {
+public class LcbMachineInstructionParameterNode extends ExpressionNode {
   @DataValue
   private TableGenInstructionOperand instructionOperand;
 
-  public MachineInstructionParameterNode(TableGenInstructionOperand instructionOperand) {
+  public LcbMachineInstructionParameterNode(TableGenInstructionOperand instructionOperand) {
     super(Type.dummy());
     this.instructionOperand = instructionOperand;
   }
@@ -36,12 +36,12 @@ public class MachineInstructionParameterNode extends ExpressionNode {
 
   @Override
   public Node copy() {
-    return new MachineInstructionParameterNode(instructionOperand);
+    return new LcbMachineInstructionParameterNode(instructionOperand);
   }
 
   @Override
   public Node shallowCopy() {
-    return new MachineInstructionParameterNode(instructionOperand);
+    return new LcbMachineInstructionParameterNode(instructionOperand);
   }
 
   @Override

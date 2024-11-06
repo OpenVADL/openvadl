@@ -1,10 +1,10 @@
 package vadl.lcb.passes.llvmLowering.tablegen.lowering;
 
 import java.io.StringWriter;
-import vadl.lcb.passes.llvmLowering.domain.machineDag.MachineInstructionNode;
-import vadl.lcb.passes.llvmLowering.domain.machineDag.MachineInstructionParameterNode;
-import vadl.lcb.passes.llvmLowering.domain.machineDag.MachineInstructionValueNode;
-import vadl.lcb.passes.llvmLowering.domain.machineDag.PseudoInstructionNode;
+import vadl.lcb.passes.llvmLowering.domain.machineDag.LcbMachineInstructionNode;
+import vadl.lcb.passes.llvmLowering.domain.machineDag.LcbMachineInstructionParameterNode;
+import vadl.lcb.passes.llvmLowering.domain.machineDag.LcbMachineInstructionValueNode;
+import vadl.lcb.passes.llvmLowering.domain.machineDag.LcbPseudoInstructionNode;
 import vadl.lcb.passes.llvmLowering.strategies.visitors.TableGenMachineInstructionVisitor;
 import vadl.viam.Constant;
 import vadl.viam.graph.NodeList;
@@ -56,7 +56,7 @@ public class TableGenMachineInstructionPrinterVisitor implements TableGenMachine
   }
 
   @Override
-  public void visit(PseudoInstructionNode node) {
+  public void visit(LcbPseudoInstructionNode node) {
     writer.write("(");
     writer.write(node.instruction().identifier.simpleName() + " ");
 
@@ -66,7 +66,7 @@ public class TableGenMachineInstructionPrinterVisitor implements TableGenMachine
   }
 
   @Override
-  public void visit(MachineInstructionNode node) {
+  public void visit(LcbMachineInstructionNode node) {
     writer.write("(");
     writer.write(node.instruction().identifier.simpleName() + " ");
 
@@ -76,12 +76,12 @@ public class TableGenMachineInstructionPrinterVisitor implements TableGenMachine
   }
 
   @Override
-  public void visit(MachineInstructionParameterNode machineInstructionParameterNode) {
+  public void visit(LcbMachineInstructionParameterNode machineInstructionParameterNode) {
     writer.write(machineInstructionParameterNode.instructionOperand().render());
   }
 
   @Override
-  public void visit(MachineInstructionValueNode machineInstructionValueNode) {
+  public void visit(LcbMachineInstructionValueNode machineInstructionValueNode) {
     writer.write("(" + machineInstructionValueNode.valueType().getLlvmType() + " "
         + machineInstructionValueNode.constant().asVal().intValue() + ")");
   }

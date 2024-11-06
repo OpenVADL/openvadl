@@ -10,17 +10,17 @@ import vadl.viam.graph.Node;
 import vadl.viam.graph.dependency.FieldAccessRefNode;
 
 /**
- * While {@link FieldAccessRefNodeReplacement} converts every
+ * While {@link LcbFieldAccessRefNodeReplacement} converts every
  * {@link FieldAccessRefNode} into {@link LlvmFieldAccessRefNode},
  * this class converts it into {@link LlvmBasicBlockSD}. This means that the field should be
  * treated like an immediate, but it is a basic block.
  */
-public class FieldAccessRefNodeByLlvmBasicBlockReplacement
+public class LcbFieldAccessRefNodeByLlvmBasicBlockReplacement
     implements GraphVisitor.NodeApplier<FieldAccessRefNode, LlvmBasicBlockSD> {
   private final List<GraphVisitor.NodeApplier<? extends Node, ? extends Node>> replacer;
   private final ValueType architectureType;
 
-  public FieldAccessRefNodeByLlvmBasicBlockReplacement(
+  public LcbFieldAccessRefNodeByLlvmBasicBlockReplacement(
       List<GraphVisitor.NodeApplier<? extends Node, ? extends Node>> replacer,
       ValueType architectureType) {
     this.replacer = replacer;

@@ -6,11 +6,10 @@ import java.util.List;
 import java.util.function.BiFunction;
 import java.util.function.Function;
 import vadl.lcb.codegen.model.llvm.ValueType;
-import vadl.lcb.passes.llvmLowering.domain.machineDag.MachineInstructionParameterNode;
+import vadl.lcb.passes.llvmLowering.domain.machineDag.LcbMachineInstructionParameterNode;
 import vadl.lcb.passes.llvmLowering.domain.selectionDag.LlvmFrameIndexSD;
 import vadl.lcb.passes.llvmLowering.domain.selectionDag.LlvmReadRegFileNode;
 import vadl.lcb.passes.llvmLowering.strategies.LlvmInstructionLoweringStrategy;
-import vadl.lcb.passes.llvmLowering.strategies.LoweringStrategyUtils;
 import vadl.lcb.passes.llvmLowering.tablegen.model.TableGenInstructionFrameRegisterOperand;
 import vadl.lcb.passes.llvmLowering.tablegen.model.TableGenInstructionOperand;
 import vadl.lcb.passes.llvmLowering.tablegen.model.TableGenPattern;
@@ -46,7 +45,7 @@ public abstract class LlvmInstructionLoweringFrameIndexHelper
     Function<LlvmReadRegFileNode, Node> selectorTransformation = LlvmFrameIndexSD::new;
     // Machine: replace by frame register operand but the `affectedParameterIdentity`
     // should change the type. So `X:$rs1` should be `Addr:$rs1`.
-    BiFunction<MachineInstructionParameterNode,
+    BiFunction<LcbMachineInstructionParameterNode,
         ParameterTypeAndNameIdentity,
         TableGenInstructionOperand>
         machineInstructionTransformation = (machineInstructionParameterNode,

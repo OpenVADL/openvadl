@@ -31,11 +31,11 @@ import vadl.viam.graph.dependency.ConstantNode;
 /**
  * Replacement strategy for nodes.
  */
-public class BuiltInCallNodeReplacement
+public class LcbBuiltInCallNodeReplacement
     implements GraphVisitor.NodeApplier<BuiltInCall, BuiltInCall> {
   private final List<GraphVisitor.NodeApplier<? extends Node, ? extends Node>> replacer;
 
-  public BuiltInCallNodeReplacement(
+  public LcbBuiltInCallNodeReplacement(
       List<GraphVisitor.NodeApplier<? extends Node, ? extends Node>> replacer) {
     this.replacer = replacer;
   }

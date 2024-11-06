@@ -5,16 +5,16 @@ import org.jetbrains.annotations.Nullable;
 import vadl.lcb.passes.llvmLowering.domain.selectionDag.LlvmUnlowerableSD;
 import vadl.viam.graph.GraphVisitor;
 import vadl.viam.graph.Node;
-import vadl.viam.graph.dependency.FuncCallNode;
+import vadl.viam.graph.control.IfNode;
 
 /**
  * Replacement strategy for nodes.
  */
-public class FuncCallReplacement
-    implements GraphVisitor.NodeApplier<FuncCallNode, FuncCallNode> {
+public class LcbIfNodeReplacement
+    implements GraphVisitor.NodeApplier<IfNode, IfNode> {
   @Nullable
   @Override
-  public FuncCallNode visit(FuncCallNode selectNode) {
+  public IfNode visit(IfNode selectNode) {
     if (selectNode.graph() != null) {
       selectNode.graph().add(new LlvmUnlowerableSD());
     }
@@ -23,7 +23,7 @@ public class FuncCallReplacement
 
   @Override
   public boolean acceptable(Node node) {
-    return node instanceof FuncCallNode;
+    return node instanceof IfNode;
   }
 
   @Override

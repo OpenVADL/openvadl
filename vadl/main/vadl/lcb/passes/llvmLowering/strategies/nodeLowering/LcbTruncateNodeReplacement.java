@@ -4,31 +4,34 @@ import java.util.List;
 import org.jetbrains.annotations.Nullable;
 import vadl.viam.graph.GraphVisitor;
 import vadl.viam.graph.Node;
-import vadl.viam.graph.dependency.ExpressionNode;
-import vadl.viam.graph.dependency.LetNode;
-import vadl.viam.graph.dependency.ReadRegNode;
+import vadl.viam.graph.dependency.TruncateNode;
 
 /**
  * Replacement strategy for nodes.
  */
-public class LetNodeReplacement implements GraphVisitor.NodeApplier<LetNode, ExpressionNode> {
+public class LcbTruncateNodeReplacement
+    implements GraphVisitor.NodeApplier<TruncateNode, TruncateNode> {
   private final List<GraphVisitor.NodeApplier<? extends Node, ? extends Node>> replacer;
 
-  public LetNodeReplacement(
+  public LcbTruncateNodeReplacement(
       List<GraphVisitor.NodeApplier<? extends Node, ? extends Node>> replacer) {
     this.replacer = replacer;
   }
 
   @Nullable
   @Override
-  public ExpressionNode visit(LetNode node) {
-    visitApplicable(node.expression());
-    return node.expression();
+  public TruncateNode visit(TruncateNode truncateNode) {
+    // Remove all nodes
+    for (var usage : truncateNode.usages().toList()) {
+      usage.replaceInput(truncateNode, truncateNode.value());
+    }
+    visitApplicable(truncateNode.value());
+    return truncateNode;
   }
 
   @Override
   public boolean acceptable(Node node) {
-    return node instanceof LetNode;
+    return node instanceof TruncateNode;
   }
 
   @Override

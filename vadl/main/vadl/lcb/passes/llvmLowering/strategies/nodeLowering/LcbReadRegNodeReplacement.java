@@ -4,34 +4,33 @@ import java.util.List;
 import org.jetbrains.annotations.Nullable;
 import vadl.viam.graph.GraphVisitor;
 import vadl.viam.graph.Node;
-import vadl.viam.graph.dependency.WriteRegFileNode;
+import vadl.viam.graph.dependency.ReadRegNode;
 
 /**
  * Replacement strategy for nodes.
  */
-public class WriteRegFileNodeReplacement
-    implements GraphVisitor.NodeApplier<WriteRegFileNode, WriteRegFileNode> {
+public class LcbReadRegNodeReplacement
+    implements GraphVisitor.NodeApplier<ReadRegNode, ReadRegNode> {
   private final List<GraphVisitor.NodeApplier<? extends Node, ? extends Node>> replacer;
 
-  public WriteRegFileNodeReplacement(
+  public LcbReadRegNodeReplacement(
       List<GraphVisitor.NodeApplier<? extends Node, ? extends Node>> replacer) {
     this.replacer = replacer;
   }
 
   @Nullable
   @Override
-  public WriteRegFileNode visit(WriteRegFileNode node) {
+  public ReadRegNode visit(ReadRegNode node) {
     if (node.hasAddress()) {
       visitApplicable(node.address());
     }
-    visitApplicable(node.value());
 
     return node;
   }
 
   @Override
   public boolean acceptable(Node node) {
-    return node instanceof WriteRegFileNode;
+    return node instanceof ReadRegNode;
   }
 
   @Override
