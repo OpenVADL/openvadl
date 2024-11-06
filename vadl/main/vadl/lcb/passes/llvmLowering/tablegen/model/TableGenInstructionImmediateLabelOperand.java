@@ -16,12 +16,18 @@ public class TableGenInstructionImmediateLabelOperand extends TableGenInstructio
     implements ReferencesFormatField {
   private final TableGenImmediateRecord immediateOperand;
 
+  /**
+   * Constructor.
+   */
   public TableGenInstructionImmediateLabelOperand(ParameterIdentity identity,
                                                   LlvmBasicBlockSD node) {
     super(node, identity);
     this.immediateOperand = node.immediateOperand();
   }
 
+  /**
+   * Constructor.
+   */
   public TableGenInstructionImmediateLabelOperand(ParameterIdentity identity,
                                                   LlvmFieldAccessRefNode node) {
     super(node, identity);

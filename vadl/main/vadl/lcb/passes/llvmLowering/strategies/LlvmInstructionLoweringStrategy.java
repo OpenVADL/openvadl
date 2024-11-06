@@ -131,14 +131,14 @@ public abstract class LlvmInstructionLoweringStrategy {
     return getSupportedInstructionLabels().contains(machineInstructionLabel);
   }
 
-  protected List<GraphVisitor.NodeApplier<? extends Node, ? extends Node>>
-  replacementHooksWithDefaultFieldAccessReplacement() {
+  protected List<GraphVisitor.NodeApplier
+      <? extends Node, ? extends Node>> replacementHooksWithDefaultFieldAccessReplacement() {
     var hooks = new ArrayList<GraphVisitor.NodeApplier<? extends Node, ? extends Node>>();
     return replacementHooks(hooks, new FieldAccessRefNodeReplacement(hooks, architectureType));
   }
 
-  protected List<GraphVisitor.NodeApplier<? extends Node, ? extends Node>>
-  replacementHooksWithFieldAccessWithBasicBlockReplacement() {
+  protected List<GraphVisitor.NodeApplier
+      <? extends Node, ? extends Node>> replacementHooksWithFieldAccessWithBasicBlockReplacement() {
     var hooks = new ArrayList<GraphVisitor.NodeApplier<? extends Node, ? extends Node>>();
     return replacementHooks(hooks,
         new FieldAccessRefNodeByLlvmBasicBlockReplacement(hooks, architectureType));
@@ -441,7 +441,8 @@ public abstract class LlvmInstructionLoweringStrategy {
     return getRegisterUses(behavior, filterRegistersWithConstraints);
   }
 
-  protected abstract List<GraphVisitor.NodeApplier<? extends Node, ? extends Node>> replacementHooks();
+  protected abstract List<GraphVisitor.NodeApplier
+      <? extends Node, ? extends Node>> replacementHooks();
 
   /**
    * Some {@link InstructionSetArchitecture} have not machine instructions for all LLVM Selection

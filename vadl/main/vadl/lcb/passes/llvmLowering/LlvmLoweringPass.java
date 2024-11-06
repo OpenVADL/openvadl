@@ -13,17 +13,17 @@ import org.jetbrains.annotations.Nullable;
 import vadl.configuration.LcbConfiguration;
 import vadl.error.Diagnostic;
 import vadl.lcb.codegen.model.llvm.ValueType;
+import vadl.lcb.passes.isaMatching.IsaMachineInstructionMatchingPass;
 import vadl.lcb.passes.isaMatching.IsaPseudoInstructionMatchingPass;
 import vadl.lcb.passes.isaMatching.MachineInstructionLabel;
-import vadl.lcb.passes.isaMatching.IsaMachineInstructionMatchingPass;
 import vadl.lcb.passes.isaMatching.PseudoInstructionLabel;
 import vadl.lcb.passes.llvmLowering.domain.LlvmLoweringRecord;
 import vadl.lcb.passes.llvmLowering.strategies.LlvmInstructionLoweringStrategy;
 import vadl.lcb.passes.llvmLowering.strategies.LlvmPseudoInstructionLowerStrategy;
-import vadl.lcb.passes.llvmLowering.strategies.instruction.LlvmPseudoInstructionLoweringDefaultStrategyImpl;
-import vadl.lcb.passes.llvmLowering.strategies.instruction.LlvmInstructionLoweringAddImmediateStrategyImpl;
 import vadl.lcb.passes.llvmLowering.strategies.instruction.LlvmInstructionLoweringConditionalBranchesStrategyImpl;
 import vadl.lcb.passes.llvmLowering.strategies.instruction.LlvmInstructionLoweringConditionalsStrategyImpl;
+import vadl.lcb.passes.llvmLowering.strategies.instruction.LlvmPseudoInstructionLoweringDefaultStrategyImpl;
+import vadl.lcb.passes.llvmLowering.strategies.instruction.LlvmInstructionLoweringAddImmediateStrategyImpl;
 import vadl.lcb.passes.llvmLowering.strategies.instruction.LlvmInstructionLoweringDefaultStrategyImpl;
 import vadl.lcb.passes.llvmLowering.strategies.instruction.LlvmInstructionLoweringIndirectJumpStrategyImpl;
 import vadl.lcb.passes.llvmLowering.strategies.instruction.LlvmInstructionLoweringMemoryLoadStrategyImpl;
@@ -202,8 +202,8 @@ public class LlvmLoweringPass extends Pass {
    * However, we would like to check whether {@link LlvmInstructionLoweringStrategy} supports this
    * {@link Instruction} in this pass. That's why we have the flip the hashmap.
    */
-  public static IdentityHashMap<Instruction, MachineInstructionLabel>
-  flipIsaMatchingMachineInstructions(
+  public static IdentityHashMap
+      <Instruction, MachineInstructionLabel> flipIsaMatchingMachineInstructions(
       Map<MachineInstructionLabel, List<Instruction>> isaMatched) {
     IdentityHashMap<Instruction, MachineInstructionLabel> inverse = new IdentityHashMap<>();
 

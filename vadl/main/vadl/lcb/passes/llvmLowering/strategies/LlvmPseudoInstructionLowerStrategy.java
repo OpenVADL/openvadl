@@ -175,8 +175,8 @@ public abstract class LlvmPseudoInstructionLowerStrategy {
                             && writeRegFileNode.hasConstantAddress()
                             // Check if there is a constraint for this register index.
                             && Arrays.stream(writeRegFileNode.registerFile().constraints())
-                            .anyMatch(constraint -> constraint.address().intValue() ==
-                                constantNode.constant().asVal().intValue()))
+                            .anyMatch(constraint -> constraint.address().intValue()
+                                == constantNode.constant().asVal().intValue()))
                         .forEach(Node::safeDelete);
                   } else {
                     occurrence.replaceAndDelete(argument.copy());
@@ -206,7 +206,7 @@ public abstract class LlvmPseudoInstructionLowerStrategy {
           var record = tableGenRecord.get();
 
           updatePatterns(pseudo, record);
-          var patternVariations =
+          final var patternVariations =
               generatePatternVariations(pseudo, record, appliedInstructionBehavior);
 
           var flags = record.flags();

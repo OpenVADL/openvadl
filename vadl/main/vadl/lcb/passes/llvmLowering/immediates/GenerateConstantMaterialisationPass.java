@@ -16,8 +16,8 @@ import org.jetbrains.annotations.Nullable;
 import vadl.configuration.GeneralConfiguration;
 import vadl.error.Diagnostic;
 import vadl.gcb.passes.IdentifyFieldUsagePass;
-import vadl.lcb.passes.isaMatching.MachineInstructionLabel;
 import vadl.lcb.passes.isaMatching.IsaMachineInstructionMatchingPass;
+import vadl.lcb.passes.isaMatching.MachineInstructionLabel;
 import vadl.lcb.passes.llvmLowering.domain.ConstantMatPseudoInstruction;
 import vadl.lcb.passes.llvmLowering.tablegen.model.TableGenImmediateRecord;
 import vadl.pass.Pass;
@@ -66,8 +66,9 @@ public class GenerateConstantMaterialisationPass extends Pass {
     var constantMatInstructions = new ArrayList<ConstantMatPseudoInstruction>();
     var fieldUsages = (IdentifyFieldUsagePass.ImmediateDetectionContainer) passResults.lastResultOf(
         IdentifyFieldUsagePass.class);
-    var isaMatching = ((HashMap<MachineInstructionLabel, List<Instruction>>) passResults.lastResultOf(
-        IsaMachineInstructionMatchingPass.class));
+    var isaMatching =
+        ((HashMap<MachineInstructionLabel, List<Instruction>>) passResults.lastResultOf(
+            IsaMachineInstructionMatchingPass.class));
     var immediates = ((List<TableGenImmediateRecord>) passResults.lastResultOf(
         GenerateTableGenImmediateRecordPass.class));
 

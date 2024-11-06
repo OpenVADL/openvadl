@@ -31,6 +31,9 @@ public interface GraphVisitor<R> {
 
     List<NodeApplier<? extends Node, ? extends Node>> recursiveHooks();
 
+    /**
+     * Checks whether the {@link NodeApplier} is applicable for the given {@code node}.
+     */
     default List<NodeApplier<? extends Node, ? extends Node>> applicable(Node node) {
       return recursiveHooks()
           .stream()
@@ -38,6 +41,9 @@ public interface GraphVisitor<R> {
           .toList();
     }
 
+    /**
+     * Find the applicable hook and run it for the given {@code arg}.
+     */
     default void visitApplicable(Node arg) {
       var applicable = applicable(arg);
       ensure(applicable.size() <= 1, "There are multiple replacement strategies applicable.");
@@ -47,6 +53,9 @@ public interface GraphVisitor<R> {
       }
     }
 
+    /**
+     * Apply the {@link NodeApplier} and replace and delete the node optionally.
+     */
     @Nullable
     default R apply(T node) {
       var newNode = visit(node);

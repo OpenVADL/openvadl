@@ -14,8 +14,8 @@ import java.util.List;
 import java.util.Map;
 import org.jetbrains.annotations.Nullable;
 import vadl.configuration.LcbConfiguration;
-import vadl.lcb.passes.isaMatching.MachineInstructionLabel;
 import vadl.lcb.passes.isaMatching.IsaMachineInstructionMatchingPass;
+import vadl.lcb.passes.isaMatching.MachineInstructionLabel;
 import vadl.lcb.passes.llvmLowering.GenerateTableGenMachineInstructionRecordPass;
 import vadl.lcb.passes.llvmLowering.domain.machineDag.MachineInstructionNode;
 import vadl.lcb.passes.llvmLowering.domain.machineDag.MachineInstructionParameterNode;
@@ -75,8 +75,9 @@ public class EmitRegisterInfoCppFilePass extends LcbTemplateRenderingPass {
                                                 Specification specification) {
     var abi =
         (DummyAbi) specification.definitions().filter(x -> x instanceof DummyAbi).findFirst().get();
-    var instructionLabels = (HashMap<MachineInstructionLabel, List<Instruction>>) passResults.lastResultOf(
-        IsaMachineInstructionMatchingPass.class);
+    var instructionLabels =
+        (HashMap<MachineInstructionLabel, List<Instruction>>) passResults.lastResultOf(
+            IsaMachineInstructionMatchingPass.class);
     var uninlined = (IdentityHashMap<Instruction, UninlinedGraph>) passResults.lastResultOf(
         FunctionInlinerPass.class);
     var tableGenMachineInstructions = (List<TableGenMachineInstruction>) passResults.lastResultOf(
@@ -139,7 +140,8 @@ public class EmitRegisterInfoCppFilePass extends LcbTemplateRenderingPass {
 
     var entries = new ArrayList<FrameIndexElimination>();
     var affected =
-        List.of(MachineInstructionLabel.ADDI_32, MachineInstructionLabel.ADDI_64, MachineInstructionLabel.STORE_MEM,
+        List.of(MachineInstructionLabel.ADDI_32, MachineInstructionLabel.ADDI_64,
+            MachineInstructionLabel.STORE_MEM,
             MachineInstructionLabel.LOAD_MEM);
 
     for (var label : affected) {
@@ -198,7 +200,7 @@ public class EmitRegisterInfoCppFilePass extends LcbTemplateRenderingPass {
       }
     }
 
-    ensure(machineInstructionIndices.size() > 0, "Expected at least one FI pattern");
+    ensure(!machineInstructionIndices.isEmpty(), "Expected at least one FI pattern");
     return machineInstructionIndices.stream().findFirst().get();
   }
 }
