@@ -4115,7 +4115,7 @@ def J : Instruction
 let Namespace = "processorNameValue";
 
 let OutOperandList = ( outs  );
-let InOperandList = ( ins  );
+let InOperandList = ( ins RV64IM_Jtype_immAsLabel:$imm );
 
 let isTerminator  = 1;
 let isBranch      = 0;
