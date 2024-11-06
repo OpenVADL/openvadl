@@ -16,6 +16,10 @@ public class TcgBr extends TcgOpNode {
     this.label = label;
   }
 
+  public TcgLabel label() {
+    return label;
+  }
+
   @Override
   public Node copy() {
     return new TcgBr(label);

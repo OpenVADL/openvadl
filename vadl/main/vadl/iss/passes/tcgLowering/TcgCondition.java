@@ -12,5 +12,9 @@ public enum TcgCondition {
   LEU,
   GTU,
   TSTEQ,
-  TSTNE,
+  TSTNE;
+
+  public String cCode() {
+    return "TCG_COND_" + this.name();
+  }
 }

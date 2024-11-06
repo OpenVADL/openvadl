@@ -123,12 +123,19 @@ static void gen_set_[(${reg_file.name_lower})](DisasContext *ctx, int reg_num, T
 }
 [/]
 
-static void gen_goto_tb(DisasContext *ctx, target_long diff)
+static void gen_goto_tb_rel(DisasContext *ctx, target_long diff)
 {
     target_ulong dest = ctx->base.pc_next + diff;
 
     // TODO: optimize as lookup might be unnecessary
-    tcg_gen_movi_tl(cpu_pc, dest);
+    tcg_gen_movi_tl(cpu_pc, (int64_t) dest);
+    tcg_gen_lookup_and_goto_ptr();
+}
+
+static void gen_goto_tb_abs(DisasContext *ctx, target_long target_pc)
+{
+    // TODO: optimize as lookup might be unnecessary
+    tcg_gen_movi_tl(cpu_pc, (int64_t) target_pc);
     tcg_gen_lookup_and_goto_ptr();
 }
 
@@ -161,7 +168,7 @@ static bool trans_jal(DisasContext *ctx, arg_jal *a) {
     tcg_gen_movi_tl(succ_pc, next_pc);
     gen_set_x(ctx, a->rd, succ_pc); // <-- is getting optimized
 
-    gen_goto_tb(ctx, a->imm);
+    gen_goto_tb_rel(ctx, a->imm);
     ctx->base.is_jmp = DISAS_NORETURN;
     return true;
 }

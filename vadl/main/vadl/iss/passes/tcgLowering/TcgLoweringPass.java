@@ -20,10 +20,12 @@ import vadl.iss.passes.tcgLowering.nodes.TcgConstantNode;
 import vadl.iss.passes.tcgLowering.nodes.TcgExtendNode;
 import vadl.iss.passes.tcgLowering.nodes.TcgGenLabel;
 import vadl.iss.passes.tcgLowering.nodes.TcgGetVar;
+import vadl.iss.passes.tcgLowering.nodes.TcgGottoTbAbs;
 import vadl.iss.passes.tcgLowering.nodes.TcgLoadMemory;
 import vadl.iss.passes.tcgLowering.nodes.TcgMoveNode;
 import vadl.iss.passes.tcgLowering.nodes.TcgOpNode;
 import vadl.iss.passes.tcgLowering.nodes.TcgSetCond;
+import vadl.iss.passes.tcgLowering.nodes.TcgSetIsJmp;
 import vadl.iss.passes.tcgLowering.nodes.TcgSetLabel;
 import vadl.iss.passes.tcgLowering.nodes.TcgSetReg;
 import vadl.iss.passes.tcgLowering.nodes.TcgSetRegFile;
@@ -36,6 +38,7 @@ import vadl.types.BuiltInTable;
 import vadl.types.Type;
 import vadl.utils.Pair;
 import vadl.viam.Constant;
+import vadl.viam.Counter;
 import vadl.viam.Instruction;
 import vadl.viam.Specification;
 import vadl.viam.ViamError;
@@ -48,7 +51,6 @@ import vadl.viam.graph.control.ControlNode;
 import vadl.viam.graph.control.DirectionalNode;
 import vadl.viam.graph.control.IfNode;
 import vadl.viam.graph.control.InstrEndNode;
-import vadl.viam.graph.control.MergeNode;
 import vadl.viam.graph.control.StartNode;
 import vadl.viam.graph.dependency.BuiltInCall;
 import vadl.viam.graph.dependency.ConstantNode;
@@ -104,10 +106,11 @@ public class TcgLoweringPass extends AbstractIssPass {
     var tcgNodes = (IssTcgAnnotatePass.Result) passResults
         .lastResultOf(IssTcgAnnotatePass.class);
 
-    viam.isa().get().ownInstructions()
+    var isa = viam.isa().get();
+    isa.ownInstructions()
         .stream()
         .filter(i -> supportedInstructions.contains(i.identifier.simpleName()))
-        .forEach(i -> TcgLoweringExecutor.runOn(i, tcgNodes));
+        .forEach(i -> TcgLoweringExecutor.runOn(i, requireNonNull(isa.pc()), tcgNodes));
 
     return null;
   }
@@ -122,13 +125,19 @@ class TcgLoweringExecutor extends GraphProcessor<Node> {
   InstrEndNode newInsnEndNode;
   DirectionalNode lastNode;
 
+  Counter pc;
   Set<Pair<TcgV, WriteResourceNode>> destVars;
   Set<TcgV> tempVars;
 
   IssTcgAnnotatePass.Result tcgNodes;
 
+  // indicates a `ctx->base.is_jmp = DISAS_NORETURN;` is required
+  // if the instruction resets the PC
+  boolean noReturnJmp;
+
 
   TcgLoweringExecutor(Instruction instruction,
+                      Counter pc,
                       IssTcgAnnotatePass.Result tcgNodes) {
     this.instruction = instruction;
     this.insnStartNode = getSingleNode(instruction.behavior(), StartNode.class);
@@ -138,10 +147,12 @@ class TcgLoweringExecutor extends GraphProcessor<Node> {
     this.destVars = new HashSet<>();
     this.tempVars = new HashSet<>();
     this.tcgNodes = tcgNodes;
+    this.pc = pc;
+    this.noReturnJmp = false;
   }
 
-  static void runOn(Instruction instruction, IssTcgAnnotatePass.Result tcgNodes) {
-    new TcgLoweringExecutor(instruction, tcgNodes).run();
+  static void runOn(Instruction instruction, Counter pc, IssTcgAnnotatePass.Result tcgNodes) {
+    new TcgLoweringExecutor(instruction, pc, tcgNodes).run();
   }
 
   protected void run() {
@@ -151,6 +162,10 @@ class TcgLoweringExecutor extends GraphProcessor<Node> {
 
     // this pass inserts all TcgGetTemp nodes necessary
     insertTemporaryVariableRetrievals();
+
+    if (noReturnJmp) {
+      addLast(new TcgSetIsJmp(TcgSetIsJmp.Type.NORETURN));
+    }
 
     // remove all control nodes from the initial graph
     instruction.behavior().getNodes(ControlNode.class)
@@ -330,6 +345,14 @@ class TcgLoweringExecutor extends GraphProcessor<Node> {
   }
 
   private Node process(ReadRegNode toProcess) {
+
+    if (toProcess.register() == pc.registerResource()) {
+      // if we read the pc register we are doing this via
+      // ctx->base.pc_next
+      // TODO: Make a custom node (TcgReadPC)
+      return toProcess;
+    }
+
     // TODO: @jzottele Don't hardcode type!
     var width = TcgWidth.i64;
     var tcgVar = TcgV.gen(width);
@@ -340,6 +363,14 @@ class TcgLoweringExecutor extends GraphProcessor<Node> {
   }
 
   private @Nullable Node process(WriteRegNode toProcess) {
+
+    if (toProcess.register() == pc.registerResource()) {
+      var pcDest = getResultOf(toProcess.value(), ExpressionNode
+          .class);
+      noReturnJmp = true;
+      return new TcgGottoTbAbs(pcDest);
+    }
+
     var valRes = getResultOf(toProcess.value(), Node.class);
 
     // TODO: Don't hardcode this
@@ -363,7 +394,9 @@ class TcgLoweringExecutor extends GraphProcessor<Node> {
       }
     }
 
+
     return new TcgSetReg(toProcess.register(), destVar);
+
   }
 
   private @Nullable Node process(WriteRegFileNode toProcess) {

@@ -16,6 +16,10 @@ public class TcgSetCond extends TcgBinaryOpNode {
     this.cond = cond;
   }
 
+  public TcgCondition condition() {
+    return cond;
+  }
+
   @Override
   public Node copy() {
     return new TcgSetCond(res, arg1, arg2, cond);
@@ -28,7 +32,7 @@ public class TcgSetCond extends TcgBinaryOpNode {
 
   @Override
   public String tcgFunctionName() {
-    return "tcg_setcond";
+    return "tcg_gen_setcond";
   }
 
   @Override

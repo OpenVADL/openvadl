@@ -50,6 +50,7 @@ public class EmitIssTranslatePass extends IssTemplateRenderingPass {
         "ADDIW",
         "SLLI",
         "LUI"
+        , "BEQ"
     );
     return insns.stream()
         .filter(i -> supportedInsns.contains(i.identifier.simpleName()))

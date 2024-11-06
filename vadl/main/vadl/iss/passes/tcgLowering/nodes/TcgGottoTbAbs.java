@@ -1,0 +1,48 @@
+package vadl.iss.passes.tcgLowering.nodes;
+
+import java.util.List;
+import vadl.iss.passes.tcgLowering.TcgV;
+import vadl.iss.passes.tcgLowering.TcgWidth;
+import vadl.javaannotations.viam.Input;
+import vadl.viam.graph.GraphVisitor;
+import vadl.viam.graph.Node;
+import vadl.viam.graph.dependency.ExpressionNode;
+
+public class TcgGottoTbAbs extends TcgOpNode {
+
+  @Input
+  private ExpressionNode targetPc;
+
+  public TcgGottoTbAbs(ExpressionNode targetPc) {
+    // TODO: This super constructor is useless. We need to create a TcgGenNode super type
+    super(TcgV.gen(TcgWidth.i64), TcgWidth.i64);
+    this.targetPc = targetPc;
+  }
+
+  public ExpressionNode targetPc() {
+    return targetPc;
+  }
+
+  @Override
+  public Node copy() {
+    return new TcgGottoTbAbs(targetPc.copy(ExpressionNode.class));
+  }
+
+  @Override
+  public Node shallowCopy() {
+    return new TcgGottoTbAbs(targetPc);
+  }
+
+
+  @Override
+  protected void collectInputs(List<Node> collection) {
+    super.collectInputs(collection);
+    collection.add(targetPc);
+  }
+
+  @Override
+  protected void applyOnInputsUnsafe(GraphVisitor.Applier<Node> visitor) {
+    super.applyOnInputsUnsafe(visitor);
+    targetPc = visitor.apply(this, targetPc, ExpressionNode.class);
+  }
+}
