@@ -13,11 +13,11 @@ import vadl.viam.graph.dependency.WriteMemNode;
 /**
  * Replacement strategy for nodes.
  */
-public class WriteMemNodeReplacement
+public class LcbWriteMemNodeReplacement
     implements GraphVisitor.NodeApplier<WriteMemNode, Node> {
   private final List<GraphVisitor.NodeApplier<? extends Node, ? extends Node>> replacer;
 
-  public WriteMemNodeReplacement(
+  public LcbWriteMemNodeReplacement(
       List<GraphVisitor.NodeApplier<? extends Node, ? extends Node>> replacer) {
     this.replacer = replacer;
   }

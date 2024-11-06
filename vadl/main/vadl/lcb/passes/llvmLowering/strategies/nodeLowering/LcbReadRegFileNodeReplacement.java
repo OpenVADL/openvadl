@@ -14,11 +14,11 @@ import vadl.viam.graph.dependency.ReadRegFileNode;
 /**
  * Replacement strategy for nodes.
  */
-public class ReadRegFileNodeReplacement
+public class LcbReadRegFileNodeReplacement
     implements GraphVisitor.NodeApplier<ReadRegFileNode, Node> {
   private final List<GraphVisitor.NodeApplier<? extends Node, ? extends Node>> replacer;
 
-  public ReadRegFileNodeReplacement(
+  public LcbReadRegFileNodeReplacement(
       List<GraphVisitor.NodeApplier<? extends Node, ? extends Node>> replacer) {
     this.replacer = replacer;
   }

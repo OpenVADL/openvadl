@@ -4,34 +4,32 @@ import java.util.List;
 import org.jetbrains.annotations.Nullable;
 import vadl.viam.graph.GraphVisitor;
 import vadl.viam.graph.Node;
-import vadl.viam.graph.dependency.TruncateNode;
+import vadl.viam.graph.control.BranchEndNode;
 
 /**
  * Replacement strategy for nodes.
  */
-public class TruncateNodeReplacement
-    implements GraphVisitor.NodeApplier<TruncateNode, TruncateNode> {
+public class LcbBranchEndNodeReplacement
+    implements GraphVisitor.NodeApplier<BranchEndNode, BranchEndNode> {
   private final List<GraphVisitor.NodeApplier<? extends Node, ? extends Node>> replacer;
 
-  public TruncateNodeReplacement(
+  public LcbBranchEndNodeReplacement(
       List<GraphVisitor.NodeApplier<? extends Node, ? extends Node>> replacer) {
     this.replacer = replacer;
   }
 
   @Nullable
   @Override
-  public TruncateNode visit(TruncateNode truncateNode) {
-    // Remove all nodes
-    for (var usage : truncateNode.usages().toList()) {
-      usage.replaceInput(truncateNode, truncateNode.value());
+  public BranchEndNode visit(BranchEndNode branchEndNode) {
+    for (var arg : branchEndNode.sideEffects()) {
+      visitApplicable(arg);
     }
-    visitApplicable(truncateNode.value());
-    return truncateNode;
+    return branchEndNode;
   }
 
   @Override
   public boolean acceptable(Node node) {
-    return node instanceof TruncateNode;
+    return node instanceof BranchEndNode;
   }
 
   @Override

@@ -2,39 +2,31 @@ package vadl.lcb.passes.llvmLowering.strategies.nodeLowering;
 
 import java.util.List;
 import org.jetbrains.annotations.Nullable;
-import vadl.lcb.passes.llvmLowering.domain.selectionDag.LlvmUnlowerableSD;
 import vadl.viam.graph.GraphVisitor;
 import vadl.viam.graph.Node;
-import vadl.viam.graph.dependency.SelectNode;
 import vadl.viam.graph.dependency.SliceNode;
 
 /**
  * Replacement strategy for nodes.
  */
-public class SelectNodeReplacement
-    implements GraphVisitor.NodeApplier<SelectNode, SelectNode> {
+public class LcbSliceNodeReplacement
+    implements GraphVisitor.NodeApplier<SliceNode, SliceNode> {
   private final List<GraphVisitor.NodeApplier<? extends Node, ? extends Node>> replacer;
 
-  public SelectNodeReplacement(
+  public LcbSliceNodeReplacement(
       List<GraphVisitor.NodeApplier<? extends Node, ? extends Node>> replacer) {
     this.replacer = replacer;
   }
 
   @Nullable
   @Override
-  public SelectNode visit(SelectNode selectNode) {
-    visitApplicable(selectNode.condition());
-    visitApplicable(selectNode.trueCase());
-    visitApplicable(selectNode.falseCase());
-    if (selectNode.graph() != null) {
-      selectNode.graph().add(new LlvmUnlowerableSD());
-    }
-    return selectNode;
+  public SliceNode visit(SliceNode sliceNode) {
+    return sliceNode;
   }
 
   @Override
   public boolean acceptable(Node node) {
-    return node instanceof SelectNode;
+    return node instanceof SliceNode;
   }
 
   @Override

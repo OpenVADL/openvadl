@@ -4,29 +4,32 @@ import java.util.List;
 import org.jetbrains.annotations.Nullable;
 import vadl.viam.graph.GraphVisitor;
 import vadl.viam.graph.Node;
-import vadl.viam.graph.dependency.SliceNode;
+import vadl.viam.graph.dependency.ReadRegNode;
 
 /**
  * Replacement strategy for nodes.
  */
-public class SliceNodeReplacement
-    implements GraphVisitor.NodeApplier<SliceNode, SliceNode> {
+public class LcbReadRegNodeReplacement implements GraphVisitor.NodeApplier<ReadRegNode, ReadRegNode> {
   private final List<GraphVisitor.NodeApplier<? extends Node, ? extends Node>> replacer;
 
-  public SliceNodeReplacement(
+  public LcbReadRegNodeReplacement(
       List<GraphVisitor.NodeApplier<? extends Node, ? extends Node>> replacer) {
     this.replacer = replacer;
   }
 
   @Nullable
   @Override
-  public SliceNode visit(SliceNode sliceNode) {
-    return sliceNode;
+  public ReadRegNode visit(ReadRegNode node) {
+    if (node.hasAddress()) {
+      visitApplicable(node.address());
+    }
+
+    return node;
   }
 
   @Override
   public boolean acceptable(Node node) {
-    return node instanceof SliceNode;
+    return node instanceof ReadRegNode;
   }
 
   @Override

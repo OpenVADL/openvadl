@@ -5,23 +5,16 @@ import org.jetbrains.annotations.Nullable;
 import vadl.lcb.passes.llvmLowering.domain.selectionDag.LlvmUnlowerableSD;
 import vadl.viam.graph.GraphVisitor;
 import vadl.viam.graph.Node;
-import vadl.viam.graph.control.ReturnNode;
+import vadl.viam.graph.dependency.FuncCallNode;
 
 /**
  * Replacement strategy for nodes.
  */
-public class ReturnNodeReplacement
-    implements GraphVisitor.NodeApplier<ReturnNode, ReturnNode> {
-  private final List<GraphVisitor.NodeApplier<? extends Node, ? extends Node>> replacer;
-
-  public ReturnNodeReplacement(
-      List<GraphVisitor.NodeApplier<? extends Node, ? extends Node>> replacer) {
-    this.replacer = replacer;
-  }
-
+public class LcbFuncCallReplacement
+    implements GraphVisitor.NodeApplier<FuncCallNode, FuncCallNode> {
   @Nullable
   @Override
-  public ReturnNode visit(ReturnNode selectNode) {
+  public FuncCallNode visit(FuncCallNode selectNode) {
     if (selectNode.graph() != null) {
       selectNode.graph().add(new LlvmUnlowerableSD());
     }
@@ -30,11 +23,11 @@ public class ReturnNodeReplacement
 
   @Override
   public boolean acceptable(Node node) {
-    return node instanceof ReturnNode;
+    return node instanceof FuncCallNode;
   }
 
   @Override
   public List<GraphVisitor.NodeApplier<? extends Node, ? extends Node>> recursiveHooks() {
-    return replacer;
+    return List.of();
   }
 }

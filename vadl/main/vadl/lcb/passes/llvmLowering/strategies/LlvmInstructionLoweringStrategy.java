@@ -39,29 +39,29 @@ import vadl.lcb.passes.llvmLowering.domain.selectionDag.LlvmFieldAccessRefNode;
 import vadl.lcb.passes.llvmLowering.domain.selectionDag.LlvmFrameIndexSD;
 import vadl.lcb.passes.llvmLowering.domain.selectionDag.LlvmNodeReplaceable;
 import vadl.lcb.passes.llvmLowering.domain.selectionDag.LlvmUnlowerableSD;
-import vadl.lcb.passes.llvmLowering.strategies.nodeLowering.BranchEndNodeReplacement;
-import vadl.lcb.passes.llvmLowering.strategies.nodeLowering.BuiltInCallNodeReplacement;
-import vadl.lcb.passes.llvmLowering.strategies.nodeLowering.ConstantNodeReplacement;
-import vadl.lcb.passes.llvmLowering.strategies.nodeLowering.FieldAccessRefNodeByLlvmBasicBlockReplacement;
-import vadl.lcb.passes.llvmLowering.strategies.nodeLowering.FieldAccessRefNodeReplacement;
-import vadl.lcb.passes.llvmLowering.strategies.nodeLowering.FuncCallReplacement;
-import vadl.lcb.passes.llvmLowering.strategies.nodeLowering.IfNodeReplacement;
-import vadl.lcb.passes.llvmLowering.strategies.nodeLowering.InstrCallNodeReplacement;
-import vadl.lcb.passes.llvmLowering.strategies.nodeLowering.InstrEndNodeReplacement;
-import vadl.lcb.passes.llvmLowering.strategies.nodeLowering.LetNodeReplacement;
+import vadl.lcb.passes.llvmLowering.strategies.nodeLowering.LcbBranchEndNodeReplacement;
+import vadl.lcb.passes.llvmLowering.strategies.nodeLowering.LcbBuiltInCallNodeReplacement;
+import vadl.lcb.passes.llvmLowering.strategies.nodeLowering.LcbConstantNodeReplacement;
+import vadl.lcb.passes.llvmLowering.strategies.nodeLowering.LcbFieldAccessRefNodeByLlvmBasicBlockReplacement;
+import vadl.lcb.passes.llvmLowering.strategies.nodeLowering.LcbFieldAccessRefNodeReplacement;
+import vadl.lcb.passes.llvmLowering.strategies.nodeLowering.LcbFuncCallReplacement;
+import vadl.lcb.passes.llvmLowering.strategies.nodeLowering.LcbIfNodeReplacement;
+import vadl.lcb.passes.llvmLowering.strategies.nodeLowering.LcbInstrCallNodeReplacement;
+import vadl.lcb.passes.llvmLowering.strategies.nodeLowering.LcbInstrEndNodeReplacement;
+import vadl.lcb.passes.llvmLowering.strategies.nodeLowering.LcbLetNodeReplacement;
 import vadl.lcb.passes.llvmLowering.strategies.nodeLowering.LlvmUnlowerableNodeReplacement;
-import vadl.lcb.passes.llvmLowering.strategies.nodeLowering.ReadMemNodeReplacement;
-import vadl.lcb.passes.llvmLowering.strategies.nodeLowering.ReadRegFileNodeReplacement;
-import vadl.lcb.passes.llvmLowering.strategies.nodeLowering.ReadRegNodeReplacement;
-import vadl.lcb.passes.llvmLowering.strategies.nodeLowering.ReturnNodeReplacement;
-import vadl.lcb.passes.llvmLowering.strategies.nodeLowering.SelectNodeReplacement;
-import vadl.lcb.passes.llvmLowering.strategies.nodeLowering.SignExtendNodeReplacement;
-import vadl.lcb.passes.llvmLowering.strategies.nodeLowering.SliceNodeReplacement;
-import vadl.lcb.passes.llvmLowering.strategies.nodeLowering.TruncateNodeReplacement;
-import vadl.lcb.passes.llvmLowering.strategies.nodeLowering.WriteMemNodeReplacement;
-import vadl.lcb.passes.llvmLowering.strategies.nodeLowering.WriteRegFileNodeReplacement;
-import vadl.lcb.passes.llvmLowering.strategies.nodeLowering.WriteRegNodeReplacement;
-import vadl.lcb.passes.llvmLowering.strategies.nodeLowering.ZeroExtendNodeReplacement;
+import vadl.lcb.passes.llvmLowering.strategies.nodeLowering.LcbReadMemNodeReplacement;
+import vadl.lcb.passes.llvmLowering.strategies.nodeLowering.LcbReadRegFileNodeReplacement;
+import vadl.lcb.passes.llvmLowering.strategies.nodeLowering.LcbReadRegNodeReplacement;
+import vadl.lcb.passes.llvmLowering.strategies.nodeLowering.LcbReturnNodeReplacement;
+import vadl.lcb.passes.llvmLowering.strategies.nodeLowering.LcbSelectNodeReplacement;
+import vadl.lcb.passes.llvmLowering.strategies.nodeLowering.LcbSignExtendNodeReplacement;
+import vadl.lcb.passes.llvmLowering.strategies.nodeLowering.LcbSliceNodeReplacement;
+import vadl.lcb.passes.llvmLowering.strategies.nodeLowering.LcbTruncateNodeReplacement;
+import vadl.lcb.passes.llvmLowering.strategies.nodeLowering.LcbWriteMemNodeReplacement;
+import vadl.lcb.passes.llvmLowering.strategies.nodeLowering.LcbWriteRegFileNodeReplacement;
+import vadl.lcb.passes.llvmLowering.strategies.nodeLowering.LcbWriteRegNodeReplacement;
+import vadl.lcb.passes.llvmLowering.strategies.nodeLowering.LcbZeroExtendNodeReplacement;
 import vadl.lcb.passes.llvmLowering.tablegen.model.TableGenConstantOperand;
 import vadl.lcb.passes.llvmLowering.tablegen.model.TableGenInstruction;
 import vadl.lcb.passes.llvmLowering.tablegen.model.TableGenInstructionBareSymbolOperand;
@@ -134,14 +134,14 @@ public abstract class LlvmInstructionLoweringStrategy {
   protected List<GraphVisitor.NodeApplier
       <? extends Node, ? extends Node>> replacementHooksWithDefaultFieldAccessReplacement() {
     var hooks = new ArrayList<GraphVisitor.NodeApplier<? extends Node, ? extends Node>>();
-    return replacementHooks(hooks, new FieldAccessRefNodeReplacement(hooks, architectureType));
+    return replacementHooks(hooks, new LcbFieldAccessRefNodeReplacement(hooks, architectureType));
   }
 
   protected List<GraphVisitor.NodeApplier
       <? extends Node, ? extends Node>> replacementHooksWithFieldAccessWithBasicBlockReplacement() {
     var hooks = new ArrayList<GraphVisitor.NodeApplier<? extends Node, ? extends Node>>();
     return replacementHooks(hooks,
-        new FieldAccessRefNodeByLlvmBasicBlockReplacement(hooks, architectureType));
+        new LcbFieldAccessRefNodeByLlvmBasicBlockReplacement(hooks, architectureType));
   }
 
   /**
@@ -150,26 +150,26 @@ public abstract class LlvmInstructionLoweringStrategy {
   private List<GraphVisitor.NodeApplier<? extends Node, ? extends Node>> replacementHooks(
       List<GraphVisitor.NodeApplier<? extends Node, ? extends Node>> hooks,
       GraphVisitor.NodeApplier<? extends Node, ? extends Node> fieldAccessRefNodeReplacement) {
-    var v1 = new BranchEndNodeReplacement(hooks);
-    var v2 = new BuiltInCallNodeReplacement(hooks);
-    var v3 = new ConstantNodeReplacement(hooks);
-    var v5 = new FuncCallReplacement();
-    var v6 = new IfNodeReplacement();
-    var v7 = new InstrCallNodeReplacement(hooks);
-    var v8 = new InstrEndNodeReplacement(hooks);
-    var v9 = new LetNodeReplacement(hooks);
-    var v10 = new ReadMemNodeReplacement(hooks);
-    var v11 = new ReadRegFileNodeReplacement(hooks);
-    var v12 = new ReadRegNodeReplacement(hooks);
-    var v13 = new ReturnNodeReplacement(hooks);
-    var v14 = new SelectNodeReplacement(hooks);
-    var v15 = new SignExtendNodeReplacement(hooks);
-    var v16 = new SliceNodeReplacement(hooks);
-    var v17 = new TruncateNodeReplacement(hooks);
-    var v18 = new WriteMemNodeReplacement(hooks);
-    var v19 = new WriteRegFileNodeReplacement(hooks);
-    var v20 = new WriteRegNodeReplacement(hooks);
-    var v21 = new ZeroExtendNodeReplacement(hooks);
+    var v1 = new LcbBranchEndNodeReplacement(hooks);
+    var v2 = new LcbBuiltInCallNodeReplacement(hooks);
+    var v3 = new LcbConstantNodeReplacement(hooks);
+    var v5 = new LcbFuncCallReplacement();
+    var v6 = new LcbIfNodeReplacement();
+    var v7 = new LcbInstrCallNodeReplacement(hooks);
+    var v8 = new LcbInstrEndNodeReplacement(hooks);
+    var v9 = new LcbLetNodeReplacement(hooks);
+    var v10 = new LcbReadMemNodeReplacement(hooks);
+    var v11 = new LcbReadRegFileNodeReplacement(hooks);
+    var v12 = new LcbReadRegNodeReplacement(hooks);
+    var v13 = new LcbReturnNodeReplacement(hooks);
+    var v14 = new LcbSelectNodeReplacement(hooks);
+    var v15 = new LcbSignExtendNodeReplacement(hooks);
+    var v16 = new LcbSliceNodeReplacement(hooks);
+    var v17 = new LcbTruncateNodeReplacement(hooks);
+    var v18 = new LcbWriteMemNodeReplacement(hooks);
+    var v19 = new LcbWriteRegFileNodeReplacement(hooks);
+    var v20 = new LcbWriteRegNodeReplacement(hooks);
+    var v21 = new LcbZeroExtendNodeReplacement(hooks);
     var v22 = new LlvmUnlowerableNodeReplacement(hooks);
 
     hooks.add(v1);

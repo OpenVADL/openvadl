@@ -2,21 +2,26 @@ package vadl.lcb.passes.llvmLowering.strategies.nodeLowering;
 
 import java.util.List;
 import org.jetbrains.annotations.Nullable;
-import vadl.dump.Info;
 import vadl.lcb.passes.llvmLowering.domain.selectionDag.LlvmUnlowerableSD;
 import vadl.viam.graph.GraphVisitor;
 import vadl.viam.graph.Node;
-import vadl.viam.graph.control.IfNode;
 import vadl.viam.graph.control.ReturnNode;
 
 /**
  * Replacement strategy for nodes.
  */
-public class IfNodeReplacement
-    implements GraphVisitor.NodeApplier<IfNode, IfNode> {
+public class LcbReturnNodeReplacement
+    implements GraphVisitor.NodeApplier<ReturnNode, ReturnNode> {
+  private final List<GraphVisitor.NodeApplier<? extends Node, ? extends Node>> replacer;
+
+  public LcbReturnNodeReplacement(
+      List<GraphVisitor.NodeApplier<? extends Node, ? extends Node>> replacer) {
+    this.replacer = replacer;
+  }
+
   @Nullable
   @Override
-  public IfNode visit(IfNode selectNode) {
+  public ReturnNode visit(ReturnNode selectNode) {
     if (selectNode.graph() != null) {
       selectNode.graph().add(new LlvmUnlowerableSD());
     }
@@ -25,11 +30,11 @@ public class IfNodeReplacement
 
   @Override
   public boolean acceptable(Node node) {
-    return node instanceof IfNode;
+    return node instanceof ReturnNode;
   }
 
   @Override
   public List<GraphVisitor.NodeApplier<? extends Node, ? extends Node>> recursiveHooks() {
-    return List.of();
+    return replacer;
   }
 }
