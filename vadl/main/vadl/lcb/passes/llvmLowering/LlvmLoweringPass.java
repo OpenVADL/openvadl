@@ -171,7 +171,7 @@ public class LlvmLoweringPass extends Pass {
       Specification viam,
       List<LlvmPseudoInstructionLowerStrategy> pseudoStrategies,
       Map<MachineInstructionLabel, List<Instruction>> labelledMachineInstructions,
-      HashMap<PseudoInstructionLabel, List<PseudoInstruction>> labelledPseudoInstructions) {
+      Map<PseudoInstructionLabel, List<PseudoInstruction>> labelledPseudoInstructions) {
     var tableGenRecords = new IdentityHashMap<PseudoInstruction, LlvmLoweringRecord>();
     var flipped = flipIsaMatchingPseudoInstructions(labelledPseudoInstructions);
 
