@@ -32,7 +32,8 @@ public class FieldAccessRefNodeReplacement
     return
         new LlvmFieldAccessRefNode(fieldAccessRefNode.fieldAccess(),
             originalType,
-            architectureType);
+            architectureType,
+            LlvmFieldAccessRefNode.Usage.Immediate);
   }
 
   @Override

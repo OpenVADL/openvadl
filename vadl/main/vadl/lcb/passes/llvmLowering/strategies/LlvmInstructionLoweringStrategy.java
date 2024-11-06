@@ -675,9 +675,17 @@ public abstract class LlvmInstructionLoweringStrategy {
    */
   private static TableGenInstructionOperand generateInstructionOperand(
       LlvmFieldAccessRefNode node) {
-    return new TableGenInstructionImmediateOperand(
-        ParameterIdentity.from(node),
-        node);
+    if (node.usage() == LlvmFieldAccessRefNode.Usage.Immediate) {
+      return new TableGenInstructionImmediateOperand(
+          ParameterIdentity.from(node),
+          node);
+    } else if (node.usage() == LlvmFieldAccessRefNode.Usage.BasicBlock) {
+      return new TableGenInstructionImmediateLabelOperand(
+          ParameterIdentity.fromToImmediateLabel(node),
+          node);
+    } else {
+      throw Diagnostic.error("Not supported usage", node.sourceLocation()).build();
+    }
   }
 
   /**

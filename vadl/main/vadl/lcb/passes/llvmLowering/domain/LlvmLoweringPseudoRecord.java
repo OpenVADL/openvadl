@@ -28,6 +28,14 @@ public class LlvmLoweringPseudoRecord extends LlvmLoweringRecord {
     this.appliedBehaviors = appliedBehaviors;
   }
 
+
+  public LlvmLoweringPseudoRecord(LlvmLoweringPseudoRecord base,
+                                  List<TableGenInstructionOperand> inputs) {
+    super(base.behavior(), inputs, base.outputs(), base.flags(), base.patterns(), base.uses(),
+        base.defs());
+    this.appliedBehaviors = base.appliedBehaviors;
+  }
+
   public Map<Instruction, Graph> appliedBehaviors() {
     return appliedBehaviors;
   }
