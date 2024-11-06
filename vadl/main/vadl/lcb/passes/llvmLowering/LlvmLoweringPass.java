@@ -222,8 +222,8 @@ public class LlvmLoweringPass extends Pass {
    * However, we would like to check whether {@link LlvmPseudoInstructionLowerStrategy} supports
    * this {@link Instruction} in this pass. That's why we have the flip the hashmap.
    */
-  public static IdentityHashMap<PseudoInstruction, PseudoInstructionLabel>
-  flipIsaMatchingPseudoInstructions(
+  public static IdentityHashMap
+      <PseudoInstruction, PseudoInstructionLabel> flipIsaMatchingPseudoInstructions(
       Map<PseudoInstructionLabel, List<PseudoInstruction>> isaMatched) {
     IdentityHashMap<PseudoInstruction, PseudoInstructionLabel> inverse = new IdentityHashMap<>();
 
