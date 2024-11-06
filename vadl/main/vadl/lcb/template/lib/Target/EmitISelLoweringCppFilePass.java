@@ -6,7 +6,6 @@ import static vadl.viam.ViamError.ensurePresent;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
@@ -110,8 +109,7 @@ public class EmitISelLoweringCppFilePass extends LcbTemplateRenderingPass {
   }
 
   private List<BranchInstruction> getBranchInstructions(
-      Map<MachineInstructionLabel, List<Instruction>>
-          labelledMachineInstructions) {
+      Map<MachineInstructionLabel, List<Instruction>> labelledMachineInstructions) {
     var result = new ArrayList<BranchInstruction>();
     var branchInstructions = Set.of(
         MachineInstructionLabel.BEQ,
