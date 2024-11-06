@@ -12,8 +12,8 @@ import java.util.Map;
 import java.util.stream.Stream;
 import vadl.configuration.LcbConfiguration;
 import vadl.gcb.passes.IdentifyFieldUsagePass;
-import vadl.lcb.passes.isaMatching.MachineInstructionLabel;
 import vadl.lcb.passes.isaMatching.IsaMachineInstructionMatchingPass;
+import vadl.lcb.passes.isaMatching.MachineInstructionLabel;
 import vadl.lcb.template.CommonVarNames;
 import vadl.lcb.template.LcbTemplateRenderingPass;
 import vadl.lcb.template.utils.ImmediatePredicateFunctionProvider;
@@ -102,8 +102,9 @@ public class EmitInstrInfoCppFilePass extends LcbTemplateRenderingPass {
 
   private List<StoreRegSlot> getStoreMemoryInstructions(
       Map<MachineInstructionLabel, List<Instruction>> isaMatching) {
-    var instructions = (List<Instruction>) isaMatching.getOrDefault(MachineInstructionLabel.STORE_MEM,
-        Collections.emptyList());
+    var instructions =
+        (List<Instruction>) isaMatching.getOrDefault(MachineInstructionLabel.STORE_MEM,
+            Collections.emptyList());
 
     var mapped = instructions.stream()
         .map(i -> {
@@ -124,10 +125,11 @@ public class EmitInstrInfoCppFilePass extends LcbTemplateRenderingPass {
 
   private List<LoadRegSlot> getLoadMemoryInstructions(
       Map<MachineInstructionLabel, List<Instruction>> isaMatching) {
-    var instructions = (List<Instruction>) isaMatching.getOrDefault(MachineInstructionLabel.LOAD_MEM,
-        Collections.emptyList());
+    var instructions =
+        (List<Instruction>) isaMatching.getOrDefault(MachineInstructionLabel.LOAD_MEM,
+            Collections.emptyList());
 
-    var mapped = instructions.stream()
+    return instructions.stream()
         .map(i -> {
           var destRegisterFile =
               ensurePresent(i.behavior().getNodes(WriteRegFileNode.class).findFirst(),
@@ -140,8 +142,6 @@ public class EmitInstrInfoCppFilePass extends LcbTemplateRenderingPass {
         // Sort by largest word size descending
         .sorted((loadRegSlot, t1) -> Integer.compare(t1.words, loadRegSlot.words))
         .toList();
-
-    return mapped;
   }
 
   private List<CopyPhysRegInstruction> mapWithInstructionLabel(

@@ -198,6 +198,9 @@ public abstract class LlvmInstructionLoweringStrategy {
     return hooks;
   }
 
+  protected abstract List<GraphVisitor.NodeApplier
+      <? extends Node, ? extends Node>> replacementHooks();
+
   /**
    * Flags indicate special properties of a machine instruction. This method checks the
    * machine instruction's behavior for those and returns them.
@@ -440,9 +443,6 @@ public abstract class LlvmInstructionLoweringStrategy {
     var filterRegistersWithConstraints = inputOperands.isEmpty() && outputOperands.isEmpty();
     return getRegisterUses(behavior, filterRegistersWithConstraints);
   }
-
-  protected abstract List<GraphVisitor.NodeApplier
-      <? extends Node, ? extends Node>> replacementHooks();
 
   /**
    * Some {@link InstructionSetArchitecture} have not machine instructions for all LLVM Selection

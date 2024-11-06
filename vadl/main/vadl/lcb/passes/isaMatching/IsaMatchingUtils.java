@@ -46,18 +46,18 @@ public interface IsaMatchingUtils {
   }
 
   /**
-   * Find the pattern with {@code builtin} as root and register-register as children in the {@code behavior}
-   * or find the pattern with {@code builtin} as root and register-immediate as children in the
-   * {@code behavior}.
+   * Find the pattern with {@code builtin} as root and register-register as children in the
+   * {@code behavior} or find the pattern with {@code builtin} as root and register-immediate as
+   * children in the {@code behavior}.
    */
   default boolean findRR_OR_findRI(UninlinedGraph behavior, BuiltInTable.BuiltIn builtin) {
     return findRR(behavior, List.of(builtin)) || findRI(behavior, List.of(builtin));
   }
 
   /**
-   * Find the pattern with one of {@code builtins} as root and register-register as children in the {@code behavior}
-   * or find the pattern with one of {@code builtins} as root and register-immediate as children in the
-   * {@code behavior}.
+   * Find the pattern with one of {@code builtins} as root and register-register as children in the
+   * {@code behavior} or find the pattern with one of {@code builtins} as root and
+   * register-immediate as children in the {@code behavior}.
    */
   default boolean findRR_OR_findRI(UninlinedGraph behavior, List<BuiltInTable.BuiltIn> builtins) {
     return findRR(behavior, builtins) || findRI(behavior, builtins);
