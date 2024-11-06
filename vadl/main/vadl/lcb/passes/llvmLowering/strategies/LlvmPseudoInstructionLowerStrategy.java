@@ -19,8 +19,8 @@ import vadl.lcb.passes.llvmLowering.LlvmLoweringPass;
 import vadl.lcb.passes.llvmLowering.domain.LlvmLoweringPseudoRecord;
 import vadl.lcb.passes.llvmLowering.domain.LlvmLoweringRecord;
 import vadl.lcb.passes.llvmLowering.domain.RegisterRef;
-import vadl.lcb.passes.llvmLowering.domain.machineDag.MachineInstructionNode;
-import vadl.lcb.passes.llvmLowering.domain.machineDag.PseudoInstructionNode;
+import vadl.lcb.passes.llvmLowering.domain.machineDag.LcbMachineInstructionNode;
+import vadl.lcb.passes.llvmLowering.domain.machineDag.LcbPseudoInstructionNode;
 import vadl.lcb.passes.llvmLowering.tablegen.model.TableGenInstruction;
 import vadl.lcb.passes.llvmLowering.tablegen.model.TableGenInstructionOperand;
 import vadl.lcb.passes.llvmLowering.tablegen.model.TableGenPattern;
@@ -259,9 +259,9 @@ public abstract class LlvmPseudoInstructionLowerStrategy {
     // instruction now. But we want the pseudo instruction.
     record.patterns().forEach(pattern -> {
       if (pattern instanceof TableGenSelectionWithOutputPattern outputPattern) {
-        outputPattern.machine().getNodes(MachineInstructionNode.class)
+        outputPattern.machine().getNodes(LcbMachineInstructionNode.class)
             .forEach(machineInstructionNode -> machineInstructionNode.replaceAndDelete(
-                new PseudoInstructionNode(machineInstructionNode.arguments(), pseudo)
+                new LcbPseudoInstructionNode(machineInstructionNode.arguments(), pseudo)
             ));
       }
     });

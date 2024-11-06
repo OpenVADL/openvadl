@@ -14,7 +14,7 @@ import vadl.configuration.LcbConfiguration;
 import vadl.error.Diagnostic;
 import vadl.lcb.passes.llvmLowering.LlvmLoweringPass;
 import vadl.lcb.passes.llvmLowering.domain.ConstantMatPseudoInstruction;
-import vadl.lcb.passes.llvmLowering.domain.machineDag.PseudoInstructionNode;
+import vadl.lcb.passes.llvmLowering.domain.machineDag.LcbPseudoInstructionNode;
 import vadl.lcb.passes.llvmLowering.domain.selectionDag.LlvmConstantSD;
 import vadl.lcb.passes.llvmLowering.tablegen.model.TableGenInstructionImmediateOperand;
 import vadl.lcb.passes.llvmLowering.tablegen.model.TableGenPattern;
@@ -79,7 +79,7 @@ public class GenerateConstantMaterialisationTableGenRecordPass extends Pass {
       selector.add(new LlvmConstantSD(
           new Constant.Str("(" + selectorContent + ")")));
       var machine = new Graph("machine");
-      machine.addWithInputs(new PseudoInstructionNode(new NodeList<>(
+      machine.addWithInputs(new LcbPseudoInstructionNode(new NodeList<>(
           new LlvmConstantSD(new Constant.Str(selectorContent))),
           instruction));
 

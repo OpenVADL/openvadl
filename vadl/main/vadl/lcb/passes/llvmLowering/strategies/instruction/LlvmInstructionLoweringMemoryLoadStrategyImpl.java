@@ -11,8 +11,8 @@ import java.util.stream.Stream;
 import vadl.error.Diagnostic;
 import vadl.lcb.codegen.model.llvm.ValueType;
 import vadl.lcb.passes.isaMatching.MachineInstructionLabel;
-import vadl.lcb.passes.llvmLowering.domain.machineDag.MachineInstructionParameterNode;
-import vadl.lcb.passes.llvmLowering.domain.machineDag.MachineInstructionValueNode;
+import vadl.lcb.passes.llvmLowering.domain.machineDag.LcbMachineInstructionParameterNode;
+import vadl.lcb.passes.llvmLowering.domain.machineDag.LcbMachineInstructionValueNode;
 import vadl.lcb.passes.llvmLowering.domain.selectionDag.LlvmAddSD;
 import vadl.lcb.passes.llvmLowering.domain.selectionDag.LlvmExtLoad;
 import vadl.lcb.passes.llvmLowering.domain.selectionDag.LlvmFieldAccessRefNode;
@@ -101,7 +101,7 @@ public class LlvmInstructionLoweringMemoryLoadStrategyImpl
         addition.replaceAndDelete(register);
 
         // We also have to replace the immediate operand in the machine pattern.
-        var immediates = machine.getNodes(MachineInstructionParameterNode.class)
+        var immediates = machine.getNodes(LcbMachineInstructionParameterNode.class)
             .filter(x -> x.instructionOperand() instanceof TableGenInstructionImmediateOperand)
             .toList();
 
@@ -110,7 +110,7 @@ public class LlvmInstructionLoweringMemoryLoadStrategyImpl
               () -> Diagnostic.error("Register must have valid llvm type",
                   register.sourceLocation()));
           imm.replaceAndDelete(
-              new MachineInstructionValueNode(ty, Constant.Value.of(0, Type.signedInt(32))));
+              new LcbMachineInstructionValueNode(ty, Constant.Value.of(0, Type.signedInt(32))));
         }
 
         alternativePatterns.add(new TableGenSelectionWithOutputPattern(selector, machine));

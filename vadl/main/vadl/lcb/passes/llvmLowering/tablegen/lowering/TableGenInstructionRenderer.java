@@ -9,8 +9,8 @@ import org.jetbrains.annotations.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import vadl.lcb.passes.llvmLowering.domain.RegisterRef;
-import vadl.lcb.passes.llvmLowering.domain.machineDag.MachineInstructionNode;
-import vadl.lcb.passes.llvmLowering.domain.machineDag.PseudoInstructionNode;
+import vadl.lcb.passes.llvmLowering.domain.machineDag.LcbMachineInstructionNode;
+import vadl.lcb.passes.llvmLowering.domain.machineDag.LcbPseudoInstructionNode;
 import vadl.lcb.passes.llvmLowering.tablegen.model.TableGenInstruction;
 import vadl.lcb.passes.llvmLowering.tablegen.model.TableGenInstructionOperand;
 import vadl.lcb.passes.llvmLowering.tablegen.model.TableGenMachineInstruction;
@@ -210,12 +210,12 @@ public final class TableGenInstructionRenderer {
     }
 
     for (var root : tableGenPattern.machine().getDataflowRoots()) {
-      ensure(root instanceof PseudoInstructionNode
-              || root instanceof MachineInstructionNode,
+      ensure(root instanceof LcbPseudoInstructionNode
+              || root instanceof LcbMachineInstructionNode,
           "root node must be pseudo or machine node");
-      if (root instanceof MachineInstructionNode machineInstructionNode) {
+      if (root instanceof LcbMachineInstructionNode machineInstructionNode) {
         machineVisitor.visit(machineInstructionNode);
-      } else if (root instanceof PseudoInstructionNode pseudoInstructionNode) {
+      } else if (root instanceof LcbPseudoInstructionNode pseudoInstructionNode) {
         machineVisitor.visit(pseudoInstructionNode);
       }
     }

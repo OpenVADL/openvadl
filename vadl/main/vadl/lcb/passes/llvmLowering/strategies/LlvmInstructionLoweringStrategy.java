@@ -29,8 +29,8 @@ import vadl.lcb.passes.llvmLowering.LlvmMayStoreMemory;
 import vadl.lcb.passes.llvmLowering.LlvmSideEffectPatternIncluded;
 import vadl.lcb.passes.llvmLowering.domain.LlvmLoweringRecord;
 import vadl.lcb.passes.llvmLowering.domain.RegisterRef;
-import vadl.lcb.passes.llvmLowering.domain.machineDag.MachineInstructionNode;
-import vadl.lcb.passes.llvmLowering.domain.machineDag.MachineInstructionParameterNode;
+import vadl.lcb.passes.llvmLowering.domain.machineDag.LcbMachineInstructionNode;
+import vadl.lcb.passes.llvmLowering.domain.machineDag.LcbMachineInstructionParameterNode;
 import vadl.lcb.passes.llvmLowering.domain.selectionDag.LlvmBasicBlockSD;
 import vadl.lcb.passes.llvmLowering.domain.selectionDag.LlvmBrCcSD;
 import vadl.lcb.passes.llvmLowering.domain.selectionDag.LlvmBrCondSD;
@@ -750,9 +750,9 @@ public abstract class LlvmInstructionLoweringStrategy {
 
     var params =
         inputOperands.stream()
-            .map(MachineInstructionParameterNode::new)
+            .map(LcbMachineInstructionParameterNode::new)
             .toList();
-    var node = new MachineInstructionNode(new NodeList<>(params), instruction);
+    var node = new LcbMachineInstructionNode(new NodeList<>(params), instruction);
     graph.addWithInputs(node);
     return graph;
   }
@@ -761,7 +761,7 @@ public abstract class LlvmInstructionLoweringStrategy {
       List<T> selectorNodes,
       Graph machine,
       Function<T, Node> selectorNodeTransformation,
-      BiFunction<MachineInstructionParameterNode,
+      BiFunction<LcbMachineInstructionParameterNode,
           ParameterTypeAndNameIdentity,
           TableGenInstructionOperand>
           machineNodeTransformation) {
@@ -775,7 +775,7 @@ public abstract class LlvmInstructionLoweringStrategy {
 
       // Find the corresponding nodes in the machine graph because we know
       // the parameter identity `selectorParameter` in the selector graph.
-      machine.getNodes(MachineInstructionParameterNode.class)
+      machine.getNodes(LcbMachineInstructionParameterNode.class)
           .filter(candidate ->
               candidate.instructionOperand().origin() instanceof LlvmNodeReplaceable cast
                   && cast.parameterIdentity().equals(selectorParameter))

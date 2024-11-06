@@ -1,6 +1,6 @@
 package vadl.lcb.passes.llvmLowering.strategies;
 
-import vadl.lcb.passes.llvmLowering.domain.machineDag.MachineInstructionParameterNode;
+import vadl.lcb.passes.llvmLowering.domain.machineDag.LcbMachineInstructionParameterNode;
 import vadl.lcb.passes.llvmLowering.domain.selectionDag.LlvmBasicBlockSD;
 import vadl.lcb.passes.llvmLowering.tablegen.model.TableGenInstructionImmediateLabelOperand;
 import vadl.lcb.passes.llvmLowering.tablegen.model.TableGenPattern;
@@ -23,7 +23,7 @@ public class LoweringStrategyUtils {
     if (pattern instanceof TableGenSelectionWithOutputPattern) {
       // We know that the `selector` already has LlvmBasicBlock nodes.
       var candidates = ((TableGenSelectionWithOutputPattern) pattern).machine().getNodes(
-          MachineInstructionParameterNode.class).toList();
+          LcbMachineInstructionParameterNode.class).toList();
       for (var candidate : candidates) {
         if (candidate.instructionOperand().origin() instanceof LlvmBasicBlockSD basicBlockSD) {
           candidate.setInstructionOperand(new TableGenInstructionImmediateLabelOperand(
