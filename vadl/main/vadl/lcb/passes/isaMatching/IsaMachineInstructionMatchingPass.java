@@ -170,17 +170,29 @@ public class IsaMachineInstructionMatchingPass extends Pass implements IsaMatchi
       } else if (pc != null && findBranchWithConditional(behavior, NEQ)) {
         extend(matched, MachineInstructionLabel.BNEQ, instruction);
       } else if (pc != null
-          && findBranchWithConditional(behavior, Set.of(SGEQ, UGEQ))) {
-        extend(matched, MachineInstructionLabel.BGEQ, instruction);
+          && findBranchWithConditional(behavior, Set.of(SGEQ))) {
+        extend(matched, MachineInstructionLabel.BSGEQ, instruction);
       } else if (pc != null
-          && findBranchWithConditional(behavior, Set.of(SLEQ, ULEQ))) {
-        extend(matched, MachineInstructionLabel.BLEQ, instruction);
+          && findBranchWithConditional(behavior, Set.of(UGEQ))) {
+        extend(matched, MachineInstructionLabel.BUGEQ, instruction);
       } else if (pc != null
-          && findBranchWithConditional(behavior, Set.of(SLTH, ULTH))) {
-        extend(matched, MachineInstructionLabel.BLTH, instruction);
+          && findBranchWithConditional(behavior, Set.of(SLEQ))) {
+        extend(matched, MachineInstructionLabel.BSLEQ, instruction);
       } else if (pc != null
-          && findBranchWithConditional(behavior, Set.of(SGTH, UGTH))) {
-        extend(matched, MachineInstructionLabel.BGTH, instruction);
+          && findBranchWithConditional(behavior, Set.of(ULEQ))) {
+        extend(matched, MachineInstructionLabel.BULEQ, instruction);
+      } else if (pc != null
+          && findBranchWithConditional(behavior, Set.of(SLTH))) {
+        extend(matched, MachineInstructionLabel.BSLTH, instruction);
+      } else if (pc != null
+          && findBranchWithConditional(behavior, Set.of(ULTH))) {
+        extend(matched, MachineInstructionLabel.BULTH, instruction);
+      } else if (pc != null
+          && findBranchWithConditional(behavior, Set.of(SGTH))) {
+        extend(matched, MachineInstructionLabel.BSGTH, instruction);
+      } else if (pc != null
+          && findBranchWithConditional(behavior, Set.of(UGTH))) {
+        extend(matched, MachineInstructionLabel.BUGTH, instruction);
       } else if (findRR_OR_findRI(behavior, List.of(SLTH, ULTH))) {
         extend(matched, MachineInstructionLabel.LT, instruction);
       } else if (findWriteMem(behavior)) {

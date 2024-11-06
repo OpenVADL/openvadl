@@ -98,6 +98,7 @@ public class EmitInstrInfoTableGenFilePass extends LcbTemplateRenderingPass {
         "immediates", renderedImmediates,
         "instructions", renderedTableGenMachineRecords,
         "pseudos", renderedTableGenPseudoRecords,
-        "constMats", renderedTableGenConstMatRecords);
+        "constMats", renderedTableGenConstMatRecords,
+        "registerFiles", specification.registerFiles().toList());
   }
 }

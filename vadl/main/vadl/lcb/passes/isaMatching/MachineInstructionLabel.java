@@ -44,13 +44,22 @@ public enum MachineInstructionLabel {
    */
   BEQ,
   BNEQ,
-  BGEQ,
-  BLEQ,
-  BLTH,
-  BGTH,
+  BSGEQ,
+  BSLEQ,
+  BSLTH,
+  BSGTH,
+  BUGEQ,
+  BULEQ,
+  BULTH,
+  BUGTH,
   /*
   UNCONDITIONAL JUMPS
    */
   JALR,
   JAL,
+  /*
+  CONDITIONAL MOVE
+   */
+  CMOVE_32,
+  CMOVE_64,
 }
