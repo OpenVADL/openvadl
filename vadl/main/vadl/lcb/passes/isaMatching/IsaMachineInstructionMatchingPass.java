@@ -98,7 +98,8 @@ public class IsaMachineInstructionMatchingPass extends Pass implements IsaMatchi
 
   @Nullable
   @Override
-  public Object execute(PassResults passResults, Specification viam)
+  public HashMap<MachineInstructionLabel, List<Instruction>> execute(PassResults passResults,
+                                                                     Specification viam)
       throws IOException {
     // The instruction matching happens on the uninlined graph
     // because the field accesses are uninlined.
