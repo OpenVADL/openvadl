@@ -1119,7 +1119,7 @@ let Size = 4;
 let CodeSize = 4;
 
 let OutOperandList = ( outs X:$rd );
-let InOperandList = ( ins X:$rs1, X:$rs2 );
+let InOperandList = ( ins X:$rs2, X:$rs1 );
 
 field bits<32> Inst;
 
@@ -1171,7 +1171,7 @@ let Size = 4;
 let CodeSize = 4;
 
 let OutOperandList = ( outs X:$rd );
-let InOperandList = ( ins X:$rs1, X:$rs2 );
+let InOperandList = ( ins X:$rs2, X:$rs1 );
 
 field bits<32> Inst;
 
@@ -1223,7 +1223,7 @@ let Size = 4;
 let CodeSize = 4;
 
 let OutOperandList = ( outs X:$rd );
-let InOperandList = ( ins X:$rs1, X:$rs2 );
+let InOperandList = ( ins X:$rs2, X:$rs1 );
 
 field bits<32> Inst;
 
@@ -1275,7 +1275,7 @@ let Size = 4;
 let CodeSize = 4;
 
 let OutOperandList = ( outs X:$rd );
-let InOperandList = ( ins X:$rs1, X:$rs2 );
+let InOperandList = ( ins X:$rs2, X:$rs1 );
 
 field bits<32> Inst;
 
@@ -2396,7 +2396,7 @@ let Size = 4;
 let CodeSize = 4;
 
 let OutOperandList = ( outs X:$rd );
-let InOperandList = ( ins X:$rs1, X:$rs2 );
+let InOperandList = ( ins X:$rs2, X:$rs1 );
 
 field bits<32> Inst;
 
@@ -2448,7 +2448,7 @@ let Size = 4;
 let CodeSize = 4;
 
 let OutOperandList = ( outs X:$rd );
-let InOperandList = ( ins X:$rs1, X:$rs2 );
+let InOperandList = ( ins X:$rs2, X:$rs1 );
 
 field bits<32> Inst;
 
@@ -2500,7 +2500,7 @@ let Size = 4;
 let CodeSize = 4;
 
 let OutOperandList = ( outs X:$rd );
-let InOperandList = ( ins X:$rs1, X:$rs2 );
+let InOperandList = ( ins X:$rs2, X:$rs1 );
 
 field bits<32> Inst;
 
@@ -2552,7 +2552,7 @@ let Size = 4;
 let CodeSize = 4;
 
 let OutOperandList = ( outs X:$rd );
-let InOperandList = ( ins X:$rs1, X:$rs2 );
+let InOperandList = ( ins X:$rs2, X:$rs1 );
 
 field bits<32> Inst;
 
@@ -4115,7 +4115,7 @@ def J : Instruction
 let Namespace = "processorNameValue";
 
 let OutOperandList = ( outs  );
-let InOperandList = ( ins  );
+let InOperandList = ( ins RV64IM_Jtype_immAsLabel:$imm );
 
 let isTerminator  = 1;
 let isBranch      = 0;
@@ -4135,6 +4135,8 @@ let Uses = [ PC ];
 let Defs = [ PC,X0 ];
 }
 
+def : Pat<(br bb:$imm),
+        (J RV64IM_Jtype_immAsLabel:$imm)>;
 
 
 def LLA : Instruction

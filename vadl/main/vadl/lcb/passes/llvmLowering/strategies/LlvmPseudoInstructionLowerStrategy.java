@@ -3,20 +3,25 @@ package vadl.lcb.passes.llvmLowering.strategies;
 import com.google.common.collect.Streams;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.IdentityHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.Set;
+import javax.annotation.Nullable;
 import vadl.error.DeferredDiagnosticStore;
 import vadl.error.Diagnostic;
 import vadl.gcb.passes.pseudo.PseudoFuncParamNode;
-import vadl.lcb.passes.isaMatching.InstructionLabel;
+import vadl.lcb.passes.isaMatching.MachineInstructionLabel;
+import vadl.lcb.passes.isaMatching.PseudoInstructionLabel;
 import vadl.lcb.passes.llvmLowering.LlvmLoweringPass;
 import vadl.lcb.passes.llvmLowering.domain.LlvmLoweringPseudoRecord;
 import vadl.lcb.passes.llvmLowering.domain.LlvmLoweringRecord;
 import vadl.lcb.passes.llvmLowering.domain.RegisterRef;
 import vadl.lcb.passes.llvmLowering.domain.machineDag.MachineInstructionNode;
 import vadl.lcb.passes.llvmLowering.domain.machineDag.PseudoInstructionNode;
+import vadl.lcb.passes.llvmLowering.tablegen.model.TableGenInstruction;
 import vadl.lcb.passes.llvmLowering.tablegen.model.TableGenInstructionOperand;
 import vadl.lcb.passes.llvmLowering.tablegen.model.TableGenPattern;
 import vadl.lcb.passes.llvmLowering.tablegen.model.TableGenSelectionWithOutputPattern;
@@ -25,36 +30,56 @@ import vadl.viam.Instruction;
 import vadl.viam.PseudoInstruction;
 import vadl.viam.graph.Graph;
 import vadl.viam.graph.HasRegisterFile;
+import vadl.viam.graph.Node;
 import vadl.viam.graph.control.InstrCallNode;
 import vadl.viam.graph.dependency.ConstantNode;
 import vadl.viam.graph.dependency.ExpressionNode;
 import vadl.viam.graph.dependency.FieldRefNode;
 import vadl.viam.graph.dependency.FuncParamNode;
+import vadl.viam.graph.dependency.WriteRegFileNode;
 
 /**
- * Whereas {@link LlvmInstructionLoweringStrategy} defines multiple to lower {@link Instruction}
- * a.k.a Machine Instructions, this class lowers {@link PseudoInstruction}.
+ * Defines a {@link PseudoInstruction} will be lowered to {@link TableGenInstruction}.
  */
-public class LlvmPseudoLoweringImpl {
-
+public abstract class LlvmPseudoInstructionLowerStrategy {
   /**
    * We use the strategies from {@link LlvmLoweringPass} for the individual
    * {@link Instruction} from {@link InstrCallNode} in {@link PseudoInstruction}.
    */
   private final List<LlvmInstructionLoweringStrategy> strategies;
 
-  public LlvmPseudoLoweringImpl(List<LlvmInstructionLoweringStrategy> strategies) {
+  /**
+   * Constructor.
+   */
+  protected LlvmPseudoInstructionLowerStrategy(List<LlvmInstructionLoweringStrategy> strategies) {
     this.strategies = strategies;
   }
 
   /**
-   * Lower a {@link PseudoInstruction} into a {@link LlvmLoweringRecord}.
+   * Get the supported set of {@link PseudoInstructionLabel} which this strategy supports.
+   */
+  protected abstract Set<PseudoInstructionLabel> getSupportedInstructionLabels();
+
+  /**
+   * Checks whether the given {@link PseudoInstruction} is lowerable with this strategy.
+   */
+  public boolean isApplicable(@Nullable PseudoInstructionLabel pseudoInstructionLabel) {
+    if (pseudoInstructionLabel == null) {
+      return false;
+    }
+
+    return getSupportedInstructionLabels().contains(pseudoInstructionLabel);
+  }
+
+  /**
+   * Lower a {@link PseudoInstruction} into a {@link LlvmLoweringPseudoRecord}.
    */
   public Optional<LlvmLoweringPseudoRecord> lower(
       PseudoInstruction pseudo,
-      Map<InstructionLabel, List<Instruction>> supportedInstructions) {
+      Map<MachineInstructionLabel, List<Instruction>> labelledMachineInstructions) {
     var patterns = new ArrayList<TableGenPattern>();
-    var flippedInstructions = LlvmLoweringPass.flipIsaMatching(supportedInstructions);
+    var flippedInstructions =
+        LlvmLoweringPass.flipIsaMatchingMachineInstructions(labelledMachineInstructions);
 
     var uses = new ArrayList<RegisterRef>();
     var defs = new ArrayList<RegisterRef>();
@@ -117,7 +142,7 @@ public class LlvmPseudoLoweringImpl {
                   // }
 
                   if (argument instanceof ConstantNode constantNode) {
-                    // The constantNode tells me the register index.
+                    // The constantNode tells me that it will be used as a register index.
 
                     // Go over the usages to emit warnings.
                     // We need the usage because we need to find out what the register file
@@ -134,12 +159,28 @@ public class LlvmPseudoLoweringImpl {
                           if (constraintValue.isEmpty()) {
                             DeferredDiagnosticStore.add(Diagnostic.warning(
                                 "There is no constraint value for this register. "
-                                    + "Therefore, we cannot generate instruction selectors for it.",
+                                    +
+                                    "Therefore, we cannot generate instruction selectors for it.",
                                 occurrence.sourceLocation()).build());
                           }
                         });
+
+                    occurrence.replaceAndDelete(argument.copy());
+
+                    // After the replacement, we can check whether we have a write node with
+                    // constant node as address which has a constraint. If that's the case, then we
+                    // can remove the side effect.
+                    occurrence.usages()
+                        .filter(node -> node instanceof WriteRegFileNode writeRegFileNode
+                            && writeRegFileNode.hasConstantAddress()
+                            // Check if there is a constraint for this register index.
+                            && Arrays.stream(writeRegFileNode.registerFile().constraints())
+                            .anyMatch(constraint -> constraint.address().intValue()
+                                == constantNode.constant().asVal().intValue()))
+                        .forEach(Node::safeDelete);
+                  } else {
+                    occurrence.replaceAndDelete(argument.copy());
                   }
-                  occurrence.replaceAndDelete(argument.copy());
                 });
           });
 
@@ -150,13 +191,12 @@ public class LlvmPseudoLoweringImpl {
         continue;
       }
 
-
       for (var strategy : strategies) {
         if (!strategy.isApplicable(label)) {
           continue;
         }
 
-        var tableGenRecord = strategy.lower(supportedInstructions,
+        var tableGenRecord = strategy.lower(labelledMachineInstructions,
             pseudo,
             callNode.target(),
             instructionBehavior);
@@ -165,17 +205,9 @@ public class LlvmPseudoLoweringImpl {
         if (tableGenRecord.isPresent()) {
           var record = tableGenRecord.get();
 
-          // We need to update the output instruction because the pattern has the machine
-          // instruction now. But we want the pseudo instruction.
-          record.patterns().forEach(pattern -> {
-            if (pattern instanceof TableGenSelectionWithOutputPattern outputPattern) {
-              outputPattern.machine().getNodes(MachineInstructionNode.class)
-                  .forEach(machineInstructionNode -> machineInstructionNode.replaceAndDelete(
-                      new PseudoInstructionNode(machineInstructionNode.arguments(), pseudo)
-                  ));
-            }
-          });
-
+          updatePatterns(pseudo, record);
+          final var patternVariations =
+              generatePatternVariations(pseudo, record, appliedInstructionBehavior);
 
           var flags = record.flags();
           isTerminator |= flags.isTerminator();
@@ -188,6 +220,7 @@ public class LlvmPseudoLoweringImpl {
           inputOperands.addAll(record.inputs());
           outputOperands.addAll(record.outputs());
           patterns.addAll(record.patterns());
+          patterns.addAll(patternVariations);
         }
 
         break;
@@ -214,6 +247,26 @@ public class LlvmPseudoLoweringImpl {
     ));
   }
 
+  protected List<TableGenPattern> generatePatternVariations(
+      PseudoInstruction pseudo,
+      LlvmLoweringRecord record,
+      IdentityHashMap<Instruction, Graph> appliedInstructionBehavior) {
+    return Collections.emptyList();
+  }
+
+  protected void updatePatterns(PseudoInstruction pseudo, LlvmLoweringRecord record) {
+    // We need to update the output instruction because the pattern has the machine
+    // instruction now. But we want the pseudo instruction.
+    record.patterns().forEach(pattern -> {
+      if (pattern instanceof TableGenSelectionWithOutputPattern outputPattern) {
+        outputPattern.machine().getNodes(MachineInstructionNode.class)
+            .forEach(machineInstructionNode -> machineInstructionNode.replaceAndDelete(
+                new PseudoInstructionNode(machineInstructionNode.arguments(), pseudo)
+            ));
+      }
+    });
+  }
+
   /**
    * There are two relevant cases.
    * The first is that the {@code argument} is a constant. Then, we do not have to do anything.
@@ -230,7 +283,7 @@ public class LlvmPseudoLoweringImpl {
    * }
    * </code>
    */
-  private ExpressionNode indexArgument(List<ExpressionNode> arguments, ExpressionNode argument) {
+  protected ExpressionNode indexArgument(List<ExpressionNode> arguments, ExpressionNode argument) {
     if (argument instanceof FuncParamNode funcParamNode) {
       int index = arguments.indexOf(argument);
       return new PseudoFuncParamNode(funcParamNode.parameter(), index);

@@ -16,6 +16,9 @@ public class LlvmLoweringPseudoRecord extends LlvmLoweringRecord {
 
   private final IdentityHashMap<Instruction, Graph> appliedBehaviors;
 
+  /**
+   * Constructor.
+   */
   public LlvmLoweringPseudoRecord(Graph behavior,
                                   List<TableGenInstructionOperand> inputs,
                                   List<TableGenInstructionOperand> outputs,
@@ -26,6 +29,17 @@ public class LlvmLoweringPseudoRecord extends LlvmLoweringRecord {
                                   IdentityHashMap<Instruction, Graph> appliedBehaviors) {
     super(behavior, inputs, outputs, flags, patterns, uses, def);
     this.appliedBehaviors = appliedBehaviors;
+  }
+
+
+  /**
+   * Constructor which overwrites the inputs from {@code base}.
+   */
+  public LlvmLoweringPseudoRecord(LlvmLoweringPseudoRecord base,
+                                  List<TableGenInstructionOperand> inputs) {
+    super(base.behavior(), inputs, base.outputs(), base.flags(), base.patterns(), base.uses(),
+        base.defs());
+    this.appliedBehaviors = base.appliedBehaviors;
   }
 
   public Map<Instruction, Graph> appliedBehaviors() {

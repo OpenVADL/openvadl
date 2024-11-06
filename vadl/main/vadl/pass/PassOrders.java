@@ -29,7 +29,8 @@ import vadl.iss.template.target.EmitIssCpuSourcePass;
 import vadl.iss.template.target.EmitIssInsnDecodePass;
 import vadl.iss.template.target.EmitIssMachinePass;
 import vadl.iss.template.target.EmitIssTranslatePass;
-import vadl.lcb.passes.isaMatching.IsaMatchingPass;
+import vadl.lcb.passes.isaMatching.IsaMachineInstructionMatchingPass;
+import vadl.lcb.passes.isaMatching.IsaPseudoInstructionMatchingPass;
 import vadl.lcb.passes.llvmLowering.ConstMatPseudoInstructionArgumentReplacementPass;
 import vadl.lcb.passes.llvmLowering.ConstMaterialisationPseudoExpansionFunctionGeneratorPass;
 import vadl.lcb.passes.llvmLowering.GenerateRegisterClassesPass;
@@ -144,7 +145,8 @@ public class PassOrders {
   public static PassOrder lcb(LcbConfiguration configuration)
       throws IOException {
     var order = gcbAndCppCodeGen(configuration);
-    order.add(new IsaMatchingPass(configuration));
+    order.add(new IsaMachineInstructionMatchingPass(configuration));
+    order.add(new IsaPseudoInstructionMatchingPass(configuration));
     order.add(new GenerateRegisterClassesPass(configuration));
     order.add(new LlvmLoweringPass(configuration));
     order.add(new GenerateTableGenMachineInstructionRecordPass(configuration));

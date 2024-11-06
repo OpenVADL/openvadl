@@ -1,8 +1,9 @@
-package vadl.lcb.passes.llvmLowering.strategies.visitors.impl;
+package vadl.lcb.passes.llvmLowering.strategies.nodeLowering;
 
+import java.util.List;
 import java.util.Objects;
 import java.util.Set;
-import vadl.lcb.codegen.model.llvm.ValueType;
+import org.jetbrains.annotations.Nullable;
 import vadl.lcb.passes.llvmLowering.domain.selectionDag.LlvmBasicBlockSD;
 import vadl.lcb.passes.llvmLowering.domain.selectionDag.LlvmBrCcSD;
 import vadl.lcb.passes.llvmLowering.domain.selectionDag.LlvmCondCode;
@@ -10,39 +11,32 @@ import vadl.lcb.passes.llvmLowering.domain.selectionDag.LlvmSetccSD;
 import vadl.types.BuiltInTable;
 import vadl.viam.ViamError;
 import vadl.viam.graph.Graph;
+import vadl.viam.graph.GraphVisitor;
 import vadl.viam.graph.Node;
-import vadl.viam.graph.control.IfNode;
 import vadl.viam.graph.dependency.BuiltInCall;
-import vadl.viam.graph.dependency.ExpressionNode;
 import vadl.viam.graph.dependency.FieldAccessRefNode;
-import vadl.viam.graph.dependency.SideEffectNode;
 import vadl.viam.graph.dependency.WriteRegNode;
 
 /**
- * Replaces VIAM nodes with LLVM nodes which have more
- * information for the lowering. But this visitor allows if-conditions.
+ * Replacement strategy for nodes.
  */
-public class ReplaceWithLlvmSDNodesWithControlFlowVisitor
-    extends ReplaceWithLlvmSDNodesVisitor {
+public class WriteRegNodeReplacement
+    implements GraphVisitor.NodeApplier<WriteRegNode, WriteRegNode> {
+  private final List<GraphVisitor.NodeApplier<? extends Node, ? extends Node>> replacer;
 
-  /**
-   * Constructor.
-   *
-   * @param architectureType is the type for which tablegen types should be upcasted to.
-   *                         On 32 Bit architectures should all immediates upcasted to 32 Bit.
-   */
-  public ReplaceWithLlvmSDNodesWithControlFlowVisitor(ValueType architectureType) {
-    super(architectureType);
+  public WriteRegNodeReplacement(
+      List<GraphVisitor.NodeApplier<? extends Node, ? extends Node>> replacer) {
+    this.replacer = replacer;
   }
 
+  @Nullable
   @Override
-  public void visit(WriteRegNode writeRegNode) {
-    if (writeRegNode.value() instanceof LlvmBrCcSD) {
-      // already lowered, so skip
-      return;
+  public WriteRegNode visit(WriteRegNode writeRegNode) {
+    if (writeRegNode.hasAddress()) {
+      visitApplicable(writeRegNode.address());
     }
 
-    visit(writeRegNode.value());
+    visitApplicable(writeRegNode.value());
 
     // this will get the nullable static counter access
     // if the reg write node writes the pc, this will not be null
@@ -69,7 +63,7 @@ public class ReplaceWithLlvmSDNodesWithControlFlowVisitor
         var first = conditional.arguments().get(0);
         var second = conditional.arguments().get(1);
         var immOffset =
-            builtin.arguments().stream().filter(x -> x instanceof LlvmBasicBlockSD)
+            builtin.arguments().stream().filter(x -> x instanceof FieldAccessRefNode)
                 .findFirst();
 
         if (immOffset.isEmpty()) {
@@ -84,40 +78,22 @@ public class ReplaceWithLlvmSDNodesWithControlFlowVisitor
         ));
       }
     }
-  }
 
-
-  @Override
-  public void visit(IfNode ifNode) {
-
+    return writeRegNode;
   }
 
   @Override
-  public void visit(SideEffectNode node) {
-    node.accept(this);
+  public boolean acceptable(Node node) {
+    return node instanceof WriteRegNode;
   }
 
   @Override
-  public void visit(FieldAccessRefNode fieldAccessRefNode) {
-    var originalType = fieldAccessRefNode.type();
-
-    fieldAccessRefNode.replaceAndDelete(new LlvmBasicBlockSD(fieldAccessRefNode.fieldAccess(),
-        originalType,
-        architectureType));
+  public List<GraphVisitor.NodeApplier<? extends Node, ? extends Node>> recursiveHooks() {
+    return replacer;
   }
 
-  @Override
-  public void visit(ExpressionNode node) {
-    node.accept(this);
-  }
-
-  @Override
-  public void visit(Node node) {
-    node.accept(this);
-  }
-
-  private LlvmSetccSD getConditional(Graph behavior) {
-    var builtIn = behavior.getNodes(LlvmSetccSD.class)
+  private BuiltInCall getConditional(Graph behavior) {
+    var builtIn = behavior.getNodes(BuiltInCall.class)
         .filter(
             x -> Set.of(BuiltInTable.EQU, BuiltInTable.NEQ, BuiltInTable.SLTH, BuiltInTable.ULTH,
                     BuiltInTable.SGEQ, BuiltInTable.UGEQ, BuiltInTable.SLEQ, BuiltInTable.ULEQ)

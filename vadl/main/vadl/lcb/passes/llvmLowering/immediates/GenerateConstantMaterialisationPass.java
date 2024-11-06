@@ -16,8 +16,8 @@ import org.jetbrains.annotations.Nullable;
 import vadl.configuration.GeneralConfiguration;
 import vadl.error.Diagnostic;
 import vadl.gcb.passes.IdentifyFieldUsagePass;
-import vadl.lcb.passes.isaMatching.InstructionLabel;
-import vadl.lcb.passes.isaMatching.IsaMatchingPass;
+import vadl.lcb.passes.isaMatching.IsaMachineInstructionMatchingPass;
+import vadl.lcb.passes.isaMatching.MachineInstructionLabel;
 import vadl.lcb.passes.llvmLowering.domain.ConstantMatPseudoInstruction;
 import vadl.lcb.passes.llvmLowering.tablegen.model.TableGenImmediateRecord;
 import vadl.pass.Pass;
@@ -47,7 +47,7 @@ import vadl.viam.graph.dependency.WriteResourceNode;
  * This pass generates a {@link PseudoInstruction} which consume immediates and emit a machine
  * instruction which loads the value into the register. Note that we will not be looking for
  * instruction like {@code LI} because it is hard to capture the semantics. Instead, we use
- * {@link IsaMatchingPass} and use the {@code ADDI} as move-instruction.
+ * {@link IsaMachineInstructionMatchingPass} and use the {@code ADDI} as move-instruction.
  */
 public class GenerateConstantMaterialisationPass extends Pass {
 
@@ -66,13 +66,14 @@ public class GenerateConstantMaterialisationPass extends Pass {
     var constantMatInstructions = new ArrayList<ConstantMatPseudoInstruction>();
     var fieldUsages = (IdentifyFieldUsagePass.ImmediateDetectionContainer) passResults.lastResultOf(
         IdentifyFieldUsagePass.class);
-    var isaMatching = ((HashMap<InstructionLabel, List<Instruction>>) passResults.lastResultOf(
-        IsaMatchingPass.class));
+    var isaMatching =
+        ((HashMap<MachineInstructionLabel, List<Instruction>>) passResults.lastResultOf(
+            IsaMachineInstructionMatchingPass.class));
     var immediates = ((List<TableGenImmediateRecord>) passResults.lastResultOf(
         GenerateTableGenImmediateRecordPass.class));
 
-    var additionWithImmediates = isaMatching.getOrDefault(InstructionLabel.ADDI_64,
-        isaMatching.getOrDefault(InstructionLabel.ADDI_32, Collections.emptyList()));
+    var additionWithImmediates = isaMatching.getOrDefault(MachineInstructionLabel.ADDI_64,
+        isaMatching.getOrDefault(MachineInstructionLabel.ADDI_32, Collections.emptyList()));
     ensure(!additionWithImmediates.isEmpty(), () -> Diagnostic.error(
         "Specification has no instruction for addition with immediate. Therefore, vadl "
             + "cannot generate an instruction for constant materialisation.",

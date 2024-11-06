@@ -14,8 +14,8 @@ import java.util.List;
 import java.util.Map;
 import org.jetbrains.annotations.Nullable;
 import vadl.configuration.LcbConfiguration;
-import vadl.lcb.passes.isaMatching.InstructionLabel;
-import vadl.lcb.passes.isaMatching.IsaMatchingPass;
+import vadl.lcb.passes.isaMatching.IsaMachineInstructionMatchingPass;
+import vadl.lcb.passes.isaMatching.MachineInstructionLabel;
 import vadl.lcb.passes.llvmLowering.GenerateTableGenMachineInstructionRecordPass;
 import vadl.lcb.passes.llvmLowering.domain.machineDag.MachineInstructionNode;
 import vadl.lcb.passes.llvmLowering.domain.machineDag.MachineInstructionParameterNode;
@@ -61,7 +61,7 @@ public class EmitRegisterInfoCppFilePass extends LcbTemplateRenderingPass {
    * Therefore, LLVM requires methods to eliminate the index. An object of this
    * record represents one method for each {@link Instruction} (ADDI, MEM_STORE, MEM_LOAD).
    */
-  record FrameIndexElimination(InstructionLabel instructionLabel,
+  record FrameIndexElimination(MachineInstructionLabel machineInstructionLabel,
                                Instruction instruction,
                                FieldAccessRefNode immediate,
                                String predicateMethodName,
@@ -75,8 +75,9 @@ public class EmitRegisterInfoCppFilePass extends LcbTemplateRenderingPass {
                                                 Specification specification) {
     var abi =
         (DummyAbi) specification.definitions().filter(x -> x instanceof DummyAbi).findFirst().get();
-    var instructionLabels = (HashMap<InstructionLabel, List<Instruction>>) passResults.lastResultOf(
-        IsaMatchingPass.class);
+    var instructionLabels =
+        (HashMap<MachineInstructionLabel, List<Instruction>>) passResults.lastResultOf(
+            IsaMachineInstructionMatchingPass.class);
     var uninlined = (IdentityHashMap<Instruction, UninlinedGraph>) passResults.lastResultOf(
         FunctionInlinerPass.class);
     var tableGenMachineInstructions = (List<TableGenMachineInstruction>) passResults.lastResultOf(
@@ -131,7 +132,7 @@ public class EmitRegisterInfoCppFilePass extends LcbTemplateRenderingPass {
   }
 
   private List<FrameIndexElimination> getEliminateFrameIndexEntries(
-      @Nullable Map<InstructionLabel, List<Instruction>> instructionLabels,
+      @Nullable Map<MachineInstructionLabel, List<Instruction>> instructionLabels,
       @Nullable IdentityHashMap<Instruction, UninlinedGraph> uninlined,
       List<TableGenMachineInstruction> tableGenMachineInstructions) {
     ensureNonNull(instructionLabels, "labels must exist");
@@ -139,8 +140,9 @@ public class EmitRegisterInfoCppFilePass extends LcbTemplateRenderingPass {
 
     var entries = new ArrayList<FrameIndexElimination>();
     var affected =
-        List.of(InstructionLabel.ADDI_32, InstructionLabel.ADDI_64, InstructionLabel.STORE_MEM,
-            InstructionLabel.LOAD_MEM);
+        List.of(MachineInstructionLabel.ADDI_32, MachineInstructionLabel.ADDI_64,
+            MachineInstructionLabel.STORE_MEM,
+            MachineInstructionLabel.LOAD_MEM);
 
     for (var label : affected) {
       for (var instruction : instructionLabels.getOrDefault(label, Collections.emptyList())) {
@@ -198,7 +200,7 @@ public class EmitRegisterInfoCppFilePass extends LcbTemplateRenderingPass {
       }
     }
 
-    ensure(machineInstructionIndices.size() > 0, "Expected at least one FI pattern");
+    ensure(!machineInstructionIndices.isEmpty(), "Expected at least one FI pattern");
     return machineInstructionIndices.stream().findFirst().get();
   }
 }

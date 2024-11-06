@@ -1,20 +1,13 @@
 package vadl.lcb.passes.llvmLowering.tablegen.model;
 
-import static vadl.viam.ViamError.ensurePresent;
-
 import java.util.Objects;
 import vadl.cppCodeGen.model.VariantKind;
-import vadl.error.DeferredDiagnosticStore;
-import vadl.error.Diagnostic;
-import vadl.gcb.passes.relocation.model.Fixup;
 import vadl.lcb.codegen.model.llvm.ValueType;
 import vadl.lcb.template.lib.Target.Disassembler.EmitDisassemblerCppFilePass;
 import vadl.lcb.template.lib.Target.MCTargetDesc.EmitMCCodeEmitterCppFilePass;
 import vadl.types.BitsType;
-import vadl.types.Type;
 import vadl.viam.Format;
 import vadl.viam.Identifier;
-import vadl.viam.passes.dummyAbi.DummyAbi;
 
 /**
  * Represents an immediate record in TableGen.

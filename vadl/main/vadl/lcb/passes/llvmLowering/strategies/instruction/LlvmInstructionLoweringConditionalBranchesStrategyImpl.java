@@ -1,11 +1,11 @@
 package vadl.lcb.passes.llvmLowering.strategies.instruction;
 
-import static vadl.lcb.passes.isaMatching.InstructionLabel.BEQ;
-import static vadl.lcb.passes.isaMatching.InstructionLabel.BGEQ;
-import static vadl.lcb.passes.isaMatching.InstructionLabel.BGTH;
-import static vadl.lcb.passes.isaMatching.InstructionLabel.BLEQ;
-import static vadl.lcb.passes.isaMatching.InstructionLabel.BLTH;
-import static vadl.lcb.passes.isaMatching.InstructionLabel.BNEQ;
+import static vadl.lcb.passes.isaMatching.MachineInstructionLabel.BEQ;
+import static vadl.lcb.passes.isaMatching.MachineInstructionLabel.BGEQ;
+import static vadl.lcb.passes.isaMatching.MachineInstructionLabel.BGTH;
+import static vadl.lcb.passes.isaMatching.MachineInstructionLabel.BLEQ;
+import static vadl.lcb.passes.isaMatching.MachineInstructionLabel.BLTH;
+import static vadl.lcb.passes.isaMatching.MachineInstructionLabel.BNEQ;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -14,26 +14,25 @@ import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Stream;
 import vadl.lcb.codegen.model.llvm.ValueType;
-import vadl.lcb.passes.isaMatching.InstructionLabel;
+import vadl.lcb.passes.isaMatching.MachineInstructionLabel;
 import vadl.lcb.passes.llvmLowering.domain.LlvmLoweringRecord;
-import vadl.lcb.passes.llvmLowering.domain.machineDag.MachineInstructionParameterNode;
-import vadl.lcb.passes.llvmLowering.domain.selectionDag.LlvmBasicBlockSD;
 import vadl.lcb.passes.llvmLowering.domain.selectionDag.LlvmBrCcSD;
 import vadl.lcb.passes.llvmLowering.domain.selectionDag.LlvmBrCondSD;
 import vadl.lcb.passes.llvmLowering.domain.selectionDag.LlvmCondCode;
 import vadl.lcb.passes.llvmLowering.domain.selectionDag.LlvmSetCondSD;
 import vadl.lcb.passes.llvmLowering.domain.selectionDag.LlvmTypeCastSD;
 import vadl.lcb.passes.llvmLowering.strategies.LlvmInstructionLoweringStrategy;
-import vadl.lcb.passes.llvmLowering.strategies.visitors.impl.ReplaceWithLlvmSDNodesWithControlFlowVisitor;
-import vadl.lcb.passes.llvmLowering.tablegen.model.TableGenInstructionImmediateLabelOperand;
+import vadl.lcb.passes.llvmLowering.strategies.LoweringStrategyUtils;
 import vadl.lcb.passes.llvmLowering.tablegen.model.TableGenInstructionOperand;
 import vadl.lcb.passes.llvmLowering.tablegen.model.TableGenPattern;
 import vadl.lcb.passes.llvmLowering.tablegen.model.TableGenSelectionWithOutputPattern;
-import vadl.lcb.passes.llvmLowering.tablegen.model.parameterIdentity.ParameterIdentity;
-import vadl.lcb.visitors.LcbGraphNodeVisitor;
 import vadl.viam.Instruction;
 import vadl.viam.graph.Graph;
+import vadl.viam.graph.GraphVisitor;
+import vadl.viam.graph.Node;
 import vadl.viam.graph.NodeList;
+import vadl.viam.graph.control.AbstractEndNode;
+import vadl.viam.graph.dependency.SideEffectNode;
 import vadl.viam.graph.dependency.WriteResourceNode;
 import vadl.viam.passes.functionInliner.UninlinedGraph;
 
@@ -47,38 +46,35 @@ public class LlvmInstructionLoweringConditionalBranchesStrategyImpl
   }
 
   @Override
-  protected Set<InstructionLabel> getSupportedInstructionLabels() {
+  protected Set<MachineInstructionLabel> getSupportedInstructionLabels() {
     return Set.of(BEQ, BGEQ, BNEQ, BLEQ, BLTH, BGTH);
   }
 
   @Override
-  protected LcbGraphNodeVisitor getVisitorForPatternSelectorLowering() {
-    // Branch instructions contain if conditionals.
-    // The normal visitor denies those. But "xxxWithControlFlowVisitor" we are allowing
-    // these instructions for conditional branches.
-    return new ReplaceWithLlvmSDNodesWithControlFlowVisitor(architectureType);
+  protected List<GraphVisitor.NodeApplier<? extends Node, ? extends Node>> replacementHooks() {
+    return replacementHooksWithFieldAccessWithBasicBlockReplacement();
   }
 
   @Override
   public Optional<LlvmLoweringRecord> lower(
-      Map<InstructionLabel, List<Instruction>> supportedInstructions,
+      Map<MachineInstructionLabel, List<Instruction>> labelledMachineInstructions,
       Instruction instruction,
       UninlinedGraph uninlinedBehavior) {
 
-    var visitor = getVisitorForPatternSelectorLowering();
+    var visitor = replacementHooks();
     var copy = (UninlinedGraph) uninlinedBehavior.copy();
 
-    for (var node : copy.getNodes().toList()) {
-      visitor.visit(node);
+    for (var node : copy.getNodes(SideEffectNode.class).toList()) {
+      visitReplacementHooks(visitor, node);
     }
 
     copy.deinitializeNodes();
     return Optional.of(
-        createIntermediateResult(supportedInstructions, instruction, copy));
+        createIntermediateResult(labelledMachineInstructions, instruction, copy));
   }
 
   private LlvmLoweringRecord createIntermediateResult(
-      Map<InstructionLabel, List<Instruction>> supportedInstructions,
+      Map<MachineInstructionLabel, List<Instruction>> supportedInstructions,
       Instruction instruction,
       UninlinedGraph visitedGraph) {
 
@@ -95,7 +91,7 @@ public class LlvmInstructionLoweringConditionalBranchesStrategyImpl
             inputOperands, outputOperands, patterns);
 
     var allPatterns = Stream.concat(patterns.stream(), alternatives.stream())
-        .map(this::replaceBasicBlockByLabelImmediateInMachineInstruction)
+        .map(LoweringStrategyUtils::replaceBasicBlockByLabelImmediateInMachineInstruction)
         .toList();
 
     var uses = getRegisterUses(visitedGraph, inputOperands, outputOperands);
@@ -112,32 +108,11 @@ public class LlvmInstructionLoweringConditionalBranchesStrategyImpl
     );
   }
 
-  /**
-   * Conditional branch patterns reference the {@code bb} selection dag node. However,
-   * the machine instruction should use the label immediate to properly encode the instruction.
-   */
-  private TableGenPattern replaceBasicBlockByLabelImmediateInMachineInstruction(
-      TableGenPattern pattern) {
-
-    if (pattern instanceof TableGenSelectionWithOutputPattern) {
-      // We know that the `selector` already has LlvmBasicBlock nodes.
-      var candidates = ((TableGenSelectionWithOutputPattern) pattern).machine().getNodes(
-          MachineInstructionParameterNode.class).toList();
-      for (var candidate : candidates) {
-        if (candidate.instructionOperand().origin() instanceof LlvmBasicBlockSD basicBlockSD) {
-          candidate.setInstructionOperand(new TableGenInstructionImmediateLabelOperand(
-              ParameterIdentity.fromBasicBlockToImmediateLabel(basicBlockSD), basicBlockSD));
-        }
-      }
-    }
-
-    return pattern;
-  }
 
   @Override
   protected List<TableGenPattern> generatePatternVariations(
       Instruction instruction,
-      Map<InstructionLabel, List<Instruction>> supportedInstructions,
+      Map<MachineInstructionLabel, List<Instruction>> supportedInstructions,
       Graph behavior,
       List<TableGenInstructionOperand> inputOperands,
       List<TableGenInstructionOperand> outputOperands,

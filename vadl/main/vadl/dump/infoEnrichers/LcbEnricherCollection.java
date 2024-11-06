@@ -10,8 +10,8 @@ import vadl.dump.Info;
 import vadl.dump.InfoEnricher;
 import vadl.dump.InfoUtils;
 import vadl.dump.entities.DefinitionEntity;
-import vadl.lcb.passes.isaMatching.InstructionLabel;
-import vadl.lcb.passes.isaMatching.IsaMatchingPass;
+import vadl.lcb.passes.isaMatching.IsaMachineInstructionMatchingPass;
+import vadl.lcb.passes.isaMatching.MachineInstructionLabel;
 import vadl.lcb.passes.llvmLowering.LlvmLoweringPass;
 import vadl.lcb.passes.llvmLowering.domain.LlvmLoweringRecord;
 import vadl.lcb.passes.llvmLowering.tablegen.model.TableGenInstructionOperand;
@@ -33,15 +33,15 @@ public class LcbEnricherCollection {
       forType(DefinitionEntity.class, (definitionEntity, passResults) -> {
         // This supplier also runs for the VIAM dump.
         // But, the pass wasn't scheduled yet.
-        if (!passResults.hasRunPassOnce(IsaMatchingPass.class)) {
+        if (!passResults.hasRunPassOnce(IsaMachineInstructionMatchingPass.class)) {
           return;
         }
 
         var labels =
-            (HashMap<InstructionLabel, List<Instruction>>) passResults.lastNullableResultOf(
-                IsaMatchingPass.class);
+            (HashMap<MachineInstructionLabel, List<Instruction>>) passResults.lastNullableResultOf(
+                IsaMachineInstructionMatchingPass.class);
         if (labels != null && definitionEntity.origin() instanceof Instruction instruction) {
-          var flipped = LlvmLoweringPass.flipIsaMatching(labels);
+          var flipped = LlvmLoweringPass.flipIsaMatchingMachineInstructions(labels);
           var label =
               Optional.ofNullable(flipped.get(instruction)).map(Enum::name).orElse("No label");
           var info = Info.Tag.of("Instruction Label", label);

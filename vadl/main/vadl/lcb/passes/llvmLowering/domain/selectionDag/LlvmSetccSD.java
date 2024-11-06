@@ -13,15 +13,13 @@ import vadl.viam.graph.GraphNodeVisitor;
 import vadl.viam.graph.Node;
 import vadl.viam.graph.NodeList;
 import vadl.viam.graph.dependency.AbstractFunctionCallNode;
+import vadl.viam.graph.dependency.BuiltInCall;
 import vadl.viam.graph.dependency.ExpressionNode;
 
 /**
  * LLVM Node for logical comparison.
  */
-public class LlvmSetccSD extends AbstractFunctionCallNode implements LlvmNodeLowerable {
-  @DataValue
-  protected BuiltInTable.BuiltIn builtIn;
-
+public class LlvmSetccSD extends BuiltInCall implements LlvmNodeLowerable {
   public static Set<BuiltInTable.BuiltIn> supported = Set.of(
       BuiltInTable.EQU,
       BuiltInTable.NEQ,
@@ -43,7 +41,7 @@ public class LlvmSetccSD extends AbstractFunctionCallNode implements LlvmNodeLow
   public LlvmSetccSD(BuiltInTable.BuiltIn built,
                      NodeList<ExpressionNode> args,
                      Type type) {
-    super(args, type);
+    super(built, args, type);
     this.builtIn = built;
     var condCode = LlvmCondCode.from(built);
     if (condCode != null) {
@@ -65,6 +63,7 @@ public class LlvmSetccSD extends AbstractFunctionCallNode implements LlvmNodeLow
   /**
    * Gets the {@link BuiltInTable.BuiltIn}.
    */
+  @Override
   public BuiltInTable.BuiltIn builtIn() {
     return this.builtIn;
   }
@@ -95,6 +94,5 @@ public class LlvmSetccSD extends AbstractFunctionCallNode implements LlvmNodeLow
   @Override
   protected void collectData(List<Object> collection) {
     super.collectData(collection);
-    collection.add(builtIn);
   }
 }

@@ -40,6 +40,10 @@ public class PseudoFuncParamNode extends FuncParamNode {
     collection.add(index);
   }
 
+  public int index() {
+    return this.index;
+  }
+
 
   @Override
   public Node copy() {

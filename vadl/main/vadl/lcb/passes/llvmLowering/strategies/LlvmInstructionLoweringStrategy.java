@@ -22,7 +22,7 @@ import org.slf4j.LoggerFactory;
 import vadl.error.DeferredDiagnosticStore;
 import vadl.error.Diagnostic;
 import vadl.lcb.codegen.model.llvm.ValueType;
-import vadl.lcb.passes.isaMatching.InstructionLabel;
+import vadl.lcb.passes.isaMatching.MachineInstructionLabel;
 import vadl.lcb.passes.llvmLowering.LlvmLoweringPass;
 import vadl.lcb.passes.llvmLowering.LlvmMayLoadMemory;
 import vadl.lcb.passes.llvmLowering.LlvmMayStoreMemory;
@@ -34,11 +34,34 @@ import vadl.lcb.passes.llvmLowering.domain.machineDag.MachineInstructionParamete
 import vadl.lcb.passes.llvmLowering.domain.selectionDag.LlvmBasicBlockSD;
 import vadl.lcb.passes.llvmLowering.domain.selectionDag.LlvmBrCcSD;
 import vadl.lcb.passes.llvmLowering.domain.selectionDag.LlvmBrCondSD;
+import vadl.lcb.passes.llvmLowering.domain.selectionDag.LlvmBrSD;
 import vadl.lcb.passes.llvmLowering.domain.selectionDag.LlvmFieldAccessRefNode;
 import vadl.lcb.passes.llvmLowering.domain.selectionDag.LlvmFrameIndexSD;
 import vadl.lcb.passes.llvmLowering.domain.selectionDag.LlvmNodeReplaceable;
-import vadl.lcb.passes.llvmLowering.strategies.visitors.TableGenPatternLowerable;
-import vadl.lcb.passes.llvmLowering.strategies.visitors.impl.ReplaceWithLlvmSDNodesVisitor;
+import vadl.lcb.passes.llvmLowering.domain.selectionDag.LlvmUnlowerableSD;
+import vadl.lcb.passes.llvmLowering.strategies.nodeLowering.BranchEndNodeReplacement;
+import vadl.lcb.passes.llvmLowering.strategies.nodeLowering.BuiltInCallNodeReplacement;
+import vadl.lcb.passes.llvmLowering.strategies.nodeLowering.ConstantNodeReplacement;
+import vadl.lcb.passes.llvmLowering.strategies.nodeLowering.FieldAccessRefNodeByLlvmBasicBlockReplacement;
+import vadl.lcb.passes.llvmLowering.strategies.nodeLowering.FieldAccessRefNodeReplacement;
+import vadl.lcb.passes.llvmLowering.strategies.nodeLowering.FuncCallReplacement;
+import vadl.lcb.passes.llvmLowering.strategies.nodeLowering.IfNodeReplacement;
+import vadl.lcb.passes.llvmLowering.strategies.nodeLowering.InstrCallNodeReplacement;
+import vadl.lcb.passes.llvmLowering.strategies.nodeLowering.InstrEndNodeReplacement;
+import vadl.lcb.passes.llvmLowering.strategies.nodeLowering.LetNodeReplacement;
+import vadl.lcb.passes.llvmLowering.strategies.nodeLowering.LlvmUnlowerableNodeReplacement;
+import vadl.lcb.passes.llvmLowering.strategies.nodeLowering.ReadMemNodeReplacement;
+import vadl.lcb.passes.llvmLowering.strategies.nodeLowering.ReadRegFileNodeReplacement;
+import vadl.lcb.passes.llvmLowering.strategies.nodeLowering.ReadRegNodeReplacement;
+import vadl.lcb.passes.llvmLowering.strategies.nodeLowering.ReturnNodeReplacement;
+import vadl.lcb.passes.llvmLowering.strategies.nodeLowering.SelectNodeReplacement;
+import vadl.lcb.passes.llvmLowering.strategies.nodeLowering.SignExtendNodeReplacement;
+import vadl.lcb.passes.llvmLowering.strategies.nodeLowering.SliceNodeReplacement;
+import vadl.lcb.passes.llvmLowering.strategies.nodeLowering.TruncateNodeReplacement;
+import vadl.lcb.passes.llvmLowering.strategies.nodeLowering.WriteMemNodeReplacement;
+import vadl.lcb.passes.llvmLowering.strategies.nodeLowering.WriteRegFileNodeReplacement;
+import vadl.lcb.passes.llvmLowering.strategies.nodeLowering.WriteRegNodeReplacement;
+import vadl.lcb.passes.llvmLowering.strategies.nodeLowering.ZeroExtendNodeReplacement;
 import vadl.lcb.passes.llvmLowering.tablegen.model.TableGenConstantOperand;
 import vadl.lcb.passes.llvmLowering.tablegen.model.TableGenInstruction;
 import vadl.lcb.passes.llvmLowering.tablegen.model.TableGenInstructionBareSymbolOperand;
@@ -52,11 +75,11 @@ import vadl.lcb.passes.llvmLowering.tablegen.model.TableGenPattern;
 import vadl.lcb.passes.llvmLowering.tablegen.model.TableGenSelectionWithOutputPattern;
 import vadl.lcb.passes.llvmLowering.tablegen.model.parameterIdentity.ParameterIdentity;
 import vadl.lcb.passes.llvmLowering.tablegen.model.parameterIdentity.ParameterTypeAndNameIdentity;
-import vadl.lcb.visitors.LcbGraphNodeVisitor;
 import vadl.viam.Instruction;
 import vadl.viam.InstructionSetArchitecture;
 import vadl.viam.PseudoInstruction;
 import vadl.viam.graph.Graph;
+import vadl.viam.graph.GraphVisitor;
 import vadl.viam.graph.Node;
 import vadl.viam.graph.NodeList;
 import vadl.viam.graph.control.AbstractBeginNode;
@@ -72,6 +95,7 @@ import vadl.viam.graph.dependency.FuncParamNode;
 import vadl.viam.graph.dependency.ReadRegFileNode;
 import vadl.viam.graph.dependency.ReadRegNode;
 import vadl.viam.graph.dependency.ReadResourceNode;
+import vadl.viam.graph.dependency.SideEffectNode;
 import vadl.viam.graph.dependency.WriteMemNode;
 import vadl.viam.graph.dependency.WriteRegFileNode;
 import vadl.viam.graph.dependency.WriteRegNode;
@@ -92,29 +116,90 @@ public abstract class LlvmInstructionLoweringStrategy {
   }
 
   /**
-   * Get the supported set of {@link InstructionLabel} which this strategy supports.
+   * Get the supported set of {@link MachineInstructionLabel} which this strategy supports.
    */
-  protected abstract Set<InstructionLabel> getSupportedInstructionLabels();
+  protected abstract Set<MachineInstructionLabel> getSupportedInstructionLabels();
 
   /**
    * Checks whether the given {@link Instruction} is lowerable with this strategy.
    */
-  public boolean isApplicable(@Nullable InstructionLabel instructionLabel) {
-    if (instructionLabel == null) {
+  public boolean isApplicable(@Nullable MachineInstructionLabel machineInstructionLabel) {
+    if (machineInstructionLabel == null) {
       return false;
     }
 
-    return getSupportedInstructionLabels().contains(instructionLabel);
+    return getSupportedInstructionLabels().contains(machineInstructionLabel);
+  }
+
+  protected List<GraphVisitor.NodeApplier
+      <? extends Node, ? extends Node>> replacementHooksWithDefaultFieldAccessReplacement() {
+    var hooks = new ArrayList<GraphVisitor.NodeApplier<? extends Node, ? extends Node>>();
+    return replacementHooks(hooks, new FieldAccessRefNodeReplacement(hooks, architectureType));
+  }
+
+  protected List<GraphVisitor.NodeApplier
+      <? extends Node, ? extends Node>> replacementHooksWithFieldAccessWithBasicBlockReplacement() {
+    var hooks = new ArrayList<GraphVisitor.NodeApplier<? extends Node, ? extends Node>>();
+    return replacementHooks(hooks,
+        new FieldAccessRefNodeByLlvmBasicBlockReplacement(hooks, architectureType));
   }
 
   /**
-   * This returns an instance of the visitor which lowers graph into a lowerable pattern.
-   * The default {@link ReplaceWithLlvmSDNodesVisitor} will reject any control flow like
-   * if-conditions and mark them as not lowerable.
+   * Returns a list of applier which transform a {@link Graph}.
    */
-  protected LcbGraphNodeVisitor getVisitorForPatternSelectorLowering() {
-    return new ReplaceWithLlvmSDNodesVisitor(architectureType);
+  private List<GraphVisitor.NodeApplier<? extends Node, ? extends Node>> replacementHooks(
+      List<GraphVisitor.NodeApplier<? extends Node, ? extends Node>> hooks,
+      GraphVisitor.NodeApplier<? extends Node, ? extends Node> fieldAccessRefNodeReplacement) {
+    var v1 = new BranchEndNodeReplacement(hooks);
+    var v2 = new BuiltInCallNodeReplacement(hooks);
+    var v3 = new ConstantNodeReplacement(hooks);
+    var v5 = new FuncCallReplacement();
+    var v6 = new IfNodeReplacement();
+    var v7 = new InstrCallNodeReplacement(hooks);
+    var v8 = new InstrEndNodeReplacement(hooks);
+    var v9 = new LetNodeReplacement(hooks);
+    var v10 = new ReadMemNodeReplacement(hooks);
+    var v11 = new ReadRegFileNodeReplacement(hooks);
+    var v12 = new ReadRegNodeReplacement(hooks);
+    var v13 = new ReturnNodeReplacement(hooks);
+    var v14 = new SelectNodeReplacement(hooks);
+    var v15 = new SignExtendNodeReplacement(hooks);
+    var v16 = new SliceNodeReplacement(hooks);
+    var v17 = new TruncateNodeReplacement(hooks);
+    var v18 = new WriteMemNodeReplacement(hooks);
+    var v19 = new WriteRegFileNodeReplacement(hooks);
+    var v20 = new WriteRegNodeReplacement(hooks);
+    var v21 = new ZeroExtendNodeReplacement(hooks);
+    var v22 = new LlvmUnlowerableNodeReplacement(hooks);
+
+    hooks.add(v1);
+    hooks.add(v2);
+    hooks.add(v3);
+    hooks.add(fieldAccessRefNodeReplacement);
+    hooks.add(v5);
+    hooks.add(v6);
+    hooks.add(v7);
+    hooks.add(v8);
+    hooks.add(v9);
+    hooks.add(v10);
+    hooks.add(v11);
+    hooks.add(v12);
+    hooks.add(v13);
+    hooks.add(v14);
+    hooks.add(v15);
+    hooks.add(v16);
+    hooks.add(v17);
+    hooks.add(v18);
+    hooks.add(v19);
+    hooks.add(v20);
+    hooks.add(v21);
+    hooks.add(v22);
+
+    return hooks;
   }
+
+  protected abstract List<GraphVisitor.NodeApplier
+      <? extends Node, ? extends Node>> replacementHooks();
 
   /**
    * Flags indicate special properties of a machine instruction. This method checks the
@@ -127,8 +212,9 @@ public abstract class LlvmInstructionLoweringStrategy {
         .anyMatch(node -> node.staticCounterAccess() != null);
 
     var isBranch = isTerminator
-        && graph.getNodes(Set.of(IfNode.class, LlvmBrCcSD.class, LlvmBrCondSD.class))
-        .findFirst().isPresent();
+        &&
+        graph.getNodes(Set.of(IfNode.class, LlvmBrCcSD.class, LlvmBrCondSD.class, LlvmBrSD.class))
+            .findFirst().isPresent();
 
     var isCall = false;
     var isReturn = false;
@@ -155,15 +241,15 @@ public abstract class LlvmInstructionLoweringStrategy {
    * Generate a lowering result for the given {@link Graph} for machine instructions.
    * If it is not lowerable then return {@link Optional#empty()}.
    *
-   * @param supportedInstructions the instructions which have known semantics.
-   * @param instruction           is the machine instruction which should be lowered.
-   * @param unmodifiedBehavior    is the uninlined graph in the case of {@link Instruction}.
+   * @param labelledMachineInstructions the instructions which have known semantics.
+   * @param instruction                 is the machine instruction which should be lowered.
+   * @param unmodifiedBehavior          is the uninlined graph in the case of {@link Instruction}.
    */
   public Optional<LlvmLoweringRecord> lower(
-      Map<InstructionLabel, List<Instruction>> supportedInstructions,
+      Map<MachineInstructionLabel, List<Instruction>> labelledMachineInstructions,
       Instruction instruction,
       UninlinedGraph unmodifiedBehavior) {
-    return lowerInstruction(supportedInstructions, instruction,
+    return lowerInstruction(labelledMachineInstructions, instruction,
         unmodifiedBehavior);
   }
 
@@ -171,13 +257,13 @@ public abstract class LlvmInstructionLoweringStrategy {
    * Lower a pseudo instruction.
    */
   public Optional<LlvmLoweringRecord> lower(
-      Map<InstructionLabel, List<Instruction>> supportedInstructions,
+      Map<MachineInstructionLabel, List<Instruction>> labelledMachineInstructions,
       PseudoInstruction pseudoInstruction,
       Instruction instruction,
       Graph unmodifiedBehavior) {
     logger.atDebug().log("Lowering {} with {}", instruction.identifier.simpleName(),
         pseudoInstruction.identifier.simpleName());
-    return lowerInstruction(supportedInstructions, instruction,
+    return lowerInstruction(labelledMachineInstructions, instruction,
         unmodifiedBehavior);
   }
 
@@ -185,16 +271,16 @@ public abstract class LlvmInstructionLoweringStrategy {
    * Generate a lowering result for the given {@link Graph} for pseudo instructions.
    * If it is not lowerable then return {@link Optional#empty()}.
    *
-   * @param supportedInstructions the instructions which have known semantics.
-   * @param instruction           is the machine instruction which should be lowered.
-   * @param unmodifiedBehavior    is the uninlined graph in the case of {@link Instruction} or
-   *                              the applied graph in the case of {@link PseudoInstruction}.
+   * @param labelledMachineInstructions the instructions which have known semantics.
+   * @param instruction                 is the machine instruction which should be lowered.
+   * @param unmodifiedBehavior          is the uninlined graph in the case of {@link Instruction} or
+   *                                    the applied graph in the case of {@link PseudoInstruction}.
    */
   protected Optional<LlvmLoweringRecord> lowerInstruction(
-      Map<InstructionLabel, List<Instruction>> supportedInstructions,
+      Map<MachineInstructionLabel, List<Instruction>> labelledMachineInstructions,
       Instruction instruction,
       Graph unmodifiedBehavior) {
-    var visitor = getVisitorForPatternSelectorLowering();
+    var visitor = replacementHooksWithDefaultFieldAccessReplacement();
     var copy = unmodifiedBehavior.copy();
 
     if (!checkIfNoControlFlow(copy) && !checkIfNotAllowedDataflowNodes(copy)) {
@@ -206,10 +292,10 @@ public abstract class LlvmInstructionLoweringStrategy {
 
     // Continue with lowering of nodes
     var isLowerable = true;
-    for (var endNode : copy.getNodes(AbstractEndNode.class).toList()) {
-      visitor.visit(endNode);
+    for (var endNode : copy.getNodes(SideEffectNode.class).toList()) {
+      visitReplacementHooks(visitor, endNode);
 
-      if (!((TableGenPatternLowerable) visitor).isPatternLowerable()) {
+      if (!copy.getNodes(LlvmUnlowerableSD.class).toList().isEmpty()) {
         DeferredDiagnosticStore.add(
             Diagnostic.warning("Instruction is not lowerable and will be skipped",
                 instruction.sourceLocation()).build());
@@ -243,7 +329,7 @@ public abstract class LlvmInstructionLoweringStrategy {
       var alternativePatterns =
           generatePatternVariations(
               instruction,
-              supportedInstructions,
+              labelledMachineInstructions,
               copy,
               inputOperands,
               outputOperands,
@@ -265,6 +351,14 @@ public abstract class LlvmInstructionLoweringStrategy {
           registerUses,
           registerDefs
       ));
+    }
+  }
+
+  protected void visitReplacementHooks(
+      List<GraphVisitor.NodeApplier<? extends Node, ? extends Node>> visitor,
+      SideEffectNode sideEffect) {
+    for (var v : visitor.stream().filter(x -> x.acceptable(sideEffect)).toList()) {
+      v.visitApplicable(sideEffect);
     }
   }
 
@@ -362,7 +456,7 @@ public abstract class LlvmInstructionLoweringStrategy {
    */
   protected abstract List<TableGenPattern> generatePatternVariations(
       Instruction instruction,
-      Map<InstructionLabel, List<Instruction>> supportedInstructions,
+      Map<MachineInstructionLabel, List<Instruction>> supportedInstructions,
       Graph behavior,
       List<TableGenInstructionOperand> inputOperands,
       List<TableGenInstructionOperand> outputOperands,
@@ -416,7 +510,7 @@ public abstract class LlvmInstructionLoweringStrategy {
   public static List<TableGenInstructionOperand> getTableGenInputOperands(
       List<TableGenInstructionOperand> outputOperands,
       Graph graph) {
-    var set =
+    var setParameters =
         outputOperands.stream()
             .filter(x -> x instanceof TableGenInstructionIndexedRegisterFileOperand)
             .map(x -> {
@@ -424,6 +518,15 @@ public abstract class LlvmInstructionLoweringStrategy {
               return mapped.parameter();
             })
             .collect(Collectors.toSet());
+    var outputFields =
+        outputOperands.stream()
+            .filter(x -> x instanceof TableGenInstructionRegisterFileOperand)
+            .map(x -> {
+              var mapped = (TableGenInstructionRegisterFileOperand) x;
+              return mapped.formatField();
+            })
+            .collect(Collectors.toSet());
+
     return getInputOperands(graph)
         .stream()
         .filter(node -> {
@@ -439,7 +542,13 @@ public abstract class LlvmInstructionLoweringStrategy {
             // If the node is a fieldRefNode then it must not be in the outputs.
             // Otherwise, ok.
             node -> !(node instanceof TableGenInstructionIndexedRegisterFileOperand operand)
-                || !set.contains(operand.parameter())).toList();
+                || !setParameters.contains(operand.parameter()))
+        .filter(
+            // If the node is a fieldRefNode then it must not be in the outputs.
+            // Otherwise, ok.
+            node -> !(node instanceof TableGenInstructionRegisterFileOperand operand)
+                || !outputFields.contains(operand.formatField()))
+        .toList();
   }
 
   /**
@@ -567,17 +676,28 @@ public abstract class LlvmInstructionLoweringStrategy {
    */
   private static TableGenInstructionOperand generateInstructionOperand(
       LlvmFieldAccessRefNode node) {
-    return new TableGenInstructionImmediateOperand(
-        ParameterIdentity.from(node),
-        node);
+    if (node.usage() == LlvmFieldAccessRefNode.Usage.Immediate) {
+      return new TableGenInstructionImmediateOperand(
+          ParameterIdentity.from(node),
+          node);
+    } else if (node.usage() == LlvmFieldAccessRefNode.Usage.BasicBlock) {
+      return new TableGenInstructionImmediateLabelOperand(
+          ParameterIdentity.fromToImmediateLabel(node),
+          node);
+    } else {
+      throw Diagnostic.error("Not supported usage", node.sourceLocation()).build();
+    }
   }
 
   /**
    * Most instruction's behaviors have inputs. Those are the results which the instruction requires.
    */
   private static List<Node> getInputOperands(Graph graph) {
+    // First, the registers
     var x = graph.getNodes(ReadRegFileNode.class);
+    // Then, immediates
     var y = graph.getNodes(FieldAccessRefNode.class);
+    // Then, the rest
     var z = graph.getNodes(FuncCallNode.class).flatMap(
         funcCallNode -> funcCallNode.function().behavior().getNodes(FuncParamNode.class));
     return Stream.concat(Stream.concat(x, y), z)

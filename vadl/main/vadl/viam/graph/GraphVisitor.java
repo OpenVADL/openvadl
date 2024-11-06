@@ -1,6 +1,10 @@
 package vadl.viam.graph;
 
+import static vadl.viam.ViamError.ensure;
+
+import java.util.List;
 import javax.annotation.Nullable;
+import vadl.lcb.passes.llvmLowering.domain.selectionDag.LlvmUnlowerableSD;
 
 /**
  * The {@link GraphVisitor} interface represents a visitor that can visit nodes in a graph and
@@ -12,6 +16,66 @@ public interface GraphVisitor<R> {
 
   @Nullable
   R visit(Node from, @Nullable Node to);
+
+  /**
+   * The {@code NodeApplier} interface represents a graph node visitor that changes
+   * nodes in a graph. When the {@code visit} method returns {@code null} then the
+   * node will be deleted. If the same node was returned then it will be replaced nonetheless.
+   * Also note that mutability in {@code visit} method is allowed.
+   */
+  interface NodeApplier<T extends Node, R extends Node> {
+    @Nullable
+    R visit(T node);
+
+    boolean acceptable(Node node);
+
+    List<NodeApplier<? extends Node, ? extends Node>> recursiveHooks();
+
+    /**
+     * Checks whether the {@link NodeApplier} is applicable for the given {@code node}.
+     */
+    default List<NodeApplier<? extends Node, ? extends Node>> applicable(Node node) {
+      return recursiveHooks()
+          .stream()
+          .filter(x -> x.acceptable(node))
+          .toList();
+    }
+
+    /**
+     * Find the applicable hook and run it for the given {@code arg}.
+     */
+    default void visitApplicable(Node arg) {
+      var applicable = applicable(arg);
+      ensure(applicable.size() <= 1, "There are multiple replacement strategies applicable.");
+      for (var applier : applicable) {
+        NodeApplier<Node, Node> cast = (NodeApplier<Node, Node>) applier;
+        cast.apply(arg);
+      }
+    }
+
+    /**
+     * Apply the {@link NodeApplier} and replace and delete the node optionally.
+     */
+    @Nullable
+    default R apply(T node) {
+      var newNode = visit(node);
+
+      if (newNode == null) {
+        if (!node.isDeleted()) {
+          node.safeDelete();
+        }
+        return null;
+      }
+
+      if (!node.isDeleted() && node != newNode) {
+        return node.replaceAndDelete(newNode);
+      } else if (!node.isDeleted() && node == newNode) {
+        return newNode;
+      }
+
+      return null;
+    }
+  }
 
   /**
    * The Applier interface represents a graph visitor that assigns new values to inputs of
