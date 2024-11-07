@@ -24,6 +24,7 @@ import vadl.javaannotations.AbstractAnnotationChecker;
 public class ApplyOnSuccessorsChecker extends AbstractAnnotationChecker {
 
   private static String GRAPH_PKG = "vadl.viam.graph.";
+  private static String NODELIST = GRAPH_PKG + "NodeList";
   private static String NODE = GRAPH_PKG + "Node";
   private static String GRAPH_APPLIER = GRAPH_PKG + "GraphVisitor.Applier";
 
@@ -87,13 +88,20 @@ public class ApplyOnSuccessorsChecker extends AbstractAnnotationChecker {
 
 
       String stmt;
+      if (fieldType.toString().startsWith(NODELIST)) {
+        // if the field is a nodelist, we implement it as stream
+        stmt =
+            ("%s = %s.stream().map((e) -> %s.apply(this, e%s))"
+                + ".collect(Collectors.toCollection(NodeList::new));")
+                .formatted(fieldName, fieldName, paramNames.get(0), typeOverload);
+      } else {
+        var applyMethod = fieldIsNullable ? "applyNullable" : "apply";
 
-      var applyMethod = fieldIsNullable ? "applyNullable" : "apply";
-
-      // otherwise we use the default apply method
-      stmt = "%s = %s.%s(this, %s%s);".formatted(
-          fieldName, paramNames.get(0), applyMethod,
-          fieldName, typeOverload);
+        // otherwise we use the default apply method
+        stmt = "%s = %s.%s(this, %s%s);".formatted(
+            fieldName, paramNames.get(0), applyMethod,
+            fieldName, typeOverload);
+      }
 
 
       stmts.add(stmt);
