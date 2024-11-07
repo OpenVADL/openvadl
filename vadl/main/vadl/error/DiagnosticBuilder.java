@@ -3,6 +3,7 @@ package vadl.error;
 import com.google.errorprone.annotations.FormatMethod;
 import java.util.ArrayList;
 import vadl.utils.SourceLocation;
+import vadl.utils.WithSourceLocation;
 
 /**
  * An ergonomic builder for a diagnostic.
@@ -44,9 +45,9 @@ public class DiagnosticBuilder {
    * @return the builder itself.
    */
   @FormatMethod
-  public DiagnosticBuilder locationDescription(SourceLocation location, String content,
+  public DiagnosticBuilder locationDescription(WithSourceLocation location, String content,
                                                Object... args) {
-    locationLabel(location,
+    locationLabel(location.sourceLocation(),
         new Diagnostic.Message(Diagnostic.MsgType.PLAIN, content.formatted(args)));
     return this;
   }
@@ -60,8 +61,9 @@ public class DiagnosticBuilder {
    * @return the builder itself.
    */
   @FormatMethod
-  public DiagnosticBuilder locationNote(SourceLocation location, String content, Object... args) {
-    locationLabel(location,
+  public DiagnosticBuilder locationNote(WithSourceLocation location, String content,
+                                        Object... args) {
+    locationLabel(location.sourceLocation(),
         new Diagnostic.Message(Diagnostic.MsgType.NOTE, content.formatted(args)));
     return this;
   }
@@ -75,8 +77,9 @@ public class DiagnosticBuilder {
    * @return the builder itself.
    */
   @FormatMethod
-  public DiagnosticBuilder locationHelp(SourceLocation location, String content, Object... args) {
-    locationLabel(location,
+  public DiagnosticBuilder locationHelp(WithSourceLocation location, String content,
+                                        Object... args) {
+    locationLabel(location.sourceLocation(),
         new Diagnostic.Message(Diagnostic.MsgType.HELP, content.formatted(args)));
     return this;
   }

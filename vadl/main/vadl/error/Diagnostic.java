@@ -46,8 +46,8 @@ public class Diagnostic extends RuntimeException {
 
   /**
    * It's generally recommended to not instantiate Diagnostics on their own but to make use of the
-   * {@link Diagnostic#error(String, SourceLocation)} and
-   * {@link Diagnostic#warning(String, SourceLocation)}
+   * {@link Diagnostic#error(String, WithSourceLocation)} and
+   * {@link Diagnostic#warning(String, WithSourceLocation)}
    * builders.
    */
   public Diagnostic(Level level, String reason, MultiLocation multiLocation,
@@ -66,34 +66,10 @@ public class Diagnostic extends RuntimeException {
    * @param location where the error occurred (primary location).
    * @return the builder.
    */
-  public static DiagnosticBuilder error(String reason, SourceLocation location) {
-    return new DiagnosticBuilder(Level.ERROR, reason, location);
-  }
-
-  /**
-   * Creates a {@link DiagnosticBuilder} for an error that already has all the mandatory fields
-   * filled in.
-   *
-   * @param reason   for the error.
-   * @param location where the error occurred (primary location).
-   * @return the builder.
-   */
   public static DiagnosticBuilder error(String reason, WithSourceLocation location) {
     return new DiagnosticBuilder(Level.ERROR, reason, location.sourceLocation());
   }
 
-
-  /**
-   * Creates a {@link DiagnosticBuilder} for a warning that already has all the mandatory fields
-   * filled in.
-   *
-   * @param reason   for the warning.
-   * @param location where the warning occurred (primary location).
-   * @return the builder.
-   */
-  public static DiagnosticBuilder warning(String reason, SourceLocation location) {
-    return new DiagnosticBuilder(Level.WARNING, reason, location);
-  }
 
   /**
    * Creates a {@link DiagnosticBuilder} for a warning that already has all the mandatory fields
