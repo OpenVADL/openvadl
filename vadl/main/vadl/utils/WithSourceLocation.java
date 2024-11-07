@@ -2,8 +2,8 @@ package vadl.utils;
 
 /**
  * Interface representing an entity with a {@link SourceLocation}.
- * <p>
- * Provides a method to retrieve the source location associated with the implementing entity.
+ *
+ * <p>Provides a method to retrieve the source location associated with the implementing entity.
  */
 public interface WithSourceLocation {
   /**
