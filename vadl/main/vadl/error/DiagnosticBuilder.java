@@ -1,5 +1,6 @@
 package vadl.error;
 
+import com.google.errorprone.annotations.FormatMethod;
 import java.util.ArrayList;
 import vadl.utils.SourceLocation;
 
@@ -42,9 +43,11 @@ public class DiagnosticBuilder {
    * @param content  of the description.
    * @return the builder itself.
    */
-  public DiagnosticBuilder locationDescription(SourceLocation location, String content) {
+  @FormatMethod
+  public DiagnosticBuilder locationDescription(SourceLocation location, String content,
+                                               Object... args) {
     locationLabel(location,
-        new Diagnostic.Message(Diagnostic.MsgType.PLAIN, content));
+        new Diagnostic.Message(Diagnostic.MsgType.PLAIN, content.formatted(args)));
     return this;
   }
 
@@ -56,9 +59,10 @@ public class DiagnosticBuilder {
    * @param content  of the note.
    * @return the builder itself.
    */
-  public DiagnosticBuilder locationNote(SourceLocation location, String content) {
+  @FormatMethod
+  public DiagnosticBuilder locationNote(SourceLocation location, String content, Object... args) {
     locationLabel(location,
-        new Diagnostic.Message(Diagnostic.MsgType.NOTE, content));
+        new Diagnostic.Message(Diagnostic.MsgType.NOTE, content.formatted(args)));
     return this;
   }
 
@@ -70,9 +74,10 @@ public class DiagnosticBuilder {
    * @param content  of the help message.
    * @return the builder itself.
    */
-  public DiagnosticBuilder locationHelp(SourceLocation location, String content) {
+  @FormatMethod
+  public DiagnosticBuilder locationHelp(SourceLocation location, String content, Object... args) {
     locationLabel(location,
-        new Diagnostic.Message(Diagnostic.MsgType.HELP, content));
+        new Diagnostic.Message(Diagnostic.MsgType.HELP, content.formatted(args)));
     return this;
   }
 
@@ -82,10 +87,11 @@ public class DiagnosticBuilder {
    * @param content of the description.
    * @return the builder itself.
    */
-  public DiagnosticBuilder description(String content) {
+  @FormatMethod
+  public DiagnosticBuilder description(String content, Object... args) {
     diagnostic.messages.add(new Diagnostic.Message(
         Diagnostic.MsgType.PLAIN,
-        content
+        content.formatted(args)
     ));
     return this;
   }
@@ -96,10 +102,11 @@ public class DiagnosticBuilder {
    * @param content of the note.
    * @return the builder itself.
    */
-  public DiagnosticBuilder note(String content) {
+  @FormatMethod
+  public DiagnosticBuilder note(String content, Object... args) {
     diagnostic.messages.add(new Diagnostic.Message(
         Diagnostic.MsgType.NOTE,
-        content
+        content.formatted(args)
     ));
     return this;
   }
@@ -110,10 +117,11 @@ public class DiagnosticBuilder {
    * @param content of the help message.
    * @return the builder itself.
    */
-  public DiagnosticBuilder help(String content) {
+  @FormatMethod
+  public DiagnosticBuilder help(String content, Object... args) {
     diagnostic.messages.add(new Diagnostic.Message(
         Diagnostic.MsgType.HELP,
-        content
+        content.formatted(args)
     ));
     return this;
   }
