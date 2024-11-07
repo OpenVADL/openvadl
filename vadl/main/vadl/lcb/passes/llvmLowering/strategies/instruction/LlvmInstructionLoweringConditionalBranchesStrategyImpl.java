@@ -13,6 +13,7 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Stream;
+import org.jetbrains.annotations.NotNull;
 import vadl.lcb.codegen.model.llvm.ValueType;
 import vadl.lcb.passes.isaMatching.MachineInstructionLabel;
 import vadl.lcb.passes.llvmLowering.domain.LlvmLoweringRecord;
@@ -116,6 +117,50 @@ public class LlvmInstructionLoweringConditionalBranchesStrategyImpl
       Graph behavior,
       List<TableGenInstructionOperand> inputOperands,
       List<TableGenInstructionOperand> outputOperands,
+      List<TableGenPattern> patterns) {
+    ArrayList<TableGenPattern> alternatives = new ArrayList<>();
+    var swapped = generatePatternsForSwappedOperands(patterns);
+    alternatives.addAll(swapped);
+    alternatives.addAll(
+        generateBrCondFromBrCc(Stream.concat(patterns.stream(), swapped.stream()).toList()));
+    return alternatives;
+  }
+
+  private List<TableGenPattern> generatePatternsForSwappedOperands(List<TableGenPattern> patterns) {
+    /*
+      When we have a pattern with SEGE.
+
+      def : Pat<(brcc SETGE, X:$rs1, X:$rs2, bb:$imm),
+            (BGE X:$rs1, X:$rs2, RV32I_Btype_ImmediateB_immediateAsLabel:$imm)>;
+
+      // Then swap the operands and replace the condCode with SETLE.
+
+      def : Pat<(brcc SETLE, X:$rs2, X:$rs1, bb:$imm),
+            (BGE X:$rs1, X:$rs2, RV32I_Btype_ImmediateB_immediateAsLabel:$imm)>;
+
+      Of course, it might be the case that there is already such an instruction which covers that.
+      But it is better to be sure.
+     */
+    ArrayList<TableGenPattern> alternatives = new ArrayList<>();
+
+    for (var pattern : patterns) {
+      if (pattern instanceof TableGenSelectionWithOutputPattern outputPattern) {
+        // We only need to consider the selector pattern.
+        // There is no change required for the machine pattern.
+        var copy = pattern.selector().copy();
+        copy.getNodes(LlvmBrCcSD.class).forEach(llvmBrCcSD -> {
+          var newCondCode = LlvmCondCode.inverse(llvmBrCcSD.condition());
+          llvmBrCcSD.swapOperands(newCondCode);
+        });
+        alternatives.add(
+            new TableGenSelectionWithOutputPattern(copy, outputPattern.machine().copy()));
+      }
+    }
+
+    return alternatives;
+  }
+
+  private List<TableGenPattern> generateBrCondFromBrCc(
       List<TableGenPattern> patterns) {
     ArrayList<TableGenPattern> alternatives = new ArrayList<>();
 
