@@ -20,7 +20,7 @@ public class ReadRegNode extends ReadResourceNode {
   @DataValue
   protected Register register;
 
-  // a register-file-read might read from a counter.
+  // a register-read might read from a counter.
   // if this can be inferred, the counter is set.
   // it is generally set during the `StaticCounterAccessResolvingPass`
   @DataValue
@@ -49,6 +49,13 @@ public class ReadRegNode extends ReadResourceNode {
   @Nullable
   public Counter.RegisterCounter staticCounterAccess() {
     return staticCounterAccess;
+  }
+
+  /**
+   * Determines if the register is a PC based on whether staticCounterAccess is set.
+   */
+  public boolean isPcAccess() {
+    return staticCounterAccess != null;
   }
 
   public void setStaticCounterAccess(@Nonnull Counter.RegisterCounter staticCounterAccess) {
@@ -96,4 +103,5 @@ public class ReadRegNode extends ReadResourceNode {
   public void accept(GraphNodeVisitor visitor) {
     visitor.visit(this);
   }
+
 }
