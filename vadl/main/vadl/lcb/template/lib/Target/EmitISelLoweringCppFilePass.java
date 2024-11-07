@@ -135,24 +135,21 @@ public class EmitISelLoweringCppFilePass extends LcbTemplateRenderingPass {
     translation.put(MachineInstructionLabel.BULTH, "SETULT");
     translation.put(MachineInstructionLabel.BNEQ, "SETNE");
 
-    branchInstructions.forEach(bi -> labelledMachineInstructions.compute(bi,
-        (key, value) -> {
-          if (value != null) {
-            var instruction = getFirstInstruction(value);
-            result.add(new BranchInstruction(instruction.simpleName(),
-                Objects.requireNonNull(translation.get(key))));
-          }
-          return null;
-        }));
+    branchInstructions.forEach(bi -> {
+      var entry = labelledMachineInstructions.get(bi);
+      if (entry != null) {
+        var instruction = getFirstInstruction(entry);
+        result.add(new BranchInstruction(instruction.simpleName(),
+            Objects.requireNonNull(translation.get(bi))));
+      }
+    });
 
     return result;
   }
 
   private static @NotNull Instruction getFirstInstruction(List<Instruction> value) {
     ensureNonNull(value, "Must not be null");
-    var instruction =
-        ensurePresent(value.stream().findFirst(), "At least one item must exist");
-    return instruction;
+    return ensurePresent(value.stream().findFirst(), "At least one item must exist");
   }
 
   @Nullable
