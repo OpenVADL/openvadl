@@ -3512,7 +3512,7 @@ let Uses = [  ];
 let Defs = [  ];
 }
 
-def : Pat<(or X:$rs1, X:$rs2),
+def : Pat<(srl X:$rs1, X:$rs2),
         (SRL X:$rs1, X:$rs2)>;
 
 
@@ -3566,7 +3566,7 @@ let Uses = [  ];
 let Defs = [  ];
 }
 
-def : Pat<(or X:$rs1, RV64IM_Ftype_sftAsInt64:$sft),
+def : Pat<(srl X:$rs1, RV64IM_Ftype_sftAsInt64:$sft),
         (SRLI X:$rs1, RV64IM_Ftype_sftAsInt64:$sft)>;
 
 
@@ -3620,7 +3620,7 @@ let Uses = [  ];
 let Defs = [  ];
 }
 
-def : Pat<(or X:$rs1, RV64IM_Rtype_rs2AsInt64:$rs2),
+def : Pat<(srl X:$rs1, RV64IM_Rtype_rs2AsInt64:$rs2),
         (SRLIW X:$rs1, RV64IM_Rtype_rs2AsInt64:$rs2)>;
 
 
@@ -3674,7 +3674,7 @@ let Uses = [  ];
 let Defs = [  ];
 }
 
-def : Pat<(or X:$rs1, X:$rs2),
+def : Pat<(srl X:$rs1, X:$rs2),
         (SRLW X:$rs1, X:$rs2)>;
 
 
@@ -3955,6 +3955,9 @@ def : Pat<(xor X:$rs1, RV64IM_Itype_immAsInt64:$imm),
 
 
 
+
+def : Pat<(i64 AddrFI:$rs1),
+  (ADDI AddrFI:$rs1, (i64 0))>;
 
 
 def BEQZ : Instruction

@@ -114,6 +114,9 @@ def : Pat<(target_call texternalsym:$func), (RESERVED_PSEUDO_CALL texternalsym:$
 [(${instruction})]
 [/]
 
+def : Pat<([(${stackPointerType})] AddrFI:$rs1),
+  ([(${addi.identifier.simpleName()})] AddrFI:$rs1, ([(${stackPointerType})] 0))>;
+
 [# th:each="pseudo : ${pseudos}" ]
 [(${pseudo})]
 [/]
