@@ -37,10 +37,13 @@ import static vadl.types.BuiltInTable.XORS;
 import static vadl.viam.ViamError.ensure;
 import static vadl.viam.ViamError.ensureNonNull;
 
+import com.google.common.collect.ImmutableMap;
 import java.io.IOException;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.IdentityHashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
 import org.jetbrains.annotations.Nullable;
@@ -98,8 +101,8 @@ public class IsaMachineInstructionMatchingPass extends Pass implements IsaMatchi
 
   @Nullable
   @Override
-  public HashMap<MachineInstructionLabel, List<Instruction>> execute(PassResults passResults,
-                                                                     Specification viam)
+  public Map<MachineInstructionLabel, List<Instruction>> execute(PassResults passResults,
+                                                                 Specification viam)
       throws IOException {
     // The instruction matching happens on the uninlined graph
     // because the field accesses are uninlined.
@@ -207,13 +210,13 @@ public class IsaMachineInstructionMatchingPass extends Pass implements IsaMatchi
       }
     });
 
-    return matched;
+    return Collections.unmodifiableMap(matched);
   }
 
   @Override
   public void verification(Specification viam, @Nullable Object passResult) {
     ensureNonNull(passResult, "There must be a passResult");
-    var isaMatched = (HashMap<MachineInstructionLabel, List<Instruction>>) passResult;
+    var isaMatched = (Map<MachineInstructionLabel, List<Instruction>>) passResult;
 
     var addi = isaMatched.get(MachineInstructionLabel.ADDI_64);
     if (addi == null) {

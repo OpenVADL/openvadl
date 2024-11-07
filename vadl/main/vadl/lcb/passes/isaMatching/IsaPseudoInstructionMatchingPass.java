@@ -8,6 +8,7 @@ import java.io.IOException;
 import java.util.HashMap;
 import java.util.IdentityHashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Objects;
 import org.jetbrains.annotations.Nullable;
 import vadl.configuration.LcbConfiguration;
@@ -51,11 +52,11 @@ public class IsaPseudoInstructionMatchingPass extends Pass implements IsaMatchin
         (IdentityHashMap<Instruction, UninlinedGraph>) passResults
             .lastResultOf(FunctionInlinerPass.class);
     Objects.requireNonNull(uninlined);
-    HashMap<MachineInstructionLabel, List<Instruction>> machineInstructionMatched =
-        (HashMap<MachineInstructionLabel, List<Instruction>>) passResults.lastResultOf(
+    Map<MachineInstructionLabel, List<Instruction>> machineInstructionMatched =
+        (Map<MachineInstructionLabel, List<Instruction>>) passResults.lastResultOf(
             IsaMachineInstructionMatchingPass.class);
     var flipped = flipIsaMatching(machineInstructionMatched);
-    HashMap<PseudoInstructionLabel, List<PseudoInstruction>> pseudoInstructionMatched =
+    Map<PseudoInstructionLabel, List<PseudoInstruction>> pseudoInstructionMatched =
         new HashMap<>();
 
     var isa = viam.isa().orElse(null);

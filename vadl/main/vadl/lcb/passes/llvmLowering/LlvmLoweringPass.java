@@ -80,11 +80,11 @@ public class LlvmLoweringPass extends Pass {
   @Override
   public Object execute(PassResults passResults, Specification viam) throws IOException {
     var labelledMachineInstructions = ensureNonNull(
-        (HashMap<MachineInstructionLabel, List<Instruction>>) passResults.lastResultOf(
+        (Map<MachineInstructionLabel, List<Instruction>>) passResults.lastResultOf(
             IsaMachineInstructionMatchingPass.class),
         () -> Diagnostic.error("Cannot find semantics of the instructions", viam.sourceLocation()));
     var labelledPseudoInstructions = ensureNonNull(
-        (HashMap<PseudoInstructionLabel, List<PseudoInstruction>>) passResults.lastResultOf(
+        (Map<PseudoInstructionLabel, List<PseudoInstruction>>) passResults.lastResultOf(
             IsaPseudoInstructionMatchingPass.class),
         () -> Diagnostic.error("Cannot find semantics of the instructions", viam.sourceLocation()));
     var abi = (DummyAbi) viam.definitions().filter(x -> x instanceof DummyAbi).findFirst().get();

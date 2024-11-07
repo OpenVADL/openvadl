@@ -75,7 +75,7 @@ public class EmitISelLoweringCppFilePass extends LcbTemplateRenderingPass {
     var stackPointer = renderRegister(abi.stackPointer().registerFile(), abi.stackPointer().addr());
     var addressSequence = abi.addressSequence();
     var labelledMachineInstructions = ensureNonNull(
-        (HashMap<MachineInstructionLabel, List<Instruction>>) passResults.lastResultOf(
+        (Map<MachineInstructionLabel, List<Instruction>>) passResults.lastResultOf(
             IsaMachineInstructionMatchingPass.class),
         () -> Diagnostic.error("Cannot find semantics of the instructions",
             specification.sourceLocation()));
@@ -110,7 +110,7 @@ public class EmitISelLoweringCppFilePass extends LcbTemplateRenderingPass {
   }
 
   private List<BranchInstruction> getBranchInstructions(
-      HashMap<MachineInstructionLabel, List<Instruction>>
+      Map<MachineInstructionLabel, List<Instruction>>
           labelledMachineInstructions) {
     var result = new ArrayList<BranchInstruction>();
     var branchInstructions = Set.of(
@@ -159,7 +159,7 @@ public class EmitISelLoweringCppFilePass extends LcbTemplateRenderingPass {
 
   @Nullable
   private Instruction getConditionalMove(boolean hasCMove32, boolean hasCMove64,
-                                         HashMap<MachineInstructionLabel, List<Instruction>>
+                                         Map<MachineInstructionLabel, List<Instruction>>
                                              labelledMachineInstructions) {
     if (hasCMove64) {
       var cmove = labelledMachineInstructions.get(MachineInstructionLabel.CMOVE_32);
