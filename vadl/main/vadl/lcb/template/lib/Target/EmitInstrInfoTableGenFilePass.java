@@ -6,6 +6,7 @@ import java.io.IOException;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import vadl.configuration.LcbConfiguration;
 import vadl.error.Diagnostic;
 import vadl.lcb.codegen.model.llvm.ValueType;
@@ -59,15 +60,16 @@ public class EmitInstrInfoTableGenFilePass extends LcbTemplateRenderingPass {
         GenerateTableGenPseudoInstructionRecordPass.class);
     var tableGenConstMatRecords = ((List<TableGenPseudoInstruction>) passResults.lastResultOf(
         GenerateConstantMaterialisationTableGenRecordPass.class));
-    var labelledMachineInstructions = (HashMap<MachineInstructionLabel, List<Instruction>>)
+    var labelledMachineInstructions = (Map<MachineInstructionLabel, List<Instruction>>)
         passResults.lastResultOf(IsaMachineInstructionMatchingPass.class);
 
-    var addi =
-        ensurePresent(labelledMachineInstructions.getOrDefault(MachineInstructionLabel.ADDI_64,
-                    labelledMachineInstructions.get(MachineInstructionLabel.ADDI_32))
-                .stream().findFirst(),
-            () -> Diagnostic.error("Instruction set requires an addition with immediate",
-                specification.sourceLocation()));
+    var addi32 = labelledMachineInstructions.get(MachineInstructionLabel.ADDI_32);
+    var addi64 = labelledMachineInstructions.get(MachineInstructionLabel.ADDI_64);
+    var rawAddi = addi64 != null ? addi64 : Objects.requireNonNull(addi32);
+
+    var addi = ensurePresent(rawAddi.stream().findFirst(),
+        () -> Diagnostic.error("Instruction set requires an addition with immediate",
+            specification.sourceLocation()));
 
     var renderedImmediates = ((List<TableGenImmediateRecord>) passResults.lastResultOf(
         GenerateTableGenImmediateRecordPass.class))

@@ -110,8 +110,8 @@ public class EmitISelLoweringCppFilePass extends LcbTemplateRenderingPass {
 
   private List<BranchInstruction> getBranchInstructions(
       Map<MachineInstructionLabel, List<Instruction>> labelledMachineInstructions) {
-    var result = new ArrayList<BranchInstruction>();
-    var branchInstructions = Set.of(
+    final var result = new ArrayList<BranchInstruction>();
+    final var branchInstructions = Set.of(
         MachineInstructionLabel.BEQ,
         MachineInstructionLabel.BSGEQ,
         MachineInstructionLabel.BSGTH,
