@@ -107,4 +107,16 @@ public class LlvmBrCcSD extends ExpressionNode implements LlvmNodeLowerable {
     second = visitor.apply(this, second, ExpressionNode.class);
     immOffset = visitor.apply(this, immOffset, ExpressionNode.class);
   }
+
+  /**
+   * This node is a conditional jump. Sometimes, we need to swap the conditional jump and
+   * this method is a helper for that. It will set new {@code condCode} and swap the first two
+   * operands.
+   */
+  public void swapOperands(LlvmCondCode condCode) {
+    this.condition = condCode;
+    var swapped = this.first;
+    this.first = this.second;
+    this.second = swapped;
+  }
 }

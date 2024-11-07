@@ -80,4 +80,22 @@ public enum LlvmCondCode {
       throw new ViamError("not supported cond code");
     }
   }
+
+  /**
+   * Get the inverse for the {@code condition}.
+   */
+  public static LlvmCondCode inverse(LlvmCondCode condition) {
+    return switch (condition) {
+      case SETEQ -> SETNE;
+      case SETNE -> SETEQ;
+      case SETUGT -> SETULT;
+      case SETUGE -> SETULE;
+      case SETULE -> SETUGE;
+      case SETGT -> SETLT;
+      case SETGE -> SETLE;
+      case SETLE -> SETGE;
+      case SETLT -> SETGT;
+      case SETULT -> SETUGT;
+    };
+  }
 }

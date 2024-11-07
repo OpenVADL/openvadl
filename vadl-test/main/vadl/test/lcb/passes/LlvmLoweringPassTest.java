@@ -65,7 +65,8 @@ public class LlvmLoweringPassTest extends AbstractLcbTest {
   }
 
   private static TestOutput createTestOutputRRWithConditionalBranch(LlvmCondCode condCode,
-                                                                    String machineInstruction) {
+                                                                    String machineInstruction,
+                                                                    LlvmCondCode inverseCondCode) {
     return new TestOutput(
         List.of(new TableGenInstructionOperand(DUMMY_NODE, "X", "rs1"),
             new TableGenInstructionOperand(DUMMY_NODE, "X", "rs2"),
@@ -73,14 +74,21 @@ public class LlvmLoweringPassTest extends AbstractLcbTest {
                 "imm")),
         List.of(),
         List.of(
-            String.format("(brcc %s, X:$rs1, X:$rs2, bb:$imm)",
-                condCode),
+            String.format("(brcc %s, X:$rs1, X:$rs2, bb:$imm)", condCode),
+            String.format("(brcc %s, X:$rs2, X:$rs1, bb:$imm)", inverseCondCode),
             String.format(
                 "(brcond (i64 (%s X:$rs1, X:$rs2)), bb:$imm)",
-                condCode.name().toLowerCase())),
+                condCode.name().toLowerCase()),
+            String.format(
+                "(brcond (i64 (%s X:$rs2, X:$rs1)), bb:$imm)",
+                inverseCondCode.name().toLowerCase())),
         // We have the same pattern twice because we have to selectors which emit the same
         // machine instruction.
         List.of(String.format("(%s X:$rs1, X:$rs2, RV64IM_Btype_immAsLabel:$imm)",
+                machineInstruction),
+            String.format("(%s X:$rs1, X:$rs2, RV64IM_Btype_immAsLabel:$imm)",
+                machineInstruction),
+            String.format("(%s X:$rs1, X:$rs2, RV64IM_Btype_immAsLabel:$imm)",
                 machineInstruction),
             String.format("(%s X:$rs1, X:$rs2, RV64IM_Btype_immAsLabel:$imm)",
                 machineInstruction)
@@ -291,14 +299,17 @@ public class LlvmLoweringPassTest extends AbstractLcbTest {
     /*
     CONDITIONAL BRANCHES
      */
-    expectedResults.put("BEQ", createTestOutputRRWithConditionalBranch(LlvmCondCode.SETEQ, "BEQ"));
-    expectedResults.put("BGE", createTestOutputRRWithConditionalBranch(LlvmCondCode.SETGE, "BGE"));
+    expectedResults.put("BEQ",
+        createTestOutputRRWithConditionalBranch(LlvmCondCode.SETEQ, "BEQ", LlvmCondCode.SETNE));
+    expectedResults.put("BGE",
+        createTestOutputRRWithConditionalBranch(LlvmCondCode.SETGE, "BGE", LlvmCondCode.SETLE));
     expectedResults.put("BGEU",
-        createTestOutputRRWithConditionalBranch(LlvmCondCode.SETUGE, "BGEU"));
-    expectedResults.put("BLT", createTestOutputRRWithConditionalBranch(LlvmCondCode.SETLT, "BLT"));
+        createTestOutputRRWithConditionalBranch(LlvmCondCode.SETUGE, "BGEU", LlvmCondCode.SETULE));
+    expectedResults.put("BLT",
+        createTestOutputRRWithConditionalBranch(LlvmCondCode.SETLT, "BLT", LlvmCondCode.SETGT));
     expectedResults.put("BLTU",
-        createTestOutputRRWithConditionalBranch(LlvmCondCode.SETULT, "BLTU"));
-    expectedResults.put("BNE", createTestOutputRRWithConditionalBranch(LlvmCondCode.SETNE, "BNE"));
+        createTestOutputRRWithConditionalBranch(LlvmCondCode.SETULT, "BLTU", LlvmCondCode.SETUGT));
+    expectedResults.put("BNE", createTestOutputRRWithConditionalBranch(LlvmCondCode.SETNE, "BNE", LlvmCondCode.SETEQ));
     /*
     INDIRECT CALL
      */

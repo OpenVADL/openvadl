@@ -817,7 +817,13 @@ let Defs = [ PC ];
 def : Pat<(brcc SETEQ, X:$rs1, X:$rs2, bb:$imm),
         (BEQ X:$rs1, X:$rs2, RV64IM_Btype_immAsLabel:$imm)>;
 
+def : Pat<(brcc SETNE, X:$rs2, X:$rs1, bb:$imm),
+        (BEQ X:$rs1, X:$rs2, RV64IM_Btype_immAsLabel:$imm)>;
+
 def : Pat<(brcond (i64 (seteq X:$rs1, X:$rs2)), bb:$imm),
+        (BEQ X:$rs1, X:$rs2, RV64IM_Btype_immAsLabel:$imm)>;
+
+def : Pat<(brcond (i64 (setne X:$rs2, X:$rs1)), bb:$imm),
         (BEQ X:$rs1, X:$rs2, RV64IM_Btype_immAsLabel:$imm)>;
 
 
@@ -875,7 +881,13 @@ let Defs = [ PC ];
 def : Pat<(brcc SETGE, X:$rs1, X:$rs2, bb:$imm),
         (BGE X:$rs1, X:$rs2, RV64IM_Btype_immAsLabel:$imm)>;
 
+def : Pat<(brcc SETLE, X:$rs2, X:$rs1, bb:$imm),
+        (BGE X:$rs1, X:$rs2, RV64IM_Btype_immAsLabel:$imm)>;
+
 def : Pat<(brcond (i64 (setge X:$rs1, X:$rs2)), bb:$imm),
+        (BGE X:$rs1, X:$rs2, RV64IM_Btype_immAsLabel:$imm)>;
+
+def : Pat<(brcond (i64 (setle X:$rs2, X:$rs1)), bb:$imm),
         (BGE X:$rs1, X:$rs2, RV64IM_Btype_immAsLabel:$imm)>;
 
 
@@ -933,7 +945,13 @@ let Defs = [ PC ];
 def : Pat<(brcc SETUGE, X:$rs1, X:$rs2, bb:$imm),
         (BGEU X:$rs1, X:$rs2, RV64IM_Btype_immAsLabel:$imm)>;
 
+def : Pat<(brcc SETULE, X:$rs2, X:$rs1, bb:$imm),
+        (BGEU X:$rs1, X:$rs2, RV64IM_Btype_immAsLabel:$imm)>;
+
 def : Pat<(brcond (i64 (setuge X:$rs1, X:$rs2)), bb:$imm),
+        (BGEU X:$rs1, X:$rs2, RV64IM_Btype_immAsLabel:$imm)>;
+
+def : Pat<(brcond (i64 (setule X:$rs2, X:$rs1)), bb:$imm),
         (BGEU X:$rs1, X:$rs2, RV64IM_Btype_immAsLabel:$imm)>;
 
 
@@ -991,7 +1009,13 @@ let Defs = [ PC ];
 def : Pat<(brcc SETLT, X:$rs1, X:$rs2, bb:$imm),
         (BLT X:$rs1, X:$rs2, RV64IM_Btype_immAsLabel:$imm)>;
 
+def : Pat<(brcc SETGT, X:$rs2, X:$rs1, bb:$imm),
+        (BLT X:$rs1, X:$rs2, RV64IM_Btype_immAsLabel:$imm)>;
+
 def : Pat<(brcond (i64 (setlt X:$rs1, X:$rs2)), bb:$imm),
+        (BLT X:$rs1, X:$rs2, RV64IM_Btype_immAsLabel:$imm)>;
+
+def : Pat<(brcond (i64 (setgt X:$rs2, X:$rs1)), bb:$imm),
         (BLT X:$rs1, X:$rs2, RV64IM_Btype_immAsLabel:$imm)>;
 
 
@@ -1049,7 +1073,13 @@ let Defs = [ PC ];
 def : Pat<(brcc SETULT, X:$rs1, X:$rs2, bb:$imm),
         (BLTU X:$rs1, X:$rs2, RV64IM_Btype_immAsLabel:$imm)>;
 
+def : Pat<(brcc SETUGT, X:$rs2, X:$rs1, bb:$imm),
+        (BLTU X:$rs1, X:$rs2, RV64IM_Btype_immAsLabel:$imm)>;
+
 def : Pat<(brcond (i64 (setult X:$rs1, X:$rs2)), bb:$imm),
+        (BLTU X:$rs1, X:$rs2, RV64IM_Btype_immAsLabel:$imm)>;
+
+def : Pat<(brcond (i64 (setugt X:$rs2, X:$rs1)), bb:$imm),
         (BLTU X:$rs1, X:$rs2, RV64IM_Btype_immAsLabel:$imm)>;
 
 
@@ -1107,7 +1137,13 @@ let Defs = [ PC ];
 def : Pat<(brcc SETNE, X:$rs1, X:$rs2, bb:$imm),
         (BNE X:$rs1, X:$rs2, RV64IM_Btype_immAsLabel:$imm)>;
 
+def : Pat<(brcc SETEQ, X:$rs2, X:$rs1, bb:$imm),
+        (BNE X:$rs1, X:$rs2, RV64IM_Btype_immAsLabel:$imm)>;
+
 def : Pat<(brcond (i64 (setne X:$rs1, X:$rs2)), bb:$imm),
+        (BNE X:$rs1, X:$rs2, RV64IM_Btype_immAsLabel:$imm)>;
+
+def : Pat<(brcond (i64 (seteq X:$rs2, X:$rs1)), bb:$imm),
         (BNE X:$rs1, X:$rs2, RV64IM_Btype_immAsLabel:$imm)>;
 
 
@@ -3476,7 +3512,7 @@ let Uses = [  ];
 let Defs = [  ];
 }
 
-def : Pat<(or X:$rs1, X:$rs2),
+def : Pat<(srl X:$rs1, X:$rs2),
         (SRL X:$rs1, X:$rs2)>;
 
 
@@ -3530,7 +3566,7 @@ let Uses = [  ];
 let Defs = [  ];
 }
 
-def : Pat<(or X:$rs1, RV64IM_Ftype_sftAsInt64:$sft),
+def : Pat<(srl X:$rs1, RV64IM_Ftype_sftAsInt64:$sft),
         (SRLI X:$rs1, RV64IM_Ftype_sftAsInt64:$sft)>;
 
 
@@ -3584,7 +3620,7 @@ let Uses = [  ];
 let Defs = [  ];
 }
 
-def : Pat<(or X:$rs1, RV64IM_Rtype_rs2AsInt64:$rs2),
+def : Pat<(srl X:$rs1, RV64IM_Rtype_rs2AsInt64:$rs2),
         (SRLIW X:$rs1, RV64IM_Rtype_rs2AsInt64:$rs2)>;
 
 
@@ -3638,7 +3674,7 @@ let Uses = [  ];
 let Defs = [  ];
 }
 
-def : Pat<(or X:$rs1, X:$rs2),
+def : Pat<(srl X:$rs1, X:$rs2),
         (SRLW X:$rs1, X:$rs2)>;
 
 
@@ -3919,6 +3955,9 @@ def : Pat<(xor X:$rs1, RV64IM_Itype_immAsInt64:$imm),
 
 
 
+
+def : Pat<(i64 AddrFI:$rs1),
+  (ADDI AddrFI:$rs1, (i64 0))>;
 
 
 def BEQZ : Instruction

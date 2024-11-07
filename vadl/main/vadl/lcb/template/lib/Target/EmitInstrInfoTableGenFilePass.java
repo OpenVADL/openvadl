@@ -1,10 +1,16 @@
 package vadl.lcb.template.lib.Target;
 
+import static vadl.viam.ViamError.ensurePresent;
+
 import java.io.IOException;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import vadl.configuration.LcbConfiguration;
+import vadl.error.Diagnostic;
 import vadl.lcb.codegen.model.llvm.ValueType;
+import vadl.lcb.passes.isaMatching.IsaMachineInstructionMatchingPass;
+import vadl.lcb.passes.isaMatching.MachineInstructionLabel;
 import vadl.lcb.passes.llvmLowering.GenerateTableGenMachineInstructionRecordPass;
 import vadl.lcb.passes.llvmLowering.GenerateTableGenPseudoInstructionRecordPass;
 import vadl.lcb.passes.llvmLowering.immediates.GenerateConstantMaterialisationTableGenRecordPass;
@@ -17,6 +23,7 @@ import vadl.lcb.passes.llvmLowering.tablegen.model.TableGenPseudoInstruction;
 import vadl.lcb.template.CommonVarNames;
 import vadl.lcb.template.LcbTemplateRenderingPass;
 import vadl.pass.PassResults;
+import vadl.viam.Instruction;
 import vadl.viam.Specification;
 import vadl.viam.passes.dummyAbi.DummyAbi;
 
@@ -52,6 +59,15 @@ public class EmitInstrInfoTableGenFilePass extends LcbTemplateRenderingPass {
         GenerateTableGenPseudoInstructionRecordPass.class);
     var tableGenConstMatRecords = ((List<TableGenPseudoInstruction>) passResults.lastResultOf(
         GenerateConstantMaterialisationTableGenRecordPass.class));
+    var labelledMachineInstructions = (HashMap<MachineInstructionLabel, List<Instruction>>)
+        passResults.lastResultOf(IsaMachineInstructionMatchingPass.class);
+
+    var addi =
+        ensurePresent(labelledMachineInstructions.getOrDefault(MachineInstructionLabel.ADDI_64,
+                    labelledMachineInstructions.get(MachineInstructionLabel.ADDI_32))
+                .stream().findFirst(),
+            () -> Diagnostic.error("Instruction set requires an addition with immediate",
+                specification.sourceLocation()));
 
     var renderedImmediates = ((List<TableGenImmediateRecord>) passResults.lastResultOf(
         GenerateTableGenImmediateRecordPass.class))
@@ -75,6 +91,7 @@ public class EmitInstrInfoTableGenFilePass extends LcbTemplateRenderingPass {
         .toList();
 
     return Map.of(CommonVarNames.NAMESPACE, specification.simpleName(),
+        "addi", addi,
         "stackPointerRegister", abi.stackPointer(),
         "stackPointerType",
         ValueType.from(abi.stackPointer().registerFile().resultType()).get().getLlvmType(),
