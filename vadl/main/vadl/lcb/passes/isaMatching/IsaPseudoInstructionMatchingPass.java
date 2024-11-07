@@ -5,6 +5,7 @@ import static vadl.viam.ViamError.ensureNonNull;
 import static vadl.viam.ViamError.ensurePresent;
 
 import java.io.IOException;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.IdentityHashMap;
 import java.util.List;
@@ -70,7 +71,7 @@ public class IsaPseudoInstructionMatchingPass extends Pass implements IsaMatchin
       }
     });
 
-    return pseudoInstructionMatched;
+    return Collections.unmodifiableMap(pseudoInstructionMatched);
   }
 
   private boolean findUnconditionalJump(
