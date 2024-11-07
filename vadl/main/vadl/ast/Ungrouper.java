@@ -511,31 +511,31 @@ public class Ungrouper
 
   @Override
   public Definition visit(AsmGrammarRuleDefinition definition) {
-    ungroupAnnotations(definition);
     return definition;
   }
 
   @Override
   public Definition visit(AsmGrammarAlternativesDefinition definition) {
-    ungroupAnnotations(definition);
     return definition;
   }
 
   @Override
   public Definition visit(AsmGrammarElementDefinition definition) {
-    ungroupAnnotations(definition);
+    return definition;
+  }
+
+  @Override
+  public Definition visit(AsmGrammarLocalVarDefinition definition) {
     return definition;
   }
 
   @Override
   public Definition visit(AsmGrammarLiteralDefinition definition) {
-    ungroupAnnotations(definition);
     return definition;
   }
 
   @Override
   public Definition visit(AsmGrammarTypeDefinition definition) {
-    ungroupAnnotations(definition);
     return definition;
   }
 

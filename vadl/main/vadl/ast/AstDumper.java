@@ -632,6 +632,9 @@ public class AstDumper
   @Override
   public Void visit(AsmGrammarElementDefinition definition) {
     dumpNode(definition);
+    if (definition.localVar != null) {
+      dumpChildren(definition.localVar);
+    }
     if (definition.attribute != null) {
       dumpChildren(definition.attribute);
     }
@@ -641,9 +644,19 @@ public class AstDumper
     if (definition.groupAlternatives != null) {
       dumpChildren(definition.groupAlternatives);
     }
+    if (definition.optionAlternatives != null) {
+      dumpChildren(definition.optionAlternatives);
+    }
     if (definition.asmType != null) {
       dumpChildren(definition.asmType);
     }
+    return null;
+  }
+
+  @Override
+  public Void visit(AsmGrammarLocalVarDefinition definition) {
+    dumpNode(definition);
+    dumpChildren(definition.id, definition.asmLiteral);
     return null;
   }
 

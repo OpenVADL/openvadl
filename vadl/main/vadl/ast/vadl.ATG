@@ -178,6 +178,7 @@ TOKENS
   TRUE         = "true".
   USING        = "using".
   VALUE        = "value".
+  VAR          = "var".
   WITH         = "with".
   WRITE        = "write".
 
@@ -1128,21 +1129,33 @@ PRODUCTIONS
     }
   .
 
-  assemblyGrammarElement<out AsmGrammarElementDefinition element>       (. Identifier id = null; Boolean isPlusEq = false; AsmGrammarAlternativesDefinition alternatives = null; List<AsmGrammarLiteralDefinition> params = new ArrayList<>();
-                                                                           AsmGrammarLiteralDefinition asmLiteral = null; AsmGrammarTypeDefinition type = null; var start = loc(); .)
-     = (
-       assemblyIdentifier<out id>
-           [ ( SYM_PLUS_EQ  (. isPlusEq = true; .)  | SYM_EQ)
-             assemblyGrammarLiteral<out asmLiteral>
-             | SYM_LT assemblyParameterList<out params>  SYM_GT
-           ] [assemblyGrammarTypeDefinition<out type>]                  (. if(asmLiteral == null){ asmLiteral = new AsmGrammarLiteralDefinition(id, params, null, type, start.join(loc()));
-                                                                           id = null; type = null; } .)
-       | assemblyGrammarGroup<out alternatives>
-         [assemblyGrammarTypeDefinition<out type>]
-       | stringLiteral<out Expr strLit>
-         [assemblyGrammarTypeDefinition<out type>]                      (. asmLiteral = new AsmGrammarLiteralDefinition(null, new ArrayList<>(), strLit, type, start.join(loc())); type = null;.)
-     )                                                                  (. element =  new AsmGrammarElementDefinition(id, isPlusEq, asmLiteral, alternatives, type, start.join(loc())); .)
-     .
+  assemblyGrammarElement<out AsmGrammarElementDefinition element>    (. AsmGrammarLocalVarDefinition localVar = null; Identifier id = null; Boolean isPlusEq = false;
+                                                                        List<AsmGrammarLiteralDefinition> params = new ArrayList<>(); AsmGrammarLiteralDefinition asmLiteral = null;
+                                                                        AsmGrammarAlternativesDefinition groupAlternatives = null; AsmGrammarAlternativesDefinition optionAlternatives = null;
+                                                                        AsmGrammarTypeDefinition type = null; var start = loc(); .)
+  = (
+      assemblyLocalVarDeclaration<out localVar>
+    | assemblyIdentifier<out id>
+        [ ( SYM_PLUS_EQ  (. isPlusEq = true; .)  | SYM_EQ)
+          assemblyGrammarLiteral<out asmLiteral>
+          | SYM_LT assemblyParameterList<out params>  SYM_GT
+        ] [assemblyGrammarTypeDefinition<out type>]                  (. if(asmLiteral == null){ asmLiteral = new AsmGrammarLiteralDefinition(id, params, null, type, start.join(loc()));
+                                                                        id = null; type = null; } .)
+    | assemblyGrammarGroup<out groupAlternatives>
+      [assemblyGrammarTypeDefinition<out type>]
+    | assemblyGrammarOptional<out optionAlternatives>
+    | stringLiteral<out Expr strLit>
+      [assemblyGrammarTypeDefinition<out type>]                      (. asmLiteral = new AsmGrammarLiteralDefinition(null, new ArrayList<>(), strLit, type, start.join(loc())); type = null;.)
+  )                                                                  (. element =  new AsmGrammarElementDefinition(localVar, id, isPlusEq, asmLiteral, groupAlternatives,
+                                                                                    optionAlternatives, type, start.join(loc())); .)
+  .
+
+  assemblyLocalVarDeclaration<out AsmGrammarLocalVarDefinition localVar> (. var start = loc(); .)
+  = VAR
+    assemblyIdentifier<out Identifier id>
+    SYM_EQ
+    assemblyGrammarLiteral<out AsmGrammarLiteralDefinition asmLiteral>  (. localVar = new AsmGrammarLocalVarDefinition(id, asmLiteral, start.join(loc())); .)
+  .
 
   assemblyGrammarLiteral<out AsmGrammarLiteralDefinition literal>       (. Identifier id = null; List<AsmGrammarLiteralDefinition> parameters = new ArrayList<>();
                                                                            Expr strLit = null; AsmGrammarTypeDefinition type = null; var start = loc(); .)
@@ -1160,10 +1173,16 @@ PRODUCTIONS
     ]
   .
 
-  assemblyGrammarGroup<.out AsmGrammarAlternativesDefinition alternatives.>
+  assemblyGrammarGroup<out AsmGrammarAlternativesDefinition alternatives>
   = SYM_PAREN_OPEN
       assemblyGrammarAlternatives<.out alternatives.>
     SYM_PAREN_CLOSE
+  .
+
+  assemblyGrammarOptional<out AsmGrammarAlternativesDefinition alternatives>
+  = SYM_BRACK_OPEN
+      assemblyGrammarAlternatives<.out alternatives.>
+    SYM_BRACK_CLOSE
   .
 
   // -- STATEMENTS ---------------------------------------------------------------------------------------------------

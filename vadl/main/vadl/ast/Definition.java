@@ -119,9 +119,11 @@ interface DefinitionVisitor<R> {
 
   R visit(AsmGrammarRuleDefinition definition);
 
+  R visit(AsmGrammarAlternativesDefinition definition);
+
   R visit(AsmGrammarElementDefinition definition);
 
-  R visit(AsmGrammarAlternativesDefinition definition);
+  R visit(AsmGrammarLocalVarDefinition definition);
 
   R visit(AsmGrammarLiteralDefinition definition);
 
@@ -3856,6 +3858,9 @@ class AsmDescriptionDefinition extends Definition {
 
   @Override
   void prettyPrint(int indent, StringBuilder builder) {
+    annotations.prettyPrint(indent, builder);
+
+    builder.append(prettyIndentString(indent));
     builder.append("assembly description ");
     id.prettyPrint(indent, builder);
     builder.append(" for ");
@@ -3928,7 +3933,6 @@ class AsmGrammarRuleDefinition extends Definition {
 
   @Override
   void prettyPrint(int indent, StringBuilder builder) {
-    annotations.prettyPrint(indent, builder);
     id.prettyPrint(indent, builder);
     if (asmType != null) {
       asmType.prettyPrint(indent, builder);
@@ -4039,6 +4043,8 @@ class AsmGrammarAlternativesDefinition extends Definition {
 
 class AsmGrammarElementDefinition extends Definition {
   @Nullable
+  AsmGrammarLocalVarDefinition localVar;
+  @Nullable
   Identifier attribute;
   Boolean isPlusEqualsAttributeAssign;
   @Nullable
@@ -4046,19 +4052,25 @@ class AsmGrammarElementDefinition extends Definition {
   @Nullable
   AsmGrammarAlternativesDefinition groupAlternatives;
   @Nullable
+  AsmGrammarAlternativesDefinition optionAlternatives;
+  @Nullable
   AsmGrammarTypeDefinition asmType;
   SourceLocation loc;
 
-  public AsmGrammarElementDefinition(@Nullable Identifier attribute,
+  public AsmGrammarElementDefinition(@Nullable AsmGrammarLocalVarDefinition localVar,
+                                     @Nullable Identifier attribute,
                                      Boolean isPlusEqualsAttributeAssign,
                                      @Nullable AsmGrammarLiteralDefinition asmLiteral,
                                      @Nullable AsmGrammarAlternativesDefinition groupAlternatives,
+                                     @Nullable AsmGrammarAlternativesDefinition optionAlternatives,
                                      @Nullable AsmGrammarTypeDefinition asmType,
                                      SourceLocation loc) {
+    this.localVar = localVar;
     this.attribute = attribute;
     this.isPlusEqualsAttributeAssign = isPlusEqualsAttributeAssign;
     this.asmLiteral = asmLiteral;
     this.groupAlternatives = groupAlternatives;
+    this.optionAlternatives = optionAlternatives;
     this.asmType = asmType;
     this.loc = loc;
   }
@@ -4080,8 +4092,11 @@ class AsmGrammarElementDefinition extends Definition {
 
   @Override
   void prettyPrint(int indent, StringBuilder builder) {
-    annotations.prettyPrint(indent, builder);
     builder.append(prettyIndentString(indent));
+
+    if (localVar != null) {
+      localVar.prettyPrint(indent, builder);
+    }
 
     if (attribute != null) {
       attribute.prettyPrint(indent, builder);
@@ -4102,7 +4117,12 @@ class AsmGrammarElementDefinition extends Definition {
       builder.append(prettyIndentString(--indent));
       builder.append("\n").append(prettyIndentString(indent)).append(')');
     }
-
+    if (optionAlternatives != null) {
+      builder.append("[\n");
+      optionAlternatives.prettyPrint(++indent, builder);
+      builder.append(prettyIndentString(--indent));
+      builder.append("\n").append(prettyIndentString(indent)).append(']');
+    }
     if (asmType != null) {
       asmType.prettyPrint(0, builder);
     }
@@ -4117,7 +4137,7 @@ class AsmGrammarElementDefinition extends Definition {
       return false;
     }
     AsmGrammarElementDefinition that = (AsmGrammarElementDefinition) o;
-    return Objects.equals(attribute, that.attribute)
+    return Objects.equals(localVar, that.localVar) && Objects.equals(attribute, that.attribute)
         && Objects.equals(isPlusEqualsAttributeAssign, that.isPlusEqualsAttributeAssign)
         && Objects.equals(asmLiteral, that.asmLiteral)
         && Objects.equals(groupAlternatives, that.groupAlternatives)
@@ -4126,8 +4146,61 @@ class AsmGrammarElementDefinition extends Definition {
 
   @Override
   public int hashCode() {
-    return Objects.hash(attribute, isPlusEqualsAttributeAssign, asmLiteral, groupAlternatives,
-        asmType);
+    return Objects.hash(localVar, attribute, isPlusEqualsAttributeAssign, asmLiteral,
+        groupAlternatives, asmType);
+  }
+}
+
+class AsmGrammarLocalVarDefinition extends Definition {
+  Identifier id;
+  AsmGrammarLiteralDefinition asmLiteral;
+  SourceLocation loc;
+
+  public AsmGrammarLocalVarDefinition(Identifier id, AsmGrammarLiteralDefinition asmLiteral,
+                                      SourceLocation loc) {
+    this.id = id;
+    this.asmLiteral = asmLiteral;
+    this.loc = loc;
+  }
+
+  @Override
+  <R> R accept(DefinitionVisitor<R> visitor) {
+    return visitor.visit(this);
+  }
+
+  @Override
+  SourceLocation location() {
+    return loc;
+  }
+
+  @Override
+  SyntaxType syntaxType() {
+    return BasicSyntaxType.INVALID;
+  }
+
+  @Override
+  void prettyPrint(int indent, StringBuilder builder) {
+    builder.append("var ");
+    id.prettyPrint(0, builder);
+    builder.append(" = ");
+    asmLiteral.prettyPrint(0, builder);
+  }
+
+  @Override
+  public boolean equals(Object o) {
+    if (this == o) {
+      return true;
+    }
+    if (o == null || getClass() != o.getClass()) {
+      return false;
+    }
+    AsmGrammarLocalVarDefinition that = (AsmGrammarLocalVarDefinition) o;
+    return Objects.equals(id, that.id) && Objects.equals(asmLiteral, that.asmLiteral);
+  }
+
+  @Override
+  public int hashCode() {
+    return Objects.hash(id, asmLiteral);
   }
 }
 
@@ -4169,7 +4242,6 @@ class AsmGrammarLiteralDefinition extends Definition {
 
   @Override
   void prettyPrint(int indent, StringBuilder builder) {
-    annotations.prettyPrint(indent, builder);
     builder.append(prettyIndentString(indent));
     if (id != null) {
       id.prettyPrint(0, builder);

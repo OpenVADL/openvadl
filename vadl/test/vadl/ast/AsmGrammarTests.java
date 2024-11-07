@@ -236,4 +236,63 @@ public class AsmGrammarTests {
         """;
     verifyPrettifiedAst(VadlParser.parse(prog));
   }
+
+  @Test
+  void localVarGrammarRule() {
+    var prog = """
+          assembly description AD for ABI = {
+            grammar = {
+              A@typeA : var tmp = null @operand
+                attrB = B
+              ;
+            }
+          }
+        """;
+    verifyPrettifiedAst(VadlParser.parse(prog));
+  }
+
+  @Test
+  void localVarInGroupGrammarRule() {
+    var prog = """
+          assembly description AD for ABI = {
+            grammar = {
+              A@typeA :
+                attrB = B
+                ( var tmp = null @operand
+                  C
+                )
+              ;
+            }
+          }
+        """;
+    verifyPrettifiedAst(VadlParser.parse(prog));
+  }
+
+  @Test
+  void optionalGrammarRule() {
+    var prog = """
+          assembly description AD for ABI = {
+            grammar = {
+              A :
+                [B C]
+              ;
+            }
+          }
+        """;
+    verifyPrettifiedAst(VadlParser.parse(prog));
+  }
+
+  @Test
+  void optionalInGroupGrammarRule() {
+    var prog = """
+          assembly description AD for ABI = {
+            grammar = {
+              A :
+                (B [C D])
+              ;
+            }
+          }
+        """;
+    verifyPrettifiedAst(VadlParser.parse(prog));
+  }
 }

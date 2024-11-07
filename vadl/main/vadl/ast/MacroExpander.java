@@ -778,39 +778,43 @@ class MacroExpander
   @Override
   public Definition visit(AsmDescriptionDefinition definition) {
     return new AsmDescriptionDefinition(definition.id, definition.abi, definition.rules,
-        copyLoc(definition.loc)).withAnnotations(definition.annotations);
+        copyLoc(definition.loc)).withAnnotations(expandAnnotations(definition.annotations));
   }
 
   @Override
   public Definition visit(AsmGrammarRuleDefinition definition) {
     return new AsmGrammarRuleDefinition(definition.id, definition.asmType, definition.alternatives,
-        copyLoc(definition.loc)).withAnnotations(definition.annotations);
+        copyLoc(definition.loc));
   }
 
   @Override
   public Definition visit(AsmGrammarAlternativesDefinition definition) {
     return new AsmGrammarAlternativesDefinition(definition.alternatives,
-        copyLoc(definition.loc)).withAnnotations(definition.annotations);
+        copyLoc(definition.loc));
   }
 
   @Override
   public Definition visit(AsmGrammarElementDefinition definition) {
-    return new AsmGrammarElementDefinition(definition.attribute,
+    return new AsmGrammarElementDefinition(definition.localVar, definition.attribute,
         definition.isPlusEqualsAttributeAssign, definition.asmLiteral, definition.groupAlternatives,
-        definition.asmType, copyLoc(definition.loc)).withAnnotations(definition.annotations);
+        definition.optionAlternatives, definition.asmType, copyLoc(definition.loc));
+  }
+
+  @Override
+  public Definition visit(AsmGrammarLocalVarDefinition definition) {
+    return new AsmGrammarLocalVarDefinition(definition.id, definition.asmLiteral,
+        copyLoc(definition.loc));
   }
 
   @Override
   public Definition visit(AsmGrammarLiteralDefinition definition) {
     return new AsmGrammarLiteralDefinition(definition.id, definition.parameters,
-        definition.stringLiteral, definition.asmType, copyLoc(definition.loc))
-        .withAnnotations(definition.annotations);
+        definition.stringLiteral, definition.asmType, copyLoc(definition.loc));
   }
 
   @Override
   public Definition visit(AsmGrammarTypeDefinition definition) {
-    return new AsmGrammarTypeDefinition(definition.id, copyLoc(definition.loc))
-        .withAnnotations(definition.annotations);
+    return new AsmGrammarTypeDefinition(definition.id, copyLoc(definition.loc));
   }
 
   @Override

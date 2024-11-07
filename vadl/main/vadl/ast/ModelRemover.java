@@ -260,6 +260,11 @@ public class ModelRemover implements DefinitionVisitor<Definition> {
   }
 
   @Override
+  public Definition visit(AsmGrammarLocalVarDefinition definition) {
+    return definition;
+  }
+
+  @Override
   public Definition visit(AsmGrammarLiteralDefinition definition) {
     return definition;
   }
