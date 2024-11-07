@@ -132,7 +132,7 @@ static void gen_goto_tb_rel(DisasContext *ctx, target_long diff)
     tcg_gen_lookup_and_goto_ptr();
 }
 
-static void gen_goto_tb_abs(DisasContext *ctx, target_long target_pc)
+static void gen_goto_tb_abs(DisasContext *ctx, target_ulong target_pc)
 {
     // TODO: optimize as lookup might be unnecessary
     tcg_gen_movi_tl(cpu_pc, (int64_t) target_pc);

@@ -13,12 +13,12 @@ public class RV64ITestBuilder extends AsmTestBuilder {
   public RV64ITestBuilder(String testId) {
     super(testId);
   }
+  
 
   @Override
-  BigInteger fillReg(String reg, BigInteger min, BigInteger max) {
-    var val = arbitraryBetween(min, max).sample();
-    add("li %s, %s", reg, val);
-    return val;
+  BigInteger fillReg(String reg, BigInteger value) {
+    add("li %s, %s", reg, value);
+    return value;
   }
 
   @Override

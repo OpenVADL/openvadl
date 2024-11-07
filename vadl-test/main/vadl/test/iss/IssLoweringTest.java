@@ -11,6 +11,7 @@ import vadl.test.AbstractTest;
 
 public class IssLoweringTest extends AbstractTest {
 
+  // TODO: Remove this (it is just for testing purposes)
   @Test
   void issLoweringTest() throws IOException, DuplicatedPassKeyException {
     var config =
