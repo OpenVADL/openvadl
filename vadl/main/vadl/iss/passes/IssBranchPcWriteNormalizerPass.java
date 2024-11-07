@@ -30,13 +30,15 @@ import vadl.viam.graph.control.StartNode;
 import vadl.viam.graph.dependency.WriteRegNode;
 
 /**
- * Inserts necessary PC (Program Counter) write operations into a control flow graph (CFG) when generating code for QEMU.
+ * Inserts necessary PC (Program Counter) write operations into a control flow graph (CFG) when
+ * generating code for QEMU.
  * <p>
  * <strong>Context:</strong><br>
  * In the QEMU Tiny Code Generator (TCG), when compiling guest instructions into host code,
  * it is crucial to ensure that all control flow paths correctly update the PC.
  * For conditional branches, if we do not emit a `goto_tb` for the default (no-branch) case,
- * QEMU cannot set `is_jmp` to `DISAS_NORETURN`, and it won't know the start of the next Translation Block (TB).
+ * QEMU cannot set `is_jmp` to `DISAS_NORETURN`, and it won't know the start of the
+ * next Translation Block (TB).
  * By adding a PC write to the next instruction for branches that do not modify the PC,
  * we generate a `goto_tb` for that path, leading to correct behavior as QEMU now knows
  * it should branch to the next instruction (which may not yet be compiled).
@@ -46,12 +48,14 @@ import vadl.viam.graph.dependency.WriteRegNode;
  * <strong>Algorithm Overview:</strong><br>
  * This class traverses the CFG and performs the following steps:
  * <ol>
- *   <li>Starts from an {@code AbstractBeginNode} and skips over any {@code DirectionalNode}s to focus on significant control nodes.</li>
+ *   <li>Starts from an {@code AbstractBeginNode} and skips over any {@code DirectionalNode}s to
+ *   focus on significant control nodes.</li>
  *   <li>Processes each {@code ControlSplitNode} (nodes where control flow diverges):
  *     <ul>
  *       <li>Recursively processes each branch stemming from the split.</li>
  *       <li>Determines if any branch writes to the PC.</li>
- *       <li>If any branch writes to the PC, inserts a PC write into branches that do not, ensuring all paths update the PC.</li>
+ *       <li>If any branch writes to the PC, inserts a PC write into branches that do not,
+ *       ensuring all paths update the PC.</li>
  *     </ul>
  *   </li>
  *   <li>Ensures that all branches merge correctly at a {@code MergeNode}.</li>
@@ -160,15 +164,18 @@ class IssBranchPcWriteNormalizer {
   }
 
   /**
-   * Processes a branch starting from the given {@code AbstractBeginNode}, ensuring that the PC is correctly updated.
+   * Processes a branch starting from the given {@code AbstractBeginNode},
+   * ensuring that the PC is correctly updated.
    * <p>
    * This method traverses the control flow of a branch, handling any control splits and merges.
-   * It recursively processes nested branches, determines if any of them write to the PC, and inserts PC write operations
+   * It recursively processes nested branches, determines if any of them write to the PC,
+   * and inserts PC write operations
    * into branches that do not, to ensure consistent behavior during code generation for QEMU.
    * </p>
    *
    * @param begin the starting node of the branch to process
-   * @return a {@code BranchResult} containing whether the branch writes to the PC and the end node of the branch
+   * @return a {@code BranchResult} containing whether the branch writes to the PC
+   *     and the end node of the branch
    */
   private BranchResult runForBranch(AbstractBeginNode begin) {
     // continue and skip all directionals
@@ -237,7 +244,8 @@ class IssBranchPcWriteNormalizer {
 
 
   /**
-   * Holds the result of processing a branch, including whether it writes to the PC and its end node.
+   * Holds the result of processing a branch, including whether it writes to
+   * the PC and its end node.
    *
    * @param hasPcWrite indicates if the branch writes to the PC
    * @param endNode    the end node of the branch
@@ -251,8 +259,10 @@ class IssBranchPcWriteNormalizer {
   /**
    * Adds a PC write operation to the given end node.
    * <p>
-   * The new PC write will point the PC to the next instruction, ensuring that QEMU can generate a {@code goto_tb}
-   * for this branch, which is essential for correct execution when the next translation block is not yet compiled.
+   * The new PC write will point the PC to the next instruction,
+   * ensuring that QEMU can generate a {@code goto_tb}
+   * for this branch, which is essential for correct execution when
+   * the next translation block is not yet compiled.
    * </p>
    *
    * @param endNode the end node to which the PC write will be added
@@ -296,7 +306,8 @@ class IssBranchPcWriteNormalizer {
    * @param ctrSplit the control split node
    * @param withEnds a stream of end nodes from each branch
    * @return the common {@code MergeNode} where the branches converge
-   * @throws IllegalStateException if branches are merged with different merge nodes or if end nodes are not used by a merge node
+   * @throws IllegalStateException if branches are merged with different merge nodes,
+   *                               or if end nodes are not used by a merge node
    */
   private MergeNode getMergeNodeOf(ControlSplitNode ctrSplit, Stream<AbstractEndNode> withEnds) {
     var mergeNodes = withEnds.map(e -> {

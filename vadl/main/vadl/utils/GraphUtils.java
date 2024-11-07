@@ -75,6 +75,14 @@ public class GraphUtils {
 
   //// GRAPH CREATION UTILS ////
 
+  /**
+   * Creates a binary operation built-in call with the specified operation and constant values.
+   *
+   * @param op The built-in operation to be performed.
+   * @param a  The first constant value operand.
+   * @param b  The second constant value operand.
+   * @return A new instance of {@code BuiltInCall} representing the binary operation.
+   */
   public static BuiltInCall binaryOp(BuiltInTable.BuiltIn op, Constant.Value a, Constant.Value b) {
     return new BuiltInCall(
         op,
@@ -86,6 +94,16 @@ public class GraphUtils {
     );
   }
 
+  /**
+   * Creates a binary operation built-in call with the specified operation, operand nodes,
+   * and result type.
+   *
+   * @param op         The built-in operation to be performed.
+   * @param resultType The type of the result produced by the operation.
+   * @param a          The first operand expression node.
+   * @param b          The second operand expression node.
+   * @return A new instance of {@code BuiltInCall} representing the binary operation.
+   */
   public static BuiltInCall binaryOp(BuiltInTable.BuiltIn op, Type resultType, ExpressionNode a,
                                      ExpressionNode b) {
     return new BuiltInCall(
