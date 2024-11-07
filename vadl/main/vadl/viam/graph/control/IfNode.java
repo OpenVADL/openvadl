@@ -6,6 +6,7 @@ import vadl.javaannotations.viam.Successor;
 import vadl.viam.graph.GraphNodeVisitor;
 import vadl.viam.graph.GraphVisitor;
 import vadl.viam.graph.Node;
+import vadl.viam.graph.NodeList;
 import vadl.viam.graph.dependency.ExpressionNode;
 
 
@@ -30,19 +31,12 @@ public class IfNode extends ControlSplitNode {
   @Input
   private ExpressionNode condition;
 
-  @Successor
-  private BeginNode trueBranch;
-
-  @Successor
-  private BeginNode falseBranch;
-
   /**
    * The constructor to instantiate a IfNode.
    */
   public IfNode(ExpressionNode condition, BeginNode trueBranch, BeginNode falseBranch) {
+    super(new NodeList<>(trueBranch, falseBranch));
     this.condition = condition;
-    this.trueBranch = trueBranch;
-    this.falseBranch = falseBranch;
   }
 
   public ExpressionNode condition() {
@@ -50,23 +44,23 @@ public class IfNode extends ControlSplitNode {
   }
 
   public BeginNode trueBranch() {
-    return trueBranch;
+    return branches().get(0);
   }
 
   public BeginNode falseBranch() {
-    return falseBranch;
+    return branches().get(1);
   }
 
 
   @Override
   public Node copy() {
-    return new IfNode((ExpressionNode) condition.copy(), (BeginNode) trueBranch.copy(),
-        (BeginNode) falseBranch.copy());
+    return new IfNode((ExpressionNode) condition.copy(), (BeginNode) trueBranch().copy(),
+        (BeginNode) falseBranch().copy());
   }
 
   @Override
   public Node shallowCopy() {
-    return new IfNode(condition, trueBranch, falseBranch);
+    return new IfNode(condition, trueBranch(), falseBranch());
   }
 
   @Override
@@ -76,7 +70,7 @@ public class IfNode extends ControlSplitNode {
 
   @Override
   public String toString() {
-    return "%s(t: %s, f: %s)".formatted(super.toString(), trueBranch.id, falseBranch.id);
+    return "%s(t: %s, f: %s)".formatted(super.toString(), trueBranch().id, falseBranch().id);
   }
 
   @Override
@@ -90,18 +84,5 @@ public class IfNode extends ControlSplitNode {
     super.applyOnInputsUnsafe(visitor);
     condition = visitor.apply(this, condition, ExpressionNode.class);
   }
-
-  @Override
-  protected void collectSuccessors(List<Node> collection) {
-    super.collectSuccessors(collection);
-    collection.add(trueBranch);
-    collection.add(falseBranch);
-  }
-
-  @Override
-  protected void applyOnSuccessorsUnsafe(GraphVisitor.Applier<Node> visitor) {
-    super.applyOnSuccessorsUnsafe(visitor);
-    trueBranch = visitor.apply(this, trueBranch, BeginNode.class);
-    falseBranch = visitor.apply(this, falseBranch, BeginNode.class);
-  }
+  
 }
