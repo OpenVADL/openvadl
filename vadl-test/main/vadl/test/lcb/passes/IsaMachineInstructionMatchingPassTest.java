@@ -5,6 +5,7 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import java.io.IOException;
 import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.stream.Stream;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.params.ParameterizedTest;
@@ -13,6 +14,7 @@ import org.junit.jupiter.params.provider.MethodSource;
 import vadl.lcb.passes.isaMatching.IsaMachineInstructionMatchingPass;
 import vadl.lcb.passes.isaMatching.MachineInstructionLabel;
 import vadl.pass.PassKey;
+import vadl.pass.PassOrders;
 import vadl.pass.exception.DuplicatedPassKeyException;
 import vadl.test.lcb.AbstractLcbTest;
 import vadl.viam.Definition;
@@ -54,18 +56,24 @@ public class IsaMachineInstructionMatchingPassTest extends AbstractLcbTest {
   void shouldFindMatchings(List<String> expectedInstructionName, MachineInstructionLabel label)
       throws IOException, DuplicatedPassKeyException {
     // Given
-    var setup = runLcb(getConfiguration(false), "sys/risc-v/rv64im.vadl",
-        new PassKey(IsaMachineInstructionMatchingPass.class.getName()));
+    var config = getConfiguration(false);
+    var setup = setupPassManagerAndRunSpec(
+        "sys/risc-v/rv64im.vadl",
+        PassOrders.lcb(config)
+        // TODO: Uncomment this
+//            .untilFirst(IsaMachineInstructionMatchingPass.class)
+    );
     var passManager = setup.passManager();
 
     // When
     var matchings =
-        (HashMap<MachineInstructionLabel, List<Instruction>>) passManager.getPassResults()
+        (Map<MachineInstructionLabel, List<Instruction>>) passManager.getPassResults()
             .lastResultOf(IsaMachineInstructionMatchingPass.class);
 
     // Then
     Assertions.assertNotNull(matchings);
     Assertions.assertFalse(matchings.isEmpty());
+    Assertions.assertNotNull(matchings.get(label));
     var result = matchings.get(label).stream().map(Definition::simpleName).sorted().toList();
     assertEquals(expectedInstructionName.stream().sorted().toList(), result);
   }
