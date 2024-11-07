@@ -121,9 +121,8 @@ public class PseudoExpansionCodeGeneratorVisitor extends GenericCppCodeGenerator
         .locationDescription(field.sourceLocation(), "Trying to assign this field.")
         .locationDescription(pseudoInstruction.sourceLocation(),
             "This pseudo instruction is affected.")
-        .help(
-            String.format("The parameter '%s' must match any pseudo instruction's parameter names",
-                parameter.simpleName()))
+        .help("The parameter '%s' must match any pseudo instruction's parameter names",
+            parameter.simpleName())
         .build();
   }
 

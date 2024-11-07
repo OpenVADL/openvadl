@@ -96,7 +96,7 @@ public class IssVerificationPass extends AbstractIssPass {
               error("Unsupported PC size", pcReg.sourceLocation())
                   .locationDescription(
                       pcReg.sourceLocation(),
-                      "The PC has " + pcReg.resultType().bitWidth() + ".")
+                      "The PC has %s.", pcReg.resultType().bitWidth())
                   .description("We currently only support PCs with a bit with of 64.")
                   .note("We have to implement this!")
                   .build()
@@ -144,13 +144,13 @@ public class IssVerificationPass extends AbstractIssPass {
       var location = isa.identifier.sourceLocation();
       var errBuilder = error("Different format sizes", location)
           .locationDescription(location,
-              "Found %s different format sizes".formatted(formatWidths.size()))
+              "Found %s different format sizes", formatWidths.size())
           .description(
               "The ISS generator currently requires that all instruction's formats have "
                   + "the same size.");
       for (var f : diffFormats) {
-        errBuilder.locationDescription(f.identifier.sourceLocation(),
-            "has a bit-width of %s".formatted(f.type().bitWidth())
+        errBuilder.locationDescription(f.identifier,
+            "has a bit-width of %s", f.type().bitWidth()
         );
       }
 
@@ -168,18 +168,18 @@ public class IssVerificationPass extends AbstractIssPass {
     var memories = isa.ownMemories();
     if (memories.size() != 1) {
       diagnostics.add(
-          error("Invalid number of `memory` definitions", isa.identifier.sourceLocation())
-              .description("Expected exactly one `memory` definition, but found %s.".formatted(
-                  memories.size()))
+          error("Invalid number of `memory` definitions", isa.identifier)
+              .description("Expected exactly one `memory` definition, but found %s.",
+                  memories.size())
               .note("This is a current limitation of the ISS generator and has to be fixed.")
               .build()
       );
     } else {
       var mem = memories.get(0);
       if (mem.wordSize() != 8) {
-        diagnostics.add(error("Unsupported memory word size", mem.sourceLocation())
-            .locationDescription(mem.sourceLocation(),
-                "Has a word size of %s bits.".formatted(mem.wordSize()))
+        diagnostics.add(error("Unsupported memory word size", mem)
+            .locationDescription(mem,
+                "Has a word size of %s bits.", mem.wordSize())
             .description("Currently the memory word must be 8 bits wide.")
             .note("This is going to be relaxed in the future.")
             .build());

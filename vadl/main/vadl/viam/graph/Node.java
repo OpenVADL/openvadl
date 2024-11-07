@@ -66,6 +66,7 @@ public abstract class Node implements WithSourceLocation {
     return this.id.isInit();
   }
 
+  @Override
   public SourceLocation sourceLocation() {
     return sourceLocation;
   }

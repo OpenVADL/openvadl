@@ -26,6 +26,7 @@ public abstract class Definition implements WithSourceLocation {
     this.identifier = identifier;
   }
 
+  @Override
   public SourceLocation sourceLocation() {
     return sourceLocation;
   }
