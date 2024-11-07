@@ -6,6 +6,7 @@ import java.util.function.Consumer;
 import java.util.function.Supplier;
 import org.jetbrains.annotations.Contract;
 import vadl.utils.SourceLocation;
+import vadl.utils.WithSourceLocation;
 
 
 /**
@@ -69,6 +70,18 @@ public class Diagnostic extends RuntimeException {
     return new DiagnosticBuilder(Level.ERROR, reason, location);
   }
 
+  /**
+   * Creates a {@link DiagnosticBuilder} for an error that already has all the mandatory fields
+   * filled in.
+   *
+   * @param reason   for the error.
+   * @param location where the error occurred (primary location).
+   * @return the builder.
+   */
+  public static DiagnosticBuilder error(String reason, WithSourceLocation location) {
+    return new DiagnosticBuilder(Level.ERROR, reason, location.sourceLocation());
+  }
+
 
   /**
    * Creates a {@link DiagnosticBuilder} for a warning that already has all the mandatory fields
@@ -80,6 +93,18 @@ public class Diagnostic extends RuntimeException {
    */
   public static DiagnosticBuilder warning(String reason, SourceLocation location) {
     return new DiagnosticBuilder(Level.WARNING, reason, location);
+  }
+
+  /**
+   * Creates a {@link DiagnosticBuilder} for a warning that already has all the mandatory fields
+   * filled in.
+   *
+   * @param reason   for the warning.
+   * @param location where the warning occurred (primary location).
+   * @return the builder.
+   */
+  public static DiagnosticBuilder warning(String reason, WithSourceLocation location) {
+    return new DiagnosticBuilder(Level.WARNING, reason, location.sourceLocation());
   }
 
   /**

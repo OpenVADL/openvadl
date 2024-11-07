@@ -4,6 +4,7 @@ import com.google.errorprone.annotations.FormatMethod;
 import com.google.errorprone.annotations.InlineMe;
 import org.jetbrains.annotations.Contract;
 import vadl.utils.SourceLocation;
+import vadl.utils.WithSourceLocation;
 import vadl.viam.graph.Graph;
 
 /**
@@ -16,7 +17,7 @@ import vadl.viam.graph.Graph;
  * must be met. It will throw an error with the definition as context if the condition is not true.
  * </p>
  */
-public abstract class Definition {
+public abstract class Definition implements WithSourceLocation {
 
   public final Identifier identifier;
   private SourceLocation sourceLocation = SourceLocation.INVALID_SOURCE_LOCATION;
