@@ -16,6 +16,9 @@ import vadl.viam.Specification;
 import vadl.viam.graph.Graph;
 import vadl.viam.graph.dependency.WriteRegNode;
 
+/**
+ * Depends on {@link SideEffectConditionResolvingPass}.
+ */
 public class SingleResourceWriteValidationPass extends Pass {
 
   public SingleResourceWriteValidationPass(GeneralConfiguration configuration) {
@@ -65,7 +68,7 @@ class SingleResourceWriteValidator {
         }
 
 //        DeferredDiagnosticStore.add()
-        
+
       }
     }
 
