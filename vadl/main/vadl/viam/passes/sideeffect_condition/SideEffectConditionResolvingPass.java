@@ -33,7 +33,7 @@ public class SideEffectConditionResolvingPass extends Pass {
   public @Nullable Object execute(PassResults passResults, Specification viam)
       throws IOException {
     var instructions = ViamUtils
-        .findDefinitionByFilter(viam, d -> d instanceof Instruction);
+        .findDefinitionsByFilter(viam, d -> d instanceof Instruction);
     for (var instruction : instructions) {
       SideEffectConditionResolver.run(((Instruction) instruction).behavior());
     }
