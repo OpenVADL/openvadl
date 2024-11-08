@@ -128,9 +128,9 @@ class SingleResourceWriteValidator {
    * in the same execution path.
    */
   void run() {
-    checkResourceType(WriteRegNode.class, "Same register written twice");
-    checkResourceType(WriteRegFileNode.class, "Same register in register file written twice");
-    checkResourceType(WriteMemNode.class, "Same memory address written twice");
+    checkResourceType(WriteRegNode.class, "Register is written twice");
+    checkResourceType(WriteRegFileNode.class, "Register in register file is written twice");
+    checkResourceType(WriteMemNode.class, "Memory address is written twice");
   }
 
   private <T extends WriteResourceNode> void checkResourceType(Class<T> resourceWriteType,
@@ -191,7 +191,14 @@ class SingleResourceWriteValidator {
         var dnf2 = requireNonNull(dnfs.get(write2));
 
         if (canOccurSimultaneously(dnf1, dnf2)) {
+          System.out.println("Conflict detected: ");
+          System.out.println(write1 + " ... " + dnf1);
+          System.out.println(write2 + " ... " + dnf2);
           onConflict.accept(write1, write2);
+        } else {
+          System.out.println("No conflict:");
+          System.out.println(write1 + " ... " + dnf1);
+          System.out.println(write2 + " ... " + dnf2);
         }
       }
     }
@@ -208,13 +215,45 @@ class SingleResourceWriteValidator {
    */
   private boolean canOccurSimultaneously(Set<Set<Literal>> dnf1, Set<Set<Literal>> dnf2) {
     for (Set<Literal> term1 : dnf1) {
+      if (!isTermConsistent(term1)) {
+        // Skip inconsistent term1
+        continue;
+      }
       for (Set<Literal> term2 : dnf2) {
+        if (!isTermConsistent(term2)) {
+          // Skip inconsistent term2
+          continue;
+        }
         if (termsAreCompatible(term1, term2)) {
           return true;
         }
       }
     }
     return false;
+  }
+
+  /**
+   * Checks whether a term (set of literals) is internally consistent,
+   * i.e., it does not contain a literal and its negation.
+   *
+   * @param term The term to check.
+   * @return True if the term is consistent, false if it contains contradictions.
+   */
+  private boolean isTermConsistent(Set<Literal> term) {
+    Map<ExpressionNode, Boolean> literalMap = new HashMap<>();
+
+    for (Literal literal : term) {
+      Boolean existingNegation = literalMap.get(literal.expression);
+      if (existingNegation != null) {
+        if (!existingNegation.equals(literal.isNegated)) {
+          // Contradiction found within the term
+          return false;
+        }
+      } else {
+        literalMap.put(literal.expression, literal.isNegated);
+      }
+    }
+    return true;
   }
 
   /**
