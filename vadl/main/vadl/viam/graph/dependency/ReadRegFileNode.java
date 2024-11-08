@@ -98,4 +98,12 @@ public class ReadRegFileNode extends ReadResourceNode implements HasRegisterFile
   public void accept(GraphNodeVisitor visitor) {
     visitor.visit(this);
   }
+
+  @Override
+  public void prettyPrint(StringBuilder sb) {
+    sb.append(registerFile.simpleName())
+        .append("(");
+    address().prettyPrint(sb);
+    sb.append(")");
+  }
 }

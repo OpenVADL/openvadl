@@ -85,4 +85,10 @@ public class TypeCastNode extends UnaryNode implements Canonicalizable {
         .addContext(this.graph());
   }
 
+  @Override
+  public void prettyPrint(StringBuilder sb) {
+    sb.append("(");
+    value.prettyPrint(sb);
+    sb.append(" as ").append(type().toString()).append(")");
+  }
 }

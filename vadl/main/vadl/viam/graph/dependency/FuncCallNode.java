@@ -74,4 +74,17 @@ public class FuncCallNode extends AbstractFunctionCallNode {
   public void accept(GraphNodeVisitor visitor) {
     visitor.visit(this);
   }
+
+  @Override
+  public void prettyPrint(StringBuilder sb) {
+    sb.append(function.simpleName())
+        .append("(");
+    for (int i = 0; i < arguments().size(); i++) {
+      if (i > 0) {
+        sb.append(", ");
+      }
+      arguments().get(i).prettyPrint(sb);
+    }
+    sb.append(")");
+  }
 }

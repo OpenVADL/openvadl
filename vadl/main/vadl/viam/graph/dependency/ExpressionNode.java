@@ -28,4 +28,10 @@ public abstract class ExpressionNode extends DependencyNode {
   public boolean isConstant() {
     return this instanceof ConstantNode;
   }
+
+  
+  public void prettyPrint(StringBuilder sb) {
+    sb.append("prettyPrint(").append(getClass().getSimpleName()).append(")");
+  }
+
 }

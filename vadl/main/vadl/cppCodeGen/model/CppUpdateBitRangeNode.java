@@ -78,4 +78,5 @@ public class CppUpdateBitRangeNode extends ExpressionNode {
     value = visitor.apply(this, value, ExpressionNode.class);
     patch = visitor.apply(this, patch, ExpressionNode.class);
   }
+  
 }
