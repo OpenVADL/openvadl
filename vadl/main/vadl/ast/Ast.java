@@ -84,7 +84,7 @@ abstract class Node implements WithSourceLocation {
   abstract SourceLocation location();
 
   @Override
-  final public SourceLocation sourceLocation() {
+  public final SourceLocation sourceLocation() {
     return location();
   }
 
