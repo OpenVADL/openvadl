@@ -47,7 +47,7 @@ import vadl.lcb.template.lib.Target.EmitMCInstLowerHeaderFilePass;
 import vadl.lcb.template.lib.Target.MCTargetDesc.EmitInstPrinterCppFilePass;
 import vadl.lcb.template.lib.Target.MCTargetDesc.EmitInstPrinterHeaderFilePass;
 import vadl.viam.passes.InstructionResourceAccessAnalysisPass;
-import vadl.viam.passes.SingleResourceWriteValidationPass;
+import vadl.viam.passes.DuplicateWriteDetectionPass;
 import vadl.viam.passes.algebraic_simplication.AlgebraicSimplificationPass;
 import vadl.viam.passes.canonicalization.CanonicalizationPass;
 import vadl.viam.passes.dummyAbi.DummyAbiPass;
@@ -90,7 +90,7 @@ public class PassOrders {
     order.add(new FunctionInlinerPass(configuration));
     order.add(new SideEffectConditionResolvingPass(configuration));
     // requires SideEffectConditionResolvingPass to work
-    order.add(new SingleResourceWriteValidationPass(configuration));
+    order.add(new DuplicateWriteDetectionPass(configuration));
 
     // Common optimizations
     order.add(new CanonicalizationPass(configuration));

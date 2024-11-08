@@ -52,11 +52,11 @@ import vadl.viam.graph.dependency.WriteResourceNode;
  *
  * <p>Depends on {@link vadl.viam.passes.sideeffect_condition.SideEffectConditionResolvingPass}.
  *
- * <p>Check {@link SingleResourceWriteValidator} for implementation details.</p>
+ * <p>Check {@link DuplicateWriteDetector} for implementation details.</p>
  */
-public class SingleResourceWriteValidationPass extends Pass {
+public class DuplicateWriteDetectionPass extends Pass {
 
-  public SingleResourceWriteValidationPass(GeneralConfiguration configuration) {
+  public DuplicateWriteDetectionPass(GeneralConfiguration configuration) {
     super(configuration);
   }
 
@@ -71,7 +71,7 @@ public class SingleResourceWriteValidationPass extends Pass {
     var diagnostics = new ArrayList<DiagnosticBuilder>();
     // run for each instruction in instruction set
     viam.isa().ifPresent(e -> e.ownInstructions().forEach(i ->
-        new SingleResourceWriteValidator(i.behavior(), i, diagnostics).run()
+        new DuplicateWriteDetector(i.behavior(), i, diagnostics).run()
     ));
 
     if (!diagnostics.isEmpty()) {
@@ -93,7 +93,7 @@ public class SingleResourceWriteValidationPass extends Pass {
  * Disjunctive Normal Form (DNF) and then checking for overlapping execution paths
  * between different write operations.</p>
  */
-class SingleResourceWriteValidator {
+class DuplicateWriteDetector {
   /**
    * List to collect diagnostic messages generated during validation.
    */
@@ -116,8 +116,8 @@ class SingleResourceWriteValidator {
    * @param definition  The definition context.
    * @param diagnostics The list to collect diagnostic messages.
    */
-  SingleResourceWriteValidator(Graph behavior, Definition definition,
-                               List<DiagnosticBuilder> diagnostics) {
+  DuplicateWriteDetector(Graph behavior, Definition definition,
+                         List<DiagnosticBuilder> diagnostics) {
     this.behavior = behavior;
     this.definition = definition;
     this.diagnostics = diagnostics;

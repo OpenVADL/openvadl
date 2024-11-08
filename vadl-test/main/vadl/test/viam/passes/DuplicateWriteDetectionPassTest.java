@@ -15,9 +15,9 @@ import vadl.error.DiagnosticList;
 import vadl.pass.PassOrders;
 import vadl.pass.exception.DuplicatedPassKeyException;
 import vadl.test.AbstractTest;
-import vadl.viam.passes.SingleResourceWriteValidationPass;
+import vadl.viam.passes.DuplicateWriteDetectionPass;
 
-public class SingleResourceWriteValidationPassTest extends AbstractTest {
+public class DuplicateWriteDetectionPassTest extends AbstractTest {
 
   static Stream<Arguments> invalidTestArgs() {
     var regErrMsg = "Register is written twice";
@@ -53,7 +53,7 @@ public class SingleResourceWriteValidationPassTest extends AbstractTest {
     var err = assertThrows(DiagnosticList.class, () -> setupPassManagerAndRunSpec(
         "passes/singleResourceWriteValidation/invalid_" + name + ".vadl",
         PassOrders.viam(getConfiguration(false))
-            .untilFirst(SingleResourceWriteValidationPass.class)
+            .untilFirst(DuplicateWriteDetectionPass.class)
     ));
 
     assertEquals(numErrs, err.items.size());
@@ -69,7 +69,7 @@ public class SingleResourceWriteValidationPassTest extends AbstractTest {
     setupPassManagerAndRunSpec(
         test,
         PassOrders.viam(getConfiguration(false))
-            .untilFirst(SingleResourceWriteValidationPass.class)
+            .untilFirst(DuplicateWriteDetectionPass.class)
             .addDump("test-weird")
     );
   }
