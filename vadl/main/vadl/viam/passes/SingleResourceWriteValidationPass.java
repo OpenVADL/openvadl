@@ -9,7 +9,9 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Set;
+import java.util.function.BiConsumer;
 import java.util.stream.Collectors;
 import org.jetbrains.annotations.Nullable;
 import vadl.configuration.GeneralConfiguration;
@@ -24,11 +26,33 @@ import vadl.viam.Specification;
 import vadl.viam.graph.Graph;
 import vadl.viam.graph.dependency.BuiltInCall;
 import vadl.viam.graph.dependency.ExpressionNode;
+import vadl.viam.graph.dependency.WriteMemNode;
+import vadl.viam.graph.dependency.WriteRegFileNode;
 import vadl.viam.graph.dependency.WriteRegNode;
 import vadl.viam.graph.dependency.WriteResourceNode;
 
 /**
- * Depends on {@link SideEffectConditionResolvingPass}.
+ * This pass tries to detect double writes on the same execution path.
+ * E.g. if there exists an execution path where a register is written twice (with different values).
+ * This can be guaranteed for register writes, however not for register file and memory writes,
+ * as different writes using different address expressions are allowed but may lead to
+ * double writes on the same resource location.
+ *
+ * <p>Consider following register file writes in an instruction:  <pre>{@code
+ * X(a + b) := c
+ * X(x + y) := z
+ * }</pre>
+ * While this is allowed, it may happen that {@code (a + b) == (x + y)} resulting in double
+ * writes. It is up to the user to check that this does not happen.
+ * </p>
+ *
+ * <p>For resources with addresses (register file and memory) we check that writes to the same
+ * address, e.i. resulting from the same expression tree, happen on disjunct execution paths.
+ * Otherwise a user error is thrown.</p>
+ *
+ * <p>Depends on {@link vadl.viam.passes.sideeffect_condition.SideEffectConditionResolvingPass}.
+ *
+ * <p>Check {@link SingleResourceWriteValidator} for implementation details.</p>
  */
 public class SingleResourceWriteValidationPass extends Pass {
 
@@ -45,11 +69,13 @@ public class SingleResourceWriteValidationPass extends Pass {
   public @Nullable Object execute(PassResults passResults, Specification viam)
       throws IOException {
     var diagnostics = new ArrayList<DiagnosticBuilder>();
+    // run for each instruction in instruction set
     viam.isa().ifPresent(e -> e.ownInstructions().forEach(i ->
         new SingleResourceWriteValidator(i.behavior(), i, diagnostics).run()
     ));
 
     if (!diagnostics.isEmpty()) {
+      // if there are diagnostics throw them
       throw new DiagnosticList(
           diagnostics.stream().map(DiagnosticBuilder::build)
               .collect(Collectors.toList()));
@@ -58,12 +84,38 @@ public class SingleResourceWriteValidationPass extends Pass {
   }
 }
 
+/**
+ * Validates that a single resource (e.g., a register) is not written multiple times
+ * in the same execution path. It analyzes the conditions under which each write occurs
+ * and determines if there is a possibility of multiple writes happening simultaneously.
+ *
+ * <p>This validator works by converting the conditions of each write operation into
+ * Disjunctive Normal Form (DNF) and then checking for overlapping execution paths
+ * between different write operations.</p>
+ */
 class SingleResourceWriteValidator {
-
+  /**
+   * List to collect diagnostic messages generated during validation.
+   */
   List<DiagnosticBuilder> diagnostics;
+
+  /**
+   * The definition context in which the validator operates.
+   */
   Definition definition;
+
+  /**
+   * The behavior graph representing the execution flow and operations.
+   */
   Graph behavior;
 
+  /**
+   * Constructs a SingleResourceWriteValidator.
+   *
+   * @param behavior    The behavior graph to validate.
+   * @param definition  The definition context.
+   * @param diagnostics The list to collect diagnostic messages.
+   */
   SingleResourceWriteValidator(Graph behavior, Definition definition,
                                List<DiagnosticBuilder> diagnostics) {
     this.behavior = behavior;
@@ -71,68 +123,224 @@ class SingleResourceWriteValidator {
     this.diagnostics = diagnostics;
   }
 
+  /**
+   * Runs the validation process to check for multiple writes to the same resource
+   * in the same execution path.
+   */
   void run() {
-    checkRegisters();
+    checkResourceType(WriteRegNode.class, "Same register written twice");
+    checkResourceType(WriteRegFileNode.class, "Same register in register file written twice");
+    checkResourceType(WriteMemNode.class, "Same memory address written twice");
   }
 
+  private <T extends WriteResourceNode> void checkResourceType(Class<T> resourceWriteType,
+                                                               String diagError) {
+    var regToWrites = behavior.getNodes(resourceWriteType)
+        .collect(Collectors.groupingBy(writeNode ->
+            writeNode.hasAddress() ?
+                Objects.hash(writeNode.resourceDefinition(), writeNode.address())
+                : writeNode.resourceDefinition()
+        ));
 
-  private void checkRegisters() {
-    var regWrites = behavior.getNodes(WriteRegNode.class)
-        .collect(Collectors.groupingBy(WriteRegNode::resourceDefinition));
-
-    for (var regWrite : regWrites.entrySet()) {
-      checkSameRegisterWrites(regWrite.getValue());
+    for (var regWriteSet : regToWrites.entrySet()) {
+      var regWrites = regWriteSet.getValue();
+      checkSameResourceWrites(regWrites, (write1, write2) ->
+          addDiagnostic(diagError, write1, write2));
     }
   }
 
-  private void checkSameRegisterWrites(List<WriteRegNode> writes) {
+  /**
+   * Checks a list of write operations to the same resource to determine if any
+   * pair of writes can occur on the same execution path.
+   *
+   * @param writes The list of write operations to the same resource.
+   */
+  private <T extends WriteResourceNode> void checkSameResourceWrites(List<T> writes,
+                                                                     BiConsumer<T, T> onConflict) {
+    if (writes.size() <= 1) {
+      // nothing to check
+      return;
+    }
 
-    var conjuncts = new HashMap<WriteRegNode, Set<ExpressionNode>>();
+    var dnfs = new HashMap<T, Set<Set<Literal>>>();
 
     for (var write : writes) {
-      var conjunct = new HashSet<ExpressionNode>();
-      produceConjunction(write.condition(), conjunct);
-      conjuncts.put(write, conjunct);
+      Set<Set<Literal>> dnf = produceDNF(write.condition());
+      dnfs.put(write, dnf);
     }
 
-    checkConjunctions(conjuncts);
+    checkDNFs(dnfs, onConflict);
   }
 
-  private void checkConjunctions(Map<WriteRegNode, Set<ExpressionNode>> conjuncts) {
-    // Convert the key set to a list for indexed access
-    var writes = new ArrayList<>(conjuncts.keySet());
+  /**
+   * Checks whether any pair of write conditions can be true simultaneously,
+   * indicating that the writes can occur on the same execution path.
+   *
+   * @param dnfs A mapping of write operations to their conditions in DNF.
+   */
+  private <T extends WriteResourceNode> void checkDNFs(Map<T, Set<Set<Literal>>> dnfs,
+                                                       BiConsumer<T, T> onConflict) {
+    var writes = new ArrayList<>(dnfs.keySet());
 
-    // Iterate over all pairs of write operations
     for (int i = 0; i < writes.size(); i++) {
-      WriteRegNode write1 = writes.get(i);
-      var conjuncts1 = requireNonNull(conjuncts.get(write1));
+      var write1 = requireNonNull(writes.get(i));
+      var dnf1 = requireNonNull(dnfs.get(write1));
 
       for (int j = i + 1; j < writes.size(); j++) {
-        WriteRegNode write2 = writes.get(j);
-        var conjuncts2 = requireNonNull(conjuncts.get(write2));
+        var write2 = requireNonNull(writes.get(j));
+        var dnf2 = requireNonNull(dnfs.get(write2));
 
-        // Check if both writes have all common conjuncts
-        if (sameExecutionPath(conjuncts1, conjuncts2)) {
-          addDiagnostic("Same register written twice", write1, write2);
+        if (canOccurSimultaneously(dnf1, dnf2)) {
+          onConflict.accept(write1, write2);
         }
       }
     }
   }
 
-  private boolean sameExecutionPath(Set<ExpressionNode> conjuncts1,
-                                    Set<ExpressionNode> conjuncts2) {
-    return conjuncts1.containsAll(conjuncts2) || conjuncts2.containsAll(conjuncts1);
-  }
-
-  private void produceConjunction(ExpressionNode root, Set<ExpressionNode> conjuncts) {
-    if (root instanceof BuiltInCall builtInCall && builtInCall.builtIn() == BuiltInTable.AND) {
-      produceConjunction(builtInCall.arguments().get(0), conjuncts);
-      produceConjunction(builtInCall.arguments().get(1), conjuncts);
-    } else {
-      conjuncts.add(root);
+  /**
+   * Determines whether two conditions, each represented in DNF, can be true
+   * at the same time, indicating that the corresponding writes can occur
+   * simultaneously.
+   *
+   * @param dnf1 The first condition in DNF.
+   * @param dnf2 The second condition in DNF.
+   * @return True if there exists at least one term in each DNF that are compatible.
+   */
+  private boolean canOccurSimultaneously(Set<Set<Literal>> dnf1, Set<Set<Literal>> dnf2) {
+    for (Set<Literal> term1 : dnf1) {
+      for (Set<Literal> term2 : dnf2) {
+        if (termsAreCompatible(term1, term2)) {
+          return true;
+        }
+      }
     }
+    return false;
   }
 
+  /**
+   * Checks whether two terms (sets of literals) are compatible, i.e., they
+   * can be true at the same time without any contradictions.
+   *
+   * @param term1 The first term (set of literals).
+   * @param term2 The second term (set of literals).
+   * @return True if the terms are compatible, false if they contain contradictory literals.
+   */
+  private boolean termsAreCompatible(Set<Literal> term1, Set<Literal> term2) {
+    // Combine both terms into a single set
+    Map<ExpressionNode, Boolean> literalMap = new HashMap<>();
+
+    for (Literal literal : term1) {
+      literalMap.put(literal.expression, literal.isNegated);
+    }
+
+    for (Literal literal : term2) {
+      Boolean existingNegation = literalMap.get(literal.expression);
+      if (existingNegation != null) {
+        // If the same literal appears in both terms
+        if (!existingNegation.equals(literal.isNegated)) {
+          // Contradiction found
+          return false;
+        }
+      } else {
+        literalMap.put(literal.expression, literal.isNegated);
+      }
+    }
+    // No contradictions found
+    return true;
+  }
+
+  /**
+   * Converts a condition expression into its Disjunctive Normal Form (DNF),
+   * representing the condition as a set of terms, where each term is a set
+   * of literals connected by conjunctions (AND operations).
+   *
+   * @param root The root of the expression tree representing the condition.
+   * @return The DNF of the expression as a set of terms (sets of literals).
+   */
+  private Set<Set<Literal>> produceDNF(ExpressionNode root) {
+    if (root instanceof BuiltInCall builtInCall) {
+      var builtIn = builtInCall.builtIn();
+      if (builtIn == BuiltInTable.AND) {
+        var leftDnf = produceDNF(builtInCall.arguments().get(0));
+        var rightDnf = produceDNF(builtInCall.arguments().get(1));
+
+        var combinedDnf = new HashSet<Set<Literal>>();
+        for (var left : leftDnf) {
+          for (var right : rightDnf) {
+            var combined = new HashSet<>(left);
+            combined.addAll(right);
+            combinedDnf.add(combined);
+          }
+        }
+        return combinedDnf;
+      } else if (builtIn == BuiltInTable.OR) {
+        var leftDnf = produceDNF(builtInCall.arguments().get(0));
+        var rightDnf = produceDNF(builtInCall.arguments().get(1));
+        var unionDnf = new HashSet<>(leftDnf);
+        unionDnf.addAll(rightDnf);
+        return unionDnf;
+      } else if (builtIn == BuiltInTable.NOT) {
+        var argDnf = produceDNF(builtInCall.arguments().get(0));
+        return negateDnf(argDnf);
+      }
+    }
+
+    // default case
+    var term = new HashSet<Literal>();
+    term.add(new Literal(root, false));
+    var dnf = new HashSet<Set<Literal>>();
+    dnf.add(term);
+    return dnf;
+  }
+
+  /**
+   * Negates a DNF expression, resulting in a Conjunctive Normal Form (CNF).
+   * This method applies De Morgan's laws to perform the negation and then
+   * converts the CNF back to DNF for compatibility with the rest of the validation.
+   *
+   * @param dnf The DNF expression to negate.
+   * @return The negated expression in DNF (since CNF is converted back to DNF).
+   */
+  private Set<Set<Literal>> negateDnf(Set<Set<Literal>> dnf) {
+    // Negation of a DNF is a Conjunctive Normal Form (CNF)
+    // Since we only need to check for contradictions, we can flatten this
+    Set<Set<Literal>> result = new HashSet<>();
+
+    for (Set<Literal> term : dnf) {
+      Set<Set<Literal>> negatedTerm = new HashSet<>();
+      for (Literal literal : term) {
+        // Negate each literal
+        Literal negatedLiteral = literal.negated();
+        Set<Literal> singleLiteralTerm = new HashSet<>();
+        singleLiteralTerm.add(negatedLiteral);
+        negatedTerm.add(singleLiteralTerm);
+      }
+      // Combine using OR (since negation of AND is OR of negations)
+      if (result.isEmpty()) {
+        result.addAll(negatedTerm);
+      } else {
+        Set<Set<Literal>> newResult = new HashSet<>();
+        for (Set<Literal> resTerm : result) {
+          for (Set<Literal> negTerm : negatedTerm) {
+            Set<Literal> combinedTerm = new HashSet<>(resTerm);
+            combinedTerm.addAll(negTerm);
+            newResult.add(combinedTerm);
+          }
+        }
+        result = newResult;
+      }
+    }
+    return result;
+  }
+
+  /**
+   * Adds a diagnostic message indicating that the same resource is written twice
+   * in the same execution path.
+   *
+   * @param reason The reason for the diagnostic.
+   * @param write1 The first write operation.
+   * @param write2 The second write operation.
+   */
   private void addDiagnostic(String reason, WriteResourceNode write1, WriteResourceNode write2) {
     var resourceName = write1.resourceDefinition().simpleName();
     var diagnostic = error(reason, definition.identifier)
@@ -144,6 +352,26 @@ class SingleResourceWriteValidator {
     diagnostics.add(diagnostic);
   }
 
+
+  /**
+   * Represents a literal in a logical expression, consisting of an expression node
+   * and a flag indicating whether it is negated.
+   */
+  private record Literal(
+      ExpressionNode expression,
+      boolean isNegated
+  ) {
+
+    Literal negated() {
+      return new Literal(expression, !isNegated);
+    }
+
+    @Override
+    public String toString() {
+      var prefix = isNegated ? "¬" : "";
+      return prefix + expression.prettyPrint();
+    }
+  }
 
 }
 
