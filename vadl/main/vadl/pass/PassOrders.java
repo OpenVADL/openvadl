@@ -81,7 +81,6 @@ public class PassOrders {
     order.add(new ViamVerificationPass(configuration));
 
     order.add(new TypeCastEliminationPass(configuration));
-    order.add(new DummyAbiPass(configuration));
     // TODO: @kper do you see any fix for this?
     // Note: we run the counter-access resolving pass before the func inliner pass
     // because the lcb uses the uninlined version of the instructions.
@@ -120,6 +119,7 @@ public class PassOrders {
   public static PassOrder gcbAndCppCodeGen(GcbConfiguration gcbConfiguration) throws IOException {
     var order = viam(gcbConfiguration);
 
+    order.add(new DummyAbiPass(gcbConfiguration));
     order.add(new IdentifyFieldUsagePass(gcbConfiguration));
     order.add(new GenerateFieldAccessEncodingFunctionPass(gcbConfiguration));
     order.add(new FieldNodeReplacementPassForDecoding(gcbConfiguration));
