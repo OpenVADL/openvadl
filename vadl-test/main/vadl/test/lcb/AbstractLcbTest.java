@@ -21,6 +21,8 @@ public abstract class AbstractLcbTest extends AbstractCppCodeGenTest {
   }
 
   /**
+   * Runs lcb pass order.
+   *
    * @deprecated as {@link #setupPassManagerAndRunSpecUntil(String, PassOrder, PassKey)} is also
    *     deprecated.
    */

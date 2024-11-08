@@ -16,6 +16,8 @@ public class AbstractCppCodeGenTest extends DockerExecutionTest {
   }
 
   /**
+   * Runs gcb passorder.
+   *
    * @deprecated as {@link #setupPassManagerAndRunSpecUntil(String, PassOrder, PassKey)} is also
    *     deprecated.
    */

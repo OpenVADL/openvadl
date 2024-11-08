@@ -16,6 +16,8 @@ public abstract class AbstractGcbTest extends AbstractCppCodeGenTest {
   }
 
   /**
+   * Runs gcb passorder.
+   *
    * @deprecated as {@link #setupPassManagerAndRunSpecUntil(String, PassOrder, PassKey)} is also
    *     deprecated.
    */

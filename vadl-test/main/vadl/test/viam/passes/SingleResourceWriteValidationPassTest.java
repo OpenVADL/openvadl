@@ -24,20 +24,18 @@ public class SingleResourceWriteValidationPassTest extends AbstractTest {
     var regFileErrMsg = "Register in register file is written twice";
     var memErrMsg = "Memory address is written twice";
     return Stream.of(
-        of("reg_single_branch", 1, regErrMsg)
-        , of("reg_dual_branch", 1, regErrMsg)
-        , of("reg_triple_branch", 1, regErrMsg)
-        , of("reg_potential_branch", 1, regErrMsg)
-
-        , of("regfile_1", 1, regFileErrMsg)
-        , of("regfile_2", 1, regFileErrMsg)
-        , of("regfile_3", 2, regFileErrMsg)
-        , of("regfile_4", 1, regFileErrMsg)
-
-        , of("mem_1", 1, memErrMsg)
-        , of("mem_2", 1, memErrMsg)
-        , of("mem_3", 2, memErrMsg)
-        , of("mem_4", 1, memErrMsg)
+        of("reg_single_branch", 1, regErrMsg),
+        of("reg_dual_branch", 1, regErrMsg),
+        of("reg_triple_branch", 1, regErrMsg),
+        of("reg_potential_branch", 1, regErrMsg),
+        of("regfile_1", 1, regFileErrMsg),
+        of("regfile_2", 1, regFileErrMsg),
+        of("regfile_3", 2, regFileErrMsg),
+        of("regfile_4", 1, regFileErrMsg),
+        of("mem_1", 1, memErrMsg),
+        of("mem_2", 1, memErrMsg),
+        of("mem_3", 2, memErrMsg),
+        of("mem_4", 1, memErrMsg)
 
     );
   }

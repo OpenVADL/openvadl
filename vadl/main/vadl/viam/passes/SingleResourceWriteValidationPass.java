@@ -137,8 +137,8 @@ class SingleResourceWriteValidator {
                                                                String diagError) {
     var regToWrites = behavior.getNodes(resourceWriteType)
         .collect(Collectors.groupingBy(writeNode ->
-            writeNode.hasAddress() ?
-                Objects.hash(writeNode.resourceDefinition(), writeNode.address())
+            writeNode.hasAddress()
+                ? Objects.hash(writeNode.resourceDefinition(), writeNode.address())
                 : writeNode.resourceDefinition()
         ));
 

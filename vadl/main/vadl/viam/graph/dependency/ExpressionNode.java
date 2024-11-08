@@ -30,12 +30,23 @@ public abstract class ExpressionNode extends DependencyNode {
   }
 
 
-  final public String prettyPrint() {
+  /**
+   * Creates a pretty-printed representation of the current expression node.
+   *
+   * @return A string containing the pretty-printed representation of the expression node.
+   */
+  public final String prettyPrint() {
     StringBuilder sb = new StringBuilder();
     prettyPrint(sb);
     return sb.toString();
   }
 
+  /**
+   * Appends a pretty-printed representation of the current expression node to the
+   * provided StringBuilder.
+   *
+   * @param sb The StringBuilder to which the pretty-printed representation is appended.
+   */
   public void prettyPrint(StringBuilder sb) {
     sb.append("prettyPrint(").append(getClass().getSimpleName()).append(")");
   }
