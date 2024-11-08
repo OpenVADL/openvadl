@@ -1,52 +1,79 @@
 package vadl.test.viam.passes;
 
+import static org.hamcrest.CoreMatchers.containsString;
+import static org.hamcrest.MatcherAssert.assertThat;
 import static org.junit.jupiter.api.Assertions.assertEquals;
-import static vadl.utils.ViamUtils.findDefinitionsByFilter;
+import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.params.provider.Arguments.of;
 
 import java.io.IOException;
-import org.junit.jupiter.api.Test;
+import java.util.stream.Stream;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.Arguments;
+import org.junit.jupiter.params.provider.MethodSource;
+import vadl.error.DiagnosticList;
 import vadl.pass.PassOrders;
 import vadl.pass.exception.DuplicatedPassKeyException;
 import vadl.test.AbstractTest;
-import vadl.viam.Instruction;
-import vadl.viam.graph.Graph;
-import vadl.viam.graph.dependency.SideEffectNode;
-import vadl.viam.graph.visualize.DotGraphVisualizer;
 import vadl.viam.passes.SingleResourceWriteValidationPass;
 
 public class SingleResourceWriteValidationPassTest extends AbstractTest {
 
-  @Test
-  void testSingleResourceWriteValidationPass() throws IOException, DuplicatedPassKeyException {
-    var setup = setupPassManagerAndRunSpec(
-        "passes/singleResourceWriteValidation/invalid_reg_triple_branch.vadl",
+  static Stream<Arguments> invalidTestArgs() {
+    var regErrMsg = "Register is written twice";
+    var regFileErrMsg = "Register in register file is written twice";
+    var memErrMsg = "Memory address is written twice";
+    return Stream.of(
+        of("reg_single_branch", 1, regErrMsg)
+        , of("reg_dual_branch", 1, regErrMsg)
+        , of("reg_triple_branch", 1, regErrMsg)
+        , of("reg_potential_branch", 1, regErrMsg)
+
+        , of("regfile_1", 1, regFileErrMsg)
+        , of("regfile_2", 1, regFileErrMsg)
+        , of("regfile_3", 2, regFileErrMsg)
+        , of("regfile_4", 1, regFileErrMsg)
+
+        , of("mem_1", 1, memErrMsg)
+        , of("mem_2", 1, memErrMsg)
+        , of("mem_3", 2, memErrMsg)
+        , of("mem_4", 1, memErrMsg)
+
+    );
+  }
+
+  static Stream<Arguments> validTestArgs() {
+    var tests = findAllTestSources("passes/singleResourceWriteValidation/valid_");
+    return tests.stream().map(Arguments::of);
+  }
+
+  @ParameterizedTest
+  @MethodSource("invalidTestArgs")
+  void testInvalid(String name, int numErrs, String errmsg)
+      throws IOException, DuplicatedPassKeyException {
+
+    var err = assertThrows(DiagnosticList.class, () -> setupPassManagerAndRunSpec(
+        "passes/singleResourceWriteValidation/invalid_" + name + ".vadl",
         PassOrders.viam(getConfiguration(false))
             .untilFirst(SingleResourceWriteValidationPass.class)
-            .addDump("build/test-out")
+    ));
+
+    assertEquals(numErrs, err.items.size());
+    for (var item : err.items) {
+      assertThat(item.getMessage(), containsString(errmsg));
+    }
+  }
+
+
+  @ParameterizedTest
+  @MethodSource("validTestArgs")
+  void validTest(String test) throws IOException, DuplicatedPassKeyException {
+    setupPassManagerAndRunSpec(
+        test,
+        PassOrders.viam(getConfiguration(false))
+            .untilFirst(SingleResourceWriteValidationPass.class)
+            .addDump("test-weird")
     );
-
-
-    var spec = setup.specification();
-
-    var instr = (Instruction) findDefinitionsByFilter(spec, f -> f instanceof Instruction)
-        .stream().findFirst().get();
-
-    var sideEffects = instr.behavior().getNodes(SideEffectNode.class);
-
-//    for (var sideEffect : sideEffects.toList()) {
-//      var sb = new StringBuilder();
-//      sideEffect.condition().prettyPrint(sb);
-//      System.out.println(sb);
-//      var conditionCopy = sideEffect.condition().copy();
-//      var graph = new Graph("test");
-//      graph.addWithInputs(conditionCopy);
-//      var dotGraph = new DotGraphVisualizer()
-//          .load(graph)
-//          .visualize();
-//      System.out.println(dotGraph);
-//    }
-
-
   }
 
 }

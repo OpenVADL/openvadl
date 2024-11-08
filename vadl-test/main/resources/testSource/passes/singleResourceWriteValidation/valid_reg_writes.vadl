@@ -1,0 +1,33 @@
+
+instruction set architecture ValidRegWrites = {
+
+  register REG: Bits<32>
+
+  instruction TEST1: TMP = {
+    if F1 = 1 then {
+      REG := 1
+
+      if F1 = 1 then {
+      } else {
+        REG := 2
+      }
+    }
+  }
+
+  // same value written to reg
+  instruction TEST2: TMP = {
+    REG := 2
+    REG := 2
+  }
+
+  encoding TEST1 = { ENC = 1 }
+  encoding TEST2 = { ENC = 1 }
+  assembly TEST1, TEST2 = ""
+
+  format TMP: Bits<32> =
+  { F1: Bits<8>
+  , F2: Bits<8>
+  , F3: Bits<8>
+  , ENC: Bits<8>
+  }
+}

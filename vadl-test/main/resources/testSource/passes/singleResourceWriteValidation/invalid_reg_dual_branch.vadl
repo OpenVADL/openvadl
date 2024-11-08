@@ -10,7 +10,7 @@ instruction set architecture RegDualBranch = {
     }
 
     if TWO = 2 then {
-      REG := 1
+      REG := 2
     }
   }
 
