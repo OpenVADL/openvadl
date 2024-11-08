@@ -29,7 +29,13 @@ public abstract class ExpressionNode extends DependencyNode {
     return this instanceof ConstantNode;
   }
 
-  
+
+  final public String prettyPrint() {
+    StringBuilder sb = new StringBuilder();
+    prettyPrint(sb);
+    return sb.toString();
+  }
+
   public void prettyPrint(StringBuilder sb) {
     sb.append("prettyPrint(").append(getClass().getSimpleName()).append(")");
   }

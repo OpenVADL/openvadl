@@ -6,24 +6,30 @@ instruction set architecture RegDualBranch = {
   register REG: Bits<32>
 
   instruction TEST: TMP = {
-    if ONE = 3 then {
-      REG := 2
-    }
 
-    if TWO = 1 then {
+
+    if F2 = 1 then {
+      if F4 = 3 then {
+        REG := 2
+      }
     } else {
-      if THREE = 1 then {
+      if F3 = 1 then {
           REG := 1
       }
     }
+
+    if (F4 = 2) then {
+      REG := 2
+    }
   }
 
-  encoding TEST = { ONE = 1 }
+  encoding TEST = { F1 = 1 }
   assembly TEST = ""
 
   format TMP: Bits<32> =
-  { ONE: Bits<16>
-  , TWO: Bits<8>
-  , THREE: Bits<8>
+  { F1: Bits<8>
+  , F2: Bits<8>
+  , F3: Bits<8>
+  , F4: Bits<8>
   }
 }
