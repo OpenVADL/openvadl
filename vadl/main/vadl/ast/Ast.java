@@ -6,6 +6,7 @@ import java.util.List;
 import java.util.Objects;
 import javax.annotation.Nullable;
 import vadl.utils.SourceLocation;
+import vadl.utils.WithSourceLocation;
 
 /**
  * The abstract syntax tree for the vadl language.
@@ -58,7 +59,7 @@ public class Ast {
   }
 }
 
-abstract class Node {
+abstract class Node implements WithSourceLocation {
   @Nullable
   SymbolTable symbolTable;
 
@@ -81,6 +82,11 @@ abstract class Node {
   }
 
   abstract SourceLocation location();
+
+  @Override
+  public final SourceLocation sourceLocation() {
+    return location();
+  }
 
   abstract SyntaxType syntaxType();
 

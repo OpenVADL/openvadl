@@ -88,9 +88,9 @@ public class EmitIssTranslatePass extends IssTemplateRenderingPass {
       );
       default -> throw error("Invalid instruction width", refFormat.identifier.sourceLocation())
           .description(
-              ("The ISS generator requires that every instruction width "
-                  + "is one of [8, 16, 32, 64], but found %s")
-                  .formatted(width))
+              "The ISS generator requires that every instruction width "
+                  + "is one of [8, 16, 32, 64], but found %s",
+              width)
           .build();
     };
   }
