@@ -51,6 +51,10 @@ MCOperand [(${namespace})]InstPrinter::adjustImmediateOp
     int64_t value;
     if(AsmUtils::evaluateConstantImm(&original, value))
     {
+        /*
+        Clarify with Christoph why this has to be done because the current code is
+        wrong. We must *not* not do for all immediates.
+
         switch(OpCode)
         {
           [# th:each="instruction : ${instructionsWithImmediate}" ]
@@ -61,6 +65,7 @@ MCOperand [(${namespace})]InstPrinter::adjustImmediateOp
           }
           [/]
         }
+        */
     }
 
     return original;
