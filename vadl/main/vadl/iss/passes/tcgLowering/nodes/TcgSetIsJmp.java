@@ -10,7 +10,8 @@ public class TcgSetIsJmp extends TcgOpNode {
 
   public enum Type {
     NORETURN,
-    NEXT;
+    NEXT,
+    CHAIN;
 
     public String cCode() {
       return "DISAS_" + this.name();

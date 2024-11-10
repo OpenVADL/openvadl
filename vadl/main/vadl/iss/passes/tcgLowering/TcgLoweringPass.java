@@ -133,7 +133,7 @@ class TcgLoweringExecutor extends GraphProcessor<Node> {
 
   // indicates a `ctx->base.is_jmp = DISAS_NORETURN;` is required
   // if the instruction resets the PC
-  boolean noReturnJmp;
+  TcgSetIsJmp.Type instrJmpType;
 
 
   TcgLoweringExecutor(Instruction instruction,
@@ -148,7 +148,7 @@ class TcgLoweringExecutor extends GraphProcessor<Node> {
     this.tempVars = new HashSet<>();
     this.tcgNodes = tcgNodes;
     this.pc = pc;
-    this.noReturnJmp = false;
+    this.instrJmpType = TcgSetIsJmp.Type.NEXT;
   }
 
   static void runOn(Instruction instruction, Counter pc, IssTcgAnnotatePass.Result tcgNodes) {
@@ -163,8 +163,9 @@ class TcgLoweringExecutor extends GraphProcessor<Node> {
     // this pass inserts all TcgGetTemp nodes necessary
     insertTemporaryVariableRetrievals();
 
-    if (noReturnJmp) {
-      addLast(new TcgSetIsJmp(TcgSetIsJmp.Type.NORETURN));
+    if (instrJmpType != TcgSetIsJmp.Type.NEXT) {
+      // everything except for next must be set
+      addLast(new TcgSetIsJmp(instrJmpType));
     }
 
     // remove all control nodes from the initial graph
@@ -367,7 +368,8 @@ class TcgLoweringExecutor extends GraphProcessor<Node> {
     if (toProcess.register() == pc.registerResource()) {
       var pcDest = getResultOf(toProcess.value(), ExpressionNode
           .class);
-      noReturnJmp = true;
+      // TODO: Determine if chain or noReturn. Chain only if end might be reached.
+      instrJmpType = TcgSetIsJmp.Type.CHAIN;
       return new TcgGottoTbAbs(pcDest);
     }
 

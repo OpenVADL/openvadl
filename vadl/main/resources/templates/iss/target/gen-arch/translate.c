@@ -18,6 +18,14 @@ static TCGv cpu_pc;
 static TCGv cpu_[(${reg_file.name_lower})][(${"[" + reg_file["size"] + "]"})];
 [/]
 
+/* We have a single condition exit.
+   So reaching the end of the branch instruction means, we want to execute the
+   following instruction as well -> we want to chain the default (no taking) branch with
+   the next instruction. This is handled in the tb_stop function by calling goto_tb with
+   the next instruction PC.
+ */
+#define DISAS_CHAIN  DISAS_TARGET_0
+
 typedef struct DisasContext {
   DisasContextBase base;
 
@@ -132,11 +140,25 @@ static void gen_goto_tb_rel(DisasContext *ctx, target_long diff)
     tcg_gen_lookup_and_goto_ptr();
 }
 
+// TODO: Replace by calls by gen_goto_tb
 static void gen_goto_tb_abs(DisasContext *ctx, target_ulong target_pc)
 {
     // TODO: optimize as lookup might be unnecessary
     tcg_gen_movi_tl(cpu_pc, (int64_t) target_pc);
     tcg_gen_lookup_and_goto_ptr();
+}
+
+static void gen_goto_tb(DisasContext *ctx, target_ulong n, target_ulong target_pc)
+{
+    if (translator_use_goto_tb(&ctx->base, target_pc)) {
+        tcg_gen_goto_tb(n);
+        tcg_gen_movi_i64(cpu_pc, (int64_t) target_pc);
+        tcg_gen_exit_tb(ctx->base.tb, n);
+    } else {
+        tcg_gen_movi_tl(cpu_pc, (int64_t) target_pc);
+        tcg_gen_lookup_and_goto_ptr();
+    }
+    ctx->base.is_jmp = DISAS_NORETURN;
 }
 
 static inline void gen_trunc(TCGv dest, TCGv arg, int bitWidth) {
@@ -234,7 +256,20 @@ static void [(${gen_arch_lower})]_tr_translate_insn(DisasContextBase *db, CPUSta
 static void [(${gen_arch_lower})]_tr_tb_stop(DisasContextBase *db, CPUState *cpu)
 {
     DisasContext *ctx = container_of(db, DisasContext, base);
-    // TODO
+
+    switch (db->is_jmp) {
+        case DISAS_NEXT:
+        case DISAS_TOO_MANY:
+        case DISAS_NORETURN:
+            // default behavior
+            break;
+        case DISAS_CHAIN:
+            // jump to subsequent instruction
+            gen_goto_tb(ctx, 0, db->pc_next);
+            break;
+        default:
+            g_assert_not_reached();
+    }
 }
 
 static const TranslatorOps [(${gen_arch_lower})]_tr_ops = {
