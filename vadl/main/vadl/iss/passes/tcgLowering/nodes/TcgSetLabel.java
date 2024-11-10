@@ -6,10 +6,19 @@ import vadl.iss.passes.tcgLowering.TcgV;
 import vadl.iss.passes.tcgLowering.TcgWidth;
 import vadl.viam.graph.Node;
 
+/**
+ * Used to define the label position in the emitted TCG code.
+ * When branching to the label, execution continues at the position of this label set operation.
+ */
 public class TcgSetLabel extends TcgOpNode {
 
   private final TcgLabel label;
 
+  /**
+   * Constructs a new {@code TcgSetLabel} with the specified {@link TcgLabel}.
+   *
+   * @param label the label to set at the position of this label set operation
+   */
   public TcgSetLabel(TcgLabel label) {
     // TODO: This super constructor is useless. We need to create a TcgGenNode super type
     super(TcgV.gen(TcgWidth.i64), TcgWidth.i64);

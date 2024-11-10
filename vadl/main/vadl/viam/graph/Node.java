@@ -327,6 +327,11 @@ public abstract class Node implements WithSourceLocation {
     }
   }
 
+  /**
+   * For each successor of the node it calls {@code visitor.visit(node, input)}.
+   *
+   * @param visitor the visitor that gets visited
+   */
   public final <T> void visitSuccessors(GraphVisitor<T> visitor) {
     for (var succ : successors().toList()) {
       visitor.visit(this, succ);

@@ -7,6 +7,11 @@ import vadl.javaannotations.viam.DataValue;
 import vadl.viam.Register;
 import vadl.viam.graph.Node;
 
+/**
+ * Translates to a TCG mov operation. The TCGv is written to the
+ * given register.
+ */
+// TODO: Rename this to TcgMov and do not directly use register but dest var
 public class TcgSetReg extends TcgOpNode {
 
   @DataValue

@@ -7,11 +7,19 @@ import vadl.iss.passes.tcgLowering.TcgWidth;
 import vadl.javaannotations.viam.DataValue;
 import vadl.viam.graph.Node;
 
+/**
+ * Represents a TCG (Tiny Code Generation) label generation node.
+ */
 public class TcgGenLabel extends TcgOpNode {
 
   @DataValue
   private final TcgLabel label;
 
+  /**
+   * Creates a TcgGenLabel instance which represents a TCG label generation node.
+   *
+   * @param label The TCG label associated with this node.
+   */
   public TcgGenLabel(TcgLabel label) {
     // TODO: This super constructor is useless. We need to create a TcgGenNode super type
     super(TcgV.gen(TcgWidth.i64), TcgWidth.i64);

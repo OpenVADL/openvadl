@@ -11,6 +11,11 @@ import vadl.viam.graph.GraphVisitor;
 import vadl.viam.graph.Node;
 import vadl.viam.graph.dependency.ExpressionNode;
 
+/**
+ * The TcgBrCondImm class represents a TCG (Tiny Code Generation) conditional branch with immediate.
+ * This class is used to model a conditional branch operation where the branch decision is
+ * determined by comparing two arguments.
+ */
 public class TcgBrCondImm extends TcgOpNode {
 
   @DataValue
@@ -20,20 +25,28 @@ public class TcgBrCondImm extends TcgOpNode {
   private TcgLabel label;
 
   @DataValue
-  private TcgV cmpArg1;
+  private TcgV varArg;
 
   @Input
-  private ExpressionNode cmpArg2;
+  private ExpressionNode immArg;
 
-
-  public TcgBrCondImm(TcgV cmpArg1, ExpressionNode cmpArg2, TcgCondition condition,
+  /**
+   * Constructs the TCG conditional branch with immediate opcode.
+   * {@code tcg_gen_brcondi}.
+   *
+   * @param varArg    the TCG variable operand
+   * @param immArg    immediate operand
+   * @param condition condition when to branch
+   * @param label     label to which the branch should jump to if condition is met
+   */
+  public TcgBrCondImm(TcgV varArg, ExpressionNode immArg, TcgCondition condition,
                       TcgLabel label) {
     // TODO: This super constructor is useless. We need to create a TcgGenNode super type
     super(TcgV.gen(TcgWidth.i64), TcgWidth.i64);
     this.condition = condition;
     this.label = label;
-    this.cmpArg1 = cmpArg1;
-    this.cmpArg2 = cmpArg2;
+    this.varArg = varArg;
+    this.immArg = immArg;
   }
 
   public TcgCondition condition() {
@@ -45,21 +58,21 @@ public class TcgBrCondImm extends TcgOpNode {
   }
 
   public TcgV cmpArg1() {
-    return cmpArg1;
+    return varArg;
   }
 
   public ExpressionNode cmpArg2() {
-    return cmpArg2;
+    return immArg;
   }
 
   @Override
   public Node copy() {
-    return new TcgBrCondImm(cmpArg1, cmpArg2.copy(ExpressionNode.class), condition, label);
+    return new TcgBrCondImm(varArg, immArg.copy(ExpressionNode.class), condition, label);
   }
 
   @Override
   public Node shallowCopy() {
-    return new TcgBrCondImm(cmpArg1, cmpArg2, condition, label);
+    return new TcgBrCondImm(varArg, immArg, condition, label);
   }
 
   @Override
@@ -67,18 +80,18 @@ public class TcgBrCondImm extends TcgOpNode {
     super.collectData(collection);
     collection.add(condition);
     collection.add(label);
-    collection.add(cmpArg1);
+    collection.add(varArg);
   }
 
   @Override
   protected void collectInputs(List<Node> collection) {
     super.collectInputs(collection);
-    collection.add(cmpArg2);
+    collection.add(immArg);
   }
 
   @Override
   protected void applyOnInputsUnsafe(GraphVisitor.Applier<Node> visitor) {
     super.applyOnInputsUnsafe(visitor);
-    cmpArg2 = visitor.apply(this, cmpArg2, ExpressionNode.class);
+    immArg = visitor.apply(this, immArg, ExpressionNode.class);
   }
 }

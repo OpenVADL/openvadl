@@ -99,8 +99,8 @@ public class TcgLoweringPass extends AbstractIssPass {
         "SB",
         "ADDIW",
         "SLLI",
-        "LUI"
-        , "BEQ"
+        "LUI",
+        "BEQ"
     );
 
     var tcgNodes = (IssTcgAnnotatePass.Result) passResults

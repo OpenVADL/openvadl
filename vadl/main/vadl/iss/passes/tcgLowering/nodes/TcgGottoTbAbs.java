@@ -8,11 +8,21 @@ import vadl.viam.graph.GraphVisitor;
 import vadl.viam.graph.Node;
 import vadl.viam.graph.dependency.ExpressionNode;
 
+/**
+ * TcgGottoTbAbs is representing a TCG (Tiny Code Generation)
+ * operation node that models an absolute jump to a target program counter (PC) value.
+ * This class is used in the context of QEMU's intermediate representation (IR) generation.
+ */
 public class TcgGottoTbAbs extends TcgOpNode {
 
   @Input
   private ExpressionNode targetPc;
 
+  /**
+   * Constructs a TcgGottoTbAbs node for TCG IR generation.
+   *
+   * @param targetPc The expression node representing the target program counter (PC) value.
+   */
   public TcgGottoTbAbs(ExpressionNode targetPc) {
     // TODO: This super constructor is useless. We need to create a TcgGenNode super type
     super(TcgV.gen(TcgWidth.i64), TcgWidth.i64);
