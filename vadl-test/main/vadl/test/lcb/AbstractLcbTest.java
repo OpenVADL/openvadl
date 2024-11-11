@@ -20,6 +20,13 @@ public abstract class AbstractLcbTest extends AbstractCppCodeGenTest {
         new ProcessorName("processorNameValue"));
   }
 
+  /**
+   * Runs lcb pass order.
+   *
+   * @deprecated as {@link #setupPassManagerAndRunSpecUntil(String, PassOrder, PassKey)} is also
+   *     deprecated.
+   */
+  @Deprecated
   public TestSetup runLcb(LcbConfiguration configuration,
                           String specPath,
                           PassKey until)
@@ -50,7 +57,11 @@ public abstract class AbstractLcbTest extends AbstractCppCodeGenTest {
    * Sometimes it is required to have additional passes during test execution. However,
    * these passes are not in the default order. With the {@code temporaryPasses} argument,
    * the function caller can specify what passes and when to schedule them.
+   *
+   * @deprecated as {@link #setupPassManagerAndRunSpecUntil(String, PassOrder, PassKey)} is also
+   *     deprecated.
    */
+  @Deprecated
   public TestSetup runLcb(LcbConfiguration configuration,
                           String specPath,
                           PassKey until,

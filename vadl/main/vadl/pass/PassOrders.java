@@ -46,6 +46,7 @@ import vadl.lcb.template.lib.Target.EmitMCInstLowerCppFilePass;
 import vadl.lcb.template.lib.Target.EmitMCInstLowerHeaderFilePass;
 import vadl.lcb.template.lib.Target.MCTargetDesc.EmitInstPrinterCppFilePass;
 import vadl.lcb.template.lib.Target.MCTargetDesc.EmitInstPrinterHeaderFilePass;
+import vadl.viam.passes.DuplicateWriteDetectionPass;
 import vadl.viam.passes.InstructionResourceAccessAnalysisPass;
 import vadl.viam.passes.algebraic_simplication.AlgebraicSimplificationPass;
 import vadl.viam.passes.canonicalization.CanonicalizationPass;
@@ -80,7 +81,6 @@ public class PassOrders {
     order.add(new ViamVerificationPass(configuration));
 
     order.add(new TypeCastEliminationPass(configuration));
-    order.add(new DummyAbiPass(configuration));
     // TODO: @kper do you see any fix for this?
     // Note: we run the counter-access resolving pass before the func inliner pass
     // because the lcb uses the uninlined version of the instructions.
@@ -89,6 +89,8 @@ public class PassOrders {
     order.add(new StaticCounterAccessResolvingPass(configuration));
     order.add(new FunctionInlinerPass(configuration));
     order.add(new SideEffectConditionResolvingPass(configuration));
+    // requires SideEffectConditionResolvingPass to work
+    order.add(new DuplicateWriteDetectionPass(configuration));
 
     // Common optimizations
     order.add(new CanonicalizationPass(configuration));
@@ -117,6 +119,7 @@ public class PassOrders {
   public static PassOrder gcbAndCppCodeGen(GcbConfiguration gcbConfiguration) throws IOException {
     var order = viam(gcbConfiguration);
 
+    order.add(new DummyAbiPass(gcbConfiguration));
     order.add(new IdentifyFieldUsagePass(gcbConfiguration));
     order.add(new GenerateFieldAccessEncodingFunctionPass(gcbConfiguration));
     order.add(new FieldNodeReplacementPassForDecoding(gcbConfiguration));

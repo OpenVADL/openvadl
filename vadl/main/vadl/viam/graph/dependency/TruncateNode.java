@@ -40,6 +40,13 @@ public class TruncateNode extends UnaryNode implements Canonicalizable {
   }
 
   @Override
+  public void prettyPrint(StringBuilder sb) {
+    sb.append("trunc<").append(type().bitWidth()).append(">(");
+    value.prettyPrint(sb);
+    sb.append(")");
+  }
+
+  @Override
   public Node copy() {
     return new TruncateNode((ExpressionNode) value.copy(), type());
   }

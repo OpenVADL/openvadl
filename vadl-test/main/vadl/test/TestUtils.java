@@ -1,15 +1,12 @@
 package vadl.test;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static vadl.utils.ViamUtils.findDefinitionsByFilter;
 
 import java.math.BigInteger;
-import java.util.Set;
-import java.util.function.Function;
 import java.util.stream.Stream;
 import net.jqwik.api.Arbitraries;
 import net.jqwik.api.Arbitrary;
-import net.jqwik.api.arbitraries.BigDecimalArbitrary;
-import vadl.utils.ViamUtils;
 import vadl.viam.Definition;
 import vadl.viam.Format;
 import vadl.viam.InstructionSetArchitecture;
@@ -65,18 +62,12 @@ public class TestUtils {
    */
   public static <T extends Definition> T findDefinitionByNameIn(String name, Definition spec,
                                                                 Class<T> definitionClass) {
-    var result = filterAllDefinitionsIn(spec,
+    var result = findDefinitionsByFilter(spec,
         (def) -> definitionClass.isInstance(def) && def.identifier.name().equals(name));
 
     assertEquals(1, result.size(), "Wrong number of definitions with name " + name + " found");
     //noinspection unchecked
     return (T) result.toArray()[0];
-  }
-
-
-  private static Set<Definition> filterAllDefinitionsIn(Definition def,
-                                                        Function<Definition, Boolean> filter) {
-    return ViamUtils.findDefinitionByFilter(def, filter);
   }
 
 

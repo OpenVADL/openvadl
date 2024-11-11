@@ -67,4 +67,9 @@ public class FieldAccessRefNode extends ParamNode {
   public Definition definition() {
     return fieldAccess;
   }
+
+  @Override
+  public void prettyPrint(StringBuilder sb) {
+    sb.append(fieldAccess.simpleName());
+  }
 }

@@ -30,7 +30,7 @@ public class TypeCastEliminationPass extends Pass {
   public Object execute(PassResults passResults, Specification viam)
       throws IOException {
 
-    ViamUtils.findDefinitionByFilter(viam, DefProp.WithBehavior.class::isInstance)
+    ViamUtils.findDefinitionsByFilter(viam, DefProp.WithBehavior.class::isInstance)
         .stream()
         .map(DefProp.WithBehavior.class::cast)
         .flatMap(definition -> definition.behaviors().stream())

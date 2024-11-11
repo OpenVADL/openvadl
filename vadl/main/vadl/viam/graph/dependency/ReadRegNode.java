@@ -104,4 +104,8 @@ public class ReadRegNode extends ReadResourceNode {
     visitor.visit(this);
   }
 
+  @Override
+  public void prettyPrint(StringBuilder sb) {
+    sb.append(register.simpleName());
+  }
 }

@@ -48,6 +48,7 @@ public class SliceNode extends ExpressionNode {
     return (DataType) super.type();
   }
 
+
   @Override
   public void verifyState() {
     super.verifyState();
@@ -59,6 +60,12 @@ public class SliceNode extends ExpressionNode {
     ensure(((DataType) value.type()).bitWidth() > slice.msb(),
         "Value node must have at least %d bits to be sliceable by %s",
         slice.msb() + 1, slice);
+  }
+
+  @Override
+  public void prettyPrint(StringBuilder sb) {
+    value.prettyPrint(sb);
+    sb.append(slice);
   }
 
   @Override

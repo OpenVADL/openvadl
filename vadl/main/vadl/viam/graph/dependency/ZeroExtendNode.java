@@ -18,7 +18,7 @@ public class ZeroExtendNode extends UnaryNode implements Canonicalizable {
   public ZeroExtendNode(ExpressionNode value, DataType type) {
     super(value, type);
   }
-  
+
   @Override
   public void verifyState() {
     super.verifyState();
@@ -37,6 +37,13 @@ public class ZeroExtendNode extends UnaryNode implements Canonicalizable {
   @Override
   public DataType type() {
     return (DataType) super.type();
+  }
+
+  @Override
+  public void prettyPrint(StringBuilder sb) {
+    sb.append("zext<").append(type().bitWidth()).append(">(");
+    value.prettyPrint(sb);
+    sb.append(")");
   }
 
   @Override

@@ -76,6 +76,11 @@ public class LetNode extends ExpressionNode {
     visitor.visit(this);
   }
 
+  @Override
+  public void prettyPrint(StringBuilder sb) {
+    expression.prettyPrint(sb);
+  }
+
 
   /**
    * The name of a let expression with source location.

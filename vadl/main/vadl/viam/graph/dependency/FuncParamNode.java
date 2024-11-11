@@ -55,4 +55,9 @@ public class FuncParamNode extends ParamNode {
   public Definition definition() {
     return parameter;
   }
+
+  @Override
+  public void prettyPrint(StringBuilder sb) {
+    sb.append(parameter.simpleName());
+  }
 }

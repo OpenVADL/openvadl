@@ -153,7 +153,7 @@ public class TypeCastEliminationPassTest extends AbstractTest {
   private static Stream<Arguments> findFuncNameArgumentsByPrefix(String prefix,
                                                                  Specification spec) {
     return
-        ViamUtils.findDefinitionByFilter(spec,
+        ViamUtils.findDefinitionsByFilter(spec,
                 (def) -> def.identifier.name().startsWith(prefix)
                     && def instanceof Function)
             .stream()

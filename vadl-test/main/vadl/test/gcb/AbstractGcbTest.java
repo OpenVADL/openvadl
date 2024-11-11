@@ -15,6 +15,13 @@ public abstract class AbstractGcbTest extends AbstractCppCodeGenTest {
     return new GcbConfiguration(super.getConfiguration(doDump));
   }
 
+  /**
+   * Runs gcb passorder.
+   *
+   * @deprecated as {@link #setupPassManagerAndRunSpecUntil(String, PassOrder, PassKey)} is also
+   *     deprecated.
+   */
+  @Deprecated
   public TestSetup runGcb(GcbConfiguration configuration,
                           String specPath,
                           PassKey until)
