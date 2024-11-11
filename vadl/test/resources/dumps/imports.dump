@@ -1,62 +1,62 @@
 ImportDefinition
 . File
-. : StringLiteral literal: "./imports/entry.vadl" ("./imports/entry.vadl")
+. : StringLiteral literal: "./imports/entry.vadl" ("./imports/entry.vadl"), type: null
 . Import
-. : ' Identifier name: "A"
+. : ' Identifier name: "A", type: null
 . Import
-. : ' Identifier name: "B"
+. : ' Identifier name: "B", type: null
 . Import
-. : ' Identifier name: "TopLevelModel"
+. : ' Identifier name: "TopLevelModel", type: null
 . Module AST
 . : ImportDefinition
 . : ' File
-. : ' | Identifier name: "isa_a"
+. : ' | Identifier name: "isa_a", type: null
 . : ' Import
-. : ' | . Identifier name: "A"
+. : ' | . Identifier name: "A", type: null
 . : ' Module AST
 . : ' | InstructionSetDefinition
-. : ' | . Identifier name: "A"
-. : ' | . ConstantDefinition
-. : ' | . : Identifier name: "a"
-. : ' | . : IntegerLiteral literal: 1 (1)
+. : ' | . Identifier name: "A", type: null
+. : ' | . ConstantDefinition type: null
+. : ' | . : Identifier name: "a", type: null
+. : ' | . : IntegerLiteral literal: 1 (1), type: null
 . : ImportDefinition
 . : ' File
-. : ' | Identifier name: "isa_a"
+. : ' | Identifier name: "isa_a", type: null
 . : ' Import
-. : ' | . Identifier name: "TopLevelModel"
+. : ' | . Identifier name: "TopLevelModel", type: null
 . : ' Module AST
 . : ' | InstructionSetDefinition
-. : ' | . Identifier name: "A"
-. : ' | . ConstantDefinition
-. : ' | . : Identifier name: "a"
-. : ' | . : IntegerLiteral literal: 1 (1)
+. : ' | . Identifier name: "A", type: null
+. : ' | . ConstantDefinition type: null
+. : ' | . : Identifier name: "a", type: null
+. : ' | . : IntegerLiteral literal: 1 (1), type: null
 . : ImportDefinition
 . : ' File
-. : ' | Identifier name: "isa_b"
+. : ' | Identifier name: "isa_b", type: null
 . : ' Import
-. : ' | . Identifier name: "B"
+. : ' | . Identifier name: "B", type: null
 . : ' Module AST
 . : ' | InstructionSetDefinition
-. : ' | . Identifier name: "B"
-. : ' | . ConstantDefinition
-. : ' | . : Identifier name: "b"
-. : ' | . : IntegerLiteral literal: 2 (2)
+. : ' | . Identifier name: "B", type: null
+. : ' | . ConstantDefinition type: null
+. : ' | . : Identifier name: "b", type: null
+. : ' | . : IntegerLiteral literal: 2 (2), type: null
 . : InstructionSetDefinition
-. : ' Identifier name: "C"
-. : ' ConstantDefinition
-. : ' | Identifier name: "c"
-. : ' | IntegerLiteral literal: 3 (3)
-ConstantDefinition
-. Identifier name: "topLevelConstant"
-. BinaryExpr operator: +
-. : IntegerLiteral literal: 456 (456)
-. : IntegerLiteral literal: 789 (789)
+. : ' Identifier name: "C", type: null
+. : ' ConstantDefinition type: null
+. : ' | Identifier name: "c", type: null
+. : ' | IntegerLiteral literal: 3 (3), type: null
+ConstantDefinition type: null
+. Identifier name: "topLevelConstant", type: null
+. BinaryExpr operator: +, type: null
+. : IntegerLiteral literal: 456 (456), type: null
+. : IntegerLiteral literal: 789 (789), type: null
 InstructionSetDefinition
-. Identifier name: "ISA_A"
-. Identifier name: "A"
+. Identifier name: "ISA_A", type: null
+. Identifier name: "A", type: null
 InstructionSetDefinition
-. Identifier name: "ISA_B"
-. Identifier name: "B"
-. ConstantDefinition
-. : Identifier name: "modelInIsa"
-. : IntegerLiteral literal: 123 (123)
+. Identifier name: "ISA_B", type: null
+. Identifier name: "B", type: null
+. ConstantDefinition type: null
+. : Identifier name: "modelInIsa", type: null
+. : IntegerLiteral literal: 123 (123), type: null

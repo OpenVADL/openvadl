@@ -68,8 +68,8 @@ public class AstDumper
   public Void visit(ConstantDefinition definition) {
     dumpNode(definition);
     dumpChildren(definition.identifier());
-    if (definition.type != null) {
-      dumpChildren(definition.type);
+    if (definition.typeLiteral != null) {
+      dumpChildren(definition.typeLiteral);
     }
     dumpChildren(definition.value);
     return null;

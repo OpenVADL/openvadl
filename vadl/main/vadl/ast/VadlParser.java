@@ -91,6 +91,7 @@ public class VadlParser {
 
     List<Diagnostic> errors = new ArrayList<>();
 
+    
     try {
       parser.Parse();
       parser.ast.passTimings.add(new PassTimings(System.nanoTime(), "Syntax parsing"));

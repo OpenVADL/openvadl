@@ -133,7 +133,7 @@ public record SourceLocation(
     String printablePath;
 
     if (Objects.requireNonNullElse(System.getenv("TERMINAL_EMULATOR"), "")
-        .equals("JetBrains-JediTerm")) {
+        .equals("JetBrains-JediTerm") || this.uri.getScheme().equals("memory")) {
       // IntelliJ integrated terminal needs special treatment
       printablePath = this.uri.toString();
     } else {

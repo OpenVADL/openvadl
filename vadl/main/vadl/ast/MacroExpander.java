@@ -411,7 +411,7 @@ class MacroExpander
   public Definition visit(ConstantDefinition definition) {
     var id = resolvePlaceholderOrIdentifier(definition.identifier);
     var value = expandExpr(definition.value);
-    return new ConstantDefinition(id, definition.type, value, copyLoc(definition.loc))
+    return new ConstantDefinition(id, definition.typeLiteral, value, copyLoc(definition.loc))
         .withAnnotations(expandAnnotations(definition.annotations));
   }
 
