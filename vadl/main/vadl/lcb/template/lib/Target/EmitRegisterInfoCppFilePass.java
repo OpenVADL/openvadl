@@ -94,7 +94,8 @@ public class EmitRegisterInfoCppFilePass extends LcbTemplateRenderingPass {
             tableGenMachineInstructions).stream()
             .sorted(Comparator.comparing(o -> o.instruction.identifier.name())).toList(),
         "registerClasses",
-        specification.registerFiles().map(RegisterUtils::getRegisterClass).toList());
+        specification.registerFiles().map(x -> RegisterUtils.getRegisterClass(x, abi.aliases()))
+            .toList());
   }
 
   record ReservedRegister(String registerFile, int index) {

@@ -1,9 +1,14 @@
 package vadl.lcb.templateUtils;
 
 import java.util.List;
+import java.util.Map;
+import java.util.Optional;
 import java.util.stream.IntStream;
+import javax.annotation.Nullable;
 import org.jetbrains.annotations.NotNull;
+import vadl.utils.Pair;
 import vadl.viam.RegisterFile;
+import vadl.viam.passes.dummyAbi.DummyAbi;
 
 /**
  * Utility class for registers.
@@ -15,9 +20,15 @@ public class RegisterUtils {
    *
    * @param index of the register in the file.
    * @param name  of the register.
+   * @param alias of the register.
    */
-  public record Register(int index, String name) {
-
+  public record Register(int index, String name, Optional<String> alias) {
+    /**
+     * Return {@code alias} or {@code name} if {@code alias} is {@code null}.
+     */
+    public String getAsmName() {
+      return alias.orElse(name);
+    }
   }
 
   /**
@@ -34,9 +45,16 @@ public class RegisterUtils {
    */
   @NotNull
   public static RegisterClass getRegisterClass(
-      RegisterFile registerFile) {
+      RegisterFile registerFile,
+      @Nullable Map<Pair<RegisterFile, Integer>, DummyAbi.RegisterAlias> aliases) {
     return new RegisterClass(registerFile,
         IntStream.range(0, (int) Math.pow(2, registerFile.addressType().bitWidth()))
-            .mapToObj(i -> new Register(i, registerFile.identifier.simpleName() + i)).toList());
+            .mapToObj(i -> {
+              var name = registerFile.identifier.simpleName() + i;
+              Optional<DummyAbi.RegisterAlias> alias =
+                  aliases != null ? Optional.ofNullable(aliases.get(Pair.of(registerFile, i))) :
+                      Optional.empty();
+              return new Register(i, name, alias.map(DummyAbi.RegisterAlias::value));
+            }).toList());
   }
 }
