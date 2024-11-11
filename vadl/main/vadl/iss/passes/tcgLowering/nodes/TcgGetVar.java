@@ -5,6 +5,7 @@ import vadl.iss.passes.tcgLowering.TcgV;
 import vadl.iss.passes.tcgLowering.TcgWidth;
 import vadl.javaannotations.viam.DataValue;
 import vadl.javaannotations.viam.Input;
+import vadl.viam.Register;
 import vadl.viam.RegisterFile;
 import vadl.viam.graph.GraphVisitor;
 import vadl.viam.graph.Node;
@@ -14,7 +15,7 @@ import vadl.viam.graph.dependency.ExpressionNode;
  * Abstract sealed class representing a variable retrieval operation in the TCG.
  */
 public abstract sealed class TcgGetVar extends TcgOpNode
-    permits TcgGetVar.TcgGetRegFile, TcgGetVar.TcgGetTemp {
+    permits TcgGetVar.TcgGetRegFile, TcgGetVar.TcgGetReg, TcgGetVar.TcgGetTemp {
 
   public TcgGetVar(TcgV res) {
     super(res, res.width());
@@ -37,6 +38,40 @@ public abstract sealed class TcgGetVar extends TcgOpNode
     @Override
     public Node shallowCopy() {
       return new TcgGetTemp(res);
+    }
+  }
+
+  /**
+   * Represents an operation in the TCG for retrieving a value from a register.
+   */
+  public static final class TcgGetReg extends TcgGetVar {
+
+    @DataValue
+    Register register;
+
+    public TcgGetReg(Register reg, TcgV res) {
+      super(res);
+      register = reg;
+    }
+
+    public Register register() {
+      return register;
+    }
+
+    @Override
+    public Node copy() {
+      return new TcgGetTemp(res);
+    }
+
+    @Override
+    public Node shallowCopy() {
+      return new TcgGetTemp(res);
+    }
+
+    @Override
+    protected void collectData(List<Object> collection) {
+      super.collectData(collection);
+      collection.add(register);
     }
   }
 

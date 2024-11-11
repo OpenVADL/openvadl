@@ -1,5 +1,7 @@
 package vadl.iss.passes;
 
+import static java.util.Objects.requireNonNull;
+
 import java.io.IOException;
 import java.util.Map;
 import java.util.Set;
@@ -10,6 +12,8 @@ import vadl.configuration.GeneralConfiguration;
 import vadl.pass.Pass;
 import vadl.pass.PassName;
 import vadl.pass.PassResults;
+import vadl.viam.Counter;
+import vadl.viam.Instruction;
 import vadl.viam.Specification;
 import vadl.viam.graph.Graph;
 import vadl.viam.graph.Node;
@@ -37,10 +41,11 @@ public class IssTcgAnnotatePass extends Pass {
 
   @Override
   public @Nonnull Result execute(PassResults passResults, Specification viam)
-        throws IOException {
-    var tcgNodes = viam.isa().get().ownInstructions().stream()
-          .flatMap(instr -> TcgAnnotator.runOn(instr.behavior()))
-          .collect(Collectors.toSet());
+      throws IOException {
+    var isa = viam.isa().get();
+    var tcgNodes = isa.ownInstructions().stream()
+        .flatMap(instr -> TcgAnnotator.runOn(instr.behavior(), requireNonNull(isa.pc())))
+        .collect(Collectors.toSet());
     return new Result(tcgNodes);
   }
 
@@ -49,20 +54,26 @@ public class IssTcgAnnotatePass extends Pass {
    * This result contains the set of nodes that are determined to be TCG nodes.
    */
   public record Result(
-        Set<Node> tcgNodes
+      Set<Node> tcgNodes
   ) {
   }
 }
 
 class TcgAnnotator extends GraphProcessor<Boolean> {
 
-  public static Stream<Node> runOn(Graph graph) {
-    var annotator = new TcgAnnotator();
+  Counter pc;
+
+  public TcgAnnotator(Counter instruction) {
+    this.pc = instruction;
+  }
+
+  public static Stream<Node> runOn(Graph graph, Counter pc) {
+    var annotator = new TcgAnnotator(pc);
     annotator.processGraph(graph, (n) -> n.usageCount() == 0);
     return annotator.processedNodes.entrySet().stream()
-          .filter(Map.Entry::getValue) // only annotated fields
-          .map(Map.Entry::getKey) // map to node
-          .distinct();
+        .filter(Map.Entry::getValue) // only annotated fields
+        .map(Map.Entry::getKey) // map to node
+        .distinct();
   }
 
   @Override
@@ -75,23 +86,30 @@ class TcgAnnotator extends GraphProcessor<Boolean> {
       // the address must be determined at "compile" time
       var addressRes = getResultOf(readRegFileNode.address(), Boolean.class);
       toProcess.ensure(!addressRes,
-            "node's address is not allowed to be tcg time but compile time annotated: %s",
-            readRegFileNode.address());
+          "node's address is not allowed to be tcg time but compile time annotated: %s",
+          readRegFileNode.address());
     }
 
     if (toProcess instanceof WriteRegFileNode writeResourceNode) {
       var addressRes = getResultOf(writeResourceNode.address(), Boolean.class);
       writeResourceNode.ensure(!addressRes,
-            "node's address is not allowed to be tcg time but compile time annotated: %s",
-            writeResourceNode.address()
+          "node's address is not allowed to be tcg time but compile time annotated: %s",
+          writeResourceNode.address()
       );
     }
-    if (toProcess instanceof ReadResourceNode || toProcess instanceof WriteResourceNode) {
+    if (toProcess instanceof ReadResourceNode readResourceNode) {
+      if (readResourceNode.resourceDefinition() == pc.registerResource()) {
+        // pc registers are not lowered to tcg as they can be access directly using
+        // ctx->base.pc_next
+        return false;
+      }
+      return true;
+    } else if (toProcess instanceof WriteResourceNode) {
       return true;
     } else {
       // In general a node is tcg if one of its inputs is tcg
       return toProcess.inputs()
-            .anyMatch(n -> getResultOf(n, Boolean.class));
+          .anyMatch(n -> getResultOf(n, Boolean.class));
     }
   }
 }

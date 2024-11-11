@@ -27,15 +27,20 @@ public interface CBuiltinMixin extends CGenMixin {
 
           if (op.arguments().size() == 2) {
             var b = op.arguments().get(1);
+            gen(a);
+            // TODO: Refactor this unreadable stuff
             if (op.builtIn() == BuiltInTable.LSL) {
-              gen(a);
               writer.write(" << ");
-              gen(b);
+            } else if (op.builtIn() == BuiltInTable.ADD) {
+              writer.write(" + ");
+            } else {
+              throw new ViamGraphError("built-in to C of %s is not implemented", op.builtIn())
+                  .addContext(op);
             }
+            gen(b);
           } else {
             throw new ViamGraphError("built-in to C of %s is not supported", op.builtIn())
-                .addContext(op)
-                .addContext(op.graph());
+                .addContext(op);
           }
 
           // close scope

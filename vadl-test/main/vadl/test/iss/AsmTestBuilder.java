@@ -1,5 +1,7 @@
 package vadl.test.iss;
 
+import static vadl.test.TestUtils.arbitraryBetween;
+
 import com.google.errorprone.annotations.FormatMethod;
 import java.math.BigInteger;
 import java.util.ArrayList;
@@ -23,7 +25,12 @@ public abstract class AsmTestBuilder {
 
   abstract Arbitrary<String> anyReg();
 
-  abstract BigInteger fillReg(String reg, BigInteger min, BigInteger max);
+  abstract BigInteger fillReg(String reg, BigInteger value);
+
+  BigInteger fillReg(String reg, BigInteger min, BigInteger max) {
+    var val = arbitraryBetween(min, max).sample();
+    return fillReg(reg, val);
+  }
 
   BigInteger fillReg(String reg, int size) {
     return fillReg(reg,
@@ -34,6 +41,9 @@ public abstract class AsmTestBuilder {
     );
   }
 
+  void addLabel(String label) {
+    add("%s:", label);
+  }
 
   @FormatMethod
   AsmTestBuilder add(String instr, Object... args) {

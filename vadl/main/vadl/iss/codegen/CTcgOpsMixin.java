@@ -6,15 +6,24 @@ import vadl.cppCodeGen.mixins.CGenMixin;
 import vadl.iss.passes.tcgLowering.TcgExtend;
 import vadl.iss.passes.tcgLowering.nodes.TcgBinaryImmOpNode;
 import vadl.iss.passes.tcgLowering.nodes.TcgBinaryOpNode;
+import vadl.iss.passes.tcgLowering.nodes.TcgBr;
+import vadl.iss.passes.tcgLowering.nodes.TcgBrCondImm;
 import vadl.iss.passes.tcgLowering.nodes.TcgConstantNode;
 import vadl.iss.passes.tcgLowering.nodes.TcgExtendNode;
+import vadl.iss.passes.tcgLowering.nodes.TcgGenLabel;
 import vadl.iss.passes.tcgLowering.nodes.TcgGetVar;
+import vadl.iss.passes.tcgLowering.nodes.TcgGottoTbAbs;
 import vadl.iss.passes.tcgLowering.nodes.TcgLoadMemory;
 import vadl.iss.passes.tcgLowering.nodes.TcgMoveNode;
+import vadl.iss.passes.tcgLowering.nodes.TcgSetCond;
+import vadl.iss.passes.tcgLowering.nodes.TcgSetIsJmp;
+import vadl.iss.passes.tcgLowering.nodes.TcgSetLabel;
+import vadl.iss.passes.tcgLowering.nodes.TcgSetReg;
 import vadl.iss.passes.tcgLowering.nodes.TcgSetRegFile;
 import vadl.iss.passes.tcgLowering.nodes.TcgStoreMemory;
 import vadl.iss.passes.tcgLowering.nodes.TcgTruncateNode;
 import vadl.viam.graph.Node;
+import vadl.viam.graph.dependency.ReadRegNode;
 
 /**
  * A mixin to add C generation support for TCG operations in the ISS.
@@ -47,6 +56,17 @@ public interface CTcgOpsMixin extends CGenMixin {
           writer.write("();\n");
         })
 
+        .set(TcgGetVar.TcgGetReg.class, (TcgGetVar.TcgGetReg node, StringWriter writer) -> {
+          writer.write("\tTCGv_" + node.res().width() + " " + node.res().varName() + " = ");
+          writer.write("cpu_" + node.register().simpleName().toLowerCase() + ";\n");
+        })
+
+        .set(ReadRegNode.class, (ReadRegNode node, StringWriter writer) -> {
+          // this can only happen if the register is the PC
+          // TODO: Make a custom node (TcgReadPC)
+          writer.write("(ctx->base.pc_next)");
+        })
+
         .set(TcgConstantNode.class, (TcgConstantNode node, StringWriter writer) -> {
           writer.write("\tTCGv_" + node.res().width() + " " + node.res().varName() + " = ");
           writer.write(node.tcgFunctionName());
@@ -60,6 +80,23 @@ public interface CTcgOpsMixin extends CGenMixin {
           writer.write("(ctx, ");
           gen(node.index());
           writer.write(", " + node.res().varName() + ");\n");
+        })
+
+        .set(TcgSetReg.class, (TcgSetReg node, StringWriter writer) -> {
+          writer.write("\ttcg_gen_mov_i" + node.width().width);
+          writer.write("(" + "cpu_" + node.register().simpleName().toLowerCase());
+          writer.write(", " + node.res().varName() + ");\n");
+        })
+
+        .set(TcgGottoTbAbs.class, (TcgGottoTbAbs node, StringWriter writer) -> {
+          writer.write("\tgen_goto_tb_abs(ctx, ");
+          gen(node.targetPc());
+          writer.write(");\n");
+        })
+
+        .set(TcgSetIsJmp.class, (TcgSetIsJmp node, StringWriter writer) -> {
+          writer.write("\tctx->base.is_jmp = ");
+          writer.write(node.type().cCode() + ";\n");
         })
 
         .set(TcgBinaryOpNode.class, (TcgBinaryOpNode node, StringWriter writer) -> {
@@ -111,6 +148,36 @@ public interface CTcgOpsMixin extends CGenMixin {
           writer.write(");\n");
         })
 
+        .set(TcgSetCond.class, (TcgSetCond node, StringWriter writer) -> {
+          writer.write("\t" + node.tcgFunctionName() + "_i" + node.width().width);
+          writer.write("(" + node.condition().cCode());
+          writer.write(", " + node.res().varName());
+          writer.write(", " + node.arg1().varName());
+          writer.write(", " + node.arg2().varName());
+          writer.write(");\n");
+        })
+
+        //// JUMP/LABELS EMITS ////
+
+        .set(TcgGenLabel.class, (TcgGenLabel node, StringWriter writer) -> {
+          writer.write("\tTCGLabel *" + node.label().varName() + " = gen_new_label();\n");
+        })
+
+        .set(TcgSetLabel.class, (TcgSetLabel node, StringWriter writer) -> {
+          writer.write("\tgen_set_label(" + node.label().varName() + ");\n");
+        })
+
+        .set(TcgBr.class, (TcgBr node, StringWriter writer) -> {
+          writer.write("\ttcg_gen_br(" + node.label().varName() + ");\n");
+        })
+
+        .set(TcgBrCondImm.class, (TcgBrCondImm node, StringWriter writer) -> {
+          writer.write("\ttcg_gen_brcondi_i" + node.width().width);
+          writer.write("(" + node.condition().cCode());
+          writer.write(", " + node.cmpArg1().varName() + ", ");
+          gen(node.cmpArg2());
+          writer.write(", " + node.label().varName() + ");\n");
+        })
 
     ;
   }

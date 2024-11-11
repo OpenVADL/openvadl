@@ -100,6 +100,62 @@ public class IssRV64IInstrTest extends QemuIssTest {
     });
   }
 
+  @TestFactory
+  Stream<DynamicTest> beq() throws IOException {
+    return runTestsWith(id -> {
+      var b = new RV64ITestBuilder("BEQ_" + id);
+
+      // Choose arbitrary registers for rs1 and rs2
+      var rs1 = b.anyTempReg().sample();
+      var rs2 = b.anyTempReg().sample();
+
+      // Randomly decide if rs1 == rs2 or rs1 != rs2
+      Boolean equal = Arbitraries.of(true, false).sample();
+
+      // Fill rs1 with a random value
+      var val1 = b.fillReg(rs1, 64);
+
+      // Fill rs2 with either the same or a different value
+      if (Boolean.TRUE.equals(equal)) {
+        // Set rs2 to the same value as rs1
+        b.fillReg(rs2, val1);
+      } else {
+        // Ensure rs2 has a different value from rs1
+        var value2 = arbitraryUnsignedInt(64)
+            .filter(v -> !v.equals(val1))
+            .sample();
+        b.fillReg(rs2, value2);
+      }
+
+      // Destination register to observe the branch effect
+      var destReg = b.anyTempReg().sample();
+
+      // Create unique labels
+      String branchLabel = "branch_target_" + id;
+      String endLabel = "end_label_" + id;
+
+      // Add the BEQ instruction with the branch label
+      b.add("beq %s, %s, %s", rs1, rs2, branchLabel);
+
+      // This instruction will be executed if the branch is not taken
+      b.add("addi %s, x0, 1", destReg);
+
+      // Jump over the branch target code
+      b.add("j %s", endLabel);
+
+      // Define the branch target label
+      b.addLabel(branchLabel);
+
+      // Instruction at the branch target
+      b.add("addi %s, x0, 2", destReg);
+
+      // Define the end label
+      b.addLabel(endLabel);
+
+      return b.toTestSpec(rs1, rs2, destReg);
+    });
+  }
+
   @SafeVarargs
   private Stream<DynamicTest> runTestsWith(
       Function<Integer, IssTestUtils.TestSpec>... generators) throws IOException {

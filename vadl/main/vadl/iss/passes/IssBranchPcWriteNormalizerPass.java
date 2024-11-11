@@ -100,7 +100,12 @@ import vadl.viam.graph.dependency.WriteRegNode;
  * It is assumed that there cannot be two potential PC reads within the same sub-branch,
  * which should be guaranteed by prior passes in the compilation process.
  * </p>
+ *
+ * @deprecated Currently we use the DISAS_CHAIN strategy which will chain default branches
+ *     so it isn't required anymore that each behavior branch has a PC write.
  */
+// TODO: Consider removing as it seems to be not beneficial
+@Deprecated
 public class IssBranchPcWriteNormalizerPass extends Pass {
 
   public IssBranchPcWriteNormalizerPass(IssConfiguration configuration) {
