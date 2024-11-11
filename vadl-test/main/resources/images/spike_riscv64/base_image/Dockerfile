@@ -13,7 +13,7 @@ WORKDIR riscv-gnu-toolchain
 RUN git submodule update --init --depth=1 -- gcc
 RUN git submodule update --init --depth=1 -- glibc
 RUN git submodule update --init --depth=1 -- binutils
-RUN ./configure --with-arch=rv64iam --with-abi=lp64 --enable-multilib --prefix=/opt/riscv-cross 
+RUN ./configure --with-arch=rv64gc --with-abi=lp64 --enable-multilib --prefix=/opt/riscv-cross 
 RUN make linux -j$num_jobs 
 RUN make clean
 
@@ -34,4 +34,5 @@ RUN apt update -y
 COPY --from=builder-riscv-toolchain /opt/riscv-cross /opt/riscv-cross
 COPY --from=builder-spike-toolchain /opt/spike /opt/spike
 WORKDIR /work
+COPY helper /helper
 COPY lcb_wrapper.sh .
