@@ -10,6 +10,7 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Objects;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -67,7 +68,7 @@ public class GenerateConstantMaterialisationPass extends Pass {
     var fieldUsages = (IdentifyFieldUsagePass.ImmediateDetectionContainer) passResults.lastResultOf(
         IdentifyFieldUsagePass.class);
     var isaMatching =
-        ((HashMap<MachineInstructionLabel, List<Instruction>>) passResults.lastResultOf(
+        ((Map<MachineInstructionLabel, List<Instruction>>) passResults.lastResultOf(
             IsaMachineInstructionMatchingPass.class));
     var immediates = ((List<TableGenImmediateRecord>) passResults.lastResultOf(
         GenerateTableGenImmediateRecordPass.class));

@@ -102,6 +102,52 @@ def RESERVED_PSEUDO_CALL : Instruction
 def : Pat<(target_call tglobaladdr:$func), (RESERVED_PSEUDO_CALL tglobaladdr:$func)>;
 def : Pat<(target_call texternalsym:$func), (RESERVED_PSEUDO_CALL texternalsym:$func)>;
 
+def SDT_rv64imSelectCC     : SDTypeProfile<1, 5, [SDTCisSameAs<1, 2>,
+                                         SDTCisSameAs<0, 4>,
+                                         SDTCisSameAs<4, 5>]>;
+def target_selectcc  : SDNode<"rv64imISD::SELECT_CC", SDT_rv64imSelectCC,
+                     [SDNPInGlue]>;
+
+def vadl_imm32 : ImmLeaf<i32, [{ return true; }]>, Operand<i32>
+{
+
+}
+
+def vadl_imm64 : ImmLeaf<i64, [{ return true; }]>, Operand<i64>
+{
+
+}
+
+
+
+
+def SelectCC_X: Instruction {
+    field bits<64> Inst;
+    // SoftFail is a field the disassembler can use to provide a way for
+    // instructions to not match without killing the whole decode process. It is
+    // mainly used for ARM, but Tablegen expects this field to exist or it fails
+    // to build the decode table.
+    field bits<32> SoftFail = 0;
+
+    bits<7> Opcode = 0;
+
+    let Inst{6-0} = Opcode;
+
+    let Namespace = "rv64im";
+
+    dag OutOperandList = (outs X:$dst);
+    dag InOperandList = (ins X:$lhs, X:$rhs, vadl_imm64:$imm, X:$truev, X:$falsev);
+    let Pattern = [ (set X:$dst, (target_selectcc X:$lhs, X:$rhs,
+                (i64 vadl_imm64:$imm), X:$truev, X:$falsev)) ];
+
+    let TSFlags{4-0} = 0;
+    let usesCustomInserter = 1;
+    let isPseudo = 1;
+    let isCodeGenOnly = 1;
+}
+
+
+
 
 class RV64IM_Ftype_sft<ValueType ty> : Operand<ty>
 {

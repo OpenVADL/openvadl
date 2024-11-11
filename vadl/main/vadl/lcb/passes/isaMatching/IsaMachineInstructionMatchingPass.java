@@ -37,10 +37,13 @@ import static vadl.types.BuiltInTable.XORS;
 import static vadl.viam.ViamError.ensure;
 import static vadl.viam.ViamError.ensureNonNull;
 
+import com.google.common.collect.ImmutableMap;
 import java.io.IOException;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.IdentityHashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
 import org.jetbrains.annotations.Nullable;
@@ -98,7 +101,8 @@ public class IsaMachineInstructionMatchingPass extends Pass implements IsaMatchi
 
   @Nullable
   @Override
-  public Object execute(PassResults passResults, Specification viam)
+  public Map<MachineInstructionLabel, List<Instruction>> execute(PassResults passResults,
+                                                                 Specification viam)
       throws IOException {
     // The instruction matching happens on the uninlined graph
     // because the field accesses are uninlined.
@@ -170,17 +174,29 @@ public class IsaMachineInstructionMatchingPass extends Pass implements IsaMatchi
       } else if (pc != null && findBranchWithConditional(behavior, NEQ)) {
         extend(matched, MachineInstructionLabel.BNEQ, instruction);
       } else if (pc != null
-          && findBranchWithConditional(behavior, Set.of(SGEQ, UGEQ))) {
-        extend(matched, MachineInstructionLabel.BGEQ, instruction);
+          && findBranchWithConditional(behavior, Set.of(SGEQ))) {
+        extend(matched, MachineInstructionLabel.BSGEQ, instruction);
       } else if (pc != null
-          && findBranchWithConditional(behavior, Set.of(SLEQ, ULEQ))) {
-        extend(matched, MachineInstructionLabel.BLEQ, instruction);
+          && findBranchWithConditional(behavior, Set.of(UGEQ))) {
+        extend(matched, MachineInstructionLabel.BUGEQ, instruction);
       } else if (pc != null
-          && findBranchWithConditional(behavior, Set.of(SLTH, ULTH))) {
-        extend(matched, MachineInstructionLabel.BLTH, instruction);
+          && findBranchWithConditional(behavior, Set.of(SLEQ))) {
+        extend(matched, MachineInstructionLabel.BSLEQ, instruction);
       } else if (pc != null
-          && findBranchWithConditional(behavior, Set.of(SGTH, UGTH))) {
-        extend(matched, MachineInstructionLabel.BGTH, instruction);
+          && findBranchWithConditional(behavior, Set.of(ULEQ))) {
+        extend(matched, MachineInstructionLabel.BULEQ, instruction);
+      } else if (pc != null
+          && findBranchWithConditional(behavior, Set.of(SLTH))) {
+        extend(matched, MachineInstructionLabel.BSLTH, instruction);
+      } else if (pc != null
+          && findBranchWithConditional(behavior, Set.of(ULTH))) {
+        extend(matched, MachineInstructionLabel.BULTH, instruction);
+      } else if (pc != null
+          && findBranchWithConditional(behavior, Set.of(SGTH))) {
+        extend(matched, MachineInstructionLabel.BSGTH, instruction);
+      } else if (pc != null
+          && findBranchWithConditional(behavior, Set.of(UGTH))) {
+        extend(matched, MachineInstructionLabel.BUGTH, instruction);
       } else if (findRR_OR_findRI(behavior, List.of(SLTH, ULTH))) {
         extend(matched, MachineInstructionLabel.LT, instruction);
       } else if (findWriteMem(behavior)) {
@@ -194,13 +210,13 @@ public class IsaMachineInstructionMatchingPass extends Pass implements IsaMatchi
       }
     });
 
-    return matched;
+    return Collections.unmodifiableMap(matched);
   }
 
   @Override
   public void verification(Specification viam, @Nullable Object passResult) {
     ensureNonNull(passResult, "There must be a passResult");
-    var isaMatched = (HashMap<MachineInstructionLabel, List<Instruction>>) passResult;
+    var isaMatched = (Map<MachineInstructionLabel, List<Instruction>>) passResult;
 
     var addi = isaMatched.get(MachineInstructionLabel.ADDI_64);
     if (addi == null) {

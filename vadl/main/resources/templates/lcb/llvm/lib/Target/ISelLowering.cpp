@@ -38,12 +38,13 @@ void [(${namespace})]TargetLowering::anchor() {}
     setOperationAction(ISD::VAARG, MVT::Other, Custom);
     setOperationAction(ISD::VACOPY, MVT::Other, Expand);
     setOperationAction(ISD::VAEND, MVT::Other, Expand);
-    /*
-    IF !hasConditionalMove»
-        setOperationAction(ISD::SELECT, MVT::i32, Custom);
-    setOperationAction(ISD::SELECT_CC, MVT::i32, Expand);
-    ENDIF
-    */
+    [#th:block th:if="${!hasCMove32}"]
+    setOperationAction(ISD::SELECT, MVT::i32, Custom);
+    [/th:block]
+    [#th:block th:if="${!hasCMove64}"]
+    setOperationAction(ISD::SELECT, MVT::i64, Custom);
+    [/th:block]
+    setOperationAction(ISD::SELECT_CC, MVT::[(${stackPointerType})], Expand);
     setOperationAction(ISD::SMUL_LOHI, MVT::i32, Expand);
     setOperationAction(ISD::UMUL_LOHI, MVT::i32, Expand);
     for (auto VT : {MVT::i1, MVT::i8, MVT::i16})
@@ -95,11 +96,10 @@ SDValue [(${namespace})]TargetLowering::LowerOperation(SDValue Op, SelectionDAG 
         return lowerVASTART(Op, DAG);
     case ISD::VAARG:
         return lowerVAARG(Op, DAG);
-        /*
-    IF !hasConditionalMove» case ISD::SELECT:
+    [#th:block th:if="${!hasConditionalMove}"]
+    case ISD::SELECT:
         return lowerSelect(Op, DAG);
-        ENDI
-        */
+    [/th:block]
     default : llvm_unreachable("unimplemented operand");
     }
 }
@@ -679,13 +679,11 @@ SDValue [(${namespace})]TargetLowering::lowerVAARG(SDValue Op, SelectionDAG &DAG
     return DAG.getLoad(VT, DL, Chain, VAList, MachinePointerInfo());
 }
 
-/*
-IF !hasConditionalMove
-    // Changes the condition code and swaps operands if necessary, so the SetCC
-    // operation matches one of the comparisons supported directly in the target's
-    // ISA.
-    static void
-    normaliseSetCC(SDValue & LHS, SDValue &RHS, ISD::CondCode &CC)
+// Changes the condition code and swaps operands if necessary, so the SetCC
+// operation matches one of the comparisons supported directly in the target's
+// ISA.
+static void
+normaliseSetCC(SDValue & LHS, SDValue &RHS, ISD::CondCode &CC)
 {
     switch (CC)
     {
@@ -700,34 +698,22 @@ IF !hasConditionalMove
         break;
     }
 }
-*/
 
-/*
 // Return the target's branch opcode that matches the given DAG integer
 // condition code. The CondCode must be one of those supported by the target's
 // ISA (see normaliseSetCC).
 static unsigned getBranchOpcodeForIntCondCode(ISD::CondCode CC, MVT::SimpleValueType Value)
 {
-    FOR instruction : machineInstructions
-                « var kind = MachineInstructionSelectNodeMatcher.getBranchCondCode(instruction) »
-                «IF kind.isPresent() »
-                    «IF MachineInstructionSelectNodeMatcher.is32Integer(instruction) » if (CC == ISD::«ConditionFlag.conditionAsString(kind.get())» && MVT::i32 == Value)
+    [# th:each="bi : ${branchInstructions}" ]
+    if (CC == ISD::[(${bi.isdName})] && MVT::[(${stackPointerType})] == Value)
     {
-        return [(${namespace})]::«instruction.simpleName»;
+        return [(${namespace})]::[(${bi.instructionName})];
     }
-    «ELSEIF MachineInstructionSelectNodeMatcher.is64Integer(instruction)» if (CC == ISD::«ConditionFlag.conditionAsString(kind.get())» && MVT::i64 == Value)
-    {
-        return [(${namespace})]::«instruction.simpleName»;
-    }
-    «ENDIF »
-                «ENDIF»
-            «ENDFOR»
+    [/]
 
-        llvm_unreachable("Unsupported CondCode");
+    llvm_unreachable("Unsupported CondCode");
 }
-*/
 
-/*
 SDValue [(${namespace})]TargetLowering::lowerSelect(SDValue Op, SelectionDAG &DAG) const
 {
     SDValue CondV = Op.getOperand(0);
@@ -743,8 +729,8 @@ SDValue [(${namespace})]TargetLowering::lowerSelect(SDValue Op, SelectionDAG &DA
     // compare+branch instructions. i.e.:
     // (select (setcc lhs, rhs, cc), truev, falsev)
     // -> (riscvisd::select_cc lhs, rhs, cc, truev, falsev)
-    if (Op.getSimpleValueType() == MVT::i32 && CondV.getOpcode() == ISD::SETCC &&
-        CondV.getOperand(0).getSimpleValueType() == MVT::i32)
+    if (Op.getSimpleValueType() == MVT::[(${stackPointerType})] && CondV.getOpcode() == ISD::SETCC &&
+        CondV.getOperand(0).getSimpleValueType() == MVT::[(${stackPointerType})])
     {
         SDValue LHS = CondV.getOperand(0);
         SDValue RHS = CondV.getOperand(1);
@@ -753,7 +739,7 @@ SDValue [(${namespace})]TargetLowering::lowerSelect(SDValue Op, SelectionDAG &DA
 
         normaliseSetCC(LHS, RHS, CCVal);
 
-        SDValue TargetCC = DAG.getConstant(CCVal, DL, MVT::i32);
+        SDValue TargetCC = DAG.getConstant(CCVal, DL, MVT::[(${stackPointerType})]);
         SDVTList VTs = DAG.getVTList(Op.getValueType(), MVT::Glue);
         SDValue Ops[] = {LHS, RHS, TargetCC, TrueV, FalseV};
         return DAG.getNode([(${namespace})]ISD::SELECT_CC, DL, VTs, Ops);
@@ -762,15 +748,14 @@ SDValue [(${namespace})]TargetLowering::lowerSelect(SDValue Op, SelectionDAG &DA
     // Otherwise:
     // (select condv, truev, falsev)
     // -> ([(${namespace})]isd::select_cc condv, zero, setne, truev, falsev)
-    SDValue Zero = DAG.getConstant(0, DL, MVT::i32);
-    SDValue SetNE = DAG.getConstant(ISD::SETNE, DL, MVT::i32);
+    SDValue Zero = DAG.getConstant(0, DL, MVT::[(${stackPointerType})]);
+    SDValue SetNE = DAG.getConstant(ISD::SETNE, DL, MVT::[(${stackPointerType})]);
 
     SDVTList VTs = DAG.getVTList(Op.getValueType(), MVT::Glue);
     SDValue Ops[] = {CondV, Zero, SetNE, TrueV, FalseV};
 
     return DAG.getNode([(${namespace})]ISD::SELECT_CC, DL, VTs, Ops);
 }
-*/
 
 MachineBasicBlock *
     [(${namespace})]TargetLowering::EmitInstrWithCustomInserter(MachineInstr &MI,
@@ -779,13 +764,12 @@ MachineBasicBlock *
     const TargetInstrInfo &TII = *BB->getParent()->getSubtarget().getInstrInfo();
     DebugLoc DL = MI.getDebugLoc();
 
-/*
     switch (MI.getOpcode())
     {
     default:
         llvm_unreachable("Unexpected instr type to insert");
     [# th:each="rg : ${registerFiles}" ]
-      case [(${namespace})]::SelectCC_${rg.registerFile.identifier.simpleName()}:
+      case [(${namespace})]::SelectCC_[(${rg.registerFileRef.identifier.simpleName()})]:
         break;
     [/]
     }
@@ -846,7 +830,4 @@ MachineBasicBlock *
 
     MI.eraseFromParent(); // The pseudo instruction is gone now.
     return TailMBB;
-    */
-
-    return nullptr;
 }

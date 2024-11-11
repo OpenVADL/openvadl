@@ -5,6 +5,7 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import java.io.IOException;
 import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.stream.Stream;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.params.ParameterizedTest;
@@ -38,7 +39,7 @@ public class IsaPseudoInstructionMatchingPassTest extends AbstractLcbTest {
 
     // When
     var matchings =
-        (HashMap<PseudoInstructionLabel, List<PseudoInstruction>>) passManager.getPassResults()
+        (Map<PseudoInstructionLabel, List<PseudoInstruction>>) passManager.getPassResults()
             .lastResultOf(IsaPseudoInstructionMatchingPass.class);
 
     // Then

@@ -102,6 +102,77 @@ def RESERVED_PSEUDO_CALL : Instruction
 def : Pat<(target_call tglobaladdr:$func), (RESERVED_PSEUDO_CALL tglobaladdr:$func)>;
 def : Pat<(target_call texternalsym:$func), (RESERVED_PSEUDO_CALL texternalsym:$func)>;
 
+def SDT_[(${namespace})]SelectCC     : SDTypeProfile<1, 5, [SDTCisSameAs<1, 2>,
+                                         SDTCisSameAs<0, 4>,
+                                         SDTCisSameAs<4, 5>]>;
+def target_selectcc  : SDNode<"[(${namespace})]ISD::SELECT_CC", SDT_[(${namespace})]SelectCC,
+                     [SDNPInGlue]>;
+
+def vadl_imm32 : ImmLeaf<i32, [{ return true; }]>, Operand<i32>
+{
+
+}
+
+def vadl_imm64 : ImmLeaf<i64, [{ return true; }]>, Operand<i64>
+{
+
+}
+
+[#th:block th:each="registerFile : ${registerFiles}" ]
+[#th:block th:if="${registerFile.resultType.bitWidth() == 32}"]
+def SelectCC_[(${registerFile.identifier.simpleName()})]: Instruction {
+    field bits<32> Inst;
+    // SoftFail is a field the disassembler can use to provide a way for
+    // instructions to not match without killing the whole decode process. It is
+    // mainly used for ARM, but Tablegen expects this field to exist or it fails
+    // to build the decode table.
+    field bits<32> SoftFail = 0;
+
+    bits<7> Opcode = 0;
+
+    let Inst{6-0} = Opcode;
+
+    let Namespace = "[(${namespace})]";
+
+    dag OutOperandList = (outs [(${registerFile.identifier.simpleName()})]:$dst);
+    dag InOperandList = (ins [(${registerFile.identifier.simpleName()})]:$lhs, [(${registerFile.identifier.simpleName()})]:$rhs, vadl_imm32:$imm, [(${registerFile.identifier.simpleName()})]:$truev, [(${registerFile.identifier.simpleName()})]:$falsev);
+    let Pattern = [ (set [(${registerFile.identifier.simpleName()})]:$dst, (target_selectcc [(${registerFile.identifier.simpleName()})]:$lhs, [(${registerFile.identifier.simpleName()})]:$rhs,
+                (i32 vadl_imm32:$imm), [(${registerFile.identifier.simpleName()})]:$truev, [(${registerFile.identifier.simpleName()})]:$falsev)) ];
+
+    let TSFlags{4-0} = 0;
+    let usesCustomInserter = 1;
+    let isPseudo = 1;
+    let isCodeGenOnly = 1;
+}
+[/th:block]
+[#th:block th:if="${registerFile.resultType.bitWidth() == 64}"]
+def SelectCC_[(${registerFile.identifier.simpleName()})]: Instruction {
+    field bits<64> Inst;
+    // SoftFail is a field the disassembler can use to provide a way for
+    // instructions to not match without killing the whole decode process. It is
+    // mainly used for ARM, but Tablegen expects this field to exist or it fails
+    // to build the decode table.
+    field bits<32> SoftFail = 0;
+
+    bits<7> Opcode = 0;
+
+    let Inst{6-0} = Opcode;
+
+    let Namespace = "[(${namespace})]";
+
+    dag OutOperandList = (outs [(${registerFile.identifier.simpleName()})]:$dst);
+    dag InOperandList = (ins [(${registerFile.identifier.simpleName()})]:$lhs, [(${registerFile.identifier.simpleName()})]:$rhs, vadl_imm64:$imm, [(${registerFile.identifier.simpleName()})]:$truev, [(${registerFile.identifier.simpleName()})]:$falsev);
+    let Pattern = [ (set [(${registerFile.identifier.simpleName()})]:$dst, (target_selectcc [(${registerFile.identifier.simpleName()})]:$lhs, [(${registerFile.identifier.simpleName()})]:$rhs,
+                (i64 vadl_imm64:$imm), [(${registerFile.identifier.simpleName()})]:$truev, [(${registerFile.identifier.simpleName()})]:$falsev)) ];
+
+    let TSFlags{4-0} = 0;
+    let usesCustomInserter = 1;
+    let isPseudo = 1;
+    let isCodeGenOnly = 1;
+}
+[/th:block]
+[/th:block]
+
 [# th:each="imm : ${immediates}" ]
 [(${imm})]
 [/]

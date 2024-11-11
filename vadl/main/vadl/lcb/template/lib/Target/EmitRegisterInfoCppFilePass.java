@@ -76,7 +76,7 @@ public class EmitRegisterInfoCppFilePass extends LcbTemplateRenderingPass {
     var abi =
         (DummyAbi) specification.definitions().filter(x -> x instanceof DummyAbi).findFirst().get();
     var instructionLabels =
-        (HashMap<MachineInstructionLabel, List<Instruction>>) passResults.lastResultOf(
+        (Map<MachineInstructionLabel, List<Instruction>>) passResults.lastResultOf(
             IsaMachineInstructionMatchingPass.class);
     var uninlined = (IdentityHashMap<Instruction, UninlinedGraph>) passResults.lastResultOf(
         FunctionInlinerPass.class);

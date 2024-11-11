@@ -1,11 +1,15 @@
 package vadl.lcb.passes.llvmLowering.strategies.instruction;
 
 import static vadl.lcb.passes.isaMatching.MachineInstructionLabel.BEQ;
-import static vadl.lcb.passes.isaMatching.MachineInstructionLabel.BGEQ;
-import static vadl.lcb.passes.isaMatching.MachineInstructionLabel.BGTH;
-import static vadl.lcb.passes.isaMatching.MachineInstructionLabel.BLEQ;
-import static vadl.lcb.passes.isaMatching.MachineInstructionLabel.BLTH;
 import static vadl.lcb.passes.isaMatching.MachineInstructionLabel.BNEQ;
+import static vadl.lcb.passes.isaMatching.MachineInstructionLabel.BSGEQ;
+import static vadl.lcb.passes.isaMatching.MachineInstructionLabel.BSGTH;
+import static vadl.lcb.passes.isaMatching.MachineInstructionLabel.BSLEQ;
+import static vadl.lcb.passes.isaMatching.MachineInstructionLabel.BSLTH;
+import static vadl.lcb.passes.isaMatching.MachineInstructionLabel.BUGEQ;
+import static vadl.lcb.passes.isaMatching.MachineInstructionLabel.BUGTH;
+import static vadl.lcb.passes.isaMatching.MachineInstructionLabel.BULEQ;
+import static vadl.lcb.passes.isaMatching.MachineInstructionLabel.BULTH;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -48,7 +52,7 @@ public class LlvmInstructionLoweringConditionalBranchesStrategyImpl
 
   @Override
   protected Set<MachineInstructionLabel> getSupportedInstructionLabels() {
-    return Set.of(BEQ, BGEQ, BNEQ, BLEQ, BLTH, BGTH);
+    return Set.of(BEQ, BNEQ, BSGEQ, BSLEQ, BSLTH, BSGTH, BUGEQ, BULEQ, BULTH, BUGTH);
   }
 
   @Override
