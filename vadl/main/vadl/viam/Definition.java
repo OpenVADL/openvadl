@@ -71,7 +71,10 @@ public abstract class Definition implements WithSourceLocation {
    * @see vadl.viam.passes.verification.ViamVerifier
    */
   public void verify() {
-
+    for (Annotation<?> annotation : annotations.values()) {
+      // verify all annotations of the definition
+      annotation.verify();
+    }
   }
 
   /**

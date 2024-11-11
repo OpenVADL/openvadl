@@ -25,11 +25,6 @@ public abstract class Annotation<T extends Definition> implements WithSourceLoca
    */
   public abstract Class<T> parentDefinitionClass();
 
-  void setParentDefinition(@Nonnull T definition) {
-    ensure(this.parentDefinition == null, "Expected definition to be null, but was %s", definition);
-    this.parentDefinition = definition;
-  }
-
   public T parentDefinition() {
     ensure(parentDefinition != null, "Expected definition to be not null, but was null");
     return parentDefinition;
@@ -90,5 +85,13 @@ public abstract class Annotation<T extends Definition> implements WithSourceLoca
 
   public final void setSourceLocation(SourceLocation sourceLocation) {
     this.sourceLocation = sourceLocation;
+  }
+
+  /**
+   * This is called by the {@link Definition#addAnnotation(Annotation)} method ONLY.
+   */
+  final void setParentDefinition(@Nonnull T definition) {
+    ensure(this.parentDefinition == null, "Expected definition to be null, but was %s", definition);
+    this.parentDefinition = definition;
   }
 }
