@@ -65,6 +65,16 @@ public class ViamError extends RuntimeException {
 
   }
 
+  /**
+   * Adds additional context information to the {@link ViamError} object.
+   *
+   * @param annotation The annotation object to add as context.
+   * @return The updated ViamError object with added context.
+   */
+  public ViamError addContext(Annotation annotation) {
+    return this.addContext("annotation", annotation);
+  }
+
   @FormatMethod
   public ViamError addContext(String format, Object... args) {
     this.context.add(String.format(format, args));
