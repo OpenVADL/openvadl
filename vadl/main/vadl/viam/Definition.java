@@ -83,7 +83,7 @@ public abstract class Definition implements WithSourceLocation {
    */
   @FormatMethod
   @Contract("false, _, _-> fail")
-  public void ensure(boolean condition, String message, Object... args) {
+  public void ensure(boolean condition, String message, @Nullable Object... args) {
     if (!condition) {
       throw new ViamError(message.formatted(args))
           .shrinkStacktrace(1)
