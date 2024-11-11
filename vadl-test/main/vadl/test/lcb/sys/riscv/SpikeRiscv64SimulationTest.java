@@ -30,6 +30,8 @@ public class SpikeRiscv64SimulationTest extends AbstractLcbTest {
   @Test
   void testFiles() throws IOException, DuplicatedPassKeyException {
     var target = "rv64im";
+    var upstreamBuildTarget = "RISCV";
+    var upstreamClangTarget = "riscv64";
     var configuration = new LcbConfiguration(getConfiguration(false),
         new ProcessorName(target));
 
@@ -47,7 +49,9 @@ public class SpikeRiscv64SimulationTest extends AbstractLcbTest {
     var redisCache = getRunningRedisCache();
     var image = redisCache.setupEnv(new ImageFromDockerfile("tc_spike_riscv64")
         .withDockerfile(Paths.get(configuration.outputPath() + "/lcb/Dockerfile"))
-        .withBuildArg("TARGET", target));
+        .withBuildArg("TARGET", target)
+        .withBuildArg("UPSTREAM_BUILD_TARGET", upstreamBuildTarget)
+        .withBuildArg("UPSTREAM_CLANG_TARGET", upstreamClangTarget));
 
     // We build the image and copy all the input files into the container.
     // The llvm compiler compiles all assembly files, and we copy them from the container
