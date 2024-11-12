@@ -4,6 +4,7 @@ import static vadl.dump.InfoEnricher.forType;
 
 import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 import java.util.stream.Collectors;
 import vadl.dump.Info;
@@ -38,7 +39,7 @@ public class LcbEnricherCollection {
         }
 
         var labels =
-            (HashMap<MachineInstructionLabel, List<Instruction>>) passResults.lastNullableResultOf(
+            (Map<MachineInstructionLabel, List<Instruction>>) passResults.lastNullableResultOf(
                 IsaMachineInstructionMatchingPass.class);
         if (labels != null && definitionEntity.origin() instanceof Instruction instruction) {
           var flipped = LlvmLoweringPass.flipIsaMatchingMachineInstructions(labels);
