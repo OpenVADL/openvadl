@@ -14,6 +14,11 @@ import vadl.viam.Specification;
 import vadl.viam.graph.control.ReturnNode;
 import vadl.viam.graph.dependency.FieldAccessRefNode;
 
+/**
+ * FieldAccessInlinerPass is a transformation pass that inlines field access operations
+ * in the VADL specification. It is responsible for identifying and replacing field
+ * accesses with field access function body.
+ */
 public class FieldAccessInlinerPass extends Pass {
   public FieldAccessInlinerPass(GeneralConfiguration configuration) {
     super(configuration);
