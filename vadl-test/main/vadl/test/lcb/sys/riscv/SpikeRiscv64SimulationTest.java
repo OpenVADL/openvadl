@@ -16,6 +16,7 @@ import java.util.stream.Stream;
 import org.junit.jupiter.api.DynamicTest;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.TestFactory;
+import org.junit.jupiter.api.condition.EnabledIfEnvironmentVariable;
 import org.testcontainers.images.builder.ImageFromDockerfile;
 import vadl.configuration.LcbConfiguration;
 import vadl.gcb.valuetypes.ProcessorName;
@@ -32,6 +33,7 @@ public class SpikeRiscv64SimulationTest extends AbstractLcbTest {
         .map(File::getName);
   }
 
+  @EnabledIfEnvironmentVariable(named = "test.spike.enabled", matches = "true")
   @TestFactory
   List<DynamicTest> testSpike() throws IOException, DuplicatedPassKeyException {
     var target = "rv64im";
