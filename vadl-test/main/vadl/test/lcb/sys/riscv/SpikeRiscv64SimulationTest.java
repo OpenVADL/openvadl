@@ -1,5 +1,8 @@
 package vadl.test.lcb.sys.riscv;
 
+import static org.assertj.core.api.AssertionsForClassTypes.assertThat;
+import static org.assertj.core.api.AssertionsForClassTypes.contentOf;
+
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
@@ -7,10 +10,12 @@ import java.io.IOException;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.Arrays;
+import java.util.List;
 import java.util.Objects;
 import java.util.stream.Stream;
+import org.junit.jupiter.api.DynamicTest;
 import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.condition.EnabledIfEnvironmentVariable;
+import org.junit.jupiter.api.TestFactory;
 import org.testcontainers.images.builder.ImageFromDockerfile;
 import vadl.configuration.LcbConfiguration;
 import vadl.gcb.valuetypes.ProcessorName;
@@ -27,8 +32,8 @@ public class SpikeRiscv64SimulationTest extends AbstractLcbTest {
         .map(File::getName);
   }
 
-  @Test
-  void testFiles() throws IOException, DuplicatedPassKeyException {
+  @TestFactory
+  List<DynamicTest> testFiles() throws IOException, DuplicatedPassKeyException {
     var target = "rv64im";
     var upstreamBuildTarget = "RISCV";
     var upstreamClangTarget = "riscv64";
@@ -66,24 +71,16 @@ public class SpikeRiscv64SimulationTest extends AbstractLcbTest {
         "/output");
 
     // The container is complete and has generated the assembly files.
-    /*
     return inputFilesFromCFile().map(input -> DynamicTest.dynamicTest(input, () -> {
       var name = Paths.get(input).getFileName();
-      var expected = new File(
-          "../../open-vadl/vadl-test/main/resources/llvm/riscv/assertions/assembly/" + name + ".s");
-
-      var errorPath = hostOutput + name + ".err";
+      var errorPath = hostOutput + name + ".out";
       var errorFile = new File(errorPath);
 
       // First check if an error file exists. Note that the container always
       // creates an error file, so we also check for the size.
       if (errorFile.exists() && errorFile.length() != 0) {
-        assertThat(contentOf(errorFile)).isEqualToIgnoringWhitespace(contentOf(expected));
-      } else {
-        var actual = new File(hostOutput + "/" + name + ".s");
-        assertThat(contentOf(actual)).isEqualToIgnoringWhitespace(contentOf(expected));
+        assertThat(contentOf(errorFile)).isEqualToIgnoringWhitespace("");
       }
     })).toList();
-     */
   }
 }
