@@ -26,14 +26,14 @@ public class SpikeRiscv64SimulationTest extends AbstractLcbTest {
 
   private static Stream<String> inputFilesFromCFile() {
     return Arrays.stream(
-            Objects.requireNonNull(new File("../../open-vadl/vadl-test/main/resources/llvm/riscv/c")
+            Objects.requireNonNull(new File("../../open-vadl/vadl-test/main/resources/llvm/riscv/spike")
                 .listFiles()))
         .filter(File::isFile)
         .map(File::getName);
   }
 
   @TestFactory
-  List<DynamicTest> testFiles() throws IOException, DuplicatedPassKeyException {
+  List<DynamicTest> testSpike() throws IOException, DuplicatedPassKeyException {
     var target = "rv64im";
     var upstreamBuildTarget = "RISCV";
     var upstreamClangTarget = "riscv64";
@@ -73,7 +73,7 @@ public class SpikeRiscv64SimulationTest extends AbstractLcbTest {
     // The container is complete and has generated the assembly files.
     return inputFilesFromCFile().map(input -> DynamicTest.dynamicTest(input, () -> {
       var name = Paths.get(input).getFileName();
-      var errorPath = hostOutput + name + ".out";
+      var errorPath = hostOutput + name + ".err";
       var errorFile = new File(errorPath);
 
       // First check if an error file exists. Note that the container always
