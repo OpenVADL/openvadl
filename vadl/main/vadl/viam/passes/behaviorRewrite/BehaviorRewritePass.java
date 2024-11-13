@@ -12,6 +12,7 @@ import vadl.pass.PassResults;
 import vadl.viam.Specification;
 import vadl.viam.passes.algebraic_simplication.AlgebraicSimplificationPass;
 import vadl.viam.passes.behaviorRewrite.rules.BehaviorRewriteSimplificationRule;
+import vadl.viam.passes.behaviorRewrite.rules.impl.LetNodeSimplificationRule;
 import vadl.viam.passes.behaviorRewrite.rules.impl.MergeSMullAndTruncateToMulSimplificationRule;
 
 /**
@@ -21,6 +22,7 @@ public class BehaviorRewritePass extends Pass {
   public static final List<BehaviorRewriteSimplificationRule> rules = new ArrayList<>();
 
   static {
+    rules.add(new LetNodeSimplificationRule());
     rules.add(new MergeSMullAndTruncateToMulSimplificationRule());
   }
 

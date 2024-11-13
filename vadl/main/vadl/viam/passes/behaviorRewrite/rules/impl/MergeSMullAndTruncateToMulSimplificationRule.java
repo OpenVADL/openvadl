@@ -24,16 +24,14 @@ public class MergeSMullAndTruncateToMulSimplificationRule
   @Override
   public Optional<Node> simplify(Node node) {
     if (node instanceof ExpressionNode n) {
-      //TODO: find a way to make the LetNode optional.
-      var matcher = new TruncNodeMatcher(new LetNodeMatcher(new BuiltInMatcher(
+      var matcher = new TruncNodeMatcher(new BuiltInMatcher(
           BuiltInTable.SMULL, Collections.emptyList()
-      )));
+      ));
 
       var matchings = TreeMatcher.matches(Stream.of(n), matcher);
       for (var matching : matchings) {
         var casted = (TruncateNode) matching;
-        var child = (LetNode) casted.value();
-        var builtin = (BuiltInCall) child.expression();
+        var builtin = (BuiltInCall) casted.value();
         builtin.setBuiltIn(BuiltInTable.MUL);
         builtin.setType(casted.type());
 
