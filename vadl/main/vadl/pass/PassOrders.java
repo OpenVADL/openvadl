@@ -49,6 +49,7 @@ import vadl.lcb.template.lib.Target.MCTargetDesc.EmitInstPrinterHeaderFilePass;
 import vadl.viam.passes.DuplicateWriteDetectionPass;
 import vadl.viam.passes.InstructionResourceAccessAnalysisPass;
 import vadl.viam.passes.algebraic_simplication.AlgebraicSimplificationPass;
+import vadl.viam.passes.behaviorRewrite.BehaviorRewritePass;
 import vadl.viam.passes.canonicalization.CanonicalizationPass;
 import vadl.viam.passes.dummyAbi.DummyAbiPass;
 import vadl.viam.passes.functionInliner.FieldAccessInlinerPass;
@@ -82,6 +83,12 @@ public class PassOrders {
     order.add(new ViamVerificationPass(configuration));
 
     order.add(new TypeCastEliminationPass(configuration));
+
+    // Common optimizations
+    order.add(new CanonicalizationPass(configuration));
+    order.add(new AlgebraicSimplificationPass(configuration));
+    order.add(new BehaviorRewritePass(configuration));
+
     // TODO: @kper do you see any fix for this?
     // Note: we run the counter-access resolving pass before the func inliner pass
     // because the lcb uses the uninlined version of the instructions.
@@ -93,10 +100,6 @@ public class PassOrders {
     order.add(new SideEffectConditionResolvingPass(configuration));
     // requires SideEffectConditionResolvingPass to work
     order.add(new DuplicateWriteDetectionPass(configuration));
-
-    // Common optimizations
-    order.add(new CanonicalizationPass(configuration));
-    order.add(new AlgebraicSimplificationPass(configuration));
 
     order.add(new InstructionResourceAccessAnalysisPass(configuration));
 
