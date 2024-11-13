@@ -101,6 +101,10 @@ public class PassOrders {
     // requires SideEffectConditionResolvingPass to work
     order.add(new DuplicateWriteDetectionPass(configuration));
 
+    order.add(new CanonicalizationPass(configuration));
+    order.add(new AlgebraicSimplificationPass(configuration));
+    order.add(new BehaviorRewritePass(configuration));
+    
     order.add(new InstructionResourceAccessAnalysisPass(configuration));
 
     // verification after viam optimizations
