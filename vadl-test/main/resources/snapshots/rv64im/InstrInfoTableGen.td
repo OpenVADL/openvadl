@@ -2150,7 +2150,7 @@ let Uses = [  ];
 let Defs = [  ];
 }
 
-def : Pat<(smullohi X:$rs1, X:$rs2),
+def : Pat<(mul X:$rs1, X:$rs2),
         (MUL X:$rs1, X:$rs2)>;
 
 
