@@ -51,6 +51,7 @@ import vadl.viam.passes.InstructionResourceAccessAnalysisPass;
 import vadl.viam.passes.algebraic_simplication.AlgebraicSimplificationPass;
 import vadl.viam.passes.canonicalization.CanonicalizationPass;
 import vadl.viam.passes.dummyAbi.DummyAbiPass;
+import vadl.viam.passes.functionInliner.FieldAccessInlinerPass;
 import vadl.viam.passes.functionInliner.FunctionInlinerPass;
 import vadl.viam.passes.sideeffect_condition.SideEffectConditionResolvingPass;
 import vadl.viam.passes.staticCounterAccess.StaticCounterAccessResolvingPass;
@@ -88,6 +89,7 @@ public class PassOrders {
     // as the canonicalization runs at a later point.
     order.add(new StaticCounterAccessResolvingPass(configuration));
     order.add(new FunctionInlinerPass(configuration));
+    order.add(new FieldAccessInlinerPass(configuration));
     order.add(new SideEffectConditionResolvingPass(configuration));
     // requires SideEffectConditionResolvingPass to work
     order.add(new DuplicateWriteDetectionPass(configuration));
@@ -320,6 +322,10 @@ public class PassOrders {
    */
   public static PassOrder iss(IssConfiguration config) throws IOException {
     var order = viam(config);
+
+    // skip inlining of field access
+    order.skip(FieldAccessInlinerPass.class);
+
     // iss function passes
     order
         .add(new IssVerificationPass(config))

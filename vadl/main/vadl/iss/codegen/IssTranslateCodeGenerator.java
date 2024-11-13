@@ -7,6 +7,7 @@ import static vadl.utils.GraphUtils.getSingleNode;
 import java.io.StringWriter;
 import java.util.Arrays;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 import vadl.cppCodeGen.CodeGenerator;
 import vadl.cppCodeGen.mixins.CBuiltinMixin;
 import vadl.cppCodeGen.mixins.CMiscMixin;
@@ -17,6 +18,7 @@ import vadl.viam.graph.Node;
 import vadl.viam.graph.control.DirectionalNode;
 import vadl.viam.graph.control.InstrEndNode;
 import vadl.viam.graph.control.StartNode;
+import vadl.viam.graph.dependency.FieldAccessRefNode;
 import vadl.viam.graph.dependency.FieldRefNode;
 
 /**
@@ -56,14 +58,18 @@ public class IssTranslateCodeGenerator extends CodeGenerator
           writer.write(" *a) {\n");
 
           // format debug string
-          var printingFields = Arrays.stream(insn.format().fields())
+          var fieldStream = Arrays.stream(insn.format().fields())
               .filter(f -> insn.encoding().fieldEncodingOf(f) == null)
+              .filter(f -> !f.simpleName().startsWith("imm"));
+          var printingFields = Stream.concat(fieldStream, insn.format()
+                  .fieldAccesses().stream())
+              .map(Definition::simpleName)
               .toList();
-          var fmtString = printingFields.stream().map(f ->
-                  f.simpleName().toLowerCase() + ": %d ")
+
+          var fmtString = printingFields.stream().map(f -> f + ": %d ")
               .collect(Collectors.joining(", "));
           var fmtArgs = printingFields.stream().map(f ->
-                  "a->" + f.simpleName())
+                  "a->" + f)
               .collect(Collectors.joining(", "));
 
           writer.write("\tqemu_printf(\"[VADL] trans_");
@@ -99,6 +105,11 @@ public class IssTranslateCodeGenerator extends CodeGenerator
     impls.set(FieldRefNode.class, (node, writer) -> {
       writer.write("a->");
       writer.write(node.formatField().simpleName());
+    });
+
+    impls.set(FieldAccessRefNode.class, (node, writer) -> {
+      writer.write("a->");
+      writer.write(node.fieldAccess().simpleName());
     });
   }
 
