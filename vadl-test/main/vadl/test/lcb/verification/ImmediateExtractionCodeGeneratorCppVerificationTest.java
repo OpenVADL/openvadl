@@ -198,6 +198,6 @@ public class ImmediateExtractionCodeGeneratorCppVerificationTest extends Abstrac
   }
 
   Arbitrary<Long> uint(int bitWidth) {
-    return Arbitraries.longs().greaterOrEqual(0).lessOrEqual((long) Math.pow(2, bitWidth));
+    return Arbitraries.longs().greaterOrEqual(0).lessOrEqual((long) Math.pow(2, bitWidth) - 1);
   }
 }
