@@ -52,33 +52,33 @@ abstract sealed class Statement extends Node
 }
 
 interface StatementVisitor<T> {
-  T visit(BlockStatement blockStatement);
+  T visit(AssignmentStatement statement);
 
-  T visit(LetStatement letStatement);
+  T visit(BlockStatement statement);
 
-  T visit(IfStatement ifStatement);
+  T visit(CallStatement statement);
 
-  T visit(AssignmentStatement assignmentStatement);
+  T visit(ForallStatement statement);
 
-  T visit(RaiseStatement raiseStatement);
+  T visit(IfStatement statement);
 
-  T visit(CallStatement callStatement);
+  T visit(InstructionCallStatement statement);
 
-  T visit(PlaceholderStatement placeholderStatement);
+  T visit(LetStatement statement);
 
-  T visit(MacroInstanceStatement macroInstanceStatement);
+  T visit(LockStatement statement);
 
-  T visit(MacroMatchStatement macroMatchStatement);
+  T visit(MacroInstanceStatement statement);
 
-  T visit(MatchStatement matchStatement);
+  T visit(MacroMatchStatement statement);
 
-  T visit(StatementList statementList);
+  T visit(MatchStatement statement);
 
-  T visit(InstructionCallStatement instructionCallStatement);
+  T visit(PlaceholderStatement statement);
 
-  T visit(LockStatement lockStatement);
+  T visit(RaiseStatement statement);
 
-  T visit(ForallStatement forallStatement);
+  T visit(StatementList statement);
 }
 
 final class BlockStatement extends Statement {
@@ -641,7 +641,8 @@ final class InstructionCallStatement extends Statement {
   List<Expr> unnamedArguments;
   SourceLocation loc;
 
-  @Nullable Definition instrNode;
+  @Nullable
+  Definition instrNode;
 
   InstructionCallStatement(IdentifierOrPlaceholder id, List<NamedArgument> namedArguments,
                            List<Expr> unnamedArguments, SourceLocation loc) {

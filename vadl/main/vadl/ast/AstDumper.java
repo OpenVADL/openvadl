@@ -68,8 +68,8 @@ public class AstDumper
   public Void visit(ConstantDefinition definition) {
     dumpNode(definition);
     dumpChildren(definition.identifier());
-    if (definition.type != null) {
-      dumpChildren(definition.type);
+    if (definition.typeLiteral != null) {
+      dumpChildren(definition.typeLiteral);
     }
     dumpChildren(definition.value);
     return null;
@@ -640,7 +640,7 @@ public class AstDumper
   @Override
   public Void visit(CastExpr expr) {
     dumpNode(expr);
-    dumpChildren(expr.value, (Expr) expr.type);
+    dumpChildren(expr.value, (Expr) expr.typeLiteral);
     return null;
   }
 

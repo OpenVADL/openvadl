@@ -145,7 +145,7 @@ class ParserUtils {
     if (expr instanceof CastExpr castExpr) {
       if (castExpr.value instanceof BinaryExpr binExpr) {
         return new BinaryExpr(binExpr.left, binExpr.operator,
-            new CastExpr(binExpr.right, castExpr.type));
+            new CastExpr(binExpr.right, castExpr.typeLiteral));
       }
     }
     return expr;
