@@ -16,6 +16,7 @@ import vadl.lcb.templateUtils.RegisterUtils;
 import vadl.pass.PassResults;
 import vadl.viam.Format;
 import vadl.viam.Specification;
+import vadl.viam.passes.dummyAbi.DummyAbi;
 
 /**
  * This file contains the target specific implementation for the disassembler.
@@ -51,10 +52,11 @@ public class EmitDisassemblerCppFilePass extends LcbTemplateRenderingPass {
 
   }
 
-  private List<RegisterUtils.RegisterClass> extractRegisterClasses(Specification specification) {
+  private List<RegisterUtils.RegisterClass> extractRegisterClasses(Specification specification,
+                                                                   DummyAbi abi) {
     return specification.isa().map(x -> x.ownRegisterFiles().stream())
         .orElse(Stream.empty())
-        .map(RegisterUtils::getRegisterClass)
+        .map(x -> RegisterUtils.getRegisterClass(x, abi.aliases()))
         .toList();
   }
 
@@ -95,10 +97,12 @@ public class EmitDisassemblerCppFilePass extends LcbTemplateRenderingPass {
   @Override
   protected Map<String, Object> createVariables(final PassResults passResults,
                                                 Specification specification) {
+    var abi =
+        (DummyAbi) specification.definitions().filter(x -> x instanceof DummyAbi).findFirst().get();
     return Map.of(CommonVarNames.NAMESPACE, specification.simpleName(),
         "immediates",
         extractImmediates(passResults),
         "instructionSize", getInstructionSize(specification),
-        CommonVarNames.REGISTERS_CLASSES, extractRegisterClasses(specification));
+        CommonVarNames.REGISTERS_CLASSES, extractRegisterClasses(specification, abi));
   }
 }

@@ -1,6 +1,7 @@
 package vadl.viam.passes.dummyAbi;
 
 import java.io.IOException;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Stream;
@@ -129,14 +130,36 @@ public class DummyAbiPass extends Pass {
 
   private Map<Pair<RegisterFile, Integer>, DummyAbi.RegisterAlias> getAliases(
       RegisterFile registerFile) {
-    return Map.of(
-        Pair.of(registerFile, 0), new DummyAbi.RegisterAlias("zero"),
-        Pair.of(registerFile, 1), new DummyAbi.RegisterAlias("ra"),
-        Pair.of(registerFile, 2), new DummyAbi.RegisterAlias("sp"),
-        Pair.of(registerFile, 3), new DummyAbi.RegisterAlias("gp"),
-        Pair.of(registerFile, 4), new DummyAbi.RegisterAlias("tp"),
-        Pair.of(registerFile, 8), new DummyAbi.RegisterAlias("fp")
-    );
+    var map = new HashMap<Pair<RegisterFile, Integer>, DummyAbi.RegisterAlias>();
+    map.put(Pair.of(registerFile, 0), new DummyAbi.RegisterAlias("zero"));
+    map.put(Pair.of(registerFile, 1), new DummyAbi.RegisterAlias("ra"));
+    map.put(Pair.of(registerFile, 2), new DummyAbi.RegisterAlias("sp"));
+    map.put(Pair.of(registerFile, 3), new DummyAbi.RegisterAlias("gp"));
+    map.put(Pair.of(registerFile, 4), new DummyAbi.RegisterAlias("tp"));
+    map.put(Pair.of(registerFile, 8), new DummyAbi.RegisterAlias("fp"));
+    map.put(Pair.of(registerFile, 10), new DummyAbi.RegisterAlias("a0"));
+    map.put(Pair.of(registerFile, 11), new DummyAbi.RegisterAlias("a1"));
+    map.put(Pair.of(registerFile, 12), new DummyAbi.RegisterAlias("a2"));
+    map.put(Pair.of(registerFile, 13), new DummyAbi.RegisterAlias("a3"));
+    map.put(Pair.of(registerFile, 14), new DummyAbi.RegisterAlias("a4"));
+    map.put(Pair.of(registerFile, 15), new DummyAbi.RegisterAlias("a5"));
+    map.put(Pair.of(registerFile, 16), new DummyAbi.RegisterAlias("a6"));
+    map.put(Pair.of(registerFile, 17), new DummyAbi.RegisterAlias("a7"));
+    map.put(Pair.of(registerFile, 18), new DummyAbi.RegisterAlias("s2"));
+    map.put(Pair.of(registerFile, 19), new DummyAbi.RegisterAlias("s3"));
+    map.put(Pair.of(registerFile, 20), new DummyAbi.RegisterAlias("s4"));
+    map.put(Pair.of(registerFile, 21), new DummyAbi.RegisterAlias("s5"));
+    map.put(Pair.of(registerFile, 22), new DummyAbi.RegisterAlias("s6"));
+    map.put(Pair.of(registerFile, 23), new DummyAbi.RegisterAlias("s7"));
+    map.put(Pair.of(registerFile, 24), new DummyAbi.RegisterAlias("s8"));
+    map.put(Pair.of(registerFile, 25), new DummyAbi.RegisterAlias("s9"));
+    map.put(Pair.of(registerFile, 26), new DummyAbi.RegisterAlias("s10"));
+    map.put(Pair.of(registerFile, 27), new DummyAbi.RegisterAlias("s11"));
+    map.put(Pair.of(registerFile, 28), new DummyAbi.RegisterAlias("t3"));
+    map.put(Pair.of(registerFile, 29), new DummyAbi.RegisterAlias("t4"));
+    map.put(Pair.of(registerFile, 30), new DummyAbi.RegisterAlias("t5"));
+    map.put(Pair.of(registerFile, 31), new DummyAbi.RegisterAlias("t6"));
+    return map;
   }
 
   private List<DummyAbi.RegisterRef> getCalleeSaved(RegisterFile registerFile) {

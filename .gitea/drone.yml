@@ -128,6 +128,7 @@ steps:
         path: /var/run/docker.sock
     environment:
       test.llvm.enabled: true
+      test.spike.enabled: true
 
 trigger:
   ref:

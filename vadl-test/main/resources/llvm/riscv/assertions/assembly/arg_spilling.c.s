@@ -4,10 +4,10 @@
 .type	arg_spilling,@function
 arg_spilling:                           # @arg_spilling
 # %bb.0:                                # %entry
-ADDI X2,X2,4048
-SD X8,40(X2)
-ADDI X8,X2,48
-LD X1,0(X8)
+ADDI sp,sp,-48
+SD fp,40(sp)
+ADDI fp,sp,48
+LD ra,0(fp)
                                       # kill: def $x4 killed $x17
                                       # kill: def $x4 killed $x16
                                       # kill: def $x4 killed $x15
@@ -16,35 +16,35 @@ LD X1,0(X8)
                                       # kill: def $x4 killed $x12
                                       # kill: def $x4 killed $x11
                                       # kill: def $x4 killed $x10
-SW X10,4084(X8)
-SW X11,4080(X8)
-SW X12,4076(X8)
-SW X13,4072(X8)
-SW X14,4068(X8)
-SW X15,4064(X8)
-SW X16,4060(X8)
-SW X17,4056(X8)
-SW X1,4052(X8)
-LW X1,4084(X8)
-LW X4,4080(X8)
-ADD X1,X1,X4
-LW X4,4076(X8)
-ADD X1,X1,X4
-LW X4,4072(X8)
-ADD X1,X1,X4
-LW X4,4068(X8)
-ADD X1,X1,X4
-LW X4,4064(X8)
-ADD X1,X1,X4
-LW X4,4060(X8)
-ADD X1,X1,X4
-LW X4,4056(X8)
-ADD X1,X1,X4
-LW X4,4052(X8)
-ADD X10,X1,X4
-LD X8,40(X2)
-ADDI X2,X2,48
-JALR X0,0(X1)
+SW a0,-12(fp)
+SW a1,-16(fp)
+SW a2,-20(fp)
+SW a3,-24(fp)
+SW a4,-28(fp)
+SW a5,-32(fp)
+SW a6,-36(fp)
+SW a7,-40(fp)
+SW ra,-44(fp)
+LW ra,-12(fp)
+LW tp,-16(fp)
+ADD ra,ra,tp
+LW tp,-20(fp)
+ADD ra,ra,tp
+LW tp,-24(fp)
+ADD ra,ra,tp
+LW tp,-28(fp)
+ADD ra,ra,tp
+LW tp,-32(fp)
+ADD ra,ra,tp
+LW tp,-36(fp)
+ADD ra,ra,tp
+LW tp,-40(fp)
+ADD ra,ra,tp
+LW tp,-44(fp)
+ADD a0,ra,tp
+LD fp,40(sp)
+ADDI sp,sp,48
+JALR zero,0(ra)
 .Lfunc_end0:
 .size	arg_spilling, .Lfunc_end0-arg_spilling
                                       # -- End function
@@ -52,26 +52,26 @@ JALR X0,0(X1)
 .type	arg_spilling_call,@function
 arg_spilling_call:                      # @arg_spilling_call
 # %bb.0:                                # %entry
-ADDI X2,X2,4064
-SD X2,24(X2)
-SD X8,16(X2)
-ADDI X8,X2,32
-ADDI X1,X0,9
-SD X1,0(X2)
-ADDI X10,X0,1
-ADDI X11,X0,2
-ADDI X12,X0,3
-ADDI X13,X0,4
-ADDI X14,X0,5
-ADDI X15,X0,6
-ADDI X16,X0,7
-ADDI X17,X0,8
-LUI X1,%hi20(arg_spilling)
-JALR X1,%lo12(arg_spilling)(X1)
-LD X8,16(X2)
-LD X2,24(X2)
-ADDI X2,X2,32
-JALR X0,0(X1)
+ADDI sp,sp,-32
+SD sp,24(sp)
+SD fp,16(sp)
+ADDI fp,sp,32
+ADDI ra,zero,9
+SD ra,0(sp)
+ADDI a0,zero,1
+ADDI a1,zero,2
+ADDI a2,zero,3
+ADDI a3,zero,4
+ADDI a4,zero,5
+ADDI a5,zero,6
+ADDI a6,zero,7
+ADDI a7,zero,8
+LUI ra,%hi20(arg_spilling)
+JALR ra,%lo12(arg_spilling)(ra)
+LD fp,16(sp)
+LD sp,24(sp)
+ADDI sp,sp,32
+JALR zero,0(ra)
 .Lfunc_end1:
 .size	arg_spilling_call, .Lfunc_end1-arg_spilling_call
                                       # -- End function
