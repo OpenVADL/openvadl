@@ -447,6 +447,10 @@ class UnaryExpr extends Expr {
     this.operand = operand;
   }
 
+  UnOp unOp() {
+    return (UnOp) operator;
+  }
+
   @Override
   SourceLocation location() {
     return operand.location().join(operand.location());
@@ -1216,6 +1220,7 @@ final class TypeLiteral extends Expr {
     this.sizeIndices = size == null ? List.of() : List.of(List.of(size));
     this.loc = symExpr.location();
   }
+
 
   @Override
   SourceLocation location() {

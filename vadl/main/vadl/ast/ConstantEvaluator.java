@@ -3,18 +3,22 @@ package vadl.ast;
 import java.math.BigInteger;
 import vadl.types.Type;
 
-record ConstantValue(Type type, BigInteger value) {
-}
 
+/**
+ * Can evaluate any expression.
+ *
+ * <p>The evaluator can only be called on expressions that are already typechecked
+ * (including all of its sub-expressions).
+ */
 class ConstantEvaluator implements ExprVisitor<ConstantValue> {
 
-  private final TypeChecker typeChecker;
-
-  public ConstantEvaluator(TypeChecker typeChecker) {
-    this.typeChecker = typeChecker;
-  }
 
   public ConstantValue eval(Expr expr) {
+    // A simple optimization that avoids unneeded traversing the tree.
+    if (expr.type instanceof ConstantType) {
+      return new ConstantValue(expr.type, ((ConstantType) expr.type).getValue());
+    }
+
     return expr.accept(this);
   }
 
@@ -91,13 +95,17 @@ class ConstantEvaluator implements ExprVisitor<ConstantValue> {
   public ConstantValue visit(IdentifierPath expr) {
     throw new RuntimeException(
         "Constant evaluator cannot evaluate %s yet.".formatted(expr.getClass().getSimpleName()));
-
   }
 
   @Override
   public ConstantValue visit(UnaryExpr expr) {
-    throw new RuntimeException(
-        "Constant evaluator cannot evaluate %s yet.".formatted(expr.getClass().getSimpleName()));
+    var innerVal = eval(expr.operand);
+
+    return switch (expr.unOp().operator) {
+      case NEGATIVE -> innerVal.withValue(innerVal.value().negate());
+      case COMPLEMENT -> innerVal.withValue(innerVal.value().not());
+      case LOG_NOT -> innerVal.withValue(innerVal.value().xor(BigInteger.ONE));
+    };
 
   }
 
@@ -197,5 +205,17 @@ class ConstantEvaluator implements ExprVisitor<ConstantValue> {
     throw new RuntimeException(
         "Constant evaluator cannot evaluate %s yet.".formatted(expr.getClass().getSimpleName()));
 
+  }
+}
+
+record ConstantValue(Type type, BigInteger value) {
+
+  ConstantValue withValue(BigInteger value) {
+    var type = this.type;
+    if (this.type instanceof ConstantType) {
+      type = new ConstantType(value);
+    }
+
+    return new ConstantValue(type, value);
   }
 }

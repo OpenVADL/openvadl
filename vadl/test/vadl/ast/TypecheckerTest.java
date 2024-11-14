@@ -1,5 +1,6 @@
 package vadl.ast;
 
+import java.math.BigInteger;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 import vadl.error.Diagnostic;
@@ -86,4 +87,82 @@ public class TypecheckerTest {
     Assertions.assertThrows(Diagnostic.class, () -> typechecker.verify(ast),
         "Shouldn't accept the program");
   }
+
+
+  @Test
+  public void unaryMinusIntExpression() {
+    var prog = """
+        constant i = -3
+        """;
+    var ast = Assertions.assertDoesNotThrow(() -> VadlParser.parse(prog), "Cannot parse input");
+    var typechecker = new TypeChecker();
+    Assertions.assertDoesNotThrow(() -> typechecker.verify(ast), "Program isn't typesafe");
+    var typeFinder = new TypeFinder();
+    Assertions.assertEquals(new ConstantType(BigInteger.valueOf(-3)),
+        typeFinder.getConstantType(ast, "i"));
+  }
+
+  @Test
+  public void unaryMinusMultipleIntExpression() {
+    var prog = """
+        constant i = -----3
+        """;
+    var ast = Assertions.assertDoesNotThrow(() -> VadlParser.parse(prog), "Cannot parse input");
+    var typechecker = new TypeChecker();
+    Assertions.assertDoesNotThrow(() -> typechecker.verify(ast), "Program isn't typesafe");
+    var typeFinder = new TypeFinder();
+    Assertions.assertEquals(new ConstantType(BigInteger.valueOf(-3)),
+        typeFinder.getConstantType(ast, "i"));
+  }
+
+  @Test
+  public void invalidMinusOnBoolean() {
+    var prog = """
+        constant i = -true
+        """;
+    var ast = Assertions.assertDoesNotThrow(() -> VadlParser.parse(prog), "Cannot parse input");
+    var typechecker = new TypeChecker();
+    Assertions.assertThrows(Diagnostic.class, () -> typechecker.verify(ast),
+        "Shouldn't accept the program");
+  }
+
+  @Test
+  public void unaryNegateBool() {
+    var prog = """
+        // It's funny because it's true.
+        constant b = !false
+        """;
+    var ast = Assertions.assertDoesNotThrow(() -> VadlParser.parse(prog), "Cannot parse input");
+    var typechecker = new TypeChecker();
+    Assertions.assertDoesNotThrow(() -> typechecker.verify(ast), "Program isn't typesafe");
+    var typeFinder = new TypeFinder();
+    Assertions.assertEquals(Type.bool(),
+        typeFinder.getConstantType(ast, "b"));
+  }
+
+  @Test
+  public void unaryNegateMultipleBool() {
+    var prog = """
+        constant b =  !!!!!false
+        """;
+    var ast = Assertions.assertDoesNotThrow(() -> VadlParser.parse(prog), "Cannot parse input");
+    var typechecker = new TypeChecker();
+    Assertions.assertDoesNotThrow(() -> typechecker.verify(ast), "Program isn't typesafe");
+    var typeFinder = new TypeFinder();
+    Assertions.assertEquals(Type.bool(),
+        typeFinder.getConstantType(ast, "b"));
+  }
+
+  @Test
+  public void invalidNegateInt() {
+    var prog = """
+        constant b = !5
+        """;
+    var ast = Assertions.assertDoesNotThrow(() -> VadlParser.parse(prog), "Cannot parse input");
+    var typechecker = new TypeChecker();
+    Assertions.assertThrows(Diagnostic.class, () -> typechecker.verify(ast),
+        "Shouldn't accept the program");
+  }
+
+
 }

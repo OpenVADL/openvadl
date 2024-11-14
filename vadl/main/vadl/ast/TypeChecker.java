@@ -3,14 +3,15 @@ package vadl.ast;
 import java.math.BigInteger;
 import java.util.Objects;
 import vadl.error.Diagnostic;
+import vadl.types.BitsType;
 import vadl.types.SIntType;
 import vadl.types.Type;
 
 /**
  * A experimental, temporary type-checker to verify expressions and attach types to the AST.
- * <p>
- * As the typesystem can depend on constants, the typechecker needs to evaluate (at least some of)
- * them.
+ *
+ * <p>As the typesystem can depend on constants, the typechecker needs to evaluate (at least some
+ * of) them.
  */
 public class TypeChecker
     implements DefinitionVisitor<Void>, StatementVisitor<Void>, ExprVisitor<Void> {
@@ -19,9 +20,15 @@ public class TypeChecker
   private final ConstantEvaluator constantEvaluator;
 
   public TypeChecker() {
-    constantEvaluator = new ConstantEvaluator(this);
+    constantEvaluator = new ConstantEvaluator();
   }
 
+  /**
+   * Verify that the program is well-typed.
+   *
+   * @param ast to verify
+   * @throws Diagnostic if the program isn't well typed
+   */
   public void verify(Ast ast) {
     for (var definition : ast.definitions) {
       definition.accept(this);
@@ -34,8 +41,15 @@ public class TypeChecker
             node.getClass().getSimpleName(), node.location().toIDEString()));
   }
 
+  /**
+   * Tests whether a type can implicitly be cast to another.
+   *
+   * @param from is the source type.
+   * @param to   is the target type.
+   * @return true if the cast can happen implicitly, false otherwise.
+   */
   private static boolean canImplicitCast(Type from, Type to) {
-    if (from.getClass() == to.getClass()) {
+    if (from.equals(to)) {
       return true;
     }
 
@@ -52,8 +66,6 @@ public class TypeChecker
 
         return availableWidth >= requiredWidth;
       }
-
-      return false;
     }
 
     return false;
@@ -424,6 +436,7 @@ public class TypeChecker
 
       // FIXME: Should we verify the type here at all?
       var widthExpr = expr.sizeIndices.get(0).get(0);
+      widthExpr.accept(this);
       var bitWidth = constantEvaluator.eval(widthExpr).value();
       if (bitWidth.compareTo(BigInteger.valueOf(1)) < 0) {
         throw Diagnostic.error("Invalid Type Notation", widthExpr.location())
@@ -451,7 +464,37 @@ public class TypeChecker
 
   @Override
   public Void visit(UnaryExpr expr) {
-    throwUnimplemented(expr);
+    expr.operand.accept(this);
+    var innerType = Objects.requireNonNull(expr.operand.type);
+
+    switch (expr.unOp().operator) {
+      // FIXME: doesn't work for sint and const as expected.
+      case NEGATIVE, COMPLEMENT -> {
+        if (!(innerType instanceof BitsType) && !(innerType instanceof ConstantType)) {
+          throw Diagnostic
+              .error("Type Mismatch", expr)
+              .description("Expected a numerical type but got `%s`", innerType)
+              .build();
+        }
+      }
+      case LOG_NOT -> {
+        if (!innerType.equals(Type.bool())) {
+          throw Diagnostic
+              .error("Type Mismatch: expected `Bool`, got `%s`".formatted(innerType), expr)
+              .help("For numerical types you can negate them with a minus `-`")
+              .build();
+        }
+      }
+      default -> throwUnimplemented(expr);
+    }
+
+    if (innerType instanceof ConstantType) {
+      // Evaluate the expression for constant types
+      expr.type = constantEvaluator.eval(expr).type();
+    } else {
+      expr.type = innerType;
+    }
+
     return null;
   }
 
