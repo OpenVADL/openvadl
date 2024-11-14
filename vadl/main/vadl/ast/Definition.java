@@ -117,7 +117,9 @@ interface DefinitionVisitor<R> {
 
   R visit(AsmDescriptionDefinition definition);
 
-  R visit(AsmModifierDefinition asmModifierDefinition);
+  R visit(AsmModifierDefinition definition);
+
+  R visit(AsmDirectiveDefinition definition);
 
   R visit(AsmGrammarRuleDefinition definition);
 
@@ -3832,16 +3834,19 @@ class AsmDescriptionDefinition extends Definition {
   Identifier id;
   Identifier abi;
   List<AsmModifierDefinition> modifiers;
+  List<AsmDirectiveDefinition> directives;
   List<AsmGrammarRuleDefinition> rules;
   SourceLocation loc;
 
   public AsmDescriptionDefinition(Identifier id, Identifier abi,
                                   List<AsmModifierDefinition> modifiers,
+                                  List<AsmDirectiveDefinition> directives,
                                   List<AsmGrammarRuleDefinition> rules,
                                   SourceLocation loc) {
     this.id = id;
     this.abi = abi;
     this.modifiers = modifiers;
+    this.directives = directives;
     this.rules = rules;
     this.loc = loc;
   }
@@ -3886,6 +3891,19 @@ class AsmDescriptionDefinition extends Definition {
       builder.append(prettyIndentString(--indent)).append("}\n");
     }
 
+    if (!directives.isEmpty()) {
+      builder.append(prettyIndentString(indent)).append("directives = {\n");
+      indent++;
+      for (var dir : directives) {
+        dir.prettyPrint(indent, builder);
+        if (!Objects.equals(directives.get(directives.size() - 1), dir)) {
+          builder.append(',');
+        }
+        builder.append("\n");
+      }
+      builder.append(prettyIndentString(--indent)).append("}\n");
+    }
+
     builder.append(prettyIndentString(indent)).append("grammar = {\n");
     indent++;
     for (var rule : rules) {
@@ -3910,12 +3928,12 @@ class AsmDescriptionDefinition extends Definition {
     }
     AsmDescriptionDefinition that = (AsmDescriptionDefinition) o;
     return Objects.equals(id, that.id) && Objects.equals(abi, that.abi)
-        && Objects.equals(modifiers, that.modifiers) && Objects.equals(rules, that.rules);
+        && Objects.equals(rules, that.rules);
   }
 
   @Override
   public int hashCode() {
-    return Objects.hash(id, abi, modifiers, rules);
+    return Objects.hash(id, abi, rules);
   }
 }
 
@@ -3974,6 +3992,60 @@ class AsmModifierDefinition extends Definition {
   @Override
   public int hashCode() {
     return Objects.hash(stringLiteral, isa, modifier);
+  }
+}
+
+class AsmDirectiveDefinition extends Definition {
+  Expr stringLiteral;
+  Identifier builtinDirective;
+  SourceLocation loc;
+
+  public AsmDirectiveDefinition(Expr stringLiteral, Identifier builtinDirective,
+                                SourceLocation loc) {
+    this.stringLiteral = stringLiteral;
+    this.builtinDirective = builtinDirective;
+    this.loc = loc;
+  }
+
+  @Override
+  <R> R accept(DefinitionVisitor<R> visitor) {
+    return visitor.visit(this);
+  }
+
+  @Override
+  SourceLocation location() {
+    return loc;
+  }
+
+  @Override
+  SyntaxType syntaxType() {
+    return BasicSyntaxType.INVALID;
+  }
+
+  @Override
+  void prettyPrint(int indent, StringBuilder builder) {
+    builder.append(prettyIndentString(indent));
+    stringLiteral.prettyPrint(0, builder);
+    builder.append(" -> ");
+    builtinDirective.prettyPrint(0, builder);
+  }
+
+  @Override
+  public boolean equals(Object o) {
+    if (this == o) {
+      return true;
+    }
+    if (o == null || getClass() != o.getClass()) {
+      return false;
+    }
+    AsmDirectiveDefinition that = (AsmDirectiveDefinition) o;
+    return Objects.equals(stringLiteral, that.stringLiteral)
+        && Objects.equals(builtinDirective, that.builtinDirective);
+  }
+
+  @Override
+  public int hashCode() {
+    return Objects.hash(stringLiteral, builtinDirective);
   }
 }
 

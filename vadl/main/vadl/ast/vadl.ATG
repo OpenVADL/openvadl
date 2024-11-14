@@ -106,6 +106,7 @@ TOKENS
   COUNTER      = "counter".
   DECODER      = "decoder".
   DESCRIPTION  = "description".
+  DIRECTIVES   = "directives".
   DO           = "do".
   ELSE         = "else".
   ENCODE       = "encode".
@@ -1085,16 +1086,16 @@ PRODUCTIONS
   // -- ASM DEFINITIONS-----------------------------------------------------------------------------------------------
 
   assemblyDescriptionDefinition<out AsmDescriptionDefinition asmDescription>    (. List<AsmModifierDefinition> modifiers = new ArrayList<>(); var start = loc(); .)
-  = ASSEMBLY DESCRIPTION
+  = ASSEMBLY DESCRIPTION                                                        (. List<AsmDirectiveDefinition> directives = new ArrayList<>(); .)
     assemblyIdentifier<out Identifier id>
     FOR
     assemblyIdentifier<out Identifier abi>
     SYM_EQ
     SYM_BRACE_OPEN
       [ assemblyModifiersDefinition<out modifiers> ]
-      //[assemblyDirectivesDefinition]
+      [ assemblyDirectivesDefinition<out directives> ]
       assemblyGrammarDefinition<.out List<AsmGrammarRuleDefinition> rules.>
-    SYM_BRACE_CLOSE                                                             (. asmDescription = new AsmDescriptionDefinition(id, abi, modifiers, rules, start.join(loc())); .)
+    SYM_BRACE_CLOSE                                                             (. asmDescription = new AsmDescriptionDefinition(id, abi, modifiers, directives, rules, start.join(loc())); .)
   .
 
   assemblyModifiersDefinition<.out List<AsmModifierDefinition> modifiers.>        (. modifiers = new ArrayList<>(); .)
@@ -1108,11 +1109,27 @@ PRODUCTIONS
   .
 
   assemblyModifierDefinition<out AsmModifierDefinition modifier>            (. var start = loc(); .)
-  = stringLiteral <out Expr strLit>
+  = stringLiteral<out Expr strLit>
     SYM_ARROW
     assemblyIdentifier<out Identifier isaId>
     SYM_NAMESPACE
     assemblyIdentifier<out Identifier modifierId>                           (. modifier = new AsmModifierDefinition(strLit, isaId, modifierId, start.join(loc())); .)
+  .
+
+  assemblyDirectivesDefinition<.out List<AsmDirectiveDefinition> directives.>       (. directives = new ArrayList<>(); .)
+  = DIRECTIVES
+    SYM_EQ
+    SYM_BRACE_OPEN
+      assemblyDirectiveDefinition<out AsmDirectiveDefinition first>                 (. directives.add(first); .)
+      { SYM_COMMA assemblyDirectiveDefinition<out AsmDirectiveDefinition other>     (. directives.add(other); .)
+      }
+    SYM_BRACE_CLOSE
+  .
+
+  assemblyDirectiveDefinition<out AsmDirectiveDefinition definition>        (. var start = loc(); .)
+  = stringLiteral<out Expr strLit>
+    SYM_ARROW
+    assemblyIdentifier<out Identifier id>                                   (. definition = new AsmDirectiveDefinition(strLit, id, start.join(loc())); .)
   .
 
   assemblyGrammarDefinition<.out List<AsmGrammarRuleDefinition> rules.>         (. rules = new ArrayList<>(); .)

@@ -605,6 +605,8 @@ public class AstDumper
   public Void visit(AsmDescriptionDefinition definition) {
     dumpNode(definition);
     dumpChildren(definition.id, definition.abi);
+    dumpChildren(definition.modifiers);
+    dumpChildren(definition.directives);
     dumpChildren(definition.rules);
     return null;
   }
@@ -613,6 +615,13 @@ public class AstDumper
   public Void visit(AsmModifierDefinition definition) {
     dumpNode(definition);
     dumpChildren(definition.stringLiteral, definition.isa, definition.modifier);
+    return null;
+  }
+
+  @Override
+  public Void visit(AsmDirectiveDefinition definition) {
+    dumpNode(definition);
+    dumpChildren(definition.stringLiteral, definition.builtinDirective);
     return null;
   }
 
