@@ -47,7 +47,7 @@ void [(${namespace})]TargetLowering::anchor() {}
     setOperationAction(ISD::SELECT_CC, MVT::[(${stackPointerType})], Expand);
     setOperationAction(ISD::SMUL_LOHI, MVT::i32, Expand);
     setOperationAction(ISD::UMUL_LOHI, MVT::i32, Expand);
-    for (auto VT : {MVT::i1, MVT::i8, MVT::i16})
+    for (auto VT : {MVT::i1, MVT::i8, MVT::i16, MVT::i32})
         setOperationAction(ISD::SIGN_EXTEND_INREG, VT, Expand);
     setOperationAction(ISD::BR_JT, MVT::Other, Expand);
     setOperationAction(ISD::ROTR, MVT::i32, Expand);
