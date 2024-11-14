@@ -510,6 +510,11 @@ public class Ungrouper
   }
 
   @Override
+  public Definition visit(AsmModifierDefinition definition) {
+    return definition;
+  }
+
+  @Override
   public Definition visit(AsmGrammarRuleDefinition definition) {
     return definition;
   }

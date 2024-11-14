@@ -777,8 +777,15 @@ class MacroExpander
 
   @Override
   public Definition visit(AsmDescriptionDefinition definition) {
-    return new AsmDescriptionDefinition(definition.id, definition.abi, definition.rules,
-        copyLoc(definition.loc)).withAnnotations(expandAnnotations(definition.annotations));
+    return new AsmDescriptionDefinition(definition.id, definition.abi, definition.modifiers,
+        definition.rules, copyLoc(definition.loc)).withAnnotations(
+        expandAnnotations(definition.annotations));
+  }
+
+  @Override
+  public Definition visit(AsmModifierDefinition definition) {
+    return new AsmModifierDefinition(definition.stringLiteral, definition.isa, definition.modifier,
+        definition.loc);
   }
 
   @Override

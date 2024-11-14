@@ -144,6 +144,7 @@ TOKENS
   MISS         = "miss".
   MODEL        = "model".
   MODEL_TYPE   = "model-type".
+  MODIFIERS    = "modifiers".
   NONE         = "none".
   NOP          = "nop".
   OPERATION    = "operation".
@@ -1083,17 +1084,35 @@ PRODUCTIONS
 
   // -- ASM DEFINITIONS-----------------------------------------------------------------------------------------------
 
-  assemblyDescriptionDefinition<out AsmDescriptionDefinition asmDescription>    (. var start = loc(); .)
+  assemblyDescriptionDefinition<out AsmDescriptionDefinition asmDescription>    (. List<AsmModifierDefinition> modifiers = new ArrayList<>(); var start = loc(); .)
   = ASSEMBLY DESCRIPTION
     assemblyIdentifier<out Identifier id>
     FOR
     assemblyIdentifier<out Identifier abi>
     SYM_EQ
     SYM_BRACE_OPEN
-      //[assemblyModifiersDefinition]
+      [ assemblyModifiersDefinition<out modifiers> ]
       //[assemblyDirectivesDefinition]
       assemblyGrammarDefinition<.out List<AsmGrammarRuleDefinition> rules.>
-    SYM_BRACE_CLOSE                                                             (. asmDescription = new AsmDescriptionDefinition(id, abi, rules, start.join(loc())); .)
+    SYM_BRACE_CLOSE                                                             (. asmDescription = new AsmDescriptionDefinition(id, abi, modifiers, rules, start.join(loc())); .)
+  .
+
+  assemblyModifiersDefinition<.out List<AsmModifierDefinition> modifiers.>        (. modifiers = new ArrayList<>(); .)
+  = MODIFIERS
+    SYM_EQ
+    SYM_BRACE_OPEN
+      assemblyModifierDefinition<out AsmModifierDefinition first>                 (. modifiers.add(first); .)
+      { SYM_COMMA assemblyModifierDefinition<out AsmModifierDefinition other>     (. modifiers.add(other); .)
+      }
+    SYM_BRACE_CLOSE
+  .
+
+  assemblyModifierDefinition<out AsmModifierDefinition modifier>            (. var start = loc(); .)
+  = stringLiteral <out Expr strLit>
+    SYM_ARROW
+    assemblyIdentifier<out Identifier isaId>
+    SYM_NAMESPACE
+    assemblyIdentifier<out Identifier modifierId>                           (. modifier = new AsmModifierDefinition(strLit, isaId, modifierId, start.join(loc())); .)
   .
 
   assemblyGrammarDefinition<.out List<AsmGrammarRuleDefinition> rules.>         (. rules = new ArrayList<>(); .)

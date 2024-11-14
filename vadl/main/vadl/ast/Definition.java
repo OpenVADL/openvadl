@@ -117,6 +117,8 @@ interface DefinitionVisitor<R> {
 
   R visit(AsmDescriptionDefinition definition);
 
+  R visit(AsmModifierDefinition asmModifierDefinition);
+
   R visit(AsmGrammarRuleDefinition definition);
 
   R visit(AsmGrammarAlternativesDefinition definition);
@@ -3829,14 +3831,17 @@ class SignalDefinition extends Definition {
 class AsmDescriptionDefinition extends Definition {
   Identifier id;
   Identifier abi;
+  List<AsmModifierDefinition> modifiers;
   List<AsmGrammarRuleDefinition> rules;
   SourceLocation loc;
 
   public AsmDescriptionDefinition(Identifier id, Identifier abi,
+                                  List<AsmModifierDefinition> modifiers,
                                   List<AsmGrammarRuleDefinition> rules,
                                   SourceLocation loc) {
     this.id = id;
     this.abi = abi;
+    this.modifiers = modifiers;
     this.rules = rules;
     this.loc = loc;
   }
@@ -3866,8 +3871,21 @@ class AsmDescriptionDefinition extends Definition {
     builder.append(" for ");
     abi.prettyPrint(indent, builder);
     builder.append(" = {\n");
-
     indent++;
+
+    if (!modifiers.isEmpty()) {
+      builder.append(prettyIndentString(indent)).append("modifiers = {\n");
+      indent++;
+      for (var mod : modifiers) {
+        mod.prettyPrint(indent, builder);
+        if (!Objects.equals(modifiers.get(modifiers.size() - 1), mod)) {
+          builder.append(',');
+        }
+        builder.append("\n");
+      }
+      builder.append(prettyIndentString(--indent)).append("}\n");
+    }
+
     builder.append(prettyIndentString(indent)).append("grammar = {\n");
     indent++;
     for (var rule : rules) {
@@ -3891,12 +3909,71 @@ class AsmDescriptionDefinition extends Definition {
       return false;
     }
     AsmDescriptionDefinition that = (AsmDescriptionDefinition) o;
-    return Objects.equals(id, that.id) && Objects.equals(abi, that.abi);
+    return Objects.equals(id, that.id) && Objects.equals(abi, that.abi)
+        && Objects.equals(modifiers, that.modifiers) && Objects.equals(rules, that.rules);
   }
 
   @Override
   public int hashCode() {
-    return Objects.hash(id, abi, rules);
+    return Objects.hash(id, abi, modifiers, rules);
+  }
+}
+
+class AsmModifierDefinition extends Definition {
+  Expr stringLiteral;
+  Identifier isa;
+  Identifier modifier;
+  SourceLocation loc;
+
+  public AsmModifierDefinition(Expr stringLiteral, Identifier isa, Identifier modifier,
+                               SourceLocation loc) {
+    this.stringLiteral = stringLiteral;
+    this.isa = isa;
+    this.modifier = modifier;
+    this.loc = loc;
+  }
+
+  @Override
+  <R> R accept(DefinitionVisitor<R> visitor) {
+    return visitor.visit(this);
+  }
+
+  @Override
+  SourceLocation location() {
+    return loc;
+  }
+
+  @Override
+  SyntaxType syntaxType() {
+    return BasicSyntaxType.INVALID;
+  }
+
+  @Override
+  void prettyPrint(int indent, StringBuilder builder) {
+    builder.append(prettyIndentString(indent));
+    stringLiteral.prettyPrint(0, builder);
+    builder.append(" -> ");
+    isa.prettyPrint(0, builder);
+    builder.append("::");
+    modifier.prettyPrint(0, builder);
+  }
+
+  @Override
+  public boolean equals(Object o) {
+    if (this == o) {
+      return true;
+    }
+    if (o == null || getClass() != o.getClass()) {
+      return false;
+    }
+    AsmModifierDefinition that = (AsmModifierDefinition) o;
+    return Objects.equals(stringLiteral, that.stringLiteral) && Objects.equals(isa, that.isa)
+        && Objects.equals(modifier, that.modifier);
+  }
+
+  @Override
+  public int hashCode() {
+    return Objects.hash(stringLiteral, isa, modifier);
   }
 }
 

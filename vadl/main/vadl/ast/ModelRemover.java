@@ -245,6 +245,11 @@ public class ModelRemover implements DefinitionVisitor<Definition> {
   }
 
   @Override
+  public Definition visit(AsmModifierDefinition definition) {
+    return definition;
+  }
+
+  @Override
   public Definition visit(AsmGrammarRuleDefinition definition) {
     return definition;
   }
