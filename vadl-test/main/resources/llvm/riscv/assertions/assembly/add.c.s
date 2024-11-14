@@ -4,19 +4,19 @@
 .type	constant_return,@function
 constant_return:                        # @constant_return
 # %bb.0:                                # %entry
-ADDI X2,X2,4080
-SD X8,8(X2)
-ADDI X8,X2,16
+ADDI sp,sp,-16
+SD fp,8(sp)
+ADDI fp,sp,16
                                       # kill: def $x1 killed $x11
                                       # kill: def $x1 killed $x10
-SW X10,4084(X8)
-SW X11,4080(X8)
-LW X1,4084(X8)
-LW X4,4080(X8)
-ADD X10,X1,X4
-LD X8,8(X2)
-ADDI X2,X2,16
-JALR X0,0(X1)
+SW a0,-12(fp)
+SW a1,-16(fp)
+LW ra,-12(fp)
+LW tp,-16(fp)
+ADD a0,ra,tp
+LD fp,8(sp)
+ADDI sp,sp,16
+JALR zero,0(ra)
 .Lfunc_end0:
 .size	constant_return, .Lfunc_end0-constant_return
                                       # -- End function

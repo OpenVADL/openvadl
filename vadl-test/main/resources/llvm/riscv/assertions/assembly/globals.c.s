@@ -4,20 +4,20 @@
 .type	main,@function
 main:                                   # @main
 # %bb.0:                                # %entry
-ADDI X2,X2,4080
-SD X8,8(X2)
-ADDI X8,X2,16
-ADDI X4,X0,0
-SW X4,4084(X8)
-LUI X1,%hi20(a)
-ADDI X1,X1,%lo12(a)
-SW X4,0(X1)
-LW X1,0(X1)
-SW X1,4080(X8)
-LW X10,4080(X8)
-LD X8,8(X2)
-ADDI X2,X2,16
-JALR X0,0(X1)
+ADDI sp,sp,-16
+SD fp,8(sp)
+ADDI fp,sp,16
+ADDI tp,zero,0
+SW tp,-12(fp)
+LUI ra,%hi20(a)
+ADDI ra,ra,%lo12(a)
+SW tp,0(ra)
+LW ra,0(ra)
+SW ra,-16(fp)
+LW a0,-16(fp)
+LD fp,8(sp)
+ADDI sp,sp,16
+JALR zero,0(ra)
 .Lfunc_end0:
 .size	main, .Lfunc_end0-main
                                       # -- End function

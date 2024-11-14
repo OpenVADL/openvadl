@@ -4,18 +4,18 @@
 .type	compdecomp,@function
 compdecomp:                             # @compdecomp
 # %bb.0:                                # %entry
-ADDI X2,X2,2049
-ADDI X2,X2,4063
-SD X8,2072(X2)
-ADDI X8,X2,2047
-ADDI X8,X8,33
+ADDI sp,sp,-2047
+ADDI sp,sp,-33
+SD fp,2072(sp)
+ADDI fp,sp,2047
+ADDI fp,fp,33
                                       # kill: def $x1 killed $x11
-SD X10,4080(X8)
-SW X11,4076(X8)
-LD X8,2072(X2)
-ADDI X2,X2,2047
-ADDI X2,X2,33
-JALR X0,0(X1)
+SD a0,-16(fp)
+SW a1,-20(fp)
+LD fp,2072(sp)
+ADDI sp,sp,2047
+ADDI sp,sp,33
+JALR zero,0(ra)
 .Lfunc_end0:
 .size	compdecomp, .Lfunc_end0-compdecomp
                                       # -- End function
