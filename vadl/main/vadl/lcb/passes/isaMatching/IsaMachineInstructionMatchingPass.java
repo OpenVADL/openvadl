@@ -202,8 +202,12 @@ public class IsaMachineInstructionMatchingPass extends Pass implements IsaMatchi
       } else if (pc != null
           && findBranchWithConditional(behavior, Set.of(UGTH))) {
         extend(matched, MachineInstructionLabel.BUGTH, instruction);
-      } else if (findRR_OR_findRI(behavior, List.of(SLTH, ULTH))) {
+      } else if (findRR(behavior, List.of(SLTH, ULTH))) {
         extend(matched, MachineInstructionLabel.LT, instruction);
+      } else if (findRI(behavior, List.of(SLTH))) {
+        extend(matched, MachineInstructionLabel.LTI, instruction);
+      } else if (findRI(behavior, List.of(ULTH))) {
+        extend(matched, MachineInstructionLabel.LTIU, instruction);
       } else if (findWriteMem(behavior)) {
         extend(matched, MachineInstructionLabel.STORE_MEM, instruction);
       } else if (findLoadMem(behavior)) {

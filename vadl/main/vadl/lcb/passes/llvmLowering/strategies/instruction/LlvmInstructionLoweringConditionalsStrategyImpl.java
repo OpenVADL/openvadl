@@ -20,7 +20,8 @@ import vadl.viam.graph.Node;
 public class LlvmInstructionLoweringConditionalsStrategyImpl
     extends LlvmInstructionLoweringStrategy {
 
-  private final Set<MachineInstructionLabel> supported = Set.of(MachineInstructionLabel.LT);
+  private final Set<MachineInstructionLabel> supported = Set.of(MachineInstructionLabel.LT,
+      MachineInstructionLabel.LTIU);
 
   public LlvmInstructionLoweringConditionalsStrategyImpl(
       ValueType architectureType) {

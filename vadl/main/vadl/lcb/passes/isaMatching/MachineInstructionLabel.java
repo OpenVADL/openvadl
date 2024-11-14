@@ -35,6 +35,8 @@ public enum MachineInstructionLabel {
   COMPARISONS
    */
   LT,
+  LTI, // less then immediate
+  LTIU, // less then immediate unsigned
   /*
   MEMORY
    */

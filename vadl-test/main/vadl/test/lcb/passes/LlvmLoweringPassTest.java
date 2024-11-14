@@ -293,9 +293,9 @@ public class LlvmLoweringPassTest extends AbstractLcbTest {
     expectedResults.put("SLTI",
         createTestOutputRIWithConditional("RV64IM_Itype_immAsInt64", "imm",
             LlvmCondCode.SETLT, "SLTI"));
-    expectedResults.put("SLTUI",
-        createTestOutputRIWithConditional("RV64IM_Btype_immAsInt64", "imm",
-            LlvmCondCode.SETULT, "SLTUI"));
+    expectedResults.put("SLTIU",
+        createTestOutputRIWithConditional("RV64IM_Itype_immAsInt64", "imm",
+            LlvmCondCode.SETULT, "SLTIU"));
     /*
     CONDITIONAL BRANCHES
      */
