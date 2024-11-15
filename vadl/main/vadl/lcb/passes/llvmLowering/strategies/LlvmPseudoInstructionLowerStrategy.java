@@ -5,11 +5,13 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.IdentityHashMap;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
 import javax.annotation.Nullable;
+import org.jetbrains.annotations.NotNull;
 import vadl.error.DeferredDiagnosticStore;
 import vadl.error.Diagnostic;
 import vadl.gcb.passes.pseudo.PseudoFuncParamNode;
@@ -237,14 +239,19 @@ public abstract class LlvmPseudoInstructionLowerStrategy {
         mayStore);
 
     return Optional.of(new LlvmLoweringPseudoRecord(pseudo.behavior(),
-        inputOperands,
-        outputOperands,
+        dedup(inputOperands),
+        dedup(outputOperands),
         flags,
         patterns,
-        uses,
-        defs,
+        dedup(uses),
+        dedup(defs),
         appliedInstructionBehavior
     ));
+  }
+
+  private <T> ArrayList<T> dedup(
+      ArrayList<T> x) {
+    return new ArrayList<>(new LinkedHashSet<>(x));
   }
 
   protected List<TableGenPattern> generatePatternVariations(
