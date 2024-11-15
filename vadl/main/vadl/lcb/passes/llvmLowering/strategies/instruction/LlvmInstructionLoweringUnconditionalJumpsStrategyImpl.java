@@ -42,11 +42,11 @@ public class LlvmInstructionLoweringUnconditionalJumpsStrategyImpl
   public Optional<LlvmLoweringRecord> lower(
       Map<MachineInstructionLabel, List<Instruction>> labelledMachineInstructions,
       Instruction instruction,
-      UninlinedGraph uninlinedBehavior,
-      @Nullable List<UninlinedGraph> unmodifiedAdditionalBehaviors) {
+      Graph uninlinedBehavior,
+      @Nullable List<Graph> unmodifiedAdditionalBehaviors) {
 
     var visitor = replacementHooks();
-    var copy = (UninlinedGraph) uninlinedBehavior.copy();
+    var copy = uninlinedBehavior.copy();
 
     for (var node : copy.getNodes(SideEffectNode.class).toList()) {
       visitReplacementHooks(visitor, node);
@@ -64,7 +64,7 @@ public class LlvmInstructionLoweringUnconditionalJumpsStrategyImpl
 
   private LlvmLoweringRecord createIntermediateResult(
       Instruction instruction,
-      UninlinedGraph uninlinedGraph) {
+      Graph uninlinedGraph) {
 
     var outputOperands = getTableGenOutputOperands(uninlinedGraph);
     var inputOperands = getTableGenInputOperands(outputOperands, uninlinedGraph);
@@ -96,7 +96,7 @@ public class LlvmInstructionLoweringUnconditionalJumpsStrategyImpl
   }
 
   protected List<TableGenPattern> generatePatterns(Instruction instruction,
-                                                   UninlinedGraph uninlinedGraph,
+                                                   Graph uninlinedGraph,
                                                    List<TableGenInstructionOperand> inputOperands,
                                                    List<WriteResourceNode> sideEffectNodes) {
     /*

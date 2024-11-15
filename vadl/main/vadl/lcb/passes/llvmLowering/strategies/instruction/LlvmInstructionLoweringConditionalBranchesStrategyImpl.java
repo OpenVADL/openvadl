@@ -63,11 +63,11 @@ public class LlvmInstructionLoweringConditionalBranchesStrategyImpl
   public Optional<LlvmLoweringRecord> lower(
       Map<MachineInstructionLabel, List<Instruction>> labelledMachineInstructions,
       Instruction instruction,
-      UninlinedGraph uninlinedBehavior,
-      @Nullable List<UninlinedGraph> unmodifiedAdditionalBehaviors) {
+      Graph uninlinedBehavior,
+      @Nullable List<Graph> unmodifiedAdditionalBehaviors) {
 
     var visitor = replacementHooks();
-    var copy = (UninlinedGraph) uninlinedBehavior.copy();
+    var copy = uninlinedBehavior.copy();
 
     for (var node : copy.getNodes(SideEffectNode.class).toList()) {
       visitReplacementHooks(visitor, node);
@@ -81,7 +81,7 @@ public class LlvmInstructionLoweringConditionalBranchesStrategyImpl
   private LlvmLoweringRecord createIntermediateResult(
       Map<MachineInstructionLabel, List<Instruction>> supportedInstructions,
       Instruction instruction,
-      UninlinedGraph visitedGraph) {
+      Graph visitedGraph) {
 
     var outputOperands = getTableGenOutputOperands(visitedGraph);
     var inputOperands = getTableGenInputOperands(outputOperands, visitedGraph);

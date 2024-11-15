@@ -41,7 +41,7 @@ public class LlvmInstructionLoweringIndirectJumpStrategyImpl
       Map<MachineInstructionLabel, List<Instruction>> labelledMachineInstructions,
       Instruction instruction,
       Graph unmodifiedBehavior,
-      @Nullable List<UninlinedGraph> unmodifiedAdditionalBehaviors) {
+      @Nullable List<Graph> unmodifiedAdditionalBehaviors) {
     var copy = unmodifiedBehavior.copy();
     var visitor = replacementHooksWithDefaultFieldAccessReplacement();
 

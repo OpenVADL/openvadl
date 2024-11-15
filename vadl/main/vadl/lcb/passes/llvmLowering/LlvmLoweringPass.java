@@ -127,6 +127,7 @@ public class LlvmLoweringPass extends Pass {
 
     // Get the supported instructions from the matching.
     // We only instructions which we know about in this pass.
+    /*
     var functionInlinerResult = ensureNonNull(
         ((FunctionInlinerPass.Output) passResults
             .lastResultOf(FunctionInlinerPass.class)),
@@ -134,6 +135,7 @@ public class LlvmLoweringPass extends Pass {
             viam.sourceLocation()));
     var uninlined = functionInlinerResult.behaviors();
     var additionalUninlined = functionInlinerResult.additionalBehaviors();
+     */
 
     // We flip it because we need to know the label for the instruction to
     // apply one of the different lowering strategies.
@@ -143,9 +145,11 @@ public class LlvmLoweringPass extends Pass {
     viam.isa().map(isa -> isa.ownInstructions().stream()).orElseGet(Stream::empty)
         .forEach(instruction -> {
           var instructionLabel = instructionLookup.get(instruction);
+          /*
           var uninlinedBehavior = ensureNonNull(uninlined.get(instruction),
               "uninlinedBehavior graph must exist");
           var uninlinedAdditionalBehaviors = additionalUninlined.get(instruction);
+           */
 
           for (var strategy : strategies) {
             if (!strategy.isApplicable(instructionLabel)) {
@@ -155,8 +159,8 @@ public class LlvmLoweringPass extends Pass {
 
             var record = strategy.lower(labelledMachineInstructions,
                 instruction,
-                uninlinedBehavior,
-                uninlinedAdditionalBehaviors);
+                instruction.behavior(),
+                instruction.alternativeBehaviors());
 
             // Okay, we have to save record.
             record.ifPresent(llvmLoweringIntermediateResult -> tableGenRecords.put(instruction,

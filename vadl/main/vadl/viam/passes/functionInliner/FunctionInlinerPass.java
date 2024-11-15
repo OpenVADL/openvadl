@@ -8,7 +8,9 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.IdentityHashMap;
 import java.util.List;
+import java.util.stream.Collectors;
 import java.util.stream.Stream;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import vadl.configuration.GeneralConfiguration;
 import vadl.pass.Pass;
@@ -16,7 +18,9 @@ import vadl.pass.PassName;
 import vadl.pass.PassResults;
 import vadl.utils.Pair;
 import vadl.viam.Instruction;
+import vadl.viam.Relocation;
 import vadl.viam.Specification;
+import vadl.viam.graph.Graph;
 import vadl.viam.graph.control.ReturnNode;
 import vadl.viam.graph.dependency.FuncCallNode;
 import vadl.viam.graph.dependency.FuncParamNode;
@@ -44,7 +48,7 @@ public class FunctionInlinerPass extends Pass {
    * stored in the {@code additionalBehaviors}.
    */
   public record Output(IdentityHashMap<Instruction, UninlinedGraph> behaviors,
-                IdentityHashMap<Instruction, List<UninlinedGraph>> additionalBehaviors) {
+                       IdentityHashMap<Instruction, List<UninlinedGraph>> additionalBehaviors) {
   }
 
   @Nullable
@@ -73,8 +77,25 @@ public class FunctionInlinerPass extends Pass {
 
   private UninlinedGraph handleMainBehavior(Instruction instruction) {
     var copy = instruction.behavior().copy();
+    return inline(instruction, copy);
+  }
+
+  private List<UninlinedGraph> handleAdditionalBehaviors(Instruction instruction) {
+    var result = new ArrayList<UninlinedGraph>();
+
+    instruction.alternativeBehaviors().forEach(alternativeBehavior -> {
+      var copy = alternativeBehavior.copy();
+      result.add(inline(instruction, copy));
+    });
+
+    return result;
+  }
+
+  private @NotNull UninlinedGraph inline(Instruction instruction, Graph copy) {
     var functionCalls = instruction.behavior().getNodes(FuncCallNode.class)
-        .filter(funcCallNode -> funcCallNode.function().behavior().isPureFunction()).toList();
+        .filter(funcCallNode -> funcCallNode.function().behavior().isPureFunction())
+        .filter(funcCallNode -> !(funcCallNode.function() instanceof Relocation))
+        .toList();
 
     functionCalls.forEach(functionCall -> {
       // copy function behaviors
@@ -95,38 +116,5 @@ public class FunctionInlinerPass extends Pass {
     });
 
     return new UninlinedGraph(copy, instruction);
-  }
-
-
-  private List<UninlinedGraph> handleAdditionalBehaviors(Instruction instruction) {
-    var result = new ArrayList<UninlinedGraph>();
-
-    instruction.alternativeBehaviors().forEach(alternativeBehavior -> {
-      var copy = alternativeBehavior.copy();
-      var functionCalls = instruction.behavior().getNodes(FuncCallNode.class)
-          .filter(funcCallNode -> funcCallNode.function().behavior().isPureFunction()).toList();
-
-      functionCalls.forEach(functionCall -> {
-        // copy function behaviors
-        var behaviorCopy = functionCall.function().behavior().copy();
-        // get return node of function behaviors
-        var returnNode = getSingleNode(behaviorCopy, ReturnNode.class);
-
-        // Replace every occurrence of `FuncParamNode` by a copy of the
-        // given argument from the `FunctionCallNode`.
-        Streams.zip(functionCall.arguments().stream(),
-            Arrays.stream(functionCall.function().parameters()), Pair::new).forEach(pair -> {
-          behaviorCopy.getNodes(FuncParamNode.class).filter(n -> n.parameter() == pair.right())
-              .forEach(usedParam -> usedParam.replaceAndDelete(pair.left().copy()));
-        });
-
-        // replace the function call by a copy of the return value of the function
-        functionCall.replaceAndDelete(returnNode.value().copy());
-      });
-
-      result.add(new UninlinedGraph(copy, instruction));
-    });
-
-    return result;
   }
 }

@@ -255,8 +255,8 @@ public abstract class LlvmInstructionLoweringStrategy {
   public Optional<LlvmLoweringRecord> lower(
       Map<MachineInstructionLabel, List<Instruction>> labelledMachineInstructions,
       Instruction instruction,
-      UninlinedGraph unmodifiedBehavior,
-      @Nullable List<UninlinedGraph> unmodifiedAdditionalBehaviors) {
+      Graph unmodifiedBehavior,
+      @Nullable List<Graph> unmodifiedAdditionalBehaviors) {
     return lowerInstruction(labelledMachineInstructions,
         instruction,
         unmodifiedBehavior,
@@ -287,7 +287,7 @@ public abstract class LlvmInstructionLoweringStrategy {
       Map<MachineInstructionLabel, List<Instruction>> labelledMachineInstructions,
       Instruction instruction,
       Graph unmodifiedBehavior,
-      @Nullable List<UninlinedGraph> unmodifiedAdditionalBehaviors) {
+      @Nullable List<Graph> unmodifiedAdditionalBehaviors) {
     var visitor = replacementHooksWithDefaultFieldAccessReplacement();
     var copy = unmodifiedBehavior.copy();
 
