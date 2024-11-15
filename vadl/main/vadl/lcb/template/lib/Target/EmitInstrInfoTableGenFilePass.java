@@ -3,7 +3,6 @@ package vadl.lcb.template.lib.Target;
 import static vadl.viam.ViamError.ensurePresent;
 
 import java.io.IOException;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
@@ -14,7 +13,6 @@ import vadl.lcb.passes.isaMatching.IsaMachineInstructionMatchingPass;
 import vadl.lcb.passes.isaMatching.MachineInstructionLabel;
 import vadl.lcb.passes.llvmLowering.GenerateTableGenMachineInstructionRecordPass;
 import vadl.lcb.passes.llvmLowering.GenerateTableGenPseudoInstructionRecordPass;
-import vadl.lcb.passes.llvmLowering.immediates.GenerateConstantMaterialisationTableGenRecordPass;
 import vadl.lcb.passes.llvmLowering.immediates.GenerateTableGenImmediateRecordPass;
 import vadl.lcb.passes.llvmLowering.tablegen.lowering.TableGenImmediateOperandRenderer;
 import vadl.lcb.passes.llvmLowering.tablegen.lowering.TableGenInstructionRenderer;
@@ -58,8 +56,6 @@ public class EmitInstrInfoTableGenFilePass extends LcbTemplateRenderingPass {
         GenerateTableGenMachineInstructionRecordPass.class);
     var tableGenPseudoRecords = (List<TableGenPseudoInstruction>) passResults.lastResultOf(
         GenerateTableGenPseudoInstructionRecordPass.class);
-    var tableGenConstMatRecords = ((List<TableGenPseudoInstruction>) passResults.lastResultOf(
-        GenerateConstantMaterialisationTableGenRecordPass.class));
     var labelledMachineInstructions = (Map<MachineInstructionLabel, List<Instruction>>)
         passResults.lastResultOf(IsaMachineInstructionMatchingPass.class);
 
@@ -87,11 +83,6 @@ public class EmitInstrInfoTableGenFilePass extends LcbTemplateRenderingPass {
         .map(TableGenInstructionRenderer::lower)
         .toList();
 
-    var renderedTableGenConstMatRecords = tableGenConstMatRecords
-        .stream()
-        .map(TableGenInstructionRenderer::lower)
-        .toList();
-
     return Map.of(CommonVarNames.NAMESPACE, specification.simpleName(),
         "addi", addi,
         "stackPointerRegister", abi.stackPointer(),
@@ -100,7 +91,6 @@ public class EmitInstrInfoTableGenFilePass extends LcbTemplateRenderingPass {
         "immediates", renderedImmediates,
         "instructions", renderedTableGenMachineRecords,
         "pseudos", renderedTableGenPseudoRecords,
-        "constMats", renderedTableGenConstMatRecords,
         "registerFiles", specification.registerFiles().toList());
   }
 }

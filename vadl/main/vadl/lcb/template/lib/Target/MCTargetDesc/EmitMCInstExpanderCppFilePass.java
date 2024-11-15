@@ -20,9 +20,6 @@ import vadl.gcb.passes.pseudo.PseudoExpansionFunctionGeneratorPass;
 import vadl.gcb.passes.relocation.model.CompilerRelocation;
 import vadl.lcb.codegen.LcbGenericCodeGenerator;
 import vadl.lcb.codegen.expansion.PseudoExpansionCodeGenerator;
-import vadl.lcb.passes.llvmLowering.ConstMaterialisationPseudoExpansionFunctionGeneratorPass;
-import vadl.lcb.passes.llvmLowering.domain.ConstantMatPseudoInstruction;
-import vadl.lcb.passes.llvmLowering.immediates.GenerateConstantMaterialisationPass;
 import vadl.lcb.passes.relocation.GenerateLinkerComponentsPass;
 import vadl.lcb.template.CommonVarNames;
 import vadl.lcb.template.LcbTemplateRenderingPass;
@@ -106,26 +103,6 @@ public class EmitMCInstExpanderCppFilePass extends LcbTemplateRenderingPass {
         pseudoInstruction);
   }
 
-  private List<RenderedPseudoInstruction> constMatInstructions(
-      Specification specification,
-      Map<PseudoInstruction, CppFunction> cppFunctions,
-      IdentifyFieldUsagePass.ImmediateDetectionContainer fieldUsages,
-      Map<Format.Field, List<VariantKind>> variants,
-      List<CompilerRelocation> relocations,
-      PassResults passResults) {
-    var constMats = (List<ConstantMatPseudoInstruction>) passResults.lastResultOf(
-        GenerateConstantMaterialisationPass.class);
-
-    return constMats.stream()
-        .map(pseudoInstruction -> renderPseudoInstruction(specification,
-            cppFunctions,
-            fieldUsages,
-            variants,
-            relocations,
-            passResults, pseudoInstruction))
-        .toList();
-  }
-
   private List<RenderedPseudoInstruction> compilerInstructions(
       DummyAbi dummyAbi,
       Specification specification,
@@ -152,11 +129,7 @@ public class EmitMCInstExpanderCppFilePass extends LcbTemplateRenderingPass {
     var cppFunctionsForPseudoInstructions =
         (IdentityHashMap<PseudoInstruction, CppFunction>) passResults.lastResultOf(
             PseudoExpansionFunctionGeneratorPass.class);
-    var cppFunctionsForConstMatInstructions =
-        (IdentityHashMap<PseudoInstruction, CppFunction>) passResults.lastResultOf(
-            ConstMaterialisationPseudoExpansionFunctionGeneratorPass.class);
-    var cppFunctions = Stream.concat(cppFunctionsForPseudoInstructions.entrySet().stream(),
-            cppFunctionsForConstMatInstructions.entrySet().stream())
+    var cppFunctions = cppFunctionsForPseudoInstructions.entrySet().stream()
         .collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue));
     var fieldUsages = (IdentifyFieldUsagePass.ImmediateDetectionContainer) passResults.lastResultOf(
         IdentifyFieldUsagePass.class);
@@ -168,16 +141,13 @@ public class EmitMCInstExpanderCppFilePass extends LcbTemplateRenderingPass {
     var pseudoInstructions =
         pseudoInstructions(specification, cppFunctions, fieldUsages, variants, relocations,
             passResults);
-    var constMatInstructions =
-        constMatInstructions(specification, cppFunctions, fieldUsages, variants, relocations,
-            passResults);
     var compilerInstructions =
         compilerInstructions(abi, specification, cppFunctions, fieldUsages, variants, relocations,
             passResults);
     return Map.of(CommonVarNames.NAMESPACE, specification.simpleName(),
         "pseudoInstructions",
         Stream.concat(pseudoInstructions.stream(),
-            Stream.concat(constMatInstructions.stream(), compilerInstructions.stream())).toList()
+            compilerInstructions.stream()).toList()
     );
   }
 }
