@@ -99,7 +99,7 @@ public class PassOrders {
     order.add(new CanonicalizationPass(configuration));
     order.add(new AlgebraicSimplificationPass(configuration));
     order.add(new BehaviorRewritePass(configuration));
-    
+
     order.add(new InstructionResourceAccessAnalysisPass(configuration));
 
     // verification after viam optimizations
@@ -257,6 +257,8 @@ public class PassOrders {
         new vadl.lcb.template.lib.Target.MCTargetDesc.EmitAsmStreamerCppFilePass(configuration));
     order.add(
         new vadl.lcb.template.lib.Target.MCTargetDesc.EmitELFStreamerCppFilePass(configuration));
+    order.add(
+        new vadl.lcb.template.lib.Target.MCTargetDesc.EmitMatIntHeaderFilePass(configuration));
     order.add(
         new vadl.lcb.template.lib.Target.MCTargetDesc.EmitMCInstExpanderCppFilePass(configuration));
     order.add(

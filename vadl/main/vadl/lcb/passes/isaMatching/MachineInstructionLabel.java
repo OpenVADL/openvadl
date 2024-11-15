@@ -11,6 +11,7 @@ import vadl.viam.Instruction;
  * 32bit registers will get the {@link MachineInstructionLabel#ADD_32} assigned.
  */
 public enum MachineInstructionLabel {
+  LUI,
   /*
   ARITHMETIC AND LOGIC
    */

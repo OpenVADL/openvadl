@@ -128,10 +128,21 @@ public class IdentifyFieldUsagePass extends Pass {
     }
 
     /**
-     * Get a result by format.
+     * Get the usages of registers by instruction.
      */
     public Map<Field, RegisterUsage> getRegisterUsages(Instruction instruction) {
       var obj = registerUsage.get(instruction);
+      if (obj == null) {
+        throw new ViamError("Hashmap must not be null");
+      }
+      return obj;
+    }
+
+    /**
+     * Get the usages of fields by instruction.
+     */
+    public Map<Field, FieldUsage> getImmediateUsages(Instruction instruction) {
+      var obj = fieldUsage.get(instruction.format());
       if (obj == null) {
         throw new ViamError("Hashmap must not be null");
       }
