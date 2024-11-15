@@ -48,6 +48,51 @@ class TypeFinder implements DefinitionVisitor<Void> {
   }
 
   @Override
+  public Void visit(AsmDescriptionDefinition definition) {
+    return null;
+  }
+
+  @Override
+  public Void visit(AsmDirectiveDefinition definition) {
+    return null;
+  }
+
+  @Override
+  public Void visit(AsmGrammarAlternativesDefinition definition) {
+    return null;
+  }
+
+  @Override
+  public Void visit(AsmGrammarElementDefinition definition) {
+    return null;
+  }
+
+  @Override
+  public Void visit(AsmGrammarLiteralDefinition definition) {
+    return null;
+  }
+
+  @Override
+  public Void visit(AsmGrammarLocalVarDefinition definition) {
+    return null;
+  }
+
+  @Override
+  public Void visit(AsmGrammarRuleDefinition definition) {
+    return null;
+  }
+
+  @Override
+  public Void visit(AsmGrammarTypeDefinition definition) {
+    return null;
+  }
+
+  @Override
+  public Void visit(AsmModifierDefinition definition) {
+    return null;
+  }
+
+  @Override
   public Void visit(AssemblyDefinition definition) {
     for (var def : definition.instructionNodes) {
       def.accept(this);
