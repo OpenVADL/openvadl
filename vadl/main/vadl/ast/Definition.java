@@ -4239,6 +4239,10 @@ class AsmGrammarElementDefinition extends Definition {
     return BasicSyntaxType.INVALID;
   }
 
+  String symbol() {
+    return isPlusEqualsAttributeAssign ? "+=" : "=";
+  }
+
   @Override
   void prettyPrint(int indent, StringBuilder builder) {
     builder.append(prettyIndentString(indent));
@@ -4250,11 +4254,7 @@ class AsmGrammarElementDefinition extends Definition {
     if (attribute != null) {
       attribute.prettyPrint(indent, builder);
       if (asmLiteral != null) {
-        if (isPlusEqualsAttributeAssign) {
-          builder.append(" += ");
-        } else {
-          builder.append(" = ");
-        }
+        builder.append(" ").append(symbol()).append(" ");
       }
     }
     if (asmLiteral != null) {
