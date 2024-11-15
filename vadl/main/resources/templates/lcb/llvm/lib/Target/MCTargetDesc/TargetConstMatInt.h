@@ -29,8 +29,6 @@ namespace [(${namespace})]MatInt {
 
     unsigned getOpcode() const { return Opc; }
     int64_t getImm() const { return Imm; }
-
-    OpndKind getOpndKind() const;
   };
 
   using InstSeq = SmallVector<Inst, 8>;
@@ -42,7 +40,6 @@ namespace [(${namespace})]MatInt {
   // instruction selection.
   InstSeq generateInstSeq(int64_t Val, const MCSubtargetInfo &STI);
 }
-}
 
 static void generateInstSeqImpl(int64_t Val, const MCSubtargetInfo &STI,
                                 [(${namespace})]MatInt::InstSeq &Res) {
@@ -53,6 +50,7 @@ static void generateInstSeqImpl(int64_t Val, const MCSubtargetInfo &STI,
     Res.emplace_back([(${namespace})]::[(${addi})] ,v);
     abs -= v;
   }
+}
 }
 
 namespace llvm::[(${namespace})]MatInt {

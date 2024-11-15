@@ -42,7 +42,7 @@ public class EmitMatIntHeaderFilePass extends LcbTemplateRenderingPass {
   protected String getOutputPath() {
     var processorName = lcbConfiguration().processorName().value();
     return "llvm/lib/Target/" + processorName + "/MCTargetDesc/" + processorName
-        + "ConstMat.h";
+        + "ConstMatInt.h";
   }
 
   @Override
@@ -76,7 +76,7 @@ public class EmitMatIntHeaderFilePass extends LcbTemplateRenderingPass {
             () -> Diagnostic.error("Compiler generator was not able to get maximal storable value",
                 addi.sourceLocation()))
             .size();
-    var largestPossibleValue = Math.pow(2, immediateSize) - 1;
+    var largestPossibleValue = (long) (Math.pow(2, immediateSize) - 1);
 
     return Map.of(CommonVarNames.NAMESPACE, specification.simpleName(),
         "addi", addi.identifier.simpleName(),
