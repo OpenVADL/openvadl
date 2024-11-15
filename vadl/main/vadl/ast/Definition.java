@@ -3830,6 +3830,10 @@ class SignalDefinition extends Definition {
   }
 }
 
+/**
+ * Represents the <code>assembly description</code> definition of a vadl specification.
+ * It contains definitions for modifiers, directives and grammar rules of an assembly language.
+ */
 class AsmDescriptionDefinition extends Definition {
   Identifier id;
   Identifier abi;
@@ -3937,6 +3941,11 @@ class AsmDescriptionDefinition extends Definition {
   }
 }
 
+/**
+ * Represents a modifier in the specified assembly language.
+ * A modifier is a mapping from a string to a defined relocation.
+ * e.g. <code>"hi" −> RV32I::HI`</code>
+ */
 class AsmModifierDefinition extends Definition {
   Expr stringLiteral;
   Identifier isa;
@@ -3995,6 +4004,11 @@ class AsmModifierDefinition extends Definition {
   }
 }
 
+/**
+ * Represents a directive in the specified assembly language.
+ * A directive is a mapping from a string to a predefined builtin directive.
+ * e.g. <code>".word"  -> Byte4</code>
+ */
 class AsmDirectiveDefinition extends Definition {
   Expr stringLiteral;
   Identifier builtinDirective;
@@ -4049,6 +4063,12 @@ class AsmDirectiveDefinition extends Definition {
   }
 }
 
+/**
+ * Represents a rule(non-terminal) in the assembly language grammar.
+ * The body of the rule is represented by a list of alternatives.
+ *
+ * @see AsmGrammarAlternativesDefinition
+ */
 class AsmGrammarRuleDefinition extends Definition {
   Identifier id;
   @Nullable
@@ -4115,6 +4135,12 @@ class AsmGrammarRuleDefinition extends Definition {
   }
 }
 
+/**
+ * Represents alternatives in an assembly grammar rule.
+ * Contains a list of alternatives, where each alternative is a list of assembly grammar elements.
+ *
+ * @see AsmGrammarElementDefinition
+ */
 class AsmGrammarAlternativesDefinition extends Definition {
   List<List<AsmGrammarElementDefinition>> alternatives;
   SourceLocation loc;
@@ -4190,6 +4216,21 @@ class AsmGrammarAlternativesDefinition extends Definition {
   }
 }
 
+/**
+ * Represents an element in an assembly grammar rule.
+ * An element is the basic building block of which rules are made of.
+ * <p>
+ * An element can be any of:
+ * <li>local variable definition</li>
+ * <li>rule invocation</li>
+ * <li>vadl function invocation</li>
+ * <li>sequence of elements</li>
+ * <li>optional block</li>
+ * <li>string literal</li>
+ * </p>
+ *
+ * @see AsmGrammarLiteralDefinition
+ */
 class AsmGrammarElementDefinition extends Definition {
   @Nullable
   AsmGrammarLocalVarDefinition localVar;
@@ -4300,6 +4341,12 @@ class AsmGrammarElementDefinition extends Definition {
   }
 }
 
+/**
+ * Represents the definition of a local variable in the assembly grammar.
+ * A variable defines an identifier and assigns an assembly grammar literal to it.
+ *
+ * @see AsmGrammarLiteralDefinition
+ */
 class AsmGrammarLocalVarDefinition extends Definition {
   Identifier id;
   AsmGrammarLiteralDefinition asmLiteral;
@@ -4353,6 +4400,16 @@ class AsmGrammarLocalVarDefinition extends Definition {
   }
 }
 
+/**
+ * Represents a literal in the assembly grammar.
+ * Literals have types and can be cast to another type.
+ * <p>
+ * A literal is any of:
+ * <li>string literal</li>
+ * <li>rule invocation</li>
+ * <li>vadl function invocation</li>
+ * </p>
+ */
 class AsmGrammarLiteralDefinition extends Definition {
   @Nullable
   Identifier id;
@@ -4432,6 +4489,10 @@ class AsmGrammarLiteralDefinition extends Definition {
   }
 }
 
+/**
+ * Represents a type cast in an assembly grammar rule.
+ * Contains the identifier of the type to be cast to.
+ */
 class AsmGrammarTypeDefinition extends Definition {
   Identifier id;
   SourceLocation loc;
