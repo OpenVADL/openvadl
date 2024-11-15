@@ -79,6 +79,23 @@ public class ViamEnricherCollection {
         defEntity.addInfo(info);
       });
 
+  /**
+   * Formats the supplier tag for a given {@link DefinitionEntity}
+   * if the origin is an instance of {@link Instruction}.
+   *
+   * <p>The tag created includes the identifier of the instruction and its CSS ID.
+   * This information is added to the {@link DefinitionEntity} as an {@link Info.Tag}.
+   */
+  public static InfoEnricher FORMAT_SUPPLIER_TAG =
+      forType(DefinitionEntity.class, (defEntity, passResult) -> {
+        if (defEntity.origin() instanceof Instruction instruction) {
+          var info =
+              Info.Tag.of("Format", instruction.format().identifier.toString(),
+                  "#" + DefinitionEntity.cssIdFor(instruction.format()));
+          defEntity.addInfo(info);
+        }
+      });
+
 
   /**
    * BEHAVIOR_SUPPLIER_MODAL is an implementation of the {@link InfoEnricher} interface.
@@ -203,6 +220,7 @@ public class ViamEnricherCollection {
       DEF_CLASS_SUPPLIER_TAG,
       TYPE_SUPPLIER_TAG,
       PARENT_SUPPLIER_TAG,
+      FORMAT_SUPPLIER_TAG,
       BEHAVIOR_SUPPLIER_MODAL,
       VERIFY_SUPPLIER_EXPANDABLE,
       SOURCE_CODE_SUPPLIER_EXPANDABLE,

@@ -12,6 +12,7 @@ import vadl.lcb.template.LcbTemplateRenderingPass;
 import vadl.lcb.templateUtils.RegisterUtils;
 import vadl.pass.PassResults;
 import vadl.viam.Specification;
+import vadl.viam.passes.dummyAbi.DummyAbi;
 
 /**
  * This file includes the util functions for asm.
@@ -48,12 +49,15 @@ public class EmitAsmUtilsCppFilePass extends LcbTemplateRenderingPass {
   @Override
   protected Map<String, Object> createVariables(final PassResults passResults,
                                                 Specification specification) {
+    var abi =
+        (DummyAbi) specification.definitions().filter(x -> x instanceof DummyAbi).findFirst().get();
     return Map.of(CommonVarNames.NAMESPACE, specification.simpleName(),
         "registers",
-        specification.registerFiles().map(RegisterUtils::getRegisterClass)
+        specification.registerFiles().map(x -> RegisterUtils.getRegisterClass(x, abi.aliases()))
             .flatMap(x -> x.registers().stream()).toList(),
         "registerClasses",
-        specification.registerFiles().map(RegisterUtils::getRegisterClass).toList(),
+        specification.registerFiles().map(x -> RegisterUtils.getRegisterClass(x, abi.aliases()))
+            .toList(),
         "formatModifiers", formatModifier(passResults)
     );
   }

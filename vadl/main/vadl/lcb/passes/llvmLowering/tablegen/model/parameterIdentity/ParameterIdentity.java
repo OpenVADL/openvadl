@@ -28,6 +28,11 @@ public abstract class ParameterIdentity {
         basicBlockSD.fieldAccess().fieldRef().identifier.simpleName());
   }
 
+  public static ParameterIdentity fromToImmediateLabel(LlvmFieldAccessRefNode node) {
+    return new ParameterTypeAndNameIdentity(node.immediateOperand().rawName() + "AsLabel",
+        node.fieldAccess().fieldRef().identifier.simpleName());
+  }
+
   public static ParameterIdentity from(LlvmFieldAccessRefNode node) {
     return new ParameterTypeAndNameIdentity(node.immediateOperand().fullname(),
         node.fieldAccess().fieldRef().identifier.simpleName());

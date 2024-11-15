@@ -71,4 +71,9 @@ public class FieldRefNode extends ParamNode {
   public Definition definition() {
     return formatField;
   }
+
+  @Override
+  public void prettyPrint(StringBuilder sb) {
+    sb.append(formatField.simpleName());
+  }
 }

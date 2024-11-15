@@ -239,7 +239,7 @@ std::string AsmUtils::getRegisterName( unsigned RegNo )
   {
   [# th:each="rg : ${registers}" ]
   case [(${namespace})]::[(${rg.name})]:
-    return "[(${rg.name})]";
+      return "[(${rg.getAsmName()})]";
   [/]
   }
 }

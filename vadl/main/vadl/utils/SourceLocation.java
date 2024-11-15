@@ -27,7 +27,7 @@ public record SourceLocation(
     Position begin,
     Position end,
     @Nullable SourceLocation expandedFrom
-) {
+) implements WithSourceLocation {
 
   private static final URI INVALID_MEMORY = URI.create("memory://unknown");
 
@@ -133,7 +133,7 @@ public record SourceLocation(
     String printablePath;
 
     if (Objects.requireNonNullElse(System.getenv("TERMINAL_EMULATOR"), "")
-        .equals("JetBrains-JediTerm")) {
+        .equals("JetBrains-JediTerm") || this.uri.getScheme().equals("memory")) {
       // IntelliJ integrated terminal needs special treatment
       printablePath = this.uri.toString();
     } else {
@@ -238,6 +238,11 @@ public record SourceLocation(
   @Override
   public int hashCode() {
     return Objects.hash(uri, begin, end, expandedFrom);
+  }
+
+  @Override
+  public SourceLocation sourceLocation() {
+    return this;
   }
 
 

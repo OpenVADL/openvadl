@@ -79,16 +79,7 @@ public class FunctionInlinerPass extends Pass {
             // replace the function call by a copy of the return value of the function
             functionCall.replaceAndDelete(returnNode.value().copy());
           });
-
-          var fieldAccesses = instruction.behavior().getNodes(FieldAccessRefNode.class)
-              .toList();
-
-          fieldAccesses.forEach(fieldAccessRefNode -> {
-            var behavior = fieldAccessRefNode.fieldAccess().accessFunction().behavior();
-            var returnNode = getSingleNode(behavior, ReturnNode.class);
-            fieldAccessRefNode.replaceAndDelete(returnNode.value().copy());
-          });
-
+          
           original.put(instruction, new UninlinedGraph(copy, instruction));
         });
   }

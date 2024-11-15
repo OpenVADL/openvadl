@@ -16,7 +16,7 @@ public class Parameter extends Definition implements DefProp.WithType {
 
   /**
    * Constructs the parameter without parent.
-   * You must to add the
+   * You must add the
    * parent definition directly after construction.
    */
   public Parameter(Identifier identifier, Type type) {

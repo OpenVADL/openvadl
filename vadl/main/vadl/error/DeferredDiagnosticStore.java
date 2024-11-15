@@ -23,6 +23,15 @@ public class DeferredDiagnosticStore {
   }
 
   /**
+   * Add another diagnostic to the store.
+   *
+   * <p>If the diagnostic is already in the store it won't be inserted a second time.
+   */
+  public static void add(DiagnosticBuilder diagnostic) {
+    diagnosticList.add(diagnostic.build());
+  }
+
+  /**
    * Retrieves all diagnostics in the order they were inserted.
    */
   public static List<Diagnostic> getAll() {

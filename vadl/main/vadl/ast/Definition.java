@@ -8,6 +8,7 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.stream.Collectors;
 import javax.annotation.Nullable;
+import vadl.types.Type;
 import vadl.utils.SourceLocation;
 
 /**
@@ -27,111 +28,111 @@ abstract class Definition extends Node {
 }
 
 interface DefinitionVisitor<R> {
-  R visit(ConstantDefinition definition);
-
-  R visit(FormatDefinition definition);
-
-  R visit(InstructionSetDefinition definition);
-
-  R visit(CounterDefinition definition);
-
-  R visit(MemoryDefinition definition);
-
-  R visit(RegisterDefinition definition);
-
-  R visit(RegisterFileDefinition definition);
-
-  R visit(InstructionDefinition definition);
-
-  R visit(PseudoInstructionDefinition definition);
-
-  R visit(RelocationDefinition definition);
-
-  R visit(EncodingDefinition definition);
-
-  R visit(AssemblyDefinition definition);
-
-  R visit(UsingDefinition definition);
-
-  R visit(FunctionDefinition definition);
+  R visit(AbiSequenceDefinition definition);
 
   R visit(AliasDefinition definition);
 
-  R visit(EnumerationDefinition definition);
-
-  R visit(ExceptionDefinition definition);
-
-  R visit(PlaceholderDefinition definition);
-
-  R visit(MacroInstanceDefinition definition);
-
-  R visit(MacroMatchDefinition definition);
-
-  R visit(DefinitionList definition);
-
-  R visit(ModelDefinition definition);
-
-  R visit(RecordTypeDefinition definition);
-
-  R visit(ModelTypeDefinition definition);
-
-  R visit(ImportDefinition importDefinition);
-
-  R visit(ProcessDefinition processDefinition);
-
-  R visit(OperationDefinition operationDefinition);
-
-  R visit(GroupDefinition groupDefinition);
-
   R visit(ApplicationBinaryInterfaceDefinition definition);
-
-  R visit(AbiSequenceDefinition definition);
-
-  R visit(SpecialPurposeRegisterDefinition definition);
-
-  R visit(MicroProcessorDefinition definition);
-
-  R visit(PatchDefinition definition);
-
-  R visit(SourceDefinition definition);
-
-  R visit(CpuFunctionDefinition definition);
-
-  R visit(CpuProcessDefinition definition);
-
-  R visit(MicroArchitectureDefinition definition);
-
-  R visit(MacroInstructionDefinition definition);
-
-  R visit(PortBehaviorDefinition definition);
-
-  R visit(PipelineDefinition definition);
-
-  R visit(StageDefinition definition);
-
-  R visit(CacheDefinition definition);
-
-  R visit(LogicDefinition definition);
-
-  R visit(SignalDefinition definition);
 
   R visit(AsmDescriptionDefinition definition);
 
-  R visit(AsmModifierDefinition definition);
-
   R visit(AsmDirectiveDefinition definition);
-
-  R visit(AsmGrammarRuleDefinition definition);
 
   R visit(AsmGrammarAlternativesDefinition definition);
 
   R visit(AsmGrammarElementDefinition definition);
 
-  R visit(AsmGrammarLocalVarDefinition definition);
-
   R visit(AsmGrammarLiteralDefinition definition);
 
+  R visit(AsmGrammarLocalVarDefinition definition);
+
+  R visit(AsmGrammarRuleDefinition definition);
+
   R visit(AsmGrammarTypeDefinition definition);
+
+  R visit(AsmModifierDefinition definition);
+
+  R visit(AssemblyDefinition definition);
+
+  R visit(CacheDefinition definition);
+
+  R visit(ConstantDefinition definition);
+
+  R visit(CounterDefinition definition);
+
+  R visit(CpuFunctionDefinition definition);
+
+  R visit(CpuProcessDefinition definition);
+
+  R visit(DefinitionList definition);
+
+  R visit(EncodingDefinition definition);
+
+  R visit(EnumerationDefinition definition);
+
+  R visit(ExceptionDefinition definition);
+
+  R visit(FormatDefinition definition);
+
+  R visit(FunctionDefinition definition);
+
+  R visit(GroupDefinition definition);
+
+  R visit(ImportDefinition definition);
+
+  R visit(InstructionDefinition definition);
+
+  R visit(InstructionSetDefinition definition);
+
+  R visit(LogicDefinition definition);
+
+  R visit(MacroInstanceDefinition definition);
+
+  R visit(MacroInstructionDefinition definition);
+
+  R visit(MacroMatchDefinition definition);
+
+  R visit(MemoryDefinition definition);
+
+  R visit(MicroArchitectureDefinition definition);
+
+  R visit(MicroProcessorDefinition definition);
+
+  R visit(ModelDefinition definition);
+
+  R visit(ModelTypeDefinition definition);
+
+  R visit(OperationDefinition definition);
+
+  R visit(PatchDefinition definition);
+
+  R visit(PipelineDefinition definition);
+
+  R visit(PlaceholderDefinition definition);
+
+  R visit(PortBehaviorDefinition definition);
+
+  R visit(ProcessDefinition definition);
+
+  R visit(PseudoInstructionDefinition definition);
+
+  R visit(RecordTypeDefinition definition);
+
+  R visit(RegisterDefinition definition);
+
+  R visit(RegisterFileDefinition definition);
+
+  R visit(RelocationDefinition definition);
+
+  R visit(SignalDefinition definition);
+
+  R visit(SourceDefinition definition);
+
+  R visit(SpecialPurposeRegisterDefinition definition);
+
+  R visit(StageDefinition definition);
+
+  R visit(UsingDefinition definition);
 }
 
 /**
@@ -163,15 +164,19 @@ class ConstantDefinition extends Definition {
   IdentifierOrPlaceholder identifier;
 
   @Nullable
-  TypeLiteral type;
+  TypeLiteral typeLiteral;
+
+  @Nullable
+  Type type;
 
   Expr value;
   SourceLocation loc;
 
-  ConstantDefinition(IdentifierOrPlaceholder identifier, @Nullable TypeLiteral type, Expr value,
+  ConstantDefinition(IdentifierOrPlaceholder identifier, @Nullable TypeLiteral typeLiteral,
+                     Expr value,
                      SourceLocation location) {
     this.identifier = identifier;
-    this.type = type;
+    this.typeLiteral = typeLiteral;
     this.value = value;
     this.loc = location;
   }
@@ -195,9 +200,9 @@ class ConstantDefinition extends Definition {
     annotations.prettyPrint(indent, builder);
     builder.append(prettyIndentString(indent));
     builder.append("constant %s".formatted(identifier().name));
-    if (type != null) {
+    if (typeLiteral != null) {
       builder.append(": ");
-      type.prettyPrint(indent, builder);
+      typeLiteral.prettyPrint(indent, builder);
     }
     if (isBlockLayout(value)) {
       builder.append(" =\n");
@@ -215,7 +220,7 @@ class ConstantDefinition extends Definition {
 
   @Override
   public String toString() {
-    return this.getClass().getSimpleName();
+    return "%s type: %s".formatted(this.getClass().getSimpleName(), type);
   }
 
   @Override
@@ -230,7 +235,7 @@ class ConstantDefinition extends Definition {
     ConstantDefinition that = (ConstantDefinition) o;
     return Objects.equals(annotations, that.annotations)
         && Objects.equals(identifier, that.identifier)
-        && Objects.equals(type, that.type)
+        && Objects.equals(typeLiteral, that.typeLiteral)
         && Objects.equals(value, that.value);
   }
 
@@ -238,7 +243,7 @@ class ConstantDefinition extends Definition {
   public int hashCode() {
     int result = Objects.hashCode(annotations);
     result = 31 * result + Objects.hashCode(identifier);
-    result = 31 * result + Objects.hashCode(type);
+    result = 31 * result + Objects.hashCode(typeLiteral);
     result = 31 * result + Objects.hashCode(value);
     return result;
   }

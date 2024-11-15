@@ -1,6 +1,5 @@
 package vadl.viam.passes.canonicalization;
 
-import java.util.Arrays;
 import org.jetbrains.annotations.Nullable;
 import vadl.configuration.GeneralConfiguration;
 import vadl.pass.Pass;
@@ -30,7 +29,8 @@ public class CanonicalizationPass extends Pass {
   @Override
   public Object execute(PassResults passResults, Specification viam) {
 
-    ViamUtils.findDefinitionByFilter(viam, definition -> definition instanceof DefProp.WithBehavior)
+    ViamUtils.findDefinitionsByFilter(viam,
+            definition -> definition instanceof DefProp.WithBehavior)
         .stream()
         .flatMap(d -> ((DefProp.WithBehavior) d).behaviors().stream())
         .forEach(Canonicalizer::canonicalize);

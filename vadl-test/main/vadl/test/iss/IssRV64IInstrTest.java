@@ -1,8 +1,10 @@
 package vadl.test.iss;
 
 import static vadl.test.TestUtils.arbitrarySignedInt;
+import static vadl.test.TestUtils.arbitraryUnsignedInt;
 
 import java.io.IOException;
+import java.math.BigInteger;
 import java.util.HashMap;
 import java.util.Objects;
 import java.util.function.Function;
@@ -22,71 +24,148 @@ import vadl.viam.Constant;
  */
 public class IssRV64IInstrTest extends QemuIssTest {
 
+  private static final int TESTS_PER_INSTRUCTION = 50;
   private static final Logger log = LoggerFactory.getLogger(IssRV64IInstrTest.class);
 
-  // Collection of all test generators
-  private static final Stream<Function<Integer, IssTestUtils.TestSpec>> TEST_GENERATORS = Stream.of(
-      IssRV64IInstrTest::gen12BitAddiTest
-  );
+  @TestFactory
+  Stream<DynamicTest> addi() throws IOException {
+    return runTestsWith(id -> {
+      var b = new RV64ITestBuilder("ADDI_" + id);
+      var aImm = arbitrarySignedInt(12).sample();
+      var regSrc = b.anyTempReg().sample();
+      b.add("addi %s, x0, %s", regSrc, aImm);
+
+      var bImm = arbitrarySignedInt(12).sample();
+      var regDest = b.anyTempReg().sample();
+      b.add("addi %s, %s, %s", regDest, regSrc, bImm);
+      return b.toTestSpec(regSrc, regDest);
+    });
+  }
+
 
   @TestFactory
-  Stream<DynamicTest> test() throws IOException {
-    var image = generateSimulator("sys/risc-v/rv64i.vadl");
+  Stream<DynamicTest> addiw() throws IOException {
+    return runTestsWith(id -> {
+      var b = new RV64ITestBuilder("ADDIW_" + id);
+      var aImm = arbitrarySignedInt(12).sample();
+      var regSrc = b.anyTempReg().sample();
+      b.add("addiw %s, x0, %s", regSrc, aImm);
 
-    var testNumberPerGenerator = 200;
-    var testCases = TEST_GENERATORS
-        .flatMap(genFunc -> IntStream.range(0, testNumberPerGenerator)
+      var bImm = arbitrarySignedInt(12).sample();
+      var regDest = b.anyTempReg().sample();
+      b.add("addiw %s, %s, %s", regDest, regSrc, bImm);
+      return b.toTestSpec(regSrc, regDest);
+    });
+  }
+
+  @TestFactory
+  Stream<DynamicTest> lui() throws IOException {
+    return runTestsWith((id) -> {
+      var b = new RV64ITestBuilder("LUI_" + id);
+      var destReg = b.anyTempReg().sample();
+      var value = arbitraryUnsignedInt(20).sample();
+      b.add("lui %s, %s", destReg, value);
+      return b.toTestSpec(destReg);
+    });
+  }
+
+
+  @TestFactory
+  Stream<DynamicTest> ssli() throws IOException {
+    return runTestsWith((id) -> {
+      var b = new RV64ITestBuilder("SSLI_" + id);
+      var srcReg = b.anyTempReg().sample();
+      b.fillReg(srcReg, 64);
+      var destReg = b.anyTempReg().sample();
+      var shiftAmount = arbitraryUnsignedInt(6).sample();
+      b.add("slli %s, %s, %s", destReg, srcReg, shiftAmount);
+      return b.toTestSpec(srcReg, destReg);
+    });
+  }
+
+  @TestFactory
+  Stream<DynamicTest> lb() throws IOException {
+    return runTestsWith((id) -> {
+      var b = new RV64ITestBuilder("LB_" + id);
+      var storeReg = b.anyTempReg().sample();
+      b.fillReg(storeReg, 8);
+      var addrReg = b.anyTempReg().sample();
+      // some memory address in a valid space
+      b.fillReg(addrReg, BigInteger.valueOf(0x80000000L), BigInteger.valueOf(0x800F0000L));
+      b.add("sb %s, 0(%s)", storeReg, addrReg);
+
+      var loadReg = b.anyTempReg().sample();
+      b.add("lb %s, 0(%s)", loadReg, addrReg);
+      return b.toTestSpec(storeReg, loadReg, addrReg);
+    });
+  }
+
+  @TestFactory
+  Stream<DynamicTest> beq() throws IOException {
+    return runTestsWith(id -> {
+      var b = new RV64ITestBuilder("BEQ_" + id);
+
+      // Choose arbitrary registers for rs1 and rs2
+      var rs1 = b.anyTempReg().sample();
+      var rs2 = b.anyTempReg().sample();
+
+      // Randomly decide if rs1 == rs2 or rs1 != rs2
+      Boolean equal = Arbitraries.of(true, false).sample();
+
+      // Fill rs1 with a random value
+      var val1 = b.fillReg(rs1, 64);
+
+      // Fill rs2 with either the same or a different value
+      if (Boolean.TRUE.equals(equal)) {
+        // Set rs2 to the same value as rs1
+        b.fillReg(rs2, val1);
+      } else {
+        // Ensure rs2 has a different value from rs1
+        var value2 = arbitraryUnsignedInt(64)
+            .filter(v -> !v.equals(val1))
+            .sample();
+        b.fillReg(rs2, value2);
+      }
+
+      // Destination register to observe the branch effect
+      var destReg = b.anyTempReg().sample();
+
+      // Create unique labels
+      String branchLabel = "branch_target_" + id;
+      String endLabel = "end_label_" + id;
+
+      // Add the BEQ instruction with the branch label
+      b.add("beq %s, %s, %s", rs1, rs2, branchLabel);
+
+      // This instruction will be executed if the branch is not taken
+      b.add("addi %s, x0, 1", destReg);
+
+      // Jump over the branch target code
+      b.add("j %s", endLabel);
+
+      // Define the branch target label
+      b.addLabel(branchLabel);
+
+      // Instruction at the branch target
+      b.add("addi %s, x0, 2", destReg);
+
+      // Define the end label
+      b.addLabel(endLabel);
+
+      return b.toTestSpec(rs1, rs2, destReg);
+    });
+  }
+
+  @SafeVarargs
+  private Stream<DynamicTest> runTestsWith(
+      Function<Integer, IssTestUtils.TestSpec>... generators) throws IOException {
+    var image = generateSimulator("sys/risc-v/rv64i.vadl");
+    var testCases = Stream.of(generators)
+        .flatMap(genFunc -> IntStream.range(0, TESTS_PER_INSTRUCTION)
             .mapToObj(genFunc::apply)
         )
         .toList();
     return runQemuInstrTests(image, testCases);
-  }
-
-  /**
-   * Generates a random test that tests the ADDI instruction with 12-bit immediate values.
-   *
-   * @return test spec to run on QEMU ISS instance.
-   */
-  private static IssTestUtils.TestSpec gen12BitAddiTest(int testId) {
-    var immSrcReg = arbitrarySignedInt(12).sample();
-    var immArg = arbitrarySignedInt(12).sample();
-
-    var regSrc = arbitraryRegNonSignal().filter(r -> !r.equals("x0")).sample();
-    var regDest = arbitraryRegNonSignal().filter(r -> !r.equals("x0")).sample();
-
-    var instr = new StringBuilder()
-        .append("addi   %s, x0, %s\n".formatted(regSrc, immSrcReg))
-        .append("addi   %s, %s, %s\n".formatted(regDest, regSrc, immArg));
-
-    var arg1Const = Constant.Value.of(immSrcReg.intValue(), DataType.signedInt(12))
-        .signExtend(DataType.bits(64));
-    var arg2Const = Constant.Value.of(immArg.intValue(), DataType.bits(12))
-        .signExtend(DataType.bits(64));
-
-    var resultConst = arg1Const.add(arg2Const, false).firstValue();
-
-    var regTest = new HashMap<String, String>();
-    regTest.put(regDest, resultConst.hexadecimal(""));
-    if (!Objects.equals(regSrc, regDest)) {
-      regTest.put(regSrc, arg1Const.hexadecimal(""));
-    }
-
-    return new IssTestUtils.TestSpec(
-        "ADDI_" + testId,
-        regTest,
-        instr.toString());
-  }
-
-  private static Arbitrary<String> arbitraryReg(String... except) {
-    return arbitraryReg().filter(r -> Stream.of(except).noneMatch(r::equals));
-  }
-
-  private static Arbitrary<String> arbitraryReg() {
-    return Arbitraries.of(IntStream.range(0, 32).mapToObj(i -> "x" + i).toList());
-  }
-
-  private static Arbitrary<String> arbitraryRegNonSignal() {
-    return arbitraryReg("x6");
   }
 
 }

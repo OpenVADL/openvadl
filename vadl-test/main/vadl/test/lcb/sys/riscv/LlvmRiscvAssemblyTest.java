@@ -53,7 +53,7 @@ public class LlvmRiscvAssemblyTest extends AbstractLcbTest {
     }
 
     var redisCache = getRunningRedisCache();
-    var image = redisCache.setupEnv(new ImageFromDockerfile("tc_llvm17", false)
+    var image = redisCache.setupEnv(new ImageFromDockerfile("tc_llvm17")
         .withDockerfile(Paths.get(configuration.outputPath() + "/lcb/Dockerfile"))
         .withBuildArg("TARGET", target));
 

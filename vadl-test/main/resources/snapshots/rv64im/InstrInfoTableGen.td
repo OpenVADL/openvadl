@@ -102,6 +102,52 @@ def RESERVED_PSEUDO_CALL : Instruction
 def : Pat<(target_call tglobaladdr:$func), (RESERVED_PSEUDO_CALL tglobaladdr:$func)>;
 def : Pat<(target_call texternalsym:$func), (RESERVED_PSEUDO_CALL texternalsym:$func)>;
 
+def SDT_rv64imSelectCC     : SDTypeProfile<1, 5, [SDTCisSameAs<1, 2>,
+                                         SDTCisSameAs<0, 4>,
+                                         SDTCisSameAs<4, 5>]>;
+def target_selectcc  : SDNode<"rv64imISD::SELECT_CC", SDT_rv64imSelectCC,
+                     [SDNPInGlue]>;
+
+def vadl_imm32 : ImmLeaf<i32, [{ return true; }]>, Operand<i32>
+{
+
+}
+
+def vadl_imm64 : ImmLeaf<i64, [{ return true; }]>, Operand<i64>
+{
+
+}
+
+
+
+
+def SelectCC_X: Instruction {
+    field bits<64> Inst;
+    // SoftFail is a field the disassembler can use to provide a way for
+    // instructions to not match without killing the whole decode process. It is
+    // mainly used for ARM, but Tablegen expects this field to exist or it fails
+    // to build the decode table.
+    field bits<32> SoftFail = 0;
+
+    bits<7> Opcode = 0;
+
+    let Inst{6-0} = Opcode;
+
+    let Namespace = "rv64im";
+
+    dag OutOperandList = (outs X:$dst);
+    dag InOperandList = (ins X:$lhs, X:$rhs, vadl_imm64:$imm, X:$truev, X:$falsev);
+    let Pattern = [ (set X:$dst, (target_selectcc X:$lhs, X:$rhs,
+                (i64 vadl_imm64:$imm), X:$truev, X:$falsev)) ];
+
+    let TSFlags{4-0} = 0;
+    let usesCustomInserter = 1;
+    let isPseudo = 1;
+    let isCodeGenOnly = 1;
+}
+
+
+
 
 class RV64IM_Ftype_sft<ValueType ty> : Operand<ty>
 {
@@ -817,7 +863,13 @@ let Defs = [ PC ];
 def : Pat<(brcc SETEQ, X:$rs1, X:$rs2, bb:$imm),
         (BEQ X:$rs1, X:$rs2, RV64IM_Btype_immAsLabel:$imm)>;
 
+def : Pat<(brcc SETNE, X:$rs2, X:$rs1, bb:$imm),
+        (BEQ X:$rs1, X:$rs2, RV64IM_Btype_immAsLabel:$imm)>;
+
 def : Pat<(brcond (i64 (seteq X:$rs1, X:$rs2)), bb:$imm),
+        (BEQ X:$rs1, X:$rs2, RV64IM_Btype_immAsLabel:$imm)>;
+
+def : Pat<(brcond (i64 (setne X:$rs2, X:$rs1)), bb:$imm),
         (BEQ X:$rs1, X:$rs2, RV64IM_Btype_immAsLabel:$imm)>;
 
 
@@ -875,7 +927,13 @@ let Defs = [ PC ];
 def : Pat<(brcc SETGE, X:$rs1, X:$rs2, bb:$imm),
         (BGE X:$rs1, X:$rs2, RV64IM_Btype_immAsLabel:$imm)>;
 
+def : Pat<(brcc SETLE, X:$rs2, X:$rs1, bb:$imm),
+        (BGE X:$rs1, X:$rs2, RV64IM_Btype_immAsLabel:$imm)>;
+
 def : Pat<(brcond (i64 (setge X:$rs1, X:$rs2)), bb:$imm),
+        (BGE X:$rs1, X:$rs2, RV64IM_Btype_immAsLabel:$imm)>;
+
+def : Pat<(brcond (i64 (setle X:$rs2, X:$rs1)), bb:$imm),
         (BGE X:$rs1, X:$rs2, RV64IM_Btype_immAsLabel:$imm)>;
 
 
@@ -933,7 +991,13 @@ let Defs = [ PC ];
 def : Pat<(brcc SETUGE, X:$rs1, X:$rs2, bb:$imm),
         (BGEU X:$rs1, X:$rs2, RV64IM_Btype_immAsLabel:$imm)>;
 
+def : Pat<(brcc SETULE, X:$rs2, X:$rs1, bb:$imm),
+        (BGEU X:$rs1, X:$rs2, RV64IM_Btype_immAsLabel:$imm)>;
+
 def : Pat<(brcond (i64 (setuge X:$rs1, X:$rs2)), bb:$imm),
+        (BGEU X:$rs1, X:$rs2, RV64IM_Btype_immAsLabel:$imm)>;
+
+def : Pat<(brcond (i64 (setule X:$rs2, X:$rs1)), bb:$imm),
         (BGEU X:$rs1, X:$rs2, RV64IM_Btype_immAsLabel:$imm)>;
 
 
@@ -991,7 +1055,13 @@ let Defs = [ PC ];
 def : Pat<(brcc SETLT, X:$rs1, X:$rs2, bb:$imm),
         (BLT X:$rs1, X:$rs2, RV64IM_Btype_immAsLabel:$imm)>;
 
+def : Pat<(brcc SETGT, X:$rs2, X:$rs1, bb:$imm),
+        (BLT X:$rs1, X:$rs2, RV64IM_Btype_immAsLabel:$imm)>;
+
 def : Pat<(brcond (i64 (setlt X:$rs1, X:$rs2)), bb:$imm),
+        (BLT X:$rs1, X:$rs2, RV64IM_Btype_immAsLabel:$imm)>;
+
+def : Pat<(brcond (i64 (setgt X:$rs2, X:$rs1)), bb:$imm),
         (BLT X:$rs1, X:$rs2, RV64IM_Btype_immAsLabel:$imm)>;
 
 
@@ -1049,7 +1119,13 @@ let Defs = [ PC ];
 def : Pat<(brcc SETULT, X:$rs1, X:$rs2, bb:$imm),
         (BLTU X:$rs1, X:$rs2, RV64IM_Btype_immAsLabel:$imm)>;
 
+def : Pat<(brcc SETUGT, X:$rs2, X:$rs1, bb:$imm),
+        (BLTU X:$rs1, X:$rs2, RV64IM_Btype_immAsLabel:$imm)>;
+
 def : Pat<(brcond (i64 (setult X:$rs1, X:$rs2)), bb:$imm),
+        (BLTU X:$rs1, X:$rs2, RV64IM_Btype_immAsLabel:$imm)>;
+
+def : Pat<(brcond (i64 (setugt X:$rs2, X:$rs1)), bb:$imm),
         (BLTU X:$rs1, X:$rs2, RV64IM_Btype_immAsLabel:$imm)>;
 
 
@@ -1107,7 +1183,13 @@ let Defs = [ PC ];
 def : Pat<(brcc SETNE, X:$rs1, X:$rs2, bb:$imm),
         (BNE X:$rs1, X:$rs2, RV64IM_Btype_immAsLabel:$imm)>;
 
+def : Pat<(brcc SETEQ, X:$rs2, X:$rs1, bb:$imm),
+        (BNE X:$rs1, X:$rs2, RV64IM_Btype_immAsLabel:$imm)>;
+
 def : Pat<(brcond (i64 (setne X:$rs1, X:$rs2)), bb:$imm),
+        (BNE X:$rs1, X:$rs2, RV64IM_Btype_immAsLabel:$imm)>;
+
+def : Pat<(brcond (i64 (seteq X:$rs2, X:$rs1)), bb:$imm),
         (BNE X:$rs1, X:$rs2, RV64IM_Btype_immAsLabel:$imm)>;
 
 
@@ -1119,7 +1201,7 @@ let Size = 4;
 let CodeSize = 4;
 
 let OutOperandList = ( outs X:$rd );
-let InOperandList = ( ins X:$rs1, X:$rs2 );
+let InOperandList = ( ins X:$rs2, X:$rs1 );
 
 field bits<32> Inst;
 
@@ -1171,7 +1253,7 @@ let Size = 4;
 let CodeSize = 4;
 
 let OutOperandList = ( outs X:$rd );
-let InOperandList = ( ins X:$rs1, X:$rs2 );
+let InOperandList = ( ins X:$rs2, X:$rs1 );
 
 field bits<32> Inst;
 
@@ -1223,7 +1305,7 @@ let Size = 4;
 let CodeSize = 4;
 
 let OutOperandList = ( outs X:$rd );
-let InOperandList = ( ins X:$rs1, X:$rs2 );
+let InOperandList = ( ins X:$rs2, X:$rs1 );
 
 field bits<32> Inst;
 
@@ -1275,7 +1357,7 @@ let Size = 4;
 let CodeSize = 4;
 
 let OutOperandList = ( outs X:$rd );
-let InOperandList = ( ins X:$rs1, X:$rs2 );
+let InOperandList = ( ins X:$rs2, X:$rs1 );
 
 field bits<32> Inst;
 
@@ -1569,6 +1651,12 @@ let Defs = [  ];
 def : Pat<(i64 (sextloadi8 (add X:$rs1, RV64IM_Itype_immAsInt64:$imm))),
         (LB X:$rs1, RV64IM_Itype_immAsInt64:$imm)>;
 
+def : Pat<(i64 (sextloadi8 X:$rs1)),
+        (LB X:$rs1, (i64 0))>;
+
+def : Pat<(i64 (extloadi8 X:$rs1)),
+        (LB X:$rs1, (i64 0))>;
+
 def : Pat<(i64 (sextloadi8 (add AddrFI:$rs1, RV64IM_Itype_immAsInt64:$imm))),
         (LB AddrFI:$rs1, RV64IM_Itype_immAsInt64:$imm)>;
 
@@ -1633,6 +1721,9 @@ let Defs = [  ];
 def : Pat<(i64 (zextloadi8 (add X:$rs1, RV64IM_Itype_immAsInt64:$imm))),
         (LBU X:$rs1, RV64IM_Itype_immAsInt64:$imm)>;
 
+def : Pat<(i64 (zextloadi8 X:$rs1)),
+        (LBU X:$rs1, (i64 0))>;
+
 def : Pat<(i64 (zextloadi8 (add AddrFI:$rs1, RV64IM_Itype_immAsInt64:$imm))),
         (LBU AddrFI:$rs1, RV64IM_Itype_immAsInt64:$imm)>;
 
@@ -1691,6 +1782,9 @@ let Defs = [  ];
 def : Pat<(i64 (load (add X:$rs1, RV64IM_Itype_immAsInt64:$imm))),
         (LD X:$rs1, RV64IM_Itype_immAsInt64:$imm)>;
 
+def : Pat<(i64 (load X:$rs1)),
+        (LD X:$rs1, (i64 0))>;
+
 def : Pat<(i64 (load (add AddrFI:$rs1, RV64IM_Itype_immAsInt64:$imm))),
         (LD AddrFI:$rs1, RV64IM_Itype_immAsInt64:$imm)>;
 
@@ -1748,6 +1842,12 @@ let Defs = [  ];
 
 def : Pat<(i64 (sextloadi16 (add X:$rs1, RV64IM_Itype_immAsInt64:$imm))),
         (LH X:$rs1, RV64IM_Itype_immAsInt64:$imm)>;
+
+def : Pat<(i64 (sextloadi16 X:$rs1)),
+        (LH X:$rs1, (i64 0))>;
+
+def : Pat<(i64 (extloadi16 X:$rs1)),
+        (LH X:$rs1, (i64 0))>;
 
 def : Pat<(i64 (sextloadi16 (add AddrFI:$rs1, RV64IM_Itype_immAsInt64:$imm))),
         (LH AddrFI:$rs1, RV64IM_Itype_immAsInt64:$imm)>;
@@ -1812,6 +1912,9 @@ let Defs = [  ];
 
 def : Pat<(i64 (zextloadi16 (add X:$rs1, RV64IM_Itype_immAsInt64:$imm))),
         (LHU X:$rs1, RV64IM_Itype_immAsInt64:$imm)>;
+
+def : Pat<(i64 (zextloadi16 X:$rs1)),
+        (LHU X:$rs1, (i64 0))>;
 
 def : Pat<(i64 (zextloadi16 (add AddrFI:$rs1, RV64IM_Itype_immAsInt64:$imm))),
         (LHU AddrFI:$rs1, RV64IM_Itype_immAsInt64:$imm)>;
@@ -1917,6 +2020,12 @@ let Defs = [  ];
 def : Pat<(i64 (sextloadi32 (add X:$rs1, RV64IM_Itype_immAsInt64:$imm))),
         (LW X:$rs1, RV64IM_Itype_immAsInt64:$imm)>;
 
+def : Pat<(i64 (sextloadi32 X:$rs1)),
+        (LW X:$rs1, (i64 0))>;
+
+def : Pat<(i64 (extloadi32 X:$rs1)),
+        (LW X:$rs1, (i64 0))>;
+
 def : Pat<(i64 (sextloadi32 (add AddrFI:$rs1, RV64IM_Itype_immAsInt64:$imm))),
         (LW AddrFI:$rs1, RV64IM_Itype_immAsInt64:$imm)>;
 
@@ -1981,6 +2090,9 @@ let Defs = [  ];
 def : Pat<(i64 (zextloadi32 (add X:$rs1, RV64IM_Itype_immAsInt64:$imm))),
         (LWU X:$rs1, RV64IM_Itype_immAsInt64:$imm)>;
 
+def : Pat<(i64 (zextloadi32 X:$rs1)),
+        (LWU X:$rs1, (i64 0))>;
+
 def : Pat<(i64 (zextloadi32 (add AddrFI:$rs1, RV64IM_Itype_immAsInt64:$imm))),
         (LWU AddrFI:$rs1, RV64IM_Itype_immAsInt64:$imm)>;
 
@@ -2038,7 +2150,7 @@ let Uses = [  ];
 let Defs = [  ];
 }
 
-def : Pat<(smullohi X:$rs1, X:$rs2),
+def : Pat<(mul X:$rs1, X:$rs2),
         (MUL X:$rs1, X:$rs2)>;
 
 
@@ -2366,7 +2478,7 @@ let Size = 4;
 let CodeSize = 4;
 
 let OutOperandList = ( outs X:$rd );
-let InOperandList = ( ins X:$rs1, X:$rs2 );
+let InOperandList = ( ins X:$rs2, X:$rs1 );
 
 field bits<32> Inst;
 
@@ -2418,7 +2530,7 @@ let Size = 4;
 let CodeSize = 4;
 
 let OutOperandList = ( outs X:$rd );
-let InOperandList = ( ins X:$rs1, X:$rs2 );
+let InOperandList = ( ins X:$rs2, X:$rs1 );
 
 field bits<32> Inst;
 
@@ -2470,7 +2582,7 @@ let Size = 4;
 let CodeSize = 4;
 
 let OutOperandList = ( outs X:$rd );
-let InOperandList = ( ins X:$rs1, X:$rs2 );
+let InOperandList = ( ins X:$rs2, X:$rs1 );
 
 field bits<32> Inst;
 
@@ -2522,7 +2634,7 @@ let Size = 4;
 let CodeSize = 4;
 
 let OutOperandList = ( outs X:$rd );
-let InOperandList = ( ins X:$rs1, X:$rs2 );
+let InOperandList = ( ins X:$rs2, X:$rs1 );
 
 field bits<32> Inst;
 
@@ -3446,7 +3558,7 @@ let Uses = [  ];
 let Defs = [  ];
 }
 
-def : Pat<(or X:$rs1, X:$rs2),
+def : Pat<(srl X:$rs1, X:$rs2),
         (SRL X:$rs1, X:$rs2)>;
 
 
@@ -3500,7 +3612,7 @@ let Uses = [  ];
 let Defs = [  ];
 }
 
-def : Pat<(or X:$rs1, RV64IM_Ftype_sftAsInt64:$sft),
+def : Pat<(srl X:$rs1, RV64IM_Ftype_sftAsInt64:$sft),
         (SRLI X:$rs1, RV64IM_Ftype_sftAsInt64:$sft)>;
 
 
@@ -3554,7 +3666,7 @@ let Uses = [  ];
 let Defs = [  ];
 }
 
-def : Pat<(or X:$rs1, RV64IM_Rtype_rs2AsInt64:$rs2),
+def : Pat<(srl X:$rs1, RV64IM_Rtype_rs2AsInt64:$rs2),
         (SRLIW X:$rs1, RV64IM_Rtype_rs2AsInt64:$rs2)>;
 
 
@@ -3608,7 +3720,7 @@ let Uses = [  ];
 let Defs = [  ];
 }
 
-def : Pat<(or X:$rs1, X:$rs2),
+def : Pat<(srl X:$rs1, X:$rs2),
         (SRLW X:$rs1, X:$rs2)>;
 
 
@@ -3890,6 +4002,9 @@ def : Pat<(xor X:$rs1, RV64IM_Itype_immAsInt64:$imm),
 
 
 
+def : Pat<(i64 AddrFI:$rs1),
+  (ADDI AddrFI:$rs1, (i64 0))>;
+
 
 def BEQZ : Instruction
 {
@@ -4058,7 +4173,7 @@ def CALL : Instruction
 let Namespace = "processorNameValue";
 
 let OutOperandList = ( outs  );
-let InOperandList = ( ins  );
+let InOperandList = ( ins bare_symbol:$symbol );
 
 let isTerminator  = 0;
 let isBranch      = 0;
@@ -4085,7 +4200,7 @@ def J : Instruction
 let Namespace = "processorNameValue";
 
 let OutOperandList = ( outs  );
-let InOperandList = ( ins  );
+let InOperandList = ( ins RV64IM_Jtype_immAsLabel:$imm );
 
 let isTerminator  = 1;
 let isBranch      = 0;
@@ -4103,6 +4218,35 @@ let Pattern = [];
 
 let Uses = [ PC ];
 let Defs = [ PC,X0 ];
+}
+
+def : Pat<(br bb:$imm),
+        (J RV64IM_Jtype_immAsLabel:$imm)>;
+
+
+def LLA : Instruction
+{
+let Namespace = "processorNameValue";
+
+let OutOperandList = ( outs X:$rd );
+let InOperandList = ( ins bare_symbol:$symbol );
+
+let isTerminator  = 0;
+let isBranch      = 0;
+let isCall        = 0;
+let isReturn      = 0;
+let isPseudo      = 1;
+let isCodeGenOnly = 0;
+let mayLoad       = 0;
+let mayStore      = 0;
+
+let Constraints = "";
+let AddedComplexity = 0;
+
+let Pattern = [];
+
+let Uses = [  ];
+let Defs = [  ];
 }
 
 
@@ -4345,7 +4489,7 @@ def TAIL : Instruction
 let Namespace = "processorNameValue";
 
 let OutOperandList = ( outs  );
-let InOperandList = ( ins  );
+let InOperandList = ( ins bare_symbol:$symbol );
 
 let isTerminator  = 0;
 let isBranch      = 0;
@@ -4362,5 +4506,5 @@ let AddedComplexity = 0;
 let Pattern = [];
 
 let Uses = [ PC,X6 ];
-let Defs = [ PC,X0 ];
+let Defs = [ PC ];
 }

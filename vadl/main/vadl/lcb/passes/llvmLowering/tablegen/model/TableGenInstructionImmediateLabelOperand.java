@@ -1,7 +1,11 @@
 package vadl.lcb.passes.llvmLowering.tablegen.model;
 
+import static vadl.viam.ViamError.ensure;
+
 import java.util.Objects;
+import vadl.error.Diagnostic;
 import vadl.lcb.passes.llvmLowering.domain.selectionDag.LlvmBasicBlockSD;
+import vadl.lcb.passes.llvmLowering.domain.selectionDag.LlvmFieldAccessRefNode;
 import vadl.lcb.passes.llvmLowering.tablegen.model.parameterIdentity.ParameterIdentity;
 import vadl.viam.Format;
 
@@ -12,9 +16,25 @@ public class TableGenInstructionImmediateLabelOperand extends TableGenInstructio
     implements ReferencesFormatField {
   private final TableGenImmediateRecord immediateOperand;
 
+  /**
+   * Constructor.
+   */
   public TableGenInstructionImmediateLabelOperand(ParameterIdentity identity,
                                                   LlvmBasicBlockSD node) {
     super(node, identity);
+    this.immediateOperand = node.immediateOperand();
+  }
+
+  /**
+   * Constructor.
+   */
+  public TableGenInstructionImmediateLabelOperand(ParameterIdentity identity,
+                                                  LlvmFieldAccessRefNode node) {
+    super(node, identity);
+    ensure(node.usage() == LlvmFieldAccessRefNode.Usage.BasicBlock,
+        () -> Diagnostic.error(
+            "Field reference has wrong type. It is expected to be basic block but it is not.",
+            node.sourceLocation()));
     this.immediateOperand = node.immediateOperand();
   }
 

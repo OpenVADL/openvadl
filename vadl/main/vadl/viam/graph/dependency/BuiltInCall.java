@@ -2,6 +2,7 @@ package vadl.viam.graph.dependency;
 
 import static java.util.Collections.reverse;
 
+import java.util.Iterator;
 import java.util.List;
 import vadl.javaannotations.viam.DataValue;
 import vadl.types.BuiltInTable;
@@ -138,5 +139,28 @@ public class BuiltInCall extends AbstractFunctionCallNode implements Canonicaliz
   protected void collectData(List<Object> collection) {
     super.collectData(collection);
     collection.add(builtIn);
+  }
+
+  @Override
+  public void prettyPrint(StringBuilder sb) {
+    if (builtIn.operator() != null && builtIn.argTypeClasses().size() == 2) {
+      sb.append("(");
+      args.get(0).prettyPrint(sb);
+      sb.append(" ").append(builtIn.operator()).append(" ");
+      args.get(1).prettyPrint(sb);
+      sb.append(")");
+    } else {
+      sb.append(builtIn.name());
+      sb.append("(");
+
+      for (int i = 0; i < args.size(); i++) {
+        if (i > 0) {
+          sb.append(", ");
+        }
+        args.get(i).prettyPrint(sb);
+      }
+
+      sb.append(")");
+    }
   }
 }

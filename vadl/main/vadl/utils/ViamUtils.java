@@ -6,7 +6,6 @@ import java.util.function.Function;
 import javax.annotation.Nullable;
 import vadl.viam.Definition;
 import vadl.viam.DefinitionVisitor;
-import vadl.viam.passes.dummyAbi.DummyAbi;
 
 /**
  * A set of utility methods that helps when working with the VIAM.
@@ -28,7 +27,7 @@ public class ViamUtils {
   @Nullable
   public Definition findDefinitionByIdentAndType(Definition root, String identifier,
                                                  Class<Definition> definitionClass) {
-    var result = findDefinitionByFilter(root,
+    var result = findDefinitionsByFilter(root,
         (def) -> definitionClass.isInstance(def) && def.identifier.name().equals(identifier));
 
     root.ensure(result.size() > 1,
@@ -49,8 +48,8 @@ public class ViamUtils {
    * @param filter The filter Function to check if a Definition should be included in the result.
    * @return A Set of Definitions that match the given filter.
    */
-  public static Set<Definition> findDefinitionByFilter(Definition root,
-                                                       Function<Definition, Boolean> filter) {
+  public static Set<Definition> findDefinitionsByFilter(Definition root,
+                                                        Function<Definition, Boolean> filter) {
     return new DefinitionVisitor.Recursive() {
 
       private Set<Definition> allDefs = new HashSet<>();

@@ -56,6 +56,13 @@ public class WriteRegNode extends WriteResourceNode {
     return staticCounterAccess;
   }
 
+  /**
+   * Determines if the register is a PC based on whether staticCounterAccess is set.
+   */
+  public boolean isPcAccess() {
+    return staticCounterAccess != null;
+  }
+
   public void setStaticCounterAccess(@Nonnull Counter.RegisterCounter staticCounterAccess) {
     this.staticCounterAccess = staticCounterAccess;
   }

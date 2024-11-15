@@ -41,6 +41,13 @@ public class SignExtendNode extends UnaryNode implements Canonicalizable {
   }
 
   @Override
+  public void prettyPrint(StringBuilder sb) {
+    sb.append("sext<").append(type().bitWidth()).append(">(");
+    value.prettyPrint(sb);
+    sb.append(")");
+  }
+
+  @Override
   public Node copy() {
     return new SignExtendNode((ExpressionNode) value.copy(), type());
   }

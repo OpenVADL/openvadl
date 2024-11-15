@@ -79,7 +79,7 @@ import vadl.viam.passes.GraphProcessor;
  * <p><b>If these rules change, we must also update
  * {@link Constant.Value#castTo(DataType)}!</b></p>
  */
-public class TypeCastEliminator extends GraphProcessor {
+public class TypeCastEliminator extends GraphProcessor<Node> {
 
   /**
    * Runs the type cast eliminator on the whole graph.

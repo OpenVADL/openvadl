@@ -18,7 +18,9 @@ import vadl.gcb.passes.pseudo.PseudoInstructionArgumentReplacementPass;
 import vadl.gcb.passes.typeNormalization.CppTypeNormalizationForDecodingsPass;
 import vadl.gcb.passes.typeNormalization.CppTypeNormalizationForEncodingsPass;
 import vadl.gcb.passes.typeNormalization.CppTypeNormalizationForPredicatesPass;
+import vadl.iss.passes.IssBranchPcWriteNormalizerPass;
 import vadl.iss.passes.IssConfigurationPass;
+import vadl.iss.passes.IssTcgAnnotatePass;
 import vadl.iss.passes.IssVerificationPass;
 import vadl.iss.passes.tcgLowering.TcgLoweringPass;
 import vadl.iss.template.target.EmitIssCpuHeaderPass;
@@ -28,7 +30,8 @@ import vadl.iss.template.target.EmitIssCpuSourcePass;
 import vadl.iss.template.target.EmitIssInsnDecodePass;
 import vadl.iss.template.target.EmitIssMachinePass;
 import vadl.iss.template.target.EmitIssTranslatePass;
-import vadl.lcb.passes.isaMatching.IsaMatchingPass;
+import vadl.lcb.passes.isaMatching.IsaMachineInstructionMatchingPass;
+import vadl.lcb.passes.isaMatching.IsaPseudoInstructionMatchingPass;
 import vadl.lcb.passes.llvmLowering.ConstMatPseudoInstructionArgumentReplacementPass;
 import vadl.lcb.passes.llvmLowering.ConstMaterialisationPseudoExpansionFunctionGeneratorPass;
 import vadl.lcb.passes.llvmLowering.GenerateRegisterClassesPass;
@@ -43,10 +46,13 @@ import vadl.lcb.template.lib.Target.EmitMCInstLowerCppFilePass;
 import vadl.lcb.template.lib.Target.EmitMCInstLowerHeaderFilePass;
 import vadl.lcb.template.lib.Target.MCTargetDesc.EmitInstPrinterCppFilePass;
 import vadl.lcb.template.lib.Target.MCTargetDesc.EmitInstPrinterHeaderFilePass;
+import vadl.viam.passes.DuplicateWriteDetectionPass;
 import vadl.viam.passes.InstructionResourceAccessAnalysisPass;
 import vadl.viam.passes.algebraic_simplication.AlgebraicSimplificationPass;
+import vadl.viam.passes.behaviorRewrite.BehaviorRewritePass;
 import vadl.viam.passes.canonicalization.CanonicalizationPass;
 import vadl.viam.passes.dummyAbi.DummyAbiPass;
+import vadl.viam.passes.functionInliner.FieldAccessInlinerPass;
 import vadl.viam.passes.functionInliner.FunctionInlinerPass;
 import vadl.viam.passes.sideeffect_condition.SideEffectConditionResolvingPass;
 import vadl.viam.passes.staticCounterAccess.StaticCounterAccessResolvingPass;
@@ -65,10 +71,24 @@ public class PassOrders {
   public static PassOrder viam(GeneralConfiguration configuration) throws IOException {
     var order = new PassOrder();
 
+    if (configuration.doDump()) {
+      var config = HtmlDumpPass.Config.from(
+          configuration,
+          "VIAM Creation",
+          "Dump directly after the VIAM got created from the AST."
+      );
+      order.add(new HtmlDumpPass(config));
+    }
+
     order.add(new ViamVerificationPass(configuration));
 
     order.add(new TypeCastEliminationPass(configuration));
-    order.add(new DummyAbiPass(configuration));
+
+    // Common optimizations
+    order.add(new CanonicalizationPass(configuration));
+    order.add(new AlgebraicSimplificationPass(configuration));
+    order.add(new BehaviorRewritePass(configuration));
+
     // TODO: @kper do you see any fix for this?
     // Note: we run the counter-access resolving pass before the func inliner pass
     // because the lcb uses the uninlined version of the instructions.
@@ -76,12 +96,15 @@ public class PassOrders {
     // as the canonicalization runs at a later point.
     order.add(new StaticCounterAccessResolvingPass(configuration));
     order.add(new FunctionInlinerPass(configuration));
+    order.add(new FieldAccessInlinerPass(configuration));
     order.add(new SideEffectConditionResolvingPass(configuration));
+    // requires SideEffectConditionResolvingPass to work
+    order.add(new DuplicateWriteDetectionPass(configuration));
 
-    // Common optimizations
     order.add(new CanonicalizationPass(configuration));
     order.add(new AlgebraicSimplificationPass(configuration));
-
+    order.add(new BehaviorRewritePass(configuration));
+    
     order.add(new InstructionResourceAccessAnalysisPass(configuration));
 
     // verification after viam optimizations
@@ -105,6 +128,7 @@ public class PassOrders {
   public static PassOrder gcbAndCppCodeGen(GcbConfiguration gcbConfiguration) throws IOException {
     var order = viam(gcbConfiguration);
 
+    order.add(new DummyAbiPass(gcbConfiguration));
     order.add(new IdentifyFieldUsagePass(gcbConfiguration));
     order.add(new GenerateFieldAccessEncodingFunctionPass(gcbConfiguration));
     order.add(new FieldNodeReplacementPassForDecoding(gcbConfiguration));
@@ -134,7 +158,8 @@ public class PassOrders {
   public static PassOrder lcb(LcbConfiguration configuration)
       throws IOException {
     var order = gcbAndCppCodeGen(configuration);
-    order.add(new IsaMatchingPass(configuration));
+    order.add(new IsaMachineInstructionMatchingPass(configuration));
+    order.add(new IsaPseudoInstructionMatchingPass(configuration));
     order.add(new GenerateRegisterClassesPass(configuration));
     order.add(new LlvmLoweringPass(configuration));
     order.add(new GenerateTableGenMachineInstructionRecordPass(configuration));
@@ -304,13 +329,17 @@ public class PassOrders {
    */
   public static PassOrder iss(IssConfiguration config) throws IOException {
     var order = viam(config);
+
+    // skip inlining of field access
+    order.skip(FieldAccessInlinerPass.class);
+
     // iss function passes
     order
         .add(new IssVerificationPass(config))
         .add(new IssConfigurationPass(config))
+        .add(new IssTcgAnnotatePass(config))
         .add(new TcgLoweringPass(config))
 
-        .add(new ViamVerificationPass(config))
     ;
 
 
@@ -319,6 +348,8 @@ public class PassOrders {
           This dump is executed after the iss transformation passes were executed.
           """)));
     }
+
+    order.add(new ViamVerificationPass(config));
 
     // add iss template emitting passes to order
     addIssEmitPasses(order, config);

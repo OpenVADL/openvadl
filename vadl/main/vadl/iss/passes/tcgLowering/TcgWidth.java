@@ -15,4 +15,19 @@ public enum TcgWidth {
   TcgWidth(int width) {
     this.width = width;
   }
+
+  /**
+   * Converts a given width in bits to the corresponding TcgWidth enumeration value.
+   *
+   * @param width The width in bits to convert.
+   * @return The corresponding TcgWidth enumeration value.
+   * @throws IllegalArgumentException If the given width does not match a known TcgWidth.
+   */
+  public static TcgWidth fromWidth(int width) {
+    return switch (width) {
+      case 32 -> i32;
+      case 64 -> i64;
+      default -> throw new IllegalArgumentException("Invalid width: " + width);
+    };
+  }
 }

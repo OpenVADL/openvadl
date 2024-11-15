@@ -6,7 +6,7 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
 import vadl.lcb.codegen.model.llvm.ValueType;
-import vadl.lcb.passes.isaMatching.InstructionLabel;
+import vadl.lcb.passes.isaMatching.MachineInstructionLabel;
 import vadl.lcb.passes.llvmLowering.LlvmLoweringPass;
 import vadl.lcb.passes.llvmLowering.domain.LlvmLoweringRecord;
 import vadl.lcb.passes.llvmLowering.strategies.LlvmInstructionLoweringStrategy;
@@ -14,12 +14,13 @@ import vadl.lcb.passes.llvmLowering.tablegen.model.TableGenInstructionOperand;
 import vadl.lcb.passes.llvmLowering.tablegen.model.TableGenPattern;
 import vadl.viam.Instruction;
 import vadl.viam.graph.Graph;
+import vadl.viam.graph.GraphVisitor;
+import vadl.viam.graph.Node;
 import vadl.viam.graph.control.AbstractEndNode;
 import vadl.viam.graph.dependency.SideEffectNode;
-import vadl.viam.passes.functionInliner.UninlinedGraph;
 
 /**
- * Generates the {@link LlvmLoweringRecord} for {@link InstructionLabel#JALR}
+ * Generates the {@link LlvmLoweringRecord} for {@link MachineInstructionLabel#JALR}
  * instruction.
  */
 public class LlvmInstructionLoweringIndirectJumpStrategyImpl
@@ -30,32 +31,27 @@ public class LlvmInstructionLoweringIndirectJumpStrategyImpl
   }
 
   @Override
-  protected Set<InstructionLabel> getSupportedInstructionLabels() {
-    return Set.of(InstructionLabel.JALR);
+  protected Set<MachineInstructionLabel> getSupportedInstructionLabels() {
+    return Set.of(MachineInstructionLabel.JALR);
   }
 
   @Override
   protected Optional<LlvmLoweringRecord> lowerInstruction(
-      Map<InstructionLabel, List<Instruction>> supportedInstructions,
+      Map<MachineInstructionLabel, List<Instruction>> labelledMachineInstructions,
       Instruction instruction,
       Graph unmodifiedBehavior) {
     var copy = unmodifiedBehavior.copy();
-    var visitor = getVisitorForPatternSelectorLowering();
+    var visitor = replacementHooksWithDefaultFieldAccessReplacement();
 
-    for (var node : copy.getNodes(AbstractEndNode.class).toList()) {
-      visitor.visit(node);
+    for (var node : copy.getNodes(SideEffectNode.class).toList()) {
+      visitReplacementHooks(visitor, node);
     }
 
-    var inputOperands = getTableGenInputOperands(copy);
     var outputOperands = getTableGenOutputOperands(copy);
+    var inputOperands = getTableGenInputOperands(outputOperands, copy);
 
-    // If a TableGen record has no input or output operands,
-    // and no registers as def or use then it will throw an error.
-    // Therefore, when input and output operands are empty then do not filter any
-    // registers.
-    var filterRegistersWithConstraints = inputOperands.isEmpty() && outputOperands.isEmpty();
-    var uses = getRegisterUses(copy, filterRegistersWithConstraints);
-    var defs = getRegisterDefs(copy, filterRegistersWithConstraints);
+    var uses = getRegisterUses(copy, inputOperands, outputOperands);
+    var defs = getRegisterDefs(copy, inputOperands, outputOperands);
 
     return Optional.of(new LlvmLoweringRecord(
         copy,
@@ -69,9 +65,14 @@ public class LlvmInstructionLoweringIndirectJumpStrategyImpl
   }
 
   @Override
+  protected List<GraphVisitor.NodeApplier<? extends Node, ? extends Node>> replacementHooks() {
+    return replacementHooksWithDefaultFieldAccessReplacement();
+  }
+
+  @Override
   protected List<TableGenPattern> generatePatternVariations(
       Instruction instruction,
-      Map<InstructionLabel, List<Instruction>> supportedInstructions,
+      Map<MachineInstructionLabel, List<Instruction>> supportedInstructions,
       Graph behavior,
       List<TableGenInstructionOperand> inputOperands,
       List<TableGenInstructionOperand> outputOperands,

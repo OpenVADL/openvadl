@@ -10,9 +10,9 @@ import java.util.Set;
 import java.util.stream.Stream;
 import vadl.error.Diagnostic;
 import vadl.lcb.codegen.model.llvm.ValueType;
-import vadl.lcb.passes.isaMatching.InstructionLabel;
-import vadl.lcb.passes.llvmLowering.domain.machineDag.MachineInstructionParameterNode;
-import vadl.lcb.passes.llvmLowering.domain.machineDag.MachineInstructionValueNode;
+import vadl.lcb.passes.isaMatching.MachineInstructionLabel;
+import vadl.lcb.passes.llvmLowering.domain.machineDag.LcbMachineInstructionParameterNode;
+import vadl.lcb.passes.llvmLowering.domain.machineDag.LcbMachineInstructionValueNode;
 import vadl.lcb.passes.llvmLowering.domain.selectionDag.LlvmAddSD;
 import vadl.lcb.passes.llvmLowering.domain.selectionDag.LlvmFieldAccessRefNode;
 import vadl.lcb.passes.llvmLowering.domain.selectionDag.LlvmFrameIndexSD;
@@ -29,6 +29,7 @@ import vadl.viam.Instruction;
 import vadl.viam.Memory;
 import vadl.viam.Register;
 import vadl.viam.graph.Graph;
+import vadl.viam.graph.GraphVisitor;
 import vadl.viam.graph.Node;
 import vadl.viam.graph.dependency.ReadRegFileNode;
 import vadl.viam.graph.dependency.WriteResourceNode;
@@ -45,14 +46,19 @@ public class LlvmInstructionLoweringMemoryStoreStrategyImpl
   }
 
   @Override
-  protected Set<InstructionLabel> getSupportedInstructionLabels() {
-    return Set.of(InstructionLabel.STORE_MEM);
+  protected Set<MachineInstructionLabel> getSupportedInstructionLabels() {
+    return Set.of(MachineInstructionLabel.STORE_MEM);
+  }
+
+  @Override
+  protected List<GraphVisitor.NodeApplier<? extends Node, ? extends Node>> replacementHooks() {
+    return replacementHooksWithDefaultFieldAccessReplacement();
   }
 
   @Override
   protected List<TableGenPattern> generatePatternVariations(
       Instruction instruction,
-      Map<InstructionLabel, List<Instruction>> supportedInstructions,
+      Map<MachineInstructionLabel, List<Instruction>> supportedInstructions,
       Graph behavior,
       List<TableGenInstructionOperand> inputOperands,
       List<TableGenInstructionOperand> outputOperands,
@@ -98,7 +104,7 @@ public class LlvmInstructionLoweringMemoryStoreStrategyImpl
         addition.replaceAndDelete(register);
 
         // We also have to replace the immediate operand in the machine pattern.
-        var immediates = machine.getNodes(MachineInstructionParameterNode.class)
+        var immediates = machine.getNodes(LcbMachineInstructionParameterNode.class)
             .filter(x -> x.instructionOperand() instanceof TableGenInstructionImmediateOperand)
             .toList();
 
@@ -106,7 +112,7 @@ public class LlvmInstructionLoweringMemoryStoreStrategyImpl
           var ty = ensurePresent(ValueType.from(register.type()),
               () -> Diagnostic.error("Register must have valid llvm type",
                   register.sourceLocation()));
-          imm.replaceAndDelete(new MachineInstructionValueNode(ty, Constant.Value.of(0,
+          imm.replaceAndDelete(new LcbMachineInstructionValueNode(ty, Constant.Value.of(0,
               Type.signedInt(32))));
         }
 
@@ -118,7 +124,7 @@ public class LlvmInstructionLoweringMemoryStoreStrategyImpl
   }
 
   /**
-   * Instructions in {@link InstructionLabel#STORE_MEM} write from a {@link Register} into
+   * Instructions in {@link MachineInstructionLabel#STORE_MEM} write from a {@link Register} into
    * {@link Memory}. However, LLVM has a special selection dag node for frame indexes.
    * Function's variables are placed on the stack and will be accessed relative to a frame pointer.
    * LLVM has for the lowering a frame index leaf node which requires additional patterns.

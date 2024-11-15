@@ -2,8 +2,12 @@ package vadl.viam;
 
 import com.google.errorprone.annotations.FormatMethod;
 import com.google.errorprone.annotations.InlineMe;
+import java.util.HashMap;
+import java.util.Map;
 import org.jetbrains.annotations.Contract;
+import org.jetbrains.annotations.Nullable;
 import vadl.utils.SourceLocation;
+import vadl.utils.WithSourceLocation;
 import vadl.viam.graph.Graph;
 
 /**
@@ -16,15 +20,19 @@ import vadl.viam.graph.Graph;
  * must be met. It will throw an error with the definition as context if the condition is not true.
  * </p>
  */
-public abstract class Definition {
+public abstract class Definition implements WithSourceLocation {
 
   public final Identifier identifier;
   private SourceLocation sourceLocation = SourceLocation.INVALID_SOURCE_LOCATION;
 
+  private final Map<Class<? extends Annotation>, Annotation> annotations;
+
   public Definition(Identifier identifier) {
     this.identifier = identifier;
+    this.annotations = new HashMap<>();
   }
 
+  @Override
   public SourceLocation sourceLocation() {
     return sourceLocation;
   }
@@ -32,6 +40,7 @@ public abstract class Definition {
   public void setSourceLocation(SourceLocation sourceLocation) {
     this.sourceLocation = sourceLocation;
   }
+
 
   public String simpleName() {
     return identifier.simpleName();
@@ -62,7 +71,10 @@ public abstract class Definition {
    * @see vadl.viam.passes.verification.ViamVerifier
    */
   public void verify() {
-
+    for (Annotation<?> annotation : annotations.values()) {
+      // verify all annotations of the definition
+      annotation.verify();
+    }
   }
 
   /**
@@ -71,7 +83,7 @@ public abstract class Definition {
    */
   @FormatMethod
   @Contract("false, _, _-> fail")
-  public void ensure(boolean condition, String message, Object... args) {
+  public void ensure(boolean condition, String message, @Nullable Object... args) {
     if (!condition) {
       throw new ViamError(message.formatted(args))
           .shrinkStacktrace(1)
@@ -80,5 +92,62 @@ public abstract class Definition {
   }
 
   public abstract void accept(DefinitionVisitor visitor);
+
+  /**
+   * Adds an annotation to this definition, ensuring that there is no existing
+   * annotation of the same type.
+   * If the operation succeeds, the annotation's definition is set to this instance.
+   *
+   * @param annotation the annotation to be added
+   */
+  public <T extends Definition> void addAnnotation(Annotation<T> annotation) {
+    var clazz = annotation.getClass();
+    ensure(!annotations.containsKey(clazz),
+        "Expected no annotation of type %s", clazz);
+    ensure(annotation.parentDefinitionClass().isInstance(this),
+        "Annotation is incompatible with definition. Annotation can be assigned to %s",
+        annotation.parentDefinitionClass());
+    //noinspection unchecked
+    annotation.setParentDefinition((T) this);
+    annotations.put(clazz, annotation);
+  }
+
+  /**
+   * Retrieves the annotation of the specified type if it exists.
+   *
+   * @param <T>             the type of the annotation
+   * @param annotationClass the class object corresponding to the annotation type
+   * @return the annotation of the specified type, or null if it does not exist
+   */
+  @Nullable
+  public <T extends Annotation<?>> T annotation(Class<T> annotationClass) {
+    var anno = annotations.get(annotationClass);
+    ensure(annotationClass.isInstance(anno), "Expected annotation of type %s, but found %s",
+        annotationClass, anno);
+    return (T) anno;
+  }
+
+  /**
+   * Retrieves the annotation of the specified type and ensures that it exists.
+   *
+   * @param <T>             the type of the annotation
+   * @param annotationClass the class object corresponding to the annotation type
+   * @return the annotation of the specified type if it exists
+   */
+  public <T extends Annotation<?>> T expectAnnotation(Class<T> annotationClass) {
+    var anno = annotation(annotationClass);
+    ensure(anno != null, "Expected annotation of type %s, but found none", annotationClass);
+    return anno;
+  }
+
+  /**
+   * Checks if the definition has an annotation of the specified type.
+   *
+   * @param annotationClass the class object corresponding to the annotation type
+   * @return true if the annotation of the specified type exists, false otherwise
+   */
+  public boolean hasAnnotation(Class<? extends Annotation<?>> annotationClass) {
+    return annotations.containsKey(annotationClass);
+  }
 
 }

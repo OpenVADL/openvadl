@@ -63,6 +63,14 @@ public final class PassOrder {
   }
 
   /**
+   * Skips all passes in the PassOrder that are of the given class.
+   */
+  public PassOrder skip(Class<? extends Pass> passClass) {
+    order.removeIf(s -> passClass.isInstance(s.pass()));
+    return this;
+  }
+
+  /**
    * Adds a given pass after the pass with the given {@code passName}.
    */
   public PassOrder addAfterLast(Class<?> passName, Pass pass) {

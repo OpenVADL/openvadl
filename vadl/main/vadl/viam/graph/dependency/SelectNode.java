@@ -84,4 +84,15 @@ public class SelectNode extends ExpressionNode {
   public ExpressionNode falseCase() {
     return falseCase;
   }
+
+  @Override
+  public void prettyPrint(StringBuilder sb) {
+    sb.append("(");
+    condition.prettyPrint(sb);
+    sb.append(" ? ");
+    trueCase.prettyPrint(sb);
+    sb.append(" : ");
+    falseCase.prettyPrint(sb);
+    sb.append(")");
+  }
 }

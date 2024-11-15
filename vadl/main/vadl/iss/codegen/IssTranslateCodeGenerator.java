@@ -5,9 +5,12 @@ import static vadl.error.Diagnostic.error;
 import static vadl.utils.GraphUtils.getSingleNode;
 
 import java.io.StringWriter;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import java.util.Arrays;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 import vadl.cppCodeGen.CodeGenerator;
+import vadl.cppCodeGen.mixins.CBuiltinMixin;
+import vadl.cppCodeGen.mixins.CMiscMixin;
 import vadl.cppCodeGen.mixins.CTypeCastMixin;
 import vadl.viam.Definition;
 import vadl.viam.Instruction;
@@ -15,6 +18,7 @@ import vadl.viam.graph.Node;
 import vadl.viam.graph.control.DirectionalNode;
 import vadl.viam.graph.control.InstrEndNode;
 import vadl.viam.graph.control.StartNode;
+import vadl.viam.graph.dependency.FieldAccessRefNode;
 import vadl.viam.graph.dependency.FieldRefNode;
 
 /**
@@ -23,7 +27,7 @@ import vadl.viam.graph.dependency.FieldRefNode;
  * in the {@link vadl.viam.InstructionSetArchitecture}.
  */
 public class IssTranslateCodeGenerator extends CodeGenerator
-    implements CTypeCastMixin, CTcgOpsMixin {
+    implements CTypeCastMixin, CTcgOpsMixin, CBuiltinMixin, CMiscMixin {
 
   public IssTranslateCodeGenerator(StringWriter writer) {
     super(writer);
@@ -53,9 +57,25 @@ public class IssTranslateCodeGenerator extends CodeGenerator
           writer.write(name);
           writer.write(" *a) {\n");
 
+          // format debug string
+          var fieldStream = Arrays.stream(insn.format().fields())
+              .filter(f -> insn.encoding().fieldEncodingOf(f) == null)
+              .filter(f -> !f.simpleName().startsWith("imm"));
+          var printingFields = Stream.concat(fieldStream, insn.format()
+                  .fieldAccesses().stream())
+              .map(Definition::simpleName)
+              .toList();
+
+          var fmtString = printingFields.stream().map(f -> f + ": %d ")
+              .collect(Collectors.joining(", "));
+          var fmtArgs = printingFields.stream().map(f ->
+                  "a->" + f)
+              .collect(Collectors.joining(", "));
+
           writer.write("\tqemu_printf(\"[VADL] trans_");
           writer.write(name);
-          writer.write("\\n\");\n");
+          writer.write(" (" + fmtString + ")");
+          writer.write("\\n\", " + fmtArgs + ");\n");
 
           var current = start.next();
 
@@ -79,10 +99,17 @@ public class IssTranslateCodeGenerator extends CodeGenerator
   public void nodeImpls(Impls<Node> impls) {
     castImpls(impls);
     tcgOpImpls(impls);
+    builtinImpls(impls);
+    miscImpls(impls);
 
     impls.set(FieldRefNode.class, (node, writer) -> {
       writer.write("a->");
       writer.write(node.formatField().simpleName());
+    });
+
+    impls.set(FieldAccessRefNode.class, (node, writer) -> {
+      writer.write("a->");
+      writer.write(node.fieldAccess().simpleName());
     });
   }
 

@@ -55,7 +55,7 @@ public class StaticCounterAccessResolvingPass extends Pass {
   @Override
   public @Nullable Object execute(PassResults passResults, Specification viam)
       throws IOException {
-    
+
     var pc = viam.isa()
         .map(InstructionSetArchitecture::pc)
         .orElse(null);
@@ -65,7 +65,7 @@ public class StaticCounterAccessResolvingPass extends Pass {
       return null;
     }
 
-    ViamUtils.findDefinitionByFilter(viam, d -> d instanceof DefProp.WithBehavior)
+    ViamUtils.findDefinitionsByFilter(viam, d -> d instanceof DefProp.WithBehavior)
         .stream()
         .map(DefProp.WithBehavior.class::cast)
         .flatMap(d -> d.behaviors().stream())

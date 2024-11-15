@@ -4,6 +4,7 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.stream.Stream;
 import vadl.utils.SourceLocation;
+import vadl.utils.WithSourceLocation;
 
 /**
  * Source level identifier class.
@@ -11,9 +12,8 @@ import vadl.utils.SourceLocation;
 public record Identifier(
     String[] parts,
     SourceLocation sourceLocation
-) {
-
-
+) implements WithSourceLocation {
+  
   /**
    * Normalize the parts of the identifier by removing leading and trailing dots.
    */

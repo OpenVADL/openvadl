@@ -2,8 +2,12 @@ package vadl.dump;
 
 import java.io.IOException;
 import java.nio.file.Path;
+import java.time.Instant;
+import java.time.ZoneId;
+import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.Comparator;
+import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -16,6 +20,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import vadl.configuration.GeneralConfiguration;
 import vadl.dump.entitySuppliers.ViamEntitySupplier;
+import vadl.dump.infoEnrichers.IssEnricherCollection;
 import vadl.dump.infoEnrichers.LcbEnricherCollection;
 import vadl.dump.infoEnrichers.ViamEnricherCollection;
 import vadl.pass.Pass;
@@ -69,6 +74,7 @@ public class HtmlDumpPass extends AbstractTemplateRenderingPass {
   static Consumer<List<InfoEnricher>> infoEnrichers = enrichers -> {
     enrichers.addAll(ViamEnricherCollection.all);
     enrichers.addAll(LcbEnricherCollection.all);
+    enrichers.addAll(IssEnricherCollection.all);
   };
 
 
@@ -187,6 +193,10 @@ public class HtmlDumpPass extends AbstractTemplateRenderingPass {
         // .filter(p -> !(p.pass() instanceof HtmlDumpPass))
         .toList();
 
+    DateTimeFormatter formatter = DateTimeFormatter.ofPattern("dd.MM.yyyy - hh:mm")
+        .withZone(ZoneId.systemDefault());
+    var renderDate = formatter.format(Instant.now());
+
     return Map.of(
         "title",
         "Specification (%s) - at %s".formatted(specification.identifier.name(), config.phase),
@@ -194,7 +204,8 @@ public class HtmlDumpPass extends AbstractTemplateRenderingPass {
         "passes", passList,
         "passDumps", findAllPassDumps(passResults),
         "entries", entities,
-        "toc", tocMapList
+        "toc", tocMapList,
+        "renderDatetime", renderDate
     );
   }
 

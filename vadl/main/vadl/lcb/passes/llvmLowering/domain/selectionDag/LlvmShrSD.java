@@ -22,7 +22,7 @@ public class LlvmShrSD extends BuiltInCall implements LlvmNodeLowerable {
 
   @Override
   public String lower() {
-    return "shr";
+    return "srl";
   }
 
 
@@ -39,12 +39,12 @@ public class LlvmShrSD extends BuiltInCall implements LlvmNodeLowerable {
 
   @Override
   public Node copy() {
-    return new LlvmOrSD(new NodeList<>(args.stream().map(x -> (ExpressionNode) x.copy()).toList()),
+    return new LlvmShrSD(new NodeList<>(args.stream().map(x -> (ExpressionNode) x.copy()).toList()),
         type());
   }
 
   @Override
   public Node shallowCopy() {
-    return new LlvmOrSD(args, type());
+    return new LlvmShrSD(args, type());
   }
 }

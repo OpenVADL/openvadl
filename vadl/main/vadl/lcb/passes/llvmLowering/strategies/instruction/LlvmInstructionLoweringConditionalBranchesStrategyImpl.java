@@ -1,11 +1,15 @@
 package vadl.lcb.passes.llvmLowering.strategies.instruction;
 
-import static vadl.lcb.passes.isaMatching.InstructionLabel.BEQ;
-import static vadl.lcb.passes.isaMatching.InstructionLabel.BGEQ;
-import static vadl.lcb.passes.isaMatching.InstructionLabel.BGTH;
-import static vadl.lcb.passes.isaMatching.InstructionLabel.BLEQ;
-import static vadl.lcb.passes.isaMatching.InstructionLabel.BLTH;
-import static vadl.lcb.passes.isaMatching.InstructionLabel.BNEQ;
+import static vadl.lcb.passes.isaMatching.MachineInstructionLabel.BEQ;
+import static vadl.lcb.passes.isaMatching.MachineInstructionLabel.BNEQ;
+import static vadl.lcb.passes.isaMatching.MachineInstructionLabel.BSGEQ;
+import static vadl.lcb.passes.isaMatching.MachineInstructionLabel.BSGTH;
+import static vadl.lcb.passes.isaMatching.MachineInstructionLabel.BSLEQ;
+import static vadl.lcb.passes.isaMatching.MachineInstructionLabel.BSLTH;
+import static vadl.lcb.passes.isaMatching.MachineInstructionLabel.BUGEQ;
+import static vadl.lcb.passes.isaMatching.MachineInstructionLabel.BUGTH;
+import static vadl.lcb.passes.isaMatching.MachineInstructionLabel.BULEQ;
+import static vadl.lcb.passes.isaMatching.MachineInstructionLabel.BULTH;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -13,28 +17,27 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Stream;
-import javax.annotation.Nullable;
+import org.jetbrains.annotations.NotNull;
 import vadl.lcb.codegen.model.llvm.ValueType;
-import vadl.lcb.passes.isaMatching.InstructionLabel;
+import vadl.lcb.passes.isaMatching.MachineInstructionLabel;
 import vadl.lcb.passes.llvmLowering.domain.LlvmLoweringRecord;
-import vadl.lcb.passes.llvmLowering.domain.machineDag.MachineInstructionParameterNode;
-import vadl.lcb.passes.llvmLowering.domain.selectionDag.LlvmBasicBlockSD;
 import vadl.lcb.passes.llvmLowering.domain.selectionDag.LlvmBrCcSD;
 import vadl.lcb.passes.llvmLowering.domain.selectionDag.LlvmBrCondSD;
 import vadl.lcb.passes.llvmLowering.domain.selectionDag.LlvmCondCode;
 import vadl.lcb.passes.llvmLowering.domain.selectionDag.LlvmSetCondSD;
 import vadl.lcb.passes.llvmLowering.domain.selectionDag.LlvmTypeCastSD;
 import vadl.lcb.passes.llvmLowering.strategies.LlvmInstructionLoweringStrategy;
-import vadl.lcb.passes.llvmLowering.strategies.visitors.impl.ReplaceWithLlvmSDNodesWithControlFlowVisitor;
-import vadl.lcb.passes.llvmLowering.tablegen.model.TableGenInstructionImmediateLabelOperand;
+import vadl.lcb.passes.llvmLowering.strategies.LoweringStrategyUtils;
 import vadl.lcb.passes.llvmLowering.tablegen.model.TableGenInstructionOperand;
 import vadl.lcb.passes.llvmLowering.tablegen.model.TableGenPattern;
 import vadl.lcb.passes.llvmLowering.tablegen.model.TableGenSelectionWithOutputPattern;
-import vadl.lcb.passes.llvmLowering.tablegen.model.parameterIdentity.ParameterIdentity;
-import vadl.lcb.visitors.LcbGraphNodeVisitor;
 import vadl.viam.Instruction;
 import vadl.viam.graph.Graph;
+import vadl.viam.graph.GraphVisitor;
+import vadl.viam.graph.Node;
 import vadl.viam.graph.NodeList;
+import vadl.viam.graph.control.AbstractEndNode;
+import vadl.viam.graph.dependency.SideEffectNode;
 import vadl.viam.graph.dependency.WriteResourceNode;
 import vadl.viam.passes.functionInliner.UninlinedGraph;
 
@@ -48,43 +51,40 @@ public class LlvmInstructionLoweringConditionalBranchesStrategyImpl
   }
 
   @Override
-  protected Set<InstructionLabel> getSupportedInstructionLabels() {
-    return Set.of(BEQ, BGEQ, BNEQ, BLEQ, BLTH, BGTH);
+  protected Set<MachineInstructionLabel> getSupportedInstructionLabels() {
+    return Set.of(BEQ, BNEQ, BSGEQ, BSLEQ, BSLTH, BSGTH, BUGEQ, BULEQ, BULTH, BUGTH);
   }
 
   @Override
-  protected LcbGraphNodeVisitor getVisitorForPatternSelectorLowering() {
-    // Branch instructions contain if conditionals.
-    // The normal visitor denies those. But "xxxWithControlFlowVisitor" we are allowing
-    // these instructions for conditional branches.
-    return new ReplaceWithLlvmSDNodesWithControlFlowVisitor(architectureType);
+  protected List<GraphVisitor.NodeApplier<? extends Node, ? extends Node>> replacementHooks() {
+    return replacementHooksWithFieldAccessWithBasicBlockReplacement();
   }
 
   @Override
   public Optional<LlvmLoweringRecord> lower(
-      Map<InstructionLabel, List<Instruction>> supportedInstructions,
+      Map<MachineInstructionLabel, List<Instruction>> labelledMachineInstructions,
       Instruction instruction,
       UninlinedGraph uninlinedBehavior) {
 
-    var visitor = getVisitorForPatternSelectorLowering();
+    var visitor = replacementHooks();
     var copy = (UninlinedGraph) uninlinedBehavior.copy();
 
-    for (var node : copy.getNodes().toList()) {
-      visitor.visit(node);
+    for (var node : copy.getNodes(SideEffectNode.class).toList()) {
+      visitReplacementHooks(visitor, node);
     }
 
     copy.deinitializeNodes();
     return Optional.of(
-        createIntermediateResult(supportedInstructions, instruction, copy));
+        createIntermediateResult(labelledMachineInstructions, instruction, copy));
   }
 
   private LlvmLoweringRecord createIntermediateResult(
-      Map<InstructionLabel, List<Instruction>> supportedInstructions,
+      Map<MachineInstructionLabel, List<Instruction>> supportedInstructions,
       Instruction instruction,
       UninlinedGraph visitedGraph) {
 
-    var inputOperands = getTableGenInputOperands(visitedGraph);
     var outputOperands = getTableGenOutputOperands(visitedGraph);
+    var inputOperands = getTableGenInputOperands(outputOperands, visitedGraph);
     var flags = getFlags(visitedGraph);
 
     var writes = visitedGraph.getNodes(WriteResourceNode.class).toList();
@@ -96,16 +96,11 @@ public class LlvmInstructionLoweringConditionalBranchesStrategyImpl
             inputOperands, outputOperands, patterns);
 
     var allPatterns = Stream.concat(patterns.stream(), alternatives.stream())
-        .map(this::replaceBasicBlockByLabelImmediateInMachineInstruction)
+        .map(LoweringStrategyUtils::replaceBasicBlockByLabelImmediateInMachineInstruction)
         .toList();
 
-    // If a TableGen record has no input or output operands,
-    // and no registers as def or use then it will throw an error.
-    // Therefore, when input and output operands are empty then do not filter any
-    // registers.
-    var filterRegistersWithConstraints = inputOperands.isEmpty() && outputOperands.isEmpty();
-    var uses = getRegisterUses(visitedGraph, filterRegistersWithConstraints);
-    var defs = getRegisterDefs(visitedGraph, filterRegistersWithConstraints);
+    var uses = getRegisterUses(visitedGraph, inputOperands, outputOperands);
+    var defs = getRegisterDefs(visitedGraph, inputOperands, outputOperands);
 
     return new LlvmLoweringRecord(
         visitedGraph,
@@ -118,35 +113,58 @@ public class LlvmInstructionLoweringConditionalBranchesStrategyImpl
     );
   }
 
-  /**
-   * Conditional branch patterns reference the {@code bb} selection dag node. However,
-   * the machine instruction should use the label immediate to properly encode the instruction.
-   */
-  private TableGenPattern replaceBasicBlockByLabelImmediateInMachineInstruction(
-      TableGenPattern pattern) {
-
-    if (pattern instanceof TableGenSelectionWithOutputPattern) {
-      // We know that the `selector` already has LlvmBasicBlock nodes.
-      var candidates = ((TableGenSelectionWithOutputPattern) pattern).machine().getNodes(
-          MachineInstructionParameterNode.class).toList();
-      for (var candidate : candidates) {
-        if (candidate.instructionOperand().origin() instanceof LlvmBasicBlockSD basicBlockSD) {
-          candidate.setInstructionOperand(new TableGenInstructionImmediateLabelOperand(
-              ParameterIdentity.fromBasicBlockToImmediateLabel(basicBlockSD), basicBlockSD));
-        }
-      }
-    }
-
-    return pattern;
-  }
 
   @Override
   protected List<TableGenPattern> generatePatternVariations(
       Instruction instruction,
-      Map<InstructionLabel, List<Instruction>> supportedInstructions,
+      Map<MachineInstructionLabel, List<Instruction>> supportedInstructions,
       Graph behavior,
       List<TableGenInstructionOperand> inputOperands,
       List<TableGenInstructionOperand> outputOperands,
+      List<TableGenPattern> patterns) {
+    ArrayList<TableGenPattern> alternatives = new ArrayList<>();
+    var swapped = generatePatternsForSwappedOperands(patterns);
+    alternatives.addAll(swapped);
+    alternatives.addAll(
+        generateBrCondFromBrCc(Stream.concat(patterns.stream(), swapped.stream()).toList()));
+    return alternatives;
+  }
+
+  private List<TableGenPattern> generatePatternsForSwappedOperands(List<TableGenPattern> patterns) {
+    /*
+      When we have a pattern with SEGE.
+
+      def : Pat<(brcc SETGE, X:$rs1, X:$rs2, bb:$imm),
+            (BGE X:$rs1, X:$rs2, RV32I_Btype_ImmediateB_immediateAsLabel:$imm)>;
+
+      // Then swap the operands and replace the condCode with SETLE.
+
+      def : Pat<(brcc SETLE, X:$rs2, X:$rs1, bb:$imm),
+            (BGE X:$rs1, X:$rs2, RV32I_Btype_ImmediateB_immediateAsLabel:$imm)>;
+
+      Of course, it might be the case that there is already such an instruction which covers that.
+      But it is better to be sure.
+     */
+    ArrayList<TableGenPattern> alternatives = new ArrayList<>();
+
+    for (var pattern : patterns) {
+      if (pattern instanceof TableGenSelectionWithOutputPattern outputPattern) {
+        // We only need to consider the selector pattern.
+        // There is no change required for the machine pattern.
+        var copy = pattern.selector().copy();
+        copy.getNodes(LlvmBrCcSD.class).forEach(llvmBrCcSD -> {
+          var newCondCode = LlvmCondCode.inverse(llvmBrCcSD.condition());
+          llvmBrCcSD.swapOperands(newCondCode);
+        });
+        alternatives.add(
+            new TableGenSelectionWithOutputPattern(copy, outputPattern.machine().copy()));
+      }
+    }
+
+    return alternatives;
+  }
+
+  private List<TableGenPattern> generateBrCondFromBrCc(
       List<TableGenPattern> patterns) {
     ArrayList<TableGenPattern> alternatives = new ArrayList<>();
 

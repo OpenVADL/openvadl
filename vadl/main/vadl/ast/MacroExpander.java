@@ -300,7 +300,7 @@ class MacroExpander
   @Override
   public Expr visit(CastExpr expr) {
     var value = expandExpr(expr.value);
-    var type = expandExpr(expr.type);
+    var type = expandExpr(expr.typeLiteral);
     return new CastExpr(value, (TypeLiteral) type);
   }
 
@@ -411,7 +411,7 @@ class MacroExpander
   public Definition visit(ConstantDefinition definition) {
     var id = resolvePlaceholderOrIdentifier(definition.identifier);
     var value = expandExpr(definition.value);
-    return new ConstantDefinition(id, definition.type, value, copyLoc(definition.loc))
+    return new ConstantDefinition(id, definition.typeLiteral, value, copyLoc(definition.loc))
         .withAnnotations(expandAnnotations(definition.annotations));
   }
 

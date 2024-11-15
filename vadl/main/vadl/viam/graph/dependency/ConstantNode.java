@@ -54,4 +54,13 @@ public class ConstantNode extends ExpressionNode {
   public void accept(GraphNodeVisitor visitor) {
     visitor.visit(this);
   }
+
+  @Override
+  public void prettyPrint(StringBuilder sb) {
+    sb
+        .append("(")
+        .append(constant.toString())
+        .append(")")
+    ;
+  }
 }

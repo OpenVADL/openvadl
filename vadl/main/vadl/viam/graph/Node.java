@@ -14,6 +14,7 @@ import java.util.stream.Stream;
 import javax.annotation.Nullable;
 import org.jetbrains.annotations.Contract;
 import vadl.utils.SourceLocation;
+import vadl.utils.WithSourceLocation;
 import vadl.viam.graph.dependency.DependencyNode;
 
 /**
@@ -23,7 +24,7 @@ import vadl.viam.graph.dependency.DependencyNode;
  * contains implicitly updated information like predecessor
  * and usages.
  */
-public abstract class Node {
+public abstract class Node implements WithSourceLocation {
 
   public final Id id;
   private @Nullable Graph graph;
@@ -65,6 +66,7 @@ public abstract class Node {
     return this.id.isInit();
   }
 
+  @Override
   public SourceLocation sourceLocation() {
     return sourceLocation;
   }
@@ -319,9 +321,20 @@ public abstract class Node {
    *
    * @param visitor the visitor that gets visited
    */
-  public final void visitInputs(GraphVisitor visitor) {
+  public final <T> void visitInputs(GraphVisitor<T> visitor) {
     for (var input : inputs().toList()) {
       visitor.visit(this, input);
+    }
+  }
+
+  /**
+   * For each successor of the node it calls {@code visitor.visit(node, input)}.
+   *
+   * @param visitor the visitor that gets visited
+   */
+  public final <T> void visitSuccessors(GraphVisitor<T> visitor) {
+    for (var succ : successors().toList()) {
+      visitor.visit(this, succ);
     }
   }
 
@@ -795,7 +808,7 @@ public abstract class Node {
   public final void ensureNonNull(@Nullable Object obj, String msg) {
     ensure(obj != null, msg);
   }
-  
+
   protected final void ensureDeleteIsPossible() {
     ensure(isActive(), "cannot delete: node is not active");
     ensure(this.usages.isEmpty(), "cannot delete: user of this node exist");
@@ -859,7 +872,7 @@ public abstract class Node {
       this.state = IdState.DELETED;
     }
 
-    protected int numericId() {
+    public int numericId() {
       ensure(state != IdState.INIT, "id in Init state has no numeric id");
       return numericId;
     }

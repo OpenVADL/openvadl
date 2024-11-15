@@ -79,7 +79,7 @@ instruction set architecture RV3264I = {
     { imm    : Bits<20>                   // [31..12] 20 bit immediate value
     , rd     : Index                      // [11..7]  destination register index
     , opcode : Bits7                      // [6..0]   7 bit operation code
-    , immU   = (imm as UIntR) << 12       // shifted unsigned immediate value
+    , immU   = (imm as SIntR) << 12       // shifted unsigned immediate value
     }
 
   format Stype : Inst =                   // Stype store instruction format
@@ -388,6 +388,12 @@ $Arch3264 ( // ((((((((((((((((((((((((((((((((((((((((
 
   assembly BGTZ = (mnemonic, " ", register( rs ), ",", decimal( offset ))
 
+  pseudo instruction LLA( rd: Index, symbol: Bits<32> ) =
+  {
+      LUI { rd = rd, imm = hi20( symbol ) }
+      ADDI { rd = rd, rs1 = rd, imm = lo12( symbol ) }
+  }
+  assembly LLA = (mnemonic, " ", register(rd), hex( symbol ))
   }
 
 

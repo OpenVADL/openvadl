@@ -79,4 +79,12 @@ public class ReadMemNode extends ReadResourceNode {
   public Memory memory() {
     return memory;
   }
+
+  @Override
+  public void prettyPrint(StringBuilder sb) {
+    sb.append(memory.simpleName())
+        .append("<").append(words).append(">(");
+    address().prettyPrint(sb);
+    sb.append(")");
+  }
 }

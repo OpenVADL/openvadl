@@ -6,13 +6,15 @@ import java.util.Map;
 import java.util.Set;
 import javax.annotation.Nullable;
 import vadl.lcb.codegen.model.llvm.ValueType;
-import vadl.lcb.passes.isaMatching.InstructionLabel;
+import vadl.lcb.passes.isaMatching.MachineInstructionLabel;
 import vadl.lcb.passes.llvmLowering.strategies.LlvmInstructionLoweringStrategy;
 import vadl.lcb.passes.llvmLowering.tablegen.model.TableGenInstruction;
 import vadl.lcb.passes.llvmLowering.tablegen.model.TableGenInstructionOperand;
 import vadl.lcb.passes.llvmLowering.tablegen.model.TableGenPattern;
 import vadl.viam.Instruction;
 import vadl.viam.graph.Graph;
+import vadl.viam.graph.GraphVisitor;
+import vadl.viam.graph.Node;
 
 /**
  * Lowers instructions into {@link TableGenInstruction}.
@@ -25,20 +27,25 @@ public class LlvmInstructionLoweringDefaultStrategyImpl
   }
 
   @Override
-  protected Set<InstructionLabel> getSupportedInstructionLabels() {
+  protected Set<MachineInstructionLabel> getSupportedInstructionLabels() {
     return Collections.emptySet();
   }
 
   @Override
-  public boolean isApplicable(@Nullable InstructionLabel instructionLabel) {
+  public boolean isApplicable(@Nullable MachineInstructionLabel machineInstructionLabel) {
     // Accept every label.
     return true;
   }
 
   @Override
+  protected List<GraphVisitor.NodeApplier<? extends Node, ? extends Node>> replacementHooks() {
+    return replacementHooksWithDefaultFieldAccessReplacement();
+  }
+
+  @Override
   protected List<TableGenPattern> generatePatternVariations(
       Instruction instruction,
-      Map<InstructionLabel, List<Instruction>> supportedInstructions,
+      Map<MachineInstructionLabel, List<Instruction>> supportedInstructions,
       Graph behavior,
       List<TableGenInstructionOperand> inputOperands,
       List<TableGenInstructionOperand> outputOperands,

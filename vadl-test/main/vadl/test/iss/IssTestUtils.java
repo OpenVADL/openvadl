@@ -9,6 +9,7 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
+import javax.annotation.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.yaml.snakeyaml.Yaml;
@@ -20,7 +21,9 @@ public class IssTestUtils {
   protected record TestSpec(
       String id,
       Map<String, String> regTests,
-      String asmCore
+      String asmCore,
+      @Nullable String referenceExec,
+      @Nullable List<String> referenceRegs
   ) {
   }
 
@@ -29,6 +32,7 @@ public class IssTestUtils {
       TestResult.Status status,
       List<TestResult.Stage> completedStages,
       List<TestResult.RegTestResult> regTests,
+      Map<String, List<String>> logs,
       List<String> errors,
       String duration
   ) {
@@ -41,7 +45,8 @@ public class IssTestUtils {
     protected enum Stage {
       COMPILE,
       LINK,
-      RUN
+      RUN,
+      RUN_REF
     }
 
     protected record RegTestResult(
@@ -67,6 +72,12 @@ public class IssTestUtils {
       specYaml.put("id", spec.id);
       specYaml.put("reg_tests", spec.regTests);
       specYaml.put("asm_core", spec.asmCore);
+      if (spec.referenceExec != null) {
+        specYaml.put("reference_exec", spec.referenceExec);
+      }
+      if (spec.referenceRegs != null) {
+        specYaml.put("reference_regs", spec.referenceRegs);
+      }
       return specYaml;
     }).toList();
 
@@ -108,6 +119,7 @@ public class IssTestUtils {
                       .map(e -> TestResult.Stage.valueOf(e))
                       .toList();
               List<String> errors = (List<String>) result.get("errors");
+              Map<String, List<String>> logs = (Map<String, List<String>>) result.get("qemuLog");
               String duration = (String) result.get("duration");
               List<TestResult.RegTestResult> regTests =
                   ((Map<String, Object>) result.get("regTests")).entrySet()
@@ -118,7 +130,7 @@ public class IssTestUtils {
                             Objects.toString(val.get("actual")));
                       }).toList();
 
-              return new TestResult(id, status, completedStages, regTests, errors,
+              return new TestResult(id, status, completedStages, regTests, logs, errors,
                   duration);
             })
             .toList();

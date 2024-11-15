@@ -3,8 +3,21 @@ package vadl.utils;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Stream;
+import org.jetbrains.annotations.Nullable;
+import vadl.types.BuiltInTable;
+import vadl.types.Type;
+import vadl.viam.Constant;
+import vadl.viam.Counter;
+import vadl.viam.Register;
 import vadl.viam.graph.Graph;
 import vadl.viam.graph.Node;
+import vadl.viam.graph.NodeList;
+import vadl.viam.graph.dependency.BuiltInCall;
+import vadl.viam.graph.dependency.ConstantNode;
+import vadl.viam.graph.dependency.ExpressionNode;
+import vadl.viam.graph.dependency.ReadRegNode;
+import vadl.viam.graph.dependency.TypeCastNode;
+import vadl.viam.graph.dependency.WriteRegNode;
 
 /**
  * A collection of useful utility methods on graphs.
@@ -57,6 +70,106 @@ public class GraphUtils {
     }
     return inputs.stream()
         .flatMap(GraphUtils::getLeafNodes);
+  }
+
+
+  //// GRAPH CREATION UTILS ////
+
+  /**
+   * Creates a binary operation built-in call with the specified operation and constant values.
+   *
+   * @param op The built-in operation to be performed.
+   * @param a  The first constant value operand.
+   * @param b  The second constant value operand.
+   * @return A new instance of {@code BuiltInCall} representing the binary operation.
+   */
+  public static BuiltInCall binaryOp(BuiltInTable.BuiltIn op, Constant.Value a, Constant.Value b) {
+    return new BuiltInCall(
+        op,
+        new NodeList<>(
+            new ConstantNode(a),
+            new ConstantNode(b)
+        ),
+        a.type()
+    );
+  }
+
+  /**
+   * Creates a binary operation built-in call with the specified operation, operand nodes,
+   * and result type.
+   *
+   * @param op         The built-in operation to be performed.
+   * @param resultType The type of the result produced by the operation.
+   * @param a          The first operand expression node.
+   * @param b          The second operand expression node.
+   * @return A new instance of {@code BuiltInCall} representing the binary operation.
+   */
+  public static BuiltInCall binaryOp(BuiltInTable.BuiltIn op, Type resultType, ExpressionNode a,
+                                     ExpressionNode b) {
+    return new BuiltInCall(
+        op,
+        new NodeList<>(
+            a,
+            b
+        ),
+        resultType
+    );
+  }
+
+  public static TypeCastNode cast(ExpressionNode val, Type type) {
+    return new TypeCastNode(val, type);
+  }
+
+  public static TypeCastNode cast(Type type, ExpressionNode val) {
+    return new TypeCastNode(val, type);
+  }
+
+  public static ConstantNode intSNode(long val, int width) {
+    return new ConstantNode(intS(val, width));
+  }
+
+  public static ConstantNode intUNode(long val, int width) {
+    return new ConstantNode(intU(val, width));
+  }
+
+  public static ConstantNode bitsNode(long val, int width) {
+    return new ConstantNode(bits(val, width));
+  }
+
+  public static ReadRegNode readReg(Register register,
+                                    @Nullable Counter.RegisterCounter staticCounterAddress
+  ) {
+    return new ReadRegNode(register, register.resultType(), staticCounterAddress);
+  }
+
+  public static WriteRegNode writeReg(Register register,
+                                      ExpressionNode val,
+                                      @Nullable Counter.RegisterCounter staticCounterAddress) {
+    return new WriteRegNode(register, val, staticCounterAddress);
+  }
+
+  //// CONSTANT VALUE CONSTRUCTION ////
+
+  public static Constant.Value intS(long val, int width) {
+    return Constant.Value.of(val, Type.signedInt(width));
+  }
+
+  public static Constant.Value intU(long val, int width) {
+    return Constant.Value.of(val, Type.unsignedInt(width));
+  }
+
+  public static Constant.Value bits(long val, int width) {
+    return Constant.Value.of(val, Type.bits(width));
+  }
+
+
+  public static Constant.Value bool(boolean val) {
+    return Constant.Value.of(val);
+  }
+
+  public static Constant.Tuple.Status status(boolean negative, boolean zero, boolean carry,
+                                             boolean overflow) {
+    return new Constant.Tuple.Status(negative, zero, carry, overflow);
   }
 
 }
