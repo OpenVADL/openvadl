@@ -239,6 +239,51 @@ public class ModelRemover implements DefinitionVisitor<Definition> {
     return definition;
   }
 
+  @Override
+  public Definition visit(AsmDescriptionDefinition definition) {
+    return definition;
+  }
+
+  @Override
+  public Definition visit(AsmModifierDefinition definition) {
+    return definition;
+  }
+
+  @Override
+  public Definition visit(AsmDirectiveDefinition definition) {
+    return definition;
+  }
+
+  @Override
+  public Definition visit(AsmGrammarRuleDefinition definition) {
+    return definition;
+  }
+
+  @Override
+  public Definition visit(AsmGrammarAlternativesDefinition definition) {
+    return definition;
+  }
+
+  @Override
+  public Definition visit(AsmGrammarElementDefinition definition) {
+    return definition;
+  }
+
+  @Override
+  public Definition visit(AsmGrammarLocalVarDefinition definition) {
+    return definition;
+  }
+
+  @Override
+  public Definition visit(AsmGrammarLiteralDefinition definition) {
+    return definition;
+  }
+
+  @Override
+  public Definition visit(AsmGrammarTypeDefinition definition) {
+    return definition;
+  }
+
   private boolean shouldRemove(Definition definition) {
     return definition instanceof ModelDefinition
         || definition instanceof RecordTypeDefinition

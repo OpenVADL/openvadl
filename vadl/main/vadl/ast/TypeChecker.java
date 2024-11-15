@@ -264,6 +264,60 @@ public class TypeChecker
   }
 
   @Override
+  public Void visit(AsmDescriptionDefinition definition) {
+    throwUnimplemented(definition);
+    return null;
+  }
+
+  @Override
+  public Void visit(AsmDirectiveDefinition definition) {
+    throwUnimplemented(definition);
+    return null;
+  }
+
+  @Override
+  public Void visit(AsmGrammarAlternativesDefinition definition) {
+    throwUnimplemented(definition);
+    return null;
+  }
+
+  @Override
+  public Void visit(AsmGrammarElementDefinition definition) {
+    throwUnimplemented(definition);
+    return null;
+  }
+
+  @Override
+  public Void visit(AsmGrammarLiteralDefinition definition) {
+    throwUnimplemented(definition);
+    return null;
+  }
+
+  @Override
+  public Void visit(AsmGrammarLocalVarDefinition definition) {
+    throwUnimplemented(definition);
+    return null;
+  }
+
+  @Override
+  public Void visit(AsmGrammarRuleDefinition definition) {
+    throwUnimplemented(definition);
+    return null;
+  }
+
+  @Override
+  public Void visit(AsmGrammarTypeDefinition definition) {
+    throwUnimplemented(definition);
+    return null;
+  }
+
+  @Override
+  public Void visit(AsmModifierDefinition definition) {
+    throwUnimplemented(definition);
+    return null;
+  }
+
+  @Override
   public Void visit(AbiSequenceDefinition definition) {
     throwUnimplemented(definition);
     return null;
