@@ -17,7 +17,7 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Stream;
-import org.jetbrains.annotations.NotNull;
+import javax.annotation.Nullable;
 import vadl.lcb.codegen.model.llvm.ValueType;
 import vadl.lcb.passes.isaMatching.MachineInstructionLabel;
 import vadl.lcb.passes.llvmLowering.domain.LlvmLoweringRecord;
@@ -36,7 +36,6 @@ import vadl.viam.graph.Graph;
 import vadl.viam.graph.GraphVisitor;
 import vadl.viam.graph.Node;
 import vadl.viam.graph.NodeList;
-import vadl.viam.graph.control.AbstractEndNode;
 import vadl.viam.graph.dependency.SideEffectNode;
 import vadl.viam.graph.dependency.WriteResourceNode;
 import vadl.viam.passes.functionInliner.UninlinedGraph;
@@ -64,7 +63,8 @@ public class LlvmInstructionLoweringConditionalBranchesStrategyImpl
   public Optional<LlvmLoweringRecord> lower(
       Map<MachineInstructionLabel, List<Instruction>> labelledMachineInstructions,
       Instruction instruction,
-      UninlinedGraph uninlinedBehavior) {
+      UninlinedGraph uninlinedBehavior,
+      @Nullable List<UninlinedGraph> unmodifiedAdditionalBehaviors) {
 
     var visitor = replacementHooks();
     var copy = (UninlinedGraph) uninlinedBehavior.copy();

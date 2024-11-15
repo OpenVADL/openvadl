@@ -8,6 +8,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
+import javax.annotation.Nullable;
 import vadl.lcb.codegen.model.llvm.ValueType;
 import vadl.lcb.passes.isaMatching.MachineInstructionLabel;
 import vadl.lcb.passes.llvmLowering.domain.LlvmLoweringRecord;
@@ -41,7 +42,8 @@ public class LlvmInstructionLoweringUnconditionalJumpsStrategyImpl
   public Optional<LlvmLoweringRecord> lower(
       Map<MachineInstructionLabel, List<Instruction>> labelledMachineInstructions,
       Instruction instruction,
-      UninlinedGraph uninlinedBehavior) {
+      UninlinedGraph uninlinedBehavior,
+      @Nullable List<UninlinedGraph> unmodifiedAdditionalBehaviors) {
 
     var visitor = replacementHooks();
     var copy = (UninlinedGraph) uninlinedBehavior.copy();

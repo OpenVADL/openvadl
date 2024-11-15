@@ -10,4 +10,9 @@ public class TableGenSelectionPattern extends TableGenPattern {
   public TableGenSelectionPattern(Graph selector) {
     super(selector);
   }
+
+  @Override
+  public TableGenPattern copy() {
+    return new TableGenSelectionPattern(selector.copy());
+  }
 }

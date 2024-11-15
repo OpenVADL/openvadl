@@ -1,6 +1,8 @@
 package vadl.viam;
 
 import com.google.errorprone.annotations.concurrent.LazyInit;
+import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.Set;
 import org.checkerframework.checker.nullness.qual.NonNull;
@@ -15,6 +17,11 @@ import vadl.viam.graph.Graph;
 public class Instruction extends Definition implements DefProp.WithBehavior {
 
   private final Graph behavior;
+  /*
+  Sometimes, instruction have a single behaviors but having additional behaviors can help when
+  generating patterns. For example, "less-than" can be rewritten to support "eq" and "neq".
+   */
+  private final List<Graph> alternativeBehaviors;
   private final Assembly assembly;
   private final Encoding encoding;
 
@@ -36,7 +43,7 @@ public class Instruction extends Definition implements DefProp.WithBehavior {
    * Creates an Instruction object with the given parameters.
    *
    * @param identifier The identifier of the instruction.
-   * @param behavior   The behavior graph of the instruction.
+   * @param behavior   The behaviors graph of the instruction.
    * @param assembly   The assembly of the instruction.
    * @param encoding   The encoding of the instruction.
    */
@@ -48,6 +55,7 @@ public class Instruction extends Definition implements DefProp.WithBehavior {
   ) {
     super(identifier);
     this.behavior = behavior;
+    this.alternativeBehaviors = new ArrayList<>();
     this.assembly = assembly;
     this.encoding = encoding;
 
@@ -56,6 +64,15 @@ public class Instruction extends Definition implements DefProp.WithBehavior {
 
   public Graph behavior() {
     return behavior;
+  }
+
+  public List<Graph> alternativeBehaviors() {
+    return alternativeBehaviors;
+  }
+
+  public void addAlternativeBehaviors(Graph graph) {
+    this.alternativeBehaviors.add(graph);
+    graph.setParentDefinition(this);
   }
 
   public Assembly assembly() {
@@ -103,7 +120,7 @@ public class Instruction extends Definition implements DefProp.WithBehavior {
   public void verify() {
     super.verify();
 
-    ensure(behavior.isInstruction(), "Behavior is not a valid instruction behavior");
+    ensure(behavior.isInstruction(), "Behavior is not a valid instruction behaviors");
 
     behavior.verify();
   }

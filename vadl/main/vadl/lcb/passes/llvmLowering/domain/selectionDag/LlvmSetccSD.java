@@ -43,7 +43,18 @@ public class LlvmSetccSD extends BuiltInCall implements LlvmNodeLowerable {
                      Type type) {
     super(built, args, type);
     this.builtIn = built;
-    var condCode = LlvmCondCode.from(built);
+    var condCode = LlvmCondCode.from(builtIn);
+    if (condCode != null) {
+      llvmCondCode = condCode;
+    } else {
+      throw new ViamError("not supported cond code");
+    }
+  }
+
+  @Override
+  public void setBuiltIn(BuiltInTable.BuiltIn builtIn) {
+    this.builtIn = builtIn;
+    var condCode = LlvmCondCode.from(builtIn);
     if (condCode != null) {
       llvmCondCode = condCode;
     } else {

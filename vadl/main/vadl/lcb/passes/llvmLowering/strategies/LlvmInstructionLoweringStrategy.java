@@ -241,16 +241,26 @@ public abstract class LlvmInstructionLoweringStrategy {
    * Generate a lowering result for the given {@link Graph} for machine instructions.
    * If it is not lowerable then return {@link Optional#empty()}.
    *
-   * @param labelledMachineInstructions the instructions which have known semantics.
-   * @param instruction                 is the machine instruction which should be lowered.
-   * @param unmodifiedBehavior          is the uninlined graph in the case of {@link Instruction}.
+   * @param labelledMachineInstructions   the instructions which have known semantics.
+   * @param instruction                   is the machine instruction which should be lowered.
+   * @param unmodifiedBehavior            is the uninlined graph in the case of {@link Instruction}.
+   * @param unmodifiedAdditionalBehaviors are the uninlined graph in the case of {@link Instruction}
+   *                                      which provide additional functionality. For example, a
+   *                                      "less-than" instruction can be also
+   *                                      lowered to "eq" or "neq". The behavior for "eq" and "neq"
+   *                                      would be an additional behavior. It is easier to provide
+   *                                      these high-level VIAM definitions then to create these
+   *                                      patterns by hand in the strategy.
    */
   public Optional<LlvmLoweringRecord> lower(
       Map<MachineInstructionLabel, List<Instruction>> labelledMachineInstructions,
       Instruction instruction,
-      UninlinedGraph unmodifiedBehavior) {
-    return lowerInstruction(labelledMachineInstructions, instruction,
-        unmodifiedBehavior);
+      UninlinedGraph unmodifiedBehavior,
+      @Nullable List<UninlinedGraph> unmodifiedAdditionalBehaviors) {
+    return lowerInstruction(labelledMachineInstructions,
+        instruction,
+        unmodifiedBehavior,
+        unmodifiedAdditionalBehaviors);
   }
 
   /**
@@ -263,23 +273,21 @@ public abstract class LlvmInstructionLoweringStrategy {
       Graph unmodifiedBehavior) {
     logger.atDebug().log("Lowering {} with {}", instruction.identifier.simpleName(),
         pseudoInstruction.identifier.simpleName());
-    return lowerInstruction(labelledMachineInstructions, instruction,
-        unmodifiedBehavior);
+    return lowerInstruction(labelledMachineInstructions,
+        instruction,
+        unmodifiedBehavior,
+        Collections.emptyList());
   }
 
   /**
    * Generate a lowering result for the given {@link Graph} for pseudo instructions.
    * If it is not lowerable then return {@link Optional#empty()}.
-   *
-   * @param labelledMachineInstructions the instructions which have known semantics.
-   * @param instruction                 is the machine instruction which should be lowered.
-   * @param unmodifiedBehavior          is the uninlined graph in the case of {@link Instruction} or
-   *                                    the applied graph in the case of {@link PseudoInstruction}.
    */
   protected Optional<LlvmLoweringRecord> lowerInstruction(
       Map<MachineInstructionLabel, List<Instruction>> labelledMachineInstructions,
       Instruction instruction,
-      Graph unmodifiedBehavior) {
+      Graph unmodifiedBehavior,
+      @Nullable List<UninlinedGraph> unmodifiedAdditionalBehaviors) {
     var visitor = replacementHooksWithDefaultFieldAccessReplacement();
     var copy = unmodifiedBehavior.copy();
 
@@ -475,7 +483,7 @@ public abstract class LlvmInstructionLoweringStrategy {
   }
 
   /**
-   * Some dataflow nodes are not lowerable. This function checks whether the {@code behavior}
+   * Some dataflow nodes are not lowerable. This function checks whether the {@code behaviors}
    * contains these.
    *
    * @return {@code true} if the {@link Graph} is lowerable.
