@@ -1166,10 +1166,10 @@ PRODUCTIONS
     }
   .
 
-  assemblyGrammarElement<out AsmGrammarElementDefinition element>    (. AsmGrammarLocalVarDefinition localVar = null; Identifier id = null; Boolean isPlusEq = false;
+  assemblyGrammarElement<out AsmGrammarElementDefinition element>    (. AsmGrammarLocalVarDefinition localVar = null; Identifier id = null; Boolean isPlusEq = false; var start = loc();
                                                                         List<AsmGrammarLiteralDefinition> params = new ArrayList<>(); AsmGrammarLiteralDefinition asmLiteral = null;
                                                                         AsmGrammarAlternativesDefinition groupAlternatives = null; AsmGrammarAlternativesDefinition optionAlternatives = null;
-                                                                        AsmGrammarTypeDefinition type = null; Expr semanticPred = null; var start = loc(); .)
+                                                                        AsmGrammarAlternativesDefinition repetitionAlternatives = null;AsmGrammarTypeDefinition type = null; Expr semanticPred = null; .)
   = (
       assemblyLocalVarDeclaration<out localVar>
     | assemblyIdentifier<out id>
@@ -1181,13 +1181,14 @@ PRODUCTIONS
     | assemblyGrammarGroup<out groupAlternatives>
       [assemblyGrammarTypeDefinition<out type>]
     | assemblyGrammarOptional<out optionAlternatives>
+    | assemblyGrammarRepetition<out repetitionAlternatives>
     | SYM_QUESTION SYM_PAREN_OPEN
       callOrBinaryExpression<out semanticPred, false>
       SYM_PAREN_CLOSE
     | stringLiteral<out Expr strLit>
       [assemblyGrammarTypeDefinition<out type>]                      (. asmLiteral = new AsmGrammarLiteralDefinition(null, new ArrayList<>(), strLit, type, start.join(loc())); type = null;.)
   )                                                                  (. element =  new AsmGrammarElementDefinition(localVar, id, isPlusEq, asmLiteral, groupAlternatives,
-                                                                                    optionAlternatives, semanticPred, type, start.join(loc())); .)
+                                                                                    optionAlternatives, repetitionAlternatives, semanticPred, type, start.join(loc())); .)
   .
 
   assemblyLocalVarDeclaration<out AsmGrammarLocalVarDefinition localVar> (. var start = loc(); .)
@@ -1223,6 +1224,12 @@ PRODUCTIONS
   = SYM_BRACK_OPEN
       assemblyGrammarAlternatives<.out alternatives.>
     SYM_BRACK_CLOSE
+  .
+
+  assemblyGrammarRepetition<out AsmGrammarAlternativesDefinition alternatives>
+  = SYM_BRACE_OPEN
+    assemblyGrammarAlternatives<.out alternatives.>
+    SYM_BRACE_CLOSE
   .
 
   // -- STATEMENTS ---------------------------------------------------------------------------------------------------
