@@ -39,6 +39,7 @@ import vadl.lcb.passes.llvmLowering.immediates.GenerateTableGenImmediateRecordPa
 import vadl.lcb.passes.relocation.GenerateLinkerComponentsPass;
 import vadl.lcb.template.lib.Target.EmitMCInstLowerCppFilePass;
 import vadl.lcb.template.lib.Target.EmitMCInstLowerHeaderFilePass;
+import vadl.lcb.template.lib.Target.MCTargetDesc.EmitConstMatIntHeaderFilePass;
 import vadl.lcb.template.lib.Target.MCTargetDesc.EmitInstPrinterCppFilePass;
 import vadl.lcb.template.lib.Target.MCTargetDesc.EmitInstPrinterHeaderFilePass;
 import vadl.viam.passes.DuplicateWriteDetectionPass;
@@ -258,7 +259,7 @@ public class PassOrders {
     order.add(
         new vadl.lcb.template.lib.Target.MCTargetDesc.EmitELFStreamerCppFilePass(configuration));
     order.add(
-        new vadl.lcb.template.lib.Target.MCTargetDesc.EmitMatIntHeaderFilePass(configuration));
+        new EmitConstMatIntHeaderFilePass(configuration));
     order.add(
         new vadl.lcb.template.lib.Target.MCTargetDesc.EmitMCInstExpanderCppFilePass(configuration));
     order.add(

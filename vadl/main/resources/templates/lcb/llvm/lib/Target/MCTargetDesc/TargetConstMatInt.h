@@ -13,6 +13,7 @@
 #include "llvm/MC/MCRegister.h"
 #include "llvm/MC/MCSubtargetInfo.h"
 #include <cstdint>
+#include <bitset>
 
 namespace llvm {
 class APInt;
@@ -43,13 +44,25 @@ namespace [(${namespace})]MatInt {
 
 static void generateInstSeqImpl(int64_t Val, const MCSubtargetInfo &STI,
                                 [(${namespace})]MatInt::InstSeq &Res) {
-  auto largestPossibleValue = [(${largestPossibleValue})];
+  auto largestPossibleValue = [(${largestPossibleValueAddi})];
   auto abs = std::abs(Val);
-  while(abs >= largestPossibleValue) {
-    Res.emplace_back([(${namespace})]::[(${addi})], largestPossibleValue);
-    abs -= largestPossibleValue;
+  if(abs <= largestPossibleValue) {
+    Res.emplace_back([(${namespace})]::[(${addi})], abs);
+  } else {
+    auto largestPossibleLi = [(${largestPossibleValue})];
+    if(Val >= largestPossibleLi) {
+      auto lui = project_range<[(${luiLowBit})], [(${luiHighBit})]> (std::bitset<[(${luiFormatSize})]>(largestPossibleLi)).to_ullong();
+      auto addi = project_range<0, [(${addiBitSize})]> (std::bitset<[(${luiFormatSize})]>(largestPossibleLi)).to_ullong();
+      Res.emplace_back([(${namespace})]::[(${lui})], lui);
+      Res.emplace_back([(${namespace})]::[(${addi})], addi);
+      generateInstSeqImpl(Val - largestPossibleLi, STI, Res);
+    } else {
+      auto lui = project_range<[(${luiLowBit})], [(${luiHighBit})]> (std::bitset<[(${luiFormatSize})]>(largestPossibleLi)).to_ullong();
+      auto addi = project_range<0, [(${addiBitSize})]> (std::bitset<[(${luiFormatSize})]>(largestPossibleLi)).to_ullong();
+      Res.emplace_back([(${namespace})]::[(${lui})], lui);
+      Res.emplace_back([(${namespace})]::[(${addi})], addi);
+    }
   }
-  Res.emplace_back([(${namespace})]::[(${addi})], abs);
 }
 }
 

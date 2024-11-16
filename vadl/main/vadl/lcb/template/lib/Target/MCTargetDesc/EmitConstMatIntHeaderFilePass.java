@@ -8,27 +8,28 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
-import jdk.jshell.Diag;
+import java.util.Optional;
+import org.jetbrains.annotations.NotNull;
 import vadl.configuration.LcbConfiguration;
 import vadl.error.Diagnostic;
 import vadl.gcb.passes.IdentifyFieldUsagePass;
+import vadl.lcb.codegen.model.llvm.ValueType;
 import vadl.lcb.passes.isaMatching.IsaMachineInstructionMatchingPass;
 import vadl.lcb.passes.isaMatching.MachineInstructionLabel;
-import vadl.lcb.passes.relocation.GenerateLinkerComponentsPass;
 import vadl.lcb.template.CommonVarNames;
 import vadl.lcb.template.LcbTemplateRenderingPass;
 import vadl.pass.PassResults;
+import vadl.viam.Format;
 import vadl.viam.Instruction;
 import vadl.viam.Specification;
-import vadl.viam.graph.dependency.FieldAccessRefNode;
 import vadl.viam.passes.dummyAbi.DummyAbi;
 
 /**
  * This file contains the implementation for constant materialisation.
  */
-public class EmitMatIntHeaderFilePass extends LcbTemplateRenderingPass {
+public class EmitConstMatIntHeaderFilePass extends LcbTemplateRenderingPass {
 
-  public EmitMatIntHeaderFilePass(LcbConfiguration lcbConfiguration)
+  public EmitConstMatIntHeaderFilePass(LcbConfiguration lcbConfiguration)
       throws IOException {
     super(lcbConfiguration);
   }
@@ -64,22 +65,50 @@ public class EmitMatIntHeaderFilePass extends LcbTemplateRenderingPass {
     var immediateDetection =
         (IdentifyFieldUsagePass.ImmediateDetectionContainer) passResults
             .lastResultOf(IdentifyFieldUsagePass.class);
-    // Get the immediate in the `addi` instruction.
-    var immediate = immediateDetection.getImmediateUsages(addi)
+    var immediateAddiSize = immediateSize(immediateDetection, addi);
+    var largestPossibleValueAddi = (long) (Math.pow(2, immediateAddiSize) - 1);
+    var lui =
+        ensurePresent(
+            Objects.requireNonNull(labelledInstructions)
+                .getOrDefault(MachineInstructionLabel.LUI, Collections.emptyList())
+                .stream().findFirst(),
+            () -> Diagnostic.error("Expected an instruction of load upper immediate",
+                specification.sourceLocation()));
+    var luiImmediate = immediate(immediateDetection, lui).get();
+    var immediateLuiSize = immediateSize(immediateDetection, lui);
+    var largestPossibleValueLui = (long) (Math.pow(2, immediateLuiSize) - 1);
+    int luiFormatSize = lui.format().type().bitWidth();
+    return Map.of(CommonVarNames.NAMESPACE, specification.simpleName(),
+        "addi", addi.identifier.simpleName(),
+        "lui", lui.identifier.simpleName(),
+        "luiHighBit", luiImmediate.bitSlice().msb(),
+        "luiLowBit", luiImmediate.bitSlice().lsb(),
+        "luiFormatSize", luiFormatSize,
+        "addiBitSize", immediateAddiSize - 1,
+        "largestPossibleValueAddi", largestPossibleValueAddi,
+        "largestPossibleValue", (long) Math.pow(2, lui.format().type().bitWidth()) - 1,
+        "largestPossibleValueLui", largestPossibleValueLui
+    );
+  }
+
+  private static int immediateSize(
+      IdentifyFieldUsagePass.ImmediateDetectionContainer immediateDetection,
+      Instruction instruction) {
+    var immediate = immediate(immediateDetection, instruction);
+    return ensurePresent(immediate,
+        () -> Diagnostic.error("Compiler generator was not able to get maximal storable value",
+            instruction.sourceLocation()))
+        .size();
+  }
+
+  private static @NotNull Optional<Format.Field> immediate(
+      IdentifyFieldUsagePass.ImmediateDetectionContainer immediateDetection,
+      Instruction instruction) {
+    return immediateDetection.getImmediateUsages(instruction)
         .entrySet()
         .stream()
         .filter(x -> x.getValue() == IdentifyFieldUsagePass.FieldUsage.IMMEDIATE)
         .map(Map.Entry::getKey)
         .findFirst();
-    var immediateSize =
-        ensurePresent(immediate,
-            () -> Diagnostic.error("Compiler generator was not able to get maximal storable value",
-                addi.sourceLocation()))
-            .size();
-    var largestPossibleValue = (long) (Math.pow(2, immediateSize) - 1);
-
-    return Map.of(CommonVarNames.NAMESPACE, specification.simpleName(),
-        "addi", addi.identifier.simpleName(),
-        "largestPossibleValue", largestPossibleValue);
   }
 }
