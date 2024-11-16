@@ -45,11 +45,11 @@ static void generateInstSeqImpl(int64_t Val, const MCSubtargetInfo &STI,
                                 [(${namespace})]MatInt::InstSeq &Res) {
   auto largestPossibleValue = [(${largestPossibleValue})];
   auto abs = std::abs(Val);
-  while(abs <= largestPossibleValue && abs > 0) {
-    auto v = (largestPossibleValue - abs);
-    Res.emplace_back([(${namespace})]::[(${addi})] ,v);
-    abs -= v;
+  while(abs >= largestPossibleValue) {
+    Res.emplace_back([(${namespace})]::[(${addi})], largestPossibleValue);
+    abs -= largestPossibleValue;
   }
+  Res.emplace_back([(${namespace})]::[(${addi})], abs);
 }
 }
 
