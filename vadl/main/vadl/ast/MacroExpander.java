@@ -810,7 +810,8 @@ class MacroExpander
   public Definition visit(AsmGrammarElementDefinition definition) {
     return new AsmGrammarElementDefinition(definition.localVar, definition.attribute,
         definition.isPlusEqualsAttributeAssign, definition.asmLiteral, definition.groupAlternatives,
-        definition.optionAlternatives, definition.asmType, copyLoc(definition.loc));
+        definition.optionAlternatives, definition.semanticPredicate, definition.asmType,
+        copyLoc(definition.loc));
   }
 
   @Override

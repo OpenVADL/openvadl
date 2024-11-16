@@ -4249,6 +4249,8 @@ class AsmGrammarElementDefinition extends Definition {
   @Nullable
   AsmGrammarAlternativesDefinition optionAlternatives;
   @Nullable
+  Expr semanticPredicate;
+  @Nullable
   AsmGrammarTypeDefinition asmType;
   SourceLocation loc;
 
@@ -4258,6 +4260,7 @@ class AsmGrammarElementDefinition extends Definition {
                                      @Nullable AsmGrammarLiteralDefinition asmLiteral,
                                      @Nullable AsmGrammarAlternativesDefinition groupAlternatives,
                                      @Nullable AsmGrammarAlternativesDefinition optionAlternatives,
+                                     @Nullable Expr semanticPredicate,
                                      @Nullable AsmGrammarTypeDefinition asmType,
                                      SourceLocation loc) {
     this.localVar = localVar;
@@ -4266,6 +4269,7 @@ class AsmGrammarElementDefinition extends Definition {
     this.asmLiteral = asmLiteral;
     this.groupAlternatives = groupAlternatives;
     this.optionAlternatives = optionAlternatives;
+    this.semanticPredicate = semanticPredicate;
     this.asmType = asmType;
     this.loc = loc;
   }
@@ -4296,7 +4300,6 @@ class AsmGrammarElementDefinition extends Definition {
     if (localVar != null) {
       localVar.prettyPrint(indent, builder);
     }
-
     if (attribute != null) {
       attribute.prettyPrint(indent, builder);
       if (asmLiteral != null) {
@@ -4317,6 +4320,11 @@ class AsmGrammarElementDefinition extends Definition {
       optionAlternatives.prettyPrint(++indent, builder);
       builder.append(prettyIndentString(--indent));
       builder.append("\n").append(prettyIndentString(indent)).append(']');
+    }
+    if (semanticPredicate != null) {
+      builder.append("?( ");
+      semanticPredicate.prettyPrint(0, builder);
+      builder.append(" )");
     }
     if (asmType != null) {
       asmType.prettyPrint(0, builder);

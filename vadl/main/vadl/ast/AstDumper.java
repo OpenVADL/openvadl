@@ -663,6 +663,9 @@ public class AstDumper
     if (definition.optionAlternatives != null) {
       dumpChildren(definition.optionAlternatives);
     }
+    if (definition.semanticPredicate != null) {
+      dumpChildren(definition.semanticPredicate);
+    }
     if (definition.asmType != null) {
       dumpChildren(definition.asmType);
     }

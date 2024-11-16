@@ -295,4 +295,37 @@ public class AsmGrammarTests {
         """;
     verifyPrettifiedAst(VadlParser.parse(prog));
   }
+
+  @Test
+  void semanticPredicateGrammarRule() {
+    var prog = """
+          assembly description AD for ABI = {
+            grammar = {
+              A :
+                [ ?( LaIdEq<1>("C") )
+                  B C
+                ]
+                B
+              ;
+            }
+          }
+        """;
+    verifyPrettifiedAst(VadlParser.parse(prog));
+  }
+
+  @Test
+  void semanticPredicateInNestedAlternatives() {
+    var prog = """
+          assembly description AD for ABI = {
+            grammar = {
+              A@typeA :
+                B
+                | ( ?(LaIdIn("CA","CB")) C@c | D | G<>@g)
+                | F<Int>@f
+              ;
+            }
+          }
+        """;
+    verifyPrettifiedAst(VadlParser.parse(prog));
+  }
 }
