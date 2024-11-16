@@ -11,7 +11,6 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
 import javax.annotation.Nullable;
-import org.jetbrains.annotations.NotNull;
 import vadl.error.DeferredDiagnosticStore;
 import vadl.error.Diagnostic;
 import vadl.gcb.passes.pseudo.PseudoFuncParamNode;
@@ -249,8 +248,8 @@ public abstract class LlvmPseudoInstructionLowerStrategy {
     ));
   }
 
-  private <T> ArrayList<T> dedup(
-      ArrayList<T> x) {
+  private <T> List<T> dedup(
+      List<T> x) {
     return new ArrayList<>(new LinkedHashSet<>(x));
   }
 
