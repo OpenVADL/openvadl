@@ -32,7 +32,7 @@ public final class TableGenImmediateOperandRenderer {
         operand.rawName(),
         type.getLlvmType(),
         type.getLlvmType(),
-        operand.originalType().bitWidth(),
+        operand.formatFieldBitSize(),
         operand.predicateMethod(),
         operand.rawName(),
         operand.rawName()
