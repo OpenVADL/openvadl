@@ -169,7 +169,7 @@ class RV64IM_Btype_imm<ValueType ty> : Operand<ty>
 
 def RV64IM_Btype_immAsInt64
     : RV64IM_Btype_imm<i64>
-    , ImmLeaf<i64, [{ return isInt<64>(Imm) && RV64IM_Btype_immS_predicate(Imm); }]>;
+    , ImmLeaf<i64, [{ return isInt<12>(Imm) && RV64IM_Btype_immS_predicate(Imm); }]>;
 
 def RV64IM_Btype_immAsLabel : RV64IM_Btype_imm<OtherVT>;
 
@@ -181,7 +181,7 @@ class RV64IM_Stype_imm<ValueType ty> : Operand<ty>
 
 def RV64IM_Stype_immAsInt64
     : RV64IM_Stype_imm<i64>
-    , ImmLeaf<i64, [{ return isInt<64>(Imm) && RV64IM_Stype_immS_predicate(Imm); }]>;
+    , ImmLeaf<i64, [{ return isInt<12>(Imm) && RV64IM_Stype_immS_predicate(Imm); }]>;
 
 def RV64IM_Stype_immAsLabel : RV64IM_Stype_imm<OtherVT>;
 
@@ -205,7 +205,7 @@ class RV64IM_Itype_imm<ValueType ty> : Operand<ty>
 
 def RV64IM_Itype_immAsInt64
     : RV64IM_Itype_imm<i64>
-    , ImmLeaf<i64, [{ return isInt<64>(Imm) && RV64IM_Itype_immS_predicate(Imm); }]>;
+    , ImmLeaf<i64, [{ return isInt<12>(Imm) && RV64IM_Itype_immS_predicate(Imm); }]>;
 
 def RV64IM_Itype_immAsLabel : RV64IM_Itype_imm<OtherVT>;
 
@@ -217,7 +217,7 @@ class RV64IM_Utype_imm<ValueType ty> : Operand<ty>
 
 def RV64IM_Utype_immAsInt64
     : RV64IM_Utype_imm<i64>
-    , ImmLeaf<i64, [{ return isInt<64>(Imm) && RV64IM_Utype_immU_predicate(Imm); }]>;
+    , ImmLeaf<i64, [{ return isInt<20>(Imm) && RV64IM_Utype_immU_predicate(Imm); }]>;
 
 def RV64IM_Utype_immAsLabel : RV64IM_Utype_imm<OtherVT>;
 
@@ -229,7 +229,7 @@ class RV64IM_Jtype_imm<ValueType ty> : Operand<ty>
 
 def RV64IM_Jtype_immAsInt64
     : RV64IM_Jtype_imm<i64>
-    , ImmLeaf<i64, [{ return isInt<64>(Imm) && RV64IM_Jtype_immS_predicate(Imm); }]>;
+    , ImmLeaf<i64, [{ return isInt<20>(Imm) && RV64IM_Jtype_immS_predicate(Imm); }]>;
 
 def RV64IM_Jtype_immAsLabel : RV64IM_Jtype_imm<OtherVT>;
 
