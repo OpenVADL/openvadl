@@ -265,7 +265,11 @@ public class IsaMachineInstructionMatchingPass extends Pass implements IsaMatchi
 
     if (fieldAccess.isPresent()) {
       var matched = TreeMatcher.matches(
-              fieldAccess.get().fieldAccess().accessFunction().behavior().getNodes(BuiltInCall.class)
+              fieldAccess.get()
+                  .fieldAccess()
+                  .accessFunction()
+                  .behavior()
+                  .getNodes(BuiltInCall.class)
                   .map(x -> x),
               new BuiltInMatcher(LSL, List.of(
                   new AnyNodeMatcher(),
