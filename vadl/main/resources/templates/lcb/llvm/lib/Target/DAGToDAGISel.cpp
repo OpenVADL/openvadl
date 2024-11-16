@@ -2,6 +2,7 @@
 #include "[(${namespace})]RegisterInfo.h"
 #include "[(${namespace})]SubTarget.h"
 #include "[(${namespace})]TargetMachine.h"
+#include "MCTargetDesc/[(${namespace})]ConstMatInt.h"
 #include "llvm/CodeGen/MachineConstantPool.h"
 #include "llvm/CodeGen/MachineFrameInfo.h"
 #include "llvm/CodeGen/MachineFunction.h"
@@ -66,12 +67,60 @@ void [(${namespace})]DAGToDAGISel::Select(SDNode *Node)
     SelectCode(Node);
 }
 
+static SDNode *selectImm(SelectionDAG *CurDAG, const SDLoc &DL, int64_t Imm,
+                         MVT XLenVT, const [(${namespace})]Subtarget &Subtarget) {
+  auto Seq = [(${namespace})]MatInt::generateInstSeq(Imm, Subtarget);
+
+  SDNode *Result;
+  SDValue SrcReg = CurDAG->getRegister([(${namespace})]::X0, XLenVT);
+  for ([(${namespace})]MatInt::Inst &Inst : Seq) {
+    SDValue SDImm = CurDAG->getTargetConstant(Inst.getImm(), DL, XLenVT);
+    if (Inst.getOpcode() == [(${namespace})]::[(${lui})])
+      Result = CurDAG->getMachineNode([(${namespace})]::[(${lui})], DL, XLenVT, SDImm);
+    else
+      Result = CurDAG->getMachineNode(Inst.getOpcode(), DL, XLenVT, SrcReg, SDImm);
+
+    // Only the first instruction has X0 as its source.
+    SrcReg = SDValue(Result, 0);
+  }
+
+  return Result;
+}
+
 bool [(${namespace})]DAGToDAGISel::trySelect(SDNode *Node)
 {
     // Instruction Selection not handled by the auto-generated tablegen selection
     // should be handled here.
     unsigned Opcode = Node->getOpcode();
     SDLoc DL(Node);
+    auto XLenVT = MVT::[(${stackPointerType})];
+
+    switch(Opcode) {
+       case ISD::Constant:
+       {
+         auto ConstNode = cast<ConstantSDNode>(Node);
+         MVT VT = Node->getSimpleValueType(0);
+
+         // Handle zeros
+         if (VT == MVT::[(${stackPointerType})] && ConstNode->isZero()) {
+           SDValue New = CurDAG->getCopyFromReg(CurDAG->getEntryNode(), SDLoc(Node),
+                                                [(${namespace})]::[(${zeroRegister})], MVT::[(${stackPointerType})]);
+           ReplaceNode(Node, New.getNode());
+           return true;
+         }
+
+         // Handle rest
+         int64_t Imm = ConstNode->getSExtValue();
+         if (XLenVT == MVT::[(${stackPointerType})]) {
+          ReplaceNode(Node, selectImm(CurDAG, SDLoc(Node), Imm, XLenVT, *Subtarget));
+          return true;
+         }
+
+         return false;
+       }
+       default:
+        return false;
+    }
 
     return false;
 }

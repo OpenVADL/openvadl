@@ -11,9 +11,6 @@ import java.util.stream.Stream;
 import vadl.configuration.LcbConfiguration;
 import vadl.cppCodeGen.model.CppFunction;
 import vadl.gcb.passes.pseudo.PseudoExpansionFunctionGeneratorPass;
-import vadl.lcb.passes.llvmLowering.ConstMaterialisationPseudoExpansionFunctionGeneratorPass;
-import vadl.lcb.passes.llvmLowering.domain.ConstantMatPseudoInstruction;
-import vadl.lcb.passes.llvmLowering.immediates.GenerateConstantMaterialisationPass;
 import vadl.lcb.template.CommonVarNames;
 import vadl.lcb.template.LcbTemplateRenderingPass;
 import vadl.lcb.template.utils.PseudoInstructionProvider;
@@ -63,22 +60,6 @@ public class EmitMCInstExpanderHeaderFilePass extends LcbTemplateRenderingPass {
         )).toList();
   }
 
-
-  private List<RenderedPseudoInstruction> constMatInstructions(
-      Map<PseudoInstruction, CppFunction> cppFunctions,
-      PassResults passResults) {
-    var constMats = (List<ConstantMatPseudoInstruction>) passResults.lastResultOf(
-        GenerateConstantMaterialisationPass.class);
-
-    return constMats.stream()
-        .map(x -> new RenderedPseudoInstruction(
-            ensureNonNull(cppFunctions.get(x), "cppFunction must exist")
-                .functionName().lower(),
-            x
-        ))
-        .toList();
-  }
-
   private List<RenderedPseudoInstruction> compilerInstructions(
       Map<PseudoInstruction, CppFunction> cppFunctions,
       Specification specification) {
@@ -100,19 +81,14 @@ public class EmitMCInstExpanderHeaderFilePass extends LcbTemplateRenderingPass {
     var cppFunctionsForPseudoInstructions =
         (IdentityHashMap<PseudoInstruction, CppFunction>) passResults.lastResultOf(
             PseudoExpansionFunctionGeneratorPass.class);
-    var cppFunctionsForConstMatInstructions =
-        (IdentityHashMap<PseudoInstruction, CppFunction>) passResults.lastResultOf(
-            ConstMaterialisationPseudoExpansionFunctionGeneratorPass.class);
-    var cppFunctions = Stream.concat(cppFunctionsForPseudoInstructions.entrySet().stream(),
-            cppFunctionsForConstMatInstructions.entrySet().stream())
+    var cppFunctions = cppFunctionsForPseudoInstructions.entrySet().stream()
         .collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue));
     var pseudoInstructions =
         pseudoInstructions(specification, passResults, cppFunctions);
-    var constMats = constMatInstructions(cppFunctions, passResults);
     var compilerInstructions = compilerInstructions(cppFunctions, specification);
     return Map.of(CommonVarNames.NAMESPACE, specification.simpleName(), "pseudoInstructions",
         Stream.concat(pseudoInstructions.stream(),
-            Stream.concat(constMats.stream(), compilerInstructions.stream())).toList()
+            compilerInstructions.stream()).toList()
     );
   }
 }

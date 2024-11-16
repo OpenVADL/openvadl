@@ -5,6 +5,7 @@ import static vadl.types.BuiltInTable.ADDS;
 import static vadl.types.BuiltInTable.AND;
 import static vadl.types.BuiltInTable.ANDS;
 import static vadl.types.BuiltInTable.EQU;
+import static vadl.types.BuiltInTable.LSL;
 import static vadl.types.BuiltInTable.MUL;
 import static vadl.types.BuiltInTable.NEQ;
 import static vadl.types.BuiltInTable.OR;
@@ -61,12 +62,14 @@ import vadl.viam.InstructionSetArchitecture;
 import vadl.viam.Specification;
 import vadl.viam.graph.control.IfNode;
 import vadl.viam.graph.dependency.BuiltInCall;
+import vadl.viam.graph.dependency.FieldAccessRefNode;
 import vadl.viam.graph.dependency.WriteMemNode;
 import vadl.viam.graph.dependency.WriteRegFileNode;
 import vadl.viam.graph.dependency.WriteRegNode;
 import vadl.viam.graph.dependency.WriteResourceNode;
 import vadl.viam.matching.TreeMatcher;
 import vadl.viam.matching.impl.AnyChildMatcher;
+import vadl.viam.matching.impl.AnyConstantValueMatcher;
 import vadl.viam.matching.impl.AnyNodeMatcher;
 import vadl.viam.matching.impl.AnyReadMemMatcher;
 import vadl.viam.matching.impl.AnyReadRegFileMatcher;
@@ -133,7 +136,9 @@ public class IsaMachineInstructionMatchingPass extends Pass implements IsaMatchi
       // The reason is that most of the time we do not care because
       // the instruction selection will figure out the types anyway.
       // The raw cases where we need the type are typed like addition.
-      if (findAdd32Bit(behavior)) {
+      if (findLui(behavior)) {
+        matched.put(MachineInstructionLabel.LUI, List.of(instruction));
+      } else if (findAdd32Bit(behavior)) {
         matched.put(MachineInstructionLabel.ADD_32, List.of(instruction));
       } else if (findAdd64Bit(behavior)) {
         matched.put(MachineInstructionLabel.ADD_64, List.of(instruction));
@@ -253,6 +258,30 @@ public class IsaMachineInstructionMatchingPass extends Pass implements IsaMatchi
         new WriteResourceMatcherForValue(new AnyChildMatcher(new AnyReadRegFileMatcher())));
 
     return !matched.isEmpty();
+  }
+
+  private boolean findLui(UninlinedGraph behavior) {
+    var fieldAccess = behavior.getNodes(FieldAccessRefNode.class).findFirst();
+
+    if (fieldAccess.isPresent()) {
+      var matched = TreeMatcher.matches(
+              fieldAccess.get()
+                  .fieldAccess()
+                  .accessFunction()
+                  .behavior()
+                  .getNodes(BuiltInCall.class)
+                  .map(x -> x),
+              new BuiltInMatcher(LSL, List.of(
+                  new AnyNodeMatcher(),
+                  new AnyConstantValueMatcher()
+              )))
+          .stream()
+          .findFirst();
+
+      return matched.isPresent() && writesExactlyOneRegisterClass(behavior);
+    }
+
+    return false;
   }
 
   private boolean findAdd32Bit(UninlinedGraph behavior) {

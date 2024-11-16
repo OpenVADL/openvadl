@@ -169,7 +169,7 @@ class RV64IM_Btype_imm<ValueType ty> : Operand<ty>
 
 def RV64IM_Btype_immAsInt64
     : RV64IM_Btype_imm<i64>
-    , ImmLeaf<i64, [{ return isInt<64>(Imm) && RV64IM_Btype_immS_predicate(Imm); }]>;
+    , ImmLeaf<i64, [{ return isInt<12>(Imm) && RV64IM_Btype_immS_predicate(Imm); }]>;
 
 def RV64IM_Btype_immAsLabel : RV64IM_Btype_imm<OtherVT>;
 
@@ -181,7 +181,7 @@ class RV64IM_Stype_imm<ValueType ty> : Operand<ty>
 
 def RV64IM_Stype_immAsInt64
     : RV64IM_Stype_imm<i64>
-    , ImmLeaf<i64, [{ return isInt<64>(Imm) && RV64IM_Stype_immS_predicate(Imm); }]>;
+    , ImmLeaf<i64, [{ return isInt<12>(Imm) && RV64IM_Stype_immS_predicate(Imm); }]>;
 
 def RV64IM_Stype_immAsLabel : RV64IM_Stype_imm<OtherVT>;
 
@@ -205,7 +205,7 @@ class RV64IM_Itype_imm<ValueType ty> : Operand<ty>
 
 def RV64IM_Itype_immAsInt64
     : RV64IM_Itype_imm<i64>
-    , ImmLeaf<i64, [{ return isInt<64>(Imm) && RV64IM_Itype_immS_predicate(Imm); }]>;
+    , ImmLeaf<i64, [{ return isInt<12>(Imm) && RV64IM_Itype_immS_predicate(Imm); }]>;
 
 def RV64IM_Itype_immAsLabel : RV64IM_Itype_imm<OtherVT>;
 
@@ -217,7 +217,7 @@ class RV64IM_Utype_imm<ValueType ty> : Operand<ty>
 
 def RV64IM_Utype_immAsInt64
     : RV64IM_Utype_imm<i64>
-    , ImmLeaf<i64, [{ return isInt<64>(Imm) && RV64IM_Utype_immU_predicate(Imm); }]>;
+    , ImmLeaf<i64, [{ return isInt<20>(Imm) && RV64IM_Utype_immU_predicate(Imm); }]>;
 
 def RV64IM_Utype_immAsLabel : RV64IM_Utype_imm<OtherVT>;
 
@@ -229,215 +229,9 @@ class RV64IM_Jtype_imm<ValueType ty> : Operand<ty>
 
 def RV64IM_Jtype_immAsInt64
     : RV64IM_Jtype_imm<i64>
-    , ImmLeaf<i64, [{ return isInt<64>(Imm) && RV64IM_Jtype_immS_predicate(Imm); }]>;
+    , ImmLeaf<i64, [{ return isInt<20>(Imm) && RV64IM_Jtype_immS_predicate(Imm); }]>;
 
 def RV64IM_Jtype_immAsLabel : RV64IM_Jtype_imm<OtherVT>;
-
-
-
-
-def RV64IM_Ftype_sft_const_mat : Instruction
-{
-let Namespace = "processorNameValue";
-
-let OutOperandList = ( outs X:$rd );
-let InOperandList = ( ins RV64IM_Ftype_sftAsInt64:$imm );
-
-let isTerminator  = 0;
-let isBranch      = 0;
-let isCall        = 0;
-let isReturn      = 0;
-let isPseudo      = 1;
-let isCodeGenOnly = 1;
-let mayLoad       = 0;
-let mayStore      = 0;
-
-let Constraints = "";
-let AddedComplexity = 0;
-
-let Pattern = [];
-
-let Uses = [  ];
-let Defs = [  ];
-}
-
-def : Pat<(RV64IM_Ftype_sftAsInt64:$imm),
-        (RV64IM_Ftype_sft_const_mat RV64IM_Ftype_sftAsInt64:$imm)>;
-
-
-def RV64IM_Btype_imm_const_mat : Instruction
-{
-let Namespace = "processorNameValue";
-
-let OutOperandList = ( outs X:$rd );
-let InOperandList = ( ins RV64IM_Btype_immAsInt64:$imm );
-
-let isTerminator  = 0;
-let isBranch      = 0;
-let isCall        = 0;
-let isReturn      = 0;
-let isPseudo      = 1;
-let isCodeGenOnly = 1;
-let mayLoad       = 0;
-let mayStore      = 0;
-
-let Constraints = "";
-let AddedComplexity = 0;
-
-let Pattern = [];
-
-let Uses = [  ];
-let Defs = [  ];
-}
-
-def : Pat<(RV64IM_Btype_immAsInt64:$imm),
-        (RV64IM_Btype_imm_const_mat RV64IM_Btype_immAsInt64:$imm)>;
-
-
-def RV64IM_Stype_imm_const_mat : Instruction
-{
-let Namespace = "processorNameValue";
-
-let OutOperandList = ( outs X:$rd );
-let InOperandList = ( ins RV64IM_Stype_immAsInt64:$imm );
-
-let isTerminator  = 0;
-let isBranch      = 0;
-let isCall        = 0;
-let isReturn      = 0;
-let isPseudo      = 1;
-let isCodeGenOnly = 1;
-let mayLoad       = 0;
-let mayStore      = 0;
-
-let Constraints = "";
-let AddedComplexity = 0;
-
-let Pattern = [];
-
-let Uses = [  ];
-let Defs = [  ];
-}
-
-def : Pat<(RV64IM_Stype_immAsInt64:$imm),
-        (RV64IM_Stype_imm_const_mat RV64IM_Stype_immAsInt64:$imm)>;
-
-
-def RV64IM_Rtype_rs2_const_mat : Instruction
-{
-let Namespace = "processorNameValue";
-
-let OutOperandList = ( outs X:$rd );
-let InOperandList = ( ins RV64IM_Rtype_rs2AsInt64:$imm );
-
-let isTerminator  = 0;
-let isBranch      = 0;
-let isCall        = 0;
-let isReturn      = 0;
-let isPseudo      = 1;
-let isCodeGenOnly = 1;
-let mayLoad       = 0;
-let mayStore      = 0;
-
-let Constraints = "";
-let AddedComplexity = 0;
-
-let Pattern = [];
-
-let Uses = [  ];
-let Defs = [  ];
-}
-
-def : Pat<(RV64IM_Rtype_rs2AsInt64:$imm),
-        (RV64IM_Rtype_rs2_const_mat RV64IM_Rtype_rs2AsInt64:$imm)>;
-
-
-def RV64IM_Itype_imm_const_mat : Instruction
-{
-let Namespace = "processorNameValue";
-
-let OutOperandList = ( outs X:$rd );
-let InOperandList = ( ins RV64IM_Itype_immAsInt64:$imm );
-
-let isTerminator  = 0;
-let isBranch      = 0;
-let isCall        = 0;
-let isReturn      = 0;
-let isPseudo      = 1;
-let isCodeGenOnly = 1;
-let mayLoad       = 0;
-let mayStore      = 0;
-
-let Constraints = "";
-let AddedComplexity = 0;
-
-let Pattern = [];
-
-let Uses = [  ];
-let Defs = [  ];
-}
-
-def : Pat<(RV64IM_Itype_immAsInt64:$imm),
-        (RV64IM_Itype_imm_const_mat RV64IM_Itype_immAsInt64:$imm)>;
-
-
-def RV64IM_Utype_imm_const_mat : Instruction
-{
-let Namespace = "processorNameValue";
-
-let OutOperandList = ( outs X:$rd );
-let InOperandList = ( ins RV64IM_Utype_immAsInt64:$imm );
-
-let isTerminator  = 0;
-let isBranch      = 0;
-let isCall        = 0;
-let isReturn      = 0;
-let isPseudo      = 1;
-let isCodeGenOnly = 1;
-let mayLoad       = 0;
-let mayStore      = 0;
-
-let Constraints = "";
-let AddedComplexity = 0;
-
-let Pattern = [];
-
-let Uses = [  ];
-let Defs = [  ];
-}
-
-def : Pat<(RV64IM_Utype_immAsInt64:$imm),
-        (RV64IM_Utype_imm_const_mat RV64IM_Utype_immAsInt64:$imm)>;
-
-
-def RV64IM_Jtype_imm_const_mat : Instruction
-{
-let Namespace = "processorNameValue";
-
-let OutOperandList = ( outs X:$rd );
-let InOperandList = ( ins RV64IM_Jtype_immAsInt64:$imm );
-
-let isTerminator  = 0;
-let isBranch      = 0;
-let isCall        = 0;
-let isReturn      = 0;
-let isPseudo      = 1;
-let isCodeGenOnly = 1;
-let mayLoad       = 0;
-let mayStore      = 0;
-
-let Constraints = "";
-let AddedComplexity = 0;
-
-let Pattern = [];
-
-let Uses = [  ];
-let Defs = [  ];
-}
-
-def : Pat<(RV64IM_Jtype_immAsInt64:$imm),
-        (RV64IM_Jtype_imm_const_mat RV64IM_Jtype_immAsInt64:$imm)>;
-
 
 
 
@@ -4190,7 +3984,7 @@ let AddedComplexity = 0;
 let Pattern = [];
 
 let Uses = [ PC,X1 ];
-let Defs = [ PC,X1 ];
+let Defs = [ X1,PC ];
 }
 
 

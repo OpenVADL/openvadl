@@ -17,6 +17,7 @@ namespace llvm
     {
         // virtual anchor method to decrease link time as the vtable
         virtual void anchor();
+        const [(${namespace})]Subtarget *Subtarget = nullptr;
 
     public:
         static char ID;
@@ -24,6 +25,7 @@ namespace llvm
 
         bool runOnMachineFunction(MachineFunction & MF) override
         {
+            Subtarget = &MF.getSubtarget<[(${namespace})]Subtarget>();
             return SelectionDAGISel::runOnMachineFunction(MF);
         }
 
