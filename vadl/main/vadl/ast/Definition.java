@@ -4231,6 +4231,8 @@ class AsmGrammarAlternativesDefinition extends Definition {
  * <li>vadl function invocation</li>
  * <li>sequence of elements</li>
  * <li>optional block</li>
+ * <li>repetition block</li>
+ * <li>semantic predicate</li>
  * <li>string literal</li>
  * </p>
  *
