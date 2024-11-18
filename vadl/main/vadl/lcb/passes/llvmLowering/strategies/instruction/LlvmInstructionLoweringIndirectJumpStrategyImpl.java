@@ -40,8 +40,7 @@ public class LlvmInstructionLoweringIndirectJumpStrategyImpl
   protected Optional<LlvmLoweringRecord> lowerInstruction(
       Map<MachineInstructionLabel, List<Instruction>> labelledMachineInstructions,
       Instruction instruction,
-      Graph unmodifiedBehavior,
-      @Nullable List<Graph> unmodifiedAdditionalBehaviors) {
+      Graph unmodifiedBehavior) {
     var copy = unmodifiedBehavior.copy();
     var visitor = replacementHooksWithDefaultFieldAccessReplacement();
 

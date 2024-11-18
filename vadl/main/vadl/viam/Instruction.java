@@ -16,11 +16,6 @@ import vadl.viam.graph.Graph;
 public class Instruction extends Definition implements DefProp.WithBehavior {
 
   private final Graph behavior;
-  /*
-  Sometimes, instruction have a single behaviors but having additional behaviors can help when
-  generating patterns. For example, "less-than" can be rewritten to support "eq" and "neq".
-   */
-  private final List<Graph> additionalBehaviors;
   private final Assembly assembly;
   private final Encoding encoding;
 
@@ -54,7 +49,6 @@ public class Instruction extends Definition implements DefProp.WithBehavior {
   ) {
     super(identifier);
     this.behavior = behavior;
-    this.additionalBehaviors = new ArrayList<>();
     this.assembly = assembly;
     this.encoding = encoding;
 
@@ -63,15 +57,6 @@ public class Instruction extends Definition implements DefProp.WithBehavior {
 
   public Graph behavior() {
     return behavior;
-  }
-
-  public List<Graph> additionalBehaviors() {
-    return additionalBehaviors;
-  }
-
-  public void addAlternativeBehaviors(Graph graph) {
-    this.additionalBehaviors.add(graph);
-    graph.setParentDefinition(this);
   }
 
   public Assembly assembly() {

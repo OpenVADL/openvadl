@@ -241,26 +241,17 @@ public abstract class LlvmInstructionLoweringStrategy {
    * Generate a lowering result for the given {@link Graph} for machine instructions.
    * If it is not lowerable then return {@link Optional#empty()}.
    *
-   * @param labelledMachineInstructions   the instructions which have known semantics.
-   * @param instruction                   is the machine instruction which should be lowered.
-   * @param unmodifiedBehavior            is the uninlined graph in the case of {@link Instruction}.
-   * @param unmodifiedAdditionalBehaviors are the uninlined graph in the case of {@link Instruction}
-   *                                      which provide additional functionality. For example, a
-   *                                      "less-than" instruction can be also
-   *                                      lowered to "eq" or "neq". The behavior for "eq" and "neq"
-   *                                      would be an additional behavior. It is easier to provide
-   *                                      these high-level VIAM definitions then to create these
-   *                                      patterns by hand in the strategy.
+   * @param labelledMachineInstructions the instructions which have known semantics.
+   * @param instruction                 is the machine instruction which should be lowered.
+   * @param unmodifiedBehavior          is the uninlined graph in the case of {@link Instruction}.
    */
   public Optional<LlvmLoweringRecord> lower(
       Map<MachineInstructionLabel, List<Instruction>> labelledMachineInstructions,
       Instruction instruction,
-      Graph unmodifiedBehavior,
-      @Nullable List<Graph> unmodifiedAdditionalBehaviors) {
+      Graph unmodifiedBehavior) {
     return lowerInstruction(labelledMachineInstructions,
         instruction,
-        unmodifiedBehavior,
-        unmodifiedAdditionalBehaviors);
+        unmodifiedBehavior);
   }
 
   /**
@@ -275,8 +266,7 @@ public abstract class LlvmInstructionLoweringStrategy {
         pseudoInstruction.identifier.simpleName());
     return lowerInstruction(labelledMachineInstructions,
         instruction,
-        unmodifiedBehavior,
-        Collections.emptyList());
+        unmodifiedBehavior);
   }
 
   /**
@@ -286,8 +276,7 @@ public abstract class LlvmInstructionLoweringStrategy {
   protected Optional<LlvmLoweringRecord> lowerInstruction(
       Map<MachineInstructionLabel, List<Instruction>> labelledMachineInstructions,
       Instruction instruction,
-      Graph unmodifiedBehavior,
-      @Nullable List<Graph> unmodifiedAdditionalBehaviors) {
+      Graph unmodifiedBehavior) {
     var visitor = replacementHooksWithDefaultFieldAccessReplacement();
     var copy = unmodifiedBehavior.copy();
 

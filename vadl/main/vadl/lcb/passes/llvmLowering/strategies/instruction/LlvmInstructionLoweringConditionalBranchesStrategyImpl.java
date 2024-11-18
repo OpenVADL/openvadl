@@ -63,8 +63,7 @@ public class LlvmInstructionLoweringConditionalBranchesStrategyImpl
   public Optional<LlvmLoweringRecord> lower(
       Map<MachineInstructionLabel, List<Instruction>> labelledMachineInstructions,
       Instruction instruction,
-      Graph uninlinedBehavior,
-      @Nullable List<Graph> unmodifiedAdditionalBehaviors) {
+      Graph uninlinedBehavior) {
 
     var visitor = replacementHooks();
     var copy = uninlinedBehavior.copy();

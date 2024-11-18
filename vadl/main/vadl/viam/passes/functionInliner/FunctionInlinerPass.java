@@ -42,52 +42,33 @@ public class FunctionInlinerPass extends Pass {
 
   /**
    * Output of the pass.
-   * {@code behaviors} saves the {@link UninlinedGraph} from the {@link Instruction}. It is
-   * also possible to store additional graphs which can help with the lowering. These are
-   * stored in the {@code additionalBehaviors}.
+   * {@code behaviors} saves the {@link UninlinedGraph} from the {@link Instruction}.
    */
-  public record Output(IdentityHashMap<Instruction, UninlinedGraph> behaviors,
-                       IdentityHashMap<Instruction, List<UninlinedGraph>> additionalBehaviors) {
+  public record Output(IdentityHashMap<Instruction, UninlinedGraph> behaviors) {
   }
 
   @Nullable
   @Override
   public Object execute(PassResults passResults, Specification viam) throws IOException {
-
     IdentityHashMap<Instruction, UninlinedGraph> behaviors = new IdentityHashMap<>();
-    IdentityHashMap<Instruction, List<UninlinedGraph>> additionalBehaviors =
-        new IdentityHashMap<>();
 
-    instructions(viam, behaviors, additionalBehaviors);
+    instructions(viam, behaviors);
 
-    return new Output(behaviors, additionalBehaviors);
+    return new Output(behaviors);
   }
 
   private void instructions(Specification viam,
-                            IdentityHashMap<Instruction, UninlinedGraph> behaviors,
-                            IdentityHashMap<Instruction, List<UninlinedGraph>> additionalBehaviors) {
+                            IdentityHashMap<Instruction, UninlinedGraph> behaviors) {
 
     viam.isa().map(isa -> isa.ownInstructions().stream()).orElse(Stream.empty())
         .forEach(instruction -> {
           behaviors.put(instruction, handleMainBehavior(instruction));
-          additionalBehaviors.put(instruction, handleAdditionalBehaviors(instruction));
         });
   }
 
   private UninlinedGraph handleMainBehavior(Instruction instruction) {
     var copy = instruction.behavior().copy();
     return inline(instruction, copy);
-  }
-
-  private List<UninlinedGraph> handleAdditionalBehaviors(Instruction instruction) {
-    var result = new ArrayList<UninlinedGraph>();
-
-    instruction.additionalBehaviors().forEach(alternativeBehavior -> {
-      var copy = alternativeBehavior.copy();
-      result.add(inline(instruction, copy));
-    });
-
-    return result;
   }
 
   private @NotNull UninlinedGraph inline(Instruction instruction, Graph copy) {
