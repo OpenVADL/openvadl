@@ -1,9 +1,6 @@
 package vadl.iss.passes.tcgLowering.nodes;
 
-import java.util.List;
 import vadl.iss.passes.tcgLowering.TcgV;
-import vadl.iss.passes.tcgLowering.TcgWidth;
-import vadl.javaannotations.viam.DataValue;
 import vadl.viam.graph.Node;
 
 
@@ -12,7 +9,7 @@ import vadl.viam.graph.Node;
  * It includes the result and argument of the move operation, along with the width specification.
  */
 public class TcgMoveNode extends TcgUnaryOpNode {
-  
+
   public TcgMoveNode(TcgV to, TcgV from) {
     super(to, from);
   }
@@ -25,12 +22,12 @@ public class TcgMoveNode extends TcgUnaryOpNode {
 
   @Override
   public Node copy() {
-    return new TcgMoveNode(res, arg);
+    return new TcgMoveNode(dest, arg);
   }
 
   @Override
   public Node shallowCopy() {
-    return new TcgMoveNode(res, arg);
+    return new TcgMoveNode(dest, arg);
   }
 
 }

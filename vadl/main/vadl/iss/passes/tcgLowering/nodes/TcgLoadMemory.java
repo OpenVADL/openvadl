@@ -1,9 +1,9 @@
 package vadl.iss.passes.tcgLowering.nodes;
 
 import java.util.List;
+import java.util.function.Function;
 import vadl.iss.passes.tcgLowering.TcgExtend;
 import vadl.iss.passes.tcgLowering.TcgV;
-import vadl.iss.passes.tcgLowering.TcgWidth;
 import vadl.iss.passes.tcgLowering.Tcg_8_16_32_64;
 import vadl.javaannotations.viam.DataValue;
 import vadl.viam.graph.Node;
@@ -30,14 +30,14 @@ public class TcgLoadMemory extends TcgOpNode {
    * @param size the size of the memory to be loaded, one of Tcg_8_16_32_64
    *             values (i8, i16, i32, i64)
    * @param mode the mode of an extension, one of TcgExtend values (SIGN, ZERO)
-   * @param res  the variable representing the result of the load operation
+   * @param dest the variable representing the result of the load operation
    * @param addr the variable representing the address from where memory is to be loaded
    */
   public TcgLoadMemory(Tcg_8_16_32_64 size,
                        TcgExtend mode,
-                       TcgV res,
+                       TcgV dest,
                        TcgV addr) {
-    super(res, res.width());
+    super(dest, dest.width());
     this.size = size;
     this.extendMode = mode;
     this.addr = addr;
@@ -56,13 +56,23 @@ public class TcgLoadMemory extends TcgOpNode {
   }
 
   @Override
+  public String cCode(Function<Node, String> nodeToCCode) {
+    return "tcg_gen_qemu_ld_" + width
+        + "(" + dest().varName()
+        + "," + addr().varName()
+        + ", 0"
+        + ", " + tcgMemOp()
+        + ");";
+  }
+
+  @Override
   public Node copy() {
-    return new TcgLoadMemory(size, extendMode, res, addr);
+    return new TcgLoadMemory(size, extendMode, dest, addr);
   }
 
   @Override
   public Node shallowCopy() {
-    return new TcgLoadMemory(size, extendMode, res, addr);
+    return new TcgLoadMemory(size, extendMode, dest, addr);
   }
 
   /**
@@ -74,7 +84,7 @@ public class TcgLoadMemory extends TcgOpNode {
    * the extension mode requires a sign extension or zero extension.
    *
    * @return A string representing the memory operation flags. It includes the memory operation size
-   *       and, if applicable, the sign extension flag.
+   *     and, if applicable, the sign extension flag.
    */
   public String tcgMemOp() {
     var first = "MO_" + size.width;

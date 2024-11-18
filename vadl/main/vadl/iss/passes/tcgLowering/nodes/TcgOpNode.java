@@ -5,42 +5,46 @@ import vadl.iss.passes.tcgLowering.TcgV;
 import vadl.iss.passes.tcgLowering.TcgWidth;
 import vadl.javaannotations.viam.DataValue;
 import vadl.viam.graph.GraphNodeVisitor;
-import vadl.viam.graph.control.DirectionalNode;
 
 /**
  * Represents an abstract TCG (Tiny Code Generation) operation node.
  * It extends the DirectionalNode class and contains a result variable and a width specification.
  * This class is designed to be the base class for specific TCG operator nodes.
  */
-public abstract class TcgOpNode extends DirectionalNode {
+public abstract class TcgOpNode extends TcgNode {
 
   @DataValue
-  TcgV res;
+  TcgV dest;
   @DataValue
   TcgWidth width;
 
-  public TcgOpNode(TcgV res, TcgWidth width) {
-    this.res = res;
+  public TcgOpNode(TcgV dest, TcgWidth width) {
+    this.dest = dest;
     this.width = width;
+  }
+
+  public TcgOpNode(TcgV dest) {
+    this.dest = dest;
+    this.width = dest.width();
   }
 
   @Override
   public void verifyState() {
     super.verifyState();
 
-    ensure(res.width() == width, "result variable width does not match");
+    ensure(dest.width() == width, "result variable width does not match");
   }
 
   public TcgWidth width() {
     return width;
   }
 
-  public TcgV res() {
-    return res;
+  public TcgV dest() {
+    return dest;
   }
 
-  public void setRes(TcgV res) {
-    this.res = res;
+  public void setDest(TcgV res) {
+    this.dest = res;
   }
 
   @Override
@@ -51,7 +55,7 @@ public abstract class TcgOpNode extends DirectionalNode {
   @Override
   protected void collectData(List<Object> collection) {
     super.collectData(collection);
-    collection.add(res);
+    collection.add(dest);
     collection.add(width);
   }
 }

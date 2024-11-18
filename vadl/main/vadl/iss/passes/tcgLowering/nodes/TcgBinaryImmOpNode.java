@@ -2,6 +2,7 @@ package vadl.iss.passes.tcgLowering.nodes;
 
 import java.util.List;
 import java.util.Objects;
+import java.util.function.Function;
 import vadl.iss.passes.tcgLowering.TcgV;
 import vadl.iss.passes.tcgLowering.TcgWidth;
 import vadl.javaannotations.viam.DataValue;
@@ -57,6 +58,15 @@ public abstract class TcgBinaryImmOpNode extends TcgOpNode {
   }
 
   public abstract String tcgFunctionName();
+
+  @Override
+  public String cCode(Function<Node, String> nodeToCCode) {
+    return tcgFunctionName() + "("
+        + dest.varName() + ", "
+        + arg1.varName() + ", "
+        + nodeToCCode.apply(arg2)
+        + ");";
+  }
 
   @Override
   protected void collectData(List<Object> collection) {

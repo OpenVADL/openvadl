@@ -1,8 +1,8 @@
 package vadl.iss.passes.tcgLowering.nodes;
 
 import java.util.List;
+import java.util.function.Function;
 import vadl.iss.passes.tcgLowering.TcgV;
-import vadl.iss.passes.tcgLowering.TcgWidth;
 import vadl.javaannotations.viam.DataValue;
 import vadl.javaannotations.viam.Input;
 import vadl.viam.Register;
@@ -17,8 +17,8 @@ import vadl.viam.graph.dependency.ExpressionNode;
 public abstract sealed class TcgGetVar extends TcgOpNode
     permits TcgGetVar.TcgGetRegFile, TcgGetVar.TcgGetReg, TcgGetVar.TcgGetTemp {
 
-  public TcgGetVar(TcgV res) {
-    super(res, res.width());
+  public TcgGetVar(TcgV dest) {
+    super(dest, dest.width());
   }
 
   /**
@@ -31,13 +31,19 @@ public abstract sealed class TcgGetVar extends TcgOpNode
     }
 
     @Override
+    public String cCode(Function<Node, String> nodeToCCode) {
+      return "TCGv_" + dest.width() + " " + dest.varName() + " = "
+          + "tcg_tmp_new_" + width + "();";
+    }
+
+    @Override
     public Node copy() {
-      return new TcgGetTemp(res);
+      return new TcgGetTemp(dest);
     }
 
     @Override
     public Node shallowCopy() {
-      return new TcgGetTemp(res);
+      return new TcgGetTemp(dest);
     }
   }
 
@@ -59,13 +65,20 @@ public abstract sealed class TcgGetVar extends TcgOpNode
     }
 
     @Override
+    public String cCode(Function<Node, String> nodeToCCode) {
+      return "TCGv_" + dest.width() + " " + dest.varName() + " = "
+          + "cpu_" + register.simpleName().toLowerCase() + ";";
+    }
+
+
+    @Override
     public Node copy() {
-      return new TcgGetTemp(res);
+      return new TcgGetTemp(dest);
     }
 
     @Override
     public Node shallowCopy() {
-      return new TcgGetTemp(res);
+      return new TcgGetTemp(dest);
     }
 
     @Override
@@ -116,14 +129,13 @@ public abstract sealed class TcgGetVar extends TcgOpNode
       this.kind = kind;
     }
 
-
     @Override
     public void verifyState() {
       super.verifyState();
 
       var cppType = registerFile.resultType().fittingCppType();
       ensure(cppType != null, "Couldn't fit cpp type");
-      ensure(res.width().width <= cppType.bitWidth(),
+      ensure(dest.width().width <= cppType.bitWidth(),
           "register file result width does not fit in node's result var width");
     }
 
@@ -140,13 +152,22 @@ public abstract sealed class TcgGetVar extends TcgOpNode
     }
 
     @Override
+    public String cCode(Function<Node, String> nodeToCCode) {
+      var prefix = kind() == TcgGetVar.TcgGetRegFile.Kind.DEST ? "dest" : "get";
+      return "TCGv_" + dest.width() + " " + dest.varName() + " = "
+          + prefix + "_" + registerFile.simpleName().toLowerCase()
+          + "(ctx, " + nodeToCCode.apply(index)
+          + ");";
+    }
+
+    @Override
     public Node copy() {
-      return new TcgGetRegFile(registerFile, index.copy(ExpressionNode.class), kind, res);
+      return new TcgGetRegFile(registerFile, index.copy(ExpressionNode.class), kind, dest);
     }
 
     @Override
     public Node shallowCopy() {
-      return new TcgGetRegFile(registerFile, index, kind, res);
+      return new TcgGetRegFile(registerFile, index, kind, dest);
     }
 
     @Override

@@ -1,6 +1,7 @@
 package vadl.iss.passes.tcgLowering.nodes;
 
 import java.util.List;
+import java.util.function.Function;
 import vadl.iss.passes.tcgLowering.TcgV;
 import vadl.iss.passes.tcgLowering.TcgWidth;
 import vadl.javaannotations.viam.DataValue;
@@ -12,7 +13,7 @@ import vadl.viam.graph.Node;
  * This is required if the TCG translation should be stopped because the translation block
  * ends (e.g. because of some branching).
  */
-public class TcgSetIsJmp extends TcgOpNode {
+public class TcgSetIsJmp extends TcgNode {
 
   /**
    * Defines the behavior done by the translator.
@@ -42,13 +43,16 @@ public class TcgSetIsJmp extends TcgOpNode {
    * @param type Defines the behavior done by the translator. It can be NORETURN, NEXT, or CHAIN.
    */
   public TcgSetIsJmp(Type type) {
-    // TODO: This super constructor is useless. We need to create a TcgGenNode super type
-    super(TcgV.gen(TcgWidth.i64), TcgWidth.i64);
     this.type = type;
   }
 
   public Type type() {
     return type;
+  }
+
+  @Override
+  public String cCode(Function<Node, String> nodeToCCode) {
+    return "ctx->base.is_jmp = " + type.cCode() + ";";
   }
 
   @Override

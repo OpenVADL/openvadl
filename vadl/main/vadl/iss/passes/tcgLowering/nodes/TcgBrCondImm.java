@@ -1,10 +1,10 @@
 package vadl.iss.passes.tcgLowering.nodes;
 
 import java.util.List;
+import java.util.function.Function;
 import vadl.iss.passes.tcgLowering.TcgCondition;
 import vadl.iss.passes.tcgLowering.TcgLabel;
 import vadl.iss.passes.tcgLowering.TcgV;
-import vadl.iss.passes.tcgLowering.TcgWidth;
 import vadl.javaannotations.viam.DataValue;
 import vadl.javaannotations.viam.Input;
 import vadl.viam.graph.GraphVisitor;
@@ -16,13 +16,10 @@ import vadl.viam.graph.dependency.ExpressionNode;
  * This class is used to model a conditional branch operation where the branch decision is
  * determined by comparing two arguments.
  */
-public class TcgBrCondImm extends TcgOpNode {
+public class TcgBrCondImm extends TcgLabelNode {
 
   @DataValue
   private TcgCondition condition;
-
-  @DataValue
-  private TcgLabel label;
 
   @DataValue
   private TcgV varArg;
@@ -41,20 +38,14 @@ public class TcgBrCondImm extends TcgOpNode {
    */
   public TcgBrCondImm(TcgV varArg, ExpressionNode immArg, TcgCondition condition,
                       TcgLabel label) {
-    // TODO: This super constructor is useless. We need to create a TcgGenNode super type
-    super(TcgV.gen(TcgWidth.i64), TcgWidth.i64);
+    super(label);
     this.condition = condition;
-    this.label = label;
     this.varArg = varArg;
     this.immArg = immArg;
   }
 
   public TcgCondition condition() {
     return condition;
-  }
-
-  public TcgLabel label() {
-    return label;
   }
 
   public TcgV cmpArg1() {
@@ -67,19 +58,18 @@ public class TcgBrCondImm extends TcgOpNode {
 
   @Override
   public Node copy() {
-    return new TcgBrCondImm(varArg, immArg.copy(ExpressionNode.class), condition, label);
+    return new TcgBrCondImm(varArg, immArg.copy(ExpressionNode.class), condition, label());
   }
 
   @Override
   public Node shallowCopy() {
-    return new TcgBrCondImm(varArg, immArg, condition, label);
+    return new TcgBrCondImm(varArg, immArg, condition, label());
   }
 
   @Override
   protected void collectData(List<Object> collection) {
     super.collectData(collection);
     collection.add(condition);
-    collection.add(label);
     collection.add(varArg);
   }
 
@@ -93,5 +83,15 @@ public class TcgBrCondImm extends TcgOpNode {
   protected void applyOnInputsUnsafe(GraphVisitor.Applier<Node> visitor) {
     super.applyOnInputsUnsafe(visitor);
     immArg = visitor.apply(this, immArg, ExpressionNode.class);
+  }
+
+  @Override
+  public String cCode(Function<Node, String> nodeToCCode) {
+    return "tcg_gen_brcondi_" + varArg.width() + "("
+        + condition.cCode() + ", "
+        + cmpArg1().varName() + ", "
+        + nodeToCCode.apply(cmpArg2()) + ", "
+        + label().varName()
+        + ");";
   }
 }

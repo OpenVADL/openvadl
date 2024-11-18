@@ -2,8 +2,8 @@ package vadl.iss.passes.tcgLowering.nodes;
 
 import java.util.List;
 import java.util.Objects;
+import java.util.function.Function;
 import vadl.iss.passes.tcgLowering.TcgV;
-import vadl.iss.passes.tcgLowering.TcgWidth;
 import vadl.javaannotations.viam.Input;
 import vadl.types.DataType;
 import vadl.viam.graph.GraphVisitor;
@@ -37,7 +37,7 @@ public abstract class TcgUnaryImmOpNode extends TcgOpNode {
     ensure(arg.type().isData(), "argument 2 is not a data type");
     ensure(
         Objects.requireNonNull(((DataType) arg.type()).fittingCppType()).bitWidth() <= width.width,
-        "argument 2 width does not match. %s vs %s", res.width(), arg.type());
+        "argument 2 width does not match. %s vs %s", dest.width(), arg.type());
   }
 
   public ExpressionNode arg() {
@@ -46,6 +46,10 @@ public abstract class TcgUnaryImmOpNode extends TcgOpNode {
 
   public abstract String tcgFunctionName();
 
+  @Override
+  public String cCode(Function<Node, String> nodeToCCode) {
+    return tcgFunctionName() + "(" + dest.varName() + ", " + nodeToCCode.apply(arg) + ");";
+  }
 
   @Override
   protected void collectInputs(List<Node> collection) {

@@ -36,7 +36,7 @@ public class TcgSetCond extends TcgBinaryOpNode {
 
   @Override
   public Node copy() {
-    return new TcgSetCond(res, arg1, arg2, cond);
+    return new TcgSetCond(dest, arg1, arg2, cond);
   }
 
   @Override

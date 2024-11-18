@@ -1,9 +1,11 @@
 package vadl.iss.passes.tcgLowering.nodes;
 
 import java.util.List;
+import java.util.function.Function;
 import vadl.iss.passes.tcgLowering.TcgV;
 import vadl.iss.passes.tcgLowering.TcgWidth;
 import vadl.javaannotations.viam.DataValue;
+import vadl.viam.graph.Node;
 
 /**
  * A common superclass that represents a TCG operator with two source variables and one result.
@@ -49,6 +51,15 @@ public abstract class TcgBinaryOpNode extends TcgOpNode {
   }
 
   public abstract String tcgFunctionName();
+
+  @Override
+  public String cCode(Function<Node, String> nodeToCCode) {
+    return tcgFunctionName() + "("
+        + dest.varName() + ", "
+        + arg1.varName() + ", "
+        + arg2.varName()
+        + ");";
+  }
 
   @Override
   protected void collectData(List<Object> collection) {

@@ -1,9 +1,8 @@
 package vadl.iss.passes.tcgLowering.nodes;
 
 import java.util.List;
+import java.util.function.Function;
 import vadl.iss.passes.tcgLowering.TcgLabel;
-import vadl.iss.passes.tcgLowering.TcgV;
-import vadl.iss.passes.tcgLowering.TcgWidth;
 import vadl.viam.graph.Node;
 
 /**
@@ -11,9 +10,7 @@ import vadl.viam.graph.Node;
  * Extends the TcgOpNode class by including a TcgLabel
  * to denote the target label for the branch operation.
  */
-public class TcgBr extends TcgOpNode {
-
-  private final TcgLabel label;
+public class TcgBr extends TcgLabelNode {
 
   /**
    * Constructs a TcgBr (Tiny Code Generation Branch) object with the specified label.
@@ -22,18 +19,13 @@ public class TcgBr extends TcgOpNode {
    *              represents the destination to which the branch will jump.
    */
   public TcgBr(TcgLabel label) {
-    // TODO: This super constructor is useless. We need to create a TcgGenNode super type
-    super(TcgV.gen(TcgWidth.i64), TcgWidth.i64);
-    this.label = label;
+    super(label);
   }
 
-  public TcgLabel label() {
-    return label;
-  }
 
   @Override
   public Node copy() {
-    return new TcgBr(label);
+    return new TcgBr(label());
   }
 
   @Override
@@ -42,8 +34,7 @@ public class TcgBr extends TcgOpNode {
   }
 
   @Override
-  protected void collectData(List<Object> collection) {
-    super.collectData(collection);
-    collection.add(label);
+  public String cCode(Function<Node, String> nodeToCCode) {
+    return "tcg_gen_br(" + label().varName() + ");";
   }
 }

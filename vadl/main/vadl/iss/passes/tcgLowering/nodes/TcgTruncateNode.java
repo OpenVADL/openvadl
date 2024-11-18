@@ -31,7 +31,7 @@ public class TcgTruncateNode extends TcgUnaryOpNode {
 
   @Override
   public Node copy() {
-    return new TcgTruncateNode(res, arg, bitWidth);
+    return new TcgTruncateNode(dest, arg, bitWidth);
   }
 
   @Override

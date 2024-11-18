@@ -1,7 +1,6 @@
 package vadl.iss.passes.tcgLowering.nodes;
 
 import vadl.iss.passes.tcgLowering.TcgV;
-import vadl.iss.passes.tcgLowering.TcgWidth;
 import vadl.viam.graph.Node;
 import vadl.viam.graph.dependency.ExpressionNode;
 
@@ -23,12 +22,12 @@ public class TcgAddiNode extends TcgBinaryImmOpNode {
   @Override
   public Node copy() {
     return new TcgAddiNode(
-        res, arg1, arg2.copy(ExpressionNode.class));
+        dest, arg1, arg2.copy(ExpressionNode.class));
   }
 
   @Override
   public Node shallowCopy() {
-    return new TcgAddiNode(res, arg1, arg2);
+    return new TcgAddiNode(dest, arg1, arg2);
   }
 
 }

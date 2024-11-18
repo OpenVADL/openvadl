@@ -22,11 +22,11 @@ public class TcgShiftLeft extends TcgBinaryImmOpNode {
 
   @Override
   public Node copy() {
-    return new TcgShiftLeft(res, arg1, arg2.copy(ExpressionNode.class));
+    return new TcgShiftLeft(dest, arg1, arg2.copy(ExpressionNode.class));
   }
 
   @Override
   public Node shallowCopy() {
-    return new TcgShiftLeft(res, arg1, arg2);
+    return new TcgShiftLeft(dest, arg1, arg2);
   }
 }

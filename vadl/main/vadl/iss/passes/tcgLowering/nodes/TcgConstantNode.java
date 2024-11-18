@@ -1,8 +1,6 @@
 package vadl.iss.passes.tcgLowering.nodes;
 
 import vadl.iss.passes.tcgLowering.TcgV;
-import vadl.iss.passes.tcgLowering.TcgWidth;
-import vadl.javaannotations.viam.Input;
 import vadl.viam.graph.Node;
 import vadl.viam.graph.dependency.ExpressionNode;
 
@@ -19,17 +17,17 @@ public class TcgConstantNode extends TcgUnaryImmOpNode {
 
   @Override
   public Node copy() {
-    return new TcgConstantNode(res, arg.copy(ExpressionNode.class));
+    return new TcgConstantNode(dest, arg.copy(ExpressionNode.class));
   }
 
   @Override
   public Node shallowCopy() {
-    return new TcgConstantNode(res, arg);
+    return new TcgConstantNode(dest, arg);
   }
 
 
   @Override
   public String tcgFunctionName() {
-    return "tcg_constant_i" + res.width().width;
+    return "tcg_constant_i" + dest.width().width;
   }
 }
