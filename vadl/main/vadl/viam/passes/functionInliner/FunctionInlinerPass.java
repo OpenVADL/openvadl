@@ -8,7 +8,6 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.IdentityHashMap;
 import java.util.List;
-import java.util.stream.Collectors;
 import java.util.stream.Stream;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -83,7 +82,7 @@ public class FunctionInlinerPass extends Pass {
   private List<UninlinedGraph> handleAdditionalBehaviors(Instruction instruction) {
     var result = new ArrayList<UninlinedGraph>();
 
-    instruction.alternativeBehaviors().forEach(alternativeBehavior -> {
+    instruction.additionalBehaviors().forEach(alternativeBehavior -> {
       var copy = alternativeBehavior.copy();
       result.add(inline(instruction, copy));
     });

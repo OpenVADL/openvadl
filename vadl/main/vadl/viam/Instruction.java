@@ -2,7 +2,6 @@ package vadl.viam;
 
 import com.google.errorprone.annotations.concurrent.LazyInit;
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.List;
 import java.util.Set;
 import org.checkerframework.checker.nullness.qual.NonNull;
@@ -21,7 +20,7 @@ public class Instruction extends Definition implements DefProp.WithBehavior {
   Sometimes, instruction have a single behaviors but having additional behaviors can help when
   generating patterns. For example, "less-than" can be rewritten to support "eq" and "neq".
    */
-  private final List<Graph> alternativeBehaviors;
+  private final List<Graph> additionalBehaviors;
   private final Assembly assembly;
   private final Encoding encoding;
 
@@ -55,7 +54,7 @@ public class Instruction extends Definition implements DefProp.WithBehavior {
   ) {
     super(identifier);
     this.behavior = behavior;
-    this.alternativeBehaviors = new ArrayList<>();
+    this.additionalBehaviors = new ArrayList<>();
     this.assembly = assembly;
     this.encoding = encoding;
 
@@ -66,12 +65,12 @@ public class Instruction extends Definition implements DefProp.WithBehavior {
     return behavior;
   }
 
-  public List<Graph> alternativeBehaviors() {
-    return alternativeBehaviors;
+  public List<Graph> additionalBehaviors() {
+    return additionalBehaviors;
   }
 
   public void addAlternativeBehaviors(Graph graph) {
-    this.alternativeBehaviors.add(graph);
+    this.additionalBehaviors.add(graph);
     graph.setParentDefinition(this);
   }
 

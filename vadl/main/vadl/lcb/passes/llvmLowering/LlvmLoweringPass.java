@@ -4,7 +4,6 @@ import static vadl.viam.ViamError.ensureNonNull;
 import static vadl.viam.ViamError.ensurePresent;
 
 import java.io.IOException;
-import java.util.HashMap;
 import java.util.IdentityHashMap;
 import java.util.List;
 import java.util.Map;
@@ -37,10 +36,7 @@ import vadl.pass.PassResults;
 import vadl.viam.Instruction;
 import vadl.viam.PseudoInstruction;
 import vadl.viam.Specification;
-import vadl.viam.graph.Graph;
 import vadl.viam.passes.dummyAbi.DummyAbi;
-import vadl.viam.passes.functionInliner.FunctionInlinerPass;
-import vadl.viam.passes.functionInliner.UninlinedGraph;
 
 /**
  * This is a wrapper class which contains utility functions for the lowering.
@@ -160,7 +156,7 @@ public class LlvmLoweringPass extends Pass {
             var record = strategy.lower(labelledMachineInstructions,
                 instruction,
                 instruction.behavior(),
-                instruction.alternativeBehaviors());
+                instruction.additionalBehaviors());
 
             // Okay, we have to save record.
             record.ifPresent(llvmLoweringIntermediateResult -> tableGenRecords.put(instruction,
