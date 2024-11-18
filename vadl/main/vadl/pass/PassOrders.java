@@ -124,6 +124,8 @@ public class PassOrders {
     var order = viam(gcbConfiguration);
 
     order.add(new DummyAbiPass(gcbConfiguration));
+    // skip inlining of field access
+    order.skip(FieldAccessInlinerPass.class);
     order.add(new IdentifyFieldUsagePass(gcbConfiguration));
     order.add(new GenerateFieldAccessEncodingFunctionPass(gcbConfiguration));
     order.add(new FieldNodeReplacementPassForDecoding(gcbConfiguration));
