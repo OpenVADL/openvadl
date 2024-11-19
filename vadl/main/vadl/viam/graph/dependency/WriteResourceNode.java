@@ -55,8 +55,7 @@ public abstract class WriteResourceNode extends SideEffectNode {
   public ExpressionNode value() {
     return value;
   }
-
-  public abstract Resource resourceDefinition();
+  
 
   /**
    * The number of bits that is getting written to the resource.
