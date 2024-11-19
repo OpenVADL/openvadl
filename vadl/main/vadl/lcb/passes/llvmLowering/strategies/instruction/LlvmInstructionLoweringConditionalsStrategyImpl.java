@@ -33,8 +33,10 @@ import vadl.viam.graph.dependency.ConstantNode;
 public class LlvmInstructionLoweringConditionalsStrategyImpl
     extends LlvmInstructionLoweringStrategy {
 
-  private final Set<MachineInstructionLabel> supported = Set.of(MachineInstructionLabel.LT,
-      MachineInstructionLabel.LTIU);
+  private final Set<MachineInstructionLabel> supported =
+      Set.of(MachineInstructionLabel.LTS,
+          MachineInstructionLabel.LTU,
+          MachineInstructionLabel.LTIU);
 
   public LlvmInstructionLoweringConditionalsStrategyImpl(
       ValueType architectureType) {
@@ -61,7 +63,7 @@ public class LlvmInstructionLoweringConditionalsStrategyImpl
       List<TableGenPattern> patterns) {
     var result = new ArrayList<TableGenPattern>();
     var lts =
-        supportedInstructions.getOrDefault(MachineInstructionLabel.LT, Collections.emptyList());
+        supportedInstructions.getOrDefault(MachineInstructionLabel.LTS, Collections.emptyList());
     var ltis =
         supportedInstructions.getOrDefault(MachineInstructionLabel.LTIU, Collections.emptyList());
     var xors =

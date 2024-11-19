@@ -3088,10 +3088,6 @@ let Defs = [  ];
 def : Pat<(setcc X:$rs1, X:$rs2, SETULT),
         (SLTU X:$rs1, X:$rs2)>;
 
-def : Pat<(setcc X:$rs1, X:$rs2, SETULT),
-        (SLTIU (XOR X:$rs1, X:$rs2), 1)>;
-
-
 def SRA : Instruction
 {
 let Namespace = "processorNameValue";

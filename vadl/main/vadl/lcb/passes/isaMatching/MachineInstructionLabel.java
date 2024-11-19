@@ -36,7 +36,8 @@ public enum MachineInstructionLabel {
    */
   EQ,
   NEQ,
-  LT,
+  LTU,
+  LTS,
   LTI, // less than immediate
   LTIU, // less than immediate unsigned
   /*

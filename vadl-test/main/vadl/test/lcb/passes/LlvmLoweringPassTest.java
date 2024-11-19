@@ -52,9 +52,22 @@ public class LlvmLoweringPassTest extends AbstractLcbTest {
   }
 
   private static TestOutput createTestOutputRRWithConditional(LlvmCondCode condCode,
-                                                              String machineInstruction,
-                                                              String
-                                                                  machineInstructionWithImmediate) {
+                                                              String machineInstruction) {
+    return new TestOutput(
+        List.of(new TableGenInstructionOperand(DUMMY_NODE, "X", "rs1"),
+            new TableGenInstructionOperand(DUMMY_NODE, "X", "rs2")),
+        List.of(new TableGenInstructionOperand(DUMMY_NODE, "X", "rd")),
+        List.of(String.format("(%s X:$rs1, X:$rs2, %s)", "setcc", condCode)),
+        List.of(String.format("(%s X:$rs1, X:$rs2)", machineInstruction)),
+        createEmptyFlags(),
+        false
+    );
+  }
+
+  private static TestOutput createTestOutputRRWithConditionalToImmediate(LlvmCondCode condCode,
+                                                                         String machineInstruction,
+                                                                         String
+                                                                             machineInstructionWithImmediate) {
     return new TestOutput(
         List.of(new TableGenInstructionOperand(DUMMY_NODE, "X", "rs1"),
             new TableGenInstructionOperand(DUMMY_NODE, "X", "rs2")),
@@ -291,9 +304,9 @@ public class LlvmLoweringPassTest extends AbstractLcbTest {
     CONDITIONALS
      */
     expectedResults.put("SLT",
-        createTestOutputRRWithConditional(LlvmCondCode.SETLT, "SLT", "SLTIU"));
+        createTestOutputRRWithConditionalToImmediate(LlvmCondCode.SETLT, "SLT", "SLTIU"));
     expectedResults.put("SLTU",
-        createTestOutputRRWithConditional(LlvmCondCode.SETULT, "SLTU", "SLTIU"));
+        createTestOutputRRWithConditional(LlvmCondCode.SETULT, "SLTU"));
     expectedResults.put("SLTI",
         createTestOutputRIWithConditional("RV64IM_Itype_immAsInt64", "imm",
             LlvmCondCode.SETLT, "SLTI"));
