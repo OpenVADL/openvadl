@@ -12,6 +12,7 @@ import vadl.dump.InfoEnricher;
 import vadl.dump.InfoUtils;
 import vadl.dump.entities.DefinitionEntity;
 import vadl.iss.passes.IssReadVarAssignPass;
+import vadl.iss.passes.IssSecureResourceReadPass;
 import vadl.iss.passes.IssTcgAnnotatePass;
 import vadl.iss.passes.tcgLowering.TcgV;
 import vadl.viam.DefProp;
@@ -67,11 +68,52 @@ public class IssEnricherCollection {
         entity.addInfo(info);
       });
 
+
+  /**
+   *
+   */
+  public static InfoEnricher READ_SPILL_LOCATION_EXPANDABLE =
+      forType(DefinitionEntity.class, (entity, passResult) -> {
+        if (!passResult.hasRunPassOnce(IssSecureResourceReadPass.class)
+            || !(entity.origin() instanceof Instruction instr)) {
+          return;
+        }
+
+
+        var result = passResult.lastResultOf(
+            IssSecureResourceReadPass.class,
+            IssSecureResourceReadPass.Result.class
+        );
+        var instrReads =
+            instr.behavior().getNodes(ReadResourceNode.class).collect(Collectors.toSet());
+        var entries = result.readTempSpillLocations().entrySet().stream()
+            .filter(e -> instrReads.contains(e.getKey()))
+            .toList();
+        var reads = entries.stream().map(e -> e.getKey().toString())
+            .collect(Collectors.toCollection(ArrayList::new));
+        var locations = entries.stream().map(e -> e.getValue().toString())
+            .collect(Collectors.toCollection(ArrayList::new));
+
+        if (reads.isEmpty()) {
+          return;
+        }
+
+        reads.add(0, "Reads");
+        locations.add(0, "Location");
+
+        var info = InfoUtils.createTableExpandable(
+            "Conflicting Read Spill Locations",
+            List.of(reads, locations)
+        );
+        entity.addInfo(info);
+      });
+
   /**
    * A list of all info enrichers that are ISS specific.
    */
   public static List<InfoEnricher> all = List.of(
-      READ_VAR_ASSIGN_EXPANDABLE
+      READ_VAR_ASSIGN_EXPANDABLE,
+      READ_SPILL_LOCATION_EXPANDABLE
   );
 
 }
