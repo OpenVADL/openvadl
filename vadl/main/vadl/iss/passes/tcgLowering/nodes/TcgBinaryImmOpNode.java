@@ -4,7 +4,7 @@ import java.util.List;
 import java.util.Objects;
 import java.util.function.Function;
 import vadl.iss.passes.tcgLowering.TcgV;
-import vadl.iss.passes.tcgLowering.TcgWidth;
+import vadl.iss.passes.tcgLowering.Tcg_32_64;
 import vadl.javaannotations.viam.DataValue;
 import vadl.javaannotations.viam.Input;
 import vadl.types.DataType;
@@ -32,7 +32,7 @@ public abstract class TcgBinaryImmOpNode extends TcgOpNode {
    * @param arg2  the second argument immediate
    * @param width the op's width
    */
-  public TcgBinaryImmOpNode(TcgV res, TcgV arg1, ExpressionNode arg2, TcgWidth width) {
+  public TcgBinaryImmOpNode(TcgV res, TcgV arg1, ExpressionNode arg2, Tcg_32_64 width) {
     super(res, width);
     this.arg1 = arg1;
     this.arg2 = arg2;

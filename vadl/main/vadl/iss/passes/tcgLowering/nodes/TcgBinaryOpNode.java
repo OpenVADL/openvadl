@@ -3,7 +3,7 @@ package vadl.iss.passes.tcgLowering.nodes;
 import java.util.List;
 import java.util.function.Function;
 import vadl.iss.passes.tcgLowering.TcgV;
-import vadl.iss.passes.tcgLowering.TcgWidth;
+import vadl.iss.passes.tcgLowering.Tcg_32_64;
 import vadl.javaannotations.viam.DataValue;
 import vadl.viam.graph.Node;
 
@@ -28,7 +28,7 @@ public abstract class TcgBinaryOpNode extends TcgOpNode {
    * @param arg2      the second argument variable
    * @param width     the bit width of the operation
    */
-  public TcgBinaryOpNode(TcgV resultVar, TcgV arg1, TcgV arg2, TcgWidth width) {
+  public TcgBinaryOpNode(TcgV resultVar, TcgV arg1, TcgV arg2, Tcg_32_64 width) {
     super(resultVar, width);
     this.arg1 = arg1;
     this.arg2 = arg2;

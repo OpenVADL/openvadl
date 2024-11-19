@@ -337,7 +337,7 @@ class TcgLoweringExecutor extends GraphProcessor<Node> {
     toProcess.ensure(addressRepl instanceof ExpressionNode, "unexpected TctNode as input");
 
     // TODO: @jzottele Don't hardcode type!
-    var width = TcgWidth.i64;
+    var width = Tcg_32_64.i64;
     var tcgVar = TcgV.gen(width);
     return new TcgGetVar.TcgGetRegFile(
         toProcess.registerFile(), (ExpressionNode) addressRepl,
@@ -356,7 +356,7 @@ class TcgLoweringExecutor extends GraphProcessor<Node> {
     }
 
     // TODO: @jzottele Don't hardcode type!
-    var width = TcgWidth.i64;
+    var width = Tcg_32_64.i64;
     var tcgVar = TcgV.gen(width);
     return new TcgGetVar.TcgGetReg(
         toProcess.register(),
@@ -377,7 +377,7 @@ class TcgLoweringExecutor extends GraphProcessor<Node> {
     var valRes = getResultOf(toProcess.value(), Node.class);
 
     // TODO: Don't hardcode this
-    var width = TcgWidth.i64;
+    var width = Tcg_32_64.i64;
     var destVar = TcgV.gen(width);
 
     if (valRes instanceof ExpressionNode valueImm) {
@@ -406,7 +406,7 @@ class TcgLoweringExecutor extends GraphProcessor<Node> {
     var valRes = getResultOf(toProcess.value(), Node.class);
 
     // TODO: Don't hardcode this
-    var width = TcgWidth.i64;
+    var width = Tcg_32_64.i64;
     var destVar = TcgV.gen(width);
 
     if (valRes instanceof ExpressionNode valueImm) {
@@ -440,7 +440,7 @@ class TcgLoweringExecutor extends GraphProcessor<Node> {
     var mode = TcgExtend.SIGN;
 
     // TODO: @jzottele Don't hardcode type!
-    var width = TcgWidth.i64;
+    var width = Tcg_32_64.i64;
     var res = TcgV.gen(width);
     tempVars.add(res);
 
@@ -466,7 +466,7 @@ class TcgLoweringExecutor extends GraphProcessor<Node> {
     var argTcg = getResultOf(toProcess.value(), TcgOpNode.class);
 
     var size = Tcg_8_16_32.fromWidth(toProcess.value().type().asDataType().bitWidth());
-    var resSize = TcgWidth.fromWidth(toProcess.type().bitWidth());
+    var resSize = Tcg_32_64.fromWidth(toProcess.type().bitWidth());
     var res = TcgV.gen(resSize);
 
     return new TcgExtendNode(size, TcgExtend.SIGN, res, argTcg.dest());
@@ -478,7 +478,7 @@ class TcgLoweringExecutor extends GraphProcessor<Node> {
     var resultWidth = toProcess.type().asDataType().bitWidth();
 
     // TODO: Don't hardcode this
-    var res = TcgV.gen(TcgWidth.i64);
+    var res = TcgV.gen(Tcg_32_64.i64);
     tempVars.add(res);
 
     return new TcgTruncateNode(res, argTcg.dest(), resultWidth);
@@ -502,7 +502,7 @@ class TcgLoweringExecutor extends GraphProcessor<Node> {
         .toList();
 
     // TODO: @jzottele Don't hardcode width!
-    var width = TcgWidth.i64;
+    var width = Tcg_32_64.i64;
     var res = TcgV.gen(width);
     tempVars.add(res);
 

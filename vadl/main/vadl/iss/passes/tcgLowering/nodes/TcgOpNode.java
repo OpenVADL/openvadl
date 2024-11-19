@@ -2,7 +2,7 @@ package vadl.iss.passes.tcgLowering.nodes;
 
 import java.util.List;
 import vadl.iss.passes.tcgLowering.TcgV;
-import vadl.iss.passes.tcgLowering.TcgWidth;
+import vadl.iss.passes.tcgLowering.Tcg_32_64;
 import vadl.javaannotations.viam.DataValue;
 import vadl.viam.graph.GraphNodeVisitor;
 
@@ -16,9 +16,9 @@ public abstract class TcgOpNode extends TcgNode {
   @DataValue
   TcgV dest;
   @DataValue
-  TcgWidth width;
+  Tcg_32_64 width;
 
-  public TcgOpNode(TcgV dest, TcgWidth width) {
+  public TcgOpNode(TcgV dest, Tcg_32_64 width) {
     this.dest = dest;
     this.width = width;
   }
@@ -35,7 +35,7 @@ public abstract class TcgOpNode extends TcgNode {
     ensure(dest.width() == width, "result variable width does not match");
   }
 
-  public TcgWidth width() {
+  public Tcg_32_64 width() {
     return width;
   }
 

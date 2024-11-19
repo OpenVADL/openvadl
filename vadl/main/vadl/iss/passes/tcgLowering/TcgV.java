@@ -11,30 +11,30 @@ import vadl.viam.graph.dependency.LetNode;
 public class TcgV {
 
   String name;
-  TcgWidth width;
+  Tcg_32_64 width;
 
-  private TcgV(String name, TcgWidth width) {
+  private TcgV(String name, Tcg_32_64 width) {
     this.name = name;
     this.width = width;
   }
 
-  public static TcgV of(LetNode node, TcgWidth width) {
+  public static TcgV of(LetNode node, Tcg_32_64 width) {
     return new TcgV("_" + node.letName().name(), width);
   }
 
-  public static TcgV of(String name, TcgWidth width) {
+  public static TcgV of(String name, Tcg_32_64 width) {
     return new TcgV("v" + name, width);
   }
 
   private static AtomicInteger counter = new AtomicInteger(0);
 
   // TODO: @jzottele Maybe remove this
-  public static TcgV gen(TcgWidth width) {
+  public static TcgV gen(Tcg_32_64 width) {
     var c = counter.getAndIncrement();
     return new TcgV("v" + c, width);
   }
 
-  public TcgWidth width() {
+  public Tcg_32_64 width() {
     return width;
   }
 

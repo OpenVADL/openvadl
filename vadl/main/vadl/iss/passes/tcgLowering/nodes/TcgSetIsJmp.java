@@ -2,8 +2,6 @@ package vadl.iss.passes.tcgLowering.nodes;
 
 import java.util.List;
 import java.util.function.Function;
-import vadl.iss.passes.tcgLowering.TcgV;
-import vadl.iss.passes.tcgLowering.TcgWidth;
 import vadl.javaannotations.viam.DataValue;
 import vadl.viam.graph.Node;
 
