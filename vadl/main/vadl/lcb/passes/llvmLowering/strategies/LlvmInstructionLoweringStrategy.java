@@ -472,7 +472,7 @@ public abstract class LlvmInstructionLoweringStrategy {
   }
 
   /**
-   * Some dataflow nodes are not lowerable. This function checks whether the {@code behaviors}
+   * Some dataflow nodes are not lowerable. This function checks whether the {@code behavior}
    * contains these.
    *
    * @return {@code true} if the {@link Graph} is lowerable.
