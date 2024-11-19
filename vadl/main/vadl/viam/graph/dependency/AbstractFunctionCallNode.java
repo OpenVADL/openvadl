@@ -26,6 +26,10 @@ public abstract class AbstractFunctionCallNode extends ExpressionNode {
     return args;
   }
 
+  public void setArgs(NodeList<ExpressionNode> args) {
+    this.args = args;
+  }
+
   /**
    * Checks whether all the inputs of the node are constant.
    *

@@ -52,13 +52,17 @@ public class LlvmLoweringPassTest extends AbstractLcbTest {
   }
 
   private static TestOutput createTestOutputRRWithConditional(LlvmCondCode condCode,
-                                                              String machineInstruction) {
+                                                              String machineInstruction,
+                                                              String
+                                                                  machineInstructionWithImmediate) {
     return new TestOutput(
         List.of(new TableGenInstructionOperand(DUMMY_NODE, "X", "rs1"),
             new TableGenInstructionOperand(DUMMY_NODE, "X", "rs2")),
         List.of(new TableGenInstructionOperand(DUMMY_NODE, "X", "rd")),
-        List.of(String.format("(%s X:$rs1, X:$rs2, %s)", "setcc", condCode)),
-        List.of(String.format("(%s X:$rs1, X:$rs2)", machineInstruction)),
+        List.of(String.format("(%s X:$rs1, X:$rs2, %s)", "setcc", condCode),
+            String.format("(%s X:$rs1, X:$rs2, %s)", "setcc", condCode)),
+        List.of(String.format("(%s X:$rs1, X:$rs2)", machineInstruction),
+            String.format("(%s (XOR X:$rs1, X:$rs2), 1)", machineInstructionWithImmediate)),
         createEmptyFlags(),
         false
     );
@@ -287,9 +291,9 @@ public class LlvmLoweringPassTest extends AbstractLcbTest {
     CONDITIONALS
      */
     expectedResults.put("SLT",
-        createTestOutputRRWithConditional(LlvmCondCode.SETLT, "SLT"));
+        createTestOutputRRWithConditional(LlvmCondCode.SETLT, "SLT", "SLTIU"));
     expectedResults.put("SLTU",
-        createTestOutputRRWithConditional(LlvmCondCode.SETULT, "SLTU"));
+        createTestOutputRRWithConditional(LlvmCondCode.SETULT, "SLTU", "SLTIU"));
     expectedResults.put("SLTI",
         createTestOutputRIWithConditional("RV64IM_Itype_immAsInt64", "imm",
             LlvmCondCode.SETLT, "SLTI"));
@@ -309,7 +313,8 @@ public class LlvmLoweringPassTest extends AbstractLcbTest {
         createTestOutputRRWithConditionalBranch(LlvmCondCode.SETLT, "BLT", LlvmCondCode.SETGT));
     expectedResults.put("BLTU",
         createTestOutputRRWithConditionalBranch(LlvmCondCode.SETULT, "BLTU", LlvmCondCode.SETUGT));
-    expectedResults.put("BNE", createTestOutputRRWithConditionalBranch(LlvmCondCode.SETNE, "BNE", LlvmCondCode.SETEQ));
+    expectedResults.put("BNE",
+        createTestOutputRRWithConditionalBranch(LlvmCondCode.SETNE, "BNE", LlvmCondCode.SETEQ));
     /*
     INDIRECT CALL
      */

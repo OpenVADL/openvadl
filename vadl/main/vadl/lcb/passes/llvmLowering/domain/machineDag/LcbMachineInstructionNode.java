@@ -17,7 +17,7 @@ import vadl.viam.graph.dependency.ExpressionNode;
  */
 public class LcbMachineInstructionNode extends AbstractFunctionCallNode {
   @DataValue
-  protected final Instruction instruction;
+  protected Instruction instruction;
 
   /**
    * Constructor.
@@ -29,6 +29,9 @@ public class LcbMachineInstructionNode extends AbstractFunctionCallNode {
     this.instruction = instruction;
   }
 
+  public void setInstruction(Instruction instruction) {
+    this.instruction = instruction;
+  }
 
   @Override
   public Node copy() {

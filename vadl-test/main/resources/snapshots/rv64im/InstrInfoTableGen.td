@@ -2927,6 +2927,9 @@ let Defs = [  ];
 def : Pat<(setcc X:$rs1, X:$rs2, SETLT),
         (SLT X:$rs1, X:$rs2)>;
 
+def : Pat<(setcc X:$rs1, X:$rs2, SETLT),
+        (SLTIU (XOR X:$rs1, X:$rs2), 1)>;
+
 
 def SLTI : Instruction
 {
@@ -3084,6 +3087,9 @@ let Defs = [  ];
 
 def : Pat<(setcc X:$rs1, X:$rs2, SETULT),
         (SLTU X:$rs1, X:$rs2)>;
+
+def : Pat<(setcc X:$rs1, X:$rs2, SETULT),
+        (SLTIU (XOR X:$rs1, X:$rs2), 1)>;
 
 
 def SRA : Instruction
