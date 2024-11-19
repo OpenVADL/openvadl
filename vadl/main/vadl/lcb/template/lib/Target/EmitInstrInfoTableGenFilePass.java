@@ -6,6 +6,7 @@ import java.io.IOException;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
+import java.util.stream.Stream;
 import vadl.configuration.LcbConfiguration;
 import vadl.error.Diagnostic;
 import vadl.lcb.codegen.model.llvm.ValueType;
@@ -15,6 +16,7 @@ import vadl.lcb.passes.llvmLowering.GenerateTableGenMachineInstructionRecordPass
 import vadl.lcb.passes.llvmLowering.GenerateTableGenPseudoInstructionRecordPass;
 import vadl.lcb.passes.llvmLowering.immediates.GenerateTableGenImmediateRecordPass;
 import vadl.lcb.passes.llvmLowering.tablegen.lowering.TableGenImmediateOperandRenderer;
+import vadl.lcb.passes.llvmLowering.tablegen.lowering.TableGenInstructionPatternRenderer;
 import vadl.lcb.passes.llvmLowering.tablegen.lowering.TableGenInstructionRenderer;
 import vadl.lcb.passes.llvmLowering.tablegen.model.TableGenImmediateRecord;
 import vadl.lcb.passes.llvmLowering.tablegen.model.TableGenMachineInstruction;
@@ -83,6 +85,12 @@ public class EmitInstrInfoTableGenFilePass extends LcbTemplateRenderingPass {
         .map(TableGenInstructionRenderer::lower)
         .toList();
 
+    var renderedPatterns =
+        Stream.concat(
+                tableGenMachineRecords.stream().map(TableGenInstructionPatternRenderer::lower),
+                tableGenPseudoRecords.stream().map(TableGenInstructionPatternRenderer::lower))
+            .toList();
+
     return Map.of(CommonVarNames.NAMESPACE, specification.simpleName(),
         "addi", addi,
         "stackPointerRegister", abi.stackPointer(),
@@ -91,6 +99,7 @@ public class EmitInstrInfoTableGenFilePass extends LcbTemplateRenderingPass {
         "immediates", renderedImmediates,
         "instructions", renderedTableGenMachineRecords,
         "pseudos", renderedTableGenPseudoRecords,
+        "patterns", renderedPatterns,
         "registerFiles", specification.registerFiles().toList());
   }
 }

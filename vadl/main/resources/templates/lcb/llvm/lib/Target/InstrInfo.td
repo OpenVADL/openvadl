@@ -187,3 +187,7 @@ def : Pat<([(${stackPointerType})] AddrFI:$rs1),
 [# th:each="pseudo : ${pseudos}" ]
 [(${pseudo})]
 [/]
+
+[# th:each="pattern : ${patterns}" ]
+[(${pattern})]
+[/]

@@ -23,88 +23,33 @@ import vadl.viam.Instruction;
 import vadl.viam.PseudoInstruction;
 
 /**
- * Utility class for mapping into tablegen.
+ * Utility class for mapping into TableGen. But it only prints the anonymous patterns.
+ * The split between {@link TableGenInstructionPatternRenderer} and
+ * {@link TableGenInstructionRenderer} is required because TableGen does not allow forward
+ * declarations. Therefore, all instructions must be defined before they can be used in patterns.
+ * This might be problem for some patterns.
  */
-public final class TableGenInstructionRenderer {
+public final class TableGenInstructionPatternRenderer {
   private static final Logger logger = LoggerFactory.getLogger(
-      TableGenInstructionRenderer.class);
+      TableGenInstructionPatternRenderer.class);
 
   /**
    * Transforms the given {@link Instruction} into a string which can be used by LLVM's TableGen.
    * It will *ONLY* print the anonymous pattern if the pattern is actually lowerable.
    */
   public static String lower(TableGenMachineInstruction instruction) {
+    var anonymousPatterns = instruction.getAnonymousPatterns().stream()
+        .filter(TableGenPattern::isPatternLowerable)
+        .filter(x -> x instanceof TableGenSelectionWithOutputPattern)
+        .map(x -> (TableGenSelectionWithOutputPattern) x)
+        .toList();
     return String.format("""
-            def %s : Instruction
-            {
-            let Namespace = "%s";
-            
-            let Size = %d;
-            let CodeSize = %d;
-            
-            let OutOperandList = ( outs %s );
-            let InOperandList = ( ins %s );
-            
-            field bits<%s> Inst;
-            
-            // SoftFail is a field the disassembler can use to provide a way for
-            // instructions to not match without killing the whole decode process. It is
-            // mainly used for ARM, but Tablegen expects this field to exist or it fails
-            // to build the decode table.
-            field bits<%s> SoftFail = 0;
-            
             %s
-            
-            %s
-            
-            let isTerminator  = %d;
-            let isBranch      = %d;
-            let isCall        = %d;
-            let isReturn      = %d;
-            let isPseudo      = %d;
-            let isCodeGenOnly = %d;
-            let mayLoad       = %d;
-            let mayStore      = %d;
-            
-            let Constraints = "";
-            let AddedComplexity = 0;
-            
-            let Pattern = [%s];
-            
-            let Uses = [ %s ];
-            let Defs = [ %s ];
-            }
             """,
-        instruction.getName(),
-        instruction.getNamespace(),
-        instruction.getSize(),
-        instruction.getCodeSize(),
-        instruction.getOutOperands().stream().map(TableGenInstructionRenderer::lower).collect(
-            Collectors.joining(", ")),
-        instruction.getInOperands().stream().map(TableGenInstructionRenderer::lower).collect(
-            Collectors.joining(", ")),
-        instruction.getFormatSize(),
-        instruction.getFormatSize(),
-        instruction.getBitBlocks().stream().map(TableGenInstructionRenderer::lower)
-            .collect(Collectors.joining("\n")),
-        instruction.getFieldEncodings().stream().map(TableGenInstructionRenderer::lower)
-            .collect(Collectors.joining("\n")),
-        toInt(instruction.getFlags().isTerminator()),
-        toInt(instruction.getFlags().isBranch()),
-        toInt(instruction.getFlags().isCall()),
-        toInt(instruction.getFlags().isReturn()),
-        toInt(instruction.getFlags().isPseudo()),
-        toInt(instruction.getFlags().isCodeGenOnly()),
-        toInt(instruction.getFlags().mayLoad()),
-        toInt(instruction.getFlags().mayStore()),
-        instruction.getAnonymousPatterns()
+        anonymousPatterns
             .stream()
-            .filter(x -> x instanceof TableGenSelectionPattern)
-            .map(x -> (TableGenSelectionPattern) x)
-            .map(TableGenInstructionRenderer::lower)
-            .collect(Collectors.joining(",")),
-        instruction.getUses().stream().map(Definition::simpleName).collect(Collectors.joining(",")),
-        instruction.getDefs().stream().map(Definition::simpleName).collect(Collectors.joining(","))
+            .map(x -> lower(instruction, x))
+            .collect(Collectors.joining("\n"))
     );
   }
 
@@ -119,55 +64,8 @@ public final class TableGenInstructionRenderer {
         .map(x -> (TableGenSelectionWithOutputPattern) x)
         .toList();
     var y = String.format("""
-            def %s : Instruction
-            {
-            let Namespace = "%s";
-            
-            let OutOperandList = ( outs %s );
-            let InOperandList = ( ins %s );
-            
-            let isTerminator  = %d;
-            let isBranch      = %d;
-            let isCall        = %d;
-            let isReturn      = %d;
-            let isPseudo      = %d;
-            let isCodeGenOnly = %d;
-            let mayLoad       = %d;
-            let mayStore      = %d;
-            
-            let Constraints = "";
-            let AddedComplexity = 0;
-            
-            let Pattern = [%s];
-            
-            let Uses = [ %s ];
-            let Defs = [ %s ];
-            }
-            
             %s
             """,
-        instruction.getName(),
-        instruction.getNamespace(),
-        instruction.getOutOperands().stream().map(TableGenInstructionRenderer::lower).collect(
-            Collectors.joining(", ")),
-        instruction.getInOperands().stream().map(TableGenInstructionRenderer::lower).collect(
-            Collectors.joining(", ")),
-        toInt(instruction.getFlags().isTerminator()),
-        toInt(instruction.getFlags().isBranch()),
-        toInt(instruction.getFlags().isCall()),
-        toInt(instruction.getFlags().isReturn()),
-        toInt(instruction.getFlags().isPseudo()),
-        toInt(instruction.getFlags().isCodeGenOnly()),
-        toInt(instruction.getFlags().mayLoad()),
-        toInt(instruction.getFlags().mayStore()),
-        instruction.getAnonymousPatterns()
-            .stream()
-            .filter(x -> x instanceof TableGenSelectionPattern)
-            .map(x -> (TableGenSelectionPattern) x)
-            .map(TableGenInstructionRenderer::lower)
-            .collect(Collectors.joining(",")),
-        instruction.getUses().stream().map(RegisterRef::lowerName).collect(Collectors.joining(",")),
-        instruction.getDefs().stream().map(RegisterRef::lowerName).collect(Collectors.joining(",")),
         anonymousPatterns.stream()
             .map(x -> lower(instruction, x))
             .collect(Collectors.joining("\n"))
