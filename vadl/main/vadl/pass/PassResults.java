@@ -87,6 +87,11 @@ public final class PassResults {
     return result;
   }
 
+  public <T extends Pass, R> R lastResultOf(Class<T> passClass, Class<R> type) {
+    var result = lastResultOf(passClass);
+    return type.cast(result);
+  }
+
   /**
    * Retrieves the pass result of the last execution of the given passClass.
    * This allows searching for the result of a pass type instead of one with a specific key.

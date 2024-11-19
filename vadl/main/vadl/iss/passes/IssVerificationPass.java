@@ -6,14 +6,18 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
+import java.util.function.Consumer;
 import org.jetbrains.annotations.Nullable;
 import vadl.configuration.IssConfiguration;
 import vadl.error.Diagnostic;
+import vadl.error.DiagnosticBuilder;
 import vadl.error.DiagnosticList;
+import vadl.iss.passes.tcgLowering.Tcg_32_64;
 import vadl.pass.PassName;
 import vadl.pass.PassResults;
 import vadl.viam.Counter;
 import vadl.viam.Instruction;
+import vadl.viam.InstructionSetArchitecture;
 import vadl.viam.Specification;
 
 /**
@@ -30,38 +34,41 @@ public class IssVerificationPass extends AbstractIssPass {
     return PassName.of("ISS Verification Pass");
   }
 
+  private int foundTargetWidth = 0;
+
   @Override
   public @Nullable Object execute(PassResults passResults, Specification viam)
       throws IOException {
 
     // create list of diagnostics to collect them
-    var diagnostics = new ArrayList<Diagnostic>();
+    var diagnostics = new ArrayList<DiagnosticBuilder>();
 
     checkIsaExists(viam, diagnostics);
     checkProgramCounter(viam, diagnostics);
+    checkRegister(viam, diagnostics);
     checkRegisterFiles(viam, diagnostics);
     checkFormats(viam, diagnostics);
     checkMemory(viam, diagnostics);
 
     if (!diagnostics.isEmpty()) {
       // if we found diagnostics, we throw them
-      throw new DiagnosticList(diagnostics);
+      throw new DiagnosticList(diagnostics.stream().map(DiagnosticBuilder::build).toList());
     }
     return null;
   }
 
-  private void checkIsaExists(Specification viam, List<Diagnostic> diagnostics) {
+  private void checkIsaExists(Specification viam, List<DiagnosticBuilder> diagnostics) {
     if (viam.isa().isEmpty()) {
       diagnostics.add(
           error("No Instruction Set Architecture found",
               viam.identifier.sourceLocation())
               .help("Add a `instruction set architecture` definition to your specification.")
-              .build()
+
       );
     }
   }
 
-  private void checkProgramCounter(Specification viam, List<Diagnostic> diagnostics) {
+  private void checkProgramCounter(Specification viam, List<DiagnosticBuilder> diagnostics) {
     var optIsa = viam.isa();
     if (optIsa.isEmpty()) {
       return;
@@ -73,7 +80,7 @@ public class IssVerificationPass extends AbstractIssPass {
               .locationDescription(isa.sourceLocation(),
                   "No `program counter` definition found.")
               .locationHelp(isa.sourceLocation(), "Add a `program counter` definition.")
-              .build()
+
       );
     } else {
       var pc = isa.pc();
@@ -87,26 +94,50 @@ public class IssVerificationPass extends AbstractIssPass {
                         + "However the ISS generator currently only supports register "
                         + "cell program counters.")
                 .note("We have to implement this!")
-                .build()
+
         );
       } else {
         var pcReg = ((Counter.RegisterCounter) pc).registerRef();
-        if (pcReg.resultType().bitWidth() != 64) {
+        if (pcReg.resultType().bitWidth() != 64 && pcReg.resultType().bitWidth() != 32) {
           diagnostics.add(
               error("Unsupported PC size", pcReg.sourceLocation())
                   .locationDescription(
                       pcReg.sourceLocation(),
                       "The PC has %s.", pcReg.resultType().bitWidth())
-                  .description("We currently only support PCs with a bit with of 64.")
+                  .description("We currently only support PCs with a bit-width of 64 or 32.")
                   .note("We have to implement this!")
-                  .build()
+
           );
         }
       }
     }
   }
 
-  private void checkRegisterFiles(Specification viam, List<Diagnostic> diagnostics) {
+  private void checkRegister(Specification viam, List<DiagnosticBuilder> diagnostics) {
+    withIsa(viam, isa -> {
+      isa.ownRegisters()
+          .stream()
+          .map(f -> {
+            var resWidth = f.resultType().bitWidth();
+            if (resWidth != 64 && resWidth != 32) {
+              return error("Invalid register result size", f)
+                  .description("ISS only supports register of size 32 or 64 bits.")
+                  ;
+            }
+            if (targetWidth(resWidth) != resWidth) {
+              return error("Different register result sizes", f)
+                  .locationDescription(f, "Also found result size of %s in ISA.", foundTargetWidth)
+                  .description(
+                      "The ISS requires all registers and register files to have the same result size.");
+            }
+            return null;
+          })
+          .filter(Objects::nonNull)
+          .forEach(diagnostics::add);
+    });
+  }
+
+  private void checkRegisterFiles(Specification viam, List<DiagnosticBuilder> diagnostics) {
     var optIsa = viam.isa();
     if (optIsa.isEmpty()) {
       return;
@@ -114,14 +145,25 @@ public class IssVerificationPass extends AbstractIssPass {
     optIsa.get().ownRegisterFiles()
         .stream()
         .map(f -> {
-          // TODO: Add checks for register files
-          return (Diagnostic) null;
+          var resWidth = f.resultType().bitWidth();
+          if (resWidth != 64 && resWidth != 32) {
+            return error("Invalid register file result width", f)
+                .description("The ISS only supports register files of size 32 or 64 bits.")
+                ;
+          }
+          if (targetWidth(resWidth) != resWidth) {
+            return error("Different register file result sizes", f)
+                .locationDescription(f, "Also found result size of %s in ISA.", foundTargetWidth)
+                .description(
+                    "The ISS requires all registers and register files to have the same result size.");
+          }
+          return null;
         })
         .filter(Objects::nonNull)
         .forEach(diagnostics::add);
   }
 
-  private void checkFormats(Specification viam, List<Diagnostic> diagnostics) {
+  private void checkFormats(Specification viam, List<DiagnosticBuilder> diagnostics) {
     var optIsa = viam.isa();
     if (optIsa.isEmpty() || optIsa.get().pc() == null) {
       return;
@@ -154,12 +196,12 @@ public class IssVerificationPass extends AbstractIssPass {
         );
       }
 
-      diagnostics.add(errBuilder.build());
+      diagnostics.add(errBuilder);
     }
 
   }
 
-  private void checkMemory(Specification viam, List<Diagnostic> diagnostics) {
+  private void checkMemory(Specification viam, List<DiagnosticBuilder> diagnostics) {
     var optIsa = viam.isa();
     if (optIsa.isEmpty() || optIsa.get().pc() == null) {
       return;
@@ -172,7 +214,7 @@ public class IssVerificationPass extends AbstractIssPass {
               .description("Expected exactly one `memory` definition, but found %s.",
                   memories.size())
               .note("This is a current limitation of the ISS generator and has to be fixed.")
-              .build()
+
       );
     } else {
       var mem = memories.get(0);
@@ -182,9 +224,25 @@ public class IssVerificationPass extends AbstractIssPass {
                 "Has a word size of %s bits.", mem.wordSize())
             .description("Currently the memory word must be 8 bits wide.")
             .note("This is going to be relaxed in the future.")
-            .build());
+        );
       }
     }
 
+  }
+
+  private int targetWidth(int thisWidth) {
+    if (this.foundTargetWidth == 0) {
+      this.foundTargetWidth = thisWidth;
+    }
+    return foundTargetWidth;
+  }
+
+  private void withIsa(Specification viam, Consumer<InstructionSetArchitecture> func) {
+    var optIsa = viam.isa();
+    if (optIsa.isEmpty() || optIsa.get().pc() == null) {
+      return;
+    }
+    var isa = optIsa.get();
+    func.accept(isa);
   }
 }

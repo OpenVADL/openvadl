@@ -19,6 +19,7 @@ import vadl.gcb.passes.typeNormalization.CppTypeNormalizationForDecodingsPass;
 import vadl.gcb.passes.typeNormalization.CppTypeNormalizationForEncodingsPass;
 import vadl.gcb.passes.typeNormalization.CppTypeNormalizationForPredicatesPass;
 import vadl.iss.passes.IssConfigurationPass;
+import vadl.iss.passes.IssReadVarAssignPass;
 import vadl.iss.passes.IssTcgAnnotatePass;
 import vadl.iss.passes.IssVerificationPass;
 import vadl.iss.passes.tcgLowering.TcgLoweringPass;
@@ -337,6 +338,7 @@ public class PassOrders {
         .add(new IssVerificationPass(config))
         .add(new IssConfigurationPass(config))
         .add(new SideEffectSchedulingPass(config))
+        .add(new IssReadVarAssignPass(config))
         .add(new IssTcgAnnotatePass(config))
         .add(new TcgLoweringPass(config))
 

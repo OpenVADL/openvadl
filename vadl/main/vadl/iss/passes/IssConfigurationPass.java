@@ -1,9 +1,12 @@
 package vadl.iss.passes;
 
+import static java.util.Objects.requireNonNull;
+
 import java.io.IOException;
 import org.jetbrains.annotations.Nullable;
 import vadl.configuration.GeneralConfiguration;
 import vadl.configuration.IssConfiguration;
+import vadl.iss.passes.tcgLowering.Tcg_32_64;
 import vadl.pass.Pass;
 import vadl.pass.PassName;
 import vadl.pass.PassResults;
@@ -31,6 +34,11 @@ public class IssConfigurationPass extends AbstractIssPass {
     // TODO: Determine actual architecture name
 
     configuration.setArchitectureName("vadl");
+
+    viam.isa().ifPresent(isa -> {
+      var targetSize = requireNonNull(isa.pc()).registerResource().resultType().bitWidth();
+      configuration.setTargetSize(Tcg_32_64.fromWidth(targetSize));
+    });
 
     // we return the configuration but also manipulate the original one,
     // so the return is actually not necessary.
