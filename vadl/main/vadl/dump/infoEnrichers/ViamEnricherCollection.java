@@ -203,6 +203,10 @@ public class ViamEnricherCollection {
             .map(rsrc -> rsrc.getClass().getSimpleName() + " " + rsrc.simpleName())
             .collect(Collectors.toCollection(ArrayList::new));
 
+        if (reads.isEmpty() && writes.isEmpty()) {
+          return;
+        }
+
         reads.add(0, "Read");
         writes.add(0, "Written");
 

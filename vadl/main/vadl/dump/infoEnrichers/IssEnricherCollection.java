@@ -50,6 +50,10 @@ public class IssEnricherCollection {
             .map(TcgV::varName)
             .collect(Collectors.toCollection(ArrayList::new));
 
+        if (vars.isEmpty()) {
+          return;
+        }
+
         var readStr = reads.stream().map(Node::toString)
             .collect(Collectors.toCollection(ArrayList::new));
 
