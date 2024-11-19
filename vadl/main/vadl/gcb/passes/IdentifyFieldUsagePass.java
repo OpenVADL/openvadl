@@ -209,7 +209,7 @@ public class IdentifyFieldUsagePass extends Pass {
                 // arithmetic with the register file's index. However, this is very unlikely.
                 Objects.requireNonNull(cast.address()).collectInputsWithChildren(nodes);
                 return cast.hasAddress()
-                    && cast.address() == fieldRefNode || nodes.contains(fieldRefNode);
+                    && (cast.address() == fieldRefNode || nodes.contains(fieldRefNode));
               });
 
           container.addFormat(fieldRef.format());
