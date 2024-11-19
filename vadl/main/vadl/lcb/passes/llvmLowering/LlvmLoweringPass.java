@@ -105,7 +105,7 @@ public class LlvmLoweringPass extends Pass {
         );
 
     var machineRecords =
-        generateRecordsForMachineInstructions(passResults, viam, machineStrategies,
+        generateRecordsForMachineInstructions(viam, machineStrategies,
             labelledMachineInstructions);
     var pseudoRecords =
         generateRecordsForPseudoInstructions(viam, pseudoStrategies, labelledMachineInstructions,
@@ -116,7 +116,7 @@ public class LlvmLoweringPass extends Pass {
 
 
   private IdentityHashMap<Instruction, LlvmLoweringRecord> generateRecordsForMachineInstructions(
-      PassResults passResults, Specification viam,
+      Specification viam,
       List<LlvmInstructionLoweringStrategy> strategies,
       Map<MachineInstructionLabel, List<Instruction>> labelledMachineInstructions) {
     var tableGenRecords = new IdentityHashMap<Instruction, LlvmLoweringRecord>();
