@@ -13,7 +13,6 @@ import vadl.lcb.codegen.model.llvm.ValueType;
 import vadl.lcb.passes.isaMatching.MachineInstructionLabel;
 import vadl.lcb.passes.llvmLowering.domain.machineDag.LcbMachineInstructionNode;
 import vadl.lcb.passes.llvmLowering.domain.machineDag.LcbMachineInstructionWrappedNode;
-import vadl.lcb.passes.llvmLowering.domain.selectionDag.LlvmCondCode;
 import vadl.lcb.passes.llvmLowering.domain.selectionDag.LlvmReadRegFileNode;
 import vadl.lcb.passes.llvmLowering.domain.selectionDag.LlvmSetccSD;
 import vadl.lcb.passes.llvmLowering.strategies.LlvmInstructionLoweringStrategy;
@@ -29,7 +28,6 @@ import vadl.viam.graph.Node;
 import vadl.viam.graph.NodeList;
 import vadl.viam.graph.dependency.ConstantNode;
 import vadl.viam.graph.dependency.ReadRegFileNode;
-import vadl.viam.graph.dependency.ReadRegNode;
 
 /**
  * Lowering of conditionals into TableGen.
@@ -100,7 +98,7 @@ public class LlvmInstructionLoweringConditionalsStrategyImpl
   private void eq(Instruction lti,
                   Instruction xor,
                   List<TableGenPattern> patterns,
-                  ArrayList<TableGenPattern> result) {
+                  List<TableGenPattern> result) {
     /*
               def : Pat<(setcc X:$rs1, X:$rs2, SETLT),
                   (SLT X:$rs1, X:$rs2)>;
@@ -139,7 +137,7 @@ public class LlvmInstructionLoweringConditionalsStrategyImpl
 
               var newArgs = new LcbMachineInstructionWrappedNode(xor, node.arguments());
               node.setArgs(
-                  new NodeList<>(newArgs, new ConstantNode(new Constant.Value.Str("1"))));
+                  new NodeList<>(newArgs, new ConstantNode(new Constant.Str("1"))));
             });
 
         result.add(outputPattern);
@@ -151,7 +149,7 @@ public class LlvmInstructionLoweringConditionalsStrategyImpl
   private void neq(Instruction ltu,
                    Instruction xor,
                    List<TableGenPattern> patterns,
-                   ArrayList<TableGenPattern> result) {
+                   List<TableGenPattern> result) {
     /*
               def : Pat<(setcc X:$rs1, X:$rs2, SETLT),
                   (SLT X:$rs1, X:$rs2)>;
