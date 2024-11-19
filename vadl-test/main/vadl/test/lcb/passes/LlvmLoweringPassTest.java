@@ -66,16 +66,20 @@ public class LlvmLoweringPassTest extends AbstractLcbTest {
 
   private static TestOutput createTestOutputRRWithConditionalToImmediate(LlvmCondCode condCode,
                                                                          String machineInstruction,
-                                                                         String
-                                                                             machineInstructionWithImmediate) {
+                                                                         LlvmCondCode condCodeWithImmediate,
+                                                                         String machineInstructionWithImmediate,
+                                                                         LlvmCondCode condCodeAlternative,
+                                                                         String machineInstructionAlternative) {
     return new TestOutput(
         List.of(new TableGenInstructionOperand(DUMMY_NODE, "X", "rs1"),
             new TableGenInstructionOperand(DUMMY_NODE, "X", "rs2")),
         List.of(new TableGenInstructionOperand(DUMMY_NODE, "X", "rd")),
-        List.of(String.format("(%s X:$rs1, X:$rs2, %s)", "setcc", condCode),
-            String.format("(%s X:$rs1, X:$rs2, %s)", "setcc", condCode)),
+        List.of(String.format("(setcc X:$rs1, X:$rs2, %s)", condCode),
+            String.format("(setcc X:$rs1, X:$rs2, %s)", condCodeWithImmediate),
+            String.format("(setcc X:$rs1, X:$rs2, %s)", condCodeAlternative)),
         List.of(String.format("(%s X:$rs1, X:$rs2)", machineInstruction),
-            String.format("(%s (XOR X:$rs1, X:$rs2), 1)", machineInstructionWithImmediate)),
+            String.format("(%s (XOR X:$rs1, X:$rs2), 1)", machineInstructionWithImmediate),
+            String.format("(%s X0, (XOR X:$rs1, X:$rs2))", machineInstructionAlternative)),
         createEmptyFlags(),
         false
     );
@@ -304,7 +308,11 @@ public class LlvmLoweringPassTest extends AbstractLcbTest {
     CONDITIONALS
      */
     expectedResults.put("SLT",
-        createTestOutputRRWithConditionalToImmediate(LlvmCondCode.SETLT, "SLT", "SLTIU"));
+        createTestOutputRRWithConditionalToImmediate(LlvmCondCode.SETLT, "SLT",
+        LlvmCondCode.SETEQ,
+        "SLTIU",
+        LlvmCondCode.SETNE,
+        "SLTU"));
     expectedResults.put("SLTU",
         createTestOutputRRWithConditional(LlvmCondCode.SETULT, "SLTU"));
     expectedResults.put("SLTI",

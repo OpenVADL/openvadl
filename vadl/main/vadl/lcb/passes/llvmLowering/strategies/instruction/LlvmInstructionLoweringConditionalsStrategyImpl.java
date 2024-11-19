@@ -13,6 +13,7 @@ import vadl.lcb.codegen.model.llvm.ValueType;
 import vadl.lcb.passes.isaMatching.MachineInstructionLabel;
 import vadl.lcb.passes.llvmLowering.domain.machineDag.LcbMachineInstructionNode;
 import vadl.lcb.passes.llvmLowering.domain.machineDag.LcbMachineInstructionWrappedNode;
+import vadl.lcb.passes.llvmLowering.domain.selectionDag.LlvmCondCode;
 import vadl.lcb.passes.llvmLowering.domain.selectionDag.LlvmReadRegFileNode;
 import vadl.lcb.passes.llvmLowering.domain.selectionDag.LlvmSetccSD;
 import vadl.lcb.passes.llvmLowering.strategies.LlvmInstructionLoweringStrategy;
@@ -87,7 +88,7 @@ public class LlvmInstructionLoweringConditionalsStrategyImpl
           ltus.stream().findFirst().ifPresent(ltu -> {
             // Why `lts`? Because we need an initial pattern from which we construct a new pattern.
             // In that case, "less-than"
-            if (lts.equals(instruction)) {
+            if (lts.contains(instruction)) {
               neq(ltu, xor, patterns, result);
             }
           });
@@ -124,6 +125,8 @@ public class LlvmInstructionLoweringConditionalsStrategyImpl
             setcc.arguments().get(0) instanceof LlvmReadRegFileNode &&
             setcc.arguments().get(1) instanceof LlvmReadRegFileNode) {
           setcc.setBuiltIn(BuiltInTable.EQU);
+          setcc.arguments().set(2,
+              new ConstantNode(new Constant.Str(setcc.llvmCondCode().name())));
         } else {
           // Otherwise, stop and go to next pattern.
           continue;
@@ -173,6 +176,8 @@ public class LlvmInstructionLoweringConditionalsStrategyImpl
             setcc.arguments().get(0) instanceof LlvmReadRegFileNode &&
             setcc.arguments().get(1) instanceof LlvmReadRegFileNode) {
           setcc.setBuiltIn(BuiltInTable.NEQ);
+          setcc.arguments().set(2,
+              new ConstantNode(new Constant.Str(setcc.llvmCondCode().name())));
         } else {
           // Otherwise, stop and go to next pattern.
           continue;
@@ -200,7 +205,8 @@ public class LlvmInstructionLoweringConditionalsStrategyImpl
               // Cannot construct a `ReadReg` because this register does not really exist.
               // (for the VIAM spec)
               var zeroRegister = new ConstantNode(
-                  new Constant.Str(registerFile.simpleName() + zeroConstraint.address()));
+                  new Constant.Str(
+                      registerFile.simpleName() + zeroConstraint.address().intValue()));
 
               var newArgs = new LcbMachineInstructionWrappedNode(xor, node.arguments());
               node.setArgs(
