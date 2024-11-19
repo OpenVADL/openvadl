@@ -175,13 +175,14 @@ public class IdentifyFieldUsagePass extends Pass {
         .toList()) {
       container.addInstruction(instruction);
       handleFields(instruction, container);
-      handleFieldAccesFunctions(instruction, container);
+      handleFieldAccessFunctions(instruction, container);
     }
 
     return container;
   }
 
-  private static void handleFieldAccesFunctions(Instruction instruction, ImmediateDetectionContainer container) {
+  private static void handleFieldAccessFunctions(Instruction instruction,
+                                                 ImmediateDetectionContainer container) {
     instruction.behavior().getNodes(FieldAccessRefNode.class)
         .forEach(fieldAccessRefNode -> {
           var fieldRef = fieldAccessRefNode.fieldAccess().fieldRef();

@@ -86,10 +86,10 @@ public class FunctionInlinerPass extends Pass {
       // Replace every occurrence of `FuncParamNode` by a copy of the
       // given argument from the `FunctionCallNode`.
       Streams.zip(functionCall.arguments().stream(),
-          Arrays.stream(functionCall.function().parameters()), Pair::new).forEach(pair -> {
-        behaviorCopy.getNodes(FuncParamNode.class).filter(n -> n.parameter() == pair.right())
-            .forEach(usedParam -> usedParam.replaceAndDelete(pair.left().copy()));
-      });
+          Arrays.stream(functionCall.function().parameters()), Pair::new).forEach(
+          pair -> behaviorCopy.getNodes(FuncParamNode.class)
+              .filter(n -> n.parameter() == pair.right())
+              .forEach(usedParam -> usedParam.replaceAndDelete(pair.left().copy())));
 
       // replace the function call by a copy of the return value of the function
       functionCall.replaceAndDelete(returnNode.value().copy());

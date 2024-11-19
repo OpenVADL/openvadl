@@ -119,9 +119,9 @@ public class LlvmInstructionLoweringConditionalsStrategyImpl
             () -> Diagnostic.error("No setcc node was found", pattern.selector()
                 .sourceLocation()));
         // Only RR and not RI should be replaced here.
-        if (setcc.arguments().size() > 2 &&
-            setcc.arguments().get(0) instanceof LlvmReadRegFileNode &&
-            setcc.arguments().get(1) instanceof LlvmReadRegFileNode) {
+        if (setcc.arguments().size() > 2
+            && setcc.arguments().get(0) instanceof LlvmReadRegFileNode
+            && setcc.arguments().get(1) instanceof LlvmReadRegFileNode) {
           setcc.setBuiltIn(BuiltInTable.EQU);
           setcc.arguments().set(2,
               new ConstantNode(new Constant.Str(setcc.llvmCondCode().name())));
@@ -170,9 +170,9 @@ public class LlvmInstructionLoweringConditionalsStrategyImpl
             () -> Diagnostic.error("No setcc node was found", pattern.selector()
                 .sourceLocation()));
         // Only RR and not RI should be replaced here.
-        if (setcc.arguments().size() > 2 &&
-            setcc.arguments().get(0) instanceof LlvmReadRegFileNode &&
-            setcc.arguments().get(1) instanceof LlvmReadRegFileNode) {
+        if (setcc.arguments().size() > 2
+            && setcc.arguments().get(0) instanceof LlvmReadRegFileNode
+            && setcc.arguments().get(1) instanceof LlvmReadRegFileNode) {
           setcc.setBuiltIn(BuiltInTable.NEQ);
           setcc.arguments().set(2,
               new ConstantNode(new Constant.Str(setcc.llvmCondCode().name())));

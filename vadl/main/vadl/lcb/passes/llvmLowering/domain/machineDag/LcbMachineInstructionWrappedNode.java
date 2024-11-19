@@ -25,6 +25,9 @@ public class LcbMachineInstructionWrappedNode extends ExpressionNode {
   @Input
   protected NodeList<ExpressionNode> args;
 
+  /**
+   * Constructor.
+   */
   public LcbMachineInstructionWrappedNode(Instruction instruction, NodeList<ExpressionNode> args) {
     super(Type.dummy());
     this.instruction = instruction;
