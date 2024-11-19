@@ -2,6 +2,7 @@ package vadl.viam.graph.control;
 
 import java.util.List;
 import java.util.stream.Collectors;
+import javax.annotation.Nonnull;
 import vadl.javaannotations.viam.Input;
 import vadl.viam.graph.GraphVisitor;
 import vadl.viam.graph.Node;
@@ -26,6 +27,28 @@ public abstract class AbstractEndNode extends ControlNode {
   public NodeList<SideEffectNode> sideEffects() {
     return sideEffects;
   }
+
+
+  /**
+   * Inserts a new {@link DirectionalNode} before the current node.
+   *
+   * @param <T>     the type extending {@link DirectionalNode}
+   * @param newNode the new directional node to be inserted
+   * @return the inserted node
+   */
+  public <T extends DirectionalNode> T addBefore(@Nonnull T newNode) {
+    ensure(isActive() && graph() != null, "Node is not active");
+
+    var predecessor = predecessor();
+    ensure(predecessor instanceof DirectionalNode,
+        "Predecessor is not a directional node, but %s", predecessor);
+
+    // the previous directional node can be used to add this after it
+    // (so in between of this and its predecessor)
+    var prevDir = (DirectionalNode) predecessor;
+    return prevDir.addAfter(newNode);
+  }
+
 
   @Override
   protected void collectInputs(List<Node> collection) {

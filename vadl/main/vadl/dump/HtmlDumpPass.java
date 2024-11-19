@@ -163,7 +163,9 @@ public class HtmlDumpPass extends AbstractTemplateRenderingPass {
     // find last pass for the result
     lastPass = getLastPass(passResults);
 
-    log.debug("Create HTML dump for phase {}", config.phase);
+    log.info("HTML dump of phase '{}' at {}dump/{}", config.phase,
+        config.outputPath().toUri(),
+        getOutputPath());
     // collect suppliers
     var suppliers = new ArrayList<DumpEntitySupplier<?>>();
     entitySuppliers.accept(suppliers);
