@@ -61,7 +61,7 @@ public abstract class TcgBinaryImmOpNode extends TcgOpNode {
 
   @Override
   public String cCode(Function<Node, String> nodeToCCode) {
-    return tcgFunctionName() + "("
+    return tcgFunctionName() + "_" + width + "("
         + dest.varName() + ", "
         + arg1.varName() + ", "
         + nodeToCCode.apply(arg2)

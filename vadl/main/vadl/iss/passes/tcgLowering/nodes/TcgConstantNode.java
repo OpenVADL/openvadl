@@ -1,5 +1,6 @@
 package vadl.iss.passes.tcgLowering.nodes;
 
+import java.util.function.Function;
 import vadl.iss.passes.tcgLowering.TcgV;
 import vadl.viam.graph.Node;
 import vadl.viam.graph.dependency.ExpressionNode;
@@ -30,4 +31,11 @@ public class TcgConstantNode extends TcgUnaryImmOpNode {
   public String tcgFunctionName() {
     return "tcg_constant_i" + dest.width().width;
   }
+
+  @Override
+  public String cCode(Function<Node, String> nodeToCCode) {
+    return "TCGv " + dest.varName() + " = "
+        + tcgFunctionName() + "(" + nodeToCCode.apply(arg) + ");";
+  }
+
 }

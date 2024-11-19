@@ -33,7 +33,7 @@ public abstract sealed class TcgGetVar extends TcgOpNode
     @Override
     public String cCode(Function<Node, String> nodeToCCode) {
       return "TCGv_" + dest.width() + " " + dest.varName() + " = "
-          + "tcg_tmp_new_" + width + "();";
+          + "tcg_temp_new_" + width + "();";
     }
 
     @Override

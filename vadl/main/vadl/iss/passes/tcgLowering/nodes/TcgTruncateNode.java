@@ -1,6 +1,7 @@
 package vadl.iss.passes.tcgLowering.nodes;
 
 import java.util.List;
+import java.util.function.Function;
 import vadl.iss.passes.tcgLowering.TcgV;
 import vadl.javaannotations.viam.DataValue;
 import vadl.viam.graph.Node;
@@ -27,6 +28,15 @@ public class TcgTruncateNode extends TcgUnaryOpNode {
   @Override
   public String tcgFunctionName() {
     return "gen_trunc";
+  }
+
+  @Override
+  public String cCode(Function<Node, String> nodeToCCode) {
+    return tcgFunctionName() + "("
+        + dest.varName()
+        + ", " + arg.varName()
+        + ", " + bitWidth
+        + ");";
   }
 
   @Override

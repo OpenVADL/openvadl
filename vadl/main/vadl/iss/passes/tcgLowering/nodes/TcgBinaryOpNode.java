@@ -54,7 +54,7 @@ public abstract class TcgBinaryOpNode extends TcgOpNode {
 
   @Override
   public String cCode(Function<Node, String> nodeToCCode) {
-    return tcgFunctionName() + "("
+    return tcgFunctionName() + "_" + width + "("
         + dest.varName() + ", "
         + arg1.varName() + ", "
         + arg2.varName()

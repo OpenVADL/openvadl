@@ -21,7 +21,7 @@ import vadl.viam.graph.Node;
  */
 public abstract class CodeGenerator {
 
-  protected final StringWriter writer;
+  protected StringWriter writer;
   // TODO: Cache those, so we don't have to recreate them every time
   protected final Impls<Node> nodeImpls;
   protected final Impls<Definition> defImpls;
@@ -62,6 +62,19 @@ public abstract class CodeGenerator {
     var impl = nodeImpls.find(node.getClass());
     ViamError.ensure(impl != null, "Tried to generate code, but no implementation for: %s", node);
     impl.accept(node, writer);
+  }
+
+  public String genToString(Node node) {
+    // backup current writer
+    var savedWriter = writer;
+    // generate writer
+    writer = new StringWriter();
+    // generate c code on temp writer
+    gen(node);
+    var result = writer.toString();
+    // restore saved writer
+    writer = savedWriter;
+    return result;
   }
 
   /**
