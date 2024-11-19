@@ -2,10 +2,7 @@ package vadl.lcb.passes.llvmLowering.tablegen.lowering;
 
 import static vadl.viam.ViamError.ensure;
 
-import java.util.BitSet;
 import java.util.stream.Collectors;
-import java.util.stream.IntStream;
-import org.jetbrains.annotations.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import vadl.lcb.passes.llvmLowering.domain.machineDag.LcbMachineInstructionNode;
@@ -14,7 +11,6 @@ import vadl.lcb.passes.llvmLowering.tablegen.model.TableGenInstruction;
 import vadl.lcb.passes.llvmLowering.tablegen.model.TableGenMachineInstruction;
 import vadl.lcb.passes.llvmLowering.tablegen.model.TableGenPattern;
 import vadl.lcb.passes.llvmLowering.tablegen.model.TableGenPseudoInstruction;
-import vadl.lcb.passes.llvmLowering.tablegen.model.TableGenSelectionPattern;
 import vadl.lcb.passes.llvmLowering.tablegen.model.TableGenSelectionWithOutputPattern;
 import vadl.viam.Instruction;
 import vadl.viam.PseudoInstruction;
@@ -71,17 +67,6 @@ public final class TableGenInstructionPatternRenderer {
     return y;
   }
 
-  private static String lower(TableGenSelectionPattern tableGenPattern) {
-    ensure(tableGenPattern.isPatternLowerable(), "TableGen pattern must be lowerable");
-    var visitor = new TableGenPatternPrinterVisitor();
-
-    for (var root : tableGenPattern.selector().getDataflowRoots()) {
-      visitor.visit(root);
-    }
-
-    return "(" + visitor.getResult() + ")";
-  }
-
   private static String lower(TableGenInstruction instruction,
                               TableGenSelectionWithOutputPattern tableGenPattern) {
     logger.atTrace().log("Lowering pattern for " + instruction.getName());
@@ -110,23 +95,5 @@ public final class TableGenInstructionPatternRenderer {
                 %s>;
         """, visitor.getResult(), machineVisitor.getResult());
 
-  }
-
-  /**
-   * Converts a bitset into string representation.
-   *
-   * @param bitSet bitset
-   * @param size   the real size of the {@code bitSet}. {@code bitSet} returns only
-   *               the highest bit + 1.
-   * @return "01010000" binary string
-   */
-  @Nullable
-  private static String toBinaryString(BitSet bitSet, int size) {
-    if (bitSet == null) {
-      return null;
-    }
-    return IntStream.range(0, size)
-        .mapToObj(b -> String.valueOf(bitSet.get(b) ? 1 : 0))
-        .collect(Collectors.joining());
   }
 }
