@@ -8,17 +8,14 @@ import java.util.stream.IntStream;
 import org.jetbrains.annotations.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import vadl.lcb.passes.llvmLowering.domain.RegisterRef;
 import vadl.lcb.passes.llvmLowering.domain.machineDag.LcbMachineInstructionNode;
 import vadl.lcb.passes.llvmLowering.domain.machineDag.LcbPseudoInstructionNode;
 import vadl.lcb.passes.llvmLowering.tablegen.model.TableGenInstruction;
-import vadl.lcb.passes.llvmLowering.tablegen.model.TableGenInstructionOperand;
 import vadl.lcb.passes.llvmLowering.tablegen.model.TableGenMachineInstruction;
 import vadl.lcb.passes.llvmLowering.tablegen.model.TableGenPattern;
 import vadl.lcb.passes.llvmLowering.tablegen.model.TableGenPseudoInstruction;
 import vadl.lcb.passes.llvmLowering.tablegen.model.TableGenSelectionPattern;
 import vadl.lcb.passes.llvmLowering.tablegen.model.TableGenSelectionWithOutputPattern;
-import vadl.viam.Definition;
 import vadl.viam.Instruction;
 import vadl.viam.PseudoInstruction;
 
@@ -102,7 +99,8 @@ public final class TableGenInstructionPatternRenderer {
           "root node must be pseudo or machine node");
       if (root instanceof LcbMachineInstructionNode machineInstructionNode) {
         machineVisitor.visit(machineInstructionNode);
-      } else if (root instanceof LcbPseudoInstructionNode pseudoInstructionNode) {
+      } else {
+        LcbPseudoInstructionNode pseudoInstructionNode = (LcbPseudoInstructionNode) root;
         machineVisitor.visit(pseudoInstructionNode);
       }
     }
@@ -112,32 +110,6 @@ public final class TableGenInstructionPatternRenderer {
                 %s>;
         """, visitor.getResult(), machineVisitor.getResult());
 
-  }
-
-  private static String lower(TableGenInstructionOperand operand) {
-    return operand.identity().render();
-  }
-
-  private static String lower(TableGenMachineInstruction.BitBlock bitBlock) {
-    if (bitBlock.getBitSet().isPresent()) {
-      return String.format("bits<%s> %s = 0b%s;", bitBlock.getSize(), bitBlock.getName(),
-          toBinaryString(bitBlock.getBitSet().get(), bitBlock.getSize()));
-    } else {
-      return String.format("bits<%s> %s;", bitBlock.getSize(), bitBlock.getName());
-    }
-  }
-
-  private static String lower(TableGenMachineInstruction.FieldEncoding fieldEncoding) {
-    var inst = fieldEncoding.getTargetHigh() != fieldEncoding.getTargetLow()
-        ? fieldEncoding.getTargetHigh() + "-"
-        + fieldEncoding.getTargetLow() : fieldEncoding.getTargetHigh();
-    var source = fieldEncoding.getSourceHigh() != fieldEncoding.getSourceLow()
-        ? fieldEncoding.getSourceHigh() + "-" + fieldEncoding.getSourceLow() :
-        fieldEncoding.getSourceHigh();
-
-    return String.format("let Inst{%s} = %s{%s};", inst,
-        fieldEncoding.getSourceBitBlockName(),
-        source);
   }
 
   /**
@@ -156,9 +128,5 @@ public final class TableGenInstructionPatternRenderer {
     return IntStream.range(0, size)
         .mapToObj(b -> String.valueOf(bitSet.get(b) ? 1 : 0))
         .collect(Collectors.joining());
-  }
-
-  private static int toInt(boolean b) {
-    return b ? 1 : 0;
   }
 }
