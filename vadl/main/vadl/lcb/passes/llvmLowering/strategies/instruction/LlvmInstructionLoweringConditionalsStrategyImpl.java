@@ -13,6 +13,7 @@ import vadl.lcb.codegen.model.llvm.ValueType;
 import vadl.lcb.passes.isaMatching.MachineInstructionLabel;
 import vadl.lcb.passes.llvmLowering.domain.machineDag.LcbMachineInstructionNode;
 import vadl.lcb.passes.llvmLowering.domain.machineDag.LcbMachineInstructionWrappedNode;
+import vadl.lcb.passes.llvmLowering.domain.selectionDag.LlvmFieldAccessRefNode;
 import vadl.lcb.passes.llvmLowering.domain.selectionDag.LlvmReadRegFileNode;
 import vadl.lcb.passes.llvmLowering.domain.selectionDag.LlvmSetccSD;
 import vadl.lcb.passes.llvmLowering.strategies.LlvmInstructionLoweringStrategy;
@@ -27,6 +28,7 @@ import vadl.viam.graph.GraphVisitor;
 import vadl.viam.graph.Node;
 import vadl.viam.graph.NodeList;
 import vadl.viam.graph.dependency.ConstantNode;
+import vadl.viam.graph.dependency.FieldAccessRefNode;
 import vadl.viam.graph.dependency.ReadRegFileNode;
 
 /**
@@ -72,6 +74,8 @@ public class LlvmInstructionLoweringConditionalsStrategyImpl
         supportedInstructions.getOrDefault(MachineInstructionLabel.LTIU, Collections.emptyList());
     var xors =
         supportedInstructions.getOrDefault(MachineInstructionLabel.XOR, Collections.emptyList());
+    var xoris =
+        supportedInstructions.getOrDefault(MachineInstructionLabel.XORI, Collections.emptyList());
 
     xors.stream().findFirst()
         .ifPresent(xor -> {
@@ -88,6 +92,18 @@ public class LlvmInstructionLoweringConditionalsStrategyImpl
             // In that case, "less-than"
             if (lts.contains(instruction)) {
               neq(ltu, xor, patterns, result);
+            }
+          });
+        });
+
+
+    xoris.stream().findFirst()
+        .ifPresent(xori -> {
+          ltis.stream().findFirst().ifPresent(lti -> {
+            // Why `lts`? Because we need an initial pattern from which we construct a new pattern.
+            // In that case, "less-than"
+            if (ltis.contains(instruction)) {
+              neqWithImmediate(lti, xori, patterns, result);
             }
           });
         });
@@ -207,6 +223,78 @@ public class LlvmInstructionLoweringConditionalsStrategyImpl
                       registerFile.simpleName() + zeroConstraint.address().intValue()));
 
               var newArgs = new LcbMachineInstructionWrappedNode(xor, node.arguments());
+              node.setArgs(
+                  new NodeList<>(zeroRegister, newArgs));
+            });
+
+        result.add(outputPattern);
+      }
+    }
+  }
+
+
+  private void neqWithImmediate(Instruction ltu,
+                                Instruction xori,
+                                List<TableGenPattern> patterns,
+                                List<TableGenPattern> result) {
+    /*
+              def : Pat<(setcc X:$rs1, X:$rs2, SETLT),
+                  (SLT X:$rs1, X:$rs2)>;
+
+                  to
+
+              def : Pat< ( setcc X:$rs1, RV64IM_Itype_immAsInt64:$imm, SETNE ),
+                  (SLTU X0, (XORI X:$rs1, RV64IM_Itype_immAsInt64:$imm) ) >;
+               */
+
+    for (var pattern : patterns) {
+      var copy = pattern.copy();
+
+      if (copy instanceof TableGenSelectionWithOutputPattern outputPattern) {
+        // Change condition code
+        var setcc = ensurePresent(
+            outputPattern.selector().getNodes(LlvmSetccSD.class).toList().stream()
+                .findFirst(),
+            () -> Diagnostic.error("No setcc node was found", pattern.selector()
+                .sourceLocation()));
+        // Only RR and not RI should be replaced here.
+        if (setcc.arguments().size() > 2
+            && setcc.arguments().get(0) instanceof LlvmReadRegFileNode
+            && setcc.arguments().get(1) instanceof FieldAccessRefNode) {
+          setcc.setBuiltIn(BuiltInTable.NEQ);
+          setcc.arguments().set(2,
+              new ConstantNode(new Constant.Str(setcc.llvmCondCode().name())));
+        } else {
+          // Otherwise, stop and go to next pattern.
+          continue;
+        }
+
+        // Change machine instruction to immediate
+        outputPattern.machine().getNodes(LcbMachineInstructionNode.class)
+            .forEach(node -> {
+              node.setInstruction(ltu);
+
+              var registerFile =
+                  ensurePresent(
+                      xori.behavior().getNodes(ReadRegFileNode.class).map(
+                              ReadRegFileNode::registerFile)
+                          .findFirst(),
+                      () -> Diagnostic.error("Cannot find a register", xori.sourceLocation()));
+
+              var zeroConstraint =
+                  ensurePresent(
+                      Arrays.stream(registerFile.constraints())
+                          .filter(x -> x.value().intValue() == 0)
+                          .findFirst(),
+                      () -> Diagnostic.error("Cannot find zero register for register file",
+                          registerFile.sourceLocation()));
+              // Cannot construct a `ReadReg` because this register does not really exist.
+              // (for the VIAM spec)
+              var zeroRegister = new ConstantNode(
+                  new Constant.Str(
+                      registerFile.simpleName() + zeroConstraint.address().intValue()));
+
+              var newArgs = new LcbMachineInstructionWrappedNode(xori, node.arguments());
               node.setArgs(
                   new NodeList<>(zeroRegister, newArgs));
             });
