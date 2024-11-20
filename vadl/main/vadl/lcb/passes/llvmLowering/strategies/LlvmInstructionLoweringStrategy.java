@@ -248,8 +248,9 @@ public abstract class LlvmInstructionLoweringStrategy {
   public Optional<LlvmLoweringRecord> lower(
       Map<MachineInstructionLabel, List<Instruction>> labelledMachineInstructions,
       Instruction instruction,
-      UninlinedGraph unmodifiedBehavior) {
-    return lowerInstruction(labelledMachineInstructions, instruction,
+      Graph unmodifiedBehavior) {
+    return lowerInstruction(labelledMachineInstructions,
+        instruction,
         unmodifiedBehavior);
   }
 
@@ -263,18 +264,14 @@ public abstract class LlvmInstructionLoweringStrategy {
       Graph unmodifiedBehavior) {
     logger.atDebug().log("Lowering {} with {}", instruction.identifier.simpleName(),
         pseudoInstruction.identifier.simpleName());
-    return lowerInstruction(labelledMachineInstructions, instruction,
+    return lowerInstruction(labelledMachineInstructions,
+        instruction,
         unmodifiedBehavior);
   }
 
   /**
    * Generate a lowering result for the given {@link Graph} for pseudo instructions.
    * If it is not lowerable then return {@link Optional#empty()}.
-   *
-   * @param labelledMachineInstructions the instructions which have known semantics.
-   * @param instruction                 is the machine instruction which should be lowered.
-   * @param unmodifiedBehavior          is the uninlined graph in the case of {@link Instruction} or
-   *                                    the applied graph in the case of {@link PseudoInstruction}.
    */
   protected Optional<LlvmLoweringRecord> lowerInstruction(
       Map<MachineInstructionLabel, List<Instruction>> labelledMachineInstructions,

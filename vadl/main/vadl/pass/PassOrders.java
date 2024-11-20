@@ -100,7 +100,6 @@ public class PassOrders {
     order.add(new CanonicalizationPass(configuration));
     order.add(new AlgebraicSimplificationPass(configuration));
     order.add(new BehaviorRewritePass(configuration));
-
     order.add(new InstructionResourceAccessAnalysisPass(configuration));
 
     // verification after viam optimizations
@@ -125,6 +124,8 @@ public class PassOrders {
     var order = viam(gcbConfiguration);
 
     order.add(new DummyAbiPass(gcbConfiguration));
+    // skip inlining of field access
+    order.skip(FieldAccessInlinerPass.class);
     order.add(new IdentifyFieldUsagePass(gcbConfiguration));
     order.add(new GenerateFieldAccessEncodingFunctionPass(gcbConfiguration));
     order.add(new FieldNodeReplacementPassForDecoding(gcbConfiguration));
@@ -154,6 +155,9 @@ public class PassOrders {
   public static PassOrder lcb(LcbConfiguration configuration)
       throws IOException {
     var order = gcbAndCppCodeGen(configuration);
+    // skip inlining of field access
+    order.skip(FieldAccessInlinerPass.class);
+
     order.add(new IsaMachineInstructionMatchingPass(configuration));
     order.add(new IsaPseudoInstructionMatchingPass(configuration));
     order.add(new GenerateRegisterClassesPass(configuration));

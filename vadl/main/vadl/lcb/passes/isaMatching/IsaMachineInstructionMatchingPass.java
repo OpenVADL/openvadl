@@ -38,7 +38,6 @@ import static vadl.types.BuiltInTable.XORS;
 import static vadl.viam.ViamError.ensure;
 import static vadl.viam.ViamError.ensureNonNull;
 
-import com.google.common.collect.ImmutableMap;
 import java.io.IOException;
 import java.util.Collections;
 import java.util.HashMap;
@@ -110,8 +109,8 @@ public class IsaMachineInstructionMatchingPass extends Pass implements IsaMatchi
     // The instruction matching happens on the uninlined graph
     // because the field accesses are uninlined.
     IdentityHashMap<Instruction, UninlinedGraph> uninlined =
-        (IdentityHashMap<Instruction, UninlinedGraph>) passResults
-            .lastResultOf(FunctionInlinerPass.class);
+        ((FunctionInlinerPass.Output) passResults
+            .lastResultOf(FunctionInlinerPass.class)).behaviors();
     Objects.requireNonNull(uninlined);
     HashMap<MachineInstructionLabel, List<Instruction>> matched = new HashMap<>();
 
@@ -127,7 +126,7 @@ public class IsaMachineInstructionMatchingPass extends Pass implements IsaMatchi
     var pc = (Counter.RegisterCounter) isa.pc();
 
     isa.ownInstructions().forEach(instruction -> {
-      // Get uninlined or the normal behavior if nothing was uninlined.
+      // Get uninlined or the normal behaviors if nothing was uninlined.
       var behavior = ensureNonNull(uninlined.get(instruction),
           () -> Diagnostic.error("Cannot find the uninlined graph of this instruction",
               instruction.sourceLocation()));
@@ -202,8 +201,14 @@ public class IsaMachineInstructionMatchingPass extends Pass implements IsaMatchi
       } else if (pc != null
           && findBranchWithConditional(behavior, Set.of(UGTH))) {
         extend(matched, MachineInstructionLabel.BUGTH, instruction);
-      } else if (findRR_OR_findRI(behavior, List.of(SLTH, ULTH))) {
-        extend(matched, MachineInstructionLabel.LT, instruction);
+      } else if (findRR(behavior, List.of(SLTH))) {
+        extend(matched, MachineInstructionLabel.LTS, instruction);
+      } else if (findRR(behavior, List.of(ULTH))) {
+        extend(matched, MachineInstructionLabel.LTU, instruction);
+      } else if (findRI(behavior, List.of(SLTH))) {
+        extend(matched, MachineInstructionLabel.LTI, instruction);
+      } else if (findRI(behavior, List.of(ULTH))) {
+        extend(matched, MachineInstructionLabel.LTIU, instruction);
       } else if (findWriteMem(behavior)) {
         extend(matched, MachineInstructionLabel.STORE_MEM, instruction);
       } else if (findLoadMem(behavior)) {

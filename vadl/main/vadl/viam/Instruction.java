@@ -1,6 +1,7 @@
 package vadl.viam;
 
 import com.google.errorprone.annotations.concurrent.LazyInit;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
 import org.checkerframework.checker.nullness.qual.NonNull;
@@ -36,7 +37,7 @@ public class Instruction extends Definition implements DefProp.WithBehavior {
    * Creates an Instruction object with the given parameters.
    *
    * @param identifier The identifier of the instruction.
-   * @param behavior   The behavior graph of the instruction.
+   * @param behavior   The behaviors graph of the instruction.
    * @param assembly   The assembly of the instruction.
    * @param encoding   The encoding of the instruction.
    */
@@ -103,7 +104,7 @@ public class Instruction extends Definition implements DefProp.WithBehavior {
   public void verify() {
     super.verify();
 
-    ensure(behavior.isInstruction(), "Behavior is not a valid instruction behavior");
+    ensure(behavior.isInstruction(), "Behavior is not a valid instruction behaviors");
 
     behavior.verify();
   }

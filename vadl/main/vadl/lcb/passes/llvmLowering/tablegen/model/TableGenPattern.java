@@ -30,4 +30,9 @@ public abstract class TableGenPattern {
   public Graph selector() {
     return selector;
   }
+
+  /**
+   * Copy the tablegen pattern.
+   */
+  public abstract TableGenPattern copy();
 }

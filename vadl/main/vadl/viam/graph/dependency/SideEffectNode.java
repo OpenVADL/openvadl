@@ -20,7 +20,7 @@ public abstract class SideEffectNode extends DependencyNode {
 
   @Input
   @Nullable
-  private ExpressionNode condition;
+  protected ExpressionNode condition;
 
   @Override
   public void verifyState() {

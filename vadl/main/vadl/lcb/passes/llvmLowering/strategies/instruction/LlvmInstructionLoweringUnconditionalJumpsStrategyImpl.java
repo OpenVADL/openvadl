@@ -8,6 +8,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
+import javax.annotation.Nullable;
 import vadl.lcb.codegen.model.llvm.ValueType;
 import vadl.lcb.passes.isaMatching.MachineInstructionLabel;
 import vadl.lcb.passes.llvmLowering.domain.LlvmLoweringRecord;
@@ -41,10 +42,10 @@ public class LlvmInstructionLoweringUnconditionalJumpsStrategyImpl
   public Optional<LlvmLoweringRecord> lower(
       Map<MachineInstructionLabel, List<Instruction>> labelledMachineInstructions,
       Instruction instruction,
-      UninlinedGraph uninlinedBehavior) {
+      Graph uninlinedBehavior) {
 
     var visitor = replacementHooks();
-    var copy = (UninlinedGraph) uninlinedBehavior.copy();
+    var copy = uninlinedBehavior.copy();
 
     for (var node : copy.getNodes(SideEffectNode.class).toList()) {
       visitReplacementHooks(visitor, node);
@@ -62,7 +63,7 @@ public class LlvmInstructionLoweringUnconditionalJumpsStrategyImpl
 
   private LlvmLoweringRecord createIntermediateResult(
       Instruction instruction,
-      UninlinedGraph uninlinedGraph) {
+      Graph uninlinedGraph) {
 
     var outputOperands = getTableGenOutputOperands(uninlinedGraph);
     var inputOperands = getTableGenInputOperands(outputOperands, uninlinedGraph);
@@ -94,7 +95,7 @@ public class LlvmInstructionLoweringUnconditionalJumpsStrategyImpl
   }
 
   protected List<TableGenPattern> generatePatterns(Instruction instruction,
-                                                   UninlinedGraph uninlinedGraph,
+                                                   Graph uninlinedGraph,
                                                    List<TableGenInstructionOperand> inputOperands,
                                                    List<WriteResourceNode> sideEffectNodes) {
     /*

@@ -3,6 +3,7 @@ package vadl.lcb.passes.llvmLowering.strategies.visitors;
 import vadl.lcb.passes.llvmLowering.domain.machineDag.LcbMachineInstructionNode;
 import vadl.lcb.passes.llvmLowering.domain.machineDag.LcbMachineInstructionParameterNode;
 import vadl.lcb.passes.llvmLowering.domain.machineDag.LcbMachineInstructionValueNode;
+import vadl.lcb.passes.llvmLowering.domain.machineDag.LcbMachineInstructionWrappedNode;
 import vadl.lcb.passes.llvmLowering.domain.machineDag.LcbPseudoInstructionNode;
 import vadl.viam.graph.Graph;
 import vadl.viam.graph.GraphNodeVisitor;
@@ -30,4 +31,9 @@ public interface TableGenMachineInstructionVisitor extends GraphNodeVisitor {
    * Visit {@link LcbMachineInstructionValueNode}.
    */
   void visit(LcbMachineInstructionValueNode machineInstructionValueNode);
+
+  /**
+   * Visit {@link LcbMachineInstructionWrappedNode}.
+   */
+  void visit(LcbMachineInstructionWrappedNode lcbMachineInstructionWrappedNode);
 }

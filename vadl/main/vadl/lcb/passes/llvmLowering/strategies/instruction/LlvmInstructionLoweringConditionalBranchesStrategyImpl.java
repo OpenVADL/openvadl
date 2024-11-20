@@ -17,7 +17,7 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Stream;
-import org.jetbrains.annotations.NotNull;
+import javax.annotation.Nullable;
 import vadl.lcb.codegen.model.llvm.ValueType;
 import vadl.lcb.passes.isaMatching.MachineInstructionLabel;
 import vadl.lcb.passes.llvmLowering.domain.LlvmLoweringRecord;
@@ -36,7 +36,6 @@ import vadl.viam.graph.Graph;
 import vadl.viam.graph.GraphVisitor;
 import vadl.viam.graph.Node;
 import vadl.viam.graph.NodeList;
-import vadl.viam.graph.control.AbstractEndNode;
 import vadl.viam.graph.dependency.SideEffectNode;
 import vadl.viam.graph.dependency.WriteResourceNode;
 import vadl.viam.passes.functionInliner.UninlinedGraph;
@@ -64,10 +63,10 @@ public class LlvmInstructionLoweringConditionalBranchesStrategyImpl
   public Optional<LlvmLoweringRecord> lower(
       Map<MachineInstructionLabel, List<Instruction>> labelledMachineInstructions,
       Instruction instruction,
-      UninlinedGraph uninlinedBehavior) {
+      Graph uninlinedBehavior) {
 
     var visitor = replacementHooks();
-    var copy = (UninlinedGraph) uninlinedBehavior.copy();
+    var copy = uninlinedBehavior.copy();
 
     for (var node : copy.getNodes(SideEffectNode.class).toList()) {
       visitReplacementHooks(visitor, node);
@@ -81,7 +80,7 @@ public class LlvmInstructionLoweringConditionalBranchesStrategyImpl
   private LlvmLoweringRecord createIntermediateResult(
       Map<MachineInstructionLabel, List<Instruction>> supportedInstructions,
       Instruction instruction,
-      UninlinedGraph visitedGraph) {
+      Graph visitedGraph) {
 
     var outputOperands = getTableGenOutputOperands(visitedGraph);
     var inputOperands = getTableGenInputOperands(outputOperands, visitedGraph);

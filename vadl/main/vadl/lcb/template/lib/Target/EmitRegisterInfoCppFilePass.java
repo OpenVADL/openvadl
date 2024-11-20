@@ -78,8 +78,9 @@ public class EmitRegisterInfoCppFilePass extends LcbTemplateRenderingPass {
     var instructionLabels =
         (Map<MachineInstructionLabel, List<Instruction>>) passResults.lastResultOf(
             IsaMachineInstructionMatchingPass.class);
-    var uninlined = (IdentityHashMap<Instruction, UninlinedGraph>) passResults.lastResultOf(
-        FunctionInlinerPass.class);
+    IdentityHashMap<Instruction, UninlinedGraph> uninlined =
+        ((FunctionInlinerPass.Output) passResults
+            .lastResultOf(FunctionInlinerPass.class)).behaviors();
     var tableGenMachineInstructions = (List<TableGenMachineInstruction>) passResults.lastResultOf(
         GenerateTableGenMachineInstructionRecordPass.class);
     var constraints = getConstraints(specification);
@@ -148,7 +149,7 @@ public class EmitRegisterInfoCppFilePass extends LcbTemplateRenderingPass {
     for (var label : affected) {
       for (var instruction : instructionLabels.getOrDefault(label, Collections.emptyList())) {
         var behavior = uninlined.get(instruction);
-        ensureNonNull(behavior, "uninlined behavior is required");
+        ensureNonNull(behavior, "uninlined behaviors is required");
         var immediate = behavior.getNodes(FieldAccessRefNode.class).findAny();
         ensure(immediate.isPresent(), "An immediate is required for frame index elimination");
         var indices =
