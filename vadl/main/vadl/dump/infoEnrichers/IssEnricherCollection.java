@@ -7,19 +7,15 @@ import java.util.Comparator;
 import java.util.List;
 import java.util.Objects;
 import java.util.stream.Collectors;
-import vadl.dump.Info;
 import vadl.dump.InfoEnricher;
 import vadl.dump.InfoUtils;
 import vadl.dump.entities.DefinitionEntity;
 import vadl.iss.passes.IssReadVarAssignPass;
-import vadl.iss.passes.IssSecureResourceReadPass;
-import vadl.iss.passes.IssTcgAnnotatePass;
+import vadl.iss.passes.safeResourceRead.IssSafeResourceReadPass;
 import vadl.iss.passes.tcgLowering.TcgV;
-import vadl.viam.DefProp;
 import vadl.viam.Instruction;
 import vadl.viam.graph.Node;
 import vadl.viam.graph.dependency.ReadResourceNode;
-import vadl.viam.passes.InstructionResourceAccessAnalysisPass;
 
 /**
  * A collection of info enrichers that provide information during the ISS generation.
@@ -74,15 +70,15 @@ public class IssEnricherCollection {
    */
   public static InfoEnricher READ_SPILL_LOCATION_EXPANDABLE =
       forType(DefinitionEntity.class, (entity, passResult) -> {
-        if (!passResult.hasRunPassOnce(IssSecureResourceReadPass.class)
+        if (!passResult.hasRunPassOnce(IssSafeResourceReadPass.class)
             || !(entity.origin() instanceof Instruction instr)) {
           return;
         }
 
 
         var result = passResult.lastResultOf(
-            IssSecureResourceReadPass.class,
-            IssSecureResourceReadPass.Result.class
+            IssSafeResourceReadPass.class,
+            IssSafeResourceReadPass.Result.class
         );
         var instrReads =
             instr.behavior().getNodes(ReadResourceNode.class).collect(Collectors.toSet());
