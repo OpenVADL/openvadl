@@ -12,6 +12,8 @@ set -x
 /src/llvm-final/build/bin/clang --target=${UPSTREAM_CLANG_TARGET} -fPIC -c -O0 /helper/common.c -o /helper/common.o
 /opt/riscv-cross/bin/riscv64-unknown-linux-gnu-gcc -static -nostartfiles -T/helper/link_lcbw.ld /tmp/main.o /helper/init.o /helper/trap.o /helper/vars.spike.o /helper/common.o -o /tmp/main
 
+cat /tmp/main.s
+
 echo "Running spike..."
 timeout --preserve-status 5 /opt/spike/bin/spike --isa=${SPIKE_TARGET} /tmp/main 2> $1
 echo "Completed spike..."

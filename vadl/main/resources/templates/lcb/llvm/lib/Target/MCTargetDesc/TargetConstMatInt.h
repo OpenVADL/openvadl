@@ -42,12 +42,11 @@ namespace [(${namespace})]MatInt {
   InstSeq generateInstSeq(int64_t Val, const MCSubtargetInfo &STI);
 }
 
-static void generateInstSeqImpl(int64_t Val, const MCSubtargetInfo &STI,
+static void generateInstSeqImplForPositiveNumbers(int64_t Val, const MCSubtargetInfo &STI,
                                 [(${namespace})]MatInt::InstSeq &Res) {
   auto largestPossibleValue = [(${largestPossibleValueAddi})];
-  auto abs = std::abs(Val);
-  if(abs <= largestPossibleValue) {
-    Res.emplace_back([(${namespace})]::[(${addi})], abs);
+  if(Val <= largestPossibleValue) {
+    Res.emplace_back([(${namespace})]::[(${addi})], Val);
   } else {
     auto largestPossibleLi = [(${largestPossibleValue})];
     if(Val >= largestPossibleLi) {
@@ -55,10 +54,35 @@ static void generateInstSeqImpl(int64_t Val, const MCSubtargetInfo &STI,
       auto addi = project_range<0, [(${addiBitSize})]> (std::bitset<[(${luiFormatSize})]>(largestPossibleLi)).to_ullong();
       Res.emplace_back([(${namespace})]::[(${lui})], lui);
       Res.emplace_back([(${namespace})]::[(${addi})], addi);
-      generateInstSeqImpl(Val - largestPossibleLi, STI, Res);
+      generateInstSeqImplForPositiveNumbers(Val - largestPossibleLi, STI, Res);
     } else {
+      auto rest = largestPossibleLi - Val;
+      auto lui = project_range<[(${luiLowBit})], [(${luiHighBit})]> (std::bitset<[(${luiFormatSize})]>(rest)).to_ullong();
+      auto addi = project_range<0, [(${addiBitSize})]> (std::bitset<[(${luiFormatSize})]>(rest)).to_ullong();
+      Res.emplace_back([(${namespace})]::[(${lui})], lui);
+      Res.emplace_back([(${namespace})]::[(${addi})], addi);
+    }
+  }
+}
+
+
+static void generateInstSeqImplForNegativeNumbers(int64_t Val, const MCSubtargetInfo &STI,
+                                [(${namespace})]MatInt::InstSeq &Res) {
+  auto smallestPossibleValue = [(${smallestPossibleValueAddi})];
+  auto abs = std::abs(Val);
+  if(abs <= std::abs(smallestPossibleValue)) {
+    Res.emplace_back([(${namespace})]::[(${addi})], Val);
+  } else {
+    auto largestPossibleLi = [(${largestPossibleValue})];
+    if(std::abs(Val) >= largestPossibleLi) {
       auto lui = project_range<[(${luiLowBit})], [(${luiHighBit})]> (std::bitset<[(${luiFormatSize})]>(largestPossibleLi)).to_ullong();
       auto addi = project_range<0, [(${addiBitSize})]> (std::bitset<[(${luiFormatSize})]>(largestPossibleLi)).to_ullong();
+      Res.emplace_back([(${namespace})]::[(${lui})], lui);
+      Res.emplace_back([(${namespace})]::[(${addi})], addi);
+      generateInstSeqImplForNegativeNumbers(Val + largestPossibleLi, STI, Res);
+    } else {
+      auto lui = project_range<[(${luiLowBit})], [(${luiHighBit})]> (std::bitset<[(${luiFormatSize})]>(Val)).to_ullong();
+      auto addi = project_range<0, [(${addiBitSize})]> (std::bitset<[(${luiFormatSize})]>(Val)).to_ullong();
       Res.emplace_back([(${namespace})]::[(${lui})], lui);
       Res.emplace_back([(${namespace})]::[(${addi})], addi);
     }
@@ -69,7 +93,11 @@ static void generateInstSeqImpl(int64_t Val, const MCSubtargetInfo &STI,
 namespace llvm::[(${namespace})]MatInt {
   InstSeq generateInstSeq(int64_t Val, const MCSubtargetInfo &STI) {
     [(${namespace})]MatInt::InstSeq Res;
-    generateInstSeqImpl(Val, STI, Res);
+    if(Val >= 0) {
+      generateInstSeqImplForPositiveNumbers(Val, STI, Res);
+    } else {
+      generateInstSeqImplForNegativeNumbers(Val, STI, Res);
+    }
     return Res;
   }
 }
