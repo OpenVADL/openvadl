@@ -15,4 +15,4 @@ WORKDIR /src
 RUN mv /opt/sccache/sccache /usr/bin/sccache
 RUN make && sccache -s
 RUN mkdir /output
-CMD ls /src/inputs | xargs -t -I {} bash -c "/src/llvm-final/build/bin/clang --target=${TARGET} -S -c /src/inputs/{} -o /tmp/main.s && cat /tmp/main.s && sh /work/lcb_wrapper.sh /output/{}.err"
+CMD /src/llvm-final/build/bin/clang --target=${TARGET} -S -c /src/inputs/$INPUT -o /tmp/main.s && cat /tmp/main.s && sh /work/lcb_wrapper.sh

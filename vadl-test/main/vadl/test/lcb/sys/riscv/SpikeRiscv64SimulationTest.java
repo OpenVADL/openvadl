@@ -66,23 +66,13 @@ public class SpikeRiscv64SimulationTest extends AbstractLcbTest {
     // to the host (hostOutput folder).
     var hostOutput = configuration.outputPath() + "/output/";
 
-    runContainerAndCopyInputIntoAndCopyOutputFromContainer(image,
-        Path.of("../../open-vadl/vadl-test/main/resources/llvm/riscv/spike"),
-        "/src/inputs",
-        Path.of(hostOutput),
-        "/output");
-
     // The container is complete and has generated the assembly files.
     return inputFilesFromCFile().map(input -> DynamicTest.dynamicTest(input, () -> {
-      var name = Paths.get(input).getFileName();
-      var errorPath = hostOutput + name + ".err";
-      var errorFile = new File(errorPath);
-
-      // First check if an error file exists. Note that the container always
-      // creates an error file, so we also check for the size.
-      if (errorFile.exists() && errorFile.length() != 0) {
-        assertThat(contentOf(errorFile)).isEqualToIgnoringWhitespace("");
-      }
+      runContainerWithEnv(image,
+          Path.of("../../open-vadl/vadl-test/main/resources/llvm/riscv/spike"),
+          "/src/inputs",
+          "INPUT",
+          input);
     })).toList();
   }
 }

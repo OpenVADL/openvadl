@@ -118,6 +118,34 @@ public abstract class DockerExecutionTest extends AbstractTest {
 
   /**
    * Starts a container and checks the status code for the exited container.
+   * It will write the given {@code content} into a temporary file. The
+   * temporary file requires a {@code prefix} and {@code suffix}.
+   * It will assert that the status code is zero. If the check takes longer
+   * than 10 seconds or the status code is not zero then it will throw an
+   * exception.
+   * Copies the data from {@code content} to {@code mountPath}.
+   *
+   * @param image            is the docker image for the {@link GenericContainer}.
+   * @param inContainerPath  is the path where the {@code path} should be mounted to.
+   * @param inHostPath       is the content of file which will be written to the
+   *                         temp file.
+   * @param envName          is the name of the environment variable which will be set.
+   * @param envValue         is the value of the environment variable which will be set.
+   */
+  protected void runContainerWithEnv(ImageFromDockerfile image,
+                                                                        Path inHostPath,
+                                                                        String inContainerPath,
+                                                                        String envName,
+                                                                        String envValue) {
+    runContainer(image, (container) -> container
+            .withCopyFileToContainer(MountableFile.forHostPath(inHostPath), inContainerPath)
+            .withEnv(envName, envValue),
+        (container) -> {}
+    );
+  }
+
+  /**
+   * Starts a container and checks the status code for the exited container.
    * It will assert that the status code is zero. If the check takes longer
    * than 10 seconds or the status code is not zero then it will throw an
    * exception.

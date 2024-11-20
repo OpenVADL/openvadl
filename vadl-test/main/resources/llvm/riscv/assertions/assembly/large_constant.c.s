@@ -7,10 +7,8 @@ constant_return:                        # @constant_return
 ADDI sp,sp,-16
 SD fp,8(sp)
 ADDI fp,sp,16
-                                      # kill: def $x1 killed $x11
                                       # kill: def $x1 killed $x10
 SW a0,-12(fp)
-SW a1,-16(fp)
 LW ra,-12(fp)
 LUI tp,0x80000
 ADDI tp,tp,0
