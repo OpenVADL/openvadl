@@ -100,7 +100,8 @@ public class LlvmInstructionLoweringConditionalsStrategyImpl
         .ifPresent(xori -> {
           ltus.stream().findFirst().ifPresent(ltu ->
               ltis.stream().findFirst().ifPresent(lti -> {
-                // Why `ltis`? Because we need an initial pattern from which we construct a new pattern.
+                // Why `ltis`? Because we need an initial pattern from which we construct a new
+                // pattern.
                 // In that case, "less-than-immediate"
                 if (ltis.contains(instruction)) {
                   neqWithImmediate(ltu, xori, patterns, result);
