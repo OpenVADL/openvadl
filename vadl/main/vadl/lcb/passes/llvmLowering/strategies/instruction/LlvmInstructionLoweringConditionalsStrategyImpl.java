@@ -27,6 +27,7 @@ import vadl.viam.graph.GraphVisitor;
 import vadl.viam.graph.Node;
 import vadl.viam.graph.NodeList;
 import vadl.viam.graph.dependency.ConstantNode;
+import vadl.viam.graph.dependency.FieldAccessRefNode;
 import vadl.viam.graph.dependency.ReadRegFileNode;
 
 /**
@@ -72,6 +73,8 @@ public class LlvmInstructionLoweringConditionalsStrategyImpl
         supportedInstructions.getOrDefault(MachineInstructionLabel.LTIU, Collections.emptyList());
     var xors =
         supportedInstructions.getOrDefault(MachineInstructionLabel.XOR, Collections.emptyList());
+    var xoris =
+        supportedInstructions.getOrDefault(MachineInstructionLabel.XORI, Collections.emptyList());
 
     xors.stream().findFirst()
         .ifPresent(xor -> {
@@ -92,10 +95,24 @@ public class LlvmInstructionLoweringConditionalsStrategyImpl
           });
         });
 
+
+    xoris.stream().findFirst()
+        .ifPresent(xori -> {
+          ltus.stream().findFirst().ifPresent(ltu ->
+              ltis.stream().findFirst().ifPresent(lti -> {
+                // Why `ltis`? Because we need an initial pattern from which we construct a new
+                // pattern.
+                // In that case, "less-than-immediate"
+                if (ltis.contains(instruction)) {
+                  neqWithImmediate(ltu, xori, patterns, result);
+                }
+              }));
+        });
+
     return result;
   }
 
-  private void eq(Instruction lti,
+  private void eq(Instruction basePattern,
                   Instruction xor,
                   List<TableGenPattern> patterns,
                   List<TableGenPattern> result) {
@@ -133,7 +150,7 @@ public class LlvmInstructionLoweringConditionalsStrategyImpl
         // Change machine instruction to immediate
         outputPattern.machine().getNodes(LcbMachineInstructionNode.class)
             .forEach(node -> {
-              node.setInstruction(lti);
+              node.setInstruction(basePattern);
 
               var newArgs = new LcbMachineInstructionWrappedNode(xor, node.arguments());
               node.setArgs(
@@ -146,7 +163,7 @@ public class LlvmInstructionLoweringConditionalsStrategyImpl
   }
 
 
-  private void neq(Instruction ltu,
+  private void neq(Instruction basePattern,
                    Instruction xor,
                    List<TableGenPattern> patterns,
                    List<TableGenPattern> result) {
@@ -184,7 +201,7 @@ public class LlvmInstructionLoweringConditionalsStrategyImpl
         // Change machine instruction to immediate
         outputPattern.machine().getNodes(LcbMachineInstructionNode.class)
             .forEach(node -> {
-              node.setInstruction(ltu);
+              node.setInstruction(basePattern);
 
               var registerFile =
                   ensurePresent(
@@ -207,6 +224,78 @@ public class LlvmInstructionLoweringConditionalsStrategyImpl
                       registerFile.simpleName() + zeroConstraint.address().intValue()));
 
               var newArgs = new LcbMachineInstructionWrappedNode(xor, node.arguments());
+              node.setArgs(
+                  new NodeList<>(zeroRegister, newArgs));
+            });
+
+        result.add(outputPattern);
+      }
+    }
+  }
+
+
+  private void neqWithImmediate(Instruction machineInstructionToBeEmitted,
+                                Instruction xori,
+                                List<TableGenPattern> patterns,
+                                List<TableGenPattern> result) {
+    /*
+              def : Pat<(setcc X:$rs1, X:$rs2, SETLT),
+                  (SLT X:$rs1, X:$rs2)>;
+
+                  to
+
+              def : Pat< ( setcc X:$rs1, RV64IM_Itype_immAsInt64:$imm, SETNE ),
+                  (SLTU X0, (XORI X:$rs1, RV64IM_Itype_immAsInt64:$imm) ) >;
+               */
+
+    for (var pattern : patterns) {
+      var copy = pattern.copy();
+
+      if (copy instanceof TableGenSelectionWithOutputPattern outputPattern) {
+        // Change condition code
+        var setcc = ensurePresent(
+            outputPattern.selector().getNodes(LlvmSetccSD.class).toList().stream()
+                .findFirst(),
+            () -> Diagnostic.error("No setcc node was found", pattern.selector()
+                .sourceLocation()));
+        // Only RR and not RI should be replaced here.
+        if (setcc.arguments().size() > 2
+            && setcc.arguments().get(0) instanceof LlvmReadRegFileNode
+            && setcc.arguments().get(1) instanceof FieldAccessRefNode) {
+          setcc.setBuiltIn(BuiltInTable.NEQ);
+          setcc.arguments().set(2,
+              new ConstantNode(new Constant.Str(setcc.llvmCondCode().name())));
+        } else {
+          // Otherwise, stop and go to next pattern.
+          continue;
+        }
+
+        // Change machine instruction to immediate
+        outputPattern.machine().getNodes(LcbMachineInstructionNode.class)
+            .forEach(node -> {
+              node.setInstruction(machineInstructionToBeEmitted);
+
+              var registerFile =
+                  ensurePresent(
+                      xori.behavior().getNodes(ReadRegFileNode.class).map(
+                              ReadRegFileNode::registerFile)
+                          .findFirst(),
+                      () -> Diagnostic.error("Cannot find a register", xori.sourceLocation()));
+
+              var zeroConstraint =
+                  ensurePresent(
+                      Arrays.stream(registerFile.constraints())
+                          .filter(x -> x.value().intValue() == 0)
+                          .findFirst(),
+                      () -> Diagnostic.error("Cannot find zero register for register file",
+                          registerFile.sourceLocation()));
+              // Cannot construct a `ReadReg` because this register does not really exist.
+              // (for the VIAM spec)
+              var zeroRegister = new ConstantNode(
+                  new Constant.Str(
+                      registerFile.simpleName() + zeroConstraint.address().intValue()));
+
+              var newArgs = new LcbMachineInstructionWrappedNode(xori, node.arguments());
               node.setArgs(
                   new NodeList<>(zeroRegister, newArgs));
             });

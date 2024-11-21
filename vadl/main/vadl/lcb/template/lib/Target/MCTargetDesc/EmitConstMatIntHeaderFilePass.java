@@ -5,6 +5,7 @@ import static vadl.viam.ViamError.ensurePresent;
 
 import java.io.IOException;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
@@ -66,7 +67,8 @@ public class EmitConstMatIntHeaderFilePass extends LcbTemplateRenderingPass {
         (IdentifyFieldUsagePass.ImmediateDetectionContainer) passResults
             .lastResultOf(IdentifyFieldUsagePass.class);
     var immediateAddiSize = immediateSize(immediateDetection, addi);
-    var largestPossibleValueAddi = (long) (Math.pow(2, immediateAddiSize) - 1);
+    var largestPossibleValueAddi = (long) (Math.pow(2, immediateAddiSize) / 2) - 1;
+    var smallestPossibleValueAddi = (long) (Math.pow(2, immediateAddiSize) / -2);
     var lui =
         ensurePresent(
             Objects.requireNonNull(labelledInstructions)
@@ -78,17 +80,21 @@ public class EmitConstMatIntHeaderFilePass extends LcbTemplateRenderingPass {
     var immediateLuiSize = immediateSize(immediateDetection, lui);
     var largestPossibleValueLui = (long) (Math.pow(2, immediateLuiSize) - 1);
     int luiFormatSize = lui.format().type().bitWidth();
-    return Map.of(CommonVarNames.NAMESPACE, specification.simpleName(),
-        "addi", addi.identifier.simpleName(),
-        "lui", lui.identifier.simpleName(),
-        "luiHighBit", luiImmediate.bitSlice().msb(),
-        "luiLowBit", luiImmediate.bitSlice().lsb(),
-        "luiFormatSize", luiFormatSize,
-        "addiBitSize", immediateAddiSize - 1,
-        "largestPossibleValueAddi", largestPossibleValueAddi,
-        "largestPossibleValue", (long) Math.pow(2, lui.format().type().bitWidth()) - 1,
-        "largestPossibleValueLui", largestPossibleValueLui
-    );
+
+    var map = new HashMap<String, Object>();
+    map.put(CommonVarNames.NAMESPACE, specification.simpleName());
+    map.put("addi", addi.identifier.simpleName());
+    map.put("lui", lui.identifier.simpleName());
+    map.put("luiHighBit", luiImmediate.bitSlice().msb());
+    map.put("luiLowBit", luiImmediate.bitSlice().lsb());
+    map.put("luiFormatSize", luiFormatSize);
+    map.put("addiBitSize", immediateAddiSize - 1);
+    map.put("largestPossibleValueAddi", largestPossibleValueAddi);
+    map.put("smallestPossibleValueAddi", smallestPossibleValueAddi);
+    map.put("largestPossibleValue", (long) Math.pow(2, lui.format().type().bitWidth()) - 1);
+    map.put("largestPossibleValueLui", largestPossibleValueLui);
+
+    return map;
   }
 
   private static int immediateSize(

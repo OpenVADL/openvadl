@@ -13,5 +13,5 @@ set -x
 /opt/riscv-cross/bin/riscv64-unknown-linux-gnu-gcc -static -nostartfiles -T/helper/link_lcbw.ld /tmp/main.o /helper/init.o /helper/trap.o /helper/vars.spike.o /helper/common.o -o /tmp/main
 
 echo "Running spike..."
-timeout --preserve-status 5 /opt/spike/bin/spike --isa=${SPIKE_TARGET} /tmp/main 2> $1
+timeout --preserve-status 5 /opt/spike/bin/spike --isa=${SPIKE_TARGET} /tmp/main
 echo "Completed spike..."

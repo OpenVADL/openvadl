@@ -172,6 +172,30 @@ public class LlvmLoweringPassTest extends AbstractLcbTest {
     );
   }
 
+  private static TestOutput createTestOutputRIWithConditionalWithImmediate(String immediateOperand,
+                                                                           String immediateName,
+                                                                           LlvmCondCode condCode,
+                                                                           String machineInstruction,
+                                                                           LlvmCondCode condCode2,
+                                                                           String machineInstruction2) {
+    return new TestOutput(
+        List.of(new TableGenInstructionOperand(DUMMY_NODE, "X", "rs1"),
+            new TableGenInstructionOperand(DUMMY_NODE, immediateOperand, immediateName)),
+        List.of(new TableGenInstructionOperand(DUMMY_NODE, "X", "rd")),
+        List.of(String.format("(setcc X:$rs1, %s:$%s, %s)", immediateOperand, immediateName,
+                condCode),
+            String.format("(setcc X:$rs1, %s:$%s, %s)", immediateOperand, immediateName,
+                condCode2)),
+        List.of(String.format("(%s X:$rs1, %s:$%s)", machineInstruction, immediateOperand,
+                immediateName),
+            String.format("(%s X0, (XORI X:$rs1, %s:$%s))", machineInstruction2, immediateOperand,
+                immediateName)
+        ),
+        createEmptyFlags(),
+        false
+    );
+  }
+
   private static TestOutput createTestOutputStoreMemory(String dagNode,
                                                         String machineInstruction) {
     return new TestOutput(
@@ -309,18 +333,19 @@ public class LlvmLoweringPassTest extends AbstractLcbTest {
      */
     expectedResults.put("SLT",
         createTestOutputRRWithConditionalToImmediate(LlvmCondCode.SETLT, "SLT",
-        LlvmCondCode.SETEQ,
-        "SLTIU",
-        LlvmCondCode.SETNE,
-        "SLTU"));
+            LlvmCondCode.SETEQ,
+            "SLTIU",
+            LlvmCondCode.SETNE,
+            "SLTU"));
     expectedResults.put("SLTU",
         createTestOutputRRWithConditional(LlvmCondCode.SETULT, "SLTU"));
     expectedResults.put("SLTI",
         createTestOutputRIWithConditional("RV64IM_Itype_immAsInt64", "imm",
             LlvmCondCode.SETLT, "SLTI"));
     expectedResults.put("SLTIU",
-        createTestOutputRIWithConditional("RV64IM_Itype_immAsInt64", "imm",
-            LlvmCondCode.SETULT, "SLTIU"));
+        createTestOutputRIWithConditionalWithImmediate("RV64IM_Itype_immAsInt64", "imm",
+            LlvmCondCode.SETULT, "SLTIU",
+            LlvmCondCode.SETNE, "SLTU"));
     /*
     CONDITIONAL BRANCHES
      */

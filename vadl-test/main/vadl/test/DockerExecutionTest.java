@@ -2,36 +2,26 @@ package vadl.test;
 
 import static org.awaitility.Awaitility.await;
 import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.fail;
 
 import com.github.dockerjava.api.DockerClient;
-import com.github.dockerjava.api.model.Bind;
 import com.github.dockerjava.api.model.Mount;
 import com.github.dockerjava.api.model.MountType;
-import com.github.dockerjava.api.model.Volume;
 import java.io.File;
-import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
-import java.io.OutputStream;
 import java.nio.file.Path;
 import java.time.Duration;
 import java.util.List;
 import java.util.Objects;
 import java.util.function.Consumer;
 import java.util.function.Function;
-import java.util.function.Supplier;
 import javax.annotation.Nullable;
-import org.apache.commons.compress.archivers.tar.TarArchiveEntry;
 import org.apache.commons.compress.archivers.tar.TarArchiveInputStream;
 import org.apache.commons.compress.utils.IOUtils;
 import org.junit.jupiter.api.AfterAll;
-import org.junit.jupiter.api.AfterEach;
-import org.junit.jupiter.api.BeforeAll;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.testcontainers.containers.BindMode;
 import org.testcontainers.containers.GenericContainer;
 import org.testcontainers.containers.Network;
 import org.testcontainers.containers.output.Slf4jLogConsumer;
@@ -118,6 +108,34 @@ public abstract class DockerExecutionTest extends AbstractTest {
 
   /**
    * Starts a container and checks the status code for the exited container.
+   * It will write the given {@code content} into a temporary file. The
+   * temporary file requires a {@code prefix} and {@code suffix}.
+   * It will assert that the status code is zero. If the check takes longer
+   * than 10 seconds or the status code is not zero then it will throw an
+   * exception.
+   * Copies the data from {@code content} to {@code mountPath}.
+   *
+   * @param image            is the docker image for the {@link GenericContainer}.
+   * @param inContainerPath  is the path where the {@code path} should be mounted to.
+   * @param inHostPath       is the content of file which will be written to the
+   *                         temp file.
+   * @param envName          is the name of the environment variable which will be set.
+   * @param envValue         is the value of the environment variable which will be set.
+   */
+  protected void runContainerWithEnv(ImageFromDockerfile image,
+                                                                        Path inHostPath,
+                                                                        String inContainerPath,
+                                                                        String envName,
+                                                                        String envValue) {
+    runContainer(image, (container) -> container
+            .withCopyFileToContainer(MountableFile.forHostPath(inHostPath), inContainerPath)
+            .withEnv(envName, envValue),
+        (container) -> {}
+    );
+  }
+
+  /**
+   * Starts a container and checks the status code for the exited container.
    * It will assert that the status code is zero. If the check takes longer
    * than 10 seconds or the status code is not zero then it will throw an
    * exception.
@@ -132,7 +150,8 @@ public abstract class DockerExecutionTest extends AbstractTest {
   ) {
     try (GenericContainer<?> container = new GenericContainer<>(image)
         .withLogConsumer(new Slf4jLogConsumer(logger))
-        .withNetwork(testNetwork)) {
+        .withNetwork(testNetwork)
+        .withStartupAttempts(1)) {
       var modifiedContainer = containerModifier.apply(container);
       modifiedContainer.setStartupAttempts(1);
       modifiedContainer.start();
