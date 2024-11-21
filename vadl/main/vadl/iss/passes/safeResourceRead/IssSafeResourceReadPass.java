@@ -38,6 +38,7 @@ import vadl.viam.graph.dependency.DependencyNode;
 import vadl.viam.graph.dependency.ExpressionNode;
 import vadl.viam.graph.dependency.ReadResourceNode;
 import vadl.viam.graph.dependency.WriteResourceNode;
+import vadl.viam.passes.CfgTraverser;
 
 /**
  * A pass that ensures safe resource reads in the Instruction Set Simulator (ISS).
@@ -308,22 +309,13 @@ class IssResourceReadSecurer {
 /**
  * Performs dominator analysis on a control flow graph (CFG) to compute dominator sets for control nodes.
  */
-class IssDominatorAnalysis {
+class IssDominatorAnalysis extends CfgTraverser {
 
-  Graph cfg;
   Map<ControlNode, List<ControlNode>> dominatorSets = new HashMap<>();
+  ArrayDeque<Integer> splitDominatorIndexStack = new ArrayDeque<>();
 
   // The current dominators during traversal
   List<ControlNode> dominators = new ArrayList<>();
-
-  /**
-   * Constructs an IssDominatorAnalysis for the given control flow graph.
-   *
-   * @param cfg The control flow graph to analyze.
-   */
-  public IssDominatorAnalysis(Graph cfg) {
-    this.cfg = cfg;
-  }
 
   /**
    * Computes the dominator sets for the given control flow graph.
@@ -332,84 +324,26 @@ class IssDominatorAnalysis {
    * @return A map of control nodes to their dominator sets.
    */
   static Map<ControlNode, List<ControlNode>> getDominatorSets(Graph cfg) {
-    var analysis = new IssDominatorAnalysis(cfg);
-    analysis.computeDominatorSets();
+    var analysis = new IssDominatorAnalysis();
+    var start = getSingleNode(cfg, StartNode.class);
+    analysis.traverseBranch(start);
     return analysis.dominatorSets;
   }
 
-  /**
-   * Computes the dominator sets for the control flow graph.
-   */
-  private void computeDominatorSets() {
-
-    var start = getSingleNode(cfg, StartNode.class);
-    var splitDominatorIndexStack = new ArrayDeque<Integer>();
-
-    traverse(start, n -> {
-      if (n instanceof ControlSplitNode splitNode) {
-        // Push index of splitNode
-        splitDominatorIndexStack.push(dominators.size() - 1);
-      } else if (n instanceof BranchEndNode || n instanceof MergeNode) {
-        // Reset sub-branch dominators
-        dominators = dominators.subList(0, requireNonNull(splitDominatorIndexStack.peek()) + 1);
-      }
-
-      // Add itself to dominator list
-      dominators.add(n);
-
-      // Copy to dominator sets
-      dominatorSets.put(n, new ArrayList<>(dominators));
-
-    });
-  }
-
-  /**
-   * Traverses the control flow graph starting from the given branch begin node.
-   *
-   * @param branchBegin The starting node of the branch to traverse.
-   * @param nodeHandler A consumer that processes each control node during traversal.
-   * @return The end node of the traversal.
-   */
-  AbstractEndNode traverse(AbstractBeginNode branchBegin, Consumer<ControlNode> nodeHandler) {
-    ControlNode currNode = branchBegin;
-
-    while (true) {
-      nodeHandler.accept(currNode);
-
-      if (currNode instanceof AbstractEndNode) {
-        // When we find the end node, we return it
-        return (AbstractEndNode) currNode;
-      } else if (currNode instanceof DirectionalNode direNode) {
-        currNode = direNode.next();
-      } else if (currNode instanceof ControlSplitNode splitNode) {
-        // Handle all branches of the nested control split node
-        currNode = handleControlSplit(splitNode, nodeHandler);
-      } else {
-        currNode.ensure(false,
-            "Expected directional or control split node, but got this node in CFG."
-        );
-      }
+  @Override
+  public void onControlNode(ControlNode n) {
+    if (n instanceof ControlSplitNode) {
+      // Push index of splitNode
+      splitDominatorIndexStack.push(dominators.size() - 1);
+    } else if (n instanceof BranchEndNode || n instanceof MergeNode) {
+      // Reset sub-branch dominators
+      dominators = dominators.subList(0, requireNonNull(splitDominatorIndexStack.peek()) + 1);
     }
-  }
 
-  /**
-   * Processes all branches of the control split node.
-   * It will return the control split's MergeNode.
-   *
-   * @param splitNode   The ControlSplitNode to process.
-   * @param nodeHandler A consumer that processes each control node during traversal.
-   * @return The MergeNode corresponding to the control split.
-   */
-  private MergeNode handleControlSplit(ControlSplitNode splitNode,
-                                       Consumer<ControlNode> nodeHandler) {
-    @Nullable AbstractEndNode someEnd = null;
-    for (var branch : splitNode.branches()) {
-      someEnd = traverse(branch, nodeHandler);
-    }
-    splitNode.ensure(someEnd != null, "Control split has no branches.");
-    splitNode.ensure(someEnd.usageCount() == 1, "End should have exactly one usage: MergeNode");
-    // Get the merge node from the end of the branch
-    return (MergeNode) someEnd.usages().findFirst().get();
-  }
+    // Add itself to dominator list
+    dominators.add(n);
 
+    // Copy to dominator sets
+    dominatorSets.put(n, new ArrayList<>(dominators));
+  }
 }

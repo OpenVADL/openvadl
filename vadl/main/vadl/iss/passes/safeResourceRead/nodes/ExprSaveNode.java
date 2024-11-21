@@ -2,7 +2,6 @@ package vadl.iss.passes.safeResourceRead.nodes;
 
 import java.util.List;
 import vadl.javaannotations.viam.Input;
-import vadl.types.Type;
 import vadl.viam.graph.GraphNodeVisitor;
 import vadl.viam.graph.GraphVisitor;
 import vadl.viam.graph.Node;
