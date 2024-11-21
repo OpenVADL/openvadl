@@ -4249,7 +4249,7 @@ def : Pat<(setcc X:$rs1, RV64IM_Itype_immAsInt64:$imm, SETULT),
         (SLTIU X:$rs1, RV64IM_Itype_immAsInt64:$imm)>;
 
 def : Pat<(setcc X:$rs1, RV64IM_Itype_immAsInt64:$imm, SETNE),
-        (SLTIU X0, (XORI X:$rs1, RV64IM_Itype_immAsInt64:$imm))>;
+        (SLTI X0, (XORI X:$rs1, RV64IM_Itype_immAsInt64:$imm))>;
 
 
 def : Pat<(setcc X:$rs1, X:$rs2, SETULT),
