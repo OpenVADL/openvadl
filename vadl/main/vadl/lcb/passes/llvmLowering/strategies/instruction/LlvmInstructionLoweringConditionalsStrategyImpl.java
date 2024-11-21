@@ -103,7 +103,7 @@ public class LlvmInstructionLoweringConditionalsStrategyImpl
                 // Why `ltis`? Because we need an initial pattern from which we construct a new pattern.
                 // In that case, "less-than-immediate"
                 if (ltis.contains(instruction)) {
-                  neqWithImmediate(lti, ltu, xori, patterns, result);
+                  neqWithImmediate(ltu, xori, patterns, result);
                 }
               }));
         });
@@ -111,7 +111,7 @@ public class LlvmInstructionLoweringConditionalsStrategyImpl
     return result;
   }
 
-  private void eq(Instruction lti,
+  private void eq(Instruction basePattern,
                   Instruction xor,
                   List<TableGenPattern> patterns,
                   List<TableGenPattern> result) {
@@ -149,7 +149,7 @@ public class LlvmInstructionLoweringConditionalsStrategyImpl
         // Change machine instruction to immediate
         outputPattern.machine().getNodes(LcbMachineInstructionNode.class)
             .forEach(node -> {
-              node.setInstruction(lti);
+              node.setInstruction(basePattern);
 
               var newArgs = new LcbMachineInstructionWrappedNode(xor, node.arguments());
               node.setArgs(
@@ -162,7 +162,7 @@ public class LlvmInstructionLoweringConditionalsStrategyImpl
   }
 
 
-  private void neq(Instruction ltu,
+  private void neq(Instruction basePattern,
                    Instruction xor,
                    List<TableGenPattern> patterns,
                    List<TableGenPattern> result) {
@@ -200,7 +200,7 @@ public class LlvmInstructionLoweringConditionalsStrategyImpl
         // Change machine instruction to immediate
         outputPattern.machine().getNodes(LcbMachineInstructionNode.class)
             .forEach(node -> {
-              node.setInstruction(ltu);
+              node.setInstruction(basePattern);
 
               var registerFile =
                   ensurePresent(
@@ -233,8 +233,7 @@ public class LlvmInstructionLoweringConditionalsStrategyImpl
   }
 
 
-  private void neqWithImmediate(Instruction basePattern,
-                                Instruction machineInstructionToBeEmitted,
+  private void neqWithImmediate(Instruction machineInstructionToBeEmitted,
                                 Instruction xori,
                                 List<TableGenPattern> patterns,
                                 List<TableGenPattern> result) {
