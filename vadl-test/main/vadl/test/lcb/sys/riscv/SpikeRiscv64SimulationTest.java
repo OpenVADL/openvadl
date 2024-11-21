@@ -61,11 +61,6 @@ public class SpikeRiscv64SimulationTest extends AbstractLcbTest {
         .withBuildArg("UPSTREAM_CLANG_TARGET", upstreamClangTarget)
         .withBuildArg("SPIKE_TARGET", "rv64gc"));
 
-    // We build the image and copy all the input files into the container.
-    // The llvm compiler compiles all assembly files, and we copy them from the container
-    // to the host (hostOutput folder).
-    var hostOutput = configuration.outputPath() + "/output/";
-
     // The container is complete and has generated the assembly files.
     return inputFilesFromCFile().map(input -> DynamicTest.dynamicTest(input, () -> {
       runContainerWithEnv(image,

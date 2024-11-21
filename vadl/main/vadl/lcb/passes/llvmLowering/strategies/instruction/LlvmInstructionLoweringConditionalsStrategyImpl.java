@@ -13,7 +13,6 @@ import vadl.lcb.codegen.model.llvm.ValueType;
 import vadl.lcb.passes.isaMatching.MachineInstructionLabel;
 import vadl.lcb.passes.llvmLowering.domain.machineDag.LcbMachineInstructionNode;
 import vadl.lcb.passes.llvmLowering.domain.machineDag.LcbMachineInstructionWrappedNode;
-import vadl.lcb.passes.llvmLowering.domain.selectionDag.LlvmFieldAccessRefNode;
 import vadl.lcb.passes.llvmLowering.domain.selectionDag.LlvmReadRegFileNode;
 import vadl.lcb.passes.llvmLowering.domain.selectionDag.LlvmSetccSD;
 import vadl.lcb.passes.llvmLowering.strategies.LlvmInstructionLoweringStrategy;
@@ -99,13 +98,14 @@ public class LlvmInstructionLoweringConditionalsStrategyImpl
 
     xoris.stream().findFirst()
         .ifPresent(xori -> {
-          ltis.stream().findFirst().ifPresent(lti -> {
-            // Why `lts`? Because we need an initial pattern from which we construct a new pattern.
-            // In that case, "less-than"
-            if (ltis.contains(instruction)) {
-              neqWithImmediate(lti, xori, patterns, result);
-            }
-          });
+          ltus.stream().findFirst().ifPresent(ltu ->
+              ltis.stream().findFirst().ifPresent(lti -> {
+                // Why `ltis`? Because we need an initial pattern from which we construct a new pattern.
+                // In that case, "less-than-immediate"
+                if (ltis.contains(instruction)) {
+                  neqWithImmediate(lti, ltu, xori, patterns, result);
+                }
+              }));
         });
 
     return result;
@@ -233,7 +233,8 @@ public class LlvmInstructionLoweringConditionalsStrategyImpl
   }
 
 
-  private void neqWithImmediate(Instruction ltu,
+  private void neqWithImmediate(Instruction basePattern,
+                                Instruction machineInstructionToBeEmitted,
                                 Instruction xori,
                                 List<TableGenPattern> patterns,
                                 List<TableGenPattern> result) {
@@ -272,7 +273,7 @@ public class LlvmInstructionLoweringConditionalsStrategyImpl
         // Change machine instruction to immediate
         outputPattern.machine().getNodes(LcbMachineInstructionNode.class)
             .forEach(node -> {
-              node.setInstruction(ltu);
+              node.setInstruction(machineInstructionToBeEmitted);
 
               var registerFile =
                   ensurePresent(
