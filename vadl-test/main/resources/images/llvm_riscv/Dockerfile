@@ -9,4 +9,4 @@ WORKDIR /src
 RUN mv /opt/sccache/sccache /usr/bin/sccache
 RUN make && sccache -s
 RUN mkdir /output
-CMD ls /src/inputs | xargs -t -I {} bash -c "/src/llvm-final/build/bin/clang --target=${TARGET} -S -c /src/inputs/{} -o /output/{}.s 2> /output/{}.err || echo 'not ok'"
+CMD /src/llvm-final/build/bin/clang --target=${TARGET} -S -c /src/inputs/$INPUT -o /output/$INPUT.s && colordiff -y /output/$INPUT.s /assertions/$INPUT.s
