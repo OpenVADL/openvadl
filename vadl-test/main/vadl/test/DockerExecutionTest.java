@@ -76,38 +76,6 @@ public abstract class DockerExecutionTest extends AbstractTest {
     );
   }
 
-
-  /**
-   * Starts a container and checks the status code for the exited container.
-   * It will write the given {@code content} into a temporary file. The
-   * temporary file requires a {@code prefix} and {@code suffix}.
-   * It will assert that the status code is zero. If the check takes longer
-   * than 10 seconds or the status code is not zero then it will throw an
-   * exception.
-   * Copies the data from {@code content} to {@code mountPath} and copies
-   * an archive from {@code containerMountPath + archiveName} to {@code hostPath + archiveName}.
-   * Both {@code containerMountPath} and {@code hostPath} need to be paths.
-   * This method will also automatically untar the file.
-   *
-   * @param image            is the docker image for the {@link GenericContainer}.
-   * @param inContainerPath  is the path where the {@code path} should be mounted to.
-   * @param inHostPath       is the content of file which will be written to the
-   *                         temp file.
-   * @param outHostPath      is the path on the host for the output archive.
-   * @param outContainerPath is the path in the container for the output archive.
-   */
-  protected void runContainerAndCopyInputIntoAndCopyOutputFromContainer(ImageFromDockerfile image,
-                                                                        Path inHostPath,
-                                                                        String inContainerPath,
-                                                                        Path outHostPath,
-                                                                        String outContainerPath) {
-    runContainer(image, (container) -> container
-            .withCopyFileToContainer(MountableFile.forHostPath(inHostPath), inContainerPath),
-        (container) -> copyPathFromContainer(container, outContainerPath, outHostPath)
-    );
-  }
-
-
   /**
    * Starts a container and checks the status code for the exited container.
    * It will write the given {@code content} into a temporary file. The
