@@ -1,5 +1,25 @@
-int main()
-{
-    int a = 1;
-    return !((a + 2147483640) == 2147483641);
-}
+.text
+.file	"large_constant_with_compare.c"
+.globl	main                            # -- Begin function main
+.type	main,@function
+main:                                   # @main
+# %bb.0:                                # %entry
+ADDI sp,sp,-16
+SD fp,8(sp)
+ADDI fp,sp,16
+ADDI ra,zero,0
+SW ra,-12(fp)
+ADDI ra,zero,1
+SW ra,-16(fp)
+LWU ra,-16(fp)
+XORI ra,ra,1
+SLTU a0,zero,ra
+LD fp,8(sp)
+ADDI sp,sp,16
+JALR zero,0(ra)
+.Lfunc_end0:
+.size	main, .Lfunc_end0-main
+                                      # -- End function
+.ident	"clang version 17.0.6 (https://github.com/llvm/llvm-project.git 6009708b4367171ccdbf4b5905cb6a803753fe18)"
+.section	".note.GNU-stack","",@progbits
+.addrsig
