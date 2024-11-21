@@ -309,7 +309,7 @@ class IssResourceReadSecurer {
 /**
  * Performs dominator analysis on a control flow graph (CFG) to compute dominator sets for control nodes.
  */
-class IssDominatorAnalysis extends CfgTraverser {
+class IssDominatorAnalysis implements CfgTraverser {
 
   Map<ControlNode, List<ControlNode>> dominatorSets = new HashMap<>();
   ArrayDeque<Integer> splitDominatorIndexStack = new ArrayDeque<>();

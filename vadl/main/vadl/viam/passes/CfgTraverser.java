@@ -3,14 +3,30 @@ package vadl.viam.passes;
 import org.jetbrains.annotations.Nullable;
 import vadl.viam.graph.control.AbstractBeginNode;
 import vadl.viam.graph.control.AbstractEndNode;
+import vadl.viam.graph.control.BeginNode;
 import vadl.viam.graph.control.ControlNode;
 import vadl.viam.graph.control.ControlSplitNode;
 import vadl.viam.graph.control.DirectionalNode;
 import vadl.viam.graph.control.MergeNode;
 
-public abstract class CfgTraverser {
+public interface CfgTraverser {
 
-  public abstract void onControlNode(ControlNode controlNode);
+  default void onControlNode(ControlNode controlNode) {
+    // do nothing by default
+  }
+
+  default void onDirectional(DirectionalNode dir) {
+    // do nothing by default
+  }
+
+  default void onEnd(AbstractEndNode endNode) {
+    // do nothing by default
+  }
+
+  default void onControlSplit(ControlSplitNode controlSplit) {
+    // do nothing by default
+  }
+
 
   /**
    * Traverses the control flow graph starting from the given branch begin node.
@@ -18,11 +34,11 @@ public abstract class CfgTraverser {
    * @param branchBegin The starting node of the branch to traverse.
    * @return The end node of the traversal.
    */
-  public AbstractEndNode traverseBranch(AbstractBeginNode branchBegin) {
+  default AbstractEndNode traverseBranch(AbstractBeginNode branchBegin) {
     ControlNode currNode = branchBegin;
 
     while (true) {
-      onControlNode(currNode);
+      handleControlNode(currNode);
 
       if (currNode instanceof AbstractEndNode) {
         // When we find the end node, we return it
@@ -40,6 +56,18 @@ public abstract class CfgTraverser {
     }
   }
 
+  private void handleControlNode(ControlNode controlNode) {
+    if (controlNode instanceof DirectionalNode direNode) {
+      onDirectional(direNode);
+    } else if (controlNode instanceof ControlSplitNode splitNode) {
+      onControlSplit(splitNode);
+    } else if (controlNode instanceof AbstractEndNode endNode) {
+      onEnd(endNode);
+    }
+
+    onControlNode(controlNode);
+  }
+
 
   /**
    * Traverses all branches of the control split node.
@@ -48,7 +76,7 @@ public abstract class CfgTraverser {
    * @param splitNode The ControlSplitNode to process.
    * @return The MergeNode corresponding to the control split.
    */
-  public MergeNode traverseControlSplit(ControlSplitNode splitNode) {
+  default MergeNode traverseControlSplit(ControlSplitNode splitNode) {
     @Nullable AbstractEndNode someEnd = null;
     for (var branch : splitNode.branches()) {
       someEnd = traverseBranch(branch);

@@ -1,6 +1,7 @@
 package vadl.viam.graph.control;
 
 import java.util.List;
+import javax.annotation.Nonnull;
 import vadl.javaannotations.viam.Input;
 import vadl.viam.graph.GraphNodeVisitor;
 import vadl.viam.graph.GraphVisitor;
@@ -10,7 +11,7 @@ import vadl.viam.graph.dependency.DependencyNode;
 public class ScheduledNode extends DirectionalNode {
 
   @Input
-  public DependencyNode node;
+  private DependencyNode node;
 
   public ScheduledNode(DependencyNode node) {
     this.node = node;
@@ -19,6 +20,7 @@ public class ScheduledNode extends DirectionalNode {
   public DependencyNode node() {
     return node;
   }
+  
 
   @Override
   public Node copy() {

@@ -23,7 +23,7 @@ public class IssLoweringTest extends AbstractTest {
     var config =
         new IssConfiguration(new GeneralConfiguration(Path.of("build/test-output"), true));
 
-    setupPassManagerAndRunSpec("sys/risc-v/rv64i.vadl",
+    setupPassManagerAndRunSpec("sys/risc-v/rv64im.vadl",
         PassOrders.iss(config)
     );
 
