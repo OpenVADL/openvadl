@@ -3838,6 +3838,9 @@ class SignalDefinition extends Definition {
 /**
  * Represents the <code>assembly description</code> definition of a vadl specification.
  * It contains definitions for modifiers, directives and grammar rules of an assembly language.
+ * <p>
+ * Further, it can also contain constant, function and using definitions.
+ * </p>
  */
 class AsmDescriptionDefinition extends Definition {
   Identifier id;
@@ -3845,18 +3848,21 @@ class AsmDescriptionDefinition extends Definition {
   List<AsmModifierDefinition> modifiers;
   List<AsmDirectiveDefinition> directives;
   List<AsmGrammarRuleDefinition> rules;
+  List<Definition> commonDefinitions;
   SourceLocation loc;
 
   public AsmDescriptionDefinition(Identifier id, Identifier abi,
                                   List<AsmModifierDefinition> modifiers,
                                   List<AsmDirectiveDefinition> directives,
                                   List<AsmGrammarRuleDefinition> rules,
+                                  List<Definition> commonDefinitions,
                                   SourceLocation loc) {
     this.id = id;
     this.abi = abi;
     this.modifiers = modifiers;
     this.directives = directives;
     this.rules = rules;
+    this.commonDefinitions = commonDefinitions;
     this.loc = loc;
   }
 
@@ -3886,6 +3892,12 @@ class AsmDescriptionDefinition extends Definition {
     abi.prettyPrint(indent, builder);
     builder.append(" = {\n");
     indent++;
+
+    if (!commonDefinitions.isEmpty()) {
+      for (var def : commonDefinitions) {
+        def.prettyPrint(indent, builder);
+      }
+    }
 
     if (!modifiers.isEmpty()) {
       builder.append(prettyIndentString(indent)).append("modifiers = {\n");

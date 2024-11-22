@@ -1088,15 +1088,23 @@ PRODUCTIONS
 
   assemblyDescriptionDefinition<out AsmDescriptionDefinition asmDescription>    (. List<AsmModifierDefinition> modifiers = new ArrayList<>(); var start = loc(); .)
   = ASSEMBLY DESCRIPTION                                                        (. List<AsmDirectiveDefinition> directives = new ArrayList<>(); .)
-    assemblyIdentifier<out Identifier id>
+    assemblyIdentifier<out Identifier id>                                       (. List<AsmGrammarRuleDefinition> rules = null; var commonDefs = new ArrayList<Definition>(); .)
     FOR
     assemblyIdentifier<out Identifier abi>
     SYM_EQ
     SYM_BRACE_OPEN
-      [ assemblyModifiersDefinition<out modifiers> ]
-      [ assemblyDirectivesDefinition<out directives> ]
-      assemblyGrammarDefinition<.out List<AsmGrammarRuleDefinition> rules.>
-    SYM_BRACE_CLOSE                                                             (. asmDescription = new AsmDescriptionDefinition(id, abi, modifiers, directives, rules, start.join(loc())); .)
+      { assemblyModifiersDefinition<out modifiers>
+      | assemblyDirectivesDefinition<out directives>
+      | assemblyGrammarDefinition<out rules>
+      | assemblyCommonDefinition<out Definition def>                            (. commonDefs.add(def); .)
+      }
+    SYM_BRACE_CLOSE                                                             (. asmDescription = new AsmDescriptionDefinition(id, abi, modifiers, directives, rules, commonDefs, start.join(loc())); .)
+  .
+
+  assemblyCommonDefinition<out Definition def>                                    (. def = DUMMY_DEF; .)
+  = constantDefinition<out def>
+  | usingDefinition<out def>
+  | functionDefinition<out def>
   .
 
   assemblyModifiersDefinition<.out List<AsmModifierDefinition> modifiers.>        (. modifiers = new ArrayList<>(); .)
