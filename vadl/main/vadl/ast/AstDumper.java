@@ -608,6 +608,7 @@ public class AstDumper
     dumpChildren(definition.modifiers);
     dumpChildren(definition.directives);
     dumpChildren(definition.rules);
+    dumpChildren(definition.commonDefinitions);
     return null;
   }
 
