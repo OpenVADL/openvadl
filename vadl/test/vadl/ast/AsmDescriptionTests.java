@@ -22,12 +22,14 @@ public class AsmDescriptionTests {
   @Test
   void asmDescriptionWithModifier() {
     var prog = """
-          instruction set architecture ISA = {}
+          instruction set architecture ISA = {
+            relocation HI ( symbol : Bits <32> ) -> Bits <16> = ( symbol >> 16 ) & 0xFFFF
+          }
           application binary interface ABI for ISA = {}
         
           assembly description AD for ABI = {
             modifiers = {
-              "mod1" -> ISA::mod1
+              "hi" -> ISA::HI
             }
         
             grammar = {
@@ -41,14 +43,16 @@ public class AsmDescriptionTests {
   @Test
   void asmDescriptionWithMultipleModifiers() {
     var prog = """
-          instruction set architecture ISA = {}
+          instruction set architecture ISA = {
+            relocation HI ( symbol : Bits <32> ) -> Bits <16> = ( symbol >> 16 ) & 0xFFFF
+            relocation LO ( symbol : Bits <32> ) -> Bits <12> =   symbol         & 0xFFF
+          }
           application binary interface ABI for ISA = {}
         
           assembly description AD for ABI = {
             modifiers = {
-              "mod1" -> ISA::mod1,
-              "mod2" -> ISA::mod2,
-              "mod3" -> ISA::mod3
+              "hi" -> ISA::HI,
+              "lo" -> ISA::LO
             }
         
             grammar = {
@@ -119,14 +123,16 @@ public class AsmDescriptionTests {
   @Test
   void asmDescriptionWithModifiersAndDirectives() {
     var prog = """
-          instruction set architecture ISA = {}
+          instruction set architecture ISA = {
+            relocation HI ( symbol : Bits <32> ) -> Bits <16> = ( symbol >> 16 ) & 0xFFFF
+            relocation LO ( symbol : Bits <32> ) -> Bits <12> =   symbol         & 0xFFF
+          }
           application binary interface ABI for ISA = {}
         
           assembly description AD for ABI = {
             modifiers = {
-              "mod1" -> ISA::mod1,
-              "mod2" -> ISA::mod2,
-              "mod3" -> ISA::mod3
+              "hi" -> ISA::HI,
+              "lo" -> ISA::LO
             }
         
             directives = {
@@ -146,6 +152,20 @@ public class AsmDescriptionTests {
   void asmDescriptionReferencesUnknownAbi() {
     var prog = """
           assembly description AD for ABI = {}
+        """;
+    Assertions.assertThrows(DiagnosticList.class, () -> VadlParser.parse(prog));
+  }
+
+  @Test
+  void asmModifiersReferenceUnknownRelocations() {
+    var prog = """
+          instruction set architecture ISA = {}
+          application binary interface ABI for ISA = {}
+          assembly description AD for ABI = {
+            modifiers = {
+              "hi" -> ISA::HI
+            }
+          }
         """;
     Assertions.assertThrows(DiagnosticList.class, () -> VadlParser.parse(prog));
   }

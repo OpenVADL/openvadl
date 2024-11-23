@@ -1229,8 +1229,9 @@ class RelocationDefinition extends Definition {
   void prettyPrint(int indent, StringBuilder builder) {
     annotations.prettyPrint(indent, builder);
     builder.append(prettyIndentString(indent));
-    builder.append("relocation");
+    builder.append("relocation ");
     identifier.prettyPrint(indent, builder);
+    builder.append(" ");
     Parameter.prettyPrint(params, builder);
     builder.append(" -> ");
     resultType.prettyPrint(0, builder);
