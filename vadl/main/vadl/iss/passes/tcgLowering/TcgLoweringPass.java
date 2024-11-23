@@ -18,7 +18,7 @@ import vadl.iss.passes.tcgLowering.nodes.TcgBr;
 import vadl.iss.passes.tcgLowering.nodes.TcgBrCondImm;
 import vadl.iss.passes.tcgLowering.nodes.TcgConstantNode;
 import vadl.iss.passes.tcgLowering.nodes.TcgExtendNode;
-import vadl.iss.passes.tcgLowering.nodes.TcgLabelLabel;
+import vadl.iss.passes.tcgLowering.nodes.TcgGenLabel;
 import vadl.iss.passes.tcgLowering.nodes.TcgGetVar;
 import vadl.iss.passes.tcgLowering.nodes.TcgGottoTbAbs;
 import vadl.iss.passes.tcgLowering.nodes.TcgLoadMemory;
@@ -242,8 +242,8 @@ class TcgLoweringExecutor extends GraphProcessor<Node> {
 
 
     // create tcg if and end labels
-    addLast(new TcgLabelLabel(ifLabel));
-    addLast(new TcgLabelLabel(endLabel));
+    addLast(new TcgGenLabel(ifLabel));
+    addLast(new TcgGenLabel(endLabel));
 
 
     // TODO: here we have potential to optimize the branch by using a branch condition

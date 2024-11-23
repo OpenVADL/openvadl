@@ -25,6 +25,7 @@ import vadl.iss.passes.IssVariableAllocationPass;
 import vadl.iss.passes.safeResourceRead.IssSafeResourceReadPass;
 import vadl.iss.passes.IssTcgAnnotatePass;
 import vadl.iss.passes.IssVerificationPass;
+import vadl.iss.passes.tcgLowering.TcgBranchLoweringPass;
 import vadl.iss.passes.tcgLowering.TcgLoweringPass;
 import vadl.iss.template.target.EmitIssCpuHeaderPass;
 import vadl.iss.template.target.EmitIssCpuParamHeaderPass;
@@ -345,8 +346,9 @@ public class PassOrders {
         .add(new IssSafeResourceReadPass(config))
         .add(new IssTcgSchedulingPass(config))
         .add(new IssVariableAllocationPass(config))
-        .add(new IssTcgAnnotatePass(config))
-        .add(new TcgLoweringPass(config))
+        .add(new TcgBranchLoweringPass(config))
+//        .add(new IssTcgAnnotatePass(config))
+//        .add(new TcgLoweringPass(config))
 
     ;
 

@@ -71,12 +71,13 @@ public interface CfgTraverser {
 
   /**
    * Traverses all branches of the control split node.
-   * It will return the control split's MergeNode.
+   * It will return the next node after the whole control split.
+   * This is typically the MergeNode.
    *
    * @param splitNode The ControlSplitNode to process.
-   * @return The MergeNode corresponding to the control split.
+   * @return The ControlNode where to continue. This is typically the MergeNode.
    */
-  default MergeNode traverseControlSplit(ControlSplitNode splitNode) {
+  default ControlNode traverseControlSplit(ControlSplitNode splitNode) {
     @Nullable AbstractEndNode someEnd = null;
     for (var branch : splitNode.branches()) {
       someEnd = traverseBranch(branch);
