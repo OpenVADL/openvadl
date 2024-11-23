@@ -1,5 +1,6 @@
 package vadl.dump.infoEnrichers;
 
+import static java.util.Objects.requireNonNull;
 import static vadl.dump.InfoEnricher.forType;
 
 import java.util.ArrayList;
@@ -11,10 +12,12 @@ import vadl.dump.InfoEnricher;
 import vadl.dump.InfoUtils;
 import vadl.dump.entities.DefinitionEntity;
 import vadl.iss.passes.IssReadVarAssignPass;
+import vadl.iss.passes.IssVariableAllocationPass;
 import vadl.iss.passes.safeResourceRead.IssSafeResourceReadPass;
 import vadl.iss.passes.tcgLowering.TcgV;
 import vadl.viam.Instruction;
 import vadl.viam.graph.Node;
+import vadl.viam.graph.dependency.DependencyNode;
 import vadl.viam.graph.dependency.ReadResourceNode;
 
 /**
@@ -25,48 +28,44 @@ public class IssEnricherCollection {
   /**
    * An {@link InfoEnricher} that enriches a {@link DefinitionEntity} by adding information
    * about variable assignments and resource reads. Specifically, it processes entities of type
-   * {@link DefinitionEntity} and extracts data if the corresponding pass {@link IssReadVarAssignPass}
-   * has been executed. The information is added as an expandable table labeled
-   * "Accessed Resources" with details on the variables read.
+   * {@link DefinitionEntity} and extracts data if the corresponding pass {@link IssVariableAllocationPass}
+   * has been executed.
    */
-  public static InfoEnricher READ_VAR_ASSIGN_EXPANDABLE =
+  public static InfoEnricher TCG_VAR_ASSIGN_EXPANDABLE =
       forType(DefinitionEntity.class, (entity, passResult) -> {
-        if (!passResult.hasRunPassOnce(IssReadVarAssignPass.class)
+        if (!passResult.hasRunPassOnce(IssVariableAllocationPass.class)
             || !(entity.origin() instanceof Instruction instr)) {
           return;
         }
 
         var assignments = passResult.lastResultOf(
-            IssReadVarAssignPass.class,
-            IssReadVarAssignPass.Result.class
+            IssVariableAllocationPass.class,
+            IssVariableAllocationPass.Result.class
         );
-        var reads = Objects.requireNonNull(instr.behavior().getNodes(ReadResourceNode.class))
-            .sorted(Comparator.comparing(e -> e.getClass().getSimpleName()))
-            .toList();
-        var vars = reads.stream().map(assignments.assignments()::get)
-            .map(TcgV::varName)
-            .collect(Collectors.toCollection(ArrayList::new));
 
-        if (vars.isEmpty()) {
-          return;
-        }
 
-        var readStr = reads.stream().map(Node::toString)
-            .collect(Collectors.toCollection(ArrayList::new));
+        var nodes = new ArrayList<String>();
+        var vars = new ArrayList<String>();
 
-        readStr.add(0, "Reads");
+        requireNonNull(assignments.varAssignments().get(instr))
+            .forEach((k, v) -> {
+              nodes.add(k.toString());
+              vars.add(v.toString());
+            });
+
+        nodes.add(0, "Nodes");
         vars.add(0, "Variables");
 
         var info = InfoUtils.createTableExpandable(
-            "Read Variable Assignments",
-            List.of(readStr, vars)
+            "Variable Assignments",
+            List.of(nodes, vars)
         );
         entity.addInfo(info);
       });
 
 
   /**
-   *
+   * Obtains, the locations of register spilling (saving in to copy node).
    */
   public static InfoEnricher READ_SPILL_LOCATION_EXPANDABLE =
       forType(DefinitionEntity.class, (entity, passResult) -> {
@@ -108,7 +107,7 @@ public class IssEnricherCollection {
    * A list of all info enrichers that are ISS specific.
    */
   public static List<InfoEnricher> all = List.of(
-      READ_VAR_ASSIGN_EXPANDABLE,
+      TCG_VAR_ASSIGN_EXPANDABLE,
       READ_SPILL_LOCATION_EXPANDABLE
   );
 
