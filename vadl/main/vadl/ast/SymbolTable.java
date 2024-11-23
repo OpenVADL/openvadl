@@ -575,6 +575,16 @@ class SymbolTable {
         symbols.defineSymbol(new GenericSymbol(cache.id.name, cache), cache.id.loc);
       } else if (definition instanceof SignalDefinition signal) {
         symbols.defineSymbol(new GenericSymbol(signal.id.name, signal), signal.id.loc);
+      } else if (definition instanceof AsmDescriptionDefinition asmDescription) {
+        symbols.defineSymbol(new GenericSymbol(asmDescription.id.name, asmDescription),
+            asmDescription.id.loc);
+        var asmDescSymbolTable = symbols.createChild();
+        asmDescription.symbolTable = asmDescSymbolTable;
+        asmDescription.modifiers.forEach(
+            modifier -> collectSymbols(asmDescSymbolTable, modifier));
+        asmDescription.directives.forEach(
+            directive -> collectSymbols(asmDescSymbolTable, directive));
+        // TODO collect symbols of asmDescription.commonDefinitions
       }
     }
 
@@ -871,6 +881,8 @@ class SymbolTable {
         resolveSymbols(pipeline.statement);
       } else if (definition instanceof StageDefinition stage) {
         resolveSymbols(stage.statement);
+      } else if (definition instanceof AsmDescriptionDefinition asmDescription) {
+        asmDescription.symbolTable().requireAbi(asmDescription.abi);
       }
     }
 

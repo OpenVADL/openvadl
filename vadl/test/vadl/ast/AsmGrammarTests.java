@@ -6,293 +6,264 @@ import org.junit.jupiter.api.Test;
 
 public class AsmGrammarTests {
 
+  private String inputWrappedByValidAsmDescription(String input) {
+    return """
+          instruction set architecture ISA = {}
+          application binary interface ABI for ISA = {}
+        
+          assembly description AD for ABI = {
+            %s
+          }
+        """.formatted(input);
+  }
+
   @Test
   void nonTerminalGrammarRule() {
     var prog = """
-          assembly description AD for ABI = {
-            grammar = {
+          grammar = {
               A :
                 B
               ;
-            }
           }
         """;
-    verifyPrettifiedAst(VadlParser.parse(prog));
+    verifyPrettifiedAst(VadlParser.parse(inputWrappedByValidAsmDescription(prog)));
   }
 
   @Test
   void nonTerminalWithTypes() {
     var prog = """
-          assembly description AD for ABI = {
-            grammar = {
-              A@typeA :
-                B@typeB
-              ;
-            }
+          grammar = {
+            A@typeA :
+              B@typeB
+            ;
           }
         """;
-    verifyPrettifiedAst(VadlParser.parse(prog));
+    verifyPrettifiedAst(VadlParser.parse(inputWrappedByValidAsmDescription(prog)));
   }
 
   @Test
   void assignNonTerminalToAttribute() {
     var prog = """
-          assembly description AD for ABI = {
-            grammar = {
-              A@typeA :
-                attributeB = B@typeB
-              ;
-            }
+          grammar = {
+            A@typeA :
+              attributeB = B@typeB
+            ;
           }
         """;
-    verifyPrettifiedAst(VadlParser.parse(prog));
+    verifyPrettifiedAst(VadlParser.parse(inputWrappedByValidAsmDescription(prog)));
   }
 
   @Test
   void assignStringLiteralToAttribute() {
     var prog = """
-          assembly description AD for ABI = {
-            grammar = {
-              A@typeA :
-                attributeB = "B" @typeB
-              ;
-            }
+          grammar = {
+            A@typeA :
+              attributeB = "B" @typeB
+            ;
           }
         """;
-    verifyPrettifiedAst(VadlParser.parse(prog));
+    verifyPrettifiedAst(VadlParser.parse(inputWrappedByValidAsmDescription(prog)));
   }
 
   @Test
   void assignMultipleAttributes() {
     var prog = """
-          assembly description AD for ABI = {
-            grammar = {
-              A@typeA :
-                attributeB = "B" @typeB
-                attributeC = C @typeC
-              ;
-            }
+          grammar = {
+            A@typeA :
+              attributeB = "B" @typeB
+              attributeC = C @typeC
+            ;
           }
         """;
-    verifyPrettifiedAst(VadlParser.parse(prog));
+    verifyPrettifiedAst(VadlParser.parse(inputWrappedByValidAsmDescription(prog)));
   }
 
   @Test
   void nonTerminalWithEmptyParameters() {
     var prog = """
-          assembly description AD for ABI = {
-            grammar = {
-              A@typeA :
-                B<>
-              ;
-            }
+          grammar = {
+            A@typeA :
+              B<>
+            ;
           }
         """;
-    verifyPrettifiedAst(VadlParser.parse(prog));
+    verifyPrettifiedAst(VadlParser.parse(inputWrappedByValidAsmDescription(prog)));
   }
 
   @Test
   void nonTerminalWithParameters() {
     var prog = """
-          assembly description AD for ABI = {
-            grammar = {
-              A@typeA :
-                B<C,D>
-              ;
-            }
+          grammar = {
+            A@typeA :
+              B<C,D>
+            ;
           }
         """;
-    verifyPrettifiedAst(VadlParser.parse(prog));
+    verifyPrettifiedAst(VadlParser.parse(inputWrappedByValidAsmDescription(prog)));
   }
 
   @Test
   void nonTerminalParametersWithTypecast() {
     var prog = """
-          assembly description AD for ABI = {
-            grammar = {
-              A@typeA :
-                B<C@typeC,D@typeD> @typeB
-              ;
-            }
+          grammar = {
+            A@typeA :
+              B<C@typeC,D@typeD> @typeB
+            ;
           }
         """;
-    verifyPrettifiedAst(VadlParser.parse(prog));
+    verifyPrettifiedAst(VadlParser.parse(inputWrappedByValidAsmDescription(prog)));
   }
 
   @Test
   void stringLiteralGrammarRule() {
     var prog = """
-          assembly description AD for ABI = {
-            grammar = {
-              A@typeA :
-                "Literal" @typeB
-              ;
-            }
+          grammar = {
+            A@typeA :
+              "Literal" @typeB
+            ;
           }
         """;
-    verifyPrettifiedAst(VadlParser.parse(prog));
+    verifyPrettifiedAst(VadlParser.parse(inputWrappedByValidAsmDescription(prog)));
   }
 
   @Test
   void groupGrammarRule() {
     var prog = """
-          assembly description AD for ABI = {
-            grammar = {
-              A@typeA :
-                ("Literal" @typeB C@typeC)
-              ;
-            }
+          grammar = {
+            A@typeA :
+              ("Literal" @typeB C@typeC)
+            ;
           }
         """;
-    verifyPrettifiedAst(VadlParser.parse(prog));
+    verifyPrettifiedAst(VadlParser.parse(inputWrappedByValidAsmDescription(prog)));
   }
 
   @Test
   void nestedGroupGrammarRule() {
     var prog = """
-          assembly description AD for ABI = {
-            grammar = {
-              A@typeA :
-                (
-                  "Literal" @typeB C@typeC
-                  (D E) @ typeDE
-                )
-              ;
-            }
+          grammar = {
+            A@typeA :
+              (
+                "Literal" @typeB C@typeC
+                (D E) @ typeDE
+              )
+            ;
           }
         """;
-    verifyPrettifiedAst(VadlParser.parse(prog));
+    verifyPrettifiedAst(VadlParser.parse(inputWrappedByValidAsmDescription(prog)));
   }
 
   @Test
   void multipleGrammarRules() {
     var prog = """
-          assembly description AD for ABI = {
-            grammar = {
-              A@typeA :
-                B
-              ;
-              C :
-                D@typeD
-              ;
-            }
+          grammar = {
+            A@typeA :
+              B
+            ;
+            C :
+              D@typeD
+            ;
           }
         """;
-    verifyPrettifiedAst(VadlParser.parse(prog));
+    verifyPrettifiedAst(VadlParser.parse(inputWrappedByValidAsmDescription(prog)));
   }
 
   @Test
   void simpleAlternativesGrammarRule() {
     var prog = """
-          assembly description AD for ABI = {
-            grammar = {
-              A@typeA :
-                B | C
-              ;
-            }
+          grammar = {
+            A@typeA :
+              B | C
+            ;
           }
         """;
-    verifyPrettifiedAst(VadlParser.parse(prog));
+    verifyPrettifiedAst(VadlParser.parse(inputWrappedByValidAsmDescription(prog)));
   }
 
   @Test
   void alternativesWithGroups() {
     var prog = """
-          assembly description AD for ABI = {
-            grammar = {
-              A@typeA :
-                B | (C@c D) | F<Int>@f
-              ;
-            }
+          grammar = {
+            A@typeA :
+              B | (C@c D) | F<Int>@f
+            ;
           }
         """;
-    verifyPrettifiedAst(VadlParser.parse(prog));
+    verifyPrettifiedAst(VadlParser.parse(inputWrappedByValidAsmDescription(prog)));
   }
 
   @Test
   void alternativesWithGroupsAndNestedAlternatives() {
     var prog = """
-          assembly description AD for ABI = {
-            grammar = {
-              A@typeA :
-                B | (C@c | D | G<>@g) | F<Int>@f
-              ;
-            }
+          grammar = {
+            A@typeA :
+              B | (C@c | D | G<>@g) | F<Int>@f
+            ;
           }
         """;
-    verifyPrettifiedAst(VadlParser.parse(prog));
+    verifyPrettifiedAst(VadlParser.parse(inputWrappedByValidAsmDescription(prog)));
   }
 
   @Test
   void alternativesWithAttributesAndGroups() {
     var prog = """
-          assembly description AD for ABI = {
-            grammar = {
-              A@typeA :
-                attrB = B | (C@c | attrD = "D" | G<>@g) | F<Int>@f
-              ;
-            }
+          grammar = {
+            A@typeA :
+              attrB = B | (C@c | attrD = "D" | G<>@g) | F<Int>@f
+            ;
           }
         """;
-    verifyPrettifiedAst(VadlParser.parse(prog));
+    verifyPrettifiedAst(VadlParser.parse(inputWrappedByValidAsmDescription(prog)));
   }
 
   @Test
   void localVarGrammarRule() {
     var prog = """
-          assembly description AD for ABI = {
-            grammar = {
-              A@typeA : var tmp = null @operand
-                attrB = B
-              ;
-            }
+          grammar = {
+            A@typeA : var tmp = null @operand
+              attrB = B
+            ;
           }
         """;
-    verifyPrettifiedAst(VadlParser.parse(prog));
+    verifyPrettifiedAst(VadlParser.parse(inputWrappedByValidAsmDescription(prog)));
   }
 
   @Test
   void localVarInGroupGrammarRule() {
     var prog = """
-          assembly description AD for ABI = {
-            grammar = {
-              A@typeA :
-                attrB = B
-                ( var tmp = null @operand
-                  C
-                )
-              ;
-            }
+          grammar = {
+            A@typeA :
+              attrB = B
+              ( var tmp = null @operand
+                C
+              )
+            ;
           }
         """;
-    verifyPrettifiedAst(VadlParser.parse(prog));
+    verifyPrettifiedAst(VadlParser.parse(inputWrappedByValidAsmDescription(prog)));
   }
 
   @Test
   void optionalGrammarRule() {
     var prog = """
-          assembly description AD for ABI = {
-            grammar = {
-              A :
-                [B C]
-              ;
-            }
+          grammar = {
+            A :
+              [B C]
+            ;
           }
         """;
-    verifyPrettifiedAst(VadlParser.parse(prog));
+    verifyPrettifiedAst(VadlParser.parse(inputWrappedByValidAsmDescription(prog)));
   }
 
   @Test
   void optionalInGroupGrammarRule() {
     var prog = """
-          assembly description AD for ABI = {
-            grammar = {
-              A :
-                (B [C D])
-              ;
-            }
+          grammar = {
+            A :
+              (B [C D])
+            ;
           }
         """;
-    verifyPrettifiedAst(VadlParser.parse(prog));
+    verifyPrettifiedAst(VadlParser.parse(inputWrappedByValidAsmDescription(prog)));
   }
 }

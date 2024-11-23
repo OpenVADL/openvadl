@@ -8,9 +8,23 @@ import vadl.error.DiagnosticList;
 
 public class AsmDescriptionTests {
 
+  private String inputWrappedByValidAsmDescription(String input) {
+    return """
+          instruction set architecture ISA = {}
+          application binary interface ABI for ISA = {}
+        
+          assembly description AD for ABI = {
+            %s
+          }
+        """.formatted(input);
+  }
+
   @Test
   void asmDescriptionWithModifier() {
     var prog = """
+          instruction set architecture ISA = {}
+          application binary interface ABI for ISA = {}
+        
           assembly description AD for ABI = {
             modifiers = {
               "mod1" -> ISA::mod1
@@ -27,6 +41,9 @@ public class AsmDescriptionTests {
   @Test
   void asmDescriptionWithMultipleModifiers() {
     var prog = """
+          instruction set architecture ISA = {}
+          application binary interface ABI for ISA = {}
+        
           assembly description AD for ABI = {
             modifiers = {
               "mod1" -> ISA::mod1,
@@ -45,69 +62,66 @@ public class AsmDescriptionTests {
   @Test
   void asmDescriptionWithEmptyModifiers() {
     var prog = """
-          assembly description AD for ABI = {
-            modifiers = {
-            }
+          modifiers = {
+          }
         
-            grammar = {
-              A : B ;
-            }
+          grammar = {
+            A : B ;
           }
         """;
-    Assertions.assertThrows(DiagnosticList.class, () -> VadlParser.parse(prog));
+    Assertions.assertThrows(DiagnosticList.class, () -> VadlParser.parse(
+        inputWrappedByValidAsmDescription(prog)));
   }
 
   @Test
   void asmDescriptionWithDirective() {
     var prog = """
-          assembly description AD for ABI = {
-            directives = {
-              "dir1" -> builtinDir1
-            }
+          directives = {
+            "dir1" -> builtinDir1
+          }
         
-            grammar = {
-              A : B ;
-            }
+          grammar = {
+            A : B ;
           }
         """;
-    verifyPrettifiedAst(VadlParser.parse(prog));
+    verifyPrettifiedAst(VadlParser.parse(inputWrappedByValidAsmDescription(prog)));
   }
 
   @Test
   void asmDescriptionWithMultipleDirectives() {
     var prog = """
-          assembly description AD for ABI = {
-            directives = {
-              "dir1" -> builtinDir1,
-              "dir2" -> builtinDir2
-            }
+          directives = {
+            "dir1" -> builtinDir1,
+            "dir2" -> builtinDir2
+          }
         
-            grammar = {
-              A : B ;
-            }
+          grammar = {
+            A : B ;
           }
         """;
-    verifyPrettifiedAst(VadlParser.parse(prog));
+    verifyPrettifiedAst(VadlParser.parse(inputWrappedByValidAsmDescription(prog)));
   }
 
   @Test
   void asmDescriptionWithEmptyDirectives() {
     var prog = """
-          assembly description AD for ABI = {
-            directives = {
-            }
+          directives = {
+          }
         
-            grammar = {
-              A : B ;
-            }
+          grammar = {
+            A : B ;
           }
         """;
-    Assertions.assertThrows(DiagnosticList.class, () -> VadlParser.parse(prog));
+    Assertions.assertThrows(DiagnosticList.class, () -> VadlParser.parse(
+        inputWrappedByValidAsmDescription(prog)));
   }
 
   @Test
   void asmDescriptionWithModifiersAndDirectives() {
     var prog = """
+          instruction set architecture ISA = {}
+          application binary interface ABI for ISA = {}
+        
           assembly description AD for ABI = {
             modifiers = {
               "mod1" -> ISA::mod1,
@@ -126,5 +140,13 @@ public class AsmDescriptionTests {
           }
         """;
     verifyPrettifiedAst(VadlParser.parse(prog));
+  }
+
+  @Test
+  void asmDescriptionReferencesUnknownAbi() {
+    var prog = """
+          assembly description AD for ABI = {}
+        """;
+    Assertions.assertThrows(DiagnosticList.class, () -> VadlParser.parse(prog));
   }
 }
