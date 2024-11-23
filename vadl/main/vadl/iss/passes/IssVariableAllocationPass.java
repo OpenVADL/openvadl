@@ -39,6 +39,7 @@ import vadl.viam.graph.dependency.WriteMemNode;
 import vadl.viam.graph.dependency.WriteRegFileNode;
 import vadl.viam.graph.dependency.WriteRegNode;
 import vadl.viam.graph.dependency.WriteResourceNode;
+import vadl.viam.passes.sideEffectScheduling.nodes.InstrExitNode;
 
 public class IssVariableAllocationPass extends Pass {
 
@@ -480,12 +481,13 @@ class VariableTable {
 
 
   public void fillWith(Graph graph) {
-    graph.getNodes(ScheduledNode.class)
-        .forEach(s -> {
-          var dep = s.node();
-          definedVar(dep);
-          usedVars(dep);
-        });
+    graph.getNodes(Set.of(ScheduledNode.class, InstrExitNode.class))
+        .forEach(s ->
+            s.inputs().forEach(dep -> {
+                  definedVar((DependencyNode) dep);
+                  usedVars((DependencyNode) dep);
+                }
+            ));
   }
 
   public Set<Variable> getRegVars() {

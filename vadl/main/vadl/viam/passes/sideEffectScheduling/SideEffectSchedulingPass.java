@@ -1,9 +1,8 @@
-package vadl.viam.passes;
+package vadl.viam.passes.sideEffectScheduling;
 
 import static vadl.utils.GraphUtils.getSingleNode;
 
 import java.io.IOException;
-import java.util.ArrayDeque;
 import java.util.List;
 import java.util.stream.Collectors;
 import org.jetbrains.annotations.Nullable;
@@ -11,20 +10,19 @@ import vadl.configuration.GeneralConfiguration;
 import vadl.pass.Pass;
 import vadl.pass.PassName;
 import vadl.pass.PassResults;
-import vadl.utils.GraphUtils;
 import vadl.viam.Counter;
 import vadl.viam.Instruction;
 import vadl.viam.Specification;
-import vadl.viam.graph.Graph;
 import vadl.viam.graph.control.AbstractBeginNode;
 import vadl.viam.graph.control.AbstractEndNode;
-import vadl.viam.graph.control.BranchEndNode;
 import vadl.viam.graph.control.ControlNode;
 import vadl.viam.graph.control.ControlSplitNode;
 import vadl.viam.graph.control.DirectionalNode;
 import vadl.viam.graph.control.MergeNode;
 import vadl.viam.graph.control.ScheduledNode;
 import vadl.viam.graph.control.StartNode;
+import vadl.viam.graph.dependency.WriteResourceNode;
+import vadl.viam.passes.sideEffectScheduling.nodes.InstrExitNode;
 
 public class SideEffectSchedulingPass extends Pass {
 
@@ -89,7 +87,7 @@ class SideEffectScheduler {
 
     // add pc update directly in front of branch end
     pcSideEffect.ifPresent(pcUpdate ->
-        endNode.addBefore(new ScheduledNode(pcUpdate))
+        endNode.addBefore(new InstrExitNode((WriteResourceNode) pcUpdate))
     );
 
     return endNode;
@@ -110,7 +108,7 @@ class SideEffectScheduler {
       } else if (currNode instanceof ControlSplitNode splitNode) {
         // handle all branches of the nested control split node
         currNode = handleControlSplit(splitNode);
-        
+
       } else {
         currNode.ensure(false,
             "Expected directional or control split node, but got this node in CFG."

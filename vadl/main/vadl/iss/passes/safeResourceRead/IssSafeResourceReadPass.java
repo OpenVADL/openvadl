@@ -39,6 +39,7 @@ import vadl.viam.graph.dependency.ExpressionNode;
 import vadl.viam.graph.dependency.ReadResourceNode;
 import vadl.viam.graph.dependency.WriteResourceNode;
 import vadl.viam.passes.CfgTraverser;
+import vadl.viam.passes.sideEffectScheduling.nodes.InstrExitNode;
 
 /**
  * A pass that ensures safe resource reads in the Instruction Set Simulator (ISS).
@@ -136,8 +137,10 @@ class IssResourceReadSecurer {
   private void handleReadResource(Resource resource) {
     var writeSchedules = instruction.behavior().getNodes(WriteResourceNode.class)
         .filter(wn -> wn.resourceDefinition() == resource)
-        .map(wn -> wn.usages().filter(ScheduledNode.class::isInstance)
-            .map(ScheduledNode.class::cast)
+        .map(wn -> wn.usages()
+            // if the write is scheduled or used by an instr exit
+            .filter(u -> u instanceof ScheduledNode || u instanceof InstrExitNode)
+            .map(ControlNode.class::cast)
             .findAny().get())
         .toList();
 
@@ -166,7 +169,7 @@ class IssResourceReadSecurer {
    * @return The ControlNode where the read should be saved, or null if no save is required.
    */
   private @Nullable ControlNode determineIfReadSaveIsRequired(List<ReadResourceNode> reads,
-                                                              List<ScheduledNode> scheduledWrites) {
+                                                              List<ControlNode> scheduledWrites) {
     // TODO: We can skip the copy read temp scheduling if:
     //  - The write schedules are in non-overlapping branches
 
