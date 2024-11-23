@@ -171,7 +171,7 @@ class SymbolTable {
     defineSymbol(new ModelTypeSymbol(definition.name.name, definition), definition.name.location());
   }
 
-  void copyFrom(SymbolTable other) {
+  void extendBy(SymbolTable other) {
     symbols.putAll(other.symbols);
     macroSymbols.putAll(other.macroSymbols);
   }
@@ -764,7 +764,7 @@ class SymbolTable {
           var extending = isa.symbolTable().requireIsa(isa.extending);
           isa.extendingNode = extending;
           if (extending != null) {
-            isa.symbolTable().copyFrom(extending.symbolTable());
+            isa.symbolTable().extendBy(extending.symbolTable());
           }
         }
         for (Definition childDef : isa.definitions) {
@@ -777,7 +777,7 @@ class SymbolTable {
       } else if (definition instanceof InstructionDefinition instr) {
         var format = instr.symbolTable().requireFormat(instr.type());
         if (format != null) {
-          instr.symbolTable().copyFrom(format.origin.symbolTable());
+          instr.symbolTable().extendBy(format.origin.symbolTable());
           instr.formatNode = format.origin;
         }
         resolveSymbols(instr.behavior);
@@ -792,7 +792,7 @@ class SymbolTable {
           var pseudoInstr = assembly.symbolTable().findPseudoInstruction((Identifier) identifier);
           if (pseudoInstr != null) {
             assembly.instructionNodes.add(pseudoInstr);
-            assembly.symbolTable().copyFrom(pseudoInstr.symbolTable());
+            assembly.symbolTable().extendBy(pseudoInstr.symbolTable());
           } else {
             var instr = assembly.symbolTable().findInstruction((Identifier) identifier);
             if (instr != null) {
@@ -800,7 +800,7 @@ class SymbolTable {
             }
             var format = assembly.symbolTable().requireInstructionFormat((Identifier) identifier);
             if (format != null) {
-              assembly.symbolTable().copyFrom(format.origin.symbolTable());
+              assembly.symbolTable().extendBy(format.origin.symbolTable());
             }
           }
         }
@@ -837,7 +837,7 @@ class SymbolTable {
         var isa = abi.symbolTable().requireIsa((Identifier) abi.isa);
         if (isa != null) {
           abi.isaNode = isa;
-          abi.symbolTable().copyFrom(isa.symbolTable());
+          abi.symbolTable().extendBy(isa.symbolTable());
           for (Definition def : abi.definitions) {
             resolveSymbols(def);
           }
@@ -856,7 +856,7 @@ class SymbolTable {
         var abi = mip.symbolTable().requireAbi((Identifier) mip.abi);
         if (abi != null) {
           mip.abiNode = abi;
-          mip.symbolTable().copyFrom(abi.symbolTable());
+          mip.symbolTable().extendBy(abi.symbolTable());
           for (Definition def : mip.definitions) {
             resolveSymbols(def);
           }
@@ -882,7 +882,24 @@ class SymbolTable {
       } else if (definition instanceof StageDefinition stage) {
         resolveSymbols(stage.statement);
       } else if (definition instanceof AsmDescriptionDefinition asmDescription) {
-        asmDescription.symbolTable().requireAbi(asmDescription.abi);
+        var abi = asmDescription.symbolTable().requireAbi(asmDescription.abi);
+        if (abi != null) {
+          asmDescription.symbolTable().extendBy(abi.symbolTable());
+          var isa = abi.symbolTable().requireIsa((Identifier) abi.isa);
+          if (isa != null) {
+            asmDescription.symbolTable().extendBy(isa.symbolTable());
+          }
+        }
+        asmDescription.modifiers.forEach(ResolutionPass::resolveSymbols);
+
+      } else if (definition instanceof AsmModifierDefinition modifier) {
+        var mod = modifier.builtinModifier;
+        var symbol = modifier.symbolTable().resolveSymbol(mod.pathToString());
+        if (symbol == null) {
+          modifier.symbolTable()
+              .reportError("Relocation symbol not found: " + mod.pathToString(),
+                  mod.location());
+        }
       }
     }
 
