@@ -112,6 +112,7 @@ static TCGv dest_[(${reg_file.name_lower})](DisasContext *ctx, int reg_num)
 {
     assert(reg_num < [(${reg_file["size"]})]);
     [# th:each="constraint, iterState : ${reg_file.constraints}"]
+    // TODO: This should be temporary instead
     if (reg_num == [(${constraint.index})]) return ctx->const[(${reg_file.name_lower})][(${constraint.value})];
     [/]
     return cpu_[(${reg_file.name_lower})][reg_num];

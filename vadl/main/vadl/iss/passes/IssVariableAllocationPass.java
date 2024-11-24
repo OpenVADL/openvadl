@@ -1,22 +1,22 @@
 package vadl.iss.passes;
 
 import static java.util.Objects.requireNonNull;
+import static vadl.utils.GraphUtils.getSingleNode;
 
 import java.io.IOException;
 import java.util.HashMap;
 import java.util.HashSet;
-import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
 import java.util.stream.Collectors;
 import org.jetbrains.annotations.Nullable;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import vadl.configuration.GeneralConfiguration;
 import vadl.iss.DataFlowAnalysis;
 import vadl.iss.passes.tcgLowering.TcgV;
 import vadl.iss.passes.tcgLowering.Tcg_32_64;
+import vadl.iss.passes.tcgLowering.nodes.TcgFreeTemp;
+import vadl.iss.passes.tcgLowering.nodes.TcgGetVar;
 import vadl.pass.Pass;
 import vadl.pass.PassName;
 import vadl.pass.PassResults;
@@ -31,6 +31,7 @@ import vadl.viam.graph.ViamGraphError;
 import vadl.viam.graph.control.ControlNode;
 import vadl.viam.graph.control.InstrEndNode;
 import vadl.viam.graph.control.ScheduledNode;
+import vadl.viam.graph.control.StartNode;
 import vadl.viam.graph.dependency.DependencyNode;
 import vadl.viam.graph.dependency.ExpressionNode;
 import vadl.viam.graph.dependency.ReadRegFileNode;
@@ -41,8 +42,29 @@ import vadl.viam.graph.dependency.WriteRegNode;
 import vadl.viam.graph.dependency.WriteResourceNode;
 import vadl.viam.passes.sideEffectScheduling.nodes.InstrExitNode;
 
+/**
+ * A pass that performs variable allocation for the Instruction Set Simulator (ISS).
+ *
+ * <p>This pass is responsible for allocating variables used in the behavior of instructions.
+ * It traverses the ISA specification, processes each instruction,
+ * and assigns TCG (Tiny Code Generator)
+ * variables to the scheduled nodes in the dependency graph of each instruction's behavior.
+ *
+ * <p>The allocation includes:
+ * <ul>
+ *   <li>Performing liveness analysis to determine variable lifetimes.
+ *   <li>Building an interference graph to model conflicts between variables.
+ *   <li>Assigning registers to variables using graph coloring.
+ *   <li>Assigning TcgV instances to the nodes in the dependency graph for code generation.
+ * </ul>
+ */
 public class IssVariableAllocationPass extends Pass {
 
+  /**
+   * Represents the result of the variable allocation pass.
+   *
+   * <p>Contains a mapping from each instruction to a mapping of its dependency nodes to their assigned TcgV variables.
+   */
   public record Result(
       Map<Instruction, Map<DependencyNode, TcgV>> varAssignments
   ) {
@@ -66,10 +88,13 @@ public class IssVariableAllocationPass extends Pass {
 
     var result = new Result(new HashMap<>());
 
+    // Process each instruction in the ISA
     viam.isa().ifPresent(isa -> isa.ownInstructions()
         .forEach(instr -> {
+              // Allocate variables for the instruction's behavior
               var res = new IssVariableAllocator(instr.behavior(), target_size)
                   .allocateVariables();
+              // Store the variable assignments for the instruction
               result.varAssignments.put(instr, res);
             }
         ));
@@ -77,22 +102,61 @@ public class IssVariableAllocationPass extends Pass {
   }
 }
 
+/**
+ * Performs variable allocation for a single instruction's behavior.
+ *
+ * <p>This class encapsulates the logic required to allocate variables for an instruction's behavior.
+ * It handles the following tasks:
+ * <ul>
+ *   <li>Filling the variable table with variables from the dependency graph.
+ *   <li>Performing liveness analysis to determine variable lifetimes.
+ *   <li>Building the interference graph to model variable conflicts.
+ *   <li>Allocating by coloring the interference graph.
+ *   <li>Assigning TcgV variables to the nodes in the dependency graph.
+ * </ul>
+ */
 class IssVariableAllocator {
 
   Graph graph;
+  StartNode startNode;
+  InstrEndNode endNode;
   Tcg_32_64 target_size;
-  Map<Variable, Integer> registerAssignment;
+  // the integer just represents some non-specific TCGv
+  Map<Variable, Integer> allocationMap;
   LivenessAnalysis livenessAnalysis;
+  // a table of virtual variables (e.g. each scheduled expression has a variable assigned)
   VariableTable variables;
 
+  /**
+   * Constructs an IssVariableAllocator for the given dependency graph and target size.
+   *
+   * @param graph       The dependency graph of the instruction's behavior.
+   * @param target_size The target size for TCG variables.
+   */
   public IssVariableAllocator(Graph graph, Tcg_32_64 target_size) {
     this.graph = graph;
+    this.startNode = getSingleNode(graph, StartNode.class);
+    this.endNode = getSingleNode(graph, InstrEndNode.class);
     this.target_size = target_size;
     this.variables = new VariableTable();
     this.livenessAnalysis = new LivenessAnalysis(variables);
-    this.registerAssignment = new HashMap<>();
+    this.allocationMap = new HashMap<>();
   }
 
+  /**
+   * Allocates variables for the instruction's behavior.
+   *
+   * <p>This method orchestrates the variable allocation process, which includes:
+   * <ul>
+   *   <li>Filling the variable table with variables from the dependency graph.
+   *   <li>Performing liveness analysis to determine variable lifetimes.
+   *   <li>Building the interference graph to model variable conflicts.
+   *   <li>Allocating by coloring the interference graph.
+   *   <li>Assigning TcgV variables to the nodes in the dependency graph.
+   * </ul>
+   *
+   * @return A mapping of dependency nodes to their assigned TcgV variables.
+   */
   Map<DependencyNode, TcgV> allocateVariables() {
 
     // fill variable table with given graph
@@ -102,63 +166,171 @@ class IssVariableAllocator {
     livenessAnalysis.analyze(graph);
 
     var interferenceGraph = buildInterferenceGraph();
-    allocateRegisters(interferenceGraph);
+    allocateAllocations(interferenceGraph);
 
     return assignTcgV();
   }
 
-
+  /**
+   * Assigns TcgV variables to nodes in the dependency graph.
+   *
+   * <p>This method is responsible for assigning TcgV (Tiny Code Generator Variables) instances to all
+   * nodes within the dependency graph that are scheduled (as TCG operations).
+   * The assignment process is crucial for code generation, as it
+   * determines how variables in the intermediate representation map to variables used in the
+   * generated code.
+   *
+   * <p>The method processes different types of nodes in a specific order to ensure
+   * that variables are assigned consistently, especially when dealing
+   * with registers and register files.
+   * The steps are as follows:
+   * <ol>
+   *   <li>Initialize two mappings:
+   *       <ul>
+   *         <li>{@code regToTcgV}: A map from register identifiers (integers) to TcgV instances.
+   *             This map keeps track of which TcgV instance corresponds to each register.
+   *         <li>{@code nodeToTcgVAssignments}: A map from {@code DependencyNode} to TcgV instances.
+   *             This map records the TcgV assignment for each node in the dependency graph.
+   *       </ul>
+   *   <li>Assign TcgV variables to register file write nodes by calling
+   *       {@link #assignTcgVToRegFileWrites(Map, Map)}.
+   *   <li>Assign TcgV variables to register file read nodes by calling
+   *       {@link #assignTcgVToRegFileReads(Map)}. This one is special as at reg allocation
+   *       time, reads and writes share the same reg assignment. However they do not share
+   *       the same TCGv, as register writes potentially receive a constant TCGv if the
+   *       register file has a constraint (e.g. {@code X(0)} in RISC-V). Thus, this method
+   *       will not put its created TCGv in the regToTcgV as temporaries are not allowed to
+   *       write it.
+   *   <li>Assign TcgV variables to register read and write nodes by calling
+   *       {@link #assignTcgVToRegReadAndWrites(Map, Map)}.
+   *   <li>Assign TcgV variables to the remaining scheduled nodes (temporaries) by calling
+   *       {@link #assignTcgVToRestOfScheduledNodes(Map, Map)}.
+   * </ol>
+   *
+   * <p>By the end of this method,
+   * every relevant node in the dependency graph will have a corresponding
+   * TcgV instance,
+   * and the mappings {@code regToTcgV} and {@code nodeToTcgVAssignments} will be fully
+   * populated.
+   * This mapping is essential for subsequent code generation steps.
+   *
+   * @return a mapping of {@code DependencyNode} to their assigned TcgV variables.
+   */
   private Map<DependencyNode, TcgV> assignTcgV() {
+    // holds the mapping of a allocation identifier to the corresponding created TCGv.
+    // this is first filled by register file writes, and register accesses as those
+    // are already existing TCGv of the CPU.
+    // when assigning the temporary variables, they first check the existing of
+    // such an alloc to tcgV assignment, if not existing, they will create one.
+    var allocationToTcgV = new HashMap<Integer, TcgV>();
+    // holds the final assignments of dependency nodes to their TCGv variables.
+    var nodeToTcgVAssignments = new HashMap<DependencyNode, TcgV>();
 
-    var regToTcgV = new HashMap<Integer, TcgV>();
+    assignTcgVToRegFileWrites(allocationToTcgV, nodeToTcgVAssignments);
+    assignTcgVToRegFileReads(nodeToTcgVAssignments);
+    assignTcgVToRegReadAndWrites(allocationToTcgV, nodeToTcgVAssignments);
 
-    var partitionedAss = registerAssignment.entrySet().stream()
-        .collect(Collectors.partitioningBy(e -> e.getKey().kind() == Variable.Kind.TMP));
+    assignTcgVToRestOfScheduledNodes(allocationToTcgV, nodeToTcgVAssignments);
 
-    for (var regAss : partitionedAss.getOrDefault(false, List.of())) {
-      // for each reg assignment of some register, we want to use it as
-      // the chosen TCGv
-      var var = regAss.getKey();
-      var tcgV = TcgV.of(var.name(), target_size);
-      regToTcgV.put(regAss.getValue(), tcgV);
+    return nodeToTcgVAssignments;
+  }
+
+  private void assignTcgVToRegFileWrites(Map<Integer, TcgV> regToTcgV,
+                                         Map<DependencyNode, TcgV> assignments) {
+    graph.getNodes(ScheduledNode.class)
+        .filter(s -> s.node() instanceof WriteRegFileNode)
+        .forEach(s -> {
+          var variable = requireNonNull(variables.definedVar(s.node()));
+          var alloc = requireNonNull(allocationMap.get(variable));
+          var tcgV = createTcgV(variable, true);
+          regToTcgV.put(alloc, tcgV);
+          assignments.put(s.node(), tcgV);
+        });
+  }
+
+  private void assignTcgVToRegFileReads(Map<DependencyNode, TcgV> assignments) {
+    // This won't put it created TCGv in the regToTcgV, as other nodes should not write
+    // to the read-only reg file of this reg file.
+    // (as it is potentially a constant, like X(0)).
+    graph.getNodes(ScheduledNode.class)
+        .filter(s -> s.node() instanceof ReadRegFileNode)
+        .forEach(s -> {
+          var variable = requireNonNull(variables.definedVar(s.node()));
+          var tcgV = createTcgV(variable, false);
+          assignments.put(s.node(), tcgV);
+        });
+  }
+
+  private void assignTcgVToRegReadAndWrites(Map<Integer, TcgV> regToTcgV,
+                                            Map<DependencyNode, TcgV> assignments) {
+    graph.getNodes(ScheduledNode.class)
+        .filter(s -> s.node() instanceof ReadRegNode || s.node() instanceof WriteRegNode)
+        .forEach(s -> {
+          var variable = requireNonNull(variables.definedVar(s.node()));
+          var alloc = requireNonNull(allocationMap.get(variable));
+          var tcgV = createTcgV(variable, false);
+          regToTcgV.put(alloc, tcgV);
+          assignments.put(s.node(), tcgV);
+        });
+  }
+
+  private void assignTcgVToRestOfScheduledNodes(Map<Integer, TcgV> regToTcgV,
+                                                Map<DependencyNode, TcgV> assignments) {
+    graph.getNodes(ScheduledNode.class)
+        .forEach(s -> {
+          if (assignments.containsKey(s.node())) {
+            // we already did an assignment for that one
+            return;
+          }
+          var variable = variables.definedVar(s.node());
+          if (variable == null) {
+            return;
+          }
+          var alloc = requireNonNull(allocationMap.get(variable));
+          TcgV tcgV;
+          if (regToTcgV.containsKey(alloc)) {
+            tcgV = regToTcgV.get(alloc);
+          } else {
+            tcgV = createTcgV(variable, false);
+            regToTcgV.put(alloc, tcgV);
+          }
+          assignments.put(s.node(), tcgV);
+        });
+  }
+
+  private int tmpCnt = 0;
+
+  private TcgV createTcgV(Variable var, boolean isRegFileWrite) {
+    // generate TCGv
+    var tcgV = switch (var.kind()) {
+      case TMP -> new TcgV("tmp_" + tmpCnt++, target_size, TcgV.Kind.TMP, null, null, false);
+      case REG -> new TcgV(var.name(), target_size, TcgV.Kind.REG, var.regOrFile(), null, false);
+      case REG_FILE -> {
+        var postfix = isRegFileWrite ? "_dest" : "";
+        yield new TcgV(var.name() + postfix, target_size, TcgV.Kind.REG_FILE, var.regOrFile(),
+            var.fileAddr(), isRegFileWrite);
+      }
+    };
+
+    // add TcgV creation start of instruction
+    startNode.addAfter(TcgGetVar.from(tcgV));
+
+    if (tcgV.kind() == TcgV.Kind.TMP) {
+      // if the tcgv is temporary, we have to free it after the instruction
+      endNode.addBefore(new TcgFreeTemp(tcgV));
     }
 
-    var tmpCnt = 0;
-    for (var tmpAss : partitionedAss.getOrDefault(true, List.of())) {
-      // iterate through all temporary register assignments.
-      var reg = tmpAss.getValue();
-
-      if (!regToTcgV.containsKey(reg)) {
-        // if there is no tcgV assignment yet, we create one.
-        var newTcgV = TcgV.of("tmp_" + tmpCnt++, target_size);
-        regToTcgV.put(reg, newTcgV);
-      }
-    }
-
-    // final assignments
-    var result = new HashMap<DependencyNode, TcgV>();
-
-    // now we have all reg to tcgv assignments.
-    // lets assign each a tcgV to each scheduled dependency that declares a variable
-    graph.getNodes(ScheduledNode.class).forEach(s -> {
-      var dep = s.node();
-      // get declared variable
-      var var = variables.definedVar(dep);
-      if (var != null) {
-        // get assigned register value
-        var reg = registerAssignment.get(var);
-        TcgV tcgV;
-        // get mapped tcgV of register value
-        tcgV = requireNonNull(regToTcgV.get(reg));
-        result.put(dep, tcgV);
-      }
-    });
-
-    return result;
+    return tcgV;
   }
 
   /**
    * Builds the interference graph based on the liveness analysis results.
+   *
+   * <p>The interference graph models conflicts between variables,
+   * where each node represents a variable.
+   * An edge between two nodes
+   * indicates that the variables interfere with each other (i.e., they are
+   * live at the same time and cannot share the same register).
    *
    * @return The interference graph representing variable interferences.
    */
@@ -183,15 +355,18 @@ class IssVariableAllocator {
   /**
    * Allocates registers by coloring the interference graph.
    *
+   * <p>This method uses a graph coloring algorithm to assign registers to variables such that no two
+   * interfering variables share the same register.
+   *
    * @param graph The interference graph to color.
    */
-  private void allocateRegisters(InterferenceGraph graph) {
+  private void allocateAllocations(InterferenceGraph graph) {
     // Use a simple heuristic graph coloring algorithm
     GraphColoring coloring = new GraphColoring(graph);
     coloring.colorGraph();
 
     // Store the register assignments
-    registerAssignment.putAll(coloring.getVariableColors());
+    allocationMap.putAll(coloring.getVariableColors());
   }
 
 
@@ -199,8 +374,10 @@ class IssVariableAllocator {
 
 /**
  * Implements liveness analysis to determine live variables at each point in the behavior.
- * This analysis is a backward may analysis that computes, for each node, the set of variables
- * that are live-in and live-out.
+ *
+ * <p>This analysis is a backward may analysis that computes, for each node, the set of variables
+ * that are live-in and live-out. It helps in building the interference graph by identifying variables
+ * that are live simultaneously.
  */
 class LivenessAnalysis extends DataFlowAnalysis<Set<Variable>> {
 
@@ -239,6 +416,14 @@ class LivenessAnalysis extends DataFlowAnalysis<Set<Variable>> {
     return output;
   }
 
+  /**
+   * Provides the initial live-out variables at the end of the instruction.
+   *
+   * <p>Assumes that all registers and register files are live after the instruction to ensure
+   * that their values are preserved.
+   *
+   * @return The set of variables assumed to be live at the end of the instruction.
+   */
   private Set<Variable> initialEndFlow() {
     // we have to assume that all registers and register files are used
     // after this instruciton. Thus we have to set them used at the end of the instruction.
@@ -260,6 +445,12 @@ class LivenessAnalysis extends DataFlowAnalysis<Set<Variable>> {
     return true;
   }
 
+  /**
+   * Retrieves the set of variables defined at the given node.
+   *
+   * @param node The control node to analyze.
+   * @return The set of variables defined at the node.
+   */
   private Set<Variable> defineVariables(ControlNode node) {
     if (!(node instanceof ScheduledNode scheduledNode)) {
       return Set.of();
@@ -269,6 +460,12 @@ class LivenessAnalysis extends DataFlowAnalysis<Set<Variable>> {
     return definedVar == null ? Set.of() : Set.of(definedVar);
   }
 
+  /**
+   * Retrieves the set of variables used at the given node.
+   *
+   * @param node The control node to analyze.
+   * @return The set of variables used at the node.
+   */
   private Set<Variable> usedVariables(ControlNode node) {
     if ((node instanceof ScheduledNode scheduledNode)) {
       // uses the dependency's inputs
@@ -295,16 +492,15 @@ class LivenessAnalysis extends DataFlowAnalysis<Set<Variable>> {
   // TODO: Write test for such a scenario
 
   /**
-   * This method adds all variables that represent some index of a given registers file
-   * to the given usedVars set.
-   * We need this, as we can't be sure if some write before some read actually
-   * writes to the same register.
-   * So we are not allowed to assign them the same TCGv. By setting all
-   * register file variables as used, we "lock" them, so they won't be assigned
-   * to the same TCGv register.
+   * Adds all variables that represent some index of a given register file to the used variables set.
    *
-   * @param usedVars     used vars to add the refreshed reg file vars
-   * @param registerFile that is read and must be refreshed.
+   * <p>This method is necessary because when reading from a register file, we cannot be certain
+   * whether other writes are potentially writing to the same index. By adding all variables of the
+   * register file to the used set, we prevent assigning them the same TcgV register,
+   * avoiding conflicts.
+   *
+   * @param usedVars     The set of used variables to add to.
+   * @param registerFile The register file being read, which must be refreshed.
    */
   private void refreshRegFileUsage(Set<Variable> usedVars, RegisterFile registerFile) {
     var regFileVars = variableTable.getRegFileVars().stream()
@@ -317,6 +513,9 @@ class LivenessAnalysis extends DataFlowAnalysis<Set<Variable>> {
 
 /**
  * Represents an interference graph where nodes are variables and edges represent interference between variables.
+ *
+ * <p>An interference graph models conflicts between variables where each node is a variable, and an edge indicates
+ * that two variables interfere with each other (i.e., they are live at the same time and cannot share a register).
  */
 class InterferenceGraph {
 
@@ -455,6 +654,16 @@ class GraphColoring {
   }
 }
 
+/**
+ * Represents a variable in the intermediate representation of the instruction's behavior.
+ *
+ * <p>A variable can be of different kinds:
+ * <ul>
+ *   <li>Temporary variables (TMP)
+ *   <li>Registers (REG)
+ *   <li>Register files (REG_FILE)
+ * </ul>
+ */
 record Variable(
     Kind kind,
     @Nullable Resource regOrFile,
@@ -473,13 +682,36 @@ record Variable(
   }
 }
 
+/**
+ * Manages the variables used in the instruction's behavior.
+ *
+ * <p>The variable table keeps track of all variables, including temporaries, registers, and register files.
+ * It provides methods to retrieve or create variables associated with nodes in the dependency graph.
+ */
 class VariableTable {
-  private static final Logger log = LoggerFactory.getLogger(VariableTable.class);
+  /**
+   * Mapping from register files and their indices to variables.
+   */
   Map<Pair<RegisterFile, ExpressionNode>, Variable> regFileVars = new HashMap<>();
+
+  /**
+   * Mapping from registers to variables.
+   */
   Map<Register, Variable> regVars = new HashMap<>();
+
+  /**
+   * Mapping from expression nodes (temporaries) to variables.
+   */
   Map<ExpressionNode, Variable> tmpVars = new HashMap<>();
 
-
+  /**
+   * Fills the variable table with variables from the dependency graph.
+   *
+   * <p>This method processes the graph and ensures that all variables used or defined in the graph
+   * are present in the variable table.
+   *
+   * @param graph The dependency graph to process.
+   */
   public void fillWith(Graph graph) {
     graph.getNodes(Set.of(ScheduledNode.class, InstrExitNode.class))
         .forEach(s ->
@@ -490,19 +722,42 @@ class VariableTable {
             ));
   }
 
+  /**
+   * Retrieves all register variables.
+   *
+   * @return A set of all register variables.
+   */
   public Set<Variable> getRegVars() {
     return new HashSet<>(regVars.values());
   }
 
+  /**
+   * Retrieves all register file variables.
+   *
+   * @return A set of all register file variables.
+   */
   public Set<Variable> getRegFileVars() {
     return new HashSet<>(regFileVars.values());
   }
 
+  /**
+   * Retrieves all temporary variables.
+   *
+   * @return A set of all temporary variables.
+   */
   public Set<Variable> getTempVars() {
     return new HashSet<>(tmpVars.values());
   }
 
-
+  /**
+   * Retrieves or creates the variable defined by the given dependency node.
+   *
+   * <p>If the node defines a variable, this method returns the corresponding Variable instance.
+   * If the variable does not exist in the table, it is created and added.
+   *
+   * @param dep The dependency node.
+   * @return The variable defined by the node, or null if the node does not define a variable.
+   */
   public @Nullable Variable definedVar(DependencyNode dep) {
     if (dep.usages().noneMatch(ScheduledNode.class::isInstance)) {
       // only scheduled nodes have some variable defined
@@ -531,6 +786,12 @@ class VariableTable {
     }
   }
 
+  /**
+   * Retrieves the set of variables used by the given dependency node.
+   *
+   * @param dep The dependency node.
+   * @return The set of variables used by the node.
+   */
   public Set<Variable> usedVars(DependencyNode dep) {
 
     if (dep instanceof ReadRegNode regRead) {
@@ -566,6 +827,12 @@ class VariableTable {
     }
   }
 
+  /**
+   * Retrieves or creates a temporary variable for the given expression node.
+   *
+   * @param expr The expression node.
+   * @return The variable corresponding to the expression node.
+   */
   private Variable getOrCreateTmpVar(ExpressionNode expr) {
     return tmpVars.computeIfAbsent(expr, n ->
         new Variable(
@@ -577,6 +844,12 @@ class VariableTable {
     );
   }
 
+  /**
+   * Retrieves or creates a variable for the given register.
+   *
+   * @param reg The register.
+   * @return The variable corresponding to the register.
+   */
   private Variable getOrCreateRegVar(Register reg) {
     return regVars.computeIfAbsent(reg, n ->
         new Variable(
@@ -588,6 +861,13 @@ class VariableTable {
     );
   }
 
+  /**
+   * Retrieves or creates a variable for the given register file and index.
+   *
+   * @param regFile The register file.
+   * @param index   The index expression node.
+   * @return The variable corresponding to the register file at the given index.
+   */
   private Variable getOrCreateRegFileVar(RegisterFile regFile, ExpressionNode index) {
     var key = Pair.of(regFile, index);
     return regFileVars.computeIfAbsent(key, n ->

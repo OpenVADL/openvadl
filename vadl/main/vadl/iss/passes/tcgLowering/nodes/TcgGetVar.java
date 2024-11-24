@@ -21,13 +21,26 @@ public abstract sealed class TcgGetVar extends TcgOpNode
     super(dest, dest.width());
   }
 
+  public static TcgGetVar from(TcgV var) {
+    return switch (var.kind()) {
+      case TMP -> new TcgGetTemp(var);
+      case REG -> new TcgGetVar.TcgGetReg((Register) var.registerOrFile(), var);
+      case REG_FILE -> {
+        var kind =
+            var.isDest() ? TcgGetVar.TcgGetRegFile.Kind.DEST : TcgGetVar.TcgGetRegFile.Kind.SRC;
+        yield new TcgGetVar.TcgGetRegFile((RegisterFile) var.registerOrFile(),
+            var.regFileIndex(), kind, var);
+      }
+    };
+  }
+
   /**
    * Represents an operation in the TCG for retrieving a value from a temporary variable.
    */
   public static final class TcgGetTemp extends TcgGetVar {
 
-    public TcgGetTemp(TcgV res) {
-      super(res);
+    public TcgGetTemp(TcgV dest) {
+      super(dest);
     }
 
     @Override
