@@ -608,6 +608,7 @@ public class AstDumper
     dumpChildren(definition.modifiers);
     dumpChildren(definition.directives);
     dumpChildren(definition.rules);
+    dumpChildren(definition.commonDefinitions);
     return null;
   }
 
@@ -662,6 +663,12 @@ public class AstDumper
     }
     if (definition.optionAlternatives != null) {
       dumpChildren(definition.optionAlternatives);
+    }
+    if (definition.repetitionAlternatives != null) {
+      dumpChildren(definition.repetitionAlternatives);
+    }
+    if (definition.semanticPredicate != null) {
+      dumpChildren(definition.semanticPredicate);
     }
     if (definition.asmType != null) {
       dumpChildren(definition.asmType);

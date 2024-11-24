@@ -778,8 +778,8 @@ class MacroExpander
   @Override
   public Definition visit(AsmDescriptionDefinition definition) {
     return new AsmDescriptionDefinition(definition.id, definition.abi, definition.modifiers,
-        definition.directives, definition.rules, copyLoc(definition.loc)).withAnnotations(
-        expandAnnotations(definition.annotations));
+        definition.directives, definition.rules, definition.commonDefinitions,
+        copyLoc(definition.loc)).withAnnotations(expandAnnotations(definition.annotations));
   }
 
   @Override
@@ -810,7 +810,8 @@ class MacroExpander
   public Definition visit(AsmGrammarElementDefinition definition) {
     return new AsmGrammarElementDefinition(definition.localVar, definition.attribute,
         definition.isPlusEqualsAttributeAssign, definition.asmLiteral, definition.groupAlternatives,
-        definition.optionAlternatives, definition.asmType, copyLoc(definition.loc));
+        definition.optionAlternatives, definition.repetitionAlternatives,
+        definition.semanticPredicate, definition.asmType, copyLoc(definition.loc));
   }
 
   @Override
