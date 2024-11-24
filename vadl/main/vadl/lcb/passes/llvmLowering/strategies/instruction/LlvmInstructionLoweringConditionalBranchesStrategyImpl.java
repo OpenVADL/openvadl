@@ -112,7 +112,6 @@ public class LlvmInstructionLoweringConditionalBranchesStrategyImpl
     );
   }
 
-
   @Override
   protected List<TableGenPattern> generatePatternVariations(
       Instruction instruction,

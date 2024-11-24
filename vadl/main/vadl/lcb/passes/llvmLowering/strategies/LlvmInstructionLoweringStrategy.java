@@ -86,6 +86,7 @@ import vadl.viam.graph.control.AbstractBeginNode;
 import vadl.viam.graph.control.AbstractEndNode;
 import vadl.viam.graph.control.ControlNode;
 import vadl.viam.graph.control.IfNode;
+import vadl.viam.graph.dependency.BuiltInCall;
 import vadl.viam.graph.dependency.ConstantNode;
 import vadl.viam.graph.dependency.DependencyNode;
 import vadl.viam.graph.dependency.FieldAccessRefNode;
@@ -100,7 +101,6 @@ import vadl.viam.graph.dependency.WriteMemNode;
 import vadl.viam.graph.dependency.WriteRegFileNode;
 import vadl.viam.graph.dependency.WriteRegNode;
 import vadl.viam.graph.dependency.WriteResourceNode;
-import vadl.viam.passes.functionInliner.UninlinedGraph;
 
 /**
  * Defines how a {@link Instruction} will be lowered to {@link TableGenInstruction}.
@@ -507,6 +507,33 @@ public abstract class LlvmInstructionLoweringStrategy {
   public static List<TableGenInstructionOperand> getTableGenInputOperands(
       List<TableGenInstructionOperand> outputOperands,
       Graph graph) {
+
+
+    return filterOutputs(outputOperands,
+        getInputOperands(graph)
+            .stream()
+            .filter(node -> {
+              // Why?
+              // Because LLVM cannot handle static registers in input or output operands.
+              // They belong to defs and uses instead.
+              if (node instanceof ReadRegFileNode readRegFileNode) {
+                return !readRegFileNode.hasConstantAddress();
+              }
+              return true;
+            })
+            .map(LlvmInstructionLoweringStrategy::generateTableGenInputOutput))
+        .toList();
+  }
+
+  /**
+   * It is not allowed to have a {@link TableGenInstructionOperand} in the input list
+   * when it is already in the output list. That's why we compute the {@code outputOperands}
+   * first and then filter out the {@code stream} for elements which already present in
+   * {@code outputOperands}.
+   */
+  protected static Stream<TableGenInstructionOperand> filterOutputs(
+      List<TableGenInstructionOperand> outputOperands,
+      Stream<TableGenInstructionOperand> stream) {
     var setParameters =
         outputOperands.stream()
             .filter(x -> x instanceof TableGenInstructionIndexedRegisterFileOperand)
@@ -524,17 +551,7 @@ public abstract class LlvmInstructionLoweringStrategy {
             })
             .collect(Collectors.toSet());
 
-    return getInputOperands(graph)
-        .stream()
-        .filter(node -> {
-          // Why?
-          // Because LLVM cannot handle static registers in input or output operands.
-          // They belong to defs and uses instead.
-          if (node instanceof ReadRegFileNode readRegFileNode) {
-            return !readRegFileNode.hasConstantAddress();
-          }
-          return true;
-        }).map(LlvmInstructionLoweringStrategy::generateTableGenInputOutput)
+    return stream
         .filter(
             // If the node is a fieldRefNode then it must not be in the outputs.
             // Otherwise, ok.
@@ -544,8 +561,7 @@ public abstract class LlvmInstructionLoweringStrategy {
             // If the node is a fieldRefNode then it must not be in the outputs.
             // Otherwise, ok.
             node -> !(node instanceof TableGenInstructionRegisterFileOperand operand)
-                || !outputFields.contains(operand.formatField()))
-        .toList();
+                || !outputFields.contains(operand.formatField()));
   }
 
   /**
@@ -728,7 +744,7 @@ public abstract class LlvmInstructionLoweringStrategy {
    * Constructs from the given dataflow node a new graph which is the pattern selector.
    */
   @NotNull
-  private static Graph getPatternSelector(WriteResourceNode sideEffectNode) {
+  protected Graph getPatternSelector(WriteResourceNode sideEffectNode) {
     var graph = new Graph(sideEffectNode.id().toString() + ".selector.lowering");
     graph.setParentDefinition(Objects.requireNonNull(sideEffectNode.graph()).parentDefinition());
 
@@ -739,9 +755,23 @@ public abstract class LlvmInstructionLoweringStrategy {
     return graph;
   }
 
+  /**
+   * Constructs from the given dataflow node a new graph which is the pattern selector.
+   */
   @NotNull
-  private static Graph getOutputPattern(Instruction instruction,
-                                        List<TableGenInstructionOperand> inputOperands) {
+  protected Graph getPatternSelector(BuiltInCall builtInCall) {
+    var graph = new Graph(builtInCall.id().toString() + ".selector.lowering");
+    graph.setParentDefinition(Objects.requireNonNull(builtInCall.graph()).parentDefinition());
+
+    Node root = builtInCall.copy();
+    root.clearUsages();
+    graph.addWithInputs(root);
+    return graph;
+  }
+
+  @NotNull
+  protected Graph getOutputPattern(Instruction instruction,
+                                   List<TableGenInstructionOperand> inputOperands) {
     var graph = new Graph(instruction.simpleName() + ".machine.lowering");
     graph.setParentDefinition(Objects.requireNonNull(instruction));
 

@@ -888,7 +888,7 @@ let Size = 4;
 let CodeSize = 4;
 
 let OutOperandList = ( outs X:$rd );
-let InOperandList = ( ins X:$rs2, X:$rs1 );
+let InOperandList = ( ins X:$rs1, X:$rs2 );
 
 field bits<32> Inst;
 
@@ -938,7 +938,7 @@ let Size = 4;
 let CodeSize = 4;
 
 let OutOperandList = ( outs X:$rd );
-let InOperandList = ( ins X:$rs2, X:$rs1 );
+let InOperandList = ( ins X:$rs1, X:$rs2 );
 
 field bits<32> Inst;
 
@@ -988,7 +988,7 @@ let Size = 4;
 let CodeSize = 4;
 
 let OutOperandList = ( outs X:$rd );
-let InOperandList = ( ins X:$rs2, X:$rs1 );
+let InOperandList = ( ins X:$rs1, X:$rs2 );
 
 field bits<32> Inst;
 
@@ -1038,7 +1038,7 @@ let Size = 4;
 let CodeSize = 4;
 
 let OutOperandList = ( outs X:$rd );
-let InOperandList = ( ins X:$rs2, X:$rs1 );
+let InOperandList = ( ins X:$rs1, X:$rs2 );
 
 field bits<32> Inst;
 
@@ -4010,12 +4010,20 @@ def : Pat<(brcond (i64 (seteq X:$rs2, X:$rs1)), bb:$imm),
         (BNE X:$rs1, X:$rs2, RV64IM_Btype_immAsLabel:$imm)>;
 
 
+def : Pat<(sdiv X:$rs1, X:$rs2),
+        (DIV X:$rs1, X:$rs2)>;
 
 
+def : Pat<(udiv X:$rs1, X:$rs2),
+        (DIVU X:$rs1, X:$rs2)>;
 
 
+def : Pat<(udiv X:$rs1, X:$rs2),
+        (DIVUW X:$rs1, X:$rs2)>;
 
 
+def : Pat<(sdiv X:$rs1, X:$rs2),
+        (DIVW X:$rs1, X:$rs2)>;
 
 
 

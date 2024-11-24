@@ -3839,6 +3839,9 @@ class SignalDefinition extends Definition {
 /**
  * Represents the <code>assembly description</code> definition of a vadl specification.
  * It contains definitions for modifiers, directives and grammar rules of an assembly language.
+ * <p>
+ * Further, it can also contain constant, function and using definitions.
+ * </p>
  */
 class AsmDescriptionDefinition extends Definition {
   Identifier id;
@@ -3846,18 +3849,21 @@ class AsmDescriptionDefinition extends Definition {
   List<AsmModifierDefinition> modifiers;
   List<AsmDirectiveDefinition> directives;
   List<AsmGrammarRuleDefinition> rules;
+  List<Definition> commonDefinitions;
   SourceLocation loc;
 
   public AsmDescriptionDefinition(Identifier id, Identifier abi,
                                   List<AsmModifierDefinition> modifiers,
                                   List<AsmDirectiveDefinition> directives,
                                   List<AsmGrammarRuleDefinition> rules,
+                                  List<Definition> commonDefinitions,
                                   SourceLocation loc) {
     this.id = id;
     this.abi = abi;
     this.modifiers = modifiers;
     this.directives = directives;
     this.rules = rules;
+    this.commonDefinitions = commonDefinitions;
     this.loc = loc;
   }
 
@@ -3887,6 +3893,12 @@ class AsmDescriptionDefinition extends Definition {
     abi.prettyPrint(indent, builder);
     builder.append(" = {\n");
     indent++;
+
+    if (!commonDefinitions.isEmpty()) {
+      for (var def : commonDefinitions) {
+        def.prettyPrint(indent, builder);
+      }
+    }
 
     if (!modifiers.isEmpty()) {
       builder.append(prettyIndentString(indent)).append("modifiers = {\n");
@@ -4232,6 +4244,8 @@ class AsmGrammarAlternativesDefinition extends Definition {
  * <li>vadl function invocation</li>
  * <li>sequence of elements</li>
  * <li>optional block</li>
+ * <li>repetition block</li>
+ * <li>semantic predicate</li>
  * <li>string literal</li>
  * </p>
  *
@@ -4250,6 +4264,10 @@ class AsmGrammarElementDefinition extends Definition {
   @Nullable
   AsmGrammarAlternativesDefinition optionAlternatives;
   @Nullable
+  AsmGrammarAlternativesDefinition repetitionAlternatives;
+  @Nullable
+  Expr semanticPredicate;
+  @Nullable
   AsmGrammarTypeDefinition asmType;
   SourceLocation loc;
 
@@ -4259,6 +4277,9 @@ class AsmGrammarElementDefinition extends Definition {
                                      @Nullable AsmGrammarLiteralDefinition asmLiteral,
                                      @Nullable AsmGrammarAlternativesDefinition groupAlternatives,
                                      @Nullable AsmGrammarAlternativesDefinition optionAlternatives,
+                                     @Nullable
+                                     AsmGrammarAlternativesDefinition repetitionAlternatives,
+                                     @Nullable Expr semanticPredicate,
                                      @Nullable AsmGrammarTypeDefinition asmType,
                                      SourceLocation loc) {
     this.localVar = localVar;
@@ -4267,6 +4288,8 @@ class AsmGrammarElementDefinition extends Definition {
     this.asmLiteral = asmLiteral;
     this.groupAlternatives = groupAlternatives;
     this.optionAlternatives = optionAlternatives;
+    this.repetitionAlternatives = repetitionAlternatives;
+    this.semanticPredicate = semanticPredicate;
     this.asmType = asmType;
     this.loc = loc;
   }
@@ -4290,6 +4313,17 @@ class AsmGrammarElementDefinition extends Definition {
     return isPlusEqualsAttributeAssign ? "+=" : "=";
   }
 
+  private void prettyPrintAlternatives(int indent, StringBuilder builder,
+                                       @Nullable AsmGrammarAlternativesDefinition alternatives,
+                                       char blockStartSymbol, char blockEndSymbol) {
+    if (alternatives != null) {
+      builder.append(blockStartSymbol).append("\n");
+      alternatives.prettyPrint(++indent, builder);
+      builder.append(prettyIndentString(--indent));
+      builder.append("\n").append(prettyIndentString(indent)).append(blockEndSymbol);
+    }
+  }
+
   @Override
   void prettyPrint(int indent, StringBuilder builder) {
     builder.append(prettyIndentString(indent));
@@ -4297,7 +4331,6 @@ class AsmGrammarElementDefinition extends Definition {
     if (localVar != null) {
       localVar.prettyPrint(indent, builder);
     }
-
     if (attribute != null) {
       attribute.prettyPrint(indent, builder);
       if (asmLiteral != null) {
@@ -4307,17 +4340,15 @@ class AsmGrammarElementDefinition extends Definition {
     if (asmLiteral != null) {
       asmLiteral.prettyPrint(0, builder);
     }
-    if (groupAlternatives != null) {
-      builder.append("(\n");
-      groupAlternatives.prettyPrint(++indent, builder);
-      builder.append(prettyIndentString(--indent));
-      builder.append("\n").append(prettyIndentString(indent)).append(')');
-    }
-    if (optionAlternatives != null) {
-      builder.append("[\n");
-      optionAlternatives.prettyPrint(++indent, builder);
-      builder.append(prettyIndentString(--indent));
-      builder.append("\n").append(prettyIndentString(indent)).append(']');
+
+    prettyPrintAlternatives(indent, builder, groupAlternatives, '(', ')');
+    prettyPrintAlternatives(indent, builder, optionAlternatives, '[', ']');
+    prettyPrintAlternatives(indent, builder, repetitionAlternatives, '{', '}');
+
+    if (semanticPredicate != null) {
+      builder.append("?( ");
+      semanticPredicate.prettyPrint(0, builder);
+      builder.append(" )");
     }
     if (asmType != null) {
       asmType.prettyPrint(0, builder);
