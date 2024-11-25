@@ -93,7 +93,9 @@ public class HandlerProcessor extends AbstractProcessor {
                                    RoundEnvironment roundEnv)
       throws IOException {
 
-    TypeMirror baseType = getBaseTypeFromAnnotation(handlerClass);
+    DispatchForData dispatchForData = getDispatchForDataFromAnnotation(handlerClass);
+    TypeMirror baseType = dispatchForData.baseType;
+    List<String> includePackages = dispatchForData.includePackages;
 
     // Collect handler methods from the class and its supertypes
     Map<String, HandlerMethod> handlerMethods = collectHandlerMethods(handlerClass, baseType);
@@ -105,7 +107,7 @@ public class HandlerProcessor extends AbstractProcessor {
     }
 
     // Collect all subclasses of baseType within vadl.* package
-    Set<TypeElement> allSubTypes = collectAllSubTypes(baseType, roundEnv);
+    Set<TypeElement> allSubTypes = collectAllSubTypes(baseType, roundEnv, includePackages);
 
     // Check for unhandled subclasses
     checkForUnhandledSubclasses(handlerMethods, allSubTypes, handlerClass);
@@ -131,18 +133,46 @@ public class HandlerProcessor extends AbstractProcessor {
   }
 
 
-  private TypeMirror getBaseTypeFromAnnotation(TypeElement handlerClass) {
+  private static class DispatchForData {
+    TypeMirror baseType;
+    List<String> includePackages;
+
+    DispatchForData(TypeMirror baseType, List<String> includePackages) {
+      this.baseType = baseType;
+      this.includePackages = includePackages;
+    }
+  }
+
+  /**
+   * Get dispatch data for the handler class annotated with {@link DispatchFor}.
+   */
+  private DispatchForData getDispatchForDataFromAnnotation(TypeElement handlerClass) {
+    TypeMirror baseType = null;
+    List<String> includePackages = new ArrayList<>();
+
     for (AnnotationMirror annotation : handlerClass.getAnnotationMirrors()) {
       if (annotation.getAnnotationType().toString().equals(DispatchFor.class.getCanonicalName())) {
-        for (Map.Entry<? extends ExecutableElement, ? extends AnnotationValue> entry :
-            annotation.getElementValues().entrySet()) {
-          if (entry.getKey().getSimpleName().toString().equals("value")) {
-            return (TypeMirror) entry.getValue().getValue();
+        Map<? extends ExecutableElement, ? extends AnnotationValue> values =
+            annotation.getElementValues();
+        for (Map.Entry<? extends ExecutableElement, ? extends AnnotationValue> entry : values.entrySet()) {
+          String key = entry.getKey().getSimpleName().toString();
+          if (key.equals("value")) {
+            baseType = (TypeMirror) entry.getValue().getValue();
+          } else if (key.equals("include")) {
+            @SuppressWarnings("unchecked")
+            List<? extends AnnotationValue> includeValues =
+                (List<? extends AnnotationValue>) entry.getValue().getValue();
+            for (AnnotationValue av : includeValues) {
+              includePackages.add((String) av.getValue());
+            }
           }
         }
       }
     }
-    throw new IllegalStateException("@DispatchFor annotation is missing a 'value' element.");
+    if (baseType == null) {
+      throw new IllegalStateException("@DispatchFor annotation is missing a 'value' element.");
+    }
+    return new DispatchForData(baseType, includePackages);
   }
 
   /**
@@ -208,20 +238,29 @@ public class HandlerProcessor extends AbstractProcessor {
   }
 
   /**
-   * Collects all subclasses of the specified base type within the {@code vadl.*} package.
+   * Collects all subclasses of the specified base type within the given include packages.
+   * If no includePackage was specified, we search in all available packages.
    *
    * @param baseType the base type
    * @param roundEnv the environment for this processing round
    * @return a set of type elements representing the subclasses
    */
-  private Set<TypeElement> collectAllSubTypes(TypeMirror baseType, RoundEnvironment roundEnv) {
+  private Set<TypeElement> collectAllSubTypes(TypeMirror baseType, RoundEnvironment roundEnv,
+                                              List<String> includePackages) {
     Set<TypeElement> subTypes = new HashSet<>();
     for (Element element : roundEnv.getRootElements()) {
       if (element.getKind() == ElementKind.CLASS || element.getKind() == ElementKind.INTERFACE) {
         TypeElement typeElement = (TypeElement) element;
         String packageName = elementUtils.getPackageOf(typeElement).getQualifiedName().toString();
-        // Check if the class is in vadl.* package
-        if (packageName.startsWith("vadl.")) {
+        // Check if the class is in one of the included packages
+        boolean packageIncluded = includePackages.isEmpty(); // Include all if 'include' is empty
+        for (String includePackage : includePackages) {
+          if (packageName.startsWith(includePackage)) {
+            packageIncluded = true;
+            break;
+          }
+        }
+        if (packageIncluded) {
           TypeMirror typeMirror = typeElement.asType();
           if (typeUtils.isSubtype(typeMirror, baseType) &&
               !typeUtils.isSameType(typeMirror, baseType)) {
