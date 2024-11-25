@@ -281,14 +281,41 @@ public class HandlerProcessor extends AbstractProcessor {
    */
   private void checkForUnhandledSubclasses(Map<String, HandlerMethod> handlerMethods,
                                            Set<TypeElement> subTypes, TypeElement handlerClass) {
+    var missingTypes = new ArrayList<TypeMirror>();
+
     for (TypeElement subtype : subTypes) {
       TypeMirror subtypeMirror = subtype.asType();
       if (!isSubtypeHandled(subtypeMirror, handlerMethods)) {
+        missingTypes.add(subtypeMirror);
         messager.printMessage(Diagnostic.Kind.ERROR,
             "No handler found for subclass: " + subtype.getQualifiedName().toString(),
             handlerClass);
       }
     }
+
+    printSuggestedMethodsToAdd(missingTypes, handlerClass);
+  }
+
+  private void printSuggestedMethodsToAdd(List<TypeMirror> missingTypes, TypeElement handlerClass) {
+    if (missingTypes.isEmpty()) {
+      return;
+    }
+
+    StringBuilder sb = new StringBuilder();
+    sb.append("Add the following to %s: \n".formatted(handlerClass.getSimpleName()));
+    for (var type : missingTypes) {
+      var typeName = typeMirrorSimpleName(type);
+      sb.append("@Handler\n");
+      sb.append("void handle(");
+      sb.append(typeName);
+      sb.append(" toHandle) {\n");
+      sb.append(
+          "\tthrow new UnsupportedOperationException(\"Type %s not yet implemented\");\n".formatted(
+              typeName));
+      sb.append("}\n\n");
+    }
+
+    messager.printMessage(Diagnostic.Kind.NOTE, sb.toString(), handlerClass);
   }
 
   /**
@@ -397,5 +424,9 @@ public class HandlerProcessor extends AbstractProcessor {
 
       writer.write("}\n");
     }
+  }
+
+  private String typeMirrorSimpleName(TypeMirror typeMirror) {
+    return typeMirror.toString().substring(typeMirror.toString().lastIndexOf('.') + 1);
   }
 }
