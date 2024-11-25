@@ -98,7 +98,8 @@ public class HandlerProcessor extends AbstractProcessor {
     List<String> includePackages = dispatchForData.includePackages;
 
     // Collect handler methods from the class and its supertypes
-    Map<String, HandlerMethod> handlerMethods = collectHandlerMethods(handlerClass, baseType);
+    Map<String, HandlerMethod> handlerMethods =
+        collectHandlerMethods(handlerClass, baseType, dispatchForData.returnType);
 
     if (handlerMethods.isEmpty()) {
       messager.printMessage(Diagnostic.Kind.WARNING,
@@ -106,14 +107,15 @@ public class HandlerProcessor extends AbstractProcessor {
       return;
     }
 
-    // Collect all subclasses of baseType within vadl.* package
+    // Collect all non-abstract subclasses of baseType within vadl.* package
     Set<TypeElement> allSubTypes = collectAllSubTypes(baseType, roundEnv, includePackages);
 
     // Check for unhandled subclasses
-    checkForUnhandledSubclasses(handlerMethods, allSubTypes, handlerClass);
+    checkForUnhandledSubclasses(handlerMethods, allSubTypes, handlerClass,
+        dispatchForData.returnType);
 
     // Generate dispatcher
-    generateDispatcher(handlerClass, baseType, handlerMethods);
+    generateDispatcher(handlerClass, baseType, handlerMethods, dispatchForData.returnType);
   }
 
   /**
@@ -124,23 +126,21 @@ public class HandlerProcessor extends AbstractProcessor {
    * @return a map of parameter type strings to handler methods
    */
   private Map<String, HandlerMethod> collectHandlerMethods(
-      TypeElement handlerClass, TypeMirror baseType) {
+      TypeElement handlerClass, TypeMirror baseType, TypeMirror returnType) {
 
     Map<String, HandlerMethod> handlerMethods = new HashMap<>();
     Set<TypeElement> processedClasses = new HashSet<>();
-    collectHandlerMethodsRecursive(handlerClass, baseType, handlerMethods, processedClasses);
+    collectHandlerMethodsRecursive(handlerClass, baseType, handlerMethods, processedClasses,
+        returnType); // Pass 'returnType'
     return handlerMethods;
   }
 
 
-  private static class DispatchForData {
-    TypeMirror baseType;
-    List<String> includePackages;
-
-    DispatchForData(TypeMirror baseType, List<String> includePackages) {
-      this.baseType = baseType;
-      this.includePackages = includePackages;
-    }
+  private record DispatchForData(
+      TypeMirror baseType,
+      List<String> includePackages,
+      TypeMirror returnType
+  ) {
   }
 
   /**
@@ -149,6 +149,7 @@ public class HandlerProcessor extends AbstractProcessor {
   private DispatchForData getDispatchForDataFromAnnotation(TypeElement handlerClass) {
     TypeMirror baseType = null;
     List<String> includePackages = new ArrayList<>();
+    TypeMirror returnType = null; // Add this line
 
     for (AnnotationMirror annotation : handlerClass.getAnnotationMirrors()) {
       if (annotation.getAnnotationType().toString().equals(DispatchFor.class.getCanonicalName())) {
@@ -165,6 +166,8 @@ public class HandlerProcessor extends AbstractProcessor {
             for (AnnotationValue av : includeValues) {
               includePackages.add((String) av.getValue());
             }
+          } else if (key.equals("returnType")) { // Add this block
+            returnType = (TypeMirror) entry.getValue().getValue();
           }
         }
       }
@@ -172,7 +175,11 @@ public class HandlerProcessor extends AbstractProcessor {
     if (baseType == null) {
       throw new IllegalStateException("@DispatchFor annotation is missing a 'value' element.");
     }
-    return new DispatchForData(baseType, includePackages);
+    // If returnType is null, default to Void
+    if (returnType == null) {
+      returnType = elementUtils.getTypeElement("java.lang.Void").asType();
+    }
+    return new DispatchForData(baseType, includePackages, returnType);
   }
 
   /**
@@ -185,7 +192,7 @@ public class HandlerProcessor extends AbstractProcessor {
    */
   private void collectHandlerMethodsRecursive(
       TypeElement clazz, TypeMirror baseType, Map<String, HandlerMethod> handlerMethods,
-      Set<TypeElement> processedClasses) {
+      Set<TypeElement> processedClasses, TypeMirror returnType) {
 
     if (processedClasses.contains(clazz)) {
       return;
@@ -217,6 +224,17 @@ public class HandlerProcessor extends AbstractProcessor {
           continue;
         }
 
+        // Check return type if returnType is not Void
+        if (!isVoid(returnType)) {
+          TypeMirror methodReturnType = method.getReturnType();
+          if (!typeUtils.isSubtype(methodReturnType, returnType)) {
+            messager.printMessage(Diagnostic.Kind.ERROR,
+                "Return type of @Handler method must be a subtype of " + returnType,
+                method);
+            continue;
+          }
+        }
+
         String paramTypeStr = paramType.toString();
         handlerMethods.put(paramTypeStr,
             new HandlerMethod(method.getSimpleName().toString(), paramType));
@@ -226,15 +244,22 @@ public class HandlerProcessor extends AbstractProcessor {
     // Process interfaces
     for (TypeMirror iface : clazz.getInterfaces()) {
       TypeElement ifaceElement = (TypeElement) typeUtils.asElement(iface);
-      collectHandlerMethodsRecursive(ifaceElement, baseType, handlerMethods, processedClasses);
+      collectHandlerMethodsRecursive(ifaceElement, baseType, handlerMethods, processedClasses,
+          returnType);
     }
 
     // Process superclass
     TypeMirror superclass = clazz.getSuperclass();
     if (superclass != null && superclass.getKind() != TypeKind.NONE) {
       TypeElement superClassElement = (TypeElement) typeUtils.asElement(superclass);
-      collectHandlerMethodsRecursive(superClassElement, baseType, handlerMethods, processedClasses);
+      collectHandlerMethodsRecursive(superClassElement, baseType, handlerMethods, processedClasses,
+          returnType);
     }
+  }
+
+  private boolean isVoid(TypeMirror type) {
+    return type.getKind() == TypeKind.VOID ||
+        typeUtils.isSameType(type, elementUtils.getTypeElement("java.lang.Void").asType());
   }
 
   /**
@@ -280,11 +305,17 @@ public class HandlerProcessor extends AbstractProcessor {
    * @param handlerClass   the handler class
    */
   private void checkForUnhandledSubclasses(Map<String, HandlerMethod> handlerMethods,
-                                           Set<TypeElement> subTypes, TypeElement handlerClass) {
+                                           Set<TypeElement> subTypes, TypeElement handlerClass,
+                                           TypeMirror returnType) {
     var missingTypes = new ArrayList<TypeMirror>();
 
     for (TypeElement subtype : subTypes) {
       TypeMirror subtypeMirror = subtype.asType();
+      if (subtype.getModifiers().contains(Modifier.ABSTRACT)) {
+        // only check non-abstract sub types
+        continue;
+      }
+
       if (!isSubtypeHandled(subtypeMirror, handlerMethods)) {
         missingTypes.add(subtypeMirror);
         messager.printMessage(Diagnostic.Kind.ERROR,
@@ -293,20 +324,24 @@ public class HandlerProcessor extends AbstractProcessor {
       }
     }
 
-    printSuggestedMethodsToAdd(missingTypes, handlerClass);
+    printSuggestedMethodsToAdd(missingTypes, handlerClass, returnType);
   }
 
-  private void printSuggestedMethodsToAdd(List<TypeMirror> missingTypes, TypeElement handlerClass) {
+  private void printSuggestedMethodsToAdd(List<TypeMirror> missingTypes, TypeElement handlerClass,
+                                          TypeMirror returnType) {
     if (missingTypes.isEmpty()) {
       return;
     }
+
+    var returnTypeStr = isVoid(returnType) ? "void" : typeMirrorSimpleName(returnType);
 
     StringBuilder sb = new StringBuilder();
     sb.append("Add the following to %s: \n".formatted(handlerClass.getSimpleName()));
     for (var type : missingTypes) {
       var typeName = typeMirrorSimpleName(type);
       sb.append("@Handler\n");
-      sb.append("void handle(");
+      sb.append(returnTypeStr);
+      sb.append(" handle(");
       sb.append(typeName);
       sb.append(" toHandle) {\n");
       sb.append(
@@ -351,7 +386,8 @@ public class HandlerProcessor extends AbstractProcessor {
    * @throws IOException if an error occurs while writing the dispatcher class
    */
   private void generateDispatcher(TypeElement handlerClass, TypeMirror baseType,
-                                  Map<String, HandlerMethod> handlerMethods) throws IOException {
+                                  Map<String, HandlerMethod> handlerMethods, TypeMirror returnType)
+      throws IOException {
     String handlerClassName = handlerClass.getQualifiedName().toString();
     String packageName = elementUtils.getPackageOf(handlerClass).getQualifiedName().toString();
     String dispatcherClassName = handlerClass.getSimpleName() + "Dispatcher";
@@ -380,9 +416,15 @@ public class HandlerProcessor extends AbstractProcessor {
 
       String baseTypeName = baseType.toString().substring(baseType.toString().lastIndexOf('.') + 1);
 
+      // Determine if returnType is void
+      boolean isVoidReturnType = isVoid(returnType);
+
+      String returnTypeName = isVoidReturnType ? "void" : returnType.toString();
+
+      writer.write("    @SuppressWarnings(\"BadInstanceof\")\n");
       writer.write(
-          "    @SuppressWarnings(\"BadInstanceof\")\n" +
-              "    public static void dispatch(" + handlerClassName + " handler, " + baseTypeName +
+          "    public static " + returnTypeName + " dispatch(" + handlerClassName +
+              " handler, " + baseTypeName +
               " obj) {\n");
 
       // Sort handler methods by specificity
@@ -411,14 +453,32 @@ public class HandlerProcessor extends AbstractProcessor {
         } else {
           writer.write("        else if (obj instanceof " + simpleParamType + ") {\n");
         }
-        writer.write("            handler." + methodName + "((" + simpleParamType + ") obj);\n");
+
+        if (isVoidReturnType) {
+          writer.write("            handler." + methodName + "((" + simpleParamType + ") obj);\n");
+        } else {
+          writer.write(
+              "            return handler." + methodName + "((" + simpleParamType + ") obj);\n");
+        }
         writer.write("        }\n");
       }
 
+
+      // Handle the 'else' case
       writer.write("        else {\n");
-      writer.write(
-          "            throw new IllegalArgumentException(\"Unhandled type: \" + obj.getClass());\n");
+      if (isVoidReturnType) {
+        writer.write(
+            "            throw new IllegalArgumentException(\"Unhandled type: \" + obj.getClass());\n");
+      } else {
+        writer.write(
+            "            throw new IllegalArgumentException(\"Unhandled type: \" + obj.getClass());\n");
+      }
       writer.write("        }\n");
+
+      // If returnType is not void, ensure all code paths return a value
+      if (!isVoidReturnType) {
+        writer.write("        // This line should be unreachable\n");
+      }
 
       writer.write("    }\n");
 

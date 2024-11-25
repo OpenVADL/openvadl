@@ -132,4 +132,7 @@ public @interface DispatchFor {
   Class<?> value();
 
   String[] include() default {};
+
+  Class<?> returnType() default Void.class; // Add this line
+
 }
