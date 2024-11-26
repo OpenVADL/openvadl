@@ -43,7 +43,7 @@ class QEMUExecuter:
         reg_results = await self._fetch_result_regs(result_regs)
 
         await self._shutdown()
-        return (reg_results, [await self.get_insn_count()])
+        return reg_results
 
     async def _start_qemu(self, test_elf: str):
         qmp_addr = f"unix:{self.sock_addr}"

@@ -5,19 +5,15 @@ import static vadl.test.TestUtils.arbitraryUnsignedInt;
 
 import java.io.IOException;
 import java.math.BigInteger;
-import java.util.HashMap;
-import java.util.Objects;
+import java.util.Map;
 import java.util.function.Function;
 import java.util.stream.IntStream;
 import java.util.stream.Stream;
 import net.jqwik.api.Arbitraries;
-import net.jqwik.api.Arbitrary;
 import org.junit.jupiter.api.DynamicTest;
 import org.junit.jupiter.api.TestFactory;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import vadl.types.DataType;
-import vadl.viam.Constant;
 
 /**
  * Tests the RV64I instructions set.
@@ -38,7 +34,7 @@ public class IssRV64IInstrTest extends QemuIssTest {
       var bImm = arbitrarySignedInt(12).sample();
       var regDest = b.anyTempReg().sample();
       b.add("addi %s, %s, %s", regDest, regSrc, bImm);
-      return b.toTestSpec(regSrc, regDest);
+      return b.toTestSpecWithSpecialRegs(Map.of("insn_count", "0000000003"), regSrc, regDest);
     });
   }
 
@@ -54,7 +50,7 @@ public class IssRV64IInstrTest extends QemuIssTest {
       var bImm = arbitrarySignedInt(12).sample();
       var regDest = b.anyTempReg().sample();
       b.add("addiw %s, %s, %s", regDest, regSrc, bImm);
-      return b.toTestSpec(regSrc, regDest);
+      return b.toTestSpecCounting(regSrc, regDest);
     });
   }
 
@@ -65,7 +61,7 @@ public class IssRV64IInstrTest extends QemuIssTest {
       var destReg = b.anyTempReg().sample();
       var value = arbitraryUnsignedInt(20).sample();
       b.add("lui %s, %s", destReg, value);
-      return b.toTestSpec(destReg);
+      return b.toTestSpecCounting(destReg);
     });
   }
 

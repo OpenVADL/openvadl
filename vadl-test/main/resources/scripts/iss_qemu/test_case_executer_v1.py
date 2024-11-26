@@ -30,27 +30,24 @@ class QMPTestCaseExecutor(AbstractTestCaseExecutor):
         regs_of_interest = list(set(self.spec.reg_tests.keys())
                              .union(set(self.spec.reference_regs)))
 
-        print(f"Regs of interest:{regs_of_interest}")
         # test with vadl generated qemu
-        (vadl_reg_results, other) = await self._execute_qemu_sim(
+        vadl_reg_results = await self._execute_qemu_sim(
             f"vadl-{self.spec.id}",
             self.qemu_exec,
             regs_of_interest
         )
 
-        print(f"vadl_reg_results: {vadl_reg_results}")
 
         self.test_result.completed_stages.append('RUN')
 
         ref_reg_results = {}
         if self.spec.reference_exec != "":
-            (ref_reg_results, other) = await self._execute_qemu_sim(
+            ref_reg_results = await self._execute_qemu_sim(
                 f"reference-{self.spec.id}",
                 self.spec.reference_exec,
                 self.spec.reference_regs
             )
             self.test_result.completed_stages.append('RUN_REF')
-        print(f"whatever: {ref_reg_results}")
 
         await self._set_results(vadl_reg_results, ref_reg_results)
 

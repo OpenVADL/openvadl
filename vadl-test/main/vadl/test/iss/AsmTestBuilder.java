@@ -7,8 +7,6 @@ import java.math.BigInteger;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
-import java.util.Objects;
-import java.util.stream.Collectors;
 import net.jqwik.api.Arbitrary;
 
 public abstract class AsmTestBuilder {
@@ -55,6 +53,26 @@ public abstract class AsmTestBuilder {
 
   public String toAsmString() {
     return String.join("\n", instructions);
+  }
+
+  IssTestUtils.TestSpec toTestSpecCounting( String... regsOfInterest) {
+    return new IssTestUtils.TestSpec(
+        testId,
+        Map.of("insn_count", String.format("%010d", (this.instructions.size() + 1))),
+        toAsmString(),
+        referenceQemuExec(),
+        List.of(regsOfInterest)
+    );
+  }
+
+  IssTestUtils.TestSpec toTestSpecWithSpecialRegs(Map<String, String> map, String... regsOfInterest) {
+    return new IssTestUtils.TestSpec(
+        testId,
+        map,
+        toAsmString(),
+        referenceQemuExec(),
+        List.of(regsOfInterest)
+    );
   }
 
   IssTestUtils.TestSpec toTestSpec(
