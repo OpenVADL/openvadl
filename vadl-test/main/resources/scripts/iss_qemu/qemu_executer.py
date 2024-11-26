@@ -125,16 +125,6 @@ class QEMUExecuter:
                 if (time.time() - first_time) > timeout_sec:
                     raise e
 
-    async def get_insn_count(self) -> int:
-        try:
-            response = await self.qmp.execute('human-monitor-command',
-                                            {'command-line': 'info registers'})
-            # Look for insn_count in the response
-            return self._extract_register_value(response, "insn_count")
-        except Exception as e:
-            print(f"Failed to get instruction count: {e}")
-            return None
-
     def _get_qmp_port(self) -> int:
         return self.port
 
