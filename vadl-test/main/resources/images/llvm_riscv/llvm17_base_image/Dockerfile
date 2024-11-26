@@ -1,7 +1,7 @@
 FROM ubuntu
 
 RUN apt-get update -y
-RUN apt-get install -y make cmake ninja-build build-essential ccache git curl pkg-config libssl-dev python3
+RUN apt-get install -y make cmake ninja-build build-essential ccache git curl pkg-config libssl-dev python3 colordiff
 
 ENV PATH=/opt/sccache:$PATH
 RUN mkdir /opt/sccache
