@@ -132,6 +132,7 @@ public abstract class QemuIssTest extends DockerExecutionTest {
               System.out.println("\nRan stages: " + e.completedStages());
               System.out.println("Register tests: \n" + e.regTests());
               System.out.println("Duration: " + e.duration());
+
               if (!success) {
                 for (var log : e.logs().entrySet()) {
                   System.out.println("Logs of " + log.getKey() + ": ");

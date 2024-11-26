@@ -71,6 +71,7 @@ async def main(qemu_exec: str):
 def load_test_config(filename: str) -> TestSuiteConfig:
   with open(filename, 'r') as file:
     data = yaml.safe_load(file)  # Load the YAML file
+    print(f"HalliHallo {data}")
     tests = [TestSpec(**test) for test in data['tests']]  # Create TestSpec instances
     return TestSuiteConfig(tests=tests)  # Create TestSuiteConfig instance
 

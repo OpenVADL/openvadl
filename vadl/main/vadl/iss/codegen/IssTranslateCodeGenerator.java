@@ -7,6 +7,7 @@ import static vadl.utils.GraphUtils.getSingleNode;
 import java.io.StringWriter;
 import java.util.Arrays;
 import java.util.stream.Collectors;
+
 import vadl.cppCodeGen.CodeGenerator;
 import vadl.cppCodeGen.mixins.CBuiltinMixin;
 import vadl.cppCodeGen.mixins.CMiscMixin;
@@ -70,7 +71,9 @@ public class IssTranslateCodeGenerator extends CodeGenerator
           writer.write(name);
           writer.write(" (" + fmtString + ")");
           writer.write("\\n\", " + fmtArgs + ");\n");
-
+          //Add separate add instruction after each that increments special cpu_insn_count flag in QEMU CPU state
+          //see resources/templates/iss/target/cpu.h/CPUArchState
+          writer.write("\ttcg_gen_addi_i64(cpu_insn_count, cpu_insn_count, 1);\n\n");
           var current = start.next();
 
           while (current instanceof DirectionalNode dirNode) {

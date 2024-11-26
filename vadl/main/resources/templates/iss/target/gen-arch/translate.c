@@ -14,6 +14,8 @@
 #undef  HELPER_H
 
 static TCGv cpu_pc;
+static TCGv cpu_insn_count;
+
 [# th:each="reg_file, iterState : ${register_files}"] // define the register file tcgs
 static TCGv cpu_[(${reg_file.name_lower})][(${"[" + reg_file["size"] + "]"})];
 [/]
@@ -44,7 +46,10 @@ void [(${gen_arch_lower})]_tcg_init(void)
     qemu_printf("[[(${gen_arch_upper})]] TODO: [(${gen_arch_lower})]_tcg_init\n");
 
     // set the cpu_pc TCGv
-    cpu_pc = tcg_global_mem_new(tcg_env, offsetof(CPU[(${gen_arch_upper})]State, [(${gen_arch_upper})]_PC), "[(${gen_arch_upper})]_PC");
+    cpu_pc         = tcg_global_mem_new(tcg_env, offsetof(CPU[(${gen_arch_upper})]State, [(${gen_arch_upper})]_PC), "[(${gen_arch_upper})]_PC");
+    //set the
+    cpu_insn_count = tcg_global_mem_new(tcg_env, offsetof(CPU[(${gen_arch_upper})]State, insn_count), "[(${gen_arch_upper})]_INSN_COUNT");
+
     [# th:each="reg_file, iterState : ${register_files}"]
     [# th:each="constraint, iterState : ${reg_file.constraints}"]
     // Register [(${reg_file.names[constraint.index]})] is placeholder for [(${constraint.value})]. DO NOT USE IT.

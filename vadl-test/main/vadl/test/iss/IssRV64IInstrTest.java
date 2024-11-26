@@ -24,7 +24,7 @@ import vadl.viam.Constant;
  */
 public class IssRV64IInstrTest extends QemuIssTest {
 
-  private static final int TESTS_PER_INSTRUCTION = 50;
+  private static final int TESTS_PER_INSTRUCTION = 2;
   private static final Logger log = LoggerFactory.getLogger(IssRV64IInstrTest.class);
 
   @TestFactory

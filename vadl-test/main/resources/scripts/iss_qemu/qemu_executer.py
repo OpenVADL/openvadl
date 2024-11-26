@@ -41,8 +41,9 @@ class QEMUExecuter:
         await self._wait_until_done(signal_reg, signal_content, timeout_sec)
         print(f"done.")
         reg_results = await self._fetch_result_regs(result_regs)
+
         await self._shutdown()
-        return reg_results
+        return (reg_results, [await self.get_insn_count()])
 
     async def _start_qemu(self, test_elf: str):
         qmp_addr = f"unix:{self.sock_addr}"
@@ -123,6 +124,16 @@ class QEMUExecuter:
             except Exception as e:
                 if (time.time() - first_time) > timeout_sec:
                     raise e
+
+    async def get_insn_count(self) -> int:
+        try:
+            response = await self.qmp.execute('human-monitor-command',
+                                            {'command-line': 'info registers'})
+            # Look for insn_count in the response
+            return self._extract_register_value(response, "insn_count")
+        except Exception as e:
+            print(f"Failed to get instruction count: {e}")
+            return None
 
     def _get_qmp_port(self) -> int:
         return self.port

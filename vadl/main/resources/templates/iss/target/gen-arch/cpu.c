@@ -70,6 +70,7 @@ static void [(${gen_arch_lower})]_cpu_reset(DeviceState *dev)
     // Start address of the execution. Notice, that this is the start of the flash memory address
     // from the virt board implementation.
     env->[(${gen_arch_upper})]_PC = 0x80000000;
+    env->insn_count = 0;
 }
 
 static ObjectClass* [(${gen_arch_lower})]_cpu_class_by_name(const char *cpu_model)
@@ -111,6 +112,7 @@ static void [(${gen_arch_lower})]_cpu_dump_state(CPUState *cs, FILE *f, int flag
       }
     }
     [/]
+    qemu_fprintf(f, " insn_count  %010" PRIx64 "\n", env->insn_count);
     qemu_fprintf(f, "\n");
 }
 
