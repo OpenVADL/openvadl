@@ -16,6 +16,7 @@ import picocli.CommandLine.ParentCommand;
 import vadl.ast.Ast;
 import vadl.ast.AstDumper;
 import vadl.ast.ModelRemover;
+import vadl.ast.TypeChecker;
 import vadl.ast.Ungrouper;
 import vadl.ast.VadlParser;
 import vadl.error.DeferredDiagnosticStore;
@@ -69,6 +70,8 @@ class AstCommands {
     public Integer call() {
       try {
         Ast ast = parse(input, main.modelOverrides, true);
+        var typeChecker = new TypeChecker();
+        typeChecker.verify(ast);
         String dump = new AstDumper().dump(ast);
         if (output != null) {
           writeToPath(dump, output);

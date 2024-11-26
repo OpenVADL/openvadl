@@ -5,10 +5,12 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.IdentityHashMap;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
+import java.util.stream.Stream;
 import javax.annotation.Nullable;
 import vadl.error.DeferredDiagnosticStore;
 import vadl.error.Diagnostic;
@@ -34,6 +36,7 @@ import vadl.viam.graph.Node;
 import vadl.viam.graph.control.InstrCallNode;
 import vadl.viam.graph.dependency.ConstantNode;
 import vadl.viam.graph.dependency.ExpressionNode;
+import vadl.viam.graph.dependency.FieldAccessRefNode;
 import vadl.viam.graph.dependency.FieldRefNode;
 import vadl.viam.graph.dependency.FuncParamNode;
 import vadl.viam.graph.dependency.WriteRegFileNode;
@@ -129,8 +132,18 @@ public abstract class LlvmPseudoInstructionLowerStrategy {
                   ADDI{ rd = rd, rs1 = rs1, imm = 0 as Bits12 }
               }
              */
-            instructionBehavior.getNodes(FieldRefNode.class)
-                .filter(x -> x.formatField().equals(formatField))
+            Stream.concat(
+                    instructionBehavior.getNodes(FieldRefNode.class),
+                    instructionBehavior.getNodes(FieldAccessRefNode.class)
+                )
+                .filter(x -> {
+                  if (x instanceof FieldRefNode fieldRefNode) {
+                    return fieldRefNode.formatField().equals(formatField);
+                  } else if (x instanceof FieldAccessRefNode fieldAccessRefNode) {
+                    return fieldAccessRefNode.fieldAccess().fieldRef().equals(formatField);
+                  }
+                  return false;
+                })
                 .forEach(occurrence -> {
                   // Edge case:
                   // When we have the following pseudo instruction. Note that "r1" is replaced
@@ -237,14 +250,19 @@ public abstract class LlvmPseudoInstructionLowerStrategy {
         mayStore);
 
     return Optional.of(new LlvmLoweringPseudoRecord(pseudo.behavior(),
-        inputOperands,
-        outputOperands,
+        dedup(inputOperands),
+        dedup(outputOperands),
         flags,
         patterns,
-        uses,
-        defs,
+        dedup(uses),
+        dedup(defs),
         appliedInstructionBehavior
     ));
+  }
+
+  private <T> List<T> dedup(
+      List<T> x) {
+    return new ArrayList<>(new LinkedHashSet<>(x));
   }
 
   protected List<TableGenPattern> generatePatternVariations(

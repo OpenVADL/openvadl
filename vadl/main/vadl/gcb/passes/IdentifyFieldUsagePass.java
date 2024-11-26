@@ -9,6 +9,7 @@ import java.util.Objects;
 import java.util.stream.Stream;
 import org.jetbrains.annotations.Nullable;
 import vadl.configuration.GcbConfiguration;
+import vadl.error.Diagnostic;
 import vadl.pass.Pass;
 import vadl.pass.PassName;
 import vadl.pass.PassResults;
@@ -18,6 +19,7 @@ import vadl.viam.Instruction;
 import vadl.viam.Specification;
 import vadl.viam.ViamError;
 import vadl.viam.graph.Node;
+import vadl.viam.graph.dependency.FieldAccessRefNode;
 import vadl.viam.graph.dependency.FieldRefNode;
 import vadl.viam.graph.dependency.ReadRegFileNode;
 import vadl.viam.graph.dependency.ReadRegNode;
@@ -128,10 +130,21 @@ public class IdentifyFieldUsagePass extends Pass {
     }
 
     /**
-     * Get a result by format.
+     * Get the usages of registers by instruction.
      */
     public Map<Field, RegisterUsage> getRegisterUsages(Instruction instruction) {
       var obj = registerUsage.get(instruction);
+      if (obj == null) {
+        throw new ViamError("Hashmap must not be null");
+      }
+      return obj;
+    }
+
+    /**
+     * Get the usages of fields by instruction.
+     */
+    public Map<Field, FieldUsage> getImmediateUsages(Instruction instruction) {
+      var obj = fieldUsage.get(instruction.format());
       if (obj == null) {
         throw new ViamError("Hashmap must not be null");
       }
@@ -161,48 +174,62 @@ public class IdentifyFieldUsagePass extends Pass {
         .orElse(Stream.empty())
         .toList()) {
       container.addInstruction(instruction);
-      instruction.behavior().getNodes(FieldRefNode.class)
-          .forEach(fieldRefNode -> {
-            var isRegisterRead = fieldRefNode.usages()
-                .anyMatch(
-                    usage -> usage instanceof ReadRegNode || usage instanceof ReadRegFileNode);
-            var isRegisterWrite = fieldRefNode.usages()
-                .filter(usage -> usage instanceof WriteResourceNode)
-                .anyMatch(usage -> {
-                  var cast = (WriteResourceNode) usage;
-                  var nodes = new ArrayList<Node>();
-                  // The field should be marked as REGISTER when the field is used as a register
-                  // index. Therefore, we need to check whether the node is in the address tree.
-                  // We avoid a direct check because it is theoretically possible to do
-                  // arithmetic with the register file's index. However, this is very unlikely.
-                  Objects.requireNonNull(cast.address()).collectInputsWithChildren(nodes);
-                  return cast.address() == fieldRefNode || nodes.contains(fieldRefNode);
-                });
-
-            container.addFormat(fieldRefNode.formatField().format());
-
-            if (isRegisterRead || isRegisterWrite) {
-              container.addField(fieldRefNode.formatField().format(), fieldRefNode.formatField(),
-                  FieldUsage.REGISTER);
-              if (isRegisterRead) {
-                container.addField(instruction, fieldRefNode.formatField(),
-                    RegisterUsage.SOURCE);
-              } else {
-                container.addField(instruction, fieldRefNode.formatField(),
-                    RegisterUsage.DESTINATION);
-              }
-            } else {
-              container.addField(fieldRefNode.formatField().format(), fieldRefNode.formatField(),
-                  FieldUsage.IMMEDIATE);
-            }
-
-            // There is no other option because any other field like opcode will never be referenced
-            // the viam.
-          });
+      handleFields(instruction, container);
+      handleFieldAccessFunctions(instruction, container);
     }
 
-
     return container;
+  }
+
+  private static void handleFieldAccessFunctions(Instruction instruction,
+                                                 ImmediateDetectionContainer container) {
+    instruction.behavior().getNodes(FieldAccessRefNode.class)
+        .forEach(fieldAccessRefNode -> {
+          var fieldRef = fieldAccessRefNode.fieldAccess().fieldRef();
+          container.addFormat(fieldRef.format());
+          container.addField(fieldRef.format(), fieldRef,
+              FieldUsage.IMMEDIATE);
+        });
+  }
+
+  private static void handleFields(Instruction instruction, ImmediateDetectionContainer container) {
+    instruction.behavior().getNodes(FieldRefNode.class)
+        .forEach(fieldRefNode -> {
+          var fieldRef = fieldRefNode.formatField();
+          var isRegisterRead = fieldRefNode.usages()
+              .anyMatch(
+                  usage -> usage instanceof ReadRegNode || usage instanceof ReadRegFileNode);
+          var isRegisterWrite = fieldRefNode.usages()
+              .filter(usage -> usage instanceof WriteResourceNode)
+              .anyMatch(usage -> {
+                var cast = (WriteResourceNode) usage;
+                var nodes = new ArrayList<Node>();
+                // The field should be marked as REGISTER when the field is used as a register
+                // index. Therefore, we need to check whether the node is in the address tree.
+                // We avoid a direct check because it is theoretically possible to do
+                // arithmetic with the register file's index. However, this is very unlikely.
+                Objects.requireNonNull(cast.address()).collectInputsWithChildren(nodes);
+                return cast.hasAddress()
+                    && (cast.address() == fieldRefNode || nodes.contains(fieldRefNode));
+              });
+
+          container.addFormat(fieldRef.format());
+
+          if (isRegisterRead || isRegisterWrite) {
+            container.addField(fieldRef.format(), fieldRef,
+                FieldUsage.REGISTER);
+            if (isRegisterRead) {
+              container.addField(instruction, fieldRef,
+                  RegisterUsage.SOURCE);
+            } else {
+              container.addField(instruction, fieldRef,
+                  RegisterUsage.DESTINATION);
+            }
+          } else {
+            throw Diagnostic.error("Register index is not used as write or read.",
+                fieldRefNode.sourceLocation()).build();
+          }
+        });
   }
 
   /**

@@ -12,6 +12,7 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.Arrays;
 import java.util.List;
+import java.util.Map;
 import java.util.Objects;
 import java.util.stream.Stream;
 import org.junit.jupiter.api.DynamicTest;
@@ -23,6 +24,7 @@ import vadl.configuration.LcbConfiguration;
 import vadl.gcb.valuetypes.ProcessorName;
 import vadl.pass.exception.DuplicatedPassKeyException;
 import vadl.test.lcb.AbstractLcbTest;
+import vadl.utils.Pair;
 
 public class LlvmRiscvAssemblyTest extends AbstractLcbTest {
 
@@ -57,34 +59,21 @@ public class LlvmRiscvAssemblyTest extends AbstractLcbTest {
         .withDockerfile(Paths.get(configuration.outputPath() + "/lcb/Dockerfile"))
         .withBuildArg("TARGET", target));
 
-    // We build the image and copy all the input files into the container.
-    // The llvm compiler compiles all assembly files, and we copy them from the container
-    // to the host (hostOutput folder).
-    var hostOutput = configuration.outputPath() + "/output/";
-
-    runContainerAndCopyInputIntoAndCopyOutputFromContainer(image,
-        Path.of("../../open-vadl/vadl-test/main/resources/llvm/riscv/c"),
-        "/src/inputs",
-        Path.of(hostOutput),
-        "/output");
-
     // The container is complete and has generated the assembly files.
     return inputFilesFromCFile().map(input -> DynamicTest.dynamicTest(input, () -> {
-      var name = Paths.get(input).getFileName();
-      var expected = new File(
-          "../../open-vadl/vadl-test/main/resources/llvm/riscv/assertions/assembly/" + name + ".s");
+      var name = Paths.get(input).getFileName().toString();
 
-      var errorPath = hostOutput + name + ".err";
-      var errorFile = new File(errorPath);
-
-      // First check if an error file exists. Note that the container always
-      // creates an error file, so we also check for the size.
-      if (errorFile.exists() && errorFile.length() != 0) {
-        assertThat(contentOf(errorFile)).isEqualToIgnoringWhitespace(contentOf(expected));
-      } else {
-        var actual = new File(hostOutput + "/" + name + ".s");
-        assertThat(contentOf(actual)).isEqualToIgnoringWhitespace(contentOf(expected));
-      }
+      runContainerAndCopyInputIntoContainer(image,
+          List.of(
+              Pair.of(
+                  Path.of("../../open-vadl/vadl-test/main/resources/llvm/riscv/c"),
+                  "/src/inputs"),
+              Pair.of(
+                  Path.of("../../open-vadl/vadl-test/main/resources/llvm/riscv/assertions/assembly"),
+                  "/assertions")
+          ),
+          Map.of("INPUT", name)
+      );
     })).toList();
   }
 }

@@ -395,3 +395,8 @@ final class MacroMatchNode extends Node implements IsMacroMatch, IsEncs, IsBinOp
     return macroMatch.hashCode();
   }
 }
+
+
+interface AstVisitor<T> extends DefinitionVisitor<T>, StatementVisitor<T>, ExprVisitor<T> {
+
+}

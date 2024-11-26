@@ -504,6 +504,52 @@ public class Ungrouper
   }
 
   @Override
+  public Definition visit(AsmDescriptionDefinition definition) {
+    ungroupAnnotations(definition);
+    return definition;
+  }
+
+  @Override
+  public Definition visit(AsmModifierDefinition definition) {
+    return definition;
+  }
+
+  @Override
+  public Definition visit(AsmDirectiveDefinition definition) {
+    return definition;
+  }
+
+  @Override
+  public Definition visit(AsmGrammarRuleDefinition definition) {
+    return definition;
+  }
+
+  @Override
+  public Definition visit(AsmGrammarAlternativesDefinition definition) {
+    return definition;
+  }
+
+  @Override
+  public Definition visit(AsmGrammarElementDefinition definition) {
+    return definition;
+  }
+
+  @Override
+  public Definition visit(AsmGrammarLocalVarDefinition definition) {
+    return definition;
+  }
+
+  @Override
+  public Definition visit(AsmGrammarLiteralDefinition definition) {
+    return definition;
+  }
+
+  @Override
+  public Definition visit(AsmGrammarTypeDefinition definition) {
+    return definition;
+  }
+
+  @Override
   public Statement visit(BlockStatement blockStatement) {
     blockStatement.statements.replaceAll(statement -> statement.accept(this));
     return blockStatement;

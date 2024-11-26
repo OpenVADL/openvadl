@@ -11,24 +11,16 @@
 %sh7    20:7
 %csr    20:12
 %rm     12:3
-%nf     29:3
-# TODO: Check if this is done by decoder or translator
-# %nf     29:3                     !function=ex_plus_1
+%nf     29:3                     !function=ex_plus_1
 
 
 # immediates:
 %imm_i    20:s12
 %imm_s    25:s7 7:5
-# TODO: Temporary without translation functionsf
-%imm_b    31:s1 7:1 25:6 8:4
-# %imm_j    31:s1 12:8 20:1 21:10
-%imm_u    12:20
-%imm_bs   30:2
-# TODO: Check if this is done by decoder or translator
-# %imm_b    31:s1 7:1 25:6 8:4     !function=ex_shift_1
+%imm_b    31:s1 7:1 25:6 8:4     !function=ex_shift_1
 %imm_j    31:s1 12:8 20:1 21:10  !function=ex_shift_1
-# %imm_u    12:s20                 !function=ex_shift_12
-# %imm_bs   30:2                   !function=ex_shift_3
+%imm_u    12:s20                 !function=ex_shift_12
+%imm_bs   30:2                   !function=ex_shift_3
 %imm_rnum 20:4
 %imm_z6   26:1 15:5
 %imm_mop5 30:1 26:2 20:2
@@ -36,15 +28,15 @@
 
 # Argument sets:
 &empty
-&b    imm rs2 rs1
-&i    imm rs1 rd
-&j    imm rd
-&r    rd rs1 rs2
+&b    immS rs2 rs1
+&i    immS rs1 rd
+&j    immS rd
+&r    shamt rd rs1 rs2
 &r2   rd rs1
 &r2_s rs1 rs2
-&s    imm rs1 rs2
-&u    imm rd
-&shift     sft rs1 rd
+&s    immS rs1 rs2
+&u    immU rd
+&shift     shamt sft rs1 rd
 &atomic    aq rl rs2 rs1 rd
 &rmrr      vm rd rs1 rs2
 &rmr       vm rd rs2
@@ -55,14 +47,14 @@
 &mop3 imm rd rs1 rs2
 
 # Formats 32:
-@r       .......   ..... ..... ... ..... ....... &r                %rs2 %rs1 %rd
-@i       ............    ..... ... ..... ....... &i      imm=%imm_i     %rs1 %rd
-@b       .......   ..... ..... ... ..... ....... &b      imm=%imm_b %rs2 %rs1
-@s       .......   ..... ..... ... ..... ....... &s      imm=%imm_s %rs2 %rs1
-@u       ....................      ..... ....... &u      imm=%imm_u          %rd
-@j       ....................      ..... ....... &j      imm=%imm_j          %rd
+@r       .......   ..... ..... ... ..... ....... &r      shamt=%rs2      %rs2 %rs1 %rd
+@i       ............    ..... ... ..... ....... &i      immS=%imm_i     %rs1 %rd
+@b       .......   ..... ..... ... ..... ....... &b      immS=%imm_b %rs2 %rs1
+@s       .......   ..... ..... ... ..... ....... &s      immS=%imm_s %rs2 %rs1
+@u       ....................      ..... ....... &u      immU=%imm_u          %rd
+@j       ....................      ..... ....... &j      immS=%imm_j          %rd
 
-@sh      ......  ...... .....  ... ..... ....... &shift  sft=%sh7     %rs1 %rd
+@sh      ......  ...... .....  ... ..... ....... &shift  sft=%sh7  shamt=%sh7   %rs1 %rd
 @csr     ............   .....  ... ..... .......               %csr     %rs1 %rd
 
 @atom_ld ..... aq:1 rl:1 ..... ........ ..... ....... &atomic rs2=0     %rs1 %rd
@@ -93,7 +85,7 @@
 @sfence_vm  ....... ..... .....   ... ..... ....... %rs1
 
 @k_aes   .. ..... ..... .....  ... ..... ....... &k_aes  shamt=%imm_bs   %rs2 %rs1 %rd
-@i_aes   .. ..... ..... .....  ... ..... ....... &i      imm=%imm_rnum        %rs1 %rd
+#@i_aes   .. ..... ..... .....  ... ..... ....... &i      imm=%imm_rnum        %rs1 %rd
 
 @mop5 . . .. .. .... .. ..... ... ..... ....... &mop5 imm=%imm_mop5 %rd %rs1
 @mop3 . . .. .. . ..... ..... ... ..... ....... &mop3 imm=%imm_mop3 %rd %rs1 %rs2

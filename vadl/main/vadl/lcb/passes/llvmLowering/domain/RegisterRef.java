@@ -3,6 +3,7 @@ package vadl.lcb.passes.llvmLowering.domain;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
+import java.util.Objects;
 import org.jetbrains.annotations.Nullable;
 import vadl.types.ConcreteRelationType;
 import vadl.types.DataType;
@@ -113,5 +114,25 @@ public class RegisterRef extends Resource {
     } else {
       return simpleName();
     }
+  }
+
+  @Override
+  public int hashCode() {
+    return Objects.hashCode(this.address)
+        & Objects.hashCode(this.relationType)
+        & Objects.hashCode(this.constraints)
+        & Objects.hashCode(this.refFormat);
+  }
+
+  @Override
+  public boolean equals(Object obj) {
+    if (obj instanceof RegisterRef registerRef) {
+      return Objects.equals(this.address, registerRef.address)
+          && Objects.equals(this.relationType, registerRef.relationType)
+          && Objects.equals(this.constraints, registerRef.constraints)
+          && Objects.equals(this.refFormat, registerRef.refFormat);
+    }
+
+    return false;
   }
 }

@@ -5,7 +5,6 @@ import vadl.cppCodeGen.model.VariantKind;
 import vadl.lcb.codegen.model.llvm.ValueType;
 import vadl.lcb.template.lib.Target.Disassembler.EmitDisassemblerCppFilePass;
 import vadl.lcb.template.lib.Target.MCTargetDesc.EmitMCCodeEmitterCppFilePass;
-import vadl.types.BitsType;
 import vadl.viam.Format;
 import vadl.viam.Identifier;
 
@@ -21,7 +20,7 @@ public class TableGenImmediateRecord {
   private final Identifier decoderMethod;
   private final Identifier predicateMethod;
   private final ValueType type;
-  private final BitsType originalType;
+  private final int formatFieldBitSize;
   private final Format.FieldAccess fieldAccessRef;
   private final VariantKind variantKind;
 
@@ -41,7 +40,7 @@ public class TableGenImmediateRecord {
     this.decoderMethod = decoderIdentifier;
     this.predicateMethod = predicateIdentifier;
     this.type = type;
-    this.originalType = (BitsType) fieldAccessRef.type();
+    this.formatFieldBitSize = fieldAccessRef.fieldRef().size();
     this.fieldAccessRef = fieldAccessRef;
     this.variantKind = new VariantKind(fieldAccessRef.fieldRef());
   }
@@ -89,8 +88,8 @@ public class TableGenImmediateRecord {
     return predicateMethod.lower();
   }
 
-  public BitsType originalType() {
-    return originalType;
+  public int formatFieldBitSize() {
+    return formatFieldBitSize;
   }
 
   @Override

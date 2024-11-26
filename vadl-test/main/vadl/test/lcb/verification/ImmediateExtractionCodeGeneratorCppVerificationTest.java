@@ -69,25 +69,27 @@ public class ImmediateExtractionCodeGeneratorCppVerificationTest extends Abstrac
         .orElse(Stream.empty())
         .flatMap(format -> format.fieldAccesses().stream())
         .forEach(fieldAccess -> {
-          var bitWidth = fieldAccess.fieldRef().format().type().bitWidth();
+          var fieldBitSize = fieldAccess.fieldRef().size();
+          // A random immediate which should be extracted from the `arbitraryInstruction` later.
           var arbitraryImmediate =
-              getArbitrary(fieldAccess.accessFunction().parameters()[0]);
-          var arbitraryTail =
-              uint(bitWidth);
-          var limit = 1;
+              uint(fieldBitSize);
+          // A random instruction word.
+          var arbitraryInstruction =
+              uint(fieldAccess.fieldRef().format().type().bitWidth());
+          var limit = 10;
 
           Streams.zip(arbitraryImmediate.sampleStream().limit(limit),
-                  arbitraryTail.sampleStream().limit(limit),
+                  arbitraryInstruction.sampleStream().limit(limit),
                   Pair::of)
               .forEach(pair -> {
                 var displayName =
-                    String.format("fieldAccess = %s (%s, %s",
+                    String.format("fieldAccess = %s (%s, %s)",
                         fieldAccess.identifier.lower(),
                         pair.left(),
                         pair.right());
                 tests.add(DynamicTest.dynamicTest(displayName,
                     () -> testExtractFunction(displayName, fieldAccess, pair.left(), pair.right(),
-                        bitWidth,
+                        fieldBitSize,
                         cppNormalisedImmediateExtraction)));
               });
 
@@ -96,10 +98,18 @@ public class ImmediateExtractionCodeGeneratorCppVerificationTest extends Abstrac
     return tests;
   }
 
-  private void testExtractFunction(String testName, Format.FieldAccess fieldAccess,
+  /**
+   * The idea of the test is that we have a {@code instruction} and we want to extract
+   * the immediate {@code x} from it. This immediate {@code x} has to be equal to the given
+   * parameter {@code imm}.
+   * However, note that {@code instruction} has not yet the immediate encoded in it. This is also
+   * done in the container test with `set_bits` function.
+   */
+  private void testExtractFunction(String testName,
+                                   Format.FieldAccess fieldAccess,
                                    Long imm,
-                                   Long tail,
-                                   int bitWidth,
+                                   Long instruction,
+                                   int fieldBitSize,
                                    CppTypeNormalizationPass.NormalisedTypeResult cppNormalisedImmediateExtraction) {
     var extractionFunctionCodeGenerator = new LcbGenericCodeGenerator();
 
@@ -149,9 +159,14 @@ public class ImmediateExtractionCodeGeneratorCppVerificationTest extends Abstrac
             %s
                         
             int main() {
-              %s expected = %d;
+              ulong expected = %d;
               std::vector<int> args = { %s };
-              auto actual = %s(set_bits(std::bitset<%d>(%d), std::bitset<%d>(%d), args).to_ulong());
+              // We have a random set of bits and set the immediate to the position of the
+              // instruction (based on `args`).
+              ulong instruction =  set_bits(std::bitset<%d>(%d), std::bitset<%d>(%d), args)
+                .to_ulong();
+              // Now, we extract the immediate again and this *must* be the same.
+              auto actual = %s(instruction);
               if(actual == expected) {
                 std::cout << "ok" << std::endl;
                 return 0;
@@ -162,17 +177,16 @@ public class ImmediateExtractionCodeGeneratorCppVerificationTest extends Abstrac
             }
             """,
         extractionFunctionCode.value(),
-        CppTypeMap.getCppTypeNameByVadlType(extractFunction.returnType()),
         imm,
         fieldAccess.fieldRef().bitSlice().stream()
             .mapToObj(String::valueOf)
             .collect(
                 Collectors.joining(", ")),
-        extractionFunctionName,
-        bitWidth,
-        tail,
-        fieldAccess.fieldRef().type().bitWidth(),
-        imm
+        fieldAccess.fieldRef().format().type().bitWidth(),
+        instruction,
+        fieldBitSize,
+        imm,
+        extractionFunctionName
     );
 
     try {
@@ -183,12 +197,7 @@ public class ImmediateExtractionCodeGeneratorCppVerificationTest extends Abstrac
     }
   }
 
-  private Arbitrary<Long> getArbitrary(Parameter parameter) {
-    var type = (BitsType) parameter.type();
-    return uint(type.bitWidth());
-  }
-
   Arbitrary<Long> uint(int bitWidth) {
-    return Arbitraries.longs().greaterOrEqual(0).lessOrEqual((long) Math.pow(2, bitWidth));
+    return Arbitraries.longs().greaterOrEqual(0).lessOrEqual((long) Math.pow(2, bitWidth) - 1);
   }
 }

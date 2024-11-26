@@ -38,4 +38,9 @@ tasks.withType<JavaCompile> {
 
 tasks.test {
     useJUnitPlatform()
+
+    testLogging {
+        events("skipped", "failed")
+    }
 }
+

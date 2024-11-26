@@ -5,6 +5,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
+import javax.annotation.Nullable;
 import vadl.lcb.codegen.model.llvm.ValueType;
 import vadl.lcb.passes.isaMatching.MachineInstructionLabel;
 import vadl.lcb.passes.llvmLowering.LlvmLoweringPass;
@@ -16,8 +17,8 @@ import vadl.viam.Instruction;
 import vadl.viam.graph.Graph;
 import vadl.viam.graph.GraphVisitor;
 import vadl.viam.graph.Node;
-import vadl.viam.graph.control.AbstractEndNode;
 import vadl.viam.graph.dependency.SideEffectNode;
+import vadl.viam.passes.functionInliner.UninlinedGraph;
 
 /**
  * Generates the {@link LlvmLoweringRecord} for {@link MachineInstructionLabel#JALR}

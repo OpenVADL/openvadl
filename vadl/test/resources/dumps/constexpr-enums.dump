@@ -1,41 +1,41 @@
 InstructionSetDefinition
-. Identifier name: "OrigVADL"
+. Identifier name: "OrigVADL", type: null
 . EnumerationDefinition
-. : Identifier name: "Flags"
-. : Identifier name: "READ"
-. : BinaryLiteral literal: 0b001 (1)
-. : Identifier name: "WRITE"
-. : BinaryLiteral literal: 0b010 (2)
-. : Identifier name: "EXEC"
-. : BinaryLiteral literal: 0b100 (4)
+. : Identifier name: "Flags", type: null
+. : Identifier name: "READ", type: null
+. : BinaryLiteral literal: 0b001 (1), type: null
+. : Identifier name: "WRITE", type: null
+. : BinaryLiteral literal: 0b010 (2), type: null
+. : Identifier name: "EXEC", type: null
+. : BinaryLiteral literal: 0b100 (4), type: null
 InstructionSetDefinition
-. Identifier name: "OpenVADL"
+. Identifier name: "OpenVADL", type: null
 . FunctionDefinition
-. : Identifier name: "nthBit"
-. : Identifier name: "n"
-. : TypeLiteral
-. : ' Identifier name: "Int"
-. : TypeLiteral
-. : ' Identifier name: "Bits"
+. : Identifier name: "nthBit", type: null
+. : Identifier name: "n", type: null
+. : TypeLiteral type: null
+. : ' Identifier name: "Int", type: null
+. : TypeLiteral type: null
+. : ' Identifier name: "Bits", type: null
 . : ' Sizes
-. : ' | IntegerLiteral literal: 3 (3)
-. : BinaryExpr operator: <<
-. : ' BinaryLiteral literal: 0b001 (1)
-. : ' Identifier name: "n"
+. : ' | IntegerLiteral literal: 3 (3), type: null
+. : BinaryExpr operator: <<, type: null
+. : ' BinaryLiteral literal: 0b001 (1), type: null
+. : ' Identifier name: "n", type: null
 . EnumerationDefinition
-. : Identifier name: "Flags"
-. : Identifier name: "READ"
-. : CallExpr
-. : ' Identifier name: "nthBit"
+. : Identifier name: "Flags", type: null
+. : Identifier name: "READ", type: null
+. : CallExpr type: null
+. : ' Identifier name: "nthBit", type: null
 . : ' ArgsIndices
-. : ' | IntegerLiteral literal: 0 (0)
-. : Identifier name: "WRITE"
-. : CallExpr
-. : ' Identifier name: "nthBit"
+. : ' | IntegerLiteral literal: 0 (0), type: null
+. : Identifier name: "WRITE", type: null
+. : CallExpr type: null
+. : ' Identifier name: "nthBit", type: null
 . : ' ArgsIndices
-. : ' | IntegerLiteral literal: 1 (1)
-. : Identifier name: "EXEC"
-. : CallExpr
-. : ' Identifier name: "nthBit"
+. : ' | IntegerLiteral literal: 1 (1), type: null
+. : Identifier name: "EXEC", type: null
+. : CallExpr type: null
+. : ' Identifier name: "nthBit", type: null
 . : ' ArgsIndices
-. : ' | IntegerLiteral literal: 2 (2)
+. : ' | IntegerLiteral literal: 2 (2), type: null

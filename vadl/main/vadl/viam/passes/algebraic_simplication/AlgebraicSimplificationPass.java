@@ -51,7 +51,7 @@ public class AlgebraicSimplificationPass extends Pass {
 
   @Override
   public PassName getName() {
-    return new PassName("constantFolding");
+    return new PassName("algebraicSimplificationPass");
   }
 
   @Nullable

@@ -2,7 +2,6 @@ package vadl.lcb.passes.llvmLowering.domain.selectionDag;
 
 import java.util.List;
 import java.util.Set;
-import vadl.javaannotations.viam.DataValue;
 import vadl.lcb.passes.llvmLowering.LlvmNodeLowerable;
 import vadl.lcb.passes.llvmLowering.strategies.visitors.TableGenMachineInstructionVisitor;
 import vadl.lcb.passes.llvmLowering.strategies.visitors.TableGenNodeVisitor;
@@ -12,7 +11,6 @@ import vadl.viam.ViamError;
 import vadl.viam.graph.GraphNodeVisitor;
 import vadl.viam.graph.Node;
 import vadl.viam.graph.NodeList;
-import vadl.viam.graph.dependency.AbstractFunctionCallNode;
 import vadl.viam.graph.dependency.BuiltInCall;
 import vadl.viam.graph.dependency.ExpressionNode;
 
@@ -43,7 +41,18 @@ public class LlvmSetccSD extends BuiltInCall implements LlvmNodeLowerable {
                      Type type) {
     super(built, args, type);
     this.builtIn = built;
-    var condCode = LlvmCondCode.from(built);
+    var condCode = LlvmCondCode.from(builtIn);
+    if (condCode != null) {
+      llvmCondCode = condCode;
+    } else {
+      throw new ViamError("not supported cond code");
+    }
+  }
+
+  @Override
+  public void setBuiltIn(BuiltInTable.BuiltIn builtIn) {
+    this.builtIn = builtIn;
+    var condCode = LlvmCondCode.from(builtIn);
     if (condCode != null) {
       llvmCondCode = condCode;
     } else {

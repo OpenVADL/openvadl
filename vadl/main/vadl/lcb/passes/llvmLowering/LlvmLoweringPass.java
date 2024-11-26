@@ -4,7 +4,6 @@ import static vadl.viam.ViamError.ensureNonNull;
 import static vadl.viam.ViamError.ensurePresent;
 
 import java.io.IOException;
-import java.util.HashMap;
 import java.util.IdentityHashMap;
 import java.util.List;
 import java.util.Map;
@@ -24,6 +23,7 @@ import vadl.lcb.passes.llvmLowering.strategies.instruction.LlvmInstructionLoweri
 import vadl.lcb.passes.llvmLowering.strategies.instruction.LlvmInstructionLoweringConditionalBranchesStrategyImpl;
 import vadl.lcb.passes.llvmLowering.strategies.instruction.LlvmInstructionLoweringConditionalsStrategyImpl;
 import vadl.lcb.passes.llvmLowering.strategies.instruction.LlvmInstructionLoweringDefaultStrategyImpl;
+import vadl.lcb.passes.llvmLowering.strategies.instruction.LlvmInstructionLoweringDivisionStrategyImpl;
 import vadl.lcb.passes.llvmLowering.strategies.instruction.LlvmInstructionLoweringIndirectJumpStrategyImpl;
 import vadl.lcb.passes.llvmLowering.strategies.instruction.LlvmInstructionLoweringMemoryLoadStrategyImpl;
 import vadl.lcb.passes.llvmLowering.strategies.instruction.LlvmInstructionLoweringMemoryStoreStrategyImpl;
@@ -37,10 +37,7 @@ import vadl.pass.PassResults;
 import vadl.viam.Instruction;
 import vadl.viam.PseudoInstruction;
 import vadl.viam.Specification;
-import vadl.viam.graph.Graph;
 import vadl.viam.passes.dummyAbi.DummyAbi;
-import vadl.viam.passes.functionInliner.FunctionInlinerPass;
-import vadl.viam.passes.functionInliner.UninlinedGraph;
 
 /**
  * This is a wrapper class which contains utility functions for the lowering.
@@ -95,6 +92,7 @@ public class LlvmLoweringPass extends Pass {
     var machineStrategies =
         List.of(
             new LlvmInstructionLoweringAddImmediateStrategyImpl(architectureType),
+            new LlvmInstructionLoweringDivisionStrategyImpl(architectureType),
             new LlvmInstructionLoweringConditionalsStrategyImpl(architectureType),
             new LlvmInstructionLoweringUnconditionalJumpsStrategyImpl(architectureType),
             new LlvmInstructionLoweringConditionalBranchesStrategyImpl(architectureType),
@@ -109,7 +107,7 @@ public class LlvmLoweringPass extends Pass {
         );
 
     var machineRecords =
-        generateRecordsForMachineInstructions(passResults, viam, machineStrategies,
+        generateRecordsForMachineInstructions(viam, machineStrategies,
             labelledMachineInstructions);
     var pseudoRecords =
         generateRecordsForPseudoInstructions(viam, pseudoStrategies, labelledMachineInstructions,
@@ -120,19 +118,23 @@ public class LlvmLoweringPass extends Pass {
 
 
   private IdentityHashMap<Instruction, LlvmLoweringRecord> generateRecordsForMachineInstructions(
-      PassResults passResults, Specification viam,
+      Specification viam,
       List<LlvmInstructionLoweringStrategy> strategies,
       Map<MachineInstructionLabel, List<Instruction>> labelledMachineInstructions) {
     var tableGenRecords = new IdentityHashMap<Instruction, LlvmLoweringRecord>();
 
     // Get the supported instructions from the matching.
     // We only instructions which we know about in this pass.
-    // TODO: define a strategy as fallback when there is no matching.
-
-    var uninlined = ensureNonNull(
-        (IdentityHashMap<Instruction, Graph>) passResults.lastResultOf(FunctionInlinerPass.class),
+    /*
+    var functionInlinerResult = ensureNonNull(
+        ((FunctionInlinerPass.Output) passResults
+            .lastResultOf(FunctionInlinerPass.class)),
         () -> Diagnostic.error("Cannot find uninlined behaviors of the instructions",
             viam.sourceLocation()));
+    var uninlined = functionInlinerResult.behaviors();
+    var additionalUninlined = functionInlinerResult.additionalBehaviors();
+     */
+
     // We flip it because we need to know the label for the instruction to
     // apply one of the different lowering strategies.
     // A strategy knows whether it can lower it by the label.
@@ -141,8 +143,7 @@ public class LlvmLoweringPass extends Pass {
     viam.isa().map(isa -> isa.ownInstructions().stream()).orElseGet(Stream::empty)
         .forEach(instruction -> {
           var instructionLabel = instructionLookup.get(instruction);
-          var uninlinedBehavior = (UninlinedGraph) uninlined.get(instruction);
-          ensureNonNull(uninlinedBehavior, "uninlinedBehavior graph must exist");
+
           for (var strategy : strategies) {
             if (!strategy.isApplicable(instructionLabel)) {
               // Try next strategy
@@ -151,7 +152,7 @@ public class LlvmLoweringPass extends Pass {
 
             var record = strategy.lower(labelledMachineInstructions,
                 instruction,
-                uninlinedBehavior);
+                instruction.behavior());
 
             // Okay, we have to save record.
             record.ifPresent(llvmLoweringIntermediateResult -> tableGenRecords.put(instruction,

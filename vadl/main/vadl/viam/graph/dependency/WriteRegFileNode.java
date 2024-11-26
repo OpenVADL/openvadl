@@ -55,6 +55,26 @@ public class WriteRegFileNode extends WriteResourceNode implements HasRegisterFi
     this.staticCounterAccess = staticCounterAccess;
   }
 
+  /**
+   * Writes a value to a register file node.
+   *
+   * @param registerFile        the register file to write to.
+   * @param address             the index/address node of the register file.
+   * @param value               the value to be written.
+   * @param staticCounterAccess the {@link Counter} that is written,
+   *                            or null if it is not known
+   * @param condition           the node for the side effect.
+   */
+  public WriteRegFileNode(RegisterFile registerFile, ExpressionNode address,
+                          ExpressionNode value,
+                          @Nullable Counter.RegisterFileCounter staticCounterAccess,
+                          @Nullable ExpressionNode condition) {
+    super(address, value);
+    this.registerFile = registerFile;
+    this.staticCounterAccess = staticCounterAccess;
+    this.condition = condition;
+  }
+
   @Override
   public RegisterFile registerFile() {
     return registerFile;
@@ -90,14 +110,19 @@ public class WriteRegFileNode extends WriteResourceNode implements HasRegisterFi
   @Override
   public Node copy() {
     return new WriteRegFileNode(registerFile,
-        (ExpressionNode) address().copy(), (ExpressionNode) value.copy(),
-        staticCounterAccess);
+        (ExpressionNode) address().copy(),
+        (ExpressionNode) value.copy(),
+        staticCounterAccess,
+        (condition != null ? (ExpressionNode) condition.copy() : null));
   }
 
   @Override
   public Node shallowCopy() {
-    return new WriteRegFileNode(registerFile, Objects.requireNonNull(address), value,
-        staticCounterAccess);
+    return new WriteRegFileNode(registerFile,
+        Objects.requireNonNull(address),
+        value,
+        staticCounterAccess,
+        condition);
   }
 
   @Override

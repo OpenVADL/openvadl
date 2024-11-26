@@ -4,8 +4,6 @@ import java.io.File;
 import java.io.IOException;
 import java.net.URISyntaxException;
 import java.nio.charset.Charset;
-import org.apache.commons.compress.utils.IOUtils;
-import org.apache.velocity.runtime.resource.loader.ClasspathResourceLoader;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 import org.testcontainers.shaded.com.google.common.io.Files;

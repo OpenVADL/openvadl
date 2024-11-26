@@ -106,9 +106,9 @@ public class GenerateConstantMaterialisationPass extends Pass {
 
     var imm =
         ensurePresent(copy.getNodes(FieldRefNode.class).filter(fieldRefNode -> fieldRefNode.usages()
-                    .allMatch(
-                        usage -> !(usage instanceof WriteResourceNode
-                            || usage instanceof ReadResourceNode)))
+                    .noneMatch(
+                        usage -> usage instanceof WriteResourceNode
+                            || usage instanceof ReadResourceNode))
                 .findFirst(),
             () -> Diagnostic.error("Immediate required for instruction", copy.sourceLocation())
         );

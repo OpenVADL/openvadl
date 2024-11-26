@@ -5,6 +5,7 @@ import static vadl.types.BuiltInTable.ADDS;
 import static vadl.types.BuiltInTable.AND;
 import static vadl.types.BuiltInTable.ANDS;
 import static vadl.types.BuiltInTable.EQU;
+import static vadl.types.BuiltInTable.LSL;
 import static vadl.types.BuiltInTable.MUL;
 import static vadl.types.BuiltInTable.NEQ;
 import static vadl.types.BuiltInTable.OR;
@@ -37,7 +38,6 @@ import static vadl.types.BuiltInTable.XORS;
 import static vadl.viam.ViamError.ensure;
 import static vadl.viam.ViamError.ensureNonNull;
 
-import com.google.common.collect.ImmutableMap;
 import java.io.IOException;
 import java.util.Collections;
 import java.util.HashMap;
@@ -61,12 +61,14 @@ import vadl.viam.InstructionSetArchitecture;
 import vadl.viam.Specification;
 import vadl.viam.graph.control.IfNode;
 import vadl.viam.graph.dependency.BuiltInCall;
+import vadl.viam.graph.dependency.FieldAccessRefNode;
 import vadl.viam.graph.dependency.WriteMemNode;
 import vadl.viam.graph.dependency.WriteRegFileNode;
 import vadl.viam.graph.dependency.WriteRegNode;
 import vadl.viam.graph.dependency.WriteResourceNode;
 import vadl.viam.matching.TreeMatcher;
 import vadl.viam.matching.impl.AnyChildMatcher;
+import vadl.viam.matching.impl.AnyConstantValueMatcher;
 import vadl.viam.matching.impl.AnyNodeMatcher;
 import vadl.viam.matching.impl.AnyReadMemMatcher;
 import vadl.viam.matching.impl.AnyReadRegFileMatcher;
@@ -107,8 +109,8 @@ public class IsaMachineInstructionMatchingPass extends Pass implements IsaMatchi
     // The instruction matching happens on the uninlined graph
     // because the field accesses are uninlined.
     IdentityHashMap<Instruction, UninlinedGraph> uninlined =
-        (IdentityHashMap<Instruction, UninlinedGraph>) passResults
-            .lastResultOf(FunctionInlinerPass.class);
+        ((FunctionInlinerPass.Output) passResults
+            .lastResultOf(FunctionInlinerPass.class)).behaviors();
     Objects.requireNonNull(uninlined);
     HashMap<MachineInstructionLabel, List<Instruction>> matched = new HashMap<>();
 
@@ -124,7 +126,7 @@ public class IsaMachineInstructionMatchingPass extends Pass implements IsaMatchi
     var pc = (Counter.RegisterCounter) isa.pc();
 
     isa.ownInstructions().forEach(instruction -> {
-      // Get uninlined or the normal behavior if nothing was uninlined.
+      // Get uninlined or the normal behaviors if nothing was uninlined.
       var behavior = ensureNonNull(uninlined.get(instruction),
           () -> Diagnostic.error("Cannot find the uninlined graph of this instruction",
               instruction.sourceLocation()));
@@ -133,7 +135,9 @@ public class IsaMachineInstructionMatchingPass extends Pass implements IsaMatchi
       // The reason is that most of the time we do not care because
       // the instruction selection will figure out the types anyway.
       // The raw cases where we need the type are typed like addition.
-      if (findAdd32Bit(behavior)) {
+      if (findLui(behavior)) {
+        matched.put(MachineInstructionLabel.LUI, List.of(instruction));
+      } else if (findAdd32Bit(behavior)) {
         matched.put(MachineInstructionLabel.ADD_32, List.of(instruction));
       } else if (findAdd64Bit(behavior)) {
         matched.put(MachineInstructionLabel.ADD_64, List.of(instruction));
@@ -197,8 +201,14 @@ public class IsaMachineInstructionMatchingPass extends Pass implements IsaMatchi
       } else if (pc != null
           && findBranchWithConditional(behavior, Set.of(UGTH))) {
         extend(matched, MachineInstructionLabel.BUGTH, instruction);
-      } else if (findRR_OR_findRI(behavior, List.of(SLTH, ULTH))) {
-        extend(matched, MachineInstructionLabel.LT, instruction);
+      } else if (findRR(behavior, List.of(SLTH))) {
+        extend(matched, MachineInstructionLabel.LTS, instruction);
+      } else if (findRR(behavior, List.of(ULTH))) {
+        extend(matched, MachineInstructionLabel.LTU, instruction);
+      } else if (findRI(behavior, List.of(SLTH))) {
+        extend(matched, MachineInstructionLabel.LTI, instruction);
+      } else if (findRI(behavior, List.of(ULTH))) {
+        extend(matched, MachineInstructionLabel.LTIU, instruction);
       } else if (findWriteMem(behavior)) {
         extend(matched, MachineInstructionLabel.STORE_MEM, instruction);
       } else if (findLoadMem(behavior)) {
@@ -253,6 +263,30 @@ public class IsaMachineInstructionMatchingPass extends Pass implements IsaMatchi
         new WriteResourceMatcherForValue(new AnyChildMatcher(new AnyReadRegFileMatcher())));
 
     return !matched.isEmpty();
+  }
+
+  private boolean findLui(UninlinedGraph behavior) {
+    var fieldAccess = behavior.getNodes(FieldAccessRefNode.class).findFirst();
+
+    if (fieldAccess.isPresent()) {
+      var matched = TreeMatcher.matches(
+              fieldAccess.get()
+                  .fieldAccess()
+                  .accessFunction()
+                  .behavior()
+                  .getNodes(BuiltInCall.class)
+                  .map(x -> x),
+              new BuiltInMatcher(LSL, List.of(
+                  new AnyNodeMatcher(),
+                  new AnyConstantValueMatcher()
+              )))
+          .stream()
+          .findFirst();
+
+      return matched.isPresent() && writesExactlyOneRegisterClass(behavior);
+    }
+
+    return false;
   }
 
   private boolean findAdd32Bit(UninlinedGraph behavior) {

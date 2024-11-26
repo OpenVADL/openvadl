@@ -18,6 +18,7 @@ public class TableGenSelectionWithOutputPattern extends TableGenPattern {
   /**
    * Copy the {@code selector} and {@link #machine} and create new object.
    */
+  @Override
   public TableGenPattern copy() {
     return new TableGenSelectionWithOutputPattern(selector.copy(), machine.copy());
   }

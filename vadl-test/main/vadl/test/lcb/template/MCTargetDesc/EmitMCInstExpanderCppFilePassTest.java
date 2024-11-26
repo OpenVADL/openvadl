@@ -73,13 +73,6 @@ public class EmitMCInstExpanderCppFilePassTest extends AbstractLcbTest {
             case rv64im::BLTZ:
             case rv64im::BGTZ:
             case rv64im::LLA:
-            case rv64im::RV64IM_Ftype_sft_const_mat:
-            case rv64im::RV64IM_Btype_imm_const_mat:
-            case rv64im::RV64IM_Stype_imm_const_mat:
-            case rv64im::RV64IM_Rtype_rs2_const_mat:
-            case rv64im::RV64IM_Itype_imm_const_mat:
-            case rv64im::RV64IM_Utype_imm_const_mat:
-            case rv64im::RV64IM_Jtype_imm_const_mat:
             case rv64im::RESERVED_PSEUDO_RET:
             case rv64im::RESERVED_PSEUDO_CALL:
            \s
@@ -119,13 +112,6 @@ public class EmitMCInstExpanderCppFilePassTest extends AbstractLcbTest {
                 case rv64im::BLTZ:
                 case rv64im::BGTZ:
                 case rv64im::LLA:
-                case rv64im::RV64IM_Ftype_sft_const_mat:
-                case rv64im::RV64IM_Btype_imm_const_mat:
-                case rv64im::RV64IM_Stype_imm_const_mat:
-                case rv64im::RV64IM_Rtype_rs2_const_mat:
-                case rv64im::RV64IM_Itype_imm_const_mat:
-                case rv64im::RV64IM_Utype_imm_const_mat:
-                case rv64im::RV64IM_Jtype_imm_const_mat:
                 case rv64im::RESERVED_PSEUDO_RET:
                 case rv64im::RESERVED_PSEUDO_CALL:
            \s
@@ -238,41 +224,6 @@ public class EmitMCInstExpanderCppFilePassTest extends AbstractLcbTest {
               case rv64im::LLA:
               {
                 MCIExpansion = RV64IM_LLA_expand(MCI);
-                return true;
-              }
-              case rv64im::RV64IM_Ftype_sft_const_mat:
-              {
-                MCIExpansion = RV64IM_ADDI_RV64IM_Ftype_sft_const_mat_expand(MCI);
-                return true;
-              }
-              case rv64im::RV64IM_Btype_imm_const_mat:
-              {
-                MCIExpansion = RV64IM_ADDI_RV64IM_Btype_imm_const_mat_expand(MCI);
-                return true;
-              }
-              case rv64im::RV64IM_Stype_imm_const_mat:
-              {
-                MCIExpansion = RV64IM_ADDI_RV64IM_Stype_imm_const_mat_expand(MCI);
-                return true;
-              }
-              case rv64im::RV64IM_Rtype_rs2_const_mat:
-              {
-                MCIExpansion = RV64IM_ADDI_RV64IM_Rtype_rs2_const_mat_expand(MCI);
-                return true;
-              }
-              case rv64im::RV64IM_Itype_imm_const_mat:
-              {
-                MCIExpansion = RV64IM_ADDI_RV64IM_Itype_imm_const_mat_expand(MCI);
-                return true;
-              }
-              case rv64im::RV64IM_Utype_imm_const_mat:
-              {
-                MCIExpansion = RV64IM_ADDI_RV64IM_Utype_imm_const_mat_expand(MCI);
-                return true;
-              }
-              case rv64im::RV64IM_Jtype_imm_const_mat:
-              {
-                MCIExpansion = RV64IM_ADDI_RV64IM_Jtype_imm_const_mat_expand(MCI);
                 return true;
               }
               case rv64im::RESERVED_PSEUDO_RET:
@@ -583,104 +534,6 @@ public class EmitMCInstExpanderCppFilePassTest extends AbstractLcbTest {
         MCOperand f = MCOperand::createExpr(processorNameValueMCExpr::create(e, processorNameValueMCExpr::VariantKind::VK_RV64IM_lo12, Ctx));
         d.addOperand(f);
         result.push_back(d);
-        return result;
-        }
-                
-                
-        std::vector< MCInst> rv64imMCInstExpander::RV64IM_ADDI_RV64IM_Ftype_sft_const_mat_expand(const MCInst& instruction) const {
-        std::vector< MCInst > result;
-        MCInst a = MCInst();
-        a.setOpcode(processorNameValue::ADDI);
-        a.addOperand(instruction.getOperand(0));
-        a.addOperand(MCOperand::createReg(processorNameValue::X0));
-        const MCExpr* b = MCOperandToMCExpr(instruction.getOperand(1));
-        MCOperand c = MCOperand::createExpr(processorNameValueMCExpr::create(b, processorNameValueMCExpr::VariantKind::VK_RV64IM_lo12, Ctx));
-        a.addOperand(c);
-        result.push_back(a);
-        return result;
-        }
-                
-                
-        std::vector< MCInst> rv64imMCInstExpander::RV64IM_ADDI_RV64IM_Btype_imm_const_mat_expand(const MCInst& instruction) const {
-        std::vector< MCInst > result;
-        MCInst a = MCInst();
-        a.setOpcode(processorNameValue::ADDI);
-        a.addOperand(instruction.getOperand(0));
-        a.addOperand(MCOperand::createReg(processorNameValue::X0));
-        const MCExpr* b = MCOperandToMCExpr(instruction.getOperand(1));
-        MCOperand c = MCOperand::createExpr(processorNameValueMCExpr::create(b, processorNameValueMCExpr::VariantKind::VK_RV64IM_lo12, Ctx));
-        a.addOperand(c);
-        result.push_back(a);
-        return result;
-        }
-                
-                
-        std::vector< MCInst> rv64imMCInstExpander::RV64IM_ADDI_RV64IM_Stype_imm_const_mat_expand(const MCInst& instruction) const {
-        std::vector< MCInst > result;
-        MCInst a = MCInst();
-        a.setOpcode(processorNameValue::ADDI);
-        a.addOperand(instruction.getOperand(0));
-        a.addOperand(MCOperand::createReg(processorNameValue::X0));
-        const MCExpr* b = MCOperandToMCExpr(instruction.getOperand(1));
-        MCOperand c = MCOperand::createExpr(processorNameValueMCExpr::create(b, processorNameValueMCExpr::VariantKind::VK_RV64IM_lo12, Ctx));
-        a.addOperand(c);
-        result.push_back(a);
-        return result;
-        }
-                
-                
-        std::vector< MCInst> rv64imMCInstExpander::RV64IM_ADDI_RV64IM_Rtype_rs2_const_mat_expand(const MCInst& instruction) const {
-        std::vector< MCInst > result;
-        MCInst a = MCInst();
-        a.setOpcode(processorNameValue::ADDI);
-        a.addOperand(instruction.getOperand(0));
-        a.addOperand(MCOperand::createReg(processorNameValue::X0));
-        const MCExpr* b = MCOperandToMCExpr(instruction.getOperand(1));
-        MCOperand c = MCOperand::createExpr(processorNameValueMCExpr::create(b, processorNameValueMCExpr::VariantKind::VK_RV64IM_lo12, Ctx));
-        a.addOperand(c);
-        result.push_back(a);
-        return result;
-        }
-                
-                
-        std::vector< MCInst> rv64imMCInstExpander::RV64IM_ADDI_RV64IM_Itype_imm_const_mat_expand(const MCInst& instruction) const {
-        std::vector< MCInst > result;
-        MCInst a = MCInst();
-        a.setOpcode(processorNameValue::ADDI);
-        a.addOperand(instruction.getOperand(0));
-        a.addOperand(MCOperand::createReg(processorNameValue::X0));
-        const MCExpr* b = MCOperandToMCExpr(instruction.getOperand(1));
-        MCOperand c = MCOperand::createExpr(processorNameValueMCExpr::create(b, processorNameValueMCExpr::VariantKind::VK_RV64IM_lo12, Ctx));
-        a.addOperand(c);
-        result.push_back(a);
-        return result;
-        }
-                
-                
-        std::vector< MCInst> rv64imMCInstExpander::RV64IM_ADDI_RV64IM_Utype_imm_const_mat_expand(const MCInst& instruction) const {
-        std::vector< MCInst > result;
-        MCInst a = MCInst();
-        a.setOpcode(processorNameValue::ADDI);
-        a.addOperand(instruction.getOperand(0));
-        a.addOperand(MCOperand::createReg(processorNameValue::X0));
-        const MCExpr* b = MCOperandToMCExpr(instruction.getOperand(1));
-        MCOperand c = MCOperand::createExpr(processorNameValueMCExpr::create(b, processorNameValueMCExpr::VariantKind::VK_RV64IM_lo12, Ctx));
-        a.addOperand(c);
-        result.push_back(a);
-        return result;
-        }
-                
-                
-        std::vector< MCInst> rv64imMCInstExpander::RV64IM_ADDI_RV64IM_Jtype_imm_const_mat_expand(const MCInst& instruction) const {
-        std::vector< MCInst > result;
-        MCInst a = MCInst();
-        a.setOpcode(processorNameValue::ADDI);
-        a.addOperand(instruction.getOperand(0));
-        a.addOperand(MCOperand::createReg(processorNameValue::X0));
-        const MCExpr* b = MCOperandToMCExpr(instruction.getOperand(1));
-        MCOperand c = MCOperand::createExpr(processorNameValueMCExpr::create(b, processorNameValueMCExpr::VariantKind::VK_RV64IM_lo12, Ctx));
-        a.addOperand(c);
-        result.push_back(a);
         return result;
         }
                 

@@ -34,11 +34,6 @@ public final class TableGenInstructionRenderer {
    * It will *ONLY* print the anonymous pattern if the pattern is actually lowerable.
    */
   public static String lower(TableGenMachineInstruction instruction) {
-    var anonymousPatterns = instruction.getAnonymousPatterns().stream()
-        .filter(TableGenPattern::isPatternLowerable)
-        .filter(x -> x instanceof TableGenSelectionWithOutputPattern)
-        .map(x -> (TableGenSelectionWithOutputPattern) x)
-        .toList();
     return String.format("""
             def %s : Instruction
             {
@@ -79,8 +74,6 @@ public final class TableGenInstructionRenderer {
             let Uses = [ %s ];
             let Defs = [ %s ];
             }
-            
-            %s
             """,
         instruction.getName(),
         instruction.getNamespace(),
@@ -111,11 +104,7 @@ public final class TableGenInstructionRenderer {
             .map(TableGenInstructionRenderer::lower)
             .collect(Collectors.joining(",")),
         instruction.getUses().stream().map(Definition::simpleName).collect(Collectors.joining(",")),
-        instruction.getDefs().stream().map(Definition::simpleName).collect(Collectors.joining(",")),
-        anonymousPatterns
-            .stream()
-            .map(x -> lower(instruction, x))
-            .collect(Collectors.joining("\n"))
+        instruction.getDefs().stream().map(Definition::simpleName).collect(Collectors.joining(","))
     );
   }
 

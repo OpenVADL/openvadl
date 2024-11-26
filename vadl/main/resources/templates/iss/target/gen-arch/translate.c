@@ -195,7 +195,7 @@ static bool trans_jal(DisasContext *ctx, arg_jal *a) {
     tcg_gen_movi_tl(succ_pc, next_pc);
     gen_set_x(ctx, a->rd, succ_pc); // <-- is getting optimized
 
-    gen_goto_tb_rel(ctx, a->imm);
+    gen_goto_tb_rel(ctx, a->immS);
     ctx->base.is_jmp = DISAS_NORETURN;
     return true;
 }

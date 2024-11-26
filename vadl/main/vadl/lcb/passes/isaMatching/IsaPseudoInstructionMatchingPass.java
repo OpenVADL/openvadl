@@ -50,8 +50,8 @@ public class IsaPseudoInstructionMatchingPass extends Pass implements IsaMatchin
     // The instruction matching happens on the uninlined graph
     // because the field accesses are uninlined.
     IdentityHashMap<Instruction, UninlinedGraph> uninlined =
-        (IdentityHashMap<Instruction, UninlinedGraph>) passResults
-            .lastResultOf(FunctionInlinerPass.class);
+        ((FunctionInlinerPass.Output) passResults
+            .lastResultOf(FunctionInlinerPass.class)).behaviors();
     Objects.requireNonNull(uninlined);
     Map<MachineInstructionLabel, List<Instruction>> machineInstructionMatched =
         (Map<MachineInstructionLabel, List<Instruction>>) passResults.lastResultOf(

@@ -47,6 +47,25 @@ public class WriteRegNode extends WriteResourceNode {
     this.staticCounterAccess = staticCounterAccess;
   }
 
+
+  /**
+   * Writes a value to a register node.
+   *
+   * @param register            the register node to write to
+   * @param value               the value to write to the register
+   * @param staticCounterAccess the {@link Counter} that is written,
+   *                            or null if no counter is written
+   * @param condition           the side condition of the node.
+   */
+  public WriteRegNode(Register register, ExpressionNode value,
+                      @Nullable Counter.RegisterCounter staticCounterAccess,
+                      @Nullable ExpressionNode condition) {
+    super(null, value);
+    this.register = register;
+    this.staticCounterAccess = staticCounterAccess;
+    this.condition = condition;
+  }
+
   public Register register() {
     return register;
   }
@@ -81,12 +100,15 @@ public class WriteRegNode extends WriteResourceNode {
 
   @Override
   public Node copy() {
-    return new WriteRegNode(register, (ExpressionNode) value.copy(), staticCounterAccess);
+    return new WriteRegNode(register,
+        (ExpressionNode) value.copy(),
+        staticCounterAccess,
+        (condition != null ? (ExpressionNode) condition.copy() : null));
   }
 
   @Override
   public Node shallowCopy() {
-    return new WriteRegNode(register, value, staticCounterAccess);
+    return new WriteRegNode(register, value, staticCounterAccess, condition);
   }
 
   @Override

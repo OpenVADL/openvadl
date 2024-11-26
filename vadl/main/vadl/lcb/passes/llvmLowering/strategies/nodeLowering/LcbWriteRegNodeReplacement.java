@@ -52,7 +52,7 @@ public class LcbWriteRegNodeReplacement
         // 4. the immediate offset
 
         // idea: it would be good to have a link from the side effect to if-node.
-        var conditional = getConditional(Objects.requireNonNull(writeRegNode.graph()));
+        var conditional = (BuiltInCall) writeRegNode.condition();
         var condCond = LlvmCondCode.from(conditional.builtIn());
         if (condCond == null) {
           throw new ViamError("CondCode must be not null");
@@ -88,21 +88,5 @@ public class LcbWriteRegNodeReplacement
   @Override
   public List<GraphVisitor.NodeApplier<? extends Node, ? extends Node>> recursiveHooks() {
     return replacer;
-  }
-
-  private BuiltInCall getConditional(Graph behavior) {
-    var builtIn = behavior.getNodes(BuiltInCall.class)
-        .filter(
-            x -> Set.of(BuiltInTable.EQU, BuiltInTable.NEQ, BuiltInTable.SLTH, BuiltInTable.ULTH,
-                    BuiltInTable.SGEQ, BuiltInTable.UGEQ, BuiltInTable.SLEQ, BuiltInTable.ULEQ)
-                .contains(x.builtIn()))
-        .findFirst();
-
-    if (builtIn.isEmpty()) {
-      throw new ViamError(
-          "Visitor wrongly used. Are you sure this is a conditional branch instruction?");
-    }
-
-    return builtIn.get();
   }
 }

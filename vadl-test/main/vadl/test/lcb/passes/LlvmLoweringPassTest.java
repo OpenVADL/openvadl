@@ -64,6 +64,27 @@ public class LlvmLoweringPassTest extends AbstractLcbTest {
     );
   }
 
+  private static TestOutput createTestOutputRRWithConditionalToImmediate(LlvmCondCode condCode,
+                                                                         String machineInstruction,
+                                                                         LlvmCondCode condCodeWithImmediate,
+                                                                         String machineInstructionWithImmediate,
+                                                                         LlvmCondCode condCodeAlternative,
+                                                                         String machineInstructionAlternative) {
+    return new TestOutput(
+        List.of(new TableGenInstructionOperand(DUMMY_NODE, "X", "rs1"),
+            new TableGenInstructionOperand(DUMMY_NODE, "X", "rs2")),
+        List.of(new TableGenInstructionOperand(DUMMY_NODE, "X", "rd")),
+        List.of(String.format("(setcc X:$rs1, X:$rs2, %s)", condCode),
+            String.format("(setcc X:$rs1, X:$rs2, %s)", condCodeWithImmediate),
+            String.format("(setcc X:$rs1, X:$rs2, %s)", condCodeAlternative)),
+        List.of(String.format("(%s X:$rs1, X:$rs2)", machineInstruction),
+            String.format("(%s (XOR X:$rs1, X:$rs2), 1)", machineInstructionWithImmediate),
+            String.format("(%s X0, (XOR X:$rs1, X:$rs2))", machineInstructionAlternative)),
+        createEmptyFlags(),
+        false
+    );
+  }
+
   private static TestOutput createTestOutputRRWithConditionalBranch(LlvmCondCode condCode,
                                                                     String machineInstruction,
                                                                     LlvmCondCode inverseCondCode) {
@@ -146,6 +167,30 @@ public class LlvmLoweringPassTest extends AbstractLcbTest {
             condCode)),
         List.of(String.format("(%s X:$rs1, %s:$%s)", machineInstruction, immediateOperand,
             immediateName)),
+        createEmptyFlags(),
+        false
+    );
+  }
+
+  private static TestOutput createTestOutputRIWithConditionalWithImmediate(String immediateOperand,
+                                                                           String immediateName,
+                                                                           LlvmCondCode condCode,
+                                                                           String machineInstruction,
+                                                                           LlvmCondCode condCode2,
+                                                                           String machineInstruction2) {
+    return new TestOutput(
+        List.of(new TableGenInstructionOperand(DUMMY_NODE, "X", "rs1"),
+            new TableGenInstructionOperand(DUMMY_NODE, immediateOperand, immediateName)),
+        List.of(new TableGenInstructionOperand(DUMMY_NODE, "X", "rd")),
+        List.of(String.format("(setcc X:$rs1, %s:$%s, %s)", immediateOperand, immediateName,
+                condCode),
+            String.format("(setcc X:$rs1, %s:$%s, %s)", immediateOperand, immediateName,
+                condCode2)),
+        List.of(String.format("(%s X:$rs1, %s:$%s)", machineInstruction, immediateOperand,
+                immediateName),
+            String.format("(%s X0, (XORI X:$rs1, %s:$%s))", machineInstruction2, immediateOperand,
+                immediateName)
+        ),
         createEmptyFlags(),
         false
     );
@@ -273,10 +318,12 @@ public class LlvmLoweringPassTest extends AbstractLcbTest {
      */
     expectedResults.put("ADD", createTestOutputRR("add", "ADD"));
     expectedResults.put("SUB", createTestOutputRR("sub", "SUB"));
-    expectedResults.put("MUL", createTestOutputRR("smullohi", "MUL"));
+    expectedResults.put("MUL", createTestOutputRR("mul", "MUL"));
     expectedResults.put("XOR", createTestOutputRR("xor", "XOR"));
     expectedResults.put("AND", createTestOutputRR("and", "AND"));
     expectedResults.put("OR", createTestOutputRR("or", "OR"));
+    expectedResults.put("DIV", createTestOutputRR("sdiv", "DIV"));
+    expectedResults.put("DIVU", createTestOutputRR("udiv", "DIVU"));
     expectedResults.put("ADDI",
         createTestOutputAddI());
     expectedResults.put("ORI",
@@ -287,15 +334,20 @@ public class LlvmLoweringPassTest extends AbstractLcbTest {
     CONDITIONALS
      */
     expectedResults.put("SLT",
-        createTestOutputRRWithConditional(LlvmCondCode.SETLT, "SLT"));
+        createTestOutputRRWithConditionalToImmediate(LlvmCondCode.SETLT, "SLT",
+            LlvmCondCode.SETEQ,
+            "SLTIU",
+            LlvmCondCode.SETNE,
+            "SLTU"));
     expectedResults.put("SLTU",
         createTestOutputRRWithConditional(LlvmCondCode.SETULT, "SLTU"));
     expectedResults.put("SLTI",
         createTestOutputRIWithConditional("RV64IM_Itype_immAsInt64", "imm",
             LlvmCondCode.SETLT, "SLTI"));
-    expectedResults.put("SLTUI",
-        createTestOutputRIWithConditional("RV64IM_Btype_immAsInt64", "imm",
-            LlvmCondCode.SETULT, "SLTUI"));
+    expectedResults.put("SLTIU",
+        createTestOutputRIWithConditionalWithImmediate("RV64IM_Itype_immAsInt64", "imm",
+            LlvmCondCode.SETULT, "SLTIU",
+            LlvmCondCode.SETNE, "SLTU"));
     /*
     CONDITIONAL BRANCHES
      */
@@ -309,7 +361,8 @@ public class LlvmLoweringPassTest extends AbstractLcbTest {
         createTestOutputRRWithConditionalBranch(LlvmCondCode.SETLT, "BLT", LlvmCondCode.SETGT));
     expectedResults.put("BLTU",
         createTestOutputRRWithConditionalBranch(LlvmCondCode.SETULT, "BLTU", LlvmCondCode.SETUGT));
-    expectedResults.put("BNE", createTestOutputRRWithConditionalBranch(LlvmCondCode.SETNE, "BNE", LlvmCondCode.SETEQ));
+    expectedResults.put("BNE",
+        createTestOutputRRWithConditionalBranch(LlvmCondCode.SETNE, "BNE", LlvmCondCode.SETEQ));
     /*
     INDIRECT CALL
      */
