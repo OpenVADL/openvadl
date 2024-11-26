@@ -34,6 +34,10 @@ public class ExprSaveNode extends ExpressionNode {
     this.value = value;
   }
 
+  public ExpressionNode value() {
+    return value;
+  }
+
   @Override
   public Node copy() {
     return new ExprSaveNode(value.copy(ExpressionNode.class));

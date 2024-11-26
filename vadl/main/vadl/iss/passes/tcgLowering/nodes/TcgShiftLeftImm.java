@@ -9,9 +9,9 @@ import vadl.viam.graph.dependency.ExpressionNode;
  * This class extends TcgBinaryImmOpNode to perform a left shift operation
  * on a source variable by a specified immediate value.
  */
-public class TcgShiftLeft extends TcgBinaryOpNode {
+public class TcgShiftLeftImm extends TcgBinaryImmOpNode {
 
-  public TcgShiftLeft(TcgV res, TcgV arg, TcgV shiftAmount) {
+  public TcgShiftLeftImm(TcgV res, TcgV arg, ExpressionNode shiftAmount) {
     super(res, arg, shiftAmount, res.width());
   }
 
@@ -22,11 +22,11 @@ public class TcgShiftLeft extends TcgBinaryOpNode {
 
   @Override
   public Node copy() {
-    return new TcgShiftLeft(dest, arg1, arg2);
+    return new TcgShiftLeftImm(dest, arg1, arg2.copy(ExpressionNode.class));
   }
 
   @Override
   public Node shallowCopy() {
-    return new TcgShiftLeft(dest, arg1, arg2);
+    return new TcgShiftLeftImm(dest, arg1, arg2);
   }
 }

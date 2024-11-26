@@ -31,6 +31,7 @@ import vadl.iss.passes.tcgLowering.nodes.TcgSetLabel;
 import vadl.iss.passes.tcgLowering.nodes.TcgSetReg;
 import vadl.iss.passes.tcgLowering.nodes.TcgSetRegFile;
 import vadl.iss.passes.tcgLowering.nodes.TcgShiftLeft;
+import vadl.iss.passes.tcgLowering.nodes.TcgShiftLeftImm;
 import vadl.iss.passes.tcgLowering.nodes.TcgStoreMemory;
 import vadl.iss.passes.tcgLowering.nodes.TcgTruncateNode;
 import vadl.pass.PassName;
@@ -514,7 +515,7 @@ class TcgLoweringExecutor extends GraphProcessor<Node> {
         return new TcgAddNode(res, asOp(args.get(0)).dest(), asOp(args.get(1)).dest());
       }
     } else if (call.builtIn() == BuiltInTable.LSL && isBinaryImm(args)) {
-      return new TcgShiftLeft(res, asOp(args.get(0)).dest(), (ExpressionNode) args.get(1));
+      return new TcgShiftLeftImm(res, asOp(args.get(0)).dest(), (ExpressionNode) args.get(1));
     } else if (call.builtIn() == BuiltInTable.EQU && !isBinaryImm(args)) {
       return new TcgSetCond(res, asOp(args.get(0)).dest(), asOp(args.get(1)).dest(),
           TcgCondition.EQ);

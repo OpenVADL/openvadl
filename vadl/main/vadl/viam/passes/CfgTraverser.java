@@ -43,8 +43,8 @@ public interface CfgTraverser {
       if (currNode instanceof AbstractEndNode) {
         // When we find the end node, we return it
         return (AbstractEndNode) currNode;
-      } else if (currNode instanceof DirectionalNode direNode) {
-        currNode = direNode.next();
+      } else if (currNode instanceof DirectionalNode dirNode) {
+        currNode = traverseDirectional(dirNode);
       } else if (currNode instanceof ControlSplitNode splitNode) {
         // Handle all branches of the nested control split node
         currNode = traverseControlSplit(splitNode);
@@ -66,6 +66,10 @@ public interface CfgTraverser {
     }
 
     onControlNode(controlNode);
+  }
+
+  default ControlNode traverseDirectional(DirectionalNode dirNode) {
+    return dirNode.next();
   }
 
 

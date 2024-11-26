@@ -4,7 +4,10 @@ import static vadl.viam.ViamError.ensure;
 
 import java.util.Objects;
 import java.util.concurrent.atomic.AtomicInteger;
+import org.checkerframework.checker.units.qual.N;
 import org.jetbrains.annotations.Nullable;
+import vadl.viam.Register;
+import vadl.viam.RegisterFile;
 import vadl.viam.Resource;
 import vadl.viam.graph.dependency.ExpressionNode;
 import vadl.viam.graph.dependency.LetNode;
@@ -18,6 +21,7 @@ public class TcgV {
 
   public enum Kind {
     TMP,
+    CONST,
     REG,
     REG_FILE
   }
@@ -28,6 +32,8 @@ public class TcgV {
   Tcg_32_64 width;
 
   private final Kind kind;
+  @Nullable
+  private final ExpressionNode constValue;
   @Nullable
   private final Resource registerOrFile;
   @Nullable
@@ -44,9 +50,11 @@ public class TcgV {
     this.isDest = false;
     this.registerOrFile = null;
     this.regFileIndex = null;
+    this.constValue = null;
   }
 
   public TcgV(String name, Tcg_32_64 width, Kind kind,
+              @Nullable ExpressionNode constValue,
               @Nullable Resource registerOrFile,
               @Nullable ExpressionNode regFileIndex,
               boolean isDest
@@ -57,6 +65,7 @@ public class TcgV {
     this.registerOrFile = registerOrFile;
     this.regFileIndex = regFileIndex;
     this.isDest = isDest;
+    this.constValue = constValue;
   }
 
   // TODO: Remove
@@ -67,6 +76,23 @@ public class TcgV {
   // TODO: Remove
   public static TcgV of(String name, Tcg_32_64 width) {
     return new TcgV("v" + name, width);
+  }
+
+  public static TcgV tmp(String name, Tcg_32_64 width) {
+    return new TcgV(name, width, Kind.TMP, null, null, null, false);
+  }
+
+  public static TcgV constant(String name, Tcg_32_64 width, ExpressionNode constValue) {
+    return new TcgV(name, width, Kind.CONST, constValue, null, null, false);
+  }
+
+  public static TcgV reg(String name, Tcg_32_64 width, Register reg) {
+    return new TcgV(name, width, Kind.REG, null, reg, null, false);
+  }
+
+  public static TcgV regFile(String name, Tcg_32_64 width, RegisterFile regFile,
+                             ExpressionNode regFileIndex, boolean isDest) {
+    return new TcgV(name, width, Kind.REG_FILE, null, regFile, regFileIndex, isDest);
   }
 
   private static final AtomicInteger counter = new AtomicInteger(0);
@@ -87,6 +113,11 @@ public class TcgV {
 
   public Kind kind() {
     return kind;
+  }
+
+  public ExpressionNode constValue() {
+    ensure(constValue != null, "constValue is null");
+    return constValue;
   }
 
   public Resource registerOrFile() {

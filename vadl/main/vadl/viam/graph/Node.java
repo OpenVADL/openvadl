@@ -412,6 +412,9 @@ public abstract class Node implements WithSourceLocation {
   /**
    * Replaces the current node with the specified replacement node.
    *
+   * <p>Note, that only usages and predecessors are updated. This means that
+   * inputs or successors are not automatically transferred to the replacement.</p>
+   *
    * @param <T>         the type of the node, which extends Node.
    * @param replacement the node to replace the current node with.
    * @return the replacement node.
@@ -594,7 +597,7 @@ public abstract class Node implements WithSourceLocation {
    */
   protected void updatePredecessorOf(@Nullable Node oldSuccessor, @Nullable Node newSuccessor) {
     ensure(isActive() && (newSuccessor == null || newSuccessor.isActiveIn(graph())),
-        "failed to set remove %s as predecessor from %s and adding it to %s", this, oldSuccessor,
+        "failed to set removed %s as predecessor from %s and adding it to %s", this, oldSuccessor,
         newSuccessor);
     if (oldSuccessor != newSuccessor) {
       if (oldSuccessor != null && oldSuccessor.predecessor != null) {

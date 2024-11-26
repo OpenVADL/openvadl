@@ -26,6 +26,7 @@ import vadl.viam.Register;
 import vadl.viam.RegisterFile;
 import vadl.viam.Resource;
 import vadl.viam.Specification;
+import vadl.viam.ViamError;
 import vadl.viam.graph.Graph;
 import vadl.viam.graph.ViamGraphError;
 import vadl.viam.graph.control.ControlNode;
@@ -303,12 +304,13 @@ class IssVariableAllocator {
   private TcgV createTcgV(Variable var, boolean isRegFileWrite) {
     // generate TCGv
     var tcgV = switch (var.kind()) {
-      case TMP -> new TcgV("tmp_" + tmpCnt++, target_size, TcgV.Kind.TMP, null, null, false);
-      case REG -> new TcgV(var.name(), target_size, TcgV.Kind.REG, var.regOrFile(), null, false);
+      case TMP -> TcgV.tmp("tmp_" + tmpCnt++, target_size);
+      case REG -> TcgV.reg(var.name(), target_size, (Register) requireNonNull(var.regOrFile()));
       case REG_FILE -> {
         var postfix = isRegFileWrite ? "_dest" : "";
-        yield new TcgV(var.name() + postfix, target_size, TcgV.Kind.REG_FILE, var.regOrFile(),
-            var.fileAddr(), isRegFileWrite);
+        yield TcgV.regFile(var.name() + postfix, target_size,
+            (RegisterFile) requireNonNull(var.regOrFile()),
+            requireNonNull(var.fileAddr()), isRegFileWrite);
       }
     };
 
