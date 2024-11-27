@@ -1,5 +1,6 @@
 package vadl.iss.passes;
 
+import vadl.viam.graph.dependency.ConstantNode;
 import vadl.viam.graph.dependency.ExpressionNode;
 import vadl.viam.graph.dependency.FieldAccessRefNode;
 import vadl.viam.graph.dependency.FieldRefNode;
@@ -14,6 +15,8 @@ public class TcgPassUtils {
       return fieldRefNode.formatField().simpleName();
     } else if (expr instanceof FieldAccessRefNode fieldAccessRefNode) {
       return fieldAccessRefNode.fieldAccess().simpleName();
+    } else if (expr instanceof ConstantNode constantNode) {
+      return constantNode.constant().asVal().asString("0x", 16, false);
     } else {
       return "n" + expr.id;
     }

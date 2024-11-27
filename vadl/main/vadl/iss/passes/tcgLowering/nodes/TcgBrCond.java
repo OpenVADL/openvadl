@@ -76,7 +76,7 @@ public class TcgBrCond extends TcgLabelNode {
 
   @Override
   public String cCode(Function<Node, String> nodeToCCode) {
-    return "tcg_gen_brcondi_" + varArg.width() + "("
+    return "tcg_gen_brcond_" + varArg.width() + "("
         + condition.cCode() + ", "
         + cmpArg1().varName() + ", "
         + cmpArg2().varName() + ", "

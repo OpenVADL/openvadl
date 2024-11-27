@@ -11,7 +11,6 @@ import java.util.stream.Collectors;
 import vadl.dump.InfoEnricher;
 import vadl.dump.InfoUtils;
 import vadl.dump.entities.DefinitionEntity;
-import vadl.iss.passes.IssReadVarAssignPass;
 import vadl.iss.passes.IssVariableAllocationPass;
 import vadl.iss.passes.safeResourceRead.IssSafeResourceReadPass;
 import vadl.iss.passes.tcgLowering.TcgV;
