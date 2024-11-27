@@ -3,7 +3,6 @@ package vadl.iss.passes.tcgLowering.nodes;
 import java.util.List;
 import vadl.iss.passes.tcgLowering.TcgExtend;
 import vadl.iss.passes.tcgLowering.TcgV;
-import vadl.iss.passes.tcgLowering.TcgWidth;
 import vadl.iss.passes.tcgLowering.Tcg_8_16_32;
 import vadl.javaannotations.viam.DataValue;
 import vadl.viam.graph.Node;
@@ -38,12 +37,12 @@ public class TcgExtendNode extends TcgUnaryOpNode {
 
   @Override
   public Node copy() {
-    return new TcgExtendNode(fromSize, extend, res, arg);
+    return new TcgExtendNode(fromSize, extend, dest, arg);
   }
 
   @Override
   public Node shallowCopy() {
-    return new TcgExtendNode(fromSize, extend, res, arg);
+    return new TcgExtendNode(fromSize, extend, dest, arg);
   }
 
   @Override

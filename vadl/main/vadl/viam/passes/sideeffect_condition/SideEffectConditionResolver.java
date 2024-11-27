@@ -6,7 +6,6 @@ import javax.annotation.Nullable;
 import vadl.types.BuiltInTable;
 import vadl.viam.Constant;
 import vadl.viam.graph.Graph;
-import vadl.viam.graph.Node;
 import vadl.viam.graph.control.AbstractBeginNode;
 import vadl.viam.graph.control.AbstractEndNode;
 import vadl.viam.graph.control.ControlNode;

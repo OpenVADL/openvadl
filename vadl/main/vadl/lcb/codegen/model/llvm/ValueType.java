@@ -5,7 +5,6 @@ import vadl.types.BitsType;
 import vadl.types.SIntType;
 import vadl.types.Type;
 import vadl.types.UIntType;
-import vadl.viam.ViamError;
 
 /**
  * LLVM types which can be used.

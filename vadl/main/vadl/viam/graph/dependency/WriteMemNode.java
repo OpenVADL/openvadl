@@ -2,6 +2,7 @@ package vadl.viam.graph.dependency;
 
 import java.util.List;
 import java.util.Objects;
+import javax.annotation.Nonnull;
 import vadl.javaannotations.viam.DataValue;
 import vadl.viam.Memory;
 import vadl.viam.Resource;
@@ -49,6 +50,12 @@ public class WriteMemNode extends WriteResourceNode {
 
   public int words() {
     return words;
+  }
+
+  @Nonnull
+  @Override
+  public ExpressionNode address() {
+    return super.address();
   }
 
   @Override

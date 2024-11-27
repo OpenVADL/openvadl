@@ -8,7 +8,6 @@ import vadl.lcb.template.LcbTemplateRenderingPass;
 import vadl.pass.PassResults;
 import vadl.viam.Specification;
 import vadl.viam.passes.dummyAbi.DummyAbi;
-import vadl.viam.passes.dummyAbi.DummyAbiPass;
 
 /**
  * This file contains code which handles the triple.

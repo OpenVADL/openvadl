@@ -3,8 +3,6 @@ package vadl.types;
 import java.util.Collection;
 import java.util.List;
 import javax.annotation.Nullable;
-import vadl.error.Diagnostic;
-import vadl.viam.ViamError;
 
 /**
  * An arbitrary sized sequence of Bits to represent anything.

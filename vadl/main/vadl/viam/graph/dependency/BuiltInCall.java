@@ -2,7 +2,6 @@ package vadl.viam.graph.dependency;
 
 import static java.util.Collections.reverse;
 
-import java.util.Iterator;
 import java.util.List;
 import vadl.javaannotations.viam.DataValue;
 import vadl.types.BuiltInTable;

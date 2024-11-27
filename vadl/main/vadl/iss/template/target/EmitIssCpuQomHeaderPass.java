@@ -1,6 +1,5 @@
 package vadl.iss.template.target;
 
-import java.util.List;
 import java.util.Map;
 import vadl.configuration.IssConfiguration;
 import vadl.iss.template.IssTemplateRenderingPass;

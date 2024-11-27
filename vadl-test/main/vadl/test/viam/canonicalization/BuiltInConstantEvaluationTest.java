@@ -2,16 +2,12 @@ package vadl.test.viam.canonicalization;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertInstanceOf;
-import static org.junit.jupiter.api.Assertions.assertTrue;
 import static vadl.test.TestUtils.findDefinitionByNameIn;
 
 import java.io.IOException;
 import java.util.stream.Stream;
 import org.junit.jupiter.api.DynamicTest;
 import org.junit.jupiter.api.TestFactory;
-import vadl.configuration.GeneralConfiguration;
-import vadl.dump.HtmlDumpPass;
-import vadl.pass.PassOrder;
 import vadl.pass.PassOrders;
 import vadl.pass.exception.DuplicatedPassKeyException;
 import vadl.test.AbstractTest;
@@ -22,7 +18,6 @@ import vadl.viam.graph.control.ReturnNode;
 import vadl.viam.graph.dependency.ConstantNode;
 import vadl.viam.passes.canonicalization.CanonicalizationPass;
 import vadl.viam.passes.canonicalization.Canonicalizer;
-import vadl.viam.passes.typeCastElimination.TypeCastEliminationPass;
 import vadl.viam.passes.verification.ViamVerificationPass;
 
 /**

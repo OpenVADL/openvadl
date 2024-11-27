@@ -3,7 +3,6 @@ package vadl.lcb.passes.llvmLowering.immediates;
 import static vadl.viam.ViamError.ensurePresent;
 
 import java.io.IOException;
-import java.util.Arrays;
 import java.util.List;
 import java.util.stream.Stream;
 import org.jetbrains.annotations.Nullable;

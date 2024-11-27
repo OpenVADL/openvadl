@@ -5,19 +5,14 @@ import static vadl.test.TestUtils.arbitraryUnsignedInt;
 
 import java.io.IOException;
 import java.math.BigInteger;
-import java.util.HashMap;
-import java.util.Objects;
 import java.util.function.Function;
 import java.util.stream.IntStream;
 import java.util.stream.Stream;
 import net.jqwik.api.Arbitraries;
-import net.jqwik.api.Arbitrary;
 import org.junit.jupiter.api.DynamicTest;
 import org.junit.jupiter.api.TestFactory;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import vadl.types.DataType;
-import vadl.viam.Constant;
 
 /**
  * Tests the RV64I instructions set.

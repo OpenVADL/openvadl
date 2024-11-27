@@ -1,7 +1,6 @@
 package vadl.pass;
 
 import java.io.IOException;
-import java.io.OutputStreamWriter;
 import java.io.StringWriter;
 import java.io.Writer;
 import vadl.configuration.GeneralConfiguration;

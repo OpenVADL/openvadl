@@ -1,6 +1,7 @@
 package vadl.iss.passes.tcgLowering.nodes;
 
 import java.util.List;
+import java.util.function.Function;
 import vadl.iss.passes.tcgLowering.TcgV;
 import vadl.javaannotations.viam.DataValue;
 import vadl.javaannotations.viam.Input;
@@ -43,7 +44,7 @@ public final class TcgSetRegFile extends TcgOpNode {
 
     var cppType = registerFile.resultType().fittingCppType();
     ensure(cppType != null, "Couldn't fit cpp type");
-    ensure(res.width().width <= cppType.bitWidth(),
+    ensure(dest.width().width <= cppType.bitWidth(),
         "register file result width does not fit in node's result var width");
   }
 
@@ -57,13 +58,21 @@ public final class TcgSetRegFile extends TcgOpNode {
   }
 
   @Override
+  public String cCode(Function<Node, String> nodeToCCode) {
+    return "gen_set_" + registerFile.simpleName().toLowerCase()
+        + "(ctx, " + nodeToCCode.apply(index)
+        + ", " + dest.varName()
+        + ");";
+  }
+
+  @Override
   public Node copy() {
-    return new TcgSetRegFile(registerFile, index.copy(ExpressionNode.class), res);
+    return new TcgSetRegFile(registerFile, index.copy(ExpressionNode.class), dest);
   }
 
   @Override
   public Node shallowCopy() {
-    return new TcgSetRegFile(registerFile, index, res);
+    return new TcgSetRegFile(registerFile, index, dest);
   }
 
   @Override

@@ -14,8 +14,6 @@ import vadl.lcb.passes.llvmLowering.tablegen.lowering.TableGenPatternPrinterVisi
 import vadl.lcb.passes.llvmLowering.tablegen.model.TableGenInstructionOperand;
 import vadl.lcb.passes.llvmLowering.tablegen.model.TableGenPattern;
 import vadl.lcb.passes.llvmLowering.tablegen.model.TableGenSelectionWithOutputPattern;
-import vadl.lcb.passes.llvmLowering.tablegen.model.parameterIdentity.ParameterIdentity;
-import vadl.lcb.passes.llvmLowering.tablegen.model.parameterIdentity.ParameterTypeAndNameIdentity;
 import vadl.pass.PassKey;
 import vadl.pass.exception.DuplicatedPassKeyException;
 import vadl.test.lcb.AbstractLcbTest;
@@ -50,8 +48,9 @@ public class LlvmLoweringPassPseudoInstructionTest extends AbstractLcbTest {
     expectedResults.put("CALL", new TestOutput(Collections.emptyList(), Collections.emptyList(),
         Collections.emptyList(), Collections.emptyList(), getPseudoFlags()));
     expectedResults.put("J", new TestOutput(Collections.emptyList(), Collections.emptyList(),
-        List.of("(br bb:$imm)"), List.of("(J RV64IM_Jtype_immAsLabel:$imm)"), new LlvmLoweringPass.Flags(
-        true, false, false, false, true, false, false, false)));
+        List.of("(br bb:$imm)"), List.of("(J RV64IM_Jtype_immAsLabel:$imm)"),
+        new LlvmLoweringPass.Flags(
+            true, false, false, false, true, false, false, false)));
     expectedResults.put("MOV",
         new TestOutput(List.of(createOperand("X", "rd")), List.of(createOperand("X", "rs1")),
             List.of("(add X:$rs1, (i64 0))", "(add AddrFI:$rs1, (i64 0))"),

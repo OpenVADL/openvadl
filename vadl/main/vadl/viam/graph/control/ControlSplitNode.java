@@ -6,7 +6,6 @@ import vadl.javaannotations.viam.Successor;
 import vadl.viam.graph.GraphVisitor;
 import vadl.viam.graph.Node;
 import vadl.viam.graph.NodeList;
-import vadl.viam.graph.dependency.ExpressionNode;
 
 /**
  * Represents a control flow node that causes diverging execution.

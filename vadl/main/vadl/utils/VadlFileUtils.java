@@ -6,7 +6,6 @@ import com.google.common.base.Splitter;
 import com.google.common.collect.Iterables;
 import java.io.BufferedReader;
 import java.io.File;
-import java.io.FileWriter;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.Writer;

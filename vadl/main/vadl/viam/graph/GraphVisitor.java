@@ -4,7 +4,6 @@ import static vadl.viam.ViamError.ensure;
 
 import java.util.List;
 import javax.annotation.Nullable;
-import vadl.lcb.passes.llvmLowering.domain.selectionDag.LlvmUnlowerableSD;
 
 /**
  * The {@link GraphVisitor} interface represents a visitor that can visit nodes in a graph and

@@ -2,7 +2,6 @@ package vadl.pass;
 
 import java.util.LinkedHashMap;
 import java.util.List;
-import java.util.Optional;
 import javax.annotation.Nullable;
 import vadl.pass.exception.PassError;
 
@@ -85,6 +84,11 @@ public final class PassResults {
               passClass));
     }
     return result;
+  }
+
+  public <T extends Pass, R> R lastResultOf(Class<T> passClass, Class<R> type) {
+    var result = lastResultOf(passClass);
+    return type.cast(result);
   }
 
   /**

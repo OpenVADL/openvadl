@@ -5,8 +5,6 @@ import java.nio.charset.Charset;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 import org.testcontainers.shaded.com.google.common.io.Files;
-import vadl.lcb.template.lib.Target.EmitInstrInfoTableGenFilePass;
-import vadl.lcb.template.lib.Target.Utils.EmitImmediateFilePass;
 import vadl.pass.PassKey;
 import vadl.pass.exception.DuplicatedPassKeyException;
 import vadl.template.AbstractTemplateRenderingPass;
@@ -36,11 +34,11 @@ public class EmitTargetElfRelocsDefFilePassTest extends AbstractLcbTest {
         #ifndef ELF_RELOC
         #error "ELF_RELOC must be defined"
         #endif
-                
+        
         ELF_RELOC(R_rv64im_NONE, 0)
         ELF_RELOC(R_rv64im_32, 1)
         ELF_RELOC(R_rv64im_64, 2)
-                
+        
         ELF_RELOC(R_RV64IM_lo12_Itype_imm, 3)
         ELF_RELOC(R_RV64IM_lo12_Utype_imm, 4)
         ELF_RELOC(R_RV64IM_lo12_Stype_imm, 5)

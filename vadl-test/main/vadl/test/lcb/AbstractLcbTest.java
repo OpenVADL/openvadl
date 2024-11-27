@@ -6,7 +6,6 @@ import vadl.configuration.LcbConfiguration;
 import vadl.gcb.valuetypes.ProcessorName;
 import vadl.pass.Pass;
 import vadl.pass.PassKey;
-import vadl.pass.PassName;
 import vadl.pass.PassOrder;
 import vadl.pass.PassOrders;
 import vadl.pass.exception.DuplicatedPassKeyException;

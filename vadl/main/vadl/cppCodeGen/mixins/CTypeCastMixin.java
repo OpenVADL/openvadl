@@ -1,13 +1,9 @@
 package vadl.cppCodeGen.mixins;
 
-import static vadl.cppCodeGen.CppTypeMap.cppSintType;
-import static vadl.cppCodeGen.CppTypeMap.cppUintType;
 import static vadl.cppCodeGen.CppTypeMap.getCppTypeNameByVadlType;
 
 import java.io.StringWriter;
-import java.util.Objects;
 import vadl.cppCodeGen.CodeGenerator;
-import vadl.types.DataType;
 import vadl.viam.graph.Node;
 import vadl.viam.graph.dependency.SignExtendNode;
 import vadl.viam.graph.dependency.TruncateNode;

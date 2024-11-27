@@ -4,10 +4,8 @@ import static vadl.dump.InfoEnricher.forType;
 
 import java.util.ArrayList;
 import java.util.Comparator;
-import java.util.LinkedList;
 import java.util.List;
 import java.util.Objects;
-import java.util.stream.Collector;
 import java.util.stream.Collectors;
 import vadl.dump.Info;
 import vadl.dump.InfoEnricher;
@@ -202,6 +200,10 @@ public class ViamEnricherCollection {
             .stream().sorted(Comparator.comparing(e -> e.getClass().getSimpleName()))
             .map(rsrc -> rsrc.getClass().getSimpleName() + " " + rsrc.simpleName())
             .collect(Collectors.toCollection(ArrayList::new));
+
+        if (reads.isEmpty() && writes.isEmpty()) {
+          return;
+        }
 
         reads.add(0, "Read");
         writes.add(0, "Written");

@@ -5,7 +5,6 @@ import java.nio.charset.Charset;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 import org.testcontainers.shaded.com.google.common.io.Files;
-import vadl.lcb.template.lib.Target.EmitInstrInfoTableGenFilePass;
 import vadl.lcb.template.lib.Target.EmitRegisterInfoHeaderFilePass;
 import vadl.pass.PassKey;
 import vadl.pass.exception.DuplicatedPassKeyException;

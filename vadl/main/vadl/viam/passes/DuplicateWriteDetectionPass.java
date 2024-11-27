@@ -191,14 +191,7 @@ class DuplicateWriteDetector {
         var dnf2 = requireNonNull(dnfs.get(write2));
 
         if (canOccurSimultaneously(dnf1, dnf2)) {
-          System.out.println("Conflict detected: ");
-          System.out.println(write1 + " ... " + dnf1);
-          System.out.println(write2 + " ... " + dnf2);
           onConflict.accept(write1, write2);
-        } else {
-          System.out.println("No conflict:");
-          System.out.println(write1 + " ... " + dnf1);
-          System.out.println(write2 + " ... " + dnf2);
         }
       }
     }
