@@ -1,9 +1,6 @@
-import asyncio
 import os
 import time
 from typing import Optional
-
-from qemu.qmp import QMPClient, EventListener
 
 from abstract_test_case_executor import AbstractTestCaseExecutor
 from models import TestSpec
@@ -28,7 +25,7 @@ class QMPTestCaseExecutor(AbstractTestCaseExecutor):
     async def exec(self):
         # combiniation of spec.reg_tests.keys and spec.reference_regs
         regs_of_interest = list(set(self.spec.reg_tests.keys())
-                             .union(set(self.spec.reference_regs)))
+                                .union(set(self.spec.reference_regs)))
 
         # test with vadl generated qemu
         vadl_reg_results = await self._execute_qemu_sim(
@@ -50,13 +47,13 @@ class QMPTestCaseExecutor(AbstractTestCaseExecutor):
 
         await self._set_results(vadl_reg_results, ref_reg_results)
 
-    async def _execute_qemu_sim(self, prefix: str, 
+    async def _execute_qemu_sim(self, prefix: str,
                                 qemu_exec: str,
                                 result_regs: list[str]) -> dict[str, str]:
         instance_name = f"{prefix}-{self.spec.id}"
-        qemu_executer = QEMUExecuter(instance_name, 
-                                    qemu_exec)
-        
+        qemu_executer = QEMUExecuter(instance_name,
+                                     qemu_exec)
+
         self.test_result.qemu_log[instance_name] = qemu_executer.logs
 
         return await qemu_executer.execute(

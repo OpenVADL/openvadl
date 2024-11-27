@@ -5,7 +5,6 @@ import java.util.Collection;
 import java.util.List;
 import java.util.Optional;
 import java.util.stream.Stream;
-import org.jetbrains.annotations.Nullable;
 
 /**
  * The Specification is the root of the VIAM, as it contains all other definitions of a

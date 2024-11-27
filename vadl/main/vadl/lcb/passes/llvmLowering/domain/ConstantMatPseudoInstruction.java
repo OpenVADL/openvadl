@@ -3,7 +3,6 @@ package vadl.lcb.passes.llvmLowering.domain;
 import vadl.lcb.passes.llvmLowering.tablegen.model.TableGenImmediateRecord;
 import vadl.viam.Assembly;
 import vadl.viam.Identifier;
-import vadl.viam.Instruction;
 import vadl.viam.Parameter;
 import vadl.viam.PseudoInstruction;
 import vadl.viam.graph.Graph;

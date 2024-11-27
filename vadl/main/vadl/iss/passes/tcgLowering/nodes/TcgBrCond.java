@@ -6,10 +6,7 @@ import vadl.iss.passes.tcgLowering.TcgCondition;
 import vadl.iss.passes.tcgLowering.TcgLabel;
 import vadl.iss.passes.tcgLowering.TcgV;
 import vadl.javaannotations.viam.DataValue;
-import vadl.javaannotations.viam.Input;
-import vadl.viam.graph.GraphVisitor;
 import vadl.viam.graph.Node;
-import vadl.viam.graph.dependency.ExpressionNode;
 
 /**
  * The TcgBrCondImm class represents a TCG (Tiny Code Generation) conditional branch with immediate.

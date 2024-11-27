@@ -16,7 +16,6 @@ import vadl.pass.Pass;
 import vadl.pass.PassName;
 import vadl.pass.PassResults;
 import vadl.utils.Pair;
-import vadl.viam.Constant;
 import vadl.viam.RegisterFile;
 import vadl.viam.RegisterFile.Constraint;
 import vadl.viam.Specification;

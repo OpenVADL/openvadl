@@ -1,6 +1,5 @@
 package vadl.iss.passes.tcgLowering.nodes;
 
-import java.util.List;
 import java.util.function.Function;
 import vadl.iss.passes.tcgLowering.TcgLabel;
 import vadl.viam.graph.Node;

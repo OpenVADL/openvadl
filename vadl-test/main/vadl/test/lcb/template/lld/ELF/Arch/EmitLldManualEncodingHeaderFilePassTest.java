@@ -6,7 +6,6 @@ import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 import org.testcontainers.shaded.com.google.common.io.Files;
 import vadl.lcb.template.lld.ELF.Arch.EmitLldManualEncodingHeaderFilePass;
-import vadl.lcb.template.lld.ELF.Arch.EmitLldTargetRelocationsHeaderFilePass;
 import vadl.pass.PassKey;
 import vadl.pass.exception.DuplicatedPassKeyException;
 import vadl.template.AbstractTemplateRenderingPass;
@@ -38,22 +37,22 @@ public class EmitLldManualEncodingHeaderFilePassTest extends AbstractLcbTest {
         #include <bitset>
         #include <vector>
         #include <tuple>
-               
+        
         template<int start, int end, std::size_t N>
         std::bitset<N> project_range(std::bitset<N> bits)
         {
             std::bitset<N> result;
             size_t result_index = 0; // Index for the new bitset
-               
+        
             // Extract bits from the range [start, end]
             for (size_t i = start; i <= end; ++i) {
               result[result_index] = bits[i];
             result_index++;
             }
-               
+        
             return result;
         }
-               
+        
         template<std::size_t N, std::size_t M>
         std::bitset<N> set_bits(std::bitset<N> dest, const std::bitset<M> source, std::vector<int> bits) {
             auto target = 0;
@@ -62,12 +61,12 @@ public class EmitLldManualEncodingHeaderFilePassTest extends AbstractLcbTest {
                 dest.set(j, source[i]);
                 target++;
             }
-               
+        
             return dest;
         }
-               
-               
-               
+        
+        
+        
         uint32_t RV64IM_Btype_imm(uint32_t instWord,uint32_t newValue) {
         return set_bits(std::bitset<32>(instWord), std::bitset<32>(newValue), std::vector<int> { 31, 7, 30, 29, 28, 27, 26, 25, 11, 10, 9, 8 } ).to_ulong();
         }

@@ -1,19 +1,11 @@
 package vadl.iss.template.target;
 
 import static vadl.iss.template.IssRenderUtils.mapPc;
-import static vadl.iss.template.IssRenderUtils.mapRegFiles;
-import static vadl.iss.template.IssRenderUtils.mapRegs;
 
-import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
-import java.util.Objects;
 import vadl.configuration.IssConfiguration;
-import vadl.cppCodeGen.CppTypeMap;
 import vadl.iss.template.IssTemplateRenderingPass;
 import vadl.pass.PassResults;
-import vadl.viam.Counter;
-import vadl.viam.Register;
 import vadl.viam.Specification;
 
 /**

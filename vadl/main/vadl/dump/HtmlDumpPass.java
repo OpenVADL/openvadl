@@ -1,14 +1,11 @@
 package vadl.dump;
 
-import java.io.IOException;
 import java.nio.file.Path;
 import java.time.Instant;
 import java.time.ZoneId;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.Comparator;
-import java.util.Date;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
@@ -23,7 +20,6 @@ import vadl.dump.entitySuppliers.ViamEntitySupplier;
 import vadl.dump.infoEnrichers.IssEnricherCollection;
 import vadl.dump.infoEnrichers.LcbEnricherCollection;
 import vadl.dump.infoEnrichers.ViamEnricherCollection;
-import vadl.pass.Pass;
 import vadl.pass.PassKey;
 import vadl.pass.PassName;
 import vadl.pass.PassResults;

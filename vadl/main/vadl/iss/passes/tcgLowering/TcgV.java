@@ -4,7 +4,6 @@ import static vadl.viam.ViamError.ensure;
 
 import java.util.Objects;
 import java.util.concurrent.atomic.AtomicInteger;
-import org.checkerframework.checker.units.qual.N;
 import org.jetbrains.annotations.Nullable;
 import vadl.viam.Register;
 import vadl.viam.RegisterFile;

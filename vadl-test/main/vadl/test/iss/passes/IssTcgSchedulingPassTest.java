@@ -1,6 +1,5 @@
 package vadl.test.iss.passes;
 
-import static org.hamcrest.MatcherAssert.assertThat;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static vadl.test.TestUtils.findDefinitionByNameIn;

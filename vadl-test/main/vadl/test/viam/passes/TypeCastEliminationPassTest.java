@@ -1,7 +1,6 @@
 package vadl.test.viam.passes;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.fail;
 import static vadl.test.TestUtils.findDefinitionByNameIn;
 import static vadl.utils.GraphUtils.getSingleNode;
 

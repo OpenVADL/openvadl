@@ -1,7 +1,6 @@
 package vadl.iss.template.target;
 
 import static vadl.error.Diagnostic.error;
-import static vadl.utils.GraphUtils.getSingleNode;
 
 import java.util.List;
 import java.util.Map;
@@ -11,7 +10,6 @@ import vadl.iss.codegen.IssTranslateCodeGenerator;
 import vadl.iss.template.IssTemplateRenderingPass;
 import vadl.pass.PassResults;
 import vadl.viam.Specification;
-import vadl.viam.graph.dependency.SignExtendNode;
 
 /**
  * Emits the target/gen-arch/translate.c that contains the functions to generate

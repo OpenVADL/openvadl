@@ -10,8 +10,6 @@ import java.util.Map;
 import java.util.Set;
 import java.util.function.Function;
 import org.jetbrains.annotations.Nullable;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import vadl.configuration.GeneralConfiguration;
 import vadl.iss.passes.IssVariableAllocationPass;
 import vadl.iss.passes.safeResourceRead.nodes.ExprSaveNode;

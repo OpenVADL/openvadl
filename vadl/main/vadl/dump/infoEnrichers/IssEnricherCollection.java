@@ -4,19 +4,14 @@ import static java.util.Objects.requireNonNull;
 import static vadl.dump.InfoEnricher.forType;
 
 import java.util.ArrayList;
-import java.util.Comparator;
 import java.util.List;
-import java.util.Objects;
 import java.util.stream.Collectors;
 import vadl.dump.InfoEnricher;
 import vadl.dump.InfoUtils;
 import vadl.dump.entities.DefinitionEntity;
 import vadl.iss.passes.IssVariableAllocationPass;
 import vadl.iss.passes.safeResourceRead.IssSafeResourceReadPass;
-import vadl.iss.passes.tcgLowering.TcgV;
 import vadl.viam.Instruction;
-import vadl.viam.graph.Node;
-import vadl.viam.graph.dependency.DependencyNode;
 import vadl.viam.graph.dependency.ReadResourceNode;
 
 /**

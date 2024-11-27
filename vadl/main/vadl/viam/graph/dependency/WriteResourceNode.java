@@ -5,7 +5,6 @@ import java.util.Objects;
 import javax.annotation.Nullable;
 import vadl.javaannotations.viam.Input;
 import vadl.types.DataType;
-import vadl.viam.Resource;
 import vadl.viam.graph.GraphVisitor;
 import vadl.viam.graph.Node;
 

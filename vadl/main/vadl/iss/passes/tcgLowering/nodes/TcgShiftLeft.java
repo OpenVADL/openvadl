@@ -2,7 +2,6 @@ package vadl.iss.passes.tcgLowering.nodes;
 
 import vadl.iss.passes.tcgLowering.TcgV;
 import vadl.viam.graph.Node;
-import vadl.viam.graph.dependency.ExpressionNode;
 
 /**
  * Represents a left shift operation in the Tiny Code Generator (TCG).

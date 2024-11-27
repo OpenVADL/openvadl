@@ -7,7 +7,6 @@ import java.util.function.Predicate;
 import java.util.stream.Collectors;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import vadl.configuration.GeneralConfiguration;
 import vadl.pass.exception.DuplicatedPassKeyException;
 import vadl.viam.Specification;
 

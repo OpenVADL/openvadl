@@ -1,7 +1,6 @@
 package vadl.lcb.passes.llvmLowering.domain.selectionDag;
 
 import java.util.List;
-import vadl.javaannotations.viam.DataValue;
 import vadl.javaannotations.viam.Input;
 import vadl.lcb.passes.llvmLowering.LlvmNodeLowerable;
 import vadl.lcb.passes.llvmLowering.strategies.visitors.TableGenMachineInstructionVisitor;

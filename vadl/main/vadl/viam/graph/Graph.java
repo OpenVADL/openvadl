@@ -17,7 +17,6 @@ import javax.annotation.Nullable;
 import vadl.utils.SourceLocation;
 import vadl.viam.Definition;
 import vadl.viam.graph.control.AbstractEndNode;
-import vadl.viam.graph.control.BranchEndNode;
 import vadl.viam.graph.control.ControlNode;
 import vadl.viam.graph.control.InstrCallNode;
 import vadl.viam.graph.control.InstrEndNode;

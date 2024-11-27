@@ -1,11 +1,9 @@
 package vadl.gcb.passes.relocation;
 
 import java.math.BigInteger;
-import java.util.Arrays;
 import java.util.List;
 import vadl.cppCodeGen.model.CppFunction;
 import vadl.cppCodeGen.model.CppUpdateBitRangeNode;
-import vadl.types.BuiltInTable;
 import vadl.utils.SourceLocation;
 import vadl.viam.Constant;
 import vadl.viam.Format;
@@ -13,11 +11,8 @@ import vadl.viam.Function;
 import vadl.viam.Identifier;
 import vadl.viam.Parameter;
 import vadl.viam.graph.Graph;
-import vadl.viam.graph.NodeList;
 import vadl.viam.graph.control.ReturnNode;
 import vadl.viam.graph.control.StartNode;
-import vadl.viam.graph.dependency.BuiltInCall;
-import vadl.viam.graph.dependency.ConstantNode;
 import vadl.viam.graph.dependency.FuncParamNode;
 
 /**

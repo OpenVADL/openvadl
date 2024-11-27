@@ -1,7 +1,6 @@
 package vadl.viam.passes.algebraic_simplication;
 
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
 import java.util.stream.Stream;
 import org.jetbrains.annotations.Nullable;

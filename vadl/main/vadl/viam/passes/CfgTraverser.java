@@ -3,7 +3,6 @@ package vadl.viam.passes;
 import org.jetbrains.annotations.Nullable;
 import vadl.viam.graph.control.AbstractBeginNode;
 import vadl.viam.graph.control.AbstractEndNode;
-import vadl.viam.graph.control.BeginNode;
 import vadl.viam.graph.control.ControlNode;
 import vadl.viam.graph.control.ControlSplitNode;
 import vadl.viam.graph.control.DirectionalNode;
