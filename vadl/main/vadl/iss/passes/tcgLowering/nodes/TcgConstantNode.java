@@ -5,6 +5,8 @@ import vadl.iss.passes.tcgLowering.TcgV;
 import vadl.viam.graph.Node;
 import vadl.viam.graph.dependency.ExpressionNode;
 
+// TODO: Delete this
+
 /**
  * TcgConstantNode represents a node containing a constant value in the TCG.
  * This node extends TcgUnaryImmOpNode and encapsulates the result variable and
@@ -29,7 +31,7 @@ public class TcgConstantNode extends TcgUnaryImmOpNode {
 
   @Override
   public String tcgFunctionName() {
-    return "tcg_constant_i" + dest.width().width;
+    return "tcg_constant_" + dest.width().width;
   }
 
   @Override

@@ -17,7 +17,7 @@ public class TcgShiftLeft extends TcgBinaryOpNode {
 
   @Override
   public String tcgFunctionName() {
-    return "tcg_gen_shli";
+    return "tcg_gen_shl";
   }
 
   @Override

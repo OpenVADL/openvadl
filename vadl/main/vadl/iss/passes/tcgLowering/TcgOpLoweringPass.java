@@ -17,6 +17,7 @@ import vadl.iss.passes.IssVariableAllocationPass;
 import vadl.iss.passes.safeResourceRead.nodes.ExprSaveNode;
 import vadl.iss.passes.tcgLowering.nodes.TcgAddNode;
 import vadl.iss.passes.tcgLowering.nodes.TcgExtendNode;
+import vadl.iss.passes.tcgLowering.nodes.TcgGottoTbAbs;
 import vadl.iss.passes.tcgLowering.nodes.TcgLoadMemory;
 import vadl.iss.passes.tcgLowering.nodes.TcgMoveNode;
 import vadl.iss.passes.tcgLowering.nodes.TcgNode;
@@ -57,6 +58,7 @@ import vadl.viam.graph.dependency.WriteRegFileNode;
 import vadl.viam.graph.dependency.WriteRegNode;
 import vadl.viam.graph.dependency.ZeroExtendNode;
 import vadl.viam.passes.CfgTraverser;
+import vadl.viam.passes.sideEffectScheduling.nodes.InstrExitNode;
 
 public class TcgOpLoweringPass extends Pass {
 
@@ -124,6 +126,8 @@ class TcgOpLoweringExecutor implements CfgTraverser {
     if ((dirNode instanceof ScheduledNode scheduledNode)) {
       toReplace = scheduledNode;
       dispatch(scheduledNode.node());
+    } else if ((dirNode instanceof InstrExitNode instrExitNode)) {
+      handle(instrExitNode);
     }
     return next;
   }
@@ -138,11 +142,17 @@ class TcgOpLoweringExecutor implements CfgTraverser {
     return tcgV;
   }
 
-  private void replaceCurrent(@Nullable TcgNode node) {
-    if (node == null) {
+  private void replaceCurrent(TcgNode... replacements) {
+    if (replacements.length == 0) {
       toReplace.replaceByNothingAndDelete();
     } else {
-      toReplace.replaceAndLinkAndDelete(node);
+      for (var i = 0; i < replacements.length - 1; i++) {
+        // add all but the last replacement before the scheduled node
+        addBeforeCurrent(replacements[i]);
+      }
+      // finally replace the scheduled node by the last replacement
+      var last = replacements[replacements.length - 1];
+      toReplace.replaceAndLinkAndDelete(last);
     }
   }
 
@@ -150,6 +160,13 @@ class TcgOpLoweringExecutor implements CfgTraverser {
     toReplace.addBefore(node);
   }
 
+  void handle(InstrExitNode node) {
+    var pcWrite = node.pcWrite();
+    // address jump to value
+    node.replaceAndLinkAndDelete(
+        new TcgGottoTbAbs(pcWrite.value())
+    );
+  }
 
   @Handler
   void handle(ExprSaveNode toHandle) {
@@ -169,7 +186,7 @@ class TcgOpLoweringExecutor implements CfgTraverser {
   void handle(ZeroExtendNode toHandle) {
     // Nothing to do? As we operate on zero extension all the time (constant size of registers)
     // TODO: Check if this is correct
-    replaceCurrent(null);
+    replaceCurrent();
   }
 
   @Handler
@@ -183,27 +200,21 @@ class TcgOpLoweringExecutor implements CfgTraverser {
   @Handler
   void handle(BuiltInCall toHandle) {
     var result = BuiltInTcgLoweringExecutor.lower(toHandle, assignments);
-    var replacements = result.replacements();
-    for (var i = 0; i < replacements.size() - 1; i++) {
-      // add all but the last replacement before the scheduled node
-      addBeforeCurrent(replacements.get(i));
-    }
-    // finally replace the scheduled node by the last replacement
-    replaceCurrent(replacements.get(replacements.size() - 1));
+    replaceCurrent(result.replacements().toArray(TcgNode[]::new));
   }
 
   @Handler
   void handle(ReadRegNode toHandle) {
     // nothing to do as register reads are just TCGvs which are created at the
     // instruction's start
-    replaceCurrent(null);
+    replaceCurrent();
   }
 
   @Handler
   void handle(ReadRegFileNode toHandle) {
     // nothing to do as register file reads are just TCGvs which are created at the
     // instruction's start
-    replaceCurrent(null);
+    replaceCurrent();
   }
 
   @Handler
@@ -225,7 +236,7 @@ class TcgOpLoweringExecutor implements CfgTraverser {
     var destVar = destOf(toHandle);
     var srcVar = destOf(toHandle.value());
     if (destVar.equals(srcVar)) {
-      replaceCurrent(null);
+      replaceCurrent();
     } else {
       replaceCurrent(new TcgMoveNode(destVar, srcVar));
     }
@@ -236,7 +247,7 @@ class TcgOpLoweringExecutor implements CfgTraverser {
     var destVar = destOf(toHandle);
     var srcVar = destOf(toHandle.value());
     if (destVar.width() != srcVar.width()) {
-      replaceCurrent(null);
+      replaceCurrent();
     } else {
       replaceCurrent(new TcgMoveNode(destVar, srcVar));
     }
@@ -245,14 +256,14 @@ class TcgOpLoweringExecutor implements CfgTraverser {
   @Handler
   void handle(WriteMemNode toHandle) {
     var addr = destOf(toHandle.address());
-    var value = destOf(toHandle.address());
+    var value = destOf(toHandle.value());
 
     var storeSize = Tcg_8_16_32_64.from(toHandle.value());
     // TODO: @jozott Don't hardcode this
     var mode = TcgExtend.SIGN;
 
     replaceCurrent(
-        new TcgStoreMemory(storeSize, mode, addr, value)
+        new TcgStoreMemory(storeSize, mode, value, addr)
     );
   }
 

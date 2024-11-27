@@ -317,10 +317,11 @@ class IssVariableAllocator {
     // add TcgV creation start of instruction
     startNode.addAfter(TcgGetVar.from(tcgV));
 
-    if (tcgV.kind() == TcgV.Kind.TMP) {
-      // if the tcgv is temporary, we have to free it after the instruction
-      endNode.addBefore(new TcgFreeTemp(tcgV));
-    }
+    // All other QEMU frontends do not free the temporaries either.
+    //    if (tcgV.kind() == TcgV.Kind.TMP) {
+    //      // if the tcgv is temporary, we have to free it after the instruction
+    //      endNode.addBefore(new TcgFreeTemp(tcgV));
+    //    }
 
     return tcgV;
   }
@@ -877,7 +878,7 @@ class VariableTable {
             Variable.Kind.REG_FILE,
             regFile,
             index,
-            "regFile_" + regFile.simpleName().toLowerCase() + "_n" + index.id
+            "regfile_" + regFile.simpleName().toLowerCase() + "_" + TcgPassUtils.exprVarName(index)
         )
     );
   }

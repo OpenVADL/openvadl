@@ -9,7 +9,6 @@ import org.jetbrains.annotations.Nullable;
 import vadl.configuration.GeneralConfiguration;
 import vadl.iss.passes.tcgLowering.TcgV;
 import vadl.iss.passes.tcgLowering.Tcg_32_64;
-import vadl.iss.passes.tcgLowering.nodes.TcgConstantNode;
 import vadl.iss.passes.tcgLowering.nodes.TcgGetVar;
 import vadl.pass.Pass;
 import vadl.pass.PassName;
@@ -22,9 +21,11 @@ import vadl.viam.graph.control.ScheduledNode;
 import vadl.viam.graph.control.StartNode;
 import vadl.viam.graph.dependency.DependencyNode;
 import vadl.viam.graph.dependency.ExpressionNode;
+import vadl.viam.graph.dependency.FieldAccessRefNode;
+import vadl.viam.graph.dependency.FieldRefNode;
+import vadl.viam.graph.dependency.LetNode;
 import vadl.viam.graph.dependency.ReadRegFileNode;
 import vadl.viam.graph.dependency.ReadRegNode;
-import vadl.viam.graph.dependency.SideEffectNode;
 import vadl.viam.graph.dependency.WriteMemNode;
 import vadl.viam.graph.dependency.WriteResourceNode;
 import vadl.viam.passes.CfgTraverser;
@@ -114,7 +115,8 @@ class IssTcgConstantScheduler implements CfgTraverser {
       // already scheduled
       return;
     }
-    var tcgV = TcgV.constant("const_n" + expressionNode.id, width, expressionNode);
+    var constName = TcgPassUtils.exprVarName(expressionNode);
+    var tcgV = TcgV.constant("const_" + constName, width, expressionNode);
     assignments.put(expressionNode, tcgV);
     startNode.addAfter(TcgGetVar.from(tcgV));
   }

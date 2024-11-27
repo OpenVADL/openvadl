@@ -16,7 +16,7 @@ public class TcgMoveNode extends TcgUnaryOpNode {
 
   @Override
   public String tcgFunctionName() {
-    return "tcg_gen_mov";
+    return "tcg_gen_mov_" + dest.width();
   }
 
 
