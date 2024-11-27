@@ -19,6 +19,7 @@ import vadl.viam.graph.control.IfNode;
 import vadl.viam.graph.control.ScheduledNode;
 import vadl.viam.graph.dependency.BuiltInCall;
 import vadl.viam.graph.dependency.ReadRegNode;
+import vadl.viam.passes.sideEffectScheduling.nodes.InstrExitNode;
 
 /**
  * We need this tests as there is no occurrence of the tested problems in the RISC-V specification.
@@ -38,32 +39,23 @@ public class IssTcgSchedulingPassTest extends AbstractTest {
 
     var test1 = findDefinitionByNameIn("ValidBranch::TEST1", viam, Instruction.class);
 
-    var regRead = getSingleNode(test1.behavior(), ReadRegNode.class);
-
     var builtInCalls = test1.behavior().getNodes(BuiltInCall.class)
         .filter(b -> b.builtIn() == BuiltInTable.ADD)
         .toList();
     assertEquals(1, builtInCalls.size());
 
-    var addition = builtInCalls.get(0);
+    var instrExits = test1.behavior().getNodes(InstrExitNode.class).toList();
 
-    var regSchedules = regRead.usages().filter(ScheduledNode.class::isInstance).toList();
-    var addSchedules = addition.usages().filter(ScheduledNode.class::isInstance).toList();
-
-    assertEquals(2, addSchedules.size());
-    assertEquals(2, addSchedules.size());
+    // no scheduled nodes as all are instruction exits
+    assertEquals(0, test1.behavior().getNodes(ScheduledNode.class).count());
+    assertEquals(2, instrExits.size());
 
     var branchBegins = getSingleNode(test1.behavior(), IfNode.class)
         .branches();
 
     for (var begin : branchBegins) {
       var beginSucc = begin.next();
-      assertTrue(regSchedules.contains(beginSucc));
-    }
-
-    for (var regSch : regSchedules) {
-      var regSchNext = ((ScheduledNode) regSch).next();
-      assertTrue(addSchedules.contains(regSchNext));
+      assertTrue(instrExits.contains(beginSucc));
     }
 
   }
