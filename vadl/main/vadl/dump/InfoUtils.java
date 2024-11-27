@@ -16,36 +16,43 @@ public class InfoUtils {
    */
   public static Info.Modal createGraphModal(String title,
                                             String modalTitle,
-                                            String dotGraph
-  ) {
+                                            String dotGraph) {
     // create new empty modal info and get its id
     var info = new Info.Modal(title, "");
     var id = info.id();
 
-    // fill info with modal title
-    info.modalTitle = modalTitle;
-    // add the body with the empty graph container
-    // and a script tag that contains the dot graph
+    // fill info with modal title and a copy button
+    info.modalTitle = """
+        <div class="flex justify-between items-center w-full">
+        <div>%s</div>
+        <button type="button" class="text-sm ml-5 rounded-md p-1 border-2 btn btn-secondary" onclick="
+            navigator.clipboard.writeText(
+                document.getElementById('dot-graph-%s').textContent.trim()
+            ).then(() => {
+                alert('DOT graph copied to clipboard!');
+            });
+        ">
+            Copy DOT Graph
+        </button>
+        </div>
+        """.formatted(modalTitle, id);
+
+    // add the body with the empty graph container and the dot graph script
     info.body = """
         <div id="graph-%s" class="h-full"></div>
         <script id="dot-graph-%s" type="application/dot">
         %s
         </script>
         """.formatted(id, id, dotGraph);
-    // add javascript that is executed when the modal is opened the first time.
-    // it renders the dot graph and embeds it in the graph container.
+
+    // add JavaScript to render the dot graph when the modal is first opened
     info.jsOnFirstOpen = """
-        var dotString =
-            document.getElementById(
-                "dot-graph-%s",
-            ).textContent;
-        d3.select("#graph-%s")
+        var dotString = document.getElementById('dot-graph-%s').textContent;
+        d3.select('#graph-%s')
             .graphviz()
-            .width("100%%")
-            .height("100%%")
-            .renderDot(
-                dotString,
-            );
+            .width('100%%')
+            .height('100%%')
+            .renderDot(dotString);
         """.formatted(id, id);
 
     return info;
