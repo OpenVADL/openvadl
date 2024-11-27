@@ -42,14 +42,17 @@ import java.lang.annotation.Target;
  * <h2>Annotation Processor Behavior</h2>
  *
  * <p>
- * The annotation processor performs the following tasks for classes annotated with {@code @DispatchFor}:
+ * The annotation processor performs the following tasks for classes annotated
+ * with {@code @DispatchFor}:
  * </p>
  *
  * <ol>
- *   <li>Collects all methods annotated with {@link Handler} in the handler class and its supertypes.</li>
+ *   <li>Collects all methods annotated with {@link Handler} in the handler class
+ *   and its supertypes.</li>
  *   <li>Identifies all subclasses of the specified base type within the included packages.</li>
  *   <li>Ensures that every identified subclass is handled by a handler method.
- *       If a subclass is unhandled, the processor emits a compile-time error indicating the missing handler.</li>
+ *       If a subclass is unhandled, the processor emits a compile-time error indicating
+ *       the missing handler.</li>
  *   <li>Generates a dispatcher class that routes objects to the appropriate handler methods
  *       based on their runtime types.</li>
  * </ol>
@@ -105,21 +108,22 @@ import java.lang.annotation.Target;
  *
  * <ul>
  *   <li>The processor will generate a dispatcher class named {@code MyNodeHandlerDispatcher}.</li>
- *   <li>The dispatcher will include logic to route instances of {@code NodeA}, {@code NodeB}, and {@code Node}
- *       to their respective handler methods.</li>
- *   <li>If there are other subclasses of {@code Node} within the specified packages that are not handled
- *       (e.g., a class {@code NodeC} in {@code vadl.iss}), the processor will emit a compile-time error.</li>
+ *   <li>The dispatcher will include logic to route instances of {@code NodeA}, {@code NodeB},
+ *   and {@code Node} to their respective handler methods.</li>
+ *   <li>If there are other subclasses of {@code Node} within the specified packages
+ *   that are not handled (e.g., a class {@code NodeC} in {@code vadl.iss}), the processor will emit
+ *   a compile-time error.</li>
  * </ul>
  *
  * <h2>Notes</h2>
  *
  * <ul>
- *   <li>The handler methods must be annotated with {@link Handler} and accept exactly one parameter,
- *       which is a subclass of the base type.</li>
+ *   <li>The handler methods must be annotated with {@link Handler} and accept
+ *   exactly one parameter, which is a subclass of the base type.</li>
  *   <li>The dispatcher checks types in order of specificity, ensuring that more specific handlers
  *       are invoked before more general ones.</li>
- *   <li>If the {@code include} attribute is omitted or empty, the processor considers all subclasses
- *       within the project.</li>
+ *   <li>If the {@code include} attribute is omitted or empty,
+ *   the processor considers all subclasses within the project.</li>
  *   <li>The processor only considers classes that are part of the current compilation unit.
  *       Classes loaded dynamically or defined in external modules may not be detected.</li>
  * </ul>
@@ -129,10 +133,19 @@ import java.lang.annotation.Target;
 @Retention(java.lang.annotation.RetentionPolicy.SOURCE)
 @Target(java.lang.annotation.ElementType.TYPE)
 public @interface DispatchFor {
+  /**
+   * The (super) class that should be handled/dispatched.
+   */
   Class<?> value();
 
+  /**
+   * The included package that should be considered during static validation checking.
+   */
   String[] include() default {};
 
+  /**
+   * The return type of the dispatch method (and all handler) should return.
+   */
   Class<?> returnType() default Void.class; // Add this line
 
 }

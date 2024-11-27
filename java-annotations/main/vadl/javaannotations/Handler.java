@@ -46,8 +46,10 @@ import java.lang.annotation.Target;
  *
  * <ul>
  *   <li>The method must accept exactly one parameter.</li>
- *   <li>The parameter type must be a subclass of the base type specified in {@link DispatchFor}.</li>
- *   <li>The method can be defined in the handler class or inherited from supertypes (including interfaces).</li>
+ *   <li>The parameter type must be a subclass of the base type
+ *   specified in {@link DispatchFor}.</li>
+ *   <li>The method can be defined in the handler class or inherited
+ *   from supertypes (including interfaces).</li>
  * </ul>
  *
  * <h2>Annotation Processor Behavior</h2>
@@ -113,10 +115,13 @@ import java.lang.annotation.Target;
  * <h2>Notes</h2>
  *
  * <ul>
- *   <li>The parameter types of handler methods must be unique. You cannot have multiple handler methods
+ *   <li>The parameter types of handler methods must be unique.
+ *        You cannot have multiple handler methods
  *       accepting the same parameter type in the same handler class hierarchy.</li>
- *   <li>The processor relies on the type hierarchy and method signatures to generate the dispatcher logic.</li>
- *   <li>Handler methods can be inherited from superclasses or interfaces, allowing for reusable handlers.</li>
+ *   <li>The processor relies on the type hierarchy and method signatures
+ *   to generate the dispatcher logic.</li>
+ *   <li>Handler methods can be inherited from superclasses or interfaces,
+ *   allowing for reusable handlers.</li>
  * </ul>
  *
  * @see DispatchFor

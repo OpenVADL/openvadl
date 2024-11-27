@@ -35,14 +35,17 @@ import javax.tools.JavaFileObject;
 
 /**
  * An annotation processor for generating dispatchers for handler classes.
- * <p>
- * This processor works with classes annotated with {@link DispatchFor} and methods annotated with
- * {@link Handler}. It performs the following tasks:
+ *
+ * <p>This processor works with classes annotated with {@link DispatchFor} and
+ * methods annotated with {@link Handler}. It performs the following tasks:
  * <ul>
  *   <li>Collects all handler methods in the annotated class and its supertypes.</li>
- *   <li>Identifies all subclasses of the specified base type within the {@code vadl.*} package.</li>
- *   <li>Ensures that every subclass has a corresponding handler method, emitting errors for unhandled subclasses.</li>
- *   <li>Generates a dispatcher class that routes objects of the base type to the appropriate handler methods.</li>
+ *   <li>Identifies all subclasses of the specified base type within
+ *   the {@code vadl.*} package.</li>
+ *   <li>Ensures that every subclass has a corresponding handler method,
+ *   emitting errors for unhandled subclasses.</li>
+ *   <li>Generates a dispatcher class that routes objects of the base type
+ *   to the appropriate handler methods.</li>
  * </ul>
  */
 @AutoService(Processor.class)
@@ -176,7 +179,8 @@ public class HandlerProcessor extends AbstractProcessor {
       if (annotation.getAnnotationType().toString().equals(DispatchFor.class.getCanonicalName())) {
         Map<? extends ExecutableElement, ? extends AnnotationValue> values =
             annotation.getElementValues();
-        for (Map.Entry<? extends ExecutableElement, ? extends AnnotationValue> entry : values.entrySet()) {
+        for (Map.Entry<? extends ExecutableElement, ? extends AnnotationValue>
+            entry : values.entrySet()) {
           String key = entry.getKey().getSimpleName().toString();
           if (key.equals("value")) {
             baseType = (TypeMirror) entry.getValue().getValue();
@@ -222,8 +226,8 @@ public class HandlerProcessor extends AbstractProcessor {
 
     // Collect methods from the current class
     for (Element elem : clazz.getEnclosedElements()) {
-      if (elem.getKind() == ElementKind.METHOD &&
-          elem.getAnnotation(Handler.class) != null) {
+      if (elem.getKind() == ElementKind.METHOD
+          && elem.getAnnotation(Handler.class) != null) {
 
         ExecutableElement method = (ExecutableElement) elem;
         List<? extends VariableElement> parameters = method.getParameters();
@@ -279,8 +283,8 @@ public class HandlerProcessor extends AbstractProcessor {
   }
 
   private boolean isVoid(TypeMirror type) {
-    return type.getKind() == TypeKind.VOID ||
-        typeUtils.isSameType(type, elementUtils.getTypeElement("java.lang.Void").asType());
+    return type.getKind() == TypeKind.VOID
+        || typeUtils.isSameType(type, elementUtils.getTypeElement("java.lang.Void").asType());
   }
 
   /**
@@ -308,8 +312,8 @@ public class HandlerProcessor extends AbstractProcessor {
         }
         if (packageIncluded) {
           TypeMirror typeMirror = typeElement.asType();
-          if (typeUtils.isSubtype(typeMirror, baseType) &&
-              !typeUtils.isSameType(typeMirror, baseType)) {
+          if (typeUtils.isSubtype(typeMirror, baseType)
+              && !typeUtils.isSameType(typeMirror, baseType)) {
             subTypes.add(typeElement);
           }
         }
@@ -444,9 +448,9 @@ public class HandlerProcessor extends AbstractProcessor {
 
       writer.write("    @SuppressWarnings(\"BadInstanceof\")\n");
       writer.write(
-          "    public static " + returnTypeName + " dispatch(" + handlerClassName +
-              " handler, " + baseTypeName +
-              " obj) {\n");
+          "    public static " + returnTypeName + " dispatch(" + handlerClassName
+              + " handler, " + baseTypeName
+              + " obj) {\n");
 
       // Sort handler methods by specificity
       List<HandlerMethod> sortedHandlerMethods = new ArrayList<>(handlerMethods.values());
@@ -489,10 +493,12 @@ public class HandlerProcessor extends AbstractProcessor {
       writer.write("        else {\n");
       if (isVoidReturnType) {
         writer.write(
-            "            throw new IllegalArgumentException(\"Unhandled type: \" + obj.getClass());\n");
+            "            "
+                + "throw new IllegalArgumentException(\"Unhandled type: \" + obj.getClass());\n");
       } else {
         writer.write(
-            "            throw new IllegalArgumentException(\"Unhandled type: \" + obj.getClass());\n");
+            "            "
+                + "throw new IllegalArgumentException(\"Unhandled type: \" + obj.getClass());\n");
       }
       writer.write("        }\n");
 

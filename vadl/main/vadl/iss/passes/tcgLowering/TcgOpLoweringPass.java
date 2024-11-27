@@ -58,17 +58,41 @@ import vadl.viam.graph.dependency.ZeroExtendNode;
 import vadl.viam.passes.CfgTraverser;
 import vadl.viam.passes.sideEffectScheduling.nodes.InstrExitNode;
 
+/**
+ * A pass that lowers high-level operations to TCG (Tiny Code Generator) operations.
+ * It processes instructions and transforms them into TCG nodes,
+ * which can be used for code generation.
+ */
 public class TcgOpLoweringPass extends Pass {
 
+  /**
+   * Constructs a new {@code TcgOpLoweringPass} with the specified configuration.
+   *
+   * @param configuration The general configuration for this pass.
+   */
   public TcgOpLoweringPass(GeneralConfiguration configuration) {
     super(configuration);
   }
 
+  /**
+   * Returns the name of the pass.
+   *
+   * @return The pass name "TCG Operation Lowering".
+   */
   @Override
   public PassName getName() {
     return PassName.of("TCG Operation Lowering");
   }
 
+  /**
+   * Executes the TCG operation lowering pass on the given specification.
+   * It processes instructions and lowers them to TCG operations.
+   *
+   * @param passResults The results from previous passes.
+   * @param viam        The VIAM specification.
+   * @return {@code null}
+   * @throws IOException If an I/O error occurs.
+   */
   @Override
   public @Nullable Object execute(PassResults passResults, Specification viam)
       throws IOException {
@@ -98,25 +122,48 @@ public class TcgOpLoweringPass extends Pass {
   }
 }
 
-
 @DispatchFor(
     value = DependencyNode.class,
     include = {"vadl.iss", "vadl.viam"})
 class TcgOpLoweringExecutor implements CfgTraverser {
 
+  /**
+   * Map of dependency nodes to their assigned TCG variables.
+   */
   Map<DependencyNode, TcgV> assignments;
+
+  /**
+   * The scheduled node currently being processed.
+   */
   @LazyInit
   ScheduledNode toReplace;
 
+  /**
+   * Constructs a new {@code TcgOpLoweringExecutor} with the given variable assignments.
+   *
+   * @param assignments The map of dependency nodes to their assigned TCG variables.
+   */
   public TcgOpLoweringExecutor(Map<DependencyNode, TcgV> assignments) {
     this.assignments = assignments;
   }
 
+  /**
+   * Runs the lowering process on the given graph.
+   *
+   * @param graph The graph to process.
+   */
   void runOn(Graph graph) {
     var start = getSingleNode(graph, StartNode.class);
     traverseBranch(start);
   }
 
+  /**
+   * Overrides the traversal of directional nodes in the CFG.
+   * Processes scheduled nodes by dispatching them to appropriate handlers.
+   *
+   * @param dirNode The directional node to traverse.
+   * @return The next control node in the traversal.
+   */
   @Override
   public ControlNode traverseDirectional(DirectionalNode dirNode) {
     var next = dirNode.next();
@@ -129,42 +176,77 @@ class TcgOpLoweringExecutor implements CfgTraverser {
     return next;
   }
 
+  /**
+   * Dispatches the given dependency node to the appropriate handler method.
+   *
+   * @param node The dependency node to dispatch.
+   */
   private void dispatch(DependencyNode node) {
     TcgOpLoweringExecutorDispatcher.dispatch(this, node);
   }
 
+  /**
+   * Retrieves the TCG variable assigned to the given dependency node.
+   *
+   * @param node The dependency node.
+   * @return The assigned TCG variable.
+   */
   private TcgV destOf(DependencyNode node) {
     var tcgV = assignments.get(node);
     node.ensure(tcgV != null, "Expected to be represented by a TCGv");
     return tcgV;
   }
 
+  /**
+   * Replaces the current scheduled node with the given TCG nodes.
+   * If multiple replacements are provided, all but the last are added before the current node,
+   * and the last replaces the current node.
+   *
+   * @param replacements The TCG nodes to replace with.
+   */
   private void replaceCurrent(TcgNode... replacements) {
     if (replacements.length == 0) {
       toReplace.replaceByNothingAndDelete();
     } else {
       for (var i = 0; i < replacements.length - 1; i++) {
-        // add all but the last replacement before the scheduled node
+        // Add all but the last replacement before the scheduled node
         addBeforeCurrent(replacements[i]);
       }
-      // finally replace the scheduled node by the last replacement
+      // Finally replace the scheduled node by the last replacement
       var last = replacements[replacements.length - 1];
       toReplace.replaceAndLinkAndDelete(last);
     }
   }
 
+  /**
+   * Adds the given TCG node before the current scheduled node.
+   *
+   * @param node The TCG node to add.
+   */
   private void addBeforeCurrent(TcgNode node) {
     toReplace.addBefore(node);
   }
 
+  /**
+   * Handles the {@link InstrExitNode} by replacing it with a TCG goto operation.
+   *
+   * @param node The instruction exit node to handle.
+   */
   void handle(InstrExitNode node) {
     var pcWrite = node.pcWrite();
-    // address jump to value
+    // Address jump to value
     node.replaceAndLinkAndDelete(
         new TcgGottoTbAbs(pcWrite.value())
     );
   }
 
+  // Handler methods for different node types
+
+  /**
+   * Handles the {@link ExprSaveNode} by generating a TCG move operation.
+   *
+   * @param toHandle The node to handle.
+   */
   @Handler
   void handle(ExprSaveNode toHandle) {
     var destVar = destOf(toHandle);
@@ -172,6 +254,11 @@ class TcgOpLoweringExecutor implements CfgTraverser {
     replaceCurrent(new TcgMoveNode(destVar, srcVar));
   }
 
+  /**
+   * Handles the {@link TruncateNode} by generating a TCG truncate operation.
+   *
+   * @param toHandle The node to handle.
+   */
   @Handler
   void handle(TruncateNode toHandle) {
     var dest = destOf(toHandle);
@@ -179,13 +266,22 @@ class TcgOpLoweringExecutor implements CfgTraverser {
     replaceCurrent(new TcgTruncateNode(dest, src, toHandle.type().bitWidth()));
   }
 
+  /**
+   * Handles the {@link ZeroExtendNode}. Currently does nothing as zero extension is implied.
+   *
+   * @param toHandle The node to handle.
+   */
   @Handler
   void handle(ZeroExtendNode toHandle) {
-    // Nothing to do? As we operate on zero extension all the time (constant size of registers)
-    // TODO: Check if this is correct
+    // Nothing to do; zero extension is implied in TCG operations
     replaceCurrent();
   }
 
+  /**
+   * Handles the {@link SignExtendNode} by generating a TCG sign extension operation.
+   *
+   * @param toHandle The node to handle.
+   */
   @Handler
   void handle(SignExtendNode toHandle) {
     var dest = destOf(toHandle);
@@ -194,26 +290,46 @@ class TcgOpLoweringExecutor implements CfgTraverser {
     replaceCurrent(new TcgExtendNode(fromSize, TcgExtend.SIGN, dest, src));
   }
 
+  /**
+   * Handles the {@link BuiltInCall} by lowering it using the built-in TCG lowering executor.
+   *
+   * @param toHandle The node to handle.
+   */
   @Handler
   void handle(BuiltInCall toHandle) {
     var result = BuiltInTcgLoweringExecutor.lower(toHandle, assignments);
     replaceCurrent(result.replacements().toArray(TcgNode[]::new));
   }
 
+  /**
+   * Handles the {@link ReadRegNode}. Currently does nothing as TCG variables
+   * represent register reads.
+   *
+   * @param toHandle The node to handle.
+   */
   @Handler
   void handle(ReadRegNode toHandle) {
-    // nothing to do as register reads are just TCGvs which are created at the
-    // instruction's start
+    // Nothing to do; register reads are TCG variables created at instruction start
     replaceCurrent();
   }
 
+  /**
+   * Handles the {@link ReadRegFileNode}. Currently does nothing as TCG variables
+   * represent register file reads.
+   *
+   * @param toHandle The node to handle.
+   */
   @Handler
   void handle(ReadRegFileNode toHandle) {
-    // nothing to do as register file reads are just TCGvs which are created at the
-    // instruction's start
+    // Nothing to do; register file reads are TCG variables created at instruction start
     replaceCurrent();
   }
 
+  /**
+   * Handles the {@link ReadMemNode} by generating a TCG load memory operation.
+   *
+   * @param toHandle The node to handle.
+   */
   @Handler
   void handle(ReadMemNode toHandle) {
     var dest = destOf(toHandle);
@@ -228,6 +344,11 @@ class TcgOpLoweringExecutor implements CfgTraverser {
     );
   }
 
+  /**
+   * Handles the {@link WriteRegFileNode} by generating a TCG move operation if necessary.
+   *
+   * @param toHandle The node to handle.
+   */
   @Handler
   void handle(WriteRegFileNode toHandle) {
     var destVar = destOf(toHandle);
@@ -239,6 +360,11 @@ class TcgOpLoweringExecutor implements CfgTraverser {
     }
   }
 
+  /**
+   * Handles the {@link WriteRegNode} by generating a TCG move operation if necessary.
+   *
+   * @param toHandle The node to handle.
+   */
   @Handler
   void handle(WriteRegNode toHandle) {
     var destVar = destOf(toHandle);
@@ -250,13 +376,18 @@ class TcgOpLoweringExecutor implements CfgTraverser {
     }
   }
 
+  /**
+   * Handles the {@link WriteMemNode} by generating a TCG store memory operation.
+   *
+   * @param toHandle The node to handle.
+   */
   @Handler
   void handle(WriteMemNode toHandle) {
     var addr = destOf(toHandle.address());
     var value = destOf(toHandle.value());
 
     var storeSize = Tcg_8_16_32_64.from(toHandle.value());
-    // TODO: @jozott Don't hardcode this
+    // TODO: Don't hardcode this
     var mode = TcgExtend.SIGN;
 
     replaceCurrent(
@@ -264,24 +395,47 @@ class TcgOpLoweringExecutor implements CfgTraverser {
     );
   }
 
-
   //// Nodes that are not yet supported ////
 
+  /**
+   * Handles the {@link LetNode}. Currently not implemented.
+   *
+   * @param toHandle The node to handle.
+   * @throws UnsupportedOperationException Always thrown.
+   */
   @Handler
   void handle(LetNode toHandle) {
     throw new UnsupportedOperationException("Type LetNode not yet implemented");
   }
 
+  /**
+   * Handles the {@link SelectNode}. Currently not implemented.
+   *
+   * @param toHandle The node to handle.
+   * @throws UnsupportedOperationException Always thrown.
+   */
   @Handler
   void handle(SelectNode toHandle) {
     throw new UnsupportedOperationException("Type SelectNode not yet implemented");
   }
 
+  /**
+   * Handles the {@link SliceNode}. Currently not implemented.
+   *
+   * @param toHandle The node to handle.
+   * @throws UnsupportedOperationException Always thrown.
+   */
   @Handler
   void handle(SliceNode toHandle) {
     throw new UnsupportedOperationException("Type SliceNode not yet implemented");
   }
 
+  /**
+   * Handles the {@link TupleGetFieldNode}. Currently not implemented.
+   *
+   * @param toHandle The node to handle.
+   * @throws UnsupportedOperationException Always thrown.
+   */
   @Handler
   void handle(TupleGetFieldNode toHandle) {
     throw new UnsupportedOperationException("Type TupleGetFieldNode not yet implemented");
@@ -289,43 +443,78 @@ class TcgOpLoweringExecutor implements CfgTraverser {
 
   //// Nodes that should never be handled ////
 
+  /**
+   * Handles the {@link ParamNode}. Should never happen.
+   *
+   * @throws ViamGraphError Always thrown.
+   */
   @Handler
   void handle(ParamNode toHandle) {
     throw failShouldNotHappen(toHandle);
   }
 
+  /**
+   * Handles the {@link ConstantNode}. Should never happen.
+   *
+   * @throws ViamGraphError Always thrown.
+   */
   @Handler
   void handle(ConstantNode toHandle) {
     throw failShouldNotHappen(toHandle);
   }
 
+  /**
+   * Handles the {@link TypeCastNode}. Should never happen.
+   *
+   * @throws ViamGraphError Always thrown.
+   */
   @Handler
   void handle(TypeCastNode toHandle) {
     throw failShouldNotHappen(toHandle);
   }
 
+  /**
+   * Handles the {@link FuncCallNode}. Should never happen.
+   *
+   * @throws ViamGraphError Always thrown.
+   */
   @Handler
   void handle(FuncCallNode toHandle) {
     throw failShouldNotHappen(toHandle);
   }
 
-
+  /**
+   * Throws a {@link ViamGraphError} indicating that the node should not be handled.
+   *
+   * @return A {@link ViamGraphError} exception.
+   */
   private static ViamGraphError failShouldNotHappen(DependencyNode node) {
-    return new ViamGraphError("%s should never be turned in to TCG operations",
+    return new ViamGraphError("%s should never be turned into TCG operations",
         node.getClass().getSimpleName())
         .addContext(node);
   }
 
 }
 
+/**
+ * Represents the result of lowering a built-in function call to TCG nodes.
+ *
+ * @param replacements The list of TCG nodes that replace the built-in call.
+ */
 record BuiltInResult(
     List<TcgNode> replacements
 ) {
 }
 
-
+/**
+ * Lowers built-in function calls to TCG nodes.
+ * Provides implementations for specific built-in functions.
+ */
 class BuiltInTcgLoweringExecutor {
 
+  /**
+   * Holds the implementations of the different built-ins.
+   */
   private static final Map<BuiltInTable.BuiltIn, Function<Context, BuiltInResult>>
       impls =
       Map.of(
@@ -342,7 +531,13 @@ class BuiltInTcgLoweringExecutor {
           )
       );
 
-
+  /**
+   * Lowers a built-in function call to TCG nodes.
+   *
+   * @param call        The built-in function call.
+   * @param assignments The map of dependency nodes to their assigned TCG variables.
+   * @return A {@link BuiltInResult} containing the TCG nodes that replace the built-in call.
+   */
   public static BuiltInResult lower(BuiltInCall call, Map<DependencyNode, TcgV> assignments) {
     var context = new Context(assignments, call);
     var impl = impls.get(call.builtIn());
@@ -353,20 +548,40 @@ class BuiltInTcgLoweringExecutor {
     return impl.apply(context);
   }
 
+  /**
+   * Helper method to create a {@link BuiltInResult} from TCG nodes.
+   *
+   * @param nodes The TCG nodes.
+   * @return A {@link BuiltInResult} containing the nodes.
+   */
   private static BuiltInResult out(TcgNode... nodes) {
     return new BuiltInResult(List.of(nodes));
   }
 
+  /**
+   * Context for lowering a built-in function call.
+   */
   private record Context(
       Map<DependencyNode, TcgV> assignments,
       BuiltInCall call
   ) {
+    /**
+     * Retrieves the destination TCG variable assigned to the built-in call.
+     *
+     * @return The destination TCG variable.
+     */
     private TcgV dest() {
       var dest = assignments.get(call);
       call.ensure(dest != null, "Expected to be represented by a TCGv");
       return dest;
     }
 
+    /**
+     * Retrieves the source TCG variable for the argument at the given index.
+     *
+     * @param index The index of the argument.
+     * @return The source TCG variable.
+     */
     private TcgV src(int index) {
       call.ensure(call.arguments().size() > index, "Tried to access arg %s", index);
       var arg = call.arguments().get(index);

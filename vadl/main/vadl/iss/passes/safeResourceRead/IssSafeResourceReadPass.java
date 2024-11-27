@@ -40,14 +40,16 @@ import vadl.viam.passes.sideEffectScheduling.nodes.InstrExitNode;
 
 /**
  * A pass that ensures safe resource reads in the Instruction Set Simulator (ISS).
- * This pass modifies the instruction behaviors to prevent unsafe concurrent resource reads and writes.
+ * This pass modifies the instruction behaviors to prevent unsafe concurrent
+ * resource reads and writes.
  */
 public class IssSafeResourceReadPass extends Pass {
 
   /**
    * Result of the IssSafeResourceReadPass execution.
    *
-   * @param readTempSpillLocations A map of ReadResourceNodes to their spill locations in the control flow.
+   * @param readTempSpillLocations A map of ReadResourceNodes to their spill
+   *                               locations in the control flow.
    */
   public record Result(
       Map<ReadResourceNode, ControlNode> readTempSpillLocations
@@ -93,8 +95,10 @@ public class IssSafeResourceReadPass extends Pass {
 }
 
 /**
- * Secures resource reads in an instruction by ensuring that resource reads do not conflict with writes.
- * If necessary, it schedules a copy of the read resource to a temporary location to prevent conflicts.
+ * Secures resource reads in an instruction by ensuring that
+ * resource reads do not conflict with writes.
+ * If necessary, it schedules a copy of the read resource to
+ * a temporary location to prevent conflicts.
  */
 class IssResourceReadSecurer {
   Instruction instruction;
@@ -268,6 +272,7 @@ class IssResourceReadSecurer {
    * @param dominatorSets The map of dominator sets for each control node.
    * @return The control node that is the latest common dominator.
    */
+  @SuppressWarnings("LineLength")
   private static ControlNode findLatestCommonNode(Set<ControlNode> set,
                                                   Map<ControlNode, List<ControlNode>> dominatorSets) {
 
@@ -306,7 +311,8 @@ class IssResourceReadSecurer {
 }
 
 /**
- * Performs dominator analysis on a control flow graph (CFG) to compute dominator sets for control nodes.
+ * Performs dominator analysis on a control flow graph (CFG)
+ * to compute dominator sets for control nodes.
  */
 class IssDominatorAnalysis implements CfgTraverser {
 

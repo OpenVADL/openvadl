@@ -64,6 +64,23 @@ public abstract class CodeGenerator {
     impl.accept(node, writer);
   }
 
+  /**
+   * Generates code for the given {@link Definition} and writes it to the {@link #writer}.
+   *
+   * @param def that is translated to code.
+   */
+  public void gen(Definition def) {
+    var impl = defImpls.find(def.getClass());
+    ViamError.ensure(impl != null, "Tried to generate code, but no implementation for: %s", def);
+    impl.accept(def, writer);
+  }
+
+  /**
+   * Generates the given node to a code string.
+   *
+   * @param node to generate code for
+   * @return generated code
+   */
   public String genToString(Node node) {
     // backup current writer
     var savedWriter = writer;
@@ -77,16 +94,6 @@ public abstract class CodeGenerator {
     return result;
   }
 
-  /**
-   * Generates code for the given {@link Definition} and writes it to the {@link #writer}.
-   *
-   * @param def that is translated to code.
-   */
-  public void gen(Definition def) {
-    var impl = defImpls.find(def.getClass());
-    ViamError.ensure(impl != null, "Tried to generate code, but no implementation for: %s", def);
-    impl.accept(def, writer);
-  }
 
   /**
    * A collection of code generation implementations of VIAM constructs ({@link Node},

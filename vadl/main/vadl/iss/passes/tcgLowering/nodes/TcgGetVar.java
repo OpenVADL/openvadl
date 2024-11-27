@@ -11,6 +11,8 @@ import vadl.viam.graph.GraphVisitor;
 import vadl.viam.graph.Node;
 import vadl.viam.graph.dependency.ExpressionNode;
 
+// TODO: This should extend TcgVarnode instead
+
 /**
  * Abstract sealed class representing a variable retrieval operation in the TCG.
  */
@@ -22,6 +24,9 @@ public abstract sealed class TcgGetVar extends TcgOpNode
     super(dest, dest.width());
   }
 
+  /**
+   * Constructs a {@link TcgGetVar} node from the given {@link TcgV}.
+   */
   public static TcgGetVar from(TcgV var) {
     return switch (var.kind()) {
       case TMP -> new TcgGetTemp(var);

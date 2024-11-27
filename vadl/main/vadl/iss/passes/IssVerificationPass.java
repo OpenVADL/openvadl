@@ -126,7 +126,8 @@ public class IssVerificationPass extends AbstractIssPass {
               return error("Different register result sizes", f)
                   .locationDescription(f, "Also found result size of %s in ISA.", foundTargetWidth)
                   .description(
-                      "The ISS requires all registers and register files to have the same result size.");
+                      "The ISS requires all registers and register files "
+                          + "to have the same result size.");
             }
             return null;
           })
@@ -153,7 +154,8 @@ public class IssVerificationPass extends AbstractIssPass {
             return error("Different register file result sizes", f)
                 .locationDescription(f, "Also found result size of %s in ISA.", foundTargetWidth)
                 .description(
-                    "The ISS requires all registers and register files to have the same result size.");
+                    "The ISS requires all registers and register files "
+                        + "to have the same result size.");
           }
           return null;
         })

@@ -7,6 +7,10 @@ import vadl.viam.graph.GraphVisitor;
 import vadl.viam.graph.Node;
 import vadl.viam.graph.dependency.DependencyNode;
 
+/**
+ * A (single directed) node in the CFG that schedules some dependency.
+ * This allows scheduling dependency nodes without transforming them into control nodes.
+ */
 public class ScheduledNode extends DirectionalNode {
 
   @Input
@@ -19,7 +23,7 @@ public class ScheduledNode extends DirectionalNode {
   public DependencyNode node() {
     return node;
   }
-  
+
 
   @Override
   public Node copy() {

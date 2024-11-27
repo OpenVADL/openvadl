@@ -24,17 +24,42 @@ import vadl.viam.graph.control.StartNode;
 import vadl.viam.graph.dependency.WriteResourceNode;
 import vadl.viam.passes.sideEffectScheduling.nodes.InstrExitNode;
 
+/**
+ * A pass that schedules side effects within the control flow graph (CFG) of instructions.
+ * It separates side effects that modify the program counter (PC) from other side effects.
+ * Non-PC side effects are scheduled at the beginning of branches, while PC updates are scheduled
+ * immediately before the branch ends.
+ */
 public class SideEffectSchedulingPass extends Pass {
 
+  /**
+   * Constructs a new {@code SideEffectSchedulingPass} with the given configuration.
+   *
+   * @param configuration The general configuration for this pass.
+   */
   public SideEffectSchedulingPass(GeneralConfiguration configuration) {
     super(configuration);
   }
 
+  /**
+   * Returns the name of the pass.
+   *
+   * @return The pass name "Side Effect Scheduling Pass".
+   */
   @Override
   public PassName getName() {
     return PassName.of("Side Effect Scheduling Pass");
   }
 
+  /**
+   * Executes the side effect scheduling pass on the given specification.
+   * It processes each instruction in the ISA and schedules side effects appropriately.
+   *
+   * @param passResults The results from previous passes.
+   * @param viam        The VIAM specification.
+   * @return {@code null}
+   * @throws IOException If an I/O error occurs.
+   */
   @Override
   public @Nullable Object execute(PassResults passResults, Specification viam)
       throws IOException {
@@ -51,13 +76,24 @@ public class SideEffectSchedulingPass extends Pass {
   }
 }
 
-
+/**
+ * Schedules side effects in an instruction's control flow graph.
+ * It separates PC updates from other side effects and schedules them at appropriate locations.
+ */
 class SideEffectScheduler {
 
+  /**
+   * The program counter register counter, if available.
+   */
   @Nullable
   Counter.RegisterCounter pc;
 
-
+  /**
+   * Runs the side effect scheduling on the given instruction.
+   *
+   * @param instr The instruction to process.
+   * @param pc    The program counter register counter, or {@code null} if not available.
+   */
   public static void run(Instruction instr, @Nullable Counter.RegisterCounter pc) {
     var startNode = getSingleNode(instr.behavior(), StartNode.class);
     var scheduler = new SideEffectScheduler();
@@ -65,9 +101,16 @@ class SideEffectScheduler {
     scheduler.processBranch(startNode);
   }
 
-
+  /**
+   * Processes a branch starting from the given begin node.
+   * It schedules non-PC side effects at the beginning
+   * of the branch and PC updates before the branch end.
+   *
+   * @param beginNode The starting node of the branch.
+   * @return The corresponding end node of the branch.
+   */
   private AbstractEndNode processBranch(AbstractBeginNode beginNode) {
-    // process until the corresponding end node of branch
+    // Process until the corresponding end node of the branch
     var endNode = traverseUntilMatchingBranchEnd(beginNode);
 
     var pcReg = pc != null ? pc.registerRef() : null;
@@ -80,12 +123,12 @@ class SideEffectScheduler {
     var pcSideEffect = partitionedEffects.getOrDefault(true, List.of())
         .stream().findFirst();
 
-    // all non pc updates should be inserted directly at the begin of the branch
+    // All non-PC updates should be inserted directly at the beginning of the branch
     for (var effect : nonPcUpdateEffects) {
       beginNode.addAfter(new ScheduledNode(effect));
     }
 
-    // add pc update directly in front of branch end
+    // Add PC update directly in front of branch end
     pcSideEffect.ifPresent(pcUpdate ->
         endNode.addBefore(new InstrExitNode((WriteResourceNode) pcUpdate))
     );
@@ -93,20 +136,26 @@ class SideEffectScheduler {
     return endNode;
   }
 
+  /**
+   * Traverses the control flow graph until it finds the matching end node for the given begin node.
+   *
+   * @param beginNode The begin node to start traversal from.
+   * @return The matching end node.
+   */
   private AbstractEndNode traverseUntilMatchingBranchEnd(AbstractBeginNode beginNode) {
 
     ControlNode currNode = beginNode;
 
     while (true) {
-      // skip all directional nodes
+      // Skip all directional nodes
       currNode = skipDirectionals(currNode);
 
       if (currNode instanceof AbstractEndNode) {
-        // when we found the end node, we return it
+        // When we find the end node, we return it
         return (AbstractEndNode) currNode;
 
       } else if (currNode instanceof ControlSplitNode splitNode) {
-        // handle all branches of the nested control split node
+        // Handle all branches of the nested control split node
         currNode = handleControlSplit(splitNode);
 
       } else {
@@ -117,8 +166,11 @@ class SideEffectScheduler {
     }
   }
 
-  /*
-   * Process all branches of the control split. It will return the control split's MergeNode.
+  /**
+   * Processes all branches of the control split node and returns the merge node.
+   *
+   * @param splitNode The control split node to process.
+   * @return The merge node corresponding to the control split.
    */
   private MergeNode handleControlSplit(ControlSplitNode splitNode) {
     @Nullable AbstractEndNode someEnd = null;
@@ -127,15 +179,21 @@ class SideEffectScheduler {
     }
     splitNode.ensure(someEnd != null, "Control split has no branches.");
     splitNode.ensure(someEnd.usageCount() == 1, "End should have exactly one usage: MergeNode");
-    // get the merge node from the end of the branch
+    // Get the merge node from the end of the branch
     return (MergeNode) someEnd.usages().findFirst().get();
   }
 
+  /**
+   * Skips all directional nodes starting from the
+   * given node and returns the next non-directional node.
+   *
+   * @param node The starting control node.
+   * @return The next non-directional control node.
+   */
   private ControlNode skipDirectionals(ControlNode node) {
     while (node instanceof DirectionalNode dirNode) {
       node = dirNode.next();
     }
     return node;
   }
-
 }

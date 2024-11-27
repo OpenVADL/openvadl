@@ -35,8 +35,9 @@ import vadl.viam.passes.CfgTraverser;
 import vadl.viam.passes.GraphProcessor;
 
 /**
- * A pass that schedules the translation of instruction behaviors to TCG (Tiny Code Generator) operations
- * for an Instruction Set Simulator (ISS). It ensures that instructions are correctly scheduled
+ * A pass that schedules the translation of instruction behaviors to TCG (Tiny Code Generator)
+ * operations for an Instruction Set Simulator (ISS).
+ * It ensures that instructions are correctly scheduled
  * for translation, considering control flow and dependencies.
  */
 public class IssTcgSchedulingPass extends Pass {
@@ -246,14 +247,16 @@ class IssTcgScheduler extends GraphProcessor<Optional<ScheduledNode>> implements
       // The address must be determined at "compile" time
       var addressRes = getResultOf(readRegFileNode.address(), Optional.class);
       toProcess.ensure(addressRes.isEmpty(),
-          "Node's address is not allowed to be TCG time but must be compile-time annotated (immediates): %s",
+          "Node's address is not allowed to be TCG time but must "
+              + "be compile-time annotated (immediates): %s",
           readRegFileNode.address());
     }
 
     if (toProcess instanceof WriteRegFileNode writeResourceNode) {
       var addressRes = getResultOf(writeResourceNode.address(), Optional.class);
       writeResourceNode.ensure(addressRes.isEmpty(),
-          "Node's address is not allowed to be TCG time but must be compile-time annotated (immediates): %s",
+          "Node's address is not allowed to be TCG time but must "
+              + "be compile-time annotated (immediates): %s",
           writeResourceNode.address()
       );
     }

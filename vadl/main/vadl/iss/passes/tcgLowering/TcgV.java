@@ -15,9 +15,11 @@ import vadl.viam.graph.dependency.LetNode;
  * The TcgV class represents a variable in the context of the QEMU ISS (TCG).
  * It is used to manage and generate variable names along with their widths.
  */
-// TODO: Make record?
 public class TcgV {
 
+  /**
+   * The kind of TCGv. This can be a temporary, constant, register or register file.
+   */
   public enum Kind {
     TMP,
     CONST,
@@ -25,10 +27,8 @@ public class TcgV {
     REG_FILE
   }
 
-
-  // TODO: Make private
-  String name;
-  Tcg_32_64 width;
+  private final String name;
+  private final Tcg_32_64 width;
 
   private final Kind kind;
   @Nullable
@@ -41,17 +41,18 @@ public class TcgV {
   // this is only useful for register file variables
   private final boolean isDest;
 
-
-  private TcgV(String name, Tcg_32_64 width) {
-    this.name = name;
-    this.width = width;
-    this.kind = Kind.TMP;
-    this.isDest = false;
-    this.registerOrFile = null;
-    this.regFileIndex = null;
-    this.constValue = null;
-  }
-
+  /**
+   * Constructs the TcgV.
+   *
+   * @param name           of the variable
+   * @param width          of the variable
+   * @param kind           of the variable
+   * @param constValue     expression of the variable (must be set if kind is CONST)
+   * @param registerOrFile register or register file represented by the variable
+   *                       (must be set if kind is REG or REG_FILE)
+   * @param regFileIndex   index of register file (must be set if kind is REG_FILE)
+   * @param isDest         must be true if the variable is used as write location of a side-effect.
+   */
   public TcgV(String name, Tcg_32_64 width, Kind kind,
               @Nullable ExpressionNode constValue,
               @Nullable Resource registerOrFile,
@@ -65,16 +66,6 @@ public class TcgV {
     this.regFileIndex = regFileIndex;
     this.isDest = isDest;
     this.constValue = constValue;
-  }
-
-  // TODO: Remove
-  public static TcgV of(LetNode node, Tcg_32_64 width) {
-    return new TcgV("_" + node.letName().name(), width);
-  }
-
-  // TODO: Remove
-  public static TcgV of(String name, Tcg_32_64 width) {
-    return new TcgV("v" + name, width);
   }
 
   public static TcgV tmp(String name, Tcg_32_64 width) {
@@ -92,14 +83,6 @@ public class TcgV {
   public static TcgV regFile(String name, Tcg_32_64 width, RegisterFile regFile,
                              ExpressionNode regFileIndex, boolean isDest) {
     return new TcgV(name, width, Kind.REG_FILE, null, regFile, regFileIndex, isDest);
-  }
-
-  private static final AtomicInteger counter = new AtomicInteger(0);
-
-  // TODO: @jzottele remove this
-  public static TcgV gen(Tcg_32_64 width) {
-    var c = counter.getAndIncrement();
-    return new TcgV("v" + c, width);
   }
 
   public Tcg_32_64 width() {
@@ -131,12 +114,6 @@ public class TcgV {
 
   public boolean isDest() {
     return isDest;
-  }
-
-
-  // TODO: remove this
-  public void setName(String name) {
-    this.name = name;
   }
 
   @Override

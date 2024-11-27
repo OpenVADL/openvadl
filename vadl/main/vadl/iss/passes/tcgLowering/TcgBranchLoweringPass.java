@@ -126,7 +126,7 @@ class TcgBranchLoweringExecutor implements CfgTraverser {
         condVar.width(),
         new ConstantNode(Constant.Value.of(
             0,
-            Type.bits(condVar.width.width)
+            Type.bits(condVar.width().width)
         )));
 
     // check if true by check if value is not 0.

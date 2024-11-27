@@ -641,6 +641,13 @@ public abstract class Constant {
       return asString(prefix, radix, true);
     }
 
+    /**
+     * Returns a string representing the value.
+     *
+     * @param prefix  string prefix
+     * @param radix   used for numeric representation
+     * @param padding if true, the String is padded with 0
+     */
     public String asString(String prefix, int radix, boolean padding) {
       Integer padFactor = null;
       switch (radix) {

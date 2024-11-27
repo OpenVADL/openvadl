@@ -13,6 +13,9 @@ public class IssConfiguration extends GeneralConfiguration {
   private String architectureName;
   private Tcg_32_64 targetSize;
 
+  /**
+   * Constructs a {@link IssConfiguration}.
+   */
   public IssConfiguration(GeneralConfiguration generalConfig) {
     super(generalConfig);
     architectureName = "unknown";

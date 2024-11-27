@@ -63,7 +63,8 @@ public abstract class DataFlowAnalysis<D> {
     while (!worklist.isEmpty()) {
       ControlNode node = worklist.poll();
 
-      D inValue, outValue;
+      D inValue;
+      D outValue;
 
       if (isForward()) {
         // Forward analysis

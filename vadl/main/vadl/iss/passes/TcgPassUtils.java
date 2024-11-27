@@ -6,8 +6,15 @@ import vadl.viam.graph.dependency.FieldAccessRefNode;
 import vadl.viam.graph.dependency.FieldRefNode;
 import vadl.viam.graph.dependency.LetNode;
 
+/**
+ * Contains utility methods for TCG passes.
+ */
 public class TcgPassUtils {
 
+  /**
+   * Returns a variable name for the given expression that is easy to read and understand
+   * in the generated source code.
+   */
   public static String exprVarName(ExpressionNode expr) {
     if (expr instanceof LetNode letNode) {
       return letNode.letName().name();

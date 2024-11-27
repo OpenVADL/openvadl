@@ -62,7 +62,8 @@ public class IssVariableAllocationPass extends Pass {
   /**
    * Represents the result of the variable allocation pass.
    *
-   * <p>Contains a mapping from each instruction to a mapping of its dependency nodes to their assigned TcgV variables.
+   * <p>Contains a mapping from each instruction to a mapping of its dependency nodes
+   * to their assigned TcgV variables.
    */
   public record Result(
       Map<Instruction, Map<DependencyNode, TcgV>> varAssignments
@@ -83,7 +84,7 @@ public class IssVariableAllocationPass extends Pass {
       throws IOException {
 
     // TODO: Don't hardcode
-    var target_size = Tcg_32_64.i64;
+    var targetSize = Tcg_32_64.i64;
 
     var result = new Result(new HashMap<>());
 
@@ -91,7 +92,7 @@ public class IssVariableAllocationPass extends Pass {
     viam.isa().ifPresent(isa -> isa.ownInstructions()
         .forEach(instr -> {
               // Allocate variables for the instruction's behavior
-              var res = new IssVariableAllocator(instr.behavior(), target_size)
+              var res = new IssVariableAllocator(instr.behavior(), targetSize)
                   .allocateVariables();
               // Store the variable assignments for the instruction
               result.varAssignments.put(instr, res);
@@ -104,7 +105,8 @@ public class IssVariableAllocationPass extends Pass {
 /**
  * Performs variable allocation for a single instruction's behavior.
  *
- * <p>This class encapsulates the logic required to allocate variables for an instruction's behavior.
+ * <p>This class encapsulates the logic required to allocate variables
+ * for an instruction's behavior.
  * It handles the following tasks:
  * <ul>
  *   <li>Filling the variable table with variables from the dependency graph.
@@ -116,27 +118,25 @@ public class IssVariableAllocationPass extends Pass {
  */
 class IssVariableAllocator {
 
-  Graph graph;
-  StartNode startNode;
-  InstrEndNode endNode;
-  Tcg_32_64 target_size;
+  private final Graph graph;
+  private final StartNode startNode;
+  private final Tcg_32_64 targetSize;
   // the integer just represents some non-specific TCGv
-  Map<Variable, Integer> allocationMap;
-  LivenessAnalysis livenessAnalysis;
+  private final Map<Variable, Integer> allocationMap;
+  private final LivenessAnalysis livenessAnalysis;
   // a table of virtual variables (e.g. each scheduled expression has a variable assigned)
-  VariableTable variables;
+  private final VariableTable variables;
 
   /**
    * Constructs an IssVariableAllocator for the given dependency graph and target size.
    *
-   * @param graph       The dependency graph of the instruction's behavior.
-   * @param target_size The target size for TCG variables.
+   * @param graph      The dependency graph of the instruction's behavior.
+   * @param targetSize The target size for TCG variables.
    */
-  public IssVariableAllocator(Graph graph, Tcg_32_64 target_size) {
+  public IssVariableAllocator(Graph graph, Tcg_32_64 targetSize) {
     this.graph = graph;
     this.startNode = getSingleNode(graph, StartNode.class);
-    this.endNode = getSingleNode(graph, InstrEndNode.class);
-    this.target_size = target_size;
+    this.targetSize = targetSize;
     this.variables = new VariableTable();
     this.livenessAnalysis = new LivenessAnalysis(variables);
     this.allocationMap = new HashMap<>();
@@ -173,8 +173,8 @@ class IssVariableAllocator {
   /**
    * Assigns TcgV variables to nodes in the dependency graph.
    *
-   * <p>This method is responsible for assigning TcgV (Tiny Code Generator Variables) instances to all
-   * nodes within the dependency graph that are scheduled (as TCG operations).
+   * <p>This method is responsible for assigning TcgV (Tiny Code Generator Variables)
+   * instances to all nodes within the dependency graph that are scheduled (as TCG operations).
    * The assignment process is crucial for code generation, as it
    * determines how variables in the intermediate representation map to variables used in the
    * generated code.
@@ -302,11 +302,11 @@ class IssVariableAllocator {
   private TcgV createTcgV(Variable var, boolean isRegFileWrite) {
     // generate TCGv
     var tcgV = switch (var.kind()) {
-      case TMP -> TcgV.tmp("tmp_" + tmpCnt++, target_size);
-      case REG -> TcgV.reg(var.name(), target_size, (Register) requireNonNull(var.regOrFile()));
+      case TMP -> TcgV.tmp("tmp_" + tmpCnt++, targetSize);
+      case REG -> TcgV.reg(var.name(), targetSize, (Register) requireNonNull(var.regOrFile()));
       case REG_FILE -> {
         var postfix = isRegFileWrite ? "_dest" : "";
-        yield TcgV.regFile(var.name() + postfix, target_size,
+        yield TcgV.regFile(var.name() + postfix, targetSize,
             (RegisterFile) requireNonNull(var.regOrFile()),
             requireNonNull(var.fileAddr()), isRegFileWrite);
       }
@@ -356,8 +356,8 @@ class IssVariableAllocator {
   /**
    * Allocates registers by coloring the interference graph.
    *
-   * <p>This method uses a graph coloring algorithm to assign registers to variables such that no two
-   * interfering variables share the same register.
+   * <p>This method uses a graph coloring algorithm to assign registers to
+   * variables such that no two interfering variables share the same register.
    *
    * @param graph The interference graph to color.
    */
@@ -377,7 +377,8 @@ class IssVariableAllocator {
  * Implements liveness analysis to determine live variables at each point in the behavior.
  *
  * <p>This analysis is a backward may analysis that computes, for each node, the set of variables
- * that are live-in and live-out. It helps in building the interference graph by identifying variables
+ * that are live-in and live-out.
+ * It helps in building the interference graph by identifying variables
  * that are live simultaneously.
  */
 class LivenessAnalysis extends DataFlowAnalysis<Set<Variable>> {
@@ -493,7 +494,8 @@ class LivenessAnalysis extends DataFlowAnalysis<Set<Variable>> {
   // TODO: Write test for such a scenario
 
   /**
-   * Adds all variables that represent some index of a given register file to the used variables set.
+   * Adds all variables that represent some index of a given
+   * register file to the used variables set.
    *
    * <p>This method is necessary because when reading from a register file, we cannot be certain
    * whether other writes are potentially writing to the same index. By adding all variables of the
@@ -513,10 +515,12 @@ class LivenessAnalysis extends DataFlowAnalysis<Set<Variable>> {
 }
 
 /**
- * Represents an interference graph where nodes are variables and edges represent interference between variables.
+ * Represents an interference graph where nodes are variables and edges represent
+ * interference between variables.
  *
- * <p>An interference graph models conflicts between variables where each node is a variable, and an edge indicates
- * that two variables interfere with each other (i.e., they are live at the same time and cannot share a register).
+ * <p>An interference graph models conflicts between variables where each node is a variable,
+ * and an edge indicates that two variables interfere with each other
+ * (i.e., they are live at the same time and cannot share a register).
  */
 class InterferenceGraph {
 
@@ -595,8 +599,8 @@ class GraphColoring {
 
   /**
    * Selects the next variable to color.
-   * <p>
-   * This implementation selects an arbitrary variable.
+   *
+   * <p>This implementation selects an arbitrary variable.
    * It can be improved by using heuristics like choosing the variable with the highest degree.
    *
    * @param uncoloredVariables The set of uncolored variables.
@@ -686,8 +690,10 @@ record Variable(
 /**
  * Manages the variables used in the instruction's behavior.
  *
- * <p>The variable table keeps track of all variables, including temporaries, registers, and register files.
- * It provides methods to retrieve or create variables associated with nodes in the dependency graph.
+ * <p>The variable table keeps track of all variables, including temporaries,
+ * registers, and register files.
+ * It provides methods to retrieve or create variables associated
+ * with nodes in the dependency graph.
  */
 class VariableTable {
   /**

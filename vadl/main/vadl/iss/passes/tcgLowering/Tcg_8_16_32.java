@@ -38,6 +38,9 @@ public enum Tcg_8_16_32 {
     };
   }
 
+  /**
+   * Returns the width of the expressions result type.
+   */
   public static Tcg_8_16_32 from(ExpressionNode expr) {
     try {
       return fromWidth(expr.type().asDataType().bitWidth());

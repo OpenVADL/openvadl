@@ -42,7 +42,10 @@ public abstract class SideEffectNode extends DependencyNode {
     return condition;
   }
 
-  abstract public Resource resourceDefinition();
+  /**
+   * Returns the resource affected by this side effect.
+   */
+  public abstract Resource resourceDefinition();
 
   /**
    * Sets the condition of the side effect.

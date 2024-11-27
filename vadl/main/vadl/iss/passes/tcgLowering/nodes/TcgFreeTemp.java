@@ -4,6 +4,9 @@ import java.util.function.Function;
 import vadl.iss.passes.tcgLowering.TcgV;
 import vadl.viam.graph.Node;
 
+/**
+ * Represents the {@code tcg_temp_free} TCG function.
+ */
 public class TcgFreeTemp extends TcgVarNode {
 
   public TcgFreeTemp(TcgV variable) {

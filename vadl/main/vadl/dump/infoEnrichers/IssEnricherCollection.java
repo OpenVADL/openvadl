@@ -22,8 +22,8 @@ public class IssEnricherCollection {
   /**
    * An {@link InfoEnricher} that enriches a {@link DefinitionEntity} by adding information
    * about variable assignments and resource reads. Specifically, it processes entities of type
-   * {@link DefinitionEntity} and extracts data if the corresponding pass {@link IssVariableAllocationPass}
-   * has been executed.
+   * {@link DefinitionEntity} and extracts data
+   * if the corresponding pass {@link IssVariableAllocationPass} has been executed.
    */
   public static InfoEnricher TCG_VAR_ASSIGN_EXPANDABLE =
       forType(DefinitionEntity.class, (entity, passResult) -> {
