@@ -3,14 +3,17 @@ package vadl.iss.passes.tcgLowering;
 import static java.util.Objects.requireNonNull;
 import static vadl.utils.GraphUtils.getSingleNode;
 
+import com.google.errorprone.annotations.concurrent.LazyInit;
 import java.io.IOException;
 import java.util.Map;
 import org.jetbrains.annotations.Nullable;
 import vadl.configuration.GeneralConfiguration;
 import vadl.iss.passes.IssVariableAllocationPass;
+import vadl.iss.passes.TcgPassUtils;
 import vadl.iss.passes.tcgLowering.nodes.TcgBr;
-import vadl.iss.passes.tcgLowering.nodes.TcgBrCondImm;
+import vadl.iss.passes.tcgLowering.nodes.TcgBrCond;
 import vadl.iss.passes.tcgLowering.nodes.TcgGenLabel;
+import vadl.iss.passes.tcgLowering.nodes.TcgGetVar;
 import vadl.iss.passes.tcgLowering.nodes.TcgSetLabel;
 import vadl.pass.Pass;
 import vadl.pass.PassName;
@@ -78,6 +81,8 @@ public class TcgBranchLoweringPass extends Pass {
 class TcgBranchLoweringExecutor implements CfgTraverser {
 
   Map<DependencyNode, TcgV> assignments;
+  @LazyInit
+  StartNode startNode;
 
   TcgBranchLoweringExecutor(Map<DependencyNode, TcgV> assignments) {
     this.assignments = assignments;
@@ -89,8 +94,8 @@ class TcgBranchLoweringExecutor implements CfgTraverser {
    * @param graph the control flow graph to traverse
    */
   public void runOn(Graph graph) {
-    var start = getSingleNode(graph, StartNode.class);
-    traverseBranch(start);
+    startNode = getSingleNode(graph, StartNode.class);
+    traverseBranch(startNode);
   }
 
   @Override
@@ -117,16 +122,17 @@ class TcgBranchLoweringExecutor implements CfgTraverser {
     var condVar = varOf(ifNode.condition());
 
     // produce 0 value node to compare to
-    var graph = requireNonNull(ifNode.graph());
-    var zeroValue = graph.add(new ConstantNode(Constant.Value.of(
-        0,
-        Type.bits(condVar.width.width)
-    )));
+    var constZero = getConstantVariable(
+        condVar.width(),
+        new ConstantNode(Constant.Value.of(
+            0,
+            Type.bits(condVar.width.width)
+        )));
 
     // check if true by check if value is not 0.
     // if true, we branch to the ifLabel.
     var tcgBranchNode = splitNode.addBefore(
-        new TcgBrCondImm(condVar, zeroValue, TcgCondition.NE, takenLabel)
+        new TcgBrCond(condVar, constZero, TcgCondition.NE, takenLabel)
     );
 
     // emit the false branch
@@ -151,6 +157,20 @@ class TcgBranchLoweringExecutor implements CfgTraverser {
         takenLabelPosition,
         (MergeNode) falseBranchEnd.usages().findFirst().get()
     );
+  }
+
+  /**
+   * Checks if a TCGv for the given constant already exists.
+   * If not, it returns a new constant and adds the constant creation to the instruction start.
+   */
+  private TcgV getConstantVariable(Tcg_32_64 width, ExpressionNode constant) {
+    if (assignments.containsKey(constant)) {
+      return assignments.get(constant);
+    }
+
+    var constVar = TcgV.constant("const_" + TcgPassUtils.exprVarName(constant), width, constant);
+    startNode.addAfter(TcgGetVar.from(constVar));
+    return constVar;
   }
 
   /**

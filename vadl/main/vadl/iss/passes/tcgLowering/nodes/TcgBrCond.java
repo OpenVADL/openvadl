@@ -16,7 +16,7 @@ import vadl.viam.graph.dependency.ExpressionNode;
  * This class is used to model a conditional branch operation where the branch decision is
  * determined by comparing two arguments.
  */
-public class TcgBrCondImm extends TcgLabelNode {
+public class TcgBrCond extends TcgLabelNode {
 
   @DataValue
   private TcgCondition condition;
@@ -24,8 +24,8 @@ public class TcgBrCondImm extends TcgLabelNode {
   @DataValue
   private TcgV varArg;
 
-  @Input
-  private ExpressionNode immArg;
+  @DataValue
+  private TcgV immArg;
 
   /**
    * Constructs the TCG conditional branch with immediate opcode.
@@ -36,8 +36,8 @@ public class TcgBrCondImm extends TcgLabelNode {
    * @param condition condition when to branch
    * @param label     label to which the branch should jump to if condition is met
    */
-  public TcgBrCondImm(TcgV varArg, ExpressionNode immArg, TcgCondition condition,
-                      TcgLabel label) {
+  public TcgBrCond(TcgV varArg, TcgV immArg, TcgCondition condition,
+                   TcgLabel label) {
     super(label);
     this.condition = condition;
     this.varArg = varArg;
@@ -52,18 +52,18 @@ public class TcgBrCondImm extends TcgLabelNode {
     return varArg;
   }
 
-  public ExpressionNode cmpArg2() {
+  public TcgV cmpArg2() {
     return immArg;
   }
 
   @Override
   public Node copy() {
-    return new TcgBrCondImm(varArg, immArg.copy(ExpressionNode.class), condition, label());
+    return new TcgBrCond(varArg, immArg, condition, label());
   }
 
   @Override
   public Node shallowCopy() {
-    return new TcgBrCondImm(varArg, immArg, condition, label());
+    return copy();
   }
 
   @Override
@@ -71,18 +71,7 @@ public class TcgBrCondImm extends TcgLabelNode {
     super.collectData(collection);
     collection.add(condition);
     collection.add(varArg);
-  }
-
-  @Override
-  protected void collectInputs(List<Node> collection) {
-    super.collectInputs(collection);
     collection.add(immArg);
-  }
-
-  @Override
-  protected void applyOnInputsUnsafe(GraphVisitor.Applier<Node> visitor) {
-    super.applyOnInputsUnsafe(visitor);
-    immArg = visitor.apply(this, immArg, ExpressionNode.class);
   }
 
   @Override
@@ -90,7 +79,7 @@ public class TcgBrCondImm extends TcgLabelNode {
     return "tcg_gen_brcondi_" + varArg.width() + "("
         + condition.cCode() + ", "
         + cmpArg1().varName() + ", "
-        + nodeToCCode.apply(cmpArg2()) + ", "
+        + cmpArg2().varName() + ", "
         + label().varName()
         + ");";
   }
