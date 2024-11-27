@@ -3,6 +3,7 @@ package vadl.iss;
 import static java.util.Objects.requireNonNull;
 import static vadl.utils.GraphUtils.getSingleNode;
 
+import java.util.ArrayDeque;
 import java.util.List;
 import java.util.Map;
 import java.util.HashMap;
@@ -49,7 +50,7 @@ public abstract class DataFlowAnalysis<D> {
    * @param cfg The control flow graph to analyze.
    */
   public void analyze(Graph cfg) {
-    Queue<ControlNode> worklist = new LinkedList<>();
+    Queue<ControlNode> worklist = new ArrayDeque<>();
 
     // Initialize the IN and OUT sets for each node
     for (ControlNode node : cfg.getNodes(ControlNode.class).toList()) {
@@ -68,16 +69,14 @@ public abstract class DataFlowAnalysis<D> {
       ControlNode node = worklist.poll();
 
       D inValue, outValue;
-      D oldInValue = requireNonNull(inValues.get(node));
-      D oldOutValue = requireNonNull(outValues.get(node));
 
       if (isForward()) {
         // Forward analysis
-        inValue = meetOfPredecessors(node, cfg);
+        inValue = meetOfPredecessors(node);
         outValue = transferFunction(node, inValue);
       } else {
         // Backward analysis
-        outValue = meetOfSuccessors(node, cfg);
+        outValue = meetOfSuccessors(node);
         inValue = transferFunction(node, outValue);
       }
 
@@ -152,10 +151,9 @@ public abstract class DataFlowAnalysis<D> {
    * Computes the meet of the OUT values of the predecessors of a node.
    *
    * @param node The node whose predecessors are considered.
-   * @param cfg  The control flow graph.
    * @return The result of the meet operation.
    */
-  private D meetOfPredecessors(ControlNode node, Graph cfg) {
+  private D meetOfPredecessors(ControlNode node) {
     Set<D> values = new HashSet<>();
     for (ControlNode pred : predecessorsOf(node)) {
       values.add(outValues.get(pred));
@@ -167,10 +165,9 @@ public abstract class DataFlowAnalysis<D> {
    * Computes the meet of the IN values of the successors of a node.
    *
    * @param node The node whose successors are considered.
-   * @param cfg  The control flow graph.
    * @return The result of the meet operation.
    */
-  private D meetOfSuccessors(ControlNode node, Graph cfg) {
+  private D meetOfSuccessors(ControlNode node) {
     Set<D> values = new HashSet<>();
     for (ControlNode succ : successorsOf(node)) {
       values.add(inValues.get(succ));

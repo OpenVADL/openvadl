@@ -106,7 +106,6 @@ public class TcgOpLoweringPass extends Pass {
     include = {"vadl.iss", "vadl.viam"})
 class TcgOpLoweringExecutor implements CfgTraverser {
 
-  private static final Logger log = LoggerFactory.getLogger(TcgOpLoweringExecutor.class);
   Map<DependencyNode, TcgV> assignments;
   @LazyInit
   ScheduledNode toReplace;

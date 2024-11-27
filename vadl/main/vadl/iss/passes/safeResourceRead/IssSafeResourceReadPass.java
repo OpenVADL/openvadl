@@ -100,7 +100,6 @@ public class IssSafeResourceReadPass extends Pass {
  * If necessary, it schedules a copy of the read resource to a temporary location to prevent conflicts.
  */
 class IssResourceReadSecurer {
-  private static final Logger log = LoggerFactory.getLogger(IssResourceReadSecurer.class);
   Instruction instruction;
   IssSafeResourceReadPass.Result result;
 
