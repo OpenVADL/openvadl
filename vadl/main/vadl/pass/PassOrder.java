@@ -4,7 +4,9 @@ import java.nio.file.Path;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.function.Function;
 import javax.annotation.Nullable;
 import vadl.configuration.GeneralConfiguration;
 import vadl.dump.HtmlDumpPass;
@@ -104,15 +106,16 @@ public final class PassOrder {
   }
 
   /**
-   * Injects a dump pass between each existing pass of this pass order.
-   * TemplateRenderingPasses and {@link ViamVerificationPass} are not affected by this
-   * method.
-   * It is most useful for debugging, as it allows to inspect the VIAM's state after every
-   * executed pass.
+   * Adds a new pass after each existing pass in the current pass order, excluding passes of
+   * types {@link AbstractTemplateRenderingPass} and {@link ViamVerificationPass}. The additional
+   * pass is determined by applying a provided function to each existing pass.
+   *
+   * @param passCreator a function that takes an existing pass and returns an optional pass
+   *                    that should be added immediately after it. If the function returns
+   *                    an empty optional, no pass is added after that specific pass.
+   * @return the updated {@link PassOrder} instance, allowing for method chaining.
    */
-  public PassOrder dumpAfterEach(String outPath) {
-    var config = new GeneralConfiguration(Path.of(outPath), true);
-    // We use a ListIterator for safe modification while iterating
+  public PassOrder addAfterEach(Function<Pass, Optional<Pass>> passCreator) {
     var iterator = order.listIterator();
 
     while (iterator.hasNext()) {
@@ -124,19 +127,9 @@ public final class PassOrder {
         continue;
       }
 
-      HtmlDumpPass dumpPass = new HtmlDumpPass(HtmlDumpPass.Config.from(config,
-          currentPass.pass().getName().value(),
-          "This is a dump right after the pass " + currentPass.key().value() + "."
-      ));
-
-      // Check if there is a next element to decide where to add the dump pass
-      if (iterator.hasNext()) {
-        iterator.add(createPassStep(null, dumpPass));
-      } else {
-        // If at the end, also add the dump pass
-        iterator.add(createPassStep(null, dumpPass));
-        break; // Break after adding at the end to avoid infinite loop
-      }
+      passCreator
+          .apply(currentPass.pass())
+          .ifPresent(value -> iterator.add(createPassStep(null, value)));
     }
     return this;
   }
