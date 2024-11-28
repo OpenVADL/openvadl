@@ -11,4 +11,9 @@ public record PassKey(String value) {
   public static PassKey of(String value) {
     return new PassKey(value);
   }
+
+  @Override
+  public String toString() {
+    return value;
+  }
 }
