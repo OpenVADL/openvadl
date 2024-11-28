@@ -132,9 +132,9 @@ public class ViamEnricherCollection {
       var filteredBehaviorGraphs =
           new ArrayList<Pair<PassResults.SingleResult, String>>();
       behaviorGraphs.forEach(entry -> {
-        if (filteredBehaviorGraphs.isEmpty() ||
-            !filteredBehaviorGraphs.get(filteredBehaviorGraphs.size() - 1).right()
-                .equals(entry.right())) {
+        if (filteredBehaviorGraphs.isEmpty()
+            || !filteredBehaviorGraphs.get(filteredBehaviorGraphs.size() - 1).right()
+            .equals(entry.right())) {
           filteredBehaviorGraphs.add(entry);
         }
       });

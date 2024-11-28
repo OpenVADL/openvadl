@@ -29,7 +29,8 @@ public class InfoUtils {
     info.modalTitle = """
         <div class="flex justify-between items-center w-full">
         <div>%s</div>
-        <button type="button" class="text-sm ml-5 rounded-md p-1 border-2 btn btn-secondary" onclick="
+        <button type="button" class="text-sm ml-5 rounded-md p-1 border-2 btn btn-secondary"
+        onclick="
             navigator.clipboard.writeText(
                 document.getElementById('dot-graph-%s').textContent.trim()
             ).then(() => {
