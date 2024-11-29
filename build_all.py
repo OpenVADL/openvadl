@@ -488,8 +488,8 @@ def compile_file(f_root, srcdir, bindir, suffix='.c'):
             log.debug('Command was:')
             log.debug(arglist_to_str(arglist))
 
-            log.debug(res.stdout.decode('utf-8'))
-            log.debug(res.stderr.decode('utf-8'))
+            log.error(res.stdout.decode('utf-8'))
+            log.error(res.stderr.decode('utf-8'))
 
     return succeeded
 

@@ -68,7 +68,7 @@ def decode_results(stdout_str, stderr_str):
     """Extract the results from the output string of the run. Return the
        elapsed time in milliseconds or zero if the run failed."""
     # Match "real s.mm?m?"
-    time = re.search('^TIME=(\d+)\.(\d+)', stdout_str, re.M)
+    time = re.search(r'^TIME=(\d+)\.(\d+)', stdout_str, re.M)
     if time:
         ms_elapsed = int(time.group(1)) * 1000 + \
                      int(time.group(2).ljust(3,'0')) # 0-pad

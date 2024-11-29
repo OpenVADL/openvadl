@@ -1,10 +1,11 @@
 #!/usr/bin/env bash
 
 set -e
+set -x
 
 CLANG_CFLAGS="--target=riscv32 -march=rv32im -mabi=ilp32"
-LCB_CFLAGS="--target=rv32i -D__SIZEOF_POINTER__=4 -D__riscv_xlen=32"
-CLANG=/llvm/build/bin/clang 
+LCB_CFLAGS="--target=rv32im -D__SIZEOF_POINTER__=4 -D__riscv_xlen=32"
+CLANG=/src/llvm-final/build/bin/clang
 
 last="${@:(-1):1}"
 extension="${last##*.}"
