@@ -1,0 +1,11 @@
+Embench
+=======
+
+Commit 0980b07
+--------------
+
+Initial commit for the RISC-V European Workshop 11-12 June 2019.
+
+Known issues:
+- NEWS file still references BEEBS.
+- INSTALL file is inappropriate.
