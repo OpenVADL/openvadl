@@ -3967,14 +3967,14 @@ class AsmDescriptionDefinition extends Definition {
 class AsmModifierDefinition extends Definition {
   Expr stringLiteral;
   Identifier isa;
-  Identifier builtinModifier;
+  Identifier relocation;
   SourceLocation loc;
 
-  public AsmModifierDefinition(Expr stringLiteral, Identifier isa, Identifier builtinModifier,
+  public AsmModifierDefinition(Expr stringLiteral, Identifier isa, Identifier relocation,
                                SourceLocation loc) {
     this.stringLiteral = stringLiteral;
     this.isa = isa;
-    this.builtinModifier = builtinModifier;
+    this.relocation = relocation;
     this.loc = loc;
   }
 
@@ -4000,7 +4000,7 @@ class AsmModifierDefinition extends Definition {
     builder.append(" -> ");
     isa.prettyPrint(0, builder);
     builder.append("::");
-    builtinModifier.prettyPrint(0, builder);
+    relocation.prettyPrint(0, builder);
   }
 
   @Override
@@ -4013,12 +4013,12 @@ class AsmModifierDefinition extends Definition {
     }
     AsmModifierDefinition that = (AsmModifierDefinition) o;
     return Objects.equals(stringLiteral, that.stringLiteral) && Objects.equals(isa, that.isa)
-        && Objects.equals(builtinModifier, that.builtinModifier);
+        && Objects.equals(relocation, that.relocation);
   }
 
   @Override
   public int hashCode() {
-    return Objects.hash(stringLiteral, isa, builtinModifier);
+    return Objects.hash(stringLiteral, isa, relocation);
   }
 }
 

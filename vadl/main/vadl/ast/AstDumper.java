@@ -615,7 +615,7 @@ public class AstDumper
   @Override
   public Void visit(AsmModifierDefinition definition) {
     dumpNode(definition);
-    dumpChildren(definition.stringLiteral, definition.isa, definition.builtinModifier);
+    dumpChildren(definition.stringLiteral, definition.isa, definition.relocation);
     return null;
   }
 
