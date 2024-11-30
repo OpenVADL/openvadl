@@ -6,7 +6,6 @@ import java.util.List;
 import java.util.stream.Stream;
 import org.jetbrains.annotations.Nullable;
 import vadl.configuration.GcbConfiguration;
-import vadl.configuration.GeneralConfiguration;
 import vadl.pass.Pass;
 import vadl.pass.PassResults;
 import vadl.viam.Function;

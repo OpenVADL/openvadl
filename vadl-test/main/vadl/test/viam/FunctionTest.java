@@ -3,7 +3,6 @@ package vadl.test.viam;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static vadl.test.TestUtils.findDefinitionByNameIn;
 
-import java.util.List;
 import org.junit.jupiter.api.Test;
 import vadl.test.AbstractTest;
 import vadl.types.BuiltInTable;
@@ -16,7 +15,6 @@ import vadl.viam.graph.dependency.BuiltInCall;
 import vadl.viam.graph.dependency.ConstantNode;
 import vadl.viam.graph.dependency.FuncCallNode;
 import vadl.viam.graph.dependency.FuncParamNode;
-import vadl.viam.graph.dependency.ParamNode;
 import vadl.viam.graph.dependency.TypeCastNode;
 
 public class FunctionTest extends AbstractTest {

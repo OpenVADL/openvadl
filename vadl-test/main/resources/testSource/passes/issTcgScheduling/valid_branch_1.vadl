@@ -1,0 +1,26 @@
+// TEST1: REG + 3 must be scheduled in both branches.
+
+instruction set architecture ValidBranch = {
+
+  register REG: Bits<32>
+  program counter PC: Bits<32>
+  memory MEM: Bits<32> -> Bits<8>
+
+  instruction TEST1: TMP = {
+    if F1 = 1 then {
+      PC := (REG + 3) - 6
+    } else {
+      PC := REG + 3
+    }
+  }
+
+  encoding TEST1 = { ENC = 1 }
+  assembly TEST1 = ""
+
+  format TMP: Bits<32> =
+  { F1: Bits<8>
+  , F2: Bits<8>
+  , F3: Bits<8>
+  , ENC: Bits<8>
+  }
+}

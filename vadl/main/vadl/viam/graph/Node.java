@@ -3,11 +3,8 @@ package vadl.viam.graph;
 import com.google.errorprone.annotations.FormatMethod;
 import com.google.errorprone.annotations.FormatString;
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.List;
 import java.util.Objects;
-import java.util.Optional;
-import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.function.Consumer;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
@@ -400,6 +397,26 @@ public abstract class Node implements WithSourceLocation {
    *     new node might be a different object
    */
   public <T extends Node> T replaceAndDelete(T replacement) {
+    var result = replace(replacement);
+    if (result == this) {
+      // we should better not delete itself
+      return result;
+    }
+    this.safeDelete();
+    return result;
+  }
+
+  /**
+   * Replaces the current node with the specified replacement node.
+   *
+   * <p>Note, that only usages and predecessors are updated. This means that
+   * inputs or successors are not automatically transferred to the replacement.</p>
+   *
+   * @param <T>         the type of the node, which extends Node.
+   * @param replacement the node to replace the current node with.
+   * @return the replacement node.
+   */
+  public <T extends Node> T replace(T replacement) {
     replacement.setSourceLocationIfNotSet(this.sourceLocation);
     if (replacement.isUninitialized() && graph != null) {
       replacement = graph.addWithInputs(replacement);
@@ -412,7 +429,6 @@ public abstract class Node implements WithSourceLocation {
     checkReplaceWith(replacement);
     replaceAtAllUsages(replacement);
     replaceAtPredecessor(replacement);
-    this.safeDelete();
     return replacement;
   }
 
@@ -425,6 +441,11 @@ public abstract class Node implements WithSourceLocation {
   public void replaceAtAllUsages(Node replacement) {
     checkReplaceWith(replacement);
     for (var u : this.usages().toList()) {
+      if (u == replacement) {
+        // if the user of this is the node to be replaced with we don't replace
+        // it, as this would lead to a cycle where the replacement uses itself
+        continue;
+      }
       u.replaceInput(this, replacement);
     }
   }
@@ -573,7 +594,7 @@ public abstract class Node implements WithSourceLocation {
    */
   protected void updatePredecessorOf(@Nullable Node oldSuccessor, @Nullable Node newSuccessor) {
     ensure(isActive() && (newSuccessor == null || newSuccessor.isActiveIn(graph())),
-        "failed to set remove %s as predecessor from %s and adding it to %s", this, oldSuccessor,
+        "failed to set removed %s as predecessor from %s and adding it to %s", this, oldSuccessor,
         newSuccessor);
     if (oldSuccessor != newSuccessor) {
       if (oldSuccessor != null && oldSuccessor.predecessor != null) {

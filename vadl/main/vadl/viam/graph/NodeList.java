@@ -8,7 +8,6 @@ import org.jetbrains.annotations.Nullable;
 import vadl.types.Type;
 import vadl.types.TypeList;
 import vadl.viam.graph.dependency.ExpressionNode;
-import vadl.viam.graph.dependency.SideEffectNode;
 
 /**
  * A list of nodes in the VIAM graph.

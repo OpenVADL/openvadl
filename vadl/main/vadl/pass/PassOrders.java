@@ -2,12 +2,16 @@ package vadl.pass;
 
 import static vadl.iss.template.IssDefaultRenderingPass.issDefault;
 
+import com.google.common.collect.Streams;
 import java.io.IOException;
+import java.util.Optional;
+import java.util.stream.Stream;
 import vadl.configuration.GcbConfiguration;
 import vadl.configuration.GeneralConfiguration;
 import vadl.configuration.IssConfiguration;
 import vadl.configuration.LcbConfiguration;
 import vadl.cppCodeGen.passes.fieldNodeReplacement.FieldNodeReplacementPassForDecoding;
+import vadl.dump.CollectBehaviorDotGraphPass;
 import vadl.dump.HtmlDumpPass;
 import vadl.gcb.passes.IdentifyFieldUsagePass;
 import vadl.gcb.passes.assembly.AssemblyConcatBuiltinMergingPass;
@@ -19,9 +23,13 @@ import vadl.gcb.passes.typeNormalization.CppTypeNormalizationForDecodingsPass;
 import vadl.gcb.passes.typeNormalization.CppTypeNormalizationForEncodingsPass;
 import vadl.gcb.passes.typeNormalization.CppTypeNormalizationForPredicatesPass;
 import vadl.iss.passes.IssConfigurationPass;
-import vadl.iss.passes.IssTcgAnnotatePass;
+import vadl.iss.passes.IssTcgConstantSchedulingPass;
+import vadl.iss.passes.IssTcgSchedulingPass;
+import vadl.iss.passes.IssVariableAllocationPass;
 import vadl.iss.passes.IssVerificationPass;
-import vadl.iss.passes.tcgLowering.TcgLoweringPass;
+import vadl.iss.passes.safeResourceRead.IssSafeResourceReadPass;
+import vadl.iss.passes.tcgLowering.TcgBranchLoweringPass;
+import vadl.iss.passes.tcgLowering.TcgOpLoweringPass;
 import vadl.iss.template.target.EmitIssCpuHeaderPass;
 import vadl.iss.template.target.EmitIssCpuParamHeaderPass;
 import vadl.iss.template.target.EmitIssCpuQomHeaderPass;
@@ -42,6 +50,7 @@ import vadl.lcb.template.lib.Target.EmitMCInstLowerHeaderFilePass;
 import vadl.lcb.template.lib.Target.MCTargetDesc.EmitConstMatIntHeaderFilePass;
 import vadl.lcb.template.lib.Target.MCTargetDesc.EmitInstPrinterCppFilePass;
 import vadl.lcb.template.lib.Target.MCTargetDesc.EmitInstPrinterHeaderFilePass;
+import vadl.template.AbstractTemplateRenderingPass;
 import vadl.viam.passes.DuplicateWriteDetectionPass;
 import vadl.viam.passes.InstructionResourceAccessAnalysisPass;
 import vadl.viam.passes.algebraic_simplication.AlgebraicSimplificationPass;
@@ -50,6 +59,7 @@ import vadl.viam.passes.canonicalization.CanonicalizationPass;
 import vadl.viam.passes.dummyAbi.DummyAbiPass;
 import vadl.viam.passes.functionInliner.FieldAccessInlinerPass;
 import vadl.viam.passes.functionInliner.FunctionInlinerPass;
+import vadl.viam.passes.sideEffectScheduling.SideEffectSchedulingPass;
 import vadl.viam.passes.sideeffect_condition.SideEffectConditionResolvingPass;
 import vadl.viam.passes.staticCounterAccess.StaticCounterAccessResolvingPass;
 import vadl.viam.passes.typeCastElimination.TypeCastEliminationPass;
@@ -168,6 +178,9 @@ public class PassOrders {
     order.add(new GenerateLinkerComponentsPass(configuration));
 
     if (configuration.doDump()) {
+      addDumpBehaviorCollectionPasses(order, configuration,
+          IssVerificationPass.class,
+          IssConfiguration.class);
       var config = HtmlDumpPass.Config.from(
           configuration,
           "lcbLlvmLowering",
@@ -335,13 +348,21 @@ public class PassOrders {
     order
         .add(new IssVerificationPass(config))
         .add(new IssConfigurationPass(config))
-        .add(new IssTcgAnnotatePass(config))
-        .add(new TcgLoweringPass(config))
-
+        .add(new SideEffectSchedulingPass(config))
+        .add(new IssSafeResourceReadPass(config))
+        .add(new IssTcgSchedulingPass(config))
+        .add(new IssVariableAllocationPass(config))
+        .add(new TcgBranchLoweringPass(config))
+        .add(new IssTcgConstantSchedulingPass(config))
+        .add(new TcgOpLoweringPass(config))
     ;
 
 
     if (config.doDump()) {
+      // TODO: this should be set in the frontend that creates the scheduling
+      addDumpBehaviorCollectionPasses(order, config,
+          IssVerificationPass.class,
+          IssConfiguration.class);
       order.add(new HtmlDumpPass(HtmlDumpPass.Config.from(config, "ISS Lowering Dump", """
           This dump is executed after the iss transformation passes were executed.
           """)));
@@ -406,6 +427,26 @@ public class PassOrders {
         .add(new EmitIssMachinePass(config))
 
     ;
+  }
+
+  private static PassOrder addDumpBehaviorCollectionPasses(PassOrder order,
+                                                           GeneralConfiguration config,
+                                                           Class<?>... exceptions) {
+    if (!config.doDump()) {
+      return order;
+    }
+    order.addAfterEach(prev -> {
+      var dontRun = Streams.concat(Stream.of(
+          ViamVerificationPass.class,
+          AbstractTemplateRenderingPass.class
+      ), Stream.of(exceptions));
+      if (dontRun.anyMatch(a -> a.isInstance(prev))) {
+        // if previous is any of the dont run pass classes, don't add the collection behavior
+        return Optional.empty();
+      }
+      return Optional.of(new CollectBehaviorDotGraphPass(config));
+    });
+    return order;
   }
 
 }

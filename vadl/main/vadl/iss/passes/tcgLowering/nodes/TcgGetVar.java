@@ -1,8 +1,8 @@
 package vadl.iss.passes.tcgLowering.nodes;
 
 import java.util.List;
+import java.util.function.Function;
 import vadl.iss.passes.tcgLowering.TcgV;
-import vadl.iss.passes.tcgLowering.TcgWidth;
 import vadl.javaannotations.viam.DataValue;
 import vadl.javaannotations.viam.Input;
 import vadl.viam.Register;
@@ -11,14 +11,34 @@ import vadl.viam.graph.GraphVisitor;
 import vadl.viam.graph.Node;
 import vadl.viam.graph.dependency.ExpressionNode;
 
+// TODO: This should extend TcgVarnode instead
+
 /**
  * Abstract sealed class representing a variable retrieval operation in the TCG.
  */
 public abstract sealed class TcgGetVar extends TcgOpNode
-    permits TcgGetVar.TcgGetRegFile, TcgGetVar.TcgGetReg, TcgGetVar.TcgGetTemp {
+    permits TcgGetVar.TcgGetConst, TcgGetVar.TcgGetReg, TcgGetVar.TcgGetRegFile,
+    TcgGetVar.TcgGetTemp {
 
-  public TcgGetVar(TcgV res) {
-    super(res, res.width());
+  public TcgGetVar(TcgV dest) {
+    super(dest, dest.width());
+  }
+
+  /**
+   * Constructs a {@link TcgGetVar} node from the given {@link TcgV}.
+   */
+  public static TcgGetVar from(TcgV var) {
+    return switch (var.kind()) {
+      case TMP -> new TcgGetTemp(var);
+      case CONST -> new TcgGetConst(var, var.constValue());
+      case REG -> new TcgGetReg((Register) var.registerOrFile(), var);
+      case REG_FILE -> {
+        var kind =
+            var.isDest() ? TcgGetRegFile.Kind.DEST : TcgGetRegFile.Kind.SRC;
+        yield new TcgGetRegFile((RegisterFile) var.registerOrFile(),
+            var.regFileIndex(), kind, var);
+      }
+    };
   }
 
   /**
@@ -26,18 +46,70 @@ public abstract sealed class TcgGetVar extends TcgOpNode
    */
   public static final class TcgGetTemp extends TcgGetVar {
 
-    public TcgGetTemp(TcgV res) {
-      super(res);
+    public TcgGetTemp(TcgV dest) {
+      super(dest);
+    }
+
+    @Override
+    public String cCode(Function<Node, String> nodeToCCode) {
+      return "TCGv_" + dest.width() + " " + dest.varName() + " = "
+          + "tcg_temp_new_" + width + "();";
     }
 
     @Override
     public Node copy() {
-      return new TcgGetTemp(res);
+      return new TcgGetTemp(dest);
     }
 
     @Override
     public Node shallowCopy() {
-      return new TcgGetTemp(res);
+      return new TcgGetTemp(dest);
+    }
+  }
+
+  /**
+   * Represents an operation in the TCG for retrieving a value from a constant variable.
+   */
+  public static final class TcgGetConst extends TcgGetVar {
+
+    @Input
+    private ExpressionNode constValue;
+
+    public TcgGetConst(TcgV dest, ExpressionNode constValue) {
+      super(dest);
+      this.constValue = constValue;
+    }
+
+    @Override
+    public String cCode(Function<Node, String> nodeToCCode) {
+      return "TCGv_" + dest.width() + " " + dest.varName() + " = "
+          + "tcg_constant_" + width + "(" + nodeToCCode.apply(constValue) + ");";
+    }
+
+    public ExpressionNode constValue() {
+      return constValue;
+    }
+
+    @Override
+    public Node copy() {
+      return new TcgGetTemp(dest);
+    }
+
+    @Override
+    public Node shallowCopy() {
+      return new TcgGetTemp(dest);
+    }
+
+    @Override
+    protected void collectInputs(List<Node> collection) {
+      super.collectInputs(collection);
+      collection.add(constValue);
+    }
+
+    @Override
+    protected void applyOnInputsUnsafe(GraphVisitor.Applier<Node> visitor) {
+      super.applyOnInputsUnsafe(visitor);
+      constValue = visitor.apply(this, constValue, ExpressionNode.class);
     }
   }
 
@@ -59,13 +131,20 @@ public abstract sealed class TcgGetVar extends TcgOpNode
     }
 
     @Override
+    public String cCode(Function<Node, String> nodeToCCode) {
+      return "TCGv_" + dest.width() + " " + dest.varName() + " = "
+          + "cpu_" + register.simpleName().toLowerCase() + ";";
+    }
+
+
+    @Override
     public Node copy() {
-      return new TcgGetTemp(res);
+      return new TcgGetTemp(dest);
     }
 
     @Override
     public Node shallowCopy() {
-      return new TcgGetTemp(res);
+      return new TcgGetTemp(dest);
     }
 
     @Override
@@ -116,14 +195,13 @@ public abstract sealed class TcgGetVar extends TcgOpNode
       this.kind = kind;
     }
 
-
     @Override
     public void verifyState() {
       super.verifyState();
 
       var cppType = registerFile.resultType().fittingCppType();
       ensure(cppType != null, "Couldn't fit cpp type");
-      ensure(res.width().width <= cppType.bitWidth(),
+      ensure(dest.width().width <= cppType.bitWidth(),
           "register file result width does not fit in node's result var width");
     }
 
@@ -140,13 +218,22 @@ public abstract sealed class TcgGetVar extends TcgOpNode
     }
 
     @Override
+    public String cCode(Function<Node, String> nodeToCCode) {
+      var prefix = kind() == Kind.DEST ? "dest" : "get";
+      return "TCGv_" + dest.width() + " " + dest.varName() + " = "
+          + prefix + "_" + registerFile.simpleName().toLowerCase()
+          + "(ctx, " + nodeToCCode.apply(index)
+          + ");";
+    }
+
+    @Override
     public Node copy() {
-      return new TcgGetRegFile(registerFile, index.copy(ExpressionNode.class), kind, res);
+      return new TcgGetRegFile(registerFile, index.copy(ExpressionNode.class), kind, dest);
     }
 
     @Override
     public Node shallowCopy() {
-      return new TcgGetRegFile(registerFile, index, kind, res);
+      return new TcgGetRegFile(registerFile, index, kind, dest);
     }
 
     @Override

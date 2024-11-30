@@ -21,7 +21,7 @@ import vadl.viam.graph.Node;
  */
 public abstract class CodeGenerator {
 
-  protected final StringWriter writer;
+  protected StringWriter writer;
   // TODO: Cache those, so we don't have to recreate them every time
   protected final Impls<Node> nodeImpls;
   protected final Impls<Definition> defImpls;
@@ -74,6 +74,26 @@ public abstract class CodeGenerator {
     ViamError.ensure(impl != null, "Tried to generate code, but no implementation for: %s", def);
     impl.accept(def, writer);
   }
+
+  /**
+   * Generates the given node to a code string.
+   *
+   * @param node to generate code for
+   * @return generated code
+   */
+  public String genToString(Node node) {
+    // backup current writer
+    var savedWriter = writer;
+    // generate writer
+    writer = new StringWriter();
+    // generate c code on temp writer
+    gen(node);
+    var result = writer.toString();
+    // restore saved writer
+    writer = savedWriter;
+    return result;
+  }
+
 
   /**
    * A collection of code generation implementations of VIAM constructs ({@link Node},

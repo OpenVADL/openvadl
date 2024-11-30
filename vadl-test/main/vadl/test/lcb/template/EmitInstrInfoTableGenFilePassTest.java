@@ -32,7 +32,8 @@ public class EmitInstrInfoTableGenFilePassTest extends AbstractLcbTest {
     var trimmed = Files.asCharSource(resultFile, Charset.defaultCharset()).read().trim();
     var output = trimmed.lines();
 
-    var fs = new File("./../../open-vadl/vadl-test/main/resources/snapshots/rv64im/InstrInfoTableGen.td");
+    var fs = new File(
+        "./../../open-vadl/vadl-test/main/resources/snapshots/rv64im/InstrInfoTableGen.td");
     var expected = FileUtils.readFileToString(fs, "UTF-8");
 
     Assertions.assertLinesMatch(expected.trim().lines(), output);

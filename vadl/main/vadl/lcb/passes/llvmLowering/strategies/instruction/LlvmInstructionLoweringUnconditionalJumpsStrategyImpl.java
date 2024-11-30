@@ -1,7 +1,6 @@
 package vadl.lcb.passes.llvmLowering.strategies.instruction;
 
 import static vadl.lcb.passes.isaMatching.MachineInstructionLabel.JAL;
-import static vadl.viam.ViamError.ensurePresent;
 
 import java.util.Collections;
 import java.util.List;
@@ -19,7 +18,6 @@ import vadl.viam.Instruction;
 import vadl.viam.graph.Graph;
 import vadl.viam.graph.GraphVisitor;
 import vadl.viam.graph.Node;
-import vadl.viam.graph.control.AbstractEndNode;
 import vadl.viam.graph.dependency.SideEffectNode;
 import vadl.viam.graph.dependency.WriteResourceNode;
 import vadl.viam.passes.functionInliner.UninlinedGraph;

@@ -4,6 +4,7 @@ import java.util.List;
 import javax.annotation.Nullable;
 import vadl.javaannotations.viam.Input;
 import vadl.types.Type;
+import vadl.viam.Resource;
 import vadl.viam.graph.GraphVisitor;
 import vadl.viam.graph.Node;
 
@@ -40,6 +41,11 @@ public abstract class SideEffectNode extends DependencyNode {
   public @Nullable ExpressionNode nullableCondition() {
     return condition;
   }
+
+  /**
+   * Returns the resource affected by this side effect.
+   */
+  public abstract Resource resourceDefinition();
 
   /**
    * Sets the condition of the side effect.

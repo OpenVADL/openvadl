@@ -1,9 +1,9 @@
 package vadl.iss.passes.tcgLowering.nodes;
 
 import java.util.List;
+import java.util.function.Function;
 import vadl.iss.passes.tcgLowering.TcgExtend;
 import vadl.iss.passes.tcgLowering.TcgV;
-import vadl.iss.passes.tcgLowering.TcgWidth;
 import vadl.iss.passes.tcgLowering.Tcg_8_16_32_64;
 import vadl.javaannotations.viam.DataValue;
 import vadl.viam.graph.Node;
@@ -53,24 +53,35 @@ public class TcgStoreMemory extends TcgOpNode {
   }
 
   public TcgV val() {
-    return res();
+    return dest();
   }
 
   @Override
+  public String cCode(Function<Node, String> nodeToCCode) {
+    return "tcg_gen_qemu_st_" + width
+        + "(" + val().varName()
+        + "," + addr().varName()
+        + ", 0"
+        + ", " + tcgMemOp()
+        + ");";
+  }
+
+
+  @Override
   public Node copy() {
-    return new TcgStoreMemory(size, extendMode, res, addr);
+    return new TcgStoreMemory(size, extendMode, dest, addr);
   }
 
   @Override
   public Node shallowCopy() {
-    return new TcgStoreMemory(size, extendMode, res, addr);
+    return new TcgStoreMemory(size, extendMode, dest, addr);
   }
 
   /**
    * Generates a memory operation string based on the size and extension mode.
    *
    * @return A string representing the memory operation with the appropriate
-   *       size and extension flag.
+   *     size and extension flag.
    */
   public String tcgMemOp() {
     var first = "MO_" + size.width;

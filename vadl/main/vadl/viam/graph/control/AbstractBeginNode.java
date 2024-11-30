@@ -1,8 +1,6 @@
 package vadl.viam.graph.control;
 
-import java.util.Objects;
 import vadl.viam.graph.GraphNodeVisitor;
-import vadl.viam.graph.Node;
 
 /**
  * The AbstractBeginNode represents the start of a control flow.

@@ -2,7 +2,6 @@ package vadl.viam.matching.impl;
 
 import vadl.viam.graph.Node;
 import vadl.viam.graph.dependency.LetNode;
-import vadl.viam.graph.dependency.TruncateNode;
 import vadl.viam.matching.Matcher;
 
 /**

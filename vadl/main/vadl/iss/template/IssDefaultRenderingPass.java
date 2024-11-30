@@ -1,8 +1,6 @@
 package vadl.iss.template;
 
 import vadl.configuration.IssConfiguration;
-import vadl.pass.PassName;
-import vadl.pass.PassOrder;
 
 /**
  * An ISS template rendering pass that takes the pass to an template and renders it

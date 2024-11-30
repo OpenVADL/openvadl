@@ -1,18 +1,20 @@
 package vadl.dump.infoEnrichers;
 
+import static java.util.Collections.reverse;
 import static vadl.dump.InfoEnricher.forType;
 
 import java.util.ArrayList;
 import java.util.Comparator;
-import java.util.LinkedList;
 import java.util.List;
 import java.util.Objects;
-import java.util.stream.Collector;
 import java.util.stream.Collectors;
+import vadl.dump.CollectBehaviorDotGraphPass;
 import vadl.dump.Info;
 import vadl.dump.InfoEnricher;
 import vadl.dump.InfoUtils;
 import vadl.dump.entities.DefinitionEntity;
+import vadl.pass.PassResults;
+import vadl.utils.Pair;
 import vadl.viam.DefProp;
 import vadl.viam.Encoding;
 import vadl.viam.Format;
@@ -117,14 +119,38 @@ public class ViamEnricherCollection {
     if (entity instanceof DefinitionEntity defEntity
         && defEntity.origin() instanceof DefProp.WithBehavior withBehavior) {
       var def = defEntity.origin();
-      var behavior = withBehavior.behaviors().get(0);
+
+      var behaviorGraphs = passResult.allResultsOf(
+              CollectBehaviorDotGraphPass.class,
+              CollectBehaviorDotGraphPass.Result.class
+          ).map(r -> Pair.of(r.prevPass(), r.behaviors().getOrDefault(def, List.of())))
+          .filter(r -> !r.right().isEmpty())
+          .map(r -> Pair.of(r.left(), r.right().get(0)))
+          .toList();
+
+      // filter only passes that altered graph
+      var filteredBehaviorGraphs =
+          new ArrayList<Pair<PassResults.SingleResult, String>>();
+      behaviorGraphs.forEach(entry -> {
+        if (filteredBehaviorGraphs.isEmpty()
+            || !filteredBehaviorGraphs.get(filteredBehaviorGraphs.size() - 1).right()
+            .equals(entry.right())) {
+          filteredBehaviorGraphs.add(entry);
+        }
+      });
+
+      // reverse the result so the first one is the latest one
+      reverse(filteredBehaviorGraphs);
+
+      if (filteredBehaviorGraphs.isEmpty()) {
+        return;
+      }
 
       // fetch behavior
-      var dotGraph = behavior.dotGraph();
-      var info = InfoUtils.createGraphModal(
+      var info = InfoUtils.createGraphModalWithTimeline(
           "Behavior",
           def.simpleName() + " Behavior",
-          dotGraph
+          filteredBehaviorGraphs
       );
       defEntity.addInfo(info);
     }
@@ -202,6 +228,10 @@ public class ViamEnricherCollection {
             .stream().sorted(Comparator.comparing(e -> e.getClass().getSimpleName()))
             .map(rsrc -> rsrc.getClass().getSimpleName() + " " + rsrc.simpleName())
             .collect(Collectors.toCollection(ArrayList::new));
+
+        if (reads.isEmpty() && writes.isEmpty()) {
+          return;
+        }
 
         reads.add(0, "Read");
         writes.add(0, "Written");

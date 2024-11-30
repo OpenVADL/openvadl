@@ -1,7 +1,5 @@
 package vadl.lcb.passes.isaMatching;
 
-import static vadl.viam.ViamError.ensure;
-import static vadl.viam.ViamError.ensureNonNull;
 import static vadl.viam.ViamError.ensurePresent;
 
 import java.io.IOException;

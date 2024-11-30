@@ -1,7 +1,5 @@
 package vadl.viam;
 
-import java.util.concurrent.atomic.AtomicInteger;
-
 /**
  * The Counter represents a program or group counter in a VADL specification.
  *

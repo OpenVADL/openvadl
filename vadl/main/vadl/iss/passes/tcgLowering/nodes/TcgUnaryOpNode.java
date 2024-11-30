@@ -1,9 +1,10 @@
 package vadl.iss.passes.tcgLowering.nodes;
 
 import java.util.List;
+import java.util.function.Function;
 import vadl.iss.passes.tcgLowering.TcgV;
-import vadl.iss.passes.tcgLowering.TcgWidth;
 import vadl.javaannotations.viam.DataValue;
+import vadl.viam.graph.Node;
 
 /**
  * Represents an abstract unary operation node within the Tiny Code Generator (TCG) framework.
@@ -15,8 +16,8 @@ public abstract class TcgUnaryOpNode extends TcgOpNode {
   @DataValue
   TcgV arg;
 
-  public TcgUnaryOpNode(TcgV res, TcgV arg) {
-    super(res, res.width());
+  public TcgUnaryOpNode(TcgV dest, TcgV arg) {
+    super(dest, dest.width());
     this.arg = arg;
   }
 
@@ -25,6 +26,11 @@ public abstract class TcgUnaryOpNode extends TcgOpNode {
   }
 
   public abstract String tcgFunctionName();
+
+  @Override
+  public String cCode(Function<Node, String> nodeToCCode) {
+    return tcgFunctionName() + "(" + dest.varName() + ", " + arg.varName() + ");";
+  }
 
   @Override
   protected void collectData(List<Object> collection) {

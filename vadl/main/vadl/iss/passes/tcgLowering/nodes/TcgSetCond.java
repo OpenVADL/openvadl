@@ -1,6 +1,7 @@
 package vadl.iss.passes.tcgLowering.nodes;
 
 import java.util.List;
+import java.util.function.Function;
 import vadl.iss.passes.tcgLowering.TcgCondition;
 import vadl.iss.passes.tcgLowering.TcgV;
 import vadl.javaannotations.viam.DataValue;
@@ -35,8 +36,18 @@ public class TcgSetCond extends TcgBinaryOpNode {
   }
 
   @Override
+  public String cCode(Function<Node, String> nodeToCCode) {
+    return tcgFunctionName() + "_" + width + "("
+        + cond.cCode() + ", "
+        + dest.varName() + ", "
+        + arg1.varName() + ", "
+        + arg2.varName()
+        + ");";
+  }
+
+  @Override
   public Node copy() {
-    return new TcgSetCond(res, arg1, arg2, cond);
+    return new TcgSetCond(dest, arg1, arg2, cond);
   }
 
   @Override
