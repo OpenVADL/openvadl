@@ -270,71 +270,62 @@ public class AsmGrammarTests {
   @Test
   void semanticPredicateGrammarRule() {
     var prog = """
-          assembly description AD for ABI = {
-            grammar = {
-              A :
-                [ ?( LaIdEq<1>("C") )
-                  B C
-                ]
-                B
-              ;
-            }
+          grammar = {
+            A :
+              [ ?( LaIdEq<1>("C") )
+                B C
+              ]
+              B
+            ;
           }
         """;
-    verifyPrettifiedAst(VadlParser.parse(prog));
+    verifyPrettifiedAst(VadlParser.parse(inputWrappedByValidAsmDescription(prog)));
   }
 
   @Test
   void semanticPredicateInNestedAlternatives() {
     var prog = """
-          assembly description AD for ABI = {
-            grammar = {
-              A@typeA :
-                B
-                | ( ?(LaIdIn("CA","CB")) C@c | D | G<>@g)
-                | F<Int>@f
-              ;
-            }
+          grammar = {
+            A@typeA :
+              B
+              | ( ?(LaIdIn("CA","CB")) C@c | D | G<>@g)
+              | F<Int>@f
+            ;
           }
         """;
-    verifyPrettifiedAst(VadlParser.parse(prog));
+    verifyPrettifiedAst(VadlParser.parse(inputWrappedByValidAsmDescription(prog)));
   }
 
   @Test
   void repetitionGrammarRule() {
     var prog = """
-          assembly description AD for ABI = {
-            grammar = {
-              A@typeA :
-                B {C@c}
-              ;
-            }
+          grammar = {
+            A@typeA :
+              B {C@c}
+            ;
           }
         """;
-    verifyPrettifiedAst(VadlParser.parse(prog));
+    verifyPrettifiedAst(VadlParser.parse(inputWrappedByValidAsmDescription(prog)));
   }
 
   @Test
   void repetitionInNestedAlternatives() {
     var prog = """
-          assembly description AD for ABI = {
-            grammar = {
-              A@typeA :
-                B
-                | ( ?(LaIdIn("CA","CB")) C@c | D {D} | G<>@g)
-                | F<Int>@f
-              ;
-            }
+          grammar = {
+            A@typeA :
+              B
+              | ( ?(LaIdIn("CA","CB")) C@c | D {D} | G<>@g)
+              | F<Int>@f
+            ;
           }
         """;
-    verifyPrettifiedAst(VadlParser.parse(prog));
+    verifyPrettifiedAst(VadlParser.parse(inputWrappedByValidAsmDescription(prog)));
   }
 
   @Test
   void repetitionContainingNestedAlternatives() {
     var prog = """
-          assembly description AD for ABI = {
-            grammar = {
+          grammar = {
               A@typeA :
                 {
                   B
@@ -343,8 +334,7 @@ public class AsmGrammarTests {
                 }
               ;
             }
-          }
         """;
-    verifyPrettifiedAst(VadlParser.parse(prog));
+    verifyPrettifiedAst(VadlParser.parse(inputWrappedByValidAsmDescription(prog)));
   }
 }
