@@ -207,6 +207,12 @@ class SymbolTable {
       return ((AliasDefinition) node).id().location();
     } else if (node instanceof ApplicationBinaryInterfaceDefinition) {
       return ((ApplicationBinaryInterfaceDefinition) node).id.location();
+    } else if (node instanceof AsmDescriptionDefinition) {
+      return ((AsmDescriptionDefinition) node).id.location();
+    } else if (node instanceof AsmGrammarRuleDefinition) {
+      return ((AsmGrammarRuleDefinition) node).id.location();
+    } else if (node instanceof AsmGrammarLocalVarDefinition) {
+      return ((AsmGrammarLocalVarDefinition) node).id.location();
     } else if (node instanceof AssemblyDefinition) {
       var identifiers = ((AssemblyDefinition) node).identifiers;
       return identifiers.get(0).location().join(identifiers.get(identifiers.size() - 1).location());
@@ -584,7 +590,33 @@ class SymbolTable {
             modifier -> collectSymbols(asmDescSymbolTable, modifier));
         asmDescription.directives.forEach(
             directive -> collectSymbols(asmDescSymbolTable, directive));
-        // TODO collect symbols of asmDescription.commonDefinitions
+        asmDescription.commonDefinitions.forEach(
+            commonDef -> collectSymbols(asmDescSymbolTable, commonDef));
+        asmDescription.rules.forEach(rule -> collectSymbols(asmDescSymbolTable, rule));
+      } else if (definition instanceof AsmGrammarRuleDefinition rule) {
+        symbols.defineSymbol(new GenericSymbol(rule.id.name, rule), rule.id.loc);
+        collectSymbols(symbols, rule.alternatives);
+      } else if (definition instanceof AsmGrammarAlternativesDefinition alternativesDef) {
+        alternativesDef.alternatives.forEach(alternative -> {
+          // each sequence of elements has its own scope
+          var elementsSymbolTable = symbols.createChild();
+          alternative.forEach(element -> collectSymbols(elementsSymbolTable, element));
+        });
+      } else if (definition instanceof AsmGrammarElementDefinition element) {
+        if (element.groupAlternatives != null) {
+          collectSymbols(symbols, element.groupAlternatives);
+        }
+        if (element.optionAlternatives != null) {
+          collectSymbols(symbols, element.optionAlternatives);
+        }
+        if (element.repetitionAlternatives != null) {
+          collectSymbols(symbols, element.repetitionAlternatives);
+        }
+        if (element.localVar != null) {
+          collectSymbols(symbols, element.localVar);
+        }
+      } else if (definition instanceof AsmGrammarLocalVarDefinition localVar) {
+        symbols.defineSymbol(new GenericSymbol(localVar.id.name, localVar), localVar.id.loc);
       }
     }
 
@@ -893,13 +925,59 @@ class SymbolTable {
         asmDescription.modifiers.forEach(ResolutionPass::resolveSymbols);
 
       } else if (definition instanceof AsmModifierDefinition modifier) {
-        var mod = modifier.builtinModifier;
-        var symbol = modifier.symbolTable().resolveSymbol(mod.pathToString());
+        var relocation = modifier.relocation;
+        var symbol = modifier.symbolTable().resolveSymbol(relocation.pathToString());
         if (symbol == null) {
           modifier.symbolTable()
-              .reportError("Relocation symbol not found: " + mod.pathToString(),
-                  mod.location());
+              .reportError("Relocation symbol not found: " + relocation.pathToString(),
+                  relocation.location());
         }
+      } else if (definition instanceof AsmGrammarRuleDefinition rule) {
+        resolveSymbols(rule.alternatives);
+        if (rule.asmType != null) {
+          resolveSymbols(rule.asmType);
+        }
+      } else if (definition instanceof AsmGrammarAlternativesDefinition alternativesDefinition) {
+        alternativesDefinition.alternatives.forEach(
+            alternative -> alternative.forEach(ResolutionPass::resolveSymbols));
+      } else if (definition instanceof AsmGrammarElementDefinition element) {
+        if (element.localVar != null) {
+          resolveSymbols(element.localVar);
+        }
+        if (element.groupAlternatives != null) {
+          resolveSymbols(element.groupAlternatives);
+        }
+        if (element.optionAlternatives != null) {
+          resolveSymbols(element.optionAlternatives);
+        }
+        if (element.repetitionAlternatives != null) {
+          resolveSymbols(element.repetitionAlternatives);
+        }
+        if (element.asmLiteral != null) {
+          resolveSymbols(element.asmLiteral);
+        }
+        if (element.asmType != null) {
+          resolveSymbols(element.asmType);
+        }
+
+        // TODO resolve semantic predicate
+
+        if (element.attribute != null) {
+          var attrSymbol = element.symbolTable().resolveSymbol(element.attribute.name);
+          if (attrSymbol == null) {
+            // localVar with attribute name not found
+            // TODO check if attribute is format field
+          }
+        }
+      } else if (definition instanceof AsmGrammarLocalVarDefinition localVar) {
+        if (localVar.asmLiteral.id != null && !localVar.asmLiteral.id.name.equals("null")) {
+          resolveSymbols(localVar.asmLiteral);
+        }
+      } else if (definition instanceof AsmGrammarLiteralDefinition asmLiteral) {
+        // TODO check if ID is a function / (builtin) rule / localVar
+        asmLiteral.parameters.forEach(ResolutionPass::resolveSymbols);
+      } else if (definition instanceof AsmGrammarTypeDefinition asmType) {
+        // TODO check if ID is valid asm type
       }
     }
 

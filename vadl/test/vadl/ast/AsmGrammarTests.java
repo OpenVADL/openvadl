@@ -2,7 +2,9 @@ package vadl.ast;
 
 import static vadl.ast.AstTestUtils.verifyPrettifiedAst;
 
+import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
+import vadl.error.DiagnosticList;
 
 public class AsmGrammarTests {
 
@@ -326,14 +328,55 @@ public class AsmGrammarTests {
   void repetitionContainingNestedAlternatives() {
     var prog = """
           grammar = {
-              A@typeA :
-                {
-                  B
-                  | ( ?(LaIdIn("CA","CB")) C@c | D {D} | G<>@g)
-                  | F<Int>@f
-                }
-              ;
-            }
+            A@typeA :
+              {
+                B
+                | ( ?(LaIdIn("CA","CB")) C@c | D {D} | G<>@g)
+                | F<Int>@f
+              }
+            ;
+          }
+        """;
+    verifyPrettifiedAst(VadlParser.parse(inputWrappedByValidAsmDescription(prog)));
+  }
+
+  @Test
+  void doubleDefinitionOfRuleName() {
+    var prog = """
+          grammar = {
+            A : B ;
+            A : C ;
+          }
+        """;
+    Assertions.assertThrows(DiagnosticList.class,
+        () -> VadlParser.parse(inputWrappedByValidAsmDescription(prog)));
+  }
+
+  @Test
+  void doubleDefinitionOfLocalVar() {
+    var prog = """
+          grammar = {
+            A :
+              var tmp = "a"
+              var tmp = "b"
+              C
+            ;
+          }
+        """;
+    Assertions.assertThrows(DiagnosticList.class,
+        () -> VadlParser.parse(inputWrappedByValidAsmDescription(prog)));
+  }
+
+  @Test
+  void innerLocalVarHidingOuterLocalVar() {
+    var prog = """
+          grammar = {
+            A : var tmp = "a"
+              ( var tmp = "b"
+                C
+              )
+            ;
+          }
         """;
     verifyPrettifiedAst(VadlParser.parse(inputWrappedByValidAsmDescription(prog)));
   }
