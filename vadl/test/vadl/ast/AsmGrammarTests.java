@@ -35,8 +35,8 @@ public class AsmGrammarTests {
   void nonTerminalWithTypes() {
     var prog = """
           grammar = {
-            A@typeA :
-              B@typeB
+            A@instruction :
+              B@operand
             ;
           }
         """;
@@ -44,11 +44,63 @@ public class AsmGrammarTests {
   }
 
   @Test
+  void ruleWithInvalidType() {
+    var prog = """
+          grammar = {
+            A@invalidType :
+              B
+            ;
+          }
+        """;
+    Assertions.assertThrows(DiagnosticList.class,
+        () -> VadlParser.parse(inputWrappedByValidAsmDescription(prog)));
+  }
+
+  @Test
+  void operandWithInvalidType() {
+    var prog = """
+          grammar = {
+            A :
+              B @invalidType
+            ;
+          }
+        """;
+    Assertions.assertThrows(DiagnosticList.class,
+        () -> VadlParser.parse(inputWrappedByValidAsmDescription(prog)));
+  }
+
+  @Test
+  void stringLiteralWithInvalidType() {
+    var prog = """
+          grammar = {
+            A :
+              "string" @invalidType
+            ;
+          }
+        """;
+    Assertions.assertThrows(DiagnosticList.class,
+        () -> VadlParser.parse(inputWrappedByValidAsmDescription(prog)));
+  }
+
+  @Test
+  void groupWithInvalidType() {
+    var prog = """
+          grammar = {
+            A :
+              (B C) @invalidType
+            ;
+          }
+        """;
+    Assertions.assertThrows(DiagnosticList.class,
+        () -> VadlParser.parse(inputWrappedByValidAsmDescription(prog)));
+  }
+
+  @Test
   void assignNonTerminalToAttribute() {
     var prog = """
           grammar = {
-            A@typeA :
-              attributeB = B@typeB
+            A@instruction :
+              attributeB = B
             ;
           }
         """;
@@ -59,8 +111,8 @@ public class AsmGrammarTests {
   void assignStringLiteralToAttribute() {
     var prog = """
           grammar = {
-            A@typeA :
-              attributeB = "B" @typeB
+            A:
+              attributeB = "B"
             ;
           }
         """;
@@ -71,9 +123,9 @@ public class AsmGrammarTests {
   void assignMultipleAttributes() {
     var prog = """
           grammar = {
-            A@typeA :
-              attributeB = "B" @typeB
-              attributeC = C @typeC
+            A@instruction :
+              attributeB = "B" @string
+              attributeC = C
             ;
           }
         """;
@@ -84,7 +136,7 @@ public class AsmGrammarTests {
   void nonTerminalWithEmptyParameters() {
     var prog = """
           grammar = {
-            A@typeA :
+            A@instruction :
               B<>
             ;
           }
@@ -96,7 +148,7 @@ public class AsmGrammarTests {
   void nonTerminalWithParameters() {
     var prog = """
           grammar = {
-            A@typeA :
+            A@instruction :
               B<C,D>
             ;
           }
@@ -108,8 +160,8 @@ public class AsmGrammarTests {
   void nonTerminalParametersWithTypecast() {
     var prog = """
           grammar = {
-            A@typeA :
-              B<C@typeC,D@typeD> @typeB
+            A@instruction :
+              B<C@string,D@string>
             ;
           }
         """;
@@ -120,8 +172,8 @@ public class AsmGrammarTests {
   void stringLiteralGrammarRule() {
     var prog = """
           grammar = {
-            A@typeA :
-              "Literal" @typeB
+            A :
+              "Literal" @string
             ;
           }
         """;
@@ -132,8 +184,8 @@ public class AsmGrammarTests {
   void groupGrammarRule() {
     var prog = """
           grammar = {
-            A@typeA :
-              ("Literal" @typeB C@typeC)
+            A :
+              ("Literal" C@operand)
             ;
           }
         """;
@@ -144,10 +196,10 @@ public class AsmGrammarTests {
   void nestedGroupGrammarRule() {
     var prog = """
           grammar = {
-            A@typeA :
+            A@instruction:
               (
-                "Literal" @typeB C@typeC
-                (D E) @ typeDE
+                "Literal" C @expression
+                (D E) @operand
               )
             ;
           }
@@ -159,11 +211,11 @@ public class AsmGrammarTests {
   void multipleGrammarRules() {
     var prog = """
           grammar = {
-            A@typeA :
+            A :
               B
             ;
             C :
-              D@typeD
+              D
             ;
           }
         """;
@@ -174,7 +226,7 @@ public class AsmGrammarTests {
   void simpleAlternativesGrammarRule() {
     var prog = """
           grammar = {
-            A@typeA :
+            A :
               B | C
             ;
           }
@@ -186,8 +238,8 @@ public class AsmGrammarTests {
   void alternativesWithGroups() {
     var prog = """
           grammar = {
-            A@typeA :
-              B | (C@c D) | F<Int>@f
+            A@instruction :
+              B | (C@expression D) | F<Int>@operand
             ;
           }
         """;
@@ -198,8 +250,8 @@ public class AsmGrammarTests {
   void alternativesWithGroupsAndNestedAlternatives() {
     var prog = """
           grammar = {
-            A@typeA :
-              B | (C@c | D | G<>@g) | F<Int>@f
+            A@instruction :
+              B | (C@operand | D | G<>@operand) | F<Int>@operand
             ;
           }
         """;
@@ -210,8 +262,8 @@ public class AsmGrammarTests {
   void alternativesWithAttributesAndGroups() {
     var prog = """
           grammar = {
-            A@typeA :
-              attrB = B | (C@c | attrD = "D" | G<>@g) | F<Int>@f
+            A:
+              attrB = B | (C | attrD = "D" | G<>) | F<Int>
             ;
           }
         """;
@@ -222,7 +274,7 @@ public class AsmGrammarTests {
   void localVarGrammarRule() {
     var prog = """
           grammar = {
-            A@typeA : var tmp = null @operand
+            A : var tmp = null @operand
               attrB = B
             ;
           }
@@ -234,7 +286,7 @@ public class AsmGrammarTests {
   void localVarInGroupGrammarRule() {
     var prog = """
           grammar = {
-            A@typeA :
+            A :
               attrB = B
               ( var tmp = null @operand
                 C
@@ -288,10 +340,10 @@ public class AsmGrammarTests {
   void semanticPredicateInNestedAlternatives() {
     var prog = """
           grammar = {
-            A@typeA :
+            A@instruction :
               B
-              | ( ?(LaIdIn("CA","CB")) C@c | D | G<>@g)
-              | F<Int>@f
+              | ( ?(LaIdIn("CA","CB")) C | D | G<>@expression)
+              | F<Int>@operand
             ;
           }
         """;
@@ -302,8 +354,8 @@ public class AsmGrammarTests {
   void repetitionGrammarRule() {
     var prog = """
           grammar = {
-            A@typeA :
-              B {C@c}
+            A :
+              B {C@string}
             ;
           }
         """;
@@ -314,10 +366,10 @@ public class AsmGrammarTests {
   void repetitionInNestedAlternatives() {
     var prog = """
           grammar = {
-            A@typeA :
+            A :
               B
-              | ( ?(LaIdIn("CA","CB")) C@c | D {D} | G<>@g)
-              | F<Int>@f
+              | ( ?(LaIdIn("CA","CB")) C | D {D} | G<>)
+              | F<Int>
             ;
           }
         """;
@@ -328,11 +380,11 @@ public class AsmGrammarTests {
   void repetitionContainingNestedAlternatives() {
     var prog = """
           grammar = {
-            A@typeA :
+            A :
               {
                 B
-                | ( ?(LaIdIn("CA","CB")) C@c | D {D} | G<>@g)
-                | F<Int>@f
+                | ( ?(LaIdIn("CA","CB")) C | D {D} | G<>)
+                | F<Int>
               }
             ;
           }

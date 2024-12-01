@@ -811,7 +811,7 @@ class MacroExpander
     return new AsmGrammarElementDefinition(definition.localVar, definition.attribute,
         definition.isPlusEqualsAttributeAssign, definition.asmLiteral, definition.groupAlternatives,
         definition.optionAlternatives, definition.repetitionAlternatives,
-        definition.semanticPredicate, definition.asmType, copyLoc(definition.loc));
+        definition.semanticPredicate, definition.groupAsmType, copyLoc(definition.loc));
   }
 
   @Override

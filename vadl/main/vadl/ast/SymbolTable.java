@@ -7,6 +7,7 @@ import java.util.Map;
 import java.util.Objects;
 import javax.annotation.Nullable;
 import vadl.error.Diagnostic;
+import vadl.types.AsmType;
 import vadl.utils.SourceLocation;
 
 class SymbolTable {
@@ -596,6 +597,9 @@ class SymbolTable {
       } else if (definition instanceof AsmGrammarRuleDefinition rule) {
         symbols.defineSymbol(new GenericSymbol(rule.id.name, rule), rule.id.loc);
         collectSymbols(symbols, rule.alternatives);
+        if (rule.asmType != null) {
+          collectSymbols(symbols, rule.asmType);
+        }
       } else if (definition instanceof AsmGrammarAlternativesDefinition alternativesDef) {
         alternativesDef.alternatives.forEach(alternative -> {
           // each sequence of elements has its own scope
@@ -603,6 +607,12 @@ class SymbolTable {
           alternative.forEach(element -> collectSymbols(elementsSymbolTable, element));
         });
       } else if (definition instanceof AsmGrammarElementDefinition element) {
+        if (element.localVar != null) {
+          collectSymbols(symbols, element.localVar);
+        }
+        if (element.asmLiteral != null) {
+          collectSymbols(symbols, element.asmLiteral);
+        }
         if (element.groupAlternatives != null) {
           collectSymbols(symbols, element.groupAlternatives);
         }
@@ -612,11 +622,18 @@ class SymbolTable {
         if (element.repetitionAlternatives != null) {
           collectSymbols(symbols, element.repetitionAlternatives);
         }
-        if (element.localVar != null) {
-          collectSymbols(symbols, element.localVar);
+        if (element.groupAsmType != null) {
+          collectSymbols(symbols, element.groupAsmType);
         }
       } else if (definition instanceof AsmGrammarLocalVarDefinition localVar) {
         symbols.defineSymbol(new GenericSymbol(localVar.id.name, localVar), localVar.id.loc);
+        if (localVar.asmLiteral != null) {
+          collectSymbols(symbols, localVar.asmLiteral);
+        }
+      } else if (definition instanceof AsmGrammarLiteralDefinition asmLiteral) {
+        if (asmLiteral.asmType != null) {
+          collectSymbols(symbols, asmLiteral.asmType);
+        }
       }
     }
 
@@ -923,6 +940,7 @@ class SymbolTable {
           }
         }
         asmDescription.modifiers.forEach(ResolutionPass::resolveSymbols);
+        asmDescription.rules.forEach(ResolutionPass::resolveSymbols);
 
       } else if (definition instanceof AsmModifierDefinition modifier) {
         var relocation = modifier.relocation;
@@ -956,18 +974,14 @@ class SymbolTable {
         if (element.asmLiteral != null) {
           resolveSymbols(element.asmLiteral);
         }
-        if (element.asmType != null) {
-          resolveSymbols(element.asmType);
+        if (element.groupAsmType != null) {
+          resolveSymbols(element.groupAsmType);
         }
-
-        // TODO resolve semantic predicate
-
         if (element.attribute != null) {
+          // if attrSymbol is not null, attribute refers to local variable
+          // else attribute is handled by matching in the AsmParser
           var attrSymbol = element.symbolTable().resolveSymbol(element.attribute.name);
-          if (attrSymbol == null) {
-            // localVar with attribute name not found
-            // TODO check if attribute is format field
-          }
+          element.isAttributeLocalVar = attrSymbol != null;
         }
       } else if (definition instanceof AsmGrammarLocalVarDefinition localVar) {
         if (localVar.asmLiteral.id != null && !localVar.asmLiteral.id.name.equals("null")) {
@@ -975,9 +989,17 @@ class SymbolTable {
         }
       } else if (definition instanceof AsmGrammarLiteralDefinition asmLiteral) {
         // TODO check if ID is a function / (builtin) rule / localVar
+
+        if (asmLiteral.asmType != null) {
+          resolveSymbols(asmLiteral.asmType);
+        }
         asmLiteral.parameters.forEach(ResolutionPass::resolveSymbols);
-      } else if (definition instanceof AsmGrammarTypeDefinition asmType) {
-        // TODO check if ID is valid asm type
+      } else if (definition instanceof AsmGrammarTypeDefinition asmTypeDefinition) {
+        if (!AsmType.isInputAsmType(asmTypeDefinition.id.name)) {
+          asmTypeDefinition.symbolTable()
+              .reportError("Unknown asm type: " + asmTypeDefinition.id.name,
+                  asmTypeDefinition.id.loc);
+        }
       }
     }
 

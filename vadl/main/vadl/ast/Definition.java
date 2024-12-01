@@ -4257,6 +4257,7 @@ class AsmGrammarElementDefinition extends Definition {
   @Nullable
   Identifier attribute;
   Boolean isPlusEqualsAttributeAssign;
+  Boolean isAttributeLocalVar = false;
   @Nullable
   AsmGrammarLiteralDefinition asmLiteral;
   @Nullable
@@ -4268,7 +4269,7 @@ class AsmGrammarElementDefinition extends Definition {
   @Nullable
   Expr semanticPredicate;
   @Nullable
-  AsmGrammarTypeDefinition asmType;
+  AsmGrammarTypeDefinition groupAsmType;
   SourceLocation loc;
 
   public AsmGrammarElementDefinition(@Nullable AsmGrammarLocalVarDefinition localVar,
@@ -4280,7 +4281,7 @@ class AsmGrammarElementDefinition extends Definition {
                                      @Nullable
                                      AsmGrammarAlternativesDefinition repetitionAlternatives,
                                      @Nullable Expr semanticPredicate,
-                                     @Nullable AsmGrammarTypeDefinition asmType,
+                                     @Nullable AsmGrammarTypeDefinition groupAsmType,
                                      SourceLocation loc) {
     this.localVar = localVar;
     this.attribute = attribute;
@@ -4290,7 +4291,7 @@ class AsmGrammarElementDefinition extends Definition {
     this.optionAlternatives = optionAlternatives;
     this.repetitionAlternatives = repetitionAlternatives;
     this.semanticPredicate = semanticPredicate;
-    this.asmType = asmType;
+    this.groupAsmType = groupAsmType;
     this.loc = loc;
   }
 
@@ -4350,8 +4351,8 @@ class AsmGrammarElementDefinition extends Definition {
       semanticPredicate.prettyPrint(0, builder);
       builder.append(" )");
     }
-    if (asmType != null) {
-      asmType.prettyPrint(0, builder);
+    if (groupAsmType != null) {
+      groupAsmType.prettyPrint(0, builder);
     }
   }
 
@@ -4368,13 +4369,13 @@ class AsmGrammarElementDefinition extends Definition {
         && Objects.equals(isPlusEqualsAttributeAssign, that.isPlusEqualsAttributeAssign)
         && Objects.equals(asmLiteral, that.asmLiteral)
         && Objects.equals(groupAlternatives, that.groupAlternatives)
-        && Objects.equals(asmType, that.asmType);
+        && Objects.equals(groupAsmType, that.groupAsmType);
   }
 
   @Override
   public int hashCode() {
     return Objects.hash(localVar, attribute, isPlusEqualsAttributeAssign, asmLiteral,
-        groupAlternatives, asmType);
+        groupAlternatives, groupAsmType);
   }
 }
 

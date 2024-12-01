@@ -670,8 +670,8 @@ public class AstDumper
     if (definition.semanticPredicate != null) {
       dumpChildren(definition.semanticPredicate);
     }
-    if (definition.asmType != null) {
-      dumpChildren(definition.asmType);
+    if (definition.groupAsmType != null) {
+      dumpChildren(definition.groupAsmType);
     }
     return null;
   }
