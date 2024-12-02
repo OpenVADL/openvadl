@@ -8,6 +8,10 @@ import vadl.viam.graph.GraphNodeVisitor;
 import vadl.viam.graph.Node;
 import vadl.viam.graph.dependency.DependencyNode;
 
+/**
+ * A dependency node that holds the TcgV variable.
+ * This is a node, as it makes it easier to optimize variable usages during allocation.
+ */
 public class TcgVRefNode extends DependencyNode {
 
   @DataValue
@@ -33,6 +37,7 @@ public class TcgVRefNode extends DependencyNode {
     return var.varName();
   }
 
+  @SuppressWarnings("MethodName")
   public String cCode() {
     return var.varName();
   }

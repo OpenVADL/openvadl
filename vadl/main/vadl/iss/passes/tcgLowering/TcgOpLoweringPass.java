@@ -11,7 +11,7 @@ import java.util.Set;
 import java.util.function.Function;
 import org.jetbrains.annotations.Nullable;
 import vadl.configuration.GeneralConfiguration;
-import vadl.iss.passes.IssTempVarAssignment;
+import vadl.iss.passes.IssVarSsaAssignment;
 import vadl.iss.passes.nodes.TcgVRefNode;
 import vadl.iss.passes.safeResourceRead.nodes.ExprSaveNode;
 import vadl.iss.passes.tcgLowering.nodes.TcgAddNode;
@@ -109,8 +109,8 @@ public class TcgOpLoweringPass extends Pass {
         "BEQ"
     );
 
-    var assignments = passResults.lastResultOf(IssTempVarAssignment.class,
-        IssTempVarAssignment.Result.class);
+    var assignments = passResults.lastResultOf(IssVarSsaAssignment.class,
+        IssVarSsaAssignment.Result.class);
 
     viam.isa().get().ownInstructions()
         .stream().filter(i -> supportedInstructions.contains(i.simpleName()))

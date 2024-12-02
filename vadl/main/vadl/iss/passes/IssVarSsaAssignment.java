@@ -33,14 +33,40 @@ import vadl.viam.graph.dependency.WriteMemNode;
 import vadl.viam.graph.dependency.WriteRegFileNode;
 import vadl.viam.graph.dependency.WriteRegNode;
 
-public class IssTempVarAssignment extends Pass<IssConfiguration> {
+/**
+ * IssSsaVarAssignment is a specific type of Pass that performs a temporary variable
+ * assignment during the ISS generation process.
+ *
+ * <p>It assigns a TCGv variable to every expression that is scheduled for TCG generation.
+ * Those assignments are not the final ones, but just an SSA assignment.
+ * The finalized assignment is done by the {@link IssTcgVAllocationPass}.
+ * The pass also adds the register variable getters ({@link TcgGetVar}), as those
+ * are required by the later allocation pass and will not be removed at a later point.
+ */
+public class IssVarSsaAssignment extends Pass<IssConfiguration> {
 
+  /**
+   * Represents the result of a temporary variable assignment during the ISS generation process.
+   * This record holds a mapping of instructions to their corresponding variable assignments.
+   *
+   * <p>The mapping associates each instruction with another mapping that links dependency nodes
+   * to TcgVRefNodes. This structure is used in the context of TCG (Tiny Code Generator) variable
+   * allocation, where each instruction's expressions are assigned temporary variables.
+   *
+   * <p>The assignments documented here are in SSA (Single Static Assignment) form,
+   * meaning that each variable is assigned exactly once.
+   * The final variable assignment is performed in a separate pass.
+   *
+   * @param varAssignments A mapping from instructions to their variable assignments, where each
+   *                       instruction is associated with a map from dependency
+   *                       nodes to TcgVRefNodes.
+   */
   public record Result(
       Map<Instruction, Map<DependencyNode, TcgVRefNode>> varAssignments
   ) {
   }
 
-  public IssTempVarAssignment(IssConfiguration configuration) {
+  public IssVarSsaAssignment(IssConfiguration configuration) {
     super(configuration);
   }
 
@@ -98,6 +124,8 @@ class IssTempVarAssigner {
     for (var ref : ssaAssignments.values()) {
       switch (ref.var().kind()) {
         case REG, REG_FILE -> startNode.addAfter(TcgGetVar.from(ref));
+        default -> {
+        }
       }
     }
   }
@@ -177,8 +205,8 @@ class IssTempVarAssigner {
     var key = Triple.of(regFile, index, isDest);
     var dest = isDest ? "_dest" : "";
     return tcgVCache.computeIfAbsent(key, k -> toNode(TcgV.regFile(
-        "regfile_" + regFile.simpleName().toLowerCase() + "_" + TcgPassUtils.exprVarName(index) +
-            dest,
+        "regfile_" + regFile.simpleName().toLowerCase() + "_" + TcgPassUtils.exprVarName(index)
+            + dest,
         targetSize,
         regFile,
         index,

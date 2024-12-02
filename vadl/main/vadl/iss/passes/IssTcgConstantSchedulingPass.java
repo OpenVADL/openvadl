@@ -73,8 +73,8 @@ public class IssTcgConstantSchedulingPass extends Pass {
   public @Nullable Object execute(PassResults passResults, Specification viam)
       throws IOException {
 
-    var assignments = passResults.lastResultOf(IssTempVarAssignment.class,
-        IssTempVarAssignment.Result.class);
+    var assignments = passResults.lastResultOf(IssVarSsaAssignment.class,
+        IssVarSsaAssignment.Result.class);
 
     viam.isa().get().ownInstructions().forEach(i -> {
       new IssTcgConstantScheduler(

@@ -8,7 +8,7 @@ import java.io.IOException;
 import java.util.Map;
 import org.jetbrains.annotations.Nullable;
 import vadl.configuration.GeneralConfiguration;
-import vadl.iss.passes.IssTempVarAssignment;
+import vadl.iss.passes.IssVarSsaAssignment;
 import vadl.iss.passes.TcgPassUtils;
 import vadl.iss.passes.nodes.TcgVRefNode;
 import vadl.iss.passes.tcgLowering.nodes.TcgBr;
@@ -59,8 +59,8 @@ public class TcgBranchLoweringPass extends Pass<GeneralConfiguration> {
   public @Nullable Object execute(PassResults passResults, Specification viam)
       throws IOException {
 
-    var varAssignments = passResults.lastResultOf(IssTempVarAssignment.class,
-        IssTempVarAssignment.Result.class);
+    var varAssignments = passResults.lastResultOf(IssVarSsaAssignment.class,
+        IssVarSsaAssignment.Result.class);
 
     viam.isa().ifPresent(isa -> isa.ownInstructions()
         .forEach(instr ->

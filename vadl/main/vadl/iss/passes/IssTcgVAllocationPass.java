@@ -76,12 +76,11 @@ public class IssTcgVAllocationPass extends Pass {
     // TODO: Don't hardcode
     var targetSize = Tcg_32_64.i64;
 
-    var tmpAssignments = passResults.lastResultOf(IssTempVarAssignment.class,
-        IssTempVarAssignment.Result.class).varAssignments();
+    var tmpAssignments = passResults.lastResultOf(IssVarSsaAssignment.class,
+        IssVarSsaAssignment.Result.class).varAssignments();
 
     // Process each instruction in the ISA
     viam.isa().ifPresent(isa -> isa.ownInstructions()
-//        .stream().filter(i -> i.simpleName().equals("ADDI"))
         .forEach(instr -> {
               var temps = requireNonNull(tmpAssignments.get(instr));
               // Allocate variables for the instruction's behavior
@@ -181,6 +180,8 @@ class IssVariableAllocator {
     for (var ref : tmps) {
       switch (ref.var().kind()) {
         case TMP -> startNode.addAfter(TcgGetVar.from(ref));
+        default -> {
+        }
       }
     }
   }
