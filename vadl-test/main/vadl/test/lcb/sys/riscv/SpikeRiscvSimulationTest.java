@@ -1,14 +1,5 @@
 package vadl.test.lcb.sys.riscv;
 
-import org.junit.jupiter.api.DynamicTest;
-import org.junit.jupiter.api.TestFactory;
-import org.junit.jupiter.api.condition.EnabledIfEnvironmentVariable;
-import org.testcontainers.images.builder.ImageFromDockerfile;
-import vadl.configuration.LcbConfiguration;
-import vadl.gcb.valuetypes.ProcessorName;
-import vadl.pass.exception.DuplicatedPassKeyException;
-import vadl.test.lcb.AbstractLcbTest;
-
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
@@ -19,6 +10,14 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.Objects;
 import java.util.stream.Stream;
+import org.junit.jupiter.api.DynamicTest;
+import org.junit.jupiter.api.TestFactory;
+import org.junit.jupiter.api.condition.EnabledIfEnvironmentVariable;
+import org.testcontainers.images.builder.ImageFromDockerfile;
+import vadl.configuration.LcbConfiguration;
+import vadl.gcb.valuetypes.ProcessorName;
+import vadl.pass.exception.DuplicatedPassKeyException;
+import vadl.test.lcb.AbstractLcbTest;
 
 public abstract class SpikeRiscvSimulationTest extends AbstractLcbTest {
   protected abstract String getTarget();

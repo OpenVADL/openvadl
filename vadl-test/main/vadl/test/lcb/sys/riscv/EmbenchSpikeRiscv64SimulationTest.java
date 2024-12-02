@@ -1,11 +1,5 @@
 package vadl.test.lcb.sys.riscv;
 
-import org.testcontainers.images.builder.ImageFromDockerfile;
-import org.testcontainers.shaded.org.apache.commons.io.FileUtils;
-import vadl.configuration.LcbConfiguration;
-import vadl.gcb.valuetypes.ProcessorName;
-import vadl.pass.exception.DuplicatedPassKeyException;
-import vadl.test.lcb.AbstractLcbTest;
 
 import java.io.File;
 import java.io.FileInputStream;
@@ -14,6 +8,12 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import org.testcontainers.images.builder.ImageFromDockerfile;
+import org.testcontainers.shaded.org.apache.commons.io.FileUtils;
+import vadl.configuration.LcbConfiguration;
+import vadl.gcb.valuetypes.ProcessorName;
+import vadl.pass.exception.DuplicatedPassKeyException;
+import vadl.test.lcb.AbstractLcbTest;
 
 public class EmbenchSpikeRiscv64SimulationTest extends AbstractLcbTest {
 
