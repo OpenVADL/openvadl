@@ -1,0 +1,646 @@
+2020-02-17  Paolo Savini
+
+	Add support for the board stm32f4-discovery.
+
+	* config/arm/boards/stm32f4-discovery/STM32F407XG.ld: stm32f4 linker
+	script.
+	* config/arm/boards/stm32f4-discovery/board.cfg: stm32f4 file for
+	specific cflags and ldflags.
+	* config/arm/boards/stm32f4-discovery/boardsupport.c: stm32f4 file
+	for support functions.
+	* config/arm/boards/stm32f4-discovery/boardsupport.h: stm32f4 support
+	header.
+	* config/arm/boards/stm32f4-discovery/startup_stm32f407xx.S: stm32f4
+	startup file.
+	* config/arm/chips/cortex-m4/chip.cfg: remove -fdata-sections as
+	affects performance due to the presence of -fsection-anchors as an
+	ARM default flag.
+	* pylib/run_stm32f4-discovery.py: add python module for the speed
+	test of stm32f4-discovery.
+	* src/matmult-int/matmult-int.c: reset LOCAL_SCALE_FACTOR.
+	* src/picojpeg/picojpeg_test.c: Likewise.
+	* src/edn/libedn.c: Likewise.
+	* src/ud/libud.c: Likewise.
+	* src/st/libst.c: Likewise.
+	* src/slre/libslre.c: Likewise.
+	* src/qrduino/qrtest.c: Likewise.
+	* src/sglib-combined/combined.c: Likewise.
+	* src/nettle-aes/nettle-aes.c: Likewise.
+	* src/aha-mont64/mont64.c: Likewise.
+	* src/huffbench/libhuffbench.c: Likewise.
+	* src/nbody/nbody.c: Likewise.
+	* src/wikisort/libwikisort.c: Likewise.
+	* src/cubic/basicmath_small.c: Likewise.
+	* src/crc32/crc_32.c: Likewise.
+	* src/nettle-sha256/nettle-sha256.c: Likewise.
+	* src/nsichneu/libnsichneu.c: Likewise.
+	* src/statemate/libstatemate.c: Likewise.
+	* src/minver/libminver.c: Likewise.
+
+2019-10-14  Paolo Savini
+
+	Remove initialization of new empty dictionary.
+
+	The initialization of a new empty dictionary in
+	populate_user_commands() to collect the user
+	compilation flags caused user flags not to be returned by
+	populate_user_commands(). Thus the extra compilation added by the user
+	were ignored.
+
+	* build-all.py: populate_user_commands(): Remove initialization of a
+	new empty dictionary.
+
+2019-08-29  Jeremy Bennett  <jeremy.bennett@embecosm.com>
+
+	Remove calls to library assert.
+
+	Assert is not appropriate for benchmark code, and pulls in large
+	amounts of library function code. This patches provides a
+	simplified macro to replace it in two benchmarks.
+
+	This is the fix to GitHub Issue 10, see
+	https://github.com/embench/embench-iot/issues/10
+
+	* src/nettle-aes/nettle-aes.c (_aes_set_key, aes_set_encrypt_key)
+	(aes_encrypt, aes_decrypt): Replace assert with assert_beebs
+	throughout.
+	* src/nettle-sha256/nettle-sha256.c (nettle_hash_digest_func)
+	(sha256_write_digest): Likewise.
+	* support/beebsc.c: Trivial layout space adjustment.
+	* support/beebsc.h (assert_beebs): Macro added.
+
+2019-08-26  Jeremy Bennett  <jeremy.bennett@embecosm.com>
+
+	Add --relative option.
+
+	This provides consistenc with benchmark_size.py.
+
+	* benchmark_speed.py (get_common_args): Add --relative option.
+
+2019-08-26  Graham Markall  <graham.markall@embecosm.com>
+
+	Fix a bug in log handling.
+
+	A patch proposed by Graham Markall and committed by Jeremy
+	Bennett.
+
+	The target-module python module needs to import the log from
+	embench_core. We also rename the module to a more python friendly
+	name.
+
+	* pylib/run_gdbserver_sim.py: Rename from run-gdbserver-sim.py and
+	import log from embench_core.
+	* pylib/run-gdbserver-sim.py: Rename to run_gdbserver_sim.py.
+
+2019-08-26  Jeremy Bennett  <jeremy.bennett@embecosm.com>
+
+	Add user specification of section names.
+
+	This is a generalization of a patch proposed by Jon Taylor of ARM.
+
+	It allows the user to specify which section names make up
+	particular section types. Rename the --sections argument as
+	--metric for clarity and add --relative option for completeness.
+
+	* benchmark_size.py (build_parser): Add arguments to specify lists
+	of sections; for clarity rename --sections to --metric.
+	(validate_args): Capture the list of section names for each type
+	of section.
+	(benchmark_size): Use the specified section names to compute the
+	metric.
+	(collect_data): Rename 'sections' attribute to 'metric'.
+
+2019-08-16  Jeremy Bennett  <jeremy.bennett@embecosm.com>
+
+	More Python friendly naming
+
+	By naming the scripts using underscore, then can if ever needed be
+	imported as modules.
+
+	* benchmark-size.py: Renamed to benchmark_size.py
+	* benchmark_size.py: Renamed from benchmark-size.py
+	* benchmark-speed.py: Renamed to benchmark_speed.py
+	* benchmark_speed.py: Renamed from benchmark-speed.py
+	* build-all.py: Renamed to build_all.py
+	* build_all.py: Renamed from build-all.py
+
+2019-08-16  Jeremy Bennett  <jeremy.bennett@embecosm.com>
+
+	Remove all artifacts associated with Autotools and DejaGnu
+
+	These are no longer needed, now we have a Python based build
+	infrastructure.  A couple of other small cleanups are made at the
+	same time.
+
+	* .gitignore: No need to ignore autotools artifacts.
+	* Makefile.am: Deleted.
+	* Makefile.in: Deleted.
+	* README: Deleted.
+	* aclocal.m4: Deleted.
+	* build-all.py: Correct an error in specifying the location of
+	embench_core.py
+	* compile: Deleted.
+	* config.guess: Deleted.
+	* config.h.in: Deleted.
+	* config.sub: Deleted.
+	* configure: Deleted.
+	* configure.ac: Deleted.
+	* depcomp: Deleted.
+	* doc/Makefile.am: Deleted.
+	* doc/Makefile.in: Deleted.
+	* install-sh: Deleted.
+	* ltmain.sh: Deleted.
+	* m4/libtool.m4: Deleted.
+	* m4/ltoptions.m4: Deleted.
+	* m4/ltsugar.m4: Deleted.
+	* m4/ltversion.m4: Deleted.
+	* m4/lt~obsolete.m4: Deleted.
+	* missing: Deleted.
+	* src/Makefile.am: Deleted.
+	* src/Makefile.in: Deleted.
+	* src/aha-mont64/Makefile.am: Deleted.
+	* src/aha-mont64/Makefile.in: Deleted.
+	* src/common.mk.am: Deleted.
+	* src/crc32/Makefile.am: Deleted.
+	* src/crc32/Makefile.in: Deleted.
+	* src/cubic/Makefile.am: Deleted.
+	* src/cubic/Makefile.in: Deleted.
+	* src/edn/Makefile.am: Deleted.
+	* src/edn/Makefile.in: Deleted.
+	* src/huffbench/Makefile.am: Deleted.
+	* src/huffbench/Makefile.in: Deleted.
+	* src/matmult-int/Makefile.am: Deleted.
+	* src/matmult-int/Makefile.in: Deleted.
+	* src/minver/Makefile.am: Deleted.
+	* src/minver/Makefile.in: Deleted.
+	* src/nbody/Makefile.am: Deleted.
+	* src/nbody/Makefile.in: Deleted.
+	* src/nettle-aes/Makefile.am: Deleted.
+	* src/nettle-aes/Makefile.in: Deleted.
+	* src/nettle-sha256/Makefile.am: Deleted.
+	* src/nettle-sha256/Makefile.in: Deleted.
+	* src/nsichneu/Makefile.am: Deleted.
+	* src/nsichneu/Makefile.in: Deleted.
+	* src/picojpeg/Makefile.am: Deleted.
+	* src/picojpeg/Makefile.in: Deleted.
+	* src/qrduino/Makefile.am: Deleted.
+	* src/qrduino/Makefile.in: Deleted.
+	* src/sglib-combined/Makefile.am: Deleted.
+	* src/sglib-combined/Makefile.in: Deleted.
+	* src/slre/Makefile.am: Deleted.
+	* src/slre/Makefile.in: Deleted.
+	* src/st/Makefile.am: Deleted.
+	* src/st/Makefile.in: Deleted.
+	* src/statemate/Makefile.am: Deleted.
+	* src/statemate/Makefile.in: Deleted.
+	* src/ud/Makefile.am: Deleted.
+	* src/ud/Makefile.in: Deleted.
+	* src/wikisort/Makefile.am: Deleted.
+	* src/wikisort/Makefile.in: Deleted.
+	* support/Makefile.am: Deleted.
+	* support/Makefile.in: Deleted.
+	* testsuite/ChangeLog: Deleted.
+	* testsuite/Makefile.am: Deleted.
+	* testsuite/Makefile.in: Deleted.
+	* testsuite/beebs-conf.exp: Deleted.
+	* testsuite/beebs.test/Makefile.am: Deleted.
+	* testsuite/beebs.test/Makefile.in: Deleted.
+	* testsuite/beebs.test/execute.exp: Deleted.
+	* testsuite/beebs.test/size.exp: Deleted.
+	* testsuite/config/Makefile.am: Deleted.
+	* testsuite/config/Makefile.in: Deleted.
+	* testsuite/config/generic.exp: Deleted.
+	* testsuite/config/none.exp: Deleted.
+	* testsuite/config/ri5cyverilator.exp: Deleted.
+	* testsuite/lib/Makefile.am: Deleted.
+	* testsuite/lib/Makefile.in: Deleted.
+	* testsuite/lib/beebs.exp: Deleted.
+	* testsuite/lib/mageec-wand.exp: Deleted.
+	* testsuite/lib/perf-stat.exp: Deleted.
+
+2019-08-16  Jeremy Bennett  <jeremy.bennett@embecosm.com>
+
+	Allow user to specify custom code to run benchmarks.
+
+	This is a transformtion to make the benchmark_speed.py script more
+	generic, ready for future expansion.
+
+	* .gitignore: Ignore __pycache__ directories and .pylintrc.
+	* benchmark-size.py: Import core files from pylib subdir.
+	(collect_data): Read JSON from baseline dir.
+	* benchmark-speed.py: Import core files from pylib subdir; import
+	importlib.
+	(build_parser): Renamed to get_common_args.
+	(get_common_args): Renamed from build_parser; return arguments to
+	common all invocations and remnant, which may be target specific
+	arguments.
+	(validate_args): Import target specific module and define global
+	methods therein.
+	(build_benchmark, decode_results): Deleted.
+	(benchmark_speed): Take target specific argument namespaced to
+	pass to the target specific code.
+	(collect_data): Take remnant command line arguments and parse to
+	pss to benchmark_speed; get JSON from baseline directory.
+	(main): Pass remnant arguments to collect_data.
+	* pylib/run-gdbserver-sim.py: Created.
+
+2019-08-16  Jeremy Bennett  <jeremy.bennett@embecosm.com>
+
+	Add a script to measure execution speed.
+
+	This is still work in progress, since the script has a lot of hard
+	coding in it.
+
+	* baseline-size.json: Clean up layout
+	* baseline-speed.json: Created.
+	* benchmark-size.py: Add docstring, remove logging, math and time
+	imports, add imports from embench_core.
+	(log, gp): Removed, since now imported from embench_core.
+	(build_parser): Add "--sections" option.
+	(create_logdir, setup_logging, log_args): Removed, since now
+	imported from embench_core.
+	(validate_args): set up sections argument.
+	(find_benchmarks, log_benchmarks): Removed, since now imported
+	from embench_core.
+	(benchmark_size): Only benchmark for specified sections.
+	(collect_data): only collect data for specified sections.
+	(compute_geomean, compute_geosd, compute_georange, output_stats):
+	Removed, since now imported from embench_core.
+	(main): Use new version of setup_logging imported from
+	embench_core; use new embench_stats function imported from
+	embench_core.
+	* benchmark-speed.py: Created.
+	* build-all.py: Add docstring, remove logging and time imports,
+	add imports from embench_core.
+	(log, gp): Removed, since now imported from embench_core.
+	(create_logdir, setup_logging, log_args, find_benchmarks)
+	(log_benchmarks): Removed, since now imported from embench_core.
+	(main): Use new version of setup_logging imported from
+	embench_core; use new embench_stats function imported from
+	embench_core.
+	* config/riscv32/chips/speed-test/chip.cfg: Correct arguments to
+	remote -msave-restore for compile flags and add -lm for user
+	libraries.
+	* embench_core.py: Created.
+
+2019-08-09  Jeremy Bennett  <jeremy.bennett@embecosm.com>
+
+	Clean up scripts to build benchmarks and run size benchmark.
+
+	This is mostly about linting the code.  However we fix one
+	systemic bug where we were using literal sets rather than literal
+	lists to iterate through dictionaries.
+
+	* baseline-size.json: Created
+	* benchmark-size.py: Remove import of shutil, subprocess and
+	traceback; add import of loads from json.
+	(baseline): Remove as global variable.
+	(build_parser, create_logdir): Standardize layout.
+	(setup_logging): Use longer variable names.
+	(validate_args): Set 'builddir' global param from args; add
+	'absolute' entry to global params.
+	(find_benchmarks): Return benchmarks as list, use longer variable
+	name for benchmark interator.
+	(log_benchmarks): Pass in benchmarks as argument, use longer
+	variable name for benchmark interator.
+	(get_section): Add pydoc string.
+	(benchmark_size): Rename argument to "bench", use longer variable
+	for file handle, standardize layout.
+	(collect_data, compute_geomean, compute_geosd, compute_geomaean)
+	(output_stats): Created.
+	(main): Rewrite statistics computation and output using
+	collect_data, compute_geomean, compute_geosd, compute_geomaean and
+	output_stats.
+	* build-all.py (benchmarks) Remove as global variable.
+	(build_parser, validate_args, create_builddir): Standardize
+	layout.
+	(find_benchmarks): Return benchmark list as result.
+	(log_benchmarks): Take benchmark list as argument.
+	(add_internal_flags, validate_tools, set_parameters): Use lists,
+	not sets when iterating.
+	(compile_file, compile_benchmark, compile_support): Standardize
+	layout.
+	(create_link_binlist): Use lists, not sets when iterating.
+	(link_benchmark): Standardize layout.
+	(main): Pass benchmark list between find_benchmarks and
+	log_benchmarks.
+
+2019-08-02  Jeremy Bennett  <jeremy.bennett@embecosm.com>
+
+	Clean up of the build-all.py script
+
+	This tries to abstract away the details of building a commmand
+	line, although the defaults are GCC/LLVM centric. So long as a
+	compiler and linker accept arguments on the command line, it
+	should be possible to drive a build using this script.
+
+	The code is also much more compliant with Python coding standards.
+
+	* build-all.py: Remove unused traceback import, define gp as empty
+	dictionary.
+	(build_parser): Revise arguments to command.
+	(create_logdir): Remove extraneous space character.
+	(setup_logging): Use PEP8 compliant variable names.
+	(log_args): Rewritten for new set of arguments.
+	(validate_args): Remove extraneous space, don't use len to test
+	for empty arguments.
+	(create_builddir): Use explicit exception names, don't raise new
+	exceptions.
+	(find-benchmarks): Remove extraneous space and use PEP8 compliant
+	variable names.
+	(log_benchmarks): Use PEP8 compliant variable names.
+	(populate_defaults, populate_user_commands, populate_user_flags)
+	(populate_user_pattersn, populate_user_libs, populate_user_defs)
+	(populate_user, add_internal_flags, validate_tools): Created.
+	(set_parameters): Rewritten to use subsidiary
+	functionspopulate_defaults, populate_user_commands,
+	populate_user_flags, populate_user_pattersn, populate_user_libs,
+	populate_user_defs, populate_user, add_internal_flags and
+	validate_tools; remove extraneous space and use PEP8 compliant
+	variable names.
+	(log_parameters): Use PEP8 compliant variable names.
+	(compile_file): Use patterns to construct argument list,
+	rename TimeoutExpired as subprocess.TimeoutExpired, reverse return
+	code tests,
+	(compile_benchmark, compile_support): Use PEP8 compliant variable
+	names, remove extraneous space, use explicit exception names.
+	(create_link_binlist, create_link_arglist): Created.
+	(link_benchmark): Simplified by using functions
+	create_link_binlist and create_link_arglist
+	(main): Use PEP8 compliant variable names, remove extraneous
+	space.
+	* config/riscv32/arch.cfg: Rewritten as a set of variable
+	definitions to be accessed using exec() to populate a local
+	dictionary.
+	* config/riscv32/boards/ri5cyverilator/board.cfg: Likewise.
+	* config/riscv32/chips/size-test-gcc/chip.cfg: Likewise.
+	* config/riscv32/chips/size-test-llvm/chip.cfg: Likewise.
+	* config/riscv32/chips/speed-test/chip.cfg: Likewise.
+
+2019-08-01  Jeremy Bennett  <jeremy.bennett@embecosm.com>
+
+	WIP on making more generic.
+
+	We switch to allowing patterns to be used to specify how key
+	arguments are added to the command line (input file, output file,
+	defined constant, include directory).
+
+	* build-all.py (build_parser): Revise argument set
+	(log_args): Revise argument to match build_parser.
+	(validate_args): WIP on reorganization to more logical structure.
+	(set_parameters, log_parameters): WIP on reorganization.
+	(compile_support, link_benchmark): WIP to be more generic command
+	line construction.
+
+2019-07-30  Jeremy Bennett  <jeremy.bennett@embecosm.com>
+
+	Fix riscv32 size-test-llvm configuration to match upstream.
+
+	The -msave-restore option is not yet in upstream Clang/LLVM.
+	Should be added back once this is available, since it is a
+	signficant win for Clang/LLVM.
+
+	* config/riscv32/chips/size-test-llvm/chip.cfg: Remove
+	-msave-restore from cflags and ldflags.
+
+2019-07-30  Jeremy Bennett  <jeremy.bennett@embecosm.com>
+
+	Add a script to compute the size benchmark.
+
+	* benchmark-size.py: Created.
+	* build-all.py (build_parser): Clearer docstring.
+
+2019-07-26  Jeremy Bennett  <jeremy.bennett@embecosm.com>
+
+	Initial attempt at a Python build script.
+
+	The configuration files are modified to set Python dictionary
+	entries.  The script is designed to build out-of-tree just like
+	autotools.
+
+	* .gitignore: Add bd and logs as default build and log directories
+	for new script.
+	* build-all.py: Created.
+	* config/riscv32/arch.cfg: Converted to Python dictionary entries.
+	* config/riscv32/boards/ri5cyverilator/board.cfg: Likewise.
+	* config/riscv32/chips/size-test-gcc/chip.cfg: Likewise.
+	* config/riscv32/chips/size-test-llvm/chip.cfg: Likewise.
+	* config/riscv32/chips/speed-test/chip.cfg: Likewise.
+
+2019-06-13  Jeremy Bennett  <jeremy.bennett@embecosm.com>
+
+	Clean up a couple of annoyances
+
+	* INSTALL: Change to reference doc/README.adoc
+	* NEWS: Replace BEEBS content with Embench content.
+
+2019-06-08  Jeremy Bennett  <jeremy.bennett@embecosm.com>
+
+	Fix LTO problems in the build system.
+
+	Attempting to use Embench with BEEBS identified some key issues,
+	notably around the handling of flags. CFLAGS should not be
+	overridden in configure.ac or Makefile.am.
+
+	There appears to be a bug in LTO, whereby not all functions in a
+	library are retained, so dummy libraries are always compiled with
+	LTO turned off.
+
+	* Makefile.in: Regenerated.
+	* config/riscv32/boards/ri5cyverilator/boardsupport.c
+	(initialise_board): Clean up layout
+	(start_trigger, stop_trigger): Add function attributes noinline
+	and externally_visible to avoid being trampled by LTO.
+	* configure: Regenerated.
+	* configure.ac: Save and restore CFLAGS, so no values are set if
+	user sets none, use EMBENCH_CPPFLAGS, EMBENCH_CFLAGS and
+	EMBENCH_LDFLAGS to pass custom flags to buidls and DUMMY_CPPFLAGS,
+	DUMMY_CFLAGS and DUMMY_LDFLAGS to remove any LTO flag when
+	building dummy libraries to avoid a LTO issue.
+	* doc/Makefile.in: Regenerated.
+	* src/Makefile.in: Regenerated.
+	* src/aha-mont64/Makefile.in: Regenerated.
+	* src/common.mk.am: Pass EMBENCH_CPPFLAGS, EMBENCH_CFLAGS and
+	EMBENCH_LDFLAGS to AM_CPPFLAGS, AM_CFLAGS and AM_LDFLAGS
+	respectively.
+	* src/crc32/Makefile.in: Regenerated.
+	* src/cubic/Makefile.in: Regenerated.
+	* src/edn/Makefile.in: Regenerated.
+	* src/huffbench/Makefile.in: Regenerated.
+	* src/matmult-int/Makefile.in: Regenerated.
+	* src/minver/Makefile.in: Regenerated.
+	* src/nbody/Makefile.in: Regenerated.
+	* src/nettle-aes/Makefile.in: Regenerated.
+	* src/nettle-sha256/Makefile.in: Regenerated.
+	* src/nsichneu/Makefile.in: Regenerated.
+	* src/picojpeg/Makefile.in: Regenerated.
+	* src/qrduino/Makefile.in: Regenerated.
+	* src/sglib-combined/Makefile.in: Regenerated.
+	* src/slre/Makefile.in: Regenerated.
+	* src/st/Makefile.in: Regenerated.
+	* src/statemate/Makefile.in: Regenerated.
+	* src/ud/Makefile.in: Regenerated.
+	* src/wikisort/Makefile.in: Regenerated. Regenerated.
+	* support/Makefile.am:Pass EMBENCH_CPPFLAGS, EMBENCH_CFLAGS and
+	EMBENCH_LDFLAGS to AM_CPPFLAGS, AM_CFLAGS and AM_LDFLAGS
+	respectively, override with DUMMY_CPPFLAGS, DUMMY_CFLAGS and
+	DUMMY_LDFLAGS for dummy libraries
+	* support/Makefile.in: Regenerated.
+	* support/dummy-libc.c (abort): Fix layout.
+	* support/main.c (main): Mark with attribute used to ensure
+	start_trigger and stop_trigger are retained.
+	* testsuite/Makefile.in: Regenerated.
+	* testsuite/beebs.test/Makefile.in: Regenerated.
+	* testsuite/config/Makefile.in: Regenerated.
+	* testsuite/lib/Makefile.in: Regenerated.
+
+2019-06-06  Jeremy Bennett  <jeremy.bennett@embecosm.com>
+
+	Initial commit of the new repository.
+
+	* .gitignore: Created.
+	* AUTHORS: Created.
+	* COPYING: Created.
+	* ChangeLog: Created.
+	* INSTALL: Created.
+	* Makefile.am: Created.
+	* Makefile.in: Created.
+	* NEWS: Created.
+	* README: Created.
+	* README.md: Created.
+	* aclocal.m4: Created.
+	* compile: Created.
+	* config.guess: Created.
+	* config.h.in: Created.
+	* config.sub: Created.
+	* config/default.exp: Created.
+	* config/riscv32/boards/generic/boardsupport.c: Created.
+	* config/riscv32/boards/generic/boardsupport.h: Created.
+	* config/riscv32/chips/size-test-gcc/chip.cfg: Created.
+	* config/riscv32/chips/size-test-gcc/chipsupport.c: Created.
+	* config/riscv32/chips/size-test-gcc/chipsupport.h: Created.
+	* config/riscv32/chips/size-test-llvm/chip.cfg: Created.
+	* config/riscv32/chips/size-test-llvm/chipsupport.c: Created.
+	* config/riscv32/chips/size-test-llvm/chipsupport.h: Created.
+	* config/riscv32/chips/speed-test/chip.cfg: Created.
+	* config/riscv32/chips/speed-test/chipsupport.c: Created.
+	* config/riscv32/chips/speed-test/chipsupport.h: Created.
+	* configure: Created.
+	* configure.ac: Created.
+	* depcomp: Created.
+	* doc/Makefile.am: Created.
+	* doc/Makefile.in: Created.
+	* doc/README.adoc: Created.
+	* doc/custom.wordlist: Created.
+	* install-sh: Created.
+	* ltmain.sh: Created.
+	* m4/libtool.m4: Created.
+	* m4/ltoptions.m4: Created.
+	* m4/ltsugar.m4: Created.
+	* m4/ltversion.m4: Created.
+	* m4/lt~obsolete.m4: Created.
+	* missing: Created.
+	* src/Makefile.am: Created.
+	* src/Makefile.in: Created.
+	* src/aha-mont64/Makefile.am: Created.
+	* src/aha-mont64/Makefile.in: Created.
+	* src/aha-mont64/mont64.c: Created.
+	* src/common.mk.am: Created.
+	* src/crc32/Makefile.am: Created.
+	* src/crc32/Makefile.in: Created.
+	* src/crc32/crc_32.c: Created.
+	* src/cubic/Makefile.am: Created.
+	* src/cubic/Makefile.in: Created.
+	* src/cubic/basicmath_small.c: Created.
+	* src/cubic/libcubic.c: Created.
+	* src/cubic/pi.h: Created.
+	* src/cubic/snipmath.h: Created.
+	* src/cubic/sniptype.h: Created.
+	* src/edn/Makefile.am: Created.
+	* src/edn/Makefile.in: Created.
+	* src/edn/libedn.c: Created.
+	* src/huffbench/.gitignore: Created.
+	* src/huffbench/Makefile.am: Created.
+	* src/huffbench/Makefile.in: Created.
+	* src/huffbench/libhuffbench.c: Created.
+	* src/matmult-int/Makefile.am: Created.
+	* src/matmult-int/Makefile.in: Created.
+	* src/matmult-int/matmult-int.c: Created.
+	* src/minver/Makefile.am: Created.
+	* src/minver/Makefile.in: Created.
+	* src/minver/libminver.c: Created.
+	* src/nbody/Makefile.am: Created.
+	* src/nbody/Makefile.in: Created.
+	* src/nbody/nbody.c: Created.
+	* src/nettle-aes/Makefile.am: Created.
+	* src/nettle-aes/Makefile.in: Created.
+	* src/nettle-aes/nettle-aes.c: Created.
+	* src/nettle-sha256/Makefile.am: Created.
+	* src/nettle-sha256/Makefile.in: Created.
+	* src/nettle-sha256/nettle-sha256.c: Created.
+	* src/nsichneu/Makefile.am: Created.
+	* src/nsichneu/Makefile.in: Created.
+	* src/nsichneu/libnsichneu.c: Created.
+	* src/picojpeg/Makefile.am: Created.
+	* src/picojpeg/Makefile.in: Created.
+	* src/picojpeg/libpicojpeg.c: Created.
+	* src/picojpeg/picojpeg.h: Created.
+	* src/picojpeg/picojpeg_test.c: Created.
+	* src/qrduino/Makefile.am: Created.
+	* src/qrduino/Makefile.in: Created.
+	* src/qrduino/ecctable.h: Created.
+	* src/qrduino/qrbits.h: Created.
+	* src/qrduino/qrencode.c: Created.
+	* src/qrduino/qrencode.h: Created.
+	* src/qrduino/qrframe.c: Created.
+	* src/qrduino/qrtest.c: Created.
+	* src/sglib-combined/Makefile.am: Created.
+	* src/sglib-combined/Makefile.in: Created.
+	* src/sglib-combined/combined.c: Created.
+	* src/sglib-combined/sglib.h: Created.
+	* src/slre/Makefile.am: Created.
+	* src/slre/Makefile.in: Created.
+	* src/slre/libslre.c: Created.
+	* src/slre/slre.h: Created.
+	* src/st/Makefile.am: Created.
+	* src/st/Makefile.in: Created.
+	* src/st/libst.c: Created.
+	* src/statemate/Makefile.am: Created.
+	* src/statemate/Makefile.in: Created.
+	* src/statemate/libstatemate.c: Created.
+	* src/ud/Makefile.am: Created.
+	* src/ud/Makefile.in: Created.
+	* src/ud/libud.c: Created.
+	* src/wikisort/Makefile.am: Created.
+	* src/wikisort/Makefile.in: Created.
+	* src/wikisort/libwikisort.c: Created.
+	* support/Makefile.am: Created.
+	* support/Makefile.in: Created.
+	* support/beebsc.c: Created.
+	* support/beebsc.h: Created.
+	* support/board.c: Created.
+	* support/chip.c: Created.
+	* support/dummy-crt0.c: Created.
+	* support/dummy-libc.c: Created.
+	* support/dummy-libgcc.c: Created.
+	* support/dummy-libm.c: Created.
+	* support/main.c: Created.
+	* support/support.h: Created.
+	* testsuite/ChangeLog: Created.
+	* testsuite/Makefile.am: Created.
+	* testsuite/Makefile.in: Created.
+	* testsuite/beebs-conf.exp: Created.
+	* testsuite/beebs.test/Makefile.am: Created.
+	* testsuite/beebs.test/Makefile.in: Created.
+	* testsuite/beebs.test/execute.exp: Created.
+	* testsuite/beebs.test/size.exp: Created.
+	* testsuite/config/Makefile.am: Created.
+	* testsuite/config/Makefile.in: Created.
+	* testsuite/config/generic.exp: Created.
+	* testsuite/config/none.exp: Created.
+	* testsuite/config/ri5cyverilator.exp: Created.
+	* testsuite/lib/Makefile.am: Created.
+	* testsuite/lib/Makefile.in: Created.
+	* testsuite/lib/beebs.exp: Created.
+	* testsuite/lib/mageec-wand.exp: Created.
+	* testsuite/lib/perf-stat.exp: Created.
