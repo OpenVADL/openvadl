@@ -10,6 +10,7 @@ RUN apt install -y build-essential autoconf automake autotools-dev python3 pytho
 WORKDIR /root
 RUN git clone https://github.com/riscv-collab/riscv-gnu-toolchain
 WORKDIR riscv-gnu-toolchain
+RUN git checkout 9a28c809a5d355874def06a414aa5f272fae564d
 RUN git submodule update --init --depth=1 -- gcc
 RUN git submodule update --init --depth=1 -- glibc
 RUN git submodule update --init --depth=1 -- binutils
