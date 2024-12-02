@@ -1,0 +1,1 @@
+../vadl/link.ld
