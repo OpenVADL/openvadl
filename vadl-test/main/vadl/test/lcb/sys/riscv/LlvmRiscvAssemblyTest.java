@@ -24,57 +24,57 @@ import vadl.utils.Pair;
 
 public abstract class LlvmRiscvAssemblyTest extends AbstractLcbTest {
 
-    protected abstract String getTarget();
+  protected abstract String getTarget();
 
-    protected abstract String getSpecPath();
+  protected abstract String getSpecPath();
 
-    private static Stream<String> inputFilesFromCFile() {
-        return Arrays.stream(
-                Objects.requireNonNull(new File("../../open-vadl/vadl-test/main/resources/llvm/riscv/c")
-                    .listFiles()))
-            .filter(File::isFile)
-            .map(File::getName);
+  private static Stream<String> inputFilesFromCFile() {
+    return Arrays.stream(
+            Objects.requireNonNull(new File("../../open-vadl/vadl-test/main/resources/llvm/riscv/c")
+                .listFiles()))
+        .filter(File::isFile)
+        .map(File::getName);
+  }
+
+  @EnabledIfEnvironmentVariable(named = "test.llvm.enabled", matches = "true")
+  @TestFactory
+  List<DynamicTest> compileLlvm() throws IOException, DuplicatedPassKeyException {
+    var target = getTarget();
+    var configuration = new LcbConfiguration(getConfiguration(false),
+        new ProcessorName(target));
+
+    runLcb(configuration, getSpecPath());
+
+    // Move Dockerfile into Docker Context
+    {
+      var inputStream = new FileInputStream(
+          "../../open-vadl/vadl-test/main/resources/images/llvm_riscv/Dockerfile");
+      var outputStream = new FileOutputStream(configuration.outputPath() + "/lcb/Dockerfile");
+      inputStream.transferTo(outputStream);
+      outputStream.close();
     }
 
-    @EnabledIfEnvironmentVariable(named = "test.llvm.enabled", matches = "true")
-    @TestFactory
-    List<DynamicTest> compileLlvm() throws IOException, DuplicatedPassKeyException {
-        var target = getTarget();
-        var configuration = new LcbConfiguration(getConfiguration(false),
-            new ProcessorName(target));
+    var redisCache = getRunningRedisCache();
+    var image = redisCache.setupEnv(new ImageFromDockerfile("tc_llvm17")
+        .withDockerfile(Paths.get(configuration.outputPath() + "/lcb/Dockerfile"))
+        .withBuildArg("TARGET", target));
 
-        runLcb(configuration, getSpecPath());
+    // The container is complete and has generated the assembly files.
+    return inputFilesFromCFile().map(input -> DynamicTest.dynamicTest(input, () -> {
+      var name = Paths.get(input).getFileName().toString();
 
-        // Move Dockerfile into Docker Context
-        {
-            var inputStream = new FileInputStream(
-                "../../open-vadl/vadl-test/main/resources/images/llvm_riscv/Dockerfile");
-            var outputStream = new FileOutputStream(configuration.outputPath() + "/lcb/Dockerfile");
-            inputStream.transferTo(outputStream);
-            outputStream.close();
-        }
-
-        var redisCache = getRunningRedisCache();
-        var image = redisCache.setupEnv(new ImageFromDockerfile("tc_llvm17")
-            .withDockerfile(Paths.get(configuration.outputPath() + "/lcb/Dockerfile"))
-            .withBuildArg("TARGET", target));
-
-        // The container is complete and has generated the assembly files.
-        return inputFilesFromCFile().map(input -> DynamicTest.dynamicTest(input, () -> {
-            var name = Paths.get(input).getFileName().toString();
-
-            runContainerAndCopyInputIntoContainer(image,
-                List.of(
-                    Pair.of(
-                        Path.of("../../open-vadl/vadl-test/main/resources/llvm/riscv/c"),
-                        "/src/inputs"),
-                    Pair.of(
-                        Path.of("../../open-vadl/vadl-test/main/resources/llvm/riscv/assertions/" +
-                            getTarget()),
-                        "/assertions")
-                ),
-                Map.of("INPUT", name)
-            );
-        })).toList();
-    }
+      runContainerAndCopyInputIntoContainer(image,
+          List.of(
+              Pair.of(
+                  Path.of("../../open-vadl/vadl-test/main/resources/llvm/riscv/c"),
+                  "/src/inputs"),
+              Pair.of(
+                  Path.of("../../open-vadl/vadl-test/main/resources/llvm/riscv/assertions/"
+                      + getTarget()),
+                  "/assertions")
+          ),
+          Map.of("INPUT", name)
+      );
+    })).toList();
+  }
 }
