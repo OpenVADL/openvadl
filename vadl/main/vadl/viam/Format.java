@@ -86,9 +86,9 @@ public class Format extends Definition implements DefProp.WithType {
 
   @Override
   public String toString() {
-    return "Format{ " + identifier + ": " + type + "{\n\t" +
-        Stream.concat(Stream.of(fields), fieldAccesses.stream()).map(Definition::toString)
-            .collect(Collectors.joining("\n\t")) + "\n}";
+    return "Format{ " + identifier + ": " + type + "{\n\t"
+        + Stream.concat(Stream.of(fields), fieldAccesses.stream()).map(Definition::toString)
+        .collect(Collectors.joining("\n\t")) + "\n}";
   }
 
   @Override
@@ -345,8 +345,8 @@ public class Format extends Definition implements DefProp.WithType {
     public void verify() {
       super.verify();
       if (encoding != null) {
-        ensure(encoding.returnType() instanceof DataType &&
-                ((DataType) encoding.returnType()).isTrivialCastTo(fieldRef.type()),
+        ensure(encoding.returnType() instanceof DataType
+                && encoding.returnType().isTrivialCastTo(fieldRef.type()),
             "Encoding type mismatch. Couldn't match encoding type %s with field reference type %s",
             encoding.returnType(), fieldRef().type());
       }
@@ -354,8 +354,8 @@ public class Format extends Definition implements DefProp.WithType {
 
     @Override
     public String toString() {
-      return "FieldAccess{ " + accessFunction.simpleName() + " = " + accessFunction.signature() +
-          " }";
+      return "FieldAccess{ " + accessFunction.simpleName() + " = " + accessFunction.signature()
+          + " }";
     }
 
     @Override
@@ -372,9 +372,9 @@ public class Format extends Definition implements DefProp.WithType {
         return false;
       }
       FieldAccess that = (FieldAccess) o;
-      return Objects.equals(accessFunction, that.accessFunction) &&
-          Objects.equals(encoding, that.encoding) && Objects.equals(predicate, that.predicate) &&
-          Objects.equals(fieldRef, that.fieldRef);
+      return Objects.equals(accessFunction, that.accessFunction)
+          && Objects.equals(encoding, that.encoding) && Objects.equals(predicate, that.predicate)
+          && Objects.equals(fieldRef, that.fieldRef);
     }
 
     @Override
