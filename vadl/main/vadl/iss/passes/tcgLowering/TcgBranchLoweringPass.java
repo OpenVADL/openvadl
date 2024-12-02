@@ -39,7 +39,7 @@ import vadl.viam.passes.CfgTraverser;
  * branch constructs into low-level TCG (Tiny Code Generator) instructions
  * suitable for code generation.
  */
-public class TcgBranchLoweringPass extends Pass<GeneralConfiguration> {
+public class TcgBranchLoweringPass extends Pass {
 
   /**
    * Constructs a new {@code TcgBranchLoweringPass} with the specified configuration.

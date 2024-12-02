@@ -8,10 +8,10 @@ import vadl.viam.Specification;
 /**
  * A pass is a unit of execution. It analysis or transforms a VADL specification.
  */
-public abstract class Pass<T extends GeneralConfiguration> {
-  private T configuration;
+public abstract class Pass {
+  private GeneralConfiguration configuration;
 
-  public Pass(T configuration) {
+  public Pass(GeneralConfiguration configuration) {
     this.configuration = configuration;
   }
 
@@ -45,7 +45,7 @@ public abstract class Pass<T extends GeneralConfiguration> {
 
   }
 
-  public T configuration() {
+  public GeneralConfiguration configuration() {
     return configuration;
   }
 }

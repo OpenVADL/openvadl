@@ -7,6 +7,7 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.Set;
 import org.jetbrains.annotations.Nullable;
+import vadl.configuration.GeneralConfiguration;
 import vadl.configuration.IssConfiguration;
 import vadl.iss.passes.nodes.TcgVRefNode;
 import vadl.iss.passes.tcgLowering.TcgV;
@@ -43,7 +44,7 @@ import vadl.viam.graph.dependency.WriteRegNode;
  * The pass also adds the register variable getters ({@link TcgGetVar}), as those
  * are required by the later allocation pass and will not be removed at a later point.
  */
-public class IssVarSsaAssignment extends Pass<IssConfiguration> {
+public class IssVarSsaAssignment extends Pass {
 
   /**
    * Represents the result of a temporary variable assignment during the ISS generation process.
@@ -73,6 +74,11 @@ public class IssVarSsaAssignment extends Pass<IssConfiguration> {
   @Override
   public PassName getName() {
     return PassName.of("ISS Temp (SSA) Var Assignment");
+  }
+
+  @Override
+  public IssConfiguration configuration() {
+    return (IssConfiguration) super.configuration();
   }
 
   @Override
