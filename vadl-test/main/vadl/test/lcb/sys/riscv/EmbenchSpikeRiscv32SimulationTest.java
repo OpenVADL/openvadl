@@ -49,7 +49,7 @@ public class EmbenchSpikeRiscv32SimulationTest extends AbstractLcbTest {
     }
 
     var redisCache = getRunningRedisCache();
-    var image = redisCache.setupEnv(new ImageFromDockerfile("tc_embench_spike_riscv32")
+    var image = redisCache.setupEnv(new ImageFromDockerfile("tc_embench_spike_riscv32", false)
         .withDockerfile(Paths.get(configuration.outputPath() + "/lcb/Dockerfile.riscv32.spike.lcb"))
         .withBuildArg("TARGET", target)
         .withBuildArg("UPSTREAM_BUILD_TARGET", upstreamBuildTarget));
