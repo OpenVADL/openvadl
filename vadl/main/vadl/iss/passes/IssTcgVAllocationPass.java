@@ -44,7 +44,7 @@ import vadl.viam.graph.dependency.DependencyNode;
  *   <li>Performing liveness analysis to determine variable lifetimes.
  *   <li>Building an interference graph to model conflicts between variables.
  *   <li>Assigning registers to variables using graph coloring.
- *   <li>Assigning TcgV instances to the nodes in the dependency graph for code generation.
+ *   <li>Updating the TCGv assignments on TcgNodes based on the allocation.
  * </ul>
  */
 public class IssTcgVAllocationPass extends Pass {
@@ -73,9 +73,6 @@ public class IssTcgVAllocationPass extends Pass {
   public @Nullable Object execute(PassResults passResults, Specification viam)
       throws IOException {
 
-    // TODO: Don't hardcode
-    var targetSize = Tcg_32_64.i64;
-
     var tmpAssignments = passResults.lastResultOf(IssVarSsaAssignment.class,
         IssVarSsaAssignment.Result.class).varAssignments();
 
@@ -84,7 +81,7 @@ public class IssTcgVAllocationPass extends Pass {
         .forEach(instr -> {
               var temps = requireNonNull(tmpAssignments.get(instr));
               // Allocate variables for the instruction's behavior
-              new IssVariableAllocator(instr.behavior(), targetSize, temps)
+              new IssVariableAllocator(instr.behavior(), temps)
                   .assignFinalVariables();
             }
         ));
@@ -99,38 +96,31 @@ public class IssTcgVAllocationPass extends Pass {
  * for an instruction's behavior.
  * It handles the following tasks:
  * <ul>
- *   <li>Filling the variable table with variables from the dependency graph.
  *   <li>Performing liveness analysis to determine variable lifetimes.
  *   <li>Building the interference graph to model variable conflicts.
  *   <li>Allocating by coloring the interference graph.
- *   <li>Assigning TcgV variables to the nodes in the dependency graph.
+ *   <li>Updating the TCGv assignments on TcgNodes based on the allocation.
  * </ul>
  */
 class IssVariableAllocator {
 
-  private static final Logger log = LoggerFactory.getLogger(IssVariableAllocator.class);
   private final Graph graph;
   private final StartNode startNode;
-  private final Tcg_32_64 targetSize;
   // the integer just represents some non-specific TCGv
   private final Map<TcgVRefNode, Integer> allocationMap;
   private final LivenessAnalysis livenessAnalysis;
-  private final Map<DependencyNode, TcgVRefNode> ssaAssignments;
 
   /**
    * Constructs an IssVariableAllocator for the given dependency graph and target size.
    *
-   * @param graph      The dependency graph of the instruction's behavior.
-   * @param targetSize The target size for TCG variables.
+   * @param graph The dependency graph of the instruction's behavior.
    */
-  public IssVariableAllocator(Graph graph, Tcg_32_64 targetSize,
+  public IssVariableAllocator(Graph graph,
                               Map<DependencyNode, TcgVRefNode> ssaAssignments) {
     this.graph = graph;
     this.startNode = getSingleNode(graph, StartNode.class);
-    this.targetSize = targetSize;
     this.livenessAnalysis = new LivenessAnalysis(ssaAssignments);
     this.allocationMap = new HashMap<>();
-    this.ssaAssignments = ssaAssignments;
   }
 
   /**
@@ -138,14 +128,11 @@ class IssVariableAllocator {
    *
    * <p>This method orchestrates the variable allocation process, which includes:
    * <ul>
-   *   <li>Filling the variable table with variables from the dependency graph.
    *   <li>Performing liveness analysis to determine variable lifetimes.
    *   <li>Building the interference graph to model variable conflicts.
    *   <li>Allocating by coloring the interference graph.
-   *   <li>Assigning TcgV variables to the nodes in the dependency graph.
+   *   <li>Updating the TCGv assignments on TcgNodes based on the allocation.
    * </ul>
-   *
-   * @return A mapping of dependency nodes to their assigned TcgV variables.
    */
   void assignFinalVariables() {
 
@@ -175,13 +162,9 @@ class IssVariableAllocator {
   }
 
   private void insertTmpTcgVGetters(Set<TcgVRefNode> tmps) {
-    var startNode = getSingleNode(graph, StartNode.class);
-
     for (var ref : tmps) {
-      switch (ref.var().kind()) {
-        case TMP -> startNode.addAfter(TcgGetVar.from(ref));
-        default -> {
-        }
+      if (requireNonNull(ref.var().kind()) == TcgV.Kind.TMP) {
+        startNode.addAfter(TcgGetVar.from(ref));
       }
     }
   }
