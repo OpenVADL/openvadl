@@ -10,6 +10,7 @@ import java.util.stream.Stream;
 import javax.annotation.Nullable;
 
 import vadl.error.Diagnostic;
+
 import vadl.types.BitsType;
 import vadl.types.DataType;
 import vadl.types.Type;
