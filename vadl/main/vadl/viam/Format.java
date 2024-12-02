@@ -105,8 +105,8 @@ public class Format extends Definition implements DefProp.WithType {
       return false;
     }
     Format format = (Format) o;
-    return Objects.equals(type, format.type) && Arrays.equals(fields, format.fields) &&
-        fieldAccesses.equals(format.fieldAccesses);
+    return Objects.equals(type, format.type) && Arrays.equals(fields, format.fields)
+        && fieldAccesses.equals(format.fieldAccesses);
   }
 
   @Override
