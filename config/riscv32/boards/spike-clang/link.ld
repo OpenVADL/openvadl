@@ -1,1 +1,0 @@
-../spike/link.ld
