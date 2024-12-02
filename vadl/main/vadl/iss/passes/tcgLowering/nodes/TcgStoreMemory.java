@@ -1,25 +1,32 @@
 package vadl.iss.passes.tcgLowering.nodes;
 
 import java.util.List;
+import java.util.Set;
 import java.util.function.Function;
+import org.jetbrains.annotations.Nullable;
+import vadl.iss.passes.nodes.TcgVRefNode;
 import vadl.iss.passes.tcgLowering.TcgExtend;
 import vadl.iss.passes.tcgLowering.TcgV;
 import vadl.iss.passes.tcgLowering.Tcg_8_16_32_64;
 import vadl.javaannotations.viam.DataValue;
+import vadl.javaannotations.viam.Input;
+import vadl.viam.graph.GraphVisitor;
 import vadl.viam.graph.Node;
 
 /**
  * Represents a memory store operation in the Tiny Code Generation (TCG) framework.
  * This class is a specific node type that encapsulates storing a value into memory.
  */
-public class TcgStoreMemory extends TcgOpNode {
+public class TcgStoreMemory extends TcgNode {
 
   @DataValue
   Tcg_8_16_32_64 size;
   @DataValue
   TcgExtend extendMode;
-  @DataValue
-  TcgV addr;
+  @Input
+  TcgVRefNode addr;
+  @Input
+  TcgVRefNode val;
 
   /**
    * Constructs a TcgStoreMemory operation node which is used to store a value into memory
@@ -32,12 +39,12 @@ public class TcgStoreMemory extends TcgOpNode {
    */
   public TcgStoreMemory(Tcg_8_16_32_64 size,
                         TcgExtend mode,
-                        TcgV val,
-                        TcgV addr) {
-    super(val, val.width());
+                        TcgVRefNode val,
+                        TcgVRefNode addr) {
     this.size = size;
     this.extendMode = mode;
     this.addr = addr;
+    this.val = val;
   }
 
   public Tcg_8_16_32_64 size() {
@@ -48,17 +55,17 @@ public class TcgStoreMemory extends TcgOpNode {
     return extendMode;
   }
 
-  public TcgV addr() {
+  public TcgVRefNode addr() {
     return addr;
   }
 
-  public TcgV val() {
-    return dest();
+  public TcgVRefNode val() {
+    return val;
   }
 
   @Override
   public String cCode(Function<Node, String> nodeToCCode) {
-    return "tcg_gen_qemu_st_" + width
+    return "tcg_gen_qemu_st_" + val.width()
         + "(" + val().varName()
         + "," + addr().varName()
         + ", 0"
@@ -66,15 +73,25 @@ public class TcgStoreMemory extends TcgOpNode {
         + ");";
   }
 
+  @Override
+  public Set<TcgVRefNode> usedVars() {
+    return Set.of(addr, val);
+  }
+
+  @Override
+  public @Nullable TcgVRefNode definedVar() {
+    return null;
+  }
+
 
   @Override
   public Node copy() {
-    return new TcgStoreMemory(size, extendMode, dest, addr);
+    return new TcgStoreMemory(size, extendMode, val, addr);
   }
 
   @Override
   public Node shallowCopy() {
-    return new TcgStoreMemory(size, extendMode, dest, addr);
+    return new TcgStoreMemory(size, extendMode, val, addr);
   }
 
   /**
@@ -96,6 +113,19 @@ public class TcgStoreMemory extends TcgOpNode {
     super.collectData(collection);
     collection.add(size);
     collection.add(extendMode);
+  }
+
+  @Override
+  protected void collectInputs(List<Node> collection) {
+    super.collectInputs(collection);
     collection.add(addr);
+    collection.add(val);
+  }
+
+  @Override
+  protected void applyOnInputsUnsafe(GraphVisitor.Applier<Node> visitor) {
+    super.applyOnInputsUnsafe(visitor);
+    addr = visitor.apply(this, addr, TcgVRefNode.class);
+    val = visitor.apply(this, val, TcgVRefNode.class);
   }
 }

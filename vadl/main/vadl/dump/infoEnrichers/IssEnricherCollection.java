@@ -9,7 +9,7 @@ import java.util.stream.Collectors;
 import vadl.dump.InfoEnricher;
 import vadl.dump.InfoUtils;
 import vadl.dump.entities.DefinitionEntity;
-import vadl.iss.passes.IssVariableAllocationPass;
+import vadl.iss.passes.IssTcgVAllocationPass;
 import vadl.iss.passes.safeResourceRead.IssSafeResourceReadPass;
 import vadl.viam.Instruction;
 import vadl.viam.graph.dependency.ReadResourceNode;
@@ -23,18 +23,18 @@ public class IssEnricherCollection {
    * An {@link InfoEnricher} that enriches a {@link DefinitionEntity} by adding information
    * about variable assignments and resource reads. Specifically, it processes entities of type
    * {@link DefinitionEntity} and extracts data
-   * if the corresponding pass {@link IssVariableAllocationPass} has been executed.
+   * if the corresponding pass {@link IssTcgVAllocationPass} has been executed.
    */
   public static InfoEnricher TCG_VAR_ASSIGN_EXPANDABLE =
       forType(DefinitionEntity.class, (entity, passResult) -> {
-        if (!passResult.hasRunPassOnce(IssVariableAllocationPass.class)
+        if (!passResult.hasRunPassOnce(IssTcgVAllocationPass.class)
             || !(entity.origin() instanceof Instruction instr)) {
           return;
         }
 
         var assignments = passResult.lastResultOf(
-            IssVariableAllocationPass.class,
-            IssVariableAllocationPass.Result.class
+            IssTcgVAllocationPass.class,
+            IssTcgVAllocationPass.Result.class
         );
 
 
@@ -101,7 +101,7 @@ public class IssEnricherCollection {
    * A list of all info enrichers that are ISS specific.
    */
   public static List<InfoEnricher> all = List.of(
-      TCG_VAR_ASSIGN_EXPANDABLE,
+//      TCG_VAR_ASSIGN_EXPANDABLE,
       READ_SPILL_LOCATION_EXPANDABLE
   );
 

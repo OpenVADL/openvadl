@@ -7,6 +7,7 @@ import java.io.IOException;
 import java.util.Map;
 import org.jetbrains.annotations.Nullable;
 import vadl.configuration.GeneralConfiguration;
+import vadl.iss.passes.nodes.TcgVRefNode;
 import vadl.iss.passes.tcgLowering.TcgV;
 import vadl.iss.passes.tcgLowering.Tcg_32_64;
 import vadl.iss.passes.tcgLowering.nodes.TcgGetVar;
@@ -72,8 +73,8 @@ public class IssTcgConstantSchedulingPass extends Pass {
   public @Nullable Object execute(PassResults passResults, Specification viam)
       throws IOException {
 
-    var assignments = passResults.lastResultOf(IssVariableAllocationPass.class,
-        IssVariableAllocationPass.Result.class);
+    var assignments = passResults.lastResultOf(IssTempVarAssignment.class,
+        IssTempVarAssignment.Result.class);
 
     viam.isa().get().ownInstructions().forEach(i -> {
       new IssTcgConstantScheduler(
@@ -95,7 +96,7 @@ class IssTcgConstantScheduler implements CfgTraverser {
   /**
    * Map of dependency nodes to their assigned TCG variables.
    */
-  Map<DependencyNode, TcgV> assignments;
+  Map<DependencyNode, TcgVRefNode> assignments;
   /**
    * The start node of the instruction behavior graph.
    */
@@ -107,7 +108,7 @@ class IssTcgConstantScheduler implements CfgTraverser {
    * @param graph       The behavior graph of the instruction.
    * @param assignments The map of dependency nodes to TCG variable assignments.
    */
-  public IssTcgConstantScheduler(Graph graph, Map<DependencyNode, TcgV> assignments) {
+  public IssTcgConstantScheduler(Graph graph, Map<DependencyNode, TcgVRefNode> assignments) {
     this.assignments = assignments;
     this.startNode = getSingleNode(graph, StartNode.class);
   }
@@ -132,7 +133,7 @@ class IssTcgConstantScheduler implements CfgTraverser {
       return;
     }
 
-    TcgV tcgV = assignments.get(scheduledNode.node());
+    var tcgV = assignments.get(scheduledNode.node());
     if (tcgV == null) {
       return;
     }
@@ -177,8 +178,9 @@ class IssTcgConstantScheduler implements CfgTraverser {
     }
     var constName = TcgPassUtils.exprVarName(expressionNode);
     var tcgV = TcgV.constant("const_" + constName, width, expressionNode);
-    assignments.put(expressionNode, tcgV);
-    startNode.addAfter(TcgGetVar.from(tcgV));
+    var refNode = requireNonNull(expressionNode.graph()).addWithInputs(new TcgVRefNode(tcgV));
+    assignments.put(expressionNode, refNode);
+    startNode.addAfter(TcgGetVar.from(refNode));
   }
 
 }

@@ -1,10 +1,17 @@
 package vadl.iss.passes.tcgLowering.nodes;
 
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
+import org.jetbrains.annotations.Nullable;
+import vadl.iss.passes.nodes.TcgVRefNode;
 import vadl.iss.passes.tcgLowering.TcgV;
 import vadl.iss.passes.tcgLowering.Tcg_32_64;
 import vadl.javaannotations.viam.DataValue;
+import vadl.javaannotations.viam.Input;
 import vadl.viam.graph.GraphNodeVisitor;
+import vadl.viam.graph.GraphVisitor;
+import vadl.viam.graph.Node;
 
 /**
  * Represents an abstract TCG (Tiny Code Generation) operation node.
@@ -13,38 +20,48 @@ import vadl.viam.graph.GraphNodeVisitor;
  */
 public abstract class TcgOpNode extends TcgNode {
 
-  @DataValue
-  TcgV dest;
+  @Input
+  TcgVRefNode dest;
   @DataValue
   Tcg_32_64 width;
 
-  public TcgOpNode(TcgV dest, Tcg_32_64 width) {
+  public TcgOpNode(TcgVRefNode dest, Tcg_32_64 width) {
     this.dest = dest;
     this.width = width;
   }
 
-  public TcgOpNode(TcgV dest) {
+  public TcgOpNode(TcgVRefNode dest) {
     this.dest = dest;
-    this.width = dest.width();
+    this.width = dest.var().width();
   }
 
   @Override
   public void verifyState() {
     super.verifyState();
 
-    ensure(dest.width() == width, "result variable width does not match");
+    ensure(dest.var().width() == width, "result variable width does not match");
   }
 
   public Tcg_32_64 width() {
     return width;
   }
 
-  public TcgV dest() {
+  public TcgVRefNode dest() {
     return dest;
   }
 
-  public void setDest(TcgV res) {
+  public void setDest(TcgVRefNode res) {
     this.dest = res;
+  }
+
+  @Override
+  public Set<TcgVRefNode> usedVars() {
+    return new HashSet<>();
+  }
+
+  @Override
+  public @Nullable TcgVRefNode definedVar() {
+    return dest;
   }
 
   @Override
@@ -55,7 +72,18 @@ public abstract class TcgOpNode extends TcgNode {
   @Override
   protected void collectData(List<Object> collection) {
     super.collectData(collection);
-    collection.add(dest);
     collection.add(width);
+  }
+
+  @Override
+  protected void applyOnInputsUnsafe(GraphVisitor.Applier<Node> visitor) {
+    super.applyOnInputsUnsafe(visitor);
+    dest = visitor.apply(this, dest, TcgVRefNode.class);
+  }
+
+  @Override
+  protected void collectInputs(List<Node> collection) {
+    super.collectInputs(collection);
+    collection.add(dest);
   }
 }

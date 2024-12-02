@@ -1,0 +1,517 @@
+package vadl.iss.passes;
+
+import static java.util.Objects.requireNonNull;
+import static vadl.utils.GraphUtils.getSingleNode;
+
+import java.io.IOException;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.Map;
+import java.util.Set;
+import java.util.stream.Collectors;
+import org.jetbrains.annotations.Nullable;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import vadl.configuration.GeneralConfiguration;
+import vadl.iss.DataFlowAnalysis;
+import vadl.iss.passes.nodes.TcgVRefNode;
+import vadl.iss.passes.tcgLowering.TcgV;
+import vadl.iss.passes.tcgLowering.Tcg_32_64;
+import vadl.iss.passes.tcgLowering.nodes.TcgGetVar;
+import vadl.iss.passes.tcgLowering.nodes.TcgNode;
+import vadl.pass.Pass;
+import vadl.pass.PassName;
+import vadl.pass.PassResults;
+import vadl.viam.Instruction;
+import vadl.viam.Specification;
+import vadl.viam.ViamError;
+import vadl.viam.graph.Graph;
+import vadl.viam.graph.control.ControlNode;
+import vadl.viam.graph.control.InstrEndNode;
+import vadl.viam.graph.control.StartNode;
+import vadl.viam.graph.dependency.DependencyNode;
+
+/**
+ * A pass that performs variable allocation for the Instruction Set Simulator (ISS).
+ *
+ * <p>This pass is responsible for allocating variables used in the behavior of instructions.
+ * It traverses the ISA specification, processes each instruction,
+ * and assigns TCG (Tiny Code Generator)
+ * variables to the scheduled nodes in the dependency graph of each instruction's behavior.
+ *
+ * <p>The allocation includes:
+ * <ul>
+ *   <li>Performing liveness analysis to determine variable lifetimes.
+ *   <li>Building an interference graph to model conflicts between variables.
+ *   <li>Assigning registers to variables using graph coloring.
+ *   <li>Assigning TcgV instances to the nodes in the dependency graph for code generation.
+ * </ul>
+ */
+public class IssTcgVAllocationPass extends Pass {
+
+  /**
+   * Represents the result of the variable allocation pass.
+   *
+   * <p>Contains a mapping from each instruction to a mapping of its dependency nodes
+   * to their assigned TcgV variables.
+   */
+  public record Result(
+      Map<Instruction, Map<DependencyNode, TcgV>> varAssignments
+  ) {
+  }
+
+  public IssTcgVAllocationPass(GeneralConfiguration configuration) {
+    super(configuration);
+  }
+
+  @Override
+  public PassName getName() {
+    return PassName.of("ISS Variable Allocation");
+  }
+
+  @Override
+  public @Nullable Object execute(PassResults passResults, Specification viam)
+      throws IOException {
+
+    // TODO: Don't hardcode
+    var targetSize = Tcg_32_64.i64;
+
+    var tmpAssignments = passResults.lastResultOf(IssTempVarAssignment.class,
+        IssTempVarAssignment.Result.class).varAssignments();
+
+    // Process each instruction in the ISA
+    viam.isa().ifPresent(isa -> isa.ownInstructions()
+//        .stream().filter(i -> i.simpleName().equals("ADDI"))
+        .forEach(instr -> {
+              var temps = requireNonNull(tmpAssignments.get(instr));
+              // Allocate variables for the instruction's behavior
+              new IssVariableAllocator(instr.behavior(), targetSize, temps)
+                  .assignFinalVariables();
+            }
+        ));
+    return null;
+  }
+}
+
+/**
+ * Performs variable allocation for a single instruction's behavior.
+ *
+ * <p>This class encapsulates the logic required to allocate variables
+ * for an instruction's behavior.
+ * It handles the following tasks:
+ * <ul>
+ *   <li>Filling the variable table with variables from the dependency graph.
+ *   <li>Performing liveness analysis to determine variable lifetimes.
+ *   <li>Building the interference graph to model variable conflicts.
+ *   <li>Allocating by coloring the interference graph.
+ *   <li>Assigning TcgV variables to the nodes in the dependency graph.
+ * </ul>
+ */
+class IssVariableAllocator {
+
+  private static final Logger log = LoggerFactory.getLogger(IssVariableAllocator.class);
+  private final Graph graph;
+  private final StartNode startNode;
+  private final Tcg_32_64 targetSize;
+  // the integer just represents some non-specific TCGv
+  private final Map<TcgVRefNode, Integer> allocationMap;
+  private final LivenessAnalysis livenessAnalysis;
+  private final Map<DependencyNode, TcgVRefNode> ssaAssignments;
+
+  /**
+   * Constructs an IssVariableAllocator for the given dependency graph and target size.
+   *
+   * @param graph      The dependency graph of the instruction's behavior.
+   * @param targetSize The target size for TCG variables.
+   */
+  public IssVariableAllocator(Graph graph, Tcg_32_64 targetSize,
+                              Map<DependencyNode, TcgVRefNode> ssaAssignments) {
+    this.graph = graph;
+    this.startNode = getSingleNode(graph, StartNode.class);
+    this.targetSize = targetSize;
+    this.livenessAnalysis = new LivenessAnalysis(ssaAssignments);
+    this.allocationMap = new HashMap<>();
+    this.ssaAssignments = ssaAssignments;
+  }
+
+  /**
+   * Allocates variables for the instruction's behavior.
+   *
+   * <p>This method orchestrates the variable allocation process, which includes:
+   * <ul>
+   *   <li>Filling the variable table with variables from the dependency graph.
+   *   <li>Performing liveness analysis to determine variable lifetimes.
+   *   <li>Building the interference graph to model variable conflicts.
+   *   <li>Allocating by coloring the interference graph.
+   *   <li>Assigning TcgV variables to the nodes in the dependency graph.
+   * </ul>
+   *
+   * @return A mapping of dependency nodes to their assigned TcgV variables.
+   */
+  void assignFinalVariables() {
+
+    // perform liveness analysis
+    livenessAnalysis.analyze(graph);
+
+    var interferenceGraph = buildInterferenceGraph();
+    allocateColoring(interferenceGraph);
+
+    updateFinalAssignments();
+  }
+
+  private void updateFinalAssignments() {
+    var coloringToTcgV = getColoringToTcgV();
+
+    var usedTcgVs = coloringToTcgV.values();
+    var varsToReplace = allocationMap.keySet().stream()
+        .filter(v -> !usedTcgVs.contains(v))
+        .collect(Collectors.toSet());
+    for (var var : varsToReplace) {
+      var color = allocationMap.get(var);
+      var replacement = coloringToTcgV.get(color);
+      var.replaceAndDelete(requireNonNull(replacement));
+    }
+
+    insertTmpTcgVGetters(new HashSet<>(coloringToTcgV.values()));
+  }
+
+  private void insertTmpTcgVGetters(Set<TcgVRefNode> tmps) {
+    var startNode = getSingleNode(graph, StartNode.class);
+
+    for (var ref : tmps) {
+      switch (ref.var().kind()) {
+        case TMP -> startNode.addAfter(TcgGetVar.from(ref));
+      }
+    }
+  }
+
+  private Map<Integer, TcgVRefNode> getColoringToTcgV() {
+    var colorAssignments = new HashMap<Integer, TcgVRefNode>();
+    allocationMap.entrySet().stream()
+        // first assign all non-temps with their original variable
+        .filter(e -> e.getKey().var().kind() != TcgV.Kind.TMP)
+        .forEach(e -> {
+          var var = e.getKey();
+          var color = e.getValue();
+          if (colorAssignments.containsKey(color)) {
+            throw new ViamError("Two non-sharable variables are sharing the same color %d", color)
+                .addContext("var1", colorAssignments.get(color))
+                .addContext("var2", var);
+          }
+          colorAssignments.put(color, var);
+        });
+
+    allocationMap.entrySet().stream()
+        // now assign the rest of the colorings
+        .filter(e -> e.getKey().var().kind() == TcgV.Kind.TMP)
+        .forEach(e -> {
+          var var = e.getKey();
+          var color = e.getValue();
+          if (!colorAssignments.containsKey(color)) {
+            colorAssignments.put(color, var);
+          }
+        });
+
+
+    return colorAssignments;
+  }
+
+
+  /**
+   * Builds the interference graph based on the liveness analysis results.
+   *
+   * <p>The interference graph models conflicts between variables,
+   * where each node represents a variable.
+   * An edge between two nodes
+   * indicates that the variables interfere with each other (i.e., they are
+   * live at the same time and cannot share the same register).
+   *
+   * @return The interference graph representing variable interferences.
+   */
+  private InterferenceGraph buildInterferenceGraph() {
+    InterferenceGraph infGraph = new InterferenceGraph();
+
+    for (var node : graph.getNodes(TcgNode.class).toList()) {
+      Set<TcgVRefNode> liveOut = livenessAnalysis.getOutValue(node);
+
+      // For each variable defined at this node, it interferes with all variables live-out
+      var def = node.definedVar();
+      if (def != null) {
+        for (var live : liveOut) {
+          infGraph.addEdge(def, live);
+        }
+      }
+    }
+
+    return infGraph;
+  }
+
+  /**
+   * Allocates registers by coloring the interference graph.
+   *
+   * <p>This method uses a graph coloring algorithm to assign registers to
+   * variables such that no two interfering variables share the same register.
+   *
+   * @param graph The interference graph to color.
+   */
+  private void allocateColoring(InterferenceGraph graph) {
+    // Use a simple heuristic graph coloring algorithm
+    GraphColoring coloring = new GraphColoring(graph);
+    coloring.colorGraph();
+
+    // Store the register assignments
+    allocationMap.putAll(coloring.getVariableColors());
+  }
+
+
+}
+
+/**
+ * Implements liveness analysis to determine live variables at each point in the behavior.
+ *
+ * <p>This analysis is a backward may analysis that computes, for each node, the set of variables
+ * that are live-in and live-out.
+ * It helps in building the interference graph by identifying variables
+ * that are live simultaneously.
+ */
+class LivenessAnalysis extends DataFlowAnalysis<Set<TcgVRefNode>> {
+
+  private final Map<DependencyNode, TcgVRefNode> tempAssignments;
+
+  public LivenessAnalysis(Map<DependencyNode, TcgVRefNode> tempAssignments) {
+    this.tempAssignments = tempAssignments;
+  }
+
+  @Override
+  protected Set<TcgVRefNode> initialFlow() {
+    return new HashSet<>();
+  }
+
+  @Override
+  protected Set<TcgVRefNode> meet(Set<Set<TcgVRefNode>> values) {
+    // union of all incoming sets
+    var result = new HashSet<TcgVRefNode>();
+    for (var value : values) {
+      result.addAll(value);
+    }
+    return result;
+  }
+
+  @Override
+  protected Set<TcgVRefNode> transferFunction(ControlNode node, Set<TcgVRefNode> input) {
+    if (node instanceof InstrEndNode) {
+      return initialEndFlow();
+    }
+
+    var output = new HashSet<>(input);
+    // Apply kill: remove variables that are defined in this node
+    output.removeAll(defineVariables(node));
+    // Apply gen: add variables that are used in this node
+    output.addAll(usedVariables(node));
+    return output;
+  }
+
+  /**
+   * Provides the initial live-out variables at the end of the instruction.
+   *
+   * <p>Assumes that all registers and register files are live after the instruction to ensure
+   * that their values are preserved.
+   *
+   * @return The set of variables assumed to be live at the end of the instruction.
+   */
+  private Set<TcgVRefNode> initialEndFlow() {
+    // We have to assume that all registers and register files are used
+    // after this instruciton. Thus we have to set them used at the end of the instruction.
+    // We also use constants at the end, so they can't be reassigned
+    return tempAssignments.values().stream().filter(v ->
+        v.var().kind() == TcgV.Kind.REG
+            || v.var().kind() == TcgV.Kind.REG_FILE
+            || v.var().kind() == TcgV.Kind.CONST
+    ).collect(Collectors.toSet());
+  }
+
+  @Override
+  protected boolean isForward() {
+    // backward analysis
+    return false;
+  }
+
+  @Override
+  protected boolean isMayAnalysis() {
+    // may analysis
+    return true;
+  }
+
+  /**
+   * Retrieves the set of variables defined at the given node.
+   *
+   * @param node The control node to analyze.
+   * @return The set of variables defined at the node.
+   */
+  private Set<TcgVRefNode> defineVariables(ControlNode node) {
+    if (!(node instanceof TcgNode tcgNode)) {
+      return Set.of();
+    }
+    var dest = tcgNode.definedVar();
+    return dest == null ? Set.of() : Set.of(dest);
+  }
+
+  /**
+   * Retrieves the set of variables used at the given node.
+   *
+   * @param node The control node to analyze.
+   * @return The set of variables used at the node.
+   */
+  private Set<TcgVRefNode> usedVariables(ControlNode node) {
+    if (!(node instanceof TcgNode tcgNode)) {
+      return Set.of();
+    }
+    return tcgNode.usedVars();
+  }
+
+}
+
+/**
+ * Represents an interference graph where nodes are variables and edges represent
+ * interference between variables.
+ *
+ * <p>An interference graph models conflicts between variables where each node is a variable,
+ * and an edge indicates that two variables interfere with each other
+ * (i.e., they are live at the same time and cannot share a register).
+ */
+class InterferenceGraph {
+
+  private Map<TcgVRefNode, Set<TcgVRefNode>> adjacencyList;
+
+  /**
+   * Constructs an empty interference graph.
+   */
+  public InterferenceGraph() {
+    this.adjacencyList = new HashMap<>();
+  }
+
+  /**
+   * Adds an edge between two variables, indicating they interfere with each other.
+   *
+   * @param v1 The first variable.
+   * @param v2 The second variable.
+   */
+  public void addEdge(TcgVRefNode v1, TcgVRefNode v2) {
+    adjacencyList.computeIfAbsent(v1, k -> new HashSet<>()).add(v2);
+    adjacencyList.computeIfAbsent(v2, k -> new HashSet<>()).add(v1);
+  }
+
+  /**
+   * Retrieves the set of variables that interfere with the given variable.
+   *
+   * @param variable The variable to query.
+   * @return The set of interfering variables.
+   */
+  public Set<TcgVRefNode> getInterferences(TcgVRefNode variable) {
+    return adjacencyList.getOrDefault(variable, new HashSet<>());
+  }
+
+  /**
+   * Retrieves all variables in the interference graph.
+   *
+   * @return A set of all variables in the graph.
+   */
+  public Set<TcgVRefNode> getVariables() {
+    return adjacencyList.keySet();
+  }
+}
+
+/**
+ * Performs graph coloring on an interference graph to allocate registers.
+ */
+class GraphColoring {
+
+  private InterferenceGraph graph;
+  private Map<TcgVRefNode, Integer> variableColors;
+  private int numRegisters;
+
+  /**
+   * Constructs a GraphColoring instance for the given interference graph.
+   *
+   * @param graph The interference graph to color.
+   */
+  public GraphColoring(InterferenceGraph graph) {
+    this.graph = graph;
+    this.variableColors = new HashMap<>();
+    this.numRegisters = 0;
+  }
+
+  /**
+   * Colors the graph using a simple heuristic algorithm.
+   */
+  public void colorGraph() {
+    var uncoloredVariables = new HashSet<>(graph.getVariables());
+
+    while (!uncoloredVariables.isEmpty()) {
+      var variable = selectVariable(uncoloredVariables);
+      assignColor(variable);
+      uncoloredVariables.remove(variable);
+    }
+  }
+
+  /**
+   * Selects the next variable to color.
+   *
+   * <p>This implementation selects an arbitrary variable.
+   * It can be improved by using heuristics like choosing the variable with the highest degree.
+   *
+   * @param uncoloredVariables The set of uncolored variables.
+   * @return The selected variable.
+   */
+  private TcgVRefNode selectVariable(Set<TcgVRefNode> uncoloredVariables) {
+    return uncoloredVariables.iterator().next();
+  }
+
+  /**
+   * Assigns a color (register number) to the given variable.
+   *
+   * @param variable The variable to color.
+   */
+  private void assignColor(TcgVRefNode variable) {
+    Set<Integer> usedColors = new HashSet<>();
+
+    // Collect colors of interfering variables
+    for (TcgVRefNode neighbor : graph.getInterferences(variable)) {
+      Integer color = variableColors.get(neighbor);
+      if (color != null) {
+        usedColors.add(color);
+      }
+    }
+
+    // Find the smallest color not used by neighbors
+    int color = 0;
+    while (usedColors.contains(color)) {
+      color++;
+    }
+
+    variableColors.put(variable, color);
+
+    // Update the number of registers used
+    if (color + 1 > numRegisters) {
+      numRegisters = color + 1;
+    }
+  }
+
+  /**
+   * Retrieves the mapping of variables to their assigned colors (register numbers).
+   *
+   * @return The variable to color mapping.
+   */
+  public Map<TcgVRefNode, Integer> getVariableColors() {
+    return variableColors;
+  }
+
+  /**
+   * Retrieves the total number of registers used.
+   *
+   * @return The number of registers used.
+   */
+  public int getNumRegisters() {
+    return numRegisters;
+  }
+}

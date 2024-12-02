@@ -2,10 +2,13 @@ package vadl.iss.passes.tcgLowering.nodes;
 
 import java.util.List;
 import java.util.function.Function;
+import vadl.iss.passes.nodes.TcgVRefNode;
 import vadl.iss.passes.tcgLowering.TcgExtend;
 import vadl.iss.passes.tcgLowering.TcgV;
 import vadl.iss.passes.tcgLowering.Tcg_8_16_32_64;
 import vadl.javaannotations.viam.DataValue;
+import vadl.javaannotations.viam.Input;
+import vadl.viam.graph.GraphVisitor;
 import vadl.viam.graph.Node;
 
 /**
@@ -21,8 +24,8 @@ public class TcgLoadMemory extends TcgOpNode {
   Tcg_8_16_32_64 size;
   @DataValue
   TcgExtend extendMode;
-  @DataValue
-  TcgV addr;
+  @Input
+  TcgVRefNode addr;
 
   /**
    * Constructs a new TcgLoadMemory operation node.
@@ -35,8 +38,8 @@ public class TcgLoadMemory extends TcgOpNode {
    */
   public TcgLoadMemory(Tcg_8_16_32_64 size,
                        TcgExtend mode,
-                       TcgV dest,
-                       TcgV addr) {
+                       TcgVRefNode dest,
+                       TcgVRefNode addr) {
     super(dest, dest.width());
     this.size = size;
     this.extendMode = mode;
@@ -51,7 +54,7 @@ public class TcgLoadMemory extends TcgOpNode {
     return extendMode;
   }
 
-  public TcgV addr() {
+  public TcgVRefNode addr() {
     return addr;
   }
 
@@ -99,6 +102,17 @@ public class TcgLoadMemory extends TcgOpNode {
     super.collectData(collection);
     collection.add(size);
     collection.add(extendMode);
+  }
+
+  @Override
+  protected void collectInputs(List<Node> collection) {
+    super.collectInputs(collection);
     collection.add(addr);
+  }
+
+  @Override
+  protected void applyOnInputsUnsafe(GraphVisitor.Applier<Node> visitor) {
+    super.applyOnInputsUnsafe(visitor);
+    addr = visitor.apply(this, addr, TcgVRefNode.class);
   }
 }

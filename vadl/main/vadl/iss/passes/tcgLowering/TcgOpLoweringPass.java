@@ -11,7 +11,8 @@ import java.util.Set;
 import java.util.function.Function;
 import org.jetbrains.annotations.Nullable;
 import vadl.configuration.GeneralConfiguration;
-import vadl.iss.passes.IssVariableAllocationPass;
+import vadl.iss.passes.IssTempVarAssignment;
+import vadl.iss.passes.nodes.TcgVRefNode;
 import vadl.iss.passes.safeResourceRead.nodes.ExprSaveNode;
 import vadl.iss.passes.tcgLowering.nodes.TcgAddNode;
 import vadl.iss.passes.tcgLowering.nodes.TcgExtendNode;
@@ -108,8 +109,8 @@ public class TcgOpLoweringPass extends Pass {
         "BEQ"
     );
 
-    var assignments = passResults.lastResultOf(IssVariableAllocationPass.class,
-        IssVariableAllocationPass.Result.class);
+    var assignments = passResults.lastResultOf(IssTempVarAssignment.class,
+        IssTempVarAssignment.Result.class);
 
     viam.isa().get().ownInstructions()
         .stream().filter(i -> supportedInstructions.contains(i.simpleName()))
@@ -130,7 +131,7 @@ class TcgOpLoweringExecutor implements CfgTraverser {
   /**
    * Map of dependency nodes to their assigned TCG variables.
    */
-  Map<DependencyNode, TcgV> assignments;
+  Map<DependencyNode, TcgVRefNode> assignments;
 
   /**
    * The scheduled node currently being processed.
@@ -143,7 +144,7 @@ class TcgOpLoweringExecutor implements CfgTraverser {
    *
    * @param assignments The map of dependency nodes to their assigned TCG variables.
    */
-  public TcgOpLoweringExecutor(Map<DependencyNode, TcgV> assignments) {
+  public TcgOpLoweringExecutor(Map<DependencyNode, TcgVRefNode> assignments) {
     this.assignments = assignments;
   }
 
@@ -191,7 +192,7 @@ class TcgOpLoweringExecutor implements CfgTraverser {
    * @param node The dependency node.
    * @return The assigned TCG variable.
    */
-  private TcgV destOf(DependencyNode node) {
+  private TcgVRefNode destOf(DependencyNode node) {
     var tcgV = assignments.get(node);
     node.ensure(tcgV != null, "Expected to be represented by a TCGv");
     return tcgV;
@@ -483,6 +484,11 @@ class TcgOpLoweringExecutor implements CfgTraverser {
     throw failShouldNotHappen(toHandle);
   }
 
+  @Handler
+  void handle(TcgVRefNode toHandle) {
+    throw failShouldNotHappen(toHandle);
+  }
+
   /**
    * Throws a {@link ViamGraphError} indicating that the node should not be handled.
    *
@@ -538,7 +544,8 @@ class BuiltInTcgLoweringExecutor {
    * @param assignments The map of dependency nodes to their assigned TCG variables.
    * @return A {@link BuiltInResult} containing the TCG nodes that replace the built-in call.
    */
-  public static BuiltInResult lower(BuiltInCall call, Map<DependencyNode, TcgV> assignments) {
+  public static BuiltInResult lower(BuiltInCall call,
+                                    Map<DependencyNode, TcgVRefNode> assignments) {
     var context = new Context(assignments, call);
     var impl = impls.get(call.builtIn());
 
@@ -562,7 +569,7 @@ class BuiltInTcgLoweringExecutor {
    * Context for lowering a built-in function call.
    */
   private record Context(
-      Map<DependencyNode, TcgV> assignments,
+      Map<DependencyNode, TcgVRefNode> assignments,
       BuiltInCall call
   ) {
     /**
@@ -570,7 +577,7 @@ class BuiltInTcgLoweringExecutor {
      *
      * @return The destination TCG variable.
      */
-    private TcgV dest() {
+    private TcgVRefNode dest() {
       var dest = assignments.get(call);
       call.ensure(dest != null, "Expected to be represented by a TCGv");
       return dest;
@@ -582,13 +589,14 @@ class BuiltInTcgLoweringExecutor {
      * @param index The index of the argument.
      * @return The source TCG variable.
      */
-    private TcgV src(int index) {
+    private TcgVRefNode src(int index) {
       call.ensure(call.arguments().size() > index, "Tried to access arg %s", index);
       var arg = call.arguments().get(index);
       var src = assignments.get(arg);
       arg.ensure(src != null, "Expected to be represented by a TCGv");
       return src;
     }
+
 
   }
 }

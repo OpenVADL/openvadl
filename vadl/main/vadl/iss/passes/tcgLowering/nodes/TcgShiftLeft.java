@@ -1,5 +1,6 @@
 package vadl.iss.passes.tcgLowering.nodes;
 
+import vadl.iss.passes.nodes.TcgVRefNode;
 import vadl.iss.passes.tcgLowering.TcgV;
 import vadl.viam.graph.Node;
 
@@ -10,7 +11,7 @@ import vadl.viam.graph.Node;
  */
 public class TcgShiftLeft extends TcgBinaryOpNode {
 
-  public TcgShiftLeft(TcgV res, TcgV arg, TcgV shiftAmount) {
+  public TcgShiftLeft(TcgVRefNode res, TcgVRefNode arg, TcgVRefNode shiftAmount) {
     super(res, arg, shiftAmount, res.width());
   }
 
@@ -21,7 +22,9 @@ public class TcgShiftLeft extends TcgBinaryOpNode {
 
   @Override
   public Node copy() {
-    return new TcgShiftLeft(dest, arg1, arg2);
+    return new TcgShiftLeft(dest.copy(TcgVRefNode.class),
+        arg1.copy(TcgVRefNode.class),
+        arg2.copy(TcgVRefNode.class));
   }
 
   @Override

@@ -2,6 +2,7 @@ package vadl.iss.passes.tcgLowering.nodes;
 
 import java.util.List;
 import java.util.function.Function;
+import vadl.iss.passes.nodes.TcgVRefNode;
 import vadl.iss.passes.tcgLowering.TcgCondition;
 import vadl.iss.passes.tcgLowering.TcgV;
 import vadl.javaannotations.viam.DataValue;
@@ -20,14 +21,14 @@ public class TcgSetCond extends TcgBinaryOpNode {
   /**
    * This constructor initializes a TcgSetCond object, representing a setcond operation in TCG.
    *
-   * @param resultVar the variable that will store the result of the conditional set operation
-   * @param arg1      the first argument variable for the comparison
-   * @param arg2      the second argument variable for the comparison
-   * @param cond      the condition to be evaluated (e.g., EQ, NE, LT, etc.), determining
-   *                  the result of the comparison
+   * @param dest the variable that will store the result of the conditional set operation
+   * @param arg1 the first argument variable for the comparison
+   * @param arg2 the second argument variable for the comparison
+   * @param cond the condition to be evaluated (e.g., EQ, NE, LT, etc.), determining
+   *             the result of the comparison
    */
-  public TcgSetCond(TcgV resultVar, TcgV arg1, TcgV arg2, TcgCondition cond) {
-    super(resultVar, arg1, arg2, resultVar.width());
+  public TcgSetCond(TcgVRefNode dest, TcgVRefNode arg1, TcgVRefNode arg2, TcgCondition cond) {
+    super(dest, arg1, arg2, dest.width());
     this.cond = cond;
   }
 
@@ -47,12 +48,13 @@ public class TcgSetCond extends TcgBinaryOpNode {
 
   @Override
   public Node copy() {
-    return new TcgSetCond(dest, arg1, arg2, cond);
+    return new TcgSetCond(dest.copy(TcgVRefNode.class), arg1.copy(TcgVRefNode.class),
+        arg2.copy(TcgVRefNode.class), cond);
   }
 
   @Override
   public Node shallowCopy() {
-    return copy();
+    return new TcgSetCond(dest, arg1, arg2, cond);
   }
 
   @Override
