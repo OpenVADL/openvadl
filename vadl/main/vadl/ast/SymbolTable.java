@@ -324,6 +324,10 @@ class SymbolTable {
         .build());
   }
 
+  record NewSymbol(Node origin) {
+  }
+
+
   interface Symbol {
     String name();
 
