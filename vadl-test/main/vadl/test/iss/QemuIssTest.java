@@ -51,10 +51,10 @@ public abstract class QemuIssTest extends DockerExecutionTest {
    * @param specPath path to VADL specification in testSource
    * @return the image containing the generated QEMU ISS
    */
-  protected ImageFromDockerfile generateSimulator(String specPath, boolean insn_counting) {
+  protected ImageFromDockerfile generateSimulator(String specPath, boolean insnCount) {
     return issImageCache.computeIfAbsent(specPath, (path) -> {
       try {
-        var config = IssConfiguration.from(getConfiguration(false), insn_counting);
+        var config = IssConfiguration.from(getConfiguration(false), insnCount);
         // run iss generation
         setupPassManagerAndRunSpec(path, PassOrders.iss(config));
 

@@ -33,15 +33,19 @@ public class EmitIssTranslatePass extends IssTemplateRenderingPass {
     var vars = super.createVariables(passResults, specification);
     vars.put("insn_width", getInstructionWidth(specification));
     vars.put("mem_word_size", getMemoryWordSize(specification));
-    vars.put("translate_functions", getTranslateFunctions(specification, this.configuration().isInsnCounting()));
+    vars.put("translate_functions",
+        getTranslateFunctions(specification, this.configuration().isInsnCounting()));
     return vars;
   }
 
   /**
-   * @param insn_counting used to determine if the iss generates add instruction for special
-   *                            cpu register (QEMU)
+   * Gets translate functions.
+   *
+   * @param insnCounting used to determine if the iss generates add instruction for special
+   *                     cpu register (QEMU)
    */
-  private static List<String> getTranslateFunctions(Specification specification, boolean insn_counting) {
+  private static List<String> getTranslateFunctions(Specification specification,
+                                                    boolean insnCounting) {
     var insns = specification.isa().get().ownInstructions();
     // TODO: Remove this filter (just for testing)
     var supportedInsns = Set.of(
@@ -57,7 +61,7 @@ public class EmitIssTranslatePass extends IssTemplateRenderingPass {
 
     return insns.stream()
         .filter(i -> supportedInsns.contains(i.identifier.simpleName()))
-        .map(i -> IssTranslateCodeGenerator.fetch(i,insn_counting))
+        .map(i -> IssTranslateCodeGenerator.fetch(i, insnCounting))
         .toList();
   }
 

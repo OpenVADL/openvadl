@@ -29,19 +29,21 @@ import vadl.viam.graph.dependency.FieldRefNode;
 public class IssTranslateCodeGenerator extends CodeGenerator
     implements CTypeCastMixin, CTcgOpsMixin, CBuiltinMixin, CMiscMixin {
 
-  private boolean generate_insn_count = false;
+  private boolean generateInsnCount = false;
 
   public IssTranslateCodeGenerator(StringWriter writer) {
     super(writer);
   }
 
   /**
-   * @param generate_insn_count used to determine if the iss generates add instruction for special
-   *                            cpu register (QEMU)
+   * Constructs IssTranslateCodeGenerator.
+   *
+   * @param generateInsnCount used to determine if the iss generates add instruction for special
+   *                          cpu register (QEMU)
    */
-  public IssTranslateCodeGenerator(StringWriter writer, boolean generate_insn_count) {
+  public IssTranslateCodeGenerator(StringWriter writer, boolean generateInsnCount) {
     super(writer);
-    this.generate_insn_count = generate_insn_count;
+    this.generateInsnCount = generateInsnCount;
   }
 
   /**
@@ -55,11 +57,12 @@ public class IssTranslateCodeGenerator extends CodeGenerator
 
   /**
    * The static entry point to get the translation function for a given instruction.
-   * @param generate_insn_count used to determine if the iss generates add instruction for special
-   *                            cpu register (QEMU)
+   *
+   * @param generateInsnCount used to determine if the iss generates add instruction for special
+   *                          cpu register (QEMU)
    */
-  public static String fetch(Instruction def, boolean generate_insn_count) {
-    var generator = new IssTranslateCodeGenerator(new StringWriter(), generate_insn_count);
+  public static String fetch(Instruction def, boolean generateInsnCount) {
+    var generator = new IssTranslateCodeGenerator(new StringWriter(), generateInsnCount);
     generator.gen(def);
     return generator.writer.toString();
   }
@@ -67,58 +70,53 @@ public class IssTranslateCodeGenerator extends CodeGenerator
 
   @Override
   public void defImpls(Impls<Definition> impls) {
-    impls
-        .set(Instruction.class, (insn, writer) -> {
-          var start = getSingleNode(insn.behavior(), StartNode.class);
+    impls.set(Instruction.class, (insn, writer) -> {
 
-          var name = insn.identifier.simpleName().toLowerCase();
-          // static bool trans_<name>(DisasContext *ctx, arg_<name> *a) {\n
-          writer.write("static bool trans_");
-          writer.write(name);
-          writer.write("(DisasContext *ctx, arg_");
-          writer.write(name);
-          writer.write(" *a) {\n");
+      var name = insn.identifier.simpleName().toLowerCase();
+      // static bool trans_<name>(DisasContext *ctx, arg_<name> *a) {\n
+      writer.write("static bool trans_");
+      writer.write(name);
+      writer.write("(DisasContext *ctx, arg_");
+      writer.write(name);
+      writer.write(" *a) {\n");
 
-          // format debug string
-          var fieldStream = Arrays.stream(insn.format().fields())
-              .filter(f -> insn.encoding().fieldEncodingOf(f) == null)
-              .filter(f -> !f.simpleName().startsWith("imm"));
-          var printingFields = Stream.concat(fieldStream, insn.format()
-                  .fieldAccesses().stream())
-              .map(Definition::simpleName)
-              .toList();
+      // format debug string
+      var fieldStream = Arrays.stream(insn.format().fields())
+          .filter(f -> insn.encoding().fieldEncodingOf(f) == null)
+          .filter(f -> !f.simpleName().startsWith("imm"));
+      var printingFields = Stream.concat(fieldStream, insn.format().fieldAccesses().stream())
+          .map(Definition::simpleName).toList();
 
-          var fmtString = printingFields.stream().map(f -> f + ": %d ")
-              .collect(Collectors.joining(", "));
-          var fmtArgs = printingFields.stream().map(f ->
-                  "a->" + f)
-              .collect(Collectors.joining(", "));
+      var fmtString =
+          printingFields.stream().map(f -> f + ": %d ").collect(Collectors.joining(", "));
+      var fmtArgs = printingFields.stream().map(f -> "a->" + f).collect(Collectors.joining(", "));
 
-          writer.write("\tqemu_printf(\"[VADL] trans_");
-          writer.write(name);
-          writer.write(" (" + fmtString + ")");
-          writer.write("\\n\", " + fmtArgs + ");\n");
+      writer.write("\tqemu_printf(\"[VADL] trans_");
+      writer.write(name);
+      writer.write(" (" + fmtString + ")");
+      writer.write("\\n\", " + fmtArgs + ");\n");
 
-          if (generate_insn_count) {
-            //Add separate add instruction after each that increments special cpu_insn_count flag in QEMU CPU state
-            //see resources/templates/iss/target/cpu.h/CPUArchState
-            writer.write("\ttcg_gen_addi_i64(cpu_insn_count, cpu_insn_count, 1);\n");
-          }
+      if (generateInsnCount) {
+        //Add separate add instruction after each that increments special cpu_insn_count flag in
+        //QEMU CPU state
+        //see resources/templates/iss/target/cpu.h/CPUArchState
+        writer.write("\ttcg_gen_addi_i64(cpu_insn_count, cpu_insn_count, 1);\n");
+      }
 
-          var current = start.next();
+      var start = getSingleNode(insn.behavior(), StartNode.class);
+      var current = start.next();
 
-          while (current instanceof DirectionalNode dirNode) {
-            gen(dirNode);
-            current = dirNode.next();
-          }
+      while (current instanceof DirectionalNode dirNode) {
+        gen(dirNode);
+        current = dirNode.next();
+      }
 
-          ensure(current instanceof InstrEndNode, () ->
-              error("Instruction contains unsupported features (e.g. if-else on constants).",
-                  insn.identifier.sourceLocation())
-          );
+      ensure(current instanceof InstrEndNode,
+          () -> error("Instruction contains unsupported features (e.g. if-else on constants).",
+              insn.identifier.sourceLocation()));
 
-          writer.write("\n\treturn true; \n}\n");
-        })
+      writer.write("\n\treturn true; \n}\n");
+    })
 
     ;
   }
