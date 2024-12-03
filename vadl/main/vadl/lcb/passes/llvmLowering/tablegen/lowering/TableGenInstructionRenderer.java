@@ -10,7 +10,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import vadl.lcb.passes.llvmLowering.domain.RegisterRef;
 import vadl.lcb.passes.llvmLowering.domain.machineDag.LcbMachineInstructionNode;
-import vadl.lcb.passes.llvmLowering.domain.machineDag.LcbMachineInstructionWrappedNode;
 import vadl.lcb.passes.llvmLowering.domain.machineDag.LcbPseudoInstructionNode;
 import vadl.lcb.passes.llvmLowering.tablegen.model.TableGenInstruction;
 import vadl.lcb.passes.llvmLowering.tablegen.model.TableGenInstructionOperand;
@@ -39,25 +38,25 @@ public final class TableGenInstructionRenderer {
             def %s : Instruction
             {
             let Namespace = "%s";
-            
+                        
             let Size = %d;
             let CodeSize = %d;
-            
+                        
             let OutOperandList = ( outs %s );
             let InOperandList = ( ins %s );
-            
+                        
             field bits<%s> Inst;
-            
+                        
             // SoftFail is a field the disassembler can use to provide a way for
             // instructions to not match without killing the whole decode process. It is
             // mainly used for ARM, but Tablegen expects this field to exist or it fails
             // to build the decode table.
             field bits<%s> SoftFail = 0;
-            
+                        
             %s
-            
+                        
             %s
-            
+                        
             let isTerminator  = %d;
             let isBranch      = %d;
             let isCall        = %d;
@@ -66,12 +65,12 @@ public final class TableGenInstructionRenderer {
             let isCodeGenOnly = %d;
             let mayLoad       = %d;
             let mayStore      = %d;
-            
+                        
             let Constraints = "";
             let AddedComplexity = 0;
-            
+                        
             let Pattern = [%s];
-            
+                        
             let Uses = [ %s ];
             let Defs = [ %s ];
             }
@@ -123,10 +122,10 @@ public final class TableGenInstructionRenderer {
             def %s : Instruction
             {
             let Namespace = "%s";
-            
+                        
             let OutOperandList = ( outs %s );
             let InOperandList = ( ins %s );
-            
+                        
             let isTerminator  = %d;
             let isBranch      = %d;
             let isCall        = %d;
@@ -135,16 +134,16 @@ public final class TableGenInstructionRenderer {
             let isCodeGenOnly = %d;
             let mayLoad       = %d;
             let mayStore      = %d;
-            
+                        
             let Constraints = "";
             let AddedComplexity = 0;
-            
+                        
             let Pattern = [%s];
-            
+                        
             let Uses = [ %s ];
             let Defs = [ %s ];
             }
-            
+                        
             %s
             """,
         instruction.getName(),
@@ -201,15 +200,11 @@ public final class TableGenInstructionRenderer {
 
     for (var root : tableGenPattern.machine().getDataflowRoots()) {
       ensure(root instanceof LcbPseudoInstructionNode
-              || root instanceof LcbMachineInstructionNode
-              || root instanceof LcbMachineInstructionWrappedNode,
+              || root instanceof LcbMachineInstructionNode,
           "root node must be pseudo or machine node");
       if (root instanceof LcbMachineInstructionNode machineInstructionNode) {
         machineVisitor.visit(machineInstructionNode);
-      } else if (root instanceof LcbMachineInstructionWrappedNode machineInstructionNode) {
-        machineVisitor.visit(machineInstructionNode);
-      }
-      else if (root instanceof LcbPseudoInstructionNode pseudoInstructionNode) {
+      } else if (root instanceof LcbPseudoInstructionNode pseudoInstructionNode) {
         machineVisitor.visit(pseudoInstructionNode);
       }
     }

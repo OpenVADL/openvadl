@@ -13,7 +13,6 @@ import vadl.lcb.codegen.model.llvm.ValueType;
 import vadl.lcb.passes.isaMatching.MachineInstructionLabel;
 import vadl.lcb.passes.llvmLowering.LlvmLoweringPass;
 import vadl.lcb.passes.llvmLowering.domain.machineDag.LcbMachineInstructionNode;
-import vadl.lcb.passes.llvmLowering.domain.machineDag.LcbMachineInstructionWrappedNode;
 import vadl.lcb.passes.llvmLowering.domain.selectionDag.LlvmReadRegFileNode;
 import vadl.lcb.passes.llvmLowering.domain.selectionDag.LlvmSetccSD;
 import vadl.lcb.passes.llvmLowering.strategies.LlvmInstructionLoweringStrategy;
@@ -23,7 +22,6 @@ import vadl.lcb.passes.llvmLowering.tablegen.model.TableGenSelectionWithOutputPa
 import vadl.types.BuiltInTable;
 import vadl.viam.Constant;
 import vadl.viam.Instruction;
-import vadl.viam.Specification;
 import vadl.viam.graph.Graph;
 import vadl.viam.graph.GraphVisitor;
 import vadl.viam.graph.Node;
@@ -80,7 +78,7 @@ public class LlvmInstructionLoweringConditionalsStrategyImpl
       eq(lti, xor, patterns, result);
       neq(ltu, xor, patterns, result);
     } else if (label == MachineInstructionLabel.LTU) {
-      uge(ltu, xori, patterns, result);
+      uge(xori, patterns, result);
     } else if (label == MachineInstructionLabel.LTIU) {
       neqWithImmediate(ltu, xori, patterns, result);
     }
@@ -138,7 +136,7 @@ public class LlvmInstructionLoweringConditionalsStrategyImpl
             .forEach(node -> {
               node.setInstruction(basePattern);
 
-              var newArgs = new LcbMachineInstructionWrappedNode(xor, node.arguments());
+              var newArgs = new LcbMachineInstructionNode(node.arguments(), xor);
               node.setArgs(
                   new NodeList<>(newArgs, new ConstantNode(new Constant.Str("1"))));
             });
@@ -148,8 +146,7 @@ public class LlvmInstructionLoweringConditionalsStrategyImpl
     }
   }
 
-  private void uge(Instruction basePattern,
-                   Instruction xori,
+  private void uge(Instruction xori,
                    List<TableGenPattern> patterns,
                    List<TableGenPattern> result) {
     /*
@@ -185,8 +182,8 @@ public class LlvmInstructionLoweringConditionalsStrategyImpl
 
         var machineInstruction =
             outputPattern.machine().getNodes(LcbMachineInstructionNode.class).findFirst().get();
-        var newMachineInstruction = new LcbMachineInstructionWrappedNode(xori,
-            new NodeList<>(machineInstruction, new ConstantNode(new Constant.Str("1"))));
+        var newMachineInstruction = new LcbMachineInstructionNode(
+            new NodeList<>(machineInstruction, new ConstantNode(new Constant.Str("1"))), xori);
         outputPattern.machine().addWithInputs(newMachineInstruction);
 
         result.add(outputPattern);
@@ -255,7 +252,7 @@ public class LlvmInstructionLoweringConditionalsStrategyImpl
                   new Constant.Str(
                       registerFile.simpleName() + zeroConstraint.address().intValue()));
 
-              var newArgs = new LcbMachineInstructionWrappedNode(xor, node.arguments());
+              var newArgs = new LcbMachineInstructionNode(node.arguments(), xor);
               node.setArgs(
                   new NodeList<>(zeroRegister, newArgs));
             });
@@ -327,7 +324,7 @@ public class LlvmInstructionLoweringConditionalsStrategyImpl
                   new Constant.Str(
                       registerFile.simpleName() + zeroConstraint.address().intValue()));
 
-              var newArgs = new LcbMachineInstructionWrappedNode(xori, node.arguments());
+              var newArgs = new LcbMachineInstructionNode(node.arguments(), xori);
               node.setArgs(
                   new NodeList<>(zeroRegister, newArgs));
             });
