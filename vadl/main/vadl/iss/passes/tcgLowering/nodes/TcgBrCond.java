@@ -1,11 +1,15 @@
 package vadl.iss.passes.tcgLowering.nodes;
 
 import java.util.List;
+import java.util.Set;
 import java.util.function.Function;
+import vadl.iss.passes.nodes.TcgVRefNode;
 import vadl.iss.passes.tcgLowering.TcgCondition;
 import vadl.iss.passes.tcgLowering.TcgLabel;
 import vadl.iss.passes.tcgLowering.TcgV;
 import vadl.javaannotations.viam.DataValue;
+import vadl.javaannotations.viam.Input;
+import vadl.viam.graph.GraphVisitor;
 import vadl.viam.graph.Node;
 
 /**
@@ -18,11 +22,11 @@ public class TcgBrCond extends TcgLabelNode {
   @DataValue
   private TcgCondition condition;
 
-  @DataValue
-  private TcgV varArg;
+  @Input
+  private TcgVRefNode varArg;
 
-  @DataValue
-  private TcgV immArg;
+  @Input
+  private TcgVRefNode immArg;
 
   /**
    * Constructs the TCG conditional branch with immediate opcode.
@@ -33,7 +37,7 @@ public class TcgBrCond extends TcgLabelNode {
    * @param condition condition when to branch
    * @param label     label to which the branch should jump to if condition is met
    */
-  public TcgBrCond(TcgV varArg, TcgV immArg, TcgCondition condition,
+  public TcgBrCond(TcgVRefNode varArg, TcgVRefNode immArg, TcgCondition condition,
                    TcgLabel label) {
     super(label);
     this.condition = condition;
@@ -45,30 +49,20 @@ public class TcgBrCond extends TcgLabelNode {
     return condition;
   }
 
-  public TcgV cmpArg1() {
+  public TcgVRefNode cmpArg1() {
     return varArg;
   }
 
-  public TcgV cmpArg2() {
+  public TcgVRefNode cmpArg2() {
     return immArg;
   }
 
   @Override
-  public Node copy() {
-    return new TcgBrCond(varArg, immArg, condition, label());
-  }
-
-  @Override
-  public Node shallowCopy() {
-    return copy();
-  }
-
-  @Override
-  protected void collectData(List<Object> collection) {
-    super.collectData(collection);
-    collection.add(condition);
-    collection.add(varArg);
-    collection.add(immArg);
+  public Set<TcgVRefNode> usedVars() {
+    var used = super.usedVars();
+    used.add(varArg);
+    used.add(immArg);
+    return used;
   }
 
   @Override
@@ -80,4 +74,37 @@ public class TcgBrCond extends TcgLabelNode {
         + label().varName()
         + ");";
   }
+
+  @Override
+  public Node copy() {
+    return new TcgBrCond(varArg.copy(TcgVRefNode.class), immArg.copy(TcgVRefNode.class), condition,
+        label());
+  }
+
+  @Override
+  public Node shallowCopy() {
+    return new TcgBrCond(varArg, immArg, condition, label());
+  }
+
+
+  @Override
+  protected void collectData(List<Object> collection) {
+    super.collectData(collection);
+    collection.add(condition);
+  }
+
+  @Override
+  protected void collectInputs(List<Node> collection) {
+    super.collectInputs(collection);
+    collection.add(varArg);
+    collection.add(immArg);
+  }
+
+  @Override
+  protected void applyOnInputsUnsafe(GraphVisitor.Applier<Node> visitor) {
+    super.applyOnInputsUnsafe(visitor);
+    varArg = visitor.apply(this, varArg, TcgVRefNode.class);
+    immArg = visitor.apply(this, immArg, TcgVRefNode.class);
+  }
+
 }

@@ -1,7 +1,10 @@
 package vadl.iss.passes.tcgLowering.nodes;
 
 import java.util.List;
+import java.util.Set;
 import java.util.function.Function;
+import org.jetbrains.annotations.Nullable;
+import vadl.iss.passes.nodes.TcgVRefNode;
 import vadl.iss.passes.tcgLowering.TcgV;
 import vadl.javaannotations.viam.DataValue;
 import vadl.javaannotations.viam.Input;
@@ -20,23 +23,23 @@ public abstract sealed class TcgGetVar extends TcgOpNode
     permits TcgGetVar.TcgGetConst, TcgGetVar.TcgGetReg, TcgGetVar.TcgGetRegFile,
     TcgGetVar.TcgGetTemp {
 
-  public TcgGetVar(TcgV dest) {
-    super(dest, dest.width());
+  public TcgGetVar(TcgVRefNode dest) {
+    super(dest, dest.var().width());
   }
 
   /**
    * Constructs a {@link TcgGetVar} node from the given {@link TcgV}.
    */
-  public static TcgGetVar from(TcgV var) {
-    return switch (var.kind()) {
-      case TMP -> new TcgGetTemp(var);
-      case CONST -> new TcgGetConst(var, var.constValue());
-      case REG -> new TcgGetReg((Register) var.registerOrFile(), var);
+  public static TcgGetVar from(TcgVRefNode varRef) {
+    return switch (varRef.var().kind()) {
+      case TMP -> new TcgGetTemp(varRef);
+      case CONST -> new TcgGetConst(varRef, varRef.var().constValue());
+      case REG -> new TcgGetReg((Register) varRef.var().registerOrFile(), varRef);
       case REG_FILE -> {
         var kind =
-            var.isDest() ? TcgGetRegFile.Kind.DEST : TcgGetRegFile.Kind.SRC;
-        yield new TcgGetRegFile((RegisterFile) var.registerOrFile(),
-            var.regFileIndex(), kind, var);
+            varRef.var().isDest() ? TcgGetRegFile.Kind.DEST : TcgGetRegFile.Kind.SRC;
+        yield new TcgGetRegFile((RegisterFile) varRef.var().registerOrFile(),
+            varRef.var().regFileIndex(), kind, varRef);
       }
     };
   }
@@ -46,19 +49,19 @@ public abstract sealed class TcgGetVar extends TcgOpNode
    */
   public static final class TcgGetTemp extends TcgGetVar {
 
-    public TcgGetTemp(TcgV dest) {
+    public TcgGetTemp(TcgVRefNode dest) {
       super(dest);
     }
 
     @Override
     public String cCode(Function<Node, String> nodeToCCode) {
-      return "TCGv_" + dest.width() + " " + dest.varName() + " = "
+      return "TCGv_" + dest.var().width() + " " + dest.var().varName() + " = "
           + "tcg_temp_new_" + width + "();";
     }
 
     @Override
     public Node copy() {
-      return new TcgGetTemp(dest);
+      return new TcgGetTemp(dest.copy(TcgVRefNode.class));
     }
 
     @Override
@@ -75,19 +78,28 @@ public abstract sealed class TcgGetVar extends TcgOpNode
     @Input
     private ExpressionNode constValue;
 
-    public TcgGetConst(TcgV dest, ExpressionNode constValue) {
+    public TcgGetConst(TcgVRefNode dest, ExpressionNode constValue) {
       super(dest);
       this.constValue = constValue;
     }
 
     @Override
     public String cCode(Function<Node, String> nodeToCCode) {
-      return "TCGv_" + dest.width() + " " + dest.varName() + " = "
+      return "TCGv_" + dest.var().width() + " " + dest.cCode() + " = "
           + "tcg_constant_" + width + "(" + nodeToCCode.apply(constValue) + ");";
     }
 
     public ExpressionNode constValue() {
       return constValue;
+    }
+
+    @Override
+    public Set<TcgVRefNode> usedVars() {
+      // by defining the constant var it self to be used, we prevent that the variable
+      // can be potentially be written before
+      var sup = super.usedVars();
+      sup.add(dest);
+      return sup;
     }
 
     @Override
@@ -121,8 +133,8 @@ public abstract sealed class TcgGetVar extends TcgOpNode
     @DataValue
     Register register;
 
-    public TcgGetReg(Register reg, TcgV res) {
-      super(res);
+    public TcgGetReg(Register reg, TcgVRefNode dest) {
+      super(dest);
       register = reg;
     }
 
@@ -132,10 +144,17 @@ public abstract sealed class TcgGetVar extends TcgOpNode
 
     @Override
     public String cCode(Function<Node, String> nodeToCCode) {
-      return "TCGv_" + dest.width() + " " + dest.varName() + " = "
+      return "TCGv_" + dest.var().width() + " " + dest.cCode() + " = "
           + "cpu_" + register.simpleName().toLowerCase() + ";";
     }
 
+    @Override
+    public Set<TcgVRefNode> usedVars() {
+      // tcg get regs are also reads, so it can't be shared
+      var sup = super.usedVars();
+      sup.add(dest);
+      return sup;
+    }
 
     @Override
     public Node copy() {
@@ -188,7 +207,8 @@ public abstract sealed class TcgGetVar extends TcgOpNode
      * @param kind         The kind of the register file retrieval, either SRC or DEST.
      * @param res          The result variable representing the output of this operation.
      */
-    public TcgGetRegFile(RegisterFile registerFile, ExpressionNode index, Kind kind, TcgV res) {
+    public TcgGetRegFile(RegisterFile registerFile, ExpressionNode index, Kind kind,
+                         TcgVRefNode res) {
       super(res);
       this.registerFile = registerFile;
       this.index = index;
@@ -201,7 +221,7 @@ public abstract sealed class TcgGetVar extends TcgOpNode
 
       var cppType = registerFile.resultType().fittingCppType();
       ensure(cppType != null, "Couldn't fit cpp type");
-      ensure(dest.width().width <= cppType.bitWidth(),
+      ensure(dest.var().width().width <= cppType.bitWidth(),
           "register file result width does not fit in node's result var width");
     }
 
@@ -218,9 +238,17 @@ public abstract sealed class TcgGetVar extends TcgOpNode
     }
 
     @Override
+    public Set<TcgVRefNode> usedVars() {
+      // tcg get regs are also reads, so it can't be shared
+      var sup = super.usedVars();
+      sup.add(dest);
+      return sup;
+    }
+
+    @Override
     public String cCode(Function<Node, String> nodeToCCode) {
       var prefix = kind() == Kind.DEST ? "dest" : "get";
-      return "TCGv_" + dest.width() + " " + dest.varName() + " = "
+      return "TCGv_" + dest.var().width() + " " + dest.var().varName() + " = "
           + prefix + "_" + registerFile.simpleName().toLowerCase()
           + "(ctx, " + nodeToCCode.apply(index)
           + ");";

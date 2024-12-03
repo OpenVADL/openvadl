@@ -1,6 +1,7 @@
 package vadl.iss.passes.tcgLowering.nodes;
 
 import java.util.List;
+import vadl.iss.passes.nodes.TcgVRefNode;
 import vadl.iss.passes.tcgLowering.TcgExtend;
 import vadl.iss.passes.tcgLowering.TcgV;
 import vadl.iss.passes.tcgLowering.Tcg_8_16_32;
@@ -29,7 +30,7 @@ public class TcgExtendNode extends TcgUnaryOpNode {
    * @param res      The result variable of the operation.
    * @param arg      The argument variable to be extended.
    */
-  public TcgExtendNode(Tcg_8_16_32 fromSize, TcgExtend extend, TcgV res, TcgV arg) {
+  public TcgExtendNode(Tcg_8_16_32 fromSize, TcgExtend extend, TcgVRefNode res, TcgVRefNode arg) {
     super(res, arg);
     this.fromSize = fromSize;
     this.extend = extend;
@@ -37,7 +38,8 @@ public class TcgExtendNode extends TcgUnaryOpNode {
 
   @Override
   public Node copy() {
-    return new TcgExtendNode(fromSize, extend, dest, arg);
+    return new TcgExtendNode(fromSize, extend, dest.copy(TcgVRefNode.class),
+        arg.copy(TcgVRefNode.class));
   }
 
   @Override

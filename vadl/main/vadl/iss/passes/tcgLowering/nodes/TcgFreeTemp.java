@@ -1,6 +1,7 @@
 package vadl.iss.passes.tcgLowering.nodes;
 
 import java.util.function.Function;
+import vadl.iss.passes.nodes.TcgVRefNode;
 import vadl.iss.passes.tcgLowering.TcgV;
 import vadl.viam.graph.Node;
 
@@ -9,24 +10,24 @@ import vadl.viam.graph.Node;
  */
 public class TcgFreeTemp extends TcgVarNode {
 
-  public TcgFreeTemp(TcgV variable) {
+  public TcgFreeTemp(TcgVRefNode variable) {
     super(variable);
   }
 
   @Override
   public void verifyState() {
     super.verifyState();
-    ensure(variable().kind() == TcgV.Kind.TMP, "Can only free temporary variables");
+    ensure(variable().var().kind() == TcgV.Kind.TMP, "Can only free temporary variables");
   }
 
   @Override
   public Node copy() {
-    return new TcgFreeTemp(variable());
+    return new TcgFreeTemp(variable().copy(TcgVRefNode.class));
   }
 
   @Override
   public Node shallowCopy() {
-    return copy();
+    return new TcgFreeTemp(variable());
   }
 
   @Override
