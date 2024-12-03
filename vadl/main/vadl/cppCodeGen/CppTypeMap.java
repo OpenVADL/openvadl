@@ -1,6 +1,5 @@
 package vadl.cppCodeGen;
 
-import vadl.cppCodeGen.model.CppGenericType;
 import vadl.cppCodeGen.model.CppType;
 import vadl.types.BitsType;
 import vadl.types.BoolType;

@@ -113,7 +113,7 @@ public class IssTranslateCodeGenerator extends CodeGenerator
           }
 
           ensure(current instanceof InstrEndNode, () ->
-              error("Instruction contains unsupported features.",
+              error("Instruction contains unsupported features (e.g. if-else on constants).",
                   insn.identifier.sourceLocation())
           );
 

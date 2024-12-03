@@ -15,10 +15,17 @@ public class DotGraphVisualizer implements GraphVisualizer<String, Graph> {
 
   private @Nullable Graph graph;
   private boolean withSourceLocation = false;
+  private String name = "unnamed";
 
   @Override
   public DotGraphVisualizer load(Graph graph) {
     this.graph = graph;
+    this.name = graph.name;
+    return this;
+  }
+
+  public DotGraphVisualizer withName(String name) {
+    this.name = name;
     return this;
   }
 
@@ -33,7 +40,7 @@ public class DotGraphVisualizer implements GraphVisualizer<String, Graph> {
 
     StringBuilder dotBuilder = new StringBuilder();
     dotBuilder.append("digraph G {\n");
-    dotBuilder.append("    label=\"%s\"\n".formatted(graph.name));
+    dotBuilder.append("    label=\"%s\"\n".formatted(name));
     dotBuilder.append("\n");
 
     var nodes = graph.getNodes(Node.class);
@@ -63,7 +70,7 @@ public class DotGraphVisualizer implements GraphVisualizer<String, Graph> {
       });
 
     });
-    
+
     dotBuilder.append("} \n");
     return dotBuilder.toString();
 

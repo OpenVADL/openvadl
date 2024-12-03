@@ -3,7 +3,6 @@ package vadl.lcb.codegen;
 import java.io.StringWriter;
 import java.util.Arrays;
 import java.util.stream.Collectors;
-import javax.swing.text.html.Option;
 import vadl.cppCodeGen.CppTypeMap;
 import vadl.cppCodeGen.GenericCppCodeGeneratorVisitor;
 import vadl.cppCodeGen.model.CppClassImplName;

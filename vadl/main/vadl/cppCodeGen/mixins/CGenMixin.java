@@ -18,6 +18,8 @@ public interface CGenMixin {
    */
   void gen(Node node);
 
+  String genToString(Node node);
+
   /**
    * The writer to write the generated C source code.
    * This is provided by the {@link vadl.cppCodeGen.CodeGenerator}.

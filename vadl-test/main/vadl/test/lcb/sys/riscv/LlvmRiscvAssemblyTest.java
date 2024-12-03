@@ -1,13 +1,9 @@
 package vadl.test.lcb.sys.riscv;
 
-import static org.assertj.core.api.AssertionsForClassTypes.assertThat;
-import static org.assertj.core.api.AssertionsForClassTypes.contentOf;
-
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.IOException;
-import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.Arrays;
@@ -19,14 +15,17 @@ import org.junit.jupiter.api.DynamicTest;
 import org.junit.jupiter.api.TestFactory;
 import org.junit.jupiter.api.condition.EnabledIfEnvironmentVariable;
 import org.testcontainers.images.builder.ImageFromDockerfile;
-import org.testcontainers.shaded.org.apache.commons.io.FileUtils;
 import vadl.configuration.LcbConfiguration;
 import vadl.gcb.valuetypes.ProcessorName;
 import vadl.pass.exception.DuplicatedPassKeyException;
 import vadl.test.lcb.AbstractLcbTest;
 import vadl.utils.Pair;
 
-public class LlvmRiscvAssemblyTest extends AbstractLcbTest {
+public abstract class LlvmRiscvAssemblyTest extends AbstractLcbTest {
+
+  protected abstract String getTarget();
+
+  protected abstract String getSpecPath();
 
   private static Stream<String> inputFilesFromCFile() {
     return Arrays.stream(
@@ -39,11 +38,11 @@ public class LlvmRiscvAssemblyTest extends AbstractLcbTest {
   @EnabledIfEnvironmentVariable(named = "test.llvm.enabled", matches = "true")
   @TestFactory
   List<DynamicTest> compileLlvm() throws IOException, DuplicatedPassKeyException {
-    var target = "rv64im";
+    var target = getTarget();
     var configuration = new LcbConfiguration(getConfiguration(false),
         new ProcessorName(target));
 
-    runLcb(configuration, "sys/risc-v/rv64im.vadl");
+    runLcb(configuration, getSpecPath());
 
     // Move Dockerfile into Docker Context
     {
@@ -69,7 +68,8 @@ public class LlvmRiscvAssemblyTest extends AbstractLcbTest {
                   Path.of("../../open-vadl/vadl-test/main/resources/llvm/riscv/c"),
                   "/src/inputs"),
               Pair.of(
-                  Path.of("../../open-vadl/vadl-test/main/resources/llvm/riscv/assertions/assembly"),
+                  Path.of("../../open-vadl/vadl-test/main/resources/llvm/riscv/assertions/"
+                      + getTarget()),
                   "/assertions")
           ),
           Map.of("INPUT", name)

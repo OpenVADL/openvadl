@@ -2,7 +2,7 @@ package vadl.pass;
 
 import java.util.LinkedHashMap;
 import java.util.List;
-import java.util.Optional;
+import java.util.stream.Stream;
 import javax.annotation.Nullable;
 import vadl.pass.exception.PassError;
 
@@ -69,6 +69,10 @@ public final class PassResults {
     return result.get();
   }
 
+  public SingleResult lastExecution() {
+    return store.values().toArray(SingleResult[]::new)[store.size() - 1];
+  }
+
   /**
    * Retrieves the pass result of the last execution of the given passClass.
    * This allows searching for the result of a pass type instead of one with a specific key.
@@ -87,6 +91,12 @@ public final class PassResults {
     return result;
   }
 
+  public <T extends Pass, R> R lastResultOf(Class<T> passClass, Class<R> type) {
+    var result = lastResultOf(passClass);
+    return type.cast(result);
+  }
+
+
   /**
    * Retrieves the pass result of the last execution of the given passClass.
    * This allows searching for the result of a pass type instead of one with a specific key.
@@ -97,6 +107,14 @@ public final class PassResults {
    */
   public <T extends Pass> @Nullable Object lastNullableResultOf(Class<T> passClass) {
     return lastExecutionOf(passClass).result();
+  }
+
+  public <T extends Pass, R> Stream<R> allResultsOf(Class<T> passClass, Class<R> type) {
+    return allExecutionsOf(passClass).map(SingleResult::result).map(type::cast);
+  }
+
+  public <T extends Pass> Stream<SingleResult> allExecutionsOf(Class<T> passClass) {
+    return executedPasses().stream().filter(x -> passClass.isInstance(x.pass));
   }
 
   /**

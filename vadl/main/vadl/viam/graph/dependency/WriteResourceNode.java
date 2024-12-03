@@ -5,7 +5,6 @@ import java.util.Objects;
 import javax.annotation.Nullable;
 import vadl.javaannotations.viam.Input;
 import vadl.types.DataType;
-import vadl.viam.Resource;
 import vadl.viam.graph.GraphVisitor;
 import vadl.viam.graph.Node;
 
@@ -55,8 +54,7 @@ public abstract class WriteResourceNode extends SideEffectNode {
   public ExpressionNode value() {
     return value;
   }
-
-  public abstract Resource resourceDefinition();
+  
 
   /**
    * The number of bits that is getting written to the resource.

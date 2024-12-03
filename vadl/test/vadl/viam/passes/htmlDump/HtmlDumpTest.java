@@ -2,11 +2,9 @@ package vadl.viam.passes.htmlDump;
 
 import static vadl.viam.helper.TestGraphUtils.binaryOp;
 import static vadl.viam.helper.TestGraphUtils.bits;
-import static vadl.viam.helper.TestGraphUtils.intU;
 
 import java.io.IOException;
 import java.nio.file.Path;
-import java.util.HashMap;
 import org.junit.jupiter.api.Test;
 import vadl.AbstractTest;
 import vadl.configuration.GeneralConfiguration;
@@ -14,7 +12,6 @@ import vadl.dump.HtmlDumpPass;
 import vadl.pass.PassResults;
 import vadl.types.BuiltInTable;
 import vadl.types.Type;
-import vadl.viam.Assembly;
 import vadl.viam.Function;
 import vadl.viam.Identifier;
 import vadl.viam.Parameter;

@@ -8,7 +8,6 @@ import vadl.viam.graph.GraphVisitor;
 import vadl.viam.graph.Node;
 import vadl.viam.graph.NodeList;
 import vadl.viam.graph.dependency.ExpressionNode;
-import vadl.viam.graph.dependency.SideEffectNode;
 
 
 /**

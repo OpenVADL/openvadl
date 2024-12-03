@@ -1,9 +1,10 @@
 import asyncio
-from pathlib import Path
 import sys
 import uuid
+from pathlib import Path
 
 QEMU_COMM_SOCKET_DIR = "/tmp/vadl-iss-socks"
+
 
 class RunCommandException(Exception):
 

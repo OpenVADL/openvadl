@@ -8,7 +8,6 @@ import java.util.ArrayDeque;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Map;
-import java.util.Stack;
 import java.util.stream.Collectors;
 import org.apache.commons.text.StringSubstitutor;
 import vadl.cppCodeGen.GenericCppCodeGeneratorVisitor;

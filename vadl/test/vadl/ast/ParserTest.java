@@ -166,6 +166,17 @@ public class ParserTest {
   }
 
   @Test
+  void relocationDefinition() {
+    var prog = """
+        instruction set architecture ISA = {
+          relocation HI ( symbol : Bits <32> ) -> Bits <16> = ( symbol >> 16 ) & 0xFFFF
+        }
+        """;
+    var ast = Assertions.assertDoesNotThrow(() -> VadlParser.parse(prog), "Cannot parse input");
+    verifyPrettifiedAst(ast);
+  }
+
+  @Test
   void unaryOperators() {
     var prog = """
         constant a = -9

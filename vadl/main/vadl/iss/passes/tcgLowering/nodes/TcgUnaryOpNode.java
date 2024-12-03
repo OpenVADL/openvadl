@@ -1,9 +1,14 @@
 package vadl.iss.passes.tcgLowering.nodes;
 
 import java.util.List;
+import java.util.Set;
+import java.util.function.Function;
+import vadl.iss.passes.nodes.TcgVRefNode;
 import vadl.iss.passes.tcgLowering.TcgV;
-import vadl.iss.passes.tcgLowering.TcgWidth;
 import vadl.javaannotations.viam.DataValue;
+import vadl.javaannotations.viam.Input;
+import vadl.viam.graph.GraphVisitor;
+import vadl.viam.graph.Node;
 
 /**
  * Represents an abstract unary operation node within the Tiny Code Generator (TCG) framework.
@@ -12,23 +17,41 @@ import vadl.javaannotations.viam.DataValue;
  */
 public abstract class TcgUnaryOpNode extends TcgOpNode {
 
-  @DataValue
-  TcgV arg;
+  @Input
+  TcgVRefNode arg;
 
-  public TcgUnaryOpNode(TcgV res, TcgV arg) {
-    super(res, res.width());
+  public TcgUnaryOpNode(TcgVRefNode dest, TcgVRefNode arg) {
+    super(dest, dest.width());
     this.arg = arg;
   }
 
-  public TcgV arg() {
+  public TcgVRefNode arg() {
     return arg;
   }
 
   public abstract String tcgFunctionName();
 
   @Override
-  protected void collectData(List<Object> collection) {
-    super.collectData(collection);
+  public Set<TcgVRefNode> usedVars() {
+    var sup = super.usedVars();
+    sup.add(arg);
+    return sup;
+  }
+
+  @Override
+  public String cCode(Function<Node, String> nodeToCCode) {
+    return tcgFunctionName() + "(" + dest.varName() + ", " + arg.varName() + ");";
+  }
+
+  @Override
+  protected void collectInputs(List<Node> collection) {
+    super.collectInputs(collection);
     collection.add(arg);
+  }
+
+  @Override
+  protected void applyOnInputsUnsafe(GraphVisitor.Applier<Node> visitor) {
+    super.applyOnInputsUnsafe(visitor);
+    arg = visitor.apply(this, arg, TcgVRefNode.class);
   }
 }

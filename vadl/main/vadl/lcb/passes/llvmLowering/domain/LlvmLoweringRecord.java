@@ -5,7 +5,6 @@ import java.util.List;
 import vadl.lcb.passes.llvmLowering.LlvmLoweringPass;
 import vadl.lcb.passes.llvmLowering.tablegen.model.TableGenInstructionOperand;
 import vadl.lcb.passes.llvmLowering.tablegen.model.TableGenPattern;
-import vadl.viam.Register;
 import vadl.viam.graph.Graph;
 
 /**

@@ -8,11 +8,8 @@ import vadl.lcb.codegen.model.llvm.ValueType;
 import vadl.lcb.passes.llvmLowering.tablegen.model.parameterIdentity.NoParameterIdentity;
 import vadl.utils.SourceLocation;
 import vadl.viam.Constant;
-import vadl.viam.Format;
 import vadl.viam.RegisterFile;
 import vadl.viam.graph.dependency.ConstantNode;
-import vadl.viam.graph.dependency.ReadRegFileNode;
-import vadl.viam.graph.dependency.WriteRegFileNode;
 
 /**
  * Indicates that the operand is a {@link Constant} index of a {@link RegisterFile}. It

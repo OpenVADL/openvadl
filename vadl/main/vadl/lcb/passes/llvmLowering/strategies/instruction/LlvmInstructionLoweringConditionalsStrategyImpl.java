@@ -11,8 +11,8 @@ import java.util.Set;
 import vadl.error.Diagnostic;
 import vadl.lcb.codegen.model.llvm.ValueType;
 import vadl.lcb.passes.isaMatching.MachineInstructionLabel;
+import vadl.lcb.passes.llvmLowering.LlvmLoweringPass;
 import vadl.lcb.passes.llvmLowering.domain.machineDag.LcbMachineInstructionNode;
-import vadl.lcb.passes.llvmLowering.domain.machineDag.LcbMachineInstructionWrappedNode;
 import vadl.lcb.passes.llvmLowering.domain.selectionDag.LlvmReadRegFileNode;
 import vadl.lcb.passes.llvmLowering.domain.selectionDag.LlvmSetccSD;
 import vadl.lcb.passes.llvmLowering.strategies.LlvmInstructionLoweringStrategy;
@@ -65,51 +65,35 @@ public class LlvmInstructionLoweringConditionalsStrategyImpl
       List<TableGenInstructionOperand> outputOperands,
       List<TableGenPattern> patterns) {
     var result = new ArrayList<TableGenPattern>();
-    var lts =
-        supportedInstructions.getOrDefault(MachineInstructionLabel.LTS, Collections.emptyList());
-    var ltus =
-        supportedInstructions.getOrDefault(MachineInstructionLabel.LTU, Collections.emptyList());
-    var ltis =
-        supportedInstructions.getOrDefault(MachineInstructionLabel.LTIU, Collections.emptyList());
-    var xors =
-        supportedInstructions.getOrDefault(MachineInstructionLabel.XOR, Collections.emptyList());
-    var xoris =
-        supportedInstructions.getOrDefault(MachineInstructionLabel.XORI, Collections.emptyList());
 
-    xors.stream().findFirst()
-        .ifPresent(xor -> {
-          ltis.stream().findFirst().ifPresent(lti -> {
-            // Why `lts`? Because we need an initial pattern from which we construct a new pattern.
-            // In that case, "less-than"
-            if (lts.contains(instruction)) {
-              eq(lti, xor, patterns, result);
-            }
-          });
+    var flipped = LlvmLoweringPass.flipIsaMatchingMachineInstructions(supportedInstructions);
+    var label = flipped.get(instruction);
 
-          ltus.stream().findFirst().ifPresent(ltu -> {
-            // Why `lts`? Because we need an initial pattern from which we construct a new pattern.
-            // In that case, "less-than"
-            if (lts.contains(instruction)) {
-              neq(ltu, xor, patterns, result);
-            }
-          });
-        });
+    var lti = getFirst(instruction, supportedInstructions, MachineInstructionLabel.LTIU);
+    var ltu = getFirst(instruction, supportedInstructions, MachineInstructionLabel.LTU);
+    var xor = getFirst(instruction, supportedInstructions, MachineInstructionLabel.XOR);
+    var xori = getFirst(instruction, supportedInstructions, MachineInstructionLabel.XORI);
 
-
-    xoris.stream().findFirst()
-        .ifPresent(xori -> {
-          ltus.stream().findFirst().ifPresent(ltu ->
-              ltis.stream().findFirst().ifPresent(lti -> {
-                // Why `ltis`? Because we need an initial pattern from which we construct a new
-                // pattern.
-                // In that case, "less-than-immediate"
-                if (ltis.contains(instruction)) {
-                  neqWithImmediate(ltu, xori, patterns, result);
-                }
-              }));
-        });
+    if (label == MachineInstructionLabel.LTS) {
+      eq(lti, xor, patterns, result);
+      neq(ltu, xor, patterns, result);
+    } else if (label == MachineInstructionLabel.LTU) {
+      uge(xori, patterns, result);
+    } else if (label == MachineInstructionLabel.LTIU) {
+      neqWithImmediate(ltu, xori, patterns, result);
+    }
 
     return result;
+  }
+
+  private Instruction getFirst(
+      Instruction instruction,
+      Map<MachineInstructionLabel, List<Instruction>> supportedInstructions,
+      MachineInstructionLabel label) {
+    return ensurePresent(supportedInstructions.getOrDefault(label, Collections.emptyList())
+            .stream().findFirst(),
+        () -> Diagnostic.error(String.format("No instruction with label '%s' detected.", label),
+            instruction.sourceLocation()));
   }
 
   private void eq(Instruction basePattern,
@@ -152,10 +136,55 @@ public class LlvmInstructionLoweringConditionalsStrategyImpl
             .forEach(node -> {
               node.setInstruction(basePattern);
 
-              var newArgs = new LcbMachineInstructionWrappedNode(xor, node.arguments());
+              var newArgs = new LcbMachineInstructionNode(node.arguments(), xor);
               node.setArgs(
                   new NodeList<>(newArgs, new ConstantNode(new Constant.Str("1"))));
             });
+
+        result.add(outputPattern);
+      }
+    }
+  }
+
+  private void uge(Instruction xori,
+                   List<TableGenPattern> patterns,
+                   List<TableGenPattern> result) {
+    /*
+              def : Pat<(setcc X:$rs1, X:$rs2, SETLTU),
+                  (SLTU X:$rs1, X:$rs2)>;
+
+                  to
+
+              def : Pat< ( setcc X:$rs1, X:$rs2, SETUGE ),
+                   ( XORI ( SLTU X:$rs1, X:$rs2 ), 1 ) >;
+               */
+    for (var pattern : patterns) {
+      var copy = pattern.copy();
+
+      if (copy instanceof TableGenSelectionWithOutputPattern outputPattern) {
+        // Change condition code
+        var setcc = ensurePresent(
+            outputPattern.selector().getNodes(LlvmSetccSD.class).toList().stream()
+                .findFirst(),
+            () -> Diagnostic.error("No setcc node was found", pattern.selector()
+                .sourceLocation()));
+        // Only RR and not RI should be replaced here.
+        if (setcc.arguments().size() > 2
+            && setcc.arguments().get(0) instanceof LlvmReadRegFileNode
+            && setcc.arguments().get(1) instanceof LlvmReadRegFileNode) {
+          setcc.setBuiltIn(BuiltInTable.UGEQ);
+          setcc.arguments().set(2,
+              new ConstantNode(new Constant.Str(setcc.llvmCondCode().name())));
+        } else {
+          // Otherwise, stop and go to next pattern.
+          continue;
+        }
+
+        var machineInstruction =
+            outputPattern.machine().getNodes(LcbMachineInstructionNode.class).findFirst().get();
+        var newMachineInstruction = new LcbMachineInstructionNode(
+            new NodeList<>(machineInstruction, new ConstantNode(new Constant.Str("1"))), xori);
+        outputPattern.machine().addWithInputs(newMachineInstruction);
 
         result.add(outputPattern);
       }
@@ -223,7 +252,7 @@ public class LlvmInstructionLoweringConditionalsStrategyImpl
                   new Constant.Str(
                       registerFile.simpleName() + zeroConstraint.address().intValue()));
 
-              var newArgs = new LcbMachineInstructionWrappedNode(xor, node.arguments());
+              var newArgs = new LcbMachineInstructionNode(node.arguments(), xor);
               node.setArgs(
                   new NodeList<>(zeroRegister, newArgs));
             });
@@ -295,7 +324,7 @@ public class LlvmInstructionLoweringConditionalsStrategyImpl
                   new Constant.Str(
                       registerFile.simpleName() + zeroConstraint.address().intValue()));
 
-              var newArgs = new LcbMachineInstructionWrappedNode(xori, node.arguments());
+              var newArgs = new LcbMachineInstructionNode(node.arguments(), xori);
               node.setArgs(
                   new NodeList<>(zeroRegister, newArgs));
             });

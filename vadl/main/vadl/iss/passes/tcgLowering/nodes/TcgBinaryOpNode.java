@@ -1,20 +1,26 @@
 package vadl.iss.passes.tcgLowering.nodes;
 
 import java.util.List;
+import java.util.Set;
+import java.util.function.Function;
+import vadl.iss.passes.nodes.TcgVRefNode;
 import vadl.iss.passes.tcgLowering.TcgV;
-import vadl.iss.passes.tcgLowering.TcgWidth;
+import vadl.iss.passes.tcgLowering.Tcg_32_64;
 import vadl.javaannotations.viam.DataValue;
+import vadl.javaannotations.viam.Input;
+import vadl.viam.graph.GraphVisitor;
+import vadl.viam.graph.Node;
 
 /**
  * A common superclass that represents a TCG operator with two source variables and one result.
  */
 public abstract class TcgBinaryOpNode extends TcgOpNode {
 
-  @DataValue
-  TcgV arg1;
+  @Input
+  TcgVRefNode arg1;
 
-  @DataValue
-  TcgV arg2;
+  @Input
+  TcgVRefNode arg2;
 
 
   /**
@@ -26,7 +32,8 @@ public abstract class TcgBinaryOpNode extends TcgOpNode {
    * @param arg2      the second argument variable
    * @param width     the bit width of the operation
    */
-  public TcgBinaryOpNode(TcgV resultVar, TcgV arg1, TcgV arg2, TcgWidth width) {
+  public TcgBinaryOpNode(TcgVRefNode resultVar, TcgVRefNode arg1, TcgVRefNode arg2,
+                         Tcg_32_64 width) {
     super(resultVar, width);
     this.arg1 = arg1;
     this.arg2 = arg2;
@@ -36,24 +43,48 @@ public abstract class TcgBinaryOpNode extends TcgOpNode {
   public void verifyState() {
     super.verifyState();
 
-    ensure(arg1.width() == width, "argument 1 width does not match");
-    ensure(arg2.width() == width, "argument 2 width does not match");
+    ensure(arg1.var().width() == width, "argument 1 width does not match");
+    ensure(arg2.var().width() == width, "argument 2 width does not match");
   }
 
-  public TcgV arg1() {
+  public TcgVRefNode arg1() {
     return arg1;
   }
 
-  public TcgV arg2() {
+  public TcgVRefNode arg2() {
     return arg2;
   }
 
   public abstract String tcgFunctionName();
 
   @Override
-  protected void collectData(List<Object> collection) {
-    super.collectData(collection);
+  public Set<TcgVRefNode> usedVars() {
+    var sup = super.usedVars();
+    sup.addAll(Set.of(arg1, arg2));
+    return sup;
+  }
+
+  @Override
+  public String cCode(Function<Node, String> nodeToCCode) {
+    return tcgFunctionName() + "_" + width + "("
+        + dest.cCode() + ", "
+        + arg1.cCode() + ", "
+        + arg2.cCode()
+        + ");";
+  }
+
+
+  @Override
+  protected void collectInputs(List<Node> collection) {
+    super.collectInputs(collection);
     collection.add(arg1);
     collection.add(arg2);
+  }
+
+  @Override
+  protected void applyOnInputsUnsafe(GraphVisitor.Applier<Node> visitor) {
+    super.applyOnInputsUnsafe(visitor);
+    arg1 = visitor.apply(this, arg1, TcgVRefNode.class);
+    arg2 = visitor.apply(this, arg2, TcgVRefNode.class);
   }
 }

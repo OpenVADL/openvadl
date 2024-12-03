@@ -1,7 +1,7 @@
 package vadl.iss.passes.tcgLowering.nodes;
 
+import vadl.iss.passes.nodes.TcgVRefNode;
 import vadl.iss.passes.tcgLowering.TcgV;
-import vadl.iss.passes.tcgLowering.TcgWidth;
 import vadl.viam.graph.Node;
 
 /**
@@ -9,7 +9,7 @@ import vadl.viam.graph.Node;
  */
 public class TcgAddNode extends TcgBinaryOpNode {
 
-  public TcgAddNode(TcgV resVar, TcgV arg1, TcgV arg2) {
+  public TcgAddNode(TcgVRefNode resVar, TcgVRefNode arg1, TcgVRefNode arg2) {
     super(resVar, arg1, arg2, resVar.width());
   }
 
@@ -20,11 +20,12 @@ public class TcgAddNode extends TcgBinaryOpNode {
 
   @Override
   public Node copy() {
-    return new TcgAddNode(res, arg1, arg2);
+    return new TcgAddNode(dest.copy(TcgVRefNode.class), arg1.copy(TcgVRefNode.class),
+        arg2.copy(TcgVRefNode.class));
   }
 
   @Override
   public Node shallowCopy() {
-    return new TcgAddNode(res, arg1, arg2);
+    return new TcgAddNode(dest, arg1, arg2);
   }
 }

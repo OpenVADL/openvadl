@@ -1,7 +1,6 @@
 package vadl.viam.graph.dependency;
 
 import vadl.types.DataType;
-import vadl.types.SIntType;
 import vadl.viam.Constant;
 import vadl.viam.graph.Canonicalizable;
 import vadl.viam.graph.GraphNodeVisitor;

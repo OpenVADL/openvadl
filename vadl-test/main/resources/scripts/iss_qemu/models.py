@@ -1,5 +1,6 @@
 from dataclasses import dataclass, field
-from typing import Dict, List, Literal
+from typing import Dict, Literal
+
 
 @dataclass
 class TestSpec:

@@ -82,6 +82,27 @@ public abstract class DirectionalNode extends ControlNode {
     safeDelete();
   }
 
+  /**
+   * This will replace this node by the given node and also links the new node
+   * to the next one.
+   * <pre>{@code
+   * Before:
+   * X --->     This    ---> Y
+   * After:
+   * X ---> Replacement ---> Y
+   * }</pre>
+   * After linking, this node is deleted.
+   *
+   * @param replacement The replacement of the current node
+   */
+  public void replaceAndLinkAndDelete(DirectionalNode replacement) {
+    replace(replacement);
+    var next = this.next();
+    setNext(null);
+    replacement.setNext(next);
+    safeDelete();
+  }
+
   public ControlNode next() {
     ensure(next != null, "next node is null but must be set!");
     return next;

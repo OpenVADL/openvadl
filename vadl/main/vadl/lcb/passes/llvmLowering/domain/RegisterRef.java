@@ -13,7 +13,6 @@ import vadl.viam.Format;
 import vadl.viam.Register;
 import vadl.viam.RegisterFile;
 import vadl.viam.Resource;
-import vadl.viam.graph.dependency.ExpressionNode;
 import vadl.viam.graph.dependency.ReadRegFileNode;
 import vadl.viam.graph.dependency.ReadResourceNode;
 import vadl.viam.graph.dependency.WriteRegFileNode;

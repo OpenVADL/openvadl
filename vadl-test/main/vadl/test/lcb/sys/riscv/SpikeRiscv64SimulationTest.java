@@ -43,7 +43,7 @@ public class SpikeRiscv64SimulationTest extends AbstractLcbTest {
     // Move Dockerfile into Docker Context
     {
       var inputStream = new FileInputStream(
-          "../../open-vadl/vadl-test/main/resources/images/spike_riscv64/Dockerfile");
+          "../../open-vadl/vadl-test/main/resources/images/spike_rv64im/Dockerfile");
       var outputStream = new FileOutputStream(configuration.outputPath() + "/lcb/Dockerfile");
       inputStream.transferTo(outputStream);
       outputStream.close();

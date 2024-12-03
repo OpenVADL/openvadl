@@ -1,5 +1,10 @@
 package vadl.iss.passes.tcgLowering;
 
+import static java.util.Objects.requireNonNull;
+
+import vadl.viam.graph.ViamGraphError;
+import vadl.viam.graph.dependency.ExpressionNode;
+
 /**
  * Represents an enumeration of bit widths used in TCG (Tiny Code Generation).
  * This enum encapsulates common bit widths (8, 16, 32, 64) typically seen in memory operations.
@@ -33,5 +38,18 @@ public enum Tcg_8_16_32_64 {
       default -> throw new IllegalArgumentException("Invalid width: " + width);
     };
   }
+
+  /**
+   * Returns the width of the expressions result type.
+   */
+  public static Tcg_8_16_32_64 from(ExpressionNode expr) {
+    try {
+      return fromWidth(expr.type().asDataType().bitWidth());
+    } catch (Exception e) {
+      throw new ViamGraphError(requireNonNull(e.getMessage()), e)
+          .addContext(expr);
+    }
+  }
+
 
 }

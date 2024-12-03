@@ -16,7 +16,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.testcontainers.images.builder.ImageFromDockerfile;
 import org.testcontainers.shaded.com.google.common.collect.Streams;
-import vadl.cppCodeGen.CppTypeMap;
 import vadl.cppCodeGen.passes.typeNormalization.CppTypeNormalizationPass;
 import vadl.gcb.passes.typeNormalization.CppTypeNormalizationForImmediateExtractionPass;
 import vadl.gcb.passes.typeNormalization.CppTypeNormalizationForPredicatesPass;
@@ -25,10 +24,8 @@ import vadl.lcb.passes.relocation.GenerateLinkerComponentsPass;
 import vadl.pass.PassKey;
 import vadl.pass.exception.DuplicatedPassKeyException;
 import vadl.test.lcb.AbstractLcbTest;
-import vadl.types.BitsType;
 import vadl.utils.Pair;
 import vadl.viam.Format;
-import vadl.viam.Parameter;
 
 public class ImmediateExtractionCodeGeneratorCppVerificationTest extends AbstractLcbTest {
   private static final String MOUNT_PATH = "/app/main.cpp";
@@ -127,22 +124,22 @@ public class ImmediateExtractionCodeGeneratorCppVerificationTest extends Abstrac
             #include <bitset>
             #include <vector>
             #include <tuple>
-                        
+
             template<int start, int end, std::size_t N>
             std::bitset<N> project_range(std::bitset<N> bits)
             {
                 std::bitset<N> result;
                 size_t result_index = 0; // Index for the new bitset
-                        
+
                 // Extract bits from the range [start, end]
                 for (size_t i = start; i <= end; ++i) {
                   result[result_index] = bits[i];
                   result_index++;
                 }
-                        
+
                 return result;
             }
-                        
+
             template<std::size_t N, std::size_t M>
             std::bitset<N> set_bits(std::bitset<N> dest, const std::bitset<M> source, std::vector<int> bits) {
                 auto target = 0;
@@ -151,13 +148,13 @@ public class ImmediateExtractionCodeGeneratorCppVerificationTest extends Abstrac
                     dest.set(j, source[i]);
                     target++;
                 }
-                        
+
                 return dest;
             }
-                        
+
             // Extraction Function
             %s
-                        
+
             int main() {
               ulong expected = %d;
               std::vector<int> args = { %s };

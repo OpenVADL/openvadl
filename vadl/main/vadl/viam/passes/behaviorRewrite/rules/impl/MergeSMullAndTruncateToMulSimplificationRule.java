@@ -7,11 +7,9 @@ import vadl.types.BuiltInTable;
 import vadl.viam.graph.Node;
 import vadl.viam.graph.dependency.BuiltInCall;
 import vadl.viam.graph.dependency.ExpressionNode;
-import vadl.viam.graph.dependency.LetNode;
 import vadl.viam.graph.dependency.TruncateNode;
 import vadl.viam.matching.TreeMatcher;
 import vadl.viam.matching.impl.BuiltInMatcher;
-import vadl.viam.matching.impl.LetNodeMatcher;
 import vadl.viam.matching.impl.TruncNodeMatcher;
 import vadl.viam.passes.behaviorRewrite.rules.BehaviorRewriteSimplificationRule;
 

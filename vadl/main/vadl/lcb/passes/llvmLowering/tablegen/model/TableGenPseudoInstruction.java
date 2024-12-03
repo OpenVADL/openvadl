@@ -3,7 +3,6 @@ package vadl.lcb.passes.llvmLowering.tablegen.model;
 import java.util.List;
 import vadl.lcb.passes.llvmLowering.LlvmLoweringPass;
 import vadl.lcb.passes.llvmLowering.domain.RegisterRef;
-import vadl.viam.Instruction;
 import vadl.viam.PseudoInstruction;
 
 /**

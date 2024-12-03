@@ -2,9 +2,8 @@ import asyncio
 import os
 import socket
 import time
-from typing import Optional
-import uuid
 from qemu.qmp import QMPClient, EventListener
+from typing import Optional
 
 from utils import get_unique_sock_addr
 
@@ -29,9 +28,9 @@ class QEMUExecuter:
             pass
 
     async def execute(self, test_elf: str,
-                      result_regs: list[str], 
-                      signal_reg: str, 
-                      signal_content: str, 
+                      result_regs: list[str],
+                      signal_reg: str,
+                      signal_content: str,
                       timeout_sec: int):
         print(f"[QEMU_EXECUTOR] Starting QEMU ({self.qemu_exec}) with {test_elf}")
         await self._start_qemu(test_elf)
@@ -79,13 +78,12 @@ class QEMUExecuter:
                 None
         except asyncio.CancelledError:
             return
-        
+
     async def _fetch_result_regs(self, result_regs: list[str]) -> dict[str, str]:
         result = {}
         for reg in result_regs:
             result[reg] = await self._reg_info(reg)
         return result
-        
 
     async def _shutdown(self, force: bool = False):
         print(f"[QEMU_EXECUTOR] Shutting down QEMU")
@@ -105,12 +103,13 @@ class QEMUExecuter:
             sig_reg = await self._reg_info(signal_reg)
             if sig_reg.endswith(signal_content):
                 break
-    
+
             diff_time = poll_time - start_time
             if diff_time > timeout_sec:
                 print(f"timed out.")
                 await self._shutdown(force=True)
-                raise Exception(f"Timeout: Timeout of finish signal {signal_content} in {signal_reg} ({diff_time:.4f}s)")
+                raise Exception(
+                    f"Timeout: Timeout of finish signal {signal_content} in {signal_reg} ({diff_time:.4f}s)")
 
     async def _connect_qmp(self, timeout_sec: int):
         # TODO: make try counter
@@ -134,7 +133,7 @@ class QEMUExecuter:
         if result is None:
             raise Exception(f"Failed to extract register value for {reg}. Full dump:\n{response}")
         return result
-    
+
     def _extract_register_value(self, registers_info: str, register_name: str) -> Optional[str]:
         # Split the registers_info into lines
         lines = registers_info.split('\n')
@@ -155,7 +154,6 @@ class QEMUExecuter:
 
         # If register name is not found, return None
         return None
-
 
 
 async def _capture_logs(self):

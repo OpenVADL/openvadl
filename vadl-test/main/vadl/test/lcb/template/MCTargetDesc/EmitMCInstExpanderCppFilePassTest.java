@@ -5,9 +5,7 @@ import java.nio.charset.Charset;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 import org.testcontainers.shaded.com.google.common.io.Files;
-import vadl.lcb.template.lib.Target.EmitRegisterInfoCppFilePass;
 import vadl.lcb.template.lib.Target.MCTargetDesc.EmitMCInstExpanderCppFilePass;
-import vadl.lcb.template.lib.Target.Utils.EmitImmediateFilePass;
 import vadl.pass.PassKey;
 import vadl.pass.exception.DuplicatedPassKeyException;
 import vadl.template.AbstractTemplateRenderingPass;
@@ -32,22 +30,22 @@ public class EmitMCInstExpanderCppFilePassTest extends AbstractLcbTest {
 
     Assertions.assertLinesMatch("""
         #include "rv64imMCInstExpander.h"
-                
+        
         #include "MCTargetDesc/rv64imMCTargetDesc.h"
         #include "Utils/ImmediateUtils.h"
-                
+        
         #include "MCTargetDesc/rv64imMCExpr.h"
         #include "llvm/MC/MCInst.h"
         #include "llvm/MC/MCExpr.h"
         #include "llvm/MC/MCContext.h"
-                
+        
         #define DEBUG_TYPE "rv64imMCInstExpander"
-                
+        
         using namespace llvm;
-                
+        
         rv64imMCInstExpander::rv64imMCInstExpander(class MCContext &Ctx)
             : Ctx(Ctx) {}
-                
+        
         bool rv64imMCInstExpander::needsExpansion(const MCInst &MCI) const
         {
             auto opcode = MCI.getOpcode();
@@ -86,7 +84,7 @@ public class EmitMCInstExpanderCppFilePassTest extends AbstractLcbTest {
             }
             return false; // unreachable
         }
-                
+        
         bool rv64imMCInstExpander::isExpandable(const MCInst &MCI) const
         {
             auto opcode = MCI.getOpcode();
@@ -125,7 +123,7 @@ public class EmitMCInstExpanderCppFilePassTest extends AbstractLcbTest {
             }
             return false; // unreachable
         }
-                
+        
         bool rv64imMCInstExpander::expand(const MCInst &MCI, std::vector<MCInst> &MCIExpansion) const
         {
             auto opcode = MCI.getOpcode();
@@ -134,7 +132,7 @@ public class EmitMCInstExpanderCppFilePassTest extends AbstractLcbTest {
                 //
                 // instructions
                 //
-                
+        
            \s
               case rv64im::CALL:
               {
@@ -244,29 +242,29 @@ public class EmitMCInstExpanderCppFilePassTest extends AbstractLcbTest {
             }
             return false; // unreachable
         }
-                
+        
         const MCExpr *rv64imMCInstExpander::MCOperandToMCExpr(const MCOperand &MCO) const
         {
             if (MCO.isImm())
             {
                 return MCConstantExpr::create(MCO.getImm(), Ctx);
             }
-                
+        
             if (MCO.isExpr())
             {
                 return MCO.getExpr();
             }
-                
+        
             llvm_unreachable("<unsupported mc operand type>");
         }
-                
+        
         const int64_t rv64imMCInstExpander::MCOperandToInt64(const MCOperand &MCO) const
         {
             if (MCO.isImm())
             {
                 return MCO.getImm();
             }
-                
+        
             if (MCO.isExpr())
             {
                 int64_t mcExprResult;
@@ -276,12 +274,12 @@ public class EmitMCInstExpanderCppFilePassTest extends AbstractLcbTest {
                     return mcExprResult;
                 }
             }
-                
+        
             llvm_unreachable("<unsupported operand type or value>");
         }
-                
-                
-                
+        
+        
+        
         std::vector< MCInst> rv64imMCInstExpander::RV64IM_CALL_expand(const MCInst& instruction) const {
         std::vector< MCInst > result;
         MCInst a = MCInst();
@@ -301,8 +299,8 @@ public class EmitMCInstExpanderCppFilePassTest extends AbstractLcbTest {
         result.push_back(d);
         return result;
         }
-                
-                
+        
+        
         std::vector< MCInst> rv64imMCInstExpander::RV64IM_TAIL_expand(const MCInst& instruction) const {
         std::vector< MCInst > result;
         MCInst a = MCInst();
@@ -322,8 +320,8 @@ public class EmitMCInstExpanderCppFilePassTest extends AbstractLcbTest {
         result.push_back(d);
         return result;
         }
-                
-                
+        
+        
         std::vector< MCInst> rv64imMCInstExpander::RV64IM_RET_expand(const MCInst& instruction) const {
         std::vector< MCInst > result;
         MCInst a = MCInst();
@@ -334,8 +332,8 @@ public class EmitMCInstExpanderCppFilePassTest extends AbstractLcbTest {
         result.push_back(a);
         return result;
         }
-                
-                
+        
+        
         std::vector< MCInst> rv64imMCInstExpander::RV64IM_J_expand(const MCInst& instruction) const {
         std::vector< MCInst > result;
         MCInst a = MCInst();
@@ -347,8 +345,8 @@ public class EmitMCInstExpanderCppFilePassTest extends AbstractLcbTest {
         result.push_back(a);
         return result;
         }
-                
-                
+        
+        
         std::vector< MCInst> rv64imMCInstExpander::RV64IM_NOP_expand(const MCInst& instruction) const {
         std::vector< MCInst > result;
         MCInst a = MCInst();
@@ -359,8 +357,8 @@ public class EmitMCInstExpanderCppFilePassTest extends AbstractLcbTest {
         result.push_back(a);
         return result;
         }
-                
-                
+        
+        
         std::vector< MCInst> rv64imMCInstExpander::RV64IM_MOV_expand(const MCInst& instruction) const {
         std::vector< MCInst > result;
         MCInst a = MCInst();
@@ -371,8 +369,8 @@ public class EmitMCInstExpanderCppFilePassTest extends AbstractLcbTest {
         result.push_back(a);
         return result;
         }
-                
-                
+        
+        
         std::vector< MCInst> rv64imMCInstExpander::RV64IM_NOT_expand(const MCInst& instruction) const {
         std::vector< MCInst > result;
         MCInst a = MCInst();
@@ -383,8 +381,8 @@ public class EmitMCInstExpanderCppFilePassTest extends AbstractLcbTest {
         result.push_back(a);
         return result;
         }
-                
-                
+        
+        
         std::vector< MCInst> rv64imMCInstExpander::RV64IM_NEG_expand(const MCInst& instruction) const {
         std::vector< MCInst > result;
         MCInst a = MCInst();
@@ -395,8 +393,8 @@ public class EmitMCInstExpanderCppFilePassTest extends AbstractLcbTest {
         result.push_back(a);
         return result;
         }
-                
-                
+        
+        
         std::vector< MCInst> rv64imMCInstExpander::RV64IM_SNEZ_expand(const MCInst& instruction) const {
         std::vector< MCInst > result;
         MCInst a = MCInst();
@@ -407,8 +405,8 @@ public class EmitMCInstExpanderCppFilePassTest extends AbstractLcbTest {
         result.push_back(a);
         return result;
         }
-                
-                
+        
+        
         std::vector< MCInst> rv64imMCInstExpander::RV64IM_SLTZ_expand(const MCInst& instruction) const {
         std::vector< MCInst > result;
         MCInst a = MCInst();
@@ -419,8 +417,8 @@ public class EmitMCInstExpanderCppFilePassTest extends AbstractLcbTest {
         result.push_back(a);
         return result;
         }
-                
-                
+        
+        
         std::vector< MCInst> rv64imMCInstExpander::RV64IM_SGTZ_expand(const MCInst& instruction) const {
         std::vector< MCInst > result;
         MCInst a = MCInst();
@@ -431,8 +429,8 @@ public class EmitMCInstExpanderCppFilePassTest extends AbstractLcbTest {
         result.push_back(a);
         return result;
         }
-                
-                
+        
+        
         std::vector< MCInst> rv64imMCInstExpander::RV64IM_BEQZ_expand(const MCInst& instruction) const {
         std::vector< MCInst > result;
         MCInst a = MCInst();
@@ -445,8 +443,8 @@ public class EmitMCInstExpanderCppFilePassTest extends AbstractLcbTest {
         result.push_back(a);
         return result;
         }
-                
-                
+        
+        
         std::vector< MCInst> rv64imMCInstExpander::RV64IM_BNEZ_expand(const MCInst& instruction) const {
         std::vector< MCInst > result;
         MCInst a = MCInst();
@@ -459,8 +457,8 @@ public class EmitMCInstExpanderCppFilePassTest extends AbstractLcbTest {
         result.push_back(a);
         return result;
         }
-                
-                
+        
+        
         std::vector< MCInst> rv64imMCInstExpander::RV64IM_BLEZ_expand(const MCInst& instruction) const {
         std::vector< MCInst > result;
         MCInst a = MCInst();
@@ -473,8 +471,8 @@ public class EmitMCInstExpanderCppFilePassTest extends AbstractLcbTest {
         result.push_back(a);
         return result;
         }
-                
-                
+        
+        
         std::vector< MCInst> rv64imMCInstExpander::RV64IM_BGEZ_expand(const MCInst& instruction) const {
         std::vector< MCInst > result;
         MCInst a = MCInst();
@@ -487,8 +485,8 @@ public class EmitMCInstExpanderCppFilePassTest extends AbstractLcbTest {
         result.push_back(a);
         return result;
         }
-                
-                
+        
+        
         std::vector< MCInst> rv64imMCInstExpander::RV64IM_BLTZ_expand(const MCInst& instruction) const {
         std::vector< MCInst > result;
         MCInst a = MCInst();
@@ -501,8 +499,8 @@ public class EmitMCInstExpanderCppFilePassTest extends AbstractLcbTest {
         result.push_back(a);
         return result;
         }
-                
-                
+        
+        
         std::vector< MCInst> rv64imMCInstExpander::RV64IM_BGTZ_expand(const MCInst& instruction) const {
         std::vector< MCInst > result;
         MCInst a = MCInst();
@@ -515,8 +513,8 @@ public class EmitMCInstExpanderCppFilePassTest extends AbstractLcbTest {
         result.push_back(a);
         return result;
         }
-                
-                
+        
+        
         std::vector< MCInst> rv64imMCInstExpander::RV64IM_LLA_expand(const MCInst& instruction) const {
         std::vector< MCInst > result;
         MCInst a = MCInst();
@@ -536,8 +534,8 @@ public class EmitMCInstExpanderCppFilePassTest extends AbstractLcbTest {
         result.push_back(d);
         return result;
         }
-                
-                
+        
+        
         std::vector< MCInst> rv64imMCInstExpander::RESERVED_PSEUDO_RET_expand(const MCInst& instruction) const {
         std::vector< MCInst > result;
         MCInst a = MCInst();
@@ -548,8 +546,8 @@ public class EmitMCInstExpanderCppFilePassTest extends AbstractLcbTest {
         result.push_back(a);
         return result;
         }
-                
-                
+        
+        
         std::vector< MCInst> rv64imMCInstExpander::RESERVED_PSEUDO_CALL_expand(const MCInst& instruction) const {
         std::vector< MCInst > result;
         MCInst a = MCInst();

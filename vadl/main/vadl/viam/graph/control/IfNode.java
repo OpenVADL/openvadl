@@ -2,7 +2,6 @@ package vadl.viam.graph.control;
 
 import java.util.List;
 import vadl.javaannotations.viam.Input;
-import vadl.javaannotations.viam.Successor;
 import vadl.viam.graph.GraphNodeVisitor;
 import vadl.viam.graph.GraphVisitor;
 import vadl.viam.graph.Node;

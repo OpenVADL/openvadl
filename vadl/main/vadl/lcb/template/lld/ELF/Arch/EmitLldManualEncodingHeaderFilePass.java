@@ -5,7 +5,6 @@ import java.util.Comparator;
 import java.util.Map;
 import java.util.stream.Collectors;
 import vadl.configuration.LcbConfiguration;
-import vadl.gcb.passes.relocation.model.ConcreteLogicalRelocation;
 import vadl.gcb.passes.relocation.model.RelocationLowerable;
 import vadl.lcb.codegen.LcbGenericCodeGenerator;
 import vadl.lcb.passes.relocation.GenerateLinkerComponentsPass;

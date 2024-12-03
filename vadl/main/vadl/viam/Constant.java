@@ -638,6 +638,17 @@ public abstract class Constant {
     }
 
     private String asString(String prefix, int radix) {
+      return asString(prefix, radix, true);
+    }
+
+    /**
+     * Returns a string representing the value.
+     *
+     * @param prefix  string prefix
+     * @param radix   used for numeric representation
+     * @param padding if true, the String is padded with 0
+     */
+    public String asString(String prefix, int radix, boolean padding) {
       Integer padFactor = null;
       switch (radix) {
         case 2:
@@ -658,9 +669,11 @@ public abstract class Constant {
       }
 
       var str = this.value.toString(radix);
-      if (padFactor > 0) {
-        var padSize = (type().bitWidth() / padFactor) - str.length();
-        str = "0".repeat(padSize) + str;
+      if (padding) {
+        if (padFactor > 0) {
+          var padSize = (type().bitWidth() / padFactor) - str.length();
+          str = "0".repeat(padSize) + str;
+        }
       }
       return prefix + str;
     }
