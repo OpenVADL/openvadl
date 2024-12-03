@@ -10,6 +10,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import vadl.lcb.passes.llvmLowering.domain.RegisterRef;
 import vadl.lcb.passes.llvmLowering.domain.machineDag.LcbMachineInstructionNode;
+import vadl.lcb.passes.llvmLowering.domain.machineDag.LcbMachineInstructionWrappedNode;
 import vadl.lcb.passes.llvmLowering.domain.machineDag.LcbPseudoInstructionNode;
 import vadl.lcb.passes.llvmLowering.tablegen.model.TableGenInstruction;
 import vadl.lcb.passes.llvmLowering.tablegen.model.TableGenInstructionOperand;
@@ -200,11 +201,15 @@ public final class TableGenInstructionRenderer {
 
     for (var root : tableGenPattern.machine().getDataflowRoots()) {
       ensure(root instanceof LcbPseudoInstructionNode
-              || root instanceof LcbMachineInstructionNode,
+              || root instanceof LcbMachineInstructionNode
+              || root instanceof LcbMachineInstructionWrappedNode,
           "root node must be pseudo or machine node");
       if (root instanceof LcbMachineInstructionNode machineInstructionNode) {
         machineVisitor.visit(machineInstructionNode);
-      } else if (root instanceof LcbPseudoInstructionNode pseudoInstructionNode) {
+      } else if (root instanceof LcbMachineInstructionWrappedNode machineInstructionNode) {
+        machineVisitor.visit(machineInstructionNode);
+      }
+      else if (root instanceof LcbPseudoInstructionNode pseudoInstructionNode) {
         machineVisitor.visit(pseudoInstructionNode);
       }
     }

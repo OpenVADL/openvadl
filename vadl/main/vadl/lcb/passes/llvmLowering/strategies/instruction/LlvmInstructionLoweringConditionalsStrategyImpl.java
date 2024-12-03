@@ -79,6 +79,8 @@ public class LlvmInstructionLoweringConditionalsStrategyImpl
     if (label == MachineInstructionLabel.LTS) {
       eq(lti, xor, patterns, result);
       neq(ltu, xor, patterns, result);
+    } else if (label == MachineInstructionLabel.LTU) {
+      uge(ltu, xori, patterns, result);
     } else if (label == MachineInstructionLabel.LTIU) {
       neqWithImmediate(ltu, xori, patterns, result);
     }
@@ -140,6 +142,52 @@ public class LlvmInstructionLoweringConditionalsStrategyImpl
               node.setArgs(
                   new NodeList<>(newArgs, new ConstantNode(new Constant.Str("1"))));
             });
+
+        result.add(outputPattern);
+      }
+    }
+  }
+
+  private void uge(Instruction basePattern,
+                   Instruction xori,
+                   List<TableGenPattern> patterns,
+                   List<TableGenPattern> result) {
+    /*
+              def : Pat<(setcc X:$rs1, X:$rs2, SETLTU),
+                  (SLTU X:$rs1, X:$rs2)>;
+
+                  to
+
+              def : Pat< ( setcc X:$rs1, X:$rs2, SETUGE ),
+                   ( XORI ( SLTU X:$rs1, X:$rs2 ), 1 ) >;
+               */
+    for (var pattern : patterns) {
+      var copy = pattern.copy();
+
+      if (copy instanceof TableGenSelectionWithOutputPattern outputPattern) {
+        // Change condition code
+        var setcc = ensurePresent(
+            outputPattern.selector().getNodes(LlvmSetccSD.class).toList().stream()
+                .findFirst(),
+            () -> Diagnostic.error("No setcc node was found", pattern.selector()
+                .sourceLocation()));
+        // Only RR and not RI should be replaced here.
+        if (setcc.arguments().size() > 2
+            && setcc.arguments().get(0) instanceof LlvmReadRegFileNode
+            && setcc.arguments().get(1) instanceof LlvmReadRegFileNode) {
+          setcc.setBuiltIn(BuiltInTable.UGEQ);
+          setcc.arguments().set(2,
+              new ConstantNode(new Constant.Str(setcc.llvmCondCode().name())));
+        } else {
+          // Otherwise, stop and go to next pattern.
+          continue;
+        }
+
+        var machineInstruction =
+            outputPattern.machine().getNodes(LcbMachineInstructionNode.class).findFirst().get();
+        var newMachineInstruction = new LcbMachineInstructionWrappedNode(xori,
+            new NodeList<>(machineInstruction, new ConstantNode(new Constant.Str("1"))));
+        outputPattern.machine().addWithInputs(newMachineInstruction);
 
         result.add(outputPattern);
       }

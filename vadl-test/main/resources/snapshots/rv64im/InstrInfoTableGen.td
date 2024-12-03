@@ -4263,6 +4263,9 @@ def : Pat<(setcc X:$rs1, RV64IM_Itype_immAsInt64:$imm, SETNE),
 def : Pat<(setcc X:$rs1, X:$rs2, SETULT),
         (SLTU X:$rs1, X:$rs2)>;
 
+def : Pat<(setcc X:$rs1, X:$rs2, SETUGE),
+        (XORI (SLTU X:$rs1, X:$rs2), 1)>;
+
 
 def : Pat<(sra X:$rs1, X:$rs2),
         (SRA X:$rs1, X:$rs2)>;
