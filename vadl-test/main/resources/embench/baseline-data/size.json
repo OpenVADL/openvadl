@@ -1,0 +1,155 @@
+{ "aha-mont64" :
+  {
+      "text" : 1072,
+      "rodata" : 0,
+      "data" : 0,
+      "bss" : 24
+  },
+  "crc32" :
+  {
+      "text" : 284,
+      "rodata" : 1024,
+      "data" : 0,
+      "bss" : 16
+  },
+  "cubic" :
+  {
+      "text" : 1584,
+      "rodata" : 0,
+      "data" : 0,
+      "bss" : 48
+  },
+  "edn" :
+  {
+      "text" : 1324,
+      "rodata" : 1600,
+      "data" : 0,
+      "bss" : 1612
+  },
+  "huffbench" :
+  {
+      "text" : 1242,
+      "rodata" : 1001,
+      "data" : 0,
+      "bss" : 8708
+  },
+  "matmult-int" :
+  {
+      "text" : 492,
+      "rodata" : 1600,
+      "data" : 0,
+      "bss" : 8004
+  },
+  "minver" :
+  {
+      "text" : 1168,
+      "rodata" : 144,
+      "data" : 0,
+      "bss" : 112
+  },
+  "md5sum" :
+  {
+      "text" : 744,
+      "rodata" : 556,
+      "data" : 0,
+      "bss" : 2032
+  },
+  "nbody" :
+  {
+      "text" : 950,
+      "rodata" : 320,
+      "data" : 320,
+      "bss" : 0
+  },
+  "nettle-aes" :
+  {
+      "text" : 2148,
+      "rodata" : 9740,
+      "data" : 544,
+      "bss" : 1000
+  },
+  "nettle-sha256" :
+  {
+      "text" : 3396,
+      "rodata" : 324,
+      "data" : 88,
+      "bss" : 32
+  },
+  "nsichneu" :
+  {
+      "text" : 11968,
+      "rodata" : 0,
+      "data" : 8,
+      "bss" : 60
+  },
+  "picojpeg" :
+  {
+      "text" : 6964,
+      "rodata" : 982,
+      "data" : 0,
+      "bss" : 2404
+  },
+  "primecount" :
+  {
+      "text" : 292,
+      "rodata" : 0,
+      "data" : 0,
+      "bss" : 0
+  },
+  "qrduino" :
+  {
+      "text" : 5814,
+      "rodata" : 1505,
+      "data" : 0,
+      "bss" : 8256
+  },
+  "sglib-combined" :
+  {
+      "text" : 2272,
+      "rodata" : 800,
+      "data" : 0,
+      "bss" : 8692
+  },
+  "slre" :
+  {
+      "text" : 2200,
+      "rodata" : 57,
+      "data" : 64,
+      "bss" : 20
+  },
+  "st" :
+  {
+      "text" : 1000,
+      "rodata" : 0,
+      "data" : 0,
+      "bss" : 1632
+  },
+  "statemate" :
+  {
+      "text" : 4484,
+      "rodata" : 64,
+      "data" : 0,
+      "bss" : 292
+  },
+  "tarfind" :
+  {
+      "text" : 478,
+      "rodata" : 0,
+      "data" : 0,
+      "bss" : 9012
+  },
+  "ud" :
+  {
+      "text" : 720,
+      "rodata" : 0,
+      "data" : 0,
+      "bss" : 1764
+  },
+  "wikisort" :
+  {
+      "text" : 4296,
+      "rodata" : 3240,
+      "data" : 0,
+      "bss" : 3216
+  }
+}

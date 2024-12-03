@@ -1,0 +1,12 @@
+.idea/
+
+*.csv
+
+# Venv
+.venv/
+lib/
+lib64
+bin/
+pyvenv.cfg
+
+results*/
