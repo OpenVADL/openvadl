@@ -11,6 +11,7 @@ import java.util.Set;
 import vadl.error.Diagnostic;
 import vadl.lcb.codegen.model.llvm.ValueType;
 import vadl.lcb.passes.isaMatching.MachineInstructionLabel;
+import vadl.lcb.passes.llvmLowering.LlvmLoweringPass;
 import vadl.lcb.passes.llvmLowering.domain.machineDag.LcbMachineInstructionNode;
 import vadl.lcb.passes.llvmLowering.domain.machineDag.LcbMachineInstructionWrappedNode;
 import vadl.lcb.passes.llvmLowering.domain.selectionDag.LlvmReadRegFileNode;
@@ -22,6 +23,7 @@ import vadl.lcb.passes.llvmLowering.tablegen.model.TableGenSelectionWithOutputPa
 import vadl.types.BuiltInTable;
 import vadl.viam.Constant;
 import vadl.viam.Instruction;
+import vadl.viam.Specification;
 import vadl.viam.graph.Graph;
 import vadl.viam.graph.GraphVisitor;
 import vadl.viam.graph.Node;
@@ -65,51 +67,33 @@ public class LlvmInstructionLoweringConditionalsStrategyImpl
       List<TableGenInstructionOperand> outputOperands,
       List<TableGenPattern> patterns) {
     var result = new ArrayList<TableGenPattern>();
-    var lts =
-        supportedInstructions.getOrDefault(MachineInstructionLabel.LTS, Collections.emptyList());
-    var ltus =
-        supportedInstructions.getOrDefault(MachineInstructionLabel.LTU, Collections.emptyList());
-    var ltis =
-        supportedInstructions.getOrDefault(MachineInstructionLabel.LTIU, Collections.emptyList());
-    var xors =
-        supportedInstructions.getOrDefault(MachineInstructionLabel.XOR, Collections.emptyList());
-    var xoris =
-        supportedInstructions.getOrDefault(MachineInstructionLabel.XORI, Collections.emptyList());
 
-    xors.stream().findFirst()
-        .ifPresent(xor -> {
-          ltis.stream().findFirst().ifPresent(lti -> {
-            // Why `lts`? Because we need an initial pattern from which we construct a new pattern.
-            // In that case, "less-than"
-            if (lts.contains(instruction)) {
-              eq(lti, xor, patterns, result);
-            }
-          });
+    var flipped = LlvmLoweringPass.flipIsaMatchingMachineInstructions(supportedInstructions);
+    var label = flipped.get(instruction);
 
-          ltus.stream().findFirst().ifPresent(ltu -> {
-            // Why `lts`? Because we need an initial pattern from which we construct a new pattern.
-            // In that case, "less-than"
-            if (lts.contains(instruction)) {
-              neq(ltu, xor, patterns, result);
-            }
-          });
-        });
+    var lti = getFirst(instruction, supportedInstructions, MachineInstructionLabel.LTIU);
+    var ltu = getFirst(instruction, supportedInstructions, MachineInstructionLabel.LTU);
+    var xor = getFirst(instruction, supportedInstructions, MachineInstructionLabel.XOR);
+    var xori = getFirst(instruction, supportedInstructions, MachineInstructionLabel.XORI);
 
-
-    xoris.stream().findFirst()
-        .ifPresent(xori -> {
-          ltus.stream().findFirst().ifPresent(ltu ->
-              ltis.stream().findFirst().ifPresent(lti -> {
-                // Why `ltis`? Because we need an initial pattern from which we construct a new
-                // pattern.
-                // In that case, "less-than-immediate"
-                if (ltis.contains(instruction)) {
-                  neqWithImmediate(ltu, xori, patterns, result);
-                }
-              }));
-        });
+    if (label == MachineInstructionLabel.LTS) {
+      eq(lti, xor, patterns, result);
+      neq(ltu, xor, patterns, result);
+    } else if (label == MachineInstructionLabel.LTIU) {
+      neqWithImmediate(ltu, xori, patterns, result);
+    }
 
     return result;
+  }
+
+  private Instruction getFirst(
+      Instruction instruction,
+      Map<MachineInstructionLabel, List<Instruction>> supportedInstructions,
+      MachineInstructionLabel label) {
+    return ensurePresent(supportedInstructions.getOrDefault(label, Collections.emptyList())
+            .stream().findFirst(),
+        () -> Diagnostic.error(String.format("No instruction with label '%s' detected.", label),
+            instruction.sourceLocation()));
   }
 
   private void eq(Instruction basePattern,
