@@ -24,7 +24,7 @@ public class AsmGrammarTests {
     var prog = """
           grammar = {
               A :
-                B
+                Register
               ;
           }
         """;
@@ -36,7 +36,7 @@ public class AsmGrammarTests {
     var prog = """
           grammar = {
             A@instruction :
-              B@operand
+              ImmediateOperand@operand
             ;
           }
         """;
@@ -48,7 +48,7 @@ public class AsmGrammarTests {
     var prog = """
           grammar = {
             A@invalidType :
-              B
+              ImmediateOperand
             ;
           }
         """;
@@ -61,7 +61,7 @@ public class AsmGrammarTests {
     var prog = """
           grammar = {
             A :
-              B @invalidType
+              ImmediateOperand @invalidType
             ;
           }
         """;
@@ -87,7 +87,7 @@ public class AsmGrammarTests {
     var prog = """
           grammar = {
             A :
-              (B C) @invalidType
+              (Register ImmediateOperand) @invalidType
             ;
           }
         """;
@@ -100,7 +100,7 @@ public class AsmGrammarTests {
     var prog = """
           grammar = {
             A@instruction :
-              attributeB = B
+              attributeB = Expression
             ;
           }
         """;
@@ -125,7 +125,7 @@ public class AsmGrammarTests {
           grammar = {
             A@instruction :
               attributeB = "B" @string
-              attributeC = C
+              attributeC = Register
             ;
           }
         """;
@@ -137,7 +137,7 @@ public class AsmGrammarTests {
     var prog = """
           grammar = {
             A@instruction :
-              B<>
+              ImmediateOperand<>
             ;
           }
         """;
@@ -149,7 +149,7 @@ public class AsmGrammarTests {
     var prog = """
           grammar = {
             A@instruction :
-              B<C,D>
+              IDENTIFIER<Integer,Integer>
             ;
           }
         """;
@@ -161,7 +161,7 @@ public class AsmGrammarTests {
     var prog = """
           grammar = {
             A@instruction :
-              B<C@string,D@string>
+              IDENTIFIER<STRING@string,STRING@string>
             ;
           }
         """;
@@ -185,7 +185,7 @@ public class AsmGrammarTests {
     var prog = """
           grammar = {
             A :
-              ("Literal" C@operand)
+              ("Literal" STRING@operand)
             ;
           }
         """;
@@ -198,8 +198,8 @@ public class AsmGrammarTests {
           grammar = {
             A@instruction:
               (
-                "Literal" C @expression
-                (D E) @operand
+                "Literal" Expression @expression
+                (Register Register) @operand
               )
             ;
           }
@@ -212,10 +212,10 @@ public class AsmGrammarTests {
     var prog = """
           grammar = {
             A :
-              B
+              IDENTIFIER
             ;
             C :
-              D
+              A
             ;
           }
         """;
@@ -227,7 +227,7 @@ public class AsmGrammarTests {
     var prog = """
           grammar = {
             A :
-              B | C
+              STRING | ImmediateOperand
             ;
           }
         """;
@@ -239,7 +239,7 @@ public class AsmGrammarTests {
     var prog = """
           grammar = {
             A@instruction :
-              B | (C@expression D) | F<Int>@operand
+              Register | (Expression@expression Register) | IDENTIFIER<Integer>@operand
             ;
           }
         """;
@@ -251,7 +251,7 @@ public class AsmGrammarTests {
     var prog = """
           grammar = {
             A@instruction :
-              B | (C@operand | D | G<>@operand) | F<Int>@operand
+              "B" | (ImmediateOperand@operand | Expression | ImmediateOperand<>@operand) | IDENTIFIER<Integer>@operand
             ;
           }
         """;
@@ -263,7 +263,7 @@ public class AsmGrammarTests {
     var prog = """
           grammar = {
             A:
-              attrB = B | (C | attrD = "D" | G<>) | F<Int>
+              attrB = "B" | (STRING | attrD = "D" | STRING)
             ;
           }
         """;
@@ -275,7 +275,7 @@ public class AsmGrammarTests {
     var prog = """
           grammar = {
             A : var tmp = null @operand
-              attrB = B
+              attrB = "B"
             ;
           }
         """;
@@ -287,9 +287,9 @@ public class AsmGrammarTests {
     var prog = """
           grammar = {
             A :
-              attrB = B
+              attrB = "B"
               ( var tmp = null @operand
-                C
+                "C"
               )
             ;
           }
@@ -302,7 +302,7 @@ public class AsmGrammarTests {
     var prog = """
           grammar = {
             A :
-              [B C]
+              ["B" "C"]
             ;
           }
         """;
@@ -314,7 +314,7 @@ public class AsmGrammarTests {
     var prog = """
           grammar = {
             A :
-              (B [C D])
+              (Register ["B" "C"])
             ;
           }
         """;
@@ -327,9 +327,9 @@ public class AsmGrammarTests {
           grammar = {
             A :
               [ ?( LaIdEq<1>("C") )
-                B C
+                Register "C"
               ]
-              B
+              Register
             ;
           }
         """;
@@ -341,9 +341,9 @@ public class AsmGrammarTests {
     var prog = """
           grammar = {
             A@instruction :
-              B
-              | ( ?(LaIdIn("CA","CB")) C | D | G<>@expression)
-              | F<Int>@operand
+              ImmediateOperand
+              | ( ?(LaIdIn("CA","CB")) STRING | ImmediateOperand | Expression<>@expression)
+              | IDENTIFIER<Integer>@operand
             ;
           }
         """;
@@ -355,8 +355,9 @@ public class AsmGrammarTests {
     var prog = """
           grammar = {
             A :
-              B {C@string}
+              "B" {C@string}
             ;
+            C : STRING;
           }
         """;
     verifyPrettifiedAst(VadlParser.parse(inputWrappedByValidAsmDescription(prog)));
@@ -368,9 +369,10 @@ public class AsmGrammarTests {
           grammar = {
             A :
               B
-              | ( ?(LaIdIn("CA","CB")) C | D {D} | G<>)
-              | F<Int>
+              | ( ?(LaIdIn("CA","CB")) "C" | B  {B} | IDENTIFIER<>)
+              | IDENTIFIER<Integer>
             ;
+            B : "B" STRING;
           }
         """;
     verifyPrettifiedAst(VadlParser.parse(inputWrappedByValidAsmDescription(prog)));
@@ -382,11 +384,12 @@ public class AsmGrammarTests {
           grammar = {
             A :
               {
-                B
-                | ( ?(LaIdIn("CA","CB")) C | D {D} | G<>)
-                | F<Int>
+                "B"
+                | ( ?(LaIdIn("CA","CB")) "C" | B  {B} | IDENTIFIER<>)
+                | IDENTIFIER<Integer>
               }
             ;
+            B : "B" STRING;
           }
         """;
     verifyPrettifiedAst(VadlParser.parse(inputWrappedByValidAsmDescription(prog)));
@@ -396,8 +399,8 @@ public class AsmGrammarTests {
   void doubleDefinitionOfRuleName() {
     var prog = """
           grammar = {
-            A : B ;
-            A : C ;
+            A : "B" ;
+            A : "C" ;
           }
         """;
     Assertions.assertThrows(DiagnosticList.class,
@@ -425,11 +428,24 @@ public class AsmGrammarTests {
           grammar = {
             A : var tmp = "a"
               ( var tmp = "b"
-                C
+                "C"
               )
             ;
           }
         """;
     verifyPrettifiedAst(VadlParser.parse(inputWrappedByValidAsmDescription(prog)));
+  }
+
+  @Test
+  void grammarRuleWithInvalidSymbol() {
+    var prog = """
+          grammar = {
+            A :
+              B
+            ;
+          }
+        """;
+    Assertions.assertThrows(DiagnosticList.class,
+        () -> VadlParser.parse(inputWrappedByValidAsmDescription(prog)));
   }
 }

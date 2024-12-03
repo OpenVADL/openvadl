@@ -33,7 +33,7 @@ public class AsmDescriptionTests {
             }
         
             grammar = {
-              A : B ;
+              A : "B" ;
             }
           }
         """;
@@ -56,7 +56,7 @@ public class AsmDescriptionTests {
             }
         
             grammar = {
-              A : B ;
+              A : "B" ;
             }
           }
         """;
@@ -70,7 +70,7 @@ public class AsmDescriptionTests {
           }
         
           grammar = {
-            A : B ;
+            A : "B" ;
           }
         """;
     Assertions.assertThrows(DiagnosticList.class, () -> VadlParser.parse(
@@ -85,7 +85,7 @@ public class AsmDescriptionTests {
           }
         
           grammar = {
-            A : B ;
+            A : "B" ;
           }
         """;
     verifyPrettifiedAst(VadlParser.parse(inputWrappedByValidAsmDescription(prog)));
@@ -100,7 +100,7 @@ public class AsmDescriptionTests {
           }
         
           grammar = {
-            A : B ;
+            A : "B" ;
           }
         """;
     verifyPrettifiedAst(VadlParser.parse(inputWrappedByValidAsmDescription(prog)));
@@ -113,7 +113,7 @@ public class AsmDescriptionTests {
           }
         
           grammar = {
-            A : B ;
+            A : "B" ;
           }
         """;
     Assertions.assertThrows(DiagnosticList.class, () -> VadlParser.parse(
@@ -141,7 +141,7 @@ public class AsmDescriptionTests {
             }
         
             grammar = {
-              A : B ;
+              A : "B" ;
             }
           }
         """;
@@ -198,7 +198,7 @@ public class AsmDescriptionTests {
           function minusOne (x : char) -> char = -x
         
           grammar = {
-            A : a = minusOne32<Integer> ;
+            A : a = minusOne<Integer> ;
           }
         """;
     verifyPrettifiedAst(VadlParser.parse(inputWrappedByValidAsmDescription(prog)));

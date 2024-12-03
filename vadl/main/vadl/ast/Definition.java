@@ -4187,18 +4187,20 @@ class AsmGrammarAlternativesDefinition extends Definition {
   @Override
   void prettyPrint(int indent, StringBuilder builder) {
     var elementIndent = indent + 1;
-    for (var alternative : alternatives) {
-      if (!Objects.equals(alternatives.get(0), alternative)) {
+    for (int i = 0; i < alternatives.size(); i++) {
+      var alternative = alternatives.get(i);
+      if (i != 0) {
         builder.append(prettyIndentString(indent));
         builder.append("|\n");
       }
-      for (var element : alternative) {
+      for (int j = 0; j < alternative.size(); j++) {
+        var element = alternative.get(j);
         element.prettyPrint(elementIndent, builder);
-        if (!Objects.equals(alternative.get(alternative.size() - 1), element)) {
+        if (j != alternative.size() - 1) {
           builder.append("\n");
         }
       }
-      if (!Objects.equals(alternatives.get(alternatives.size() - 1), alternative)) {
+      if (i != alternatives.size() - 1) {
         builder.append("\n");
       }
     }
@@ -4491,9 +4493,9 @@ class AsmGrammarLiteralDefinition extends Definition {
       id.prettyPrint(0, builder);
       if (!parameters.isEmpty()) {
         builder.append('<');
-        for (var param : parameters) {
-          param.prettyPrint(indent, builder);
-          if (!Objects.equals(parameters.get(parameters.size() - 1), param)) {
+        for (int i = 0; i < parameters.size(); i++) {
+          parameters.get(i).prettyPrint(indent, builder);
+          if (i != parameters.size() - 1) {
             builder.append(", ");
           }
         }

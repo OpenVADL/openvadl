@@ -637,6 +637,9 @@ class SymbolTable {
           collectSymbols(symbols, localVar.asmLiteral);
         }
       } else if (definition instanceof AsmGrammarLiteralDefinition asmLiteral) {
+        if (!asmLiteral.parameters.isEmpty()) {
+          asmLiteral.parameters.forEach(param -> collectSymbols(symbols, param));
+        }
         if (asmLiteral.asmType != null) {
           collectSymbols(symbols, asmLiteral.asmType);
         }
@@ -994,8 +997,14 @@ class SymbolTable {
           resolveSymbols(localVar.asmLiteral);
         }
       } else if (definition instanceof AsmGrammarLiteralDefinition asmLiteral) {
-        // TODO check if ID is a function / (builtin) rule / localVar
-
+        if (asmLiteral.id != null) {
+          var idSymbol = asmLiteral.symbolTable().resolveSymbol(asmLiteral.id.name);
+          if (idSymbol == null) {
+            asmLiteral.symbolTable()
+                .reportError("Unknown symbol in asm grammar rule: " + asmLiteral.id.name,
+                    asmLiteral.id.loc);
+          }
+        }
         if (asmLiteral.asmType != null) {
           resolveSymbols(asmLiteral.asmType);
         }
