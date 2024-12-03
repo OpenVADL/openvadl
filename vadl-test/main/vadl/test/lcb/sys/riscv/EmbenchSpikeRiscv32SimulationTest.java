@@ -8,6 +8,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import org.junit.Ignore;
+import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.condition.EnabledIfEnvironmentVariable;
 import org.testcontainers.images.builder.ImageFromDockerfile;
@@ -21,17 +22,16 @@ public class EmbenchSpikeRiscv32SimulationTest extends AbstractLcbTest {
 
   @EnabledIfEnvironmentVariable(named = "test.embench.enabled", matches = "true")
   @Test
-  @Ignore
+  @Disabled("embench has errors")
   void testEmbench() throws IOException, DuplicatedPassKeyException {
     var target = "rv32im";
     var upstreamBuildTarget = "RISCV";
-    var upstreamClangTarget = "riscv32";
     var configuration = new LcbConfiguration(getConfiguration(false),
         new ProcessorName(target));
 
     runLcb(configuration, "sys/risc-v/rv32im.vadl");
 
-    // Move Dockerfile.riscv64.spike.lcb into Docker Context
+    // Move Dockerfile.riscv32.spike.lcb into Docker Context
     Files.createDirectories(Path.of(configuration.outputPath() + "/lcb/embench"));
     {
       var inputStream = new FileInputStream(
