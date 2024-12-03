@@ -28,7 +28,9 @@ typedef struct CPUArchState {
   [# th:each="reg, iterState : ${registers}"] // CPU registers
   [(${reg.c_type})] [(${reg.name_lower})];
   [/]
+  [# th:if="${insn_count}"]
   uint64_t insn_count;
+  [/]
 } CPU[(${gen_arch_upper})]State;
 
 

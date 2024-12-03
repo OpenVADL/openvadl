@@ -55,16 +55,6 @@ public abstract class AsmTestBuilder {
     return String.join("\n", instructions);
   }
 
-  IssTestUtils.TestSpec toTestSpecCounting( String... regsOfInterest) {
-    return new IssTestUtils.TestSpec(
-        testId,
-        Map.of("insn_count", String.format("%010d", (this.instructions.size() + 1))),
-        toAsmString(),
-        referenceQemuExec(),
-        List.of(regsOfInterest)
-    );
-  }
-
   IssTestUtils.TestSpec toTestSpecWithSpecialRegs(Map<String, String> map, String... regsOfInterest) {
     return new IssTestUtils.TestSpec(
         testId,

@@ -72,6 +72,7 @@ public abstract class IssTemplateRenderingPass extends AbstractTemplateRendering
     vars.put("gen_arch_lower", configuration().architectureName().toLowerCase());
     vars.put("register_files", mapRegFiles(specification));
     vars.put("registers", mapRegs(specification));
+    vars.put("insn_count", configuration().isInsnCounting());
     return vars;
   }
 }

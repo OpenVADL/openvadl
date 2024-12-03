@@ -5,7 +5,6 @@ import static vadl.test.TestUtils.arbitraryUnsignedInt;
 
 import java.io.IOException;
 import java.math.BigInteger;
-import java.util.Map;
 import java.util.function.Function;
 import java.util.stream.IntStream;
 import java.util.stream.Stream;
@@ -34,7 +33,7 @@ public class IssRV64IInstrTest extends QemuIssTest {
       var bImm = arbitrarySignedInt(12).sample();
       var regDest = b.anyTempReg().sample();
       b.add("addi %s, %s, %s", regDest, regSrc, bImm);
-      return b.toTestSpecWithSpecialRegs(Map.of("insn_count", "0000000003"), regSrc, regDest);
+      return b.toTestSpec(regSrc, regDest);
     });
   }
 
@@ -50,7 +49,7 @@ public class IssRV64IInstrTest extends QemuIssTest {
       var bImm = arbitrarySignedInt(12).sample();
       var regDest = b.anyTempReg().sample();
       b.add("addiw %s, %s, %s", regDest, regSrc, bImm);
-      return b.toTestSpecCounting(regSrc, regDest);
+      return b.toTestSpec(regSrc, regDest);
     });
   }
 
@@ -61,7 +60,7 @@ public class IssRV64IInstrTest extends QemuIssTest {
       var destReg = b.anyTempReg().sample();
       var value = arbitraryUnsignedInt(20).sample();
       b.add("lui %s, %s", destReg, value);
-      return b.toTestSpecCounting(destReg);
+      return b.toTestSpec(destReg);
     });
   }
 
@@ -155,7 +154,7 @@ public class IssRV64IInstrTest extends QemuIssTest {
   @SafeVarargs
   private Stream<DynamicTest> runTestsWith(
       Function<Integer, IssTestUtils.TestSpec>... generators) throws IOException {
-    var image = generateSimulator("sys/risc-v/rv64i.vadl");
+    var image = generateSimulator("sys/risc-v/rv64i.vadl", false);
     var testCases = Stream.of(generators)
         .flatMap(genFunc -> IntStream.range(0, TESTS_PER_INSTRUCTION)
             .mapToObj(genFunc::apply)

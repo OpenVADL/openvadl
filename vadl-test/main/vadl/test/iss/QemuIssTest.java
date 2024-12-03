@@ -2,18 +2,14 @@ package vadl.test.iss;
 
 import static vadl.test.iss.IssTestUtils.writeTestSuiteConfigYaml;
 import static vadl.test.iss.IssTestUtils.yamlToTestResults;
-import static vadl.viam.ViamError.ensure;
 
 import java.io.IOException;
-import java.net.Socket;
 import java.nio.file.Path;
 import java.util.Collection;
 import java.util.List;
-import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
-import javax.annotation.Nullable;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.DynamicTest;
 import org.slf4j.Logger;
@@ -22,7 +18,6 @@ import org.testcontainers.images.builder.ImageFromDockerfile;
 import org.testcontainers.shaded.com.google.common.collect.Streams;
 import org.testcontainers.utility.MountableFile;
 import vadl.configuration.IssConfiguration;
-import vadl.pass.PassOrder;
 import vadl.pass.PassOrders;
 import vadl.pass.exception.DuplicatedPassKeyException;
 import vadl.test.DockerExecutionTest;
@@ -56,10 +51,10 @@ public abstract class QemuIssTest extends DockerExecutionTest {
    * @param specPath path to VADL specification in testSource
    * @return the image containing the generated QEMU ISS
    */
-  protected ImageFromDockerfile generateSimulator(String specPath) {
+  protected ImageFromDockerfile generateSimulator(String specPath, boolean insn_counting) {
     return issImageCache.computeIfAbsent(specPath, (path) -> {
       try {
-        var config = IssConfiguration.from(getConfiguration(false));
+        var config = IssConfiguration.from(getConfiguration(false), insn_counting);
         // run iss generation
         setupPassManagerAndRunSpec(path, PassOrders.iss(config));
 

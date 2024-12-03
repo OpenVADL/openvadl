@@ -14,7 +14,10 @@
 #undef  HELPER_H
 
 static TCGv cpu_pc;
+
+[# th:if="${insn_count}"]
 static TCGv cpu_insn_count;
+[/]
 
 [# th:each="reg_file, iterState : ${register_files}"] // define the register file tcgs
 static TCGv cpu_[(${reg_file.name_lower})][(${"[" + reg_file["size"] + "]"})];
@@ -47,8 +50,10 @@ void [(${gen_arch_lower})]_tcg_init(void)
 
     // set the cpu_pc TCGv
     cpu_pc         = tcg_global_mem_new(tcg_env, offsetof(CPU[(${gen_arch_upper})]State, [(${gen_arch_upper})]_PC), "[(${gen_arch_upper})]_PC");
-    //set the
+    //only generate if insn_count feature is enabled
+    [# th:if="${insn_count}"]
     cpu_insn_count = tcg_global_mem_new(tcg_env, offsetof(CPU[(${gen_arch_upper})]State, insn_count), "[(${gen_arch_upper})]_INSN_COUNT");
+    [/]
 
     [# th:each="reg_file, iterState : ${register_files}"]
     [# th:each="constraint, iterState : ${reg_file.constraints}"]

@@ -29,8 +29,19 @@ import vadl.viam.graph.dependency.FieldRefNode;
 public class IssTranslateCodeGenerator extends CodeGenerator
     implements CTypeCastMixin, CTcgOpsMixin, CBuiltinMixin, CMiscMixin {
 
+  private boolean generate_insn_count = false;
+
   public IssTranslateCodeGenerator(StringWriter writer) {
     super(writer);
+  }
+
+  /**
+   * @param generate_insn_count used to determine if the iss generates add instruction for special
+   *                            cpu register (QEMU)
+   */
+  public IssTranslateCodeGenerator(StringWriter writer, boolean generate_insn_count) {
+    super(writer);
+    this.generate_insn_count = generate_insn_count;
   }
 
   /**
@@ -38,6 +49,17 @@ public class IssTranslateCodeGenerator extends CodeGenerator
    */
   public static String fetch(Instruction def) {
     var generator = new IssTranslateCodeGenerator(new StringWriter());
+    generator.gen(def);
+    return generator.writer.toString();
+  }
+
+  /**
+   * The static entry point to get the translation function for a given instruction.
+   * @param generate_insn_count used to determine if the iss generates add instruction for special
+   *                            cpu register (QEMU)
+   */
+  public static String fetch(Instruction def, boolean generate_insn_count) {
+    var generator = new IssTranslateCodeGenerator(new StringWriter(), generate_insn_count);
     generator.gen(def);
     return generator.writer.toString();
   }
@@ -76,9 +98,13 @@ public class IssTranslateCodeGenerator extends CodeGenerator
           writer.write(name);
           writer.write(" (" + fmtString + ")");
           writer.write("\\n\", " + fmtArgs + ");\n");
-          //Add separate add instruction after each that increments special cpu_insn_count flag in QEMU CPU state
-          //see resources/templates/iss/target/cpu.h/CPUArchState
-          writer.write("\ttcg_gen_addi_i64(cpu_insn_count, cpu_insn_count, 1);\n\n");
+
+          if (generate_insn_count) {
+            //Add separate add instruction after each that increments special cpu_insn_count flag in QEMU CPU state
+            //see resources/templates/iss/target/cpu.h/CPUArchState
+            writer.write("\ttcg_gen_addi_i64(cpu_insn_count, cpu_insn_count, 1);\n");
+          }
+
           var current = start.next();
 
           while (current instanceof DirectionalNode dirNode) {

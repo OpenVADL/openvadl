@@ -1,7 +1,6 @@
 package vadl.iss.template.target;
 
 import static vadl.error.Diagnostic.error;
-import static vadl.utils.GraphUtils.getSingleNode;
 
 import java.util.List;
 import java.util.Map;
@@ -35,11 +34,15 @@ public class EmitIssTranslatePass extends IssTemplateRenderingPass {
     var vars = super.createVariables(passResults, specification);
     vars.put("insn_width", getInstructionWidth(specification));
     vars.put("mem_word_size", getMemoryWordSize(specification));
-    vars.put("translate_functions", getTranslateFunctions(specification));
+    vars.put("translate_functions", getTranslateFunctions(specification, this.configuration().isInsnCounting()));
     return vars;
   }
 
-  private static List<String> getTranslateFunctions(Specification specification) {
+  /**
+   * @param insn_counting used to determine if the iss generates add instruction for special
+   *                            cpu register (QEMU)
+   */
+  private static List<String> getTranslateFunctions(Specification specification, boolean insn_counting) {
     var insns = specification.isa().get().ownInstructions();
     // TODO: Remove this filter (just for testing)
     var supportedInsns = Set.of(
@@ -52,9 +55,10 @@ public class EmitIssTranslatePass extends IssTemplateRenderingPass {
         "LUI",
         "BEQ"
     );
+
     return insns.stream()
         .filter(i -> supportedInsns.contains(i.identifier.simpleName()))
-        .map(IssTranslateCodeGenerator::fetch)
+        .map(i -> IssTranslateCodeGenerator.fetch(i,insn_counting))
         .toList();
   }
 
