@@ -594,6 +594,12 @@ class SymbolTable {
         asmDescription.commonDefinitions.forEach(
             commonDef -> collectSymbols(asmDescSymbolTable, commonDef));
         asmDescription.rules.forEach(rule -> collectSymbols(asmDescSymbolTable, rule));
+
+        // get default rules that are not yet defined,
+        // collect their symbols and add them to assembly description
+        var defaultRules = AsmGrammarDefaultRules.notIncludedDefaultRules(asmDescription.rules);
+        defaultRules.forEach(rule -> collectSymbols(asmDescSymbolTable, rule));
+        asmDescription.rules.addAll(defaultRules);
       } else if (definition instanceof AsmGrammarRuleDefinition rule) {
         symbols.defineSymbol(new GenericSymbol(rule.id.name, rule), rule.id.loc);
         collectSymbols(symbols, rule.alternatives);

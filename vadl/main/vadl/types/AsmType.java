@@ -19,6 +19,14 @@ public enum AsmType {
   INSTRUCTIONS,
   OPERANDS;
 
+  /**
+   * Check if the input string is a valid assembly grammar type.
+   * The input string is valid if it is equal to the lowercase string representation
+   * of any assembly grammar type.
+   *
+   * @param input the input string to check
+   * @return true if the input string is a valid assembly type, false otherwise
+   */
   public static boolean isInputAsmType(String input) {
     return Arrays.stream(AsmType.values())
         .anyMatch(type -> type.toString().toLowerCase().equals(input));
