@@ -1,7 +1,6 @@
 package vadl.iss.passes.tcgLowering.nodes;
 
 import vadl.iss.passes.nodes.TcgVRefNode;
-import vadl.iss.passes.tcgLowering.TcgV;
 import vadl.viam.graph.Node;
 
 /**
@@ -9,26 +8,26 @@ import vadl.viam.graph.Node;
  * This class extends TcgBinaryImmOpNode to perform a left shift operation
  * on a source variable by a specified immediate value.
  */
-public class TcgShiftLeft extends TcgBinaryOpNode {
+public class TcgShrNode extends TcgBinaryOpNode {
 
-  public TcgShiftLeft(TcgVRefNode res, TcgVRefNode arg, TcgVRefNode shiftAmount) {
+  public TcgShrNode(TcgVRefNode res, TcgVRefNode arg, TcgVRefNode shiftAmount) {
     super(res, arg, shiftAmount, res.width());
   }
 
   @Override
   public String tcgFunctionName() {
-    return "tcg_gen_shl";
+    return "tcg_gen_shr";
   }
 
   @Override
   public Node copy() {
-    return new TcgShiftLeft(dest.copy(TcgVRefNode.class),
+    return new TcgShrNode(dest.copy(TcgVRefNode.class),
         arg1.copy(TcgVRefNode.class),
         arg2.copy(TcgVRefNode.class));
   }
 
   @Override
   public Node shallowCopy() {
-    return new TcgShiftLeft(dest, arg1, arg2);
+    return new TcgShrNode(dest, arg1, arg2);
   }
 }

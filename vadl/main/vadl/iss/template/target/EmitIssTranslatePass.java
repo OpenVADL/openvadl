@@ -51,7 +51,7 @@ public class EmitIssTranslatePass extends IssTemplateRenderingPass {
         "BEQ"
     );
     return insns.stream()
-        .filter(i -> supportedInsns.contains(i.identifier.simpleName()))
+        .filter(i -> !i.identifier.simpleName().contains("JALR"))
         .map(IssTranslateCodeGenerator::fetch)
         .toList();
   }

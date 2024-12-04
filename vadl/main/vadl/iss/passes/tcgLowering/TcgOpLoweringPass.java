@@ -5,6 +5,7 @@ import static vadl.utils.GraphUtils.getSingleNode;
 
 import com.google.errorprone.annotations.concurrent.LazyInit;
 import java.io.IOException;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -15,15 +16,22 @@ import vadl.iss.passes.IssVarSsaAssignment;
 import vadl.iss.passes.nodes.TcgVRefNode;
 import vadl.iss.passes.safeResourceRead.nodes.ExprSaveNode;
 import vadl.iss.passes.tcgLowering.nodes.TcgAddNode;
+import vadl.iss.passes.tcgLowering.nodes.TcgAndNode;
 import vadl.iss.passes.tcgLowering.nodes.TcgExtendNode;
 import vadl.iss.passes.tcgLowering.nodes.TcgGottoTbAbs;
 import vadl.iss.passes.tcgLowering.nodes.TcgLoadMemory;
 import vadl.iss.passes.tcgLowering.nodes.TcgMoveNode;
 import vadl.iss.passes.tcgLowering.nodes.TcgNode;
+import vadl.iss.passes.tcgLowering.nodes.TcgNotNode;
+import vadl.iss.passes.tcgLowering.nodes.TcgOrNode;
+import vadl.iss.passes.tcgLowering.nodes.TcgSarNode;
 import vadl.iss.passes.tcgLowering.nodes.TcgSetCond;
-import vadl.iss.passes.tcgLowering.nodes.TcgShiftLeft;
+import vadl.iss.passes.tcgLowering.nodes.TcgShlNode;
+import vadl.iss.passes.tcgLowering.nodes.TcgShrNode;
 import vadl.iss.passes.tcgLowering.nodes.TcgStoreMemory;
+import vadl.iss.passes.tcgLowering.nodes.TcgSubNode;
 import vadl.iss.passes.tcgLowering.nodes.TcgTruncateNode;
+import vadl.iss.passes.tcgLowering.nodes.TcgXorNode;
 import vadl.javaannotations.DispatchFor;
 import vadl.javaannotations.Handler;
 import vadl.pass.Pass;
@@ -113,7 +121,7 @@ public class TcgOpLoweringPass extends Pass {
         IssVarSsaAssignment.Result.class);
 
     viam.isa().get().ownInstructions()
-        .stream().filter(i -> supportedInstructions.contains(i.simpleName()))
+//        .stream().filter(i -> supportedInstructions.contains(i.simpleName()))
         .forEach(i -> {
           new TcgOpLoweringExecutor(requireNonNull(assignments.varAssignments().get(i)))
               .runOn(i.behavior());
@@ -428,7 +436,8 @@ class TcgOpLoweringExecutor implements CfgTraverser {
    */
   @Handler
   void handle(SliceNode toHandle) {
-    throw new UnsupportedOperationException("Type SliceNode not yet implemented");
+    throw new ViamGraphError("Type SliceNode not yet implemented")
+        .addContext(toHandle);
   }
 
   /**
@@ -521,21 +530,97 @@ class BuiltInTcgLoweringExecutor {
   /**
    * Holds the implementations of the different built-ins.
    */
-  private static final Map<BuiltInTable.BuiltIn, Function<Context, BuiltInResult>>
-      impls =
-      Map.of(
-          BuiltInTable.ADD, (ctx) -> out(
-              new TcgAddNode(ctx.dest(), ctx.src(0), ctx.src(1))
-          ),
+  private static final Map<BuiltInTable.BuiltIn, Function<Context, BuiltInResult>> impls;
 
-          BuiltInTable.LSL, (ctx) -> out(
-              new TcgShiftLeft(ctx.dest(), ctx.src(0), ctx.src(1))
-          ),
+  static {
+    impls = new MapBuilder<BuiltInTable.BuiltIn, Function<Context, BuiltInResult>>(new HashMap<>())
 
-          BuiltInTable.EQU, (ctx) -> out(
-              new TcgSetCond(ctx.dest(), ctx.src(0), ctx.src(1), TcgCondition.EQ)
-          )
-      );
+        //// Arithmetic ////
+        .set(BuiltInTable.ADD, (ctx) -> out(
+            new TcgAddNode(ctx.dest(), ctx.src(0), ctx.src(1))
+        ))
+
+
+        .set(BuiltInTable.SUB, (ctx) -> out(
+            new TcgSubNode(ctx.dest(), ctx.src(0), ctx.src(1))
+        ))
+
+        //// Logical ////
+
+        .set(BuiltInTable.NOT, (ctx) -> out(
+            new TcgNotNode(ctx.dest(), ctx.src(0), ctx.src(1))
+        ))
+
+        .set(BuiltInTable.AND, (ctx) -> out(
+            new TcgAndNode(ctx.dest(), ctx.src(0), ctx.src(1))
+        ))
+
+        .set(BuiltInTable.OR, (ctx) -> out(
+            new TcgOrNode(ctx.dest(), ctx.src(0), ctx.src(1))
+        ))
+
+        .set(BuiltInTable.XOR, (ctx) -> out(
+            new TcgXorNode(ctx.dest(), ctx.src(0), ctx.src(1))
+        ))
+
+        //// Comparison ////
+
+        .set(BuiltInTable.EQU, (ctx) -> out(
+            new TcgSetCond(ctx.dest(), ctx.src(0), ctx.src(1), TcgCondition.EQ)
+        ))
+
+        .set(BuiltInTable.NEQ, (ctx) -> out(
+            new TcgSetCond(ctx.dest(), ctx.src(0), ctx.src(1), TcgCondition.NE)
+        ))
+
+        .set(BuiltInTable.SLTH, (ctx) -> out(
+            new TcgSetCond(ctx.dest(), ctx.src(0), ctx.src(1), TcgCondition.LT)
+        ))
+
+        .set(BuiltInTable.ULTH, (ctx) -> out(
+            new TcgSetCond(ctx.dest(), ctx.src(0), ctx.src(1), TcgCondition.LTU)
+        ))
+
+        .set(BuiltInTable.SLEQ, (ctx) -> out(
+            new TcgSetCond(ctx.dest(), ctx.src(0), ctx.src(1), TcgCondition.LE)
+        ))
+
+        .set(BuiltInTable.ULEQ, (ctx) -> out(
+            new TcgSetCond(ctx.dest(), ctx.src(0), ctx.src(1), TcgCondition.LEU)
+        ))
+
+        .set(BuiltInTable.SGTH, (ctx) -> out(
+            new TcgSetCond(ctx.dest(), ctx.src(0), ctx.src(1), TcgCondition.GT)
+        ))
+
+        .set(BuiltInTable.UGTH, (ctx) -> out(
+            new TcgSetCond(ctx.dest(), ctx.src(0), ctx.src(1), TcgCondition.GTU)
+        ))
+
+        .set(BuiltInTable.SGEQ, (ctx) -> out(
+            new TcgSetCond(ctx.dest(), ctx.src(0), ctx.src(1), TcgCondition.GE)
+        ))
+
+        .set(BuiltInTable.UGEQ, (ctx) -> out(
+            new TcgSetCond(ctx.dest(), ctx.src(0), ctx.src(1), TcgCondition.GEU)
+        ))
+
+        //// Shifts/Rotates ////
+
+        .set(BuiltInTable.LSL, (ctx) -> out(
+            new TcgShlNode(ctx.dest(), ctx.src(0), ctx.src(1))
+        ))
+
+        .set(BuiltInTable.LSR, (ctx) -> out(
+            new TcgShrNode(ctx.dest(), ctx.src(0), ctx.src(1))
+        ))
+
+        .set(BuiltInTable.ASR, (ctx) -> out(
+            new TcgSarNode(ctx.dest(), ctx.src(0), ctx.src(1))
+        ))
+
+        .build();
+  }
 
   /**
    * Lowers a built-in function call to TCG nodes.
@@ -596,7 +681,17 @@ class BuiltInTcgLoweringExecutor {
       arg.ensure(src != null, "Expected to be represented by a TCGv");
       return src;
     }
+  }
 
 
+  private record MapBuilder<K, V>(Map<K, V> map) {
+    MapBuilder<K, V> set(K key, V value) {
+      map.put(key, value);
+      return this;
+    }
+
+    Map<K, V> build() {
+      return map;
+    }
   }
 }

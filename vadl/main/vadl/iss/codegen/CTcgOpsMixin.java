@@ -3,6 +3,7 @@ package vadl.iss.codegen;
 import java.io.StringWriter;
 import vadl.cppCodeGen.CodeGenerator;
 import vadl.cppCodeGen.mixins.CGenMixin;
+import vadl.iss.passes.safeResourceRead.nodes.ExprSaveNode;
 import vadl.iss.passes.tcgLowering.nodes.TcgNode;
 import vadl.viam.graph.Node;
 import vadl.viam.graph.dependency.ReadRegNode;
@@ -33,7 +34,6 @@ public interface CTcgOpsMixin extends CGenMixin {
           // TODO: Make a custom node (TcgReadPC)
           writer.write("(ctx->base.pc_next)");
         })
-
 
     ;
   }
