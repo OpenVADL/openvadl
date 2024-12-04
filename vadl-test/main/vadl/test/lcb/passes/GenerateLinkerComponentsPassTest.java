@@ -25,18 +25,35 @@ public class GenerateLinkerComponentsPassTest extends AbstractLcbTest {
 
     // Then
     var names = List.of(
-        "R_RV64IM_lo_Itype_imm", "R_RV64IM_lo_Utype_imm", "R_RV64IM_lo_Stype_imm",
-        "R_RV64IM_lo_Btype_imm", "R_RV64IM_lo_Jtype_imm", "R_RV64IM_lo_Ftype_sft",
-        "R_RV64IM_hi_Itype_imm", "R_RV64IM_hi_Utype_imm", "R_RV64IM_hi_Stype_imm",
-        "R_RV64IM_hi_Btype_imm", "R_RV64IM_hi_Jtype_imm", "R_RV64IM_hi_Ftype_sft",
-        "R_RV64IM_Ftype_ABSOLUTE_sft", "R_RV64IM_Btype_ABSOLUTE_imm", "R_RV64IM_Stype_ABSOLUTE_imm",
-        "R_RV64IM_Itype_ABSOLUTE_imm", "R_RV64IM_Utype_ABSOLUTE_imm", "R_RV64IM_Jtype_ABSOLUTE_imm",
-        "R_RV64IM_Ftype_RELATIVE_sft", "R_RV64IM_Btype_RELATIVE_imm", "R_RV64IM_Stype_RELATIVE_imm",
-        "R_RV64IM_Itype_RELATIVE_imm", "R_RV64IM_Utype_RELATIVE_imm", "R_RV64IM_Jtype_RELATIVE_imm"
+        "R_RV64IM_hi_Itype_imm",
+        "R_RV64IM_hi_Utype_imm",
+        "R_RV64IM_hi_Stype_imm",
+        "R_RV64IM_hi_Btype_imm",
+        "R_RV64IM_hi_Jtype_imm",
+        "R_RV64IM_hi_Ftype_sft",
+        "R_RV64IM_lo_Itype_imm",
+        "R_RV64IM_lo_Utype_imm",
+        "R_RV64IM_lo_Stype_imm",
+        "R_RV64IM_lo_Btype_imm",
+        "R_RV64IM_lo_Jtype_imm",
+        "R_RV64IM_lo_Ftype_sft",
+        "R_RV64IM_Ftype_ABSOLUTE_sft",
+        "R_RV64IM_Btype_ABSOLUTE_imm",
+        "R_RV64IM_Stype_ABSOLUTE_imm",
+        "R_RV64IM_Itype_ABSOLUTE_imm",
+        "R_RV64IM_Utype_ABSOLUTE_imm",
+        "R_RV64IM_Jtype_ABSOLUTE_imm",
+        "R_RV64IM_Ftype_RELATIVE_sft",
+        "R_RV64IM_Btype_RELATIVE_imm",
+        "R_RV64IM_Stype_RELATIVE_imm",
+        "R_RV64IM_Itype_RELATIVE_imm",
+        "R_RV64IM_Utype_RELATIVE_imm",
+        "R_RV64IM_Jtype_RELATIVE_imm"
     );
-
-    assertEquals(names, output.elfRelocations().stream()
+    var actual = output.elfRelocations().stream()
         .map(x -> x.elfRelocationName().value())
-        .toList());
+        .toList();
+
+    assertEquals(names, actual);
   }
 }
