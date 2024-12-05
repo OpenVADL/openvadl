@@ -32,7 +32,11 @@ import vadl.viam.graph.dependency.ZeroExtendNode;
  *
  * <p>Note that this visitor should only be used if traditional node search/graph manipulation
  * is not sufficient. Most of the times it is far easier to implement a pass without visitors.</p>
+ *
+ * @deprecated Using visitors for nodes is deprecated. To handle many different types of nodes
+ *     use {@link vadl.javaannotations.DispatchFor @DispatchFor} instead.
  */
+@Deprecated
 public interface GraphNodeVisitor {
   /**
    * Catchall method when overloading did not work.

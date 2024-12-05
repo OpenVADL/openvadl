@@ -4,8 +4,8 @@ import vadl.iss.passes.nodes.TcgVRefNode;
 import vadl.viam.graph.Node;
 
 /**
- * Represents a left shift operation in the Tiny Code Generator (TCG).
- * This class extends TcgBinaryImmOpNode to perform a left shift operation
+ * Represents an arithmetic right shift operation in the Tiny Code Generator (TCG).
+ * This class extends TcgBinaryImmOpNode to perform an arithmetic right shift operation
  * on a source variable by a specified immediate value.
  */
 public class TcgSarNode extends TcgBinaryOpNode {

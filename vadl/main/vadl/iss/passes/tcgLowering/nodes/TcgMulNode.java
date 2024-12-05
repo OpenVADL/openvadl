@@ -4,6 +4,10 @@ import vadl.iss.passes.nodes.TcgVRefNode;
 import vadl.iss.passes.tcgLowering.Tcg_32_64;
 import vadl.viam.graph.Node;
 
+
+/**
+ * Represents the {@code tcg_gen_mul} TCG instruction in the TCG VIAM lowering.
+ */
 public class TcgMulNode extends TcgBinaryOpNode {
 
   public TcgMulNode(TcgVRefNode resultVar, TcgVRefNode arg1, TcgVRefNode arg2) {

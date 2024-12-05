@@ -14,8 +14,8 @@ import vadl.viam.graph.dependency.ExpressionNode;
  * operation node that jumps to the location of the current PC address.
  * If the address is not yet translated to native machine code, it will trigger
  * the translation loop.
- * <p>
- * It translates to {@code lookup_and_goto_ptr();}
+ *
+ * <p>It translates to {@code lookup_and_goto_ptr();}
  */
 public class TcgLookupAndGotoPtr extends TcgNode {
 

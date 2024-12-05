@@ -113,11 +113,9 @@ public class TcgOpLoweringPass extends Pass {
         IssVarSsaAssignment.Result.class);
 
     viam.isa().get().ownInstructions()
-//        .stream().filter(i -> supportedInstructions.contains(i.simpleName()))
-        .forEach(i -> {
-          new TcgOpLoweringExecutor(requireNonNull(assignments.varAssignments().get(i)))
-              .runOn(i.behavior());
-        });
+        .forEach(i ->
+            new TcgOpLoweringExecutor(requireNonNull(assignments.varAssignments().get(i)))
+                .runOn(i.behavior()));
 
     return null;
   }

@@ -15,6 +15,16 @@ import vadl.viam.graph.dependency.ReadRegNode;
 import vadl.viam.graph.dependency.ReadResourceNode;
 import vadl.viam.passes.sideEffectScheduling.nodes.InstrExitNode;
 
+/**
+ * Determines if a {@link InstrExitNode instr exit} can be done with a statically known
+ * PC (e.g. because of a jump to current PC + 4 which is known from the {@code DisasContext})
+ * or if it is dependent of a statically unknown register (e.g. in {@code JALR} where the
+ * new PC is read from a register in X).
+ * If the latter is the case, the PC write must be scheduled, otherwise not.
+ *
+ * <p>Additionally, the pass converts all PC reads into {@link IssStaticPcRegNode}s, so
+ * they are not scheduled in the succeeding {@link IssTcgSchedulingPass}.</p>
+ */
 public class IssPcAccessConversionPass extends Pass {
 
   public IssPcAccessConversionPass(GeneralConfiguration configuration) {

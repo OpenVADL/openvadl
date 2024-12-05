@@ -4,7 +4,7 @@ import vadl.iss.passes.nodes.TcgVRefNode;
 import vadl.viam.graph.Node;
 
 /**
- * Represents the {@code tcg_gen_add} TCG instruction in the TCG VIAM lowering.
+ * Represents the {@code tcg_gen_not} TCG instruction in the TCG VIAM lowering.
  */
 public class TcgNotNode extends TcgBinaryOpNode {
 
