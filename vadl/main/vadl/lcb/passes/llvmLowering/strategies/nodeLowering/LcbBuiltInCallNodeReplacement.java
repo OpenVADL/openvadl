@@ -3,6 +3,7 @@ package vadl.lcb.passes.llvmLowering.strategies.nodeLowering;
 import static vadl.viam.ViamError.ensure;
 
 import java.util.List;
+import java.util.Set;
 import org.jetbrains.annotations.Nullable;
 import vadl.error.Diagnostic;
 import vadl.lcb.passes.llvmLowering.domain.selectionDag.LlvmAddSD;
@@ -34,6 +35,9 @@ import vadl.viam.graph.dependency.ConstantNode;
 public class LcbBuiltInCallNodeReplacement
     implements GraphVisitor.NodeApplier<BuiltInCall, BuiltInCall> {
   private final List<GraphVisitor.NodeApplier<? extends Node, ? extends Node>> replacer;
+  // Builtins which do not need to be handled here because they are handled elsewhere.
+  private final Set<BuiltInTable.BuiltIn> exceptions =
+      Set.of(BuiltInTable.SMULL, BuiltInTable.SMULLS, BuiltInTable.UMULL, BuiltInTable.UMULLS);
 
   public LcbBuiltInCallNodeReplacement(
       List<GraphVisitor.NodeApplier<? extends Node, ? extends Node>> replacer) {
@@ -53,10 +57,6 @@ public class LcbBuiltInCallNodeReplacement
       return node.replaceAndDelete(new LlvmSubSD(node.arguments(), node.type()));
     } else if (node.builtIn() == BuiltInTable.MUL || node.builtIn() == BuiltInTable.MULS) {
       return node.replaceAndDelete(new LlvmMulSD(node.arguments(), node.type()));
-    } else if (node.builtIn() == BuiltInTable.SMULL || node.builtIn() == BuiltInTable.SMULLS) {
-      return node.replaceAndDelete(new LlvmSMulSD(node.arguments(), node.type()));
-    } else if (node.builtIn() == BuiltInTable.UMULL || node.builtIn() == BuiltInTable.UMULLS) {
-      return node.replaceAndDelete(new LlvmUMulSD(node.arguments(), node.type()));
     } else if (node.builtIn() == BuiltInTable.SDIV || node.builtIn() == BuiltInTable.SDIVS) {
       return node.replaceAndDelete(new LlvmSDivSD(node.arguments(), node.type()));
     } else if (node.builtIn() == BuiltInTable.UDIV || node.builtIn() == BuiltInTable.UDIVS) {
@@ -94,7 +94,7 @@ public class LcbBuiltInCallNodeReplacement
 
   @Override
   public boolean acceptable(Node node) {
-    return node instanceof BuiltInCall;
+    return node instanceof BuiltInCall bc && !exceptions.contains(bc.builtIn());
   }
 
   @Override

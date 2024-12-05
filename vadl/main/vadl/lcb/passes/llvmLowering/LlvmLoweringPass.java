@@ -123,18 +123,6 @@ public class LlvmLoweringPass extends Pass {
       Map<MachineInstructionLabel, List<Instruction>> labelledMachineInstructions) {
     var tableGenRecords = new IdentityHashMap<Instruction, LlvmLoweringRecord>();
 
-    // Get the supported instructions from the matching.
-    // We only instructions which we know about in this pass.
-    /*
-    var functionInlinerResult = ensureNonNull(
-        ((FunctionInlinerPass.Output) passResults
-            .lastResultOf(FunctionInlinerPass.class)),
-        () -> Diagnostic.error("Cannot find uninlined behaviors of the instructions",
-            viam.sourceLocation()));
-    var uninlined = functionInlinerResult.behaviors();
-    var additionalUninlined = functionInlinerResult.additionalBehaviors();
-     */
-
     // We flip it because we need to know the label for the instruction to
     // apply one of the different lowering strategies.
     // A strategy knows whether it can lower it by the label.

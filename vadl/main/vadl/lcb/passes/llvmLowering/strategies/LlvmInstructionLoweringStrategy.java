@@ -49,6 +49,9 @@ import vadl.lcb.passes.llvmLowering.strategies.nodeLowering.LcbIfNodeReplacement
 import vadl.lcb.passes.llvmLowering.strategies.nodeLowering.LcbInstrCallNodeReplacement;
 import vadl.lcb.passes.llvmLowering.strategies.nodeLowering.LcbInstrEndNodeReplacement;
 import vadl.lcb.passes.llvmLowering.strategies.nodeLowering.LcbLetNodeReplacement;
+import vadl.lcb.passes.llvmLowering.strategies.nodeLowering.LcbMulNodeReplacement;
+import vadl.lcb.passes.llvmLowering.strategies.nodeLowering.LcbMulhsNodeReplacement;
+import vadl.lcb.passes.llvmLowering.strategies.nodeLowering.LcbMulhuNodeReplacement;
 import vadl.lcb.passes.llvmLowering.strategies.nodeLowering.LcbReadMemNodeReplacement;
 import vadl.lcb.passes.llvmLowering.strategies.nodeLowering.LcbReadRegFileNodeReplacement;
 import vadl.lcb.passes.llvmLowering.strategies.nodeLowering.LcbReadRegNodeReplacement;
@@ -151,6 +154,9 @@ public abstract class LlvmInstructionLoweringStrategy {
       List<GraphVisitor.NodeApplier<? extends Node, ? extends Node>> hooks,
       GraphVisitor.NodeApplier<? extends Node, ? extends Node> fieldAccessRefNodeReplacement) {
     var v1 = new LcbBranchEndNodeReplacement(hooks);
+    var mul = new LcbMulNodeReplacement(hooks);
+    var mulhs = new LcbMulhsNodeReplacement(hooks);
+    var mulhu = new LcbMulhuNodeReplacement(hooks);
     var v2 = new LcbBuiltInCallNodeReplacement(hooks);
     var v3 = new LcbConstantNodeReplacement(hooks);
     var v5 = new LcbFuncCallReplacement();
@@ -173,6 +179,9 @@ public abstract class LlvmInstructionLoweringStrategy {
     var v22 = new LlvmUnlowerableNodeReplacement(hooks);
 
     hooks.add(v1);
+    hooks.add(mul);
+    hooks.add(mulhs);
+    hooks.add(mulhu);
     hooks.add(v2);
     hooks.add(v3);
     hooks.add(fieldAccessRefNodeReplacement);

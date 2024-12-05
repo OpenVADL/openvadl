@@ -7,6 +7,7 @@ import static vadl.types.BuiltInTable.ANDS;
 import static vadl.types.BuiltInTable.EQU;
 import static vadl.types.BuiltInTable.LSL;
 import static vadl.types.BuiltInTable.MUL;
+import static vadl.types.BuiltInTable.MULS;
 import static vadl.types.BuiltInTable.NEQ;
 import static vadl.types.BuiltInTable.OR;
 import static vadl.types.BuiltInTable.ORS;
@@ -33,6 +34,8 @@ import static vadl.types.BuiltInTable.ULEQ;
 import static vadl.types.BuiltInTable.ULTH;
 import static vadl.types.BuiltInTable.UMOD;
 import static vadl.types.BuiltInTable.UMODS;
+import static vadl.types.BuiltInTable.UMULL;
+import static vadl.types.BuiltInTable.UMULLS;
 import static vadl.types.BuiltInTable.XOR;
 import static vadl.types.BuiltInTable.XORS;
 import static vadl.viam.ViamError.ensure;
@@ -62,6 +65,8 @@ import vadl.viam.Specification;
 import vadl.viam.graph.control.IfNode;
 import vadl.viam.graph.dependency.BuiltInCall;
 import vadl.viam.graph.dependency.FieldAccessRefNode;
+import vadl.viam.graph.dependency.SliceNode;
+import vadl.viam.graph.dependency.TruncateNode;
 import vadl.viam.graph.dependency.WriteMemNode;
 import vadl.viam.graph.dependency.WriteRegFileNode;
 import vadl.viam.graph.dependency.WriteRegNode;
@@ -155,6 +160,10 @@ public class IsaMachineInstructionMatchingPass extends Pass implements IsaMatchi
         extend(matched, MachineInstructionLabel.AND, instruction);
       } else if (findRR_OR_findRI(behavior, List.of(OR, ORS))) {
         extend(matched, MachineInstructionLabel.OR, instruction);
+      } else if (findRR_MultiplicationHigh(behavior, Set.of(SMULL, SMULLS))) {
+        extend(matched, MachineInstructionLabel.MULHS, instruction);
+      } else if (findRR_MultiplicationHigh(behavior, Set.of(UMULL, UMULLS))) {
+        extend(matched, MachineInstructionLabel.MULHU, instruction);
       } else if (findRR(behavior, List.of(XOR, XORS))) {
         extend(matched, MachineInstructionLabel.XOR, instruction);
       } else if (findRI(behavior, List.of(XOR, XORS))) {
@@ -163,7 +172,7 @@ public class IsaMachineInstructionMatchingPass extends Pass implements IsaMatchi
         // However, when generating alternative patterns for conditionals,
         // then we need the XORI instruction. Therefore, we put it extra.
         extend(matched, MachineInstructionLabel.XORI, instruction);
-      } else if (findRR_OR_findRI(behavior, List.of(MUL, SMULL, SMULLS))) {
+      } else if (findRR_Mul(behavior, List.of(MUL, MULS, SMULL, SMULLS))) {
         extend(matched, MachineInstructionLabel.MUL, instruction);
       } else if (findRR_OR_findRI(behavior, List.of(SDIV, SDIVS))) {
         extend(matched, MachineInstructionLabel.SDIV, instruction);
@@ -221,6 +230,51 @@ public class IsaMachineInstructionMatchingPass extends Pass implements IsaMatchi
     });
 
     return Collections.unmodifiableMap(matched);
+  }
+
+  private boolean findRR_Mul(UninlinedGraph behavior, List<BuiltInTable.BuiltIn> builtins) {
+    // There are two approaches:
+    // (1) Cut the result
+    // (2) Cut the inputs
+    return TreeMatcher.matches(behavior.getNodes(BuiltInCall.class).map(x -> x),
+            new BuiltInMatcher(builtins, List.of(
+                new AnyChildMatcher(new AnyReadRegFileMatcher()),
+                new AnyChildMatcher(new AnyReadRegFileMatcher())
+            )))
+        .stream()
+        .map(x -> (BuiltInCall) x)
+        .anyMatch(x -> x.usages().allMatch(y -> y instanceof TruncateNode)
+            || x.arguments().stream().allMatch(arg -> arg instanceof TruncateNode)
+            || behavior.getNodes(TruncateNode.class).findAny().isEmpty()
+        );
+  }
+
+  private boolean findRR_MultiplicationHigh(UninlinedGraph behavior,
+                                            Set<BuiltInTable.BuiltIn> builtins) {
+    // We need a multiplication which is defined in `builtins` and then a slice node
+    // which gets the top part.
+    return
+        TreeMatcher.matches(behavior.getNodes(BuiltInCall.class).map(x -> x),
+                new BuiltInMatcher(builtins, List.of(
+                    new AnyChildMatcher(new AnyReadRegFileMatcher()),
+                    new AnyChildMatcher(new AnyReadRegFileMatcher())
+                )))
+            .stream()
+            .map(x -> (BuiltInCall) x)
+            .anyMatch(node -> {
+              /*
+                Example: `ty` is `int128`
+                then `high` is `128` and `64`.
+                A SliceNode requires the bounds `lsb` = `64` and `msb` = `127`.
+               */
+              var ty = (BitsType) node.type();
+              var high = ty.bitWidth();
+              var low = high / 2;
+              return node.usages().allMatch(
+                  usage -> usage instanceof SliceNode sliceNode
+                      && sliceNode.bitSlice().lsb() == low
+                      && sliceNode.bitSlice().msb() == high - 1);
+            }) && writesExactlyOneRegisterClass(behavior);
   }
 
   @Override

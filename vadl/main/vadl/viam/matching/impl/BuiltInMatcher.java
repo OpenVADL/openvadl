@@ -1,6 +1,7 @@
 package vadl.viam.matching.impl;
 
 import com.google.common.collect.Streams;
+import java.util.Collection;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
@@ -18,10 +19,10 @@ import vadl.viam.matching.Matcher;
 public class BuiltInMatcher implements Matcher {
 
   private final Set<BuiltInTable.BuiltIn> builtIns;
-  private final List<Matcher> matchers;
+  private final Collection<Matcher> matchers;
 
   public BuiltInMatcher(BuiltInTable.BuiltIn builtIn,
-                        List<Matcher> matchers) {
+                        Collection<Matcher> matchers) {
     this.builtIns = Set.of(builtIn);
     this.matchers = matchers;
   }
@@ -32,7 +33,7 @@ public class BuiltInMatcher implements Matcher {
    * @param builtIns is a list of accepted builtins.
    * @param matchers for children nodes.
    */
-  public BuiltInMatcher(List<BuiltInTable.BuiltIn> builtIns, List<Matcher> matchers) {
+  public BuiltInMatcher(Collection<BuiltInTable.BuiltIn> builtIns, List<Matcher> matchers) {
     this.builtIns = new HashSet<>(builtIns);
     this.matchers = matchers;
   }

@@ -35,7 +35,9 @@ public class IsaMachineInstructionMatchingPassTest extends AbstractLcbTest {
         Arguments.of(List.of("OR", "ORI"), MachineInstructionLabel.OR),
         Arguments.of(List.of("XOR"), MachineInstructionLabel.XOR),
         Arguments.of(List.of("XORI"), MachineInstructionLabel.XORI),
-        Arguments.of(List.of("MUL", "MULW", "MULHSU", "MULH"), MachineInstructionLabel.MUL),
+        Arguments.of(List.of("MUL", "MULW"), MachineInstructionLabel.MUL),
+        Arguments.of(List.of("MULHU"), MachineInstructionLabel.MULHU),
+        Arguments.of(List.of("MULH", "MULHSU"), MachineInstructionLabel.MULHS),
         Arguments.of(List.of("DIV", "DIVW"), MachineInstructionLabel.SDIV),
         Arguments.of(List.of("DIVU", "DIVUW"), MachineInstructionLabel.UDIV),
         Arguments.of(List.of("REMU", "REMUW"), MachineInstructionLabel.UMOD),
@@ -61,8 +63,7 @@ public class IsaMachineInstructionMatchingPassTest extends AbstractLcbTest {
     var setup = setupPassManagerAndRunSpec(
         "sys/risc-v/rv64im.vadl",
         PassOrders.lcb(config)
-        // TODO: Uncomment this
-//            .untilFirst(IsaMachineInstructionMatchingPass.class)
+            .untilFirst(IsaMachineInstructionMatchingPass.class)
     );
     var passManager = setup.passManager();
 
