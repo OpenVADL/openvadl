@@ -584,7 +584,7 @@ class SymbolTable {
         symbols.defineSymbol(new GenericSymbol(signal.id.name, signal), signal.id.loc);
       } else if (definition instanceof AsmDescriptionDefinition asmDescription) {
         symbols.defineSymbol(new GenericSymbol(asmDescription.id.name, asmDescription),
-            asmDescription.id.loc);
+            asmDescription.id.location());
         var asmDescSymbolTable = symbols.createChild();
         asmDescription.symbolTable = asmDescSymbolTable;
         asmDescription.modifiers.forEach(
@@ -610,7 +610,7 @@ class SymbolTable {
         defaultRules.forEach(rule -> collectSymbols(asmDescSymbolTable, rule));
         asmDescription.rules.addAll(defaultRules);
       } else if (definition instanceof AsmGrammarRuleDefinition rule) {
-        symbols.defineSymbol(new GenericSymbol(rule.id.name, rule), rule.id.loc);
+        symbols.defineSymbol(new GenericSymbol(rule.id.name, rule), rule.id.location());
         collectSymbols(symbols, rule.alternatives);
         if (rule.asmType != null) {
           collectSymbols(symbols, rule.asmType);
@@ -641,7 +641,7 @@ class SymbolTable {
           collectSymbols(symbols, element.groupAsmType);
         }
       } else if (definition instanceof AsmGrammarLocalVarDefinition localVar) {
-        symbols.defineSymbol(new GenericSymbol(localVar.id.name, localVar), localVar.id.loc);
+        symbols.defineSymbol(new GenericSymbol(localVar.id.name, localVar), localVar.id.location());
         if (localVar.asmLiteral != null) {
           collectSymbols(symbols, localVar.asmLiteral);
         }
@@ -1013,7 +1013,7 @@ class SymbolTable {
           if (idSymbol == null) {
             asmLiteral.symbolTable()
                 .reportError("Unknown symbol in asm grammar rule: " + asmLiteral.id.name,
-                    asmLiteral.id.loc);
+                    asmLiteral.id.location());
           }
         }
         if (asmLiteral.asmType != null) {
@@ -1024,7 +1024,7 @@ class SymbolTable {
         if (!AsmType.isInputAsmType(asmTypeDefinition.id.name)) {
           asmTypeDefinition.symbolTable()
               .reportError("Unknown asm type: " + asmTypeDefinition.id.name,
-                  asmTypeDefinition.id.loc);
+                  asmTypeDefinition.id.location());
         }
       }
     }
