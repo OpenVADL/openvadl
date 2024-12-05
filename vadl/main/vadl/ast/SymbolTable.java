@@ -587,10 +587,14 @@ class SymbolTable {
             asmDescription.id.location());
         var asmDescSymbolTable = symbols.createChild();
         asmDescription.symbolTable = asmDescSymbolTable;
+
+        var modifierSymbols = asmDescSymbolTable.createChild();
         asmDescription.modifiers.forEach(
-            modifier -> collectSymbols(asmDescSymbolTable, modifier));
+            modifier -> collectSymbols(modifierSymbols, modifier));
+
+        var directiveSymbols = asmDescSymbolTable.createChild();
         asmDescription.directives.forEach(
-            directive -> collectSymbols(asmDescSymbolTable, directive));
+            directive -> collectSymbols(directiveSymbols, directive));
 
         // add integer negation function to common definitions if not already defined
         // this function is used in the grammar default rules
@@ -609,6 +613,12 @@ class SymbolTable {
         var defaultRules = AsmGrammarDefaultRules.notIncludedDefaultRules(asmDescription.rules);
         defaultRules.forEach(rule -> collectSymbols(asmDescSymbolTable, rule));
         asmDescription.rules.addAll(defaultRules);
+      } else if (definition instanceof AsmModifierDefinition modifier) {
+        symbols.defineSymbol(new GenericSymbol(modifier.stringLiteral.toString(), modifier),
+            modifier.location());
+      } else if (definition instanceof AsmDirectiveDefinition directive) {
+        symbols.defineSymbol(new GenericSymbol(directive.stringLiteral.toString(), directive),
+            directive.location());
       } else if (definition instanceof AsmGrammarRuleDefinition rule) {
         symbols.defineSymbol(new GenericSymbol(rule.id.name, rule), rule.id.location());
         collectSymbols(symbols, rule.alternatives);

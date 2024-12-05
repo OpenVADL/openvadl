@@ -64,6 +64,29 @@ public class AsmDescriptionTests {
   }
 
   @Test
+  void asmDescriptionDuplicateModifierString() {
+    var prog = """
+          instruction set architecture ISA = {
+            relocation HI ( symbol : Bits <32> ) -> Bits <16> = ( symbol >> 16 ) & 0xFFFF
+            relocation LO ( symbol : Bits <32> ) -> Bits <12> =   symbol         & 0xFFF
+          }
+          application binary interface ABI for ISA = {}
+        
+          assembly description AD for ABI = {
+            modifiers = {
+              "hi" -> ISA::HI,
+              "hi" -> ISA::LO
+            }
+        
+            grammar = {
+              A : "B" ;
+            }
+          }
+        """;
+    Assertions.assertThrows(DiagnosticList.class, () -> VadlParser.parse(prog));
+  }
+
+  @Test
   void asmDescriptionWithEmptyModifiers() {
     var prog = """
           modifiers = {
@@ -104,6 +127,21 @@ public class AsmDescriptionTests {
           }
         """;
     verifyPrettifiedAst(VadlParser.parse(inputWrappedByValidAsmDescription(prog)));
+  }
+
+  @Test
+  void asmDescriptionDuplicateDirectiveString() {
+    var prog = """
+          directives = {
+            "dir1" -> ALIGN_POW2,
+            "dir1" -> BYTE4
+          }
+        
+          grammar = {
+            A : "B" ;
+          }
+        """;
+    Assertions.assertThrows(DiagnosticList.class, () -> VadlParser.parse(prog));
   }
 
   @Test
