@@ -38,25 +38,25 @@ public final class TableGenInstructionRenderer {
             def %s : Instruction
             {
             let Namespace = "%s";
-            
+                        
             let Size = %d;
             let CodeSize = %d;
-            
+                        
             let OutOperandList = ( outs %s );
             let InOperandList = ( ins %s );
-            
+                        
             field bits<%s> Inst;
-            
+                        
             // SoftFail is a field the disassembler can use to provide a way for
             // instructions to not match without killing the whole decode process. It is
             // mainly used for ARM, but Tablegen expects this field to exist or it fails
             // to build the decode table.
             field bits<%s> SoftFail = 0;
-            
+                        
             %s
-            
+                        
             %s
-            
+                        
             let isTerminator  = %d;
             let isBranch      = %d;
             let isCall        = %d;
@@ -65,12 +65,12 @@ public final class TableGenInstructionRenderer {
             let isCodeGenOnly = %d;
             let mayLoad       = %d;
             let mayStore      = %d;
-            
+                        
             let Constraints = "";
             let AddedComplexity = 0;
-            
+                        
             let Pattern = [%s];
-            
+                        
             let Uses = [ %s ];
             let Defs = [ %s ];
             }
@@ -122,10 +122,10 @@ public final class TableGenInstructionRenderer {
             def %s : Instruction
             {
             let Namespace = "%s";
-            
+                        
             let OutOperandList = ( outs %s );
             let InOperandList = ( ins %s );
-            
+                        
             let isTerminator  = %d;
             let isBranch      = %d;
             let isCall        = %d;
@@ -134,16 +134,16 @@ public final class TableGenInstructionRenderer {
             let isCodeGenOnly = %d;
             let mayLoad       = %d;
             let mayStore      = %d;
-            
+                        
             let Constraints = "";
             let AddedComplexity = 0;
-            
+                        
             let Pattern = [%s];
-            
+                        
             let Uses = [ %s ];
             let Defs = [ %s ];
             }
-            
+                        
             %s
             """,
         instruction.getName(),

@@ -1,0 +1,12 @@
+FROM kper1337/riscv64-spike-lcb-test:v2
+ARG TARGET
+ARG SCCACHE_REDIS_ENDPOINT
+ARG UPSTREAM_BUILD_TARGET
+ENV TARGET=${TARGET}
+ENV LLVM_UPSTREAM_TARGETS=${UPSTREAM_BUILD_TARGET}
+ENV SCCACHE_REDIS_ENDPOINT=${SCCACHE_REDIS_ENDPOINT}
+COPY . /src
+WORKDIR /src
+RUN mv /opt/sccache/sccache /usr/bin/sccache
+RUN make && sccache -s
+CMD sh /src/embench/benchmark-extras/run-benchmarks-spike-clang-lcb.sh

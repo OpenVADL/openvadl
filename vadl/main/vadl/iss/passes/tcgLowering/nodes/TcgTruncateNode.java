@@ -2,6 +2,7 @@ package vadl.iss.passes.tcgLowering.nodes;
 
 import java.util.List;
 import java.util.function.Function;
+import vadl.iss.passes.nodes.TcgVRefNode;
 import vadl.iss.passes.tcgLowering.TcgV;
 import vadl.javaannotations.viam.DataValue;
 import vadl.viam.graph.Node;
@@ -16,7 +17,7 @@ public class TcgTruncateNode extends TcgUnaryOpNode {
   @DataValue
   int bitWidth;
 
-  public TcgTruncateNode(TcgV res, TcgV arg, int bitWidth) {
+  public TcgTruncateNode(TcgVRefNode res, TcgVRefNode arg, int bitWidth) {
     super(res, arg);
     this.bitWidth = bitWidth;
   }
@@ -41,12 +42,12 @@ public class TcgTruncateNode extends TcgUnaryOpNode {
 
   @Override
   public Node copy() {
-    return new TcgTruncateNode(dest, arg, bitWidth);
+    return new TcgTruncateNode(dest.copy(TcgVRefNode.class), arg.copy(TcgVRefNode.class), bitWidth);
   }
 
   @Override
   public Node shallowCopy() {
-    return copy();
+    return new TcgTruncateNode(dest, arg, bitWidth);
   }
 
   @Override

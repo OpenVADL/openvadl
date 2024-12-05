@@ -4,7 +4,6 @@ import java.io.StringWriter;
 import vadl.lcb.passes.llvmLowering.domain.machineDag.LcbMachineInstructionNode;
 import vadl.lcb.passes.llvmLowering.domain.machineDag.LcbMachineInstructionParameterNode;
 import vadl.lcb.passes.llvmLowering.domain.machineDag.LcbMachineInstructionValueNode;
-import vadl.lcb.passes.llvmLowering.domain.machineDag.LcbMachineInstructionWrappedNode;
 import vadl.lcb.passes.llvmLowering.domain.machineDag.LcbPseudoInstructionNode;
 import vadl.lcb.passes.llvmLowering.strategies.visitors.TableGenMachineInstructionVisitor;
 import vadl.viam.Constant;
@@ -85,16 +84,6 @@ public class TableGenMachineInstructionPrinterVisitor implements TableGenMachine
   public void visit(LcbMachineInstructionValueNode machineInstructionValueNode) {
     writer.write("(" + machineInstructionValueNode.valueType().getLlvmType() + " "
         + machineInstructionValueNode.constant().asVal().intValue() + ")");
-  }
-
-  @Override
-  public void visit(LcbMachineInstructionWrappedNode lcbMachineInstructionWrappedNode) {
-    writer.write(
-        "(" + lcbMachineInstructionWrappedNode.instruction().identifier.simpleName() + " ");
-
-    joinArgumentsWithComma(lcbMachineInstructionWrappedNode.arguments());
-
-    writer.write(")");
   }
 
   @Override

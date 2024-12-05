@@ -1,8 +1,14 @@
 package vadl.iss.passes.tcgLowering.nodes;
 
 import java.util.List;
+import java.util.Set;
+import org.jetbrains.annotations.Nullable;
+import vadl.iss.passes.nodes.TcgVRefNode;
 import vadl.iss.passes.tcgLowering.TcgV;
 import vadl.javaannotations.viam.DataValue;
+import vadl.javaannotations.viam.Input;
+import vadl.viam.graph.GraphVisitor;
+import vadl.viam.graph.Node;
 
 /**
  * An abstract base class for TCG nodes that are associated with a {@link TcgV} variable.
@@ -14,10 +20,10 @@ public abstract class TcgVarNode extends TcgNode {
   /**
    * The TCG variable associated with this node.
    */
-  @DataValue
-  private TcgV variable;
+  @Input
+  private TcgVRefNode variable;
 
-  public TcgVarNode(TcgV variable) {
+  public TcgVarNode(TcgVRefNode variable) {
     this.variable = variable;
   }
 
@@ -26,13 +32,29 @@ public abstract class TcgVarNode extends TcgNode {
    *
    * @return The TCG variable of this node.
    */
-  public TcgV variable() {
+  public TcgVRefNode variable() {
     return variable;
   }
 
   @Override
-  protected void collectData(List<Object> collection) {
-    super.collectData(collection);
+  public Set<TcgVRefNode> usedVars() {
+    return Set.of();
+  }
+
+  @Override
+  public @Nullable TcgVRefNode definedVar() {
+    return null;
+  }
+
+  @Override
+  protected void collectInputs(List<Node> collection) {
+    super.collectInputs(collection);
     collection.add(variable);
+  }
+
+  @Override
+  protected void applyOnInputsUnsafe(GraphVisitor.Applier<Node> visitor) {
+    super.applyOnInputsUnsafe(visitor);
+    variable = visitor.apply(this, variable, TcgVRefNode.class);
   }
 }

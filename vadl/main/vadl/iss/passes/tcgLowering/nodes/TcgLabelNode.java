@@ -1,7 +1,12 @@
 package vadl.iss.passes.tcgLowering.nodes;
 
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
+import org.jetbrains.annotations.Nullable;
+import vadl.iss.passes.nodes.TcgVRefNode;
 import vadl.iss.passes.tcgLowering.TcgLabel;
+import vadl.iss.passes.tcgLowering.TcgV;
 import vadl.javaannotations.viam.DataValue;
 
 /**
@@ -34,7 +39,17 @@ public abstract class TcgLabelNode extends TcgNode {
   public TcgLabel label() {
     return label;
   }
-  
+
+  @Override
+  public Set<TcgVRefNode> usedVars() {
+    return new HashSet<>();
+  }
+
+  @Override
+  public @Nullable TcgVRefNode definedVar() {
+    return null;
+  }
+
   @Override
   protected void collectData(List<Object> collection) {
     super.collectData(collection);

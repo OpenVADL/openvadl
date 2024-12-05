@@ -64,7 +64,3 @@ E.g. it will abort a commit if the commit message violates
 [OpenVADL's coding guidelines](https://ea.complang.tuwien.ac.at/vadl/vadl/issues/1573).
 
 Note: If you re-clone the repository, you will have to reinstall the hooks.
-
-
-
-

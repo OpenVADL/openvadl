@@ -51,14 +51,18 @@ public class LlvmLoweringPassTest extends AbstractLcbTest {
     );
   }
 
-  private static TestOutput createTestOutputRRWithConditional(LlvmCondCode condCode,
-                                                              String machineInstruction) {
+  private static TestOutput createTestOutputRR_ForLessThanUnsigned(LlvmCondCode condCode,
+                                                                   String machineInstruction,
+                                                                   LlvmCondCode condCode2,
+                                                                   String machineInstruction2) {
     return new TestOutput(
         List.of(new TableGenInstructionOperand(DUMMY_NODE, "X", "rs1"),
             new TableGenInstructionOperand(DUMMY_NODE, "X", "rs2")),
         List.of(new TableGenInstructionOperand(DUMMY_NODE, "X", "rd")),
-        List.of(String.format("(%s X:$rs1, X:$rs2, %s)", "setcc", condCode)),
-        List.of(String.format("(%s X:$rs1, X:$rs2)", machineInstruction)),
+        List.of(String.format("(setcc X:$rs1, X:$rs2, %s)", condCode),
+            String.format("(setcc X:$rs1, X:$rs2, %s)", condCode2)),
+        List.of(String.format("(%s X:$rs1, X:$rs2)", machineInstruction),
+            String.format("(%s (%s X:$rs1, X:$rs2), 1)", machineInstruction2, machineInstruction)),
         createEmptyFlags(),
         false
     );
@@ -340,7 +344,8 @@ public class LlvmLoweringPassTest extends AbstractLcbTest {
             LlvmCondCode.SETNE,
             "SLTU"));
     expectedResults.put("SLTU",
-        createTestOutputRRWithConditional(LlvmCondCode.SETULT, "SLTU"));
+        createTestOutputRR_ForLessThanUnsigned(LlvmCondCode.SETULT, "SLTU",
+            LlvmCondCode.SETUGE, "XORI"));
     expectedResults.put("SLTI",
         createTestOutputRIWithConditional("RV64IM_Itype_immAsInt64", "imm",
             LlvmCondCode.SETLT, "SLTI"));

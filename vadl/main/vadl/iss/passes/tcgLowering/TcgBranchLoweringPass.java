@@ -8,8 +8,9 @@ import java.io.IOException;
 import java.util.Map;
 import org.jetbrains.annotations.Nullable;
 import vadl.configuration.GeneralConfiguration;
-import vadl.iss.passes.IssVariableAllocationPass;
+import vadl.iss.passes.IssVarSsaAssignment;
 import vadl.iss.passes.TcgPassUtils;
+import vadl.iss.passes.nodes.TcgVRefNode;
 import vadl.iss.passes.tcgLowering.nodes.TcgBr;
 import vadl.iss.passes.tcgLowering.nodes.TcgBrCond;
 import vadl.iss.passes.tcgLowering.nodes.TcgGenLabel;
@@ -58,15 +59,15 @@ public class TcgBranchLoweringPass extends Pass {
   public @Nullable Object execute(PassResults passResults, Specification viam)
       throws IOException {
 
-    var varAssignments = passResults.lastResultOf(IssVariableAllocationPass.class,
-        IssVariableAllocationPass.Result.class);
+    var varAssignments = passResults.lastResultOf(IssVarSsaAssignment.class,
+        IssVarSsaAssignment.Result.class);
 
     viam.isa().ifPresent(isa -> isa.ownInstructions()
         .forEach(instr ->
             new TcgBranchLoweringExecutor(
+                instr.behavior(),
                 requireNonNull(varAssignments.varAssignments().get(instr))
-            )
-                .runOn(instr.behavior())
+            ).run()
         ));
 
     return null;
@@ -80,20 +81,21 @@ public class TcgBranchLoweringPass extends Pass {
  */
 class TcgBranchLoweringExecutor implements CfgTraverser {
 
-  Map<DependencyNode, TcgV> assignments;
+  Map<DependencyNode, TcgVRefNode> assignments;
   @LazyInit
   StartNode startNode;
 
-  TcgBranchLoweringExecutor(Map<DependencyNode, TcgV> assignments) {
+  Graph graph;
+
+  TcgBranchLoweringExecutor(Graph graph, Map<DependencyNode, TcgVRefNode> assignments) {
+    this.graph = graph;
     this.assignments = assignments;
   }
 
   /**
    * Initiates traversal of the CFG starting from the graph's start node.
-   *
-   * @param graph the control flow graph to traverse
    */
-  public void runOn(Graph graph) {
+  public void run() {
     startNode = getSingleNode(graph, StartNode.class);
     traverseBranch(startNode);
   }
@@ -163,14 +165,15 @@ class TcgBranchLoweringExecutor implements CfgTraverser {
    * Checks if a TCGv for the given constant already exists.
    * If not, it returns a new constant and adds the constant creation to the instruction start.
    */
-  private TcgV getConstantVariable(Tcg_32_64 width, ExpressionNode constant) {
+  private TcgVRefNode getConstantVariable(Tcg_32_64 width, ExpressionNode constant) {
     if (assignments.containsKey(constant)) {
       return assignments.get(constant);
     }
 
     var constVar = TcgV.constant("const_" + TcgPassUtils.exprVarName(constant), width, constant);
-    startNode.addAfter(TcgGetVar.from(constVar));
-    return constVar;
+    var refNode = graph.addWithInputs(new TcgVRefNode(constVar));
+    startNode.addAfter(TcgGetVar.from(refNode));
+    return refNode;
   }
 
   /**
@@ -236,7 +239,7 @@ class TcgBranchLoweringExecutor implements CfgTraverser {
    * @return the associated TCG variable
    * @throws IllegalStateException if the node is not associated with a TCG variable
    */
-  private TcgV varOf(ExpressionNode node) {
+  private TcgVRefNode varOf(ExpressionNode node) {
     node.ensure(isTcg(node), "Expected to be a tcg node");
     return requireNonNull(assignments.get(node));
   }

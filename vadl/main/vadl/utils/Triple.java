@@ -17,6 +17,10 @@ public class Triple<T, X, Z> {
     this.right = right;
   }
 
+  public static <T, X, Z> Triple<T, X, Z> of(T left, X middle, Z right) {
+    return new Triple<T, X, Z>(left, middle, right);
+  }
+
   public Z right() {
     return right;
   }

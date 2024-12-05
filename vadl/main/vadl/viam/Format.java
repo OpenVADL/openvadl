@@ -51,16 +51,15 @@ public class Format extends Definition implements DefProp.WithType {
    * order.
    */
   public Stream<Field> fieldsSortedByLsbDesc() {
-    return Arrays.stream(fields).sorted(
-        (o1, o2) -> Integer.compare(o1.bitSlice().lsb(), o2.bitSlice.lsb()));
+    return Arrays.stream(fields)
+        .sorted((o1, o2) -> Integer.compare(o1.bitSlice().lsb(), o2.bitSlice.lsb()));
   }
 
   /**
    * Used by VIAM builder only.
    */
   public void setFields(Field[] fields) {
-    this.fields = Stream.of(fields)
-        .sorted(Comparator.comparingInt(a -> -a.bitSlice.msb()))
+    this.fields = Stream.of(fields).sorted(Comparator.comparingInt(a -> -a.bitSlice.msb()))
         .toArray(Field[]::new);
   }
 
@@ -87,10 +86,8 @@ public class Format extends Definition implements DefProp.WithType {
   @Override
   public String toString() {
     return "Format{ " + identifier + ": " + type + "{\n\t"
-        + Stream.concat(Stream.of(fields), fieldAccesses.stream())
-        .map(Definition::toString)
-        .collect(Collectors.joining("\n\t"))
-        + "\n}";
+        + Stream.concat(Stream.of(fields), fieldAccesses.stream()).map(Definition::toString)
+        .collect(Collectors.joining("\n\t")) + "\n}";
   }
 
   @Override
@@ -107,8 +104,7 @@ public class Format extends Definition implements DefProp.WithType {
       return false;
     }
     Format format = (Format) o;
-    return Objects.equals(type, format.type)
-        && Arrays.equals(fields, format.fields)
+    return Objects.equals(type, format.type) && Arrays.equals(fields, format.fields)
         && fieldAccesses.equals(format.fieldAccesses);
   }
 
@@ -148,12 +144,8 @@ public class Format extends Definition implements DefProp.WithType {
      * @param bitSlice     the constant bitslice of the instruction for this field
      * @param parentFormat the parent format of the field
      */
-    public Field(
-        Identifier identifier,
-        DataType type,
-        Constant.BitSlice bitSlice,
-        Format parentFormat
-    ) {
+    public Field(Identifier identifier, DataType type, Constant.BitSlice bitSlice,
+                 Format parentFormat) {
       super(identifier);
 
       this.type = type;
@@ -239,9 +231,8 @@ public class Format extends Definition implements DefProp.WithType {
 
       var behavior = function.behavior();
       var funcParamNode = behavior.add(new FuncParamNode(formatParam));
-      var sliceNode = behavior.add(
-          new SliceNode(funcParamNode, bitSlice, Type.bits(bitSlice.bitSize()))
-      );
+      var sliceNode =
+          behavior.add(new SliceNode(funcParamNode, bitSlice, Type.bits(bitSlice.bitSize())));
       var returnNode = behavior.add(new ReturnNode(sliceNode));
       // add start node
       behavior.add(new StartNode(returnNode));
@@ -261,8 +252,7 @@ public class Format extends Definition implements DefProp.WithType {
         return false;
       }
       Field field = (Field) o;
-      return Objects.equals(type, field.type)
-          && Objects.equals(bitSlice, field.bitSlice);
+      return field.identifier.equals(this.identifier);
     }
 
     @Override
@@ -355,7 +345,7 @@ public class Format extends Definition implements DefProp.WithType {
       super.verify();
       if (encoding != null) {
         ensure(encoding.returnType() instanceof DataType
-                && ((DataType) encoding.returnType()).isTrivialCastTo(fieldRef.type()),
+                && encoding.returnType().isTrivialCastTo(fieldRef.type()),
             "Encoding type mismatch. Couldn't match encoding type %s with field reference type %s",
             encoding.returnType(), fieldRef().type());
       }
@@ -382,8 +372,7 @@ public class Format extends Definition implements DefProp.WithType {
       }
       FieldAccess that = (FieldAccess) o;
       return Objects.equals(accessFunction, that.accessFunction)
-          && Objects.equals(encoding, that.encoding)
-          && Objects.equals(predicate, that.predicate)
+          && Objects.equals(encoding, that.encoding) && Objects.equals(predicate, that.predicate)
           && Objects.equals(fieldRef, that.fieldRef);
     }
 

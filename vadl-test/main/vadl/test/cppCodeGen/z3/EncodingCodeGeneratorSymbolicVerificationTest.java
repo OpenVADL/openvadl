@@ -87,12 +87,12 @@ public class EncodingCodeGeneratorSymbolicVerificationTest extends AbstractGcbTe
      */
     String z3Code = String.format("""
             from z3 import *
-                        
+
             x = BitVec('x', %d) # field
-                        
+
             f_x = %s
             f_z = %s
-                        
+
             def prove(f):
                 s = Solver()
                 s.add(Not(f))
@@ -102,7 +102,7 @@ public class EncodingCodeGeneratorSymbolicVerificationTest extends AbstractGcbTe
                 else:
                     print("failed to prove")
                     exit(1)
-                        
+
             prove(x == f_z)
             """, fieldAccess.fieldRef().bitSlice().bitSize(),
         generatedDecodeFunctionCode,
