@@ -68,40 +68,40 @@ public class EmitLldTargetRelocationsHeaderFilePassTest extends AbstractLcbTest 
         uint32_t RV64IM_Utype_RELATIVE_imm(uint32_t input) {
         return input;
         }
-        uint32_t RV64IM_hi20(uint32_t symbol) {
+        uint32_t RV64IM_hi(uint32_t symbol) {
         return ((uint32_t) ((symbol) + (2048)) >> (12));
         }
-        uint32_t RV64IM_hi20(uint32_t symbol) {
+        uint32_t RV64IM_hi(uint32_t symbol) {
         return ((uint32_t) ((symbol) + (2048)) >> (12));
         }
-        uint32_t RV64IM_hi20(uint32_t symbol) {
+        uint32_t RV64IM_hi(uint32_t symbol) {
         return ((uint32_t) ((symbol) + (2048)) >> (12));
         }
-        uint32_t RV64IM_hi20(uint32_t symbol) {
+        uint32_t RV64IM_hi(uint32_t symbol) {
         return ((uint32_t) ((symbol) + (2048)) >> (12));
         }
-        uint32_t RV64IM_hi20(uint32_t symbol) {
+        uint32_t RV64IM_hi(uint32_t symbol) {
         return ((uint32_t) ((symbol) + (2048)) >> (12));
         }
-        uint32_t RV64IM_hi20(uint32_t symbol) {
+        uint32_t RV64IM_hi(uint32_t symbol) {
         return ((uint32_t) ((symbol) + (2048)) >> (12));
         }
-        int16_t RV64IM_lo12(uint32_t symbol) {
+        int16_t RV64IM_lo(uint32_t symbol) {
         return ((int16_t) symbol);
         }
-        int16_t RV64IM_lo12(uint32_t symbol) {
+        int16_t RV64IM_lo(uint32_t symbol) {
         return ((int16_t) symbol);
         }
-        int16_t RV64IM_lo12(uint32_t symbol) {
+        int16_t RV64IM_lo(uint32_t symbol) {
         return ((int16_t) symbol);
         }
-        int16_t RV64IM_lo12(uint32_t symbol) {
+        int16_t RV64IM_lo(uint32_t symbol) {
         return ((int16_t) symbol);
         }
-        int16_t RV64IM_lo12(uint32_t symbol) {
+        int16_t RV64IM_lo(uint32_t symbol) {
         return ((int16_t) symbol);
         }
-        int16_t RV64IM_lo12(uint32_t symbol) {
+        int16_t RV64IM_lo(uint32_t symbol) {
         return ((int16_t) symbol);
         }
         """.trim().lines(), output);

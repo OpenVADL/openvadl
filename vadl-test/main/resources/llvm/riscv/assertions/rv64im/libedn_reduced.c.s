@@ -1,4 +1,4 @@
-.text
+	.text
 	.file	"libedn_reduced.c"
 	.globl	jpegdct                         # -- Begin function jpegdct
 	.type	jpegdct,@function
@@ -17,7 +17,7 @@ jpegdct:                                # @jpegdct
 	SH ra,-82(fp)
 	ADDI ra,zero,8
 	SH ra,-84(fp)
-	JAL zero,%lo12(.LBB0_1)
+	JAL zero,%hi(.LBB0_1)
 .LBB0_1:                                # %for.cond
                                         # =>This Loop Header: Depth=1
                                         #     Child Loop BB0_3 Depth 2
@@ -25,12 +25,12 @@ jpegdct:                                # @jpegdct
 	LH tp,-78(fp)
 	ADDI ra,zero,8
 	BLT ra,tp,.LBB0_12
-	JAL zero,%lo12(.LBB0_2)
+	JAL zero,%hi(.LBB0_2)
 .LBB0_2:                                # %for.body
                                         #   in Loop: Header=BB0_1 Depth=1
 	ADDI ra,zero,0
 	SH ra,-74(fp)
-	JAL zero,%lo12(.LBB0_3)
+	JAL zero,%hi(.LBB0_3)
 .LBB0_3:                                # %for.cond2
                                         #   Parent Loop BB0_1 Depth=1
                                         # =>  This Loop Header: Depth=2
@@ -38,12 +38,12 @@ jpegdct:                                # @jpegdct
 	LH tp,-74(fp)
 	ADDI ra,zero,7
 	BLT ra,tp,.LBB0_10
-	JAL zero,%lo12(.LBB0_4)
+	JAL zero,%hi(.LBB0_4)
 .LBB0_4:                                # %for.body6
                                         #   in Loop: Header=BB0_3 Depth=2
 	ADDI ra,zero,0
 	SH ra,-76(fp)
-	JAL zero,%lo12(.LBB0_5)
+	JAL zero,%hi(.LBB0_5)
 .LBB0_5:                                # %for.cond7
                                         #   Parent Loop BB0_1 Depth=1
                                         #     Parent Loop BB0_3 Depth=2
@@ -51,7 +51,7 @@ jpegdct:                                # @jpegdct
 	LH tp,-76(fp)
 	ADDI ra,zero,3
 	BLT ra,tp,.LBB0_8
-	JAL zero,%lo12(.LBB0_6)
+	JAL zero,%hi(.LBB0_6)
 .LBB0_6:                                # %for.body11
                                         #   in Loop: Header=BB0_5 Depth=3
 	LD X6,-16(fp)
@@ -93,13 +93,13 @@ jpegdct:                                # @jpegdct
 	SLLI X5,X5,2
 	ADD ra,ra,X5
 	SW tp,0(ra)
-	JAL zero,%lo12(.LBB0_7)
+	JAL zero,%hi(.LBB0_7)
 .LBB0_7:                                # %for.inc
                                         #   in Loop: Header=BB0_5 Depth=3
 	LH ra,-76(fp)
 	ADDI ra,ra,1
 	SH ra,-76(fp)
-	JAL zero,%lo12(.LBB0_5)
+	JAL zero,%hi(.LBB0_5)
 .LBB0_8:                                # %for.end
                                         #   in Loop: Header=BB0_3 Depth=2
 	LW ra,-72(fp)
@@ -319,7 +319,7 @@ jpegdct:                                # @jpegdct
 	SLLI X5,X5,1
 	ADD ra,ra,X5
 	SH tp,0(ra)
-	JAL zero,%lo12(.LBB0_9)
+	JAL zero,%hi(.LBB0_9)
 .LBB0_9:                                # %for.inc221
                                         #   in Loop: Header=BB0_3 Depth=2
 	LH ra,-74(fp)
@@ -330,10 +330,10 @@ jpegdct:                                # @jpegdct
 	SLLI tp,tp,1
 	ADD ra,ra,tp
 	SD ra,-16(fp)
-	JAL zero,%lo12(.LBB0_3)
+	JAL zero,%hi(.LBB0_3)
 .LBB0_10:                               # %for.end224
                                         #   in Loop: Header=BB0_1 Depth=1
-	JAL zero,%lo12(.LBB0_11)
+	JAL zero,%hi(.LBB0_11)
 .LBB0_11:                               # %for.inc225
                                         #   in Loop: Header=BB0_1 Depth=1
 	LH ra,-78(fp)
@@ -351,7 +351,7 @@ jpegdct:                                # @jpegdct
 	LD ra,-16(fp)
 	ADDI ra,ra,-128
 	SD ra,-16(fp)
-	JAL zero,%lo12(.LBB0_1)
+	JAL zero,%hi(.LBB0_1)
 .LBB0_12:                               # %for.end239
 	LD fp,104(sp)
 	ADDI sp,sp,112
