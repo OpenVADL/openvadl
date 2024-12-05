@@ -328,6 +328,8 @@ public class LlvmLoweringPassTest extends AbstractLcbTest {
     expectedResults.put("OR", createTestOutputRR("or", "OR"));
     expectedResults.put("DIV", createTestOutputRR("sdiv", "DIV"));
     expectedResults.put("DIVU", createTestOutputRR("udiv", "DIVU"));
+    expectedResults.put("REM", createTestOutputRR("srem", "REM"));
+    expectedResults.put("REMU", createTestOutputRR("urem", "REMU"));
     expectedResults.put("ADDI",
         createTestOutputAddI());
     expectedResults.put("ORI",
