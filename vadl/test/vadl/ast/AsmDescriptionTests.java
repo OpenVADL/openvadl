@@ -81,7 +81,7 @@ public class AsmDescriptionTests {
   void asmDescriptionWithDirective() {
     var prog = """
           directives = {
-            "dir1" -> builtinDir1
+            "dir1" -> ALIGN_POW2
           }
         
           grammar = {
@@ -95,8 +95,8 @@ public class AsmDescriptionTests {
   void asmDescriptionWithMultipleDirectives() {
     var prog = """
           directives = {
-            "dir1" -> builtinDir1,
-            "dir2" -> builtinDir2
+            "dir1" -> ALIGN_POW2,
+            "dir2" -> BYTE4
           }
         
           grammar = {
@@ -136,8 +136,8 @@ public class AsmDescriptionTests {
             }
         
             directives = {
-              "dir1" -> builtinDir1,
-              "dir2" -> builtinDir2
+              "dir1" -> BYTE4,
+              "dir2" -> ASCII
             }
         
             grammar = {

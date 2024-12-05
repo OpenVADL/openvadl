@@ -954,15 +954,21 @@ class SymbolTable {
           asmDescription.symbolTable().extendBy(abi.symbolTable());
         }
         asmDescription.modifiers.forEach(ResolutionPass::resolveSymbols);
+        asmDescription.directives.forEach(ResolutionPass::resolveSymbols);
         asmDescription.rules.forEach(ResolutionPass::resolveSymbols);
-
       } else if (definition instanceof AsmModifierDefinition modifier) {
         var relocation = modifier.relocation;
         var symbol = modifier.symbolTable().resolveSymbol(relocation.pathToString());
         if (symbol == null) {
           modifier.symbolTable()
-              .reportError("Relocation symbol not found: " + relocation.pathToString(),
+              .reportError("Unknown relocation symbol: " + relocation.pathToString(),
                   relocation.location());
+        }
+      } else if (definition instanceof AsmDirectiveDefinition directive) {
+        if (!AsmDirective.isAsmDirective(directive.builtinDirective.name)) {
+          directive.symbolTable()
+              .reportError("Unknown asm directive: " + directive.builtinDirective.name,
+                  directive.builtinDirective.location());
         }
       } else if (definition instanceof AsmGrammarRuleDefinition rule) {
         resolveSymbols(rule.alternatives);
