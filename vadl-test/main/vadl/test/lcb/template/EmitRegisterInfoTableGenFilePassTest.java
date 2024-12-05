@@ -141,8 +141,8 @@ public class EmitRegisterInfoTableGenFilePassTest extends AbstractLcbTest {
         def X5 : Register<"X5">
         {
             let Namespace = "processorNameValue";
-            let AsmName = "X5";
-            let AltNames = [   ];
+            let AsmName = "t0";
+            let AltNames = [ "t0", "X5"  ];
             let Aliases = [ ];
             let SubRegs = [ ];
             let SubRegIndices = [ ];
@@ -159,8 +159,8 @@ public class EmitRegisterInfoTableGenFilePassTest extends AbstractLcbTest {
         def X6 : Register<"X6">
         {
             let Namespace = "processorNameValue";
-            let AsmName = "X6";
-            let AltNames = [   ];
+            let AsmName = "t1";
+            let AltNames = [ "t1", "X6"  ];
             let Aliases = [ ];
             let SubRegs = [ ];
             let SubRegIndices = [ ];
@@ -177,8 +177,8 @@ public class EmitRegisterInfoTableGenFilePassTest extends AbstractLcbTest {
         def X7 : Register<"X7">
         {
             let Namespace = "processorNameValue";
-            let AsmName = "X7";
-            let AltNames = [   ];
+            let AsmName = "t2";
+            let AltNames = [ "t2", "X7"  ];
             let Aliases = [ ];
             let SubRegs = [ ];
             let SubRegIndices = [ ];
@@ -624,9 +624,9 @@ public class EmitRegisterInfoTableGenFilePassTest extends AbstractLcbTest {
            \s
             let isArtificial = 0;
         }
-        
-        
-        
+                
+                
+                
         def X : RegisterClass
         < /* namespace = */ "processorNameValue"
         , /* regTypes  = */  [  i64 ]
