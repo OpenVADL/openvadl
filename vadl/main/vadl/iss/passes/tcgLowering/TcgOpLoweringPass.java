@@ -2,6 +2,7 @@ package vadl.iss.passes.tcgLowering;
 
 import static java.util.Objects.requireNonNull;
 import static vadl.utils.GraphUtils.getSingleNode;
+import static vadl.utils.GraphUtils.hasUser;
 
 import com.google.errorprone.annotations.concurrent.LazyInit;
 import java.io.IOException;
@@ -13,6 +14,7 @@ import java.util.function.Function;
 import org.jetbrains.annotations.Nullable;
 import vadl.configuration.GeneralConfiguration;
 import vadl.iss.passes.IssVarSsaAssignment;
+import vadl.iss.passes.nodes.IssStaticPcRegNode;
 import vadl.iss.passes.nodes.TcgVRefNode;
 import vadl.iss.passes.safeResourceRead.nodes.ExprSaveNode;
 import vadl.iss.passes.tcgLowering.nodes.TcgAddNode;
@@ -20,6 +22,7 @@ import vadl.iss.passes.tcgLowering.nodes.TcgAndNode;
 import vadl.iss.passes.tcgLowering.nodes.TcgExtendNode;
 import vadl.iss.passes.tcgLowering.nodes.TcgGottoTbAbs;
 import vadl.iss.passes.tcgLowering.nodes.TcgLoadMemory;
+import vadl.iss.passes.tcgLowering.nodes.TcgLookupAndGotoPtr;
 import vadl.iss.passes.tcgLowering.nodes.TcgMoveNode;
 import vadl.iss.passes.tcgLowering.nodes.TcgNode;
 import vadl.iss.passes.tcgLowering.nodes.TcgNotNode;
@@ -105,17 +108,6 @@ public class TcgOpLoweringPass extends Pass {
   @Override
   public @Nullable Object execute(PassResults passResults, Specification viam)
       throws IOException {
-
-    var supportedInstructions = Set.of(
-        "ADD",
-        "ADDI",
-        "LB",
-        "SB",
-        "ADDIW",
-        "SLLI",
-        "LUI",
-        "BEQ"
-    );
 
     var assignments = passResults.lastResultOf(IssVarSsaAssignment.class,
         IssVarSsaAssignment.Result.class);
@@ -206,6 +198,10 @@ class TcgOpLoweringExecutor implements CfgTraverser {
     return tcgV;
   }
 
+  private boolean isTcg(DependencyNode node) {
+    return assignments.containsKey(node);
+  }
+
   /**
    * Replaces the current scheduled node with the given TCG nodes.
    * If multiple replacements are provided, all but the last are added before the current node,
@@ -242,11 +238,17 @@ class TcgOpLoweringExecutor implements CfgTraverser {
    * @param node The instruction exit node to handle.
    */
   void handle(InstrExitNode node) {
-    var pcWrite = node.pcWrite();
-    // Address jump to value
-    node.replaceAndLinkAndDelete(
-        new TcgGottoTbAbs(pcWrite.value())
-    );
+    if (isTcg(node.pcWrite())) {
+      // if the pc is not statically defined, we must jump to the current PC
+      node.replaceAndLinkAndDelete(
+          new TcgLookupAndGotoPtr()
+      );
+    } else {
+      var pcWrite = node.pcWrite();
+      // Address jump to value
+      node.replaceAndLinkAndDelete(
+          new TcgGottoTbAbs(pcWrite.value()));
+    }
   }
 
   // Handler methods for different node types
@@ -402,6 +404,13 @@ class TcgOpLoweringExecutor implements CfgTraverser {
     replaceCurrent(
         new TcgStoreMemory(storeSize, mode, value, addr)
     );
+  }
+
+  /// / Nodes that are already considered lowered ////
+
+  @Handler
+  void handle(IssStaticPcRegNode node) {
+    // nothing to do
   }
 
   //// Nodes that are not yet supported ////

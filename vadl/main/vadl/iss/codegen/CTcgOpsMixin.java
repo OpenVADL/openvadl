@@ -3,10 +3,9 @@ package vadl.iss.codegen;
 import java.io.StringWriter;
 import vadl.cppCodeGen.CodeGenerator;
 import vadl.cppCodeGen.mixins.CGenMixin;
-import vadl.iss.passes.safeResourceRead.nodes.ExprSaveNode;
+import vadl.iss.passes.nodes.IssStaticPcRegNode;
 import vadl.iss.passes.tcgLowering.nodes.TcgNode;
 import vadl.viam.graph.Node;
-import vadl.viam.graph.dependency.ReadRegNode;
 
 /**
  * A mixin to add C generation support for TCG operations in the ISS.
@@ -29,9 +28,7 @@ public interface CTcgOpsMixin extends CGenMixin {
           writer.write("\n");
         })
 
-        .set(ReadRegNode.class, (ReadRegNode node, StringWriter writer) -> {
-          // this can only happen if the register is the PC
-          // TODO: Make a custom node (TcgReadPC)
+        .set(IssStaticPcRegNode.class, (IssStaticPcRegNode node, StringWriter writer) -> {
           writer.write("(ctx->base.pc_next)");
         })
 

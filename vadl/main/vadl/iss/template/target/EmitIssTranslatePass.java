@@ -39,19 +39,7 @@ public class EmitIssTranslatePass extends IssTemplateRenderingPass {
 
   private static List<String> getTranslateFunctions(Specification specification) {
     var insns = specification.isa().get().ownInstructions();
-    // TODO: Remove this filter (just for testing)
-    var supportedInsns = Set.of(
-        "ADD",
-        "ADDI",
-        "LB",
-        "SB",
-        "ADDIW",
-        "SLLI",
-        "LUI",
-        "BEQ"
-    );
     return insns.stream()
-        .filter(i -> !i.identifier.simpleName().contains("JALR"))
         .map(IssTranslateCodeGenerator::fetch)
         .toList();
   }
