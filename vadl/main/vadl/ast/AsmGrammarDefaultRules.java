@@ -16,6 +16,11 @@ import vadl.utils.SourceLocation;
 public class AsmGrammarDefaultRules {
 
   /**
+   * The name of the built-in function that negates a 64-bit integer.
+   */
+  public static final String BUILTIN_ASM_NEG = "builtin_asm_neg";
+
+  /**
    * Returns a list of default rules that are not included in the given rules.
    *
    * @param rules the rules to check against the default rules
@@ -84,6 +89,34 @@ public class AsmGrammarDefaultRules {
     ));
   }
 
+  /**
+   * Defines a function that negates a 64-bit integer.
+   * This function is used in the default grammar rules to be able to parse negative constants.
+   *
+   * @return a function definition that negates a 64-bit integer
+   */
+  public static FunctionDefinition asmNegFunctionDefinition() {
+    return new FunctionDefinition(
+        new Identifier(BUILTIN_ASM_NEG, SourceLocation.INVALID_SOURCE_LOCATION),
+        new ArrayList<>(List.of(
+            new Parameter(
+                new Identifier("x", SourceLocation.INVALID_SOURCE_LOCATION),
+                new TypeLiteral(new Identifier("SInt", SourceLocation.INVALID_SOURCE_LOCATION),
+                    List.of(
+                        List.of(new IntegerLiteral("64", SourceLocation.INVALID_SOURCE_LOCATION))),
+                    SourceLocation.INVALID_SOURCE_LOCATION)
+            )
+        )),
+        new TypeLiteral(new Identifier("SInt", SourceLocation.INVALID_SOURCE_LOCATION),
+            List.of(
+                List.of(new IntegerLiteral("64", SourceLocation.INVALID_SOURCE_LOCATION))),
+            SourceLocation.INVALID_SOURCE_LOCATION),
+        new UnaryExpr(new UnOp(UnaryOperator.NEGATIVE, SourceLocation.INVALID_SOURCE_LOCATION),
+            new Identifier("x", SourceLocation.INVALID_SOURCE_LOCATION)),
+        SourceLocation.INVALID_SOURCE_LOCATION
+    );
+  }
+
   private static AsmGrammarRuleDefinition terminalRule(String name, String regularExpression) {
     return new AsmGrammarRuleDefinition(
         new Identifier(name, SourceLocation.INVALID_SOURCE_LOCATION),
@@ -118,6 +151,21 @@ public class AsmGrammarDefaultRules {
   }
 
   private static AsmGrammarRuleDefinition integerRule() {
+
+    var negCallElement = new AsmGrammarElementDefinition(
+        null, null, false,
+        new AsmGrammarLiteralDefinition(
+            new Identifier(BUILTIN_ASM_NEG, SourceLocation.INVALID_SOURCE_LOCATION),
+            List.of(
+                new AsmGrammarLiteralDefinition(
+                    new Identifier("INTEGER", SourceLocation.INVALID_SOURCE_LOCATION), List.of(),
+                    null,
+                    null, SourceLocation.INVALID_SOURCE_LOCATION)
+            ), null, null, SourceLocation.INVALID_SOURCE_LOCATION
+        ),
+        null, null, null, null, null, SourceLocation.INVALID_SOURCE_LOCATION
+    );
+
     return new AsmGrammarRuleDefinition(
         new Identifier("Integer", SourceLocation.INVALID_SOURCE_LOCATION),
         new AsmGrammarTypeDefinition(
@@ -126,7 +174,7 @@ public class AsmGrammarDefaultRules {
             SourceLocation.INVALID_SOURCE_LOCATION),
         new AsmGrammarAlternativesDefinition(
             List.of(
-                //List.of(), // TODO add alternative for negative integers
+                List.of(ruleReference("MINUS"), negCallElement),
                 List.of(ruleReference("INTEGER", AsmType.CONSTANT))
             ), SourceLocation.INVALID_SOURCE_LOCATION
         ), SourceLocation.INVALID_SOURCE_LOCATION);

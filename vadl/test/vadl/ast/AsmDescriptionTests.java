@@ -205,6 +205,23 @@ public class AsmDescriptionTests {
   }
 
   @Test
+  void asmDescriptionWithFunctionFromISA() {
+    var prog = """
+          instruction set architecture ISA = {
+            function minusOne (x : char) -> char = -x
+          }
+          application binary interface ABI for ISA = {}
+        
+          assembly description AD for ABI = {
+            grammar = {
+              A : a = minusOne<Integer> ;
+            }
+          }
+        """;
+    verifyPrettifiedAst(VadlParser.parse(prog));
+  }
+
+  @Test
   void asmDescriptionNotAllowedFormatDefinition() {
     var prog = """
           format F : Bits<16> =

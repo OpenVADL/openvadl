@@ -591,6 +591,15 @@ class SymbolTable {
             modifier -> collectSymbols(asmDescSymbolTable, modifier));
         asmDescription.directives.forEach(
             directive -> collectSymbols(asmDescSymbolTable, directive));
+
+        // add integer negation function to common definitions if not already defined
+        // this function is used in the grammar default rules
+        if (asmDescription.commonDefinitions.stream().noneMatch(
+            def -> def instanceof FunctionDefinition functionDef
+                && functionDef.name.path().pathToString()
+                .equals(AsmGrammarDefaultRules.BUILTIN_ASM_NEG))) {
+          asmDescription.commonDefinitions.add(AsmGrammarDefaultRules.asmNegFunctionDefinition());
+        }
         asmDescription.commonDefinitions.forEach(
             commonDef -> collectSymbols(asmDescSymbolTable, commonDef));
         asmDescription.rules.forEach(rule -> collectSymbols(asmDescSymbolTable, rule));
@@ -943,10 +952,6 @@ class SymbolTable {
         var abi = asmDescription.symbolTable().requireAbi(asmDescription.abi);
         if (abi != null) {
           asmDescription.symbolTable().extendBy(abi.symbolTable());
-          var isa = abi.symbolTable().requireIsa((Identifier) abi.isa);
-          if (isa != null) {
-            asmDescription.symbolTable().extendBy(isa.symbolTable());
-          }
         }
         asmDescription.modifiers.forEach(ResolutionPass::resolveSymbols);
         asmDescription.rules.forEach(ResolutionPass::resolveSymbols);
