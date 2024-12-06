@@ -130,6 +130,8 @@ steps:
       test.llvm.enabled: true
       test.embench.enabled: true
       test.spike.enabled: true
+      LLVM_PARALLEL_COMPILE_JOBS: 4
+      LLVM_PARALLEL_LINK_JOBS: 2
 
 trigger:
   ref:
