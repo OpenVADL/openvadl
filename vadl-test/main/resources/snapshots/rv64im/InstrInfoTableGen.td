@@ -2007,7 +2007,7 @@ let Size = 4;
 let CodeSize = 4;
 
 let OutOperandList = ( outs X:$rd );
-let InOperandList = ( ins X:$rs2, X:$rs1 );
+let InOperandList = ( ins X:$rs1, X:$rs2 );
 
 field bits<32> Inst;
 
@@ -2057,7 +2057,7 @@ let Size = 4;
 let CodeSize = 4;
 
 let OutOperandList = ( outs X:$rd );
-let InOperandList = ( ins X:$rs2, X:$rs1 );
+let InOperandList = ( ins X:$rs1, X:$rs2 );
 
 field bits<32> Inst;
 
@@ -2107,7 +2107,7 @@ let Size = 4;
 let CodeSize = 4;
 
 let OutOperandList = ( outs X:$rd );
-let InOperandList = ( ins X:$rs2, X:$rs1 );
+let InOperandList = ( ins X:$rs1, X:$rs2 );
 
 field bits<32> Inst;
 
@@ -2157,7 +2157,7 @@ let Size = 4;
 let CodeSize = 4;
 
 let OutOperandList = ( outs X:$rd );
-let InOperandList = ( ins X:$rs2, X:$rs1 );
+let InOperandList = ( ins X:$rs1, X:$rs2 );
 
 field bits<32> Inst;
 
@@ -4158,13 +4158,19 @@ def : Pat<(mul X:$rs1, X:$rs2),
         (MUL X:$rs1, X:$rs2)>;
 
 
+def : Pat<(mulhs X:$rs1, X:$rs2),
+        (MULH X:$rs1, X:$rs2)>;
 
 
+def : Pat<(mulhs X:$rs1, X:$rs2),
+        (MULHSU X:$rs1, X:$rs2)>;
 
 
+def : Pat<(mulhu X:$rs1, X:$rs2),
+        (MULHU X:$rs1, X:$rs2)>;
 
 
-def : Pat<(smullohi X:$rs1, X:$rs2),
+def : Pat<(mulhs X:$rs1, X:$rs2),
         (MULW X:$rs1, X:$rs2)>;
 
 
@@ -4176,12 +4182,20 @@ def : Pat<(or X:$rs1, RV64IM_Itype_immAsInt64:$imm),
         (ORI X:$rs1, RV64IM_Itype_immAsInt64:$imm)>;
 
 
+def : Pat<(srem X:$rs1, X:$rs2),
+        (REM X:$rs1, X:$rs2)>;
 
 
+def : Pat<(urem X:$rs1, X:$rs2),
+        (REMU X:$rs1, X:$rs2)>;
 
 
+def : Pat<(urem X:$rs1, X:$rs2),
+        (REMUW X:$rs1, X:$rs2)>;
 
 
+def : Pat<(srem X:$rs1, X:$rs2),
+        (REMW X:$rs1, X:$rs2)>;
 
 
 def : Pat<(truncstorei8 X:$rs2, (add X:$rs1, RV64IM_Stype_immAsInt64:$imm)),

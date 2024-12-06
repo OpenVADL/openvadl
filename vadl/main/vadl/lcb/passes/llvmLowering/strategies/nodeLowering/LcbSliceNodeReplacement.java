@@ -21,6 +21,7 @@ public class LcbSliceNodeReplacement
   @Nullable
   @Override
   public SliceNode visit(SliceNode sliceNode) {
+    visitApplicable(sliceNode.value());
     return sliceNode;
   }
 

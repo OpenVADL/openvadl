@@ -23,7 +23,7 @@ import vadl.lcb.passes.llvmLowering.strategies.instruction.LlvmInstructionLoweri
 import vadl.lcb.passes.llvmLowering.strategies.instruction.LlvmInstructionLoweringConditionalBranchesStrategyImpl;
 import vadl.lcb.passes.llvmLowering.strategies.instruction.LlvmInstructionLoweringConditionalsStrategyImpl;
 import vadl.lcb.passes.llvmLowering.strategies.instruction.LlvmInstructionLoweringDefaultStrategyImpl;
-import vadl.lcb.passes.llvmLowering.strategies.instruction.LlvmInstructionLoweringDivisionStrategyImpl;
+import vadl.lcb.passes.llvmLowering.strategies.instruction.LlvmInstructionLoweringDivisionAndRemainderStrategyImpl;
 import vadl.lcb.passes.llvmLowering.strategies.instruction.LlvmInstructionLoweringIndirectJumpStrategyImpl;
 import vadl.lcb.passes.llvmLowering.strategies.instruction.LlvmInstructionLoweringMemoryLoadStrategyImpl;
 import vadl.lcb.passes.llvmLowering.strategies.instruction.LlvmInstructionLoweringMemoryStoreStrategyImpl;
@@ -92,7 +92,7 @@ public class LlvmLoweringPass extends Pass {
     var machineStrategies =
         List.of(
             new LlvmInstructionLoweringAddImmediateStrategyImpl(architectureType),
-            new LlvmInstructionLoweringDivisionStrategyImpl(architectureType),
+            new LlvmInstructionLoweringDivisionAndRemainderStrategyImpl(architectureType),
             new LlvmInstructionLoweringConditionalsStrategyImpl(architectureType),
             new LlvmInstructionLoweringUnconditionalJumpsStrategyImpl(architectureType),
             new LlvmInstructionLoweringConditionalBranchesStrategyImpl(architectureType),
@@ -122,18 +122,6 @@ public class LlvmLoweringPass extends Pass {
       List<LlvmInstructionLoweringStrategy> strategies,
       Map<MachineInstructionLabel, List<Instruction>> labelledMachineInstructions) {
     var tableGenRecords = new IdentityHashMap<Instruction, LlvmLoweringRecord>();
-
-    // Get the supported instructions from the matching.
-    // We only instructions which we know about in this pass.
-    /*
-    var functionInlinerResult = ensureNonNull(
-        ((FunctionInlinerPass.Output) passResults
-            .lastResultOf(FunctionInlinerPass.class)),
-        () -> Diagnostic.error("Cannot find uninlined behaviors of the instructions",
-            viam.sourceLocation()));
-    var uninlined = functionInlinerResult.behaviors();
-    var additionalUninlined = functionInlinerResult.additionalBehaviors();
-     */
 
     // We flip it because we need to know the label for the instruction to
     // apply one of the different lowering strategies.
