@@ -3613,6 +3613,33 @@ def : Pat<(br bb:$imm),
         (J RV64IM_Jtype_immAsLabel:$imm)>;
 
 
+def LI : Instruction
+{
+let Namespace = "processorNameValue";
+
+let OutOperandList = ( outs X:$rd );
+let InOperandList = ( ins bare_symbol:$symbol );
+
+let isTerminator  = 0;
+let isBranch      = 0;
+let isCall        = 0;
+let isReturn      = 0;
+let isPseudo      = 1;
+let isCodeGenOnly = 0;
+let mayLoad       = 0;
+let mayStore      = 0;
+
+let Constraints = "";
+let AddedComplexity = 0;
+
+let Pattern = [];
+
+let Uses = [  ];
+let Defs = [  ];
+}
+
+
+
 def LLA : Instruction
 {
 let Namespace = "processorNameValue";
@@ -4361,6 +4388,8 @@ def : Pat<(xor X:$rs1, RV64IM_Itype_immAsInt64:$imm),
 
 def : Pat<(br bb:$imm),
         (J RV64IM_Jtype_immAsLabel:$imm)>;
+
+
 
 
 

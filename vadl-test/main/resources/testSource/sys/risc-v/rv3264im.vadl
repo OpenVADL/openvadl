@@ -394,6 +394,13 @@ $Arch3264 ( // ((((((((((((((((((((((((((((((((((((((((
       ADDI { rd = rd, rs1 = rd, imm = lo( symbol ) }
   }
   assembly LLA = (mnemonic, " ", register(rd), hex( symbol ))
+
+   pseudo instruction LI( rd : Index, symbol : Bits<32> ) =
+   {
+      LUI{ rd = rd, imm = hi( symbol ) }
+      ADDI{ rd = rd, rs1 = rd, imm = lo( symbol ) }
+   }
+   assembly LI = (mnemonic, " ", register( rd ), ",", decimal( symbol ))
   }
 
 
