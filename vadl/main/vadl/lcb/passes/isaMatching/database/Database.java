@@ -52,28 +52,45 @@ public class Database {
    * two results and not the intersection of both.
    */
   public QueryResult run(Query query) {
-    var instructions = matchInstructions(query);
-    var pseudoInstructions = matchPseudoInstructions(query);
+    var result = matchInstructions(query);
 
-    return new QueryResult(instructions, pseudoInstructions);
+    return new QueryResult(query, result.machineInstructions(), result.pseudoInstructions());
   }
 
-  private List<Instruction> matchInstructions(Query query) {
+  private QueryResult matchInstructions(Query query) {
+    var resultMachineInstructions = new ArrayList<Instruction>();
+    var resultPseudoInstructions = new ArrayList<PseudoInstruction>();
+
     if (query.machineInstructionLabel() != null) {
-      return labelledMachineInstructions.getOrDefault(query.machineInstructionLabel(),
-          Collections.emptyList());
+      resultMachineInstructions.addAll(
+          labelledMachineInstructions.getOrDefault(query.machineInstructionLabel(),
+              Collections.emptyList()));
     }
 
-    return Collections.emptyList();
-  }
-
-
-  private List<PseudoInstruction> matchPseudoInstructions(Query query) {
     if (query.pseudoInstructionLabel() != null) {
-      return labelledPseudoInstructions.getOrDefault(query.pseudoInstructionLabel(),
-          Collections.emptyList());
+      resultPseudoInstructions.addAll(
+          labelledPseudoInstructions.getOrDefault(query.pseudoInstructionLabel(),
+              Collections.emptyList()));
     }
 
-    return Collections.emptyList();
+    for (var x : query.or()) {
+      var subResult = matchInstructions(x);
+      resultMachineInstructions.addAll(subResult.machineInstructions());
+      resultPseudoInstructions.addAll(subResult.pseudoInstructions());
+    }
+
+    for (var x : query.withBehavior()) {
+      // Remove machine instruction when any behavior query matches.
+      resultMachineInstructions.removeIf(instruction -> {
+        var satisfied = instruction.behavior().getNodes()
+            .filter(node -> x.applicable().isInstance(node))
+            .allMatch(node -> x.predicate().test(node));
+
+        // only remove when it's not covered.
+        return !satisfied;
+      });
+    }
+
+    return new QueryResult(query, resultMachineInstructions, resultPseudoInstructions);
   }
 }

@@ -33,6 +33,9 @@ public enum MachineInstructionLabel {
   XORI,
   MULHU,
   MULHS,
+  SLL,
+  SRL,
+  ROTL,
   /*
   COMPARISONS
    */
