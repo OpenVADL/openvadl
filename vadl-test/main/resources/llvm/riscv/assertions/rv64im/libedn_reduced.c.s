@@ -54,44 +54,44 @@ jpegdct:                                # @jpegdct
 	JAL zero,%hi(.LBB0_6)
 .LBB0_6:                                # %for.body11
                                         #   in Loop: Header=BB0_5 Depth=3
-	LD X6,-16(fp)
-	LH X7,-78(fp)
+	LD t1,-16(fp)
+	LH t2,-78(fp)
 	LH ra,-76(fp)
-	MUL tp,X7,ra
+	MUL tp,t2,ra
 	SLLI tp,tp,1
-	ADD tp,X6,tp
+	ADD tp,t1,tp
 	LH tp,0(tp)
-	ADDI X5,zero,7
-	SUB a0,X5,ra
-	MUL X7,X7,a0
+	ADDI t0,zero,7
+	SUB a0,t0,ra
+	MUL t2,t2,a0
 	ADDI a0,zero,32
-	SLL X7,X7,a0
-	SRA X7,X7,a0
-	SLLI X7,X7,1
-	ADD X6,X6,X7
-	LH X6,0(X6)
-	ADD X6,tp,X6
+	SLL t2,t2,a0
+	SRA t2,t2,a0
+	SLLI t2,t2,1
+	ADD t1,t1,t2
+	LH t1,0(t1)
+	ADD t1,tp,t1
 	SLLI tp,ra,2
 	ADDI ra,fp,-72
 	ADD tp,ra,tp
-	SW X6,0(tp)
-	LD X6,-16(fp)
-	LH X7,-78(fp)
+	SW t1,0(tp)
+	LD t1,-16(fp)
+	LH t2,-78(fp)
 	LH a1,-76(fp)
-	MUL tp,X7,a1
+	MUL tp,t2,a1
 	SLLI tp,tp,1
-	ADD tp,X6,tp
+	ADD tp,t1,tp
 	LH tp,0(tp)
-	SUB X5,X5,a1
-	MUL X7,X7,X5
-	SLL X7,X7,a0
-	SRA X7,X7,a0
-	SLLI X7,X7,1
-	ADD X6,X6,X7
-	LH X6,0(X6)
-	SUB tp,tp,X6
-	SLLI X5,X5,2
-	ADD ra,ra,X5
+	SUB t0,t0,a1
+	MUL t2,t2,t0
+	SLL t2,t2,a0
+	SRA t2,t2,a0
+	SLLI t2,t2,1
+	ADD t1,t1,t2
+	LH t1,0(t1)
+	SUB tp,tp,t1
+	SLLI t0,t0,2
+	ADD ra,ra,t0
 	SW tp,0(ra)
 	JAL zero,%hi(.LBB0_7)
 .LBB0_7:                                # %for.inc
@@ -121,31 +121,31 @@ jpegdct:                                # @jpegdct
 	LW ra,-40(fp)
 	LW tp,-32(fp)
 	ADD ra,ra,tp
-	ADDI X7,zero,32
-	SD X7,-108(fp)
-	SLL ra,ra,X7
-	SRA ra,ra,X7
+	ADDI t2,zero,32
+	SD t2,-108(fp)
+	SLL ra,ra,t2
+	SRA ra,ra,t2
 	LH tp,-80(fp)
-	LUI X5,0xfffff
-	ADDI X5,X5,4095
-	ADDI X5,X5,0
-	SD X5,-100(fp)
-	AND tp,tp,X5
+	LUI t0,0xfffff
+	ADDI t0,t0,4095
+	ADDI t0,t0,0
+	SD t0,-100(fp)
+	AND tp,tp,t0
 	SRA tp,ra,tp
 	LD ra,-16(fp)
 	SH tp,0(ra)
 	LW ra,-40(fp)
 	LW tp,-32(fp)
 	SUB ra,ra,tp
-	SLL ra,ra,X7
-	SRA ra,ra,X7
+	SLL ra,ra,t2
+	SRA ra,ra,t2
 	LH tp,-80(fp)
-	AND tp,tp,X5
+	AND tp,tp,t0
 	SRA tp,ra,tp
 	LD ra,-16(fp)
-	LH X6,-78(fp)
-	SLLI X6,X6,3
-	ADD ra,ra,X6
+	LH t1,-78(fp)
+	SLLI t1,t1,3
+	ADD ra,ra,t1
 	SH tp,0(ra)
 	LW ra,-28(fp)
 	LW tp,-36(fp)
@@ -154,170 +154,170 @@ jpegdct:                                # @jpegdct
 	SD tp,-92(fp)
 	SLL ra,ra,tp
 	SRA ra,ra,tp
-	LD X6,-24(fp)
-	LH X6,20(X6)
-	MUL ra,ra,X6
+	LD t1,-24(fp)
+	LH t1,20(t1)
+	MUL ra,ra,t1
 	SW ra,-40(fp)
 	LW ra,-40(fp)
-	LW X6,-36(fp)
+	LW t1,-36(fp)
 	LD a0,-24(fp)
 	LH a0,18(a0)
-	MUL X6,X6,a0
-	SLL X6,X6,X7
-	SRA X6,X6,X7
+	MUL t1,t1,a0
+	SLL t1,t1,t2
+	SRA t1,t1,t2
 	LH a0,-82(fp)
-	AND a0,a0,X5
-	SRA X6,X6,a0
-	ADD X6,ra,X6
+	AND a0,a0,t0
+	SRA t1,t1,a0
+	ADD t1,ra,t1
 	LD ra,-16(fp)
 	LH a0,-78(fp)
 	SLLI a0,a0,2
 	ADD ra,ra,a0
-	SH X6,0(ra)
+	SH t1,0(ra)
 	LW ra,-40(fp)
-	LW X6,-28(fp)
+	LW t1,-28(fp)
 	LD a0,-24(fp)
 	LH a0,22(a0)
-	MUL X6,X6,a0
-	SLL X6,X6,X7
-	SRA X6,X6,X7
-	LH X7,-82(fp)
-	AND X7,X7,X5
-	SRA X6,X6,X7
-	ADD X6,ra,X6
+	MUL t1,t1,a0
+	SLL t1,t1,t2
+	SRA t1,t1,t2
+	LH t2,-82(fp)
+	AND t2,t2,t0
+	SRA t1,t1,t2
+	ADD t1,ra,t1
 	LD ra,-16(fp)
-	LH X7,-78(fp)
+	LH t2,-78(fp)
 	ADDI a0,zero,12
-	MUL X7,X7,a0
-	ADD ra,ra,X7
-	SH X6,0(ra)
+	MUL t2,t2,a0
+	ADD ra,ra,t2
+	SH t1,0(ra)
 	LW ra,-56(fp)
-	LW X6,-44(fp)
-	ADD ra,ra,X6
+	LW t1,-44(fp)
+	ADD ra,ra,t1
 	SLL ra,ra,tp
 	SRA ra,ra,tp
-	LD X6,-24(fp)
-	LH X6,4(X6)
-	MUL ra,ra,X6
+	LD t1,-24(fp)
+	LH t1,4(t1)
+	MUL ra,ra,t1
 	SW ra,-72(fp)
 	LW ra,-52(fp)
-	LW X6,-48(fp)
-	ADD ra,ra,X6
+	LW t1,-48(fp)
+	ADD ra,ra,t1
 	SLL ra,ra,tp
 	SRA ra,ra,tp
-	LD X6,-24(fp)
-	LH X6,0(X6)
-	MUL ra,ra,X6
+	LD t1,-24(fp)
+	LH t1,0(t1)
+	MUL ra,ra,t1
 	SW ra,-68(fp)
 	LW ra,-56(fp)
-	LW X6,-48(fp)
-	ADD ra,ra,X6
+	LW t1,-48(fp)
+	ADD ra,ra,t1
 	SW ra,-64(fp)
 	LW ra,-52(fp)
-	LW X6,-44(fp)
-	ADD ra,ra,X6
+	LW t1,-44(fp)
+	ADD ra,ra,t1
 	SW ra,-60(fp)
 	LW ra,-64(fp)
-	LW X6,-60(fp)
-	ADD ra,ra,X6
+	LW t1,-60(fp)
+	ADD ra,ra,t1
 	SLL ra,ra,tp
 	SRA ra,ra,tp
-	LD X6,-24(fp)
-	LH X6,16(X6)
-	MUL ra,ra,X6
+	LD t1,-24(fp)
+	LH t1,16(t1)
+	MUL ra,ra,t1
 	SW ra,-40(fp)
 	LH ra,-64(fp)
-	LD X6,-24(fp)
-	LH X6,2(X6)
-	MUL ra,ra,X6
-	LW X6,-40(fp)
-	ADD ra,ra,X6
+	LD t1,-24(fp)
+	LH t1,2(t1)
+	MUL ra,ra,t1
+	LW t1,-40(fp)
+	ADD ra,ra,t1
 	SW ra,-64(fp)
 	LH ra,-60(fp)
-	LD X6,-24(fp)
-	LH X6,6(X6)
-	MUL ra,ra,X6
-	LW X6,-40(fp)
-	ADD ra,ra,X6
+	LD t1,-24(fp)
+	LH t1,6(t1)
+	MUL ra,ra,t1
+	LW t1,-40(fp)
+	ADD ra,ra,t1
 	SW ra,-60(fp)
 	LW ra,-56(fp)
-	LD X6,-24(fp)
-	ADDI X6,X6,8
-	LH X6,0(X6)
-	MUL ra,ra,X6
-	LW X6,-72(fp)
-	ADD ra,ra,X6
-	LW X6,-64(fp)
-	ADD ra,ra,X6
+	LD t1,-24(fp)
+	ADDI t1,t1,8
+	LH t1,0(t1)
+	MUL ra,ra,t1
+	LW t1,-72(fp)
+	ADD ra,ra,t1
+	LW t1,-64(fp)
+	ADD ra,ra,t1
 	SLL ra,ra,tp
 	SRA ra,ra,tp
-	LH X6,-82(fp)
-	AND X6,X6,X5
-	SRA X6,ra,X6
+	LH t1,-82(fp)
+	AND t1,t1,t0
+	SRA t1,ra,t1
 	LD ra,-16(fp)
-	LH X7,-78(fp)
+	LH t2,-78(fp)
 	ADDI a0,zero,14
-	MUL X7,X7,a0
-	ADD ra,ra,X7
-	SH X6,0(ra)
+	MUL t2,t2,a0
+	ADD ra,ra,t2
+	SH t1,0(ra)
 	LW ra,-52(fp)
-	LD X6,-24(fp)
-	ADDI X6,X6,12
-	LH X6,0(X6)
-	MUL ra,ra,X6
-	LW X6,-68(fp)
-	ADD ra,ra,X6
-	LW X6,-60(fp)
-	ADD ra,ra,X6
+	LD t1,-24(fp)
+	ADDI t1,t1,12
+	LH t1,0(t1)
+	MUL ra,ra,t1
+	LW t1,-68(fp)
+	ADD ra,ra,t1
+	LW t1,-60(fp)
+	ADD ra,ra,t1
 	SLL ra,ra,tp
 	SRA ra,ra,tp
-	LH X6,-82(fp)
-	AND X6,X6,X5
-	SRA X6,ra,X6
+	LH t1,-82(fp)
+	AND t1,t1,t0
+	SRA t1,ra,t1
 	LD ra,-16(fp)
-	LH X7,-78(fp)
+	LH t2,-78(fp)
 	ADDI a0,zero,10
-	MUL X7,X7,a0
-	ADD ra,ra,X7
-	SH X6,0(ra)
+	MUL t2,t2,a0
+	ADD ra,ra,t2
+	SH t1,0(ra)
 	LW ra,-48(fp)
-	LD X6,-24(fp)
-	ADDI X6,X6,10
-	LH X6,0(X6)
-	MUL ra,ra,X6
-	LW X6,-68(fp)
-	ADD ra,ra,X6
-	LW X6,-64(fp)
-	ADD ra,ra,X6
+	LD t1,-24(fp)
+	ADDI t1,t1,10
+	LH t1,0(t1)
+	MUL ra,ra,t1
+	LW t1,-68(fp)
+	ADD ra,ra,t1
+	LW t1,-64(fp)
+	ADD ra,ra,t1
 	SLL ra,ra,tp
 	SRA ra,ra,tp
-	LH X6,-82(fp)
-	AND X6,X6,X5
-	SRA X6,ra,X6
+	LH t1,-82(fp)
+	AND t1,t1,t0
+	SRA t1,ra,t1
 	LD ra,-16(fp)
-	LH X7,-78(fp)
+	LH t2,-78(fp)
 	ADDI a0,zero,6
-	MUL X7,X7,a0
-	ADD ra,ra,X7
-	SH X6,0(ra)
+	MUL t2,t2,a0
+	ADD ra,ra,t2
+	SH t1,0(ra)
 	LW ra,-44(fp)
-	LD X6,-24(fp)
-	ADDI X6,X6,14
-	LH X6,0(X6)
-	MUL ra,ra,X6
-	LW X6,-72(fp)
-	ADD ra,ra,X6
-	LW X6,-60(fp)
-	ADD ra,ra,X6
+	LD t1,-24(fp)
+	ADDI t1,t1,14
+	LH t1,0(t1)
+	MUL ra,ra,t1
+	LW t1,-72(fp)
+	ADD ra,ra,t1
+	LW t1,-60(fp)
+	ADD ra,ra,t1
 	SLL ra,ra,tp
 	SRA ra,ra,tp
 	LH tp,-82(fp)
-	AND tp,tp,X5
+	AND tp,tp,t0
 	SRA tp,ra,tp
 	LD ra,-16(fp)
-	LH X5,-78(fp)
-	SLLI X5,X5,1
-	ADD ra,ra,X5
+	LH t0,-78(fp)
+	SLLI t0,t0,1
+	ADD ra,ra,t0
 	SH tp,0(ra)
 	JAL zero,%hi(.LBB0_9)
 .LBB0_9:                                # %for.inc221

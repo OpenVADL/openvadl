@@ -24,21 +24,21 @@ _nettle_sha256_compress:                # @_nettle_sha256_compress
 	LD tp,-24(fp)
 	LW ra,0(tp)
 	SLLI ra,ra,24
-	ADDI X5,tp,4
-	LW X5,0(X5)
-	SLLI X5,X5,16
-	OR ra,ra,X5
-	ADDI X5,tp,8
-	LW X5,0(X5)
-	SLLI X5,X5,8
-	OR ra,ra,X5
+	ADDI t0,tp,4
+	LW t0,0(t0)
+	SLLI t0,t0,16
+	OR ra,ra,t0
+	ADDI t0,tp,8
+	LW t0,0(t0)
+	SLLI t0,t0,8
+	OR ra,ra,t0
 	ADDI tp,tp,12
 	LW tp,0(tp)
 	OR tp,ra,tp
 	LW ra,-132(fp)
-	SLLI X5,ra,2
+	SLLI t0,ra,2
 	ADDI ra,fp,-96
-	ADD ra,ra,X5
+	ADD ra,ra,t0
 	SW tp,0(ra)
 	JAL zero,%hi(.LBB0_3)
 .LBB0_3:                                # %for.inc
@@ -59,15 +59,15 @@ _nettle_sha256_compress:                # @_nettle_sha256_compress
 	SLLI tp,ra,2
 	ADDI ra,fp,-96
 	ADD tp,ra,tp
-	LW X5,0(tp)
-	SLLI tp,X5,25
-	SRLI X5,X5,7
-	OR X5,tp,X5
+	LW t0,0(tp)
+	SLLI tp,t0,25
+	SRLI t0,t0,7
+	OR t0,tp,t0
 	LW tp,-144(fp)
 	SLLI tp,tp,2
 	ADD ra,ra,tp
 	LW tp,0(ra)
-	ADD tp,tp,X5
+	ADD tp,tp,t0
 	SW tp,0(ra)
 	LD fp,152(sp)
 	ADDI sp,sp,160
