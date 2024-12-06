@@ -1,11 +1,15 @@
 package vadl.lcb.passes.isaMatching;
 
+import static vadl.lcb.passes.isaMatching.MachineInstructionLabel.ORI;
 import static vadl.types.BuiltInTable.ADD;
 import static vadl.types.BuiltInTable.ADDS;
 import static vadl.types.BuiltInTable.AND;
 import static vadl.types.BuiltInTable.ANDS;
 import static vadl.types.BuiltInTable.EQU;
 import static vadl.types.BuiltInTable.LSL;
+import static vadl.types.BuiltInTable.LSLS;
+import static vadl.types.BuiltInTable.LSR;
+import static vadl.types.BuiltInTable.LSRS;
 import static vadl.types.BuiltInTable.MUL;
 import static vadl.types.BuiltInTable.MULS;
 import static vadl.types.BuiltInTable.NEQ;
@@ -158,12 +162,14 @@ public class IsaMachineInstructionMatchingPass extends Pass implements IsaMatchi
         extend(matched, MachineInstructionLabel.SUBC, instruction);
       } else if (findRR_OR_findRI(behavior, List.of(AND, ANDS))) {
         extend(matched, MachineInstructionLabel.AND, instruction);
-      } else if (findRR_OR_findRI(behavior, List.of(OR, ORS))) {
+      } else if (findRR(behavior, List.of(OR, ORS))) {
         extend(matched, MachineInstructionLabel.OR, instruction);
       } else if (findRR_MultiplicationHigh(behavior, Set.of(SMULL, SMULLS))) {
         extend(matched, MachineInstructionLabel.MULHS, instruction);
       } else if (findRR_MultiplicationHigh(behavior, Set.of(UMULL, UMULLS))) {
         extend(matched, MachineInstructionLabel.MULHU, instruction);
+      } else if (findRI(behavior, List.of(OR, ORS))) {
+        extend(matched, ORI, instruction);
       } else if (findRR(behavior, List.of(XOR, XORS))) {
         extend(matched, MachineInstructionLabel.XOR, instruction);
       } else if (findRI(behavior, List.of(XOR, XORS))) {
@@ -182,6 +188,10 @@ public class IsaMachineInstructionMatchingPass extends Pass implements IsaMatchi
         extend(matched, MachineInstructionLabel.SMOD, instruction);
       } else if (findRR_OR_findRI(behavior, List.of(UMOD, UMODS))) {
         extend(matched, MachineInstructionLabel.UMOD, instruction);
+      } else if (findRR(behavior, List.of(LSL, LSLS))) {
+        extend(matched, MachineInstructionLabel.SLL, instruction);
+      } else if (findRR(behavior, List.of(LSR, LSRS))) {
+        extend(matched, MachineInstructionLabel.SRL, instruction);
       } else if (pc != null && findBranchWithConditional(behavior, EQU)) {
         extend(matched, MachineInstructionLabel.BEQ, instruction);
       } else if (pc != null && findBranchWithConditional(behavior, NEQ)) {

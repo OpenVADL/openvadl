@@ -21,6 +21,7 @@ public enum MachineInstructionLabel {
   ADDI_64,
   AND,
   OR,
+  ORI,
   SUB,
   MUL,
   SUBB,

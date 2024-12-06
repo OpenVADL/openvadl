@@ -15,31 +15,38 @@ import vadl.viam.graph.Node;
 import vadl.viam.graph.dependency.BuiltInCall;
 import vadl.viam.graph.dependency.SignExtendNode;
 import vadl.viam.graph.dependency.TruncateNode;
+import vadl.viam.graph.dependency.ZeroExtendNode;
 
 /**
  * Strategy for generating rotate-left.
  */
 public class LlvmCompensationRotateLeftPatternStrategy implements LlvmCompensationPatternStrategy {
+  private static final Predicate<Node> pure =
+      builtInCall -> builtInCall.usages()
+          .noneMatch(x -> x instanceof SignExtendNode || x instanceof ZeroExtendNode);
+
   private static final Query orQuery = new Query.Builder()
       .machineInstructionLabel(MachineInstructionLabel.OR)
       .build();
   private static final Query sllQuery = new Query.Builder()
       .machineInstructionLabel(MachineInstructionLabel.SLL)
+      .withBehavior(new BehaviorQuery(
+          BuiltInCall.class,
+          pure))
       .build();
   private static final Query srlQuery = new Query.Builder()
       .machineInstructionLabel(MachineInstructionLabel.SRL)
+      .withBehavior(new BehaviorQuery(
+          BuiltInCall.class,
+          pure))
       .build();
   private static final Query subQuery = new Query.Builder()
       .machineInstructionLabel(MachineInstructionLabel.SUB)
       .withBehavior(new BehaviorQuery(
           BuiltInCall.class,
-          builtInCall -> {
-            var a = builtInCall.usages().noneMatch(x -> x instanceof SignExtendNode);
-            var b = builtInCall.inputs().noneMatch(x -> x instanceof TruncateNode);
-
-            return a && b;
-          }))
+          pure))
       .build();
+
   private static final Query liQuery = new Query.Builder()
       .pseudoInstructionLabel(PseudoInstructionLabel.LI)
       .build();
