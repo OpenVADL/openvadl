@@ -7,6 +7,9 @@ import vadl.lcb.passes.isaMatching.MachineInstructionLabel;
 import vadl.lcb.passes.isaMatching.PseudoInstructionLabel;
 import vadl.viam.graph.Node;
 
+/**
+ * Query to find instructions and pseudo instructions.
+ */
 public class Query {
   @Nullable
   private MachineInstructionLabel machineInstructionLabel;
@@ -18,6 +21,9 @@ public class Query {
 
   private final List<Query> or;
 
+  /**
+   * Constructor.
+   */
   public Query(@Nullable MachineInstructionLabel machineInstructionLabel,
                @Nullable PseudoInstructionLabel pseudoInstructionLabel,
                List<Query> or,
@@ -38,10 +44,16 @@ public class Query {
     return pseudoInstructionLabel;
   }
 
+  /**
+   * Getter.
+   */
   public List<Query> or() {
     return or;
   }
 
+  /**
+   * Getter.
+   */
   public List<BehaviorQuery> withBehavior() {
     return withBehavior;
   }

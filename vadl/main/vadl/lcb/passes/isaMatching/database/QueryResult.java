@@ -13,6 +13,9 @@ import vadl.viam.PseudoInstruction;
 public record QueryResult(Query executedQuery,
                           List<Instruction> machineInstructions,
                           List<PseudoInstruction> pseudoInstructions) {
+  /**
+   * Get the first machine instruction from the result.
+   */
   public Instruction firstMachineInstruction() {
     ensure(pseudoInstructions.isEmpty(),
         "Cannot get first machine instruction when there are pseudo instructions");
@@ -20,6 +23,10 @@ public record QueryResult(Query executedQuery,
         "There has to be at least one machine instruction");
   }
 
+  /**
+  * Get the first pseudo instruction
+   *
+*/
   public PseudoInstruction firstPseudoInstruction() {
     ensure(machineInstructions.isEmpty(),
         "Cannot get first pseudo instruction when there are machine instructions");

@@ -38,7 +38,8 @@ public class LlvmRotlSD extends BuiltInCall implements LlvmNodeLowerable {
 
   @Override
   public Node copy() {
-    return new LlvmRotlSD(new NodeList<>(args.stream().map(x -> (ExpressionNode) x.copy()).toList()),
+    return new LlvmRotlSD(
+        new NodeList<>(args.stream().map(x -> (ExpressionNode) x.copy()).toList()),
         type());
   }
 

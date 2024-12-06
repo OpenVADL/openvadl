@@ -63,6 +63,9 @@ public final class TableGenInstructionPatternRenderer {
     return y;
   }
 
+  /**
+   * Lowering patterns.
+   */
   public static String lower(TableGenSelectionWithOutputPattern tableGenPattern) {
     ensure(tableGenPattern.isPatternLowerable(), "TableGen pattern must be lowerable");
     var visitor = new TableGenPatternPrinterVisitor();

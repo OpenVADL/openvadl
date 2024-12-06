@@ -4,8 +4,8 @@ import static vadl.viam.ViamError.ensurePresent;
 
 import java.util.Collection;
 import java.util.List;
-import java.util.function.Predicate;
 import org.jetbrains.annotations.NotNull;
+
 import vadl.error.Diagnostic;
 import vadl.lcb.codegen.model.llvm.ValueType;
 import vadl.lcb.passes.isaMatching.MachineInstructionLabel;
@@ -18,15 +18,12 @@ import vadl.lcb.passes.llvmLowering.domain.machineDag.LcbMachineInstructionValue
 import vadl.lcb.passes.llvmLowering.domain.machineDag.LcbPseudoInstructionNode;
 import vadl.lcb.passes.llvmLowering.domain.selectionDag.LlvmReadRegFileNode;
 import vadl.lcb.passes.llvmLowering.domain.selectionDag.LlvmRotlSD;
-import vadl.lcb.passes.llvmLowering.tablegen.model.TableGenPattern;
 import vadl.lcb.passes.llvmLowering.tablegen.model.TableGenSelectionWithOutputPattern;
-import vadl.types.DataType;
 import vadl.viam.Constant;
 import vadl.viam.Instruction;
 import vadl.viam.PseudoInstruction;
 import vadl.viam.Specification;
 import vadl.viam.graph.Graph;
-import vadl.viam.graph.Node;
 import vadl.viam.graph.NodeList;
 import vadl.viam.graph.dependency.BuiltInCall;
 import vadl.viam.graph.dependency.ExpressionNode;
@@ -134,14 +131,16 @@ public class LlvmCompensationRotateLeftPatternStrategy implements LlvmCompensati
     var operandType = ensurePresent(ValueType.from(origType),
         () -> Diagnostic.error("Cannot construct llvm type from type.",
             liftedOperands.get(0).sourceLocation()));
-    var mLi =
+    var machineLi =
         new LcbPseudoInstructionNode(new NodeList<>(new LcbMachineInstructionValueNode(operandType,
             Constant.Value.of(operandType.getBitwidth(), origType))), li);
-    var mSub = new LcbMachineInstructionNode(new NodeList<>(mLi, liftedOperands.get(1)), sub);
-    var mSll = new LcbMachineInstructionNode(new NodeList<>(liftedOperands), sll);
-    var mSrl = new LcbMachineInstructionNode(new NodeList<>(liftedOperands.get(0), mSub), srl);
+    var machineSub =
+        new LcbMachineInstructionNode(new NodeList<>(machineLi, liftedOperands.get(1)), sub);
+    var machineSll = new LcbMachineInstructionNode(new NodeList<>(liftedOperands), sll);
+    var machineSrl =
+        new LcbMachineInstructionNode(new NodeList<>(liftedOperands.get(0), machineSub), srl);
     var machineInstructionNode = new LcbMachineInstructionNode(
-        new NodeList<>(mSll, mSrl), or);
+        new NodeList<>(machineSll, machineSrl), or);
     rotlMachineGraph.addWithInputs(machineInstructionNode);
     return rotlMachineGraph;
   }
