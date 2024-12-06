@@ -155,6 +155,9 @@ public class DummyAbiPass extends Pass {
     map.put(Pair.of(registerFile, 25), new DummyAbi.RegisterAlias("s9"));
     map.put(Pair.of(registerFile, 26), new DummyAbi.RegisterAlias("s10"));
     map.put(Pair.of(registerFile, 27), new DummyAbi.RegisterAlias("s11"));
+    map.put(Pair.of(registerFile, 5), new DummyAbi.RegisterAlias("t0"));
+    map.put(Pair.of(registerFile, 6), new DummyAbi.RegisterAlias("t1"));
+    map.put(Pair.of(registerFile, 7), new DummyAbi.RegisterAlias("t2"));
     map.put(Pair.of(registerFile, 28), new DummyAbi.RegisterAlias("t3"));
     map.put(Pair.of(registerFile, 29), new DummyAbi.RegisterAlias("t4"));
     map.put(Pair.of(registerFile, 30), new DummyAbi.RegisterAlias("t5"));

@@ -69,20 +69,20 @@ ludcmp:                                 # @ludcmp
 .LBB0_7:                                # %for.body8
                                         #   in Loop: Header=BB0_6 Depth=3
 	LW ra,-20(fp)
-	ADDI X6,zero,80
-	MUL ra,ra,X6
+	ADDI t1,zero,80
+	MUL ra,ra,t1
 	LW tp,-24(fp)
-	SLLI X5,tp,2
-	ADD ra,ra,X5
-	LUI X5,%hi(a)
-	ADDI X5,X5,%lo(a)
-	ADD ra,ra,X5
+	SLLI t0,tp,2
+	ADD ra,ra,t0
+	LUI t0,%hi(a)
+	ADDI t0,t0,%lo(a)
+	ADD ra,ra,t0
 	LW ra,0(ra)
-	MUL tp,tp,X6
-	LW X6,-16(fp)
-	SLLI X6,X6,2
-	ADD tp,tp,X6
-	ADD tp,tp,X5
+	MUL tp,tp,t1
+	LW t1,-16(fp)
+	SLLI t1,t1,2
+	ADD tp,tp,t1
+	ADD tp,tp,t0
 	LW tp,0(tp)
 	MUL tp,ra,tp
 	LW ra,-28(fp)
@@ -101,20 +101,20 @@ ludcmp:                                 # @ludcmp
 .LBB0_10:                               # %if.end
                                         #   in Loop: Header=BB0_3 Depth=2
 	LW ra,-28(fp)
-	LW X5,-16(fp)
-	ADDI X7,zero,80
-	MUL tp,X5,X7
-	SLLI X6,X5,2
-	ADD tp,tp,X6
-	LUI X5,%hi(a)
-	ADDI X5,X5,%lo(a)
-	ADD tp,tp,X5
+	LW t0,-16(fp)
+	ADDI t2,zero,80
+	MUL tp,t0,t2
+	SLLI t1,t0,2
+	ADD tp,tp,t1
+	LUI t0,%hi(a)
+	ADDI t0,t0,%lo(a)
+	ADD tp,tp,t0
 	LW tp,0(tp)
 	DIV tp,ra,tp
 	LW ra,-20(fp)
-	MUL ra,ra,X7
-	ADD ra,ra,X6
-	ADD ra,ra,X5
+	MUL ra,ra,t2
+	ADD ra,ra,t1
+	ADD ra,ra,t0
 	SW tp,0(ra)
 	JAL zero,%hi(.LBB0_11)
 .LBB0_11:                               # %for.inc17
@@ -164,20 +164,20 @@ ludcmp:                                 # @ludcmp
 .LBB0_16:                               # %for.body29
                                         #   in Loop: Header=BB0_15 Depth=3
 	LW ra,-16(fp)
-	ADDI X6,zero,80
-	MUL ra,ra,X6
+	ADDI t1,zero,80
+	MUL ra,ra,t1
 	LW tp,-24(fp)
-	SLLI X5,tp,2
-	ADD ra,ra,X5
-	LUI X5,%hi(a)
-	ADDI X5,X5,%lo(a)
-	ADD ra,X5,ra
+	SLLI t0,tp,2
+	ADD ra,ra,t0
+	LUI t0,%hi(a)
+	ADDI t0,t0,%lo(a)
+	ADD ra,t0,ra
 	LW ra,80(ra)
-	MUL tp,tp,X6
-	LW X6,-20(fp)
-	SLLI X6,X6,2
-	ADD tp,tp,X6
-	ADD tp,tp,X5
+	MUL tp,tp,t1
+	LW t1,-20(fp)
+	SLLI t1,t1,2
+	ADD tp,tp,t1
+	ADD tp,tp,t0
 	LW tp,0(tp)
 	MUL tp,ra,tp
 	LW ra,-28(fp)
@@ -194,14 +194,14 @@ ludcmp:                                 # @ludcmp
                                         #   in Loop: Header=BB0_13 Depth=2
 	LW tp,-28(fp)
 	LW ra,-16(fp)
-	ADDI X5,zero,80
-	MUL ra,ra,X5
-	LW X5,-20(fp)
-	SLLI X5,X5,2
-	ADD X5,ra,X5
+	ADDI t0,zero,80
+	MUL ra,ra,t0
+	LW t0,-20(fp)
+	SLLI t0,t0,2
+	ADD t0,ra,t0
 	LUI ra,%hi(a)
 	ADDI ra,ra,%lo(a)
-	ADD ra,ra,X5
+	ADD ra,ra,t0
 	SW tp,80(ra)
 	JAL zero,%hi(.LBB0_19)
 .LBB0_19:                               # %for.inc43
@@ -259,14 +259,14 @@ ludcmp:                                 # @ludcmp
 	ADDI tp,zero,80
 	MUL ra,ra,tp
 	LW tp,-20(fp)
-	SLLI X5,tp,2
-	ADD ra,ra,X5
+	SLLI t0,tp,2
+	ADD ra,ra,t0
 	LUI tp,%hi(a)
 	ADDI tp,tp,%lo(a)
 	ADD ra,ra,tp
 	LW ra,0(ra)
 	ADDI tp,fp,-428
-	ADD tp,tp,X5
+	ADD tp,tp,t0
 	LW tp,0(tp)
 	MUL tp,ra,tp
 	LW ra,-28(fp)
@@ -283,9 +283,9 @@ ludcmp:                                 # @ludcmp
                                         #   in Loop: Header=BB0_23 Depth=1
 	LW tp,-28(fp)
 	LW ra,-16(fp)
-	SLLI X5,ra,2
+	SLLI t0,ra,2
 	ADDI ra,fp,-428
-	ADD ra,ra,X5
+	ADD ra,ra,t0
 	SW tp,0(ra)
 	JAL zero,%hi(.LBB0_29)
 .LBB0_29:                               # %for.inc66
@@ -295,22 +295,22 @@ ludcmp:                                 # @ludcmp
 	SW ra,-16(fp)
 	JAL zero,%hi(.LBB0_23)
 .LBB0_30:                               # %for.end68
-	LW X5,-12(fp)
-	SLLI ra,X5,2
+	LW t0,-12(fp)
+	SLLI ra,t0,2
 	ADDI tp,fp,-428
 	ADD tp,tp,ra
 	LW tp,0(tp)
-	ADDI X6,zero,80
-	MUL X5,X5,X6
-	ADD X5,X5,ra
-	LUI X6,%hi(a)
-	ADDI X6,X6,%lo(a)
-	ADD X5,X5,X6
-	LW X5,0(X5)
-	DIV tp,tp,X5
-	LUI X5,%hi(x)
-	ADDI X5,X5,%lo(x)
-	ADD ra,ra,X5
+	ADDI t1,zero,80
+	MUL t0,t0,t1
+	ADD t0,t0,ra
+	LUI t1,%hi(a)
+	ADDI t1,t1,%lo(a)
+	ADD t0,t0,t1
+	LW t0,0(t0)
+	DIV tp,tp,t0
+	LUI t0,%hi(x)
+	ADDI t0,t0,%lo(x)
+	ADD ra,ra,t0
 	SW tp,0(ra)
 	LW ra,-12(fp)
 	ADDI ra,ra,-1
@@ -350,13 +350,13 @@ ludcmp:                                 # @ludcmp
 	LW tp,-20(fp)
 	SLLI tp,tp,2
 	ADD ra,ra,tp
-	LUI X5,%hi(a)
-	ADDI X5,X5,%lo(a)
-	ADD ra,ra,X5
+	LUI t0,%hi(a)
+	ADDI t0,t0,%lo(a)
+	ADD ra,ra,t0
 	LW ra,0(ra)
-	LUI X5,%hi(x)
-	ADDI X5,X5,%lo(x)
-	ADD tp,tp,X5
+	LUI t0,%hi(x)
+	ADDI t0,t0,%lo(x)
+	ADD tp,tp,t0
 	LW tp,0(tp)
 	MUL tp,ra,tp
 	LW ra,-28(fp)
@@ -373,18 +373,18 @@ ludcmp:                                 # @ludcmp
                                         #   in Loop: Header=BB0_31 Depth=1
 	LW tp,-28(fp)
 	LW ra,-16(fp)
-	ADDI X5,zero,80
-	MUL X5,ra,X5
+	ADDI t0,zero,80
+	MUL t0,ra,t0
 	SLLI ra,ra,2
-	ADD X5,X5,ra
-	LUI X6,%hi(a)
-	ADDI X6,X6,%lo(a)
-	ADD X5,X5,X6
-	LW X5,0(X5)
-	DIV tp,tp,X5
-	LUI X5,%hi(x)
-	ADDI X5,X5,%lo(x)
-	ADD ra,ra,X5
+	ADD t0,t0,ra
+	LUI t1,%hi(a)
+	ADDI t1,t1,%lo(a)
+	ADD t0,t0,t1
+	LW t0,0(t0)
+	DIV tp,tp,t0
+	LUI t0,%hi(x)
+	ADDI t0,t0,%lo(x)
+	ADD ra,ra,t0
 	SW tp,0(ra)
 	JAL zero,%hi(.LBB0_37)
 .LBB0_37:                               # %for.inc95
