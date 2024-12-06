@@ -24,9 +24,8 @@ public record QueryResult(Query executedQuery,
   }
 
   /**
-  * Get the first pseudo instruction
-   *
-*/
+   * Get the first pseudo instruction.
+   */
   public PseudoInstruction firstPseudoInstruction() {
     ensure(machineInstructions.isEmpty(),
         "Cannot get first pseudo instruction when there are machine instructions");

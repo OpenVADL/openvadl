@@ -5,7 +5,6 @@ import java.util.List;
 import javax.annotation.Nullable;
 import vadl.lcb.passes.isaMatching.MachineInstructionLabel;
 import vadl.lcb.passes.isaMatching.PseudoInstructionLabel;
-import vadl.viam.graph.Node;
 
 /**
  * Query to find instructions and pseudo instructions.
@@ -58,6 +57,9 @@ public class Query {
     return withBehavior;
   }
 
+  /**
+   * Builder for the Query.
+   */
   public static class Builder {
 
     @Nullable

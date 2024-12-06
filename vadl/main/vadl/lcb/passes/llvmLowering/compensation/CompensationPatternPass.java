@@ -5,7 +5,6 @@ import java.util.ArrayList;
 import java.util.List;
 import org.jetbrains.annotations.Nullable;
 import vadl.configuration.GeneralConfiguration;
-
 import vadl.lcb.passes.isaMatching.database.Database;
 import vadl.lcb.passes.llvmLowering.compensation.strategies.LlvmCompensationPatternStrategy;
 import vadl.lcb.passes.llvmLowering.compensation.strategies.LlvmCompensationRotateLeftPatternStrategy;
@@ -35,7 +34,8 @@ public class CompensationPatternPass extends Pass {
 
   @Nullable
   @Override
-  public List<TableGenSelectionWithOutputPattern> execute(PassResults passResults, Specification viam) throws IOException {
+  public List<TableGenSelectionWithOutputPattern> execute(PassResults passResults,
+                                                          Specification viam) throws IOException {
     var patterns = new ArrayList<TableGenSelectionWithOutputPattern>();
     var database = new Database(passResults, viam);
 
