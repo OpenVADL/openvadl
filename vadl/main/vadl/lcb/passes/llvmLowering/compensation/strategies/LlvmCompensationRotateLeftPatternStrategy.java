@@ -1,20 +1,37 @@
 package vadl.lcb.passes.llvmLowering.compensation.strategies;
 
+import static vadl.viam.ViamError.ensurePresent;
+
 import java.util.Collection;
-import java.util.Collections;
+import java.util.List;
 import java.util.function.Predicate;
+import org.jetbrains.annotations.NotNull;
+import vadl.error.Diagnostic;
+import vadl.lcb.codegen.model.llvm.ValueType;
 import vadl.lcb.passes.isaMatching.MachineInstructionLabel;
 import vadl.lcb.passes.isaMatching.PseudoInstructionLabel;
 import vadl.lcb.passes.isaMatching.database.BehaviorQuery;
 import vadl.lcb.passes.isaMatching.database.Database;
 import vadl.lcb.passes.isaMatching.database.Query;
+import vadl.lcb.passes.llvmLowering.domain.machineDag.LcbMachineInstructionNode;
+import vadl.lcb.passes.llvmLowering.domain.machineDag.LcbMachineInstructionValueNode;
+import vadl.lcb.passes.llvmLowering.domain.machineDag.LcbPseudoInstructionNode;
+import vadl.lcb.passes.llvmLowering.domain.selectionDag.LlvmReadRegFileNode;
+import vadl.lcb.passes.llvmLowering.domain.selectionDag.LlvmRotlSD;
 import vadl.lcb.passes.llvmLowering.tablegen.model.TableGenPattern;
-import vadl.types.BuiltInTable;
+import vadl.lcb.passes.llvmLowering.tablegen.model.TableGenSelectionWithOutputPattern;
+import vadl.types.DataType;
+import vadl.viam.Constant;
+import vadl.viam.Instruction;
+import vadl.viam.PseudoInstruction;
 import vadl.viam.Specification;
+import vadl.viam.graph.Graph;
 import vadl.viam.graph.Node;
+import vadl.viam.graph.NodeList;
 import vadl.viam.graph.dependency.BuiltInCall;
+import vadl.viam.graph.dependency.ExpressionNode;
+import vadl.viam.graph.dependency.ReadRegFileNode;
 import vadl.viam.graph.dependency.SignExtendNode;
-import vadl.viam.graph.dependency.TruncateNode;
 import vadl.viam.graph.dependency.ZeroExtendNode;
 
 /**
@@ -73,7 +90,7 @@ public class LlvmCompensationRotateLeftPatternStrategy implements LlvmCompensati
   }
 
   @Override
-  public Collection<? extends TableGenPattern> lower(Database database, Specification viam) {
+  public Collection<TableGenSelectionWithOutputPattern> lower(Database database, Specification viam) {
     /*
     def : Pat< ( rotl X:$rs1, X:$rs2 ),
            ( OR (SLL X:$rs1, X:$rs2), (SRL X:$rs1, (SUB (LI (i32 32)), X:$rs2))) >;
@@ -89,7 +106,52 @@ public class LlvmCompensationRotateLeftPatternStrategy implements LlvmCompensati
     var li = database.run(liQuery)
         .firstPseudoInstruction();
 
+    var operands = or.behavior().getNodes(ReadRegFileNode.class).toList();
+    var rotlGraph = setupSelector(operands, or);
+    var rotlMachineGraph = setupMachine(operands, or, sub, sll, srl, li);
 
-    return Collections.emptyList();
+    return List.of(new TableGenSelectionWithOutputPattern(rotlGraph, rotlMachineGraph));
+  }
+
+  private Graph setupSelector(List<ReadRegFileNode> operands, Instruction or) {
+    var liftedOperands = liftOperands(operands);
+
+    var rotlGraph = new Graph("rotl.selector");
+    var selector = new LlvmRotlSD(new NodeList<>(liftedOperands), or.format().type());
+    rotlGraph.addWithInputs(selector);
+    return rotlGraph;
+  }
+
+  private Graph setupMachine(List<ReadRegFileNode> operands,
+                             Instruction or,
+                             Instruction sub,
+                             Instruction sll,
+                             Instruction srl,
+                             PseudoInstruction li) {
+    var liftedOperands = liftOperands(operands);
+    var rotlMachineGraph = new Graph("rotl.machine");
+    var origType = liftedOperands.get(0).type();
+    var operandType = ensurePresent(ValueType.from(origType),
+        () -> Diagnostic.error("Cannot construct llvm type from type.",
+            liftedOperands.get(0).sourceLocation()));
+    var mLi =
+        new LcbPseudoInstructionNode(new NodeList<>(new LcbMachineInstructionValueNode(operandType,
+            Constant.Value.of(operandType.getBitwidth(), origType))), li);
+    var mSub = new LcbMachineInstructionNode(new NodeList<>(mLi, liftedOperands.get(1)), sub);
+    var mSll = new LcbMachineInstructionNode(new NodeList<>(liftedOperands), sll);
+    var mSrl = new LcbMachineInstructionNode(new NodeList<>(liftedOperands.get(0), mSub), srl);
+    var machineInstructionNode = new LcbMachineInstructionNode(
+        new NodeList<>(mSll, mSrl), or);
+    rotlMachineGraph.addWithInputs(machineInstructionNode);
+    return rotlMachineGraph;
+  }
+
+  private static @NotNull List<LlvmReadRegFileNode> liftOperands(
+      List<ReadRegFileNode> operands) {
+    return operands.stream()
+        .map(readRegFileNode -> new LlvmReadRegFileNode(readRegFileNode.registerFile(),
+            (ExpressionNode) readRegFileNode.address().copy(),
+            readRegFileNode.type(),
+            readRegFileNode.staticCounterAccess())).toList();
   }
 }

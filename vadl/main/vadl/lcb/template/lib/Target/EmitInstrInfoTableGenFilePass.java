@@ -14,13 +14,16 @@ import vadl.lcb.passes.isaMatching.IsaMachineInstructionMatchingPass;
 import vadl.lcb.passes.isaMatching.MachineInstructionLabel;
 import vadl.lcb.passes.llvmLowering.GenerateTableGenMachineInstructionRecordPass;
 import vadl.lcb.passes.llvmLowering.GenerateTableGenPseudoInstructionRecordPass;
+import vadl.lcb.passes.llvmLowering.compensation.CompensationPatternPass;
 import vadl.lcb.passes.llvmLowering.immediates.GenerateTableGenImmediateRecordPass;
 import vadl.lcb.passes.llvmLowering.tablegen.lowering.TableGenImmediateOperandRenderer;
 import vadl.lcb.passes.llvmLowering.tablegen.lowering.TableGenInstructionPatternRenderer;
 import vadl.lcb.passes.llvmLowering.tablegen.lowering.TableGenInstructionRenderer;
 import vadl.lcb.passes.llvmLowering.tablegen.model.TableGenImmediateRecord;
 import vadl.lcb.passes.llvmLowering.tablegen.model.TableGenMachineInstruction;
+import vadl.lcb.passes.llvmLowering.tablegen.model.TableGenPattern;
 import vadl.lcb.passes.llvmLowering.tablegen.model.TableGenPseudoInstruction;
+import vadl.lcb.passes.llvmLowering.tablegen.model.TableGenSelectionWithOutputPattern;
 import vadl.lcb.template.CommonVarNames;
 import vadl.lcb.template.LcbTemplateRenderingPass;
 import vadl.pass.PassResults;
@@ -85,10 +88,17 @@ public class EmitInstrInfoTableGenFilePass extends LcbTemplateRenderingPass {
         .map(TableGenInstructionRenderer::lower)
         .toList();
 
+    var compensationPatterns =
+        (List<TableGenSelectionWithOutputPattern>) passResults.lastResultOf(
+            CompensationPatternPass.class);
+
     var renderedPatterns =
         Stream.concat(
                 tableGenMachineRecords.stream().map(TableGenInstructionPatternRenderer::lower),
-                tableGenPseudoRecords.stream().map(TableGenInstructionPatternRenderer::lower))
+                Stream.concat(
+                    tableGenPseudoRecords.stream().map(TableGenInstructionPatternRenderer::lower),
+                    compensationPatterns.stream().map(TableGenInstructionPatternRenderer::lower))
+            )
             .toList();
 
     return Map.of(CommonVarNames.NAMESPACE, specification.simpleName(),

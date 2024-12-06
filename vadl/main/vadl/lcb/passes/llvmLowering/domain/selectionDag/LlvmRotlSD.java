@@ -12,17 +12,17 @@ import vadl.viam.graph.dependency.BuiltInCall;
 import vadl.viam.graph.dependency.ExpressionNode;
 
 /**
- * Logical node for logical shift left.
+ * Logical node for rotate left.
  */
-public class LlvmShlSD extends BuiltInCall implements LlvmNodeLowerable {
-  public LlvmShlSD(NodeList<ExpressionNode> args,
-                   Type type) {
-    super(BuiltInTable.LSL, args, type);
+public class LlvmRotlSD extends BuiltInCall implements LlvmNodeLowerable {
+  public LlvmRotlSD(NodeList<ExpressionNode> args,
+                    Type type) {
+    super(BuiltInTable.ROL, args, type);
   }
 
   @Override
   public String lower() {
-    return "shl";
+    return "rotl";
   }
 
   @Override
@@ -38,12 +38,12 @@ public class LlvmShlSD extends BuiltInCall implements LlvmNodeLowerable {
 
   @Override
   public Node copy() {
-    return new LlvmShlSD(new NodeList<>(args.stream().map(x -> (ExpressionNode) x.copy()).toList()),
+    return new LlvmRotlSD(new NodeList<>(args.stream().map(x -> (ExpressionNode) x.copy()).toList()),
         type());
   }
 
   @Override
   public Node shallowCopy() {
-    return new LlvmShlSD(args, type());
+    return new LlvmRotlSD(args, type());
   }
 }

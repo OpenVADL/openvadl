@@ -4425,3 +4425,9 @@ def : Pat<(setcc X:$rs1, (i64 0), SETLT),
 
 def : Pat<(setcc (i64 0), X:$rs1, SETULT),
         (SNEZ X:$rs1)>;
+
+
+
+
+def : Pat<(rotl X:$rs1, X:$rs2),
+        (OR (SLL X:$rs1, X:$rs2), (SRL X:$rs1, (SUB (LI (i64 64)), X:$rs2)))>;

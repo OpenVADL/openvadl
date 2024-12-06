@@ -2,8 +2,7 @@ package vadl.lcb.passes.llvmLowering.compensation.strategies;
 
 import java.util.Collection;
 import vadl.lcb.passes.isaMatching.database.Database;
-import vadl.lcb.passes.isaMatching.database.Query;
-import vadl.lcb.passes.llvmLowering.tablegen.model.TableGenPattern;
+import vadl.lcb.passes.llvmLowering.tablegen.model.TableGenSelectionWithOutputPattern;
 import vadl.viam.Specification;
 
 /**
@@ -20,5 +19,5 @@ public interface LlvmCompensationPatternStrategy {
   /**
    * Generates a pattern with this strategy.
    */
-  Collection<? extends TableGenPattern> lower(Database database, Specification viam);
+  Collection<TableGenSelectionWithOutputPattern> lower(Database database, Specification viam);
 }

@@ -1,7 +1,5 @@
 package vadl.lcb.passes.llvmLowering.compensation;
 
-import static vadl.viam.ViamError.ensureNonNull;
-
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
@@ -11,7 +9,7 @@ import vadl.configuration.GeneralConfiguration;
 import vadl.lcb.passes.isaMatching.database.Database;
 import vadl.lcb.passes.llvmLowering.compensation.strategies.LlvmCompensationPatternStrategy;
 import vadl.lcb.passes.llvmLowering.compensation.strategies.LlvmCompensationRotateLeftPatternStrategy;
-import vadl.lcb.passes.llvmLowering.tablegen.model.TableGenPattern;
+import vadl.lcb.passes.llvmLowering.tablegen.model.TableGenSelectionWithOutputPattern;
 import vadl.pass.Pass;
 import vadl.pass.PassName;
 import vadl.pass.PassResults;
@@ -37,8 +35,8 @@ public class CompensationPatternPass extends Pass {
 
   @Nullable
   @Override
-  public Object execute(PassResults passResults, Specification viam) throws IOException {
-    var patterns = new ArrayList<TableGenPattern>();
+  public List<TableGenSelectionWithOutputPattern> execute(PassResults passResults, Specification viam) throws IOException {
+    var patterns = new ArrayList<TableGenSelectionWithOutputPattern>();
     var database = new Database(passResults, viam);
 
     for (var strategy : patternStrategies) {

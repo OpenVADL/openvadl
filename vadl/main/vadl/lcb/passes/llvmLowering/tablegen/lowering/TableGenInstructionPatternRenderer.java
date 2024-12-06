@@ -7,7 +7,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import vadl.lcb.passes.llvmLowering.domain.machineDag.LcbMachineInstructionNode;
 import vadl.lcb.passes.llvmLowering.domain.machineDag.LcbPseudoInstructionNode;
-import vadl.lcb.passes.llvmLowering.tablegen.model.TableGenInstruction;
 import vadl.lcb.passes.llvmLowering.tablegen.model.TableGenMachineInstruction;
 import vadl.lcb.passes.llvmLowering.tablegen.model.TableGenPattern;
 import vadl.lcb.passes.llvmLowering.tablegen.model.TableGenPseudoInstruction;
@@ -41,7 +40,7 @@ public final class TableGenInstructionPatternRenderer {
             """,
         anonymousPatterns
             .stream()
-            .map(x -> lower(instruction, x))
+            .map(TableGenInstructionPatternRenderer::lower)
             .collect(Collectors.joining("\n"))
     );
   }
@@ -60,16 +59,14 @@ public final class TableGenInstructionPatternRenderer {
             %s
             """,
         anonymousPatterns.stream()
-            .map(x -> lower(instruction, x))
+            .map(TableGenInstructionPatternRenderer::lower)
             .collect(Collectors.joining("\n"))
     );
 
     return y;
   }
 
-  private static String lower(TableGenInstruction instruction,
-                              TableGenSelectionWithOutputPattern tableGenPattern) {
-    logger.atTrace().log("Lowering pattern for " + instruction.getName());
+  public static String lower(TableGenSelectionWithOutputPattern tableGenPattern) {
     ensure(tableGenPattern.isPatternLowerable(), "TableGen pattern must be lowerable");
     var visitor = new TableGenPatternPrinterVisitor();
     var machineVisitor = new TableGenMachineInstructionPrinterVisitor();
