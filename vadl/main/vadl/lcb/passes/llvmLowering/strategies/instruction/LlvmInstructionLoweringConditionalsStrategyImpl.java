@@ -79,6 +79,7 @@ public class LlvmInstructionLoweringConditionalsStrategyImpl
       neq(ltu, xor, patterns, result);
     } else if (label == MachineInstructionLabel.LTU) {
       uge(xori, patterns, result);
+      ule(xori, patterns, result);
     } else if (label == MachineInstructionLabel.LTIU) {
       neqWithImmediate(ltu, xori, patterns, result);
     }
@@ -191,6 +192,54 @@ public class LlvmInstructionLoweringConditionalsStrategyImpl
     }
   }
 
+  private void ule(Instruction xori,
+                   List<TableGenPattern> patterns,
+                   List<TableGenPattern> result) {
+    /*
+              def : Pat<(setcc X:$rs1, X:$rs2, SETLTU),
+                  (SLTU X:$rs1, X:$rs2)>;
+
+                  to
+
+              def : Pat< ( setcc X:$rs1, X:$rs2, SETULE ),
+                (XORI ( SLTU X:$rs2, X:$rs1 ), 1 ) >;
+               */
+    for (var pattern : patterns) {
+      var copy = pattern.copy();
+
+      if (copy instanceof TableGenSelectionWithOutputPattern outputPattern) {
+        // Change condition code
+        var setcc = ensurePresent(
+            outputPattern.selector().getNodes(LlvmSetccSD.class).toList().stream()
+                .findFirst(),
+            () -> Diagnostic.error("No setcc node was found", pattern.selector()
+                .sourceLocation()));
+        // Only RR and not RI should be replaced here.
+        if (setcc.arguments().size() > 2
+            && setcc.arguments().get(0) instanceof LlvmReadRegFileNode
+            && setcc.arguments().get(1) instanceof LlvmReadRegFileNode) {
+          setcc.setBuiltIn(BuiltInTable.ULEQ);
+          setcc.arguments().set(2,
+              new ConstantNode(new Constant.Str(setcc.llvmCondCode().name())));
+        } else {
+          // Otherwise, stop and go to next pattern.
+          continue;
+        }
+
+        var machineInstruction =
+            outputPattern.machine().getNodes(LcbMachineInstructionNode.class).findFirst().get();
+
+        // Swap operands
+        Collections.reverse(machineInstruction.arguments());
+
+        var newMachineInstruction = new LcbMachineInstructionNode(
+            new NodeList<>(machineInstruction, new ConstantNode(new Constant.Str("1"))), xori);
+        outputPattern.machine().addWithInputs(newMachineInstruction);
+
+        result.add(outputPattern);
+      }
+    }
+  }
 
   private void neq(Instruction basePattern,
                    Instruction xor,

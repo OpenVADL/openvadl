@@ -4280,6 +4280,9 @@ def : Pat<(setcc X:$rs1, X:$rs2, SETULT),
 def : Pat<(setcc X:$rs1, X:$rs2, SETUGE),
         (XORI (SLTU X:$rs1, X:$rs2), 1)>;
 
+def : Pat<(setcc X:$rs1, X:$rs2, SETULE),
+        (XORI (SLTU X:$rs2, X:$rs1), 1)>;
+
 
 def : Pat<(sra X:$rs1, X:$rs2),
         (SRA X:$rs1, X:$rs2)>;
