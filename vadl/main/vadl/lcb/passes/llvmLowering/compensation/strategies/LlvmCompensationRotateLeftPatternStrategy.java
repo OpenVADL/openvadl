@@ -38,10 +38,6 @@ import vadl.viam.graph.dependency.ZeroExtendNode;
  * Strategy for generating rotate-left.
  */
 public class LlvmCompensationRotateLeftPatternStrategy implements LlvmCompensationPatternStrategy {
-  private static final Predicate<Node> pure =
-      builtInCall -> builtInCall.usages()
-          .noneMatch(x -> x instanceof SignExtendNode || x instanceof ZeroExtendNode);
-
   private static final Query orQuery = new Query.Builder()
       .machineInstructionLabel(MachineInstructionLabel.OR)
       .build();
@@ -49,19 +45,22 @@ public class LlvmCompensationRotateLeftPatternStrategy implements LlvmCompensati
       .machineInstructionLabel(MachineInstructionLabel.SLL)
       .withBehavior(new BehaviorQuery(
           BuiltInCall.class,
-          pure))
+          builtInCall -> builtInCall.usages()
+              .noneMatch(x -> x instanceof SignExtendNode || x instanceof ZeroExtendNode)))
       .build();
   private static final Query srlQuery = new Query.Builder()
       .machineInstructionLabel(MachineInstructionLabel.SRL)
       .withBehavior(new BehaviorQuery(
           BuiltInCall.class,
-          pure))
+          builtInCall -> builtInCall.usages()
+              .noneMatch(x -> x instanceof SignExtendNode || x instanceof ZeroExtendNode)))
       .build();
   private static final Query subQuery = new Query.Builder()
       .machineInstructionLabel(MachineInstructionLabel.SUB)
       .withBehavior(new BehaviorQuery(
           BuiltInCall.class,
-          pure))
+          builtInCall -> builtInCall.usages()
+              .noneMatch(x -> x instanceof SignExtendNode || x instanceof ZeroExtendNode)))
       .build();
 
   private static final Query liQuery = new Query.Builder()
@@ -90,7 +89,8 @@ public class LlvmCompensationRotateLeftPatternStrategy implements LlvmCompensati
   }
 
   @Override
-  public Collection<TableGenSelectionWithOutputPattern> lower(Database database, Specification viam) {
+  public Collection<TableGenSelectionWithOutputPattern> lower(Database database,
+                                                              Specification viam) {
     /*
     def : Pat< ( rotl X:$rs1, X:$rs2 ),
            ( OR (SLL X:$rs1, X:$rs2), (SRL X:$rs1, (SUB (LI (i32 32)), X:$rs2))) >;
