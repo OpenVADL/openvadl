@@ -22,9 +22,6 @@ import vadl.viam.PseudoInstruction;
  * This might be problem for some patterns.
  */
 public final class TableGenInstructionPatternRenderer {
-  private static final Logger logger = LoggerFactory.getLogger(
-      TableGenInstructionPatternRenderer.class);
-
   /**
    * Transforms the given {@link Instruction} into a string which can be used by LLVM's TableGen.
    * It will *ONLY* print the anonymous pattern if the pattern is actually lowerable.
