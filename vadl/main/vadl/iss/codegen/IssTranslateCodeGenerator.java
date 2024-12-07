@@ -6,6 +6,7 @@ import static vadl.utils.GraphUtils.getSingleNode;
 
 import java.io.StringWriter;
 import java.util.Arrays;
+import java.util.List;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 import vadl.cppCodeGen.CodeGenerator;
@@ -60,9 +61,17 @@ public class IssTranslateCodeGenerator extends CodeGenerator
           // format debug string
           var fieldStream = Arrays.stream(insn.format().fields())
               .filter(f -> insn.encoding().fieldEncodingOf(f) == null)
-              .filter(f -> !f.simpleName().startsWith("imm"));
+              // those filters are just because of riscv decode incompatibility
+              // we will remove the print in anyway
+              .filter(f -> !f.simpleName().startsWith("imm"))
+              .filter(f -> !f.simpleName().contains("rs2"));
           var printingFields = Stream.concat(fieldStream, insn.format()
-                  .fieldAccesses().stream())
+                  .fieldAccesses().stream()
+                  // we need this filter as the insn.decode of RISCV is incompatible with the
+                  // definition in vadl spec.
+                  // Is later deleted anyway
+                  .filter(f -> !List.of("EBREAK", "ECALL").contains(insn.simpleName()))
+              )
               .map(Definition::simpleName)
               .toList();
 
@@ -72,10 +81,12 @@ public class IssTranslateCodeGenerator extends CodeGenerator
                   "a->" + f)
               .collect(Collectors.joining(", "));
 
+          var fmtArgsStr = fmtArgs.isBlank() ? "" : ", " + fmtArgs;
+
           writer.write("\tqemu_printf(\"[VADL] trans_");
           writer.write(name);
           writer.write(" (" + fmtString + ")");
-          writer.write("\\n\", " + fmtArgs + ");\n");
+          writer.write("\\n\"" + fmtArgsStr + ");\n");
 
           var current = start.next();
 

@@ -44,7 +44,7 @@ instruction set architecture RV3264I = {
   program counter PC : Address            // PC points to the start of the current instruction
   memory         MEM : Address -> Byte    // byte addressed memory
 
-  format Rtype : Inst =                   // Rtype register 3 operand instruction format
+  format Rtype : Inst =                   // Rtype register 3 operand instruction formatMULH
     { funct7 : Bits7                      // [31..25] 7 bit function code
     , rs2    : Index                      // [24..20] 2nd source register index / shamt
     , rs1    : Index                      // [19..15] 1st source register index

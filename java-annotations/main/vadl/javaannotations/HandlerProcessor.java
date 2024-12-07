@@ -88,7 +88,6 @@ public class HandlerProcessor extends AbstractProcessor {
 
     // Process classes annotated with @DispatchFor
     for (Element elem : roundEnv.getElementsAnnotatedWith(DispatchFor.class)) {
-      System.out.println(elem.toString() + " found");
       if (elem.getKind() != ElementKind.CLASS) {
         messager.printMessage(Diagnostic.Kind.ERROR,
             "@DispatchFor can only be applied to classes", elem);
