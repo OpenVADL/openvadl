@@ -3613,6 +3613,33 @@ def : Pat<(br bb:$imm),
         (J RV64IM_Jtype_immAsLabel:$imm)>;
 
 
+def LI : Instruction
+{
+let Namespace = "processorNameValue";
+
+let OutOperandList = ( outs X:$rd );
+let InOperandList = ( ins bare_symbol:$symbol );
+
+let isTerminator  = 0;
+let isBranch      = 0;
+let isCall        = 0;
+let isReturn      = 0;
+let isPseudo      = 1;
+let isCodeGenOnly = 0;
+let mayLoad       = 0;
+let mayStore      = 0;
+
+let Constraints = "";
+let AddedComplexity = 0;
+
+let Pattern = [];
+
+let Uses = [  ];
+let Defs = [  ];
+}
+
+
+
 def LLA : Instruction
 {
 let Namespace = "processorNameValue";
@@ -4365,6 +4392,8 @@ def : Pat<(br bb:$imm),
 
 
 
+
+
 def : Pat<(add X:$rs1, (i64 0)),
         (MOV X:$rs1)>;
 
@@ -4396,3 +4425,9 @@ def : Pat<(setcc X:$rs1, (i64 0), SETLT),
 
 def : Pat<(setcc (i64 0), X:$rs1, SETULT),
         (SNEZ X:$rs1)>;
+
+
+
+
+def : Pat<(rotl X:$rs1, X:$rs2),
+        (OR (SLL X:$rs1, X:$rs2), (SRL X:$rs1, (SUB (LI (i64 64)), X:$rs2)))>;

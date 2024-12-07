@@ -73,6 +73,10 @@ public class LlvmFieldAccessRefNode extends FieldAccessRefNode {
     return usage;
   }
 
+  public ValueType llvmType() {
+    return llvmType;
+  }
+
   @Override
   public void accept(GraphNodeVisitor visitor) {
     if (visitor instanceof TableGenMachineInstructionVisitor v) {
