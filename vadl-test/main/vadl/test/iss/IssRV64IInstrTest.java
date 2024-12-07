@@ -89,7 +89,8 @@ public class IssRV64IInstrTest extends QemuIssTest {
       var addrReg = b.anyTempReg().sample();
       b.fillReg(addrReg, BigInteger.valueOf(0x80000000L), BigInteger.valueOf(0x800F0000L));
       b.add("%s %s, 0(%s)", instruction, storeReg, addrReg);
-      var loadReg = b.anyTempReg().sample();
+      var loadReg = b.anyTempReg()
+          .filter(reg -> !reg.equals(storeReg)).sample();
       b.add("%s %s, 0(%s)", loadInstruction, loadReg, addrReg);
       return b.toTestSpec(storeReg, loadReg, addrReg);
     });

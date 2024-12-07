@@ -7,6 +7,7 @@ import java.util.HashMap;
 import java.util.Map;
 import org.jetbrains.annotations.Nullable;
 import vadl.configuration.IssConfiguration;
+import vadl.cppCodeGen.formatting.ClangFormatter;
 import vadl.cppCodeGen.formatting.CodeFormatter;
 import vadl.iss.codegen.QemuClangFormatter;
 import vadl.pass.PassName;
@@ -57,8 +58,9 @@ public abstract class IssTemplateRenderingPass extends AbstractTemplateRendering
 
   @Override
   public @Nullable CodeFormatter getFormatter() {
-    if (issTemplatePath().endsWith(".c") || issTemplatePath().endsWith(".h")) {
+    if (issTemplatePath().endsWith("translate.c")) {
       return QemuClangFormatter.INSTANCE;
+
     }
     return null;
   }

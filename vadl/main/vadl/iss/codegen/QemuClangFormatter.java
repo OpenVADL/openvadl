@@ -78,7 +78,7 @@ public class QemuClangFormatter extends ClangFormatter {
           MaxEmptyLinesToKeep: 2,
           PointerAlignment: Right,
           ReflowComments: true,
-          SortIncludes: true,
+          SortIncludes: false,
           SpaceAfterCStyleCast: false,
           SpaceBeforeAssignmentOperators: true,
           SpaceBeforeParens: ControlStatements,

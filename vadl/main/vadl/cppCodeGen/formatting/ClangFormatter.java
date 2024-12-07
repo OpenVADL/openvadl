@@ -21,7 +21,7 @@ public class ClangFormatter implements CodeFormatter {
   private boolean checkedAvailability = false;
   private boolean isAvailable = false;
 
-  protected ClangFormatter(String style) {
+  public ClangFormatter(String style) {
     this.style = style;
   }
 
