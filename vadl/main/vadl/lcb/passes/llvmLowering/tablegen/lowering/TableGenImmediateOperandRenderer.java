@@ -14,12 +14,12 @@ public final class TableGenImmediateOperandRenderer {
   public static String lower(TableGenImmediateRecord operand) {
     var type = operand.type().isSigned() ? operand.type() : operand.type().makeSigned();
     int highestPossibleValue =
-        (int) (operand.type().isSigned() ?
-            Math.pow(2, (double) operand.formatFieldBitSize() - 1) - 1
+        (int) (operand.type().isSigned()
+            ? Math.pow(2, (double) operand.formatFieldBitSize() - 1) - 1
             : Math.pow(2, operand.formatFieldBitSize()));
     int lowestPossibleValue =
-        operand.type().isSigned() ?
-            (int) (-1 * Math.pow(2, (double) operand.formatFieldBitSize() - 1))
+        operand.type().isSigned()
+            ? (int) (-1 * Math.pow(2, (double) operand.formatFieldBitSize() - 1))
             : 0;
     return String.format("""
             class %s<ValueType ty> : Operand<ty>
