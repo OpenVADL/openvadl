@@ -36,7 +36,7 @@ public class ClangFormatter implements CodeFormatter {
       ProcessBuilder pb = new ProcessBuilder(CLANG_FORMAT_PATH, "--version");
       Process process = pb.start();
       try (BufferedReader reader = new BufferedReader(
-          new InputStreamReader(process.getInputStream()))) {
+          new InputStreamReader(process.getInputStream(), StandardCharsets.UTF_8))) {
         String output = reader.readLine();
         isAvailable = output != null && output.contains("clang-format");
       }
