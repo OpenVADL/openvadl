@@ -213,8 +213,8 @@ public class EmitRegisterInfoTableGenFilePassTest extends AbstractLcbTest {
         def X9 : Register<"X9">
         {
             let Namespace = "processorNameValue";
-            let AsmName = "X9";
-            let AltNames = [   ];
+            let AsmName = "s1";
+            let AltNames = [ "s1", "X9"  ];
             let Aliases = [ ];
             let SubRegs = [ ];
             let SubRegIndices = [ ];
