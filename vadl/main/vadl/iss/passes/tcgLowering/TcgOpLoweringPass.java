@@ -34,6 +34,7 @@ import vadl.iss.passes.tcgLowering.nodes.TcgShrNode;
 import vadl.iss.passes.tcgLowering.nodes.TcgStoreMemory;
 import vadl.iss.passes.tcgLowering.nodes.TcgSubNode;
 import vadl.iss.passes.tcgLowering.nodes.TcgTruncateNode;
+import vadl.iss.passes.tcgLowering.nodes.TcgUnaryNopNode;
 import vadl.iss.passes.tcgLowering.nodes.TcgXorNode;
 import vadl.javaannotations.DispatchFor;
 import vadl.javaannotations.Handler;
@@ -282,8 +283,12 @@ class TcgOpLoweringExecutor implements CfgTraverser {
    */
   @Handler
   void handle(ZeroExtendNode toHandle) {
+    var dest = destOf(toHandle);
+    var src = destOf(toHandle.value());
+    // TODO: This must be either optimized earlier, or be fixed.
+    //   the current solution isn't good.
     // Nothing to do; zero extension is implied in TCG operations
-    replaceCurrent();
+    replaceCurrent(new TcgUnaryNopNode(dest, src));
   }
 
   /**
@@ -346,7 +351,7 @@ class TcgOpLoweringExecutor implements CfgTraverser {
     var loadSize = Tcg_8_16_32_64.fromWidth(toHandle.type().bitWidth());
 
     // TODO: Don't hardcode this
-    var mode = TcgExtend.SIGN;
+    var mode = TcgExtend.ZERO;
 
     replaceCurrent(
         new TcgLoadMemory(loadSize, mode, dest, src)

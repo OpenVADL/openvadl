@@ -7,6 +7,7 @@ import java.math.BigInteger;
 import java.util.stream.Stream;
 import net.jqwik.api.Arbitraries;
 import net.jqwik.api.Arbitrary;
+import net.jqwik.api.arbitraries.BigIntegerArbitrary;
 import vadl.viam.Definition;
 import vadl.viam.Format;
 import vadl.viam.InstructionSetArchitecture;
@@ -80,7 +81,7 @@ public class TestUtils {
    * @param bitWidth the number of bits to generate.
    * @return positive number with potentially zero bits within the bit-width
    */
-  public static Arbitrary<BigInteger> arbitraryBits(int bitWidth) {
+  public static BigIntegerArbitrary arbitraryBits(int bitWidth) {
     return Arbitraries.bigIntegers()
         .greaterOrEqual(BigInteger.ZERO)
         .lessOrEqual(BigInteger.valueOf(2)
@@ -98,7 +99,7 @@ public class TestUtils {
    * @param bitWidth the number of bits to generate.
    * @return positive number with potentially zero bits within the bit-width
    */
-  public static Arbitrary<BigInteger> arbitraryUnsignedInt(int bitWidth) {
+  public static BigIntegerArbitrary arbitraryUnsignedInt(int bitWidth) {
     return arbitraryBits(bitWidth);
   }
 
@@ -110,7 +111,7 @@ public class TestUtils {
    * @param bitWidth the number of bits to generate.
    * @return number with potentially zero bits within the bit-width
    */
-  public static Arbitrary<BigInteger> arbitrarySignedInt(int bitWidth) {
+  public static BigIntegerArbitrary arbitrarySignedInt(int bitWidth) {
     return Arbitraries.bigIntegers()
         .greaterOrEqual(BigInteger.valueOf(-2)
             .pow(bitWidth - 1))
