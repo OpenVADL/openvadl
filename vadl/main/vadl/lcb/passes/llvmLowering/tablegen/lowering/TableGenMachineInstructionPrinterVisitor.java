@@ -91,6 +91,8 @@ public class TableGenMachineInstructionPrinterVisitor implements TableGenMachine
   public void visit(ConstantNode node) {
     if (node.constant() instanceof Constant.Str str) {
       writer.write(str.value());
+    } else if (node.constant() instanceof Constant.Value v) {
+      writer.write(v.intValue());
     } else {
       throw new RuntimeException("not implemented");
     }

@@ -19,9 +19,11 @@ import vadl.lcb.passes.llvmLowering.immediates.GenerateTableGenImmediateRecordPa
 import vadl.lcb.passes.llvmLowering.tablegen.lowering.TableGenImmediateOperandRenderer;
 import vadl.lcb.passes.llvmLowering.tablegen.lowering.TableGenInstructionPatternRenderer;
 import vadl.lcb.passes.llvmLowering.tablegen.lowering.TableGenInstructionRenderer;
+import vadl.lcb.passes.llvmLowering.tablegen.lowering.TableGenPseudoInstExpansionRenderer;
 import vadl.lcb.passes.llvmLowering.tablegen.model.TableGenImmediateRecord;
 import vadl.lcb.passes.llvmLowering.tablegen.model.TableGenMachineInstruction;
 import vadl.lcb.passes.llvmLowering.tablegen.model.TableGenPattern;
+import vadl.lcb.passes.llvmLowering.tablegen.model.TableGenPseudoInstExpansionPattern;
 import vadl.lcb.passes.llvmLowering.tablegen.model.TableGenPseudoInstruction;
 import vadl.lcb.passes.llvmLowering.tablegen.model.TableGenSelectionWithOutputPattern;
 import vadl.lcb.template.CommonVarNames;
@@ -88,17 +90,26 @@ public class EmitInstrInfoTableGenFilePass extends LcbTemplateRenderingPass {
         .map(TableGenInstructionRenderer::lower)
         .toList();
 
+    var pseudoExpansionPatterns = tableGenMachineRecords
+        .stream()
+        .flatMap(x -> x.getAnonymousPatterns().stream())
+        .filter(x -> x instanceof TableGenPseudoInstExpansionPattern)
+        .map(x -> (TableGenPseudoInstExpansionPattern) x)
+        .toList();
+
     var compensationPatterns =
         (List<TableGenSelectionWithOutputPattern>) passResults.lastResultOf(
             CompensationPatternPass.class);
 
     var renderedPatterns =
         Stream.concat(
-                tableGenMachineRecords.stream().map(TableGenInstructionPatternRenderer::lower),
                 Stream.concat(
-                    tableGenPseudoRecords.stream().map(TableGenInstructionPatternRenderer::lower),
-                    compensationPatterns.stream().map(TableGenInstructionPatternRenderer::lower))
-            )
+                    tableGenMachineRecords.stream().map(TableGenInstructionPatternRenderer::lower),
+                    Stream.concat(
+                        tableGenPseudoRecords.stream().map(TableGenInstructionPatternRenderer::lower),
+                        compensationPatterns.stream().map(TableGenInstructionPatternRenderer::lower))
+                ),
+                pseudoExpansionPatterns.stream().map(TableGenPseudoInstExpansionRenderer::lower))
             .toList();
 
     return Map.of(CommonVarNames.NAMESPACE, specification.simpleName(),

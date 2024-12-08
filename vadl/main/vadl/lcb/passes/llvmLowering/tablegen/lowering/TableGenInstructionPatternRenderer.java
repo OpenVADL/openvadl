@@ -13,6 +13,7 @@ import vadl.lcb.passes.llvmLowering.tablegen.model.TableGenPseudoInstruction;
 import vadl.lcb.passes.llvmLowering.tablegen.model.TableGenSelectionWithOutputPattern;
 import vadl.viam.Instruction;
 import vadl.viam.PseudoInstruction;
+import vadl.viam.graph.Graph;
 
 /**
  * Utility class for mapping into TableGen. But it only prints the anonymous patterns.
@@ -68,14 +69,34 @@ public final class TableGenInstructionPatternRenderer {
    */
   public static String lower(TableGenSelectionWithOutputPattern tableGenPattern) {
     ensure(tableGenPattern.isPatternLowerable(), "TableGen pattern must be lowerable");
-    var visitor = new TableGenPatternPrinterVisitor();
-    var machineVisitor = new TableGenMachineInstructionPrinterVisitor();
 
-    for (var root : tableGenPattern.selector().getDataflowRoots()) {
+    return String.format("""
+        def : Pat<%s,
+                %s>;
+        """, lowerSelector(tableGenPattern.selector()), lowerMachine(tableGenPattern.machine()));
+
+  }
+
+  /**
+   * Render the selector pattern.
+   */
+  public static String lowerSelector(Graph graph) {
+    var visitor = new TableGenPatternPrinterVisitor();
+
+    for (var root : graph.getDataflowRoots()) {
       visitor.visit(root);
     }
 
-    for (var root : tableGenPattern.machine().getDataflowRoots()) {
+    return visitor.getResult();
+  }
+
+  /**
+   * Render the machine pattern.
+   */
+  public static String lowerMachine(Graph graph) {
+    var machineVisitor = new TableGenMachineInstructionPrinterVisitor();
+
+    for (var root : graph.getDataflowRoots()) {
       ensure(root instanceof LcbPseudoInstructionNode
               || root instanceof LcbMachineInstructionNode,
           "root node must be pseudo or machine node");
@@ -87,10 +108,6 @@ public final class TableGenInstructionPatternRenderer {
       }
     }
 
-    return String.format("""
-        def : Pat<%s,
-                %s>;
-        """, visitor.getResult(), machineVisitor.getResult());
-
+    return machineVisitor.getResult();
   }
 }

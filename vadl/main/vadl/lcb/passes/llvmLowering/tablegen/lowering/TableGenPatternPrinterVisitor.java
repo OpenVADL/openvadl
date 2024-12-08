@@ -253,7 +253,7 @@ public class TableGenPatternPrinterVisitor
 
   @Override
   public void visit(LlvmTargetCallSD node) {
-    writer.write("(" + node.lower());
+    writer.write("(" + node.lower() + " ");
 
     joinArgumentsWithComma(node.arguments());
 

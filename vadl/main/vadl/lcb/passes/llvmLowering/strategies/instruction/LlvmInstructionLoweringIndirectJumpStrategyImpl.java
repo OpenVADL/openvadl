@@ -129,15 +129,21 @@ public class LlvmInstructionLoweringIndirectJumpStrategyImpl
                       new Query.Builder().machineInstructionLabel(MachineInstructionLabel.JALR).build())
                   .firstMachineInstruction();
           var machine = new Graph("machine");
-          var constant = Constant.Value.of(0, DataType.signedInt(32));
+          var constant = new Constant.Str("0");
           machine.addWithInputs(new LcbMachineInstructionNode(
               new NodeList<>(new ConstantNode(new Constant.Str(abi.returnAddress().render())), ref,
                   new ConstantNode(constant)), jalr));
-          var expansion = new TableGenPseudoInstExpansionPattern(selector, machine, true, List.of(
-              new TableGenInstructionRegisterFileOperand(ParameterIdentity.from(ref, ref.address()),
-                  ref,
-                  address.formatField())
-          ), Collections.emptyList());
+          var expansion =
+              new TableGenPseudoInstExpansionPattern("PseudoCALLIndirect",
+                  selector,
+                  machine,
+                  true,
+                  List.of(
+                      new TableGenInstructionRegisterFileOperand(
+                          ParameterIdentity.from(ref, ref.address()),
+                          ref,
+                          address.formatField())
+                  ), Collections.emptyList());
 
           result.add(expansion);
         });
