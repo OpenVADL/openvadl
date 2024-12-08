@@ -4,6 +4,7 @@ import vadl.lcb.passes.llvmLowering.domain.selectionDag.LlvmBasicBlockSD;
 import vadl.lcb.passes.llvmLowering.domain.selectionDag.LlvmBrCcSD;
 import vadl.lcb.passes.llvmLowering.domain.selectionDag.LlvmBrCondSD;
 import vadl.lcb.passes.llvmLowering.domain.selectionDag.LlvmBrSD;
+import vadl.lcb.passes.llvmLowering.domain.selectionDag.LlvmBrindSD;
 import vadl.lcb.passes.llvmLowering.domain.selectionDag.LlvmExtLoad;
 import vadl.lcb.passes.llvmLowering.domain.selectionDag.LlvmFieldAccessRefNode;
 import vadl.lcb.passes.llvmLowering.domain.selectionDag.LlvmLoadSD;
@@ -89,4 +90,9 @@ public interface TableGenNodeVisitor extends LcbGraphNodeVisitor {
    * Visit {@link LlvmTargetCallSD}.
    */
   void visit(LlvmTargetCallSD node);
+
+  /**
+   * Visit {@link LlvmBrindSD}.
+   */
+  void visit(LlvmBrindSD node);
 }
