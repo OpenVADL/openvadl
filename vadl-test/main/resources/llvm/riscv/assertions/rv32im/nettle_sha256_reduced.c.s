@@ -12,13 +12,13 @@ _nettle_sha256_compress:                # @_nettle_sha256_compress
 	SW a2,-16(fp)
 	ADDI ra,zero,0
 	SW ra,-116(fp)
-	JAL zero,%hi(.LBB0_1)
+	JAL zero,.LBB0_1
 .LBB0_1:                                # %for.cond
                                         # =>This Inner Loop Header: Depth=1
 	LW tp,-116(fp)
 	ADDI ra,zero,15
 	BLTU ra,tp,.LBB0_4
-	JAL zero,%hi(.LBB0_2)
+	JAL zero,.LBB0_2
 .LBB0_2:                                # %for.body
                                         #   in Loop: Header=BB0_1 Depth=1
 	LW tp,-12(fp)
@@ -39,7 +39,7 @@ _nettle_sha256_compress:                # @_nettle_sha256_compress
 	ADDI ra,fp,-80
 	ADD ra,ra,t0
 	SW tp,0(ra)
-	JAL zero,%hi(.LBB0_3)
+	JAL zero,.LBB0_3
 .LBB0_3:                                # %for.inc
                                         #   in Loop: Header=BB0_1 Depth=1
 	LW ra,-116(fp)
@@ -48,7 +48,7 @@ _nettle_sha256_compress:                # @_nettle_sha256_compress
 	LW ra,-12(fp)
 	ADDI ra,ra,16
 	SW ra,-12(fp)
-	JAL zero,%hi(.LBB0_1)
+	JAL zero,.LBB0_1
 .LBB0_4:                                # %for.end
 	ADDI ra,zero,0
 	SW ra,-124(fp)
