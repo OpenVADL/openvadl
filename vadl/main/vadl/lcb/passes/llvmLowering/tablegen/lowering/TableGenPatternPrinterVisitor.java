@@ -15,6 +15,7 @@ import vadl.lcb.passes.llvmLowering.domain.selectionDag.LlvmLoadSD;
 import vadl.lcb.passes.llvmLowering.domain.selectionDag.LlvmSExtLoad;
 import vadl.lcb.passes.llvmLowering.domain.selectionDag.LlvmSetccSD;
 import vadl.lcb.passes.llvmLowering.domain.selectionDag.LlvmStoreSD;
+import vadl.lcb.passes.llvmLowering.domain.selectionDag.LlvmTargetCallSD;
 import vadl.lcb.passes.llvmLowering.domain.selectionDag.LlvmTruncStore;
 import vadl.lcb.passes.llvmLowering.domain.selectionDag.LlvmTypeCastSD;
 import vadl.lcb.passes.llvmLowering.domain.selectionDag.LlvmZExtLoad;
@@ -248,6 +249,15 @@ public class TableGenPatternPrinterVisitor
     var operand = LlvmInstructionLoweringStrategy.generateTableGenInputOutput(node);
     var identity = (ParameterTypeAndNameIdentity) operand.identity();
     writer.write(node.lower() + ":$" + identity.name());
+  }
+
+  @Override
+  public void visit(LlvmTargetCallSD node) {
+    writer.write("(" + node.lower());
+
+    joinArgumentsWithComma(node.arguments());
+
+    writer.write(")");
   }
 
   @Override

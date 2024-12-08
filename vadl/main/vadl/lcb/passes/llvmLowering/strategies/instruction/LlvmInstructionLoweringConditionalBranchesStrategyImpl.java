@@ -17,7 +17,6 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Stream;
-import javax.annotation.Nullable;
 import vadl.lcb.codegen.model.llvm.ValueType;
 import vadl.lcb.passes.isaMatching.MachineInstructionLabel;
 import vadl.lcb.passes.llvmLowering.domain.LlvmLoweringRecord;
@@ -38,7 +37,7 @@ import vadl.viam.graph.Node;
 import vadl.viam.graph.NodeList;
 import vadl.viam.graph.dependency.SideEffectNode;
 import vadl.viam.graph.dependency.WriteResourceNode;
-import vadl.viam.passes.functionInliner.UninlinedGraph;
+import vadl.viam.passes.dummyAbi.DummyAbi;
 
 /**
  * Lowering conditional branch instructions into TableGen patterns.
@@ -63,8 +62,8 @@ public class LlvmInstructionLoweringConditionalBranchesStrategyImpl
   public Optional<LlvmLoweringRecord> lower(
       Map<MachineInstructionLabel, List<Instruction>> labelledMachineInstructions,
       Instruction instruction,
-      Graph uninlinedBehavior) {
-
+      Graph uninlinedBehavior,
+      DummyAbi abi) {
     var visitor = replacementHooks();
     var copy = uninlinedBehavior.copy();
 
@@ -74,13 +73,14 @@ public class LlvmInstructionLoweringConditionalBranchesStrategyImpl
 
     copy.deinitializeNodes();
     return Optional.of(
-        createIntermediateResult(labelledMachineInstructions, instruction, copy));
+        createIntermediateResult(labelledMachineInstructions, instruction, copy, abi));
   }
 
   private LlvmLoweringRecord createIntermediateResult(
       Map<MachineInstructionLabel, List<Instruction>> supportedInstructions,
       Instruction instruction,
-      Graph visitedGraph) {
+      Graph visitedGraph,
+      DummyAbi dummyAbi) {
 
     var outputOperands = getTableGenOutputOperands(visitedGraph);
     var inputOperands = getTableGenInputOperands(outputOperands, visitedGraph);
@@ -92,7 +92,10 @@ public class LlvmInstructionLoweringConditionalBranchesStrategyImpl
         generatePatternVariations(instruction,
             supportedInstructions,
             visitedGraph,
-            inputOperands, outputOperands, patterns);
+            inputOperands,
+            outputOperands,
+            patterns,
+            dummyAbi);
 
     var allPatterns = Stream.concat(patterns.stream(), alternatives.stream())
         .map(LoweringStrategyUtils::replaceBasicBlockByLabelImmediateInMachineInstruction)
@@ -119,7 +122,8 @@ public class LlvmInstructionLoweringConditionalBranchesStrategyImpl
       Graph behavior,
       List<TableGenInstructionOperand> inputOperands,
       List<TableGenInstructionOperand> outputOperands,
-      List<TableGenPattern> patterns) {
+      List<TableGenPattern> patterns,
+      DummyAbi abi) {
     ArrayList<TableGenPattern> alternatives = new ArrayList<>();
     var swapped = generatePatternsForSwappedOperands(patterns);
     alternatives.addAll(swapped);
