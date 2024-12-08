@@ -15,6 +15,39 @@ def SDT_CallSeqEnd   : SDCallSeqEnd<[SDTCisVT<0, [(${stackPointerType})]>, SDTCi
 // Target-dependent type requirements
 def SDT_CPU_Call : SDTypeProfile<0, -1, [SDTCisVT<0, [(${stackPointerType})]>]>;
 
+class InstFormat<bits<5> val> {
+    bits<5> Value = val;
+}
+
+class GenericInstCommon<dag outs, dag ins, string opcodestr, string argstr,
+           list<dag> pattern, InstFormat format> : Instruction {
+    let Namespace = "CPU";
+
+    dag OutOperandList = outs;
+    dag InOperandList = ins;
+    let AsmString = opcodestr # !if(!empty(argstr), "", "\t" # argstr);
+    let Pattern = pattern;
+    let TSFlags{4-0} = format.Value;
+}
+
+class GenericInst<dag outs, dag ins, string opcodestr, string argstr,
+     list<dag> pattern, InstFormat format>
+    : GenericInstCommon<outs, ins, opcodestr, argstr, pattern, format> {
+    field bits<32> Inst;
+    // SoftFail is a field the disassembler can use to provide a way for
+    // instructions to not match without killing the whole decode process. It is
+    // mainly used for ARM, but Tablegen expects this field to exist or it fails
+    // to build the decode table.
+    field bits<32> SoftFail = 0;
+    let Size = 4;
+}
+
+class Pseudo<dag outs, dag ins, list<dag> pattern, string opcodestr = "", string argstr = "">
+    : GenericInst<outs, ins, opcodestr, argstr, pattern, InstFormat<0>> {
+    let isPseudo = 1;
+    let isCodeGenOnly = 1;
+}
+
 // Target-independent nodes, but with target-specific formats
 def callseq_start : SDNode<"ISD::CALLSEQ_START", SDT_CallSeqStart, [SDNPHasChain, SDNPOutGlue]>;
 def callseq_end   : SDNode<"ISD::CALLSEQ_END", SDT_CallSeqEnd, [SDNPHasChain, SDNPOptInGlue, SDNPOutGlue]>;
