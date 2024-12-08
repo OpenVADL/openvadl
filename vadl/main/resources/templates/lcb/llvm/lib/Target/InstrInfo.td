@@ -21,7 +21,7 @@ class InstFormat<bits<5> val> {
 
 class GenericInstCommon<dag outs, dag ins, string opcodestr, string argstr,
            list<dag> pattern, InstFormat format> : Instruction {
-    let Namespace = "CPU";
+    let Namespace = "[(${namespace})]";
 
     dag OutOperandList = outs;
     dag InOperandList = ins;
