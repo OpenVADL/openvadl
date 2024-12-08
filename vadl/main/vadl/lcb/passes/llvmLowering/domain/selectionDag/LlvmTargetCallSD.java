@@ -41,7 +41,8 @@ public class LlvmTargetCallSD extends AbstractFunctionCallNode implements LlvmNo
 
   @Override
   public Node copy() {
-    return new LlvmTargetCallSD(new NodeList<>(args.stream().map(x -> (ExpressionNode) x.copy()).toList()),
+    return new LlvmTargetCallSD(
+        new NodeList<>(args.stream().map(x -> (ExpressionNode) x.copy()).toList()),
         type());
   }
 

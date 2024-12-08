@@ -106,8 +106,10 @@ public class EmitInstrInfoTableGenFilePass extends LcbTemplateRenderingPass {
                 Stream.concat(
                     tableGenMachineRecords.stream().map(TableGenInstructionPatternRenderer::lower),
                     Stream.concat(
-                        tableGenPseudoRecords.stream().map(TableGenInstructionPatternRenderer::lower),
-                        compensationPatterns.stream().map(TableGenInstructionPatternRenderer::lower))
+                        tableGenPseudoRecords.stream()
+                            .map(TableGenInstructionPatternRenderer::lower),
+                        compensationPatterns.stream()
+                            .map(TableGenInstructionPatternRenderer::lower))
                 ),
                 pseudoExpansionPatterns.stream().map(TableGenPseudoInstExpansionRenderer::lower))
             .toList();

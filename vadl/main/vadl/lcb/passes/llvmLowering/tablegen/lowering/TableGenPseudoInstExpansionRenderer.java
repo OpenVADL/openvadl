@@ -7,6 +7,9 @@ import vadl.lcb.passes.llvmLowering.tablegen.model.TableGenPseudoInstExpansionPa
  * This class creates a special tablegen pattern to render pseudo instance without any C++.
  */
 public class TableGenPseudoInstExpansionRenderer {
+  /**
+  * Lowers a pseudo inst.
+  */
   public static String lower(
       TableGenPseudoInstExpansionPattern pattern) {
     var out = pattern.outputs().stream().map(TableGenInstructionRenderer::lower).collect(
