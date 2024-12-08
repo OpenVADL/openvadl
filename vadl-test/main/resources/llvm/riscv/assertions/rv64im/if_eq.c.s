@@ -14,15 +14,15 @@ if_eq:                                  # @if_eq
 	LWU tp,-16(fp)
 	LWU ra,-20(fp)
 	BEQ ra,tp,.LBB0_2
-	JAL zero,%hi(.LBB0_1)
+	JAL zero,.LBB0_1
 .LBB0_1:                                # %if.then
 	LW ra,-16(fp)
 	SW ra,-12(fp)
-	JAL zero,%hi(.LBB0_3)
+	JAL zero,.LBB0_3
 .LBB0_2:                                # %if.else
 	LW ra,-20(fp)
 	SW ra,-12(fp)
-	JAL zero,%hi(.LBB0_3)
+	JAL zero,.LBB0_3
 .LBB0_3:                                # %return
 	LW a0,-12(fp)
 	LD fp,24(sp)
