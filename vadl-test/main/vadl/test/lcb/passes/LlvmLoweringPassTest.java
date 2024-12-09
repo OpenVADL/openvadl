@@ -78,17 +78,20 @@ public class LlvmLoweringPassTest extends AbstractLcbTest {
                                                                          LlvmCondCode condCodeWithImmediate,
                                                                          String machineInstructionWithImmediate,
                                                                          LlvmCondCode condCodeAlternative,
-                                                                         String machineInstructionAlternative) {
+                                                                         String machineInstructionAlternative,
+                                                                         LlvmCondCode condCode3) {
     return new TestOutput(
         List.of(new TableGenInstructionOperand(DUMMY_NODE, "X", "rs1"),
             new TableGenInstructionOperand(DUMMY_NODE, "X", "rs2")),
         List.of(new TableGenInstructionOperand(DUMMY_NODE, "X", "rd")),
         List.of(String.format("(setcc X:$rs1, X:$rs2, %s)", condCode),
             String.format("(setcc X:$rs1, X:$rs2, %s)", condCodeWithImmediate),
-            String.format("(setcc X:$rs1, X:$rs2, %s)", condCodeAlternative)),
+            String.format("(setcc X:$rs1, X:$rs2, %s)", condCodeAlternative),
+            String.format("(setcc X:$rs1, X:$rs2, %s)", condCode3)),
         List.of(String.format("(%s X:$rs1, X:$rs2)", machineInstruction),
             String.format("(%s (XOR X:$rs1, X:$rs2), 1)", machineInstructionWithImmediate),
-            String.format("(%s X0, (XOR X:$rs1, X:$rs2))", machineInstructionAlternative)),
+            String.format("(%s X0, (XOR X:$rs1, X:$rs2))", machineInstructionAlternative),
+            String.format("(%s X:$rs2, X:$rs1)", machineInstruction)),
         createEmptyFlags(),
         false
     );
@@ -351,7 +354,8 @@ public class LlvmLoweringPassTest extends AbstractLcbTest {
             LlvmCondCode.SETEQ,
             "SLTIU",
             LlvmCondCode.SETNE,
-            "SLTU"));
+            "SLTU",
+            LlvmCondCode.SETGT));
     expectedResults.put("SLTU",
         createTestOutputRR_ForLessThanUnsigned(LlvmCondCode.SETULT, "SLTU",
             LlvmCondCode.SETUGE, "XORI", LlvmCondCode.SETULE, "XORI"));

@@ -77,6 +77,7 @@ public class LlvmInstructionLoweringConditionalsStrategyImpl
     if (label == MachineInstructionLabel.LTS) {
       eq(lti, xor, patterns, result);
       neq(ltu, xor, patterns, result);
+      gt(instruction, patterns, result);
     } else if (label == MachineInstructionLabel.LTU) {
       uge(xori, patterns, result);
       ule(xori, patterns, result);
@@ -85,6 +86,54 @@ public class LlvmInstructionLoweringConditionalsStrategyImpl
     }
 
     return result;
+  }
+
+  private void gt(Instruction lt,
+                  List<TableGenPattern> patterns,
+                  ArrayList<TableGenPattern> result) {
+    /*
+              def : Pat<(setcc X:$rs1, X:$rs2, SETLT),
+                  (SLT X:$rs1, X:$rs2)>;
+
+                  to
+
+              def : Pat< ( setcc X:$rs1, X:$rs2, SETEQ ),
+                  (SLT X:$rs2, X:$rs1)>;
+               */
+
+    for (var pattern : patterns) {
+      var copy = pattern.copy();
+
+      if (copy instanceof TableGenSelectionWithOutputPattern outputPattern) {
+        // Change condition code
+        var setcc = ensurePresent(
+            outputPattern.selector().getNodes(LlvmSetccSD.class).toList().stream()
+                .findFirst(),
+            () -> Diagnostic.error("No setcc node was found", pattern.selector()
+                .sourceLocation()));
+        // Only RR and not RI should be replaced here.
+        if (setcc.arguments().size() > 2
+            && setcc.arguments().get(0) instanceof LlvmReadRegFileNode
+            && setcc.arguments().get(1) instanceof LlvmReadRegFileNode) {
+          setcc.setBuiltIn(BuiltInTable.SGTH);
+          setcc.arguments().set(2,
+              new ConstantNode(new Constant.Str(setcc.llvmCondCode().name())));
+        } else {
+          // Otherwise, stop and go to next pattern.
+          continue;
+        }
+
+        // Change machine instruction to immediate
+        outputPattern.machine().getNodes(LcbMachineInstructionNode.class)
+            .forEach(node -> {
+              node.setInstruction(lt);
+              // Swap the operands
+              Collections.reverse(node.arguments());
+            });
+
+        result.add(outputPattern);
+      }
+    }
   }
 
   private Instruction getFirst(
