@@ -92,7 +92,7 @@ public class LlvmInstructionLoweringConditionalsStrategyImpl
 
   private void gtOrUgt(Instruction lt,
                        List<TableGenPattern> patterns,
-                       ArrayList<TableGenPattern> result,
+                       List<TableGenPattern> result,
                        BuiltInTable.BuiltIn builtIn,
                        LlvmCondCode condCode) {
     /*
