@@ -13,6 +13,7 @@ import vadl.lcb.codegen.model.llvm.ValueType;
 import vadl.lcb.passes.isaMatching.MachineInstructionLabel;
 import vadl.lcb.passes.llvmLowering.LlvmLoweringPass;
 import vadl.lcb.passes.llvmLowering.domain.machineDag.LcbMachineInstructionNode;
+import vadl.lcb.passes.llvmLowering.domain.selectionDag.LlvmCondCode;
 import vadl.lcb.passes.llvmLowering.domain.selectionDag.LlvmReadRegFileNode;
 import vadl.lcb.passes.llvmLowering.domain.selectionDag.LlvmSetccSD;
 import vadl.lcb.passes.llvmLowering.strategies.LlvmInstructionLoweringStrategy;
@@ -77,14 +78,76 @@ public class LlvmInstructionLoweringConditionalsStrategyImpl
     if (label == MachineInstructionLabel.LTS) {
       eq(lti, xor, patterns, result);
       neq(ltu, xor, patterns, result);
+      gtOrUgt(instruction, patterns, result, BuiltInTable.SGTH, LlvmCondCode.SETGT);
     } else if (label == MachineInstructionLabel.LTU) {
       uge(xori, patterns, result);
       ule(xori, patterns, result);
+      gtOrUgt(instruction, patterns, result, BuiltInTable.SGTH, LlvmCondCode.SETUGT);
     } else if (label == MachineInstructionLabel.LTIU) {
       neqWithImmediate(ltu, xori, patterns, result);
     }
 
     return result;
+  }
+
+  private void gtOrUgt(Instruction lt,
+                       List<TableGenPattern> patterns,
+                       List<TableGenPattern> result,
+                       BuiltInTable.BuiltIn builtIn,
+                       LlvmCondCode condCode) {
+    /*
+              def : Pat<(setcc X:$rs1, X:$rs2, SETLT),
+                  (SLT X:$rs1, X:$rs2)>;
+
+                  to
+
+              def : Pat< (setcc X:$rs1, X:$rs2, SETGT ),
+                  (SLT X:$rs2, X:$rs1)>;
+
+              or
+
+              def : Pat<(setcc X:$rs1, X:$rs2, SETULT),
+                  (SLTU X:$rs1, X:$rs2)>;
+
+                  to
+
+              def : Pat< (setcc X:$rs1, X:$rs2, SETUGT ),
+                  (SLTU X:$rs2, X:$rs1)>;
+    */
+
+    for (var pattern : patterns) {
+      var copy = pattern.copy();
+
+      if (copy instanceof TableGenSelectionWithOutputPattern outputPattern) {
+        // Change condition code
+        var setcc = ensurePresent(
+            outputPattern.selector().getNodes(LlvmSetccSD.class).toList().stream()
+                .findFirst(),
+            () -> Diagnostic.error("No setcc node was found", pattern.selector()
+                .sourceLocation()));
+        // Only RR and not RI should be replaced here.
+        if (setcc.arguments().size() > 2
+            && setcc.arguments().get(0) instanceof LlvmReadRegFileNode
+            && setcc.arguments().get(1) instanceof LlvmReadRegFileNode) {
+          setcc.setBuiltIn(builtIn);
+          setcc.arguments().set(2,
+              new ConstantNode(new Constant.Str(condCode.name())));
+        } else {
+          // Otherwise, stop and go to next pattern.
+          continue;
+        }
+
+        // Change machine instruction to immediate
+        outputPattern.machine().getNodes(LcbMachineInstructionNode.class)
+            .forEach(node -> {
+              node.setInstruction(lt);
+              // Swap the operands
+              Collections.reverse(node.arguments());
+            });
+
+        result.add(outputPattern);
+      }
+    }
   }
 
   private Instruction getFirst(
