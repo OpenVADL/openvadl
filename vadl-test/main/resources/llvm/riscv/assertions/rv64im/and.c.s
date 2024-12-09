@@ -20,6 +20,6 @@ and:                                    # @and
 .Lfunc_end0:
 	.size	and, .Lfunc_end0-and
                                         # -- End function
-	.ident	"clang version 17.0.6 (https://github.com/llvm/llvm-project 6009708b4367171ccdbf4b5905cb6a803753fe18)"
+	.ident	"clang version 17.0.6 (https://github.com/llvm/llvm-project.git 6009708b4367171ccdbf4b5905cb6a803753fe18)"
 	.section	".note.GNU-stack","",@progbits
 	.addrsig
