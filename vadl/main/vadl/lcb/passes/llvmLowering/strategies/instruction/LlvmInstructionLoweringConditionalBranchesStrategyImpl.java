@@ -10,19 +10,25 @@ import static vadl.lcb.passes.isaMatching.MachineInstructionLabel.BUGEQ;
 import static vadl.lcb.passes.isaMatching.MachineInstructionLabel.BUGTH;
 import static vadl.lcb.passes.isaMatching.MachineInstructionLabel.BULEQ;
 import static vadl.lcb.passes.isaMatching.MachineInstructionLabel.BULTH;
+import static vadl.viam.ViamError.ensurePresent;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Stream;
+import vadl.error.Diagnostic;
 import vadl.lcb.codegen.model.llvm.ValueType;
 import vadl.lcb.passes.isaMatching.MachineInstructionLabel;
+import vadl.lcb.passes.llvmLowering.LlvmLoweringPass;
 import vadl.lcb.passes.llvmLowering.domain.LlvmLoweringRecord;
+import vadl.lcb.passes.llvmLowering.domain.machineDag.LcbMachineInstructionNode;
 import vadl.lcb.passes.llvmLowering.domain.selectionDag.LlvmBrCcSD;
 import vadl.lcb.passes.llvmLowering.domain.selectionDag.LlvmBrCondSD;
 import vadl.lcb.passes.llvmLowering.domain.selectionDag.LlvmCondCode;
+import vadl.lcb.passes.llvmLowering.domain.selectionDag.LlvmReadRegFileNode;
 import vadl.lcb.passes.llvmLowering.domain.selectionDag.LlvmSetCondSD;
 import vadl.lcb.passes.llvmLowering.domain.selectionDag.LlvmTypeCastSD;
 import vadl.lcb.passes.llvmLowering.strategies.LlvmInstructionLoweringStrategy;
@@ -30,11 +36,16 @@ import vadl.lcb.passes.llvmLowering.strategies.LoweringStrategyUtils;
 import vadl.lcb.passes.llvmLowering.tablegen.model.TableGenInstructionOperand;
 import vadl.lcb.passes.llvmLowering.tablegen.model.TableGenPattern;
 import vadl.lcb.passes.llvmLowering.tablegen.model.TableGenSelectionWithOutputPattern;
+import vadl.viam.Constant;
 import vadl.viam.Instruction;
+import vadl.viam.RegisterFile;
 import vadl.viam.graph.Graph;
 import vadl.viam.graph.GraphVisitor;
 import vadl.viam.graph.Node;
 import vadl.viam.graph.NodeList;
+import vadl.viam.graph.dependency.ConstantNode;
+import vadl.viam.graph.dependency.ExpressionNode;
+import vadl.viam.graph.dependency.ReadRegFileNode;
 import vadl.viam.graph.dependency.SideEffectNode;
 import vadl.viam.graph.dependency.WriteResourceNode;
 import vadl.viam.passes.dummyAbi.DummyAbi;
@@ -124,12 +135,62 @@ public class LlvmInstructionLoweringConditionalBranchesStrategyImpl
       List<TableGenInstructionOperand> outputOperands,
       List<TableGenPattern> patterns,
       DummyAbi abi) {
+    var flipped = LlvmLoweringPass.flipIsaMatchingMachineInstructions(supportedInstructions);
+    var label = flipped.get(instruction);
+
     ArrayList<TableGenPattern> alternatives = new ArrayList<>();
     var swapped = generatePatternsForSwappedOperands(patterns);
     alternatives.addAll(swapped);
     alternatives.addAll(
         generateBrCondFromBrCc(Stream.concat(patterns.stream(), swapped.stream()).toList()));
+
+    if (label == BNEQ) {
+      alternatives.add(generateBrCondWithRegister(instruction, behavior));
+    }
+
     return alternatives;
+  }
+
+  private TableGenPattern generateBrCondWithRegister(Instruction instruction, Graph behavior) {
+    /*
+     Generate the following pattern:
+
+     def : Pat<(brcond X:$cond, bb:$imm12), (BNE X:$cond, X0, bb:$imm12)>;
+     */
+
+    var brcc = ensurePresent(
+        behavior.getNodes(LlvmBrCcSD.class)
+            .findFirst(), () -> Diagnostic.error("Cannot find a comparison in the behavior",
+            instruction.sourceLocation()));
+    var register = (ReadRegFileNode) brcc.first();
+    var llvmRegisterNode =
+        new LlvmReadRegFileNode(register.registerFile(), (ExpressionNode) register.address().copy(),
+            register.type(), register.staticCounterAccess());
+    var registerFile = register.registerFile();
+    var zeroRegister = getZeroRegister(registerFile);
+
+    var selector = new Graph("selector");
+    selector.addWithInputs(new LlvmBrCondSD(llvmRegisterNode,
+        (ExpressionNode) brcc.immOffset().copy()));
+    var machine = new Graph("machine");
+    machine.addWithInputs(new LcbMachineInstructionNode(new NodeList<>(
+        (ExpressionNode) llvmRegisterNode.copy(),
+        zeroRegister,
+        (ExpressionNode) brcc.immOffset().copy()
+    ), instruction));
+
+    return new TableGenSelectionWithOutputPattern(selector, machine);
+  }
+
+  private ConstantNode getZeroRegister(RegisterFile registerFile) {
+    var zeroConstraint =
+        ensurePresent(
+            Arrays.stream(registerFile.constraints()).filter(x -> x.value().intValue() == 0)
+                .findFirst(),
+            () -> Diagnostic.error("Cannot find zero constraint", registerFile.sourceLocation()));
+    var constant =
+        new Constant.Str(registerFile.simpleName() + zeroConstraint.address().intValue());
+    return new ConstantNode(constant);
   }
 
   private List<TableGenPattern> generatePatternsForSwappedOperands(List<TableGenPattern> patterns) {
@@ -212,6 +273,4 @@ public class LlvmInstructionLoweringConditionalBranchesStrategyImpl
 
     return alternatives;
   }
-
-
 }

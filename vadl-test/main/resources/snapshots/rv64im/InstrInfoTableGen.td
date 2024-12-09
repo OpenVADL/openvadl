@@ -4069,6 +4069,9 @@ def : Pat<(brcond (i64 (setne X:$rs1, X:$rs2)), bb:$imm),
 def : Pat<(brcond (i64 (seteq X:$rs2, X:$rs1)), bb:$imm),
         (BNE X:$rs1, X:$rs2, RV64IM_Btype_immAsLabel:$imm)>;
 
+def : Pat<(brcond X:$rs1, bb:$imm),
+        (BNE X:$rs1, X0, bb:$imm)>;
+
 
 def : Pat<(sdiv X:$rs1, X:$rs2),
         (DIV X:$rs1, X:$rs2)>;
