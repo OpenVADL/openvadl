@@ -14,6 +14,9 @@ public class TableGenPseudoInstExpansionPattern extends TableGenPattern {
   private final List<TableGenInstructionOperand> inputs;
   private final Graph machine;
 
+  /**
+   * Constructor.
+   */
   public TableGenPseudoInstExpansionPattern(String name,
                                             Graph selector,
                                             Graph machine,
