@@ -5,6 +5,7 @@ import vadl.lcb.passes.llvmLowering.domain.machineDag.LcbMachineInstructionNode;
 import vadl.lcb.passes.llvmLowering.domain.machineDag.LcbMachineInstructionParameterNode;
 import vadl.lcb.passes.llvmLowering.domain.machineDag.LcbMachineInstructionValueNode;
 import vadl.lcb.passes.llvmLowering.domain.machineDag.LcbPseudoInstructionNode;
+import vadl.lcb.passes.llvmLowering.domain.selectionDag.LlvmBasicBlockSD;
 import vadl.lcb.passes.llvmLowering.strategies.LlvmInstructionLoweringStrategy;
 import vadl.lcb.passes.llvmLowering.strategies.visitors.TableGenMachineInstructionVisitor;
 import vadl.viam.Constant;
@@ -85,6 +86,11 @@ public class TableGenMachineInstructionPrinterVisitor implements TableGenMachine
   public void visit(LcbMachineInstructionValueNode machineInstructionValueNode) {
     writer.write("(" + machineInstructionValueNode.valueType().getLlvmType() + " "
         + machineInstructionValueNode.constant().asVal().intValue() + ")");
+  }
+
+  @Override
+  public void visit(LlvmBasicBlockSD basicBlockSD) {
+    writer.write(basicBlockSD.parameterIdentity().render());
   }
 
   @Override
