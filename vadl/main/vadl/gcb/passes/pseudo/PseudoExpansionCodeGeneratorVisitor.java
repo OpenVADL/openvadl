@@ -12,6 +12,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.stream.Collectors;
+import jdk.jshell.Diag;
 import vadl.cppCodeGen.GenericCppCodeGeneratorVisitor;
 import vadl.cppCodeGen.SymbolTable;
 import vadl.cppCodeGen.model.CppFunction;
@@ -167,7 +168,7 @@ public class PseudoExpansionCodeGeneratorVisitor extends GenericCppCodeGenerator
         var pseudoInstructionIndex =
             getOperandIndexFromPseudoInstruction(field, argument,
                 funcParamNode.parameter().identifier);
-        lowerExpressionWithImmOrRegister(sym, field, pseudoInstructionIndex);
+        lowerExpressionWithImmOrRegister(sym, field, argument, pseudoInstructionIndex);
       } else if (argument instanceof ZeroExtendNode zeroExtendNode
           && zeroExtendNode.value() instanceof ConstantNode cn) {
         lowerExpression(instrCallNode.target(), sym, field, cn);
@@ -281,6 +282,7 @@ public class PseudoExpansionCodeGeneratorVisitor extends GenericCppCodeGenerator
 
   private void lowerExpressionWithImmOrRegister(String sym,
                                                 Format.Field field,
+                                                ExpressionNode argument,
                                                 int argumentIndex) {
     var usage = fieldUsages.getFieldUsages(field.format()).get(field);
     ensure(usage != null, "usage must not be null");
@@ -303,7 +305,13 @@ public class PseudoExpansionCodeGeneratorVisitor extends GenericCppCodeGenerator
                     + "pseudo expansion. To do so it requires to generate variants for immediates. "
                     + "It seems like that that this variants was not generated.")
         );
-        var variant = Objects.requireNonNull(variants).get(0);
+        var variant =
+            ensurePresent(
+                Objects.requireNonNull(variants).stream().filter(VariantKind::isImmediate)
+                    .findFirst(),
+                () -> Diagnostic.error("Expected a variant for an immediate. But haven't "
+                        + "found any",
+                    argument.sourceLocation()));
         writer.write(
             String.format(
                 "MCOperand %s = "
