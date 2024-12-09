@@ -28,6 +28,7 @@ import vadl.viam.graph.dependency.BuiltInCall;
 import vadl.viam.graph.dependency.ReadRegFileNode;
 import vadl.viam.graph.dependency.SideEffectNode;
 import vadl.viam.graph.dependency.WriteResourceNode;
+import vadl.viam.passes.dummyAbi.DummyAbi;
 
 /**
  * Lowers division into {@link TableGenInstruction}.
@@ -58,7 +59,9 @@ public class LlvmInstructionLoweringDivisionAndRemainderStrategyImpl
   @Override
   public Optional<LlvmLoweringRecord> lower(
       Map<MachineInstructionLabel, List<Instruction>> labelledMachineInstructions,
-      Instruction instruction, Graph unmodifiedBehavior) {
+      Instruction instruction,
+      Graph unmodifiedBehavior,
+      DummyAbi abi) {
     var visitor = replacementHooksWithDefaultFieldAccessReplacement();
     var copy = unmodifiedBehavior.copy();
 
@@ -132,7 +135,8 @@ public class LlvmInstructionLoweringDivisionAndRemainderStrategyImpl
       Graph behavior,
       List<TableGenInstructionOperand> inputOperands,
       List<TableGenInstructionOperand> outputOperands,
-      List<TableGenPattern> patterns) {
+      List<TableGenPattern> patterns,
+      DummyAbi abi) {
     return Collections.emptyList();
   }
 }

@@ -392,7 +392,7 @@ public class LlvmLoweringPassTest extends AbstractLcbTest {
         List.of(new TableGenInstructionOperand(DUMMY_NODE, "X", "rs1"),
             new TableGenInstructionOperand(DUMMY_NODE, "RV64IM_Itype_immAsInt64", "imm")),
         List.of(new TableGenInstructionOperand(DUMMY_NODE, "X", "rd")),
-        Collections.emptyList(),
+        List.of("(target_call X:$rs1)", "(brind X:$rs1)"),
         Collections.emptyList(),
         createEmptyFlags(),
         false

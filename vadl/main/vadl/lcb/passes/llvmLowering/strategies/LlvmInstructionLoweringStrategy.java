@@ -104,6 +104,7 @@ import vadl.viam.graph.dependency.WriteMemNode;
 import vadl.viam.graph.dependency.WriteRegFileNode;
 import vadl.viam.graph.dependency.WriteRegNode;
 import vadl.viam.graph.dependency.WriteResourceNode;
+import vadl.viam.passes.dummyAbi.DummyAbi;
 
 /**
  * Defines how a {@link Instruction} will be lowered to {@link TableGenInstruction}.
@@ -257,10 +258,12 @@ public abstract class LlvmInstructionLoweringStrategy {
   public Optional<LlvmLoweringRecord> lower(
       Map<MachineInstructionLabel, List<Instruction>> labelledMachineInstructions,
       Instruction instruction,
-      Graph unmodifiedBehavior) {
+      Graph unmodifiedBehavior,
+      DummyAbi abi) {
     return lowerInstruction(labelledMachineInstructions,
         instruction,
-        unmodifiedBehavior);
+        unmodifiedBehavior,
+        abi);
   }
 
   /**
@@ -270,12 +273,14 @@ public abstract class LlvmInstructionLoweringStrategy {
       Map<MachineInstructionLabel, List<Instruction>> labelledMachineInstructions,
       PseudoInstruction pseudoInstruction,
       Instruction instruction,
-      Graph unmodifiedBehavior) {
+      Graph unmodifiedBehavior,
+      DummyAbi abi) {
     logger.atDebug().log("Lowering {} with {}", instruction.identifier.simpleName(),
         pseudoInstruction.identifier.simpleName());
     return lowerInstruction(labelledMachineInstructions,
         instruction,
-        unmodifiedBehavior);
+        unmodifiedBehavior,
+        abi);
   }
 
   /**
@@ -285,7 +290,8 @@ public abstract class LlvmInstructionLoweringStrategy {
   protected Optional<LlvmLoweringRecord> lowerInstruction(
       Map<MachineInstructionLabel, List<Instruction>> labelledMachineInstructions,
       Instruction instruction,
-      Graph unmodifiedBehavior) {
+      Graph unmodifiedBehavior,
+      DummyAbi abi) {
     var visitor = replacementHooksWithDefaultFieldAccessReplacement();
     var copy = unmodifiedBehavior.copy();
 
@@ -339,7 +345,8 @@ public abstract class LlvmInstructionLoweringStrategy {
               copy,
               inputOperands,
               outputOperands,
-              patterns);
+              patterns,
+              abi);
       return Optional.of(new LlvmLoweringRecord(copy,
           inputOperands,
           outputOperands,
@@ -466,7 +473,8 @@ public abstract class LlvmInstructionLoweringStrategy {
       Graph behavior,
       List<TableGenInstructionOperand> inputOperands,
       List<TableGenInstructionOperand> outputOperands,
-      List<TableGenPattern> patterns);
+      List<TableGenPattern> patterns,
+      DummyAbi abi);
 
   /**
    * LLvm's TableGen cannot work with control flow. So if statements and other constructs are not

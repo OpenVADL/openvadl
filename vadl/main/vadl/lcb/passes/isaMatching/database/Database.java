@@ -45,6 +45,14 @@ public class Database {
   }
 
   /**
+   * Constructor for {@link Instruction}.
+   */
+  public Database(Map<MachineInstructionLabel, List<Instruction>> labelledMachineInstruction) {
+    this.labelledMachineInstructions = labelledMachineInstruction;
+    this.labelledPseudoInstructions = Collections.emptyMap();
+  }
+
+  /**
    * Run the given {@link Query} and return the matched {@link Instruction} and
    * {@link PseudoInstruction} wrapped by {@link QueryResult}.
    * Note that the query will be executed on both types of instructions. Therefore, when

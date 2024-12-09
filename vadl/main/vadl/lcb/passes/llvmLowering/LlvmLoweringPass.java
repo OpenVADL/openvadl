@@ -107,10 +107,15 @@ public class LlvmLoweringPass extends Pass {
         );
 
     var machineRecords =
-        generateRecordsForMachineInstructions(viam, machineStrategies,
+        generateRecordsForMachineInstructions(viam,
+            abi,
+            machineStrategies,
             labelledMachineInstructions);
     var pseudoRecords =
-        generateRecordsForPseudoInstructions(viam, pseudoStrategies, labelledMachineInstructions,
+        generateRecordsForPseudoInstructions(viam,
+            abi,
+            pseudoStrategies,
+            labelledMachineInstructions,
             labelledPseudoInstructions);
 
     return new LlvmLoweringPassResult(machineRecords, pseudoRecords);
@@ -119,6 +124,7 @@ public class LlvmLoweringPass extends Pass {
 
   private IdentityHashMap<Instruction, LlvmLoweringRecord> generateRecordsForMachineInstructions(
       Specification viam,
+      DummyAbi abi,
       List<LlvmInstructionLoweringStrategy> strategies,
       Map<MachineInstructionLabel, List<Instruction>> labelledMachineInstructions) {
     var tableGenRecords = new IdentityHashMap<Instruction, LlvmLoweringRecord>();
@@ -140,7 +146,8 @@ public class LlvmLoweringPass extends Pass {
 
             var record = strategy.lower(labelledMachineInstructions,
                 instruction,
-                instruction.behavior());
+                instruction.behavior(),
+                abi);
 
             // Okay, we have to save record.
             record.ifPresent(llvmLoweringIntermediateResult -> tableGenRecords.put(instruction,
@@ -158,6 +165,7 @@ public class LlvmLoweringPass extends Pass {
   private IdentityHashMap<PseudoInstruction,
       LlvmLoweringRecord> generateRecordsForPseudoInstructions(
       Specification viam,
+      DummyAbi abi,
       List<LlvmPseudoInstructionLowerStrategy> pseudoStrategies,
       Map<MachineInstructionLabel, List<Instruction>> labelledMachineInstructions,
       Map<PseudoInstructionLabel, List<PseudoInstruction>> labelledPseudoInstructions) {
@@ -172,7 +180,7 @@ public class LlvmLoweringPass extends Pass {
               continue;
             }
 
-            var record = strategy.lower(pseudo, labelledMachineInstructions);
+            var record = strategy.lower(abi, pseudo, labelledMachineInstructions);
 
             // Okay, we have to save record.
             record.ifPresent(llvmLoweringIntermediateResult -> tableGenRecords.put(pseudo,

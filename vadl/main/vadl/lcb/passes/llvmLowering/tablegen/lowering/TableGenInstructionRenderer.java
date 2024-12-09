@@ -216,7 +216,10 @@ public final class TableGenInstructionRenderer {
 
   }
 
-  private static String lower(TableGenInstructionOperand operand) {
+  /**
+   * Renders an operand into a string.
+   */
+  public static String lower(TableGenInstructionOperand operand) {
     return operand.identity().render();
   }
 
