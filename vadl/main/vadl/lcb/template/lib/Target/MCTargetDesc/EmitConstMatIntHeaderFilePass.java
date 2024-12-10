@@ -61,6 +61,14 @@ public class EmitConstMatIntHeaderFilePass extends LcbTemplateRenderingPass {
                 .stream().findFirst(),
             () -> Diagnostic.error("Expected an instruction with addition of immediate",
                 specification.sourceLocation()));
+    var slli =
+        ensurePresent(
+            Objects.requireNonNull(labelledInstructions)
+                .getOrDefault(MachineInstructionLabel.SLLI,
+                    Collections.emptyList())
+                .stream().findFirst(),
+            () -> Diagnostic.error("Expected an instruction with addition of immediate",
+                specification.sourceLocation()));
     var immediateDetection =
         (IdentifyFieldUsagePass.ImmediateDetectionContainer) passResults
             .lastResultOf(IdentifyFieldUsagePass.class);
@@ -83,6 +91,7 @@ public class EmitConstMatIntHeaderFilePass extends LcbTemplateRenderingPass {
     map.put(CommonVarNames.NAMESPACE, specification.simpleName());
     map.put("addi", addi.identifier.simpleName());
     map.put("lui", lui.identifier.simpleName());
+    map.put("slli", slli.identifier.simpleName());
     map.put("luiHighBit", luiImmediate.bitSlice().msb());
     map.put("luiLowBit", luiImmediate.bitSlice().lsb());
     map.put("luiFormatSize", luiFormatSize);

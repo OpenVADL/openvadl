@@ -190,6 +190,8 @@ public class IsaMachineInstructionMatchingPass extends Pass implements IsaMatchi
         extend(matched, MachineInstructionLabel.UMOD, instruction);
       } else if (findRR(behavior, List.of(LSL, LSLS))) {
         extend(matched, MachineInstructionLabel.SLL, instruction);
+      } else if (findRI(behavior, List.of(LSL, LSLS))) {
+        extend(matched, MachineInstructionLabel.SLLI, instruction);
       } else if (findRR(behavior, List.of(LSR, LSRS))) {
         extend(matched, MachineInstructionLabel.SRL, instruction);
       } else if (pc != null && findBranchWithConditional(behavior, EQU)) {
