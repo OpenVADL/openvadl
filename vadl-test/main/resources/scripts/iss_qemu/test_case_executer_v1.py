@@ -81,7 +81,6 @@ class QMPTestCaseExecutor(AbstractTestCaseExecutor):
         signal_stop:
         addi t1, x0, 0xde
         
-        loop:	j loop
         """
 
         with open(out_path, "w") as f:

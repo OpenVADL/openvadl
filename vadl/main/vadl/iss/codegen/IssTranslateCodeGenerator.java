@@ -73,7 +73,6 @@ public class IssTranslateCodeGenerator extends CodeGenerator
   public void defImpls(Impls<Definition> impls) {
     impls
         .set(Instruction.class, (insn, writer) -> {
-          var start = getSingleNode(insn.behavior(), StartNode.class);
 
           var name = insn.identifier.simpleName().toLowerCase();
           // static bool trans_<name>(DisasContext *ctx, arg_<name> *a) {\n
@@ -120,6 +119,7 @@ public class IssTranslateCodeGenerator extends CodeGenerator
             writer.write("\ttcg_gen_addi_i64(cpu_insn_count, cpu_insn_count, 1);\n");
           }
 
+          var start = getSingleNode(insn.behavior(), StartNode.class);
           var current = start.next();
 
           while (current instanceof DirectionalNode dirNode) {
