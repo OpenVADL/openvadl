@@ -164,6 +164,12 @@ static void gen_goto_tb(DisasContext *ctx, target_ulong n, target_ulong target_p
     ctx->base.is_jmp = DISAS_NORETURN;
 }
 
+static void generate_exception(DisasContext *ctx, int excp) {
+	tcg_gen_mov_i64(cpu_pc, ctx->base.pc_next);
+	gen_helper_raise_exception(tcg_env, tcg_constant_i32(excp));
+	ctx->base.is_jmp = DISAS_NORETURN;
+}
+
 static inline void gen_trunc(TCGv dest, TCGv arg, int bitWidth) {
     tcg_gen_andi_tl(dest, arg, (int64_t)((1ULL << bitWidth) - 1));
 }
@@ -216,6 +222,7 @@ static void translate(DisasContext *ctx)
     if(!decode_insn(ctx, insn)) {
         error_report("[[(${gen_arch_upper})]] translate, illegal instr, pc: 0x%04llx , insn: 0x%04x\n", ctx->base.pc_next, insn);
 
+        tcg_gen_movi_i64(cpu_pc, ctx->base.pc_next);
         gen_helper_unsupported(tcg_env);
         ctx->base.is_jmp = DISAS_NORETURN;
     }

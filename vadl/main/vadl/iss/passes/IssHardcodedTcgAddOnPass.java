@@ -7,6 +7,7 @@ import java.util.List;
 import java.util.function.Consumer;
 import org.jetbrains.annotations.Nullable;
 import vadl.configuration.GeneralConfiguration;
+import vadl.iss.passes.tcgLowering.nodes.TcgGenException;
 import vadl.iss.passes.tcgLowering.nodes.TcgHelperCall;
 import vadl.pass.Pass;
 import vadl.pass.PassName;
@@ -43,7 +44,7 @@ public class IssHardcodedTcgAddOnPass extends Pass {
         isa.ownInstructions()
             .forEach(i ->
                 instrAddOns.forEach(f -> f.accept(i))));
-    
+
     return null;
   }
 
@@ -56,12 +57,9 @@ public class IssHardcodedTcgAddOnPass extends Pass {
     if (!instr.simpleName().equals("ECALL")) {
       return;
     }
-
+    
     var instrEnd = getSingleNode(instr.behavior(), InstrEndNode.class);
-    var M_CALL_EXP = GraphUtils.intSNode(0xb, 32);
-    var args = new NodeList<DependencyNode>(M_CALL_EXP);
-    instrEnd.addBefore(new TcgHelperCall(null, args, true, "raise_exception"));
-
+    instrEnd.addBefore(new TcgGenException(0xb));
   }
 
 

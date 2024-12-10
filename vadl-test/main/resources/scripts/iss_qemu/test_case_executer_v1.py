@@ -76,10 +76,9 @@ class QMPTestCaseExecutor(AbstractTestCaseExecutor):
         _start:	
         {core}
 
-         # the qmp script polls this t1 to check whether the test has ended
-         signal_stop:
-         addi t1, x0, 0xde
-
+        # the qmp script polls this t1 to check whether the test has ended
+        signal_stop:
+        addi t1, x0, 0xde
         """
 
         with open(out_path, "w") as f:

@@ -29,6 +29,7 @@ import vadl.iss.passes.tcgLowering.nodes.TcgNotNode;
 import vadl.iss.passes.tcgLowering.nodes.TcgOrNode;
 import vadl.iss.passes.tcgLowering.nodes.TcgSarNode;
 import vadl.iss.passes.tcgLowering.nodes.TcgSetCond;
+import vadl.iss.passes.tcgLowering.nodes.TcgSetIsJmp;
 import vadl.iss.passes.tcgLowering.nodes.TcgShlNode;
 import vadl.iss.passes.tcgLowering.nodes.TcgShrNode;
 import vadl.iss.passes.tcgLowering.nodes.TcgStoreMemory;
@@ -47,6 +48,7 @@ import vadl.viam.graph.Graph;
 import vadl.viam.graph.ViamGraphError;
 import vadl.viam.graph.control.ControlNode;
 import vadl.viam.graph.control.DirectionalNode;
+import vadl.viam.graph.control.InstrEndNode;
 import vadl.viam.graph.control.ScheduledNode;
 import vadl.viam.graph.control.StartNode;
 import vadl.viam.graph.dependency.BuiltInCall;
@@ -153,8 +155,40 @@ class TcgOpLoweringExecutor implements CfgTraverser {
    * @param graph The graph to process.
    */
   void runOn(Graph graph) {
+    // first set jump, as later the info isn't available anymore
+    setJmp(graph);
+
+    // lower all nodes
     var start = getSingleNode(graph, StartNode.class);
     traverseBranch(start);
+  }
+
+  /**
+   * Set {@code ctx->is_jmp} to {@code DISAS_CHAIN} if there are InstrExits in the instruction
+   * that are not in the default branch.
+   * This allows chaining of instructions.
+   */
+  private void setJmp(Graph graph) {
+    var instrEnd = getSingleNode(graph, InstrEndNode.class);
+
+    var containsJmps = graph.getNodes(InstrExitNode.class).findAny().isPresent();
+    if (!containsJmps) {
+      // if there are no jumps, we don't have to chain any instructions
+      return;
+    }
+
+    // check if there is an unconditional jump (InstrExit) at the default branch.
+    // this is the case if there is some side effect of at the instrEnd that
+    // is used by some InstrExit node.
+    var unconditionalJump = instrEnd.sideEffects().stream()
+        .anyMatch(s -> s.usages().anyMatch(u -> u instanceof InstrExitNode));
+
+    if (!unconditionalJump) {
+      // if there is no unconditional jump, we must chain the instruction with the next one
+      // by setting the jmp type to chain.
+      // the tcg_stop_tb method will take care about the instruction chaining.
+      instrEnd.addBefore(new TcgSetIsJmp(TcgSetIsJmp.Type.CHAIN));
+    }
   }
 
   /**
