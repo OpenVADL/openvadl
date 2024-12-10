@@ -54,15 +54,21 @@ public class LlvmLoweringPassTest extends AbstractLcbTest {
   private static TestOutput createTestOutputRR_ForLessThanUnsigned(LlvmCondCode condCode,
                                                                    String machineInstruction,
                                                                    LlvmCondCode condCode2,
-                                                                   String machineInstruction2) {
+                                                                   String machineInstruction2,
+                                                                   LlvmCondCode condCode3,
+                                                                   LlvmCondCode condCode4) {
     return new TestOutput(
         List.of(new TableGenInstructionOperand(DUMMY_NODE, "X", "rs1"),
             new TableGenInstructionOperand(DUMMY_NODE, "X", "rs2")),
         List.of(new TableGenInstructionOperand(DUMMY_NODE, "X", "rd")),
         List.of(String.format("(setcc X:$rs1, X:$rs2, %s)", condCode),
-            String.format("(setcc X:$rs1, X:$rs2, %s)", condCode2)),
+            String.format("(setcc X:$rs1, X:$rs2, %s)", condCode2),
+            String.format("(setcc X:$rs1, X:$rs2, %s)", condCode3),
+            String.format("(setcc X:$rs1, X:$rs2, %s)", condCode4)),
         List.of(String.format("(%s X:$rs1, X:$rs2)", machineInstruction),
-            String.format("(%s (%s X:$rs1, X:$rs2), 1)", machineInstruction2, machineInstruction)),
+            String.format("(%s (%s X:$rs1, X:$rs2), 1)", machineInstruction2, machineInstruction),
+            String.format("(%s X:$rs2, X:$rs1)", machineInstruction),
+            String.format("(%s (%s X:$rs2, X:$rs1), 1)", machineInstruction2, machineInstruction)),
         createEmptyFlags(),
         false
     );
@@ -73,17 +79,24 @@ public class LlvmLoweringPassTest extends AbstractLcbTest {
                                                                          LlvmCondCode condCodeWithImmediate,
                                                                          String machineInstructionWithImmediate,
                                                                          LlvmCondCode condCodeAlternative,
-                                                                         String machineInstructionAlternative) {
+                                                                         String machineInstructionAlternative,
+                                                                         LlvmCondCode condCode3,
+                                                                         LlvmCondCode condCode4,
+                                                                         String machineInstruction4) {
     return new TestOutput(
         List.of(new TableGenInstructionOperand(DUMMY_NODE, "X", "rs1"),
             new TableGenInstructionOperand(DUMMY_NODE, "X", "rs2")),
         List.of(new TableGenInstructionOperand(DUMMY_NODE, "X", "rd")),
         List.of(String.format("(setcc X:$rs1, X:$rs2, %s)", condCode),
             String.format("(setcc X:$rs1, X:$rs2, %s)", condCodeWithImmediate),
-            String.format("(setcc X:$rs1, X:$rs2, %s)", condCodeAlternative)),
+            String.format("(setcc X:$rs1, X:$rs2, %s)", condCodeAlternative),
+            String.format("(setcc X:$rs1, X:$rs2, %s)", condCode3),
+            String.format("(setcc X:$rs1, X:$rs2, %s)", condCode4)),
         List.of(String.format("(%s X:$rs1, X:$rs2)", machineInstruction),
             String.format("(%s (XOR X:$rs1, X:$rs2), 1)", machineInstructionWithImmediate),
-            String.format("(%s X0, (XOR X:$rs1, X:$rs2))", machineInstructionAlternative)),
+            String.format("(%s X0, (XOR X:$rs1, X:$rs2))", machineInstructionAlternative),
+            String.format("(%s X:$rs2, X:$rs1)", machineInstruction),
+            String.format("(%s (%s X:$rs2, X:$rs1), 1)", machineInstruction4, machineInstruction)),
         createEmptyFlags(),
         false
     );
@@ -117,6 +130,43 @@ public class LlvmLoweringPassTest extends AbstractLcbTest {
                 machineInstruction),
             String.format("(%s X:$rs1, X:$rs2, RV64IM_Btype_immAsLabel:$imm)",
                 machineInstruction)
+        ),
+        createBranchFlags(),
+        true
+    );
+  }
+
+
+  private static TestOutput createTestOutputRRWithConditionalBranchForBne(LlvmCondCode condCode,
+                                                                          String machineInstruction,
+                                                                          LlvmCondCode inverseCondCode) {
+    return new TestOutput(
+        List.of(new TableGenInstructionOperand(DUMMY_NODE, "X", "rs1"),
+            new TableGenInstructionOperand(DUMMY_NODE, "X", "rs2"),
+            new TableGenInstructionOperand(DUMMY_NODE, "RV64IM_Btype_immAsLabel",
+                "imm")),
+        List.of(),
+        List.of(
+            String.format("(brcc %s, X:$rs1, X:$rs2, bb:$imm)", condCode),
+            String.format("(brcc %s, X:$rs2, X:$rs1, bb:$imm)", inverseCondCode),
+            String.format(
+                "(brcond (i64 (%s X:$rs1, X:$rs2)), bb:$imm)",
+                condCode.name().toLowerCase()),
+            String.format(
+                "(brcond (i64 (%s X:$rs2, X:$rs1)), bb:$imm)",
+                inverseCondCode.name().toLowerCase()),
+            "(brcond X:$rs1, bb:$imm)"),
+        // We have the same pattern twice because we have to selectors which emit the same
+        // machine instruction.
+        List.of(String.format("(%s X:$rs1, X:$rs2, RV64IM_Btype_immAsLabel:$imm)",
+                machineInstruction),
+            String.format("(%s X:$rs1, X:$rs2, RV64IM_Btype_immAsLabel:$imm)",
+                machineInstruction),
+            String.format("(%s X:$rs1, X:$rs2, RV64IM_Btype_immAsLabel:$imm)",
+                machineInstruction),
+            String.format("(%s X:$rs1, X:$rs2, RV64IM_Btype_immAsLabel:$imm)",
+                machineInstruction),
+            String.format("(%s X:$rs1, X0, bb:$imm)", machineInstruction)
         ),
         createBranchFlags(),
         true
@@ -323,11 +373,15 @@ public class LlvmLoweringPassTest extends AbstractLcbTest {
     expectedResults.put("ADD", createTestOutputRR("add", "ADD"));
     expectedResults.put("SUB", createTestOutputRR("sub", "SUB"));
     expectedResults.put("MUL", createTestOutputRR("mul", "MUL"));
+    expectedResults.put("MULH", createTestOutputRR("mulhs", "MULH"));
+    expectedResults.put("MULHU", createTestOutputRR("mulhu", "MULHU"));
     expectedResults.put("XOR", createTestOutputRR("xor", "XOR"));
     expectedResults.put("AND", createTestOutputRR("and", "AND"));
     expectedResults.put("OR", createTestOutputRR("or", "OR"));
     expectedResults.put("DIV", createTestOutputRR("sdiv", "DIV"));
     expectedResults.put("DIVU", createTestOutputRR("udiv", "DIVU"));
+    expectedResults.put("REM", createTestOutputRR("srem", "REM"));
+    expectedResults.put("REMU", createTestOutputRR("urem", "REMU"));
     expectedResults.put("ADDI",
         createTestOutputAddI());
     expectedResults.put("ORI",
@@ -342,10 +396,16 @@ public class LlvmLoweringPassTest extends AbstractLcbTest {
             LlvmCondCode.SETEQ,
             "SLTIU",
             LlvmCondCode.SETNE,
-            "SLTU"));
+            "SLTU",
+            LlvmCondCode.SETGT,
+            LlvmCondCode.SETLE,
+            "XORI"));
     expectedResults.put("SLTU",
         createTestOutputRR_ForLessThanUnsigned(LlvmCondCode.SETULT, "SLTU",
-            LlvmCondCode.SETUGE, "XORI"));
+            LlvmCondCode.SETUGE,
+            "XORI",
+            LlvmCondCode.SETUGT,
+            LlvmCondCode.SETULE));
     expectedResults.put("SLTI",
         createTestOutputRIWithConditional("RV64IM_Itype_immAsInt64", "imm",
             LlvmCondCode.SETLT, "SLTI"));
@@ -367,7 +427,8 @@ public class LlvmLoweringPassTest extends AbstractLcbTest {
     expectedResults.put("BLTU",
         createTestOutputRRWithConditionalBranch(LlvmCondCode.SETULT, "BLTU", LlvmCondCode.SETUGT));
     expectedResults.put("BNE",
-        createTestOutputRRWithConditionalBranch(LlvmCondCode.SETNE, "BNE", LlvmCondCode.SETEQ));
+        createTestOutputRRWithConditionalBranchForBne(LlvmCondCode.SETNE, "BNE",
+            LlvmCondCode.SETEQ));
     /*
     INDIRECT CALL
      */
@@ -375,7 +436,7 @@ public class LlvmLoweringPassTest extends AbstractLcbTest {
         List.of(new TableGenInstructionOperand(DUMMY_NODE, "X", "rs1"),
             new TableGenInstructionOperand(DUMMY_NODE, "RV64IM_Itype_immAsInt64", "imm")),
         List.of(new TableGenInstructionOperand(DUMMY_NODE, "X", "rd")),
-        Collections.emptyList(),
+        List.of("(target_call X:$rs1)", "(brind X:$rs1)"),
         Collections.emptyList(),
         createEmptyFlags(),
         false

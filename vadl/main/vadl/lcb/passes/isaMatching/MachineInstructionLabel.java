@@ -21,6 +21,7 @@ public enum MachineInstructionLabel {
   ADDI_64,
   AND,
   OR,
+  ORI,
   SUB,
   MUL,
   SUBB,
@@ -31,6 +32,12 @@ public enum MachineInstructionLabel {
   UMOD,
   XOR,
   XORI,
+  MULHU,
+  MULHS,
+  SLL,
+  SLLI,
+  SRL,
+  ROTL,
   /*
   COMPARISONS
    */

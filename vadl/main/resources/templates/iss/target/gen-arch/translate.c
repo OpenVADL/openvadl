@@ -192,19 +192,19 @@ static bool decode_insn(DisasContext *ctx, uint[(${insn_width.int})]_t insn);
 
 
 // TODO: Remove this hardcoded translate function in template
-static bool trans_jal(DisasContext *ctx, arg_jal *a) {
-    qemu_printf("[VADL] trans_jal rd: %d\n", a->rd);
-
-    // set rd to next pc
-    TCGv succ_pc = dest_x(ctx, a->rd);
-    target_ulong next_pc = ctx->base.pc_next + 4;
-    tcg_gen_movi_tl(succ_pc, next_pc);
-    gen_set_x(ctx, a->rd, succ_pc); // <-- is getting optimized
-
-    gen_goto_tb_rel(ctx, a->immS);
-    ctx->base.is_jmp = DISAS_NORETURN;
-    return true;
-}
+//static bool trans_jal(DisasContext *ctx, arg_jal *a) {
+//    qemu_printf("[VADL] trans_jal rd: %d\n", a->rd);
+//
+//    // set rd to next pc
+//    TCGv succ_pc = dest_x(ctx, a->rd);
+//    target_ulong next_pc = ctx->base.pc_next + 4;
+//    tcg_gen_movi_tl(succ_pc, next_pc);
+//    gen_set_x(ctx, a->rd, succ_pc); // <-- is getting optimized
+//
+//    gen_goto_tb_rel(ctx, a->immS);
+//    ctx->base.is_jmp = DISAS_NORETURN;
+//    return true;
+//}
 
 //// END OF TRANSLATE FUNCTIONS ////
 

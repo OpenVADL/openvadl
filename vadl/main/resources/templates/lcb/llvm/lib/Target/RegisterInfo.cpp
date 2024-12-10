@@ -81,7 +81,7 @@ bool eliminateFrameIndex[(${fe.instruction.identifier.simpleName()})]
     // try to inline the offset into the instruction
     //
 
-    if([(${fe.predicateMethodName})](Offset))
+    if(Offset >= [(${fe.minValue})] && Offset <= [(${fe.maxValue})] && [(${fe.predicateMethodName})](Offset))
     {
         // immediate can be encoded and instruction can be inlined.
         FIOp.ChangeToRegister( FrameReg, false /* isDef */ );

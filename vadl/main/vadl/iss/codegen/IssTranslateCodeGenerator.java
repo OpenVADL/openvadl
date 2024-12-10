@@ -6,6 +6,7 @@ import static vadl.utils.GraphUtils.getSingleNode;
 
 import java.io.StringWriter;
 import java.util.Arrays;
+import java.util.List;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 import vadl.cppCodeGen.CodeGenerator;
@@ -70,53 +71,69 @@ public class IssTranslateCodeGenerator extends CodeGenerator
 
   @Override
   public void defImpls(Impls<Definition> impls) {
-    impls.set(Instruction.class, (insn, writer) -> {
+    impls
+        .set(Instruction.class, (insn, writer) -> {
+          var start = getSingleNode(insn.behavior(), StartNode.class);
 
-      var name = insn.identifier.simpleName().toLowerCase();
-      // static bool trans_<name>(DisasContext *ctx, arg_<name> *a) {\n
-      writer.write("static bool trans_");
-      writer.write(name);
-      writer.write("(DisasContext *ctx, arg_");
-      writer.write(name);
-      writer.write(" *a) {\n");
+          var name = insn.identifier.simpleName().toLowerCase();
+          // static bool trans_<name>(DisasContext *ctx, arg_<name> *a) {\n
+          writer.write("static bool trans_");
+          writer.write(name);
+          writer.write("(DisasContext *ctx, arg_");
+          writer.write(name);
+          writer.write(" *a) {\n");
 
-      // format debug string
-      var fieldStream = Arrays.stream(insn.format().fields())
-          .filter(f -> insn.encoding().fieldEncodingOf(f) == null)
-          .filter(f -> !f.simpleName().startsWith("imm"));
-      var printingFields = Stream.concat(fieldStream, insn.format().fieldAccesses().stream())
-          .map(Definition::simpleName).toList();
+          // format debug string
+          var fieldStream = Arrays.stream(insn.format().fields())
+              .filter(f -> insn.encoding().fieldEncodingOf(f) == null)
+              // those filters are just because of riscv decode incompatibility
+              // we will remove the print in anyway
+              .filter(f -> !f.simpleName().startsWith("imm"))
+              .filter(f -> !f.simpleName().contains("rs2"));
+          var printingFields = Stream.concat(fieldStream, insn.format()
+                  .fieldAccesses().stream()
+                  // we need this filter as the insn.decode of RISCV is incompatible with the
+                  // definition in vadl spec.
+                  // Is later deleted anyway
+                  .filter(f -> !List.of("EBREAK", "ECALL").contains(insn.simpleName()))
+              )
+              .map(Definition::simpleName)
+              .toList();
 
-      var fmtString =
-          printingFields.stream().map(f -> f + ": %d ").collect(Collectors.joining(", "));
-      var fmtArgs = printingFields.stream().map(f -> "a->" + f).collect(Collectors.joining(", "));
+          var fmtString = printingFields.stream().map(f -> f + ": %d ")
+              .collect(Collectors.joining(", "));
+          var fmtArgs = printingFields.stream().map(f ->
+                  "a->" + f)
+              .collect(Collectors.joining(", "));
 
-      writer.write("\tqemu_printf(\"[VADL] trans_");
-      writer.write(name);
-      writer.write(" (" + fmtString + ")");
-      writer.write("\\n\", " + fmtArgs + ");\n");
+          var fmtArgsStr = fmtArgs.isBlank() ? "" : ", " + fmtArgs;
 
-      if (generateInsnCount) {
-        //Add separate add instruction after each that increments special cpu_insn_count flag in
-        //QEMU CPU state
-        //see resources/templates/iss/target/cpu.h/CPUArchState
-        writer.write("\ttcg_gen_addi_i64(cpu_insn_count, cpu_insn_count, 1);\n");
-      }
+          writer.write("\tqemu_printf(\"[VADL] trans_");
+          writer.write(name);
+          writer.write(" (" + fmtString + ")");
+          writer.write("\\n\"" + fmtArgsStr + ");\n");
 
-      var start = getSingleNode(insn.behavior(), StartNode.class);
-      var current = start.next();
+          if (generateInsnCount) {
+            //Add separate add instruction after each that increments special cpu_insn_count flag in
+            //QEMU CPU state
+            //see resources/templates/iss/target/cpu.h/CPUArchState
+            writer.write("\ttcg_gen_addi_i64(cpu_insn_count, cpu_insn_count, 1);\n");
+          }
 
-      while (current instanceof DirectionalNode dirNode) {
-        gen(dirNode);
-        current = dirNode.next();
-      }
+          var current = start.next();
 
-      ensure(current instanceof InstrEndNode,
-          () -> error("Instruction contains unsupported features (e.g. if-else on constants).",
-              insn.identifier.sourceLocation()));
+          while (current instanceof DirectionalNode dirNode) {
+            gen(dirNode);
+            current = dirNode.next();
+          }
 
-      writer.write("\n\treturn true; \n}\n");
-    })
+          ensure(current instanceof InstrEndNode, () ->
+              error("Instruction contains unsupported features (e.g. if-else on constants).",
+                  insn.identifier.sourceLocation())
+          );
+
+          writer.write("\n\treturn true; \n}\n");
+        })
 
     ;
   }

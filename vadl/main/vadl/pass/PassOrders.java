@@ -23,6 +23,7 @@ import vadl.gcb.passes.typeNormalization.CppTypeNormalizationForDecodingsPass;
 import vadl.gcb.passes.typeNormalization.CppTypeNormalizationForEncodingsPass;
 import vadl.gcb.passes.typeNormalization.CppTypeNormalizationForPredicatesPass;
 import vadl.iss.passes.IssConfigurationPass;
+import vadl.iss.passes.IssPcAccessConversionPass;
 import vadl.iss.passes.IssTcgConstantSchedulingPass;
 import vadl.iss.passes.IssTcgSchedulingPass;
 import vadl.iss.passes.IssTcgVAllocationPass;
@@ -44,6 +45,7 @@ import vadl.lcb.passes.llvmLowering.GenerateRegisterClassesPass;
 import vadl.lcb.passes.llvmLowering.GenerateTableGenMachineInstructionRecordPass;
 import vadl.lcb.passes.llvmLowering.GenerateTableGenPseudoInstructionRecordPass;
 import vadl.lcb.passes.llvmLowering.LlvmLoweringPass;
+import vadl.lcb.passes.llvmLowering.compensation.CompensationPatternPass;
 import vadl.lcb.passes.llvmLowering.immediates.GenerateTableGenImmediateRecordPass;
 import vadl.lcb.passes.relocation.GenerateLinkerComponentsPass;
 import vadl.lcb.template.lib.Target.EmitMCInstLowerCppFilePass;
@@ -176,6 +178,7 @@ public class PassOrders {
     order.add(new GenerateTableGenMachineInstructionRecordPass(configuration));
     order.add(new GenerateTableGenPseudoInstructionRecordPass(configuration));
     order.add(new GenerateTableGenImmediateRecordPass(configuration));
+    order.add(new CompensationPatternPass(configuration));
     order.add(new GenerateLinkerComponentsPass(configuration));
 
     if (configuration.doDump()) {
@@ -351,6 +354,7 @@ public class PassOrders {
         .add(new IssConfigurationPass(config))
         .add(new SideEffectSchedulingPass(config))
         .add(new IssSafeResourceReadPass(config))
+        .add(new IssPcAccessConversionPass(config))
         .add(new IssTcgSchedulingPass(config))
         .add(new IssVarSsaAssignment(config))
         .add(new TcgBranchLoweringPass(config))

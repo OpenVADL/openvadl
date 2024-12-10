@@ -13,6 +13,14 @@ public final class TableGenImmediateOperandRenderer {
    */
   public static String lower(TableGenImmediateRecord operand) {
     var type = operand.type().isSigned() ? operand.type() : operand.type().makeSigned();
+    int highestPossibleValue =
+        (int) (operand.type().isSigned()
+            ? Math.pow(2, (double) operand.formatFieldBitSize() - 1) - 1
+            : Math.pow(2, operand.formatFieldBitSize()));
+    int lowestPossibleValue =
+        operand.type().isSigned()
+            ? (int) (-1 * Math.pow(2, (double) operand.formatFieldBitSize() - 1))
+            : 0;
     return String.format("""
             class %s<ValueType ty> : Operand<ty>
             {
@@ -22,7 +30,7 @@ public final class TableGenImmediateOperandRenderer {
                     
             def %s
                 : %s<%s>
-                , ImmLeaf<%s, [{ return isInt<%s>(Imm) && %s(Imm); }]>;
+                , ImmLeaf<%s, [{ return isInt<%s>(Imm) && Imm >= %s && Imm <= %s && %s(Imm); }]>;
                 
             def %sAsLabel : %s<OtherVT>;
             """, operand.rawName(),
@@ -33,6 +41,8 @@ public final class TableGenImmediateOperandRenderer {
         type.getLlvmType(),
         type.getLlvmType(),
         operand.formatFieldBitSize(),
+        lowestPossibleValue,
+        highestPossibleValue,
         operand.predicateMethod(),
         operand.rawName(),
         operand.rawName()

@@ -45,7 +45,6 @@ public interface GraphVisitor<R> {
      */
     default void visitApplicable(Node arg) {
       var applicable = applicable(arg);
-      ensure(applicable.size() <= 1, "There are multiple replacement strategies applicable.");
       for (var applier : applicable) {
         NodeApplier<Node, Node> cast = (NodeApplier<Node, Node>) applier;
         cast.apply(arg);

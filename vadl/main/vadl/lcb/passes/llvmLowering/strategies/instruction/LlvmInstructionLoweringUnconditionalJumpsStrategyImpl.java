@@ -20,6 +20,7 @@ import vadl.viam.graph.GraphVisitor;
 import vadl.viam.graph.Node;
 import vadl.viam.graph.dependency.SideEffectNode;
 import vadl.viam.graph.dependency.WriteResourceNode;
+import vadl.viam.passes.dummyAbi.DummyAbi;
 import vadl.viam.passes.functionInliner.UninlinedGraph;
 
 /**
@@ -40,7 +41,8 @@ public class LlvmInstructionLoweringUnconditionalJumpsStrategyImpl
   public Optional<LlvmLoweringRecord> lower(
       Map<MachineInstructionLabel, List<Instruction>> labelledMachineInstructions,
       Instruction instruction,
-      Graph uninlinedBehavior) {
+      Graph uninlinedBehavior,
+      DummyAbi abi) {
 
     var visitor = replacementHooks();
     var copy = uninlinedBehavior.copy();
@@ -96,34 +98,6 @@ public class LlvmInstructionLoweringUnconditionalJumpsStrategyImpl
                                                    Graph uninlinedGraph,
                                                    List<TableGenInstructionOperand> inputOperands,
                                                    List<WriteResourceNode> sideEffectNodes) {
-    /*
-    var selector = new Graph("selector", instruction);
-    var machine = new Graph("machine", instruction);
-
-    var imm = ensurePresent(uninlinedGraph.getNodes(FieldAccessRefNode.class).findFirst(),
-        () -> Diagnostic.error("Instruction was expected to have an immediate.",
-            instruction.sourceLocation()));
-    var upcasted = ensurePresent(ValueType.from(imm.type()),
-        () -> Diagnostic.error("Cannot convert immediate type to LLVM type.", imm.sourceLocation())
-            .help("Check whether this type exists in LLVM"));
-
-    selector.addWithInputs(
-        new LlvmBrSD(new LlvmBasicBlockSD(imm.fieldAccess(), imm.type(), upcasted)));
-    machine.addWithInputs(new MachineInstructionNode(
-        new NodeList<>(
-            new MachineInstructionParameterNode(new TableGenInstructionBareSymbolOperand(
-                new LlvmBasicBlockSD(imm.fieldAccess(), imm.type(), upcasted), "type",
-                imm.fieldAccess().simpleName()))
-
-        ),
-        instruction));
-
-    return List.of(
-        replaceBasicBlockByLabelImmediateInMachineInstruction(
-            new TableGenSelectionWithOutputPattern(selector, machine)
-        )
-    );
-     */
     return Collections.emptyList();
   }
 
@@ -134,7 +108,8 @@ public class LlvmInstructionLoweringUnconditionalJumpsStrategyImpl
       Graph behavior,
       List<TableGenInstructionOperand> inputOperands,
       List<TableGenInstructionOperand> outputOperands,
-      List<TableGenPattern> patterns) {
+      List<TableGenPattern> patterns,
+      DummyAbi abi) {
     return Collections.emptyList();
   }
 }

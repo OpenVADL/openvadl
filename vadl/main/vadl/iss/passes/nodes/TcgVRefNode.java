@@ -43,7 +43,7 @@ public class TcgVRefNode extends DependencyNode {
   }
 
   @Override
-  public Node copy() {
+  public TcgVRefNode copy() {
     return new TcgVRefNode(var);
   }
 

@@ -32,14 +32,20 @@ public class IsaMachineInstructionMatchingPassTest extends AbstractLcbTest {
         Arguments.of(List.of("BLTU"), MachineInstructionLabel.BULTH),
         Arguments.of(List.of("AND", "ANDI"), MachineInstructionLabel.AND),
         Arguments.of(List.of("SUB", "SUBW"), MachineInstructionLabel.SUB),
-        Arguments.of(List.of("OR", "ORI"), MachineInstructionLabel.OR),
+        Arguments.of(List.of("OR"), MachineInstructionLabel.OR),
+        Arguments.of(List.of("ORI"), MachineInstructionLabel.ORI),
         Arguments.of(List.of("XOR"), MachineInstructionLabel.XOR),
         Arguments.of(List.of("XORI"), MachineInstructionLabel.XORI),
-        Arguments.of(List.of("MUL", "MULW", "MULHSU", "MULH"), MachineInstructionLabel.MUL),
+        Arguments.of(List.of("MUL", "MULW"), MachineInstructionLabel.MUL),
+        Arguments.of(List.of("MULHU"), MachineInstructionLabel.MULHU),
+        Arguments.of(List.of("MULH", "MULHSU"), MachineInstructionLabel.MULHS),
         Arguments.of(List.of("DIV", "DIVW"), MachineInstructionLabel.SDIV),
         Arguments.of(List.of("DIVU", "DIVUW"), MachineInstructionLabel.UDIV),
         Arguments.of(List.of("REMU", "REMUW"), MachineInstructionLabel.UMOD),
         Arguments.of(List.of("REM", "REMW"), MachineInstructionLabel.SMOD),
+        Arguments.of(List.of("SLL", "SLLW"), MachineInstructionLabel.SLL),
+        Arguments.of(List.of("SLLI", "SLLIW"), MachineInstructionLabel.SLLI),
+        Arguments.of(List.of("SRL", "SRLW"), MachineInstructionLabel.SRL),
         Arguments.of(List.of("SLT"), MachineInstructionLabel.LTS),
         Arguments.of(List.of("SLTU"), MachineInstructionLabel.LTU),
         Arguments.of(List.of("SLTI"), MachineInstructionLabel.LTI),
@@ -61,8 +67,7 @@ public class IsaMachineInstructionMatchingPassTest extends AbstractLcbTest {
     var setup = setupPassManagerAndRunSpec(
         "sys/risc-v/rv64im.vadl",
         PassOrders.lcb(config)
-        // TODO: Uncomment this
-//            .untilFirst(IsaMachineInstructionMatchingPass.class)
+            .untilFirst(IsaMachineInstructionMatchingPass.class)
     );
     var passManager = setup.passManager();
 

@@ -44,6 +44,6 @@ public class LlvmShlSD extends BuiltInCall implements LlvmNodeLowerable {
 
   @Override
   public Node shallowCopy() {
-    return new LlvmShrSD(args, type());
+    return new LlvmShlSD(args, type());
   }
 }

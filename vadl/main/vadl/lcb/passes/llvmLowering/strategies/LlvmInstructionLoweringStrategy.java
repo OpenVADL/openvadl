@@ -49,6 +49,9 @@ import vadl.lcb.passes.llvmLowering.strategies.nodeLowering.LcbIfNodeReplacement
 import vadl.lcb.passes.llvmLowering.strategies.nodeLowering.LcbInstrCallNodeReplacement;
 import vadl.lcb.passes.llvmLowering.strategies.nodeLowering.LcbInstrEndNodeReplacement;
 import vadl.lcb.passes.llvmLowering.strategies.nodeLowering.LcbLetNodeReplacement;
+import vadl.lcb.passes.llvmLowering.strategies.nodeLowering.LcbMulNodeReplacement;
+import vadl.lcb.passes.llvmLowering.strategies.nodeLowering.LcbMulhsNodeReplacement;
+import vadl.lcb.passes.llvmLowering.strategies.nodeLowering.LcbMulhuNodeReplacement;
 import vadl.lcb.passes.llvmLowering.strategies.nodeLowering.LcbReadMemNodeReplacement;
 import vadl.lcb.passes.llvmLowering.strategies.nodeLowering.LcbReadRegFileNodeReplacement;
 import vadl.lcb.passes.llvmLowering.strategies.nodeLowering.LcbReadRegNodeReplacement;
@@ -101,6 +104,7 @@ import vadl.viam.graph.dependency.WriteMemNode;
 import vadl.viam.graph.dependency.WriteRegFileNode;
 import vadl.viam.graph.dependency.WriteRegNode;
 import vadl.viam.graph.dependency.WriteResourceNode;
+import vadl.viam.passes.dummyAbi.DummyAbi;
 
 /**
  * Defines how a {@link Instruction} will be lowered to {@link TableGenInstruction}.
@@ -151,6 +155,9 @@ public abstract class LlvmInstructionLoweringStrategy {
       List<GraphVisitor.NodeApplier<? extends Node, ? extends Node>> hooks,
       GraphVisitor.NodeApplier<? extends Node, ? extends Node> fieldAccessRefNodeReplacement) {
     var v1 = new LcbBranchEndNodeReplacement(hooks);
+    var mul = new LcbMulNodeReplacement(hooks);
+    var mulhs = new LcbMulhsNodeReplacement(hooks);
+    var mulhu = new LcbMulhuNodeReplacement(hooks);
     var v2 = new LcbBuiltInCallNodeReplacement(hooks);
     var v3 = new LcbConstantNodeReplacement(hooks);
     var v5 = new LcbFuncCallReplacement();
@@ -173,6 +180,9 @@ public abstract class LlvmInstructionLoweringStrategy {
     var v22 = new LlvmUnlowerableNodeReplacement(hooks);
 
     hooks.add(v1);
+    hooks.add(mul);
+    hooks.add(mulhs);
+    hooks.add(mulhu);
     hooks.add(v2);
     hooks.add(v3);
     hooks.add(fieldAccessRefNodeReplacement);
@@ -248,10 +258,12 @@ public abstract class LlvmInstructionLoweringStrategy {
   public Optional<LlvmLoweringRecord> lower(
       Map<MachineInstructionLabel, List<Instruction>> labelledMachineInstructions,
       Instruction instruction,
-      Graph unmodifiedBehavior) {
+      Graph unmodifiedBehavior,
+      DummyAbi abi) {
     return lowerInstruction(labelledMachineInstructions,
         instruction,
-        unmodifiedBehavior);
+        unmodifiedBehavior,
+        abi);
   }
 
   /**
@@ -261,12 +273,14 @@ public abstract class LlvmInstructionLoweringStrategy {
       Map<MachineInstructionLabel, List<Instruction>> labelledMachineInstructions,
       PseudoInstruction pseudoInstruction,
       Instruction instruction,
-      Graph unmodifiedBehavior) {
+      Graph unmodifiedBehavior,
+      DummyAbi abi) {
     logger.atDebug().log("Lowering {} with {}", instruction.identifier.simpleName(),
         pseudoInstruction.identifier.simpleName());
     return lowerInstruction(labelledMachineInstructions,
         instruction,
-        unmodifiedBehavior);
+        unmodifiedBehavior,
+        abi);
   }
 
   /**
@@ -276,7 +290,8 @@ public abstract class LlvmInstructionLoweringStrategy {
   protected Optional<LlvmLoweringRecord> lowerInstruction(
       Map<MachineInstructionLabel, List<Instruction>> labelledMachineInstructions,
       Instruction instruction,
-      Graph unmodifiedBehavior) {
+      Graph unmodifiedBehavior,
+      DummyAbi abi) {
     var visitor = replacementHooksWithDefaultFieldAccessReplacement();
     var copy = unmodifiedBehavior.copy();
 
@@ -330,7 +345,8 @@ public abstract class LlvmInstructionLoweringStrategy {
               copy,
               inputOperands,
               outputOperands,
-              patterns);
+              patterns,
+              abi);
       return Optional.of(new LlvmLoweringRecord(copy,
           inputOperands,
           outputOperands,
@@ -457,7 +473,8 @@ public abstract class LlvmInstructionLoweringStrategy {
       Graph behavior,
       List<TableGenInstructionOperand> inputOperands,
       List<TableGenInstructionOperand> outputOperands,
-      List<TableGenPattern> patterns);
+      List<TableGenPattern> patterns,
+      DummyAbi abi);
 
   /**
    * LLvm's TableGen cannot work with control flow. So if statements and other constructs are not

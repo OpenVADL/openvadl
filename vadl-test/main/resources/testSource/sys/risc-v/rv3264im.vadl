@@ -44,7 +44,7 @@ instruction set architecture RV3264I = {
   program counter PC : Address            // PC points to the start of the current instruction
   memory         MEM : Address -> Byte    // byte addressed memory
 
-  format Rtype : Inst =                   // Rtype register 3 operand instruction format
+  format Rtype : Inst =                   // Rtype register 3 operand instruction formatMULH
     { funct7 : Bits7                      // [31..25] 7 bit function code
     , rs2    : Index                      // [24..20] 2nd source register index / shamt
     , rs1    : Index                      // [19..15] 1st source register index
@@ -270,20 +270,20 @@ $Arch3264 ( // ((((((((((((((((((((((((((((((((((((((((
   $IShftInstr (SRLI ; >> ; 0b101 ; 0b000'0000 ; UInt)  // shift right logical immediate
   $IShftInstr (SRAI ; >> ; 0b101 ; 0b010'0000 ; SInt)  // shift right arithmetic immediate
 
-  relocation hi20( symbol : Bits<32> ) -> UInt<20> = ( ( symbol + 0x800 ) >> 12 ) as UInt<20>
-  relocation lo12( symbol : Bits<32> ) -> SInt<12> = symbol as SInt<12>
+  relocation hi( symbol : Bits<32> ) -> UInt<20> = ( ( symbol + 0x800 ) >> 12 ) as UInt<20>
+  relocation lo( symbol : Bits<32> ) -> SInt<12> = symbol as SInt<12>
 
   pseudo instruction CALL( symbol : Bits<32> ) =
   {
-      LUI{ rd = 1 as Bits5, imm = hi20( symbol ) }
-      JALR{ rd = 1 as Bits5, rs1 = 1 as Bits5, imm = lo12( symbol ) }
+      LUI{ rd = 1 as Bits5, imm = hi( symbol ) }
+      JALR{ rd = 1 as Bits5, rs1 = 1 as Bits5, imm = lo( symbol ) }
   }
   assembly CALL = (mnemonic, " ", hex( symbol ))
 
   pseudo instruction TAIL( symbol : Bits<32> ) =
   {
-      AUIPC{ rd = 6 as Bits5, imm = hi20( symbol ) }
-      JALR{ rd = 0 as Bits5, rs1 = 6 as Bits5, imm = lo12( symbol ) as Bits12 }
+      AUIPC{ rd = 6 as Bits5, imm = hi( symbol ) }
+      JALR{ rd = 0 as Bits5, rs1 = 6 as Bits5, imm = lo( symbol ) as Bits12 }
   }
   assembly TAIL = (mnemonic, " ", hex( symbol ))
 
@@ -390,10 +390,17 @@ $Arch3264 ( // ((((((((((((((((((((((((((((((((((((((((
 
   pseudo instruction LLA( rd: Index, symbol: Bits<32> ) =
   {
-      LUI { rd = rd, imm = hi20( symbol ) }
-      ADDI { rd = rd, rs1 = rd, imm = lo12( symbol ) }
+      LUI { rd = rd, imm = hi( symbol ) }
+      ADDI { rd = rd, rs1 = rd, imm = lo( symbol ) }
   }
   assembly LLA = (mnemonic, " ", register(rd), hex( symbol ))
+
+   pseudo instruction LI( rd : Index, symbol : Bits<32> ) =
+   {
+      LUI{ rd = rd, imm = hi( symbol ) }
+      ADDI{ rd = rd, rs1 = rd, imm = lo( symbol ) }
+   }
+   assembly LI = (mnemonic, " ", register( rd ), ",", decimal( symbol ))
   }
 
 

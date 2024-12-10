@@ -14,6 +14,7 @@ import vadl.viam.graph.dependency.BuiltInCall;
  */
 public interface CBuiltinMixin extends CGenMixin {
 
+
   /**
    * Adds the C gen TCG node implementations to the given impls.
    */
@@ -33,6 +34,8 @@ public interface CBuiltinMixin extends CGenMixin {
               writer.write(" << ");
             } else if (op.builtIn() == BuiltInTable.ADD) {
               writer.write(" + ");
+            } else if (op.builtIn() == BuiltInTable.AND) {
+              writer.write(" & ");
             } else {
               throw new ViamGraphError("built-in to C of %s is not implemented", op.builtIn())
                   .addContext(op);

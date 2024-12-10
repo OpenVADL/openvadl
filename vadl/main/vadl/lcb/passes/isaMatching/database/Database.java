@@ -1,0 +1,104 @@
+package vadl.lcb.passes.isaMatching.database;
+
+import static vadl.viam.ViamError.ensureNonNull;
+
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
+import java.util.Map;
+import vadl.error.Diagnostic;
+import vadl.lcb.passes.isaMatching.IsaMachineInstructionMatchingPass;
+import vadl.lcb.passes.isaMatching.IsaPseudoInstructionMatchingPass;
+import vadl.lcb.passes.isaMatching.MachineInstructionLabel;
+import vadl.lcb.passes.isaMatching.PseudoInstructionLabel;
+import vadl.pass.PassResults;
+import vadl.viam.Instruction;
+import vadl.viam.PseudoInstruction;
+import vadl.viam.Specification;
+
+/**
+ * This database contains the labelled instructions and pseudo instructions and makes it possible
+ * to query for instructions.
+ */
+public class Database {
+  private final Map<MachineInstructionLabel, List<Instruction>> labelledMachineInstructions;
+  private final Map<PseudoInstructionLabel, List<PseudoInstruction>> labelledPseudoInstructions;
+
+  /**
+   * Constructor. It requires the information from {@link IsaMachineInstructionMatchingPass} and
+   * {@link IsaPseudoInstructionMatchingPass} to have labelled instructions and pseudo instructions.
+   */
+  public Database(PassResults passResults, Specification viam) {
+    var labelledMachineInstructions = ensureNonNull(
+        (Map<MachineInstructionLabel, List<Instruction>>) passResults.lastResultOf(
+            IsaMachineInstructionMatchingPass.class),
+        () -> Diagnostic.error("Cannot find semantics of the instructions",
+            viam.sourceLocation()));
+    var labelledPseudoInstructions = ensureNonNull(
+        (Map<PseudoInstructionLabel, List<PseudoInstruction>>) passResults.lastResultOf(
+            IsaPseudoInstructionMatchingPass.class),
+        () -> Diagnostic.error("Cannot find semantics of the instructions",
+            viam.sourceLocation()));
+
+    this.labelledMachineInstructions = labelledMachineInstructions;
+    this.labelledPseudoInstructions = labelledPseudoInstructions;
+  }
+
+  /**
+   * Constructor for {@link Instruction}.
+   */
+  public Database(Map<MachineInstructionLabel, List<Instruction>> labelledMachineInstruction) {
+    this.labelledMachineInstructions = labelledMachineInstruction;
+    this.labelledPseudoInstructions = Collections.emptyMap();
+  }
+
+  /**
+   * Run the given {@link Query} and return the matched {@link Instruction} and
+   * {@link PseudoInstruction} wrapped by {@link QueryResult}.
+   * Note that the query will be executed on both types of instructions. Therefore, when
+   * given a {@link MachineInstructionLabel} and {@link PseudoInstructionLabel} then you might get
+   * two results and not the intersection of both.
+   */
+  public QueryResult run(Query query) {
+    var result = matchInstructions(query);
+
+    return new QueryResult(query, result.machineInstructions(), result.pseudoInstructions());
+  }
+
+  private QueryResult matchInstructions(Query query) {
+    var resultMachineInstructions = new ArrayList<Instruction>();
+    var resultPseudoInstructions = new ArrayList<PseudoInstruction>();
+
+    if (query.machineInstructionLabel() != null) {
+      resultMachineInstructions.addAll(
+          labelledMachineInstructions.getOrDefault(query.machineInstructionLabel(),
+              Collections.emptyList()));
+    }
+
+    if (query.pseudoInstructionLabel() != null) {
+      resultPseudoInstructions.addAll(
+          labelledPseudoInstructions.getOrDefault(query.pseudoInstructionLabel(),
+              Collections.emptyList()));
+    }
+
+    for (var x : query.or()) {
+      var subResult = matchInstructions(x);
+      resultMachineInstructions.addAll(subResult.machineInstructions());
+      resultPseudoInstructions.addAll(subResult.pseudoInstructions());
+    }
+
+    for (var x : query.withBehavior()) {
+      // Remove machine instruction when any behavior query matches.
+      resultMachineInstructions.removeIf(instruction -> {
+        var satisfied = instruction.behavior().getNodes()
+            .filter(node -> x.applicable().isInstance(node))
+            .allMatch(node -> x.predicate().test(node));
+
+        // only remove when it's not covered.
+        return !satisfied;
+      });
+    }
+
+    return new QueryResult(query, resultMachineInstructions, resultPseudoInstructions);
+  }
+}

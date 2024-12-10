@@ -5,6 +5,8 @@ import vadl.lcb.passes.llvmLowering.domain.machineDag.LcbMachineInstructionNode;
 import vadl.lcb.passes.llvmLowering.domain.machineDag.LcbMachineInstructionParameterNode;
 import vadl.lcb.passes.llvmLowering.domain.machineDag.LcbMachineInstructionValueNode;
 import vadl.lcb.passes.llvmLowering.domain.machineDag.LcbPseudoInstructionNode;
+import vadl.lcb.passes.llvmLowering.domain.selectionDag.LlvmBasicBlockSD;
+import vadl.lcb.passes.llvmLowering.strategies.LlvmInstructionLoweringStrategy;
 import vadl.lcb.passes.llvmLowering.strategies.visitors.TableGenMachineInstructionVisitor;
 import vadl.viam.Constant;
 import vadl.viam.graph.NodeList;
@@ -87,9 +89,16 @@ public class TableGenMachineInstructionPrinterVisitor implements TableGenMachine
   }
 
   @Override
+  public void visit(LlvmBasicBlockSD basicBlockSD) {
+    writer.write(basicBlockSD.parameterIdentity().render());
+  }
+
+  @Override
   public void visit(ConstantNode node) {
     if (node.constant() instanceof Constant.Str str) {
       writer.write(str.value());
+    } else if (node.constant() instanceof Constant.Value v) {
+      writer.write(v.intValue());
     } else {
       throw new RuntimeException("not implemented");
     }
@@ -132,7 +141,8 @@ public class TableGenMachineInstructionPrinterVisitor implements TableGenMachine
 
   @Override
   public void visit(ReadRegFileNode readRegFileNode) {
-    throw new RuntimeException("not implemented");
+    var operand = LlvmInstructionLoweringStrategy.generateTableGenInputOutput(readRegFileNode);
+    writer.write(operand.render());
   }
 
   @Override
