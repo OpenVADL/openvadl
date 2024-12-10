@@ -19,6 +19,9 @@ import vadl.viam.graph.ViamGraphError;
 import vadl.viam.graph.dependency.DependencyNode;
 import vadl.viam.graph.dependency.ExpressionNode;
 
+/**
+ * A TCG node that represents a generic helper call.
+ */
 public class TcgHelperCall extends TcgNode {
 
   @Input
@@ -34,6 +37,9 @@ public class TcgHelperCall extends TcgNode {
   @DataValue
   String name;
 
+  /**
+   * Constructs the helper call node.
+   */
   public TcgHelperCall(@Nullable TcgVRefNode result, NodeList<DependencyNode> args, boolean envArg,
                        String name) {
     this.result = result;

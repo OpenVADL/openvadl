@@ -8,19 +8,18 @@ import java.util.function.Consumer;
 import org.jetbrains.annotations.Nullable;
 import vadl.configuration.GeneralConfiguration;
 import vadl.iss.passes.tcgLowering.nodes.TcgGenException;
-import vadl.iss.passes.tcgLowering.nodes.TcgHelperCall;
 import vadl.pass.Pass;
 import vadl.pass.PassName;
 import vadl.pass.PassResults;
-import vadl.types.Type;
-import vadl.utils.GraphUtils;
 import vadl.viam.Instruction;
 import vadl.viam.Specification;
-import vadl.viam.graph.NodeList;
 import vadl.viam.graph.control.InstrEndNode;
-import vadl.viam.graph.dependency.ConstantNode;
-import vadl.viam.graph.dependency.DependencyNode;
 
+/**
+ * This pass manipulates the VIAM with hardcoded elements.
+ * E.g. it adds an exception generation to {@code ECALL} instruction because
+ * this is not yet supported in the VADL specification.
+ */
 public class IssHardcodedTcgAddOnPass extends Pass {
 
   public IssHardcodedTcgAddOnPass(GeneralConfiguration configuration) {
@@ -33,7 +32,7 @@ public class IssHardcodedTcgAddOnPass extends Pass {
   }
 
   List<Consumer<Instruction>> instrAddOns = List.of(
-      this::eCallAddExceptionRaise
+      this::ecallAddExceptionRaise
   );
 
   @Override
@@ -53,11 +52,11 @@ public class IssHardcodedTcgAddOnPass extends Pass {
    * Add a tcg helper call to raise_exception in ecall. We do this as the current
    * specification does not yet implement it, however, it is necessary for tests.
    */
-  private void eCallAddExceptionRaise(Instruction instr) {
+  private void ecallAddExceptionRaise(Instruction instr) {
     if (!instr.simpleName().equals("ECALL")) {
       return;
     }
-    
+
     var instrEnd = getSingleNode(instr.behavior(), InstrEndNode.class);
     instrEnd.addBefore(new TcgGenException(0xb));
   }

@@ -32,6 +32,9 @@ public enum Tcg_32_64 {
     };
   }
 
+  /**
+   * Returns the next fitting type for the given width.
+   */
   public static Tcg_32_64 nextFitting(int width) {
     if (width <= 32) {
       return Tcg_32_64.i32;

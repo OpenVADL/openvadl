@@ -8,6 +8,11 @@ import vadl.iss.passes.nodes.TcgVRefNode;
 import vadl.javaannotations.viam.DataValue;
 import vadl.viam.graph.Node;
 
+/**
+ * A TCG node that represents the {@code generate_exception} function to raise an exception
+ * in TCG.
+ * This substitutes the {@code raise} statement in VADL.
+ */
 public class TcgGenException extends TcgNode {
 
   @DataValue
