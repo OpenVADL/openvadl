@@ -6,6 +6,7 @@
 #include "exec/translator.h"
 #include "qemu/qemu-print.h"
 #include "tcg/tcg-op.h"
+#include "cpu-bits.h"
 
 #include "exec/helper-proto.h"
 #include "exec/helper-gen.h"
@@ -182,20 +183,23 @@ static bool decode_insn(DisasContext *ctx, uint[(${insn_width.int})]_t insn);
 [/]
 
 
-// TODO: Remove this hardcoded translate function in template
-//static bool trans_jal(DisasContext *ctx, arg_jal *a) {
-//    qemu_printf("[VADL] trans_jal rd: %d\n", a->rd);
-//
-//    // set rd to next pc
-//    TCGv succ_pc = dest_x(ctx, a->rd);
-//    target_ulong next_pc = ctx->base.pc_next + 4;
-//    tcg_gen_movi_tl(succ_pc, next_pc);
-//    gen_set_x(ctx, a->rd, succ_pc); // <-- is getting optimized
-//
-//    gen_goto_tb_rel(ctx, a->immS);
-//    ctx->base.is_jmp = DISAS_NORETURN;
-//    return true;
-//}
+// TODO: Remove this hardcoded translate functions in template
+static bool trans_csrrw(DisasContext *ctx, arg_csrrw *a) {
+    qemu_printf("[VADL] trans_csrrw (rd: %d , csr: %d , rs1: %d , shamt: %d )\n",
+                a->rd, a->csr, a->rs1);
+
+    TCGv dest    = dest_x(ctx, a->rd);
+    TCGv src     = get_x(ctx, a->rs1);
+    TCGv_i32 csr = tcg_constant_i32(a->csr);
+
+    gen_helper_csrrw(dest, tcg_env, csr, src);
+
+    tcg_gen_movi_i64(cpu_pc, ctx->base.pc_next + 4);
+    tcg_gen_exit_tb(NULL, 0);
+    ctx->base.is_jmp = DISAS_NORETURN;
+
+    return true;
+}
 
 //// END OF TRANSLATE FUNCTIONS ////
 

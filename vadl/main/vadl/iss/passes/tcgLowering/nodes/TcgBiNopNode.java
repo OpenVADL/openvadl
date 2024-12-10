@@ -24,6 +24,11 @@ public class TcgBiNopNode extends TcgBinaryOpNode {
   }
 
   @Override
+  public String cCode(Function<Node, String> nodeToCCode) {
+    return "";
+  }
+
+  @Override
   public Node copy() {
     return new TcgBiNopNode(dest.copy(), arg1.copy(), arg2.copy());
   }
