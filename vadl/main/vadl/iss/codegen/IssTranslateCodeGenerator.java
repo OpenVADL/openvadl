@@ -30,8 +30,21 @@ import vadl.viam.graph.dependency.FieldRefNode;
 public class IssTranslateCodeGenerator extends CodeGenerator
     implements CTypeCastMixin, CTcgOpsMixin, CBuiltinMixin, CMiscMixin {
 
+  private boolean generateInsnCount = false;
+
   public IssTranslateCodeGenerator(StringWriter writer) {
     super(writer);
+  }
+
+  /**
+   * Constructs IssTranslateCodeGenerator.
+   *
+   * @param generateInsnCount used to determine if the iss generates add instruction for special
+   *                          cpu register (QEMU)
+   */
+  public IssTranslateCodeGenerator(StringWriter writer, boolean generateInsnCount) {
+    super(writer);
+    this.generateInsnCount = generateInsnCount;
   }
 
   /**
@@ -43,12 +56,23 @@ public class IssTranslateCodeGenerator extends CodeGenerator
     return generator.writer.toString();
   }
 
+  /**
+   * The static entry point to get the translation function for a given instruction.
+   *
+   * @param generateInsnCount used to determine if the iss generates add instruction for special
+   *                          cpu register (QEMU)
+   */
+  public static String fetch(Instruction def, boolean generateInsnCount) {
+    var generator = new IssTranslateCodeGenerator(new StringWriter(), generateInsnCount);
+    generator.gen(def);
+    return generator.writer.toString();
+  }
+
 
   @Override
   public void defImpls(Impls<Definition> impls) {
     impls
         .set(Instruction.class, (insn, writer) -> {
-          var start = getSingleNode(insn.behavior(), StartNode.class);
 
           var name = insn.identifier.simpleName().toLowerCase();
           // static bool trans_<name>(DisasContext *ctx, arg_<name> *a) {\n
@@ -88,6 +112,14 @@ public class IssTranslateCodeGenerator extends CodeGenerator
           writer.write(" (" + fmtString + ")");
           writer.write("\\n\", ctx->base.pc_next" + fmtArgsStr + ");\n");
 
+          if (generateInsnCount) {
+            //Add separate add instruction after each that increments special cpu_insn_count flag in
+            //QEMU CPU state
+            //see resources/templates/iss/target/cpu.h/CPUArchState
+            writer.write("\ttcg_gen_addi_i64(cpu_insn_count, cpu_insn_count, 1);\n");
+          }
+
+          var start = getSingleNode(insn.behavior(), StartNode.class);
           var current = start.next();
 
           while (current instanceof DirectionalNode dirNode) {

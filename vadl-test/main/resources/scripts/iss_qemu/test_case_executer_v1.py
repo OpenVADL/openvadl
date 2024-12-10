@@ -34,6 +34,7 @@ class QMPTestCaseExecutor(AbstractTestCaseExecutor):
             regs_of_interest
         )
 
+
         self.test_result.completed_stages.append('RUN')
 
         ref_reg_results = {}
@@ -41,7 +42,7 @@ class QMPTestCaseExecutor(AbstractTestCaseExecutor):
             ref_reg_results = await self._execute_qemu_sim(
                 f"reference-{self.spec.id}",
                 self.spec.reference_exec,
-                regs_of_interest
+                self.spec.reference_regs
             )
             self.test_result.completed_stages.append('RUN_REF')
 
@@ -75,10 +76,11 @@ class QMPTestCaseExecutor(AbstractTestCaseExecutor):
         
         _start:	
         {core}
-
+        
         # the qmp script polls this t1 to check whether the test has ended
         signal_stop:
         addi t1, x0, 0xde
+
         """
 
         with open(out_path, "w") as f:

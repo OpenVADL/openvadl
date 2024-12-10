@@ -55,6 +55,16 @@ public abstract class AsmTestBuilder {
     return String.join("\n", instructions);
   }
 
+  IssTestUtils.TestSpec toTestSpecWithSpecialRegs(Map<String, String> map, String... regsOfInterest) {
+    return new IssTestUtils.TestSpec(
+        testId,
+        map,
+        toAsmString(),
+        referenceQemuExec(),
+        List.of(regsOfInterest)
+    );
+  }
+
   IssTestUtils.TestSpec toTestSpec(
       String... regsOfInterest
   ) {

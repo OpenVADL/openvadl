@@ -40,6 +40,7 @@ class QEMUExecuter:
         await self._wait_until_done(signal_reg, signal_content, timeout_sec)
         print(f"done.")
         reg_results = await self._fetch_result_regs(result_regs)
+
         await self._shutdown()
         return reg_results
 

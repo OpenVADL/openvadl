@@ -61,7 +61,7 @@ use a Intellij configuration to run the tests:
 1. Create a new run configuration of type `Gradle`
 2. Set the `Run` field to
     ```bash
-   --tests at.ac.tuwien.complang.vadl.tests.OpenVADLTestSuite -PnoXtendCompile
+   test --tests at.ac.tuwien.complang.vadl.tests.OpenVADLTestSuite -PnoXtendCompile
    ```
 3. For the `Gralde project` select the (old-)`vadl` project path
 

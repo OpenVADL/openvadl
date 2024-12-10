@@ -51,10 +51,10 @@ public abstract class QemuIssTest extends DockerExecutionTest {
    * @param specPath path to VADL specification in testSource
    * @return the image containing the generated QEMU ISS
    */
-  protected ImageFromDockerfile generateSimulator(String specPath) {
+  protected ImageFromDockerfile generateSimulator(String specPath, boolean insnCount) {
     return issImageCache.computeIfAbsent(specPath, (path) -> {
       try {
-        var config = IssConfiguration.from(getConfiguration(false));
+        var config = IssConfiguration.from(getConfiguration(false), insnCount);
         // run iss generation
         setupPassManagerAndRunSpec(path, PassOrders.iss(config));
 
@@ -127,6 +127,7 @@ public abstract class QemuIssTest extends DockerExecutionTest {
               System.out.println("\nRan stages: " + e.completedStages());
               System.out.println("Register tests: \n" + e.regTests());
               System.out.println("Duration: " + e.duration());
+
               if (!success) {
                 for (var log : e.logs().entrySet()) {
                   System.out.println("Logs of " + log.getKey() + ": ");

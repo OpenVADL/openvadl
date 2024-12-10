@@ -11,6 +11,7 @@ public class IssConfiguration extends GeneralConfiguration {
 
   // is set by the IssConfigurationPass
   private String architectureName;
+  private boolean insnCount;
   private Tcg_32_64 targetSize;
 
   /**
@@ -19,11 +20,30 @@ public class IssConfiguration extends GeneralConfiguration {
   public IssConfiguration(GeneralConfiguration generalConfig) {
     super(generalConfig);
     architectureName = "unknown";
+    insnCount = false;
     targetSize = Tcg_32_64.i64;
+  }
+
+  /**
+   * Constructs IssConfiguration.
+   *
+   * @param insnCount used to determine if the iss generates add instruction for special
+   *                            cpu register (QEMU)
+   */
+  public IssConfiguration(GeneralConfiguration generalConfig, boolean insnCount) {
+    super(generalConfig);
+    this.architectureName = "unknown";
+    this.insnCount = insnCount;
+    targetSize = Tcg_32_64.i64;
+
   }
 
   public static IssConfiguration from(GeneralConfiguration generalConfig) {
     return new IssConfiguration(generalConfig);
+  }
+
+  public static IssConfiguration from(GeneralConfiguration generalConfig, boolean insnCounting) {
+    return new IssConfiguration(generalConfig, insnCounting);
   }
 
   public String architectureName() {
@@ -36,6 +56,14 @@ public class IssConfiguration extends GeneralConfiguration {
 
   public void setArchitectureName(String architectureName) {
     this.architectureName = architectureName;
+  }
+
+  public boolean isInsnCounting() {
+    return insnCount;
+  }
+
+  public void setInsnCounting(boolean insnCounting) {
+    this.insnCount = insnCounting;
   }
 
   public void setTargetSize(Tcg_32_64 targetSize) {
