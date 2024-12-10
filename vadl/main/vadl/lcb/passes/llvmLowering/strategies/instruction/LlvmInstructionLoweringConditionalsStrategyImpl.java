@@ -13,6 +13,7 @@ import vadl.lcb.codegen.model.llvm.ValueType;
 import vadl.lcb.passes.isaMatching.MachineInstructionLabel;
 import vadl.lcb.passes.llvmLowering.LlvmLoweringPass;
 import vadl.lcb.passes.llvmLowering.domain.machineDag.LcbMachineInstructionNode;
+import vadl.lcb.passes.llvmLowering.domain.selectionDag.LlvmCondCode;
 import vadl.lcb.passes.llvmLowering.domain.selectionDag.LlvmReadRegFileNode;
 import vadl.lcb.passes.llvmLowering.domain.selectionDag.LlvmSetccSD;
 import vadl.lcb.passes.llvmLowering.strategies.LlvmInstructionLoweringStrategy;
@@ -29,6 +30,7 @@ import vadl.viam.graph.NodeList;
 import vadl.viam.graph.dependency.ConstantNode;
 import vadl.viam.graph.dependency.FieldAccessRefNode;
 import vadl.viam.graph.dependency.ReadRegFileNode;
+import vadl.viam.passes.dummyAbi.DummyAbi;
 
 /**
  * Lowering of conditionals into TableGen.
@@ -63,7 +65,8 @@ public class LlvmInstructionLoweringConditionalsStrategyImpl
       Graph behavior,
       List<TableGenInstructionOperand> inputOperands,
       List<TableGenInstructionOperand> outputOperands,
-      List<TableGenPattern> patterns) {
+      List<TableGenPattern> patterns,
+      DummyAbi abi) {
     var result = new ArrayList<TableGenPattern>();
 
     var flipped = LlvmLoweringPass.flipIsaMatchingMachineInstructions(supportedInstructions);
@@ -77,13 +80,77 @@ public class LlvmInstructionLoweringConditionalsStrategyImpl
     if (label == MachineInstructionLabel.LTS) {
       eq(lti, xor, patterns, result);
       neq(ltu, xor, patterns, result);
+      gtOrUgt(instruction, patterns, result, BuiltInTable.SGTH, LlvmCondCode.SETGT);
+      leqOrUleq(xori, patterns, result, BuiltInTable.SLEQ);
     } else if (label == MachineInstructionLabel.LTU) {
       uge(xori, patterns, result);
+      gtOrUgt(instruction, patterns, result, BuiltInTable.SGTH, LlvmCondCode.SETUGT);
+      leqOrUleq(xori, patterns, result, BuiltInTable.ULEQ);
     } else if (label == MachineInstructionLabel.LTIU) {
       neqWithImmediate(ltu, xori, patterns, result);
     }
 
     return result;
+  }
+
+  private void gtOrUgt(Instruction lt,
+                       List<TableGenPattern> patterns,
+                       List<TableGenPattern> result,
+                       BuiltInTable.BuiltIn builtIn,
+                       LlvmCondCode condCode) {
+    /*
+              def : Pat<(setcc X:$rs1, X:$rs2, SETLT),
+                  (SLT X:$rs1, X:$rs2)>;
+
+                  to
+
+              def : Pat< (setcc X:$rs1, X:$rs2, SETGT ),
+                  (SLT X:$rs2, X:$rs1)>;
+
+              or
+
+              def : Pat<(setcc X:$rs1, X:$rs2, SETULT),
+                  (SLTU X:$rs1, X:$rs2)>;
+
+                  to
+
+              def : Pat< (setcc X:$rs1, X:$rs2, SETUGT ),
+                  (SLTU X:$rs2, X:$rs1)>;
+    */
+
+    for (var pattern : patterns) {
+      var copy = pattern.copy();
+
+      if (copy instanceof TableGenSelectionWithOutputPattern outputPattern) {
+        // Change condition code
+        var setcc = ensurePresent(
+            outputPattern.selector().getNodes(LlvmSetccSD.class).toList().stream()
+                .findFirst(),
+            () -> Diagnostic.error("No setcc node was found", pattern.selector()
+                .sourceLocation()));
+        // Only RR and not RI should be replaced here.
+        if (setcc.arguments().size() > 2
+            && setcc.arguments().get(0) instanceof LlvmReadRegFileNode
+            && setcc.arguments().get(1) instanceof LlvmReadRegFileNode) {
+          setcc.setBuiltIn(builtIn);
+          setcc.arguments().set(2,
+              new ConstantNode(new Constant.Str(condCode.name())));
+        } else {
+          // Otherwise, stop and go to next pattern.
+          continue;
+        }
+
+        // Change machine instruction to immediate
+        outputPattern.machine().getNodes(LcbMachineInstructionNode.class)
+            .forEach(node -> {
+              node.setInstruction(lt);
+              // Swap the operands
+              Collections.reverse(node.arguments());
+            });
+
+        result.add(outputPattern);
+      }
+    }
   }
 
   private Instruction getFirst(
@@ -146,6 +213,54 @@ public class LlvmInstructionLoweringConditionalsStrategyImpl
     }
   }
 
+
+  private void leqOrUleq(Instruction xori,
+                         List<TableGenPattern> patterns,
+                         List<TableGenPattern> result,
+                         BuiltInTable.BuiltIn builtIn) {
+    /*
+              def : Pat<(setcc X:$rs1, X:$rs2, SETLT),
+                  (SLT X:$rs1, X:$rs2)>;
+
+                  to
+
+              def : Pat< ( setcc X:$rs1, X:$rs2, SETLE ),
+                   ( XORI ( SLT X:$rs1, X:$rs2 ), 1 ) >;
+               */
+    for (var pattern : patterns) {
+      var copy = pattern.copy();
+
+      if (copy instanceof TableGenSelectionWithOutputPattern outputPattern) {
+        // Change condition code
+        var setcc = ensurePresent(
+            outputPattern.selector().getNodes(LlvmSetccSD.class).toList().stream()
+                .findFirst(),
+            () -> Diagnostic.error("No setcc node was found", pattern.selector()
+                .sourceLocation()));
+        // Only RR and not RI should be replaced here.
+        if (setcc.arguments().size() > 2
+            && setcc.arguments().get(0) instanceof LlvmReadRegFileNode
+            && setcc.arguments().get(1) instanceof LlvmReadRegFileNode) {
+          setcc.setBuiltIn(builtIn);
+          setcc.arguments().set(2,
+              new ConstantNode(new Constant.Str(setcc.llvmCondCode().name())));
+        } else {
+          // Otherwise, stop and go to next pattern.
+          continue;
+        }
+
+        var machineInstruction =
+            outputPattern.machine().getNodes(LcbMachineInstructionNode.class).findFirst().get();
+        Collections.reverse(machineInstruction.arguments());
+        var newMachineInstruction = new LcbMachineInstructionNode(
+            new NodeList<>(machineInstruction, new ConstantNode(new Constant.Str("1"))), xori);
+        outputPattern.machine().addWithInputs(newMachineInstruction);
+
+        result.add(outputPattern);
+      }
+    }
+  }
+
   private void uge(Instruction xori,
                    List<TableGenPattern> patterns,
                    List<TableGenPattern> result) {
@@ -190,7 +305,6 @@ public class LlvmInstructionLoweringConditionalsStrategyImpl
       }
     }
   }
-
 
   private void neq(Instruction basePattern,
                    Instruction xor,

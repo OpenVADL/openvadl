@@ -1,17 +1,27 @@
 package vadl.template;
 
+import static vadl.viam.ViamError.ensure;
+
+import java.io.File;
+import java.io.FileWriter;
 import java.io.IOException;
 import java.io.StringWriter;
 import java.io.Writer;
+import java.nio.charset.Charset;
 import java.nio.file.Path;
 import java.util.Map;
 import javax.annotation.Nonnull;
+import javax.annotation.Nullable;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.thymeleaf.TemplateEngine;
 import org.thymeleaf.context.Context;
 import org.thymeleaf.templatemode.TemplateMode;
 import org.thymeleaf.templateresolver.ClassLoaderTemplateResolver;
 import org.thymeleaf.templateresolver.ITemplateResolver;
 import vadl.configuration.GeneralConfiguration;
+import vadl.cppCodeGen.formatting.CodeFormatter;
+import vadl.iss.template.IssTemplateRenderingPass;
 import vadl.pass.Pass;
 import vadl.pass.PassName;
 import vadl.pass.PassResults;
@@ -23,6 +33,7 @@ import vadl.viam.Specification;
  */
 public abstract class AbstractTemplateRenderingPass extends Pass {
   private static final TemplateEngine templateEngine = templateEngine();
+  private static final Logger log = LoggerFactory.getLogger(AbstractTemplateRenderingPass.class);
 
   private static TemplateEngine templateEngine() {
     TemplateEngine templateEngine = new TemplateEngine();
@@ -92,14 +103,24 @@ public abstract class AbstractTemplateRenderingPass extends Pass {
     return new PassName("EmitFile " + getOutputPath());
   }
 
+  /**
+   * Allows a subclass defining a code formatter that formats the emitted file.
+   * See {@link IssTemplateRenderingPass#getFormatter()} for an example.
+   */
+  public @Nullable CodeFormatter getFormatter() {
+    return null;
+  }
+
   @Nonnull
   @Override
   public Result execute(final PassResults passResults, Specification viam)
       throws IOException {
 
-    var writer =
-        configuration().outputFactory().createWriter(configuration(), subDir, getOutputPath());
+    var finalFilePath = createOutputPath(configuration(), subDir, getOutputPath());
+    var writer = createFileWriter(finalFilePath);
+
     renderTemplate(passResults, viam, writer);
+    formatRenderedFile(finalFilePath);
 
     return constructResult();
   }
@@ -136,10 +157,44 @@ public abstract class AbstractTemplateRenderingPass extends Pass {
   }
 
   private void renderTemplate(final PassResults passResults, Specification viam,
-                              Writer writer) {
+                              Writer writer) throws IOException {
     var ctx = new Context();
     // Map the variables into thymeleaf's context
     createVariables(passResults, viam).forEach(ctx::setVariable);
     templateEngine.process(getTemplatePath(), ctx, writer);
+    writer.flush();
+    writer.close();
   }
+
+  private void formatRenderedFile(Path filePath) {
+    var formatter = getFormatter();
+    if (formatter != null) {
+      try {
+        formatter.format(filePath);
+      } catch (CodeFormatter.NotAvailableException | CodeFormatter.FormatFailureException e) {
+        log.warn("Failed to apply code formatter: {}", e.getMessage());
+      }
+    }
+  }
+
+  private Path createOutputPath(GeneralConfiguration configuration, String subDir,
+                                String outputPath) {
+    return Path.of(configuration.outputPath().toString(), subDir, outputPath);
+  }
+
+  private FileWriter createFileWriter(Path filePath)
+      throws IOException {
+    var file = filePath.toFile();
+
+    if (!file.getParentFile().exists()) {
+      ensure(file.getParentFile().mkdirs(), "Cannot create parent directories of %s", file);
+    }
+
+    if (!file.exists()) {
+      ensure(file.createNewFile(), "Cannot create new file %s", file);
+    }
+
+    return new FileWriter(file, Charset.defaultCharset());
+  }
+
 }

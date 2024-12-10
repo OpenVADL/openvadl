@@ -19,6 +19,8 @@ import vadl.viam.graph.dependency.FieldAccessRefNode;
 public class LlvmBasicBlockSD extends FieldAccessRefNode implements LlvmNodeLowerable {
   private final ValueType llvmType;
   private final TableGenImmediateRecord immediateOperand;
+
+
   protected final ParameterIdentity parameterIdentity;
 
   /**
@@ -66,5 +68,9 @@ public class LlvmBasicBlockSD extends FieldAccessRefNode implements LlvmNodeLowe
   @Override
   public String lower() {
     return "bb";
+  }
+
+  public ParameterIdentity parameterIdentity() {
+    return parameterIdentity;
   }
 }

@@ -8,5 +8,6 @@ import vadl.viam.PseudoInstruction;
  * pseudo instruction.
  */
 public enum PseudoInstructionLabel {
+  LI,
   J
 }

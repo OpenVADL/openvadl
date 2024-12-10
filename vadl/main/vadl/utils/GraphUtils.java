@@ -1,6 +1,8 @@
 package vadl.utils;
 
+import java.util.function.Function;
 import java.util.stream.Stream;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import vadl.types.BuiltInTable;
 import vadl.types.Type;
@@ -8,10 +10,12 @@ import vadl.viam.Constant;
 import vadl.viam.Counter;
 import vadl.viam.Register;
 import vadl.viam.graph.Graph;
+import vadl.viam.graph.GraphVisitor;
 import vadl.viam.graph.Node;
 import vadl.viam.graph.NodeList;
 import vadl.viam.graph.dependency.BuiltInCall;
 import vadl.viam.graph.dependency.ConstantNode;
+import vadl.viam.graph.dependency.DependencyNode;
 import vadl.viam.graph.dependency.ExpressionNode;
 import vadl.viam.graph.dependency.ReadRegNode;
 import vadl.viam.graph.dependency.TypeCastNode;
@@ -70,6 +74,66 @@ public class GraphUtils {
         .flatMap(GraphUtils::getLeafNodes);
   }
 
+  /**
+   * Determines if a given node has dependencies based on a provided filter function.
+   *
+   * @param node   The starting node to check for dependencies.
+   * @param filter A function that applies a condition to each node,
+   *               returning true if the node has a dependency and should be considered.
+   * @return true if any dependency satisfies the filter condition; false otherwise.
+   */
+  public static boolean hasDependencies(Node node, Function<Node, Boolean> filter) {
+    GraphVisitor<Boolean> visitor = new GraphVisitor<>() {
+      @Override
+      public @NotNull Boolean visit(Node from, @Nullable Node to) {
+        if (to == null || filter.apply(to)) {
+          return filter.apply(to);
+        }
+        return to.inputs().anyMatch(input -> visit(node, input));
+      }
+    };
+
+    return node.inputs().anyMatch(input -> visitor.visit(node, input));
+  }
+
+  /**
+   * Determines if a given node has users based on a provided filter function.
+   *
+   * @param node   The starting node to check for users.
+   * @param filter A function that applies a condition to each node, returning true if the node
+   *               is considered a user and satisfies the condition.
+   * @return true if any user satisfies the filter condition; false otherwise.
+   */
+  public static boolean hasUser(Node node, Function<Node, Boolean> filter) {
+    GraphVisitor<Boolean> visitor = new GraphVisitor<>() {
+      @Override
+      public @NotNull Boolean visit(Node from, @Nullable Node to) {
+        if (to == null || filter.apply(to)) {
+          return filter.apply(to);
+        }
+        return to.usages().anyMatch(input -> visit(node, input));
+      }
+    };
+
+    return node.usages().anyMatch(input -> visitor.visit(node, input));
+  }
+
+  /**
+   * Retrieves a single instance of a specified type of user node from the provided node's usages.
+   * The method ensures that there is exactly one user of the specified type.
+   *
+   * @param node      The node whose usages are to be inspected.
+   * @param userClass The class type of the user node to retrieve.
+   * @param <T>       The type of the user node.
+   * @return The single user node of the specified type.
+   */
+  public static <T extends Node> T getSingleUsage(Node node, Class<T> userClass) {
+    var users = node.usages().filter(userClass::isInstance).toList();
+    node.ensure(users.size() == 1, "Expected exactly one user of type %s but got %s",
+        userClass.getSimpleName(), users.size());
+    //noinspection unchecked
+    return (T) users.get(0);
+  }
 
   //// GRAPH CREATION UTILS ////
 
@@ -146,7 +210,7 @@ public class GraphUtils {
     return new WriteRegNode(register, val, staticCounterAddress);
   }
 
-  //// CONSTANT VALUE CONSTRUCTION ////
+  /// / CONSTANT VALUE CONSTRUCTION ////
 
   public static Constant.Value intS(long val, int width) {
     return Constant.Value.of(val, Type.signedInt(width));

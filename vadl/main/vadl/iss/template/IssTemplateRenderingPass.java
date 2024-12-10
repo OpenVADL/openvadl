@@ -5,7 +5,11 @@ import static vadl.iss.template.IssRenderUtils.mapRegs;
 
 import java.util.HashMap;
 import java.util.Map;
+import org.jetbrains.annotations.Nullable;
 import vadl.configuration.IssConfiguration;
+import vadl.cppCodeGen.formatting.ClangFormatter;
+import vadl.cppCodeGen.formatting.CodeFormatter;
+import vadl.iss.codegen.QemuClangFormatter;
 import vadl.pass.PassName;
 import vadl.pass.PassResults;
 import vadl.template.AbstractTemplateRenderingPass;
@@ -50,6 +54,15 @@ public abstract class IssTemplateRenderingPass extends AbstractTemplateRendering
   @Override
   public PassName getName() {
     return PassName.of("Rendering ISS " + issTemplatePath());
+  }
+
+  @Override
+  public @Nullable CodeFormatter getFormatter() {
+    if (issTemplatePath().endsWith("translate.c")) {
+      return QemuClangFormatter.INSTANCE;
+
+    }
+    return null;
   }
 
   @Override

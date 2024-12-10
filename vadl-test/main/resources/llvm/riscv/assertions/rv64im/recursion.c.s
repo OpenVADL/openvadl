@@ -13,18 +13,18 @@ recursion:                              # @recursion
 	LW ra,-24(fp)
 	ADDI tp,zero,1
 	BLT ra,tp,.LBB0_2
-	JAL zero,%hi(.LBB0_1)
+	JAL zero,.LBB0_1
 .LBB0_1:                                # %if.then
 	LW ra,-24(fp)
 	SW ra,-20(fp)
-	JAL zero,%hi(.LBB0_3)
+	JAL zero,.LBB0_3
 .LBB0_2:                                # %if.end
 	LW ra,-24(fp)
 	ADDI a0,ra,1
 	LUI ra,%hi(recursion)
 	JALR ra,%lo(recursion)(ra)
 	SW a0,-20(fp)
-	JAL zero,%hi(.LBB0_3)
+	JAL zero,.LBB0_3
 .LBB0_3:                                # %return
 	LW a0,-20(fp)
 	LD fp,16(sp)

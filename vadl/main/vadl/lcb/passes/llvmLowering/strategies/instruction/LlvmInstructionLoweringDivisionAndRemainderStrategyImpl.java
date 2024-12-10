@@ -1,7 +1,9 @@
 package vadl.lcb.passes.llvmLowering.strategies.instruction;
 
 import static vadl.lcb.passes.isaMatching.MachineInstructionLabel.SDIV;
+import static vadl.lcb.passes.isaMatching.MachineInstructionLabel.SMOD;
 import static vadl.lcb.passes.isaMatching.MachineInstructionLabel.UDIV;
+import static vadl.lcb.passes.isaMatching.MachineInstructionLabel.UMOD;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -26,17 +28,20 @@ import vadl.viam.graph.dependency.BuiltInCall;
 import vadl.viam.graph.dependency.ReadRegFileNode;
 import vadl.viam.graph.dependency.SideEffectNode;
 import vadl.viam.graph.dependency.WriteResourceNode;
+import vadl.viam.passes.dummyAbi.DummyAbi;
 
 /**
  * Lowers division into {@link TableGenInstruction}.
  */
-public class LlvmInstructionLoweringDivisionStrategyImpl
+public class LlvmInstructionLoweringDivisionAndRemainderStrategyImpl
     extends LlvmInstructionLoweringStrategy {
   private final Set<BuiltInTable.BuiltIn> supportedBuiltins =
-      Set.of(BuiltInTable.SDIV, BuiltInTable.SDIVS, BuiltInTable.UDIV, BuiltInTable.UDIVS);
-  private final Set<MachineInstructionLabel> supported = Set.of(SDIV, UDIV);
+      Set.of(BuiltInTable.SDIV, BuiltInTable.SDIVS, BuiltInTable.UDIV, BuiltInTable.UDIVS,
+          BuiltInTable.SMOD,
+          BuiltInTable.UMOD, BuiltInTable.SMODS, BuiltInTable.UMODS);
+  private final Set<MachineInstructionLabel> supported = Set.of(SDIV, UDIV, SMOD, UMOD);
 
-  public LlvmInstructionLoweringDivisionStrategyImpl(
+  public LlvmInstructionLoweringDivisionAndRemainderStrategyImpl(
       ValueType architectureType) {
     super(architectureType);
   }
@@ -54,7 +59,9 @@ public class LlvmInstructionLoweringDivisionStrategyImpl
   @Override
   public Optional<LlvmLoweringRecord> lower(
       Map<MachineInstructionLabel, List<Instruction>> labelledMachineInstructions,
-      Instruction instruction, Graph unmodifiedBehavior) {
+      Instruction instruction,
+      Graph unmodifiedBehavior,
+      DummyAbi abi) {
     var visitor = replacementHooksWithDefaultFieldAccessReplacement();
     var copy = unmodifiedBehavior.copy();
 
@@ -128,7 +135,8 @@ public class LlvmInstructionLoweringDivisionStrategyImpl
       Graph behavior,
       List<TableGenInstructionOperand> inputOperands,
       List<TableGenInstructionOperand> outputOperands,
-      List<TableGenPattern> patterns) {
+      List<TableGenPattern> patterns,
+      DummyAbi abi) {
     return Collections.emptyList();
   }
 }

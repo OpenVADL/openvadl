@@ -10,6 +10,7 @@ import java.nio.file.Path;
 import org.junit.jupiter.api.Test;
 import vadl.configuration.GeneralConfiguration;
 import vadl.configuration.IssConfiguration;
+import vadl.iss.passes.IssTcgSchedulingPass;
 import vadl.pass.PassOrders;
 import vadl.pass.exception.DuplicatedPassKeyException;
 import vadl.test.AbstractTest;
@@ -19,6 +20,7 @@ import vadl.viam.graph.control.IfNode;
 import vadl.viam.graph.control.ScheduledNode;
 import vadl.viam.graph.dependency.BuiltInCall;
 import vadl.viam.graph.dependency.ReadRegNode;
+import vadl.viam.passes.sideEffectScheduling.SideEffectSchedulingPass;
 import vadl.viam.passes.sideEffectScheduling.nodes.InstrExitNode;
 
 /**
@@ -34,6 +36,7 @@ public class IssTcgSchedulingPassTest extends AbstractTest {
 
     var setup = setupPassManagerAndRunSpec("passes/issTcgScheduling/valid_branch_1.vadl",
         PassOrders.iss(config)
+            .untilFirst(SideEffectSchedulingPass.class)
     );
     var viam = setup.specification();
 

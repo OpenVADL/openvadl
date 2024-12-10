@@ -22,6 +22,9 @@ public abstract class TcgBinaryOpNode extends TcgOpNode {
   @Input
   TcgVRefNode arg2;
 
+  public TcgBinaryOpNode(TcgVRefNode dest, TcgVRefNode arg1, TcgVRefNode arg2) {
+    this(dest, arg1, arg2, dest.width());
+  }
 
   /**
    * Constructs a TcgBinaryOpNode with specified result variable, two argument variables,

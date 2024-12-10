@@ -60,7 +60,7 @@ public abstract class CodeGenerator {
    */
   public void gen(Node node) {
     var impl = nodeImpls.find(node.getClass());
-    ViamError.ensure(impl != null, "Tried to generate code, but no implementation for: %s", node);
+    node.ensure(impl != null, "Tried to generate code, but no implementation for: %s", node);
     impl.accept(node, writer);
   }
 
@@ -71,7 +71,7 @@ public abstract class CodeGenerator {
    */
   public void gen(Definition def) {
     var impl = defImpls.find(def.getClass());
-    ViamError.ensure(impl != null, "Tried to generate code, but no implementation for: %s", def);
+    def.ensure(impl != null, "Tried to generate code, but no implementation for: %s", def);
     impl.accept(def, writer);
   }
 

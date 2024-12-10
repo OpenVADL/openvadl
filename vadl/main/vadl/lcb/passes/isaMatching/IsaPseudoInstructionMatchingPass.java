@@ -66,10 +66,29 @@ public class IsaPseudoInstructionMatchingPass extends Pass implements IsaMatchin
     isa.ownPseudoInstructions().forEach(pseudoInstruction -> {
       if (findUnconditionalJump(flipped, pseudoInstruction)) {
         pseudoInstructionMatched.put(PseudoInstructionLabel.J, List.of(pseudoInstruction));
+      } else if (findLi(flipped, pseudoInstruction)) {
+        pseudoInstructionMatched.put(PseudoInstructionLabel.LI, List.of(pseudoInstruction));
       }
     });
 
     return Collections.unmodifiableMap(pseudoInstructionMatched);
+  }
+
+  private boolean findLi(IdentityHashMap<Instruction, MachineInstructionLabel> flipped,
+                         PseudoInstruction pseudoInstruction) {
+    if (pseudoInstruction.behavior().getNodes(InstrCallNode.class).count() != 2) {
+      return false;
+    }
+
+    var instrCallNodes =
+        pseudoInstruction.behavior().getNodes(InstrCallNode.class).toList();
+    var firstNode = instrCallNodes.get(0);
+    var secondNode = instrCallNodes.get(1);
+
+    return firstNode != null && secondNode != null
+        && flipped.get(firstNode.target()) == MachineInstructionLabel.LUI
+        && (flipped.get(secondNode.target()) == MachineInstructionLabel.ADDI_32
+        || flipped.get(secondNode.target()) == MachineInstructionLabel.ADDI_64);
   }
 
   private boolean findUnconditionalJump(

@@ -1,23 +1,48 @@
 package vadl.lcb.passes.llvmLowering.strategies.instruction;
 
+import static vadl.viam.ViamError.ensurePresent;
+
+import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
 import javax.annotation.Nullable;
+import org.jetbrains.annotations.NotNull;
+import vadl.error.Diagnostic;
 import vadl.lcb.codegen.model.llvm.ValueType;
 import vadl.lcb.passes.isaMatching.MachineInstructionLabel;
+import vadl.lcb.passes.isaMatching.database.Database;
+import vadl.lcb.passes.isaMatching.database.Query;
 import vadl.lcb.passes.llvmLowering.LlvmLoweringPass;
 import vadl.lcb.passes.llvmLowering.domain.LlvmLoweringRecord;
+import vadl.lcb.passes.llvmLowering.domain.machineDag.LcbMachineInstructionNode;
+import vadl.lcb.passes.llvmLowering.domain.selectionDag.LlvmBrindSD;
+import vadl.lcb.passes.llvmLowering.domain.selectionDag.LlvmReadRegFileNode;
+import vadl.lcb.passes.llvmLowering.domain.selectionDag.LlvmTargetCallSD;
 import vadl.lcb.passes.llvmLowering.strategies.LlvmInstructionLoweringStrategy;
 import vadl.lcb.passes.llvmLowering.tablegen.model.TableGenInstructionOperand;
+import vadl.lcb.passes.llvmLowering.tablegen.model.TableGenInstructionRegisterFileOperand;
 import vadl.lcb.passes.llvmLowering.tablegen.model.TableGenPattern;
+import vadl.lcb.passes.llvmLowering.tablegen.model.TableGenPseudoInstExpansionPattern;
+import vadl.lcb.passes.llvmLowering.tablegen.model.parameterIdentity.ParameterIdentity;
+import vadl.types.DataType;
+import vadl.types.Type;
+import vadl.viam.Constant;
+import vadl.viam.Format;
 import vadl.viam.Instruction;
+import vadl.viam.RegisterFile;
 import vadl.viam.graph.Graph;
 import vadl.viam.graph.GraphVisitor;
 import vadl.viam.graph.Node;
+import vadl.viam.graph.NodeList;
+import vadl.viam.graph.dependency.ConstantNode;
+import vadl.viam.graph.dependency.FieldRefNode;
+import vadl.viam.graph.dependency.ReadRegFileNode;
 import vadl.viam.graph.dependency.SideEffectNode;
+import vadl.viam.passes.dummyAbi.DummyAbi;
 import vadl.viam.passes.functionInliner.UninlinedGraph;
 
 /**
@@ -40,7 +65,8 @@ public class LlvmInstructionLoweringIndirectJumpStrategyImpl
   protected Optional<LlvmLoweringRecord> lowerInstruction(
       Map<MachineInstructionLabel, List<Instruction>> labelledMachineInstructions,
       Instruction instruction,
-      Graph unmodifiedBehavior) {
+      Graph unmodifiedBehavior,
+      DummyAbi abi) {
     var copy = unmodifiedBehavior.copy();
     var visitor = replacementHooksWithDefaultFieldAccessReplacement();
 
@@ -54,12 +80,20 @@ public class LlvmInstructionLoweringIndirectJumpStrategyImpl
     var uses = getRegisterUses(copy, inputOperands, outputOperands);
     var defs = getRegisterDefs(copy, inputOperands, outputOperands);
 
+    var patterns = generatePatternVariations(instruction,
+        labelledMachineInstructions,
+        copy,
+        inputOperands,
+        outputOperands,
+        Collections.emptyList(),
+        abi);
+
     return Optional.of(new LlvmLoweringRecord(
         copy,
         inputOperands,
         outputOperands,
         LlvmLoweringPass.Flags.empty(),
-        Collections.emptyList(), // TODO: currently do not generate indirect call
+        patterns,
         uses,
         defs
     ));
@@ -77,7 +111,101 @@ public class LlvmInstructionLoweringIndirectJumpStrategyImpl
       Graph behavior,
       List<TableGenInstructionOperand> inputOperands,
       List<TableGenInstructionOperand> outputOperands,
-      List<TableGenPattern> patterns) {
-    return Collections.emptyList();
+      List<TableGenPattern> patterns,
+      DummyAbi abi) {
+    var result = new ArrayList<TableGenPattern>();
+    inputOperands.stream().filter(x -> x instanceof TableGenInstructionRegisterFileOperand)
+        .findFirst()
+        .ifPresent((uncastInputRegister) -> {
+          result.add(generateIndirectCall(supportedInstructions, abi,
+              (TableGenInstructionRegisterFileOperand) uncastInputRegister));
+          result.add(generateBranchIndirect(supportedInstructions,
+              (TableGenInstructionRegisterFileOperand) uncastInputRegister));
+        });
+
+    return result;
+  }
+
+  private static @NotNull TableGenPseudoInstExpansionPattern generateIndirectCall(
+      Map<MachineInstructionLabel,
+          List<Instruction>> supportedInstructions,
+      DummyAbi abi,
+      TableGenInstructionRegisterFileOperand inputRegister) {
+    var selector = new Graph("selector");
+    var ref = (ReadRegFileNode) inputRegister.reference().copy();
+    var address = (FieldRefNode) ref.address().copy();
+    selector.addWithInputs(new LlvmTargetCallSD(new NodeList<>(new LlvmReadRegFileNode(
+        inputRegister.registerFile(), address, inputRegister.formatField().type(),
+        ref.staticCounterAccess()
+    )),
+        Type.dummy()));
+
+    var database = new Database(supportedInstructions);
+    var jalr =
+        database.run(
+                new Query.Builder().machineInstructionLabel(MachineInstructionLabel.JALR).build())
+            .firstMachineInstruction();
+    var machine = new Graph("machine");
+    var constant = new Constant.Str("0");
+    machine.addWithInputs(new LcbMachineInstructionNode(
+        new NodeList<>(new ConstantNode(new Constant.Str(abi.returnAddress().render())), ref,
+            new ConstantNode(constant)), jalr));
+    return new TableGenPseudoInstExpansionPattern("PseudoCALLIndirect",
+        selector,
+        machine,
+        true,
+        List.of(
+            new TableGenInstructionRegisterFileOperand(
+                ParameterIdentity.from(ref, ref.address()),
+                ref,
+                address.formatField())
+        ), Collections.emptyList());
+  }
+
+  private static @NotNull TableGenPseudoInstExpansionPattern generateBranchIndirect(
+      Map<MachineInstructionLabel, List<Instruction>> supportedInstructions,
+      TableGenInstructionRegisterFileOperand inputRegister) {
+    var selector = new Graph("selector");
+    var ref = (ReadRegFileNode) inputRegister.reference().copy();
+    var address = (FieldRefNode) ref.address().copy();
+    selector.addWithInputs(new LlvmBrindSD(new NodeList<>(new LlvmReadRegFileNode(
+        inputRegister.registerFile(), address, inputRegister.formatField().type(),
+        ref.staticCounterAccess()
+    )),
+        Type.dummy()));
+
+    var database = new Database(supportedInstructions);
+    var jalr =
+        database.run(
+                new Query.Builder().machineInstructionLabel(MachineInstructionLabel.JALR).build())
+            .firstMachineInstruction();
+    var machine = new Graph("machine");
+    var constant = new Constant.Str("0");
+    machine.addWithInputs(new LcbMachineInstructionNode(
+        new NodeList<>(
+            new ConstantNode(new Constant.Str(zeroRegister(inputRegister.registerFile()))), ref,
+            new ConstantNode(constant)), jalr));
+    return new TableGenPseudoInstExpansionPattern("PseudoBRIND",
+        selector,
+        machine,
+        true,
+        List.of(
+            new TableGenInstructionRegisterFileOperand(
+                ParameterIdentity.from(ref, ref.address()),
+                ref,
+                address.formatField())
+        ), Collections.emptyList());
+  }
+
+  private static String zeroRegister(RegisterFile registerFile) {
+    var constraint =
+        ensurePresent(
+            Arrays.stream(registerFile.constraints()).filter(x -> x.value().intValue() == 0)
+                .findFirst(),
+            () -> Diagnostic.error("There must a constraint for the zero register.",
+                registerFile.sourceLocation())
+        );
+
+    return registerFile.simpleName() + constraint.address().intValue();
   }
 }

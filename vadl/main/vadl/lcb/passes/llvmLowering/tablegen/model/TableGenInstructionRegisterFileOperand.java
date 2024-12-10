@@ -3,6 +3,7 @@ package vadl.lcb.passes.llvmLowering.tablegen.model;
 import vadl.lcb.passes.llvmLowering.tablegen.model.parameterIdentity.ParameterIdentity;
 import vadl.viam.Format;
 import vadl.viam.RegisterFile;
+import vadl.viam.graph.Node;
 import vadl.viam.graph.dependency.ReadRegFileNode;
 import vadl.viam.graph.dependency.WriteRegFileNode;
 
@@ -13,6 +14,7 @@ public class TableGenInstructionRegisterFileOperand extends TableGenInstructionO
     implements ReferencesFormatField {
   private final RegisterFile registerFile;
   private final Format.Field formatField;
+  private final Node reference;
 
   /**
    * Constructor.
@@ -23,6 +25,7 @@ public class TableGenInstructionRegisterFileOperand extends TableGenInstructionO
     super(node, identity);
     this.registerFile = node.registerFile();
     this.formatField = formatField;
+    this.reference = node;
   }
 
   /**
@@ -34,6 +37,7 @@ public class TableGenInstructionRegisterFileOperand extends TableGenInstructionO
     super(node, identity);
     this.registerFile = node.registerFile();
     this.formatField = formatField;
+    this.reference = node;
   }
 
   public RegisterFile registerFile() {
@@ -43,5 +47,9 @@ public class TableGenInstructionRegisterFileOperand extends TableGenInstructionO
   @Override
   public Format.Field formatField() {
     return formatField;
+  }
+
+  public Node reference() {
+    return reference;
   }
 }
