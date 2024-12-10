@@ -31,4 +31,14 @@ public enum Tcg_32_64 {
       default -> throw new IllegalArgumentException("Invalid width: " + width);
     };
   }
+
+  public static Tcg_32_64 nextFitting(int width) {
+    if (width <= 32) {
+      return Tcg_32_64.i32;
+    } else if (width <= 64) {
+      return Tcg_32_64.i64;
+    } else {
+      throw new IllegalArgumentException("Width too big: " + width);
+    }
+  }
 }
