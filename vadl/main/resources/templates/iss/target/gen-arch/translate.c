@@ -147,6 +147,7 @@ static void gen_goto_tb_abs(DisasContext *ctx, target_ulong target_pc)
     // TODO: optimize as lookup might be unnecessary
     tcg_gen_movi_tl(cpu_pc, (int64_t) target_pc);
     tcg_gen_lookup_and_goto_ptr();
+    ctx->base.is_jmp = DISAS_NORETURN;
 }
 
 static void gen_goto_tb(DisasContext *ctx, target_ulong n, target_ulong target_pc)
