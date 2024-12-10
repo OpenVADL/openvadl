@@ -81,10 +81,11 @@ public class LlvmInstructionLoweringConditionalsStrategyImpl
       eq(lti, xor, patterns, result);
       neq(ltu, xor, patterns, result);
       gtOrUgt(instruction, patterns, result, BuiltInTable.SGTH, LlvmCondCode.SETGT);
+      leqOrUleq(xori, patterns, result, BuiltInTable.SLEQ);
     } else if (label == MachineInstructionLabel.LTU) {
       uge(xori, patterns, result);
-      ule(xori, patterns, result);
       gtOrUgt(instruction, patterns, result, BuiltInTable.SGTH, LlvmCondCode.SETUGT);
+      leqOrUleq(xori, patterns, result, BuiltInTable.ULEQ);
     } else if (label == MachineInstructionLabel.LTIU) {
       neqWithImmediate(ltu, xori, patterns, result);
     }
@@ -212,6 +213,54 @@ public class LlvmInstructionLoweringConditionalsStrategyImpl
     }
   }
 
+
+  private void leqOrUleq(Instruction xori,
+                         List<TableGenPattern> patterns,
+                         List<TableGenPattern> result,
+                         BuiltInTable.BuiltIn builtIn) {
+    /*
+              def : Pat<(setcc X:$rs1, X:$rs2, SETLT),
+                  (SLT X:$rs1, X:$rs2)>;
+
+                  to
+
+              def : Pat< ( setcc X:$rs1, X:$rs2, SETLE ),
+                   ( XORI ( SLT X:$rs1, X:$rs2 ), 1 ) >;
+               */
+    for (var pattern : patterns) {
+      var copy = pattern.copy();
+
+      if (copy instanceof TableGenSelectionWithOutputPattern outputPattern) {
+        // Change condition code
+        var setcc = ensurePresent(
+            outputPattern.selector().getNodes(LlvmSetccSD.class).toList().stream()
+                .findFirst(),
+            () -> Diagnostic.error("No setcc node was found", pattern.selector()
+                .sourceLocation()));
+        // Only RR and not RI should be replaced here.
+        if (setcc.arguments().size() > 2
+            && setcc.arguments().get(0) instanceof LlvmReadRegFileNode
+            && setcc.arguments().get(1) instanceof LlvmReadRegFileNode) {
+          setcc.setBuiltIn(builtIn);
+          setcc.arguments().set(2,
+              new ConstantNode(new Constant.Str(setcc.llvmCondCode().name())));
+        } else {
+          // Otherwise, stop and go to next pattern.
+          continue;
+        }
+
+        var machineInstruction =
+            outputPattern.machine().getNodes(LcbMachineInstructionNode.class).findFirst().get();
+        Collections.reverse(machineInstruction.arguments());
+        var newMachineInstruction = new LcbMachineInstructionNode(
+            new NodeList<>(machineInstruction, new ConstantNode(new Constant.Str("1"))), xori);
+        outputPattern.machine().addWithInputs(newMachineInstruction);
+
+        result.add(outputPattern);
+      }
+    }
+  }
+
   private void uge(Instruction xori,
                    List<TableGenPattern> patterns,
                    List<TableGenPattern> result) {
@@ -248,55 +297,6 @@ public class LlvmInstructionLoweringConditionalsStrategyImpl
 
         var machineInstruction =
             outputPattern.machine().getNodes(LcbMachineInstructionNode.class).findFirst().get();
-        var newMachineInstruction = new LcbMachineInstructionNode(
-            new NodeList<>(machineInstruction, new ConstantNode(new Constant.Str("1"))), xori);
-        outputPattern.machine().addWithInputs(newMachineInstruction);
-
-        result.add(outputPattern);
-      }
-    }
-  }
-
-  private void ule(Instruction xori,
-                   List<TableGenPattern> patterns,
-                   List<TableGenPattern> result) {
-    /*
-              def : Pat<(setcc X:$rs1, X:$rs2, SETLTU),
-                  (SLTU X:$rs1, X:$rs2)>;
-
-                  to
-
-              def : Pat< ( setcc X:$rs1, X:$rs2, SETULE ),
-                (XORI ( SLTU X:$rs2, X:$rs1 ), 1 ) >;
-               */
-    for (var pattern : patterns) {
-      var copy = pattern.copy();
-
-      if (copy instanceof TableGenSelectionWithOutputPattern outputPattern) {
-        // Change condition code
-        var setcc = ensurePresent(
-            outputPattern.selector().getNodes(LlvmSetccSD.class).toList().stream()
-                .findFirst(),
-            () -> Diagnostic.error("No setcc node was found", pattern.selector()
-                .sourceLocation()));
-        // Only RR and not RI should be replaced here.
-        if (setcc.arguments().size() > 2
-            && setcc.arguments().get(0) instanceof LlvmReadRegFileNode
-            && setcc.arguments().get(1) instanceof LlvmReadRegFileNode) {
-          setcc.setBuiltIn(BuiltInTable.ULEQ);
-          setcc.arguments().set(2,
-              new ConstantNode(new Constant.Str(setcc.llvmCondCode().name())));
-        } else {
-          // Otherwise, stop and go to next pattern.
-          continue;
-        }
-
-        var machineInstruction =
-            outputPattern.machine().getNodes(LcbMachineInstructionNode.class).findFirst().get();
-
-        // Swap operands
-        Collections.reverse(machineInstruction.arguments());
-
         var newMachineInstruction = new LcbMachineInstructionNode(
             new NodeList<>(machineInstruction, new ConstantNode(new Constant.Str("1"))), xori);
         outputPattern.machine().addWithInputs(newMachineInstruction);
