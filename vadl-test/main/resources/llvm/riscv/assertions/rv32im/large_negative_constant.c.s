@@ -10,7 +10,6 @@ constant_return:                        # @constant_return
 	SW a0,-8(fp)
 	LW ra,-8(fp)
 	LUI tp,0x80000
-	ADDI tp,tp,0
 	ADD a0,ra,tp
 	LW fp,12(sp)
 	ADDI sp,sp,16

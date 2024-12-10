@@ -44,6 +44,7 @@ public class IsaMachineInstructionMatchingPassTest extends AbstractLcbTest {
         Arguments.of(List.of("REMU", "REMUW"), MachineInstructionLabel.UMOD),
         Arguments.of(List.of("REM", "REMW"), MachineInstructionLabel.SMOD),
         Arguments.of(List.of("SLL", "SLLW"), MachineInstructionLabel.SLL),
+        Arguments.of(List.of("SLLI", "SLLIW"), MachineInstructionLabel.SLLI),
         Arguments.of(List.of("SRL", "SRLW"), MachineInstructionLabel.SRL),
         Arguments.of(List.of("SLT"), MachineInstructionLabel.LTS),
         Arguments.of(List.of("SLTU"), MachineInstructionLabel.LTU),

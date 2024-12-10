@@ -35,6 +35,7 @@ public enum MachineInstructionLabel {
   MULHU,
   MULHS,
   SLL,
+  SLLI,
   SRL,
   ROTL,
   /*
