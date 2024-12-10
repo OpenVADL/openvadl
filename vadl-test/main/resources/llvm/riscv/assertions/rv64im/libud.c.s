@@ -212,9 +212,8 @@ ludcmp:                                 # @ludcmp
 	LW ra,-20(fp)
 	ADDI t0,zero,32
 	SLL ra,ra,t0
-	LUI t1,0xfffff
-	ADDI t1,t1,4095
-	ADDI t1,t1,1
+	ADDI t1,zero,1
+	SLLIW t1,t1,32
 	ADD ra,ra,t1
 	SRA ra,ra,t0
 	ADDI t0,zero,80
