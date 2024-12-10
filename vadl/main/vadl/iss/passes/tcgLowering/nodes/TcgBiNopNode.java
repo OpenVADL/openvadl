@@ -1,10 +1,7 @@
 package vadl.iss.passes.tcgLowering.nodes;
 
-import java.util.Set;
 import java.util.function.Function;
-import org.jetbrains.annotations.Nullable;
 import vadl.iss.passes.nodes.TcgVRefNode;
-import vadl.javaannotations.viam.Input;
 import vadl.viam.graph.Node;
 
 /**
@@ -20,6 +17,11 @@ public class TcgBiNopNode extends TcgBinaryOpNode {
 
   @Override
   public String tcgFunctionName() {
+    return "";
+  }
+
+  @Override
+  public String cCode(Function<Node, String> nodeToCCode) {
     return "";
   }
 

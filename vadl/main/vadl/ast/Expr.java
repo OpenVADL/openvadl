@@ -706,6 +706,12 @@ class StringLiteral extends Expr {
     this.loc = loc;
   }
 
+  public StringLiteral(String token) {
+    this.token = '"' + token + '"';
+    this.value = token;
+    this.loc = SourceLocation.INVALID_SOURCE_LOCATION;
+  }
+
   @Override
   SourceLocation location() {
     return loc;

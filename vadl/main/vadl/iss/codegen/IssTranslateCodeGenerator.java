@@ -107,10 +107,10 @@ public class IssTranslateCodeGenerator extends CodeGenerator
 
           var fmtArgsStr = fmtArgs.isBlank() ? "" : ", " + fmtArgs;
 
-          writer.write("\tqemu_printf(\"[VADL] trans_");
+          writer.write("\tqemu_printf(\"[VADL][%lx] trans_");
           writer.write(name);
           writer.write(" (" + fmtString + ")");
-          writer.write("\\n\"" + fmtArgsStr + ");\n");
+          writer.write("\\n\", ctx->base.pc_next" + fmtArgsStr + ");\n");
 
           if (generateInsnCount) {
             //Add separate add instruction after each that increments special cpu_insn_count flag in

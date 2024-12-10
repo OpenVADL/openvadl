@@ -31,6 +31,15 @@ typedef struct CPUArchState {
   [# th:if="${insn_count}"]
   uint64_t insn_count;
   [/]
+
+  // hardcoded CSR and Privilege registers
+  target_ulong priv;
+
+  uint64_t mstatus;
+  target_ulong mtvec;
+  target_ulong mcause;
+  target_ulong mepc;
+  target_ulong mtval;
 } CPU[(${gen_arch_upper})]State;
 
 

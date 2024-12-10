@@ -8,16 +8,32 @@ import vadl.error.DiagnosticList;
 
 public class AsmDescriptionTests {
 
+  private String inputWrappedByValidAsmDescription(String input) {
+    return """
+          instruction set architecture ISA = {}
+          application binary interface ABI for ISA = {}
+        
+          assembly description AD for ABI = {
+            %s
+          }
+        """.formatted(input);
+  }
+
   @Test
   void asmDescriptionWithModifier() {
     var prog = """
+          instruction set architecture ISA = {
+            relocation HI ( symbol : Bits <32> ) -> Bits <16> = ( symbol >> 16 ) & 0xFFFF
+          }
+          application binary interface ABI for ISA = {}
+        
           assembly description AD for ABI = {
             modifiers = {
-              "mod1" -> ISA::mod1
+              "hi" -> ISA::HI
             }
         
             grammar = {
-              A : B ;
+              A : "B" ;
             }
           }
         """;
@@ -27,103 +43,143 @@ public class AsmDescriptionTests {
   @Test
   void asmDescriptionWithMultipleModifiers() {
     var prog = """
+          instruction set architecture ISA = {
+            relocation HI ( symbol : Bits <32> ) -> Bits <16> = ( symbol >> 16 ) & 0xFFFF
+            relocation LO ( symbol : Bits <32> ) -> Bits <12> =   symbol         & 0xFFF
+          }
+          application binary interface ABI for ISA = {}
+        
           assembly description AD for ABI = {
             modifiers = {
-              "mod1" -> ISA::mod1,
-              "mod2" -> ISA::mod2,
-              "mod3" -> ISA::mod3
+              "hi" -> ISA::HI,
+              "lo" -> ISA::LO
             }
         
             grammar = {
-              A : B ;
+              A : "B" ;
             }
           }
         """;
     verifyPrettifiedAst(VadlParser.parse(prog));
+  }
+
+  @Test
+  void asmDescriptionDuplicateModifierString() {
+    var prog = """
+          instruction set architecture ISA = {
+            relocation HI ( symbol : Bits <32> ) -> Bits <16> = ( symbol >> 16 ) & 0xFFFF
+            relocation LO ( symbol : Bits <32> ) -> Bits <12> =   symbol         & 0xFFF
+          }
+          application binary interface ABI for ISA = {}
+        
+          assembly description AD for ABI = {
+            modifiers = {
+              "hi" -> ISA::HI,
+              "hi" -> ISA::LO
+            }
+        
+            grammar = {
+              A : "B" ;
+            }
+          }
+        """;
+    Assertions.assertThrows(DiagnosticList.class, () -> VadlParser.parse(prog));
   }
 
   @Test
   void asmDescriptionWithEmptyModifiers() {
     var prog = """
-          assembly description AD for ABI = {
-            modifiers = {
-            }
+          modifiers = {
+          }
         
-            grammar = {
-              A : B ;
-            }
+          grammar = {
+            A : "B" ;
           }
         """;
-    Assertions.assertThrows(DiagnosticList.class, () -> VadlParser.parse(prog),
-        "Empty modifiers definition");
+    Assertions.assertThrows(DiagnosticList.class, () -> VadlParser.parse(
+        inputWrappedByValidAsmDescription(prog)));
   }
 
   @Test
   void asmDescriptionWithDirective() {
     var prog = """
-          assembly description AD for ABI = {
-            directives = {
-              "dir1" -> builtinDir1
-            }
+          directives = {
+            "dir1" -> ALIGN_POW2
+          }
         
-            grammar = {
-              A : B ;
-            }
+          grammar = {
+            A : "B" ;
           }
         """;
-    verifyPrettifiedAst(VadlParser.parse(prog));
+    verifyPrettifiedAst(VadlParser.parse(inputWrappedByValidAsmDescription(prog)));
   }
 
   @Test
   void asmDescriptionWithMultipleDirectives() {
     var prog = """
-          assembly description AD for ABI = {
-            directives = {
-              "dir1" -> builtinDir1,
-              "dir2" -> builtinDir2
-            }
+          directives = {
+            "dir1" -> ALIGN_POW2,
+            "dir2" -> BYTE4
+          }
         
-            grammar = {
-              A : B ;
-            }
+          grammar = {
+            A : "B" ;
           }
         """;
-    verifyPrettifiedAst(VadlParser.parse(prog));
+    verifyPrettifiedAst(VadlParser.parse(inputWrappedByValidAsmDescription(prog)));
+  }
+
+  @Test
+  void asmDescriptionDuplicateDirectiveString() {
+    var prog = """
+          directives = {
+            "dir1" -> ALIGN_POW2,
+            "dir1" -> BYTE4
+          }
+        
+          grammar = {
+            A : "B" ;
+          }
+        """;
+    Assertions.assertThrows(DiagnosticList.class, () -> VadlParser.parse(prog));
   }
 
   @Test
   void asmDescriptionWithEmptyDirectives() {
     var prog = """
-          assembly description AD for ABI = {
-            directives = {
-            }
+          directives = {
+          }
         
-            grammar = {
-              A : B ;
-            }
+          grammar = {
+            A : "B" ;
           }
         """;
-    Assertions.assertThrows(DiagnosticList.class, () -> VadlParser.parse(prog),
-        "Empty directives definition");
+    Assertions.assertThrows(DiagnosticList.class, () -> VadlParser.parse(
+        inputWrappedByValidAsmDescription(prog)));
   }
 
   @Test
   void asmDescriptionWithModifiersAndDirectives() {
     var prog = """
+          instruction set architecture ISA = {
+            relocation HI ( symbol : Bits <32> ) -> Bits <16> = ( symbol >> 16 ) & 0xFFFF
+            relocation LO ( symbol : Bits <32> ) -> Bits <12> =   symbol         & 0xFFF
+          }
+          application binary interface ABI for ISA = {}
+        
           assembly description AD for ABI = {
             modifiers = {
-              "mod1" -> ISA::mod1,
-              "mod2" -> ISA::mod2,
-              "mod3" -> ISA::mod3
+              "hi" -> ISA::HI,
+              "lo" -> ISA::LO
             }
         
             directives = {
-              "dir1" -> builtinDir1,
-              "dir2" -> builtinDir2
+              "dir1" -> BYTE4,
+              "dir2" -> ASCII
             }
         
             grammar = {
-              A : B ;
+              A : "B" ;
             }
           }
         """;
@@ -133,60 +189,70 @@ public class AsmDescriptionTests {
   @Test
   void asmDescriptionWithFunctions() {
     var prog = """
-          assembly description AD for ABI = {
-            function minus (x : SInt<64>) -> SInt<64> = -x
-            function minus32 (x : SInt<32>) -> SInt<32> = -x
+          function minus (x : SInt<64>) -> SInt<64> = -x
+          function minus32 (x : SInt<32>) -> SInt<32> = -x
         
-            grammar = {
-              A : a = minus32<Integer> ;
-            }
+          grammar = {
+            A : a = minus32<Integer> ;
           }
         """;
-    verifyPrettifiedAst(VadlParser.parse(prog));
+    verifyPrettifiedAst(VadlParser.parse(inputWrappedByValidAsmDescription(prog)));
   }
 
   @Test
   void asmDescriptionWithInvalidFunctionDefinition() {
     var prog = """
-          assembly description AD for ABI = {
-            function minus (x) -> SInt<64> = -x   // argument without type
+          function minus (x) -> SInt<64> = -x   // argument without type
         
-            grammar = {
-              A : a = minus<Integer> ;
-            }
+          grammar = {
+            A : a = minus<Integer> ;
           }
         """;
-    Assertions.assertThrows(DiagnosticList.class, () -> VadlParser.parse(prog),
+    Assertions.assertThrows(DiagnosticList.class,
+        () -> VadlParser.parse(inputWrappedByValidAsmDescription(prog)),
         "Invalid function definition");
   }
 
   @Test
   void asmDescriptionWithConstantAndFunction() {
     var prog = """
-          assembly description AD for ABI = {
-            constant one = 1
+          constant one = 1
         
-            function minusOne (x : SInt<64>) -> SInt<64> = x - one
-            function minusOne32 (x : SInt<32>) -> SInt<32> = x - one
+          function minusOne (x : SInt<64>) -> SInt<64> = x - one
+          function minusOne32 (x : SInt<32>) -> SInt<32> = x - one
         
-            grammar = {
-              A : a = minusOne32<Integer> ;
-            }
+          grammar = {
+            A : a = minusOne32<Integer> ;
           }
         """;
-    verifyPrettifiedAst(VadlParser.parse(prog));
+    verifyPrettifiedAst(VadlParser.parse(inputWrappedByValidAsmDescription(prog)));
   }
 
   @Test
   void asmDescriptionWithUsingAndFunction() {
     var prog = """
-          assembly description AD for ABI = {
-            using char = Bits<8>
+          using char = Bits<8>
         
+          function minusOne (x : char) -> char = -x
+        
+          grammar = {
+            A : a = minusOne<Integer> ;
+          }
+        """;
+    verifyPrettifiedAst(VadlParser.parse(inputWrappedByValidAsmDescription(prog)));
+  }
+
+  @Test
+  void asmDescriptionWithFunctionFromISA() {
+    var prog = """
+          instruction set architecture ISA = {
             function minusOne (x : char) -> char = -x
+          }
+          application binary interface ABI for ISA = {}
         
+          assembly description AD for ABI = {
             grammar = {
-              A : a = minusOne32<Integer> ;
+              A : a = minusOne<Integer> ;
             }
           }
         """;
@@ -196,31 +262,51 @@ public class AsmDescriptionTests {
   @Test
   void asmDescriptionNotAllowedFormatDefinition() {
     var prog = """
-          assembly description AD for ABI = {
-            format F : Bits<16> =
-             { rs2 : RegIndex
-             , rs1 : RegIndex
-             , rd : RegIndex
-             , op : Bits<4>
-             }
-          }
+          format F : Bits<16> =
+           { rs2 : RegIndex
+           , rs1 : RegIndex
+           , rd : RegIndex
+           , op : Bits<4>
+           }
         """;
-    Assertions.assertThrows(DiagnosticList.class, () -> VadlParser.parse(prog),
+    Assertions.assertThrows(DiagnosticList.class,
+        () -> VadlParser.parse(inputWrappedByValidAsmDescription(prog)),
         "Format definition not allowed in assembly description");
   }
 
   @Test
   void asmDescriptionNotAllowedModelDefinition() {
     var prog = """
-          assembly description AD for ABI = {
-            model CreateInstr ( instr : Id , fmt: Id , behavior : Stats) : IsaDefs = {
-              instruction $instr : $fmt = {
-                $behavior
-              }
+          model CreateInstr ( instr : Id , fmt: Id , behavior : Stats) : IsaDefs = {
+            instruction $instr : $fmt = {
+              $behavior
             }
           }
         """;
-    Assertions.assertThrows(DiagnosticList.class, () -> VadlParser.parse(prog),
+    Assertions.assertThrows(DiagnosticList.class,
+        () -> VadlParser.parse(inputWrappedByValidAsmDescription(prog)),
         "Model definition not allowed in assembly description");
+  }
+
+  @Test
+  void asmDescriptionReferencesUnknownAbi() {
+    var prog = """
+          assembly description AD for ABI = {}
+        """;
+    Assertions.assertThrows(DiagnosticList.class, () -> VadlParser.parse(prog));
+  }
+
+  @Test
+  void asmModifiersReferenceUnknownRelocations() {
+    var prog = """
+          instruction set architecture ISA = {}
+          application binary interface ABI for ISA = {}
+          assembly description AD for ABI = {
+            modifiers = {
+              "hi" -> ISA::HI
+            }
+          }
+        """;
+    Assertions.assertThrows(DiagnosticList.class, () -> VadlParser.parse(prog));
   }
 }

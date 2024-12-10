@@ -7,6 +7,7 @@ import java.util.Map;
 import java.util.Objects;
 import javax.annotation.Nullable;
 import vadl.error.Diagnostic;
+import vadl.types.AsmType;
 import vadl.utils.SourceLocation;
 
 class SymbolTable {
@@ -171,7 +172,7 @@ class SymbolTable {
     defineSymbol(new ModelTypeSymbol(definition.name.name, definition), definition.name.location());
   }
 
-  void copyFrom(SymbolTable other) {
+  void extendBy(SymbolTable other) {
     symbols.putAll(other.symbols);
     macroSymbols.putAll(other.macroSymbols);
   }
@@ -207,6 +208,12 @@ class SymbolTable {
       return ((AliasDefinition) node).id().location();
     } else if (node instanceof ApplicationBinaryInterfaceDefinition) {
       return ((ApplicationBinaryInterfaceDefinition) node).id.location();
+    } else if (node instanceof AsmDescriptionDefinition) {
+      return ((AsmDescriptionDefinition) node).id.location();
+    } else if (node instanceof AsmGrammarRuleDefinition) {
+      return ((AsmGrammarRuleDefinition) node).id.location();
+    } else if (node instanceof AsmGrammarLocalVarDefinition) {
+      return ((AsmGrammarLocalVarDefinition) node).id.location();
     } else if (node instanceof AssemblyDefinition) {
       var identifiers = ((AssemblyDefinition) node).identifiers;
       return identifiers.get(0).location().join(identifiers.get(identifiers.size() - 1).location());
@@ -575,6 +582,86 @@ class SymbolTable {
         symbols.defineSymbol(new GenericSymbol(cache.id.name, cache), cache.id.loc);
       } else if (definition instanceof SignalDefinition signal) {
         symbols.defineSymbol(new GenericSymbol(signal.id.name, signal), signal.id.loc);
+      } else if (definition instanceof AsmDescriptionDefinition asmDescription) {
+        symbols.defineSymbol(new GenericSymbol(asmDescription.id.name, asmDescription),
+            asmDescription.id.location());
+        var asmDescSymbolTable = symbols.createChild();
+        asmDescription.symbolTable = asmDescSymbolTable;
+
+        var modifierSymbols = asmDescSymbolTable.createChild();
+        asmDescription.modifiers.forEach(
+            modifier -> collectSymbols(modifierSymbols, modifier));
+
+        var directiveSymbols = asmDescSymbolTable.createChild();
+        asmDescription.directives.forEach(
+            directive -> collectSymbols(directiveSymbols, directive));
+
+        // add integer negation function to common definitions if not already defined
+        // this function is used in the grammar default rules
+        if (asmDescription.commonDefinitions.stream().noneMatch(
+            def -> def instanceof FunctionDefinition functionDef
+                && functionDef.name.path().pathToString()
+                .equals(AsmGrammarDefaultRules.BUILTIN_ASM_NEG))) {
+          asmDescription.commonDefinitions.add(AsmGrammarDefaultRules.asmNegFunctionDefinition());
+        }
+        asmDescription.commonDefinitions.forEach(
+            commonDef -> collectSymbols(asmDescSymbolTable, commonDef));
+        asmDescription.rules.forEach(rule -> collectSymbols(asmDescSymbolTable, rule));
+
+        // get default rules that are not yet defined,
+        // collect their symbols and add them to assembly description
+        var defaultRules = AsmGrammarDefaultRules.notIncludedDefaultRules(asmDescription.rules);
+        defaultRules.forEach(rule -> collectSymbols(asmDescSymbolTable, rule));
+        asmDescription.rules.addAll(defaultRules);
+      } else if (definition instanceof AsmModifierDefinition modifier) {
+        symbols.defineSymbol(new GenericSymbol(modifier.stringLiteral.toString(), modifier),
+            modifier.location());
+      } else if (definition instanceof AsmDirectiveDefinition directive) {
+        symbols.defineSymbol(new GenericSymbol(directive.stringLiteral.toString(), directive),
+            directive.location());
+      } else if (definition instanceof AsmGrammarRuleDefinition rule) {
+        symbols.defineSymbol(new GenericSymbol(rule.id.name, rule), rule.id.location());
+        collectSymbols(symbols, rule.alternatives);
+        if (rule.asmType != null) {
+          collectSymbols(symbols, rule.asmType);
+        }
+      } else if (definition instanceof AsmGrammarAlternativesDefinition alternativesDef) {
+        alternativesDef.alternatives.forEach(alternative -> {
+          // each sequence of elements has its own scope
+          var elementsSymbolTable = symbols.createChild();
+          alternative.forEach(element -> collectSymbols(elementsSymbolTable, element));
+        });
+      } else if (definition instanceof AsmGrammarElementDefinition element) {
+        if (element.localVar != null) {
+          collectSymbols(symbols, element.localVar);
+        }
+        if (element.asmLiteral != null) {
+          collectSymbols(symbols, element.asmLiteral);
+        }
+        if (element.groupAlternatives != null) {
+          collectSymbols(symbols, element.groupAlternatives);
+        }
+        if (element.optionAlternatives != null) {
+          collectSymbols(symbols, element.optionAlternatives);
+        }
+        if (element.repetitionAlternatives != null) {
+          collectSymbols(symbols, element.repetitionAlternatives);
+        }
+        if (element.groupAsmType != null) {
+          collectSymbols(symbols, element.groupAsmType);
+        }
+      } else if (definition instanceof AsmGrammarLocalVarDefinition localVar) {
+        symbols.defineSymbol(new GenericSymbol(localVar.id.name, localVar), localVar.id.location());
+        if (localVar.asmLiteral != null) {
+          collectSymbols(symbols, localVar.asmLiteral);
+        }
+      } else if (definition instanceof AsmGrammarLiteralDefinition asmLiteral) {
+        if (!asmLiteral.parameters.isEmpty()) {
+          asmLiteral.parameters.forEach(param -> collectSymbols(symbols, param));
+        }
+        if (asmLiteral.asmType != null) {
+          collectSymbols(symbols, asmLiteral.asmType);
+        }
       }
     }
 
@@ -754,7 +841,7 @@ class SymbolTable {
           var extending = isa.symbolTable().requireIsa(isa.extending);
           isa.extendingNode = extending;
           if (extending != null) {
-            isa.symbolTable().copyFrom(extending.symbolTable());
+            isa.symbolTable().extendBy(extending.symbolTable());
           }
         }
         for (Definition childDef : isa.definitions) {
@@ -767,7 +854,7 @@ class SymbolTable {
       } else if (definition instanceof InstructionDefinition instr) {
         var format = instr.symbolTable().requireFormat(instr.type());
         if (format != null) {
-          instr.symbolTable().copyFrom(format.origin.symbolTable());
+          instr.symbolTable().extendBy(format.origin.symbolTable());
           instr.formatNode = format.origin;
         }
         resolveSymbols(instr.behavior);
@@ -782,7 +869,7 @@ class SymbolTable {
           var pseudoInstr = assembly.symbolTable().findPseudoInstruction((Identifier) identifier);
           if (pseudoInstr != null) {
             assembly.instructionNodes.add(pseudoInstr);
-            assembly.symbolTable().copyFrom(pseudoInstr.symbolTable());
+            assembly.symbolTable().extendBy(pseudoInstr.symbolTable());
           } else {
             var instr = assembly.symbolTable().findInstruction((Identifier) identifier);
             if (instr != null) {
@@ -790,7 +877,7 @@ class SymbolTable {
             }
             var format = assembly.symbolTable().requireInstructionFormat((Identifier) identifier);
             if (format != null) {
-              assembly.symbolTable().copyFrom(format.origin.symbolTable());
+              assembly.symbolTable().extendBy(format.origin.symbolTable());
             }
           }
         }
@@ -827,7 +914,7 @@ class SymbolTable {
         var isa = abi.symbolTable().requireIsa((Identifier) abi.isa);
         if (isa != null) {
           abi.isaNode = isa;
-          abi.symbolTable().copyFrom(isa.symbolTable());
+          abi.symbolTable().extendBy(isa.symbolTable());
           for (Definition def : abi.definitions) {
             resolveSymbols(def);
           }
@@ -846,7 +933,7 @@ class SymbolTable {
         var abi = mip.symbolTable().requireAbi((Identifier) mip.abi);
         if (abi != null) {
           mip.abiNode = abi;
-          mip.symbolTable().copyFrom(abi.symbolTable());
+          mip.symbolTable().extendBy(abi.symbolTable());
           for (Definition def : mip.definitions) {
             resolveSymbols(def);
           }
@@ -871,6 +958,84 @@ class SymbolTable {
         resolveSymbols(pipeline.statement);
       } else if (definition instanceof StageDefinition stage) {
         resolveSymbols(stage.statement);
+      } else if (definition instanceof AsmDescriptionDefinition asmDescription) {
+        var abi = asmDescription.symbolTable().requireAbi(asmDescription.abi);
+        if (abi != null) {
+          asmDescription.symbolTable().extendBy(abi.symbolTable());
+        }
+        asmDescription.modifiers.forEach(ResolutionPass::resolveSymbols);
+        asmDescription.directives.forEach(ResolutionPass::resolveSymbols);
+        asmDescription.rules.forEach(ResolutionPass::resolveSymbols);
+      } else if (definition instanceof AsmModifierDefinition modifier) {
+        var relocation = modifier.relocation;
+        var symbol = modifier.symbolTable().resolveSymbol(relocation.pathToString());
+        if (symbol == null) {
+          modifier.symbolTable()
+              .reportError("Unknown relocation symbol: " + relocation.pathToString(),
+                  relocation.location());
+        }
+      } else if (definition instanceof AsmDirectiveDefinition directive) {
+        if (!AsmDirective.isAsmDirective(directive.builtinDirective.name)) {
+          directive.symbolTable()
+              .reportError("Unknown asm directive: " + directive.builtinDirective.name,
+                  directive.builtinDirective.location());
+        }
+      } else if (definition instanceof AsmGrammarRuleDefinition rule) {
+        resolveSymbols(rule.alternatives);
+        if (rule.asmType != null) {
+          resolveSymbols(rule.asmType);
+        }
+      } else if (definition instanceof AsmGrammarAlternativesDefinition alternativesDefinition) {
+        alternativesDefinition.alternatives.forEach(
+            alternative -> alternative.forEach(ResolutionPass::resolveSymbols));
+      } else if (definition instanceof AsmGrammarElementDefinition element) {
+        if (element.localVar != null) {
+          resolveSymbols(element.localVar);
+        }
+        if (element.groupAlternatives != null) {
+          resolveSymbols(element.groupAlternatives);
+        }
+        if (element.optionAlternatives != null) {
+          resolveSymbols(element.optionAlternatives);
+        }
+        if (element.repetitionAlternatives != null) {
+          resolveSymbols(element.repetitionAlternatives);
+        }
+        if (element.asmLiteral != null) {
+          resolveSymbols(element.asmLiteral);
+        }
+        if (element.groupAsmType != null) {
+          resolveSymbols(element.groupAsmType);
+        }
+        if (element.attribute != null) {
+          // if attrSymbol is not null, attribute refers to local variable
+          // else attribute is handled by matching in the AsmParser
+          var attrSymbol = element.symbolTable().resolveSymbol(element.attribute.name);
+          element.isAttributeLocalVar = attrSymbol != null;
+        }
+      } else if (definition instanceof AsmGrammarLocalVarDefinition localVar) {
+        if (localVar.asmLiteral.id != null && !localVar.asmLiteral.id.name.equals("null")) {
+          resolveSymbols(localVar.asmLiteral);
+        }
+      } else if (definition instanceof AsmGrammarLiteralDefinition asmLiteral) {
+        if (asmLiteral.id != null) {
+          var idSymbol = asmLiteral.symbolTable().resolveSymbol(asmLiteral.id.name);
+          if (idSymbol == null) {
+            asmLiteral.symbolTable()
+                .reportError("Unknown symbol in asm grammar rule: " + asmLiteral.id.name,
+                    asmLiteral.id.location());
+          }
+        }
+        if (asmLiteral.asmType != null) {
+          resolveSymbols(asmLiteral.asmType);
+        }
+        asmLiteral.parameters.forEach(ResolutionPass::resolveSymbols);
+      } else if (definition instanceof AsmGrammarTypeDefinition asmTypeDefinition) {
+        if (!AsmType.isInputAsmType(asmTypeDefinition.id.name)) {
+          asmTypeDefinition.symbolTable()
+              .reportError("Unknown asm type: " + asmTypeDefinition.id.name,
+                  asmTypeDefinition.id.location());
+        }
       }
     }
 
