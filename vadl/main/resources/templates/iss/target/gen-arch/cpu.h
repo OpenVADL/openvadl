@@ -28,6 +28,15 @@ typedef struct CPUArchState {
   [# th:each="reg, iterState : ${registers}"] // CPU registers
   [(${reg.c_type})] [(${reg.name_lower})];
   [/]
+
+  // hardcoded CSR and Privilege registers
+  target_ulong priv;
+
+  uint64_t mstatus;
+  target_ulong mtvec;
+  target_ulong mcause;
+  target_ulong mepc;
+  target_ulong mtval;
 } CPU[(${gen_arch_upper})]State;
 
 

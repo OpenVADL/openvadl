@@ -23,6 +23,7 @@ import vadl.gcb.passes.typeNormalization.CppTypeNormalizationForDecodingsPass;
 import vadl.gcb.passes.typeNormalization.CppTypeNormalizationForEncodingsPass;
 import vadl.gcb.passes.typeNormalization.CppTypeNormalizationForPredicatesPass;
 import vadl.iss.passes.IssConfigurationPass;
+import vadl.iss.passes.IssHardcodedTcgAddOnPass;
 import vadl.iss.passes.IssPcAccessConversionPass;
 import vadl.iss.passes.IssTcgConstantSchedulingPass;
 import vadl.iss.passes.IssTcgSchedulingPass;
@@ -360,6 +361,7 @@ public class PassOrders {
         .add(new TcgBranchLoweringPass(config))
         .add(new IssTcgConstantSchedulingPass(config))
         .add(new TcgOpLoweringPass(config))
+        .add(new IssHardcodedTcgAddOnPass(config))
         .add(new IssTcgVAllocationPass(config))
     ;
 
@@ -417,6 +419,7 @@ public class PassOrders {
         .add(issDefault("/target/gen-arch/meson.build", config))
         .add(issDefault("/target/gen-arch/helper.c", config))
         .add(issDefault("/target/gen-arch/helper.h", config))
+        .add(issDefault("/target/gen-arch/cpu-bits.h", config))
         // target/gen-arch/cpu-qom.h
         .add(new EmitIssCpuQomHeaderPass(config))
         // target/gen-arch/cpu-param.h

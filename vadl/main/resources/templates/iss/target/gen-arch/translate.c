@@ -6,6 +6,7 @@
 #include "exec/translator.h"
 #include "qemu/qemu-print.h"
 #include "tcg/tcg-op.h"
+#include "cpu-bits.h"
 
 #include "exec/helper-proto.h"
 #include "exec/helper-gen.h"
@@ -147,6 +148,7 @@ static void gen_goto_tb_abs(DisasContext *ctx, target_ulong target_pc)
     // TODO: optimize as lookup might be unnecessary
     tcg_gen_movi_tl(cpu_pc, (int64_t) target_pc);
     tcg_gen_lookup_and_goto_ptr();
+    ctx->base.is_jmp = DISAS_NORETURN;
 }
 
 static void gen_goto_tb(DisasContext *ctx, target_ulong n, target_ulong target_pc)
@@ -160,6 +162,12 @@ static void gen_goto_tb(DisasContext *ctx, target_ulong n, target_ulong target_p
         tcg_gen_lookup_and_goto_ptr();
     }
     ctx->base.is_jmp = DISAS_NORETURN;
+}
+
+static void generate_exception(DisasContext *ctx, int excp) {
+	tcg_gen_mov_i64(cpu_pc, ctx->base.pc_next);
+	gen_helper_raise_exception(tcg_env, tcg_constant_i32(excp));
+	ctx->base.is_jmp = DISAS_NORETURN;
 }
 
 static inline void gen_trunc(TCGv dest, TCGv arg, int bitWidth) {
@@ -181,20 +189,23 @@ static bool decode_insn(DisasContext *ctx, uint[(${insn_width.int})]_t insn);
 [/]
 
 
-// TODO: Remove this hardcoded translate function in template
-//static bool trans_jal(DisasContext *ctx, arg_jal *a) {
-//    qemu_printf("[VADL] trans_jal rd: %d\n", a->rd);
-//
-//    // set rd to next pc
-//    TCGv succ_pc = dest_x(ctx, a->rd);
-//    target_ulong next_pc = ctx->base.pc_next + 4;
-//    tcg_gen_movi_tl(succ_pc, next_pc);
-//    gen_set_x(ctx, a->rd, succ_pc); // <-- is getting optimized
-//
-//    gen_goto_tb_rel(ctx, a->immS);
-//    ctx->base.is_jmp = DISAS_NORETURN;
-//    return true;
-//}
+// TODO: Remove this hardcoded translate functions in template
+static bool trans_csrrw(DisasContext *ctx, arg_csrrw *a) {
+    qemu_printf("[VADL] trans_csrrw (rd: %d , csr: %d , rs1: %d , shamt: %d )\n",
+                a->rd, a->csr, a->rs1);
+
+    TCGv dest    = dest_x(ctx, a->rd);
+    TCGv src     = get_x(ctx, a->rs1);
+    TCGv_i32 csr = tcg_constant_i32(a->csr);
+
+    gen_helper_csrrw(dest, tcg_env, csr, src);
+
+    tcg_gen_movi_i64(cpu_pc, ctx->base.pc_next + 4);
+    tcg_gen_exit_tb(NULL, 0);
+    ctx->base.is_jmp = DISAS_NORETURN;
+
+    return true;
+}
 
 //// END OF TRANSLATE FUNCTIONS ////
 
@@ -211,6 +222,7 @@ static void translate(DisasContext *ctx)
     if(!decode_insn(ctx, insn)) {
         error_report("[[(${gen_arch_upper})]] translate, illegal instr, pc: 0x%04llx , insn: 0x%04x\n", ctx->base.pc_next, insn);
 
+        tcg_gen_movi_i64(cpu_pc, ctx->base.pc_next);
         gen_helper_unsupported(tcg_env);
         ctx->base.is_jmp = DISAS_NORETURN;
     }
