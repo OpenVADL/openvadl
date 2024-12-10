@@ -11,8 +11,10 @@ import java.util.Comparator;
 import java.util.IdentityHashMap;
 import java.util.List;
 import java.util.Map;
+import jdk.jshell.Diag;
 import org.jetbrains.annotations.Nullable;
 import vadl.configuration.LcbConfiguration;
+import vadl.error.Diagnostic;
 import vadl.lcb.passes.isaMatching.IsaMachineInstructionMatchingPass;
 import vadl.lcb.passes.isaMatching.MachineInstructionLabel;
 import vadl.lcb.passes.llvmLowering.GenerateTableGenMachineInstructionRecordPass;
@@ -26,6 +28,7 @@ import vadl.lcb.template.CommonVarNames;
 import vadl.lcb.template.LcbTemplateRenderingPass;
 import vadl.lcb.templateUtils.RegisterUtils;
 import vadl.pass.PassResults;
+import vadl.types.SIntType;
 import vadl.viam.Instruction;
 import vadl.viam.RegisterFile;
 import vadl.viam.Specification;
@@ -65,7 +68,9 @@ public class EmitRegisterInfoCppFilePass extends LcbTemplateRenderingPass {
                                FieldAccessRefNode immediate,
                                String predicateMethodName,
                                RegisterFile registerFile,
-                               MachineInstructionIndices machineInstructionIndices) {
+                               MachineInstructionIndices machineInstructionIndices,
+                               long minValue,
+                               long maxValue) {
 
   }
 
@@ -147,17 +152,24 @@ public class EmitRegisterInfoCppFilePass extends LcbTemplateRenderingPass {
 
     for (var label : affected) {
       for (var instruction : instructionLabels.getOrDefault(label, Collections.emptyList())) {
-        var behavior = uninlined.get(instruction);
-        ensureNonNull(behavior, "uninlined behaviors is required");
-        var immediate = behavior.getNodes(FieldAccessRefNode.class).findAny();
-        ensure(immediate.isPresent(), "An immediate is required for frame index elimination");
+        var behavior = ensureNonNull(uninlined.get(instruction),
+            () -> Diagnostic.error("No uninlined behavior was found.",
+                instruction.sourceLocation()));
+        var immediate = ensurePresent(behavior.getNodes(FieldAccessRefNode.class).findAny(), () ->
+            Diagnostic.error("Cannot find an immediate for frame index elimination.",
+                instruction.sourceLocation()));
         var indices =
             extractFrameIndexAndImmIndexFromMachineInstruction(tableGenMachineInstructions,
                 instruction);
-        var entry = new FrameIndexElimination(label, instruction, immediate.get(),
-            immediate.get().fieldAccess().predicate().identifier.lower(),
+        var isSigned = immediate.fieldAccess().type() instanceof SIntType;
+        var fieldBitWidth = immediate.fieldAccess().fieldRef().bitSlice().bitSize();
+        long minValue = isSigned ? -1 * (long) Math.pow(2, fieldBitWidth - 1) : 0;
+        long maxValue = isSigned ? (long) Math.pow(2, fieldBitWidth - 1) - 1 :
+            (long) Math.pow(2, fieldBitWidth);
+        var entry = new FrameIndexElimination(label, instruction, immediate,
+            immediate.fieldAccess().predicate().identifier.lower(),
             instruction.behavior().getNodes(ReadRegFileNode.class).findFirst().get()
-                .registerFile(), indices);
+                .registerFile(), indices, minValue, maxValue);
         entries.add(entry);
       }
     }
