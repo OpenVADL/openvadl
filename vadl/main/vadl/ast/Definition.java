@@ -3967,14 +3967,14 @@ class AsmDescriptionDefinition extends Definition {
 class AsmModifierDefinition extends Definition {
   Expr stringLiteral;
   Identifier isa;
-  Identifier modifier;
+  Identifier relocation;
   SourceLocation loc;
 
-  public AsmModifierDefinition(Expr stringLiteral, Identifier isa, Identifier modifier,
+  public AsmModifierDefinition(Expr stringLiteral, Identifier isa, Identifier relocation,
                                SourceLocation loc) {
     this.stringLiteral = stringLiteral;
     this.isa = isa;
-    this.modifier = modifier;
+    this.relocation = relocation;
     this.loc = loc;
   }
 
@@ -4000,7 +4000,7 @@ class AsmModifierDefinition extends Definition {
     builder.append(" -> ");
     isa.prettyPrint(0, builder);
     builder.append("::");
-    modifier.prettyPrint(0, builder);
+    relocation.prettyPrint(0, builder);
   }
 
   @Override
@@ -4013,12 +4013,12 @@ class AsmModifierDefinition extends Definition {
     }
     AsmModifierDefinition that = (AsmModifierDefinition) o;
     return Objects.equals(stringLiteral, that.stringLiteral) && Objects.equals(isa, that.isa)
-        && Objects.equals(modifier, that.modifier);
+        && Objects.equals(relocation, that.relocation);
   }
 
   @Override
   public int hashCode() {
-    return Objects.hash(stringLiteral, isa, modifier);
+    return Objects.hash(stringLiteral, isa, relocation);
   }
 }
 
@@ -4187,18 +4187,20 @@ class AsmGrammarAlternativesDefinition extends Definition {
   @Override
   void prettyPrint(int indent, StringBuilder builder) {
     var elementIndent = indent + 1;
-    for (var alternative : alternatives) {
-      if (!Objects.equals(alternatives.get(0), alternative)) {
+    for (int i = 0; i < alternatives.size(); i++) {
+      var alternative = alternatives.get(i);
+      if (i != 0) {
         builder.append(prettyIndentString(indent));
         builder.append("|\n");
       }
-      for (var element : alternative) {
+      for (int j = 0; j < alternative.size(); j++) {
+        var element = alternative.get(j);
         element.prettyPrint(elementIndent, builder);
-        if (!Objects.equals(alternative.get(alternative.size() - 1), element)) {
+        if (j != alternative.size() - 1) {
           builder.append("\n");
         }
       }
-      if (!Objects.equals(alternatives.get(alternatives.size() - 1), alternative)) {
+      if (i != alternatives.size() - 1) {
         builder.append("\n");
       }
     }
@@ -4257,6 +4259,7 @@ class AsmGrammarElementDefinition extends Definition {
   @Nullable
   Identifier attribute;
   Boolean isPlusEqualsAttributeAssign;
+  Boolean isAttributeLocalVar = false;
   @Nullable
   AsmGrammarLiteralDefinition asmLiteral;
   @Nullable
@@ -4268,7 +4271,7 @@ class AsmGrammarElementDefinition extends Definition {
   @Nullable
   Expr semanticPredicate;
   @Nullable
-  AsmGrammarTypeDefinition asmType;
+  AsmGrammarTypeDefinition groupAsmType;
   SourceLocation loc;
 
   public AsmGrammarElementDefinition(@Nullable AsmGrammarLocalVarDefinition localVar,
@@ -4280,7 +4283,7 @@ class AsmGrammarElementDefinition extends Definition {
                                      @Nullable
                                      AsmGrammarAlternativesDefinition repetitionAlternatives,
                                      @Nullable Expr semanticPredicate,
-                                     @Nullable AsmGrammarTypeDefinition asmType,
+                                     @Nullable AsmGrammarTypeDefinition groupAsmType,
                                      SourceLocation loc) {
     this.localVar = localVar;
     this.attribute = attribute;
@@ -4290,7 +4293,7 @@ class AsmGrammarElementDefinition extends Definition {
     this.optionAlternatives = optionAlternatives;
     this.repetitionAlternatives = repetitionAlternatives;
     this.semanticPredicate = semanticPredicate;
-    this.asmType = asmType;
+    this.groupAsmType = groupAsmType;
     this.loc = loc;
   }
 
@@ -4350,8 +4353,8 @@ class AsmGrammarElementDefinition extends Definition {
       semanticPredicate.prettyPrint(0, builder);
       builder.append(" )");
     }
-    if (asmType != null) {
-      asmType.prettyPrint(0, builder);
+    if (groupAsmType != null) {
+      groupAsmType.prettyPrint(0, builder);
     }
   }
 
@@ -4368,13 +4371,13 @@ class AsmGrammarElementDefinition extends Definition {
         && Objects.equals(isPlusEqualsAttributeAssign, that.isPlusEqualsAttributeAssign)
         && Objects.equals(asmLiteral, that.asmLiteral)
         && Objects.equals(groupAlternatives, that.groupAlternatives)
-        && Objects.equals(asmType, that.asmType);
+        && Objects.equals(groupAsmType, that.groupAsmType);
   }
 
   @Override
   public int hashCode() {
     return Objects.hash(localVar, attribute, isPlusEqualsAttributeAssign, asmLiteral,
-        groupAlternatives, asmType);
+        groupAlternatives, groupAsmType);
   }
 }
 
@@ -4490,9 +4493,9 @@ class AsmGrammarLiteralDefinition extends Definition {
       id.prettyPrint(0, builder);
       if (!parameters.isEmpty()) {
         builder.append('<');
-        for (var param : parameters) {
-          param.prettyPrint(indent, builder);
-          if (!Objects.equals(parameters.get(parameters.size() - 1), param)) {
+        for (int i = 0; i < parameters.size(); i++) {
+          parameters.get(i).prettyPrint(indent, builder);
+          if (i != parameters.size() - 1) {
             builder.append(", ");
           }
         }

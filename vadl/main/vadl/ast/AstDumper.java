@@ -615,7 +615,7 @@ public class AstDumper
   @Override
   public Void visit(AsmModifierDefinition definition) {
     dumpNode(definition);
-    dumpChildren(definition.stringLiteral, definition.isa, definition.modifier);
+    dumpChildren(definition.stringLiteral, definition.isa, definition.relocation);
     return null;
   }
 
@@ -670,8 +670,8 @@ public class AstDumper
     if (definition.semanticPredicate != null) {
       dumpChildren(definition.semanticPredicate);
     }
-    if (definition.asmType != null) {
-      dumpChildren(definition.asmType);
+    if (definition.groupAsmType != null) {
+      dumpChildren(definition.groupAsmType);
     }
     return null;
   }
