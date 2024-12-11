@@ -51,21 +51,16 @@ MCOperand [(${namespace})]InstPrinter::adjustImmediateOp
     int64_t value;
     if(AsmUtils::evaluateConstantImm(&original, value))
     {
-        /*
-        Clarify with Christoph why this has to be done because the current code is
-        wrong. We must *not* not do for all immediates.
-
         switch(OpCode)
         {
-          [# th:each="instruction : ${instructionsWithImmediate}" ]
+          [# th:each="instruction : ${instructionWithEncodedImmediate}" ]
           case [(${namespace})]::[(${instruction.identifier().simpleName()})]:
           {
-            auto newOp = [(${instruction.operand().immediateOperand().rawEncoderMethod()})](value);
+            auto newOp = [(${instruction.rawEncoderMethod()})](value);
             return MCOperand::createImm(newOp);
           }
           [/]
         }
-        */
     }
 
     return original;

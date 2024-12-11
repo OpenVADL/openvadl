@@ -153,6 +153,7 @@ instruction set architecture RV3264I = {
     instruction $name : Utype =                        // upper immediate instructions
       X(rd) := $rhsEx
     encoding $name = {opcode = $opcode}
+    [encode imm]
     assembly $name = (mnemonic, " ", register(rd), ",", hex(imm))
     }
 
@@ -177,6 +178,7 @@ instruction set architecture RV3264I = {
       if (X(rs1) as $lhsTy) $relOp X(rs2) then
         PC := PC + immS
     encoding $name = {opcode = 0b110'0011, funct3 = $funct3}
+    [encode imm]
     assembly $name = (mnemonic, " ", register(rs1), ",", register(rs2), ",", decimal(imm))
     }
 
@@ -187,6 +189,7 @@ instruction set architecture RV3264I = {
         X(rd) := retaddr                               // when rs1 is equal to rd
         }
     encoding $name = {$opcode}
+    [encode imm]
     assembly $name = (mnemonic, " ", register(rd), ",", decimal(imm), $asm)
     }
 
