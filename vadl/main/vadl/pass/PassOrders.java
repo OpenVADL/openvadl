@@ -40,6 +40,7 @@ import vadl.iss.template.target.EmitIssCpuSourcePass;
 import vadl.iss.template.target.EmitIssInsnDecodePass;
 import vadl.iss.template.target.EmitIssMachinePass;
 import vadl.iss.template.target.EmitIssTranslatePass;
+import vadl.lcb.passes.DummyAnnotationPass;
 import vadl.lcb.passes.isaMatching.IsaMachineInstructionMatchingPass;
 import vadl.lcb.passes.isaMatching.IsaPseudoInstructionMatchingPass;
 import vadl.lcb.passes.llvmLowering.GenerateRegisterClassesPass;
@@ -171,6 +172,7 @@ public class PassOrders {
     var order = gcbAndCppCodeGen(configuration);
     // skip inlining of field access
     order.skip(FieldAccessInlinerPass.class);
+    order.add(new DummyAnnotationPass(configuration));
 
     order.add(new IsaMachineInstructionMatchingPass(configuration));
     order.add(new IsaPseudoInstructionMatchingPass(configuration));
