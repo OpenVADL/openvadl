@@ -121,7 +121,7 @@ public class LlvmLoweringPass extends Pass {
 
     var machineRecords = generateRecordsForMachineInstructions(viam, abi, machineStrategies,
         labelledMachineInstructions);
-    var pseudoRecords = generateRecordsForPseudoInstructions(viam, abi, pseudoStrategies,
+    var pseudoRecords = pseudoInstructions(viam, abi, pseudoStrategies,
         labelledMachineInstructions, labelledPseudoInstructions);
 
     return new LlvmLoweringPassResult(machineRecords, pseudoRecords);
@@ -136,7 +136,7 @@ public class LlvmLoweringPass extends Pass {
     // We flip it because we need to know the label for the instruction to
     // apply one of the different lowering strategies.
     // A strategy knows whether it can lower it by the label.
-    var instructionLookup = flipIsaMatchingMachineInstructions(labelledMachineInstructions);
+    var instructionLookup = flipMachineInstructions(labelledMachineInstructions);
 
     viam.isa().map(isa -> isa.ownInstructions().stream()).orElseGet(Stream::empty)
         .forEach(instruction -> {
@@ -165,13 +165,12 @@ public class LlvmLoweringPass extends Pass {
     return tableGenRecords;
   }
 
-  private IdentityHashMap<PseudoInstruction,
-      LlvmLoweringRecord> generateRecordsForPseudoInstructions(
+  private IdentityHashMap<PseudoInstruction, LlvmLoweringRecord> pseudoInstructions(
       Specification viam, DummyAbi abi, List<LlvmPseudoInstructionLowerStrategy> pseudoStrategies,
       Map<MachineInstructionLabel, List<Instruction>> labelledMachineInstructions,
       Map<PseudoInstructionLabel, List<PseudoInstruction>> labelledPseudoInstructions) {
     var tableGenRecords = new IdentityHashMap<PseudoInstruction, LlvmLoweringRecord>();
-    var flipped = flipIsaMatchingPseudoInstructions(labelledPseudoInstructions);
+    var flipped = flipPseudoInstructions(labelledPseudoInstructions);
 
     viam.isa().map(isa -> isa.ownPseudoInstructions().stream()).orElseGet(Stream::empty)
         .forEach(pseudo -> {
@@ -200,8 +199,7 @@ public class LlvmLoweringPass extends Pass {
    * However, we would like to check whether {@link LlvmInstructionLoweringStrategy} supports this
    * {@link Instruction} in this pass. That's why we have the flip the hashmap.
    */
-  public static IdentityHashMap<Instruction,
-      MachineInstructionLabel> flipIsaMatchingMachineInstructions(
+  public static IdentityHashMap<Instruction, MachineInstructionLabel> flipMachineInstructions(
       Map<MachineInstructionLabel, List<Instruction>> isaMatched) {
     IdentityHashMap<Instruction, MachineInstructionLabel> inverse = new IdentityHashMap<>();
 
@@ -221,7 +219,7 @@ public class LlvmLoweringPass extends Pass {
    * this {@link Instruction} in this pass. That's why we have the flip the hashmap.
    */
   public static IdentityHashMap<PseudoInstruction,
-      PseudoInstructionLabel> flipIsaMatchingPseudoInstructions(
+      PseudoInstructionLabel> flipPseudoInstructions(
       Map<PseudoInstructionLabel, List<PseudoInstruction>> isaMatched) {
     IdentityHashMap<PseudoInstruction, PseudoInstructionLabel> inverse = new IdentityHashMap<>();
 

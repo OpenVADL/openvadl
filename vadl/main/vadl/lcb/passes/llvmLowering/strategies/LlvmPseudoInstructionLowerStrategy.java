@@ -84,7 +84,7 @@ public abstract class LlvmPseudoInstructionLowerStrategy {
       Map<MachineInstructionLabel, List<Instruction>> labelledMachineInstructions) {
     var patterns = new ArrayList<TableGenPattern>();
     var flippedInstructions =
-        LlvmLoweringPass.flipIsaMatchingMachineInstructions(labelledMachineInstructions);
+        LlvmLoweringPass.flipMachineInstructions(labelledMachineInstructions);
 
     var uses = new ArrayList<RegisterRef>();
     var defs = new ArrayList<RegisterRef>();
