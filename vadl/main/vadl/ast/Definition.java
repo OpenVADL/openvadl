@@ -138,29 +138,75 @@ interface DefinitionVisitor<R> {
 /**
  * A common parameter type that corresponds to the {@code parameter} grammar rule.
  *
- * @param name The declared name of this parameter.
- * @param type The declared type of this parameter.
+ * <p>name The declared name of this parameter.
+ * type The declared type of this parameter.
  */
-record Parameter(Identifier name, TypeLiteral type) {
-  static void prettyPrint(List<Parameter> params, StringBuilder builder) {
-    if (!params.isEmpty()) {
-      builder.append("(");
-      var isFirst = true;
-      for (var param : params) {
-        if (!isFirst) {
-          builder.append(", ");
-        }
-        isFirst = false;
-        param.name().prettyPrint(0, builder);
-        builder.append(" : ");
-        param.type().prettyPrint(0, builder);
-      }
-      builder.append(")");
+class Parameter extends Node implements IdentifiableNode {
+  Identifier name;
+  TypeLiteral type;
+
+  public Parameter(Identifier name, TypeLiteral type) {
+    this.name = name;
+    this.type = type;
+  }
+
+  @Override
+  public Identifier identifier() {
+    return name;
+  }
+
+  @Override
+  SourceLocation location() {
+    return name.location().join(type.location());
+  }
+
+  @Override
+  SyntaxType syntaxType() {
+    return BasicSyntaxType.INVALID;
+  }
+
+  @Override
+  void prettyPrint(int indent, StringBuilder builder) {
+    name.prettyPrint(indent, builder);
+    builder.append(" : ");
+    type.prettyPrint(indent, builder);
+  }
+
+  static void prettyPrintMultiple(int indent, List<Parameter> parmaeters, StringBuilder builder) {
+    if (parmaeters.isEmpty()) {
+      return;
     }
+
+    builder.append("(");
+    for (int i = 0; i < parmaeters.size(); i++) {
+      if (i != 0) {
+        builder.append(", ");
+      }
+      parmaeters.get(i).prettyPrint(indent, builder);
+    }
+    builder.append(")");
+
+  }
+
+  @Override
+  public boolean equals(Object o) {
+    if (o == null || getClass() != o.getClass()) {
+      return false;
+    }
+
+    Parameter parameter = (Parameter) o;
+    return name.equals(parameter.name) && type.equals(parameter.type);
+  }
+
+  @Override
+  public int hashCode() {
+    int result = name.hashCode();
+    result = 31 * result + type.hashCode();
+    return result;
   }
 }
 
-class ConstantDefinition extends Definition {
+class ConstantDefinition extends Definition implements IdentifiableNode {
   IdentifierOrPlaceholder identifier;
 
   @Nullable
@@ -181,7 +227,8 @@ class ConstantDefinition extends Definition {
     this.loc = location;
   }
 
-  Identifier identifier() {
+  @Override
+  public Identifier identifier() {
     return (Identifier) identifier;
   }
 
@@ -249,7 +296,7 @@ class ConstantDefinition extends Definition {
   }
 }
 
-class FormatDefinition extends Definition {
+class FormatDefinition extends Definition implements IdentifiableNode {
   IdentifierOrPlaceholder identifier;
   TypeLiteral type;
   List<FormatField> fields;
@@ -257,7 +304,7 @@ class FormatDefinition extends Definition {
   SourceLocation loc;
 
   interface FormatField {
-    Identifier identifier();
+    public Identifier identifier();
 
     void prettyPrint(int indent, StringBuilder builder);
   }
@@ -536,7 +583,8 @@ class FormatDefinition extends Definition {
     this.loc = location;
   }
 
-  Identifier identifier() {
+  @Override
+  public Identifier identifier() {
     return (Identifier) identifier;
   }
 
@@ -626,7 +674,7 @@ class FormatDefinition extends Definition {
   }
 }
 
-class InstructionSetDefinition extends Definition {
+class InstructionSetDefinition extends Definition implements IdentifiableNode {
   Identifier identifier;
   @Nullable
   Identifier extending;
@@ -642,6 +690,11 @@ class InstructionSetDefinition extends Definition {
     this.extending = extending;
     this.definitions = statements;
     this.loc = location;
+  }
+
+  @Override
+  public Identifier identifier() {
+    return identifier;
   }
 
   @Override
@@ -713,7 +766,7 @@ class InstructionSetDefinition extends Definition {
   }
 }
 
-class CounterDefinition extends Definition {
+class CounterDefinition extends Definition implements IdentifiableNode {
   CounterKind kind;
   IdentifierOrPlaceholder identifier;
   TypeLiteral type;
@@ -732,7 +785,8 @@ class CounterDefinition extends Definition {
     this.loc = location;
   }
 
-  Identifier identifier() {
+  @Override
+  public Identifier identifier() {
     return (Identifier) identifier;
   }
 
@@ -793,7 +847,7 @@ class CounterDefinition extends Definition {
   }
 }
 
-class MemoryDefinition extends Definition {
+class MemoryDefinition extends Definition implements IdentifiableNode {
   IdentifierOrPlaceholder identifier;
   TypeLiteral addressType;
   TypeLiteral dataType;
@@ -807,7 +861,8 @@ class MemoryDefinition extends Definition {
     this.loc = loc;
   }
 
-  Identifier identifier() {
+  @Override
+  public Identifier identifier() {
     return (Identifier) identifier;
   }
 
@@ -870,7 +925,7 @@ class MemoryDefinition extends Definition {
   }
 }
 
-class RegisterDefinition extends Definition {
+class RegisterDefinition extends Definition implements IdentifiableNode {
   IdentifierOrPlaceholder identifier;
   TypeLiteral type;
   SourceLocation loc;
@@ -882,7 +937,8 @@ class RegisterDefinition extends Definition {
     this.loc = location;
   }
 
-  Identifier identifier() {
+  @Override
+  public Identifier identifier() {
     return (Identifier) identifier;
   }
 
@@ -941,7 +997,7 @@ class RegisterDefinition extends Definition {
   }
 }
 
-class RegisterFileDefinition extends Definition {
+class RegisterFileDefinition extends Definition implements IdentifiableNode {
   IdentifierOrPlaceholder identifier;
   RelationType type;
   SourceLocation loc;
@@ -953,7 +1009,8 @@ class RegisterFileDefinition extends Definition {
     this.loc = location;
   }
 
-  Identifier identifier() {
+  @Override
+  public Identifier identifier() {
     return (Identifier) identifier;
   }
 
@@ -1024,7 +1081,7 @@ class RegisterFileDefinition extends Definition {
   }
 }
 
-class InstructionDefinition extends Definition {
+class InstructionDefinition extends Definition implements IdentifiableNode {
   IdentifierOrPlaceholder identifier;
   IdentifierOrPlaceholder typeIdentifier;
   Statement behavior;
@@ -1041,7 +1098,8 @@ class InstructionDefinition extends Definition {
     this.loc = location;
   }
 
-  Identifier id() {
+  @Override
+  public Identifier identifier() {
     return (Identifier) identifier;
   }
 
@@ -1108,7 +1166,7 @@ class InstructionDefinition extends Definition {
   }
 }
 
-class PseudoInstructionDefinition extends Definition {
+class PseudoInstructionDefinition extends Definition implements IdentifiableNode {
   IdentifierOrPlaceholder identifier;
   PseudoInstrKind kind;
   List<Parameter> params;
@@ -1125,7 +1183,8 @@ class PseudoInstructionDefinition extends Definition {
     this.loc = loc;
   }
 
-  Identifier id() {
+  @Override
+  public Identifier identifier() {
     return (Identifier) identifier;
   }
 
@@ -1149,7 +1208,7 @@ class PseudoInstructionDefinition extends Definition {
     };
     builder.append(kindStr).append(" instruction ");
     identifier.prettyPrint(indent, builder);
-    Parameter.prettyPrint(params, builder);
+    Parameter.prettyPrintMultiple(indent, params, builder);
     builder.append(" = {\n");
     for (InstructionCallStatement statement : statements) {
       statement.prettyPrint(indent + 1, builder);
@@ -1199,7 +1258,7 @@ class PseudoInstructionDefinition extends Definition {
   }
 }
 
-class RelocationDefinition extends Definition {
+class RelocationDefinition extends Definition implements IdentifiableNode {
   Identifier identifier;
   List<Parameter> params;
   TypeLiteral resultType;
@@ -1213,6 +1272,11 @@ class RelocationDefinition extends Definition {
     this.resultType = resultType;
     this.expr = expr;
     this.loc = loc;
+  }
+
+  @Override
+  public Identifier identifier() {
+    return identifier;
   }
 
   @Override
@@ -1232,7 +1296,7 @@ class RelocationDefinition extends Definition {
     builder.append("relocation ");
     identifier.prettyPrint(indent, builder);
     builder.append(" ");
-    Parameter.prettyPrint(params, builder);
+    Parameter.prettyPrintMultiple(indent, params, builder);
     builder.append(" -> ");
     resultType.prettyPrint(0, builder);
     if (isBlockLayout(expr)) {
@@ -1290,7 +1354,7 @@ sealed interface IsEncs permits EncodingDefinition.EncsNode,
   void prettyPrint(int indent, StringBuilder builder);
 }
 
-class EncodingDefinition extends Definition {
+class EncodingDefinition extends Definition implements IdentifiableNode {
   IdentifierOrPlaceholder instrIdentifier;
   EncsNode encodings;
   SourceLocation loc;
@@ -1305,7 +1369,8 @@ class EncodingDefinition extends Definition {
     this.loc = location;
   }
 
-  Identifier instrId() {
+  @Override
+  public Identifier identifier() {
     return (Identifier) instrIdentifier;
   }
 
@@ -1506,7 +1571,7 @@ class AssemblyDefinition extends Definition {
   }
 }
 
-class UsingDefinition extends Definition {
+class UsingDefinition extends Definition implements IdentifiableNode {
   final IdentifierOrPlaceholder id;
   final TypeLiteral type;
   final SourceLocation loc;
@@ -1517,7 +1582,8 @@ class UsingDefinition extends Definition {
     this.loc = location;
   }
 
-  Identifier identifier() {
+  @Override
+  public Identifier identifier() {
     return (Identifier) id;
   }
 
@@ -1576,7 +1642,7 @@ class UsingDefinition extends Definition {
   }
 }
 
-class FunctionDefinition extends Definition {
+class FunctionDefinition extends Definition implements IdentifiableNode {
   IdentifierOrPlaceholder name;
   List<Parameter> params;
   TypeLiteral retType;
@@ -1592,7 +1658,8 @@ class FunctionDefinition extends Definition {
     this.loc = location;
   }
 
-  Identifier name() {
+  @Override
+  public Identifier identifier() {
     return (Identifier) name;
   }
 
@@ -1611,7 +1678,7 @@ class FunctionDefinition extends Definition {
     builder.append(prettyIndentString(indent));
     builder.append("function ");
     name.prettyPrint(indent, builder);
-    Parameter.prettyPrint(params, builder);
+    Parameter.prettyPrintMultiple(indent, params, builder);
     builder.append(" -> ");
     retType.prettyPrint(0, builder);
     if (!isBlockLayout(expr)) {
@@ -1661,7 +1728,7 @@ class FunctionDefinition extends Definition {
   }
 }
 
-class AliasDefinition extends Definition {
+class AliasDefinition extends Definition implements IdentifiableNode {
   IdentifierOrPlaceholder id;
   AliasKind kind;
   @Nullable
@@ -1682,7 +1749,8 @@ class AliasDefinition extends Definition {
     this.loc = location;
   }
 
-  Identifier id() {
+  @Override
+  public Identifier identifier() {
     return (Identifier) id;
   }
 
@@ -1765,7 +1833,7 @@ class AliasDefinition extends Definition {
   }
 }
 
-final class EnumerationDefinition extends Definition {
+final class EnumerationDefinition extends Definition implements IdentifiableNode {
   IdentifierOrPlaceholder id;
   @Nullable
   TypeLiteral enumType;
@@ -1780,7 +1848,8 @@ final class EnumerationDefinition extends Definition {
     this.loc = location;
   }
 
-  Identifier id() {
+  @Override
+  public Identifier identifier() {
     return (Identifier) id;
   }
 
@@ -1863,7 +1932,7 @@ final class EnumerationDefinition extends Definition {
   }
 }
 
-final class ExceptionDefinition extends Definition {
+final class ExceptionDefinition extends Definition implements IdentifiableNode {
   IdentifierOrPlaceholder id;
   Statement statement;
   SourceLocation loc;
@@ -1874,7 +1943,8 @@ final class ExceptionDefinition extends Definition {
     this.loc = location;
   }
 
-  Identifier id() {
+  @Override
+  public Identifier identifier() {
     return (Identifier) id;
   }
 
@@ -2268,7 +2338,7 @@ class DefinitionList extends Definition {
  * An internal temporary definition of a model.
  * This node should never leave the parser.
  */
-final class ModelDefinition extends Definition {
+final class ModelDefinition extends Definition implements IdentifiableNode {
   /**
    * Either a concrete identifier for this model or, if it is a model-in-model, a placeholder ID.
    */
@@ -2311,6 +2381,11 @@ final class ModelDefinition extends Definition {
   Macro toMacro() {
     return new Macro(new Identifier(id.pathToString(), id.location()), params, body, returnType,
         boundArguments);
+  }
+
+  @Override
+  public Identifier identifier() {
+    return (Identifier) id;
   }
 
   @Override
@@ -2374,7 +2449,7 @@ final class ModelDefinition extends Definition {
  * An internal temporary placeholder of record type.
  * This node should never leave the parser.
  */
-final class RecordTypeDefinition extends Definition {
+final class RecordTypeDefinition extends Definition implements IdentifiableNode {
   Identifier name;
   RecordType recordType;
   SourceLocation loc;
@@ -2428,13 +2503,18 @@ final class RecordTypeDefinition extends Definition {
   public int hashCode() {
     return Objects.hash(name, recordType);
   }
+
+  @Override
+  public Identifier identifier() {
+    return name;
+  }
 }
 
 /**
  * An internal temporary placeholder of model type.
  * This node should never leave the parser.
  */
-final class ModelTypeDefinition extends Definition {
+final class ModelTypeDefinition extends Definition implements IdentifiableNode {
   Identifier name;
   ProjectionType projectionType;
   SourceLocation loc;
@@ -2487,9 +2567,76 @@ final class ModelTypeDefinition extends Definition {
   public int hashCode() {
     return Objects.hash(name, projectionType);
   }
+
+  @Override
+  public Identifier identifier() {
+    return name;
+  }
 }
 
-class ProcessDefinition extends Definition {
+class TemplateParam extends Node implements IdentifiableNode {
+  Identifier name;
+  TypeLiteral type;
+
+  @Nullable
+  Expr value;
+
+  public TemplateParam(Identifier name, TypeLiteral type, @Nullable Expr value) {
+    this.name = name;
+    this.type = type;
+    this.value = value;
+  }
+
+  @Override
+  public Identifier identifier() {
+    return name;
+  }
+
+  @Override
+  SourceLocation location() {
+    if (value != null) {
+      return name.location().join(value.location());
+    }
+    return name.location().join(type.location());
+  }
+
+  @Override
+  SyntaxType syntaxType() {
+    return BasicSyntaxType.INVALID;
+  }
+
+  @Override
+  void prettyPrint(int indent, StringBuilder builder) {
+    name.prettyPrint(0, builder);
+    builder.append(": ");
+    type.prettyPrint(0, builder);
+    if (value != null) {
+      builder.append(" = ");
+      value.prettyPrint(0, builder);
+    }
+  }
+
+  @Override
+  public boolean equals(Object o) {
+    if (o == null || getClass() != o.getClass()) {
+      return false;
+    }
+
+    TemplateParam that = (TemplateParam) o;
+    return name.equals(that.name) && type.equals(that.type)
+        && Objects.equals(value, that.value);
+  }
+
+  @Override
+  public int hashCode() {
+    int result = name.hashCode();
+    result = 31 * result + type.hashCode();
+    result = 31 * result + Objects.hashCode(value);
+    return result;
+  }
+}
+
+class ProcessDefinition extends Definition implements IdentifiableNode {
   IdentifierOrPlaceholder name;
   List<TemplateParam> templateParams;
   List<Parameter> inputs;
@@ -2508,7 +2655,8 @@ class ProcessDefinition extends Definition {
     this.loc = loc;
   }
 
-  Identifier name() {
+  @Override
+  public Identifier identifier() {
     return (Identifier) name;
   }
 
@@ -2536,20 +2684,14 @@ class ProcessDefinition extends Definition {
           builder.append(", ");
         }
         isFirst = false;
-        templateParam.name.prettyPrint(0, builder);
-        builder.append(": ");
-        templateParam.type.prettyPrint(0, builder);
-        if (templateParam.value != null) {
-          builder.append(" = ");
-          templateParam.value.prettyPrint(0, builder);
-        }
+        templateParam.prettyPrint(indent, builder);
       }
       builder.append("> ");
     }
-    Parameter.prettyPrint(inputs, builder);
+    Parameter.prettyPrintMultiple(indent, inputs, builder);
     if (!outputs.isEmpty()) {
       builder.append(" -> ");
-      Parameter.prettyPrint(outputs, builder);
+      Parameter.prettyPrintMultiple(indent, outputs, builder);
     }
     builder.append(" =\n");
     statement.prettyPrint(indent + 1, builder);
@@ -2587,11 +2729,10 @@ class ProcessDefinition extends Definition {
     return Objects.hash(name, templateParams, inputs, outputs, statement);
   }
 
-  record TemplateParam(Identifier name, TypeLiteral type, @Nullable Expr value) {
-  }
+
 }
 
-class OperationDefinition extends Definition {
+class OperationDefinition extends Definition implements IdentifiableNode {
   IdentifierOrPlaceholder name;
   List<IsId> resources;
   SourceLocation loc;
@@ -2602,9 +2743,6 @@ class OperationDefinition extends Definition {
     this.loc = loc;
   }
 
-  Identifier name() {
-    return (Identifier) name;
-  }
 
   @Override
   SourceLocation location() {
@@ -2666,9 +2804,14 @@ class OperationDefinition extends Definition {
   public int hashCode() {
     return Objects.hash(name, resources);
   }
+
+  @Override
+  public Identifier identifier() {
+    return (Identifier) name;
+  }
 }
 
-class GroupDefinition extends Definition {
+class GroupDefinition extends Definition implements IdentifiableNode {
   IdentifierOrPlaceholder name;
   @Nullable
   TypeLiteral type;
@@ -2683,7 +2826,8 @@ class GroupDefinition extends Definition {
     this.loc = loc;
   }
 
-  Identifier name() {
+  @Override
+  public Identifier identifier() {
     return (Identifier) name;
   }
 
@@ -2741,7 +2885,7 @@ class GroupDefinition extends Definition {
   }
 }
 
-class ApplicationBinaryInterfaceDefinition extends Definition {
+class ApplicationBinaryInterfaceDefinition extends Definition implements IdentifiableNode {
   Identifier id;
   IsId isa;
   List<Definition> definitions;
@@ -2804,6 +2948,11 @@ class ApplicationBinaryInterfaceDefinition extends Definition {
   public int hashCode() {
     return Objects.hash(id, isa, definitions);
   }
+
+  @Override
+  public Identifier identifier() {
+    return id;
+  }
 }
 
 class AbiSequenceDefinition extends Definition {
@@ -2842,20 +2991,7 @@ class AbiSequenceDefinition extends Definition {
     builder.append(prettyIndentString(indent));
     builder.append(kind.keyword);
     builder.append(" sequence ");
-    if (!params.isEmpty()) {
-      builder.append("(");
-      var isFirst = true;
-      for (Parameter param : params) {
-        if (!isFirst) {
-          builder.append(", ");
-        }
-        isFirst = false;
-        param.name().prettyPrint(0, builder);
-        builder.append(" : ");
-        param.type().prettyPrint(0, builder);
-      }
-      builder.append(")");
-    }
+    Parameter.prettyPrintMultiple(indent, params, builder);
     builder.append(" = {\n");
     for (InstructionCallStatement statement : statements) {
       statement.prettyPrint(indent + 1, builder);
@@ -2977,7 +3113,7 @@ class SpecialPurposeRegisterDefinition extends Definition {
   }
 }
 
-class MicroProcessorDefinition extends Definition {
+class MicroProcessorDefinition extends Definition implements IdentifiableNode {
   Identifier id;
   List<IsId> implementedIsas;
   IsId abi;
@@ -3000,6 +3136,11 @@ class MicroProcessorDefinition extends Definition {
   @Override
   <R> R accept(DefinitionVisitor<R> visitor) {
     return visitor.visit(this);
+  }
+
+  @Override
+  public Identifier identifier() {
+    return id;
   }
 
   @Override
@@ -3054,8 +3195,11 @@ class MicroProcessorDefinition extends Definition {
   public int hashCode() {
     return Objects.hash(id, implementedIsas, abi, definitions);
   }
+
+
 }
 
+// TODO: This should probably be a IdentifiableDefinition, but I don't understand how..
 class PatchDefinition extends Definition {
   Identifier generator;
   Identifier handle;
@@ -3078,6 +3222,7 @@ class PatchDefinition extends Definition {
   <R> R accept(DefinitionVisitor<R> visitor) {
     return visitor.visit(this);
   }
+
 
   @Override
   SourceLocation location() {
@@ -3128,7 +3273,7 @@ class PatchDefinition extends Definition {
   }
 }
 
-class SourceDefinition extends Definition {
+class SourceDefinition extends Definition implements IdentifiableNode {
   Identifier id;
   String source;
   SourceLocation loc;
@@ -3137,6 +3282,11 @@ class SourceDefinition extends Definition {
     this.id = id;
     this.source = source;
     this.loc = loc;
+  }
+
+  @Override
+  public Identifier identifier() {
+    return id;
   }
 
   @Override
@@ -3179,6 +3329,8 @@ class SourceDefinition extends Definition {
   public int hashCode() {
     return Objects.hash(id, source);
   }
+
+
 }
 
 class CpuFunctionDefinition extends Definition {
@@ -3295,7 +3447,7 @@ class CpuProcessDefinition extends Definition {
     builder.append(kind.keyword);
     if (kind == ProcessKind.STARTUP) {
       builder.append(" -> ");
-      Parameter.prettyPrint(startupOutputs, builder);
+      Parameter.prettyPrintMultiple(indent, startupOutputs, builder);
     }
     builder.append(" =\n");
     statement.prettyPrint(indent + 1, builder);
@@ -3330,7 +3482,7 @@ class CpuProcessDefinition extends Definition {
   }
 }
 
-class MicroArchitectureDefinition extends Definition {
+class MicroArchitectureDefinition extends Definition implements IdentifiableNode {
   Identifier id;
   IsId processor;
   List<Definition> definitions;
@@ -3342,6 +3494,11 @@ class MicroArchitectureDefinition extends Definition {
     this.processor = processor;
     this.definitions = definitions;
     this.loc = loc;
+  }
+
+  @Override
+  public Identifier identifier() {
+    return id;
   }
 
   @Override
@@ -3391,6 +3548,7 @@ class MicroArchitectureDefinition extends Definition {
   public int hashCode() {
     return Objects.hash(id, processor, definitions);
   }
+
 }
 
 class MacroInstructionDefinition extends Definition {
@@ -3429,9 +3587,9 @@ class MacroInstructionDefinition extends Definition {
     annotations.prettyPrint(indent, builder);
     builder.append(prettyIndentString(indent));
     builder.append(kind.keyword);
-    Parameter.prettyPrint(inputs, builder);
+    Parameter.prettyPrintMultiple(indent, inputs, builder);
     builder.append(" -> ");
-    Parameter.prettyPrint(outputs, builder);
+    Parameter.prettyPrintMultiple(indent, outputs, builder);
     builder.append(" =\n");
     statement.prettyPrint(indent + 1, builder);
   }
@@ -3467,7 +3625,7 @@ class MacroInstructionDefinition extends Definition {
   }
 }
 
-class PortBehaviorDefinition extends Definition {
+class PortBehaviorDefinition extends Definition implements IdentifiableNode {
   Identifier id;
   PortKind kind;
   List<Parameter> inputs;
@@ -3506,9 +3664,9 @@ class PortBehaviorDefinition extends Definition {
     builder.append(prettyIndentString(indent));
     builder.append(kind.keyword);
     id.prettyPrint(0, builder);
-    Parameter.prettyPrint(inputs, builder);
+    Parameter.prettyPrintMultiple(indent, inputs, builder);
     builder.append(" -> ");
-    Parameter.prettyPrint(outputs, builder);
+    Parameter.prettyPrintMultiple(indent, outputs, builder);
     builder.append(" =\n");
     statement.prettyPrint(indent + 1, builder);
   }
@@ -3533,6 +3691,11 @@ class PortBehaviorDefinition extends Definition {
     return Objects.hash(id, kind, inputs, outputs, statement);
   }
 
+  @Override
+  public Identifier identifier() {
+    return id;
+  }
+
   enum PortKind {
     READ("read"), WRITE("write"), HIT("hit"), MISS("miss");
 
@@ -3544,7 +3707,7 @@ class PortBehaviorDefinition extends Definition {
   }
 }
 
-class PipelineDefinition extends Definition {
+class PipelineDefinition extends Definition implements IdentifiableNode {
   Identifier id;
   List<Parameter> outputs;
   Statement statement;
@@ -3581,7 +3744,7 @@ class PipelineDefinition extends Definition {
     id.prettyPrint(0, builder);
     if (!outputs.isEmpty()) {
       builder.append(" -> ");
-      Parameter.prettyPrint(outputs, builder);
+      Parameter.prettyPrintMultiple(indent, outputs, builder);
     }
     builder.append(" = ");
     statement.prettyPrint(indent + 1, builder);
@@ -3605,9 +3768,14 @@ class PipelineDefinition extends Definition {
   public int hashCode() {
     return Objects.hash(id, outputs, statement);
   }
+
+  @Override
+  public Identifier identifier() {
+    return id;
+  }
 }
 
-class StageDefinition extends Definition {
+class StageDefinition extends Definition implements IdentifiableNode {
   Identifier id;
   List<Parameter> outputs;
   Statement statement;
@@ -3643,7 +3811,7 @@ class StageDefinition extends Definition {
     builder.append("stage ");
     id.prettyPrint(0, builder);
     if (!outputs.isEmpty()) {
-      Parameter.prettyPrint(outputs, builder);
+      Parameter.prettyPrintMultiple(indent, outputs, builder);
     }
     builder.append(" =\n");
     statement.prettyPrint(indent + 1, builder);
@@ -3666,9 +3834,14 @@ class StageDefinition extends Definition {
   public int hashCode() {
     return Objects.hash(id, outputs, statement);
   }
+
+  @Override
+  public Identifier identifier() {
+    return id;
+  }
 }
 
-class CacheDefinition extends Definition {
+class CacheDefinition extends Definition implements IdentifiableNode {
   Identifier id;
   TypeLiteral sourceType;
   TypeLiteral targetType;
@@ -3728,9 +3901,14 @@ class CacheDefinition extends Definition {
   public int hashCode() {
     return Objects.hash(id, sourceType, targetType);
   }
+
+  @Override
+  public Identifier identifier() {
+    return id;
+  }
 }
 
-class LogicDefinition extends Definition {
+class LogicDefinition extends Definition implements IdentifiableNode {
   Identifier id;
   SourceLocation loc;
 
@@ -3779,9 +3957,14 @@ class LogicDefinition extends Definition {
   public int hashCode() {
     return Objects.hashCode(id);
   }
+
+  @Override
+  public Identifier identifier() {
+    return id;
+  }
 }
 
-class SignalDefinition extends Definition {
+class SignalDefinition extends Definition implements IdentifiableNode {
   Identifier id;
   TypeLiteral type;
   SourceLocation loc;
@@ -3834,6 +4017,11 @@ class SignalDefinition extends Definition {
   public int hashCode() {
     return Objects.hash(id, type);
   }
+
+  @Override
+  public Identifier identifier() {
+    return id;
+  }
 }
 
 /**
@@ -3843,7 +4031,7 @@ class SignalDefinition extends Definition {
  * Further, it can also contain constant, function and using definitions.
  * </p>
  */
-class AsmDescriptionDefinition extends Definition {
+class AsmDescriptionDefinition extends Definition implements IdentifiableNode {
   Identifier id;
   Identifier abi;
   List<AsmModifierDefinition> modifiers;
@@ -3956,6 +4144,11 @@ class AsmDescriptionDefinition extends Definition {
   @Override
   public int hashCode() {
     return Objects.hash(id, abi, rules);
+  }
+
+  @Override
+  public Identifier identifier() {
+    return id;
   }
 }
 
@@ -4087,7 +4280,7 @@ class AsmDirectiveDefinition extends Definition {
  *
  * @see AsmGrammarAlternativesDefinition
  */
-class AsmGrammarRuleDefinition extends Definition {
+class AsmGrammarRuleDefinition extends Definition implements IdentifiableNode {
   Identifier id;
   @Nullable
   AsmGrammarTypeDefinition asmType;
@@ -4150,6 +4343,11 @@ class AsmGrammarRuleDefinition extends Definition {
   @Override
   public int hashCode() {
     return Objects.hash(id, asmType, alternatives);
+  }
+
+  @Override
+  public Identifier identifier() {
+    return id;
   }
 }
 
@@ -4387,7 +4585,7 @@ class AsmGrammarElementDefinition extends Definition {
  *
  * @see AsmGrammarLiteralDefinition
  */
-class AsmGrammarLocalVarDefinition extends Definition {
+class AsmGrammarLocalVarDefinition extends Definition implements IdentifiableNode {
   Identifier id;
   AsmGrammarLiteralDefinition asmLiteral;
   SourceLocation loc;
@@ -4437,6 +4635,11 @@ class AsmGrammarLocalVarDefinition extends Definition {
   @Override
   public int hashCode() {
     return Objects.hash(id, asmLiteral);
+  }
+
+  @Override
+  public Identifier identifier() {
+    return id;
   }
 }
 
@@ -4533,7 +4736,7 @@ class AsmGrammarLiteralDefinition extends Definition {
  * Represents a type cast in an assembly grammar rule.
  * Contains the identifier of the type to be cast to.
  */
-class AsmGrammarTypeDefinition extends Definition {
+class AsmGrammarTypeDefinition extends Definition implements IdentifiableNode {
   Identifier id;
   SourceLocation loc;
 
@@ -4578,5 +4781,10 @@ class AsmGrammarTypeDefinition extends Definition {
   @Override
   public int hashCode() {
     return Objects.hash(id);
+  }
+
+  @Override
+  public Identifier identifier() {
+    return id;
   }
 }

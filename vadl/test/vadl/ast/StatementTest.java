@@ -106,7 +106,7 @@ public class StatementTest {
     var ast = Assertions.assertDoesNotThrow(() -> VadlParser.parse(prog), "Cannot parse input");
     var expectedAst = new Ast();
     var loc = SourceLocation.INVALID_SOURCE_LOCATION;
-    var definitions = List.of(
+    List<Definition> definitions = List.of(
         new FormatDefinition(
             new Identifier("F", loc),
             new TypeLiteral(new Identifier("Bits", loc),

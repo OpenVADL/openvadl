@@ -237,16 +237,16 @@ public class AstDumper
   @Override
   public Void visit(InstructionDefinition definition) {
     dumpNode(definition);
-    dumpChildren(definition.id(), definition.type(), definition.behavior);
+    dumpChildren(definition.identifier(), definition.type(), definition.behavior);
     return null;
   }
 
   @Override
   public Void visit(PseudoInstructionDefinition definition) {
     dumpNode(definition);
-    dumpChildren(definition.id());
+    dumpChildren(definition.identifier());
     dumpChildren(definition.params.stream()
-        .flatMap(param -> Stream.of(param.name(), param.type())).toList());
+        .flatMap(param -> Stream.of(param.identifier(), param.type)).toList());
     dumpChildren(definition.statements);
     return null;
   }
@@ -261,7 +261,7 @@ public class AstDumper
   @Override
   public Void visit(EncodingDefinition definition) {
     dumpNode(definition);
-    dumpChildren(definition.instrId());
+    dumpChildren(definition.identifier());
     dumpChildren(definition.encodings.items.stream()
         .map(EncodingDefinition.EncodingField.class::cast)
         .flatMap(entry -> Stream.of(entry.field(), (Node) entry.value()))
@@ -287,9 +287,9 @@ public class AstDumper
   @Override
   public Void visit(FunctionDefinition definition) {
     dumpNode(definition);
-    dumpChildren(definition.name());
+    dumpChildren(definition.identifier());
     for (var param : definition.params) {
-      dumpChildren(param.name(), param.type());
+      dumpChildren(param.identifier(), param.type);
     }
     dumpChildren(definition.retType, definition.expr);
     return null;
@@ -298,7 +298,7 @@ public class AstDumper
   @Override
   public Void visit(AliasDefinition definition) {
     dumpNode(definition);
-    dumpChildren(definition.id());
+    dumpChildren(definition.identifier());
     if (definition.aliasType != null) {
       dumpChildren(definition.aliasType);
     }
@@ -312,7 +312,7 @@ public class AstDumper
   @Override
   public Void visit(EnumerationDefinition definition) {
     dumpNode(definition);
-    dumpChildren(definition.id());
+    dumpChildren(definition.identifier());
     if (definition.enumType != null) {
       dumpChildren(definition.enumType);
     }
@@ -331,7 +331,7 @@ public class AstDumper
   @Override
   public Void visit(ExceptionDefinition definition) {
     dumpNode(definition);
-    dumpChildren(definition.id());
+    dumpChildren(definition.identifier());
     dumpChildren(definition.statement);
     return null;
   }
@@ -411,18 +411,18 @@ public class AstDumper
   @Override
   public Void visit(ProcessDefinition processDefinition) {
     dumpNode(processDefinition);
-    dumpChildren(processDefinition.name());
+    dumpChildren(processDefinition.identifier());
     for (var templateParam : processDefinition.templateParams) {
-      dumpChildren(templateParam.name(), templateParam.type());
-      if (templateParam.value() != null) {
-        dumpChildren(templateParam.value());
+      dumpChildren(templateParam.identifier(), templateParam.type);
+      if (templateParam.value != null) {
+        dumpChildren(templateParam.value);
       }
     }
     for (var input : processDefinition.inputs) {
-      dumpChildren(input.name(), input.type());
+      dumpChildren(input.identifier(), input.type);
     }
     for (var output : processDefinition.outputs) {
-      dumpChildren(output.name(), output.type());
+      dumpChildren(output.identifier(), output.type);
     }
     return null;
   }
@@ -430,7 +430,7 @@ public class AstDumper
   @Override
   public Void visit(OperationDefinition operationDefinition) {
     dumpNode(operationDefinition);
-    dumpChildren(operationDefinition.name());
+    dumpChildren(operationDefinition.identifier());
     for (IsId resource : operationDefinition.resources) {
       dumpChildren((Node) resource);
     }
@@ -440,7 +440,7 @@ public class AstDumper
   @Override
   public Void visit(GroupDefinition groupDefinition) {
     dumpNode(groupDefinition);
-    dumpChildren(groupDefinition.name());
+    dumpChildren(groupDefinition.identifier());
     if (groupDefinition.type != null) {
       dumpChildren(groupDefinition.type);
     }
@@ -517,7 +517,7 @@ public class AstDumper
   public Void visit(CpuProcessDefinition definition) {
     dumpNode(definition);
     for (Parameter startupOutput : definition.startupOutputs) {
-      dumpChildren(startupOutput.name(), startupOutput.type());
+      dumpChildren(startupOutput.identifier(), startupOutput.type);
     }
     dumpChildren(definition.statement);
     return null;
@@ -535,10 +535,10 @@ public class AstDumper
   public Void visit(MacroInstructionDefinition definition) {
     dumpNode(definition);
     for (Parameter input : definition.inputs) {
-      dumpChildren(input.name(), input.type());
+      dumpChildren(input.identifier(), input.type);
     }
     for (Parameter output : definition.outputs) {
-      dumpChildren(output.name(), output.type());
+      dumpChildren(output.identifier(), output.type);
     }
     dumpChildren(definition.statement);
     return null;
@@ -549,10 +549,10 @@ public class AstDumper
     dumpNode(definition);
     dumpChildren(definition.id);
     for (Parameter input : definition.inputs) {
-      dumpChildren(input.name(), input.type());
+      dumpChildren(input.identifier(), input.type);
     }
     for (Parameter output : definition.outputs) {
-      dumpChildren(output.name(), output.type());
+      dumpChildren(output.identifier(), output.type);
     }
     dumpChildren(definition.statement);
     return null;
@@ -563,7 +563,7 @@ public class AstDumper
     dumpNode(definition);
     dumpChildren(definition.id);
     for (Parameter output : definition.outputs) {
-      dumpChildren(output.name(), output.type());
+      dumpChildren(output.identifier(), output.type);
     }
     dumpChildren(definition.statement);
     return null;
@@ -574,7 +574,7 @@ public class AstDumper
     dumpNode(definition);
     dumpChildren(definition.id);
     for (Parameter output : definition.outputs) {
-      dumpChildren(output.name(), output.type());
+      dumpChildren(output.identifier(), output.type);
     }
     dumpChildren(definition.statement);
     return null;
@@ -814,8 +814,8 @@ public class AstDumper
   public Void visit(ForallThenExpr expr) {
     dumpNode(expr);
     for (ForallThenExpr.Index index : expr.indices) {
-      dumpChildren((Node) index.id());
-      for (IsId operation : index.operations()) {
+      dumpChildren((Node) index.identifier());
+      for (IsId operation : index.operations) {
         dumpChildren((Node) operation);
       }
     }
@@ -827,7 +827,7 @@ public class AstDumper
   public Void visit(ForallExpr expr) {
     dumpNode(expr);
     for (ForallExpr.Index index : expr.indices) {
-      dumpChildren((Node) index.id(), index.domain());
+      dumpChildren((Node) index.identifier(), index.domain);
     }
     dumpChildren(expr.expr);
     return null;
@@ -951,7 +951,7 @@ public class AstDumper
   public Void visit(ForallStatement forallStatement) {
     dumpNode(forallStatement);
     for (ForallStatement.Index index : forallStatement.indices) {
-      dumpChildren(index.name(), index.domain());
+      dumpChildren(index.identifier(), index.domain);
     }
     dumpChildren(forallStatement.statement);
     return null;

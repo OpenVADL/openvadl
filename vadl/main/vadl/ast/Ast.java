@@ -32,12 +32,12 @@ public class Ast {
    *
    * @return a source code resulting in the same AST.
    */
-  public CharSequence prettyPrint() {
+  public String prettyPrint() {
     StringBuilder builder = new StringBuilder();
     for (var definition : definitions) {
       definition.prettyPrint(0, builder);
     }
-    return builder;
+    return builder.toString();
   }
 
   @Override
@@ -91,6 +91,10 @@ abstract class Node implements WithSourceLocation {
   abstract SyntaxType syntaxType();
 
   abstract void prettyPrint(int indent, StringBuilder builder);
+}
+
+interface IdentifiableNode {
+  Identifier identifier();
 }
 
 final class BinOp extends Node implements IsBinOp {

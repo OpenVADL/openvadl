@@ -385,9 +385,9 @@ class MacroExpander
   public Expr visit(ForallThenExpr expr) {
     var indices = new ArrayList<>(expr.indices);
     indices.replaceAll(index -> {
-      var operations = new ArrayList<>(index.operations());
+      var operations = new ArrayList<>(index.operations);
       operations.replaceAll(id -> (IsId) expandExpr((Expr) id));
-      return new ForallThenExpr.Index((IsId) expandExpr((Expr) index.id()), operations);
+      return new ForallThenExpr.Index((IsId) expandExpr((Expr) index.identifier()), operations);
     });
     return new ForallThenExpr(indices, expandExpr(expr.thenExpr), copyLoc(expr.loc));
   }
@@ -395,8 +395,8 @@ class MacroExpander
   @Override
   public Expr visit(ForallExpr expr) {
     var indices = new ArrayList<>(expr.indices);
-    indices.replaceAll(index -> new ForallExpr.Index((IsId) expandExpr((Expr) index.id()),
-        expandExpr(index.domain())));
+    indices.replaceAll(index -> new ForallExpr.Index((IsId) expandExpr((Expr) index.identifier()),
+        expandExpr(index.domain)));
     return new ForallExpr(indices, expr.operation, expr.foldOperator, expandExpr(expr.expr),
         copyLoc(expr.loc));
   }
@@ -633,9 +633,9 @@ class MacroExpander
     var id = resolvePlaceholderOrIdentifier(processDefinition.name);
     var templateParams = new ArrayList<>(processDefinition.templateParams);
     templateParams.replaceAll(
-        templateParam -> new ProcessDefinition.TemplateParam(templateParam.name(),
-            templateParam.type(),
-            templateParam.value() == null ? null : expandExpr(templateParam.value())));
+        templateParam -> new TemplateParam(templateParam.identifier(),
+            templateParam.type,
+            templateParam.value == null ? null : expandExpr(templateParam.value)));
     return new ProcessDefinition(id, templateParams, expandParams(processDefinition.inputs),
         expandParams(processDefinition.outputs), processDefinition.statement.accept(this),
         copyLoc(processDefinition.loc)).withAnnotations(
@@ -956,7 +956,7 @@ class MacroExpander
   public Statement visit(ForallStatement forallStatement) {
     var indices = new ArrayList<>(forallStatement.indices);
     indices.replaceAll(
-        index -> new ForallStatement.Index(index.name(), expandExpr(index.domain())));
+        index -> new ForallStatement.Index(index.identifier(), expandExpr(index.domain)));
     var statement = expandStatement(forallStatement.statement);
     return new ForallStatement(indices, statement, copyLoc(forallStatement.loc));
   }
@@ -1163,7 +1163,7 @@ class MacroExpander
   private List<Parameter> expandParams(List<Parameter> params) {
     var expandedParams = new ArrayList<>(params);
     expandedParams.replaceAll(param ->
-        new Parameter(param.name(), (TypeLiteral) expandExpr(param.type())));
+        new Parameter(param.identifier(), (TypeLiteral) expandExpr(param.type)));
     return expandedParams;
   }
 

@@ -2047,17 +2047,8 @@ class ForallThenExpr extends Expr {
         builder.append(", ");
       }
       isFirst = false;
-      index.id.prettyPrint(0, builder);
-      builder.append(" in {");
-      var isFirstOp = true;
-      for (IsId operation : index.operations) {
-        if (!isFirstOp) {
-          builder.append(", ");
-        }
-        isFirstOp = false;
-        operation.prettyPrint(0, builder);
-      }
-      builder.append("}");
+      index.prettyPrint(indent, builder);
+
     }
     if (isBlockLayout(thenExpr)) {
       builder.append(" then\n");
@@ -2092,7 +2083,65 @@ class ForallThenExpr extends Expr {
     return Objects.hash(indices, thenExpr);
   }
 
-  record Index(IsId id, List<IsId> operations) {
+  static final class Index extends Node implements IdentifiableNode {
+    IsId id;
+    List<IsId> operations;
+
+    public Index(IsId id, List<IsId> operations) {
+      this.id = id;
+      this.operations = operations;
+    }
+
+    @Override
+    public Identifier identifier() {
+      return (Identifier) id;
+    }
+
+    @Override
+    SourceLocation location() {
+      var loc = id.location();
+      if (!operations.isEmpty()) {
+        loc = loc.join(operations.get(operations.size() - 1).location());
+      }
+      return loc;
+    }
+
+    @Override
+    SyntaxType syntaxType() {
+      return BasicSyntaxType.INVALID;
+    }
+
+    @Override
+    void prettyPrint(int indent, StringBuilder builder) {
+      id.prettyPrint(0, builder);
+      builder.append(" in {");
+      var isFirstOp = true;
+      for (IsId operation : operations) {
+        if (!isFirstOp) {
+          builder.append(", ");
+        }
+        isFirstOp = false;
+        operation.prettyPrint(0, builder);
+      }
+      builder.append("}");
+    }
+
+    @Override
+    public boolean equals(Object o) {
+      if (o == null || getClass() != o.getClass()) {
+        return false;
+      }
+
+      Index index = (Index) o;
+      return id.equals(index.id) && operations.equals(index.operations);
+    }
+
+    @Override
+    public int hashCode() {
+      int result = id.hashCode();
+      result = 31 * result + operations.hashCode();
+      return result;
+    }
   }
 }
 
@@ -2132,9 +2181,7 @@ class ForallExpr extends Expr {
         builder.append(", ");
       }
       isFirst = false;
-      index.id.prettyPrint(0, builder);
-      builder.append(" in ");
-      index.domain.prettyPrint(0, builder);
+      index.prettyPrint(indent, builder);
     }
     builder.append(" ").append(operation.keyword);
     if (foldOperator != null) {
@@ -2179,7 +2226,53 @@ class ForallExpr extends Expr {
         type);
   }
 
-  record Index(IsId id, Expr domain) {
+  static final class Index extends Node implements IdentifiableNode {
+    IsId id;
+    Expr domain;
+
+    public Index(IsId id, Expr domain) {
+      this.id = id;
+      this.domain = domain;
+    }
+
+    @Override
+    public Identifier identifier() {
+      return (Identifier) id;
+    }
+
+    @Override
+    SourceLocation location() {
+      return id.location().join(domain.location());
+    }
+
+    @Override
+    SyntaxType syntaxType() {
+      return BasicSyntaxType.INVALID;
+    }
+
+    @Override
+    void prettyPrint(int indent, StringBuilder builder) {
+      id.prettyPrint(0, builder);
+      builder.append(" in ");
+      domain.prettyPrint(0, builder);
+    }
+
+    @Override
+    public boolean equals(Object o) {
+      if (o == null || getClass() != o.getClass()) {
+        return false;
+      }
+
+      Index index = (Index) o;
+      return id.equals(index.id) && domain.equals(index.domain);
+    }
+
+    @Override
+    public int hashCode() {
+      int result = id.hashCode();
+      result = 31 * result + domain.hashCode();
+      return result;
+    }
   }
 
   enum Operation {

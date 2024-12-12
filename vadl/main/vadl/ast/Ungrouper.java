@@ -193,7 +193,8 @@ public class Ungrouper
 
   @Override
   public Expr visit(ForallExpr expr) {
-    expr.indices.replaceAll(index -> new ForallExpr.Index(index.id(), index.domain().accept(this)));
+    expr.indices.replaceAll(
+        index -> new ForallExpr.Index(index.identifier(), index.domain.accept(this)));
     expr.expr = expr.expr.accept(this);
     return expr;
   }
@@ -379,9 +380,9 @@ public class Ungrouper
   public Definition visit(ProcessDefinition processDefinition) {
     ungroupAnnotations(processDefinition);
     processDefinition.templateParams.replaceAll(
-        templateParam -> new ProcessDefinition.TemplateParam(templateParam.name(),
-            templateParam.type(),
-            templateParam.value() == null ? null : templateParam.value().accept(this)));
+        templateParam -> new TemplateParam(templateParam.identifier(),
+            templateParam.type,
+            templateParam.value == null ? null : templateParam.value.accept(this)));
     processDefinition.statement = processDefinition.statement.accept(this);
     return processDefinition;
   }
@@ -641,7 +642,7 @@ public class Ungrouper
   @Override
   public Statement visit(ForallStatement forallStatement) {
     forallStatement.indices.replaceAll(
-        index -> new ForallStatement.Index(index.name(), index.domain().accept(this)));
+        index -> new ForallStatement.Index(index.identifier(), index.domain.accept(this)));
     forallStatement.statement = forallStatement.statement.accept(this);
     return forallStatement;
   }

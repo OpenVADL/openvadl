@@ -519,7 +519,7 @@ class ParserUtils {
       if (definition instanceof DefinitionList list) {
         readMacroSymbols(macroTable, list.items);
       } else if (definition instanceof ModelDefinition modelDefinition) {
-        macroTable.addModelDefinition(modelDefinition);
+        macroTable.defineSymbol(modelDefinition);
       }
     }
   }

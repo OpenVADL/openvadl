@@ -87,6 +87,10 @@ subprojects {
         }
     }
 
+    tasks.withType<JavaExec> {
+        outputs.upToDateWhen { false }
+    }
+
     tasks {
         compileTestJava {
             options.errorprone.isEnabled.set(false)

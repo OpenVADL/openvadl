@@ -290,7 +290,7 @@ PRODUCTIONS
     identifier<out Identifier identifier>                       (. Identifier extending = null; .)
     [
       EXTENDING
-      identifier<out extending>                                 (. var extendingIsa = macroTable.requireIsa(extending);
+      identifier<out extending>                                 (. var extendingIsa = macroTable.requireAs(extending, InstructionSetDefinition.class);
                                                                    if (extendingIsa != null)
                                                                      readMacroSymbols(macroTable, extendingIsa.definitions);
                                                                 .)
@@ -298,7 +298,7 @@ PRODUCTIONS
     SYM_EQ SYM_BRACE_OPEN
     isaDefinitionList<.out List<Definition> definitions.>       (. macroTable = Objects.requireNonNull(macroTable.parent); .)
     SYM_BRACE_CLOSE                                             (. isaDef = new InstructionSetDefinition(identifier, extending, definitions, startLocation.join(loc()));
-                                                                   macroTable.defineSymbol(new SymbolTable.IsaSymbol(identifier.name, isaDef), identifier.location()); .)
+                                                                   macroTable.defineSymbol(isaDef); .)
   .
 
   isaDefinitionList<.out List<Definition> definitions.> (. definitions = new ArrayList<>(); .)
@@ -659,7 +659,7 @@ PRODUCTIONS
       syntaxType<out type>          (. entries.add(new RecordType.Entry(paramName.name, type)); .)
     }                               (. var recordType = new RecordType(recordName.name, entries); .)
     SYM_PAREN_CLOSE                 (. def = new RecordTypeDefinition(recordName, recordType, start.join(loc()));
-                                       macroTable.addRecord(def); .)
+                                       macroTable.defineSymbol(def); .)
   .
 
   modelTypeDefinition<out ModelTypeDefinition def>
@@ -667,7 +667,7 @@ PRODUCTIONS
     identifier<out Identifier name>
     SYM_EQ
     projectionType<out ProjectionType type> (. def = new ModelTypeDefinition(name, type, start.join(loc()));
-                                               macroTable.addModelType(def); .)
+                                               macroTable.defineSymbol(def); .)
   .
 
   importDefinition<out Definition def>     (. var importPaths = new ArrayList<IsId>(); Identifier fileId = null; StringLiteral filePath = null; .)
@@ -712,7 +712,7 @@ PRODUCTIONS
 
   processDefinition<out Definition def>
   = PROCESS                       (. var start = loc();
-                                     List<ProcessDefinition.TemplateParam> templateParams = new ArrayList<>();
+                                     List<TemplateParam> templateParams = new ArrayList<>();
                                      List<Parameter> inputs = new ArrayList<>();
                                      List<Parameter> outputs = new ArrayList<>(); .)
     identifierOrPlaceholder<out IdentifierOrPlaceholder name>
@@ -723,7 +723,7 @@ PRODUCTIONS
     statement<out Statement stmt> (. def = new ProcessDefinition(name, templateParams, inputs, outputs, stmt, start.join(loc())); .)
   .
 
-  processTemplateParameters<.out List<ProcessDefinition.TemplateParam> templateParams.>
+  processTemplateParameters<.out List<TemplateParam> templateParams.>
   = SYM_LT                            (. templateParams = new ArrayList<>(); .)
     identifier<out Identifier id>
     SYM_COLON
@@ -731,7 +731,7 @@ PRODUCTIONS
     [
       SYM_EQ
       expression<out value, BIN_OPS_EXCEPT_GT>
-    ]                                 (. templateParams.add(new ProcessDefinition.TemplateParam(id, type, value)); .)
+    ]                                 (. templateParams.add(new TemplateParam(id, type, value)); .)
     {
         identifier<out id>
         SYM_COLON
@@ -739,7 +739,7 @@ PRODUCTIONS
         [
           SYM_EQ
           expression<out value, BIN_OPS_EXCEPT_GT>
-        ]                             (. templateParams.add(new ProcessDefinition.TemplateParam(id, type, value)); .)
+        ]                             (. templateParams.add(new TemplateParam(id, type, value)); .)
     }
     SYM_GT
   .
@@ -2020,7 +2020,7 @@ PRODUCTIONS
 
   syntaxType<out SyntaxType type> (. type = BasicSyntaxType.INVALID; .)
   = IF (la.kind == _identifierToken)
-    identifier<out Identifier id> (. type = macroTable.findType(id); .)
+    identifier<out Identifier id> (. type = macroTable.requireSyntaxType(id); .)
   | projectionType<out type>
   | basicSyntaxType<out type>
   .
