@@ -165,8 +165,8 @@ public class LlvmLoweringPass extends Pass {
     return tableGenRecords;
   }
 
-  private IdentityHashMap<PseudoInstruction, LlvmLoweringRecord>
-  generateRecordsForPseudoInstructions(
+  private IdentityHashMap<PseudoInstruction,
+      LlvmLoweringRecord> generateRecordsForPseudoInstructions(
       Specification viam, DummyAbi abi, List<LlvmPseudoInstructionLowerStrategy> pseudoStrategies,
       Map<MachineInstructionLabel, List<Instruction>> labelledMachineInstructions,
       Map<PseudoInstructionLabel, List<PseudoInstruction>> labelledPseudoInstructions) {
@@ -200,8 +200,8 @@ public class LlvmLoweringPass extends Pass {
    * However, we would like to check whether {@link LlvmInstructionLoweringStrategy} supports this
    * {@link Instruction} in this pass. That's why we have the flip the hashmap.
    */
-  public static IdentityHashMap<Instruction, MachineInstructionLabel>
-  flipIsaMatchingMachineInstructions(
+  public static IdentityHashMap<Instruction,
+      MachineInstructionLabel> flipIsaMatchingMachineInstructions(
       Map<MachineInstructionLabel, List<Instruction>> isaMatched) {
     IdentityHashMap<Instruction, MachineInstructionLabel> inverse = new IdentityHashMap<>();
 
@@ -220,8 +220,8 @@ public class LlvmLoweringPass extends Pass {
    * However, we would like to check whether {@link LlvmPseudoInstructionLowerStrategy} supports
    * this {@link Instruction} in this pass. That's why we have the flip the hashmap.
    */
-  public static IdentityHashMap<PseudoInstruction, PseudoInstructionLabel>
-  flipIsaMatchingPseudoInstructions(
+  public static IdentityHashMap<PseudoInstruction,
+      PseudoInstructionLabel> flipIsaMatchingPseudoInstructions(
       Map<PseudoInstructionLabel, List<PseudoInstruction>> isaMatched) {
     IdentityHashMap<PseudoInstruction, PseudoInstructionLabel> inverse = new IdentityHashMap<>();
 

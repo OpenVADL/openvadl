@@ -54,41 +54,6 @@ public class BitMaskFunctionGenerator {
     var graph = new Graph("updatingValue");
     var ty = format.type();
 
-    /*
-
-    var otherFields =
-        Arrays.stream(format.fields()).filter(x -> x != field).map(Format.Field::bitSlice).toList();
-    var instrWordBitMask =
-        new ConstantNode(
-            Constant.Value.of(generateBitMaskForInstrWord(otherFields).longValue(), ty));
-    var newValueBitMask =
-        new ConstantNode(Constant.Value.of(generateBitMask(field.size()), ty));
-    var fieldNode = new BuiltInCall(BuiltInTable.AND,
-        new NodeList<>(new FuncParamNode(parameterNewValue),
-            newValueBitMask),
-        ty);
-
-    var lowestLsb = Arrays.stream(format.fields()).filter(x -> x == field)
-        .map(Format.Field::bitSlice)
-        .flatMap(Constant.BitSlice::parts)
-        .mapToInt(Constant.BitSlice.Part::lsb)
-        .min()
-        .getAsInt();
-
-    var orNode = new BuiltInCall(
-        BuiltInTable.OR,
-        new NodeList<>(new BuiltInCall(BuiltInTable.AND,
-            new NodeList<>(new FuncParamNode(parameterInstWord), instrWordBitMask), ty),
-            new BuiltInCall(BuiltInTable.LSL,
-                new NodeList<>(
-                    fieldNode,
-                    new ConstantNode(Constant.Value.of(lowestLsb, ty))
-                ),
-                ty)),
-        ty
-    );
-     */
-
     var node = new ReturnNode(new CppUpdateBitRangeNode(
         ty,
         new FuncParamNode(parameterInstWord),
