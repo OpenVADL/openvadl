@@ -253,8 +253,8 @@ public abstract class AbstractTest {
       var errorLogs = logs.substring(logs.indexOf(" error: "));
 
       System.out.println(
-          "Test source: ---------------\n" + testSourceToString(testSource.toUri()) +
-              "\n---------------");
+          "Test source: ---------------\n" + testSourceToString(testSource.toUri())
+              + "\n---------------");
       fail(errorLogs);
     }
   }
@@ -316,13 +316,13 @@ public abstract class AbstractTest {
    * @deprecated Use {@link #setupPassManagerAndRunSpec(String, PassOrder)} instead and use the
    *     {@link PassOrder#untilFirst(Class)} method instead.
    *     <pre>{@code
-   *                      var config = getConfiguration(false);
-   *                      var setup = setupPassManagerAndRunSpec(
-   *                          "sys/risc-v/rv64i.vadl",
-   *                          PassOrders.viam(config)
-   *                             .untilFirst(SideEffectConditionResolvingPass.class)
-   *                      );
-   *                         }</pre>
+   *                          var config = getConfiguration(false);
+   *                          var setup = setupPassManagerAndRunSpec(
+   *                              "sys/risc-v/rv64i.vadl",
+   *                              PassOrders.viam(config)
+   *                                 .untilFirst(SideEffectConditionResolvingPass.class)
+   *                          );
+   *                             }</pre>
    */
   @Deprecated
   public TestSetup setupPassManagerAndRunSpecUntil(String specPath,
