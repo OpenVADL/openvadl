@@ -46,7 +46,7 @@ public class LlvmLoweringPassPseudoInstructionTest extends AbstractLcbTest {
     expectedResults.put("BNEZ", new TestOutput(Collections.emptyList(), Collections.emptyList(),
         Collections.emptyList(), Collections.emptyList(), getPseudoFlags()));
     expectedResults.put("CALL", new TestOutput(Collections.emptyList(), Collections.emptyList(),
-        Collections.emptyList(), Collections.emptyList(), getPseudoFlags()));
+        Collections.emptyList(), Collections.emptyList(), getPseudoFlagsCall()));
     expectedResults.put("J", new TestOutput(Collections.emptyList(), Collections.emptyList(),
         List.of("(br bb:$imm)"), List.of("(J RV64IM_Jtype_immAsLabel:$imm)"),
         new LlvmLoweringPass.Flags(
@@ -74,7 +74,7 @@ public class LlvmLoweringPassPseudoInstructionTest extends AbstractLcbTest {
         List.of(createOperand("X", "rs1")),
         List.of("(setcc (i64 0), X:$rs1, SETULT)"), List.of("(SNEZ X:$rs1)"), getPseudoFlags()));
     expectedResults.put("TAIL", new TestOutput(Collections.emptyList(), Collections.emptyList(),
-        Collections.emptyList(), Collections.emptyList(), getPseudoFlags()));
+        Collections.emptyList(), Collections.emptyList(), getPseudoFlagsCall()));
   }
 
   private static TableGenInstructionOperand createOperand(String type, String name) {
@@ -84,6 +84,18 @@ public class LlvmLoweringPassPseudoInstructionTest extends AbstractLcbTest {
   private static LlvmLoweringPass.Flags getPseudoFlags() {
     return new LlvmLoweringPass.Flags(false,
         false,
+        false,
+        false,
+        true,
+        false,
+        false,
+        false);
+  }
+
+
+  private static LlvmLoweringPass.Flags getPseudoFlagsCall() {
+    return new LlvmLoweringPass.Flags(true,
+        true,
         false,
         false,
         true,
