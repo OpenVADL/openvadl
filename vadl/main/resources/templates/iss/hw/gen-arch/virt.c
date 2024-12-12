@@ -10,7 +10,7 @@
 #include <stdlib.h>
 
 static const MemMapEntry virt_memmap[] = {
-  [VIRT_DRAM] =         { 0x80000000,           0x0 },
+  [VIRT_HTIF] = {0x1000000, 0x1000},
   [VIRT_DRAM] = {0x80000000, 0x0},
 };
 
