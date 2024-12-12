@@ -27,6 +27,8 @@ struct [(${gen_arch_upper})]VirtMachineState {
 };
 
 enum {
+  // location for HTIF memory io mapping (if not found in elf)
+  VIRT_HTIF,
   // location where bios is load to
   VIRT_DRAM
 };

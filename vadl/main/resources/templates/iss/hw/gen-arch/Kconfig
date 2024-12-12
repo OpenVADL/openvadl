@@ -7,3 +7,4 @@ config [(${gen_arch_upper})]_VIRT_MCU
 config [(${gen_arch_upper})]_VIRT
     bool
     select [(${gen_arch_upper})]_VIRT_MCU
+    select HTIF

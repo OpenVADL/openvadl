@@ -164,8 +164,8 @@ static void gen_goto_tb_abs(DisasContext *ctx, target_ulong target_pc)
 static void gen_goto_tb(DisasContext *ctx, target_ulong n, target_ulong target_pc)
 {
     if (translator_use_goto_tb(&ctx->base, target_pc)) {
-        tcg_gen_goto_tb(n);
         tcg_gen_movi_i64(cpu_pc, (int64_t) target_pc);
+        tcg_gen_goto_tb(n);
         tcg_gen_exit_tb(ctx->base.tb, n);
     } else {
         tcg_gen_movi_tl(cpu_pc, (int64_t) target_pc);
@@ -175,7 +175,7 @@ static void gen_goto_tb(DisasContext *ctx, target_ulong n, target_ulong target_p
 }
 
 static void generate_exception(DisasContext *ctx, int excp) {
-	tcg_gen_mov_i64(cpu_pc, ctx->base.pc_next);
+	tcg_gen_movi_i64(cpu_pc, ctx->base.pc_next);
 	gen_helper_raise_exception(tcg_env, tcg_constant_i32(excp));
 	ctx->base.is_jmp = DISAS_NORETURN;
 }
@@ -281,18 +281,17 @@ static void [(${gen_arch_lower})]_tr_tb_stop(DisasContextBase *db, CPUState *cpu
     DisasContext *ctx = container_of(db, DisasContext, base);
 
     switch (db->is_jmp) {
-        case DISAS_NEXT:
-        case DISAS_TOO_MANY:
-        case DISAS_NORETURN:
-            // default behavior
-            break;
-        case DISAS_CHAIN:
-            // jump to subsequent instruction
-            gen_goto_tb(ctx, 0, db->pc_next);
-            break;
-        default:
-            g_assert_not_reached();
-    }
+    		case DISAS_TOO_MANY:
+    		case DISAS_CHAIN:
+    			// jump to subsequent instruction
+    			gen_goto_tb(ctx, 0, db->pc_next);
+    			break;
+    		case DISAS_NORETURN:
+    			// default behavior
+    			break;
+    		default:
+    			g_assert_not_reached();
+    	}
 }
 
 static const TranslatorOps [(${gen_arch_lower})]_tr_ops = {

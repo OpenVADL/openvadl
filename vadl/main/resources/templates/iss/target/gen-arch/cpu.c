@@ -188,6 +188,8 @@ static int [(${gen_arch_lower})]_cpu_memory_rw_debug(CPUState *cs, vaddr addr, u
 static bool [(${gen_arch_lower})]_cpu_exec_interrupt(CPUState *cs, int interrupt_request)
 {
     qemu_printf("[VADL] TODO: [(${gen_arch_lower})]_cpu_exec_interrupt\n");
+    // should never happen right now (no irq handling)
+    assert(false);
     // TODO: Later
     return false;
 }
@@ -196,6 +198,15 @@ static void [(${gen_arch_lower})]_cpu_exec_halt(CPUState *cs)
 {
     qemu_printf("[VADL] TODO: [(${gen_arch_lower})]_cpu_exec_halt\n");
     // TODO: Later
+}
+
+static void [(${gen_arch_lower})]_cpu_restore_state_to_opc(CPUState *cs, const TranslationBlock *tb, const uint64_t *data) {
+    qemu_printf("[VADL] %s\n", __func__);
+
+    [(${gen_arch_upper})]CPU *cpu      = [(${gen_arch_upper})]_CPU(cs);
+    CPU[(${gen_arch_upper})]State *env = &cpu->env;
+
+    env->[(${gen_arch_upper})]_PC = data[0];
 }
 
 static bool [(${gen_arch_lower})]_cpu_tlb_fill(CPUState *cs, vaddr address, int size,
@@ -236,6 +247,7 @@ static const struct TCGCPUOps [(${gen_arch_lower})]_tcg_ops = {
     .cpu_exec_halt = [(${gen_arch_lower})]_cpu_exec_halt,
     .tlb_fill = [(${gen_arch_lower})]_cpu_tlb_fill,
     .do_interrupt = [(${gen_arch_lower})]_cpu_do_interrupt,
+    .restore_state_to_opc = [(${gen_arch_lower})]_cpu_restore_state_to_opc,
 };
 
 static void [(${gen_arch_lower})]_cpu_class_init(ObjectClass *oc, void *data)

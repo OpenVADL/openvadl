@@ -6,11 +6,27 @@
 #include "exec/address-spaces.h"
 #include "sysemu/sysemu.h"
 #include "qemu/error-report.h"
+#include "hw/char/riscv_htif.h"
 #include <stdlib.h>
 
 static const MemMapEntry virt_memmap[] = {
-  [VIRT_DRAM] =         { 0x80000000,           0x0 },
+  [VIRT_HTIF] = {0x1000000, 0x1000},
+  [VIRT_DRAM] = {0x80000000, 0x0},
 };
+
+static bool tofromhost_defined = false;
+
+/*
+ * Checks if a fromhost/tohost symbol was found. This is used to define if we use
+ * our custom fromhost/tohost addresses or the ones defined in the elf.
+ */
+static void virt_sym_cb(const char *st_name, int st_info, uint64_t st_value,
+                        uint64_t st_size) {
+    if (strcmp("fromhost", st_name) == 0 || strcmp("tohost", st_name) == 0) {
+        tofromhost_defined = true;
+    }
+    htif_symbol_callback(st_name, st_info, st_value, st_size);
+}
 
 static void virt_machine_ready(Notifier *notifier, void *data)
 {
@@ -22,6 +38,7 @@ static void virt_machine_ready(Notifier *notifier, void *data)
     MachineState *machine = MACHINE(s);
     target_ulong start_addr = memmap[VIRT_DRAM].base;
     target_ulong firmware_end_addr;
+    MemoryRegion *system_memory = get_system_memory();
 
     // currently the -bios flag must be set
     // as no default firmware is provided
@@ -30,7 +47,7 @@ static void virt_machine_ready(Notifier *notifier, void *data)
         exit(1);
     }
 
-    firmware_end_addr = [(${gen_arch_lower})]_find_and_load_firmware(machine, start_addr, NULL);
+    firmware_end_addr = [(${gen_arch_lower})]_find_and_load_firmware(machine, start_addr, virt_sym_cb);
 
     if (firmware_end_addr == start_addr) {
         error_report("Failed to load firmware.");
@@ -38,6 +55,10 @@ static void virt_machine_ready(Notifier *notifier, void *data)
     }
 
     qemu_printf("[VADL] firmware loaded from %x to %x\n", start_addr, firmware_end_addr);
+
+
+    // now we can init the htif, as it requires the firmware callbacks to be loaded
+    htif_mm_init(system_memory, serial_hd(0), memmap[VIRT_HTIF].base, !tofromhost_defined);
 }
 
 static void virt_machine_init(MachineState *machine)

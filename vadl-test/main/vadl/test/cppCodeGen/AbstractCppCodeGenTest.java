@@ -11,7 +11,7 @@ import vadl.test.DockerExecutionTest;
 public class AbstractCppCodeGenTest extends DockerExecutionTest {
 
   @Override
-  public GcbConfiguration getConfiguration(boolean doDump) throws IOException {
+  public GcbConfiguration getConfiguration(boolean doDump) {
     return new GcbConfiguration(super.getConfiguration(doDump));
   }
 

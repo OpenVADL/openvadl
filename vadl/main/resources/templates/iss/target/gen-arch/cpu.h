@@ -8,6 +8,9 @@
 
 #define CPU_RESOLVING_TYPE TYPE_[(${gen_arch_upper})]_CPU
 
+// no default memory ordering
+#define TCG_GUEST_DEFAULT_MO 0
+
 #define [(${gen_arch_upper})]_PC [(${pc_reg_name})]
 #define [(${gen_arch_upper})]_PC_TYPE [(${pc_reg_c_type})]
 
