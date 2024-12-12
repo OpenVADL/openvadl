@@ -149,8 +149,8 @@ public abstract class Constant {
       return fromInteger(BigInteger.valueOf(value ? 1 : 0), Type.bool());
     }
 
-    public static Value of(String value) {
-      return fromInteger(new BigInteger(value), Type.bool());
+    public static Value of(String value, DataType type) {
+      return fromInteger(new BigInteger(value), type);
     }
 
     /**
