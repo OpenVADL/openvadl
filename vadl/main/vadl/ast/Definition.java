@@ -172,17 +172,17 @@ class Parameter extends Node implements IdentifiableNode {
     type.prettyPrint(indent, builder);
   }
 
-  static void prettyPrintMultiple(int indent, List<Parameter> parmaeters, StringBuilder builder) {
-    if (parmaeters.isEmpty()) {
+  static void prettyPrintMultiple(int indent, List<Parameter> parameters, StringBuilder builder) {
+    if (parameters.isEmpty()) {
       return;
     }
 
     builder.append("(");
-    for (int i = 0; i < parmaeters.size(); i++) {
+    for (int i = 0; i < parameters.size(); i++) {
       if (i != 0) {
         builder.append(", ");
       }
-      parmaeters.get(i).prettyPrint(indent, builder);
+      parameters.get(i).prettyPrint(indent, builder);
     }
     builder.append(")");
 
@@ -4736,7 +4736,7 @@ class AsmGrammarLiteralDefinition extends Definition {
  * Represents a type cast in an assembly grammar rule.
  * Contains the identifier of the type to be cast to.
  */
-class AsmGrammarTypeDefinition extends Definition implements IdentifiableNode {
+class AsmGrammarTypeDefinition extends Definition {
   Identifier id;
   SourceLocation loc;
 
@@ -4781,10 +4781,5 @@ class AsmGrammarTypeDefinition extends Definition implements IdentifiableNode {
   @Override
   public int hashCode() {
     return Objects.hash(id);
-  }
-
-  @Override
-  public Identifier identifier() {
-    return id;
   }
 }

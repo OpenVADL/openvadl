@@ -63,14 +63,6 @@ public class AstMacroTests {
     Files.deleteIfExists(actualAstPath(vadlPath));
     writeAst(actualAstPath(vadlPath), actualExpandedAst);
     Assertions.assertLinesMatch(expectedAst.lines(), actualExpandedAst.lines());
-
-//    if (expectedAst.contentEquals(actualExpandedAst)) {
-//      // Clean up any ".actual" files we might have left behind the last time this test failed
-//      Files.deleteIfExists(actualAstPath(vadlPath));
-//    } else {
-//      writeAst(actualAstPath(vadlPath), actualExpandedAst);
-//      Assertions.fail("Mismatched expanded ASTs - see " + actualAstPath(vadlPath).getFileName());
-//    }
   }
 
   private Map<String, String> parseMacroReplacements(Path vadlPath) throws IOException {

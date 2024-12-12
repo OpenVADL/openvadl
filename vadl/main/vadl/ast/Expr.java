@@ -78,9 +78,6 @@ final class Identifier extends Expr implements IsId, IdentifierOrPlaceholder {
   String name;
   SourceLocation loc;
 
-  @Nullable
-  Object refNode; // TODO should always be a Node
-
   public Identifier(String name, SourceLocation location) {
     this.loc = location;
     this.name = name;

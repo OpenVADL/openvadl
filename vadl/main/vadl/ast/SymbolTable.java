@@ -39,7 +39,7 @@ class SymbolTable {
   }
 
   /**
-   * Imports all the symbols of specified from the module specified into the current symbol-tabel.
+   * Imports all the symbols from the module specified into the current symbol-tabel.
    *
    * @param moduleAst       of the module from which you import.
    * @param importedSymbols to be imported.
@@ -1046,10 +1046,6 @@ class SymbolTable {
         var symbol = expr.symbolTable().resolveSymbol(id.pathToString());
         if (symbol == null) {
           expr.symbolTable().reportError("Symbol not found: " + id.pathToString(), id.location());
-        } else if (id instanceof Identifier identifier) {
-          identifier.refNode = symbol;
-        } else if (id instanceof IdentifierPath identifierPath) {
-          identifierPath.refNode = symbol;
         }
       } else if (expr instanceof MatchExpr match) {
         resolveSymbols(match.candidate);
