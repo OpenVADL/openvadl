@@ -14,7 +14,7 @@ import vadl.test.cppCodeGen.AbstractCppCodeGenTest;
 public abstract class AbstractLcbTest extends AbstractCppCodeGenTest {
 
   @Override
-  public LcbConfiguration getConfiguration(boolean doDump) throws IOException {
+  public LcbConfiguration getConfiguration(boolean doDump) {
     return new LcbConfiguration(super.getConfiguration(doDump),
         new ProcessorName("processorNameValue"));
   }

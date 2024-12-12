@@ -17,6 +17,7 @@ import org.slf4j.LoggerFactory;
 import org.testcontainers.images.builder.ImageFromDockerfile;
 import org.testcontainers.shaded.com.google.common.collect.Streams;
 import org.testcontainers.utility.MountableFile;
+import vadl.configuration.GeneralConfiguration;
 import vadl.configuration.IssConfiguration;
 import vadl.pass.PassOrders;
 import vadl.pass.exception.DuplicatedPassKeyException;
@@ -41,6 +42,15 @@ public abstract class QemuIssTest extends DockerExecutionTest {
       new ConcurrentHashMap<>();
 
   private static final Logger log = LoggerFactory.getLogger(QemuIssTest.class);
+  
+  public IssConfiguration getIssConfig(boolean instrCount) {
+    return IssConfiguration.from(getConfiguration(instrCount), instrCount);
+  }
+
+  protected ImageFromDockerfile generateSimulator(String specPath) {
+    var config = IssConfiguration.from(getConfiguration(false));
+    return generateSimulator(specPath, config);
+  }
 
   /**
    * This will run the given specification and produces a working docker image that contains
@@ -51,10 +61,10 @@ public abstract class QemuIssTest extends DockerExecutionTest {
    * @param specPath path to VADL specification in testSource
    * @return the image containing the generated QEMU ISS
    */
-  protected ImageFromDockerfile generateSimulator(String specPath, boolean insnCount) {
+  protected ImageFromDockerfile generateSimulator(String specPath, IssConfiguration configuration) {
     return issImageCache.computeIfAbsent(specPath, (path) -> {
       try {
-        var config = IssConfiguration.from(getConfiguration(false), insnCount);
+        var config = configuration;
         // run iss generation
         setupPassManagerAndRunSpec(path, PassOrders.iss(config));
 

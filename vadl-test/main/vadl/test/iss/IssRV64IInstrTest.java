@@ -444,7 +444,7 @@ public class IssRV64IInstrTest extends QemuIssTest {
   @SafeVarargs
   private Stream<DynamicTest> runTestsWith(
       Function<Integer, IssTestUtils.TestSpec>... generators) throws IOException {
-    var image = generateSimulator("sys/risc-v/rv64i.vadl", false);
+    var image = generateSimulator("sys/risc-v/rv64i.vadl");
     var testCases = Stream.of(generators)
         .flatMap(genFunc -> IntStream.range(0, TESTS_PER_INSTRUCTION)
             .mapToObj(genFunc::apply)

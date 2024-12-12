@@ -89,13 +89,13 @@ public abstract class AbstractTest {
   /**
    * Resolves the test source's path to an absolute URI.
    */
-  public static URI getTestSourcePath(String path) {
+  public static Path getTestSourcePath(String path) {
     var prefixToRemove = "/" + TEST_SOURCE_DIR + "/";
     var subPath = path.startsWith(prefixToRemove)
         ? path.substring(prefixToRemove.length())
         : path;
 
-    return testSourceRootPath.resolve(subPath).toUri();
+    return testSourceRootPath.resolve(subPath);
   }
 
   /**
@@ -212,7 +212,7 @@ public abstract class AbstractTest {
    */
   public void runAndAssumeFailure(String testSourcePath, @Nullable String failureMessage) {
     var sourceUri = getTestSourcePath(testSourcePath);
-    var success = testFrontend.runSpecification(sourceUri);
+    var success = testFrontend.runSpecification(sourceUri.toUri());
     if (success) {
       fail("Assumed failure for specification " + testSourcePath + " but succeeded");
     }
@@ -247,13 +247,14 @@ public abstract class AbstractTest {
   private static void tryToRunSpecificationWithFrontend(String testSourcePath,
                                                         TestFrontend frontend) {
     var testSource = getTestSourcePath(testSourcePath);
-    var success = frontend.runSpecification(testSource);
+    var success = frontend.runSpecification(testSource.toUri());
     if (!success) {
       var logs = frontend.getLogAsString();
       var errorLogs = logs.substring(logs.indexOf(" error: "));
 
       System.out.println(
-          "Test source: ---------------\n" + testSourceToString(testSource) + "\n---------------");
+          "Test source: ---------------\n" + testSourceToString(testSource.toUri()) +
+              "\n---------------");
       fail(errorLogs);
     }
   }
@@ -315,13 +316,13 @@ public abstract class AbstractTest {
    * @deprecated Use {@link #setupPassManagerAndRunSpec(String, PassOrder)} instead and use the
    *     {@link PassOrder#untilFirst(Class)} method instead.
    *     <pre>{@code
-   *      var config = getConfiguration(false);
-   *      var setup = setupPassManagerAndRunSpec(
-   *          "sys/risc-v/rv64i.vadl",
-   *          PassOrders.viam(config)
-   *             .untilFirst(SideEffectConditionResolvingPass.class)
-   *      );
-   *         }</pre>
+   *                      var config = getConfiguration(false);
+   *                      var setup = setupPassManagerAndRunSpec(
+   *                          "sys/risc-v/rv64i.vadl",
+   *                          PassOrders.viam(config)
+   *                             .untilFirst(SideEffectConditionResolvingPass.class)
+   *                      );
+   *                         }</pre>
    */
   @Deprecated
   public TestSetup setupPassManagerAndRunSpecUntil(String specPath,
@@ -351,7 +352,7 @@ public abstract class AbstractTest {
     return testDirectory;
   }
 
-  public GeneralConfiguration getConfiguration(boolean doDump) throws IOException {
+  public GeneralConfiguration getConfiguration(boolean doDump) {
     var directory = getTestDirectory();
     return new GeneralConfiguration(directory.toAbsolutePath(), doDump);
   }
