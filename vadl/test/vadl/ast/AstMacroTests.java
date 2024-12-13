@@ -52,7 +52,7 @@ public class AstMacroTests {
     var ast = VadlParser.parse(vadlPath.toAbsolutePath(), replacements);
     verifyPrettifiedAst(ast);
 
-    var actualExpandedAst = ast.prettyPrint();
+    var actualExpandedAst = ast.prettyPrintToString();
     var expectedAstPath = expandedAstPath(vadlPath);
     if (!Files.isRegularFile(expectedAstPath)) {
       writeAst(actualAstPath(vadlPath), actualExpandedAst);
